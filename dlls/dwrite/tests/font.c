@@ -7558,12 +7558,12 @@ static void test_CreateFontFaceReference(void)
     static const WCHAR dummyW[] = {'d','u','m','m','y',0};
     IDWriteFontFace3 *fontface, *fontface1;
     IDWriteFontFaceReference *ref, *ref1;
+    IDWriteFontCollection1 *collection;
     IDWriteFontFile *file, *file1;
     IDWriteFactory3 *factory;
+    UINT32 index, count, i;
     IDWriteFont3 *font3;
-    IDWriteFont *font;
     ULONG refcount;
-    UINT32 index;
     WCHAR *path;
     HRESULT hr;
     BOOL ret;
@@ -7672,47 +7672,87 @@ todo_wine
     IDWriteFontFile_Release(file);
     IDWriteFontFile_Release(file1);
 
-    /* references returned from IDWriteFont3 */
-    font = get_tahoma_instance((IDWriteFactory *)factory, DWRITE_FONT_STYLE_NORMAL);
-    hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont3, (void**)&font3);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    IDWriteFont_Release(font);
+    /* References returned from IDWriteFont3/IDWriteFontFace3. */
+    hr = IDWriteFactory3_GetSystemFontCollection(factory, FALSE, &collection, FALSE);
+    ok(hr == S_OK, "Failed to get system collection, hr %#x.\n", hr);
 
-    hr = IDWriteFont3_GetFontFaceReference(font3, &ref);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    count = IDWriteFontCollection1_GetFontFamilyCount(collection);
+    for (i = 0; i < count; i++)
+    {
+        IDWriteFontFamily1 *family;
+        UINT32 font_count, j;
 
-    hr = IDWriteFont3_GetFontFaceReference(font3, &ref1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(ref != ref1, "got %p, %p\n", ref1, ref);
+        hr = IDWriteFontCollection1_GetFontFamily(collection, i, &family);
+        ok(hr == S_OK, "Failed to get family, hr %#x.\n", hr);
 
-    IDWriteFontFaceReference_Release(ref);
-    IDWriteFontFaceReference_Release(ref1);
+        font_count = IDWriteFontFamily1_GetFontCount(family);
 
-    /* references returned from IDWriteFontFace3 */
-    hr = IDWriteFont3_CreateFontFace(font3, &fontface);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        for (j = 0; j < font_count; j++)
+        {
+            IDWriteFontFaceReference1 *ref2;
 
-    hr = IDWriteFontFace3_GetFontFaceReference(fontface, &ref);
-todo_wine
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+            hr = IDWriteFontFamily1_GetFont(family, j, &font3);
+            ok(hr == S_OK, "Failed to get font, hr %#x.\n", hr);
 
-    hr = IDWriteFontFace3_GetFontFaceReference(fontface, &ref1);
-todo_wine
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK)
-    ok(ref == ref1, "got %p, %p\n", ref1, ref);
+            hr = IDWriteFont3_GetFontFaceReference(font3, &ref);
+            ok(hr == S_OK, "Failed to get reference object, hr %#x.\n", hr);
 
-if (hr == S_OK) {
-    hr = IDWriteFontFaceReference_CreateFontFace(ref, &fontface1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fontface1 == fontface, "got %p, %p\n", fontface1, fontface);
-    IDWriteFontFace3_Release(fontface1);
+            hr = IDWriteFont3_GetFontFaceReference(font3, &ref1);
+            ok(hr == S_OK, "Failed to get reference object, hr %#x.\n", hr);
+            ok(ref != ref1, "Unexpected reference object %p, %p.\n", ref1, ref);
 
-    IDWriteFontFaceReference_Release(ref);
-    IDWriteFontFaceReference_Release(ref1);
-}
-    IDWriteFontFace3_Release(fontface);
-    IDWriteFont3_Release(font3);
+            hr = IDWriteFont3_CreateFontFace(font3, &fontface);
+            ok(hr == S_OK, "Failed to create a fontface, hr %#x.\n", hr);
+
+            /* Fonts present regular properties as axis values, for non-variable fonts too.
+               Normally it would include weight/width/slant/italic, but could also contain optical size axis. */
+            if (SUCCEEDED(hr = IDWriteFontFaceReference_QueryInterface(ref, &IID_IDWriteFontFaceReference1,
+                    (void **)&ref2)))
+            {
+                UINT32 axis_count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref2);
+            todo_wine
+                ok(axis_count > 0, "Unexpected axis value count.\n");
+                IDWriteFontFaceReference1_Release(ref2);
+            }
+
+            IDWriteFontFaceReference_Release(ref);
+            IDWriteFontFaceReference_Release(ref1);
+
+            hr = IDWriteFontFace3_GetFontFaceReference(fontface, &ref);
+        todo_wine
+            ok(hr == S_OK, "Failed to get a reference, hr %#x.\n", hr);
+
+            hr = IDWriteFontFace3_GetFontFaceReference(fontface, &ref1);
+        todo_wine
+            ok(hr == S_OK, "Failed to get a reference, hr %#x.\n", hr);
+        if (hr == S_OK)
+            ok(ref == ref1, "Unexpected reference %p, %p.\n", ref1, ref);
+
+        if (hr == S_OK) {
+            hr = IDWriteFontFaceReference_CreateFontFace(ref, &fontface1);
+            ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
+            ok(fontface1 == fontface, "Unexpected fontface %p, %p.\n", fontface1, fontface);
+            IDWriteFontFace3_Release(fontface1);
+
+            if (SUCCEEDED(hr = IDWriteFontFaceReference_QueryInterface(ref, &IID_IDWriteFontFaceReference1,
+                    (void **)&ref2)))
+            {
+                UINT32 axis_count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref2);
+                ok(!axis_count, "Unexpected axis value count.\n");
+                IDWriteFontFaceReference1_Release(ref2);
+            }
+
+            IDWriteFontFaceReference_Release(ref);
+            IDWriteFontFaceReference_Release(ref1);
+        }
+            IDWriteFontFace3_Release(fontface);
+
+            IDWriteFont3_Release(font3);
+        }
+
+        IDWriteFontFamily1_Release(family);
+    }
+    IDWriteFontCollection1_Release(collection);
 
     refcount = IDWriteFactory3_Release(factory);
     ok(refcount == 0, "factory not released, %u\n", refcount);
