@@ -939,7 +939,6 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
 
 void wined3d_device_delete_opengl_contexts_cs(void *object)
 {
-    struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain_gl *swapchain_gl;
     struct wined3d_device *device = object;
     struct wined3d_context_gl *context_gl;
@@ -948,12 +947,6 @@ void wined3d_device_delete_opengl_contexts_cs(void *object)
     struct wined3d_shader *shader;
 
     device_gl = wined3d_device_gl(device);
-
-    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
-    {
-        TRACE("Unloading resource %p.\n", resource);
-        wined3d_cs_emit_unload_resource(device->cs, resource);
-    }
 
     LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
     {
@@ -1106,6 +1099,7 @@ static void device_free_sampler(struct wine_rb_entry *entry, void *context)
 void wined3d_device_uninit_3d(struct wined3d_device *device)
 {
     BOOL no3d = device->wined3d->flags & WINED3D_NO3D;
+    struct wined3d_resource *resource, *cursor;
     struct wined3d_rendertarget_view *view;
     struct wined3d_texture *texture;
     unsigned int i;
@@ -1144,6 +1138,12 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
     }
 
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
+
+    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+    {
+        TRACE("Unloading resource %p.\n", resource);
+        wined3d_cs_emit_unload_resource(device->cs, resource);
+    }
 
     device->adapter->adapter_ops->adapter_uninit_3d(device);
     device->d3d_initialized = FALSE;
@@ -5297,6 +5297,12 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         TRACE("Resetting state.\n");
         wined3d_cs_emit_reset_state(device->cs);
         state_cleanup(&device->state);
+
+        LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+        {
+            TRACE("Unloading resource %p.\n", resource);
+            wined3d_cs_emit_unload_resource(device->cs, resource);
+        }
 
         if (device->d3d_initialized)
             device->adapter->adapter_ops->adapter_uninit_3d(device);
