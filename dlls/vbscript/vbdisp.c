@@ -817,11 +817,26 @@ static ULONG WINAPI ScriptDisp_Release(IDispatchEx *iface)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
     LONG ref = InterlockedDecrement(&This->ref);
+    unsigned i;
 
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
         assert(!This->ctx);
+
+        while (This->procs)
+        {
+            class_desc_t *class_desc = This->procs;
+            This->procs = class_desc->next;
+            heap_free(class_desc);
+        }
+
+        for (i = 0; i < This->global_vars_cnt; i++)
+            release_dynamic_var(This->global_vars[i]);
+
+        heap_pool_free(&This->heap);
+        heap_free(This->global_vars);
+        heap_free(This->global_funcs);
         heap_free(This);
     }
 
@@ -899,15 +914,15 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     if(!This->ctx)
         return E_UNEXPECTED;
 
-    for(i = 0; i < This->ctx->global_vars_cnt; i++) {
-        if(!wcsicmp(This->ctx->global_vars[i]->name, bstrName)) {
+    for(i = 0; i < This->global_vars_cnt; i++) {
+        if(!wcsicmp(This->global_vars[i]->name, bstrName)) {
             *pid = i + 1;
             return S_OK;
         }
     }
 
-    for(i = 0; i < This->ctx->global_funcs_cnt; i++) {
-        if(!wcsicmp(This->ctx->global_funcs[i]->name, bstrName)) {
+    for(i = 0; i < This->global_funcs_cnt; i++) {
+        if(!wcsicmp(This->global_funcs[i]->name, bstrName)) {
             *pid = i + 1 + DISPID_FUNCTION_MASK;
             return S_OK;
         }
@@ -928,14 +943,14 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if (id & DISPID_FUNCTION_MASK)
     {
         id &= ~DISPID_FUNCTION_MASK;
-        if (id > This->ctx->global_funcs_cnt)
+        if (id > This->global_funcs_cnt)
             return DISP_E_MEMBERNOTFOUND;
 
         switch (wFlags)
         {
         case DISPATCH_METHOD:
         case DISPATCH_METHOD | DISPATCH_PROPERTYGET:
-            hres = exec_script(This->ctx, TRUE, This->ctx->global_funcs[id - 1], NULL, pdp, pvarRes);
+            hres = exec_script(This->ctx, TRUE, This->global_funcs[id - 1], NULL, pdp, pvarRes);
             break;
         default:
             FIXME("Unsupported flags %x\n", wFlags);
@@ -945,16 +960,16 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return hres;
     }
 
-    if (id > This->ctx->global_vars_cnt)
+    if (id > This->global_vars_cnt)
         return DISP_E_MEMBERNOTFOUND;
 
-    if (This->ctx->global_vars[id - 1]->is_const)
+    if (This->global_vars[id - 1]->is_const)
     {
         FIXME("const not supported\n");
         return E_NOTIMPL;
     }
 
-    return invoke_variant_prop(This->ctx, &This->ctx->global_vars[id - 1]->v, wFlags, pdp, pvarRes);
+    return invoke_variant_prop(This->ctx, &This->global_vars[id - 1]->v, wFlags, pdp, pvarRes);
 }
 
 static HRESULT WINAPI ScriptDisp_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
@@ -1028,6 +1043,7 @@ HRESULT create_script_disp(script_ctx_t *ctx, ScriptDisp **ret)
     script_disp->IDispatchEx_iface.lpVtbl = &ScriptDispVtbl;
     script_disp->ref = 1;
     script_disp->ctx = ctx;
+    heap_pool_init(&script_disp->heap);
 
     *ret = script_disp;
     return S_OK;

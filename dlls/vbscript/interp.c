@@ -94,7 +94,7 @@ static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *re
     return FALSE;
 }
 
-static BOOL lookup_global_vars(script_ctx_t *script, const WCHAR *name, ref_t *ref)
+static BOOL lookup_global_vars(ScriptDisp *script, const WCHAR *name, ref_t *ref)
 {
     dynamic_var_t **vars = script->global_vars;
     size_t i, cnt = script->global_vars_cnt;
@@ -112,6 +112,7 @@ static BOOL lookup_global_vars(script_ctx_t *script, const WCHAR *name, ref_t *r
 
 static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_t invoke_type, ref_t *ref)
 {
+    ScriptDisp *script_obj = ctx->script->script_obj;
     named_item_t *item;
     IDispatch *disp;
     unsigned i;
@@ -175,11 +176,11 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
-    if(lookup_global_vars(ctx->script, name, ref))
+    if(lookup_global_vars(script_obj, name, ref))
         return S_OK;
 
-    for(i = 0; i < ctx->script->global_funcs_cnt; i++) {
-        function_t *func = ctx->script->global_funcs[i];
+    for(i = 0; i < script_obj->global_funcs_cnt; i++) {
+        function_t *func = script_obj->global_funcs[i];
         if(!wcsicmp(func->name, name)) {
             ref->type = REF_FUNC;
             ref->u.f = func;
@@ -221,12 +222,13 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
         BOOL is_const, VARIANT **out_var)
 {
+    ScriptDisp *script_obj = ctx->script->script_obj;
     dynamic_var_t *new_var;
     heap_pool_t *heap;
     WCHAR *str;
     unsigned size;
 
-    heap = ctx->func->type == FUNC_GLOBAL ? &ctx->script->heap : &ctx->heap;
+    heap = ctx->func->type == FUNC_GLOBAL ? &script_obj->heap : &ctx->heap;
 
     new_var = heap_pool_alloc(heap, sizeof(*new_var));
     if(!new_var)
@@ -243,19 +245,19 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
     V_VT(&new_var->v) = VT_EMPTY;
 
     if(ctx->func->type == FUNC_GLOBAL) {
-        size_t cnt = ctx->script->global_vars_cnt + 1;
-        if(cnt > ctx->script->global_vars_size) {
+        size_t cnt = script_obj->global_vars_cnt + 1;
+        if(cnt > script_obj->global_vars_size) {
             dynamic_var_t **new_vars;
-            if(ctx->script->global_vars)
-                new_vars = heap_realloc(ctx->script->global_vars, cnt * 2 * sizeof(*new_vars));
+            if(script_obj->global_vars)
+                new_vars = heap_realloc(script_obj->global_vars, cnt * 2 * sizeof(*new_vars));
             else
                 new_vars = heap_alloc(cnt * 2 * sizeof(*new_vars));
             if(!new_vars)
                 return E_OUTOFMEMORY;
-            ctx->script->global_vars = new_vars;
-            ctx->script->global_vars_size = cnt * 2;
+            script_obj->global_vars = new_vars;
+            script_obj->global_vars_size = cnt * 2;
         }
-        ctx->script->global_vars[ctx->script->global_vars_cnt++] = new_var;
+        script_obj->global_vars[script_obj->global_vars_cnt++] = new_var;
     }else {
         new_var->next = ctx->dynamic_vars;
         ctx->dynamic_vars = new_var;
@@ -1113,7 +1115,7 @@ static HRESULT interp_new(exec_ctx_t *ctx)
         return stack_push(ctx, &v);
     }
 
-    for(class_desc = ctx->script->classes; class_desc; class_desc = class_desc->next) {
+    for(class_desc = ctx->script->script_obj->classes; class_desc; class_desc = class_desc->next) {
         if(!wcsicmp(class_desc->name, arg))
             break;
     }
@@ -1133,6 +1135,7 @@ static HRESULT interp_new(exec_ctx_t *ctx)
 
 static HRESULT interp_dim(exec_ctx_t *ctx)
 {
+    ScriptDisp *script_obj = ctx->script->script_obj;
     const BSTR ident = ctx->instr->arg1.bstr;
     const unsigned array_id = ctx->instr->arg2.uint;
     const array_desc_t *array_desc;
@@ -1146,13 +1149,13 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
 
     if(ctx->func->type == FUNC_GLOBAL) {
         unsigned i;
-        for(i = 0; i < ctx->script->global_vars_cnt; i++) {
-            if(!wcsicmp(ctx->script->global_vars[i]->name, ident))
+        for(i = 0; i < script_obj->global_vars_cnt; i++) {
+            if(!wcsicmp(script_obj->global_vars[i]->name, ident))
                 break;
         }
-        assert(i < ctx->script->global_vars_cnt);
-        v = &ctx->script->global_vars[i]->v;
-        array_ref = &ctx->script->global_vars[i]->array;
+        assert(i < script_obj->global_vars_cnt);
+        v = &script_obj->global_vars[i]->v;
+        array_ref = &script_obj->global_vars[i]->array;
     }else {
         ref_t ref;
 

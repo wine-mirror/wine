@@ -120,11 +120,31 @@ struct _vbdisp_t {
     VARIANT props[1];
 };
 
+typedef struct _dynamic_var_t {
+    struct _dynamic_var_t *next;
+    VARIANT v;
+    const WCHAR *name;
+    BOOL is_const;
+    SAFEARRAY *array;
+} dynamic_var_t;
+
 typedef struct {
     IDispatchEx IDispatchEx_iface;
     LONG ref;
 
+    dynamic_var_t **global_vars;
+    size_t global_vars_cnt;
+    size_t global_vars_size;
+
+    function_t **global_funcs;
+    size_t global_funcs_cnt;
+    size_t global_funcs_size;
+
+    class_desc_t *classes;
+    class_desc_t *procs;
+
     script_ctx_t *ctx;
+    heap_pool_t heap;
 } ScriptDisp;
 
 typedef struct _builtin_prop_t builtin_prop_t;
@@ -158,14 +178,6 @@ static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
     return dp->rgvarg + dp->cArgs-i-1;
 }
 
-typedef struct _dynamic_var_t {
-    struct _dynamic_var_t *next;
-    VARIANT v;
-    const WCHAR *name;
-    BOOL is_const;
-    SAFEARRAY *array;
-} dynamic_var_t;
-
 struct _script_ctx_t {
     IActiveScriptSite *site;
     LCID lcid;
@@ -181,19 +193,6 @@ struct _script_ctx_t {
     BuiltinDisp *err_obj;
 
     EXCEPINFO ei;
-
-    dynamic_var_t **global_vars;
-    size_t global_vars_cnt;
-    size_t global_vars_size;
-
-    function_t **global_funcs;
-    size_t global_funcs_cnt;
-    size_t global_funcs_size;
-
-    class_desc_t *classes;
-    class_desc_t *procs;
-
-    heap_pool_t heap;
 
     struct list objects;
     struct list code_list;
