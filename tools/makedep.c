@@ -3093,6 +3093,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
         output_filenames( defines );
         output_filenames( extra_cross_cflags );
+        if (source->file->flags & FLAG_C_IMPLIB) output_filename( "-fno-builtin" );
         output_filenames( cpp_flags );
         output_filename( "$(CROSSCFLAGS)" );
         output( "\n" );
