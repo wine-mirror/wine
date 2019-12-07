@@ -173,8 +173,6 @@ void * CDECL __wine_kernel_init(void)
     kernel32_handle = GetModuleHandleW(kernel32W);
     RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
 
-    LOCALE_Init();
-
     return start_process_wrapper;
 }
 

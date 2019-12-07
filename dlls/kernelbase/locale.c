@@ -1118,7 +1118,10 @@ static inline int is_valid_dbcs_mapping( const CPTABLEINFO *info, DWORD flags,
                                          WCHAR wch, unsigned short ch )
 {
     if ((flags & WC_NO_BEST_FIT_CHARS) || ch == info->DefaultChar)
-        return info->DBCSOffsets[info->DBCSOffsets[ch >> 8] + (ch & 0xff)] == wch;
+    {
+        if (ch >> 8) return info->DBCSOffsets[info->DBCSOffsets[ch >> 8] + (ch & 0xff)] == wch;
+        return info->MultiByteTable[ch] == wch;
+    }
     return 1;
 }
 

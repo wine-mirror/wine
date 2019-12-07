@@ -1096,7 +1096,7 @@
 @ stdcall MoveFileWithProgressA(str str ptr ptr long)
 @ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long)
 @ stdcall MulDiv(long long long)
-@ stdcall MultiByteToWideChar(long long str long ptr long)
+@ stdcall -import MultiByteToWideChar(long long str long ptr long)
 @ stdcall -import NeedCurrentDirectoryForExePathA(str)
 @ stdcall -import NeedCurrentDirectoryForExePathW(wstr)
 # @ stub NlsCheckPolicy
@@ -1601,7 +1601,7 @@
 # @ stub WerpNotifyLoadStringResourceEx
 # @ stub WerpNotifyUseStringResource
 # @ stub WerpStringLookup
-@ stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr)
+@ stdcall -import WideCharToMultiByte(long long wstr long ptr long ptr ptr)
 @ stdcall WinExec(str long)
 @ stdcall Wow64EnableWow64FsRedirection(long) KERNEL32_Wow64EnableWow64FsRedirection
 @ stdcall -import Wow64DisableWow64FsRedirection(ptr)
