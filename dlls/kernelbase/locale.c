@@ -45,6 +45,8 @@ extern UINT CDECL __wine_get_unix_codepage(void);
 extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
 extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
 
+extern const unsigned short wctype_table[] DECLSPEC_HIDDEN;
+
 static HANDLE kernel32_handle;
 
 static const struct registry_value
@@ -326,6 +328,12 @@ void init_locale(void)
         RegSetValueExW( hkey, L"MACCP", 0, REG_SZ, (BYTE *)bufferW, (count + 1) * sizeof(WCHAR) );
         RegCloseKey( hkey );
     }
+}
+
+
+static inline USHORT get_table_entry( const USHORT *table, WCHAR ch )
+{
+    return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
 }
 
 
@@ -2701,6 +2709,115 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *locale, LCTYPE info, 
 UINT WINAPI GetOEMCP(void)
 {
     return nls_info.OemTableInfo.CodePage;
+}
+
+
+/***********************************************************************
+ *	GetStringTypeA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetStringTypeA( LCID locale, DWORD type, const char *src, int count,
+                                              WORD *chartype )
+{
+    UINT cp;
+    INT countW;
+    LPWSTR srcW;
+    BOOL ret = FALSE;
+
+    if (count == -1) count = strlen(src) + 1;
+
+    cp = get_lcid_codepage( locale, 0 );
+    countW = MultiByteToWideChar(cp, 0, src, count, NULL, 0);
+    if((srcW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR))))
+    {
+        MultiByteToWideChar(cp, 0, src, count, srcW, countW);
+    /*
+     * NOTE: the target buffer has 1 word for each CHARACTER in the source
+     * string, with multibyte characters there maybe be more bytes in count
+     * than character space in the buffer!
+     */
+        ret = GetStringTypeW(type, srcW, countW, chartype);
+        HeapFree(GetProcessHeap(), 0, srcW);
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *	GetStringTypeW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetStringTypeW( DWORD type, const WCHAR *src, INT count, WORD *chartype )
+{
+    if (!src)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (count == -1) count = lstrlenW(src) + 1;
+    switch (type)
+    {
+    case CT_CTYPE1:
+        while (count--) *chartype++ = get_table_entry( wctype_table, *src++ ) & 0xfff;
+        break;
+    case CT_CTYPE2:
+        while (count--) *chartype++ = get_table_entry( wctype_table, *src++ ) >> 12;
+        break;
+    case CT_CTYPE3:
+    {
+        WARN("CT_CTYPE3: semi-stub.\n");
+        while (count--)
+        {
+            int c = *src;
+            WORD type1, type3 = 0; /* C3_NOTAPPLICABLE */
+
+            type1 = get_table_entry( wctype_table, *src++ ) & 0xfff;
+            /* try to construct type3 from type1 */
+            if(type1 & C1_SPACE) type3 |= C3_SYMBOL;
+            if(type1 & C1_ALPHA) type3 |= C3_ALPHA;
+            if ((c>=0x30A0)&&(c<=0x30FF)) type3 |= C3_KATAKANA;
+            if ((c>=0x3040)&&(c<=0x309F)) type3 |= C3_HIRAGANA;
+            if ((c>=0x4E00)&&(c<=0x9FAF)) type3 |= C3_IDEOGRAPH;
+            if (c == 0x0640) type3 |= C3_KASHIDA;
+            if ((c>=0x3000)&&(c<=0x303F)) type3 |= C3_SYMBOL;
+
+            if ((c>=0xD800)&&(c<=0xDBFF)) type3 |= C3_HIGHSURROGATE;
+            if ((c>=0xDC00)&&(c<=0xDFFF)) type3 |= C3_LOWSURROGATE;
+
+            if ((c>=0xFF00)&&(c<=0xFF60)) type3 |= C3_FULLWIDTH;
+            if ((c>=0xFF00)&&(c<=0xFF20)) type3 |= C3_SYMBOL;
+            if ((c>=0xFF3B)&&(c<=0xFF40)) type3 |= C3_SYMBOL;
+            if ((c>=0xFF5B)&&(c<=0xFF60)) type3 |= C3_SYMBOL;
+            if ((c>=0xFF21)&&(c<=0xFF3A)) type3 |= C3_ALPHA;
+            if ((c>=0xFF41)&&(c<=0xFF5A)) type3 |= C3_ALPHA;
+            if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_FULLWIDTH;
+            if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_SYMBOL;
+
+            if ((c>=0xFF61)&&(c<=0xFFDC)) type3 |= C3_HALFWIDTH;
+            if ((c>=0xFF61)&&(c<=0xFF64)) type3 |= C3_SYMBOL;
+            if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_KATAKANA;
+            if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_ALPHA;
+            if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_HALFWIDTH;
+            if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_SYMBOL;
+            *chartype++ = type3;
+        }
+        break;
+    }
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *	GetStringTypeExW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetStringTypeExW( LCID locale, DWORD type, const WCHAR *src, int count,
+                                                WORD *chartype )
+{
+    /* locale is ignored for Unicode */
+    return GetStringTypeW( type, src, count, chartype );
 }
 
 

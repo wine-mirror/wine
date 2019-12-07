@@ -39,7 +39,6 @@ C_SRCS = \
 	version.c \
 	virtual.c \
 	volume.c \
-	wctype.c \
 	wer.c
 
 RC_SRCS = \

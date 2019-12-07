@@ -814,10 +814,10 @@
 @ stdcall -import GetStartupInfoW(ptr)
 @ stdcall -import GetStdHandle(long)
 # @ stub GetStringScripts
-@ stdcall GetStringTypeA(long long str long ptr)
+@ stdcall -import GetStringTypeA(long long str long ptr)
 @ stdcall GetStringTypeExA(long long str long ptr)
-@ stdcall GetStringTypeExW(long long wstr long ptr)
-@ stdcall GetStringTypeW(long wstr long ptr)
+@ stdcall -import GetStringTypeExW(long long wstr long ptr)
+@ stdcall -import GetStringTypeW(long wstr long ptr)
 @ stdcall -import GetSystemFileCacheSize(ptr ptr ptr)
 @ stdcall -import GetSystemDefaultLCID()
 @ stdcall -import GetSystemDefaultLangID()

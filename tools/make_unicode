@@ -2920,7 +2920,7 @@ dump_ctype_tables( "libs/port/wctype.c" );
 dump_bidi_dir_table( "dlls/gdi32/direction.c" );
 dump_bidi_dir_table( "dlls/usp10/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
-dump_string_type_table( "dlls/kernel32/wctype.c" );
+dump_string_type_table( "dlls/kernelbase/wctype.c" );
 dump_digit_folding( "libs/port/digitmap.c", 1 );
 dump_digit_folding( "dlls/kernelbase/digitmap.c", 0 );
 dump_combining_class( "libs/port/combclass.c" );

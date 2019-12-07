@@ -674,9 +674,9 @@
 @ stdcall GetStdHandle(long)
 # @ stub GetStringScripts
 @ stub GetStringTableEntry
-@ stdcall GetStringTypeA(long long str long ptr) kernel32.GetStringTypeA
-@ stdcall GetStringTypeExW(long long wstr long ptr) kernel32.GetStringTypeExW
-@ stdcall GetStringTypeW(long wstr long ptr) kernel32.GetStringTypeW
+@ stdcall GetStringTypeA(long long str long ptr)
+@ stdcall GetStringTypeExW(long long wstr long ptr)
+@ stdcall GetStringTypeW(long wstr long ptr)
 # @ stub GetSystemAppDataFolder
 # @ stub GetSystemAppDataKey
 # @ stub GetSystemCpuSetInformation
