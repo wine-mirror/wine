@@ -544,7 +544,7 @@
 @ stdcall GetLocaleInfoA(long long ptr long)
 @ stdcall GetLocaleInfoEx(wstr long ptr long)
 @ stub GetLocaleInfoHelper
-@ stdcall GetLocaleInfoW(long long ptr long) kernel32.GetLocaleInfoW
+@ stdcall GetLocaleInfoW(long long ptr long)
 @ stdcall GetLogicalDriveStringsW(long ptr) kernel32.GetLogicalDriveStringsW
 @ stdcall GetLogicalDrives() kernel32.GetLogicalDrives
 @ stdcall GetLogicalProcessorInformation(ptr ptr)
@@ -1447,7 +1447,7 @@
 @ stub SetLastConsoleEventActive
 @ stdcall SetLastError(long) ntdll.RtlSetLastWin32Error
 @ stdcall SetLocalTime(ptr)
-@ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
+@ stdcall SetLocaleInfoW(long long wstr)
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr)
 @ stdcall SetPriorityClass(long long)
 @ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long)

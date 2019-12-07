@@ -704,7 +704,7 @@
 @ stub GetLinguistLangSize
 @ stdcall -import GetLocalTime(ptr)
 @ stdcall -import GetLocaleInfoA(long long ptr long)
-@ stdcall GetLocaleInfoW(long long ptr long)
+@ stdcall -import GetLocaleInfoW(long long ptr long)
 @ stdcall -import GetLocaleInfoEx(wstr long ptr long)
 @ stdcall GetLogicalDriveStringsA(long ptr)
 @ stdcall GetLogicalDriveStringsW(long ptr)
@@ -1421,7 +1421,7 @@
 # @ stub SetLocalPrimaryComputerNameW
 @ stdcall -import SetLocalTime(ptr)
 @ stdcall SetLocaleInfoA(long long str)
-@ stdcall SetLocaleInfoW(long long wstr)
+@ stdcall -import SetLocaleInfoW(long long wstr)
 @ stdcall SetMailslotInfo(long long)
 @ stub SetMessageWaitingIndicator
 # @ stub SetNamedPipeAttribute

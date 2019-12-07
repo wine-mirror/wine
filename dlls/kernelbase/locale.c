@@ -98,6 +98,8 @@ static const struct registry_value
     { LOCALE_ITIMEMARKPOSN, L"iTimePrefix" },
 };
 
+static WCHAR *registry_cache[ARRAY_SIZE(registry_values)];
+
 static const struct { UINT cp; const WCHAR *name; } codepage_names[] =
 {
     { 37,    L"IBM EBCDIC US Canada" },
@@ -334,6 +336,92 @@ static UINT get_lcid_codepage( LCID lcid, ULONG flags )
     if (!(flags & LOCALE_USE_CP_ACP) && lcid != GetSystemDefaultLCID())
         GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                         (WCHAR *)&ret, sizeof(ret)/sizeof(WCHAR) );
+    return ret;
+}
+
+
+static BOOL is_genitive_name_supported( LCTYPE lctype )
+{
+    switch (LOWORD(lctype))
+    {
+    case LOCALE_SMONTHNAME1:
+    case LOCALE_SMONTHNAME2:
+    case LOCALE_SMONTHNAME3:
+    case LOCALE_SMONTHNAME4:
+    case LOCALE_SMONTHNAME5:
+    case LOCALE_SMONTHNAME6:
+    case LOCALE_SMONTHNAME7:
+    case LOCALE_SMONTHNAME8:
+    case LOCALE_SMONTHNAME9:
+    case LOCALE_SMONTHNAME10:
+    case LOCALE_SMONTHNAME11:
+    case LOCALE_SMONTHNAME12:
+    case LOCALE_SMONTHNAME13:
+         return TRUE;
+    default:
+         return FALSE;
+    }
+}
+
+
+static int get_value_base_by_lctype( LCTYPE lctype )
+{
+    return lctype == LOCALE_ILANGUAGE || lctype == LOCALE_IDEFAULTLANGUAGE ? 16 : 10;
+}
+
+
+static const struct registry_value *get_locale_registry_value( DWORD lctype )
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE( registry_values ); i++)
+        if (registry_values[i].lctype == lctype) return &registry_values[i];
+    return NULL;
+}
+
+
+static INT get_registry_locale_info( const struct registry_value *registry_value, LPWSTR buffer, INT len )
+{
+    DWORD size, index = registry_value - registry_values;
+    INT ret;
+
+    RtlEnterCriticalSection( &locale_section );
+
+    if (!registry_cache[index])
+    {
+        size = len * sizeof(WCHAR);
+        ret = RegQueryValueExW( intl_key, registry_value->name, NULL, NULL, (BYTE *)buffer, &size );
+        if (!ret)
+        {
+            if (buffer && (registry_cache[index] = HeapAlloc( GetProcessHeap(), 0, size + sizeof(WCHAR) )))
+            {
+                memcpy( registry_cache[index], buffer, size );
+                registry_cache[index][size / sizeof(WCHAR)] = 0;
+            }
+            RtlLeaveCriticalSection( &locale_section );
+            return size / sizeof(WCHAR);
+        }
+        else
+        {
+            RtlLeaveCriticalSection( &locale_section );
+            if (ret == ERROR_FILE_NOT_FOUND) return -1;
+            if (ret == ERROR_MORE_DATA) SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            else SetLastError( ret );
+            return 0;
+        }
+    }
+
+    ret = lstrlenW( registry_cache[index] ) + 1;
+    if (buffer)
+    {
+        if (ret > len)
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            ret = 0;
+        }
+        else lstrcpyW( buffer, registry_cache[index] );
+    }
+    RtlLeaveCriticalSection( &locale_section );
     return ret;
 }
 
@@ -2439,6 +2527,142 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoA( LCID lcid, LCTYPE lctype, char *buf
 
 
 /******************************************************************************
+ *	GetLocaleInfoW   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *buffer, INT len )
+{
+    HRSRC hrsrc;
+    HGLOBAL hmem;
+    INT ret;
+    UINT lcflags = lctype;
+    const WCHAR *p;
+    unsigned int i;
+
+    if (len < 0 || (len && !buffer))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (lctype & LOCALE_RETURN_GENITIVE_NAMES && !is_genitive_name_supported( lctype ))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (!len) buffer = NULL;
+
+    lcid = ConvertDefaultLocale( lcid );
+    lctype = LOWORD(lctype);
+
+    TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d)\n", lcid, lctype, buffer, len );
+
+    /* first check for overrides in the registry */
+
+    if (!(lcflags & LOCALE_NOUSEROVERRIDE) && lcid == ConvertDefaultLocale( LOCALE_USER_DEFAULT ))
+    {
+        const struct registry_value *value = get_locale_registry_value( lctype );
+
+        if (value)
+        {
+            if (lcflags & LOCALE_RETURN_NUMBER)
+            {
+                WCHAR tmp[16];
+                ret = get_registry_locale_info( value, tmp, ARRAY_SIZE( tmp ));
+                if (ret > 0)
+                {
+                    WCHAR *end;
+                    UINT number = wcstol( tmp, &end, get_value_base_by_lctype( lctype ) );
+                    if (*end)  /* invalid number */
+                    {
+                        SetLastError( ERROR_INVALID_FLAGS );
+                        return 0;
+                    }
+                    ret = sizeof(UINT) / sizeof(WCHAR);
+                    if (!len) return ret;
+                    if (ret > len)
+                    {
+                        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                        return 0;
+                    }
+                    memcpy( buffer, &number, sizeof(number) );
+                }
+            }
+            else ret = get_registry_locale_info( value, buffer, len );
+
+            if (ret != -1) return ret;
+        }
+    }
+
+    /* now load it from kernel resources */
+
+    if (!(hrsrc = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
+                                   ULongToPtr((lctype >> 4) + 1), lcid )))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );  /* no such lctype */
+        return 0;
+    }
+    if (!(hmem = LoadResource( kernel32_handle, hrsrc ))) return 0;
+
+    p = LockResource( hmem );
+    for (i = 0; i < (lctype & 0x0f); i++) p += *p + 1;
+
+    if (lcflags & LOCALE_RETURN_NUMBER) ret = sizeof(UINT) / sizeof(WCHAR);
+    else if (is_genitive_name_supported( lctype ) && *p)
+    {
+        /* genitive form is stored after a null separator from a nominative */
+        for (i = 1; i <= *p; i++) if (!p[i]) break;
+
+        if (i <= *p && (lcflags & LOCALE_RETURN_GENITIVE_NAMES))
+        {
+            ret = *p - i + 1;
+            p += i;
+        }
+        else ret = i;
+    }
+    else
+        ret = (lctype == LOCALE_FONTSIGNATURE) ? *p : *p + 1;
+
+    if (!len) return ret;
+
+    if (ret > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+
+    if (lcflags & LOCALE_RETURN_NUMBER)
+    {
+        UINT number;
+        WCHAR *end, *tmp = HeapAlloc( GetProcessHeap(), 0, (*p + 1) * sizeof(WCHAR) );
+        if (!tmp) return 0;
+        memcpy( tmp, p + 1, *p * sizeof(WCHAR) );
+        tmp[*p] = 0;
+        number = wcstol( tmp, &end, get_value_base_by_lctype( lctype ) );
+        if (!*end)
+            memcpy( buffer, &number, sizeof(number) );
+        else  /* invalid number */
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            ret = 0;
+        }
+        HeapFree( GetProcessHeap(), 0, tmp );
+
+        TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d) returning number %d\n",
+               lcid, lctype, buffer, len, number );
+    }
+    else
+    {
+        memcpy( buffer, p + 1, ret * sizeof(WCHAR) );
+        if (lctype != LOCALE_FONTSIGNATURE) buffer[ret-1] = 0;
+
+        TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d) returning %d %s\n",
+               lcid, lctype, buffer, len, ret, debugstr_w(buffer) );
+    }
+    return ret;
+}
+
+
+/******************************************************************************
  *	GetLocaleInfoEx   (kernelbase.@)
  */
 INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *locale, LCTYPE info, WCHAR *buffer, INT len )
@@ -2746,6 +2970,71 @@ INT WINAPI DECLSPEC_HOTPATCH ResolveLocaleName( LPCWSTR name, LPWSTR buffer, INT
 
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return 0;
+}
+
+
+/******************************************************************************
+ *	SetLocaleInfoW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetLocaleInfoW( LCID lcid, LCTYPE lctype, const WCHAR *data )
+{
+    const struct registry_value *value;
+    DWORD index;
+    LSTATUS status;
+
+    lctype = LOWORD(lctype);
+    value = get_locale_registry_value( lctype );
+
+    if (!data || !value)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (lctype == LOCALE_IDATE || lctype == LOCALE_ILDATE)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return FALSE;
+    }
+
+    TRACE( "setting %x (%s) to %s\n", lctype, debugstr_w(value->name), debugstr_w(data) );
+
+    /* FIXME: should check that data to set is sane */
+
+    status = RegSetValueExW( intl_key, value->name, 0, REG_SZ, (BYTE *)data, (lstrlenW(data)+1)*sizeof(WCHAR) );
+    index = value - registry_values;
+
+    RtlEnterCriticalSection( &locale_section );
+    HeapFree( GetProcessHeap(), 0, registry_cache[index] );
+    registry_cache[index] = NULL;
+    RtlLeaveCriticalSection( &locale_section );
+
+    if (lctype == LOCALE_SSHORTDATE || lctype == LOCALE_SLONGDATE)
+    {
+        /* Set I-value from S value */
+        WCHAR *pD, *pM, *pY, buf[2];
+
+        pD = wcschr( data, 'd' );
+        pM = wcschr( data, 'M' );
+        pY = wcschr( data, 'y' );
+
+        if (pD <= pM) buf[0] = '1'; /* D-M-Y */
+        else if (pY <= pM) buf[0] = '2'; /* Y-M-D */
+        else buf[0] = '0'; /* M-D-Y */
+        buf[1] = 0;
+
+        lctype = (lctype == LOCALE_SSHORTDATE) ? LOCALE_IDATE : LOCALE_ILDATE;
+        value = get_locale_registry_value( lctype );
+        index = value - registry_values;
+
+        RegSetValueExW( intl_key, value->name, 0, REG_SZ, (BYTE *)buf, sizeof(buf) );
+
+        RtlEnterCriticalSection( &locale_section );
+        HeapFree( GetProcessHeap(), 0, registry_cache[index] );
+        registry_cache[index] = NULL;
+        RtlLeaveCriticalSection( &locale_section );
+    }
+    return set_ntstatus( status );
 }
 
 
