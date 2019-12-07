@@ -86,13 +86,15 @@ static int (*pgnutls_privkey_export_rsa_raw)(gnutls_privkey_t, gnutls_datum_t *,
                                              gnutls_datum_t *);
 static int (*pgnutls_privkey_generate)(gnutls_privkey_t, gnutls_pk_algorithm_t, unsigned int, unsigned int);
 
+/* Not present in gnutls version < 3.6.0 */
+static int (*pgnutls_decode_rs_value)(const gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *);
+
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gnutls_cipher_decrypt2);
 MAKE_FUNCPTR(gnutls_cipher_deinit);
 MAKE_FUNCPTR(gnutls_cipher_encrypt2);
 MAKE_FUNCPTR(gnutls_cipher_init);
-MAKE_FUNCPTR(gnutls_decode_rs_value);
 MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
 MAKE_FUNCPTR(gnutls_global_set_log_function);
@@ -164,6 +166,11 @@ static int compat_gnutls_privkey_generate(gnutls_privkey_t key, gnutls_pk_algori
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
+static int compat_gnutls_decode_rs_value(const gnutls_datum_t * sig_value, gnutls_datum_t * r, gnutls_datum_t * s)
+{
+    return GNUTLS_E_INTERNAL_ERROR;
+}
+
 static void gnutls_log( int level, const char *msg )
 {
     TRACE( "<%d> %s", level, msg );
@@ -190,7 +197,6 @@ BOOL gnutls_initialize(void)
     LOAD_FUNCPTR(gnutls_cipher_deinit)
     LOAD_FUNCPTR(gnutls_cipher_encrypt2)
     LOAD_FUNCPTR(gnutls_cipher_init)
-    LOAD_FUNCPTR(gnutls_decode_rs_value)
     LOAD_FUNCPTR(gnutls_global_deinit)
     LOAD_FUNCPTR(gnutls_global_init)
     LOAD_FUNCPTR(gnutls_global_set_log_function)
@@ -258,6 +264,11 @@ BOOL gnutls_initialize(void)
     {
         WARN("gnutls_privkey_generate not found\n");
         pgnutls_privkey_generate = compat_gnutls_privkey_generate;
+    }
+    if (!(pgnutls_decode_rs_value = wine_dlsym( libgnutls_handle, "gnutls_decode_rs_value", NULL, 0 )))
+    {
+        WARN("gnutls_decode_rs_value not found\n");
+        pgnutls_decode_rs_value = compat_gnutls_decode_rs_value;
     }
 
     if (TRACE_ON( bcrypt ))
