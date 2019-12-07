@@ -303,7 +303,7 @@ BOOL WINAPI WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
 BOOL WINAPI WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
 {
     FIXME("Stub %p %p 0x%08x\n", hServer, hWnd, dwFlags);
-    return FALSE;
+    return TRUE;
 }
 
 
