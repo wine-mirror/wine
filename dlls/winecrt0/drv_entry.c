@@ -35,7 +35,7 @@ NTSTATUS DECLSPEC_HIDDEN WINAPI __wine_spec_drv_entry( struct _DRIVER_OBJECT *ob
 {
     BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
 
-    if (needs_init) _init( __wine_main_argc, __wine_main_argv, NULL );
+    if (needs_init) _init( 0, NULL, NULL );
     return DriverEntry( obj, path );
     /* there is no detach routine so we can't call destructors */
 }

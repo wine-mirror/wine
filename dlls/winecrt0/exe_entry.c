@@ -25,19 +25,43 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winternl.h"
 #include "wine/library.h"
 #include "crt0_private.h"
 
 extern int __cdecl main( int argc, char *argv[] );
 
+static char **build_argv( WCHAR **wargv )
+{
+    int argc;
+    char *p, **argv;
+    DWORD total = 0;
+
+    for (argc = 0; wargv[argc]; argc++)
+        total += WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, NULL, 0, NULL, NULL );
+
+    argv = HeapAlloc( GetProcessHeap(), 0, total + (argc + 1) * sizeof(*argv) );
+    p = (char *)(argv + argc + 1);
+    for (argc = 0; wargv[argc]; argc++)
+    {
+        DWORD reslen = WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, p, total, NULL, NULL );
+        argv[argc] = p;
+        p += reslen;
+        total -= reslen;
+    }
+    argv[argc] = NULL;
+    return argv;
+}
+
 DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_entry( PEB *peb )
 {
     BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
+    char **argv = build_argv( __wine_main_wargv );
     DWORD ret;
 
-    if (needs_init) _init( __wine_main_argc, __wine_main_argv, NULL );
-    ret = main( __wine_main_argc, __wine_main_argv );
+    if (needs_init) _init( __wine_main_argc, argv, NULL );
+    ret = main( __wine_main_argc, argv );
     if (needs_init) _fini();
     ExitProcess( ret );
 }

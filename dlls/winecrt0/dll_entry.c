@@ -38,7 +38,7 @@ BOOL WINAPI DECLSPEC_HIDDEN __wine_spec_dll_entry( HINSTANCE inst, DWORD reason,
     if (reason == DLL_PROCESS_ATTACH && __wine_spec_init_state != CONSTRUCTORS_DONE)
     {
         call_fini = TRUE;
-        _init( __wine_main_argc, __wine_main_argv, NULL );
+        _init( 0, NULL, NULL );
     }
 
     ret = DllMain( inst, reason, reserved );
