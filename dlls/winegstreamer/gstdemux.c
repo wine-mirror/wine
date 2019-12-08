@@ -1735,29 +1735,19 @@ static inline struct gstdemux_source *impl_source_from_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, struct gstdemux_source, pin.pin.IPin_iface);
 }
 
-static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
+static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    struct gstdemux_source *This = impl_source_from_IPin(iface);
+    struct gstdemux_source *pin = impl_source_from_IPin(&iface->IPin_iface);
 
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
+    if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &pin->seek.IMediaSeeking_iface;
+    else if (IsEqualGUID(iid, &IID_IQualityControl))
+        *out = &pin->IQualityControl_iface;
+    else
+        return E_NOINTERFACE;
 
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &This->seek;
-    else if (IsEqualIID(riid, &IID_IQualityControl))
-        *ppv = &This->IQualityControl_iface;
-
-    if (*ppv) {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
@@ -1847,7 +1837,7 @@ static void free_source_pin(struct gstdemux_source *pin)
 }
 
 static const IPinVtbl GST_OutputPin_Vtbl = {
-    GSTOutPin_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
@@ -1869,6 +1859,7 @@ static const IPinVtbl GST_OutputPin_Vtbl = {
 
 static const struct strmbase_source_ops source_ops =
 {
+    .base.pin_query_interface = source_query_interface,
     .base.pin_query_accept = source_query_accept,
     .base.pin_get_media_type = source_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
@@ -2071,36 +2062,8 @@ static HRESULT WINAPI GSTInPin_NewSegment(IPin *iface, REFERENCE_TIME start,
     return S_OK;
 }
 
-static HRESULT WINAPI GSTInPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
-{
-    struct gstdemux *filter = impl_from_sink_IPin(iface);
-
-    TRACE("filter %p, riid %s, ppv %p.\n", filter, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-    {
-        return IBaseFilter_QueryInterface(&filter->filter.IBaseFilter_iface, &IID_IMediaSeeking, ppv);
-    }
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
 static const IPinVtbl GST_InputPin_Vtbl = {
-    GSTInPin_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
