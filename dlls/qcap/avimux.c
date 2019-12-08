@@ -1108,6 +1108,24 @@ static const ISpecifyPropertyPagesVtbl SpecifyPropertyPagesVtbl = {
     SpecifyPropertyPages_GetPages
 };
 
+static inline AviMux *impl_from_source_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, AviMux, source.pin);
+}
+
+static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    AviMux *filter = impl_from_source_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IQualityControl))
+        *out = &filter->IQualityControl_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
 {
     FIXME("(%p) stub\n", base);
@@ -1176,6 +1194,7 @@ static HRESULT WINAPI AviMuxOut_DecideAllocator(struct strmbase_source *base,
 
 static const struct strmbase_source_ops source_ops =
 {
+    .base.pin_query_interface = source_query_interface,
     .base.pin_query_accept = source_query_accept,
     .base.pin_get_media_type = source_get_media_type,
     .pfnAttemptConnection = AviMuxOut_AttemptConnection,
@@ -1185,26 +1204,6 @@ static const struct strmbase_source_ops source_ops =
 static inline AviMux *impl_from_out_IPin(IPin *iface)
 {
     return CONTAINING_RECORD(iface, AviMux, source.pin.IPin_iface);
-}
-
-static HRESULT WINAPI AviMuxOut_QueryInterface(IPin *iface, REFIID riid, void **ppv)
-{
-    AviMux *This = impl_from_out_IPin(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-
-    if(IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if(IsEqualIID(riid, &IID_IQualityControl))
-        *ppv = &This->IQualityControl_iface;
-    else {
-        FIXME("no interface for %s\n", debugstr_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
 }
 
 static HRESULT WINAPI AviMuxOut_Connect(IPin *iface,
@@ -1250,7 +1249,7 @@ static HRESULT WINAPI AviMuxOut_Disconnect(IPin *iface)
 }
 
 static const IPinVtbl AviMuxOut_PinVtbl = {
-    AviMuxOut_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     AviMuxOut_Connect,
@@ -1320,6 +1319,30 @@ static const IQualityControlVtbl AviMuxOut_QualityControlVtbl = {
     AviMuxOut_QualityControl_Notify,
     AviMuxOut_QualityControl_SetSink
 };
+
+static inline AviMuxIn *impl_sink_from_strmbase_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, AviMuxIn, pin.pin.IPin_iface);
+}
+
+static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    AviMuxIn *pin = impl_sink_from_strmbase_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IAMStreamControl))
+        *out = &pin->IAMStreamControl_iface;
+    else if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &pin->pin.IMemInputPin_iface;
+    else if (IsEqualGUID(iid, &IID_IPropertyBag))
+        *out = &pin->IPropertyBag_iface;
+    else if (IsEqualGUID(iid, &IID_IQualityControl))
+        *out = &pin->IQualityControl_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
 
 static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *pmt)
 {
@@ -1441,6 +1464,7 @@ static HRESULT WINAPI AviMuxIn_Receive(struct strmbase_sink *base, IMediaSample 
 
 static const struct strmbase_sink_ops sink_ops =
 {
+    .base.pin_query_interface = sink_query_interface,
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = AviMuxIn_Receive,
@@ -1455,32 +1479,6 @@ static inline AviMux* impl_from_in_IPin(IPin *iface)
 static inline AviMuxIn* AviMuxIn_from_IPin(IPin *iface)
 {
     return CONTAINING_RECORD(iface, AviMuxIn, pin.pin.IPin_iface);
-}
-
-static HRESULT WINAPI AviMuxIn_QueryInterface(IPin *iface, REFIID riid, void **ppv)
-{
-    AviMuxIn *avimuxin = AviMuxIn_from_IPin(iface);
-
-    TRACE("pin %p, riid %s, ppv %p.\n", avimuxin, debugstr_guid(riid), ppv);
-
-    if(IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPin))
-        *ppv = &avimuxin->pin.pin.IPin_iface;
-    else if(IsEqualIID(riid, &IID_IAMStreamControl))
-        *ppv = &avimuxin->IAMStreamControl_iface;
-    else if(IsEqualIID(riid, &IID_IMemInputPin))
-        *ppv = &avimuxin->pin.IMemInputPin_iface;
-    else if(IsEqualIID(riid, &IID_IPropertyBag))
-        *ppv = &avimuxin->IPropertyBag_iface;
-    else if(IsEqualIID(riid, &IID_IQualityControl))
-        *ppv = &avimuxin->IQualityControl_iface;
-    else {
-        FIXME("no interface for %s\n", debugstr_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
 }
 
 static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
@@ -1576,7 +1574,7 @@ static HRESULT WINAPI AviMuxIn_Disconnect(IPin *iface)
 }
 
 static const IPinVtbl AviMuxIn_PinVtbl = {
-    AviMuxIn_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
