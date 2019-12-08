@@ -368,49 +368,36 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_RemoveNotificationType(IDirectMus
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_GetParam(IDirectMusicSegment8 *iface,
-        REFGUID type, DWORD group, DWORD index, MUSIC_TIME time, MUSIC_TIME *next,
-        void *param)
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetParam(IDirectMusicSegment8 *iface, REFGUID type,
+        DWORD group, DWORD index, MUSIC_TIME time, MUSIC_TIME *next, void *param)
 {
     IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
-    struct list *item;
     IDirectMusicTrack *track;
-    DMUS_PRIVATE_SEGMENT_TRACK *segment;
-    HRESULT hr;
+    unsigned int i, count;
+    HRESULT hr = DMUS_E_TRACK_NOT_FOUND;
 
-    FIXME("(%p, %s, 0x%x, %d, %d, %p, %p) Semi-stub\n", This, debugstr_dmguid(type), group,
-                index, time, next, param);
+    TRACE("(%p, %s, %#x, %u, %d, %p, %p)\n", This, debugstr_dmguid(type), group, index, time,
+            next, param);
 
-    if (index == DMUS_SEG_ANYTRACK || group == 0xffffffff) {
-        if (group == 0xffffffff && index != DMUS_SEG_ANYTRACK)
-            WARN("Any group doesnt have DMUS_SEG_ANYTRACK index.\n");
+    if (!type)
+        return E_POINTER;
 
-        LIST_FOR_EACH (item, &This->Tracks) {
-            segment = LIST_ENTRY(item, DMUS_PRIVATE_SEGMENT_TRACK, entry);
+    /* Index is relative to the search pattern: group bits and supported param type */
+    for (i = 0, count = 0; i < DMUS_SEG_ANYTRACK && count <= index; i++) {
+        if (FAILED(IDirectMusicSegment8Impl_GetTrack(iface, &GUID_NULL, group, i, &track)))
+            break;
+        if (FAILED(IDirectMusicTrack_IsParamSupported(track, type)))
+            continue;
+        if (index == count || index == DMUS_SEG_ANYTRACK)
+            hr = IDirectMusicTrack_GetParam(track, type, time, next, param);
+        IDirectMusicTrack_Release(track);
 
-            TRACE(" - %p -> 0x%x,%p\n", segment, segment->dwGroupBits, segment->pTrack);
-
-            if (group != 0xffffffff && !(segment->dwGroupBits & group))
-                continue;
-            if (FAILED(IDirectMusicTrack_IsParamSupported(segment->pTrack, type)))
-                continue;
-            hr = IDirectMusicTrack_GetParam(segment->pTrack, type, time, next, param);
-            if (SUCCEEDED(hr))
-                return hr;
-        }
-
-        WARN("(%p): not found\n", This);
-        return DMUS_E_TRACK_NOT_FOUND;
+        if (SUCCEEDED(hr))
+            return hr;
+        count++;
     }
 
-    hr = IDirectMusicSegment8Impl_GetTrack(iface, &GUID_NULL, group, index, &track);
-    if (FAILED(hr)) {
-        ERR("(%p): not found\n", This);
-        return DMUS_E_TRACK_NOT_FOUND;
-    }
-
-    hr = IDirectMusicTrack_GetParam(track, type, time, next, param);
-    IDirectMusicTrack_Release(track);
+    TRACE("(%p): not found\n", This);
 
     return hr;
 }
