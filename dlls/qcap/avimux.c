@@ -1230,21 +1230,6 @@ static HRESULT WINAPI AviMuxOut_Connect(IPin *iface,
         }
     }
 
-    if(hr == S_OK)
-        IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
-    return hr;
-}
-
-static HRESULT WINAPI AviMuxOut_Disconnect(IPin *iface)
-{
-    AviMux *This = impl_from_out_IPin(iface);
-    HRESULT hr;
-
-    TRACE("(%p)\n", This);
-
-    hr = BaseOutputPinImpl_Disconnect(iface);
-    if(hr == S_OK)
-        IBaseFilter_Release(&This->filter.IBaseFilter_iface);
     return hr;
 }
 
@@ -1254,7 +1239,7 @@ static const IPinVtbl AviMuxOut_PinVtbl = {
     BasePinImpl_Release,
     AviMuxOut_Connect,
     BaseOutputPinImpl_ReceiveConnection,
-    AviMuxOut_Disconnect,
+    BaseOutputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
