@@ -1140,15 +1140,7 @@ static const IPinVtbl QT_InputPin_Vtbl = {
     QTInPin_NewSegment
 };
 
-/*
- * Output Pin
- */
-static inline QTOutPin *impl_QTOutPin_from_IPin( IPin *iface )
-{
-    return CONTAINING_RECORD(iface, QTOutPin, pin.pin.IPin_iface);
-}
-
-static inline QTOutPin *impl_sink_from_strmbase_pin(struct strmbase_pin *iface)
+static inline QTOutPin *impl_source_from_strmbase_pin(struct strmbase_pin *iface)
 {
     return CONTAINING_RECORD(iface, QTOutPin, pin.pin);
 }
@@ -1158,30 +1150,19 @@ static inline QTOutPin *impl_QTOutPin_from_BaseOutputPin(struct strmbase_source 
     return CONTAINING_RECORD(iface, QTOutPin, pin);
 }
 
-static HRESULT WINAPI QTOutPin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
+static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    QTOutPin *This = impl_QTOutPin_from_IPin(iface);
+    QTOutPin *pin = impl_source_from_strmbase_pin(&iface->IPin_iface);
 
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+    if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &pin->seeking.IMediaSeeking_iface;
+    else if (IsEqualGUID(iid, &IID_IQualityControl))
+        *out = &pin->IQualityControl_iface;
+    else
+        return E_NOINTERFACE;
 
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &This->seeking.IMediaSeeking_iface;
-    else if (IsEqualIID(riid, &IID_IQualityControl))
-        *ppv = &This->IQualityControl_iface;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
@@ -1192,7 +1173,7 @@ static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYP
 
 static HRESULT source_get_media_type(struct strmbase_pin *iface, unsigned int iPosition, AM_MEDIA_TYPE *pmt)
 {
-    QTOutPin *This = impl_sink_from_strmbase_pin(iface);
+    QTOutPin *This = impl_source_from_strmbase_pin(iface);
 
     if (iPosition > 0)
         return VFW_S_NO_MORE_ITEMS;
@@ -1231,7 +1212,7 @@ static HRESULT WINAPI QTOutPin_DecideAllocator(struct strmbase_source *iface,
 }
 
 static const IPinVtbl QT_OutputPin_Vtbl = {
-    QTOutPin_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
