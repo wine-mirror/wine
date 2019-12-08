@@ -3439,7 +3439,7 @@ static void test_FoldStringW(void)
   };
   static const WCHAR foldczone_broken_dst[] =
   {
-    'W','i','n','e',0x0348,0x0551,0x1323,0x280d,'W','i','n','e',0x3cb,0x1f0,0xa0,0xaa,0
+    'W','i','n','e',0x0348,0x0551,0x1323,0x280d,'W','i','n','e',0x03c5,0x0308,'j',0x030c,0x00a0,0x00aa,0
   };
   static const WCHAR ligatures_src[] =
   {
@@ -3582,9 +3582,11 @@ static void test_FoldStringW(void)
   /* MAP_FOLDCZONE */
   SetLastError(0);
   ret = pFoldStringW(MAP_FOLDCZONE, foldczone_src, -1, dst, 256);
-  ok(ret == ARRAY_SIZE(foldczone_dst), "Got %d, error %d\n", ret, GetLastError());
+  ok(ret == ARRAY_SIZE(foldczone_dst)
+     || broken(ret == ARRAY_SIZE(foldczone_broken_dst)), /* winxp, win2003 */
+     "Got %d, error %d.\n", ret, GetLastError());
   ok(!memcmp(dst, foldczone_dst, sizeof(foldczone_dst))
-     || broken(!memcmp(dst, foldczone_broken_dst, sizeof(foldczone_broken_dst))),
+     || broken(!memcmp(dst, foldczone_broken_dst, sizeof(foldczone_broken_dst))), /* winxp, win2003 */
      "Got unexpected string %s.\n", wine_dbgstr_w(dst));
 
   /* MAP_EXPAND_LIGATURES */
