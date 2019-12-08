@@ -3585,7 +3585,7 @@ static void test_FoldStringW(void)
   ok(ret == ARRAY_SIZE(foldczone_dst), "Got %d, error %d\n", ret, GetLastError());
   ok(!memcmp(dst, foldczone_dst, sizeof(foldczone_dst))
      || broken(!memcmp(dst, foldczone_broken_dst, sizeof(foldczone_broken_dst))),
-     "MAP_FOLDCZONE: Expanded incorrectly\n");
+     "Got unexpected string %s.\n", wine_dbgstr_w(dst));
 
   /* MAP_EXPAND_LIGATURES */
   SetLastError(0);
@@ -3594,7 +3594,7 @@ static void test_FoldStringW(void)
   if (!(ret == 0 && GetLastError() == ERROR_INVALID_FLAGS)) {
     ok(ret == ARRAY_SIZE(ligatures_dst), "Got %d, error %d\n", ret, GetLastError());
     ok(!memcmp(dst, ligatures_dst, sizeof(ligatures_dst)),
-       "MAP_EXPAND_LIGATURES: Expanded incorrectly\n");
+       "Got unexpected string %s.\n", wine_dbgstr_w(dst));
   }
 
   /* FIXME: MAP_PRECOMPOSED : MAP_COMPOSITE */
