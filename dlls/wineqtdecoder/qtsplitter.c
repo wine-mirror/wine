@@ -285,7 +285,7 @@ static HRESULT qt_splitter_start_stream(struct strmbase_filter *iface, REFERENCE
     QTSplitter *filter = impl_from_strmbase_filter(iface);
     HRESULT hr = VFW_E_NOT_CONNECTED, pin_hr;
 
-    EnterCriticalSection(&This->csReceive);
+    EnterCriticalSection(&filter->csReceive);
 
     if (filter->pVideo_Pin)
         pin_hr = BaseOutputPinImpl_Active(&filter->pVideo_Pin->pin);
@@ -297,7 +297,7 @@ static HRESULT qt_splitter_start_stream(struct strmbase_filter *iface, REFERENCE
         hr = pin_hr;
     SetEvent(filter->runEvent);
 
-    LeaveCriticalSection(&This->csReceive);
+    LeaveCriticalSection(&filter->csReceive);
 
     return hr;
 }
@@ -306,10 +306,10 @@ static HRESULT qt_splitter_cleanup_stream(struct strmbase_filter *iface)
 {
     QTSplitter *filter = impl_from_strmbase_filter(iface);
 
-    EnterCriticalSection(&This->csReceive);
+    EnterCriticalSection(&filter->csReceive);
     IAsyncReader_BeginFlush(filter->pInputPin.pReader);
     IAsyncReader_EndFlush(filter->pInputPin.pReader);
-    LeaveCriticalSection(&This->csReceive);
+    LeaveCriticalSection(&filter->csReceive);
 
     return S_OK;
 }
