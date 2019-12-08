@@ -10219,6 +10219,7 @@ static void test_load(void)
     VARIANT src;
     HRESULT hr;
     void* ptr;
+    int n;
 
     GetTempPathA(MAX_PATH, path);
     strcat(path, "winetest.xml");
@@ -10267,6 +10268,22 @@ static void test_load(void)
     hr = IXMLDOMDocument_get_url(doc, &bstr1);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     SysFreeString(bstr1);
+
+    /* Regular local path with some URL encoded characters. */
+    strcpy(path2, path);
+    n = strlen(path2);
+    strcpy(&path2[n-1], "%6C");  /* C:\path\to\winetest.xm%6C */
+    test_doc_load_from_path(doc, path2);
+
+    /* Both spaces and %20s work. */
+    GetTempPathA(MAX_PATH, path2);
+    strcat(path2, "wine test.xml");
+    write_to_file(path2, win1252xml);
+    test_doc_load_from_path(doc, path2);
+    GetTempPathA(MAX_PATH, path2);
+    strcat(path2, "wine%20test.xml");
+    test_doc_load_from_path(doc, path2);
+    DeleteFileA(path2);
 
     DeleteFileA(path);
 

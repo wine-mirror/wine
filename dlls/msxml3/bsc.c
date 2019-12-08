@@ -253,15 +253,19 @@ HRESULT create_uri(const WCHAR *url, IUri **uri)
         WCHAR fullpath[MAX_PATH];
         DWORD needed = ARRAY_SIZE(fileUrl);
 
-        if (!PathSearchAndQualifyW(url, fullpath, ARRAY_SIZE(fullpath)))
+        lstrcpynW(fileUrl, url, ARRAY_SIZE(fileUrl));
+        UrlUnescapeW(fileUrl, NULL, NULL, URL_UNESCAPE_INPLACE);
+
+        if (!PathSearchAndQualifyW(fileUrl, fullpath, ARRAY_SIZE(fullpath)))
         {
             WARN("can't find path\n");
             return E_FAIL;
         }
 
-        if (FAILED(UrlCreateFromPathW(fullpath, fileUrl, &needed, 0)))
+        if (FAILED(UrlApplySchemeW(fullpath, fileUrl, &needed, URL_APPLY_GUESSSCHEME | URL_APPLY_GUESSFILE |
+                URL_APPLY_DEFAULT)))
         {
-            ERR("can't create url from path\n");
+            ERR("Failed to apply url scheme.\n");
             return E_FAIL;
         }
         url = fileUrl;
