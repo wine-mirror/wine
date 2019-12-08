@@ -113,14 +113,6 @@ HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnu
 HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin);
 HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
-/* Base Output Pin */
-HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI BaseOutputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface);
-HRESULT WINAPI BaseOutputPinImpl_EndOfStream(IPin * iface);
-HRESULT WINAPI BaseOutputPinImpl_BeginFlush(IPin * iface);
-HRESULT WINAPI BaseOutputPinImpl_EndFlush(IPin * iface);
-
 HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *pin,
         IMediaSample **sample, REFERENCE_TIME *start, REFERENCE_TIME *stop, DWORD flags);
 HRESULT WINAPI BaseOutputPinImpl_Active(struct strmbase_source *pin);
@@ -130,7 +122,7 @@ HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(struct strmbase_source *pin, IM
 HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
 
 void strmbase_source_cleanup(struct strmbase_source *pin);
-void strmbase_source_init(struct strmbase_source *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
+void strmbase_source_init(struct strmbase_source *pin, struct strmbase_filter *filter,
         const WCHAR *name, const struct strmbase_source_ops *func_table);
 
 /* Base Input Pin */

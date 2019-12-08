@@ -521,28 +521,6 @@ static const struct strmbase_filter_ops testfilter_ops =
     .filter_destroy = testfilter_destroy,
 };
 
-static const IPinVtbl testsource_vtbl =
-{
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BasePinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment,
-};
-
 static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     return S_OK;
@@ -579,7 +557,7 @@ static void testfilter_init(struct testfilter *filter)
 {
     static const GUID clsid = {0xabacab};
     strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
-    strmbase_source_init(&filter->source, &testsource_vtbl, &filter->filter, L"", &testsource_ops);
+    strmbase_source_init(&filter->source, &filter->filter, L"", &testsource_ops);
 }
 
 static void test_allocator(IMemInputPin *input)

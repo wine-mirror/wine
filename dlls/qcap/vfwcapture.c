@@ -563,28 +563,6 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
-static const IPinVtbl VfwPin_Vtbl =
-{
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BaseOutputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
-
 IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
 {
     static const WCHAR source_name[] = {'O','u','t','p','u','t',0};
@@ -603,8 +581,7 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
     object->IPersistPropertyBag_iface.lpVtbl = &IPersistPropertyBag_VTable;
     object->init = FALSE;
 
-    strmbase_source_init(&object->source, &VfwPin_Vtbl, &object->filter,
-            source_name, &source_ops);
+    strmbase_source_init(&object->source, &object->filter, source_name, &source_ops);
 
     object->IKsPropertySet_iface.lpVtbl = &IKsPropertySet_VTable;
 

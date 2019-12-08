@@ -171,7 +171,6 @@ typedef struct QTSplitter {
     HANDLE splitterThread;
 } QTSplitter;
 
-static const IPinVtbl QT_OutputPin_Vtbl;
 static const IPinVtbl QT_InputPin_Vtbl;
 static const IBaseFilterVtbl QT_Vtbl;
 static const IMediaSeekingVtbl QT_Seeking_Vtbl;
@@ -1211,27 +1210,6 @@ static HRESULT WINAPI QTOutPin_DecideAllocator(struct strmbase_source *iface,
     return hr;
 }
 
-static const IPinVtbl QT_OutputPin_Vtbl = {
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BaseOutputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
-
 static inline QTOutPin *impl_from_IQualityControl( IQualityControl *iface )
 {
     return CONTAINING_RECORD(iface, QTOutPin, IQualityControl_iface);
@@ -1304,8 +1282,7 @@ static HRESULT QT_AddPin(QTSplitter *filter, const WCHAR *name,
     else
         filter->pAudio_Pin = pin;
 
-    strmbase_source_init(&pin->pin, &QT_OutputPin_Vtbl, &filter->filter, name,
-            &source_ops);
+    strmbase_source_init(&pin->pin, &filter->filter, name, &source_ops);
     pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
     CopyMediaType(pin->pmt, mt);
     pin->IQualityControl_iface.lpVtbl = &QTOutPin_QualityControl_Vtbl;

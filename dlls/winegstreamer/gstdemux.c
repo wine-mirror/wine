@@ -97,7 +97,6 @@ const char* media_quark_string = "media-sample";
 
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const IMediaSeekingVtbl GST_Seeking_Vtbl;
-static const IPinVtbl GST_OutputPin_Vtbl;
 static const IPinVtbl GST_InputPin_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
@@ -1836,27 +1835,6 @@ static void free_source_pin(struct gstdemux_source *pin)
     heap_free(pin);
 }
 
-static const IPinVtbl GST_OutputPin_Vtbl = {
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BaseOutputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
-
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_interface = source_query_interface,
@@ -1879,8 +1857,7 @@ static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *
     if (!(pin = heap_alloc_zero(sizeof(*pin))))
         return NULL;
 
-    strmbase_source_init(&pin->pin, &GST_OutputPin_Vtbl, &filter->filter, name,
-            &source_ops);
+    strmbase_source_init(&pin->pin, &filter->filter, name, &source_ops);
     pin->caps_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     pin->segment = gst_segment_new();
     gst_segment_init(pin->segment, GST_FORMAT_TIME);

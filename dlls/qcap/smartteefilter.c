@@ -275,27 +275,6 @@ static const struct strmbase_sink_ops sink_ops =
     .pfnReceive = SmartTeeFilterInput_Receive,
 };
 
-static const IPinVtbl SmartTeeFilterCaptureVtbl = {
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BaseOutputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
-
 static HRESULT capture_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
 {
     FIXME("(%p) stub\n", base);
@@ -337,27 +316,6 @@ static const struct strmbase_source_ops capture_ops =
     .base.pin_get_media_type = source_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = SmartTeeFilterCapture_DecideAllocator,
-};
-
-static const IPinVtbl SmartTeeFilterPreviewVtbl = {
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BaseOutputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
 };
 
 static HRESULT preview_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
@@ -410,10 +368,8 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_source_init(&object->capture, &SmartTeeFilterCaptureVtbl,
-            &object->filter, captureW, &capture_ops);
-    strmbase_source_init(&object->preview, &SmartTeeFilterPreviewVtbl,
-            &object->filter, previewW, &preview_ops);
+    strmbase_source_init(&object->capture, &object->filter, captureW, &capture_ops);
+    strmbase_source_init(&object->preview, &object->filter, previewW, &preview_ops);
 
     *phr = S_OK;
     return &object->filter.IUnknown_inner;

@@ -1217,27 +1217,6 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideAllocator = AviMuxOut_DecideAllocator,
 };
 
-static const IPinVtbl AviMuxOut_PinVtbl = {
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BaseOutputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
-
 static inline AviMux* impl_from_out_IQualityControl(IQualityControl *iface)
 {
     return CONTAINING_RECORD(iface, AviMux, IQualityControl_iface);
@@ -1923,8 +1902,7 @@ IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
     info.dir = PINDIR_OUTPUT;
     info.pFilter = &avimux->filter.IBaseFilter_iface;
     lstrcpyW(info.achName, output_name);
-    strmbase_source_init(&avimux->source, &AviMuxOut_PinVtbl, &avimux->filter,
-            output_name, &source_ops);
+    strmbase_source_init(&avimux->source, &avimux->filter, output_name, &source_ops);
     avimux->IQualityControl_iface.lpVtbl = &AviMuxOut_QualityControlVtbl;
     avimux->cur_stream = 0;
     avimux->cur_time = 0;

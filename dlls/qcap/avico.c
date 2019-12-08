@@ -473,27 +473,6 @@ static const struct strmbase_sink_ops sink_ops =
     .pfnReceive = AVICompressorIn_Receive,
 };
 
-static const IPinVtbl AVICompressorOutputPinVtbl = {
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BaseOutputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
-
 static HRESULT source_get_media_type(struct strmbase_pin *base, unsigned int iPosition, AM_MEDIA_TYPE *amt)
 {
     AVICompressor *This = impl_from_strmbase_filter(base->filter);
@@ -564,8 +543,7 @@ IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
 
     strmbase_sink_init(&compressor->sink, &AVICompressorInputPinVtbl,
             &compressor->filter, sink_name, &sink_ops, NULL);
-    strmbase_source_init(&compressor->source, &AVICompressorOutputPinVtbl,
-            &compressor->filter, source_name, &source_ops);
+    strmbase_source_init(&compressor->source, &compressor->filter, source_name, &source_ops);
 
     *phr = S_OK;
     return &compressor->filter.IUnknown_inner;

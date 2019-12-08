@@ -284,7 +284,7 @@ static inline struct strmbase_source *impl_source_from_IPin( IPin *iface )
     return CONTAINING_RECORD(iface, struct strmbase_source, pin.IPin_iface);
 }
 
-HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI source_Connect(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
     HRESULT hr;
     struct strmbase_source *This = impl_source_from_IPin(iface);
@@ -375,13 +375,13 @@ HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const
     return hr;
 }
 
-HRESULT WINAPI BaseOutputPinImpl_ReceiveConnection(IPin *iface, IPin *pin, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI source_ReceiveConnection(IPin *iface, IPin *pin, const AM_MEDIA_TYPE *pmt)
 {
     ERR("(%p)->(%p, %p) incoming connection on an output pin!\n", iface, pin, pmt);
     return E_UNEXPECTED;
 }
 
-HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface)
+static HRESULT WINAPI source_Disconnect(IPin *iface)
 {
     HRESULT hr;
     struct strmbase_source *This = impl_source_from_IPin(iface);
@@ -418,7 +418,7 @@ HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface)
     return hr;
 }
 
-HRESULT WINAPI BaseOutputPinImpl_EndOfStream(IPin * iface)
+static HRESULT WINAPI source_EndOfStream(IPin *iface)
 {
     TRACE("(%p)->()\n", iface);
 
@@ -427,7 +427,7 @@ HRESULT WINAPI BaseOutputPinImpl_EndOfStream(IPin * iface)
     return E_UNEXPECTED;
 }
 
-HRESULT WINAPI BaseOutputPinImpl_BeginFlush(IPin * iface)
+static HRESULT WINAPI source_BeginFlush(IPin *iface)
 {
     TRACE("(%p)->()\n", iface);
 
@@ -436,7 +436,7 @@ HRESULT WINAPI BaseOutputPinImpl_BeginFlush(IPin * iface)
     return E_UNEXPECTED;
 }
 
-HRESULT WINAPI BaseOutputPinImpl_EndFlush(IPin * iface)
+static HRESULT WINAPI source_EndFlush(IPin *iface)
 {
     TRACE("(%p)->()\n", iface);
 
@@ -444,6 +444,28 @@ HRESULT WINAPI BaseOutputPinImpl_EndFlush(IPin * iface)
 
     return E_UNEXPECTED;
 }
+
+static const IPinVtbl source_vtbl =
+{
+    BasePinImpl_QueryInterface,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
+    source_Connect,
+    source_ReceiveConnection,
+    source_Disconnect,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    BasePinImpl_QueryAccept,
+    BasePinImpl_EnumMediaTypes,
+    BasePinImpl_QueryInternalConnections,
+    source_EndOfStream,
+    source_BeginFlush,
+    source_EndFlush,
+    BasePinImpl_NewSegment,
+};
 
 HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *This,
         IMediaSample **ppSample, REFERENCE_TIME *tStart, REFERENCE_TIME *tStop, DWORD dwFlags)
@@ -595,11 +617,11 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
     return hr;
 }
 
-void strmbase_source_init(struct strmbase_source *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
+void strmbase_source_init(struct strmbase_source *pin, struct strmbase_filter *filter,
         const WCHAR *name, const struct strmbase_source_ops *func_table)
 {
     memset(pin, 0, sizeof(*pin));
-    pin->pin.IPin_iface.lpVtbl = vtbl;
+    pin->pin.IPin_iface.lpVtbl = &source_vtbl;
     pin->pin.filter = filter;
     pin->pin.dir = PINDIR_OUTPUT;
     lstrcpyW(pin->pin.name, name);

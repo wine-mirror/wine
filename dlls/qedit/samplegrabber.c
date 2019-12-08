@@ -660,28 +660,6 @@ static const struct strmbase_source_ops source_ops =
     .pfnAttemptConnection = sample_grabber_source_AttemptConnection,
 };
 
-static const IPinVtbl source_vtbl =
-{
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BaseOutputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment,
-};
-
 HRESULT SampleGrabber_create(IUnknown *outer, void **out)
 {
     SG_Impl* obj = NULL;
@@ -700,7 +678,7 @@ HRESULT SampleGrabber_create(IUnknown *outer, void **out)
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
 
     strmbase_sink_init(&obj->sink, &sink_vtbl, &obj->filter, L"In", &sink_ops, NULL);
-    strmbase_source_init(&obj->source, &source_vtbl, &obj->filter, L"Out", &source_ops);
+    strmbase_source_init(&obj->source, &obj->filter, L"Out", &source_ops);
 
     obj->mtype.majortype = GUID_NULL;
     obj->mtype.subtype = MEDIASUBTYPE_None;

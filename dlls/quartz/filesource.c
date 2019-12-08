@@ -77,7 +77,6 @@ typedef struct AsyncReader
     HANDLE *handle_list;
 } AsyncReader;
 
-static const IPinVtbl FileAsyncReaderPin_Vtbl;
 static const struct strmbase_source_ops source_ops;
 
 static inline AsyncReader *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -468,8 +467,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    strmbase_source_init(&This->source, &FileAsyncReaderPin_Vtbl, &This->filter,
-            wszOutputPinName, &source_ops);
+    strmbase_source_init(&This->source, &This->filter, wszOutputPinName, &source_ops);
     BaseFilterImpl_IncrementPinVersion(&This->filter);
 
     This->file = hFile;
@@ -593,28 +591,6 @@ static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, vo
     IUnknown_AddRef((IUnknown *)*out);
     return S_OK;
 }
-
-static const IPinVtbl FileAsyncReaderPin_Vtbl = 
-{
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BasePinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
 
 /* Function called as a helper to IPin_Connect */
 /* specific AM_MEDIA_TYPE - it cannot be NULL */
