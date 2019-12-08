@@ -67,8 +67,13 @@ static HRESULT WINAPI recordset_QueryInterface( _Recordset *iface, REFIID riid, 
 {
     TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
 
-    if (IsEqualGUID( riid, &IID__Recordset ) || IsEqualGUID( riid, &IID_IDispatch ) ||
-        IsEqualGUID( riid, &IID_IUnknown ))
+    if (IsEqualIID(riid, &IID_IUnknown)    ||
+        IsEqualIID(riid, &IID_IDispatch)   ||
+        IsEqualIID(riid, &IID__ADO)        ||
+        IsEqualIID(riid, &IID_Recordset15) ||
+        IsEqualIID(riid, &IID_Recordset20) ||
+        IsEqualIID(riid, &IID_Recordset21) ||
+        IsEqualIID(riid, &IID__Recordset))
     {
         *obj = iface;
     }
