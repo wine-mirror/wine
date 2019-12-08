@@ -630,6 +630,47 @@ static void test_gettrack(void)
     IDirectMusicSegment8_Release(seg);
 }
 
+static void test_segment_param(void)
+{
+    IDirectMusicSegment8 *seg;
+    char buf[64];
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment8, (void **)&seg);
+    ok(hr == S_OK, "DirectMusicSegment create failed: %08x, expected S_OK\n", hr);
+
+    add_track(seg, LyricsTrack, 0x1);         /* no params */
+    add_track(seg, SegmentTriggerTrack, 0x1); /* all params "supported" */
+
+    hr = IDirectMusicSegment8_GetParam(seg, NULL, 0x1, 0, 0, NULL, buf);
+    ok(hr == E_POINTER, "GetParam failed: %08x, expected E_POINTER\n", hr);
+    hr = IDirectMusicSegment8_SetParam(seg, NULL, 0x1, 0, 0, buf);
+    todo_wine ok(hr == E_POINTER, "SetParam failed: %08x, expected E_POINTER\n", hr);
+
+    hr = IDirectMusicSegment8_GetParam(seg, &GUID_Valid_Start_Time, 0x1, 0, 0, NULL, buf);
+    ok(hr == DMUS_E_GET_UNSUPPORTED,
+            "GetParam failed: %08x, expected DMUS_E_GET_UNSUPPORTED\n", hr);
+    hr = IDirectMusicSegment8_GetParam(seg, &GUID_Valid_Start_Time, 0x1, 1, 0, NULL, buf);
+    ok(hr == DMUS_E_TRACK_NOT_FOUND,
+            "GetParam failed: %08x, expected DMUS_E_TRACK_NOT_FOUND\n", hr);
+    hr = IDirectMusicSegment8_GetParam(seg, &GUID_Valid_Start_Time, 0x1, DMUS_SEG_ANYTRACK, 0,
+            NULL, buf);
+    ok(hr == DMUS_E_GET_UNSUPPORTED,
+            "GetParam failed: %08x, expected DMUS_E_GET_UNSUPPORTED\n", hr);
+
+    hr = IDirectMusicSegment8_SetParam(seg, &GUID_Valid_Start_Time, 0x1, 0, 0, buf);
+    ok(hr == S_OK, "SetParam failed: %08x, expected S_OK\n", hr);
+    hr = IDirectMusicSegment8_SetParam(seg, &GUID_Valid_Start_Time, 0x1, 1, 0, buf);
+    todo_wine ok(hr == DMUS_E_TRACK_NOT_FOUND,
+            "SetParam failed: %08x, expected DMUS_E_TRACK_NOT_FOUND\n", hr);
+    hr = IDirectMusicSegment8_SetParam(seg, &GUID_Valid_Start_Time, 0x1, DMUS_SEG_ALLTRACKS,
+            0, buf);
+    ok(hr == S_OK, "SetParam failed: %08x, expected S_OK\n", hr);
+
+    IDirectMusicSegment8_Release(seg);
+}
+
 static void expect_getparam(IDirectMusicTrack *track, REFGUID type, const char *name,
         HRESULT expect)
 {
@@ -1117,6 +1158,7 @@ START_TEST(dmime)
     test_graph();
     test_segment();
     test_gettrack();
+    test_segment_param();
     test_track();
     test_parsedescriptor();
 
