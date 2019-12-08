@@ -1132,19 +1132,35 @@ static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYP
     return S_OK;
 }
 
-static HRESULT WINAPI AviMuxOut_AttemptConnection(struct strmbase_source *base,
+static HRESULT WINAPI AviMuxOut_AttemptConnection(struct strmbase_source *iface,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
+    AviMux *filter = impl_from_source_pin(&iface->pin);
     PIN_DIRECTION dir;
+    unsigned int i;
     HRESULT hr;
-
-    TRACE("(%p)->(%p AM_MEDIA_TYPE(%p))\n", base, pReceivePin, pmt);
 
     hr = IPin_QueryDirection(pReceivePin, &dir);
     if(hr==S_OK && dir!=PINDIR_INPUT)
         return VFW_E_INVALID_DIRECTION;
 
-    return BaseOutputPinImpl_AttemptConnection(base, pReceivePin, pmt);
+    if (FAILED(hr = BaseOutputPinImpl_AttemptConnection(iface, pReceivePin, pmt)))
+        return hr;
+
+    for (i = 0; i < filter->input_pin_no; ++i)
+    {
+        if (!filter->in[i]->pin.pin.peer)
+            continue;
+
+        hr = IFilterGraph_Reconnect(filter->filter.filterInfo.pGraph, &filter->in[i]->pin.pin.IPin_iface);
+        if (FAILED(hr))
+        {
+            IPin_Disconnect(&iface->pin.IPin_iface);
+            break;
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT source_get_media_type(struct strmbase_pin *base, unsigned int iPosition, AM_MEDIA_TYPE *amt)
@@ -1201,43 +1217,11 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideAllocator = AviMuxOut_DecideAllocator,
 };
 
-static inline AviMux *impl_from_out_IPin(IPin *iface)
-{
-    return CONTAINING_RECORD(iface, AviMux, source.pin.IPin_iface);
-}
-
-static HRESULT WINAPI AviMuxOut_Connect(IPin *iface,
-        IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
-{
-    AviMux *This = impl_from_out_IPin(iface);
-    HRESULT hr;
-    int i;
-
-    TRACE("(%p)->(%p AM_MEDIA_TYPE(%p))\n", This, pReceivePin, pmt);
-
-    hr = BaseOutputPinImpl_Connect(iface, pReceivePin, pmt);
-    if(FAILED(hr))
-        return hr;
-
-    for(i=0; i<This->input_pin_no; i++) {
-        if(!This->in[i]->pin.pin.peer)
-            continue;
-
-        hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph, &This->in[i]->pin.pin.IPin_iface);
-        if(FAILED(hr)) {
-            BaseOutputPinImpl_Disconnect(iface);
-            break;
-        }
-    }
-
-    return hr;
-}
-
 static const IPinVtbl AviMuxOut_PinVtbl = {
     BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
-    AviMuxOut_Connect,
+    BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BaseOutputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
