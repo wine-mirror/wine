@@ -11180,7 +11180,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeIdldesc(ICreateTypeInfo2 *iface,
 static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    ITypeInfo *tinfo;
+    ITypeInfo2 *tinfo = &This->ITypeInfo2_iface;
     TLBFuncDesc *func_desc;
     UINT user_vft = 0, i, depth = 0;
     HRESULT hres = S_OK;
@@ -11189,25 +11189,20 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
 
     This->needs_layout = FALSE;
 
-    hres = ICreateTypeInfo2_QueryInterface(iface, &IID_ITypeInfo, (LPVOID*)&tinfo);
-    if (FAILED(hres))
-        return hres;
-
     if (This->typeattr.typekind == TKIND_INTERFACE) {
         ITypeInfo *inh;
         TYPEATTR *attr;
         HREFTYPE inh_href;
 
-        hres = ITypeInfo_GetRefTypeOfImplType(tinfo, 0, &inh_href);
+        hres = ITypeInfo2_GetRefTypeOfImplType(tinfo, 0, &inh_href);
 
         if (SUCCEEDED(hres)) {
-            hres = ITypeInfo_GetRefTypeInfo(tinfo, inh_href, &inh);
+            hres = ITypeInfo2_GetRefTypeInfo(tinfo, inh_href, &inh);
 
             if (SUCCEEDED(hres)) {
                 hres = ITypeInfo_GetTypeAttr(inh, &attr);
                 if (FAILED(hres)) {
                     ITypeInfo_Release(inh);
-                    ITypeInfo_Release(tinfo);
                     return hres;
                 }
                 This->typeattr.cbSizeVft = attr->cbSizeVft;
@@ -11231,17 +11226,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
             } else if (hres == TYPE_E_ELEMENTNOTFOUND) {
                 This->typeattr.cbSizeVft = 0;
                 hres = S_OK;
-            } else {
-                ITypeInfo_Release(tinfo);
+            } else
                 return hres;
-            }
         } else if (hres == TYPE_E_ELEMENTNOTFOUND) {
             This->typeattr.cbSizeVft = 0;
             hres = S_OK;
-        } else {
-            ITypeInfo_Release(tinfo);
+        } else
             return hres;
-        }
     } else if (This->typeattr.typekind == TKIND_DISPATCH)
         This->typeattr.cbSizeVft = 7 * This->pTypeLib->ptr_size;
     else
@@ -11316,7 +11307,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
         }
     }
 
-    ITypeInfo_Release(tinfo);
     return hres;
 }
 
