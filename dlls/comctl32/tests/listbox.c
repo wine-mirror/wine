@@ -1819,7 +1819,7 @@ static void test_listbox_dlgdir(void)
     ok (res == 0, "DlgDirSelectEx() with no selection returned %d, expected 0\n", res);
     /* WinXP-SP2 leaves pathBuffer untouched, but Win98 fills it with garbage. */
     /*
-    ok (strlen(pathBuffer) == 0, "DlgDirSelectEx() with no selection filled buffer with %s\n", pathBuffer);
+    ok (!*pathBuffer, "DlgDirSelectEx() with no selection filled buffer with %s\n", pathBuffer);
     */
     /* Test proper drive/dir/file recognition */
     itemCount = SendMessageA(g_listBox, LB_GETCOUNT, 0, 0);
