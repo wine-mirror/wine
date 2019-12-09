@@ -640,25 +640,6 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 	
 	IDirectMusicLoader_Release (pLoader); /* release loader */
 
-#if 0
-	/* DEBUG: dumps whole container object tree: */
-	if (TRACE_ON(dmloader)) {
-		int r = 0;
-		LPWINE_CONTAINER_ENTRY tmpEntry;
-		struct list *listEntry;
-
-		TRACE("*** IDirectMusicContainer (%p) ***\n", This->ContainerVtbl);
-		TRACE(" - Objects:\n");
-		LIST_FOR_EACH (listEntry, This->pContainedObjects) {
-			tmpEntry = LIST_ENTRY( listEntry, WINE_CONTAINER_ENTRY, entry );
-			TRACE("    - Object[%i]:\n", r);
-			TRACE("       - wszAlias: %s\n", debugstr_w(tmpEntry->wszAlias));
-			TRACE("       - Object descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC(&tmpEntry->Desc));
-			r++;
-		}
-	}
-#endif
-
 	return result;
 }
 
