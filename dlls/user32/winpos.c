@@ -1397,7 +1397,7 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
     if (flags & PLACE_MAX) make_point_onscreen( &wp.ptMaxPosition );
     if (flags & PLACE_RECT) make_rect_onscreen( &wp.rcNormalPosition );
 
-    TRACE( "%p: setting min %d,%d max %d,%d normal %s flags %x ajusted to min %d,%d max %d,%d normal %s\n",
+    TRACE( "%p: setting min %d,%d max %d,%d normal %s flags %x adjusted to min %d,%d max %d,%d normal %s\n",
            hwnd, wndpl->ptMinPosition.x, wndpl->ptMinPosition.y,
            wndpl->ptMaxPosition.x, wndpl->ptMaxPosition.y,
            wine_dbgstr_rect(&wndpl->rcNormalPosition), flags,
