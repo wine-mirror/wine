@@ -6280,9 +6280,16 @@ static UINT32 WINAPI fontfacereference1_GetFontAxisValueCount(IDWriteFontFaceRef
 static HRESULT WINAPI fontfacereference1_GetFontAxisValues(IDWriteFontFaceReference1 *iface,
         DWRITE_FONT_AXIS_VALUE *axis_values, UINT32 value_count)
 {
-    FIXME("%p, %p, %u.\n", iface, axis_values, value_count);
+    struct dwrite_fontfacereference *reference = impl_from_IDWriteFontFaceReference1(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %u.\n", iface, axis_values, value_count);
+
+    if (value_count < reference->axis_values_count)
+        return E_NOT_SUFFICIENT_BUFFER;
+
+    memcpy(axis_values, reference->axis_values, value_count * sizeof(*axis_values));
+
+    return S_OK;
 }
 
 static const IDWriteFontFaceReference1Vtbl fontfacereferencevtbl =

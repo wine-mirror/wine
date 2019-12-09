@@ -9408,6 +9408,16 @@ static void test_font_resource(void)
     ok(!ret, "Unexpected result.\n");
     IDWriteFontFaceReference1_Release(reference2);
 
+    memset(axis_values, 0, sizeof(axis_values));
+    hr = IDWriteFontFaceReference1_GetFontAxisValues(reference, axis_values, 1);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+    ok(!axis_values[0].axisTag, "Unexpected axis tag.\n");
+
+    memset(axis_values, 0, sizeof(axis_values));
+    hr = IDWriteFontFaceReference1_GetFontAxisValues(reference, axis_values, 2);
+    ok(hr == S_OK, "Failed to get axis values, hr %#x.\n", hr);
+    ok(axis_values[0].axisTag == DWRITE_FONT_AXIS_TAG_WEIGHT, "Unexpected axis tag.\n");
+
     IDWriteFontFaceReference1_Release(reference);
 
     IDWriteFontFile_Release(fontfile);
