@@ -591,7 +591,7 @@ static void test_inputdesktop(void)
 
     /* by default, GetThreadDesktop is the input desktop, SendInput should succeed. */
     old_thread_desk = GetThreadDesktop(GetCurrentThreadId());
-    ok(old_thread_desk != NULL, "GetThreadDesktop faile!\n");
+    ok(old_thread_desk != NULL, "GetThreadDesktop failed!\n");
     memset(name, 0, sizeof(name));
     ret = GetUserObjectInformationA(old_thread_desk, UOI_NAME, name, 1024, NULL);
     ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
