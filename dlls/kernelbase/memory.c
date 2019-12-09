@@ -967,7 +967,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
     status->ullTotalPhys     = perf_info.TotalCommitLimit;
     status->ullAvailPhys     = perf_info.AvailablePages;
     status->ullTotalPageFile = perf_info.TotalCommitLimit + 1; /* Titan Quest refuses to run if TotalPageFile <= TotalPhys */
-    status->ullAvailPageFile = status->ullTotalPageFile - perf_info.TotalCommittedPages - perf_info.AvailablePages;
+    status->ullAvailPageFile = status->ullTotalPageFile - perf_info.TotalCommittedPages;
     status->ullTotalVirtual  = (ULONG_PTR)basic_info.HighestUserAddress - (ULONG_PTR)basic_info.LowestUserAddress;
     status->ullAvailVirtual  = status->ullTotalVirtual - 64 * 1024;  /* FIXME */
     status->ullAvailExtendedVirtual = 0;
