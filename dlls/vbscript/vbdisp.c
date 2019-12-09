@@ -1002,13 +1002,6 @@ static ULONG WINAPI ScriptDisp_Release(IDispatchEx *iface)
     if(!ref) {
         assert(!This->ctx);
 
-        while (This->procs)
-        {
-            class_desc_t *class_desc = This->procs;
-            This->procs = class_desc->next;
-            heap_free(class_desc);
-        }
-
         for (i = 0; i < This->global_vars_cnt; i++)
             release_dynamic_var(This->global_vars[i]);
 
