@@ -34,6 +34,7 @@ struct stream
 {
     _Stream         Stream_iface;
     LONG            refs;
+    ObjectStateEnum state;
     StreamTypeEnum  type;
 };
 
@@ -198,14 +199,25 @@ static HRESULT WINAPI stream_Read( _Stream *iface, LONG size, VARIANT *val )
 static HRESULT WINAPI stream_Open( _Stream *iface, VARIANT src, ConnectModeEnum mode, StreamOpenOptionsEnum options,
                                     BSTR username, BSTR password )
 {
-    FIXME( "%p, %s, %u, %d, %s, %p\n", iface, debugstr_variant(&src), mode, options, debugstr_w(username), password );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    FIXME( "%p, %s, %u, %d, %s, %p\n", stream, debugstr_variant(&src), mode, options, debugstr_w(username), password );
+
+    if (stream->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
+
+    stream->state = adStateOpen;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_Close( _Stream *iface )
 {
-    FIXME( "%p\n", iface );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+
+    TRACE( "%p\n", stream );
+
+    if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    stream->state = adStateClosed;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_SkipLine( _Stream *iface )

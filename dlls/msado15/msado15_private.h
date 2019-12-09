@@ -19,6 +19,8 @@
 #ifndef _WINE_MSADO15_PRIVATE_H_
 #define _WINE_MSADO15_PRIVATE_H_
 
+#define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
+
 HRESULT Connection_create( void ** ) DECLSPEC_HIDDEN;
 HRESULT Recordset_create( void ** ) DECLSPEC_HIDDEN;
 HRESULT Stream_create( void ** ) DECLSPEC_HIDDEN;

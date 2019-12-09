@@ -23,11 +23,14 @@
 #include <msado15_backcompat.h>
 #include "wine/test.h"
 
+#define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
+
 static void test_Stream(void)
 {
     _Stream *stream;
     StreamTypeEnum type;
     LONG refs;
+    VARIANT missing;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_Stream, NULL, CLSCTX_INPROC_SERVER, &IID__Stream, (void **)&stream );
@@ -50,6 +53,20 @@ static void test_Stream(void)
     /* revert */
     hr = _Stream_put_Type( stream, adTypeText );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    V_VT( &missing ) = VT_ERROR;
+    V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
+    hr = _Stream_Open( stream, missing, adModeUnknown, adOpenStreamUnspecified, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Stream_Open( stream, missing, adModeUnknown, adOpenStreamUnspecified, NULL, NULL );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectOpen ), "got %08x\n", hr );
+
+    hr = _Stream_Close( stream );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Stream_Close( stream );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
 
     refs = _Stream_Release( stream );
     ok( !refs, "got %d\n", refs );
