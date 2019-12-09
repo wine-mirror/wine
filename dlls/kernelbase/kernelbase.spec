@@ -914,9 +914,9 @@
 @ stdcall K32QueryWorkingSetEx(long ptr long) kernel32.K32QueryWorkingSetEx
 @ stub KernelBaseGetGlobalData
 @ stdcall LCIDToLocaleName(long ptr long long)
-@ stdcall LCMapStringA(long long str long ptr long) kernel32.LCMapStringA
-@ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long) kernel32.LCMapStringEx
-@ stdcall LCMapStringW(long long wstr long ptr long) kernel32.LCMapStringW
+@ stdcall LCMapStringA(long long str long ptr long)
+@ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long)
+@ stdcall LCMapStringW(long long wstr long ptr long)
 # @ stub LeaveCriticalPolicySectionInternal
 @ stdcall LeaveCriticalSection(ptr) ntdll.RtlLeaveCriticalSection
 @ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) ntdll.TpCallbackLeaveCriticalSectionOnCompletion

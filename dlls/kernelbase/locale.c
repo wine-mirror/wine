@@ -46,6 +46,7 @@ extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned in
 extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
 
 extern const unsigned short wctype_table[] DECLSPEC_HIDDEN;
+extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
 
 static HANDLE kernel32_handle;
 
@@ -334,6 +335,12 @@ void init_locale(void)
 static inline USHORT get_table_entry( const USHORT *table, WCHAR ch )
 {
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
+}
+
+
+static inline WCHAR casemap( const USHORT *table, WCHAR ch )
+{
+    return ch + table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
 }
 
 
@@ -1467,6 +1474,334 @@ static int wcstombs_codepage( UINT codepage, DWORD flags, const WCHAR *src, int 
         return wcstombs_dbcs( info, src, srclen, dst, dstlen );
     else
         return wcstombs_sbcs( info, src, srclen, dst, dstlen );
+}
+
+
+static int get_sortkey( DWORD flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+{
+    WCHAR dummy[4]; /* no decomposition is larger than 4 chars */
+    int key_len[4];
+    char *key_ptr[4];
+    const WCHAR *src_save = src;
+    int srclen_save = srclen;
+
+    key_len[0] = key_len[1] = key_len[2] = key_len[3] = 0;
+    for (; srclen; srclen--, src++)
+    {
+        unsigned int i, decomposed_len = 1;/*wine_decompose(*src, dummy, 4);*/
+        dummy[0] = *src;
+        if (decomposed_len)
+        {
+            for (i = 0; i < decomposed_len; i++)
+            {
+                WCHAR wch = dummy[i];
+                unsigned int ce;
+
+                if ((flags & NORM_IGNORESYMBOLS) &&
+                    (get_table_entry( wctype_table, wch ) & (C1_PUNCT | C1_SPACE)))
+                    continue;
+
+                if (flags & NORM_IGNORECASE) wch = casemap( nls_info.LowerCaseTable, wch );
+
+                ce = collation_table[collation_table[wch >> 8] + (wch & 0xff)];
+                if (ce != (unsigned int)-1)
+                {
+                    if (ce >> 16) key_len[0] += 2;
+                    if ((ce >> 8) & 0xff) key_len[1]++;
+                    if ((ce >> 4) & 0x0f) key_len[2]++;
+                    if (ce & 1)
+                    {
+                        if (wch >> 8) key_len[3]++;
+                        key_len[3]++;
+                    }
+                }
+                else
+                {
+                    key_len[0] += 2;
+                    if (wch >> 8) key_len[0]++;
+                    if (wch & 0xff) key_len[0]++;
+		}
+            }
+        }
+    }
+
+    if (!dstlen) /* compute length */
+        /* 4 * '\1' + key length */
+        return key_len[0] + key_len[1] + key_len[2] + key_len[3] + 4;
+
+    if (dstlen < key_len[0] + key_len[1] + key_len[2] + key_len[3] + 4 + 1)
+        return 0; /* overflow */
+
+    src = src_save;
+    srclen = srclen_save;
+
+    key_ptr[0] = dst;
+    key_ptr[1] = key_ptr[0] + key_len[0] + 1;
+    key_ptr[2] = key_ptr[1] + key_len[1] + 1;
+    key_ptr[3] = key_ptr[2] + key_len[2] + 1;
+
+    for (; srclen; srclen--, src++)
+    {
+        unsigned int i, decomposed_len = 1;/*wine_decompose(*src, dummy, 4);*/
+        dummy[0] = *src;
+        if (decomposed_len)
+        {
+            for (i = 0; i < decomposed_len; i++)
+            {
+                WCHAR wch = dummy[i];
+                unsigned int ce;
+
+                if ((flags & NORM_IGNORESYMBOLS) &&
+                    (get_table_entry( wctype_table, wch ) & (C1_PUNCT | C1_SPACE)))
+                    continue;
+
+                if (flags & NORM_IGNORECASE) wch = casemap( nls_info.LowerCaseTable, wch );
+
+                ce = collation_table[collation_table[wch >> 8] + (wch & 0xff)];
+                if (ce != (unsigned int)-1)
+                {
+                    WCHAR key;
+                    if ((key = ce >> 16))
+                    {
+                        *key_ptr[0]++ = key >> 8;
+                        *key_ptr[0]++ = key & 0xff;
+                    }
+                    /* make key 1 start from 2 */
+                    if ((key = (ce >> 8) & 0xff)) *key_ptr[1]++ = key + 1;
+                    /* make key 2 start from 2 */
+                    if ((key = (ce >> 4) & 0x0f)) *key_ptr[2]++ = key + 1;
+                    /* key 3 is always a character code */
+                    if (ce & 1)
+                    {
+                        if (wch >> 8) *key_ptr[3]++ = wch >> 8;
+                        if (wch & 0xff) *key_ptr[3]++ = wch & 0xff;
+                    }
+                }
+                else
+                {
+                    *key_ptr[0]++ = 0xff;
+                    *key_ptr[0]++ = 0xfe;
+                    if (wch >> 8) *key_ptr[0]++ = wch >> 8;
+                    if (wch & 0xff) *key_ptr[0]++ = wch & 0xff;
+                }
+            }
+        }
+    }
+
+    *key_ptr[0] = 1;
+    *key_ptr[1] = 1;
+    *key_ptr[2] = 1;
+    *key_ptr[3]++ = 1;
+    *key_ptr[3] = 0;
+    return key_ptr[3] - dst;
+}
+
+
+/* compose a full-width katakana. return consumed source characters. */
+static int compose_katakana( const WCHAR *src, int srclen, WCHAR *dst )
+{
+    static const BYTE katakana_map[] =
+    {
+        /* */ 0x02, 0x0c, 0x0d, 0x01, 0xfb, 0xf2, 0xa1, /* U+FF61- */
+        0xa3, 0xa5, 0xa7, 0xa9, 0xe3, 0xe5, 0xe7, 0xc3, /* U+FF68- */
+        0xfc, 0xa2, 0xa4, 0xa6, 0xa8, 0xaa, 0xab, 0xad, /* U+FF70- */
+        0xaf, 0xb1, 0xb3, 0xb5, 0xb7, 0xb9, 0xbb, 0xbd, /* U+FF78- */
+        0xbf, 0xc1, 0xc4, 0xc6, 0xc8, 0xca, 0xcb, 0xcc, /* U+FF80- */
+        0xcd, 0xce, 0xcf, 0xd2, 0xd5, 0xd8, 0xdb, 0xde, /* U+FF88- */
+        0xdf, 0xe0, 0xe1, 0xe2, 0xe4, 0xe6, 0xe8, 0xe9, /* U+FF90- */
+        0xea, 0xeb, 0xec, 0xed, 0xef, 0xf3, 0x99, 0x9a, /* U+FF98- */
+    };
+    WCHAR dummy;
+    int shift;
+
+    if (!dst) dst = &dummy;
+
+    switch (*src)
+    {
+    case 0x309b:
+    case 0x309c:
+        *dst = *src - 2;
+        return 1;
+    case 0x30f0:
+    case 0x30f1:
+    case 0x30fd:
+        *dst = *src;
+        break;
+    default:
+        shift = *src - 0xff61;
+        if (shift < 0 || shift >= ARRAY_SIZE( katakana_map )) return 0;
+        *dst = katakana_map[shift] | 0x3000;
+        break;
+    }
+
+    if (srclen <= 1) return 1;
+
+    switch (src[1])
+    {
+    case 0xff9e:  /* datakuten (voiced sound) */
+        if ((*src >= 0xff76 && *src <= 0xff84) || (*src >= 0xff8a && *src <= 0xff8e) || *src == 0x30fd)
+            *dst += 1;
+        else if (*src == 0xff73)
+            *dst = 0x30f4; /* KATAKANA LETTER VU */
+        else if (*src == 0xff9c)
+            *dst = 0x30f7; /* KATAKANA LETTER VA */
+        else if (*src == 0x30f0)
+            *dst = 0x30f8; /* KATAKANA LETTER VI */
+        else if (*src == 0x30f1)
+            *dst = 0x30f9; /* KATAKANA LETTER VE */
+        else if (*src == 0xff66)
+            *dst = 0x30fa; /* KATAKANA LETTER VO */
+        else
+            return 1;
+        break;
+    case 0xff9f:  /* handakuten (semi-voiced sound) */
+        if (*src >= 0xff8a && *src <= 0xff8e)
+            *dst += 2;
+        else
+            return 1;
+        break;
+    default:
+        return 1;
+    }
+    return 2;
+}
+
+/* map one or two half-width characters to one full-width character */
+static int map_to_fullwidth( const WCHAR *src, int srclen, WCHAR *dst )
+{
+    INT n;
+
+    if (*src <= '~' && *src > ' ' && *src != '\\')
+        *dst = *src - 0x20 + 0xff00;
+    else if (*src == ' ')
+        *dst = 0x3000;
+    else if (*src <= 0x00af && *src >= 0x00a2)
+    {
+        static const BYTE misc_symbols_table[] =
+        {
+            0xe0, 0xe1, 0x00, 0xe5, 0xe4, 0x00, 0x00, /* U+00A2- */
+            0x00, 0x00, 0x00, 0xe2, 0x00, 0x00, 0xe3  /* U+00A9- */
+        };
+        if (misc_symbols_table[*src - 0x00a2])
+            *dst = misc_symbols_table[*src - 0x00a2] | 0xff00;
+        else
+            *dst = *src;
+    }
+    else if (*src == 0x20a9) /* WON SIGN */
+        *dst = 0xffe6;
+    else if ((n = compose_katakana(src, srclen, dst)) > 0)
+        return n;
+    else if (*src >= 0xffa0 && *src <= 0xffdc)
+    {
+        static const BYTE hangul_mapping_table[] =
+        {
+            0x64, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,  /* U+FFA0- */
+            0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,  /* U+FFA8- */
+            0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,  /* U+FFB0- */
+            0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x00,  /* U+FFB8- */
+            0x00, 0x00, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54,  /* U+FFC0- */
+            0x00, 0x00, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a,  /* U+FFC8- */
+            0x00, 0x00, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x60,  /* U+FFD0- */
+            0x00, 0x00, 0x61, 0x62, 0x63                     /* U+FFD8- */
+        };
+
+        if (hangul_mapping_table[*src - 0xffa0])
+            *dst = hangul_mapping_table[*src - 0xffa0] | 0x3100;
+        else
+            *dst = *src;
+    }
+    else
+        *dst = *src;
+
+    return 1;
+}
+
+/* decompose a full-width katakana character into one or two half-width characters. */
+static int decompose_katakana( WCHAR c, WCHAR *dst, int dstlen )
+{
+    static const BYTE katakana_map[] =
+    {
+        /* */ 0x9e, 0x9f, 0x9e, 0x9f, 0x00, 0x00, 0x00, /* U+3099- */
+        0x00, 0x67, 0x71, 0x68, 0x72, 0x69, 0x73, 0x6a, /* U+30a1- */
+        0x74, 0x6b, 0x75, 0x76, 0x01, 0x77, 0x01, 0x78, /* U+30a8- */
+        0x01, 0x79, 0x01, 0x7a, 0x01, 0x7b, 0x01, 0x7c, /* U+30b0- */
+        0x01, 0x7d, 0x01, 0x7e, 0x01, 0x7f, 0x01, 0x80, /* U+30b8- */
+        0x01, 0x81, 0x01, 0x6f, 0x82, 0x01, 0x83, 0x01, /* U+30c0- */
+        0x84, 0x01, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, /* U+30c8- */
+        0x01, 0x02, 0x8b, 0x01, 0x02, 0x8c, 0x01, 0x02, /* U+30d0- */
+        0x8d, 0x01, 0x02, 0x8e, 0x01, 0x02, 0x8f, 0x90, /* U+30d8- */
+        0x91, 0x92, 0x93, 0x6c, 0x94, 0x6d, 0x95, 0x6e, /* U+30e0- */
+        0x96, 0x97, 0x98, 0x99, 0x9a, 0x9b, 0x00, 0x9c, /* U+30e8- */
+        0x00, 0x00, 0x66, 0x9d, 0x4e, 0x00, 0x00, 0x08, /* U+30f0- */
+        0x58, 0x58, 0x08, 0x65, 0x70, 0x00, 0x51        /* U+30f8- */
+    };
+    int len = 0, shift = c - 0x3099;
+    BYTE k;
+
+    if (shift < 0 || shift >= ARRAY_SIZE( katakana_map )) return 0;
+
+    k = katakana_map[shift];
+    if (!k)
+    {
+        if (dstlen > 0) *dst = c;
+        len++;
+    }
+    else if (k > 0x60)
+    {
+        if (dstlen > 0) *dst = k | 0xff00;
+        len++;
+    }
+    else
+    {
+        if (dstlen >= 2)
+        {
+            dst[0] = (k > 0x50) ? (c - (k & 0xf)) : (katakana_map[shift - k] | 0xff00);
+            dst[1] = (k == 2) ? 0xff9f : 0xff9e;
+        }
+        len += 2;
+    }
+    return len;
+}
+
+/* map single full-width character to single or double half-width characters. */
+static int map_to_halfwidth( WCHAR c, WCHAR *dst, int dstlen )
+{
+    int n = decompose_katakana( c, dst, dstlen );
+    if (n > 0) return n;
+
+    if (c == 0x3000)
+        *dst = ' ';
+    else if (c == 0x3001)
+        *dst = 0xff64;
+    else if (c == 0x3002)
+        *dst = 0xff61;
+    else if (c == 0x300c || c == 0x300d)
+        *dst = (c - 0x300c) + 0xff62;
+    else if (c >= 0x3131 && c <= 0x3163)
+    {
+        *dst = c - 0x3131 + 0xffa1;
+        if (*dst >= 0xffbf) *dst += 3;
+        if (*dst >= 0xffc8) *dst += 2;
+        if (*dst >= 0xffd0) *dst += 2;
+        if (*dst >= 0xffd8) *dst += 2;
+    }
+    else if (c == 0x3164)
+        *dst = 0xffa0;
+    else if (c == 0x2019)
+        *dst = '\'';
+    else if (c == 0x201d)
+        *dst = '"';
+    else if (c > 0xff00 && c < 0xff5f && c != 0xff3c)
+        *dst = c - 0xff00 + 0x20;
+    else if (c >= 0xffe0 && c <= 0xffe6)
+    {
+        static const WCHAR misc_symbol_map[] = { 0x00a2, 0x00a3, 0x00ac, 0x00af, 0x00a6, 0x00a5, 0x20a9 };
+        *dst = misc_symbol_map[c - 0xffe0];
+    }
+    else
+        *dst = c;
+
+    return 1;
 }
 
 
@@ -3144,6 +3479,288 @@ INT WINAPI DECLSPEC_HOTPATCH LCIDToLocaleName( LCID lcid, WCHAR *name, INT count
     if (flags && !once++) FIXME( "unsupported flags %x\n", flags );
 
     return GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, name, count );
+}
+
+
+/***********************************************************************
+ *	LCMapStringEx   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, const WCHAR *src, int srclen,
+                                            WCHAR *dst, int dstlen, NLSVERSIONINFO *version,
+                                            void *reserved, LPARAM handle )
+{
+    LPWSTR dst_ptr;
+    INT len;
+
+    if (version) FIXME( "unsupported version structure %p\n", version );
+    if (reserved) FIXME( "unsupported reserved pointer %p\n", reserved );
+    if (handle)
+    {
+        static int once;
+        if (!once++) FIXME( "unsupported lparam %lx\n", handle );
+    }
+
+    if (!src || !srclen || dstlen < 0)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    /* mutually exclusive flags */
+    if ((flags & (LCMAP_LOWERCASE | LCMAP_UPPERCASE)) == (LCMAP_LOWERCASE | LCMAP_UPPERCASE) ||
+        (flags & (LCMAP_HIRAGANA | LCMAP_KATAKANA)) == (LCMAP_HIRAGANA | LCMAP_KATAKANA) ||
+        (flags & (LCMAP_HALFWIDTH | LCMAP_FULLWIDTH)) == (LCMAP_HALFWIDTH | LCMAP_FULLWIDTH) ||
+        (flags & (LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE)) == (LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE) ||
+        !flags)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (!dstlen) dst = NULL;
+
+    if (flags & LCMAP_SORTKEY)
+    {
+        INT ret;
+
+        if (src == dst)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        if (srclen < 0) srclen = lstrlenW(src);
+
+        TRACE( "(%s,0x%08x,%s,%d,%p,%d)\n",
+               debugstr_w(locale), flags, debugstr_wn(src, srclen), srclen, dst, dstlen );
+
+        if ((ret = get_sortkey( flags, src, srclen, (char *)dst, dstlen ))) ret++;
+        else SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return ret;
+    }
+
+    /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
+    if (flags & SORT_STRINGSORT)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    if (((flags & (NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS)) &&
+         (flags & ~(NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS))) ||
+        ((flags & (LCMAP_HIRAGANA | LCMAP_KATAKANA | LCMAP_HALFWIDTH | LCMAP_FULLWIDTH)) &&
+         (flags & (LCMAP_SIMPLIFIED_CHINESE | LCMAP_TRADITIONAL_CHINESE))))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (srclen < 0) srclen = lstrlenW(src) + 1;
+
+    TRACE( "(%s,0x%08x,%s,%d,%p,%d)\n",
+           debugstr_w(locale), flags, debugstr_wn(src, srclen), srclen, dst, dstlen );
+
+    if (!dst) /* return required string length */
+    {
+        if (flags & NORM_IGNORESYMBOLS)
+        {
+            for (len = 0; srclen; src++, srclen--)
+                if (!(get_table_entry( wctype_table, *src ) & (C1_PUNCT | C1_SPACE))) len++;
+        }
+        else if (flags & LCMAP_FULLWIDTH)
+        {
+            for (len = 0; srclen; src++, srclen--, len++)
+            {
+                if (compose_katakana( src, srclen, NULL ) == 2)
+                {
+                    src++;
+                    srclen--;
+                }
+            }
+        }
+        else if (flags & LCMAP_HALFWIDTH)
+        {
+            for (len = 0; srclen; src++, srclen--, len++)
+            {
+                WCHAR wch = *src;
+                /* map Hiragana to Katakana before decomposition if needed */
+                if ((flags & LCMAP_KATAKANA) &&
+                    ((wch >= 0x3041 && wch <= 0x3096) || wch == 0x309D || wch == 0x309E))
+                    wch += 0x60;
+
+                if (decompose_katakana( wch, NULL, 0 ) == 2) len++;
+            }
+        }
+        else len = srclen;
+        return len;
+    }
+
+    if (src == dst && (flags & ~(LCMAP_LOWERCASE | LCMAP_UPPERCASE)))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (flags & (NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS))
+    {
+        for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--)
+        {
+            if ((flags & NORM_IGNORESYMBOLS) && (get_table_entry( wctype_table, *src ) & (C1_PUNCT | C1_SPACE)))
+                continue;
+            *dst_ptr++ = *src;
+            len--;
+        }
+        goto done;
+    }
+
+    if (flags & (LCMAP_FULLWIDTH | LCMAP_HALFWIDTH | LCMAP_HIRAGANA | LCMAP_KATAKANA))
+    {
+        for (len = dstlen, dst_ptr = dst; len && srclen; src++, srclen--, len--, dst_ptr++)
+        {
+            WCHAR wch;
+            if (flags & LCMAP_FULLWIDTH)
+            {
+                /* map half-width character to full-width one,
+                   e.g. U+FF71 -> U+30A2, U+FF8C U+FF9F -> U+30D7. */
+                if (map_to_fullwidth( src, srclen, &wch ) == 2)
+                {
+                    src++;
+                    srclen--;
+                }
+            }
+            else wch = *src;
+
+            if (flags & LCMAP_KATAKANA)
+            {
+                /* map hiragana to katakana, e.g. U+3041 -> U+30A1.
+                   we can't use C3_HIRAGANA as some characters can't map to katakana */
+                if ((wch >= 0x3041 && wch <= 0x3096) || wch == 0x309D || wch == 0x309E) wch += 0x60;
+            }
+            else if (flags & LCMAP_HIRAGANA)
+            {
+                /* map katakana to hiragana, e.g. U+30A1 -> U+3041.
+                   we can't use C3_KATAKANA as some characters can't map to hiragana */
+                if ((wch >= 0x30A1 && wch <= 0x30F6) || wch == 0x30FD || wch == 0x30FE) wch -= 0x60;
+            }
+
+            if (flags & LCMAP_HALFWIDTH)
+            {
+                /* map full-width character to half-width one,
+                   e.g. U+30A2 -> U+FF71, U+30D7 -> U+FF8C U+FF9F. */
+                if (map_to_halfwidth(wch, dst_ptr, len) == 2)
+                {
+                    len--;
+                    dst_ptr++;
+                    if (!len) break;
+                }
+            }
+            else *dst_ptr = wch;
+        }
+        if (!(flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE)) || srclen) goto done;
+
+        srclen = dst_ptr - dst;
+        src = dst;
+    }
+
+    if (flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE))
+    {
+        USHORT *table = (flags & LCMAP_LOWERCASE) ? nls_info.LowerCaseTable : nls_info.UpperCaseTable;
+        for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--, len--)
+            *dst_ptr++ = casemap( table, *src );
+    }
+    else
+    {
+        len = min( srclen, dstlen );
+        memcpy( dst, src, len * sizeof(WCHAR) );
+        dst_ptr = dst + len;
+        srclen -= len;
+    }
+
+done:
+    if (srclen)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+
+    return dst_ptr - dst;
+}
+
+
+/***********************************************************************
+ *	LCMapStringA   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH LCMapStringA( LCID lcid, DWORD flags, const char *src, int srclen,
+                                           char *dst, int dstlen )
+{
+    WCHAR *bufW = NtCurrentTeb()->StaticUnicodeBuffer;
+    LPWSTR srcW, dstW;
+    INT ret = 0, srclenW, dstlenW;
+    UINT locale_cp = CP_ACP;
+
+    if (!src || !srclen || dstlen < 0)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    locale_cp = get_lcid_codepage( lcid, flags );
+
+    srclenW = MultiByteToWideChar( locale_cp, 0, src, srclen, bufW, 260 );
+    if (srclenW) srcW = bufW;
+    else
+    {
+        srclenW = MultiByteToWideChar( locale_cp, 0, src, srclen, NULL, 0 );
+        srcW = HeapAlloc( GetProcessHeap(), 0, srclenW * sizeof(WCHAR) );
+        if (!srcW)
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return 0;
+        }
+        MultiByteToWideChar( locale_cp, 0, src, srclen, srcW, srclenW );
+    }
+
+    if (flags & LCMAP_SORTKEY)
+    {
+        if (src == dst)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            goto done;
+        }
+        ret = LCMapStringEx( NULL, flags, srcW, srclenW, (WCHAR *)dst, dstlen, NULL, NULL, 0 );
+        goto done;
+    }
+
+    if (flags & SORT_STRINGSORT)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        goto done;
+    }
+
+    dstlenW = LCMapStringEx( NULL, flags, srcW, srclenW, NULL, 0, NULL, NULL, 0 );
+    if (!dstlenW) goto done;
+
+    dstW = HeapAlloc( GetProcessHeap(), 0, dstlenW * sizeof(WCHAR) );
+    if (!dstW)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        goto done;
+    }
+    LCMapStringEx( NULL, flags, srcW, srclenW, dstW, dstlenW, NULL, NULL, 0 );
+    ret = WideCharToMultiByte( locale_cp, 0, dstW, dstlenW, dst, dstlen, NULL, NULL );
+    HeapFree( GetProcessHeap(), 0, dstW );
+
+done:
+    if (srcW != bufW) HeapFree( GetProcessHeap(), 0, srcW );
+    return ret;
+}
+
+
+/***********************************************************************
+ *	LCMapStringW   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH LCMapStringW( LCID lcid, DWORD flags, const WCHAR *src, int srclen,
+                                           WCHAR *dst, int dstlen )
+{
+    return LCMapStringEx( NULL, flags, src, srclen, dst, dstlen, NULL, NULL, 0 );
 }
 
 

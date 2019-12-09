@@ -1027,9 +1027,9 @@
 @ stdcall -i386 -private -norelay K32Thk1632Epilog() krnl386.exe16.K32Thk1632Epilog
 @ stdcall -i386 -private -norelay K32Thk1632Prolog() krnl386.exe16.K32Thk1632Prolog
 @ stdcall -import LCIDToLocaleName(long ptr long long)
-@ stdcall LCMapStringA(long long str long ptr long)
-@ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long)
-@ stdcall LCMapStringW(long long wstr long ptr long)
+@ stdcall -import LCMapStringA(long long str long ptr long)
+@ stdcall -import LCMapStringEx(wstr long wstr long ptr long ptr ptr long)
+@ stdcall -import LCMapStringW(long long wstr long ptr long)
 @ stdcall LZClose(long)
 # @ stub LZCloseFile
 @ stdcall LZCopy(long long)
