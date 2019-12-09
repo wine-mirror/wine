@@ -1615,7 +1615,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             return packet_ok;
         if (strncmp(gdbctx->in_packet, "Supported", 9) == 0)
         {
-            if (strlen(target_xml))
+            if (*target_xml)
                 return packet_reply(gdbctx, "PacketSize=400;qXfer:features:read+");
             else
             {
@@ -1652,7 +1652,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         }
         break;
     case 'X':
-        if (strlen(target_xml) && strncmp(gdbctx->in_packet, "Xfer:features:read:target.xml", 29) == 0)
+        if (*target_xml && strncmp(gdbctx->in_packet, "Xfer:features:read:target.xml", 29) == 0)
             return packet_reply(gdbctx, target_xml);
         break;
     }
