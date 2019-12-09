@@ -539,12 +539,6 @@ static inline int textcmpWT(LPCWSTR aw, LPCWSTR bt, BOOL isW)
 	    
     return 1;
 }
-    
-static inline int lstrncmpiW(LPCWSTR s1, LPCWSTR s2, int n)
-{
-    n = min(min(n, lstrlenW(s1)), lstrlenW(s2));
-    return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, s1, n, s2, n) - CSTR_EQUAL;
-}
 
 /******** Debugging functions *****************************************/
 
@@ -1953,7 +1947,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
                 item.cchTextMax = MAX_PATH;
                 if (!LISTVIEW_GetItemW(infoPtr, &item)) return 0;
 
-                if (!lstrncmpiW(item.pszText, infoPtr->szSearchParam, infoPtr->nSearchParamLength))
+                if (!wcsnicmp(item.pszText, infoPtr->szSearchParam, infoPtr->nSearchParamLength))
                 {
                     nItem = i;
                     break;
@@ -1961,7 +1955,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
                 /* this is used to find first char match when search string is not available yet,
                    otherwise every WM_CHAR will search to next item by first char, ignoring that we're
                    already waiting for user to complete a string */
-                else if (nItem == -1 && infoPtr->nSearchParamLength == 1 && !lstrncmpiW(item.pszText, infoPtr->szSearchParam, 1))
+                else if (nItem == -1 && infoPtr->nSearchParamLength == 1 && !wcsnicmp(item.pszText, infoPtr->szSearchParam, 1))
                 {
                     /* this would work but we must keep looking for a longer match */
                     nItem = i;
