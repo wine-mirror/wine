@@ -4412,9 +4412,8 @@ HRESULT WINAPI ApplicationRecoveryInProgress(PBOOL canceled)
  */
 HRESULT WINAPI RegisterApplicationRecoveryCallback(APPLICATION_RECOVERY_CALLBACK callback, PVOID param, DWORD pingint, DWORD flags)
 {
-    FIXME("%p, %p, %d, %d: stub\n", callback, param, pingint, flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return E_FAIL;
+    FIXME("%p, %p, %d, %d: stub, faking success\n", callback, param, pingint, flags);
+    return S_OK;
 }
 
 /***********************************************************************
