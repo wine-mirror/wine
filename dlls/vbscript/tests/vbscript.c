@@ -1070,16 +1070,12 @@ static void test_script_typeinfo(void)
     ITypeComp_Release(typecomp2);
     wcscpy(str, L"not_found");
     hr = ITypeComp_Bind(typecomp, NULL, 0, 0, &typeinfo2, &desckind, &bindptr);
-    todo_wine
     ok(hr == E_INVALIDARG, "Bind returned: %08x\n", hr);
     hr = ITypeComp_Bind(typecomp, str, 0, 0, NULL, &desckind, &bindptr);
-    todo_wine
     ok(hr == E_INVALIDARG, "Bind returned: %08x\n", hr);
     hr = ITypeComp_Bind(typecomp, str, 0, 0, &typeinfo2, NULL, &bindptr);
-    todo_wine
     ok(hr == E_INVALIDARG, "Bind returned: %08x\n", hr);
     hr = ITypeComp_Bind(typecomp, str, 0, 0, &typeinfo2, &desckind, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Bind returned: %08x\n", hr);
     ITypeComp_Release(typecomp);
 
