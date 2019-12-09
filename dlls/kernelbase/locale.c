@@ -222,6 +222,322 @@ static const WCHAR ligatures[][5] =
     { 0xfb06,  's','t',0 },
 };
 
+enum locationkind { LOCATION_NATION = 0, LOCATION_REGION, LOCATION_BOTH };
+
+struct geoinfo
+{
+    GEOID id;
+    WCHAR iso2W[3];
+    WCHAR iso3W[4];
+    GEOID parent;
+    int   uncode;
+    enum locationkind kind;
+};
+
+static const struct geoinfo geoinfodata[] =
+{
+    { 2, L"AG", L"ATG", 10039880,  28 }, /* Antigua and Barbuda */
+    { 3, L"AF", L"AFG", 47614,   4 }, /* Afghanistan */
+    { 4, L"DZ", L"DZA", 42487,  12 }, /* Algeria */
+    { 5, L"AZ", L"AZE", 47611,  31 }, /* Azerbaijan */
+    { 6, L"AL", L"ALB", 47610,   8 }, /* Albania */
+    { 7, L"AM", L"ARM", 47611,  51 }, /* Armenia */
+    { 8, L"AD", L"AND", 47610,  20 }, /* Andorra */
+    { 9, L"AO", L"AGO", 42484,  24 }, /* Angola */
+    { 10, L"AS", L"ASM", 26286,  16 }, /* American Samoa */
+    { 11, L"AR", L"ARG", 31396,  32 }, /* Argentina */
+    { 12, L"AU", L"AUS", 10210825,  36 }, /* Australia */
+    { 14, L"AT", L"AUT", 10210824,  40 }, /* Austria */
+    { 17, L"BH", L"BHR", 47611,  48 }, /* Bahrain */
+    { 18, L"BB", L"BRB", 10039880,  52 }, /* Barbados */
+    { 19, L"BW", L"BWA", 10039883,  72 }, /* Botswana */
+    { 20, L"BM", L"BMU", 23581,  60 }, /* Bermuda */
+    { 21, L"BE", L"BEL", 10210824,  56 }, /* Belgium */
+    { 22, L"BS", L"BHS", 10039880,  44 }, /* Bahamas, The */
+    { 23, L"BD", L"BGD", 47614,  50 }, /* Bangladesh */
+    { 24, L"BZ", L"BLZ", 27082,  84 }, /* Belize */
+    { 25, L"BA", L"BIH", 47610,  70 }, /* Bosnia and Herzegovina */
+    { 26, L"BO", L"BOL", 31396,  68 }, /* Bolivia */
+    { 27, L"MM", L"MMR", 47599, 104 }, /* Myanmar */
+    { 28, L"BJ", L"BEN", 42483, 204 }, /* Benin */
+    { 29, L"BY", L"BLR", 47609, 112 }, /* Belarus */
+    { 30, L"SB", L"SLB", 20900,  90 }, /* Solomon Islands */
+    { 32, L"BR", L"BRA", 31396,  76 }, /* Brazil */
+    { 34, L"BT", L"BTN", 47614,  64 }, /* Bhutan */
+    { 35, L"BG", L"BGR", 47609, 100 }, /* Bulgaria */
+    { 37, L"BN", L"BRN", 47599,  96 }, /* Brunei */
+    { 38, L"BI", L"BDI", 47603, 108 }, /* Burundi */
+    { 39, L"CA", L"CAN", 23581, 124 }, /* Canada */
+    { 40, L"KH", L"KHM", 47599, 116 }, /* Cambodia */
+    { 41, L"TD", L"TCD", 42484, 148 }, /* Chad */
+    { 42, L"LK", L"LKA", 47614, 144 }, /* Sri Lanka */
+    { 43, L"CG", L"COG", 42484, 178 }, /* Congo */
+    { 44, L"CD", L"COD", 42484, 180 }, /* Congo (DRC) */
+    { 45, L"CN", L"CHN", 47600, 156 }, /* China */
+    { 46, L"CL", L"CHL", 31396, 152 }, /* Chile */
+    { 49, L"CM", L"CMR", 42484, 120 }, /* Cameroon */
+    { 50, L"KM", L"COM", 47603, 174 }, /* Comoros */
+    { 51, L"CO", L"COL", 31396, 170 }, /* Colombia */
+    { 54, L"CR", L"CRI", 27082, 188 }, /* Costa Rica */
+    { 55, L"CF", L"CAF", 42484, 140 }, /* Central African Republic */
+    { 56, L"CU", L"CUB", 10039880, 192 }, /* Cuba */
+    { 57, L"CV", L"CPV", 42483, 132 }, /* Cape Verde */
+    { 59, L"CY", L"CYP", 47611, 196 }, /* Cyprus */
+    { 61, L"DK", L"DNK", 10039882, 208 }, /* Denmark */
+    { 62, L"DJ", L"DJI", 47603, 262 }, /* Djibouti */
+    { 63, L"DM", L"DMA", 10039880, 212 }, /* Dominica */
+    { 65, L"DO", L"DOM", 10039880, 214 }, /* Dominican Republic */
+    { 66, L"EC", L"ECU", 31396, 218 }, /* Ecuador */
+    { 67, L"EG", L"EGY", 42487, 818 }, /* Egypt */
+    { 68, L"IE", L"IRL", 10039882, 372 }, /* Ireland */
+    { 69, L"GQ", L"GNQ", 42484, 226 }, /* Equatorial Guinea */
+    { 70, L"EE", L"EST", 10039882, 233 }, /* Estonia */
+    { 71, L"ER", L"ERI", 47603, 232 }, /* Eritrea */
+    { 72, L"SV", L"SLV", 27082, 222 }, /* El Salvador */
+    { 73, L"ET", L"ETH", 47603, 231 }, /* Ethiopia */
+    { 75, L"CZ", L"CZE", 47609, 203 }, /* Czech Republic */
+    { 77, L"FI", L"FIN", 10039882, 246 }, /* Finland */
+    { 78, L"FJ", L"FJI", 20900, 242 }, /* Fiji Islands */
+    { 80, L"FM", L"FSM", 21206, 583 }, /* Micronesia */
+    { 81, L"FO", L"FRO", 10039882, 234 }, /* Faroe Islands */
+    { 84, L"FR", L"FRA", 10210824, 250 }, /* France */
+    { 86, L"GM", L"GMB", 42483, 270 }, /* Gambia, The */
+    { 87, L"GA", L"GAB", 42484, 266 }, /* Gabon */
+    { 88, L"GE", L"GEO", 47611, 268 }, /* Georgia */
+    { 89, L"GH", L"GHA", 42483, 288 }, /* Ghana */
+    { 90, L"GI", L"GIB", 47610, 292 }, /* Gibraltar */
+    { 91, L"GD", L"GRD", 10039880, 308 }, /* Grenada */
+    { 93, L"GL", L"GRL", 23581, 304 }, /* Greenland */
+    { 94, L"DE", L"DEU", 10210824, 276 }, /* Germany */
+    { 98, L"GR", L"GRC", 47610, 300 }, /* Greece */
+    { 99, L"GT", L"GTM", 27082, 320 }, /* Guatemala */
+    { 100, L"GN", L"GIN", 42483, 324 }, /* Guinea */
+    { 101, L"GY", L"GUY", 31396, 328 }, /* Guyana */
+    { 103, L"HT", L"HTI", 10039880, 332 }, /* Haiti */
+    { 104, L"HK", L"HKG", 47600, 344 }, /* Hong Kong S.A.R. */
+    { 106, L"HN", L"HND", 27082, 340 }, /* Honduras */
+    { 108, L"HR", L"HRV", 47610, 191 }, /* Croatia */
+    { 109, L"HU", L"HUN", 47609, 348 }, /* Hungary */
+    { 110, L"IS", L"ISL", 10039882, 352 }, /* Iceland */
+    { 111, L"ID", L"IDN", 47599, 360 }, /* Indonesia */
+    { 113, L"IN", L"IND", 47614, 356 }, /* India */
+    { 114, L"IO", L"IOT", 39070,  86 }, /* British Indian Ocean Territory */
+    { 116, L"IR", L"IRN", 47614, 364 }, /* Iran */
+    { 117, L"IL", L"ISR", 47611, 376 }, /* Israel */
+    { 118, L"IT", L"ITA", 47610, 380 }, /* Italy */
+    { 119, L"CI", L"CIV", 42483, 384 }, /* Côte d'Ivoire */
+    { 121, L"IQ", L"IRQ", 47611, 368 }, /* Iraq */
+    { 122, L"JP", L"JPN", 47600, 392 }, /* Japan */
+    { 124, L"JM", L"JAM", 10039880, 388 }, /* Jamaica */
+    { 125, L"SJ", L"SJM", 10039882, 744 }, /* Jan Mayen */
+    { 126, L"JO", L"JOR", 47611, 400 }, /* Jordan */
+    { 127, L"XX", L"XX", 161832256 }, /* Johnston Atoll */
+    { 129, L"KE", L"KEN", 47603, 404 }, /* Kenya */
+    { 130, L"KG", L"KGZ", 47590, 417 }, /* Kyrgyzstan */
+    { 131, L"KP", L"PRK", 47600, 408 }, /* North Korea */
+    { 133, L"KI", L"KIR", 21206, 296 }, /* Kiribati */
+    { 134, L"KR", L"KOR", 47600, 410 }, /* Korea */
+    { 136, L"KW", L"KWT", 47611, 414 }, /* Kuwait */
+    { 137, L"KZ", L"KAZ", 47590, 398 }, /* Kazakhstan */
+    { 138, L"LA", L"LAO", 47599, 418 }, /* Laos */
+    { 139, L"LB", L"LBN", 47611, 422 }, /* Lebanon */
+    { 140, L"LV", L"LVA", 10039882, 428 }, /* Latvia */
+    { 141, L"LT", L"LTU", 10039882, 440 }, /* Lithuania */
+    { 142, L"LR", L"LBR", 42483, 430 }, /* Liberia */
+    { 143, L"SK", L"SVK", 47609, 703 }, /* Slovakia */
+    { 145, L"LI", L"LIE", 10210824, 438 }, /* Liechtenstein */
+    { 146, L"LS", L"LSO", 10039883, 426 }, /* Lesotho */
+    { 147, L"LU", L"LUX", 10210824, 442 }, /* Luxembourg */
+    { 148, L"LY", L"LBY", 42487, 434 }, /* Libya */
+    { 149, L"MG", L"MDG", 47603, 450 }, /* Madagascar */
+    { 151, L"MO", L"MAC", 47600, 446 }, /* Macao S.A.R. */
+    { 152, L"MD", L"MDA", 47609, 498 }, /* Moldova */
+    { 154, L"MN", L"MNG", 47600, 496 }, /* Mongolia */
+    { 156, L"MW", L"MWI", 47603, 454 }, /* Malawi */
+    { 157, L"ML", L"MLI", 42483, 466 }, /* Mali */
+    { 158, L"MC", L"MCO", 10210824, 492 }, /* Monaco */
+    { 159, L"MA", L"MAR", 42487, 504 }, /* Morocco */
+    { 160, L"MU", L"MUS", 47603, 480 }, /* Mauritius */
+    { 162, L"MR", L"MRT", 42483, 478 }, /* Mauritania */
+    { 163, L"MT", L"MLT", 47610, 470 }, /* Malta */
+    { 164, L"OM", L"OMN", 47611, 512 }, /* Oman */
+    { 165, L"MV", L"MDV", 47614, 462 }, /* Maldives */
+    { 166, L"MX", L"MEX", 27082, 484 }, /* Mexico */
+    { 167, L"MY", L"MYS", 47599, 458 }, /* Malaysia */
+    { 168, L"MZ", L"MOZ", 47603, 508 }, /* Mozambique */
+    { 173, L"NE", L"NER", 42483, 562 }, /* Niger */
+    { 174, L"VU", L"VUT", 20900, 548 }, /* Vanuatu */
+    { 175, L"NG", L"NGA", 42483, 566 }, /* Nigeria */
+    { 176, L"NL", L"NLD", 10210824, 528 }, /* Netherlands */
+    { 177, L"NO", L"NOR", 10039882, 578 }, /* Norway */
+    { 178, L"NP", L"NPL", 47614, 524 }, /* Nepal */
+    { 180, L"NR", L"NRU", 21206, 520 }, /* Nauru */
+    { 181, L"SR", L"SUR", 31396, 740 }, /* Suriname */
+    { 182, L"NI", L"NIC", 27082, 558 }, /* Nicaragua */
+    { 183, L"NZ", L"NZL", 10210825, 554 }, /* New Zealand */
+    { 184, L"PS", L"PSE", 47611, 275 }, /* Palestinian Authority */
+    { 185, L"PY", L"PRY", 31396, 600 }, /* Paraguay */
+    { 187, L"PE", L"PER", 31396, 604 }, /* Peru */
+    { 190, L"PK", L"PAK", 47614, 586 }, /* Pakistan */
+    { 191, L"PL", L"POL", 47609, 616 }, /* Poland */
+    { 192, L"PA", L"PAN", 27082, 591 }, /* Panama */
+    { 193, L"PT", L"PRT", 47610, 620 }, /* Portugal */
+    { 194, L"PG", L"PNG", 20900, 598 }, /* Papua New Guinea */
+    { 195, L"PW", L"PLW", 21206, 585 }, /* Palau */
+    { 196, L"GW", L"GNB", 42483, 624 }, /* Guinea-Bissau */
+    { 197, L"QA", L"QAT", 47611, 634 }, /* Qatar */
+    { 198, L"RE", L"REU", 47603, 638 }, /* Reunion */
+    { 199, L"MH", L"MHL", 21206, 584 }, /* Marshall Islands */
+    { 200, L"RO", L"ROU", 47609, 642 }, /* Romania */
+    { 201, L"PH", L"PHL", 47599, 608 }, /* Philippines */
+    { 202, L"PR", L"PRI", 10039880, 630 }, /* Puerto Rico */
+    { 203, L"RU", L"RUS", 47609, 643 }, /* Russia */
+    { 204, L"RW", L"RWA", 47603, 646 }, /* Rwanda */
+    { 205, L"SA", L"SAU", 47611, 682 }, /* Saudi Arabia */
+    { 206, L"PM", L"SPM", 23581, 666 }, /* St. Pierre and Miquelon */
+    { 207, L"KN", L"KNA", 10039880, 659 }, /* St. Kitts and Nevis */
+    { 208, L"SC", L"SYC", 47603, 690 }, /* Seychelles */
+    { 209, L"ZA", L"ZAF", 10039883, 710 }, /* South Africa */
+    { 210, L"SN", L"SEN", 42483, 686 }, /* Senegal */
+    { 212, L"SI", L"SVN", 47610, 705 }, /* Slovenia */
+    { 213, L"SL", L"SLE", 42483, 694 }, /* Sierra Leone */
+    { 214, L"SM", L"SMR", 47610, 674 }, /* San Marino */
+    { 215, L"SG", L"SGP", 47599, 702 }, /* Singapore */
+    { 216, L"SO", L"SOM", 47603, 706 }, /* Somalia */
+    { 217, L"ES", L"ESP", 47610, 724 }, /* Spain */
+    { 218, L"LC", L"LCA", 10039880, 662 }, /* St. Lucia */
+    { 219, L"SD", L"SDN", 42487, 736 }, /* Sudan */
+    { 220, L"SJ", L"SJM", 10039882, 744 }, /* Svalbard */
+    { 221, L"SE", L"SWE", 10039882, 752 }, /* Sweden */
+    { 222, L"SY", L"SYR", 47611, 760 }, /* Syria */
+    { 223, L"CH", L"CHE", 10210824, 756 }, /* Switzerland */
+    { 224, L"AE", L"ARE", 47611, 784 }, /* United Arab Emirates */
+    { 225, L"TT", L"TTO", 10039880, 780 }, /* Trinidad and Tobago */
+    { 227, L"TH", L"THA", 47599, 764 }, /* Thailand */
+    { 228, L"TJ", L"TJK", 47590, 762 }, /* Tajikistan */
+    { 231, L"TO", L"TON", 26286, 776 }, /* Tonga */
+    { 232, L"TG", L"TGO", 42483, 768 }, /* Togo */
+    { 233, L"ST", L"STP", 42484, 678 }, /* São Tomé and Príncipe */
+    { 234, L"TN", L"TUN", 42487, 788 }, /* Tunisia */
+    { 235, L"TR", L"TUR", 47611, 792 }, /* Turkey */
+    { 236, L"TV", L"TUV", 26286, 798 }, /* Tuvalu */
+    { 237, L"TW", L"TWN", 47600, 158 }, /* Taiwan */
+    { 238, L"TM", L"TKM", 47590, 795 }, /* Turkmenistan */
+    { 239, L"TZ", L"TZA", 47603, 834 }, /* Tanzania */
+    { 240, L"UG", L"UGA", 47603, 800 }, /* Uganda */
+    { 241, L"UA", L"UKR", 47609, 804 }, /* Ukraine */
+    { 242, L"GB", L"GBR", 10039882, 826 }, /* United Kingdom */
+    { 244, L"US", L"USA", 23581, 840 }, /* United States */
+    { 245, L"BF", L"BFA", 42483, 854 }, /* Burkina Faso */
+    { 246, L"UY", L"URY", 31396, 858 }, /* Uruguay */
+    { 247, L"UZ", L"UZB", 47590, 860 }, /* Uzbekistan */
+    { 248, L"VC", L"VCT", 10039880, 670 }, /* St. Vincent and the Grenadines */
+    { 249, L"VE", L"VEN", 31396, 862 }, /* Bolivarian Republic of Venezuela */
+    { 251, L"VN", L"VNM", 47599, 704 }, /* Vietnam */
+    { 252, L"VI", L"VIR", 10039880, 850 }, /* Virgin Islands */
+    { 253, L"VA", L"VAT", 47610, 336 }, /* Vatican City */
+    { 254, L"NA", L"NAM", 10039883, 516 }, /* Namibia */
+    { 257, L"EH", L"ESH", 42487, 732 }, /* Western Sahara (disputed) */
+    { 258, L"XX", L"XX", 161832256 }, /* Wake Island */
+    { 259, L"WS", L"WSM", 26286, 882 }, /* Samoa */
+    { 260, L"SZ", L"SWZ", 10039883, 748 }, /* Swaziland */
+    { 261, L"YE", L"YEM", 47611, 887 }, /* Yemen */
+    { 263, L"ZM", L"ZMB", 47603, 894 }, /* Zambia */
+    { 264, L"ZW", L"ZWE", 47603, 716 }, /* Zimbabwe */
+    { 269, L"CS", L"SCG", 47610, 891 }, /* Serbia and Montenegro (Former) */
+    { 270, L"ME", L"MNE", 47610, 499 }, /* Montenegro */
+    { 271, L"RS", L"SRB", 47610, 688 }, /* Serbia */
+    { 273, L"CW", L"CUW", 10039880, 531 }, /* Curaçao */
+    { 276, L"SS", L"SSD", 42487, 728 }, /* South Sudan */
+    { 300, L"AI", L"AIA", 10039880, 660 }, /* Anguilla */
+    { 301, L"AQ", L"ATA", 39070,  10 }, /* Antarctica */
+    { 302, L"AW", L"ABW", 10039880, 533 }, /* Aruba */
+    { 303, L"XX", L"XX", 343 }, /* Ascension Island */
+    { 304, L"XX", L"XX", 10210825 }, /* Ashmore and Cartier Islands */
+    { 305, L"XX", L"XX", 161832256 }, /* Baker Island */
+    { 306, L"BV", L"BVT", 39070,  74 }, /* Bouvet Island */
+    { 307, L"KY", L"CYM", 10039880, 136 }, /* Cayman Islands */
+    { 308, L"XX", L"XX", 10210824, 830, LOCATION_BOTH }, /* Channel Islands */
+    { 309, L"CX", L"CXR", 12, 162 }, /* Christmas Island */
+    { 310, L"XX", L"XX", 27114 }, /* Clipperton Island */
+    { 311, L"CC", L"CCK", 10210825, 166 }, /* Cocos (Keeling) Islands */
+    { 312, L"CK", L"COK", 26286, 184 }, /* Cook Islands */
+    { 313, L"XX", L"XX", 10210825 }, /* Coral Sea Islands */
+    { 314, L"XX", L"XX", 114 }, /* Diego Garcia */
+    { 315, L"FK", L"FLK", 31396, 238 }, /* Falkland Islands (Islas Malvinas) */
+    { 317, L"GF", L"GUF", 31396, 254 }, /* French Guiana */
+    { 318, L"PF", L"PYF", 26286, 258 }, /* French Polynesia */
+    { 319, L"TF", L"ATF", 39070, 260 }, /* French Southern and Antarctic Lands */
+    { 321, L"GP", L"GLP", 10039880, 312 }, /* Guadeloupe */
+    { 322, L"GU", L"GUM", 21206, 316 }, /* Guam */
+    { 323, L"XX", L"XX", 39070 }, /* Guantanamo Bay */
+    { 324, L"GG", L"GGY", 308, 831 }, /* Guernsey */
+    { 325, L"HM", L"HMD", 39070, 334 }, /* Heard Island and McDonald Islands */
+    { 326, L"XX", L"XX", 161832256 }, /* Howland Island */
+    { 327, L"XX", L"XX", 161832256 }, /* Jarvis Island */
+    { 328, L"JE", L"JEY", 308, 832 }, /* Jersey */
+    { 329, L"XX", L"XX", 161832256 }, /* Kingman Reef */
+    { 330, L"MQ", L"MTQ", 10039880, 474 }, /* Martinique */
+    { 331, L"YT", L"MYT", 47603, 175 }, /* Mayotte */
+    { 332, L"MS", L"MSR", 10039880, 500 }, /* Montserrat */
+    { 333, L"AN", L"ANT", 10039880, 530, LOCATION_BOTH }, /* Netherlands Antilles (Former) */
+    { 334, L"NC", L"NCL", 20900, 540 }, /* New Caledonia */
+    { 335, L"NU", L"NIU", 26286, 570 }, /* Niue */
+    { 336, L"NF", L"NFK", 10210825, 574 }, /* Norfolk Island */
+    { 337, L"MP", L"MNP", 21206, 580 }, /* Northern Mariana Islands */
+    { 338, L"XX", L"XX", 161832256 }, /* Palmyra Atoll */
+    { 339, L"PN", L"PCN", 26286, 612 }, /* Pitcairn Islands */
+    { 340, L"XX", L"XX", 337 }, /* Rota Island */
+    { 341, L"XX", L"XX", 337 }, /* Saipan */
+    { 342, L"GS", L"SGS", 39070, 239 }, /* South Georgia and the South Sandwich Islands */
+    { 343, L"SH", L"SHN", 42483, 654 }, /* St. Helena */
+    { 346, L"XX", L"XX", 337 }, /* Tinian Island */
+    { 347, L"TK", L"TKL", 26286, 772 }, /* Tokelau */
+    { 348, L"XX", L"XX", 343 }, /* Tristan da Cunha */
+    { 349, L"TC", L"TCA", 10039880, 796 }, /* Turks and Caicos Islands */
+    { 351, L"VG", L"VGB", 10039880,  92 }, /* Virgin Islands, British */
+    { 352, L"WF", L"WLF", 26286, 876 }, /* Wallis and Futuna */
+    { 742, L"XX", L"XX", 39070, 2, LOCATION_REGION }, /* Africa */
+    { 2129, L"XX", L"XX", 39070, 142, LOCATION_REGION }, /* Asia */
+    { 10541, L"XX", L"XX", 39070, 150, LOCATION_REGION }, /* Europe */
+    { 15126, L"IM", L"IMN", 10039882, 833 }, /* Man, Isle of */
+    { 19618, L"MK", L"MKD", 47610, 807 }, /* Macedonia, Former Yugoslav Republic of */
+    { 20900, L"XX", L"XX", 27114, 54, LOCATION_REGION }, /* Melanesia */
+    { 21206, L"XX", L"XX", 27114, 57, LOCATION_REGION }, /* Micronesia */
+    { 21242, L"XX", L"XX", 161832256 }, /* Midway Islands */
+    { 23581, L"XX", L"XX", 10026358, 21, LOCATION_REGION }, /* Northern America */
+    { 26286, L"XX", L"XX", 27114, 61, LOCATION_REGION }, /* Polynesia */
+    { 27082, L"XX", L"XX", 161832257, 13, LOCATION_REGION }, /* Central America */
+    { 27114, L"XX", L"XX", 39070, 9, LOCATION_REGION }, /* Oceania */
+    { 30967, L"SX", L"SXM", 10039880, 534 }, /* Sint Maarten (Dutch part) */
+    { 31396, L"XX", L"XX", 161832257, 5, LOCATION_REGION }, /* South America */
+    { 31706, L"MF", L"MAF", 10039880, 663 }, /* Saint Martin (French part) */
+    { 39070, L"XX", L"XX", 39070, 1, LOCATION_REGION }, /* World */
+    { 42483, L"XX", L"XX", 742, 11, LOCATION_REGION }, /* Western Africa */
+    { 42484, L"XX", L"XX", 742, 17, LOCATION_REGION }, /* Middle Africa */
+    { 42487, L"XX", L"XX", 742, 15, LOCATION_REGION }, /* Northern Africa */
+    { 47590, L"XX", L"XX", 2129, 143, LOCATION_REGION }, /* Central Asia */
+    { 47599, L"XX", L"XX", 2129, 35, LOCATION_REGION }, /* South-Eastern Asia */
+    { 47600, L"XX", L"XX", 2129, 30, LOCATION_REGION }, /* Eastern Asia */
+    { 47603, L"XX", L"XX", 742, 14, LOCATION_REGION }, /* Eastern Africa */
+    { 47609, L"XX", L"XX", 10541, 151, LOCATION_REGION }, /* Eastern Europe */
+    { 47610, L"XX", L"XX", 10541, 39, LOCATION_REGION }, /* Southern Europe */
+    { 47611, L"XX", L"XX", 2129, 145, LOCATION_REGION }, /* Middle East */
+    { 47614, L"XX", L"XX", 2129, 34, LOCATION_REGION }, /* Southern Asia */
+    { 7299303, L"TL", L"TLS", 47599, 626 }, /* Democratic Republic of Timor-Leste */
+    { 9914689, L"XK", L"XKS", 47610, 906 }, /* Kosovo */
+    { 10026358, L"XX", L"XX", 39070, 19, LOCATION_REGION }, /* Americas */
+    { 10028789, L"AX", L"ALA", 10039882, 248 }, /* Åland Islands */
+    { 10039880, L"XX", L"XX", 161832257, 29, LOCATION_REGION }, /* Caribbean */
+    { 10039882, L"XX", L"XX", 10541, 154, LOCATION_REGION }, /* Northern Europe */
+    { 10039883, L"XX", L"XX", 742, 18, LOCATION_REGION }, /* Southern Africa */
+    { 10210824, L"XX", L"XX", 10541, 155, LOCATION_REGION }, /* Western Europe */
+    { 10210825, L"XX", L"XX", 27114, 53, LOCATION_REGION }, /* Australia and New Zealand */
+    { 161832015, L"BL", L"BLM", 10039880, 652 }, /* Saint Barthélemy */
+    { 161832256, L"UM", L"UMI", 27114, 581 }, /* U.S. Minor Outlying Islands */
+    { 161832257, L"XX", L"XX", 10026358, 419, LOCATION_REGION }, /* Latin America and the Caribbean */
+};
+
 static NLSTABLEINFO nls_info;
 static UINT mac_cp = 10000;
 static HKEY intl_key;
@@ -1924,6 +2240,23 @@ static int compare_weights(int flags, const WCHAR *str1, int len1,
 }
 
 
+static const struct geoinfo *get_geoinfo_ptr( GEOID geoid )
+{
+    int min = 0, max = ARRAY_SIZE( geoinfodata )-1;
+
+    while (min <= max)
+    {
+        int n = (min + max)/2;
+        const struct geoinfo *ptr = &geoinfodata[n];
+        if (geoid == ptr->id) /* we don't need empty entries */
+            return *ptr->iso2W ? ptr : NULL;
+        if (ptr->id > geoid) max = n-1;
+        else min = n+1;
+    }
+    return NULL;
+}
+
+
 /* Note: the Internal_ functions are not documented. The number of parameters
  * should be correct, but their exact meaning may not.
  */
@@ -2548,6 +2881,40 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemCodePagesW( CODEPAGE_ENUMPROCW proc, DWO
 
 
 /******************************************************************************
+ *	EnumSystemGeoID   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemGeoID( GEOCLASS class, GEOID parent, GEO_ENUMPROC proc )
+{
+    INT i;
+
+    TRACE( "(%d, %d, %p)\n", class, parent, proc );
+
+    if (!proc)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (class != GEOCLASS_NATION && class != GEOCLASS_REGION && class != GEOCLASS_ALL)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return FALSE;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(geoinfodata); i++)
+    {
+        const struct geoinfo *ptr = &geoinfodata[i];
+
+        if (class == GEOCLASS_NATION && (ptr->kind != LOCATION_NATION)) continue;
+        /* LOCATION_BOTH counts as region */
+        if (class == GEOCLASS_REGION && (ptr->kind == LOCATION_NATION)) continue;
+        if (parent && ptr->parent != parent) continue;
+        if (!proc( ptr->id )) break;
+    }
+    return TRUE;
+}
+
+
+/******************************************************************************
  *	EnumSystemLanguageGroupsW   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLanguageGroupsW( LANGUAGEGROUP_ENUMPROCW proc,
@@ -3143,6 +3510,73 @@ INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoEx( const WCHAR *locale, CALID calen
 
 
 /******************************************************************************
+ *	GetGeoInfoW   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH GetGeoInfoW( GEOID id, GEOTYPE type, WCHAR *data, int count, LANGID lang )
+{
+    const struct geoinfo *ptr = get_geoinfo_ptr( id );
+    WCHAR bufferW[12];
+    const WCHAR *str = bufferW;
+    int len;
+
+    TRACE( "%d %d %p %d %d\n", id, type, data, count, lang );
+
+    if (!ptr)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    switch (type)
+    {
+    case GEO_NATION:
+        if (ptr->kind != LOCATION_NATION) return 0;
+        /* fall through */
+    case GEO_ID:
+        swprintf( bufferW, ARRAY_SIZE(bufferW), L"%u", ptr->id );
+        break;
+    case GEO_ISO_UN_NUMBER:
+        swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03u", ptr->uncode );
+        break;
+    case GEO_PARENT:
+        swprintf( bufferW, ARRAY_SIZE(bufferW), L"%u", ptr->parent );
+        break;
+    case GEO_ISO2:
+        str = ptr->iso2W;
+        break;
+    case GEO_ISO3:
+        str = ptr->iso3W;
+        break;
+    case GEO_RFC1766:
+    case GEO_LCID:
+    case GEO_FRIENDLYNAME:
+    case GEO_OFFICIALNAME:
+    case GEO_TIMEZONES:
+    case GEO_OFFICIALLANGUAGES:
+    case GEO_LATITUDE:
+    case GEO_LONGITUDE:
+    case GEO_DIALINGCODE:
+    case GEO_CURRENCYCODE:
+    case GEO_CURRENCYSYMBOL:
+    case GEO_NAME:
+        FIXME( "type %d is not supported\n", type );
+        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+        return 0;
+    default:
+        WARN( "unrecognized type %d\n", type );
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    len = lstrlenW(str) + 1;
+    if (!data || !count) return len;
+
+    memcpy( data, str, min(len, count) * sizeof(WCHAR) );
+    if (count < len) SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    return count < len ? 0 : len;
+}
+
+
+/******************************************************************************
  *	GetLocaleInfoA   (kernelbase.@)
  */
 INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoA( LCID lcid, LCTYPE lctype, char *buffer, INT len )
@@ -3545,6 +3979,39 @@ LANGID WINAPI DECLSPEC_HOTPATCH GetUserDefaultUILanguage(void)
     LANGID lang;
     NtQueryDefaultUILanguage( &lang );
     return lang;
+}
+
+
+/******************************************************************************
+ *	GetUserGeoID   (kernelbase.@)
+ */
+GEOID WINAPI DECLSPEC_HOTPATCH GetUserGeoID( GEOCLASS geoclass )
+{
+    GEOID ret = 39070;
+    const WCHAR *name;
+    WCHAR bufferW[40];
+    HKEY hkey;
+
+    switch (geoclass)
+    {
+    case GEOCLASS_NATION:
+        name = L"Nation";
+        break;
+    case GEOCLASS_REGION:
+        name = L"Region";
+        break;
+    default:
+        WARN("Unknown geoclass %d\n", geoclass);
+        return GEOID_NOT_AVAILABLE;
+    }
+    if (!RegOpenKeyExW( intl_key, L"Geo", 0, KEY_ALL_ACCESS, &hkey ))
+    {
+        DWORD count = sizeof(bufferW);
+        if (!RegQueryValueExW( hkey, name, NULL, NULL, (BYTE *)bufferW, &count ))
+            ret = wcstol( bufferW, NULL, 10 );
+        RegCloseKey( hkey );
+    }
+    return ret;
 }
 
 
@@ -4231,6 +4698,31 @@ INT WINAPI /* DECLSPEC_HOTPATCH */ SetCalendarInfoW( LCID lcid, CALID calendar, 
 {
     FIXME( "(%08x,%08x,%08x,%s): stub\n", lcid, calendar, type, debugstr_w(data) );
     return 0;
+}
+
+
+/******************************************************************************
+ *	SetUserGeoID   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetUserGeoID( GEOID id )
+{
+    const struct geoinfo *geoinfo = get_geoinfo_ptr( id );
+    WCHAR bufferW[10];
+    HKEY hkey;
+
+    if (!geoinfo)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!RegCreateKeyExW( intl_key, L"Geo", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    {
+        const WCHAR *name = geoinfo->kind == LOCATION_NATION ? L"Nation" : L"Region";
+        swprintf( bufferW, ARRAY_SIZE(bufferW), L"%u", geoinfo->id );
+        RegSetValueExW( hkey, name, 0, REG_SZ, (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
+        RegCloseKey( hkey );
+    }
+    return TRUE;
 }
 
 

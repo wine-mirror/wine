@@ -313,7 +313,7 @@
 @ stdcall EnumResourceTypesExW(long ptr long long long)
 @ stdcall EnumSystemCodePagesW(ptr long)
 @ stdcall EnumSystemFirmwareTables(long ptr long)
-@ stdcall EnumSystemGeoID(long long ptr) kernel32.EnumSystemGeoID
+@ stdcall EnumSystemGeoID(long long ptr)
 @ stdcall EnumSystemLanguageGroupsW(ptr long ptr)
 @ stdcall EnumSystemLocalesA(ptr long)
 @ stdcall EnumSystemLocalesEx(ptr long long ptr)
@@ -530,7 +530,7 @@
 @ stdcall GetFullPathNameW(wstr long ptr ptr)
 # @ stub GetGPOListInternalA
 # @ stub GetGPOListInternalW
-@ stdcall GetGeoInfoW(long long ptr long long) kernel32.GetGeoInfoW
+@ stdcall GetGeoInfoW(long long ptr long long)
 @ stdcall GetHandleInformation(long ptr)
 # @ stub GetHivePath
 # @ stub GetIntegratedDisplaySize
@@ -743,7 +743,7 @@
 @ stdcall GetUserDefaultLangID()
 @ stdcall GetUserDefaultLocaleName(ptr long)
 @ stdcall GetUserDefaultUILanguage()
-@ stdcall GetUserGeoID(long) kernel32.GetUserGeoID
+@ stdcall GetUserGeoID(long)
 @ stub GetUserInfo
 @ stub GetUserInfoWord
 # @ stub GetUserOverrideString
@@ -1502,7 +1502,7 @@
 @ stdcall SetTimeZoneInformation(ptr) kernel32.SetTimeZoneInformation
 @ stdcall SetTokenInformation(long long ptr long)
 @ stdcall SetUnhandledExceptionFilter(ptr)
-@ stdcall SetUserGeoID(long) kernel32.SetUserGeoID
+@ stdcall SetUserGeoID(long)
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long)
 @ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long)
 # @ stub SetXStateFeaturesMask

@@ -419,7 +419,7 @@
 @ stdcall EnumSystemCodePagesA(ptr long)
 @ stdcall -import EnumSystemCodePagesW(ptr long)
 @ stdcall -import EnumSystemFirmwareTables(long ptr long)
-@ stdcall EnumSystemGeoID(long long ptr)
+@ stdcall -import EnumSystemGeoID(long long ptr)
 @ stdcall EnumSystemLanguageGroupsA(ptr long ptr)
 @ stdcall -import EnumSystemLanguageGroupsW(ptr long ptr)
 @ stdcall -import EnumSystemLocalesA(ptr long)
@@ -693,7 +693,7 @@
 # @ stub GetFullPathNameTransactedW
 @ stdcall -import GetFullPathNameW(wstr long ptr ptr)
 @ stdcall GetGeoInfoA(long long ptr long long)
-@ stdcall GetGeoInfoW(long long ptr long long)
+@ stdcall -import GetGeoInfoW(long long ptr long long)
 @ stdcall GetHandleContext(long)
 @ stdcall -import GetHandleInformation(long ptr)
 @ stub -i386 GetLSCallbackTarget
@@ -875,7 +875,7 @@
 @ stdcall -import GetUserDefaultLangID()
 @ stdcall -import GetUserDefaultLocaleName(ptr long)
 @ stdcall -import GetUserDefaultUILanguage()
-@ stdcall GetUserGeoID(long)
+@ stdcall -import GetUserGeoID(long)
 @ stub GetVDMCurrentDirectories
 @ stdcall -import GetVersion()
 @ stdcall -import GetVersionExA(ptr)
@@ -1471,7 +1471,7 @@
 @ stub SetTimerQueueTimer
 @ stdcall -arch=x86_64 SetUmsThreadInformation(ptr long ptr long)
 @ stdcall -import SetUnhandledExceptionFilter(ptr)
-@ stdcall SetUserGeoID(long)
+@ stdcall -import SetUserGeoID(long)
 @ stub SetVDMCurrentDirectories
 @ stdcall SetVolumeLabelA(str str)
 @ stdcall SetVolumeLabelW(wstr wstr)
