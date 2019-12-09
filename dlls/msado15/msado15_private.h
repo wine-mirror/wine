@@ -25,4 +25,10 @@ HRESULT Connection_create( void ** ) DECLSPEC_HIDDEN;
 HRESULT Recordset_create( void ** ) DECLSPEC_HIDDEN;
 HRESULT Stream_create( void ** ) DECLSPEC_HIDDEN;
 
+static inline void *heap_realloc_zero( void *mem, SIZE_T len )
+{
+    if (!mem) return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
+    return HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len );
+}
+
 #endif /* _WINE_MSADO15_PRIVATE_H_ */

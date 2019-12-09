@@ -25,13 +25,34 @@
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
+static HRESULT str_to_byte_array( const char *data, VARIANT *ret )
+{
+    SAFEARRAY *vector;
+    LONG i, len = strlen(data);
+    HRESULT hr;
+
+    if (!(vector = SafeArrayCreateVector( VT_UI1, 0, len ))) return E_OUTOFMEMORY;
+    for (i = 0; i < len; i++)
+    {
+        if ((hr = SafeArrayPutElement( vector, &i, (void *)&data[i] )) != S_OK)
+        {
+            SafeArrayDestroy( vector );
+            return hr;
+        }
+    }
+
+    V_VT( ret ) = VT_ARRAY | VT_UI1;
+    V_ARRAY( ret ) = vector;
+    return S_OK;
+}
+
 static void test_Stream(void)
 {
     _Stream *stream;
     StreamTypeEnum type;
     LONG refs;
     ObjectStateEnum state;
-    VARIANT missing;
+    VARIANT missing, val;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_Stream, NULL, CLSCTX_INPROC_SERVER, &IID__Stream, (void **)&stream );
@@ -60,6 +81,9 @@ static void test_Stream(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == adStateClosed, "got %u\n", state );
 
+    hr = _Stream_Read( stream, 2, &val );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
+
     V_VT( &missing ) = VT_ERROR;
     V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
     hr = _Stream_Open( stream, missing, adModeUnknown, adOpenStreamUnspecified, NULL, NULL );
@@ -73,6 +97,9 @@ static void test_Stream(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == adStateOpen, "got %u\n", state );
 
+    hr = _Stream_Read( stream, 2, &val );
+    ok( hr == MAKE_ADO_HRESULT( adErrIllegalOperation ), "got %08x\n", hr );
+
     hr = _Stream_Close( stream );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -83,6 +110,34 @@ static void test_Stream(void)
 
     hr = _Stream_Close( stream );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
+
+    refs = _Stream_Release( stream );
+    ok( !refs, "got %d\n", refs );
+
+    /* binary type */
+    hr = CoCreateInstance( &CLSID_Stream, NULL, CLSCTX_INPROC_SERVER, &IID__Stream, (void **)&stream );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Stream_put_Type( stream, adTypeBinary );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Stream_Open( stream, missing, adModeUnknown, adOpenStreamUnspecified, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    VariantInit( &val );
+    hr = _Stream_Read( stream, 1, &val );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &val ) == VT_NULL, "got %u\n", V_VT( &val ) );
+
+    VariantInit( &val );
+    hr = _Stream_Write( stream, val );
+    ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08x\n", hr );
+
+    hr = str_to_byte_array( "data", &val );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = _Stream_Write( stream, val );
+    ok( hr == S_OK, "got %08x\n", hr );
+    VariantClear( &val );
 
     refs = _Stream_Release( stream );
     ok( !refs, "got %d\n", refs );

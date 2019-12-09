@@ -32,10 +32,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
 struct stream
 {
-    _Stream         Stream_iface;
-    LONG            refs;
-    ObjectStateEnum state;
-    StreamTypeEnum  type;
+    _Stream          Stream_iface;
+    LONG             refs;
+    ObjectStateEnum  state;
+    StreamTypeEnum   type;
+    LONG             size;
+    LONG             allocated;
+    LONG             pos;
+    BYTE            *buf;
 };
 
 static inline struct stream *impl_from_Stream( _Stream *iface )
@@ -56,6 +60,7 @@ static ULONG WINAPI stream_Release( _Stream *iface )
     if (!refs)
     {
         TRACE( "destroying %p\n", stream );
+        heap_free( stream->buf );
         heap_free( stream );
     }
     return refs;
@@ -122,6 +127,20 @@ static HRESULT WINAPI stream_get_Position( _Stream *iface, LONG *pos )
 {
     FIXME( "%p, %p\n", iface, pos );
     return E_NOTIMPL;
+}
+
+static HRESULT resize_buffer( struct stream *stream, LONG size )
+{
+    if (stream->allocated < size)
+    {
+        BYTE *tmp;
+        LONG new_size = max( size, stream->allocated * 2 );
+        if (!(tmp = heap_realloc_zero( stream->buf, new_size ))) return E_OUTOFMEMORY;
+        stream->buf = tmp;
+        stream->allocated = new_size;
+    }
+    stream->size = size;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_put_Position( _Stream *iface, LONG pos )
@@ -193,10 +212,49 @@ static HRESULT WINAPI stream_put_Charset( _Stream *iface, BSTR charset )
     return E_NOTIMPL;
 }
 
+static HRESULT create_byte_array( BYTE *data, LONG len, VARIANT *ret )
+{
+    SAFEARRAY *vector;
+    LONG i;
+    HRESULT hr;
+
+    if (!len)
+    {
+        V_VT( ret ) = VT_NULL;
+        return S_OK;
+    }
+    if (!(vector = SafeArrayCreateVector( VT_UI1, 0, len ))) return E_OUTOFMEMORY;
+    for (i = 0; i < len; i++)
+    {
+        if ((hr = SafeArrayPutElement( vector, &i, &data[i] )) != S_OK)
+        {
+            SafeArrayDestroy( vector );
+            return hr;
+        }
+    }
+
+    V_VT( ret ) = VT_ARRAY | VT_UI1;
+    V_ARRAY( ret ) = vector;
+    return S_OK;
+}
+
 static HRESULT WINAPI stream_Read( _Stream *iface, LONG size, VARIANT *val )
 {
-    FIXME( "%p, %d, %p\n", iface, size, val );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    HRESULT hr;
+
+    TRACE( "%p, %d, %p\n", stream, size, val );
+
+    if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (stream->type != adTypeBinary) return MAKE_ADO_HRESULT( adErrIllegalOperation );
+    if (size < adReadAll) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if (size == adReadAll) size = stream->size - stream->pos;
+    else size = min( size, stream->size - stream->pos );
+
+    if ((hr = create_byte_array( stream->buf + stream->pos, size, val )) != S_OK) return hr;
+    stream->pos += size;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_Open( _Stream *iface, VARIANT src, ConnectModeEnum mode, StreamOpenOptionsEnum options,
@@ -219,6 +277,10 @@ static HRESULT WINAPI stream_Close( _Stream *iface )
 
     if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
+    heap_free( stream->buf );
+    stream->buf  = NULL;
+    stream->size = stream->allocated = stream->pos = 0;
+
     stream->state = adStateClosed;
     return S_OK;
 }
@@ -231,8 +293,25 @@ static HRESULT WINAPI stream_SkipLine( _Stream *iface )
 
 static HRESULT WINAPI stream_Write( _Stream *iface, VARIANT buf )
 {
-    FIXME( "%p, %s\n", iface, debugstr_variant(&buf) );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    LONG bound, i;
+    HRESULT hr;
+
+    TRACE( "%p, %s\n", stream, debugstr_variant(&buf) );
+
+    if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (stream->type != adTypeBinary) return MAKE_ADO_HRESULT( adErrIllegalOperation );
+    if (V_VT( &buf ) != (VT_ARRAY | VT_UI1)) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if ((hr = SafeArrayGetUBound( V_ARRAY( &buf ), 1, &bound )) != S_OK) return hr;
+    if ((hr = resize_buffer( stream, stream->size + bound + 1 )) != S_OK) return hr;
+
+    for (i = 0; i <= bound; i++)
+    {
+        if ((hr = SafeArrayGetElement( V_ARRAY( &buf ), &i, &stream->buf[stream->pos++] )) != S_OK) return hr;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_SetEOS( _Stream *iface )
