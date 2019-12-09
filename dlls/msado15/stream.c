@@ -113,8 +113,13 @@ static HRESULT WINAPI stream_Invoke( _Stream *iface, DISPID member, REFIID riid,
 
 static HRESULT WINAPI stream_get_Size( _Stream *iface, LONG *size )
 {
-    FIXME( "%p, %p\n", iface, size );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    TRACE( "%p, %p\n", stream, size );
+
+    if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    *size = stream->size;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_get_EOS( _Stream *iface, VARIANT_BOOL *eos )

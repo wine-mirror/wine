@@ -50,13 +50,16 @@ static void test_Stream(void)
 {
     _Stream *stream;
     StreamTypeEnum type;
-    LONG refs, pos;
+    LONG refs, size, pos;
     ObjectStateEnum state;
     VARIANT missing, val;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_Stream, NULL, CLSCTX_INPROC_SERVER, &IID__Stream, (void **)&stream );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Stream_get_Size( stream, &size );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
 
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
@@ -103,10 +106,20 @@ static void test_Stream(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == adStateOpen, "got %u\n", state );
 
+    size = -1;
+    hr = _Stream_get_Size( stream, &size );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !size, "got %d\n", size );
+
     pos = -1;
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !pos, "got %d\n", pos );
+
+    size = -1;
+    hr = _Stream_get_Size( stream, &size );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !size, "got %d\n", size );
 
     hr = _Stream_Read( stream, 2, &val );
     ok( hr == MAKE_ADO_HRESULT( adErrIllegalOperation ), "got %08x\n", hr );
