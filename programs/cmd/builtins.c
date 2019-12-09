@@ -2549,7 +2549,7 @@ void WCMD_give_help (const WCHAR *args)
   size_t i;
 
   args = WCMD_skip_leading_spaces((WCHAR*) args);
-  if (lstrlenW(args) == 0) {
+  if (!*args) {
     WCMD_output_asis (WCMD_LoadMessage(WCMD_ALLHELP));
   }
   else {
@@ -3460,7 +3460,8 @@ void WCMD_setshow_default (const WCHAR *args) {
   }
 
   GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
-  if (lstrlenW(args) == 0) {
+
+  if (!*args) {
     lstrcatW (cwd, newlineW);
     WCMD_output_asis (cwd);
   }
@@ -3552,7 +3553,7 @@ void WCMD_setshow_date (void) {
   DWORD count;
   static const WCHAR parmT[] = {'/','T','\0'};
 
-  if (lstrlenW(param1) == 0) {
+  if (!*param1) {
     if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, NULL, NULL, curdate, ARRAY_SIZE(curdate))) {
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTDATE), curdate);
       if (wcsstr (quals, parmT) == NULL) {
@@ -4194,7 +4195,7 @@ void WCMD_setshow_env (WCHAR *s) {
 
     /* Output the prompt */
     *p++ = '\0';
-    if (lstrlenW(p) != 0) WCMD_output_asis(p);
+    if (*p) WCMD_output_asis(p);
 
     /* Read the reply */
     WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count);
@@ -4268,7 +4269,7 @@ void WCMD_setshow_env (WCHAR *s) {
     }
     *p++ = '\0';
 
-    if (lstrlenW(p) == 0) p = NULL;
+    if (!*p) p = NULL;
     WINE_TRACE("set: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
                wine_dbgstr_w(p));
     status = SetEnvironmentVariableW(s, p);
@@ -4293,7 +4294,7 @@ void WCMD_setshow_path (const WCHAR *args) {
   static const WCHAR pathW[] = {'P','A','T','H','\0'};
   static const WCHAR pathEqW[] = {'P','A','T','H','=','\0'};
 
-  if (lstrlenW(param1) == 0 && lstrlenW(param2) == 0) {
+  if (!*param1 && !*param2) {
     status = GetEnvironmentVariableW(pathW, string, ARRAY_SIZE(string));
     if (status != 0) {
       WCMD_output_asis ( pathEqW);
@@ -4322,13 +4323,13 @@ void WCMD_setshow_prompt (void) {
   WCHAR *s;
   static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
 
-  if (lstrlenW(param1) == 0) {
+  if (!*param1) {
     SetEnvironmentVariableW(promptW, NULL);
   }
   else {
     s = param1;
     while ((*s == '=') || (*s == ' ') || (*s == '\t')) s++;
-    if (lstrlenW(s) == 0) {
+    if (!*s) {
       SetEnvironmentVariableW(promptW, NULL);
     }
     else SetEnvironmentVariableW(promptW, s);
@@ -4349,7 +4350,7 @@ void WCMD_setshow_time (void) {
   SYSTEMTIME st;
   static const WCHAR parmT[] = {'/','T','\0'};
 
-  if (lstrlenW(param1) == 0) {
+  if (!*param1) {
     GetLocalTime(&st);
     if (GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &st, NULL, curtime, ARRAY_SIZE(curtime))) {
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTTIME), curtime);
@@ -4756,7 +4757,7 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
   WCHAR string[MAX_PATH], label[MAX_PATH], curdir[MAX_PATH];
   BOOL status;
 
-  if (lstrlenW(path) == 0) {
+  if (!*path) {
     status = GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir);
     if (!status) {
       WCMD_print_error ();
@@ -4794,7 +4795,7 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
       string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
     }
-    if (lstrlenW(path) != 0) {
+    if (*path) {
       if (!SetVolumeLabelW(curdir, string)) WCMD_print_error ();
     }
     else {
