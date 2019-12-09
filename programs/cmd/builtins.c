@@ -2511,7 +2511,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       heap_free(dirsToWalk->dirName);
       heap_free(dirsToWalk);
       dirsToWalk = nextDir;
-      if (dirsToWalk) WINE_TRACE("Moving to next directorty to iterate: %s\n",
+      if (dirsToWalk) WINE_TRACE("Moving to next directory to iterate: %s\n",
                                  wine_dbgstr_w(dirsToWalk->dirName));
       else WINE_TRACE("Finished all directories.\n");
     }

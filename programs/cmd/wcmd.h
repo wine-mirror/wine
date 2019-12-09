@@ -34,7 +34,7 @@
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192
 
-/* Data structure to hold commands delimitors/separators */
+/* Data structure to hold commands delimiters/separators */
 
 typedef enum _CMDdelimiters {
   CMD_NONE,        /* End of line or single & */
