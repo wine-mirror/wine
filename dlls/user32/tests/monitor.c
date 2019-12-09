@@ -71,7 +71,6 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
     int device_id;
     int subsys_id;
     int revision_id;
-    size_t length;
     HDC hdc;
 
     adapter_count++;
@@ -87,9 +86,8 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
        "#%d: wrong DeviceKey %s\n", index, device->DeviceKey);
 
     /* DeviceString */
-    length = strlen(device->DeviceString);
-    ok(broken(length == 0) || /* XP on Testbot will return an empty string, whereas XP on real machine doesn't. Probably a bug in virtual adapter driver */
-       length > 0, "#%d: expect DeviceString not empty\n", index);
+    ok(broken(!*device->DeviceString) || /* XP on Testbot will return an empty string, whereas XP on real machine doesn't. Probably a bug in virtual adapter driver */
+       *device->DeviceString, "#%d: expect DeviceString not empty\n", index);
 
     /* StateFlags */
     if (index == 0)
@@ -139,7 +137,7 @@ static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index
     ok(!strcmp(monitor_name, device->DeviceName), "#%d: expect %s, got %s\n", monitor_index, monitor_name, device->DeviceName);
 
     /* DeviceString */
-    ok(strlen(device->DeviceString) > 0, "#%d: expect DeviceString not empty\n", monitor_index);
+    ok(*device->DeviceString, "#%d: expect DeviceString not empty\n", monitor_index);
 
     /* StateFlags */
     if (adapter_index == 0 && monitor_index == 0)
