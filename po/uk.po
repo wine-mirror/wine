@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-12 15:58+0200\n"
+"PO-Revision-Date: 2019-12-09 22:24+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -6830,535 +6830,387 @@ msgstr "Відсилання пошти"
 
 #: mferror.mc:249 mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "Запит вже зроблено.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Already initialized.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "Вже ініціалізовано.\n"
+msgstr "Вихід не було завершено.\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "Платформа встановлення не підтримується.\n"
+msgstr "Платформа Media Foundation не ініціалізована.\n"
 
 #: mferror.mc:39
 msgid "Buffer is too small.\n"
-msgstr ""
+msgstr "Розмір буфера занадто малий.\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "Невірний синтаксис запиту.\n"
+msgstr "Невірний запит.\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "Невірний номер сегмента.\n"
+msgstr "Невірний номер потоку.\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
 msgstr "Невірний тип даних.\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "Request not accepted.\n"
 msgid "No more input is accepted.\n"
-msgstr "Запит не прийнято.\n"
+msgstr "Введення даних більше не приймається.\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Already initialized.\n"
 msgid "Object is not initialized.\n"
-msgstr "Вже ініціалізовано.\n"
+msgstr "Об'єкт не ініціалізований.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "Запит не підтримується.\n"
+msgstr "Представлення не підтримується.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "Більше типів даних у запропонованому списку немає.\n"
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Непідтримувана служба.\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "Неочікувана помилка мережі.\n"
+msgstr "Неочікувана помилка.\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "Невірний час.\n"
+msgstr "Невірний тип.\n"
 
 #: mferror.mc:123
-#, fuzzy
-#| msgid "Invalid number format."
 msgid "Invalid file format.\n"
-msgstr "Невірний числовий формат."
+msgstr "Невірний формат файлу.\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "Невірний час.\n"
+msgstr "Невірна мітка часу.\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Непідтримувана схема.\n"
 
 #: mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Непідтримуваний тип потоку даних.\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Непідтримуваний формат часу.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "Часова позначка для зразка не встановлена.\n"
 
 #: mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "Тривалість для вибірки не встановлена.\n"
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "Невірні дані.\n"
+msgstr "Невірні дані потоку.\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "Довідка недоступна."
+msgstr "Підтримка в режимі реального часу недоступна.\n"
 
 #: mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Непідтримуваний темп.\n"
 
 #: mferror.mc:200
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported thinning.\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Непідтримуване проріджування.\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "Запит не підтримується.\n"
+msgstr "Реверс не підтримується.\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported name syntax.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "Непідтримуваний синтаксис імені.\n"
+msgstr "Зміна швидкості не підтримується.\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "Перешкоджання зміни швидкості.\n"
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Sector not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "Сектор не знайдено.\n"
+msgstr "Об'єкт або значення не знайдено.\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "Довідка недоступна."
+msgstr "Значення недоступне.\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "Довідка недоступна."
+msgstr "Годинник недоступний.\n"
 
 #: mferror.mc:263
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "Запит не підтримується.\n"
+msgstr "Підтримка декількох користувачів не надається.\n"
 
 #: mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "Драйвер не підключений."
+msgstr ""
 
 #: mferror.mc:277
 msgid "State transition is pending.\n"
-msgstr ""
+msgstr "Очікується зміна стану.\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported name syntax.\n"
 msgid "Unsupported state transition.\n"
-msgstr "Непідтримуваний синтаксис імені.\n"
+msgstr "Непідтримувана зміна стану.\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "Виникла внутрішня помилка.\n"
+msgstr "Виникла критична помилка.\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "Зразок має занадто багато буферів.\n"
 
 #: mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "Тимчасова тека недоступна для запису.\n"
+msgstr "Неможливо записати зразок.\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "Невірний шлях.\n"
+msgstr "Невірний ключ.\n"
 
 #: mferror.mc:319
-#, fuzzy
-#| msgid "Bad network response.\n"
 msgid "Bad startup version.\n"
-msgstr "Погана відповідь мережі.\n"
+msgstr "Некоректна версія під час запуску.\n"
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Непідтримуваний підпис.\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid Option"
 msgid "Invalid position.\n"
-msgstr "Невірний параметр"
+msgstr "Невірна позиція.\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "Файл не знайдено.\n"
+msgstr "Атрибут не знайдено.\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "Недозволений тип гачка.\n"
+msgstr "Недозволений тип властивості.\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "Запит не підтримується.\n"
+msgstr "Тип властивості не підтримується.\n"
 
 #: mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "Каталог не порожній.\n"
+msgstr "Властивість порожня.\n"
 
 #: mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "Каталог не порожній.\n"
+msgstr "Властивість не порожня.\n"
 
 #: mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "Недозволений тип гачка.\n"
+msgstr "Недозволена векторна властивість.\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "Потребується векторна властивість.\n"
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "Операція скасована користувачем.\n"
+msgstr "Операція була скасована.\n"
 
 #: mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "Сервер не вимкнений.\n"
+msgstr "Потік не є послідовним.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "Платформа відключена в безпечному режимі.\n"
 
 #: mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "Неможливо створити.\n"
+msgstr "Неможливо розібрати потік даних.\n"
 
 #: mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "Конфліктні прапори передані до вихідної резолюції.\n"
 
 #: mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "Невідомий інтерфейс.\n"
+msgstr "Невідома довжина потоку.\n"
 
 #: mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "Невірний індекс.\n"
+msgstr "Невірний індекс черги завдань.\n"
 
 #: mferror.mc:438
-#, fuzzy
-#| msgid "No more data available.\n"
 msgid "No events available.\n"
-msgstr "Даних більше немає.\n"
+msgstr "Подій немає.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported name syntax.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "Непідтримуваний синтаксис імені.\n"
+msgstr "Невірна зміна стану джерела медіа.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "Реєстр відновлено.\n"
+msgstr "Досягнуто кінця медіапотоку.\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "Було викликано Shutdown().\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "Реєстр відновлено.\n"
+msgstr "Тривалості для медіапотоку не встановлено.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "Формат медіа був розпізнаний, але він невірний.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "Набір властивостей не знайдено.\n"
+msgstr "Властивість не знайдено.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "Каталог не порожній.\n"
+msgstr "Властивість лише для читання.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "Недозволений тип гачка.\n"
+msgstr "Недозволена властивість.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "Ресурс використовується.\n"
+msgstr "Джерело медіа не запускається.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Непідтримуваний формат медіа.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "Ресурс використовується.\n"
+msgstr "Невірний стан джерела медіа.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "Даних не виявлено.\n"
+msgstr "Не вибрано потоків медіа.\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Непідтримувані характеристики джерела медіа.\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "Вихід потоку даних видалено.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "Потік даних не синхронізується.\n"
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "Реєстр відновлено.\n"
+msgstr "Запис виходу потоку даних медіавиходу неможливо змінити.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "Домен вже існує.\n"
+msgstr "Вихід потоку даних вже існує.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "Операція скасована користувачем.\n"
+msgstr "Виділення зразка було перервано.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "Каталог не порожній.\n"
+msgstr "Розподільник зразків порожній.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "Клас вже існує.\n"
+msgstr "Вихід вже було припинино.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "Невідомий бітрейт для виводу файлу ASF.\n"
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "Даних не виявлено.\n"
+msgstr "Для виводу не вибрано потоків даних.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "Ім'я файлу занадто довге.\n"
+msgstr "Метадані були занадто довгими.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "Жодні зразки не оброблялися результатами.\n"
 
 #: mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "Вихідні дані не були забезпечені необхідними заголовками.\n"
 
 #: mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "Невірне з'єднання.\n"
+msgstr "Необов’язковий вузол невірний.\n"
 
 #: mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "Не вдалось знайти принтер."
+msgstr "Модуль розшифровки не знайдено.\n"
 
 #: mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "Модуль не знайдено.\n"
+msgstr "Кодек не було знайдено.\n"
 
 #: mferror.mc:648
 msgid "Cannot connect topology nodes.\n"
-msgstr ""
+msgstr "Не вдалося підключити топологічні вузли.\n"
 
 #: mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "Запит не підтримується.\n"
+msgstr "Запит на топологію не підтримується.\n"
 
 #: mferror.mc:662
-#, fuzzy
-#| msgid "Invalid oplock message received.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "Отримане невірне oplock-повідомлення.\n"
+msgstr "Невірні атрибути часу топології.\n"
 
 #: mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "Знайдені петлі в топології.\n"
 
 #: mferror.mc:676
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "Джерело встановлення втрачене.\n"
+msgstr "Дескриптор презентації відсутній.\n"
 
 #: mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "Індекс загублений.\n"
+msgstr "Дескриптор потоку відсутній.\n"
 
 #: mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "Пристрій не під'єднаний.\n"
+msgstr "Дескриптор потоку не вибраний.\n"
 
 #: mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "Індекс загублений.\n"
+msgstr "Джерело відсутнє.\n"
 
 #: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "Завантажувач топології не підтримує вихідний сигнал.\n"
 
 #: mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "У годинника немає призначеного джерела часу.\n"
 
 #: mferror.mc:718
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "Клас вже існує.\n"
+msgstr "Статус годинника вже встановлено.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -9718,16 +9570,12 @@ msgid "Cape Verde Daylight Time"
 msgstr ""
 
 #: tzres.rc:74
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Standard Time"
-msgstr "Центральноєвропейський"
+msgstr ""
 
 #: tzres.rc:75
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Daylight Time"
-msgstr "Центральноєвропейський"
+msgstr ""
 
 #: tzres.rc:140
 msgid "Morocco Standard Time"
@@ -9738,16 +9586,12 @@ msgid "Morocco Daylight Time"
 msgstr ""
 
 #: tzres.rc:72
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Standard Time"
-msgstr "Центральноєвропейський"
+msgstr ""
 
 #: tzres.rc:73
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Daylight Time"
-msgstr "Центральноєвропейський"
+msgstr ""
 
 #: tzres.rc:118
 msgid "Iran Standard Time"
@@ -9782,10 +9626,8 @@ msgid "Mountain Daylight Time (Mexico)"
 msgstr ""
 
 #: tzres.rc:106
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GMT Standard Time"
-msgstr "&Стандартна панель"
+msgstr ""
 
 #: tzres.rc:107
 msgid "GMT Daylight Time"
@@ -9956,10 +9798,8 @@ msgid "India Daylight Time"
 msgstr ""
 
 #: tzres.rc:112
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "&Стандартна панель"
+msgstr ""
 
 #: tzres.rc:113
 msgid "GTB Daylight Time"
@@ -10278,10 +10118,8 @@ msgid "Paraguay Daylight Time"
 msgstr ""
 
 #: tzres.rc:84
-#, fuzzy
-#| msgid "Date and time"
 msgid "Dateline Standard Time"
-msgstr "Дата та час"
+msgstr ""
 
 #: tzres.rc:85
 msgid "Dateline Daylight Time"
@@ -10368,16 +10206,12 @@ msgid "Greenland Daylight Time"
 msgstr ""
 
 #: tzres.rc:92
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Standard Time"
-msgstr "Дата та час"
+msgstr ""
 
 #: tzres.rc:93
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Daylight Time"
-msgstr "Дата та час"
+msgstr ""
 
 #: tzres.rc:96
 msgid "Egypt Standard Time"
@@ -10428,10 +10262,8 @@ msgid "E. Africa Daylight Time"
 msgstr ""
 
 #: tzres.rc:102
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "&Стандартна панель"
+msgstr ""
 
 #: tzres.rc:103
 msgid "FLE Daylight Time"
@@ -11249,10 +11081,6 @@ msgstr ""
 "використовувати їх одночасно."
 
 #: winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
@@ -11273,10 +11101,6 @@ msgid "An error occurred with the specified port."
 msgstr "Сталася помилка зі вказаним портом."
 
 #: winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
@@ -15428,7 +15252,7 @@ msgstr "Переглядач звичайних метафайлів"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Метафайли (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15596,16 +15420,12 @@ msgid "Drive configuration"
 msgstr "Налаштування привода"
 
 #: winecfg.rc:233
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
-"Неможливо з'єднатися з менеджером монтування, конфігурація дисків не буде "
-"редагуватися."
+"Неможливо з'єднатися з менеджером монтування, конфігурацію дисків не можна "
+"редагувати."
 
 #: winecfg.rc:236
 msgid "A&dd..."
@@ -15891,19 +15711,13 @@ msgid "System drive"
 msgstr "Системний диск"
 
 #: winecfg.rc:76
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
-"Справді видалити диск C?\n"
+"Ви впевнені, що хочете видалити диск C?\n"
 "\n"
 "Більшість Windows-програм перестануть працювати без диску C. Якщо ви все ж "
 "вирішили видалити диск, не забудьте створити новий!"
@@ -16979,10 +16793,8 @@ msgid "Text documents (*.txt)"
 msgstr "Текстові документи (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
-msgstr "Текстовий документ Юнікод (*.txt)"
+msgstr "Текстові документи Юнікод (*.txt)"
 
 #: wordpad.rc:150
 msgid "Rich text format (*.rtf)"
@@ -17183,42 +16995,6 @@ msgid "D"
 msgstr "Д"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
