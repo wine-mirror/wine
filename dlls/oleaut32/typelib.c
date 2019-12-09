@@ -3757,7 +3757,7 @@ static DWORD SLTG_ReadLibBlk(LPVOID pLibBlk, ITypeLibImpl *pTypeLibImpl)
 
     ptr += 6;
     if((w = *(WORD*)ptr) != 0xffff) {
-        FIXME("LibBlk.res06 = %04x. Assumung string and skipping\n", w);
+        FIXME("LibBlk.res06 = %04x. Assuming string and skipping\n", w);
         ptr += w;
     }
     ptr += 2;
