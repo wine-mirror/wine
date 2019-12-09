@@ -125,8 +125,13 @@ static HRESULT WINAPI stream_get_EOS( _Stream *iface, VARIANT_BOOL *eos )
 
 static HRESULT WINAPI stream_get_Position( _Stream *iface, LONG *pos )
 {
-    FIXME( "%p, %p\n", iface, pos );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    TRACE( "%p, %p\n", stream, pos );
+
+    if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    *pos = stream->pos;
+    return S_OK;
 }
 
 static HRESULT resize_buffer( struct stream *stream, LONG size )
@@ -145,8 +150,17 @@ static HRESULT resize_buffer( struct stream *stream, LONG size )
 
 static HRESULT WINAPI stream_put_Position( _Stream *iface, LONG pos )
 {
-    FIXME( "%p, %d\n", iface, pos );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    HRESULT hr;
+
+    TRACE( "%p, %d\n", stream, pos );
+
+    if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (pos < 0) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if ((hr = resize_buffer( stream, stream->pos )) != S_OK) return hr;
+    stream->pos = pos;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_get_Type( _Stream *iface, StreamTypeEnum *type )

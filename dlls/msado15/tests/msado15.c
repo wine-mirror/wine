@@ -50,13 +50,19 @@ static void test_Stream(void)
 {
     _Stream *stream;
     StreamTypeEnum type;
-    LONG refs;
+    LONG refs, pos;
     ObjectStateEnum state;
     VARIANT missing, val;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_Stream, NULL, CLSCTX_INPROC_SERVER, &IID__Stream, (void **)&stream );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Stream_get_Position( stream, &pos );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
+
+    hr = _Stream_put_Position( stream, 0 );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
 
     /* check default type */
     type = 0;
@@ -97,8 +103,18 @@ static void test_Stream(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == adStateOpen, "got %u\n", state );
 
+    pos = -1;
+    hr = _Stream_get_Position( stream, &pos );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !pos, "got %d\n", pos );
+
     hr = _Stream_Read( stream, 2, &val );
     ok( hr == MAKE_ADO_HRESULT( adErrIllegalOperation ), "got %08x\n", hr );
+
+    pos = -1;
+    hr = _Stream_get_Position( stream, &pos );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !pos, "got %d\n", pos );
 
     hr = _Stream_Close( stream );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -138,6 +154,25 @@ static void test_Stream(void)
     hr = _Stream_Write( stream, val );
     ok( hr == S_OK, "got %08x\n", hr );
     VariantClear( &val );
+
+    pos = -1;
+    hr = _Stream_get_Position( stream, &pos );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( pos == 4, "got %d\n", pos );
+
+    hr = _Stream_put_Position( stream, 0 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    VariantInit( &val );
+    hr = _Stream_Read( stream, adReadAll, &val );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &val ) == (VT_ARRAY | VT_UI1), "got %04x\n", V_VT( &val ) );
+    VariantClear( &val );
+
+    pos = -1;
+    hr = _Stream_get_Position( stream, &pos );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( pos == 4, "got %d\n", pos );
 
     refs = _Stream_Release( stream );
     ok( !refs, "got %d\n", refs );
