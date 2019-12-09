@@ -621,7 +621,7 @@ static HRESULT WINAPI WMReaderAdvanced5_SetPlayerHook(IWMReaderAdvanced6 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMReaderAdvanced6_SetProtextStreamSamples(IWMReaderAdvanced6 *iface, BYTE *cert,
+static HRESULT WINAPI WMReaderAdvanced6_SetProtectStreamSamples(IWMReaderAdvanced6 *iface, BYTE *cert,
         DWORD cert_size, DWORD cert_type, DWORD flags, BYTE *initialization_vector, DWORD *initialization_vector_size)
 {
     WMReader *This = impl_from_IWMReaderAdvanced6(iface);
@@ -681,7 +681,7 @@ static const IWMReaderAdvanced6Vtbl WMReaderAdvanced6Vtbl = {
     WMReaderAdvanced4_CancelSaveFileAs,
     WMReaderAdvanced4_GetURL,
     WMReaderAdvanced5_SetPlayerHook,
-    WMReaderAdvanced6_SetProtextStreamSamples
+    WMReaderAdvanced6_SetProtectStreamSamples
 };
 
 static inline WMReader *impl_from_IWMReaderAccelerator(IWMReaderAccelerator *iface)
