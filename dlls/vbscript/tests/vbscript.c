@@ -1077,6 +1077,65 @@ static void test_script_typeinfo(void)
     ok(hr == E_INVALIDARG, "Bind returned: %08x\n", hr);
     hr = ITypeComp_Bind(typecomp, str, 0, 0, &typeinfo2, &desckind, NULL);
     ok(hr == E_INVALIDARG, "Bind returned: %08x\n", hr);
+
+    hr = ITypeComp_Bind(typecomp, str, 0, 0, &typeinfo2, &desckind, &bindptr);
+    ok(hr == S_OK, "Bind failed: %08x\n", hr);
+    ok(desckind == DESCKIND_NONE, "Unexpected desckind %u\n", desckind);
+    wcscpy(str, L"GLOBAL_VAR");
+    hr = ITypeComp_Bind(typecomp, str, 0, INVOKE_FUNC, &typeinfo2, &desckind, &bindptr);
+    ok(hr == TYPE_E_TYPEMISMATCH, "Bind returned: %08x\n", hr);
+    ok(!lstrcmpW(str, L"GLOBAL_VAR"), "Unexpected string %s\n", wine_dbgstr_w(str));
+    wcscpy(str, L"C");
+    hr = ITypeComp_Bind(typecomp, str, 0, 0, &typeinfo2, &desckind, &bindptr);
+    ok(hr == S_OK, "Bind failed: %08x\n", hr);
+    ok(desckind == DESCKIND_NONE, "Unexpected desckind %u\n", desckind);
+    wcscpy(str, L"addRef");
+    hr = ITypeComp_Bind(typecomp, str, 0, 0, &typeinfo2, &desckind, &bindptr);
+    ok(hr == S_OK, "Bind failed: %08x\n", hr);
+    ok(desckind == DESCKIND_FUNCDESC, "Unexpected desckind %u\n", desckind);
+    ok(!lstrcmpW(str, L"addRef"), "Unexpected string %s\n", wine_dbgstr_w(str));
+    ITypeInfo_ReleaseFuncDesc(typeinfo2, bindptr.lpfuncdesc);
+    ITypeInfo_Release(typeinfo2);
+    for (i = 0; i < ARRAY_SIZE(var); i++)
+    {
+        wcscpy(str, var[i].name);
+        hr = ITypeComp_Bind(typecomp, str, 0, INVOKE_PROPERTYGET, &typeinfo2, &desckind, &bindptr);
+        ok(hr == S_OK, "Bind failed: %08x\n", hr);
+        ok(desckind == DESCKIND_VARDESC, "Unexpected desckind %u\n", desckind);
+        ITypeInfo_ReleaseVarDesc(typeinfo2, bindptr.lpvardesc);
+        ITypeInfo_Release(typeinfo2);
+    }
+    for (i = 0; i < ARRAY_SIZE(func); i++)
+    {
+        wcscpy(str, func[i].name);
+        hr = ITypeComp_Bind(typecomp, str, 0, INVOKE_FUNC, &typeinfo2, &desckind, &bindptr);
+        ok(hr == S_OK, "Bind failed: %08x\n", hr);
+        ok(desckind == DESCKIND_FUNCDESC, "Unexpected desckind %u\n", desckind);
+        ITypeInfo_ReleaseFuncDesc(typeinfo2, bindptr.lpfuncdesc);
+        ITypeInfo_Release(typeinfo2);
+    }
+    wcscpy(str, L"VBScriptTypeInfo");
+    hr = ITypeComp_BindType(typecomp, NULL, 0, &typeinfo2, &typecomp2);
+    ok(hr == E_INVALIDARG, "BindType returned: %08x\n", hr);
+    hr = ITypeComp_BindType(typecomp, str, 0, NULL, &typecomp2);
+    ok(hr == E_INVALIDARG, "BindType returned: %08x\n", hr);
+    hr = ITypeComp_BindType(typecomp, str, 0, &typeinfo2, NULL);
+    ok(hr == E_INVALIDARG, "BindType returned: %08x\n", hr);
+    hr = ITypeComp_BindType(typecomp, str, 0, &typeinfo2, &typecomp2);
+    ok(hr == S_OK, "BindType failed: %08x\n", hr);
+    ok(!typeinfo2, "Unexpected TypeInfo %p (expected null)\n", typeinfo2);
+    ok(!typecomp2, "Unexpected TypeComp %p (expected null)\n", typecomp2);
+    wcscpy(str, L"C");
+    hr = ITypeComp_BindType(typecomp, str, 0, &typeinfo2, &typecomp2);
+    ok(hr == S_OK, "BindType failed: %08x\n", hr);
+    ok(!typeinfo2, "Unexpected TypeInfo %p (expected null)\n", typeinfo2);
+    ok(!typecomp2, "Unexpected TypeComp %p (expected null)\n", typecomp2);
+    wcscpy(str, L"IDispatch");
+    hr = ITypeComp_BindType(typecomp, str, 0, &typeinfo2, &typecomp2);
+    ok(hr == S_OK, "BindType failed: %08x\n", hr);
+    ok(!typeinfo2, "Unexpected TypeInfo %p (expected null)\n", typeinfo2);
+    ok(!typecomp2, "Unexpected TypeComp %p (expected null)\n", typecomp2);
+
     ITypeComp_Release(typecomp);
 
     /* Updating the script won't update the typeinfo obtained before,
