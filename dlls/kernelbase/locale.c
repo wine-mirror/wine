@@ -2902,6 +2902,146 @@ LANGID WINAPI DECLSPEC_HOTPATCH GetUserDefaultUILanguage(void)
 
 
 /******************************************************************************
+ *	IsCharAlphaA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaA( CHAR c )
+{
+    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
+    return !!(get_table_entry( wctype_table, wc ) & C1_ALPHA);
+}
+
+
+/******************************************************************************
+ *	IsCharAlphaW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & C1_ALPHA);
+}
+
+
+/******************************************************************************
+ *	IsCharAlphaNumericA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaNumericA( CHAR c )
+{
+    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
+    return !!(get_table_entry( wctype_table, wc ) & (C1_ALPHA | C1_DIGIT));
+}
+
+
+/******************************************************************************
+ *	IsCharAlphaNumericW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaNumericW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & (C1_ALPHA | C1_DIGIT));
+}
+
+
+/******************************************************************************
+ *	IsCharBlankW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharBlankW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & C1_BLANK);
+}
+
+
+/******************************************************************************
+ *	IsCharCntrlW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharCntrlW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & C1_CNTRL);
+}
+
+
+/******************************************************************************
+ *	IsCharDigitW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharDigitW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & C1_DIGIT);
+}
+
+
+/******************************************************************************
+ *	IsCharLowerA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharLowerA( CHAR c )
+{
+    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
+    return !!(get_table_entry( wctype_table, wc ) & C1_LOWER);
+}
+
+
+/******************************************************************************
+ *	IsCharLowerW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharLowerW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & C1_LOWER);
+}
+
+
+/******************************************************************************
+ *	IsCharPunctW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharPunctW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & C1_PUNCT);
+}
+
+
+/******************************************************************************
+ *	IsCharSpaceA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharSpaceA( CHAR c )
+{
+    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
+    return !!(get_table_entry( wctype_table, wc ) & C1_SPACE);
+}
+
+
+/******************************************************************************
+ *	IsCharSpaceW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharSpaceW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & C1_SPACE);
+}
+
+
+/******************************************************************************
+ *	IsCharUpperA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharUpperA( CHAR c )
+{
+    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
+    return !!(get_table_entry( wctype_table, wc ) & C1_UPPER);
+}
+
+
+/******************************************************************************
+ *	IsCharUpperW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharUpperW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & C1_UPPER);
+}
+
+
+/******************************************************************************
+ *	IsCharXDigitW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsCharXDigitW( WCHAR wc )
+{
+    return !!(get_table_entry( wctype_table, wc ) & C1_XDIGIT);
+}
+
+
+/******************************************************************************
  *	IsDBCSLeadByte   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsDBCSLeadByte( BYTE testchar )
