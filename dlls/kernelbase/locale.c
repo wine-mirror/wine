@@ -1805,6 +1805,125 @@ static int map_to_halfwidth( WCHAR c, WCHAR *dst, int dstlen )
 }
 
 
+/* 32-bit collation element table format:
+ * unicode weight - high 16 bit, diacritic weight - high 8 bit of low 16 bit,
+ * case weight - high 4 bit of low 8 bit.
+ */
+
+enum weight { UNICODE_WEIGHT, DIACRITIC_WEIGHT, CASE_WEIGHT };
+
+static unsigned int get_weight( WCHAR ch, enum weight type )
+{
+    unsigned int ret = collation_table[collation_table[ch >> 8] + (ch & 0xff)];
+    if (ret == (unsigned int)-1) return ch;
+
+    switch (type)
+    {
+    case UNICODE_WEIGHT:   return ret >> 16;
+    case DIACRITIC_WEIGHT: return (ret >> 8) & 0xff;
+    case CASE_WEIGHT:      return (ret >> 4) & 0x0f;
+    default:               return 0;
+    }
+}
+
+
+static void inc_str_pos( const WCHAR **str, int *len, int *dpos, int *dlen )
+{
+    (*dpos)++;
+    if (*dpos == *dlen)
+    {
+        *dpos = *dlen = 0;
+        (*str)++;
+        (*len)--;
+    }
+}
+
+
+static int compare_weights(int flags, const WCHAR *str1, int len1,
+                           const WCHAR *str2, int len2, enum weight type )
+{
+    int dpos1 = 0, dpos2 = 0, dlen1 = 0, dlen2 = 0;
+    WCHAR dstr1[4], dstr2[4];
+    unsigned int ce1, ce2;
+
+    while (len1 > 0 && len2 > 0)
+    {
+        if (!dlen1) dlen1 = wine_decompose( 0, *str1, dstr1, 4 );
+        if (!dlen2) dlen2 = wine_decompose( 0, *str2, dstr2, 4 );
+
+        if (flags & NORM_IGNORESYMBOLS)
+        {
+            int skip = 0;
+            /* FIXME: not tested */
+            if (get_table_entry( wctype_table, dstr1[dpos1] ) & (C1_PUNCT | C1_SPACE))
+            {
+                inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
+                skip = 1;
+            }
+            if (get_table_entry( wctype_table, dstr2[dpos1] ) & (C1_PUNCT | C1_SPACE))
+            {
+                inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
+                skip = 1;
+            }
+            if (skip) continue;
+        }
+
+       /* hyphen and apostrophe are treated differently depending on
+        * whether SORT_STRINGSORT specified or not
+        */
+        if (type == UNICODE_WEIGHT && !(flags & SORT_STRINGSORT))
+        {
+            if (dstr1[dpos1] == '-' || dstr1[dpos1] == '\'')
+            {
+                if (dstr2[dpos2] != '-' && dstr2[dpos2] != '\'')
+                {
+                    inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
+                    continue;
+                }
+            }
+            else if (dstr2[dpos2] == '-' || dstr2[dpos2] == '\'')
+            {
+                inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
+                continue;
+            }
+        }
+
+        ce1 = get_weight( dstr1[dpos1], type );
+        if (!ce1)
+        {
+            inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
+            continue;
+        }
+        ce2 = get_weight( dstr2[dpos2], type );
+        if (!ce2)
+        {
+            inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
+            continue;
+        }
+
+        if (ce1 - ce2) return ce1 - ce2;
+
+        inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
+        inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
+    }
+    while (len1)
+    {
+        if (!dlen1) dlen1 = wine_decompose( 0, *str1, dstr1, 4 );
+        ce1 = get_weight( dstr1[dpos1], type );
+        if (ce1) break;
+        inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
+    }
+    while (len2)
+    {
+        if (!dlen2) dlen2 = wine_decompose( 0, *str2, dstr2, 4 );
+        ce2 = get_weight( dstr2[dpos2], type );
+        if (ce2) break;
+        inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
+    }
+    return len1 - len2;
+}
+
+
 /* Note: the Internal_ functions are not documented. The number of parameters
  * should be correct, but their exact meaning may not.
  */
@@ -2139,6 +2258,141 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumUILanguages( UILANGUAGE_ENUMPROCW pro
 
 
 /******************************************************************************
+ *	CompareStringEx   (kernelbase.@)
+ */
+INT WINAPI CompareStringEx( const WCHAR *locale, DWORD flags, const WCHAR *str1, int len1,
+                            const WCHAR *str2, int len2, NLSVERSIONINFO *version,
+                            void *reserved, LPARAM handle )
+{
+    DWORD supported_flags = NORM_IGNORECASE | NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS | SORT_STRINGSORT |
+                            NORM_IGNOREKANATYPE | NORM_IGNOREWIDTH | LOCALE_USE_CP_ACP;
+    DWORD semistub_flags = NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE | 0x10000000;
+    /* 0x10000000 is related to diacritics in Arabic, Japanese, and Hebrew */
+    INT ret;
+    static int once;
+
+    if (version) FIXME( "unexpected version parameter\n" );
+    if (reserved) FIXME( "unexpected reserved value\n" );
+    if (handle) FIXME( "unexpected handle\n" );
+
+    if (!str1 || !str2)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (flags & ~(supported_flags | semistub_flags))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (flags & semistub_flags)
+    {
+        if (!once++) FIXME( "semi-stub behavior for flag(s) 0x%x\n", flags & semistub_flags );
+    }
+
+    if (len1 < 0) len1 = lstrlenW(str1);
+    if (len2 < 0) len2 = lstrlenW(str2);
+
+    ret = compare_weights( flags, str1, len1, str2, len2, UNICODE_WEIGHT );
+    if (!ret)
+    {
+        if (!(flags & NORM_IGNORENONSPACE))
+            ret = compare_weights( flags, str1, len1, str2, len2, DIACRITIC_WEIGHT );
+        if (!ret && !(flags & NORM_IGNORECASE))
+            ret = compare_weights( flags, str1, len1, str2, len2, CASE_WEIGHT );
+    }
+    if (!ret) return CSTR_EQUAL;
+    return (ret < 0) ? CSTR_LESS_THAN : CSTR_GREATER_THAN;
+}
+
+
+/******************************************************************************
+ *	CompareStringA   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH CompareStringA( LCID lcid, DWORD flags, const char *str1, int len1,
+                                             const char *str2, int len2 )
+{
+    WCHAR *buf1W = NtCurrentTeb()->StaticUnicodeBuffer;
+    WCHAR *buf2W = buf1W + 130;
+    LPWSTR str1W, str2W;
+    INT len1W = 0, len2W = 0, ret;
+    UINT locale_cp = CP_ACP;
+
+    if (!str1 || !str2)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (len1 < 0) len1 = strlen(str1);
+    if (len2 < 0) len2 = strlen(str2);
+
+    locale_cp = get_lcid_codepage( lcid, flags );
+    if (len1)
+    {
+        if (len1 <= 130) len1W = MultiByteToWideChar( locale_cp, 0, str1, len1, buf1W, 130 );
+        if (len1W) str1W = buf1W;
+        else
+        {
+            len1W = MultiByteToWideChar( locale_cp, 0, str1, len1, NULL, 0 );
+            str1W = HeapAlloc( GetProcessHeap(), 0, len1W * sizeof(WCHAR) );
+            if (!str1W)
+            {
+                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                return 0;
+            }
+            MultiByteToWideChar( locale_cp, 0, str1, len1, str1W, len1W );
+        }
+    }
+    else
+    {
+        len1W = 0;
+        str1W = buf1W;
+    }
+
+    if (len2)
+    {
+        if (len2 <= 130) len2W = MultiByteToWideChar( locale_cp, 0, str2, len2, buf2W, 130 );
+        if (len2W) str2W = buf2W;
+        else
+        {
+            len2W = MultiByteToWideChar( locale_cp, 0, str2, len2, NULL, 0 );
+            str2W = HeapAlloc( GetProcessHeap(), 0, len2W * sizeof(WCHAR) );
+            if (!str2W)
+            {
+                if (str1W != buf1W) HeapFree( GetProcessHeap(), 0, str1W );
+                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                return 0;
+            }
+            MultiByteToWideChar( locale_cp, 0, str2, len2, str2W, len2W );
+        }
+    }
+    else
+    {
+        len2W = 0;
+        str2W = buf2W;
+    }
+
+    ret = CompareStringW( lcid, flags, str1W, len1W, str2W, len2W );
+
+    if (str1W != buf1W) HeapFree( GetProcessHeap(), 0, str1W );
+    if (str2W != buf2W) HeapFree( GetProcessHeap(), 0, str2W );
+    return ret;
+}
+
+
+/******************************************************************************
+ *	CompareStringW   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH CompareStringW( LCID lcid, DWORD flags, const WCHAR *str1, int len1,
+                                             const WCHAR *str2, int len2 )
+{
+    return CompareStringEx( NULL, flags, str1, len1, str2, len2, NULL, NULL, 0 );
+}
+
+
+/******************************************************************************
  *	CompareStringOrdinal   (kernelbase.@)
  */
 INT WINAPI DECLSPEC_HOTPATCH CompareStringOrdinal( const WCHAR *str1, INT len1,
@@ -2419,6 +2673,64 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumTimeFormatsEx( TIMEFMT_ENUMPROCEX proc, const 
 {
     LCID lcid = LocaleNameToLCID( locale, 0 );
     return Internal_EnumTimeFormats( (TIMEFMT_ENUMPROCW)proc, lcid, flags, TRUE, TRUE, lparam );
+}
+
+
+/**************************************************************************
+ *	FindNLSString   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH FindNLSString( LCID lcid, DWORD flags, const WCHAR *src,
+                                            int srclen, const WCHAR *value, int valuelen, int *found )
+{
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+
+    LCIDToLocaleName( lcid, locale, ARRAY_SIZE(locale), 0 );
+    return FindNLSStringEx( locale, flags, src, srclen, value, valuelen, found, NULL, NULL, 0 );
+}
+
+
+/**************************************************************************
+ *	FindNLSStringEx   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH FindNLSStringEx( const WCHAR *locale, DWORD flags, const WCHAR *src,
+                                              int srclen, const WCHAR *value, int valuelen, int *found,
+                                              NLSVERSIONINFO *version, void *reserved, LPARAM handle )
+{
+    /* FIXME: this function should normalize strings before calling CompareStringEx() */
+    DWORD mask = flags;
+    int offset, inc, count;
+
+    TRACE( "%s %x %s %d %s %d %p %p %p %ld\n", wine_dbgstr_w(locale), flags,
+           wine_dbgstr_w(src), srclen, wine_dbgstr_w(value), valuelen, found,
+           version, reserved, handle );
+
+    if (version || reserved || handle || !IsValidLocaleName(locale) ||
+        !src || !srclen || srclen < -1 || !value || !valuelen || valuelen < -1)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return -1;
+    }
+    if (srclen == -1) srclen = lstrlenW(src);
+    if (valuelen == -1) valuelen = lstrlenW(value);
+
+    srclen -= valuelen;
+    if (srclen < 0) return -1;
+
+    mask = flags & ~(FIND_FROMSTART | FIND_FROMEND | FIND_STARTSWITH | FIND_ENDSWITH);
+    count = flags & (FIND_FROMSTART | FIND_FROMEND) ? srclen + 1 : 1;
+    offset = flags & (FIND_FROMSTART | FIND_STARTSWITH) ? 0 : srclen;
+    inc = flags & (FIND_FROMSTART | FIND_STARTSWITH) ? 1 : -1;
+    while (count--)
+    {
+        if (CompareStringEx( locale, mask, src + offset, valuelen,
+                             value, valuelen, NULL, NULL, 0 ) == CSTR_EQUAL)
+        {
+            if (found) *found = valuelen;
+            return offset;
+        }
+        offset += inc;
+    }
+    return -1;
 }
 
 

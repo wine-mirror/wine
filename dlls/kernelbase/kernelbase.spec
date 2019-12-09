@@ -153,10 +153,10 @@
 # @ stub CommitStateAtom
 @ stdcall CompareFileTime(ptr ptr)
 # @ stub CompareObjectHandles
-@ stdcall CompareStringA(long long str long str long) kernel32.CompareStringA
-@ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long) kernel32.CompareStringEx
+@ stdcall CompareStringA(long long str long str long)
+@ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long)
 @ stdcall CompareStringOrdinal(wstr long wstr long long)
-@ stdcall CompareStringW(long long wstr long wstr long) kernel32.CompareStringW
+@ stdcall CompareStringW(long long wstr long wstr long)
 @ stdcall ConnectNamedPipe(long ptr)
 @ stdcall ContinueDebugEvent(long long long)
 @ stdcall ConvertDefaultLocale(long)
@@ -362,8 +362,8 @@
 @ stdcall FindFirstFreeAce(ptr ptr)
 @ stdcall FindFirstStreamW(wstr long ptr long) kernel32.FindFirstStreamW
 @ stdcall FindFirstVolumeW(ptr long) kernel32.FindFirstVolumeW
-@ stub FindNLSString
-@ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernel32.FindNLSStringEx
+@ stdcall FindNLSString(long long wstr long wstr long ptr)
+@ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long)
 @ stdcall FindNextChangeNotification(long)
 @ stdcall FindNextFileA(long ptr) kernel32.FindNextFileA
 # @ stub FindNextFileNameW

@@ -239,10 +239,10 @@
 @ stdcall CommConfigDialogW(wstr long ptr)
 # @ stub CompareCalendarDates
 @ stdcall -import CompareFileTime(ptr ptr)
-@ stdcall CompareStringA(long long str long str long)
-@ stdcall CompareStringW(long long wstr long wstr long)
-@ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long)
+@ stdcall -import CompareStringA(long long str long str long)
+@ stdcall -import CompareStringEx(wstr long wstr long wstr long ptr ptr long)
 @ stdcall -import CompareStringOrdinal(wstr long wstr long long)
+@ stdcall -import CompareStringW(long long wstr long wstr long)
 @ stdcall -import ConnectNamedPipe(long ptr)
 @ stub ConsoleMenuControl
 @ stub ConsoleSubst
@@ -502,8 +502,8 @@
 @ stub FindNextVolumeMountPointA
 @ stub FindNextVolumeMountPointW
 @ stdcall FindNextVolumeW(long ptr long)
-# @ stub FindNLSString
-@ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long)
+@ stdcall -import FindNLSString(long long wstr long wstr long ptr)
+@ stdcall -import FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long)
 @ stdcall FindResourceA(long str str)
 @ stdcall FindResourceExA(long str str long)
 @ stdcall -import FindResourceExW(long wstr wstr long)
