@@ -62,7 +62,7 @@ ULONG WINAPI HttpInitialize(HTTPAPI_VERSION version, ULONG flags, void *reserved
     if (flags & ~HTTP_INITIALIZE_SERVER)
     {
         FIXME("Unhandled flags %#x.\n", flags);
-        return ERROR_CALL_NOT_IMPLEMENTED;
+        return ERROR_SUCCESS;
     }
 
     if (!(manager = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT)))
