@@ -180,6 +180,7 @@ static void test_bandtrack(void)
     IPersistStream *ps;
     CLSID class;
     ULARGE_INTEGER size;
+    char buf[64] = { 0 };
     HRESULT hr;
 #define X(guid)        &guid, #guid
     const struct {
@@ -233,26 +234,39 @@ static void test_bandtrack(void)
     }
     hr = IDirectMusicTrack8_EndPlay(dmt8, NULL);
     ok(hr == S_OK, "IDirectMusicTrack8_EndPlay failed: %08x\n", hr);
-    todo_wine {
     hr = IDirectMusicTrack8_Play(dmt8, NULL, 0, 0, 0, 0, NULL, NULL, 0);
+    todo_wine
     ok(hr == DMUS_S_END, "IDirectMusicTrack8_Play failed: %08x\n", hr);
     hr = IDirectMusicTrack8_GetParam(dmt8, NULL, 0, NULL, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_GetParam failed: %08x\n", hr);
     hr = IDirectMusicTrack8_SetParam(dmt8, NULL, 0, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_SetParam failed: %08x\n", hr);
-    }
 
     hr = IDirectMusicTrack8_IsParamSupported(dmt8, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
     for (i = 0; i < ARRAY_SIZE(param_types); i++) {
         hr = IDirectMusicTrack8_IsParamSupported(dmt8, param_types[i].type);
-        if (param_types[i].supported)
+        if (param_types[i].supported) {
             ok(hr == S_OK, "IsParamSupported(%s) failed: %08x, expected S_OK\n",
                     param_types[i].name, hr);
-        else
+            hr = IDirectMusicTrack8_GetParam(dmt8, param_types[i].type, 0, NULL, buf);
+            if (param_types[i].type != &GUID_BandParam)
+                ok(hr == DMUS_E_GET_UNSUPPORTED,
+                        "GetParam(%s) failed: %08x, expected DMUS_E_GET_UNSUPPORTED\n",
+                        param_types[i].name, hr);
+        } else {
             ok(hr == DMUS_E_TYPE_UNSUPPORTED,
                     "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
                     param_types[i].name, hr);
+            hr = IDirectMusicTrack8_GetParam(dmt8, param_types[i].type, 0, NULL, buf);
+            ok(hr == DMUS_E_GET_UNSUPPORTED,
+                    "GetParam(%s) failed: %08x, expected DMUS_E_GET_UNSUPPORTED\n",
+                    param_types[i].name, hr);
+            hr = IDirectMusicTrack8_SetParam(dmt8, param_types[i].type, 0, buf);
+            ok(hr == DMUS_E_TYPE_UNSUPPORTED,
+                    "SetParam(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
+                    param_types[i].name, hr);
+        }
     }
 
     hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);

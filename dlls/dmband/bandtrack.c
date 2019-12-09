@@ -132,20 +132,57 @@ static HRESULT WINAPI band_track_Play(IDirectMusicTrack8 *iface, void *state_dat
     return S_OK;
 }
 
-static HRESULT WINAPI band_track_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
+static HRESULT WINAPI band_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
+        MUSIC_TIME *next, void *param)
 {
-  IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
-  return S_OK;
+    IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
+
+    if (!type)
+        return E_POINTER;
+    if (!IsEqualGUID(type, &GUID_BandParam))
+        return DMUS_E_GET_UNSUPPORTED;
+
+    FIXME("GUID_BandParam not handled yet\n");
+
+    return S_OK;
 }
 
-static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, void *pParam)
+static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
+        void *param)
 {
-  IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %s, %d, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
-  return S_OK;
+    IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(type), time, param);
+
+    if (!type)
+        return E_POINTER;
+    if (FAILED(IDirectMusicTrack8_IsParamSupported(iface, type)))
+        return DMUS_E_TYPE_UNSUPPORTED;
+
+    if (IsEqualGUID(type, &GUID_BandParam))
+        FIXME("GUID_BandParam not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_Clear_All_Bands))
+        FIXME("GUID_Clear_All_Bands not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_ConnectToDLSCollection))
+        FIXME("GUID_ConnectToDLSCollection not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_Disable_Auto_Download))
+        FIXME("GUID_Disable_Auto_Download not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_Download))
+        FIXME("GUID_Download not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_DownloadToAudioPath))
+        FIXME("GUID_DownloadToAudioPath not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_Enable_Auto_Download))
+        FIXME("GUID_Enable_Auto_Download not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_IDirectMusicBand))
+        FIXME("GUID_IDirectMusicBand not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_StandardMIDIFile))
+        FIXME("GUID_StandardMIDIFile not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_UnloadFromAudioPath))
+        FIXME("GUID_UnloadFromAudioPath not handled yet\n");
+
+    return S_OK;
 }
 
 static HRESULT WINAPI band_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID rguidType)
