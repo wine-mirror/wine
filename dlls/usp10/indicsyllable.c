@@ -1,6 +1,6 @@
 /* Unicode Indic Syllabic Category */
-/* generated from http://www.unicode.org/Public/12.0.0/ucd/IndicSyllabicCategory.txt */
-/*       and from http://www.unicode.org/Public/12.0.0/ucd/IndicPositionalCategory.txt */
+/* generated from http://www.unicode.org/Public/12.1.0/ucd/IndicSyllabicCategory.txt */
+/*       and from http://www.unicode.org/Public/12.1.0/ucd/IndicPositionalCategory.txt */
 /* DO NOT EDIT!! */
 
 #include "windef.h"

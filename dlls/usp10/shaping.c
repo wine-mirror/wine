@@ -1,5 +1,5 @@
 /* Unicode Arabic shaping */
-/* generated from http://www.unicode.org/Public/12.0.0/ucd/ArabicShaping.txt */
+/* generated from http://www.unicode.org/Public/12.1.0/ucd/ArabicShaping.txt */
 /* DO NOT EDIT!! */
 
 #include "windef.h"
