@@ -988,8 +988,25 @@ static HRESULT WINAPI ScriptTypeComp_BindType(ITypeComp *iface, LPOLESTR szName,
         ITypeInfo **ppTInfo, ITypeComp **ppTComp)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeComp(iface);
-    FIXME("(%p)->(%s %08x %p %p)\n", This, debugstr_w(szName), lHashVal, ppTInfo, ppTComp);
-    return E_NOTIMPL;
+    ITypeInfo *disp_typeinfo;
+    ITypeComp *disp_typecomp;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %08x %p %p)\n", This, debugstr_w(szName), lHashVal, ppTInfo, ppTComp);
+
+    if (!szName || !ppTInfo || !ppTComp)
+        return E_INVALIDARG;
+
+    /* Look into the inherited IDispatch */
+    hr = get_dispatch_typeinfo(&disp_typeinfo);
+    if (FAILED(hr)) return hr;
+
+    hr = ITypeInfo_GetTypeComp(disp_typeinfo, &disp_typecomp);
+    if (FAILED(hr)) return hr;
+
+    hr = ITypeComp_BindType(disp_typecomp, szName, lHashVal, ppTInfo, ppTComp);
+    ITypeComp_Release(disp_typecomp);
+    return hr;
 }
 
 static const ITypeCompVtbl ScriptTypeCompVtbl = {
