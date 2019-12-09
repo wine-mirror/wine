@@ -236,6 +236,8 @@ struct dwrite_fontfacereference
     IDWriteFactory7 *factory;
 };
 
+static const IDWriteFontFaceReference1Vtbl fontfacereferencevtbl;
+
 struct dwrite_fontresource
 {
     IDWriteFontResource IDWriteFontResource_iface;
@@ -1894,6 +1896,16 @@ struct dwrite_fontface *unsafe_impl_from_IDWriteFontFace(IDWriteFontFace *iface)
         return NULL;
     assert(iface->lpVtbl == (IDWriteFontFaceVtbl*)&dwritefontfacevtbl);
     return CONTAINING_RECORD(iface, struct dwrite_fontface, IDWriteFontFace5_iface);
+}
+
+static struct dwrite_fontfacereference *unsafe_impl_from_IDWriteFontFaceReference(IDWriteFontFaceReference *iface)
+{
+    if (!iface)
+        return NULL;
+    if (iface->lpVtbl != (IDWriteFontFaceReferenceVtbl *)&fontfacereferencevtbl)
+        return NULL;
+    return CONTAINING_RECORD((IDWriteFontFaceReference1 *)iface, struct dwrite_fontfacereference,
+            IDWriteFontFaceReference1_iface);
 }
 
 void get_logfont_from_font(IDWriteFont *iface, LOGFONTW *lf)
@@ -6132,18 +6144,18 @@ static HRESULT WINAPI fontfacereference_CreateFontFaceWithSimulations(IDWriteFon
 static BOOL WINAPI fontfacereference_Equals(IDWriteFontFaceReference1 *iface, IDWriteFontFaceReference *ref)
 {
     struct dwrite_fontfacereference *reference = impl_from_IDWriteFontFaceReference1(iface);
-    IDWriteFontFile *file;
+    struct dwrite_fontfacereference *other = unsafe_impl_from_IDWriteFontFaceReference(ref);
     BOOL ret;
 
     TRACE("%p, %p.\n", iface, ref);
 
-    if (FAILED(IDWriteFontFaceReference_GetFontFile(ref, &file)))
-        return FALSE;
-
-    ret = is_same_fontfile(reference->file, file) &&
-            reference->index == IDWriteFontFaceReference_GetFontFaceIndex(ref) &&
-            reference->simulations == IDWriteFontFaceReference_GetSimulations(ref);
-    IDWriteFontFile_Release(file);
+    ret = is_same_fontfile(reference->file, other->file) && reference->index == other->index &&
+            reference->simulations == other->simulations;
+    if (reference->axis_values_count)
+    {
+        ret &= reference->axis_values_count == other->axis_values_count &&
+                !memcmp(reference->axis_values, other->axis_values, reference->axis_values_count * sizeof(*reference->axis_values));
+    }
 
     return ret;
 }

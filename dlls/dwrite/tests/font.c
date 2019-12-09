@@ -9279,13 +9279,14 @@ static void test_font_resource(void)
     IDWriteFontFaceReference1 *reference, *reference2;
     IDWriteFontResource *resource, *resource2;
     IDWriteFontFile *fontfile, *fontfile2;
-    DWRITE_FONT_AXIS_VALUE axis_value;
+    DWRITE_FONT_AXIS_VALUE axis_values[2];
     IDWriteFontFace5 *fontface5;
     IDWriteFontFace *fontface;
     IDWriteFactory6 *factory;
     UINT32 count, index;
     HRESULT hr;
     ULONG ref;
+    BOOL ret;
 
     if (!(factory = create_factory_iid(&IID_IDWriteFactory6)))
     {
@@ -9316,9 +9317,9 @@ static void test_font_resource(void)
     ok(!index, "Unexpected index %u.\n", index);
 
     /* Specify axis value, font has no variations. */
-    axis_value.axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
-    axis_value.value = 400.0f;
-    hr = IDWriteFontResource_CreateFontFaceReference(resource, DWRITE_FONT_SIMULATIONS_NONE, &axis_value, 1, &reference);
+    axis_values[0].axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
+    axis_values[0].value = 400.0f;
+    hr = IDWriteFontResource_CreateFontFaceReference(resource, DWRITE_FONT_SIMULATIONS_NONE, axis_values, 1, &reference);
     ok(hr == S_OK, "Failed to create reference object, hr %#x.\n", hr);
 
     count = IDWriteFontFaceReference1_GetFontAxisValueCount(reference);
@@ -9326,7 +9327,7 @@ static void test_font_resource(void)
 
     IDWriteFontFaceReference1_Release(reference);
 
-    hr = IDWriteFactory6_CreateFontFaceReference(factory, fontfile, 0, DWRITE_FONT_SIMULATIONS_NONE, &axis_value, 1,
+    hr = IDWriteFactory6_CreateFontFaceReference(factory, fontfile, 0, DWRITE_FONT_SIMULATIONS_NONE, axis_values, 1,
             &reference);
     count = IDWriteFontFaceReference1_GetFontAxisValueCount(reference);
     ok(count == 1, "Unexpected axis value count.\n");
@@ -9359,6 +9360,55 @@ static void test_font_resource(void)
     IDWriteFontResource_Release(resource2);
 
     IDWriteFontFace5_Release(fontface5);
+
+    /* Reference equality regarding set axis values. */
+    axis_values[0].axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
+    axis_values[0].value = 400.0f;
+    axis_values[1].axisTag = DWRITE_FONT_AXIS_TAG_ITALIC;
+    axis_values[1].value = 1.0f;
+    hr = IDWriteFactory6_CreateFontFaceReference(factory, fontfile, 0, DWRITE_FONT_SIMULATIONS_NONE, axis_values, 2,
+            &reference);
+    count = IDWriteFontFaceReference1_GetFontAxisValueCount(reference);
+    ok(count == 2, "Unexpected axis value count.\n");
+
+    hr = IDWriteFactory6_CreateFontFaceReference(factory, fontfile, 0, DWRITE_FONT_SIMULATIONS_NONE, NULL, 0,
+            &reference2);
+    count = IDWriteFontFaceReference1_GetFontAxisValueCount(reference2);
+    ok(!count, "Unexpected axis value count.\n");
+
+    ret = IDWriteFontFaceReference1_Equals(reference, (IDWriteFontFaceReference *)reference2);
+    ok(!ret, "Unexpected result.\n");
+    IDWriteFontFaceReference1_Release(reference2);
+
+    /* Different values order. */
+    axis_values[0].axisTag = DWRITE_FONT_AXIS_TAG_ITALIC;
+    axis_values[0].value = 1.0f;
+    axis_values[1].axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
+    axis_values[1].value = 400.0f;
+    hr = IDWriteFactory6_CreateFontFaceReference(factory, fontfile, 0, DWRITE_FONT_SIMULATIONS_NONE, axis_values, 2,
+            &reference2);
+    count = IDWriteFontFaceReference1_GetFontAxisValueCount(reference2);
+    ok(count == 2, "Unexpected axis value count.\n");
+
+    ret = IDWriteFontFaceReference1_Equals(reference, (IDWriteFontFaceReference *)reference2);
+    ok(!ret, "Unexpected result.\n");
+    IDWriteFontFaceReference1_Release(reference2);
+
+    /* Different axis values. */
+    axis_values[0].axisTag = DWRITE_FONT_AXIS_TAG_ITALIC;
+    axis_values[0].value = 1.0f;
+    axis_values[1].axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
+    axis_values[1].value = 401.0f;
+    hr = IDWriteFactory6_CreateFontFaceReference(factory, fontfile, 0, DWRITE_FONT_SIMULATIONS_NONE, axis_values, 2,
+            &reference2);
+    count = IDWriteFontFaceReference1_GetFontAxisValueCount(reference2);
+    ok(count == 2, "Unexpected axis value count.\n");
+
+    ret = IDWriteFontFaceReference1_Equals(reference, (IDWriteFontFaceReference *)reference2);
+    ok(!ret, "Unexpected result.\n");
+    IDWriteFontFaceReference1_Release(reference2);
+
+    IDWriteFontFaceReference1_Release(reference);
 
     IDWriteFontFile_Release(fontfile);
 
