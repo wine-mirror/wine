@@ -1977,7 +1977,7 @@ static void test_DdeCreateDataHandle(void)
     ok(size == 262, "Expected 262, got %d\n", size);
     todo_wine
     {
-        ok(lstrlenA((LPSTR)ptr) == 0, "Expected 0, got %d\n", lstrlenA((LPSTR)ptr));
+        ok(ptr && !*ptr, "Expected 0, got %d\n", lstrlenA((LPSTR)ptr));
     }
 
     ret = DdeUnaccessData(hdata);
