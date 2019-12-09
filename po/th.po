@@ -332,7 +332,7 @@ msgstr ""
 msgid "< &Back"
 msgstr "< ย้อนกลับ"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "ต่อไป >"
 
@@ -8385,6 +8385,23 @@ msgstr "เปิด"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "ปิด"
+
+#: version.rc:42
+msgid "Provider"
+msgstr ""
+
+#: version.rc:45
+msgid "Select the data you want to connect to:"
+msgstr ""
+
+#: version.rc:36
+#, fuzzy
+msgid "Data Link Properties"
+msgstr "ปรับแต่งนาฬิกา"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

@@ -359,7 +359,7 @@ msgstr "Vodič"
 msgid "< &Back"
 msgstr "< &Nazad"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Napred >"
 
@@ -8845,6 +8845,26 @@ msgstr "Uključeno"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Isključeno"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "video zapis"
+
+#: version.rc:45
+msgid "Select the data you want to connect to:"
+msgstr ""
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "Svojstva"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

@@ -362,7 +362,7 @@ msgstr "Varázsló"
 msgid "< &Back"
 msgstr "< &Előző"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Következő >"
 
@@ -8618,6 +8618,28 @@ msgstr "Be"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Ki"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "videó"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "Válassza ki a használni kívánt formátumot:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "Tulajdonságok"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

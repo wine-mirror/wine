@@ -337,7 +337,7 @@ msgstr "Expert"
 msgid "< &Back"
 msgstr "< &Înapoi"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Următor >"
 
@@ -8552,6 +8552,28 @@ msgstr "Activat"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Dezactivat"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "video"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "Selectați formatul pe care doriți să îl utilizați:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "Proprietăți"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

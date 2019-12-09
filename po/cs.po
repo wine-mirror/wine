@@ -350,7 +350,7 @@ msgstr "Průvodce"
 msgid "< &Back"
 msgstr "< &Zpět"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Další >"
 
@@ -8450,6 +8450,28 @@ msgstr "Zapnuto"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Vypnuto"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "video"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "Zvolte formát, který chcete použít:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "&Vlastnosti"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

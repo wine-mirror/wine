@@ -1,6 +1,5 @@
-/* OLE DB Internal header
- *
- * Copyright 2009 Huw Davies
+/*
+ * Copyright 2019 Alistair Leslie-Hughes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,18 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-HRESULT create_oledb_convert(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
-HRESULT create_data_init(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
-HRESULT create_error_info(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
-HRESULT create_oledb_rowpos(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
-HRESULT create_dslocator(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
+#define IDD_PROVIDER        1000
+#define IDC_BTN_NEXT        1001
+#define IDC_LST_CONNECTIONS 1002
 
-HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID riid,
-    IUnknown **datasource) DECLSPEC_HIDDEN;
-
-extern HINSTANCE instance;
-
-static inline void* __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size);
-}
+#define IDS_PROPSHEET_TITLE 2000
+#define IDS_COL_PROVIDER    2001

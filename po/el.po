@@ -331,7 +331,7 @@ msgstr "Βοηθός"
 msgid "< &Back"
 msgstr "< &Προηγούμενο"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Επόμενο >"
 
@@ -8378,6 +8378,23 @@ msgstr "Ενεργό"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Ανενεργό"
+
+#: version.rc:42
+msgid "Provider"
+msgstr ""
+
+#: version.rc:45
+msgid "Select the data you want to connect to:"
+msgstr ""
+
+#: version.rc:36
+#, fuzzy
+msgid "Data Link Properties"
+msgstr "Επιλογές"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

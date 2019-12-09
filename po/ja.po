@@ -349,7 +349,7 @@ msgstr "ウィザード"
 msgid "< &Back"
 msgstr "< 戻る(&B)"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "次へ(&N) >"
 
@@ -8285,6 +8285,28 @@ msgstr "On"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Off"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "ビデオ"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "形式を選択してください:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "プロパティ"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

@@ -368,7 +368,7 @@ msgstr "Procedura guidata"
 msgid "< &Back"
 msgstr "< &Indietro"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Avanti >"
 
@@ -8687,6 +8687,28 @@ msgstr "On"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Off"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "Video"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "Seleziona il formato che vuoi usare:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "Proprietà"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

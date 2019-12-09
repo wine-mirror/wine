@@ -354,7 +354,7 @@ msgstr ""
 msgid "< &Back"
 msgstr "< ה&קודם"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "ה&בא >"
 
@@ -8692,6 +8692,27 @@ msgstr "פעיל"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "כבוי"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "וידאו"
+
+#: version.rc:45
+#, fuzzy
+msgid "Select the data you want to connect to:"
+msgstr "נא לציין את הקובץ אותו ברצונך לייבא."
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "מאפיינים"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

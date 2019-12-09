@@ -344,7 +344,7 @@ msgstr "Майстер"
 msgid "< &Back"
 msgstr "< &Назад"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Далі >"
 
@@ -8376,6 +8376,28 @@ msgstr "Ввімкнено"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Вимкнено"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "відео"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "Виберіть формат, який ви хочете використати:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "Властивості"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

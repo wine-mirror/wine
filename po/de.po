@@ -349,7 +349,7 @@ msgstr "Assistent"
 msgid "< &Back"
 msgstr "< &Zurück"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Weiter >"
 
@@ -8304,6 +8304,28 @@ msgstr "Ein"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Aus"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "Video"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "Wählen Sie das gewünschte Format:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "&Eigenschaften"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

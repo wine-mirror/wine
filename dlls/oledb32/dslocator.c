@@ -20,6 +20,7 @@
 #include <string.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -29,8 +30,11 @@
 #include "oledb.h"
 #include "oledberr.h"
 #include "msdasc.h"
+#include "prsht.h"
+#include "commctrl.h"
 
 #include "oledb_private.h"
+#include "resource.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -188,13 +192,134 @@ static HRESULT WINAPI dslocator_put_hWnd(IDataSourceLocator *iface, COMPATIBLE_L
     return S_OK;
 }
 
-static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch **ppADOConnection)
+static void create_connections_columns(HWND lv)
+{
+    RECT rc;
+    WCHAR buf[256];
+    LVCOLUMNW column;
+
+    SendMessageW(lv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+    GetWindowRect(lv, &rc);
+    LoadStringW(instance, IDS_COL_PROVIDER, buf, ARRAY_SIZE(buf));
+    column.mask = LVCF_WIDTH | LVCF_TEXT;
+    column.cx = (rc.right - rc.left) - 5;
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+}
+
+static void add_connections_providers(HWND lv)
+{
+    static const WCHAR oledbprov[] = {'\\','O','L','E',' ','D','B',' ','P','r','o','v','i','d','e','r',0};
+    LONG res;
+    HKEY key = NULL, subkey;
+    DWORD index = 0;
+    LONG next_key;
+    WCHAR provider[MAX_PATH];
+    WCHAR guidkey[MAX_PATH];
+    LONG size;
+
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, L"CLSID", 0, KEY_READ, &key);
+    if (res == ERROR_FILE_NOT_FOUND)
+        return;
+
+    next_key = RegEnumKeyW(key, index, provider, MAX_PATH);
+    while (next_key == ERROR_SUCCESS)
+    {
+        WCHAR description[MAX_PATH];
+
+        lstrcpyW(guidkey, provider);
+        lstrcatW(guidkey, oledbprov);
+
+        res = RegOpenKeyW(key, guidkey, &subkey);
+        if (res == ERROR_SUCCESS)
+        {
+            TRACE("Found %s\n", debugstr_w(guidkey));
+
+            size = MAX_PATH;
+            res = RegQueryValueW(subkey, NULL, description, &size);
+            if (res == ERROR_SUCCESS)
+            {
+                LVITEMW item;
+                item.mask = LVIF_TEXT;
+                item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+                item.iSubItem = 0;
+                item.pszText = description;
+                SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+                /* TODO - Add ProgID to item data */
+            }
+            RegCloseKey(subkey);
+        }
+
+        index++;
+        next_key = RegEnumKeyW(key, index, provider, MAX_PATH);
+    }
+
+    RegCloseKey(key);
+}
+
+static LRESULT CALLBACK data_link_properties_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            HWND btn, lv = GetDlgItem(hwnd, IDC_LST_CONNECTIONS);
+            create_connections_columns(lv);
+            add_connections_providers(lv);
+
+            btn = GetDlgItem(GetParent(hwnd), IDOK);
+            EnableWindow(btn, FALSE);
+
+            break;
+        }
+        case WM_COMMAND:
+        {
+            if (LOWORD(wp) == IDC_BTN_NEXT)
+            {
+                /* TODO: Implement Connection dialog */
+                MessageBoxA(hwnd, "Not implemented yet.", "Error", MB_OK | MB_ICONEXCLAMATION);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    return 0;
+}
+
+static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch **connection)
 {
     DSLocatorImpl *This = impl_from_IDataSourceLocator(iface);
+    PROPSHEETHEADERW hdr;
+    PROPSHEETPAGEW page;
+    INT_PTR ret;
 
-    FIXME("(%p)->(%p)\n",This, ppADOConnection);
+    FIXME("(%p, %p) Semi-stub\n", iface, connection);
 
-    return E_NOTIMPL;
+    if(!connection)
+        return E_INVALIDARG;
+
+    *connection = NULL;
+
+    memset(&page, 0, sizeof(PROPSHEETPAGEW));
+    page.dwSize = sizeof(page);
+    page.hInstance = instance;
+    page.u.pszTemplate = MAKEINTRESOURCEW(IDD_PROVIDER);
+    page.pfnDlgProc = data_link_properties_dlg_proc;
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.dwSize = sizeof(hdr);
+    hdr.hwndParent = This->hwnd;
+    hdr.dwFlags = PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE;
+    hdr.hInstance = instance;
+    hdr.pszCaption = MAKEINTRESOURCEW(IDS_PROPSHEET_TITLE);
+    hdr.u3.ppsp = &page;
+    hdr.nPages = 1;
+    ret = PropertySheetW(&hdr);
+
+    return ret ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI dslocator_PromptEdit(IDataSourceLocator *iface, IDispatch **ppADOConnection, VARIANT_BOOL *success)

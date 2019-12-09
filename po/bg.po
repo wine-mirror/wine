@@ -352,7 +352,7 @@ msgstr ""
 msgid "< &Back"
 msgstr "< На&зад"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "На&пред >"
 
@@ -8536,6 +8536,24 @@ msgstr "Включено"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Изключено"
+
+#: version.rc:42
+msgid "Provider"
+msgstr ""
+
+#: version.rc:45
+msgid "Select the data you want to connect to:"
+msgstr ""
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "Свойства"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

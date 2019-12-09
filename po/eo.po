@@ -340,7 +340,7 @@ msgstr "Estrita Proceduro"
 msgid "< &Back"
 msgstr "< &Retro"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Antaŭen >"
 
@@ -8384,6 +8384,26 @@ msgstr "Ŝaltita"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Malŝaltita"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "video"
+
+#: version.rc:45
+msgid "Select the data you want to connect to:"
+msgstr ""
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "Ecoj"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

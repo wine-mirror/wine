@@ -346,7 +346,7 @@ msgstr "마법사"
 msgid "< &Back"
 msgstr "< 뒤로(&B)"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "다음(&N) >"
 
@@ -8272,6 +8272,28 @@ msgstr "작동"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "비작동"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "비디오"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "사용할 파일 형식 선택:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "속성"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

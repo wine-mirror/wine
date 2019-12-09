@@ -341,7 +341,7 @@ msgstr "المرشِد"
 msgid "< &Back"
 msgstr "< &السابق"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&التالي >"
 
@@ -8584,6 +8584,28 @@ msgstr "تشغيل"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "إيقاف"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "صورة"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "اختر الصيغة التي ترغب باستخدامه:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "خصائص"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

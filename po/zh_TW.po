@@ -338,7 +338,7 @@ msgstr "精靈"
 msgid "< &Back"
 msgstr "< 上一步(&B)"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "下一步(&N) >"
 
@@ -8554,6 +8554,28 @@ msgstr "開"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "關"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "視訊"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "請選擇您要使用的格式："
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "屬性"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"

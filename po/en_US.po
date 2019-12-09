@@ -348,7 +348,7 @@ msgstr "Wizard"
 msgid "< &Back"
 msgstr "< &Back"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Next >"
 
@@ -8290,6 +8290,22 @@ msgstr "On"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Off"
+
+#: version.rc:42
+msgid "Provider"
+msgstr "Provider"
+
+#: version.rc:45
+msgid "Select the data you want to connect to:"
+msgstr "Select the data you want to connect to:"
+
+#: version.rc:36
+msgid "Data Link Properties"
+msgstr "Data Link Properties"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr "OLE DB Provider(s)"
 
 #: oledlg.rc:55
 msgid "Insert Object"

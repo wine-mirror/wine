@@ -356,7 +356,7 @@ msgstr "Kreator"
 msgid "< &Back"
 msgstr "< &Wstecz"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:47
 msgid "&Next >"
 msgstr "&Naprzód >"
 
@@ -8490,6 +8490,28 @@ msgstr "Włączone"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Wyłączone"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "obraz"
+
+#: version.rc:45
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "Wybierz format, którego chcesz użyć:"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "Właściwości"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
 
 #: oledlg.rc:55
 msgid "Insert Object"
