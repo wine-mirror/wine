@@ -54,6 +54,16 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 #define NS_STRING_CONTAINER_INIT_DEPEND  0x0002
 #define NS_CSTRING_CONTAINER_INIT_DEPEND 0x0002
 
+#ifdef __i386__
+#define GECKO_ARCH_STRING "x86"
+#elif defined(__x86_64__)
+#define GECKO_ARCH_STRING "x86_64"
+#else
+#define GECKO_ARCH_STRING ""
+#endif
+
+#define GECKO_DIR_NAME "wine-gecko-" GECKO_VERSION "-" GECKO_ARCH_STRING
+
 typedef UINT32 PRUint32;
 
 static nsresult (CDECL *NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
@@ -730,6 +740,56 @@ static WCHAR *find_wine_gecko_reg(void)
     return check_version(buffer);
 }
 
+static WCHAR *heap_strcat(const WCHAR *str1, const WCHAR *str2)
+{
+    size_t len1 = lstrlenW(str1);
+    size_t len2 = lstrlenW(str2);
+    WCHAR *ret = heap_alloc((len1 + len2 + 1) * sizeof(WCHAR));
+    if(!ret) return NULL;
+    memcpy(ret, str1, len1 * sizeof(WCHAR));
+    memcpy(ret + len1, str2, len2 * sizeof(WCHAR));
+    ret[len1 + len2] = 0;
+    return ret;
+}
+
+static WCHAR *find_wine_gecko_datadir(void)
+{
+    const WCHAR *data_dir;
+    WCHAR *path = NULL, *ret;
+
+    if((data_dir = _wgetenv(L"WINEDATADIR")))
+        path = heap_strcat(data_dir, L"\\gecko\\" GECKO_DIR_NAME);
+    else if((data_dir = _wgetenv(L"WINEBUILDDIR")))
+        path = heap_strcat(data_dir, L"\\..\\gecko\\" GECKO_DIR_NAME);
+    if(!path)
+        return NULL;
+
+    ret = check_version(path);
+    heap_free(path);
+    return ret;
+}
+
+static WCHAR *find_wine_gecko_unix(const char *unix_path)
+{
+    static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
+    WCHAR *dos_dir, *ret;
+
+    if(!p_wine_get_dos_file_name) {
+        p_wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleA("kernel32"), "wine_get_dos_file_name");
+        if(!p_wine_get_dos_file_name)
+            return FALSE;
+    }
+
+    dos_dir = p_wine_get_dos_file_name(unix_path);
+    if(!dos_dir)
+        return FALSE;
+
+    ret = check_version(dos_dir);
+
+    heap_free(dos_dir);
+    return ret;
+}
+
 static CRITICAL_SECTION cs_load_gecko;
 static CRITICAL_SECTION_DEBUG cs_load_gecko_dbg =
 {
@@ -747,6 +807,11 @@ BOOL load_gecko(void)
 
     TRACE("()\n");
 
+    if(!GECKO_ARCH_STRING[0]) {
+        FIXME("Wine Gecko is not supported on this architecture.\n");
+        return FALSE;
+    }
+
     /* load_gecko may be called recursively */
     if(loading_thread == GetCurrentThreadId())
         return pCompMgr != NULL;
@@ -759,6 +824,11 @@ BOOL load_gecko(void)
         loading_thread = GetCurrentThreadId();
 
         if(!(gecko_path = find_wine_gecko_reg())
+           && !(gecko_path = find_wine_gecko_datadir())
+           && !(gecko_path = find_wine_gecko_unix(INSTALL_DATADIR "/wine/gecko/" GECKO_DIR_NAME))
+           && (!strcmp(INSTALL_DATADIR, "/usr/share") ||
+               !(gecko_path = find_wine_gecko_unix("/usr/share/wine/gecko/" GECKO_DIR_NAME)))
+           && !(gecko_path = find_wine_gecko_unix("/opt/wine/gecko/" GECKO_DIR_NAME))
            && install_wine_gecko())
             gecko_path = find_wine_gecko_reg();
 

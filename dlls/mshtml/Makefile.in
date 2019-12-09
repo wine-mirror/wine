@@ -65,6 +65,8 @@ C_SRCS = \
 	view.c \
 	xmlhttprequest.c
 
+nsembed_EXTRADEFS = -DINSTALL_DATADIR="\"${datadir}\""
+
 RC_SRCS = mshtml.rc
 
 IDL_SRCS = \
