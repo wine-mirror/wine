@@ -162,8 +162,11 @@ static HRESULT WINAPI stream_put_LineSeparator( _Stream *iface, LineSeparatorEnu
 
 static HRESULT WINAPI stream_get_State( _Stream *iface, ObjectStateEnum *state )
 {
-    FIXME( "%p, %p\n", iface, state );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    TRACE( "%p, %p\n", stream, state );
+
+    *state = stream->state;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_get_Mode( _Stream *iface, ConnectModeEnum *mode )

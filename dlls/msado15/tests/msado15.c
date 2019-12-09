@@ -30,6 +30,7 @@ static void test_Stream(void)
     _Stream *stream;
     StreamTypeEnum type;
     LONG refs;
+    ObjectStateEnum state;
     VARIANT missing;
     HRESULT hr;
 
@@ -54,6 +55,11 @@ static void test_Stream(void)
     hr = _Stream_put_Type( stream, adTypeText );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    state = 0xdeadbeef;
+    hr = _Stream_get_State( stream, &state );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == adStateClosed, "got %u\n", state );
+
     V_VT( &missing ) = VT_ERROR;
     V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
     hr = _Stream_Open( stream, missing, adModeUnknown, adOpenStreamUnspecified, NULL, NULL );
@@ -62,8 +68,18 @@ static void test_Stream(void)
     hr = _Stream_Open( stream, missing, adModeUnknown, adOpenStreamUnspecified, NULL, NULL );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectOpen ), "got %08x\n", hr );
 
+    state = 0xdeadbeef;
+    hr = _Stream_get_State( stream, &state );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == adStateOpen, "got %u\n", state );
+
     hr = _Stream_Close( stream );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    hr = _Stream_get_State( stream, &state );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == adStateClosed, "got %u\n", state );
 
     hr = _Stream_Close( stream );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
