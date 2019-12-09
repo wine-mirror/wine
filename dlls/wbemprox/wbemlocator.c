@@ -98,7 +98,7 @@ static BOOL is_local_machine( const WCHAR *server )
 
 static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **namespace )
 {
-    static const WCHAR rootW[] = {'R','O','O','T'};
+    static const WCHAR rootW[] = {'R','O','O','T',0};
     static const WCHAR cimv2W[] = {'C','I','M','V','2',0};
     static const WCHAR defaultW[] = {'D','E','F','A','U','L','T',0};
     HRESULT hr = WBEM_E_INVALID_NAMESPACE;
@@ -131,7 +131,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
     p = q;
     while (*q && *q != '\\' && *q != '/') q++;
     len = q - p;
-    if (len >= ARRAY_SIZE( rootW ) && wcsnicmp( rootW, p, len )) goto done;
+    if (len >= ARRAY_SIZE( rootW ) - 1 && wcsnicmp( rootW, p, len )) goto done;
     if (!*q)
     {
         hr = S_OK;
