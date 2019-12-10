@@ -655,8 +655,8 @@
 @ stdcall GetDriveTypeW(wstr)
 # @ stub GetDurationFormat
 # @ stub GetDurationFormatEx
-@ stdcall GetDynamicTimeZoneInformation(ptr)
-@ stdcall GetDynamicTimeZoneInformationEffectiveYears(ptr ptr ptr)
+@ stdcall -import GetDynamicTimeZoneInformation(ptr)
+@ stdcall -import GetDynamicTimeZoneInformationEffectiveYears(ptr ptr ptr)
 @ stdcall -ret64 -arch=i386,x86_64 GetEnabledXStateFeatures()
 @ stdcall -import GetEnvironmentStrings()
 @ stdcall -import GetEnvironmentStringsA()
@@ -866,8 +866,8 @@
 @ stdcall GetTimeFormatA(long long ptr str ptr long)
 @ stdcall GetTimeFormatEx(wstr long ptr wstr ptr long)
 @ stdcall GetTimeFormatW(long long ptr wstr ptr long)
-@ stdcall GetTimeZoneInformation(ptr)
-@ stdcall GetTimeZoneInformationForYear(long ptr ptr)
+@ stdcall -import GetTimeZoneInformation(ptr)
+@ stdcall -import GetTimeZoneInformationForYear(long ptr ptr)
 # @ stub GetUILanguageInfo
 @ stdcall -arch=x86_64 GetUmsCompletionListEvent(ptr ptr)
 # @ stub -arch=x86_64 GetUmsSystemThreadInformation
@@ -1467,7 +1467,7 @@
 @ stdcall SetThreadpoolThreadMinimum(ptr long) ntdll.TpSetPoolMinThreads
 @ stdcall SetThreadpoolTimer(ptr ptr long long) ntdll.TpSetTimer
 @ stdcall SetThreadpoolWait(ptr long ptr) ntdll.TpSetWait
-@ stdcall SetTimeZoneInformation(ptr)
+@ stdcall -import SetTimeZoneInformation(ptr)
 @ stub SetTimerQueueTimer
 @ stdcall -arch=x86_64 SetUmsThreadInformation(ptr long ptr long)
 @ stdcall -import SetUnhandledExceptionFilter(ptr)
@@ -1496,7 +1496,7 @@
 @ stdcall -import SwitchToFiber(ptr)
 @ stdcall -import SwitchToThread()
 @ stdcall -import SystemTimeToFileTime(ptr ptr)
-@ stdcall SystemTimeToTzSpecificLocalTime (ptr ptr ptr)
+@ stdcall -import SystemTimeToTzSpecificLocalTime (ptr ptr ptr)
 # @ stub SystemTimeToTzSpecificLocalTimeEx
 @ stdcall TerminateJobObject(long long)
 @ stdcall -import TerminateProcess(long long)
@@ -1519,7 +1519,7 @@
 @ stdcall TryAcquireSRWLockShared(ptr) ntdll.RtlTryAcquireSRWLockShared
 @ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
 @ stdcall -import TrySubmitThreadpoolCallback(ptr ptr ptr)
-@ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr)
+@ stdcall -import TzSpecificLocalTimeToSystemTime(ptr ptr ptr)
 # @ stub TzSpecificLocalTimeToSystemTimeEx
 # @ stub -arch=x86_64 uaw_lstrcmpW
 # @ stub -arch=x86_64 uaw_lstrcmpiW

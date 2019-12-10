@@ -542,6 +542,7 @@ static NLSTABLEINFO nls_info;
 static UINT mac_cp = 10000;
 static HKEY intl_key;
 static HKEY nls_key;
+static HKEY tz_key;
 
 static CPTABLEINFO codepages[128];
 static unsigned int nb_codepages;
@@ -564,6 +565,7 @@ void init_locale(void)
     USHORT *ansi_ptr, *oem_ptr, *casemap_ptr;
     LCID lcid = GetUserDefaultLCID();
     WCHAR bufferW[80];
+    DYNAMIC_TIME_ZONE_INFORMATION timezone;
     GEOID geoid = GEOID_NOT_AVAILABLE;
     DWORD count, dispos, i;
     SIZE_T size;
@@ -591,8 +593,21 @@ void init_locale(void)
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Nls",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &nls_key, NULL );
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones",
+                     0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &tz_key, NULL );
     RegCreateKeyExW( HKEY_CURRENT_USER, L"Control Panel\\International",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &intl_key, NULL );
+
+    if (GetDynamicTimeZoneInformation( &timezone ) != TIME_ZONE_ID_INVALID &&
+        !RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\TimeZoneInformation",
+                          0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    {
+        RegSetValueExW( hkey, L"StandardName", 0, REG_SZ, (BYTE *)timezone.StandardName,
+                        (lstrlenW(timezone.StandardName) + 1) * sizeof(WCHAR) );
+        RegSetValueExW( hkey, L"TimeZoneKeyName", 0, REG_SZ, (BYTE *)timezone.TimeZoneKeyName,
+                        (lstrlenW(timezone.TimeZoneKeyName) + 1) * sizeof(WCHAR) );
+        RegCloseKey( hkey );
+    }
 
     if (!RegCreateKeyExW( intl_key, L"Geo", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, &dispos ))
     {
@@ -2257,6 +2272,91 @@ static const struct geoinfo *get_geoinfo_ptr( GEOID geoid )
 }
 
 
+static int compare_tzdate( const TIME_FIELDS *tf, const SYSTEMTIME *compare )
+{
+    static const int month_lengths[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    int first, last, limit, dayinsecs;
+
+    if (tf->Month < compare->wMonth) return -1; /* We are in a month before the date limit. */
+    if (tf->Month > compare->wMonth) return 1; /* We are in a month after the date limit. */
+
+    /* if year is 0 then date is in day-of-week format, otherwise
+     * it's absolute date.
+     */
+    if (!compare->wYear)
+    {
+        /* wDay is interpreted as number of the week in the month
+         * 5 means: the last week in the month */
+        /* calculate the day of the first DayOfWeek in the month */
+        first = (6 + compare->wDayOfWeek - tf->Weekday + tf->Day) % 7 + 1;
+        /* check needed for the 5th weekday of the month */
+        last = month_lengths[tf->Month - 1] +
+            (tf->Month == 2 && (!(tf->Year % 4) && (tf->Year % 100 || !(tf->Year % 400))));
+        limit = first + 7 * (compare->wDay - 1);
+        if (limit > last) limit -= 7;
+    }
+    else limit = compare->wDay;
+
+    limit = ((limit * 24 + compare->wHour) * 60 + compare->wMinute) * 60;
+    dayinsecs = ((tf->Day * 24  + tf->Hour) * 60 + tf->Minute) * 60 + tf->Second;
+    return dayinsecs - limit;
+}
+
+
+static DWORD get_timezone_id( const TIME_ZONE_INFORMATION *info, LARGE_INTEGER time, BOOL is_local )
+{
+    int year;
+    BOOL before_standard_date, after_daylight_date;
+    LARGE_INTEGER t2;
+    TIME_FIELDS tf;
+
+    if (!info->DaylightDate.wMonth) return TIME_ZONE_ID_UNKNOWN;
+
+    /* if year is 0 then date is in day-of-week format, otherwise it's absolute date */
+    if (info->StandardDate.wMonth == 0 ||
+        (info->StandardDate.wYear == 0 &&
+         (info->StandardDate.wDay < 1 || info->StandardDate.wDay > 5 ||
+          info->DaylightDate.wDay < 1 || info->DaylightDate.wDay > 5)))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return TIME_ZONE_ID_INVALID;
+    }
+
+    if (!is_local) time.QuadPart -= info->Bias * (LONGLONG)600000000;
+    RtlTimeToTimeFields( &time, &tf );
+    year = tf.Year;
+    if (!is_local)
+    {
+        t2.QuadPart = time.QuadPart - info->DaylightBias * (LONGLONG)600000000;
+        RtlTimeToTimeFields( &t2, &tf );
+    }
+    if (tf.Year == year)
+        before_standard_date = compare_tzdate( &tf, &info->StandardDate ) < 0;
+    else
+        before_standard_date = tf.Year < year;
+
+    if (!is_local)
+    {
+        t2.QuadPart = time.QuadPart - info->StandardBias * (LONGLONG)600000000;
+        RtlTimeToTimeFields( &t2, &tf );
+    }
+    if (tf.Year == year)
+        after_daylight_date = compare_tzdate( &tf, &info->DaylightDate ) >= 0;
+    else
+        after_daylight_date = tf.Year > year;
+
+    if (info->DaylightDate.wMonth < info->StandardDate.wMonth) /* Northern hemisphere */
+    {
+        if (before_standard_date && after_daylight_date) return TIME_ZONE_ID_DAYLIGHT;
+    }
+    else /* Down south */
+    {
+        if (before_standard_date || after_daylight_date) return TIME_ZONE_ID_DAYLIGHT;
+    }
+    return TIME_ZONE_ID_STANDARD;
+}
+
+
 /* Note: the Internal_ functions are not documented. The number of parameters
  * should be correct, but their exact meaning may not.
  */
@@ -3509,6 +3609,59 @@ INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoEx( const WCHAR *locale, CALID calen
 }
 
 
+/***********************************************************************
+ *	GetDynamicTimeZoneInformation   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetDynamicTimeZoneInformation( DYNAMIC_TIME_ZONE_INFORMATION *info )
+{
+    HKEY key;
+    LARGE_INTEGER now;
+
+    if (!set_ntstatus( RtlQueryDynamicTimeZoneInformation( (RTL_DYNAMIC_TIME_ZONE_INFORMATION *)info )))
+        return TIME_ZONE_ID_INVALID;
+
+    if (!RegOpenKeyExW( tz_key, info->TimeZoneKeyName, 0, KEY_ALL_ACCESS, &key ))
+    {
+        RegLoadMUIStringW( key, L"MUI_Std", info->StandardName,
+                           sizeof(info->StandardName), NULL, 0, system_dir );
+        RegLoadMUIStringW( key, L"MUI_Dlt", info->DaylightName,
+                           sizeof(info->DaylightName), NULL, 0, system_dir );
+        RegCloseKey( key );
+    }
+    else return TIME_ZONE_ID_INVALID;
+
+    NtQuerySystemTime( &now );
+    return get_timezone_id( (TIME_ZONE_INFORMATION *)info, now, FALSE );
+}
+
+
+/******************************************************************************
+ *	GetDynamicTimeZoneInformationEffectiveYears   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetDynamicTimeZoneInformationEffectiveYears( const DYNAMIC_TIME_ZONE_INFORMATION *info,
+                                                                            DWORD *first, DWORD *last )
+{
+    HKEY key, dst_key = 0;
+    DWORD type, count, ret = ERROR_FILE_NOT_FOUND;
+
+    if (RegOpenKeyExW( tz_key, info->TimeZoneKeyName, 0, KEY_ALL_ACCESS, &key )) return ret;
+
+    if (RegOpenKeyExW( key, L"Dynamic DST", 0, KEY_ALL_ACCESS, &dst_key )) goto done;
+    count = sizeof(DWORD);
+    if (RegQueryValueExW( dst_key, L"FirstEntry", NULL, &type, (BYTE *)first, &count )) goto done;
+    if (type != REG_DWORD) goto done;
+    count = sizeof(DWORD);
+    if (RegQueryValueExW( dst_key, L"LastEntry", NULL, &type, (BYTE *)last, &count )) goto done;
+    if (type != REG_DWORD) goto done;
+    ret = 0;
+
+done:
+    RegCloseKey( dst_key );
+    RegCloseKey( key );
+    return ret;
+}
+
+
 /******************************************************************************
  *	GetGeoInfoW   (kernelbase.@)
  */
@@ -3939,6 +4092,95 @@ LANGID WINAPI DECLSPEC_HOTPATCH GetSystemDefaultUILanguage(void)
     LANGID lang;
     NtQueryInstallUILanguage( &lang );
     return lang;
+}
+
+
+/***********************************************************************
+ *	GetTimeZoneInformation   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetTimeZoneInformation( TIME_ZONE_INFORMATION *info )
+{
+    DYNAMIC_TIME_ZONE_INFORMATION tzinfo;
+    DWORD ret = GetDynamicTimeZoneInformation( &tzinfo );
+
+    memcpy( info, &tzinfo, sizeof(*info) );
+    return ret;
+}
+
+
+/***********************************************************************
+ *	GetTimeZoneInformationForYear   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetTimeZoneInformationForYear( USHORT year,
+                                                             DYNAMIC_TIME_ZONE_INFORMATION *dynamic,
+                                                             TIME_ZONE_INFORMATION *info )
+{
+    DYNAMIC_TIME_ZONE_INFORMATION local_info;
+    HKEY key = 0, dst_key;
+    DWORD count;
+    LRESULT ret;
+    struct
+    {
+        LONG bias;
+        LONG std_bias;
+        LONG dlt_bias;
+        SYSTEMTIME std_date;
+        SYSTEMTIME dlt_date;
+    } data;
+
+    TRACE( "(%u,%p)\n", year, info );
+
+    if (!dynamic)
+    {
+        if (GetDynamicTimeZoneInformation( &local_info ) == TIME_ZONE_ID_INVALID) return FALSE;
+        dynamic = &local_info;
+    }
+
+    if ((ret = RegOpenKeyExW( tz_key, dynamic->TimeZoneKeyName, 0, KEY_ALL_ACCESS, &key ))) goto done;
+    if (RegLoadMUIStringW( key, L"MUI_Std", info->StandardName,
+                           sizeof(info->StandardName), NULL, 0, system_dir ))
+    {
+        count = sizeof(info->StandardName);
+        if ((ret = RegQueryValueExW( key, L"Std", NULL, NULL, (BYTE *)info->StandardName, &count )))
+            goto done;
+    }
+    if (RegLoadMUIStringW( key, L"MUI_Dlt", info->DaylightName,
+                           sizeof(info->DaylightName), NULL, 0, system_dir ))
+    {
+        count = sizeof(info->DaylightName);
+        if ((ret = RegQueryValueExW( key, L"Dlt", NULL, NULL, (BYTE *)info->DaylightName, &count )))
+            goto done;
+    }
+
+    ret = ERROR_FILE_NOT_FOUND;
+    if (!dynamic->DynamicDaylightTimeDisabled &&
+        !RegOpenKeyExW( key, L"Dynamic DST", 0, KEY_ALL_ACCESS, &dst_key ))
+    {
+        WCHAR yearW[16];
+        swprintf( yearW, ARRAY_SIZE(yearW), L"%u", year );
+        count = sizeof(data);
+        ret = RegQueryValueExW( dst_key, yearW, NULL, NULL, (BYTE *)&data, &count );
+        RegCloseKey( dst_key );
+    }
+    if (ret)
+    {
+        count = sizeof(data);
+        ret = RegQueryValueExW( key, L"TZI", NULL, NULL, (BYTE *)&data, &count );
+    }
+
+    if (!ret)
+    {
+        info->Bias = data.bias;
+        info->StandardBias = data.std_bias;
+        info->DaylightBias = data.dlt_bias;
+        info->StandardDate = data.std_date;
+        info->DaylightDate = data.dlt_date;
+    }
+
+done:
+    RegCloseKey( key );
+    if (ret) SetLastError( ret );
+    return !ret;
 }
 
 
@@ -4701,6 +4943,15 @@ INT WINAPI /* DECLSPEC_HOTPATCH */ SetCalendarInfoW( LCID lcid, CALID calendar, 
 }
 
 
+/***********************************************************************
+ *	SetTimeZoneInformation   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetTimeZoneInformation( const TIME_ZONE_INFORMATION *info )
+{
+    return set_ntstatus( RtlSetTimeZoneInformation( (const RTL_TIME_ZONE_INFORMATION *)info ));
+}
+
+
 /******************************************************************************
  *	SetUserGeoID   (kernelbase.@)
  */
@@ -4723,6 +4974,76 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetUserGeoID( GEOID id )
         RegCloseKey( hkey );
     }
     return TRUE;
+}
+
+
+/***********************************************************************
+ *	SystemTimeToTzSpecificLocalTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SystemTimeToTzSpecificLocalTime( const TIME_ZONE_INFORMATION *info,
+                                                               const SYSTEMTIME *system,
+                                                               SYSTEMTIME *local )
+{
+    TIME_ZONE_INFORMATION tzinfo;
+    LARGE_INTEGER ft;
+
+    if (!info)
+    {
+        RtlQueryTimeZoneInformation( (RTL_TIME_ZONE_INFORMATION *)&tzinfo );
+        info = &tzinfo;
+    }
+
+    if (!SystemTimeToFileTime( system, (FILETIME *)&ft )) return FALSE;
+    switch (get_timezone_id( info, ft, FALSE ))
+    {
+    case TIME_ZONE_ID_UNKNOWN:
+        ft.QuadPart -= info->Bias * (LONGLONG)600000000;
+        break;
+    case TIME_ZONE_ID_STANDARD:
+        ft.QuadPart -= (info->Bias + info->StandardBias) * (LONGLONG)600000000;
+        break;
+    case TIME_ZONE_ID_DAYLIGHT:
+        ft.QuadPart -= (info->Bias + info->DaylightBias) * (LONGLONG)600000000;
+        break;
+    default:
+        return FALSE;
+    }
+    return FileTimeToSystemTime( (FILETIME *)&ft, local );
+}
+
+
+/***********************************************************************
+ *	TzSpecificLocalTimeToSystemTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH TzSpecificLocalTimeToSystemTime( const TIME_ZONE_INFORMATION *info,
+                                                               const SYSTEMTIME *local,
+                                                               SYSTEMTIME *system )
+{
+    TIME_ZONE_INFORMATION tzinfo;
+    LARGE_INTEGER ft;
+
+    if (!info)
+    {
+        RtlQueryTimeZoneInformation( (RTL_TIME_ZONE_INFORMATION *)&tzinfo );
+        info = &tzinfo;
+    }
+
+    if (!SystemTimeToFileTime( local, (FILETIME *)&ft )) return FALSE;
+    switch (get_timezone_id( info, ft, TRUE ))
+    {
+    case TIME_ZONE_ID_UNKNOWN:
+        ft.QuadPart += info->Bias * (LONGLONG)600000000;
+        break;
+    case TIME_ZONE_ID_STANDARD:
+        ft.QuadPart += (info->Bias + info->StandardBias) * (LONGLONG)600000000;
+        break;
+    case TIME_ZONE_ID_DAYLIGHT:
+        ft.QuadPart += (info->Bias + info->DaylightBias) * (LONGLONG)600000000;
+        break;
+    default:
+        return FALSE;
+    }
+    return FileTimeToSystemTime( (FILETIME *)&ft, system );
 }
 
 
