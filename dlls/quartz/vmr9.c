@@ -331,38 +331,20 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
     return hr;
 }
 
-static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
-    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
+    const VIDEOINFOHEADER *vih;
 
-    if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) || !pmt->pbFormat)
+    if (!IsEqualIID(&mt->majortype, &MEDIATYPE_Video) || !mt->pbFormat)
         return S_FALSE;
 
-    /* Ignore subtype, test for bicompression instead */
-    if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo))
-    {
-        VIDEOINFOHEADER *format = (VIDEOINFOHEADER *)pmt->pbFormat;
-
-        This->bmiheader = format->bmiHeader;
-        This->VideoWidth = format->bmiHeader.biWidth;
-        This->VideoHeight = format->bmiHeader.biHeight;
-        SetRect(&This->source_rect, 0, 0, This->VideoWidth, This->VideoHeight);
-    }
-    else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2))
-    {
-        VIDEOINFOHEADER2 *format = (VIDEOINFOHEADER2 *)pmt->pbFormat;
-
-        This->bmiheader = format->bmiHeader;
-        This->VideoWidth = format->bmiHeader.biWidth;
-        This->VideoHeight = format->bmiHeader.biHeight;
-        SetRect(&This->source_rect, 0, 0, This->VideoWidth, This->VideoHeight);
-    }
-    else
-    {
-        ERR("Format type %s not supported\n", debugstr_guid(&pmt->formattype));
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
+            && !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2))
         return S_FALSE;
-    }
-    if (This->bmiheader.biCompression != BI_RGB)
+
+    vih = (VIDEOINFOHEADER *)mt->pbFormat;
+
+    if (vih->bmiHeader.biCompression != BI_RGB)
         return S_FALSE;
     return S_OK;
 }
@@ -461,16 +443,33 @@ static HRESULT WINAPI VMR9_ShouldDrawSampleNow(struct strmbase_renderer *iface,
     return S_FALSE;
 }
 
-static HRESULT WINAPI VMR9_CompleteConnect(struct strmbase_renderer *This, IPin *pReceivePin)
+static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
-    struct quartz_vmr *pVMR9 = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
+    struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
     HRESULT hr;
 
-    TRACE("(%p)\n", This);
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+    {
+        VIDEOINFOHEADER *format = (VIDEOINFOHEADER *)mt->pbFormat;
 
-    if (pVMR9->mode ||
-            SUCCEEDED(hr = IVMRFilterConfig9_SetRenderingMode(&pVMR9->IVMRFilterConfig9_iface, VMR9Mode_Windowed)))
-        hr = VMR9_maybe_init(pVMR9, FALSE);
+        filter->bmiheader = format->bmiHeader;
+        filter->VideoWidth = format->bmiHeader.biWidth;
+        filter->VideoHeight = format->bmiHeader.biHeight;
+        SetRect(&filter->source_rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
+    }
+    else if (IsEqualIID(&mt->formattype, &FORMAT_VideoInfo2))
+    {
+        VIDEOINFOHEADER2 *format = (VIDEOINFOHEADER2 *)mt->pbFormat;
+
+        filter->bmiheader = format->bmiHeader;
+        filter->VideoWidth = format->bmiHeader.biWidth;
+        filter->VideoHeight = format->bmiHeader.biHeight;
+        SetRect(&filter->source_rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
+    }
+
+    if (filter->mode
+            || SUCCEEDED(hr = IVMRFilterConfig9_SetRenderingMode(&filter->IVMRFilterConfig9_iface, VMR9Mode_Windowed)))
+        hr = VMR9_maybe_init(filter, FALSE);
 
     return hr;
 }
@@ -576,7 +575,7 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_start_stream = vmr_start_stream,
     .renderer_stop_stream = vmr_stop_stream,
     .pfnShouldDrawSampleNow = VMR9_ShouldDrawSampleNow,
-    .pfnCompleteConnect = VMR9_CompleteConnect,
+    .renderer_connect = vmr_connect,
     .pfnBreakConnect = VMR9_BreakConnect,
     .renderer_destroy = vmr_destroy,
     .renderer_query_interface = vmr_query_interface,

@@ -413,17 +413,12 @@ static void dsound_render_start_stream(struct strmbase_renderer *iface)
     }
 }
 
-static HRESULT WINAPI DSoundRender_CompleteConnect(struct strmbase_renderer *iface, IPin *pReceivePin)
+static HRESULT dsound_render_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     DSoundRenderImpl *This = impl_from_strmbase_renderer(iface);
-    const AM_MEDIA_TYPE *pmt = &This->renderer.sink.pin.mt;
+    const WAVEFORMATEX *format = (WAVEFORMATEX *)mt->pbFormat;
     HRESULT hr = S_OK;
-    WAVEFORMATEX *format;
     DSBUFFERDESC buf_desc;
-
-    TRACE("(%p)->(%p)\n", This, pReceivePin);
-
-    format = (WAVEFORMATEX*)pmt->pbFormat;
 
     This->buf_size = format->nAvgBytesPerSec;
 
@@ -433,7 +428,7 @@ static HRESULT WINAPI DSoundRender_CompleteConnect(struct strmbase_renderer *ifa
                        DSBCAPS_CTRLFREQUENCY | DSBCAPS_GLOBALFOCUS |
                        DSBCAPS_GETCURRENTPOSITION2;
     buf_desc.dwBufferBytes = This->buf_size;
-    buf_desc.lpwfxFormat = format;
+    buf_desc.lpwfxFormat = (WAVEFORMATEX *)format;
     hr = IDirectSound8_CreateSoundBuffer(This->dsound, &buf_desc, &This->dsbuffer, NULL);
     This->writepos = This->buf_size;
     if (FAILED(hr))
@@ -539,7 +534,7 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_stop_stream = dsound_render_stop_stream,
     .pfnShouldDrawSampleNow = DSoundRender_ShouldDrawSampleNow,
     .pfnPrepareReceive = DSoundRender_PrepareReceive,
-    .pfnCompleteConnect = DSoundRender_CompleteConnect,
+    .renderer_connect = dsound_render_connect,
     .pfnBreakConnect = DSoundRender_BreakConnect,
     .pfnEndOfStream = DSoundRender_EndOfStream,
     .pfnEndFlush = DSoundRender_EndFlush,

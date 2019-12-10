@@ -52,8 +52,8 @@ static HRESULT WINAPI BaseRenderer_InputPin_ReceiveConnection(IPin *iface, IPin 
     hr = BaseInputPinImpl_ReceiveConnection(iface, peer, mt);
     if (SUCCEEDED(hr))
     {
-        if (filter->pFuncsTable->pfnCompleteConnect)
-            hr = filter->pFuncsTable->pfnCompleteConnect(filter, peer);
+        if (filter->pFuncsTable->renderer_connect)
+            hr = filter->pFuncsTable->renderer_connect(filter, mt);
     }
     LeaveCriticalSection(&filter->filter.csFilter);
 

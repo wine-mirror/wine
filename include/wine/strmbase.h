@@ -523,7 +523,6 @@ typedef HRESULT (WINAPI *BaseRenderer_EndOfStream)(struct strmbase_renderer *ifa
 typedef HRESULT (WINAPI *BaseRenderer_BeginFlush) (struct strmbase_renderer *iface);
 typedef HRESULT (WINAPI *BaseRenderer_EndFlush) (struct strmbase_renderer *iface);
 typedef HRESULT (WINAPI *BaseRenderer_BreakConnect) (struct strmbase_renderer *iface);
-typedef HRESULT (WINAPI *BaseRenderer_CompleteConnect) (struct strmbase_renderer *iface, IPin *peer);
 
 struct strmbase_renderer_ops
 {
@@ -534,7 +533,7 @@ struct strmbase_renderer_ops
     void (*renderer_stop_stream)(struct strmbase_renderer *iface);
     BaseRenderer_ShouldDrawSampleNow  pfnShouldDrawSampleNow;
     BaseRenderer_PrepareReceive pfnPrepareReceive;
-    BaseRenderer_CompleteConnect pfnCompleteConnect;
+    HRESULT (*renderer_connect)(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt);
     BaseRenderer_BreakConnect pfnBreakConnect;
     BaseRenderer_EndOfStream pfnEndOfStream;
     BaseRenderer_EndFlush pfnEndFlush;
