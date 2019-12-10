@@ -124,8 +124,13 @@ static HRESULT WINAPI stream_get_Size( _Stream *iface, LONG *size )
 
 static HRESULT WINAPI stream_get_EOS( _Stream *iface, VARIANT_BOOL *eos )
 {
-    FIXME( "%p, %p\n", iface, eos );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    TRACE( "%p, %p\n", stream, eos );
+
+    if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    *eos = (stream->pos >= stream->size) ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_get_Position( _Stream *iface, LONG *pos )

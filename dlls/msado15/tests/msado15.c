@@ -49,6 +49,7 @@ static HRESULT str_to_byte_array( const char *data, VARIANT *ret )
 static void test_Stream(void)
 {
     _Stream *stream;
+    VARIANT_BOOL eos;
     StreamTypeEnum type;
     LONG refs, size, pos;
     ObjectStateEnum state;
@@ -59,6 +60,9 @@ static void test_Stream(void)
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = _Stream_get_Size( stream, &size );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
+
+    hr = _Stream_get_EOS( stream, &eos );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
 
     hr = _Stream_get_Position( stream, &pos );
@@ -110,6 +114,11 @@ static void test_Stream(void)
     hr = _Stream_get_Size( stream, &size );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !size, "got %d\n", size );
+
+    eos = VARIANT_FALSE;
+    hr = _Stream_get_EOS( stream, &eos );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( eos == VARIANT_TRUE, "got %04x\n", eos );
 
     pos = -1;
     hr = _Stream_get_Position( stream, &pos );
