@@ -2551,6 +2551,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,gecko\plugin,npmshtml.dll
 11,Speech\Common,sapi.dll
 11,wbem,mofcomp.exe
+11,WindowsPowerShell\v1.0,powershell.exe
 10,syswow64,stdole2.tlb
 11,,iexplore.exe
 11,,winetest.exe,-
@@ -2630,6 +2631,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,wbem,wbemprox.dll
 11,wbem,wmic.exe
 11,wbem,wmiutils.dll
+11,WindowsPowerShell\v1.0,powershell.exe
 ; empty folders to make sure the parent dirs are not removed
 16410,Microsoft,
 16412,Microsoft,
