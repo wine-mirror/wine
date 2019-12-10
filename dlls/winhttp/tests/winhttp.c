@@ -1070,6 +1070,13 @@ static void test_secure_connection(void)
     con = WinHttpConnect(ses, test_winehq, 443, 0);
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
+    SetLastError( 0xdeadbeef );
+    protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
+    ret = WinHttpSetOption(con, WINHTTP_OPTION_SECURE_PROTOCOLS, &protocols, sizeof(protocols));
+    err = GetLastError();
+    ok(!ret, "unexpected success\n");
+    ok(err == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE, "got %u\n", err);
+
     /* try without setting WINHTTP_FLAG_SECURE */
     req = WinHttpOpenRequest(con, NULL, NULL, NULL, NULL, NULL, 0);
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
