@@ -104,9 +104,7 @@ __ASM_GLOBAL_FUNC( call_process_entry,
                     __ASM_CFI(".cfi_same_value %ebp\n\t")
                     "ret" )
 
-extern void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb ) DECLSPEC_HIDDEN;
-extern void WINAPI start_process_wrapper(void) DECLSPEC_HIDDEN;
-__ASM_GLOBAL_FUNC( start_process_wrapper,
+__ASM_GLOBAL_FUNC( __wine_start_process,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
@@ -120,16 +118,18 @@ static inline DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry )
 {
     return entry( peb );
 }
-static void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb );
-#define start_process_wrapper start_process
 #endif
 
 /***********************************************************************
- *           start_process
+ *           __wine_start_process
  *
  * Startup routine of a new process. Runs on the new process stack.
  */
-void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
+#ifdef __i386__
+void CDECL start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
+#else
+void CDECL __wine_start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
+#endif
 {
     BOOL being_debugged;
 
@@ -158,22 +158,6 @@ void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
     }
     __ENDTRY
     abort();  /* should not be reached */
-}
-
-
-/***********************************************************************
- *           __wine_kernel_init
- *
- * Wine initialisation: load and start the main exe file.
- */
-void * CDECL __wine_kernel_init(void)
-{
-    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
-
-    kernel32_handle = GetModuleHandleW(kernel32W);
-    RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
-
-    return start_process_wrapper;
 }
 
 

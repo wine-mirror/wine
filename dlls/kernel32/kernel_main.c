@@ -84,6 +84,9 @@ static BOOL process_attach( HMODULE module )
 {
     RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
 
+    kernel32_handle = module;
+    RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
+
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
 
     /* Setup registry timezone information */

@@ -4237,7 +4237,6 @@ void __wine_process_init(void)
     NTSTATUS status;
     ANSI_STRING func_name;
     UNICODE_STRING nt_name;
-    void * (CDECL *init_func)(void);
     INITIAL_TEB stack;
     BOOL suspend;
     SIZE_T info_size;
@@ -4273,11 +4272,11 @@ void __wine_process_init(void)
         MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
         exit(1);
     }
-    RtlInitAnsiString( &func_name, "__wine_kernel_init" );
+    RtlInitAnsiString( &func_name, "__wine_start_process" );
     if ((status = LdrGetProcedureAddress( wm->ldr.BaseAddress, &func_name,
-                                          0, (void **)&init_func )) != STATUS_SUCCESS)
+                                          0, (void **)&kernel32_start_process )) != STATUS_SUCCESS)
     {
-        MESSAGE( "wine: could not find __wine_kernel_init in kernel32.dll, status %x\n", status );
+        MESSAGE( "wine: could not find __wine_start_process in kernel32.dll, status %x\n", status );
         exit(1);
     }
 
@@ -4322,8 +4321,6 @@ void __wine_process_init(void)
         }
         NtTerminateProcess( GetCurrentProcess(), status );
     }
-
-    kernel32_start_process = init_func();
 
     virtual_set_large_address_space();
 
