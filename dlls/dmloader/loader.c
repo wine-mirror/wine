@@ -168,7 +168,7 @@ static struct cache_entry *find_cache_object(IDirectMusicLoaderImpl *This, DMUS_
     struct cache_entry *existing;
 
     /*
-     * The Object is looked for the the following order.
+     * The Object is looked up in the following order.
      * 1. DMUS_OBJ_OBJECT
      * 2. DMUS_OBJ_STREAM
      * 3. DMUS_OBJ_MEMORY
@@ -682,7 +682,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_CacheObject(IDirectMusicLoader8 *if
     entry = find_cache_object(This, &desc);
     if (entry) {
         if ((entry->Desc.dwValidData & DMUS_OBJ_LOADED) && entry->pObject) {
-            TRACE("Object already laoded.\n");
+            TRACE("Object already loaded.\n");
             return S_FALSE;
         }
 
