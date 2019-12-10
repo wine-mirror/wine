@@ -212,12 +212,31 @@ static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void
     return S_OK;
 }
 
+static HRESULT sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    TransformFilter *filter = impl_from_sink_IPin(&iface->pin.IPin_iface);
+
+    if (filter->pFuncsTable->transform_connect_sink)
+        return filter->pFuncsTable->transform_connect_sink(filter, mt);
+    return S_OK;
+}
+
+static void sink_disconnect(struct strmbase_sink *iface)
+{
+    TransformFilter *filter = impl_from_sink_IPin(&iface->pin.IPin_iface);
+
+    if (filter->pFuncsTable->pfnBreakConnect)
+        filter->pFuncsTable->pfnBreakConnect(filter, PINDIR_INPUT);
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
     .base.pin_query_interface = sink_query_interface,
     .pfnReceive = TransformFilter_Input_Receive,
+    .sink_connect = sink_connect,
+    .sink_disconnect = sink_disconnect,
 };
 
 static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
@@ -397,39 +416,6 @@ static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
     return VFW_E_NOT_CONNECTED;
 }
 
-static HRESULT WINAPI TransformFilter_InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
-{
-    TransformFilter *pTransform = impl_from_sink_IPin(iface);
-    HRESULT hr = S_OK;
-
-    TRACE("(%p)->(%p, %p)\n", iface, pReceivePin, pmt);
-    strmbase_dump_media_type(pmt);
-
-    if (pTransform->pFuncsTable->transform_connect_sink)
-        hr = pTransform->pFuncsTable->transform_connect_sink(pTransform, pmt);
-
-    if (SUCCEEDED(hr))
-    {
-        hr = BaseInputPinImpl_ReceiveConnection(iface, pReceivePin, pmt);
-        if (FAILED(hr) && pTransform->pFuncsTable->pfnBreakConnect)
-            pTransform->pFuncsTable->pfnBreakConnect(pTransform, PINDIR_INPUT);
-    }
-
-    return hr;
-}
-
-static HRESULT WINAPI TransformFilter_InputPin_Disconnect(IPin * iface)
-{
-    TransformFilter *pTransform = impl_from_sink_IPin(iface);
-
-    TRACE("(%p)->()\n", iface);
-
-    if (pTransform->pFuncsTable->pfnBreakConnect)
-        pTransform->pFuncsTable->pfnBreakConnect(pTransform, PINDIR_INPUT);
-
-    return BaseInputPinImpl_Disconnect(iface);
-}
-
 static HRESULT WINAPI TransformFilter_InputPin_BeginFlush(IPin * iface)
 {
     TransformFilter *pTransform = impl_from_sink_IPin(iface);
@@ -483,8 +469,8 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
-    TransformFilter_InputPin_ReceiveConnection,
-    TransformFilter_InputPin_Disconnect,
+    BaseInputPinImpl_ReceiveConnection,
+    BaseInputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
