@@ -1724,15 +1724,16 @@ static inline TLBCustData *TLB_get_custdata_by_guid(struct list *custdata_list, 
     return NULL;
 }
 
-static inline ITypeInfoImpl *TLB_get_typeinfo_by_name(ITypeInfoImpl **typeinfos,
-        UINT n, const OLECHAR *name)
+static inline ITypeInfoImpl *TLB_get_typeinfo_by_name(ITypeLibImpl *typelib, const OLECHAR *name)
 {
-    while(n){
-        if(!lstrcmpiW(TLB_get_bstr((*typeinfos)->Name), name))
-            return *typeinfos;
-        ++typeinfos;
-        --n;
+    int i;
+
+    for (i = 0; i < typelib->TypeInfoCount; ++i)
+    {
+        if (!lstrcmpiW(TLB_get_bstr(typelib->typeinfos[i]->Name), name))
+            return typelib->typeinfos[i];
     }
+
     return NULL;
 }
 
@@ -5507,7 +5508,7 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
     if(!szName || !ppTInfo || !ppTComp)
         return E_INVALIDARG;
 
-    info = TLB_get_typeinfo_by_name(This->typeinfos, This->TypeInfoCount, szName);
+    info = TLB_get_typeinfo_by_name(This, szName);
     if(!info){
         *ppTInfo = NULL;
         *ppTComp = NULL;
@@ -9007,7 +9008,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(ICreateTypeLib2 *iface,
     if (!ctinfo || !name)
         return E_INVALIDARG;
 
-    info = TLB_get_typeinfo_by_name(This->typeinfos, This->TypeInfoCount, name);
+    info = TLB_get_typeinfo_by_name(This, name);
     if (info)
         return TYPE_E_NAMECONFLICT;
 
