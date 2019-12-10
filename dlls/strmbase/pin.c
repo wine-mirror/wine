@@ -119,31 +119,6 @@ ULONG WINAPI BasePinImpl_Release(IPin *iface)
     return IBaseFilter_Release(&pin->filter->IBaseFilter_iface);
 }
 
-HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface)
-{
-    struct strmbase_pin *This = impl_from_IPin(iface);
-    HRESULT hr;
-
-    TRACE("(%p)->()\n", This);
-
-    EnterCriticalSection(&This->filter->csFilter);
-    {
-        if (This->peer)
-        {
-            IPin_Release(This->peer);
-            This->peer = NULL;
-            FreeMediaType(&This->mt);
-            ZeroMemory(&This->mt, sizeof(This->mt));
-            hr = S_OK;
-        }
-        else
-            hr = S_FALSE;
-    }
-    LeaveCriticalSection(&This->filter->csFilter);
-
-    return hr;
-}
-
 HRESULT WINAPI BasePinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
 {
     struct strmbase_pin *This = impl_from_IPin(iface);
@@ -685,6 +660,9 @@ HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceiveP
             }
         }
 
+        if (SUCCEEDED(hr) && This->pFuncsTable->sink_connect)
+            hr = This->pFuncsTable->sink_connect(This, pReceivePin, pmt);
+
         if (SUCCEEDED(hr))
         {
             CopyMediaType(&This->pin.mt, pmt);
@@ -693,6 +671,34 @@ HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceiveP
         }
     }
     LeaveCriticalSection(&This->pin.filter->csFilter);
+
+    return hr;
+}
+
+HRESULT WINAPI BaseInputPinImpl_Disconnect(IPin *iface)
+{
+    struct strmbase_sink *pin = impl_sink_from_IPin(iface);
+    HRESULT hr;
+
+    TRACE("pin %p.\n", pin);
+
+    EnterCriticalSection(&pin->pin.filter->csFilter);
+
+    if (pin->pin.peer)
+    {
+        if (pin->pFuncsTable->sink_disconnect)
+            pin->pFuncsTable->sink_disconnect(pin);
+
+        IPin_Release(pin->pin.peer);
+        pin->pin.peer = NULL;
+        FreeMediaType(&pin->pin.mt);
+        memset(&pin->pin.mt, 0, sizeof(AM_MEDIA_TYPE));
+        hr = S_OK;
+    }
+    else
+        hr = S_FALSE;
+
+    LeaveCriticalSection(&pin->pin.filter->csFilter);
 
     return hr;
 }

@@ -1469,7 +1469,7 @@ static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
         if(SUCCEEDED(hr))
             hr = IMemAllocator_Commit(avimuxin->samples_allocator);
         if(FAILED(hr)) {
-            BasePinImpl_Disconnect(iface);
+            BaseInputPinImpl_Disconnect(iface);
             return hr;
         }
 
@@ -1497,7 +1497,7 @@ static HRESULT WINAPI AviMuxIn_Disconnect(IPin *iface)
 
     TRACE("pin %p.\n", avimuxin);
 
-    hr = BasePinImpl_Disconnect(iface);
+    hr = BaseInputPinImpl_Disconnect(iface);
     if(FAILED(hr))
         return hr;
 

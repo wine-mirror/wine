@@ -523,7 +523,7 @@ static const IPinVtbl sink_vtbl =
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
     SampleGrabber_In_IPin_ReceiveConnection,
-    BasePinImpl_Disconnect,
+    BaseInputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,

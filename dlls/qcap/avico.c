@@ -291,7 +291,7 @@ static HRESULT WINAPI AVICompressorIn_ReceiveConnection(IPin *iface,
 
     hres = fill_format_info(This, (VIDEOINFOHEADER*)pmt->pbFormat);
     if(FAILED(hres))
-        BasePinImpl_Disconnect(iface);
+        BaseInputPinImpl_Disconnect(iface);
     return hres;
 }
 
@@ -302,7 +302,7 @@ static HRESULT WINAPI AVICompressorIn_Disconnect(IPin *iface)
 
     TRACE("(%p)\n", This);
 
-    hres = BasePinImpl_Disconnect(iface);
+    hres = BaseInputPinImpl_Disconnect(iface);
     if(FAILED(hres))
         return hres;
 

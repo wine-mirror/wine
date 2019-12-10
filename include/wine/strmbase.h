@@ -91,9 +91,10 @@ typedef HRESULT (WINAPI *BaseInputPin_Receive)(struct strmbase_sink *This, IMedi
 
 struct strmbase_sink_ops
 {
-	BasePinFuncTable base;
-	/* Optional */
-	BaseInputPin_Receive pfnReceive;
+    BasePinFuncTable base;
+    BaseInputPin_Receive pfnReceive;
+    HRESULT (*sink_connect)(struct strmbase_sink *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
+    void (*sink_disconnect)(struct strmbase_sink *pin);
 };
 
 /* Base Pin */
@@ -102,7 +103,7 @@ LONG WINAPI BasePinImpl_GetMediaTypeVersion(struct strmbase_pin *pin);
 HRESULT WINAPI BasePinImpl_QueryInterface(IPin *iface, REFIID iid, void **out);
 ULONG WINAPI BasePinImpl_AddRef(IPin *iface);
 ULONG WINAPI BasePinImpl_Release(IPin *iface);
-HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface);
+HRESULT WINAPI BaseInputPinImpl_Disconnect(IPin * iface);
 HRESULT WINAPI BasePinImpl_ConnectedTo(IPin * iface, IPin ** ppPin);
 HRESULT WINAPI BasePinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI BasePinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo);

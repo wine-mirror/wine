@@ -68,7 +68,7 @@ static HRESULT WINAPI BaseRenderer_InputPin_Disconnect(IPin * iface)
     TRACE("iface %p.\n", iface);
 
     EnterCriticalSection(&filter->filter.csFilter);
-    hr = BasePinImpl_Disconnect(iface);
+    hr = BaseInputPinImpl_Disconnect(iface);
     if (SUCCEEDED(hr))
     {
         if (filter->pFuncsTable->pfnBreakConnect)

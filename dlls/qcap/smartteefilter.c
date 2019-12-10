@@ -87,7 +87,7 @@ static const IPinVtbl SmartTeeFilterInputVtbl = {
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
     BaseInputPinImpl_ReceiveConnection,
-    BasePinImpl_Disconnect,
+    BaseInputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,

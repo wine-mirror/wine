@@ -427,7 +427,7 @@ static HRESULT WINAPI TransformFilter_InputPin_Disconnect(IPin * iface)
     if (pTransform->pFuncsTable->pfnBreakConnect)
         pTransform->pFuncsTable->pfnBreakConnect(pTransform, PINDIR_INPUT);
 
-    return BasePinImpl_Disconnect(iface);
+    return BaseInputPinImpl_Disconnect(iface);
 }
 
 static HRESULT WINAPI TransformFilter_InputPin_BeginFlush(IPin * iface)
