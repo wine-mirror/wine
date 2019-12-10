@@ -38,6 +38,7 @@ struct stream
     ConnectModeEnum    mode;
     StreamTypeEnum     type;
     LineSeparatorEnum  sep;
+    WCHAR             *charset;
     LONG               size;
     LONG               allocated;
     LONG               pos;
@@ -62,6 +63,7 @@ static ULONG WINAPI stream_Release( _Stream *iface )
     if (!refs)
     {
         TRACE( "destroying %p\n", stream );
+        heap_free( stream->charset );
         heap_free( stream->buf );
         heap_free( stream );
     }
@@ -240,14 +242,28 @@ static HRESULT WINAPI stream_put_Mode( _Stream *iface, ConnectModeEnum mode )
 
 static HRESULT WINAPI stream_get_Charset( _Stream *iface, BSTR *charset )
 {
-    FIXME( "%p, %p\n", iface, charset );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    const WCHAR *src = stream->charset ? stream->charset : L"Unicode";
+    BSTR dst;
+
+    TRACE( "%p, %p\n", stream, charset );
+
+    if (!(dst = SysAllocString( src ))) return E_OUTOFMEMORY;
+    *charset = dst;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_put_Charset( _Stream *iface, BSTR charset )
 {
-    FIXME( "%p, %s\n", iface, debugstr_w(charset) );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    WCHAR *str;
+
+    TRACE( "%p, %s\n", stream, debugstr_w(charset) );
+
+    if (!(str = strdupW( charset ))) return E_OUTOFMEMORY;
+    heap_free( stream->charset );
+    stream->charset = str;
+    return S_OK;
 }
 
 static HRESULT create_byte_array( BYTE *data, LONG len, VARIANT *ret )

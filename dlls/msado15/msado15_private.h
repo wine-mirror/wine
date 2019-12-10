@@ -31,4 +31,12 @@ static inline void *heap_realloc_zero( void *mem, SIZE_T len )
     return HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len );
 }
 
+static inline WCHAR *strdupW( const WCHAR *src )
+{
+    WCHAR *dst;
+    if (!src) return NULL;
+    if ((dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(*dst) ))) lstrcpyW( dst, src );
+    return dst;
+}
+
 #endif /* _WINE_MSADO15_PRIVATE_H_ */

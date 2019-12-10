@@ -55,6 +55,7 @@ static void test_Stream(void)
     LONG refs, size, pos;
     ObjectStateEnum state;
     ConnectModeEnum mode;
+    BSTR charset, str;
     VARIANT missing, val;
     HRESULT hr;
 
@@ -111,6 +112,16 @@ static void test_Stream(void)
 
     hr = _Stream_put_Mode( stream, adModeReadWrite );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Stream_get_Charset( stream, &charset );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( charset, L"Unicode" ), "got %s\n", wine_dbgstr_w(charset) );
+    SysFreeString( charset );
+
+    str = SysAllocString( L"Unicode" );
+    hr = _Stream_put_Charset( stream, str );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( str );
 
     hr = _Stream_Read( stream, 2, &val );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
