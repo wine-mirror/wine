@@ -45,14 +45,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 
-#define GECKO_VERSION "2.47"
+#define GECKO_VERSION "2.47.1"
 
 #ifdef __i386__
 #define ARCH_STRING "x86"
-#define GECKO_SHA "3b8a361f5d63952d21caafd74e849a774994822fb96c5922b01d554f1677643a"
+#define GECKO_SHA "f00b0e2892404827e8ce6811dedfc25ae699a09955bb3df1bbb31753e51da051"
 #elif defined(__x86_64__)
 #define ARCH_STRING "x86_64"
-#define GECKO_SHA "c565ea25e50ea953937d4ab01299e4306da4a556946327d253ea9b28357e4a7d"
+#define GECKO_SHA "69312e79a988da3e7d292382005e92bc4d4b2a52a23c34440ae3007feb57474a"
 #else
 #define ARCH_STRING ""
 #define GECKO_SHA "???"
@@ -79,7 +79,7 @@ typedef struct {
 static const addon_info_t addons_info[] = {
     {
         GECKO_VERSION,
-        L"wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
+        L"wine-gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
         L"gecko",
         GECKO_SHA,
         "http://source.winehq.org/winegecko.php",
