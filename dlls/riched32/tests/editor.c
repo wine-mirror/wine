@@ -293,7 +293,7 @@ static void test_EM_STREAMIN(void)
   result = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
   ok (result  == 0,
       "EM_STREAMIN: Test 3 returned %ld, expected 0\n", result);
-  ok (strlen(buffer)  == 0,
+  ok (!*buffer,
       "EM_STREAMIN: Test 3 set wrong text: Result: %s\n",buffer);
   ok(es.dwError == -16, "EM_STREAMIN: Test 0 set error %d, expected %d\n", es.dwError, -16);
 
