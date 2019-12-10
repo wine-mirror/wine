@@ -76,6 +76,15 @@
 #define ARCH "none"
 #endif
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
 static HRESULT (WINAPI *pRegisterTypeLibForUser)(ITypeLib*,OLECHAR*,OLECHAR*);
 static HRESULT (WINAPI *pUnRegisterTypeLibForUser)(REFGUID,WORD,WORD,LCID,SYSKIND);
 
@@ -1846,6 +1855,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     static const GUID interfaceguid = {0x3b9ff02f,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
     static const GUID interface2guid = {0x3b9ff02f,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcd}};
 
+    ITypeInfo *interface1, *interface2, *dual, *unknown, *dispatch, *ti, *ti_2;
     char filename[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *createtl;
@@ -1853,7 +1863,6 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ICreateTypeInfo2 *createti2;
     ITypeLib *tl, *stdole;
     ITypeLib2 *tl2;
-    ITypeInfo *interface1, *interface2, *dual, *unknown, *dispatch, *ti;
     ITypeInfo *tinfos[2];
     ITypeInfo2 *ti2;
     ITypeComp *tcomp, *tcomp2;
@@ -2829,8 +2838,11 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ok(hres == S_OK, "got %08x\n", hres);
     ok(hreftype == -2, "got %08x\n", hreftype);
 
+    EXPECT_REF(dual, 2);
     hres = ITypeInfo_GetRefTypeInfo(dual, -2, &ti);
     ok(hres == S_OK, "got %08x\n", hres);
+todo_wine
+    EXPECT_REF(dual, 3);
 
     hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
@@ -2847,6 +2859,18 @@ static void test_CreateTypeLib(SYSKIND sys) {
 
     ITypeInfo_ReleaseTypeAttr(ti, typeattr);
 
+    hres = ITypeInfo_GetRefTypeInfo(dual, -2, &ti_2);
+    ok(hres == S_OK, "Failed to get reference typeinfo, hr %#x.\n", hres);
+todo_wine {
+    ok(ti == ti_2, "Unexpected typeinfo instance.\n");
+    EXPECT_REF(dual, 4);
+}
+    ITypeInfo_AddRef(ti_2);
+todo_wine
+    EXPECT_REF(dual, 5);
+    ITypeInfo_Release(ti_2);
+
+    ITypeInfo_Release(ti_2);
     ITypeInfo_Release(ti);
 
     hres = ICreateTypeInfo_SetTypeDescAlias(createti, &typedesc1);
