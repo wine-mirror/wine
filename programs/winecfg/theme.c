@@ -842,7 +842,7 @@ static void on_shell_folder_selection_changed(HWND hDlg, LPNMLISTVIEW lpnm) {
     if (lpnm->uNewState & LVIS_SELECTED) {
         psfiSelected = (struct ShellFolderInfo *)lpnm->lParam;
         EnableWindow(GetDlgItem(hDlg, IDC_LINK_SFPATH), 1);
-        if (strlen(psfiSelected->szLinkTarget)) {
+        if (*psfiSelected->szLinkTarget) {
             WCHAR *link;
             CheckDlgButton(hDlg, IDC_LINK_SFPATH, BST_CHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_EDIT_SFPATH), 1);
