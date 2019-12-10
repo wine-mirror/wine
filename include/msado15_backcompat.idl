@@ -1068,8 +1068,8 @@ interface Recordset20 : Recordset15
     HRESULT GetString(
         [in, defaultvalue(adClipString)] StringFormatEnum string_format,
         [in, defaultvalue(-1)] LONG num_rows,
-        [in, optional] BSTR column_delimeter,
-        [in, optional] BSTR row_delimeter,
+        [in, optional] BSTR column_delimiter,
+        [in, optional] BSTR row_delimiter,
         [in, optional] BSTR null_expr,
         [out, retval] BSTR *ret_string);
 

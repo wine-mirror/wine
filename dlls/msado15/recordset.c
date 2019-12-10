@@ -526,11 +526,11 @@ static HRESULT WINAPI recordset_get_StayInSync( _Recordset *iface, VARIANT_BOOL 
 }
 
 static HRESULT WINAPI recordset_GetString( _Recordset *iface, StringFormatEnum string_format, LONG num_rows,
-                                           BSTR column_delimeter, BSTR row_delimeter, BSTR null_expr,
+                                           BSTR column_delimiter, BSTR row_delimiter, BSTR null_expr,
                                            BSTR *ret_string )
 {
-    FIXME( "%p, %u, %d, %s, %s, %s, %p\n", iface, string_format, num_rows, debugstr_w(column_delimeter),
-           debugstr_w(row_delimeter), debugstr_w(null_expr), ret_string );
+    FIXME( "%p, %u, %d, %s, %s, %s, %p\n", iface, string_format, num_rows, debugstr_w(column_delimiter),
+           debugstr_w(row_delimiter), debugstr_w(null_expr), ret_string );
     return E_NOTIMPL;
 }
 
