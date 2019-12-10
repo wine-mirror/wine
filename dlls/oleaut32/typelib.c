@@ -1679,39 +1679,42 @@ static BSTR TLB_MultiByteToBSTR(const char *ptr)
     return ret;
 }
 
-static inline TLBFuncDesc *TLB_get_funcdesc_by_memberid(TLBFuncDesc *funcdescs,
-        UINT n, MEMBERID memid)
+static inline TLBFuncDesc *TLB_get_funcdesc_by_memberid(ITypeInfoImpl *typeinfo, MEMBERID memid)
 {
-    while(n){
-        if(funcdescs->funcdesc.memid == memid)
-            return funcdescs;
-        ++funcdescs;
-        --n;
+    int i;
+
+    for (i = 0; i < typeinfo->typeattr.cFuncs; ++i)
+    {
+        if (typeinfo->funcdescs[i].funcdesc.memid == memid)
+            return &typeinfo->funcdescs[i];
     }
+
     return NULL;
 }
 
-static inline TLBVarDesc *TLB_get_vardesc_by_memberid(TLBVarDesc *vardescs,
-        UINT n, MEMBERID memid)
+static inline TLBVarDesc *TLB_get_vardesc_by_memberid(ITypeInfoImpl *typeinfo, MEMBERID memid)
 {
-    while(n){
-        if(vardescs->vardesc.memid == memid)
-            return vardescs;
-        ++vardescs;
-        --n;
+    int i;
+
+    for (i = 0; i < typeinfo->typeattr.cVars; ++i)
+    {
+        if (typeinfo->vardescs[i].vardesc.memid == memid)
+            return &typeinfo->vardescs[i];
     }
+
     return NULL;
 }
 
-static inline TLBVarDesc *TLB_get_vardesc_by_name(TLBVarDesc *vardescs,
-        UINT n, const OLECHAR *name)
+static inline TLBVarDesc *TLB_get_vardesc_by_name(ITypeInfoImpl *typeinfo, const OLECHAR *name)
 {
-    while(n){
-        if(!lstrcmpiW(TLB_get_bstr(vardescs->Name), name))
-            return vardescs;
-        ++vardescs;
-        --n;
+    int i;
+
+    for (i = 0; i < typeinfo->typeattr.cVars; ++i)
+    {
+        if (!lstrcmpiW(TLB_get_bstr(typeinfo->vardescs[i].Name), name))
+            return &typeinfo->vardescs[i];
     }
+
     return NULL;
 }
 
@@ -5128,7 +5131,7 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
             }
         }
 
-        var = TLB_get_vardesc_by_name(pTInfo->vardescs, pTInfo->typeattr.cVars, name);
+        var = TLB_get_vardesc_by_name(pTInfo, name);
         if (var) {
             memid[count] = var->vardesc.memid;
             goto ITypeLib2_fnFindName_exit;
@@ -6117,7 +6120,7 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
 
     *pcNames = 0;
 
-    pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->typeattr.cFuncs, memid);
+    pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
     if(pFDesc)
     {
         if(!cMaxNames || !pFDesc->Name)
@@ -6135,7 +6138,7 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
         return S_OK;
     }
 
-    pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->typeattr.cVars, memid);
+    pVDesc = TLB_get_vardesc_by_memberid(This, memid);
     if(pVDesc)
     {
       *rgBstrNames=SysAllocString(TLB_get_bstr(pVDesc->Name));
@@ -6294,7 +6297,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
             return ret;
         }
     }
-    pVDesc = TLB_get_vardesc_by_name(This->vardescs, This->typeattr.cVars, *rgszNames);
+    pVDesc = TLB_get_vardesc_by_name(This, *rgszNames);
     if(pVDesc){
         if(cNames)
             *pMemId = pVDesc->vardesc.memid;
@@ -7743,7 +7746,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
             *pBstrHelpFile=SysAllocString(TLB_get_bstr(This->pTypeLib->HelpFile));
         return S_OK;
     }else {/* for a member */
-        pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->typeattr.cFuncs, memid);
+        pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
         if(pFDesc){
             if(pBstrName)
               *pBstrName = SysAllocString(TLB_get_bstr(pFDesc->Name));
@@ -7755,7 +7758,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
               *pBstrHelpFile = SysAllocString(TLB_get_bstr(This->pTypeLib->HelpFile));
             return S_OK;
         }
-        pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->typeattr.cVars, memid);
+        pVDesc = TLB_get_vardesc_by_memberid(This, memid);
         if(pVDesc){
             if(pBstrName)
               *pBstrName = SysAllocString(TLB_get_bstr(pVDesc->Name));
@@ -7809,7 +7812,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
     if (This->typeattr.typekind != TKIND_MODULE)
         return TYPE_E_BADMODULEKIND;
 
-    pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->typeattr.cFuncs, memid);
+    pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
     if(pFDesc){
 	    dump_TypeInfo(This);
 	    if (TRACE_ON(ole))
@@ -8317,7 +8320,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetVarIndexOfMemId( ITypeInfo2 * iface,
 
     TRACE("%p %d %p\n", iface, memid, pVarIndex);
 
-    pVarInfo = TLB_get_vardesc_by_memberid(This->vardescs, This->typeattr.cVars, memid);
+    pVarInfo = TLB_get_vardesc_by_memberid(This, memid);
     if(!pVarInfo)
         return TYPE_E_ELEMENTNOTFOUND;
 
@@ -8510,7 +8513,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation2(
                 SysAllocString(TLB_get_bstr(This->pTypeLib->HelpStringDll));/* FIXME */
         return S_OK;
     }else {/* for a member */
-        pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->typeattr.cFuncs, memid);
+        pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
         if(pFDesc){
             if(pbstrHelpString)
                 *pbstrHelpString=SysAllocString(TLB_get_bstr(pFDesc->HelpString));
@@ -8521,7 +8524,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation2(
                     SysAllocString(TLB_get_bstr(This->pTypeLib->HelpStringDll));/* FIXME */
             return S_OK;
         }
-        pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->typeattr.cVars, memid);
+        pVDesc = TLB_get_vardesc_by_memberid(This, memid);
         if(pVDesc){
             if(pbstrHelpString)
                 *pbstrHelpString=SysAllocString(TLB_get_bstr(pVDesc->HelpString));
@@ -8868,7 +8871,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         ITypeInfo_AddRef(*ppTInfo);
         return S_OK;
     } else {
-        pVDesc = TLB_get_vardesc_by_name(This->vardescs, This->typeattr.cVars, szName);
+        pVDesc = TLB_get_vardesc_by_name(This, szName);
         if(pVDesc){
             HRESULT hr = TLB_AllocAndInitVarDesc(&pVDesc->vardesc, &pBindPtr->lpvardesc);
             if (FAILED(hr))
