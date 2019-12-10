@@ -51,6 +51,7 @@ static void test_Stream(void)
     _Stream *stream;
     VARIANT_BOOL eos;
     StreamTypeEnum type;
+    LineSeparatorEnum sep;
     LONG refs, size, pos;
     ObjectStateEnum state;
     VARIANT missing, val;
@@ -87,6 +88,14 @@ static void test_Stream(void)
 
     /* revert */
     hr = _Stream_put_Type( stream, adTypeText );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    sep = 0;
+    hr = _Stream_get_LineSeparator( stream, &sep );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( sep == adCRLF, "got %d\n", sep );
+
+    hr = _Stream_put_LineSeparator( stream, adLF );
     ok( hr == S_OK, "got %08x\n", hr );
 
     state = 0xdeadbeef;
