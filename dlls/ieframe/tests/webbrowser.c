@@ -45,6 +45,7 @@
 #include "docobjectservice.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+DEFINE_GUID(outer_test_iid,0x06d4cd6c,0x18dd,0x11ea,0x8e,0x76,0xfc,0xaa,0x14,0x72,0x2d,0xac);
 DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 #define DEFINE_EXPECT(func) \
@@ -155,6 +156,7 @@ DEFINE_EXPECT(ControlSite_TranslateAccelerator);
 DEFINE_EXPECT(OnFocus_TRUE);
 DEFINE_EXPECT(OnFocus_FALSE);
 DEFINE_EXPECT(GetExternal);
+DEFINE_EXPECT(outer_QI_test);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 
@@ -4136,6 +4138,63 @@ static void test_SetAdvise(void)
     IWebBrowser2_Release(browser);
 }
 
+static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &outer_test_iid)) {
+        CHECK_EXPECT(outer_QI_test);
+        *ppv = (IUnknown*)0xdeadbeef;
+        return S_OK;
+    }
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI outer_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI outer_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static IUnknownVtbl outer_vtbl = {
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release
+};
+
+static void test_com_aggregation(void)
+{
+    HRESULT hr;
+    IClassFactory *class_factory;
+    IUnknown outer = { &outer_vtbl };
+    IUnknown *unk = NULL;
+    IWebBrowser *web_browser = NULL;
+    IUnknown *unk2 = NULL;
+
+    hr = CoGetClassObject(&CLSID_WebBrowser, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)&class_factory);
+    ok(hr == S_OK, "CoGetClassObject failed: %08x\n", hr);
+
+    hr = IClassFactory_CreateInstance(class_factory, &outer, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "CreateInstance returned hr = %08x\n", hr);
+    ok(unk != NULL, "result NULL, hr = %08x\n", hr);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IWebBrowser, (void**)&web_browser);
+    ok(hr == S_OK, "QI to IWebBrowser failed, hr=%08x\n", hr);
+
+    SET_EXPECT(outer_QI_test);
+    hr = IWebBrowser_QueryInterface(web_browser, &outer_test_iid, (void**)&unk2);
+    CHECK_CALLED(outer_QI_test);
+    ok(hr == S_OK, "Could not get test iface: %08x\n", hr);
+    ok(unk2 == (IUnknown*)0xdeadbeef, "unexpected unk2\n");
+
+    IWebBrowser_Release(web_browser);
+    IUnknown_Release(unk);
+    IClassFactory_Release(class_factory);
+}
+
 START_TEST(webbrowser)
 {
     OleInitialize(NULL);
@@ -4167,6 +4226,7 @@ START_TEST(webbrowser)
     test_FileProtocol();
     trace("Testing SetAdvise...\n");
     test_SetAdvise();
+    test_com_aggregation();
 
     OleUninitialize();
 }
