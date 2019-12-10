@@ -2813,7 +2813,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     hres = ITypeInfo_GetTypeAttr(dual, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == ptr_size, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
-    ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
     ok(typeattr->cFuncs == 1, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
@@ -2835,7 +2835,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == ptr_size, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
-    ok(typeattr->typekind == 4, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->typekind == TKIND_DISPATCH, "typekind = %d\n", typeattr->typekind);
     ok(typeattr->cFuncs == 8, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
@@ -2857,7 +2857,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     hres = ITypeInfo_GetTypeAttr(interface1, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == ptr_size, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
-    ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
     ok(typeattr->cFuncs == 13, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
@@ -2872,7 +2872,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     hres = ITypeInfo_GetTypeAttr(interface2, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == ptr_size, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
-    ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
     ok(typeattr->cFuncs == 2, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
