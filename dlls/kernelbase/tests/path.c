@@ -1110,7 +1110,7 @@ static void test_PathCchCanonicalize(void)
     hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), path_inW);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), "expect hr %#x, got %#x %s\n",
        HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), hr, wine_dbgstr_w(path_outW));
-    ok(lstrlenW(path_outW) == 0, "got %d\n", lstrlenW(path_outW));
+    ok(!*path_outW, "got %d\n", lstrlenW(path_outW));
 
     path_inW[0] = 'C';
     path_inW[1] = ':';
