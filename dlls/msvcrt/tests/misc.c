@@ -211,7 +211,7 @@ static void test_strerror_s(void)
     memset(buf, 'X', sizeof(buf));
     ret = pstrerror_s(buf, 1, 0);
     ok(ret == 0, "Expected strerror_s to return 0, got %d\n", ret);
-    ok(strlen(buf) == 0, "Expected output buffer to be null terminated\n");
+    ok(buf[0] == 0, "Expected output buffer to be null terminated\n");
 
     memset(buf, 'X', sizeof(buf));
     ret = pstrerror_s(buf, 2, 0);
