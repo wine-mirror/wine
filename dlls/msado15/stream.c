@@ -400,14 +400,64 @@ static HRESULT WINAPI stream_LoadFromFile( _Stream *iface, BSTR filename )
 
 static HRESULT WINAPI stream_ReadText( _Stream *iface, LONG len, BSTR *ret )
 {
-    FIXME( "%p, %d, %p\n", iface, len, ret );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    BSTR str;
+
+    TRACE( "%p, %d, %p\n", stream, len, ret );
+    if (len == adReadLine)
+    {
+        FIXME( "adReadLine not supported\n" );
+        return E_NOTIMPL;
+    }
+    if (stream->charset && wcscmp( stream->charset, L"Unicode" ))
+    {
+        FIXME( "charset %s not supported\n", debugstr_w(stream->charset) );
+        return E_NOTIMPL;
+    }
+
+    if (stream->type != adTypeText) return MAKE_ADO_HRESULT( adErrIllegalOperation );
+    if (len < adReadLine) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if (len == adReadAll) len = (stream->size - stream->pos) / sizeof(WCHAR);
+    else len = min( len, stream->size - stream->pos / sizeof(WCHAR) );
+
+    if (!(str = SysAllocStringLen( NULL, len ))) return E_OUTOFMEMORY;
+    memcpy( str, stream->buf + stream->pos, len * sizeof(WCHAR) );
+    str[len] = 0;
+
+    stream->pos += len * sizeof(WCHAR);
+
+    *ret = str;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_WriteText( _Stream *iface, BSTR data, StreamWriteEnum options )
 {
-    FIXME( "%p, %s, %u\n", iface, debugstr_w(data), options );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    HRESULT hr;
+    LONG size;
+
+    TRACE( "%p, %s, %u\n", stream, debugstr_w(data), options );
+    if (options != adWriteChar)
+    {
+        FIXME( "options %u not supported\n", options );
+        return E_NOTIMPL;
+    }
+    if (stream->charset && wcscmp( stream->charset, L"Unicode" ))
+    {
+        FIXME( "charset %s not supported\n", debugstr_w(stream->charset) );
+        return E_NOTIMPL;
+    }
+
+    if (stream->type != adTypeText) return MAKE_ADO_HRESULT( adErrIllegalOperation );
+
+    size = (lstrlenW( data ) + 1) * sizeof(WCHAR);
+    if ((hr = resize_buffer( stream, stream->size + size )) != S_OK) return hr;
+
+    memcpy( stream->buf + stream->pos, data, size );
+    stream->pos += size;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_Cancel( _Stream *iface )

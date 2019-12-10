@@ -162,10 +162,53 @@ static void test_Stream(void)
     hr = _Stream_Read( stream, 2, &val );
     ok( hr == MAKE_ADO_HRESULT( adErrIllegalOperation ), "got %08x\n", hr );
 
+    hr = _Stream_ReadText( stream, 2, &str );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !str[0], "got %s\n", wine_dbgstr_w(str) );
+    SysFreeString( str );
+
     pos = -1;
     hr = _Stream_get_Position( stream, &pos );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !pos, "got %d\n", pos );
+
+    str = SysAllocString( L"test" );
+    hr = _Stream_WriteText( stream, str, adWriteChar );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( str );
+
+    hr = _Stream_ReadText( stream, adReadAll, &str );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !str[0], "got %s\n", wine_dbgstr_w(str) );
+    SysFreeString( str );
+
+    hr = _Stream_put_Position( stream, 0 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = _Stream_ReadText( stream, adReadAll, &str );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( str, L"test" ), "got %s\n", wine_dbgstr_w(str) );
+    SysFreeString( str );
+
+    pos = -1;
+    hr = _Stream_get_Position( stream, &pos );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( pos == 10, "got %d\n", pos );
+
+    eos = VARIANT_FALSE;
+    hr = _Stream_get_EOS( stream, &eos );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( eos == VARIANT_TRUE, "got %04x\n", eos );
+
+    hr = _Stream_put_Position( stream, 6 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    size = -1;
+    hr = _Stream_get_Size( stream, &size );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( size == 10, "got %d\n", size );
+
+    hr = _Stream_put_Position( stream, 2 );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     hr = _Stream_Close( stream );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -190,6 +233,14 @@ static void test_Stream(void)
 
     hr = _Stream_Open( stream, missing, adModeUnknown, adOpenStreamUnspecified, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Stream_ReadText( stream, adReadAll, &str );
+    ok( hr == MAKE_ADO_HRESULT( adErrIllegalOperation ), "got %08x\n", hr );
+
+    str = SysAllocString( L"test" );
+    hr = _Stream_WriteText( stream, str, adWriteChar );
+    ok( hr == MAKE_ADO_HRESULT( adErrIllegalOperation ), "got %08x\n", hr );
+    SysFreeString( str );
 
     VariantInit( &val );
     hr = _Stream_Read( stream, 1, &val );
