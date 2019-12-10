@@ -569,7 +569,7 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 			{
 				if (check_for_interrupt(gdbctx)) {
 					if (!DebugBreakProcess(gdbctx->process->handle)) {
-						ERR("Failed to break into debugee\n");
+						ERR("Failed to break into debuggee\n");
 						break;
 					}
 					WaitForDebugEvent(&de, INFINITE);	
@@ -624,7 +624,7 @@ static void get_process_info(struct gdb_context* gdbctx, char* buffer, size_t le
     case ABOVE_NORMAL_PRIORITY_CLASS:   strcat(buffer, ", above normal priority");      break;
 #endif
 #ifdef BELOW_NORMAL_PRIORITY_CLASS
-    case BELOW_NORMAL_PRIORITY_CLASS:   strcat(buffer, ", below normal priotity");      break;
+    case BELOW_NORMAL_PRIORITY_CLASS:   strcat(buffer, ", below normal priority");      break;
 #endif
     case HIGH_PRIORITY_CLASS:           strcat(buffer, ", high priority");              break;
     case IDLE_PRIORITY_CLASS:           strcat(buffer, ", idle priority");              break;
