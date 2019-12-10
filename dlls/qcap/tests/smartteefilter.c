@@ -2078,7 +2078,7 @@ static void test_smart_tee_filter(void)
     if (FAILED(hr))
         goto end;
 
-    ok(lstrlenW(filterInfo.achName) == 0,
+    ok(!*filterInfo.achName,
             "filter's name is meant to be empty but it's %s\n", wine_dbgstr_w(filterInfo.achName));
 
     hr = IBaseFilter_EnumPins(smartTeeFilter, &enumPins);
