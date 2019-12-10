@@ -35,6 +35,7 @@ struct stream
     _Stream            Stream_iface;
     LONG               refs;
     ObjectStateEnum    state;
+    ConnectModeEnum    mode;
     StreamTypeEnum     type;
     LineSeparatorEnum  sep;
     LONG               size;
@@ -221,14 +222,20 @@ static HRESULT WINAPI stream_get_State( _Stream *iface, ObjectStateEnum *state )
 
 static HRESULT WINAPI stream_get_Mode( _Stream *iface, ConnectModeEnum *mode )
 {
-    FIXME( "%p, %p\n", iface, mode );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    TRACE( "%p, %p\n", stream, mode );
+
+    *mode = stream->mode;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_put_Mode( _Stream *iface, ConnectModeEnum mode )
 {
-    FIXME( "%p, %u\n", iface, mode );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    TRACE( "%p, %u\n", stream, mode );
+
+    stream->mode = mode;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_get_Charset( _Stream *iface, BSTR *charset )

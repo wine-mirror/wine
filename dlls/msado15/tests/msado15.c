@@ -54,6 +54,7 @@ static void test_Stream(void)
     LineSeparatorEnum sep;
     LONG refs, size, pos;
     ObjectStateEnum state;
+    ConnectModeEnum mode;
     VARIANT missing, val;
     HRESULT hr;
 
@@ -102,6 +103,14 @@ static void test_Stream(void)
     hr = _Stream_get_State( stream, &state );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == adStateClosed, "got %u\n", state );
+
+    mode = 0xdeadbeef;
+    hr = _Stream_get_Mode( stream, &mode );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( mode == adModeUnknown, "got %u\n", mode );
+
+    hr = _Stream_put_Mode( stream, adModeReadWrite );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     hr = _Stream_Read( stream, 2, &val );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
