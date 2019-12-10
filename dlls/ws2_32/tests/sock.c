@@ -6611,7 +6611,7 @@ static void test_WSASendMsg(void)
     ok(!ret, "WSASendMsg should have worked\n");
     ok(GetLastError() == 0 || broken(GetLastError() == 0xdeadbeef) /* Win <= 2008 */,
        "Expected 0, got %d\n", GetLastError());
-    ok(bytesSent == iovec[0].len, "incorret bytes sent, expected %d, sent %d\n",
+    ok(bytesSent == iovec[0].len, "incorrect bytes sent, expected %d, sent %d\n",
        iovec[0].len, bytesSent);
 
     /* receive data */
@@ -6639,7 +6639,7 @@ static void test_WSASendMsg(void)
     SetLastError(0xdeadbeef);
     ret = pWSASendMsg(sock, &msg, 0, &bytesSent, NULL, NULL);
     ok(!ret, "WSASendMsg should have worked\n");
-    ok(bytesSent == iovec[0].len + iovec[1].len, "incorret bytes sent, expected %d, sent %d\n",
+    ok(bytesSent == iovec[0].len + iovec[1].len, "incorrect bytes sent, expected %d, sent %d\n",
        iovec[0].len + iovec[1].len, bytesSent);
     ok(GetLastError() == 0 || broken(GetLastError() == 0xdeadbeef) /* Win <= 2008 */,
        "Expected 0, got %d\n", GetLastError());
