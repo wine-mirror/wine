@@ -74,6 +74,8 @@
 #define WINED3D_QUIRK_BROKEN_ARB_FOG            0x00000200
 #define WINED3D_QUIRK_NO_INDEPENDENT_BIT_DEPTHS 0x00000400
 
+#define WINED3D_MAX_DIRTY_REGION_COUNT 7
+
 struct wined3d_fragment_pipe_ops;
 struct wined3d_adapter;
 struct wined3d_context;
@@ -3538,6 +3540,13 @@ struct wined3d_texture
         DWORD color_key_flags;
     } async;
 
+    struct wined3d_dirty_regions
+    {
+        struct wined3d_box *boxes;
+        SIZE_T boxes_size;
+        unsigned int box_count;
+    } *dirty_regions;
+
     struct wined3d_overlay_info
     {
         struct list entry;
@@ -3666,6 +3675,7 @@ void wined3d_texture_upload_from_texture(struct wined3d_texture *dst_texture, un
         unsigned int src_sub_resource_idx, const struct wined3d_box *src_box) DECLSPEC_HIDDEN;
 void wined3d_texture_validate_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, DWORD location) DECLSPEC_HIDDEN;
+void wined3d_texture_clear_dirty_regions(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 
 HRESULT wined3d_texture_no3d_init(struct wined3d_texture *texture_no3d, struct wined3d_device *device,
         const struct wined3d_resource_desc *desc, unsigned int layer_count, unsigned int level_count,

@@ -1369,6 +1369,8 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
     }
     if (!levels)
         levels = wined3d_log2i(max(width, height)) + 1;
+    if (pool == D3DPOOL_SYSTEMMEM)
+        flags |= WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS;
 
     wined3d_mutex_lock();
     hr = wined3d_texture_create(device->wined3d_device, &desc, 1, levels, flags,
@@ -1449,6 +1451,8 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
     }
     if (!levels)
         levels = wined3d_log2i(edge_length) + 1;
+    if (pool == D3DPOOL_SYSTEMMEM)
+        flags |= WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS;
 
     wined3d_mutex_lock();
     hr = wined3d_texture_create(device->wined3d_device, &desc, 6, levels, flags,
@@ -1470,6 +1474,7 @@ HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *dev
         UINT width, UINT height, UINT depth, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
     struct wined3d_resource_desc desc;
+    DWORD flags = 0;
     HRESULT hr;
 
     if (pool == D3DPOOL_MANAGED && device->d3d_parent->extended)
@@ -1513,9 +1518,11 @@ HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *dev
     }
     if (!levels)
         levels = wined3d_log2i(max(max(width, height), depth)) + 1;
+    if (pool == D3DPOOL_SYSTEMMEM)
+        flags |= WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS;
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_create(device->wined3d_device, &desc, 1, levels, 0,
+    hr = wined3d_texture_create(device->wined3d_device, &desc, 1, levels, flags,
             NULL, texture, &d3d9_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))

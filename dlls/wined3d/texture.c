@@ -340,6 +340,21 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
                 sub_resource_idx, texture);
 }
 
+void wined3d_texture_clear_dirty_regions(struct wined3d_texture *texture)
+{
+    unsigned int i;
+
+    TRACE("texture %p\n", texture);
+
+    if (!texture->dirty_regions)
+        return;
+
+    for (i = 0; i < texture->layer_count; ++i)
+    {
+        texture->dirty_regions[i].box_count = 0;
+    }
+}
+
 static BOOL wined3d_texture_copy_sysmem_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
 {
@@ -1114,6 +1129,15 @@ static void wined3d_texture_destroy_object(void *object)
         heap_free(texture->overlay_info);
     }
 
+    if (texture->dirty_regions)
+    {
+        for (i = 0; i < texture->layer_count; ++i)
+        {
+            heap_free(texture->dirty_regions[i].boxes);
+        }
+        heap_free(texture->dirty_regions);
+    }
+
     resource->resource_ops->resource_unload(resource);
 }
 
@@ -1770,6 +1794,37 @@ static struct wined3d_texture_sub_resource *wined3d_texture_get_sub_resource(str
     return &texture->sub_resources[sub_resource_idx];
 }
 
+static void wined3d_texture_dirty_region_add(struct wined3d_texture *texture,
+        unsigned int layer, const struct wined3d_box *box)
+{
+    struct wined3d_dirty_regions *regions;
+    unsigned int count;
+
+    if (!texture->dirty_regions)
+        return;
+
+    regions = &texture->dirty_regions[layer];
+    count = regions->box_count + 1;
+    if (count >= WINED3D_MAX_DIRTY_REGION_COUNT || !box
+            || (!box->left && !box->top && !box->front
+            && box->right == texture->resource.width
+            && box->bottom == texture->resource.height
+            && box->back == texture->resource.depth))
+    {
+        regions->box_count = WINED3D_MAX_DIRTY_REGION_COUNT;
+        return;
+    }
+
+    if (!wined3d_array_reserve((void **)&regions->boxes, &regions->boxes_size, count, sizeof(*regions->boxes)))
+    {
+        WARN("Failed to grow boxes array, marking entire texture dirty.\n");
+        regions->box_count = WINED3D_MAX_DIRTY_REGION_COUNT;
+        return;
+    }
+
+    regions->boxes[regions->box_count++] = *box;
+}
+
 HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         UINT layer, const struct wined3d_box *dirty_region)
 {
@@ -1781,16 +1836,13 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (dirty_region)
+    if (dirty_region && FAILED(wined3d_texture_check_box_dimensions(texture, 0, dirty_region)))
     {
-        if (FAILED(wined3d_texture_check_box_dimensions(texture, 0, dirty_region)))
-        {
-            WARN("Invalid dirty_region %s specified.\n", debug_box(dirty_region));
-            return WINED3DERR_INVALIDCALL;
-        }
-        FIXME("Ignoring dirty_region %s.\n", debug_box(dirty_region));
+        WARN("Invalid dirty_region %s specified.\n", debug_box(dirty_region));
+        return WINED3DERR_INVALIDCALL;
     }
 
+    wined3d_texture_dirty_region_add(texture, layer, dirty_region);
     wined3d_cs_emit_add_dirty_texture_region(texture->resource.device->cs, texture, layer);
 
     return WINED3D_OK;
@@ -3090,6 +3142,11 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         return E_OUTOFMEMORY;
     }
 
+    /* We only record dirty regions for the top-most level. */
+    if (texture->dirty_regions && flags & WINED3D_MAP_WRITE
+            && !(flags & WINED3D_MAP_NO_DIRTY_UPDATE) && !texture_level)
+        wined3d_texture_dirty_region_add(texture, sub_resource_idx / texture->level_count, box);
+
     if (flags & WINED3D_MAP_WRITE
             && (!(flags & WINED3D_MAP_NO_DIRTY_UPDATE) || (resource->usage & WINED3DUSAGE_DYNAMIC)))
         wined3d_texture_invalidate_location(texture, sub_resource_idx, ~resource->map_binding);
@@ -3380,6 +3437,13 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
                     "ignoring WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS flag.\n");
         else
             texture->flags |= WINED3D_TEXTURE_GENERATE_MIPMAPS;
+    }
+
+    if (flags & WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS
+            && !(texture->dirty_regions = heap_calloc(texture->layer_count, sizeof(*texture->dirty_regions))))
+    {
+        wined3d_texture_cleanup_sync(texture);
+        return E_OUTOFMEMORY;
     }
 
     /* Precalculated scaling for 'faked' non power of two texture coords. */

@@ -4059,8 +4059,10 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
 {
     unsigned int src_size, dst_size, src_skip_levels = 0;
     unsigned int src_level_count, dst_level_count;
+    const struct wined3d_dirty_regions *regions;
     unsigned int layer_count, level_count, i, j;
     enum wined3d_resource_type type;
+    BOOL entire_texture = TRUE;
     struct wined3d_box box;
 
     TRACE("device %p, src_texture %p, dst_texture %p.\n", device, src_texture, dst_texture);
@@ -4127,6 +4129,21 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
+    if ((regions = src_texture->dirty_regions))
+    {
+        for (i = 0; i < layer_count && entire_texture; ++i)
+        {
+            if (regions[i].box_count >= WINED3D_MAX_DIRTY_REGION_COUNT)
+                continue;
+
+            entire_texture = FALSE;
+            break;
+        }
+    }
+
+    if (!entire_texture)
+        FIXME("Ignoring dirty regions.\n");
+
     /* Update every surface level of the texture. */
     for (i = 0; i < level_count; ++i)
     {
@@ -4139,6 +4156,8 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
                     0, NULL, WINED3D_TEXF_POINT);
         }
     }
+
+    wined3d_texture_clear_dirty_regions(src_texture);
 
     return WINED3D_OK;
 }

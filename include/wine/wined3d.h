@@ -1565,6 +1565,7 @@ enum wined3d_shader_type
 #define WINED3D_TEXTURE_CREATE_GET_DC_LENIENT                   0x00000004
 #define WINED3D_TEXTURE_CREATE_GET_DC                           0x00000008
 #define WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS                 0x00000010
+#define WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS             0x00000020
 
 #define WINED3D_STANDARD_MULTISAMPLE_PATTERN                    0xffffffff
 
