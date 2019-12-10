@@ -672,13 +672,13 @@ static INT32 double_to_int32(double number)
      * after rounding; if the exponent is > 83 then no bits of precision can be
      * left in the low 32-bit range of the result (IEEE-754 doubles have 52 bits
      * of fractional precision).
-     * Note this case handles 0, -0, and all infinte, NaN, & denormal value. */
+     * Note this case handles 0, -0, and all infinite, NaN & denormal values. */
     if(exp < 0 || exp > 83)
         return 0;
 
     /* Select the appropriate 32-bits from the floating point mantissa.  If the
      * exponent is 52 then the bits we need to select are already aligned to the
-     * lowest bits of the 64-bit integer representation of tghe number, no need
+     * lowest bits of the 64-bit integer representation of the number, no need
      * to shift.  If the exponent is greater than 52 we need to shift the value
      * left by (exp - 52), if the value is less than 52 we need to shift right
      * accordingly. */
