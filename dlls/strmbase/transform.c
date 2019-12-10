@@ -405,11 +405,8 @@ static HRESULT WINAPI TransformFilter_InputPin_ReceiveConnection(IPin * iface, I
     TRACE("(%p)->(%p, %p)\n", iface, pReceivePin, pmt);
     strmbase_dump_media_type(pmt);
 
-    if (pTransform->pFuncsTable->pfnSetMediaType)
-        hr = pTransform->pFuncsTable->pfnSetMediaType(pTransform, PINDIR_INPUT, pmt);
-
-    if (SUCCEEDED(hr) && pTransform->pFuncsTable->pfnCompleteConnect)
-        hr = pTransform->pFuncsTable->pfnCompleteConnect(pTransform, PINDIR_INPUT, pReceivePin);
+    if (pTransform->pFuncsTable->transform_connect_sink)
+        hr = pTransform->pFuncsTable->transform_connect_sink(pTransform, pmt);
 
     if (SUCCEEDED(hr))
     {

@@ -197,9 +197,7 @@ typedef HRESULT (WINAPI *TransformFilter_DecideBufferSize) (TransformFilter *ifa
 typedef HRESULT (WINAPI *TransformFilter_StartStreaming) (TransformFilter *iface);
 typedef HRESULT (WINAPI *TransformFilter_StopStreaming) (TransformFilter *iface);
 typedef HRESULT (WINAPI *TransformFilter_Receive) (TransformFilter* iface, IMediaSample* pIn);
-typedef HRESULT (WINAPI *TransformFilter_CompleteConnect) (TransformFilter *iface, PIN_DIRECTION dir, IPin *pPin);
 typedef HRESULT (WINAPI *TransformFilter_BreakConnect) (TransformFilter *iface, PIN_DIRECTION dir);
-typedef HRESULT (WINAPI *TransformFilter_SetMediaType) (TransformFilter *iface, PIN_DIRECTION dir, const AM_MEDIA_TYPE *pMediaType);
 typedef HRESULT (WINAPI *TransformFilter_CheckInputType) (TransformFilter *iface, const AM_MEDIA_TYPE *pMediaType);
 typedef HRESULT (WINAPI *TransformFilter_EndOfStream) (TransformFilter *iface);
 typedef HRESULT (WINAPI *TransformFilter_BeginFlush) (TransformFilter *iface);
@@ -216,8 +214,7 @@ typedef struct TransformFilterFuncTable {
 	TransformFilter_Receive pfnReceive;
 	TransformFilter_StopStreaming pfnStopStreaming;
 	TransformFilter_CheckInputType pfnCheckInputType;
-	TransformFilter_SetMediaType pfnSetMediaType;
-	TransformFilter_CompleteConnect pfnCompleteConnect;
+        HRESULT (*transform_connect_sink)(TransformFilter *filter, const AM_MEDIA_TYPE *mt);
 	TransformFilter_BreakConnect pfnBreakConnect;
 	TransformFilter_EndOfStream pfnEndOfStream;
 	TransformFilter_BeginFlush pfnBeginFlush;

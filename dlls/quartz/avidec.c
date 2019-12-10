@@ -210,15 +210,10 @@ static HRESULT WINAPI AVIDec_StopStreaming(TransformFilter* pTransformFilter)
     return S_OK;
 }
 
-static HRESULT WINAPI AVIDec_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir, const AM_MEDIA_TYPE * pmt)
+static HRESULT avi_dec_connect_sink(TransformFilter *tf, const AM_MEDIA_TYPE *pmt)
 {
     AVIDecImpl* This = impl_from_TransformFilter(tf);
     HRESULT hr = VFW_E_TYPE_NOT_ACCEPTED;
-
-    TRACE("(%p)->(%p)\n", This, pmt);
-
-    if (dir != PINDIR_INPUT)
-        return S_OK;
 
     /* Check root (GUID w/o FOURCC) */
     if ((IsEqualIID(&pmt->majortype, &MEDIATYPE_Video)) &&
@@ -310,15 +305,6 @@ failed:
     return hr;
 }
 
-static HRESULT WINAPI AVIDec_CompleteConnect(TransformFilter *tf, PIN_DIRECTION dir, IPin *pin)
-{
-    AVIDecImpl* This = impl_from_TransformFilter(tf);
-
-    TRACE("(%p)\n", This);
-
-    return S_OK;
-}
-
 static HRESULT WINAPI AVIDec_BreakConnect(TransformFilter *tf, PIN_DIRECTION dir)
 {
     AVIDecImpl *This = impl_from_TransformFilter(tf);
@@ -357,19 +343,14 @@ static HRESULT WINAPI AVIDec_DecideBufferSize(TransformFilter *tf, IMemAllocator
 }
 
 static const TransformFilterFuncTable AVIDec_FuncsTable = {
-    AVIDec_DecideBufferSize,
-    AVIDec_StartStreaming,
-    AVIDec_Receive,
-    AVIDec_StopStreaming,
-    NULL,
-    AVIDec_SetMediaType,
-    AVIDec_CompleteConnect,
-    AVIDec_BreakConnect,
-    NULL,
-    NULL,
-    AVIDec_EndFlush,
-    NULL,
-    AVIDec_NotifyDrop
+    .pfnDecideBufferSize = AVIDec_DecideBufferSize,
+    .pfnStartStreaming = AVIDec_StartStreaming,
+    .pfnReceive = AVIDec_Receive,
+    .pfnStopStreaming = AVIDec_StopStreaming,
+    .transform_connect_sink = avi_dec_connect_sink,
+    .pfnBreakConnect = AVIDec_BreakConnect,
+    .pfnEndFlush = AVIDec_EndFlush,
+    .pfnNotify = AVIDec_NotifyDrop,
 };
 
 HRESULT AVIDec_create(IUnknown *outer, void **out)
