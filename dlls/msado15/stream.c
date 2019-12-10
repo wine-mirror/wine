@@ -371,7 +371,7 @@ static HRESULT WINAPI stream_ReadText( _Stream *iface, LONG len, BSTR *ret )
 
 static HRESULT WINAPI stream_WriteText( _Stream *iface, BSTR data, StreamWriteEnum options )
 {
-    FIXME( "%p, %p, %u\n", iface, debugstr_w(data), options );
+    FIXME( "%p, %s, %u\n", iface, debugstr_w(data), options );
     return E_NOTIMPL;
 }
 

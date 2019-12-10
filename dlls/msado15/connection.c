@@ -187,7 +187,7 @@ static HRESULT WINAPI connection_Open( _Connection *iface, BSTR connect_str, BST
                                        LONG options )
 {
     FIXME( "%p, %s, %s, %p, %08x\n", iface, debugstr_w(connect_str), debugstr_w(userid),
-           debugstr_w(password), options );
+           password, options );
     return E_NOTIMPL;
 }
 
