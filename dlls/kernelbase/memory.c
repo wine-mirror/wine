@@ -390,6 +390,42 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, co
 }
 
 
+/* IsBadStringPtrA replacement for kernelbase, to catch exception in debug traces. */
+BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
+{
+    if (!str) return TRUE;
+    __TRY
+    {
+        volatile const char *p = str;
+        while (p != str + max) if (!*p++) break;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return TRUE;
+    }
+    __ENDTRY
+    return FALSE;
+}
+
+
+/* IsBadStringPtrW replacement for kernelbase, to catch exception in debug traces. */
+BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
+{
+    if (!str) return TRUE;
+    __TRY
+    {
+        volatile const WCHAR *p = str;
+        while (p != str + max) if (!*p++) break;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return TRUE;
+    }
+    __ENDTRY
+    return FALSE;
+}
+
+
 /***********************************************************************
  * Heap functions
  ***********************************************************************/
