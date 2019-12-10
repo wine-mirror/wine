@@ -141,7 +141,6 @@ typedef struct {
     size_t global_funcs_size;
 
     class_desc_t *classes;
-    class_desc_t *procs;
 
     script_ctx_t *ctx;
     heap_pool_t heap;

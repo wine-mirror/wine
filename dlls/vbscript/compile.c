@@ -1980,9 +1980,6 @@ HRESULT compile_procedure(script_ctx_t *script, const WCHAR *src, const WCHAR *d
     desc->func_cnt = 1;
     desc->funcs->entries[VBDISP_CALLGET] = &code->main_code;
 
-    desc->next = script->script_obj->procs;
-    script->script_obj->procs = desc;
-
     *ret = desc;
     return S_OK;
 }
