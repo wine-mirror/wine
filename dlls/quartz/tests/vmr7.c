@@ -1392,7 +1392,7 @@ static void test_connect_pin(void)
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Disconnect(graph, pin);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(source.source.pin.peer == pin, "Got peer %p.\n", peer);
     IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
 

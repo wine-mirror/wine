@@ -40,46 +40,6 @@ static inline struct strmbase_renderer *impl_from_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, struct strmbase_renderer, sink.pin.IPin_iface);
 }
 
-static HRESULT WINAPI BaseRenderer_InputPin_ReceiveConnection(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
-{
-    struct strmbase_renderer *filter = impl_from_IPin(iface);
-    HRESULT hr;
-
-    TRACE("iface %p, peer %p, mt %p.\n", iface, peer, mt);
-    strmbase_dump_media_type(mt);
-
-    EnterCriticalSection(&filter->filter.csFilter);
-    hr = BaseInputPinImpl_ReceiveConnection(iface, peer, mt);
-    if (SUCCEEDED(hr))
-    {
-        if (filter->pFuncsTable->renderer_connect)
-            hr = filter->pFuncsTable->renderer_connect(filter, mt);
-    }
-    LeaveCriticalSection(&filter->filter.csFilter);
-
-    return hr;
-}
-
-static HRESULT WINAPI BaseRenderer_InputPin_Disconnect(IPin * iface)
-{
-    struct strmbase_renderer *filter = impl_from_IPin(iface);
-    HRESULT hr;
-
-    TRACE("iface %p.\n", iface);
-
-    EnterCriticalSection(&filter->filter.csFilter);
-    hr = BaseInputPinImpl_Disconnect(iface);
-    if (SUCCEEDED(hr))
-    {
-        if (filter->pFuncsTable->pfnBreakConnect)
-            hr = filter->pFuncsTable->pfnBreakConnect(filter);
-    }
-    BaseRendererImpl_ClearPendingSample(filter);
-    LeaveCriticalSection(&filter->filter.csFilter);
-
-    return hr;
-}
-
 static HRESULT WINAPI BaseRenderer_InputPin_EndOfStream(IPin * iface)
 {
     struct strmbase_renderer *filter = impl_from_IPin(iface);
@@ -157,8 +117,8 @@ static const IPinVtbl BaseRenderer_InputPin_Vtbl =
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
-    BaseRenderer_InputPin_ReceiveConnection,
-    BaseRenderer_InputPin_Disconnect,
+    BaseInputPinImpl_ReceiveConnection,
+    BaseInputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
@@ -312,12 +272,31 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
     return BaseRendererImpl_Receive(filter, sample);
 }
 
+static HRESULT sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    struct strmbase_renderer *filter = impl_from_IPin(&iface->pin.IPin_iface);
+
+    if (filter->pFuncsTable->renderer_connect)
+        return filter->pFuncsTable->renderer_connect(filter, mt);
+    return S_OK;
+}
+
+static void sink_disconnect(struct strmbase_sink *iface)
+{
+    struct strmbase_renderer *filter = impl_from_IPin(&iface->pin.IPin_iface);
+
+    if (filter->pFuncsTable->pfnBreakConnect)
+        filter->pFuncsTable->pfnBreakConnect(filter);
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_query_interface = sink_query_interface,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = BaseRenderer_Receive,
+    .sink_connect = sink_connect,
+    .sink_disconnect = sink_disconnect,
 };
 
 void strmbase_renderer_cleanup(struct strmbase_renderer *filter)

@@ -901,7 +901,8 @@ static HRESULT WINAPI testsource_AttemptConnection(struct strmbase_source *iface
 
     if (FAILED(hr = IPin_ReceiveConnection(peer, &iface->pin.IPin_iface, mt)))
     {
-        ok(hr == VFW_E_TYPE_NOT_ACCEPTED || hr == E_FAIL, "Got hr %#x.\n", hr);
+        todo_wine_if (((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader.biBitCount == 24)
+            ok(hr == VFW_E_TYPE_NOT_ACCEPTED || hr == E_FAIL, "Got hr %#x.\n", hr);
         IPin_Release(peer);
         iface->pin.peer = NULL;
         FreeMediaType(&iface->pin.mt);
@@ -1315,13 +1316,17 @@ static void test_connect_pin(void)
                 skip("Got E_FAIL when connecting.\n");
                 goto out;
             }
-            ok(hr == S_OK, "Got hr %#x for subtype %s and bpp %u.\n", hr,
-                    wine_dbgstr_guid(subtype_tests[i]), bpp_tests[j]);
+            todo_wine_if (bpp_tests[j] == 24)
+                ok(hr == S_OK, "Got hr %#x for subtype %s and bpp %u.\n", hr,
+                        wine_dbgstr_guid(subtype_tests[i]), bpp_tests[j]);
 
-            hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
-            hr = IFilterGraph2_Disconnect(graph, pin);
-            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            if (hr == S_OK)
+            {
+                hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                hr = IFilterGraph2_Disconnect(graph, pin);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+            }
         }
     }
 
@@ -1391,7 +1396,7 @@ static void test_connect_pin(void)
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Disconnect(graph, pin);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(source.source.pin.peer == pin, "Got peer %p.\n", source.source.pin.peer);
     IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
 

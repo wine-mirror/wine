@@ -356,7 +356,7 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *This, BOOL force)
     HRESULT hr;
 
     TRACE("my mode: %u, my window: %p, my last window: %p\n", This->mode, This->baseControlWindow.baseWindow.hWnd, This->hWndClippingWindow);
-    if (This->num_surfaces || !This->renderer.sink.pin.peer)
+    if (This->num_surfaces)
         return S_OK;
 
     if (This->mode == VMR9Mode_Windowless && !This->hWndClippingWindow)
@@ -410,7 +410,8 @@ static void vmr_start_stream(struct strmbase_renderer *iface)
 
     TRACE("(%p)\n", This);
 
-    VMR9_maybe_init(This, TRUE);
+    if (This->renderer.sink.pin.peer)
+        VMR9_maybe_init(This, TRUE);
     IVMRImagePresenter9_StartPresenting(This->presenter, This->cookie);
     SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL,
         This->source_rect.left,
@@ -1760,7 +1761,8 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoClippingWindow(IVMRWindowles
 
     EnterCriticalSection(&This->renderer.filter.csFilter);
     This->hWndClippingWindow = hwnd;
-    VMR9_maybe_init(This, FALSE);
+    if (This->renderer.sink.pin.peer)
+        VMR9_maybe_init(This, FALSE);
     if (!hwnd)
         IVMRSurfaceAllocatorEx9_TerminateDevice(This->allocator, This->cookie);
     LeaveCriticalSection(&This->renderer.filter.csFilter);
