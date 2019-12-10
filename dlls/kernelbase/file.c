@@ -428,8 +428,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     DWORD dosdev;
     const WCHAR *vxd_name = NULL;
     static const WCHAR bkslashes_with_dotW[] = {'\\','\\','.','\\',0};
-    static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
-    static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
     SECURITY_QUALITY_OF_SERVICE qos;
 
     static const UINT nt_disposition[5] =
@@ -462,12 +460,10 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
 
     /* Open a console for CONIN$ or CONOUT$ */
 
-    if (!wcsicmp(filename, coninW) || !wcsicmp(filename, conoutW))
-    {
-        ret = OpenConsoleW( filename, access, sa && sa->bInheritHandle, creation ? OPEN_EXISTING : 0 );
-        if (ret == INVALID_HANDLE_VALUE) SetLastError( ERROR_INVALID_PARAMETER );
-        return ret;
-    }
+    if (!wcsicmp( filename, L"CONIN$" ))
+        return open_console( FALSE, access, sa, creation ? OPEN_EXISTING : 0 );
+    if (!wcsicmp( filename, L"CONOUT$" ))
+        return open_console( TRUE, access, sa, creation ? OPEN_EXISTING : 0 );
 
     if (!wcsncmp( filename, bkslashes_with_dotW, 4 ))
     {
@@ -502,9 +498,9 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
             switch (access & (GENERIC_READ|GENERIC_WRITE))
             {
             case GENERIC_READ:
-                return OpenConsoleW( coninW, access, sa && sa->bInheritHandle, OPEN_EXISTING );
+                return open_console( FALSE, access, sa, OPEN_EXISTING );
             case GENERIC_WRITE:
-                return OpenConsoleW( conoutW, access, sa && sa->bInheritHandle, OPEN_EXISTING );
+                return open_console( TRUE, access, sa, OPEN_EXISTING );
             default:
                 SetLastError( ERROR_FILE_NOT_FOUND );
                 return INVALID_HANDLE_VALUE;
