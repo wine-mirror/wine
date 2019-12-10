@@ -19340,7 +19340,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x00ff0000, 1),
+    ok(color_match(color, 0x00ff0000, 1),
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -19353,7 +19353,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x00ff0000, 1),
+    ok(color_match(color, 0x00ff0000, 1),
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -19365,7 +19365,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x00ff0000, 1),
+    ok(color_match(color, 0x00ff0000, 1),
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -19382,7 +19382,7 @@ static void add_dirty_rect_test(void)
     ok(color_match(color, 0x0000ff00, 1),
             "Expected color 0x0000ff00, got 0x%08x.\n", color);
     color = getPixelColor(device, 1, 1);
-    todo_wine ok(color_match(color, 0x00ff0000, 1),
+    ok(color_match(color, 0x00ff0000, 1),
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -19404,7 +19404,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x0000ff00, 1),
+    ok(color_match(color, 0x0000ff00, 1),
             "Expected color 0x0000ff00, got 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -19416,7 +19416,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x0000ff00, 1),
+    ok(color_match(color, 0x0000ff00, 1),
             "Expected color 0x0000ff00, got 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);

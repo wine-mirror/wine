@@ -4141,19 +4141,66 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         }
     }
 
-    if (!entire_texture)
-        FIXME("Ignoring dirty regions.\n");
-
     /* Update every surface level of the texture. */
-    for (i = 0; i < level_count; ++i)
+    if (entire_texture)
     {
-        wined3d_texture_get_level_box(dst_texture, i, &box);
-        for (j = 0; j < layer_count; ++j)
+        for (i = 0; i < level_count; ++i)
         {
-            wined3d_cs_emit_blt_sub_resource(device->cs,
-                    &dst_texture->resource, j * dst_level_count + i, &box,
-                    &src_texture->resource, j * src_level_count + i + src_skip_levels, &box,
-                    0, NULL, WINED3D_TEXF_POINT);
+            wined3d_texture_get_level_box(dst_texture, i, &box);
+            for (j = 0; j < layer_count; ++j)
+            {
+                wined3d_cs_emit_blt_sub_resource(device->cs,
+                        &dst_texture->resource, j * dst_level_count + i, &box,
+                        &src_texture->resource, j * src_level_count + i + src_skip_levels, &box,
+                        0, NULL, WINED3D_TEXF_POINT);
+            }
+        }
+    }
+    else
+    {
+        unsigned int src_level, box_count, k;
+        const struct wined3d_box *boxes;
+        struct wined3d_box b;
+
+        for (i = 0; i < layer_count; ++i)
+        {
+            boxes = regions[i].boxes;
+            box_count = regions[i].box_count;
+            if (regions[i].box_count >= WINED3D_MAX_DIRTY_REGION_COUNT)
+            {
+                boxes = &b;
+                box_count = 1;
+                wined3d_texture_get_level_box(dst_texture, i, &b);
+            }
+
+            for (j = 0; j < level_count; ++j)
+            {
+                src_level = j + src_skip_levels;
+
+                /* TODO: We could pass an array of boxes here to avoid
+                 * multiple context acquisitions for the same resource. */
+                for (k = 0; k < box_count; ++k)
+                {
+                    box = boxes[k];
+                    if (src_level)
+                    {
+                        box.left >>= src_level;
+                        box.top >>= src_level;
+                        box.right = min((box.right + (1u << src_level) - 1) >> src_level,
+                                wined3d_texture_get_level_width(src_texture, src_level));
+                        box.bottom = min((box.bottom + (1u << src_level) - 1) >> src_level,
+                                wined3d_texture_get_level_height(src_texture, src_level));
+                        box.front >>= src_level;
+                        box.back = min((box.back + (1u << src_level) - 1) >> src_level,
+                                wined3d_texture_get_level_depth(src_texture, src_level));
+                    }
+
+                    wined3d_cs_emit_blt_sub_resource(device->cs,
+                            &dst_texture->resource, i * dst_level_count + j, &box,
+                            &src_texture->resource, i * src_level_count + src_level, &box,
+                            0, NULL, WINED3D_TEXF_POINT);
+                }
+            }
         }
     }
 
