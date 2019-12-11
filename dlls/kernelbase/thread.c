@@ -866,7 +866,7 @@ static void CDECL start_fiber(void)
     __TRY
     {
         start( fiber->param );
-        ExitThread( 1 );
+        RtlExitUserThread( 1 );
     }
     __EXCEPT(UnhandledExceptionFilter)
     {
@@ -996,7 +996,7 @@ void WINAPI DECLSPEC_HOTPATCH DeleteFiber( LPVOID fiber_ptr )
     if (fiber == NtCurrentTeb()->Tib.u.FiberData)
     {
         HeapFree( GetProcessHeap(), 0, fiber );
-        ExitThread(1);
+        RtlExitUserThread( 1 );
     }
     RtlFreeUserStack( fiber->stack_allocation );
     HeapFree( GetProcessHeap(), 0, fiber->fls_slots );

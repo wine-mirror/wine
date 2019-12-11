@@ -2687,10 +2687,10 @@ static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, 
         return ERROR_NOT_ENOUGH_MEMORY;
     GetFullPathNameW(file_name, size, full_name, NULL);
 
-    EnterCriticalSection(&reg_mui_cs);
+    RtlEnterCriticalSection(&reg_mui_cs);
     size = reg_mui_cache_get(full_name, res_id, &string);
     if (!size) {
-        LeaveCriticalSection(&reg_mui_cs);
+        RtlLeaveCriticalSection(&reg_mui_cs);
 
         /* Load the file */
         hModule = LoadLibraryExW(full_name, NULL,
@@ -2705,9 +2705,9 @@ static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, 
             goto cleanup;
         }
 
-        EnterCriticalSection(&reg_mui_cs);
+        RtlEnterCriticalSection(&reg_mui_cs);
         reg_mui_cache_put(full_name, res_id, string, size);
-        LeaveCriticalSection(&reg_mui_cs);
+        RtlLeaveCriticalSection(&reg_mui_cs);
     }
     *req_chars = size + 1;
 
@@ -2739,7 +2739,7 @@ cleanup:
     if (hModule)
         FreeLibrary(hModule);
     else
-        LeaveCriticalSection(&reg_mui_cs);
+        RtlLeaveCriticalSection(&reg_mui_cs);
     heap_free(full_name);
     return result;
 }
