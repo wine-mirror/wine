@@ -633,6 +633,9 @@ HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceiveP
     TRACE("(%p)->(%p, %p)\n", This, pReceivePin, pmt);
     strmbase_dump_media_type(pmt);
 
+    if (!pmt)
+        return E_POINTER;
+
     EnterCriticalSection(&This->pin.filter->csFilter);
     {
         if (This->pin.filter->state != State_Stopped)
