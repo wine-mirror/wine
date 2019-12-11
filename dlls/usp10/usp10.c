@@ -3748,7 +3748,7 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
  */
 HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *logtovis)
 {
-    int* indexs;
+    int* indices;
     int ich;
 
     TRACE("(%d, %p, %p, %p)\n", runs, level, vistolog, logtovis);
@@ -3756,31 +3756,31 @@ HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *log
     if (!level || (!vistolog && !logtovis))
         return E_INVALIDARG;
 
-    if (!(indexs = heap_calloc(runs, sizeof(*indexs))))
+    if (!(indices = heap_calloc(runs, sizeof(*indices))))
         return E_OUTOFMEMORY;
 
     if (vistolog)
     {
         for( ich = 0; ich < runs; ich++)
-            indexs[ich] = ich;
+            indices[ich] = ich;
 
         ich = 0;
         while (ich < runs)
-            ich += BIDI_ReorderV2lLevel(0, indexs+ich, level+ich, runs - ich, FALSE);
-        memcpy(vistolog, indexs, runs * sizeof(*vistolog));
+            ich += BIDI_ReorderV2lLevel(0, indices+ich, level+ich, runs - ich, FALSE);
+        memcpy(vistolog, indices, runs * sizeof(*vistolog));
     }
 
     if (logtovis)
     {
         for( ich = 0; ich < runs; ich++)
-            indexs[ich] = ich;
+            indices[ich] = ich;
 
         ich = 0;
         while (ich < runs)
-            ich += BIDI_ReorderL2vLevel(0, indexs+ich, level+ich, runs - ich, FALSE);
-        memcpy(logtovis, indexs, runs * sizeof(*logtovis));
+            ich += BIDI_ReorderL2vLevel(0, indices+ich, level+ich, runs - ich, FALSE);
+        memcpy(logtovis, indices, runs * sizeof(*logtovis));
     }
-    heap_free(indexs);
+    heap_free(indices);
 
     return S_OK;
 }

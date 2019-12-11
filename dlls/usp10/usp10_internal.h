@@ -253,8 +253,8 @@ BOOL BIDI_DetermineLevels(const WCHAR *string, unsigned int count, const SCRIPT_
         const SCRIPT_CONTROL *c, WORD *levels, WORD *overrides) DECLSPEC_HIDDEN;
 BOOL BIDI_GetStrengths(const WCHAR *string, unsigned int count,
         const SCRIPT_CONTROL *c, WORD *strength) DECLSPEC_HIDDEN;
-INT BIDI_ReorderV2lLevel(int level, int *pIndexs, const BYTE* plevel, int cch, BOOL fReverse) DECLSPEC_HIDDEN;
-INT BIDI_ReorderL2vLevel(int level, int *pIndexs, const BYTE* plevel, int cch, BOOL fReverse) DECLSPEC_HIDDEN;
+INT BIDI_ReorderV2lLevel(int level, int *pIndices, const BYTE* plevel, int cch, BOOL fReverse) DECLSPEC_HIDDEN;
+INT BIDI_ReorderL2vLevel(int level, int *pIndices, const BYTE* plevel, int cch, BOOL fReverse) DECLSPEC_HIDDEN;
 void SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust) DECLSPEC_HIDDEN;
 void SHAPE_ApplyDefaultOpentypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, INT cChars, WORD *pwLogClust) DECLSPEC_HIDDEN;
 void SHAPE_ApplyOpenTypePositions(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WORD* pwGlyphs, INT cGlyphs, int *piAdvance, GOFFSET *pGoffset ) DECLSPEC_HIDDEN;
