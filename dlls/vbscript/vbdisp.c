@@ -891,10 +891,46 @@ static HRESULT WINAPI ScriptTypeInfo_GetDocumentation(ITypeInfo *iface, MEMBERID
         BSTR *pBstrDocString, DWORD *pdwHelpContext, BSTR *pBstrHelpFile)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    ITypeInfo *disp_typeinfo;
+    function_t *func;
+    HRESULT hr;
 
-    FIXME("(%p)->(%d %p %p %p %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+    TRACE("(%p)->(%d %p %p %p %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
 
-    return E_NOTIMPL;
+    if (pBstrDocString) *pBstrDocString = NULL;
+    if (pdwHelpContext) *pdwHelpContext = 0;
+    if (pBstrHelpFile) *pBstrHelpFile = NULL;
+
+    if (memid == MEMBERID_NIL)
+    {
+        if (pBstrName && !(*pBstrName = SysAllocString(L"VBScriptTypeInfo")))
+            return E_OUTOFMEMORY;
+        if (pBstrDocString &&
+            !(*pBstrDocString = SysAllocString(L"Visual Basic Scripting Type Info")))
+        {
+            if (pBstrName) SysFreeString(*pBstrName);
+            return E_OUTOFMEMORY;
+        }
+        return S_OK;
+    }
+    if (memid <= 0) return TYPE_E_ELEMENTNOTFOUND;
+
+    func = get_func_from_memid(This, memid);
+    if (!func && memid > This->num_vars)
+    {
+        hr = get_dispatch_typeinfo(&disp_typeinfo);
+        if (FAILED(hr)) return hr;
+
+        return ITypeInfo_GetDocumentation(disp_typeinfo, memid, pBstrName, pBstrDocString,
+                                          pdwHelpContext, pBstrHelpFile);
+    }
+
+    if (pBstrName)
+    {
+        *pBstrName = SysAllocString(func ? func->name : This->disp->global_vars[memid - 1]->name);
+        if (!*pBstrName) return E_OUTOFMEMORY;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetDllEntry(ITypeInfo *iface, MEMBERID memid, INVOKEKIND invKind,
