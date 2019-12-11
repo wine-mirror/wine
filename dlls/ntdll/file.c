@@ -495,6 +495,7 @@ NTSTATUS FILE_GetNtStatus(void)
     case ECONNRESET:return STATUS_PIPE_DISCONNECTED;
     case EFAULT:    return STATUS_ACCESS_VIOLATION;
     case ESPIPE:    return STATUS_ILLEGAL_FUNCTION;
+    case ELOOP:     return STATUS_REPARSE_POINT_NOT_RESOLVED;
 #ifdef ETIME /* Missing on FreeBSD */
     case ETIME:     return STATUS_IO_TIMEOUT;
 #endif
