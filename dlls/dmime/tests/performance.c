@@ -472,7 +472,7 @@ static void test_notification_type(void)
         IDirectMusicPerformance8_FreePMsg(perf, (DMUS_PMSG*)msg);
     }
     todo_wine ok(prime_segment8 == segment8, "Wrong end segment\n");
-    todo_wine ok(found_end, "Didn't recieve DMUS_NOTIFICATION_SEGEND message\n");
+    todo_wine ok(found_end, "Didn't receive DMUS_NOTIFICATION_SEGEND message\n");
 
     CloseHandle(messages);
 
