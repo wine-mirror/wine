@@ -210,6 +210,19 @@ static void test_Stream(void)
     hr = _Stream_put_Position( stream, 2 );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    hr = _Stream_SetEOS( stream );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    pos = -1;
+    hr = _Stream_get_Position( stream, &pos );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( pos == 2, "got %d\n", pos );
+
+    size = -1;
+    hr = _Stream_get_Size( stream, &size );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( size == 2, "got %d\n", size );
+
     hr = _Stream_Close( stream );
     ok( hr == S_OK, "got %08x\n", hr );
 

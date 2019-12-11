@@ -370,8 +370,11 @@ static HRESULT WINAPI stream_Write( _Stream *iface, VARIANT buf )
 
 static HRESULT WINAPI stream_SetEOS( _Stream *iface )
 {
-    FIXME( "%p\n", iface );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+
+    TRACE( "%p\n", stream );
+
+    return resize_buffer( stream, stream->pos );
 }
 
 static HRESULT WINAPI stream_CopyTo( _Stream *iface, _Stream *dst, LONG size )
