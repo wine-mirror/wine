@@ -31,11 +31,189 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
+struct fields;
 struct recordset
 {
-    _Recordset  Recordset_iface;
-    LONG        refs;
+    _Recordset     Recordset_iface;
+    LONG           refs;
+    struct fields *fields;
 };
+
+struct fields
+{
+    Fields              Fields_iface;
+    LONG                refs;
+    struct recordset   *recordset;
+};
+
+static inline struct fields *impl_from_Fields( Fields *iface )
+{
+    return CONTAINING_RECORD( iface, struct fields, Fields_iface );
+}
+
+static ULONG WINAPI fields_AddRef( Fields *iface )
+{
+    struct fields *fields = impl_from_Fields( iface );
+    LONG refs = InterlockedIncrement( &fields->refs );
+    TRACE( "%p new refcount %d\n", fields, refs );
+    return refs;
+}
+
+static ULONG WINAPI fields_Release( Fields *iface )
+{
+    struct fields *fields = impl_from_Fields( iface );
+    LONG refs = InterlockedDecrement( &fields->refs );
+    TRACE( "%p new refcount %d\n", fields, refs );
+    if (!refs)
+    {
+        if (fields->recordset) _Recordset_Release( &fields->recordset->Recordset_iface );
+        WARN( "not destroying %p\n", fields );
+        return InterlockedIncrement( &fields->refs );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI fields_QueryInterface( Fields *iface, REFIID riid, void **obj )
+{
+    TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
+
+    if (IsEqualGUID( riid, &IID_Fields ) || IsEqualGUID( riid, &IID_IDispatch ) ||
+        IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+    fields_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI fields_GetTypeInfoCount( Fields *iface, UINT *count )
+{
+    FIXME( "%p, %p\n", iface, count );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_GetTypeInfo( Fields *iface, UINT index, LCID lcid, ITypeInfo **info )
+{
+    FIXME( "%p, %u, %u, %p\n", iface, index, lcid, info );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_GetIDsOfNames( Fields *iface, REFIID riid, LPOLESTR *names, UINT count,
+                                            LCID lcid, DISPID *dispid )
+{
+    FIXME( "%p, %s, %p, %u, %u, %p\n", iface, debugstr_guid(riid), names, count, lcid, dispid );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_Invoke( Fields *iface, DISPID member, REFIID riid, LCID lcid, WORD flags,
+                                     DISPPARAMS *params, VARIANT *result, EXCEPINFO *excep_info, UINT *arg_err )
+{
+    FIXME( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", iface, member, debugstr_guid(riid), lcid, flags, params,
+           result, excep_info, arg_err );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_get_Count( Fields *iface, LONG *count )
+{
+    FIXME( "%p, %p\n", iface, count );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields__NewEnum( Fields *iface, IUnknown **obj )
+{
+    FIXME( "%p, %p\n", iface, obj );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_Refresh( Fields *iface )
+{
+    FIXME( "%p\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj )
+{
+    FIXME( "%p, %s, %p\n", iface, debugstr_variant(&index), obj );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum type, LONG size, FieldAttributeEnum attr )
+{
+    FIXME( "%p, %s, %u, %d, %d\n", iface, debugstr_w(name), type, size, attr );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_Delete( Fields *iface, VARIANT index )
+{
+    FIXME( "%p, %s\n", iface, debugstr_variant(&index) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_Append( Fields *iface, BSTR name, DataTypeEnum type, LONG size, FieldAttributeEnum attr,
+                                     VARIANT value )
+{
+    TRACE( "%p, %s, %u, %d, %d, %s\n", iface, debugstr_w(name), type, size, attr, debugstr_variant(&value) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_Update( Fields *iface )
+{
+    FIXME( "%p\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_Resync( Fields *iface, ResyncEnum resync_values )
+{
+    FIXME( "%p, %u\n", iface, resync_values );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fields_CancelUpdate( Fields *iface )
+{
+    FIXME( "%p\n", iface );
+    return E_NOTIMPL;
+}
+
+static const struct FieldsVtbl fields_vtbl =
+{
+    fields_QueryInterface,
+    fields_AddRef,
+    fields_Release,
+    fields_GetTypeInfoCount,
+    fields_GetTypeInfo,
+    fields_GetIDsOfNames,
+    fields_Invoke,
+    fields_get_Count,
+    fields__NewEnum,
+    fields_Refresh,
+    fields_get_Item,
+    fields__Append,
+    fields_Delete,
+    fields_Append,
+    fields_Update,
+    fields_Resync,
+    fields_CancelUpdate
+};
+
+static HRESULT fields_create( struct recordset *recordset, struct fields **ret )
+{
+    struct fields *fields;
+
+    if (!(fields = heap_alloc_zero( sizeof(*fields) ))) return E_OUTOFMEMORY;
+    fields->Fields_iface.lpVtbl = &fields_vtbl;
+    fields->refs = 1;
+    fields->recordset = recordset;
+    _Recordset_AddRef( &fields->recordset->Recordset_iface );
+
+    *ret = fields;
+    TRACE( "returning %p\n", *ret );
+    return S_OK;
+}
 
 static inline struct recordset *impl_from_Recordset( _Recordset *iface )
 {
@@ -58,6 +236,7 @@ static ULONG WINAPI recordset_Release( _Recordset *iface )
     if (!refs)
     {
         TRACE( "destroying %p\n", recordset );
+        recordset->fields->recordset = NULL;
         heap_free( recordset );
     }
     return refs;
@@ -199,8 +378,23 @@ static HRESULT WINAPI recordset_get_EOF( _Recordset *iface, VARIANT_BOOL *eof )
 
 static HRESULT WINAPI recordset_get_Fields( _Recordset *iface, Fields **obj )
 {
-    FIXME( "%p, %p\n", iface, obj );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
+
+    TRACE( "%p, %p\n", recordset, obj );
+
+    if (recordset->fields)
+    {
+        /* yes, this adds a reference to the recordset instead of the fields object */
+        _Recordset_AddRef( &recordset->Recordset_iface );
+        *obj = &recordset->fields->Fields_iface;
+        return S_OK;
+    }
+
+    if ((hr = fields_create( recordset, &recordset->fields )) != S_OK) return hr;
+
+    *obj = &recordset->fields->Fields_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_LockType( _Recordset *iface, LockTypeEnum *lock_type )
