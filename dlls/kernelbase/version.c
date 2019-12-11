@@ -1104,34 +1104,24 @@ BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
  */
 static BOOL file_existsA( char const * path, char const * file, BOOL excl )
 {
-    char  filename[1024];
-    int  filenamelen;
-    OFSTRUCT  fileinfo;
-
-    fileinfo.cBytes = sizeof(OFSTRUCT);
+    DWORD sharing = excl ? 0 : FILE_SHARE_READ | FILE_SHARE_WRITE;
+    char filename[MAX_PATH];
+    int len;
+    HANDLE handle;
 
     if (path)
     {
-        strcpy(filename, path);
-        filenamelen = strlen(filename);
-
-        /* Add a trailing \ if necessary */
-        if(filenamelen)
-        {
-            if(filename[filenamelen - 1] != '\\')
-                strcat(filename, "\\");
-        }
-        else /* specify the current directory */
-            strcpy(filename, ".\\");
+        strcpy( filename, path );
+        len = strlen(filename);
+        if (len && filename[len - 1] != '\\') strcat( filename, "\\" );
+        strcat( filename, file );
     }
-    else
-        filename[0] = 0;
+    else if (!SearchPathA( NULL, file, NULL, MAX_PATH, filename, NULL )) return FALSE;
 
-    /* Create the full pathname */
-    strcat(filename, file);
-
-    return (OpenFile(filename, &fileinfo,
-                     OF_EXIST | (excl ? OF_SHARE_EXCLUSIVE : 0)) != HFILE_ERROR);
+    handle = CreateFileA( filename, 0, sharing, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 );
+    if (handle == INVALID_HANDLE_VALUE) return FALSE;
+    CloseHandle( handle );
+    return TRUE;
 }
 
 /******************************************************************************
@@ -1139,32 +1129,24 @@ static BOOL file_existsA( char const * path, char const * file, BOOL excl )
  */
 static BOOL file_existsW( const WCHAR *path, const WCHAR *file, BOOL excl )
 {
-    char *filename;
-    DWORD pathlen, filelen;
-    int ret;
-    OFSTRUCT fileinfo;
+    DWORD sharing = excl ? 0 : FILE_SHARE_READ | FILE_SHARE_WRITE;
+    WCHAR filename[MAX_PATH];
+    int len;
+    HANDLE handle;
 
-    fileinfo.cBytes = sizeof(OFSTRUCT);
-
-    pathlen = WideCharToMultiByte( CP_ACP, 0, path, -1, NULL, 0, NULL, NULL );
-    filelen = WideCharToMultiByte( CP_ACP, 0, file, -1, NULL, 0, NULL, NULL );
-    filename = HeapAlloc( GetProcessHeap(), 0, pathlen+filelen+2 );
-
-    WideCharToMultiByte( CP_ACP, 0, path, -1, filename, pathlen, NULL, NULL );
-    /* Add a trailing \ if necessary */
-    if (pathlen > 1)
+    if (path)
     {
-        if (filename[pathlen-2] != '\\') strcpy( &filename[pathlen-1], "\\" );
+        lstrcpyW( filename, path );
+        len = lstrlenW(filename);
+        if (len && filename[len - 1] != '\\') lstrcatW( filename, L"\\" );
+        lstrcatW( filename, file );
     }
-    else /* specify the current directory */
-        strcpy(filename, ".\\");
+    else if (!SearchPathW( NULL, file, NULL, MAX_PATH, filename, NULL )) return FALSE;
 
-    WideCharToMultiByte( CP_ACP, 0, file, -1, filename+strlen(filename), filelen, NULL, NULL );
-
-    ret = (OpenFile(filename, &fileinfo,
-                    OF_EXIST | (excl ? OF_SHARE_EXCLUSIVE : 0)) != HFILE_ERROR);
-    HeapFree( GetProcessHeap(), 0, filename );
-    return ret;
+    handle = CreateFileW( filename, 0, sharing, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0 );
+    if (handle == INVALID_HANDLE_VALUE) return FALSE;
+    CloseHandle( handle );
+    return TRUE;
 }
 
 /*****************************************************************************
