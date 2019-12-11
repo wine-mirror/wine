@@ -684,27 +684,78 @@ BOOL WINAPI PathQualifyAW(LPCVOID pszPath)
 	return PathQualifyA(pszPath);
 }
 
-static BOOL PathResolveA(LPSTR path, LPCSTR *paths, DWORD flags)
+BOOL WINAPI PathFindOnPathExA(LPSTR,LPCSTR *,DWORD);
+BOOL WINAPI PathFindOnPathExW(LPWSTR,LPCWSTR *,DWORD);
+BOOL WINAPI PathFileExistsDefExtA(LPSTR,DWORD);
+BOOL WINAPI PathFileExistsDefExtW(LPWSTR,DWORD);
+
+static BOOL PathResolveA(char *path, const char **dirs, DWORD flags)
 {
-    FIXME("(%s,%p,0x%08x),stub!\n", debugstr_a(path), paths, flags);
-    return FALSE;
+    BOOL is_file_spec = PathIsFileSpecA(path);
+    DWORD dwWhich = flags & PRF_DONTFINDLNK ? 0xf : 0xff;
+
+    TRACE("(%s,%p,0x%08x)\n", debugstr_a(path), dirs, flags);
+
+    if (flags & PRF_VERIFYEXISTS && !PathFileExistsA(path))
+    {
+        if (PathFindOnPathExA(path, dirs, dwWhich))
+            return TRUE;
+        if (PathFileExistsDefExtA(path, dwWhich))
+            return TRUE;
+        if (!is_file_spec) GetFullPathNameA(path, MAX_PATH, path, NULL);
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    if (is_file_spec)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    GetFullPathNameA(path, MAX_PATH, path, NULL);
+
+    return TRUE;
 }
 
-static BOOL PathResolveW(LPWSTR path, LPCWSTR *paths, DWORD flags)
+static BOOL PathResolveW(WCHAR *path, const WCHAR **dirs, DWORD flags)
 {
-    FIXME("(%s,%p,0x%08x),stub!\n", debugstr_w(path), paths, flags);
-    return FALSE;
+    BOOL is_file_spec = PathIsFileSpecW(path);
+    DWORD dwWhich = flags & PRF_DONTFINDLNK ? 0xf : 0xff;
+
+    TRACE("(%s,%p,0x%08x)\n", debugstr_w(path), dirs, flags);
+
+    if (flags & PRF_VERIFYEXISTS && !PathFileExistsW(path))
+    {
+        if (PathFindOnPathExW(path, dirs, dwWhich))
+            return TRUE;
+        if (PathFileExistsDefExtW(path, dwWhich))
+            return TRUE;
+        if (!is_file_spec) GetFullPathNameW(path, MAX_PATH, path, NULL);
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    if (is_file_spec)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    GetFullPathNameW(path, MAX_PATH, path, NULL);
+
+    return TRUE;
 }
 
 /*************************************************************************
  * PathResolve [SHELL32.51]
  */
-BOOL WINAPI PathResolveAW(LPVOID path, LPCVOID *paths, DWORD flags)
+BOOL WINAPI PathResolveAW(void *path, const void **paths, DWORD flags)
 {
     if (SHELL_OsIsUnicode())
-        return PathResolveW(path, (LPCWSTR*)paths, flags);
+        return PathResolveW(path, (const WCHAR **)paths, flags);
     else
-        return PathResolveA(path, (LPCSTR*)paths, flags);
+        return PathResolveA(path, (const char **)paths, flags);
 }
 
 /*************************************************************************
