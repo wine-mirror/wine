@@ -350,24 +350,24 @@
 @ stdcall FillConsoleOutputCharacterW(long long long long ptr)
 @ stdcall FindActCtxSectionGuid(long ptr long ptr ptr)
 @ stdcall FindActCtxSectionStringW(long ptr long wstr ptr)
-@ stdcall FindClose(long) kernel32.FindClose
+@ stdcall FindClose(long)
 @ stdcall FindCloseChangeNotification(long)
 @ stdcall FindFirstChangeNotificationA(str long long)
 @ stdcall FindFirstChangeNotificationW(wstr long long)
-@ stdcall FindFirstFileA(str ptr) kernel32.FindFirstFileA
-@ stdcall FindFirstFileExA(str long ptr long ptr long) kernel32.FindFirstFileExA
-@ stdcall FindFirstFileExW(wstr long ptr long ptr long) kernel32.FindFirstFileExW
+@ stdcall FindFirstFileA(str ptr)
+@ stdcall FindFirstFileExA(str long ptr long ptr long)
+@ stdcall FindFirstFileExW(wstr long ptr long ptr long)
 # @ stub FindFirstFileNameW
-@ stdcall FindFirstFileW(wstr ptr) kernel32.FindFirstFileW
+@ stdcall FindFirstFileW(wstr ptr)
 @ stdcall FindFirstFreeAce(ptr ptr)
 @ stdcall FindFirstStreamW(wstr long ptr long) kernel32.FindFirstStreamW
 @ stdcall FindFirstVolumeW(ptr long) kernel32.FindFirstVolumeW
 @ stdcall FindNLSString(long long wstr long wstr long ptr)
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long)
 @ stdcall FindNextChangeNotification(long)
-@ stdcall FindNextFileA(long ptr) kernel32.FindNextFileA
+@ stdcall FindNextFileA(long ptr)
 # @ stub FindNextFileNameW
-@ stdcall FindNextFileW(long ptr) kernel32.FindNextFileW
+@ stdcall FindNextFileW(long ptr)
 @ stdcall FindNextStreamW(long ptr) kernel32.FindNextStreamW
 @ stdcall FindNextVolumeW(long ptr long) kernel32.FindNextVolumeW
 # @ stub FindPackagesByPackageFamily

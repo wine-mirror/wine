@@ -475,18 +475,18 @@
 @ stdcall -import FindActCtxSectionStringW(long ptr long wstr ptr)
 @ stdcall FindAtomA(str)
 @ stdcall FindAtomW(wstr)
-@ stdcall FindClose(long)
+@ stdcall -import FindClose(long)
 @ stdcall -import FindCloseChangeNotification(long)
 @ stdcall -import FindFirstChangeNotificationA(str long long)
 @ stdcall -import FindFirstChangeNotificationW(wstr long long)
-@ stdcall FindFirstFileA(str ptr)
-@ stdcall FindFirstFileExA(str long ptr long ptr long)
-@ stdcall FindFirstFileExW(wstr long ptr long ptr long)
+@ stdcall -import FindFirstFileA(str ptr)
+@ stdcall -import FindFirstFileExA(str long ptr long ptr long)
+@ stdcall -import FindFirstFileExW(wstr long ptr long ptr long)
 # @ stub FindFirstFileNameTransactedW
 # @ stub FindFirstFileNameW
 # @ stub FindFirstFileTransactedA
 # @ stub FindFirstFileTransactedW
-@ stdcall FindFirstFileW(wstr ptr)
+@ stdcall -import FindFirstFileW(wstr ptr)
 # @ stub FindFirstStreamTransactedW
 @ stdcall FindFirstStreamW(wstr long ptr long)
 @ stdcall FindFirstVolumeA(ptr long)
@@ -494,9 +494,9 @@
 @ stdcall FindFirstVolumeMountPointW(wstr ptr long)
 @ stdcall FindFirstVolumeW(ptr long)
 @ stdcall -import FindNextChangeNotification(long)
-@ stdcall FindNextFileA(long ptr)
+@ stdcall -import FindNextFileA(long ptr)
 # @ stub FindNextFileNameW
-@ stdcall FindNextFileW(long ptr)
+@ stdcall -import FindNextFileW(long ptr)
 @ stdcall FindNextStreamW(long ptr)
 @ stdcall FindNextVolumeA(long ptr long)
 @ stub FindNextVolumeMountPointA
