@@ -1468,12 +1468,12 @@ static BOOL macdrv_init_adapter(HKEY video_hkey, int video_index, int gpu_index,
     RegCreateKeyExW(HKEY_CURRENT_CONFIG, adapter_keyW, 0, NULL, REG_OPTION_VOLATILE, KEY_WRITE, NULL, &hkey, NULL);
 
     /* Write GPU instance path so that we can find the GPU instance via adapters quickly. Another way is trying to match
-     * them via the GUID in Device Paramters/VideoID, but it would required enumrating all GPU instances */
+     * them via the GUID in Device Parameters/VideoID, but it would require enumerating all GPU instances */
     sprintfW(bufferW, gpu_instance_fmtW, gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, gpu_index);
     if (RegSetValueExW(hkey, gpu_idW, 0, REG_SZ, (const BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR)))
         goto done;
 
-    /* Write all monitor instances paths under this adapter */
+    /* Write all monitor instance paths under this adapter */
     for (i = 0; i < monitor_count; i++)
     {
         sprintfW(key_nameW, mointor_id_fmtW, i);
