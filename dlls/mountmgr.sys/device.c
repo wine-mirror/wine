@@ -704,19 +704,19 @@ static HKEY get_scsi_device_lun_key( SCSI_ADDRESS *scsi_addr )
 
     if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, scsi_keyW, 0, KEY_READ|KEY_WRITE, &scsi_key )) return NULL;
 
-    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), scsi_port_keyW, scsi_addr->PortNumber );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_port_keyW, scsi_addr->PortNumber );
     if (RegCreateKeyExW( scsi_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &port_key, NULL )) return NULL;
     RegCloseKey( scsi_key );
 
-    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), scsi_bus_keyW, scsi_addr->PathId );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_bus_keyW, scsi_addr->PathId );
     if (RegCreateKeyExW( port_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &bus_key, NULL )) return NULL;
     RegCloseKey( port_key );
 
-    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), target_id_keyW, scsi_addr->TargetId );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), target_id_keyW, scsi_addr->TargetId );
     if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return NULL;
     RegCloseKey( bus_key );
 
-    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), lun_keyW, scsi_addr->Lun );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), lun_keyW, scsi_addr->Lun );
     if (RegCreateKeyExW( target_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &lun_key, NULL )) return NULL;
     RegCloseKey( target_key );
 
@@ -746,7 +746,7 @@ void create_scsi_entry( SCSI_ADDRESS *scsi_addr, UINT init_id, const char *drive
 
     if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, scsi_keyW, 0, KEY_READ|KEY_WRITE, &scsi_key )) return;
 
-    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), scsi_port_keyW, scsi_addr->PortNumber );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_port_keyW, scsi_addr->PortNumber );
     if (RegCreateKeyExW( scsi_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &port_key, NULL )) return;
     RegCloseKey( scsi_key );
 
@@ -757,19 +757,19 @@ void create_scsi_entry( SCSI_ADDRESS *scsi_addr, UINT init_id, const char *drive
 
     value = 0;
 
-    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), scsi_bus_keyW, scsi_addr->PathId );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), scsi_bus_keyW, scsi_addr->PathId );
     if (RegCreateKeyExW( port_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &bus_key, NULL )) return;
     RegCloseKey( port_key );
 
-    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), init_id_keyW, init_id );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), init_id_keyW, init_id );
     if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
     RegCloseKey( target_key );
 
-    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), target_id_keyW, scsi_addr->TargetId );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), target_id_keyW, scsi_addr->TargetId );
     if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
     RegCloseKey( bus_key );
 
-    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), lun_keyW, scsi_addr->Lun );
+    snprintfW( dataW, ARRAY_SIZE( dataW ), lun_keyW, scsi_addr->Lun );
     if (RegCreateKeyExW( target_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &lun_key, NULL )) return;
     RegCloseKey( target_key );
 
@@ -811,7 +811,7 @@ void create_scsi_entry( SCSI_ADDRESS *scsi_addr, UINT init_id, const char *drive
     }
     else if (type == SCSI_TAPE_PERIPHERAL)
     {
-        snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), tapeW, tape_no++ );
+        snprintfW( dataW, ARRAY_SIZE( dataW ), tapeW, tape_no++ );
         RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)dataW, strlenW( dataW ) );
     }
 
