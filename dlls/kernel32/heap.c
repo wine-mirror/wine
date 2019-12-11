@@ -143,34 +143,6 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
 }
 
 
-
-
-
-/* These are needed so that we can call the functions from inside kernel itself */
-
-/***********************************************************************
- *           HeapAlloc    (KERNEL32.@)
- */
-LPVOID WINAPI HeapAlloc( HANDLE heap, DWORD flags, SIZE_T size )
-{
-    return RtlAllocateHeap( heap, flags, size );
-}
-
-BOOL WINAPI HeapFree( HANDLE heap, DWORD flags, LPVOID ptr )
-{
-    return RtlFreeHeap( heap, flags, ptr );
-}
-
-LPVOID WINAPI HeapReAlloc( HANDLE heap, DWORD flags, LPVOID ptr, SIZE_T size )
-{
-    return RtlReAllocateHeap( heap, flags, ptr, size );
-}
-
-SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPCVOID ptr )
-{
-    return RtlSizeHeap( heap, flags, ptr );
-}
-
 /*
  * Win32 Global heap functions (GlobalXXX).
  * These functions included in Win32 for compatibility with 16 bit Windows
