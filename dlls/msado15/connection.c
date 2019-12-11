@@ -36,6 +36,7 @@ struct connection
     LONG        refs;
 
     ObjectStateEnum state;
+    LONG timeout;
 };
 
 static inline struct connection *impl_from_Connection( _Connection *iface )
@@ -126,14 +127,18 @@ static HRESULT WINAPI connection_put_ConnectionString( _Connection *iface, BSTR 
 
 static HRESULT WINAPI connection_get_CommandTimeout( _Connection *iface, LONG *timeout )
 {
-    FIXME( "%p, %p\n", iface, timeout );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    TRACE( "%p, %p\n", connection, timeout );
+    *timeout = connection->timeout;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_put_CommandTimeout( _Connection *iface, LONG timeout )
 {
-    FIXME( "%p, %d\n", iface, timeout );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    TRACE( "%p, %d\n", connection, timeout );
+    connection->timeout = timeout;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_get_ConnectionTimeout( _Connection *iface, LONG *timeout )
@@ -342,6 +347,7 @@ HRESULT Connection_create( void **obj )
     connection->Connection_iface.lpVtbl = &connection_vtbl;
     connection->refs = 1;
     connection->state = adStateClosed;
+    connection->timeout = 30;
 
     *obj = &connection->Connection_iface;
     TRACE( "returning iface %p\n", *obj );

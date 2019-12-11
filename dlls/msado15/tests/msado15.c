@@ -286,7 +286,7 @@ static void test_Connection(void)
     _Connection *connection;
     IRunnableObject *runtime;
     ISupportErrorInfo *errorinfo;
-    LONG state;
+    LONG state, timeout;
 
     hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER, &IID__Connection, (void**)&connection);
     ok( hr == S_OK, "got %08x\n", hr );
@@ -309,6 +309,19 @@ if (0)   /* Crashes on windows */
     hr = _Connection_get_State(connection, &state);
     ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
     ok(state == adStateClosed, "Unexpected state value 0x%08x\n", state);
+
+    timeout = 0;
+    hr = _Connection_get_CommandTimeout(connection, &timeout);
+    ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
+    ok(timeout == 30, "Unexpected timeout value %d\n", timeout);
+
+    hr = _Connection_put_CommandTimeout(connection, 300);
+    ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
+
+    timeout = 0;
+    hr = _Connection_get_CommandTimeout(connection, &timeout);
+    ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
+    ok(timeout == 300, "Unexpected timeout value %d\n", timeout);
 
     _Connection_Release(connection);
 }
