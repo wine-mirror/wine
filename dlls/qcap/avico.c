@@ -272,52 +272,13 @@ static const IPersistPropertyBagVtbl PersistPropertyBagVtbl = {
     AVICompressorPropertyBag_Save
 };
 
-static inline AVICompressor *impl_from_IPin(IPin *iface)
-{
-    return impl_from_strmbase_filter(CONTAINING_RECORD(iface, struct strmbase_pin, IPin_iface)->filter);
-}
-
-static HRESULT WINAPI AVICompressorIn_ReceiveConnection(IPin *iface,
-        IPin *pConnector, const AM_MEDIA_TYPE *pmt)
-{
-    AVICompressor *This = impl_from_IPin(iface);
-    HRESULT hres;
-
-    TRACE("(%p)->(%p AM_MEDIA_TYPE(%p))\n", This, pConnector, pmt);
-
-    hres = BaseInputPinImpl_ReceiveConnection(iface, pConnector, pmt);
-    if(FAILED(hres))
-        return hres;
-
-    hres = fill_format_info(This, (VIDEOINFOHEADER*)pmt->pbFormat);
-    if(FAILED(hres))
-        BaseInputPinImpl_Disconnect(iface);
-    return hres;
-}
-
-static HRESULT WINAPI AVICompressorIn_Disconnect(IPin *iface)
-{
-    AVICompressor *This = impl_from_IPin(iface);
-    HRESULT hres;
-
-    TRACE("(%p)\n", This);
-
-    hres = BaseInputPinImpl_Disconnect(iface);
-    if(FAILED(hres))
-        return hres;
-
-    heap_free(This->videoinfo);
-    This->videoinfo = NULL;
-    return S_OK;
-}
-
 static const IPinVtbl AVICompressorInputPinVtbl = {
     BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
-    AVICompressorIn_ReceiveConnection,
-    AVICompressorIn_Disconnect,
+    BaseInputPinImpl_ReceiveConnection,
+    BaseInputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
@@ -465,12 +426,27 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
     return hres;
 }
 
+static HRESULT sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    AVICompressor *filter = impl_from_strmbase_pin(&iface->pin);
+    return fill_format_info(filter, (VIDEOINFOHEADER *)mt->pbFormat);
+}
+
+static void sink_disconnect(struct strmbase_sink *iface)
+{
+    AVICompressor *filter = impl_from_strmbase_pin(&iface->pin);
+    heap_free(filter->videoinfo);
+    filter->videoinfo = NULL;
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
     .base.pin_query_interface = sink_query_interface,
     .pfnReceive = AVICompressorIn_Receive,
+    .sink_connect = sink_connect,
+    .sink_disconnect = sink_disconnect,
 };
 
 static HRESULT source_get_media_type(struct strmbase_pin *base, unsigned int iPosition, AM_MEDIA_TYPE *amt)
