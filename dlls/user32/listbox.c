@@ -2901,7 +2901,11 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case LB_SETSEL:
         ret = LISTBOX_SetSelection( descr, lParam, wParam, FALSE );
         if (ret != LB_ERR && wParam)
+        {
             descr->anchor_item = lParam;
+            if (lParam != -1)
+                LISTBOX_SetCaretIndex( descr, lParam, TRUE );
+        }
         return ret;
 
     case LB_SETCURSEL:
