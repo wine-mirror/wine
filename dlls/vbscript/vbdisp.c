@@ -1014,10 +1014,23 @@ static HRESULT WINAPI ScriptTypeInfo_CreateInstance(ITypeInfo *iface, IUnknown *
 static HRESULT WINAPI ScriptTypeInfo_GetMops(ITypeInfo *iface, MEMBERID memid, BSTR *pBstrMops)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    ITypeInfo *disp_typeinfo;
+    HRESULT hr;
 
-    FIXME("(%p)->(%d %p)\n", This, memid, pBstrMops);
+    TRACE("(%p)->(%d %p)\n", This, memid, pBstrMops);
 
-    return E_NOTIMPL;
+    if (!pBstrMops) return E_INVALIDARG;
+
+    if (!get_func_from_memid(This, memid) && memid > This->num_vars)
+    {
+        hr = get_dispatch_typeinfo(&disp_typeinfo);
+        if (FAILED(hr)) return hr;
+
+        return ITypeInfo_GetMops(disp_typeinfo, memid, pBstrMops);
+    }
+
+    *pBstrMops = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetContainingTypeLib(ITypeInfo *iface, ITypeLib **ppTLib, UINT *pIndex)
