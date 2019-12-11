@@ -34,6 +34,8 @@ struct connection
 {
     _Connection Connection_iface;
     LONG        refs;
+
+    ObjectStateEnum state;
 };
 
 static inline struct connection *impl_from_Connection( _Connection *iface )
@@ -271,8 +273,10 @@ static HRESULT WINAPI connection_put_Provider( _Connection *iface, BSTR str )
 
 static HRESULT WINAPI connection_get_State( _Connection *iface, LONG *state )
 {
-    FIXME( "%p, %p\n", iface, state );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    TRACE( "%p, %p\n", connection, state );
+    *state = connection->state;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_OpenSchema( _Connection *iface, SchemaEnum schema, VARIANT restrictions,
@@ -337,6 +341,7 @@ HRESULT Connection_create( void **obj )
     if (!(connection = heap_alloc( sizeof(*connection) ))) return E_OUTOFMEMORY;
     connection->Connection_iface.lpVtbl = &connection_vtbl;
     connection->refs = 1;
+    connection->state = adStateClosed;
 
     *obj = &connection->Connection_iface;
     TRACE( "returning iface %p\n", *obj );

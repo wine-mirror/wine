@@ -280,9 +280,43 @@ static void test_Stream(void)
     ok( !refs, "got %d\n", refs );
 }
 
+static void test_Connection(void)
+{
+    HRESULT hr;
+    _Connection *connection;
+    IRunnableObject *runtime;
+    ISupportErrorInfo *errorinfo;
+    LONG state;
+
+    hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER, &IID__Connection, (void**)&connection);
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Connection_QueryInterface(connection, &IID_IRunnableObject, (void**)&runtime);
+    ok(hr == E_NOINTERFACE, "Unexpected IRunnableObject interface\n");
+
+    hr = _Connection_QueryInterface(connection, &IID_ISupportErrorInfo, (void**)&errorinfo);
+    todo_wine ok(hr == S_OK, "Failed to get ISupportErrorInfo interface\n");
+    if (hr == S_OK)
+        ISupportErrorInfo_Release(errorinfo);
+
+if (0)   /* Crashes on windows */
+{
+    hr = _Connection_get_State(connection, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr 0x%08x\n", hr);
+}
+
+    state = -1;
+    hr = _Connection_get_State(connection, &state);
+    ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
+    ok(state == adStateClosed, "Unexpected state value 0x%08x\n", state);
+
+    _Connection_Release(connection);
+}
+
 START_TEST(msado15)
 {
     CoInitialize( NULL );
     test_Stream();
+    test_Connection();
     CoUninitialize();
 }
