@@ -99,6 +99,7 @@ static HRESULT (WINAPI *pSHSetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, 
 static HRESULT (WINAPI *pSHGetFolderPathEx)(REFKNOWNFOLDERID, DWORD, HANDLE, LPWSTR, DWORD);
 static BOOL (WINAPI *pPathYetAnotherMakeUniqueName)(PWSTR, PCWSTR, PCWSTR, PCWSTR);
 static HRESULT (WINAPI *pSHGetKnownFolderIDList)(REFKNOWNFOLDERID, DWORD, HANDLE, PIDLIST_ABSOLUTE*);
+static BOOL (WINAPI *pPathResolve)(PWSTR, PZPCWSTR, UINT);
 
 static DLLVERSIONINFO shellVersion = { 0 };
 static LPMALLOC pMalloc;
@@ -207,6 +208,7 @@ static void loadShell32(void)
     GET_PROC(SHGetMalloc)
     GET_PROC(PathYetAnotherMakeUniqueName)
     GET_PROC(SHGetKnownFolderIDList)
+    GET_PROC(PathResolve);
 
     ok(pSHGetMalloc != NULL, "shell32 is missing SHGetMalloc\n");
     if (pSHGetMalloc)
@@ -2864,6 +2866,122 @@ if (0) { /* crashes on native */
     ILFree(pidl);
 }
 
+static void test_PathResolve(void)
+{
+    WCHAR testfile[MAX_PATH], testfile_lnk[MAX_PATH], regedit_in_testdir[MAX_PATH], regedit_cmd[MAX_PATH];
+    WCHAR tempdir[MAX_PATH], path[MAX_PATH];
+    const WCHAR *dirs[2] = { tempdir, NULL };
+    HANDLE file, file2;
+    BOOL ret;
+    int i;
+    struct {
+        const WCHAR *path;
+        UINT flags;
+        BOOL expected;
+        const WCHAR *expected_path;
+    } tests[] = {
+        /* no flags */
+        { L"test", 0, FALSE, L"test" },
+        { L"C:\\test", 0, TRUE, L"C:\\test" },
+        { L"regedit", 0, FALSE, L"regedit" },
+        { testfile, 0, TRUE, testfile },
+
+        /* PRF_VERIFYEXISTS */
+        { L"test", PRF_VERIFYEXISTS, TRUE, testfile_lnk },
+        { L"C:\\test", PRF_VERIFYEXISTS, FALSE, L"C:\\test" },
+        /* common extensions are tried even if PRF_TRYPROGRAMEXTENSIONS isn't passed */
+        /* directories in dirs parameter are always searched first even if PRF_FIRSTDIRDEF isn't passed */
+        { L"regedit", PRF_VERIFYEXISTS, TRUE, regedit_cmd },
+        /* .dll is not tried */
+        { L"bcrypt", PRF_VERIFYEXISTS, FALSE, L"bcrypt" },
+        { testfile, PRF_VERIFYEXISTS, TRUE, testfile_lnk },
+        { regedit_in_testdir, PRF_VERIFYEXISTS, TRUE, regedit_cmd },
+
+        /* PRF_FIRSTDIRDEF */
+        { L"regedit", PRF_FIRSTDIRDEF, FALSE, L"regedit" },
+
+        /* RF_VERIFYEXISTS | PRF_FIRSTDIRDEF */
+        { L"regedit", PRF_VERIFYEXISTS | PRF_FIRSTDIRDEF, TRUE, regedit_cmd },
+
+        /* PRF_DONTFINDLNK */
+        { testfile, PRF_DONTFINDLNK, TRUE, testfile },
+        { regedit_in_testdir, PRF_DONTFINDLNK, TRUE, regedit_in_testdir },
+
+        /* RF_VERIFYEXISTS | PRF_DONTFINDLNK */
+        { testfile, PRF_VERIFYEXISTS | PRF_DONTFINDLNK, FALSE, testfile },
+        /* cmd is also ignored when passing PRF_VERIFYEXISTS | PRF_DONTFINDLNK */
+        { regedit_in_testdir, PRF_VERIFYEXISTS | PRF_DONTFINDLNK, FALSE, regedit_in_testdir },
+
+        /* PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE */
+        /* only PRF_VERIFYEXISTS matters*/
+        { L"test", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, testfile_lnk },
+        { L"C:\\test", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, FALSE, L"C:\\test" },
+        { L"regedit", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, regedit_cmd },
+        { testfile, PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, testfile_lnk },
+
+        /* PRF_TRYPROGRAMEXTENSIONS */
+        { L"test", PRF_TRYPROGRAMEXTENSIONS, TRUE, testfile_lnk},
+        { L"C:\\test", PRF_TRYPROGRAMEXTENSIONS, FALSE, L"C:\\test" },
+        { L"regedit", PRF_TRYPROGRAMEXTENSIONS, TRUE, regedit_cmd },
+        /* .dll is not tried */
+        { L"bcrypt", PRF_TRYPROGRAMEXTENSIONS, FALSE, L"bcrypt" },
+        { testfile, PRF_TRYPROGRAMEXTENSIONS, TRUE, testfile_lnk },
+        { regedit_in_testdir, PRF_TRYPROGRAMEXTENSIONS, TRUE, regedit_cmd },
+
+        /* PRF_TRYPROGRAMEXTENSIONS | PRF_DONTFINDLNK */
+        { testfile, PRF_TRYPROGRAMEXTENSIONS | PRF_DONTFINDLNK, FALSE, testfile },
+        /* cmd is also ignored when passing PRF_TRYPROGRAMEXTENSIONS | PRF_DONTFINDLNK */
+        { regedit_in_testdir, PRF_TRYPROGRAMEXTENSIONS | PRF_DONTFINDLNK, FALSE, regedit_in_testdir }
+    };
+
+    if (!pPathResolve)
+    {
+        win_skip("PathResolve not available\n");
+        return;
+    }
+
+    GetTempPathW(MAX_PATH, tempdir);
+
+    lstrcpyW(testfile, tempdir);
+    lstrcatW(testfile, L"test");
+    lstrcpyW(testfile_lnk, testfile);
+    lstrcatW(testfile_lnk, L".lnk");
+
+    file = CreateFileW(testfile_lnk, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
+
+    lstrcpyW(regedit_in_testdir, tempdir);
+    lstrcatW(regedit_in_testdir, L"regedit");
+    lstrcpyW(regedit_cmd, regedit_in_testdir);
+    lstrcatW(regedit_cmd, L".cmd");
+
+    file2 = CreateFileW(regedit_cmd, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok(file2 != INVALID_HANDLE_VALUE, "got %p\n", file);
+
+    /* show that resolving regedit with NULL dirs returns regedit.exe */
+    lstrcpyW(path, L"regedit");
+    ret = pPathResolve(path, NULL, PRF_VERIFYEXISTS);
+    ok(ret, "resolving regedit failed unexpectedly\n");
+    ok(!lstrcmpiW(path, L"C:\\windows\\regedit.exe") || !lstrcmpiW(path, L"C:\\windows\\system32\\regedit.exe"),
+            "unexpected path %s\n", wine_dbgstr_w(path));
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        lstrcpyW(path, tests[i].path);
+
+        if (!tests[i].expected) SetLastError(0xdeadbeef);
+        ret = pPathResolve(path, dirs, tests[i].flags);
+        ok(ret == tests[i].expected, "test %d: expected %d, got %d\n", i, tests[i].expected, ret);
+        ok(!lstrcmpiW(path, tests[i].expected_path),
+                "test %d: expected %s, got %s\n", i, wine_dbgstr_w(tests[i].expected_path), wine_dbgstr_w(path));
+        if (!tests[i].expected)
+            ok(GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_ALREADY_EXISTS, got %d\n", GetLastError());
+    }
+
+    CloseHandle(file);
+    CloseHandle(file2);
+}
+
 START_TEST(shellpath)
 {
     if (!init()) return;
@@ -2894,5 +3012,6 @@ START_TEST(shellpath)
         test_DoEnvironmentSubst();
         test_PathYetAnotherMakeUniqueName();
         test_SHGetKnownFolderIDList();
+        test_PathResolve();
     }
 }
