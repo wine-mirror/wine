@@ -893,12 +893,16 @@ static void test_script_typeinfo(void)
     FUNCDESC *funcdesc;
     VARDESC  *vardesc;
     DESCKIND desckind;
+    INT implTypeFlags;
+    UINT count, index;
+    HREFTYPE reftype;
     BINDPTR bindptr;
     MEMBERID memid;
     TYPEATTR *attr;
-    UINT index;
     HRESULT hr;
     WCHAR str[64], *names = str;
+    BSTR bstr, bstrs[5];
+    void *obj;
     int i;
 
     vbscript = create_vbscript();
@@ -961,6 +965,20 @@ static void test_script_typeinfo(void)
     ok(typeinfo != typeinfo2, "TypeInfo was not supposed to be shared.\n");
     ITypeInfo_Release(typeinfo2);
 
+    obj = (void*)0xdeadbeef;
+    hr = ITypeInfo_CreateInstance(typeinfo, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "CreateInstance returned: %08x\n", hr);
+    hr = ITypeInfo_CreateInstance(typeinfo, NULL, NULL, &obj);
+    ok(hr == TYPE_E_BADMODULEKIND, "CreateInstance returned: %08x\n", hr);
+    hr = ITypeInfo_CreateInstance(typeinfo, NULL, &IID_IDispatch, &obj);
+    ok(hr == TYPE_E_BADMODULEKIND, "CreateInstance returned: %08x\n", hr);
+    ok(!obj, "Unexpected non-null obj %p.\n", obj);
+
+    hr = ITypeInfo_GetDocumentation(typeinfo, MEMBERID_NIL, &bstr, NULL, NULL, NULL);
+    ok(hr == S_OK, "GetDocumentation(MEMBERID_NIL) failed: %08x\n", hr);
+    ok(!lstrcmpW(bstr, L"VBScriptTypeInfo"), "Unexpected TypeInfo name %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
     hr = ITypeInfo_GetTypeAttr(typeinfo, &attr);
     ok(hr == S_OK, "GetTypeAttr failed: %08x\n", hr);
     ok(IsEqualGUID(&attr->guid, &IID_IScriptTypeInfo), "Unexpected GUID %s\n", wine_dbgstr_guid(&attr->guid));
@@ -978,6 +996,45 @@ static void test_script_typeinfo(void)
     ok(attr->tdescAlias.vt == VT_EMPTY, "Unexpected tdescAlias.vt %d\n", attr->tdescAlias.vt);
     ok(attr->idldescType.wIDLFlags == IDLFLAG_NONE, "Unexpected idldescType.wIDLFlags 0x%x\n", attr->idldescType.wIDLFlags);
     ITypeInfo_ReleaseTypeAttr(typeinfo, attr);
+
+    /* The type inherits from IDispatch */
+    hr = ITypeInfo_GetImplTypeFlags(typeinfo, 0, NULL);
+    ok(hr == E_INVALIDARG, "GetImplTypeFlags returned: %08x\n", hr);
+    hr = ITypeInfo_GetImplTypeFlags(typeinfo, 1, &implTypeFlags);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetImplTypeFlags returned: %08x\n", hr);
+    hr = ITypeInfo_GetImplTypeFlags(typeinfo, -1, &implTypeFlags);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetImplTypeFlags returned: %08x\n", hr);
+    hr = ITypeInfo_GetImplTypeFlags(typeinfo, 0, &implTypeFlags);
+    ok(hr == S_OK, "GetImplTypeFlags failed: %08x\n", hr);
+    ok(implTypeFlags == 0, "Unexpected implTypeFlags 0x%x\n", implTypeFlags);
+
+    hr = ITypeInfo_GetRefTypeOfImplType(typeinfo, 0, NULL);
+    ok(hr == E_INVALIDARG, "GetRefTypeOfImplType returned: %08x\n", hr);
+    hr = ITypeInfo_GetRefTypeOfImplType(typeinfo, 1, &reftype);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetRefTypeOfImplType returned: %08x\n", hr);
+    hr = ITypeInfo_GetRefTypeOfImplType(typeinfo, -1, &reftype);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "GetRefTypeOfImplType failed: %08x\n", hr);
+    hr = ITypeInfo_GetRefTypeOfImplType(typeinfo, 0, &reftype);
+    ok(hr == S_OK, "GetRefTypeOfImplType failed: %08x\n", hr);
+    ok(reftype == 1, "Unexpected reftype %d\n", reftype);
+
+    hr = ITypeInfo_GetRefTypeInfo(typeinfo, reftype, NULL);
+    ok(hr == E_INVALIDARG, "GetRefTypeInfo returned: %08x\n", hr);
+    hr = ITypeInfo_GetRefTypeInfo(typeinfo, -1, &typeinfo2);
+    ok(hr == E_INVALIDARG, "GetRefTypeInfo returned: %08x\n", hr);
+    hr = ITypeInfo_GetRefTypeInfo(typeinfo, 4, &typeinfo2);
+    ok(hr == E_FAIL, "GetRefTypeInfo returned: %08x\n", hr);
+    hr = ITypeInfo_GetRefTypeInfo(typeinfo, 0, &typeinfo2);
+    ok(hr == S_OK, "GetRefTypeInfo failed: %08x\n", hr);
+    ok(typeinfo == typeinfo2, "Unexpected TypeInfo %p (expected %p)\n", typeinfo2, typeinfo);
+    ITypeInfo_Release(typeinfo2);
+    hr = ITypeInfo_GetRefTypeInfo(typeinfo, reftype, &typeinfo2);
+    ok(hr == S_OK, "GetRefTypeInfo failed: %08x\n", hr);
+    hr = ITypeInfo_GetDocumentation(typeinfo2, MEMBERID_NIL, &bstr, NULL, NULL, NULL);
+    ok(hr == S_OK, "GetDocumentation(MEMBERID_NIL) failed: %08x\n", hr);
+    ok(!lstrcmpW(bstr, L"IDispatch"), "Unexpected TypeInfo name %s\n", wine_dbgstr_w(bstr));
+    ITypeInfo_Release(typeinfo2);
+    SysFreeString(bstr);
 
     /* GetIDsOfNames looks into the inherited types as well */
     wcscpy(str, L"queryinterface");
@@ -998,6 +1055,53 @@ static void test_script_typeinfo(void)
     ok(hr == S_OK, "GetIDsOfNames failed: %08x\n", hr);
     ok(!lstrcmpW(str, L"SUBtract"), "Unexpected string %s\n", wine_dbgstr_w(str));
 
+    hr = ITypeInfo_GetNames(typeinfo, memid, NULL, 1, &count);
+    ok(hr == E_INVALIDARG, "GetNames returned: %08x\n", hr);
+    hr = ITypeInfo_GetNames(typeinfo, memid, bstrs, 1, NULL);
+    ok(hr == E_INVALIDARG, "GetNames returned: %08x\n", hr);
+    hr = ITypeInfo_GetNames(typeinfo, memid, bstrs, 0, &count);
+    ok(hr == S_OK, "GetNames failed: %08x\n", hr);
+    ok(count == 0, "Unexpected count %u\n", count);
+    hr = ITypeInfo_GetNames(typeinfo, memid, bstrs, ARRAY_SIZE(bstrs), &count);
+    ok(hr == S_OK, "GetNames failed: %08x\n", hr);
+    ok(count == 3, "Unexpected count %u\n", count);
+    ok(!lstrcmpW(bstrs[0], L"subtract"), "Unexpected function name %s\n", wine_dbgstr_w(bstrs[0]));
+    ok(!lstrcmpW(bstrs[1], L"x"), "Unexpected function first param name %s\n", wine_dbgstr_w(bstrs[1]));
+    ok(!lstrcmpW(bstrs[2], L"y"), "Unexpected function second param name %s\n", wine_dbgstr_w(bstrs[2]));
+    for (i = 0; i < count; i++) SysFreeString(bstrs[i]);
+
+    hr = ITypeInfo_GetMops(typeinfo, memid, NULL);
+    ok(hr == E_INVALIDARG, "GetMops returned: %08x\n", hr);
+    hr = ITypeInfo_GetMops(typeinfo, memid, &bstr);
+    ok(hr == S_OK, "GetMops failed: %08x\n", hr);
+    ok(!bstr, "Unexpected non-null string %s\n", wine_dbgstr_w(bstr));
+    hr = ITypeInfo_GetMops(typeinfo, MEMBERID_NIL, &bstr);
+    ok(hr == S_OK, "GetMops failed: %08x\n", hr);
+    ok(!bstr, "Unexpected non-null string %s\n", wine_dbgstr_w(bstr));
+
+    /* These always fail */
+    obj = (void*)0xdeadbeef;
+    hr = ITypeInfo_AddressOfMember(typeinfo, memid, INVOKE_FUNC, NULL);
+    ok(hr == E_INVALIDARG, "AddressOfMember returned: %08x\n", hr);
+    hr = ITypeInfo_AddressOfMember(typeinfo, memid, INVOKE_FUNC, &obj);
+    ok(hr == TYPE_E_BADMODULEKIND, "AddressOfMember returned: %08x\n", hr);
+    ok(!obj, "Unexpected non-null obj %p.\n", obj);
+    bstr = (BSTR)0xdeadbeef;
+    hr = ITypeInfo_GetDllEntry(typeinfo, memid, INVOKE_FUNC, &bstr, NULL, NULL);
+    ok(hr == TYPE_E_BADMODULEKIND, "GetDllEntry returned: %08x\n", hr);
+    ok(!bstr, "Unexpected non-null str %p.\n", bstr);
+    wcscpy(str, L"Invoke");
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, &names, 1, &memid);
+    ok(hr == S_OK, "GetIDsOfNames failed: %08x\n", hr);
+    obj = (void*)0xdeadbeef;
+    hr = ITypeInfo_AddressOfMember(typeinfo, memid, INVOKE_FUNC, &obj);
+    ok(hr == TYPE_E_BADMODULEKIND, "AddressOfMember returned: %08x\n", hr);
+    ok(!obj, "Unexpected non-null obj %p.\n", obj);
+    bstr = (BSTR)0xdeadbeef;
+    hr = ITypeInfo_GetDllEntry(typeinfo, memid, INVOKE_FUNC, &bstr, NULL, NULL);
+    ok(hr == TYPE_E_BADMODULEKIND, "GetDllEntry returned: %08x\n", hr);
+    ok(!bstr, "Unexpected non-null str %p.\n", bstr);
+
     /* Check variable descriptions */
     hr = ITypeInfo_GetVarDesc(typeinfo, 0, NULL);
     ok(hr == E_INVALIDARG, "GetVarDesc returned: %08x\n", hr);
@@ -1007,6 +1111,12 @@ static void test_script_typeinfo(void)
     {
         hr = ITypeInfo_GetVarDesc(typeinfo, i, &vardesc);
         ok(hr == S_OK, "GetVarDesc(%u) failed: %08x\n", i, hr);
+        hr = ITypeInfo_GetDocumentation(typeinfo, vardesc->memid, &bstr, &bstrs[0], NULL, NULL);
+        ok(hr == S_OK, "[%u] GetDocumentation failed: %08x\n", i, hr);
+        ok(!lstrcmpW(bstr, var[i].name), "[%u] Unexpected variable name %s (expected %s)\n",
+            i, wine_dbgstr_w(bstr), wine_dbgstr_w(var[i].name));
+        ok(!bstrs[0], "[%u] Unexpected doc string %s\n", i, wine_dbgstr_w(bstrs[0]));
+        SysFreeString(bstr);
         ok(vardesc->lpstrSchema == NULL, "[%u] Unexpected lpstrSchema %p\n", i, vardesc->lpstrSchema);
         ok(vardesc->oInst == 0, "[%u] Unexpected oInst %u\n", i, vardesc->oInst);
         ok(vardesc->varkind == VAR_DISPATCH, "[%u] Unexpected varkind %d\n", i, vardesc->varkind);
@@ -1029,6 +1139,12 @@ static void test_script_typeinfo(void)
     {
         hr = ITypeInfo_GetFuncDesc(typeinfo, i, &funcdesc);
         ok(hr == S_OK, "GetFuncDesc(%u) failed: %08x\n", i, hr);
+        hr = ITypeInfo_GetDocumentation(typeinfo, funcdesc->memid, &bstr, &bstrs[0], NULL, NULL);
+        ok(hr == S_OK, "[%u] GetDocumentation failed: %08x\n", i, hr);
+        ok(!lstrcmpW(bstr, func[i].name), "[%u] Unexpected function name %s (expected %s)\n",
+            i, wine_dbgstr_w(bstr), wine_dbgstr_w(func[i].name));
+        ok(!bstrs[0], "[%u] Unexpected doc string %s\n", i, wine_dbgstr_w(bstrs[0]));
+        SysFreeString(bstr);
         ok(funcdesc->lprgscode == NULL, "[%u] Unexpected lprgscode %p\n", i, funcdesc->lprgscode);
         ok(func[i].num_args ? (funcdesc->lprgelemdescParam != NULL) : (funcdesc->lprgelemdescParam == NULL),
             "[%u] Unexpected lprgelemdescParam %p\n", i, funcdesc->lprgelemdescParam);
@@ -1159,6 +1275,14 @@ static void test_script_typeinfo(void)
     ok(attr->cFuncs == ARRAY_SIZE(func) + 1, "Unexpected cFuncs %u\n", attr->cFuncs);
     ok(attr->cVars == ARRAY_SIZE(var) + 1, "Unexpected cVars %u\n", attr->cVars);
     ITypeInfo_ReleaseTypeAttr(typeinfo2, attr);
+    hr = ITypeInfo_GetVarDesc(typeinfo2, ARRAY_SIZE(var), &vardesc);
+    ok(hr == S_OK, "GetVarDesc failed: %08x\n", hr);
+    hr = ITypeInfo_GetDocumentation(typeinfo2, vardesc->memid, &bstr, &bstrs[0], NULL, NULL);
+    ok(hr == S_OK, "GetDocumentation failed: %08x\n", hr);
+    ok(!lstrcmpW(bstr, L"new_var"), "Unexpected variable name %s\n", wine_dbgstr_w(bstr));
+    ok(!bstrs[0], "Unexpected doc string %s\n", wine_dbgstr_w(bstrs[0]));
+    ITypeInfo_ReleaseVarDesc(typeinfo2, vardesc);
+    SysFreeString(bstr);
     hr = ITypeInfo_GetFuncDesc(typeinfo, 0, &funcdesc);
     ok(hr == S_OK, "GetFuncDesc failed: %08x\n", hr);
     ok(funcdesc->cParams == 0, "Unexpected cParams %d\n", funcdesc->cParams);
