@@ -1988,7 +1988,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
         DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
 {
     HRESULT hres;
-    DWORD readed;
+    DWORD read;
     BYTE buf[512];
     CHAR clipfmt[512];
 
@@ -2075,8 +2075,8 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
 
         if(callback_read) {
             do {
-                hres = IStream_Read(stream, buf, 512, &readed);
-                if(test_protocol == HTTP_TEST && emulate_protocol && readed)
+                hres = IStream_Read(stream, buf, 512, &read);
+                if(test_protocol == HTTP_TEST && emulate_protocol && read)
                     ok(buf[0] == (use_cache_file && !(bindf&BINDF_ASYNCHRONOUS) ? 'X' : '?'), "buf[0] = '%c'\n", buf[0]);
             }while(hres == S_OK);
             ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08x\n", hres);
@@ -3245,7 +3245,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
 
     if(unk) {
         BYTE buf[512];
-        DWORD readed;
+        DWORD read;
         IStream *stream;
 
         hres = IUnknown_QueryInterface(unk, &IID_IStream, (void**)&stream);
@@ -3253,14 +3253,14 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         IUnknown_Release(unk);
 
         do {
-            readed = 0xdeadbeef;
-            hres = IStream_Read(stream, buf, sizeof(buf), &readed);
-            ok(readed != 0xdeadbeef, "readed = 0xdeadbeef\n");
-            if(emulate_protocol && test_protocol == HTTP_TEST && readed)
+            read = 0xdeadbeef;
+            hres = IStream_Read(stream, buf, sizeof(buf), &read);
+            ok(read != 0xdeadbeef, "read = 0xdeadbeef\n");
+            if(emulate_protocol && test_protocol == HTTP_TEST && read)
                 ok(buf[0] == (use_cache_file && !(bindf&BINDF_ASYNCHRONOUS) ? 'X' : '?'), "buf[0] = '%c'\n", buf[0]);
         }while(hres == S_OK);
         ok(hres == S_FALSE, "IStream_Read returned %08x\n", hres);
-        ok(!readed, "readed = %d\n", readed);
+        ok(!read, "read = %d\n", read);
 
         IStream_Release(stream);
     }

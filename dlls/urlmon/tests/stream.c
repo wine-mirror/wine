@@ -204,7 +204,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
                                                 DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
 {
     HRESULT hres;
-    DWORD readed;
+    DWORD read;
     BYTE buf[512];
 
     CHECK_EXPECT2(OnDataAvailable);
@@ -230,7 +230,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     }
 
     if(U(*pstgmed).pstm) {
-        do hres = IStream_Read(U(*pstgmed).pstm, buf, 512, &readed);
+        do hres = IStream_Read(U(*pstgmed).pstm, buf, 512, &read);
         while(hres == S_OK);
         ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08x\n", hres);
     }
