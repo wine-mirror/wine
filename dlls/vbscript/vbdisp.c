@@ -1003,9 +1003,12 @@ static HRESULT WINAPI ScriptTypeInfo_CreateInstance(ITypeInfo *iface, IUnknown *
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
 
-    FIXME("(%p)->(%p %s %p)\n", This, pUnkOuter, debugstr_guid(riid), ppvObj);
+    TRACE("(%p)->(%p %s %p)\n", This, pUnkOuter, debugstr_guid(riid), ppvObj);
 
-    return E_NOTIMPL;
+    if (!ppvObj) return E_INVALIDARG;
+
+    *ppvObj = NULL;
+    return TYPE_E_BADMODULEKIND;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetMops(ITypeInfo *iface, MEMBERID memid, BSTR *pBstrMops)
