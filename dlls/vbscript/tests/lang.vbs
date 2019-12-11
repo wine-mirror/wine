@@ -1573,7 +1573,7 @@ sub test_dotIdentifiers
 end sub
 call test_dotIdentifiers
 
-' Test End statements not required to be preceeded by a newline or separator
+' Test End statements not required to be preceded by a newline or separator
 Sub EndTestSub
     x = 1 End Sub
 
