@@ -1717,10 +1717,9 @@ BOOL WINAPI WriteCabinetState(CABINETSTATE *);
 
 /* PathResolve flags */
 #define PRF_VERIFYEXISTS         0x01
-#define PRF_EXECUTABLE           0x02
 #define PRF_TRYPROGRAMEXTENSIONS 0x03
 #define PRF_FIRSTDIRDEF          0x04
-#define PRF_DONTFINDLINK         0x08
+#define PRF_DONTFINDLNK          0x08
 #define PRF_REQUIREABSOLUTE      0x10
 
 VOID WINAPI PathGetShortPath(LPWSTR pszPath);
