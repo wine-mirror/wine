@@ -546,6 +546,26 @@ typedef struct {
     ScriptDisp *disp;
 } ScriptTypeInfo;
 
+static function_t *get_func_from_memid(const ScriptTypeInfo *typeinfo, MEMBERID memid)
+{
+    UINT a = 0, b = typeinfo->num_funcs;
+
+    if (!(memid & DISPID_FUNCTION_MASK)) return NULL;
+
+    while (a < b)
+    {
+        UINT i = (a + b - 1) / 2;
+
+        if (memid == typeinfo->funcs[i].memid)
+            return typeinfo->funcs[i].func;
+        else if (memid < typeinfo->funcs[i].memid)
+            b = i;
+        else
+            a = i + 1;
+    }
+    return NULL;
+}
+
 static inline ScriptTypeInfo *ScriptTypeInfo_from_ITypeInfo(ITypeInfo *iface)
 {
     return CONTAINING_RECORD(iface, ScriptTypeInfo, ITypeInfo_iface);
@@ -707,10 +727,53 @@ static HRESULT WINAPI ScriptTypeInfo_GetNames(ITypeInfo *iface, MEMBERID memid, 
         UINT cMaxNames, UINT *pcNames)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    ITypeInfo *disp_typeinfo;
+    function_t *func;
+    HRESULT hr;
+    UINT i = 0;
 
-    FIXME("(%p)->(%d %p %u %p)\n", This, memid, rgBstrNames, cMaxNames, pcNames);
+    TRACE("(%p)->(%d %p %u %p)\n", This, memid, rgBstrNames, cMaxNames, pcNames);
 
-    return E_NOTIMPL;
+    if (!rgBstrNames || !pcNames) return E_INVALIDARG;
+    if (memid <= 0) return TYPE_E_ELEMENTNOTFOUND;
+
+    func = get_func_from_memid(This, memid);
+    if (!func && memid > This->num_vars)
+    {
+        hr = get_dispatch_typeinfo(&disp_typeinfo);
+        if (FAILED(hr)) return hr;
+
+        return ITypeInfo_GetNames(disp_typeinfo, memid, rgBstrNames, cMaxNames, pcNames);
+    }
+
+    *pcNames = 0;
+    if (!cMaxNames) return S_OK;
+
+    if (func)
+    {
+        UINT num = min(cMaxNames, func->arg_cnt + 1);
+
+        rgBstrNames[0] = SysAllocString(func->name);
+        if (!rgBstrNames[0]) return E_OUTOFMEMORY;
+
+        for (i = 1; i < num; i++)
+        {
+            if (!(rgBstrNames[i] = SysAllocString(func->args[i - 1].name)))
+            {
+                do SysFreeString(rgBstrNames[--i]); while (i);
+                return E_OUTOFMEMORY;
+            }
+        }
+    }
+    else
+    {
+        rgBstrNames[0] = SysAllocString(This->disp->global_vars[memid - 1]->name);
+        if (!rgBstrNames[0]) return E_OUTOFMEMORY;
+        i++;
+    }
+
+    *pcNames = i;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetRefTypeOfImplType(ITypeInfo *iface, UINT index, HREFTYPE *pRefType)
