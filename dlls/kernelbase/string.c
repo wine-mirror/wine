@@ -24,6 +24,7 @@
 #include "shlwapi.h"
 #include "winternl.h"
 
+#include "kernelbase.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 

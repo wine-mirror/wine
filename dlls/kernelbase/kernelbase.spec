@@ -775,7 +775,7 @@
 @ stdcall HeapCompact(long long)
 @ stdcall HeapCreate(long long long)
 @ stdcall HeapDestroy(long)
-@ stdcall HeapFree(long long ptr)
+@ stdcall HeapFree(long long ptr) ntdll.RtlFreeHeap
 @ stdcall HeapLock(long)
 @ stdcall HeapQueryInformation(long long ptr long ptr)
 @ stdcall HeapReAlloc(long long ptr long) ntdll.RtlReAllocateHeap

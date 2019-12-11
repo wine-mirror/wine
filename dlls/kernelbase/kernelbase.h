@@ -54,4 +54,9 @@ static inline BOOL set_ntstatus( NTSTATUS status )
     return !status;
 }
 
+/* make the kernel32 names available */
+#define HeapAlloc(heap, flags, size) RtlAllocateHeap(heap, flags, size)
+#define HeapReAlloc(heap, flags, ptr, size) RtlReAllocateHeap(heap, flags, ptr, size)
+#define HeapFree(heap, flags, ptr) RtlFreeHeap(heap, flags, ptr)
+
 #endif /* __WINE_KERNELBASE_H */
