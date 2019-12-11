@@ -1410,40 +1410,14 @@ static HRESULT WINAPI AviMuxIn_Receive(struct strmbase_sink *base, IMediaSample 
     return hr;
 }
 
-static const struct strmbase_sink_ops sink_ops =
+static HRESULT avi_mux_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *pmt)
 {
-    .base.pin_query_interface = sink_query_interface,
-    .base.pin_query_accept = sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
-    .pfnReceive = AviMuxIn_Receive,
-};
-
-static inline AviMux* impl_from_in_IPin(IPin *iface)
-{
-    struct strmbase_pin *pin = CONTAINING_RECORD(iface, struct strmbase_pin, IPin_iface);
-    return impl_from_strmbase_filter(pin->filter);
-}
-
-static inline AviMuxIn* AviMuxIn_from_IPin(IPin *iface)
-{
-    return CONTAINING_RECORD(iface, AviMuxIn, pin.pin.IPin_iface);
-}
-
-static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
-        IPin *pConnector, const AM_MEDIA_TYPE *pmt)
-{
-    AviMux *This = impl_from_in_IPin(iface);
-    AviMuxIn *avimuxin = AviMuxIn_from_IPin(iface);
+    AviMuxIn *avimuxin = impl_sink_from_strmbase_pin(&iface->pin);
+    AviMux *This = impl_from_strmbase_filter(iface->pin.filter);
     HRESULT hr;
-
-    TRACE("pin %p, pConnector %p, pmt %p.\n", avimuxin, pConnector, pmt);
 
     if(!pmt)
         return E_POINTER;
-
-    hr = BaseInputPinImpl_ReceiveConnection(iface, pConnector, pmt);
-    if(FAILED(hr))
-        return hr;
 
     if(IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) &&
             IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
@@ -1468,10 +1442,8 @@ static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
         hr = IMemAllocator_SetProperties(avimuxin->samples_allocator, &req, &act);
         if(SUCCEEDED(hr))
             hr = IMemAllocator_Commit(avimuxin->samples_allocator);
-        if(FAILED(hr)) {
-            BaseInputPinImpl_Disconnect(iface);
+        if (FAILED(hr))
             return hr;
-        }
 
         size = pmt->cbFormat - FIELD_OFFSET(VIDEOINFOHEADER, bmiHeader);
         avimuxin->strf = CoTaskMemAlloc(sizeof(RIFFCHUNK) + ALIGN(FIELD_OFFSET(BITMAPINFO, bmiColors[vih->bmiHeader.biClrUsed])));
@@ -1489,23 +1461,15 @@ static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
     return create_input_pin(This);
 }
 
-static HRESULT WINAPI AviMuxIn_Disconnect(IPin *iface)
+static void avi_mux_sink_disconnect(struct strmbase_sink *iface)
 {
-    AviMuxIn *avimuxin = AviMuxIn_from_IPin(iface);
+    AviMuxIn *avimuxin = impl_sink_from_strmbase_pin(&iface->pin);
     IMediaSample **prev, *cur;
-    HRESULT hr;
-
-    TRACE("pin %p.\n", avimuxin);
-
-    hr = BaseInputPinImpl_Disconnect(iface);
-    if(FAILED(hr))
-        return hr;
 
     IMemAllocator_Decommit(avimuxin->samples_allocator);
     while(avimuxin->samples_head) {
         cur = avimuxin->samples_head;
-        hr = IMediaSample_GetPointer(cur, (BYTE**)&prev);
-        if(FAILED(hr))
+        if (FAILED(IMediaSample_GetPointer(cur, (BYTE **)&prev)))
             break;
         prev--;
 
@@ -1518,7 +1482,22 @@ static HRESULT WINAPI AviMuxIn_Disconnect(IPin *iface)
     }
     CoTaskMemFree(avimuxin->strf);
     avimuxin->strf = NULL;
-    return hr;
+}
+
+static const struct strmbase_sink_ops sink_ops =
+{
+    .base.pin_query_interface = sink_query_interface,
+    .base.pin_query_accept = sink_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .pfnReceive = AviMuxIn_Receive,
+    .sink_connect = avi_mux_sink_connect,
+    .sink_disconnect = avi_mux_sink_disconnect,
+};
+
+static inline AviMux* impl_from_in_IPin(IPin *iface)
+{
+    struct strmbase_pin *pin = CONTAINING_RECORD(iface, struct strmbase_pin, IPin_iface);
+    return impl_from_strmbase_filter(pin->filter);
 }
 
 static const IPinVtbl AviMuxIn_PinVtbl = {
@@ -1526,8 +1505,8 @@ static const IPinVtbl AviMuxIn_PinVtbl = {
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
-    AviMuxIn_ReceiveConnection,
-    AviMuxIn_Disconnect,
+    BaseInputPinImpl_ReceiveConnection,
+    BaseInputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
