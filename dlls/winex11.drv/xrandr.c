@@ -622,7 +622,7 @@ fallback:
     if (output_info)
         pXRRFreeOutputInfo( output_info );
 
-    WARN("Primary is set to a disconneted XRandR output.\n");
+    WARN("Primary is set to a disconnected XRandR output.\n");
     for (i = 0; i < resources->ncrtc; ++i)
     {
         crtc_info = pXRRGetCrtcInfo( gdi_display, resources, resources->crtcs[i] );
