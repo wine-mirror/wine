@@ -52,7 +52,7 @@ struct gstdemux
     struct strmbase_filter filter;
     IAMStreamSelect IAMStreamSelect_iface;
 
-    struct strmbase_pin sink;
+    struct strmbase_sink sink;
     IAsyncReader *reader;
     IMemAllocator *alloc;
     struct gstdemux_source **ppPins;
@@ -1184,7 +1184,7 @@ static struct strmbase_pin *gstdemux_get_pin(struct strmbase_filter *base, unsig
     struct gstdemux *filter = impl_from_strmbase_filter(base);
 
     if (!index)
-        return &filter->sink;
+        return &filter->sink.pin;
     else if (index <= filter->cStreams)
         return &filter->ppPins[index - 1]->pin.pin;
     return NULL;
@@ -1199,28 +1199,27 @@ static void gstdemux_destroy(struct strmbase_filter *iface)
     CloseHandle(filter->duration_event);
 
     /* Don't need to clean up output pins, disconnecting input pin will do that */
-    if (filter->sink.peer)
+    if (filter->sink.pin.peer)
     {
-        hr = IPin_Disconnect(filter->sink.peer);
+        hr = IPin_Disconnect(filter->sink.pin.peer);
         assert(hr == S_OK);
-        hr = IPin_Disconnect(&filter->sink.IPin_iface);
+        hr = IPin_Disconnect(&filter->sink.pin.IPin_iface);
         assert(hr == S_OK);
     }
 
-    FreeMediaType(&filter->sink.mt);
     if (filter->alloc)
         IMemAllocator_Release(filter->alloc);
     filter->alloc = NULL;
     if (filter->reader)
         IAsyncReader_Release(filter->reader);
     filter->reader = NULL;
-    filter->sink.IPin_iface.lpVtbl = NULL;
 
     if (filter->bus)
     {
         gst_bus_set_sync_handler(filter->bus, NULL, NULL, NULL);
         gst_object_unref(filter->bus);
     }
+    strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
     heap_free(filter);
 }
@@ -1351,10 +1350,10 @@ static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE
     return S_FALSE;
 }
 
-static const BasePinFuncTable sink_ops =
+static const struct strmbase_sink_ops sink_ops =
 {
-    .pin_query_accept = sink_query_accept,
-    .pin_get_media_type = strmbase_pin_get_media_type,
+    .base.pin_query_accept = sink_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
 };
 
 static BOOL gstdecoder_init_gst(struct gstdemux *filter)
@@ -1437,13 +1436,10 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     }
 
     strmbase_filter_init(&object->filter, outer, &CLSID_Gstreamer_Splitter, &filter_ops);
+    strmbase_sink_init(&object->sink, &GST_InputPin_Vtbl, &object->filter,
+            wcsInputPinName, &sink_ops, NULL);
 
     object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    object->sink.dir = PINDIR_INPUT;
-    object->sink.filter = &object->filter;
-    lstrcpynW(object->sink.name, wcsInputPinName, ARRAY_SIZE(object->sink.name));
-    object->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
-    object->sink.pFuncsTable = &sink_ops;
     object->init_gst = gstdecoder_init_gst;
     *phr = S_OK;
 
@@ -1907,7 +1903,7 @@ static HRESULT GST_RemoveOutputPins(struct gstdemux *This)
 
 static inline struct gstdemux *impl_from_sink_IPin(IPin *iface)
 {
-    return CONTAINING_RECORD(iface, struct gstdemux, sink.IPin_iface);
+    return CONTAINING_RECORD(iface, struct gstdemux, sink.pin.IPin_iface);
 }
 
 static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
@@ -1922,7 +1918,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
     mark_wine_thread();
 
     EnterCriticalSection(&filter->filter.csFilter);
-    if (!filter->sink.peer)
+    if (!filter->sink.pin.peer)
     {
         ALLOCATOR_PROPERTIES props;
         IMemAllocator *pAlloc = NULL;
@@ -1963,8 +1959,8 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
         if (pAlloc)
             IMemAllocator_Release(pAlloc);
         if (SUCCEEDED(hr)) {
-            CopyMediaType(&filter->sink.mt, pmt);
-            filter->sink.peer = pReceivePin;
+            CopyMediaType(&filter->sink.pin.mt, pmt);
+            filter->sink.pin.peer = pReceivePin;
             IPin_AddRef(pReceivePin);
             hr = IMemAllocator_Commit(filter->alloc);
         } else {
@@ -1995,13 +1991,13 @@ static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
 
     hr = IBaseFilter_GetState(&filter->filter.IBaseFilter_iface, INFINITE, &state);
     EnterCriticalSection(&filter->filter.csFilter);
-    if (filter->sink.peer)
+    if (filter->sink.pin.peer)
     {
         if (SUCCEEDED(hr) && state == State_Stopped) {
             IMemAllocator_Decommit(filter->alloc);
-            IPin_Disconnect(filter->sink.peer);
-            IPin_Release(filter->sink.peer);
-            filter->sink.peer = NULL;
+            IPin_Disconnect(filter->sink.pin.peer);
+            IPin_Release(filter->sink.pin.peer);
+            filter->sink.pin.peer = NULL;
             hr = GST_RemoveOutputPins(filter);
         } else
             hr = VFW_E_NOT_STOPPED;
@@ -2220,10 +2216,10 @@ static HRESULT wave_parser_sink_query_accept(struct strmbase_pin *iface, const A
     return S_FALSE;
 }
 
-static const BasePinFuncTable wave_parser_sink_ops =
+static const struct strmbase_sink_ops wave_parser_sink_ops =
 {
-    .pin_query_accept = wave_parser_sink_query_accept,
-    .pin_get_media_type = strmbase_pin_get_media_type,
+    .base.pin_query_accept = wave_parser_sink_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
 };
 
 static BOOL wave_parser_init_gst(struct gstdemux *filter)
@@ -2305,12 +2301,8 @@ IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
     }
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);
-
-    object->sink.dir = PINDIR_INPUT;
-    object->sink.filter = &object->filter;
-    lstrcpynW(object->sink.name, sink_name, ARRAY_SIZE(object->sink.name));
-    object->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
-    object->sink.pFuncsTable = &wave_parser_sink_ops;
+    strmbase_sink_init(&object->sink, &GST_InputPin_Vtbl, &object->filter,
+            sink_name, &wave_parser_sink_ops, NULL);
     object->init_gst = wave_parser_init_gst;
     *phr = S_OK;
 
@@ -2326,10 +2318,10 @@ static HRESULT avi_splitter_sink_query_accept(struct strmbase_pin *iface, const 
     return S_FALSE;
 }
 
-static const BasePinFuncTable avi_splitter_sink_ops =
+static const struct strmbase_sink_ops avi_splitter_sink_ops =
 {
-    .pin_query_accept = avi_splitter_sink_query_accept,
-    .pin_get_media_type = strmbase_pin_get_media_type,
+    .base.pin_query_accept = avi_splitter_sink_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
 };
 
 static BOOL avi_splitter_init_gst(struct gstdemux *filter)
@@ -2411,13 +2403,9 @@ IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr)
     }
 
     strmbase_filter_init(&object->filter, outer, &CLSID_AviSplitter, &filter_ops);
-
+    strmbase_sink_init(&object->sink, &GST_InputPin_Vtbl, &object->filter,
+            sink_name, &avi_splitter_sink_ops, NULL);
     object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    object->sink.dir = PINDIR_INPUT;
-    object->sink.filter = &object->filter;
-    lstrcpynW(object->sink.name, sink_name, ARRAY_SIZE(object->sink.name));
-    object->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
-    object->sink.pFuncsTable = &avi_splitter_sink_ops;
     object->init_gst = avi_splitter_init_gst;
     *phr = S_OK;
 
@@ -2438,10 +2426,10 @@ static HRESULT mpeg_splitter_sink_query_accept(struct strmbase_pin *iface, const
     return S_FALSE;
 }
 
-static const BasePinFuncTable mpeg_splitter_sink_ops =
+static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 {
-    .pin_query_accept = mpeg_splitter_sink_query_accept,
-    .pin_get_media_type = strmbase_pin_get_media_type,
+    .base.pin_query_accept = mpeg_splitter_sink_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
 };
 
 static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
@@ -2549,14 +2537,11 @@ IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr)
     }
 
     strmbase_filter_init(&object->filter, outer, &CLSID_MPEG1Splitter, &mpeg_splitter_ops);
+    strmbase_sink_init(&object->sink, &GST_InputPin_Vtbl, &object->filter,
+            sink_name, &mpeg_splitter_sink_ops, NULL);
     object->IAMStreamSelect_iface.lpVtbl = &stream_select_vtbl;
 
     object->duration_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    object->sink.dir = PINDIR_INPUT;
-    object->sink.filter = &object->filter;
-    lstrcpynW(object->sink.name, sink_name, ARRAY_SIZE(object->sink.name));
-    object->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
-    object->sink.pFuncsTable = &mpeg_splitter_sink_ops;
     object->init_gst = mpeg_splitter_init_gst;
     *phr = S_OK;
 
