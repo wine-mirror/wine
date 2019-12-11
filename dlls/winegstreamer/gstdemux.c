@@ -1343,6 +1343,11 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_wait_state = gstdemux_wait_state,
 };
 
+static inline struct gstdemux *impl_from_strmbase_sink(struct strmbase_sink *iface)
+{
+    return CONTAINING_RECORD(iface, struct gstdemux, sink);
+}
+
 static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
@@ -1350,10 +1355,71 @@ static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE
     return S_FALSE;
 }
 
+static HRESULT gstdemux_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *pmt)
+{
+    struct gstdemux *filter = impl_from_strmbase_sink(iface);
+    IMemAllocator *allocator = NULL;
+    ALLOCATOR_PROPERTIES props;
+    HRESULT hr = S_OK;
+
+    mark_wine_thread();
+
+    props.cBuffers = 8;
+    props.cbBuffer = 16384;
+    props.cbAlign = 1;
+    props.cbPrefix = 0;
+
+    filter->reader = NULL;
+    filter->alloc = NULL;
+    if (FAILED(hr = IPin_QueryInterface(peer, &IID_IAsyncReader, (void **)&filter->reader)))
+        return hr;
+
+    if (FAILED(hr = GST_Connect(filter, peer, &props)))
+        goto err;
+
+    /* Some applications depend on IAsyncReader::RequestAllocator() passing a
+     * non-NULL preferred allocator. */
+    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC,
+            &IID_IMemAllocator, (void **)&allocator);
+    if (FAILED(hr))
+        goto err;
+    hr = IAsyncReader_RequestAllocator(filter->reader, allocator, &props, &filter->alloc);
+    IMemAllocator_Release(allocator);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get allocator, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = IMemAllocator_Commit(filter->alloc)))
+    {
+        WARN("Failed to commit allocator, hr %#x.\n", hr);
+        goto err;
+    }
+
+    return S_OK;
+err:
+    GST_RemoveOutputPins(filter);
+    IAsyncReader_Release(filter->reader);
+    return hr;
+}
+
+static void gstdemux_sink_disconnect(struct strmbase_sink *iface)
+{
+    struct gstdemux *filter = impl_from_strmbase_sink(iface);
+
+    mark_wine_thread();
+
+    IMemAllocator_Decommit(filter->alloc);
+    GST_RemoveOutputPins(filter);
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .sink_connect = gstdemux_sink_connect,
+    .sink_disconnect = gstdemux_sink_disconnect,
 };
 
 static BOOL gstdecoder_init_gst(struct gstdemux *filter)
@@ -1901,112 +1967,6 @@ static HRESULT GST_RemoveOutputPins(struct gstdemux *This)
     return S_OK;
 }
 
-static inline struct gstdemux *impl_from_sink_IPin(IPin *iface)
-{
-    return CONTAINING_RECORD(iface, struct gstdemux, sink.pin.IPin_iface);
-}
-
-static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
-{
-    struct gstdemux *filter = impl_from_sink_IPin(iface);
-    PIN_DIRECTION pindirReceive;
-    HRESULT hr = S_OK;
-
-    TRACE("filter %p, peer %p, mt %p.\n", filter, pReceivePin, pmt);
-    strmbase_dump_media_type(pmt);
-
-    mark_wine_thread();
-
-    EnterCriticalSection(&filter->filter.csFilter);
-    if (!filter->sink.pin.peer)
-    {
-        ALLOCATOR_PROPERTIES props;
-        IMemAllocator *pAlloc = NULL;
-
-        props.cBuffers = 8;
-        props.cbBuffer = 16384;
-        props.cbAlign = 1;
-        props.cbPrefix = 0;
-
-        if (IPin_QueryAccept(iface, pmt) != S_OK)
-            hr = VFW_E_TYPE_NOT_ACCEPTED;
-
-        if (SUCCEEDED(hr)) {
-            IPin_QueryDirection(pReceivePin, &pindirReceive);
-            if (pindirReceive != PINDIR_OUTPUT) {
-                ERR("Can't connect from non-output pin\n");
-                hr = VFW_E_INVALID_DIRECTION;
-            }
-        }
-
-        filter->reader = NULL;
-        filter->alloc = NULL;
-        if (SUCCEEDED(hr))
-            hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&filter->reader);
-        if (SUCCEEDED(hr))
-            hr = GST_Connect(filter, pReceivePin, &props);
-
-        /* A certain IAsyncReader::RequestAllocator expects to be passed
-           non-NULL preferred allocator */
-        if (SUCCEEDED(hr))
-            hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC,
-                                  &IID_IMemAllocator, (LPVOID *)&pAlloc);
-        if (SUCCEEDED(hr)) {
-            hr = IAsyncReader_RequestAllocator(filter->reader, pAlloc, &props, &filter->alloc);
-            if (FAILED(hr))
-                WARN("Can't get an allocator, got %08x\n", hr);
-        }
-        if (pAlloc)
-            IMemAllocator_Release(pAlloc);
-        if (SUCCEEDED(hr)) {
-            CopyMediaType(&filter->sink.pin.mt, pmt);
-            filter->sink.pin.peer = pReceivePin;
-            IPin_AddRef(pReceivePin);
-            hr = IMemAllocator_Commit(filter->alloc);
-        } else {
-            GST_RemoveOutputPins(filter);
-            if (filter->reader)
-                IAsyncReader_Release(filter->reader);
-            filter->reader = NULL;
-            if (filter->alloc)
-                IMemAllocator_Release(filter->alloc);
-            filter->alloc = NULL;
-        }
-        TRACE("Size: %i\n", props.cbBuffer);
-    } else
-        hr = VFW_E_ALREADY_CONNECTED;
-    LeaveCriticalSection(&filter->filter.csFilter);
-    return hr;
-}
-
-static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
-{
-    struct gstdemux *filter = impl_from_sink_IPin(iface);
-    HRESULT hr;
-    FILTER_STATE state;
-
-    TRACE("filter %p.\n", filter);
-
-    mark_wine_thread();
-
-    hr = IBaseFilter_GetState(&filter->filter.IBaseFilter_iface, INFINITE, &state);
-    EnterCriticalSection(&filter->filter.csFilter);
-    if (filter->sink.pin.peer)
-    {
-        if (SUCCEEDED(hr) && state == State_Stopped) {
-            IMemAllocator_Decommit(filter->alloc);
-            IPin_Disconnect(filter->sink.pin.peer);
-            IPin_Release(filter->sink.pin.peer);
-            filter->sink.pin.peer = NULL;
-            hr = GST_RemoveOutputPins(filter);
-        } else
-            hr = VFW_E_NOT_STOPPED;
-    } else
-        hr = S_FALSE;
-    LeaveCriticalSection(&filter->filter.csFilter);
-    return hr;
-}
-
 static HRESULT WINAPI GSTInPin_EndOfStream(IPin *iface)
 {
     FIXME("iface %p, stub!\n", iface);
@@ -2040,8 +2000,8 @@ static const IPinVtbl GST_InputPin_Vtbl = {
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
-    GSTInPin_ReceiveConnection,
-    GSTInPin_Disconnect,
+    BaseInputPinImpl_ReceiveConnection,
+    BaseInputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
@@ -2220,6 +2180,8 @@ static const struct strmbase_sink_ops wave_parser_sink_ops =
 {
     .base.pin_query_accept = wave_parser_sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .sink_connect = gstdemux_sink_connect,
+    .sink_disconnect = gstdemux_sink_disconnect,
 };
 
 static BOOL wave_parser_init_gst(struct gstdemux *filter)
@@ -2322,6 +2284,8 @@ static const struct strmbase_sink_ops avi_splitter_sink_ops =
 {
     .base.pin_query_accept = avi_splitter_sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .sink_connect = gstdemux_sink_connect,
+    .sink_disconnect = gstdemux_sink_disconnect,
 };
 
 static BOOL avi_splitter_init_gst(struct gstdemux *filter)
@@ -2430,6 +2394,8 @@ static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 {
     .base.pin_query_accept = mpeg_splitter_sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .sink_connect = gstdemux_sink_connect,
+    .sink_disconnect = gstdemux_sink_disconnect,
 };
 
 static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
