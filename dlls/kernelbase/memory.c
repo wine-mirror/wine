@@ -688,7 +688,20 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL hmem )
 {
     void *ret = NULL;
 
-    if (is_pointer( hmem )) return IsBadReadPtr( hmem, 1 ) ? NULL : hmem;
+    if (is_pointer( hmem ))
+    {
+        __TRY
+        {
+            volatile char *p = hmem;
+            *p |= 0;
+        }
+        __EXCEPT_PAGE_FAULT
+        {
+            return NULL;
+        }
+        __ENDTRY
+        return hmem;
+    }
 
     RtlLockHeap( GetProcessHeap() );
     __TRY

@@ -30,6 +30,7 @@
 #include "winternl.h"
 
 #include "kernelbase.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -5049,10 +5050,15 @@ HRESULT WINAPI HashData(const unsigned char *src, DWORD src_len, unsigned char *
 
 HRESULT WINAPI UrlHashA(const char *url, unsigned char *dest, DWORD dest_len)
 {
-    if (IsBadStringPtrA(url, -1) || IsBadWritePtr(dest, dest_len))
+    __TRY
+    {
+        HashData((const BYTE *)url, (int)strlen(url), dest, dest_len);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
         return E_INVALIDARG;
-
-    HashData((const BYTE *)url, (int)strlen(url), dest, dest_len);
+    }
+    __ENDTRY
     return S_OK;
 }
 
@@ -5062,11 +5068,16 @@ HRESULT WINAPI UrlHashW(const WCHAR *url, unsigned char *dest, DWORD dest_len)
 
     TRACE("%s, %p, %d\n", debugstr_w(url), dest, dest_len);
 
-    if (IsBadStringPtrW(url, -1) || IsBadWritePtr(dest, dest_len))
+    __TRY
+    {
+        WideCharToMultiByte(CP_ACP, 0, url, -1, urlA, MAX_PATH, NULL, NULL);
+        HashData((const BYTE *)urlA, (int)strlen(urlA), dest, dest_len);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
         return E_INVALIDARG;
-
-    WideCharToMultiByte(CP_ACP, 0, url, -1, urlA, MAX_PATH, NULL, NULL);
-    HashData((const BYTE *)urlA, (int)strlen(urlA), dest, dest_len);
+    }
+    __ENDTRY
     return S_OK;
 }
 

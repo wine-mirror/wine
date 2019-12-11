@@ -41,6 +41,7 @@
 
 #include "kernelbase.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 #include "wine/heap.h"
 #include "wine/list.h"
 
@@ -3432,8 +3433,16 @@ LONG WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, const WCHAR *value, DWORD type, vo
 
     TRACE("%p, %s, %d, %p, %d, %#x\n", hUSKey, debugstr_w(value), type, data, data_len, flags);
 
-    if (!hUSKey || IsBadWritePtr(hUSKey, sizeof(struct USKEY)) || !(flags & (SHREGSET_FORCE_HKCU|SHREGSET_FORCE_HKLM)))
+    __TRY
+    {
+        dummy = hKey->HKCUkey || hKey->HKLMkey;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
         return ERROR_INVALID_PARAMETER;
+    }
+    __ENDTRY
+    if (!(flags & (SHREGSET_FORCE_HKCU|SHREGSET_FORCE_HKLM))) return ERROR_INVALID_PARAMETER;
 
     if (flags & (SHREGSET_FORCE_HKCU | SHREGSET_HKCU))
     {

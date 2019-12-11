@@ -36,6 +36,7 @@
 
 #include "kernelbase.h"
 #include "wine/asm.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
@@ -336,14 +337,16 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventExW( SECURITY_ATTRIBUTES *sa, LPCWSTR
     /* one buggy program needs this
      * ("Van Dale Groot woordenboek der Nederlandse taal")
      */
-    if (sa && IsBadReadPtr(sa,sizeof(SECURITY_ATTRIBUTES)))
+    __TRY
     {
-        ERR("Bad security attributes pointer %p\n",sa);
+        get_create_object_attributes( &attr, &nameW, sa, name );
+    }
+    __EXCEPT_PAGE_FAULT
+    {
         SetLastError( ERROR_INVALID_PARAMETER);
         return 0;
     }
-
-    get_create_object_attributes( &attr, &nameW, sa, name );
+    __ENDTRY
 
     status = NtCreateEvent( &ret, access, &attr,
                             (flags & CREATE_EVENT_MANUAL_RESET) ? NotificationEvent : SynchronizationEvent,
