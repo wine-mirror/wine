@@ -103,6 +103,8 @@ OP_LIST
     OP_LAST
 } jsop_t;
 
+typedef struct _bytecode_t bytecode_t;
+
 typedef union {
     BSTR bstr;
     LONG lng;
@@ -163,11 +165,13 @@ typedef struct _function_code_t {
 
     unsigned locals_cnt;
     local_ref_t *locals;
+
+    bytecode_t *bytecode;
 } function_code_t;
 
 local_ref_t *lookup_local(const function_code_t*,const WCHAR*) DECLSPEC_HIDDEN;
 
-typedef struct _bytecode_t {
+struct _bytecode_t {
     LONG ref;
     BOOL is_persistent;
 
@@ -187,7 +191,7 @@ typedef struct _bytecode_t {
     unsigned str_cnt;
 
     struct list entry;
-} bytecode_t;
+};
 
 HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
 void release_bytecode(bytecode_t*) DECLSPEC_HIDDEN;

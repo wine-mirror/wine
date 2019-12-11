@@ -2279,6 +2279,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 
     TRACE("\n");
 
+    func->bytecode = ctx->code;
     ctx->func_head = ctx->func_tail = NULL;
     ctx->from_eval = from_eval;
     ctx->func = func;
