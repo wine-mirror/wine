@@ -388,8 +388,12 @@ static HRESULT WINAPI fields_Invoke( Fields *iface, DISPID member, REFIID riid, 
 
 static HRESULT WINAPI fields_get_Count( Fields *iface, LONG *count )
 {
-    FIXME( "%p, %p\n", iface, count );
-    return E_NOTIMPL;
+    struct fields *fields = impl_from_Fields( iface );
+
+    TRACE( "%p, %p\n", fields, count );
+
+    *count = fields->count;
+    return S_OK;
 }
 
 static HRESULT WINAPI fields__NewEnum( Fields *iface, IUnknown **obj )

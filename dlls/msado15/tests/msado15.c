@@ -77,8 +77,8 @@ static void test_Recordset(void)
 
     count = -1;
     hr = Fields_get_Count( fields2, &count );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( !count, "got %d\n", count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %d\n", count );
 
     refs = _Recordset_Release( recordset );
     ok( !refs, "got %d\n", refs );
@@ -86,6 +86,49 @@ static void test_Recordset(void)
     /* fields object still has a reference */
     refs = Fields_Release( fields2 );
     ok( refs == 1, "got %d\n", refs );
+}
+
+static void test_Fields(void)
+{
+    _Recordset *recordset;
+    Fields *fields;
+    VARIANT val;
+    BSTR name;
+    LONG count;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Recordset_get_Fields( recordset, &fields );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = -1;
+    hr = Fields_get_Count( fields, &count );
+    ok( !count, "got %d\n", count );
+
+    name = SysAllocString( L"field" );
+    V_VT( &val ) = VT_ERROR;
+    V_ERROR( &val ) = DISP_E_PARAMNOTFOUND;
+    hr = Fields_Append( fields, name, adInteger, 4, adFldUnspecified, val );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( name );
+
+    count = -1;
+    hr = Fields_get_Count( fields, &count );
+    ok( count == 1, "got %d\n", count );
+
+    name = SysAllocString( L"field2" );
+    hr = Fields__Append( fields, name, adInteger, 4, adFldUnspecified );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( name );
+
+    count = -1;
+    hr = Fields_get_Count( fields, &count );
+    ok( count == 2, "got %d\n", count );
+
+    Fields_Release( fields );
+    _Recordset_Release( recordset );
 }
 
 static HRESULT str_to_byte_array( const char *data, VARIANT *ret )
@@ -406,6 +449,7 @@ START_TEST(msado15)
 {
     CoInitialize( NULL );
     test_Connection();
+    test_Fields();
     test_Recordset();
     test_Stream();
     CoUninitialize();
