@@ -202,7 +202,7 @@ static BOOL running_on_visible_desktop (void)
         HWINSTA wstation;
         USEROBJECTFLAGS uoflags;
 
-        wstation = (HWINSTA)pGetProcessWindowStation();
+        wstation = pGetProcessWindowStation();
         assert(pGetUserObjectInformationA(wstation, UOI_FLAGS, &uoflags, sizeof(uoflags), &len));
         return (uoflags.dwFlags & WSF_VISIBLE) != 0;
     }
