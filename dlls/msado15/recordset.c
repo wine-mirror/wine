@@ -54,6 +54,9 @@ struct field
     Field             Field_iface;
     LONG              refs;
     WCHAR            *name;
+    DataTypeEnum      type;
+    LONG              defined_size;
+    LONG              attrs;
     LONG              index;
     struct recordset *recordset;
 };
@@ -240,20 +243,32 @@ static HRESULT WINAPI field_put_NumericScale( Field *iface, unsigned char scale 
 
 static HRESULT WINAPI field_put_Type( Field *iface, DataTypeEnum type )
 {
-    FIXME( "%p, %u\n", iface, type );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+
+    TRACE( "%p, %u\n", field, type );
+
+    field->type = type;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_put_DefinedSize( Field *iface, LONG size )
 {
-    FIXME( "%p, %d\n", iface, size );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+
+    TRACE( "%p, %d\n", field, size );
+
+    field->defined_size = size;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_put_Attributes( Field *iface, LONG attrs )
 {
-    FIXME( "%p, %d\n", iface, attrs );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+
+    TRACE( "%p, %d\n", field, attrs );
+
+    field->attrs = attrs;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_get_Status( Field *iface, LONG *status )
