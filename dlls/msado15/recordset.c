@@ -41,10 +41,278 @@ struct recordset
 
 struct fields
 {
-    Fields              Fields_iface;
-    LONG                refs;
-    struct recordset   *recordset;
+    Fields             Fields_iface;
+    LONG               refs;
+    Field            **field;
+    ULONG              count;
+    ULONG              allocated;
+    struct recordset  *recordset;
 };
+
+struct field
+{
+    Field             Field_iface;
+    LONG              refs;
+    WCHAR            *name;
+    LONG              index;
+    struct recordset *recordset;
+};
+
+static inline struct field *impl_from_Field( Field *iface )
+{
+    return CONTAINING_RECORD( iface, struct field, Field_iface );
+}
+
+static ULONG WINAPI field_AddRef( Field *iface )
+{
+    struct field *field = impl_from_Field( iface );
+    LONG refs = InterlockedIncrement( &field->refs );
+    TRACE( "%p new refcount %d\n", field, refs );
+    return refs;
+}
+
+static ULONG WINAPI field_Release( Field *iface )
+{
+    struct field *field = impl_from_Field( iface );
+    LONG refs = InterlockedDecrement( &field->refs );
+    TRACE( "%p new refcount %d\n", field, refs );
+    if (!refs)
+    {
+        TRACE( "destroying %p\n", field );
+        heap_free( field->name );
+        heap_free( field );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI field_QueryInterface( Field *iface, REFIID riid, void **obj )
+{
+    TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
+
+    if (IsEqualGUID( riid, &IID_Field ) || IsEqualGUID( riid, &IID_IDispatch ) ||
+        IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+    field_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI field_GetTypeInfoCount( Field *iface, UINT *count )
+{
+    FIXME( "%p, %p\n", iface, count );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_GetTypeInfo( Field *iface, UINT index, LCID lcid, ITypeInfo **info )
+{
+    FIXME( "%p, %u, %u, %p\n", iface, index, lcid, info );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_GetIDsOfNames( Field *iface, REFIID riid, LPOLESTR *names, UINT count,
+                                           LCID lcid, DISPID *dispid )
+{
+    FIXME( "%p, %s, %p, %u, %u, %p\n", iface, debugstr_guid(riid), names, count, lcid, dispid );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_Invoke( Field *iface, DISPID member, REFIID riid, LCID lcid, WORD flags,
+                                    DISPPARAMS *params, VARIANT *result, EXCEPINFO *excep_info, UINT *arg_err )
+{
+    FIXME( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", iface, member, debugstr_guid(riid), lcid, flags, params,
+           result, excep_info, arg_err );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_Properties( Field *iface, Properties **obj )
+{
+    FIXME( "%p, %p\n", iface, obj );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_ActualSize( Field *iface, LONG *size )
+{
+    FIXME( "%p, %p\n", iface, size );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_Attributes( Field *iface, LONG *attrs )
+{
+    TRACE( "%p, %p\n", iface, attrs );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_DefinedSize( Field *iface, LONG *size )
+{
+    FIXME( "%p, %p\n", iface, size );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_Name( Field *iface, BSTR *str )
+{
+    FIXME( "%p, %p\n", iface, str );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_Type( Field *iface, DataTypeEnum *type )
+{
+    FIXME( "%p, %p\n", iface, type );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_Value( Field *iface, VARIANT *val )
+{
+    FIXME( "%p, %p\n", iface, val );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_put_Value( Field *iface, VARIANT val )
+{
+    FIXME( "%p, %s\n", iface, debugstr_variant(&val) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_Precision( Field *iface, unsigned char *precision )
+{
+    FIXME( "%p, %p\n", iface, precision );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_NumericScale( Field *iface, unsigned char *scale )
+{
+    FIXME( "%p, %p\n", iface, scale );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_AppendChunk( Field *iface, VARIANT data )
+{
+    FIXME( "%p, %s\n", iface, debugstr_variant(&data) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_GetChunk( Field *iface, LONG length, VARIANT *var )
+{
+    FIXME( "%p, %d, %p\n", iface, length, var );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_OriginalValue( Field *iface, VARIANT *val )
+{
+    FIXME( "%p, %p\n", iface, val );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_UnderlyingValue( Field *iface, VARIANT *val )
+{
+    FIXME( "%p, %p\n", iface, val );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_DataFormat( Field *iface, IUnknown **format )
+{
+    FIXME( "%p, %p\n", iface, format );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_putref_DataFormat( Field *iface, IUnknown *format )
+{
+    FIXME( "%p, %p\n", iface, format );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_put_Precision( Field *iface, unsigned char precision )
+{
+    FIXME( "%p, %c\n", iface, precision );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_put_NumericScale( Field *iface, unsigned char scale )
+{
+    FIXME( "%p, %c\n", iface, scale );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_put_Type( Field *iface, DataTypeEnum type )
+{
+    FIXME( "%p, %u\n", iface, type );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_put_DefinedSize( Field *iface, LONG size )
+{
+    FIXME( "%p, %d\n", iface, size );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_put_Attributes( Field *iface, LONG attrs )
+{
+    FIXME( "%p, %d\n", iface, attrs );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_get_Status( Field *iface, LONG *status )
+{
+    FIXME( "%p, %p\n", iface, status );
+    return E_NOTIMPL;
+}
+
+static const struct FieldVtbl field_vtbl =
+{
+    field_QueryInterface,
+    field_AddRef,
+    field_Release,
+    field_GetTypeInfoCount,
+    field_GetTypeInfo,
+    field_GetIDsOfNames,
+    field_Invoke,
+    field_get_Properties,
+    field_get_ActualSize,
+    field_get_Attributes,
+    field_get_DefinedSize,
+    field_get_Name,
+    field_get_Type,
+    field_get_Value,
+    field_put_Value,
+    field_get_Precision,
+    field_get_NumericScale,
+    field_AppendChunk,
+    field_GetChunk,
+    field_get_OriginalValue,
+    field_get_UnderlyingValue,
+    field_get_DataFormat,
+    field_putref_DataFormat,
+    field_put_Precision,
+    field_put_NumericScale,
+    field_put_Type,
+    field_put_DefinedSize,
+    field_put_Attributes,
+    field_get_Status
+};
+
+static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *recordset, Field **obj )
+{
+    struct field *field;
+
+    if (!(field = heap_alloc_zero( sizeof(*field) ))) return E_OUTOFMEMORY;
+    field->Field_iface.lpVtbl = &field_vtbl;
+    if (!(field->name = strdupW( name )))
+    {
+        heap_free( field );
+        return E_OUTOFMEMORY;
+    }
+    field->index = index;
+    field->recordset = recordset;
+
+    *obj = &field->Field_iface;
+    TRACE( "returning iface %p\n", *obj );
+    return S_OK;
+}
 
 static inline struct fields *impl_from_Fields( Fields *iface )
 {
@@ -142,10 +410,50 @@ static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj
     return E_NOTIMPL;
 }
 
+static BOOL resize_fields( struct fields *fields, ULONG count )
+{
+    if (count > fields->allocated)
+    {
+        Field **tmp;
+        ULONG new_size = max( count, fields->allocated * 2 );
+        if (!(tmp = heap_realloc( fields->field, new_size * sizeof(*tmp) ))) return FALSE;
+        fields->field = tmp;
+        fields->allocated = new_size;
+    }
+
+    fields->count = count;
+    return TRUE;
+}
+
+static HRESULT append_field( struct fields *fields, BSTR name, DataTypeEnum type, LONG size, FieldAttributeEnum attr,
+                             VARIANT *value )
+{
+    Field *field;
+    HRESULT hr;
+
+    if ((hr = Field_create( name, fields->count, fields->recordset, &field )) != S_OK) return hr;
+    Field_put_Type( field, type );
+    Field_put_DefinedSize( field, size );
+    if (attr != adFldUnspecified) Field_put_Attributes( field, attr );
+    if (value) FIXME( "ignoring value %s\n", debugstr_variant(value) );
+
+    if (!(resize_fields( fields, fields->count + 1 )))
+    {
+        Field_Release( field );
+        return E_OUTOFMEMORY;
+    }
+
+    fields->field[fields->count - 1] = field;
+    return S_OK;
+}
+
 static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum type, LONG size, FieldAttributeEnum attr )
 {
-    FIXME( "%p, %s, %u, %d, %d\n", iface, debugstr_w(name), type, size, attr );
-    return E_NOTIMPL;
+    struct fields *fields = impl_from_Fields( iface );
+
+    TRACE( "%p, %s, %u, %d, %d\n", fields, debugstr_w(name), type, size, attr );
+
+    return append_field( fields, name, type, size, attr, NULL );
 }
 
 static HRESULT WINAPI fields_Delete( Fields *iface, VARIANT index )
@@ -157,8 +465,11 @@ static HRESULT WINAPI fields_Delete( Fields *iface, VARIANT index )
 static HRESULT WINAPI fields_Append( Fields *iface, BSTR name, DataTypeEnum type, LONG size, FieldAttributeEnum attr,
                                      VARIANT value )
 {
-    TRACE( "%p, %s, %u, %d, %d, %s\n", iface, debugstr_w(name), type, size, attr, debugstr_variant(&value) );
-    return E_NOTIMPL;
+    struct fields *fields = impl_from_Fields( iface );
+
+    TRACE( "%p, %s, %u, %d, %d, %s\n", fields, debugstr_w(name), type, size, attr, debugstr_variant(&value) );
+
+    return append_field( fields, name, type, size, attr, &value );
 }
 
 static HRESULT WINAPI fields_Update( Fields *iface )
