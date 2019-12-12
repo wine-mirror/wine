@@ -1311,9 +1311,7 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
         void *parent, const struct wined3d_parent_ops *parent_ops, const struct wined3d_buffer_ops *buffer_ops)
 {
     const struct wined3d_format *format = wined3d_get_format(device->adapter, WINED3DFMT_UNKNOWN, desc->bind_flags);
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_resource *resource = &buffer->resource;
-    BOOL dynamic_buffer_ok;
     HRESULT hr;
 
     TRACE("buffer %p, device %p, desc byte_width %u, usage %s, bind_flags %s, "
@@ -1362,28 +1360,6 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
         TRACE("Pinning system memory.\n");
         buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
         buffer->locations = WINED3D_LOCATION_SYSMEM;
-    }
-
-    /* Observations show that draw_primitive_immediate_mode() is faster on
-     * dynamic vertex buffers than converting + draw_primitive_arrays().
-     * (Half-Life 2 and others.) */
-    dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] || gl_info->supported[ARB_MAP_BUFFER_RANGE];
-
-    if (!gl_info->supported[ARB_VERTEX_BUFFER_OBJECT])
-    {
-        TRACE("Not creating a BO because GL_ARB_vertex_buffer is not supported.\n");
-    }
-    else if (!(desc->access & WINED3D_RESOURCE_ACCESS_GPU))
-    {
-        TRACE("Not creating a BO because the buffer is not GPU accessible.\n");
-    }
-    else if (!dynamic_buffer_ok && (resource->usage & WINED3DUSAGE_DYNAMIC))
-    {
-        TRACE("Not creating a BO because the buffer has dynamic usage and no GL support.\n");
-    }
-    else
-    {
-        buffer->flags |= WINED3D_BUFFER_USE_BO;
     }
 
     if (buffer->locations & WINED3D_LOCATION_SYSMEM || !(buffer->flags & WINED3D_BUFFER_USE_BO))
@@ -1557,6 +1533,18 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
     TRACE("buffer_gl %p, device %p, desc %p, data %p, parent %p, parent_ops %p.\n",
             buffer_gl, device, desc, data, parent, parent_ops);
 
+    /* Observations show that draw_primitive_immediate_mode() is faster on
+     * dynamic vertex buffers than converting + draw_primitive_arrays().
+     * (Half-Life 2 and others.) */
+    if (!(desc->access & WINED3D_RESOURCE_ACCESS_GPU))
+        TRACE("Not creating a BO because the buffer is not GPU accessible.\n");
+    else if (!gl_info->supported[ARB_VERTEX_BUFFER_OBJECT])
+        TRACE("Not creating a BO because GL_ARB_vertex_buffer is not supported.\n");
+    else if (!(gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] || gl_info->supported[ARB_MAP_BUFFER_RANGE])
+            && (desc->usage & WINED3DUSAGE_DYNAMIC))
+        TRACE("Not creating a BO because the buffer has dynamic usage and no GL support.\n");
+    else
+        buffer_gl->b.flags |= WINED3D_BUFFER_USE_BO;
     buffer_gl->buffer_type_hint = wined3d_buffer_gl_binding_from_bind_flags(gl_info, desc->bind_flags);
 
     return wined3d_buffer_init(&buffer_gl->b, device, desc, data, parent, parent_ops, &wined3d_buffer_gl_ops);
