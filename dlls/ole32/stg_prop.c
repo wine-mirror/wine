@@ -1015,20 +1015,25 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
         ptr += sizeof(PROPID);
         StorageUtl_ReadDWord(ptr, 0, &cbEntry);
         ptr += sizeof(DWORD);
-        TRACE("Reading entry with ID 0x%08x, %d bytes\n", propid, cbEntry);
         /* Make sure the source string is NULL-terminated */
         if (This->codePage != CP_UNICODE)
             ptr[cbEntry - 1] = '\0';
         else
-            *((LPWSTR)ptr + cbEntry / sizeof(WCHAR)) = '\0';
+            ((WCHAR *)ptr)[cbEntry - 1] = '\0';
+
+        TRACE("Reading entry with ID %#x, %d chars, name %s.\n", propid, cbEntry, This->codePage == CP_UNICODE ?
+                debugstr_wn((WCHAR *)ptr, cbEntry) : debugstr_an((char *)ptr, cbEntry));
+
         hr = PropertyStorage_StoreNameWithId(This, (char*)ptr, This->codePage, propid);
         if (This->codePage == CP_UNICODE)
         {
+            cbEntry *= sizeof(WCHAR);
+
             /* Unicode entries are padded to DWORD boundaries */
             if (cbEntry % sizeof(DWORD))
                 ptr += sizeof(DWORD) - (cbEntry % sizeof(DWORD));
         }
-        ptr += sizeof(DWORD) + cbEntry;
+        ptr += cbEntry;
     }
     return hr;
 }
@@ -1573,7 +1578,7 @@ static inline HRESULT PropertStorage_WriteWStringToStream(IStream *stm,
     HeapFree(GetProcessHeap(), 0, leStr);
     return hr;
 #else
-    return IStream_Write(stm, str, len, written);
+    return IStream_Write(stm, str, len * sizeof(WCHAR), written);
 #endif
 }
 
@@ -1588,7 +1593,7 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
 {
     PropertyStorage_impl *This = extra;
     struct DictionaryClosure *c = closure;
-    DWORD propid;
+    DWORD propid, keyLen;
     ULONG count;
 
     assert(key);
@@ -1600,10 +1605,9 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
     c->bytesWritten += sizeof(DWORD);
     if (This->codePage == CP_UNICODE)
     {
-        DWORD keyLen, pad = 0;
+        DWORD pad = 0, pad_len;
 
-        StorageUtl_WriteDWord((LPBYTE)&keyLen, 0,
-         (lstrlenW((LPCWSTR)key) + 1) * sizeof(WCHAR));
+        StorageUtl_WriteDWord((LPBYTE)&keyLen, 0, lstrlenW((LPCWSTR)key) + 1);
         c->hr = IStream_Write(This->stm, &keyLen, sizeof(keyLen), &count);
         if (FAILED(c->hr))
             goto end;
@@ -1612,20 +1616,21 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
          &count);
         if (FAILED(c->hr))
             goto end;
-        c->bytesWritten += keyLen * sizeof(WCHAR);
-        if (keyLen % sizeof(DWORD))
+        keyLen *= sizeof(WCHAR);
+        c->bytesWritten += keyLen;
+
+        /* Align to 4 bytes. */
+        pad_len = sizeof(DWORD) - keyLen % sizeof(DWORD);
+        if (pad_len)
         {
-            c->hr = IStream_Write(This->stm, &pad,
-             sizeof(DWORD) - keyLen % sizeof(DWORD), &count);
+            c->hr = IStream_Write(This->stm, &pad, pad_len, &count);
             if (FAILED(c->hr))
                 goto end;
-            c->bytesWritten += sizeof(DWORD) - keyLen % sizeof(DWORD);
+            c->bytesWritten += pad_len;
         }
     }
     else
     {
-        DWORD keyLen;
-
         StorageUtl_WriteDWord((LPBYTE)&keyLen, 0, strlen((LPCSTR)key) + 1);
         c->hr = IStream_Write(This->stm, &keyLen, sizeof(keyLen), &count);
         if (FAILED(c->hr))
