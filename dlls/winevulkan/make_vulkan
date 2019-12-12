@@ -235,7 +235,7 @@ class VkBaseType(object):
 
         Args:
             name (:obj:'str'): Name of the base type.
-            _type (:obj:'str'): Underlaying type
+            _type (:obj:'str'): Underlying type
             alias (bool): type is an alias or not.
             requires (:obj:'str', optional): Other types required.
                 Often bitmask values pull in a *FlagBits type.
