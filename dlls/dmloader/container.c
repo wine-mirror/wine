@@ -307,23 +307,20 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 								TRACE_(dmfile)(": GUID chunk\n");
 								IStream_Read (pStm, &This->dmobj.desc.guidObject, Chunk.dwSize, NULL);
 								This->dmobj.desc.dwValidData |= DMUS_OBJ_OBJECT;
-								TRACE_(dmdump)(": GUID: %s\n", debugstr_guid(&This->dmobj.desc.guidObject));
 								break;
 							}
 							case DMUS_FOURCC_VERSION_CHUNK: {
 								TRACE_(dmfile)(": version chunk\n");
 								IStream_Read (pStm, &This->dmobj.desc.vVersion, Chunk.dwSize, NULL);
 								This->dmobj.desc.dwValidData |= DMUS_OBJ_VERSION;
-								TRACE_(dmdump)(": version: %s\n", debugstr_dmversion(&This->dmobj.desc.vVersion));
 								break;
 							}
 							case DMUS_FOURCC_DATE_CHUNK: {
 								TRACE_(dmfile)(": date chunk\n");
 								IStream_Read (pStm, &This->dmobj.desc.ftDate, Chunk.dwSize, NULL);
 								This->dmobj.desc.dwValidData |= DMUS_OBJ_DATE;
-								TRACE_(dmdump)(": date: %s\n", debugstr_filetime(&This->dmobj.desc.ftDate));
 								break;
-							}							
+							}
 							case DMUS_FOURCC_CATEGORY_CHUNK: {
 								TRACE_(dmfile)(": category chunk\n");
 								/* if it happens that string is too long,
@@ -336,7 +333,6 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 									IStream_Read (pStm, This->dmobj.desc.wszCategory, Chunk.dwSize, NULL);
 								}
 								This->dmobj.desc.dwValidData |= DMUS_OBJ_CATEGORY;
-								TRACE_(dmdump)(": category: %s\n", debugstr_w(This->dmobj.desc.wszCategory));
 								break;
 							}
 							case FOURCC_LIST: {
@@ -367,7 +363,6 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 														IStream_Read (pStm, This->dmobj.desc.wszName, Chunk.dwSize, NULL);
 													}
 													This->dmobj.desc.dwValidData |= DMUS_OBJ_NAME;
-													TRACE_(dmdump)(": name: %s\n", debugstr_w(This->dmobj.desc.wszName));
 													break;
 												}
 												default: {
@@ -606,6 +601,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 			}
 			TRACE_(dmfile)(": reading finished\n");
 			This->dmobj.desc.dwValidData |= DMUS_OBJ_LOADED;
+                        dump_DMUS_OBJECTDESC(&This->dmobj.desc);
 			break;
 		}
 		default: {
