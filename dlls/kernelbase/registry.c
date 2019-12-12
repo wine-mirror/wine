@@ -2263,12 +2263,10 @@ LSTATUS WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
  */
 LSTATUS WINAPI RegSaveKeyExW( HKEY hkey, LPCWSTR file, SECURITY_ATTRIBUTES *sa, DWORD flags )
 {
-    static const WCHAR format[] =
-        {'r','e','g','%','0','4','x','.','t','m','p',0};
-    WCHAR buffer[MAX_PATH];
-    int count = 0;
-    LPWSTR nameW;
-    DWORD ret, err;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
     HANDLE handle;
 
     TRACE( "(%p,%s,%p)\n", hkey, debugstr_w(file), sa );
@@ -2276,39 +2274,20 @@ LSTATUS WINAPI RegSaveKeyExW( HKEY hkey, LPCWSTR file, SECURITY_ATTRIBUTES *sa, 
     if (!file || !*file) return ERROR_INVALID_PARAMETER;
     if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
-    err = GetLastError();
-    GetFullPathNameW( file, ARRAY_SIZE( buffer ), buffer, &nameW );
+    if ((status = RtlDosPathNameToNtPathName_U_WithStatus( file, &nameW, NULL, NULL )))
+        return RtlNtStatusToDosError( status );
 
-    for (;;)
+    InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, sa );
+    status = NtCreateFile( &handle, GENERIC_WRITE | SYNCHRONIZE, &attr, &io, NULL, FILE_NON_DIRECTORY_FILE,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OVERWRITE_IF,
+                           FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    RtlFreeUnicodeString( &nameW );
+    if (!status)
     {
-        swprintf( nameW, 16, format, count++ );
-        handle = CreateFileW( buffer, GENERIC_WRITE, 0, NULL,
-                            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
-        if (handle != INVALID_HANDLE_VALUE) break;
-        if ((ret = GetLastError()) != ERROR_FILE_EXISTS) goto done;
-
-        /* Something gone haywire ? Please report if this happens abnormally */
-        if (count >= 100)
-            MESSAGE("Wow, we are already fiddling with a temp file %s with an ordinal as high as %d !\nYou might want to delete all corresponding temp files in that directory.\n", debugstr_w(buffer), count);
+        status = NtSaveKey( hkey, handle );
+        CloseHandle( handle );
     }
-
-    ret = RtlNtStatusToDosError(NtSaveKey(hkey, handle));
-
-    CloseHandle( handle );
-    if (!ret)
-    {
-        if (!MoveFileExW( buffer, file, MOVEFILE_REPLACE_EXISTING ))
-        {
-            ERR( "Failed to move %s to %s\n", debugstr_w(buffer),
-	        debugstr_w(file) );
-            ret = GetLastError();
-        }
-    }
-    if (ret) DeleteFileW( buffer );
-
-done:
-    SetLastError( err );  /* restore last error code */
-    return ret;
+    return RtlNtStatusToDosError( status );
 }
 
 
