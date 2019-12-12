@@ -37,6 +37,7 @@ typedef struct {
 struct _function_vtbl_t {
     HRESULT (*call)(script_ctx_t*,FunctionInstance*,IDispatch*,unsigned,unsigned,jsval_t*,jsval_t*);
     HRESULT (*toString)(FunctionInstance*,jsstr_t**);
+    function_code_t* (*get_code)(FunctionInstance*);
     void (*destructor)(FunctionInstance*);
 };
 
@@ -524,6 +525,16 @@ static HRESULT Function_get_arguments(script_ctx_t *ctx, jsdisp_t *jsthis, jsval
     return S_OK;
 }
 
+function_code_t *Function_get_code(jsdisp_t *jsthis)
+{
+    FunctionInstance *function;
+
+    assert(is_class(jsthis, JSCLASS_FUNCTION));
+    function = function_from_jsdisp(jsthis);
+
+    return function->vtbl->get_code(function);
+}
+
 static void Function_destructor(jsdisp_t *dispex)
 {
     FunctionInstance *function = function_from_jsdisp(dispex);
@@ -638,6 +649,11 @@ static HRESULT NativeFunction_toString(FunctionInstance *func, jsstr_t **ret)
     return S_OK;
 }
 
+static function_code_t *NativeFunction_get_code(FunctionInstance *function)
+{
+    return NULL;
+}
+
 static void NativeFunction_destructor(FunctionInstance *function)
 {
 }
@@ -645,6 +661,7 @@ static void NativeFunction_destructor(FunctionInstance *function)
 static const function_vtbl_t NativeFunctionVtbl = {
     NativeFunction_call,
     NativeFunction_toString,
+    NativeFunction_get_code,
     NativeFunction_destructor
 };
 
@@ -749,6 +766,13 @@ static HRESULT InterpretedFunction_toString(FunctionInstance *func, jsstr_t **re
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
+static function_code_t *InterpretedFunction_get_code(FunctionInstance *func)
+{
+    InterpretedFunction *function = (InterpretedFunction*)func;
+
+    return function->func_code;
+}
+
 static void InterpretedFunction_destructor(FunctionInstance *func)
 {
     InterpretedFunction *function = (InterpretedFunction*)func;
@@ -761,6 +785,7 @@ static void InterpretedFunction_destructor(FunctionInstance *func)
 static const function_vtbl_t InterpretedFunctionVtbl = {
     InterpretedFunction_call,
     InterpretedFunction_toString,
+    InterpretedFunction_get_code,
     InterpretedFunction_destructor
 };
 
@@ -842,6 +867,11 @@ static HRESULT BindFunction_toString(FunctionInstance *function, jsstr_t **ret)
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
+static function_code_t *BindFunction_get_code(FunctionInstance *function)
+{
+    return NULL;
+}
+
 static void BindFunction_destructor(FunctionInstance *func)
 {
     BindFunction *function = (BindFunction*)func;
@@ -858,6 +888,7 @@ static void BindFunction_destructor(FunctionInstance *func)
 static const function_vtbl_t BindFunctionVtbl = {
     BindFunction_call,
     BindFunction_toString,
+    BindFunction_get_code,
     BindFunction_destructor
 };
 

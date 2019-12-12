@@ -19,6 +19,7 @@
 #include <assert.h>
 
 #include "jscript.h"
+#include "engine.h"
 
 #include "wine/debug.h"
 
@@ -68,6 +69,20 @@ static inline dispex_prop_t *get_prop(jsdisp_t *This, DISPID id)
         return NULL;
 
     return This->props+id;
+}
+
+static inline BOOL is_function_prop(dispex_prop_t *prop)
+{
+    BOOL ret = FALSE;
+
+    if (is_object_instance(prop->u.val))
+    {
+        jsdisp_t *jsdisp = iface_to_jsdisp(get_object(prop->u.val));
+
+        if (jsdisp) ret = is_class(jsdisp, JSCLASS_FUNCTION);
+        jsdisp_release(jsdisp);
+    }
+    return ret;
 }
 
 static DWORD get_flags(jsdisp_t *This, dispex_prop_t *prop)
@@ -590,9 +605,21 @@ static HRESULT fill_protrefs(jsdisp_t *This)
     return S_OK;
 }
 
+struct typeinfo_func {
+    dispex_prop_t *prop;
+    function_code_t *code;
+};
+
 typedef struct {
     ITypeInfo ITypeInfo_iface;
     LONG ref;
+
+    UINT num_funcs;
+    UINT num_vars;
+    struct typeinfo_func *funcs;
+    dispex_prop_t **vars;
+
+    jsdisp_t *jsdisp;
 } ScriptTypeInfo;
 
 static inline ScriptTypeInfo *ScriptTypeInfo_from_ITypeInfo(ITypeInfo *iface)
@@ -632,11 +659,17 @@ static ULONG WINAPI ScriptTypeInfo_Release(ITypeInfo *iface)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
     LONG ref = InterlockedDecrement(&This->ref);
+    UINT i;
 
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref)
     {
+        for (i = This->num_funcs; i--;)
+            release_bytecode(This->funcs[i].code->bytecode);
+        IDispatchEx_Release(&This->jsdisp->IDispatchEx_iface);
+        heap_free(This->funcs);
+        heap_free(This->vars);
         heap_free(This);
     }
     return ref;
@@ -897,17 +930,94 @@ static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
                                               ITypeInfo **ppTInfo)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
+    dispex_prop_t *prop, *cur, *end, **typevar;
+    UINT num_funcs = 0, num_vars = 0;
+    struct typeinfo_func *typefunc;
+    function_code_t *func_code;
     ScriptTypeInfo *typeinfo;
+    unsigned pos;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
     if (iTInfo != 0) return DISP_E_BADINDEX;
+
+    for (prop = This->props, end = prop + This->prop_cnt; prop != end; prop++)
+    {
+        if (!prop->name || prop->type != PROP_JSVAL || !(prop->flags & PROPF_ENUMERABLE))
+            continue;
+
+        /* If two identifiers differ only by case, the TypeInfo fails */
+        pos = This->props[get_props_idx(This, prop->hash)].bucket_head;
+        while (pos)
+        {
+            cur = This->props + pos;
+
+            if (prop->hash == cur->hash && prop != cur &&
+                cur->type == PROP_JSVAL && (cur->flags & PROPF_ENUMERABLE) &&
+                !wcsicmp(prop->name, cur->name))
+            {
+                return TYPE_E_AMBIGUOUSNAME;
+            }
+            pos = cur->bucket_next;
+        }
+
+        if (is_function_prop(prop))
+        {
+            if (Function_get_code(as_jsdisp(get_object(prop->u.val))))
+                num_funcs++;
+        }
+        else num_vars++;
+    }
 
     if (!(typeinfo = heap_alloc(sizeof(*typeinfo))))
         return E_OUTOFMEMORY;
 
     typeinfo->ITypeInfo_iface.lpVtbl = &ScriptTypeInfoVtbl;
     typeinfo->ref = 1;
+    typeinfo->num_vars = num_vars;
+    typeinfo->num_funcs = num_funcs;
+    typeinfo->jsdisp = This;
+
+    typeinfo->funcs = heap_alloc(sizeof(*typeinfo->funcs) * num_funcs);
+    if (!typeinfo->funcs)
+    {
+        heap_free(typeinfo);
+        return E_OUTOFMEMORY;
+    }
+
+    typeinfo->vars = heap_alloc(sizeof(*typeinfo->vars) * num_vars);
+    if (!typeinfo->vars)
+    {
+        heap_free(typeinfo->funcs);
+        heap_free(typeinfo);
+        return E_OUTOFMEMORY;
+    }
+
+    typefunc = typeinfo->funcs;
+    typevar = typeinfo->vars;
+    for (prop = This->props; prop != end; prop++)
+    {
+        if (!prop->name || prop->type != PROP_JSVAL || !(prop->flags & PROPF_ENUMERABLE))
+            continue;
+
+        if (is_function_prop(prop))
+        {
+            func_code = Function_get_code(as_jsdisp(get_object(prop->u.val)));
+            if (!func_code) continue;
+
+            typefunc->prop = prop;
+            typefunc->code = func_code;
+            typefunc++;
+
+            /* The function may be deleted, so keep a ref */
+            bytecode_addref(func_code->bytecode);
+        }
+        else
+            *typevar++ = prop;
+    }
+
+    /* Keep a ref to the props and their names */
+    IDispatchEx_AddRef(&This->IDispatchEx_iface);
 
     *ppTInfo = &typeinfo->ITypeInfo_iface;
     return S_OK;

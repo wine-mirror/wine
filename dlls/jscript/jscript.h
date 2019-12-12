@@ -307,6 +307,7 @@ HRESULT Function_invoke(jsdisp_t*,IDispatch*,WORD,unsigned,jsval_t*,jsval_t*) DE
 
 HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT Function_get_value(script_ctx_t*,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
+struct _function_code_t *Function_get_code(jsdisp_t*) DECLSPEC_HIDDEN;
 #define DEFAULT_FUNCTION_VALUE {NULL, Function_value,0, Function_get_value}
 
 HRESULT throw_eval_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
