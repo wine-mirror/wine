@@ -37,6 +37,30 @@ LONG module_ref = 0;
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 HINSTANCE jscript_hinstance;
+static ITypeInfo *dispatch_typeinfo;
+
+HRESULT get_dispatch_typeinfo(ITypeInfo **out)
+{
+    ITypeInfo *typeinfo;
+    ITypeLib *typelib;
+    HRESULT hr;
+
+    if (!dispatch_typeinfo)
+    {
+        hr = LoadRegTypeLib(&IID_StdOle, STDOLE_MAJORVERNUM, STDOLE_MINORVERNUM, STDOLE_LCID, &typelib);
+        if (FAILED(hr)) return hr;
+
+        hr = ITypeLib_GetTypeInfoOfGuid(typelib, &IID_IDispatch, &typeinfo);
+        ITypeLib_Release(typelib);
+        if (FAILED(hr)) return hr;
+
+        if (InterlockedCompareExchangePointer((void**)&dispatch_typeinfo, typeinfo, NULL))
+            ITypeInfo_Release(typeinfo);
+    }
+
+    *out = dispatch_typeinfo;
+    return S_OK;
+}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
@@ -145,6 +169,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         break;
     case DLL_PROCESS_DETACH:
         if (lpv) break;
+        if (dispatch_typeinfo) ITypeInfo_Release(dispatch_typeinfo);
         free_strings();
     }
 

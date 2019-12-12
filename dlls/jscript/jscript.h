@@ -87,6 +87,7 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 typedef struct jsdisp_t jsdisp_t;
 
 extern HINSTANCE jscript_hinstance DECLSPEC_HIDDEN;
+HRESULT get_dispatch_typeinfo(ITypeInfo**) DECLSPEC_HIDDEN;
 
 #define PROPF_ARGMASK       0x00ff
 #define PROPF_METHOD        0x0100
