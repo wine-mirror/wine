@@ -720,10 +720,33 @@ static HRESULT WINAPI ScriptTypeInfo_GetTypeComp(ITypeInfo *iface, ITypeComp **p
 static HRESULT WINAPI ScriptTypeInfo_GetFuncDesc(ITypeInfo *iface, UINT index, FUNCDESC **ppFuncDesc)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    struct typeinfo_func *func;
+    FUNCDESC *desc;
+    unsigned i;
 
-    FIXME("(%p)->(%u %p)\n", This, index, ppFuncDesc);
+    TRACE("(%p)->(%u %p)\n", This, index, ppFuncDesc);
 
-    return E_NOTIMPL;
+    if (!ppFuncDesc) return E_INVALIDARG;
+    if (index >= This->num_funcs) return TYPE_E_ELEMENTNOTFOUND;
+    func = &This->funcs[index];
+
+    /* Store the parameter array after the FUNCDESC structure */
+    desc = heap_alloc_zero(sizeof(*desc) + sizeof(ELEMDESC) * func->code->param_cnt);
+    if (!desc) return E_OUTOFMEMORY;
+
+    desc->memid = prop_to_id(This->jsdisp, func->prop);
+    desc->funckind = FUNC_DISPATCH;
+    desc->invkind = INVOKE_FUNC;
+    desc->callconv = CC_STDCALL;
+    desc->cParams = func->code->param_cnt;
+    desc->elemdescFunc.tdesc.vt = VT_VARIANT;
+
+    if (func->code->param_cnt) desc->lprgelemdescParam = (ELEMDESC*)(desc + 1);
+    for (i = 0; i < func->code->param_cnt; i++)
+        desc->lprgelemdescParam[i].tdesc.vt = VT_VARIANT;
+
+    *ppFuncDesc = desc;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetVarDesc(ITypeInfo *iface, UINT index, VARDESC **ppVarDesc)
@@ -862,7 +885,9 @@ static void WINAPI ScriptTypeInfo_ReleaseFuncDesc(ITypeInfo *iface, FUNCDESC *pF
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
 
-    FIXME("(%p)->(%p)\n", This, pFuncDesc);
+    TRACE("(%p)->(%p)\n", This, pFuncDesc);
+
+    heap_free(pFuncDesc);
 }
 
 static void WINAPI ScriptTypeInfo_ReleaseVarDesc(ITypeInfo *iface, VARDESC *pVarDesc)
