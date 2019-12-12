@@ -444,6 +444,32 @@ if (0)   /* Crashes on windows */
     _Connection_Release(connection);
 }
 
+static void test_Command(void)
+{
+    HRESULT hr;
+    _Command *command;
+    _ADO *ado;
+    Command15 *command15;
+    Command25 *command25;
+
+    hr = CoCreateInstance( &CLSID_Command, NULL, CLSCTX_INPROC_SERVER, &IID__Command, (void **)&command );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Command_QueryInterface( command, &IID__ADO, (void **)&ado );
+    ok( hr == S_OK, "got %08x\n", hr );
+    _ADO_Release( ado );
+
+    hr = _Command_QueryInterface( command, &IID_Command15, (void **)&command15 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    Command15_Release( command15 );
+
+    hr = _Command_QueryInterface( command, &IID_Command25, (void **)&command25 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    Command25_Release( command25 );
+
+    _Command_Release( command );
+}
+
 START_TEST(msado15)
 {
     CoInitialize( NULL );
@@ -451,5 +477,6 @@ START_TEST(msado15)
     test_Fields();
     test_Recordset();
     test_Stream();
+    test_Command();
     CoUninitialize();
 }

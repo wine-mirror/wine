@@ -4,6 +4,7 @@ IMPORTS   = oleaut32
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	command.c \
 	connection.c \
 	main.c \
 	recordset.c \

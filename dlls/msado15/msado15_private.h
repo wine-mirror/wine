@@ -21,6 +21,7 @@
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
+HRESULT Command_create( void ** ) DECLSPEC_HIDDEN;
 HRESULT Connection_create( void ** ) DECLSPEC_HIDDEN;
 HRESULT Recordset_create( void ** ) DECLSPEC_HIDDEN;
 HRESULT Stream_create( void ** ) DECLSPEC_HIDDEN;

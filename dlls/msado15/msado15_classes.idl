@@ -20,6 +20,14 @@
 
 [
     threading(apartment),
+    progid("ADODB.Command.6.0"),
+    vi_progid("ADODB.Command"),
+    uuid(00000507-0000-0010-8000-00aa006d2ea4)
+]
+coclass Command { interface _Command; }
+
+[
+    threading(apartment),
     progid("ADODB.Connection.6.0"),
     vi_progid("ADODB.Connection"),
     uuid(00000514-0000-0010-8000-00aa006d2ea4)
