@@ -1711,7 +1711,7 @@ static void PropertyStorage_MakeHeader(PropertyStorage_impl *This,
     StorageUtl_WriteWord(&hdr->wByteOrder, 0, PROPSETHDR_BYTEORDER_MAGIC);
     StorageUtl_WriteWord(&hdr->wFormat, 0, This->format);
     StorageUtl_WriteDWord(&hdr->dwOSVer, 0, This->originatorOS);
-    StorageUtl_WriteGUID((BYTE *)&hdr->clsid, 0, &This->clsid);
+    StorageUtl_WriteGUID(&hdr->clsid, 0, &This->clsid);
     StorageUtl_WriteDWord(&hdr->reserved, 0, 1);
 }
 
@@ -1719,7 +1719,7 @@ static void PropertyStorage_MakeFmtIdOffset(PropertyStorage_impl *This,
  FORMATIDOFFSET *fmtOffset)
 {
     assert(fmtOffset);
-    StorageUtl_WriteGUID((BYTE *)fmtOffset, 0, &This->fmtid);
+    StorageUtl_WriteGUID(fmtOffset, 0, &This->fmtid);
     StorageUtl_WriteDWord(fmtOffset, offsetof(FORMATIDOFFSET, dwOffset),
      sizeof(PROPERTYSETHEADER) + sizeof(FORMATIDOFFSET));
 }
@@ -2008,7 +2008,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     {
         CLSID temp;
 
-        StorageUtl_WriteGUID((BYTE *)&temp, 0, var->u.puuid);
+        StorageUtl_WriteGUID(&temp, 0, var->u.puuid);
         hr = IStream_Write(This->stm, &temp, sizeof(temp), &count);
         bytesWritten = count;
         break;

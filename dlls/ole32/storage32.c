@@ -7005,13 +7005,13 @@ void StorageUtl_ReadGUID(const BYTE* buffer, ULONG offset, GUID* value)
   memcpy(value->Data4, buffer+offset+8, sizeof(value->Data4));
 }
 
-void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value)
+void StorageUtl_WriteGUID(void *buffer, ULONG offset, const GUID* value)
 {
   StorageUtl_WriteDWord(buffer, offset,   value->Data1);
   StorageUtl_WriteWord(buffer,  offset+4, value->Data2);
   StorageUtl_WriteWord(buffer,  offset+6, value->Data3);
 
-  memcpy(buffer+offset+8, value->Data4, sizeof(value->Data4));
+  memcpy((BYTE *)buffer + offset + 8, value->Data4, sizeof(value->Data4));
 }
 
 void StorageUtl_CopyDirEntryToSTATSTG(
