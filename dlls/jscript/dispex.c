@@ -752,10 +752,22 @@ static HRESULT WINAPI ScriptTypeInfo_GetFuncDesc(ITypeInfo *iface, UINT index, F
 static HRESULT WINAPI ScriptTypeInfo_GetVarDesc(ITypeInfo *iface, UINT index, VARDESC **ppVarDesc)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    VARDESC *desc;
 
-    FIXME("(%p)->(%u %p)\n", This, index, ppVarDesc);
+    TRACE("(%p)->(%u %p)\n", This, index, ppVarDesc);
 
-    return E_NOTIMPL;
+    if (!ppVarDesc) return E_INVALIDARG;
+    if (index >= This->num_vars) return TYPE_E_ELEMENTNOTFOUND;
+
+    desc = heap_alloc_zero(sizeof(*desc));
+    if (!desc) return E_OUTOFMEMORY;
+
+    desc->memid = prop_to_id(This->jsdisp, This->vars[index]);
+    desc->varkind = VAR_DISPATCH;
+    desc->elemdescVar.tdesc.vt = VT_VARIANT;
+
+    *ppVarDesc = desc;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetNames(ITypeInfo *iface, MEMBERID memid, BSTR *rgBstrNames,
@@ -894,7 +906,9 @@ static void WINAPI ScriptTypeInfo_ReleaseVarDesc(ITypeInfo *iface, VARDESC *pVar
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
 
-    FIXME("(%p)->(%p)\n", This, pVarDesc);
+    TRACE("(%p)->(%p)\n", This, pVarDesc);
+
+    heap_free(pVarDesc);
 }
 
 static const ITypeInfoVtbl ScriptTypeInfoVtbl = {
