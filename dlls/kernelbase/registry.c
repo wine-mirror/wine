@@ -3045,69 +3045,6 @@ LSTATUS WINAPI RegLoadAppKeyW(const WCHAR *file, HKEY *result, REGSAM sam, DWORD
     return ERROR_SUCCESS;
 }
 
-/******************************************************************************
- *           EnumDynamicTimeZoneInformation   (kernelbase.@)
- */
-DWORD WINAPI EnumDynamicTimeZoneInformation(const DWORD index,
-    DYNAMIC_TIME_ZONE_INFORMATION *dtzi)
-{
-    static const WCHAR mui_stdW[] = { 'M','U','I','_','S','t','d',0 };
-    static const WCHAR mui_dltW[] = { 'M','U','I','_','D','l','t',0 };
-    WCHAR keyname[ARRAY_SIZE(dtzi->TimeZoneKeyName)];
-    HKEY time_zones_key, sub_key;
-    LSTATUS ret;
-    DWORD size;
-    struct tz_reg_data
-    {
-        LONG bias;
-        LONG std_bias;
-        LONG dlt_bias;
-        SYSTEMTIME std_date;
-        SYSTEMTIME dlt_date;
-    } tz_data;
-
-    if (!dtzi)
-        return ERROR_INVALID_PARAMETER;
-
-    ret = RegOpenKeyExA( HKEY_LOCAL_MACHINE,
-                "Software\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", 0,
-                KEY_ENUMERATE_SUB_KEYS|KEY_QUERY_VALUE, &time_zones_key );
-    if (ret) return ret;
-
-    sub_key = NULL;
-    size = ARRAY_SIZE(keyname);
-    ret = RegEnumKeyExW( time_zones_key, index, keyname, &size, NULL, NULL, NULL, NULL );
-    if (ret) goto cleanup;
-
-    ret = RegOpenKeyExW( time_zones_key, keyname, 0, KEY_QUERY_VALUE, &sub_key );
-    if (ret) goto cleanup;
-
-    size = sizeof(dtzi->StandardName);
-    ret = RegLoadMUIStringW( sub_key, mui_stdW, dtzi->StandardName, size, NULL, 0, system_dir );
-    if (ret) goto cleanup;
-
-    size = sizeof(dtzi->DaylightName);
-    ret = RegLoadMUIStringW( sub_key, mui_dltW, dtzi->DaylightName, size, NULL, 0, system_dir );
-    if (ret) goto cleanup;
-
-    size = sizeof(tz_data);
-    ret = RegQueryValueExA( sub_key, "TZI", NULL, NULL, (BYTE*)&tz_data, &size );
-    if (ret) goto cleanup;
-
-    dtzi->Bias = tz_data.bias;
-    dtzi->StandardBias = tz_data.std_bias;
-    dtzi->DaylightBias = tz_data.dlt_bias;
-    memcpy( &dtzi->StandardDate, &tz_data.std_date, sizeof(tz_data.std_date) );
-    memcpy( &dtzi->DaylightDate, &tz_data.dlt_date, sizeof(tz_data.dlt_date) );
-    lstrcpyW( dtzi->TimeZoneKeyName, keyname );
-    dtzi->DynamicDaylightTimeDisabled = FALSE;
-
-cleanup:
-    if (sub_key) RegCloseKey( sub_key );
-    RegCloseKey( time_zones_key );
-    return ret;
-}
-
 
 struct USKEY
 {

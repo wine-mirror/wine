@@ -2952,6 +2952,32 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumDateFormatsExEx( DATEFMT_ENUMPROCEXEX proc, co
 }
 
 
+
+/******************************************************************************
+ *	EnumDynamicTimeZoneInformation   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH EnumDynamicTimeZoneInformation( DWORD index,
+                                                               DYNAMIC_TIME_ZONE_INFORMATION *info )
+{
+    DYNAMIC_TIME_ZONE_INFORMATION tz;
+    LSTATUS ret;
+    DWORD size;
+
+    if (!info) return ERROR_INVALID_PARAMETER;
+
+    size = ARRAY_SIZE(tz.TimeZoneKeyName);
+    ret = RegEnumKeyExW( tz_key, index, tz.TimeZoneKeyName, &size, NULL, NULL, NULL, NULL );
+    if (ret) return ret;
+
+    tz.DynamicDaylightTimeDisabled = TRUE;
+    if (!GetTimeZoneInformationForYear( 0, &tz, (TIME_ZONE_INFORMATION *)info )) return GetLastError();
+
+    lstrcpyW( info->TimeZoneKeyName, tz.TimeZoneKeyName );
+    info->DynamicDaylightTimeDisabled = FALSE;
+    return 0;
+}
+
+
 /******************************************************************************
  *	EnumLanguageGroupLocalesW   (kernelbase.@)
  */
