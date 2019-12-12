@@ -1711,9 +1711,9 @@ static void PropertyStorage_MakeHeader(PropertyStorage_impl *This,
     StorageUtl_WriteWord((BYTE *)&hdr->wByteOrder, 0,
      PROPSETHDR_BYTEORDER_MAGIC);
     StorageUtl_WriteWord((BYTE *)&hdr->wFormat, 0, This->format);
-    StorageUtl_WriteDWord((BYTE *)&hdr->dwOSVer, 0, This->originatorOS);
+    StorageUtl_WriteDWord(&hdr->dwOSVer, 0, This->originatorOS);
     StorageUtl_WriteGUID((BYTE *)&hdr->clsid, 0, &This->clsid);
-    StorageUtl_WriteDWord((BYTE *)&hdr->reserved, 0, 1);
+    StorageUtl_WriteDWord(&hdr->reserved, 0, 1);
 }
 
 static void PropertyStorage_MakeFmtIdOffset(PropertyStorage_impl *This,
@@ -1721,7 +1721,7 @@ static void PropertyStorage_MakeFmtIdOffset(PropertyStorage_impl *This,
 {
     assert(fmtOffset);
     StorageUtl_WriteGUID((BYTE *)fmtOffset, 0, &This->fmtid);
-    StorageUtl_WriteDWord((BYTE *)fmtOffset, offsetof(FORMATIDOFFSET, dwOffset),
+    StorageUtl_WriteDWord(fmtOffset, offsetof(FORMATIDOFFSET, dwOffset),
      sizeof(PROPERTYSETHEADER) + sizeof(FORMATIDOFFSET));
 }
 
@@ -1729,18 +1729,16 @@ static void PropertyStorage_MakeSectionHdr(DWORD cbSection, DWORD numProps,
  PROPERTYSECTIONHEADER *hdr)
 {
     assert(hdr);
-    StorageUtl_WriteDWord((BYTE *)hdr, 0, cbSection);
-    StorageUtl_WriteDWord((BYTE *)hdr,
-     offsetof(PROPERTYSECTIONHEADER, cProperties), numProps);
+    StorageUtl_WriteDWord(hdr, 0, cbSection);
+    StorageUtl_WriteDWord(hdr, offsetof(PROPERTYSECTIONHEADER, cProperties), numProps);
 }
 
 static void PropertyStorage_MakePropertyIdOffset(DWORD propid, DWORD dwOffset,
  PROPERTYIDOFFSET *propIdOffset)
 {
     assert(propIdOffset);
-    StorageUtl_WriteDWord((BYTE *)propIdOffset, 0, propid);
-    StorageUtl_WriteDWord((BYTE *)propIdOffset,
-     offsetof(PROPERTYIDOFFSET, dwOffset), dwOffset);
+    StorageUtl_WriteDWord(propIdOffset, 0, propid);
+    StorageUtl_WriteDWord(propIdOffset, offsetof(PROPERTYIDOFFSET, dwOffset), dwOffset);
 }
 
 static inline HRESULT PropertyStorage_WriteWStringToStream(IStream *stm,
@@ -1778,7 +1776,7 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
 
     assert(key);
     assert(closure);
-    StorageUtl_WriteDWord((LPBYTE)&propid, 0, PtrToUlong(value));
+    StorageUtl_WriteDWord(&propid, 0, PtrToUlong(value));
     c->hr = IStream_Write(This->stm, &propid, sizeof(propid), &count);
     if (FAILED(c->hr))
         goto end;
@@ -1787,7 +1785,7 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
     {
         DWORD pad = 0, pad_len;
 
-        StorageUtl_WriteDWord((LPBYTE)&keyLen, 0, lstrlenW((LPCWSTR)key) + 1);
+        StorageUtl_WriteDWord(&keyLen, 0, lstrlenW((LPCWSTR)key) + 1);
         c->hr = IStream_Write(This->stm, &keyLen, sizeof(keyLen), &count);
         if (FAILED(c->hr))
             goto end;
@@ -1811,7 +1809,7 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
     }
     else
     {
-        StorageUtl_WriteDWord((LPBYTE)&keyLen, 0, strlen((LPCSTR)key) + 1);
+        StorageUtl_WriteDWord(&keyLen, 0, strlen((LPCSTR)key) + 1);
         c->hr = IStream_Write(This->stm, &keyLen, sizeof(keyLen), &count);
         if (FAILED(c->hr))
             goto end;
@@ -1859,8 +1857,7 @@ static HRESULT PropertyStorage_WriteDictionaryToStream(
     hr = IStream_Seek(This->stm, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
         goto end;
-    StorageUtl_WriteDWord((LPBYTE)&dwTemp, 0,
-     dictionary_num_entries(This->name_to_propid));
+    StorageUtl_WriteDWord(&dwTemp, 0, dictionary_num_entries(This->name_to_propid));
     hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
     if (FAILED(hr))
         goto end;
@@ -1914,7 +1911,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     hr = IStream_Seek(This->stm, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
         goto end;
-    StorageUtl_WriteDWord((LPBYTE)&dwType, 0, var->vt);
+    StorageUtl_WriteDWord(&dwType, 0, var->vt);
     hr = IStream_Write(This->stm, &dwType, sizeof(dwType), &count);
     if (FAILED(hr))
         goto end;
@@ -1947,7 +1944,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     {
         DWORD dwTemp;
 
-        StorageUtl_WriteDWord((LPBYTE)&dwTemp, 0, var->u.lVal);
+        StorageUtl_WriteDWord(&dwTemp, 0, var->u.lVal);
         hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
         bytesWritten = count;
         break;
@@ -1960,7 +1957,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
             len = (lstrlenW(var->u.pwszVal) + 1) * sizeof(WCHAR);
         else
             len = lstrlenA(var->u.pszVal) + 1;
-        StorageUtl_WriteDWord((LPBYTE)&dwTemp, 0, len);
+        StorageUtl_WriteDWord(&dwTemp, 0, len);
         hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
         if (FAILED(hr))
             goto end;
@@ -1972,7 +1969,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     {
         DWORD len = lstrlenW(var->u.pwszVal) + 1, dwTemp;
 
-        StorageUtl_WriteDWord((LPBYTE)&dwTemp, 0, len);
+        StorageUtl_WriteDWord(&dwTemp, 0, len);
         hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
         if (FAILED(hr))
             goto end;
@@ -1996,8 +1993,8 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         DWORD cf_hdr[2], len;
 
         len = var->u.pclipdata->cbSize;
-        StorageUtl_WriteDWord((LPBYTE)&cf_hdr[0], 0, len + 8);
-        StorageUtl_WriteDWord((LPBYTE)&cf_hdr[1], 0, var->u.pclipdata->ulClipFmt);
+        StorageUtl_WriteDWord(&cf_hdr[0], 0, len + 8);
+        StorageUtl_WriteDWord(&cf_hdr[1], 0, var->u.pclipdata->ulClipFmt);
         hr = IStream_Write(This->stm, cf_hdr, sizeof(cf_hdr), &count);
         if (FAILED(hr))
             goto end;
@@ -2192,7 +2189,7 @@ static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *This)
     hr = IStream_Seek(This->stm, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
         goto end;
-    StorageUtl_WriteDWord((LPBYTE)&dwTemp, 0, sectionOffset);
+    StorageUtl_WriteDWord(&dwTemp, 0, sectionOffset);
     hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
 
 end:

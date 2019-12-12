@@ -6962,10 +6962,10 @@ void StorageUtl_ReadDWord(const BYTE* buffer, ULONG offset, DWORD* value)
   *value = lendian32toh(tmp);
 }
 
-void StorageUtl_WriteDWord(BYTE* buffer, ULONG offset, DWORD value)
+void StorageUtl_WriteDWord(void *buffer, ULONG offset, DWORD value)
 {
-  value = htole32(value);
-  memcpy(buffer+offset, &value, sizeof(DWORD));
+    value = htole32(value);
+    memcpy((BYTE *)buffer + offset, &value, sizeof(DWORD));
 }
 
 void StorageUtl_ReadULargeInteger(const BYTE* buffer, ULONG offset,
@@ -7896,7 +7896,7 @@ static void SmallBlockChainStream_SetNextBlockInChain(
 
   offsetOfBlockInDepot.QuadPart  = (ULONGLONG)blockIndex * sizeof(ULONG);
 
-  StorageUtl_WriteDWord((BYTE *)&buffer, 0, nextBlock);
+  StorageUtl_WriteDWord(&buffer, 0, nextBlock);
 
   /*
    * Read those bytes in the buffer from the small block file.

@@ -558,7 +558,7 @@ StgStreamImpl* StgStreamImpl_Construct(
 void StorageUtl_ReadWord(const BYTE* buffer, ULONG offset, WORD* value) DECLSPEC_HIDDEN;
 void StorageUtl_WriteWord(BYTE* buffer, ULONG offset, WORD value) DECLSPEC_HIDDEN;
 void StorageUtl_ReadDWord(const BYTE* buffer, ULONG offset, DWORD* value) DECLSPEC_HIDDEN;
-void StorageUtl_WriteDWord(BYTE* buffer, ULONG offset, DWORD value) DECLSPEC_HIDDEN;
+void StorageUtl_WriteDWord(void *buffer, ULONG offset, DWORD value) DECLSPEC_HIDDEN;
 void StorageUtl_ReadULargeInteger(const BYTE* buffer, ULONG offset,
  ULARGE_INTEGER* value) DECLSPEC_HIDDEN;
 void StorageUtl_WriteULargeInteger(BYTE* buffer, ULONG offset,
