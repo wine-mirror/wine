@@ -2665,7 +2665,7 @@ static void test_Extent(IWebBrowser2 *unk)
         trace("dpi: %d / %d\n", dpi_y, dpi_y);
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
-    ok(hres == S_OK, "Could not get IOleObkect: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
     if(FAILED(hres))
         return;
 
