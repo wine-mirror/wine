@@ -244,7 +244,7 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( const WCHAR *filename
  */
 static NTSTATUS create_nt_process( SECURITY_ATTRIBUTES *psa, SECURITY_ATTRIBUTES *tsa,
                                    BOOL inherit, DWORD flags, RTL_USER_PROCESS_PARAMETERS *params,
-                                   RTL_USER_PROCESS_INFORMATION *info )
+                                   RTL_USER_PROCESS_INFORMATION *info, HANDLE parent )
 {
     NTSTATUS status;
     UNICODE_STRING nameW;
@@ -257,7 +257,7 @@ static NTSTATUS create_nt_process( SECURITY_ATTRIBUTES *psa, SECURITY_ATTRIBUTES
         status = RtlCreateUserProcess( &nameW, OBJ_CASE_INSENSITIVE, params,
                                        psa ? psa->lpSecurityDescriptor : NULL,
                                        tsa ? tsa->lpSecurityDescriptor : NULL,
-                                       0, inherit, 0, 0, info );
+                                       parent, inherit, 0, 0, info );
         RtlFreeUnicodeString( &nameW );
     }
     return status;
@@ -288,7 +288,7 @@ static NTSTATUS create_vdm_process( SECURITY_ATTRIBUTES *psa, SECURITY_ATTRIBUTE
               winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
     RtlInitUnicodeString( &params->ImagePathName, winevdm );
     RtlInitUnicodeString( &params->CommandLine, newcmdline );
-    status = create_nt_process( psa, tsa, inherit, flags, params, info );
+    status = create_nt_process( psa, tsa, inherit, flags, params, info, NULL );
     HeapFree( GetProcessHeap(), 0, newcmdline );
     return status;
 }
@@ -316,7 +316,7 @@ static NTSTATUS create_cmd_process( SECURITY_ATTRIBUTES *psa, SECURITY_ATTRIBUTE
     swprintf( newcmdline, len, L"%s /s/c \"%s\"", comspec, params->CommandLine.Buffer );
     RtlInitUnicodeString( &params->ImagePathName, comspec );
     RtlInitUnicodeString( &params->CommandLine, newcmdline );
-    status = create_nt_process( psa, tsa, inherit, flags, params, info );
+    status = create_nt_process( psa, tsa, inherit, flags, params, info, NULL );
     RtlFreeHeap( GetProcessHeap(), 0, newcmdline );
     return status;
 }
@@ -368,7 +368,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessAsUserW( HANDLE token, const WCHAR *a
                                    inherit, flags, env, cur_dir, startup_info, info, NULL );
 }
 
-
 /**********************************************************************
  *           CreateProcessInternalA   (kernelbase.@)
  */
@@ -382,7 +381,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalA( HANDLE token, const char *
     BOOL ret = FALSE;
     WCHAR *app_nameW = NULL, *cmd_lineW = NULL, *cur_dirW = NULL;
     UNICODE_STRING desktopW, titleW;
-    STARTUPINFOW infoW;
+    STARTUPINFOEXW infoW;
 
     desktopW.Buffer = NULL;
     titleW.Buffer = NULL;
@@ -393,12 +392,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalA( HANDLE token, const char *
     if (startup_info->lpDesktop) RtlCreateUnicodeStringFromAsciiz( &desktopW, startup_info->lpDesktop );
     if (startup_info->lpTitle) RtlCreateUnicodeStringFromAsciiz( &titleW, startup_info->lpTitle );
 
-    memcpy( &infoW, startup_info, sizeof(infoW) );
-    infoW.lpDesktop = desktopW.Buffer;
-    infoW.lpTitle = titleW.Buffer;
+    memcpy( &infoW.StartupInfo, startup_info, sizeof(infoW.StartupInfo) );
+    infoW.StartupInfo.lpDesktop = desktopW.Buffer;
+    infoW.StartupInfo.lpTitle = titleW.Buffer;
+
+    if (flags & EXTENDED_STARTUPINFO_PRESENT)
+        infoW.lpAttributeList = ((STARTUPINFOEXW *)startup_info)->lpAttributeList;
 
     ret = CreateProcessInternalW( token, app_nameW, cmd_lineW, process_attr, thread_attr,
-                                  inherit, flags, env, cur_dirW, &infoW, info, new_token );
+                                  inherit, flags, env, cur_dirW, (STARTUPINFOW *)&infoW, info, new_token );
 done:
     RtlFreeHeap( GetProcessHeap(), 0, app_nameW );
     RtlFreeHeap( GetProcessHeap(), 0, cmd_lineW );
@@ -408,6 +410,22 @@ done:
     return ret;
 }
 
+struct proc_thread_attr
+{
+    DWORD_PTR attr;
+    SIZE_T size;
+    void *value;
+};
+
+struct _PROC_THREAD_ATTRIBUTE_LIST
+{
+    DWORD mask;  /* bitmask of items in list */
+    DWORD size;  /* max number of items in list */
+    DWORD count; /* number of items in list */
+    DWORD pad;
+    DWORD_PTR unk;
+    struct proc_thread_attr attrs[1];
+};
 
 /**********************************************************************
  *           CreateProcessInternalW   (kernelbase.@)
@@ -423,6 +441,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
     WCHAR *p, *tidy_cmdline = cmd_line;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     RTL_USER_PROCESS_INFORMATION rtl_info;
+    HANDLE parent = NULL;
     NTSTATUS status;
 
     /* Process the AppName and/or CmdLine to get module name and path */
@@ -473,7 +492,36 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
         goto done;
     }
 
-    status = create_nt_process( process_attr, thread_attr, inherit, flags, params, &rtl_info );
+    if (flags & EXTENDED_STARTUPINFO_PRESENT)
+    {
+        struct _PROC_THREAD_ATTRIBUTE_LIST *attrs =
+                (struct _PROC_THREAD_ATTRIBUTE_LIST *)((STARTUPINFOEXW *)startup_info)->lpAttributeList;
+        unsigned int i;
+
+        if (attrs)
+        {
+            for (i = 0; i < attrs->count; ++i)
+            {
+                switch(attrs->attrs[i].attr)
+                {
+                    case PROC_THREAD_ATTRIBUTE_PARENT_PROCESS:
+                        parent = *(HANDLE *)attrs->attrs[i].value;
+                        TRACE("PROC_THREAD_ATTRIBUTE_PARENT_PROCESS parent %p.\n", parent);
+                        if (!parent)
+                        {
+                            status = STATUS_INVALID_HANDLE;
+                            goto done;
+                        }
+                        break;
+                    default:
+                        FIXME("Unsupported attribute %#lx.\n", attrs->attrs[i].attr);
+                        break;
+                }
+            }
+        }
+    }
+
+    status = create_nt_process( process_attr, thread_attr, inherit, flags, params, &rtl_info, parent );
     switch (status)
     {
     case STATUS_SUCCESS:
@@ -1300,24 +1348,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetEnvironmentVariableW( LPCWSTR name, LPCWSTR val
 /***********************************************************************
  * Process/thread attribute lists
  ***********************************************************************/
-
-
-struct proc_thread_attr
-{
-    DWORD_PTR attr;
-    SIZE_T size;
-    void *value;
-};
-
-struct _PROC_THREAD_ATTRIBUTE_LIST
-{
-    DWORD mask;  /* bitmask of items in list */
-    DWORD size;  /* max number of items in list */
-    DWORD count; /* number of items in list */
-    DWORD pad;
-    DWORD_PTR unk;
-    struct proc_thread_attr attrs[1];
-};
 
 /***********************************************************************
  *           InitializeProcThreadAttributeList   (kernelbase.@)
