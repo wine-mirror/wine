@@ -36,7 +36,12 @@ struct recordset
 {
     _Recordset     Recordset_iface;
     LONG           refs;
+    LONG           state;
     struct fields *fields;
+    LONG           count;
+    LONG           allocated;
+    LONG           index;
+    VARIANT       *data;
 };
 
 struct fields
@@ -187,16 +192,51 @@ static HRESULT WINAPI field_get_Type( Field *iface, DataTypeEnum *type )
     return S_OK;
 }
 
+static LONG get_column_count( struct recordset *recordset )
+{
+    return recordset->fields->count;
+}
+
 static HRESULT WINAPI field_get_Value( Field *iface, VARIANT *val )
 {
-    FIXME( "%p, %p\n", iface, val );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+    ULONG row = field->recordset->index, col = field->index, col_count;
+    VARIANT copy;
+    HRESULT hr;
+
+    TRACE( "%p, %p\n", field, val );
+
+    if (field->recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (field->recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    col_count = get_column_count( field->recordset );
+
+    VariantInit( &copy );
+    if ((hr = VariantCopy( &copy, &field->recordset->data[row * col_count + col] )) != S_OK) return hr;
+
+    *val = copy;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_put_Value( Field *iface, VARIANT val )
 {
-    FIXME( "%p, %s\n", iface, debugstr_variant(&val) );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+    ULONG row = field->recordset->index, col = field->index, col_count;
+    VARIANT copy;
+    HRESULT hr;
+
+    TRACE( "%p, %s\n", field, debugstr_variant(&val) );
+
+    if (field->recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (field->recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    col_count = get_column_count( field->recordset );
+
+    VariantInit( &copy );
+    if ((hr = VariantCopy( &copy, &val )) != S_OK) return hr;
+
+    field->recordset->data[row * col_count + col] = copy;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_get_Precision( Field *iface, unsigned char *precision )
@@ -614,6 +654,22 @@ static ULONG WINAPI recordset_AddRef( _Recordset *iface )
     return refs;
 }
 
+static void close_recordset( struct recordset *recordset )
+{
+    ULONG row, col, col_count = get_column_count( recordset );
+
+    recordset->fields->recordset = NULL;
+    Fields_Release( &recordset->fields->Fields_iface );
+    recordset->fields = NULL;
+
+    for (row = 0; row < recordset->count; row++)
+        for (col = 0; col < col_count; col++) VariantClear( &recordset->data[row * col_count + col] );
+
+    recordset->count = recordset->allocated = recordset->index = 0;
+    heap_free( recordset->data );
+    recordset->data = NULL;
+}
+
 static ULONG WINAPI recordset_Release( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
@@ -622,7 +678,7 @@ static ULONG WINAPI recordset_Release( _Recordset *iface )
     if (!refs)
     {
         TRACE( "destroying %p\n", recordset );
-        recordset->fields->recordset = NULL;
+        close_recordset( recordset );
         heap_free( recordset );
     }
     return refs;
@@ -1264,6 +1320,7 @@ HRESULT Recordset_create( void **obj )
     if (!(recordset = heap_alloc_zero( sizeof(*recordset) ))) return E_OUTOFMEMORY;
     recordset->Recordset_iface.lpVtbl = &recordset_vtbl;
     recordset->refs = 1;
+    recordset->index = -1;
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );
