@@ -2133,7 +2133,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	/* Tell it "disabled" */
 	if (lpAnimInfo && lpAnimInfo->cbSize == sizeof(ANIMATIONINFO))
         {
-	    lpAnimInfo->iMinAnimate = 0; /* Minimise and restore animation is disabled (nonzero == enabled) */
+	    lpAnimInfo->iMinAnimate = 0; /* Minimize and restore animation is disabled (nonzero == enabled) */
             ret = TRUE;
         }
 	break;
