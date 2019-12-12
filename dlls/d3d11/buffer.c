@@ -448,7 +448,7 @@ static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *dev
 
     wined3d_desc.byte_width = buffer->desc.ByteWidth;
     wined3d_desc.usage = wined3d_usage_from_d3d11(buffer->desc.Usage);
-    wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(buffer->desc.BindFlags);
+    wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(buffer->desc.BindFlags, buffer->desc.MiscFlags);
     wined3d_desc.access = wined3d_access_from_d3d11(buffer->desc.Usage, buffer->desc.CPUAccessFlags);
     wined3d_desc.misc_flags = buffer->desc.MiscFlags;
     wined3d_desc.structure_byte_stride = buffer->desc.StructureByteStride;

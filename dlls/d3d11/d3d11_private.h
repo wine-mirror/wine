@@ -92,14 +92,33 @@ HRESULT d3d_set_private_data(struct wined3d_private_store *store,
 HRESULT d3d_set_private_data_interface(struct wined3d_private_store *store,
         REFGUID guid, const IUnknown *object) DECLSPEC_HIDDEN;
 
-static inline unsigned int wined3d_bind_flags_from_d3d11(UINT bind_flags)
+static inline unsigned int wined3d_bind_flags_from_d3d11(UINT bind_flags, UINT misc_flags)
 {
-    return bind_flags;
+    unsigned int wined3d_flags = bind_flags & (D3D11_BIND_VERTEX_BUFFER
+            | D3D11_BIND_INDEX_BUFFER
+            | D3D11_BIND_CONSTANT_BUFFER
+            | D3D11_BIND_SHADER_RESOURCE
+            | D3D11_BIND_STREAM_OUTPUT
+            | D3D11_BIND_RENDER_TARGET
+            | D3D11_BIND_DEPTH_STENCIL
+            | D3D11_BIND_UNORDERED_ACCESS);
+
+    if (misc_flags & D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS)
+        wined3d_flags |= WINED3D_BIND_INDIRECT_BUFFER;
+
+    return wined3d_flags;
 }
 
 static inline UINT d3d11_bind_flags_from_wined3d(unsigned int bind_flags)
 {
-    return bind_flags;
+    return bind_flags & (WINED3D_BIND_VERTEX_BUFFER
+            | WINED3D_BIND_INDEX_BUFFER
+            | WINED3D_BIND_CONSTANT_BUFFER
+            | WINED3D_BIND_SHADER_RESOURCE
+            | WINED3D_BIND_STREAM_OUTPUT
+            | WINED3D_BIND_RENDER_TARGET
+            | WINED3D_BIND_DEPTH_STENCIL
+            | WINED3D_BIND_UNORDERED_ACCESS);
 }
 
 /* ID3D11Texture1D, ID3D10Texture1D */

@@ -914,6 +914,7 @@ enum wined3d_shader_type
 #define WINED3D_BIND_RENDER_TARGET                              0x00000020
 #define WINED3D_BIND_DEPTH_STENCIL                              0x00000040
 #define WINED3D_BIND_UNORDERED_ACCESS                           0x00000080
+#define WINED3D_BIND_INDIRECT_BUFFER                            0x00000100
 
 #define WINED3DUSAGE_SOFTWAREPROCESSING                         0x00000010
 #define WINED3DUSAGE_DONOTCLIP                                  0x00000020

@@ -454,7 +454,7 @@ HRESULT d3d_texture1d_create(struct d3d_device *device, const D3D11_TEXTURE1D_DE
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.usage = wined3d_usage_from_d3d11(desc->Usage);
-    wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(desc->BindFlags);
+    wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(desc->BindFlags, desc->MiscFlags);
     wined3d_desc.access = wined3d_access_from_d3d11(desc->Usage,
             desc->Usage == D3D11_USAGE_DEFAULT ? 0 : desc->CPUAccessFlags);
     wined3d_desc.width = desc->Width;
@@ -1008,7 +1008,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     wined3d_desc.multisample_type = desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = desc->SampleDesc.Quality;
     wined3d_desc.usage = wined3d_usage_from_d3d11(desc->Usage);
-    wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(desc->BindFlags);
+    wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(desc->BindFlags, desc->MiscFlags);
     wined3d_desc.access = wined3d_access_from_d3d11(desc->Usage,
             desc->Usage == D3D11_USAGE_DEFAULT ? 0 : desc->CPUAccessFlags);
     wined3d_desc.width = desc->Width;
@@ -1467,7 +1467,7 @@ static HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_devi
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.usage = wined3d_usage_from_d3d11(desc->Usage);
-    wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(desc->BindFlags);
+    wined3d_desc.bind_flags = wined3d_bind_flags_from_d3d11(desc->BindFlags, desc->MiscFlags);
     wined3d_desc.access = wined3d_access_from_d3d11(desc->Usage,
             desc->Usage == D3D11_USAGE_DEFAULT ? 0 : desc->CPUAccessFlags);
     wined3d_desc.width = desc->Width;

@@ -4687,6 +4687,7 @@ const char *wined3d_debug_bind_flags(DWORD bind_flags)
     BIND_FLAG_TO_STR(WINED3D_BIND_RENDER_TARGET);
     BIND_FLAG_TO_STR(WINED3D_BIND_DEPTH_STENCIL);
     BIND_FLAG_TO_STR(WINED3D_BIND_UNORDERED_ACCESS);
+    BIND_FLAG_TO_STR(WINED3D_BIND_INDIRECT_BUFFER);
 #undef BIND_FLAG_TO_STR
     if (bind_flags)
         FIXME("Unrecognised bind flag(s) %#x.\n", bind_flags);

@@ -1300,6 +1300,10 @@ GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *g
     if (bind_flags & WINED3D_BIND_STREAM_OUTPUT)
         return GL_TRANSFORM_FEEDBACK_BUFFER;
 
+    if (bind_flags & WINED3D_BIND_INDIRECT_BUFFER
+            && gl_info->supported[ARB_DRAW_INDIRECT])
+        return GL_DRAW_INDIRECT_BUFFER;
+
     if (bind_flags & ~(WINED3D_BIND_VERTEX_BUFFER | WINED3D_BIND_INDEX_BUFFER))
         FIXME("Unhandled bind flags %#x.\n", bind_flags);
 
