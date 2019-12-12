@@ -18,6 +18,7 @@
  */
 
 #include "dmcompos_private.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
