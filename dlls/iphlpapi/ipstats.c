@@ -951,21 +951,26 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
         /* ip.forwarding is 0 or 1 on BSD */
         stats->u.dwForwarding = ip_forwarding+1;
         stats->dwDefaultTTL = ip_ttl;
-        stats->dwInDelivers = ip_stat.ips_delivered;
-        stats->dwInHdrErrors = ip_stat.ips_badhlen + ip_stat.ips_badsum + ip_stat.ips_tooshort + ip_stat.ips_badlen;
-        stats->dwInAddrErrors = ip_stat.ips_cantforward;
         stats->dwInReceives = ip_stat.ips_total;
+        stats->dwInHdrErrors = ip_stat.ips_badhlen + ip_stat.ips_badsum + ip_stat.ips_tooshort + ip_stat.ips_badlen +
+                               ip_stat.ips_badvers + ip_stat.ips_badoptions;
+        /* ips_badaddr also includes outgoing packets with a bad address, but we can't account for that right now */
+        stats->dwInAddrErrors = ip_stat.ips_cantforward + ip_stat.ips_badaddr + ip_stat.ips_notmember;
         stats->dwForwDatagrams = ip_stat.ips_forward;
         stats->dwInUnknownProtos = ip_stat.ips_noproto;
         stats->dwInDiscards = ip_stat.ips_fragdropped;
+        stats->dwInDelivers = ip_stat.ips_delivered;
+        stats->dwOutRequests = ip_stat.ips_localout;
+        /*stats->dwRoutingDiscards = 0;*/ /* FIXME */
         stats->dwOutDiscards = ip_stat.ips_odropped;
+        stats->dwOutNoRoutes = ip_stat.ips_noroute;
+        stats->dwReasmTimeout = ip_stat.ips_fragtimeout;
+        stats->dwReasmReqds = ip_stat.ips_fragments;
         stats->dwReasmOks = ip_stat.ips_reassembled;
+        stats->dwReasmFails = ip_stat.ips_fragments - ip_stat.ips_reassembled;
         stats->dwFragOks = ip_stat.ips_fragmented;
         stats->dwFragFails = ip_stat.ips_cantfrag;
-        stats->dwReasmTimeout = ip_stat.ips_fragtimeout;
-        stats->dwOutNoRoutes = ip_stat.ips_noroute;
-        stats->dwOutRequests = ip_stat.ips_localout;
-        stats->dwReasmReqds = ip_stat.ips_fragments;
+        stats->dwFragCreates = ip_stat.ips_ofragments;
         ret = NO_ERROR;
     }
 #else
