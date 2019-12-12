@@ -159,14 +159,24 @@ static HRESULT WINAPI field_get_DefinedSize( Field *iface, LONG *size )
 
 static HRESULT WINAPI field_get_Name( Field *iface, BSTR *str )
 {
-    FIXME( "%p, %p\n", iface, str );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+    BSTR name;
+
+    TRACE( "%p, %p\n", field, str );
+
+    if (!(name = SysAllocString( field->name ))) return E_OUTOFMEMORY;
+    *str = name;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_get_Type( Field *iface, DataTypeEnum *type )
 {
-    FIXME( "%p, %p\n", iface, type );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+
+    TRACE( "%p, %p\n", field, type );
+
+    *type = field->type;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_get_Value( Field *iface, VARIANT *val )
