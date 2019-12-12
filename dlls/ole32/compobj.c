@@ -4763,7 +4763,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
  * PARAMS
  *  pszName      [I] String representing the object.
  *  pBindOptions [I] Parameters affecting the binding to the named object.
- *  riid         [I] Interface to bind to on the objecct.
+ *  riid         [I] Interface to bind to on the object.
  *  ppv          [O] On output, the interface riid of the object represented
  *                   by pszName.
  *

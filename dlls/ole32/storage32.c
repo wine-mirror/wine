@@ -8621,7 +8621,7 @@ end:
  *  pwcsName  [ I] Unicode string with filename (can be relative or NULL)
  *  grfMode   [ I] Access mode for opening the new storage object (see STGM_ constants)
  *  reserved  [ ?] unused?, usually 0
- *  ppstgOpen [IO] A pointer to IStorage pointer to the new onject
+ *  ppstgOpen [IO] A pointer to IStorage pointer to the new object
  *
  * RETURNS
  *  S_OK if the file was successfully created
