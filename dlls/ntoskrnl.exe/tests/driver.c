@@ -800,7 +800,7 @@ static void test_call_driver(DEVICE_OBJECT *device)
     ok(irpsp->MajorFunction == IRP_MJ_FLUSH_BUFFERS, "MajorFunction = %u\n", irpsp->MajorFunction);
     ok(!irpsp->DeviceObject, "DeviceObject = %u\n", irpsp->DeviceObject);
     ok(!irpsp->FileObject, "FileObject = %u\n", irpsp->FileObject);
-    ok(!irpsp->CompletionRoutine, "CompletionRouptine = %p\n", irpsp->CompletionRoutine);
+    ok(!irpsp->CompletionRoutine, "CompletionRoutine = %p\n", irpsp->CompletionRoutine);
 
     status = IoCallDriver(device, irp);
     ok(status == STATUS_PENDING, "IoCallDriver returned %#x\n", status);
@@ -824,7 +824,7 @@ static void test_call_driver(DEVICE_OBJECT *device)
     ok(irpsp->MajorFunction == IRP_MJ_FLUSH_BUFFERS, "MajorFunction = %u\n", irpsp->MajorFunction);
     ok(!irpsp->DeviceObject, "DeviceObject = %u\n", irpsp->DeviceObject);
     ok(!irpsp->FileObject, "FileObject = %u\n", irpsp->FileObject);
-    ok(!irpsp->CompletionRoutine, "CompletionRouptine = %p\n", irpsp->CompletionRoutine);
+    ok(!irpsp->CompletionRoutine, "CompletionRoutine = %p\n", irpsp->CompletionRoutine);
 
     status = wait_single(&event, 0);
     ok(status == STATUS_TIMEOUT, "got %#x\n", status);
