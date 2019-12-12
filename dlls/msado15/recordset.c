@@ -901,8 +901,13 @@ static HRESULT WINAPI recordset_CancelUpdate( _Recordset *iface )
 
 static HRESULT WINAPI recordset_Close( _Recordset *iface )
 {
-    FIXME( "%p\n", iface );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p\n", recordset );
+
+    close_recordset( recordset );
+    recordset->state = adStateClosed;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_Delete( _Recordset *iface, AffectEnum affect_records )
@@ -950,9 +955,13 @@ static HRESULT WINAPI recordset_MoveLast( _Recordset *iface )
 static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT active_connection,
                                       CursorTypeEnum cursor_type, LockTypeEnum lock_type, LONG options )
 {
-    FIXME( "%p, %s, %s, %d, %d, %d\n", iface, debugstr_variant(&source), debugstr_variant(&active_connection),
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    FIXME( "%p, %s, %s, %d, %d, %d\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
            cursor_type, lock_type, options );
-    return E_NOTIMPL;
+
+    recordset->state = adStateOpen;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_Requery( _Recordset *iface, LONG options )
