@@ -60,25 +60,4 @@ typedef struct _DMUS_PRIVATE_CHUNK {
 	DWORD dwSize; /* size of the chunk */
 } DMUS_PRIVATE_CHUNK, *LPDMUS_PRIVATE_CHUNK;
 
-/* used for generic dumping (copied from ddraw) */
-typedef struct {
-    DWORD val;
-    const char* name;
-} flag_info;
-
-typedef struct {
-    const GUID *guid;
-    const char* name;
-} guid_info;
-
-#define FE(x) { x, #x }	
-#define GE(x) { &x, #x }
-
-/* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
-/* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
-/* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
-
 #endif	/* __WINE_DSWAVE_PRIVATE_H */

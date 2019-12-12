@@ -124,7 +124,8 @@ static HRESULT WINAPI wave_IDirectMusicObject_ParseDescriptor(IDirectMusicObject
     if (FAILED(hr))
         return hr;
 
-    TRACE("returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC(desc));
+    TRACE("returning descriptor:\n");
+    dump_DMUS_OBJECTDESC(desc);
     return S_OK;
 }
 
