@@ -72,7 +72,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bidi);
     Note:
 
       The list of bidirectional character types here is not grouped the
-      same way as the table 3-7, since the numberic values for the types
+      same way as the table 3-7, since the numeric values for the types
       are chosen to keep the state and action tables compact.
 ------------------------------------------------------------------------*/
 enum directions
@@ -1083,7 +1083,7 @@ search:
 }
 
 /*************************************************************
- *    BIDI_DeterminLevels
+ *    BIDI_DetermineLevels
  */
 BOOL BIDI_DetermineLevels(
                 const WCHAR *lpString,  /* [in] The string for which information is to be returned */

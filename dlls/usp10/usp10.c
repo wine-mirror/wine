@@ -3009,7 +3009,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
         else /* (glyph_index >= cGlyphs) */
             i = cChars;
 
-        /* If not snaping in the reverse direction (such as Hebrew) Then 0
+        /* If not snapping in the reverse direction (such as Hebrew) Then 0
            point flow to the next character */
         if (direction < 0)
         {

@@ -998,7 +998,7 @@ static inline BOOL left_join_causing(CHAR joining_type)
 
 static inline BOOL word_break_causing(WCHAR chr)
 {
-    /* we are working within a string of characters already guareented to
+    /* we are working within a string of characters already guaranteed to
        be within one script, Syriac, so we do not worry about any character
        other than the space character outside of that range */
     return (chr == 0 || chr == 0x20 );
