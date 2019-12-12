@@ -79,6 +79,21 @@ static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
 /* FIXME: this is not thread safe */
 static HANDLE console_wait_event;
 
+/* map input records to ASCII */
+static void input_records_WtoA( INPUT_RECORD *buffer, int count )
+{
+    UINT cp = GetConsoleCP();
+    int i;
+    char ch;
+
+    for (i = 0; i < count; i++)
+    {
+        if (buffer[i].EventType != KEY_EVENT) continue;
+        WideCharToMultiByte( cp, 0, &buffer[i].Event.KeyEvent.uChar.UnicodeChar, 1, &ch, 1, NULL, NULL );
+        buffer[i].Event.KeyEvent.uChar.AsciiChar = ch;
+    }
+}
+
 static struct termios S_termios;        /* saved termios for bare consoles */
 static BOOL S_termios_raw /* = FALSE */;
 
@@ -727,6 +742,30 @@ BOOL WINAPI AllocConsole(void)
 
 
 /***********************************************************************
+ *            ReadConsoleA   (KERNEL32.@)
+ */
+BOOL WINAPI ReadConsoleA( HANDLE handle, LPVOID buffer, DWORD length, DWORD *ret_count, void *reserved )
+{
+    LPWSTR strW = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
+    DWORD count = 0;
+    BOOL ret;
+
+    if (!strW)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    if ((ret = ReadConsoleW( handle, strW, length, &count, NULL )))
+    {
+        count = WideCharToMultiByte( GetConsoleCP(), 0, strW, count, buffer, length, NULL, NULL );
+        if (ret_count) *ret_count = count;
+    }
+    HeapFree( GetProcessHeap(), 0, strW );
+    return ret;
+}
+
+
+/***********************************************************************
  *            ReadConsoleW   (KERNEL32.@)
  */
 BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
@@ -797,6 +836,20 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 
     if (lpNumberOfCharsRead) *lpNumberOfCharsRead = charsread;
 
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *            ReadConsoleInputA   (KERNEL32.@)
+ */
+BOOL WINAPI ReadConsoleInputA( HANDLE handle, INPUT_RECORD *buffer, DWORD length, DWORD *count )
+{
+    DWORD read;
+
+    if (!ReadConsoleInputW( handle, buffer, length, &read )) return FALSE;
+    input_records_WtoA( buffer, read );
+    if (count) *count = read;
     return TRUE;
 }
 
@@ -1125,6 +1178,28 @@ static BOOL write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
 
     return TRUE;
 }
+
+
+/***********************************************************************
+ *            WriteConsoleA   (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleA( HANDLE handle, LPCVOID buffer, DWORD length,
+                                             DWORD *written, void *reserved )
+{
+    UINT cp = GetConsoleOutputCP();
+    LPWSTR strW;
+    DWORD lenW;
+    BOOL ret;
+
+    if (written) *written = 0;
+    lenW = MultiByteToWideChar( cp, 0, buffer, length, NULL, 0 );
+    if (!(strW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) ))) return FALSE;
+    MultiByteToWideChar( cp, 0, buffer, length, strW, lenW );
+    ret = WriteConsoleW( handle, strW, lenW, written, 0 );
+    HeapFree( GetProcessHeap(), 0, strW );
+    return ret;
+}
+
 
 /***********************************************************************
  *            WriteConsoleW   (KERNEL32.@)

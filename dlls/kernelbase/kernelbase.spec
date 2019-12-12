@@ -1234,8 +1234,8 @@
 @ stdcall RaiseException(long long long ptr)
 # @ stub RaiseFailFastException
 @ stdcall ReOpenFile(ptr long long long)
-@ stdcall ReadConsoleA(long ptr long ptr ptr)
-@ stdcall ReadConsoleInputA(long ptr long ptr)
+@ stdcall ReadConsoleA(long ptr long ptr ptr) kernel32.ReadConsoleA
+@ stdcall ReadConsoleInputA(long ptr long ptr) kernel32.ReadConsoleInputA
 @ stub ReadConsoleInputExA
 @ stub ReadConsoleInputExW
 @ stdcall ReadConsoleInputW(long ptr long ptr) kernel32.ReadConsoleInputW
@@ -1716,7 +1716,7 @@
 @ stdcall Wow64RevertWow64FsRedirection(ptr)
 # @ stub Wow64SetThreadDefaultGuestMachine
 # @ stub -arch=i386 Wow64Transition
-@ stdcall WriteConsoleA(long ptr long ptr ptr)
+@ stdcall WriteConsoleA(long ptr long ptr ptr) kernel32.WriteConsoleA
 @ stdcall WriteConsoleInputA(long ptr long ptr)
 @ stdcall WriteConsoleInputW(long ptr long ptr)
 @ stdcall WriteConsoleOutputA(long ptr long long ptr)

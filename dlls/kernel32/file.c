@@ -354,6 +354,61 @@ UINT WINAPI SetHandleCount( UINT count )
 }
 
 
+/*************************************************************************
+ *           ReadFile   (KERNEL32.@)
+ */
+BOOL WINAPI KERNEL32_ReadFile( HANDLE file, LPVOID buffer, DWORD count,
+                               LPDWORD result, LPOVERLAPPED overlapped )
+{
+    if (result) *result = 0;
+
+    if (is_console_handle( file ))
+    {
+        DWORD conread, mode;
+
+        if (!ReadConsoleA( file, buffer, count, &conread, NULL) || !GetConsoleMode( file, &mode ))
+            return FALSE;
+        /* ctrl-Z (26) means end of file on window (if at beginning of buffer)
+         * but Unix uses ctrl-D (4), and ctrl-Z is a bad idea on Unix :-/
+         * So map both ctrl-D ctrl-Z to EOF.
+         */
+        if ((mode & ENABLE_PROCESSED_INPUT) && conread > 0 &&
+            (((char *)buffer)[0] == 26 || ((char *)buffer)[0] == 4))
+        {
+            conread = 0;
+        }
+        if (result) *result = conread;
+        return TRUE;
+    }
+    return ReadFile( file, buffer, count, result, overlapped );
+}
+
+
+/*************************************************************************
+ *           WriteFile   (KERNEL32.@)
+ */
+BOOL WINAPI KERNEL32_WriteFile( HANDLE file, LPCVOID buffer, DWORD count,
+                                LPDWORD result, LPOVERLAPPED overlapped )
+{
+    if (is_console_handle( file )) return WriteConsoleA( file, buffer, count, result, NULL );
+    return WriteFile( file, buffer, count, result, overlapped );
+}
+
+
+/*************************************************************************
+ *           FlushFileBuffers   (KERNEL32.@)
+ */
+BOOL WINAPI KERNEL32_FlushFileBuffers( HANDLE file )
+{
+    IO_STATUS_BLOCK iosb;
+
+    /* this will fail (as expected) for an output handle */
+    if (is_console_handle( file )) return FlushConsoleInputBuffer( file );
+
+    return set_ntstatus( NtFlushBuffersFile( file, &iosb ));
+}
+
+
 /**************************************************************************
  *                      Operations on file names                          *
  **************************************************************************/

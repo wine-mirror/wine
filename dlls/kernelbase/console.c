@@ -663,46 +663,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH PeekConsoleInputW( HANDLE handle, INPUT_RECORD *bu
 }
 
 
-/***********************************************************************
- *	ReadConsoleA   (kernelbase.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleA( HANDLE handle, LPVOID buffer, DWORD length,
-                                            DWORD *ret_count, void *reserved )
-{
-    LPWSTR strW = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
-    DWORD count = 0;
-    BOOL ret;
-
-    if (!strW)
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-    }
-    if ((ret = ReadConsoleW( handle, strW, length, &count, NULL )))
-    {
-        count = WideCharToMultiByte( GetConsoleCP(), 0, strW, count, buffer, length, NULL, NULL );
-        if (ret_count) *ret_count = count;
-    }
-    HeapFree( GetProcessHeap(), 0, strW );
-    return ret;
-}
-
-
-/******************************************************************************
- *	ReadConsoleInputA   (kernelbase.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
-                                                 DWORD length, DWORD *count )
-{
-    DWORD read;
-
-    if (!ReadConsoleInputW( handle, buffer, length, &read )) return FALSE;
-    input_records_WtoA( buffer, read );
-    if (count) *count = read;
-    return TRUE;
-}
-
-
 /******************************************************************************
  *	ReadConsoleOutputAttribute   (kernelbase.@)
  */
@@ -1285,27 +1245,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleWindowInfo( HANDLE handle, BOOL absolute
     }
     SERVER_END_REQ;
 
-    return ret;
-}
-
-
-/***********************************************************************
- *	WriteConsoleA   (kernelbase.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleA( HANDLE handle, LPCVOID buffer, DWORD length,
-                                             DWORD *written, void *reserved )
-{
-    UINT cp = GetConsoleOutputCP();
-    LPWSTR strW;
-    DWORD lenW;
-    BOOL ret;
-
-    if (written) *written = 0;
-    lenW = MultiByteToWideChar( cp, 0, buffer, length, NULL, 0 );
-    if (!(strW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) ))) return FALSE;
-    MultiByteToWideChar( cp, 0, buffer, length, strW, lenW );
-    ret = WriteConsoleW( handle, strW, lenW, written, 0 );
-    HeapFree( GetProcessHeap(), 0, strW );
     return ret;
 }
 

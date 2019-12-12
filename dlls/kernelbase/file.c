@@ -2205,9 +2205,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlushFileBuffers( HANDLE file )
 {
     IO_STATUS_BLOCK iosb;
 
-    /* this will fail (as expected) for an output handle */
-    if (is_console_handle( file )) return FlushConsoleInputBuffer( file );
-
     return set_ntstatus( NtFlushBuffersFile( file, &iosb ));
 }
 
@@ -2631,25 +2628,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReadFile( HANDLE file, LPVOID buffer, DWORD count,
 
     if (result) *result = 0;
 
-    if (is_console_handle( file ))
-    {
-        DWORD conread, mode;
-
-        if (!ReadConsoleA( file, buffer, count, &conread, NULL) || !GetConsoleMode( file, &mode ))
-            return FALSE;
-        /* ctrl-Z (26) means end of file on window (if at beginning of buffer)
-         * but Unix uses ctrl-D (4), and ctrl-Z is a bad idea on Unix :-/
-         * So map both ctrl-D ctrl-Z to EOF.
-         */
-        if ((mode & ENABLE_PROCESSED_INPUT) && conread > 0 &&
-            (((char *)buffer)[0] == 26 || ((char *)buffer)[0] == 4))
-        {
-            conread = 0;
-        }
-        if (result) *result = conread;
-        return TRUE;
-    }
-
     if (overlapped)
     {
         offset.u.LowPart = overlapped->u.s.Offset;
@@ -2977,8 +2955,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteFile( HANDLE file, LPCVOID buffer, DWORD coun
     LPVOID cvalue = NULL;
 
     TRACE( "%p %p %d %p %p\n", file, buffer, count, result, overlapped );
-
-    if (is_console_handle( file )) return WriteConsoleA( file, buffer, count, result, NULL);
 
     if (overlapped)
     {
