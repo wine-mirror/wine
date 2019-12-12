@@ -216,7 +216,7 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
             declaration->position_transformed = TRUE;
 
         /* Find the streams used in the declaration. The vertex buffers have
-         * to be loaded when drawing, but filter tesselation pseudo streams. */
+         * to be loaded when drawing, but filter tessellation pseudo streams. */
         if (e->input_slot >= WINED3D_MAX_STREAMS)
             continue;
 

@@ -1472,7 +1472,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE) mod = "_SAT";
     else mod = "";
 
-    /* Fragment samplers always have indentity mapping */
+    /* Fragment samplers always have identity mapping */
     if(sampler_idx >= WINED3D_MAX_FRAGMENT_SAMPLERS)
     {
         sampler_idx = priv->cur_vs_args->vertex.samplers[sampler_idx - WINED3D_MAX_FRAGMENT_SAMPLERS];

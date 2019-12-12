@@ -4487,7 +4487,7 @@ static void wined3d_context_gl_draw_primitive_arrays(struct wined3d_context_gl *
      * this for now.
      *
      * Shouldn't be too hard to support with OpenGL, in theory just call
-     * glDrawArrays() instead of drawElements(). But the stream fequency value
+     * glDrawArrays() instead of drawElements(). But the stream frequency value
      * has a different meaning in that situation. */
     if (!idx_size)
     {
