@@ -1922,12 +1922,12 @@ struct attach_console_reply
 struct get_console_wait_event_request
 {
     struct request_header __header;
-    char __pad_12[4];
+    obj_handle_t handle;
 };
 struct get_console_wait_event_reply
 {
     struct reply_header __header;
-    obj_handle_t handle;
+    obj_handle_t event;
     char __pad_12[4];
 };
 
@@ -6702,6 +6702,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 593
+#define SERVER_PROTOCOL_VERSION 594
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

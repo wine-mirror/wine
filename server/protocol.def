@@ -1532,8 +1532,9 @@ struct console_renderer_event
 
 /* Get the input queue wait event */
 @REQ(get_console_wait_event)
+    obj_handle_t handle;        /* handle to the console */
 @REPLY
-    obj_handle_t handle;
+    obj_handle_t event;
 @END
 
 /* Get a console mode (input or output) */

@@ -1905,14 +1905,26 @@ static int cgwe_enum( struct process* process, void* user)
 DECL_HANDLER(get_console_wait_event)
 {
     struct console_input* console = NULL;
+    struct object *obj;
 
-    if (current->process->console)
-        console = (struct console_input*)grab_object( (struct object*)current->process->console );
+    if (req->handle)
+    {
+        if (!(obj = get_handle_obj( current->process, req->handle, FILE_READ_PROPERTIES, NULL ))) return;
+        if (obj->ops == &console_input_ops)
+            console = (struct console_input *)grab_object( obj );
+        else if (obj->ops == &screen_buffer_ops)
+            console = (struct console_input *)grab_object( ((struct screen_buffer *)obj)->input );
+        else
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        release_object( obj );
+    }
+    else if (current->process->console)
+        console = (struct console_input *)grab_object( current->process->console );
     else enum_processes(cgwe_enum, &console);
 
     if (console)
     {
-        reply->handle = alloc_handle( current->process, console->event, EVENT_ALL_ACCESS, 0 );
+        reply->event = alloc_handle( current->process, console->event, EVENT_ALL_ACCESS, 0 );
         release_object( console );
     }
     else set_error( STATUS_INVALID_PARAMETER );

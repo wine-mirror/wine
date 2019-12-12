@@ -2031,11 +2031,12 @@ static void dump_attach_console_reply( const struct attach_console_reply *req )
 
 static void dump_get_console_wait_event_request( const struct get_console_wait_event_request *req )
 {
+    fprintf( stderr, " handle=%04x", req->handle );
 }
 
 static void dump_get_console_wait_event_reply( const struct get_console_wait_event_reply *req )
 {
-    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, " event=%04x", req->event );
 }
 
 static void dump_get_console_mode_request( const struct get_console_mode_request *req )

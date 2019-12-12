@@ -310,7 +310,7 @@ HANDLE WINAPI GetConsoleInputWaitHandle(void)
         SERVER_START_REQ(get_console_wait_event)
         {
             if (!wine_server_call_err( req ))
-                console_wait_event = wine_server_ptr_handle( reply->handle );
+                console_wait_event = wine_server_ptr_handle( reply->event );
         }
         SERVER_END_REQ;
     }
