@@ -948,7 +948,8 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS stats, DWORD family)
             return ERROR_NOT_SUPPORTED;
         }
 
-        stats->u.dwForwarding = ip_forwarding;
+        /* ip.forwarding is 0 or 1 on BSD */
+        stats->u.dwForwarding = ip_forwarding+1;
         stats->dwDefaultTTL = ip_ttl;
         stats->dwInDelivers = ip_stat.ips_delivered;
         stats->dwInHdrErrors = ip_stat.ips_badhlen + ip_stat.ips_badsum + ip_stat.ips_tooshort + ip_stat.ips_badlen;
