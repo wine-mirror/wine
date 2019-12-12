@@ -62,14 +62,6 @@ static const char* debugstr_flags (DWORD flags, const flag_info* names, size_t n
 	return ptr;
 }
 
-/* dump DMUS_CONTAINER flags */
-static const char *debugstr_DMUS_CONTAINER_FLAGS (DWORD flagmask) {
-    static const flag_info flags[] = {
-	    FE(DMUS_CONTAINER_NOLOADS)
-	};
-    return debugstr_flags(flagmask, flags, ARRAY_SIZE(flags));
-}
-
 /* dump DMUS_CONTAINED_OBJF flags */
 static const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask) {
     static const flag_info flags[] = {
@@ -81,10 +73,11 @@ static const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask) {
 const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader) {
 	if (pHeader) {
 		char buffer[1024], *ptr = buffer;
-		
+
 		ptr += sprintf(ptr, "DMUS_IO_CONTAINER_HEADER (%p):", pHeader);
-		ptr += sprintf(ptr, "\n - dwFlags = %s", debugstr_DMUS_CONTAINER_FLAGS(pHeader->dwFlags));
-		
+		ptr += sprintf(ptr, "\n - dwFlags = %#x%s", pHeader->dwFlags,
+                        pHeader->dwFlags & DMUS_CONTAINER_NOLOADS ? " (DMUS_CONTAINER_NOLOADS)" : "");
+
 		return wine_dbg_sprintf("%s", buffer);
 	} else {
 		return wine_dbg_sprintf("(NULL)");
