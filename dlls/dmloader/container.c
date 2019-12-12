@@ -22,7 +22,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
-WINE_DECLARE_DEBUG_CHANNEL(dmdump);
 
 #define DMUS_MAX_CATEGORY_SIZE DMUS_MAX_CATEGORY*sizeof(WCHAR)
 #define DMUS_MAX_NAME_SIZE     DMUS_MAX_NAME*sizeof(WCHAR)
@@ -298,9 +297,8 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 						TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 						switch (Chunk.fccID) {
 							case DMUS_FOURCC_CONTAINER_CHUNK: {
-								TRACE_(dmfile)(": container header chunk\n");
 								IStream_Read (pStm, &This->Header, Chunk.dwSize, NULL);
-								TRACE_(dmdump)(": container header chunk:\n%s\n", debugstr_DMUS_IO_CONTAINER_HEADER(&This->Header));
+								TRACE_(dmfile)(": container header chunk:\n%s\n", debugstr_DMUS_IO_CONTAINER_HEADER(&This->Header));
 								break;	
 							}
 							case DMUS_FOURCC_GUID_CHUNK: {
@@ -403,14 +401,13 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 																		TRACE_(dmfile)(": alias chunk\n");
 																		pNewEntry->wszAlias = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
 																		IStream_Read (pStm, pNewEntry->wszAlias, Chunk.dwSize, NULL);
-																		TRACE_(dmdump)(": alias: %s\n", debugstr_w(pNewEntry->wszAlias));
+																		TRACE_(dmfile)(": alias: %s\n", debugstr_w(pNewEntry->wszAlias));
 																		break;
 																	}
 																	case DMUS_FOURCC_CONTAINED_OBJECT_CHUNK: {
 																		DMUS_IO_CONTAINED_OBJECT_HEADER tmpObjectHeader;
-																		TRACE_(dmfile)(": contained object header chunk\n");
 																		IStream_Read (pStm, &tmpObjectHeader, Chunk.dwSize, NULL);
-																		TRACE_(dmdump)(": contained object header:\n%s\n", debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER(&tmpObjectHeader));
+																		TRACE_(dmfile)(": contained object header:\n%s\n", debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER(&tmpObjectHeader));
 																		/* copy guidClass */
 																		pNewEntry->Desc.dwValidData |= DMUS_OBJ_CLASS;
 																		pNewEntry->Desc.guidClass = tmpObjectHeader.guidClassID;
