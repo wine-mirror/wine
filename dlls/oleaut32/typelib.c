@@ -4202,7 +4202,7 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI,
 	       letter of the name, else the next WORD is an offset to
 	       the arg type and paramName points to the first letter.
 	       So let's take one char off paramName and see if we're
-	       pointing at an alpha-numeric char.  However if *pArg is
+	       pointing at an alphanumeric char.  However if *pArg is
 	       0xffff or 0xfffe then the param has no name, the former
 	       meaning that the next WORD is the type, the latter
 	       meaning that the next WORD is an offset to the type. */

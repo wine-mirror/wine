@@ -176,7 +176,7 @@ done:
  *  (linked at run-time), as opposed to early-bound (linked at compile time).
  *
  *  The interface is used by objects that wish to called by scripting
- *  languages such as VBA, in order to minimise the amount of COM and C/C++
+ *  languages such as VBA, in order to minimize the amount of COM and C/C++
  *  knowledge required, or by objects that wish to live out of process from code
  *  that will call their methods.
  *
