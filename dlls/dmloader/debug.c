@@ -43,33 +43,6 @@ const char *resolve_STREAM_SEEK (DWORD flag) {
 	}
 }
 
-/* generic flag-dumping function */
-static const char* debugstr_flags (DWORD flags, const flag_info* names, size_t num_names){
-	static char buffer[128] = "", *ptr = &buffer[0];
-	unsigned int i;
-	int size = sizeof(buffer);
-		
-	for (i=0; i < num_names; i++) {
-		if ((flags & names[i].val)) {
-			int cnt = snprintf(ptr, size, "%s ", names[i].name);
-			if (cnt < 0 || cnt >= size) break;
-			size -= cnt;
-			ptr += cnt;
-		}
-	}
-	
-	ptr = &buffer[0];
-	return ptr;
-}
-
-/* dump DMUS_CONTAINED_OBJF flags */
-static const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask) {
-    static const flag_info flags[] = {
-	    FE(DMUS_CONTAINED_OBJF_KEEP)
-	};
-    return debugstr_flags(flagmask, flags, ARRAY_SIZE(flags));
-}
-
 const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader) {
 	if (pHeader) {
 		char buffer[1024], *ptr = buffer;
@@ -90,7 +63,8 @@ const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT
 		
 		ptr += sprintf(ptr, "DMUS_IO_CONTAINED_OBJECT_HEADER (%p):", pHeader);
 		ptr += sprintf(ptr, "\n - guidClassID = %s", debugstr_dmguid(&pHeader->guidClassID));
-		ptr += sprintf(ptr, "\n - dwFlags = %s", debugstr_DMUS_CONTAINED_OBJF_FLAGS (pHeader->dwFlags));
+		ptr += sprintf(ptr, "\n - dwFlags = %#x%s", pHeader->dwFlags,
+                        pHeader->dwFlags & DMUS_CONTAINED_OBJF_KEEP ? " (DMUS_CONTAINED_OBJF_KEEP)" : "");
 		ptr += sprintf(ptr, "\n - ckid = %s", debugstr_fourcc (pHeader->ckid));
 		ptr += sprintf(ptr, "\n - fccType = %s", debugstr_fourcc (pHeader->fccType));
 
