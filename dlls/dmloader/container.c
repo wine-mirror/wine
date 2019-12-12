@@ -18,7 +18,6 @@
  */
 
 #include "dmloader_private.h"
-#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
