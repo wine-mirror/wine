@@ -109,6 +109,8 @@ static struct list reg_mui_cache = LIST_INIT(reg_mui_cache); /* MRU */
 static unsigned int reg_mui_cache_count;
 #define REG_MUI_CACHE_SIZE 8
 
+#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+
 /* check if value type needs string conversion (Ansi<->Unicode) */
 static inline BOOL is_string( DWORD type )
 {
@@ -1374,7 +1376,7 @@ static DWORD query_perf_data(const WCHAR *query, DWORD *type, void *data, DWORD 
     data = pdb + 1;
     pdb->SystemNameOffset = sizeof(*pdb);
     pdb->SystemNameLength = (data_size - sizeof(*pdb)) / sizeof(WCHAR);
-    if (!GetComputerNameW(data, &pdb->SystemNameLength))
+    if (!GetComputerNameExW(ComputerNameNetBIOS, data, &pdb->SystemNameLength))
         return ERROR_MORE_DATA;
 
     pdb->SystemNameLength++;
@@ -3077,6 +3079,218 @@ BOOL WINAPI DECLSPEC_HOTPATCH DnsHostnameToComputerNameExW( const WCHAR *hostnam
     return TRUE;
 }
 
+
+/***********************************************************************
+ * GetComputerNameExA   (kernelbase.@)
+ */
+BOOL WINAPI GetComputerNameExA( COMPUTER_NAME_FORMAT type, char *name, DWORD *len )
+{
+    BOOL ret = FALSE;
+    DWORD lenA, lenW = 0;
+    WCHAR *buffer;
+
+    GetComputerNameExW( type, NULL, &lenW );
+    if (GetLastError() != ERROR_MORE_DATA) return FALSE;
+
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    if (GetComputerNameExW( type, buffer, &lenW ))
+    {
+        lenA = WideCharToMultiByte( CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL );
+        if (lenA > *len)
+        {
+            *len = lenA;
+            SetLastError( ERROR_MORE_DATA );
+        }
+        else
+        {
+            WideCharToMultiByte( CP_ACP, 0, buffer, -1, name, *len, NULL, NULL );
+            *len = lenA - 1;
+            ret = TRUE;
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return ret;
+}
+
+
+/***********************************************************************
+ * GetComputerNameExW   (kernelbase.@)
+ */
+BOOL WINAPI GetComputerNameExW( COMPUTER_NAME_FORMAT type, WCHAR *name, DWORD *len )
+{
+    const WCHAR *keyname, *valuename;
+    LRESULT ret;
+    HKEY key;
+
+    switch (type)
+    {
+    case ComputerNameNetBIOS:
+    case ComputerNamePhysicalNetBIOS:
+        keyname = L"System\\CurrentControlSet\\Control\\ComputerName\\ActiveComputerName";
+        valuename = L"ComputerName";
+        break;
+    case ComputerNameDnsHostname:
+    case ComputerNamePhysicalDnsHostname:
+        keyname = L"System\\CurrentControlSet\\Services\\Tcpip\\Parameters";
+        valuename = L"Hostname";
+        break;
+    case ComputerNameDnsDomain:
+    case ComputerNamePhysicalDnsDomain:
+        keyname = L"System\\CurrentControlSet\\Services\\Tcpip\\Parameters";
+        valuename = L"Domain";
+        break;
+    case ComputerNameDnsFullyQualified:
+    case ComputerNamePhysicalDnsFullyQualified:
+    {
+        WCHAR buffer[256];
+        DWORD size = ARRAY_SIZE(buffer);
+
+        if (!GetComputerNameExW( ComputerNameDnsHostname, buffer, &size )) return FALSE;
+        lstrcatW( buffer, L"." );
+        size = ARRAY_SIZE(buffer) - lstrlenW(buffer);
+        if (!GetComputerNameExW( ComputerNameDnsDomain, buffer + lstrlenW(buffer), &size )) return FALSE;
+        size = lstrlenW(buffer);
+        if (name && size < *len)
+        {
+            if (name) lstrcpyW( name, buffer );
+            *len = size;
+            return TRUE;
+        }
+        *len = size + 1;
+        SetLastError( ERROR_MORE_DATA );
+        return FALSE;
+    }
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!(ret = RegOpenKeyExW( HKEY_LOCAL_MACHINE, keyname, 0, KEY_READ, &key )))
+    {
+        DWORD size = *len * sizeof(WCHAR);
+        ret = RegQueryValueExW( key, valuename, NULL, NULL, (BYTE *)name, &size );
+        if (!name) ret = ERROR_MORE_DATA;
+        else if (!ret) size -= sizeof(WCHAR);
+        *len = size / sizeof(WCHAR);
+        RegCloseKey( key );
+    }
+    TRACE("-> %lu %s\n", ret, debugstr_w(name) );
+    if (ret) SetLastError( ret );
+    return !ret;
+}
+
+
+/***********************************************************************
+ * SetComputerNameA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetComputerNameA( const char *name )
+{
+    BOOL ret;
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    WCHAR *nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+
+    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, len );
+    ret = SetComputerNameExW( ComputerNamePhysicalNetBIOS, nameW );
+    HeapFree( GetProcessHeap(), 0, nameW );
+    return ret;
+}
+
+
+/***********************************************************************
+ * SetComputerNameW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetComputerNameW( const WCHAR *name )
+{
+    return SetComputerNameExW( ComputerNamePhysicalNetBIOS, name );
+}
+
+
+/***********************************************************************
+ * SetComputerNameExA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetComputerNameExA( COMPUTER_NAME_FORMAT type, const char *name )
+{
+    BOOL ret;
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    WCHAR *nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+
+    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, len );
+    ret = SetComputerNameExW( type, nameW );
+    HeapFree( GetProcessHeap(), 0, nameW );
+    return ret;
+}
+
+
+/***********************************************************************
+ * SetComputerNameExW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetComputerNameExW( COMPUTER_NAME_FORMAT type, const WCHAR *name )
+{
+    WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD size;
+    HKEY key;
+    LRESULT ret;
+
+    TRACE( "%u %s\n", type, debugstr_w( name ));
+
+    switch (type)
+    {
+    case ComputerNameDnsHostname:
+    case ComputerNamePhysicalDnsHostname:
+        ret = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                               0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL );
+        if (ret) break;
+        ret = RegSetValueExW( key, L"Hostname", 0, REG_SZ,
+                              (BYTE *)name, (lstrlenW(name) + 1) * sizeof(WCHAR) );
+        RegCloseKey( key );
+        /* fall through */
+
+    case ComputerNameNetBIOS:
+    case ComputerNamePhysicalNetBIOS:
+        /* @@ Wine registry key: HKCU\Software\Wine\Network */
+        if (!RegOpenKeyExW( HKEY_CURRENT_USER, L"Software\\Wine\\Network", 0, KEY_READ, &key ))
+        {
+            BOOL use_dns = TRUE;
+            size = sizeof(buffer);
+            if (!RegQueryValueExW( key, L"UseDnsComputerName", NULL, NULL, (BYTE *)buffer, &size ))
+                use_dns = IS_OPTION_TRUE( buffer[0] );
+            RegCloseKey( key );
+            if (!use_dns)
+            {
+                ret = ERROR_ACCESS_DENIED;
+                break;
+            }
+        }
+        size = ARRAY_SIZE( buffer );
+        if (!DnsHostnameToComputerNameExW( name, buffer, &size )) return FALSE;
+        ret = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\ComputerName\\ComputerName",
+                               0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL );
+        if (ret) break;
+        ret = RegSetValueExW( key, L"ComputerName", 0, REG_SZ,
+                              (BYTE *)buffer, (lstrlenW(buffer) + 1) * sizeof(WCHAR) );
+        RegCloseKey( key );
+        break;
+
+    case ComputerNameDnsDomain:
+    case ComputerNamePhysicalDnsDomain:
+        ret = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                               0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL );
+        if (ret) break;
+        ret = RegSetValueExW( key, L"Domain", 0, REG_SZ,
+                              (BYTE *)name, (lstrlenW(name) + 1) * sizeof(WCHAR) );
+        RegCloseKey( key );
+        break;
+    default:
+        ret = ERROR_INVALID_PARAMETER;
+        break;
+    }
+    if (ret) SetLastError( ret );
+    return !ret;
+}
 
 struct USKEY
 {

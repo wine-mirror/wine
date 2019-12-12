@@ -437,8 +437,8 @@
 @ stdcall GetCommandLineW()
 @ stdcall GetCompressedFileSizeA(long ptr)
 @ stdcall GetCompressedFileSizeW(long ptr)
-@ stdcall GetComputerNameExA(long ptr ptr) kernel32.GetComputerNameExA
-@ stdcall GetComputerNameExW(long ptr ptr) kernel32.GetComputerNameExW
+@ stdcall GetComputerNameExA(long ptr ptr)
+@ stdcall GetComputerNameExW(long ptr ptr)
 @ stdcall GetConsoleCP()
 @ stdcall GetConsoleCursorInfo(long ptr)
 @ stdcall GetConsoleInputExeNameA(long ptr)
@@ -1397,11 +1397,11 @@
 @ stdcall SetCommMask(long long)
 @ stdcall SetCommState(long ptr)
 @ stdcall SetCommTimeouts(long ptr)
-@ stdcall SetComputerNameA(str) kernel32.SetComputerNameA
+@ stdcall SetComputerNameA(str)
 # @ stub SetComputerNameEx2W
-@ stdcall SetComputerNameExA(long str) kernel32.SetComputerNameExA
-@ stdcall SetComputerNameExW(long wstr) kernel32.SetComputerNameExW
-@ stdcall SetComputerNameW(wstr) kernel32.SetComputerNameW
+@ stdcall SetComputerNameExA(long str)
+@ stdcall SetComputerNameExW(long wstr)
+@ stdcall SetComputerNameW(wstr)
 @ stdcall SetConsoleActiveScreenBuffer(long)
 @ stdcall SetConsoleCP(long)
 @ stdcall SetConsoleCtrlHandler(ptr long) kernel32.SetConsoleCtrlHandler
