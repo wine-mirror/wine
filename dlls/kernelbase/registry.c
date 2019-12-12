@@ -3046,6 +3046,38 @@ LSTATUS WINAPI RegLoadAppKeyW(const WCHAR *file, HKEY *result, REGSAM sam, DWORD
 }
 
 
+/***********************************************************************
+ * DnsHostnameToComputerNameExW   (kernelbase.@)
+ *
+ * FIXME: how is this different from the non-Ex function?
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH DnsHostnameToComputerNameExW( const WCHAR *hostname, WCHAR *computername,
+                                                            DWORD *size )
+{
+    static const WCHAR allowed[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&')(-_{}";
+    WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD i, len;
+
+    lstrcpynW( buffer, hostname, MAX_COMPUTERNAME_LENGTH + 1 );
+    len = lstrlenW( buffer );
+    if (*size < len + 1)
+    {
+        *size = len;
+        SetLastError( ERROR_MORE_DATA );
+        return FALSE;
+    }
+    *size = len;
+    if (!computername) return FALSE;
+    for (i = 0; i < len; i++)
+    {
+        if (buffer[i] >= 'a' && buffer[i] <= 'z') computername[i] = buffer[i] + 'A' - 'a';
+        else computername[i] = wcschr( allowed, buffer[i] ) ? buffer[i] : '_';
+    }
+    computername[len] = 0;
+    return TRUE;
+}
+
+
 struct USKEY
 {
     HKEY  HKCUstart; /* Start key in CU hive */

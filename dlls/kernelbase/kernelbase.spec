@@ -267,7 +267,7 @@
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) ntdll.TpDisassociateCallback
 # @ stub DiscardVirtualMemory
 @ stdcall DisconnectNamedPipe(long)
-# @ stub DnsHostnameToComputerNameExW
+@ stdcall DnsHostnameToComputerNameExW(wstr ptr ptr)
 # @ stub DsBindWithSpnExW
 # @ stub DsCrackNamesW
 # @ stub DsFreeDomainControllerInfoW
