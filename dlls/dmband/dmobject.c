@@ -219,6 +219,59 @@ const char *debugstr_dmguid(const GUID *id) {
     return debugstr_guid(id);
 }
 
+void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *desc)
+{
+    if (!desc || !TRACE_ON(dmfile))
+        return;
+
+    TRACE_(dmfile)("DMUS_OBJECTDESC (%p):", desc);
+    TRACE_(dmfile)(" - dwSize = %u\n", desc->dwSize);
+
+#define X(flag) if (desc->dwValidData & flag) TRACE_(dmfile)(#flag " ")
+    TRACE_(dmfile)(" - dwValidData = %#08x ( ", desc->dwValidData);
+    X(DMUS_OBJ_OBJECT);
+    X(DMUS_OBJ_CLASS);
+    X(DMUS_OBJ_NAME);
+    X(DMUS_OBJ_CATEGORY);
+    X(DMUS_OBJ_FILENAME);
+    X(DMUS_OBJ_FULLPATH);
+    X(DMUS_OBJ_URL);
+    X(DMUS_OBJ_VERSION);
+    X(DMUS_OBJ_DATE);
+    X(DMUS_OBJ_LOADED);
+    X(DMUS_OBJ_MEMORY);
+    X(DMUS_OBJ_STREAM);
+    TRACE_(dmfile)(")\n");
+#undef X
+
+    if (desc->dwValidData & DMUS_OBJ_CLASS)
+        TRACE_(dmfile)(" - guidClass = %s\n", debugstr_dmguid(&desc->guidClass));
+    if (desc->dwValidData & DMUS_OBJ_OBJECT)
+        TRACE_(dmfile)(" - guidObject = %s\n", debugstr_guid(&desc->guidObject));
+
+    if (desc->dwValidData & DMUS_OBJ_DATE) {
+        SYSTEMTIME time;
+        FileTimeToSystemTime(&desc->ftDate, &time);
+        TRACE_(dmfile)(" - ftDate = \'%04u-%02u-%02u %02u:%02u:%02u\'\n",
+                time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
+    }
+    if (desc->dwValidData & DMUS_OBJ_VERSION)
+        TRACE_(dmfile)(" - vVersion = \'%u,%u,%u,%u\'\n",
+                HIWORD(desc->vVersion.dwVersionMS), LOWORD(desc->vVersion.dwVersionMS),
+                HIWORD(desc->vVersion.dwVersionLS), LOWORD(desc->vVersion.dwVersionLS));
+    if (desc->dwValidData & DMUS_OBJ_NAME)
+        TRACE_(dmfile)(" - wszName = %s\n", debugstr_w(desc->wszName));
+    if (desc->dwValidData & DMUS_OBJ_CATEGORY)
+        TRACE_(dmfile)(" - wszCategory = %s\n", debugstr_w(desc->wszCategory));
+    if (desc->dwValidData & DMUS_OBJ_FILENAME)
+        TRACE_(dmfile)(" - wszFileName = %s\n", debugstr_w(desc->wszFileName));
+    if (desc->dwValidData & DMUS_OBJ_MEMORY)
+        TRACE_(dmfile)(" - llMemLength = 0x%s - pbMemData = %p\n",
+                wine_dbgstr_longlong(desc->llMemLength), desc->pbMemData);
+    if (desc->dwValidData & DMUS_OBJ_STREAM)
+        TRACE_(dmfile)(" - pStream = %p\n", desc->pStream);
+}
+
 
 /* RIFF format parsing */
 #define CHUNK_HDR_SIZE (sizeof(FOURCC) + sizeof(DWORD))

@@ -108,6 +108,7 @@ HRESULT WINAPI unimpl_IPersistStream_GetSizeMax(IPersistStream *iface,
 /* Debugging helpers */
 const char *debugstr_chunk(const struct chunk_entry *chunk) DECLSPEC_HIDDEN;
 const char *debugstr_dmguid(const GUID *id) DECLSPEC_HIDDEN;
+void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *desc) DECLSPEC_HIDDEN;
 
 static inline const char *debugstr_fourcc(DWORD fourcc)
 {

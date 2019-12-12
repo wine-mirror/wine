@@ -158,7 +158,7 @@ static HRESULT WINAPI band_IDirectMusicObject_ParseDescriptor(IDirectMusicObject
     }
 
     TRACE("returning descriptor:\n");
-    debug_DMUS_OBJECTDESC(desc);
+    dump_DMUS_OBJECTDESC(desc);
     return S_OK;
 }
 

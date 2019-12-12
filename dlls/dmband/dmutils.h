@@ -34,18 +34,4 @@ extern HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_C
 extern HRESULT IDirectMusicUtils_IPersistStream_ParseUNFOGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
 extern HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicObject** ppObject) DECLSPEC_HIDDEN;
 
-/**
- * Debug utilities
- */
-/* used for generic dumping (copied from ddraw) */
-typedef struct {
-    DWORD val;
-    const char* name;
-} flag_info;
-
-/* used for initialising structs */
-#define FE(x) { x, #x }	
-
-extern void        debug_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
-
 #endif /* __WINE_DMUTILS_H */
