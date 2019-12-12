@@ -101,7 +101,9 @@ static void test_Fields(void)
     Field *field, *field2;
     VARIANT val, index;
     BSTR name;
-    LONG refs, count;
+    LONG refs, count, size;
+    DataTypeEnum type;
+    FieldAttributeEnum attrs;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
@@ -163,6 +165,24 @@ static void test_Fields(void)
     ok( refs == 1, "got %d\n", refs );
     Field_Release( field2 );
     SysFreeString( name );
+
+    /* verify values set with _Append */
+    hr = Field_get_Name( field, &name );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW( name, L"field" ), "got %s\n", wine_dbgstr_w(name) );
+    SysFreeString( name );
+    type = 0xdead;
+    hr = Field_get_Type( field, &type );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( type == adInteger, "got %d\n", type );
+    size = -1;
+    hr = Field_get_DefinedSize( field, &size );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( size == 4, "got %d\n", size );
+    attrs = 0xdead;
+    hr = Field_get_Attributes( field, &attrs );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !attrs, "got %d\n", attrs );
 
     Field_Release( field );
     Fields_Release( fields );

@@ -147,14 +147,22 @@ static HRESULT WINAPI field_get_ActualSize( Field *iface, LONG *size )
 
 static HRESULT WINAPI field_get_Attributes( Field *iface, LONG *attrs )
 {
-    TRACE( "%p, %p\n", iface, attrs );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+
+    TRACE( "%p, %p\n", field, attrs );
+
+    *attrs = field->attrs;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_get_DefinedSize( Field *iface, LONG *size )
 {
-    FIXME( "%p, %p\n", iface, size );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+
+    TRACE( "%p, %p\n", field, size );
+
+    *size = field->defined_size;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_get_Name( Field *iface, BSTR *str )
