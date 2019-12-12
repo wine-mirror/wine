@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include "dmusic_private.h"
+#include "dmobject.h"
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);

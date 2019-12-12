@@ -242,13 +242,7 @@ typedef struct {
     const char* name;
 } flag_info;
 
-typedef struct {
-    const GUID *guid;
-    const char* name;
-} guid_info;
-
 #define FE(x) { x, #x }	
-#define GE(x) { &x, #x }
 
 /* dwPatch from MIDILOCALE */
 extern DWORD MIDILOCALE2Patch (const MIDILOCALE *pLocale) DECLSPEC_HIDDEN;
@@ -257,12 +251,6 @@ extern void Patch2MIDILOCALE (DWORD dwPatch, LPMIDILOCALE pLocale) DECLSPEC_HIDD
 
 /* check whether the given DWORD is even (return 0) or odd (return 1) */
 extern int even_or_odd (DWORD number) DECLSPEC_HIDDEN;
-/* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
-/* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
-/* Dump whole DMUS_OBJECTDESC struct */
-extern void dump_DMUS_OBJECTDESC(LPDMUS_OBJECTDESC desc) DECLSPEC_HIDDEN;
 /* Dump whole DMUS_PORTPARAMS struct */
 extern void dump_DMUS_PORTPARAMS(LPDMUS_PORTPARAMS params) DECLSPEC_HIDDEN;
 
