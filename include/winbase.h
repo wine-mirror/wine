@@ -1262,7 +1262,7 @@ typedef struct COPYFILE2_EXTENDED_PARAMETERS
 #define ACTCTX_FLAG_SOURCE_IS_ASSEMBLYREF         (0x00000040)
 #define ACTCTX_FLAG_HMODULE_VALID                 (0x00000080)
 
-/* flags to DeactiveActCtx */
+/* flags to DeactivateActCtx */
 #define DEACTIVATE_ACTCTX_FLAG_FORCE_EARLY_DEACTIVATION  (0x00000001)
 
 /* flags to FindActCtxSection{Guid,String[AW]} */
