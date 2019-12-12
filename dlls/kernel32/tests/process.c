@@ -3861,14 +3861,14 @@ void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
 
         memset(&parent_data, 0, sizeof(parent_data));
         ret = ReadFile(read_pipe, &parent_data, sizeof(parent_data), &size, NULL);
-        todo_wine_if(level == 2) ok((level == 2 && ret) || (level == 1 && !ret && GetLastError() == ERROR_INVALID_HANDLE),
+        ok((level == 2 && ret) || (level == 1 && !ret && GetLastError() == ERROR_INVALID_HANDLE),
                 "Got unexpected ret %#x, level %u, GetLastError() %u.\n",
                 ret, level, GetLastError());
     }
 
     if (level == 2)
     {
-        todo_wine ok(parent_id == parent_data.parent_id, "Got parent id %u, parent_data.parent_id %u.\n",
+        ok(parent_id == parent_data.parent_id, "Got parent id %u, parent_data.parent_id %u.\n",
                 parent_id, parent_data.parent_id);
         return;
     }

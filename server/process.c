@@ -1116,7 +1116,8 @@ DECL_HANDLER(new_process)
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
     struct process *process = NULL;
-    struct process *parent = current->process;
+    struct process *parent;
+    struct thread *parent_thread = current;
     int socket_fd = thread_get_inflight_fd( current, req->socket_fd );
 
     if (socket_fd == -1)
@@ -1148,11 +1149,23 @@ DECL_HANDLER(new_process)
         return;
     }
 
+    if (req->parent_process)
+    {
+        if (!(parent = get_process_from_handle( req->parent_process, PROCESS_CREATE_PROCESS)))
+        {
+            close( socket_fd );
+            return;
+        }
+        parent_thread = NULL;
+    }
+    else parent = (struct process *)grab_object( current->process );
+
     if (parent->job && (req->create_flags & CREATE_BREAKAWAY_FROM_JOB) &&
         !(parent->job->limit_flags & (JOB_OBJECT_LIMIT_BREAKAWAY_OK | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK)))
     {
         set_error( STATUS_ACCESS_DENIED );
         close( socket_fd );
+        release_object( parent );
         return;
     }
 
@@ -1160,6 +1173,7 @@ DECL_HANDLER(new_process)
     if (!(info = alloc_object( &startup_info_ops )))
     {
         close( socket_fd );
+        release_object( parent );
         return;
     }
     info->process  = NULL;
@@ -1222,7 +1236,7 @@ DECL_HANDLER(new_process)
     }
 
     /* connect to the window station */
-    connect_process_winstation( process, current );
+    connect_process_winstation( process, parent_thread, parent );
 
     /* set the process console */
     if (!(req->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
@@ -1231,7 +1245,7 @@ DECL_HANDLER(new_process)
          * like if hConOut and hConIn are console handles, then they should be on the same
          * physical console
          */
-        inherit_console( current, process, req->inherit_all ? info->data->hstdin : 0 );
+        inherit_console( parent_thread, parent, process, req->inherit_all ? info->data->hstdin : 0 );
     }
 
     if (!req->inherit_all && !(req->create_flags & CREATE_NEW_CONSOLE))
@@ -1246,16 +1260,15 @@ DECL_HANDLER(new_process)
         if (get_error() == STATUS_INVALID_HANDLE ||
             get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();
     }
-
     /* attach to the debugger if requested */
     if (req->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
     {
         set_process_debugger( process, current );
         process->debug_children = !(req->create_flags & DEBUG_ONLY_THIS_PROCESS);
     }
-    else if (parent->debugger && parent->debug_children)
+    else if (current->process->debugger && current->process->debug_children)
     {
-        set_process_debugger( process, parent->debugger );
+        set_process_debugger( process, current->process->debugger );
         /* debug_children is set to 1 by default */
     }
 
@@ -1265,10 +1278,11 @@ DECL_HANDLER(new_process)
     info->process = (struct process *)grab_object( process );
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, 0 );
     reply->pid = get_process_id( process );
-    reply->handle = alloc_handle_no_access_check( parent, process, req->access, objattr->attributes );
+    reply->handle = alloc_handle_no_access_check( current->process, process, req->access, objattr->attributes );
 
  done:
     if (process) release_object( process );
+    release_object( parent );
     release_object( info );
 }
 

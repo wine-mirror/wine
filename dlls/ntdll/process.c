@@ -1709,6 +1709,7 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
 
     SERVER_START_REQ( new_process )
     {
+        req->parent_process = wine_server_obj_handle(parent);
         req->inherit_all    = inherit;
         req->create_flags   = params->DebugFlags; /* hack: creation flags stored in DebugFlags for now */
         req->socket_fd      = socketfd[1];

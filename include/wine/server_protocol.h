@@ -769,6 +769,7 @@ struct rawinput_device
 struct new_process_request
 {
     struct request_header __header;
+    obj_handle_t parent_process;
     int          inherit_all;
     unsigned int create_flags;
     int          socket_fd;
@@ -779,6 +780,7 @@ struct new_process_request
     /* VARARG(objattr,object_attributes); */
     /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
+    char __pad_44[4];
 };
 struct new_process_reply
 {
@@ -6702,6 +6704,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 594
+#define SERVER_PROTOCOL_VERSION 595
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

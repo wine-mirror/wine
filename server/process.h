@@ -141,7 +141,8 @@ extern struct process_snapshot *process_snap( int *count );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
 /* console functions */
-extern void inherit_console(struct thread *parent_thread, struct process *process, obj_handle_t hconin);
+extern void inherit_console( struct thread *parent_thread, struct process *parent,
+                             struct process *process, obj_handle_t hconin );
 extern int free_console( struct process *process );
 extern struct thread *console_get_renderer( struct console_input *console );
 
