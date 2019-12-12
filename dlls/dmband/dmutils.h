@@ -43,17 +43,8 @@ typedef struct {
     const char* name;
 } flag_info;
 
-typedef struct {
-    const GUID *guid;
-    const char* name;
-} guid_info;
-
 /* used for initialising structs */
 #define FE(x) { x, #x }	
-#define GE(x) { &x, #x }
-
-/* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 
 extern void        debug_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
 

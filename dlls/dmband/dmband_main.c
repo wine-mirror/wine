@@ -19,6 +19,7 @@
 
 #include "dmband_private.h"
 #include "rpcproxy.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 
