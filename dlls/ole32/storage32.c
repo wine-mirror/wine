@@ -6948,10 +6948,10 @@ void StorageUtl_ReadWord(const BYTE* buffer, ULONG offset, WORD* value)
   *value = lendian16toh(tmp);
 }
 
-void StorageUtl_WriteWord(BYTE* buffer, ULONG offset, WORD value)
+void StorageUtl_WriteWord(void *buffer, ULONG offset, WORD value)
 {
-  value = htole16(value);
-  memcpy(buffer+offset, &value, sizeof(WORD));
+    value = htole16(value);
+    memcpy((BYTE *)buffer + offset, &value, sizeof(WORD));
 }
 
 void StorageUtl_ReadDWord(const BYTE* buffer, ULONG offset, DWORD* value)

@@ -1708,9 +1708,8 @@ static void PropertyStorage_MakeHeader(PropertyStorage_impl *This,
  PROPERTYSETHEADER *hdr)
 {
     assert(hdr);
-    StorageUtl_WriteWord((BYTE *)&hdr->wByteOrder, 0,
-     PROPSETHDR_BYTEORDER_MAGIC);
-    StorageUtl_WriteWord((BYTE *)&hdr->wFormat, 0, This->format);
+    StorageUtl_WriteWord(&hdr->wByteOrder, 0, PROPSETHDR_BYTEORDER_MAGIC);
+    StorageUtl_WriteWord(&hdr->wFormat, 0, This->format);
     StorageUtl_WriteDWord(&hdr->dwOSVer, 0, This->originatorOS);
     StorageUtl_WriteGUID((BYTE *)&hdr->clsid, 0, &This->clsid);
     StorageUtl_WriteDWord(&hdr->reserved, 0, 1);
@@ -1934,7 +1933,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     {
         WORD wTemp;
 
-        StorageUtl_WriteWord((LPBYTE)&wTemp, 0, var->u.iVal);
+        StorageUtl_WriteWord(&wTemp, 0, var->u.iVal);
         hr = IStream_Write(This->stm, &wTemp, sizeof(wTemp), &count);
         bytesWritten = count;
         break;
