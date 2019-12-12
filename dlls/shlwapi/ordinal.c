@@ -4635,7 +4635,7 @@ static const struct objcompat_entry objcompat_table[] = {
  * in registry for CLSID under ShellCompatibility subkey.
  *
  * PARAMS
- *  pUnk:  pointer to object IUnknown interface, idetifies CLSID
+ *  pUnk:  pointer to object IUnknown interface, identifies CLSID
  *  clsid: pointer to CLSID to retrieve data for
  *
  * RETURNS

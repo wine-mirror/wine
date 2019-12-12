@@ -1485,7 +1485,7 @@ static void test_IConnectionPoint(void)
     rc = pConnectToConnectionPoint(NULL, &IID_NULL, FALSE, (IUnknown*)container, &cookie, NULL);
     ok(rc == S_OK, "pConnectToConnectionPoint failed with %x\n",rc);
 
-/* MSDN says this should be required but it crashs on XP
+/* MSDN says this should be required but it crashes on XP
     IUnknown_Release(point);
 */
     ref = IUnknown_Release((IUnknown*)container);
