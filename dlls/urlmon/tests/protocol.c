@@ -3160,7 +3160,7 @@ static void test_file_protocol(void) {
     lstrcatW(buf, fragmentW);
     test_file_protocol_url(buf);
 
-    /* Fragment part is considered a part of the file name, if the file exsists. */
+    /* Fragment part is considered a part of the file name, if the file exists. */
     len = lstrlenW(file_name_buf);
     lstrcpyW(file_name_buf+len, fragmentW);
     file = CreateFileW(wszIndexHtml, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
