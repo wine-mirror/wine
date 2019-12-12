@@ -1013,11 +1013,56 @@ static HRESULT WINAPI ScriptTypeComp_Bind(ITypeComp *iface, LPOLESTR szName, ULO
         ITypeInfo **ppTInfo, DESCKIND *pDescKind, BINDPTR *pBindPtr)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeComp(iface);
+    UINT flags = wFlags ? wFlags : ~0;
+    ITypeInfo *disp_typeinfo;
+    ITypeComp *disp_typecomp;
+    HRESULT hr;
+    UINT i;
 
-    FIXME("(%p)->(%s %08x %d %p %p %p)\n", This, debugstr_w(szName), lHashVal,
+    TRACE("(%p)->(%s %08x %d %p %p %p)\n", This, debugstr_w(szName), lHashVal,
           wFlags, ppTInfo, pDescKind, pBindPtr);
 
-    return E_NOTIMPL;
+    if (!szName || !ppTInfo || !pDescKind || !pBindPtr)
+        return E_INVALIDARG;
+
+    for (i = 0; i < This->num_funcs; i++)
+    {
+        if (wcsicmp(szName, This->funcs[i].prop->name)) continue;
+        if (!(flags & INVOKE_FUNC)) return TYPE_E_TYPEMISMATCH;
+
+        hr = ITypeInfo_GetFuncDesc(&This->ITypeInfo_iface, i, &pBindPtr->lpfuncdesc);
+        if (FAILED(hr)) return hr;
+
+        *pDescKind = DESCKIND_FUNCDESC;
+        *ppTInfo = &This->ITypeInfo_iface;
+        ITypeInfo_AddRef(*ppTInfo);
+        return S_OK;
+    }
+
+    for (i = 0; i < This->num_vars; i++)
+    {
+        if (wcsicmp(szName, This->vars[i]->name)) continue;
+        if (!(flags & INVOKE_PROPERTYGET)) return TYPE_E_TYPEMISMATCH;
+
+        hr = ITypeInfo_GetVarDesc(&This->ITypeInfo_iface, i, &pBindPtr->lpvardesc);
+        if (FAILED(hr)) return hr;
+
+        *pDescKind = DESCKIND_VARDESC;
+        *ppTInfo = &This->ITypeInfo_iface;
+        ITypeInfo_AddRef(*ppTInfo);
+        return S_OK;
+    }
+
+    /* Look into the inherited IDispatch */
+    hr = get_dispatch_typeinfo(&disp_typeinfo);
+    if (FAILED(hr)) return hr;
+
+    hr = ITypeInfo_GetTypeComp(disp_typeinfo, &disp_typecomp);
+    if (FAILED(hr)) return hr;
+
+    hr = ITypeComp_Bind(disp_typecomp, szName, lHashVal, wFlags, ppTInfo, pDescKind, pBindPtr);
+    ITypeComp_Release(disp_typecomp);
+    return hr;
 }
 
 static HRESULT WINAPI ScriptTypeComp_BindType(ITypeComp *iface, LPOLESTR szName, ULONG lHashVal,
