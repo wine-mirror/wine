@@ -414,9 +414,8 @@ static void test_Connection(void)
     ok(hr == E_NOINTERFACE, "Unexpected IRunnableObject interface\n");
 
     hr = _Connection_QueryInterface(connection, &IID_ISupportErrorInfo, (void**)&errorinfo);
-    todo_wine ok(hr == S_OK, "Failed to get ISupportErrorInfo interface\n");
-    if (hr == S_OK)
-        ISupportErrorInfo_Release(errorinfo);
+    ok(hr == S_OK, "Failed to get ISupportErrorInfo interface\n");
+    ISupportErrorInfo_Release(errorinfo);
 
 if (0)   /* Crashes on windows */
 {

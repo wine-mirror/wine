@@ -32,16 +32,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
 struct connection
 {
-    _Connection Connection_iface;
-    LONG        refs;
-
-    ObjectStateEnum state;
-    LONG timeout;
+    _Connection       Connection_iface;
+    ISupportErrorInfo ISupportErrorInfo_iface;
+    LONG              refs;
+    ObjectStateEnum   state;
+    LONG              timeout;
 };
 
 static inline struct connection *impl_from_Connection( _Connection *iface )
 {
     return CONTAINING_RECORD( iface, struct connection, Connection_iface );
+}
+
+static inline struct connection *impl_from_ISupportErrorInfo( ISupportErrorInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct connection, ISupportErrorInfo_iface );
 }
 
 static ULONG WINAPI connection_AddRef( _Connection *iface )
@@ -64,12 +69,17 @@ static ULONG WINAPI connection_Release( _Connection *iface )
 
 static HRESULT WINAPI connection_QueryInterface( _Connection *iface, REFIID riid, void **obj )
 {
-    TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
+    struct connection *connection = impl_from_Connection( iface );
+    TRACE( "%p, %s, %p\n", connection, debugstr_guid(riid), obj );
 
     if (IsEqualGUID( riid, &IID__Connection ) || IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
         *obj = iface;
+    }
+    else if(IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        *obj = &connection->ISupportErrorInfo_iface;
     }
     else
     {
@@ -339,12 +349,46 @@ static const struct _ConnectionVtbl connection_vtbl =
     connection_Cancel
 };
 
+static HRESULT WINAPI supporterror_QueryInterface( ISupportErrorInfo *iface, REFIID riid, void **obj )
+{
+    struct connection *connection = impl_from_ISupportErrorInfo( iface );
+    return connection_QueryInterface( &connection->Connection_iface, riid, obj );
+}
+
+static ULONG WINAPI supporterror_AddRef( ISupportErrorInfo *iface )
+{
+    struct connection *connection = impl_from_ISupportErrorInfo( iface );
+    return connection_AddRef( &connection->Connection_iface );
+}
+
+static ULONG WINAPI supporterror_Release( ISupportErrorInfo *iface )
+{
+    struct connection *connection = impl_from_ISupportErrorInfo( iface );
+    return connection_Release( &connection->Connection_iface );
+}
+
+static HRESULT WINAPI supporterror_InterfaceSupportsErrorInfo( ISupportErrorInfo *iface, REFIID riid )
+{
+    struct connection *connection = impl_from_ISupportErrorInfo( iface );
+    FIXME( "%p, %s\n", connection, debugstr_guid(riid) );
+    return S_FALSE;
+}
+
+static const struct ISupportErrorInfoVtbl support_error_vtbl =
+{
+    supporterror_QueryInterface,
+    supporterror_AddRef,
+    supporterror_Release,
+    supporterror_InterfaceSupportsErrorInfo
+};
+
 HRESULT Connection_create( void **obj )
 {
     struct connection *connection;
 
     if (!(connection = heap_alloc( sizeof(*connection) ))) return E_OUTOFMEMORY;
     connection->Connection_iface.lpVtbl = &connection_vtbl;
+    connection->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
     connection->refs = 1;
     connection->state = adStateClosed;
     connection->timeout = 30;
