@@ -4801,7 +4801,7 @@ struct wined3d_view_gl_destroy_ctx
 {
     struct wined3d_device *device;
     const struct wined3d_gl_view *gl_view;
-    GLuint counter_bo;
+    GLuint *counter_bo;
     void *object;
     struct wined3d_view_gl_destroy_ctx *free;
 };
@@ -4825,7 +4825,7 @@ static void wined3d_view_gl_destroy_object(void *object)
             gl_info->gl_ops.gl.p_glDeleteTextures(1, &ctx->gl_view->name);
         }
         if (ctx->counter_bo)
-            GL_EXTCALL(glDeleteBuffers(1, &ctx->counter_bo));
+            GL_EXTCALL(glDeleteBuffers(1, ctx->counter_bo));
         checkGLcall("delete resources");
         context_release(context);
     }
@@ -4835,7 +4835,7 @@ static void wined3d_view_gl_destroy_object(void *object)
 }
 
 static void wined3d_view_gl_destroy(struct wined3d_device *device,
-        const struct wined3d_gl_view *gl_view, GLuint counter_bo, void *object)
+        const struct wined3d_gl_view *gl_view, GLuint *counter_bo, void *object)
 {
     struct wined3d_view_gl_destroy_ctx *ctx, c;
 
@@ -4867,7 +4867,7 @@ static void adapter_gl_destroy_rendertarget_view(struct wined3d_rendertarget_vie
     if (swapchain_count)
         wined3d_device_incref(device);
     wined3d_rendertarget_view_cleanup(&view_gl->v);
-    wined3d_view_gl_destroy(device, &view_gl->gl_view, 0, view_gl);
+    wined3d_view_gl_destroy(device, &view_gl->gl_view, NULL, view_gl);
     if (swapchain_count)
         wined3d_device_decref(device);
 }
@@ -4913,7 +4913,7 @@ static void adapter_gl_destroy_shader_resource_view(struct wined3d_shader_resour
     if (swapchain_count)
         wined3d_device_incref(device);
     wined3d_shader_resource_view_cleanup(&view_gl->v);
-    wined3d_view_gl_destroy(device, &view_gl->gl_view, 0, view_gl);
+    wined3d_view_gl_destroy(device, &view_gl->gl_view, NULL, view_gl);
     if (swapchain_count)
         wined3d_device_decref(device);
 }
@@ -4959,7 +4959,7 @@ static void adapter_gl_destroy_unordered_access_view(struct wined3d_unordered_ac
     if (swapchain_count)
         wined3d_device_incref(device);
     wined3d_unordered_access_view_cleanup(&view_gl->v);
-    wined3d_view_gl_destroy(device, &view_gl->gl_view, view_gl->counter_bo, view_gl);
+    wined3d_view_gl_destroy(device, &view_gl->gl_view, &view_gl->counter_bo, view_gl);
     if (swapchain_count)
         wined3d_device_decref(device);
 }
