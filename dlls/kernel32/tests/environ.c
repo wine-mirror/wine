@@ -489,6 +489,12 @@ static void test_GetComputerNameExA(void)
     ok(ret == 0, "Expected 0, got %d\n", ret);
     ok(error == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", error);
 
+    size = 0;
+    ret = pGetComputerNameExA(ComputerNameNetBIOS, NULL, &size);
+    error = GetLastError();
+    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(error == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", error);
+
     /* size is not set in win2k */
     if (size == 0)
         size = MAX_COMP_NAME;
@@ -552,6 +558,11 @@ static void test_GetComputerNameExW(void)
     ret = pGetComputerNameExW(ComputerNameNetBIOS, nameW, &size);
     ok(ret, "GetComputerNameExW(ComputerNameNetBIOS) failed with error %d\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, nameW);
+
+    size = 0;
+    ret = pGetComputerNameExW(ComputerNameNetBIOS, NULL, &size);
+    error = GetLastError();
+    ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameExW should have failed with ERROR_MORE_DATA instead of %d\n", error);
 }
 
 static void test_GetEnvironmentStringsW(void)

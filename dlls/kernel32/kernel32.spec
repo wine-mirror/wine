@@ -576,7 +576,7 @@
 @ stdcall -import GetCompressedFileSizeW(long ptr)
 @ stdcall GetComputerNameA(ptr ptr)
 @ stdcall GetComputerNameExA(long ptr ptr)
-@ stdcall GetComputerNameExW(long ptr ptr)
+@ stdcall -import GetComputerNameExW(long ptr ptr)
 @ stdcall GetComputerNameW(ptr ptr)
 @ stub GetConsoleAliasA
 @ stub GetConsoleAliasExesA
@@ -1338,10 +1338,10 @@
 @ stdcall -import SetCommMask(long long)
 @ stdcall -import SetCommState(long ptr)
 @ stdcall -import SetCommTimeouts(long ptr)
-@ stdcall SetComputerNameA(str)
-@ stdcall SetComputerNameExA(long str)
-@ stdcall SetComputerNameExW(long wstr)
-@ stdcall SetComputerNameW(wstr)
+@ stdcall -import SetComputerNameA(str)
+@ stdcall -import SetComputerNameExA(long str)
+@ stdcall -import SetComputerNameExW(long wstr)
+@ stdcall -import SetComputerNameW(wstr)
 @ stdcall -import SetConsoleActiveScreenBuffer(long)
 @ stdcall -import SetConsoleCP(long)
 # @ stub SetConsoleHistoryInfo

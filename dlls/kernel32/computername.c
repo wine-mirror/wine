@@ -59,9 +59,7 @@ static const WCHAR ComputerW[] = {'\\','R','e','g','i','s','t','r','y','\\',
 static const WCHAR ActiveComputerNameW[] =   {'A','c','t','i','v','e','C','o','m','p','u','t','e','r','N','a','m','e',0};
 static const WCHAR ComputerNameW[] = {'C','o','m','p','u','t','e','r','N','a','m','e',0};
 
-static const char default_ComputerName[] = "WINE";
-
-#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+static const WCHAR default_ComputerName[] = {'W','I','N','E',0};
 
 /*********************************************************************** 
  *                    dns_gethostbyname (INTERNAL)
@@ -71,62 +69,41 @@ static const char default_ComputerName[] = "WINE";
  *
  *  Wine can use this technique only if the thread-safe gethostbyname_r is available.
  */
-#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
-static BOOL dns_gethostbyname ( char *name, int *size )
+static void dns_gethostbyname ( char *name, int size )
 {
+#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
     struct hostent* host = NULL;
     char *extrabuf;
     int ebufsize = 1024;
     struct hostent hostentry;
-    int locerr = ENOBUFS, res = ENOMEM;
+    int locerr = ENOBUFS, res;
 
-    extrabuf = HeapAlloc( GetProcessHeap(), 0, ebufsize ) ;
-
-    while( extrabuf ) 
+    for (;;)
     {
+        if (!(extrabuf = HeapAlloc( GetProcessHeap(), 0, ebufsize ))) return;
         res = gethostbyname_r ( name, &hostentry, extrabuf, ebufsize, &host, &locerr );
         if( res != ERANGE ) break;
         ebufsize *= 2;
-        extrabuf = HeapReAlloc( GetProcessHeap(), 0, extrabuf, ebufsize ) ;
+        HeapFree( GetProcessHeap(), 0, extrabuf );
     }
 
     if ( res )
         WARN ("Error in gethostbyname_r %d (%d)\n", res, locerr);
     else if ( !host )
-    {
         WARN ("gethostbyname_r returned NULL host, locerr = %d\n", locerr);
-        res = 1;
-    }
     else
-    {
-        int len = strlen ( host->h_name );
-        if ( len < *size )
-        {
-            strcpy ( name, host->h_name );
-            *size = len;
-        }
-        else
-        {
-            memcpy ( name, host->h_name, *size );
-            name[*size] = 0;
-            SetLastError ( ERROR_MORE_DATA );
-            res = 1;
-        }
-    }
+        if (strlen( host->h_name ) < size) strcpy( name, host->h_name );
 
     HeapFree( GetProcessHeap(), 0, extrabuf );
-    return !res;
-}
-#else
-#  define dns_gethostbyname(name,size) 0
 #endif
+}
 
 /*********************************************************************** 
  *                     dns_fqdn (INTERNAL)
  */
-static BOOL dns_fqdn ( char *name, int *size )
+static BOOL dns_fqdn ( char *name, int size )
 {
-    if ( gethostname ( name, *size + 1 ) ) 
+    if (gethostname( name, size ))
     {
         switch( errno )
         {
@@ -139,95 +116,9 @@ static BOOL dns_fqdn ( char *name, int *size )
         }
         return FALSE;
     }
-
-    if ( !dns_gethostbyname ( name, size ) )
-        *size = strlen ( name );
-
+    dns_gethostbyname( name, size );
     return TRUE;
 }
-
-/*********************************************************************** 
- *                     dns_hostname (INTERNAL)
- */
-static BOOL dns_hostname ( char *name, int *size )
-{
-    char *c;
-    if ( ! dns_fqdn ( name, size ) ) return FALSE;
-    c = strchr ( name, '.' );
-    if (c)
-    {
-        *c = 0;
-        *size = (c - name);
-    }
-    return TRUE;
-}
-
-/*********************************************************************** 
- *                     dns_domainname (INTERNAL)
- */
-static BOOL dns_domainname ( char *name, int *size )
-{
-    char *c;
-    if ( ! dns_fqdn ( name, size ) ) return FALSE;
-    c = strchr ( name, '.' );
-    if (c)
-    {
-        c += 1;
-        *size -= (c - name);
-        memmove ( name, c, *size + 1 );
-    }
-    return TRUE;
-}
-
-/*********************************************************************** 
- *                      _init_attr    (INTERNAL)
- */
-static inline void _init_attr ( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *name )
-{
-    attr->Length = sizeof (OBJECT_ATTRIBUTES);
-    attr->RootDirectory = 0;
-    attr->ObjectName = name;
-    attr->Attributes = 0;
-    attr->SecurityDescriptor = NULL;
-    attr->SecurityQualityOfService = NULL;
-}
-
-/***********************************************************************
- *           get_use_dns_option
- */
-static BOOL get_use_dns_option(void)
-{
-    static const WCHAR NetworkW[] = {'S','o','f','t','w','a','r','e','\\',
-                                     'W','i','n','e','\\','N','e','t','w','o','r','k',0};
-    static const WCHAR UseDNSW[] = {'U','s','e','D','n','s','C','o','m','p','u','t','e','r','N','a','m','e',0};
-
-    char tmp[80];
-    HANDLE root, hkey;
-    DWORD dummy;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    BOOL ret = TRUE;
-
-    _init_attr( &attr, &nameW );
-    RtlOpenCurrentUser( KEY_READ, &root );
-    attr.RootDirectory = root;
-    RtlInitUnicodeString( &nameW, NetworkW );
-
-    /* @@ Wine registry key: HKCU\Software\Wine\Network */
-    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
-    {
-        RtlInitUnicodeString( &nameW, UseDNSW );
-        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-        {
-            WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-            ret = IS_OPTION_TRUE( str[0] );
-        }
-        NtClose( hkey );
-    }
-    NtClose( root );
-    return ret;
-}
-
 
 /*********************************************************************** 
  *                      COMPUTERNAME_Init    (INTERNAL)
@@ -239,12 +130,23 @@ void COMPUTERNAME_Init (void)
     UNICODE_STRING nameW;
     char buf[offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ) + (MAX_COMPUTERNAME_LENGTH + 1) * sizeof( WCHAR )];
     DWORD len = sizeof( buf );
-    LPWSTR computer_name = (LPWSTR) (buf + offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ));
+    const WCHAR *computer_name = (WCHAR *)(buf + offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ));
     NTSTATUS st = STATUS_INTERNAL_ERROR;
+    char hbuf[256];
+    WCHAR *dot, bufW[256];
+
+    if (dns_fqdn( hbuf, sizeof(hbuf) ))
+    {
+        MultiByteToWideChar( CP_UNIXCP, 0, hbuf, -1, bufW, ARRAY_SIZE(bufW) );
+        dot = strchrW( bufW, '.' );
+        if (dot) *dot++ = 0;
+        else dot = bufW + strlenW(bufW);
+        SetComputerNameExW( ComputerNamePhysicalDnsDomain, dot );
+        SetComputerNameExW( ComputerNamePhysicalDnsHostname, bufW );
+    }
 
     TRACE("(void)\n");
-    _init_attr ( &attr, &nameW );
-    
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
     RtlInitUnicodeString( &nameW, ComputerW );
     if ( ( st = NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) ) != STATUS_SUCCESS )
         goto out;
@@ -256,30 +158,14 @@ void COMPUTERNAME_Init (void)
     
     st = NtQueryValueKey( hsubkey, &nameW, KeyValuePartialInformation, buf, len, &len );
 
-    if ( st != STATUS_SUCCESS || get_use_dns_option() )
+    if ( st != STATUS_SUCCESS)
     {
-        char hbuf[256];
-        int hlen = sizeof (hbuf);
-        char *dot;
-        TRACE( "retrieving Unix host name\n" );
-        if ( gethostname ( hbuf, hlen ) )
-        {
-            strcpy ( hbuf, default_ComputerName );
-            WARN( "gethostname() error: %d, using host name %s\n", errno, hbuf );
-        }
-        hbuf[MAX_COMPUTERNAME_LENGTH] = 0;
-        dot = strchr ( hbuf, '.' );
-        if ( dot ) *dot = 0;
-        hlen = strlen ( hbuf );
-        len = MultiByteToWideChar( CP_UNIXCP, 0, hbuf, hlen + 1, computer_name, MAX_COMPUTERNAME_LENGTH + 1 )
-            * sizeof( WCHAR );
-        if ( NtSetValueKey( hsubkey, &nameW, 0, REG_SZ, computer_name, len ) != STATUS_SUCCESS )
-            WARN ( "failed to set ComputerName\n" );
+        computer_name = default_ComputerName;
+        len = sizeof(default_ComputerName);
     }
     else
     {
         len = (len - offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ));
-        TRACE( "found in registry\n" );
     }
 
     NtClose( hsubkey );
@@ -312,68 +198,9 @@ out:
  */
 BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
 {
-    UNICODE_STRING nameW;
-    OBJECT_ATTRIBUTES attr;
-    HANDLE hkey = INVALID_HANDLE_VALUE, hsubkey = INVALID_HANDLE_VALUE;
-    char buf[offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ) + (MAX_COMPUTERNAME_LENGTH + 1) * sizeof( WCHAR )];
-    DWORD len = sizeof( buf );
-    LPWSTR theName = (LPWSTR) (buf + offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ));
-    NTSTATUS st = STATUS_INVALID_PARAMETER;
-    DWORD err = ERROR_SUCCESS;
-    
-    TRACE ("%p %p\n", name, size);
-
-    _init_attr ( &attr, &nameW );
-    RtlInitUnicodeString( &nameW, ComputerW );
-    if ( ( st = NtOpenKey( &hkey, KEY_READ, &attr ) ) != STATUS_SUCCESS )
-    {
-        err = RtlNtStatusToDosError ( st );
-        goto out;
-    }
-         
-    attr.RootDirectory = hkey;
-    RtlInitUnicodeString( &nameW, ActiveComputerNameW );
-    if ( ( st = NtOpenKey( &hsubkey, KEY_READ, &attr ) ) != STATUS_SUCCESS )
-    {
-        err = RtlNtStatusToDosError ( st );
-        goto out;
-    }
-    
-    RtlInitUnicodeString( &nameW, ComputerNameW );
-    if ( ( st = NtQueryValueKey( hsubkey, &nameW, KeyValuePartialInformation, buf, len, &len ) )
-         != STATUS_SUCCESS )
-    {
-        err = RtlNtStatusToDosError ( st );
-        goto out;
-    }
-
-    len = (len -offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data )) / sizeof (WCHAR) - 1;
-    TRACE ("ComputerName is %s (length %u)\n", debugstr_w ( theName ), len);
-
-    if ( *size < len + 1 )
-    {
-        *size = len + 1;
-        err = ERROR_BUFFER_OVERFLOW;
-    }
-    else
-    {
-        memcpy ( name, theName, len * sizeof (WCHAR) );
-        name[len] = 0;
-        *size = len;
-    }
-
-out:
-    NtClose ( hsubkey );
-    NtClose ( hkey );
-
-    if ( err == ERROR_SUCCESS )
-        return TRUE;
-    else
-    {
-        SetLastError ( err );
-        WARN ( "Status %u reading computer name from registry\n", st );
-        return FALSE;
-    }
+    BOOL ret = GetComputerNameExW( ComputerNameNetBIOS, name, size );
+    if (!ret && GetLastError() == ERROR_MORE_DATA) SetLastError( ERROR_BUFFER_OVERFLOW );
+    return ret;
 }
 
 /***********************************************************************
@@ -416,288 +243,28 @@ BOOL WINAPI GetComputerNameA(LPSTR name, LPDWORD size)
 }
 
 /***********************************************************************
- *              GetComputerNameExA         (KERNEL32.@)
- */
-BOOL WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT type, LPSTR name, LPDWORD size)
-{
-    char buf[256];
-    int len = sizeof(buf) - 1, ret;
-    TRACE("%d, %p, %p\n", type, name, size);
-    switch( type )
-    {
-    case ComputerNameNetBIOS:
-    case ComputerNamePhysicalNetBIOS:
-        ret = GetComputerNameA (name, size);
-        if (!ret && GetLastError() == ERROR_BUFFER_OVERFLOW)
-            SetLastError( ERROR_MORE_DATA );
-        return ret;
-
-    case ComputerNameDnsHostname:
-    case ComputerNamePhysicalDnsHostname:
-        ret = dns_hostname (buf, &len);
-        break;
-    case ComputerNameDnsDomain:
-    case ComputerNamePhysicalDnsDomain:
-        ret = dns_domainname (buf, &len);
-        break;
-    case ComputerNameDnsFullyQualified:
-    case ComputerNamePhysicalDnsFullyQualified:
-        ret = dns_fqdn (buf, &len);
-        break;
-    default:
-        SetLastError (ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if ( ret )
-    {
-        TRACE ("-> %s (%d)\n", debugstr_a (buf), len);
-        if ( *size < len + 1 )
-        {
-            *size = len + 1;
-            SetLastError( ERROR_MORE_DATA );
-            ret = FALSE;
-        }
-        else
-        {
-            memcpy( name, buf, len );
-            name[len] = 0;
-            *size = len;
-            ret = TRUE;
-        }
-    }
-
-    return ret;
-}
-
-
-/***********************************************************************
- *              GetComputerNameExW         (KERNEL32.@)
- */
-BOOL WINAPI GetComputerNameExW( COMPUTER_NAME_FORMAT type, LPWSTR name, LPDWORD size )
-{
-    char buf[256];
-    int len = sizeof(buf) - 1, ret;
-
-    TRACE("%d, %p, %p\n", type, name, size);
-    switch( type )
-    {
-    case ComputerNameNetBIOS:
-    case ComputerNamePhysicalNetBIOS:
-        ret = GetComputerNameW (name, size);
-        if (!ret && GetLastError() == ERROR_BUFFER_OVERFLOW)
-            SetLastError( ERROR_MORE_DATA );
-        return ret;
-    case ComputerNameDnsHostname:
-    case ComputerNamePhysicalDnsHostname:
-        ret = dns_hostname (buf, &len);
-        break;
-    case ComputerNameDnsDomain:
-    case ComputerNamePhysicalDnsDomain:
-        ret = dns_domainname (buf, &len);
-        break;
-    case ComputerNameDnsFullyQualified:
-    case ComputerNamePhysicalDnsFullyQualified:
-        ret = dns_fqdn (buf, &len);
-        break;
-    default:
-        SetLastError (ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if ( ret )
-    {
-        unsigned int lenW;
-
-        TRACE ("-> %s (%d)\n", debugstr_a (buf), len);
-
-        lenW = MultiByteToWideChar( CP_ACP, 0, buf, len, NULL, 0 );
-        if ( *size < lenW + 1 )
-        {
-            *size = lenW + 1;
-            SetLastError( ERROR_MORE_DATA );
-            ret = FALSE;
-        }
-        else
-        {
-            MultiByteToWideChar( CP_ACP, 0, buf, len, name, lenW );
-            name[lenW] = 0;
-            *size = lenW;
-            ret = TRUE;
-        }
-    }
-
-    return ret;
-}
-
-/******************************************************************************
- * netbios_char (INTERNAL)
- */
-static WCHAR netbios_char ( WCHAR wc )
-{
-    static const WCHAR special[] = {'!','@','#','$','%','^','&','\'',')','(','-','_','{','}','~'};
-    static const WCHAR deflt = '_';
-    unsigned int i;
-
-    if ( isalnumW ( wc ) ) return wc;
-    for ( i = 0; i < ARRAY_SIZE( special ); i++ )
-        if ( wc == special[i] ) return wc;
-    return deflt;
-}
-
-/******************************************************************************
- * SetComputerNameW [KERNEL32.@]
- *
- * Set a new NetBIOS name for the local computer.
- *
- * PARAMS
- *    lpComputerName [I] Address of new computer name
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
-{
-    UNICODE_STRING nameW;
-    OBJECT_ATTRIBUTES attr;
-    HANDLE hkey = INVALID_HANDLE_VALUE, hsubkey = INVALID_HANDLE_VALUE;
-    int plen = strlenW ( lpComputerName );
-    int i;
-    NTSTATUS st = STATUS_INTERNAL_ERROR;
-
-    if (get_use_dns_option())
-    {
-        /* This check isn't necessary, but may help debugging problems. */
-        WARN( "Disabled by Wine Configuration.\n" );
-        WARN( "Set \"UseDnsComputerName\" = \"N\" in HKCU\\Software\\Wine\\Network to enable.\n" );
-        SetLastError ( ERROR_ACCESS_DENIED );
-        return FALSE;
-    }
-
-    TRACE( "%s\n", debugstr_w (lpComputerName) );
-
-    /* Check parameter */
-    if ( plen > MAX_COMPUTERNAME_LENGTH ) 
-        goto out;
-
-    /* This is NT behaviour. Win 95/98 would coerce characters. */
-    for ( i = 0; i < plen; i++ )
-    {
-        WCHAR wc = lpComputerName[i];
-        if ( wc != netbios_char( wc ) )
-            goto out;
-    }
-    
-    _init_attr ( &attr, &nameW );
-    
-    RtlInitUnicodeString (&nameW, ComputerW);
-    if ( ( st = NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) ) != STATUS_SUCCESS )
-        goto out;
-    attr.RootDirectory = hkey;
-    RtlInitUnicodeString( &nameW, ComputerNameW );
-    if ( ( st = NtOpenKey( &hsubkey, KEY_ALL_ACCESS, &attr ) ) != STATUS_SUCCESS )
-        goto out;
-    if ( ( st = NtSetValueKey( hsubkey, &nameW, 0, REG_SZ, lpComputerName, ( plen + 1) * sizeof(WCHAR) ) )
-         != STATUS_SUCCESS )
-        goto out;
-
-out:
-    NtClose( hsubkey );
-    NtClose( hkey );
-    
-    if ( st == STATUS_SUCCESS )
-    {
-        TRACE( "ComputerName changed\n" );
-        return TRUE;
-    }
-
-    else
-    {
-        SetLastError ( RtlNtStatusToDosError ( st ) );
-        WARN ( "status %u\n", st );
-        return FALSE;
-    }
-}
-
-/******************************************************************************
- * SetComputerNameA [KERNEL32.@]
- *
- * See SetComputerNameW.
- */
-BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
-{
-    BOOL ret;
-    DWORD len = MultiByteToWideChar( CP_ACP, 0, lpComputerName, -1, NULL, 0 );
-    LPWSTR nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-
-    MultiByteToWideChar( CP_ACP, 0, lpComputerName, -1, nameW, len );
-    ret = SetComputerNameW( nameW );
-    HeapFree( GetProcessHeap(), 0, nameW );
-    return ret;
-}
-
-/******************************************************************************
- * SetComputerNameExW [KERNEL32.@]
- *
- */
-BOOL WINAPI SetComputerNameExW( COMPUTER_NAME_FORMAT type, LPCWSTR lpComputerName )
-{
-    TRACE("%d, %s\n", type, debugstr_w (lpComputerName));
-    switch( type )
-    {
-    case ComputerNameNetBIOS:
-    case ComputerNamePhysicalNetBIOS:
-        return SetComputerNameW( lpComputerName );
-    default:
-        SetLastError( ERROR_ACCESS_DENIED );
-        return FALSE;
-    }
-}
-
-/******************************************************************************
- * SetComputerNameExA [KERNEL32.@]
- *
- */
-BOOL WINAPI SetComputerNameExA( COMPUTER_NAME_FORMAT type, LPCSTR lpComputerName )
-{
-    TRACE( "%d, %s\n", type, debugstr_a (lpComputerName) );
-    switch( type )
-    {
-    case ComputerNameNetBIOS:
-    case ComputerNamePhysicalNetBIOS:
-        return SetComputerNameA( lpComputerName );
-    default:
-        SetLastError( ERROR_ACCESS_DENIED );
-        return FALSE;
-    }
-}
-
-/***********************************************************************
  *              DnsHostnameToComputerNameA         (KERNEL32.@)
  */
 BOOL WINAPI DnsHostnameToComputerNameA(LPCSTR hostname,
     LPSTR computername, LPDWORD size)
 {
+    WCHAR *hostW, nameW[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len;
-
-    FIXME("(%s, %p, %p): stub\n", debugstr_a(hostname), computername, size);
+    BOOL ret;
 
     if (!hostname || !size) return FALSE;
-    len = lstrlenA(hostname);
-
-    if (len > MAX_COMPUTERNAME_LENGTH)
-        len = MAX_COMPUTERNAME_LENGTH;
-
-    if (*size < len + 1)
+    len = MultiByteToWideChar( CP_ACP, 0, hostname, -1, NULL, 0 );
+    if (!(hostW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+    MultiByteToWideChar( CP_ACP, 0, hostname, -1, hostW, len );
+    len = ARRAY_SIZE(nameW);
+    if ((ret = DnsHostnameToComputerNameW( hostW, nameW, &len )))
     {
-        *size = len;
-        return FALSE;
+        if (!computername || !WideCharToMultiByte( CP_ACP, 0, nameW, -1, computername, *size, NULL, NULL ))
+            *size = WideCharToMultiByte( CP_ACP, 0, nameW, -1, NULL, 0, NULL, NULL );
+        else
+            *size = strlen(computername);
     }
-    if (!computername) return FALSE;
-
-    memcpy( computername, hostname, len );
-    computername[len] = 0;
+    HeapFree( GetProcessHeap(), 0, hostW );
     return TRUE;
 }
 
@@ -707,24 +274,5 @@ BOOL WINAPI DnsHostnameToComputerNameA(LPCSTR hostname,
 BOOL WINAPI DnsHostnameToComputerNameW(LPCWSTR hostname,
     LPWSTR computername, LPDWORD size)
 {
-    DWORD len;
-
-    FIXME("(%s, %p, %p): stub\n", debugstr_w(hostname), computername, size);
-
-    if (!hostname || !size) return FALSE;
-    len = lstrlenW(hostname);
-
-    if (len > MAX_COMPUTERNAME_LENGTH)
-        len = MAX_COMPUTERNAME_LENGTH;
-
-    if (*size < len + 1)
-    {
-        *size = len;
-        return FALSE;
-    }
-    if (!computername) return FALSE;
-
-    memcpy( computername, hostname, len * sizeof(WCHAR) );
-    computername[len] = 0;
-    return TRUE;
+    return DnsHostnameToComputerNameExW( hostname, computername, size );
 }
