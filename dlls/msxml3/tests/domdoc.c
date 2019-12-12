@@ -4865,7 +4865,7 @@ static void test_XPath(void)
     EXPECT_HR(hr, S_OK);
     expect_list_and_release(list, "E2.D1");
 
-    /* peform xpath tests */
+    /* perform xpath tests */
     for ( ; xptest->query ; xptest++ )
     {
         char *str;

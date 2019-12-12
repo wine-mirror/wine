@@ -3172,7 +3172,7 @@ static void test_mxwriter_properties(void)
     ok(hr == E_INVALIDARG, "got %08x\n", hr);
     SysFreeString(str);
 
-    /* test case sensivity */
+    /* test case sensitivity */
     hr = IMXWriter_put_encoding(writer, _bstr_("utf-8"));
     EXPECT_HR(hr, S_OK);
     str = (void*)0xdeadbeef;
@@ -5639,7 +5639,7 @@ static void test_mxattr_localname(void)
         hr = ISAXAttributes_getIndexFromName(saxattr, NULL, 0, NULL, 0, &index);
         EXPECT_HR(hr, E_INVALIDARG);
 
-        /* add some ambiguos attribute names */
+        /* add some ambiguous attribute names */
         hr = IMXAttributes_addAttribute(mxattr, _bstr_("uri"), _bstr_("localname"),
             _bstr_("a:localname"), _bstr_(""), _bstr_("value"));
         EXPECT_HR(hr, S_OK);
