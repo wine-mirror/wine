@@ -52,8 +52,6 @@ typedef struct {
 #define FE(x) { x, #x }	
 #define GE(x) { &x, #x }
 
-/* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
 /* returns name of given GUID */
 extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 

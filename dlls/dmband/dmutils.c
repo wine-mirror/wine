@@ -40,6 +40,7 @@
 #include "dmusics.h"
 
 #include "dmutils.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
@@ -294,14 +295,6 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
   TRACE_(dmfile)("** DM Reference End of Load ***\n");
 
   return hr;
-}
-
-/* FOURCC to string conversion for debug messages */
-const char *debugstr_fourcc (DWORD fourcc) {
-    if (!fourcc) return "'null'";
-    return wine_dbg_sprintf ("\'%c%c%c%c\'",
-		(char)(fourcc), (char)(fourcc >> 8),
-        (char)(fourcc >> 16), (char)(fourcc >> 24));
 }
 
 /* returns name of given GUID */

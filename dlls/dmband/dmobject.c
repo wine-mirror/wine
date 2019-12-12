@@ -34,13 +34,6 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /* RIFF format parsing */
 #define CHUNK_HDR_SIZE (sizeof(FOURCC) + sizeof(DWORD))
 
-static inline const char *debugstr_fourcc(DWORD fourcc)
-{
-    if (!fourcc) return "''";
-    return wine_dbg_sprintf("'%c%c%c%c'", (char)(fourcc), (char)(fourcc >> 8),
-            (char)(fourcc >> 16), (char)(fourcc >> 24));
-}
-
 const char *debugstr_chunk(const struct chunk_entry *chunk)
 {
     const char *type = "";
