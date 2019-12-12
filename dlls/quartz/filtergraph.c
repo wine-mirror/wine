@@ -176,7 +176,7 @@ typedef struct _IFilterGraphImpl {
     /* IFilterMapper2 */
     /* IQueueCommand */
     /* IRegisterServiceProvider */
-    /* IResourceMananger */
+    /* IResourceManager */
     /* IServiceProvider */
     /* IVideoFrameStep */
 
