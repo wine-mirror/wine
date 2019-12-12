@@ -283,7 +283,7 @@ static BOOL get_line( char *buf, int size, struct map_context *ctx )
  *
  *		PSDRV_PPDGetInvocationValue
  *
- * Passed string that should be surrounded by `"'s, return string alloced
+ * Passed string that should be surrounded by `"'s, return string allocated
  * from process heap.
  */
 static BOOL PSDRV_PPDGetInvocationValue(struct map_context *ctx, PPDTuple *tuple)
@@ -318,7 +318,7 @@ static BOOL PSDRV_PPDGetInvocationValue(struct map_context *ctx, PPDTuple *tuple
  *		PSDRV_PPDGetQuotedValue
  *
  * Passed string that should be surrounded by `"'s. Expand <xx> as hex
- * return string alloced from process heap.
+ * return string allocated from process heap.
  */
 static BOOL PSDRV_PPDGetQuotedValue(struct map_context *ctx, PPDTuple *tuple)
 {
@@ -517,7 +517,7 @@ static DUPLEX *get_duplex( PPD *ppd, const char *name )
  *
  *		PSDRV_PPDGetWord
  *
- * Returns ptr alloced from heap to first word in str. Strips leading spaces.
+ * Returns ptr allocated from heap to first word in str. Strips leading spaces.
  * Puts ptr to next word in next
  */
 static char *PSDRV_PPDGetWord(char *str, char **next)
