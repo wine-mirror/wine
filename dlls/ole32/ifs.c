@@ -60,7 +60,7 @@ typedef struct {
 /* this is the static object instance */
 static _Malloc32 Malloc32 = {{&VT_IMalloc32}, 0, NULL, 0, 0, NULL, 0};
 
-/* with a spy active all calls from pre to post methods are threadsave */
+/* with a spy active all calls from pre to post methods are threadsafe */
 static CRITICAL_SECTION IMalloc32_SpyCS;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -285,8 +285,8 @@ static void WINAPI IMalloc_fnFree(IMalloc *iface, void *pv)
  *
  * NOTES
  *  FIXME returns:
- *      win95:  size allocated (4 byte boundarys)
- *      win2k:  size originally requested !!! (allocated on 8 byte boundarys)
+ *      win95:  size allocated (4 byte boundaries)
+ *      win2k:  size originally requested !!! (allocated on 8 byte boundaries)
  */
 static SIZE_T WINAPI IMalloc_fnGetSize(IMalloc *iface, void *pv)
 {
