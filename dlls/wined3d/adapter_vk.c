@@ -1100,9 +1100,10 @@ static enum wined3d_display_driver guess_display_driver(enum wined3d_pci_vendor 
     }
 }
 
-static void adapter_vk_init_driver_info(struct wined3d_adapter *adapter,
-        const VkPhysicalDeviceProperties *properties, const VkPhysicalDeviceMemoryProperties *memory_properties)
+static void adapter_vk_init_driver_info(struct wined3d_adapter_vk *adapter_vk,
+        const VkPhysicalDeviceProperties *properties)
 {
+    const VkPhysicalDeviceMemoryProperties *memory_properties = &adapter_vk->memory_properties;
     const struct wined3d_gpu_description *gpu_description;
     struct wined3d_gpu_description description;
     UINT64 vram_bytes, sysmem_bytes;
@@ -1144,7 +1145,7 @@ static void adapter_vk_init_driver_info(struct wined3d_adapter *adapter,
         gpu_description = &description;
     }
 
-    wined3d_driver_info_init(&adapter->driver_info, gpu_description, vram_bytes, sysmem_bytes);
+    wined3d_driver_info_init(&adapter_vk->a.driver_info, gpu_description, vram_bytes, sysmem_bytes);
 }
 
 static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter *adapter, uint32_t wined3d_creation_flags)
@@ -1162,7 +1163,6 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
         unsigned int ordinal, unsigned int wined3d_creation_flags)
 {
     struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
-    VkPhysicalDeviceMemoryProperties memory_properties;
     struct wined3d_adapter *adapter = &adapter_vk->a;
     VkPhysicalDeviceIDProperties id_properties;
     VkPhysicalDeviceProperties2 properties2;
@@ -1193,9 +1193,9 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
         VK_CALL(vkGetPhysicalDeviceProperties(adapter_vk->physical_device, &properties2.properties));
     adapter_vk->device_limits = properties2.properties.limits;
 
-    VK_CALL(vkGetPhysicalDeviceMemoryProperties(adapter_vk->physical_device, &memory_properties));
+    VK_CALL(vkGetPhysicalDeviceMemoryProperties(adapter_vk->physical_device, &adapter_vk->memory_properties));
 
-    adapter_vk_init_driver_info(adapter, &properties2.properties, &memory_properties);
+    adapter_vk_init_driver_info(adapter_vk, &properties2.properties);
     adapter->vram_bytes_used = 0;
     TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->driver_info.vram_bytes));
 
