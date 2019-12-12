@@ -25,6 +25,12 @@
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
+static LONG get_refs_field( Field *field )
+{
+    Field_AddRef( field );
+    return Field_Release( field );
+}
+
 static LONG get_refs_fields( Fields *fields )
 {
     Fields_AddRef( fields );
@@ -92,9 +98,10 @@ static void test_Fields(void)
 {
     _Recordset *recordset;
     Fields *fields;
-    VARIANT val;
+    Field *field, *field2;
+    VARIANT val, index;
     BSTR name;
-    LONG count;
+    LONG refs, count;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
@@ -127,6 +134,37 @@ static void test_Fields(void)
     hr = Fields_get_Count( fields, &count );
     ok( count == 2, "got %d\n", count );
 
+    /* handing out field object doesn't add reference to fields or recordset object */
+    name = SysAllocString( L"field" );
+    V_VT( &index ) = VT_BSTR;
+    V_BSTR( &index ) = name;
+    refs = get_refs_recordset( recordset );
+    ok( refs == 2, "got %d\n", refs );
+    refs = get_refs_fields( fields );
+    ok( refs == 1, "got %d\n", refs );
+    hr = Fields_get_Item( fields, index, &field );
+    ok( hr == S_OK, "got %08x\n", hr );
+    refs = get_refs_field( field );
+    ok( refs == 1, "got %d\n", refs );
+    refs = get_refs_recordset( recordset );
+    ok( refs == 2, "got %d\n", refs );
+    refs = get_refs_fields( fields );
+    ok( refs == 1, "got %d\n", refs );
+
+    /* calling get_Item again returns the same object and adds reference */
+    hr = Fields_get_Item( fields, index, &field2 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( field2 == field, "expected same object\n" );
+    refs = get_refs_field( field2 );
+    ok( refs == 2, "got %d\n", refs );
+    refs = get_refs_recordset( recordset );
+    ok( refs == 2, "got %d\n", refs );
+    refs = get_refs_fields( fields );
+    ok( refs == 1, "got %d\n", refs );
+    Field_Release( field2 );
+    SysFreeString( name );
+
+    Field_Release( field );
     Fields_Release( fields );
     _Recordset_Release( recordset );
 }

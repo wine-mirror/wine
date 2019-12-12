@@ -433,10 +433,48 @@ static HRESULT WINAPI fields_Refresh( Fields *iface )
     return E_NOTIMPL;
 }
 
+static HRESULT map_index( struct fields *fields, VARIANT *index, ULONG *ret )
+{
+    ULONG i;
+
+    if (V_VT( index ) != VT_BSTR)
+    {
+        FIXME( "variant type %u not supported\n", V_VT( index ) );
+        return E_INVALIDARG;
+    }
+
+    for (i = 0; i < fields->count; i++)
+    {
+        BSTR name;
+        BOOL match;
+        HRESULT hr;
+
+        if ((hr = Field_get_Name( fields->field[i], &name )) != S_OK) return hr;
+        match = !wcsicmp( V_BSTR( index ), name );
+        SysFreeString( name );
+        if (match)
+        {
+            *ret = i;
+            return S_OK;
+        }
+    }
+
+    return E_INVALIDARG;
+}
+
 static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj )
 {
-    FIXME( "%p, %s, %p\n", iface, debugstr_variant(&index), obj );
-    return E_NOTIMPL;
+    struct fields *fields = impl_from_Fields( iface );
+    HRESULT hr;
+    ULONG i;
+
+    TRACE( "%p, %s, %p\n", fields, debugstr_variant(&index), obj );
+
+    if ((hr = map_index( fields, &index, &i )) != S_OK) return hr;
+
+    Field_AddRef( fields->field[i] );
+    *obj = fields->field[i];
+    return S_OK;
 }
 
 static BOOL resize_fields( struct fields *fields, ULONG count )
