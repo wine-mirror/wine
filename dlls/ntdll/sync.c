@@ -2143,8 +2143,8 @@ void WINAPI RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
  *              RtlTryAcquireSRWLockExclusive (NTDLL.@)
  *
  * NOTES
- *  Similar to AcquireSRWLockExclusive recusive calls are not allowed
- *  and will fail with return value FALSE.
+ *  Similarly to AcquireSRWLockExclusive, recursive calls are not allowed
+ *  and will fail with a FALSE return value.
  */
 BOOLEAN WINAPI RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
 {

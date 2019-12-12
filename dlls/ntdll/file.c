@@ -3281,7 +3281,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
  *  restart       [I] restart EA scan
  *
  * RETURNS
- *  Success: 0. Atrributes read into buffer
+ *  Success: 0. Attributes read into buffer
  *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtQueryEaFile( HANDLE hFile, PIO_STATUS_BLOCK iosb, PVOID buffer, ULONG length,
