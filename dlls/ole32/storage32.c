@@ -6982,17 +6982,16 @@ void StorageUtl_ReadULargeInteger(const BYTE* buffer, ULONG offset,
 #endif
 }
 
-void StorageUtl_WriteULargeInteger(BYTE* buffer, ULONG offset,
- const ULARGE_INTEGER *value)
+void StorageUtl_WriteULargeInteger(void *buffer, ULONG offset, const ULARGE_INTEGER *value)
 {
 #ifdef WORDS_BIGENDIAN
     ULARGE_INTEGER tmp;
 
     tmp.u.LowPart = htole32(value->u.HighPart);
     tmp.u.HighPart = htole32(value->u.LowPart);
-    memcpy(buffer + offset, &tmp, sizeof(ULARGE_INTEGER));
+    memcpy((BYTE *)buffer + offset, &tmp, sizeof(ULARGE_INTEGER));
 #else
-    memcpy(buffer + offset, value, sizeof(ULARGE_INTEGER));
+    memcpy((BYTE *)buffer + offset, value, sizeof(ULARGE_INTEGER));
 #endif
 }
 

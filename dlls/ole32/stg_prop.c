@@ -1981,9 +1981,8 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     {
         FILETIME temp;
 
-        StorageUtl_WriteULargeInteger((BYTE *)&temp, 0,
-         (const ULARGE_INTEGER *)&var->u.filetime);
-        hr = IStream_Write(This->stm, &temp, sizeof(FILETIME), &count);
+        StorageUtl_WriteULargeInteger(&temp, 0, (const ULARGE_INTEGER *)&var->u.filetime);
+        hr = IStream_Write(This->stm, &temp, sizeof(temp), &count);
         bytesWritten = count;
         break;
     }
