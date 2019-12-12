@@ -3364,7 +3364,7 @@ static void output_module( struct makefile *make )
 
     if (spec_file)
         output_man_pages( make );
-    else if (*dll_ext && !make->is_win16)
+    else if (*dll_ext && !make->is_win16 && strendswith( make->module, ".exe" ))
     {
         char *binary = replace_extension( make->module, ".exe", "" );
         add_install_rule( make, binary, "wineapploader", strmake( "t$(bindir)/%s", binary ));
