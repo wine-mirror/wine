@@ -396,7 +396,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 	/* load */
 	result = IPersistStream_Load (pPersistStream, pStream);
 	if (result != S_OK) {
-		WARN(": failed to (completely) load object (%s)\n", debugstr_dmreturn(result));
+		WARN(": failed to (completely) load object (%08x)\n", result);
 		return result;
 	}
 	/* get descriptor */

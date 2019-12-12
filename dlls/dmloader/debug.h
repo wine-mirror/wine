@@ -39,8 +39,6 @@ typedef struct {
 extern BOOL IS_VALID_DMFORM (FOURCC chunkID) DECLSPEC_HIDDEN;
 /* translate STREAM_SEEK flag to string */
 extern const char *resolve_STREAM_SEEK (DWORD flag) DECLSPEC_HIDDEN;
-/* returns name of given error code */
-extern const char *debugstr_dmreturn (DWORD code) DECLSPEC_HIDDEN;
 
 extern const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader) DECLSPEC_HIDDEN;
 extern const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader) DECLSPEC_HIDDEN;
