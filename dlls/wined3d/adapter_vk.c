@@ -448,27 +448,42 @@ static HRESULT adapter_vk_init_3d(struct wined3d_device *device)
     return WINED3D_OK;
 }
 
-static void adapter_vk_uninit_3d(struct wined3d_device *device)
+static void adapter_vk_uninit_3d_cs(void *object)
 {
+    struct wined3d_device_vk *device_vk = object;
     struct wined3d_context_vk *context_vk;
+    struct wined3d_device *device;
     struct wined3d_shader *shader;
 
-    TRACE("device %p.\n", device);
+    TRACE("device_vk %p.\n", device_vk);
 
-    context_vk = &wined3d_device_vk(device)->context_vk;
+    context_vk = &device_vk->context_vk;
+    device = &device_vk->d;
 
     LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
     {
         device->shader_backend->shader_destroy(shader);
     }
 
-    wined3d_device_destroy_default_samplers(device, &context_vk->c);
-
     device->blitter->ops->blitter_destroy(device->blitter, NULL);
+    device->shader_backend->shader_free_private(device, &context_vk->c);
+    wined3d_device_destroy_default_samplers(device, &context_vk->c);
+}
 
+static void adapter_vk_uninit_3d(struct wined3d_device *device)
+{
+    struct wined3d_context_vk *context_vk;
+    struct wined3d_device_vk *device_vk;
+
+    TRACE("device %p.\n", device);
+
+    device_vk = wined3d_device_vk(device);
+    context_vk = &device_vk->context_vk;
+
+    wined3d_cs_destroy_object(device->cs, adapter_vk_uninit_3d_cs, device_vk);
     wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
+
     device_context_remove(device, &context_vk->c);
-    device->shader_backend->shader_free_private(device, NULL);
     wined3d_context_vk_cleanup(context_vk);
 }
 
