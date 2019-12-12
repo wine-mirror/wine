@@ -4177,6 +4177,11 @@ typedef enum _TOKEN_INFORMATION_CLASS {
   MaxTokenInfoClass
 } TOKEN_INFORMATION_CLASS;
 
+#define DISABLE_MAX_PRIVILEGE        0x1
+#define SANDBOX_INERT                0x2
+#define LUA_TOKEN                    0x4
+#define WRITE_RESTRICTED             0x8
+
 #define TOKEN_TOKEN_ADJUST_DEFAULT   0x0080
 #define TOKEN_ADJUST_GROUPS          0x0040
 #define TOKEN_ADJUST_PRIVILEGES      0x0020
