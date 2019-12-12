@@ -1014,7 +1014,8 @@ static void test_set_clipboard(void)
     test_cf_dataobject(data_cmpl);
     test_enum_fmtetc(data_cmpl);
 
-    ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard, hr = 0x%08x\n", hr);
+    hr = OleSetClipboard(NULL);
+    ok(hr == S_OK, "failed to clear clipboard, hr = 0x%08x.\n", hr);
 
     test_no_cf_dataobject();
     test_enum_fmtetc(NULL);
