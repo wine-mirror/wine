@@ -990,10 +990,53 @@ static HRESULT WINAPI ScriptTypeInfo_GetDocumentation(ITypeInfo *iface, MEMBERID
         BSTR *pBstrDocString, DWORD *pdwHelpContext, BSTR *pBstrHelpFile)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    struct typeinfo_func *func;
+    ITypeInfo *disp_typeinfo;
+    dispex_prop_t *var;
+    HRESULT hr;
 
-    FIXME("(%p)->(%d %p %p %p %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+    TRACE("(%p)->(%d %p %p %p %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
 
-    return E_NOTIMPL;
+    if (pBstrDocString) *pBstrDocString = NULL;
+    if (pdwHelpContext) *pdwHelpContext = 0;
+    if (pBstrHelpFile) *pBstrHelpFile = NULL;
+
+    if (memid == MEMBERID_NIL)
+    {
+        if (pBstrName && !(*pBstrName = SysAllocString(L"JScriptTypeInfo")))
+            return E_OUTOFMEMORY;
+        if (pBstrDocString &&
+            !(*pBstrDocString = SysAllocString(L"JScript Type Info")))
+        {
+            if (pBstrName) SysFreeString(*pBstrName);
+            return E_OUTOFMEMORY;
+        }
+        return S_OK;
+    }
+    if (memid <= 0) return TYPE_E_ELEMENTNOTFOUND;
+
+    func = get_func_from_memid(This, memid);
+    if (!func)
+    {
+        var = get_var_from_memid(This, memid);
+        if (!var)
+        {
+            hr = get_dispatch_typeinfo(&disp_typeinfo);
+            if (FAILED(hr)) return hr;
+
+            return ITypeInfo_GetDocumentation(disp_typeinfo, memid, pBstrName, pBstrDocString,
+                                              pdwHelpContext, pBstrHelpFile);
+        }
+    }
+
+    if (pBstrName)
+    {
+        *pBstrName = SysAllocString(func ? func->prop->name : var->name);
+
+        if (!*pBstrName)
+            return E_OUTOFMEMORY;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetDllEntry(ITypeInfo *iface, MEMBERID memid, INVOKEKIND invKind,
