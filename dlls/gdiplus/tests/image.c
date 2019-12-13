@@ -5484,6 +5484,48 @@ todo_wine
     GdipDisposeImage((GpImage *)bitmap);
 }
 
+static void test_graphics_clear(void)
+{
+    BYTE argb[8] = { 0x11,0x22,0x33,0x80, 0xff,0xff,0xff,0 };
+    BYTE cleared[8] = { 0,0,0,0, 0,0,0,0 };
+    BYTE *bits;
+    GpBitmap *bitmap;
+    GpGraphics *graphics;
+    BitmapData data;
+    GpStatus status;
+    int match;
+
+    status = GdipCreateBitmapFromScan0(2, 1, 8, PixelFormat32bppARGB, argb, &bitmap);
+    expect(Ok, status);
+
+    status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, status);
+
+    status = GdipGraphicsClear(graphics, 0x00000000);
+    expect(Ok, status);
+
+    status = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, PixelFormat32bppARGB, &data);
+    expect(Ok, status);
+    ok(data.Width == 2, "expected 2, got %d\n", data.Width);
+    ok(data.Height == 1, "expected 1, got %d\n", data.Height);
+    ok(data.Stride == 8, "expected 8, got %d\n", data.Stride);
+    ok(data.PixelFormat == PixelFormat32bppARGB, "expected PixelFormat32bppARGB, got %d\n", data.PixelFormat);
+    match = !memcmp(data.Scan0, cleared, sizeof(cleared));
+    ok(match, "bits don't match\n");
+    if (!match)
+    {
+        bits = data.Scan0;
+        trace("format %#x, bits %02x,%02x,%02x,%02x %02x,%02x,%02x,%02x\n", PixelFormat32bppPARGB,
+               bits[0], bits[1], bits[2], bits[3], bits[4], bits[5], bits[6], bits[7]);
+    }
+    status = GdipBitmapUnlockBits(bitmap, &data);
+    expect(Ok, status);
+
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    GdipDisposeImage((GpImage *)bitmap);
+}
+
 START_TEST(image)
 {
     HMODULE mod = GetModuleHandleA("gdiplus.dll");
@@ -5559,6 +5601,7 @@ START_TEST(image)
     test_histogram();
     test_imageabort();
     test_GdipLoadImageFromStream();
+    test_graphics_clear();
 
     GdiplusShutdown(gdiplusToken);
 }
