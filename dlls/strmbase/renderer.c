@@ -40,28 +40,6 @@ static inline struct strmbase_renderer *impl_from_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, struct strmbase_renderer, sink.pin.IPin_iface);
 }
 
-static const IPinVtbl BaseRenderer_InputPin_Vtbl =
-{
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseInputPinImpl_Connect,
-    BaseInputPinImpl_ReceiveConnection,
-    BaseInputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseInputPinImpl_EndOfStream,
-    BaseInputPinImpl_BeginFlush,
-    BaseInputPinImpl_EndFlush,
-    BaseInputPinImpl_NewSegment
-};
-
 static struct strmbase_pin *renderer_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
@@ -436,8 +414,7 @@ HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown
 
     filter->pFuncsTable = ops;
 
-    strmbase_sink_init(&filter->sink, &BaseRenderer_InputPin_Vtbl, &filter->filter,
-            sink_name, &sink_ops, NULL);
+    strmbase_sink_init(&filter->sink, &filter->filter, sink_name, &sink_ops, NULL);
 
     hr = CreatePosPassThru(outer ? outer : (IUnknown *)&filter->filter.IBaseFilter_iface,
             TRUE, &filter->sink.pin.IPin_iface, &filter->pPosition);

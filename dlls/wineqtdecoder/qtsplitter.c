@@ -171,7 +171,6 @@ typedef struct QTSplitter {
     HANDLE splitterThread;
 } QTSplitter;
 
-static const IPinVtbl QT_InputPin_Vtbl;
 static const IBaseFilterVtbl QT_Vtbl;
 static const IMediaSeekingVtbl QT_Seeking_Vtbl;
 
@@ -421,8 +420,7 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     ZeroMemory(This,sizeof(*This));
 
     strmbase_filter_init(&This->filter, outer, &CLSID_QTSplitter, &filter_ops);
-    strmbase_sink_init(&This->pInputPin.pin, &QT_InputPin_Vtbl, &This->filter,
-            wcsInputPinName, &sink_ops, NULL);
+    strmbase_sink_init(&This->pInputPin.pin, &This->filter, wcsInputPinName, &sink_ops, NULL);
 
     InitializeCriticalSection(&This->csReceive);
     This->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": QTSplitter.csReceive");
@@ -1029,27 +1027,6 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
 
     return hr;
 }
-
-static const IPinVtbl QT_InputPin_Vtbl = {
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseInputPinImpl_Connect,
-    BaseInputPinImpl_ReceiveConnection,
-    BaseInputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseInputPinImpl_EndOfStream,
-    BaseInputPinImpl_BeginFlush,
-    BaseInputPinImpl_EndFlush,
-    BaseInputPinImpl_NewSegment
-};
 
 static inline QTOutPin *impl_source_from_strmbase_pin(struct strmbase_pin *iface)
 {

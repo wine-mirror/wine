@@ -1500,27 +1500,6 @@ static inline AviMux* impl_from_in_IPin(IPin *iface)
     return impl_from_strmbase_filter(pin->filter);
 }
 
-static const IPinVtbl AviMuxIn_PinVtbl = {
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseInputPinImpl_Connect,
-    BaseInputPinImpl_ReceiveConnection,
-    BaseInputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseInputPinImpl_EndOfStream,
-    BaseInputPinImpl_BeginFlush,
-    BaseInputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
-
 static inline AviMuxIn* AviMuxIn_from_IAMStreamControl(IAMStreamControl *iface)
 {
     return CONTAINING_RECORD(iface, AviMuxIn, IAMStreamControl_iface);
@@ -1825,7 +1804,7 @@ static HRESULT create_input_pin(AviMux *avimux)
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    strmbase_sink_init(&object->pin, &AviMuxIn_PinVtbl, &avimux->filter, name, &sink_ops, NULL);
+    strmbase_sink_init(&object->pin, &avimux->filter, name, &sink_ops, NULL);
     object->pin.IMemInputPin_iface.lpVtbl = &AviMuxIn_MemInputPinVtbl;
     object->IAMStreamControl_iface.lpVtbl = &AviMuxIn_AMStreamControlVtbl;
     object->IPropertyBag_iface.lpVtbl = &AviMuxIn_PropertyBagVtbl;

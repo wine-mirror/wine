@@ -473,28 +473,6 @@ static const IMemInputPinVtbl IMemInputPin_VTable =
     SampleGrabber_IMemInputPin_ReceiveCanBlock,
 };
 
-static const IPinVtbl sink_vtbl =
-{
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseInputPinImpl_Connect,
-    BaseInputPinImpl_ReceiveConnection,
-    BaseInputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseInputPinImpl_EndOfStream,
-    BaseInputPinImpl_BeginFlush,
-    BaseInputPinImpl_EndFlush,
-    BaseInputPinImpl_NewSegment
-};
-
 static inline SG_Impl *impl_from_sink_pin(struct strmbase_pin *iface)
 {
     return CONTAINING_RECORD(iface, SG_Impl, sink.pin);
@@ -663,7 +641,7 @@ HRESULT SampleGrabber_create(IUnknown *outer, void **out)
     obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
 
-    strmbase_sink_init(&obj->sink, &sink_vtbl, &obj->filter, L"In", &sink_ops, NULL);
+    strmbase_sink_init(&obj->sink, &obj->filter, L"In", &sink_ops, NULL);
     strmbase_source_init(&obj->source, &obj->filter, L"Out", &source_ops);
 
     obj->mtype.majortype = GUID_NULL;

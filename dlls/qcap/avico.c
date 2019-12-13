@@ -272,27 +272,6 @@ static const IPersistPropertyBagVtbl PersistPropertyBagVtbl = {
     AVICompressorPropertyBag_Save
 };
 
-static const IPinVtbl AVICompressorInputPinVtbl = {
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseInputPinImpl_Connect,
-    BaseInputPinImpl_ReceiveConnection,
-    BaseInputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseInputPinImpl_EndOfStream,
-    BaseInputPinImpl_BeginFlush,
-    BaseInputPinImpl_EndFlush,
-    BaseInputPinImpl_NewSegment
-};
-
 static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *pmt)
 {
     AVICompressor *This = impl_from_strmbase_pin(base);
@@ -517,8 +496,7 @@ IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
 
     compressor->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 
-    strmbase_sink_init(&compressor->sink, &AVICompressorInputPinVtbl,
-            &compressor->filter, sink_name, &sink_ops, NULL);
+    strmbase_sink_init(&compressor->sink, &compressor->filter, sink_name, &sink_ops, NULL);
     strmbase_source_init(&compressor->source, &compressor->filter, source_name, &source_ops);
 
     *phr = S_OK;

@@ -26,8 +26,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 static const WCHAR wcsInputPinName[] = {'I','n',0};
 static const WCHAR wcsOutputPinName[] = {'O','u','t',0};
 
-static const IPinVtbl TransformFilter_InputPin_Vtbl;
-
 static inline TransformFilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, TransformFilter, filter);
@@ -403,8 +401,7 @@ static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
     filter->pFuncsTable = func_table;
     ZeroMemory(&filter->pmt, sizeof(filter->pmt));
 
-    strmbase_sink_init(&filter->sink, &TransformFilter_InputPin_Vtbl, &filter->filter,
-            wcsInputPinName, &sink_ops, NULL);
+    strmbase_sink_init(&filter->sink, &filter->filter, wcsInputPinName, &sink_ops, NULL);
 
     strmbase_source_init(&filter->source, &filter->filter, wcsOutputPinName, &source_ops);
     filter->source_IQualityControl_iface.lpVtbl = &source_qc_vtbl;
@@ -454,25 +451,3 @@ HRESULT strmbase_transform_create(LONG filter_size, IUnknown *outer, const CLSID
     CoTaskMemFree(pTf);
     return E_FAIL;
 }
-
-static const IPinVtbl TransformFilter_InputPin_Vtbl =
-{
-    BasePinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BasePinImpl_Release,
-    BaseInputPinImpl_Connect,
-    BaseInputPinImpl_ReceiveConnection,
-    BaseInputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseInputPinImpl_EndOfStream,
-    BaseInputPinImpl_BeginFlush,
-    BaseInputPinImpl_EndFlush,
-    BaseInputPinImpl_NewSegment
-};

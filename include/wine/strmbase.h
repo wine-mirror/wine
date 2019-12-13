@@ -103,20 +103,6 @@ struct strmbase_sink_ops
 
 /* Base Pin */
 HRESULT strmbase_pin_get_media_type(struct strmbase_pin *pin, unsigned int index, AM_MEDIA_TYPE *mt);
-LONG WINAPI BasePinImpl_GetMediaTypeVersion(struct strmbase_pin *pin);
-HRESULT WINAPI BasePinImpl_QueryInterface(IPin *iface, REFIID iid, void **out);
-ULONG WINAPI BasePinImpl_AddRef(IPin *iface);
-ULONG WINAPI BasePinImpl_Release(IPin *iface);
-HRESULT WINAPI BaseInputPinImpl_Disconnect(IPin * iface);
-HRESULT WINAPI BasePinImpl_ConnectedTo(IPin * iface, IPin ** ppPin);
-HRESULT WINAPI BasePinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI BasePinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo);
-HRESULT WINAPI BasePinImpl_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir);
-HRESULT WINAPI BasePinImpl_QueryId(IPin * iface, LPWSTR * Id);
-HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum);
-HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin);
-HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *pin,
         IMediaSample **sample, REFERENCE_TIME *start, REFERENCE_TIME *stop, DWORD flags);
@@ -130,16 +116,7 @@ void strmbase_source_cleanup(struct strmbase_source *pin);
 void strmbase_source_init(struct strmbase_source *pin, struct strmbase_filter *filter,
         const WCHAR *name, const struct strmbase_source_ops *func_table);
 
-/* Base Input Pin */
-HRESULT WINAPI BaseInputPinImpl_Connect(IPin * iface, IPin * pConnector, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI BaseInputPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI BaseInputPinImpl_EndOfStream(IPin * iface);
-HRESULT WINAPI BaseInputPinImpl_BeginFlush(IPin * iface);
-HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface);
-HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
-
-void strmbase_sink_init(struct strmbase_sink *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
+void strmbase_sink_init(struct strmbase_sink *pin, struct strmbase_filter *filter,
         const WCHAR *name, const struct strmbase_sink_ops *ops, IMemAllocator *allocator);
 void strmbase_sink_cleanup(struct strmbase_sink *pin);
 
