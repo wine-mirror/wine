@@ -772,8 +772,12 @@ static HRESULT WINAPI recordset_get_ActiveConnection( _Recordset *iface, VARIANT
 
 static HRESULT WINAPI recordset_get_BOF( _Recordset *iface, VARIANT_BOOL *bof )
 {
-    FIXME( "%p, %p\n", iface, bof );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %p\n", recordset, bof );
+
+    *bof = (recordset->index < 0) ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_Bookmark( _Recordset *iface, VARIANT *bookmark )
@@ -814,8 +818,12 @@ static HRESULT WINAPI recordset_put_CursorType( _Recordset *iface, CursorTypeEnu
 
 static HRESULT WINAPI recordset_get_EOF( _Recordset *iface, VARIANT_BOOL *eof )
 {
-    FIXME( "%p, %p\n", iface, eof );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %p\n", recordset, eof );
+
+    *eof = (!recordset->count || recordset->index >= recordset->count) ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_Fields( _Recordset *iface, Fields **obj )

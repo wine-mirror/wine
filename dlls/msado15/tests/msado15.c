@@ -25,6 +25,20 @@
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
+static BOOL is_bof( _Recordset *recordset )
+{
+    VARIANT_BOOL bof = VARIANT_FALSE;
+    _Recordset_get_BOF( recordset, &bof );
+    return bof == VARIANT_TRUE;
+}
+
+static BOOL is_eof( _Recordset *recordset )
+{
+    VARIANT_BOOL eof = VARIANT_FALSE;
+    _Recordset_get_EOF( recordset, &eof );
+    return eof == VARIANT_TRUE;
+}
+
 static LONG get_refs_field( Field *field )
 {
     Field_AddRef( field );
@@ -122,6 +136,8 @@ static void test_Recordset(void)
 
     hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
     ok( hr == S_OK, "got %08x\n", hr );
+    ok( is_eof( recordset ), "not eof\n" );
+    ok( is_bof( recordset ), "not bof\n" );
 
     state = -1;
     hr = _Recordset_get_State( recordset, &state );
@@ -130,6 +146,8 @@ static void test_Recordset(void)
 
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08x\n", hr );
+    ok( !is_eof( recordset ), "eof\n" );
+    ok( !is_bof( recordset ), "bof\n" );
 
     hr = _Recordset_Close( recordset );
     ok( hr == S_OK, "got %08x\n", hr );
