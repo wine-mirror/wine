@@ -31,6 +31,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "ole2.h"
 #include "moniker.h"
 
@@ -227,35 +228,44 @@ static HRESULT WINAPI ItemMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 /******************************************************************************
  *        ItemMoniker_Save
  ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface, IStream* pStm, BOOL fClearDirty)
+static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker *iface, IStream *stream, BOOL fClearDirty)
 {
     ItemMonikerImpl *This = impl_from_IMoniker(iface);
-    HRESULT res;
-    CHAR *itemNameA,*itemDelimiterA;
+    int str_len;
+    HRESULT hr;
+    char *str;
+
+    TRACE("(%p, %p, %d)\n", iface, stream, fClearDirty);
 
     /* data written by this function are : 1) DWORD : size of item delimiter string ('\0' included ) */
     /*                                    2) String (type A): item delimiter string ('\0' included)          */
     /*                                    3) DWORD : size of item name string ('\0' included)       */
     /*                                    4) String (type A): item name string ('\0' included)               */
+    if (This->itemDelimiter)
+    {
+        str_len = WideCharToMultiByte(CP_ACP, 0, This->itemDelimiter, -1, NULL, 0, NULL, NULL);
+        str = heap_alloc(str_len);
+        WideCharToMultiByte(CP_ACP, 0, This->itemDelimiter, -1, str, str_len, NULL, NULL);
 
-    DWORD nameLength = WideCharToMultiByte( CP_ACP, 0, This->itemName, -1, NULL, 0, NULL, NULL);
-    DWORD delimiterLength = WideCharToMultiByte( CP_ACP, 0, This->itemDelimiter, -1, NULL, 0, NULL, NULL);
-    itemNameA=HeapAlloc(GetProcessHeap(),0,nameLength);
-    itemDelimiterA=HeapAlloc(GetProcessHeap(),0,delimiterLength);
-    WideCharToMultiByte( CP_ACP, 0, This->itemName, -1, itemNameA, nameLength, NULL, NULL);
-    WideCharToMultiByte( CP_ACP, 0, This->itemDelimiter, -1, itemDelimiterA, delimiterLength, NULL, NULL);
+        hr = IStream_Write(stream, &str_len, sizeof(str_len), NULL);
+        hr = IStream_Write(stream, str, str_len, NULL);
 
-    TRACE("%p, %s\n", pStm, fClearDirty ? "TRUE" : "FALSE");
+        heap_free(str);
+    }
+    else
+    {
+        str_len = 0;
+        hr = IStream_Write(stream, &str_len, sizeof(str_len), NULL);
+    }
 
-    res=IStream_Write(pStm,&delimiterLength,sizeof(DWORD),NULL);
-    res=IStream_Write(pStm,itemDelimiterA,delimiterLength * sizeof(CHAR),NULL);
-    res=IStream_Write(pStm,&nameLength,sizeof(DWORD),NULL);
-    res=IStream_Write(pStm,itemNameA,nameLength * sizeof(CHAR),NULL);
+    str_len = WideCharToMultiByte(CP_ACP, 0, This->itemName, -1, NULL, 0, NULL, NULL);
+    str = heap_alloc(str_len);
+    WideCharToMultiByte(CP_ACP, 0, This->itemName, -1, str, str_len, NULL, NULL);
+    hr = IStream_Write(stream, &str_len, sizeof(str_len), NULL);
+    hr = IStream_Write(stream, str, str_len, NULL);
+    heap_free(str);
 
-    HeapFree(GetProcessHeap(), 0, itemNameA);
-    HeapFree(GetProcessHeap(), 0, itemDelimiterA);
-
-    return res;
+    return hr;
 }
 
 /******************************************************************************
@@ -264,7 +274,6 @@ static HRESULT WINAPI ItemMonikerImpl_Save(IMoniker* iface, IStream* pStm, BOOL 
 static HRESULT WINAPI ItemMonikerImpl_GetSizeMax(IMoniker* iface, ULARGE_INTEGER* pcbSize)
 {
     ItemMonikerImpl *This = impl_from_IMoniker(iface);
-    DWORD delimiterLength=lstrlenW(This->itemDelimiter)+1;
     DWORD nameLength=lstrlenW(This->itemName)+1;
 
     TRACE("(%p,%p)\n",iface,pcbSize);
@@ -275,10 +284,12 @@ static HRESULT WINAPI ItemMonikerImpl_GetSizeMax(IMoniker* iface, ULARGE_INTEGER
     /* for more details see ItemMonikerImpl_Save comments */
 
     pcbSize->u.LowPart =  sizeof(DWORD) + /* DWORD which contains delimiter length */
-                        delimiterLength*4 + /* item delimiter string */
                         sizeof(DWORD) + /* DWORD which contains item name length */
                         nameLength*4 + /* item name string */
                         18; /* strange, but true */
+    if (This->itemDelimiter)
+        pcbSize->u.LowPart += (lstrlenW(This->itemDelimiter) + 1) * 4;
+
     pcbSize->u.HighPart=0;
 
     return S_OK;
@@ -683,6 +694,7 @@ static HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,
                                                      LPOLESTR *ppszDisplayName)
 {
     ItemMonikerImpl *This = impl_from_IMoniker(iface);
+    SIZE_T size;
 
     TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,ppszDisplayName);
 
@@ -693,12 +705,18 @@ static HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,
         return E_INVALIDARG;
     }
 
-    *ppszDisplayName=CoTaskMemAlloc(sizeof(WCHAR)*(lstrlenW(This->itemDelimiter)+lstrlenW(This->itemName)+1));
+    size = lstrlenW(This->itemName) + 1;
+    if (This->itemDelimiter)
+        size += lstrlenW(This->itemDelimiter);
+    size *= sizeof(WCHAR);
 
+    *ppszDisplayName = CoTaskMemAlloc(size);
     if (*ppszDisplayName==NULL)
         return E_OUTOFMEMORY;
 
-    lstrcpyW(*ppszDisplayName,This->itemDelimiter);
+    (*ppszDisplayName)[0] = 0;
+    if (This->itemDelimiter)
+        lstrcatW(*ppszDisplayName, This->itemDelimiter);
     lstrcatW(*ppszDisplayName,This->itemName);
 
     TRACE("-- %s\n", debugstr_w(*ppszDisplayName));
@@ -806,32 +824,34 @@ static ULONG   WINAPI ItemMonikerROTDataImpl_Release(IROTData* iface)
 /******************************************************************************
  *        ItemMonikerIROTData_GetComparisonData
  ******************************************************************************/
-static HRESULT WINAPI ItemMonikerROTDataImpl_GetComparisonData(IROTData* iface,
-                                                               BYTE* pbData,
-                                                               ULONG cbMax,
-                                                               ULONG* pcbData)
+static HRESULT WINAPI ItemMonikerROTDataImpl_GetComparisonData(IROTData *iface, BYTE *buffer, ULONG max_len,
+        ULONG *data_len)
 {
     ItemMonikerImpl *This = impl_from_IROTData(iface);
-    int len = (lstrlenW(This->itemName)+1);
-    int i;
-    LPWSTR pszItemName;
-    LPWSTR pszItemDelimiter;
+    int name_len = lstrlenW(This->itemName);
+    int delim_len, i;
+    WCHAR *ptrW;
 
-    TRACE("(%p, %u, %p)\n", pbData, cbMax, pcbData);
+    TRACE("(%p, %p, %u, %p)\n", iface, buffer, max_len, data_len);
 
-    *pcbData = sizeof(CLSID) + sizeof(WCHAR) + len * sizeof(WCHAR);
-    if (cbMax < *pcbData)
+    delim_len = This->itemDelimiter && This->itemDelimiter[0] ? lstrlenW(This->itemDelimiter) : 0;
+    *data_len = sizeof(CLSID) + sizeof(WCHAR) + (delim_len + name_len) * sizeof(WCHAR);
+    if (max_len < *data_len)
         return E_OUTOFMEMORY;
 
     /* write CLSID */
-    memcpy(pbData, &CLSID_ItemMoniker, sizeof(CLSID));
+    memcpy(buffer, &CLSID_ItemMoniker, sizeof(CLSID));
+    buffer += sizeof(CLSID);
+
     /* write delimiter */
-    pszItemDelimiter = (LPWSTR)(pbData+sizeof(CLSID));
-    *pszItemDelimiter = *This->itemDelimiter;
+    for (i = 0, ptrW = (WCHAR *)buffer; i < delim_len; ++i)
+        ptrW[i] = towupper(This->itemDelimiter[i]);
+    buffer += (delim_len * sizeof(WCHAR));
+
     /* write name */
-    pszItemName = pszItemDelimiter + 1;
-    for (i = 0; i < len; i++)
-        pszItemName[i] = towupper(This->itemName[i]);
+    for (i = 0, ptrW = (WCHAR *)buffer; i < name_len; ++i)
+        ptrW[i] = towupper(This->itemName[i]);
+    ptrW[i] = 0;
 
     return S_OK;
 }
@@ -879,38 +899,37 @@ static const IROTDataVtbl VT_ROTDataImpl =
 /******************************************************************************
  *         ItemMoniker_Construct (local function)
  *******************************************************************************/
-static HRESULT ItemMonikerImpl_Construct(ItemMonikerImpl* This, LPCOLESTR lpszDelim,LPCOLESTR lpszItem)
+static HRESULT ItemMonikerImpl_Construct(ItemMonikerImpl* This, const WCHAR *delimiter, const WCHAR *name)
 {
+    int str_len;
 
-    int sizeStr1=lstrlenW(lpszItem), sizeStr2;
-    static const OLECHAR emptystr[1];
-    LPCOLESTR	delim;
-
-    TRACE("(%p,%s,%s)\n",This,debugstr_w(lpszDelim),debugstr_w(lpszItem));
+    TRACE("(%p, %s, %s)\n", This, debugstr_w(delimiter), debugstr_w(name));
 
     /* Initialize the virtual function table. */
     This->IMoniker_iface.lpVtbl = &VT_ItemMonikerImpl;
     This->IROTData_iface.lpVtbl = &VT_ROTDataImpl;
     This->ref          = 0;
     This->pMarshal     = NULL;
+    This->itemDelimiter = NULL;
 
-    This->itemName=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr1+1));
+    str_len = (lstrlenW(name) + 1) * sizeof(WCHAR);
+    This->itemName = heap_alloc(str_len);
     if (!This->itemName)
 	return E_OUTOFMEMORY;
-    lstrcpyW(This->itemName,lpszItem);
+    memcpy(This->itemName, name, str_len);
 
-    if (!lpszDelim)
-	FIXME("lpszDelim is NULL. Using empty string which is possibly wrong.\n");
-
-    delim = lpszDelim ? lpszDelim : emptystr;
-
-    sizeStr2=lstrlenW(delim);
-    This->itemDelimiter=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr2+1));
-    if (!This->itemDelimiter) {
-	HeapFree(GetProcessHeap(),0,This->itemName);
-	return E_OUTOFMEMORY;
+    if (delimiter)
+    {
+        str_len = (lstrlenW(delimiter) + 1) * sizeof(WCHAR);
+        This->itemDelimiter = heap_alloc(str_len);
+        if (!This->itemDelimiter)
+        {
+            heap_free(This->itemName);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(This->itemDelimiter, delimiter, str_len);
     }
-    lstrcpyW(This->itemDelimiter,delim);
+
     return S_OK;
 }
 
