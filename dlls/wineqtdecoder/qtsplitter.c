@@ -1030,31 +1030,6 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     return hr;
 }
 
-static HRESULT WINAPI QTInPin_EndOfStream(IPin *iface)
-{
-    FIXME("iface %p, stub!\n", iface);
-    return S_OK;
-}
-
-static HRESULT WINAPI QTInPin_BeginFlush(IPin *iface)
-{
-    FIXME("iface %p, stub!\n", iface);
-    return S_OK;
-}
-
-static HRESULT WINAPI QTInPin_EndFlush(IPin *iface)
-{
-    FIXME("iface %p, stub!\n", iface);
-    return S_OK;
-}
-
-static HRESULT WINAPI QTInPin_NewSegment(IPin *iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
-{
-    BasePinImpl_NewSegment(iface, tStart, tStop, dRate);
-    FIXME("iface %p, stub!\n", iface);
-    return S_OK;
-}
-
 static const IPinVtbl QT_InputPin_Vtbl = {
     BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
@@ -1070,10 +1045,10 @@ static const IPinVtbl QT_InputPin_Vtbl = {
     BasePinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
-    QTInPin_EndOfStream,
-    QTInPin_BeginFlush,
-    QTInPin_EndFlush,
-    QTInPin_NewSegment
+    BaseInputPinImpl_EndOfStream,
+    BaseInputPinImpl_BeginFlush,
+    BaseInputPinImpl_EndFlush,
+    BaseInputPinImpl_NewSegment
 };
 
 static inline QTOutPin *impl_source_from_strmbase_pin(struct strmbase_pin *iface)
