@@ -983,10 +983,23 @@ static HRESULT WINAPI ScriptTypeInfo_GetDllEntry(ITypeInfo *iface, MEMBERID memi
 static HRESULT WINAPI ScriptTypeInfo_GetRefTypeInfo(ITypeInfo *iface, HREFTYPE hRefType, ITypeInfo **ppTInfo)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    HRESULT hr;
 
-    FIXME("(%p)->(%x %p)\n", This, hRefType, ppTInfo);
+    TRACE("(%p)->(%x %p)\n", This, hRefType, ppTInfo);
 
-    return E_NOTIMPL;
+    if (!ppTInfo || (INT)hRefType < 0) return E_INVALIDARG;
+
+    if (hRefType & ~3) return E_FAIL;
+    if (hRefType & 1)
+    {
+        hr = get_dispatch_typeinfo(ppTInfo);
+        if (FAILED(hr)) return hr;
+    }
+    else
+        *ppTInfo = iface;
+
+    ITypeInfo_AddRef(*ppTInfo);
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_AddressOfMember(ITypeInfo *iface, MEMBERID memid, INVOKEKIND invKind, PVOID *ppv)
