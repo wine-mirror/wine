@@ -130,7 +130,7 @@ static void PropertyStorage_DestroyDictionaries(PropertyStorage_impl *);
  * string using PropertyStorage_StringCopy.
  */
 static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
- const PROPVARIANT *propvar, LCID targetCP, LCID srcCP);
+ const PROPVARIANT *propvar, UINT targetCP, UINT srcCP);
 
 /* Copies the string src, which is encoded using code page srcCP, and returns
  * it in *dst, in the code page specified by targetCP.  The returned string is
@@ -139,8 +139,8 @@ static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
  * is CP_UNICODE, the returned string is in fact an LPWSTR.
  * Returns S_OK on success, something else on failure.
  */
-static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
- LCID targetCP);
+static HRESULT PropertyStorage_StringCopy(LPCSTR src, UINT srcCP, LPSTR *dst,
+ UINT targetCP);
 
 static const IPropertyStorageVtbl IPropertyStorage_Vtbl;
 
@@ -533,8 +533,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
     return hr;
 }
 
-static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
- LCID dstCP)
+static HRESULT PropertyStorage_StringCopy(LPCSTR src, UINT srcCP, LPSTR *dst, UINT dstCP)
 {
     HRESULT hr = S_OK;
     int len;
@@ -617,8 +616,8 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
     return hr;
 }
 
-static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
- const PROPVARIANT *propvar, LCID targetCP, LCID srcCP)
+static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop, const PROPVARIANT *propvar,
+        UINT targetCP, UINT srcCP)
 {
     HRESULT hr = S_OK;
 
@@ -644,7 +643,7 @@ static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
  * a version 1-only property.
  */
 static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
- PROPID propid, const PROPVARIANT *propvar, LCID lcid)
+ PROPID propid, const PROPVARIANT *propvar, UINT cp)
 {
     HRESULT hr = S_OK;
     PROPVARIANT *prop = PropertyStorage_FindProperty(This, propid);
@@ -665,8 +664,7 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
     if (prop)
     {
         PropVariantClear(prop);
-        hr = PropertyStorage_PropVariantCopy(prop, propvar, This->codePage,
-         lcid);
+        hr = PropertyStorage_PropVariantCopy(prop, propvar, This->codePage, cp);
     }
     else
     {
@@ -674,8 +672,7 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
          sizeof(PROPVARIANT));
         if (prop)
         {
-            hr = PropertyStorage_PropVariantCopy(prop, propvar, This->codePage,
-             lcid);
+            hr = PropertyStorage_PropVariantCopy(prop, propvar, This->codePage, cp);
             if (SUCCEEDED(hr))
             {
                 dictionary_insert(This->propid_to_prop, UlongToPtr(propid), prop);
@@ -699,7 +696,7 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
  * Doesn't validate id.
  */
 static HRESULT PropertyStorage_StoreNameWithId(PropertyStorage_impl *This,
- LPCSTR srcName, LCID cp, PROPID id)
+ LPCSTR srcName, UINT cp, PROPID id)
 {
     LPSTR name;
     HRESULT hr;
