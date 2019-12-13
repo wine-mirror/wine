@@ -34,36 +34,39 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 struct fields;
 struct recordset
 {
-    _Recordset     Recordset_iface;
-    LONG           refs;
-    LONG           state;
-    struct fields *fields;
-    LONG           count;
-    LONG           allocated;
-    LONG           index;
-    VARIANT       *data;
+    _Recordset         Recordset_iface;
+    ISupportErrorInfo  ISupportErrorInfo_iface;
+    LONG               refs;
+    LONG               state;
+    struct fields     *fields;
+    LONG               count;
+    LONG               allocated;
+    LONG               index;
+    VARIANT           *data;
 };
 
 struct fields
 {
-    Fields             Fields_iface;
-    LONG               refs;
-    Field            **field;
-    ULONG              count;
-    ULONG              allocated;
-    struct recordset  *recordset;
+    Fields              Fields_iface;
+    ISupportErrorInfo   ISupportErrorInfo_iface;
+    LONG                refs;
+    Field             **field;
+    ULONG               count;
+    ULONG               allocated;
+    struct recordset   *recordset;
 };
 
 struct field
 {
-    Field             Field_iface;
-    LONG              refs;
-    WCHAR            *name;
-    DataTypeEnum      type;
-    LONG              defined_size;
-    LONG              attrs;
-    LONG              index;
-    struct recordset *recordset;
+    Field               Field_iface;
+    ISupportErrorInfo   ISupportErrorInfo_iface;
+    LONG                refs;
+    WCHAR              *name;
+    DataTypeEnum        type;
+    LONG                defined_size;
+    LONG                attrs;
+    LONG                index;
+    struct recordset   *recordset;
 };
 
 static inline struct field *impl_from_Field( Field *iface )
@@ -95,12 +98,17 @@ static ULONG WINAPI field_Release( Field *iface )
 
 static HRESULT WINAPI field_QueryInterface( Field *iface, REFIID riid, void **obj )
 {
+    struct field *field = impl_from_Field( iface );
     TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
 
     if (IsEqualGUID( riid, &IID_Field ) || IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
         *obj = iface;
+    }
+    else if (IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        *obj = &field->ISupportErrorInfo_iface;
     }
     else
     {
@@ -368,12 +376,51 @@ static const struct FieldVtbl field_vtbl =
     field_get_Status
 };
 
+static inline struct field *field_from_ISupportErrorInfo( ISupportErrorInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct field, ISupportErrorInfo_iface );
+}
+
+static HRESULT WINAPI field_supporterrorinfo_QueryInterface( ISupportErrorInfo *iface, REFIID riid, void **obj )
+{
+    struct field *field = field_from_ISupportErrorInfo( iface );
+    return Field_QueryInterface( &field->Field_iface, riid, obj );
+}
+
+static ULONG WINAPI field_supporterrorinfo_AddRef( ISupportErrorInfo *iface )
+{
+    struct field *field = field_from_ISupportErrorInfo( iface );
+    return Field_AddRef( &field->Field_iface );
+}
+
+static ULONG WINAPI field_supporterrorinfo_Release( ISupportErrorInfo *iface )
+{
+    struct field *field = field_from_ISupportErrorInfo( iface );
+    return Field_Release( &field->Field_iface );
+}
+
+static HRESULT WINAPI field_supporterrorinfo_InterfaceSupportsErrorInfo( ISupportErrorInfo *iface, REFIID riid )
+{
+    struct field *field = field_from_ISupportErrorInfo( iface );
+    FIXME( "%p, %s\n", field, debugstr_guid(riid) );
+    return S_FALSE;
+}
+
+static const ISupportErrorInfoVtbl field_supporterrorinfo_vtbl =
+{
+    field_supporterrorinfo_QueryInterface,
+    field_supporterrorinfo_AddRef,
+    field_supporterrorinfo_Release,
+    field_supporterrorinfo_InterfaceSupportsErrorInfo
+};
+
 static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *recordset, Field **obj )
 {
     struct field *field;
 
     if (!(field = heap_alloc_zero( sizeof(*field) ))) return E_OUTOFMEMORY;
     field->Field_iface.lpVtbl = &field_vtbl;
+    field->ISupportErrorInfo_iface.lpVtbl = &field_supporterrorinfo_vtbl;
     if (!(field->name = strdupW( name )))
     {
         heap_free( field );
@@ -416,12 +463,17 @@ static ULONG WINAPI fields_Release( Fields *iface )
 
 static HRESULT WINAPI fields_QueryInterface( Fields *iface, REFIID riid, void **obj )
 {
+    struct fields *fields = impl_from_Fields( iface );
     TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
 
     if (IsEqualGUID( riid, &IID_Fields ) || IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
         *obj = iface;
+    }
+    else if (IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        *obj = &fields->ISupportErrorInfo_iface;
     }
     else
     {
@@ -626,12 +678,51 @@ static const struct FieldsVtbl fields_vtbl =
     fields_CancelUpdate
 };
 
+static inline struct fields *fields_from_ISupportErrorInfo( ISupportErrorInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct fields, ISupportErrorInfo_iface );
+}
+
+static HRESULT WINAPI fields_supporterrorinfo_QueryInterface( ISupportErrorInfo *iface, REFIID riid, void **obj )
+{
+    struct fields *fields = fields_from_ISupportErrorInfo( iface );
+    return Fields_QueryInterface( &fields->Fields_iface, riid, obj );
+}
+
+static ULONG WINAPI fields_supporterrorinfo_AddRef( ISupportErrorInfo *iface )
+{
+    struct fields *fields = fields_from_ISupportErrorInfo( iface );
+    return Fields_AddRef( &fields->Fields_iface );
+}
+
+static ULONG WINAPI fields_supporterrorinfo_Release( ISupportErrorInfo *iface )
+{
+    struct fields *fields = fields_from_ISupportErrorInfo( iface );
+    return Fields_Release( &fields->Fields_iface );
+}
+
+static HRESULT WINAPI fields_supporterrorinfo_InterfaceSupportsErrorInfo( ISupportErrorInfo *iface, REFIID riid )
+{
+    struct fields *fields = fields_from_ISupportErrorInfo( iface );
+    FIXME( "%p, %s\n", fields, debugstr_guid(riid) );
+    return S_FALSE;
+}
+
+static const ISupportErrorInfoVtbl fields_supporterrorinfo_vtbl =
+{
+    fields_supporterrorinfo_QueryInterface,
+    fields_supporterrorinfo_AddRef,
+    fields_supporterrorinfo_Release,
+    fields_supporterrorinfo_InterfaceSupportsErrorInfo
+};
+
 static HRESULT fields_create( struct recordset *recordset, struct fields **ret )
 {
     struct fields *fields;
 
     if (!(fields = heap_alloc_zero( sizeof(*fields) ))) return E_OUTOFMEMORY;
     fields->Fields_iface.lpVtbl = &fields_vtbl;
+    fields->ISupportErrorInfo_iface.lpVtbl = &fields_supporterrorinfo_vtbl;
     fields->refs = 1;
     fields->recordset = recordset;
     _Recordset_AddRef( &fields->recordset->Recordset_iface );
@@ -686,17 +777,19 @@ static ULONG WINAPI recordset_Release( _Recordset *iface )
 
 static HRESULT WINAPI recordset_QueryInterface( _Recordset *iface, REFIID riid, void **obj )
 {
+    struct recordset *recordset = impl_from_Recordset( iface );
     TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
 
-    if (IsEqualIID(riid, &IID_IUnknown)    ||
-        IsEqualIID(riid, &IID_IDispatch)   ||
-        IsEqualIID(riid, &IID__ADO)        ||
-        IsEqualIID(riid, &IID_Recordset15) ||
-        IsEqualIID(riid, &IID_Recordset20) ||
-        IsEqualIID(riid, &IID_Recordset21) ||
+    if (IsEqualIID(riid, &IID_IUnknown)    || IsEqualIID(riid, &IID_IDispatch)   ||
+        IsEqualIID(riid, &IID__ADO)        || IsEqualIID(riid, &IID_Recordset15) ||
+        IsEqualIID(riid, &IID_Recordset20) || IsEqualIID(riid, &IID_Recordset21) ||
         IsEqualIID(riid, &IID__Recordset))
     {
         *obj = iface;
+    }
+    else if (IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        *obj = &recordset->ISupportErrorInfo_iface;
     }
     else
     {
@@ -1379,12 +1472,51 @@ static const struct _RecordsetVtbl recordset_vtbl =
     recordset_Save
 };
 
+static inline struct recordset *recordset_from_ISupportErrorInfo( ISupportErrorInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct recordset, ISupportErrorInfo_iface );
+}
+
+static HRESULT WINAPI recordset_supporterrorinfo_QueryInterface( ISupportErrorInfo *iface, REFIID riid, void **obj )
+{
+    struct recordset *recordset = recordset_from_ISupportErrorInfo( iface );
+    return _Recordset_QueryInterface( &recordset->Recordset_iface, riid, obj );
+}
+
+static ULONG WINAPI recordset_supporterrorinfo_AddRef( ISupportErrorInfo *iface )
+{
+    struct recordset *recordset = recordset_from_ISupportErrorInfo( iface );
+    return _Recordset_AddRef( &recordset->Recordset_iface );
+}
+
+static ULONG WINAPI recordset_supporterrorinfo_Release( ISupportErrorInfo *iface )
+{
+    struct recordset *recordset = recordset_from_ISupportErrorInfo( iface );
+    return _Recordset_Release( &recordset->Recordset_iface );
+}
+
+static HRESULT WINAPI recordset_supporterrorinfo_InterfaceSupportsErrorInfo( ISupportErrorInfo *iface, REFIID riid )
+{
+    struct recordset *recordset = recordset_from_ISupportErrorInfo( iface );
+    FIXME( "%p, %s\n", recordset, debugstr_guid(riid) );
+    return S_FALSE;
+}
+
+static const ISupportErrorInfoVtbl recordset_supporterrorinfo_vtbl =
+{
+    recordset_supporterrorinfo_QueryInterface,
+    recordset_supporterrorinfo_AddRef,
+    recordset_supporterrorinfo_Release,
+    recordset_supporterrorinfo_InterfaceSupportsErrorInfo
+};
+
 HRESULT Recordset_create( void **obj )
 {
     struct recordset *recordset;
 
     if (!(recordset = heap_alloc_zero( sizeof(*recordset) ))) return E_OUTOFMEMORY;
     recordset->Recordset_iface.lpVtbl = &recordset_vtbl;
+    recordset->ISupportErrorInfo_iface.lpVtbl = &recordset_supporterrorinfo_vtbl;
     recordset->refs = 1;
     recordset->index = -1;
 

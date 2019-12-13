@@ -60,6 +60,7 @@ static LONG get_refs_recordset( _Recordset *recordset )
 static void test_Recordset(void)
 {
     _Recordset *recordset;
+    ISupportErrorInfo *errorinfo;
     Fields *fields, *fields2;
     Field *field;
     LONG refs, count, state;
@@ -69,6 +70,16 @@ static void test_Recordset(void)
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    /* _Recordset object supports ISupportErrorInfo */
+    errorinfo = NULL;
+    hr = _Recordset_QueryInterface( recordset, &IID_ISupportErrorInfo, (void **)&errorinfo );
+    ok( hr == S_OK, "got %08x\n", hr );
+    refs = get_refs_recordset( recordset );
+    ok( refs == 2, "got %d\n", refs );
+    if (errorinfo) ISupportErrorInfo_Release( errorinfo );
+    refs = get_refs_recordset( recordset );
+    ok( refs == 1, "got %d\n", refs );
 
     /* handing out fields object increases recordset refcount */
     refs = get_refs_recordset( recordset );
@@ -256,6 +267,7 @@ static void test_Recordset(void)
 static void test_Fields(void)
 {
     _Recordset *recordset;
+    ISupportErrorInfo *errorinfo;
     Fields *fields;
     Field *field, *field2;
     VARIANT val, index;
@@ -270,6 +282,16 @@ static void test_Fields(void)
 
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    /* Fields object supports ISupportErrorInfo */
+    errorinfo = NULL;
+    hr = Fields_QueryInterface( fields, &IID_ISupportErrorInfo, (void **)&errorinfo );
+    ok( hr == S_OK, "got %08x\n", hr );
+    refs = get_refs_fields( fields );
+    ok( refs == 2, "got %d\n", refs );
+    if (errorinfo) ISupportErrorInfo_Release( errorinfo );
+    refs = get_refs_fields( fields );
+    ok( refs == 1, "got %d\n", refs );
 
     count = -1;
     hr = Fields_get_Count( fields, &count );
@@ -324,6 +346,16 @@ static void test_Fields(void)
     ok( refs == 1, "got %d\n", refs );
     Field_Release( field2 );
     SysFreeString( name );
+
+    /* Field object supports ISupportErrorInfo */
+    errorinfo = NULL;
+    hr = Field_QueryInterface( field, &IID_ISupportErrorInfo, (void **)&errorinfo );
+    ok( hr == S_OK, "got %08x\n", hr );
+    refs = get_refs_field( field );
+    ok( refs == 2, "got %d\n", refs );
+    if (errorinfo) ISupportErrorInfo_Release( errorinfo );
+    refs = get_refs_field( field );
+    ok( refs == 1, "got %d\n", refs );
 
     /* verify values set with _Append */
     hr = Field_get_Name( field, &name );
