@@ -47,7 +47,9 @@ static void test_Recordset(void)
 {
     _Recordset *recordset;
     Fields *fields, *fields2;
-    LONG refs, count;
+    LONG refs, count, state;
+    VARIANT missing;
+    BSTR name;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
@@ -92,6 +94,48 @@ static void test_Recordset(void)
     /* fields object still has a reference */
     refs = Fields_Release( fields2 );
     ok( refs == 1, "got %d\n", refs );
+
+    hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    state = -1;
+    hr = _Recordset_get_State( recordset, &state );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( state == adStateClosed, "got %d\n", state );
+
+    VariantInit( &missing );
+    hr = _Recordset_AddNew( recordset, missing, missing );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
+
+    V_VT( &missing ) = VT_ERROR;
+    V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
+    hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
+    todo_wine ok( hr == MAKE_ADO_HRESULT( adErrInvalidConnection ), "got %08x\n", hr );
+
+    hr = _Recordset_get_Fields( recordset, &fields );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    name = SysAllocString( L"field" );
+    hr = Fields__Append( fields, name, adInteger, 4, adFldUnspecified );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( name );
+
+    hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    state = -1;
+    hr = _Recordset_get_State( recordset, &state );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( state == adStateOpen, "got %d\n", state );
+
+    hr = _Recordset_AddNew( recordset, missing, missing );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Recordset_Close( recordset );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    Fields_Release( fields );
+    _Recordset_Release( recordset );
 }
 
 static void test_Fields(void)

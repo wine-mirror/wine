@@ -887,10 +887,35 @@ static HRESULT WINAPI recordset_get_Source( _Recordset *iface, VARIANT *source )
     return E_NOTIMPL;
 }
 
+static BOOL resize_recordset( struct recordset *recordset, ULONG row_count )
+{
+    ULONG row_size = get_column_count( recordset ) * sizeof(*recordset->data);
+
+    if (row_count > recordset->allocated)
+    {
+        VARIANT *tmp;
+        ULONG count = max( row_count, recordset->allocated * 2 );
+        if (!(tmp = heap_realloc_zero( recordset->data, count * row_size ))) return FALSE;
+        recordset->data = tmp;
+        recordset->allocated = count;
+    }
+
+    recordset->count = row_count;
+    return TRUE;
+}
+
 static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, VARIANT values )
 {
-    FIXME( "%p, %s, %s\n", iface, debugstr_variant(&field_list), debugstr_variant(&values) );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %s, %s\n", recordset, debugstr_variant(&field_list), debugstr_variant(&values) );
+    FIXME( "ignoring field list and values\n" );
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!resize_recordset( recordset, recordset->count + 1 )) return E_OUTOFMEMORY;
+    recordset->index++;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_CancelUpdate( _Recordset *iface )
