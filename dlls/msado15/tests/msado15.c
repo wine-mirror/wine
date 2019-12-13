@@ -144,10 +144,20 @@ static void test_Recordset(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == adStateOpen, "got %d\n", state );
 
+    count = -1;
+    hr = _Recordset_get_RecordCount( recordset, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %d\n", count );
+
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !is_eof( recordset ), "eof\n" );
     ok( !is_bof( recordset ), "bof\n" );
+
+    count = -1;
+    hr = _Recordset_get_RecordCount( recordset, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == 1, "got %d\n", count );
 
     hr = _Recordset_Close( recordset );
     ok( hr == S_OK, "got %08x\n", hr );

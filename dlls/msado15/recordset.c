@@ -873,8 +873,12 @@ static HRESULT WINAPI recordset_put_MaxRecords( _Recordset *iface, LONG max_reco
 
 static HRESULT WINAPI recordset_get_RecordCount( _Recordset *iface, LONG *count )
 {
-    FIXME( "%p, %p\n", iface, count );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %p\n", recordset, count );
+
+    *count = recordset->count;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_putref_Source( _Recordset *iface, IDispatch *source )
