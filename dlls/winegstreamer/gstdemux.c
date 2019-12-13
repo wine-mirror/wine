@@ -1967,34 +1967,6 @@ static HRESULT GST_RemoveOutputPins(struct gstdemux *This)
     return S_OK;
 }
 
-static HRESULT WINAPI GSTInPin_EndOfStream(IPin *iface)
-{
-    FIXME("iface %p, stub!\n", iface);
-    return S_OK;
-}
-
-static HRESULT WINAPI GSTInPin_BeginFlush(IPin *iface)
-{
-    FIXME("iface %p, stub!\n", iface);
-    return S_OK;
-}
-
-static HRESULT WINAPI GSTInPin_EndFlush(IPin *iface)
-{
-    FIXME("iface %p, stub!\n", iface);
-    return S_OK;
-}
-
-static HRESULT WINAPI GSTInPin_NewSegment(IPin *iface, REFERENCE_TIME start,
-        REFERENCE_TIME stop, double rate)
-{
-    FIXME("iface %p, start %s, stop %s, rate %.16e, stub!\n",
-            iface, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
-
-    BasePinImpl_NewSegment(iface, start, stop, rate);
-    return S_OK;
-}
-
 static const IPinVtbl GST_InputPin_Vtbl = {
     BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
@@ -2010,10 +1982,10 @@ static const IPinVtbl GST_InputPin_Vtbl = {
     BasePinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
-    GSTInPin_EndOfStream,
-    GSTInPin_BeginFlush,
-    GSTInPin_EndFlush,
-    GSTInPin_NewSegment
+    BaseInputPinImpl_EndOfStream,
+    BaseInputPinImpl_BeginFlush,
+    BaseInputPinImpl_EndFlush,
+    BaseInputPinImpl_NewSegment
 };
 
 pthread_mutex_t cb_list_lock = PTHREAD_MUTEX_INITIALIZER;
