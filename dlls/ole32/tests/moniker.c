@@ -1345,15 +1345,16 @@ static void test_moniker(
     const BYTE *expected_moniker_marshal_data, unsigned int sizeof_expected_moniker_marshal_data,
     const BYTE *expected_moniker_saved_data, unsigned int sizeof_expected_moniker_saved_data,
     const BYTE *expected_moniker_comparison_data, unsigned int sizeof_expected_moniker_comparison_data,
-    LPCWSTR expected_display_name)
+    int expected_max_size, LPCWSTR expected_display_name)
 {
+    ULARGE_INTEGER max_size;
     IStream * stream;
     IROTData * rotdata;
     HRESULT hr;
     HGLOBAL hglobal;
     LPBYTE moniker_data;
     DWORD moniker_size;
-    DWORD i;
+    DWORD i, moniker_type;
     BOOL same;
     BYTE buffer[128];
     IMoniker * moniker_proxy;
@@ -1423,6 +1424,13 @@ static void test_moniker(
     ok_ole_success(hr, CreateStreamOnHGlobal);
   
     /* Saving */
+    moniker_type = 0;
+    IMoniker_IsSystemMoniker(moniker, &moniker_type);
+
+    hr = IMoniker_GetSizeMax(moniker, &max_size);
+    ok(hr == S_OK, "Failed to get max size, hr %#x.\n", hr);
+todo_wine_if(moniker_type == MKSYS_GENERICCOMPOSITE)
+    ok(expected_max_size == max_size.u.LowPart, "%s: unexpected max size %u.\n", testname, max_size.u.LowPart);
 
     hr = IMoniker_Save(moniker, stream, TRUE);
     ok_ole_success(hr, IMoniker_Save);
@@ -1541,7 +1549,7 @@ static void test_class_moniker(void)
         expected_class_moniker_marshal_data, sizeof(expected_class_moniker_marshal_data),
         expected_class_moniker_saved_data, sizeof(expected_class_moniker_saved_data),
         expected_class_moniker_comparison_data, sizeof(expected_class_moniker_comparison_data),
-        expected_class_moniker_display_name);
+        sizeof(expected_class_moniker_saved_data), expected_class_moniker_display_name);
 
     /* Hashing */
 
@@ -1684,7 +1692,7 @@ static void test_item_moniker(void)
         expected_item_moniker_marshal_data2, sizeof(expected_item_moniker_marshal_data2),
         expected_item_moniker_saved_data2, sizeof(expected_item_moniker_saved_data2),
         expected_item_moniker_comparison_data2, sizeof(expected_item_moniker_comparison_data2),
-        L"Test");
+        46, L"Test");
 
     IMoniker_Release(moniker);
 
@@ -1695,7 +1703,7 @@ static void test_item_moniker(void)
         expected_item_moniker_marshal_data3, sizeof(expected_item_moniker_marshal_data3),
         expected_item_moniker_saved_data3, sizeof(expected_item_moniker_saved_data3),
         expected_item_moniker_comparison_data2, sizeof(expected_item_moniker_comparison_data2),
-        L"Test");
+        50, L"Test");
 
     IMoniker_Release(moniker);
 
@@ -1706,7 +1714,7 @@ static void test_item_moniker(void)
         expected_item_moniker_marshal_data4, sizeof(expected_item_moniker_marshal_data4),
         expected_item_moniker_saved_data4, sizeof(expected_item_moniker_saved_data4),
         expected_item_moniker_comparison_data4, sizeof(expected_item_moniker_comparison_data4),
-        L"&&Test");
+        58, L"&&Test");
 
     IMoniker_Release(moniker);
 
@@ -1717,7 +1725,7 @@ static void test_item_moniker(void)
         expected_item_moniker_marshal_data5, sizeof(expected_item_moniker_marshal_data5),
         expected_item_moniker_saved_data5, sizeof(expected_item_moniker_saved_data5),
         expected_item_moniker_comparison_data5, sizeof(expected_item_moniker_comparison_data5),
-        L"abTest");
+        58, L"abTest");
 
     IMoniker_Release(moniker);
 
@@ -1728,7 +1736,7 @@ static void test_item_moniker(void)
         expected_item_moniker_marshal_data, sizeof(expected_item_moniker_marshal_data),
         expected_item_moniker_saved_data, sizeof(expected_item_moniker_saved_data),
         expected_item_moniker_comparison_data, sizeof(expected_item_moniker_comparison_data),
-        expected_display_name);
+        54, expected_display_name);
 
     /* Hashing */
 
@@ -1793,7 +1801,7 @@ static void test_anti_moniker(void)
         expected_anti_moniker_marshal_data, sizeof(expected_anti_moniker_marshal_data),
         expected_anti_moniker_saved_data, sizeof(expected_anti_moniker_saved_data),
         expected_anti_moniker_comparison_data, sizeof(expected_anti_moniker_comparison_data),
-        expected_display_name);
+        20, expected_display_name);
 
     /* Hashing */
     hr = IMoniker_Hash(moniker, &hash);
@@ -1863,7 +1871,7 @@ static void test_generic_composite_moniker(void)
         expected_gc_moniker_marshal_data, sizeof(expected_gc_moniker_marshal_data),
         expected_gc_moniker_saved_data, sizeof(expected_gc_moniker_saved_data),
         expected_gc_moniker_comparison_data, sizeof(expected_gc_moniker_comparison_data),
-        expected_display_name);
+        160, expected_display_name);
 
     /* Hashing */
 
