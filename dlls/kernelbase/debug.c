@@ -43,6 +43,8 @@ typedef INT (WINAPI *MessageBoxW_funcptr)(HWND,LPCWSTR,LPCWSTR,UINT);
 
 static PTOP_LEVEL_EXCEPTION_FILTER top_filter;
 
+void *dummy = RtlUnwind;  /* force importing RtlUnwind from ntdll */
+
 /***********************************************************************
  *           CheckRemoteDebuggerPresent   (kernelbase.@)
  */
