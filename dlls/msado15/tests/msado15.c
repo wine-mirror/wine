@@ -61,8 +61,9 @@ static void test_Recordset(void)
 {
     _Recordset *recordset;
     Fields *fields, *fields2;
+    Field *field;
     LONG refs, count, state;
-    VARIANT missing;
+    VARIANT missing, val, index;
     BSTR name;
     HRESULT hr;
 
@@ -132,6 +133,11 @@ static void test_Recordset(void)
     name = SysAllocString( L"field" );
     hr = Fields__Append( fields, name, adInteger, 4, adFldUnspecified );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    V_VT( &index ) = VT_BSTR;
+    V_BSTR( &index ) = name;
+    hr = Fields_get_Item( fields, index, &field );
+    ok( hr == S_OK, "got %08x\n", hr );
     SysFreeString( name );
 
     hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
@@ -159,6 +165,81 @@ static void test_Recordset(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( count == 1, "got %d\n", count );
 
+    /* get_Fields still returns the same object */
+    hr = _Recordset_get_Fields( recordset, &fields2 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( fields2 == fields, "expected same object\n" );
+    Fields_Release( fields2 );
+
+    count = -1;
+    hr = Fields_get_Count( fields2, &count );
+    ok( count == 1, "got %d\n", count );
+
+    hr = Field_get_Value( field, &val );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &val ) == VT_EMPTY, "got %u\n", V_VT( &val  ) );
+
+    V_VT( &val ) = VT_I4;
+    V_I4( &val ) = -1;
+    hr = Field_put_Value( field, val );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    V_VT( &val ) = VT_ERROR;
+    V_ERROR( &val ) = DISP_E_PARAMNOTFOUND;
+    hr = Field_get_Value( field, &val );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &val ) == VT_I4, "got %u\n", V_VT( &val ) );
+    ok( V_I4( &val ) == -1, "got %d\n", V_I4( &val ) );
+
+    hr = _Recordset_AddNew( recordset, missing, missing );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* field object returns different value after AddNew */
+    V_VT( &val ) = VT_ERROR;
+    V_ERROR( &val ) = DISP_E_PARAMNOTFOUND;
+    hr = Field_get_Value( field, &val );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &val ) == VT_EMPTY, "got %u\n", V_VT( &val ) );
+
+    ok( !is_eof( recordset ), "eof\n" );
+    ok( !is_bof( recordset ), "bof\n" );
+    hr = _Recordset_MoveFirst( recordset );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !is_eof( recordset ), "eof\n" );
+    ok( !is_bof( recordset ), "bof\n" );
+
+    V_VT( &val ) = VT_ERROR;
+    V_ERROR( &val ) = DISP_E_PARAMNOTFOUND;
+    hr = Field_get_Value( field, &val );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &val ) == VT_I4, "got %u\n", V_VT( &val ) );
+    ok( V_I4( &val ) == -1, "got %d\n", V_I4( &val ) );
+
+    hr = _Recordset_MoveNext( recordset );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !is_eof( recordset ), "eof\n" );
+    ok( !is_bof( recordset ), "not bof\n" );
+
+    hr = _Recordset_MoveNext( recordset );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( is_eof( recordset ), "not eof\n" );
+    ok( !is_bof( recordset ), "bof\n" );
+
+    hr = _Recordset_MoveFirst( recordset );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !is_eof( recordset ), "eof\n" );
+    ok( !is_bof( recordset ), "bof\n" );
+
+    hr = _Recordset_MovePrevious( recordset );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !is_eof( recordset ), "eof\n" );
+    ok( is_bof( recordset ), "not bof\n" );
+
+    /* try get value at BOF */
+    VariantInit( &val );
+    hr = Field_get_Value( field, &val );
+    ok( hr == MAKE_ADO_HRESULT( adErrNoCurrentRecord ), "got %08x\n", hr );
+
     hr = _Recordset_Close( recordset );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -167,6 +248,7 @@ static void test_Recordset(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == adStateClosed, "got %d\n", state );
 
+    Field_Release( field );
     Fields_Release( fields );
     _Recordset_Release( recordset );
 }
