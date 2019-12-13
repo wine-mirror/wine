@@ -967,14 +967,22 @@ static HRESULT WINAPI recordset_Move( _Recordset *iface, LONG num_records, VARIA
 
 static HRESULT WINAPI recordset_MoveNext( _Recordset *iface )
 {
-    FIXME( "%p\n", iface );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p\n", recordset );
+
+    if (recordset->index < recordset->count) recordset->index++;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_MovePrevious( _Recordset *iface )
 {
-    FIXME( "%p\n", iface );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p\n", recordset );
+
+    if (recordset->index >= 0) recordset->index--;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_MoveFirst( _Recordset *iface )
