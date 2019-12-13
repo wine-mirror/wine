@@ -4949,6 +4949,7 @@ GpStatus WINGDIPAPI GdipGraphicsClear(GpGraphics *graphics, ARGB color)
     GpSolidFill *brush;
     GpStatus stat;
     GpRectF wnd_rect;
+    CompositingMode prev_comp_mode;
 
     TRACE("(%p, %x)\n", graphics, color);
 
@@ -4969,8 +4970,11 @@ GpStatus WINGDIPAPI GdipGraphicsClear(GpGraphics *graphics, ARGB color)
         return stat;
     }
 
+    GdipGetCompositingMode(graphics, &prev_comp_mode);
+    GdipSetCompositingMode(graphics, CompositingModeSourceCopy);
     GdipFillRectangle(graphics, (GpBrush*)brush, wnd_rect.X, wnd_rect.Y,
                                                  wnd_rect.Width, wnd_rect.Height);
+    GdipSetCompositingMode(graphics, prev_comp_mode);
 
     GdipDeleteBrush((GpBrush*)brush);
 
