@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-12-01 13:42+0200\n"
+"PO-Revision-Date: 2019-12-13 10:36+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -8297,26 +8297,20 @@ msgid "Off"
 msgstr "Išjungta"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "vaizdas"
+msgstr "Tiekėjas"
 
 #: version.rc:45
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "Išrinkite formatą, kurį norite naudoti:"
+msgstr "Išrinkite duomenis, prie kurių norite jungtis:"
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "Savybės"
+msgstr "Duomenų saito savybės"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "OLE DB tiekėjai"
 
 #: oledlg.rc:55
 msgid "Insert Object"
