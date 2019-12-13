@@ -157,72 +157,106 @@ static HRESULT WINAPI ItemMonikerImpl_IsDirty(IMoniker* iface)
     return S_FALSE;
 }
 
+static HRESULT item_moniker_load_string_record(IStream *stream, WCHAR **ret)
+{
+    DWORD str_len, read_len, lenW, i;
+    HRESULT hr = S_OK;
+    char *buffer;
+    WCHAR *str;
+
+    IStream_Read(stream, &str_len, sizeof(str_len), &read_len);
+    if (read_len != sizeof(str_len))
+        return E_FAIL;
+
+    if (!str_len)
+    {
+        heap_free(*ret);
+        *ret = NULL;
+        return S_OK;
+    }
+
+    if (!(buffer = heap_alloc(str_len)))
+        return E_OUTOFMEMORY;
+
+    IStream_Read(stream, buffer, str_len, &read_len);
+    if (read_len != str_len)
+    {
+        heap_free(buffer);
+        return E_FAIL;
+    }
+
+    /* Skip ansi buffer, it must be null terminated. */
+    i = 0;
+    while (i < str_len && buffer[i])
+        i++;
+
+    if (buffer[i])
+    {
+        WARN("Expected null terminated ansi name.\n");
+        hr = E_FAIL;
+        goto end;
+    }
+
+    if (i < str_len - 1)
+    {
+        str_len -= i + 1;
+
+        if (str_len % sizeof(WCHAR))
+        {
+            WARN("Unexpected Unicode name length %d.\n", str_len);
+            hr = E_FAIL;
+            goto end;
+        }
+
+        str = heap_alloc(str_len + sizeof(WCHAR));
+        if (str)
+        {
+            memcpy(str, &buffer[i + 1], str_len);
+            str[str_len / sizeof(WCHAR)] = 0;
+        }
+    }
+    else
+    {
+        lenW = MultiByteToWideChar(CP_ACP, 0, buffer, -1, NULL, 0);
+        str = heap_alloc(lenW * sizeof(WCHAR));
+        if (str)
+            MultiByteToWideChar(CP_ACP, 0, buffer, -1, str, lenW);
+    }
+
+    if (str)
+    {
+        heap_free(*ret);
+        *ret = str;
+    }
+    else
+        hr = E_OUTOFMEMORY;
+
+end:
+    heap_free(buffer);
+
+    return hr;
+}
+
 /******************************************************************************
  *        ItemMoniker_Load
  ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_Load(IMoniker* iface,IStream* pStm)
+static HRESULT WINAPI ItemMonikerImpl_Load(IMoniker *iface, IStream *stream)
 {
     ItemMonikerImpl *This = impl_from_IMoniker(iface);
-    HRESULT res;
-    DWORD delimiterLength,nameLength,lenW;
-    CHAR *itemNameA,*itemDelimiterA;
-    ULONG bread;
+    HRESULT hr;
 
-    TRACE("\n");
+    TRACE("(%p, %p)\n", iface, stream);
 
-    /* for more details about data read by this function see comments of ItemMonikerImpl_Save function */
+    /* Delimiter and name use the same record structure: 4 bytes byte-length field, followed by
+       string data. Data starts with single byte null-terminated string, WCHAR non-terminated
+       string optionally follows. Length of WCHAR string is determined as a difference between total
+       byte-length and single byte string length. */
 
-    /* read item delimiter string length + 1 */
-    res=IStream_Read(pStm,&delimiterLength,sizeof(DWORD),&bread);
-    if (bread != sizeof(DWORD))
-        return E_FAIL;
+    hr = item_moniker_load_string_record(stream, &This->itemDelimiter);
+    if (SUCCEEDED(hr))
+        hr = item_moniker_load_string_record(stream, &This->itemName);
 
-    /* read item delimiter string */
-    if (!(itemDelimiterA=HeapAlloc(GetProcessHeap(),0,delimiterLength)))
-        return E_OUTOFMEMORY;
-    res=IStream_Read(pStm,itemDelimiterA,delimiterLength,&bread);
-    if (bread != delimiterLength)
-    {
-        HeapFree( GetProcessHeap(), 0, itemDelimiterA );
-        return E_FAIL;
-    }
-
-    lenW = MultiByteToWideChar( CP_ACP, 0, itemDelimiterA, -1, NULL, 0 );
-    This->itemDelimiter=HeapReAlloc(GetProcessHeap(),0,This->itemDelimiter,lenW*sizeof(WCHAR));
-    if (!This->itemDelimiter)
-    {
-        HeapFree( GetProcessHeap(), 0, itemDelimiterA );
-        return E_OUTOFMEMORY;
-    }
-    MultiByteToWideChar( CP_ACP, 0, itemDelimiterA, -1, This->itemDelimiter, lenW );
-    HeapFree( GetProcessHeap(), 0, itemDelimiterA );
-
-    /* read item name string length + 1*/
-    res=IStream_Read(pStm,&nameLength,sizeof(DWORD),&bread);
-    if (bread != sizeof(DWORD))
-        return E_FAIL;
-
-    /* read item name string */
-    if (!(itemNameA=HeapAlloc(GetProcessHeap(),0,nameLength)))
-        return E_OUTOFMEMORY;
-    res=IStream_Read(pStm,itemNameA,nameLength,&bread);
-    if (bread != nameLength)
-    {
-        HeapFree( GetProcessHeap(), 0, itemNameA );
-        return E_FAIL;
-    }
-
-    lenW = MultiByteToWideChar( CP_ACP, 0, itemNameA, -1, NULL, 0 );
-    This->itemName=HeapReAlloc(GetProcessHeap(),0,This->itemName,lenW*sizeof(WCHAR));
-    if (!This->itemName)
-    {
-        HeapFree( GetProcessHeap(), 0, itemNameA );
-        return E_OUTOFMEMORY;
-    }
-    MultiByteToWideChar( CP_ACP, 0, itemNameA, -1, This->itemName, lenW );
-    HeapFree( GetProcessHeap(), 0, itemNameA );
-
-    return res;
+    return hr;
 }
 
 /******************************************************************************

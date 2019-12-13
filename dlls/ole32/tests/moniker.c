@@ -1674,9 +1674,37 @@ static void test_file_monikers(void)
 
 static void test_item_moniker(void)
 {
+    static const char item_moniker_unicode_delim_stream[] =
+    {
+        0x05, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, '!',
+        0x00, 0x02, 0x00, 0x00, 0x00,  'A', 0x00,
+    };
+    static const char item_moniker_unicode_item_stream[] =
+    {
+        0x02, 0x00, 0x00, 0x00,  '!', 0x00, 0x05, 0x00,
+        0x00, 0x00, 0xff, 0xff, 0x00,  'B', 0x00,
+    };
+    static const char item_moniker_unicode_delim_item_stream[] =
+    {
+        0x05, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00,  '!',
+        0x00, 0x06, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+        0x00,  'C', 0x00,
+    };
+    static struct
+    {
+        const char *data;
+        int data_len;
+        const WCHAR *display_name;
+    }
+    item_moniker_data[] =
+    {
+        { item_moniker_unicode_delim_stream, sizeof(item_moniker_unicode_delim_stream), L"!A" },
+        { item_moniker_unicode_item_stream, sizeof(item_moniker_unicode_item_stream), L"!B" },
+        { item_moniker_unicode_delim_item_stream, sizeof(item_moniker_unicode_delim_item_stream), L"!C" },
+    };
+    IMoniker *moniker, *moniker2;
     HRESULT hr;
-    IMoniker *moniker;
-    DWORD moniker_type;
+    DWORD moniker_type, i;
     DWORD hash;
     IBindCtx *bindctx;
     IMoniker *inverse;
@@ -1684,6 +1712,9 @@ static void test_item_moniker(void)
     static const WCHAR wszDelimiter[] = {'!',0};
     static const WCHAR wszObjectName[] = {'T','e','s','t',0};
     static const WCHAR expected_display_name[] = { '!','T','e','s','t',0 };
+    WCHAR *display_name;
+    LARGE_INTEGER pos;
+    IStream *stream;
 
     hr = CreateItemMoniker(NULL, wszObjectName, &moniker);
     ok(hr == S_OK, "Failed to create item moniker, hr %#x.\n", hr);
@@ -1727,6 +1758,43 @@ static void test_item_moniker(void)
         expected_item_moniker_comparison_data5, sizeof(expected_item_moniker_comparison_data5),
         58, L"abTest");
 
+    /* Serialize and load back. */
+    hr = CreateItemMoniker(NULL, L"object", &moniker2);
+    ok(hr == S_OK, "Failed to create item moniker, hr %#x.\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+
+    hr = CreateBindCtx(0, &bindctx);
+    ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(item_moniker_data); ++i)
+    {
+        pos.QuadPart = 0;
+        hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "Failed to seek stream, hr %#x.\n", hr);
+
+        hr = IStream_Write(stream, item_moniker_data[i].data, item_moniker_data[i].data_len, NULL);
+        ok(hr == S_OK, "Failed to write stream contents, hr %#x.\n", hr);
+
+        pos.QuadPart = 0;
+        hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "Failed to seek stream, hr %#x.\n", hr);
+
+        hr = IMoniker_Load(moniker2, stream);
+        ok(hr == S_OK, "Failed to load moniker, hr %#x.\n", hr);
+
+        hr = IMoniker_GetDisplayName(moniker2, bindctx, NULL, &display_name);
+        ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
+        ok(!lstrcmpW(display_name, item_moniker_data[i].display_name), "%d: unexpected display name %s.\n",
+                i, wine_dbgstr_w(display_name));
+
+        CoTaskMemFree(display_name);
+    }
+
+    IStream_Release(stream);
+
+    IMoniker_Release(moniker2);
     IMoniker_Release(moniker);
 
     hr = CreateItemMoniker(wszDelimiter, wszObjectName, &moniker);
@@ -1755,9 +1823,6 @@ static void test_item_moniker(void)
     ok(moniker_type == MKSYS_ITEMMONIKER,
         "dwMkSys != MKSYS_ITEMMONIKER, instead was 0x%08x\n",
         moniker_type);
-
-    hr = CreateBindCtx(0, &bindctx);
-    ok_ole_success(hr, CreateBindCtx);
 
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
