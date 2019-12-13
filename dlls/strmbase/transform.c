@@ -229,6 +229,52 @@ static void sink_disconnect(struct strmbase_sink *iface)
         filter->pFuncsTable->pfnBreakConnect(filter, PINDIR_INPUT);
 }
 
+static HRESULT sink_eos(struct strmbase_sink *iface)
+{
+    TransformFilter *filter = impl_from_sink_IPin(&iface->pin.IPin_iface);
+
+    if (filter->source.pin.peer)
+        return IPin_EndOfStream(filter->source.pin.peer);
+    return VFW_E_NOT_CONNECTED;
+}
+
+static HRESULT sink_begin_flush(struct strmbase_sink *iface)
+{
+    TransformFilter *filter = impl_from_sink_IPin(&iface->pin.IPin_iface);
+    HRESULT hr = S_OK;
+
+    if (filter->pFuncsTable->pfnBeginFlush)
+        hr = filter->pFuncsTable->pfnBeginFlush(filter);
+    if (SUCCEEDED(hr) && filter->source.pin.peer)
+        hr = IPin_BeginFlush(filter->source.pin.peer);
+    return hr;
+}
+
+static HRESULT sink_end_flush(struct strmbase_sink *iface)
+{
+    TransformFilter *filter = impl_from_sink_IPin(&iface->pin.IPin_iface);
+    HRESULT hr = S_OK;
+
+    if (filter->pFuncsTable->pfnEndFlush)
+        hr = filter->pFuncsTable->pfnEndFlush(filter);
+    if (SUCCEEDED(hr) && filter->source.pin.peer)
+        hr = IPin_EndFlush(filter->source.pin.peer);
+    return hr;
+}
+
+static HRESULT sink_new_segment(struct strmbase_sink *iface,
+        REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
+{
+    TransformFilter *filter = impl_from_sink_IPin(&iface->pin.IPin_iface);
+    HRESULT hr = S_OK;
+
+    if (filter->pFuncsTable->pfnNewSegment)
+        hr = filter->pFuncsTable->pfnNewSegment(filter, start, stop, rate);
+    if (SUCCEEDED(hr) && filter->source.pin.peer)
+        hr = IPin_NewSegment(filter->source.pin.peer, start, stop, rate);
+    return hr;
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
@@ -237,6 +283,10 @@ static const struct strmbase_sink_ops sink_ops =
     .pfnReceive = TransformFilter_Input_Receive,
     .sink_connect = sink_connect,
     .sink_disconnect = sink_disconnect,
+    .sink_eos = sink_eos,
+    .sink_begin_flush = sink_begin_flush,
+    .sink_end_flush = sink_end_flush,
+    .sink_new_segment = sink_new_segment,
 };
 
 static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
@@ -405,64 +455,6 @@ HRESULT strmbase_transform_create(LONG filter_size, IUnknown *outer, const CLSID
     return E_FAIL;
 }
 
-static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
-{
-    TransformFilter *filter = impl_from_sink_IPin(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    if (filter->source.pin.peer)
-        return IPin_EndOfStream(filter->source.pin.peer);
-    return VFW_E_NOT_CONNECTED;
-}
-
-static HRESULT WINAPI TransformFilter_InputPin_BeginFlush(IPin * iface)
-{
-    TransformFilter *pTransform = impl_from_sink_IPin(iface);
-    HRESULT hr = S_OK;
-
-    TRACE("(%p)->()\n", iface);
-
-    EnterCriticalSection(&pTransform->filter.csFilter);
-    if (pTransform->pFuncsTable->pfnBeginFlush)
-        hr = pTransform->pFuncsTable->pfnBeginFlush(pTransform);
-    if (SUCCEEDED(hr))
-        hr = BaseInputPinImpl_BeginFlush(iface);
-    LeaveCriticalSection(&pTransform->filter.csFilter);
-    return hr;
-}
-
-static HRESULT WINAPI TransformFilter_InputPin_EndFlush(IPin * iface)
-{
-    TransformFilter *pTransform = impl_from_sink_IPin(iface);
-    HRESULT hr = S_OK;
-
-    TRACE("(%p)->()\n", iface);
-
-    EnterCriticalSection(&pTransform->filter.csFilter);
-    if (pTransform->pFuncsTable->pfnEndFlush)
-        hr = pTransform->pFuncsTable->pfnEndFlush(pTransform);
-    if (SUCCEEDED(hr))
-        hr = BaseInputPinImpl_EndFlush(iface);
-    LeaveCriticalSection(&pTransform->filter.csFilter);
-    return hr;
-}
-
-static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
-{
-    TransformFilter *pTransform = impl_from_sink_IPin(iface);
-    HRESULT hr = S_OK;
-
-    TRACE("iface %p, start %s, stop %s, rate %.16e.\n",
-            iface, debugstr_time(tStart), debugstr_time(tStop), dRate);
-
-    if (pTransform->pFuncsTable->pfnNewSegment)
-        hr = pTransform->pFuncsTable->pfnNewSegment(pTransform, tStart, tStop, dRate);
-    if (SUCCEEDED(hr))
-        hr = BaseInputPinImpl_NewSegment(iface, tStart, tStop, dRate);
-    return hr;
-}
-
 static const IPinVtbl TransformFilter_InputPin_Vtbl =
 {
     BasePinImpl_QueryInterface,
@@ -479,8 +471,8 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     BasePinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
-    TransformFilter_InputPin_EndOfStream,
-    TransformFilter_InputPin_BeginFlush,
-    TransformFilter_InputPin_EndFlush,
-    TransformFilter_InputPin_NewSegment
+    BaseInputPinImpl_EndOfStream,
+    BaseInputPinImpl_BeginFlush,
+    BaseInputPinImpl_EndFlush,
+    BaseInputPinImpl_NewSegment
 };
