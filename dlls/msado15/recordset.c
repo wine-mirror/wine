@@ -1075,8 +1075,12 @@ static HRESULT WINAPI recordset_get_Status( _Recordset *iface, LONG *status )
 
 static HRESULT WINAPI recordset_get_State( _Recordset *iface, LONG *state )
 {
-    FIXME( "%p, %p\n", iface, state );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %p\n", recordset, state );
+
+    *state = recordset->state;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset__xClone( _Recordset *iface, _Recordset **obj )

@@ -100,8 +100,8 @@ static void test_Recordset(void)
 
     state = -1;
     hr = _Recordset_get_State( recordset, &state );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( state == adStateClosed, "got %d\n", state );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == adStateClosed, "got %d\n", state );
 
     VariantInit( &missing );
     hr = _Recordset_AddNew( recordset, missing, missing );
@@ -125,14 +125,19 @@ static void test_Recordset(void)
 
     state = -1;
     hr = _Recordset_get_State( recordset, &state );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( state == adStateOpen, "got %d\n", state );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == adStateOpen, "got %d\n", state );
 
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = _Recordset_Close( recordset );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    state = -1;
+    hr = _Recordset_get_State( recordset, &state );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == adStateClosed, "got %d\n", state );
 
     Fields_Release( fields );
     _Recordset_Release( recordset );
