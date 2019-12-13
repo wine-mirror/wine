@@ -1087,10 +1087,22 @@ static HRESULT WINAPI ScriptTypeInfo_GetRefTypeInfo(ITypeInfo *iface, HREFTYPE h
 static HRESULT WINAPI ScriptTypeInfo_AddressOfMember(ITypeInfo *iface, MEMBERID memid, INVOKEKIND invKind, PVOID *ppv)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    ITypeInfo *disp_typeinfo;
+    HRESULT hr;
 
-    FIXME("(%p)->(%d %d %p)\n", This, memid, invKind, ppv);
+    TRACE("(%p)->(%d %d %p)\n", This, memid, invKind, ppv);
 
-    return E_NOTIMPL;
+    if (!ppv) return E_INVALIDARG;
+    *ppv = NULL;
+
+    if (!get_func_from_memid(This, memid) && !get_var_from_memid(This, memid))
+    {
+        hr = get_dispatch_typeinfo(&disp_typeinfo);
+        if (FAILED(hr)) return hr;
+
+        return ITypeInfo_AddressOfMember(disp_typeinfo, memid, invKind, ppv);
+    }
+    return TYPE_E_BADMODULEKIND;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_CreateInstance(ITypeInfo *iface, IUnknown *pUnkOuter, REFIID riid, PVOID *ppvObj)
