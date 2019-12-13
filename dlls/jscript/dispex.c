@@ -1043,10 +1043,23 @@ static HRESULT WINAPI ScriptTypeInfo_GetDllEntry(ITypeInfo *iface, MEMBERID memi
         BSTR *pBstrDllName, BSTR *pBstrName, WORD *pwOrdinal)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    ITypeInfo *disp_typeinfo;
+    HRESULT hr;
 
-    FIXME("(%p)->(%d %d %p %p %p)\n", This, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
+    TRACE("(%p)->(%d %d %p %p %p)\n", This, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
 
-    return E_NOTIMPL;
+    if (pBstrDllName) *pBstrDllName = NULL;
+    if (pBstrName) *pBstrName = NULL;
+    if (pwOrdinal) *pwOrdinal = 0;
+
+    if (!get_func_from_memid(This, memid) && !get_var_from_memid(This, memid))
+    {
+        hr = get_dispatch_typeinfo(&disp_typeinfo);
+        if (FAILED(hr)) return hr;
+
+        return ITypeInfo_GetDllEntry(disp_typeinfo, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
+    }
+    return TYPE_E_BADMODULEKIND;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetRefTypeInfo(ITypeInfo *iface, HREFTYPE hRefType, ITypeInfo **ppTInfo)
