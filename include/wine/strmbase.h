@@ -95,6 +95,10 @@ struct strmbase_sink_ops
     BaseInputPin_Receive pfnReceive;
     HRESULT (*sink_connect)(struct strmbase_sink *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
     void (*sink_disconnect)(struct strmbase_sink *pin);
+    HRESULT (*sink_eos)(struct strmbase_sink *pin);
+    HRESULT (*sink_begin_flush)(struct strmbase_sink *pin);
+    HRESULT (*sink_end_flush)(struct strmbase_sink *pin);
+    HRESULT (*sink_new_segment)(struct strmbase_sink *pin, REFERENCE_TIME start, REFERENCE_TIME stop, double rate);
 };
 
 /* Base Pin */

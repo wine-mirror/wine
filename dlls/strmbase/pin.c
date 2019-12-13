@@ -718,6 +718,9 @@ HRESULT WINAPI BaseInputPinImpl_EndOfStream(IPin * iface)
 
     TRACE("(%p)->()\n", This);
 
+    if (This->pFuncsTable->sink_eos)
+        return This->pFuncsTable->sink_eos(This);
+
     EnterCriticalSection(&This->pin.filter->csFilter);
     if (This->flushing)
         hr = S_FALSE;
@@ -735,15 +738,21 @@ static HRESULT deliver_beginflush(IPin* pin, LPVOID unused)
 
 HRESULT WINAPI BaseInputPinImpl_BeginFlush(IPin * iface)
 {
-    struct strmbase_sink *This = impl_sink_from_IPin(iface);
+    struct strmbase_sink *pin = impl_sink_from_IPin(iface);
     HRESULT hr;
-    TRACE("(%p) semi-stub\n", This);
 
-    EnterCriticalSection(&This->pin.filter->csFilter);
-    This->flushing = TRUE;
+    TRACE("pin %p.\n", pin);
 
-    hr = SendFurther(This, deliver_beginflush, NULL);
-    LeaveCriticalSection(&This->pin.filter->csFilter);
+    EnterCriticalSection(&pin->pin.filter->csFilter);
+
+    pin->flushing = TRUE;
+
+    if (pin->pFuncsTable->sink_begin_flush)
+        hr = pin->pFuncsTable->sink_begin_flush(pin);
+    else
+        hr = SendFurther(pin, deliver_beginflush, NULL);
+
+    LeaveCriticalSection(&pin->pin.filter->csFilter);
 
     return hr;
 }
@@ -755,15 +764,21 @@ static HRESULT deliver_endflush(IPin* pin, LPVOID unused)
 
 HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface)
 {
-    struct strmbase_sink *This = impl_sink_from_IPin(iface);
+    struct strmbase_sink *pin = impl_sink_from_IPin(iface);
     HRESULT hr;
-    TRACE("(%p)->()\n", This);
 
-    EnterCriticalSection(&This->pin.filter->csFilter);
-    This->flushing = FALSE;
+    TRACE("pin %p.\n", pin);
 
-    hr = SendFurther(This, deliver_endflush, NULL);
-    LeaveCriticalSection(&This->pin.filter->csFilter);
+    EnterCriticalSection(&pin->pin.filter->csFilter);
+
+    pin->flushing = FALSE;
+
+    if (pin->pFuncsTable->sink_end_flush)
+        hr = pin->pFuncsTable->sink_end_flush(pin);
+    else
+        hr = SendFurther(pin, deliver_endflush, NULL);
+
+    LeaveCriticalSection(&pin->pin.filter->csFilter);
 
     return hr;
 }
@@ -787,6 +802,9 @@ HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME start, R
 
     TRACE("iface %p, start %s, stop %s, rate %.16e.\n",
             iface, debugstr_time(start), debugstr_time(stop), rate);
+
+    if (pin->pFuncsTable->sink_new_segment)
+        return pin->pFuncsTable->sink_new_segment(pin, start, stop, rate);
 
     args.tStart = start;
     args.tStop = stop;
