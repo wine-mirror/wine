@@ -1686,4 +1686,4 @@
 @ cdecl wine_get_dos_file_name(str)
 
 # Init code
-@ cdecl __wine_start_process()
+@ cdecl -norelay -private __wine_start_process()
