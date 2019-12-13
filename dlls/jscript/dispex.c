@@ -877,9 +877,14 @@ static HRESULT WINAPI ScriptTypeInfo_GetRefTypeOfImplType(ITypeInfo *iface, UINT
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
 
-    FIXME("(%p)->(%u %p)\n", This, index, pRefType);
+    TRACE("(%p)->(%u %p)\n", This, index, pRefType);
 
-    return E_NOTIMPL;
+    /* We only inherit from IDispatch */
+    if (!pRefType) return E_INVALIDARG;
+    if (index != 0) return TYPE_E_ELEMENTNOTFOUND;
+
+    *pRefType = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetImplTypeFlags(ITypeInfo *iface, UINT index, INT *pImplTypeFlags)
