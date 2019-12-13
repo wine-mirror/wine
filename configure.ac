@@ -648,14 +648,6 @@ AC_CHECK_HEADERS([linux/ipx.h linux/irda.h linux/rtnetlink.h],,,
      # include <linux/types.h>
      #endif])
 
-AC_CHECK_HEADERS([mach-o/dyld_images.h],,,
-    [#ifdef HAVE_STDBOOL_H
-     # include <stdbool.h>
-     #endif
-     #ifdef HAVE_STDINT_H
-     # include <stdint.h>
-     #endif])
-
 AC_CHECK_HEADERS([resolv.h],,,
     [#include <sys/types.h>
      #ifdef HAVE_SYS_SOCKET_H
