@@ -114,6 +114,9 @@ static void test_Recordset(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !count, "got %d\n", count );
 
+    hr = _Recordset_Close( recordset );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
+
     refs = _Recordset_Release( recordset );
     ok( !refs, "got %d\n", refs );
 
@@ -136,7 +139,7 @@ static void test_Recordset(void)
     V_VT( &missing ) = VT_ERROR;
     V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
     hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
-    todo_wine ok( hr == MAKE_ADO_HRESULT( adErrInvalidConnection ), "got %08x\n", hr );
+    ok( hr == MAKE_ADO_HRESULT( adErrInvalidConnection ), "got %08x\n", hr );
 
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -155,6 +158,9 @@ static void test_Recordset(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( is_eof( recordset ), "not eof\n" );
     ok( is_bof( recordset ), "not bof\n" );
+
+    hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectOpen ), "got %08x\n", hr );
 
     state = -1;
     hr = _Recordset_get_State( recordset, &state );

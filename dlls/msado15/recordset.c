@@ -1035,6 +1035,8 @@ static HRESULT WINAPI recordset_Close( _Recordset *iface )
 
     TRACE( "%p\n", recordset );
 
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
     close_recordset( recordset );
     recordset->state = adStateClosed;
     return S_OK;
@@ -1105,6 +1107,9 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 
     FIXME( "%p, %s, %s, %d, %d, %d\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
            cursor_type, lock_type, options );
+
+    if (!recordset->fields) return MAKE_ADO_HRESULT( adErrInvalidConnection );
+    if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
 
     recordset->state = adStateOpen;
     return S_OK;
