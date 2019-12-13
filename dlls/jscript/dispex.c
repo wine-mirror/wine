@@ -957,11 +957,33 @@ static HRESULT WINAPI ScriptTypeInfo_Invoke(ITypeInfo *iface, PVOID pvInstance, 
         DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    ITypeInfo *disp_typeinfo;
+    IDispatch *disp;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p %d %d %p %p %p %p)\n", This, pvInstance, memid, wFlags,
+    TRACE("(%p)->(%p %d %d %p %p %p %p)\n", This, pvInstance, memid, wFlags,
           pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    return E_NOTIMPL;
+    if (!pvInstance) return E_INVALIDARG;
+    if (memid <= 0) return TYPE_E_ELEMENTNOTFOUND;
+
+    if (!get_func_from_memid(This, memid) && !get_var_from_memid(This, memid))
+    {
+        hr = get_dispatch_typeinfo(&disp_typeinfo);
+        if (FAILED(hr)) return hr;
+
+        return ITypeInfo_Invoke(disp_typeinfo, pvInstance, memid, wFlags, pDispParams,
+                                pVarResult, pExcepInfo, puArgErr);
+    }
+
+    hr = IUnknown_QueryInterface((IUnknown*)pvInstance, &IID_IDispatch, (void**)&disp);
+    if (FAILED(hr)) return hr;
+
+    hr = IDispatch_Invoke(disp, memid, &IID_NULL, LOCALE_USER_DEFAULT, wFlags,
+                          pDispParams, pVarResult, pExcepInfo, puArgErr);
+    IDispatch_Release(disp);
+
+    return hr;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetDocumentation(ITypeInfo *iface, MEMBERID memid, BSTR *pBstrName,
