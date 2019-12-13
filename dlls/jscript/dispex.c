@@ -625,6 +625,44 @@ typedef struct {
     jsdisp_t *jsdisp;
 } ScriptTypeInfo;
 
+static struct typeinfo_func *get_func_from_memid(const ScriptTypeInfo *typeinfo, MEMBERID memid)
+{
+    UINT a = 0, b = typeinfo->num_funcs;
+
+    while (a < b)
+    {
+        UINT i = (a + b - 1) / 2;
+        MEMBERID func_memid = prop_to_id(typeinfo->jsdisp, typeinfo->funcs[i].prop);
+
+        if (memid == func_memid)
+            return &typeinfo->funcs[i];
+        else if (memid < func_memid)
+            b = i;
+        else
+            a = i + 1;
+    }
+    return NULL;
+}
+
+static dispex_prop_t *get_var_from_memid(const ScriptTypeInfo *typeinfo, MEMBERID memid)
+{
+    UINT a = 0, b = typeinfo->num_vars;
+
+    while (a < b)
+    {
+        UINT i = (a + b - 1) / 2;
+        MEMBERID var_memid = prop_to_id(typeinfo->jsdisp, typeinfo->vars[i]);
+
+        if (memid == var_memid)
+            return typeinfo->vars[i];
+        else if (memid < var_memid)
+            b = i;
+        else
+            a = i + 1;
+    }
+    return NULL;
+}
+
 static inline ScriptTypeInfo *ScriptTypeInfo_from_ITypeInfo(ITypeInfo *iface)
 {
     return CONTAINING_RECORD(iface, ScriptTypeInfo, ITypeInfo_iface);
@@ -786,10 +824,53 @@ static HRESULT WINAPI ScriptTypeInfo_GetNames(ITypeInfo *iface, MEMBERID memid, 
         UINT cMaxNames, UINT *pcNames)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    struct typeinfo_func *func;
+    ITypeInfo *disp_typeinfo;
+    dispex_prop_t *var;
+    HRESULT hr;
+    UINT i = 0;
 
-    FIXME("(%p)->(%d %p %u %p)\n", This, memid, rgBstrNames, cMaxNames, pcNames);
+    TRACE("(%p)->(%d %p %u %p)\n", This, memid, rgBstrNames, cMaxNames, pcNames);
 
-    return E_NOTIMPL;
+    if (!rgBstrNames || !pcNames) return E_INVALIDARG;
+    if (memid <= 0) return TYPE_E_ELEMENTNOTFOUND;
+
+    func = get_func_from_memid(This, memid);
+    if (!func)
+    {
+        var = get_var_from_memid(This, memid);
+        if (!var)
+        {
+            hr = get_dispatch_typeinfo(&disp_typeinfo);
+            if (FAILED(hr)) return hr;
+
+            return ITypeInfo_GetNames(disp_typeinfo, memid, rgBstrNames, cMaxNames, pcNames);
+        }
+    }
+
+    *pcNames = 0;
+    if (!cMaxNames) return S_OK;
+
+    rgBstrNames[0] = SysAllocString(func ? func->prop->name : var->name);
+    if (!rgBstrNames[0]) return E_OUTOFMEMORY;
+    i++;
+
+    if (func)
+    {
+        unsigned num = min(cMaxNames, func->code->param_cnt + 1);
+
+        for (; i < num; i++)
+        {
+            if (!(rgBstrNames[i] = SysAllocString(func->code->params[i - 1])))
+            {
+                do SysFreeString(rgBstrNames[--i]); while (i);
+                return E_OUTOFMEMORY;
+            }
+        }
+    }
+
+    *pcNames = i;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetRefTypeOfImplType(ITypeInfo *iface, UINT index, HREFTYPE *pRefType)
