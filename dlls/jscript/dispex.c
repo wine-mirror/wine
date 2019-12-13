@@ -891,9 +891,13 @@ static HRESULT WINAPI ScriptTypeInfo_GetImplTypeFlags(ITypeInfo *iface, UINT ind
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
 
-    FIXME("(%p)->(%u %p)\n", This, index, pImplTypeFlags);
+    TRACE("(%p)->(%u %p)\n", This, index, pImplTypeFlags);
 
-    return E_NOTIMPL;
+    if (!pImplTypeFlags) return E_INVALIDARG;
+    if (index != 0) return TYPE_E_ELEMENTNOTFOUND;
+
+    *pImplTypeFlags = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetIDsOfNames(ITypeInfo *iface, LPOLESTR *rgszNames, UINT cNames,
