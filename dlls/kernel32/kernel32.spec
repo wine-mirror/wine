@@ -1558,8 +1558,8 @@
 @ stdcall -ret64 VerSetConditionMask(long long long long) ntdll.VerSetConditionMask
 @ stdcall VerifyConsoleIoHandle(long)
 # @ stub VerifyScripts
-@ stdcall VerifyVersionInfoA(long long int64)
-@ stdcall VerifyVersionInfoW(long long int64)
+@ stdcall VerifyVersionInfoA(ptr long int64)
+@ stdcall VerifyVersionInfoW(ptr long int64)
 @ stdcall -import VirtualAlloc(ptr long long long)
 @ stdcall -import VirtualAllocEx(long ptr long long long)
 @ stdcall -import VirtualAllocExNuma(long ptr long long long long)
@@ -1632,7 +1632,7 @@
 @ stdcall WritePrivateProfileStructW(wstr wstr ptr long wstr)
 @ stdcall -import WriteProcessMemory(long ptr ptr long ptr)
 @ stdcall WriteProfileSectionA(str str)
-@ stdcall WriteProfileSectionW(str str)
+@ stdcall WriteProfileSectionW(wstr wstr)
 @ stdcall WriteProfileStringA(str str str)
 @ stdcall WriteProfileStringW(wstr wstr wstr)
 @ stdcall WriteTapemark(ptr long long long)

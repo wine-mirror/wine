@@ -64,6 +64,6 @@
 @ stdcall SetVolumeLabelW(wstr wstr) kernel32.SetVolumeLabelW
 @ stdcall SetVolumeMountPointW(wstr wstr) kernel32.SetVolumeMountPointW
 @ stdcall UnregisterWait(long) kernel32.UnregisterWait
-@ stdcall VerifyVersionInfoW(long long int64) kernel32.VerifyVersionInfoW
+@ stdcall VerifyVersionInfoW(ptr long int64) kernel32.VerifyVersionInfoW
 @ stdcall WaitForMultipleObjects(long ptr long long) kernel32.WaitForMultipleObjects
 @ stdcall WTSGetActiveConsoleSessionId() kernel32.WTSGetActiveConsoleSessionId
