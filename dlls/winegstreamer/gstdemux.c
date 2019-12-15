@@ -1393,6 +1393,8 @@ static HRESULT gstdemux_sink_connect(struct strmbase_sink *iface, IPin *peer, co
     if (FAILED(hr = IMemAllocator_Commit(filter->alloc)))
     {
         WARN("Failed to commit allocator, hr %#x.\n", hr);
+        IMemAllocator_Release(filter->alloc);
+        filter->alloc = NULL;
         goto err;
     }
 
@@ -1400,6 +1402,7 @@ static HRESULT gstdemux_sink_connect(struct strmbase_sink *iface, IPin *peer, co
 err:
     GST_RemoveOutputPins(filter);
     IAsyncReader_Release(filter->reader);
+    filter->reader = NULL;
     return hr;
 }
 
