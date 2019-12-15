@@ -643,7 +643,7 @@ int ntdll_umbstowcs( DWORD flags, const char *src, int srclen, WCHAR *dst, int d
 
     if (!dstlen) dst = NULL;
     status = RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
-    if (status && status != STATUS_SOME_NOT_MAPPED) return 0;
+    if (status && status != STATUS_SOME_NOT_MAPPED) return -1;
     reslen /= sizeof(WCHAR);
 #ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
     if (reslen && dst) RtlNormalizeString( NormalizationC, dst, reslen, dst, (int *)&reslen );
@@ -666,7 +666,7 @@ int ntdll_wcstoumbs( DWORD flags, const WCHAR *src, int srclen, char *dst, int d
     if (used) *used = 0;  /* all chars are valid for UTF-8 */
     if (!dstlen) dst = NULL;
     status = RtlUnicodeToUTF8N( dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
-    if (status && status != STATUS_SOME_NOT_MAPPED) return 0;
+    if (status && status != STATUS_SOME_NOT_MAPPED) return -1;
     return reslen;
 }
 
