@@ -111,6 +111,8 @@ static void sample_grabber_destroy(struct strmbase_filter *iface)
     SG_Impl *filter = impl_from_strmbase_filter(iface);
 
     SampleGrabber_cleanup(filter);
+    strmbase_sink_cleanup(&filter->sink);
+    strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
     CoTaskMemFree(filter);
 }
