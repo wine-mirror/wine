@@ -1199,10 +1199,10 @@ err:
 }
 
 /* Common helper for Create{Proxy,Stub}FromTypeInfo(). */
-static HRESULT get_iface_info(ITypeInfo **typeinfo, WORD *funcs, WORD *parentfuncs,
-        GUID *parentiid)
+static HRESULT get_iface_info(ITypeInfo *typeinfo, WORD *funcs, WORD *parentfuncs,
+        GUID *parentiid, ITypeInfo **real_typeinfo)
 {
-    ITypeInfo *real_typeinfo, *parentinfo;
+    ITypeInfo *parentinfo;
     TYPEATTR *typeattr;
     ITypeLib *typelib;
     TLIBATTR *libattr;
@@ -1214,59 +1214,62 @@ static HRESULT get_iface_info(ITypeInfo **typeinfo, WORD *funcs, WORD *parentfun
     /* Dual interfaces report their size to be sizeof(IDispatchVtbl) and their
      * implemented type to be IDispatch. We need to retrieve the underlying
      * interface to get that information. */
-    hr = ITypeInfo_GetTypeAttr(*typeinfo, &typeattr);
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
     if (FAILED(hr))
         return hr;
     typekind = typeattr->typekind;
-    ITypeInfo_ReleaseTypeAttr(*typeinfo, typeattr);
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
     if (typekind == TKIND_DISPATCH)
     {
-        hr = ITypeInfo_GetRefTypeOfImplType(*typeinfo, -1, &reftype);
+        hr = ITypeInfo_GetRefTypeOfImplType(typeinfo, -1, &reftype);
         if (FAILED(hr))
             return hr;
 
-        hr = ITypeInfo_GetRefTypeInfo(*typeinfo, reftype, &real_typeinfo);
+        hr = ITypeInfo_GetRefTypeInfo(typeinfo, reftype, real_typeinfo);
         if (FAILED(hr))
             return hr;
-
-        ITypeInfo_Release(*typeinfo);
-        *typeinfo = real_typeinfo;
     }
+    else
+        ITypeInfo_AddRef(*real_typeinfo = typeinfo);
 
-    hr = ITypeInfo_GetContainingTypeLib(*typeinfo, &typelib, NULL);
+    hr = ITypeInfo_GetContainingTypeLib(*real_typeinfo, &typelib, NULL);
     if (FAILED(hr))
-        return hr;
+        goto err;
 
     hr = ITypeLib_GetLibAttr(typelib, &libattr);
     if (FAILED(hr))
     {
         ITypeLib_Release(typelib);
-        return hr;
+        goto err;
     }
     syskind = libattr->syskind;
     ITypeLib_ReleaseTLibAttr(typelib, libattr);
     ITypeLib_Release(typelib);
 
-    hr = ITypeInfo_GetTypeAttr(*typeinfo, &typeattr);
+    hr = ITypeInfo_GetTypeAttr(*real_typeinfo, &typeattr);
     if (FAILED(hr))
-        return hr;
+        goto err;
     *funcs = typeattr->cFuncs;
     *parentfuncs = typeattr->cbSizeVft / (syskind == SYS_WIN64 ? 8 : 4) - *funcs;
-    ITypeInfo_ReleaseTypeAttr(*typeinfo, typeattr);
+    ITypeInfo_ReleaseTypeAttr(*real_typeinfo, typeattr);
 
-    hr = ITypeInfo_GetRefTypeOfImplType(*typeinfo, 0, &reftype);
+    hr = ITypeInfo_GetRefTypeOfImplType(*real_typeinfo, 0, &reftype);
     if (FAILED(hr))
-        return hr;
-    hr = ITypeInfo_GetRefTypeInfo(*typeinfo, reftype, &parentinfo);
+        goto err;
+    hr = ITypeInfo_GetRefTypeInfo(*real_typeinfo, reftype, &parentinfo);
     if (FAILED(hr))
-        return hr;
+        goto err;
     hr = ITypeInfo_GetTypeAttr(parentinfo, &typeattr);
     if (FAILED(hr))
-        return hr;
+        goto err;
     *parentiid = typeattr->guid;
     ITypeInfo_ReleaseTypeAttr(parentinfo, typeattr);
     ITypeInfo_Release(parentinfo);
 
+    return S_OK;
+
+err:
+    ITypeInfo_Release(*real_typeinfo);
     return hr;
 }
 
@@ -1355,19 +1358,21 @@ HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo, IUnknown *outer,
 {
     struct typelib_proxy *proxy;
     WORD funcs, parentfuncs, i;
+    ITypeInfo *real_typeinfo;
     GUID parentiid;
     HRESULT hr;
 
     TRACE("typeinfo %p, outer %p, iid %s, proxy_buffer %p, out %p.\n",
             typeinfo, outer, debugstr_guid(iid), proxy_buffer, out);
 
-    hr = get_iface_info(&typeinfo, &funcs, &parentfuncs, &parentiid);
+    hr = get_iface_info(typeinfo, &funcs, &parentfuncs, &parentiid, &real_typeinfo);
     if (FAILED(hr))
         return hr;
 
     if (!(proxy = heap_alloc_zero(sizeof(*proxy))))
     {
         ERR("Failed to allocate proxy object.\n");
+        ITypeInfo_Release(real_typeinfo);
         return E_OUTOFMEMORY;
     }
 
@@ -1379,6 +1384,7 @@ HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo, IUnknown *outer,
     {
         ERR("Failed to allocate proxy vtbl.\n");
         heap_free(proxy);
+        ITypeInfo_Release(real_typeinfo);
         return E_OUTOFMEMORY;
     }
     proxy->proxy_vtbl->header.pStublessProxyInfo = &proxy->proxy_info;
@@ -1388,8 +1394,9 @@ HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo, IUnknown *outer,
     for (i = 0; i < funcs; i++)
         proxy->proxy_vtbl->Vtbl[parentfuncs + i] = (void *)-1;
 
-    hr = build_format_strings(typeinfo, funcs, parentfuncs, &proxy->stub_desc.pFormatTypes,
+    hr = build_format_strings(real_typeinfo, funcs, parentfuncs, &proxy->stub_desc.pFormatTypes,
             &proxy->proxy_info.ProcFormatString, &proxy->offset_table);
+    ITypeInfo_Release(real_typeinfo);
     if (FAILED(hr))
     {
         heap_free(proxy->proxy_vtbl);
@@ -1490,27 +1497,30 @@ HRESULT WINAPI CreateStubFromTypeInfo(ITypeInfo *typeinfo, REFIID iid,
 {
     WORD funcs, parentfuncs, i;
     struct typelib_stub *stub;
+    ITypeInfo *real_typeinfo;
     GUID parentiid;
     HRESULT hr;
 
     TRACE("typeinfo %p, iid %s, server %p, stub_buffer %p.\n",
             typeinfo, debugstr_guid(iid), server, stub_buffer);
 
-    hr = get_iface_info(&typeinfo, &funcs, &parentfuncs, &parentiid);
+    hr = get_iface_info(typeinfo, &funcs, &parentfuncs, &parentiid, &real_typeinfo);
     if (FAILED(hr))
         return hr;
 
     if (!(stub = heap_alloc_zero(sizeof(*stub))))
     {
         ERR("Failed to allocate stub object.\n");
+        ITypeInfo_Release(real_typeinfo);
         return E_OUTOFMEMORY;
     }
 
     init_stub_desc(&stub->stub_desc);
     stub->server_info.pStubDesc = &stub->stub_desc;
 
-    hr = build_format_strings(typeinfo, funcs, parentfuncs, &stub->stub_desc.pFormatTypes,
+    hr = build_format_strings(real_typeinfo, funcs, parentfuncs, &stub->stub_desc.pFormatTypes,
             &stub->server_info.ProcString, &stub->offset_table);
+    ITypeInfo_Release(real_typeinfo);
     if (FAILED(hr))
     {
         heap_free(stub);
