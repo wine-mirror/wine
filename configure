@@ -17442,7 +17442,7 @@ fi ;;
     MSVCRTFLAGS=""
 
   case $host_os in
-    cygwin*|mingw32*) ;;
+    mingw32*) ;;
     *) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-builtin" >&5
 $as_echo_n "checking whether the compiler supports -fno-builtin... " >&6; }
 if ${ac_cv_cflags__fno_builtin+:} false; then :
