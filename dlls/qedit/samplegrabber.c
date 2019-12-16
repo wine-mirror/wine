@@ -593,7 +593,7 @@ static HRESULT WINAPI sample_grabber_source_AttemptConnection(struct strmbase_so
         return VFW_E_TYPE_NOT_ACCEPTED;
     if (!IsEqualGUID(&mt->formattype, &FORMAT_None)
             && !IsEqualGUID(&mt->formattype, &GUID_NULL)
-            && !IsEqualGUID(&mt->formattype, &filter->mtype.majortype))
+            && !IsEqualGUID(&mt->formattype, &filter->mtype.formattype))
         return VFW_E_TYPE_NOT_ACCEPTED;
     if (!IsEqualGUID(&mt->formattype, &FORMAT_None)
             && !IsEqualGUID(&mt->formattype, &GUID_NULL)
