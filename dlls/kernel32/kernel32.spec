@@ -1127,7 +1127,7 @@
 # @ stub OpenPrivateNamespaceA
 # @ stub OpenPrivateNamespaceW
 @ stdcall -import OpenProcess(long long long)
-# @ stub OpenProcessToken
+@ stdcall -import OpenProcessToken(long long ptr)
 @ stdcall OpenProfileUserMapping()
 @ stdcall OpenSemaphoreA(long long str)
 @ stdcall -import OpenSemaphoreW(long long wstr)
