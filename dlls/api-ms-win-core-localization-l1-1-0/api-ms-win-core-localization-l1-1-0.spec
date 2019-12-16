@@ -1,5 +1,5 @@
 @ stdcall ConvertDefaultLocale(long) kernel32.ConvertDefaultLocale
-@ stub FindNLSString
+@ stdcall FindNLSString(long long wstr long wstr long ptr) kernel32.FindNLSString
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernel32.FindNLSStringEx
 @ stdcall GetACP() kernel32.GetACP
 @ stub GetCPFileNameFromRegistry
