@@ -1136,7 +1136,7 @@
 @ stdcall -i386 OpenVxDHandle(long)
 @ stdcall OpenWaitableTimerA(long long str)
 @ stdcall -import OpenWaitableTimerW(long long wstr)
-@ stdcall -import OutputDebugStringA(str)
+@ stdcall OutputDebugStringA(str)
 @ stdcall -import OutputDebugStringW(wstr)
 @ stdcall -import PeekConsoleInputA(ptr ptr long ptr)
 @ stdcall -import PeekConsoleInputW(ptr ptr long ptr)
