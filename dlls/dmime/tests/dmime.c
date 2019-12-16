@@ -956,8 +956,6 @@ static void test_parsedescriptor(void)
     HRESULT hr;
     DWORD valid;
     unsigned int i;
-    const WCHAR s_unam[] = {'U','N','A','M','\0'};
-    const WCHAR s_inam[] = {'I','\0'};
     /* fourcc ~0 will be replaced later on */
     FOURCC alldesc[] =
     {
@@ -1092,7 +1090,7 @@ static void test_parsedescriptor(void)
             "Got version %u.%u, expected 5.8\n", desc.vVersion.dwVersionMS,
             desc.vVersion.dwVersionLS);
         if (forms[i].form != mmioFOURCC('W','A','V','E'))
-            ok(!memcmp(desc.wszName, s_unam, sizeof(s_unam)), "Got name '%s', expected 'UNAM'\n",
+            ok(!lstrcmpW(desc.wszName, L"UNAM"), "Got name '%s', expected 'UNAM'\n",
                     wine_dbgstr_w(desc.wszName));
         IStream_Release(stream);
 
@@ -1130,7 +1128,7 @@ static void test_parsedescriptor(void)
             valid |= DMUS_OBJ_NAME;
         ok(desc.dwValidData == valid, "Got valid data %#x, expected %#x\n", desc.dwValidData, valid);
         if (forms[i].form == mmioFOURCC('W','A','V','E'))
-            ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'I'\n",
+            ok(!lstrcmpW(desc.wszName, L"I"), "Got name '%s', expected 'I'\n",
                     wine_dbgstr_w(desc.wszName));
         IStream_Release(stream);
 
