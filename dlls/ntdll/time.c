@@ -1121,8 +1121,13 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
 /***********************************************************************
  *        RtlQueryUnbiasedInterruptTime [NTDLL.@]
  */
-NTSTATUS WINAPI RtlQueryUnbiasedInterruptTime(ULONGLONG *time)
+BOOL WINAPI RtlQueryUnbiasedInterruptTime(ULONGLONG *time)
 {
+    if (!time)
+    {
+        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
+        return FALSE;
+    }
     *time = monotonic_counter();
-    return STATUS_SUCCESS;
+    return TRUE;
 }
