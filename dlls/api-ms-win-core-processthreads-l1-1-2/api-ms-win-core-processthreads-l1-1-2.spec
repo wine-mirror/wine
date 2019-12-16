@@ -42,7 +42,7 @@
 @ stdcall OpenProcess(long long long) kernel32.OpenProcess
 @ stdcall OpenProcessToken(long long ptr) advapi32.OpenProcessToken
 @ stdcall OpenThread(long long long) kernel32.OpenThread
-@ stdcall OpenThreadToken(long long long ptr) advapi32.OpenThreadToken
+@ stdcall OpenThreadToken(long long long ptr) kernel32.OpenThreadToken
 @ stdcall ProcessIdToSessionId(long ptr) kernel32.ProcessIdToSessionId
 @ stub QueryProcessAffinityUpdateMode
 @ stdcall QueueUserAPC(ptr long long) kernel32.QueueUserAPC

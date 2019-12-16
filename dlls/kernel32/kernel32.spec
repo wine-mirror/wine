@@ -1132,7 +1132,7 @@
 @ stdcall OpenSemaphoreA(long long str)
 @ stdcall -import OpenSemaphoreW(long long wstr)
 @ stdcall -import OpenThread(long long long)
-# @ stub OpenThreadToken
+@ stdcall -import OpenThreadToken(long long long ptr)
 @ stdcall -i386 OpenVxDHandle(long)
 @ stdcall OpenWaitableTimerA(long long str)
 @ stdcall -import OpenWaitableTimerW(long long wstr)
