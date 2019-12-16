@@ -663,10 +663,11 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Clone (LPSTREAM if
 	TRACE("(%p, %p)\n", iface, ppstm);
 	result = DMUSIC_CreateDirectMusicLoaderGenericStream ((LPVOID*)&pOther);
 	if (FAILED(result)) return result;
-	
-	if (FAILED(IStream_Clone (This->pStream, &pLowLevel)))
+
+	if (FAILED(IStream_Clone (This->pStream, &pLowLevel))) {
+		IStream_Release(pOther);
 		return E_FAIL;
-	
+	}
 	IDirectMusicLoaderGenericStream_Attach (pOther, pLowLevel, This->pLoader);
 
 	TRACE(": succeeded\n");

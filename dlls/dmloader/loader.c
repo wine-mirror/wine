@@ -384,18 +384,24 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 	/* create object */
 	result = CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
 	if (FAILED(result)) {
+		IStream_Release(pStream);
 		ERR(": could not create object\n");
 		return result;
 	}
 	/* acquire PersistStream interface */
 	result = IDirectMusicObject_QueryInterface (pObject, &IID_IPersistStream, (LPVOID*)&pPersistStream);
 	if (FAILED(result)) {
+		IStream_Release(pStream);
+		IDirectMusicObject_Release(pObject);
 		ERR("failed to Query\n");
 		return result;
 	}
 	/* load */
 	result = IPersistStream_Load (pPersistStream, pStream);
 	if (result != S_OK) {
+		IStream_Release(pStream);
+		IPersistStream_Release(pPersistStream);
+		IDirectMusicObject_Release(pObject);
 		WARN(": failed to (completely) load object (%08x)\n", result);
 		return result;
 	}
@@ -408,6 +414,9 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 		lstrcpyW (GotDesc.wszFileName, pDesc->wszFileName);
 	}
 	if (FAILED(result)) {
+		IStream_Release(pStream);
+		IPersistStream_Release(pPersistStream);
+		IDirectMusicObject_Release(pObject);
 		ERR(": failed to get descriptor\n");
 		return result;
 	}
@@ -524,6 +533,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	/* create object */
 	hr = CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
         if (FAILED(hr)) {
+		IStream_Release(pStream);
 		ERR("Object creation of %s failed 0x%08x\n", debugstr_guid(&pDesc->guidClass),hr);
 		return DMUS_E_LOADER_FAILEDOPEN;
         }
@@ -537,6 +547,8 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	/* hmph... due to some trouble I had with certain tests, we store current position and then set it back */
 	DM_STRUCT_INIT(&Desc);
 	if (FAILED(IDirectMusicObject_ParseDescriptor (pObject, pStream, &Desc))) {
+		IStream_Release(pStream);
+		IDirectMusicObject_Release(pObject);
 		ERR(": couldn't parse descriptor\n");
 		return DMUS_E_LOADER_FORMATNOTSUPPORTED;
 	}
