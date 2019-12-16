@@ -1044,12 +1044,12 @@ static int check_invalid_chars( const CPTABLEINFO *info, const unsigned char *sr
             {
                 if (srclen == 1) break;  /* partial char, error */
                 if (info->DBCSOffsets[off + src[1]] == info->UniDefaultChar &&
-                    ((src[0] << 8) | src[1]) != info->TransDefaultChar) break;
+                    ((src[0] << 8) | src[1]) != info->TransUniDefaultChar) break;
                 src++;
                 srclen--;
                 continue;
             }
-            if (info->MultiByteTable[*src] == info->UniDefaultChar && *src != info->TransDefaultChar)
+            if (info->MultiByteTable[*src] == info->UniDefaultChar && *src != info->TransUniDefaultChar)
                 break;
             if (is_private_use_area_char( info->MultiByteTable[*src] )) break;
         }
@@ -1058,7 +1058,7 @@ static int check_invalid_chars( const CPTABLEINFO *info, const unsigned char *sr
     {
         for ( ; srclen; src++, srclen-- )
         {
-            if (info->MultiByteTable[*src] == info->UniDefaultChar && *src != info->TransDefaultChar)
+            if (info->MultiByteTable[*src] == info->UniDefaultChar && *src != info->TransUniDefaultChar)
                 break;
             if (is_private_use_area_char( info->MultiByteTable[*src] )) break;
         }

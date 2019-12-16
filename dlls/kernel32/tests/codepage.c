@@ -1005,12 +1005,15 @@ static void test_undefined_byte_char(void)
         LPCSTR str;
         BOOL is_error;
     } testset[] = {
+        {   37, "\x6f", FALSE },
         {  874, "\xdd", TRUE },
         {  932, "\xfe", TRUE },
         {  932, "\x80", FALSE },
+        {  932, "\x81\x45", FALSE },
         {  936, "\xff", TRUE },
         {  949, "\xff", TRUE },
         {  950, "\xff", TRUE },
+        { 1252, "?", FALSE },
         { 1252, "\x90", FALSE },
         { 1253, "\xaa", TRUE },
         { 1255, "\xff", TRUE },
