@@ -41,7 +41,6 @@ typedef struct _SG_Impl {
     struct strmbase_source source;
     /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
     IUnknown *seekthru_unk;
-    IMemInputPin *memOutput;
 
     struct strmbase_sink sink;
     AM_MEDIA_TYPE mtype;
@@ -85,8 +84,6 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         WARN("(%p) still joined to filter graph %p\n", This, This->filter.filterInfo.pGraph);
     if (This->allocator)
         IMemAllocator_Release(This->allocator);
-    if (This->memOutput)
-        IMemInputPin_Release(This->memOutput);
     if (This->grabberIface)
         ISampleGrabberCB_Release(This->grabberIface);
     CoTaskMemFree(This->mtype.pbFormat);
@@ -398,7 +395,7 @@ SampleGrabber_IMemInputPin_GetAllocatorRequirements(IMemInputPin *iface, ALLOCAT
     FIXME("(%p)->(%p): semi-stub\n", This, props);
     if (!props)
         return E_POINTER;
-    return This->memOutput ? IMemInputPin_GetAllocatorRequirements(This->memOutput, props) : E_NOTIMPL;
+    return This->source.pMemInputPin ? IMemInputPin_GetAllocatorRequirements(This->source.pMemInputPin, props) : E_NOTIMPL;
 }
 
 /* IMemInputPin */
@@ -407,13 +404,13 @@ SampleGrabber_IMemInputPin_Receive(IMemInputPin *iface, IMediaSample *sample)
 {
     SG_Impl *This = impl_from_IMemInputPin(iface);
     HRESULT hr;
-    TRACE("(%p)->(%p) output = %p, grabber = %p\n", This, sample, This->memOutput, This->grabberIface);
+    TRACE("(%p)->(%p) output = %p, grabber = %p\n", This, sample, This->source.pMemInputPin, This->grabberIface);
     if (!sample)
         return E_POINTER;
     if (This->oneShot == OneShot_Past)
         return S_FALSE;
     SampleGrabber_callback(This, sample);
-    hr = This->memOutput ? IMemInputPin_Receive(This->memOutput, sample) : S_OK;
+    hr = This->source.pMemInputPin ? IMemInputPin_Receive(This->source.pMemInputPin, sample) : S_OK;
     if (This->oneShot == OneShot_Wait) {
         This->oneShot = OneShot_Past;
         hr = S_FALSE;
@@ -429,14 +426,14 @@ SampleGrabber_IMemInputPin_ReceiveMultiple(IMemInputPin *iface, IMediaSample **s
 {
     SG_Impl *This = impl_from_IMemInputPin(iface);
     LONG idx;
-    TRACE("(%p)->(%p, %u, %p) output = %p, grabber = %p\n", This, samples, nSamples, nProcessed, This->memOutput, This->grabberIface);
+    TRACE("(%p)->(%p, %u, %p) output = %p, grabber = %p\n", This, samples, nSamples, nProcessed, This->source.pMemInputPin, This->grabberIface);
     if (!samples || !nProcessed)
         return E_POINTER;
     if ((This->filter.state != State_Running) || (This->oneShot == OneShot_Past))
         return S_FALSE;
     for (idx = 0; idx < nSamples; idx++)
         SampleGrabber_callback(This, samples[idx]);
-    return This->memOutput ? IMemInputPin_ReceiveMultiple(This->memOutput, samples, nSamples, nProcessed) : S_OK;
+    return This->source.pMemInputPin ? IMemInputPin_ReceiveMultiple(This->source.pMemInputPin, samples, nSamples, nProcessed) : S_OK;
 }
 
 /* IMemInputPin */
@@ -445,7 +442,7 @@ SampleGrabber_IMemInputPin_ReceiveCanBlock(IMemInputPin *iface)
 {
     SG_Impl *This = impl_from_IMemInputPin(iface);
     TRACE("(%p)\n", This);
-    return This->memOutput ? IMemInputPin_ReceiveCanBlock(This->memOutput) : S_OK;
+    return This->source.pMemInputPin ? IMemInputPin_ReceiveCanBlock(This->source.pMemInputPin) : S_OK;
 }
 
 static const ISampleGrabberVtbl ISampleGrabber_VTable =
@@ -650,7 +647,6 @@ HRESULT SampleGrabber_create(IUnknown *outer, void **out)
     obj->mtype.subtype = MEDIASUBTYPE_None;
     obj->mtype.formattype = FORMAT_None;
     obj->allocator = NULL;
-    obj->memOutput = NULL;
     obj->grabberIface = NULL;
     obj->grabberMethod = -1;
     obj->oneShot = OneShot_None;
