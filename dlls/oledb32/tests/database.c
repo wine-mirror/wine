@@ -940,6 +940,26 @@ static void test_dslocator(void)
         hr = IDataSourceLocator_QueryInterface(dslocator, &IID_IRpcOptions, (void **)&opts);
         ok(hr == E_NOINTERFACE, "got %08x\n", hr);
 
+        if (winetest_interactive)
+        {
+            IDispatch *disp = NULL;
+
+            hr = IDataSourceLocator_PromptNew(dslocator, NULL);
+            ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+            hr = IDataSourceLocator_PromptNew(dslocator, &disp);
+            if (hr == S_OK)
+            {
+                ok(disp != NULL, "got %08x\n", hr);
+                IDispatch_Release(disp);
+            }
+            else
+            {
+                ok(hr == S_FALSE, "got %08x\n", hr);
+                ok(!disp, "got %08x\n", hr);
+            }
+        }
+
         IDataInitialize_Release(datainit2);
         IDataInitialize_Release(datainit);
 
