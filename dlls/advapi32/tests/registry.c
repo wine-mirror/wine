@@ -59,88 +59,11 @@ static DWORD (WINAPI *pEnumDynamicTimeZoneInformation)(const DWORD,
 
 static BOOL limited_user;
 
-
-/* Debugging functions from wine/libs/wine/debug.c */
-
-/* allocate some tmp string space */
-/* FIXME: this is not 100% thread-safe */
-static char *get_temp_buffer( int size )
-{
-    static char *list[32];
-    static UINT pos;
-    char *ret;
-    UINT idx;
-
-    idx = ++pos % ARRAY_SIZE(list);
-    if (list[idx])
-        ret = HeapReAlloc( GetProcessHeap(), 0, list[idx], size );
-    else
-        ret = HeapAlloc( GetProcessHeap(), 0, size );
-    if (ret) list[idx] = ret;
-    return ret;
-}
-
-static const char *wine_debugstr_an( const char *str, int n )
-{
-    static const char hex[16] = "0123456789abcdef";
-    char *dst, *res;
-    size_t size;
-
-    if (!((ULONG_PTR)str >> 16))
-    {
-        if (!str) return "(null)";
-        res = get_temp_buffer( 6 );
-        sprintf( res, "#%04x", LOWORD(str) );
-        return res;
-    }
-    if (n == -1) n = strlen(str);
-    if (n < 0) n = 0;
-    size = 10 + min( 300, n * 4 );
-    dst = res = get_temp_buffer( size );
-    *dst++ = '"';
-    while (n-- > 0 && dst <= res + size - 9)
-    {
-        unsigned char c = *str++;
-        switch (c)
-        {
-        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
-        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
-        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
-        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
-        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
-        default:
-            if (c >= ' ' && c <= 126)
-                *dst++ = c;
-            else
-            {
-                *dst++ = '\\';
-                *dst++ = 'x';
-                *dst++ = hex[(c >> 4) & 0x0f];
-                *dst++ = hex[c & 0x0f];
-            }
-        }
-    }
-    *dst++ = '"';
-    if (n > 0)
-    {
-        *dst++ = '.';
-        *dst++ = '.';
-        *dst++ = '.';
-    }
-    *dst++ = 0;
-    return res;
-}
-
 static const char *dbgstr_SYSTEMTIME(const SYSTEMTIME *st)
 {
-    static int index;
-    static char buf[2][64];
-
-    index %= ARRAY_SIZE(buf);
-    sprintf(buf[index], "%02d-%02d-%04d %02d:%02d:%02d.%03d",
-            st->wMonth, st->wDay, st->wYear,
-            st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
-    return buf[index++];
+    return wine_dbg_sprintf("%02d-%02d-%04d %02d:%02d:%02d.%03d",
+                            st->wMonth, st->wDay, st->wYear,
+                            st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
 }
 
 #define ADVAPI32_GET_PROC(func) \
@@ -263,8 +186,8 @@ static void _test_hkey_main_Value_A(int line, LPCSTR name, LPCSTR string,
     else
     {
         lok(memcmp(value, string, cbData) == 0, "RegQueryValueExA/2 failed: %s/%d != %s/%d\n",
-           wine_debugstr_an((char*)value, cbData), cbData,
-           wine_debugstr_an(string, full_byte_len), full_byte_len);
+           debugstr_an((char*)value, cbData), cbData,
+           debugstr_an(string, full_byte_len), full_byte_len);
         lok(*(value+cbData) == 0xbd, "RegQueryValueExA/2 overflowed at offset %u: %02x != bd\n", cbData, *(value+cbData));
     }
     HeapFree(GetProcessHeap(), 0, value);
@@ -2089,7 +2012,7 @@ static void test_string_termination(void)
     ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", ret);
     ok(outsize == insize, "wrong size: %u != %u\n", outsize, insize);
     ok(memcmp(buffer, string, outsize) == 0, "bad string: %s/%u != %s\n",
-       wine_debugstr_an((char*)buffer, outsize), outsize, string);
+       debugstr_an((char*)buffer, outsize), outsize, string);
     ok(buffer[insize] == 0xbd, "buffer overflow at %u %02x\n", insize, buffer[insize]);
 
     /* RegQueryValueExA adds a trailing '\0' if there is room */
@@ -2099,7 +2022,7 @@ static void test_string_termination(void)
     ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", ret);
     ok(outsize == insize, "wrong size: %u != %u\n", outsize, insize);
     ok(memcmp(buffer, string, outsize) == 0, "bad string: %s/%u != %s\n",
-       wine_debugstr_an((char*)buffer, outsize), outsize, string);
+       debugstr_an((char*)buffer, outsize), outsize, string);
     ok(buffer[insize] == 0, "buffer overflow at %u %02x\n", insize, buffer[insize]);
 
     /* RegEnumValueA may return a string with no trailing '\0' */
@@ -2111,7 +2034,7 @@ static void test_string_termination(void)
     ok(strcmp(name, "stringtest") == 0, "wrong name: %s\n", name);
     ok(outsize == insize, "wrong size: %u != %u\n", outsize, insize);
     ok(memcmp(buffer, string, outsize) == 0, "bad string: %s/%u != %s\n",
-       wine_debugstr_an((char*)buffer, outsize), outsize, string);
+       debugstr_an((char*)buffer, outsize), outsize, string);
     ok(buffer[insize] == 0xbd, "buffer overflow at %u %02x\n", insize, buffer[insize]);
 
     /* RegEnumValueA adds a trailing '\0' if there is room */
@@ -2123,7 +2046,7 @@ static void test_string_termination(void)
     ok(strcmp(name, "stringtest") == 0, "wrong name: %s\n", name);
     ok(outsize == insize, "wrong size: %u != %u\n", outsize, insize);
     ok(memcmp(buffer, string, outsize) == 0, "bad string: %s/%u != %s\n",
-       wine_debugstr_an((char*)buffer, outsize), outsize, string);
+       debugstr_an((char*)buffer, outsize), outsize, string);
     ok(buffer[insize] == 0, "buffer overflow at %u %02x\n", insize, buffer[insize]);
 
     RegDeleteKeyA(subkey, "");

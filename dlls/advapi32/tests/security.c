@@ -140,27 +140,17 @@ static HMODULE hmod;
 static int     myARGC;
 static char**  myARGV;
 
-#define SID_SLOTS 4
-static char debugsid_str[SID_SLOTS][256];
-static int debugsid_index = 0;
 static const char* debugstr_sid(PSID sid)
 {
     LPSTR sidstr;
     DWORD le = GetLastError();
-    char* res = debugsid_str[debugsid_index];
-    debugsid_index = (debugsid_index + 1) % SID_SLOTS;
+    const char *res;
 
     if (!ConvertSidToStringSidA(sid, &sidstr))
-        sprintf(res, "ConvertSidToStringSidA failed le=%u", GetLastError());
-    else if (strlen(sidstr) > sizeof(*debugsid_str) - 1)
-    {
-        memcpy(res, sidstr, sizeof(*debugsid_str) - 4);
-        strcpy(res + sizeof(*debugsid_str) - 4, "...");
-        LocalFree(sidstr);
-    }
+        res = wine_dbg_sprintf("ConvertSidToStringSidA failed le=%u", GetLastError());
     else
     {
-        strcpy(res, sidstr);
+        res = __wine_dbg_strdup(sidstr);
         LocalFree(sidstr);
     }
     /* Restore the last error in case ConvertSidToStringSidA() modified it */
