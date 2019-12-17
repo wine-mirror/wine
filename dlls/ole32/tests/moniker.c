@@ -41,14 +41,13 @@
 
 #define CHECK_EXPECTED_METHOD(method_name) \
 do { \
-    trace("%s\n", method_name); \
-        ok(*expected_method_list != NULL, "Extra method %s called\n", method_name); \
-            if (*expected_method_list) \
-            { \
-                ok(!strcmp(*expected_method_list, method_name), "Expected %s to be called instead of %s\n", \
-                   *expected_method_list, method_name); \
-                       expected_method_list++; \
-            } \
+    ok(*expected_method_list != NULL, "Extra method %s called\n", method_name); \
+        if (*expected_method_list) \
+        { \
+            ok(!strcmp(*expected_method_list, method_name), "Expected %s to be called instead of %s\n", \
+                    *expected_method_list, method_name); \
+            expected_method_list++; \
+        } \
 } while(0)
 
 static char const * const *expected_method_list;
@@ -116,8 +115,6 @@ static ULONG WINAPI ExternalConnection_Release(IExternalConnection *iface)
 
 static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface, DWORD extconn, DWORD reserved)
 {
-    trace("add connection\n");
-
     ok(extconn == EXTCONN_STRONG, "extconn = %d\n", extconn);
     ok(!reserved, "reserved = %x\n", reserved);
     return ++external_connections;
@@ -126,8 +123,6 @@ static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface,
 static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *iface, DWORD extconn,
         DWORD reserved, BOOL fLastReleaseCloses)
 {
-    trace("release connection\n");
-
     ok(extconn == EXTCONN_STRONG, "extconn = %d\n", extconn);
     ok(!reserved, "reserved = %x\n", reserved);
 
@@ -838,7 +833,6 @@ static int count_moniker_matches(IBindCtx * pbc, IEnumMoniker * spEM)
             CoTaskMemFree(szDisplayn);
         }
     }
-    trace("Total number of monikers is %i\n", monCnt);
     return matchCnt;
 }
 
@@ -1071,7 +1065,6 @@ todo_wine
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
 
     matchCnt = count_moniker_matches(pbc, spEM1);
-    trace("Number of matches is %i\n", matchCnt);
 
     grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
     hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk1, &pdwReg1);
@@ -1088,12 +1081,10 @@ todo_wine
     matchCnt = count_moniker_matches(pbc, spEM2);
     ok(matchCnt==2, "Number of matches should be equal to 2 not %i\n", matchCnt);
 
-    trace("IEnumMoniker::Clone\n");
     IEnumMoniker_Clone(spEM2, &spEM3);
 
     matchCnt = count_moniker_matches(pbc, spEM3);
     ok(matchCnt==0, "Number of matches should be equal to 0 not %i\n", matchCnt);
-    trace("IEnumMoniker::Reset\n");
     IEnumMoniker_Reset(spEM3);
 
     matchCnt = count_moniker_matches(pbc, spEM3);
