@@ -1609,7 +1609,10 @@ todo_wine
     IBindCtx_Release(bindctx);
 
     hr = IMoniker_Inverse(moniker, &inverse);
-    ok_ole_success(hr, IMoniker_Inverse);
+    ok(hr == S_OK, "Failed to get inverse, hr %#x.\n", hr);
+    hr = IMoniker_IsSystemMoniker(inverse, &moniker_type);
+    ok(hr == S_OK, "Failed to get moniker type, hr %#x.\n", hr);
+    ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
     IMoniker_Release(inverse);
 
     IMoniker_Release(moniker);
@@ -1617,8 +1620,9 @@ todo_wine
 
 static void test_file_moniker(WCHAR* path)
 {
+    IMoniker *moniker1 = NULL, *moniker2 = NULL, *inverse;
+    DWORD moniker_type;
     IStream *stream;
-    IMoniker *moniker1 = NULL, *moniker2 = NULL;
     IUnknown *unk;
     HRESULT hr;
 
@@ -1633,6 +1637,13 @@ todo_wine
         ok(unk == (IUnknown *)moniker1, "Unexpected interface.\n");
         IUnknown_Release(unk);
     }
+
+    hr = IMoniker_Inverse(moniker1, &inverse);
+    ok(hr == S_OK, "Failed to get inverse, hr %#x.\n", hr);
+    hr = IMoniker_IsSystemMoniker(inverse, &moniker_type);
+    ok(hr == S_OK, "Failed to get moniker type, hr %#x.\n", hr);
+    ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
+    IMoniker_Release(inverse);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
@@ -1892,7 +1903,10 @@ todo_wine
     IBindCtx_Release(bindctx);
 
     hr = IMoniker_Inverse(moniker, &inverse);
-    ok_ole_success(hr, IMoniker_Inverse);
+    ok(hr == S_OK, "Failed to get inverse, hr %#x.\n", hr);
+    hr = IMoniker_IsSystemMoniker(inverse, &moniker_type);
+    ok(hr == S_OK, "Failed to get moniker type, hr %#x.\n", hr);
+    ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
     IMoniker_Release(inverse);
 
     IMoniker_Release(moniker);
@@ -2068,7 +2082,10 @@ todo_wine
     IBindCtx_Release(bindctx);
 
     hr = IMoniker_Inverse(moniker, &inverse);
-    ok_ole_success(hr, IMoniker_Inverse);
+    ok(hr == S_OK, "Failed to get inverse, hr %#x.\n", hr);
+    hr = IMoniker_IsSystemMoniker(inverse, &moniker_type);
+    ok(hr == S_OK, "Failed to get moniker type, hr %#x.\n", hr);
+    ok(moniker_type == MKSYS_GENERICCOMPOSITE, "Unexpected moniker type %d.\n", moniker_type);
     IMoniker_Release(inverse);
 
     IMoniker_Release(moniker);
@@ -2150,7 +2167,10 @@ todo_wine
         moniker_type);
 
     hr = IMoniker_Inverse(moniker, &inverse);
-    ok_ole_success(hr, IMoniker_Inverse);
+    ok(hr == S_OK, "Failed to get inverse, hr %#x.\n", hr);
+    hr = IMoniker_IsSystemMoniker(inverse, &moniker_type);
+    ok(hr == S_OK, "Failed to get moniker type, hr %#x.\n", hr);
+    ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
     IMoniker_Release(inverse);
 
     hr = CreateBindCtx(0, &bindctx);
