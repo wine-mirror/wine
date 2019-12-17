@@ -250,6 +250,7 @@ SOURCES = \
 	dxgi1_5.idl \
 	dxgi1_6.idl \
 	dxgicommon.idl \
+	dxgidebug.idl \
 	dxgiformat.idl \
 	dxgitype.idl \
 	dxva.h \
