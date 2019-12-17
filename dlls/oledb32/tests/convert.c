@@ -3092,7 +3092,7 @@ static void test_getconversionsize(void)
     SAFEARRAYBOUND rgsabound[1];
     int i4 = 200;
     WORD i2 = 201;
-    char i1 = 203;
+    char i1 = (char)203;
     FLOAT f4 = 1.0;
     LONGLONG i8 = 202;
     DATE dbdate;
