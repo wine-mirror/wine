@@ -1728,6 +1728,23 @@ static void test_item_moniker(void)
         { item_moniker_unicode_item_stream, sizeof(item_moniker_unicode_item_stream), L"!B" },
         { item_moniker_unicode_delim_item_stream, sizeof(item_moniker_unicode_delim_item_stream), L"!C" },
     };
+    static const struct
+    {
+        const WCHAR *delim1;
+        const WCHAR *item1;
+        const WCHAR *delim2;
+        const WCHAR *item2;
+        HRESULT hr;
+    } isequal_tests[] =
+    {
+        { L"!", L"Item1", L"!", L"ITEM1", S_OK },
+        { NULL, L"Item1", L"!", L"ITEM1", S_OK },
+        { L"", L"Item1", L"!", L"ITEM1", S_OK },
+        { L"&", L"Item1", L"!", L"ITEM1", S_OK },
+        {L"&&", L"Item1", L"&", L"&Item1", S_FALSE },
+        { NULL, L"Item1", NULL, L"Item2", S_FALSE },
+        { NULL, L"Item1", NULL, L"ITEM1", S_OK },
+    };
     IMoniker *moniker, *moniker2;
     HRESULT hr;
     DWORD moniker_type, i;
@@ -1879,6 +1896,27 @@ todo_wine
     IMoniker_Release(inverse);
 
     IMoniker_Release(moniker);
+
+    /* IsEqual */
+    for (i = 0; i < ARRAY_SIZE(isequal_tests); ++i)
+    {
+        hr = CreateItemMoniker(isequal_tests[i].delim1, isequal_tests[i].item1, &moniker);
+        ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
+
+        hr = CreateItemMoniker(isequal_tests[i].delim2, isequal_tests[i].item2, &moniker2);
+        ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
+
+        hr = IMoniker_IsEqual(moniker, moniker2);
+    todo_wine_if(i == 4 || i == 5)
+        ok(hr == isequal_tests[i].hr, "%d: unexpected result %#x.\n", i, hr);
+
+        hr = IMoniker_IsEqual(moniker2, moniker);
+    todo_wine_if(i == 4 || i == 5)
+        ok(hr == isequal_tests[i].hr, "%d: unexpected result %#x.\n", i, hr);
+
+        IMoniker_Release(moniker);
+        IMoniker_Release(moniker2);
+    }
 }
 
 static void test_anti_moniker(void)
