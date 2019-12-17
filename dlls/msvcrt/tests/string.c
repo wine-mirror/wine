@@ -3078,17 +3078,33 @@ static void test__stricmp(void)
 
 static void test__wcstoi64(void)
 {
-    static const WCHAR digit[] = { '9', 0 };
-    static const WCHAR space[] = { ' ', 0 };
-    static const WCHAR stock[] = { 0x3231, 0 }; /* PARENTHESIZED IDEOGRAPH STOCK */
-    static const WCHAR cjk_1[] = { 0x4e00, 0 }; /* CJK Ideograph, First */
-    static const WCHAR tamil[] = { 0x0bef, 0 }; /* TAMIL DIGIT NINE */
-    static const WCHAR thai[]  = { 0x0e59, 0 }; /* THAI DIGIT NINE */
-    static const WCHAR fullwidth[] = { 0xff19, 0 }; /* FULLWIDTH DIGIT NINE */
-    static const WCHAR superscript1[] = { 0xb9, 0 }; /* SUPERSCRIPT ONE */
-    static const WCHAR minus_0x91[]  = { '-', 0x0e50, 'x', 0xff19, '1', 0 };
-    static const WCHAR plus_071[]  = { '+', 0x0e50, 0xff17, '1', 0 };
-    static const WCHAR hex[] = { 0xff19, 'f', 0x0e59, 0xff46, 0 };
+    static const struct { WCHAR str[24]; __int64 res; unsigned __int64 ures; int base; } tests[] =
+    {
+        { L"9", 9, 9, 10 },
+        { L" ", 0, 0 },
+        { L"-1234", -1234, -1234 },
+        { { 0x3231 }, 0, 0 }, /* PARENTHESIZED IDEOGRAPH STOCK */
+        { { 0x4e00 }, 0, 0 }, /* CJK Ideograph, First */
+        { { 0x0bef }, 0, 0 }, /* TAMIL DIGIT NINE */
+        { { 0x0e59 }, 9, 9 }, /* THAI DIGIT NINE */
+        { { 0xff19 }, 9, 9 }, /* FULLWIDTH DIGIT NINE */
+        { { 0x00b9 }, 0, 0 }, /* SUPERSCRIPT ONE */
+        { { '-',0x0e50,'x',0xff19,'1' }, -0x91, -0x91 },
+        { { '+',0x0e50,0xff17,'1' }, 071, 071 },
+        { { 0xff19,'f',0x0e59,0xff46 }, 0x9f9, 0x9f9, 16 },
+        { L"4294967295", 4294967295, 4294967295 },
+        { L"4294967296", 4294967296, 4294967296 },
+        { L"9223372036854775807", 9223372036854775807, 9223372036854775807 },
+        { L"9223372036854775808", _I64_MAX, 9223372036854775808u },
+        { L"18446744073709551615", _I64_MAX, _UI64_MAX },
+        { L"18446744073709551616", _I64_MAX, _UI64_MAX },
+        { L"-4294967295", -4294967295, -4294967295 },
+        { L"-4294967296", -4294967296, -4294967296 },
+        { L"-9223372036854775807", -9223372036854775807, -9223372036854775807 },
+        { L"-9223372036854775808", _I64_MIN, 9223372036854775808u },
+        { L"-18446744073709551615", _I64_MIN, 1 },
+        { L"-18446744073709551616", _I64_MIN, 1 },
+    };
     static const WCHAR zeros[] = {
         0x660, 0x6f0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66, 0xc66, 0xce6,
         0xd66, 0xe50, 0xed0, 0xf20, 0x1040, 0x17e0, 0x1810, 0xff10
@@ -3104,51 +3120,16 @@ static void test__wcstoi64(void)
         return;
     }
 
-    res = p_wcstoi64(digit, NULL, 10);
-    ok(res == 9, "res != 9\n");
-    res = p_wcstoi64(space, &endpos, 0);
-    ok(endpos == space, "endpos != space\n");
-    res = p_wcstoi64(stock, &endpos, 10);
-    ok(res == 0, "res != 0\n");
-    ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
-    res = p_wcstoi64(cjk_1, NULL, 0);
-    ok(res == 0, "res != 0\n");
-    res = p_wcstoi64(tamil, &endpos, 10);
-    ok(res == 0, "res != 0\n");
-    ok(endpos == tamil, "Incorrect endpos (%p-%p)\n", tamil, endpos);
-    res = p_wcstoi64(thai, NULL, 10);
-    ok(res == 9, "res != 9\n");
-    res = p_wcstoi64(fullwidth, NULL, 10);
-    ok(res == 9, "res != 9\n");
-    res = p_wcstoi64(superscript1, NULL, 10);
-    ok(res == 0, "res != 0\n");
-    res = p_wcstoi64(hex, NULL, 16);
-    ok(res == 0x9f9, "res != 0x9f9\n");
-    res = p_wcstoi64(minus_0x91, NULL, 0);
-    ok(res == -0x91, "res != -0x91\n");
-    res = p_wcstoi64(plus_071, NULL, 0);
-    ok(res == 071, "res != 071\n");
-
-    ures = p_wcstoui64(digit, NULL, 10);
-    ok(ures == 9, "ures != 9\n");
-    ures = p_wcstoui64(space, &endpos, 0);
-    ok(endpos == space, "endpos != space\n");
-    ures = p_wcstoui64(stock, &endpos, 10);
-    ok(ures == 0, "ures != 0\n");
-    ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
-    ures = p_wcstoui64(tamil, &endpos, 10);
-    ok(ures == 0, "ures != 0\n");
-    ok(endpos == tamil, "Incorrect endpos (%p-%p)\n", tamil, endpos);
-    ures = p_wcstoui64(thai, NULL, 10);
-    ok(ures == 9, "ures != 9\n");
-    ures = p_wcstoui64(fullwidth, NULL, 10);
-    ok(ures == 9, "ures != 9\n");
-    ures = p_wcstoui64(superscript1, NULL, 10);
-    ok(ures == 0, "ures != 0\n");
-    ures = p_wcstoui64(hex, NULL, 16);
-    ok(ures == 0x9f9, "ures != 0x9f9\n");
-    ures = p_wcstoui64(plus_071, NULL, 0);
-    ok(ures == 071, "ures != 071\n");
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        res = p_wcstoi64( tests[i].str, &endpos, tests[i].base );
+        ok( res == tests[i].res, "%u: %s res %s\n",
+            i, wine_dbgstr_w(tests[i].str), wine_dbgstr_longlong(res) );
+        if (!res) ok( endpos == tests[i].str, "%u: wrong endpos %p/%p\n", i, endpos, tests[i].str );
+        ures = p_wcstoui64( tests[i].str, &endpos, tests[i].base );
+        ok( ures == tests[i].ures, "%u: %s res %s\n",
+            i, wine_dbgstr_w(tests[i].str), wine_dbgstr_longlong(ures) );
+    }
 
     /* Test various unicode digits */
     for (i = 0; i < ARRAY_SIZE(zeros); ++i) {
@@ -3159,8 +3140,6 @@ static void test__wcstoi64(void)
         res = p_wcstoi64(tmp, NULL, 16);
         ok(res == 4, "with zero = U+%04X: got %d, expected 4\n", zeros[i], (int)res);
     }
-
-    return;
 }
 
 static void test_atoi(void)
