@@ -2693,12 +2693,6 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
     if (!module_ptr) module_ptr = &module;
 
     status = find_builtin_dll( name, pwm, module_ptr, &image_info, &st, &so_name );
-    if (status == STATUS_DLL_NOT_FOUND && *module_ptr)
-    {
-        /* builtin not found, load the module we got previously */
-        TRACE( "loading %s from PE file %s\n", debugstr_w(name), debugstr_us(nt_name) );
-        return load_native_dll( load_path, nt_name, module_ptr, &image_info, flags, pwm, &st );
-    }
     if (status) return status;
 
     if (*pwm)
@@ -3007,6 +3001,8 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
             case LO_BUILTIN_NATIVE:
             case LO_DEFAULT:
                 nts = load_builtin_dll( load_path, &nt_name, &module, flags, pwm );
+                if (nts == STATUS_DLL_NOT_FOUND)
+                    nts = load_native_dll( load_path, &nt_name, &module, &image_info, flags, pwm, &st );
                 break;
             default:
                 nts = STATUS_DLL_NOT_FOUND;
@@ -3024,11 +3020,11 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
                 nts = load_native_dll( load_path, &nt_name, &module, &image_info, flags, pwm, &st );
                 break;
             case LO_BUILTIN:
-                nts = load_builtin_dll( load_path, &nt_name, NULL, flags, pwm );
+                nts = load_builtin_dll( load_path, &nt_name, &module, flags, pwm );
                 break;
             case LO_BUILTIN_NATIVE:
             case LO_DEFAULT:
-                nts = load_builtin_dll( load_path, &nt_name, NULL, flags, pwm );
+                nts = load_builtin_dll( load_path, &nt_name, &module, flags, pwm );
                 if (nts == STATUS_SUCCESS && loadorder == LO_DEFAULT &&
                     (MODULE_InitDLL( *pwm, DLL_WINE_PREATTACH, NULL ) != STATUS_SUCCESS))
                 {
@@ -3036,6 +3032,8 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
                     TRACE( "%s pre-attach returned FALSE, preferring native\n", debugstr_us(&nt_name) );
                     LdrUnloadDll( (*pwm)->ldr.BaseAddress );
                     nts = STATUS_DLL_NOT_FOUND;
+                    /* map the dll again if it was unmapped */
+                    if (!module && open_dll_file( &nt_name, pwm, &module, &image_info, &st )) break;
                 }
                 if (nts == STATUS_DLL_NOT_FOUND)
                     nts = load_native_dll( load_path, &nt_name, &module, &image_info, flags, pwm, &st );
