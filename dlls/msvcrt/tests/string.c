@@ -3142,6 +3142,65 @@ static void test__wcstoi64(void)
     }
 }
 
+static void test__wcstol(void)
+{
+    static const struct { WCHAR str[24]; long res; unsigned long ures; int base; } tests[] =
+    {
+        { L"9", 9, 9, 10 },
+        { L" ", 0, 0 },
+        { L"-1234", -1234, -1234 },
+        { { 0x3231 }, 0, 0 }, /* PARENTHESIZED IDEOGRAPH STOCK */
+        { { 0x4e00 }, 0, 0 }, /* CJK Ideograph, First */
+        { { 0x0bef }, 0, 0 }, /* TAMIL DIGIT NINE */
+        { { 0x0e59 }, 9, 9 }, /* THAI DIGIT NINE */
+        { { 0xff19 }, 9, 9 }, /* FULLWIDTH DIGIT NINE */
+        { { 0x00b9 }, 0, 0 }, /* SUPERSCRIPT ONE */
+        { { '-',0x0e50,'x',0xff19,'1' }, -0x91, -0x91 },
+        { { '+',0x0e50,0xff17,'1' }, 071, 071 },
+        { { 0xff19,'f',0x0e59,0xff46 }, 0x9f9, 0x9f9, 16 },
+        { L"2147483647", 2147483647, 2147483647 },
+        { L"2147483648", LONG_MAX, 2147483648 },
+        { L"4294967295", LONG_MAX, 4294967295 },
+        { L"4294967296", LONG_MAX, ULONG_MAX },
+        { L"9223372036854775807", LONG_MAX, ULONG_MAX },
+        { L"-2147483647", -2147483647, -2147483647 },
+        { L"-2147483648", LONG_MIN, LONG_MIN },
+        { L"-4294967295", LONG_MIN, 1 },
+        { L"-4294967296", LONG_MIN, 1 },
+        { L"-9223372036854775807", LONG_MIN, 1 },
+    };
+    static const WCHAR zeros[] = {
+        0x660, 0x6f0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66, 0xc66, 0xce6,
+        0xd66, 0xe50, 0xed0, 0xf20, 0x1040, 0x17e0, 0x1810, 0xff10
+    };
+    int i;
+
+    long res;
+    unsigned long ures;
+    WCHAR *endpos;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        res = wcstol( tests[i].str, &endpos, tests[i].base );
+        ok( res == tests[i].res, "%u: %s res %08lx\n",
+            i, wine_dbgstr_w(tests[i].str), res );
+        if (!res) ok( endpos == tests[i].str, "%u: wrong endpos %p/%p\n", i, endpos, tests[i].str );
+        ures = wcstoul( tests[i].str, &endpos, tests[i].base );
+        ok( ures == tests[i].ures, "%u: %s res %08lx\n",
+            i, wine_dbgstr_w(tests[i].str), ures );
+    }
+
+    /* Test various unicode digits */
+    for (i = 0; i < ARRAY_SIZE(zeros); ++i) {
+        WCHAR tmp[] = {zeros[i] + 4, zeros[i], zeros[i] + 5, 0};
+        res = wcstol(tmp, NULL, 0);
+        ok(res == 405, "with zero = U+%04X: got %d, expected 405\n", zeros[i], (int)res);
+        tmp[1] = zeros[i] + 10;
+        res = wcstol(tmp, NULL, 16);
+        ok(res == 4, "with zero = U+%04X: got %d, expected 4\n", zeros[i], (int)res);
+    }
+}
+
 static void test_atoi(void)
 {
     int r;
@@ -4066,6 +4125,7 @@ START_TEST(string)
     test__atodbl();
     test__stricmp();
     test__wcstoi64();
+    test__wcstol();
     test_atoi();
     test_atol();
     test_atof();

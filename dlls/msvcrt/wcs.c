@@ -2487,10 +2487,13 @@ unsigned __int64 CDECL MSVCRT__wcstoui64(const MSVCRT_wchar_t *nptr,
 MSVCRT_ulong __cdecl MSVCRT__wcstoul_l(const MSVCRT_wchar_t *s,
         MSVCRT_wchar_t **end, int base, MSVCRT__locale_t locale)
 {
-    unsigned __int64 ret = MSVCRT__wcstoui64_l(s, end, base, locale);
+    __int64 ret = MSVCRT__wcstoi64_l(s, end, base, locale);
 
     if(ret > MSVCRT_ULONG_MAX) {
         ret = MSVCRT_ULONG_MAX;
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+    }else if(ret < -(__int64)MSVCRT_ULONG_MAX) {
+        ret = 1;
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }
     return ret;
