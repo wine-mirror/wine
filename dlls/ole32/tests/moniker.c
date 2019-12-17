@@ -31,6 +31,7 @@
 #include "ocidl.h"
 #include "comcat.h"
 #include "olectl.h"
+#include "initguid.h"
 
 #include "wine/test.h"
 
@@ -61,6 +62,13 @@ static const CLSID CLSID_TestMoniker =
     0x4f53,
     {0xb9, 0x3e, 0x2f, 0xf9, 0xc8, 0x32, 0x23, 0xd7}
 };
+
+DEFINE_OLEGUID(CLSID_FileMoniker,      0x303, 0, 0);
+DEFINE_OLEGUID(CLSID_ItemMoniker,      0x304, 0, 0);
+DEFINE_OLEGUID(CLSID_AntiMoniker,      0x305, 0, 0);
+DEFINE_OLEGUID(CLSID_CompositeMoniker, 0x309, 0, 0);
+DEFINE_OLEGUID(CLSID_ClassMoniker,     0x31a, 0, 0);
+DEFINE_OLEGUID(CLSID_PointerMoniker,   0x306, 0, 0);
 
 static LONG cLocks;
 
@@ -1543,7 +1551,15 @@ static void test_class_moniker(void)
 
     hr = CreateClassMoniker(&CLSID_StdComponentCategoriesMgr, &moniker);
     ok_ole_success(hr, CreateClassMoniker);
-    if (!moniker) return;
+
+    hr = IMoniker_QueryInterface(moniker, &CLSID_ClassMoniker, (void **)&unknown);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
+        IUnknown_Release(unknown);
+    }
 
     test_moniker("class moniker", moniker, 
         expected_class_moniker_marshal_data, sizeof(expected_class_moniker_marshal_data),
@@ -1603,10 +1619,20 @@ static void test_file_moniker(WCHAR* path)
 {
     IStream *stream;
     IMoniker *moniker1 = NULL, *moniker2 = NULL;
+    IUnknown *unk;
     HRESULT hr;
 
     hr = CreateFileMoniker(path, &moniker1);
     ok_ole_success(hr, CreateFileMoniker); 
+
+    hr = IMoniker_QueryInterface(moniker1, &CLSID_FileMoniker, (void **)&unk);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(unk == (IUnknown *)moniker1, "Unexpected interface.\n");
+        IUnknown_Release(unk);
+    }
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
@@ -1718,6 +1744,15 @@ static void test_item_moniker(void)
 
     hr = CreateItemMoniker(NULL, wszObjectName, &moniker);
     ok(hr == S_OK, "Failed to create item moniker, hr %#x.\n", hr);
+
+    hr = IMoniker_QueryInterface(moniker, &CLSID_ItemMoniker, (void **)&unknown);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
+        IUnknown_Release(unknown);
+    }
 
     test_moniker("item moniker 2", moniker,
         expected_item_moniker_marshal_data2, sizeof(expected_item_moniker_marshal_data2),
@@ -1860,7 +1895,15 @@ static void test_anti_moniker(void)
 
     hr = CreateAntiMoniker(&moniker);
     ok_ole_success(hr, CreateAntiMoniker);
-    if (!moniker) return;
+
+    hr = IMoniker_QueryInterface(moniker, &CLSID_AntiMoniker, (void **)&unknown);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
+        IUnknown_Release(unknown);
+    }
 
     test_moniker("anti moniker", moniker, 
         expected_anti_moniker_marshal_data, sizeof(expected_anti_moniker_marshal_data),
@@ -1931,6 +1974,13 @@ static void test_generic_composite_moniker(void)
     ok_ole_success(hr, CreateItemMoniker);
     hr = CreateGenericComposite(moniker1, moniker2, &moniker);
     ok_ole_success(hr, CreateGenericComposite);
+
+    /* Generic composite is special, as it does not addref in this case. */
+    hr = IMoniker_QueryInterface(moniker, &CLSID_CompositeMoniker, (void **)&unknown);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
 
     test_moniker("generic composite moniker", moniker, 
         expected_gc_moniker_marshal_data, sizeof(expected_gc_moniker_marshal_data),
@@ -2007,7 +2057,15 @@ static void test_pointer_moniker(void)
 
     hr = CreatePointerMoniker((IUnknown *)&Test_ClassFactory, &moniker);
     ok_ole_success(hr, CreatePointerMoniker);
-    if (!moniker) return;
+
+    hr = IMoniker_QueryInterface(moniker, &CLSID_PointerMoniker, (void **)&unknown);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
+        IUnknown_Release(unknown);
+    }
 
     ok_more_than_one_lock();
 
