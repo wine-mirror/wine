@@ -115,17 +115,12 @@ struct thiscall_thunk
 #include "poppack.h"
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
-static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
-static void * (WINAPI *call_thiscall_func3)( void *func, void *this, const void *a,
-        const void *b );
-static void * (WINAPI *call_thiscall_func4)( void *func, void *this, const void *a,
-        const void *b, const void *c );
-static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a,
-        const void *b, const void *c, const void *d );
-static void * (WINAPI *call_thiscall_func6)( void *func, void *this, const void *a,
-        const void *b, const void *c, const void *d, const void *e );
-static void * (WINAPI *call_thiscall_func7)( void *func, void *this, const void *a,
-        const void *b, const void *c, const void *d, const void *e, const void *f );
+static void * (WINAPI *call_thiscall_func2)( void *func, void *this, void *a );
+static void * (WINAPI *call_thiscall_func3)( void *func, void *this, void *a, void *b );
+static void * (WINAPI *call_thiscall_func4)( void *func, void *this, void *a, void *b, void *c );
+static void * (WINAPI *call_thiscall_func5)( void *func, void *this, void *a, void *b, void *c, void *d );
+static void * (WINAPI *call_thiscall_func6)( void *func, void *this, void *a, void *b, void *c, void *d, void *e );
+static void * (WINAPI *call_thiscall_func7)( void *func, void *this, void *a, void *b, void *c, void *d, void *e, void *f );
 
 static void init_thiscall_thunk(void)
 {
@@ -146,17 +141,12 @@ static void init_thiscall_thunk(void)
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
-#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
-#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)(a),\
-        (const void*)(b))
-#define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(const void*)(a),\
-        (const void*)(b),(const void*)(c))
-#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),\
-        (const void*)(b),(const void*)(c),(const void*)(d))
-#define call_func6(func,_this,a,b,c,d,e) call_thiscall_func6(func,_this,(const void*)(a),\
-        (const void*)(b),(const void*)(c),(const void*)(d),(const void*)(e))
-#define call_func7(func,_this,a,b,c,d,e,f) call_thiscall_func7(func,_this,(const void*)(a),\
-        (const void*)(b),(const void*)(c),(const void*)(d),(const void*)(e),(const void*)(f))
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(void*)(a))
+#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(void*)(a),(void*)(b))
+#define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(void*)(a),(void*)(b),(void*)(c))
+#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(void*)(a),(void*)(b),(void*)(c),(void*)(d))
+#define call_func6(func,_this,a,b,c,d,e) call_thiscall_func6(func,_this,(void*)(a),(void*)(b),(void*)(c),(void*)(d),(void*)(e))
+#define call_func7(func,_this,a,b,c,d,e,f) call_thiscall_func7(func,_this,(void*)(a),(void*)(b),(void*)(c),(void*)(d),(void*)(e),(void*)(f))
 #else
 
 #define init_thiscall_thunk()
