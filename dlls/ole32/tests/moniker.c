@@ -1933,10 +1933,26 @@ todo_wine
     }
 }
 
+static void stream_write_dword(IStream *stream, DWORD value)
+{
+    LARGE_INTEGER pos;
+    HRESULT hr;
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Failed to seek, hr %#x.\n", hr);
+
+    hr = IStream_Write(stream, &value, sizeof(value), NULL);
+    ok(hr == S_OK, "Stream write failed, hr %#x.\n", hr);
+
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Failed to seek, hr %#x.\n", hr);
+}
+
 static void test_anti_moniker(void)
 {
+    IMoniker *moniker, *moniker2, *moniker3;
     HRESULT hr;
-    IMoniker *moniker;
     DWORD moniker_type;
     DWORD hash;
     IBindCtx *bindctx;
@@ -1944,6 +1960,8 @@ static void test_anti_moniker(void)
     IMoniker *inverse;
     IUnknown *unknown;
     static const WCHAR expected_display_name[] = { '\\','.','.',0 };
+    IStream *stream;
+    WCHAR *name;
 
     hr = CreateAntiMoniker(&moniker);
     ok_ole_success(hr, CreateAntiMoniker);
@@ -1997,8 +2015,90 @@ todo_wine
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
     ok(hr == E_NOTIMPL, "IMoniker_BindToStorage should return E_NOTIMPL, not 0x%08x\n", hr);
 
-    IBindCtx_Release(bindctx);
+    /* ComposeWith */
+    hr = CreateAntiMoniker(&moniker2);
+    ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
 
+    moniker3 = moniker;
+    hr = IMoniker_ComposeWith(moniker, moniker2, TRUE, &moniker3);
+    ok(hr == MK_E_NEEDGENERIC, "Unexpected hr %#x.\n", hr);
+    ok(!moniker3, "Unexpected interface.\n");
+
+    hr = IMoniker_ComposeWith(moniker, moniker2, FALSE, &moniker3);
+    ok(hr == S_OK, "Failed to compose, hr %#x.\n", hr);
+    hr = IMoniker_IsSystemMoniker(moniker3, &moniker_type);
+    ok(hr == S_OK, "Failed to get moniker type, hr %#x.\n", hr);
+    ok(moniker_type == MKSYS_GENERICCOMPOSITE, "Unexpected moniker type %d.\n", moniker_type);
+    IMoniker_Release(moniker3);
+
+    IMoniker_Release(moniker2);
+
+    /* Load with composed number > 1. */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+
+    stream_write_dword(stream, 2);
+
+    hr = IMoniker_Load(moniker, stream);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Hash(moniker, &hash);
+    ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
+todo_wine
+    ok(hash == 0x80000002, "Unexpected hash value %#x.\n", hash);
+
+    /* Display name reflects anti combination. */
+    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &name);
+    ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
+todo_wine
+    ok(!lstrcmpW(name, L"\\..\\.."), "Unexpected display name %s.\n", wine_dbgstr_w(name));
+    CoTaskMemFree(name);
+
+    /* Limit is at 0xfffff. */
+    stream_write_dword(stream, 0xfffff);
+
+    hr = IMoniker_Load(moniker, stream);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Hash(moniker, &hash);
+    ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
+todo_wine
+    ok(hash == 0x800fffff, "Unexpected hash value %#x.\n", hash);
+
+    stream_write_dword(stream, 0xfffff + 1);
+
+    hr = IMoniker_Load(moniker, stream);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Hash(moniker, &hash);
+    ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
+todo_wine
+    ok(hash == 0x800fffff, "Unexpected hash value %#x.\n", hash);
+
+    /* Zero combining counter is also valid. */
+    stream_write_dword(stream, 0);
+
+    hr = IMoniker_Load(moniker, stream);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Hash(moniker, &hash);
+    ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
+todo_wine
+    ok(hash == 0x80000000, "Unexpected hash value %#x.\n", hash);
+
+    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &name);
+    ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
+todo_wine
+    ok(!lstrcmpW(name, L""), "Unexpected display name %s.\n", wine_dbgstr_w(name));
+    CoTaskMemFree(name);
+
+    IStream_Release(stream);
+
+    IBindCtx_Release(bindctx);
     IMoniker_Release(moniker);
 }
 
