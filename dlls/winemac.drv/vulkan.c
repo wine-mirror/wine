@@ -50,6 +50,9 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 typedef VkFlags VkMacOSSurfaceCreateFlagsMVK;
 #define VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK 1000123000
 
+typedef VkFlags VkMetalSurfaceCreateFlagsEXT;
+#define VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT 1000217000
+
 struct wine_vk_surface
 {
     macdrv_metal_device device;
@@ -65,9 +68,18 @@ typedef struct VkMacOSSurfaceCreateInfoMVK
     const void *pView; /* NSView */
 } VkMacOSSurfaceCreateInfoMVK;
 
+typedef struct VkMetalSurfaceCreateInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkMetalSurfaceCreateFlagsEXT flags;
+    const void *pLayer; /* CAMetalLayer */
+} VkMetalSurfaceCreateInfoEXT;
+
 static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
 static VkResult (*pvkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *);
 static VkResult (*pvkCreateMacOSSurfaceMVK)(VkInstance, const VkMacOSSurfaceCreateInfoMVK*, const VkAllocationCallbacks *, VkSurfaceKHR *);
+static VkResult (*pvkCreateMetalSurfaceEXT)(VkInstance, const VkMetalSurfaceCreateInfoEXT*, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
@@ -103,6 +115,7 @@ static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
     LOAD_FUNCPTR(vkCreateInstance)
     LOAD_FUNCPTR(vkCreateSwapchainKHR)
     LOAD_FUNCPTR(vkCreateMacOSSurfaceMVK)
+    LOAD_FUNCPTR(vkCreateMetalSurfaceEXT)
     LOAD_FUNCPTR(vkDestroyInstance)
     LOAD_FUNCPTR(vkDestroySurfaceKHR)
     LOAD_FUNCPTR(vkDestroySwapchainKHR)
@@ -159,7 +172,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
              */
             if (!strcmp(src->ppEnabledExtensionNames[i], "VK_KHR_win32_surface"))
             {
-                enabled_extensions[i] = "VK_MVK_macos_surface";
+                enabled_extensions[i] = pvkCreateMetalSurfaceEXT ? "VK_EXT_metal_surface" : "VK_MVK_macos_surface";
             }
             else
             {
@@ -239,7 +252,6 @@ static VkResult macdrv_vkCreateWin32SurfaceKHR(VkInstance instance,
         const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
 {
     VkResult res;
-    VkMacOSSurfaceCreateInfoMVK create_info_host;
     struct wine_vk_surface *mac_surface;
     struct macdrv_win_data *data;
 
@@ -279,12 +291,26 @@ static VkResult macdrv_vkCreateWin32SurfaceKHR(VkInstance instance,
         goto err;
     }
 
-    create_info_host.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-    create_info_host.pNext = NULL;
-    create_info_host.flags = 0; /* reserved */
-    create_info_host.pView = macdrv_view_get_metal_layer(mac_surface->view);
+    if (pvkCreateMetalSurfaceEXT)
+    {
+        VkMetalSurfaceCreateInfoEXT create_info_host;
+        create_info_host.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+        create_info_host.pNext = NULL;
+        create_info_host.flags = 0; /* reserved */
+        create_info_host.pLayer = macdrv_view_get_metal_layer(mac_surface->view);
 
-    res = pvkCreateMacOSSurfaceMVK(instance, &create_info_host, NULL /* allocator */, &mac_surface->surface);
+        res = pvkCreateMetalSurfaceEXT(instance, &create_info_host, NULL /* allocator */, &mac_surface->surface);
+    }
+    else
+    {
+        VkMacOSSurfaceCreateInfoMVK create_info_host;
+        create_info_host.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+        create_info_host.pNext = NULL;
+        create_info_host.flags = 0; /* reserved */
+        create_info_host.pView = macdrv_view_get_metal_layer(mac_surface->view);
+
+        res = pvkCreateMacOSSurfaceMVK(instance, &create_info_host, NULL /* allocator */, &mac_surface->surface);
+    }
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create MoltenVK surface, res=%d\n", res);
@@ -342,6 +368,7 @@ static VkResult macdrv_vkEnumerateInstanceExtensionProperties(const char *layer_
         uint32_t *count, VkExtensionProperties* properties)
 {
     unsigned int i;
+    BOOL seen_surface = FALSE;
     VkResult res;
 
     TRACE("layer_name %s, count %p, properties %p\n", debugstr_a(layer_name), count, properties);
@@ -353,8 +380,9 @@ static VkResult macdrv_vkEnumerateInstanceExtensionProperties(const char *layer_
         return VK_ERROR_LAYER_NOT_PRESENT;
     }
 
-    /* We will return the same number of instance extensions reported by the host back to
-     * winevulkan. Along the way we may replace MoltenVK extensions with their win32 equivalents.
+    /* We will return at most the same number of instance extensions reported by the host back to
+     * winevulkan. Along the way we may replace MoltenVK extensions with their win32 equivalents,
+     * or remove redundant extensions outright.
      * Winevulkan will perform more detailed filtering as it knows whether it has thunks
      * for a particular extension.
      */
@@ -364,14 +392,24 @@ static VkResult macdrv_vkEnumerateInstanceExtensionProperties(const char *layer_
 
     for (i = 0; i < *count; i++)
     {
-        /* For now the only MoltenVK extension we need to fixup. Long-term we may need an array. */
-        if (!strcmp(properties[i].extensionName, "VK_MVK_macos_surface"))
+        /* For now the only MoltenVK extensions we need to fixup. Long-term we may need an array. */
+        if (!strcmp(properties[i].extensionName, "VK_MVK_macos_surface") ||
+            !strcmp(properties[i].extensionName, "VK_EXT_metal_surface"))
         {
-            TRACE("Substituting VK_MVK_macos_surface for VK_KHR_win32_surface\n");
+            if (seen_surface)
+            {
+                /* If we've already seen a surface extension, just hide this one. */
+                memmove(properties + i, properties + i + 1, (*count - i - 1) * sizeof(*properties));
+                --*count;
+                --i;
+                continue;
+            }
+            TRACE("Substituting %s for VK_KHR_win32_surface\n", properties[i].extensionName);
 
             snprintf(properties[i].extensionName, sizeof(properties[i].extensionName),
                     VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
             properties[i].specVersion = VK_KHR_WIN32_SURFACE_SPEC_VERSION;
+            seen_surface = TRUE;
         }
     }
 
