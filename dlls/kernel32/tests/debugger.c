@@ -48,7 +48,7 @@ static LONG child_failures;
 
 static HMODULE ntdll;
 
-static void WINAPIV WINETEST_PRINTF_ATTR(2, 3) test_child_ok(int condition, const char *msg, ...)
+static void WINAPIV __WINE_PRINTF_ATTR(2, 3) test_child_ok(int condition, const char *msg, ...)
 {
     __ms_va_list valist;
 

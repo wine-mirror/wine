@@ -282,7 +282,7 @@ static void     get_file_name(char* buf)
  *		static void     childPrintf
  *
  */
-static void WINAPIV WINETEST_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
+static void WINAPIV __WINE_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
 {
     __ms_va_list valist;
     char        buffer[1024+4*MAX_LISTED_ENV_VAR];

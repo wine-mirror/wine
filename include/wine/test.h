@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <windef.h>
 #include <winbase.h>
+#include <wine/debug.h>
 
 #ifdef __WINE_CONFIG_H
 #error config.h should not be used in Wine tests
@@ -34,9 +35,6 @@
 #endif
 #ifdef __WINE_WINE_UNICODE_H
 #error wine/unicode.h should not be used in Wine tests
-#endif
-#ifdef __WINE_WINE_DEBUG_H
-#error wine/debug.h should not be used in Wine tests
 #endif
 
 #ifndef INVALID_FILE_ATTRIBUTES
@@ -77,12 +75,6 @@ extern LONG winetest_get_failures(void);
 extern void winetest_add_failures( LONG new_failures );
 extern void winetest_wait_child_process( HANDLE process );
 
-extern const char *wine_dbgstr_wn( const WCHAR *str, int n );
-extern const char *wine_dbgstr_guid( const GUID *guid );
-extern const char *wine_dbgstr_rect( const RECT *rect );
-static inline const char *wine_dbgstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, -1 ); }
-extern const char *wine_dbgstr_longlong( ULONGLONG ll );
-
 #ifdef STANDALONE
 #define START_TEST(name) \
   static void func_##name(void); \
@@ -104,16 +96,10 @@ extern int broken( int condition );
 extern int winetest_vok( int condition, const char *msg, __winetest_va_list ap );
 extern void winetest_vskip( const char *msg, __winetest_va_list ap );
 
-#ifdef __GNUC__
-# define WINETEST_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
-#else
-# define WINETEST_PRINTF_ATTR(fmt,args)
-#endif
-
-extern void __winetest_cdecl winetest_ok( int condition, const char *msg, ... ) WINETEST_PRINTF_ATTR(2,3);
-extern void __winetest_cdecl winetest_skip( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
-extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
-extern void __winetest_cdecl winetest_trace( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
+extern void __winetest_cdecl winetest_ok( int condition, const char *msg, ... ) __WINE_PRINTF_ATTR(2,3);
+extern void __winetest_cdecl winetest_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+extern void __winetest_cdecl winetest_trace( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 
 #ifdef WINETEST_NO_LINE_NUMBERS
 # define subtest_(file, line)  (winetest_set_location(file, 0), 0) ? (void)0 : winetest_subtest
@@ -264,24 +250,6 @@ static struct tls_data *get_tls_data(void)
     }
     SetLastError(last_error);
     return data;
-}
-
-/* allocate some tmp space for a string */
-static char *get_temp_buffer( size_t n )
-{
-    struct tls_data *data = get_tls_data();
-    char *res = data->str_pos;
-
-    if (res + n >= &data->strings[sizeof(data->strings)]) res = data->strings;
-    data->str_pos = res + n;
-    return res;
-}
-
-/* release extra space that we requested in get_temp_buffer() */
-static void release_temp_buffer( char *ptr, size_t size )
-{
-    struct tls_data *data = get_tls_data();
-    data->str_pos = ptr + size;
 }
 
 static void exit_process( int code )
@@ -486,99 +454,6 @@ void winetest_wait_child_process( HANDLE process )
                 InterlockedIncrement(&failures);
         }
     }
-}
-
-const char *wine_dbgstr_wn( const WCHAR *str, int n )
-{
-    char *dst, *res;
-    size_t size;
-
-    if (!((ULONG_PTR)str >> 16))
-    {
-        if (!str) return "(null)";
-        res = get_temp_buffer( 6 );
-        sprintf( res, "#%04x", LOWORD(str) );
-        return res;
-    }
-    if (n == -1)
-    {
-        const WCHAR *end = str;
-        while (*end) end++;
-        n = end - str;
-    }
-    if (n < 0) n = 0;
-    size = 12 + min( 300, n * 5 );
-    dst = res = get_temp_buffer( size );
-    *dst++ = 'L';
-    *dst++ = '"';
-    while (n-- > 0 && dst <= res + size - 10)
-    {
-        WCHAR c = *str++;
-        switch (c)
-        {
-        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
-        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
-        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
-        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
-        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
-        default:
-            if (c >= ' ' && c <= 126)
-                *dst++ = (char)c;
-            else
-            {
-                *dst++ = '\\';
-                sprintf(dst,"%04x",c);
-                dst+=4;
-            }
-        }
-    }
-    *dst++ = '"';
-    if (n > 0)
-    {
-        *dst++ = '.';
-        *dst++ = '.';
-        *dst++ = '.';
-    }
-    *dst++ = 0;
-    release_temp_buffer( res, dst - res );
-    return res;
-}
-
-const char *wine_dbgstr_guid( const GUID *guid )
-{
-    char *res;
-
-    if (!guid) return "(null)";
-    res = get_temp_buffer( 39 ); /* CHARS_IN_GUID */
-    sprintf( res, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-             guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
-             guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
-             guid->Data4[5], guid->Data4[6], guid->Data4[7] );
-    return res;
-}
-
-const char *wine_dbgstr_rect( const RECT *rect )
-{
-    char *res;
-
-    if (!rect) return "(null)";
-    res = get_temp_buffer( 60 );
-    sprintf( res, "(%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
-    release_temp_buffer( res, strlen(res) + 1 );
-    return res;
-}
-
-const char *wine_dbgstr_longlong( ULONGLONG ll )
-{
-    char *res;
-
-    res = get_temp_buffer( 17 );
-    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
-        sprintf( res, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll );
-    else
-        sprintf( res, "%lx", (unsigned long)ll );
-    release_temp_buffer( res, strlen(res) + 1 );
-    return res;
 }
 
 /* Find a test by name */

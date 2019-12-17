@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 
-#include <wine/test.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -27,6 +26,7 @@
 #include "ole2.h"
 #include "mshtml.h"
 #include "objsafe.h"
+#include "wine/test.h"
 
 static BSTR a2bstr(const char *str)
 {
@@ -454,34 +454,6 @@ static void test_header(const struct HEADER_TYPE expect[], int num)
     }
 }
 
-static const char *debugstr_variant(const VARIANT *var)
-{
-    static char buf[400];
-
-    if (!var)
-        return "(null)";
-
-    switch (V_VT(var))
-    {
-    case VT_EMPTY:
-        return "{VT_EMPTY}";
-    case VT_BSTR:
-        sprintf(buf, "{VT_BSTR: %s}", wine_dbgstr_w(V_BSTR(var)));
-        break;
-    case VT_BOOL:
-        sprintf(buf, "{VT_BOOL: %x}", V_BOOL(var));
-        break;
-    case VT_UI4:
-        sprintf(buf, "{VT_UI4: %u}", V_UI4(var));
-        break;
-    default:
-        sprintf(buf, "{vt %d}", V_VT(var));
-        break;
-    }
-
-    return buf;
-}
-
 static void test_illegal_xml(IXMLDOMDocument *xmldom)
 {
     IXMLDOMNode *first, *last;
@@ -500,7 +472,7 @@ static void test_illegal_xml(IXMLDOMDocument *xmldom)
     ok(hres == E_INVALIDARG, "Expect E_INVALIDARG, got %08x\n", hres);
     hres = IXMLDOMDocument_get_dataType(xmldom, &variant);
     ok(hres == S_FALSE, "get_dataType failed: %08x\n", hres);
-    ok(V_VT(&variant) == VT_NULL, "got %s\n", debugstr_variant(&variant));
+    ok(V_VT(&variant) == VT_NULL, "got %s\n", wine_dbgstr_variant(&variant));
     VariantClear(&variant);
 
     hres = IXMLDOMDocument_get_text(xmldom, &bstr);

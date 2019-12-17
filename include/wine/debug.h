@@ -29,10 +29,6 @@
 #include <guiddef.h>
 #endif
 
-#ifdef __WINE_WINE_TEST_H
-#error This file should not be used in Wine tests
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
