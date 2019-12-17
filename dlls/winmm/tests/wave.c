@@ -161,7 +161,7 @@ static char* wave_generate_silence(WAVEFORMATEX* wfx, double duration, DWORD* si
     for (i=0;i<nb_samples;i++) {
         if (wfx->wBitsPerSample==8) {
             for (j = 0; j < wfx->nChannels; j++)
-                *b++=128;
+                *b++=(char)128;
         } else if (wfx->wBitsPerSample==16) {
             for (j = 0; j < wfx->nChannels; j++) {
                 b[0]=0;
