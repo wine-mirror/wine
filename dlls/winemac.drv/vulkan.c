@@ -280,7 +280,7 @@ static VkResult macdrv_vkCreateWin32SurfaceKHR(VkInstance instance,
     create_info_host.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
     create_info_host.pNext = NULL;
     create_info_host.flags = 0; /* reserved */
-    create_info_host.pView = mac_surface->view;
+    create_info_host.pView = macdrv_view_get_metal_layer(mac_surface->view);
 
     res = pvkCreateMacOSSurfaceMVK(instance, &create_info_host, NULL /* allocator */, &mac_surface->surface);
     if (res != VK_SUCCESS)

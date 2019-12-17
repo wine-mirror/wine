@@ -141,6 +141,7 @@ typedef struct macdrv_opaque_opengl_context* macdrv_opengl_context;
 #ifdef HAVE_METAL_METAL_H
 typedef struct macdrv_opaque_metal_device* macdrv_metal_device;
 typedef struct macdrv_opaque_metal_view* macdrv_metal_view;
+typedef struct macdrv_opaque_metal_layer* macdrv_metal_layer;
 #endif
 typedef struct macdrv_opaque_status_item* macdrv_status_item;
 struct macdrv_event;
@@ -538,6 +539,7 @@ extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_conte
 extern macdrv_metal_device macdrv_create_metal_device(void) DECLSPEC_HIDDEN;
 extern void macdrv_release_metal_device(macdrv_metal_device d) DECLSPEC_HIDDEN;
 extern macdrv_metal_view macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d) DECLSPEC_HIDDEN;
+extern macdrv_metal_layer macdrv_view_get_metal_layer(macdrv_metal_view v) DECLSPEC_HIDDEN;
 extern void macdrv_view_release_metal_view(macdrv_metal_view v) DECLSPEC_HIDDEN;
 #endif
 extern int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2]) DECLSPEC_HIDDEN;
