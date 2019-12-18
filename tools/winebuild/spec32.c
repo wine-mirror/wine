@@ -48,6 +48,9 @@
 
 int needs_get_pc_thunk = 0;
 
+static const char builtin_signature[32] = "Wine builtin DLL";
+static const char fakedll_signature[32] = "Wine placeholder DLL";
+
 /* check if entry point needs a relay thunk */
 static inline int needs_relay( const ORDDEF *odp )
 {
@@ -790,12 +793,11 @@ void output_fake_module( DLLSPEC *spec )
     static const unsigned char exe_code_section[] = { 0xb8, 0x01, 0x00, 0x00, 0x00,  /* movl $1,%eax */
                                                       0xc2, 0x04, 0x00 };            /* ret $4 */
 
-    static const char fakedll_signature[] = "Wine placeholder DLL";
     const unsigned int page_size = get_page_size();
     const unsigned int section_align = page_size;
     const unsigned int file_align = 0x200;
     const unsigned int reloc_size = 8;
-    const unsigned int lfanew = (0x40 + sizeof(fakedll_signature) + 15) & ~15;
+    const unsigned int lfanew = 0x40 + sizeof(fakedll_signature);
     const unsigned int nb_sections = 2 + (spec->nb_resources != 0);
     const unsigned int text_size = (spec->characteristics & IMAGE_FILE_DLL) ?
                                     sizeof(dll_code_section) : sizeof(exe_code_section);
@@ -837,7 +839,6 @@ void output_fake_module( DLLSPEC *spec )
     put_dword( lfanew );
 
     put_data( fakedll_signature, sizeof(fakedll_signature) );
-    align_output( 16 );
 
     put_dword( 0x4550 );                             /* Signature */
     switch(target_cpu)
@@ -1061,4 +1062,32 @@ void output_def_file( DLLSPEC *spec, int import_only )
     }
     if (!total) warning( "%s: Import library doesn't export anything\n", spec->file_name );
     if (spec32) free_dll_spec( spec32 );
+}
+
+
+/*******************************************************************
+ *         make_builtin_files
+ */
+void make_builtin_files( char *argv[] )
+{
+    int i, fd;
+    struct
+    {
+        unsigned short e_magic;
+        unsigned short unused[29];
+        unsigned int   e_lfanew;
+    } header;
+
+    for (i = 0; argv[i]; i++)
+    {
+        if ((fd = open( argv[i], O_RDWR | O_BINARY )) == -1) fatal_perror( "Cannot open %s", argv[i] );
+        if (read( fd, &header, sizeof(header) ) == sizeof(header) && !memcmp( &header.e_magic, "MZ", 2 ))
+        {
+            if (header.e_lfanew < sizeof(header) + sizeof(builtin_signature))
+                fatal_error( "%s: Not enough space (%x) for Wine signature\n", argv[i], header.e_lfanew );
+            write( fd, builtin_signature, sizeof(builtin_signature) );
+        }
+        else fatal_error( "%s: Unrecognized file format\n", argv[i] );
+        close( fd );
+    }
 }

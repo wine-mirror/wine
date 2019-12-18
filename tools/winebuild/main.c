@@ -113,6 +113,7 @@ enum exec_mode_values
     MODE_EXE,
     MODE_DEF,
     MODE_IMPLIB,
+    MODE_BUILTIN,
     MODE_RESOURCES
 };
 
@@ -291,11 +292,12 @@ static const char usage_str[] =
 "       --version             Print the version and exit\n"
 "   -w, --warnings            Turn on warnings\n"
 "\nMode options:\n"
-"       --dll                 Build a .c file from a .spec or .def file\n"
+"       --dll                 Build a library from a .spec file and object files\n"
 "       --def                 Build a .def file from a .spec file\n"
-"       --exe                 Build a .c file for an executable\n"
+"       --exe                 Build an executable from object files\n"
 "       --implib              Build an import library\n"
-"       --resources           Build a .o file for the resource files\n\n"
+"       --builtin             Mark a library as a Wine builtin\n"
+"       --resources           Build a .o or .res file for the resource files\n\n"
 "The mode options are mutually exclusive; you must specify one and only one.\n\n";
 
 enum long_options_values
@@ -304,6 +306,7 @@ enum long_options_values
     LONG_OPT_DEF,
     LONG_OPT_EXE,
     LONG_OPT_IMPLIB,
+    LONG_OPT_BUILTIN,
     LONG_OPT_ASCMD,
     LONG_OPT_CCCMD,
     LONG_OPT_EXTERNAL_SYMS,
@@ -326,6 +329,7 @@ static const struct option long_options[] =
     { "def",           0, 0, LONG_OPT_DEF },
     { "exe",           0, 0, LONG_OPT_EXE },
     { "implib",        0, 0, LONG_OPT_IMPLIB },
+    { "builtin",       0, 0, LONG_OPT_BUILTIN },
     { "as-cmd",        1, 0, LONG_OPT_ASCMD },
     { "cc-cmd",        1, 0, LONG_OPT_CCCMD },
     { "external-symbols", 0, 0, LONG_OPT_EXTERNAL_SYMS },
@@ -493,6 +497,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_IMPLIB:
             set_exec_mode( MODE_IMPLIB );
+            break;
+        case LONG_OPT_BUILTIN:
+            set_exec_mode( MODE_BUILTIN );
             break;
         case LONG_OPT_ASCMD:
             as_command = strarray_fromstring( optarg, " " );
@@ -676,6 +683,10 @@ int main(int argc, char **argv)
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         output_import_lib( spec, argv );
+        break;
+    case MODE_BUILTIN:
+        if (!argv[0]) fatal_error( "missing file argument for --builtin option\n" );
+        make_builtin_files( argv );
         break;
     case MODE_RESOURCES:
         load_resources( argv, spec );
