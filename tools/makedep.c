@@ -2424,6 +2424,7 @@ static void output_install_commands( struct makefile *make, const struct makefil
         case 'c':  /* cross-compiled program */
             output( "\tSTRIPPROG=%s-strip %s -m 644 $(INSTALL_PROGRAM_FLAGS) %s %s\n",
                     crosstarget, install_sh, obj_dir_path( make, file ), dest );
+            output( "\t%s --builtin %s\n", tools_path( make, "winebuild" ), dest );
             break;
         case 'd':  /* data file */
             output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s %s\n",
