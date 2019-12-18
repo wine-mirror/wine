@@ -524,28 +524,6 @@ static int check_platform( struct options *opts, const char *file )
     return ret;
 }
 
-static void make_wine_builtin( const char *file )
-{
-    static const char wine_magic[32] = "Wine builtin DLL";
-    int fd;
-    struct
-    {
-        unsigned short e_magic;
-        unsigned short unused[29];
-        unsigned int   e_lfanew;
-    } header;
-
-    if ((fd = open( file, O_RDWR | O_BINARY )) == -1) error( "Failed to add signature to %s\n", file );
-
-    if (read( fd, &header, sizeof(header) ) == sizeof(header) && !memcmp( &header.e_magic, "MZ", 2 ))
-    {
-        if (header.e_lfanew < sizeof(header) + sizeof(wine_magic))
-            error( "Not enough space (%x) for Wine signature\n", header.e_lfanew );
-        write( fd, wine_magic, sizeof(wine_magic) );
-    }
-    close( fd );
-}
-
 static const char *get_multiarch_dir( enum target_cpu cpu )
 {
    switch(cpu)
@@ -880,6 +858,16 @@ static strarray *get_winebuild_args(struct options *opts)
     if (opts->unwind_tables) strarray_add( spec_args, "-fasynchronous-unwind-tables" );
     else strarray_add( spec_args, "-fno-asynchronous-unwind-tables" );
     return spec_args;
+}
+
+static void make_wine_builtin( struct options *opts, const char *file )
+{
+    strarray *args = get_winebuild_args( opts );
+
+    strarray_add( args, "--builtin" );
+    strarray_add( args, file );
+    spawn( opts->prefix, args, 0 );
+    strarray_free( args );
 }
 
 /* check if there is a static lib associated to a given dll */
@@ -1267,7 +1255,7 @@ static void build(struct options* opts)
     spawn(opts->prefix, link_args, 0);
     strarray_free (link_args);
 
-    if (is_pe && opts->wine_builtin) make_wine_builtin( output_path );
+    if (is_pe && opts->wine_builtin) make_wine_builtin( opts, output_path );
 
     /* set the base address with prelink if linker support is not present */
     if (opts->prelink && !opts->target)
