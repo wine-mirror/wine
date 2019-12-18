@@ -28,6 +28,7 @@
 #include <locale.h>
 #include <errno.h>
 #include <limits.h>
+#include <float.h>
 #include <math.h>
 
 /* make it use a definition from string.h */
@@ -1885,6 +1886,13 @@ static inline BOOL almost_equal(double d1, double d2) {
     return FALSE;
 }
 
+static inline BOOL large_almost_equal(double d1, double d2) {
+    double diff = fabs(d1-d2);
+    if(diff / (fabs(d1) + fabs(d2)) < DBL_EPSILON)
+        return TRUE;
+    return FALSE;
+}
+
 static void test__strtod(void)
 {
     const char double1[] = "12.1";
@@ -1990,6 +1998,9 @@ static void test__strtod(void)
     errno = 0xdeadbeef;
     strtod("-1d309", NULL);
     ok(errno == ERANGE, "errno = %x\n", errno);
+
+    d = strtod("1.7976931348623158e+308", NULL);
+    ok(almost_equal(d, DBL_MAX), "d = %lf (%lf)\n", d, DBL_MAX);
 }
 
 static void test_mbstowcs(void)
@@ -2984,11 +2995,28 @@ static void test_tolower(void)
     setlocale(LC_ALL, "C");
 }
 
+static double mul_pow10(double x, double exp)
+{
+    int fpexcept = _EM_DENORMAL|_EM_INVALID|_EM_ZERODIVIDE|_EM_OVERFLOW|_EM_UNDERFLOW|_EM_INEXACT;
+    BOOL negexp = (exp < 0);
+    int fpcontrol;
+    double ret;
+
+    if(negexp)
+        exp = -exp;
+    fpcontrol = _control87(0, 0);
+    _control87(fpexcept, 0xffffffff);
+    ret = pow(10.0, exp);
+    ret = (negexp ? x/ret : x*ret);
+    _control87(fpcontrol, 0xffffffff);
+    return ret;
+}
+
 static void test__atodbl(void)
 {
     _CRT_DOUBLE d;
     char num[32];
-    int ret;
+    int i, j, ret;
 
     if(!p__atodbl_l) {
         /* Old versions of msvcrt use different values for _OVERFLOW and _UNDERFLOW
@@ -3029,13 +3057,25 @@ static void test__atodbl(void)
     ok(ret == 0, "_atodbl(&d, \"123\") returned %d, expected 0\n", ret);
     ok(d.x == 123, "d.x = %lf, expected 123\n", d.x);
 
+    /* check over the whole range of (simple) normal doubles */
+    for (j = DBL_MIN_10_EXP; j <= DBL_MAX_10_EXP; j++) {
+        for (i = 1; i <= 9; i++) {
+            double expected = mul_pow10(i, j);
+            if (expected < DBL_MIN || expected > DBL_MAX) continue;
+            snprintf(num, sizeof(num), "%de%d", i, j);
+            ret = _atodbl(&d, num);
+            ok(large_almost_equal(d.x, expected), "d.x = %le, expected %le\n", d.x, expected);
+        }
+    }
+
+    /* check with denormal doubles */
     strcpy(num, "1e-309");
     ret = p__atodbl_l(&d, num, NULL);
     ok(ret == _UNDERFLOW, "_atodbl_l(&d, \"1e-309\", NULL) returned %d, expected _UNDERFLOW\n", ret);
-    ok(d.x!=0 && almost_equal(d.x, 0), "d.x = %le, expected 0\n", d.x);
+    ok(d.x!=0 && almost_equal(d.x, 0.1e-308), "d.x = %le, expected 0.1e-308\n", d.x);
     ret = _atodbl(&d, num);
     ok(ret == _UNDERFLOW, "_atodbl(&d, \"1e-309\") returned %d, expected _UNDERFLOW\n", ret);
-    ok(d.x!=0 && almost_equal(d.x, 0), "d.x = %le, expected 0\n", d.x);
+    ok(d.x!=0 && almost_equal(d.x, 0.1e-308), "d.x = %le, expected 0.1e-308\n", d.x);
 
     strcpy(num, "1e309");
     ret = p__atodbl_l(&d, num, NULL);
