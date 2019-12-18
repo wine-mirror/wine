@@ -2025,6 +2025,9 @@ todo_wine
     IMoniker_Release(moniker2);
 
     /* Load with composed number > 1. */
+    hr = CreateAntiMoniker(&moniker2);
+    ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
+
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
 
@@ -2033,6 +2036,14 @@ todo_wine
     hr = IMoniker_Load(moniker, stream);
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker, moniker2);
+todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker2, moniker);
+todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_Hash(moniker, &hash);
     ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
@@ -2076,6 +2087,14 @@ todo_wine
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMoniker_IsEqual(moniker, moniker2);
+todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker2, moniker);
+todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
     hr = IMoniker_Hash(moniker, &hash);
     ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
 todo_wine
@@ -2087,10 +2106,27 @@ todo_wine
     ok(!lstrcmpW(name, L""), "Unexpected display name %s.\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
+    /* Back to initial value. */
+    stream_write_dword(stream, 1);
+
+    hr = IMoniker_Load(moniker, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker, moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker2, moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     IStream_Release(stream);
 
     IBindCtx_Release(bindctx);
     IMoniker_Release(moniker);
+    IMoniker_Release(moniker2);
 }
 
 static void test_generic_composite_moniker(void)
