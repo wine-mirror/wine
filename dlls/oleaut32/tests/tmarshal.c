@@ -1571,6 +1571,14 @@ static HRESULT WINAPI Widget_Coclass_ptr(IWidget *iface, Coclass1 **in, Coclass1
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_no_in_out(IWidget *iface, BSTR str, int i)
+{
+    ok(SysStringLen(str) == 4, "unexpected len\n");
+    ok(!lstrcmpW(str, L"test"), "unexpected str %s\n", wine_dbgstr_w(str));
+    ok(i == 5, "i = %d\n", i);
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -1629,6 +1637,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_myint,
     Widget_Coclass,
     Widget_Coclass_ptr,
+    Widget_no_in_out,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -2440,6 +2449,10 @@ static void test_marshal_bstr(IWidget *widget, IDispatch *disp)
     testmode = 1;
     out = in_ptr = in_out = NULL;
     hr = IWidget_bstr(widget, NULL, &out, &in_ptr, &in_out);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    in = SysAllocString(L"test");
+    hr = IWidget_no_in_out(widget, in, 5);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
