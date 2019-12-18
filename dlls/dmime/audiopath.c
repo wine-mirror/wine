@@ -108,6 +108,8 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_Release (IDirectMusicAudioPath *if
     TRACE("(%p): ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
+        if (This->pPrimary)
+            IDirectSoundBuffer_Release(This->pPrimary);
         if (This->pDSBuffer)
             IDirectSoundBuffer_Release(This->pDSBuffer);
         This->pPerf = NULL;
