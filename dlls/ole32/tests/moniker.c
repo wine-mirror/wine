@@ -1747,6 +1747,20 @@ static void test_item_moniker(void)
         { NULL, L"Item1", NULL, L"Item2", S_FALSE },
         { NULL, L"Item1", NULL, L"ITEM1", S_OK },
     };
+    static const struct
+    {
+        const WCHAR *delim;
+        const WCHAR *item;
+        DWORD hash;
+    } hash_tests[] =
+    {
+        { L"!", L"Test", 0x73c },
+        { L"%", L"Test", 0x73c },
+        { L"%", L"TEST", 0x73c },
+        { L"%", L"T", 0x54 },
+        { L"%", L"A", 0x41 },
+        { L"%", L"a", 0x41 },
+    };
     IMoniker *moniker, *moniker2;
     HRESULT hr;
     DWORD moniker_type, i;
@@ -1851,6 +1865,20 @@ todo_wine
     IMoniker_Release(moniker2);
     IMoniker_Release(moniker);
 
+    /* Hashing */
+
+    for (i = 0; i < ARRAY_SIZE(hash_tests); ++i)
+    {
+        hr = CreateItemMoniker(hash_tests[i].delim, hash_tests[i].item, &moniker);
+        ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+        hr = IMoniker_Hash(moniker, &hash);
+        ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
+        ok(hash == hash_tests[i].hash, "%d: unexpected hash value %#x.\n", i, hash);
+
+        IMoniker_Release(moniker);
+    }
+
     hr = CreateItemMoniker(wszDelimiter, wszObjectName, &moniker);
     ok_ole_success(hr, CreateItemMoniker);
 
@@ -1859,15 +1887,6 @@ todo_wine
         expected_item_moniker_saved_data, sizeof(expected_item_moniker_saved_data),
         expected_item_moniker_comparison_data, sizeof(expected_item_moniker_comparison_data),
         54, expected_display_name);
-
-    /* Hashing */
-
-    hr = IMoniker_Hash(moniker, &hash);
-    ok_ole_success(hr, IMoniker_Hash);
-
-    ok(hash == 0x73c,
-        "Hash value != 0x73c, instead was 0x%08x\n",
-        hash);
 
     /* IsSystemMoniker test */
 
