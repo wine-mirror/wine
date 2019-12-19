@@ -14464,8 +14464,6 @@ CPPFLAGS=$ac_save_CPPFLAGS
 test -z "$KRB5_CFLAGS" || KRB5_CFLAGS=`echo " $KRB5_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
 test -z "$KRB5_LIBS" || KRB5_LIBS=`echo " $KRB5_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
-else
-    with_gssapi=${with_gssapi:-no}
 fi
 if test "x$ac_cv_lib_soname_krb5" = "x"; then :
   case "x$with_krb5" in
@@ -14476,6 +14474,7 @@ This is an error since --with-krb5 was requested." "$LINENO" 5 ;;
 esac
 
 fi
+test "x$ac_cv_lib_soname_krb5" != "x" || with_gssapi=${with_gssapi:-no}
 
 if test "x$with_gssapi" != "xno"
 then

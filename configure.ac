@@ -1702,11 +1702,10 @@ then
          else
              KRB5_CFLAGS=""
          fi])
-else
-    with_gssapi=${with_gssapi:-no}
 fi
 WINE_NOTICE_WITH(krb5,[test "x$ac_cv_lib_soname_krb5" = "x"],
                  [libkrb5 ${notice_platform}development files not found (or too old), Kerberos won't be supported.])
+test "x$ac_cv_lib_soname_krb5" != "x" || with_gssapi=${with_gssapi:-no}
 
 dnl **** Check for gssapi ****
 if test "x$with_gssapi" != "xno"
