@@ -381,20 +381,30 @@ int CDECL MSVCRT__wcsncoll(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str
     return MSVCRT__wcsncoll_l(str1, str2, count, NULL);
 }
 
+static double MSVCRT_mul_pow10(double x, int exp)
+{
+    BOOL negexp = (exp < 0);
+    double ret;
+
+    if(negexp)
+        exp = -exp;
+    ret = pow(10.0, exp);
+    return (negexp ? x/ret : x*ret);
+}
+
 /*********************************************************************
  *		_wcstod_l (MSVCRT.@)
  */
 double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         MSVCRT__locale_t locale)
 {
+    BOOL found_digit = FALSE, overflow, underflow;
+    int exp1=0, exp2=0, exp3=0, sign=1;
     MSVCRT_pthreadlocinfo locinfo;
     unsigned __int64 d=0, hlp;
     unsigned fpcontrol;
-    int exp=0, sign=1;
     const MSVCRT_wchar_t *p;
     double ret;
-    long double lret=1, expcnt = 10;
-    BOOL found_digit = FALSE, negexp;
 
     if (!MSVCRT_CHECK_PMT(str != NULL)) return 0;
 
@@ -417,13 +427,13 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         found_digit = TRUE;
         hlp = d*10+*(p++)-'0';
         if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
-            exp++;
+            exp1++;
             break;
         } else
             d = hlp;
     }
     while(*p>='0' && *p<='9') {
-        exp++;
+        exp1++;
         p++;
     }
     if(*p == *locinfo->lconv->decimal_point)
@@ -436,7 +446,7 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
             break;
 
         d = hlp;
-        exp--;
+        exp1--;
     }
     while(*p>='0' && *p<='9')
         p++;
@@ -465,9 +475,9 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
             }
             e *= s;
 
-            if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
-            else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
-            else exp += e;
+            if(exp1<0 && e<0 && exp1+e>=0) exp1 = INT_MIN;
+            else if(exp1>0 && e>0 && exp1+e<0) exp1 = INT_MAX;
+            else exp3 += e;
         } else {
             if(*p=='-' || *p=='+')
                 p--;
@@ -477,20 +487,31 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
 
     fpcontrol = _control87(0, 0);
     _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
-            |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT, 0xffffffff);
+               |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT|MSVCRT__PC_64,
+               MSVCRT__MCW_EM | MSVCRT__MCW_PC );
 
-    negexp = (exp < 0);
-    if(negexp)
-        exp = -exp;
-    while(exp) {
-        if(exp & 1)
-            lret *= expcnt;
-        exp /= 2;
-        expcnt = expcnt*expcnt;
+    /* if we have a simple case then just calculate the result directly */
+    overflow = (exp3-exp1 > MSVCRT_DBL_MAX_10_EXP);
+    underflow = (exp3-exp1 < MSVCRT_DBL_MIN_10_EXP);
+    if(!overflow && !underflow) {
+        exp1 += exp3;
+        exp3 = 0;
     }
-    ret = (long double)sign * (negexp ? d/lret : d*lret);
+    /* take the number without exponent and convert it into a double */
+    ret = MSVCRT_mul_pow10(d, exp1);
+    /* shift the number to the representation where the first non-zero digit is in the ones place */
+    if(overflow || underflow)
+        exp2 = (ret != 0.0 ? (int)log10(ret) : 0);
+    /* incorporate an additional shift to deal with floating point denormal values (if necessary) */
+    if(exp3-exp2 < MSVCRT_DBL_MIN_10_EXP)
+        exp2 += exp3-exp2-MSVCRT_DBL_MIN_10_EXP;
+    ret = MSVCRT_mul_pow10(ret, exp2);
+    /* apply the exponent (and undo any shift) */
+    ret = MSVCRT_mul_pow10(ret, exp3-exp2);
+    /* apply the sign bit */
+    ret *= sign;
 
-    _control87(fpcontrol, 0xffffffff);
+    _control87( fpcontrol, MSVCRT__MCW_EM | MSVCRT__MCW_PC );
 
     if((d && ret==0.0) || isinf(ret))
         *MSVCRT__errno() = MSVCRT_ERANGE;
