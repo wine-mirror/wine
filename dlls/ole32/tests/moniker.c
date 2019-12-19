@@ -1531,12 +1531,11 @@ todo_wine_if(moniker_type == MKSYS_GENERICCOMPOSITE)
 
 static void test_class_moniker(void)
 {
+    IMoniker *moniker, *inverse, *reduced;
     HRESULT hr;
-    IMoniker *moniker;
     DWORD moniker_type;
     DWORD hash;
     IBindCtx *bindctx;
-    IMoniker *inverse;
     IUnknown *unknown;
     FILETIME filetime;
 
@@ -1597,8 +1596,6 @@ todo_wine
     ok_ole_success(hr, IMoniker_BindToStorage);
     IUnknown_Release(unknown);
 
-    IBindCtx_Release(bindctx);
-
     hr = IMoniker_Inverse(moniker, &inverse);
     ok(hr == S_OK, "Failed to get inverse, hr %#x.\n", hr);
     hr = IMoniker_IsSystemMoniker(inverse, &moniker_type);
@@ -1606,13 +1603,22 @@ todo_wine
     ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
     IMoniker_Release(inverse);
 
+    /* Reduce() */
+    hr = IMoniker_Reduce(moniker, NULL, MKRREDUCE_ALL, NULL, &reduced);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(reduced == moniker, "Unexpected moniker.\n");
+    IMoniker_Release(reduced);
+
+    IBindCtx_Release(bindctx);
+
     IMoniker_Release(moniker);
 }
 
 static void test_file_moniker(WCHAR* path)
 {
-    IMoniker *moniker1 = NULL, *moniker2 = NULL, *inverse;
+    IMoniker *moniker1 = NULL, *moniker2 = NULL, *inverse, *reduced;
     DWORD moniker_type;
+    IBindCtx *bind_ctx;
     IStream *stream;
     IUnknown *unk;
     HRESULT hr;
@@ -1653,6 +1659,21 @@ todo_wine
 
     hr = IMoniker_IsEqual(moniker1, moniker2);
     ok_ole_success(hr, IsEqual);
+
+    /* Reduce() */
+    hr = CreateBindCtx(0, &bind_ctx);
+    ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
+
+    hr = IMoniker_Reduce(moniker1, NULL, MKRREDUCE_ALL, NULL, &reduced);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Reduce(moniker1, bind_ctx, MKRREDUCE_ALL, NULL, &reduced);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(reduced == moniker1, "Unexpected moniker.\n");
+    IMoniker_Release(reduced);
+
+    IBindCtx_Release(bind_ctx);
 
     IStream_Release(stream);
     if (moniker1) 
@@ -1761,7 +1782,7 @@ static void test_item_moniker(void)
         { L"%", L"A", 0x41 },
         { L"%", L"a", 0x41 },
     };
-    IMoniker *moniker, *moniker2;
+    IMoniker *moniker, *moniker2, *reduced;
     HRESULT hr;
     DWORD moniker_type, i;
     DWORD hash;
@@ -1919,6 +1940,12 @@ todo_wine
     ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
     IMoniker_Release(inverse);
 
+    /* Reduce() */
+    hr = IMoniker_Reduce(moniker, NULL, MKRREDUCE_ALL, NULL, &reduced);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(reduced == moniker, "Unexpected moniker.\n");
+    IMoniker_Release(reduced);
+
     IMoniker_Release(moniker);
 
     /* IsEqual */
@@ -1961,13 +1988,12 @@ static void stream_write_dword(IStream *stream, DWORD value)
 
 static void test_anti_moniker(void)
 {
-    IMoniker *moniker, *moniker2, *moniker3;
+    IMoniker *moniker, *moniker2, *moniker3, *inverse, *reduced;
     HRESULT hr;
     DWORD moniker_type;
     DWORD hash;
     IBindCtx *bindctx;
     FILETIME filetime;
-    IMoniker *inverse;
     IUnknown *unknown;
     static const WCHAR expected_display_name[] = { '\\','.','.',0 };
     IStream *stream;
@@ -2142,6 +2168,11 @@ todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IStream_Release(stream);
+
+    hr = IMoniker_Reduce(moniker, NULL, MKRREDUCE_ALL, NULL, &reduced);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(reduced == moniker, "Unexpected moniker.\n");
+    IMoniker_Release(reduced);
 
     IBindCtx_Release(bindctx);
     IMoniker_Release(moniker);
