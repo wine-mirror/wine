@@ -3048,9 +3048,8 @@ static void test_WSAEnumNetworkEvents(void)
                     "Test[%d]: WSAEnumNetworkEvents failed\n", i);
                 if (i >= 1 && j == 0) /* FD_WRITE is SET on first try for UDP and connected TCP */
                 {
-                    todo_wine_if (i == 0) /* Remove when fixed */
-                        ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %d\n",
-                            i, net_events.lNetworkEvents);
+                    ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %d\n",
+                        i, net_events.lNetworkEvents);
                 }
                 else
                 {
