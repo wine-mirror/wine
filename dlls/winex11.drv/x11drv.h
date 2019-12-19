@@ -273,6 +273,7 @@ extern BOOL X11DRV_IsSolidColor(COLORREF color) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel) DECLSPEC_HIDDEN;
 extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color ) DECLSPEC_HIDDEN;
+extern int *get_window_surface_mapping( int bpp, int *mapping ) DECLSPEC_HIDDEN;
 
 /* GDI escapes */
 

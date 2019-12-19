@@ -1911,11 +1911,8 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
 
         if (src != dst)
         {
-            const int *mapping = NULL;
+            int map[256], *mapping = get_window_surface_mapping( surface->image->bits_per_pixel, map );
             int width_bytes = surface->image->bytes_per_line;
-
-            if (surface->image->bits_per_pixel == 4 || surface->image->bits_per_pixel == 8)
-                mapping = X11DRV_PALETTE_PaletteToXPixel;
 
             src += coords.visrect.top * width_bytes;
             dst += coords.visrect.top * width_bytes;
@@ -2016,7 +2013,7 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     surface->info.bmiHeader.biPlanes      = 1;
     surface->info.bmiHeader.biBitCount    = format->bits_per_pixel;
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
-    set_color_info( vis, &surface->info, use_alpha );
+    if (format->bits_per_pixel > 8) set_color_info( vis, &surface->info, use_alpha );
 
     InitializeCriticalSection( &surface->crit );
     surface->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": surface");
