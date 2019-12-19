@@ -19,9 +19,17 @@
  */
 
 #include "dmime_private.h"
+#include "wine/heap.h"
+#include "wine/rbtree.h"
 #include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
+
+struct pchannel_block {
+    DWORD block_num;   /* Block 0 is PChannels 0-15, Block 1 is PChannels 16-31, etc */
+    DMUSIC_PRIVATE_PCHANNEL pchannel[16];
+    struct wine_rb_entry entry;
+};
 
 typedef struct IDirectMusicPerformance8Impl {
     IDirectMusicPerformance8 IDirectMusicPerformance8_iface;
@@ -35,7 +43,7 @@ typedef struct IDirectMusicPerformance8Impl {
     float fMasterTempo;
     long lMasterVolume;
     /* performance channels */
-    DMUSIC_PRIVATE_PCHANNEL PChannel[32];
+    struct wine_rb_tree pchannels;
     /* IDirectMusicPerformance8Impl fields */
     IDirectMusicAudioPath *pDefaultPath;
     HANDLE hNotification;
@@ -192,6 +200,49 @@ static BOOL PostMessageToProcessMsgThread(IDirectMusicPerformance8Impl* This, UI
   return PostThreadMessageA(This->procThreadId, iMsg, 0, 0);
 }
 
+static int pchannel_block_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct pchannel_block *b = WINE_RB_ENTRY_VALUE(entry, const struct pchannel_block, entry);
+
+    return *(DWORD *)key - b->block_num;
+}
+
+static void pchannel_block_free(struct wine_rb_entry *entry, void *context)
+{
+    struct pchannel_block *b = WINE_RB_ENTRY_VALUE(entry, struct pchannel_block, entry);
+
+    heap_free(b);
+}
+
+static struct pchannel_block *pchannel_block_set(struct wine_rb_tree *tree, DWORD block_num,
+        IDirectMusicPort *port, DWORD group, BOOL only_set_new)
+{
+    struct pchannel_block *block;
+    struct wine_rb_entry *entry;
+    unsigned int i;
+
+    entry = wine_rb_get(tree, &block_num);
+    if (entry) {
+        block = WINE_RB_ENTRY_VALUE(entry, struct pchannel_block, entry);
+        if (only_set_new)
+            return block;
+    } else {
+        if (!(block = heap_alloc(sizeof(*block))))
+            return NULL;
+        block->block_num = block_num;
+    }
+
+    for (i = 0; i < 16; ++i) {
+        block->pchannel[i].port = port;
+        block->pchannel[i].group = group;
+        block->pchannel[i].channel = i;
+    }
+    if (!entry)
+        wine_rb_put(tree, &block->block_num, &block->entry);
+
+    return block;
+}
+
 static inline IDirectMusicPerformance8Impl *impl_from_IDirectMusicPerformance8(IDirectMusicPerformance8 *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicPerformance8Impl, IDirectMusicPerformance8_iface);
@@ -236,6 +287,7 @@ static ULONG WINAPI IDirectMusicPerformance8Impl_Release(IDirectMusicPerformance
   TRACE("(%p): ReleaseRef to %d\n", This, ref);
   
   if (ref == 0) {
+    wine_rb_destroy(&This->pchannels, pchannel_block_free, NULL);
     This->safe.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->safe);
     HeapFree(GetProcessHeap(), 0, This);
@@ -579,7 +631,6 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AddPort(IDirectMusicPerforman
 	  GUID port_guid;
 	  IDirectMusicPort* pDefaultPort = NULL;
 	  DMUS_PORTPARAMS params;
-	  int i, j;
           hr = IDirectMusic8_GetDefaultPort(This->dmusic, &port_guid);
 	  if (FAILED(hr)) return hr;
 	  ZeroMemory(&params, sizeof(params)); 
@@ -591,15 +642,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AddPort(IDirectMusicPerforman
 	  if (FAILED(hr)) return hr;
 	  hr = IDirectMusicPort_Activate(pDefaultPort, TRUE);
 	  if (FAILED(hr)) { IDirectMusicPort_Release(pDefaultPort); return hr; }
-	  j = 0;
-	  for (i = 0; i < 16; ++i) {
-	    if (NULL == This->PChannel[i].port) {
-	      This->PChannel[i].port = pPort; 
-	      This->PChannel[i].group = 0; 
-	      This->PChannel[i].channel = j; /* FIXME: should this be assigned? */
-	      j++;
-	    }
-	  }
+          IDirectMusicPerformance8_AssignPChannelBlock(iface, 0, pDefaultPort, 1);
 	} else {
 	  IDirectMusicPort_AddRef(pPort);	  
 	}
@@ -621,41 +664,38 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_RemovePort(IDirectMusicPerfor
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannelBlock(IDirectMusicPerformance8 *iface,
-        DWORD dwBlockNum, IDirectMusicPort *pPort, DWORD dwGroup)
-{
-        IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
-	int i, j, range /* min value in range */;
-
-	FIXME("(%p, %d, %p, %d): semi-stub\n", This, dwBlockNum, pPort, dwGroup-1);
-	if (NULL == pPort) return E_POINTER;
-
-	range = 16 * dwBlockNum;
-	j = 0;
-	for (i = range; i < range+16; i++) {
-		/*TRACE("Setting PChannel[%i] to port %p, group %ld, MIDI port %i\n", i, pPort, dwGroup-1, j); */
-		This->PChannel[i].port = pPort; 
-		This->PChannel[i].group = dwGroup - 1; /* first index is always zero */
-		This->PChannel[i].channel = j; /* FIXME: should this be assigned? */
-		j++;
-	}
-	/*if (dwGroup > 2) return S_FALSE;*/
-
-	return S_OK;
-}
-
-static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannel(IDirectMusicPerformance8 *iface,
-        DWORD PChannel, IDirectMusicPort *port, DWORD group, DWORD MChannel)
+        DWORD block_num, IDirectMusicPort *port, DWORD group)
 {
     IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
 
-    TRACE("(%p)->(%d, %p, %d, %d)\n", This, PChannel, port, group, MChannel);
+    FIXME("(%p, %d, %p, %d): semi-stub\n", This, block_num, port, group);
+
+    if (!port)
+        return E_POINTER;
+    if (block_num > MAXDWORD / 16)
+        return E_INVALIDARG;
+
+    pchannel_block_set(&This->pchannels, block_num, port, group, FALSE);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannel(IDirectMusicPerformance8 *iface,
+        DWORD pchannel, IDirectMusicPort *port, DWORD group, DWORD channel)
+{
+    IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
+    struct pchannel_block *block;
+
+    FIXME("(%p)->(%d, %p, %d, %d) semi-stub\n", This, pchannel, port, group, channel);
 
     if (!port)
         return E_POINTER;
 
-    This->PChannel[PChannel].port = port;
-    This->PChannel[PChannel].group = group;
-    This->PChannel[PChannel].channel = MChannel;
+    block = pchannel_block_set(&This->pchannels, pchannel / 16, port, 0, TRUE);
+    if (block) {
+        block->pchannel[pchannel % 16].group = group;
+        block->pchannel[pchannel % 16].channel = channel;
+    }
 
     return S_OK;
 }
@@ -1211,6 +1251,7 @@ HRESULT WINAPI create_dmperformance(REFIID lpcGUID, void **ppobj)
 	obj->pDefaultPath = NULL;
 	InitializeCriticalSection(&obj->safe);
 	obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectMusicPerformance8Impl*->safe");
+        wine_rb_init(&obj->pchannels, pchannel_block_compare);
 
         obj->rtLatencyTime  = 100;  /* 100 ms TO FIX */
         obj->dwBumperLength =   50; /* 50 ms default */
