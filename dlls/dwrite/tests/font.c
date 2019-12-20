@@ -446,6 +446,7 @@ enum opentype_cmap_table_platform
 
 enum opentype_cmap_table_encoding
 {
+    OPENTYPE_CMAP_TABLE_ENCODING_SYMBOL = 0,
     OPENTYPE_CMAP_TABLE_ENCODING_UNICODE_BMP = 1,
     OPENTYPE_CMAP_TABLE_ENCODING_UNICODE_FULL = 10,
 };
@@ -7198,48 +7199,122 @@ static void test_CreateAlphaTexture(void)
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
+static BOOL get_expected_is_symbol(IDWriteFontFace *fontface)
+{
+    BOOL exists, is_symbol = FALSE;
+    struct dwrite_fonttable cmap;
+    const TT_OS2_V2 *tt_os2;
+    const BYTE *tables;
+    void *os2_context;
+    WORD num_tables;
+    unsigned int i;
+    UINT32 size;
+    HRESULT hr;
+
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void **)&tt_os2, &size, &os2_context, &exists);
+    ok(hr == S_OK, "Failed to get OS/2 table, hr %#x.\n", hr);
+
+    if (tt_os2)
+    {
+        if (tt_os2->version)
+            is_symbol = !!(GET_BE_DWORD(tt_os2->ulCodePageRange1) & FS_SYMBOL);
+        if (!is_symbol)
+            is_symbol = tt_os2->panose.bFamilyType == PAN_FAMILY_PICTORIAL;
+        IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
+    }
+
+    if (is_symbol)
+        return is_symbol;
+
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_CMAP_TAG, (const void **)&cmap.data,
+            &cmap.size, &cmap.context, &exists);
+    if (FAILED(hr) || !exists)
+        return is_symbol;
+
+    num_tables = table_read_be_word(&cmap, 0, FIELD_OFFSET(struct cmap_header, numTables));
+    tables = cmap.data + FIELD_OFFSET(struct cmap_header, tables);
+
+    for (i = 0; i < num_tables; ++i)
+    {
+        struct cmap_encoding_record *record = (struct cmap_encoding_record *)(tables + i * sizeof(*record));
+        WORD platform, encoding;
+
+        platform = table_read_be_word(&cmap, record, FIELD_OFFSET(struct cmap_encoding_record, platformID));
+        encoding = table_read_be_word(&cmap, record, FIELD_OFFSET(struct cmap_encoding_record, encodingID));
+
+        if (platform == OPENTYPE_CMAP_TABLE_PLATFORM_WIN && encoding == OPENTYPE_CMAP_TABLE_ENCODING_SYMBOL)
+        {
+            is_symbol = TRUE;
+            break;
+        }
+    }
+
+    IDWriteFontFace_ReleaseFontTable(fontface, cmap.context);
+
+    return is_symbol;
+}
+
 static void test_IsSymbolFont(void)
 {
-    static const WCHAR symbolW[] = {'S','y','m','b','o','l',0};
     IDWriteFontCollection *collection;
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
     IDWriteFont *font;
+    UINT32 count, i;
     HRESULT hr;
     ULONG ref;
-    BOOL ret;
 
     factory = create_factory();
-
-    /* Tahoma */
-    fontface = create_fontface(factory);
-    ret = IDWriteFontFace_IsSymbolFont(fontface);
-    ok(!ret, "got %d\n", ret);
 
     hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFontCollection_GetFontFromFontFace(collection, fontface, &font);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    count = IDWriteFontCollection_GetFontFamilyCount(collection);
+    for (i = 0; i < count; ++i)
+    {
+        IDWriteLocalizedStrings *names;
+        IDWriteFontFamily *family;
+        UINT32 font_count, j;
+        WCHAR nameW[256];
 
-    ret = IDWriteFont_IsSymbolFont(font);
-    ok(!ret, "got %d\n", ret);
+        hr = IDWriteFontCollection_GetFontFamily(collection, i, &family);
+        ok(hr == S_OK, "Failed to get family, hr %#x.\n", hr);
+
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "Failed to get names, hr %#x.\n", hr);
+        get_enus_string(names, nameW, ARRAY_SIZE(nameW));
+        IDWriteLocalizedStrings_Release(names);
+
+        font_count = IDWriteFontFamily_GetFontCount(family);
+
+        for (j = 0; j < font_count; ++j)
+        {
+            BOOL is_symbol_font, is_symbol_face, is_symbol_expected;
+
+            hr = IDWriteFontFamily_GetFont(family, j, &font);
+            ok(hr == S_OK, "Failed to get font, hr %#x.\n", hr);
+
+            hr = IDWriteFont_CreateFontFace(font, &fontface);
+            ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
+
+            is_symbol_font = IDWriteFont_IsSymbolFont(font);
+            is_symbol_face = IDWriteFontFace_IsSymbolFont(fontface);
+            ok(is_symbol_font == is_symbol_face, "Unexpected symbol flag.\n");
+
+            /* FIXME: failures disabled on Wine for now */
+            is_symbol_expected = get_expected_is_symbol(fontface);
+        todo_wine_if(is_symbol_expected != is_symbol_face)
+            ok(is_symbol_expected == is_symbol_face, "Unexpected is_symbol flag %d for %s, font %d.\n",
+                    is_symbol_face, wine_dbgstr_w(nameW), j);
+
+            IDWriteFontFace_Release(fontface);
+            IDWriteFont_Release(font);
+        }
+
+        IDWriteFontFamily_Release(family);
+    }
 
     IDWriteFontCollection_Release(collection);
-    IDWriteFont_Release(font);
-    IDWriteFontFace_Release(fontface);
-
-    /* Symbol */
-    font = get_font(factory, symbolW, DWRITE_FONT_STYLE_NORMAL);
-    ret = IDWriteFont_IsSymbolFont(font);
-    ok(ret, "got %d\n", ret);
-
-    hr = IDWriteFont_CreateFontFace(font, &fontface);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ret = IDWriteFontFace_IsSymbolFont(fontface);
-    ok(ret, "got %d\n", ret);
-    IDWriteFontFace_Release(fontface);
-    IDWriteFont_Release(font);
 
     ref = IDWriteFactory_Release(factory);
     ok(ref == 0, "factory not released, %u\n", ref);
