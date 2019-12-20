@@ -1532,6 +1532,7 @@ todo_wine_if(moniker_type == MKSYS_GENERICCOMPOSITE)
 static void test_class_moniker(void)
 {
     IMoniker *moniker, *inverse, *reduced;
+    IEnumMoniker *enummoniker;
     HRESULT hr;
     DWORD moniker_type;
     DWORD hash;
@@ -1609,6 +1610,21 @@ todo_wine
     ok(reduced == moniker, "Unexpected moniker.\n");
     IMoniker_Release(reduced);
 
+    /* Enum() */
+    enummoniker = (void *)0xdeadbeef;
+    hr = IMoniker_Enum(moniker, TRUE, &enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker, "Unexpected pointer.\n");
+
+    enummoniker = (void *)0xdeadbeef;
+    hr = IMoniker_Enum(moniker, FALSE, &enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker, "Unexpected pointer.\n");
+
+    hr = IMoniker_Enum(moniker, FALSE, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     IBindCtx_Release(bindctx);
 
     IMoniker_Release(moniker);
@@ -1617,6 +1633,7 @@ todo_wine
 static void test_file_moniker(WCHAR* path)
 {
     IMoniker *moniker1 = NULL, *moniker2 = NULL, *inverse, *reduced;
+    IEnumMoniker *enummoniker;
     DWORD moniker_type;
     IBindCtx *bind_ctx;
     IStream *stream;
@@ -1672,6 +1689,21 @@ todo_wine
     ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
     ok(reduced == moniker1, "Unexpected moniker.\n");
     IMoniker_Release(reduced);
+
+    /* Enum() */
+    enummoniker = (void *)0xdeadbeef;
+    hr = IMoniker_Enum(moniker1, TRUE, &enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker, "Unexpected pointer.\n");
+
+    enummoniker = (void *)0xdeadbeef;
+    hr = IMoniker_Enum(moniker1, FALSE, &enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker, "Unexpected pointer.\n");
+
+    hr = IMoniker_Enum(moniker1, FALSE, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IBindCtx_Release(bind_ctx);
 
@@ -1792,6 +1824,7 @@ static void test_item_moniker(void)
     static const WCHAR wszDelimiter[] = {'!',0};
     static const WCHAR wszObjectName[] = {'T','e','s','t',0};
     static const WCHAR expected_display_name[] = { '!','T','e','s','t',0 };
+    IEnumMoniker *enummoniker;
     WCHAR *display_name;
     LARGE_INTEGER pos;
     IStream *stream;
@@ -1946,6 +1979,21 @@ todo_wine
     ok(reduced == moniker, "Unexpected moniker.\n");
     IMoniker_Release(reduced);
 
+    /* Enum() */
+    enummoniker = (void *)0xdeadbeef;
+    hr = IMoniker_Enum(moniker, TRUE, &enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker, "Unexpected pointer.\n");
+
+    enummoniker = (void *)0xdeadbeef;
+    hr = IMoniker_Enum(moniker, FALSE, &enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker, "Unexpected pointer.\n");
+
+    hr = IMoniker_Enum(moniker, FALSE, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     IMoniker_Release(moniker);
 
     /* IsEqual */
@@ -1996,6 +2044,7 @@ static void test_anti_moniker(void)
     FILETIME filetime;
     IUnknown *unknown;
     static const WCHAR expected_display_name[] = { '\\','.','.',0 };
+    IEnumMoniker *enummoniker;
     IStream *stream;
     WCHAR *name;
 
@@ -2169,10 +2218,26 @@ todo_wine
 
     IStream_Release(stream);
 
+    /* Reduce() */
     hr = IMoniker_Reduce(moniker, NULL, MKRREDUCE_ALL, NULL, &reduced);
     ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
     ok(reduced == moniker, "Unexpected moniker.\n");
     IMoniker_Release(reduced);
+
+    /* Enum() */
+    enummoniker = (void *)0xdeadbeef;
+    hr = IMoniker_Enum(moniker, TRUE, &enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker, "Unexpected pointer.\n");
+
+    enummoniker = (void *)0xdeadbeef;
+    hr = IMoniker_Enum(moniker, FALSE, &enummoniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!enummoniker, "Unexpected pointer.\n");
+
+    hr = IMoniker_Enum(moniker, FALSE, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IBindCtx_Release(bindctx);
     IMoniker_Release(moniker);
@@ -2181,6 +2246,7 @@ todo_wine
 
 static void test_generic_composite_moniker(void)
 {
+    IEnumMoniker *enummoniker;
     HRESULT hr;
     IMoniker *moniker;
     IMoniker *moniker1;
@@ -2265,18 +2331,31 @@ todo_wine
     ok(moniker_type == MKSYS_GENERICCOMPOSITE, "Unexpected moniker type %d.\n", moniker_type);
     IMoniker_Release(inverse);
 
+    /* Enum() */
+    hr = IMoniker_Enum(moniker, TRUE, &enummoniker);
+    ok(hr == S_OK, "Failed to get enumerator, hr %#x.\n", hr);
+    IEnumMoniker_Release(enummoniker);
+
+    hr = IMoniker_Enum(moniker, FALSE, &enummoniker);
+    ok(hr == S_OK, "Failed to get enumerator, hr %#x.\n", hr);
+    IEnumMoniker_Release(enummoniker);
+
+    hr = IMoniker_Enum(moniker, FALSE, NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     IMoniker_Release(moniker);
 }
 
 static void test_pointer_moniker(void)
 {
+    IMoniker *moniker, *inverse;
+    IEnumMoniker *enummoniker;
     HRESULT hr;
-    IMoniker *moniker;
     DWORD moniker_type;
     DWORD hash;
     IBindCtx *bindctx;
     FILETIME filetime;
-    IMoniker *inverse;
     IUnknown *unknown;
     IStream *stream;
     IROTData *rotdata;
@@ -2382,6 +2461,15 @@ todo_wine
     ok(hr == E_UNEXPECTED, "IMoniker_BindToStorage should have returned E_UNEXPECTED instead of 0x%08x\n", hr);
 
     IBindCtx_Release(bindctx);
+
+    /* Enum() */
+    hr = IMoniker_Enum(moniker, TRUE, &enummoniker);
+todo_wine
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Enum(moniker, FALSE, &enummoniker);
+todo_wine
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
     IMoniker_Release(moniker);
 }
