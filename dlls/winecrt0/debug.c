@@ -50,9 +50,11 @@ static void load_func( void **func, const char *name, void *def )
 {
     if (!*func)
     {
+        DWORD err = GetLastError();
         HMODULE module = GetModuleHandleA( "ntdll.dll" );
         void *proc = GetProcAddress( module, name );
         InterlockedExchangePointer( func, proc ? proc : def );
+        SetLastError( err );
     }
 }
 #define LOAD_FUNC(name) load_func( (void **)&p ## name, #name, fallback ## name )
