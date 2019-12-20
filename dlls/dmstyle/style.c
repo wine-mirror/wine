@@ -778,23 +778,21 @@ static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK
 	ListCount[0] = 0;
 	switch (Chunk.fccID) {
 	case DMUS_FOURCC_BAND_FORM: { 
-	  LPSTREAM pClonedStream = NULL;
+          ULARGE_INTEGER save;
           struct style_band *pNewBand;
 
 	  TRACE_(dmfile)(": BAND RIFF\n");
-	  
-	  IStream_Clone (pStm, &pClonedStream);
-	    
+
+          /* Can be application provided IStream without Clone method */
 	  liMove.QuadPart = 0;
 	  liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
-	  IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
+          IStream_Seek(pStm, liMove, STREAM_SEEK_CUR, &save);
 
-          hr = load_band(pClonedStream, &pBand);
+          hr = load_band(pStm, &pBand);
 	  if (FAILED(hr)) {
 	    ERR(": could not load track\n");
 	    return hr;
 	  }
-	  IStream_Release (pClonedStream);
 
           pNewBand = heap_alloc_zero(sizeof(*pNewBand));
 	  if (NULL == pNewBand) {
@@ -808,9 +806,9 @@ static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK
 	  IDirectMusicTrack_Release(pBand); pBand = NULL;  /* now we can release it as it's inserted */
 	
 	  /** now safely move the cursor */
-	  liMove.QuadPart = ListSize[0];
-	  IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	  
+          liMove.QuadPart = save.QuadPart - liMove.QuadPart + ListSize[0];
+          IStream_Seek(pStm, liMove, STREAM_SEEK_SET, NULL);
+
 	  break;
 	}
 	default: {
