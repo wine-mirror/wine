@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-03-28 11:30+0300\n"
+"PO-Revision-Date: 2019-12-20 15:34+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.2.4\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -6829,10 +6829,8 @@ msgid "Begin request has already been made.\n"
 msgstr "Запрос уже был инициирован.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object is not initialized.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "Объект не инициализирован.\n"
+msgstr "Приёмник данных не был завершён.\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7055,132 +7053,96 @@ msgid "No events available.\n"
 msgstr "Нет доступных событий.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported state transition.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "Данный смена состояний не поддерживается.\n"
+msgstr "Некорректная смена состояний источника данных.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "Реестр был восстановлен.\n"
+msgstr "Достигнут конец потока данных.\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
 msgstr "Был вызван метод Shutdown().\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "Реестр был восстановлен.\n"
+msgstr "Длительность медиапотока не задана.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
 msgstr ""
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "Набор свойств не найден.\n"
+msgstr "Свойство не найдено.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Property is empty.\n"
 msgid "Property is read-only.\n"
-msgstr "Пустое свойство\n"
+msgstr "Свойство доступно только для чтения.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Property type is not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "Некорректный тип свойства.\n"
+msgstr "Недопустимое свойство.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "Ресурс занят.\n"
+msgstr "Источник данных остановлен.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported time format.\n"
 msgid "Unsupported media format.\n"
-msgstr "Данный формат времени не поддерживается.\n"
+msgstr "Данный формат не поддерживается.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "Ресурс занят.\n"
+msgstr "Некорректное состояние источника данных.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "Данные не обнаружены.\n"
+msgstr "Не выбрано ни одного потока.\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported time format.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "Данный формат времени не поддерживается.\n"
+msgstr "Характеристики данного источника данных не поддерживаются.\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "Приёмник данных был удалён.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
 msgstr ""
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "Реестр был восстановлен.\n"
+msgstr "Набор потоков данного приёмника данных фиксирован.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "Домен уже существует.\n"
+msgstr "Поток приёмника данных уже существует.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation was cancelled.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "Операция была отменена.\n"
+msgstr "Создание сэмпла было отменено.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "Каталог не пуст.\n"
+msgstr "Аллокатор сэмплов пуст.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Clock state was already set.\n"
 msgid "Sink was already stopped.\n"
-msgstr "Состояние часов уже установлено.\n"
+msgstr "Приёмник данных уже был остановлен.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
 msgstr ""
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "Данные не обнаружены.\n"
+msgstr "Потоки приёмника не выбраны.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "Слишком длинное имя файла.\n"
+msgstr "Превышена длина метаданных.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
@@ -8338,22 +8300,16 @@ msgid "Off"
 msgstr "Выключено"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "видео"
+msgstr "Провайдер"
 
 #: version.rc:45
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "Выберите формат для экспорта:"
+msgstr "Выберите формат для подключения:"
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "Сво&йства"
+msgstr "Свойства подключения"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
