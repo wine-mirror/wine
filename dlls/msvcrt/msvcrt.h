@@ -49,6 +49,8 @@
 #define MSVCRT_I64_MIN    (-MSVCRT_I64_MAX-1)
 #define MSVCRT_UI64_MAX   (((unsigned __int64)0xffffffff << 32) | 0xffffffff)
 #define MSVCRT_MB_LEN_MAX 5
+#define MSVCRT_FLT_MAX_10_EXP 38
+#define MSVCRT_FLT_MIN_10_EXP (-37)
 #define MSVCRT_DBL_MAX_10_EXP 308
 #define MSVCRT_DBL_MIN_10_EXP (-307)
 #ifdef _WIN64

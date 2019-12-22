@@ -1999,8 +1999,11 @@ static void test__strtod(void)
     strtod("-1d309", NULL);
     ok(errno == ERANGE, "errno = %x\n", errno);
 
+    d = strtod("3.4028234663852887e38", NULL);
+    ok(d <= FLT_MAX, "d = %e\n", d);
+
     d = strtod("1.7976931348623158e+308", NULL);
-    ok(almost_equal(d, DBL_MAX), "d = %lf (%lf)\n", d, DBL_MAX);
+    ok(d == DBL_MAX, "d = %le\n", d);
 }
 
 static void test_mbstowcs(void)
