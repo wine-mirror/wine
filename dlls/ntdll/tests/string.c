@@ -67,6 +67,8 @@ static int      (__cdecl *p_tolower)(int);
 static int      (__cdecl *p_toupper)(int);
 static int      (__cdecl *p__strnicmp)(LPCSTR,LPCSTR,size_t);
 
+static int      (WINAPIV *p_sscanf)(const char *, const char *, ...);
+
 static void InitFunctionPtrs(void)
 {
     hntdll = LoadLibraryA("ntdll.dll");
@@ -109,6 +111,8 @@ static void InitFunctionPtrs(void)
         p_tolower = (void *)GetProcAddress(hntdll, "tolower");
         p_toupper = (void *)GetProcAddress(hntdll, "toupper");
         p__strnicmp = (void *)GetProcAddress(hntdll, "_strnicmp");
+
+        p_sscanf = (void *)GetProcAddress(hntdll, "sscanf");
     } /* if */
 }
 
@@ -1455,6 +1459,48 @@ static void test__strnicmp(void)
     ok(!ret, "_strnicmp returned %d\n", ret);
 }
 
+static void test_sscanf(void)
+{
+    double d = 0.0;
+    float f = 0.0f;
+    int i = 0;
+    int ret;
+
+    if (!p_sscanf)
+    {
+        win_skip("sscanf tests\n");
+        return;
+    }
+
+    ret = p_sscanf("10", "%d", &i);
+    ok(ret == 1, "ret = %d\n", ret);
+    ok(i == 10, "i = %d\n", i);
+
+    ret = p_sscanf("10", "%f", &f);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(f == 0.0f, "f = %f\n", f);
+
+    ret = p_sscanf("10", "%g", &f);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(f == 0.0f, "f = %f\n", f);
+
+    ret = p_sscanf("10", "%e", &f);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(f == 0.0f, "f = %f\n", f);
+
+    ret = p_sscanf("10", "%lf", &d);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(d == 0.0, "d = %lf\n", f);
+
+    ret = p_sscanf("10", "%lg", &d);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(d == 0.0, "d = %lf\n", f);
+
+    ret = p_sscanf("10", "%le", &d);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(d == 0.0, "d = %lf\n", f);
+}
+
 START_TEST(string)
 {
     InitFunctionPtrs();
@@ -1498,4 +1544,5 @@ START_TEST(string)
     test_tolower();
     test_toupper();
     test__strnicmp();
+    test_sscanf();
 }
