@@ -177,16 +177,21 @@ static HRESULT create_update_manager(IDirectManipulationUpdateManager **obj)
     return S_OK;
 }
 
-
 struct primarycontext
 {
     IDirectManipulationPrimaryContent IDirectManipulationPrimaryContent_iface;
+    IDirectManipulationContent IDirectManipulationContent_iface;
     LONG ref;
 };
 
 static inline struct primarycontext *impl_from_IDirectManipulationPrimaryContent(IDirectManipulationPrimaryContent *iface)
 {
     return CONTAINING_RECORD(iface, struct primarycontext, IDirectManipulationPrimaryContent_iface);
+}
+
+static inline struct primarycontext *impl_from_IDirectManipulationContent(IDirectManipulationContent *iface)
+{
+    return CONTAINING_RECORD(iface, struct primarycontext, IDirectManipulationContent_iface);
 }
 
 static HRESULT WINAPI primary_QueryInterface(IDirectManipulationPrimaryContent *iface, REFIID riid, void **ppv)
@@ -199,6 +204,12 @@ static HRESULT WINAPI primary_QueryInterface(IDirectManipulationPrimaryContent *
     {
         IDirectManipulationPrimaryContent_AddRef(&This->IDirectManipulationPrimaryContent_iface);
         *ppv = &This->IDirectManipulationPrimaryContent_iface;
+        return S_OK;
+    }
+    else if(IsEqualGUID(riid, &IID_IDirectManipulationContent))
+    {
+        IUnknown_AddRef(iface);
+        *ppv = &This->IDirectManipulationContent_iface;
         return S_OK;
     }
 
@@ -311,6 +322,102 @@ static const IDirectManipulationPrimaryContentVtbl primaryVtbl =
     primary_SetVerticalAlignment,
     primary_GetInertiaEndTransform,
     primary_GetCenterPoint
+};
+
+
+static HRESULT WINAPI content_QueryInterface(IDirectManipulationContent *iface, REFIID riid, void **ppv)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppv);
+
+    return IDirectManipulationPrimaryContent_QueryInterface(&This->IDirectManipulationPrimaryContent_iface,
+            riid, ppv);
+}
+
+static ULONG WINAPI content_AddRef(IDirectManipulationContent *iface)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    return IDirectManipulationPrimaryContent_AddRef(&This->IDirectManipulationPrimaryContent_iface);
+}
+
+static ULONG WINAPI content_Release(IDirectManipulationContent *iface)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    return IDirectManipulationPrimaryContent_Release(&This->IDirectManipulationPrimaryContent_iface);
+}
+
+static HRESULT WINAPI content_GetContentRect(IDirectManipulationContent *iface, RECT *size)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    FIXME("%p, %p\n", This, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI content_SetContentRect(IDirectManipulationContent *iface, const RECT *size)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    FIXME("%p, %p\n", This, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI content_GetViewport(IDirectManipulationContent *iface, REFIID riid, void **object)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    FIXME("%p, %p, %p\n", This, debugstr_guid(riid), object);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI content_GetTag(IDirectManipulationContent *iface, REFIID riid, void **object, UINT32 *id)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    FIXME("%p, %p, %p, %p\n", This, debugstr_guid(riid), object, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI content_SetTag(IDirectManipulationContent *iface, IUnknown *object, UINT32 id)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    FIXME("%p, %p, %d\n", This, object, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI content_GetOutputTransform(IDirectManipulationContent *iface,
+                    float *matrix, DWORD count)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    FIXME("%p, %p, %d\n", This, matrix, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI content_GetContentTransform(IDirectManipulationContent *iface,
+                    float *matrix, DWORD count)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    FIXME("%p, %p, %d\n", This, matrix, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI content_SyncContentTransform(IDirectManipulationContent *iface,
+                    const float *matrix, DWORD count)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationContent(iface);
+    FIXME("%p, %p, %d\n", This, matrix, count);
+    return E_NOTIMPL;
+}
+
+static const IDirectManipulationContentVtbl contentVtbl =
+{
+    content_QueryInterface,
+    content_AddRef,
+    content_Release,
+    content_GetContentRect,
+    content_SetContentRect,
+    content_GetViewport,
+    content_GetTag,
+    content_SetTag,
+    content_GetOutputTransform,
+    content_GetContentTransform,
+    content_SyncContentTransform
 };
 
 struct directviewport
@@ -473,6 +580,7 @@ static HRESULT WINAPI viewport_GetPrimaryContent(IDirectManipulationViewport2 *i
             return E_OUTOFMEMORY;
 
         primary->IDirectManipulationPrimaryContent_iface.lpVtbl = &primaryVtbl;
+        primary->IDirectManipulationContent_iface.lpVtbl = &contentVtbl;
         primary->ref = 1;
 
         *object = &primary->IDirectManipulationPrimaryContent_iface;
