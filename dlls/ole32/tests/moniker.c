@@ -34,6 +34,7 @@
 #include "initguid.h"
 
 #include "wine/test.h"
+#include "wine/heap.h"
 
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
 #define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %d\n", cLocks)
@@ -246,9 +247,30 @@ static const IUnknownVtbl HeapUnknown_Vtbl =
     HeapUnknown_Release
 };
 
-static HRESULT WINAPI
-MonikerNoROTData_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
+struct test_moniker
 {
+    IMoniker IMoniker_iface;
+    IROTData IROTData_iface;
+    LONG refcount;
+
+    BOOL no_IROTData;
+};
+
+static struct test_moniker *impl_from_IMoniker(IMoniker *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_moniker, IMoniker_iface);
+}
+
+static struct test_moniker *impl_from_IROTData(IROTData *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_moniker, IROTData_iface);
+}
+
+static HRESULT WINAPI
+Moniker_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
+{
+    struct test_moniker *moniker = impl_from_IMoniker(iface);
+
     if (!ppvObject)
         return E_INVALIDARG;
 
@@ -260,7 +282,11 @@ MonikerNoROTData_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
         IsEqualIID(&IID_IMoniker, riid))
         *ppvObject = iface;
     if (IsEqualIID(&IID_IROTData, riid))
+    {
         CHECK_EXPECTED_METHOD("Moniker_QueryInterface(IID_IROTData)");
+        if (!moniker->no_IROTData)
+            *ppvObject = &moniker->IROTData_iface;
+    }
 
     if ((*ppvObject)==0)
         return E_NOINTERFACE;
@@ -273,13 +299,20 @@ MonikerNoROTData_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
 static ULONG WINAPI
 Moniker_AddRef(IMoniker* iface)
 {
-    return 2;
+    struct test_moniker *moniker = impl_from_IMoniker(iface);
+    return InterlockedIncrement(&moniker->refcount);
 }
 
 static ULONG WINAPI
 Moniker_Release(IMoniker* iface)
 {
-    return 1;
+    struct test_moniker *moniker = impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedDecrement(&moniker->refcount);
+
+    if (!refcount)
+        heap_free(moniker);
+
+    return refcount;
 }
 
 static HRESULT WINAPI
@@ -457,53 +490,25 @@ Moniker_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys)
     return S_FALSE;
 }
 
-static const IMonikerVtbl MonikerNoROTDataVtbl =
-{
-    MonikerNoROTData_QueryInterface,
-    Moniker_AddRef,
-    Moniker_Release,
-    Moniker_GetClassID,
-    Moniker_IsDirty,
-    Moniker_Load,
-    Moniker_Save,
-    Moniker_GetSizeMax,
-    Moniker_BindToObject,
-    Moniker_BindToStorage,
-    Moniker_Reduce,
-    Moniker_ComposeWith,
-    Moniker_Enum,
-    Moniker_IsEqual,
-    Moniker_Hash,
-    Moniker_IsRunning,
-    Moniker_GetTimeOfLastChange,
-    Moniker_Inverse,
-    Moniker_CommonPrefixWith,
-    Moniker_RelativePathTo,
-    Moniker_GetDisplayName,
-    Moniker_ParseDisplayName,
-    Moniker_IsSystemMoniker
-};
-
-static IMoniker MonikerNoROTData = { &MonikerNoROTDataVtbl };
-
-static IMoniker Moniker;
-
 static HRESULT WINAPI
 ROTData_QueryInterface(IROTData *iface,REFIID riid,VOID** ppvObject)
 {
-    return IMoniker_QueryInterface(&Moniker, riid, ppvObject);
+    struct test_moniker *moniker = impl_from_IROTData(iface);
+    return IMoniker_QueryInterface(&moniker->IMoniker_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI
 ROTData_AddRef(IROTData *iface)
 {
-    return 2;
+    struct test_moniker *moniker = impl_from_IROTData(iface);
+    return IMoniker_AddRef(&moniker->IMoniker_iface);
 }
 
 static ULONG WINAPI
 ROTData_Release(IROTData* iface)
 {
-    return 1;
+    struct test_moniker *moniker = impl_from_IROTData(iface);
+    return IMoniker_Release(&moniker->IMoniker_iface);
 }
 
 static HRESULT WINAPI
@@ -528,35 +533,6 @@ static IROTDataVtbl ROTDataVtbl =
     ROTData_Release,
     ROTData_GetComparisonData
 };
-
-static IROTData ROTData = { &ROTDataVtbl };
-
-static HRESULT WINAPI
-Moniker_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
-{
-    if (!ppvObject)
-        return E_INVALIDARG;
-
-    *ppvObject = 0;
-
-    if (IsEqualIID(&IID_IUnknown, riid)      ||
-        IsEqualIID(&IID_IPersist, riid)      ||
-        IsEqualIID(&IID_IPersistStream,riid) ||
-        IsEqualIID(&IID_IMoniker, riid))
-        *ppvObject = iface;
-    if (IsEqualIID(&IID_IROTData, riid))
-    {
-        CHECK_EXPECTED_METHOD("Moniker_QueryInterface(IID_IROTData)");
-        *ppvObject = &ROTData;
-    }
-
-    if ((*ppvObject)==0)
-        return E_NOINTERFACE;
-
-    IMoniker_AddRef(iface);
-
-    return S_OK;
-}
 
 static const IMonikerVtbl MonikerVtbl =
 {
@@ -585,7 +561,17 @@ static const IMonikerVtbl MonikerVtbl =
     Moniker_IsSystemMoniker
 };
 
-static IMoniker Moniker = { &MonikerVtbl };
+static struct test_moniker *create_test_moniker(void)
+{
+    struct test_moniker *obj;
+
+    obj = heap_alloc_zero(sizeof(*obj));
+    obj->IMoniker_iface.lpVtbl = &MonikerVtbl;
+    obj->IROTData_iface.lpVtbl = &ROTDataVtbl;
+    obj->refcount = 1;
+
+    return obj;
+}
 
 static void test_ROT(void)
 {
@@ -594,6 +580,7 @@ static void test_ROT(void)
         '2','0','4','6','E','5','8','6','C','9','2','5',0};
     HRESULT hr;
     IMoniker *pMoniker = NULL;
+    struct test_moniker *test_moniker;
     IRunningObjectTable *pROT = NULL;
     DWORD dwCookie;
     static const char *methods_register_no_ROTData[] =
@@ -634,19 +621,22 @@ static void test_ROT(void)
     hr = GetRunningObjectTable(0, &pROT);
     ok_ole_success(hr, GetRunningObjectTable);
 
+    test_moniker = create_test_moniker();
+    test_moniker->no_IROTData = TRUE;
+
     expected_method_list = methods_register_no_ROTData;
     external_connections = 0;
     /* try with our own moniker that doesn't support IROTData */
-    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
-        (IUnknown*)&Test_ClassFactory, &MonikerNoROTData, &dwCookie);
-    ok_ole_success(hr, IRunningObjectTable_Register);
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)&Test_ClassFactory,
+            &test_moniker->IMoniker_iface, &dwCookie);
+    ok(hr == S_OK, "Failed to register interface, hr %#x.\n", hr);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
     ok(external_connections == 1, "external_connections = %d\n", external_connections);
 
     ok_more_than_one_lock();
 
     expected_method_list = methods_isrunning_no_ROTData;
-    hr = IRunningObjectTable_IsRunning(pROT, &MonikerNoROTData);
+    hr = IRunningObjectTable_IsRunning(pROT, &test_moniker->IMoniker_iface);
     ok_ole_success(hr, IRunningObjectTable_IsRunning);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 
@@ -658,15 +648,16 @@ static void test_ROT(void)
 
     expected_method_list = methods_register;
     /* try with our own moniker */
+    test_moniker->no_IROTData = FALSE;
     hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
-        (IUnknown*)&Test_ClassFactory, &Moniker, &dwCookie);
+        (IUnknown *)&Test_ClassFactory, &test_moniker->IMoniker_iface, &dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Register);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 
     ok_more_than_one_lock();
 
     expected_method_list = methods_isrunning;
-    hr = IRunningObjectTable_IsRunning(pROT, &Moniker);
+    hr = IRunningObjectTable_IsRunning(pROT, &test_moniker->IMoniker_iface);
     ok_ole_success(hr, IRunningObjectTable_IsRunning);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 
@@ -719,6 +710,7 @@ static void test_ROT(void)
     ok(hr == E_INVALIDARG, "IRunningObjectTable_Register should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
     IMoniker_Release(pMoniker);
+    IMoniker_Release(&test_moniker->IMoniker_iface);
 
     IRunningObjectTable_Release(pROT);
 }
