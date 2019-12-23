@@ -9546,6 +9546,109 @@ static void test_font_resource(void)
     ok(ref == 0, "Factory wasn't released, %u.\n", ref);
 }
 
+static BOOL get_expected_is_color(IDWriteFontFace2 *fontface)
+{
+    void *context;
+    UINT32 size;
+    BOOL exists;
+    void *data;
+    HRESULT hr;
+
+    hr = IDWriteFontFace2_TryGetFontTable(fontface, MS_CPAL_TAG, (const void **)&data, &size, &context, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (context)
+        IDWriteFontFace2_ReleaseFontTable(fontface, context);
+
+    if (exists)
+    {
+        hr = IDWriteFontFace2_TryGetFontTable(fontface, MS_COLR_TAG, (const void **)&data, &size, &context, &exists);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        if (context)
+            IDWriteFontFace2_ReleaseFontTable(fontface, context);
+    }
+
+    return exists;
+}
+
+static void test_IsColorFont(void)
+{
+    IDWriteFontCollection *collection;
+    IDWriteFactory2 *factory;
+    UINT32 count, i;
+    ULONG refcount;
+    HRESULT hr;
+
+    factory = create_factory_iid(&IID_IDWriteFactory2);
+
+    if (!factory)
+    {
+        win_skip("IsColorFont() is not supported.\n");
+        return;
+    }
+
+    hr = IDWriteFactory2_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "Failed to get font collection, hr %#x.\n", hr);
+
+    count = IDWriteFontCollection_GetFontFamilyCount(collection);
+    for (i = 0; i < count; ++i)
+    {
+        IDWriteLocalizedStrings *names;
+        IDWriteFontFamily *family;
+        UINT32 font_count, j;
+        WCHAR nameW[256];
+
+        hr = IDWriteFontCollection_GetFontFamily(collection, i, &family);
+        ok(hr == S_OK, "Failed to get family, hr %#x.\n", hr);
+
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "Failed to get names, hr %#x.\n", hr);
+        get_enus_string(names, nameW, ARRAY_SIZE(nameW));
+        IDWriteLocalizedStrings_Release(names);
+
+        font_count = IDWriteFontFamily_GetFontCount(family);
+
+        for (j = 0; j < font_count; ++j)
+        {
+            BOOL is_color_font, is_color_face, is_color_expected;
+            IDWriteFontFace2 *fontface2;
+            IDWriteFontFace *fontface;
+            IDWriteFont2 *font2;
+            IDWriteFont *font;
+
+            hr = IDWriteFontFamily_GetFont(family, j, &font);
+            ok(hr == S_OK, "Failed to get font, hr %#x.\n", hr);
+
+            hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont2, (void **)&font2);
+            ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+            IDWriteFont_Release(font);
+
+            hr = IDWriteFont2_CreateFontFace(font2, &fontface);
+            ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
+
+            hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace2, (void **)&fontface2);
+            ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+            IDWriteFontFace_Release(fontface);
+
+            is_color_font = IDWriteFont2_IsColorFont(font2);
+            is_color_face = IDWriteFontFace2_IsColorFont(fontface2);
+            ok(is_color_font == is_color_face, "Unexpected color flag.\n");
+
+            is_color_expected = get_expected_is_color(fontface2);
+            ok(is_color_expected == is_color_face, "Unexpected is_color flag %d for %s, font %d.\n",
+                    is_color_face, wine_dbgstr_w(nameW), j);
+
+            IDWriteFontFace2_Release(fontface2);
+            IDWriteFont2_Release(font2);
+        }
+
+        IDWriteFontFamily_Release(family);
+    }
+
+    IDWriteFontCollection_Release(collection);
+    refcount = IDWriteFactory2_Release(factory);
+    ok(refcount == 0, "Factory not released, refcount %u.\n", refcount);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -9614,6 +9717,7 @@ START_TEST(font)
     test_AnalyzeContainerType();
     test_fontsetbuilder();
     test_font_resource();
+    test_IsColorFont();
 
     IDWriteFactory_Release(factory);
 }
