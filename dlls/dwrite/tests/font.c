@@ -1,7 +1,7 @@
 /*
  *    Font related tests
  *
- * Copyright 2012, 2014-2018 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2019 Nikolay Sivov for CodeWeavers
  * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #define MS_VDMX_TAG DWRITE_MAKE_OPENTYPE_TAG('V','D','M','X')
 #define MS_GASP_TAG DWRITE_MAKE_OPENTYPE_TAG('g','a','s','p')
 #define MS_CPAL_TAG DWRITE_MAKE_OPENTYPE_TAG('C','P','A','L')
-#define MS_0S2_TAG  DWRITE_MAKE_OPENTYPE_TAG('O','S','/','2')
+#define MS_OS2_TAG  DWRITE_MAKE_OPENTYPE_TAG('O','S','/','2')
 #define MS_HEAD_TAG DWRITE_MAKE_OPENTYPE_TAG('h','e','a','d')
 #define MS_HHEA_TAG DWRITE_MAKE_OPENTYPE_TAG('h','h','e','a')
 #define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
@@ -1961,7 +1961,7 @@ static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_MET
 
     memset(metrics, 0, sizeof(*metrics));
 
-    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void**)&tt_os2, &size, &os2_context, &exists);
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_OS2_TAG, (const void **)&tt_os2, &size, &os2_context, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFontFace_TryGetFontTable(fontface, MS_HEAD_TAG, (const void**)&tt_head, &size, &head_context, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -2600,7 +2600,7 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "Failed to create font face, %#x\n", hr);
 
-    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void **)&tt_os2, &size,
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_OS2_TAG, (const void **)&tt_os2, &size,
         &os2_context, &exists);
     ok(hr == S_OK, "Failed to get OS/2 table, %#x\n", hr);
 
@@ -4900,67 +4900,111 @@ static void test_GetDesignGlyphMetrics(void)
     DELETE_FONTFILE(path);
 }
 
+static BOOL get_expected_is_monospaced(IDWriteFontFace1 *fontface, const DWRITE_PANOSE *panose)
+{
+    BOOL exists, is_monospaced = FALSE;
+    const TT_POST *tt_post;
+    void *post_context;
+    UINT32 size;
+    HRESULT hr;
+
+    hr = IDWriteFontFace1_TryGetFontTable(fontface, MS_POST_TAG, (const void **)&tt_post, &size,
+            &post_context, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    if (tt_post)
+    {
+        is_monospaced = !!tt_post->fixed_pitch;
+        IDWriteFontFace1_ReleaseFontTable(fontface, post_context);
+    }
+
+    if (!is_monospaced)
+        is_monospaced |= panose->text.proportion == DWRITE_PANOSE_PROPORTION_MONOSPACED;
+
+    return is_monospaced;
+}
+
 static void test_IsMonospacedFont(void)
 {
-    static const WCHAR courierW[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
     IDWriteFontCollection *collection;
-    IDWriteFactory *factory;
-    UINT32 index;
-    BOOL exists;
+    IDWriteFactory1 *factory;
+    UINT32 count, i;
     HRESULT hr;
     ULONG ref;
 
-    factory = create_factory();
+    factory = create_factory_iid(&IID_IDWriteFactory1);
 
-    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (!factory)
+    {
+        win_skip("IsMonospacedFont() is not supported.\n");
+        return;
+    }
 
-    exists = FALSE;
-    hr = IDWriteFontCollection_FindFamilyName(collection, courierW, &index, &exists);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (exists) {
+    hr = IDWriteFactory1_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "Failed to get font collection, hr %#x.\n", hr);
+
+    count = IDWriteFontCollection_GetFontFamilyCount(collection);
+    for (i = 0; i < count; ++i)
+    {
+        IDWriteLocalizedStrings *names;
         IDWriteFontFamily *family;
-        IDWriteFont1 *font1;
-        IDWriteFont *font;
+        UINT32 font_count, j;
+        WCHAR nameW[256];
 
-        hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteFontCollection_GetFontFamily(collection, i, &family);
+        ok(hr == S_OK, "Failed to get family, hr %#x.\n", hr);
 
-        hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
-            DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        IDWriteFontFamily_Release(family);
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "Failed to get names, hr %#x.\n", hr);
+        get_enus_string(names, nameW, ARRAY_SIZE(nameW));
+        IDWriteLocalizedStrings_Release(names);
 
-        hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont1, (void**)&font1);
-        if (hr == S_OK) {
+        font_count = IDWriteFontFamily_GetFontCount(family);
+
+        for (j = 0; j < font_count; ++j)
+        {
+            BOOL is_monospaced_font, is_monospaced_face, is_monospaced_expected;
             IDWriteFontFace1 *fontface1;
             IDWriteFontFace *fontface;
-            BOOL is_monospaced;
+            DWRITE_PANOSE panose;
+            IDWriteFont1 *font1;
+            IDWriteFont *font;
 
-            is_monospaced = IDWriteFont1_IsMonospacedFont(font1);
-            ok(is_monospaced, "got %d\n", is_monospaced);
+            hr = IDWriteFontFamily_GetFont(family, j, &font);
+            ok(hr == S_OK, "Failed to get font, hr %#x.\n", hr);
+
+            hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont1, (void **)&font1);
+            ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+            IDWriteFont_Release(font);
 
             hr = IDWriteFont1_CreateFontFace(font1, &fontface);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            is_monospaced = IDWriteFontFace1_IsMonospacedFont(fontface1);
-            ok(is_monospaced, "got %d\n", is_monospaced);
-            IDWriteFontFace1_Release(fontface1);
+            ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
 
+            hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void **)&fontface1);
+            ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
             IDWriteFontFace_Release(fontface);
+
+            is_monospaced_font = IDWriteFont1_IsMonospacedFont(font1);
+            is_monospaced_face = IDWriteFontFace1_IsMonospacedFont(fontface1);
+            ok(is_monospaced_font == is_monospaced_face, "Unexpected monospaced flag.\n");
+
+            IDWriteFont1_GetPanose(font1, &panose);
+
+            /* FIXME: failures disabled on Wine for now */
+            is_monospaced_expected = get_expected_is_monospaced(fontface1, &panose);
+        todo_wine_if(is_monospaced_expected != is_monospaced_face)
+            ok(is_monospaced_expected == is_monospaced_face, "Unexpected is_monospaced flag %d for %s, font %d.\n",
+                    is_monospaced_face, wine_dbgstr_w(nameW), j);
+
+            IDWriteFontFace1_Release(fontface1);
             IDWriteFont1_Release(font1);
         }
-        else
-            win_skip("IsMonospacedFont() is not supported.\n");
 
-        IDWriteFont_Release(font);
+        IDWriteFontFamily_Release(family);
     }
-    else
-        skip("Courier New font not found.\n");
 
     IDWriteFontCollection_Release(collection);
-    ref = IDWriteFactory_Release(factory);
+    ref = IDWriteFactory1_Release(factory);
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
@@ -6276,7 +6320,7 @@ static void get_expected_panose(IDWriteFont1 *font, DWRITE_PANOSE *panose)
     hr = IDWriteFont1_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void **)&tt_os2, &size, &os2_context, &exists);
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_OS2_TAG, (const void **)&tt_os2, &size, &os2_context, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     if (tt_os2) {
@@ -7211,7 +7255,7 @@ static BOOL get_expected_is_symbol(IDWriteFontFace *fontface)
     UINT32 size;
     HRESULT hr;
 
-    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void **)&tt_os2, &size, &os2_context, &exists);
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_OS2_TAG, (const void **)&tt_os2, &size, &os2_context, &exists);
     ok(hr == S_OK, "Failed to get OS/2 table, hr %#x.\n", hr);
 
     if (tt_os2)
@@ -7848,7 +7892,7 @@ static void get_expected_fontsig(IDWriteFont *font, FONTSIGNATURE *fontsig)
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void**)&tt_os2, &size, &os2_context, &exists);
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_OS2_TAG, (const void **)&tt_os2, &size, &os2_context, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     if (tt_os2) {
