@@ -45,6 +45,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
 
+static const GUID MEDIASUBTYPE_CVID = {mmioFOURCC('c','v','i','d'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+
 static pthread_key_t wine_gst_key;
 
 struct gstdemux
@@ -331,6 +333,7 @@ static gboolean amt_from_gst_caps_audio_mpeg(const GstCaps *caps, AM_MEDIA_TYPE 
 static gboolean amt_from_gst_caps(const GstCaps *caps, AM_MEDIA_TYPE *mt)
 {
     const char *type = gst_structure_get_name(gst_caps_get_structure(caps, 0));
+    GstStructure *structure = gst_caps_get_structure(caps, 0);
 
     if (!strcmp(type, "audio/x-raw"))
         return amt_from_gst_caps_audio_raw(caps, mt);
@@ -338,6 +341,38 @@ static gboolean amt_from_gst_caps(const GstCaps *caps, AM_MEDIA_TYPE *mt)
         return amt_from_gst_caps_video_raw(caps, mt);
     else if (!strcmp(type, "audio/mpeg"))
         return amt_from_gst_caps_audio_mpeg(caps, mt);
+    else if (!strcmp(type, "video/x-cinepak"))
+    {
+        VIDEOINFOHEADER *vih;
+        gint i;
+
+        memset(mt, 0, sizeof(AM_MEDIA_TYPE));
+        mt->majortype = MEDIATYPE_Video;
+        mt->subtype = MEDIASUBTYPE_CVID;
+        mt->bTemporalCompression = TRUE;
+        mt->lSampleSize = 1;
+        mt->formattype = FORMAT_VideoInfo;
+        if (!(vih = CoTaskMemAlloc(sizeof(VIDEOINFOHEADER))))
+            return FALSE;
+        mt->cbFormat = sizeof(VIDEOINFOHEADER);
+        mt->pbFormat = (BYTE *)vih;
+
+        memset(vih, 0, sizeof(VIDEOINFOHEADER));
+        vih->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        if (gst_structure_get_int(structure, "width", &i))
+            vih->bmiHeader.biWidth = i;
+        if (gst_structure_get_int(structure, "height", &i))
+            vih->bmiHeader.biHeight = i;
+        vih->bmiHeader.biPlanes = 1;
+        /* Both ffmpeg's encoder and a Cinepak file seen in the wild report
+         * 24 bpp. ffmpeg sets biSizeImage as below; others may be smaller, but
+         * as long as every sample fits into our allocator, we're fine. */
+        vih->bmiHeader.biBitCount = 24;
+        vih->bmiHeader.biCompression = mmioFOURCC('c','v','i','d');
+        vih->bmiHeader.biSizeImage = vih->bmiHeader.biWidth
+                * vih->bmiHeader.biHeight * vih->bmiHeader.biBitCount / 8;
+        return TRUE;
+    }
     else
     {
         FIXME("Unhandled type %s.\n", debugstr_a(type));
@@ -852,12 +887,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
     caps = gst_caps_make_writable(caps);
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
-
-    if (strcmp(typename, "audio/x-raw") && strcmp(typename, "video/x-raw"))
-    {
-        FIXME("Unknown type \'%s\'\n", typename);
-        return;
-    }
 
     if (!(pin = create_pin(This, nameW)))
     {
