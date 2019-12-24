@@ -3267,6 +3267,7 @@ static void test_dpi_mapping(void)
         ok( EqualRect( &expect, &rect ), "%lu: wrong caps desktop rect %s expected %s\n",
             i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
         SetRect( &rect, 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ), GetDeviceCaps( hdc, DESKTOPVERTRES ));
+        todo_wine_if(monitor_count > 1)
         ok( EqualRect( &desktop, &rect ), "%lu: wrong caps virt desktop rect %s expected %s\n",
             i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&desktop) );
         DeleteDC( hdc );
@@ -3345,6 +3346,7 @@ static void test_dpi_mapping(void)
             ok( EqualRect( &expect, &rect ), "%lu/%lu: wrong DC resolution %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
             SetRect( &rect, 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ), GetDeviceCaps( hdc, DESKTOPVERTRES ));
+            todo_wine_if(monitor_count > 1)
             ok( EqualRect( &desktop, &rect ), "%lu/%lu: wrong desktop resolution %s expected %s\n",
                 i, j, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&desktop) );
             ReleaseDC( hwnd, hdc );
