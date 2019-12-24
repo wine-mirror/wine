@@ -218,7 +218,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
         NtClose( handle );
     }
 
-    if (!name)  /* otherwise some hardcoded defaults */
+    if (!name || !*name)  /* otherwise some hardcoded defaults */
     {
         switch (type)
         {
