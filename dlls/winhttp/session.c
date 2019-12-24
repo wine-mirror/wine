@@ -1427,7 +1427,7 @@ static WCHAR *build_wpad_url( const char *hostname, const struct addrinfo *ai )
 static WCHAR *detect_autoproxyconfig_url_dns(void)
 {
     char *fqdn, *domain, *p;
-    WCHAR *ret;
+    WCHAR *ret = NULL;
 
     if (!(fqdn = get_computer_name( ComputerNamePhysicalDnsFullyQualified ))) return NULL;
     if (!(domain = get_computer_name( ComputerNamePhysicalDnsDomain )))
