@@ -2582,11 +2582,11 @@ Optional Packages:
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
   --without-xfixes        do not use Xfixes for clipboard change notifications
-  --without-xinerama      do not use Xinerama (multi-monitor support)
+  --without-xinerama      do not use Xinerama (legacy multi-monitor support)
   --without-xinput        do not use the Xinput extension
   --without-xinput2       do not use the Xinput 2 extension
   --without-xml           do not use XML
-  --without-xrandr        do not use Xrandr (resolution changes)
+  --without-xrandr        do not use Xrandr (multi-monitor support)
   --without-xrender       do not use the Xrender extension
   --without-xshape        do not use the Xshape extension
   --without-xshm          do not use XShm (shared memory extension)
