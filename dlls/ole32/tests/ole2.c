@@ -99,7 +99,6 @@ static const IID IID_WineTest =
     {0xbc, 0x13, 0x51, 0x6e, 0x92, 0x39, 0xac, 0xe1}
 };
 
-#define TEST_OPTIONAL 0x1
 #define TEST_TODO     0x2
 
 struct expected_method
@@ -152,16 +151,8 @@ static void inline check_expected_method_fmt(const char *method_name, const FORM
 {
     trace("%s\n", method_name);
     ok(expected_method_list->method != NULL, "Extra method %s called\n", method_name);
-    if (!strcmp(expected_method_list->method, "WINE_EXTRA"))
-    {
-        todo_wine ok(0, "Too many method calls.\n");
-        return;
-    }
     if (expected_method_list->method)
     {
-        while (expected_method_list->flags & TEST_OPTIONAL &&
-               strcmp(expected_method_list->method, method_name) != 0)
-            expected_method_list++;
         todo_wine_if (expected_method_list->flags & TEST_TODO)
         {
             ok(!strcmp(expected_method_list->method, method_name),
@@ -188,8 +179,6 @@ static void inline check_expected_method_fmt(const char *method_name, const FORM
 
 #define CHECK_NO_EXTRA_METHODS() \
     do { \
-        while (expected_method_list->flags & TEST_OPTIONAL) \
-            expected_method_list++; \
         ok(!expected_method_list->method, "Method sequence starting from %s not called\n", expected_method_list->method); \
     } while (0)
 
@@ -266,10 +255,10 @@ static void create_text(STGMEDIUM *med)
     med->pUnkForRelease = NULL;
 }
 
+static LONG ole_object_refcount;
+
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
-    CHECK_EXPECTED_METHOD("OleObject_QueryInterface");
-
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IOleObject))
@@ -294,14 +283,12 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
 
 static ULONG WINAPI OleObject_AddRef(IOleObject *iface)
 {
-    CHECK_EXPECTED_METHOD("OleObject_AddRef");
-    return 2;
+    return InterlockedIncrement(&ole_object_refcount);
 }
 
 static ULONG WINAPI OleObject_Release(IOleObject *iface)
 {
-    CHECK_EXPECTED_METHOD("OleObject_Release");
-    return 1;
+    return InterlockedDecrement(&ole_object_refcount);
 }
 
 static HRESULT WINAPI OleObject_SetClientSite
@@ -573,20 +560,17 @@ static IOleObject OleObject = { &OleObjectVtbl };
 
 static HRESULT WINAPI OleObjectPersistStg_QueryInterface(IPersistStorage *iface, REFIID riid, void **ppv)
 {
-    trace("OleObjectPersistStg_QueryInterface\n");
     return IOleObject_QueryInterface(&OleObject, riid, ppv);
 }
 
 static ULONG WINAPI OleObjectPersistStg_AddRef(IPersistStorage *iface)
 {
-    CHECK_EXPECTED_METHOD("OleObjectPersistStg_AddRef");
-    return 2;
+    return IOleObject_AddRef(&OleObject);
 }
 
 static ULONG WINAPI OleObjectPersistStg_Release(IPersistStorage *iface)
 {
-    CHECK_EXPECTED_METHOD("OleObjectPersistStg_Release");
-    return 1;
+    return IOleObject_Release(&OleObject);
 }
 
 static HRESULT WINAPI OleObjectPersistStg_GetClassId(IPersistStorage *iface, CLSID *clsid)
@@ -677,14 +661,12 @@ static HRESULT WINAPI OleObjectCache_QueryInterface(IOleCache *iface, REFIID rii
 
 static ULONG WINAPI OleObjectCache_AddRef(IOleCache *iface)
 {
-    CHECK_EXPECTED_METHOD("OleObjectCache_AddRef");
-    return 2;
+    return IOleObject_AddRef(&OleObject);
 }
 
 static ULONG WINAPI OleObjectCache_Release(IOleCache *iface)
 {
-    CHECK_EXPECTED_METHOD("OleObjectCache_Release");
-    return 1;
+    return IOleObject_Release(&OleObject);
 }
 
 static HRESULT WINAPI OleObjectCache_Cache
@@ -824,14 +806,12 @@ static HRESULT WINAPI OleObjectRunnable_QueryInterface(IRunnableObject *iface, R
 
 static ULONG WINAPI OleObjectRunnable_AddRef(IRunnableObject *iface)
 {
-    CHECK_EXPECTED_METHOD("OleObjectRunnable_AddRef");
-    return 2;
+    return IOleObject_AddRef(&OleObject);
 }
 
 static ULONG WINAPI OleObjectRunnable_Release(IRunnableObject *iface)
 {
-    CHECK_EXPECTED_METHOD("OleObjectRunnable_Release");
-    return 1;
+    return IOleObject_Release(&OleObject);
 }
 
 static HRESULT WINAPI OleObjectRunnable_GetRunningClass(
@@ -974,143 +954,49 @@ static void test_OleCreate(IStorage *pStorage)
     FORMATETC formatetc;
     static const struct expected_method methods_olerender_none[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", TEST_OPTIONAL },
-        { "OleObject_Release", TEST_OPTIONAL },
-        { "OleObject_QueryInterface", TEST_OPTIONAL },
-        { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
-        { "OleObjectPersistStg_Release", 0 },
-        { "OleObject_Release", 0 },
-        { "OleObject_Release", TEST_OPTIONAL },
         { NULL, 0 }
     };
     static const struct expected_method methods_olerender_draw[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObject_QueryInterface", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
-        { "OleObjectPersistStg_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectRunnable_AddRef", 0 },
         { "OleObjectRunnable_Run", 0 },
-        { "OleObjectRunnable_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectCache_AddRef", 0 },
         { "OleObjectCache_Cache", 0 },
-        { "OleObjectCache_Release", 0 },
-        { "OleObject_Release", 0 },
-        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
         { NULL, 0 }
     };
     static const struct expected_method methods_olerender_draw_with_site[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
         { "OleObject_GetMiscStatus", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
-        { "OleObjectPersistStg_Release", 0 },
         { "OleObject_SetClientSite", 0 },
-        { "OleObject_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectRunnable_AddRef", 0 },
         { "OleObjectRunnable_Run", 0 },
-        { "OleObjectRunnable_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectCache_AddRef", 0 },
         { "OleObjectCache_Cache", 0 },
-        { "OleObjectCache_Release", 0 },
-        { "OleObject_Release", 0 },
         { NULL, 0 }
     };
     static const struct expected_method methods_olerender_format[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
         { "OleObject_GetMiscStatus", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
-        { "OleObjectPersistStg_Release", 0 },
         { "OleObject_SetClientSite", 0 },
-        { "OleObject_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectRunnable_AddRef", 0 },
         { "OleObjectRunnable_Run", 0 },
-        { "OleObjectRunnable_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectCache_AddRef", 0 },
         { "OleObjectCache_Cache", 0 },
-        { "OleObjectCache_Release", 0 },
-        { "OleObject_Release", 0 },
         { NULL, 0 }
     };
     static const struct expected_method methods_olerender_asis[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObject_QueryInterface", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
-        { "OleObjectPersistStg_Release", 0 },
-        { "OleObject_Release", 0 },
-        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
         { NULL, 0 }
     };
     static const struct expected_method methods_olerender_draw_no_runnable[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObject_QueryInterface", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
-        { "OleObjectPersistStg_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectCache_AddRef", 0 },
         { "OleObjectCache_Cache", 0 },
-        { "OleObjectCache_Release", 0 },
-        { "OleObject_Release", 0 },
-        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
         { NULL, 0 },
     };
     static const struct expected_method methods_olerender_draw_no_cache[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObject_QueryInterface", TEST_OPTIONAL /* NT4 only */ },
-        { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_InitNew", 0 },
-        { "OleObjectPersistStg_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectRunnable_AddRef", 0 },
         { "OleObjectRunnable_Run", 0 },
-        { "OleObjectRunnable_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_Release", 0 },
-        { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
         { NULL, 0 }
     };
 
@@ -1128,6 +1014,7 @@ static void test_OleCreate(IStorage *pStorage)
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
+    ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     expected_method_list = methods_olerender_draw;
     trace("OleCreate with OLERENDER_DRAW:\n");
@@ -1135,6 +1022,7 @@ static void test_OleCreate(IStorage *pStorage)
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
+    ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     expected_method_list = methods_olerender_draw_with_site;
     trace("OleCreate with OLERENDER_DRAW, with site:\n");
@@ -1142,6 +1030,7 @@ static void test_OleCreate(IStorage *pStorage)
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
+    ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     /* GetMiscStatus fails */
     g_GetMiscStatusFailsWith = 0x8fafefaf;
@@ -1151,6 +1040,7 @@ static void test_OleCreate(IStorage *pStorage)
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
+    ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
     g_GetMiscStatusFailsWith = S_OK;
 
     formatetc.cfFormat = CF_TEXT;
@@ -1169,6 +1059,7 @@ static void test_OleCreate(IStorage *pStorage)
         IOleObject_Release(pObject);
         CHECK_NO_EXTRA_METHODS();
     }
+    ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     expected_method_list = methods_olerender_asis;
     trace("OleCreate with OLERENDER_ASIS:\n");
@@ -1176,6 +1067,7 @@ static void test_OleCreate(IStorage *pStorage)
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
+    ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     formatetc.cfFormat = 0;
     formatetc.tymed = TYMED_NULL;
@@ -1195,6 +1087,7 @@ static void test_OleCreate(IStorage *pStorage)
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
+    ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
     trace("end\n");
     g_expected_fetc = NULL;
 }
@@ -1207,20 +1100,10 @@ static void test_OleLoad(IStorage *pStorage)
 
     static const struct expected_method methods_oleload[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
         { "OleObject_GetMiscStatus", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectPersistStg_AddRef", 0 },
         { "OleObjectPersistStg_Load", 0 },
-        { "OleObjectPersistStg_Release", 0 },
         { "OleObject_SetClientSite", 0 },
-        { "OleObject_Release", 0 },
-        { "OleObject_QueryInterface", 0 },
         { "OleObject_GetMiscStatus", 0 },
-        { "OleObject_Release", 0 },
         { NULL, 0 }
     };
 
@@ -1242,6 +1125,7 @@ static void test_OleLoad(IStorage *pStorage)
         IOleObject_Release(pObject);
         CHECK_NO_EXTRA_METHODS();
     }
+    ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
     g_GetMiscStatusFailsWith = S_OK;
 
     /* Test again, let IOleObject_GetMiscStatus succeed. */
@@ -1261,6 +1145,7 @@ static void test_OleLoad(IStorage *pStorage)
         IOleObject_Release(pObject);
         CHECK_NO_EXTRA_METHODS();
     }
+    ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     for (fmt = CF_TEXT; fmt < CF_MAX; fmt++)
     {
@@ -1447,8 +1332,6 @@ static HRESULT WINAPI DataObject_QueryInterface(
             REFIID           riid,
             void**           ppvObject)
 {
-    CHECK_EXPECTED_METHOD("DataObject_QueryInterface");
-
     if (IsEqualIID(riid, &IID_IDataObject) || IsEqualIID(riid, &IID_IUnknown))
     {
         *ppvObject = iface;
@@ -1461,14 +1344,12 @@ static HRESULT WINAPI DataObject_QueryInterface(
 static ULONG WINAPI DataObject_AddRef(
             IDataObject*     iface)
 {
-    CHECK_EXPECTED_METHOD("DataObject_AddRef");
     return 2;
 }
 
 static ULONG WINAPI DataObject_Release(
             IDataObject*     iface)
 {
-    CHECK_EXPECTED_METHOD("DataObject_Release");
     return 1;
 }
 
@@ -2962,15 +2843,6 @@ static void test_default_handler(void)
 
     static const struct expected_method methods_embeddinghelper[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_AddRef", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_QueryInterface", TEST_TODO },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_QueryInterface", 0 },
-        { "OleObject_QueryInterface", TEST_OPTIONAL }, /* Win95/98/NT4 */
-        { "OleObject_Release", TEST_TODO },
-        { "WINE_EXTRA", TEST_OPTIONAL },
         { NULL, 0 }
     };
 
@@ -3138,6 +3010,7 @@ static void test_default_handler(void)
         }
 
         CHECK_NO_EXTRA_METHODS();
+        todo_wine ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
         hr = CoRevokeClassObject(dwRegister);
         ok_ole_success(hr, "CoRevokeClassObject");
@@ -3148,16 +3021,12 @@ static void test_runnable(void)
 {
     static const struct expected_method methods_query_runnable[] =
     {
-        { "OleObject_QueryInterface", 0 },
-        { "OleObjectRunnable_AddRef", 0 },
         { "OleObjectRunnable_IsRunning", 0 },
-        { "OleObjectRunnable_Release", 0 },
         { NULL, 0 }
     };
 
     static const struct expected_method methods_no_runnable[] =
     {
-        { "OleObject_QueryInterface", 0 },
         { NULL, 0 }
     };
 
@@ -3172,18 +3041,21 @@ static void test_runnable(void)
     ret = OleIsRunning(object);
     ok(ret == TRUE, "Object should be running\n");
     CHECK_NO_EXTRA_METHODS();
+    todo_wine ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     g_isRunning = FALSE;
     expected_method_list = methods_query_runnable;
     ret = OleIsRunning(object);
     ok(ret == FALSE, "Object should not be running\n");
     CHECK_NO_EXTRA_METHODS();
+    todo_wine ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     g_showRunnable = FALSE;  /* QueryInterface(IID_IRunnableObject, ...) will fail */
     expected_method_list = methods_no_runnable;
     ret = OleIsRunning(object);
     ok(ret == TRUE, "Object without IRunnableObject should be running\n");
     CHECK_NO_EXTRA_METHODS();
+    todo_wine ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     g_isRunning = TRUE;
     g_showRunnable = TRUE;
