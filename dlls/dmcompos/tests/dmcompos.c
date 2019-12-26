@@ -267,6 +267,7 @@ static void test_chordmaptrack(void)
 {
     IDirectMusicTrack8 *dmt8;
     IPersistStream *ps;
+    IDirectMusicChordMap *chordmap;
     CLSID class;
     ULARGE_INTEGER size;
     HRESULT hr;
@@ -331,11 +332,29 @@ static void test_chordmaptrack(void)
     ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
     hr = IDirectMusicTrack8_IsParamSupported(dmt8, &GUID_IDirectMusicChordMap);
     ok(hr == S_OK, "IsParamSupported(GUID_IDirectMusicChordMap) failed: %08x, expected S_OK\n", hr);
+    hr = IDirectMusicTrack8_GetParam(dmt8, &GUID_IDirectMusicChordMap, 0, NULL, &chordmap);
+    todo_wine ok(hr == DMUS_E_NOT_FOUND,
+            "GetParam(GUID_IDirectMusicChordMap) failed: %08x, expected DMUS_E_NOT_FOUND\n", hr);
+    hr = CoCreateInstance(&CLSID_DirectMusicChordMap, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicChordMap, (void **)&chordmap);
+    ok(hr == S_OK, "DirectMusicChordMap create failed: %08x, expected S_OK\n", hr);
+    hr = IDirectMusicTrack8_SetParam(dmt8, &GUID_IDirectMusicChordMap, 0, chordmap);
+    ok(hr == S_OK, "SetParam(GUID_IDirectMusicChordMap) failed: %08x, expected S_OK\n", hr);
+    IDirectMusicChordMap_Release(chordmap);
+
     for (i = 0; i < ARRAY_SIZE(unsupported); i++) {
         hr = IDirectMusicTrack8_IsParamSupported(dmt8, unsupported[i].type);
         ok(hr == DMUS_E_TYPE_UNSUPPORTED,
                 "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
                     unsupported[i].name, hr);
+        hr = IDirectMusicTrack8_GetParam(dmt8, unsupported[i].type, 0, NULL, &chordmap);
+        todo_wine ok(hr == DMUS_E_GET_UNSUPPORTED,
+                "GetParam(%s) failed: %08x, expected DMUS_E_GET_UNSUPPORTED\n",
+                unsupported[i].name, hr);
+        hr = IDirectMusicTrack8_SetParam(dmt8, unsupported[i].type, 0, chordmap);
+        todo_wine ok(hr == DMUS_E_SET_UNSUPPORTED,
+                "SetParam(%s) failed: %08x, expected DMUS_E_SET_UNSUPPORTED\n",
+                unsupported[i].name, hr);
     }
 
     hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);
