@@ -1475,9 +1475,12 @@ static void test_is_exception_typeof(void)
 
 static void test__AdjustPointer(void)
 {
-    int off = 0xf0;
-    void *obj1 = &off;
-    void *obj2 = (char*)&off - 2;
+    struct {
+        int vbase;
+        int off;
+    } obj = { 0, 0xf0 };
+    void *obj1 = &obj.off;
+    void *obj2 = &obj;
     struct test_data {
         void *ptr;
         void *ret;
@@ -1490,10 +1493,10 @@ static void test__AdjustPointer(void)
         {NULL, NULL, {0, -1, 0}},
         {(void*)0xbeef, (void*)0xbef0, {1, -1, 1}},
         {(void*)0xbeef, (void*)0xbeee, {-1, -1, 0}},
-        {&obj1, (char*)&obj1 + off, {0, 0, 0}},
-        {(char*)&obj1 - 5, (char*)&obj1 + off, {0, 5, 0}},
-        {(char*)&obj1 - 3, (char*)&obj1 + off + 24, {24, 3, 0}},
-        {(char*)&obj2 - 17, (char*)&obj2 + off + 4, {4, 17, 2}}
+        {&obj1, (char*)&obj1 + obj.off, {0, 0, 0}},
+        {(char*)&obj1 - 5, (char*)&obj1 + obj.off, {0, 5, 0}},
+        {(char*)&obj1 - 3, (char*)&obj1 + obj.off + 24, {24, 3, 0}},
+        {(char*)&obj2 - 17, (char*)&obj2 + obj.off + 4, {4, 17, sizeof(int)}}
     };
     void *ret;
     int i;
