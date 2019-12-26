@@ -3032,6 +3032,14 @@ VOID WINAPI KeInitializeDpc(PRKDPC Dpc, PKDEFERRED_ROUTINE DeferredRoutine, PVOI
 }
 
 /***********************************************************************
+ *          KeSetImportanceDpc   (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI KeSetImportanceDpc(PRKDPC dpc, KDPC_IMPORTANCE importance)
+{
+    FIXME("%p, %d stub\n", dpc, importance);
+}
+
+/***********************************************************************
  *          KeSetTargetProcessorDpc   (NTOSKRNL.EXE.@)
  */
 VOID WINAPI KeSetTargetProcessorDpc(PRKDPC dpc, CCHAR number)
