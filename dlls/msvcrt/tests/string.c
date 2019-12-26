@@ -1880,17 +1880,21 @@ static void test__strtoi64(void)
     ok(errno == ERANGE, "errno = %x\n", errno);
 }
 
-static inline BOOL almost_equal(double d1, double d2) {
-    if(d1-d2>-1e-30 && d1-d2<1e-30)
-        return TRUE;
-    return FALSE;
-}
+static inline BOOL compare_double(double f, double g, unsigned int ulps)
+{
+    ULONGLONG x = *(ULONGLONG *)&f;
+    ULONGLONG y = *(ULONGLONG *)&g;
 
-static inline BOOL large_almost_equal(double d1, double d2) {
-    double diff = fabs(d1-d2);
-    if(diff / (fabs(d1) + fabs(d2)) < DBL_EPSILON)
-        return TRUE;
-    return FALSE;
+    if (f < 0)
+        x = ~x + 1;
+    else
+        x |= ((ULONGLONG)1)<<63;
+    if (g < 0)
+        y = ~y + 1;
+    else
+        y |= ((ULONGLONG)1)<<63;
+
+    return (x>y ? x-y : y-x) <= ulps;
 }
 
 static void test__strtod(void)
@@ -1908,34 +1912,34 @@ static void test__strtod(void)
     double d;
 
     d = strtod(double1, &end);
-    ok(almost_equal(d, 12.1), "d = %lf\n", d);
+    ok(d == 12.1, "d = %.16e\n", d);
     ok(end == double1+4, "incorrect end (%d)\n", (int)(end-double1));
 
     d = strtod(double2, &end);
-    ok(almost_equal(d, -13.721), "d = %lf\n", d);
+    ok(d == -13.721, "d = %.16e\n", d);
     ok(end == double2+7, "incorrect end (%d)\n", (int)(end-double2));
 
     d = strtod(double3, &end);
-    ok(almost_equal(d, 0), "d = %lf\n", d);
+    ok(d == 0, "d = %.16e\n", d);
     ok(end == double3, "incorrect end (%d)\n", (int)(end-double3));
 
     d = strtod(double4, &end);
-    ok(almost_equal(d, 210000000000.0), "d = %lf\n", d);
+    ok(d == 210000000000.0, "d = %.16e\n", d);
     ok(end == double4+6, "incorrect end (%d)\n", (int)(end-double4));
 
     d = strtod(double5, &end);
-    ok(almost_equal(d, 214.353), "d = %lf\n", d);
+    ok(d == 214.353, "d = %.16e\n", d);
     ok(end == double5+9, "incorrect end (%d)\n", (int)(end-double5));
 
     d = strtod(double6, &end);
-    ok(almost_equal(d, 0), "d = %lf\n", d);
+    ok(d == 0, "d = %.16e\n", d);
     ok(end == double6, "incorrect end (%d)\n", (int)(end-double6));
 
     d = strtod("12.1d2", NULL);
-    ok(almost_equal(d, 12.1e2), "d = %lf\n", d);
+    ok(d == 12.1e2, "d = %.16e\n", d);
 
     d = strtod(white_chars, &end);
-    ok(almost_equal(d, 0), "d = %lf\n", d);
+    ok(d == 0, "d = %.16e\n", d);
     ok(end == white_chars, "incorrect end (%d)\n", (int)(end-white_chars));
 
     if (!p__strtod_l)
@@ -1944,19 +1948,19 @@ static void test__strtod(void)
     {
         errno = EBADF;
         d = strtod(NULL, NULL);
-        ok(almost_equal(d, 0.0), "d = %lf\n", d);
+        ok(d == 0.0, "d = %.16e\n", d);
         ok(errno == EINVAL, "errno = %x\n", errno);
 
         errno = EBADF;
         end = (char *)0xdeadbeef;
         d = strtod(NULL, &end);
-        ok(almost_equal(d, 0.0), "d = %lf\n", d);
+        ok(d == 0.0, "d = %.16e\n", d);
         ok(errno == EINVAL, "errno = %x\n", errno);
         ok(!end, "incorrect end ptr %p\n", end);
 
         errno = EBADF;
         d = p__strtod_l(NULL, NULL, NULL);
-        ok(almost_equal(d, 0.0), "d = %lf\n", d);
+        ok(d == 0.0, "d = %.16e\n", d);
         ok(errno == EINVAL, "errno = %x\n", errno);
     }
 
@@ -1967,28 +1971,28 @@ static void test__strtod(void)
     }
 
     d = strtod("12.1", NULL);
-    ok(almost_equal(d, 12.0), "d = %lf\n", d);
+    ok(d == 12.0, "d = %.16e\n", d);
 
     d = strtod("12,1", NULL);
-    ok(almost_equal(d, 12.1), "d = %lf\n", d);
+    ok(d == 12.1, "d = %.16e\n", d);
 
     setlocale(LC_ALL, "C");
 
     /* Precision tests */
     d = strtod("0.1", NULL);
-    ok(almost_equal(d, 0.1), "d = %lf\n", d);
+    ok(d == 0.1, "d = %.16e\n", d);
     d = strtod("-0.1", NULL);
-    ok(almost_equal(d, -0.1), "d = %lf\n", d);
+    ok(d == -0.1, "d = %.16e\n", d);
     d = strtod("0.1281832188491894198128921", NULL);
-    ok(almost_equal(d, 0.1281832188491894198128921), "d = %lf\n", d);
+    ok(d == 0.1281832188491894198128921, "d = %.16e\n", d);
     d = strtod("0.82181281288121", NULL);
-    ok(almost_equal(d, 0.82181281288121), "d = %lf\n", d);
+    ok(d == 0.82181281288121, "d = %.16e\n", d);
     d = strtod("21921922352523587651128218821", NULL);
-    ok(almost_equal(d, 21921922352523587651128218821.0), "d = %lf\n", d);
+    ok(d == 21921922352523587651128218821.0, "d = %.16e\n", d);
     d = strtod("0.1d238", NULL);
-    ok(almost_equal(d, 0.1e238L), "d = %lf\n", d);
+    ok(d == 0.1e238, "d = %.16e\n", d);
     d = strtod("0.1D-4736", NULL);
-    ok(almost_equal(d, 0.1e-4736L), "d = %lf\n", d);
+    ok(d == 0.0, "d = %.16e\n", d);
 
     errno = 0xdeadbeef;
     strtod(overflow, &end);
@@ -3067,7 +3071,7 @@ static void test__atodbl(void)
             if (expected < DBL_MIN || expected > DBL_MAX) continue;
             snprintf(num, sizeof(num), "%de%d", i, j);
             ret = _atodbl(&d, num);
-            ok(large_almost_equal(d.x, expected), "d.x = %le, expected %le\n", d.x, expected);
+            ok(compare_double(d.x, expected, 2), "d.x = %.16e, expected %.16e\n", d.x, expected);
         }
     }
 
@@ -3075,10 +3079,10 @@ static void test__atodbl(void)
     strcpy(num, "1e-309");
     ret = p__atodbl_l(&d, num, NULL);
     ok(ret == _UNDERFLOW, "_atodbl_l(&d, \"1e-309\", NULL) returned %d, expected _UNDERFLOW\n", ret);
-    ok(d.x!=0 && almost_equal(d.x, 0.1e-308), "d.x = %le, expected 0.1e-308\n", d.x);
+    ok(compare_double(d.x, 1e-309, 1), "d.x = %.16e, expected 0\n", d.x);
     ret = _atodbl(&d, num);
     ok(ret == _UNDERFLOW, "_atodbl(&d, \"1e-309\") returned %d, expected _UNDERFLOW\n", ret);
-    ok(d.x!=0 && almost_equal(d.x, 0.1e-308), "d.x = %le, expected 0.1e-308\n", d.x);
+    ok(compare_double(d.x, 1e-309, 1), "d.x = %.16e, expected 0\n", d.x);
 
     strcpy(num, "1e309");
     ret = p__atodbl_l(&d, num, NULL);
@@ -3283,13 +3287,13 @@ static void test_atof(void)
     double d;
 
     d = atof("0.0");
-    ok(almost_equal(d, 0.0), "d = %lf\n", d);
+    ok(d == 0.0, "d = %lf\n", d);
 
     d = atof("1.0");
-    ok(almost_equal(d, 1.0), "d = %lf\n", d);
+    ok(d == 1.0, "d = %lf\n", d);
 
     d = atof("-1.0");
-    ok(almost_equal(d, -1.0), "d = %lf\n", d);
+    ok(d == -1.0, "d = %lf\n", d);
 
     if (!p__atof_l)
     {
@@ -3299,12 +3303,12 @@ static void test_atof(void)
 
     errno = EBADF;
     d = atof(NULL);
-    ok(almost_equal(d, 0.0), "d = %lf\n", d);
+    ok(d == 0.0, "d = %lf\n", d);
     ok(errno == EINVAL, "errno = %x\n", errno);
 
     errno = EBADF;
     d = p__atof_l(NULL, NULL);
-    ok(almost_equal(d, 0.0), "d = %lf\n", d);
+    ok(d == 0.0, "d = %lf\n", d);
     ok(errno == EINVAL, "errno = %x\n", errno);
 }
 
