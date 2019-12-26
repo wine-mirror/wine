@@ -91,6 +91,13 @@ typedef struct _KDPC {
   PULONG_PTR  Lock;
 } KDPC, *PKDPC, *RESTRICTED_POINTER PRKDPC;
 
+typedef enum _KDPC_IMPORTANCE {
+  LowImportance,
+  MediumImportance,
+  HighImportance,
+  MediumHighImportance
+} KDPC_IMPORTANCE;
+
 typedef struct _KDEVICE_QUEUE_ENTRY {
   LIST_ENTRY  DeviceListEntry;
   ULONG  SortKey;

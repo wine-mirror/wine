@@ -615,7 +615,7 @@
 @ stdcall KeSetEvent(ptr long long)
 @ stub KeSetEventBoostPriority
 @ stub KeSetIdealProcessorThread
-@ stub KeSetImportanceDpc
+@ stdcall KeSetImportanceDpc(ptr long)
 @ stub KeSetKernelStackSwapEnable
 @ stdcall KeSetPriorityThread(ptr long)
 @ stub KeSetProfileIrql
