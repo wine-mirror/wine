@@ -150,7 +150,7 @@ typedef struct PresentationDataHeader
 
 static void inline check_expected_method_fmt(const char *method_name, const FORMATETC *fmt)
 {
-    trace("%s\n", method_name);
+    if (winetest_debug > 1) trace("%s\n", method_name);
     ok(expected_method_list->method != NULL, "Extra method %s called\n", method_name);
     if (expected_method_list->method)
     {
@@ -269,6 +269,8 @@ static LONG ole_object_refcount;
 
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
+    if (winetest_debug > 1) trace("IOleObject::QueryInterface(%s)\n", debugstr_guid(riid));
+
     *ppv = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IOleObject))
@@ -287,7 +289,6 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
         return S_OK;
     }
 
-    trace("OleObject_QueryInterface: returning E_NOINTERFACE\n");
     return E_NOINTERFACE;
 }
 
@@ -1019,7 +1020,6 @@ static void test_OleCreate(IStorage *pStorage)
     runnable = &OleObjectRunnable;
     cache = &OleObjectCache;
     expected_method_list = methods_olerender_none;
-    trace("OleCreate with OLERENDER_NONE:\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_NONE, NULL, NULL, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
@@ -1027,7 +1027,6 @@ static void test_OleCreate(IStorage *pStorage)
     ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     expected_method_list = methods_olerender_draw;
-    trace("OleCreate with OLERENDER_DRAW:\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, NULL, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
@@ -1035,7 +1034,6 @@ static void test_OleCreate(IStorage *pStorage)
     ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     expected_method_list = methods_olerender_draw_with_site;
-    trace("OleCreate with OLERENDER_DRAW, with site:\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, (IOleClientSite*)0xdeadbeef, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
@@ -1045,7 +1043,6 @@ static void test_OleCreate(IStorage *pStorage)
     /* GetMiscStatus fails */
     g_GetMiscStatusFailsWith = 0x8fafefaf;
     expected_method_list = methods_olerender_draw_with_site;
-    trace("OleCreate with OLERENDER_DRAW, with site:\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, (IOleClientSite*)0xdeadbeef, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
@@ -1059,7 +1056,6 @@ static void test_OleCreate(IStorage *pStorage)
     formatetc.lindex = -1;
     formatetc.tymed = TYMED_HGLOBAL;
     expected_method_list = methods_olerender_format;
-    trace("OleCreate with OLERENDER_FORMAT:\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_FORMAT, &formatetc, (IOleClientSite *)0xdeadbeef, pStorage, (void **)&pObject);
     ok(hr == S_OK ||
        broken(hr == E_INVALIDARG), /* win2k */
@@ -1072,7 +1068,6 @@ static void test_OleCreate(IStorage *pStorage)
     ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
 
     expected_method_list = methods_olerender_asis;
-    trace("OleCreate with OLERENDER_ASIS:\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_ASIS, NULL, NULL, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
@@ -1083,7 +1078,6 @@ static void test_OleCreate(IStorage *pStorage)
     formatetc.tymed = TYMED_NULL;
     runnable = NULL;
     expected_method_list = methods_olerender_draw_no_runnable;
-    trace("OleCreate with OLERENDER_DRAW (no IRunnableObject):\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, NULL, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
@@ -1092,13 +1086,11 @@ static void test_OleCreate(IStorage *pStorage)
     runnable = &OleObjectRunnable;
     cache = NULL;
     expected_method_list = methods_olerender_draw_no_cache;
-    trace("OleCreate with OLERENDER_DRAW (no IOleCache):\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, NULL, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
     ok(!ole_object_refcount, "Got outstanding refcount %d.\n", ole_object_refcount);
-    trace("end\n");
     g_expected_fetc = NULL;
 }
 
@@ -1120,7 +1112,6 @@ static void test_OleLoad(IStorage *pStorage)
     /* Test once with IOleObject_GetMiscStatus failing */
     expected_method_list = methods_oleload;
     g_GetMiscStatusFailsWith = E_FAIL;
-    trace("OleLoad:\n");
     hr = OleLoad(pStorage, &IID_IOleObject, (IOleClientSite *)0xdeadbeef, (void **)&pObject);
     ok(hr == S_OK ||
        broken(hr == E_INVALIDARG), /* win98 and win2k */
@@ -1140,7 +1131,6 @@ static void test_OleLoad(IStorage *pStorage)
 
     /* Test again, let IOleObject_GetMiscStatus succeed. */
     expected_method_list = methods_oleload;
-    trace("OleLoad:\n");
     hr = OleLoad(pStorage, &IID_IOleObject, (IOleClientSite *)0xdeadbeef, (void **)&pObject);
     ok(hr == S_OK ||
        broken(hr == E_INVALIDARG), /* win98 and win2k */
@@ -1826,7 +1816,6 @@ static void test_data_cache(void)
     CHECK_NO_EXTRA_METHODS();
 
     /* Test with loaded data */
-    trace("Testing loaded data with CreateDataCache:\n");
     expected_method_list = methods_cacheload;
 
     hr = CreateDataCache(NULL, &CLSID_NULL, &IID_IOleCache2, (LPVOID *)&pOleCache);
@@ -3685,7 +3674,6 @@ static void test_data_cache_save(void)
     SET_EXPECT(Storage_DestroyElement);
     Storage_DestroyElement_limit = 50;
     Storage_SetClass_CLSID = &CLSID_NULL;
-    trace("IPersistStorage_Save:\n");
     hr = IPersistStorage_Save(stg, &Storage, FALSE);
     ok(hr == S_OK, "unexpected %#x\n", hr);
     CHECK_CALLED(Storage_CreateStream_OlePres);
@@ -4357,7 +4345,6 @@ static void test_data_cache_save_data(void)
         ok(hr == S_OK, "unexpected %#x\n", hr);
 
         /* cache entries are dirty. test saving them to stg */
-        trace("IPersistStorage_Save:\n");
         hr = IPersistStorage_Save(persist, doc, FALSE);
         ok(hr == S_OK, "unexpected %#x\n", hr);
 
@@ -4381,7 +4368,6 @@ static void test_data_cache_save_data(void)
 
         hr = IStorage_SetClass(doc, pdata->clsid);
         ok(hr == S_OK, "unexpected %#x\n", hr);
-        trace("IPersistStorage_Load\n");
         hr = IPersistStorage_Load(persist, doc);
         ok(hr == S_OK, "unexpected %#x\n", hr);
 
