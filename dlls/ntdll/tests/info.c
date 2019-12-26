@@ -363,8 +363,6 @@ static void test_query_process(void)
 
         last_pid = (DWORD_PTR)spi->UniqueProcessId;
 
-        ok( spi->dwThreadCount > 0, "Expected some threads for this process, got 0\n");
-
         /* Loop through the threads, skip NT4 for now */
         
         if (!is_nt)
