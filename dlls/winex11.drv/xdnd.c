@@ -786,11 +786,9 @@ static HRESULT WINAPI XDNDDATAOBJECT_QueryGetData(IDataObject *dataObject,
         FIXME("only HGLOBAL medium types supported right now\n");
         return DV_E_TYMED;
     }
-    if (formatEtc->dwAspect != DVASPECT_CONTENT)
-    {
-        FIXME("only the content aspect is supported right now\n");
-        return E_NOTIMPL;
-    }
+    /* Windows Explorer ignores .dwAspect and .lindex for CF_HDROP,
+     * and we have no way to implement them on XDnD anyway, so ignore them too.
+     */
 
     LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
     {
