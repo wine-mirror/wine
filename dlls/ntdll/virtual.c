@@ -496,14 +496,14 @@ static struct file_view *find_view_range( const void *addr, size_t size )
     return NULL;
 }
 
-
 /***********************************************************************
- *           find_free_area
+ *           find_reserved_free_area
  *
  * Find a free area between views inside the specified range.
  * The csVirtual section must be held by caller.
+ * The range must be inside the preloader reserved range.
  */
-static void *find_free_area( void *base, void *end, size_t size, size_t mask, int top_down )
+static void *find_reserved_free_area( void *base, void *end, size_t size, size_t mask, int top_down )
 {
     struct wine_rb_entry *first = NULL, *ptr = views_tree.root;
     void *start;
@@ -1053,14 +1053,14 @@ static int alloc_reserved_area_callback( void *start, size_t size, void *arg )
         else
         {
             /* range is split in two by the preloader reservation, try first part */
-            if ((alloc->result = find_free_area( start, preload_reserve_start, alloc->size,
-                                                 alloc->mask, alloc->top_down )))
+            if ((alloc->result = find_reserved_free_area( start, preload_reserve_start, alloc->size,
+                                                          alloc->mask, alloc->top_down )))
                 return 1;
             /* then fall through to try second part */
             start = preload_reserve_end;
         }
     }
-    if ((alloc->result = find_free_area( start, end, alloc->size, alloc->mask, alloc->top_down )))
+    if ((alloc->result = find_reserved_free_area( start, end, alloc->size, alloc->mask, alloc->top_down )))
         return 1;
 
     return 0;
@@ -1167,7 +1167,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
         {
             if (!zero_bits_64)
                 ptr = NULL;
-            else if (!(ptr = find_free_area( (void*)0, alloc.limit, view_size, mask, top_down )))
+            else if (!(ptr = find_reserved_free_area( (void*)0, alloc.limit, view_size, mask, top_down )))
                 return STATUS_NO_MEMORY;
 
             if ((ptr = wine_anon_mmap( ptr, view_size, VIRTUAL_GetUnixProt(vprot), ptr ? MAP_FIXED : 0 )) == (void *)-1)
