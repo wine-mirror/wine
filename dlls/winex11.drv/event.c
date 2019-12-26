@@ -706,7 +706,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
              * whether the window wants to be activated */
             LRESULT ma = SendMessageW( hwnd, WM_MOUSEACTIVATE,
                                        (WPARAM)GetAncestor( hwnd, GA_ROOT ),
-                                       MAKELONG(HTCAPTION,WM_LBUTTONDOWN) );
+                                       MAKELONG( HTMENU, WM_LBUTTONDOWN ) );
             if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
             {
                 set_focus( event->display, hwnd, event_time );
