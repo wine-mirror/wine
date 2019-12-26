@@ -496,17 +496,17 @@ static struct file_view *find_view_range( const void *addr, size_t size )
     return NULL;
 }
 
+
 /***********************************************************************
- *           find_reserved_free_area
+ *           find_view_inside_range
  *
- * Find a free area between views inside the specified range.
+ * Find first (resp. last, if top_down) view inside a range.
  * The csVirtual section must be held by caller.
- * The range must be inside the preloader reserved range.
  */
-static void *find_reserved_free_area( void *base, void *end, size_t size, size_t mask, int top_down )
+static struct wine_rb_entry *find_view_inside_range( void **base_ptr, void **end_ptr, int top_down )
 {
     struct wine_rb_entry *first = NULL, *ptr = views_tree.root;
-    void *start;
+    void *base = *base_ptr, *end = *end_ptr;
 
     /* find the first (resp. last) view inside the range */
     while (ptr)
@@ -528,6 +528,24 @@ static void *find_reserved_free_area( void *base, void *end, size_t size, size_t
             ptr = top_down ? ptr->right : ptr->left;
         }
     }
+
+    *base_ptr = base;
+    *end_ptr = end;
+    return first;
+}
+
+
+/***********************************************************************
+ *           find_reserved_free_area
+ *
+ * Find a free area between views inside the specified range.
+ * The csVirtual section must be held by caller.
+ * The range must be inside the preloader reserved range.
+ */
+static void *find_reserved_free_area( void *base, void *end, size_t size, size_t mask, int top_down )
+{
+    struct wine_rb_entry *first = find_view_inside_range( &base, &end, top_down );
+    void *start;
 
     if (top_down)
     {
