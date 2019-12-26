@@ -536,6 +536,90 @@ static struct wine_rb_entry *find_view_inside_range( void **base_ptr, void **end
 
 
 /***********************************************************************
+ *           try_map_free_area
+ *
+ * Try mmaping some expected free memory region, eventually stepping and
+ * retrying inside it, and return where it actually succeeded, or NULL.
+ */
+static void* try_map_free_area( void *base, void *end, ptrdiff_t step,
+                                void *start, size_t size, int unix_prot )
+{
+    void *ptr;
+
+    while (start && base <= start && (char*)start + size <= (char*)end)
+    {
+        if ((ptr = wine_anon_mmap( start, size, unix_prot, 0 )) == start)
+            return start;
+        TRACE( "Found free area is already mapped, start %p.\n", start );
+
+        if (ptr != (void *)-1)
+            munmap( ptr, size );
+
+        if ((step > 0 && (char *)end - (char *)start < step) ||
+            (step < 0 && (char *)start - (char *)base < -step) ||
+            step == 0)
+            break;
+        start = (char *)start + step;
+    }
+
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           map_free_area
+ *
+ * Find a free area between views inside the specified range and map it.
+ * The csVirtual section must be held by caller.
+ */
+static void *map_free_area( void *base, void *end, size_t size, size_t mask, int top_down,
+                             int unix_prot )
+{
+    struct wine_rb_entry *first = find_view_inside_range( &base, &end, top_down );
+    ptrdiff_t step = top_down ? -(mask + 1) : (mask + 1);
+    void *start;
+
+    if (top_down)
+    {
+        start = ROUND_ADDR( (char *)end - size, mask );
+        if (start >= end || start < base) return NULL;
+
+        while (first)
+        {
+            struct file_view *view = WINE_RB_ENTRY_VALUE( first, struct file_view, entry );
+            if ((start = try_map_free_area( (char *)view->base + view->size, (char *)start + size, step,
+                                            start, size, unix_prot ))) break;
+            start = ROUND_ADDR( (char *)view->base - size, mask );
+            /* stop if remaining space is not large enough */
+            if (!start || start >= end || start < base) return NULL;
+            first = wine_rb_prev( first );
+        }
+    }
+    else
+    {
+        start = ROUND_ADDR( (char *)base + mask, mask );
+        if (!start || start >= end || (char *)end - (char *)start < size) return NULL;
+
+        while (first)
+        {
+            struct file_view *view = WINE_RB_ENTRY_VALUE( first, struct file_view, entry );
+            if ((start = try_map_free_area( start, view->base, step,
+                                            start, size, unix_prot ))) break;
+            start = ROUND_ADDR( (char *)view->base + view->size + mask, mask );
+            /* stop if remaining space is not large enough */
+            if (!start || start >= end || (char *)end - (char *)start < size) return NULL;
+            first = wine_rb_next( first );
+        }
+    }
+
+    if (!first)
+        return try_map_free_area( base, end, step, start, size, unix_prot );
+
+    return start;
+}
+
+
+/***********************************************************************
  *           find_reserved_free_area
  *
  * Find a free area between views inside the specified range.
@@ -1181,14 +1265,17 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
             goto done;
         }
 
+        if (zero_bits_64)
+        {
+            if (!(ptr = map_free_area( (void*)0, alloc.limit, size, mask, top_down, VIRTUAL_GetUnixProt(vprot) )))
+                return STATUS_NO_MEMORY;
+            TRACE( "got mem with map_free_area %p-%p\n", ptr, (char *)ptr + size );
+            goto done;
+        }
+
         for (;;)
         {
-            if (!zero_bits_64)
-                ptr = NULL;
-            else if (!(ptr = find_reserved_free_area( (void*)0, alloc.limit, view_size, mask, top_down )))
-                return STATUS_NO_MEMORY;
-
-            if ((ptr = wine_anon_mmap( ptr, view_size, VIRTUAL_GetUnixProt(vprot), ptr ? MAP_FIXED : 0 )) == (void *)-1)
+            if ((ptr = wine_anon_mmap( NULL, view_size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
             {
                 if (errno == ENOMEM) return STATUS_NO_MEMORY;
                 return STATUS_INVALID_PARAMETER;
