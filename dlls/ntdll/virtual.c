@@ -1267,7 +1267,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
 
         if (zero_bits_64)
         {
-            if (!(ptr = map_free_area( (void*)0, alloc.limit, size, mask, top_down, VIRTUAL_GetUnixProt(vprot) )))
+            if (!(ptr = map_free_area( address_space_start, alloc.limit, size, mask, top_down, VIRTUAL_GetUnixProt(vprot) )))
                 return STATUS_NO_MEMORY;
             TRACE( "got mem with map_free_area %p-%p\n", ptr, (char *)ptr + size );
             goto done;
