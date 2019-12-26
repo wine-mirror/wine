@@ -234,11 +234,6 @@ static int cb_called[4];
 static int g_qsort_s_context_counter;
 static int g_bsearch_s_context_counter;
 
-static inline int almost_equal_f(float f1, float f2)
-{
-    return f1-f2 > -1e-30 && f1-f2 < 1e-30;
-}
-
 /* ########## */
 
 /* thiscall emulation */
@@ -1009,7 +1004,7 @@ if (0)
             _atoflt_testdata[i].ret, _atoflt_testdata[i].str);
 
         if (ret == 0)
-          ok(almost_equal_f(flt.f, _atoflt_testdata[i].flt), "got %f, expected %f, for %s\n", flt.f,
+          ok(flt.f == _atoflt_testdata[i].flt, "got %f, expected %f, for %s\n", flt.f,
               _atoflt_testdata[i].flt, _atoflt_testdata[i].str);
 
         i++;
