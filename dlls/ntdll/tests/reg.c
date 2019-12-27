@@ -387,7 +387,9 @@ todo_wine
     /* Open is case sensitive unless OBJ_CASE_INSENSITIVE is specified. */
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\Machine" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
-    todo_wine ok(status == STATUS_OBJECT_PATH_NOT_FOUND, "NtOpenKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_OBJECT_PATH_NOT_FOUND || status == STATUS_SUCCESS /* Win10 1607+ */,
+            "NtOpenKey Failed: 0x%08x\n", status);
+    if (!status) pNtClose( key );
 
     attr.Attributes = OBJ_CASE_INSENSITIVE;
     status = pNtOpenKey(&key, KEY_READ, &attr);
@@ -615,8 +617,9 @@ static void test_NtCreateKey(void)
     attr.Attributes = 0;
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\Machine\\Software\\Classes" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
-    todo_wine
-    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    ok(status == STATUS_OBJECT_PATH_NOT_FOUND || status == STATUS_SUCCESS /* Win10 1607+ */,
+            "NtCreateKey failed: 0x%08x\n", status );
+    if (!status) pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\REGISTRY\\Machine\\Software\\Classes" );
@@ -926,14 +929,14 @@ static void test_NtQueryLicenseKey(void)
     len = 0xbeef;
     status = pNtQueryLicenseValue(&name, NULL, buffer, sizeof(buffer), &len);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryLicenseValue returned %08x, expected STATUS_OBJECT_NAME_NOT_FOUND\n", status);
-    ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
+    ok(len == 0xbeef || broken(!len) /* Win10 1607 */, "expected unmodified value for len, got %u\n", len);
 
     type = 0xdead;
     len = 0xbeef;
     status = pNtQueryLicenseValue(&name, &type, buffer, sizeof(buffer), &len);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryLicenseValue unexpected succeeded\n");
     ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
-    ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
+    ok(len == 0xbeef || broken(!len) /* Win10 1607 */, "expected unmodified value for len, got %u\n", len);
 
     pRtlFreeUnicodeString(&name);
 
@@ -1291,7 +1294,7 @@ static void test_symlinks(void)
     ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
     attr.ObjectName = &link_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_SUCCESS || status == STATUS_OBJECT_NAME_NOT_FOUND,
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_NAME_INVALID /* Win10 1607+ */,
         "NtOpenKey wrong status 0x%08x\n", status );
 
     key = (HKEY)0xdeadbeef;
@@ -1320,8 +1323,10 @@ static void test_symlinks(void)
     ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
 
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_NAME_TOO_LONG,
-        "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND /* XP */
+            || status == STATUS_NAME_TOO_LONG
+            || status == STATUS_INVALID_PARAMETER /* Win10 1607+ */,
+            "NtOpenKey failed: 0x%08x\n", status );
 
     attr.Attributes = OBJ_OPENLINK;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
