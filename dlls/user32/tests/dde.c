@@ -43,6 +43,22 @@ static WNDPROC old_dde_client_wndproc;
 
 static const DWORD default_timeout = 200;
 
+static HANDLE create_process(const char *arg)
+{
+    STARTUPINFOA si = {.cb = sizeof(si)};
+    PROCESS_INFORMATION pi;
+    char cmdline[200];
+    char **argv;
+    BOOL ret;
+
+    winetest_get_mainargs(&argv);
+    sprintf(cmdline, "\"%s\" %s %s", argv[0], argv[1], arg);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess failed: %u\n", GetLastError());
+    CloseHandle(pi.hThread);
+    return pi.hProcess;
+}
+
 static BOOL is_cjk(void)
 {
     int lang_id = PRIMARYLANGID(GetUserDefaultLangID());
@@ -253,23 +269,25 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
-static void test_msg_server(HANDLE hproc, HANDLE hthread)
+static void test_msg_server(void)
 {
+    HANDLE client;
     MSG msg;
     HWND hwnd;
     DWORD res;
 
     create_dde_window(&hwnd, "dde_server", dde_server_wndproc);
-    ResumeThread( hthread );
+    client = create_process("ddeml");
 
-    while (MsgWaitForMultipleObjects( 1, &hproc, FALSE, INFINITE, QS_ALLINPUT ) != 0)
+    while (MsgWaitForMultipleObjects(1, &client, FALSE, INFINITE, QS_ALLINPUT) != 0)
     {
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     }
 
     destroy_dde_window(&hwnd, "dde_server");
-    GetExitCodeProcess( hproc, &res );
+    GetExitCodeProcess(client, &res);
     ok( !res, "client failed with %u error(s)\n", res );
+    CloseHandle(client);
 }
 
 static HDDEDATA CALLBACK client_ddeml_callback(UINT uType, UINT uFmt, HCONV hconv,
@@ -823,13 +841,16 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
     return 0;
 }
 
-static void test_ddeml_server(HANDLE hproc)
+static void test_ddeml_server(void)
 {
+    HANDLE client;
     MSG msg;
     UINT res;
     BOOL ret;
     HSZ server;
     HDDEDATA hdata;
+
+    client = create_process("msg");
 
     /* set up DDE server */
     server_pid = 0;
@@ -842,14 +863,15 @@ static void test_ddeml_server(HANDLE hproc)
     hdata = DdeNameService(server_pid, server, 0, DNS_REGISTER);
     ok(hdata == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", hdata);
 
-    while (MsgWaitForMultipleObjects( 1, &hproc, FALSE, INFINITE, QS_ALLINPUT ) != 0)
+    while (MsgWaitForMultipleObjects(1, &client, FALSE, INFINITE, QS_ALLINPUT) != 0)
     {
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     }
     ret = DdeUninitialize(server_pid);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    GetExitCodeProcess( hproc, &res );
+    GetExitCodeProcess(client, &res);
     ok( !res, "client failed with %u error(s)\n", res );
+    CloseHandle(client);
 }
 
 static HWND client_hwnd, server_hwnd;
@@ -2683,8 +2705,9 @@ static void test_end_to_end_client(BOOL type_a)
 
 }
 
-static void test_end_to_end_server(HANDLE hproc, HANDLE hthread, BOOL type_a)
+static void test_end_to_end_server(BOOL client_unicode, BOOL server_unicode)
 {
+    HANDLE client;
     MSG msg;
     HSZ server;
     BOOL ret;
@@ -2692,13 +2715,14 @@ static void test_end_to_end_server(HANDLE hproc, HANDLE hthread, BOOL type_a)
     HDDEDATA hdata;
     static const char test_service[] = "TestDDEService";
 
-    trace("start end to end server %s\n", type_a ? "ASCII" : "UNICODE");
+    trace("client %s, server %s\n", client_unicode ? "unicode" : "ascii",
+            server_unicode ? "unicode" : "ascii");
     server_pid = 0;
 
-    if (type_a)
-        res = DdeInitializeA(&server_pid, server_end_to_end_callback, APPCLASS_STANDARD, 0);
-    else
+    if (server_unicode)
         res = DdeInitializeW(&server_pid, server_end_to_end_callback, APPCLASS_STANDARD, 0);
+    else
+        res = DdeInitializeA(&server_pid, server_end_to_end_callback, APPCLASS_STANDARD, 0);
     ok(res == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", res);
 
     server = DdeCreateStringHandleA(server_pid, test_service, CP_WINANSI);
@@ -2706,27 +2730,25 @@ static void test_end_to_end_server(HANDLE hproc, HANDLE hthread, BOOL type_a)
 
     hdata = DdeNameService(server_pid, server, 0, DNS_REGISTER);
     ok(hdata == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", hdata);
-    ResumeThread( hthread );
 
+    client = create_process(client_unicode ? "endw" : "enda");
 
-    while (MsgWaitForMultipleObjects( 1, &hproc, FALSE, INFINITE, QS_ALLINPUT ) != 0)
+    while (MsgWaitForMultipleObjects(1, &client, FALSE, INFINITE, QS_ALLINPUT) != 0)
     {
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     }
 
     ret = DdeUninitialize(server_pid);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    GetExitCodeProcess( hproc, &res );
+    GetExitCodeProcess(client, &res);
     ok( !res, "client failed with %u error(s)\n", res );
+    CloseHandle(client);
 }
 
 START_TEST(dde)
 {
     int argc;
     char **argv;
-    char buffer[MAX_PATH];
-    STARTUPINFOA startup;
-    PROCESS_INFORMATION proc;
     DWORD dde_inst = 0xdeadbeef;
 
     argc = winetest_get_mainargs(&argv);
@@ -2754,30 +2776,12 @@ START_TEST(dde)
         return;
     }
 
-    ZeroMemory(&startup, sizeof(STARTUPINFOA));
-    sprintf(buffer, "%s dde ddeml", argv[0]);
-    startup.cb = sizeof(startup);
-    startup.dwFlags = STARTF_USESHOWWINDOW;
-    startup.wShowWindow = SW_SHOWNORMAL;
-
-    CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
-                   CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
-
-    test_msg_server(proc.hProcess, proc.hThread);
-
-    sprintf(buffer, "%s dde msg", argv[0]);
-    CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
-                   0, NULL, NULL, &startup, &proc);
-
-    test_ddeml_server(proc.hProcess);
+    test_msg_server();
+    test_ddeml_server();
 
     /* Test the combinations of A and W interfaces with A and W data
        end to end to ensure that data conversions are accurate */
-    sprintf(buffer, "%s dde enda", argv[0]);
-    CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
-                   CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
-
-    test_end_to_end_server(proc.hProcess, proc.hThread, TRUE);
+    test_end_to_end_server(FALSE, FALSE);
 
     /* Don't bother testing W interfaces on Win9x/WinMe */
     SetLastError(0xdeadbeef);
@@ -2788,23 +2792,9 @@ START_TEST(dde)
     }
     else
     {
-        sprintf(buffer, "%s dde endw", argv[0]);
-        CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
-                       CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
-
-        test_end_to_end_server(proc.hProcess, proc.hThread, FALSE);
-
-        sprintf(buffer, "%s dde enda", argv[0]);
-        CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
-                       CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
-
-        test_end_to_end_server(proc.hProcess, proc.hThread, FALSE);
-
-        sprintf(buffer, "%s dde endw", argv[0]);
-        CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
-                       CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
-
-        test_end_to_end_server(proc.hProcess, proc.hThread, TRUE);
+        test_end_to_end_server(TRUE, TRUE);
+        test_end_to_end_server(FALSE, TRUE);
+        test_end_to_end_server(TRUE, FALSE);
 
         test_dde_aw_transaction( FALSE, TRUE );
         test_dde_aw_transaction( TRUE, FALSE );
