@@ -1585,20 +1585,14 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
     else
     {
         buf_len = src_len * 4;
-        do
+        for (;;)
         {
-            WCHAR *old_buf = buf;
-
-            if (!buf) buf = RtlAllocateHeap( GetProcessHeap(), 0, buf_len );
-            else buf = RtlReAllocateHeap( GetProcessHeap(), 0, buf, buf_len );
-            if (!buf)
-            {
-                RtlFreeHeap( GetProcessHeap(), 0, old_buf );
-                return STATUS_NO_MEMORY;
-            }
+            buf = RtlAllocateHeap( GetProcessHeap(), 0, buf_len * sizeof(WCHAR) );
+            if (!buf) return STATUS_NO_MEMORY;
             res = wine_decompose_string( flags, src, src_len, buf, buf_len );
+            if (res) break;
             buf_len *= 2;
-        } while (!res);
+        }
     }
 
     if (compose)
