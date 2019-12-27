@@ -1,12 +1,12 @@
-The Wine development release 5.0-rc2 is now available.
+The Wine development release 5.0-rc3 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/5.0/wine-5.0-rc2.tar.xz
-  http://mirrors.ibiblio.org/wine/source/5.0/wine-5.0-rc2.tar.xz
+  https://dl.winehq.org/wine/source/5.0/wine-5.0-rc3.tar.xz
+  http://mirrors.ibiblio.org/wine/source/5.0/wine-5.0-rc3.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,141 +22,131 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 5.0-rc2 (total 36):
+Bugs fixed in 5.0-rc3 (total 46):
 
-  10696  Direct3D mode in Age of Wonders 2 demo is unusably slow and glitchy
-  18879  The Sims 3: Textures go Black and sometimes Abnormal patterns.
-  26276  StarFisher: Crashes when entering a New Event
-  30506  GdipGraphicsClear() needs to overwrite pixels, not alpha blend (Text misrendered in Brain Workshop)
-  31399  Pegasus Mail 4.6x is crashing
-  31543  Warface not started
-  35205  WOLF RPG Editor 2.10: Updating the whole texture in IDirect3DDevice9::UpdateTexture() breaks font caches
-  35731  Startopia: menu contents flicker
-  38054  DoDragDrop() should abort when IDropSource::QueryContinueDrag fails
-  38596  Photo Ninja 1.2.5 (32 bit) crashes on startup
-  38981  Super Mario Bros X v1.3.x crashes when starting game with sound enabled
-  39804  Algodoo v2.1.0 crashes on startup
-  42942  Disgen 2016: Fatal error when adding a person to the database (Sqlite).
-  43189  Christmas Magic crashes on start without native d3drm
-  44734  D3D accelerates can't be enabled in Plants Vs Zomies ,When this is selected,It says hardware not supported.
-  46981  winetricks -q --verify dotnet461 crashes under win64
-  47275  winecfg fails to connect to mountmgr on 64-bit
-  47350  Winecfg crashes on exit (macOS wine built without mingw)
-  47364  COM ports do not work
-  47565  winetricks vcrun* verbs fail with Wine 4.12(+), when using a 32-bit WINEPREFIX
-  47649  Wavelab 6 Installs but cannot launch (Mingw generates misplaced stack pointer in DECLSPEC_HOTPATCH stubs for 32-bit)
-  47817  Gameforge Client: Cannot launch TERA
-  47856  Logos Bible Software (.Net 4.7.2 app) crashes in win8/10 (probably RtlQueryUnbiasedInterruptTime insufficiency)
-  47959  WINE fails to configure on CYGWIN
-  47993  Epic Games Launcher crashes at the installation
-  48059  IMVU Social Network Client hangs
-  48088  Wrong color mapping with client-side graphics on 256-color X server
-  48160  cl.exe (visual studio 2017) fails to compile c++ due to error C2177: constant too big
-  48183  Running most applications causes a crash in krnl386.exe DllMain() when the Windows version is set to non-NT
-  48239  MTGA Launcher fails to download the game (regression)
-  48261  Batman: Arkham Knight hangs when trying to close upgrade screen
-  48273  Relay debugging is broken in a --without-mingw build
-  48288  kernelbase: Japanese character wrongly reported as invalid.
-  48300  timezone info not found for 'CET' spam on prefix creation
-  48304  Mail.ru Game Center incorrectly determines the version of Windows that is being used, therefore it does not start, because it requires at least Windows 7.
-  48314  Building wine on CentOS7 fails due to lack of libkrb5
+  11633  Blood 2: The Chosen Launcher audio bug
+  11998  NEXON client installers using embedded IE browser control: buttons don't respond to click (Lunia Senki, Combat Arms, War Rock)
+  12675  Lego Racers crashes trying to play videos when Indeo 5 codec is not installed
+  12941  International Football 2000: crashes when launching in Direct3D mode
+  14901  MoveFile fails when used to recase some letters of the filename
+  17766  Empire Earth crashes on start without native directmusic
+  21218  Pac-Man All Stars: Story Mode starts with page fault on read access
+  21715  Blitz3d demo version can't show samples
+  21791  3D Rad demo "BeltBall" full screen display shows as tiny black rectangle
+  22278  swkotor crashes on videos
+  23002  Dynamic HTML Editor unusable due to screen refresh problem
+  23525  Daytona USA Evolutions: some text/graphics are black, should be colored
+  24740  Trinklet Supreme crashes on startup
+  24946  uTorrent 2.2.0 hangs on startup (FD_WRITE event is reported over and over in WSAEnumNetworkEvents for a bound UDP socket)
+  26566  Gabriel Knight 3: visual glitches in DirectDraw HAL mode
+  27525  Active Worlds 5.x/6.x shows 3D-world view/window separated from main window (embedded browser control)
+  31562  crash in mmdevapi/MMDevCol_GetCount() using lithtech game engine.
+  33829  explorer.exe crashes with simsun.ttc in non-english locale
+  33908  Undercover: Operation Wintersun demo freezes on start
+  34232  Rigs of Rods: dropdown menus have too small height
+  34383  BoulderDashPortal does not start
+  35412  wine's cmd fails on if not exist foo\nul
+  35613  Foxit Reader 6.12: 'Show Certificate' button is greyed out after failure to validate digital signature
+  36878  You Don't Know Jack V1 XL: Not possible to accept license agreement in installer
+  37574  Everyday Shooter -- crackling/popping sound
+  37900  Xara Photo Graphic Designer 2013 (8.1.1) crashes on startup
+  39084  Simpsons Hit & Run regression: fullscreen glitching
+  39809  Empires: Dawn of the Modern World crash on startup
+  41619  Lego Racers: crashes when moving the mouse
+  43115  Metal Slug 1, X, 3 (GOG.com) fail to start
+  43368  HashMyFiles: Drag & Drop from native File Managers (Dolphin, Nautilus, ...) does not work
+  44019  Stud.io: parts not showing in the Building Palette
+  44062  Hedgewars 0.9.23 crashes on start
+  44773  LEGO Pirates of the Caribbean DEMO crashes on startup
+  44798  New Bugs on Epic Games
+  45608  Flintest: Garbled Text
+  47428  mouse input skipping / jitter in conjunction with xf86-video-amdgpu in almost every game
+  47484  `winetricks -q dotnet20sp1` fails when compiled with mingw (failure to relocate PE builtin ngen.exe)
+  47710  objidl.h contains invalid C++
+  47969  Taiga: Crashes on changing the grouping in seasons
+  48141  Total Commander: launching of native linux commands for file associations is broken
+  48180  Divinity: Original Sin 2 - Icons in inventory are invisible
+  48324  cl.exe fails to compile valid code with float constant due to error C2177: constant too big
+  48349  Steam doesn't display main window
+  48350  TrackMania Forever: Dialog after running the ingame benchmark doesn't show up
+  48358  Dell Latitude E6440 BIOS updater crashes on unimplemented function ntoskrnl.exe.KeSetImportanceDpc
 
 ----------------------------------------------------------------
 
-Changes since 5.0-rc1:
+Changes since 5.0-rc2:
 
-Akihiro Sagawa (2):
-      kernel32/tests: Refactor MB_ERR_INVALID_CHARS tests.
-      kernelbase: Use translated Unicode default char to check invalid chars.
+Alex Henrie (2):
+      ntoskrnl: Add KeSetImportanceDpc stub.
+      po: Update Catalan translation.
 
-Alexandre Julliard (21):
-      libport: Fix the Cygwin build.
-      kernel32: Duplicate OutputDebugStringA implementation.
-      api-ms-win-core-localization: Add spec entry for FindNLSString().
-      ntdll: Fix RtlQueryUnbiasedInterruptTime() prototype.
-      ntdll: Fix loading the main binary as PE file with an explicit dll override.
-      msvcrt/tests: Add some tests for wcstoi64().
-      msvcrt: Fix wcstoul() to behave identically to strtoul().
-      include: Allow using debug.h in tests.
-      advapi32/tests: Use debug.h functions.
-      d3dx9_36/tests: Fix some constant conversion warnings.
-      oledb32/tests: Fix a constant conversion warning.
-      winmm/tests: Fix a constant conversion warning.
-      msvcp120/tests: Don't use const pointers to avoid compiler warnings.
-      ntdll: Silence the timezone fixme when the registry is empty.
-      tools: Upgrade the autoconf scripts.
-      winebuild: Add a --builtin option to mark PE files as builtins.
-      winegcc: Use winebuild to set the builtin flag.
-      makefiles: Add the builtin flag again after stripping.
-      configure: Disable gssapi also when linking with kerberos doesn't work.
-      winex11: Use the default color table for window surfaces on 8bpp displays.
-      winecrt0: Preserve last error when loading debug functions.
+Alexandre Julliard (2):
+      d3d8: Remove redundant includes.
+      ntdll: Fix memory corruption in RtlNormalizeString().
 
-Alistair Leslie-Hughes (3):
-      dmloader: Release objects on error paths (Coverity).
-      oledb32/tests: Add PromptNew interactive test.
-      dmime: IDirectMusicAudioPath Release primary buffer.
+Damjan Jovanovic (1):
+      winex11.drv: Ignore .dwAspect in FORMATETC during XDnD.
 
-André Hentschel (3):
-      kernel32: Fix some spec file entries.
-      mapi32: Fix some spec file entries.
-      rpcrt4: Fix RpcNetworkIsProtseqValid[AW] spec file entries.
-
-Charles Davis (4):
-      kernel32: Forward OpenThreadToken() to kernelbase.
-      kernel32: Forward OpenProcessToken() to kernelbase.
-      winemac.drv: Pass the CAMetalLayer to MoltenVK.
-      winemac.drv: Support VK_EXT_metal_surface.
-
-Damjan Jovanovic (2):
-      ws2_32: Remove an unneeded todo_wine.
-      wineserver: Avoid spurious FD_WRITE on repeated calls to WSAEventSelect().
+Dmitry Timoshkov (2):
+      ntdll: Use default casemap and codepage file names if the value in registry is empty.
+      msscript.ocx/tests: Fix a typo.
 
 Erich Hoover (2):
-      msvcrt: Implement strtod without using 'long double'.
-      msvcrt: Implement wcstod without using 'long double'.
+      ntdll: Drop support for floating point numbers in sscanf.
+      msvcrt: Fix [str|wcs]tod result being compared against FLT_MAX.
 
-Jacek Caban (6):
-      jscript/tests: Allow GetTypeInfo calls.
-      rpcrt4: Fix implicit in attribute handling in write_param_fs.
-      rpcrt4: Support VT_BSTR in get_param_pointer_info.
-      wininet: Add missing schemes to url_schemes.
-      wininet: Don't set default gopher protocol in InternetCrackUrlW.
-      configure: Allow setting CROSSLDFLAGS by configure.
+Jeff Smith (1):
+      include: Declare _STGMEDIUM_UNION type except when it violates C spec.
 
-Louis Lenders (1):
-      kernel32: Update version to win7.
+Martin Storsjo (1):
+      msvcrt: Only export __p__* functions on i386.
 
-Michael Stefaniuc (6):
-      dmband/tests: Use wide-char string literals.
-      dmime/tests: Use wide-char string literals.
-      dmstyle/tests: Use wide-char string literals.
-      dswave/tests: Use wide-char string literals.
-      dmime: Use a rbtree to store the PChannels of a performance.
-      dmime/tests: Add PChannel tests.
+Michael Stefaniuc (2):
+      dmstyle: Avoid cloning the IStream in parse_style_form().
+      dmcompos/tests: Add Chord track GetParam/SetParam tests.
 
-Nikolay Sivov (13):
-      ole32/tests: Add tests for system moniker identification queries.
-      ole32/tests: Add some tests for item moniker equality.
-      ole32/tests: Test inverse moniker type.
-      ole32/tests: Add some tests for combined antimonikers.
-      ole32/tests: Remove trace noise from moniker tests.
-      ole32/tests: Add equality tests for antimonikers.
-      ole32/tests: Add some more tests for item moniker hashing.
-      ole32/tests: Add PropVariantCopy() test for BSTR with embedded null.
-      include: Add I1 vector definitions for PROPVARIANT.
-      ole32/tests: Add some tests for Reduce().
-      dwrite/tests: Improve coverage of IsSymbolFont() tests.
-      ole32/tests: Add a trivial test for IMoniker::Enum().
-      po: Update some Russian strings.
+Nikolay Sivov (6):
+      dwrite/tests: Improve coverage of IsMonospacedFont() tests.
+      dwrite/tests: Add IsColorFont() tests.
+      ole32/tests: Use heap-based object for custom moniker.
+      ole32/tests: Add a test for bind speed used by item moniker BindToObject().
+      ole32/tests: Add some tests for item moniker ParseDisplayName().
+      include: Update DWRITE_FONT_PROPERTY_ID enum.
 
-Zebediah Figura (6):
-      ntdll: Return -1 from Unix code page conversion functions if an error was encountered.
-      winegstreamer: Clear the "reader" and "allocator" fields if connection fails.
-      qedit/samplegrabber: Clean up the pins in sample_grabber_destroy().
-      qedit/samplegrabber: Consistently use the "pMemInputPin" member of struct strmbase_source.
-      qedit/samplegrabber: Fix a typo in format type negotiation.
-      rpcrt4: Fix ITypeInfo ref count handling.
+Piotr Caban (3):
+      msvcr90: Fix compilation warning in __AdjustPointer tests.
+      msvcrt/tests: Improve doubles comparison in strtod and atodbl tests.
+      msvcr90/tests: Improve floats comparison in _atoflt tests.
+
+Rémi Bernon (7):
+      user32/tests: Move TEST_MOUSEACTIVATE to test_defwinproc.
+      user32/tests: Return MA_ACTIVATE to WM_MOUSEACTIVATE on main test window.
+      winex11.drv: Send HTMENU instead of HTCAPTION to query window activation.
+      ntdll: Rename find_free_area to find_reserved_free_area.
+      ntdll: Split view search initialization to find_view_inside_range function.
+      ntdll: Replace incorrect find_free_reserved_area function call.
+      ntdll: Start find_free_area from address_space_start instead of 0.
+
+Steve Lhomme (2):
+      include: Add dxgidebug.idl.
+      include: Add D3D11_VIDEO_PROCESSOR_FORMAT_SUPPORT_OUTPUT.
+
+Zebediah Figura (9):
+      winegstreamer: Recognize the "video/x-cinepak" type.
+      ole32/tests: Avoid testing exact sequences of IUnknown methods.
+      ole32/tests: Rewrite and expand test_data_cache_updatecache().
+      ole32/tests: Make the tests less verbose by default.
+      oleaut32/tests: Avoid testing that GDI objects are invalid.
+      ntdll/tests: Remove a no longer reliable test.
+      user32/tests: Remove unnecessary uses of CREATE_SUSPENDED.
+      user32/tests: Get rid of some Windows 9x workarounds.
+      user32/tests: Work around failures on Windows 10 version 1607.
+
+Zhiyi Zhang (5):
+      configure: Update Xinerama and XRandR extension help strings.
+      user32/tests: Mark some GetDeviceCaps() tests as todo on Wine.
+      winhttp: Initialize a return variable.
+      include: Fix SetupDiOpenDeviceInterfaceRegKey() prototype.
+      include: Add GUID_DEVINTERFACE_MONITOR.
 
 --
 Alexandre Julliard
