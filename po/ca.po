@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-17 21:33-0700\n"
+"PO-Revision-Date: 2019-12-26 18:54-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.2\n"
+"X-Generator: Poedit 2.2.4\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -629,7 +629,7 @@ msgstr "Colors personalit&zats:"
 
 #: comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|Sò&lid"
 
 #: comdlg32.rc:290
 msgid "&Red:"
@@ -666,11 +666,9 @@ msgid "&Define Custom Colors >>"
 msgstr "D&efinició de colors personalitzats >>"
 
 #: comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&No"
+msgstr "&l"
 
 #: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
@@ -1723,7 +1721,7 @@ msgstr "Correu electrònic segur"
 
 #: crypt32.rc:142
 msgid "Time Stamping"
-msgstr "Segellament de temps"
+msgstr "Marcació horària"
 
 #: crypt32.rc:143
 msgid "Microsoft Trust List Signing"
@@ -1731,7 +1729,7 @@ msgstr "Segellament de llista de confiança del Microsoft"
 
 #: crypt32.rc:144
 msgid "Microsoft Time Stamping"
-msgstr "Segellament de temps del Microsoft"
+msgstr "Marcació horària del Microsoft"
 
 #: crypt32.rc:145
 msgid "IP security end system"
@@ -3924,7 +3922,7 @@ msgstr "La longitud és dolenta.\n"
 
 #: winerror.mc:153 winerror.mc:528
 msgid "Seek error.\n"
-msgstr "Hi ha hagut un error en cercar.\n"
+msgstr "Hi ha hagut un error en saltar.\n"
 
 #: winerror.mc:158
 msgid "Not DOS disk.\n"
@@ -4216,7 +4214,7 @@ msgstr "L'ús d'identificador d'accés directe no és vàlid.\n"
 
 #: winerror.mc:523
 msgid "Negative seek.\n"
-msgstr "La cerca és negativa.\n"
+msgstr "El salt és negatiu.\n"
 
 #: winerror.mc:533
 msgid "Drive is a JOIN target.\n"
@@ -4372,7 +4370,7 @@ msgstr "El fitxer ja existeix.\n"
 
 #: winerror.mc:723
 msgid "Invalid flag number.\n"
-msgstr "El número de bandera no és vàlid.\n"
+msgstr "El número d'opció no és vàlid.\n"
 
 #: winerror.mc:728
 msgid "Semaphore name not found.\n"
@@ -4624,7 +4622,7 @@ msgstr "No es pot acabar.\n"
 
 #: winerror.mc:1038
 msgid "Invalid flags.\n"
-msgstr "Les banderes no són vàlides.\n"
+msgstr "Les opcions no són vàlides.\n"
 
 #: winerror.mc:1043
 msgid "Unrecognized volume.\n"
@@ -5700,7 +5698,7 @@ msgstr "L'autenticació mútua ha fallat.\n"
 
 #: winerror.mc:2393
 msgid "Time skew between client and server.\n"
-msgstr "Hi ha una asimetria de temps entre el client i el servidor.\n"
+msgstr "Hi ha una asimetria horària entre el client i el servidor.\n"
 
 #: winerror.mc:2398
 msgid "Invalid window handle.\n"
@@ -6840,541 +6838,387 @@ msgstr "Envia correu"
 
 #: mferror.mc:249 mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "Ja s'ha fet la sol·licitud per començar.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "No s'ha trobat l'UUID de l'objecte.\n"
+msgstr "No s'ha finalitzat el receptor.\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "La plataforma d'instal·lació no és compatible.\n"
+msgstr "No s'ha inicialitzat la plataforma de Fundació de Mitjans.\n"
 
 #: mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "El nombre de bytes és massa petit.\n"
+msgstr "La memòria intermèdia és massa petita.\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "La sintaxi de consulta no és vàlida.\n"
+msgstr "La sol·licitud no és vàlida.\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "El número de segment no és vàlid.\n"
+msgstr "El número de flux no és vàlid.\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "El tipus de dades no és vàlid.\n"
+msgstr "El tipus de mitjans no és vàlid.\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "No hi ha més entrades.\n"
+msgstr "No s'accepten més entrades.\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "No s'ha trobat l'UUID de l'objecte.\n"
+msgstr "No s'ha inicialitzat l'objecte.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "No s'admet l'operació.\n"
+msgstr "No s'admet la representació.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "No hi ha més tipus en la llista de tipus de mitjans suggerits.\n"
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El servei és incompatible.\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "Hi ha hagut un error de xarxa inesperat.\n"
+msgstr "Hi ha hagut un error inesperat.\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "L'hora no és vàlida.\n"
+msgstr "El tipus no és vàlid.\n"
 
 #: mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "El format de píxels no és vàlid.\n"
+msgstr "El format de fitxer no és vàlid.\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "L'hora no és vàlida.\n"
+msgstr "La marca horària no és vàlida.\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "L'esquema és incompatible.\n"
 
 #: mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El flux de bytes és incompatible.\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El format horari és incompatible.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "La marca horària de la mostra no està establerta.\n"
 
 #: mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "La mostra no té cap duració establerta.\n"
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "Les dades no són vàlides.\n"
+msgstr "Les dades de flux no són vàlides.\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "No hi ha cap ajuda disponible."
+msgstr "Suport per a temps real no està disponible.\n"
 
 #: mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "La velocitat és incompatible.\n"
 
 #: mferror.mc:200
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported thinning.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "L'aprimament és incompatible.\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "No s'admet la sol·licitud.\n"
+msgstr "No s'admet marxa enrere.\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "No s'admet el nivell d'autorització.\n"
+msgstr "La transició de velocitat no és compatible.\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "El canvi de velocitat ha estat cancel·lat per un altre.\n"
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "No s'ha trobat l'UUID de l'objecte.\n"
+msgstr "No s'ha trobat l'objecte o el valor.\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "No hi ha cap ajuda disponible."
+msgstr "El valor no està disponible.\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "No hi ha cap ajuda disponible."
+msgstr "El rellotge no està disponible.\n"
 
 #: mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "No s'accepten atributs extensos.\n"
+msgstr "No s'accepten múltiples subscriptors.\n"
 
 #: mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "El controlador no estava habilitat."
+msgstr "El temporitzador s'ha fet orfe.\n"
 
 #: mferror.mc:277
-#, fuzzy
-#| msgid "Character translation table open failed.\n"
 msgid "State transition is pending.\n"
-msgstr "Ha fallat l'obertura de la taula de traducció de caràcters.\n"
+msgstr "Una transició d'estat està penjada.\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported state transition.\n"
-msgstr "No s'admet el nivell d'autorització.\n"
+msgstr "La transició de velocitat no és compatible.\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "Ha ocorregut un error intern.\n"
+msgstr "Ha ocorregut un error no recuperable.\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "La mostra té massa memòria intermèdia.\n"
 
 #: mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "No es pot escriure al directori temporal.\n"
+msgstr "No es pot escriure a la mostra.\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "El camí no és vàlid.\n"
+msgstr "La clau no és vàlida.\n"
 
 #: mferror.mc:319
-#, fuzzy
-#| msgid "Wrong stub version.\n"
 msgid "Bad startup version.\n"
-msgstr "La versió d'esbós (stub) és incorrecta.\n"
+msgstr "La versió d'inici és dolenta.\n"
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El subtítol és incompatible.\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "L'estació de treball no és vàlida.\n"
+msgstr "La posició no és vàlida.\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "No s'ha trobat el fitxer.\n"
+msgstr "No s'ha trobat l'atribut.\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "El tipus de ganxo no es permet.\n"
+msgstr "El tipus de propietat no es permet.\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "No s'admet l'operació.\n"
+msgstr "El tipus de propietat no s'admet.\n"
 
 #: mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "El directori no està buit.\n"
+msgstr "La propietat està buida.\n"
 
 #: mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "El directori no està buit.\n"
+msgstr "La propietat no està buida.\n"
 
 #: mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "El tipus de ganxo no es permet.\n"
+msgstr "No es permet una propietat vectora.\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "Cal una propietat vectora.\n"
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "L'usuari ha cancel·lat l'operació.\n"
+msgstr "S'ha cancel·lat l'operació.\n"
 
 #: mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "El servidor no està inhabilitat.\n"
+msgstr "No es pot saltar en el flux de bytes.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "La plataforma està inhabilitat en el mode segur.\n"
 
 #: mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "No es pot crear el fil de servei.\n"
+msgstr "No es pot analitzar el flux de bytes.\n"
 
 #: mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "S'han passat opcions mutualment exclusives al resolutor de fons.\n"
 
 #: mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "La interfície és desconeguda.\n"
+msgstr "La llargada del flux de dades és desconeguda.\n"
 
 #: mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "L'índex no és vàlid.\n"
+msgstr "L'índex de cua de treball no és vàlida.\n"
 
 #: mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "Cap servidor d'autenticació està disponible.\n"
+msgstr "Cap esdeveniment està disponible.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "No s'admet el nivell d'autorització.\n"
+msgstr "La transició d'estat de fons de mitjans no és vàlida.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "S'ha recuperat el registre.\n"
+msgstr "S'ha arribat al final del flux de mitjans.\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "S'ha invocat Shutdown().\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "S'ha recuperat el registre.\n"
+msgstr "El flux de mitjans no té cap duració establerta.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "El format de mitjans s'ha reconegut però no és vàlid.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "No s'ha trobat el conjunt de propietats.\n"
+msgstr "No s'ha trobat la propietat.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "El directori no està buit.\n"
+msgstr "Només es pot llegir la propietat.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "El tipus de ganxo no es permet.\n"
+msgstr "No es permet la propietat.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "El recurs està en ús.\n"
+msgstr "No s'ha començat la font de mitjans.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El format de mitjans és incompatible.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "El recurs està en ús.\n"
+msgstr "La font de mitjans està en un estat incorrecte.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "No s'ha detectat dades.\n"
+msgstr "No s'ha seleccionat cap flux de mitjans.\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "Les característiques de font de mitjans són incompatibles.\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "S'ha eliminat el receptor de flux.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "Els receptors de flux no estan sincronitzats.\n"
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "S'ha recuperat el registre.\n"
+msgstr "El conjunt de receptors del flux de mitjans és fix.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "El domini ja existeix.\n"
+msgstr "El receptor de flux ja existeix.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "L'usuari ha cancel·lat l'operació.\n"
+msgstr "S'ha cancel·lat l'assignació de mostra.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "El directori no està buit.\n"
+msgstr "L'assignador de mostra està buit.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "La classe ja existeix.\n"
+msgstr "El receptor ja s'ha aturat.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "No s'ha reconegut la velocitat de bits del receptor ASF.\n"
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "No s'ha detectat dades.\n"
+msgstr "No s'ha seleccionat cap flux per al receptor.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "El nom de fitxer és massa llarg.\n"
+msgstr "Les metadades han estat massa llargues.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "El receptor no ha processat cap mostra.\n"
 
 #: mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "No s'han proporcionat les capçaleres requerides al receptor.\n"
 
 #: mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "La connexió no és vàlida.\n"
+msgstr "El node opcional no és vàlid.\n"
 
 #: mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "No es pot trobar la impressora."
+msgstr "No es pot trobar el desxifrador.\n"
 
 #: mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "No s'ha trobat el mòdul.\n"
+msgstr "No s'ha trobat el còdec.\n"
 
 #: mferror.mc:648
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "No es pot obtenir l'identificador de trucada.\n"
+msgstr "No es poden connectar els nodes de la topologia.\n"
 
 #: mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "No s'admet la sol·licitud.\n"
+msgstr "No s'admet la sol·licitud de topologia.\n"
 
 #: mferror.mc:662
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "Els atributs de grup no són vàlids.\n"
+msgstr "Els atributs de topologia horària no són vàlids.\n"
 
 #: mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "S'han trobat bucles en la topologia.\n"
 
 #: mferror.mc:676
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "Manca la font d'instal·lació.\n"
+msgstr "Manca el descriptor de presentació.\n"
 
 #: mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "Manca l'índex.\n"
+msgstr "Manca el descriptor de flux.\n"
 
 #: mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "El dispositiu no està connectat.\n"
+msgstr "El descriptor de flux no està seleccionat.\n"
 
 #: mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "Manca l'índex.\n"
+msgstr "Manca la font.\n"
 
 #: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "El carregador de topologia no admet activacions de receptor.\n"
 
 #: mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "El rellotge no té cap font d'hora establerta.\n"
 
 #: mferror.mc:718
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "La classe ja existeix.\n"
+msgstr "Ja s'ha establert l'estat de rellotge.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8471,26 +8315,20 @@ msgid "Off"
 msgstr "Inactiu"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "vídeo"
+msgstr "Proveïdor"
 
 #: version.rc:45
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "Seleccioneu el format que voleu utilitzar:"
+msgstr "Seleccioneu les dades a les qualles voleu connectar:"
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "Propietats"
+msgstr "Propietats d'enllaç de dades"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "Proveïdors de base de dades OLE"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9884,11 +9722,11 @@ msgstr "Hora d'estiu central"
 
 #: tzres.rc:50
 msgid "Azores Standard Time"
-msgstr "Hora estàndard dels Açores"
+msgstr "Hora estàndard de les Açores"
 
 #: tzres.rc:51
 msgid "Azores Daylight Time"
-msgstr "Hora d'estiu dels Açores"
+msgstr "Hora d'estiu de les Açores"
 
 #: tzres.rc:158
 msgid "North Asia East Standard Time"
@@ -10048,11 +9886,11 @@ msgstr "Hora d'estiu de les muntanyes"
 
 #: tzres.rc:206
 msgid "US Eastern Standard Time"
-msgstr "Hora estàndard oriental EEUU"
+msgstr "Hora estàndard oriental EUA"
 
 #: tzres.rc:207
 msgid "US Eastern Daylight Time"
-msgstr "Hora d'estiu oriental EEUU"
+msgstr "Hora d'estiu oriental EUA"
 
 #: tzres.rc:196
 msgid "Tasmania Standard Time"
@@ -10072,11 +9910,11 @@ msgstr "Hora d'estiu de l'Àmerica Central"
 
 #: tzres.rc:208
 msgid "US Mountain Standard Time"
-msgstr "Hora estàndard de les muntanyes EEUU"
+msgstr "Hora estàndard de les muntanyes EUA"
 
 #: tzres.rc:209
 msgid "US Mountain Daylight Time"
-msgstr "Hora d'estiu de les muntanyes EEUU"
+msgstr "Hora d'estiu de les muntanyes EUA"
 
 #: tzres.rc:188
 msgid "South Africa Standard Time"
@@ -10120,11 +9958,11 @@ msgstr "Hora d'estiu de Iakutsk"
 
 #: tzres.rc:176
 msgid "SA Eastern Standard Time"
-msgstr "Hora estàndard de l'Àmerica del Sud-Est"
+msgstr "Hora estàndard de l'Àmerica del Sud-est"
 
 #: tzres.rc:177
 msgid "SA Eastern Daylight Time"
-msgstr "Hora d'estiu de l'Àmerica del Sud-Est"
+msgstr "Hora d'estiu de l'Àmerica del Sud-est"
 
 #: tzres.rc:34
 msgid "Arab Standard Time"
@@ -10160,11 +9998,11 @@ msgstr "Hora d'estiu romànic"
 
 #: tzres.rc:98
 msgid "Ekaterinburg Standard Time"
-msgstr "Hora estàndard d'Iekaterinburg"
+msgstr "Hora estàndard de Iekaterinburg"
 
 #: tzres.rc:99
 msgid "Ekaterinburg Daylight Time"
-msgstr "Hora d'estiu d'Iekaterinburg"
+msgstr "Hora d'estiu de Iekaterinburg"
 
 #: tzres.rc:192
 msgid "Syria Standard Time"
@@ -10288,11 +10126,11 @@ msgstr "Hora d'estiu de Hawaii"
 
 #: tzres.rc:184
 msgid "SE Asia Standard Time"
-msgstr "Hora estàndard de l'Àsia del Sud-Est"
+msgstr "Hora estàndard de l'Àsia del Sud-est"
 
 #: tzres.rc:185
 msgid "SE Asia Daylight Time"
-msgstr "Hora d'estiu de l'Àsia del Sud-Est"
+msgstr "Hora d'estiu de l'Àsia del Sud-est"
 
 #: tzres.rc:154
 msgid "New Zealand Standard Time"
@@ -10320,11 +10158,11 @@ msgstr "Hora d'estiu de Bielorússia"
 
 #: tzres.rc:180
 msgid "SA Western Standard Time"
-msgstr "Hora estàndard de l'Àmerica del Sud-Oest"
+msgstr "Hora estàndard de l'Àmerica del Sud-oest"
 
 #: tzres.rc:181
 msgid "SA Western Daylight Time"
-msgstr "Hora d'estiu de l'Àmerica del Sud-Oest"
+msgstr "Hora d'estiu de l'Àmerica del Sud-oest"
 
 #: tzres.rc:108
 msgid "Greenland Standard Time"
@@ -10747,7 +10585,7 @@ msgstr "Un número d'error s'ha especificat que no està definit en el sistema."
 
 #: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
-msgstr "S'ha passat una bandera no vàlida a una funció de sistema."
+msgstr "S'ha passat una opció no vàlida a una funció de sistema."
 
 #: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
@@ -10783,7 +10621,7 @@ msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"No es pot obrir el dispositiu sense utilitzar la bandera WAVE_ALLOWSYNC. "
+"No es pot obrir el dispositiu sense utilitzar l'opció WAVE_ALLOWSYNC. "
 "Utilitzeu la bandera i després torneu a intentar."
 
 #: winmm.rc:52
@@ -11026,7 +10864,7 @@ msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"El valor especificat per al format d'hora no és vàlid. Consulteu la "
+"El valor especificat per al format horari no és vàlid. Consulteu la "
 "documentació MCI pels formats vàlids."
 
 #: winmm.rc:93
@@ -11066,7 +10904,7 @@ msgstr "Heu d'especificar un àlies quan s'utilitza el paràmetre 'new'."
 #: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr ""
-"No es pot utilitzar la bandera 'notify' amb els dispositius oberts "
+"No es pot utilitzar l'opció 'notify' amb els dispositius oberts "
 "automàticament."
 
 #: winmm.rc:100
@@ -11242,19 +11080,15 @@ msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-"Els formats d'hora de la \"punter de cançó\" i SMPTE són mútuament "
+"Els formats horaris de la \"punter de cançó\" i SMPTE són mútuament "
 "excloents. No es poden utilitzar junts."
 
 #: winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
 msgstr ""
-"El port MIDI especificat ja està en ús. Espereu fins que estigui lliure; "
+"El port MIDI especificat ja està en ús. Espereu fins que estigui lliure i "
 "llavors torneu a intentar."
 
 #: winmm.rc:131
@@ -11271,16 +11105,12 @@ msgid "An error occurred with the specified port."
 msgstr "Ha ocorregut un error amb el port especificat."
 
 #: winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
 msgstr ""
-"Les altres aplicacions estan utilitzant tots els temporitzadors de "
-"multimèdia. Tanqueu una d'aquestes aplicacions, llavors torneu a intentar."
+"Tots els temporitzadors de multimèdia estan en ús per altres aplicacions. "
+"Tanqueu una d'aquestes aplicacions i llavors torneu a intentar."
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -11692,7 +11522,7 @@ msgid ""
 msgstr ""
 "CALL <nom de fitxer BAT> s'utilitza dins un fitxer BAT per a executar\n"
 "ordres d'un altre fitxer BAT. Quan se surt del fitxer BAT, el control\n"
-"retorna al fitxer que l'ha trucat. L'ordre CALL pot proveir paràmetres al\n"
+"retorna al fitxer que l'ha invocat. L'ordre CALL pot proveir paràmetres al\n"
 "procediment trucat.\n"
 "\n"
 "El procediment trucant hereta els canvis al directori per defecte,\n"
@@ -11792,7 +11622,7 @@ msgstr ""
 "\n"
 "L'etiqueta que és la destinació d'un GOTO pot ser de fins a 255 caràcters\n"
 "de longitud però no pot incloure espais (això és diferent d'altres sistemes\n"
-"operatius). Si dos o més etiquetes idèntiques existeixen en un fitxer BAT,\n"
+"operatius). Si dues o més etiquetes idèntiques existeixen en un fitxer BAT,\n"
 "el primer sempre s'executarà. Intentar fer GOTO a una etiqueta no existent\n"
 "termina l'execució del fitxer BAT.\n"
 "\n"
@@ -12104,14 +11934,14 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"S'utilitza VERIFY per a definir, esborrar o provar la bandera de\n"
+"S'utilitza VERIFY per a establir, esborrar o provar l'opció de\n"
 "verificació. Les formes vàlides són:\n"
 "\n"
-"VERIFY ON\tEstableix la bandera.\n"
-"VERIFY OFF\tEsborra la bandera.\n"
+"VERIFY ON\tEstableix l'opció.\n"
+"VERIFY OFF\tEsborra l'opció.\n"
 "VERIFY\t\tMostra ON o OFF segons correspongui.\n"
 "\n"
-"La bandera de verificació no té cap funció en el Wine.\n"
+"L'opció de verificació no té cap funció en el Wine.\n"
 
 #: cmd.rc:256
 msgid "VER displays the version of cmd you are running.\n"
@@ -13132,7 +12962,7 @@ msgstr "&Executa l'Editor de Registre"
 
 #: oleview.rc:42
 msgid "&CoCreateInstance Flag"
-msgstr "Bandera &CoCreateInstance"
+msgstr "Opció &CoCreateInstance"
 
 #: oleview.rc:44
 msgid "&In-process server"
@@ -14699,7 +14529,7 @@ msgstr "De&finició de la prioritat"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
-msgstr "&Temps real"
+msgstr "Temps &real"
 
 #: taskmgr.rc:160
 msgid "&Above Normal"
@@ -15470,7 +15300,7 @@ msgstr "Visualitzador de Metafitxers Regular"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Metafitxers (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15643,10 +15473,6 @@ msgid "Drive configuration"
 msgstr "Configuració d'unitats"
 
 #: winecfg.rc:233
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -15938,12 +15764,6 @@ msgid "System drive"
 msgstr "Unitat de sistema"
 
 #: winecfg.rc:76
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -16375,7 +16195,7 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
-"Un program en el vostre sistema ha tingut una pana, però el WineDbg no ha "
+"Un programa en el vostre sistema ha tingut una pana, però el WineDbg no ha "
 "pogut enganxar-se al procès per a obtenir una traça inversa."
 
 #: winedbg.rc:41
@@ -17027,10 +16847,8 @@ msgid "Text documents (*.txt)"
 msgstr "Documents de text (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
-msgstr "Documents de text d'Unicode (*.txt)"
+msgstr "Document de text d'Unicode (*.txt)"
 
 #: wordpad.rc:150
 msgid "Rich text format (*.rtf)"
@@ -17234,42 +17052,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -17333,6 +17115,8 @@ msgstr ""
 "[/A]  Només copiar els fitxers amb l'atribut d'arxiu establert.\n"
 "[/M]  Només copiar els fitxers amb l'atribut d'arxiu establert, elimina\n"
 "\tl'atribut d'arxiu.\n"
+"[/K]  Copiar els atributs de fitxer; sense això, no se preserven els\n"
+"    atributs.\n"
 "[/D | /D:m-d-y] Copiar els fitxers nous o els modificats després de la data\n"
 "\t\tproveïda.\n"
 "\t\tSi no es proveeix cap data, només es copia si la destinació és més\n"
