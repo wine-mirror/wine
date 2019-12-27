@@ -315,7 +315,12 @@ static void test_ddeml_client(void)
 
     DdeGetLastError(client_pid);
     conversation = DdeConnect(client_pid, server, topic, NULL);
-    ok(conversation != NULL, "Expected non-NULL conversation\n");
+    if (broken(!conversation)) /* Windows 10 version 1607 */
+    {
+        win_skip("Failed to connect; error %#x.\n", DdeGetLastError(client_pid));
+        DdeUninitialize(client_pid);
+        return;
+    }
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
 
@@ -1573,7 +1578,12 @@ static void test_dde_aw_transaction( BOOL client_unicode, BOOL server_unicode )
     hsz_server = DdeCreateStringHandleW(dde_inst, TEST_DDE_SERVICE, CP_WINUNICODE);
 
     hconv = DdeConnect(dde_inst, hsz_server, 0, NULL);
-    ok(hconv != 0, "DdeConnect error %x\n", DdeGetLastError(dde_inst));
+    if (broken(!hconv)) /* Windows 10 version 1607 */
+    {
+        win_skip("Failed to connect; error %#x.\n", DdeGetLastError(dde_inst));
+        DdeUninitialize(dde_inst);
+        return;
+    }
     err = DdeGetLastError(dde_inst);
     ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
 
@@ -2352,7 +2362,8 @@ static WCHAR test_cmd_w_to_w[][32] = {
     { 0x4efa, 0x4efc, 0x0061, 0x4efe, 0 },  /* some Chinese chars */
     { 0x0061, 0x0062, 0x0063, 0x9152, 0 },  /* Chinese with latin characters begin */
 };
-static const int nb_callbacks = 5 + ARRAY_SIZE(test_cmd_w_to_w);
+static int msg_index;
+static BOOL unicode_server, unicode_client;
 
 static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV hconv,
                                                HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
@@ -2360,24 +2371,26 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
 {
     DWORD size, rsize;
     char str[MAX_PATH];
-    static int msg_index = 0;
     static HCONV conversation = 0;
     static const char test_service [] = "TestDDEService";
     static const char test_topic [] = "TestDDETopic";
 
+    trace("type %#x, fmt %#x\n", uType, uFmt);
+
+    ok(msg_index < 5 + ARRAY_SIZE(test_cmd_w_to_w), "Got unexpected message type %#x.\n", uType);
     msg_index++;
 
     switch (uType)
     {
     case XTYP_REGISTER:
     {
-        ok(msg_index % nb_callbacks == 1, "Expected 1 modulo %u, got %d\n", nb_callbacks, msg_index);
+        ok(msg_index == 1, "Expected 1, got %d\n", msg_index);
         return (HDDEDATA)TRUE;
     }
 
     case XTYP_CONNECT:
     {
-        ok(msg_index % nb_callbacks == 2, "Expected 2 modulo %u, got %d\n", nb_callbacks, msg_index);
+        ok(msg_index == 2, "Expected 2, got %d\n", msg_index);
         ok(uFmt == 0, "Expected 0, got %d, msg_index=%d\n", uFmt, msg_index);
         ok(hconv == 0, "Expected 0, got %p, msg_index=%d\n", hconv, msg_index);
         ok(hdata == 0, "Expected 0, got %p, msg_index=%d\n", hdata, msg_index);
@@ -2398,7 +2411,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
     }
     case XTYP_CONNECT_CONFIRM:
     {
-        ok(msg_index % nb_callbacks == 3, "Expected 3 modulo %u, got %d\n", nb_callbacks, msg_index);
+        ok(msg_index == 3, "Expected 3, got %d\n", msg_index);
         conversation = hconv;
         return (HDDEDATA) TRUE;
     }
@@ -2409,7 +2422,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
         char test_cmd_w_to_a[64];
         WCHAR test_cmd_a_to_w[64];
         DWORD size_a, size_w, size_w_to_a, size_a_to_w;
-        BOOL unicode_server, unicode_client, str_index;
+        BOOL str_index;
 
         ok(uFmt == 0, "Expected 0, got %d\n", uFmt);
         ok(hconv == conversation, "Expected conversation handle, got %p, msg_index=%d\n",
@@ -2429,9 +2442,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
            size, rsize, msg_index);
         trace("msg %u strA \"%s\" strW %s\n", msg_index, buffer, wine_dbgstr_w((WCHAR*)buffer));
 
-        unicode_server = (msg_index / nb_callbacks == 1 || msg_index / nb_callbacks == 2);
-        unicode_client = (msg_index / nb_callbacks == 1 || msg_index / nb_callbacks == 3);
-        str_index = msg_index % nb_callbacks - 4;
+        str_index = msg_index - 4;
         cmd_w = test_cmd_w_to_w[str_index - 1];
         size_a = strlen(test_cmd_a_to_a) + 1;
         size_w = (lstrlenW(cmd_w) + 1) * sizeof(WCHAR);
@@ -2606,7 +2617,12 @@ static void test_end_to_end_client(BOOL type_a)
 
     DdeGetLastError(client_pid);
     hconv = DdeConnect(client_pid, server, topic, NULL);
-    ok(hconv != NULL, "Expected non-NULL conversation\n");
+    if (broken(!hconv)) /* Windows 10 version 1607 */
+    {
+        win_skip("Failed to connect; error %#x.\n", DdeGetLastError(client_pid));
+        DdeUninitialize(client_pid);
+        return;
+    }
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %x\n", ret);
     DdeFreeStringHandle(client_pid, server);
@@ -2639,7 +2655,7 @@ static void test_end_to_end_client(BOOL type_a)
 
 }
 
-static void test_end_to_end_server(BOOL client_unicode, BOOL server_unicode)
+static void test_end_to_end_server(void)
 {
     HANDLE client;
     MSG msg;
@@ -2649,11 +2665,12 @@ static void test_end_to_end_server(BOOL client_unicode, BOOL server_unicode)
     HDDEDATA hdata;
     static const char test_service[] = "TestDDEService";
 
-    trace("client %s, server %s\n", client_unicode ? "unicode" : "ascii",
-            server_unicode ? "unicode" : "ascii");
+    trace("client %s, server %s\n", unicode_client ? "unicode" : "ascii",
+            unicode_server ? "unicode" : "ascii");
     server_pid = 0;
+    msg_index = 0;
 
-    if (server_unicode)
+    if (unicode_server)
         res = DdeInitializeW(&server_pid, server_end_to_end_callback, APPCLASS_STANDARD, 0);
     else
         res = DdeInitializeA(&server_pid, server_end_to_end_callback, APPCLASS_STANDARD, 0);
@@ -2665,7 +2682,7 @@ static void test_end_to_end_server(BOOL client_unicode, BOOL server_unicode)
     hdata = DdeNameService(server_pid, server, 0, DNS_REGISTER);
     ok(hdata == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", hdata);
 
-    client = create_process(client_unicode ? "endw" : "enda");
+    client = create_process(unicode_client ? "endw" : "enda");
 
     while (MsgWaitForMultipleObjects(1, &client, FALSE, INFINITE, QS_ALLINPUT) != 0)
     {
@@ -2709,10 +2726,16 @@ START_TEST(dde)
 
     /* Test the combinations of A and W interfaces with A and W data
        end to end to ensure that data conversions are accurate */
-    test_end_to_end_server(FALSE, FALSE);
-    test_end_to_end_server(TRUE, TRUE);
-    test_end_to_end_server(FALSE, TRUE);
-    test_end_to_end_server(TRUE, FALSE);
+    unicode_client = unicode_server = FALSE;
+    test_end_to_end_server();
+    unicode_client = unicode_server = TRUE;
+    test_end_to_end_server();
+    unicode_client = FALSE;
+    unicode_server = TRUE;
+    test_end_to_end_server();
+    unicode_client = TRUE;
+    unicode_server = FALSE;
+    test_end_to_end_server();
 
     test_dde_aw_transaction( FALSE, TRUE );
     test_dde_aw_transaction( TRUE, FALSE );
