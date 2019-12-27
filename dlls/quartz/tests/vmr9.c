@@ -2180,7 +2180,13 @@ static void test_video_window(void)
     testfilter_init(&source);
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, filter, NULL);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+    if (hr == E_FAIL)
+    {
+        skip("Got E_FAIL when connecting.\n");
+        goto out;
+    }
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMemInputPin_GetAllocator(input, &allocator);
@@ -2215,8 +2221,6 @@ static void test_video_window(void)
     hr = IVideoWindow_GetMaxIdealImageSize(window, &width, &height);
     todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
-
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
@@ -2237,6 +2241,7 @@ static void test_video_window(void)
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+out:
     IMediaControl_Release(control);
     IFilterGraph2_Release(graph);
     IVideoWindow_Release(window);
