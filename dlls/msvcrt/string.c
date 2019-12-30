@@ -343,8 +343,6 @@ void CDECL MSVCRT__swab(char* src, char* dst, int len)
   }
 }
 
-#if _MSVCR_VER >= 140
-
 enum round {
     ROUND_ZERO, /* only used when dropped part contains only zeros */
     ROUND_DOWN,
@@ -443,6 +441,8 @@ static double make_double(int sign, int exp, ULONGLONG m, enum round round, int 
     TRACE("returning %s\n", wine_dbgstr_longlong(bits));
     return *((double*)&bits);
 }
+
+#if _MSVCR_VER >= 140
 
 static inline int hex2int(char c)
 {
@@ -558,26 +558,105 @@ static double strtod16(int sign, const char *p, char **end,
 }
 #endif
 
-static double MSVCRT_mul_pow10(double x, int exp)
-{
-    BOOL negexp = (exp < 0);
-    double ret;
+struct u128 {
+   ULONGLONG u[2];
+};
 
-    if(negexp)
-        exp = -exp;
-    ret = pow(10.0, exp);
-    return (negexp ? x/ret : x*ret);
+static inline struct u128 u128_lshift(struct u128 *u)
+{
+    struct u128 r;
+
+    r.u[0] = u->u[0] << 1;
+    r.u[1] = (u->u[1] << 1) + (u->u[0] >> (sizeof(u->u[0])*8-1));
+    return r;
+}
+
+static inline struct u128 u128_rshift(struct u128 *u)
+{
+    struct u128 r;
+
+    r.u[0] = (u->u[0] >> 1) + ((u->u[1] & 1) << (sizeof(u->u[1])*8-1));
+    r.u[1] = u->u[1] >> 1;
+    return r;
+}
+
+static inline void u128_mul10(struct u128 *u)
+{
+    struct u128 tmp;
+
+    tmp = u128_lshift(u);
+    *u = u128_lshift(&tmp);
+    *u = u128_lshift(u);
+
+    u->u[0] += tmp.u[0];
+    u->u[1] += tmp.u[1];
+    if (u->u[0] < tmp.u[0]) u->u[1]++;
+}
+
+static inline void u128_div10(struct u128 *u)
+{
+    ULONGLONG h, l, r;
+
+    r = u->u[1] % 10;
+    u->u[1] /= 10;
+
+    h = (r << 32) + (u->u[0] >> 32);
+    r = h % 10;
+    h /= 10;
+
+    l = (r << 32) + (u->u[0] & 0xffffffff);
+    l /= 10;
+    u->u[0] = (h << 32) + l;
+}
+
+static double convert_e10_to_e2(int sign, int e10, ULONGLONG m, int *err)
+{
+    int e2 = 0;
+    struct u128 u128;
+
+    u128.u[0] = m;
+    u128.u[1] = 0;
+
+    while(e10 > 0)
+    {
+        u128_mul10(&u128);
+        e10--;
+
+        while(u128.u[1] > MSVCRT_UI64_MAX/16)
+        {
+            u128 = u128_rshift(&u128);
+            e2++;
+        }
+    }
+
+    while(e10 < 0)
+    {
+        while(!(u128.u[1] & (1 << (sizeof(u128.u[1])-1))))
+        {
+            u128 = u128_lshift(&u128);
+            e2--;
+        }
+
+        u128_div10(&u128);
+        e10++;
+    }
+
+    while(u128.u[1])
+    {
+        u128 = u128_rshift(&u128);
+        e2++;
+    }
+
+    return make_double(sign, e2, u128.u[0], ROUND_DOWN, err);
 }
 
 static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *err)
 {
-    int exp1=0, exp2=0, exp3=0, sign=1;
     MSVCRT_pthreadlocinfo locinfo;
     unsigned __int64 d=0, hlp;
-    BOOL found_digit = FALSE;
-    unsigned fpcontrol;
+    int exp=0, sign=1;
     const char *p;
-    double ret;
+    BOOL found_digit = FALSE;
 
     if(err)
         *err = 0;
@@ -631,13 +710,13 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
         found_digit = TRUE;
         hlp = d * 10 + *p++ - '0';
         if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
-            exp1++;
+            exp++;
             break;
         } else
             d = hlp;
     }
     while(*p>='0' && *p<='9') {
-        exp1++;
+        exp++;
         p++;
     }
 
@@ -650,7 +729,7 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
         if(d>MSVCRT_UI64_MAX/10 || hlp<d)
             break;
         d = hlp;
-        exp1--;
+        exp--;
     }
     while(*p>='0' && *p<='9')
         p++;
@@ -679,9 +758,9 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
             }
             e *= s;
 
-            if(exp1<0 && e<0 && exp1+e>=0) exp1 = INT_MIN;
-            else if(exp1>0 && e>0 && exp1+e<0) exp1 = INT_MAX;
-            else exp3 = e;
+            if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
+            else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
+            else exp += e;
         } else {
             if(*p=='-' || *p=='+')
                 p--;
@@ -689,39 +768,19 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
         }
     }
 
-    fpcontrol = _control87(0, 0);
-    _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
-               |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT|MSVCRT__PC_64,
-               MSVCRT__MCW_EM | MSVCRT__MCW_PC );
-
-    /* take the number without exponent and convert it into a double */
-    ret = MSVCRT_mul_pow10(d, exp1);
-    /* shift the number to the representation where the first non-zero digit is in the ones place */
-    exp2 = (ret != 0.0 ? (int)round(log10(ret)) : 0);
-    if (exp3-exp2 >= MSVCRT_FLT_MIN_10_EXP && exp3-exp2 <= MSVCRT_FLT_MAX_10_EXP)
-        exp2 = 0; /* only bother to take this extra step with very small or very large numbers */
-    /* incorporate an additional shift to deal with floating point denormal values (if necessary) */
-    if(exp3-exp2 < MSVCRT_DBL_MIN_10_EXP)
-        exp2 += exp3-exp2-MSVCRT_DBL_MIN_10_EXP;
-    ret = MSVCRT_mul_pow10(ret, exp2);
-    /* apply the exponent (and undo any shift) */
-    ret = MSVCRT_mul_pow10(ret, exp3-exp2);
-    /* apply the sign bit */
-    ret *= sign;
-
-    _control87( fpcontrol, MSVCRT__MCW_EM | MSVCRT__MCW_PC );
-
-    if((d && ret==0.0) || isinf(ret)) {
-        if(err)
-            *err = MSVCRT_ERANGE;
-        else
-            *MSVCRT__errno() = MSVCRT_ERANGE;
-    }
-
     if(end)
         *end = (char*)p;
 
-    return ret;
+    if(!err) err = MSVCRT__errno();
+    if(!d) return make_double(sign, exp, d, ROUND_ZERO, err);
+    if(exp > MSVCRT_DBL_MAX_10_EXP)
+        return make_double(sign, INT_MAX, d, ROUND_ZERO, err);
+    /* Count part of exponent stored in denormalized mantissa. */
+    /* Increase exponent range to handle subnormals. */
+    if(exp < MSVCRT_DBL_MIN_10_EXP-MSVCRT_DBL_DIG-18)
+        return make_double(sign, INT_MIN, d, ROUND_ZERO, err);
+
+    return convert_e10_to_e2(sign, exp, d, err);
 }
 
 /*********************************************************************
