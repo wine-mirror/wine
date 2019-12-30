@@ -971,7 +971,7 @@
 @ stdcall IsBadHugeReadPtr(ptr long)
 @ stdcall IsBadHugeWritePtr(ptr long)
 @ stdcall IsBadReadPtr(ptr long)
-@ stdcall IsBadStringPtrA(ptr long)
+@ stdcall -norelay IsBadStringPtrA(ptr long)
 @ stdcall IsBadStringPtrW(ptr long)
 @ stdcall IsBadWritePtr(ptr long)
 # @ stub IsCalendarLeapDay
