@@ -1592,6 +1592,7 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
             res = wine_decompose_string( flags, src, src_len, buf, buf_len );
             if (res) break;
             buf_len *= 2;
+            RtlFreeHeap( GetProcessHeap(), 0, buf );
         }
     }
 
