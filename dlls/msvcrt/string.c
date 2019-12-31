@@ -455,28 +455,30 @@ static inline int hex2int(char c)
     return -1;
 }
 
-static double strtod16(int sign, const char *p, char **end,
-        MSVCRT_pthreadlocinfo locinfo, int *err)
+static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
+        void *ctx, int sign, MSVCRT_pthreadlocinfo locinfo, int *err)
 {
+    BOOL found_digit = FALSE, found_dp = FALSE;
     enum round round = ROUND_ZERO;
-    BOOL found_digit = FALSE;
+    MSVCRT_wchar_t nch;
     ULONGLONG m = 0;
     int val, exp = 0;
 
+    nch = get(ctx);
     while(m < MSVCRT_UI64_MAX/16)
     {
-        val = hex2int(*p);
+        val = hex2int(nch);
         if (val == -1) break;
         found_digit = TRUE;
-        p++;
+        nch = get(ctx);
 
         m = m*16 + val;
     }
     while(1)
     {
-        val = hex2int(*p);
+        val = hex2int(nch);
         if (val == -1) break;
-        p++;
+        nch = get(ctx);
         exp += 4;
 
         if (val || round != ROUND_ZERO)
@@ -487,29 +489,33 @@ static double strtod16(int sign, const char *p, char **end,
         }
     }
 
-    if(*p == *locinfo->lconv->decimal_point)
-        p++;
+    if(nch == *locinfo->lconv->decimal_point)
+    {
+        found_dp = TRUE;
+        nch = get(ctx);
+    }
     else if (!found_digit)
     {
-        if(end) *end = (char*)p - 1;
+        if(nch!=MSVCRT_WEOF) unget(ctx);
+        unget(ctx);
         return 0.0;
     }
 
     while(m <= MSVCRT_UI64_MAX/16)
     {
-        val = hex2int(*p);
+        val = hex2int(nch);
         if (val == -1) break;
         found_digit = TRUE;
-        p++;
+        nch = get(ctx);
 
         m = m*16 + val;
         exp -= 4;
     }
     while(1)
     {
-        val = hex2int(*p);
+        val = hex2int(nch);
         if (val == -1) break;
-        p++;
+        nch = get(ctx);
 
         if (val || round != ROUND_ZERO)
         {
@@ -521,39 +527,44 @@ static double strtod16(int sign, const char *p, char **end,
 
     if (!found_digit)
     {
-        if(end) *end = (char*)p - 2;
+        if (nch != MSVCRT_WEOF) unget(ctx);
+        if (found_dp) unget(ctx);
+        unget(ctx);
         return 0.0;
     }
 
-    if(*p=='p' || *p=='P') {
+    if(nch=='p' || nch=='P') {
+        BOOL found_sign = FALSE;
         int e=0, s=1;
 
-        p++;
-        if(*p == '-') {
+        nch = get(ctx);
+        if(nch == '-') {
+            found_sign = TRUE;
             s = -1;
-            p++;
-        } else if(*p == '+')
-            p++;
-
-        if(*p>='0' && *p<='9') {
-            while(*p>='0' && *p<='9') {
-                if(e>INT_MAX/10 || (e=e*10+*p-'0')<0)
+            nch = get(ctx);
+        } else if(nch == '+') {
+            found_sign = TRUE;
+            nch = get(ctx);
+        }
+        if(nch>='0' && nch<='9') {
+            while(nch>='0' && nch<='9') {
+                if(e>INT_MAX/10 || (e=e*10+nch-'0')<0)
                     e = INT_MAX;
-                p++;
+                nch = get(ctx);
             }
+            if((nch!=MSVCRT_WEOF) && (nch < '0' || nch > '9')) unget(ctx);
             e *= s;
 
             if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
             else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
             else exp += e;
         } else {
-            if(*p=='-' || *p=='+')
-                p--;
-            p--;
+            if(nch != MSVCRT_WEOF) unget(ctx);
+            if(found_sign) unget(ctx);
+            unget(ctx);
         }
     }
 
-    if (end) *end = (char*)p;
     return make_double(sign, exp, m, round, err);
 }
 #endif
@@ -650,111 +661,120 @@ static double convert_e10_to_e2(int sign, int e10, ULONGLONG m, int *err)
     return make_double(sign, e2, u128.u[0], ROUND_DOWN, err);
 }
 
-static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *err)
+double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
+        void *ctx, MSVCRT_pthreadlocinfo locinfo, int *err)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+#if _MSVCR_VER >= 140
+    MSVCRT_wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
+    MSVCRT_wchar_t _nan[] = { 'n', 'a', 'n', 0 };
+    MSVCRT_wchar_t *str_match = NULL;
+    int matched=0;
+#endif
+    BOOL found_digit = FALSE, found_dp = FALSE, found_sign = FALSE;
     unsigned __int64 d=0, hlp;
+    MSVCRT_wchar_t nch;
     int exp=0, sign=1;
-    const char *p;
-    BOOL found_digit = FALSE;
 
-    if(err)
-        *err = 0;
-    else if(!MSVCRT_CHECK_PMT(str != NULL)) {
-        if (end)
-            *end = NULL;
-        return 0;
-    }
-
-    if(!locale)
-        locinfo = get_locinfo();
-    else
-        locinfo = locale->locinfo;
-
-    p = str;
-    while(MSVCRT__isspace_l((unsigned char)*p, locale))
-        p++;
-
-    if(*p == '-') {
+    nch = get(ctx);
+    if(nch == '-') {
+        found_sign = TRUE;
         sign = -1;
-        p++;
-    } else  if(*p == '+')
-        p++;
+        nch = get(ctx);
+    } else if(nch == '+') {
+        found_sign = TRUE;
+        nch = get(ctx);
+    }
 
 #if _MSVCR_VER >= 140
-    if(MSVCRT__tolower_l(p[0], locale) == 'i' && MSVCRT__tolower_l(p[1], locale) == 'n'
-            && MSVCRT__tolower_l(p[2], locale) == 'f') {
-        if(end)
-            *end = (char*) &p[3];
-        if(MSVCRT__tolower_l(p[3], locale) == 'i' && MSVCRT__tolower_l(p[4], locale) == 'n'
-            && MSVCRT__tolower_l(p[5], locale) == 'i' && MSVCRT__tolower_l(p[6], locale) == 't'
-            && MSVCRT__tolower_l(p[7], locale) == 'y' && end)
-            *end = (char*) &p[8];
-        return sign*INFINITY;
+    if(nch == _infinity[0] || nch == MSVCRT__toupper(_infinity[0]))
+        str_match = _infinity;
+    if(nch == _nan[0] || nch == MSVCRT__toupper(_nan[0]))
+        str_match = _nan;
+    while(str_match && nch != MSVCRT_WEOF &&
+            (nch == str_match[matched] || nch == MSVCRT__toupper(str_match[matched]))) {
+        nch = get(ctx);
+        matched++;
     }
-    if(MSVCRT__tolower_l(p[0], locale) == 'n' &&
-       MSVCRT__tolower_l(p[1], locale) == 'a' &&
-       MSVCRT__tolower_l(p[2], locale) == 'n') {
-        if(end)
-            *end = (char*) &p[3];
-        return NAN;
+    if(str_match) {
+        int keep = 0;
+        if(matched >= 8) keep = 8;
+        else if(matched >= 3) keep = 3;
+        if(nch != MSVCRT_WEOF) unget(ctx);
+        for (; matched > keep; matched--) {
+            unget(ctx);
+        }
+        if(keep) {
+            if (str_match == _infinity) return sign*INFINITY;
+            if (str_match == _nan) return sign*NAN;
+        }
     }
 
-    if(p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
-        p += 2;
-        return strtod16(sign, p, end, locinfo, err);
+    if(nch == '0') {
+        nch = get(ctx);
+        if(nch == 'x' || nch == 'X')
+            return strtod16(get, unget, ctx, sign, locinfo, err);
     }
 #endif
 
-    while(*p>='0' && *p<='9') {
+    while(nch>='0' && nch<='9') {
         found_digit = TRUE;
-        hlp = d * 10 + *p++ - '0';
+        hlp = d * 10 + nch - '0';
+        nch = get(ctx);
         if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
             exp++;
             break;
         } else
             d = hlp;
     }
-    while(*p>='0' && *p<='9') {
+    while(nch>='0' && nch<='9') {
         exp++;
-        p++;
+        nch = get(ctx);
     }
 
-    if(*p == *locinfo->lconv->decimal_point)
-        p++;
+    if(nch == *locinfo->lconv->decimal_point) {
+        found_dp = TRUE;
+        nch = get(ctx);
+    }
 
-    while(*p>='0' && *p<='9') {
+    while(nch>='0' && nch<='9') {
         found_digit = TRUE;
-        hlp = d * 10 + *p++ - '0';
+        hlp = d * 10 + nch - '0';
+        nch = get(ctx);
         if(d>MSVCRT_UI64_MAX/10 || hlp<d)
             break;
         d = hlp;
         exp--;
     }
-    while(*p>='0' && *p<='9')
-        p++;
+    while(nch>='0' && nch<='9')
+        nch = get(ctx);
 
     if(!found_digit) {
-        if(end)
-            *end = (char*)str;
+        if(nch != MSVCRT_WEOF) unget(ctx);
+        if(found_dp) unget(ctx);
+        if(found_sign) unget(ctx);
         return 0.0;
     }
 
-    if(*p=='e' || *p=='E' || *p=='d' || *p=='D') {
+    if(nch=='e' || nch=='E' || nch=='d' || nch=='D') {
         int e=0, s=1;
 
-        p++;
-        if(*p == '-') {
+        nch = get(ctx);
+        if(nch == '-') {
+            found_sign = TRUE;
             s = -1;
-            p++;
-        } else if(*p == '+')
-            p++;
+            nch = get(ctx);
+        } else if(nch == '+') {
+            found_sign = TRUE;
+            nch = get(ctx);
+        } else {
+            found_sign = FALSE;
+        }
 
-        if(*p>='0' && *p<='9') {
-            while(*p>='0' && *p<='9') {
-                if(e>INT_MAX/10 || (e=e*10+*p-'0')<0)
+        if(nch>='0' && nch<='9') {
+            while(nch>='0' && nch<='9') {
+                if(e>INT_MAX/10 || (e=e*10+nch-'0')<0)
                     e = INT_MAX;
-                p++;
+                nch = get(ctx);
             }
             e *= s;
 
@@ -762,14 +782,11 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
             else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
             else exp += e;
         } else {
-            if(*p=='-' || *p=='+')
-                p--;
-            p--;
+            if(nch != MSVCRT_WEOF) unget(ctx);
+            if(found_sign) unget(ctx);
+            unget(ctx);
         }
     }
-
-    if(end)
-        *end = (char*)p;
 
     if(!err) err = MSVCRT__errno();
     if(!d) return make_double(sign, exp, d, ROUND_ZERO, err);
@@ -781,6 +798,46 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
         return make_double(sign, INT_MIN, d, ROUND_ZERO, err);
 
     return convert_e10_to_e2(sign, exp, d, err);
+}
+
+static MSVCRT_wchar_t strtod_str_get(void *ctx)
+{
+    const char **p = ctx;
+    if (!**p) return MSVCRT_WEOF;
+    return *(*p)++;
+}
+
+static void strtod_str_unget(void *ctx)
+{
+    const char **p = ctx;
+    (*p)--;
+}
+
+static inline double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *err)
+{
+    MSVCRT_pthreadlocinfo locinfo;
+    const char *beg, *p;
+    double ret;
+
+    if (err) *err = 0;
+    if (!MSVCRT_CHECK_PMT(str != NULL)) {
+        if (end) *end = NULL;
+        return 0;
+    }
+
+    if (!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    p = str;
+    while(MSVCRT__isspace_l((unsigned char)*p, locale))
+        p++;
+    beg = p;
+
+    ret = parse_double(strtod_str_get, strtod_str_unget, &p, locinfo, err);
+    if (end) *end = (p == beg ? (char*)str : (char*)p);
+    return ret;
 }
 
 /*********************************************************************

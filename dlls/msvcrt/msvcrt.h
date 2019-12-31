@@ -1181,6 +1181,7 @@ int __cdecl      MSVCRT__toupper_l(int,MSVCRT__locale_t);
 int __cdecl      MSVCRT__tolower_l(int,MSVCRT__locale_t);
 int __cdecl      MSVCRT__towupper_l(MSVCRT_wint_t,MSVCRT__locale_t);
 int __cdecl      MSVCRT__towlower_l(MSVCRT_wint_t,MSVCRT__locale_t);
+int __cdecl      MSVCRT__toupper(int); /* only use on lower-case ASCII characters */
 int __cdecl      MSVCRT__stricmp(const char*, const char*);
 int __cdecl      MSVCRT__strnicmp(const char*, const char*, MSVCRT_size_t);
 int __cdecl      MSVCRT__strnicoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
@@ -1190,6 +1191,7 @@ int __cdecl      MSVCRT_strcmp(const char*, const char*);
 char* __cdecl    MSVCRT_strstr(const char*, const char*);
 unsigned int __cdecl MSVCRT__get_output_format(void);
 char* __cdecl MSVCRT_strtok_s(char*, const char*, char**);
+double parse_double(MSVCRT_wchar_t (*)(void*), void (*)(void*), void*, MSVCRT_pthreadlocinfo, int*);
 
 /* Maybe one day we'll enable the invalid parameter handlers with the full set of information (msvcrXXd)
  *      #define MSVCRT_INVALID_PMT(x) MSVCRT_call_invalid_parameter_handler(x, __FUNCTION__, __FILE__, __LINE__, 0)
