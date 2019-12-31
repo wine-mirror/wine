@@ -381,15 +381,17 @@ int CDECL MSVCRT__wcsncoll(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str
     return MSVCRT__wcsncoll_l(str1, str2, count, NULL);
 }
 
-static double MSVCRT_mul_pow10(double x, int exp)
+static MSVCRT_wchar_t strtod_wstr_get(void *ctx)
 {
-    BOOL negexp = (exp < 0);
-    double ret;
+    const MSVCRT_wchar_t **p = ctx;
+    if (!**p) return MSVCRT_WEOF;
+    return *(*p)++;
+}
 
-    if(negexp)
-        exp = -exp;
-    ret = pow(10.0, exp);
-    return (negexp ? x/ret : x*ret);
+static void strtod_wstr_unget(void *ctx)
+{
+    const MSVCRT_wchar_t **p = ctx;
+    (*p)--;
 }
 
 /*********************************************************************
@@ -398,121 +400,27 @@ static double MSVCRT_mul_pow10(double x, int exp)
 double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         MSVCRT__locale_t locale)
 {
-    int exp1=0, exp2=0, exp3=0, sign=1;
     MSVCRT_pthreadlocinfo locinfo;
-    unsigned __int64 d=0, hlp;
-    BOOL found_digit = FALSE;
-    unsigned fpcontrol;
-    const MSVCRT_wchar_t *p;
+    const MSVCRT_wchar_t *beg, *p;
     double ret;
 
-    if (!MSVCRT_CHECK_PMT(str != NULL)) return 0;
+    if (!MSVCRT_CHECK_PMT(str != NULL)) {
+        if (end) *end = NULL;
+        return 0;
+    }
 
-    if(!locale)
+    if (!locale)
         locinfo = get_locinfo();
     else
         locinfo = locale->locinfo;
 
     p = str;
-    while(isspaceW(*p))
+    while(MSVCRT__iswspace_l(*p, locale))
         p++;
+    beg = p;
 
-    if(*p == '-') {
-        sign = -1;
-        p++;
-    } else  if(*p == '+')
-        p++;
-
-    while(*p>='0' && *p<='9') {
-        found_digit = TRUE;
-        hlp = d*10+*(p++)-'0';
-        if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
-            exp1++;
-            break;
-        } else
-            d = hlp;
-    }
-    while(*p>='0' && *p<='9') {
-        exp1++;
-        p++;
-    }
-    if(*p == *locinfo->lconv->decimal_point)
-        p++;
-
-    while(*p>='0' && *p<='9') {
-        found_digit = TRUE;
-        hlp = d*10+*(p++)-'0';
-        if(d>MSVCRT_UI64_MAX/10 || hlp<d)
-            break;
-
-        d = hlp;
-        exp1--;
-    }
-    while(*p>='0' && *p<='9')
-        p++;
-
-    if(!found_digit) {
-        if(end)
-            *end = (MSVCRT_wchar_t*)str;
-        return 0.0;
-    }
-
-    if(*p=='e' || *p=='E' || *p=='d' || *p=='D') {
-        int e=0, s=1;
-
-        p++;
-        if(*p == '-') {
-            s = -1;
-            p++;
-        } else if(*p == '+')
-            p++;
-
-        if(*p>='0' && *p<='9') {
-            while(*p>='0' && *p<='9') {
-                if(e>INT_MAX/10 || (e=e*10+*p-'0')<0)
-                    e = INT_MAX;
-                p++;
-            }
-            e *= s;
-
-            if(exp1<0 && e<0 && exp1+e>=0) exp1 = INT_MIN;
-            else if(exp1>0 && e>0 && exp1+e<0) exp1 = INT_MAX;
-            else exp3 += e;
-        } else {
-            if(*p=='-' || *p=='+')
-                p--;
-            p--;
-        }
-    }
-
-    fpcontrol = _control87(0, 0);
-    _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
-               |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT|MSVCRT__PC_64,
-               MSVCRT__MCW_EM | MSVCRT__MCW_PC );
-
-    /* take the number without exponent and convert it into a double */
-    ret = MSVCRT_mul_pow10(d, exp1);
-    /* shift the number to the representation where the first non-zero digit is in the ones place */
-    exp2 = (ret != 0.0 ? (int)round(log10(ret)) : 0);
-    if (exp3-exp2 >= MSVCRT_FLT_MIN_10_EXP && exp3-exp2 <= MSVCRT_FLT_MAX_10_EXP)
-        exp2 = 0; /* only bother to take this extra step with very small or very large numbers */
-    /* incorporate an additional shift to deal with floating point denormal values (if necessary) */
-    if(exp3-exp2 < MSVCRT_DBL_MIN_10_EXP)
-        exp2 += exp3-exp2-MSVCRT_DBL_MIN_10_EXP;
-    ret = MSVCRT_mul_pow10(ret, exp2);
-    /* apply the exponent (and undo any shift) */
-    ret = MSVCRT_mul_pow10(ret, exp3-exp2);
-    /* apply the sign bit */
-    ret *= sign;
-
-    _control87( fpcontrol, MSVCRT__MCW_EM | MSVCRT__MCW_PC );
-
-    if((d && ret==0.0) || isinf(ret))
-        *MSVCRT__errno() = MSVCRT_ERANGE;
-
-    if(end)
-        *end = (MSVCRT_wchar_t*)p;
-
+    ret = parse_double(strtod_wstr_get, strtod_wstr_unget, &p, locinfo, NULL);
+    if (end) *end = (p == beg ? (MSVCRT_wchar_t*)str : (MSVCRT_wchar_t*)p);
     return ret;
 }
 
