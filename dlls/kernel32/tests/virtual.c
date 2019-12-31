@@ -122,8 +122,11 @@ static void test_VirtualAllocEx(void)
     ok( bytes_written == 0, "%lu bytes written\n", bytes_written );
     b = ReadProcessMemory(hProcess, addr1, src, alloc_size, &bytes_read);
     ok( !b, "ReadProcessMemory succeeded\n" );
-    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
-    ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_PARTIAL_COPY, /* win10 v1607+ */
+        "wrong error %u\n", GetLastError() );
+    if (GetLastError() == ERROR_NOACCESS)
+        ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
 
     b = VirtualProtect( src, 0x2000, PAGE_NOACCESS, &old_prot );
     ok( b, "VirtualProtect failed error %u\n", GetLastError() );
@@ -135,8 +138,11 @@ static void test_VirtualAllocEx(void)
     ok( bytes_written == 0, "%lu bytes written\n", bytes_written );
     b = ReadProcessMemory(hProcess, addr1, src, alloc_size, &bytes_read);
     ok( !b, "ReadProcessMemory succeeded\n" );
-    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
-    ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_PARTIAL_COPY, /* win10 v1607+ */
+        "wrong error %u\n", GetLastError() );
+    if (GetLastError() == ERROR_NOACCESS)
+        ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
 
     b = pVirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE);
     ok(b != 0, "VirtualFreeEx, error %u\n", GetLastError());
