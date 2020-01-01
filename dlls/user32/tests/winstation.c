@@ -51,7 +51,12 @@ static void register_class(void)
     WNDCLASSA cls;
 
     cls.style = CS_DBLCLKS;
-    cls.lpfnWndProc = DefWindowProcA;
+    /* Windows < Vista apparently checks lpfnWndProc against the address of
+     * DefWindowProcA(), and for some reason fails to change the thread desktop
+     * after creating and destroying a window if it doesn't match. Using an IAT
+     * (as is default) or a wrapper triggers this, so use GetProcAddress() as
+     * a workaround. */
+    cls.lpfnWndProc = (void *)GetProcAddress(GetModuleHandleA("user32"), "DefWindowProcA");
     cls.cbClsExtra = 0;
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
