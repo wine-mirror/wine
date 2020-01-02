@@ -452,7 +452,6 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
     LPCWSTR q, p = format;
     pf_flags flags;
 
-    TRACE("format is %s\n",debugstr_w(format));
     while (*p)
     {
         q = strchrW( p, '%' );
