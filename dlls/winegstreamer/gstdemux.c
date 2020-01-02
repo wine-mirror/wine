@@ -68,7 +68,7 @@ struct gstdemux
     GstBus *bus;
     guint64 start, nextofs, nextpullofs, stop;
     ALLOCATOR_PROPERTIES props;
-    HANDLE no_more_pads_event, duration_event;
+    HANDLE no_more_pads_event, duration_event, error_event;
 
     HANDLE push_thread;
 
@@ -1139,6 +1139,7 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
         ERR("%s\n", dbg_info);
         g_error_free(err);
         g_free(dbg_info);
+        SetEvent(filter->error_event);
         break;
     case GST_MESSAGE_WARNING:
         gst_message_parse_warning(msg, &err, &dbg_info);
@@ -1225,6 +1226,7 @@ static void gstdemux_destroy(struct strmbase_filter *iface)
 
     CloseHandle(filter->no_more_pads_event);
     CloseHandle(filter->duration_event);
+    CloseHandle(filter->error_event);
 
     /* Don't need to clean up output pins, disconnecting input pin will do that */
     if (filter->sink.pin.peer)
@@ -1498,12 +1500,14 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
     for (i = 0; i < filter->cStreams; ++i)
     {
         struct gstdemux_source *pin = filter->ppPins[i];
+        const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
         pin->seek.llDuration = pin->seek.llStop = duration / 100;
         pin->seek.llCurrent = 0;
         if (!pin->seek.llDuration)
             pin->seek.dwCapabilities = 0;
-        WaitForSingleObject(pin->caps_event, INFINITE);
+        if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+            return FALSE;
     }
 
     filter->ignore_flush = TRUE;
@@ -1536,6 +1540,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     strmbase_sink_init(&object->sink, &object->filter, wcsInputPinName, &sink_ops, NULL);
 
     object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     object->init_gst = gstdecoder_init_gst;
     *phr = S_OK;
 
@@ -2171,6 +2176,7 @@ static BOOL wave_parser_init_gst(struct gstdemux *filter)
     struct gstdemux_source *pin;
     GstElement *element;
     LONGLONG duration;
+    HANDLE events[2];
     int ret;
 
     if (!(element = gst_element_factory_make("wavparse", NULL)))
@@ -2214,7 +2220,10 @@ static BOOL wave_parser_init_gst(struct gstdemux *filter)
     if (!pin->seek.llDuration)
         pin->seek.dwCapabilities = 0;
 
-    WaitForSingleObject(pin->caps_event, INFINITE);
+    events[0] = pin->caps_event;
+    events[1] = filter->error_event;
+    if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+        return FALSE;
 
     filter->ignore_flush = TRUE;
     gst_element_set_state(filter->container, GST_STATE_READY);
@@ -2246,6 +2255,7 @@ IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
     strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &wave_parser_sink_ops, NULL);
     object->init_gst = wave_parser_init_gst;
+    object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     *phr = S_OK;
 
     TRACE("Created WAVE parser %p.\n", object);
@@ -2311,12 +2321,14 @@ static BOOL avi_splitter_init_gst(struct gstdemux *filter)
     for (i = 0; i < filter->cStreams; ++i)
     {
         struct gstdemux_source *pin = filter->ppPins[i];
+        const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
         pin->seek.llDuration = pin->seek.llStop = duration / 100;
         pin->seek.llCurrent = 0;
         if (!pin->seek.llDuration)
             pin->seek.dwCapabilities = 0;
-        WaitForSingleObject(pin->caps_event, INFINITE);
+        if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+            return FALSE;
     }
 
     filter->ignore_flush = TRUE;
@@ -2349,6 +2361,7 @@ IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr)
     strmbase_filter_init(&object->filter, outer, &CLSID_AviSplitter, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &avi_splitter_sink_ops, NULL);
     object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     object->init_gst = avi_splitter_init_gst;
     *phr = S_OK;
 
@@ -2383,6 +2396,7 @@ static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
     struct gstdemux_source *pin;
     GstElement *element;
     LONGLONG duration;
+    HANDLE events[2];
     int ret;
 
     if (!(element = gst_element_factory_make("mpegaudioparse", NULL)))
@@ -2419,14 +2433,20 @@ static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
         return FALSE;
     }
 
-    WaitForSingleObject(filter->duration_event, INFINITE);
+    events[0] = filter->duration_event;
+    events[1] = filter->error_event;
+    if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+        return FALSE;
+
     gst_pad_query_duration(pin->their_src, GST_FORMAT_TIME, &duration);
     pin->seek.llDuration = pin->seek.llStop = duration / 100;
     pin->seek.llCurrent = 0;
     if (!pin->seek.llDuration)
         pin->seek.dwCapabilities = 0;
 
-    WaitForSingleObject(pin->caps_event, INFINITE);
+    events[0] = pin->caps_event;
+    if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+        return FALSE;
 
     filter->ignore_flush = TRUE;
     gst_element_set_state(filter->container, GST_STATE_READY);
@@ -2486,6 +2506,7 @@ IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr)
     object->IAMStreamSelect_iface.lpVtbl = &stream_select_vtbl;
 
     object->duration_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     object->init_gst = mpeg_splitter_init_gst;
     *phr = S_OK;
 
