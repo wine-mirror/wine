@@ -61,6 +61,7 @@
 
 static const GUID CLSID_WineTestPSFactoryBuffer = { 0x22222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const GUID CLSID_DfMarshal = { 0x0000030b, 0x0000, 0x0000, { 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 } };
+static const GUID CLSID_ft_unmarshaler_1809 = {0x00000359, 0x0000, 0x0000, {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
 
 /* functions that are not present on all versions of Windows */
 static HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
@@ -1392,7 +1393,7 @@ static ULONG WINAPI CustomMarshal_Release(IMarshal *iface)
 static HRESULT WINAPI CustomMarshal_GetUnmarshalClass(IMarshal *iface, REFIID riid,
         void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, CLSID *clsid)
 {
-    CHECK_EXPECT(CustomMarshal_GetUnmarshalClass);
+    CHECK_EXPECT2(CustomMarshal_GetUnmarshalClass);
     *clsid = *unmarshal_class;
     return S_OK;
 }
@@ -3329,8 +3330,8 @@ static void test_freethreadedmarshaler(void)
     hr = IMarshal_GetUnmarshalClass(pFTMarshal, &IID_IClassFactory,
             &Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL, &clsid);
     ok_ole_success(hr, IMarshal_GetUnmarshalClass);
-    ok(IsEqualIID(&clsid, &CLSID_StdMarshal), "clsid = %s\n",
-            wine_dbgstr_guid(&clsid));
+    ok(IsEqualGUID(&clsid, &CLSID_StdMarshal) || IsEqualGUID(&clsid, &CLSID_ft_unmarshaler_1809) /* Win10 1809 */,
+            "clsid = %s\n", wine_dbgstr_guid(&clsid));
 
     IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
     hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory, &Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
