@@ -100,15 +100,6 @@ static int wchar2digit(MSVCRT_wchar_t c, int base) {
 /* vsnscanf_s_l */
 #define SECURE
 #include "scanf.h"
-
-/* vsnwscanf_l */
-#define WIDE_SCANF 1
-#undef SECURE
-#include "scanf.h"
-
-/* vsnwscanf_s_l */
-#define SECURE 1
-#include "scanf.h"
 #undef STRING_LEN
 
 /* vswscanf_l */
@@ -117,6 +108,15 @@ static int wchar2digit(MSVCRT_wchar_t c, int base) {
 #define STRING 1
 #undef SECURE
 #include "scanf.h"
+
+/* vsnwscanf_l */
+#define STRING_LEN 1
+#include "scanf.h"
+
+/* vsnwscanf_s_l */
+#define SECURE 1
+#include "scanf.h"
+#undef STRING_LEN
 
 /* vswscanf_s_l */
 #define SECURE 1

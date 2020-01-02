@@ -776,6 +776,7 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
                     e = INT_MAX;
                 nch = get(ctx);
             }
+            if(nch != MSVCRT_WEOF) unget(ctx);
             e *= s;
 
             if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
@@ -786,6 +787,8 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
             if(found_sign) unget(ctx);
             unget(ctx);
         }
+    } else if(nch != MSVCRT_WEOF) {
+        unget(ctx);
     }
 
     if(!err) err = MSVCRT__errno();
