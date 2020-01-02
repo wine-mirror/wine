@@ -202,7 +202,7 @@ static ULONG WINAPI ExternalConnection_Release(IExternalConnection *iface)
 
 static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface, DWORD extconn, DWORD reserved)
 {
-    trace("add connection\n");
+    if (winetest_debug > 1) trace("add connection\n");
     return ++external_connections;
 }
 
@@ -210,7 +210,7 @@ static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface,
 static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *iface, DWORD extconn,
         DWORD reserved, BOOL fLastReleaseCloses)
 {
-    trace("release connection %d\n", fLastReleaseCloses);
+    if (winetest_debug > 1) trace("release connection %d\n", fLastReleaseCloses);
     last_release_closes = fLastReleaseCloses;
     return --external_connections;
 }
@@ -2577,7 +2577,7 @@ static DWORD WINAPI MessageFilter_HandleInComingCall(
 {
     static int callcount = 0;
     DWORD ret;
-    trace("HandleInComingCall\n");
+    if (winetest_debug > 1) trace("HandleInComingCall()\n");
     switch (callcount)
     {
     case 0:
@@ -2600,7 +2600,7 @@ static DWORD WINAPI MessageFilter_RetryRejectedCall(
   DWORD dwTickCount,
   DWORD dwRejectType)
 {
-    trace("RetryRejectedCall\n");
+    if (winetest_debug > 1) trace("RetryRejectedCall()\n");
     return 0;
 }
 
@@ -2610,7 +2610,7 @@ static DWORD WINAPI MessageFilter_MessagePending(
   DWORD dwTickCount,
   DWORD dwPendingType)
 {
-    trace("MessagePending\n");
+    if (winetest_debug > 1) trace("MessagePending()\n");
     return PENDINGMSG_WAITNOPROCESS;
 }
 
@@ -3165,7 +3165,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
             ok(*(DWORD *)marshal_data == 0, "expected 0x0, but got 0x%x\n", *(DWORD *)marshal_data);
             marshal_data += sizeof(DWORD);
         }
-        if (size >= 3*sizeof(DWORD) + sizeof(GUID))
+        if (size >= 3*sizeof(DWORD) + sizeof(GUID) && winetest_debug > 1)
         {
             trace("got guid data: %s\n", wine_dbgstr_guid((GUID *)marshal_data));
         }
@@ -3755,7 +3755,6 @@ again:
 
             if (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
             {
-                trace("Message 0x%x\n", msg.message);
                 TranslateMessage(&msg);
                 DispatchMessageA(&msg);
             }
@@ -3941,7 +3940,6 @@ static void test_globalinterfacetable(void)
         IClassFactory *cf;
         ULONG ref;
 
-        trace("test_globalinterfacetable\n");
 	cLocks = 0;
 
 	hr = pDllGetClassObject(&CLSID_StdGlobalInterfaceTable, &IID_IClassFactory, (void**)&cf);
@@ -4243,30 +4241,6 @@ static void test_implicit_mta(void)
     CoUninitialize();
 }
 
-static const char *debugstr_iid(REFIID riid)
-{
-    static char name[256];
-    HKEY hkeyInterface;
-    WCHAR bufferW[39];
-    char buffer[39];
-    LONG name_size = sizeof(name);
-    StringFromGUID2(riid, bufferW, ARRAY_SIZE(bufferW));
-    WideCharToMultiByte(CP_ACP, 0, bufferW, ARRAY_SIZE(bufferW), buffer, sizeof(buffer), NULL, NULL);
-    if (RegOpenKeyExA(HKEY_CLASSES_ROOT, "Interface", 0, KEY_QUERY_VALUE, &hkeyInterface) != ERROR_SUCCESS)
-    {
-        memcpy(name, buffer, sizeof(buffer));
-        goto done;
-    }
-    if (RegQueryValueA(hkeyInterface, buffer, name, &name_size) != ERROR_SUCCESS)
-    {
-        memcpy(name, buffer, sizeof(buffer));
-        goto done;
-    }
-    RegCloseKey(hkeyInterface);
-done:
-    return name;
-}
-
 static HRESULT WINAPI TestChannelHook_QueryInterface(IChannelHook *iface, REFIID riid, void **ppv)
 {
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IChannelHook))
@@ -4300,8 +4274,8 @@ static void WINAPI TestChannelHook_ClientGetSize(
     ULONG  *pDataSize )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ClientGetSize\n");
-    trace("\t%s\n", debugstr_iid(riid));
+
+    if (winetest_debug > 1) trace("IChannelHook::ClientGetSize(iid %s)\n", debugstr_guid(riid));
 
     if (info->cbSize == sizeof(*info))
     {
@@ -4327,7 +4301,8 @@ static void WINAPI TestChannelHook_ClientFillBuffer(
     void   *pDataBuffer )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ClientFillBuffer\n");
+
+    if (winetest_debug > 1) trace("IChannelHook::ClientFillBuffer()\n");
 
     if (info->cbSize == sizeof(*info))
     {
@@ -4353,7 +4328,8 @@ static void WINAPI TestChannelHook_ClientNotify(
     HRESULT hrFault )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ClientNotify hrFault = 0x%08x\n", hrFault);
+
+    if (winetest_debug > 1) trace("IChannelHook::ClientNotify(hr %#x)\n", hrFault);
 
     if (info->cbSize == sizeof(*info))
     {
@@ -4377,7 +4353,8 @@ static void WINAPI TestChannelHook_ServerNotify(
     DWORD   lDataRep )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ServerNotify\n");
+
+    if (winetest_debug > 1) trace("IChannelHook::ServerNotify()\n");
 
     if (info->cbSize == sizeof(*info))
     {
@@ -4400,8 +4377,8 @@ static void WINAPI TestChannelHook_ServerGetSize(
     ULONG  *pDataSize )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ServerGetSize\n");
-    trace("\t%s\n", debugstr_iid(riid));
+
+    if (winetest_debug > 1) trace("IChannelHook::ServerGetSize(iid %s, hr %#x)\n", debugstr_guid(riid), hrFault);
 
     if (info->cbSize == sizeof(*info))
     {
@@ -4412,9 +4389,6 @@ static void WINAPI TestChannelHook_ServerGetSize(
     }
 
     ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
-    if (hrFault != S_OK)
-        trace("\thrFault = 0x%08x\n", hrFault);
-
     *pDataSize = 0;
 }
 
@@ -4426,7 +4400,6 @@ static void WINAPI TestChannelHook_ServerFillBuffer(
     void   *pDataBuffer,
     HRESULT hrFault )
 {
-    trace("TestChannelHook_ServerFillBuffer\n");
     ok(0, "TestChannelHook_ServerFillBuffer shouldn't be called\n");
 }
 
