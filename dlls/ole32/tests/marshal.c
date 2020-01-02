@@ -1120,13 +1120,7 @@ static void test_proxy_marshal_and_unmarshal_strong(void)
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     /* marshal the proxy */
     hr = CoMarshalInterface(pStream, &IID_IClassFactory, pProxy, MSHCTX_INPROC, NULL, MSHLFLAGS_TABLESTRONG);
-    ok(hr == S_OK /* WinNT */ || hr == E_INVALIDARG /* Win9x */,
-        "CoMarshalInterface should have return S_OK or E_INVALIDARG instead of 0x%08x\n", hr);
-    if (FAILED(hr))
-    {
-        IUnknown_Release(pProxy);
-        goto end;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok_more_than_one_lock();
     ok_non_zero_external_conn();
@@ -1147,7 +1141,6 @@ static void test_proxy_marshal_and_unmarshal_strong(void)
     ok_more_than_one_lock();
     ok_non_zero_external_conn();
 
-end:
     IStream_Release(pStream);
 
     end_host_object(tid, thread);
@@ -1831,11 +1824,6 @@ static void test_crash_couninitialize(void)
     HANDLE thread;
     DWORD tid;
 
-    if(!GetProcAddress(GetModuleHandleA("kernel32.dll"), "CreateActCtxW")) {
-        win_skip("Skipping crash tests on win2k.\n");
-        return;
-    }
-
     crash_thread_success = FALSE;
     thread = CreateThread(NULL, 0, crash_couninitialize_proc, NULL, 0, &tid);
     ok(!WaitForSingleObject(thread, 10000), "wait timed out\n");
@@ -2485,20 +2473,15 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     IUnknown * proxy = NULL;
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
-    todo_wine
-    ok(hr == CO_E_NOTINITIALIZED,
-       "COM should have failed with CO_E_NOTINITIALIZED on using proxy without apartment, but instead returned 0x%08x\n",
-       hr);
+    todo_wine ok(hr == CO_E_NOTINITIALIZED, "Got hr %#x.\n", hr);
 
     hr = IClassFactory_QueryInterface(cf, &IID_IMultiQI, (LPVOID *)&proxy);
-    /* Win9x returns S_OK, whilst NT returns RPC_E_WRONG_THREAD */
-    trace("call to proxy's QueryInterface for local interface without apartment returned 0x%08x\n", hr);
+    todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(proxy);
 
     hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
-    /* Win9x returns E_NOINTERFACE, whilst NT returns RPC_E_WRONG_THREAD */
-    trace("call to proxy's QueryInterface without apartment returned 0x%08x\n", hr);
+    todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(proxy);
 
@@ -2511,8 +2494,7 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
         hr);
 
     hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
-    /* Win9x returns E_NOINTERFACE, whilst NT returns RPC_E_WRONG_THREAD */
-    trace("call to proxy's QueryInterface from wrong apartment returned 0x%08x\n", hr);
+    todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#x.\n", hr);
 
     /* now be really bad and release the proxy from the wrong apartment */
     IClassFactory_Release(cf);
@@ -2555,10 +2537,6 @@ static void test_proxy_used_in_wrong_thread(void)
 
     ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
     CloseHandle(thread);
-
-    /* do release statement on Win9x that we should have done above */
-    if (!GetProcAddress(GetModuleHandleA("ole32"), "CoRegisterSurrogateEx"))
-        IUnknown_Release(pProxy);
 
     ok_no_locks();
 
@@ -3176,9 +3154,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
     if (mshctx == MSHCTX_INPROC)
     {
         DWORD expected_size = round_global_size(3*sizeof(DWORD) + sizeof(GUID));
-        ok(size == expected_size ||
-           broken(size == (2*sizeof(DWORD))) /* Win9x & NT4 */,
-           "size should have been %d instead of %d\n", expected_size, size);
+        ok(size == expected_size, "expected size %u, got %u\n", expected_size, size);
 
         ok(*(DWORD *)marshal_data == mshlflags, "expected 0x%x, but got 0x%x for mshctx\n", mshlflags, *(DWORD *)marshal_data);
         marshal_data += sizeof(DWORD);
@@ -3846,9 +3822,7 @@ static void test_local_server(void)
      * class in the registry */
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER,
         NULL, &IID_IClassFactory, (LPVOID*)&cf);
-    ok(hr == REGDB_E_CLASSNOTREG || /* NT */
-       hr == S_OK /* Win9x */,
-        "CoGetClassObject should have returned REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
+    todo_wine ok(hr == REGDB_E_CLASSNOTREG, "Got hr %#x.\n", hr);
 
     /* Resume the object suspended above ... */
     hr = CoResumeClassObjects();
@@ -3883,10 +3857,7 @@ static void test_local_server(void)
     /* try to connect again after SCM has suspended registered class objects */
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER, NULL,
         &IID_IClassFactory, (LPVOID*)&cf);
-    ok(hr == CO_E_SERVER_STOPPING || /* NT */
-       hr == REGDB_E_CLASSNOTREG || /* win2k */
-       hr == S_OK /* Win9x */,
-        "CoGetClassObject should have returned CO_E_SERVER_STOPPING or REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
+    todo_wine ok(hr == CO_E_SERVER_STOPPING || hr == REGDB_E_CLASSNOTREG /* Win10 1709+ */, "Got hr %#x.\n", hr);
 
     hr = CoRevokeClassObject(cookie);
     ok_ole_success(hr, CoRevokeClassObject);
@@ -3943,13 +3914,7 @@ static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
 	IClassFactory *cf;
 
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
-	ok(hr == CO_E_NOTINITIALIZED ||
-		broken(hr == E_UNEXPECTED) /* win2k */ ||
-		broken(hr == S_OK) /* NT 4 */,
-		"IGlobalInterfaceTable_GetInterfaceFromGlobal should have failed with error CO_E_NOTINITIALIZED or E_UNEXPECTED instead of 0x%08x\n",
-		hr);
-	if (hr == S_OK)
-		IClassFactory_Release(cf);
+	ok(hr == CO_E_NOTINITIALIZED, "Got hr %#x.\n", hr);
 
 	CoInitialize(NULL);
 
@@ -4534,11 +4499,6 @@ START_TEST(marshal)
     HMODULE hOle32 = GetModuleHandleA("ole32");
     int argc;
     char **argv;
-
-    if (!GetProcAddress(hOle32, "CoRegisterSurrogateEx")) {
-        win_skip("skipping test on win9x\n");
-        return;
-    }
 
     pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx");
     pDllGetClassObject = (void*)GetProcAddress(hOle32, "DllGetClassObject");
