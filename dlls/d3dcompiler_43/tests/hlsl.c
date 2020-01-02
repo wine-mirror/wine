@@ -24,6 +24,9 @@
 
 static pD3DCompile ppD3DCompile;
 
+static HRESULT (WINAPI *pD3DXGetShaderConstantTable)(const DWORD *byte_code, ID3DXConstantTable **constant_table);
+static D3DMATRIX *(WINAPI *pD3DXMatrixOrthoLH)(D3DXMATRIX *pout, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf);
+
 struct vertex
 {
     float x, y, z;
@@ -182,7 +185,7 @@ static IDirect3DPixelShader9 *compile_pixel_shader9(IDirect3DDevice9 *device, co
             errors ? (char *)ID3D10Blob_GetBufferPointer(errors) : "");
     if (FAILED(hr)) return NULL;
 
-    hr = D3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(compiled), constants);
+    hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(compiled), constants);
     ok(hr == D3D_OK, "Could not get constant table from compiled pixel shader\n");
 
     hr = IDirect3DDevice9_CreatePixelShader(device, ID3D10Blob_GetBufferPointer(compiled), &pshader);
@@ -197,7 +200,7 @@ static void draw_quad_with_shader9(IDirect3DDevice9 *device, IDirect3DVertexBuff
     HRESULT hr;
     D3DXMATRIX projection_matrix;
 
-    D3DXMatrixOrthoLH(&projection_matrix, 2.0f, 2.0f, 0.0f, 1.0f);
+    pD3DXMatrixOrthoLH(&projection_matrix, 2.0f, 2.0f, 0.0f, 1.0f);
     IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &projection_matrix);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
@@ -641,12 +644,21 @@ START_TEST(hlsl)
     IDirect3DVertexDeclaration9 *vdeclaration;
     IDirect3DVertexBuffer9 *quad_geometry;
     IDirect3DVertexShader9 *vshader_passthru;
+    HMODULE mod;
 
     if (!load_d3dcompiler())
     {
         win_skip("Could not load d3dcompiler_43.dll\n");
         return;
     }
+
+    if (!(mod = LoadLibraryA("d3dx9_36.dll")))
+    {
+        win_skip("Failed to load d3dx9_36.dll.\n");
+        return;
+    }
+    pD3DXGetShaderConstantTable = (void *)GetProcAddress(mod, "D3DXGetShaderConstantTable");
+    pD3DXMatrixOrthoLH = (void *)GetProcAddress(mod, "D3DXMatrixOrthoLH");
 
     device = init_d3d9(&vdeclaration, &quad_geometry, &vshader_passthru);
     if (!device) return;
