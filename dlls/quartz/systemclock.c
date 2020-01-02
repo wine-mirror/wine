@@ -126,13 +126,14 @@ static DWORD WINAPI SystemClockAdviseThread(void *param)
     struct system_clock *clock = param;
     struct advise_sink *sink, *cursor;
     REFERENCE_TIME current_time;
-    DWORD timeout = INFINITE;
     HANDLE handles[2] = {clock->stop_event, clock->notify_event};
 
     TRACE("Starting advise thread for clock %p.\n", clock);
 
     for (;;)
     {
+        DWORD timeout = INFINITE;
+
         EnterCriticalSection(&clock->cs);
 
         current_time = GetTickCount64() * 10000;
