@@ -367,8 +367,9 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
     trace("vect. handler %08x addr:%p context.Eip:%x\n", rec->ExceptionCode,
           rec->ExceptionAddress, context->Eip);
 
-    ok(rec->ExceptionAddress == (char *)code_mem + 0xb, "ExceptionAddress at %p instead of %p\n",
-       rec->ExceptionAddress, (char *)code_mem + 0xb);
+    ok(rec->ExceptionAddress == (char *)code_mem + 0xb
+            || broken(rec->ExceptionAddress == code_mem || !rec->ExceptionAddress) /* 2008 */,
+            "ExceptionAddress at %p instead of %p\n", rec->ExceptionAddress, (char *)code_mem + 0xb);
 
     if (NtCurrentTeb()->Peb->BeingDebugged)
         ok((void *)context->Eax == pRtlRaiseException ||
@@ -403,8 +404,9 @@ static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     trace( "exception: %08x flags:%x addr:%p context: Eip:%x\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Eip );
 
-    ok(rec->ExceptionAddress == (char *)code_mem + 0xb, "ExceptionAddress at %p instead of %p\n",
-       rec->ExceptionAddress, (char *)code_mem + 0xb);
+    ok(rec->ExceptionAddress == (char *)code_mem + 0xb
+            || broken(rec->ExceptionAddress == code_mem || !rec->ExceptionAddress) /* 2008 */,
+            "ExceptionAddress at %p instead of %p\n", rec->ExceptionAddress, (char *)code_mem + 0xb);
 
     ok( context->ContextFlags == CONTEXT_ALL || context->ContextFlags == (CONTEXT_ALL | CONTEXT_XSTATE) ||
         broken(context->ContextFlags == CONTEXT_FULL),  /* win2003 */
@@ -515,8 +517,10 @@ static DWORD unwind_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECOR
 
     ok(rec->ExceptionCode == STATUS_UNWIND, "ExceptionCode is %08x instead of %08x\n",
        rec->ExceptionCode, STATUS_UNWIND);
-    ok(rec->ExceptionAddress == (char *)code_mem + 0x22, "ExceptionAddress at %p instead of %p\n",
-       rec->ExceptionAddress, (char *)code_mem + 0x22);
+    ok(rec->ExceptionAddress == (char *)code_mem + 0x22 || broken(TRUE) /* Win10 1709 */,
+       "ExceptionAddress at %p instead of %p\n", rec->ExceptionAddress, (char *)code_mem + 0x22);
+    ok(context->Eip == (DWORD)code_mem + 0x22, "context->Eip is %08x instead of %08x\n",
+       context->Eip, (DWORD)code_mem + 0x22);
     ok(context->Eax == unwind_expected_eax, "context->Eax is %08x instead of %08x\n",
        context->Eax, unwind_expected_eax);
 
