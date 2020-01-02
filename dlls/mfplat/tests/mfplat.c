@@ -59,6 +59,10 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc == ref, "Unexpected refcount %d, expected %d.\n", rc, ref);
 }
 
+static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
+        D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context);
+
 static HRESULT (WINAPI *pMFCopyImage)(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride,
         DWORD width, DWORD lines);
 static HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
@@ -524,6 +528,11 @@ static void init_functions(void)
     X(MFRegisterLocalSchemeHandler);
     X(MFRemovePeriodicCallback);
 #undef X
+
+    if ((mod = LoadLibraryA("d3d11.dll")))
+    {
+        pD3D11CreateDevice = (void *)GetProcAddress(mod, "D3D11CreateDevice");
+    }
 
     is_win8_plus = pMFPutWaitingWorkItem != NULL;
 }
@@ -3746,7 +3755,7 @@ static void test_dxgi_device_manager(void)
     ok(manager != manager2, "got wrong pointer: %p.\n", manager2);
     EXPECT_REF(manager, 1);
 
-    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
+    hr = pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
                            NULL, 0, D3D11_SDK_VERSION, &d3d11_dev, NULL, NULL);
     ok(hr == S_OK, "D3D11CreateDevice failed: %#x.\n", hr);
     EXPECT_REF(d3d11_dev, 1);
@@ -3773,7 +3782,7 @@ static void test_dxgi_device_manager(void)
     EXPECT_REF(manager, 1);
     EXPECT_REF(d3d11_dev, 2);
 
-    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0,
+    hr = pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0,
                            NULL, 0, D3D11_SDK_VERSION, &d3d11_dev2, NULL, NULL);
     ok(hr == S_OK, "D3D11CreateDevice failed: %#x.\n", hr);
     EXPECT_REF(d3d11_dev2, 1);
