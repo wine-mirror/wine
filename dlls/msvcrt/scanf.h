@@ -79,9 +79,9 @@
 #endif
 #ifdef STRING_LEN
 #ifdef WIDE_SCANF
-#define _GETC_(file) (consumed==length ? '\0' : (consumed++, *file++))
+#define _GETC_(file) (consumed++, consumed>length ? '\0' : *file++)
 #else /* WIDE_SCANF */
-#define _GETC_(file) (consumed==length ? '\0' : (consumed++, (unsigned char)*file++))
+#define _GETC_(file) (consumed++, consumed>length ? '\0' : (unsigned char)*file++)
 #endif /* WIDE_SCANF */
 #define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
 #define _LOCK_FILE_(file) do {} while(0)
