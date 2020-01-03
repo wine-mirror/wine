@@ -230,6 +230,18 @@ static void _test_grfdex(unsigned line, DWORD grfdex, DWORD expect)
     ok_(__FILE__,line)(grfdex == expect, "grfdex = %x, expected %x\n", grfdex, expect);
 }
 
+static void close_script(IActiveScript *script)
+{
+    HRESULT hres;
+    ULONG ref;
+
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+
+    ref = IActiveScript_Release(script);
+    ok(!ref, "ref=%u\n", ref);
+}
+
 static HRESULT WINAPI EnumVARIANT_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -2408,23 +2420,22 @@ static HRESULT parse_script_expr(const char *expr, VARIANT *res, IActiveScript *
 
     IActiveScriptParse_Release(parser);
 
-    if(engine_ret) {
+    if(engine_ret)
         *engine_ret = engine;
-    }else {
-        IActiveScript_Close(engine);
-        IActiveScript_Release(engine);
-    }
+    else
+        close_script(engine);
+
     return hres;
 }
 
 static void test_retval(void)
 {
-    BSTR str = a2bstr("reportSuccess(), true");
     IActiveScriptParse *parser;
     IActiveScript *engine;
     SCRIPTSTATE state;
     VARIANT res;
     HRESULT hres;
+    BSTR str;
 
     engine = create_script();
     if(!engine)
@@ -2445,6 +2456,7 @@ static void test_retval(void)
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
     CHECK_CALLED(GetItemInfo_testVal);
 
+    str = a2bstr("reportSuccess(), true");
     V_VT(&res) = VT_NULL;
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
@@ -2453,6 +2465,7 @@ static void test_retval(void)
     CHECK_CALLED(global_success_i);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     ok(V_VT(&res) == VT_EMPTY, "V_VT(&res) = %d\n", V_VT(&res));
+    SysFreeString(str);
 
     hres = IActiveScript_GetScriptState(engine, &state);
     ok(hres == S_OK, "GetScriptState failed: %08x\n", hres);
@@ -2461,12 +2474,9 @@ static void test_retval(void)
     hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
     ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
 
-    hres = IActiveScript_Close(engine);
-    ok(hres == S_OK, "Close failed: %08x\n", hres);
-
     IActiveScriptParse_Release(parser);
-    IActiveScript_Release(engine);
-    SysFreeString(str);
+
+    close_script(engine);
 }
 
 static void test_default_value(void)
@@ -2697,8 +2707,7 @@ static void test_eval(void)
 
     IDispatchEx_Release(script_dispex);
     IActiveScriptParse_Release(parser);
-    IActiveScript_Close(engine);
-    IActiveScript_Release(engine);
+    close_script(engine);
 }
 
 struct bom_test
