@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-11-01 22:38+0100\n"
+"PO-Revision-Date: 2020-01-03 16:23+0100\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -662,11 +662,9 @@ msgid "&Define Custom Colors >>"
 msgstr "&Definer egendefinerte farger >>"
 
 #: comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&Nei"
+msgstr "&o"
 
 #: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
@@ -6832,34 +6830,24 @@ msgid "Sink has not been finalized.\n"
 msgstr "Fant ikke objekt-UUID'en.\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "Installasjonsplattformen støttes ikke.\n"
+msgstr "Media Foundation plattformen er ikke lastet.\n"
 
 #: mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "Antall byte er for lavt.\n"
+msgstr "For lite hurtigminne.\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "Ugyldig syntaks for spørring.\n"
+msgstr "Ugyldig forespørsel.\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "Ugyldig segmentnummer.\n"
+msgstr "Ugyldig strømnummer.\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "Ugyldig datatype.\n"
+msgstr "Ugyldig mediatype.\n"
 
 #: mferror.mc:67
 #, fuzzy
@@ -6868,44 +6856,32 @@ msgid "No more input is accepted.\n"
 msgstr "Ingen flere oppføringer.\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "Fant ikke objekt-UUID'en.\n"
+msgstr "Objekt er ikke lastet.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "Operasjonen støttes ikke.\n"
+msgstr "Representasjonen støttes ikke.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
 msgstr ""
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "Typen støttes ikke.\n"
+msgstr "Tjenesten støttes ikke.\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "Uventet nettverksfeil.\n"
+msgstr "Uventet feil.\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "Ugyldig tid.\n"
+msgstr "Ugyldig type.\n"
 
 #: mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "Ugyldig format for bildepunkt.\n"
+msgstr "Ugyldig filformat.\n"
 
 #: mferror.mc:137
 #, fuzzy
@@ -6914,10 +6890,8 @@ msgid "Invalid timestamp.\n"
 msgstr "Ugyldig tid.\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "Typen støttes ikke.\n"
+msgstr "Skjemaet støttes ikke.\n"
 
 #: mferror.mc:151
 #, fuzzy
@@ -6926,10 +6900,8 @@ msgid "Unsupported bytestream type.\n"
 msgstr "Typen støttes ikke.\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "Typen støttes ikke.\n"
+msgstr "Tidsformatet støttes ikke.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
@@ -6940,16 +6912,12 @@ msgid "No duration set for the sample.\n"
 msgstr ""
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "Ugyldig data.\n"
+msgstr "Ugyldig strømdata.\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "Ingen hjelp er ikke tilgjengelig."
+msgstr "Sanntidsstøtte er ikke tilgjengelig.\n"
 
 #: mferror.mc:193
 #, fuzzy
@@ -6980,22 +6948,16 @@ msgid "Rate change was preempted.\n"
 msgstr ""
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "Fant ikke objekt-UUID'en.\n"
+msgstr "Fant ikke objekt eller verdi.\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "Ingen hjelp er ikke tilgjengelig."
+msgstr "Verdi er ikke tilgjengelig.\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "Ingen hjelp er ikke tilgjengelig."
+msgstr "Klokken er ikke tilgjengelig.\n"
 
 #: mferror.mc:263
 #, fuzzy
@@ -7022,10 +6984,8 @@ msgid "Unsupported state transition.\n"
 msgstr "Godkjenningsnivået støttes ikke.\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "En intern feil har oppstått.\n"
+msgstr "En ugjenopprettelig feil har oppstått.\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
@@ -7038,10 +6998,8 @@ msgid "Sample is not writable.\n"
 msgstr "Mappen for midlertidige filer kan ikke skrives til.\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "Stien er ugyldig.\n"
+msgstr "Nøkkelen er ugyldig.\n"
 
 #: mferror.mc:319
 #, fuzzy
@@ -7056,16 +7014,12 @@ msgid "Unsupported caption.\n"
 msgstr "Typen støttes ikke.\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "Ugyldig arbeidsstasjon.\n"
+msgstr "Ugyldig posisjon.\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "Fant ikke filen.\n"
+msgstr "Fant ikke egenskapen.\n"
 
 #: mferror.mc:347
 #, fuzzy
@@ -7102,10 +7056,8 @@ msgid "Vector property is required.\n"
 msgstr ""
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "Operasjonen ble avbrutt av brukeren.\n"
+msgstr "Operasjonen ble avbrutt.\n"
 
 #: mferror.mc:396
 #, fuzzy
@@ -7190,16 +7142,12 @@ msgid "Property is not allowed.\n"
 msgstr "Hook-typen er ikke tillat.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "Ressursen er i bruk.\n"
+msgstr "Mediakilden er ikke startet.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "Typen støttes ikke.\n"
+msgstr "Mediaformatet støttes ikke.\n"
 
 #: mferror.mc:515
 #, fuzzy
@@ -8450,10 +8398,8 @@ msgid "Off"
 msgstr "Av"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "video"
+msgstr "Tilbyder"
 
 #: version.rc:45
 #, fuzzy
