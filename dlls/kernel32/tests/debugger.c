@@ -38,9 +38,6 @@ static int    myARGC;
 static char** myARGV;
 
 static BOOL (WINAPI *pCheckRemoteDebuggerPresent)(HANDLE,PBOOL);
-static BOOL (WINAPI *pDebugActiveProcessStop)(DWORD);
-static BOOL (WINAPI *pDebugSetProcessKillOnExit)(BOOL);
-static BOOL (WINAPI *pIsDebuggerPresent)(void);
 
 static void (WINAPI *pDbgBreakPoint)(void);
 
@@ -509,7 +506,7 @@ static void doDebugger(int argc, char** argv)
     blackbox.nokill_err=0;
     if (strstr(myARGV[2], "nokill"))
     {
-        blackbox.nokill_rc=pDebugSetProcessKillOnExit(FALSE);
+        blackbox.nokill_rc = DebugSetProcessKillOnExit(FALSE);
         if (!blackbox.nokill_rc)
             blackbox.nokill_err=GetLastError();
     }
@@ -519,7 +516,7 @@ static void doDebugger(int argc, char** argv)
     blackbox.detach_err=0;
     if (strstr(myARGV[2], "detach"))
     {
-        blackbox.detach_rc=pDebugActiveProcessStop(blackbox.pid);
+        blackbox.detach_rc = DebugActiveProcessStop(blackbox.pid);
         if (!blackbox.detach_rc)
             blackbox.detach_err=GetLastError();
     }
@@ -764,17 +761,9 @@ static void test_ExitCode(void)
     ok(disposition == REG_OPENED_EXISTING_KEY, "expected REG_OPENED_EXISTING_KEY, got %d\n", disposition);
     crash_and_debug(hkey, test_exe, "dbg,event,order");
     crash_and_debug(hkey, test_exe, "dbg,attach,event,code2");
-    if (pDebugSetProcessKillOnExit)
-        crash_and_debug(hkey, test_exe, "dbg,attach,event,nokill");
-    else
-        win_skip("DebugSetProcessKillOnExit is not available\n");
-    if (pDebugActiveProcessStop)
-    {
-        crash_and_debug(hkey, test_exe, "dbg,attach,event,detach");
-        crash_and_debug(hkey, test_exe, "dbg,attach,detach,late");
-    }
-    else
-        win_skip("DebugActiveProcessStop is not available\n");
+    crash_and_debug(hkey, test_exe, "dbg,attach,event,nokill");
+    crash_and_debug(hkey, test_exe, "dbg,attach,event,detach");
+    crash_and_debug(hkey, test_exe, "dbg,attach,detach,late");
     crash_and_debug(hkey, test_exe, "dbg,attach,process,event,detach");
 
     if (disposition == REG_CREATED_NEW_KEY)
@@ -851,7 +840,7 @@ static void doChild(int argc, char **argv)
     child_ok(ret, "CheckRemoteDebuggerPresent failed, last error %#x.\n", GetLastError());
     child_ok(debug, "Expected debug != 0, got %#x.\n", debug);
 
-    ret = pDebugActiveProcessStop(ppid);
+    ret = DebugActiveProcessStop(ppid);
     child_ok(ret, "DebugActiveProcessStop failed, last error %#x.\n", GetLastError());
 
     ret = pCheckRemoteDebuggerPresent(parent, &debug);
@@ -861,7 +850,7 @@ static void doChild(int argc, char **argv)
     ret = CloseHandle(parent);
     child_ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
 
-    ret = pIsDebuggerPresent();
+    ret = IsDebuggerPresent();
     child_ok(ret, "Expected ret != 0, got %#x.\n", ret);
     ret = pCheckRemoteDebuggerPresent(GetCurrentProcess(), &debug);
     child_ok(ret, "CheckRemoteDebuggerPresent failed, last error %#x.\n", GetLastError());
@@ -869,7 +858,7 @@ static void doChild(int argc, char **argv)
 
     NtCurrentTeb()->Peb->BeingDebugged = FALSE;
 
-    ret = pIsDebuggerPresent();
+    ret = IsDebuggerPresent();
     child_ok(!ret, "Expected ret != 0, got %#x.\n", ret);
     ret = pCheckRemoteDebuggerPresent(GetCurrentProcess(), &debug);
     child_ok(ret, "CheckRemoteDebuggerPresent failed, last error %#x.\n", GetLastError());
@@ -893,9 +882,9 @@ static void test_debug_loop(int argc, char **argv)
     char *cmd;
     BOOL ret;
 
-    if (!pDebugActiveProcessStop || !pCheckRemoteDebuggerPresent)
+    if (!pCheckRemoteDebuggerPresent)
     {
-        win_skip("DebugActiveProcessStop or CheckRemoteDebuggerPresent not available, skipping test.\n");
+        win_skip("CheckRemoteDebuggerPresent not available, skipping test.\n");
         return;
     }
 
@@ -1024,9 +1013,9 @@ static void test_debug_children(const char *name, DWORD flag, BOOL debug_child, 
     BOOL debug, ret;
     struct debugger_context ctx = { 0 };
 
-    if (!pDebugActiveProcessStop || !pCheckRemoteDebuggerPresent)
+    if (!pCheckRemoteDebuggerPresent)
     {
-        win_skip("DebugActiveProcessStop or CheckRemoteDebuggerPresent not available, skipping test.\n");
+        win_skip("CheckRemoteDebuggerPresent not available, skipping test.\n");
         return;
     }
 
@@ -1447,9 +1436,6 @@ START_TEST(debugger)
 
     hdll=GetModuleHandleA("kernel32.dll");
     pCheckRemoteDebuggerPresent=(void*)GetProcAddress(hdll, "CheckRemoteDebuggerPresent");
-    pDebugActiveProcessStop=(void*)GetProcAddress(hdll, "DebugActiveProcessStop");
-    pDebugSetProcessKillOnExit=(void*)GetProcAddress(hdll, "DebugSetProcessKillOnExit");
-    pIsDebuggerPresent=(void*)GetProcAddress(hdll, "IsDebuggerPresent");
 
     ntdll = GetModuleHandleA("ntdll.dll");
     pDbgBreakPoint = (void*)GetProcAddress(ntdll, "DbgBreakPoint");
