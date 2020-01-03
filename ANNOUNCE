@@ -1,12 +1,12 @@
-The Wine development release 5.0-rc3 is now available.
+The Wine development release 5.0-rc4 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/5.0/wine-5.0-rc3.tar.xz
-  http://mirrors.ibiblio.org/wine/source/5.0/wine-5.0-rc3.tar.xz
+  https://dl.winehq.org/wine/source/5.0/wine-5.0-rc4.tar.xz
+  http://mirrors.ibiblio.org/wine/source/5.0/wine-5.0-rc4.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,131 +22,99 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 5.0-rc3 (total 46):
+Bugs fixed in 5.0-rc4 (total 15):
 
-  11633  Blood 2: The Chosen Launcher audio bug
-  11998  NEXON client installers using embedded IE browser control: buttons don't respond to click (Lunia Senki, Combat Arms, War Rock)
-  12675  Lego Racers crashes trying to play videos when Indeo 5 codec is not installed
-  12941  International Football 2000: crashes when launching in Direct3D mode
-  14901  MoveFile fails when used to recase some letters of the filename
-  17766  Empire Earth crashes on start without native directmusic
-  21218  Pac-Man All Stars: Story Mode starts with page fault on read access
-  21715  Blitz3d demo version can't show samples
-  21791  3D Rad demo "BeltBall" full screen display shows as tiny black rectangle
-  22278  swkotor crashes on videos
-  23002  Dynamic HTML Editor unusable due to screen refresh problem
-  23525  Daytona USA Evolutions: some text/graphics are black, should be colored
-  24740  Trinklet Supreme crashes on startup
-  24946  uTorrent 2.2.0 hangs on startup (FD_WRITE event is reported over and over in WSAEnumNetworkEvents for a bound UDP socket)
-  26566  Gabriel Knight 3: visual glitches in DirectDraw HAL mode
-  27525  Active Worlds 5.x/6.x shows 3D-world view/window separated from main window (embedded browser control)
-  31562  crash in mmdevapi/MMDevCol_GetCount() using lithtech game engine.
-  33829  explorer.exe crashes with simsun.ttc in non-english locale
-  33908  Undercover: Operation Wintersun demo freezes on start
-  34232  Rigs of Rods: dropdown menus have too small height
-  34383  BoulderDashPortal does not start
-  35412  wine's cmd fails on if not exist foo\nul
-  35613  Foxit Reader 6.12: 'Show Certificate' button is greyed out after failure to validate digital signature
-  36878  You Don't Know Jack V1 XL: Not possible to accept license agreement in installer
-  37574  Everyday Shooter -- crackling/popping sound
-  37900  Xara Photo Graphic Designer 2013 (8.1.1) crashes on startup
-  39084  Simpsons Hit & Run regression: fullscreen glitching
-  39809  Empires: Dawn of the Modern World crash on startup
-  41619  Lego Racers: crashes when moving the mouse
-  43115  Metal Slug 1, X, 3 (GOG.com) fail to start
-  43368  HashMyFiles: Drag & Drop from native File Managers (Dolphin, Nautilus, ...) does not work
-  44019  Stud.io: parts not showing in the Building Palette
-  44062  Hedgewars 0.9.23 crashes on start
-  44773  LEGO Pirates of the Caribbean DEMO crashes on startup
-  44798  New Bugs on Epic Games
-  45608  Flintest: Garbled Text
-  47428  mouse input skipping / jitter in conjunction with xf86-video-amdgpu in almost every game
-  47484  `winetricks -q dotnet20sp1` fails when compiled with mingw (failure to relocate PE builtin ngen.exe)
-  47710  objidl.h contains invalid C++
-  47969  Taiga: Crashes on changing the grouping in seasons
-  48141  Total Commander: launching of native linux commands for file associations is broken
-  48180  Divinity: Original Sin 2 - Icons in inventory are invisible
-  48324  cl.exe fails to compile valid code with float constant due to error C2177: constant too big
-  48349  Steam doesn't display main window
-  48350  TrackMania Forever: Dialog after running the ingame benchmark doesn't show up
-  48358  Dell Latitude E6440 BIOS updater crashes on unimplemented function ntoskrnl.exe.KeSetImportanceDpc
+  12321  Some WinInet tests are invalid
+  12359  Multiple apps can't detect audio CDs (affects Express Rip, Exact Audio Copy, dbpoweramp CD Ripper)
+  12363  Exact Audio Copy hangs early when in "native win32" mode.
+  14715  TopStyle can't preview with wine's built in browser
+  30039  Can't download Adobe Photoshop CS 5 trial - Adobe Download Assistant can't log in
+  30102  ieframe/webbrowser test often crashes
+  33068  PDF-XChange Viewer 2.5.x (32-bit and 64-bit) crashes when trying to save changes/annotations to PDF file
+  40779  PDF Eraser 1.5 (.NET 4.0 app): Paste of license data from clipboard fails with Wine-Mono
+  43540  Cosmoteer: ships in game not rendered
+  44026  Content Manager crashes
+  44994  Pokemon Reborn crashes when starting
+  46230  dlls/wininet/http: build failure on NetBSD
+  47498  Touhou Danmakufu 0.12m crashes on startup in 4.12.1
+  47820  Magic: The Gathering Arena installer needs powershell.exe (cannot find it)
+  48374  Divinity: Original Sin 2 - Icons in inventory are invisible (...again!)
 
 ----------------------------------------------------------------
 
-Changes since 5.0-rc2:
+Changes since 5.0-rc3:
 
-Alex Henrie (2):
-      ntoskrnl: Add KeSetImportanceDpc stub.
-      po: Update Catalan translation.
+Alex Henrie (1):
+      po: Fix typo in Catalan translation.
 
 Alexandre Julliard (2):
-      d3d8: Remove redundant includes.
-      ntdll: Fix memory corruption in RtlNormalizeString().
+      ntdll: Fix memory leak in RtlNormalizeString().
+      Update copyright info for 2020.
 
-Damjan Jovanovic (1):
-      winex11.drv: Ignore .dwAspect in FORMATETC during XDnD.
+Erich Hoover (3):
+      msvcrt: Rework strtod_helper to be reusable.
+      msvcrt: Use parse_double for wcstod.
+      msvcrt: Use parse_double for scanf floats.
 
-Dmitry Timoshkov (2):
-      ntdll: Use default casemap and codepage file names if the value in registry is empty.
-      msscript.ocx/tests: Fix a typo.
+François Gouget (1):
+      user32/tests: Don't trace the test_topmost() window handles.
 
-Erich Hoover (2):
-      ntdll: Drop support for floating point numbers in sscanf.
-      msvcrt: Fix [str|wcs]tod result being compared against FLT_MAX.
+Gabriel Ivăncescu (2):
+      quartz: Reset the advise thread's timeout on each iteration.
+      wined3d: Return FALSE rather than E_FAIL in wined3d_context_gl_create_wgl_ctx.
 
-Jeff Smith (1):
-      include: Declare _STGMEDIUM_UNION type except when it violates C spec.
+Hans Leidekker (2):
+      qmgr/tests: Fix test failures on Windows XP.
+      msi/tests: Avoid test failure when running as an unprivileged user.
 
-Martin Storsjo (1):
-      msvcrt: Only export __p__* functions on i386.
+Jacek Caban (4):
+      kernel32/tests: Get rid of no longer needed win9x checks.
+      kernel32/tests: Use WAIT_EVENT_TIMEOUT in wait_for_breakpoint.
+      kernel32/tests: Don't use blackbox for crashing process.
+      kernel32/tests: Avoid function pointers for functions present since XP.
 
-Michael Stefaniuc (2):
-      dmstyle: Avoid cloning the IStream in parse_style_form().
-      dmcompos/tests: Add Chord track GetParam/SetParam tests.
+Kim Malmo (1):
+      po: Update Norwegian translation.
 
-Nikolay Sivov (6):
-      dwrite/tests: Improve coverage of IsMonospacedFont() tests.
-      dwrite/tests: Add IsColorFont() tests.
-      ole32/tests: Use heap-based object for custom moniker.
-      ole32/tests: Add a test for bind speed used by item moniker BindToObject().
-      ole32/tests: Add some tests for item moniker ParseDisplayName().
-      include: Update DWRITE_FONT_PROPERTY_ID enum.
+Lauri Kenttä (1):
+      po: Update Finnish translations.
 
-Piotr Caban (3):
-      msvcr90: Fix compilation warning in __AdjustPointer tests.
-      msvcrt/tests: Improve doubles comparison in strtod and atodbl tests.
-      msvcr90/tests: Improve floats comparison in _atoflt tests.
+Matteo Bruni (2):
+      d3dcompiler/tests: Load the correct d3dcompiler DLL in the HLSL tests.
+      d3dcompiler/tests: Load the correct d3dcompiler DLL in the asm tests.
 
-Rémi Bernon (7):
-      user32/tests: Move TEST_MOUSEACTIVATE to test_defwinproc.
-      user32/tests: Return MA_ACTIVATE to WM_MOUSEACTIVATE on main test window.
-      winex11.drv: Send HTMENU instead of HTCAPTION to query window activation.
-      ntdll: Rename find_free_area to find_reserved_free_area.
-      ntdll: Split view search initialization to find_view_inside_range function.
-      ntdll: Replace incorrect find_free_reserved_area function call.
-      ntdll: Start find_free_area from address_space_start instead of 0.
+Nikolay Sivov (5):
+      include: Update DWRITE_INFORMATIONAL_STRING_ID enum.
+      kernelbase: Fix a typo in weights comparison helper (Coverity).
+      vbscript/tests: Add missing checks for Close() calls (Coverity).
+      strmbase: Fix fixed size buffer copy in JoinFilterGraph() (Coverity).
+      ole32/tests: Add some return value checks (Coverity).
 
-Steve Lhomme (2):
-      include: Add dxgidebug.idl.
-      include: Add D3D11_VIDEO_PROCESSOR_FORMAT_SUPPORT_OUTPUT.
+Piotr Caban (5):
+      msvcrt: Improve strtod precision.
+      webservices: Fix WsWriteText test crash on Windows 10.
+      ucrtbase: Fix 0 parsing in parse_double.
+      msvcrt: Update consumed in all scanf variants on end of input.
+      msvcrt: Don't use ungetc when reading double in scanf.
 
-Zebediah Figura (9):
-      winegstreamer: Recognize the "video/x-cinepak" type.
-      ole32/tests: Avoid testing exact sequences of IUnknown methods.
-      ole32/tests: Rewrite and expand test_data_cache_updatecache().
+Vijay Kiran Kamuju (1):
+      include: Add IWbemContext and IWbemCallResult interface and other class definitions.
+
+Zebediah Figura (14):
+      ntdll/tests: Fix some test failures with Windows 10.
+      quartz/tests: Skip the IVideoWindow tests if connecting returns E_FAIL.
+      kernel32: Exclude IsBadStringPtrA() from relay traces.
+      kernel32/tests: Fix a test failure on Windows 10.
+      user32/tests: Work around a failure on Windows < Vista.
+      ntdll: Avoid debug traces in _vsnprintf().
+      ole32/tests: Fix some failures on Windows 10.
+      ole32/tests: Only test the original SChannelHookCallInfo structure.
+      ole32/tests: Get rid of some workarounds for no longer supported versions of Windows.
       ole32/tests: Make the tests less verbose by default.
-      oleaut32/tests: Avoid testing that GDI objects are invalid.
-      ntdll/tests: Remove a no longer reliable test.
-      user32/tests: Remove unnecessary uses of CREATE_SUSPENDED.
-      user32/tests: Get rid of some Windows 9x workarounds.
-      user32/tests: Work around failures on Windows 10 version 1607.
-
-Zhiyi Zhang (5):
-      configure: Update Xinerama and XRandR extension help strings.
-      user32/tests: Mark some GetDeviceCaps() tests as todo on Wine.
-      winhttp: Initialize a return variable.
-      include: Fix SetupDiOpenDeviceInterfaceRegKey() prototype.
-      include: Add GUID_DEVINTERFACE_MONITOR.
+      winegstreamer: Catch errors while waiting for pin connection.
+      ntdll/tests: Fix some exception test failures.
+      mfplat/tests: Link dynamically to d3d11.
+      d3dcompiler/tests: Load d3dx9_36.dll dynamically.
 
 --
 Alexandre Julliard
