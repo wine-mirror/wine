@@ -2049,7 +2049,7 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
         if (!(context_gl->dc = wined3d_swapchain_gl_get_backup_dc(swapchain_gl)))
         {
             ERR("Failed to retrieve the backup device context.\n");
-            return E_FAIL;
+            return FALSE;
         }
         context_gl->dc_is_private = TRUE;
 
