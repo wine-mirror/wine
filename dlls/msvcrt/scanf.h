@@ -47,7 +47,6 @@
 
 #ifdef CONSOLE
 #define _GETC_FUNC_(file) _getch()
-#define _UNGETC_FUNC_(nch, file) _ungetch(nch)
 #define _STRTOD_NAME_(func) console_ ## func
 #define _GETC_(file) (consumed++, _getch())
 #define _UNGETC_(nch, file) do { _ungetch(nch); consumed--; } while(0)
@@ -71,7 +70,6 @@
 #undef _EOF_
 #define _EOF_ 0
 #define _GETC_FUNC_(file) (*file++)
-#define _UNGETC_FUNC_(nch, file) do { file--; } while(0)
 #ifdef WIDE_SCANF
 #define _STRTOD_NAME_(func) wstr_ ## func
 #else
@@ -125,7 +123,6 @@
 #else /* STRING */
 #ifdef WIDE_SCANF
 #define _GETC_FUNC_(file) MSVCRT_fgetwc(file)
-#define _UNGETC_FUNC_(nch, file) MSVCRT_ungetwc(nch, file)
 #define _STRTOD_NAME_(func) filew_ ## func
 #define _GETC_(file) (consumed++, MSVCRT_fgetwc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetwc(nch, file); consumed--; } while(0)
@@ -138,7 +135,6 @@
 #endif /* SECURE */
 #else /* WIDE_SCANF */
 #define _GETC_FUNC_(file) MSVCRT_fgetc(file)
-#define _UNGETC_FUNC_(nch, file) MSVCRT_ungetc(nch, file)
 #define _STRTOD_NAME_(func) file_ ## func
 #define _GETC_(file) (consumed++, MSVCRT_fgetc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetc(nch, file); consumed--; } while(0)
@@ -163,22 +159,28 @@ struct _STRTOD_NAME_(strtod_scanf_ctx) {
 #endif
     int length;
     int read;
-    _CHAR_ unget_buf[8];
+    int cur;
+    int unget;
+    BOOL err;
 };
 
 static MSVCRT_wchar_t _STRTOD_NAME_(strtod_scanf_get)(void *ctx)
 {
     struct _STRTOD_NAME_(strtod_scanf_ctx) *context = ctx;
-    int c;
 
+    context->cur = _EOF_;
     if (!context->length) return MSVCRT_WEOF;
-    c = _GETC_FUNC_(context->file);
-    if (c == _EOF_) return MSVCRT_WEOF;
+    if (context->unget != _EOF_) {
+        context->cur = context->unget;
+        context->unget = _EOF_;
+    } else {
+        context->cur = _GETC_FUNC_(context->file);
+        if (context->cur == _EOF_) return MSVCRT_WEOF;
+    }
 
     if (context->length > 0) context->length--;
-    context->unget_buf[context->read % ARRAY_SIZE(context->unget_buf)] = c;
     context->read++;
-    return c;
+    return context->cur;
 }
 
 static void _STRTOD_NAME_(strtod_scanf_unget)(void *ctx)
@@ -187,7 +189,11 @@ static void _STRTOD_NAME_(strtod_scanf_unget)(void *ctx)
 
     if (context->length >= 0) context->length++;
     context->read--;
-    _UNGETC_FUNC_(context->unget_buf[context->read % ARRAY_SIZE(context->unget_buf)], context->file);
+    if (context->unget != _EOF_ || context->cur == _EOF_) {
+        context->err = TRUE;
+        return;
+    }
+    context->unget = context->cur;
 }
 #endif
 
@@ -387,23 +393,27 @@ _FUNCTION_ {
                     /* skip initial whitespace */
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
-                    if (nch != _EOF_) _UNGETC_(nch, file);
+                    ctx.unget = nch;
 #ifdef STRING
                     ctx.file = file;
 #endif
 #ifdef STRING_LEN
-                    if(ctx.length > length-consumed) ctx.length = length-consumed;
+                    if(ctx.length > length-consumed+1) ctx.length = length-consumed+1;
 #endif
 
                     cur = parse_double(_STRTOD_NAME_(strtod_scanf_get),
                             _STRTOD_NAME_(strtod_scanf_unget), &ctx, locinfo, NULL);
-                    if(!ctx.read) break;
+                    if(!rd && ctx.err) {
+                        _UNLOCK_FILE_(file);
+                        return _EOF_RET;
+                    }
+                    if(ctx.err || !ctx.read)
+                        break;
                     consumed += ctx.read;
 #ifdef STRING
                     file = ctx.file;
 #endif
-
-                    nch = _GETC_(file);
+                    nch = ctx.cur;
 
                     st = 1;
                     if (!suppress) {
@@ -712,7 +722,6 @@ _FUNCTION_ {
 #undef _WIDE2SUPPORTED_
 #undef _CHAR2DIGIT_
 #undef _GETC_FUNC_
-#undef _UNGETC_FUNC_
 #undef _STRTOD_NAME_
 #undef _GETC_
 #undef _UNGETC_
