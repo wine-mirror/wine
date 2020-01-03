@@ -290,7 +290,7 @@ static HRESULT WINAPI filter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *p
     EnterCriticalSection(&This->csFilter);
     {
         if (pName)
-            lstrcpyW(This->filterInfo.achName, pName);
+            lstrcpynW(This->filterInfo.achName, pName, MAX_FILTER_NAME);
         else
             *This->filterInfo.achName = '\0';
         This->filterInfo.pGraph = pGraph; /* NOTE: do NOT increase ref. count */
