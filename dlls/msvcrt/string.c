@@ -710,6 +710,7 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     }
 
     if(nch == '0') {
+        found_digit = TRUE;
         nch = get(ctx);
         if(nch == 'x' || nch == 'X')
             return strtod16(get, unget, ctx, sign, locinfo, err);
