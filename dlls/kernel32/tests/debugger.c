@@ -390,13 +390,13 @@ static void next_event_(unsigned line, struct debugger_context *ctx, unsigned ti
 #define wait_for_breakpoint(a) wait_for_breakpoint_(__LINE__,a)
 static void wait_for_breakpoint_(unsigned line, struct debugger_context *ctx)
 {
-    do next_event_(line, ctx, 2000);
+    do next_event_(line, ctx, WAIT_EVENT_TIMEOUT);
     while (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx->ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
            || ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT);
 
-    ok(ctx->ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
-    ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
-       ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
+    ok_(__FILE__,line)(ctx->ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
+    ok_(__FILE__,line)(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
+                       ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
 }
 
 static void process_attach_events(struct debugger_context *ctx, BOOL pass_exception)
