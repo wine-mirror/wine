@@ -174,12 +174,7 @@ static void run_background_thread(void)
     CloseHandle(thread);
 }
 
-typedef struct
-{
-    DWORD pid;
-} crash_blackbox_t;
-
-static void doCrash(int argc,  char** argv)
+static void doCrash(void)
 {
     volatile char* p;
 
@@ -188,13 +183,6 @@ static void doCrash(int argc,  char** argv)
     SetUnhandledExceptionFilter( NULL );
 
     run_background_thread();
-
-    if (argc >= 4)
-    {
-        crash_blackbox_t blackbox;
-        blackbox.pid=GetCurrentProcessId();
-        save_blackbox(argv[3], &blackbox, sizeof(blackbox), NULL);
-    }
 
     /* Just crash */
     trace("child: crashing...\n");
@@ -567,11 +555,9 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     HANDLE start_event, done_event;
     char* cmd;
     char dbglog[MAX_PATH];
-    char childlog[MAX_PATH];
     PROCESS_INFORMATION	info;
     STARTUPINFOA startup;
     DWORD exit_code;
-    crash_blackbox_t crash_blackbox;
     debugger_blackbox_t dbg_blackbox;
     DWORD wait_code;
 
@@ -599,9 +585,8 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     ok(ret == ERROR_SUCCESS, "unable to set AeDebug/debugger: ret=%d\n", ret);
     HeapFree(GetProcessHeap(), 0, cmd);
 
-    get_file_name(childlog);
-    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+16+strlen(dbglog)+2+1);
-    sprintf(cmd, "%s debugger crash \"%s\"", argv0, childlog);
+    cmd = HeapAlloc(GetProcessHeap(), 0, strlen(argv0) + 16);
+    sprintf(cmd, "%s debugger crash", argv0);
 
     trace("running %s...\n", dbgtasks);
     memset(&startup, 0, sizeof(startup));
@@ -625,7 +610,6 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
         WaitForSingleObject(info.hProcess, 5000);
         CloseHandle(info.hProcess);
         DeleteFileA(dbglog);
-        DeleteFileA(childlog);
         win_skip("Giving up on child process\n");
         return;
     }
@@ -661,18 +645,16 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     if (skip_crash_and_debug)
     {
         DeleteFileA(dbglog);
-        DeleteFileA(childlog);
         win_skip("Giving up on debugger\n");
         return;
     }
 #endif
     ok(wait_code == WAIT_OBJECT_0, "Timed out waiting for the debugger\n");
 
-    ok(load_blackbox(childlog, &crash_blackbox, sizeof(crash_blackbox)), "failed to open: %s\n", childlog);
     ok(load_blackbox(dbglog, &dbg_blackbox, sizeof(dbg_blackbox)), "failed to open: %s\n", dbglog);
 
     ok(dbg_blackbox.argc == 6, "wrong debugger argument count: %d\n", dbg_blackbox.argc);
-    ok(dbg_blackbox.pid == crash_blackbox.pid, "the child and debugged pids don't match: %d != %d\n", crash_blackbox.pid, dbg_blackbox.pid);
+    ok(dbg_blackbox.pid == info.dwProcessId, "the child and debugged pids don't match: %d != %d\n", info.dwProcessId, dbg_blackbox.pid);
     ok(dbg_blackbox.debug_rc, "debugger: SetEvent(debug_event) failed err=%d\n", dbg_blackbox.debug_err);
     ok(dbg_blackbox.attach_rc, "DebugActiveProcess(%d) failed err=%d\n", dbg_blackbox.pid, dbg_blackbox.attach_err);
     ok(dbg_blackbox.nokill_rc, "DebugSetProcessKillOnExit(FALSE) failed err=%d\n", dbg_blackbox.nokill_err);
@@ -680,7 +662,6 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     ok(!dbg_blackbox.failures, "debugger reported %u failures\n", dbg_blackbox.failures);
 
     DeleteFileA(dbglog);
-    DeleteFileA(childlog);
 }
 
 static void crash_and_winedbg(HKEY hkey, const char* argv0)
@@ -1476,7 +1457,7 @@ START_TEST(debugger)
     myARGC=winetest_get_mainargs(&myARGV);
     if (myARGC >= 3 && strcmp(myARGV[2], "crash") == 0)
     {
-        doCrash(myARGC, myARGV);
+        doCrash();
     }
     else if (myARGC >= 3 && strncmp(myARGV[2], "dbg,", 4) == 0)
     {
