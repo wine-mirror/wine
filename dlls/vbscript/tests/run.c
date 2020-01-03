@@ -1956,7 +1956,6 @@ static HRESULT parse_script(DWORD flags, BSTR script_str, const WCHAR *delim)
     IActiveScriptParse *parser;
     IActiveScript *engine;
     IDispatch *script_disp;
-    LONG ref;
     HRESULT hres;
 
     engine = create_and_init_script(flags, TRUE);
@@ -1980,13 +1979,10 @@ static HRESULT parse_script(DWORD flags, BSTR script_str, const WCHAR *delim)
 
     hres = IActiveScriptParse_ParseScriptText(parser, script_str, NULL, NULL, delim, 0, 0, 0, NULL, NULL);
 
-    IActiveScript_Close(engine);
-
     IDispatch_Release(script_disp);
-    IActiveScript_Release(engine);
+    IActiveScriptParse_Release(parser);
+    close_script(engine);
 
-    ref = IActiveScriptParse_Release(parser);
-    ok(!ref, "ref=%d\n", ref);
     return hres;
 }
 
@@ -2383,7 +2379,8 @@ static void test_gc(void)
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
-    IActiveScript_Close(engine);
+    hres = IActiveScript_Close(engine);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
