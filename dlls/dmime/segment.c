@@ -463,17 +463,20 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_GetStartPoint(IDirectMusicSegment
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_SetLoopPoints(IDirectMusicSegment8 *iface,
-        MUSIC_TIME mtStart, MUSIC_TIME mtEnd)
+        MUSIC_TIME start, MUSIC_TIME end)
 {
-  IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
+    IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
 
-  TRACE("(%p, %d, %d)\n", This, mtStart, mtEnd);
-  if (mtStart >= This->header.mtLength || mtEnd > This->header.mtLength || mtStart > mtEnd) {
-    return DMUS_E_OUT_OF_RANGE;
-  }
-  This->header.mtLoopStart = mtStart;
-  This->header.mtLoopEnd   = mtEnd;
-  return S_OK;
+    TRACE("(%p, %d, %d)\n", This, start, end);
+
+    if ((end || start) &&
+            (start >= This->header.mtLength || end > This->header.mtLength || start > end))
+        return DMUS_E_OUT_OF_RANGE;
+
+    This->header.mtLoopStart = start;
+    This->header.mtLoopEnd = end;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_GetLoopPoints(IDirectMusicSegment8 *iface,
