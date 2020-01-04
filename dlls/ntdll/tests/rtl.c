@@ -1487,7 +1487,7 @@ static const struct
     NTSTATUS res;
     int terminator_offset;
     int ip[8];
-    /* win_broken: older versions of windows do not handle this correctly
+    /* win_broken: XP and Vista do not handle this correctly
         ex_fail: Ex function does need the string to be terminated, non-Ex does not.
         ex_skip: test doesn't make sense for Ex (f.e. it's invalid for non-Ex but valid for Ex) */
     enum { normal_6, win_broken_6 = 1, ex_fail_6 = 2, ex_skip_6 = 4 } flags;
@@ -1501,7 +1501,7 @@ static const struct
             { 0, 0, 0, 0, 0, 0, 0, 0 } },
     { "0:0:0:0:0:0:0:1",                                STATUS_SUCCESS,             15,
             { 0, 0, 0, 0, 0, 0, 0, 0x100 } },
-    { "0:0:0:0:0:0:0::",                                STATUS_SUCCESS,             13,
+    { "0:0:0:0:0:0:0::",                                STATUS_SUCCESS,             15,
             { 0, 0, 0, 0, 0, 0, 0, 0 }, win_broken_6 },
     { "0:0:0:0:0:0:13.1.68.3",                          STATUS_SUCCESS,             21,
             { 0, 0, 0, 0, 0, 0, 0x10d, 0x344 } },
@@ -1517,7 +1517,7 @@ static const struct
             { 0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x700 } },
     { "1080:0:0:0:8:800:200c:417a",                     STATUS_SUCCESS,             26,
             { 0x8010, 0, 0, 0, 0x800, 0x8, 0x0c20, 0x7a41 } },
-    { "0:a:b:c:d:e:f::",                                STATUS_SUCCESS,             13,
+    { "0:a:b:c:d:e:f::",                                STATUS_SUCCESS,             15,
             { 0, 0xa00, 0xb00, 0xc00, 0xd00, 0xe00, 0xf00, 0 }, win_broken_6 },
     { "1111:2222:3333:4444:5555:6666:123.123.123.123",  STATUS_SUCCESS,             45,
             { 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7b7b, 0x7b7b } },
@@ -1531,7 +1531,7 @@ static const struct
             { 0x1111, 0x2222, 0x3333, 0x4444, 0xabab, 0xabab, 0xabab, 0xabab } },
     { "1111:2222:3333:4444:r5555:6666:7777:8888",       STATUS_INVALID_PARAMETER,   20,
             { 0x1111, 0x2222, 0x3333, 0x4444, 0xabab, 0xabab, 0xabab, 0xabab } },
-    { "1111:2222:3333:4444:5555:6666:7777::",           STATUS_SUCCESS,             34,
+    { "1111:2222:3333:4444:5555:6666:7777::",           STATUS_SUCCESS,             36,
             { 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0 }, win_broken_6 },
     { "1111:2222:3333:4444:5555:6666::",                STATUS_SUCCESS,             31,
             { 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0, 0 } },
@@ -2111,13 +2111,6 @@ static void test_RtlIpv6StringToAddress(void)
             ok(terminator == (void *)0xdeadbeef,
                "[%s] terminator = %p, expected it not to change\n",
                ipv6_tests[i].address, terminator);
-        }
-        else if (ipv6_tests[i].flags & win_broken_6)
-        {
-            PCSTR expected = ipv6_tests[i].address + ipv6_tests[i].terminator_offset;
-            ok(terminator == expected || broken(terminator == expected + 2),
-               "[%s] terminator = %p, expected %p\n",
-               ipv6_tests[i].address, terminator, expected);
         }
         else
         {
