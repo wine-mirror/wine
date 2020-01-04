@@ -1519,7 +1519,8 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, CONTEXT *context,
 static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION *func,
                                  CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ptrs )
 {
-    unsigned int i, len, offset, skip = 0;
+    int i;
+    unsigned int len, offset, skip = 0;
     unsigned int int_size = func->u.s.RegI * 8, fp_size = func->u.s.RegF * 8, regsave, local_size;
 
     TRACE( "function %lx-%lx: len=%#x flag=%x regF=%u regI=%u H=%u CR=%u frame=%x\n",
