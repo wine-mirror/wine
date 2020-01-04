@@ -1060,7 +1060,7 @@ static void test_threadcp(void)
     static const LCID JAPANESE = MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN),     SORT_DEFAULT);
     static const LCID CHINESE  = MAKELCID(MAKELANGID(LANG_CHINESE,  SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT);
 
-    BOOL islead, islead_acp;
+    BOOL islead, islead_default;
     CPINFOEXA cpi;
     UINT cp, acp;
     int  i, num;
@@ -1155,8 +1155,8 @@ static void test_threadcp(void)
             ok(cpi.CodePage == lcids[i].threadcp, "wrong codepage %u for lcid %04x, should be %u\n",
                cpi.CodePage, lcids[i].lcid, lcids[i].threadcp);
         else
-            ok(cpi.CodePage == acp, "wrong codepage %u for lcid %04x, should be %u\n",
-               cpi.CodePage, lcids[i].lcid, acp);
+            ok(cpi.CodePage == acp || cpi.CodePage == CP_UTF8 /* Win10 1809+ */,
+                "wrong codepage %u for lcid %04x, should be %u\n", cpi.CodePage, lcids[i].lcid, acp);
 
         /* WideCharToMultiByte - CP_THREAD_ACP */
         num = WideCharToMultiByte(CP_THREAD_ACP, 0, foobarW, -1, NULL, 0, NULL, NULL);
@@ -1172,11 +1172,12 @@ static void test_threadcp(void)
     {
         SetThreadLocale(isleads_nocp[i].lcid);
 
-        islead_acp = IsDBCSLeadByteEx(CP_ACP,        isleads_nocp[i].testchar);
-        islead     = IsDBCSLeadByteEx(CP_THREAD_ACP, isleads_nocp[i].testchar);
+        GetCPInfoExA(CP_THREAD_ACP, 0, &cpi);
+        islead_default = IsDBCSLeadByteEx(cpi.CodePage, isleads_nocp[i].testchar);
+        islead = IsDBCSLeadByteEx(CP_THREAD_ACP, isleads_nocp[i].testchar);
 
-        ok(islead == islead_acp, "wrong islead %i for test char %x in lcid %04x.  should be %i\n",
-            islead, isleads_nocp[i].testchar, isleads_nocp[i].lcid, islead_acp);
+        ok(islead == islead_default, "wrong islead %i for test char %x in lcid %04x.  should be %i\n",
+            islead, isleads_nocp[i].testchar, isleads_nocp[i].lcid, islead_default);
     }
 
     /* IsDBCSLeadByteEx - locales with codepage */
