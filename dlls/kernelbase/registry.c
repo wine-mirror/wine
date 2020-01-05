@@ -3146,13 +3146,15 @@ BOOL WINAPI GetComputerNameExW( COMPUTER_NAME_FORMAT type, WCHAR *name, DWORD *l
     case ComputerNameDnsFullyQualified:
     case ComputerNamePhysicalDnsFullyQualified:
     {
-        WCHAR buffer[256];
-        DWORD size = ARRAY_SIZE(buffer);
+        WCHAR *domain, buffer[256];
+        DWORD size = ARRAY_SIZE(buffer) - 1;
 
         if (!GetComputerNameExW( ComputerNameDnsHostname, buffer, &size )) return FALSE;
-        lstrcatW( buffer, L"." );
-        size = ARRAY_SIZE(buffer) - lstrlenW(buffer);
-        if (!GetComputerNameExW( ComputerNameDnsDomain, buffer + lstrlenW(buffer), &size )) return FALSE;
+        domain = buffer + lstrlenW(buffer);
+        *domain++ = '.';
+        size = ARRAY_SIZE(buffer) - (domain - buffer);
+        if (!GetComputerNameExW( ComputerNameDnsDomain, domain, &size )) return FALSE;
+        if (!*domain) domain[-1] = 0;
         size = lstrlenW(buffer);
         if (name && size < *len)
         {
