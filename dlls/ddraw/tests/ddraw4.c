@@ -1171,7 +1171,6 @@ static void test_coop_level_d3d_state(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDraw4_RestoreAllSurfaces(ddraw);
     ok(SUCCEEDED(hr), "Failed to restore surfaces, hr %#x.\n", hr);
-    IDirectDraw4_Release(ddraw);
 
     hr = IDirect3DDevice3_GetRenderTarget(device, &surface);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
@@ -1197,12 +1196,15 @@ static void test_coop_level_d3d_state(void)
     hr = IDirect3DDevice3_EndScene(device);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     color = get_surface_color(rt, 320, 240);
-    ok(compare_color(color, 0x0000ff80, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x0000ff80, 1)
+            || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
+            "Got unexpected color 0x%08x.\n", color);
 
     destroy_viewport(device, viewport);
     IDirectDrawSurface4_Release(surface);
     IDirectDrawSurface4_Release(rt);
     IDirect3DDevice3_Release(device);
+    IDirectDraw4_Release(ddraw);
     DestroyWindow(window);
 }
 
