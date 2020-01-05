@@ -3053,8 +3053,9 @@ static void test_WSAEnumNetworkEvents(void)
                 }
                 else
                 {
-                    ok (net_events.lNetworkEvents == 0, "Test[%d]: expected 0, got %d\n",
-                        i, net_events.lNetworkEvents);
+                    todo_wine_if (i != 0) /* Remove when fixed */
+                        ok (net_events.lNetworkEvents == 0, "Test[%d]: expected 0, got %d\n",
+                            i, net_events.lNetworkEvents);
                 }
                 for (k = 0; k < FD_MAX_EVENTS; k++)
                 {
