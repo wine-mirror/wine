@@ -1182,13 +1182,13 @@ static LRESULT WINAPI hook_dde_client_wndprocA(HWND hwnd, UINT msg, WPARAM wpara
 {
     UINT_PTR lo, hi;
 
-    trace("hook_dde_client_wndprocA: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
+    if (winetest_debug > 1) trace("hook_dde_client_wndprocA: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
 
     switch (msg)
     {
     case WM_DDE_ACK:
         UnpackDDElParam(WM_DDE_ACK, lparam, &lo, &hi);
-        trace("WM_DDE_ACK: status %04lx hglobal %p\n", lo, (HGLOBAL)hi);
+        if (winetest_debug > 1) trace("WM_DDE_ACK: status %04lx hglobal %p\n", lo, (HGLOBAL)hi);
         break;
 
     default:
@@ -1201,13 +1201,13 @@ static LRESULT WINAPI hook_dde_client_wndprocW(HWND hwnd, UINT msg, WPARAM wpara
 {
     UINT_PTR lo, hi;
 
-    trace("hook_dde_client_wndprocW: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
+    if (winetest_debug > 1) trace("hook_dde_client_wndprocW: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
 
     switch (msg)
     {
     case WM_DDE_ACK:
         UnpackDDElParam(WM_DDE_ACK, lparam, &lo, &hi);
-        trace("WM_DDE_ACK: status %04lx hglobal %p\n", lo, (HGLOBAL)hi);
+        if (winetest_debug > 1) trace("WM_DDE_ACK: status %04lx hglobal %p\n", lo, (HGLOBAL)hi);
         break;
 
     default:
@@ -1227,7 +1227,7 @@ static LRESULT WINAPI dde_server_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LP
     {
         ATOM aService = GlobalAddAtomW(TEST_DDE_SERVICE);
 
-        trace("server A: got WM_DDE_INITIATE from %p (%s) with %08lx\n",
+        if (winetest_debug > 1) trace("server A: got WM_DDE_INITIATE from %p (%s) with %08lx\n",
               (HWND)wparam, client_unicode ? "Unicode" : "ANSI", lparam);
 
         if (LOWORD(lparam) == aService)
@@ -1242,7 +1242,6 @@ static LRESULT WINAPI dde_server_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LP
             else
                 old_dde_client_wndproc = (WNDPROC)SetWindowLongPtrA((HWND)wparam, GWLP_WNDPROC,
                                                                     (ULONG_PTR)hook_dde_client_wndprocA);
-            trace("server: sending WM_DDE_ACK to %p\n", (HWND)wparam);
             SendMessageW((HWND)wparam, WM_DDE_ACK, (WPARAM)hwnd, PackDDElParam(WM_DDE_ACK, aService, 0));
         }
         else
@@ -1257,10 +1256,10 @@ static LRESULT WINAPI dde_server_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LP
         LPCSTR cmd;
         UINT_PTR lo, hi;
 
-        trace("server A: got WM_DDE_EXECUTE from %p with %08lx\n", (HWND)wparam, lparam);
+        if (winetest_debug > 1) trace("server A: got WM_DDE_EXECUTE from %p with %08lx\n", (HWND)wparam, lparam);
 
         UnpackDDElParam(WM_DDE_EXECUTE, lparam, &lo, &hi);
-        trace("%08lx => lo %04lx hi %04lx\n", lparam, lo, hi);
+        if (winetest_debug > 1) trace("%08lx => lo %04lx hi %04lx\n", lparam, lo, hi);
 
         ack.bAppReturnCode = 0;
         ack.reserved = 0;
@@ -1279,7 +1278,6 @@ static LRESULT WINAPI dde_server_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LP
             switch (step % 5)
             {
             case 0:  /* bad command */
-                trace( "server A got unhandled command\n" );
                 break;
 
             case 1:  /* ANSI command */
@@ -1315,7 +1313,6 @@ static LRESULT WINAPI dde_server_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LP
         else ok( 0, "bad command data %lx\n", hi );
 
         step++;
-        trace("server A: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
 
         status = *((WORD *)&ack);
         lparam = ReuseDDElParam(lparam, WM_DDE_EXECUTE, WM_DDE_ACK, status, hi);
@@ -1329,14 +1326,12 @@ static LRESULT WINAPI dde_server_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LP
         DDEACK ack;
         WORD status;
 
-        trace("server A: got WM_DDE_TERMINATE from %p with %08lx\n", (HWND)wparam, lparam);
+        if (winetest_debug > 1) trace("server A: got WM_DDE_TERMINATE from %#lx with %08lx\n", wparam, lparam);
 
         ack.bAppReturnCode = 0;
         ack.reserved = 0;
         ack.fBusy = 0;
         ack.fAck = 1;
-
-        trace("server A: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
 
         status = *((WORD *)&ack);
         lparam = PackDDElParam(WM_DDE_ACK, status, 0);
@@ -1375,14 +1370,14 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
             else
                 old_dde_client_wndproc = (WNDPROC)SetWindowLongPtrA((HWND)wparam, GWLP_WNDPROC,
                                                                     (ULONG_PTR)hook_dde_client_wndprocA);
-            trace("server W: sending WM_DDE_ACK to %p\n", (HWND)wparam);
             SendMessageW((HWND)wparam, WM_DDE_ACK, (WPARAM)hwnd, PackDDElParam(WM_DDE_ACK, aService, 0));
         }
         else
             GlobalDeleteAtom(aService);
 
-        trace("server W: got WM_DDE_INITIATE from %p with %08lx (client %s conv %s)\n", (HWND)wparam,
-              lparam, client_unicode ? "Unicode" : "ANSI", conv_unicode ? "Unicode" : "ANSI" );
+        if (winetest_debug > 1)
+            trace("server W: got WM_DDE_INITIATE from %p with %08lx (client %s conv %s)\n", (HWND)wparam,
+                    lparam, client_unicode ? "Unicode" : "ANSI", conv_unicode ? "Unicode" : "ANSI" );
 
         return 0;
     }
@@ -1394,10 +1389,10 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
         LPCSTR cmd;
         UINT_PTR lo, hi;
 
-        trace("server W: got WM_DDE_EXECUTE from %p with %08lx\n", (HWND)wparam, lparam);
+        if (winetest_debug > 1) trace("server W: got WM_DDE_EXECUTE from %#lx with %08lx\n", wparam, lparam);
 
         UnpackDDElParam(WM_DDE_EXECUTE, lparam, &lo, &hi);
-        trace("%08lx => lo %04lx hi %04lx\n", lparam, lo, hi);
+        if (winetest_debug > 1) trace("%08lx => lo %04lx hi %04lx\n", lparam, lo, hi);
 
         ack.bAppReturnCode = 0;
         ack.reserved = 0;
@@ -1416,7 +1411,6 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
             switch (step % 5)
             {
             case 0:  /* bad command */
-                trace( "server W got unhandled command\n" );
                 break;
 
             case 1:  /* ANSI command */
@@ -1460,7 +1454,6 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
         else ok( 0, "bad command data %lx\n", hi );
 
         step++;
-        trace("server W: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
 
         status = *((WORD *)&ack);
         lparam = ReuseDDElParam(lparam, WM_DDE_EXECUTE, WM_DDE_ACK, status, hi);
@@ -1474,14 +1467,12 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
         DDEACK ack;
         WORD status;
 
-        trace("server W: got WM_DDE_TERMINATE from %p with %08lx\n", (HWND)wparam, lparam);
+        if (winetest_debug > 1) trace("server W: got WM_DDE_TERMINATE from %#lx with %08lx\n", wparam, lparam);
 
         ack.bAppReturnCode = 0;
         ack.reserved = 0;
         ack.fBusy = 0;
         ack.fAck = 1;
-
-        trace("server W: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
 
         status = *((WORD *)&ack);
         lparam = PackDDElParam(WM_DDE_ACK, status, 0);
@@ -1548,8 +1539,9 @@ static HDDEDATA CALLBACK client_dde_callback(UINT uType, UINT uFmt, HCONV hconv,
     type = (uType & XTYP_MASK) >> XTYP_SHIFT;
     cmd_name = (type <= 14) ? cmd_type[type] : "unknown";
 
-    trace("client_dde_callback: %04x (%s) %d %p %p %p %p %08lx %08lx\n",
-          uType, cmd_name, uFmt, hconv, hsz1, hsz2, hdata, dwData1, dwData2);
+    if (winetest_debug > 1)
+        trace("client_dde_callback: %04x (%s) %d %p %p %p %p %08lx %08lx\n",
+                uType, cmd_name, uFmt, hconv, hsz1, hsz2, hdata, dwData1, dwData2);
     return 0;
 }
 
@@ -1601,9 +1593,7 @@ todo_wine {
     ok(info.wType == 0, "unexpected info.wType: %04x\n", info.wType);
 
     client_unicode = IsWindowUnicode( info.hwnd );
-    trace("hwnd %p, hwndPartner %p, unicode %u\n", info.hwnd, info.hwndPartner, client_unicode);
 
-    trace("sending test client transaction command\n");
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)test_cmd, strlen(test_cmd) + 1, hconv, (HSZ)0xdead, 0xbeef, XTYP_EXECUTE, 1000, &ret);
     ok(!hdata, "DdeClientTransaction succeeded\n");
@@ -1611,7 +1601,6 @@ todo_wine {
     err = DdeGetLastError(dde_inst);
     ok(err == DMLERR_NOTPROCESSED, "wrong dde error %x\n", err);
 
-    trace("sending ANSI client transaction command\n");
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)exec_cmdA, lstrlenA(exec_cmdA) + 1, hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
     err = DdeGetLastError(dde_inst);
@@ -1634,7 +1623,6 @@ todo_wine {
         ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
     }
 
-    trace("sending ANSI-as-Unicode client transaction command\n");
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)exec_cmdAW, (lstrlenW(exec_cmdAW) + 1) * sizeof(WCHAR),
                                  hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
@@ -1658,7 +1646,6 @@ todo_wine {
         ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
     }
 
-    trace("sending unicode client transaction command\n");
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)exec_cmdW, (lstrlenW(exec_cmdW) + 1) * sizeof(WCHAR), hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
     err = DdeGetLastError(dde_inst);
@@ -1681,7 +1668,6 @@ todo_wine {
         ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
     }
 
-    trace("sending Unicode-as-ANSI client transaction command\n");
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)exec_cmdWA, lstrlenA(exec_cmdWA) + 1, hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
     err = DdeGetLastError(dde_inst);
@@ -2375,7 +2361,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
     static const char test_service [] = "TestDDEService";
     static const char test_topic [] = "TestDDETopic";
 
-    trace("type %#x, fmt %#x\n", uType, uFmt);
+    if (winetest_debug > 1) trace("type %#x, fmt %#x\n", uType, uFmt);
 
     ok(msg_index < 5 + ARRAY_SIZE(test_cmd_w_to_w), "Got unexpected message type %#x.\n", uType);
     msg_index++;
@@ -2440,7 +2426,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
         rsize = DdeGetData(hdata, buffer, size, 0);
         ok(rsize == size, "Incorrect size returned, expected %d got %d, msg_index=%d\n",
            size, rsize, msg_index);
-        trace("msg %u strA \"%s\" strW %s\n", msg_index, buffer, wine_dbgstr_w((WCHAR*)buffer));
+        if (winetest_debug > 1) trace("msg %u strA \"%s\" strW %s\n", msg_index, buffer, wine_dbgstr_w((WCHAR*)buffer));
 
         str_index = msg_index - 4;
         cmd_w = test_cmd_w_to_w[str_index - 1];
@@ -2596,8 +2582,6 @@ static void test_end_to_end_client(BOOL type_a)
     static const WCHAR test_service_w[] = {'T','e','s','t','D','D','E','S','e','r','v','i','c','e',0};
     static const char test_topic[] = "TestDDETopic";
     static const WCHAR test_topic_w[] = {'T','e','s','t','D','D','E','T','o','p','i','c',0};
-
-    trace("Start end to end client %s\n", type_a ? "ASCII" : "UNICODE");
 
     if (type_a)
         ret = DdeInitializeA(&client_pid, client_end_to_end_callback, APPCMD_CLIENTONLY, 0);
