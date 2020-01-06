@@ -54,7 +54,7 @@ static void test_dc_attributes(void)
 
     ok( WindowFromDC( hdc ) == hwnd_cache, "wrong window\n" );
     ReleaseDC( hwnd_cache, hdc );
-    ok( WindowFromDC( hdc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( hdc ) != hwnd_cache, "wrong window\n" );
     hdc = GetDC( hwnd_cache );
     rop = GetROP2( hdc );
     ok( rop == def_rop, "wrong ROP2 %d after release\n", rop );
@@ -124,7 +124,7 @@ static void test_dc_attributes(void)
     ok( caps == 0, "got %d\n", caps );
     caps = GetDeviceCaps( old_hdc, NUMCOLORS );
     ok( caps == 0, "got %d\n", caps );
-    ok( WindowFromDC( old_hdc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( old_hdc ) != hwnd_cache, "wrong window\n" );
 
     hdc = GetDC(0);
     caps = GetDeviceCaps( hdc, HORZRES );
@@ -645,7 +645,7 @@ static void test_destroyed_window(void)
     DestroyWindow( hwnd_cache );
     rop = GetROP2( dc );
     ok( rop == 0, "wrong ROP2 %d\n", rop );
-    ok( WindowFromDC( dc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( dc ) != hwnd_cache, "wrong window\n" );
     ok( !ReleaseDC( hwnd_cache, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_cache );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
@@ -674,7 +674,7 @@ static void test_destroyed_window(void)
 
     rop = GetROP2( dc );
     ok( rop == R2_WHITE, "wrong ROP2 %d\n", rop );
-    ok( WindowFromDC( dc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( dc ) != hwnd_classdc2, "wrong window\n" );
     ok( !ReleaseDC( hwnd_classdc2, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_classdc2 );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
@@ -688,7 +688,7 @@ static void test_destroyed_window(void)
 
     rop = GetROP2( dc );
     ok( rop == R2_WHITE, "wrong ROP2 %d\n", rop );
-    ok( WindowFromDC( dc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( dc ) != hwnd_classdc, "wrong window\n" );
     ok( !ReleaseDC( hwnd_classdc, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_classdc );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
@@ -702,7 +702,7 @@ static void test_destroyed_window(void)
 
     rop = GetROP2( dc );
     ok( rop == 0, "wrong ROP2 %d\n", rop );
-    ok( WindowFromDC( dc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( dc ) != hwnd_owndc, "wrong window\n" );
     ok( !ReleaseDC( hwnd_owndc, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_owndc );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
