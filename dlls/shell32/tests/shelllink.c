@@ -43,7 +43,6 @@ static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
 static HRESULT (WINAPI *pSHGetFolderLocation)(HWND,INT,HANDLE,DWORD,PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHDefExtractIconA)(LPCSTR, int, UINT, HICON*, HICON*, UINT);
 static HRESULT (WINAPI *pSHGetStockIconInfo)(SHSTOCKICONID, UINT, SHSTOCKICONINFO *);
-static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR, LPSTR, DWORD);
 static DWORD (WINAPI *pGetShortPathNameA)(LPCSTR, LPSTR, DWORD);
 static UINT (WINAPI *pSHExtractIconsW)(LPCWSTR, int, int, int, HICON *, UINT *, UINT, UINT);
 static BOOL (WINAPI *pIsProcessDPIAware)(void);
@@ -170,19 +169,12 @@ static void test_get_set(void)
     ok(finddata.dwFileAttributes == 0, "unexpected attributes %x\n", finddata.dwFileAttributes);
     ok(finddata.cFileName[0] == 0, "unexpected filename '%s'\n", finddata.cFileName);
 
-    r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-                         &IID_IShellLinkW, (LPVOID*)&slW);
+    r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLinkW, (void **)&slW);
     ok(r == S_OK, "CoCreateInstance failed (0x%08x)\n", r);
-    if (!slW /* Win9x */ || !pGetLongPathNameA /* NT4 */)
-        skip("SetPath with NULL parameter crashes on Win9x and some NT4\n");
-    else
-    {
-        IShellLinkW_Release(slW);
-        r = IShellLinkA_SetPath(sl, NULL);
-        ok(r==E_INVALIDARG ||
-           broken(r==S_OK), /* Some Win95 and NT4 */
-           "SetPath returned wrong error (0x%08x)\n", r);
-    }
+    IShellLinkW_Release(slW);
+
+    r = IShellLinkA_SetPath(sl, NULL);
+    ok(r == E_INVALIDARG, "Unexpected hr %#x.\n", r);
 
     r = IShellLinkA_SetPath(sl, "");
     ok(r==S_OK, "SetPath failed (0x%08x)\n", r);
@@ -643,12 +635,6 @@ static void test_load_save(void)
     HANDLE hf;
     DWORD r;
 
-    if (!pGetLongPathNameA)
-    {
-        win_skip("GetLongPathNameA is not available\n");
-        return;
-    }
-
     /* Don't used a fixed path for the test.lnk file */
     GetTempPathA(MAX_PATH, lnkfileA);
     lstrcatA(lnkfileA, lnkfileA_name);
@@ -687,7 +673,8 @@ static void test_load_save(void)
         *p='\0';
 
     /* IShellLink returns path in long form */
-    if (!pGetLongPathNameA(mypath, realpath, MAX_PATH)) strcpy( realpath, mypath );
+    if (!GetLongPathNameA(mypath, realpath, MAX_PATH))
+        strcpy( realpath, mypath );
 
     /* Overwrite the existing lnk file and point it to existing files */
     desc.description="test 2";
@@ -755,7 +742,7 @@ static void test_load_save(void)
     /* Create a temporary non-executable file */
     r=GetTempPathA(sizeof(mypath), mypath);
     ok(r<sizeof(mypath), "GetTempPath failed (%d), err %d\n", r, GetLastError());
-    r=pGetLongPathNameA(mypath, mydir, sizeof(mydir));
+    r = GetLongPathNameA(mypath, mydir, sizeof(mydir));
     ok(r<sizeof(mydir), "GetLongPathName failed (%d), err %d\n", r, GetLastError());
     p=strrchr(mydir, '\\');
     if (p)
@@ -895,13 +882,8 @@ static void test_datalink(void)
     ok( r == E_FAIL, "CopyDataBlock failed\n");
     ok( dar == NULL, "should be null\n");
 
-    if (!pGetLongPathNameA /* NT4 */)
-        skip("SetPath with NULL parameter crashes on NT4\n");
-    else
-    {
-        r = IShellLinkW_SetPath(sl, NULL);
-        ok(r == E_INVALIDARG, "SetPath returned wrong error (0x%08x)\n", r);
-    }
+    r = IShellLinkW_SetPath(sl, NULL);
+    ok(r == E_INVALIDARG, "Unexpected hr %#x.\n", r);
 
     r = IShellLinkW_SetPath(sl, lnk);
     ok(r == S_OK, "SetPath failed\n");
@@ -1478,7 +1460,6 @@ START_TEST(shelllink)
     pSHGetFolderLocation = (void *)GetProcAddress(hmod, "SHGetFolderLocation");
     pSHDefExtractIconA = (void *)GetProcAddress(hmod, "SHDefExtractIconA");
     pSHGetStockIconInfo = (void *)GetProcAddress(hmod, "SHGetStockIconInfo");
-    pGetLongPathNameA = (void *)GetProcAddress(hkernel32, "GetLongPathNameA");
     pGetShortPathNameA = (void *)GetProcAddress(hkernel32, "GetShortPathNameA");
     pSHExtractIconsW = (void *)GetProcAddress(hmod, "SHExtractIconsW");
     pIsProcessDPIAware = (void *)GetProcAddress(huser32, "IsProcessDPIAware");
