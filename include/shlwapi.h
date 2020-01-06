@@ -1018,13 +1018,24 @@ HRESULT WINAPI SHSetThreadRef(IUnknown*);
 HRESULT WINAPI SHReleaseThreadRef(void);
 
 /* SHCreateThread flags */
-#define CTF_INSIST          0x01 /* Always call */
-#define CTF_THREAD_REF      0x02 /* Hold thread ref */
-#define CTF_PROCESS_REF     0x04 /* Hold process ref */
-#define CTF_COINIT          0x08 /* Startup COM first */
-#define CTF_FREELIBANDEXIT  0x10 /* Hold DLL ref */
-#define CTF_REF_COUNTED     0x20 /* Thread is ref counted */
-#define CTF_WAIT_ALLOWCOM   0x40 /* Allow marshalling */
+enum
+{
+    CTF_INSIST            = 0x00000001, /* Always call */
+    CTF_THREAD_REF        = 0x00000002, /* Hold thread ref */
+    CTF_PROCESS_REF       = 0x00000004, /* Hold process ref */
+    CTF_COINIT_STA        = 0x00000008,
+    CTF_COINIT            = 0x00000008, /* Startup COM first */
+    CTF_FREELIBANDEXIT    = 0x00000010, /* Hold DLL ref */
+    CTF_REF_COUNTED       = 0x00000020, /* Thread is ref counted */
+    CTF_WAIT_ALLOWCOM     = 0x00000040, /* Allow marshalling */
+    CTF_UNUSED            = 0x00000080,
+    CTF_INHERITWOW64      = 0x00000100,
+    CTF_WAIT_NO_REENTRACY = 0x00000200,
+    CTF_KEYBOARD_LOCALE   = 0x00000400,
+    CTF_OLEINITIALIZE     = 0x00000800,
+    CTF_COINIT_MTA        = 0x00001000,
+    CTF_NOADDREFLIB       = 0x00002000,
+};
 
 BOOL WINAPI SHCreateThread(LPTHREAD_START_ROUTINE,void*,DWORD,LPTHREAD_START_ROUTINE);
 
