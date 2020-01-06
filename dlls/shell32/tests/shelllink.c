@@ -43,7 +43,6 @@ static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
 static HRESULT (WINAPI *pSHGetFolderLocation)(HWND,INT,HANDLE,DWORD,PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHDefExtractIconA)(LPCSTR, int, UINT, HICON*, HICON*, UINT);
 static HRESULT (WINAPI *pSHGetStockIconInfo)(SHSTOCKICONID, UINT, SHSTOCKICONINFO *);
-static DWORD (WINAPI *pGetShortPathNameA)(LPCSTR, LPSTR, DWORD);
 static UINT (WINAPI *pSHExtractIconsW)(LPCWSTR, int, int, int, HICON *, UINT *, UINT, UINT);
 static BOOL (WINAPI *pIsProcessDPIAware)(void);
 
@@ -767,7 +766,7 @@ static void test_load_save(void)
     create_lnk(lnkfile, &desc, 0);
     check_lnk(lnkfile, &desc, 0x0);
 
-    r=pGetShortPathNameA(mydir, mypath, sizeof(mypath));
+    r = GetShortPathNameA(mydir, mypath, sizeof(mypath));
     ok(r<sizeof(mypath), "GetShortPathName failed (%d), err %d\n", r, GetLastError());
 
     strcpy(realpath, mypath);
@@ -1452,7 +1451,6 @@ START_TEST(shelllink)
 {
     HRESULT r;
     HMODULE hmod = GetModuleHandleA("shell32.dll");
-    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
     HMODULE huser32 = GetModuleHandleA("user32.dll");
 
     pILIsEqual = (void *)GetProcAddress(hmod, (LPSTR)21);
@@ -1460,7 +1458,6 @@ START_TEST(shelllink)
     pSHGetFolderLocation = (void *)GetProcAddress(hmod, "SHGetFolderLocation");
     pSHDefExtractIconA = (void *)GetProcAddress(hmod, "SHDefExtractIconA");
     pSHGetStockIconInfo = (void *)GetProcAddress(hmod, "SHGetStockIconInfo");
-    pGetShortPathNameA = (void *)GetProcAddress(hkernel32, "GetShortPathNameA");
     pSHExtractIconsW = (void *)GetProcAddress(hmod, "SHExtractIconsW");
     pIsProcessDPIAware = (void *)GetProcAddress(huser32, "IsProcessDPIAware");
 
