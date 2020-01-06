@@ -1,4 +1,4 @@
-@ stdcall QISearch(long long long long) shlwapi.QISearch
+@ stdcall QISearch(ptr ptr ptr ptr) shlwapi.QISearch
 @ stdcall SHLoadIndirectString(wstr ptr long ptr) shlwapi.SHLoadIndirectString
 @ stdcall StrCSpnA(str str) shlwapi.StrCSpnA
 @ stdcall StrCSpnIA(str str) shlwapi.StrCSpnIA

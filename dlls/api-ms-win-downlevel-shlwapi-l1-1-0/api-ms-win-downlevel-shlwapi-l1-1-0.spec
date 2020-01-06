@@ -67,7 +67,7 @@
 @ stdcall PathStripToRootW(wstr) shlwapi.PathStripToRootW
 @ stdcall PathUnquoteSpacesA(str) shlwapi.PathUnquoteSpacesA
 @ stdcall PathUnquoteSpacesW(wstr) shlwapi.PathUnquoteSpacesW
-@ stdcall QISearch(long long long long) shlwapi.QISearch
+@ stdcall QISearch(ptr ptr ptr ptr) shlwapi.QISearch
 @ stdcall SHLoadIndirectString(wstr ptr long ptr) shlwapi.SHLoadIndirectString
 @ stdcall SHRegCloseUSKey(ptr) shlwapi.SHRegCloseUSKey
 @ stdcall SHRegDeleteUSValueA(long str long) shlwapi.SHRegDeleteUSValueA
