@@ -40,27 +40,6 @@
 
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 
-static void dump_region(HRGN hrgn)
-{
-    DWORD i, size;
-    RGNDATA *data = NULL;
-    RECT *rect;
-
-    if (!hrgn)
-    {
-        printf( "(null) region\n" );
-        return;
-    }
-    if (!(size = GetRegionData( hrgn, 0, NULL ))) return;
-    if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
-    GetRegionData( hrgn, size, data );
-    printf( "%d rects:", data->rdh.nCount );
-    for (i = 0, rect = (RECT *)data->Buffer; i < data->rdh.nCount; i++, rect++)
-        printf( " (%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
-    printf( "\n" );
-    HeapFree( GetProcessHeap(), 0, data );
-}
-
 static void test_dc_values(void)
 {
     HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
@@ -111,6 +90,8 @@ static void test_dc_values(void)
 
 static void test_savedc_2(void)
 {
+    char buffer[100];
+    RGNDATA *rgndata = (RGNDATA *)buffer;
     HWND hwnd;
     HDC hdc;
     HRGN hrgn;
@@ -130,13 +111,16 @@ static void test_savedc_2(void)
     ok(hdc != NULL, "GetDC failed\n");
 
     ret = GetClipBox(hdc, &rc_clip);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
+    /* all versions of Windows return SIMPLEREGION despite returning an empty region */
+    todo_wine ok(ret == NULLREGION || broken(ret == SIMPLEREGION), "wrong region type %d\n", ret);
     ret = GetClipRgn(hdc, hrgn);
     ok(ret == 0, "GetClipRgn returned %d instead of 0\n", ret);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == NULLREGION, "GetRgnBox returned %d %s instead of NULLREGION\n",
        ret, wine_dbgstr_rect(&rc));
-    /*dump_region(hrgn);*/
+    ret = GetRegionData(hrgn, sizeof(buffer), rgndata);
+    ok(ret == sizeof(RGNDATAHEADER), "got %u\n", ret);
+    ok(!rgndata->rdh.nCount, "got %u rectangles\n", rgndata->rdh.nCount);
     SetRect(&rc, 0, 0, 100, 100);
     ok(EqualRect(&rc, &rc_clip), "rects are not equal: %s - %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&rc_clip));
@@ -145,20 +129,18 @@ static void test_savedc_2(void)
     ok(ret == 1, "ret = %d\n", ret);
 
     ret = IntersectClipRect(hdc, 0, 0, 50, 50);
-    if (ret == COMPLEXREGION)
-    {
-        /* XP returns COMPLEXREGION although dump_region reports only 1 rect */
-        trace("Windows BUG: IntersectClipRect returned %d instead of SIMPLEREGION\n", ret);
-        /* let's make sure that it's a simple region */
-        ret = GetClipRgn(hdc, hrgn);
-        ok(ret == 1, "GetClipRgn returned %d instead of 1\n", ret);
-        dump_region(hrgn);
-    }
-    else
-        ok(ret == SIMPLEREGION, "IntersectClipRect returned %d instead of SIMPLEREGION\n", ret);
+    /* all versions of Windows return COMPLEXREGION despite the region comprising one rectangle */
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "wrong region type %d\n", ret);
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 1, "GetClipRgn returned %d instead of 1\n", ret);
+    ret = GetRegionData(hrgn, sizeof(buffer), rgndata);
+    ok(ret == sizeof(RGNDATAHEADER) + sizeof(RECT), "got %u\n", ret);
+    ok(rgndata->rdh.nCount == 1, "got %u rectangles\n", rgndata->rdh.nCount);
+    SetRect(&rc, 0, 0, 50, 50);
+    ok(EqualRect((RECT *)rgndata->Buffer, &rc), "got rect %s\n", wine_dbgstr_rect((RECT *)rgndata->Buffer));
 
     ret = GetClipBox(hdc, &rc_clip);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
+    ok(ret == SIMPLEREGION, "wrong region type %d\n", ret);
     SetRect(&rc, 0, 0, 50, 50);
     ok(EqualRect(&rc, &rc_clip), "rects are not equal: %s - %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&rc_clip));
@@ -167,7 +149,7 @@ static void test_savedc_2(void)
     ok(ret, "ret = %d\n", ret);
 
     ret = GetClipBox(hdc, &rc_clip);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
+    ok(ret == SIMPLEREGION, "wrong region type %d\n", ret);
     SetRect(&rc, 0, 0, 100, 100);
     ok(EqualRect(&rc, &rc_clip), "rects are not equal: %s - %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&rc_clip));

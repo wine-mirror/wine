@@ -60,20 +60,6 @@ static void init_function_pointers(void)
     GDI_GET_PROC(SetDCPenColor);
 }
 
-static DWORD rgn_rect_count(HRGN hrgn)
-{
-    DWORD size;
-    RGNDATA *data;
-
-    if (!hrgn) return 0;
-    if (!(size = GetRegionData(hrgn, 0, NULL))) return 0;
-    if (!(data = HeapAlloc(GetProcessHeap(), 0, size))) return 0;
-    GetRegionData(hrgn, size, data);
-    size = data->rdh.nCount;
-    HeapFree(GetProcessHeap(), 0, data);
-    return size;
-}
-
 static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     const ENHMETARECORD *emr, int n_objs, LPARAM param)
 {
@@ -2716,6 +2702,8 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
 static void test_emf_clipping(void)
 {
+    char buffer[100];
+    RGNDATA *rgndata = (RGNDATA *)buffer;
     static const RECT rc = { 0, 0, 100, 100 };
     RECT rc_clip = { 100, 100, 1024, 1024 };
     HWND hwnd;
@@ -2790,15 +2778,14 @@ static void test_emf_clipping(void)
        wine_dbgstr_rect(&rc_res));
 
     ret = IntersectClipRect(hdc, 0, 0, 100, 100);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION) /* XP */, "got %d\n", ret);
-    if (ret == COMPLEXREGION)
-    {
-        /* XP returns COMPLEXREGION although region contains only 1 rect */
-        ret = GetClipRgn(hdc, hrgn);
-        ok(ret == 1, "expected 1, got %d\n", ret);
-        ret = rgn_rect_count(hrgn);
-        ok(ret == 1, "expected 1, got %d\n", ret);
-    }
+    /* all versions of Windows return COMPLEXREGION despite the region comprising one rectangle */
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "wrong region type %d\n", ret);
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ret = GetRegionData(hrgn, sizeof(buffer), rgndata);
+    ok(ret == sizeof(RGNDATAHEADER) + sizeof(RECT), "got %u\n", ret);
+    ok(rgndata->rdh.nCount == 1, "got %u rectangles\n", rgndata->rdh.nCount);
+    ok(EqualRect((RECT *)rgndata->Buffer, &rc), "got rect %s\n", wine_dbgstr_rect((RECT *)rgndata->Buffer));
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
@@ -2807,15 +2794,14 @@ static void test_emf_clipping(void)
 
     SetRect(&rc_sclip, 0, 0, 100, 50);
     ret = ExcludeClipRect(hdc, 0, 50, 100, 100);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION) /* XP */, "got %d\n", ret);
-    if (ret == COMPLEXREGION)
-    {
-        /* XP returns COMPLEXREGION although region contains only 1 rect */
-        ret = GetClipRgn(hdc, hrgn);
-        ok(ret == 1, "expected 1, got %d\n", ret);
-        ret = rgn_rect_count(hrgn);
-        ok(ret == 1, "expected 1, got %d\n", ret);
-    }
+    /* all versions of Windows return COMPLEXREGION despite the region comprising one rectangle */
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "wrong region type %d\n", ret);
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ret = GetRegionData(hrgn, sizeof(buffer), rgndata);
+    ok(ret == sizeof(RGNDATAHEADER) + sizeof(RECT), "got %u\n", ret);
+    ok(rgndata->rdh.nCount == 1, "got %u rectangles\n", rgndata->rdh.nCount);
+    ok(EqualRect((RECT *)rgndata->Buffer, &rc_sclip), "got rect %s\n", wine_dbgstr_rect((RECT *)rgndata->Buffer));
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
