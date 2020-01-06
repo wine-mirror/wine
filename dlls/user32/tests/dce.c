@@ -632,8 +632,7 @@ static void test_dc_layout(void)
 static void test_destroyed_window(void)
 {
     HDC dc, old_dc;
-    HDC hdcs[30];
-    int i, rop;
+    int rop;
 
     dc = GetDC( hwnd_cache );
     SetROP2( dc, R2_WHITE );
@@ -649,14 +648,6 @@ static void test_destroyed_window(void)
     ok( !ReleaseDC( hwnd_cache, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_cache );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
-
-    for (i = 0; i < 30; i++)
-    {
-        dc = hdcs[i] = GetDCEx( hwnd_parent, 0, DCX_CACHE | DCX_USESTYLE );
-        if (dc == old_dc) break;
-    }
-    ok( i < 30, "DC for destroyed window not reused\n" );
-    while (i > 0) ReleaseDC( hwnd_parent, hdcs[--i] );
 
     dc = GetDC( hwnd_classdc );
     SetROP2( dc, R2_WHITE );
