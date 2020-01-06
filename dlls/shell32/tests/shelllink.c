@@ -492,13 +492,10 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
         lok(str != NULL ||
             broken(str == NULL), /* shell32 < 5.0 */
             "Didn't expect NULL\n");
-        if (str != NULL)
+        if (str)
         {
-            IMalloc *pmalloc;
-
             lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
-            SHGetMalloc(&pmalloc);
-            IMalloc_Free(pmalloc, str);
+            CoTaskMemFree(str);
         }
         else
             win_skip("GetCurFile fails on shell32 < 5.0\n");
@@ -550,11 +547,8 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
         "Didn't expect NULL\n");
     if (str != NULL)
     {
-        IMalloc *pmalloc;
-
         lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
-        SHGetMalloc(&pmalloc);
-        IMalloc_Free(pmalloc, str);
+        CoTaskMemFree(str);
     }
     else
         win_skip("GetCurFile fails on shell32 < 5.0\n");
