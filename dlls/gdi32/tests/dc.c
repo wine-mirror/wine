@@ -423,9 +423,6 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
         }
         else
             ok( ret || broken(!ret) /* NT4 */, "GetDeviceGammaRamp failed on %s (type %d), error %u\n", descr, GetObjectType( hdc ), GetLastError() );
-        type = GetClipBox( hdc, &rect );
-        todo_wine_if (GetObjectType( hdc ) == OBJ_ENHMETADC)
-            ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
 
         type = GetBoundsRect( hdc, &rect, 0 );
         ok( type == DCB_RESET || broken(type == DCB_SET) /* XP */,
@@ -1563,6 +1560,104 @@ static void test_pscript_printer_dc(void)
     DeleteDC(hdc);
 }
 
+static void test_clip_box(void)
+{
+    DEVMODEA scale_mode = {.dmSize = sizeof(DEVMODEA)};
+    HBITMAP bitmap = CreateBitmap(10, 10, 1, 1, NULL);
+    HDC dc, desktop_dc, printer_dc;
+    RECT rect, expect, screen_rect;
+    int type, screen_type;
+
+    EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &scale_mode);
+    scale_mode.dmFields |= DM_SCALE;
+    scale_mode.u1.s1.dmScale = 200;
+
+    SetRect(&screen_rect, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
+            GetSystemMetrics(SM_XVIRTUALSCREEN) + GetSystemMetrics(SM_CXVIRTUALSCREEN),
+            GetSystemMetrics(SM_YVIRTUALSCREEN) + GetSystemMetrics(SM_CYVIRTUALSCREEN));
+    screen_type = GetSystemMetrics(SM_CMONITORS) > 1 ? COMPLEXREGION : SIMPLEREGION;
+
+    dc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    type = GetClipBox(dc, &rect);
+    todo_wine_if(screen_type == COMPLEXREGION)
+        ok(type == screen_type, "wrong region type %d\n", type);
+    ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+            wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+    DeleteDC(dc);
+
+    dc = CreateDCA("DISPLAY", NULL, NULL, &scale_mode);
+    type = GetClipBox(dc, &rect);
+    todo_wine_if(screen_type == COMPLEXREGION)
+        ok(type == screen_type, "wrong region type %d\n", type);
+    ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+            wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+    ResetDCA(dc, &scale_mode);
+    type = GetClipBox(dc, &rect);
+    todo_wine_if(screen_type == COMPLEXREGION)
+        ok(type == screen_type, "wrong region type %d\n", type);
+    ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+            wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+    DeleteDC(dc);
+
+    dc = CreateCompatibleDC(NULL);
+    type = GetClipBox(dc, &rect);
+    ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+    SetRect(&expect, 0, 0, 1, 1);
+    ok(EqualRect(&rect, &expect), "got %s\n", wine_dbgstr_rect(&rect));
+    SelectObject(dc, bitmap);
+    type = GetClipBox(dc, &rect);
+    ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+    SetRect(&expect, 0, 0, 10, 10);
+    ok(EqualRect(&rect, &expect), "got %s\n", wine_dbgstr_rect(&rect));
+    DeleteDC(dc);
+
+    desktop_dc = GetDC(0);
+    type = GetClipBox(desktop_dc, &rect);
+    todo_wine_if(screen_type == COMPLEXREGION)
+        ok(type == screen_type, "wrong region type %d\n", type);
+    ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+            wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+
+    dc = CreateEnhMetaFileA(desktop_dc, NULL, NULL, NULL);
+    ok(!!dc, "CreateEnhMetaFile() failed\n");
+    type = GetClipBox(dc, &rect);
+    todo_wine ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+    if (type != ERROR)
+        ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+                wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+    DeleteEnhMetaFile(CloseEnhMetaFile(dc));
+
+    ReleaseDC(0, desktop_dc);
+
+    dc = CreateMetaFileA(NULL);
+    ok(!!dc, "CreateEnhMetaFile() failed\n");
+    type = GetClipBox(dc, &rect);
+    ok(type == ERROR, "wrong region type %d\n", type);
+    DeleteMetaFile(CloseMetaFile(dc));
+
+    if ((printer_dc = create_printer_dc(100, FALSE)))
+    {
+        type = GetClipBox(printer_dc, &rect);
+        ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+
+        dc = CreateCompatibleDC(printer_dc);
+        type = GetClipBox(dc, &rect);
+        ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+        SetRect(&expect, 0, 0, 1, 1);
+        ok(EqualRect(&rect, &expect), "got %s\n", wine_dbgstr_rect(&rect));
+        DeleteDC(dc);
+
+        dc = CreateEnhMetaFileA(printer_dc, NULL, NULL, NULL);
+        type = GetClipBox(dc, &rect);
+        todo_wine ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+        DeleteEnhMetaFile(CloseEnhMetaFile(dc));
+
+        DeleteDC(printer_dc);
+    }
+
+    DeleteObject(bitmap);
+}
+
 START_TEST(dc)
 {
     pSetLayout = (void *)GetProcAddress( GetModuleHandleA("gdi32.dll"), "SetLayout");
@@ -1579,4 +1674,5 @@ START_TEST(dc)
     test_gamma();
     test_printer_dc();
     test_pscript_printer_dc();
+    test_clip_box();
 }
