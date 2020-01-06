@@ -61,8 +61,6 @@ static INT (WINAPI *pLCMapStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPWSTR, INT, L
 static LCID (WINAPI *pLocaleNameToLCID)(LPCWSTR, DWORD);
 static NTSTATUS (WINAPI *pRtlLocaleNameToLcid)(LPCWSTR, LCID *, DWORD);
 static INT  (WINAPI *pLCIDToLocaleName)(LCID, LPWSTR, INT, DWORD);
-static INT (WINAPI *pFoldStringA)(DWORD, LPCSTR, INT, LPSTR, INT);
-static INT (WINAPI *pFoldStringW)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static BOOL (WINAPI *pIsValidLanguageGroup)(LGRPID, DWORD);
 static INT (WINAPI *pIdnToNameprepUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pIdnToAscii)(DWORD, LPCWSTR, INT, LPWSTR, INT);
@@ -103,8 +101,6 @@ static void InitFunctionPointers(void)
   X(LocaleNameToLCID);
   X(LCIDToLocaleName);
   X(LCMapStringEx);
-  X(FoldStringA);
-  X(FoldStringW);
   X(IsValidLanguageGroup);
   X(EnumUILanguagesA);
   X(EnumSystemLocalesEx);
@@ -3191,9 +3187,6 @@ static void test_FoldStringA(void)
     { 0x00 }
   };
 
-  if (!pFoldStringA)
-    return; /* FoldString is present in NT v3.1+, but not 95/98/Me */
-
   /* these tests are locale specific */
   if (GetACP() != 1252)
   {
@@ -3202,13 +3195,8 @@ static void test_FoldStringA(void)
   }
 
   /* MAP_FOLDDIGITS */
-  SetLastError(0);
-  ret = pFoldStringA(MAP_FOLDDIGITS, digits_src, -1, dst, 256);
-  if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-  {
-    win_skip("FoldStringA is not implemented\n");
-    return;
-  }
+  SetLastError(0xdeadbeef);
+  ret = FoldStringA(MAP_FOLDDIGITS, digits_src, -1, dst, 256);
   ok(ret == 4, "Expected ret == 4, got %d, error %d\n", ret, GetLastError());
   ok(strcmp(dst, digits_dst) == 0,
      "MAP_FOLDDIGITS: Expected '%s', got '%s'\n", digits_dst, dst);
@@ -3218,19 +3206,16 @@ static void test_FoldStringA(void)
     {
       src[0] = i;
       src[1] = '\0';
-      SetLastError(0);
-      ret = pFoldStringA(MAP_FOLDDIGITS, src, -1, dst, 256);
+      ret = FoldStringA(MAP_FOLDDIGITS, src, -1, dst, 256);
       ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
       ok(dst[0] == src[0],
          "MAP_FOLDDIGITS: Expected '%s', got '%s'\n", src, dst);
     }
   }
 
-  /* MAP_EXPAND_LIGATURES */
-  SetLastError(0);
-  ret = pFoldStringA(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
-  /* NT 4.0 doesn't support MAP_EXPAND_LIGATURES */
-  if (!(ret == 0 && GetLastError() == ERROR_INVALID_FLAGS)) {
+    /* MAP_EXPAND_LIGATURES */
+    SetLastError(0xdeadbeef);
+    ret = FoldStringA(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
     ok(ret == sizeof(ligatures_dst), "Got %d, error %d\n", ret, GetLastError());
     ok(strcmp(dst, ligatures_dst) == 0,
        "MAP_EXPAND_LIGATURES: Expected '%s', got '%s'\n", ligatures_dst, dst);
@@ -3240,8 +3225,7 @@ static void test_FoldStringA(void)
       {
         src[0] = i;
         src[1] = '\0';
-        SetLastError(0);
-        ret = pFoldStringA(MAP_EXPAND_LIGATURES, src, -1, dst, 256);
+        ret = FoldStringA(MAP_EXPAND_LIGATURES, src, -1, dst, 256);
         if (ret == 3)
         {
           /* Vista */
@@ -3257,12 +3241,13 @@ static void test_FoldStringA(void)
         }
       }
     }
-  }
 
   /* MAP_COMPOSITE */
-  SetLastError(0);
-  ret = pFoldStringA(MAP_COMPOSITE, composite_src, -1, dst, 256);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringA(MAP_COMPOSITE, composite_src, -1, dst, 256);
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  ok( GetLastError() == 0xdeadbeef || broken(!GetLastError()), /* vista */
+      "wrong error %u\n", GetLastError());
   ok(ret == 121 || ret == 119, "Expected 121 or 119, got %d\n", ret);
   ok(strcmp(dst, composite_dst) == 0 || strcmp(dst, composite_dst_alt) == 0,
      "MAP_COMPOSITE: Mismatch, got '%s'\n", dst);
@@ -3273,8 +3258,7 @@ static void test_FoldStringA(void)
     {
       src[0] = i;
       src[1] = '\0';
-      SetLastError(0);
-      ret = pFoldStringA(MAP_COMPOSITE, src, -1, dst, 256);
+      ret = FoldStringA(MAP_COMPOSITE, src, -1, dst, 256);
       ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
       ok(dst[0] == src[0],
          "0x%02x, 0x%02x,0x%02x,0x%02x,\n", (unsigned char)src[0],
@@ -3287,8 +3271,8 @@ static void test_FoldStringA(void)
   {
     src[0] = i;
     src[1] = '\0';
-    SetLastError(0);
-    ret = pFoldStringA(MAP_FOLDCZONE, src, -1, dst, 256);
+    SetLastError(0xdeadbeef);
+    ret = FoldStringA(MAP_FOLDCZONE, src, -1, dst, 256);
     is_special = FALSE;
     for (j = 0; foldczone_special[j].src != 0 && ! is_special; j++)
     {
@@ -3317,8 +3301,7 @@ static void test_FoldStringA(void)
   {
     src[0] = i;
     src[1] = '\0';
-    SetLastError(0);
-    ret = pFoldStringA(MAP_PRECOMPOSED, src, -1, dst, 256);
+    ret = FoldStringA(MAP_PRECOMPOSED, src, -1, dst, 256);
     ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
     ok(src[0] == dst[0],
        "MAP_PRECOMPOSED: Expected 0x%02x, got 0x%02x\n",
@@ -3460,69 +3443,58 @@ static void test_FoldStringW(void)
     'f','l','f','f','i','f','f','l',0x017f,'t','s','t','\0'
   };
 
-  if (!pFoldStringW)
-  {
-    win_skip("FoldStringW is not available\n");
-    return; /* FoldString is present in NT v3.1+, but not 95/98/Me */
-  }
-
   /* Invalid flag combinations */
   for (i = 0; i < ARRAY_SIZE(badFlags); i++)
   {
     src[0] = dst[0] = '\0';
-    SetLastError(0);
-    ret = pFoldStringW(badFlags[i], src, 256, dst, 256);
-    if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
-    {
-      win_skip("FoldStringW is not implemented\n");
-      return;
-    }
+    SetLastError(0xdeadbeef);
+    ret = FoldStringW(badFlags[i], src, 256, dst, 256);
     ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
        "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
   }
 
   /* src & dst cannot be the same */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, src, -1, src, 256);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, src, -1, src, 256);
   ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
   /* src can't be NULL */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, NULL, -1, dst, 256);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, NULL, -1, dst, 256);
   ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
   /* srclen can't be 0 */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, src, 0, dst, 256);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, src, 0, dst, 256);
   ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
   /* dstlen can't be < 0 */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, src, -1, dst, -1);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, src, -1, dst, -1);
   ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
   /* Ret includes terminating NUL which is appended if srclen = -1 */
-  SetLastError(0);
+  SetLastError(0xdeadbeef);
   src[0] = 'A';
   src[1] = '\0';
   dst[0] = '\0';
-  ret = pFoldStringW(MAP_FOLDCZONE, src, -1, dst, 256);
+  ret = FoldStringW(MAP_FOLDCZONE, src, -1, dst, 256);
   ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
   ok(dst[0] == 'A' && dst[1] == '\0',
      "srclen=-1: Expected ret=2 [%d,%d], got ret=%d [%d,%d], err=%d\n",
      'A', '\0', ret, dst[0], dst[1], GetLastError());
 
   /* If size is given, result is not NUL terminated */
-  SetLastError(0);
+  SetLastError(0xdeadbeef);
   src[0] = 'A';
   src[1] = 'A';
   dst[0] = 'X';
   dst[1] = 'X';
-  ret = pFoldStringW(MAP_FOLDCZONE, src, 1, dst, 256);
+  ret = FoldStringW(MAP_FOLDCZONE, src, 1, dst, 256);
   ok(ret == 1, "Expected ret == 1, got %d, error %d\n", ret, GetLastError());
   ok(dst[0] == 'A' && dst[1] == 'X',
      "srclen=1: Expected ret=1, [%d,%d], got ret=%d,[%d,%d], err=%d\n",
@@ -3534,10 +3506,10 @@ static void test_FoldStringW(void)
     /* Check everything before this range */
     for (ch = prev_ch; ch < digitRanges[j]; ch++)
     {
-      SetLastError(0);
+      SetLastError(0xdeadbeef);
       src[0] = ch;
       src[1] = dst[0] = '\0';
-      ret = pFoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
+      ret = FoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
       ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
 
       ok(dst[0] == ch || wcschr(outOfSequenceDigits, ch) ||
@@ -3562,10 +3534,10 @@ static void test_FoldStringW(void)
       else if (ch == 0x2073) c = 0x00B3; /* Superscript 3 */
       else if (ch == 0x245F) c = 0x24EA; /* Circled 0     */
       else                   c = ch;
-      SetLastError(0);
+      SetLastError(0xdeadbeef);
       src[0] = c;
       src[1] = dst[0] = '\0';
-      ret = pFoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
+      ret = FoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
       ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
 
       ok((dst[0] == '0' + ch - digitRanges[j] && dst[1] == '\0') ||
@@ -3580,8 +3552,8 @@ static void test_FoldStringW(void)
   }
 
   /* MAP_FOLDCZONE */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, foldczone_src, -1, dst, 256);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, foldczone_src, -1, dst, 256);
   ok(ret == ARRAY_SIZE(foldczone_dst)
      || broken(ret == ARRAY_SIZE(foldczone_broken_dst)), /* winxp, win2003 */
      "Got %d, error %d.\n", ret, GetLastError());
@@ -3589,15 +3561,12 @@ static void test_FoldStringW(void)
      || broken(!memcmp(dst, foldczone_broken_dst, sizeof(foldczone_broken_dst))), /* winxp, win2003 */
      "Got unexpected string %s.\n", wine_dbgstr_w(dst));
 
-  /* MAP_EXPAND_LIGATURES */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
-  /* NT 4.0 doesn't support MAP_EXPAND_LIGATURES */
-  if (!(ret == 0 && GetLastError() == ERROR_INVALID_FLAGS)) {
+    /* MAP_EXPAND_LIGATURES */
+    SetLastError(0xdeadbeef);
+    ret = FoldStringW(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
     ok(ret == ARRAY_SIZE(ligatures_dst), "Got %d, error %d\n", ret, GetLastError());
     ok(!memcmp(dst, ligatures_dst, sizeof(ligatures_dst)),
        "Got unexpected string %s.\n", wine_dbgstr_w(dst));
-  }
 
   /* FIXME: MAP_PRECOMPOSED : MAP_COMPOSITE */
 }
