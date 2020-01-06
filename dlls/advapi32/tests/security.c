@@ -7346,7 +7346,8 @@ static void test_child_token_sd(void)
     ok(acl->AceCount, "Expected at least one ACE\n");
     for (i = 0; i < acl->AceCount; i++)
     {
-        ok(pGetAce(acl, i, (void **)&acc_ace), "GetAce failed with error %u\n", GetLastError());
+        ret = pGetAce(acl, i, (void **)&acc_ace);
+        ok(ret, "GetAce failed with error %u\n", GetLastError());
         ok(acc_ace->Header.AceType != ACCESS_ALLOWED_ACE_TYPE || !EqualSid(&acc_ace->SidStart, psid),
            "ACE inherited from the parent\n");
     }
