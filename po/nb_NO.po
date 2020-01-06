@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-01-03 16:23+0100\n"
+"PO-Revision-Date: 2020-01-05 13:06+0100\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -625,7 +625,7 @@ msgstr "&Egendefinerte farger:"
 
 #: comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|S&olid"
 
 #: comdlg32.rc:290
 msgid "&Red:"
@@ -6850,10 +6850,8 @@ msgid "Invalid media type.\n"
 msgstr "Ugyldig mediatype.\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "Ingen flere oppføringer.\n"
+msgstr "Ingen flere inndata akseptert.\n"
 
 #: mferror.mc:74
 msgid "Object is not initialized.\n"
@@ -6865,7 +6863,7 @@ msgstr "Representasjonen støttes ikke.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "Ingen flere typer i listen av foreslåtte mediatyper.\n"
 
 #: mferror.mc:95
 msgid "Unsupported service.\n"
@@ -6884,10 +6882,8 @@ msgid "Invalid file format.\n"
 msgstr "Ugyldig filformat.\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "Ugyldig tid.\n"
+msgstr "Ugyldig tidspunkt.\n"
 
 #: mferror.mc:144
 msgid "Unsupported scheme.\n"
@@ -7067,7 +7063,7 @@ msgstr "Tjeneren er ikke deaktivert.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "Plattformen er avslått i sikkermodus.\n"
 
 #: mferror.mc:410
 #, fuzzy
@@ -7114,32 +7110,24 @@ msgid "Shutdown() was called.\n"
 msgstr ""
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "Registeret har blitt gjenopprettet.\n"
+msgstr "Mediastrømmen har ingen satt varighet.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "Mediaformatet ble gjenkjent men er ugyldig.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "Fant ikke settet av egenskaper.\n"
+msgstr "Fant ikke egenskapen.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "Katalogen er ikke tom.\n"
+msgstr "Egenskapen kan kun leses.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "Hook-typen er ikke tillat.\n"
+msgstr "Egenskapen er ikke tillat.\n"
 
 #: mferror.mc:501
 msgid "Media source is not started.\n"
@@ -7156,10 +7144,8 @@ msgid "Media source is in wrong state.\n"
 msgstr "Ressursen er i bruk.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "Ingen data oppdaget.\n"
+msgstr "Ingen mediastrømmer ble valgt.\n"
 
 #: mferror.mc:529
 #, fuzzy
@@ -7242,10 +7228,8 @@ msgid "Cannot find decryptor.\n"
 msgstr "Kan ikke finne skriveren."
 
 #: mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "Fant ikke modulen.\n"
+msgstr "Fant ikke kodeks.\n"
 
 #: mferror.mc:648
 #, fuzzy
