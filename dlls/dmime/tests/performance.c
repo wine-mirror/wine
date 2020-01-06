@@ -96,8 +96,10 @@ static HRESULT test_InitAudio(void)
     dsound = NULL;
     hr = IDirectMusicPerformance8_InitAudio(performance, NULL, &dsound, NULL,
             DMUS_APATH_SHARED_STEREOPLUSREVERB, 128, DMUS_AUDIOF_ALL, NULL);
-    if(hr != S_OK)
+    if (hr != S_OK) {
+        IDirectMusicPerformance8_Release(performance);
         return hr;
+    }
 
     port = NULL;
     hr = IDirectMusicPerformance8_PChannelInfo(performance, 128, &port, NULL, NULL);
