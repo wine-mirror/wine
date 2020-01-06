@@ -38,7 +38,6 @@
 #  define SLDF_HAS_LOGO3ID 0x00000800 /* not available in the Vista SDK */
 #endif
 
-static void (WINAPI *pILFree)(LPITEMIDLIST);
 static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
 static HRESULT (WINAPI *pSHGetFolderLocation)(HWND,INT,HANDLE,DWORD,PIDLIST_ABSOLUTE*);
@@ -228,7 +227,7 @@ static void test_get_set(void)
         ok(ret, "SHGetPathFromIDListA failed\n");
         if (ret)
             ok(lstrcmpiA(buffer,str)==0, "GetIDList returned '%s'\n", buffer);
-        pILFree(tmp_pidl);
+        ILFree(tmp_pidl);
     }
 
     pidl=path_to_pidl(mypath);
@@ -253,9 +252,9 @@ static void test_get_set(void)
            "GetIDList returned an incorrect pidl\n");
         ok(second_pidl != tmp_pidl, "pidls are the same\n");
 
-        pILFree(second_pidl);
-        pILFree(tmp_pidl);
-        pILFree(pidl);
+        ILFree(second_pidl);
+        ILFree(tmp_pidl);
+        ILFree(pidl);
 
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
@@ -294,7 +293,7 @@ static void test_get_set(void)
         ok(finddata.dwFileAttributes == 0, "unexpected attributes %x\n", finddata.dwFileAttributes);
         ok(finddata.cFileName[0] == 0, "unexpected filename '%s'\n", finddata.cFileName);
 
-        pILFree(pidl_controls);
+        ILFree(pidl_controls);
     }
 
     /* test path with quotes (IShellLinkA_SetPath returns S_FALSE on W2K and below and S_OK on XP and above */
@@ -1000,7 +999,7 @@ static void test_GetIconLocation(void)
     pidl = path_to_pidl(mypath);
     r = IShellLinkA_SetIDList(sl, pidl);
     ok(r == S_OK, "SetPath failed (0x%08x)\n", r);
-    pILFree(pidl);
+    ILFree(pidl);
 
     i = 0xdeadbeef;
     strcpy(buffer, "garbage");
@@ -1474,7 +1473,6 @@ START_TEST(shelllink)
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
     HMODULE huser32 = GetModuleHandleA("user32.dll");
 
-    pILFree = (void *)GetProcAddress(hmod, (LPSTR)155);
     pILIsEqual = (void *)GetProcAddress(hmod, (LPSTR)21);
     pSHILCreateFromPath = (void *)GetProcAddress(hmod, (LPSTR)28);
     pSHGetFolderLocation = (void *)GetProcAddress(hmod, "SHGetFolderLocation");
