@@ -2813,7 +2813,8 @@ static COLORREF get_color_from_bits(const unsigned char *bits, const BITMAPINFO 
 
 #define compare_bitmap_bits(a, b, c, d, e, f, g) compare_bitmap_bits_(__LINE__, a, b, c, d, e, f, g)
 static void compare_bitmap_bits_(unsigned int line, HDC hdc, HBITMAP bitmap, BITMAPINFO *bmi,
-        size_t result_bits_size, const unsigned char *expected_bits, unsigned int test_index, BOOL todo)
+        size_t result_bits_size, const unsigned char *expected_bits, unsigned int test_index,
+        const unsigned char *expected_broken_bits)
 {
     unsigned char *result_bits;
     unsigned int row, column;
@@ -2832,9 +2833,9 @@ static void compare_bitmap_bits_(unsigned int line, HDC hdc, HBITMAP bitmap, BIT
             result = get_color_from_bits(result_bits, bmi, row, column);
             expected = get_color_from_bits(expected_bits, bmi, row, column);
 
-            todo_wine_if(todo)
-            ok_(__FILE__, line)(result == expected, "Colors do not match, "
-                    "got 0x%06x, expected 0x%06x, test_index %u, row %u, column %u.\n",
+            ok_(__FILE__, line)(result == expected || broken(expected_broken_bits
+                    && result == get_color_from_bits(expected_broken_bits, bmi, row, column)),
+                    "Colors do not match, got 0x%06x, expected 0x%06x, test_index %u, row %u, column %u.\n",
                     result, expected, test_index, row, column);
         }
     HeapFree(GetProcessHeap(), 0, result_bits);
@@ -2849,10 +2850,15 @@ static void test_Image_StretchMode(void)
         0x00, 0xff, 0xff,  0x00, 0xff, 0x00,  0x00, 0xff, 0xff,  0x00, 0xff, 0x00,
         0xff, 0xff, 0x00,  0x00, 0xff, 0xff,  0x00, 0xff, 0x00,  0x00, 0xff, 0x00,
     };
-    static const unsigned char expected_bits_24[] =
+    static const unsigned char expected_broken_bits_24[] =
     {
         0x3f, 0xff, 0x00,  0x3f, 0xff, 0x3f,  0x00, 0x00,
         0x3f, 0xff, 0x7f,  0x00, 0xff, 0x3f,  0x00, 0x00,
+    };
+    static const unsigned char expected_bits_24[] =
+    {
+        0x00, 0xff, 0x00,  0x00, 0xff, 0x00,  0x00, 0x00,
+        0x00, 0xff, 0x00,  0x00, 0xff, 0x00,  0x00, 0x00,
     };
 #define rgb16(r, g, b) ((WORD)(((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3)))
     static const WORD test_bits_16[] =
@@ -2907,20 +2913,21 @@ static void test_Image_StretchMode(void)
         size_t test_bits_size, result_bits_size;
         const RGBQUAD *bmi_colors;
         size_t bmi_colors_size;
-        BOOL todo;
+        const unsigned char *expected_broken_bits;
     }
     tests[] =
     {
         {4, 4, 2, 2, 24, test_bits_24, expected_bits_24,
-                sizeof(test_bits_24), sizeof(expected_bits_24), NULL, 0, TRUE},
+                sizeof(test_bits_24), sizeof(expected_bits_24), NULL, 0,
+                /* Broken on Windows before Win10 1607+ */ expected_broken_bits_24},
         {4, 4, 2, 2, 1, test_bits_1, expected_bits_1,
                 sizeof(test_bits_1), sizeof(expected_bits_1), colors_bits_1,
-                sizeof(colors_bits_1), FALSE},
+                sizeof(colors_bits_1)},
         {4, 4, 2, 2, 8, test_bits_8, expected_bits_8,
                 sizeof(test_bits_8), sizeof(expected_bits_8), colors_bits_8,
-                sizeof(colors_bits_8), FALSE},
+                sizeof(colors_bits_8)},
         {4, 4, 2, 2, 16, (const unsigned char *)test_bits_16, (const unsigned char *)expected_bits_16,
-                sizeof(test_bits_16), sizeof(expected_bits_16), NULL, 0, FALSE},
+                sizeof(test_bits_16), sizeof(expected_bits_16), NULL, 0},
     };
     static const char filename[] = "test.bmp";
     BITMAPINFO *bmi, *bmi_output;
@@ -2966,7 +2973,7 @@ static void test_Image_StretchMode(void)
         ok(!!bitmap_copy, "CopyImage() failed, result %u.\n", GetLastError());
 
         compare_bitmap_bits(hdc, bitmap_copy, bmi_output, tests[test_index].result_bits_size,
-                tests[test_index].expected_bits, test_index, tests[test_index].todo);
+                tests[test_index].expected_bits, test_index, tests[test_index].expected_broken_bits);
         DeleteObject(bitmap);
         DeleteObject(bitmap_copy);
 
@@ -2976,7 +2983,7 @@ static void test_Image_StretchMode(void)
         ok(!!bitmap, "LoadImageA() failed, result %u.\n", GetLastError());
         DeleteFileA(filename);
         compare_bitmap_bits(hdc, bitmap, bmi_output, tests[test_index].result_bits_size,
-                tests[test_index].expected_bits, test_index, tests[test_index].todo);
+                tests[test_index].expected_bits, test_index, tests[test_index].expected_broken_bits);
         DeleteObject(bitmap);
     }
     ReleaseDC(0, hdc);
