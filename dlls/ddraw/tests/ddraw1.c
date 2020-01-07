@@ -10043,8 +10043,12 @@ static void test_getdc(void)
         ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
         hr = IDirectDrawSurface_ReleaseDC(surface, dc);
         ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        /* Geforce 9600, Windows 7 returns E_FAIL. The unlock still seems to work as intended, after-
+         * wards the surface can be locked again. ReleaseDC() does not unlock the surface, trying to
+         * Lock it after ReleaseDC returns DDERR_SURFACEBUSY. ddraw4 and 7 are unaffected. */
         hr = IDirectDrawSurface_Unlock(surface, NULL);
-        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        ok(SUCCEEDED(hr) || broken(ddraw_is_nvidia(ddraw) && hr == E_FAIL),
+                "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
 
         hr = IDirectDrawSurface_GetDC(surface, &dc);
         ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
@@ -10080,7 +10084,8 @@ static void test_getdc(void)
         hr = IDirectDrawSurface_ReleaseDC(surface, dc);
         ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
         hr = IDirectDrawSurface_Unlock(surface, NULL);
-        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        ok(SUCCEEDED(hr) || broken(ddraw_is_nvidia(ddraw) && hr == E_FAIL),
+                "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
 
         hr = IDirectDrawSurface_Lock(surface2, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
         ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
