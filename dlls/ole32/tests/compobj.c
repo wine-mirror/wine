@@ -70,7 +70,6 @@ DEFINE_EXPECT(PreUninitialize);
 DEFINE_EXPECT(PostUninitialize);
 
 /* functions that are not present on all versions of Windows */
-static HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 static HRESULT (WINAPI * pCoGetObjectContext)(REFIID riid, LPVOID *ppv);
 static HRESULT (WINAPI * pCoSwitchCallContext)(IUnknown *pObject, IUnknown **ppOldObject);
 static HRESULT (WINAPI * pCoGetTreatAsClass)(REFCLSID clsidOld, LPCLSID pClsidNew);
@@ -721,7 +720,7 @@ static void test_CoGetClassObject(void)
         return;
     }
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
     if (hr == S_OK)
@@ -903,7 +902,7 @@ static void test_CoRegisterMessageFilter(void)
         "CoRegisterMessageFilter should have failed with CO_E_NOT_SUPPORTED instead of 0x%08x\n",
         hr);
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
     prev_filter = (IMessageFilter *)0xdeadbeef;
     hr = CoRegisterMessageFilter(&MessageFilter, &prev_filter);
     ok(hr == CO_E_NOT_SUPPORTED,
@@ -913,7 +912,7 @@ static void test_CoRegisterMessageFilter(void)
         "prev_filter should have been set to %p\n", prev_filter);
     CoUninitialize();
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoRegisterMessageFilter(NULL, NULL);
     ok_ole_success(hr, "CoRegisterMessageFilter");
@@ -1103,7 +1102,7 @@ static DWORD CALLBACK register_ps_clsid_thread(void *context)
     HRESULT hr;
     CLSID clsid = {0};
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoGetPSClsid(&IID_IWineTest, &clsid);
     ok_ole_success(hr, "CoGetPSClsid");
@@ -1131,7 +1130,7 @@ static void test_CoRegisterPSClsid(void)
     hr = CoRegisterPSClsid(&IID_IWineTest, &CLSID_WineTestPSFactoryBuffer);
     ok(hr == CO_E_NOTINITIALIZED, "CoRegisterPSClsid should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoRegisterClassObject(&CLSID_WineTestPSFactoryBuffer, (IUnknown *)&PSFactoryBuffer,
         CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &dwRegistrationKey);
@@ -1189,7 +1188,7 @@ static void test_CoRegisterPSClsid(void)
 
     CoUninitialize();
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoGetPSClsid(&IID_IWineTest, &clsid);
     ok(hr == REGDB_E_IIDNOTREG, "CoGetPSClsid should have returned REGDB_E_IIDNOTREG instead of 0x%08x\n", hr);
@@ -1199,7 +1198,7 @@ static void test_CoRegisterPSClsid(void)
 
     CoUninitialize();
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = CoRegisterPSClsid(&IID_IWineTest, &CLSID_WineTestPSFactoryBuffer);
     ok_ole_success(hr, "CoRegisterPSClsid");
@@ -1238,7 +1237,7 @@ static void test_CoGetPSClsid(void)
        "CoGetPSClsid should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n",
        hr);
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
     ok_ole_success(hr, "CoGetPSClsid");
@@ -1385,7 +1384,7 @@ static void test_CoUnmarshalInterface(void)
     todo_wine
     ok(hr == CO_E_NOTINITIALIZED, "CoUnmarshalInterface should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)&pProxy);
     ok(hr == STG_E_READFAULT, "CoUnmarshalInterface should have returned STG_E_READFAULT instead of 0x%08x\n", hr);
@@ -1403,7 +1402,7 @@ static void test_CoGetInterfaceAndReleaseStream(void)
     HRESULT hr;
     IUnknown *pUnk;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoGetInterfaceAndReleaseStream(NULL, &IID_IUnknown, (void**)&pUnk);
     ok(hr == E_INVALIDARG, "hr %08x\n", hr);
@@ -1418,7 +1417,7 @@ static void test_CoMarshalInterface(void)
     HRESULT hr;
     static const LARGE_INTEGER llZero;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
     ok_ole_success(hr, "CreateStreamOnHGlobal");
@@ -1453,7 +1452,7 @@ static void test_CoMarshalInterThreadInterfaceInStream(void)
     HRESULT hr;
     IClassFactory *pProxy;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     cLocks = 0;
 
@@ -1489,7 +1488,7 @@ static void test_CoRegisterClassObject(void)
     HRESULT hr;
     IClassFactory *pcf;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     /* CLSCTX_INPROC_SERVER */
     hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
@@ -1550,7 +1549,7 @@ static void test_CoRegisterClassObject(void)
     ok_ole_success(hr, "CoRegisterClassObject");
 
     CoUninitialize();
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER, NULL,
                           &IID_IClassFactory, (void **)&pcf);
@@ -1607,7 +1606,7 @@ static DWORD CALLBACK get_class_object_thread(LPVOID pv)
     CLSCTX clsctx = (CLSCTX)(DWORD_PTR)pv;
     HRESULT hr;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = get_class_object(clsctx);
 
@@ -1623,7 +1622,7 @@ static DWORD CALLBACK get_class_object_proxy_thread(LPVOID pv)
     IClassFactory *pcf;
     IMultiQI *pMQI;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoGetClassObject(&CLSID_WineOOPTest, clsctx, NULL, &IID_IClassFactory,
                           (void **)&pcf);
@@ -1646,7 +1645,7 @@ static DWORD CALLBACK register_class_object_thread(LPVOID pv)
     HRESULT hr;
     DWORD cookie;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
                                CLSCTX_INPROC_SERVER, REGCLS_SINGLEUSE, &cookie);
@@ -1661,7 +1660,7 @@ static DWORD CALLBACK revoke_class_object_thread(LPVOID pv)
     DWORD cookie = (DWORD_PTR)pv;
     HRESULT hr;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoRevokeClassObject(cookie);
 
@@ -1678,7 +1677,7 @@ static void test_registered_object_thread_affinity(void)
     DWORD tid;
     DWORD exitcode;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     /* CLSCTX_INPROC_SERVER */
 
@@ -1776,7 +1775,7 @@ static void test_CoFreeUnusedLibraries(void)
     DWORD tid;
     HANDLE thread;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     ok(!is_module_loaded("urlmon.dll"), "urlmon.dll shouldn't be loaded\n");
 
@@ -1833,7 +1832,7 @@ static void test_CoGetObjectContext(void)
     ok(hr == CO_E_NOTINITIALIZED, "CoGetObjectContext should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
     ok(pComThreadingInfo == NULL, "pComThreadingInfo should have been set to NULL\n");
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     test_apt_type(APTTYPE_MAINSTA, APTTYPEQUALIFIER_NONE);
 
@@ -1875,7 +1874,7 @@ static void test_CoGetObjectContext(void)
 
     CoUninitialize();
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = pCoGetObjectContext(&IID_IComThreadingInfo, (void **)&pComThreadingInfo);
     ok_ole_success(hr, "CoGetObjectContext");
@@ -2178,7 +2177,7 @@ static void test_CoInitializeEx(void)
 {
     HRESULT hr;
 
-    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
 
     /* Calling OleInitialize for the first time should yield S_OK even with
@@ -2203,7 +2202,7 @@ static void test_OleInitialize_InitCounting(void)
     REFCLSID rclsid = &CLSID_InternetZoneManager;
 
     /* 1. OleInitialize fails but OleUninitialize is still called: apartment stays initialized */
-    hr = pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     ok(hr == S_OK, "CoInitializeEx(COINIT_MULTITHREADED) failed with error 0x%08x\n", hr);
 
     hr = OleInitialize(NULL);
@@ -2605,7 +2604,7 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
     MSG msg;
     int ret;
 
-    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
 
     hWnd = CreateWindowExA(0, cls_name, "Test (thread)", WS_TILEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
@@ -2647,7 +2646,7 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
     DestroyWindow(hWnd);
     CoUninitialize();
 
-    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
@@ -2692,7 +2691,7 @@ static void test_CoWaitForMultipleHandles(void)
     HWND hWnd;
     MSG msg;
 
-    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
 
     memset(&wc, 0, sizeof(wc));
@@ -3141,7 +3140,7 @@ static void test_CoGetApartmentType(void)
 
     type = 0xdeadbeef;
     qualifier = 0xdeadbeef;
-    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     ok(hr == S_OK, "CoInitializeEx failed, error: 0x%08x\n", hr);
     hr = pCoGetApartmentType(&type, &qualifier);
     ok(hr == S_OK, "CoGetApartmentType failed, error: 0x%08x\n", hr);
@@ -3151,7 +3150,7 @@ static void test_CoGetApartmentType(void)
 
     type = 0xdeadbeef;
     qualifier = 0xdeadbeef;
-    hr = pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     ok(hr == S_OK, "CoInitializeEx failed, error: 0x%08x\n", hr);
     hr = pCoGetApartmentType(&type, &qualifier);
     ok(hr == S_OK, "CoGetApartmentType failed, error: 0x%08x\n", hr);
@@ -3422,7 +3421,7 @@ static void test_IInitializeSpy(BOOL mt)
 
     if (mt)
     {
-        hr = pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+        hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
         ok(hr == S_OK, "CoInitializeEx failed: %#x\n", hr);
     }
 
@@ -3674,7 +3673,7 @@ static void test_CoGetInstanceFromFile(void)
     DWORD cookie;
     HRESULT hr;
 
-    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* CLSID is not specified, file does not exist */
@@ -3821,7 +3820,6 @@ static void init_funcs(void)
     pCoGetApartmentType = (void*)GetProcAddress(hOle32, "CoGetApartmentType");
     pRegDeleteKeyExA = (void*)GetProcAddress(hAdvapi32, "RegDeleteKeyExA");
     pRegOverridePredefKey = (void*)GetProcAddress(hAdvapi32, "RegOverridePredefKey");
-    pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx");
 
     pActivateActCtx = (void*)GetProcAddress(hkernel32, "ActivateActCtx");
     pCreateActCtxW = (void*)GetProcAddress(hkernel32, "CreateActCtxW");
@@ -3921,12 +3919,6 @@ static void test_CoGetCurrentProcess(void)
 START_TEST(compobj)
 {
     init_funcs();
-
-    if (!pCoInitializeEx)
-    {
-        trace("You need DCOM95 installed to run this test\n");
-        return;
-    }
 
     GetTempPathA(ARRAY_SIZE(testlib), testlib);
     SetCurrentDirectoryA(testlib);

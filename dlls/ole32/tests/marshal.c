@@ -64,7 +64,6 @@ static const GUID CLSID_DfMarshal = { 0x0000030b, 0x0000, 0x0000, { 0xc0, 0x00, 
 static const GUID CLSID_ft_unmarshaler_1809 = {0x00000359, 0x0000, 0x0000, {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
 
 /* functions that are not present on all versions of Windows */
-static HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID,REFIID,LPVOID);
 
 /* helper macros to make tests a bit leaner */
@@ -153,7 +152,7 @@ static void test_cocreateinstance_proxy(void)
     IMultiQI *pMQI;
     HRESULT hr;
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = CoCreateInstance(&CLSID_ShellDesktop, NULL, CLSCTX_INPROC, &IID_IUnknown, (void **)&pProxy);
     ok_ole_success(hr, CoCreateInstance);
@@ -621,7 +620,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
     HRESULT hr;
     MSG msg;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     if(data->register_object) {
         hr = CoRegisterClassObject(data->register_clsid, data->register_object,
@@ -1237,7 +1236,7 @@ static void test_marshal_proxy_apartment_shutdown(void)
 
     end_host_object(tid, thread);
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 }
 
 /* tests that proxies are released when the containing mta apartment is destroyed */
@@ -1250,7 +1249,7 @@ static void test_marshal_proxy_mta_apartment_shutdown(void)
     HANDLE thread;
 
     CoUninitialize();
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     cLocks = 0;
     external_connections = 0;
@@ -1282,7 +1281,7 @@ static void test_marshal_proxy_mta_apartment_shutdown(void)
 
     end_host_object(tid, thread);
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 }
 
 static void test_marshal_channel_buffer(void)
@@ -1654,7 +1653,7 @@ static DWORD CALLBACK no_couninitialize_server_proc(LPVOID p)
     struct ncu_params *ncu_params = p;
     HRESULT hr;
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = CoMarshalInterface(ncu_params->stream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok_ole_success(hr, CoMarshalInterface);
@@ -1728,7 +1727,7 @@ static DWORD CALLBACK no_couninitialize_client_proc(LPVOID p)
     HRESULT hr;
     IUnknown *pProxy = NULL;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoUnmarshalInterface(ncu_params->stream, &IID_IClassFactory, (void **)&pProxy);
     ok_ole_success(hr, CoUnmarshalInterface);
@@ -2005,7 +2004,7 @@ static DWORD CALLBACK duo_marshal_thread_proc(void *p)
     HANDLE hQuitEvent = data->hQuitEvent;
     MSG msg;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoMarshalInterface(data->pStream1, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, data->marshal_flags1);
     ok_ole_success(hr, "CoMarshalInterface");
@@ -2485,7 +2484,7 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     if (SUCCEEDED(hr))
         IUnknown_Release(proxy);
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
     if (proxy) IUnknown_Release(proxy);
@@ -3642,7 +3641,7 @@ static HRESULT WINAPI local_server_GetClassID(IPersist *iface, CLSID *clsid)
 
     /* Initialize and uninitialize the apartment to show that we
      * remain in the autojoined mta */
-    hr = pCoInitializeEx( NULL, COINIT_MULTITHREADED );
+    hr = CoInitializeEx( NULL, COINIT_MULTITHREADED );
     ok( hr == S_FALSE, "got %08x\n", hr );
     CoUninitialize();
 
@@ -4473,13 +4472,12 @@ START_TEST(marshal)
     int argc;
     char **argv;
 
-    pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx");
     pDllGetClassObject = (void*)GetProcAddress(hOle32, "DllGetClassObject");
 
     argc = winetest_get_mainargs( &argv );
     if (argc > 2 && (!strcmp(argv[2], "-Embedding")))
     {
-        pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+        CoInitializeEx(NULL, COINIT_MULTITHREADED);
         test_register_local_server();
         CoUninitialize();
 
@@ -4491,7 +4489,7 @@ START_TEST(marshal)
     test_cocreateinstance_proxy();
     test_implicit_mta();
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     /* FIXME: test CoCreateInstanceEx */
 
