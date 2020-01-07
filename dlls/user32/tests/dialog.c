@@ -1984,6 +1984,8 @@ static void test_MessageBoxFontTest(void)
 
     ncMetrics.cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
     SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &ncMetrics, 0);
+    /* The height doesn't match on Windows 10 1709+. */
+    ncMetrics.lfMessageFont.lfHeight = lfStaticFont.lfHeight;
     ok( !memcmp(&lfStaticFont, &ncMetrics.lfMessageFont, FIELD_OFFSET(LOGFONTW, lfFaceName)) &&
         !lstrcmpW(lfStaticFont.lfFaceName, ncMetrics.lfMessageFont.lfFaceName),
         "dialog doesn't use message box font\n");
