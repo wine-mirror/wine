@@ -1951,6 +1951,28 @@ static BYTE ecdh_secret[] =
     0x9b, 0x69, 0xaf, 0xd1, 0xaf, 0x1f, 0xc2, 0xd7, 0x83, 0x0a, 0xb7, 0xf8, 0x4f, 0x24, 0x32, 0x8e,
 };
 
+BCryptBuffer hash_param_buffers[] =
+{
+{
+    sizeof(BCRYPT_SHA1_ALGORITHM),
+    KDF_HASH_ALGORITHM,
+    (void *)BCRYPT_SHA1_ALGORITHM,
+}
+};
+
+BCryptBufferDesc hash_params =
+{
+    BCRYPTBUFFER_VERSION,
+    ARRAY_SIZE(hash_param_buffers),
+    hash_param_buffers,
+};
+
+static BYTE hashed_secret[] =
+{
+    0x1b, 0xe7, 0xbf, 0x0f, 0x65, 0x1e, 0xd0, 0x07, 0xf9, 0xf4, 0x77, 0x48, 0x48, 0x39, 0xd0, 0xf8,
+    0xf3, 0xce, 0xfc, 0x89
+};
+
 static void test_ECDH(void)
 {
     BYTE *buf;
@@ -2045,14 +2067,14 @@ static void test_ECDH(void)
     if (status == STATUS_NOT_SUPPORTED)
     {
         win_skip("BCRYPT_KDF_RAW_SECRET not supported\n");
-        goto derive_end;
+        goto raw_secret_end;
     }
 
     todo_wine ok(status == STATUS_SUCCESS, "got %08x\n", status);
 
     if (status != STATUS_SUCCESS)
     {
-        goto derive_end;
+        goto raw_secret_end;
     }
 
     ok(size == 32, "size of secret key incorrect, got %u, expected 32\n", size);
@@ -2061,6 +2083,40 @@ static void test_ECDH(void)
     ok(status == STATUS_SUCCESS, "got %08x\n", status);
     ok(!(memcmp(ecdh_secret, buf, size)), "wrong data\n");
     HeapFree(GetProcessHeap(), 0, buf);
+
+    raw_secret_end:
+
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
+    todo_wine ok (status == STATUS_SUCCESS, "got %08x\n", status);
+
+    if (status != STATUS_SUCCESS)
+    {
+        goto derive_end;
+    }
+
+    ok (size == 20, "got %u\n", size);
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, buf, size, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ok(!(memcmp(hashed_secret, buf, size)), "wrong data\n");
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    /* ulVersion is not verified */
+    hash_params.ulVersion = 0xdeadbeef;
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
+    ok (status == STATUS_SUCCESS, "got %08x\n", status);
+
+    hash_params.ulVersion = BCRYPTBUFFER_VERSION;
+    hash_param_buffers[0].pvBuffer = (void*) L"INVALID";
+    hash_param_buffers[0].cbBuffer = sizeof(L"INVALID");
+
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
+    ok (status == STATUS_NOT_SUPPORTED || broken (status == STATUS_NOT_FOUND) /* < win8 */, "got %08x\n", status);
+
+    hash_param_buffers[0].pvBuffer = (void*) BCRYPT_RNG_ALGORITHM;
+    hash_param_buffers[0].cbBuffer = sizeof(BCRYPT_RNG_ALGORITHM);
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
+    ok (status == STATUS_NOT_SUPPORTED, "got %08x\n", status);
 
     derive_end:
 

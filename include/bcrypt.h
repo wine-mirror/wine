@@ -286,12 +286,18 @@ typedef struct _BCRYPT_KEY_DATA_BLOB_HEADER
     ULONG cbKeyData;
 } BCRYPT_KEY_DATA_BLOB_HEADER, *PBCRYPT_KEY_DATA_BLOB_HEADER;
 
+#define KDF_HASH_ALGORITHM 0x00000000
+#define KDF_SECRET_PREPEND 0x00000001
+#define KDF_SECRET_APPEND  0x00000002
+
 typedef struct _BCryptBuffer
 {
     ULONG cbBuffer;
     ULONG BufferType;
     void  *pvBuffer;
 } BCryptBuffer, *PBCryptBuffer;
+
+#define BCRYPTBUFFER_VERSION        0
 
 typedef struct _BCryptBufferDesc
 {
