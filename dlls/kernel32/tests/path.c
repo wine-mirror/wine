@@ -66,9 +66,6 @@
 static const CHAR funny_chars[]="!@#$%^&*()=+{}[],?'`";
 static const CHAR is_char_ok[] ="11111110111111111011";
 
-static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR,LPSTR,DWORD);
-static DWORD (WINAPI *pGetLongPathNameW)(LPWSTR,LPWSTR,DWORD);
-
 /* Present in Win2003+ */
 static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathA)(LPCSTR);
 static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathW)(LPCWSTR);
@@ -127,14 +124,11 @@ static void test_ValidPathA(const CHAR *curdir, const CHAR *subdir, const CHAR *
     passfail->shortlen=-1;passfail->s2llen=-1;passfail->longlen=-1;
     passfail->shorterror=0;passfail->s2lerror=0;passfail->longerror=0;
   }
-/* GetLongPathNameA is only supported on Win2k+ and Win98+ */
-  if(pGetLongPathNameA) {
-    ok((len=pGetLongPathNameA(curdir,curdirlong,MAX_PATH)),
-       "%s: GetLongPathNameA failed\n",errstr);
+
+  ok((len = GetLongPathNameA(curdir,curdirlong,MAX_PATH)), "%s: GetLongPathNameA failed\n", errstr);
 /*GetLongPathNameA can return a trailing '\\' but shouldn't do so here */
-    ok(! HAS_TRAIL_SLASH_A(curdirlong),
-       "%s: GetLongPathNameA should not have a trailing \\\n",errstr);
-  }
+  ok(!HAS_TRAIL_SLASH_A(curdirlong), "%s: GetLongPathNameA should not have a trailing \\\n", errstr);
+
   ok((len=GetShortPathNameA(curdir,curdirshort,MAX_PATH)),
      "%s: GetShortPathNameA failed\n",errstr);
 /*GetShortPathNameA can return a trailing '\\' but shouldn't do so here */
@@ -175,35 +169,38 @@ static void test_ValidPathA(const CHAR *curdir, const CHAR *subdir, const CHAR *
     passfail->shortlen=len;
     passfail->shorterror=GetLastError();
   }
-/* Test GetLongPathNameA functionality
-   We test both conversion from GetFullPathNameA and from GetShortPathNameA
-*/
-  if(pGetLongPathNameA) {
-    if(len!=0) {
-      SetLastError(0);
-      len=pGetLongPathNameA(shortstr,tmpstr,MAX_PATH);
-      if(passfail==NULL) {
-        ok(len,
-          "%s: GetLongPathNameA failed during Short->Long conversion\n", errstr);
-        ok(lstrcmpiA(fullpathlong,tmpstr)==0,
-           "%s: GetLongPathNameA returned '%s' instead of '%s'\n",
-           errstr,tmpstr,fullpathlong);
-      } else {
-        passfail->s2llen=len;
-        passfail->s2lerror=GetLastError();
-      }
+
+    /* Test GetLongPathNameA functionality, both conversion from GetFullPathNameA and from GetShortPathNameA */
+    if (len)
+    {
+        SetLastError(0);
+        len = GetLongPathNameA(shortstr, tmpstr, MAX_PATH);
+        if (!passfail)
+        {
+            ok(len, "%s: GetLongPathNameA failed during Short->Long conversion\n", errstr);
+            ok(!lstrcmpiA(fullpathlong, tmpstr), "%s: GetLongPathNameA returned '%s' instead of '%s'\n", errstr,
+                    tmpstr, fullpathlong);
+        }
+        else
+        {
+            passfail->s2llen = len;
+            passfail->s2lerror = GetLastError();
+        }
     }
+
     SetLastError(0);
-    len=pGetLongPathNameA(fullpath,tmpstr,MAX_PATH);
-    if(passfail==NULL) {
-      ok(len, "%s: GetLongPathNameA failed\n",errstr);
-      ok(!lstrcmpiA(fullpathlong, tmpstr), "%s: GetLongPathNameA returned '%s' instead of '%s'\n",
-         errstr, tmpstr, fullpathlong);
-    } else {
-      passfail->longlen=len;
-      passfail->longerror=GetLastError();
+    len = GetLongPathNameA(fullpath, tmpstr, MAX_PATH);
+    if (!passfail)
+    {
+        ok(len, "%s: GetLongPathNameA failed\n",errstr);
+        ok(!lstrcmpiA(fullpathlong, tmpstr), "%s: GetLongPathNameA returned '%s' instead of '%s'\n",
+                errstr, tmpstr, fullpathlong);
     }
-  }
+    else
+    {
+        passfail->longlen = len;
+        passfail->longerror = GetLastError();
+    }
 }
 
 /* split path into leading directory, and 8.3 filename */
@@ -282,19 +279,18 @@ static void test_FunnyChars(CHAR *curdir,CHAR *curdir_short,CHAR *filename, INT 
          "%s: GetShortPathA should have failed len=%d, error=%d\n",
          errstr,passfail.shortlen,passfail.shorterror);
   }
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    if(valid) {
-      ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
-         "%s: GetLongPathA returned %d and not %d\n",
-         errstr,passfail.longerror,ERROR_FILE_NOT_FOUND);
-    } else {
-      ok(passfail.longerror==ERROR_INVALID_NAME ||
-         passfail.longerror==ERROR_FILE_NOT_FOUND,
-         "%s: GetLongPathA returned %d and not %d or %d'\n",
-         errstr, passfail.longerror,ERROR_INVALID_NAME,ERROR_FILE_NOT_FOUND);
+
+    ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+    if (valid)
+    {
+        ok(passfail.longerror == ERROR_FILE_NOT_FOUND, "%s: GetLongPathA unexpected error %d.\n", errstr,
+                passfail.longerror);
     }
-  }
+    else
+    {
+        ok(passfail.longerror == ERROR_INVALID_NAME || passfail.longerror == ERROR_FILE_NOT_FOUND,
+                "%s: GetLongPathA unexpected error %d.\n", errstr, passfail.longerror);
+    }
 }
 
 /* Routine to test that SetCurrentDirectory behaves as expected. */
@@ -612,6 +608,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   INT i;
   CHAR dir[MAX_PATH],eight[MAX_PATH],three[MAX_PATH];
   SLpassfail passfail;
+  DWORD rc1, rc2;
 
 /* Get the short form of the current directory */
   ok((len=GetShortPathNameA(curdir,curdir_short,MAX_PATH)),
@@ -625,21 +622,17 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   ok(lstrcmpiA(longdir_short+(len-1),"\\")!=0,
      "GetShortPathNameA should not have a trailing \\\n");
 
-  if (pGetLongPathNameA) {
-    DWORD rc1,rc2;
-    sprintf(tmpstr,"%s\\%s\\%s",curdir,LONGDIR,LONGFILE);
-    rc1=(*pGetLongPathNameA)(tmpstr,NULL,0);
-    rc2=(*pGetLongPathNameA)(curdir,NULL,0);
-    ok((rc1-strlen(tmpstr))==(rc2-strlen(curdir)),
-       "GetLongPathNameA: wrong return code, %d instead of %d\n",
-       rc1, lstrlenA(tmpstr)+1);
+  sprintf(tmpstr,"%s\\%s\\%s",curdir,LONGDIR,LONGFILE);
+  rc1 = GetLongPathNameA(tmpstr, NULL, 0);
+  rc2 = GetLongPathNameA(curdir, NULL, 0);
+  ok((rc1-strlen(tmpstr))==(rc2-strlen(curdir)),
+     "GetLongPathNameA: wrong return code, %d instead of %d\n",
+     rc1, lstrlenA(tmpstr)+1);
 
-    sprintf(dir,"%c:",curDrive);
-    rc1=(*pGetLongPathNameA)(dir,tmpstr,sizeof(tmpstr));
-    ok(strcmp(dir,tmpstr)==0,
-       "GetLongPathNameA: returned '%s' instead of '%s' (rc=%d)\n",
-       tmpstr,dir,rc1);
-  }
+  sprintf(dir,"%c:",curDrive);
+  rc1= GetLongPathNameA(dir, tmpstr, sizeof(tmpstr));
+  ok(!strcmp(dir,tmpstr), "GetLongPathNameA: returned '%s' instead of '%s' (rc=%d)\n",
+       tmpstr, dir, rc1);
 
 /* Check the cases where both file and directory exist first */
 /* Start with a 8.3 directory, 8.3 filename */
@@ -670,11 +663,10 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
      "GetShortPathNameA error: len=%d error=%d tmpstr=[%s]\n",
      passfail.shortlen,passfail.shorterror,tmpstr);
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
-       "GetlongPathA should have returned 'ERROR_FILE_NOT_FOUND'\n");
-  }
+
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_FILE_NOT_FOUND, "Unexpected error %d.\n", passfail.longerror);
+
 /* Now try a 8.3 directory, long file name */
   test_ValidPathA(curdir,SHORTDIR,NONFILE_LONG,tmpstr,&passfail,"test6");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have\n");
@@ -682,11 +674,9 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      passfail.shorterror==ERROR_FILE_NOT_FOUND ||
      !passfail.shorterror,
      "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'\n");
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
-       "GetlongPathA should have returned 'ERROR_FILE_NOT_FOUND'\n");
-  }
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_FILE_NOT_FOUND, "Unexpected error %d.\n", passfail.longerror);
+
 /* Next is a long directory, 8.3 file */
   test_ValidPathA(curdir,LONGDIR,NONFILE_SHORT,tmpstr,&passfail,"test7");
   sprintf(tmpstr2,"%s\\%s",curdir_short,LONGDIR);
@@ -698,11 +688,9 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
      "GetShortPathNameA error: len=%d error=%d tmpstr=[%s]\n",
      passfail.shortlen,passfail.shorterror,tmpstr);
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
-      "GetlongPathA should have returned 'ERROR_FILE_NOT_FOUND'\n");
-  }
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_FILE_NOT_FOUND, "Unexpected error %d.\n", passfail.longerror);
+
 /*Lastly a long directory, long file */
   test_ValidPathA(curdir,LONGDIR,NONFILE_LONG,tmpstr,&passfail,"test8");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have\n");
@@ -710,11 +698,9 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      passfail.shorterror==ERROR_FILE_NOT_FOUND ||
      !passfail.shorterror,
      "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'\n");
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
-       "GetlongPathA should have returned 'ERROR_FILE_NOT_FOUND'\n");
-  }
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_FILE_NOT_FOUND, "Unexpected error %d.\n", passfail.longerror);
+
 /* Now try again with directories that don't exist */
 /* 8.3 directory, 8.3 filename */
   test_ValidPathA(curdir,NONDIR_SHORT,SHORTFILE,tmpstr,&passfail,"test9");
@@ -725,13 +711,10 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
      "GetShortPathNameA error: len=%d error=%d tmpstr=[%s]\n",
      passfail.shortlen,passfail.shorterror,tmpstr);
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_PATH_NOT_FOUND ||
-       passfail.longerror==ERROR_FILE_NOT_FOUND,
-       "GetLongPathA returned %d and not 'ERROR_PATH_NOT_FOUND'\n",
-       passfail.longerror);
-  }
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_PATH_NOT_FOUND || passfail.longerror == ERROR_FILE_NOT_FOUND,
+     "Unexpected error %d.\n", passfail.longerror);
+
 /* Now try a 8.3 directory, long file name */
   test_ValidPathA(curdir,NONDIR_SHORT,LONGFILE,tmpstr,&passfail,"test10");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have\n");
@@ -740,13 +723,10 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      !passfail.shorterror,
      "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'\n",
       passfail.shorterror);
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_PATH_NOT_FOUND ||
-       passfail.longerror==ERROR_FILE_NOT_FOUND,
-       "GetLongPathA returned %d and not 'ERROR_PATH_NOT_FOUND'\n",
-       passfail.longerror);
-  }
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_PATH_NOT_FOUND || passfail.longerror == ERROR_FILE_NOT_FOUND,
+     "Unexpected error %d.\n", passfail.longerror);
+
 /* Next is a long directory, 8.3 file */
   test_ValidPathA(curdir,NONDIR_LONG,SHORTFILE,tmpstr,&passfail,"test11");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have\n");
@@ -755,13 +735,10 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      !passfail.shorterror,
      "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'\n",
       passfail.shorterror);
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_PATH_NOT_FOUND ||
-       passfail.longerror==ERROR_FILE_NOT_FOUND,
-       "GetLongPathA returned %d and not 'ERROR_PATH_NOT_FOUND'\n",
-       passfail.longerror);
-  }
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_PATH_NOT_FOUND || passfail.longerror == ERROR_FILE_NOT_FOUND,
+     "Unexpected error %d.\n", passfail.longerror);
+
 /*Lastly a long directory, long file */
   test_ValidPathA(curdir,NONDIR_LONG,LONGFILE,tmpstr,&passfail,"test12");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have\n");
@@ -770,13 +747,10 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      !passfail.shorterror,
      "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'\n",
       passfail.shorterror);
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_PATH_NOT_FOUND ||
-       passfail.longerror==ERROR_FILE_NOT_FOUND,
-       "GetLongPathA returned %d and not 'ERROR_PATH_NOT_FOUND'\n",
-       passfail.longerror);
-  }
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_PATH_NOT_FOUND || passfail.longerror == ERROR_FILE_NOT_FOUND,
+     "Unexpected error %d.\n", passfail.longerror);
+
 /* Next try directories ending with '\\' */
 /* Existing Directories */
   sprintf(tmpstr,"%s\\",SHORTDIR);
@@ -793,12 +767,9 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      (passfail.shortlen==strlen(tmpstr2) && lstrcmpiA(tmpstr1,tmpstr2)==0),
      "GetShortPathNameA error: len=%d error=%d tmpstr=[%s]\n",
      passfail.shortlen,passfail.shorterror,tmpstr);
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
-       "GetLongPathA returned %d and not 'ERROR_FILE_NOT_FOUND'\n",
-       passfail.longerror);
-  }
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_FILE_NOT_FOUND, "Unexpected error %d.\n", passfail.longerror);
+
   sprintf(tmpstr,"%s\\",NONDIR_LONG);
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,&passfail,"test16");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have\n");
@@ -807,12 +778,9 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      !passfail.shorterror,
      "GetShortPathA returned %d and not 'ERROR_FILE_NOT_FOUND'\n",
       passfail.shorterror);
-  if(pGetLongPathNameA) {
-    ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have\n");
-    ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
-       "GetLongPathA returned %d and not 'ERROR_FILE_NOT_FOUND'\n",
-       passfail.longerror);
-  }
+  ok(!passfail.longlen, "GetLongPathNameA passed when it shouldn't have\n");
+  ok(passfail.longerror == ERROR_FILE_NOT_FOUND, "Unexpected error %d.\n", passfail.longerror);
+
 /* Test GetFullPathNameA with drive letters */
   if( curDrive != NOT_A_VALID_DRIVE) {
     sprintf(tmpstr,"%c:",curdir[0]);
@@ -863,26 +831,25 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   }
   /* Don't Starve relies on GetLongPathName returning the passed in filename,
      even if the actual file on disk has a different case or separator */
-  if (pGetLongPathNameA) {
-    int len = lstrlenA(LONGDIR) + 1;
-    sprintf(tmpstr,"%s/%s",LONGDIR,LONGFILE);
-    ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
-    ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-       "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
-    tmpstr[len] = tolower(tmpstr[len]);
-    ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
-    ok(lstrcmpA(tmpstr,tmpstr1)==0,
-       "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
-    sprintf(tmpstr,"%s/%s",SHORTDIR,SHORTFILE);
-    ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
-    ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-       "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
-    len = lstrlenA(SHORTDIR) + 1;
-    tmpstr[len] = toupper(tmpstr[len]);
-    ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
-    ok(lstrcmpiA(tmpstr,tmpstr1)==0 && lstrcmpA(tmpstr,tmpstr1) != 0,
-       "GetLongPathNameA returned '%s' instead of '%s/%s'\n",tmpstr1,SHORTDIR,SHORTFILE);
-  }
+  len = lstrlenA(LONGDIR) + 1;
+  sprintf(tmpstr,"%s/%s",LONGDIR,LONGFILE);
+  ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
+  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+     "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
+  tmpstr[len] = tolower(tmpstr[len]);
+  ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
+  ok(lstrcmpA(tmpstr,tmpstr1)==0,
+     "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
+  sprintf(tmpstr,"%s/%s",SHORTDIR,SHORTFILE);
+  ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
+  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+     "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
+  len = lstrlenA(SHORTDIR) + 1;
+  tmpstr[len] = toupper(tmpstr[len]);
+  ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
+  ok(lstrcmpiA(tmpstr,tmpstr1)==0 && lstrcmpA(tmpstr,tmpstr1) != 0,
+     "GetLongPathNameA returned '%s' instead of '%s/%s'\n",tmpstr1,SHORTDIR,SHORTFILE);
+
   sprintf(tmpstr,"%s/%s",SHORTDIR,SHORTFILE);
   ok(GetShortPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetShortPathNameA failed\n");
   ok(lstrcmpiA(tmpstr,tmpstr1)==0,
@@ -909,22 +876,17 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 /* Now try some relative paths */
   ok(GetShortPathNameA(LONGDIR,tmpstr,MAX_PATH),"GetShortPathNameA failed\n");
   test_SplitShortPathA(tmpstr,dir,eight,three);
-  if(pGetLongPathNameA) {
-    ok(pGetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
-    ok(lstrcmpiA(tmpstr1,LONGDIR)==0,
-       "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,LONGDIR);
-  }
+  ok(GetLongPathNameA(tmpstr, tmpstr1, MAX_PATH), "GetLongPathNameA failed\n");
+  ok(!lstrcmpiA(tmpstr1, LONGDIR), "GetLongPathNameA returned '%s' instead of '%s'\n", tmpstr1, LONGDIR);
+
   sprintf(tmpstr,".\\%s",LONGDIR);
   ok(GetShortPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetShortPathNameA failed\n");
   test_SplitShortPathA(tmpstr1,dir,eight,three);
   ok(lstrcmpiA(dir,".")==0 || dir[0]=='\0',
      "GetShortPathNameA did not keep relative directory [%s]\n",tmpstr1);
-  if(pGetLongPathNameA) {
-    ok(pGetLongPathNameA(tmpstr1,tmpstr1,MAX_PATH),"GetLongPathNameA failed %s\n",
-       tmpstr);
-    ok(lstrcmpiA(tmpstr1,tmpstr)==0,
-       "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
-  }
+  ok(GetLongPathNameA(tmpstr1, tmpstr1, MAX_PATH), "GetLongPathNameA failed %s\n", tmpstr);
+  ok(!lstrcmpiA(tmpstr1, tmpstr), "GetLongPathNameA returned '%s' instead of '%s'\n", tmpstr1, tmpstr);
+
 /* Check out Get*PathNameA on some funny characters */
   for(i=0;i<lstrlenA(funny_chars);i++) {
     INT valid;
@@ -966,17 +928,13 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   ok(lstrcmpiA(tmpstr,tmpstr1)==0,
        "GetShortPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
 
-  if (pGetLongPathNameA) {
-    sprintf(tmpstr,"%s\\\\%s",LONGDIR,LONGFILE);
-    ok(pGetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
-    ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-        "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
+  sprintf(tmpstr,"%s\\\\%s",LONGDIR,LONGFILE);
+  ok(GetLongPathNameA(tmpstr, tmpstr1, MAX_PATH), "GetLongPathNameA failed\n");
+  ok(!lstrcmpiA(tmpstr,tmpstr1), "GetLongPathNameA returned '%s' instead of '%s'\n", tmpstr1, tmpstr);
 
-    sprintf(tmpstr,".\\\\%s\\\\%s",LONGDIR,LONGFILE);
-    ok(pGetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
-    ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-       "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
-  }
+  sprintf(tmpstr,".\\\\%s\\\\%s",LONGDIR,LONGFILE);
+  ok(GetLongPathNameA(tmpstr, tmpstr1, MAX_PATH), "GetLongPathNameA failed\n");
+  ok(!lstrcmpiA(tmpstr,tmpstr1), "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
 }
 
 static void test_GetTempPathA(char* tmp_dir)
@@ -1202,15 +1160,12 @@ static void test_GetLongPathNameA(void)
     char temppath[MAX_PATH], temppath2[MAX_PATH];
     HANDLE file;
 
-    if (!pGetLongPathNameA)
-        return;
-
     GetTempPathA(MAX_PATH, tempfile);
     name = tempfile + strlen(tempfile);
 
     strcpy(name, "*");
     SetLastError(0xdeadbeef);
-    length = pGetLongPathNameA(tempfile, temppath, MAX_PATH);
+    length = GetLongPathNameA(tempfile, temppath, MAX_PATH);
     ok(!length, "GetLongPathNameA should fail\n");
     ok(GetLastError() == ERROR_INVALID_NAME, "wrong error %d\n", GetLastError());
 
@@ -1221,7 +1176,7 @@ static void test_GetLongPathNameA(void)
 
     /* Test a normal path with a small buffer size */
     memset(temppath, 0, MAX_PATH);
-    length = pGetLongPathNameA(tempfile, temppath, 4);
+    length = GetLongPathNameA(tempfile, temppath, 4);
     /* We have a failure so length should be the minimum plus the terminating '0'  */
     ok(length >= strlen(tempfile) + 1, "Wrong length\n");
     ok(temppath[0] == 0, "Buffer should not have been touched\n");
@@ -1235,7 +1190,7 @@ static void test_GetLongPathNameA(void)
     explength = length + 4;
 
     SetLastError(0xdeadbeef);
-    length = pGetLongPathNameA(temppath2, NULL, 0);
+    length = GetLongPathNameA(temppath2, NULL, 0);
     if (length == 0 && GetLastError() == ERROR_BAD_NET_NAME)
     {
         win_skip("UNC syntax tests don't work on Win98/WinMe\n");
@@ -1244,10 +1199,10 @@ static void test_GetLongPathNameA(void)
     }
     ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
 
-    length = pGetLongPathNameA(temppath2, NULL, MAX_PATH);
+    length = GetLongPathNameA(temppath2, NULL, MAX_PATH);
     ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
 
-    length = pGetLongPathNameA(temppath2, temppath, 4);
+    length = GetLongPathNameA(temppath2, temppath, 4);
     ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
     ok(temppath[0] == 0, "Buffer should not have been touched\n");
 
@@ -1267,7 +1222,7 @@ static void test_GetLongPathNameA(void)
 
     /* Create a long syntax for reference */
     memset(longpath, 0, MAX_PATH);
-    pGetLongPathNameA(tempfile, temppath, MAX_PATH);
+    GetLongPathNameA(tempfile, temppath, MAX_PATH);
     lstrcpyA(longpath, unc_prefix);
     longpath[lstrlenA(longpath)] = temppath[0];
     lstrcatA(longpath, "$\\");
@@ -1275,7 +1230,7 @@ static void test_GetLongPathNameA(void)
 
     /* NULL test */
     SetLastError(0xdeadbeef);
-    length = pGetLongPathNameA(unc_short, NULL, 0);
+    length = GetLongPathNameA(unc_short, NULL, 0);
     if (length == 0 && GetLastError() == ERROR_BAD_NETPATH)
     {
         /* Seen on Window XP Home */
@@ -1287,19 +1242,19 @@ static void test_GetLongPathNameA(void)
     todo_wine
     ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
 
-    length = pGetLongPathNameA(unc_short, NULL, MAX_PATH);
+    length = GetLongPathNameA(unc_short, NULL, MAX_PATH);
     todo_wine
     ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
 
     memset(unc_long, 0, MAX_PATH);
-    length = pGetLongPathNameA(unc_short, unc_long, lstrlenA(unc_short));
+    length = GetLongPathNameA(unc_short, unc_long, lstrlenA(unc_short));
     /* length will include terminating '0' on failure */
     todo_wine
     ok(length == explength, "Wrong length %d, expected %d\n", length, explength);
     ok(unc_long[0] == 0, "Buffer should not have been touched\n");
 
     memset(unc_long, 0, MAX_PATH);
-    length = pGetLongPathNameA(unc_short, unc_long, length);
+    length = GetLongPathNameA(unc_short, unc_long, length);
     /* length doesn't include terminating '0' on success */
     explength--;
     todo_wine
@@ -1324,11 +1279,8 @@ static void test_GetLongPathNameW(void)
     static const WCHAR backslash[] = { '\\', 0};
     static const WCHAR letterX[] = { 'X', 0};
 
-    if (!pGetLongPathNameW)
-        return;
-
     SetLastError(0xdeadbeef); 
-    length = pGetLongPathNameW(NULL,NULL,0);
+    length = GetLongPathNameW(NULL,NULL,0);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("GetLongPathNameW is not implemented\n");
@@ -1339,7 +1291,7 @@ static void test_GetLongPathNameW(void)
 
     SetLastError(0xdeadbeef); 
     empty[0]=0;
-    length = pGetLongPathNameW(empty,NULL,0);
+    length = GetLongPathNameW(empty,NULL,0);
     ok(0==length,"GetLongPathNameW returned %d but expected 0\n",length);
     ok(GetLastError()==ERROR_PATH_NOT_FOUND,"GetLastError returned %d but expected ERROR_PATH_NOT_FOUND\n",GetLastError());
 
@@ -1366,14 +1318,14 @@ static void test_GetLongPathNameW(void)
 
     /* No prefix */
     SetLastError(0xdeadbeef);
-    length = pGetLongPathNameW(shortpath + 4, NULL, 0);
+    length = GetLongPathNameW(shortpath + 4, NULL, 0);
     ok(length == 0, "Expected 0, got %d\n", length);
     todo_wine
     ok(GetLastError() == ERROR_PATH_NOT_FOUND,
        "Expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
     /* With prefix */
     SetLastError(0xdeadbeef);
-    length = pGetLongPathNameW(shortpath, NULL, 0);
+    length = GetLongPathNameW(shortpath, NULL, 0);
     todo_wine
     {
     ok(length == 0, "Expected 0, got %d\n", length);
@@ -1391,21 +1343,21 @@ static void test_GetLongPathNameW(void)
 
     /* No prefix */
     SetLastError(0xdeadbeef);
-    length = pGetLongPathNameW(shortpath + 4, NULL, 0);
+    length = GetLongPathNameW(shortpath + 4, NULL, 0);
     todo_wine
     {
     ok(length == 0, "Expected 0, got %d\n", length);
     ok(GetLastError() == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
     }
     /* With prefix */
-    expanded = 4 + (pGetLongPathNameW(tempdir, NULL, 0) - 1) + lstrlenW(name) + 1 + lstrlenW(name) + 1;
+    expanded = 4 + (GetLongPathNameW(tempdir, NULL, 0) - 1) + lstrlenW(name) + 1 + lstrlenW(name) + 1;
     SetLastError(0xdeadbeef);
-    length = pGetLongPathNameW(shortpath, NULL, 0);
+    length = GetLongPathNameW(shortpath, NULL, 0);
     ok(length == expanded, "Expected %d, got %d\n", expanded, length);
 
     /* NULL buffer with length crashes on Windows */
     if (0)
-        pGetLongPathNameW(shortpath, NULL, 20);
+        GetLongPathNameW(shortpath, NULL, 20);
 
     ok(DeleteFileW(shortpath), "Could not delete temporary file\n");
     ok(RemoveDirectoryW(dirpath), "Could not delete temporary directory\n");
@@ -1738,16 +1690,13 @@ static void test_drive_letter_case(void)
     ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
     ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
 
-    if (pGetLongPathNameA)
-    {
-        /* re-use the buffer returned by GetShortPathName */
-        SetLastError(0xdeadbeef);
-        ret = pGetLongPathNameA(buf, buf, sizeof(buf));
-        ok(ret, "GetLongPathNameA error %u\n", GetLastError());
-        ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
-        ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
-        ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
-    }
+    /* re-use the buffer returned by GetShortPathName */
+    SetLastError(0xdeadbeef);
+    ret = GetLongPathNameA(buf, buf, sizeof(buf));
+    ok(ret, "GetLongPathNameA error %u\n", GetLastError());
+    ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
+    ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
+    ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
 #undef is_upper_case_letter
 }
 
@@ -2201,8 +2150,6 @@ static void init_pointers(void)
     HMODULE mod = GetModuleHandleA("kernel32.dll");
 
 #define MAKEFUNC(f) (p##f = (void*)GetProcAddress(mod, #f))
-    MAKEFUNC(GetLongPathNameA);
-    MAKEFUNC(GetLongPathNameW);
     MAKEFUNC(NeedCurrentDirectoryForExePathA);
     MAKEFUNC(NeedCurrentDirectoryForExePathW);
     MAKEFUNC(SetSearchPathMode);
@@ -2232,8 +2179,6 @@ static void test_relative_path(void)
     int ret;
     WCHAR curdir[MAX_PATH];
 
-    if (!pGetLongPathNameA) return;
-
     GetCurrentDirectoryW(MAX_PATH, curdir);
     GetTempPathA(MAX_PATH, path);
     ret = SetCurrentDirectoryA(path);
@@ -2253,7 +2198,7 @@ static void test_relative_path(void)
     ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributes error %d\n", GetLastError());
 
     strcpy(buf, "deadbeef");
-    ret = pGetLongPathNameA(".", buf, MAX_PATH);
+    ret = GetLongPathNameA(".", buf, MAX_PATH);
     ok(ret, "GetLongPathName error %d\n", GetLastError());
     ok(!strcmp(buf, "."), "expected ., got %s\n", buf);
     strcpy(buf, "deadbeef");
@@ -2262,7 +2207,7 @@ static void test_relative_path(void)
     ok(!strcmp(buf, "."), "expected ., got %s\n", buf);
 
     strcpy(buf, "deadbeef");
-    ret = pGetLongPathNameA("..", buf, MAX_PATH);
+    ret = GetLongPathNameA("..", buf, MAX_PATH);
     ok(ret, "GetLongPathName error %d\n", GetLastError());
     ok(!strcmp(buf, ".."), "expected .., got %s\n", buf);
     strcpy(buf, "deadbeef");
@@ -2271,7 +2216,7 @@ static void test_relative_path(void)
     ok(!strcmp(buf, ".."), "expected .., got %s\n", buf);
 
     strcpy(buf, "deadbeef");
-    ret = pGetLongPathNameA("..\\foo\\file", buf, MAX_PATH);
+    ret = GetLongPathNameA("..\\foo\\file", buf, MAX_PATH);
     ok(ret, "GetLongPathName error %d\n", GetLastError());
     ok(!strcmp(buf, "..\\foo\\file"), "expected ..\\foo\\file, got %s\n", buf);
     strcpy(buf, "deadbeef");
@@ -2280,7 +2225,7 @@ static void test_relative_path(void)
     ok(!strcmp(buf, "..\\foo\\file"), "expected ..\\foo\\file, got %s\n", buf);
 
     strcpy(buf, "deadbeef");
-    ret = pGetLongPathNameA(".\\..\\foo\\file", buf, MAX_PATH);
+    ret = GetLongPathNameA(".\\..\\foo\\file", buf, MAX_PATH);
     ok(ret, "GetLongPathName error %d\n", GetLastError());
     ok(!strcmp(buf, ".\\..\\foo\\file"), "expected .\\..\\foo\\file, got %s\n", buf);
     strcpy(buf, "deadbeef");
@@ -2290,7 +2235,7 @@ static void test_relative_path(void)
 
     /* test double delimiters */
     strcpy(buf, "deadbeef");
-    ret = pGetLongPathNameA("..\\\\foo\\file", buf, MAX_PATH);
+    ret = GetLongPathNameA("..\\\\foo\\file", buf, MAX_PATH);
     ok(ret, "GetLongPathName error %d\n", GetLastError());
     ok(!strcmp(buf, "..\\\\foo\\file"), "expected ..\\\\foo\\file, got %s\n", buf);
     strcpy(buf, "deadbeef");
@@ -2751,10 +2696,6 @@ START_TEST(path)
     init_pointers();
 
     /* Report only once */
-    if (!pGetLongPathNameA)
-        win_skip("GetLongPathNameA is not available\n");
-    if (!pGetLongPathNameW)
-        win_skip("GetLongPathNameW is not available\n");
     if (!pActivateActCtx)
         win_skip("Activation contexts not supported, some tests will be skipped\n");
 
