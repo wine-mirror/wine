@@ -2845,6 +2845,7 @@ class VkRegistry(object):
         for t in types:
             type_info = {}
             type_info["category"] = t.attrib.get("category", None)
+            type_info["requires"] = t.attrib.get("requires", None)
 
             # We parse aliases in a second pass when we know more.
             alias = t.attrib.get("alias")
@@ -2863,13 +2864,19 @@ class VkRegistry(object):
                 base_types.append(basetype)
                 type_info["data"] = basetype
 
+            # Basic C types don't need us to define them, but we do need data for them
+            if type_info["requires"] == "vk_platform":
+                requires = type_info["requires"]
+                basic_c = VkBaseType(name, _type, requires=requires)
+                type_info["data"] = basic_c
+
             if type_info["category"] == "bitmask":
                 name = t.find("name").text
                 _type = t.find("type").text
 
                 # Most bitmasks have a requires attribute used to pull in
                 # required '*FlagBits" enum.
-                requires = t.attrib.get("requires")
+                requires = type_info["requires"]
                 bitmask = VkBaseType(name, _type, requires=requires)
                 bitmasks.append(bitmask)
                 type_info["data"] = bitmask
