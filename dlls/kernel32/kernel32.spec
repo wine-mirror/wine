@@ -711,10 +711,10 @@
 @ stdcall GetLogicalDrives()
 @ stdcall -import GetLogicalProcessorInformation(ptr ptr)
 @ stdcall -import GetLogicalProcessorInformationEx(long ptr ptr)
-@ stdcall -import GetLongPathNameA (str long long)
+@ stdcall -import GetLongPathNameA(str ptr long)
 # @ stub GetLongPathNameTransactedA
 # @ stub GetLongPathNameTransactedW
-@ stdcall -import GetLongPathNameW (wstr long long)
+@ stdcall -import GetLongPathNameW(wstr ptr long)
 @ stdcall GetMailslotInfo(long ptr ptr ptr ptr)
 @ stdcall GetMaximumProcessorCount(long)
 # @ stub GetMaximumProcessorGroupCount

@@ -549,8 +549,8 @@
 @ stdcall GetLogicalDrives() kernel32.GetLogicalDrives
 @ stdcall GetLogicalProcessorInformation(ptr ptr)
 @ stdcall GetLogicalProcessorInformationEx(long ptr ptr)
-@ stdcall GetLongPathNameA(str long long)
-@ stdcall GetLongPathNameW(wstr long long)
+@ stdcall GetLongPathNameA(str ptr long)
+@ stdcall GetLongPathNameW(wstr ptr long)
 # @ stub GetMappedFileNameA
 # @ stub GetMappedFileNameW
 # @ stub GetMemoryErrorHandlingCapabilities
