@@ -706,7 +706,11 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         if(keep) {
             if (str_match == _infinity) return sign*INFINITY;
             if (str_match == _nan) return sign*NAN;
+        } else if(found_sign) {
+            unget(ctx);
         }
+
+        return make_double(sign, exp, d, ROUND_ZERO, err);
     }
 
     if(nch == '0') {

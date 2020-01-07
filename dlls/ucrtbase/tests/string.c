@@ -144,6 +144,8 @@ static void test_strtod(void)
     test_strtod_str("inf42", INFINITY, 3);
     test_strtod_str("inffoo", INFINITY, 3);
     test_strtod_str("infini", INFINITY, 3);
+    test_strtod_str("input", 0, 0);
+    test_strtod_str("-input", 0, 0);
 
     test_strtod_str("NAN", NAN, 3);
     test_strtod_str("nan", NAN, 3);
