@@ -92,6 +92,12 @@ typedef LONG NTSTATUS;
 #define BCRYPT_CHAIN_MODE_CFB       L"ChainingModeCFB"
 #define BCRYPT_CHAIN_MODE_CCM       L"ChainingModeCCM"
 #define BCRYPT_CHAIN_MODE_GCM       L"ChainingModeGCM"
+
+#define BCRYPT_KDF_HASH             L"HASH"
+#define BCRYPT_KDF_HMAC             L"HMAC"
+#define BCRYPT_KDF_TLS_PRF          L"TLS_PRF"
+#define BCRYPT_KDF_SP80056A_CONCAT  L"SP800_56A_CONCAT"
+#define BCRYPT_KDF_RAW_SECRET       L"TRUNCATE"
 #else
 static const WCHAR BCRYPT_ALGORITHM_NAME[] = {'A','l','g','o','r','i','t','h','m','N','a','m','e',0};
 static const WCHAR BCRYPT_AUTH_TAG_LENGTH[] = {'A','u','t','h','T','a','g','L','e','n','g','t','h',0};
@@ -146,6 +152,12 @@ static const WCHAR BCRYPT_CHAIN_MODE_ECB[] = {'C','h','a','i','n','i','n','g','M
 static const WCHAR BCRYPT_CHAIN_MODE_CFB[] = {'C','h','a','i','n','i','n','g','M','o','d','e','C','F','B',0};
 static const WCHAR BCRYPT_CHAIN_MODE_CCM[] = {'C','h','a','i','n','i','n','g','M','o','d','e','C','C','M',0};
 static const WCHAR BCRYPT_CHAIN_MODE_GCM[] = {'C','h','a','i','n','i','n','g','M','o','d','e','G','C','M',0};
+
+static const WCHAR BCRYPT_KDF_HASH[] = {'H','A','S','H',0};
+static const WCHAR BCRYPT_KDF_HMAC[] = {'H','M','A','C',0};
+static const WCHAR BCRYPT_KDF_TLS_PRF[] = {'T','L','S','_','P','R','F',0};
+static const WCHAR BCRYPT_KDF_SP80056A_CONCAT[] = {'S','P','8','0','0','_','5','6','A','_','C','O','N','C','A','T',0};
+static const WCHAR BCRYPT_KDF_RAW_SECRET[] = {'T','R','U','N','C','A','T','E',0};
 #endif
 
 #define BCRYPT_ECDSA_PUBLIC_P256_MAGIC  0x31534345
