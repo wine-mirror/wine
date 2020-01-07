@@ -18,6 +18,8 @@
 
 #include "winhttp.h"
 
+_locale_t c_locale DECLSPEC_HIDDEN;
+
 #define STREAM_BUFSIZE 4096
 
 struct xmlbuf

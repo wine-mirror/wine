@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <locale.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -49,6 +50,8 @@ void winsock_init(void)
     InitOnceExecuteOnce( &once, winsock_startup, NULL, NULL );
 }
 
+_locale_t c_locale;
+
 /******************************************************************
  *      DllMain (webservices.@)
  */
@@ -59,11 +62,13 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
     case DLL_PROCESS_ATTACH:
         webservices_instance = hinst;
         DisableThreadLibraryCalls( hinst );
+        c_locale = _create_locale( LC_ALL, "C" );
         break;
 
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         if (winsock_loaded) WSACleanup();
+        _free_locale( c_locale );
         break;
     }
     return TRUE;

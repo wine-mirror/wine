@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <float.h>
+#include <locale.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -3726,15 +3727,13 @@ static HRESULT str_to_uint64( const unsigned char *str, ULONG len, UINT64 max, U
 
 static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
 {
+    BOOL found_sign = FALSE, found_exponent = FALSE, found_digit = FALSE, found_decimal = FALSE;
     static const unsigned __int64 nan = 0xfff8000000000000;
     static const unsigned __int64 inf = 0x7ff0000000000000;
     static const unsigned __int64 inf_min = 0xfff0000000000000;
-    HRESULT hr = WS_E_INVALID_FORMAT;
-    const unsigned char *p = str, *q;
-    int sign = 1, exp_sign = 1, exp = 0, exp_tmp = 0, neg_exp, i, nb_digits, have_digits;
-    unsigned __int64 val = 0, tmp;
-    long double exp_val = 1.0, exp_mul = 10.0;
-    unsigned int fpword = _control87( 0, 0 );
+    const char *p = (const char *)str;
+    double tmp;
+    ULONG i;
 
     while (len && read_isspace( *p )) { p++; len--; }
     while (len && read_isspace( p[len - 1] )) { len--; }
@@ -3756,88 +3755,40 @@ static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
         return S_OK;
     }
 
-    *ret = 0.0;
-    if (*p == '-')
+    for (i = 0; i < len; i++)
     {
-        sign = -1;
-        p++; len--;
-    }
-    else if (*p == '+') { p++; len--; };
-    if (!len) return S_OK;
-
-    _control87( _MCW_EM | _RC_NEAR | _PC_64, _MCW_EM | _MCW_RC | _MCW_PC );
-
-    q = p;
-    while (len && isdigit( *q )) { q++; len--; }
-    have_digits = nb_digits = q - p;
-    for (i = 0; i < nb_digits; i++)
-    {
-        tmp = val * 10 + p[i] - '0';
-        if (val > MAX_UINT64 / 10 || tmp < val)
+        if (p[i] >= '0' && p[i] <= '9')
         {
-            for (; i < nb_digits; i++) exp++;
-            break;
+            found_digit = TRUE;
+            continue;
         }
-        val = tmp;
-    }
-
-    if (len)
-    {
-        if (*q == '.')
+        if (!found_sign && !found_digit && (p[i] == '+' || p[i] == '-'))
         {
-            p = ++q; len--;
-            while (len && isdigit( *q )) { q++; len--; };
-            have_digits |= nb_digits = q - p;
-            for (i = 0; i < nb_digits; i++)
-            {
-                tmp = val * 10 + p[i] - '0';
-                if (val > MAX_UINT64 / 10 || tmp < val) break;
-                val = tmp;
-                exp--;
-            }
+            found_sign = TRUE;
+            continue;
         }
-        if (len > 1 && tolower(*q) == 'e')
+        if (!found_exponent && found_digit && (p[i] == 'e' || p[i] == 'E'))
         {
-            if (!have_digits) goto done;
-            p = ++q; len--;
-            if (*p == '-')
-            {
-                exp_sign = -1;
-                p++; len--;
-            }
-            else if (*p == '+') { p++; len--; };
-
-            q = p;
-            while (len && isdigit( *q )) { q++; len--; };
-            nb_digits = q - p;
-            if (!nb_digits || len) goto done;
-            for (i = 0; i < nb_digits; i++)
-            {
-                if (exp_tmp > MAX_INT32 / 10 || (exp_tmp = exp_tmp * 10 + p[i] - '0') < 0)
-                    exp_tmp = MAX_INT32;
-            }
-            exp_tmp *= exp_sign;
-
-            if (exp < 0 && exp_tmp < 0 && exp + exp_tmp >= 0) exp = MIN_INT32;
-            else if (exp > 0 && exp_tmp > 0 && exp + exp_tmp < 0) exp = MAX_INT32;
-            else exp += exp_tmp;
+            found_exponent = found_decimal = TRUE;
+            found_digit = found_sign = FALSE;
+            continue;
         }
+        if (!found_decimal && p[i] == '.')
+        {
+            found_decimal = TRUE;
+            continue;
+        }
+        return WS_E_INVALID_FORMAT;
     }
-    if (!have_digits || len) goto done;
-
-    if ((neg_exp = exp < 0)) exp = -exp;
-    for (; exp; exp >>= 1)
+    if (!found_digit && !found_exponent)
     {
-        if (exp & 1) exp_val *= exp_mul;
-        exp_mul *= exp_mul;
+        *ret = 0;
+        return S_OK;
     }
 
-    *ret = sign * (neg_exp ? val / exp_val : val * exp_val);
-    hr = S_OK;
-
-done:
-    _control87( fpword, _MCW_EM | _MCW_RC | _MCW_PC );
-    return hr;
+    if (_snscanf_l( p, len, "%lf", c_locale, &tmp ) != 1) return WS_E_INVALID_FORMAT;
+    *ret = tmp;
+    return S_OK;
 }
 
 static HRESULT str_to_float( const unsigned char *str, ULONG len, float *ret )

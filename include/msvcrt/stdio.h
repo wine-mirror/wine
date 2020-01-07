@@ -191,6 +191,7 @@ int    WINAPIV sprintf_s(char*,size_t,const char*,...);
 int    WINAPIV _scprintf(const char *, ...);
 int    WINAPIV sscanf(const char*,const char*,...);
 int    WINAPIV sscanf_s(const char*,const char*,...);
+int    WINAPIV _snscanf_l(const char*,size_t,const char*,_locale_t,...);
 FILE*  __cdecl tmpfile(void);
 char*  __cdecl tmpnam(char*);
 int    __cdecl ungetc(int,FILE*);
