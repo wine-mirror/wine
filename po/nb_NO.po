@@ -3285,7 +3285,7 @@ msgstr "Fram"
 
 #: iccvid.rc:28 iccvid.rc:29
 msgid "Cinepak Video codec"
-msgstr "Cinepak-videokodek"
+msgstr "Cinepak videokodeks"
 
 #: ieframe.rc:28 shell32.rc:114 notepad.rc:29 oleview.rc:30 oleview.rc:80
 #: progman.rc:32 taskmgr.rc:35 view.rc:31 winefile.rc:28 winhlp32.rc:31
@@ -7895,14 +7895,14 @@ msgstr ""
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
-msgstr "Wine MS-RLE-videokodek"
+msgstr "Wine MS-RLE videokodeks"
 
 #: msrle32.rc:32
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
-"Wine MS-RLE-videokodek\n"
+"Wine MS-RLE videokodeks\n"
 "Kopirett 2002 tilhører Michael Günnewig"
 
 #: msvfw32.rc:33
@@ -7943,7 +7943,7 @@ msgstr "Fulle bilder (ukomprimert)"
 
 #: msvidc32.rc:29
 msgid "Wine Video 1 video codec"
-msgstr "Wine Video 1-videokodek"
+msgstr "Wine Video 1 videokodeks"
 
 #: oleacc.rc:31
 msgid "unknown object"
