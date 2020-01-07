@@ -16388,9 +16388,19 @@ static void test_clipper_refcount(void)
     IDirectDrawClipper_Release(clipper);
     IDirectDrawClipper_Release(clipper);
 
-    hr = IDirectDrawSurface4_GetClipper(surface, &clipper2);
-    ok(SUCCEEDED(hr), "Failed to get clipper, hr %#x.\n", hr);
-    ok(clipper == clipper2, "Got clipper %p, expected %p.\n", clipper2, clipper);
+    if (!ddraw_is_nvidia(ddraw))
+    {
+        /* Disabled because it causes heap corruption (HeapValidate fails and random
+         * hangs in a later HeapFree) on Windows on one of my Machines: MacbookPro 10,1
+         * running Windows 10 18363.535 and Nvidia driver 425.31. Driver version 441.66
+         * is affected too.
+         *
+         * The same Windows and driver versions run the test without heap corruption on
+         * a Geforce 1060 GTX card. I have not seen the problem on AMD GPUs either. */
+        hr = IDirectDrawSurface4_GetClipper(surface, &clipper2);
+        ok(SUCCEEDED(hr), "Failed to get clipper, hr %#x.\n", hr);
+        ok(clipper == clipper2, "Got clipper %p, expected %p.\n", clipper2, clipper);
+    }
 
     /* Show that invoking the Release method does not crash, but don't get the
      * vtable through the clipper pointer because it is no longer pointing to
