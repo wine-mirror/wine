@@ -1,4 +1,4 @@
-@ stub GetRestrictedErrorInfo
+@ stdcall GetRestrictedErrorInfo(ptr) combase.GetRestrictedErrorInfo
 @ stub IsErrorPropagationEnabled
 @ stub RoCaptureErrorContext
 @ stub RoClearError
@@ -9,7 +9,7 @@
 @ stub RoInspectThreadErrorInfo
 @ stub RoOriginateError
 @ stub RoOriginateErrorW
-@ stub RoOriginateLanguageException
+@ stdcall RoOriginateLanguageException(long ptr ptr) combase.RoOriginateLanguageException
 @ stub RoReportFailedDelegate
 @ stub RoReportUnhandledError
 @ stub RoResolveRestrictedErrorInfoReference
