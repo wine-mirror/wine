@@ -1,4 +1,4 @@
-@ stub GetRestrictedErrorInfo
+@ stdcall GetRestrictedErrorInfo(ptr) combase.GetRestrictedErrorInfo
 @ stub RoCaptureErrorContext
 @ stub RoFailFastWithErrorContext
 @ stub RoGetErrorReportingFlags

@@ -180,7 +180,7 @@
 @ stub GetFuncDescs
 @ stdcall GetHGlobalFromStream(ptr ptr) ole32.GetHGlobalFromStream
 @ stub GetHookInterface
-@ stub GetRestrictedErrorInfo
+@ stdcall GetRestrictedErrorInfo(ptr)
 @ stub HSTRING_UserFree
 @ stub HSTRING_UserFree64
 @ stub HSTRING_UserMarshal
@@ -260,7 +260,7 @@
 @ stub RoInspectThreadErrorInfo
 @ stub RoOriginateError
 @ stub RoOriginateErrorW
-@ stub RoOriginateLanguageException
+@ stdcall RoOriginateLanguageException(long ptr ptr)
 @ stub RoParameterizedTypeExtraGetTypeSignature
 @ stdcall RoRegisterActivationFactories(ptr ptr long ptr)
 @ stdcall RoRegisterForApartmentShutdown(ptr ptr ptr)
