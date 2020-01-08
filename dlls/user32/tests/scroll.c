@@ -561,6 +561,8 @@ static void test_SetScrollInfo(void)
 
     ret = IsWindowEnabled(hScroll);
     ok(!ret, "scroll bar enabled\n");
+    ret = IsWindowVisible(hScroll);
+    ok(!ret, "Unexpected visible state.\n");
 
     memset(&si, 0, sizeof(si));
     si.cbSize = sizeof(si);
@@ -581,6 +583,8 @@ static void test_SetScrollInfo(void)
     SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
     ret = IsWindowEnabled(hScroll);
     ok(!ret, "scroll bar enabled\n");
+    ret = IsWindowVisible(hScroll);
+    ok(!ret, "Unexpected visible state.\n");
 
     si.fMask = 0xf;
     ret = GetScrollInfo(hScroll, SB_CTL, &si);
@@ -588,6 +592,8 @@ static void test_SetScrollInfo(void)
 
     EnableScrollBar(hScroll, SB_CTL, ESB_ENABLE_BOTH);
     ok(IsWindowEnabled(hScroll), "expected enabled scrollbar\n");
+    ret = IsWindowVisible(hScroll);
+    ok(!ret, "Unexpected visible state.\n");
 
     si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
     si.nMax = 10;
@@ -597,6 +603,76 @@ static void test_SetScrollInfo(void)
     SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
     ret = IsWindowEnabled(hScroll);
     ok(ret, "scroll bar disabled\n");
+    ret = IsWindowVisible(hScroll);
+    ok(!ret, "Unexpected visible state.\n");
+
+    /* With visible window. */
+    ShowWindow(mainwnd, SW_SHOW);
+
+    ret = IsWindowVisible(hScroll);
+    ok(ret, "Unexpected visible state.\n");
+
+    EnableScrollBar(hScroll, SB_CTL, ESB_DISABLE_BOTH);
+    ret = IsWindowEnabled(hScroll);
+    ok(!ret, "Unexpected enabled state.\n");
+
+    /* Enabled state is changed only for visible windows, and only with redraw flag. */
+    si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
+    si.nMax = 100;
+    si.nMin = 10;
+    si.nPos = 0;
+    si.nPage = 50;
+    SetScrollInfo(hScroll, SB_CTL, &si, FALSE);
+    ret = IsWindowEnabled(hScroll);
+    ok(!ret, "Unexpected enabled state.\n");
+
+    /* State changes when called with same arguments too. */
+    si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
+    si.nMax = 100;
+    si.nMin = 10;
+    si.nPos = 0;
+    si.nPage = 50;
+    SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
+    ret = IsWindowEnabled(hScroll);
+todo_wine
+    ok(ret, "Unexpected enabled state.\n");
+
+    si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
+    si.nMax = 100;
+    si.nMin = 10;
+    si.nPos = 0;
+    si.nPage = 100;
+    SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
+    ret = IsWindowEnabled(hScroll);
+    ok(!ret, "Unexpected enabled state.\n");
+
+    EnableScrollBar(hScroll, SB_CTL, ESB_ENABLE_BOTH);
+    ret = IsWindowEnabled(hScroll);
+    ok(ret, "Unexpected enabled state.\n");
+
+    si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
+    si.nMax = 100;
+    si.nMin = 10;
+    si.nPos = 0;
+    si.nPage = 100;
+    SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
+    ret = IsWindowEnabled(hScroll);
+todo_wine
+    ok(!ret, "Unexpected enabled state.\n");
+
+    EnableScrollBar(hScroll, SB_CTL, ESB_DISABLE_BOTH);
+    ret = IsWindowEnabled(hScroll);
+    ok(!ret, "Unexpected enabled state.\n");
+
+    si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
+    si.nMax = 41;
+    si.nMin = 0;
+    si.nPos = 0;
+    si.nPage = 41;
+    SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
+    ret = IsWindowEnabled(hScroll);
+todo_wine
+    ok(ret, "Unexpected enabled state.\n");
 
     DestroyWindow(hScroll);
     DestroyWindow(mainwnd);
