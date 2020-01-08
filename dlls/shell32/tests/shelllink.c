@@ -38,7 +38,6 @@
 #  define SLDF_HAS_LOGO3ID 0x00000800 /* not available in the Vista SDK */
 #endif
 
-static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
 static HRESULT (WINAPI *pSHGetFolderLocation)(HWND,INT,HANDLE,DWORD,PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHDefExtractIconA)(LPCSTR, int, UINT, HICON*, HICON*, UINT);
@@ -234,12 +233,12 @@ static void test_get_set(void)
         tmp_pidl=NULL;
         r = IShellLinkA_GetIDList(sl, &tmp_pidl);
         ok(r == S_OK, "GetIDList failed (0x%08x)\n", r);
-        ok(tmp_pidl && pILIsEqual(pidl, tmp_pidl),
+        ok(tmp_pidl && ILIsEqual(pidl, tmp_pidl),
            "GetIDList returned an incorrect pidl\n");
 
         r = IShellLinkA_GetIDList(sl, &second_pidl);
         ok(r == S_OK, "GetIDList failed (0x%08x)\n", r);
-        ok(second_pidl && pILIsEqual(pidl, second_pidl),
+        ok(second_pidl && ILIsEqual(pidl, second_pidl),
            "GetIDList returned an incorrect pidl\n");
         ok(second_pidl != tmp_pidl, "pidls are the same\n");
 
@@ -583,7 +582,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
         r = IShellLinkA_GetIDList(sl, &pidl);
         lok(r == S_OK, "GetIDList failed (0x%08x)\n", r);
         todo_wine_if ((todo & 0x8) != 0)
-            lok(pILIsEqual(pidl, desc->pidl), "GetIDList returned an incorrect pidl\n");
+            lok(ILIsEqual(pidl, desc->pidl), "GetIDList returned an incorrect pidl\n");
     }
     if (desc->showcmd)
     {
@@ -1453,7 +1452,6 @@ START_TEST(shelllink)
     HMODULE hmod = GetModuleHandleA("shell32.dll");
     HMODULE huser32 = GetModuleHandleA("user32.dll");
 
-    pILIsEqual = (void *)GetProcAddress(hmod, (LPSTR)21);
     pSHILCreateFromPath = (void *)GetProcAddress(hmod, (LPSTR)28);
     pSHGetFolderLocation = (void *)GetProcAddress(hmod, "SHGetFolderLocation");
     pSHDefExtractIconA = (void *)GetProcAddress(hmod, "SHDefExtractIconA");
