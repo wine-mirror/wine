@@ -192,7 +192,8 @@ static BOOL ignore_message( UINT message )
             message == WM_TIMER ||
             message == WM_SYSTIMER ||
             message == WM_TIMECHANGE ||
-            message == WM_DEVICECHANGE);
+            message == WM_DEVICECHANGE ||
+            message == 0x0060 /* undocumented, used by Win10 1709+ */);
 }
 
 static BOOL CALLBACK EnumChildProc( HWND hwndChild, LPARAM lParam)
@@ -1117,7 +1118,7 @@ static void wine_AdjustWindowRectExForDpi( RECT *rect, LONG style, BOOL menu, LO
     int adjust = 0;
 
     ncm.cbSize = sizeof(ncm);
-    pSystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
+    pSystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0, dpi );
 
     if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE)
         adjust = 1; /* for the outer frame always present */
@@ -2541,6 +2542,8 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ok( rect.left == 90 && rect.top == 90 && rect.right == 110 && rect.bottom == 110,
         "invalid client rect %s\n", wine_dbgstr_rect(&rect));
 
+    flush_events( TRUE ); /* needed by Win10 1709+ */
+
     ret = SetWindowPos(hwnd, 0, 200, 200, 0, 0, SWP_NOZORDER|SWP_FRAMECHANGED);
     ok(ret, "Got %d\n", ret);
     GetWindowRect( hwnd, &rect );
@@ -3180,8 +3183,10 @@ static void test_SetActiveWindow(HWND hwnd)
     ShowWindow(hwnd, SW_SHOW);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
+    SetLastError(0xdeadbeef);
     ret = SetActiveWindow(0);
-    ok(ret == hwnd, "SetActiveWindow returned %p instead of %p\n", ret, hwnd);
+    ok(ret == hwnd || broken(!ret) /* Win10 1809 */, "expected %p, got %p\n", hwnd, ret);
+    if (!ret) ok(GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError());
     if (!GetActiveWindow())  /* doesn't always work on vista */
     {
         check_wnd_state(0, 0, 0, 0);
@@ -3238,8 +3243,10 @@ static void test_SetActiveWindow(HWND hwnd)
     ret = SetActiveWindow(hwnd2);
     ok(ret == hwnd, "expected %p, got %p\n", hwnd, ret);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
+    SetLastError(0xdeadbeef);
     ret = SetActiveWindow(0);
-    ok(ret == hwnd, "expected %p, got %p\n", hwnd, ret);
+    ok(ret == hwnd || broken(!ret) /* Win10 1809 */, "expected %p, got %p\n", hwnd, ret);
+    if (!ret) ok(GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError());
     if (!GetActiveWindow())
     {
         ret = SetActiveWindow(hwnd2);
@@ -3294,8 +3301,10 @@ static void test_SetForegroundWindow(HWND hwnd)
     ShowWindow(hwnd, SW_SHOW);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
+    SetLastError(0xdeadbeef);
     hwnd2 = SetActiveWindow(0);
-    ok(hwnd2 == hwnd, "SetActiveWindow(0) returned %p instead of %p\n", hwnd2, hwnd);
+    ok(hwnd2 == hwnd || broken(!hwnd2) /* Win10 1809 */, "expected %p, got %p\n", hwnd, hwnd2);
+    if (!hwnd2) ok(GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError());
     if (GetActiveWindow() == hwnd)  /* doesn't always work on vista */
         check_wnd_state(hwnd, hwnd, hwnd, 0);
     else
@@ -3963,13 +3972,12 @@ static void test_mouse_input(HWND hwnd)
 
     ret = wait_for_message( &msg );
     ok(ret, "no message available\n");
-todo_wine
-    ok(msg.hwnd == child && msg.message == WM_NCMOUSEMOVE, "hwnd %p/%p message %04x\n",
-       msg.hwnd, child, msg.message);
-
-    if (msg.message == WM_NCMOUSEMOVE)
+    if (msg.message == WM_NCMOUSEMOVE) /* not sent by Win10 1709+ */
+    {
+        ok(msg.hwnd == child, "expected %p, got %p\n", child, msg.hwnd);
         ret = wait_for_message( &msg );
-    ok(ret, "no message available\n");
+        ok(ret, "no message available\n");
+    }
     ok(msg.hwnd == child && msg.message == WM_NCLBUTTONDOWN, "hwnd %p/%p message %04x\n",
        msg.hwnd, child, msg.message);
     ok(msg.wParam == HTSYSMENU, "wparam %ld\n", msg.wParam);
