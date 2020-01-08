@@ -34,22 +34,11 @@
 
 #include "shell32_test.h"
 
-#ifndef SLDF_HAS_LOGO3ID
-#  define SLDF_HAS_LOGO3ID 0x00000800 /* not available in the Vista SDK */
-#endif
-
 static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
 static HRESULT (WINAPI *pSHGetFolderLocation)(HWND,INT,HANDLE,DWORD,PIDLIST_ABSOLUTE*);
-static HRESULT (WINAPI *pSHDefExtractIconA)(LPCSTR, int, UINT, HICON*, HICON*, UINT);
 static HRESULT (WINAPI *pSHGetStockIconInfo)(SHSTOCKICONID, UINT, SHSTOCKICONINFO *);
 static UINT (WINAPI *pSHExtractIconsW)(LPCWSTR, int, int, int, HICON *, UINT *, UINT, UINT);
 static BOOL (WINAPI *pIsProcessDPIAware)(void);
-
-static const GUID _IID_IShellLinkDataList = {
-    0x45e2b4ae, 0xb1c3, 0x11d0,
-    { 0xb9, 0x2f, 0x00, 0xa0, 0xc9, 0x03, 0x12, 0xe1 }
-};
-
 
 /* For some reason SHILCreateFromPath does not work on Win98 and
  * SHSimpleIDListFromPathA does not work on NT4. But if we call both we
@@ -136,7 +125,7 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetDescription(sl, buffer, sizeof(buffer));
     ok(r == S_OK, "GetDescription failed (0x%08x)\n", r);
-    ok(*buffer=='\0' || broken(strcmp(buffer,str)==0), "GetDescription returned '%s'\n", buffer); /* NT4 */
+    ok(!*buffer, "GetDescription returned '%s'\n", buffer);
 
     /* Test Getting / Setting the work directory */
     strcpy(buffer,"garbage");
@@ -156,14 +145,14 @@ static void test_get_set(void)
     /* Test Getting / Setting the path */
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
-    ok(r == S_FALSE || broken(r == S_OK) /* NT4/W2K */, "GetPath failed (0x%08x)\n", r);
-    ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
+    ok(r == S_FALSE, "GetPath failed (0x%08x)\n", r);
+    ok(!*buffer, "GetPath returned '%s'\n", buffer);
 
     strcpy(buffer,"garbage");
     memset(&finddata, 0xaa, sizeof(finddata));
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), &finddata, SLGP_RAWPATH);
-    ok(r == S_FALSE || broken(r == S_OK) /* NT4/W2K */, "GetPath failed (0x%08x)\n", r);
-    ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
+    ok(r == S_FALSE, "GetPath failed (0x%08x)\n", r);
+    ok(!*buffer, "GetPath returned '%s'\n", buffer);
     ok(finddata.dwFileAttributes == 0, "unexpected attributes %x\n", finddata.dwFileAttributes);
     ok(finddata.cFileName[0] == 0, "unexpected filename '%s'\n", finddata.cFileName);
 
@@ -293,8 +282,7 @@ static void test_get_set(void)
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
     ok(r==S_OK, "GetPath failed (0x%08x)\n", r);
-    todo_wine ok(!strcmp(buffer, "C:\\nonexistent\\file") ||
-       broken(!strcmp(buffer, "C:\\\"c:\\nonexistent\\file\"")), /* NT4 */
+    todo_wine ok(!strcmp(buffer, "C:\\nonexistent\\file"),
        "case doesn't match\n");
 
     r = IShellLinkA_SetPath(sl, "\"c:\\foo");
@@ -849,26 +837,10 @@ static void test_datalink(void)
 
     r = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                             &IID_IShellLinkW, (LPVOID*)&sl );
-    ok( r == S_OK ||
-        broken(r == E_NOINTERFACE), /* Win9x */
-        "CoCreateInstance failed (0x%08x)\n", r);
-    if (!sl)
-    {
-        win_skip("no shelllink\n");
-        return;
-    }
+    ok( r == S_OK, "Failed to create shelllink object, hr %#x.\n", r);
 
-    r = IShellLinkW_QueryInterface( sl, &_IID_IShellLinkDataList, (LPVOID*) &dl );
-    ok( r == S_OK ||
-        broken(r == E_NOINTERFACE), /* NT4 */
-        "IShellLinkW_QueryInterface failed (0x%08x)\n", r);
-
-    if (!dl)
-    {
-        win_skip("no datalink interface\n");
-        IShellLinkW_Release( sl );
-        return;
-    }
+    r = IShellLinkW_QueryInterface( sl, &IID_IShellLinkDataList, (void **)&dl );
+    ok( r == S_OK, "Failed to get interface, hr %#x.\n", r);
 
     flags = 0;
     r = IShellLinkDataList_GetFlags( dl, &flags );
@@ -917,13 +889,7 @@ static void test_shdefextracticon(void)
     HICON hiconlarge=NULL, hiconsmall=NULL;
     HRESULT res;
 
-    if (!pSHDefExtractIconA)
-    {
-        win_skip("SHDefExtractIconA is unavailable\n");
-        return;
-    }
-
-    res = pSHDefExtractIconA("shell32.dll", 0, 0, &hiconlarge, &hiconsmall, MAKELONG(16,24));
+    res = SHDefExtractIconA("shell32.dll", 0, 0, &hiconlarge, &hiconsmall, MAKELONG(16,24));
     ok(SUCCEEDED(res), "SHDefExtractIconA failed, res=%x\n", res);
     ok(hiconlarge != NULL, "got null hiconlarge\n");
     ok(hiconsmall != NULL, "got null hiconsmall\n");
@@ -931,12 +897,12 @@ static void test_shdefextracticon(void)
     DestroyIcon(hiconsmall);
 
     hiconsmall = NULL;
-    res = pSHDefExtractIconA("shell32.dll", 0, 0, NULL, &hiconsmall, MAKELONG(16,24));
+    res = SHDefExtractIconA("shell32.dll", 0, 0, NULL, &hiconsmall, MAKELONG(16,24));
     ok(SUCCEEDED(res), "SHDefExtractIconA failed, res=%x\n", res);
     ok(hiconsmall != NULL, "got null hiconsmall\n");
     DestroyIcon(hiconsmall);
 
-    res = pSHDefExtractIconA("shell32.dll", 0, 0, NULL, NULL, MAKELONG(16,24));
+    res = SHDefExtractIconA("shell32.dll", 0, 0, NULL, NULL, MAKELONG(16,24));
     ok(SUCCEEDED(res), "SHDefExtractIconA failed, res=%x\n", res);
 }
 
@@ -1454,7 +1420,6 @@ START_TEST(shelllink)
 
     pSHILCreateFromPath = (void *)GetProcAddress(hmod, (LPSTR)28);
     pSHGetFolderLocation = (void *)GetProcAddress(hmod, "SHGetFolderLocation");
-    pSHDefExtractIconA = (void *)GetProcAddress(hmod, "SHDefExtractIconA");
     pSHGetStockIconInfo = (void *)GetProcAddress(hmod, "SHGetStockIconInfo");
     pSHExtractIconsW = (void *)GetProcAddress(hmod, "SHExtractIconsW");
     pIsProcessDPIAware = (void *)GetProcAddress(huser32, "IsProcessDPIAware");
