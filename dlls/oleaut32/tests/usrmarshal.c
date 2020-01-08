@@ -36,9 +36,7 @@
 # define V_U2(A)  (*(A))
 #endif
 
-static HRESULT (WINAPI *pSafeArrayGetIID)(SAFEARRAY*,GUID*);
 static HRESULT (WINAPI *pSafeArrayGetVartype)(SAFEARRAY*,VARTYPE*);
-static HRESULT (WINAPI *pVarBstrCmp)(BSTR,BSTR,LCID,ULONG);
 
 static inline SF_TYPE get_union_type(SAFEARRAY *psa)
 {
@@ -133,7 +131,7 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
         return;
     }
 
-    if (!pSafeArrayGetVartype || !pSafeArrayGetIID)
+    if (!pSafeArrayGetVartype)
         return;
 
     if(FAILED(pSafeArrayGetVartype(lpsa, &vt)))
@@ -165,7 +163,7 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
     if(sftype == SF_HAVEIID)
     {
         GUID guid;
-        pSafeArrayGetIID(lpsa, &guid);
+        SafeArrayGetIID(lpsa, &guid);
         ok(IsEqualGUID(&guid, wiresa), "guid mismatch\n");
         wiresa += sizeof(GUID);
     }
@@ -474,8 +472,7 @@ static void test_marshal_LPSAFEARRAY(void)
             ok(hr == S_OK, "Failed to get bstr element at hres 0x%x\n", hr);
             if (hr == S_OK)
             {
-                if (pVarBstrCmp)
-                    ok(pVarBstrCmp(values[i], gotvalue, 0, 0) == VARCMP_EQ, "String %d does not match\n", i);
+                ok(VarBstrCmp(values[i], gotvalue, 0, 0) == VARCMP_EQ, "String %d does not match\n", i);
                 SysFreeString(gotvalue);
             }
         }
@@ -1613,13 +1610,11 @@ START_TEST(usrmarshal)
 {
     HANDLE hOleaut32 = GetModuleHandleA("oleaut32.dll");
 #define GETPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func)
-    GETPTR(SafeArrayGetIID);
     GETPTR(SafeArrayGetVartype);
-    GETPTR(VarBstrCmp);
 #undef GETPTR
 
-    if (!pSafeArrayGetIID || !pSafeArrayGetVartype)
-        win_skip("SafeArrayGetIID and/or SafeArrayGetVartype is not available, some tests will be skipped\n");
+    if (!pSafeArrayGetVartype)
+        win_skip("SafeArrayGetVartype is not available, some tests will be skipped\n");
 
     CoInitialize(NULL);
 

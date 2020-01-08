@@ -46,11 +46,9 @@
 static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pSafeArrayAllocDescriptorEx)(VARTYPE,UINT,SAFEARRAY**);
-static HRESULT (WINAPI *pSafeArrayCopyData)(SAFEARRAY*,SAFEARRAY*);
 static HRESULT (WINAPI *pSafeArrayGetVartype)(SAFEARRAY*,VARTYPE*);
 static HRESULT (WINAPI *pSafeArrayGetRecordInfo)(SAFEARRAY*,IRecordInfo**);
 static SAFEARRAY* (WINAPI *pSafeArrayCreateEx)(VARTYPE,UINT,SAFEARRAYBOUND*,LPVOID);
-static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
 
 #define GETPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func)
 
@@ -616,13 +614,11 @@ static void test_safearray(void)
             ok(broken(vt == VT_UNKNOWN) || vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d\n", vttypes[i].vt, vt);
         }
 
-        if (pSafeArrayCopyData) {
-            hres = pSafeArrayCopyData(a, c);
-            ok(hres == S_OK, "failed to copy safearray data of vt %d with hres %x\n", vttypes[i].vt, hres);
+        hres = SafeArrayCopyData(a, c);
+        ok(hres == S_OK, "failed to copy safearray data of vt %d with hres %x\n", vttypes[i].vt, hres);
 
-            hres = SafeArrayDestroyData(c);
-            ok(hres == S_OK,"SADD of copy of array with vt %d failed with hres %x\n", vttypes[i].vt, hres);
-        }
+        hres = SafeArrayDestroyData(c);
+        ok(hres == S_OK,"SADD of copy of array with vt %d failed with hres %x\n", vttypes[i].vt, hres);
 
 		hres = SafeArrayDestroy(c);
 		ok(hres == S_OK,"SAD failed with hres %x\n", hres);
@@ -939,12 +935,7 @@ static void test_VectorCreateLockDestroy(void)
   VARTYPE vt;
   int element;
 
-  if (!pSafeArrayCreateVector)
-  {
-    win_skip("SafeArrayCreateVector not supported\n");
-    return;
-  }
-  sa = pSafeArrayCreateVector(VT_UI1, 0, 0);
+  sa = SafeArrayCreateVector(VT_UI1, 0, 0);
   ok(sa != NULL, "SACV with 0 elements failed.\n");
 
   hres = SafeArrayDestroy(sa);
@@ -957,7 +948,7 @@ static void test_VectorCreateLockDestroy(void)
     {
       DWORD dwLen = SAFEARRAY_GetVTSize(vt);
 
-      sa = pSafeArrayCreateVector(vt, 0, element);
+      sa = SafeArrayCreateVector(vt, 0, element);
 
       if (dwLen)
         ok(sa != NULL, "VARTYPE %d (@%d elements) failed\n", vt, element);
@@ -1040,10 +1031,10 @@ test_LockUnlock_Vector:
     ok(hres == S_OK, "got 0x%08x\n", hres);
   }
 
-  if (bVector == FALSE && pSafeArrayCreateVector)
+  if (bVector == FALSE)
   {
     /* Test again with a vector */
-    sa = pSafeArrayCreateVector(VT_UI1, 0, 100);
+    sa = SafeArrayCreateVector(VT_UI1, 0, 100);
     bVector = TRUE;
     goto test_LockUnlock_Vector;
   }
@@ -1376,12 +1367,6 @@ static void test_SafeArrayCopyData(void)
   HRESULT hres;
   int dimension, size = 1, i;
 
-  if (!pSafeArrayCopyData)
-  {
-    win_skip("SafeArrayCopyData not supported\n");
-    return;
-  }
-
   for (dimension = 0; dimension < ARRAY_SIZE(sab); dimension++)
   {
     sab[dimension].lLbound = dimension * 2 + 2;
@@ -1406,7 +1391,7 @@ static void test_SafeArrayCopyData(void)
     data[dimension] = dimension;
   }
 
-  hres = pSafeArrayCopyData(sa, sacopy);
+  hres = SafeArrayCopyData(sa, sacopy);
   ok(hres == S_OK, "copy data failed hres 0x%x\n", hres);
   if (hres == S_OK)
   {
@@ -1414,33 +1399,33 @@ static void test_SafeArrayCopyData(void)
   }
 
   /* Failure cases */
-  hres = pSafeArrayCopyData(NULL, sacopy);
+  hres = SafeArrayCopyData(NULL, sacopy);
   ok(hres == E_INVALIDARG, "Null copy source hres 0x%x\n", hres);
-  hres = pSafeArrayCopyData(sa, NULL);
+  hres = SafeArrayCopyData(sa, NULL);
   ok(hres == E_INVALIDARG, "Null copy hres 0x%x\n", hres);
 
   sacopy->rgsabound[0].cElements += 1;
-  hres = pSafeArrayCopyData(sa, sacopy);
+  hres = SafeArrayCopyData(sa, sacopy);
   ok(hres == E_INVALIDARG, "Bigger copy first dimension hres 0x%x\n", hres);
 
   sacopy->rgsabound[0].cElements -= 2;
-  hres = pSafeArrayCopyData(sa, sacopy);
+  hres = SafeArrayCopyData(sa, sacopy);
   ok(hres == E_INVALIDARG, "Smaller copy first dimension hres 0x%x\n", hres);
   sacopy->rgsabound[0].cElements += 1;
 
   sacopy->rgsabound[3].cElements += 1;
-  hres = pSafeArrayCopyData(sa, sacopy);
+  hres = SafeArrayCopyData(sa, sacopy);
   ok(hres == E_INVALIDARG, "Bigger copy last dimension hres 0x%x\n", hres);
 
   sacopy->rgsabound[3].cElements -= 2;
-  hres = pSafeArrayCopyData(sa, sacopy);
+  hres = SafeArrayCopyData(sa, sacopy);
   ok(hres == E_INVALIDARG, "Smaller copy last dimension hres 0x%x\n", hres);
   sacopy->rgsabound[3].cElements += 1;
 
   hres = SafeArrayDestroy(sacopy);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   sacopy = NULL;
-  hres = pSafeArrayCopyData(sa, sacopy);
+  hres = SafeArrayCopyData(sa, sacopy);
   ok(hres == E_INVALIDARG, "->Null copy hres 0x%x\n", hres);
 
   hres = SafeArrayCopy(sa, &sacopy);
@@ -1828,32 +1813,30 @@ static void test_SafeArrayChangeTypeEx(void)
   /* VT_VECTOR|VT_UI1 -> VT_BSTR */
   hres = SafeArrayDestroy(sa);
   ok(hres == S_OK, "got 0x%08x\n", hres);
-  if (pSafeArrayCreateVector)
+
+  sa = SafeArrayCreateVector(VT_UI1, 0, strlen(szHello)+1);
+  ok(sa != NULL, "CreateVector() failed.\n");
+  if (!sa)
+    return;
+
+  memcpy(sa->pvData, szHello, strlen(szHello)+1);
+  V_VT(&v) = VT_VECTOR|VT_UI1;
+  V_ARRAY(&v) = sa;
+  VariantInit(&v2);
+
+  hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_BSTR);
+  ok(hres == DISP_E_BADVARTYPE, "CTE VT_VECTOR|VT_UI1 returned %x\n", hres);
+
+  /* (vector)VT_ARRAY|VT_UI1 -> VT_BSTR (In place) */
+  V_VT(&v) = VT_ARRAY|VT_UI1;
+  hres = VariantChangeTypeEx(&v, &v, 0, 0, VT_BSTR);
+  ok(hres == S_OK, "CTE VT_ARRAY|VT_UI1 -> VT_BSTR failed with %x\n", hres);
+  if (hres == S_OK)
   {
-    sa = pSafeArrayCreateVector(VT_UI1, 0, strlen(szHello)+1);
-    ok(sa != NULL, "CreateVector() failed.\n");
-    if (!sa)
-      return;
-
-    memcpy(sa->pvData, szHello, strlen(szHello)+1);
-    V_VT(&v) = VT_VECTOR|VT_UI1;
-    V_ARRAY(&v) = sa;
-    VariantInit(&v2);
-
-    hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_BSTR);
-    ok(hres == DISP_E_BADVARTYPE, "CTE VT_VECTOR|VT_UI1 returned %x\n", hres);
-
-    /* (vector)VT_ARRAY|VT_UI1 -> VT_BSTR (In place) */
-    V_VT(&v) = VT_ARRAY|VT_UI1;
-    hres = VariantChangeTypeEx(&v, &v, 0, 0, VT_BSTR);
-    ok(hres == S_OK, "CTE VT_ARRAY|VT_UI1 -> VT_BSTR failed with %x\n", hres);
-    if (hres == S_OK)
-    {
-      ok(V_VT(&v) == VT_BSTR, "CTE VT_ARRAY|VT_UI1 -> VT_BSTR did not return VT_BSTR, but %d.\n",V_VT(&v));
-      ok(strcmp((char*)V_BSTR(&v),szHello) == 0,"Expected string '%s', got '%s'\n", szHello,
-              (char*)V_BSTR(&v));
-      VariantClear(&v);
-    }
+    ok(V_VT(&v) == VT_BSTR, "CTE VT_ARRAY|VT_UI1 -> VT_BSTR did not return VT_BSTR, but %d.\n",V_VT(&v));
+    ok(strcmp((char*)V_BSTR(&v),szHello) == 0,"Expected string '%s', got '%s'\n", szHello,
+            (char*)V_BSTR(&v));
+    VariantClear(&v);
   }
 
   /* To/from BSTR only works with arrays of VT_UI1 */
@@ -1889,33 +1872,30 @@ static void test_SafeArrayChangeTypeEx(void)
   /* Can't change an array of one type into array of another type , even
    * if the other type is the same size
    */
-  if (pSafeArrayCreateVector)
-  {
-    sa = pSafeArrayCreateVector(VT_UI1, 0, 1);
-    ok(sa != NULL, "CreateVector() failed.\n");
-    if (!sa)
-      return;
+  sa = SafeArrayCreateVector(VT_UI1, 0, 1);
+  ok(sa != NULL, "CreateVector() failed.\n");
+  if (!sa)
+    return;
 
-    V_VT(&v) = VT_ARRAY|VT_UI1;
-    V_ARRAY(&v) = sa;
-    hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_ARRAY|VT_I1);
-    ok(hres == DISP_E_TYPEMISMATCH, "CTE VT_ARRAY|VT_UI1->VT_ARRAY|VT_I1 returned %x\n", hres);
+  V_VT(&v) = VT_ARRAY|VT_UI1;
+  V_ARRAY(&v) = sa;
+  hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_ARRAY|VT_I1);
+  ok(hres == DISP_E_TYPEMISMATCH, "CTE VT_ARRAY|VT_UI1->VT_ARRAY|VT_I1 returned %x\n", hres);
 
-    /* But can change to the same array type */
-    hres = SafeArrayDestroy(sa);
-    ok(hres == S_OK, "got 0x%08x\n", hres);
-    sa = pSafeArrayCreateVector(VT_UI1, 0, 1);
-    ok(sa != NULL, "CreateVector() failed.\n");
-    if (!sa)
-      return;
-    V_VT(&v) = VT_ARRAY|VT_UI1;
-    V_ARRAY(&v) = sa;
-    hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_ARRAY|VT_UI1);
-    ok(hres == S_OK, "CTE VT_ARRAY|VT_UI1->VT_ARRAY|VT_UI1 returned %x\n", hres);
-    hres = SafeArrayDestroy(sa);
-    ok(hres == S_OK, "got 0x%08x\n", hres);
-    VariantClear(&v2);
-  }
+  /* But can change to the same array type */
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  sa = SafeArrayCreateVector(VT_UI1, 0, 1);
+  ok(sa != NULL, "CreateVector() failed.\n");
+  if (!sa)
+    return;
+  V_VT(&v) = VT_ARRAY|VT_UI1;
+  V_ARRAY(&v) = sa;
+  hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_ARRAY|VT_UI1);
+  ok(hres == S_OK, "CTE VT_ARRAY|VT_UI1->VT_ARRAY|VT_UI1 returned %x\n", hres);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  VariantClear(&v2);
 
   /* NULL/EMPTY */
   MKARRAY(0,1,VT_UI1);
@@ -2090,10 +2070,8 @@ START_TEST(safearray)
     has_i8 = GetProcAddress(hOleaut32, "VarI8FromI1") != NULL;
 
     GETPTR(SafeArrayAllocDescriptorEx);
-    GETPTR(SafeArrayCopyData);
     GETPTR(SafeArrayGetVartype);
     GETPTR(SafeArrayCreateEx);
-    GETPTR(SafeArrayCreateVector);
     GETPTR(SafeArrayGetRecordInfo);
 
     check_for_VT_INT_PTR();
