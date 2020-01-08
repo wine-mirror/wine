@@ -356,129 +356,43 @@ static void run_localgroupgetinfo_tests(void)
 
 static void test_DavGetHTTPFromUNCPath(void)
 {
-    static const WCHAR path[] =
-        {0};
-    static const WCHAR path2[] =
-        {'c',':','\\',0};
-    static const WCHAR path3[] =
-        {'\\','\\','.','\\','c',':',0};
-    static const WCHAR path4[] =
-        {'\\','\\','.','\\','c',':','\\',0};
-    static const WCHAR path5[] =
-        {'\\','\\','.','\\','c',':','\\','n','o','s','u','c','h','p','a','t','h',0};
-    static const WCHAR path6[] =
-        {'\\','\\','n','o','s','u','c','h','s','e','r','v','e','r','\\','c',':','\\',0};
-    static const WCHAR path7[] =
-        {'\\','.','\\','c',':',0};
-    static const WCHAR path8[] =
-        {'\\','\\','.','\\','c',':','\\','\\',0};
-    static const WCHAR path9[] =
-        {'\\','\\','.','@','S','S','L','\\','c',':',0};
-    static const WCHAR path10[] =
-        {'\\','\\','.','@','s','s','l','\\','c',':',0};
-    static const WCHAR path11[] =
-        {'\\','\\','.','@','t','l','s','\\','c',':',0};
-    static const WCHAR path12[] =
-        {'\\','\\','.','@','S','S','L','@','4','4','3','\\','c',':',0};
-    static const WCHAR path13[] =
-        {'\\','\\','.','@','S','S','L','@','8','0','\\','c',':',0};
-    static const WCHAR path14[] =
-        {'\\','\\','.','@','8','0','\\','c',':',0};
-    static const WCHAR path15[] =
-        {'\\','\\','.','@','8','0','8','0','\\','c',':',0};
-    static const WCHAR path16[] =
-        {'\\','\\','\\','c',':',0};
-    static const WCHAR path17[] =
-        {'\\','\\',0};
-    static const WCHAR path18[] =
-        {'/','/','.','/','c',':',0};
-    static const WCHAR path19[] =
-        {'\\','\\','.','\\','c',':','/',0};
-    static const WCHAR path20[] =
-        {'\\','\\','.','\\','c',':','\\','\\','\\',0};
-    static const WCHAR path21[] =
-        {'\\','\\','.','\\','\\','c',':',0};
-    static const WCHAR path22[] =
-        {'\\','\\','.','\\','c',':','d','i','r',0};
-    static const WCHAR path23[] =
-        {'\\','\\','.',0};
-    static const WCHAR path24[] =
-        {'\\','\\','.','\\','d','i','r',0};
-    static const WCHAR path25[] =
-        {'\\','\\','.','\\','\\',0};
-    static const WCHAR path26[] =
-        {'\\','\\','.','\\','c',':','d','i','r','/',0};
-    static const WCHAR path27[] =
-        {'\\','\\','.','/','c',':',0};
-    static const WCHAR path28[] =
-        {'\\','\\','.','@','8','0','@','S','S','L','\\','c',':',0};
-    static const WCHAR result[] =
-        {'h','t','t','p',':','/','/','.','/','c',':',0};
-    static const WCHAR result2[] =
-        {'h','t','t','p',':','/','/','.','/','c',':','/','n','o','s','u','c','h','p','a','t','h',0};
-    static const WCHAR result3[] =
-        {'h','t','t','p',':','/','/','n','o','s','u','c','h','s','e','r','v','e','r','/','c',':',0};
-    static const WCHAR result4[] =
-        {'h','t','t','p',':','/','/','.','/','c',':','/',0};
-    static const WCHAR result5[] =
-        {'h','t','t','p','s',':','/','/','.','/','c',':',0};
-    static const WCHAR result6[] =
-        {'h','t','t','p','s',':','/','/','.',':','8','0','/','c',':',0};
-    static const WCHAR result7[] =
-        {'h','t','t','p',':','/','/','.',':','8','0','8','0','/','c',':',0};
-    static const WCHAR result8[] =
-        {'h','t','t','p',':','/','/','/','c',':',0};
-    static const WCHAR result9[] =
-        {'h','t','t','p',':','/','/','.','/','c',':','/','/',0};
-    static const WCHAR result10[] =
-        {'h','t','t','p',':','/','/','.','/','/','c',':',0};
-    static const WCHAR result11[] =
-        {'h','t','t','p',':','/','/','.','/','c',':','d','i','r',0};
-    static const WCHAR result12[] =
-        {'h','t','t','p',':','/','/','.',0};
-    static const WCHAR result13[] =
-        {'h','t','t','p',':','/','/','.','/','d','i','r',0};
-    static const WCHAR result14[] =
-        {'h','t','t','p',':','/','/','.','/',0};
     static const struct
     {
         const WCHAR *path;
-        DWORD        size;
-        DWORD        ret;
+        DWORD ret;
         const WCHAR *ret_path;
-        DWORD        ret_size;
-        int          todo;
+        DWORD broken_ret; /* < Win10 1709 */
+        BOOL todo;
     }
     tests[] =
     {
-        { path, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path2, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path3, MAX_PATH, ERROR_SUCCESS, result, 12 },
-        { path4, MAX_PATH, ERROR_SUCCESS, result, 12 },
-        { path5, MAX_PATH, ERROR_SUCCESS, result2, 23 },
-        { path6, MAX_PATH, ERROR_SUCCESS, result3, 23 },
-        { path7, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path8, MAX_PATH, ERROR_SUCCESS, result4, 13 },
-        { path9, MAX_PATH, ERROR_SUCCESS, result5, 13 },
-        { path10, MAX_PATH, ERROR_SUCCESS, result5, 13 },
-        { path11, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path12, MAX_PATH, ERROR_SUCCESS, result5, 13 },
-        { path13, MAX_PATH, ERROR_SUCCESS, result6, 16 },
-        { path14, MAX_PATH, ERROR_SUCCESS, result, 12 },
-        { path15, MAX_PATH, ERROR_SUCCESS, result7, 17 },
-        { path16, MAX_PATH, ERROR_SUCCESS, result8, 11 },
-        { path17, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path18, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path19, MAX_PATH, ERROR_SUCCESS, result, 12 },
-        { path20, MAX_PATH, ERROR_SUCCESS, result9, 14 },
-        { path21, MAX_PATH, ERROR_SUCCESS, result10, 13 },
-        { path22, MAX_PATH, ERROR_SUCCESS, result11, 15 },
-        { path23, MAX_PATH, ERROR_SUCCESS, result12, 9 },
-        { path24, MAX_PATH, ERROR_SUCCESS, result13, 13 },
-        { path25, MAX_PATH, ERROR_SUCCESS, result14, 10, 1 },
-        { path26, MAX_PATH, ERROR_SUCCESS, result11, 15 },
-        { path27, MAX_PATH, ERROR_SUCCESS, result, 12 },
-        { path28, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
+        {L"",                       ERROR_BAD_NET_NAME, NULL, ERROR_INVALID_PARAMETER, TRUE},
+        {L"c:\\",                   ERROR_BAD_NET_NAME, NULL, ERROR_INVALID_PARAMETER, TRUE},
+        {L"\\\\",                   ERROR_BAD_NET_NAME, NULL, ERROR_INVALID_PARAMETER, TRUE},
+        {L"\\a\\b",                 ERROR_BAD_NET_NAME, NULL, ERROR_INVALID_PARAMETER, TRUE},
+        {L"\\\\a",                  ERROR_SUCCESS, L"http://a"},
+        {L"\\\\a\\",                ERROR_SUCCESS, L"http://a"},
+        {L"\\\\a\\b",               ERROR_SUCCESS, L"http://a/b"},
+        {L"\\\\a\\b\\",             ERROR_SUCCESS, L"http://a/b"},
+        {L"\\\\a\\b\\c",            ERROR_SUCCESS, L"http://a/b/c"},
+        {L"\\\\a@SSL\\b",           ERROR_SUCCESS, L"https://a/b"},
+        {L"\\\\a@ssl\\b",           ERROR_SUCCESS, L"https://a/b"},
+        {L"\\\\a@tls\\b",           ERROR_INVALID_PARAMETER},
+        {L"\\\\a@SSL@443\\b",       ERROR_SUCCESS, L"https://a/b"},
+        {L"\\\\a@SSL@80\\b",        ERROR_SUCCESS, L"https://a:80/b"},
+        {L"\\\\a@80@SSL\\b",        ERROR_INVALID_PARAMETER},
+        {L"\\\\a@80\\b",            ERROR_SUCCESS, L"http://a/b"},
+        {L"\\\\a@8080\\b",          ERROR_SUCCESS, L"http://a:8080/b"},
+        {L"\\\\a\\b/",              ERROR_SUCCESS, L"http://a/b"},
+        {L"\\\\a/b",                ERROR_SUCCESS, L"http://a/b"},
+        {L"\\\\a.\\b",              ERROR_SUCCESS, L"http://a./b"},
+        {L"\\\\.a\\b",              ERROR_SUCCESS, L"http://.a/b"},
+        {L"//a/b",                  ERROR_SUCCESS, L"http://a/b", ERROR_INVALID_PARAMETER, TRUE},
+        {L"\\\\a\\\\",              ERROR_BAD_NET_NAME, NULL, ERROR_SUCCESS, TRUE},
+        {L"\\\\\\a\\",              ERROR_BAD_NET_NAME, NULL, ERROR_SUCCESS, TRUE},
+        {L"\\\\a\\b\\\\",           ERROR_BAD_NET_NAME, NULL, ERROR_SUCCESS, TRUE},
+        {L"\\\\.\\a",               ERROR_BAD_NET_NAME, NULL, ERROR_SUCCESS, TRUE},
+        {L"\\\\a\\b:",              ERROR_BAD_NET_NAME, NULL, ERROR_SUCCESS, TRUE},
     };
     WCHAR buf[MAX_PATH];
     DWORD i, ret, size;
@@ -489,162 +403,89 @@ static void test_DavGetHTTPFromUNCPath(void)
         return;
     }
 
-    if (0) { /* crash */
-    ret = pDavGetHTTPFromUNCPath( NULL, NULL, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    if (0) /* crashes on Windows */
+    {
+        ret = pDavGetHTTPFromUNCPath(NULL, NULL, NULL);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+
+        size = 0;
+        ret = pDavGetHTTPFromUNCPath(L"", buf, &size);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+
+        ret = pDavGetHTTPFromUNCPath(L"\\\\a\\b", buf, NULL);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
     }
 
-    ret = pDavGetHTTPFromUNCPath( path, buf, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ret = pDavGetHTTPFromUNCPath(L"", buf, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
 
     size = 0;
-    ret = pDavGetHTTPFromUNCPath( path, NULL, &size );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    if (0) { /* crash */
-    buf[0] = 0;
-    size = 0;
-    ret = pDavGetHTTPFromUNCPath( path, buf, &size );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-
-    ret = pDavGetHTTPFromUNCPath( path3, buf, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-    }
+    ret = pDavGetHTTPFromUNCPath(L"", NULL, &size);
+    ok(ret == ERROR_INVALID_PARAMETER || ret == ERROR_BAD_NET_NAME /* Win10 1709+ */, "got %u\n", ret);
 
     size = 0;
-    ret = pDavGetHTTPFromUNCPath( path3, NULL, &size );
-    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
+    ret = pDavGetHTTPFromUNCPath(L"\\\\a\\b", NULL, &size);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret);
 
     buf[0] = 0;
     size = 0;
-    ret = pDavGetHTTPFromUNCPath( path3, buf, &size );
-    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
-    ok( size == 12, "got %u\n", size );
+    ret = pDavGetHTTPFromUNCPath(L"\\\\a\\b", buf, &size);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret);
+    ok(size == 11, "got %u\n", size);
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         buf[0] = 0;
-        size = tests[i].size;
+        size = ARRAY_SIZE(buf);
         ret = pDavGetHTTPFromUNCPath( tests[i].path, buf, &size );
-        if (tests[i].todo)
+        todo_wine_if (tests[i].todo)
+            ok(ret == tests[i].ret || broken(ret == tests[i].broken_ret),
+                    "%u: expected %u got %u\n", i, tests[i].ret, ret);
+        if (!ret)
         {
-            ok( ret == tests[i].ret, "%u: expected %u got %u\n", i, tests[i].ret, ret );
-            todo_wine {
             if (tests[i].ret_path)
-            {
-                ok( !lstrcmpW( buf, tests[i].ret_path ), "%u: expected %s got %s\n",
-                    i, wine_dbgstr_w(tests[i].ret_path), wine_dbgstr_w(buf) );
-            }
-            ok( size == tests[i].ret_size, "%u: expected %u got %u\n", i, tests[i].ret_size, size );
-            }
+                ok(!wcscmp(buf, tests[i].ret_path), "%u: expected %s got %s\n",
+                        i, wine_dbgstr_w(tests[i].ret_path), wine_dbgstr_w(buf));
+            ok(size == wcslen(buf) + 1, "%u: got %u\n", i, size);
         }
         else
-        {
-            ok( ret == tests[i].ret, "%u: expected %u got %u\n", i, tests[i].ret, ret );
-            if (tests[i].ret_path)
-            {
-                ok( !lstrcmpW( buf, tests[i].ret_path ), "%u: expected %s got %s\n",
-                    i, wine_dbgstr_w(tests[i].ret_path), wine_dbgstr_w(buf) );
-            }
-            ok( size == tests[i].ret_size, "%u: expected %u got %u\n", i, tests[i].ret_size, size );
-        }
+            ok(size == ARRAY_SIZE(buf), "%u: wrong size %u\n", i, size);
     }
 }
 
+
 static void test_DavGetUNCFromHTTPPath(void)
 {
-    static const WCHAR path[] =
-        {0};
-    static const WCHAR path2[] =
-        {'h','t','t','p',':','/','/','s','e','r','v','e','r','/','p','a','t','h',0};
-    static const WCHAR path3[] =
-        {'h','t','t','p','s',':','/','/','h','o','s','t','/','p','a','t','h',0};
-    static const WCHAR path4[] =
-        {'\\','\\','s','e','r','v','e','r',0};
-    static const WCHAR path5[] =
-        {'\\','\\','s','e','r','v','e','r','\\','p','a','t','h',0};
-    static const WCHAR path6[] =
-        {'\\','\\','h','t','t','p',':','/','/','s','e','r','v','e','r','/','p','a','t','h',0};
-    static const WCHAR path7[] =
-        {'h','t','t','p',':','/','/',0};
-    static const WCHAR path8[] =
-        {'h','t','t','p',':',0};
-    static const WCHAR path9[] =
-        {'h','t','t','p',0};
-    static const WCHAR path10[] =
-        {'h','t','t','p',':','s','e','r','v','e','r',0};
-    static const WCHAR path11[] =
-        {'h','t','t','p',':','/','/','s','e','r','v','e','r',':','8','0',0};
-    static const WCHAR path12[] =
-        {'h','t','t','p',':','/','/','s','e','r','v','e','r',':','8','1',0};
-    static const WCHAR path13[] =
-        {'h','t','t','p','s',':','/','/','s','e','r','v','e','r',':','8','0',0};
-    static const WCHAR path14[] =
-        {'H','T','T','P',':','/','/','s','e','r','v','e','r','/','p','a','t','h',0};
-    static const WCHAR path15[] =
-        {'h','t','t','p',':','/','/','s','e','r','v','e','r',':','6','5','5','3','7',0};
-    static const WCHAR path16[] =
-        {'h','t','t','p',':','/','/','s','e','r','v','e','r','/','p','a','t','h','/',0};
-    static const WCHAR path17[] =
-        {'h','t','t','p',':','/','/','s','e','r','v','e','r','/','p','a','t','h','/','/',0};
-    static const WCHAR path18[] =
-        {'h','t','t','p',':','/','/','s','e','r','v','e','r',':','/','p','a','t','h',0};
-    static const WCHAR path19[] =
-        {'h','t','t','p',':','/','/','s','e','r','v','e','r',0};
-    static const WCHAR path20[] =
-        {'h','t','t','p','s',':','/','/','s','e','r','v','e','r',':','4','4','3',0};
-    static const WCHAR path21[] =
-        {'h','t','t','p','s',':','/','/','s','e','r','v','e','r',':','8','0',0};
-    static const WCHAR result[] =
-        {'\\','\\','s','e','r','v','e','r','\\','D','a','v','W','W','W','R','o','o','t','\\','p','a','t','h',0};
-    static const WCHAR result2[] =
-        {'\\','\\','h','o','s','t','@','S','S','L','\\','D','a','v','W','W','W','R','o','o','t','\\',
-         'p','a','t','h',0};
-    static const WCHAR result3[] =
-        {'\\','\\','s','e','r','v','e','r','\\','D','a','v','W','W','W','R','o','o','t',0};
-    static const WCHAR result4[] =
-        {'\\','\\','s','e','r','v','e','r','@','8','1','\\','D','a','v','W','W','W','R','o','o','t',0};
-    static const WCHAR result5[] =
-        {'\\','\\','s','e','r','v','e','r','@','S','S','L','@','8','0','\\','D','a','v','W','W','W','R','o','o','t',0};
-    static const WCHAR result6[] =
-        {'\\','\\','s','e','r','v','e','r','@','6','5','5','3','7','\\','D','a','v','W','W','W','R','o','o','t',0};
-    static const WCHAR result7[] =
-        {'\\','\\','s','e','r','v','e','r','@','\\','D','a','v','W','W','W','R','o','o','t','\\','p','a','t','h',0};
-    static const WCHAR result8[] =
-        {'\\','\\','s','e','r','v','e','r','@','S','S','L','\\','D','a','v','W','W','W','R','o','o','t',0};
-    static const WCHAR result9[] =
-        {'\\','\\','s','e','r','v','e','r','@','S','S','L','@','8','0','\\','D','a','v','W','W','W','R','o','o','t',0};
     static const struct
     {
         const WCHAR *path;
-        DWORD        size;
-        DWORD        ret;
+        DWORD ret;
         const WCHAR *ret_path;
-        DWORD        ret_size;
+        DWORD broken_ret; /* < Win10 1709 */
+        BOOL todo;
     }
     tests[] =
     {
-        { path, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path2, MAX_PATH, ERROR_SUCCESS, result, 25 },
-        { path3, MAX_PATH, ERROR_SUCCESS, result2, 27 },
-        { path4, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path5, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path6, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path7, MAX_PATH, ERROR_BAD_NET_NAME, NULL, MAX_PATH },
-        { path8, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path9, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path10, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
-        { path11, MAX_PATH, ERROR_SUCCESS, result3, 20 },
-        { path12, MAX_PATH, ERROR_SUCCESS, result4, 23 },
-        { path13, MAX_PATH, ERROR_SUCCESS, result5, 27 },
-        { path14, MAX_PATH, ERROR_SUCCESS, result, 25 },
-        { path15, MAX_PATH, ERROR_SUCCESS, result6, 26 },
-        { path16, MAX_PATH, ERROR_SUCCESS, result, 25 },
-        { path17, MAX_PATH, ERROR_BAD_NET_NAME, NULL, MAX_PATH },
-        { path18, MAX_PATH, ERROR_SUCCESS, result7, 26 },
-        { path19, MAX_PATH, ERROR_SUCCESS, result3, 20 },
-        { path20, MAX_PATH, ERROR_SUCCESS, result8, 24 },
-        { path21, MAX_PATH, ERROR_SUCCESS, result9, 27 },
+        {L"",                       ERROR_INVALID_PARAMETER},
+        {L"http://server/path",     ERROR_SUCCESS, L"\\\\server\\DavWWWRoot\\path"},
+        {L"https://host/path",      ERROR_SUCCESS, L"\\\\host@SSL\\DavWWWRoot\\path"},
+        {L"\\\\server",             ERROR_INVALID_PARAMETER},
+        {L"\\\\server\\path",       ERROR_INVALID_PARAMETER},
+        {L"\\\\http://server/path", ERROR_INVALID_PARAMETER},
+        {L"http://",                ERROR_BAD_NETPATH, NULL, ERROR_BAD_NET_NAME, TRUE},
+        {L"http:",                  ERROR_BAD_NET_NAME, NULL, ERROR_INVALID_PARAMETER, TRUE},
+        {L"http",                   ERROR_INVALID_PARAMETER},
+        {L"http:server",            ERROR_BAD_NET_NAME, NULL, ERROR_INVALID_PARAMETER, TRUE},
+        {L"http://server:80",       ERROR_SUCCESS, L"\\\\server\\DavWWWRoot"},
+        {L"http://server:81",       ERROR_SUCCESS, L"\\\\server@81\\DavWWWRoot"},
+        {L"https://server:80",      ERROR_SUCCESS, L"\\\\server@SSL@80\\DavWWWRoot"},
+        {L"HTTP://server/path",     ERROR_SUCCESS, L"\\\\server\\DavWWWRoot\\path"},
+        {L"http://server:65537",    ERROR_BAD_NETPATH, NULL, ERROR_SUCCESS, TRUE},
+        {L"http://server/path/",    ERROR_SUCCESS, L"\\\\server\\DavWWWRoot\\path"},
+        {L"http://server/path//",   ERROR_SUCCESS, L"\\\\server\\DavWWWRoot\\path", ERROR_BAD_NET_NAME, TRUE},
+        {L"http://server:/path",    ERROR_BAD_NETPATH, NULL, ERROR_SUCCESS, TRUE},
+        {L"http://server",          ERROR_SUCCESS, L"\\\\server\\DavWWWRoot"},
+        {L"https://server:443",     ERROR_SUCCESS, L"\\\\server@SSL\\DavWWWRoot"},
     };
     WCHAR buf[MAX_PATH];
     DWORD i, ret, size;
@@ -655,51 +496,56 @@ static void test_DavGetUNCFromHTTPPath(void)
         return;
     }
 
-    if (0) { /* crash */
-    ret = pDavGetUNCFromHTTPPath( NULL, NULL, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    if (0) /* crashes on Windows */
+    {
+        ret = pDavGetUNCFromHTTPPath(NULL, NULL, NULL);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
+
+        ret = pDavGetUNCFromHTTPPath(L"http://server/path", buf, NULL);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
     }
-    ret = pDavGetUNCFromHTTPPath( path, buf, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    ret = pDavGetUNCFromHTTPPath(L"", buf, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
 
     size = 0;
-    ret = pDavGetUNCFromHTTPPath( path, NULL, &size );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ret = pDavGetUNCFromHTTPPath(L"", NULL, &size);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
 
     buf[0] = 0;
     size = 0;
-    ret = pDavGetUNCFromHTTPPath( path, buf, &size );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ret = pDavGetUNCFromHTTPPath(L"", buf, &size);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %u\n", ret);
 
-    if (0) { /* crash */
-    ret = pDavGetUNCFromHTTPPath( path2, buf, NULL );
-    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-    }
     size = 0;
-    ret = pDavGetUNCFromHTTPPath( path2, NULL, &size );
+    ret = pDavGetUNCFromHTTPPath(L"http://server/path", NULL, &size);
     ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
 
     buf[0] = 0;
     size = 0;
-    ret = pDavGetUNCFromHTTPPath( path2, buf, &size );
-    ok( ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret );
-    ok( size == 25, "got %u\n", size );
+    ret = pDavGetUNCFromHTTPPath(L"http://server/path", buf, &size);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %u\n", ret);
+    ok(size == 25, "got %u\n", size);
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         buf[0] = 0;
-        size = tests[i].size;
+        size = ARRAY_SIZE(buf);
         ret = pDavGetUNCFromHTTPPath( tests[i].path, buf, &size );
-        ok( ret == tests[i].ret, "%u: expected %u got %u\n", i, tests[i].ret, ret );
-        if (tests[i].ret_path)
+        todo_wine_if (tests[i].todo)
+            ok(ret == tests[i].ret || broken(ret == tests[i].broken_ret),
+                    "%u: expected %u got %u\n", i, tests[i].ret, ret);
+        if (!ret)
         {
-            ok( !lstrcmpW( buf, tests[i].ret_path ), "%u: expected %s got %s\n",
-                i, wine_dbgstr_w(tests[i].ret_path), wine_dbgstr_w(buf) );
+            if (tests[i].ret_path)
+                ok(!wcscmp(buf, tests[i].ret_path), "%u: expected %s got %s\n",
+                        i, wine_dbgstr_w(tests[i].ret_path), wine_dbgstr_w(buf));
+            ok(size == wcslen(buf) + 1, "%u: got %u\n", i, size);
         }
-        ok( size == tests[i].ret_size, "%u: expected %u got %u\n", i, tests[i].ret_size, size );
+        else
+            ok(size == ARRAY_SIZE(buf), "%u: wrong size %u\n", i, size);
     }
 }
-
 
 START_TEST(access)
 {
