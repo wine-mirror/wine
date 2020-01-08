@@ -38,8 +38,6 @@
 #define LAYOUT_LTR 0
 #endif
 
-static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
-
 static void test_dc_values(void)
 {
     HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
@@ -1002,27 +1000,24 @@ static void test_boundsrect(void)
     SetRect(&expect, 40, 70, 100, 130);
     ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
 
-    if (pSetLayout)
-    {
-        pSetLayout( hdc, LAYOUT_RTL );
-        ret = GetBoundsRect(hdc, &rect, 0);
-        ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
-        SetRect(&expect, 159, 70, 99, 130);
-        ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
-        SetRect(&set_rect, 50, 25, 30, 35);
-        ret = SetBoundsRect(hdc, &set_rect, DCB_SET);
-        ok(ret == (DCB_SET | DCB_DISABLE), "SetBoundsRect returned %x\n", ret);
-        ret = GetBoundsRect(hdc, &rect, 0);
-        ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
-        SetRect(&expect, 50, 25, 30, 35);
-        ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
+    SetLayout( hdc, LAYOUT_RTL );
+    ret = GetBoundsRect(hdc, &rect, 0);
+    ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
+    SetRect(&expect, 159, 70, 99, 130);
+    ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
+    SetRect(&set_rect, 50, 25, 30, 35);
+    ret = SetBoundsRect(hdc, &set_rect, DCB_SET);
+    ok(ret == (DCB_SET | DCB_DISABLE), "SetBoundsRect returned %x\n", ret);
+    ret = GetBoundsRect(hdc, &rect, 0);
+    ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
+    SetRect(&expect, 50, 25, 30, 35);
+    ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
 
-        pSetLayout( hdc, LAYOUT_LTR );
-        ret = GetBoundsRect(hdc, &rect, 0);
-        ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
-        SetRect(&expect, 149, 25, 169, 35);
-        ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
-    }
+    SetLayout( hdc, LAYOUT_LTR );
+    ret = GetBoundsRect(hdc, &rect, 0);
+    ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
+    SetRect(&expect, 149, 25, 169, 35);
+    ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
 
     /* empty rect resets, except on nt4 */
     SetRect(&expect, 20, 20, 10, 10);
@@ -1642,7 +1637,6 @@ static void test_clip_box(void)
 
 START_TEST(dc)
 {
-    pSetLayout = (void *)GetProcAddress( GetModuleHandleA("gdi32.dll"), "SetLayout");
     test_dc_values();
     test_savedc();
     test_savedc_2();
