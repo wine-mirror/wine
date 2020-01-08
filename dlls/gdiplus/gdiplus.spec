@@ -100,7 +100,7 @@
 100 stdcall GdipCreateMatrix3I(ptr ptr ptr)
 101 stdcall GdipCreateMatrix(ptr)
 102 stdcall GdipCreateMetafileFromEmf(ptr long ptr)
-103 stdcall GdipCreateMetafileFromFile(ptr ptr)
+103 stdcall GdipCreateMetafileFromFile(wstr ptr)
 104 stdcall GdipCreateMetafileFromStream(ptr ptr)
 105 stdcall GdipCreateMetafileFromWmf(ptr long ptr ptr)
 106 stdcall GdipCreateMetafileFromWmfFile(wstr ptr ptr)
@@ -506,7 +506,7 @@
 506 stdcall GdipSetImageAttributesGamma(ptr long long float)
 507 stdcall GdipSetImageAttributesNoOp(ptr long long)
 508 stdcall GdipSetImageAttributesOutputChannel(ptr long long long)
-509 stdcall GdipSetImageAttributesOutputChannelColorProfile(ptr long long ptr)
+509 stdcall GdipSetImageAttributesOutputChannelColorProfile(ptr long long wstr)
 510 stdcall GdipSetImageAttributesRemapTable(ptr long long long ptr)
 511 stdcall GdipSetImageAttributesThreshold(ptr long long float)
 512 stdcall GdipSetImageAttributesToIdentity(ptr long)
@@ -624,7 +624,7 @@
 624 stdcall GdipImageSetAbort(ptr ptr)
 625 stdcall GdipGraphicsSetAbort(ptr ptr)
 626 stub GdipDrawImageFX
-627 stdcall GdipConvertToEmfPlus(ptr ptr ptr long ptr ptr)
-628 stdcall GdipConvertToEmfPlusToFile(ptr ptr ptr ptr long ptr ptr)
+627 stdcall GdipConvertToEmfPlus(ptr ptr ptr long wstr ptr)
+628 stdcall GdipConvertToEmfPlusToFile(ptr ptr ptr wstr long wstr ptr)
 629 stub GdipConvertToEmfPlusToStream
 630 stub GdipPlayTSClientRecord
