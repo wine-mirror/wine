@@ -419,7 +419,7 @@ static BOOL test_wmp(void)
     ok(hres == S_OK, "IWMPPlayer4_get_currentMedia failed: %08x\n", hres);
     hres = IWMPMedia_get_duration(media, &duration);
     ok(hres == S_OK, "IWMPMedia_get_duration failed: %08x\n", hres);
-    ok(round(duration) == 3, "unexpected value: %f\n", duration);
+    ok(floor(duration + 0.5) == 3, "unexpected value: %f\n", duration);
     IWMPMedia_Release(media);
 
     network = NULL;
