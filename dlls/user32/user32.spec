@@ -220,8 +220,8 @@
 @ stdcall EnumDesktopsW(ptr ptr long)
 @ stub EnumDisplayDeviceModesA
 @ stub EnumDisplayDeviceModesW
-@ stdcall EnumDisplayDevicesA(ptr long ptr long)
-@ stdcall EnumDisplayDevicesW(ptr long ptr long)
+@ stdcall EnumDisplayDevicesA(str long ptr long)
+@ stdcall EnumDisplayDevicesW(wstr long ptr long)
 @ stdcall EnumDisplayMonitors(long ptr ptr long)
 @ stdcall EnumDisplaySettingsA(str long ptr)
 @ stdcall EnumDisplaySettingsExA(str long ptr long)
@@ -444,7 +444,7 @@
 @ stdcall InsertMenuItemA(long long long ptr)
 @ stdcall InsertMenuItemW(long long long ptr)
 @ stdcall InsertMenuW(long long long long ptr)
-@ stdcall InternalGetWindowText(long long long)
+@ stdcall InternalGetWindowText(long ptr long)
 @ stdcall IntersectRect(ptr ptr ptr)
 @ stdcall InvalidateRect(long ptr long)
 @ stdcall InvalidateRgn(long long long)
