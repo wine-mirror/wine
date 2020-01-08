@@ -42,15 +42,10 @@ static inline BOOL match_off_by_n(int a, int b, unsigned int n)
 
 static LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
 static DWORD (WINAPI *pGdiGetCodePage)(HDC hdc);
-static BOOL  (WINAPI *pGetCharABCWidthsI)(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPABC abc);
-static BOOL  (WINAPI *pGetCharABCWidthsA)(HDC hdc, UINT first, UINT last, LPABC abc);
-static BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
 static BOOL  (WINAPI *pGetCharABCWidthsFloatW)(HDC hdc, UINT first, UINT last, LPABCFLOAT abc);
-static BOOL  (WINAPI *pGetCharWidth32A)(HDC hdc, UINT first, UINT last, LPINT buffer);
 static BOOL  (WINAPI *pGetCharWidth32W)(HDC hdc, UINT first, UINT last, LPINT buffer);
 static BOOL  (WINAPI *pGetCharWidthInfo)(HDC hdc, void *);
 static DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
-static DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 static BOOL  (WINAPI *pGetTextExtentExPointI)(HDC hdc, const WORD *indices, INT count, INT max_ext,
                                               LPINT nfit, LPINT dxs, LPSIZE size );
@@ -89,15 +84,10 @@ static void init(void)
 
     pGdiGetCharDimensions = (void *)GetProcAddress(hgdi32, "GdiGetCharDimensions");
     pGdiGetCodePage = (void *) GetProcAddress(hgdi32,"GdiGetCodePage");
-    pGetCharABCWidthsI = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsI");
-    pGetCharABCWidthsA = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsA");
-    pGetCharABCWidthsW = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsW");
     pGetCharABCWidthsFloatW = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsFloatW");
-    pGetCharWidth32A = (void *)GetProcAddress(hgdi32, "GetCharWidth32A");
     pGetCharWidth32W = (void *)GetProcAddress(hgdi32, "GetCharWidth32W");
     pGetCharWidthInfo = (void *)GetProcAddress(hgdi32, "GetCharWidthInfo");
     pGetFontUnicodeRanges = (void *)GetProcAddress(hgdi32, "GetFontUnicodeRanges");
-    pGetGlyphIndicesA = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesA");
     pGetGlyphIndicesW = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesW");
     pGetTextExtentExPointI = (void *)GetProcAddress(hgdi32, "GetTextExtentExPointI");
     pGdiRealizationInfo = (void *)GetProcAddress(hgdi32, "GdiRealizationInfo");
@@ -1137,13 +1127,13 @@ static void ABCWidths_helper(const char* description, HDC hdc, WORD *glyphs, con
     ABCFLOAT abcf[1];
     BOOL ret = FALSE;
 
-    ret = pGetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
+    ret = GetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
     ok(ret, "%s: GetCharABCWidthsI should have succeeded\n", description);
     ok ((INT)abc->abcB > 0, "%s: abcB should be positive\n", description);
     ok(abc->abcA * base_abci->abcA >= 0, "%s: abcA's sign should be unchanged\n", description);
     ok(abc->abcC * base_abci->abcC >= 0, "%s: abcC's sign should be unchanged\n", description);
 
-    ret = pGetCharABCWidthsW(hdc, 'i', 'i', abc);
+    ret = GetCharABCWidthsW(hdc, 'i', 'i', abc);
     ok(ret, "%s: GetCharABCWidthsW should have succeeded\n", description);
     ok ((INT)abc->abcB > 0, "%s: abcB should be positive\n", description);
     ok(abc->abcA * base_abcw->abcA >= 0, "%s: abcA's sign should be unchanged\n", description);
@@ -1209,9 +1199,9 @@ static void test_GetCharABCWidths(void)
     };
     UINT i;
 
-    if (!pGetCharABCWidthsA || !pGetCharABCWidthsW || !pGetCharABCWidthsFloatW || !pGetCharABCWidthsI)
+    if (!pGetCharABCWidthsFloatW)
     {
-        win_skip("GetCharABCWidthsA/W/I not available on this platform\n");
+        win_skip("GetCharABCWidthsFloatW is not available on this platform\n");
         return;
     }
 
@@ -1226,22 +1216,22 @@ static void test_GetCharABCWidths(void)
     nb = pGetGlyphIndicesW(hdc, str, 1, glyphs, 0);
     ok(nb == 1, "GetGlyphIndicesW should have returned 1\n");
 
-    ret = pGetCharABCWidthsI(NULL, 0, 1, glyphs, abc);
+    ret = GetCharABCWidthsI(NULL, 0, 1, glyphs, abc);
     ok(!ret, "GetCharABCWidthsI should have failed\n");
 
-    ret = pGetCharABCWidthsI(hdc, 0, 1, glyphs, NULL);
+    ret = GetCharABCWidthsI(hdc, 0, 1, glyphs, NULL);
     ok(!ret, "GetCharABCWidthsI should have failed\n");
 
-    ret = pGetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
+    ret = GetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
     ok(ret, "GetCharABCWidthsI should have succeeded\n");
 
-    ret = pGetCharABCWidthsW(NULL, 'a', 'a', abc);
+    ret = GetCharABCWidthsW(NULL, 'a', 'a', abc);
     ok(!ret, "GetCharABCWidthsW should have failed\n");
 
-    ret = pGetCharABCWidthsW(hdc, 'a', 'a', NULL);
+    ret = GetCharABCWidthsW(hdc, 'a', 'a', NULL);
     ok(!ret, "GetCharABCWidthsW should have failed\n");
 
-    ret = pGetCharABCWidthsW(hdc, 'a', 'a', abc);
+    ret = GetCharABCWidthsW(hdc, 'a', 'a', abc);
     ok(!ret, "GetCharABCWidthsW should have failed\n");
 
     ret = pGetCharABCWidthsFloatW(NULL, 'a', 'a', abcf);
@@ -1274,16 +1264,15 @@ static void test_GetCharABCWidths(void)
         memset(a, 0, sizeof a);
         memset(w, 0, sizeof w);
         hfont = SelectObject(hdc, hfont);
-        ok(pGetCharABCWidthsA(hdc, c[i].a, c[i].a + 1, a) &&
-           pGetCharABCWidthsW(hdc, c[i].w, c[i].w + 1, w) &&
-           memcmp(a, w, sizeof a) == 0,
-           "GetCharABCWidthsA and GetCharABCWidthsW should return same widths. charset = %u\n", c[i].cs);
+        ok(GetCharABCWidthsA(hdc, c[i].a, c[i].a + 1, a) && GetCharABCWidthsW(hdc, c[i].w, c[i].w + 1, w)
+                && !memcmp(a, w, sizeof(a)),
+                "GetCharABCWidthsA and GetCharABCWidthsW should return same widths. charset = %u\n", c[i].cs);
 
         memset(a, 0xbb, sizeof a);
-        ret = pGetCharABCWidthsA(hdc, code, code, a);
+        ret = GetCharABCWidthsA(hdc, code, code, a);
         ok(ret, "GetCharABCWidthsA should have succeeded\n");
         memset(full, 0xcc, sizeof full);
-        ret = pGetCharABCWidthsA(hdc, 0x00, code, full);
+        ret = GetCharABCWidthsA(hdc, 0x00, code, full);
         ok(ret, "GetCharABCWidthsA should have succeeded\n");
         ok(memcmp(&a[0], &full[code], sizeof(ABC)) == 0,
            "GetCharABCWidthsA info should match. codepage = %u\n", c[i].cs);
@@ -1291,13 +1280,13 @@ static void test_GetCharABCWidths(void)
         for (j = 0; j < ARRAY_SIZE(range); ++j)
         {
             memset(full, 0xdd, sizeof full);
-            ret = pGetCharABCWidthsA(hdc, range[j].first, range[j].last, full);
+            ret = GetCharABCWidthsA(hdc, range[j].first, range[j].last, full);
             ok(ret == c[i].r[j], "GetCharABCWidthsA %x - %x should have %s\n",
                range[j].first, range[j].last, c[i].r[j] ? "succeeded" : "failed");
             if (ret)
             {
                 UINT last = range[j].last - range[j].first;
-                ret = pGetCharABCWidthsA(hdc, range[j].last, range[j].last, a);
+                ret = GetCharABCWidthsA(hdc, range[j].last, range[j].last, a);
                 ok(ret && memcmp(&full[last], &a[0], sizeof(ABC)) == 0,
                    "GetCharABCWidthsA %x should match. codepage = %u\n",
                    range[j].last, c[i].cs);
@@ -1318,12 +1307,12 @@ static void test_GetCharABCWidths(void)
     ret = pGetCharABCWidthsFloatW(hdc, ' ', ' ', abcf);
     ok(ret, "GetCharABCWidthsFloatW should have succeeded\n");
     ok(abcf[0].abcfB == 1.0, "got %f\n", abcf[0].abcfB);
-    ret = pGetCharABCWidthsW(hdc, ' ', ' ', abcw);
+    ret = GetCharABCWidthsW(hdc, ' ', ' ', abcw);
     ok(ret, "GetCharABCWidthsW should have succeeded\n");
     ok(abcw[0].abcB == 1, "got %u\n", abcw[0].abcB);
 
     /* 1) prepare unrotated font metrics */
-    ret = pGetCharABCWidthsW(hdc, 'a', 'a', abcw);
+    ret = GetCharABCWidthsW(hdc, 'a', 'a', abcw);
     ok(ret, "GetCharABCWidthsW should have succeeded\n");
     DeleteObject(SelectObject(hdc, hfont));
 
@@ -1331,7 +1320,7 @@ static void test_GetCharABCWidths(void)
     lf.lfEscapement = lf.lfOrientation = 900;
     hfont = CreateFontIndirectA(&lf);
     hfont = SelectObject(hdc, hfont);
-    ret = pGetCharABCWidthsW(hdc, 'a', 'a', abc);
+    ret = GetCharABCWidthsW(hdc, 'a', 'a', abc);
     ok(ret, "GetCharABCWidthsW should have succeeded\n");
 
     /* 3) compare ABC results */
@@ -1409,9 +1398,9 @@ static void test_GetCharABCWidths(void)
     nb = pGetGlyphIndicesW(hdc, str, 1, glyphs, 0);
     ok(nb == 1, "GetGlyphIndicesW should have returned 1\n");
 
-    ret = pGetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
+    ret = GetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
     ok(ret, "GetCharABCWidthsI should have succeeded\n");
-    ret = pGetCharABCWidthsW(hdc, 'i', 'i', abcw);
+    ret = GetCharABCWidthsW(hdc, 'i', 'i', abcw);
     ok(ret, "GetCharABCWidthsW should have succeeded\n");
     ret = pGetCharABCWidthsFloatW(hdc, 'i', 'i', abcf);
     ok(ret, "GetCharABCWidthsFloatW should have succeeded\n");
@@ -2423,8 +2412,8 @@ static void test_SetTextJustification(void)
 
     testJustification(hdc, testText, &clientArea);
 
-    if (!pGetGlyphIndicesA || !pGetTextExtentExPointI) goto done;
-    pGetGlyphIndicesA( hdc, "A ", 2, indices, 0 );
+    if (!pGetTextExtentExPointI) goto done;
+    GetGlyphIndicesA( hdc, "A ", 2, indices, 0 );
 
     SetTextJustification(hdc, 0, 0);
     GetTextExtentPoint32A(hdc, " ", 1, &expect);
@@ -2576,7 +2565,7 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
         for (i = 0; i < count; i++) ansi_buf[i] = (BYTE)(i + 128);
 
         SetLastError(0xdeadbeef);
-        ret = pGetGlyphIndicesA(hdc, ansi_buf, count, idx, 0);
+        ret = GetGlyphIndicesA(hdc, ansi_buf, count, idx, 0);
         ok(ret == count, "GetGlyphIndicesA expected %d got %d, error %u\n",
            count, ret, GetLastError());
     }
@@ -2604,7 +2593,7 @@ static void test_font_charset(void)
     };
     int i;
 
-    if (!pGetGlyphIndicesA || !pGetGlyphIndicesW)
+    if (!pGetGlyphIndicesW)
     {
         win_skip("Skipping the font charset test on a Win9x platform\n");
         return;
@@ -3231,9 +3220,6 @@ static void test_negative_width(HDC hdc, const LOGFONTA *lf)
     LOGFONTA lf2 = *lf;
     WORD idx;
 
-    if(!pGetGlyphIndicesA)
-        return;
-
     /* negative widths are handled just as positive ones */
     lf2.lfWidth = -lf->lfWidth;
 
@@ -3244,7 +3230,7 @@ static void test_negative_width(HDC hdc, const LOGFONTA *lf)
 
     hfont_prev = SelectObject(hdc, hfont);
 
-    ret = pGetGlyphIndicesA(hdc, "x", 1, &idx, GGI_MARK_NONEXISTING_GLYPHS);
+    ret = GetGlyphIndicesA(hdc, "x", 1, &idx, GGI_MARK_NONEXISTING_GLYPHS);
     if (ret == GDI_ERROR || idx == 0xffff)
     {
         SelectObject(hdc, hfont_prev);
@@ -4048,10 +4034,6 @@ static void test_GetTextMetrics(void)
     LOGFONTA lf;
     HDC hdc;
     INT enumed;
-
-    /* Report only once */
-    if(!pGetGlyphIndicesA)
-        win_skip("GetGlyphIndicesA is unavailable, negative width will not be checked\n");
 
     hdc = GetDC(0);
 
@@ -6560,9 +6542,9 @@ static void test_GetCharWidth32(void)
     INT bufferW;
     HWND hwnd;
 
-    if (!pGetCharWidth32A || !pGetCharWidth32W)
+    if (!pGetCharWidth32W)
     {
-        win_skip("GetCharWidth32A/W not available on this platform\n");
+        win_skip("GetCharWidth32W not available on this platform\n");
         return;
     }
 
@@ -6576,7 +6558,7 @@ static void test_GetCharWidth32(void)
 
     ret = pGetCharWidth32W(hdc, 'a', 'a', &bufferW);
     ok(ret, "GetCharWidth32W should have succeeded\n");
-    ret = pGetCharWidth32A(hdc, 'a', 'a', &bufferA);
+    ret = GetCharWidth32A(hdc, 'a', 'a', &bufferA);
     ok(ret, "GetCharWidth32A should have succeeded\n");
     ok (bufferA == bufferW, "Widths should be the same\n");
     ok (bufferA > 0," Width should be greater than zero\n");
@@ -6669,11 +6651,6 @@ static void test_fake_bold_font(void)
     int i;
     DWORD r;
 
-    if (!pGetCharWidth32A || !pGetCharABCWidthsA) {
-        win_skip("GetCharWidth32A/GetCharABCWidthA is not available on this platform\n");
-        return;
-    }
-
     /* Test outline font */
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Wingdings");
@@ -6691,7 +6668,7 @@ static void test_fake_bold_font(void)
 
         ret = GetTextMetricsA(hdc, &data[i].tm);
         ok(ret, "got %d\n", ret);
-        ret = pGetCharABCWidthsA(hdc, 0x76, 0x76, &data[i].abc);
+        ret = GetCharABCWidthsA(hdc, 0x76, 0x76, &data[i].abc);
         ok(ret, "got %d\n", ret);
         data[i].w = data[i].abc.abcA + data[i].abc.abcB + data[i].abc.abcC;
         r = GetGlyphOutlineA(hdc, 0x76, GGO_METRICS, &data[i].gm, 0, NULL, &x2_mat);
@@ -6742,7 +6719,7 @@ static void test_fake_bold_font(void)
 
         ret = GetTextMetricsA(hdc, &data[i].tm);
         ok(ret, "got %d\n", ret);
-        ret = pGetCharWidth32A(hdc, 0x76, 0x76, &data[i].w);
+        ret = GetCharWidth32A(hdc, 0x76, 0x76, &data[i].w);
         ok(ret, "got %d\n", ret);
 
         SelectObject(hdc, hfont_old);
@@ -6804,7 +6781,7 @@ static void test_bitmap_font_glyph_index(void)
     CHARSETINFO ci;
     BYTE chr = '\xA9';
 
-    if (!pGetGlyphIndicesW || !pGetGlyphIndicesA) {
+    if (!pGetGlyphIndicesW) {
         win_skip("GetGlyphIndices is unavailable\n");
         return;
     }
@@ -6889,7 +6866,7 @@ static void test_bitmap_font_glyph_index(void)
                 ret = ExtTextOutA(hdc, 100, 0, 0, NULL, (LPCSTR)&chr, 1, NULL);
                 break;
             case 1:
-                ret = pGetGlyphIndicesA(hdc, (LPCSTR)&chr, 1, &code, 0);
+                ret = GetGlyphIndicesA(hdc, (LPCSTR)&chr, 1, &code, 0);
                 ok(ret, "GetGlyphIndices failed\n");
                 ok(code == chr, "expected %02x, got %02x (%s:%d)\n", chr, code, lf.lfFaceName, tm.tmCharSet);
                 ret = ExtTextOutA(hdc, 100, 0, ETO_GLYPH_INDEX, NULL, (LPCSTR)&code, 1, NULL);
