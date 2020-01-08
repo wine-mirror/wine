@@ -283,7 +283,7 @@
 @ stub UpdateDCOMSettings
 @ stdcall WdtpInterfacePointer_UserMarshal(ptr long ptr ptr ptr) ole32.WdtpInterfacePointer_UserMarshal
 @ stub WdtpInterfacePointer_UserMarshal64
-@ stdcall WdtpInterfacePointer_UserSize(ptr long ptr long ptr) ole32.WdtpInterfacePointer_UserSize
+@ stdcall WdtpInterfacePointer_UserSize(ptr long long ptr ptr) ole32.WdtpInterfacePointer_UserSize
 @ stub WdtpInterfacePointer_UserSize64
 @ stdcall WdtpInterfacePointer_UserUnmarshal(ptr ptr ptr ptr) ole32.WdtpInterfacePointer_UserUnmarshal
 @ stub WdtpInterfacePointer_UserUnmarshal64
