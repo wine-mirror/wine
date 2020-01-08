@@ -32,29 +32,13 @@
 static WCHAR user_name[UNLEN + 1];
 static WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
 
-static const WCHAR sNonexistentUser[] = {'N','o','n','e','x','i','s','t','e','n','t',' ',
-                                'U','s','e','r',0};
-static WCHAR sTooLongName[] = {'T','h','i','s',' ','i','s',' ','a',' ','b','a','d',
-    ' ','u','s','e','r','n','a','m','e',0};
-static WCHAR sTooLongPassword[] = {'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h','a','b','c','d','e','f','g','h',
-    'a', 0};
+static WCHAR sTooLongName[] = L"This is a bad username";
+static WCHAR sTooLongPassword[] = L"abcdefghabcdefghabcdefghabcdefghabcdefgh"
+        "abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefgh"
+        "abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefgh"
+        "abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefgha";
 
-static WCHAR sTestUserName[] = {'t', 'e', 's', 't', 'u', 's', 'e', 'r', 0};
-static WCHAR sTestUserOldPass[] = {'O', 'l', 'd', 'P', 'a', 's', 's', 'W', '0', 'r', 'd', 'S', 'e', 't', '!', '~', 0};
-static const WCHAR sBadNetPath[] = {'\\','\\','B','a',' ',' ','p','a','t','h',0};
-static const WCHAR sInvalidName[] = {'\\',0};
-static const WCHAR sInvalidName2[] = {'\\','\\',0};
-static const WCHAR sEmptyStr[] = { 0 };
+static WCHAR sTestUserOldPass[] = L"OldPassW0rdSet!~";
 
 static NET_API_STATUS (WINAPI *pNetApiBufferFree)(LPVOID);
 static NET_API_STATUS (WINAPI *pNetApiBufferSize)(LPVOID,LPDWORD);
@@ -93,7 +77,7 @@ static NET_API_STATUS create_test_user(void)
 {
     USER_INFO_1 usri;
 
-    usri.usri1_name = sTestUserName;
+    usri.usri1_name = (WCHAR *)L"testuser";
     usri.usri1_password = sTestUserOldPass;
     usri.usri1_priv = USER_PRIV_USER;
     usri.usri1_home_dir = NULL;
@@ -106,7 +90,7 @@ static NET_API_STATUS create_test_user(void)
 
 static NET_API_STATUS delete_test_user(void)
 {
-    return pNetUserDel(NULL, sTestUserName);
+    return pNetUserDel(NULL, L"testuser");
 }
 
 static void run_usergetinfo_tests(void)
@@ -123,24 +107,23 @@ static void run_usergetinfo_tests(void)
     }
 
     /* Level 0 */
-    rc=pNetUserGetInfo(NULL, sTestUserName, 0, (LPBYTE *)&ui0);
+    rc = pNetUserGetInfo(NULL, L"testuser", 0, (LPBYTE *)&ui0);
     ok(rc == NERR_Success, "NetUserGetInfo level 0 failed: 0x%08x.\n", rc);
-    ok(!lstrcmpW(sTestUserName, ui0->usri0_name),"Username mismatch for level 0.\n");
+    ok(!wcscmp(L"testuser", ui0->usri0_name), "Got level 0 name %s.\n", debugstr_w(ui0->usri0_name));
     pNetApiBufferSize(ui0, &dwSize);
-    ok(dwSize >= (sizeof(USER_INFO_0) +
-                  (lstrlenW(ui0->usri0_name) + 1) * sizeof(WCHAR)),
+    ok(dwSize >= (sizeof(USER_INFO_0) + (wcslen(ui0->usri0_name) + 1) * sizeof(WCHAR)),
        "Is allocated with NetApiBufferAllocate\n");
 
     /* Level 10 */
-    rc=pNetUserGetInfo(NULL, sTestUserName, 10, (LPBYTE *)&ui10);
+    rc = pNetUserGetInfo(NULL, L"testuser", 10, (LPBYTE *)&ui10);
     ok(rc == NERR_Success, "NetUserGetInfo level 10 failed: 0x%08x.\n", rc);
-    ok(!lstrcmpW(sTestUserName, ui10->usri10_name), "Username mismatch for level 10.\n");
+    ok(!wcscmp(L"testuser", ui10->usri10_name), "Got level 10 name %s.\n", debugstr_w(ui10->usri10_name));
     pNetApiBufferSize(ui10, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_10) +
-                  (lstrlenW(ui10->usri10_name) + 1 +
-                   lstrlenW(ui10->usri10_comment) + 1 +
-                   lstrlenW(ui10->usri10_usr_comment) + 1 +
-                   lstrlenW(ui10->usri10_full_name) + 1) * sizeof(WCHAR)),
+                  (wcslen(ui10->usri10_name) + 1 +
+                   wcslen(ui10->usri10_comment) + 1 +
+                   wcslen(ui10->usri10_usr_comment) + 1 +
+                   wcslen(ui10->usri10_full_name) + 1) * sizeof(WCHAR)),
        "Is allocated with NetApiBufferAllocate\n");
 
     pNetApiBufferFree(ui0);
@@ -152,13 +135,13 @@ static void run_usergetinfo_tests(void)
     pNetApiBufferFree(ui0);
 
     /* errors handling */
-    rc=pNetUserGetInfo(NULL, sTestUserName, 10000, (LPBYTE *)&ui0);
+    rc = pNetUserGetInfo(NULL, L"testuser", 10000, (LPBYTE *)&ui0);
     ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%d\n",rc);
-    rc=pNetUserGetInfo(NULL, sNonexistentUser, 0, (LPBYTE *)&ui0);
+    rc = pNetUserGetInfo(NULL, L"Nonexistent User", 0, (LPBYTE *)&ui0);
     ok(rc == NERR_UserNotFound,"Invalid User Name: rc=%d\n",rc);
     todo_wine {
         /* FIXME - Currently Wine can't verify whether the network path is good or bad */
-        rc=pNetUserGetInfo(sBadNetPath, sTestUserName, 0, (LPBYTE *)&ui0);
+        rc = pNetUserGetInfo(L"\\\\Ba  path", L"testuser", 0, (LPBYTE *)&ui0);
         ok(rc == ERROR_BAD_NETPATH ||
            rc == ERROR_NETWORK_UNREACHABLE ||
            rc == RPC_S_SERVER_UNAVAILABLE ||
@@ -166,12 +149,12 @@ static void run_usergetinfo_tests(void)
            rc == RPC_S_INVALID_NET_ADDR, /* Some Win7 */
            "Bad Network Path: rc=%d\n",rc);
     }
-    rc=pNetUserGetInfo(sEmptyStr, sTestUserName, 0, (LPBYTE *)&ui0);
+    rc = pNetUserGetInfo(L"", L"testuser", 0, (LPBYTE *)&ui0);
     ok(rc == ERROR_BAD_NETPATH || rc == NERR_Success,
        "Bad Network Path: rc=%d\n",rc);
-    rc=pNetUserGetInfo(sInvalidName, sTestUserName, 0, (LPBYTE *)&ui0);
+    rc = pNetUserGetInfo(L"\\", L"testuser", 0, (LPBYTE *)&ui0);
     ok(rc == ERROR_INVALID_NAME || rc == ERROR_INVALID_HANDLE,"Invalid Server Name: rc=%d\n",rc);
-    rc=pNetUserGetInfo(sInvalidName2, sTestUserName, 0, (LPBYTE *)&ui0);
+    rc = pNetUserGetInfo(L"\\\\", L"testuser", 0, (LPBYTE *)&ui0);
     ok(rc == ERROR_INVALID_NAME || rc == ERROR_INVALID_HANDLE,"Invalid Server Name: rc=%d\n",rc);
 
     if(delete_test_user() != NERR_Success)
@@ -269,7 +252,7 @@ static void run_userhandling_tests(void)
            broken(ret == NERR_PasswordTooShort), /* NT4 */
            "Adding user with too long username returned 0x%08x\n", ret);
 
-    usri.usri1_name = sTestUserName;
+    usri.usri1_name = (WCHAR *)L"testuser";
     usri.usri1_password = sTooLongPassword;
 
     ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
@@ -286,7 +269,7 @@ static void run_userhandling_tests(void)
     ok(ret == NERR_BadUsername || ret == NERR_PasswordTooShort,
             "Adding user with too long username/password returned 0x%08x\n", ret);
 
-    usri.usri1_name = sTestUserName;
+    usri.usri1_name = (WCHAR *)L"testuser";
     usri.usri1_password = sTestUserOldPass;
 
     ret = pNetUserAdd(NULL, 5, (LPBYTE)&usri, NULL);
@@ -318,23 +301,22 @@ static void run_userhandling_tests(void)
      * So let's not test NetUserChangePassword for now.
      */
 
-    ret = pNetUserDel(NULL, sTestUserName);
+    ret = pNetUserDel(NULL, L"testuser");
     ok(ret == NERR_Success, "Deleting the user failed.\n");
 
-    ret = pNetUserDel(NULL, sTestUserName);
+    ret = pNetUserDel(NULL, L"testuser");
     ok(ret == NERR_UserNotFound, "Deleting a nonexistent user returned 0x%08x\n",ret);
 }
 
 static void run_localgroupgetinfo_tests(void)
 {
     NET_API_STATUS status;
-    static const WCHAR admins[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r','s',0};
     PLOCALGROUP_INFO_1 lgi = NULL;
     PLOCALGROUP_MEMBERS_INFO_3 buffer = NULL;
     DWORD entries_read = 0, total_entries =0;
     int i;
 
-    status = pNetLocalGroupGetInfo(NULL, admins, 1, (LPBYTE *)&lgi);
+    status = pNetLocalGroupGetInfo(NULL, L"Administrators", 1, (BYTE **)&lgi);
     ok(status == NERR_Success || broken(status == NERR_GroupNotFound),
        "NetLocalGroupGetInfo unexpectedly returned %d\n", status);
     if (status != NERR_Success) return;
@@ -344,7 +326,8 @@ static void run_localgroupgetinfo_tests(void)
 
     pNetApiBufferFree(lgi);
 
-    status = pNetLocalGroupGetMembers(NULL, admins, 3, (LPBYTE *)&buffer, MAX_PREFERRED_LENGTH, &entries_read, &total_entries, NULL);
+    status = pNetLocalGroupGetMembers(NULL, L"Administrators", 3, (BYTE **)&buffer,
+            MAX_PREFERRED_LENGTH, &entries_read, &total_entries, NULL);
     ok(status == NERR_Success, "NetLocalGroupGetMembers unexpectedly returned %d\n", status);
     ok(entries_read > 0 && total_entries > 0, "Amount of entries is unexpectedly 0\n");
 

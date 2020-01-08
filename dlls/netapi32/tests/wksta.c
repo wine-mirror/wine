@@ -69,7 +69,7 @@ static void run_get_comp_name_tests(void)
     LPWSTR ws = NULL;
 
     ok(pNetpGetComputerName(&ws) == NERR_Success, "Computer name is retrieved\n");
-    ok(!lstrcmpW(computer_name, ws), "This is really computer name\n");
+    ok(!wcscmp(computer_name, ws), "Expected %s, got %s.\n", debugstr_w(computer_name), debugstr_w(ws));
     pNetApiBufferFree(ws);
 }
 
@@ -98,33 +98,32 @@ static void run_wkstausergetinfo_tests(void)
         return;
     }
 
-    ok(!lstrcmpW(user_name, ui0->wkui0_username), "This is really user name\n");
+    ok(!wcscmp(user_name, ui0->wkui0_username), "Expected username %s, got %s.\n",
+            debugstr_w(user_name), debugstr_w(ui0->wkui0_username));
     pNetApiBufferSize(ui0, &dwSize);
-    ok(dwSize >= (sizeof(WKSTA_USER_INFO_0) +
-                 lstrlenW(ui0->wkui0_username) * sizeof(WCHAR)),
+    ok(dwSize >= (sizeof(WKSTA_USER_INFO_0) + wcslen(ui0->wkui0_username) * sizeof(WCHAR)),
        "Is allocated with NetApiBufferAllocate\n");
 
     /* Level 1 */
     ok(pNetWkstaUserGetInfo(NULL, 1, (LPBYTE *)&ui1) == NERR_Success,
        "NetWkstaUserGetInfo is successful\n");
-    ok(lstrcmpW(ui1->wkui1_username, ui0->wkui0_username) == 0,
-       "the same name as returned for level 0\n");
+    ok(!wcscmp(user_name, ui1->wkui1_username), "Expected username %s, got %s.\n",
+            debugstr_w(user_name), debugstr_w(ui1->wkui1_username));
     pNetApiBufferSize(ui1, &dwSize);
     ok(dwSize >= (sizeof(WKSTA_USER_INFO_1) +
-                  (lstrlenW(ui1->wkui1_username) +
-                   lstrlenW(ui1->wkui1_logon_domain) +
-                   lstrlenW(ui1->wkui1_oth_domains) +
-                   lstrlenW(ui1->wkui1_logon_server)) * sizeof(WCHAR)),
+                  (wcslen(ui1->wkui1_username) +
+                   wcslen(ui1->wkui1_logon_domain) +
+                   wcslen(ui1->wkui1_oth_domains) +
+                   wcslen(ui1->wkui1_logon_server)) * sizeof(WCHAR)),
        "Is allocated with NetApiBufferAllocate\n");
 
     /* Level 1101 */
     ok(pNetWkstaUserGetInfo(NULL, 1101, (LPBYTE *)&ui1101) == NERR_Success,
        "NetWkstaUserGetInfo is successful\n");
-    ok(lstrcmpW(ui1101->wkui1101_oth_domains, ui1->wkui1_oth_domains) == 0,
-       "the same oth_domains as returned for level 1\n");
+    ok(!wcscmp(ui1101->wkui1101_oth_domains, ui1->wkui1_oth_domains), "Expected %s, got %s.\n",
+            debugstr_w(ui1->wkui1_oth_domains), debugstr_w(ui1101->wkui1101_oth_domains));
     pNetApiBufferSize(ui1101, &dwSize);
-    ok(dwSize >= (sizeof(WKSTA_USER_INFO_1101) +
-                 lstrlenW(ui1101->wkui1101_oth_domains) * sizeof(WCHAR)),
+    ok(dwSize >= (sizeof(WKSTA_USER_INFO_1101) + wcslen(ui1101->wkui1101_oth_domains) * sizeof(WCHAR)),
        "Is allocated with NetApiBufferAllocate\n");
 
     pNetApiBufferFree(ui0);
