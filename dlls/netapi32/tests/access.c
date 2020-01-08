@@ -40,38 +40,8 @@ static WCHAR sTooLongPassword[] = L"abcdefghabcdefghabcdefghabcdefghabcdefgh"
 
 static WCHAR sTestUserOldPass[] = L"OldPassW0rdSet!~";
 
-static NET_API_STATUS (WINAPI *pNetApiBufferFree)(LPVOID);
-static NET_API_STATUS (WINAPI *pNetApiBufferSize)(LPVOID,LPDWORD);
-static NET_API_STATUS (WINAPI *pNetQueryDisplayInformation)(LPWSTR,DWORD,DWORD,DWORD,DWORD,LPDWORD,PVOID*);
-static NET_API_STATUS (WINAPI *pNetUserGetInfo)(LPCWSTR,LPCWSTR,DWORD,LPBYTE*);
-static NET_API_STATUS (WINAPI *pNetUserModalsGet)(LPCWSTR,DWORD,LPBYTE*);
-static NET_API_STATUS (WINAPI *pNetUserAdd)(LPCWSTR,DWORD,LPBYTE,LPDWORD);
-static NET_API_STATUS (WINAPI *pNetUserDel)(LPCWSTR,LPCWSTR);
-static NET_API_STATUS (WINAPI *pNetLocalGroupGetInfo)(LPCWSTR,LPCWSTR,DWORD,LPBYTE*);
-static NET_API_STATUS (WINAPI *pNetLocalGroupGetMembers)(LPCWSTR,LPCWSTR,DWORD,LPBYTE*,DWORD,LPDWORD,LPDWORD,PDWORD_PTR);
 static DWORD (WINAPI *pDavGetHTTPFromUNCPath)(LPCWSTR,LPWSTR,LPDWORD);
 static DWORD (WINAPI *pDavGetUNCFromHTTPPath)(LPCWSTR,LPWSTR,LPDWORD);
-
-static BOOL init_access_tests(void)
-{
-    DWORD dwSize;
-    BOOL rc;
-
-    user_name[0] = 0;
-    dwSize = ARRAY_SIZE(user_name);
-    rc=GetUserNameW(user_name, &dwSize);
-    if (rc==FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("GetUserNameW is not available.\n");
-        return FALSE;
-    }
-    ok(rc, "User Name Retrieved\n");
-
-    computer_name[0] = 0;
-    dwSize = ARRAY_SIZE(computer_name);
-    ok(GetComputerNameW(computer_name, &dwSize), "Computer Name Retrieved\n");
-    return TRUE;
-}
 
 static NET_API_STATUS create_test_user(void)
 {
@@ -85,12 +55,12 @@ static NET_API_STATUS create_test_user(void)
     usri.usri1_flags = UF_SCRIPT;
     usri.usri1_script_path = NULL;
 
-    return pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
+    return NetUserAdd(NULL, 1, (BYTE *)&usri, NULL);
 }
 
 static NET_API_STATUS delete_test_user(void)
 {
-    return pNetUserDel(NULL, L"testuser");
+    return NetUserDel(NULL, L"testuser");
 }
 
 static void run_usergetinfo_tests(void)
@@ -107,18 +77,18 @@ static void run_usergetinfo_tests(void)
     }
 
     /* Level 0 */
-    rc = pNetUserGetInfo(NULL, L"testuser", 0, (LPBYTE *)&ui0);
+    rc = NetUserGetInfo(NULL, L"testuser", 0, (BYTE **)&ui0);
     ok(rc == NERR_Success, "NetUserGetInfo level 0 failed: 0x%08x.\n", rc);
     ok(!wcscmp(L"testuser", ui0->usri0_name), "Got level 0 name %s.\n", debugstr_w(ui0->usri0_name));
-    pNetApiBufferSize(ui0, &dwSize);
+    NetApiBufferSize(ui0, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_0) + (wcslen(ui0->usri0_name) + 1) * sizeof(WCHAR)),
        "Is allocated with NetApiBufferAllocate\n");
 
     /* Level 10 */
-    rc = pNetUserGetInfo(NULL, L"testuser", 10, (LPBYTE *)&ui10);
+    rc = NetUserGetInfo(NULL, L"testuser", 10, (BYTE **)&ui10);
     ok(rc == NERR_Success, "NetUserGetInfo level 10 failed: 0x%08x.\n", rc);
     ok(!wcscmp(L"testuser", ui10->usri10_name), "Got level 10 name %s.\n", debugstr_w(ui10->usri10_name));
-    pNetApiBufferSize(ui10, &dwSize);
+    NetApiBufferSize(ui10, &dwSize);
     ok(dwSize >= (sizeof(USER_INFO_10) +
                   (wcslen(ui10->usri10_name) + 1 +
                    wcslen(ui10->usri10_comment) + 1 +
@@ -126,22 +96,22 @@ static void run_usergetinfo_tests(void)
                    wcslen(ui10->usri10_full_name) + 1) * sizeof(WCHAR)),
        "Is allocated with NetApiBufferAllocate\n");
 
-    pNetApiBufferFree(ui0);
-    pNetApiBufferFree(ui10);
+    NetApiBufferFree(ui0);
+    NetApiBufferFree(ui10);
 
     /* NetUserGetInfo should always work for the current user. */
-    rc=pNetUserGetInfo(NULL, user_name, 0, (LPBYTE*)&ui0);
+    rc = NetUserGetInfo(NULL, user_name, 0, (BYTE **)&ui0);
     ok(rc == NERR_Success, "NetUsetGetInfo for current user failed: 0x%08x.\n", rc);
-    pNetApiBufferFree(ui0);
+    NetApiBufferFree(ui0);
 
     /* errors handling */
-    rc = pNetUserGetInfo(NULL, L"testuser", 10000, (LPBYTE *)&ui0);
+    rc = NetUserGetInfo(NULL, L"testuser", 10000, (BYTE **)&ui0);
     ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%d\n",rc);
-    rc = pNetUserGetInfo(NULL, L"Nonexistent User", 0, (LPBYTE *)&ui0);
+    rc = NetUserGetInfo(NULL, L"Nonexistent User", 0, (BYTE **)&ui0);
     ok(rc == NERR_UserNotFound,"Invalid User Name: rc=%d\n",rc);
     todo_wine {
         /* FIXME - Currently Wine can't verify whether the network path is good or bad */
-        rc = pNetUserGetInfo(L"\\\\Ba  path", L"testuser", 0, (LPBYTE *)&ui0);
+        rc = NetUserGetInfo(L"\\\\Ba  path", L"testuser", 0, (BYTE **)&ui0);
         ok(rc == ERROR_BAD_NETPATH ||
            rc == ERROR_NETWORK_UNREACHABLE ||
            rc == RPC_S_SERVER_UNAVAILABLE ||
@@ -149,12 +119,12 @@ static void run_usergetinfo_tests(void)
            rc == RPC_S_INVALID_NET_ADDR, /* Some Win7 */
            "Bad Network Path: rc=%d\n",rc);
     }
-    rc = pNetUserGetInfo(L"", L"testuser", 0, (LPBYTE *)&ui0);
+    rc = NetUserGetInfo(L"", L"testuser", 0, (BYTE **)&ui0);
     ok(rc == ERROR_BAD_NETPATH || rc == NERR_Success,
        "Bad Network Path: rc=%d\n",rc);
-    rc = pNetUserGetInfo(L"\\", L"testuser", 0, (LPBYTE *)&ui0);
+    rc = NetUserGetInfo(L"\\", L"testuser", 0, (BYTE **)&ui0);
     ok(rc == ERROR_INVALID_NAME || rc == ERROR_INVALID_HANDLE,"Invalid Server Name: rc=%d\n",rc);
-    rc = pNetUserGetInfo(L"\\\\", L"testuser", 0, (LPBYTE *)&ui0);
+    rc = NetUserGetInfo(L"\\\\", L"testuser", 0, (BYTE **)&ui0);
     ok(rc == ERROR_INVALID_NAME || rc == ERROR_INVALID_HANDLE,"Invalid Server Name: rc=%d\n",rc);
 
     if(delete_test_user() != NERR_Success)
@@ -172,7 +142,7 @@ static void run_querydisplayinformation1_tests(void)
 
     do
     {
-        Result = pNetQueryDisplayInformation(
+        Result = NetQueryDisplayInformation(
             NULL, 1, i, 1000, MAX_PREFERRED_LENGTH, &EntryCount,
             (PVOID *)&Buffer);
 
@@ -200,7 +170,7 @@ static void run_querydisplayinformation1_tests(void)
             rec++;
         }
 
-        pNetApiBufferFree(Buffer);
+        NetApiBufferFree(Buffer);
     } while (Result == ERROR_MORE_DATA);
 
     ok(hasAdmin, "Doesn't have 'Administrator' account\n");
@@ -211,11 +181,11 @@ static void run_usermodalsget_tests(void)
     NET_API_STATUS rc;
     USER_MODALS_INFO_2 * umi2 = NULL;
 
-    rc = pNetUserModalsGet(NULL, 2, (LPBYTE *)&umi2);
+    rc = NetUserModalsGet(NULL, 2, (BYTE **)&umi2);
     ok(rc == ERROR_SUCCESS, "NetUserModalsGet failed, rc = %d\n", rc);
 
     if (umi2)
-        pNetApiBufferFree(umi2);
+        NetApiBufferFree(umi2);
 }
 
 static void run_userhandling_tests(void)
@@ -232,37 +202,26 @@ static void run_userhandling_tests(void)
     usri.usri1_name = sTooLongName;
     usri.usri1_password = sTestUserOldPass;
 
-    ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
-    if (ret == NERR_Success || ret == NERR_UserExists)
-    {
-        /* Windows NT4 does create the user. Delete the user and also if it already existed
-         * due to a previous test run on NT4.
-         */
-        trace("We are on NT4, we have to delete the user with the too long username\n");
-        ret = pNetUserDel(NULL, sTooLongName);
-        ok(ret == NERR_Success, "Deleting the user failed : %d\n", ret);
-    }
-    else if (ret == ERROR_ACCESS_DENIED)
+    ret = NetUserAdd(NULL, 1, (BYTE *)&usri, NULL);
+    if (ret == ERROR_ACCESS_DENIED)
     {
         skip("not enough permissions to add a user\n");
         return;
     }
     else
-        ok(ret == NERR_BadUsername ||
-           broken(ret == NERR_PasswordTooShort), /* NT4 */
-           "Adding user with too long username returned 0x%08x\n", ret);
+        ok(ret == NERR_BadUsername, "Got %u.\n", ret);
 
     usri.usri1_name = (WCHAR *)L"testuser";
     usri.usri1_password = sTooLongPassword;
 
-    ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
+    ret = NetUserAdd(NULL, 1, (BYTE *)&usri, NULL);
     ok(ret == NERR_PasswordTooShort || ret == ERROR_ACCESS_DENIED /* Win2003 */,
        "Adding user with too long password returned 0x%08x\n", ret);
 
     usri.usri1_name = sTooLongName;
     usri.usri1_password = sTooLongPassword;
 
-    ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
+    ret = NetUserAdd(NULL, 1, (BYTE *)&usri, NULL);
     /* NT4 doesn't have a problem with the username so it will report the too long password
      * as the error. NERR_PasswordTooShort is reported for all kind of password related errors.
      */
@@ -272,10 +231,10 @@ static void run_userhandling_tests(void)
     usri.usri1_name = (WCHAR *)L"testuser";
     usri.usri1_password = sTestUserOldPass;
 
-    ret = pNetUserAdd(NULL, 5, (LPBYTE)&usri, NULL);
+    ret = NetUserAdd(NULL, 5, (BYTE *)&usri, NULL);
     ok(ret == ERROR_INVALID_LEVEL, "Adding user with level 5 returned 0x%08x\n", ret);
 
-    ret = pNetUserAdd(NULL, 1, (LPBYTE)&usri, NULL);
+    ret = NetUserAdd(NULL, 1, (BYTE *)&usri, NULL);
     if(ret == ERROR_ACCESS_DENIED)
     {
         skip("Insufficient permissions to add users. Skipping test.\n");
@@ -287,11 +246,7 @@ static void run_userhandling_tests(void)
         return;
     }
 
-    ok(ret == NERR_Success ||
-       broken(ret == NERR_PasswordTooShort), /* NT4 */
-       "Adding user failed with error 0x%08x\n", ret);
-    if(ret != NERR_Success)
-        return;
+    ok(!ret, "Got %u.\n", ret);
 
     /* On Windows XP (and newer), calling NetUserChangePassword with a NULL
      * domainname parameter creates a user home directory, iff the machine is
@@ -301,10 +256,10 @@ static void run_userhandling_tests(void)
      * So let's not test NetUserChangePassword for now.
      */
 
-    ret = pNetUserDel(NULL, L"testuser");
+    ret = NetUserDel(NULL, L"testuser");
     ok(ret == NERR_Success, "Deleting the user failed.\n");
 
-    ret = pNetUserDel(NULL, L"testuser");
+    ret = NetUserDel(NULL, L"testuser");
     ok(ret == NERR_UserNotFound, "Deleting a nonexistent user returned 0x%08x\n",ret);
 }
 
@@ -316,7 +271,7 @@ static void run_localgroupgetinfo_tests(void)
     DWORD entries_read = 0, total_entries =0;
     int i;
 
-    status = pNetLocalGroupGetInfo(NULL, L"Administrators", 1, (BYTE **)&lgi);
+    status = NetLocalGroupGetInfo(NULL, L"Administrators", 1, (BYTE **)&lgi);
     ok(status == NERR_Success || broken(status == NERR_GroupNotFound),
        "NetLocalGroupGetInfo unexpectedly returned %d\n", status);
     if (status != NERR_Success) return;
@@ -324,9 +279,9 @@ static void run_localgroupgetinfo_tests(void)
     trace("Local groupname:%s\n", wine_dbgstr_w( lgi->lgrpi1_name));
     trace("Comment: %s\n", wine_dbgstr_w( lgi->lgrpi1_comment));
 
-    pNetApiBufferFree(lgi);
+    NetApiBufferFree(lgi);
 
-    status = pNetLocalGroupGetMembers(NULL, L"Administrators", 3, (BYTE **)&buffer,
+    status = NetLocalGroupGetMembers(NULL, L"Administrators", 3, (BYTE **)&buffer,
             MAX_PREFERRED_LENGTH, &entries_read, &total_entries, NULL);
     ok(status == NERR_Success, "NetLocalGroupGetMembers unexpectedly returned %d\n", status);
     ok(entries_read > 0 && total_entries > 0, "Amount of entries is unexpectedly 0\n");
@@ -334,7 +289,7 @@ static void run_localgroupgetinfo_tests(void)
     for(i=0;i<entries_read;i++)
         trace("domain and name: %s\n", wine_dbgstr_w(buffer[i].lgrmi3_domainandname));
 
-    pNetApiBufferFree(buffer);
+    NetApiBufferFree(buffer);
 }
 
 static void test_DavGetHTTPFromUNCPath(void)
@@ -532,38 +487,26 @@ static void test_DavGetUNCFromHTTPPath(void)
 
 START_TEST(access)
 {
-    HMODULE hnetapi32=LoadLibraryA("netapi32.dll");
+    HMODULE hnetapi32 = GetModuleHandleA("netapi32.dll");
+    DWORD size;
+    BOOL ret;
 
-    pNetApiBufferFree=(void*)GetProcAddress(hnetapi32,"NetApiBufferFree");
-    pNetApiBufferSize=(void*)GetProcAddress(hnetapi32,"NetApiBufferSize");
-    pNetQueryDisplayInformation=(void*)GetProcAddress(hnetapi32,"NetQueryDisplayInformation");
-    pNetUserGetInfo=(void*)GetProcAddress(hnetapi32,"NetUserGetInfo");
-    pNetUserModalsGet=(void*)GetProcAddress(hnetapi32,"NetUserModalsGet");
-    pNetUserAdd=(void*)GetProcAddress(hnetapi32, "NetUserAdd");
-    pNetUserDel=(void*)GetProcAddress(hnetapi32, "NetUserDel");
-    pNetLocalGroupGetInfo=(void*)GetProcAddress(hnetapi32, "NetLocalGroupGetInfo");
-    pNetLocalGroupGetMembers=(void*)GetProcAddress(hnetapi32, "NetLocalGroupGetMembers");
     pDavGetHTTPFromUNCPath = (void*)GetProcAddress(hnetapi32, "DavGetHTTPFromUNCPath");
     pDavGetUNCFromHTTPPath = (void*)GetProcAddress(hnetapi32, "DavGetUNCFromHTTPPath");
 
-    /* These functions were introduced with NT. It's safe to assume that
-     * if one is not available, none are.
-     */
-    if (!pNetApiBufferFree) {
-        win_skip("Needed functions are not available\n");
-        FreeLibrary(hnetapi32);
-        return;
-    }
+    size = sizeof(user_name);
+    ret = GetUserNameW(user_name, &size);
+    ok(ret, "Failed to get user name, error %u.\n", GetLastError());
+    size = sizeof(computer_name);
+    ret = GetComputerNameW(computer_name, &size);
+    ok(ret, "Failed to get computer name, error %u.\n", GetLastError());
 
-    if (init_access_tests()) {
-        run_userhandling_tests();
-        run_usergetinfo_tests();
-        run_querydisplayinformation1_tests();
-        run_usermodalsget_tests();
-        run_localgroupgetinfo_tests();
-    }
+    run_userhandling_tests();
+    run_usergetinfo_tests();
+    run_querydisplayinformation1_tests();
+    run_usermodalsget_tests();
+    run_localgroupgetinfo_tests();
 
     test_DavGetHTTPFromUNCPath();
     test_DavGetUNCFromHTTPPath();
-    FreeLibrary(hnetapi32);
 }
