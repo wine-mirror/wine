@@ -2355,7 +2355,7 @@ HRESULT WINAPI WsWriteMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_
         return E_INVALIDARG;
     }
 
-    if ((hr = WsWriteEnvelopeEnd( msg, NULL )) == S_OK && (hr = connect_channel( channel ) == S_OK))
+    if ((hr = WsWriteEnvelopeEnd( msg, NULL )) == S_OK && (hr = connect_channel( channel )) == S_OK)
         hr = send_message( channel, msg );
 
     LeaveCriticalSection( &channel->cs );
