@@ -1806,8 +1806,8 @@
 @ stub _o_tgammal
 @ stub _o_tmpfile_s
 @ stub _o_tmpnam_s
-@ cdecl _o_tolower(long) MSVCRT__tolower
-@ cdecl _o_toupper(long) MSVCRT__toupper
+@ cdecl _o_tolower(long) MSVCRT_tolower
+@ cdecl _o_toupper(long) MSVCRT_toupper
 @ stub _o_towlower
 @ stub _o_towupper
 @ stub _o_ungetc
