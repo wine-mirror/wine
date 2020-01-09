@@ -55,8 +55,6 @@ static DEVMODEW registry_mode;
 static HRESULT (WINAPI *ValidateVertexShader)(const DWORD *, const DWORD *, const D3DCAPS8 *, BOOL, char **);
 static HRESULT (WINAPI *ValidatePixelShader)(const DWORD *, const D3DCAPS8 *, BOOL, char **);
 
-static BOOL (WINAPI *pGetCursorInfo)(PCURSORINFO);
-
 static const DWORD simple_vs[] = {0xFFFE0101,       /* vs_1_1               */
     0x00000009, 0xC0010000, 0x90E40000, 0xA0E40000, /* dp4 oPos.x, v0, c0   */
     0x00000009, 0xC0020000, 0x90E40000, 0xA0E40001, /* dp4 oPos.y, v0, c1   */
@@ -930,7 +928,6 @@ cleanup:
 
 static void test_cursor(void)
 {
-    HMODULE user32_handle = GetModuleHandleA("user32.dll");
     IDirect3DSurface8 *cursor = NULL;
     IDirect3DDevice8 *device;
     CURSORINFO info;
@@ -941,13 +938,6 @@ static void test_cursor(void)
     HRESULT hr;
     BOOL ret;
 
-    pGetCursorInfo = (void *)GetProcAddress(user32_handle, "GetCursorInfo");
-    if (!pGetCursorInfo)
-    {
-        win_skip("GetCursorInfo is not available\n");
-        return;
-    }
-
     window = create_window();
     ok(!!window, "Failed to create a window.\n");
 
@@ -957,7 +947,7 @@ static void test_cursor(void)
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
+    ok(GetCursorInfo(&info), "GetCursorInfo failed\n");
     cur = info.hCursor;
 
     d3d = Direct3DCreate8(D3D_SDK_VERSION);
@@ -990,7 +980,7 @@ static void test_cursor(void)
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
+    ok(GetCursorInfo(&info), "GetCursorInfo failed\n");
     ok(info.flags & (CURSOR_SHOWING|CURSOR_SUPPRESSED), "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
@@ -1004,7 +994,7 @@ static void test_cursor(void)
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
+    ok(GetCursorInfo(&info), "GetCursorInfo failed\n");
     ok(info.flags & (CURSOR_SHOWING|CURSOR_SUPPRESSED), "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor != cur, "The cursor handle is %p\n", info.hCursor);
 
