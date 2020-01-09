@@ -2550,7 +2550,7 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     IActiveScriptSiteInterruptPoll *poll;
     IActiveScriptSiteDebug *debug;
     IServiceProvider *service;
-    ICanHandleException *canexpection;
+    ICanHandleException *canexception;
     LCID lcid;
     HRESULT hres;
 
@@ -2574,7 +2574,7 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     if(SUCCEEDED(hres))
         IActiveScriptSiteDebug_Release(debug);
 
-    hres = IActiveScriptSite_QueryInterface(pass, &IID_ICanHandleException, (void**)&canexpection);
+    hres = IActiveScriptSite_QueryInterface(pass, &IID_ICanHandleException, (void**)&canexception);
     ok(hres == E_NOINTERFACE, "Could not get IID_ICanHandleException interface: %08x\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IServiceProvider, (void**)&service);
