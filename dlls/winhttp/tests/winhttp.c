@@ -3564,7 +3564,7 @@ static void test_passport_auth( int port )
          'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',':',' ',
          'P','a','s','s','p','o','r','t','1','.','4','\r','\n','\r','\n',0};
     HINTERNET ses, con, req;
-    DWORD status, size, option;
+    DWORD status, size, option, err;
     WCHAR buf[128];
     BOOL ret;
 
@@ -3585,8 +3585,10 @@ static void test_passport_auth( int port )
     ok( ret, "got %u\n", GetLastError() );
 
     ret = WinHttpReceiveResponse( req, NULL );
-    ok( ret || broken(!ret && GetLastError() == ERROR_WINHTTP_LOGIN_FAILURE) /* winxp */, "got %u\n", GetLastError() );
-    if (!ret && GetLastError() == ERROR_WINHTTP_LOGIN_FAILURE)
+    err = GetLastError();
+    ok( ret || broken(!ret && err == ERROR_WINHTTP_LOGIN_FAILURE) /* winxp */
+            || broken(!ret && err == ERROR_WINHTTP_INVALID_SERVER_RESPONSE ), "got %u\n", err );
+    if (!ret)
     {
         win_skip("no support for Passport redirects\n");
         goto cleanup;
