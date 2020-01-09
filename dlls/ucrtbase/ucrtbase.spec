@@ -1621,8 +1621,8 @@
 @ stub _o_fma
 @ stub _o_fmaf
 @ stub _o_fmal
-@ stub _o_fmod
-@ stub _o_fmodf
+@ cdecl _o_fmod(double double) MSVCRT_fmod
+@ cdecl -arch=!i386 _o_fmodf(float float) MSVCRT_fmodf
 @ stub _o_fopen
 @ stub _o_fopen_s
 @ stub _o_fputc
