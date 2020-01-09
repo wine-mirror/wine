@@ -35,7 +35,6 @@
 static HWND hwnd;
 
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
-static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
 
 static void init_function_pointers(void)
 {
@@ -43,7 +42,6 @@ static void init_function_pointers(void)
 
     hmod = GetModuleHandleA("shell32.dll");
     pSHCreateShellItem = (void*)GetProcAddress(hmod, "SHCreateShellItem");
-    pSHParseDisplayName = (void*)GetProcAddress(hmod, "SHParseDisplayName");
 }
 
 /*********************************************************************
@@ -1295,7 +1293,6 @@ static void test_navigation(void)
     static const WCHAR testfolderW[] =
         {'w','i','n','e','t','e','s','t','f','o','l','d','e','r','\0'};
 
-    ok(pSHParseDisplayName != NULL, "pSHParseDisplayName unexpectedly missing.\n");
     ok(pSHCreateShellItem != NULL, "pSHCreateShellItem unexpectedly missing.\n");
 
     GetCurrentDirectoryW(MAX_PATH, current_path);
@@ -1311,8 +1308,10 @@ static void test_navigation(void)
 
     CreateDirectoryW(child_path, NULL);
 
-    pSHParseDisplayName(current_path, NULL, &pidl_current, 0, NULL);
-    pSHParseDisplayName(child_path, NULL, &pidl_child, 0, NULL);
+    hr = SHParseDisplayName(current_path, NULL, &pidl_current, 0, NULL);
+    ok(hr == S_OK, "Failed to parse a path, hr %#x.\n", hr);
+    hr = SHParseDisplayName(child_path, NULL, &pidl_child, 0, NULL);
+    ok(hr == S_OK, "Failed to parse a path, hr %#x.\n", hr);
 
     ebrowser_instantiate(&peb);
     ebrowser_initialize(peb);
