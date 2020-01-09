@@ -73,8 +73,14 @@ static double (__cdecl *p_strtod)(const char*, char** end);
 static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
 static size_t (__cdecl *p___strncnt)(const char*, size_t);
+static int (__cdecl *p_tolower)(int);
+static int (__cdecl *p__tolower)(int);
+static int (__cdecl *p__o_tolower)(int);
 static int (__cdecl *p_towlower)(wint_t);
 static int (__cdecl *p__towlower_l)(wint_t, _locale_t);
+static int (__cdecl *p_toupper)(int);
+static int (__cdecl *p__toupper)(int);
+static int (__cdecl *p__o_toupper)(int);
 static int (__cdecl *p_towupper)(wint_t);
 static int (__cdecl *p__towupper_l)(wint_t, _locale_t);
 static char* (__cdecl *p_setlocale)(int, const char*);
@@ -100,8 +106,14 @@ static BOOL init(void)
     p__memicmp = (void*)GetProcAddress(module, "_memicmp");
     p__memicmp_l = (void*)GetProcAddress(module, "_memicmp_l");
     p___strncnt = (void*)GetProcAddress(module, "__strncnt");
+    p_tolower = (void*)GetProcAddress(module, "tolower");
+    p__tolower = (void*)GetProcAddress(module, "_tolower");
+    p__o_tolower = (void*)GetProcAddress(module, "_o_tolower");
     p_towlower = (void*)GetProcAddress(module, "towlower");
     p__towlower_l = (void*)GetProcAddress(module, "_towlower_l");
+    p_toupper = (void*)GetProcAddress(module, "toupper");
+    p__toupper = (void*)GetProcAddress(module, "_toupper");
+    p__o_toupper = (void*)GetProcAddress(module, "_o_toupper");
     p_towupper = (void*)GetProcAddress(module, "towupper");
     p__towupper_l = (void*)GetProcAddress(module, "_towupper_l");
     p_setlocale = (void*)GetProcAddress(module, "setlocale");
@@ -320,10 +332,54 @@ static void test_C_locale(void)
     p_setlocale(LC_ALL, "C");
     for (i = 0; i <= 0xffff; i++)
     {
+        ret = p_tolower(i);
+        if (i >= 'A' && i <= 'Z')
+        {
+            exp = i + 'a' - 'A';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
+        ret = p__tolower(i);
+        exp = i + 'a' - 'A';
+        ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+
+        ret = p__o_tolower(i);
+        if (i >= 'A' && i <= 'Z')
+        {
+            exp = i + 'a' - 'A';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
         ret = p_towlower(i);
         if (i >= 'A' && i <= 'Z')
         {
             exp = i + 'a' - 'A';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
+        ret = p_toupper(i);
+        if (i >= 'a' && i <= 'z')
+        {
+            exp = i + 'A' - 'a';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
+        ret = p__toupper(i);
+        exp = i + 'A' - 'a';
+        ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+
+        ret = p__o_toupper(i);
+        if (i >= 'a' && i <= 'z')
+        {
+            exp = i + 'A' - 'a';
             ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
         }
         else
