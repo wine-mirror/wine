@@ -50,15 +50,12 @@
 
 void dump_region(HRGN hrgn);
 
-static HWND (WINAPI *pGetAncestor)(HWND,UINT);
 static BOOL (WINAPI *pGetWindowInfo)(HWND,WINDOWINFO*);
 static UINT (WINAPI *pGetWindowModuleFileNameA)(HWND,LPSTR,UINT);
 static BOOL (WINAPI *pGetLayeredWindowAttributes)(HWND,COLORREF*,BYTE*,DWORD*);
 static BOOL (WINAPI *pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
 static BOOL (WINAPI *pUpdateLayeredWindow)(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
 static BOOL (WINAPI *pUpdateLayeredWindowIndirect)(HWND,const UPDATELAYEREDWINDOWINFO*);
-static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
-static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static int  (WINAPI *pGetWindowRgnBox)(HWND,LPRECT);
 static BOOL (WINAPI *pGetGUIThreadInfo)(DWORD, GUITHREADINFO*);
 static BOOL (WINAPI *pGetProcessDefaultLayout)( DWORD *layout );
@@ -135,24 +132,18 @@ static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_
 {
     HWND res;
 
-    if (pGetAncestor)
-    {
-        res = pGetAncestor( hwnd, GA_PARENT );
-        ok( res == ga_parent, "Wrong result for GA_PARENT %p expected %p\n", res, ga_parent );
-    }
+    res = GetAncestor( hwnd, GA_PARENT );
+    ok( res == ga_parent, "Wrong result for GA_PARENT %p expected %p\n", res, ga_parent );
     res = (HWND)GetWindowLongPtrA( hwnd, GWLP_HWNDPARENT );
     ok( res == gwl_parent, "Wrong result for GWL_HWNDPARENT %p expected %p\n", res, gwl_parent );
     res = GetParent( hwnd );
     ok( res == get_parent, "Wrong result for GetParent %p expected %p\n", res, get_parent );
     res = GetWindow( hwnd, GW_OWNER );
     ok( res == gw_owner, "Wrong result for GW_OWNER %p expected %p\n", res, gw_owner );
-    if (pGetAncestor)
-    {
-        res = pGetAncestor( hwnd, GA_ROOT );
-        ok( res == ga_root, "Wrong result for GA_ROOT %p expected %p\n", res, ga_root );
-        res = pGetAncestor( hwnd, GA_ROOTOWNER );
-        ok( res == ga_root_owner, "Wrong result for GA_ROOTOWNER %p expected %p\n", res, ga_root_owner );
-    }
+    res = GetAncestor( hwnd, GA_ROOT );
+    ok( res == ga_root, "Wrong result for GA_ROOT %p expected %p\n", res, ga_root );
+    res = GetAncestor( hwnd, GA_ROOTOWNER );
+    ok( res == ga_root_owner, "Wrong result for GA_ROOTOWNER %p expected %p\n", res, ga_root_owner );
 }
 
 #define check_wnd_state(a,b,c,d) check_wnd_state_(__FILE__,__LINE__,a,b,c,d)
@@ -1267,19 +1258,16 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
             if (0)
             {
             /* Uncomment this once the test succeeds in all cases */
-	    if (pGetAncestor)
-	    {
-		ok(pGetAncestor(hwnd, GA_PARENT) == hwndMessage, "GA_PARENT should be set to hwndMessage at this point\n");
-		ok(pGetAncestor(hwnd, GA_ROOT) == hwnd,
-		   "GA_ROOT is set to %p, expected %p\n", pGetAncestor(hwnd, GA_ROOT), hwnd);
+		ok(GetAncestor(hwnd, GA_PARENT) == hwndMessage, "GA_PARENT should be set to hwndMessage at this point\n");
+		ok(GetAncestor(hwnd, GA_ROOT) == hwnd,
+		   "GA_ROOT is set to %p, expected %p\n", GetAncestor(hwnd, GA_ROOT), hwnd);
 
 		if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
-		    ok(pGetAncestor(hwnd, GA_ROOTOWNER) == hwndMessage,
+		    ok(GetAncestor(hwnd, GA_ROOTOWNER) == hwndMessage,
 		       "GA_ROOTOWNER should be set to hwndMessage at this point\n");
 		else
-		    ok(pGetAncestor(hwnd, GA_ROOTOWNER) == hwnd,
-		       "GA_ROOTOWNER is set to %p, expected %p\n", pGetAncestor(hwnd, GA_ROOTOWNER), hwnd);
-            }
+		    ok(GetAncestor(hwnd, GA_ROOTOWNER) == hwnd,
+		       "GA_ROOTOWNER is set to %p, expected %p\n", GetAncestor(hwnd, GA_ROOTOWNER), hwnd);
 
 	    ok(GetWindowRect(hwnd, &rc), "GetWindowRect failed\n");
 	    ok(EqualRect(&rc, &rc_null), "window rect should be set to 0 HCBT_CREATEWND\n");
@@ -5265,17 +5253,9 @@ static void test_params(void)
     ok(!IsWindow(HWND_TOPMOST), "IsWindow(HWND_TOPMOST)\n");
 
     /* Just a param check */
-    if (pGetMonitorInfoA)
-    {
-        SetLastError(0xdeadbeef);
-        rc = GetWindowTextA(hwndMain2, NULL, 1024);
-        ok( rc==0, "GetWindowText: rc=%d err=%d\n",rc,GetLastError());
-    }
-    else
-    {
-        /* Skips actually on Win95 and NT4 */
-        win_skip("Test would crash on Win95\n");
-    }
+    SetLastError(0xdeadbeef);
+    rc = GetWindowTextA(hwndMain2, NULL, 1024);
+    ok(!rc, "GetWindowText: rc=%d err=%d\n",rc,GetLastError());
 
     SetLastError(0xdeadbeef);
     hwnd=CreateWindowA("LISTBOX", "TestList",
@@ -8040,31 +8020,28 @@ static void test_hwnd_message(void)
         { GWLP_WNDPROC,    0, ERROR_ACCESS_DENIED },
         { DWLP_MSGRESULT,  0, ERROR_INVALID_INDEX }
     };
+    HWND root, desktop = GetDesktopWindow();
     DWORD_PTR result;
+    char buffer[100];
     int i;
 
     hwnd = CreateWindowExW(0, mainwindowclassW, message_windowW, WS_CAPTION | WS_VISIBLE,
                            100, 100, 200, 200, HWND_MESSAGE, 0, 0, NULL);
     ok( hwnd != 0, "CreateWindowExW with parent HWND_MESSAGE failed\n" );
     ok( !GetParent(hwnd), "GetParent should return 0 for message only windows\n" );
-    if (pGetAncestor)
-    {
-        char buffer[100];
-        HWND root, desktop = GetDesktopWindow();
 
-        parent = pGetAncestor(hwnd, GA_PARENT);
-        ok(parent != 0, "GetAncestor(GA_PARENT) should not return 0 for message windows\n");
-        ok(parent != desktop, "GetAncestor(GA_PARENT) should not return desktop for message windows\n");
-        root = pGetAncestor(hwnd, GA_ROOT);
-        ok(root == hwnd, "GetAncestor(GA_ROOT) should return hwnd for message windows\n");
-        ok( !pGetAncestor(parent, GA_PARENT),
-            "parent shouldn't have parent %p\n", pGetAncestor(parent, GA_PARENT) );
-        if (!GetClassNameA( parent, buffer, sizeof(buffer) )) buffer[0] = 0;
-        ok( !lstrcmpiA( buffer, "Message" ), "wrong parent class '%s'\n", buffer );
-        GetWindowRect( parent, &rect );
-        ok( rect.left == 0 && rect.right == 100 && rect.top == 0 && rect.bottom == 100,
-            "wrong parent rect %s\n", wine_dbgstr_rect( &rect ));
-    }
+    parent = GetAncestor(hwnd, GA_PARENT);
+    ok(parent != 0, "GetAncestor(GA_PARENT) should not return 0 for message windows\n");
+    ok(parent != desktop, "GetAncestor(GA_PARENT) should not return desktop for message windows\n");
+    root = GetAncestor(hwnd, GA_ROOT);
+    ok(root == hwnd, "GetAncestor(GA_ROOT) should return hwnd for message windows\n");
+    ok( !GetAncestor(parent, GA_PARENT),
+        "parent shouldn't have parent %p\n", GetAncestor(parent, GA_PARENT) );
+    if (!GetClassNameA( parent, buffer, sizeof(buffer) )) buffer[0] = 0;
+    ok( !lstrcmpiA( buffer, "Message" ), "wrong parent class '%s'\n", buffer );
+    GetWindowRect( parent, &rect );
+    ok( rect.left == 0 && rect.right == 100 && rect.top == 0 && rect.bottom == 100,
+        "wrong parent rect %s\n", wine_dbgstr_rect( &rect ));
     GetWindowRect( hwnd, &rect );
     ok( rect.left == 100 && rect.right == 300 && rect.top == 100 && rect.bottom == 300,
         "wrong window rect %s\n", wine_dbgstr_rect( &rect ));
@@ -8344,20 +8321,14 @@ static void test_fullscreen(void)
     HMONITOR hmon;
     LRESULT ret;
 
-    if (!pGetMonitorInfoA || !pMonitorFromPoint)
-    {
-        win_skip("GetMonitorInfoA or MonitorFromPoint are not available on this platform\n");
-        return;
-    }
-
     pt.x = pt.y = 0;
     SetLastError(0xdeadbeef);
-    hmon = pMonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+    hmon = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
     ok(hmon != 0, "MonitorFromPoint error %u\n", GetLastError());
 
     mi.cbSize = sizeof(mi);
     SetLastError(0xdeadbeef);
-    ret = pGetMonitorInfoA(hmon, &mi);
+    ret = GetMonitorInfoA(hmon, &mi);
     ok(ret, "GetMonitorInfo error %u\n", GetLastError());
     trace("monitor %s, work %s\n", wine_dbgstr_rect(&mi.rcMonitor), wine_dbgstr_rect(&mi.rcWork));
 
@@ -11873,15 +11844,12 @@ START_TEST(win)
     int argc = winetest_get_mainargs( &argv );
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
-    pGetAncestor = (void *)GetProcAddress( user32, "GetAncestor" );
     pGetWindowInfo = (void *)GetProcAddress( user32, "GetWindowInfo" );
     pGetWindowModuleFileNameA = (void *)GetProcAddress( user32, "GetWindowModuleFileNameA" );
     pGetLayeredWindowAttributes = (void *)GetProcAddress( user32, "GetLayeredWindowAttributes" );
     pSetLayeredWindowAttributes = (void *)GetProcAddress( user32, "SetLayeredWindowAttributes" );
     pUpdateLayeredWindow = (void *)GetProcAddress( user32, "UpdateLayeredWindow" );
     pUpdateLayeredWindowIndirect = (void *)GetProcAddress( user32, "UpdateLayeredWindowIndirect" );
-    pGetMonitorInfoA = (void *)GetProcAddress( user32,  "GetMonitorInfoA" );
-    pMonitorFromPoint = (void *)GetProcAddress( user32,  "MonitorFromPoint" );
     pGetWindowRgnBox = (void *)GetProcAddress( user32, "GetWindowRgnBox" );
     pGetGUIThreadInfo = (void *)GetProcAddress( user32, "GetGUIThreadInfo" );
     pGetProcessDefaultLayout = (void *)GetProcAddress( user32, "GetProcessDefaultLayout" );

@@ -2010,15 +2010,10 @@ static int log_all_parent_messages;
 static CRITICAL_SECTION sequence_cs;
 
 /* user32 functions */
-static HWND (WINAPI *pGetAncestor)(HWND,UINT);
-static BOOL (WINAPI *pGetMenuInfo)(HMENU,LPCMENUINFO);
 static void (WINAPI *pNotifyWinEvent)(DWORD, HWND, LONG, LONG);
-static BOOL (WINAPI *pSetMenuInfo)(HMENU,LPCMENUINFO);
 static HWINEVENTHOOK (WINAPI *pSetWinEventHook)(DWORD, DWORD, HMODULE, WINEVENTPROC, DWORD, DWORD, DWORD);
 static BOOL (WINAPI *pTrackMouseEvent)(TRACKMOUSEEVENT*);
 static BOOL (WINAPI *pUnhookWinEvent)(HWINEVENTHOOK);
-static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
-static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static BOOL (WINAPI *pUpdateLayeredWindow)(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
 static UINT_PTR (WINAPI *pSetSystemTimer)(HWND, UINT_PTR, UINT, TIMERPROC);
 static UINT_PTR (WINAPI *pKillSystemTimer)(HWND, UINT_PTR);
@@ -2037,15 +2032,10 @@ static void init_procs(void)
       trace("GetProcAddress(%s) failed\n", #func); \
     }
 
-    GET_PROC(user32, GetAncestor)
-    GET_PROC(user32, GetMenuInfo)
     GET_PROC(user32, NotifyWinEvent)
-    GET_PROC(user32, SetMenuInfo)
     GET_PROC(user32, SetWinEventHook)
     GET_PROC(user32, TrackMouseEvent)
     GET_PROC(user32, UnhookWinEvent)
-    GET_PROC(user32, GetMonitorInfoA)
-    GET_PROC(user32, MonitorFromPoint)
     GET_PROC(user32, UpdateLayeredWindow)
     GET_PROC(user32, SetSystemTimer)
     GET_PROC(user32, KillSystemTimer)
@@ -9469,8 +9459,7 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	}
 	/* fall through */
 	case WM_DESTROY:
-            if (pGetAncestor)
-	        ok(pGetAncestor(hwnd, GA_PARENT) != 0, "parent should NOT be unlinked at this point\n");
+	    ok(GetAncestor(hwnd, GA_PARENT) != 0, "parent should NOT be unlinked at this point\n");
 	    if (test_DestroyWindow_flag)
 	    {
 		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
@@ -11172,10 +11161,8 @@ static void test_DestroyWindow(void)
     test = GetParent(child2);
     ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
     ok(!IsChild(parent, child2), "wrong parent/child %p/%p\n", parent, child2);
-    if(pGetAncestor) {
-        test = pGetAncestor(child2, GA_PARENT);
-        ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
-    }
+    test = GetAncestor(child2, GA_PARENT);
+    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
     test = GetWindow(child2, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
@@ -11186,10 +11173,8 @@ static void test_DestroyWindow(void)
     test = GetParent(parent);
     ok(!test, "wrong parent %p\n", test);
     ok(!IsChild(GetDesktopWindow(), parent), "wrong parent/child %p/%p\n", GetDesktopWindow(), parent);
-    if(pGetAncestor) {
-        test = pGetAncestor(parent, GA_PARENT);
-        ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
-    }
+    test = GetAncestor(parent, GA_PARENT);
+    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
     test = GetWindow(parent, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
@@ -11197,10 +11182,8 @@ static void test_DestroyWindow(void)
     test = GetParent(child1);
     ok(test == parent, "wrong parent %p\n", test);
     ok(IsChild(parent, child1), "wrong parent/child %p/%p\n", parent, child1);
-    if(pGetAncestor) {
-        test = pGetAncestor(child1, GA_PARENT);
-        ok(test == parent, "wrong parent %p\n", test);
-    }
+    test = GetAncestor(child1, GA_PARENT);
+    ok(test == parent, "wrong parent %p\n", test);
     test = GetWindow(child1, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
@@ -11208,10 +11191,8 @@ static void test_DestroyWindow(void)
     test = GetParent(child2);
     ok(test == parent, "wrong parent %p\n", test);
     ok(IsChild(parent, child2), "wrong parent/child %p/%p\n", parent, child2);
-    if(pGetAncestor) {
-        test = pGetAncestor(child2, GA_PARENT);
-        ok(test == parent, "wrong parent %p\n", test);
-    }
+    test = GetAncestor(child2, GA_PARENT);
+    ok(test == parent, "wrong parent %p\n", test);
     test = GetWindow(child2, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
@@ -11219,10 +11200,8 @@ static void test_DestroyWindow(void)
     test = GetParent(child3);
     ok(test == child1, "wrong parent %p\n", test);
     ok(IsChild(parent, child3), "wrong parent/child %p/%p\n", parent, child3);
-    if(pGetAncestor) {
-        test = pGetAncestor(child3, GA_PARENT);
-        ok(test == child1, "wrong parent %p\n", test);
-    }
+    test = GetAncestor(child3, GA_PARENT);
+    ok(test == child1, "wrong parent %p\n", test);
     test = GetWindow(child3, GW_OWNER);
     ok(!test, "wrong owner %p\n", test);
 
@@ -11230,10 +11209,8 @@ static void test_DestroyWindow(void)
     test = GetParent(child4);
     ok(test == parent, "wrong parent %p\n", test);
     ok(!IsChild(parent, child4), "wrong parent/child %p/%p\n", parent, child4);
-    if(pGetAncestor) {
-        test = pGetAncestor(child4, GA_PARENT);
-        ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
-    }
+    test = GetAncestor(child4, GA_PARENT);
+    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
     test = GetWindow(child4, GW_OWNER);
     ok(test == parent, "wrong owner %p\n", test);
 
@@ -13440,6 +13417,9 @@ static void test_ShowWindow(void)
     INT i;
     WINDOWPLACEMENT wp;
     RECT win_rc, work_rc = {0, 0, 0, 0};
+    HMONITOR hmon;
+    MONITORINFO mi;
+    POINT pt = {0, 0};
 
 #define WS_BASE (WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|WS_CLIPSIBLINGS)
     hwnd = CreateWindowExA(0, "ShowWindowClass", NULL, WS_BASE,
@@ -13453,24 +13433,17 @@ static void test_ShowWindow(void)
     flush_events();
     flush_sequence();
 
-    if (pGetMonitorInfoA && pMonitorFromPoint)
-    {
-        HMONITOR hmon;
-        MONITORINFO mi;
-        POINT pt = {0, 0};
+    SetLastError(0xdeadbeef);
+    hmon = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+    ok(hmon != 0, "MonitorFromPoint error %u\n", GetLastError());
 
-        SetLastError(0xdeadbeef);
-        hmon = pMonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
-        ok(hmon != 0, "MonitorFromPoint error %u\n", GetLastError());
-
-        mi.cbSize = sizeof(mi);
-        SetLastError(0xdeadbeef);
-        ret = pGetMonitorInfoA(hmon, &mi);
-        ok(ret, "GetMonitorInfo error %u\n", GetLastError());
-        trace("monitor %s, work %s\n", wine_dbgstr_rect(&mi.rcMonitor),
-              wine_dbgstr_rect(&mi.rcWork));
-        work_rc = mi.rcWork;
-    }
+    mi.cbSize = sizeof(mi);
+    SetLastError(0xdeadbeef);
+    ret = GetMonitorInfoA(hmon, &mi);
+    ok(ret, "GetMonitorInfo error %u\n", GetLastError());
+    trace("monitor %s, work %s\n", wine_dbgstr_rect(&mi.rcMonitor),
+          wine_dbgstr_rect(&mi.rcWork));
+    work_rc = mi.rcWork;
 
     GetWindowRect(hwnd, &win_rc);
     OffsetRect(&win_rc, -work_rc.left, -work_rc.top);
@@ -15258,7 +15231,7 @@ static void set_menu_style(HMENU hmenu, DWORD style)
     mi.fMask = MIM_STYLE;
     mi.dwStyle = style;
     SetLastError(0xdeadbeef);
-    ret = pSetMenuInfo(hmenu, &mi);
+    ret = SetMenuInfo(hmenu, &mi);
     ok(ret, "SetMenuInfo error %u\n", GetLastError());
 }
 
@@ -15271,7 +15244,7 @@ static DWORD get_menu_style(HMENU hmenu)
     mi.fMask = MIM_STYLE;
     mi.dwStyle = 0;
     SetLastError(0xdeadbeef);
-    ret = pGetMenuInfo(hmenu, &mi);
+    ret = GetMenuInfo(hmenu, &mi);
     ok(ret, "GetMenuInfo error %u\n", GetLastError());
 
     return mi.dwStyle;
@@ -15286,11 +15259,6 @@ static void test_menu_messages(void)
     DWORD style;
     BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
 
-    if (!pGetMenuInfo || !pSetMenuInfo)
-    {
-        win_skip("GetMenuInfo and/or SetMenuInfo are not available\n");
-        return;
-    }
     cls.style = 0;
     cls.lpfnWndProc = parent_menu_proc;
     cls.cbClsExtra = 0;
