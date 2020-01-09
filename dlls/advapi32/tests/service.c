@@ -45,8 +45,6 @@ static BOOL (WINAPI *pEnumServicesStatusExA)(SC_HANDLE, SC_ENUM_TYPE, DWORD,
 static BOOL (WINAPI *pEnumServicesStatusExW)(SC_HANDLE, SC_ENUM_TYPE, DWORD,
                                              DWORD, LPBYTE, DWORD, LPDWORD,
                                              LPDWORD, LPDWORD, LPCWSTR);
-static DWORD (WINAPI *pGetSecurityInfo)(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
-                                        PSID*, PSID*, PACL*, PACL*, PSECURITY_DESCRIPTOR*);
 static BOOL (WINAPI *pQueryServiceConfig2A)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD);
 static BOOL (WINAPI *pQueryServiceConfig2W)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD);
 static BOOL (WINAPI *pQueryServiceStatusEx)(SC_HANDLE, SC_STATUS_TYPE, LPBYTE,
@@ -63,7 +61,6 @@ static void init_function_pointers(void)
     pChangeServiceConfig2W = (void*)GetProcAddress(hadvapi32, "ChangeServiceConfig2W");
     pEnumServicesStatusExA= (void*)GetProcAddress(hadvapi32, "EnumServicesStatusExA");
     pEnumServicesStatusExW= (void*)GetProcAddress(hadvapi32, "EnumServicesStatusExW");
-    pGetSecurityInfo = (void *)GetProcAddress(hadvapi32, "GetSecurityInfo");
     pQueryServiceConfig2A= (void*)GetProcAddress(hadvapi32, "QueryServiceConfig2A");
     pQueryServiceConfig2W= (void*)GetProcAddress(hadvapi32, "QueryServiceConfig2W");
     pQueryServiceStatusEx= (void*)GetProcAddress(hadvapi32, "QueryServiceStatusEx");
@@ -1910,7 +1907,7 @@ static void test_sequence(void)
     else
     {
         ok(svc_handle != NULL, "Could not create the service : %d\n", GetLastError());
-        if ((svc_handle != NULL) && (pGetSecurityInfo != NULL))
+        if (svc_handle != NULL)
         {
             PSID sidOwner, sidGroup;
             PACL dacl, sacl;
@@ -1920,22 +1917,22 @@ static void test_sequence(void)
             BOOL bret;
 
             /* Test using GetSecurityInfo to obtain security information */
-            retval = pGetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, &sidOwner,
+            retval = GetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, &sidOwner,
                                       &sidGroup, &dacl, &sacl, &pSD);
             LocalFree(pSD);
             ok(retval == ERROR_SUCCESS, "Expected GetSecurityInfo to succeed: result %d\n", retval);
-            retval = pGetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, NULL,
+            retval = GetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, NULL,
                                       NULL, NULL, NULL, &pSD);
             LocalFree(pSD);
             ok(retval == ERROR_SUCCESS, "Expected GetSecurityInfo to succeed: result %d\n", retval);
             if (!is_nt4)
             {
-                retval = pGetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, NULL,
+                retval = GetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, NULL,
                                           NULL, &dacl, NULL, &pSD);
                 ok(retval == ERROR_SUCCESS, "Expected GetSecurityInfo to succeed: result %d\n", retval);
                 LocalFree(pSD);
                 SetLastError(0xdeadbeef);
-                retval = pGetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, NULL,
+                retval = GetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, NULL,
                                           NULL, NULL, NULL, NULL);
                 error = GetLastError();
                 ok(retval == ERROR_INVALID_PARAMETER, "Expected GetSecurityInfo to fail: result %d\n", retval);
