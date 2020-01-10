@@ -62,8 +62,6 @@ static BOOL (WINAPI *pGetProcessDefaultLayout)( DWORD *layout );
 static BOOL (WINAPI *pSetProcessDefaultLayout)( DWORD layout );
 static BOOL (WINAPI *pFlashWindow)( HWND hwnd, BOOL bInvert );
 static BOOL (WINAPI *pFlashWindowEx)( PFLASHWINFO pfwi );
-static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
-static DWORD (WINAPI *pGetLayout)(HDC hdc);
 static BOOL (WINAPI *pMirrorRgn)(HWND hwnd, HRGN hrgn);
 static BOOL (WINAPI *pGetWindowDisplayAffinity)(HWND hwnd, DWORD *affinity);
 static BOOL (WINAPI *pSetWindowDisplayAffinity)(HWND hwnd, DWORD affinity);
@@ -5908,6 +5906,7 @@ static void test_CreateWindow(void)
     RECT rc, rc_minmax;
     MINMAXINFO minmax;
     BOOL res;
+    HDC hdc;
 
 #define expect_menu(window, menu) \
     SetLastError(0xdeadbeef); \
@@ -6248,73 +6247,69 @@ static void test_CreateWindow(void)
         "invalid error %u\n", GetLastError());
     DestroyWindow(hwnd);
 
-    if (pGetLayout && pSetLayout)
+    hdc = GetDC( parent );
+    SetLayout( hdc, LAYOUT_RTL );
+    if (GetLayout( hdc ))
     {
-        HDC hdc = GetDC( parent );
-        pSetLayout( hdc, LAYOUT_RTL );
-        if (pGetLayout( hdc ))
+        ReleaseDC( parent, hdc );
+        DestroyWindow( parent );
+        SetLastError( 0xdeadbeef );
+        parent = CreateWindowExA(WS_EX_APPWINDOW | WS_EX_LAYOUTRTL, "static", NULL, WS_POPUP,
+                                0, 0, 100, 100, 0, 0, 0, NULL);
+        ok( parent != 0, "creation failed err %u\n", GetLastError());
+        expect_ex_style( parent, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL );
+        hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 20, 20, parent, 0, 0, NULL);
+        ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+        expect_ex_style( hwnd, WS_EX_LAYOUTRTL );
+        DestroyWindow( hwnd );
+        hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 20, 20, parent, 0, 0, NULL);
+        ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+        expect_ex_style( hwnd, 0 );
+        DestroyWindow( hwnd );
+        SetWindowLongW( parent, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL | WS_EX_NOINHERITLAYOUT );
+        hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 20, 20, parent, 0, 0, NULL);
+        ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+        expect_ex_style( hwnd, 0 );
+        DestroyWindow( hwnd );
+
+        if (pGetProcessDefaultLayout && pSetProcessDefaultLayout)
         {
-            ReleaseDC( parent, hdc );
-            DestroyWindow( parent );
+            DWORD layout;
+
             SetLastError( 0xdeadbeef );
-            parent = CreateWindowExA(WS_EX_APPWINDOW | WS_EX_LAYOUTRTL, "static", NULL, WS_POPUP,
-                                    0, 0, 100, 100, 0, 0, 0, NULL);
-            ok( parent != 0, "creation failed err %u\n", GetLastError());
-            expect_ex_style( parent, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL );
-            hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 20, 20, parent, 0, 0, NULL);
+            ok( !pGetProcessDefaultLayout( NULL ), "GetProcessDefaultLayout succeeded\n" );
+            ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+            SetLastError( 0xdeadbeef );
+            res = pGetProcessDefaultLayout( &layout );
+            ok( res, "GetProcessDefaultLayout failed err %u\n", GetLastError ());
+            ok( layout == 0, "GetProcessDefaultLayout wrong layout %x\n", layout );
+            SetLastError( 0xdeadbeef );
+            res = pSetProcessDefaultLayout( 7 );
+            ok( res, "SetProcessDefaultLayout failed err %u\n", GetLastError ());
+            res = pGetProcessDefaultLayout( &layout );
+            ok( res, "GetProcessDefaultLayout failed err %u\n", GetLastError ());
+            ok( layout == 7, "GetProcessDefaultLayout wrong layout %x\n", layout );
+            SetLastError( 0xdeadbeef );
+            res = pSetProcessDefaultLayout( LAYOUT_RTL );
+            ok( res, "SetProcessDefaultLayout failed err %u\n", GetLastError ());
+            res = pGetProcessDefaultLayout( &layout );
+            ok( res, "GetProcessDefaultLayout failed err %u\n", GetLastError ());
+            ok( layout == LAYOUT_RTL, "GetProcessDefaultLayout wrong layout %x\n", layout );
+            hwnd = CreateWindowExA(WS_EX_APPWINDOW, "static", NULL, WS_POPUP,
+                                  0, 0, 100, 100, 0, 0, 0, NULL);
             ok( hwnd != 0, "creation failed err %u\n", GetLastError());
-            expect_ex_style( hwnd, WS_EX_LAYOUTRTL );
+            expect_ex_style( hwnd, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL );
             DestroyWindow( hwnd );
-            hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 20, 20, parent, 0, 0, NULL);
+            hwnd = CreateWindowExA(WS_EX_APPWINDOW, "static", NULL, WS_POPUP,
+                                  0, 0, 100, 100, parent, 0, 0, NULL);
             ok( hwnd != 0, "creation failed err %u\n", GetLastError());
-            expect_ex_style( hwnd, 0 );
+            expect_ex_style( hwnd, WS_EX_APPWINDOW );
             DestroyWindow( hwnd );
-            SetWindowLongW( parent, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL | WS_EX_NOINHERITLAYOUT );
-            hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 20, 20, parent, 0, 0, NULL);
-            ok( hwnd != 0, "creation failed err %u\n", GetLastError());
-            expect_ex_style( hwnd, 0 );
-            DestroyWindow( hwnd );
-
-            if (pGetProcessDefaultLayout && pSetProcessDefaultLayout)
-            {
-                DWORD layout;
-
-                SetLastError( 0xdeadbeef );
-                ok( !pGetProcessDefaultLayout( NULL ), "GetProcessDefaultLayout succeeded\n" );
-                ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
-                SetLastError( 0xdeadbeef );
-                res = pGetProcessDefaultLayout( &layout );
-                ok( res, "GetProcessDefaultLayout failed err %u\n", GetLastError ());
-                ok( layout == 0, "GetProcessDefaultLayout wrong layout %x\n", layout );
-                SetLastError( 0xdeadbeef );
-                res = pSetProcessDefaultLayout( 7 );
-                ok( res, "SetProcessDefaultLayout failed err %u\n", GetLastError ());
-                res = pGetProcessDefaultLayout( &layout );
-                ok( res, "GetProcessDefaultLayout failed err %u\n", GetLastError ());
-                ok( layout == 7, "GetProcessDefaultLayout wrong layout %x\n", layout );
-                SetLastError( 0xdeadbeef );
-                res = pSetProcessDefaultLayout( LAYOUT_RTL );
-                ok( res, "SetProcessDefaultLayout failed err %u\n", GetLastError ());
-                res = pGetProcessDefaultLayout( &layout );
-                ok( res, "GetProcessDefaultLayout failed err %u\n", GetLastError ());
-                ok( layout == LAYOUT_RTL, "GetProcessDefaultLayout wrong layout %x\n", layout );
-                hwnd = CreateWindowExA(WS_EX_APPWINDOW, "static", NULL, WS_POPUP,
-                                      0, 0, 100, 100, 0, 0, 0, NULL);
-                ok( hwnd != 0, "creation failed err %u\n", GetLastError());
-                expect_ex_style( hwnd, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL );
-                DestroyWindow( hwnd );
-                hwnd = CreateWindowExA(WS_EX_APPWINDOW, "static", NULL, WS_POPUP,
-                                      0, 0, 100, 100, parent, 0, 0, NULL);
-                ok( hwnd != 0, "creation failed err %u\n", GetLastError());
-                expect_ex_style( hwnd, WS_EX_APPWINDOW );
-                DestroyWindow( hwnd );
-                pSetProcessDefaultLayout( 0 );
-            }
-            else win_skip( "SetProcessDefaultLayout not supported\n" );
+            pSetProcessDefaultLayout( 0 );
         }
-        else win_skip( "SetLayout not supported\n" );
+        else win_skip( "SetProcessDefaultLayout not supported\n" );
     }
-    else win_skip( "SetLayout not available\n" );
+    else win_skip( "SetLayout not supported\n" );
 
     DestroyWindow(parent);
 
@@ -11856,8 +11851,6 @@ START_TEST(win)
     pSetProcessDefaultLayout = (void *)GetProcAddress( user32, "SetProcessDefaultLayout" );
     pFlashWindow = (void *)GetProcAddress( user32, "FlashWindow" );
     pFlashWindowEx = (void *)GetProcAddress( user32, "FlashWindowEx" );
-    pGetLayout = (void *)GetProcAddress( gdi32, "GetLayout" );
-    pSetLayout = (void *)GetProcAddress( gdi32, "SetLayout" );
     pMirrorRgn = (void *)GetProcAddress( gdi32, "MirrorRgn" );
     pGetWindowDisplayAffinity = (void *)GetProcAddress( user32, "GetWindowDisplayAffinity" );
     pSetWindowDisplayAffinity = (void *)GetProcAddress( user32, "SetWindowDisplayAffinity" );

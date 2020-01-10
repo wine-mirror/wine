@@ -550,24 +550,13 @@ static void test_invisible_create(void)
 
 static void test_dc_layout(void)
 {
-    DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
-    DWORD (WINAPI *pGetLayout)(HDC hdc);
     HWND hwnd_cache_rtl, hwnd_owndc_rtl, hwnd_classdc_rtl, hwnd_classdc2_rtl;
     HDC hdc;
     DWORD layout;
-    HMODULE mod = GetModuleHandleA("gdi32.dll");
-
-    pGetLayout = (void *)GetProcAddress( mod, "GetLayout" );
-    pSetLayout = (void *)GetProcAddress( mod, "SetLayout" );
-    if (!pGetLayout || !pSetLayout)
-    {
-        win_skip( "Don't have SetLayout\n" );
-        return;
-    }
 
     hdc = GetDC( hwnd_cache );
-    pSetLayout( hdc, LAYOUT_RTL );
-    layout = pGetLayout( hdc );
+    SetLayout( hdc, LAYOUT_RTL );
+    layout = GetLayout( hdc );
     ReleaseDC( hwnd_cache, hdc );
     if (!layout)
     {
@@ -584,42 +573,42 @@ static void test_dc_layout(void)
     hwnd_classdc2_rtl = CreateWindowExA(WS_EX_LAYOUTRTL, "classdc_class", NULL, WS_OVERLAPPED | WS_VISIBLE,
                                         200, 200, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
     hdc = GetDC( hwnd_cache_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
 
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
-    pSetLayout( hdc, 0 );
+    SetLayout( hdc, 0 );
     ReleaseDC( hwnd_cache_rtl, hdc );
     hdc = GetDC( hwnd_owndc_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_cache_rtl, hdc );
 
     hdc = GetDC( hwnd_cache );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == 0, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_cache, hdc );
 
     hdc = GetDC( hwnd_owndc_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
-    pSetLayout( hdc, 0 );
+    SetLayout( hdc, 0 );
     ReleaseDC( hwnd_owndc_rtl, hdc );
     hdc = GetDC( hwnd_owndc_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_owndc_rtl, hdc );
 
     hdc = GetDC( hwnd_classdc_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
-    pSetLayout( hdc, 0 );
+    SetLayout( hdc, 0 );
     ReleaseDC( hwnd_classdc_rtl, hdc );
     hdc = GetDC( hwnd_classdc2_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_classdc2_rtl, hdc );
     hdc = GetDC( hwnd_classdc );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_classdc_rtl, hdc );
 
