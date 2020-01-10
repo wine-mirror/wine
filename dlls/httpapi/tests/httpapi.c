@@ -20,6 +20,8 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
+#include <wchar.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -31,8 +33,6 @@
 
 #include "wine/test.h"
 
-static const WCHAR localhost_urlW[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/',0};
-static const WCHAR localhost_url2W[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','5','0','0','0','1','/',0};
 static const WCHAR invalid_url1[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','5','0','0','0','0',0};
 static const WCHAR invalid_url2[] = {'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0',0};
 static const WCHAR invalid_url3[] = {'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/',0};
@@ -69,17 +69,17 @@ static void init(void)
 
 static const char simple_req[] =
     "GET /foobar HTTP/1.1\r\n"
-    "Host: localhost:50000\r\n"
+    "Host: localhost:%u\r\n"
     "Connection: keep-alive\r\n"
     "User-Agent: WINE\r\n"
     "\r\n";
 
-static SOCKET create_client_socket(void)
+static SOCKET create_client_socket(unsigned short port)
 {
     struct sockaddr_in sockaddr =
     {
         .sin_family = AF_INET,
-        .sin_port = htons(50000),
+        .sin_port = htons(port),
         .sin_addr.S_un.S_addr = inet_addr("127.0.0.1"),
     };
     SOCKET s = socket(AF_INET, SOCK_STREAM, 0), ret;
@@ -104,19 +104,65 @@ static void send_response_v1(HANDLE queue, HTTP_REQUEST_ID id, int s)
     ok(ret > 0, "recv() failed.\n");
 }
 
+static unsigned short add_url_v1(HANDLE queue)
+{
+    unsigned short port;
+    WCHAR url[50];
+    ULONG ret;
+
+    for (port = 50000; port < 51000; ++port)
+    {
+        swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
+        if ((ret = HttpAddUrl(queue, url, NULL)) != ERROR_SHARING_VIOLATION)
+            return port;
+    }
+    ok(0, "Failed to add url %s, error %u.\n", debugstr_w(url), ret);
+    return 0;
+}
+
+static ULONG add_url_v2(HTTP_URL_GROUP_ID group)
+{
+    unsigned short port;
+    WCHAR url[50];
+    ULONG ret;
+
+    for (port = 50010; port < 51000; ++port)
+    {
+        swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
+        if ((ret = pHttpAddUrlToUrlGroup(group, url, 0xdeadbeef, 0)) != ERROR_SHARING_VIOLATION)
+            return port;
+    }
+    ok(0, "Failed to add url %s, error %u.\n", debugstr_w(url), ret);
+    return 0;
+}
+
+static ULONG remove_url_v1(HANDLE queue, unsigned short port)
+{
+    WCHAR url[50];
+    swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
+    return HttpRemoveUrl(queue, url);
+}
+
+static ULONG remove_url_v2(HTTP_URL_GROUP_ID group, unsigned short port)
+{
+    WCHAR url[50];
+    swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
+    return pHttpRemoveUrlFromUrlGroup(group, url, 0);
+}
+
 static void test_v1_server(void)
 {
-    static const WCHAR cooked_urlW[] = {'h','t','t','p',':','/','/',
-        'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/','f','o','o','b','a','r',0};
-
     char DECLSPEC_ALIGN(8) req_buffer[2048], response_buffer[2048];
     HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer;
     struct sockaddr_in sockaddr, *sin;
     HTTP_RESPONSE_V1 response = {};
     HANDLE queue, queue2;
+    unsigned short port;
+    char req_text[200];
     unsigned int i;
     OVERLAPPED ovl;
     DWORD ret_size;
+    WCHAR url[50];
     ULONG ret;
     SOCKET s;
     int len;
@@ -152,7 +198,7 @@ static void test_v1_server(void)
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
 
-    ret = HttpAddUrl(NULL, localhost_urlW, NULL);
+    ret = HttpAddUrl(NULL, L"http://localhost:50000/", NULL);
     ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_INVALID_PARAMETER /* < Vista */, "Got error %u.\n", ret);
     ret = HttpAddUrl(queue, invalid_url1, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
@@ -166,14 +212,12 @@ static void test_v1_server(void)
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
     ret = HttpAddUrl(queue, invalid_url6, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
-    ok(!ret, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
+    port = add_url_v1(queue);
+    swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
+    ret = HttpAddUrl(queue, url, NULL);
     ok(ret == ERROR_ALREADY_EXISTS, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, localhost_url2W, NULL);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
 
-    s = create_client_socket();
+    s = create_client_socket(port);
     len = sizeof(sockaddr);
     ret = getsockname(s, (struct sockaddr *)&sockaddr, &len);
     ok(ret == 0, "getsockname() failed, error %u.\n", WSAGetLastError());
@@ -183,8 +227,9 @@ static void test_v1_server(void)
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
 
-    ret = send(s, simple_req, strlen(simple_req), 0);
-    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+    sprintf(req_text, simple_req, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
     ok(ret, "Got error %u.\n", GetLastError());
@@ -210,7 +255,8 @@ static void test_v1_server(void)
     ok(req->CookedUrl.HostLength == 30, "Got host length %u.\n", req->CookedUrl.HostLength);
     ok(req->CookedUrl.AbsPathLength == 14, "Got absolute path length %u.\n", req->CookedUrl.AbsPathLength);
     ok(!req->CookedUrl.QueryStringLength, "Got query string length %u.\n", req->CookedUrl.QueryStringLength);
-    ok(!wcscmp(req->CookedUrl.pFullUrl, cooked_urlW), "Got full URL %s.\n", wine_dbgstr_w(req->CookedUrl.pFullUrl));
+    swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/foobar", port);
+    ok(!wcscmp(req->CookedUrl.pFullUrl, url), "Got full URL %s.\n", wine_dbgstr_w(req->CookedUrl.pFullUrl));
     ok(req->CookedUrl.pHost == req->CookedUrl.pFullUrl + 7, "Got host %s.\n", wine_dbgstr_w(req->CookedUrl.pHost));
     ok(req->CookedUrl.pAbsPath == req->CookedUrl.pFullUrl + 22,
             "Got absolute path %s.\n", wine_dbgstr_w(req->CookedUrl.pAbsPath));
@@ -218,7 +264,7 @@ static void test_v1_server(void)
     ok(!memcmp(req->Address.pRemoteAddress, &sockaddr, len), "Client addresses didn't match.\n");
     sin = (SOCKADDR_IN *)req->Address.pLocalAddress;
     ok(sin->sin_family == AF_INET, "Got family %u.\n", sin->sin_family);
-    ok(ntohs(sin->sin_port) == 50000, "Got wrong port %u.\n", ntohs(sin->sin_port));
+    ok(ntohs(sin->sin_port) == port, "Got wrong port %u.\n", ntohs(sin->sin_port));
     ok(sin->sin_addr.S_un.S_addr == inet_addr("127.0.0.1"), "Got address %08x.\n", sin->sin_addr.S_un.S_addr);
     ok(!req->Headers.UnknownHeaderCount, "Got %u unknown headers.\n", req->Headers.UnknownHeaderCount);
     ok(!req->Headers.pUnknownHeaders, "Got unknown headers %p.\n", req->Headers.pUnknownHeaders);
@@ -233,9 +279,11 @@ static void test_v1_server(void)
         }
         else if (i == HttpHeaderHost)
         {
-            ok(req->Headers.KnownHeaders[i].RawValueLength == 15, "Got length %u.\n",
+            char expect[16];
+            sprintf(expect, "localhost:%u", port);
+            ok(req->Headers.KnownHeaders[i].RawValueLength == strlen(expect), "Got length %u.\n",
                     req->Headers.KnownHeaders[i].RawValueLength);
-            ok(!strcmp(req->Headers.KnownHeaders[i].pRawValue, "localhost:50000"),
+            ok(!strcmp(req->Headers.KnownHeaders[i].pRawValue, expect),
                     "Got connection '%s'.\n", req->Headers.KnownHeaders[i].pRawValue);
         }
         else if (i == HttpHeaderUserAgent)
@@ -253,7 +301,7 @@ static void test_v1_server(void)
                     i, req->Headers.KnownHeaders[i].pRawValue);
         }
     }
-    ok(req->BytesReceived == strlen(simple_req), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
+    ok(req->BytesReceived == strlen(req_text), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(!req->EntityChunkCount, "Got %u entity chunks.\n", req->EntityChunkCount);
     ok(!req->pEntityChunks, "Got entity chunks %p.\n", req->pEntityChunks);
     ok(!req->RawConnectionId, "Got SSL connection ID %s.\n", wine_dbgstr_longlong(req->RawConnectionId));
@@ -288,21 +336,19 @@ static void test_v1_server(void)
      * reliably tested. Introducing a delay after send() and before
      * HttpReceiveHttpRequest() confirms this. */
 
-    ret = HttpRemoveUrl(NULL, localhost_urlW);
+    ret = remove_url_v1(NULL, port);
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = HttpRemoveUrl(queue, localhost_urlW);
+    ret = remove_url_v1(queue, port);
     ok(!ret, "Got error %u.\n", ret);
-    ret = HttpRemoveUrl(queue, localhost_urlW);
+    ret = remove_url_v1(queue, port);
     ok(ret == ERROR_FILE_NOT_FOUND, "Got error %u.\n", ret);
-    ret = HttpRemoveUrl(queue, localhost_url2W);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
 
     closesocket(s);
     CloseHandle(ovl.hEvent);
     ret = CloseHandle(queue);
     ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
 
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
+    ret = HttpAddUrl(queue, L"http://localhost:50000/", NULL);
     ok(ret == ERROR_INVALID_HANDLE, "Got error %u.\n", ret);
 }
 
@@ -311,8 +357,10 @@ static void test_v1_completion_port(void)
     char DECLSPEC_ALIGN(8) req_buffer[2048], response_buffer[2048];
     HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer;
     HTTP_RESPONSE_V1 response = {};
+    unsigned short tcp_port;
     OVERLAPPED ovl, *povl;
     HANDLE queue, port;
+    char req_text[200];
     DWORD ret_size;
     ULONG_PTR key;
     ULONG ret;
@@ -333,17 +381,16 @@ static void test_v1_completion_port(void)
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
     ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
 
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
-    ok(!ret, "Got error %u.\n", ret);
-
-    s = create_client_socket();
+    tcp_port = add_url_v1(queue);
+    s = create_client_socket(tcp_port);
 
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
 
-    ret = send(s, simple_req, strlen(simple_req), 0);
-    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+    sprintf(req_text, simple_req, tcp_port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     ret_size = key = 0xdeadbeef;
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 1000);
@@ -371,7 +418,7 @@ static void test_v1_completion_port(void)
     ret = recv(s, response_buffer, sizeof(response_buffer), 0);
     ok(ret == ret_size, "Expected size %u, got %u.\n", ret_size, ret);
 
-    ret = HttpRemoveUrl(queue, localhost_urlW);
+    ret = remove_url_v1(queue, tcp_port);
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     CloseHandle(port);
@@ -387,6 +434,8 @@ static void test_v1_multiple_requests(void)
     HTTP_RESPONSE_V1 response = {};
     struct sockaddr_in sockaddr;
     OVERLAPPED ovl1, ovl2;
+    unsigned short port;
+    char req_text[200];
     DWORD ret_size;
     SOCKET s1, s2;
     HANDLE queue;
@@ -398,8 +447,7 @@ static void test_v1_multiple_requests(void)
 
     ret = HttpCreateHttpHandle(&queue, 0);
     ok(!ret, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
-    ok(!ret, "Got error %u.\n", ret);
+    port = add_url_v1(queue);
 
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req1, sizeof(req_buffer1), NULL, &ovl1);
     ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
@@ -411,18 +459,19 @@ static void test_v1_multiple_requests(void)
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
 
-    s1 = create_client_socket();
-    ret = send(s1, simple_req, strlen(simple_req), 0);
-    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+    s1 = create_client_socket(port);
+    sprintf(req_text, simple_req, port);
+    ret = send(s1, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     ret = WaitForSingleObject(ovl1.hEvent, 100);
     ok(!ret, "Got %u.\n", ret);
     ret = WaitForSingleObject(ovl2.hEvent, 100);
     ok(ret == WAIT_TIMEOUT, "Got %u.\n", ret);
 
-    s2 = create_client_socket();
-    ret = send(s2, simple_req, strlen(simple_req), 0);
-    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+    s2 = create_client_socket(port);
+    ret = send(s2, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     ret = WaitForSingleObject(ovl1.hEvent, 0);
     ok(!ret, "Got %u.\n", ret);
@@ -455,10 +504,10 @@ static void test_v1_multiple_requests(void)
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req2, sizeof(req_buffer2), NULL, &ovl2);
     ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
 
-    ret = send(s1, simple_req, strlen(simple_req), 0);
-    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
-    ret = send(s1, simple_req, strlen(simple_req), 0);
-    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+    ret = send(s1, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
+    ret = send(s1, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     ret = WaitForSingleObject(ovl1.hEvent, 100);
     ok(!ret, "Got %u.\n", ret);
@@ -474,7 +523,7 @@ static void test_v1_multiple_requests(void)
     ok(req1->RequestId != req2->RequestId,
             "Expected different request IDs, but got %s.\n", wine_dbgstr_longlong(req1->RequestId));
 
-    ret = HttpRemoveUrl(queue, localhost_urlW);
+    ret = remove_url_v1(queue, port);
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s1);
     closesocket(s2);
@@ -489,6 +538,8 @@ static void test_v1_short_buffer(void)
     char DECLSPEC_ALIGN(8) req_buffer[2048], DECLSPEC_ALIGN(8) req_buffer2[2048];
     HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer, *req2 = (HTTP_REQUEST_V1 *)req_buffer2;
     HTTP_REQUEST_ID req_id;
+    unsigned short port;
+    char req_text[200];
     OVERLAPPED ovl;
     DWORD ret_size;
     HANDLE queue;
@@ -499,12 +550,12 @@ static void test_v1_short_buffer(void)
 
     ret = HttpCreateHttpHandle(&queue, 0);
     ok(!ret, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
-    ok(!ret, "Got error %u.\n", ret);
+    port = add_url_v1(queue);
 
-    s = create_client_socket();
-    ret = send(s, simple_req, strlen(simple_req), 0);
-    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+    s = create_client_socket(port);
+    sprintf(req_text, simple_req, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(HTTP_REQUEST_V1) - 1, &ret_size, NULL);
@@ -536,7 +587,7 @@ static void test_v1_short_buffer(void)
 
     CancelIo(queue);
 
-    ret = HttpRemoveUrl(queue, localhost_urlW);
+    ret = remove_url_v1(queue, port);
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     CloseHandle(ovl.hEvent);
@@ -551,6 +602,8 @@ static void test_v1_entity_body(void)
     HTTP_RESPONSE_V1 response = {};
     HTTP_DATA_CHUNK chunks[2] = {};
     ULONG ret, chunk_size;
+    unsigned short port;
+    char req_text[200];
     unsigned int i;
     OVERLAPPED ovl;
     DWORD ret_size;
@@ -559,7 +612,7 @@ static void test_v1_entity_body(void)
 
     static const char post_req[] =
         "POST /xyzzy HTTP/1.1\r\n"
-        "Host: localhost:50000\r\n"
+        "Host: localhost:%u\r\n"
         "Connection: keep-alive\r\n"
         "Content-Length: 5\r\n"
         "\r\n"
@@ -567,7 +620,7 @@ static void test_v1_entity_body(void)
 
     static const char post_req2[] =
         "POST /xyzzy HTTP/1.1\r\n"
-        "Host: localhost:50000\r\n"
+        "Host: localhost:%u\r\n"
         "Connection: keep-alive\r\n"
         "Content-Length: 2048\r\n"
         "\r\n";
@@ -579,12 +632,12 @@ static void test_v1_entity_body(void)
 
     ret = HttpCreateHttpHandle(&queue, 0);
     ok(!ret, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
-    ok(!ret, "Got error %u.\n", ret);
+    port = add_url_v1(queue);
 
-    s = create_client_socket();
-    ret = send(s, post_req, sizeof(post_req), 0);
-    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    s = create_client_socket(port);
+    sprintf(req_text, post_req, port);
+    ret = send(s, req_text, strlen(req_text) + 1, 0);
+    ok(ret == strlen(req_text) + 1, "send() returned %d.\n", ret);
     /* Windows versions before 8 will return success, and report that an entity
      * body exists in the Flags member, but fail to account for it in the
      * BytesReceived member or actually copy it to the buffer, if
@@ -597,7 +650,7 @@ static void test_v1_entity_body(void)
     ok(!ret, "Got error %u.\n", ret);
     ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
     ok(req->Flags == HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS, "Got flags %#x.\n", req->Flags);
-    ok(req->BytesReceived == sizeof(post_req), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
+    ok(req->BytesReceived == strlen(req_text) + 1, "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength == 1,
             "Got header length %u.\n", req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength);
     ok(!strcmp(req->Headers.KnownHeaders[HttpHeaderContentLength].pRawValue, "5"),
@@ -637,8 +690,8 @@ static void test_v1_entity_body(void)
      * but it also won't truncate the entity body to match. It will however
      * always write its own Date header. */
 
-    ret = send(s, post_req, sizeof(post_req), 0);
-    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    ret = send(s, req_text, strlen(req_text) + 1, 0);
+    ok(ret == strlen(req_text) + 1, "send() returned %d.\n", ret);
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
 
@@ -661,8 +714,8 @@ static void test_v1_entity_body(void)
 
     /* Test the COPY_BODY flag. */
 
-    ret = send(s, post_req, sizeof(post_req), 0);
-    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    ret = send(s, req_text, strlen(req_text) + 1, 0);
+    ok(ret == strlen(req_text) + 1, "send() returned %d.\n", ret);
     Sleep(100);
 
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY,
@@ -670,7 +723,7 @@ static void test_v1_entity_body(void)
     ok(!ret, "Got error %u.\n", ret);
     ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
     ok(!req->Flags, "Got flags %#x.\n", req->Flags);
-    ok(req->BytesReceived == sizeof(post_req), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
+    ok(req->BytesReceived == strlen(req_text) + 1, "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength == 1,
             "Got header length %u.\n", req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength);
     ok(!strcmp(req->Headers.KnownHeaders[HttpHeaderContentLength].pRawValue, "5"),
@@ -685,8 +738,9 @@ static void test_v1_entity_body(void)
 
     send_response_v1(queue, req->RequestId, s);
 
-    ret = send(s, post_req2, strlen(post_req2), 0);
-    ok(ret == strlen(post_req2), "send() returned %d.\n", ret);
+    sprintf(req_text, post_req2, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
     ret = send(s, req_body, sizeof(req_body), 0);
     ok(ret == sizeof(req_body), "send() returned %d.\n", ret);
 
@@ -697,7 +751,7 @@ static void test_v1_entity_body(void)
     ok(!ret, "Got error %u.\n", ret);
     ok(ret_size == 2000, "Got size %u.\n", ret_size);
     ok(req->Flags == HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS, "Got flags %#x.\n", req->Flags);
-    ok(req->BytesReceived == strlen(post_req2) + 2048, "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
+    ok(req->BytesReceived == strlen(req_text) + 2048, "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength == 4,
             "Got header length %u.\n", req->Headers.KnownHeaders[HttpHeaderContentLength].RawValueLength);
     ok(!strcmp(req->Headers.KnownHeaders[HttpHeaderContentLength].pRawValue, "2048"),
@@ -713,8 +767,9 @@ static void test_v1_entity_body(void)
 
     /* Test HttpReceiveRequestEntityBody(). */
 
-    ret = send(s, post_req, sizeof(post_req), 0);
-    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    sprintf(req_text, post_req, port);
+    ret = send(s, req_text, strlen(req_text) + 1, 0);
+    ok(ret == strlen(req_text) + 1, "send() returned %d.\n", ret);
     Sleep(100);
 
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
@@ -739,8 +794,8 @@ static void test_v1_entity_body(void)
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
     ok(ret == ERROR_CONNECTION_INVALID, "Got error %u.\n", ret);
 
-    ret = send(s, post_req, sizeof(post_req), 0);
-    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    ret = send(s, req_text, strlen(req_text) + 1, 0);
+    ok(ret == strlen(req_text) + 1, "send() returned %d.\n", ret);
     Sleep(100);
 
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
@@ -766,8 +821,8 @@ static void test_v1_entity_body(void)
 
     send_response_v1(queue, req->RequestId, s);
 
-    ret = send(s, post_req, sizeof(post_req), 0);
-    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    ret = send(s, req_text, strlen(req_text) + 1, 0);
+    ok(ret == strlen(req_text) + 1, "send() returned %d.\n", ret);
     Sleep(100);
 
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
@@ -787,8 +842,8 @@ static void test_v1_entity_body(void)
 
     send_response_v1(queue, req->RequestId, s);
 
-    ret = send(s, post_req, sizeof(post_req), 0);
-    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    ret = send(s, req_text, strlen(req_text) + 1, 0);
+    ok(ret == strlen(req_text) + 1, "send() returned %d.\n", ret);
     Sleep(100);
 
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY,
@@ -800,8 +855,9 @@ static void test_v1_entity_body(void)
 
     send_response_v1(queue, req->RequestId, s);
 
-    ret = send(s, post_req2, strlen(post_req2), 0);
-    ok(ret == strlen(post_req2), "send() returned %d.\n", ret);
+    sprintf(req_text, post_req2, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
     ret = send(s, req_body, sizeof(req_body), 0);
     ok(ret == sizeof(req_body), "send() returned %d.\n", ret);
 
@@ -824,7 +880,7 @@ static void test_v1_entity_body(void)
     send_response_v1(queue, req->RequestId, s);
 
     CloseHandle(ovl.hEvent);
-    ret = HttpRemoveUrl(queue, localhost_urlW);
+    ret = remove_url_v1(queue, port);
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     ret = CloseHandle(queue);
@@ -834,16 +890,16 @@ static void test_v1_entity_body(void)
 static void test_v1_bad_request(void)
 {
     char response_buffer[2048];
+    unsigned short port;
     HANDLE queue;
     ULONG ret;
     SOCKET s;
 
     ret = HttpCreateHttpHandle(&queue, 0);
     ok(!ret, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
-    ok(!ret, "Got error %u.\n", ret);
+    port = add_url_v1(queue);
 
-    s = create_client_socket();
+    s = create_client_socket(port);
     ret = send(s, "foo\r\n", strlen("foo\r\n"), 0);
     ok(ret == strlen("foo\r\n"), "send() returned %d.\n", ret);
 
@@ -864,7 +920,7 @@ static void test_v1_bad_request(void)
     ok(!ret, "Connection should be shut down.\n");
     ok(!WSAGetLastError(), "Got error %u.\n", WSAGetLastError());
 
-    ret = HttpRemoveUrl(queue, localhost_urlW);
+    ret = remove_url_v1(queue, port);
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     ret = CloseHandle(queue);
@@ -873,11 +929,11 @@ static void test_v1_bad_request(void)
 
 static void test_v1_cooked_url(void)
 {
-    static const WCHAR cooked_urlW[] = {'h','t','t','p',':','/','/',
-        'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/','f','o','o','b','a','r','?','a','=','b',0};
-
     char DECLSPEC_ALIGN(8) req_buffer[2048];
     HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer;
+    char expect[24], req_text[200];
+    unsigned short port;
+    WCHAR expectW[50];
     DWORD ret_size;
     HANDLE queue;
     ULONG ret;
@@ -885,24 +941,24 @@ static void test_v1_cooked_url(void)
 
     static const char req1[] =
         "GET /foobar?a=b HTTP/1.1\r\n"
-        "Host: localhost:50000\r\n"
+        "Host: localhost:%u\r\n"
         "Connection: keep-alive\r\n"
         "\r\n";
 
     static const char req2[] =
-        "GET http://localhost:50000/ HTTP/1.1\r\n"
+        "GET http://localhost:%u/ HTTP/1.1\r\n"
         "Host: ignored\r\n"
         "Connection: keep-alive\r\n"
         "\r\n";
 
     ret = HttpCreateHttpHandle(&queue, 0);
     ok(!ret, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
-    ok(!ret, "Got error %u.\n", ret);
+    port = add_url_v1(queue);
 
-    s = create_client_socket();
-    ret = send(s, req1, strlen(req1), 0);
-    ok(ret == strlen(req1), "send() returned %d.\n", ret);
+    s = create_client_socket(port);
+    sprintf(req_text, req1, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
@@ -914,8 +970,9 @@ static void test_v1_cooked_url(void)
     ok(req->CookedUrl.HostLength == 30, "Got host length %u.\n", req->CookedUrl.HostLength);
     ok(req->CookedUrl.AbsPathLength == 14, "Got absolute path length %u.\n", req->CookedUrl.AbsPathLength);
     ok(req->CookedUrl.QueryStringLength == 8, "Got query string length %u.\n", req->CookedUrl.QueryStringLength);
-    ok(!wcscmp(req->CookedUrl.pFullUrl, cooked_urlW),
-            "Got full URL %s.\n", wine_dbgstr_w(req->CookedUrl.pFullUrl));
+    swprintf(expectW, ARRAY_SIZE(expectW), L"http://localhost:%u/foobar?a=b", port);
+    ok(!wcscmp(req->CookedUrl.pFullUrl, expectW), "Expected full URL %s, got %s.\n",
+            debugstr_w(expectW), debugstr_w(req->CookedUrl.pFullUrl));
     ok(req->CookedUrl.pHost == req->CookedUrl.pFullUrl + 7, "Got host %s.\n", wine_dbgstr_w(req->CookedUrl.pHost));
     ok(req->CookedUrl.pAbsPath == req->CookedUrl.pFullUrl + 22,
             "Got absolute path %s.\n", wine_dbgstr_w(req->CookedUrl.pAbsPath));
@@ -924,21 +981,24 @@ static void test_v1_cooked_url(void)
 
     send_response_v1(queue, req->RequestId, s);
 
-    ret = send(s, req2, strlen(req2), 0);
-    ok(ret == strlen(req2), "send() returned %d.\n", ret);
+    sprintf(req_text, req2, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
     ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
     ok(req->RawUrlLength == 23, "Got raw URL length %u.\n", req->RawUrlLength);
-    ok(!strcmp(req->pRawUrl, "http://localhost:50000/"), "Got raw URL %s.\n", req->pRawUrl);
+    sprintf(expect, "http://localhost:%u/", port);
+    ok(!strcmp(req->pRawUrl, expect), "Expected raw URL \"%s\", got \"%s\".\n", expect, req->pRawUrl);
     ok(req->CookedUrl.FullUrlLength == 46, "Got full URL length %u.\n", req->CookedUrl.FullUrlLength);
     ok(req->CookedUrl.HostLength == 30, "Got host length %u.\n", req->CookedUrl.HostLength);
     ok(req->CookedUrl.AbsPathLength == 2, "Got absolute path length %u.\n", req->CookedUrl.AbsPathLength);
     ok(!req->CookedUrl.QueryStringLength, "Got query string length %u.\n", req->CookedUrl.QueryStringLength);
-    ok(!wcscmp(req->CookedUrl.pFullUrl, localhost_urlW),
-            "Got full URL %s.\n", wine_dbgstr_w(req->CookedUrl.pFullUrl));
+    swprintf(expectW, ARRAY_SIZE(expectW), L"http://localhost:%u/", port);
+    ok(!wcscmp(req->CookedUrl.pFullUrl, expectW), "Expected full URL %s, got %s.\n",
+            wine_dbgstr_w(expectW), wine_dbgstr_w(req->CookedUrl.pFullUrl));
     ok(req->CookedUrl.pHost == req->CookedUrl.pFullUrl + 7, "Got host %s.\n", wine_dbgstr_w(req->CookedUrl.pHost));
     ok(req->CookedUrl.pAbsPath == req->CookedUrl.pFullUrl + 22,
             "Got absolute path %s.\n", wine_dbgstr_w(req->CookedUrl.pAbsPath));
@@ -946,7 +1006,7 @@ static void test_v1_cooked_url(void)
 
     send_response_v1(queue, req->RequestId, s);
 
-    ret = HttpRemoveUrl(queue, localhost_urlW);
+    ret = remove_url_v1(queue, port);
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     ret = CloseHandle(queue);
@@ -957,6 +1017,8 @@ static void test_v1_unknown_tokens(void)
 {
     char DECLSPEC_ALIGN(8) req_buffer[2048];
     HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer;
+    unsigned short port;
+    char req_text[200];
     DWORD ret_size;
     HANDLE queue;
     ULONG ret;
@@ -964,19 +1026,19 @@ static void test_v1_unknown_tokens(void)
 
     static const char req1[] =
         "xyzzy / HTTP/1.1\r\n"
-        "Host: localhost:50000\r\n"
+        "Host: localhost:%u\r\n"
         "Connection: keep-alive\r\n"
         "Qux: foo baz \r\n"
         "\r\n";
 
     ret = HttpCreateHttpHandle(&queue, 0);
     ok(!ret, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, localhost_urlW, NULL);
-    ok(!ret, "Got error %u.\n", ret);
+    port = add_url_v1(queue);
 
-    s = create_client_socket();
-    ret = send(s, req1, strlen(req1), 0);
-    ok(ret == strlen(req1), "send() returned %d.\n", ret);
+    s = create_client_socket(port);
+    sprintf(req_text, req1, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
@@ -994,7 +1056,7 @@ static void test_v1_unknown_tokens(void)
     ok(!strcmp(req->Headers.pUnknownHeaders[0].pRawValue, "foo baz"), "Got value %s.\n",
             req->Headers.pUnknownHeaders[0].pRawValue);
 
-    ret = HttpRemoveUrl(queue, localhost_urlW);
+    ret = remove_url_v1(queue, port);
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     ret = CloseHandle(queue);
@@ -1088,9 +1150,6 @@ static void test_HttpCreateUrlGroup(void)
 
 static void test_v2_server(void)
 {
-    static const WCHAR cooked_urlW[] = {'h','t','t','p',':','/','/',
-        'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/','f','o','o','b','a','r',0};
-
     char DECLSPEC_ALIGN(8) req_buffer[2048], response_buffer[2048];
     HTTP_REQUEST_V2 *reqv2 = (HTTP_REQUEST_V2 *)req_buffer;
     static const HTTPAPI_VERSION version = {2, 0};
@@ -1100,9 +1159,12 @@ static void test_v2_server(void)
     HTTP_RESPONSE_V2 response = {};
     HTTP_BINDING_INFO binding;
     HTTP_URL_GROUP_ID group;
+    unsigned short port;
+    char req_text[100];
     unsigned int i;
     OVERLAPPED ovl;
     DWORD ret_size;
+    WCHAR url[50];
     HANDLE queue;
     ULONG ret;
     SOCKET s;
@@ -1134,8 +1196,8 @@ static void test_v2_server(void)
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
 
-    ret = pHttpAddUrlToUrlGroup(group, localhost_urlW, 0xdeadbeef, 0);
-    ok(!ret, "Got error %u.\n", ret);
+    port = add_url_v2(group);
+
     ret = pHttpAddUrlToUrlGroup(group, invalid_url1, 0xdeadbeef, 0);
     todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
     ret = pHttpAddUrlToUrlGroup(group, invalid_url2, 0xdeadbeef, 0);
@@ -1148,12 +1210,11 @@ static void test_v2_server(void)
     todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
     ret = pHttpAddUrlToUrlGroup(group, invalid_url6, 0xdeadbeef, 0);
     todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = pHttpAddUrlToUrlGroup(group, localhost_urlW, 0xdeadbeef, 0);
+    swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
+    ret = pHttpAddUrlToUrlGroup(group, url, 0xdeadbeef, 0);
     todo_wine ok(ret == ERROR_ALREADY_EXISTS, "Got error %u.\n", ret);
-    ret = pHttpAddUrlToUrlGroup(group, localhost_url2W, 0xdeadbeef, 0);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
 
-    s = create_client_socket();
+    s = create_client_socket(port);
     len = sizeof(sockaddr);
     ret = getsockname(s, (struct sockaddr *)&sockaddr, &len);
     ok(ret == 0, "getsockname() failed, error %u.\n", WSAGetLastError());
@@ -1163,8 +1224,9 @@ static void test_v2_server(void)
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
 
-    ret = send(s, simple_req, strlen(simple_req), 0);
-    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+    sprintf(req_text, simple_req, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
     ok(ret, "Got error %u.\n", GetLastError());
@@ -1186,7 +1248,9 @@ static void test_v2_server(void)
     ok(req->CookedUrl.HostLength == 30, "Got host length %u.\n", req->CookedUrl.HostLength);
     ok(req->CookedUrl.AbsPathLength == 14, "Got absolute path length %u.\n", req->CookedUrl.AbsPathLength);
     ok(!req->CookedUrl.QueryStringLength, "Got query string length %u.\n", req->CookedUrl.QueryStringLength);
-    ok(!wcscmp(req->CookedUrl.pFullUrl, cooked_urlW), "Got full URL %s.\n", wine_dbgstr_w(req->CookedUrl.pFullUrl));
+    swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/foobar", port);
+    ok(!wcscmp(req->CookedUrl.pFullUrl, url), "Expected full URL %s, got %s.\n",
+            debugstr_w(url), debugstr_w(req->CookedUrl.pFullUrl));
     ok(req->CookedUrl.pHost == req->CookedUrl.pFullUrl + 7, "Got host %s.\n", wine_dbgstr_w(req->CookedUrl.pHost));
     ok(req->CookedUrl.pAbsPath == req->CookedUrl.pFullUrl + 22,
             "Got absolute path %s.\n", wine_dbgstr_w(req->CookedUrl.pAbsPath));
@@ -1194,7 +1258,7 @@ static void test_v2_server(void)
     ok(!memcmp(req->Address.pRemoteAddress, &sockaddr, len), "Client addresses didn't match.\n");
     sin = (SOCKADDR_IN *)req->Address.pLocalAddress;
     ok(sin->sin_family == AF_INET, "Got family %u.\n", sin->sin_family);
-    ok(ntohs(sin->sin_port) == 50000, "Got wrong port %u.\n", ntohs(sin->sin_port));
+    ok(ntohs(sin->sin_port) == port, "Got wrong port %u.\n", ntohs(sin->sin_port));
     ok(sin->sin_addr.S_un.S_addr == inet_addr("127.0.0.1"), "Got address %08x.\n", sin->sin_addr.S_un.S_addr);
     ok(!req->Headers.UnknownHeaderCount, "Got %u unknown headers.\n", req->Headers.UnknownHeaderCount);
     ok(!req->Headers.pUnknownHeaders, "Got unknown headers %p.\n", req->Headers.pUnknownHeaders);
@@ -1209,9 +1273,11 @@ static void test_v2_server(void)
         }
         else if (i == HttpHeaderHost)
         {
-            ok(req->Headers.KnownHeaders[i].RawValueLength == 15, "Got length %u.\n",
+            char expect[16];
+            sprintf(expect, "localhost:%u", port);
+            ok(req->Headers.KnownHeaders[i].RawValueLength == strlen(expect), "Got length %u.\n",
                     req->Headers.KnownHeaders[i].RawValueLength);
-            ok(!strcmp(req->Headers.KnownHeaders[i].pRawValue, "localhost:50000"),
+            ok(!strcmp(req->Headers.KnownHeaders[i].pRawValue, expect),
                     "Got connection '%s'.\n", req->Headers.KnownHeaders[i].pRawValue);
         }
         else if (i == HttpHeaderUserAgent)
@@ -1229,7 +1295,7 @@ static void test_v2_server(void)
                     i, req->Headers.KnownHeaders[i].pRawValue);
         }
     }
-    ok(req->BytesReceived == strlen(simple_req), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
+    ok(req->BytesReceived == strlen(req_text), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(!req->EntityChunkCount, "Got %u entity chunks.\n", req->EntityChunkCount);
     ok(!req->pEntityChunks, "Got entity chunks %p.\n", req->pEntityChunks);
     ok(!req->RawConnectionId, "Got SSL connection ID %s.\n", wine_dbgstr_longlong(req->RawConnectionId));
@@ -1262,12 +1328,10 @@ static void test_v2_server(void)
     ret = HttpReceiveHttpRequest(queue, req->RequestId, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
     ok(ret == ERROR_CONNECTION_INVALID, "Got error %u.\n", ret);
 
-    ret = pHttpRemoveUrlFromUrlGroup(group, localhost_urlW, 0);
+    ret = remove_url_v2(group, port);
     ok(!ret, "Got error %u.\n", ret);
-    ret = pHttpRemoveUrlFromUrlGroup(group, localhost_urlW, 0);
+    ret = remove_url_v2(group, port);
     ok(ret == ERROR_FILE_NOT_FOUND, "Got error %u.\n", ret);
-    ret = pHttpRemoveUrlFromUrlGroup(group, localhost_url2W, 0);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
 
     closesocket(s);
     CloseHandle(ovl.hEvent);
@@ -1288,8 +1352,10 @@ static void test_v2_completion_port(void)
     HTTP_RESPONSE_V2 response = {};
     HTTP_BINDING_INFO binding;
     HTTP_URL_GROUP_ID group;
+    unsigned short tcp_port;
     OVERLAPPED ovl, *povl;
     HANDLE queue, port;
+    char req_text[100];
     DWORD ret_size;
     ULONG_PTR key;
     ULONG ret;
@@ -1318,17 +1384,16 @@ static void test_v2_completion_port(void)
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
     ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
 
-    ret = pHttpAddUrlToUrlGroup(group, localhost_urlW, 0, 0);
-    ok(!ret, "Got error %u.\n", ret);
-
-    s = create_client_socket();
+    tcp_port = add_url_v2(group);
+    s = create_client_socket(tcp_port);
 
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
 
-    ret = send(s, simple_req, strlen(simple_req), 0);
-    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+    sprintf(req_text, simple_req, tcp_port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     ret_size = key = 0xdeadbeef;
     ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 1000);
@@ -1356,7 +1421,7 @@ static void test_v2_completion_port(void)
     ret = recv(s, response_buffer, sizeof(response_buffer), 0);
     ok(ret == ret_size, "Expected size %u, got %u.\n", ret_size, ret);
 
-    ret = pHttpRemoveUrlFromUrlGroup(group, localhost_urlW, 0);
+    ret = remove_url_v2(group, tcp_port);
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
     CloseHandle(port);
