@@ -3777,7 +3777,7 @@ static const struct ID2D1RectangleGeometryVtbl d2d_rectangle_geometry_vtbl =
 HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory, const D2D1_RECT_F *rect)
 {
     struct d2d_face *f;
-    D2D1_POINT_2F *v;
+    D2D1_POINT_2F *v, v0p, v0n, v1p, v1n, v2p, v2n, v3p, v3n;
     float l, r, t, b;
 
     d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
@@ -3806,6 +3806,15 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory 
     d2d_face_set(&f[1], 0, 2, 3);
     geometry->fill.face_count = 2;
 
+    d2d_point_set(&v0p, l+1.0f, t);
+    d2d_point_set(&v0n, l, t+1.0f);
+    d2d_point_set(&v1p, l, b-1.0f);
+    d2d_point_set(&v1n, l+1.0f, b);
+    d2d_point_set(&v2p, r-1.0f, b);
+    d2d_point_set(&v2n, r, b-1.0f);
+    d2d_point_set(&v3p, r, t+1.0f);
+    d2d_point_set(&v3n, r-1.0f, t);
+
     if (!d2d_geometry_outline_add_line_segment(geometry, &v[0], &v[1]))
         goto fail;
     if (!d2d_geometry_outline_add_line_segment(geometry, &v[1], &v[2]))
@@ -3815,13 +3824,13 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory 
     if (!d2d_geometry_outline_add_line_segment(geometry, &v[3], &v[0]))
         goto fail;
 
-    if (!d2d_geometry_outline_add_join(geometry, &v[3], &v[0], &v[1]))
+    if (!d2d_geometry_outline_add_join(geometry, &v0p, &v[0], &v0n))
         goto fail;
-    if (!d2d_geometry_outline_add_join(geometry, &v[0], &v[1], &v[2]))
+    if (!d2d_geometry_outline_add_join(geometry, &v1p, &v[1], &v1n))
         goto fail;
-    if (!d2d_geometry_outline_add_join(geometry, &v[1], &v[2], &v[3]))
+    if (!d2d_geometry_outline_add_join(geometry, &v2p, &v[2], &v2n))
         goto fail;
-    if (!d2d_geometry_outline_add_join(geometry, &v[2], &v[3], &v[0]))
+    if (!d2d_geometry_outline_add_join(geometry, &v3p, &v[3], &v3n))
         goto fail;
 
     return S_OK;
