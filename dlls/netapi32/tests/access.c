@@ -494,10 +494,10 @@ START_TEST(access)
     pDavGetHTTPFromUNCPath = (void*)GetProcAddress(hnetapi32, "DavGetHTTPFromUNCPath");
     pDavGetUNCFromHTTPPath = (void*)GetProcAddress(hnetapi32, "DavGetUNCFromHTTPPath");
 
-    size = sizeof(user_name);
+    size = ARRAY_SIZE(user_name);
     ret = GetUserNameW(user_name, &size);
     ok(ret, "Failed to get user name, error %u.\n", GetLastError());
-    size = sizeof(computer_name);
+    size = ARRAY_SIZE(computer_name);
     ret = GetComputerNameW(computer_name, &size);
     ok(ret, "Failed to get computer name, error %u.\n", GetLastError());
 
