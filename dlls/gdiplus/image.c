@@ -3683,7 +3683,7 @@ static GpStatus decode_frame_wic(IWICBitmapDecoder *decoder, BOOL force_conversi
             IWICBitmapSource_Release(source);
         }
 
-        if (SUCCEEDED(hr)) {
+        if (SUCCEEDED(hr) && status == Ok) {
             bitmap->metadata_reader = NULL;
 
             if (metadata_reader)
