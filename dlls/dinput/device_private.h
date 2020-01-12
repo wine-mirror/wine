@@ -71,10 +71,11 @@ struct IDirectInputDeviceImpl
     DI_EVENT_PROC               event_proc;  /* function to receive mouse & keyboard events */
 
     LPDIDEVICEOBJECTDATA        data_queue;  /* buffer for 'GetDeviceData'.                 */
-    int                         queue_len;   /* size of the queue - set in 'SetProperty'    */
+    int                         queue_len;   /* valid size of the queue                     */
     int                         queue_head;  /* position to write new event into queue      */
     int                         queue_tail;  /* next event to read from queue               */
     BOOL                        overflow;    /* return DI_BUFFEROVERFLOW in 'GetDeviceData' */
+    DWORD                       buffersize;  /* size of the queue - set in 'SetProperty'    */
 
     DataFormat                  data_format; /* user data format and wine to user format converter */
 
