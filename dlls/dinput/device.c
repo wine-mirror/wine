@@ -1307,7 +1307,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface,
 
             if (pdiph->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
 
-            pd->dwData = This->queue_len;
+            pd->dwData = This->buffersize;
             TRACE("buffersize = %d\n", pd->dwData);
             break;
         }
@@ -1396,12 +1396,14 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty(
             TRACE("buffersize = %d\n", pd->dwData);
 
             EnterCriticalSection(&This->crit);
+
+            This->buffersize  = pd->dwData;
+            This->queue_len = min(This->buffersize, 20);
             HeapFree(GetProcessHeap(), 0, This->data_queue);
 
-            This->data_queue = !pd->dwData ? NULL : HeapAlloc(GetProcessHeap(), 0,
-                                pd->dwData * sizeof(DIDEVICEOBJECTDATA));
+            This->data_queue = !This->queue_len ? NULL : HeapAlloc(GetProcessHeap(), 0,
+                                This->queue_len * sizeof(DIDEVICEOBJECTDATA));
             This->queue_head = This->queue_tail = This->overflow = 0;
-            This->queue_len  = pd->dwData;
 
             LeaveCriticalSection(&This->crit);
             break;
