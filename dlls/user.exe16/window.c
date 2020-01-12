@@ -23,6 +23,7 @@
 #include "user_private.h"
 #include "wine/list.h"
 #include "wine/server.h"
+#include "wine/gdi_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
@@ -675,7 +676,9 @@ HDC16 WINAPI GetWindowDC16( HWND16 hwnd )
  */
 INT16 WINAPI ReleaseDC16( HWND16 hwnd, HDC16 hdc )
 {
-    return (INT16)ReleaseDC( WIN_Handle32(hwnd), HDC_32(hdc) );
+    INT16 ret = (INT16)ReleaseDC( WIN_Handle32(hwnd), HDC_32(hdc) );
+    SetHookFlags( HDC_32(hdc), DCHF_ENABLEDC );
+    return ret;
 }
 
 
