@@ -48,6 +48,23 @@ WINE_DECLARE_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(file);
 
 
+static LONG WINAPI badptr_handler( EXCEPTION_POINTERS *eptr )
+{
+    EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
+
+    if (rec->ExceptionCode == STATUS_ACCESS_VIOLATION) return EXCEPTION_EXECUTE_HANDLER;
+    if (rec->ExceptionCode == STATUS_STACK_OVERFLOW)
+    {
+        /* restore stack guard page */
+        void *addr = (char *)NtCurrentTeb()->DeallocationStack + system_info.PageSize;
+        SIZE_T size = (char *)rec - (char *)addr;
+        ULONG old_prot;
+        NtProtectVirtualMemory( GetCurrentProcess(), &addr, &size, PAGE_GUARD|PAGE_READWRITE, &old_prot );
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 /***********************************************************************
  *             IsBadReadPtr   (KERNEL32.@)
  *
@@ -79,7 +96,7 @@ BOOL WINAPI IsBadReadPtr( LPCVOID ptr, UINT_PTR size )
         dummy = p[0];
         dummy = p[count - 1];
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT( badptr_handler )
     {
         TRACE_(seh)("%p caused page fault during read\n", ptr);
         return TRUE;
@@ -120,7 +137,7 @@ BOOL WINAPI IsBadWritePtr( LPVOID ptr, UINT_PTR size )
         p[0] |= 0;
         p[count - 1] |= 0;
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT( badptr_handler )
     {
         TRACE_(seh)("%p caused page fault during write\n", ptr);
         return TRUE;
@@ -202,13 +219,13 @@ BOOL WINAPI IsBadCodePtr( FARPROC ptr )
 BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
 {
     if (!str) return TRUE;
-    
+
     __TRY
     {
         volatile const char *p = str;
         while (p != str + max) if (!*p++) break;
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT( badptr_handler )
     {
         TRACE_(seh)("%p caused page fault during read\n", str);
         return TRUE;
@@ -226,13 +243,13 @@ BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
 BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
 {
     if (!str) return TRUE;
-    
+
     __TRY
     {
         volatile const WCHAR *p = str;
         while (p != str + max) if (!*p++) break;
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT( badptr_handler )
     {
         TRACE_(seh)("%p caused page fault during read\n", str);
         return TRUE;

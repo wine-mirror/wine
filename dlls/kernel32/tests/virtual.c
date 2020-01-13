@@ -1533,6 +1533,12 @@ static void test_IsBadReadPtr(void)
 
     ret = IsBadReadPtr(&stackvar, sizeof(char));
     ok(ret == FALSE, "Expected IsBadReadPtr to return FALSE, got %d\n", ret);
+
+    ret = IsBadReadPtr((char *)NtCurrentTeb()->DeallocationStack + 4096, sizeof(DWORD));
+    ok(ret == TRUE, "Expected IsBadReadPtr to return TRUE, got %d\n", ret);
+
+    ret = IsBadReadPtr((char *)NtCurrentTeb()->DeallocationStack + 4096, sizeof(DWORD));
+    ok(ret == TRUE, "Expected IsBadReadPtr to return TRUE, got %d\n", ret);
 }
 
 static void test_IsBadWritePtr(void)
@@ -1558,6 +1564,12 @@ static void test_IsBadWritePtr(void)
 
     ret = IsBadWritePtr(&stackval, sizeof(char));
     ok(ret == FALSE, "Expected IsBadWritePtr to return FALSE, got %d\n", ret);
+
+    ret = IsBadWritePtr((char *)NtCurrentTeb()->DeallocationStack + 4096, sizeof(DWORD));
+    ok(ret == TRUE, "Expected IsBadWritePtr to return TRUE, got %d\n", ret);
+
+    ret = IsBadWritePtr((char *)NtCurrentTeb()->DeallocationStack + 4096, sizeof(DWORD));
+    ok(ret == TRUE, "Expected IsBadWritePtr to return TRUE, got %d\n", ret);
 }
 
 static void test_IsBadCodePtr(void)
