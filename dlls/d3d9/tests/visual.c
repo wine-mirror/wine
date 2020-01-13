@@ -26472,6 +26472,185 @@ static void test_sample_attached_rendertarget(void)
     DestroyWindow(window);
 }
 
+static void test_alpha_to_coverage(void)
+{
+    static const struct
+    {
+        struct vec3 position;
+        struct vec2 texcoord;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, {0.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.1f}, {0.0f, 1.0f}},
+        {{ 1.0f, -1.0f, 0.1f}, {1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.1f}, {1.0f, 1.0f}},
+    };
+
+    IDirect3DSurface9 *rt, *ms_rt, *surface;
+    D3DADAPTER_IDENTIFIER9 identifier;
+    struct surface_readback rb;
+    IDirect3DTexture9 *texture;
+    IDirect3DDevice9 *device;
+    DWORD quality_levels;
+    BOOL nvidia_mode;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    DWORD colour;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (IDirect3D9_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES, &quality_levels) == D3DERR_NOTAVAILABLE)
+    {
+        skip("Multisampling not supported for D3DFMT_A8R8G8B8.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a 3D device.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
+            D3DRTYPE_SURFACE, MAKEFOURCC('A','T','O','C')) == D3D_OK)
+    {
+        /* ATOC pseudo format is introduced by Nvidia. Some Intel GPUs support
+         * alpha to coverage the same way as Nvidia. */
+        nvidia_mode = TRUE;
+    }
+    else
+    {
+        nvidia_mode = FALSE;
+        hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        if (identifier.VendorId != 0x1002 /* AMD */)
+        {
+            skip("Alpha to coverage is not supported.\n");
+            refcount = IDirect3DDevice9_Release(device);
+            ok(!refcount, "Device has %u references left.\n", refcount);
+            IDirect3D9_Release(d3d);
+            DestroyWindow(window);
+            return;
+        }
+    }
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_2_SAMPLES, 0, FALSE, &ms_rt, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, ms_rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8,
+            D3DPOOL_DEFAULT, &texture, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    fill_surface(surface, 0xff2000ff, 0);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    if (nvidia_mode)
+    {
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ADAPTIVETESS_Y, MAKEFOURCC('A','T','O','C'));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        /* While undocumented, Nvidia also requires to enable alpha test to enable
+         * alpha to coverage. Intel does not. */
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHATESTENABLE, TRUE);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+    else
+    {
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, MAKEFOURCC('A','2','M','1'));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    fill_surface(surface, 0x40608000, 0);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt, NULL, D3DTEXF_POINT);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    get_rt_readback(rt, &rb);
+    colour = get_readback_color(&rb, 64, 64);
+
+    /* Nvidia is probably using some proprietary algorithm for averaging sample colour values. */
+    todo_wine ok(color_match(colour, 0x9f404080, 1) || color_match(colour, 0x9f485cbc, 1) /* Nvidia */,
+            "Got unexpected colour %08x.\n", colour);
+    release_surface_readback(&rb);
+
+    if (nvidia_mode)
+    {
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ADAPTIVETESS_Y, D3DFMT_UNKNOWN);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+    else
+    {
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, MAKEFOURCC('A','2','M','0'));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt, NULL, D3DTEXF_POINT);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    get_rt_readback(rt, &rb);
+    colour = get_readback_color(&rb, 64, 64);
+    ok(colour == 0x40608000, "Got unexpected colour %08x.\n", colour);
+    release_surface_readback(&rb);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(surface);
+    IDirect3DTexture9_Release(texture);
+    IDirect3DSurface9_Release(ms_rt);
+    IDirect3DSurface9_Release(rt);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -26618,4 +26797,5 @@ START_TEST(visual)
     test_mismatched_sample_types();
     test_draw_mapped_buffer();
     test_sample_attached_rendertarget();
+    test_alpha_to_coverage();
 }
