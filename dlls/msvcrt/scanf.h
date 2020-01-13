@@ -393,6 +393,8 @@ _FUNCTION_ {
                     /* skip initial whitespace */
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
+                    if (nch == _EOF_)
+                        break;
                     ctx.unget = nch;
 #ifdef STRING
                     ctx.file = file;

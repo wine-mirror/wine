@@ -165,6 +165,12 @@ static void test_sscanf( void )
     ok(double_res >= 1.1e-30-1e-45 && double_res <= 1.1e-30+1e-45,
             "Got %.18le, expected %.18le\n", double_res, 1.1e-30);
 
+    buffer[0] = 0;
+    double_res = 1;
+    ret = p_sscanf(buffer, "%lf", &double_res);
+    ok(ret == -1, "expected 0, got %u\n", ret);
+    ok(double_res == 1, "Got %lf, expected 1\n", double_res);
+
     /* check strings */
     ret = p_sprintf(buffer," %s", pname);
     ok( ret == 26, "expected 26, got %u\n", ret);
