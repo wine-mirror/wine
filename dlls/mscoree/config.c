@@ -489,7 +489,7 @@ static HRESULT WINAPI ConfigFileHandler_startElement(ISAXContentHandler *iface,
     return hr;
 
 unknown:
-    FIXME("Unknown element %s in state %u\n", debugstr_wn(pLocalName,nLocalName),
+    TRACE("Unknown element %s in state %u\n", debugstr_wn(pLocalName,nLocalName),
         This->states[This->statenum]);
 
     This->states[++This->statenum] = STATE_UNKNOWN;
