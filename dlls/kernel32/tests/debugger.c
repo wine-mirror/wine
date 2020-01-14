@@ -1343,6 +1343,8 @@ static void test_debugger(const char *argv0)
 
     if (sizeof(loop_code) > 1)
     {
+        struct debuggee_thread *prev_thread;
+
         memset(buf, OP_BP, sizeof(buf));
         memcpy(proc_code, &loop_code, sizeof(loop_code));
         ret = WriteProcessMemory(pi.hProcess, mem, buf, sizeof(buf), NULL);
@@ -1356,7 +1358,7 @@ static void test_debugger(const char *argv0)
             thread = CreateRemoteThread(pi.hProcess, NULL, 0, (void*)thread_proc, NULL, 0, NULL);
             ok(thread != NULL, "CreateRemoteThread failed: %u\n", GetLastError());
 
-            next_event(&ctx, 20000);
+            next_event(&ctx, WAIT_EVENT_TIMEOUT);
             ok(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
 
             ret = CloseHandle(thread);
@@ -1370,10 +1372,8 @@ static void test_debugger(const char *argv0)
         expect_breakpoint_exception(&ctx, thread_proc + 1);
         exception_cnt = 1;
 
-        debuggee_thread = ctx.current_thread;
+        prev_thread = ctx.current_thread;
         fetch_process_context(&ctx);
-        ok(get_ip(&ctx.current_thread->ctx) == thread_proc + 2, "unexpected instruction pointer %p\n",
-           get_ip(&ctx.current_thread->ctx));
 
         byte = 0xc3; /* ret */
         ret = WriteProcessMemory(pi.hProcess, thread_proc + 1, &byte, 1, NULL);
@@ -1387,19 +1387,24 @@ static void test_debugger(const char *argv0)
             ret = WaitForDebugEvent(&ev, 10);
             ok(GetLastError() == ERROR_SEM_TIMEOUT, "WaitForDebugEvent returned %x(%u)\n", ret, GetLastError());
 
-            next_event(&ctx, 100);
+            next_event(&ctx, POLL_EVENT_TIMEOUT);
             if (ctx.ev.dwDebugEventCode != EXCEPTION_DEBUG_EVENT) break;
             trace("exception at %p in thread %04x\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress, ctx.ev.dwThreadId);
             ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
                ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
             ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == thread_proc + 1,
                "ExceptionAddress = %p\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress);
-            ok(get_ip(&ctx.current_thread->ctx) == thread_proc + 2
-               || broken(get_ip(&ctx.current_thread->ctx) == thread_proc), /* sometimes observed on win10 */
-               "unexpected instruction pointer %p\n",
-               get_ip(&ctx.current_thread->ctx));
+            ok(get_ip(&prev_thread->ctx) == thread_proc + 2
+               || broken(get_ip(&prev_thread->ctx) == thread_proc), /* sometimes observed on win10 */
+               "unexpected instruction pointer %p\n", get_ip(&prev_thread->ctx));
+            prev_thread = ctx.current_thread;
             exception_cnt++;
         }
+
+        /* for some reason sometimes on Windows one thread has a different address. this is always the thread
+         * with the last reported exception, so we simply skip the check for the last exception unless it's the only one. */
+        if (exception_cnt == 1)
+            ok(get_ip(&prev_thread->ctx) == thread_proc + 2, "unexpected instruction pointer %p\n", get_ip(&prev_thread->ctx));
 
         trace("received %u exceptions\n", exception_cnt);
 
@@ -1409,7 +1414,7 @@ static void test_debugger(const char *argv0)
                || broken(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT), /* sometimes happens on vista */
                "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
             if (ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT && !--worker_cnt) break;
-            next_event(&ctx, 2000);
+            next_event(&ctx, WAIT_EVENT_TIMEOUT);
         }
     }
 
