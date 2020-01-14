@@ -1918,7 +1918,7 @@ static HRESULT invoke_procedure(const char *argsa, const char *sourcea, DISPPARA
     return hres;
 }
 
-static HRESULT parse_htmlscript(BSTR script_str)
+static HRESULT parse_htmlscript(const WCHAR *script_str)
 {
     IActiveScriptParse *parser;
     IActiveScript *engine;
@@ -2128,16 +2128,6 @@ static void parse_script_ae(const char *src, HRESULT exhres)
     hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp);
     SysFreeString(tmp);
     ok(hres == exhres, "parse_script failed: %08x, expected %08x\n", hres, exhres);
-}
-
-static HRESULT parse_htmlscript_a(const char *src)
-{
-    HRESULT hres;
-    BSTR tmp = a2bstr(src);
-    hres = parse_htmlscript(tmp);
-    SysFreeString(tmp);
-
-    return hres;
 }
 
 static BSTR get_script_from_file(const char *filename)
@@ -3085,17 +3075,17 @@ static BOOL run_tests(void)
     parse_script_af(0, "test.testThis2(this);");
     parse_script_af(0, "(function () { test.testThis2(this); })();");
 
-    hres = parse_htmlscript_a("<!--");
+    hres = parse_htmlscript(L"<!--");
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
-    hres = parse_htmlscript_a("-->");
+    hres = parse_htmlscript(L"-->");
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
-    hres = parse_htmlscript_a("<!--\nvar a=1;\n-->\n");
+    hres = parse_htmlscript(L"<!--\nvar a=1;\n-->\n");
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
-    hres = parse_htmlscript_a("<!--\n<!-- ignore this\n-->\n");
+    hres = parse_htmlscript(L"<!--\n<!-- ignore this\n-->\n");
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
-    hres = parse_htmlscript_a("var a=1;\nif(a-->0) a=5;\n");
+    hres = parse_htmlscript(L"var a=1;\nif(a-->0) a=5;\n");
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
-    hres = parse_htmlscript_a("var a=1;\nif(a\n-->0) a=5;\n");
+    hres = parse_htmlscript(L"var a=1;\nif(a\n-->0) a=5;\n");
     ok(hres != S_OK, "ParseScriptText have not failed\n");
 
     test_script_exprs();
