@@ -1817,7 +1817,7 @@ static IActiveScript *create_script(void)
     return script;
 }
 
-static HRESULT parse_script(DWORD flags, BSTR script_str)
+static HRESULT parse_script(DWORD flags, const WCHAR *script_str)
 {
     IActiveScriptParse *parser;
     IActiveScript *engine;
@@ -2103,31 +2103,13 @@ static void parse_script_with_error(DWORD flags, const WCHAR *script_str, SCODE 
     IActiveScriptParse_Release(parser);
 }
 
-static void parse_script_af(DWORD flags, const char *src)
+#define run_script(a) _run_script(__LINE__,a)
+static void _run_script(unsigned line, const WCHAR *src)
 {
-    BSTR tmp;
     HRESULT hres;
 
-    tmp = a2bstr(src);
-    hres = parse_script(flags, tmp);
-    SysFreeString(tmp);
-    ok(hres == S_OK, "parse_script failed: %08x\n", hres);
-}
-
-static void parse_script_a(const char *src)
-{
-    parse_script_af(SCRIPTITEM_GLOBALMEMBERS, src);
-}
-
-static void parse_script_ae(const char *src, HRESULT exhres)
-{
-    BSTR tmp;
-    HRESULT hres;
-
-    tmp = a2bstr(src);
-    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp);
-    SysFreeString(tmp);
-    ok(hres == exhres, "parse_script failed: %08x, expected %08x\n", hres, exhres);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, src);
+    ok_(__FILE__,line)(hres == S_OK, "script %s failed: %08x\n", wine_dbgstr_w(src), hres);
 }
 
 static BSTR get_script_from_file(const char *filename)
@@ -2752,228 +2734,229 @@ static BOOL run_tests(void)
 
     strict_dispid_check = TRUE;
 
-    parse_script_a("");
-    parse_script_a("/* empty */ ;");
+    run_script(L"");
+    run_script(L"/* empty */ ;");
 
     SET_EXPECT(global_propget_d);
     SET_EXPECT(global_propget_i);
-    parse_script_a("testPropGet;");
+    run_script(L"testPropGet;");
     CHECK_CALLED(global_propget_d);
     CHECK_CALLED(global_propget_i);
 
     SET_EXPECT(global_propput_d);
     SET_EXPECT(global_propput_i);
-    parse_script_a("testPropPut = 1;");
+    run_script(L"testPropPut = 1;");
     CHECK_CALLED(global_propput_d);
     CHECK_CALLED(global_propput_i);
 
     SET_EXPECT(global_propputref_d);
     SET_EXPECT(global_propputref_i);
-    parse_script_a("testPropPutRef = new Object();");
+    run_script(L"testPropPutRef = new Object();");
     CHECK_CALLED(global_propputref_d);
     CHECK_CALLED(global_propputref_i);
 
     SET_EXPECT(global_propputref_d);
     SET_EXPECT(global_propputref_i);
-    parse_script_a("testPropPutRef = testObj;");
+    run_script(L"testPropPutRef = testObj;");
     CHECK_CALLED(global_propputref_d);
     CHECK_CALLED(global_propputref_i);
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
-    parse_script_a("reportSuccess();");
+    run_script(L"reportSuccess();");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
     SET_EXPECT(testobj_delete_test);
-    parse_script_a("ok((delete testObj.deleteTest) === true, 'delete testObj.deleteTest did not return true');");
+    run_script(L"ok((delete testObj.deleteTest) === true, 'delete testObj.deleteTest did not return true');");
     CHECK_CALLED(testobj_delete_test);
 
     SET_EXPECT(testobj_delete_nodelete);
-    parse_script_a("ok((delete testObj.noDeleteTest) === false, 'delete testObj.noDeleteTest did not return false');");
+    run_script(L"ok((delete testObj.noDeleteTest) === false, 'delete testObj.noDeleteTest did not return false');");
     CHECK_CALLED(testobj_delete_nodelete);
 
     SET_EXPECT(global_propdelete_d);
     SET_EXPECT(DeleteMemberByDispID);
-    parse_script_a("ok((delete testPropDelete) === true, 'delete testPropDelete did not return true');");
+    run_script(L"ok((delete testPropDelete) === true, 'delete testPropDelete did not return true');");
     CHECK_CALLED(global_propdelete_d);
     CHECK_CALLED(DeleteMemberByDispID);
 
     SET_EXPECT(global_nopropdelete_d);
     SET_EXPECT(DeleteMemberByDispID_false);
-    parse_script_a("ok((delete testNoPropDelete) === false, 'delete testPropDelete did not return false');");
+    run_script(L"ok((delete testNoPropDelete) === false, 'delete testPropDelete did not return false');");
     CHECK_CALLED(global_nopropdelete_d);
     CHECK_CALLED(DeleteMemberByDispID_false);
 
     SET_EXPECT(global_propdeleteerror_d);
     SET_EXPECT(DeleteMemberByDispID_error);
-    parse_script_ae("delete testPropDeleteError;", E_FAIL);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, L"delete testPropDeleteError;");
+    ok(hres == E_FAIL, "unexpected result %08x\n", hres);
     CHECK_CALLED(global_propdeleteerror_d);
     CHECK_CALLED(DeleteMemberByDispID_error);
 
     SET_EXPECT(puredisp_prop_d);
-    parse_script_a("ok((delete pureDisp.prop) === false, 'delete pureDisp.prop did not return true');");
+    run_script(L"ok((delete pureDisp.prop) === false, 'delete pureDisp.prop did not return true');");
     CHECK_CALLED(puredisp_prop_d);
 
     SET_EXPECT(puredisp_noprop_d);
-    parse_script_a("ok((delete pureDisp.noprop) === true, 'delete pureDisp.noprop did not return false');");
+    run_script(L"ok((delete pureDisp.noprop) === true, 'delete pureDisp.noprop did not return false');");
     CHECK_CALLED(puredisp_noprop_d);
 
     SET_EXPECT(puredisp_value);
-    parse_script_a("var t=pureDisp; t=t(false);");
+    run_script(L"var t=pureDisp; t=t(false);");
     CHECK_CALLED(puredisp_value);
 
     SET_EXPECT(puredisp_value);
-    parse_script_a("var t = {func: pureDisp}; t = t.func(false);");
+    run_script(L"var t = {func: pureDisp}; t = t.func(false);");
     CHECK_CALLED(puredisp_value);
 
     SET_EXPECT(dispexfunc_value);
-    parse_script_a("var t = dispexFunc; t = t(false);");
+    run_script(L"var t = dispexFunc; t = t(false);");
     CHECK_CALLED(dispexfunc_value);
 
     SET_EXPECT(dispexfunc_value);
-    parse_script_a("var t = {func: dispexFunc}; t = t.func(false);");
+    run_script(L"var t = {func: dispexFunc}; t = t.func(false);");
     CHECK_CALLED(dispexfunc_value);
 
     SET_EXPECT(dispexfunc_value);
-    parse_script_a("Function.prototype.apply.call(dispexFunc, testObj, [true]);");
+    run_script(L"Function.prototype.apply.call(dispexFunc, testObj, [true]);");
     CHECK_CALLED(dispexfunc_value);
 
     SET_EXPECT(puredisp_value);
-    parse_script_a("Function.prototype.apply.call(pureDisp, testObj, [true]);");
+    run_script(L"Function.prototype.apply.call(pureDisp, testObj, [true]);");
     CHECK_CALLED(puredisp_value);
 
-    parse_script_a("(function reportSuccess() {})()");
+    run_script(L"(function reportSuccess() {})()");
 
-    parse_script_a("ok(typeof(test) === 'object', \"typeof(test) != 'object'\");");
+    run_script(L"ok(typeof(test) === 'object', \"typeof(test) != 'object'\");");
 
-    parse_script_a("function reportSuccess() {}; reportSuccess();");
+    run_script(L"function reportSuccess() {}; reportSuccess();");
 
     SET_EXPECT(global_propget_d);
-    parse_script_a("var testPropGet");
+    run_script(L"var testPropGet");
     CHECK_CALLED(global_propget_d);
 
     SET_EXPECT(global_propget_d);
-    parse_script_a("eval('var testPropGet;');");
+    run_script(L"eval('var testPropGet;');");
     CHECK_CALLED(global_propget_d);
 
-    parse_script_a("var testPropGet; function testPropGet() {}");
+    run_script(L"var testPropGet; function testPropGet() {}");
 
     SET_EXPECT(global_notexists_d);
-    parse_script_a("var notExists; notExists = 1;");
+    run_script(L"var notExists; notExists = 1;");
     CHECK_CALLED(global_notexists_d);
 
     SET_EXPECT(testobj_notexists_d);
-    parse_script_a("testObj.notExists;");
+    run_script(L"testObj.notExists;");
     CHECK_CALLED(testobj_notexists_d);
 
-    parse_script_a("function f() { var testPropGet; }");
-    parse_script_a("(function () { var testPropGet; })();");
-    parse_script_a("(function () { eval('var testPropGet;'); })();");
+    run_script(L"function f() { var testPropGet; }");
+    run_script(L"(function () { var testPropGet; })();");
+    run_script(L"(function () { eval('var testPropGet;'); })();");
 
     SET_EXPECT(invoke_func);
-    parse_script_a("ok(propGetFunc() == 0, \"Incorrect propGetFunc value\");");
+    run_script(L"ok(propGetFunc() == 0, \"Incorrect propGetFunc value\");");
     CHECK_CALLED(invoke_func);
-    parse_script_a("ok(propGetFunc(1) == 1, \"Incorrect propGetFunc value\");");
-    parse_script_a("ok(propGetFunc(1, 2) == 2, \"Incorrect propGetFunc value\");");
+    run_script(L"ok(propGetFunc(1) == 1, \"Incorrect propGetFunc value\");");
+    run_script(L"ok(propGetFunc(1, 2) == 2, \"Incorrect propGetFunc value\");");
     SET_EXPECT(invoke_func);
-    parse_script_a("ok(propGetFunc().toString() == 0, \"Incorrect propGetFunc value\");");
+    run_script(L"ok(propGetFunc().toString() == 0, \"Incorrect propGetFunc value\");");
     CHECK_CALLED(invoke_func);
-    parse_script_a("ok(propGetFunc(1).toString() == 1, \"Incorrect propGetFunc value\");");
+    run_script(L"ok(propGetFunc(1).toString() == 1, \"Incorrect propGetFunc value\");");
     SET_EXPECT(invoke_func);
-    parse_script_a("propGetFunc(1);");
+    run_script(L"propGetFunc(1);");
     CHECK_CALLED(invoke_func);
 
-    parse_script_a("objectFlag(1).toString();");
+    run_script(L"objectFlag(1).toString();");
 
-    parse_script_a("(function() { var tmp = (function () { return testObj; })()(1);})();");
-    parse_script_a("(function() { var tmp = (function () { return testObj; })()();})();");
+    run_script(L"(function() { var tmp = (function () { return testObj; })()(1);})();");
+    run_script(L"(function() { var tmp = (function () { return testObj; })()();})();");
 
-    parse_script_a("ok((testObj instanceof Object) === false, 'testObj is instance of Object');");
+    run_script(L"ok((testObj instanceof Object) === false, 'testObj is instance of Object');");
 
     SET_EXPECT(testobj_prop_d);
-    parse_script_a("ok(('prop' in testObj) === true, 'prop is not in testObj');");
+    run_script(L"ok(('prop' in testObj) === true, 'prop is not in testObj');");
     CHECK_CALLED(testobj_prop_d);
 
     SET_EXPECT(testobj_noprop_d);
-    parse_script_a("ok(('noprop' in testObj) === false, 'noprop is in testObj');");
+    run_script(L"ok(('noprop' in testObj) === false, 'noprop is in testObj');");
     CHECK_CALLED(testobj_noprop_d);
 
     SET_EXPECT(testobj_prop_d);
-    parse_script_a("ok(Object.prototype.hasOwnProperty.call(testObj, 'prop') === true, 'hasOwnProperty(\\\"prop\\\") returned false');");
+    run_script(L"ok(Object.prototype.hasOwnProperty.call(testObj, 'prop') === true, 'hasOwnProperty(\\\"prop\\\") returned false');");
     CHECK_CALLED(testobj_prop_d);
 
     SET_EXPECT(testobj_noprop_d);
-    parse_script_a("ok(Object.prototype.hasOwnProperty.call(testObj, 'noprop') === false, 'hasOwnProperty(\\\"noprop\\\") returned true');");
+    run_script(L"ok(Object.prototype.hasOwnProperty.call(testObj, 'noprop') === false, 'hasOwnProperty(\\\"noprop\\\") returned true');");
     CHECK_CALLED(testobj_noprop_d);
 
     SET_EXPECT(puredisp_prop_d);
-    parse_script_a("ok(Object.prototype.hasOwnProperty.call(pureDisp, 'prop') === true, 'hasOwnProperty(\\\"noprop\\\") returned false');");
+    run_script(L"ok(Object.prototype.hasOwnProperty.call(pureDisp, 'prop') === true, 'hasOwnProperty(\\\"noprop\\\") returned false');");
     CHECK_CALLED(puredisp_prop_d);
 
     SET_EXPECT(puredisp_noprop_d);
-    parse_script_a("ok(Object.prototype.hasOwnProperty.call(pureDisp, 'noprop') === false, 'hasOwnProperty(\\\"noprop\\\") returned true');");
+    run_script(L"ok(Object.prototype.hasOwnProperty.call(pureDisp, 'noprop') === false, 'hasOwnProperty(\\\"noprop\\\") returned true');");
     CHECK_CALLED(puredisp_noprop_d);
 
     SET_EXPECT(testobj_value);
-    parse_script_a("ok(String(testObj) === '1', 'wrong testObj value');");
+    run_script(L"ok(String(testObj) === '1', 'wrong testObj value');");
     CHECK_CALLED(testobj_value);
 
     SET_EXPECT(testobj_value);
-    parse_script_a("ok(String.prototype.concat.call(testObj, ' OK') === '1 OK', 'wrong concat result');");
+    run_script(L"ok(String.prototype.concat.call(testObj, ' OK') === '1 OK', 'wrong concat result');");
     CHECK_CALLED(testobj_value);
 
     SET_EXPECT(testobj_construct);
-    parse_script_a("var t = new testObj(1);");
+    run_script(L"var t = new testObj(1);");
     CHECK_CALLED(testobj_construct);
 
     SET_EXPECT(global_propget_d);
     SET_EXPECT(global_propget_i);
-    parse_script_a("this.testPropGet;");
+    run_script(L"this.testPropGet;");
     CHECK_CALLED(global_propget_d);
     CHECK_CALLED(global_propget_i);
 
     SET_EXPECT(global_propputref_d);
     SET_EXPECT(global_propputref_i);
-    parse_script_a("testPropPutRef = nullDisp;");
+    run_script(L"testPropPutRef = nullDisp;");
     CHECK_CALLED(global_propputref_d);
     CHECK_CALLED(global_propputref_i);
 
     SET_EXPECT(global_propget_d);
     SET_EXPECT(global_propget_i);
-    parse_script_a("(function () { this.testPropGet; })();");
+    run_script(L"(function () { this.testPropGet; })();");
     CHECK_CALLED(global_propget_d);
     CHECK_CALLED(global_propget_i);
 
-    parse_script_a("testThis(this);");
-    parse_script_a("(function () { testThis(this); })();");
-    parse_script_a("function x() { testThis(this); }; x();");
-    parse_script_a("var t = {func: function () { ok(this === t, 'this !== t'); }}; with(t) { func(); }");
-    parse_script_a("function x() { testThis(this); }; with({y: 1}) { x(); }");
-    parse_script_a("(function () { function x() { testThis(this);} x(); })();");
+    run_script(L"testThis(this);");
+    run_script(L"(function () { testThis(this); })();");
+    run_script(L"function x() { testThis(this); }; x();");
+    run_script(L"var t = {func: function () { ok(this === t, 'this !== t'); }}; with(t) { func(); }");
+    run_script(L"function x() { testThis(this); }; with({y: 1}) { x(); }");
+    run_script(L"(function () { function x() { testThis(this);} x(); })();");
 
     SET_EXPECT(testobj_onlydispid_d);
     SET_EXPECT(testobj_onlydispid_i);
-    parse_script_a("ok(typeof(testObj.onlyDispID) === 'unknown', 'unexpected typeof(testObj.onlyDispID)');");
+    run_script(L"ok(typeof(testObj.onlyDispID) === 'unknown', 'unexpected typeof(testObj.onlyDispID)');");
     CHECK_CALLED(testobj_onlydispid_d);
     CHECK_CALLED(testobj_onlydispid_i);
 
     SET_EXPECT(global_propargput_d);
     SET_EXPECT(global_propargput_i);
-    parse_script_a("var t=0; propArgPutG(t++, t++) = t++;");
+    run_script(L"var t=0; propArgPutG(t++, t++) = t++;");
     CHECK_CALLED(global_propargput_d);
     CHECK_CALLED(global_propargput_i);
 
     SET_EXPECT(global_propargput_d);
     SET_EXPECT(global_propargput_i);
-    parse_script_a("var t=0; test.propArgPutO(t++, t++) = t++;");
+    run_script(L"var t=0; test.propArgPutO(t++, t++) = t++;");
     CHECK_CALLED(global_propargput_d);
     CHECK_CALLED(global_propargput_i);
 
     SET_EXPECT(global_propargputop_d);
     SET_EXPECT(global_propargputop_get_i);
     SET_EXPECT(global_propargputop_put_i);
-    parse_script_a("var t=0; propArgPutOp(t++, t++) += t++;");
+    run_script(L"var t=0; propArgPutOp(t++, t++) += t++;");
     CHECK_CALLED(global_propargputop_d);
     CHECK_CALLED(global_propargputop_get_i);
     CHECK_CALLED(global_propargputop_put_i);
@@ -2981,44 +2964,44 @@ static BOOL run_tests(void)
     SET_EXPECT(global_propargputop_d);
     SET_EXPECT(global_propargputop_get_i);
     SET_EXPECT(global_propargputop_put_i);
-    parse_script_a("var t=0; propArgPutOp(t++, t++) ^= 14;");
+    run_script(L"var t=0; propArgPutOp(t++, t++) ^= 14;");
     CHECK_CALLED(global_propargputop_d);
     CHECK_CALLED(global_propargputop_get_i);
     CHECK_CALLED(global_propargputop_put_i);
 
     SET_EXPECT(global_testargtypes_i);
-    parse_script_a("testArgTypes(dispUnk, intProp(), intProp, getShort(), shortProp,"
-                   "function(i1,ui1,ui2,r4,i4ref,ui4,nullunk,d,i,s) {"
-                   "    ok(getVT(i) === 'VT_I4', 'getVT(i) = ' + getVT(i));"
-                   "    ok(getVT(s) === 'VT_I4', 'getVT(s) = ' + getVT(s));"
-                   "    ok(getVT(d) === 'VT_DISPATCH', 'getVT(d) = ' + getVT(d));"
-                   "    ok(getVT(nullunk) === 'VT_DISPATCH', 'getVT(nullunk) = ' + getVT(nullunk));"
-                   "    ok(nullunk === null, 'nullunk !== null');"
-                   "    ok(getVT(ui4) === 'VT_R8', 'getVT(ui4) = ' + getVT(ui4));"
-                   "    ok(ui4 > 0, 'ui4 = ' + ui4);"
-                   "    ok(getVT(i4ref) === 'VT_I4', 'getVT(i4ref) = ' + getVT(i4ref));"
-                   "    ok(i4ref === 2, 'i4ref = ' + i4ref);"
-                   "    ok(r4 === 0.5, 'r4 = ' + r4);"
-                   "    ok(getVT(r4) === 'VT_R8', 'getVT(r4) = ' + getVT(r4));"
-                   "    ok(getVT(ui2) === 'VT_I4', 'getVT(ui2) = ' + getVT(ui2));"
-                   "    ok(getVT(ui1) === 'VT_I4', 'getVT(ui1) = ' + getVT(ui1));"
-                   "    ok(ui1 === 4, 'ui1 = ' + ui1);"
-                   "    ok(getVT(i1) === 'VT_I4', 'getVT(i1) = ' + getVT(i1));"
-                   "    ok(i1 === 5, 'i1 = ' + i1);"
-                   "});");
+    run_script(L"testArgTypes(dispUnk, intProp(), intProp, getShort(), shortProp,"
+               L"function(i1,ui1,ui2,r4,i4ref,ui4,nullunk,d,i,s) {"
+               L"    ok(getVT(i) === 'VT_I4', 'getVT(i) = ' + getVT(i));"
+               L"    ok(getVT(s) === 'VT_I4', 'getVT(s) = ' + getVT(s));"
+               L"    ok(getVT(d) === 'VT_DISPATCH', 'getVT(d) = ' + getVT(d));"
+               L"    ok(getVT(nullunk) === 'VT_DISPATCH', 'getVT(nullunk) = ' + getVT(nullunk));"
+               L"    ok(nullunk === null, 'nullunk !== null');"
+               L"    ok(getVT(ui4) === 'VT_R8', 'getVT(ui4) = ' + getVT(ui4));"
+               L"    ok(ui4 > 0, 'ui4 = ' + ui4);"
+               L"    ok(getVT(i4ref) === 'VT_I4', 'getVT(i4ref) = ' + getVT(i4ref));"
+               L"    ok(i4ref === 2, 'i4ref = ' + i4ref);"
+               L"    ok(r4 === 0.5, 'r4 = ' + r4);"
+               L"    ok(getVT(r4) === 'VT_R8', 'getVT(r4) = ' + getVT(r4));"
+               L"    ok(getVT(ui2) === 'VT_I4', 'getVT(ui2) = ' + getVT(ui2));"
+               L"    ok(getVT(ui1) === 'VT_I4', 'getVT(ui1) = ' + getVT(ui1));"
+               L"    ok(ui1 === 4, 'ui1 = ' + ui1);"
+               L"    ok(getVT(i1) === 'VT_I4', 'getVT(i1) = ' + getVT(i1));"
+               L"    ok(i1 === 5, 'i1 = ' + i1);"
+               L"});");
     CHECK_CALLED(global_testargtypes_i);
 
     SET_EXPECT(testobj_withprop_d);
     SET_EXPECT(testobj_withprop_i);
-    parse_script_a("var t = (function () { with(testObj) { return withProp; }})(); ok(t === 1, 't = ' + t);");
+    run_script(L"var t = (function () { with(testObj) { return withProp; }})(); ok(t === 1, 't = ' + t);");
     CHECK_CALLED(testobj_withprop_d);
     CHECK_CALLED(testobj_withprop_i);
 
-    parse_script_a("@set @t=2\nok(@t === 2, '@t = ' + @t);");
+    run_script(L"@set @t=2\nok(@t === 2, '@t = ' + @t);");
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
-    parse_script_a("@if(true)\nif(@_jscript) reportSuccess();\n@end");
+    run_script(L"@if(true)\nif(@_jscript) reportSuccess();\n@end");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
@@ -3026,7 +3009,7 @@ static BOOL run_tests(void)
     EnumVARIANT_next_0_count = 1;
     SET_EXPECT(testobj_newenum);
     SET_EXPECT(enumvariant_next_0);
-    parse_script_a("new Enumerator(testObj);");
+    run_script(L"new Enumerator(testObj);");
     CHECK_CALLED(testobj_newenum);
     CHECK_CALLED(enumvariant_next_0);
 
@@ -3035,11 +3018,11 @@ static BOOL run_tests(void)
     SET_EXPECT(testobj_newenum);
     SET_EXPECT(enumvariant_next_0);
     SET_EXPECT(enumvariant_reset);
-    parse_script_a("(function () {"
-                   "    var testEnumObj = new Enumerator(testObj);"
-                   "    var tmp = testEnumObj.moveFirst();"
-                   "    ok(tmp == undefined, \"testEnumObj.moveFirst() = \" + tmp);"
-                   "})()");
+    run_script(L"(function () {"
+               L"    var testEnumObj = new Enumerator(testObj);"
+               L"    var tmp = testEnumObj.moveFirst();"
+               L"    ok(tmp == undefined, \"testEnumObj.moveFirst() = \" + tmp);"
+               L"})()");
     CHECK_CALLED(testobj_newenum);
     CHECK_CALLED(enumvariant_next_0);
     CHECK_CALLED(enumvariant_reset);
@@ -3049,15 +3032,15 @@ static BOOL run_tests(void)
     SET_EXPECT(testobj_newenum);
     SET_EXPECT(enumvariant_next_0);
     SET_EXPECT(enumvariant_next_1);
-    parse_script_a("(function () {"
-                   "    var testEnumObj = new Enumerator(testObj);"
-                   "    while (!testEnumObj.atEnd())"
-                   "    {"
-                   "        ok(testEnumObj.item() == 123, "
-                   "         \"testEnumObj.item() = \"+testEnumObj.item());"
-                   "        testEnumObj.moveNext();"
-                   "    }"
-                   "})()");
+    run_script(L"(function () {"
+               L"    var testEnumObj = new Enumerator(testObj);"
+               L"    while (!testEnumObj.atEnd())"
+               L"    {"
+               L"        ok(testEnumObj.item() == 123, "
+               L"         \"testEnumObj.item() = \"+testEnumObj.item());"
+               L"        testEnumObj.moveNext();"
+               L"    }"
+               L"})()");
     CHECK_CALLED(testobj_newenum);
     CHECK_CALLED(enumvariant_next_0);
     CHECK_CALLED(enumvariant_next_1);
@@ -3072,8 +3055,10 @@ static BOOL run_tests(void)
     test_start();
     test_automagic();
 
-    parse_script_af(0, "test.testThis2(this);");
-    parse_script_af(0, "(function () { test.testThis2(this); })();");
+    hres = parse_script(0, L"test.testThis2(this);");
+    ok(hres == S_OK, "unexpected result %08x\n", hres);
+    hres = parse_script(0, L"(function () { test.testThis2(this); })();");
+    ok(hres == S_OK, "unexpected result %08x\n", hres);
 
     hres = parse_htmlscript(L"<!--");
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
@@ -3179,27 +3164,27 @@ static void run_encoded_tests(void)
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
     /*             |reportSuccess();                           | */
-    parse_script_a("#@~^EAAAAA==.\x7fwGMYUEm1+kd`*iAQYAAA==^#~@");
+    run_script(L"#@~^EAAAAA==.\x7fwGMYUEm1+kd`*iAQYAAA==^#~@");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
-    parse_script_a("reportSuccess();");
+    run_script(L"reportSuccess();");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
     /*                   |Success                         | */
-    parse_script_a("report#@~^BwAAAA==j!m^\x7f/k2QIAAA==^#~@();");
+    run_script(L"report#@~^BwAAAA==j!m^\x7f/k2QIAAA==^#~@();");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
     /*             |\r\n\treportSuccess();\r\n                        | */
-    parse_script_a("#@~^GQAAAA==@#@&d.\x7fwKDYUE1^+k/c#p@#@&OAYAAA==^#~@");
+    run_script(L"#@~^GQAAAA==@#@&d.\x7fwKDYUE1^+k/c#p@#@&OAYAAA==^#~@");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
 
