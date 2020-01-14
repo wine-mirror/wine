@@ -1959,7 +1959,8 @@ static HRESULT parse_htmlscript(BSTR script_str)
     return hres;
 }
 
-static void test_IActiveScriptError(IActiveScriptError *error, SCODE errorcode, ULONG line, LONG pos, BSTR script_source, BSTR description, BSTR line_text)
+static void test_IActiveScriptError(IActiveScriptError *error, SCODE errorcode, ULONG line, LONG pos, const WCHAR *script_source,
+                                    const WCHAR *description, const WCHAR *line_text)
 {
     HRESULT hres;
     DWORD source_context;
@@ -2047,7 +2048,8 @@ static void test_IActiveScriptError(IActiveScriptError *error, SCODE errorcode, 
     SysFreeString(excep.bstrHelpFile);
 }
 
-static void parse_script_with_error(DWORD flags, BSTR script_str, SCODE errorcode, ULONG line, LONG pos, BSTR script_source, BSTR description, BSTR line_text)
+static void parse_script_with_error(DWORD flags, const WCHAR *script_str, SCODE errorcode, ULONG line, LONG pos, const WCHAR *script_source,
+                                    const WCHAR *description, const WCHAR *line_text)
 {
     IActiveScriptParse *parser;
     IActiveScript *engine;
@@ -2126,23 +2128,6 @@ static void parse_script_ae(const char *src, HRESULT exhres)
     hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp);
     SysFreeString(tmp);
     ok(hres == exhres, "parse_script failed: %08x, expected %08x\n", hres, exhres);
-}
-
-static void parse_script_with_error_a(const char *src, SCODE errorcode, ULONG line, LONG pos, LPCSTR source, LPCSTR desc, LPCSTR linetext)
-{
-    BSTR tmp, script_source, description, line_text;
-
-    tmp = a2bstr(src);
-    script_source = a2bstr(source);
-    description = a2bstr(desc);
-    line_text = a2bstr(linetext);
-
-    parse_script_with_error(SCRIPTITEM_GLOBALMEMBERS, tmp, errorcode, line, pos, script_source, description, line_text);
-
-    SysFreeString(line_text);
-    SysFreeString(description);
-    SysFreeString(script_source);
-    SysFreeString(tmp);
 }
 
 static HRESULT parse_htmlscript_a(const char *src)
@@ -3117,46 +3102,52 @@ static BOOL run_tests(void)
     test_invokeex();
     test_eval();
 
-    parse_script_with_error_a(
-        "?",
+    parse_script_with_error(
+        SCRIPTITEM_GLOBALMEMBERS,
+        L"?",
         0x800a03ea, 0, 0,
-        "Microsoft JScript compilation error",
-        "Syntax error",
-        "?");
+        L"Microsoft JScript compilation error",
+        L"Syntax error",
+        L"?");
 
-    parse_script_with_error_a(
-        "var a=1;\nif(a\n-->0) a=5;\n",
+    parse_script_with_error(
+        SCRIPTITEM_GLOBALMEMBERS,
+        L"var a=1;\nif(a\n-->0) a=5;\n",
         0x800a03ee, 2, 0,
-        "Microsoft JScript compilation error",
-        "Expected ')'",
-        "-->0) a=5;");
+        L"Microsoft JScript compilation error",
+        L"Expected ')'",
+        L"-->0) a=5;");
 
-    parse_script_with_error_a(
-        "new 3;",
+    parse_script_with_error(
+        SCRIPTITEM_GLOBALMEMBERS,
+        L"new 3;",
         0x800a01bd, 0, 0,
-        "Microsoft JScript runtime error",
-        "Object doesn't support this action",
+        L"Microsoft JScript runtime error",
+        L"Object doesn't support this action",
         NULL);
 
-    parse_script_with_error_a(
-        "new null;",
+    parse_script_with_error(
+        SCRIPTITEM_GLOBALMEMBERS,
+        L"new null;",
         0x800a138f, 0, 0,
-        "Microsoft JScript runtime error",
-        "Object expected",
+        L"Microsoft JScript runtime error",
+        L"Object expected",
         NULL);
 
-    parse_script_with_error_a(
-        "var a;\nnew null;",
+    parse_script_with_error(
+        SCRIPTITEM_GLOBALMEMBERS,
+        L"var a;\nnew null;",
         0x800a138f, 1, 0,
-        "Microsoft JScript runtime error",
-        "Object expected",
+        L"Microsoft JScript runtime error",
+        L"Object expected",
         NULL);
 
-    parse_script_with_error_a(
-        "var a; new null;",
+    parse_script_with_error(
+        SCRIPTITEM_GLOBALMEMBERS,
+        L"var a; new null;",
         0x800a138f, 0, 7,
-        "Microsoft JScript runtime error",
-        "Object expected",
+        L"Microsoft JScript runtime error",
+        L"Object expected",
         NULL);
 
     run_bom_tests();
