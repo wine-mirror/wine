@@ -69,9 +69,6 @@ static const char * const builtin_only[] =
     "user32",
     "vdmdbg",
     "w32skrnl",
-    "wined3d",
-    "winedos",
-    "wineps",
     "winmm",
     "wintab32",
     "wnaspi32",
@@ -208,6 +205,7 @@ static inline BOOL is_builtin_only( const char *name )
             !strcmp( ext, ".tlb" ))
             return TRUE;
     }
+    if (!strncmp( name, "wine", 4 )) return TRUE;
     return bsearch( &name, builtin_only, ARRAY_SIZE(builtin_only),
                     sizeof(builtin_only[0]), compare_dll ) != NULL;
 }
@@ -224,6 +222,8 @@ static BOOL show_dll_in_list( const char *name )
         /* skip exes */
         if (!strcmp( ext, ".exe" )) return FALSE;
     }
+    /* skip api set placeholders */
+    if (!strncmp( name, "api-ms-", 7 ) || !strncmp( name, "ext-ms-", 7 )) return FALSE;
     /* skip dlls that should always be builtin */
     return !is_builtin_only( name );
 }
@@ -253,7 +253,9 @@ static void clear_settings(HWND dialog)
 /* load the list of available libraries from a given dir */
 static void load_library_list_from_dir( HWND dialog, const char *dir_path, int check_subdirs )
 {
+    static const char * const ext[] = { ".dll", ".dll.so", ".so", "" };
     char *buffer = NULL, name[256];
+    unsigned int i;
     struct dirent *de;
     DIR *dir = opendir( dir_path );
 
@@ -266,30 +268,36 @@ static void load_library_list_from_dir( HWND dialog, const char *dir_path, int c
     {
         size_t len = strlen(de->d_name);
         if (len > sizeof(name)) continue;
-        if (len > 3 && !strcmp( de->d_name + len - 3, ".so"))
-        {
-            len -= 3;
-            if (len > 4 && !strcmp( de->d_name + len - 4, ".dll.so")) len -= 4;
-            memcpy( name, de->d_name, len );
-            name[len] = 0;
-            if (!show_dll_in_list( name )) continue;
-            SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)name );
-        }
-        else if (check_subdirs)
+        if (check_subdirs)
         {
             struct stat st;
+
+            if (!strcmp( de->d_name, "." )) continue;
+            if (!strcmp( de->d_name, ".." )) continue;
             if (!show_dll_in_list( de->d_name )) continue;
-            sprintf( buffer, "%s/%s/%s.dll.so", dir_path, de->d_name, de->d_name );
-            if (!stat( buffer, &st ))
+            for (i = 0; i < ARRAY_SIZE( ext ); i++)
             {
-                SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)de->d_name );
-                continue;
+                sprintf( buffer, "%s/%s/%s%s", dir_path, de->d_name, de->d_name, ext[i] );
+                if (!stat( buffer, &st ))
+                {
+                    SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)de->d_name );
+                    break;
+                }
             }
-            sprintf( buffer, "%s/%s/%s.so", dir_path, de->d_name, de->d_name );
-            if (!stat( buffer, &st ))
+        }
+        else
+        {
+            for (i = 0; i < ARRAY_SIZE( ext ); i++)
             {
-                SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)de->d_name );
-                continue;
+                if (!ext[i][0]) continue;
+                if (len > strlen(ext[i]) && !strcmp( de->d_name + len - strlen(ext[i]), ext[i]))
+                {
+                    len -= strlen( ext[i] );
+                    memcpy( name, de->d_name, len );
+                    name[len] = 0;
+                    if (!show_dll_in_list( name )) continue;
+                    SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)name );
+                }
             }
         }
     }
