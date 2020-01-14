@@ -1916,6 +1916,8 @@ static LRESULT WINAPI cd_wndproc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         NMHDR *nmhdr = (NMHDR*)lParam;
         if(nmhdr->code == NM_CUSTOMDRAW) {
             NMLVCUSTOMDRAW *nmlvcd = (NMLVCUSTOMDRAW*)nmhdr;
+            BOOL showsel_always = !!(GetWindowLongA(nmlvcd->nmcd.hdr.hwndFrom, GWL_STYLE) & LVS_SHOWSELALWAYS);
+            BOOL is_selected = !!(nmlvcd->nmcd.uItemState & CDIS_SELECTED);
             struct message msg;
 
             msg.message = message;
@@ -1931,21 +1933,40 @@ static LRESULT WINAPI cd_wndproc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 SetBkColor(nmlvcd->nmcd.hdc, c0ffee);
                 return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYPOSTPAINT;
             case CDDS_ITEMPREPAINT:
+                clr = GetBkColor(nmlvcd->nmcd.hdc);
+                todo_wine_if(nmlvcd->iSubItem)
+                    ok(clr == c0ffee, "Unexpected background color %#x.\n", clr);
                 nmlvcd->clrTextBk = CLR_DEFAULT;
                 nmlvcd->clrText = RGB(0, 255, 0);
                 return CDRF_NOTIFYSUBITEMDRAW|CDRF_NOTIFYPOSTPAINT;
             case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
                 clr = GetBkColor(nmlvcd->nmcd.hdc);
-                ok(nmlvcd->clrTextBk == CLR_DEFAULT, "got 0x%x\n", nmlvcd->clrTextBk);
-                ok(nmlvcd->clrText == RGB(0, 255, 0), "got 0x%x\n", nmlvcd->clrText);
+                todo_wine_if(showsel_always && is_selected && nmlvcd->iSubItem)
+                {
+                    ok(nmlvcd->clrTextBk == CLR_DEFAULT, "Unexpected text background %#x.\n", nmlvcd->clrTextBk);
+                    ok(nmlvcd->clrText == RGB(0, 255, 0), "Unexpected text color %#x.\n", nmlvcd->clrText);
+                }
+                if (showsel_always && is_selected && nmlvcd->iSubItem)
+                    ok(clr == GetSysColor(COLOR_3DFACE), "Unexpected background color %#x.\n", clr);
+                else
                 todo_wine_if(nmlvcd->iSubItem)
                     ok(clr == c0ffee, "clr=%.8x\n", clr);
                 return CDRF_NOTIFYPOSTPAINT;
             case CDDS_ITEMPOSTPAINT | CDDS_SUBITEM:
                 clr = GetBkColor(nmlvcd->nmcd.hdc);
-                todo_wine ok(clr == c0ffee, "clr=%.8x\n", clr);
-                ok(nmlvcd->clrTextBk == CLR_DEFAULT, "got 0x%x\n", nmlvcd->clrTextBk);
-                ok(nmlvcd->clrText == RGB(0, 255, 0), "got 0x%x\n", nmlvcd->clrText);
+                if (showsel_always && is_selected)
+                    ok(clr == GetSysColor(COLOR_3DFACE), "Unexpected background color %#x.\n", clr);
+                else
+                {
+                todo_wine
+                    ok(clr == c0ffee, "Unexpected background color %#x.\n", clr);
+                }
+
+                todo_wine_if(showsel_always)
+                {
+                    ok(nmlvcd->clrTextBk == CLR_DEFAULT, "Unexpected text background color %#x.\n", nmlvcd->clrTextBk);
+                    ok(nmlvcd->clrText == RGB(0, 255, 0), "got 0x%x\n", nmlvcd->clrText);
+                }
                 return CDRF_DODEFAULT;
             }
             return CDRF_DODEFAULT;
@@ -1959,6 +1980,7 @@ static void test_customdraw(void)
 {
     HWND hwnd;
     WNDPROC oldwndproc;
+    LVITEMA item;
 
     hwnd = create_listview_control(LVS_REPORT);
 
@@ -1977,6 +1999,25 @@ static void test_customdraw(void)
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
     ok_sequence(sequences, PARENT_CD_SEQ_INDEX, parent_report_cd_seq, "parent customdraw, LVS_REPORT", FALSE);
+
+    /* Check colors when item is selected. */
+    item.mask = LVIF_STATE;
+    item.stateMask = LVIS_SELECTED;
+    item.state = LVIS_SELECTED;
+    SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+    ok_sequence(sequences, PARENT_CD_SEQ_INDEX, parent_report_cd_seq,
+            "parent customdraw, item selected, LVS_REPORT, selection", FALSE);
+
+    SetWindowLongW(hwnd, GWL_STYLE, GetWindowLongW(hwnd, GWL_STYLE) | LVS_SHOWSELALWAYS);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+    ok_sequence(sequences, PARENT_CD_SEQ_INDEX, parent_report_cd_seq,
+            "parent customdraw, item selected, LVS_SHOWSELALWAYS, LVS_REPORT", FALSE);
 
     DestroyWindow(hwnd);
 
