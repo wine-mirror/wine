@@ -168,9 +168,7 @@ DEFINE_EXPECT(BindHandler);
 #define JS_E_INVALID_CHAR 0x800a03f6
 
 static const WCHAR testW[] = {'t','e','s','t',0};
-static const CHAR testA[] = "test";
 static const WCHAR test_valW[] = {'t','e','s','t','V','a','l',0};
-static const CHAR test_valA[] = "testVal";
 static const WCHAR emptyW[] = {0};
 
 static BOOL strict_dispid_check, testing_expr;
@@ -202,13 +200,6 @@ static BOOL is_lang_english(void)
         return PRIMARYLANGID(pGetUserDefaultUILanguage()) == LANG_ENGLISH;
 
     return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
-}
-
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
-    return lstrcmpA(buf, stra);
 }
 
 #define test_grfdex(a,b) _test_grfdex(__LINE__,a,b)
@@ -450,31 +441,31 @@ static HRESULT WINAPI testObj_Invoke(IDispatchEx *iface, DISPID id,
 
 static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    if(!strcmp_wa(bstrName, "prop")) {
+    if(!lstrcmpW(bstrName, L"prop")) {
         CHECK_EXPECT(testobj_prop_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_TESTOBJ_PROP;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "withProp")) {
+    if(!lstrcmpW(bstrName, L"withProp")) {
         CHECK_EXPECT(testobj_withprop_d);
         test_grfdex(grfdex, fdexNameCaseSensitive|fdexNameImplicit);
         *pid = DISPID_TESTOBJ_WITHPROP;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "noprop")) {
+    if(!lstrcmpW(bstrName, L"noprop")) {
         CHECK_EXPECT(testobj_noprop_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         return DISP_E_UNKNOWNNAME;
     }
-    if(!strcmp_wa(bstrName, "onlyDispID")) {
+    if(!lstrcmpW(bstrName, L"onlyDispID")) {
         if(strict_dispid_check)
             CHECK_EXPECT(testobj_onlydispid_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_TESTOBJ_ONLYDISPID;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "notExists")) {
+    if(!lstrcmpW(bstrName, L"notExists")) {
         CHECK_EXPECT(testobj_notexists_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         return DISP_E_UNKNOWNNAME;
@@ -559,12 +550,12 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
 
 static HRESULT WINAPI testObj_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
-    if(!strcmp_wa(bstrName, "deleteTest")) {
+    if(!lstrcmpW(bstrName, L"deleteTest")) {
         CHECK_EXPECT(testobj_delete_test);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "noDeleteTest")) {
+    if(!lstrcmpW(bstrName, L"noDeleteTest")) {
         CHECK_EXPECT(testobj_delete_nodelete);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         return S_FALSE;
@@ -670,11 +661,11 @@ static HRESULT WINAPI pureDisp_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
     ok(IsEqualGUID(riid, &IID_NULL), "Expected IID_NULL\n");
     ok(cNames==1, "cNames = %d\n", cNames);
 
-    if(!strcmp_wa(*rgszNames, "prop")) {
+    if(!lstrcmpW(*rgszNames, L"prop")) {
         CHECK_EXPECT(puredisp_prop_d);
         *rgDispId = DISPID_TESTOBJ_PROP;
         return S_OK;
-    } else if(!strcmp_wa(*rgszNames, "noprop")) {
+    } else if(!lstrcmpW(*rgszNames, L"noprop")) {
         CHECK_EXPECT(puredisp_noprop_d);
         return DISP_E_UNKNOWNNAME;
     }
@@ -748,7 +739,7 @@ static ULONG WINAPI BindEventHandler_Release(IBindEventHandler *iface)
 static HRESULT WINAPI BindEventHandler_BindHandler(IBindEventHandler *iface, const WCHAR *event, IDispatch *disp)
 {
     CHECK_EXPECT(BindHandler);
-    ok(!strcmp_wa(event, "eventName"), "event = %s\n", wine_dbgstr_w(event));
+    ok(!lstrcmpW(event, L"eventName"), "event = %s\n", wine_dbgstr_w(event));
     ok(disp != NULL, "disp = NULL\n");
     return S_OK;
 }
@@ -800,213 +791,213 @@ static IDispatchEx bindEventHandlerDisp = { &bindEventHandlerDispVtbl };
 
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    if(!strcmp_wa(bstrName, "ok")) {
+    if(!lstrcmpW(bstrName, L"ok")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_OK;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "trace")) {
+    if(!lstrcmpW(bstrName, L"trace")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TRACE;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "reportSuccess")) {
+    if(!lstrcmpW(bstrName, L"reportSuccess")) {
         CHECK_EXPECT(global_success_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_REPORTSUCCESS;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "testPropGet")) {
+    if(!lstrcmpW(bstrName, L"testPropGet")) {
         CHECK_EXPECT(global_propget_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTPROPGET;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "testPropPut")) {
+    if(!lstrcmpW(bstrName, L"testPropPut")) {
         CHECK_EXPECT(global_propput_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTPROPPUT;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "testPropPutRef")) {
+    if(!lstrcmpW(bstrName, L"testPropPutRef")) {
         CHECK_EXPECT(global_propputref_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTPROPPUTREF;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "testPropDelete")) {
+    if(!lstrcmpW(bstrName, L"testPropDelete")) {
         CHECK_EXPECT(global_propdelete_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTPROPDELETE;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "testNoPropDelete")) {
+    if(!lstrcmpW(bstrName, L"testNoPropDelete")) {
         CHECK_EXPECT(global_nopropdelete_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTNOPROPDELETE;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "testPropDeleteError")) {
+    if(!lstrcmpW(bstrName, L"testPropDeleteError")) {
         CHECK_EXPECT(global_propdeleteerror_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTPROPDELETEERROR;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "getVT")) {
+    if(!lstrcmpW(bstrName, L"getVT")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_GETVT;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "testObj")) {
+    if(!lstrcmpW(bstrName, L"testObj")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTOBJ;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "getNullBSTR")) {
+    if(!lstrcmpW(bstrName, L"getNullBSTR")) {
         *pid = DISPID_GLOBAL_GETNULLBSTR;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "isNullBSTR")) {
+    if(!lstrcmpW(bstrName, L"isNullBSTR")) {
         *pid = DISPID_GLOBAL_ISNULLBSTR;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "nullDisp")) {
+    if(!lstrcmpW(bstrName, L"nullDisp")) {
         *pid = DISPID_GLOBAL_NULL_DISP;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "notExists")) {
+    if(!lstrcmpW(bstrName, L"notExists")) {
         CHECK_EXPECT(global_notexists_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         return DISP_E_UNKNOWNNAME;
     }
 
-    if(!strcmp_wa(bstrName, "testThis")) {
+    if(!lstrcmpW(bstrName, L"testThis")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTTHIS;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "testThis2")) {
+    if(!lstrcmpW(bstrName, L"testThis2")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTTHIS2;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "invokeVersion")) {
+    if(!lstrcmpW(bstrName, L"invokeVersion")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_INVOKEVERSION;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "createArray")) {
+    if(!lstrcmpW(bstrName, L"createArray")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_CREATEARRAY;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "propGetFunc")) {
+    if(!lstrcmpW(bstrName, L"propGetFunc")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_PROPGETFUNC;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "objectFlag")) {
+    if(!lstrcmpW(bstrName, L"objectFlag")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_OBJECT_FLAG;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "isWin64")) {
+    if(!lstrcmpW(bstrName, L"isWin64")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_ISWIN64;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "pureDisp")) {
+    if(!lstrcmpW(bstrName, L"pureDisp")) {
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_PUREDISP;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "propArgPutG")) {
+    if(!lstrcmpW(bstrName, L"propArgPutG")) {
         CHECK_EXPECT(global_propargput_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_PROPARGPUT;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "propArgPutOp")) {
+    if(!lstrcmpW(bstrName, L"propArgPutOp")) {
         CHECK_EXPECT(global_propargputop_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_PROPARGPUTOP;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "propArgPutO")) {
+    if(!lstrcmpW(bstrName, L"propArgPutO")) {
         CHECK_EXPECT(global_propargput_d);
         test_grfdex(grfdex, fdexNameEnsure|fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_PROPARGPUT;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "shortProp")) {
+    if(!lstrcmpW(bstrName, L"shortProp")) {
         *pid = DISPID_GLOBAL_SHORTPROP;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "getShort")) {
+    if(!lstrcmpW(bstrName, L"getShort")) {
         *pid = DISPID_GLOBAL_GETSHORT;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "testArgTypes")) {
+    if(!lstrcmpW(bstrName, L"testArgTypes")) {
         *pid = DISPID_GLOBAL_TESTARGTYPES;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "intProp")) {
+    if(!lstrcmpW(bstrName, L"intProp")) {
         *pid = DISPID_GLOBAL_INTPROP;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "dispUnk")) {
+    if(!lstrcmpW(bstrName, L"dispUnk")) {
         *pid = DISPID_GLOBAL_DISPUNK;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "testRes")) {
+    if(!lstrcmpW(bstrName, L"testRes")) {
         *pid = DISPID_GLOBAL_TESTRES;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "testNoRes")) {
+    if(!lstrcmpW(bstrName, L"testNoRes")) {
         *pid = DISPID_GLOBAL_TESTNORES;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "dispexFunc")) {
+    if(!lstrcmpW(bstrName, L"dispexFunc")) {
         *pid = DISPID_GLOBAL_DISPEXFUNC;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "getScriptState")) {
+    if(!lstrcmpW(bstrName, L"getScriptState")) {
         *pid = DISPID_GLOBAL_GETSCRIPTSTATE;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "bindEventHandler")) {
+    if(!lstrcmpW(bstrName, L"bindEventHandler")) {
         *pid = DISPID_GLOBAL_BINDEVENTHANDLER;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "testEnumObj")) {
+    if(!lstrcmpW(bstrName, L"testEnumObj")) {
         *pid = DISPID_GLOBAL_TESTENUMOBJ;
         return S_OK;
     }
 
-    if(!strcmp_wa(bstrName, "callEval")) {
+    if(!lstrcmpW(bstrName, L"callEval")) {
         *pid = DISPID_GLOBAL_CALLEVAL;
         return S_OK;
     }
 
-    if(strict_dispid_check && strcmp_wa(bstrName, "t"))
+    if(strict_dispid_check && lstrcmpW(bstrName, L"t"))
         ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
 }
@@ -1682,9 +1673,9 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %x\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
 
-    if(!strcmp_wa(pstrName, test_valA))
+    if(!lstrcmpW(pstrName, test_valW))
         CHECK_EXPECT(GetItemInfo_testVal);
-    else if(strcmp_wa(pstrName, testA))
+    else if(lstrcmpW(pstrName, testW))
         ok(0, "unexpected pstrName %s\n", wine_dbgstr_w(pstrName));
 
     *ppiunkItem = (IUnknown*)&Global;
