@@ -627,7 +627,7 @@ msgstr "&Özel Renkler:"
 
 #: comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|Kat&ı"
 
 #: comdlg32.rc:290
 msgid "&Red:"
@@ -664,11 +664,9 @@ msgid "&Define Custom Colors >>"
 msgstr "&Özel Renkleri Tanımla >>"
 
 #: comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&Hayır"
+msgstr "&k"
 
 #: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
@@ -6821,83 +6819,59 @@ msgstr "Posta Gönder"
 
 #: mferror.mc:249 mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "Başlama isteği zaten yapıldı.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "Nesne UUID'i bulunamadı.\n"
+msgstr "Ses çıkışı bitirilmedi.\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "Kurulum platformu desteklenmiyor.\n"
+msgstr "Media Foundation platformu başlatılmadı.\n"
 
 #: mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "Bit sayısı çok küçük.\n"
+msgstr "Tampon çok küçük.\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "Geçersiz sorgu sözdizimi.\n"
+msgstr "Geçersiz istek.\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "Geçersiz segment numarası.\n"
+msgstr "Geçersiz akış numarası.\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "Geçersiz veri türü.\n"
+msgstr "Geçersiz ortam türü.\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "Başka bir girdi yok.\n"
+msgstr "Başka giriş kabul edilmiyor.\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "Nesne UUID'i bulunamadı.\n"
+msgstr "Nesne başlatılmadı.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "İşlem desteklenmiyor.\n"
+msgstr "Temsil desteklenmiyor.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "Önerilen ortam türlerinde daha fazla tür yok.\n"
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen hizmet.\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "Beklenmeyen ağ hatası.\n"
+msgstr "Beklenmeyen hata.\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "Geçeriz zaman.\n"
+msgstr "Geçersiz tür.\n"
 
 #: mferror.mc:123
 #, fuzzy
@@ -6906,456 +6880,328 @@ msgid "Invalid file format.\n"
 msgstr "Geçersiz piksel biçimi.\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "Geçeriz zaman.\n"
+msgstr "Geçeriz zaman damgası.\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen şema.\n"
 
 #: mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen bit akış şeması.\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen zaman biçimi.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "Örnek için zaman damgası ayarlanmamış.\n"
 
 #: mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "Örnek için süre ayarlanmamış.\n"
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "Geçersiz veri.\n"
+msgstr "Geçersiz akış verisi.\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "Yardım kullanılamıyor."
+msgstr "Gerçek zamanlı destek kullanılamıyor.\n"
 
 #: mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen oran.\n"
 
 #: mferror.mc:200
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported thinning.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen sıkıştırma.\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "İstek desteklenmiyor.\n"
+msgstr "Geri sarma desteklenmiyor.\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "Desteklenmeyen yetkilendirme seviyesi.\n"
+msgstr "Desteklenmeyen oran çevrimi.\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "Oran değişimi öne alındı.\n"
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "Nesne UUID'i bulunamadı.\n"
+msgstr "Nesne veya değer bulunamadı.\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "Yardım kullanılamıyor."
+msgstr "Değer kullanılamıyor.\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "Yardım kullanılamıyor."
+msgstr "Saat kullanılamıyor.\n"
 
 #: mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "Genişletilmiş özellikler desteklenmiyor.\n"
+msgstr "Çoklu imzalayanlar desteklenmiyor.\n"
 
 #: mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "Sürücü etkinleştirilmemiş."
+msgstr "Zamanlayıcı tek kaldı.\n"
 
 #: mferror.mc:277
-#, fuzzy
-#| msgid "Character translation table open failed.\n"
 msgid "State transition is pending.\n"
-msgstr "Karakter çevrim tablosu açılamıyor.\n"
+msgstr "Durum değişimi bekliyor.\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported state transition.\n"
-msgstr "Desteklenmeyen yetkilendirme seviyesi.\n"
+msgstr "Desteklenmeyen hal değişimi.\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "Bir iç hata oluştu.\n"
+msgstr "Kurtarılamaz hata oluştu.\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "Örnekte çok fazla tampon var.\n"
 
 #: mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "Geçici klasöre yazılamıyor.\n"
+msgstr "Örneğe yazılamıyor.\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "Yol geçersiz.\n"
+msgstr "Anahtar geçersiz.\n"
 
 #: mferror.mc:319
-#, fuzzy
-#| msgid "Wrong stub version.\n"
 msgid "Bad startup version.\n"
-msgstr "Hatalı taslak sürümü.\n"
+msgstr "Hatalı başlangıç sürümü.\n"
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen başlık.\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "Geçersiz iş istasyonu.\n"
+msgstr "Geçersiz konum.\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr "Özellik bulunamadı.\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "Yönlendirme türüne izin verilmiyor.\n"
+msgstr "Özellik türüne izin verilmiyor.\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "İşlem desteklenmiyor.\n"
+msgstr "Özellik türü desteklenmiyor.\n"
 
 #: mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "Dizin boş değil.\n"
+msgstr "Özellik boş.\n"
 
 #: mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "Dizin boş değil.\n"
+msgstr "Özellik boş değil.\n"
 
 #: mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "Yönlendirme türüne izin verilmiyor.\n"
+msgstr "Vektör özelliğine izin verilmiyor.\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "Vektör özelliği gerekli.\n"
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "İşlem kullanıcı tarafından iptal edildi.\n"
+msgstr "İşlem iptal edildi.\n"
 
 #: mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "Sunucu devre dışı değil.\n"
+msgstr "Bit akışında arama yapılamıyor.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "Güvenli modda platform devre dışıdır.\n"
 
 #: mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "Hizmet iş parçacığı oluşturulamıyor.\n"
+msgstr "Bit akışı ayrılamıyor.\n"
 
 #: mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "Karşılıklı dışlama bayrakları, kaynak çözücüsüne geçirildi.\n"
 
 #: mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "Bilinmeyen arayüz.\n"
+msgstr "Bilinmeyen bit akış uzunluğu.\n"
 
 #: mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "Geçersiz dizin.\n"
+msgstr "Geçersiz iş kuyruğu dizini.\n"
 
 #: mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "Kullanılabilir oturum sunucusu yok.\n"
+msgstr "Olay yok.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "Desteklenmeyen yetkilendirme seviyesi.\n"
+msgstr "Desteklenmeyen ortam kaynağı durum çevrimi.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "Kayıt defteri kurtarıldı.\n"
+msgstr "Ortam akışının sonuna ulaşıldı.\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "Shutdown() işlevi çağırıldı.\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "Kayıt defteri kurtarıldı.\n"
+msgstr "Ortam akışına süre ayarlanmamış.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "Ortam biçimi tanındı ancak geçersiz.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "Özellik ayarı bulunamadı.\n"
+msgstr "Özellik bulunamadı.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "Dizin boş değil.\n"
+msgstr "Özellik salt okunur.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "Yönlendirme türüne izin verilmiyor.\n"
+msgstr "Özelliğe izin verilmiyor.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "Kaynak kullanımda.\n"
+msgstr "Ortam kaynağı başlatılmadı.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen ortam türü.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "Kaynak kullanımda.\n"
+msgstr "Ortam kaynağı yanlış durumda.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "Veri tespit edilemedi.\n"
+msgstr "Bir ortam akışı seçilmedi.\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen ortam akış karakteristiği.\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "Akış çıkışı kaldırıldı.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "Akış çıkışı eşlenmedi.\n"
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "Kayıt defteri kurtarıldı.\n"
+msgstr "Ortam çıkışının akış çıkışları düzeltildi.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "Etki alanı zaten mevcut.\n"
+msgstr "Akış çıkışı zaten mevcut.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "İşlem kullanıcı tarafından iptal edildi.\n"
+msgstr "Örnek konumlandırması iptal edildi.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "Dizin boş değil.\n"
+msgstr "Örnek konumlandırıcısı boş.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "Sınıf zaten bulunuyor.\n"
+msgstr "Çıkış zaten durduruldu.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "ASF dosya çıkışı için bit oranı bilinmiyor.\n"
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "Veri tespit edilemedi.\n"
+msgstr "Çıkış için bir akış seçilmedi.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "Dosya adı çok uzun.\n"
+msgstr "Üst veri çok uzun.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "Çıkış tarafından bir örnek işlenmedi.\n"
 
 #: mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "Çıkış için gerekli üstbilgi sağlanmamış.\n"
 
 #: mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "Bağlantı geçersiz.\n"
+msgstr "Ek düğüm geçersiz.\n"
 
 #: mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "Yazıcı bulunamıyor."
+msgstr "Çözücü bulunamıyor.\n"
 
 #: mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "Modül bulunamadı.\n"
+msgstr "Codec bulunamadı.\n"
 
 #: mferror.mc:648
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "Çağrı işlemesi alınamıyor.\n"
+msgstr "Topoloji düğümlerine bağlanılamıyor.\n"
 
 #: mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "İstek desteklenmiyor.\n"
+msgstr "Topoloji isteği desteklenmiyor.\n"
 
 #: mferror.mc:662
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "Geçersiz grup özellikleri.\n"
+msgstr "Geçersiz topoloji zaman özellikleri.\n"
 
 #: mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "Topolojide döngü bulundu.\n"
 
 #: mferror.mc:676
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "Kurulum kaynağı yok.\n"
+msgstr "Sunum tanımlayıcısı yok.\n"
 
 #: mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "Dizin yok.\n"
+msgstr "Akış tanımlayıcısı yok.\n"
 
 #: mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "Aygıt bağlı değil.\n"
+msgstr "Akış tanımlayıcısı seçilmedi.\n"
 
 #: mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "Dizin yok.\n"
+msgstr "Kaynak yok.\n"
 
 #: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "Topoloji yükleyicisi çıkış etkinleşmesini desteklemiyor.\n"
 
 #: mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "Saatin zaman kaynağı ayarlanmamış.\n"
 
 #: mferror.mc:718
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "Sınıf zaten bulunuyor.\n"
+msgstr "Saat durumu zaten ayarlı.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8451,26 +8297,20 @@ msgid "Off"
 msgstr "Kapalı"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "video"
+msgstr "Sağlayıcı"
 
 #: version.rc:45
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "Kullanmak istediğiniz biçimi seçin:"
+msgstr "Bağlanmak istediğiniz veriyi seçin:"
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "Özellikler"
+msgstr "Veri Bağlantısı Özellikleri"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "OLE Veritabanı Sağlayıcısı"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9581,7 +9421,7 @@ msgstr ""
 "BİR AMACA UYGUNLUĞU bile garanti edilmez. Daha fazla bilgi için GNU Kısıtlı "
 "Genel Kamu Lisansı'na bakın.\n"
 "\n"
-"Wine ile birlikte GNU Lesser Genel Kamu Lisansı'nın bir kopyasını almış "
+"Wine ile birlikte GNU Kısıtlı Genel Kamu Lisansı'nın bir kopyasını almış "
 "olmanız gereklidir. Eğer almamışsanız Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA adresine yazın."
 
@@ -11175,10 +11015,6 @@ msgstr ""
 "kullanamazsınız."
 
 #: winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
@@ -11199,10 +11035,6 @@ msgid "An error occurred with the specified port."
 msgstr "Belirtilen bağlantı noktasında hata oluştu."
 
 #: winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
@@ -15365,7 +15197,7 @@ msgstr "Genel Meta Dosya Görüntüleyicisi"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Meta dosyalar (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15536,10 +15368,6 @@ msgid "Drive configuration"
 msgstr "Sürücü yapılandırması"
 
 #: winecfg.rc:233
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -15830,12 +15658,6 @@ msgid "System drive"
 msgstr "Sistem sürücüsü"
 
 #: winecfg.rc:76
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -16917,8 +16739,6 @@ msgid "Text documents (*.txt)"
 msgstr "Metin belgeleri (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
 msgstr "Unicode metin belgesi (*.txt)"
 
@@ -17122,42 +16942,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -17201,9 +16985,9 @@ msgstr ""
 "\n"
 "Nerede:\n"
 "\n"
-"[/I]  Hedef dizin bulunmuyorsa oluşturup iki veya daha fazla dosyaları\n"
-"\tkopyala.\n"
-"[/S]  Dizin ve alt dizinlerini kopyalar.\n"
+"[/I]  Hedef dizin bulunmuyorsa oluşturup iki veya daha fazla dosyayı\n"
+"\tkopyalar.\n"
+"[/S]  Dizin ve alt dizinleri kopyalar.\n"
 "[/E]  Boş olanlar hariç dizin ve alt dizinleri kopyalar.\n"
 "[/Q]  Kopyalama sırasında isimleri göstermez, işi sessiz yapar.\n"
 "[/F]  Kopyalama sırasında tüm kaynak ve hedef isimlerini gösterir.\n"
