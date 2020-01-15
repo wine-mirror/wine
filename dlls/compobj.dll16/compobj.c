@@ -48,34 +48,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 typedef LPSTR LPOLESTR16;
 typedef LPCSTR LPCOLESTR16;
 
-#define STDMETHOD16CALLTYPE __cdecl
-#define STDMETHOD16(m) HRESULT (STDMETHOD16CALLTYPE *m)
-#define STDMETHOD16_(t,m) t (STDMETHOD16CALLTYPE *m)
-
 #define CHARS_IN_GUID 39
 
-/***********************************************************************
- * IMalloc16 interface
- */
-
-typedef struct IMalloc16 *LPMALLOC16;
-
-#define INTERFACE IMalloc16
-DECLARE_INTERFACE_(IMalloc16,IUnknown)
+typedef struct
 {
-    /*** IUnknown methods ***/
-    STDMETHOD16_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
-    STDMETHOD16_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD16_(ULONG,Release)(THIS) PURE;
-    /*** IMalloc16 methods ***/
-    STDMETHOD16_(LPVOID,Alloc)(THIS_ DWORD   cb) PURE;
-    STDMETHOD16_(LPVOID,Realloc)(THIS_ LPVOID  pv, DWORD  cb) PURE;
-    STDMETHOD16_(void,Free)(THIS_ LPVOID  pv) PURE;
-    STDMETHOD16_(DWORD,GetSize)(THIS_ LPVOID  pv) PURE;
-    STDMETHOD16_(INT16,DidAlloc)(THIS_ LPVOID  pv) PURE;
-    STDMETHOD16_(LPVOID,HeapMinimize)(THIS) PURE;
-};
-#undef INTERFACE
+    SEGPTR QueryInterface;
+    SEGPTR AddRef;
+    SEGPTR Release;
+    SEGPTR Alloc;
+    SEGPTR Realloc;
+    SEGPTR Free;
+    SEGPTR GetSize;
+    SEGPTR DidAlloc;
+    SEGPTR HeapMinimize;
+} IMalloc16Vtbl;
+
+typedef struct
+{
+    SEGPTR lpVtbl;
+} IMalloc16, *LPMALLOC16;
 
 static HTASK16 hETask = 0;
 static WORD Table_ETask[62];
@@ -220,7 +211,7 @@ IMalloc16_Constructor(void)
     This = HeapAlloc( GetProcessHeap(), 0, sizeof(IMalloc16Impl) );
     if (!msegvt16)
     {
-#define VTENT(x) vt16.x = (void*)GetProcAddress16(hcomp,"IMalloc16_"#x);assert(vt16.x)
+#define VTENT(x) vt16.x = (SEGPTR)GetProcAddress16(hcomp,"IMalloc16_"#x);assert(vt16.x)
         VTENT(QueryInterface);
         VTENT(AddRef);
         VTENT(Release);
@@ -233,7 +224,7 @@ IMalloc16_Constructor(void)
 #undef VTENT
         msegvt16 = MapLS( &vt16 );
     }
-    This->IMalloc16_iface.lpVtbl = (const IMalloc16Vtbl*)msegvt16;
+    This->IMalloc16_iface.lpVtbl = msegvt16;
     This->ref = 1;
     return (LPMALLOC16)MapLS( This );
 }
