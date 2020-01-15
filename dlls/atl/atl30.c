@@ -313,7 +313,7 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoA(_ATL_MODULEA *pm, _ATL_WNDCLASSINFOA 
 
         if (!wci->m_wc.lpszClassName)
         {
-            sprintf(wci->m_szAutoName, "ATL%08x", PtrToUint(wci));
+            sprintf(wci->m_szAutoName, "ATL:%p", wci);
             TRACE("auto-generated class name %s\n", wci->m_szAutoName);
             wci->m_wc.lpszClassName = wci->m_szAutoName;
         }
@@ -350,8 +350,8 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoA(_ATL_MODULEA *pm, _ATL_WNDCLASSINFOA 
  * NOTES
  *  Can be called multiple times without error, unlike RegisterClassEx().
  *
- *  If the class name is NULL, then a class with a name of "ATLxxxxxxxx" is
- *  registered, where the 'x's represent a unique value.
+ *  If the class name is NULL, then a class with a name of "ATL:xxxxxxxx" is
+ *  registered, where 'xxxxxxxx' represents a unique hexadecimal value.
  *
  */
 ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW *wci, WNDPROC *pProc)
@@ -372,8 +372,7 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW 
 
         if (!wci->m_wc.lpszClassName)
         {
-            static const WCHAR szFormat[] = {'A','T','L','%','0','8','x',0};
-            swprintf(wci->m_szAutoName, ARRAY_SIZE(wci->m_szAutoName), szFormat, PtrToUint(wci));
+            swprintf(wci->m_szAutoName, ARRAY_SIZE(wci->m_szAutoName), L"ATL:%p", wci);
             TRACE("auto-generated class name %s\n", debugstr_w(wci->m_szAutoName));
             wci->m_wc.lpszClassName = wci->m_szAutoName;
         }
