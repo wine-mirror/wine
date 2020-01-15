@@ -136,8 +136,14 @@ HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
 
 HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
 {
+    BaseControlWindow *window = impl_from_BaseWindow(This);
+
     if (!This->hWnd)
         return S_OK;
+
+    /* Media Player Classic deadlocks if WM_PARENTNOTIFY is sent, so unparent
+     * the window first. */
+    IVideoWindow_put_Owner(&window->IVideoWindow_iface, 0);
 
     SendMessageW(This->hWnd, WM_CLOSE, 0, 0);
     This->hWnd = NULL;
