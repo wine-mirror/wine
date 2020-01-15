@@ -67,6 +67,28 @@ typedef struct
     SEGPTR lpVtbl;
 } IMalloc16;
 
+static ULONG call_IMalloc_AddRef(SEGPTR iface)
+{
+    IMalloc16 *malloc = MapSL(iface);
+    IMalloc16Vtbl *vtbl = MapSL(malloc->lpVtbl);
+    DWORD args[1], ret;
+
+    args[0] = iface;
+    WOWCallback16Ex(vtbl->AddRef, WCB16_CDECL, sizeof(args), args, &ret);
+    return ret;
+}
+
+static ULONG call_IMalloc_Release(SEGPTR iface)
+{
+    IMalloc16 *malloc = MapSL(iface);
+    IMalloc16Vtbl *vtbl = MapSL(malloc->lpVtbl);
+    DWORD args[1], ret;
+
+    args[0] = iface;
+    WOWCallback16Ex(vtbl->Release, WCB16_CDECL, sizeof(args), args, &ret);
+    return ret;
+}
+
 static SEGPTR call_IMalloc_Alloc(SEGPTR iface, DWORD size)
 {
     IMalloc16 *malloc = MapSL(iface);
@@ -288,8 +310,9 @@ SEGPTR WINAPI CoMemAlloc(DWORD size, MEMCTX context, DWORD unknown)
 HRESULT WINAPI CoInitialize16(SEGPTR malloc)
 {
     if (!malloc)
-        CoCreateStandardMalloc16(MEMCTX_TASK, &malloc);
-    compobj_malloc = malloc;
+        CoCreateStandardMalloc16(MEMCTX_TASK, &compobj_malloc);
+    else
+        call_IMalloc_AddRef(compobj_malloc = malloc);
     return S_OK;
 }
 
@@ -301,8 +324,11 @@ HRESULT WINAPI CoInitialize16(SEGPTR malloc)
  */
 void WINAPI CoUninitialize16(void)
 {
-  TRACE("()\n");
-  CoFreeAllLibraries();
+    TRACE("\n");
+
+    CoFreeAllLibraries();
+    call_IMalloc_Release(compobj_malloc);
+    compobj_malloc = 0;
 }
 
 /***********************************************************************
