@@ -43,7 +43,6 @@ static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(IID_IBindStatusCallbackHolder,0x79eac9cc,0xbaf9,0x11ce,0x8c,0x82,0x00,0xaa,0x00,0x4b,0xa9,0x0b);
-static const IID IID_undocumentedIE11 = {0xd5ae15f6,0x2032,0x488e,{0x8f,0x96,0xf9,0x24,0x06,0xd8,0xd8,0xb4}};
 extern CLSID CLSID_AboutProtocol;
 
 #define DEFINE_EXPECT(func) \
@@ -366,7 +365,7 @@ static IInternetPriority InternetPriority = { &InternetPriorityVtbl };
 
 static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
-    static const IID IID_undocumentedIE10 = {0x7daf9908,0x8415,0x4005,{0x95,0xae,0xbd,0x27,0xf6,0xe3,0xdc,0x00}};
+    if (winetest_debug > 1) trace("IInternetProtocol::QueryInterface(%s)\n", debugstr_guid(riid));
 
     *ppv = NULL;
 
@@ -383,15 +382,6 @@ static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID r
         return S_OK;
     }
 
-    if(IsEqualGUID(&IID_IInternetProtocolEx, riid))
-        return E_NOINTERFACE; /* TODO */
-
-    if(IsEqualGUID(&IID_undocumentedIE10, riid)) {
-        trace("QI(%s)\n", wine_dbgstr_guid(riid));
-        return E_NOINTERFACE; /* TODO */
-    }
-
-    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1403,6 +1393,10 @@ static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
 static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
+    if (winetest_debug > 1)
+        trace("IServiceProvider::QueryService(service %s, iid %s)\n",
+                debugstr_guid(guidService), debugstr_guid(riid));
+
     if(IsEqualGUID(&IID_IAuthenticate, guidService)) {
         CHECK_EXPECT(QueryService_IAuthenticate);
         return E_NOTIMPL;
@@ -1430,19 +1424,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         return S_OK;
     }
 
-    if(IsEqualGUID(&IID_IGetBindHandle, guidService)) {
-        trace("QueryService(IID_IGetBindHandle)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    if(IsEqualGUID(&IID_undocumentedIE11, guidService)) {
-        trace("QueryService(IID_undocumentedIE11)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -1505,7 +1487,7 @@ static void test_WinInetHttpInfo(IWinInetHttpInfo *http_info, DWORD progress)
 
 static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REFIID riid, void **ppv)
 {
-    static const IID IID_undocumentedIE10 = {0xf286fa56,0xc1fd,0x4270,{0x8e,0x67,0xb3,0xeb,0x79,0x0a,0x81,0xe8}};
+    if (winetest_debug > 1) trace("IBindStatusCallback::QueryInterface(%s)\n", debugstr_guid(riid));
 
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
 
@@ -1554,20 +1536,6 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REF
     }else if(IsEqualGUID(&IID_IHttpSecurity, riid)) {
         CHECK_EXPECT2(QueryInterface_IHttpSecurity);
         return E_NOINTERFACE;
-    }else if(IsEqualGUID(&IID_IGetBindHandle, riid)) {
-        trace("QI(IID_IGetBindHandle)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }else if(IsEqualGUID(&IID_undocumentedIE10, riid)) {
-        trace("QI(IID_undocumentedIE10)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }else if(IsEqualGUID(&IID_undocumentedIE11, riid)) {
-        trace("QI(IID_undocumentedIE11)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }else {
-        ok(0, "unexpected interface %s\n", wine_dbgstr_guid(riid));
     }
 
     return E_NOINTERFACE;
