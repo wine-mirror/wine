@@ -1626,6 +1626,10 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
 {
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
 
+    if (winetest_debug > 1)
+        trace("IBindStatusCallbackEx::OnProgress(progress %u/%u, code %u, text %s)\n",
+                ulProgress, ulProgressMax, ulStatusCode, debugstr_w(szStatusText));
+
     switch(ulStatusCode) {
     case BINDSTATUS_FINDINGRESOURCE:
         if(iface == &objbsc)
@@ -1785,13 +1789,8 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
         ok(szStatusText == NULL, "Expected szStatusText to be NULL\n");
         break;
     case BINDSTATUS_PROXYDETECTING:
-        trace("BINDSTATUS_PROXYDETECTING\n");
-        break;
     case BINDSTATUS_COOKIE_SENT:
-        trace("BINDSTATUS_COOKIE_SENT\n");
-        break;
     case BINDSTATUS_DECODING:
-        trace("BINDSTATUS_DECODING\n");
         break;
     default:
         ok(0, "unexpected code %d\n", ulStatusCode);
@@ -2895,7 +2894,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     prot_state = 0;
     ResetEvent(complete_event);
 
-    trace("URL: %s\n", wine_dbgstr_w(current_url));
+    if (winetest_debug > 1) trace("URL: %s\n", wine_dbgstr_w(current_url));
 }
 
 static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
