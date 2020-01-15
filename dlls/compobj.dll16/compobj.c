@@ -65,7 +65,7 @@ typedef struct
 typedef struct
 {
     SEGPTR lpVtbl;
-} IMalloc16, *LPMALLOC16;
+} IMalloc16;
 
 static SEGPTR call_IMalloc_Alloc(SEGPTR iface, DWORD size)
 {
@@ -82,7 +82,7 @@ static SEGPTR call_IMalloc_Alloc(SEGPTR iface, DWORD size)
 static HTASK16 hETask = 0;
 static WORD Table_ETask[62];
 
-static LPMALLOC16 currentMalloc16=NULL;
+static SEGPTR compobj_malloc;
 
 /* --- IMalloc16 implementation */
 
@@ -211,8 +211,7 @@ LPVOID CDECL IMalloc16_fnHeapMinimize(IMalloc16* iface) {
 /******************************************************************************
  * IMalloc16_Constructor [VTABLE]
  */
-static LPMALLOC16
-IMalloc16_Constructor(void)
+static SEGPTR IMalloc16_Constructor(void)
 {
     static IMalloc16Vtbl vt16;
     static SEGPTR msegvt16;
@@ -237,7 +236,7 @@ IMalloc16_Constructor(void)
     }
     This->IMalloc16_iface.lpVtbl = msegvt16;
     This->ref = 1;
-    return (LPMALLOC16)MapLS( This );
+    return MapLS(This);
 }
 
 
@@ -250,32 +249,24 @@ DWORD WINAPI CoBuildVersion16(void)
 }
 
 /***********************************************************************
- *           CoGetMalloc    [COMPOBJ.4]
- *
- * Retrieve the current win16 IMalloc interface.
- *
- * RETURNS
- *	The current win16 IMalloc
+ *           CoGetMalloc   [COMPOBJ.4]
  */
-HRESULT WINAPI CoGetMalloc16(
-	DWORD dwMemContext,	/* [in] unknown */
-	LPMALLOC16 * lpMalloc	/* [out] current win16 malloc interface */
-) {
-    if(!currentMalloc16)
-	currentMalloc16 = IMalloc16_Constructor();
-    *lpMalloc = currentMalloc16;
+HRESULT WINAPI CoGetMalloc16(MEMCTX context, SEGPTR *malloc)
+{
+    if (!compobj_malloc)
+        compobj_malloc = IMalloc16_Constructor();
+    *malloc = compobj_malloc;
     return S_OK;
 }
 
 /***********************************************************************
  *           CoCreateStandardMalloc [COMPOBJ.71]
  */
-HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
-					  LPMALLOC16 *lpMalloc)
+HRESULT WINAPI CoCreateStandardMalloc16(MEMCTX context, SEGPTR *malloc)
 {
     /* FIXME: docu says we shouldn't return the same allocator as in
      * CoGetMalloc16 */
-    *lpMalloc = IMalloc16_Constructor();
+    *malloc = IMalloc16_Constructor();
     return S_OK;
 }
 
@@ -292,19 +283,17 @@ SEGPTR WINAPI CoMemAlloc(DWORD size, MEMCTX context, DWORD unknown)
     if (unknown)
         FIXME("Ignoring unknown parameter %#x.\n", unknown);
 
-    if (CoGetMalloc16(0, (IMalloc16 **)&malloc))
+    if (CoGetMalloc16(0, &malloc))
         return 0;
     return call_IMalloc_Alloc(malloc, size);
 }
 
-/******************************************************************************
- *		CoInitialize	[COMPOBJ.2]
- * Set the win16 IMalloc used for memory management
+/***********************************************************************
+ *           CoInitialize   [COMPOBJ.2]
  */
-HRESULT WINAPI CoInitialize16(
-	LPVOID lpReserved	/* [in] pointer to win16 malloc interface */
-) {
-    currentMalloc16 = (LPMALLOC16)lpReserved;
+HRESULT WINAPI CoInitialize16(SEGPTR malloc)
+{
+    compobj_malloc = malloc;
     return S_OK;
 }
 

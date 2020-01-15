@@ -1,5 +1,5 @@
 1 pascal CoBuildVersion() CoBuildVersion16
-2 pascal CoInitialize(long) CoInitialize16
+2 pascal CoInitialize(segptr) CoInitialize16
 3 pascal CoUninitialize() CoUninitialize16
 4 pascal CoGetMalloc(long ptr) CoGetMalloc16
 5 pascal CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject16
