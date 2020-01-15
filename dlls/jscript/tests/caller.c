@@ -73,35 +73,14 @@ static const CLSID CLSID_JScript =
 
 DEFINE_EXPECT(testArgConv);
 
-static const WCHAR testW[] = {'t','e','s','t',0};
-
 static IVariantChangeType *script_change_type;
 static IDispatch *stored_obj;
 
 #define DISPID_TEST_TESTARGCONV      0x1000
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len-1);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
-    return lstrcmpA(buf, stra);
-}
-
 typedef struct {
     int int_result;
-    const char *str_result;
+    const WCHAR *str_result;
     VARIANT_BOOL bool_result;
     int test_double;
     double double_result;
@@ -140,7 +119,7 @@ static void test_change_type(IVariantChangeType *change_type, VARIANT *src, cons
     ok(V_UI2(&v) == (UINT16)ex->int_result, "V_UI2(v) = %u, expected %u\n", V_UI2(&v), (UINT16)ex->int_result);
 
     call_change_type(change_type, &v, src, VT_BSTR);
-    ok(!strcmp_wa(V_BSTR(&v), ex->str_result), "V_BSTR(v) = %s, expected %s\n", wine_dbgstr_w(V_BSTR(&v)), ex->str_result);
+    ok(!lstrcmpW(V_BSTR(&v), ex->str_result), "V_BSTR(v) = %s, expected %s\n", wine_dbgstr_w(V_BSTR(&v)), wine_dbgstr_w(ex->str_result));
     VariantClear(&v);
 
     call_change_type(change_type, &v, src, VT_BOOL);
@@ -175,18 +154,18 @@ static void test_change_types(IVariantChangeType *change_type, IDispatch *obj_di
     HRESULT hres;
 
     static const conv_results_t bool_results[] = {
-        {0, "false", VARIANT_FALSE, 1,0.0},
-        {1, "true", VARIANT_TRUE, 1,1.0}};
+        {0, L"false", VARIANT_FALSE, 1,0.0},
+        {1, L"true", VARIANT_TRUE, 1,1.0}};
     static const conv_results_t int_results[] = {
-        {0, "0", VARIANT_FALSE, 1,0.0},
-        {-100, "-100", VARIANT_TRUE, 1,-100.0},
-        {0x10010, "65552", VARIANT_TRUE, 1,65552.0}};
+        {0, L"0", VARIANT_FALSE, 1,0.0},
+        {-100, L"-100", VARIANT_TRUE, 1,-100.0},
+        {0x10010, L"65552", VARIANT_TRUE, 1,65552.0}};
     static const conv_results_t empty_results =
-        {0, "undefined", VARIANT_FALSE, 0,0};
+        {0, L"undefined", VARIANT_FALSE, 0,0};
     static const conv_results_t null_results =
-        {0, "null", VARIANT_FALSE, 0,0};
+        {0, L"null", VARIANT_FALSE, 0,0};
     static const conv_results_t obj_results =
-        {10, "strval", VARIANT_TRUE, 1,10.0};
+        {10, L"strval", VARIANT_TRUE, 1,10.0};
 
     V_VT(&v) = VT_BOOL;
     V_BOOL(&v) = VARIANT_FALSE;
@@ -221,12 +200,13 @@ static void test_change_types(IVariantChangeType *change_type, IDispatch *obj_di
 
     /* Test conversion in place */
     V_VT(&v) = VT_BSTR;
-    V_BSTR(&v) = str = a2bstr("test");
+    V_BSTR(&v) = str = SysAllocString(L"test");
     hres = IVariantChangeType_ChangeType(change_type, &v, &v, 0, VT_BSTR);
     ok(hres == S_OK, "ChangeType failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
     ok(V_BSTR(&v) != str, "V_BSTR(v) == str\n");
-    ok(!strcmp_wa(V_BSTR(&v), "test"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"test"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 }
 
 static void test_caller(IServiceProvider *caller, IDispatch *arg_obj)
@@ -334,7 +314,7 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 
 static HRESULT WINAPI Test_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    if(!strcmp_wa(bstrName, "testArgConv")) {
+    if(!lstrcmpW(bstrName, L"testArgConv")) {
         ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
         *pid = DISPID_TEST_TESTARGCONV;
         return S_OK;
@@ -431,7 +411,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
 {
     ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %x\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
-    ok(!strcmp_wa(pstrName, "test"), "pstrName = %s\n", wine_dbgstr_w(pstrName));
+    ok(!lstrcmpW(pstrName, L"test"), "pstrName = %s\n", wine_dbgstr_w(pstrName));
 
     *ppiunkItem = (IUnknown*)&testObj;
     return S_OK;
@@ -484,15 +464,12 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
 
 static IActiveScriptSite ActiveScriptSite = { &ActiveScriptSiteVtbl };
 
-#define parse_script_a(p,s) _parse_script_a(__LINE__,p,s)
-static void _parse_script_a(unsigned line, IActiveScriptParse *parser, const char *script)
+#define parse_script(p,s) _parse_script(__LINE__,p,s)
+static void _parse_script(unsigned line, IActiveScriptParse *parser, const WCHAR *script)
 {
-    BSTR str;
     HRESULT hres;
 
-    str = a2bstr(script);
-    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-    SysFreeString(str);
+    hres = IActiveScriptParse_ParseScriptText(parser, script, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 }
 
@@ -516,7 +493,7 @@ static IActiveScriptParse *create_script(void)
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
 
-    hres = IActiveScript_AddNamedItem(script, testW,
+    hres = IActiveScript_AddNamedItem(script, L"test",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
@@ -539,12 +516,12 @@ static void run_scripts(void)
     ok(hres == S_OK, "Could not get IVariantChangeType iface: %08x\n", hres);
 
     SET_EXPECT(testArgConv);
-    parse_script_a(parser,
-                   "var obj = {"
-                   "    toString: function() { return 'strval'; },"
-                   "    valueOf: function()  { return 10; }"
-                   "};"
-                   "testArgConv(obj);");
+    parse_script(parser,
+                 L"var obj = {"
+                 L"    toString: function() { return 'strval'; },"
+                 L"    valueOf: function()  { return 10; }"
+                 L"};"
+                 L"testArgConv(obj);");
     CHECK_CALLED(testArgConv);
 
     test_change_types(script_change_type, stored_obj);
@@ -558,16 +535,14 @@ static BOOL check_jscript(void)
 {
     IActiveScriptProperty *script_prop;
     IActiveScriptParse *parser;
-    BSTR str;
     HRESULT hres;
 
     parser = create_script();
     if(!parser)
         return FALSE;
 
-    str = a2bstr("if(!('localeCompare' in String.prototype)) throw 1;");
-    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-    SysFreeString(str);
+    hres = IActiveScriptParse_ParseScriptText(parser, L"if(!('localeCompare' in String.prototype)) throw 1;",
+                                              NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
 
     if(hres == S_OK)
         hres = IActiveScriptParse_QueryInterface(parser, &IID_IActiveScriptProperty, (void**)&script_prop);
