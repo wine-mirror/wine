@@ -253,8 +253,6 @@ DWORD WINAPI CoBuildVersion16(void)
  */
 HRESULT WINAPI CoGetMalloc16(MEMCTX context, SEGPTR *malloc)
 {
-    if (!compobj_malloc)
-        compobj_malloc = IMalloc16_Constructor();
     *malloc = compobj_malloc;
     return S_OK;
 }
@@ -275,17 +273,13 @@ HRESULT WINAPI CoCreateStandardMalloc16(MEMCTX context, SEGPTR *malloc)
  */
 SEGPTR WINAPI CoMemAlloc(DWORD size, MEMCTX context, DWORD unknown)
 {
-    SEGPTR malloc;
-
     TRACE("size %u, context %d, unknown %#x.\n", size, context, unknown);
     if (context != MEMCTX_TASK)
         FIXME("Ignoring context %d.\n", context);
     if (unknown)
         FIXME("Ignoring unknown parameter %#x.\n", unknown);
 
-    if (CoGetMalloc16(0, &malloc))
-        return 0;
-    return call_IMalloc_Alloc(malloc, size);
+    return call_IMalloc_Alloc(compobj_malloc, size);
 }
 
 /***********************************************************************
@@ -293,6 +287,8 @@ SEGPTR WINAPI CoMemAlloc(DWORD size, MEMCTX context, DWORD unknown)
  */
 HRESULT WINAPI CoInitialize16(SEGPTR malloc)
 {
+    if (!malloc)
+        CoCreateStandardMalloc16(MEMCTX_TASK, &malloc);
     compobj_malloc = malloc;
     return S_OK;
 }
