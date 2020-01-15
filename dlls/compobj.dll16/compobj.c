@@ -111,8 +111,8 @@ static SEGPTR compobj_malloc;
 
 typedef struct
 {
-        IMalloc16 IMalloc16_iface;
-        DWORD     ref;
+    IMalloc16 IMalloc16_iface;
+    LONG refcount;
 } IMalloc16Impl;
 
 static inline IMalloc16Impl *impl_from_IMalloc16(IMalloc16 *iface)
@@ -139,21 +139,28 @@ HRESULT CDECL IMalloc16_fnQueryInterface(IMalloc16* iface,REFIID refiid,LPVOID *
 /******************************************************************************
  *		IMalloc16_AddRef	[COMPOBJ.501]
  */
-ULONG CDECL IMalloc16_fnAddRef(IMalloc16* iface) {
-        IMalloc16Impl *This = impl_from_IMalloc16(iface);
-
-	TRACE("(%p)->AddRef()\n",This);
-	return 1; /* cannot be freed */
+ULONG CDECL IMalloc16_fnAddRef(IMalloc16 *iface)
+{
+    IMalloc16Impl *malloc = impl_from_IMalloc16(iface);
+    ULONG refcount = InterlockedIncrement(&malloc->refcount);
+    TRACE("%p increasing refcount to %u.\n", malloc, refcount);
+    return refcount;
 }
 
 /******************************************************************************
  *		IMalloc16_Release	[COMPOBJ.502]
  */
-ULONG CDECL IMalloc16_fnRelease(IMalloc16* iface) {
-        IMalloc16Impl *This = impl_from_IMalloc16(iface);
-
-	TRACE("(%p)->Release()\n",This);
-	return 1; /* cannot be freed */
+ULONG CDECL IMalloc16_fnRelease(SEGPTR iface)
+{
+    IMalloc16Impl *malloc = impl_from_IMalloc16(MapSL(iface));
+    ULONG refcount = InterlockedDecrement(&malloc->refcount);
+    TRACE("%p decreasing refcount to %u.\n", malloc, refcount);
+    if (!refcount)
+    {
+        UnMapLS(iface);
+        HeapFree(GetProcessHeap(), 0, malloc);
+    }
+    return refcount;
 }
 
 /******************************************************************************
@@ -257,10 +264,9 @@ static SEGPTR IMalloc16_Constructor(void)
         msegvt16 = MapLS( &vt16 );
     }
     This->IMalloc16_iface.lpVtbl = msegvt16;
-    This->ref = 1;
+    This->refcount = 1;
     return MapLS(This);
 }
-
 
 /******************************************************************************
  *           CoBuildVersion [COMPOBJ.1]
