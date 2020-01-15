@@ -1051,7 +1051,7 @@ static void test_extension(void)
 {
     OPENFILENAMEA ofn = { OPENFILENAME_SIZE_VERSION_400A };
     char filename[1024] = {0};
-    char curdir[MAX_PATH];
+    char dir[MAX_PATH];
     unsigned int i;
     BOOL boolret;
 
@@ -1070,14 +1070,14 @@ static void test_extension(void)
         NULL    /* is a test, not an endmark! */
     };
 
-    boolret = GetCurrentDirectoryA(sizeof(curdir), curdir);
+    boolret = GetTempPathA(sizeof(dir), dir);
     ok(boolret, "Failed to get current dir err %d\n", GetLastError());
 
     ofn.hwndOwner = NULL;
     ofn.lpstrFile = filename;
     ofn.nMaxFile = MAX_PATH;
     ofn.Flags = OFN_EXPLORER | OFN_ENABLEHOOK;
-    ofn.lpstrInitialDir = curdir;
+    ofn.lpstrInitialDir = dir;
     ofn.lpfnHook = test_extension_wndproc;
     ofn.nFileExtension = 0;
 
