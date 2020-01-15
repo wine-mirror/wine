@@ -2287,6 +2287,7 @@ static void test_AssociateFocus(void)
     ITfDocumentMgr *dm1, *dm2, *olddm, *dmcheck, *dmorig;
     HWND wnd1, wnd2, wnd3;
     HRESULT hr;
+    ULONG ref;
 
     ITfThreadMgr_GetFocus(g_tm, &dmorig);
     test_CurrentFocus = NULL;
@@ -2428,10 +2429,20 @@ static void test_AssociateFocus(void)
     processPendingMessages();
     SetFocus(wnd1);
     processPendingMessages();
-    test_OnSetFocus = SINK_UNEXPECTED;
+
+    hr = ITfThreadMgr_AssociateFocus(g_tm,wnd2,dm2,&olddm);
+    ok(SUCCEEDED(hr),"AssociateFocus failed\n");
+
+    /* Vista doesn't return NULL */
+    if (olddm) ITfDocumentMgr_Release(olddm);
+    ref = ITfDocumentMgr_Release(dm2);
+    ok(ref == 0, "incorrect DocumentMgr ref %d\n", ref);
+
+    hr = ITfThreadMgr_AssociateFocus(g_tm,wnd2,NULL,&olddm);
+    ok(SUCCEEDED(hr),"AssociateFocus failed\n");
+    ok(olddm == NULL, "incorrect old DocumentMgr returned\n");
 
     ITfDocumentMgr_Release(dm1);
-    ITfDocumentMgr_Release(dm2);
 
     test_CurrentFocus = dmorig;
     test_PrevFocus = FOCUS_IGNORE;

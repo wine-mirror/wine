@@ -1530,6 +1530,8 @@ void ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *iface, ITfDocumentMgr *mgr
 {
     ThreadMgr *This = impl_from_ITfThreadMgrEx((ITfThreadMgrEx *)iface);
     struct list *cursor;
+    BOOL found = FALSE;
+
     LIST_FOR_EACH(cursor, &This->CreatedDocumentMgrs)
     {
         DocumentMgrEntry *mgrentry = LIST_ENTRY(cursor,DocumentMgrEntry,entry);
@@ -1537,8 +1539,16 @@ void ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *iface, ITfDocumentMgr *mgr
         {
             list_remove(cursor);
             HeapFree(GetProcessHeap(),0,mgrentry);
-            return;
+            found = TRUE;
+            break;
         }
     }
-    FIXME("ITfDocumentMgr %p not found in this thread\n",mgr);
+    if (!found) FIXME("ITfDocumentMgr %p not found in this thread\n",mgr);
+
+    LIST_FOR_EACH(cursor, &This->AssociatedFocusWindows)
+    {
+        AssociatedWindow *wnd = LIST_ENTRY(cursor,AssociatedWindow,entry);
+        if (wnd->docmgr == mgr)
+            wnd->docmgr = NULL;
+    }
 }
