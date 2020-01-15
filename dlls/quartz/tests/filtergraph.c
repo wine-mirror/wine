@@ -4232,15 +4232,35 @@ static HWND get_renderer_hwnd(IFilterGraph2 *graph)
     return hwnd;
 }
 
+static BOOL expect_parent_message = TRUE;
+
+static LRESULT CALLBACK parent_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    ok(expect_parent_message, "Got unexpected message %#x.\n", msg);
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
 static void test_window_threading(void)
 {
+    static const WNDCLASSA class =
+    {
+        .lpfnWndProc = parent_proc,
+        .lpszClassName = "quartz_test_parent",
+    };
     WCHAR *filename = load_resource(avifile);
     IFilterGraph2 *graph = create_graph();
+    IVideoWindow *window;
+    HWND hwnd, parent;
     HRESULT hr;
     DWORD tid;
     ULONG ref;
-    HWND hwnd;
     BOOL ret;
+
+    RegisterClassA(&class);
+
+    parent = CreateWindowA("quartz_test_parent", NULL, WS_OVERLAPPEDWINDOW,
+            50, 50, 150, 150, NULL, NULL, NULL, NULL);
+    ok(!!parent, "Failed to create parent window.\n");
 
     hr = IFilterGraph2_RenderFile(graph, filename, NULL);
     if (FAILED(hr))
@@ -4259,12 +4279,24 @@ static void test_window_threading(void)
 
         /* The thread should be processing messages, or this will hang. */
         SendMessageA(hwnd, WM_NULL, 0, 0);
+
+        /* Media Player Classic deadlocks if the parent is sent any messages
+         * while the video window is released. In particular, we must not send
+         * WM_PARENTNOTIFY. This is not achieved through window styles. */
+        hr = IFilterGraph2_QueryInterface(graph, &IID_IVideoWindow, (void **)&window);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IVideoWindow_put_Owner(window, (OAHWND)parent);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IVideoWindow_Release(window);
+        ok(!(GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_NOPARENTNOTIFY), "Window has WS_EX_NOPARENTNOTIFY.\n");
     }
     else
         skip("Could not find renderer window.\n");
 
+    expect_parent_message = FALSE;
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+    expect_parent_message = TRUE;
 
     hr = CoCreateInstance(&CLSID_FilterGraphNoThread, NULL, CLSCTX_INPROC_SERVER,
             &IID_IFilterGraph2, (void **)&graph);
@@ -4283,6 +4315,9 @@ static void test_window_threading(void)
 
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    DestroyWindow(parent);
+    UnregisterClassA("quartz_test_parent", GetModuleHandleA(NULL));
     ret = DeleteFileW(filename);
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
