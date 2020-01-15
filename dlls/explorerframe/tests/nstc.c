@@ -885,7 +885,7 @@ static void test_basics(void)
         ok(hr == S_OK || broken(hr == E_FAIL), "Got 0x%08x\n", hr);
         if(hr == S_OK)
         {
-            static const NSTCSTYLE styles_setable[] =
+            static const NSTCSTYLE styles[] =
                 { NSTCS_HASEXPANDOS,NSTCS_HASLINES,NSTCS_SINGLECLICKEXPAND,
                   NSTCS_FULLROWSELECT,NSTCS_HORIZONTALSCROLL,
                   NSTCS_ROOTHASEXPANDO,NSTCS_SHOWSELECTIONALWAYS,NSTCS_NOINFOTIP,
@@ -894,11 +894,6 @@ static void test_basics(void)
                   NSTCS_TABSTOP,NSTCS_FAVORITESMODE,NSTCS_EMPTYTEXT,NSTCS_CHECKBOXES,
                   NSTCS_ALLOWJUNCTIONS,NSTCS_SHOWTABSBUTTON,NSTCS_SHOWDELETEBUTTON,
                   NSTCS_SHOWREFRESHBUTTON, 0};
-            static const NSTCSTYLE styles_nonsetable[] =
-                { NSTCS_SPRINGEXPAND, NSTCS_RICHTOOLTIP, NSTCS_AUTOHSCROLL,
-                  NSTCS_FADEINOUTEXPANDOS,
-                  NSTCS_PARTIALCHECKBOXES, NSTCS_EXCLUSIONCHECKBOXES,
-                  NSTCS_DIMMEDCHECKBOXES, NSTCS_NOINDENTCHECKS,0};
 
             /* Set/GetControlStyle */
             style = style2 = 0xdeadbeef;
@@ -909,22 +904,12 @@ static void test_basics(void)
             hr = INameSpaceTreeControl2_SetControlStyle(pnstc2, 0, 0xFFFFFFF);
             ok(hr == S_OK, "Got 0x%08x\n", hr);
 
-            hr = INameSpaceTreeControl2_SetControlStyle(pnstc2, 0xFFFFFFFF, 0);
-            ok(hr == E_FAIL, "Got 0x%08x\n", hr);
-            hr = INameSpaceTreeControl2_SetControlStyle(pnstc2, 0xFFFFFFFF, 0xFFFFFFFF);
-            ok(hr == E_FAIL, "Got 0x%08x\n", hr);
-
             tmp = 0;
-            for(i = 0; styles_setable[i] != 0; i++)
+            for(i = 0; styles[i] != 0; i++)
             {
-                hr = INameSpaceTreeControl2_SetControlStyle(pnstc2, styles_setable[i], styles_setable[i]);
-                ok(hr == S_OK, "Got 0x%08x (%x)\n", hr, styles_setable[i]);
-                if(SUCCEEDED(hr)) tmp |= styles_setable[i];
-            }
-            for(i = 0; styles_nonsetable[i] != 0; i++)
-            {
-                hr = INameSpaceTreeControl2_SetControlStyle(pnstc2, styles_nonsetable[i], styles_nonsetable[i]);
-                ok(hr == E_FAIL, "Got 0x%08x (%x)\n", hr, styles_nonsetable[i]);
+                hr = INameSpaceTreeControl2_SetControlStyle(pnstc2, styles[i], styles[i]);
+                ok(hr == S_OK, "Got 0x%08x (%x)\n", hr, styles[i]);
+                if(SUCCEEDED(hr)) tmp |= styles[i];
             }
 
             hr = INameSpaceTreeControl2_GetControlStyle(pnstc2, 0xFFFFFFFF, &style);
@@ -933,23 +918,18 @@ static void test_basics(void)
             if(SUCCEEDED(hr))
             {
                 DWORD tmp2;
-                for(i = 0; styles_setable[i] != 0; i++)
+                for(i = 0; styles[i] != 0; i++)
                 {
-                    hr = INameSpaceTreeControl2_GetControlStyle(pnstc2, styles_setable[i], &tmp2);
+                    hr = INameSpaceTreeControl2_GetControlStyle(pnstc2, styles[i], &tmp2);
                     ok(hr == S_OK, "Got 0x%08x\n", hr);
-                    ok(tmp2 == (style & styles_setable[i]), "Got %x\n", tmp2);
+                    ok(tmp2 == (style & styles[i]), "Got %x\n", tmp2);
                 }
             }
 
-            for(i = 0; styles_setable[i] != 0; i++)
+            for(i = 0; styles[i] != 0; i++)
             {
-                hr = INameSpaceTreeControl2_SetControlStyle(pnstc2, styles_setable[i], 0);
-                ok(hr == S_OK, "Got 0x%08x (%x)\n", hr, styles_setable[i]);
-            }
-            for(i = 0; styles_nonsetable[i] != 0; i++)
-            {
-                hr = INameSpaceTreeControl2_SetControlStyle(pnstc2, styles_nonsetable[i], 0);
-                ok(hr == E_FAIL, "Got 0x%08x (%x)\n", hr, styles_nonsetable[i]);
+                hr = INameSpaceTreeControl2_SetControlStyle(pnstc2, styles[i], 0);
+                ok(hr == S_OK, "Got 0x%08x (%x)\n", hr, styles[i]);
             }
             hr = INameSpaceTreeControl2_GetControlStyle(pnstc2, 0xFFFFFFFF, &style);
             ok(hr == S_OK, "Got 0x%08x\n", hr);
