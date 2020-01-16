@@ -25,9 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
-static const WCHAR sink_id[] = {'I','{','A','3','5','F','F','5','6','B',
-        '-','9','F','D','A','-','1','1','D','0','-','8','F','D','F',
-        '-','0','0','C','0','4','F','D','9','1','8','9','D','}',0};
+static const WCHAR sink_id[] = L"I{A35FF56B-9FDA-11D0-8FDF-00C04FD9189D}";
 
 typedef struct {
     IAudioStreamSample IAudioStreamSample_iface;
@@ -811,7 +809,7 @@ static HRESULT WINAPI audio_sink_QueryPinInfo(IPin *iface, PIN_INFO *info)
 
     IBaseFilter_AddRef(info->pFilter = (IBaseFilter *)stream->filter);
     info->dir = PINDIR_INPUT;
-    lstrcpyW(info->achName, sink_id);
+    wcscpy(info->achName, sink_id);
 
     return S_OK;
 }
@@ -830,7 +828,7 @@ static HRESULT WINAPI audio_sink_QueryId(IPin *iface, WCHAR **id)
     if (!(*id = CoTaskMemAlloc(sizeof(sink_id))))
         return E_OUTOFMEMORY;
 
-    lstrcpyW(*id, sink_id);
+    wcscpy(*id, sink_id);
 
     return S_OK;
 }

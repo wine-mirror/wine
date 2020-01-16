@@ -198,7 +198,6 @@ static HRESULT WINAPI multimedia_stream_GetEndOfStream(IAMMultiMediaStream *ifac
 static HRESULT WINAPI multimedia_stream_Initialize(IAMMultiMediaStream *iface,
         STREAM_TYPE StreamType, DWORD dwFlags, IGraphBuilder *pFilterGraph)
 {
-    static const WCHAR filternameW[] = {'M','e','d','i','a','S','t','r','e','a','m','F','i','l','t','e','r',0};
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
     HRESULT hr = S_OK;
 
@@ -221,7 +220,7 @@ static HRESULT WINAPI multimedia_stream_Initialize(IAMMultiMediaStream *iface,
         if (SUCCEEDED(hr))
             hr = IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaControl, (void**)&This->media_control);
         if (SUCCEEDED(hr))
-            hr = IGraphBuilder_AddFilter(This->pFilterGraph, (IBaseFilter*)This->filter, filternameW);
+            hr = IGraphBuilder_AddFilter(This->pFilterGraph, (IBaseFilter*)This->filter, L"MediaStreamFilter");
         if (SUCCEEDED(hr))
         {
             IMediaEventEx* media_event = NULL;
@@ -342,7 +341,6 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
 static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
         const WCHAR *filename, DWORD flags)
 {
-    static const WCHAR sourceW[] = {'S','o','u','r','c','e',0};
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
     HRESULT ret = S_OK;
     IBaseFilter *BaseFilter = NULL;
@@ -360,7 +358,7 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
         ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
 
     if (SUCCEEDED(ret))
-        ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, filename, sourceW, &BaseFilter);
+        ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, filename, L"Source", &BaseFilter);
 
     if (SUCCEEDED(ret))
         ret = IBaseFilter_EnumPins(BaseFilter, &EnumPins);

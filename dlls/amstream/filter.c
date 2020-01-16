@@ -364,7 +364,7 @@ static HRESULT WINAPI filter_FindPin(IMediaStreamFilter *iface, const WCHAR *id,
 
         if (SUCCEEDED(IPin_QueryId(pin, &ret_id)))
         {
-            if (!lstrcmpW(id, ret_id))
+            if (!wcscmp(id, ret_id))
             {
                 CoTaskMemFree(ret_id);
                 *out = pin;
@@ -389,7 +389,7 @@ static HRESULT WINAPI filter_QueryFilterInfo(IMediaStreamFilter *iface, FILTER_I
 
     EnterCriticalSection(&filter->cs);
 
-    lstrcpyW(info->achName, filter->name);
+    wcscpy(info->achName, filter->name);
     if (filter->graph)
         IFilterGraph_AddRef(filter->graph);
     info->pGraph = filter->graph;
@@ -409,7 +409,7 @@ static HRESULT WINAPI filter_JoinFilterGraph(IMediaStreamFilter *iface,
     EnterCriticalSection(&filter->cs);
 
     if (name)
-        lstrcpynW(filter->name, name, ARRAY_SIZE(filter->name));
+        wcsncpy(filter->name, name, ARRAY_SIZE(filter->name));
     else
         filter->name[0] = 0;
     filter->graph = graph;

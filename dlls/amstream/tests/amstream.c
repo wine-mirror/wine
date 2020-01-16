@@ -28,12 +28,8 @@
 #include "initguid.h"
 #include "ksmedia.h"
 
-static const WCHAR primary_video_sink_id[] = {'I','{','A','3','5','F','F','5','6','A',
-        '-','9','F','D','A','-','1','1','D','0','-','8','F','D','F',
-        '-','0','0','C','0','4','F','D','9','1','8','9','D','}',0};
-static const WCHAR primary_audio_sink_id[] = {'I','{','A','3','5','F','F','5','6','B',
-        '-','9','F','D','A','-','1','1','D','0','-','8','F','D','F',
-        '-','0','0','C','0','4','F','D','9','1','8','9','D','}',0};
+static const WCHAR primary_video_sink_id[] = L"I{A35FF56A-9FDA-11D0-8FDF-00C04FD9189D}";
+static const WCHAR primary_audio_sink_id[] = L"I{A35FF56B-9FDA-11D0-8FDF-00C04FD9189D}";
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
@@ -43,8 +39,6 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     rc = IUnknown_Release(obj);
     ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
 }
-
-static const WCHAR filenameW[] = {'t','e','s','t','.','a','v','i',0};
 
 static IDirectDraw7* pdd7;
 static IDirectDrawSurface7* pdds7;
@@ -229,7 +223,7 @@ static void test_openfile(void)
     if (pgraph)
         IGraphBuilder_Release(pgraph);
 
-    hr = IAMMultiMediaStream_OpenFile(pams, filenameW, 0);
+    hr = IAMMultiMediaStream_OpenFile(pams, L"test.avi", 0);
     ok(hr==S_OK, "IAMMultiMediaStream_OpenFile returned: %x\n", hr);
 
     hr = IAMMultiMediaStream_GetFilterGraph(pams, &pgraph);
@@ -269,7 +263,7 @@ static void test_renderfile(void)
     hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryAudio, AMMSF_ADDDEFAULTRENDERER, NULL);
     ok(hr==S_OK, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
 
-    hr = IAMMultiMediaStream_OpenFile(pams, filenameW, 0);
+    hr = IAMMultiMediaStream_OpenFile(pams, L"test.avi", 0);
     ok(hr==S_OK, "IAMMultiMediaStream_OpenFile returned: %x\n", hr);
 
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &pvidstream);
@@ -1256,7 +1250,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == (IBaseFilter *)filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, primary_video_sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!wcscmp(info.achName, primary_video_sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
@@ -1265,7 +1259,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, primary_video_sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!wcscmp(id, primary_video_sink_id), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, &count);
@@ -1283,7 +1277,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == (IBaseFilter *)filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, primary_audio_sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!wcscmp(info.achName, primary_audio_sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
@@ -1292,7 +1286,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, primary_audio_sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!wcscmp(id, primary_audio_sink_id), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, &count);
@@ -1487,8 +1481,6 @@ static const IFilterGraph2Vtbl graph_vtbl =
 
 static void test_initialize(void)
 {
-    static const WCHAR expectW[] = {'M','e','d','i','a','S','t','r','e','a','m','F','i','l','t','e','r',0};
-
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     IFilterGraph2 graph = {&graph_vtbl};
     IMediaStreamFilter *filter;
@@ -1634,7 +1626,7 @@ static void test_initialize(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(got_add_filter == 1, "Got %d calls to IGraphBuilder::AddFilter().\n", got_add_filter);
     ok(graph_filter == (IBaseFilter *)filter, "Got filter %p.\n", filter);
-    ok(!wcscmp(graph_filter_name, expectW), "Got unexpected name %s.\n", wine_dbgstr_w(graph_filter_name));
+    ok(!wcscmp(graph_filter_name, L"MediaStreamFilter"), "Got unexpected name %s.\n", wine_dbgstr_w(graph_filter_name));
 
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2318,7 +2310,7 @@ START_TEST(amstream)
     test_media_types();
     test_IDirectDrawStreamSample();
 
-    file = CreateFileW(filenameW, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    file = CreateFileW(L"test.avi", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (file != INVALID_HANDLE_VALUE)
     {
         CloseHandle(file);
