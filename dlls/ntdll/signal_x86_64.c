@@ -3747,7 +3747,7 @@ __ASM_GLOBAL_FUNC( call_consolidate_callback,
 /*******************************************************************
  *              RtlRestoreContext (NTDLL.@)
  */
-void WINAPI RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
+void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 {
     EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
 

@@ -463,7 +463,7 @@
 @ stdcall RtlAddMandatoryAce(ptr long long long long ptr)
 # @ stub RtlAddRange
 @ cdecl -arch=arm,arm64,x86_64 RtlAddFunctionTable(ptr long long)
-@ cdecl -arch=arm,arm64,x86_64 RtlAddGrowableFunctionTable(ptr ptr long long long long)
+@ stdcall -arch=arm,arm64,x86_64 RtlAddGrowableFunctionTable(ptr ptr long long long long)
 @ stdcall RtlAddRefActivationContext(ptr)
 # @ stub RtlAddRefMemoryStream
 @ stdcall RtlAddVectoredContinueHandler(long ptr)
@@ -572,7 +572,7 @@
 @ stdcall RtlDeleteAce(ptr long)
 @ stdcall RtlDeleteAtomFromAtomTable(ptr long)
 @ stdcall RtlDeleteCriticalSection(ptr)
-@ cdecl -arch=arm,arm64,x86_64 RtlDeleteGrowableFunctionTable(ptr)
+@ stdcall -arch=arm,arm64,x86_64 RtlDeleteGrowableFunctionTable(ptr)
 @ stub RtlDeleteElementGenericTable
 @ stub RtlDeleteElementGenericTableAvl
 @ cdecl -arch=arm,arm64,x86_64 RtlDeleteFunctionTable(ptr)
@@ -902,7 +902,7 @@
 @ stdcall RtlRemoveVectoredContinueHandler(ptr)
 @ stdcall RtlRemoveVectoredExceptionHandler(ptr)
 @ stdcall RtlResetRtlTranslations(ptr)
-@ stdcall -arch=x86_64 RtlRestoreContext(ptr ptr)
+@ cdecl -arch=x86_64 RtlRestoreContext(ptr ptr)
 @ stdcall RtlRestoreLastWin32Error(long) RtlSetLastWin32Error
 @ stub RtlRevertMemoryStream
 @ stub RtlRunDecodeUnicodeString

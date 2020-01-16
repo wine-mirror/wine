@@ -150,15 +150,15 @@ static BOOLEAN   (CDECL *pRtlAddFunctionTable)(RUNTIME_FUNCTION*, DWORD, DWORD64
 static BOOLEAN   (CDECL *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
 static BOOLEAN   (CDECL *pRtlInstallFunctionTableCallback)(DWORD64, DWORD64, DWORD, PGET_RUNTIME_FUNCTION_CALLBACK, PVOID, PCWSTR);
 static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionEntry)(ULONG64, ULONG64*, UNWIND_HISTORY_TABLE*);
-static DWORD     (CDECL *pRtlAddGrowableFunctionTable)(void**, RUNTIME_FUNCTION*, DWORD, DWORD, ULONG_PTR, ULONG_PTR);
-static void      (CDECL *pRtlGrowFunctionTable)(void*, DWORD);
-static void      (CDECL *pRtlDeleteGrowableFunctionTable)(void*);
+static DWORD     (WINAPI *pRtlAddGrowableFunctionTable)(void**, RUNTIME_FUNCTION*, DWORD, DWORD, ULONG_PTR, ULONG_PTR);
+static void      (WINAPI *pRtlGrowFunctionTable)(void*, DWORD);
+static void      (WINAPI *pRtlDeleteGrowableFunctionTable)(void*);
 static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, ULONG64, CONTEXT*, DISPATCHER_CONTEXT*);
 static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
 static VOID      (CDECL *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
 static NTSTATUS  (WINAPI *pRtlWow64GetThreadContext)(HANDLE, WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64SetThreadContext)(HANDLE, const WOW64_CONTEXT *);
-static VOID      (CDECL *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, CONTEXT*, UNWIND_HISTORY_TABLE*);
+static VOID      (WINAPI *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, CONTEXT*, UNWIND_HISTORY_TABLE*);
 static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 #endif
 

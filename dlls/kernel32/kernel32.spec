@@ -1299,7 +1299,7 @@
 @ stdcall RtlMoveMemory(ptr ptr long) ntdll.RtlMoveMemory
 @ stdcall -arch=x86_64,arm,arm64 RtlPcToFileHeader(ptr ptr) ntdll.RtlPcToFileHeader
 @ stdcall -arch=arm -norelay RtlRaiseException(ptr) ntdll.RtlRaiseException
-@ stdcall -arch=x86_64 RtlRestoreContext(ptr ptr) ntdll.RtlRestoreContext
+@ cdecl -arch=x86_64 RtlRestoreContext(ptr ptr) ntdll.RtlRestoreContext
 @ stdcall RtlUnwind(ptr ptr ptr long) ntdll.RtlUnwind
 @ stdcall -arch=arm64,x86_64 RtlUnwindEx(long long ptr long ptr) ntdll.RtlUnwindEx
 @ stdcall -arch=arm64,x86_64 RtlVirtualUnwind(long long long ptr ptr ptr ptr ptr) ntdll.RtlVirtualUnwind
