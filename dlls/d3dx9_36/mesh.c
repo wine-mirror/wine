@@ -832,8 +832,6 @@ static HRESULT WINAPI d3dx9_mesh_UnlockIndexBuffer(ID3DXMesh *iface)
     return IDirect3DIndexBuffer9_Unlock(mesh->index_buffer);
 }
 
-/* FIXME: This looks just wrong, we never check *attrib_table_size before
- * copying the data. */
 static HRESULT WINAPI d3dx9_mesh_GetAttributeTable(ID3DXMesh *iface,
         D3DXATTRIBUTERANGE *attrib_table, DWORD *attrib_table_size)
 {
