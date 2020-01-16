@@ -5346,14 +5346,17 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     count = IDWriteFontCollection_GetFontFamilyCount(syscollection);
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; ++i)
+    {
         DWRITE_FONT_METRICS fontmetrics;
         IDWriteLocalizedStrings *names;
         struct renderer_context ctxt;
         IDWriteFontFamily *family;
         IDWriteFontFace *fontface;
+        WCHAR nameW[256], str[1];
         IDWriteFont *font;
-        WCHAR nameW[256];
+        UINT32 codepoint;
+        UINT16 glyph;
         BOOL exists;
 
         format = NULL;
@@ -5414,19 +5417,38 @@ todo_wine
             DWRITE_FONT_STRETCH_NORMAL, fontmetrics.designUnitsPerEm, enusW, &format);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        hr = IDWriteFactory_CreateTextLayout(factory, strW, 2, format, 30000.0f, 100.0f, &layout);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        /* Look for first supported character to avoid triggering fallback path. With fallback it's harder to test
+           DrawUnderline() metrics, because actual resolved fontface is not passed to it. Grabbing fontface instance
+           from corresponding DrawGlyphRun() call is not straightforward. */
+        for (codepoint = ' '; codepoint < 0xffff; ++codepoint)
+        {
+            glyph = 0;
+            hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, &glyph);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            if (glyph)
+                break;
+        }
+
+        if (!glyph)
+        {
+            skip("Couldn't find reasonable test string.\n");
+            goto cleanup;
+        }
+
+        str[0] = codepoint;
+        hr = IDWriteFactory_CreateTextLayout(factory, str, 1, format, 30000.0f, 100.0f, &layout);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
         range.startPosition = 0;
         range.length = 2;
         hr = IDWriteTextLayout_SetUnderline(layout, TRUE, range);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
         memset(&ctxt, 0, sizeof(ctxt));
         ctxt.format = format;
         ctxt.familyW = nameW;
         hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0f, 0.0f);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     cleanup:
         if (layout)
