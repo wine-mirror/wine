@@ -2289,8 +2289,8 @@ void* __cdecl MSVCRT_memchr(const void *ptr, int c, MSVCRT_size_t n)
 int __cdecl MSVCRT_strcmp(const char *str1, const char *str2)
 {
     while (*str1 && *str1 == *str2) { str1++; str2++; }
-    if (*str1 > *str2) return 1;
-    if (*str1 < *str2) return -1;
+    if ((unsigned char)*str1 > (unsigned char)*str2) return 1;
+    if ((unsigned char)*str1 < (unsigned char)*str2) return -1;
     return 0;
 }
 
@@ -2301,9 +2301,7 @@ int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len
 {
     if (!len) return 0;
     while (--len && *str1 && *str1 == *str2) { str1++; str2++; }
-    if (*str1 > *str2) return 1;
-    if (*str1 < *str2) return -1;
-    return 0;
+    return (unsigned char)*str1 - (unsigned char)*str2;
 }
 
 /*********************************************************************

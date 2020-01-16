@@ -57,6 +57,8 @@ static void* (__cdecl *pmemcpy)(void *, const void *, size_t n);
 static int (__cdecl *p_memcpy_s)(void *, size_t, const void *, size_t);
 static int (__cdecl *p_memmove_s)(void *, size_t, const void *, size_t);
 static int* (__cdecl *pmemcmp)(void *, const void *, size_t n);
+static int (__cdecl *p_strcmp)(const char *, const char *);
+static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
 static int (__cdecl *p_strcpy)(char *dst, const char *src);
 static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
@@ -628,6 +630,37 @@ static void test_strdup(void)
    str = _strdup( 0 );
    ok( str == 0, "strdup returns %s should be 0\n", str);
    free( str );
+}
+
+static void test_strcmp(void)
+{
+    int ret = p_strcmp( "abc", "abcd" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "", "abc" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "abc", "ab\xa0" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "ab\xb0", "ab\xa0" );
+    ok( ret == 1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "ab\xc2", "ab\xc2" );
+    ok( ret == 0, "wrong ret %d\n", ret );
+
+    ret = p_strncmp( "abc", "abcd", 3 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "", "abc", 3 );
+    ok( ret == 0 - 'a', "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ok( ret == 'c' - 0xa0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ok( ret == 0xb0 - 0xa0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 2 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xc2", "ab\xc2", 3 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "abd", 0 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "abc", 12 );
+    ok( ret == 0, "wrong ret %d\n", ret );
 }
 
 static void test_strcpy_s(void)
@@ -4067,6 +4100,8 @@ START_TEST(string)
     SET(p_mbctype,"_mbctype");
     SET(p__mb_cur_max,"__mb_cur_max");
     SET(p_strcpy, "strcpy");
+    SET(p_strcmp, "strcmp");
+    SET(p_strncmp, "strncmp");
     pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
     p_mbscat_s = (void*)GetProcAddress( hMsvcrt, "_mbscat_s" );
@@ -4134,6 +4169,7 @@ START_TEST(string)
     test_mbsspn();
     test_mbsspnp();
     test_strdup();
+    test_strcmp();
     test_strcpy_s();
     test_memcpy_s();
     test_memmove_s();
