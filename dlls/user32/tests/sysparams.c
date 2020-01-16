@@ -664,19 +664,17 @@ static BOOL run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
 
     rc=SystemParametersInfoA( SPI_GETMOUSE, 0, mi, 0 );
     ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
-    for (i = 0; i < 3; i++)
-    {
-        ok(mi[i] == curr_val[i],
-           "incorrect value for %d: %d != %d\n", i, mi[i], curr_val[i]);
-    }
+    ok(mi[0] == curr_val[0], "expected X threshold %d, got %d\n", curr_val[0], mi[0]);
+    ok(mi[1] == curr_val[1], "expected Y threshold %d, got %d\n", curr_val[1], mi[1]);
+    ok(mi[2] == curr_val[2] || broken(mi[2] == 1) /* Win10 1709+ */,
+            "expected acceleration %d, got %d\n", curr_val[2], mi[2]);
 
     rc=SystemParametersInfoW( SPI_GETMOUSE, 0, mi, 0 );
     ok(rc, "SystemParametersInfoW: rc=%d err=%d\n", rc, GetLastError());
-    for (i = 0; i < 3; i++)
-    {
-        ok(mi[i] == curr_val[i],
-           "incorrect value for %d: %d != %d\n", i, mi[i], curr_val[i]);
-    }
+    ok(mi[0] == curr_val[0], "expected X threshold %d, got %d\n", curr_val[0], mi[0]);
+    ok(mi[1] == curr_val[1], "expected Y threshold %d, got %d\n", curr_val[1], mi[1]);
+    ok(mi[2] == curr_val[2] || broken(mi[2] == 1) /* Win10 1709+ */,
+            "expected acceleration %d, got %d\n", curr_val[2], mi[2]);
 
     if (0)
     {
@@ -2921,7 +2919,7 @@ static void test_GetSystemMetrics( void)
 
 static void compare_font( const LOGFONTW *lf1, const LOGFONTW *lf2, int dpi, int custom_dpi, int line )
 {
-    ok_(__FILE__,line)( lf1->lfHeight == MulDiv( lf2->lfHeight, dpi, custom_dpi ),
+    ok_(__FILE__,line)( lf2->lfHeight == (dpi == custom_dpi) ? lf1->lfHeight : MulDiv( lf1->lfHeight, custom_dpi, 2 * dpi ),
                         "wrong lfHeight %d vs %d\n", lf1->lfHeight, lf2->lfHeight );
     ok_(__FILE__,line)( abs( lf1->lfWidth - MulDiv( lf2->lfWidth, dpi, custom_dpi )) <= 1,
                         "wrong lfWidth %d vs %d\n", lf1->lfWidth, lf2->lfWidth );
@@ -3014,6 +3012,13 @@ static void test_metrics_for_dpi( int custom_dpi )
                 ret2 == ((get_tmheightW( &ncm2.lfMenuFont, 1 ) - 1) | 1),
                 "%u: wrong value %u vs %u font %u vs %u\n", i, ret1, ret2,
                 get_tmheightW( &ncm1.lfMenuFont, 1 ), get_tmheightW( &ncm2.lfMenuFont, 1 ));
+            break;
+        case SM_CYMIN:
+        case SM_CYMINTRACK:
+            val = pGetSystemMetricsForDpi( SM_CYCAPTION, custom_dpi );
+            val += 2 * pGetSystemMetricsForDpi( SM_CYFRAME, custom_dpi );
+            val += 2 * ncm2.iPaddedBorderWidth;
+            ok( ret1 == ret2 || ret2 == val /* Win10 1709+ */, "%u: expected %u or %u, got %u\n", i, ret1, val, ret2 );
             break;
         default:
             ok( ret1 == ret2, "%u: wrong value %u vs %u\n", i, ret1, ret2 );
@@ -3684,32 +3689,48 @@ static void test_dpi_context(void)
         switch (i)
         {
         case 0x10:
+            ok( awareness == DPI_AWARENESS_UNAWARE || awareness == DPI_AWARENESS_INVALID /* Win10 1709+ */,
+                "%lx: wrong value %u\n", i, awareness );
+            break;
         case 0x11:
         case 0x12:
             ok( awareness == (i & ~0x10), "%lx: wrong value %u\n", i, awareness );
-            ok( pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i ), "%lx: not valid\n", i );
+            break;
+        case 0x22:
+            ok( awareness == DPI_AWARENESS_INVALID || awareness == DPI_AWARENESS_PER_MONITOR_AWARE /* Win10 1709+ */,
+                "%lx: wrong value %u\n", i, awareness );
             break;
         default:
             ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", i, awareness );
-            ok( !pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i ), "%lx: valid\n", i );
             break;
         }
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i );
+        ok( ret == (awareness != DPI_AWARENESS_INVALID), "%lx: expected %d, got %d\n",
+            i, (awareness != DPI_AWARENESS_INVALID), ret );
+
         awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) );
         switch (i)
         {
         case 0x10:
+            ok( awareness == DPI_AWARENESS_UNAWARE || awareness == DPI_AWARENESS_INVALID /* Win10 1709+ */,
+                "%lx: wrong value %u\n", i | 0x80000000, awareness );
+            break;
         case 0x11:
         case 0x12:
             ok( awareness == (i & ~0x10), "%lx: wrong value %u\n", i | 0x80000000, awareness );
-            ok( pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) ),
-                "%lx: not valid\n", i | 0x80000000 );
+            break;
+        case 0x22:
+            ok( awareness == DPI_AWARENESS_INVALID || awareness == DPI_AWARENESS_PER_MONITOR_AWARE /* Win10 1709+ */,
+                "%lx: wrong value %u\n", i, awareness );
             break;
         default:
             ok( awareness == DPI_AWARENESS_INVALID, "%lx: wrong value %u\n", i | 0x80000000, awareness );
-            ok( !pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) ),
-                "%lx: valid\n", i | 0x80000000 );
             break;
         }
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) );
+        ok( ret == (awareness != DPI_AWARENESS_INVALID), "%lx: expected %d, got %d\n",
+            (i | 0x80000000), (awareness != DPI_AWARENESS_INVALID), ret );
+
         awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
         switch (~i)
         {
