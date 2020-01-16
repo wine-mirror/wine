@@ -70,7 +70,6 @@ static const struct strmbase_renderer_ops renderer_ops =
 
 HRESULT evr_filter_create(IUnknown *outer, void **out)
 {
-    static const WCHAR sink_name[] = {'E','V','R',' ','I','n','p','u','t','0',0};
     evr_filter *object;
 
     *out = NULL;
@@ -80,7 +79,7 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
         return E_OUTOFMEMORY;
 
     strmbase_renderer_init(&object->renderer, outer,
-            &CLSID_EnhancedVideoRenderer, sink_name, &renderer_ops);
+            &CLSID_EnhancedVideoRenderer, L"EVR Input0", &renderer_ops);
 
     *out = &object->renderer.filter.IUnknown_inner;
 
