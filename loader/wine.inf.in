@@ -212,7 +212,6 @@ AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
-AddService=WineBus,0,WineBusService
 AddService=Winmgmt,0,WinmgmtService
 AddService=wuauserv,0,wuauService
 
