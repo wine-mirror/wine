@@ -64,8 +64,6 @@ static const struct strmbase_renderer_ops renderer_ops =
 
 HRESULT NullRenderer_create(IUnknown *outer, void **out)
 {
-    static const WCHAR sink_name[] = {'I','n',0};
-
     HRESULT hr;
     NullRendererImpl *pNullRenderer;
 
@@ -74,7 +72,7 @@ HRESULT NullRenderer_create(IUnknown *outer, void **out)
     pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
 
     hr = strmbase_renderer_init(&pNullRenderer->renderer, outer,
-            &CLSID_NullRenderer, sink_name, &renderer_ops);
+            &CLSID_NullRenderer, L"In", &renderer_ops);
 
     if (FAILED(hr))
         CoTaskMemFree(pNullRenderer);

@@ -137,8 +137,6 @@ static WCHAR test_sound_avi_filename[MAX_PATH];
 static BOOL unpack_avi_file(int id, WCHAR name[MAX_PATH])
 {
     static WCHAR temp_path[MAX_PATH];
-    static const WCHAR prefix[] = {'D','E','S',0};
-    static const WCHAR avi[] = {'a','v','i',0};
     HRSRC res;
     HGLOBAL data;
     char *mem;
@@ -166,11 +164,11 @@ static BOOL unpack_avi_file(int id, WCHAR name[MAX_PATH])
         return FALSE;
 
     /* We might end up relying on the extension here, so .TMP is no good.  */
-    if (!GetTempFileNameW(temp_path, prefix, 0, name))
+    if (!GetTempFileNameW(temp_path, L"DES", 0, name))
         return FALSE;
 
     DeleteFileW(name);
-    lstrcpyW(name + lstrlenW(name) - 3, avi);
+    wcscpy(name + wcslen(name) - 3, L"avi");
 
     fh = CreateFileW(name, GENERIC_WRITE, 0, NULL, CREATE_NEW,
                      FILE_ATTRIBUTE_NORMAL, NULL);
@@ -272,8 +270,8 @@ static void test_mediadet(void)
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
     ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
-    ok(lstrcmpW(filename, test_avi_filename) == 0,
-       "IMediaDet_get_Filename\n");
+    ok(!wcscmp(filename, test_avi_filename), "Expected filename %s, got %s.\n",
+            debugstr_w(test_avi_filename), debugstr_w(filename));
     SysFreeString(filename);
 
     hr = IMediaDet_get_Filename(pM, NULL);
@@ -344,8 +342,8 @@ static void test_mediadet(void)
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
     ok(hr == S_OK, "IMediaDet_get_Filename failed: %08x\n", hr);
-    ok(lstrcmpW(filename, test_sound_avi_filename) == 0,
-       "IMediaDet_get_Filename\n");
+    ok(!wcscmp(filename, test_sound_avi_filename), "Expected filename %s, got %s.\n",
+            debugstr_w(test_sound_avi_filename), debugstr_w(filename));
     SysFreeString(filename);
 
     /* I don't know if the stream order is deterministic.  Just check

@@ -340,8 +340,6 @@ static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)
 /* From quartz, 2008/04/07 */
 static HRESULT GetFilterInfo(IMoniker *pMoniker, GUID *pclsid, VARIANT *pvar)
 {
-    static const WCHAR wszClsidName[] = {'C','L','S','I','D',0};
-    static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
     IPropertyBag *pPropBagCat = NULL;
     HRESULT hr;
 
@@ -352,7 +350,7 @@ static HRESULT GetFilterInfo(IMoniker *pMoniker, GUID *pclsid, VARIANT *pvar)
                                 (LPVOID *) &pPropBagCat);
 
     if (SUCCEEDED(hr))
-        hr = IPropertyBag_Read(pPropBagCat, wszClsidName, pvar, NULL);
+        hr = IPropertyBag_Read(pPropBagCat, L"CLSID", pvar, NULL);
 
     if (SUCCEEDED(hr))
     {
@@ -362,7 +360,7 @@ static HRESULT GetFilterInfo(IMoniker *pMoniker, GUID *pclsid, VARIANT *pvar)
     }
 
     if (SUCCEEDED(hr))
-        hr = IPropertyBag_Read(pPropBagCat, wszFriendlyName, pvar, NULL);
+        hr = IPropertyBag_Read(pPropBagCat, L"FriendlyName", pvar, NULL);
 
     if (SUCCEEDED(hr))
         TRACE("Moniker = %s - %s\n", debugstr_guid(pclsid), debugstr_w(V_BSTR(pvar)));
@@ -484,7 +482,6 @@ retry:
 
 static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
 {
-    static const WCHAR reader[] = {'R','e','a','d','e','r',0};
     MediaDetImpl *This = impl_from_IMediaDet(iface);
     IGraphBuilder *gb;
     IBaseFilter *bf;
@@ -503,8 +500,7 @@ static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
     if (FAILED(hr))
         return hr;
 
-    hr = IGraphBuilder_AddSourceFilter(gb, newVal, reader, &bf);
-    if (FAILED(hr))
+    if (FAILED(hr = IGraphBuilder_AddSourceFilter(gb, newVal, L"Reader", &bf)))
     {
         IGraphBuilder_Release(gb);
         return hr;
