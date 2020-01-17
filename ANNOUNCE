@@ -1,12 +1,15 @@
-The Wine development release 5.0-rc5 is now available.
+The Wine development release 5.0-rc6 is now available.
+
+Barring any last minute issue, this is expected to be the last
+release candidate before the final 5.0.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/5.0/wine-5.0-rc5.tar.xz
-  http://mirrors.ibiblio.org/wine/source/5.0/wine-5.0-rc5.tar.xz
+  https://dl.winehq.org/wine/source/5.0/wine-5.0-rc6.tar.xz
+  http://mirrors.ibiblio.org/wine/source/5.0/wine-5.0-rc6.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,147 +25,110 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 5.0-rc5 (total 19):
+Bugs fixed in 5.0-rc6 (total 21):
 
-   9609  graphical glitches running Tom Clancy's Splinter Cell Demo (need better FBO stencil buffer support)
-  25728  UFO: Extraterrestrials Gold - crash at start caused by wine's built-in dsound/directmusic
-  34041  Skyrim (Steam) hangup on quit
-  34379  Splinter Cell: Blacklist voice stuttering
-  35194  Emperor: Battle for Dune does not show compressed textures
-  40720  Splinter Cell: Blacklist changing sound level has no effect
-  40721  Splinter Cell: Blacklist some voices/sounds overlap each other
-  40859  Builtin wbemprox.dll load error for multiple games (Colin McRae DiRT 2, Burnout Paradise)
-  42558  The Old City: Leviathan sound periodically has crackle effect
-  42930  Graphical glitches in "Giants Citizen Kabuto"
-  45323  Rayman Origins, UPlay: Sound effects don't work but music and ambience do
-  45396  The Evil Within: no audio in game
-  46972  Adobe DNG Converter 11.2+ runs into Call to unimplemented function api-ms-win-core-winrt-error-l1-1-0.dll.GetRestrictedErrorInfo
-  47974  X Rebirth - wined3d GL_INVALID_OPERATION dimensions must be identical with current filtering modes
-  48293  Battle.net App lags when clicking UI elements
-  48357  Wine 5.0-rc2 prevents multiple apps from connecting to servers (Origin; Dungeons and Dragons Online; Lord Of the Rings Online)
-  48415  The Magic School Bus Explores The Solar System fails to install
-  48417  32-bit PE 'kernelbase.dll' has default imagebase 0x10000000 when built with llvm-mingw, preventing non-relocatable native executables from being loaded
-  48420  Warframe equipment mouse-overs no longer highlight the item
+  20465  Brothers In Arms Hell's Highway : Setup asks for DVD for every .cab file (SetupPromptForDiskA/W should only show a dialog if the file doesn't exist)
+  37598  Double dark line inside default button, e.g. 'OK' / 'SAVE'
+  41459  32bit 7zFM.exe closes unexpectedly with error "The system cannot allocate the required amount of memory"
+  43271  Tomb Raider (2013) - unable to use interact key with CSMT
+  43272  Crash after click Start button in virtual desktop mode when using Steam
+  44408  Tetris for Windows has wrong colors for the game pieces and the score box
+  44594  MindManager Pro v7.0 shows XML processing error on startup (needs support for 'exhaustive-errors', 'external-general-entities' and 'external-parameter-entities' features in MSXML SAX reader)
+  44664  The Five Cores - distorted rendering
+  45732  Far Cry 5 Cannot Steer Land Vehicles
+  46036  7-Zip: Endless / infinite dialogs open when you copy a selection of directories from within one .zip file into another
+  46361  Sonic Mania freezes/crashes when we use a gamepad on 4.0+
+  46616  ABBYY FineReader 14 crashes during installation
+  47433  Accel World vs. Sword Art Online needs WTSRegisterSessionNotificationEx() to return true.
+  47923  kernel32:debugger tests sometimes fail on Windows 10
+  48335  Serious Sam Classic TFE/TSE crash on saving the game
+  48416  wine: Call from 0x7bc7b154 to unimplemented function api-ms-win-core-rtlsupport-l1-2-0.dll.RtlInstallFunctionTableCallback, aborting
+  48444  Dark Messiah of Might and Magic demo: crash on start
+  48452  The Witcher Enhanced Edition (GOG) some HUD graphics distorted starting wine 5.0-rc4
+  48454  Acrobat Reader 11 crashes a few seconds after startup
+  48458  Changes to scanf.c and scanf.h have resulted in Star Citizen incorrectly showing green lighting
+  48469  Pale Moon crashes when loading web page from address bar
 
 ----------------------------------------------------------------
 
-Changes since 5.0-rc4:
-
-Alex Henrie (1):
-      ntdll/tests: Fix expected RtlIpv6StringToAddress terminator output.
+Changes since 5.0-rc5:
 
 Alexandre Julliard (4):
-      ntdll: Make loop counter signed.
-      kernelbase: Remove trailing dot in GetComputerNameExW() when domain name is empty.
-      kernelbase: Set an explicit load address.
-      kernel32/tests: Remove some workarounds for old Windows versions.
+      kernel32: Catch stack overflow faults in IsBad*Ptr() functions.
+      winecfg: Fix list of configurable dlls to account for PE files.
+      msvcrt: Use unsigned comparisons in strcmp and strncmp.
+      wine.inf: Remove the winebus service also for ARM64.
 
 Alistair Leslie-Hughes (2):
-      dmime: IDirectMusicSegment8 SetLoopPoints support zero start/end.
-      d3dx9: Make ID3DXLine::OnResetDevice() return S_OK.
+      dinput: Cap the buffer size to 20.
+      gdiplus: Check status as well before using bitmap.
 
-Andrey Gusev (3):
-      webservices: Fix misplaced parenthesis.
-      mshtml/tests: Fix a typo.
-      scrobj/tests: Fix a typo.
+Andrew Eikum (1):
+      mscoree: Don't print FIXME for unused config file elements.
 
-André Hentschel (7):
-      advapi32/tests: Don't test function directly when reporting GetLastError().
-      comctl32: Fix Str_SetPtr[AW] spec file entries.
-      dbghelp: Fix MiniDumpWriteDump spec file entry.
-      gdiplus: Fix some spec file entries.
-      ole32: Fix some spec file entries.
-      user32: Fix some spec file entries.
-      gdi32: Fix some spec file entries.
+André Hentschel (1):
+      d3dx9: Fix some spec file entries.
 
-Damjan Jovanovic (1):
-      server: Revert b4a1d80ae35d35f5c170e101922bf1563488be18 for now.
+Can Taşan (1):
+      po: Update Turkish translation.
 
-Derek Lesho (2):
-      bcrypt/tests: Add test for BCryptSecretAgreement.
-      bcrypt/tests: Add tests for BCRYPT_KDF_HASH.
+Charles Davis (1):
+      dbghelp: Look for .eh_fram if no .eh_frame is found.
 
-Erich Hoover (1):
-      webservices: Use sscanf to convert strings to doubles.
+Gabriel Ivăncescu (4):
+      strmbase: Detach the window from the parent before destroying it.
+      quartz/tests: Test video window parent's WM_DESTROY notification.
+      winex11.drv: Don't confine the pointer to any window when just checking for active grab.
+      msctf: Clear the corresponding DocumentMgr pointers for Associated Focus Windows on destruction.
 
-Hans Leidekker (3):
-      winhttp/tests: Fix a test failure.
-      wininet/tests: Make a check for available data less strict.
-      wininet/tests: Fix test failures on Windows XP.
+Jacek Caban (9):
+      jscript/tests: Use wide char string literals instead of parse_script_with_error_a.
+      jscript/tests: Use wide char string literals instead of parse_htmlscript_a.
+      jscript/tests: Use wide char string literals instead of parse_script_a.
+      jscript/tests: Use wide char string literals instead of a2bstr.
+      jscript/tests: Use wide char string literals instead of strcmp_wa.
+      jscript/tests: Use wide char strings in a few more places.
+      kernel32/tests: Skip instruction pointer check of the last exception in exception race tests.
+      jscript/tests: Use wide char string literals in activex.c.
+      jscript/tests: Use wide char string literals in caller.c.
 
-Jacek Caban (2):
-      include: Add roerrorapi.h header.
-      wmp/tests: Don't use round to avoid dependency on mingwex.
+Jeff Smith (1):
+      user.exe16: Releasing DC does not disable it.
 
-Kim Malmo (2):
-      po: Update Norwegian translation.
-      po: Fix a typo in Norwegian translation.
+Michael Müller (2):
+      setupapi: Add support for IDF_CHECKFIRST flag in SetupPromptForDiskW.
+      setupapi/tests: Add test for IDF_CHECKFIRST and SetupPromptForDiskA/W.
 
-Louis Lenders (1):
-      combase: Add GetRestrictedErrorInfo and RoOriginateLanguageException stubs.
-
-Matteo Bruni (3):
-      ucrtbase: Export _o_to{lower, upper}() as to{lower, upper}().
-      ucrtbase: Add _o_fmod() and _o_fmodf().
-      ucrtbase/tests: Add tests for the various tolower() and toupper() variants.
-
-Michael Stefaniuc (1):
-      dmime/tests: Destroy the performance on an error path (Valgrind).
-
-Nikolay Sivov (25):
-      include: Update CTF_ flags.
-      include: Update shell link flags enum.
-      shlwapi: Fix spec entry for QISearch().
-      jscript/tests: Add missing checks for Close() calls (Coverity).
-      shell32/tests: Remove workarounds for SHGetFolderLocation().
-      shell32/tests: Get rid of SHGetMalloc() in tests.
-      shell32/tests: Use ILFree() directly.
-      shell32/tests: Use GetLongPathNameA() directly in tests.
-      shell32/tests: Use GetShortPathNameA() directly in tests.
-      kernel32/tests: Remove GetLongPathName() workarounds.
-      kernel32: Fix spec entries for GetLongPathName().
-      ole32/tests: Link to CoInitializeEx() directly.
-      shell32/tests: Use ILIsEqual() directly.
-      shell32/tests: Remove some more workarounds from shelllink tests.
-      gdi32/tests: Remove some workarounds in font tests.
-      gdi32/tests: Remove workarounds for SetLayout().
-      oleaut32/tests: Remove some workarounds for functions that are assumed to be available.
-      user32/tests: Add some more SetScrollInfo() tests.
-      shell32/tests: Use SHParseDisplayName() directly.
-      user32/tests: Remove some workarounds for older Windows versions.
-      d3d8/tests: Use GetCursorInfo() directly.
-      advapi32/tests: Remove some workarounds for older versions.
-      user32/tests: Use device context layout functions directly.
-      advapi32/tests: Use CreateWellKnownSid() directly.
-      advapi32/tests: Remove some workarounds in Crypt* tests.
+Nikolay Sivov (2):
+      comctl32/tests: Add some more ListView customdraw tests.
+      dwrite/tests: Improve DrawUnderline() test reliability by using text tested font actually supports.
 
 Paul Gofman (1):
-      user32/tests: Handle results on Win10 in test_Image_StretchMode().
+      d3dx9: Pass D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY when appropriate.
 
-Piotr Caban (1):
-      ucrtbase: Fix end pointer setting in parse_double on partial nan/infinity match.
+Piotr Caban (5):
+      msvcrt: Pass catch_func_nested_frame struct to cxx_frame_handler.
+      msvcrt: Pass catch_func_nested_frame struct to call_catch_block.
+      msvcrt: Fix handling tryblocks inside current catch block on nested exception.
+      msvcrt: Fix floating point numbers scanning when null-byte is preceding the number.
+      urlmon: Fix CoInternetParse{Url,IUri} spec entry.
 
-Thomas Faber (1):
-      setupapi/tests: Remove an unused variable.
+Zebediah Figura (11):
+      httpapi/tests: Avoid depending on the availability of specific ports.
+      netapi32/tests: Fix the size passed to GetUserNameW() and GetComputerNameW() (Coverity).
+      include: Add more NTSTATUS codes.
+      rpcrt4/tests: Pass the default maximum call limit to RpcServerListen().
+      comdlg32/tests: Use GetTempPathA() instead of the current directory in test_extension().
+      explorerframe/tests: Remove some failing tests.
+      user32/tests: Fix some test failures with Windows 10.
+      msi/tests: Fix test_feature_override() to properly clean up its features on removal.
+      msi/tests: Fix a crash on Windows 10.
+      urlmon/tests: Avoid testing that only certain interfaces are queried.
+      urlmon/tests: Make the url tests a bit less verbose by default.
 
-Zebediah Figura (17):
-      shell32/tests: Avoid testing that only certain services are requested by IObjectWithSite::SetSite().
-      ntdll: Fix a typo in get_current_directory().
-      kernel32/tests: Fix some codepage test failures with Windows 10.
-      user32/tests: Make the DDE tests less verbose by default.
-      user32/tests: Relax WindowFromDC() tests a bit.
-      user32/tests: Get rid of the test for DC handle reuse.
-      gdi32/tests: Separate and expand tests for GetClipBox().
-      gdi32/tests: Clarify return values from IntersectClipRect() and ExcludeClipRect().
-      user32/tests: Avoid testing that GDI handles are no longer valid.
-      user32/tests: Fix a dialog test failure on Windows 10.
-      wininet/tests: Don't test that the URL cache is used for persistent cookies.
-      wininet/tests: Simplify test_InternetErrorDlg().
-      wininet/tests: Fix some test failures with Windows 10.
-      user32/tests: Fix some test failures on Windows 10.
-      netapi32/tests: Rewrite UNC/HTTP conversion tests.
-      netapi32/tests: Use wide character string constants.
-      netapi32/tests: Remove some workarounds for no longer supported versions of Windows.
+Zhiyi Zhang (2):
+      ntdll: Fix some Rtl* functions having wrong calling convention.
+      api-ms-win-core-rtlsupport-l1-2-0: Add missing spec file entries.
 
 --
 Alexandre Julliard
