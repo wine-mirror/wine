@@ -472,10 +472,10 @@ DATETIME_ReturnTxt (const DATETIME_INFO *infoPtr, int count, LPWSTR result, int 
 	    result[1] = 0;
 	    break;
 	case ONEDIGITYEAR:
-	    wsprintfW (result, fmt_dW, date.wYear-10* (int) floor(date.wYear/10));
+	    wsprintfW (result, fmt_dW, date.wYear % 10);
 	    break;
 	case TWODIGITYEAR:
-	    wsprintfW (result, fmt__2dW, date.wYear-100* (int) floor(date.wYear/100));
+	    wsprintfW (result, fmt__2dW, date.wYear % 100);
 	    break;
         case INVALIDFULLYEAR:
 	case FULLYEAR:
