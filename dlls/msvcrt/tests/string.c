@@ -648,11 +648,11 @@ static void test_strcmp(void)
     ret = p_strncmp( "abc", "abcd", 3 );
     ok( ret == 0, "wrong ret %d\n", ret );
     ret = p_strncmp( "", "abc", 3 );
-    ok( ret == 0 - 'a', "wrong ret %d\n", ret );
+    ok( ret == 0 - 'a' || ret == -1, "wrong ret %d\n", ret );
     ret = p_strncmp( "abc", "ab\xa0", 4 );
-    ok( ret == 'c' - 0xa0, "wrong ret %d\n", ret );
+    ok( ret == 'c' - 0xa0 || ret == -1, "wrong ret %d\n", ret );
     ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
-    ok( ret == 0xb0 - 0xa0, "wrong ret %d\n", ret );
+    ok( ret == 0xb0 - 0xa0 || ret == 1, "wrong ret %d\n", ret );
     ret = p_strncmp( "ab\xb0", "ab\xa0", 2 );
     ok( ret == 0, "wrong ret %d\n", ret );
     ret = p_strncmp( "ab\xc2", "ab\xc2", 3 );
