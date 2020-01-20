@@ -177,10 +177,9 @@ static void test_enumerate_physical_device2(void)
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
 
     vr = vkEnumeratePhysicalDevices(vk_instance, &count, NULL);
-    ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
-    if (!count)
+    if (vr || !count)
     {
-        skip("No physical devices.\n");
+        skip("No physical devices. VkResult %d.\n", vr);
         vkDestroyInstance(vk_instance, NULL);
         return;
     }
@@ -397,10 +396,9 @@ static void for_each_device(void (*test_func)(VkPhysicalDevice))
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
 
     vr = vkEnumeratePhysicalDevices(vk_instance, &count, NULL);
-    ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
-    if (!count)
+    if (vr || !count)
     {
-        skip("No physical devices.\n");
+        skip("No physical devices. VkResult %d.\n", vr);
         vkDestroyInstance(vk_instance, NULL);
         return;
     }
