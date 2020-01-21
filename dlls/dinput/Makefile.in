@@ -1,6 +1,6 @@
 MODULE    = dinput.dll
 IMPORTLIB = dinput
-IMPORTS   = dxguid uuid comctl32 ole32 user32 advapi32
+IMPORTS   = dinput dxguid uuid comctl32 ole32 user32 advapi32
 EXTRADEFS = -DDIRECTINPUT_VERSION=0x0700
 EXTRALIBS = $(IOKIT_LIBS) $(FORCEFEEDBACK_LIBS)
 

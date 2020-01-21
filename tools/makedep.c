@@ -2193,6 +2193,9 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
         const char *name = get_base_name( imports.str[i] );
         const char *lib = NULL;
 
+        /* skip module's own importlib, its object files will be linked directly */
+        if (make->importlib && !strcmp( make->importlib, imports.str[i] )) continue;
+
         for (j = 0; j < top_makefile->subdirs.count; j++)
         {
             const struct makefile *submake = top_makefile->submakes[j];
@@ -3070,7 +3073,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
     {
         if ((source->file->flags & FLAG_C_UNIX) && *dll_ext)
             strarray_add( &make->unixobj_files, strmake( "%s.o", obj ));
-        else if (!is_dll_src)
+        else if (!is_dll_src && (!(source->file->flags & FLAG_C_IMPLIB) || (make->importlib && strarray_exists( &make->imports, make->importlib ))))
             strarray_add( &make->object_files, strmake( "%s.o", obj ));
         else
             strarray_add( &make->clean_files, strmake( "%s.o", obj ));
