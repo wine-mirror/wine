@@ -200,6 +200,7 @@ SOURCES = \
 	dimm.idl \
 	dinput.h \
 	dinputd.h \
+	directmanipulation.idl \
 	dispdib.h \
 	dispex.idl \
 	dlgs.h \
