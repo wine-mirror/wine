@@ -384,7 +384,6 @@ static int try_link( const strarray *prefix, const strarray *link_tool, const ch
 
 static strarray *get_link_args( struct options *opts, const char *output_name )
 {
-    int use_wine_crt = opts->wine_builtin && opts->shared;
     strarray *link_args = get_translator( opts );
     strarray *flags = strarray_alloc();
 
@@ -438,8 +437,8 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         else strarray_add( flags, opts->gui_app ? "-mwindows" : "-mconsole" );
 
         if (opts->unicode_app) strarray_add( flags, "-municode" );
-        if (opts->nodefaultlibs || use_wine_crt) strarray_add( flags, "-nodefaultlibs" );
-        if (opts->nostartfiles || use_wine_crt) strarray_add( flags, "-nostartfiles" );
+        if (opts->nodefaultlibs || opts->wine_builtin) strarray_add( flags, "-nodefaultlibs" );
+        if (opts->nostartfiles || opts->wine_builtin) strarray_add( flags, "-nostartfiles" );
         if (opts->subsystem) strarray_add( flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
 
         strarray_add( flags, "-Wl,--nxcompat" );
@@ -1097,6 +1096,13 @@ static void build(struct options* opts)
         {
             if (opts->subsystem && !strcmp( opts->subsystem, "native" ))
                 entry_point = opts->target_cpu == CPU_x86 ? "_DriverEntry@8" : "DriverEntry";
+            else if(opts->wine_builtin && !opts->shared && !opts->win16_app)
+            {
+                if (opts->unicode_app)
+                    entry_point = opts->target_cpu == CPU_x86 ? "_wmainCRTStartup" : "wmainCRTStartup";
+                else
+                    entry_point = opts->target_cpu == CPU_x86 ? "_mainCRTStartup" : "mainCRTStartup";
+            }
         }
         else if (!opts->shared && opts->unicode_app)
             entry_point = "__wine_spec_exe_wentry";
@@ -1190,7 +1196,7 @@ static void build(struct options* opts)
     /* link everything together now */
     link_args = get_link_args( opts, output_name );
 
-    if ((opts->nodefaultlibs || opts->shared) && is_pe)
+    if ((opts->nodefaultlibs || opts->wine_builtin) && is_pe)
     {
         libgcc = find_libgcc(opts->prefix, link_args);
         if (!libgcc) libgcc = "-lgcc";
