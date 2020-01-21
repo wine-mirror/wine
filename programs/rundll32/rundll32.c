@@ -37,16 +37,51 @@
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 #include "wine/winbase16.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rundll32);
 
 
-/*
- * Control_RunDLL has these parameters
- */
-typedef void (WINAPI *EntryPointW)(HWND hWnd, HINSTANCE hInst, LPWSTR lpszCmdLine, int nCmdShow);
-typedef void (WINAPI *EntryPointA)(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine, int nCmdShow);
+#ifdef __i386__
+/* wrapper for dlls that declare the entry point incorrectly */
+extern void call_entry_point( void *func, HWND hwnd, HINSTANCE inst, void *cmdline, int show );
+__ASM_GLOBAL_FUNC( call_entry_point,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %edi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %edi,-4\n\t")
+                   "pushl %esi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
+                   "pushl %ebx\n\t"
+                   __ASM_CFI(".cfi_rel_offset %ebx,-12\n\t")
+                   "subl $12,%esp\n\t"
+                   "pushl 24(%ebp)\n\t"
+                   "pushl 20(%ebp)\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "call *8(%ebp)\n\t"
+                   "leal -12(%ebp),%esp\n\t"
+                   "popl %ebx\n\t"
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
+                   "popl %esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   "popl %edi\n\t"
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
+                   "leave\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret" )
+#else
+static void call_entry_point( void *func, HWND hwnd, HINSTANCE inst, void *cmdline, int show )
+{
+    void (WINAPI *entry_point)( HWND hwnd, HINSTANCE inst, void *cmdline, int show ) = func;
+    entry_point( hwnd, inst, cmdline, show );
+}
+#endif
 
 /*
  * Control_RunDLL needs to have a window. So lets make us a very
@@ -304,12 +339,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
 
     if (unicode)
     {
-        EntryPointW pEntryPointW = entry_point;
-
         WINE_TRACE( "Calling %s (%p,%p,%s,%d)\n", wine_dbgstr_w(szEntryPoint),
                     hWnd, instance, wine_dbgstr_w(szCmdLine), info.wShowWindow );
 
-        pEntryPointW( hWnd, instance, szCmdLine, info.wShowWindow );
+        call_entry_point( entry_point, hWnd, instance, szCmdLine, info.wShowWindow );
     }
     else
     {
@@ -331,11 +364,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
             if (pRunDLL_CallEntry16)
                 pRunDLL_CallEntry16( entry_point, hWnd, instance, cmdline, info.wShowWindow );
         }
-        else
-        {
-            EntryPointA pEntryPointA = entry_point;
-            pEntryPointA( hWnd, instance, cmdline, info.wShowWindow );
-        }
+        else call_entry_point( entry_point, hWnd, instance, cmdline, info.wShowWindow );
+
         HeapFree( GetProcessHeap(), 0, cmdline );
     }
 
