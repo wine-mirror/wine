@@ -97,6 +97,7 @@
 #define _Inout_updates_(count)
 #define _Inout_updates_bytes_(count)
 #define _Inout_updates_bytes_all_opt_(count)
+#define _Inout_updates_bytes_opt_(count)
 #define _Inout_updates_opt_(count)
 #define _Inout_updates_z_(count)
 #define _Inout_updates_opt_z_(count)
