@@ -559,7 +559,10 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         if (check_bus_option(&SDL_enabled, 1))
         {
             if (sdl_driver_init() == STATUS_SUCCESS)
-                return STATUS_SUCCESS;
+            {
+                irp->IoStatus.u.Status = STATUS_SUCCESS;
+                break;
+            }
         }
         udev_driver_init();
         iohid_driver_init();
