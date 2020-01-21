@@ -344,20 +344,18 @@ static HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock(LPDIRECTMUSIC8 iface, DW
     if (!index)
     {
         static const GUID guid_system_clock = { 0x58d58419, 0x71b4, 0x11d1, { 0xa7, 0x4c, 0x00, 0x00, 0xf8, 0x75, 0xac, 0x12 } };
-        static const WCHAR name_system_clock[] = { 'S','y','s','t','e','m',' ','C','l','o','c','k',0 };
 
         clock_info->ctType = 0;
         clock_info->guidClock = guid_system_clock;
-        lstrcpyW(clock_info->wszDescription, name_system_clock);
+        lstrcpyW(clock_info->wszDescription, L"System Clock");
     }
     else
     {
         static const GUID guid_dsound_clock = { 0x58d58420, 0x71b4, 0x11d1, { 0xa7, 0x4c, 0x00, 0x00, 0xf8, 0x75, 0xac, 0x12 } };
-        static const WCHAR name_dsound_clock[] = { 'D','i','r','e','c','t','S','o','u','n','d',' ','C','l','o','c','k',0 };
 
         clock_info->ctType = 0;
         clock_info->guidClock = guid_dsound_clock;
-        lstrcpyW(clock_info->wszDescription, name_dsound_clock);
+        lstrcpyW(clock_info->wszDescription, L"DirectSound Clock");
     }
 
     return S_OK;
@@ -497,7 +495,7 @@ static const IDirectMusic8Vtbl DirectMusic8_Vtbl = {
 
 static void create_system_ports_list(IDirectMusic8Impl* object)
 {
-    static const WCHAR emulated[] = {' ','[','E','m','u','l','a','t','e','d',']',0};
+    static const WCHAR emulated[] = L" [Emulated]";
     port_info * port;
     ULONG nb_ports;
     ULONG nb_midi_out;

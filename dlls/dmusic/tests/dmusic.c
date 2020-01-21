@@ -639,7 +639,6 @@ static void test_parsedescriptor(void)
     IStream *stream;
     DMUS_OBJECTDESC desc = {0};
     HRESULT hr;
-    const WCHAR s_inam[] = {'I','N','A','M','\0'};
     const FOURCC alldesc[] =
     {
         FOURCC_RIFF, FOURCC_DLS, DMUS_FOURCC_CATEGORY_CHUNK, FOURCC_LIST,
@@ -735,7 +734,7 @@ static void test_parsedescriptor(void)
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
     ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_NAME),
             "Got valid data %#x, expected DMUS_OBJ_CLASS | DMUS_OBJ_NAME\n", desc.dwValidData);
-    ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"INAM"), "Got name '%s', expected 'INAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 
@@ -747,7 +746,7 @@ static void test_parsedescriptor(void)
     ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_NAME | DMUS_OBJ_VERSION),
             "Got valid data %#x, expected DMUS_OBJ_CLASS | DMUS_OBJ_NAME | DMUS_OBJ_VERSION\n",
             desc.dwValidData);
-    ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"INAM"), "Got name '%s', expected 'INAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 
