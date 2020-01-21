@@ -621,7 +621,6 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoad
 static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *iface, REFGUID rguidClass, WCHAR *pwzFileExtension, WCHAR *pwzScanFileName)
 {
 	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-	static const WCHAR wszAny[] = {'*',0};
 	WIN32_FIND_DATAW FileData;
 	HANDLE hSearch;
 	WCHAR wszSearchString[MAX_PATH];
@@ -643,11 +642,12 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
 	p = wszSearchString + lstrlenW(wszSearchString);
 	if (p > wszSearchString && p[-1] != '\\') *p++ = '\\';
 	*p++ = '*'; /* any file */
-	if (lstrcmpW (pwzFileExtension, wszAny)) *p++ = '.'; /* if we have actual extension, put a dot */
+        if (lstrcmpW (pwzFileExtension, L"*"))
+                *p++ = '.'; /* if we have actual extension, put a dot */
 	lstrcpyW (p, pwzFileExtension);
-	
+
 	TRACE(": search string: %s\n", debugstr_w(wszSearchString));
-	
+
 	hSearch = FindFirstFileW (wszSearchString, &FileData);
 	if (hSearch == INVALID_HANDLE_VALUE) {
 		TRACE(": no files found\n");
