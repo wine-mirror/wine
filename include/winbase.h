@@ -3136,6 +3136,7 @@ static FORCEINLINE HANDLE WINAPI GetCurrentThreadEffectiveToken(void)
 /* WinMain(entry point) must be declared in winbase.h. */
 /* If this is not declared, we cannot compile many sources written with C++. */
 int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
+int WINAPI wWinMain(HINSTANCE,HINSTANCE,LPWSTR,int);
 
 #ifdef __WINESRC__
 /* shouldn't be here, but is nice for type checking */
