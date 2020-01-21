@@ -219,6 +219,7 @@ struct options
     const char* isysroot;
     const char* lib_suffix;
     const char* subsystem;
+    const char* entry_point;
     const char* prelink;
     strarray* prefix;
     strarray* lib_dirs;
@@ -439,16 +440,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         if (opts->unicode_app) strarray_add( flags, "-municode" );
         if (opts->nodefaultlibs || use_wine_crt) strarray_add( flags, "-nodefaultlibs" );
         if (opts->nostartfiles || use_wine_crt) strarray_add( flags, "-nostartfiles" );
-
-        if (opts->subsystem)
-        {
-            strarray_add( flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
-            if (!strcmp( opts->subsystem, "native" ))
-            {
-                const char *entry = opts->target_cpu == CPU_x86 ? "_DriverEntry@8" : "DriverEntry";
-                strarray_add( flags, strmake( "-Wl,--entry,%s", entry ));
-            }
-        }
+        if (opts->subsystem) strarray_add( flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
 
         strarray_add( flags, "-Wl,--nxcompat" );
 
@@ -957,7 +949,7 @@ static void build(struct options* opts)
     const char *spec_o_name, *libgcc = NULL;
     const char *output_name, *spec_file, *lang;
     int generate_app_loader = 1;
-    const char* crt_lib = NULL;
+    const char *crt_lib = NULL, *entry_point = NULL;
     int fake_module = 0;
     int is_pe = (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN);
     unsigned int j;
@@ -1098,6 +1090,19 @@ static void build(struct options* opts)
     }
     if (!opts->nostdlib && !is_pe) add_library(opts, lib_dirs, files, "wine");
 
+    /* set default entry point, if needed */
+    if (!opts->entry_point)
+    {
+        if (is_pe)
+        {
+            if (opts->subsystem && !strcmp( opts->subsystem, "native" ))
+                entry_point = opts->target_cpu == CPU_x86 ? "_DriverEntry@8" : "DriverEntry";
+        }
+        else if (!opts->shared && opts->unicode_app)
+            entry_point = "__wine_spec_exe_wentry";
+    }
+    else entry_point = opts->entry_point;
+
     /* run winebuild to generate the .spec.o file */
     spec_args = get_winebuild_args( opts );
     strarray_add( spec_args, strmake( "--cc-cmd=%s", build_tool_name( opts, "gcc", CC )));
@@ -1133,12 +1138,13 @@ static void build(struct options* opts)
         strarray_add(spec_args, output_name);
         strarray_add(spec_args, "--subsystem");
         strarray_add(spec_args, opts->gui_app ? "windows" : "console");
-        if (opts->unicode_app)
-        {
-            strarray_add(spec_args, "--entry");
-            strarray_add(spec_args, "__wine_spec_exe_wentry");
-        }
         if (opts->large_address_aware) strarray_add( spec_args, "--large-address-aware" );
+    }
+
+    if (entry_point)
+    {
+        strarray_add(spec_args, "--entry");
+        strarray_add(spec_args, entry_point);
     }
 
     if (opts->subsystem)
@@ -1195,6 +1201,8 @@ static void build(struct options* opts)
 
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
+
+    if (is_pe && entry_point) strarray_add(link_args, strmake("-Wl,--entry,%s", entry_point));
 
     strarray_add(link_args, spec_o_name);
 
@@ -1675,6 +1683,11 @@ int main(int argc, char **argv)
                             if (!strcmp(Wl->base[j], "--subsystem") && j < Wl->size - 1)
                             {
                                 opts.subsystem = strdup( Wl->base[++j] );
+                                continue;
+                            }
+                            if (!strcmp(Wl->base[j], "--entry") && j < Wl->size - 1)
+                            {
+                                opts.entry_point = strdup( Wl->base[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl->base[j], "-delayload") && j < Wl->size - 1)
