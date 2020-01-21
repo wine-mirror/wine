@@ -4288,14 +4288,6 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
-case "$srcdir" in
- .) ;;
- *) if test -f "$srcdir/Makefile" -o -f "$srcdir/include/config.h"; then
-      as_fn_error $? "you are building out of the source tree, but the source tree contains object files.
-You need to run 'make distclean' in the source tree first." "$LINENO" 5
-    fi ;;
-esac
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 $as_echo_n "checking whether ${MAKE-make} sets \$(MAKE)... " >&6; }
