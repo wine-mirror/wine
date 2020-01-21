@@ -157,8 +157,14 @@ static HRESULT WINAPI HTMLScriptElement_put_htmlFor(IHTMLScriptElement *iface, B
 static HRESULT WINAPI HTMLScriptElement_get_htmlFor(IHTMLScriptElement *iface, BSTR *p)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString html_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&html_str, NULL);
+    nsres = nsIDOMHTMLScriptElement_GetHtmlFor(This->nsscript, &html_str);
+    return return_nsstr(nsres, &html_str, p);
 }
 
 static HRESULT WINAPI HTMLScriptElement_put_event(IHTMLScriptElement *iface, BSTR v)

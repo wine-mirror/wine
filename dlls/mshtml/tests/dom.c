@@ -8834,6 +8834,11 @@ static void test_elems(IHTMLDocument2 *doc)
             hres = IHTMLScriptElement_get_src(script, &str);
             ok(hres == S_OK, "get_src failed: %08x\n", hres);
             ok(!str, "src = %s\n", wine_dbgstr_w(str));
+
+            str = (BSTR)0xdeadbeef;
+            hres = IHTMLScriptElement_get_htmlFor(script, &str);
+            ok(hres == S_OK, "get_htmlFor failed: %08x\n", hres);
+            ok(!str, "htmlFor = %s\n", wine_dbgstr_w(str));
         }
 
         IHTMLScriptElement_Release(script);
