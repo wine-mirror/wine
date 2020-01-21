@@ -531,7 +531,9 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_FreePMsg(IDirectMusicPerforma
   DMUS_ItemRemoveFromQueue( This, pItem );
   LeaveCriticalSection(&This->safe);
 
-  /** TODO: see if we should Release the pItem->pMsg->punkUser and others Interfaces */
+  if (pPMSG->punkUser)
+    IUnknown_Release(pPMSG->punkUser);
+
   HeapFree(GetProcessHeap(), 0, pItem);  
   return S_OK;
 }
