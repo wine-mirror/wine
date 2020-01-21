@@ -6974,6 +6974,7 @@ static void test_window(IHTMLDocument2 *doc)
         IHTMLPerformance *performance;
         IHTMLDOMNode *node;
         IHTMLElement *elem;
+        LONG offset;
 
         ok(window7 != NULL, "window7 == NULL\n");
 
@@ -6998,9 +6999,15 @@ static void test_window(IHTMLDocument2 *doc)
             ok(hres == S_OK, "get_performance failed: %08x\n", hres);
             ok(V_VT(&v) == VT_I2, "V_VT(performance) = %u\n", V_VT(&v));
             ok(V_I2(&v) == 2, "V_I2(performance) = %d\n", V_I2(&v));
-
-            IHTMLWindow7_Release(window7);
         }
+
+        hres = IHTMLWindow7_get_pageXOffset(window7, &offset);
+        ok(hres == S_OK, "get_pageXOffset failed: %08x\n", hres);
+        ok(!offset, "Unexpected offset %d.\n", offset);
+
+        hres = IHTMLWindow7_get_pageYOffset(window7, &offset);
+        ok(hres == S_OK, "get_pageYOffset failed: %08x\n", hres);
+        ok(!offset, "Unexpected offset %d.\n", offset);
 
         hres = IHTMLDocument2_get_body(doc, &elem);
         ok(hres == S_OK, "get_body failed: %08x\n", hres);
@@ -7020,6 +7027,8 @@ static void test_window(IHTMLDocument2 *doc)
 
         IHTMLDOMNode_Release(node);
         IHTMLElement_Release(elem);
+
+        IHTMLWindow7_Release(window7);
     }else {
         win_skip("IHTMLWindow7 not supported\n");
     }

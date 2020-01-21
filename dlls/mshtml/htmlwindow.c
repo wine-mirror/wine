@@ -2444,15 +2444,37 @@ static HRESULT WINAPI HTMLWindow7_get_innerHeight(IHTMLWindow7 *iface, LONG *p)
 static HRESULT WINAPI HTMLWindow7_get_pageXOffset(IHTMLWindow7 *iface, LONG *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsresult nsres;
+    INT32 ret;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMWindow_GetPageXOffset(This->outer_window->nswindow, &ret);
+    if(NS_FAILED(nsres)) {
+        ERR("GetPageXOffset failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow7_get_pageYOffset(IHTMLWindow7 *iface, LONG *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsresult nsres;
+    INT32 ret;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMWindow_GetPageYOffset(This->outer_window->nswindow, &ret);
+    if(NS_FAILED(nsres)) {
+        ERR("GetPageYOffset failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow7_get_screenX(IHTMLWindow7 *iface, LONG *p)
