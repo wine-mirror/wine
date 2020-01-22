@@ -57,6 +57,84 @@ static inline ItemMonikerImpl *impl_from_IROTData(IROTData *iface)
     return CONTAINING_RECORD(iface, ItemMonikerImpl, IROTData_iface);
 }
 
+struct container_lock
+{
+    IUnknown IUnknown_iface;
+    LONG refcount;
+    IOleItemContainer *container;
+};
+
+static struct container_lock *impl_lock_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct container_lock, IUnknown_iface);
+}
+
+static HRESULT WINAPI container_lock_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI container_lock_AddRef(IUnknown *iface)
+{
+    struct container_lock *lock = impl_lock_from_IUnknown(iface);
+    return InterlockedIncrement(&lock->refcount);
+}
+
+static ULONG WINAPI container_lock_Release(IUnknown *iface)
+{
+    struct container_lock *lock = impl_lock_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&lock->refcount);
+
+    if (!refcount)
+    {
+        IOleItemContainer_LockContainer(lock->container, FALSE);
+        IOleItemContainer_Release(lock->container);
+        heap_free(lock);
+    }
+
+    return refcount;
+}
+
+static const IUnknownVtbl container_lock_vtbl =
+{
+    container_lock_QueryInterface,
+    container_lock_AddRef,
+    container_lock_Release,
+};
+
+static HRESULT set_container_lock(IOleItemContainer *container, IBindCtx *pbc)
+{
+    struct container_lock *lock;
+    HRESULT hr;
+
+    if (!(lock = heap_alloc(sizeof(*lock))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = IOleItemContainer_LockContainer(container, TRUE)))
+    {
+        heap_free(lock);
+        return hr;
+    }
+
+    lock->IUnknown_iface.lpVtbl = &container_lock_vtbl;
+    lock->refcount = 1;
+    lock->container = container;
+    IOleItemContainer_AddRef(lock->container);
+
+    hr = IBindCtx_RegisterObjectBound(pbc, &lock->IUnknown_iface);
+    IUnknown_Release(&lock->IUnknown_iface);
+    return hr;
+}
+
 static HRESULT ItemMonikerImpl_Destroy(ItemMonikerImpl* iface);
 
 /*******************************************************************************
@@ -787,13 +865,15 @@ static HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker *iface, IBindCtx
     hr = IMoniker_BindToObject(pmkToLeft, pbc, NULL, &IID_IOleItemContainer, (void **)&container);
     if (SUCCEEDED(hr))
     {
-        hr = IOleItemContainer_GetObject(container, This->itemName, get_bind_speed_from_bindctx(pbc), pbc,
-                &IID_IParseDisplayName, (void **)&parser);
-        if (SUCCEEDED(hr))
+        if (SUCCEEDED(hr = set_container_lock(container, pbc)))
         {
-            hr = IParseDisplayName_ParseDisplayName(parser, pbc, displayname, eaten, ppmkOut);
-
-            IParseDisplayName_Release(parser);
+            hr = IOleItemContainer_GetObject(container, This->itemName, get_bind_speed_from_bindctx(pbc), pbc,
+                    &IID_IParseDisplayName, (void **)&parser);
+            if (SUCCEEDED(hr))
+            {
+                hr = IParseDisplayName_ParseDisplayName(parser, pbc, displayname, eaten, ppmkOut);
+                IParseDisplayName_Release(parser);
+            }
         }
         IOleItemContainer_Release(container);
     }
