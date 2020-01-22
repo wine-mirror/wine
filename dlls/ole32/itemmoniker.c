@@ -329,6 +329,18 @@ static HRESULT WINAPI ItemMonikerImpl_GetSizeMax(IMoniker* iface, ULARGE_INTEGER
     return S_OK;
 }
 
+static DWORD get_bind_speed_from_bindctx(IBindCtx *pbc)
+{
+    DWORD bind_speed = BINDSPEED_INDEFINITE;
+    BIND_OPTS bind_opts;
+
+    bind_opts.cbStruct = sizeof(bind_opts);
+    if (SUCCEEDED(IBindCtx_GetBindOptions(pbc, &bind_opts)) && bind_opts.dwTickCountDeadline)
+        bind_speed = bind_opts.dwTickCountDeadline < 2500 ? BINDSPEED_IMMEDIATE : BINDSPEED_MODERATE;
+
+    return bind_speed;
+}
+
 /******************************************************************************
  *                  ItemMoniker_BindToObject
  ******************************************************************************/
@@ -339,9 +351,8 @@ static HRESULT WINAPI ItemMonikerImpl_BindToObject(IMoniker* iface,
                                                    VOID** ppvResult)
 {
     ItemMonikerImpl *This = impl_from_IMoniker(iface);
-    HRESULT   res;
-    IID    refid=IID_IOleItemContainer;
-    IOleItemContainer *poic=0;
+    IOleItemContainer *container;
+    HRESULT hr;
 
     TRACE("(%p,%p,%p,%s,%p)\n",iface,pbc,pmkToLeft,debugstr_guid(riid),ppvResult);
 
@@ -353,16 +364,15 @@ static HRESULT WINAPI ItemMonikerImpl_BindToObject(IMoniker* iface,
 
     *ppvResult=0;
 
-    res=IMoniker_BindToObject(pmkToLeft,pbc,NULL,&refid,(void**)&poic);
-
-    if (SUCCEEDED(res)){
-
-        res=IOleItemContainer_GetObject(poic,This->itemName,BINDSPEED_MODERATE,pbc,riid,ppvResult);
-
-        IOleItemContainer_Release(poic);
+    hr = IMoniker_BindToObject(pmkToLeft, pbc, NULL, &IID_IOleItemContainer, (void **)&container);
+    if (SUCCEEDED(hr))
+    {
+        hr = IOleItemContainer_GetObject(container, This->itemName, get_bind_speed_from_bindctx(pbc), pbc,
+                riid, ppvResult);
+        IOleItemContainer_Release(container);
     }
 
-    return res;
+    return hr;
 }
 
 /******************************************************************************

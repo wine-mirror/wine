@@ -2105,7 +2105,6 @@ todo_wine
     container_moniker = create_test_moniker();
 
     hr = IMoniker_BindToObject(moniker, bindctx, &container_moniker->IMoniker_iface, &IID_IUnknown, (void **)&unknown);
-todo_wine
     ok(hr == (0x8bee0000 | BINDSPEED_INDEFINITE), "Unexpected hr %#x.\n", hr);
 
     bind_opts.cbStruct = sizeof(bind_opts);
@@ -2116,14 +2115,12 @@ todo_wine
     hr = IBindCtx_SetBindOptions(bindctx, &bind_opts);
     ok(hr == S_OK, "Failed to set bind options, hr %#x.\n", hr);
     hr = IMoniker_BindToObject(moniker, bindctx, &container_moniker->IMoniker_iface, &IID_IUnknown, (void **)&unknown);
-todo_wine
     ok(hr == (0x8bee0000 | BINDSPEED_IMMEDIATE), "Unexpected hr %#x.\n", hr);
 
     bind_opts.dwTickCountDeadline = 2499;
     hr = IBindCtx_SetBindOptions(bindctx, &bind_opts);
     ok(hr == S_OK, "Failed to set bind options, hr %#x.\n", hr);
     hr = IMoniker_BindToObject(moniker, bindctx, &container_moniker->IMoniker_iface, &IID_IUnknown, (void **)&unknown);
-todo_wine
     ok(hr == (0x8bee0000 | BINDSPEED_IMMEDIATE), "Unexpected hr %#x.\n", hr);
 
     bind_opts.dwTickCountDeadline = 2500;
