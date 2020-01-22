@@ -3767,26 +3767,49 @@ done:
 
 static void fill_surface(IDirect3DSurface9 *surface, DWORD color, DWORD flags)
 {
+    unsigned int byte_count;
     D3DSURFACE_DESC desc;
+    unsigned int x, y;
     D3DLOCKED_RECT l;
     HRESULT hr;
-    unsigned int x, y;
-    DWORD *mem;
+    void *mem;
 
     memset(&desc, 0, sizeof(desc));
     memset(&l, 0, sizeof(l));
     hr = IDirect3DSurface9_GetDesc(surface, &desc);
     ok(hr == D3D_OK, "IDirect3DSurface9_GetDesc failed with %08x\n", hr);
+
+    switch(desc.Format)
+    {
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_X8R8G8B8:
+            byte_count = 4;
+            break;
+
+        case D3DFMT_A1R5G5B5:
+        case D3DFMT_X1R5G5B5:
+        case D3DFMT_R5G6B5:
+            byte_count = 2;
+            break;
+
+        default:
+            ok(0, "Unsupported format %#x.\n", desc.Format);
+            return;
+    }
+
     hr = IDirect3DSurface9_LockRect(surface, &l, NULL, flags);
     ok(hr == D3D_OK, "IDirect3DSurface9_LockRect failed with %08x\n", hr);
     if(FAILED(hr)) return;
 
     for(y = 0; y < desc.Height; y++)
     {
-        mem = (DWORD *) ((BYTE *) l.pBits + y * l.Pitch);
-        for(x = 0; x < l.Pitch / sizeof(DWORD); x++)
+        mem = (BYTE *)l.pBits + y * l.Pitch;
+        for(x = 0; x < l.Pitch / byte_count; ++x)
         {
-            mem[x] = color;
+            if (byte_count == 4)
+                ((DWORD *)mem)[x] = color;
+            else
+                ((WORD *)mem)[x] = color;
         }
     }
     hr = IDirect3DSurface9_UnlockRect(surface);
@@ -8964,7 +8987,8 @@ static void srgbtexture_test(void)
     struct IDirect3DSurface9 *surface;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
-    D3DCOLOR color;
+    D3DCOLOR colour;
+    unsigned int i;
     ULONG refcount;
     HWND window;
     DWORD value;
@@ -8977,6 +9001,25 @@ static void srgbtexture_test(void)
          1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
          1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
     };
+    static const struct
+    {
+        D3DFORMAT format;
+        const char *format_name;
+        DWORD fill_colour1, fill_colour2;
+        DWORD fill_colour_rb1, fill_colour_rb2;
+        DWORD conv_colour1, conv_colour2;
+    }
+    tests[] =
+    {
+        {D3DFMT_A8R8G8B8, "A8R8G8B8",
+                0xff7f7f7f, 0xff3f3f3f, 0x007f7f7f, 0x003f3f3f, 0x00363636, 0x000d0d0d},
+        {D3DFMT_R5G6B5, "R5G6R5",
+                0x7bef, 0x39e7, 0x007b7d7b, 0x003a3d3a, 0x00333433, 0x000a0c0a},
+        {D3DFMT_A1R5G5B5, "A1R5G5R5",
+                0xbdef, 0x9ce7, 0x007b7b7b, 0x003a3a3a, 0x00333433, 0x000a0a0a},
+        {D3DFMT_X1R5G5B5, "X1R5G5R5",
+                0x3def, 0x1ce7, 0x007b7b7b, 0x003a3a3a, 0x00333433, 0x000a0a0a},
+    };
 
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -8987,179 +9030,195 @@ static void srgbtexture_test(void)
         goto done;
     }
 
-    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
-            D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_SRGBREAD, D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8) != D3D_OK)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        skip("D3DFMT_A8R8G8B8 textures with SRGBREAD not supported.\n");
-        IDirect3DDevice9_Release(device);
-        goto done;
+        if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_SRGBREAD, D3DRTYPE_TEXTURE, tests[i].format) != D3D_OK)
+        {
+            skip("%s textures with SRGBREAD are not supported.\n", tests[i].format_name);
+            continue;
+        }
+
+        hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 2, 0, tests[i].format, D3DPOOL_MANAGED, &texture, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        fill_surface(surface, tests[i].fill_colour1, 0);
+        IDirect3DSurface9_Release(surface);
+        hr = IDirect3DTexture9_GetSurfaceLevel(texture, 1, &surface);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        fill_surface(surface, tests[i].fill_colour2, 0);
+        IDirect3DSurface9_Release(surface);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        /* AMD uses the LSB of the D3DSAMP_SRGBTEXTURE value.
+         * NVIDIA ignores any values other than 0 and 1, leaving the previous
+         * D3DSAMP_SRGBTEXTURE state.
+         * Intel, WARP treat the value as boolean. */
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 0x7e41882a);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(value == 0x7e41882a, "Got unexpected value %#x.\n", value);
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        colour = getPixelColor(device, 320, 240);
+        ok(color_match(colour, tests[i].fill_colour_rb1, 2)
+                || broken(color_match(colour, tests[i].conv_colour1, 1)),
+                "Format %s, got unexpected colour 0x%08x.\n", tests[i].format_name, colour);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 100);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(value == 100, "Got unexpected value %#x.\n", value);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        colour = getPixelColor(device, 320, 240);
+        ok(color_match(colour, tests[i].fill_colour_rb1, 2)
+                || broken(color_match(colour, tests[i].conv_colour1, 1)),
+                "Format %s, got unexpected colour 0x%08x.\n", tests[i].format_name, colour);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 2);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(value == 2, "Got unexpected value %#x.\n", value);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        colour = getPixelColor(device, 320, 240);
+        ok(color_match(colour, tests[i].fill_colour_rb1, 2)
+                || broken(color_match(colour, tests[i].conv_colour1, 1)),
+                "Format %s, got unexpected colour 0x%08x.\n", tests[i].format_name, colour);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 3);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(value == 3, "Got unexpected value %#x.\n", value);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        colour = getPixelColor(device, 320, 240);
+        ok(color_match(colour, tests[i].fill_colour_rb1, 2)
+                || color_match(colour, tests[i].conv_colour1, 3),
+                "Format %s, got unexpected colour 0x%08x.\n", tests[i].format_name, colour);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, TRUE);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(value == TRUE, "Got unexpected value %#x.\n", value);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        colour = getPixelColor(device, 320, 240);
+        ok(color_match(colour, tests[i].conv_colour1, 3), "Format %s, got unexpected colour 0x%08x.\n",
+                tests[i].format_name, colour);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        /* Set the other state to verify that the sampler just inherits old
+         * D3DSAMP_SRGBTEXTURE but the old sampler is not preserved entirely on
+         * NVIDIA. */
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 0x7e41882a);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(value == 0x7e41882a, "Got unexpected value %#x.\n", value);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 1);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        colour = getPixelColor(device, 320, 240);
+        ok(color_match(colour, tests[i].conv_colour2, 1)
+                || color_match(colour, tests[i].fill_colour_rb2, 2),
+                "Format %s, got unexpected colour 0x%08x.\n", tests[i].format_name, colour);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(value == 0, "Got unexpected value %#x.\n", value);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        colour = getPixelColor(device, 320, 240);
+        ok(color_match(colour, tests[i].fill_colour_rb2, 2),
+                "Format %s, got unexpected colour 0x%08x.\n", tests[i].format_name, colour);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 0x7e41882a);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(value == 0x7e41882a, "Got unexpected value %#x.\n", value);
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        colour = getPixelColor(device, 320, 240);
+        ok(color_match(colour, tests[i].fill_colour_rb2, 2)
+                || broken(color_match(colour, tests[i].conv_colour2, 1)),
+                "Format %s, got unexpected colour 0x%08x.\n", tests[i].format_name, colour);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        IDirect3DTexture9_Release(texture);
+
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     }
 
-    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 2, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    fill_surface(surface, 0xff7f7f7f, 0);
-    IDirect3DSurface9_Release(surface);
-    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 1, &surface);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    fill_surface(surface, 0xff3f3f3f, 0);
-    IDirect3DSurface9_Release(surface);
-
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-
-    /* AMD uses the LSB of the D3DSAMP_SRGBTEXTURE value.
-     * NVIDIA ignores any values other than 0 and 1, leaving the previous
-     * D3DSAMP_SRGBTEXTURE state.
-     * Intel, WARP treat the value as boolean. */
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 0x7e41882a);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    ok(value == 0x7e41882a, "Got unexpected value %#x.\n", value);
-    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x007f7f7f, 1) || broken(color_match(color, 0x00363636, 1)),
-            "Got unexpected color 0x%08x.\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 100);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    ok(value == 100, "Got unexpected value %#x.\n", value);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x007f7f7f, 1) || broken(color_match(color, 0x00363636, 1)),
-            "Got unexpected color 0x%08x.\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 2);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    ok(value == 2, "Got unexpected value %#x.\n", value);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x007f7f7f, 1) || broken(color_match(color, 0x00363636, 1)),
-            "Got unexpected color 0x%08x.\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 3);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    ok(value == 3, "Got unexpected value %#x.\n", value);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x007f7f7f, 1) || color_match(color, 0x00363636, 1),
-            "Got unexpected color 0x%08x.\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, TRUE);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    ok(value == TRUE, "Got unexpected value %#x.\n", value);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00363636, 1), "Got unexpected color 0x%08x.\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Set the other state to verify that the sampler just inherits old
-     * D3DSAMP_SRGBTEXTURE but * the old sampler is not preserved entirely on
-     * NVIDIA. */
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 0x7e41882a);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    ok(value == 0x7e41882a, "Got unexpected value %#x.\n", value);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 1);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x000d0d0d, 1) || color_match(color, 0x003f3f3f, 1),
-            "Got unexpected color 0x%08x.\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 0);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    ok(value == 0, "Got unexpected value %#x.\n", value);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x003f3f3f, 1), "Got unexpected color 0x%08x.\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, 0x7e41882a);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, &value);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    ok(value == 0x7e41882a, "Got unexpected value %#x.\n", value);
-    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x003f3f3f, 1) || broken(color_match(color, 0x000d0d0d, 1)),
-            "Got unexpected color 0x%08x.\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    IDirect3DTexture9_Release(texture);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 done:
