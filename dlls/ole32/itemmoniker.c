@@ -771,45 +771,35 @@ static HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,
 /******************************************************************************
  *        ItemMoniker_ParseDisplayName
  ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker* iface,
-                                                       IBindCtx* pbc,
-                                                       IMoniker* pmkToLeft,
-                                                       LPOLESTR pszDisplayName,
-                                                       ULONG* pchEaten,
-                                                       IMoniker** ppmkOut)
+static HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
+        LPOLESTR displayname, ULONG *eaten, IMoniker **ppmkOut)
 {
     ItemMonikerImpl *This = impl_from_IMoniker(iface);
-    IOleItemContainer* poic=0;
-    IParseDisplayName* ppdn=0;
+    IOleItemContainer *container;
+    IParseDisplayName *parser;
     LPOLESTR displayName;
-    HRESULT res;
+    HRESULT hr;
 
-    TRACE("%s\n", debugstr_w(pszDisplayName));
+    TRACE("%p, %p, %p, %s, %p, %p.\n", iface, pbc, pmkToLeft, debugstr_w(displayname), eaten, ppmkOut);
 
-    /* If pmkToLeft is NULL, this method returns MK_E_SYNTAX */
-    if (pmkToLeft==NULL)
-
+    if (!pmkToLeft)
         return MK_E_SYNTAX;
 
-    else{
-        /* Otherwise, the method calls IMoniker::BindToObject on the pmkToLeft parameter, requesting an */
-        /* IParseDisplayName interface pointer to the object identified by the moniker, and passes the display */
-        /* name to IParseDisplayName::ParseDisplayName */
-        res=IMoniker_BindToObject(pmkToLeft,pbc,NULL,&IID_IOleItemContainer,(void**)&poic);
+    hr = IMoniker_BindToObject(pmkToLeft, pbc, NULL, &IID_IOleItemContainer, (void **)&container);
+    if (SUCCEEDED(hr))
+    {
+        hr = IOleItemContainer_GetObject(container, This->itemName, get_bind_speed_from_bindctx(pbc), pbc,
+                &IID_IParseDisplayName, (void **)&parser);
 
-        if (SUCCEEDED(res)){
+        hr = IMoniker_GetDisplayName(iface,pbc,NULL,&displayName);
 
-            res=IOleItemContainer_GetObject(poic,This->itemName,BINDSPEED_MODERATE,pbc,&IID_IParseDisplayName,(void**)&ppdn);
+        hr = IParseDisplayName_ParseDisplayName(parser, pbc, displayName, eaten, ppmkOut);
 
-            res=IMoniker_GetDisplayName(iface,pbc,NULL,&displayName);
-
-            res=IParseDisplayName_ParseDisplayName(ppdn,pbc,displayName,pchEaten,ppmkOut);
-
-            IOleItemContainer_Release(poic);
-            IParseDisplayName_Release(ppdn);
-        }
+        IOleItemContainer_Release(container);
+        IParseDisplayName_Release(parser);
     }
-    return res;
+
+    return hr;
 }
 
 /******************************************************************************
