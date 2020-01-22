@@ -213,6 +213,8 @@ typedef struct _PEB_LDR_DATA
     LIST_ENTRY          InMemoryOrderModuleList;
     LIST_ENTRY          InInitializationOrderModuleList;
     PVOID               EntryInProgress;
+    BOOLEAN             ShutdownInProgress;
+    HANDLE              ShutdownThreadId;
 } PEB_LDR_DATA, *PPEB_LDR_DATA;
 
 typedef struct _GDI_TEB_BATCH
