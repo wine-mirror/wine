@@ -351,7 +351,7 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
     skip_spaces(ctx);
     *loc = ctx->ptr - ctx->code;
     if(ctx->ptr == ctx->end)
-        return ctx->last_token == tNL ? tEOF : tNL;
+        return ctx->last_token == tNL ? 0 : tNL;
 
     c = *ctx->ptr;
 

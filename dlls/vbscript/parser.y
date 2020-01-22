@@ -110,7 +110,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
     double dbl;
 }
 
-%token tEXPRESSION tEOF tNL tEMPTYBRACKETS tEXPRLBRACKET
+%token tEXPRESSION tNL tEMPTYBRACKETS tEXPRLBRACKET
 %token tLTEQ tGTEQ tNEQ
 %token tSTOP tME tREM tDOT
 %token <string> tTRUE tFALSE
@@ -153,8 +153,8 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %%
 
 Program
-    : OptionExplicit_opt SourceElements tEOF    { parse_complete(ctx, $1); }
-    | tEXPRESSION ExpressionNl_opt tEOF         { handle_isexpression_script(ctx, $2); }
+    : OptionExplicit_opt SourceElements     { parse_complete(ctx, $1); }
+    | tEXPRESSION ExpressionNl_opt          { handle_isexpression_script(ctx, $2); }
 
 OptionExplicit_opt
     : /* empty */                { $$ = FALSE; }
@@ -506,6 +506,12 @@ StSep
 
 static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
 {
+    if(ctx->hres == S_OK) {
+        FIXME("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
+        ctx->hres = E_FAIL;
+    }else {
+        WARN("%s: %08x\n", debugstr_w(ctx->code + *loc), ctx->hres);
+    }
     return 0;
 }
 
@@ -530,7 +536,6 @@ static void source_add_class(parser_ctx_t *ctx, class_decl_t *class_decl)
 
 static void parse_complete(parser_ctx_t *ctx, BOOL option_explicit)
 {
-    ctx->parse_complete = TRUE;
     ctx->option_explicit = option_explicit;
 }
 
@@ -538,7 +543,6 @@ static void handle_isexpression_script(parser_ctx_t *ctx, expression_t *expr)
 {
     retval_statement_t *stat;
 
-    ctx->parse_complete = TRUE;
     if(!expr)
         return;
 
@@ -1143,9 +1147,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
 
     heap_pool_init(&ctx->heap);
 
-    ctx->parse_complete = FALSE;
     ctx->hres = S_OK;
-
     ctx->last_token = tNL;
     ctx->last_nl = 0;
     ctx->stats = ctx->stats_tail = NULL;
@@ -1158,14 +1160,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
 
     parser_parse(ctx);
 
-    if(FAILED(ctx->hres))
-        return ctx->hres;
-    if(!ctx->parse_complete) {
-        FIXME("parser failed around %s\n", debugstr_w(ctx->code+20 > ctx->ptr ? ctx->code : ctx->ptr-20));
-        return E_FAIL;
-    }
-
-    return S_OK;
+    return ctx->hres;
 }
 
 void parser_release(parser_ctx_t *ctx)

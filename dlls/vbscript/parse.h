@@ -284,7 +284,6 @@ typedef struct {
     const WCHAR *end;
 
     BOOL option_explicit;
-    BOOL parse_complete;
     BOOL is_html;
     HRESULT hres;
 
