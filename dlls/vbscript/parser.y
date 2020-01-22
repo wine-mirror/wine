@@ -27,7 +27,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static int parser_error(unsigned*,parser_ctx_t*,const char*);
 
-static void parse_complete(parser_ctx_t*,BOOL);
 static void handle_isexpression_script(parser_ctx_t *ctx, expression_t *expr);
 
 static void source_add_statement(parser_ctx_t*,statement_t*);
@@ -138,7 +137,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <expression> ConstExpression NumericLiteralExpression
 %type <member> MemberExpression
 %type <expression> Arguments Arguments_opt ArgumentList ArgumentList_opt Step_opt ExpressionList
-%type <boolean> OptionExplicit_opt DoType Preserve_opt
+%type <boolean> DoType Preserve_opt
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl PropertyDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
@@ -153,12 +152,12 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %%
 
 Program
-    : OptionExplicit_opt SourceElements     { parse_complete(ctx, $1); }
+    : OptionExplicit_opt SourceElements
     | tEXPRESSION ExpressionNl_opt          { handle_isexpression_script(ctx, $2); }
 
 OptionExplicit_opt
-    : /* empty */                { $$ = FALSE; }
-    | tOPTION tEXPLICIT StSep    { $$ = TRUE; }
+    : /* empty */
+    | tOPTION tEXPLICIT StSep               { ctx->option_explicit = TRUE; }
 
 SourceElements
     : /* empty */
@@ -532,11 +531,6 @@ static void source_add_class(parser_ctx_t *ctx, class_decl_t *class_decl)
 {
     class_decl->next = ctx->class_decls;
     ctx->class_decls = class_decl;
-}
-
-static void parse_complete(parser_ctx_t *ctx, BOOL option_explicit)
-{
-    ctx->option_explicit = option_explicit;
 }
 
 static void handle_isexpression_script(parser_ctx_t *ctx, expression_t *expr)
