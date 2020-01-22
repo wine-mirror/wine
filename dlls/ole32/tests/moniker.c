@@ -2193,6 +2193,9 @@ todo_wine
 todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
+    hr = IMoniker_IsEqual(moniker, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     IMoniker_Release(moniker);
 
     /* IsEqual */
@@ -2205,11 +2208,9 @@ todo_wine
         ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
 
         hr = IMoniker_IsEqual(moniker, moniker2);
-    todo_wine_if(i == 4 || i == 5)
         ok(hr == isequal_tests[i].hr, "%d: unexpected result %#x.\n", i, hr);
 
         hr = IMoniker_IsEqual(moniker2, moniker);
-    todo_wine_if(i == 4 || i == 5)
         ok(hr == isequal_tests[i].hr, "%d: unexpected result %#x.\n", i, hr);
 
         IMoniker_Release(moniker);

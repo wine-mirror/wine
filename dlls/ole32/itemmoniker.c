@@ -52,6 +52,8 @@ static inline ItemMonikerImpl *impl_from_IMoniker(IMoniker *iface)
     return CONTAINING_RECORD(iface, ItemMonikerImpl, IMoniker_iface);
 }
 
+static ItemMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface);
+
 static inline ItemMonikerImpl *impl_from_IROTData(IROTData *iface)
 {
     return CONTAINING_RECORD(iface, ItemMonikerImpl, IROTData_iface);
@@ -601,34 +603,20 @@ static HRESULT WINAPI ItemMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumM
 /******************************************************************************
  *        ItemMoniker_IsEqual
  ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
+static HRESULT WINAPI ItemMonikerImpl_IsEqual(IMoniker *iface, IMoniker *other)
 {
+    ItemMonikerImpl *moniker = impl_from_IMoniker(iface), *other_moniker;
 
-    CLSID clsid;
-    LPOLESTR dispName1,dispName2;
-    IBindCtx* bind;
-    HRESULT res = S_FALSE;
+    TRACE("%p, %p.\n", iface, other);
 
-    TRACE("(%p,%p)\n",iface,pmkOtherMoniker);
+    if (!other)
+        return E_INVALIDARG;
 
-    if (!pmkOtherMoniker) return S_FALSE;
+    other_moniker = unsafe_impl_from_IMoniker(other);
+    if (!other_moniker)
+        return S_FALSE;
 
-
-    /* check if both are ItemMoniker */
-    if(FAILED (IMoniker_GetClassID(pmkOtherMoniker,&clsid))) return S_FALSE;
-    if(!IsEqualCLSID(&clsid,&CLSID_ItemMoniker)) return S_FALSE;
-
-    /* check if both displaynames are the same */
-    if(SUCCEEDED ((res = CreateBindCtx(0,&bind)))) {
-        if(SUCCEEDED (IMoniker_GetDisplayName(iface,bind,NULL,&dispName1))) {
-	    if(SUCCEEDED (IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&dispName2))) {
-                if(wcscmp(dispName1,dispName2)==0) res = S_OK;
-                CoTaskMemFree(dispName2);
-            }
-            CoTaskMemFree(dispName1);
-	}
-    }
-    return res;
+    return !wcsicmp(moniker->itemName, other_moniker->itemName) ? S_OK : S_FALSE;
 }
 
 /******************************************************************************
@@ -1001,6 +989,13 @@ static const IMonikerVtbl VT_ItemMonikerImpl =
     ItemMonikerImpl_ParseDisplayName,
     ItemMonikerImpl_IsSystemMoniker
 };
+
+static ItemMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface)
+{
+    if (iface->lpVtbl != &VT_ItemMonikerImpl)
+        return NULL;
+    return CONTAINING_RECORD(iface, ItemMonikerImpl, IMoniker_iface);
+}
 
 /********************************************************************************/
 /* Virtual function table for the IROTData class.                               */
