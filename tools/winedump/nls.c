@@ -80,12 +80,98 @@ static void dump_casemap(void)
     printf( "\n\n" );
 }
 
+static void dump_codepage(void)
+{
+    unsigned int i, j, uni2cp_offset, pos = 0;
+    const unsigned short *header, *ptr;
+
+    if (!(header = read_data( &pos, 13 * sizeof(*header) ))) return;
+    printf( "Codepage:       %03u\n", header[1] );
+    printf( "Char size:      %u\n", header[2] );
+    printf( "Default char A: %04x / %04x\n", header[3], header[5] );
+    printf( "Default char W: %04x / %04x\n", header[4], header[6] );
+    if (header[2] == 2)
+    {
+        printf( "Lead bytes:    " );
+        for (i = 0; i < 12; i++)
+        {
+            unsigned char val = ((unsigned char *)(header + 7))[i];
+            if (!val) break;
+            printf( "%c%02x", (i % 2) ? '-' : ' ', val );
+        }
+        printf( "\n" );
+    }
+    printf( "\nCharacter map:\n" );
+    pos = header[0] * sizeof(*ptr);
+    if (!(ptr = read_data( &pos, sizeof(*ptr) ))) return;
+    uni2cp_offset = pos / sizeof(*ptr) + *ptr;
+    if (!(ptr = read_data( &pos, 256 * sizeof(*ptr) ))) return;
+    for (i = 0; i < 256; i++)
+    {
+        if (!(i % 16)) printf( "\n%02x:", i );
+        printf( " %04x", ptr[i] );
+    }
+    printf( "\n" );
+    if (!(ptr = read_data( &pos, sizeof(*ptr) ))) return;
+    if (*ptr == 256)
+    {
+        if (!(ptr = read_data( &pos, 256 * sizeof(*ptr) ))) return;
+        printf( "\nGlyph table:\n" );
+        for (i = 0; i < 256; i++)
+        {
+            if (!(i % 16)) printf( "\n%02x:", i );
+            printf( " %04x", ptr[i] );
+        }
+        printf( "\n" );
+    }
+    if (!(ptr = read_data( &pos, sizeof(*ptr) ))) return;
+    if (*ptr)
+    {
+        if (!(ptr = read_data( &pos, (uni2cp_offset - pos) * sizeof(*ptr) ))) return;
+        for (i = 0; i < 256; i++)
+        {
+            if (!ptr[i] || ptr[i] > pos - 256) continue;
+            for (j = 0; j < 256; j++)
+            {
+                if (!(j % 16)) printf( "\n%02x%02x:", i, j );
+                printf( " %04x", ptr[ptr[i] + j] );
+            }
+        }
+        printf( "\n" );
+    }
+    printf( "\nUnicode table:\n" );
+    pos = uni2cp_offset * sizeof(*ptr);
+    if (header[2] == 2)
+    {
+        if (!(ptr = read_data( &pos, 65536 * sizeof(*ptr) ))) return;
+        for (i = 0; i < 65536; i++)
+        {
+            if (!(i % 16)) printf( "\n%04x:", i );
+            printf( " %04x", ptr[i] );
+        }
+        printf( "\n" );
+    }
+    else
+    {
+        const unsigned char *uni2cp;
+        if (!(uni2cp = read_data( &pos, 65536 ))) return;
+        for (i = 0; i < 65536; i++)
+        {
+            if (!(i % 16)) printf( "\n%04x:", i );
+            printf( " %02x", uni2cp[i] );
+        }
+        printf( "\n" );
+    }
+    printf( "\n" );
+}
+
 void nls_dump(void)
 {
     const char *name = strrchr( globals.input_name, '/' );
     if (name) name++;
     else name = globals.input_name;
     if (!strcasecmp( name, "l_intl.nls" )) return dump_casemap();
+    if (!strncasecmp( name, "c_", 2 )) return dump_codepage();
     fprintf( stderr, "Unrecognized file name '%s'\n", globals.input_name );
 }
 
