@@ -117,24 +117,45 @@ static HRESULT WINAPI motif_track_Play(IDirectMusicTrack8 *iface, void *pStateDa
 	return S_OK;
 }
 
-static HRESULT WINAPI motif_track_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
+static HRESULT WINAPI motif_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
+        MUSIC_TIME *next, void *param)
 {
     IDirectMusicMotifTrack *This = impl_from_IDirectMusicTrack8(iface);
-    FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
 
-    if (!rguidType)
+    TRACE("(%p, %s, %d, %p, %p):\n", This, debugstr_dmguid(type), time, next, param);
+
+    if (!type)
         return E_POINTER;
+    if (!IsEqualGUID(type, &GUID_Valid_Start_Time))
+        return DMUS_E_GET_UNSUPPORTED;
+
+    FIXME("GUID_Valid_Start_Time not handled yet\n");
 
     return S_OK;
 }
 
-static HRESULT WINAPI motif_track_SetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, void *pParam)
+static HRESULT WINAPI motif_track_SetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
+        void *param)
 {
-        IDirectMusicMotifTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, %d, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
-	return S_OK;
+    IDirectMusicMotifTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(type), time, param);
+
+    if (!type)
+        return E_POINTER;
+
+    if (IsEqualGUID(type, &GUID_DisableTimeSig)) {
+        FIXME("GUID_DisableTimeSig not handled yet\n");
+        return S_OK;
+    } else if (IsEqualGUID(type, &GUID_EnableTimeSig)) {
+        FIXME("GUID_EnableTimeSig not handled yet\n");
+        return S_OK;
+    } else if (IsEqualGUID(type, &GUID_SeedVariations)) {
+        FIXME("GUID_SeedVariations not handled yet\n");
+        return S_OK;
+    }
+
+    return DMUS_E_SET_UNSUPPORTED;
 }
 
 static HRESULT WINAPI motif_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID rguidType)
