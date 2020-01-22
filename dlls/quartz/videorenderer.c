@@ -707,7 +707,6 @@ static const IOverlayVtbl overlay_vtbl =
 
 HRESULT VideoRenderer_create(IUnknown *outer, void **out)
 {
-    static const WCHAR sink_name[] = {'I','n',0};
     HRESULT hr;
     VideoRendererImpl * pVideoRenderer;
 
@@ -724,7 +723,7 @@ HRESULT VideoRenderer_create(IUnknown *outer, void **out)
     pVideoRenderer->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
     hr = strmbase_renderer_init(&pVideoRenderer->renderer, outer,
-            &CLSID_VideoRenderer, sink_name, &renderer_ops);
+            &CLSID_VideoRenderer, L"In", &renderer_ops);
 
     if (FAILED(hr))
         goto fail;

@@ -41,11 +41,6 @@ typedef struct TestFilterImpl
     UINT nPins;
 } TestFilterImpl;
 
-static const WCHAR avifile[] = {'t','e','s','t','.','a','v','i',0};
-static const WCHAR mpegfile[] = {'t','e','s','t','.','m','p','g',0};
-static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
-static const WCHAR wavefile[] = {'t','e','s','t','.','w','a','v',0};
-
 static WCHAR *create_file(const WCHAR *name, const char *data, DWORD size)
 {
     static WCHAR pathW[MAX_PATH];
@@ -53,7 +48,7 @@ static WCHAR *create_file(const WCHAR *name, const char *data, DWORD size)
     HANDLE file;
 
     GetTempPathW(ARRAY_SIZE(pathW), pathW);
-    lstrcatW(pathW, name);
+    wcscat(pathW, name);
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %u.\n",
             wine_dbgstr_w(pathW), GetLastError());
@@ -556,7 +551,6 @@ static void rungraph(IFilterGraph2 *graph, BOOL video)
 
 static HRESULT test_graph_builder_connect_file(WCHAR *filename, BOOL audio, BOOL video)
 {
-    static const WCHAR outputW[] = {'O','u','t','p','u','t',0};
     IBaseFilter *source_filter, *renderer;
     IPin *pin_in, *pin_out;
     IFilterGraph2 *graph;
@@ -585,7 +579,7 @@ static HRESULT test_graph_builder_connect_file(WCHAR *filename, BOOL audio, BOOL
     hr = IFilterGraph2_AddFilter(graph, renderer, NULL);
     ok(hr == S_OK, "AddFilter failed: %#x\n", hr);
 
-    hr = IBaseFilter_FindPin(source_filter, outputW, &pin_out);
+    hr = IBaseFilter_FindPin(source_filter, L"Output", &pin_out);
     ok(hr == S_OK, "FindPin failed: %#x\n", hr);
     hr = IFilterGraph2_Connect(graph, pin_out, pin_in);
 
@@ -755,7 +749,7 @@ static void test_enum_filters(void)
 
 static DWORD WINAPI call_RenderFile_multithread(LPVOID lParam)
 {
-    WCHAR *filename = load_resource(avifile);
+    WCHAR *filename = load_resource(L"test.avi");
     IFilterGraph2 *graph = lParam;
     HRESULT hr;
 
@@ -956,7 +950,7 @@ static HRESULT WINAPI testpin_QueryPinInfo(IPin *iface, PIN_INFO *info)
     info->pFilter = pin->filter;
     IBaseFilter_AddRef(pin->filter);
     info->dir = pin->dir;
-    lstrcpyW(info->achName, pin->name);
+    wcscpy(info->achName, pin->name);
     return S_OK;
 }
 
@@ -975,7 +969,7 @@ static HRESULT WINAPI testpin_QueryId(IPin *iface, WCHAR **id)
     struct testpin *pin = impl_from_IPin(iface);
     if (winetest_debug > 1) trace("%p->QueryId()\n", iface);
     *id = CoTaskMemAlloc(11);
-    lstrcpyW(*id, pin->id);
+    wcscpy(*id, pin->id);
     return S_OK;
 }
 
@@ -1432,7 +1426,7 @@ static HRESULT WINAPI testfilter_QueryFilterInfo(IBaseFilter *iface, FILTER_INFO
     if (filter->graph)
         IFilterGraph_AddRef(filter->graph);
     if (filter->name)
-        lstrcpyW(info->achName, filter->name);
+        wcscpy(info->achName, filter->name);
     else
         info->achName[0] = 0;
     return S_OK;
@@ -1447,8 +1441,8 @@ static HRESULT WINAPI testfilter_JoinFilterGraph(IBaseFilter *iface, IFilterGrap
     heap_free(filter->name);
     if (name)
     {
-        filter->name = heap_alloc((lstrlenW(name)+1)*sizeof(WCHAR));
-        lstrcpyW(filter->name, name);
+        filter->name = heap_alloc((wcslen(name) + 1) * sizeof(WCHAR));
+        wcscpy(filter->name, name);
     }
     else
         filter->name = NULL;
@@ -1868,7 +1862,6 @@ static IClassFactoryVtbl testfilter_cf_vtbl =
 
 static void test_graph_builder_render(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     static const GUID sink1_clsid = {0x12345678};
     static const GUID sink2_clsid = {0x87654321};
     AM_MEDIA_TYPE source_type = {{0}};
@@ -1989,7 +1982,7 @@ static void test_graph_builder_render(void)
     regpins.lpMediaType = &regtypes;
     regtypes.clsMajorType = &source_type.majortype;
     regtypes.clsMinorType = &MEDIASUBTYPE_NULL;
-    hr = IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    hr = IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, L"test", NULL, NULL, NULL, &regfilter);
     if (hr == E_ACCESSDENIED)
     {
         skip("Not enough permission to register filters.\n");
@@ -1998,7 +1991,7 @@ static void test_graph_builder_render(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     regpins.dwFlags = REG_PINFLAG_B_RENDERER;
-    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2029,9 +2022,9 @@ static void test_graph_builder_render(void)
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink1_clsid);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink2_clsid);
 
-    IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, L"test", NULL, NULL, NULL, &regfilter);
     regpins.dwFlags = 0;
-    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2050,9 +2043,9 @@ static void test_graph_builder_render(void)
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink2_clsid);
 
     regfilter.dwMerit = MERIT_UNLIKELY;
-    IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, L"test", NULL, NULL, NULL, &regfilter);
     regfilter.dwMerit = MERIT_PREFERRED;
-    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2068,9 +2061,9 @@ static void test_graph_builder_render(void)
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink2_clsid);
 
     regfilter.dwMerit = MERIT_PREFERRED;
-    IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &sink1_clsid, L"test", NULL, NULL, NULL, &regfilter);
     regfilter.dwMerit = MERIT_UNLIKELY;
-    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2098,7 +2091,6 @@ out:
 
 static void test_graph_builder_connect(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     static const GUID parser1_clsid = {0x12345678};
     static const GUID parser2_clsid = {0x87654321};
     AM_MEDIA_TYPE source_type = {{0}}, sink_type = {{0}}, parser3_type = {{0}};
@@ -2355,7 +2347,7 @@ todo_wine
     regpins[1].lpMediaType = &regtypes;
     regtypes.clsMajorType = &source_type.majortype;
     regtypes.clsMinorType = &MEDIASUBTYPE_NULL;
-    hr = IFilterMapper2_RegisterFilter(mapper, &parser1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    hr = IFilterMapper2_RegisterFilter(mapper, &parser1_clsid, L"test", NULL, NULL, NULL, &regfilter);
     if (hr == E_ACCESSDENIED)
     {
         skip("Not enough permission to register filters.\n");
@@ -2363,7 +2355,7 @@ todo_wine
     }
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    IFilterMapper2_RegisterFilter(mapper, &parser2_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &parser2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2400,9 +2392,9 @@ todo_wine
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &parser2_clsid);
 
     regfilter.dwMerit = MERIT_UNLIKELY;
-    IFilterMapper2_RegisterFilter(mapper, &parser1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &parser1_clsid, L"test", NULL, NULL, NULL, &regfilter);
     regfilter.dwMerit = MERIT_PREFERRED;
-    IFilterMapper2_RegisterFilter(mapper, &parser2_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &parser2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2420,9 +2412,9 @@ todo_wine
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &parser2_clsid);
 
     regfilter.dwMerit = MERIT_PREFERRED;
-    IFilterMapper2_RegisterFilter(mapper, &parser1_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &parser1_clsid, L"test", NULL, NULL, NULL, &regfilter);
     regfilter.dwMerit = MERIT_UNLIKELY;
-    IFilterMapper2_RegisterFilter(mapper, &parser2_clsid, testW, NULL, NULL, NULL, &regfilter);
+    IFilterMapper2_RegisterFilter(mapper, &parser2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2684,8 +2676,6 @@ static void test_control_delegation(void)
 
 static void test_add_remove_filter(void)
 {
-    static const WCHAR defaultid[] = {'0','0','0','1',0};
-    static const WCHAR testid[] = {'t','e','s','t','i','d',0};
     struct testfilter filter;
 
     IFilterGraph2 *graph = create_graph();
@@ -2694,16 +2684,16 @@ static void test_add_remove_filter(void)
 
     testfilter_init(&filter, NULL, 0);
 
-    hr = IFilterGraph2_FindFilterByName(graph, testid, &ret_filter);
+    hr = IFilterGraph2_FindFilterByName(graph, L"testid", &ret_filter);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
     ok(!ret_filter, "Got filter %p.\n", ret_filter);
 
-    hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, testid);
+    hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, L"testid");
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter.graph == (IFilterGraph *)graph, "Got graph %p.\n", filter.graph);
-    ok(!lstrcmpW(filter.name, testid), "Got name %s.\n", wine_dbgstr_w(filter.name));
+    ok(!wcscmp(filter.name, L"testid"), "Got name %s.\n", wine_dbgstr_w(filter.name));
 
-    hr = IFilterGraph2_FindFilterByName(graph, testid, &ret_filter);
+    hr = IFilterGraph2_FindFilterByName(graph, L"testid", &ret_filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ret_filter == &filter.IBaseFilter_iface, "Got filter %p.\n", ret_filter);
     IBaseFilter_Release(ret_filter);
@@ -2715,16 +2705,16 @@ static void test_add_remove_filter(void)
     ok(!filter.clock, "Got clock %p,\n", filter.clock);
     ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
 
-    hr = IFilterGraph2_FindFilterByName(graph, testid, &ret_filter);
+    hr = IFilterGraph2_FindFilterByName(graph, L"testid", &ret_filter);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
     ok(!ret_filter, "Got filter %p.\n", ret_filter);
 
     hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter.graph == (IFilterGraph *)graph, "Got graph %p.\n", filter.graph);
-    ok(!lstrcmpW(filter.name, defaultid), "Got name %s.\n", wine_dbgstr_w(filter.name));
+    ok(!wcscmp(filter.name, L"0001"), "Got name %s.\n", wine_dbgstr_w(filter.name));
 
-    hr = IFilterGraph2_FindFilterByName(graph, defaultid, &ret_filter);
+    hr = IFilterGraph2_FindFilterByName(graph, L"0001", &ret_filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ret_filter == &filter.IBaseFilter_iface, "Got filter %p.\n", ret_filter);
     IBaseFilter_Release(ret_filter);
@@ -4068,7 +4058,6 @@ static void test_add_source_filter(void)
 {
     static const char bogus_data[20] = {0xde, 0xad, 0xbe, 0xef};
     static const char midi_data[20] = {'M','T','h','d'};
-    static const WCHAR testW[] = {'t','e','s','t',0};
 
     IFilterGraph2 *graph = create_graph();
     IFileSourceFilter *filesource;
@@ -4085,8 +4074,8 @@ static void test_add_source_filter(void)
 
     /* Test a file which should be registered by extension. */
 
-    filename = create_file(mp3file, midi_data, sizeof(midi_data));
-    hr = IFilterGraph2_AddSourceFilter(graph, filename, testW, &filter);
+    filename = create_file(L"test.mp3", midi_data, sizeof(midi_data));
+    hr = IFilterGraph2_AddSourceFilter(graph, filename, L"test", &filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetClassID(filter, &clsid);
@@ -4094,7 +4083,7 @@ static void test_add_source_filter(void)
     ok(IsEqualGUID(&clsid, &CLSID_AsyncReader), "Got filter %s.\n", wine_dbgstr_guid(&clsid));
     hr = IBaseFilter_QueryFilterInfo(filter, &filter_info);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!wcscmp(filter_info.achName, testW), "Got unexpected name %s.\n", wine_dbgstr_w(filter_info.achName));
+    ok(!wcscmp(filter_info.achName, L"test"), "Got unexpected name %s.\n", wine_dbgstr_w(filter_info.achName));
     IFilterGraph_Release(filter_info.pGraph);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
@@ -4107,7 +4096,7 @@ static void test_add_source_filter(void)
     ok(IsEqualGUID(&mt.subtype, &MEDIASUBTYPE_MPEG1Audio), "Got subtype %s.\n", wine_dbgstr_guid(&mt.subtype));
     IFileSourceFilter_Release(filesource);
 
-    hr = IFilterGraph2_AddSourceFilter(graph, filename, testW, &filter2);
+    hr = IFilterGraph2_AddSourceFilter(graph, filename, L"test", &filter2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter2 != filter, "Filters shouldn't match.\n");
     hr = IFilterGraph2_RemoveFilter(graph, filter2);
@@ -4124,7 +4113,7 @@ static void test_add_source_filter(void)
 
     /* Test a file which should be registered by signature. */
 
-    filename = create_file(avifile, midi_data, sizeof(midi_data));
+    filename = create_file(L"test.avi", midi_data, sizeof(midi_data));
     hr = IFilterGraph2_AddSourceFilter(graph, filename, NULL, &filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -4171,7 +4160,7 @@ static void test_add_source_filter(void)
         RegSetValueExA(key, "0", 0, REG_SZ, (const BYTE *)"0,4,,deadbeef", 14);
         RegSetValueExA(key, "Source Filter", 0, REG_SZ, (const BYTE *)"{12345678-0000-0000-0000-000000000000}", 39);
 
-        filename = create_file(avifile, bogus_data, sizeof(bogus_data));
+        filename = create_file(L"test.avi", bogus_data, sizeof(bogus_data));
         hr = IFilterGraph2_AddSourceFilter(graph, filename, NULL, &filter);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         ok(filter == &testfilter.IBaseFilter_iface, "Got unexpected filter %p.\n", filter);
@@ -4247,7 +4236,7 @@ static void test_window_threading(void)
         .lpfnWndProc = parent_proc,
         .lpszClassName = "quartz_test_parent",
     };
-    WCHAR *filename = load_resource(avifile);
+    WCHAR *filename = load_resource(L"test.avi");
     IFilterGraph2 *graph = create_graph();
     IVideoWindow *window;
     HWND hwnd, parent;
@@ -4327,10 +4316,10 @@ START_TEST(filtergraph)
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     test_interfaces();
-    test_render_run(avifile, FALSE, TRUE);
-    test_render_run(mpegfile, TRUE, TRUE);
-    test_render_run(mp3file, TRUE, FALSE);
-    test_render_run(wavefile, TRUE, FALSE);
+    test_render_run(L"test.avi", FALSE, TRUE);
+    test_render_run(L"test.mpg", TRUE, TRUE);
+    test_render_run(L"test.mp3", TRUE, FALSE);
+    test_render_run(L"test.wav", TRUE, FALSE);
     test_enum_filters();
     test_graph_builder_render();
     test_graph_builder_connect();

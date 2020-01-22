@@ -2202,8 +2202,6 @@ static const IOverlayVtbl overlay_vtbl =
 
 static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
 {
-    static const WCHAR sink_name[] = {'V','M','R',' ','I','n','p','u','t','0',0};
-
     HRESULT hr;
     struct quartz_vmr* pVMR;
 
@@ -2239,7 +2237,7 @@ static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
     pVMR->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    hr = strmbase_renderer_init(&pVMR->renderer, outer, clsid, sink_name, &renderer_ops);
+    hr = strmbase_renderer_init(&pVMR->renderer, outer, clsid, L"VMR Input0", &renderer_ops);
     if (FAILED(hr))
         goto fail;
 

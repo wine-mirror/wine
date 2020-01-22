@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
-
 static const AM_MEDIA_TYPE default_mt =
 {
     {0xe436eb83,0x524f,0x11ce,{0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70}},   /* MEDIATYPE_Stream */
@@ -91,13 +89,6 @@ static inline AsyncReader *impl_from_IFileSourceFilter(IFileSourceFilter *iface)
 
 static const IFileSourceFilterVtbl FileSource_Vtbl;
 static const IAsyncReaderVtbl FileAsyncReader_Vtbl;
-
-static const WCHAR mediatype_name[] = {
-    'M', 'e', 'd', 'i', 'a', ' ', 'T', 'y', 'p', 'e', 0 };
-static const WCHAR subtype_name[] = {
-    'S', 'u', 'b', 't', 'y', 'p', 'e', 0 };
-static const WCHAR source_filter_name[] = {
-    'S','o','u','r','c','e',' ','F','i','l','t','e','r',0};
 
 static unsigned char byte_from_hex_char(WCHAR wHex)
 {
@@ -230,15 +221,15 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
         if (!RegOpenKeyExW(HKEY_CLASSES_ROOT, extensions_path, 0, KEY_READ, &key))
         {
             size = sizeof(guidstr);
-            if (majortype && !RegQueryValueExW(key, mediatype_name, NULL, NULL, (BYTE *)guidstr, &size))
+            if (majortype && !RegQueryValueExW(key, L"Media Type", NULL, NULL, (BYTE *)guidstr, &size))
                 CLSIDFromString(guidstr, majortype);
 
             size = sizeof(guidstr);
-            if (subtype && !RegQueryValueExW(key, subtype_name, NULL, NULL, (BYTE *)guidstr, &size))
+            if (subtype && !RegQueryValueExW(key, L"Subtype", NULL, NULL, (BYTE *)guidstr, &size))
                 CLSIDFromString(guidstr, subtype);
 
             size = sizeof(guidstr);
-            if (source_clsid && !RegQueryValueExW(key, source_filter_name, NULL, NULL, (BYTE *)guidstr, &size))
+            if (source_clsid && !RegQueryValueExW(key, L"Source Filter", NULL, NULL, (BYTE *)guidstr, &size))
                 CLSIDFromString(guidstr, source_clsid);
 
             RegCloseKey(key);
@@ -304,7 +295,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
                         NULL, NULL, (BYTE *)pattern, &max_size))
                     break;
 
-                if (!wcscmp(value_name, source_filter_name))
+                if (!wcscmp(value_name, L"Source Filter"))
                     continue;
 
                 if (!process_pattern_string(pattern, file))
@@ -315,7 +306,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
                 if (subtype)
                     CLSIDFromString(subtype_str, subtype);
                 size = sizeof(source_clsid_str);
-                if (source_clsid && !RegQueryValueExW(subtype_key, source_filter_name,
+                if (source_clsid && !RegQueryValueExW(subtype_key, L"Source Filter",
                         NULL, NULL, (BYTE *)source_clsid_str, &size))
                     CLSIDFromString(source_clsid_str, source_clsid);
 
@@ -467,7 +458,14 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    strmbase_source_init(&This->source, &This->filter, wszOutputPinName, &source_ops);
+    free(This->pszFileName);
+    if (!(This->pszFileName = wcsdup(pszFileName)))
+    {
+        CloseHandle(hFile);
+        return E_OUTOFMEMORY;
+    }
+
+    strmbase_source_init(&This->source, &This->filter, L"Output", &source_ops);
     BaseFilterImpl_IncrementPinVersion(&This->filter);
 
     This->file = hFile;
@@ -478,12 +476,8 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     InitializeCriticalSection(&This->sample_cs);
     This->sample_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FileAsyncReader.sample_cs");
 
-    CoTaskMemFree(This->pszFileName);
     if (This->pmt)
         DeleteMediaType(This->pmt);
-
-    This->pszFileName = CoTaskMemAlloc((lstrlenW(pszFileName) + 1) * sizeof(WCHAR));
-    lstrcpyW(This->pszFileName, pszFileName);
 
     This->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
     if (!pmt)
@@ -513,8 +507,8 @@ static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR 
     /* copy file name & media type if available, otherwise clear the outputs */
     if (This->pszFileName)
     {
-        *ppszFileName = CoTaskMemAlloc((lstrlenW(This->pszFileName) + 1) * sizeof(WCHAR));
-        lstrcpyW(*ppszFileName, This->pszFileName);
+        *ppszFileName = CoTaskMemAlloc((wcslen(This->pszFileName) + 1) * sizeof(WCHAR));
+        wcscpy(*ppszFileName, This->pszFileName);
     }
     else
         *ppszFileName = NULL;

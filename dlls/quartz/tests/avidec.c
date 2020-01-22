@@ -23,11 +23,6 @@
 #include "vfw.h"
 #include "wine/test.h"
 
-static const WCHAR sink_id[] = {'I','n',0};
-static const WCHAR source_id[] = {'O','u','t',0};
-static const WCHAR sink_name[] = {'X','F','o','r','m',' ','I','n',0};
-static const WCHAR source_name[] = {'X','F','o','r','m',' ','O','u','t',0};
-
 static const DWORD test_handler = mmioFOURCC('w','t','s','t');
 static const GUID test_subtype = {mmioFOURCC('w','t','s','t'),0x0000,0x0010,{0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71}};
 
@@ -106,7 +101,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
-    IBaseFilter_FindPin(filter, sink_id, &pin);
+    IBaseFilter_FindPin(filter, L"In", &pin);
 
     check_interface(pin, &IID_IMemInputPin, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
@@ -118,7 +113,7 @@ static void test_interfaces(void)
 
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, source_id, &pin);
+    IBaseFilter_FindPin(filter, L"Out", &pin);
 
     check_interface(pin, &IID_IPin, TRUE);
     todo_wine check_interface(pin, &IID_IMediaPosition, TRUE);
@@ -350,8 +345,6 @@ static void test_enum_pins(void)
 
 static void test_find_pin(void)
 {
-    static const WCHAR input_pinW[] = {'i','n','p','u','t',' ','p','i','n',0};
-    static const WCHAR output_pinW[] = {'o','u','t','p','u','t',' ','p','i','n',0};
     IBaseFilter *filter = create_avi_dec();
     IEnumPins *enum_pins;
     IPin *pin, *pin2;
@@ -361,7 +354,7 @@ static void test_find_pin(void)
     hr = IBaseFilter_EnumPins(filter, &enum_pins);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"In", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -369,7 +362,7 @@ static void test_find_pin(void)
     IPin_Release(pin);
     IPin_Release(pin2);
 
-    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Out", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -377,13 +370,13 @@ static void test_find_pin(void)
     IPin_Release(pin);
     IPin_Release(pin2);
 
-    hr = IBaseFilter_FindPin(filter, sink_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"XForm In", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
-    hr = IBaseFilter_FindPin(filter, source_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"XForm Out", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
-    hr = IBaseFilter_FindPin(filter, input_pinW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"input pin", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
-    hr = IBaseFilter_FindPin(filter, output_pinW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"output pin", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
     IEnumPins_Release(enum_pins);
@@ -401,7 +394,7 @@ static void test_pin_info(void)
     ULONG ref;
     IPin *pin;
 
-    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"In", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
     ok(ref == 2, "Got unexpected refcount %d.\n", ref);
@@ -412,7 +405,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-    todo_wine ok(!lstrcmpW(info.achName, sink_name), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    todo_wine ok(!wcscmp(info.achName, L"XForm In"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
@@ -425,7 +418,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!wcscmp(id, L"In"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, NULL);
@@ -433,7 +426,7 @@ static void test_pin_info(void)
 
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Out", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_interface(pin, &IID_IPin, TRUE);
@@ -443,7 +436,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
-    todo_wine ok(!lstrcmpW(info.achName, source_name), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    todo_wine ok(!wcscmp(info.achName, L"XForm Out"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
@@ -452,7 +445,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, source_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!wcscmp(id, L"Out"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, NULL);
@@ -474,7 +467,7 @@ static void test_media_types(void)
     ULONG ref;
     IPin *pin;
 
-    IBaseFilter_FindPin(filter, sink_id, &pin);
+    IBaseFilter_FindPin(filter, L"In", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -528,7 +521,7 @@ static void test_media_types(void)
 
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, source_id, &pin);
+    IBaseFilter_FindPin(filter, L"Out", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -552,7 +545,7 @@ static void test_enum_media_types(void)
     HRESULT hr;
     IPin *pin;
 
-    IBaseFilter_FindPin(filter, sink_id, &pin);
+    IBaseFilter_FindPin(filter, L"In", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -583,7 +576,7 @@ static void test_enum_media_types(void)
     IEnumMediaTypes_Release(enum2);
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, source_id, &pin);
+    IBaseFilter_FindPin(filter, L"Out", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

@@ -26,7 +26,7 @@
 #include "amaudio.h"
 #include "wine/test.h"
 
-static const WCHAR sink_id[] = {'A','u','d','i','o',' ','I','n','p','u','t',' ','p','i','n',' ','(','r','e','n','d','e','r','e','d',')',0};
+static const WCHAR sink_id[] = L"Audio Input pin (rendered)";
 
 static IBaseFilter *create_dsound_render(void)
 {
@@ -64,10 +64,9 @@ static ULONG WINAPI property_bag_Release(IPropertyBag *iface)
 
 static HRESULT WINAPI property_bag_Read(IPropertyBag *iface, const WCHAR *name, VARIANT *var, IErrorLog *log)
 {
-    static const WCHAR dsguidW[] = {'D','S','G','u','i','d',0};
     WCHAR guidstr[39];
 
-    ok(!lstrcmpW(name, dsguidW), "Got unexpected name %s.\n", wine_dbgstr_w(name));
+    ok(!wcscmp(name, L"DSGuid"), "Got unexpected name %s.\n", wine_dbgstr_w(name));
     ok(V_VT(var) == VT_BSTR, "Got unexpected type %u.\n", V_VT(var));
     StringFromGUID2(&DSDEVID_DefaultPlayback, guidstr, ARRAY_SIZE(guidstr));
     V_BSTR(var) = SysAllocString(guidstr);
@@ -353,18 +352,16 @@ static void test_enum_pins(void)
 
 static void test_find_pin(void)
 {
-    static const WCHAR inW[] = {'I','n',0};
-    static const WCHAR input_pinW[] = {'i','n','p','u','t',' ','p','i','n',0};
     IBaseFilter *filter = create_dsound_render();
     IEnumPins *enum_pins;
     IPin *pin, *pin2;
     HRESULT hr;
     ULONG ref;
 
-    hr = IBaseFilter_FindPin(filter, inW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"In", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, input_pinW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"input pin", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_FindPin(filter, sink_id, &pin);
@@ -405,7 +402,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!wcscmp(info.achName, sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
@@ -418,7 +415,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!wcscmp(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, NULL);

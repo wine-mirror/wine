@@ -72,16 +72,6 @@ static inline FilterMapper3Impl *impl_from_IUnknown( IUnknown *iface )
     return CONTAINING_RECORD(iface, FilterMapper3Impl, IUnknown_inner);
 }
 
-/* CLSID property in media category Moniker */
-static const WCHAR wszClsidName[] = {'C','L','S','I','D',0};
-/* FriendlyName property in media category Moniker */
-static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
-/* Merit property in media category Moniker (CLSID_ActiveMovieCategories only) */
-static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};
-/* FilterData property in media category Moniker (not CLSID_ActiveMovieCategories) */
-static const WCHAR wszFilterDataName[] = {'F','i','l','t','e','r','D','a','t','a',0};
-
-
 /* registry format for REGFILTER2 */
 struct REG_RF
 {
@@ -786,7 +776,7 @@ static HRESULT WINAPI FilterMapper3_EnumMatchingFilters(
         hrSub = IMoniker_BindToStorage(pMonikerCat, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBagCat);
 
         if (SUCCEEDED(hrSub))
-            hrSub = IPropertyBag_Read(pPropBagCat, wszMeritName, &var, NULL);
+            hrSub = IPropertyBag_Read(pPropBagCat, L"Merit", &var, NULL);
 
         if (SUCCEEDED(hrSub) && (V_UI4(&var) >= dwMerit))
         {
@@ -800,12 +790,12 @@ static HRESULT WINAPI FilterMapper3_EnumMatchingFilters(
             {
                 VARIANT temp;
                 V_VT(&temp) = VT_EMPTY;
-                IPropertyBag_Read(pPropBagCat, wszFriendlyName, &temp, NULL);
+                IPropertyBag_Read(pPropBagCat, L"FriendlyName", &temp, NULL);
                 TRACE("Considering category %s\n", debugstr_w(V_BSTR(&temp)));
                 VariantClear(&temp);
             }
 
-            hrSub = IPropertyBag_Read(pPropBagCat, wszClsidName, &var, NULL);
+            hrSub = IPropertyBag_Read(pPropBagCat, L"CLSID", &var, NULL);
 
             if (SUCCEEDED(hrSub))
                 hrSub = CLSIDFromString(V_BSTR(&var), &clsidCat);
@@ -834,14 +824,14 @@ static HRESULT WINAPI FilterMapper3_EnumMatchingFilters(
                     {
                         VARIANT temp;
                         V_VT(&temp) = VT_EMPTY;
-                        IPropertyBag_Read(pPropBag, wszFriendlyName, &temp, NULL);
+                        IPropertyBag_Read(pPropBag, L"FriendlyName", &temp, NULL);
                         TRACE("Considering filter %s\n", debugstr_w(V_BSTR(&temp)));
                         VariantClear(&temp);
                     }
 
                     if (SUCCEEDED(hrSub))
                     {
-                        hrSub = IPropertyBag_Read(pPropBag, wszFilterDataName, &var, NULL);
+                        hrSub = IPropertyBag_Read(pPropBag, L"FilterData", &var, NULL);
                     }
 
                     if (SUCCEEDED(hrSub))
@@ -1061,7 +1051,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
         hrSub = IMoniker_BindToStorage(IMon, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBagCat);
 
         if (SUCCEEDED(hrSub))
-            hrSub = IPropertyBag_Read(pPropBagCat, wszClsidName, &var, NULL);
+            hrSub = IPropertyBag_Read(pPropBagCat, L"CLSID", &var, NULL);
 
         if (SUCCEEDED(hrSub))
             hrSub = CLSIDFromString(V_BSTR(&var), &clsid);
@@ -1069,11 +1059,11 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
         VariantClear(&var);
 
         if (SUCCEEDED(hrSub))
-            hrSub = IPropertyBag_Read(pPropBagCat, wszFriendlyName, &var, NULL);
+            hrSub = IPropertyBag_Read(pPropBagCat, L"FriendlyName", &var, NULL);
 
         if (SUCCEEDED(hrSub))
         {
-            len = (lstrlenW(V_BSTR(&var))+1) * sizeof(WCHAR);
+            len = (wcslen(V_BSTR(&var)) + 1) * sizeof(WCHAR);
             if (!(regfilters[idx].Name = CoTaskMemAlloc(len*2)))
                 hr = E_OUTOFMEMORY;
         }

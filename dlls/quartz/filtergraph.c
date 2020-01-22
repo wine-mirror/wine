@@ -954,7 +954,6 @@ static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface)
 
 static HRESULT GetFilterInfo(IMoniker* pMoniker, VARIANT* pvar)
 {
-    static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
     IPropertyBag * pPropBagCat = NULL;
     HRESULT hr;
 
@@ -963,7 +962,7 @@ static HRESULT GetFilterInfo(IMoniker* pMoniker, VARIANT* pvar)
     hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBagCat);
 
     if (SUCCEEDED(hr))
-        hr = IPropertyBag_Read(pPropBagCat, wszFriendlyName, pvar, NULL);
+        hr = IPropertyBag_Read(pPropBagCat, L"FriendlyName", pvar, NULL);
 
     if (SUCCEEDED(hr))
         TRACE("Moniker = %s\n", debugstr_w(V_BSTR(pvar)));
@@ -1670,7 +1669,6 @@ static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface, LPCWSTR lpcw
         LPCWSTR lpcwstrPlayList)
 {
     IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
-    static const WCHAR string[] = {'R','e','a','d','e','r',0};
     IBaseFilter* preader = NULL;
     IPin* ppinreader = NULL;
     IEnumPins* penumpins = NULL;
@@ -1684,7 +1682,7 @@ static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface, LPCWSTR lpcw
     if (lpcwstrPlayList != NULL)
         return E_INVALIDARG;
 
-    hr = IFilterGraph2_AddSourceFilter(iface, lpcwstrFile, string, &preader);
+    hr = IFilterGraph2_AddSourceFilter(iface, lpcwstrFile, L"Reader", &preader);
     if (FAILED(hr))
         return hr;
 

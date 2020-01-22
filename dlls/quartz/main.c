@@ -323,14 +323,14 @@ DWORD WINAPI AMGetErrorTextA(HRESULT hr, LPSTR buffer, DWORD maxlen)
 DWORD WINAPI AMGetErrorTextW(HRESULT hr, LPWSTR buffer, DWORD maxlen)
 {
     unsigned int len;
-    static const WCHAR format[] = {'E','r','r','o','r',':',' ','0','x','%','l','x',0};
     WCHAR error[MAX_ERROR_TEXT_LEN];
 
     FIXME("(%x,%p,%d) stub\n", hr, buffer, maxlen);
 
     if (!buffer) return 0;
-    wsprintfW(error, format, hr);
-    if ((len = lstrlenW(error)) >= maxlen) return 0;
-    lstrcpyW(buffer, error);
+    swprintf(error, ARRAY_SIZE(error), L"Error: 0x%lx", hr);
+    if ((len = wcslen(error)) >= maxlen)
+        return 0;
+    wcscpy(buffer, error);
     return len;
 }

@@ -22,9 +22,6 @@
 #include "dshow.h"
 #include "wine/test.h"
 
-static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
-static const WCHAR source_name[] = {'o','u','t','p','u','t',0};
-
 static IBaseFilter *create_wave_parser(void)
 {
     IBaseFilter *filter = NULL;
@@ -33,8 +30,6 @@ static IBaseFilter *create_wave_parser(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     return filter;
 }
-
-static const WCHAR wavefile[] = {'t','e','s','t','.','w','a','v',0};
 
 static WCHAR *load_resource(const WCHAR *name)
 {
@@ -45,7 +40,7 @@ static WCHAR *load_resource(const WCHAR *name)
     void *ptr;
 
     GetTempPathW(ARRAY_SIZE(pathW), pathW);
-    lstrcatW(pathW, name);
+    wcscat(pathW, name);
 
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %u.\n",
@@ -70,7 +65,6 @@ static ULONG get_refcount(void *iface)
 
 static IFilterGraph2 *connect_input(IBaseFilter *splitter, const WCHAR *filename)
 {
-    static const WCHAR outputW[] = {'O','u','t','p','u','t',0};
     IFileSourceFilter *filesource;
     IFilterGraph2 *graph;
     IBaseFilter *reader;
@@ -87,8 +81,8 @@ static IFilterGraph2 *connect_input(IBaseFilter *splitter, const WCHAR *filename
     IFilterGraph2_AddFilter(graph, reader, NULL);
     IFilterGraph2_AddFilter(graph, splitter, NULL);
 
-    IBaseFilter_FindPin(splitter, sink_name, &sink);
-    IBaseFilter_FindPin(reader, outputW, &source);
+    IBaseFilter_FindPin(splitter, L"input pin", &sink);
+    IBaseFilter_FindPin(reader, L"Output", &source);
 
     hr = IFilterGraph2_ConnectDirect(graph, source, sink, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -117,7 +111,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 static void test_interfaces(void)
 {
-    const WCHAR *filename = load_resource(wavefile);
+    const WCHAR *filename = load_resource(L"test.wav");
     IBaseFilter *filter = create_wave_parser();
     IFilterGraph2 *graph = connect_input(filter, filename);
     IPin *pin;
@@ -140,7 +134,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
-    IBaseFilter_FindPin(filter, sink_name, &pin);
+    IBaseFilter_FindPin(filter, L"input pin", &pin);
 
     check_interface(pin, &IID_IPin, TRUE);
     check_interface(pin, &IID_IUnknown, TRUE);
@@ -152,7 +146,7 @@ static void test_interfaces(void)
 
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, source_name, &pin);
+    IBaseFilter_FindPin(filter, L"output", &pin);
 
     todo_wine check_interface(pin, &IID_IMediaPosition, TRUE);
     check_interface(pin, &IID_IMediaSeeking, TRUE);
@@ -266,7 +260,7 @@ static void test_aggregation(void)
 
 static void test_enum_pins(void)
 {
-    const WCHAR *filename = load_resource(wavefile);
+    const WCHAR *filename = load_resource(L"test.wav");
     IBaseFilter *filter = create_wave_parser();
     IEnumPins *enum1, *enum2;
     IFilterGraph2 *graph;
@@ -401,7 +395,7 @@ todo_wine
 
 static void test_find_pin(void)
 {
-    const WCHAR *filename = load_resource(wavefile);
+    const WCHAR *filename = load_resource(L"test.wav");
     IBaseFilter *filter = create_wave_parser();
     IFilterGraph2 *graph;
     IEnumPins *enum_pins;
@@ -410,11 +404,11 @@ static void test_find_pin(void)
     ULONG ref;
     BOOL ret;
 
-    hr = IBaseFilter_FindPin(filter, sink_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"input pin", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, source_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"output", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
     graph = connect_input(filter, filename);
@@ -425,7 +419,7 @@ static void test_find_pin(void)
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, source_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"output", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 todo_wine
     ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
@@ -435,7 +429,7 @@ todo_wine
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, sink_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"input pin", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 todo_wine
     ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
@@ -452,7 +446,7 @@ todo_wine
 
 static void test_pin_info(void)
 {
-    const WCHAR *filename = load_resource(wavefile);
+    const WCHAR *filename = load_resource(L"test.wav");
     IBaseFilter *filter = create_wave_parser();
     ULONG ref, expect_ref;
     IFilterGraph2 *graph;
@@ -465,7 +459,7 @@ static void test_pin_info(void)
 
     graph = connect_input(filter, filename);
 
-    hr = IBaseFilter_FindPin(filter, sink_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"input pin", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     expect_ref = get_refcount(filter);
     ref = get_refcount(pin);
@@ -475,7 +469,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, sink_name), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!wcscmp(info.achName, L"input pin"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
     ok(ref == expect_ref + 1, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
@@ -488,12 +482,12 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, sink_name), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!wcscmp(id, L"input pin"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, source_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"output", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_interface(pin, &IID_IPin, TRUE);
@@ -503,7 +497,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, source_name), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!wcscmp(info.achName, L"output"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
@@ -512,7 +506,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, source_name), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!wcscmp(id, L"output"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     IPin_Release(pin);
@@ -528,7 +522,7 @@ static void test_media_types(void)
 {
     static const WAVEFORMATEX expect_wfx = {WAVE_FORMAT_PCM, 1, 44100, 44100, 1, 8, 0};
 
-    const WCHAR *filename = load_resource(wavefile);
+    const WCHAR *filename = load_resource(L"test.wav");
     IBaseFilter *filter = create_wave_parser();
     AM_MEDIA_TYPE mt = {{0}}, *pmt;
     IEnumMediaTypes *enummt;
@@ -538,7 +532,7 @@ static void test_media_types(void)
     IPin *pin;
     BOOL ret;
 
-    IBaseFilter_FindPin(filter, sink_name, &pin);
+    IBaseFilter_FindPin(filter, L"input pin", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -581,7 +575,7 @@ static void test_media_types(void)
     IEnumMediaTypes_Release(enummt);
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, source_name, &pin);
+    IBaseFilter_FindPin(filter, L"output", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -645,7 +639,7 @@ static void test_media_types(void)
 
 static void test_enum_media_types(void)
 {
-    const WCHAR *filename = load_resource(wavefile);
+    const WCHAR *filename = load_resource(L"test.wav");
     IBaseFilter *filter = create_wave_parser();
     IFilterGraph2 *graph = connect_input(filter, filename);
     IEnumMediaTypes *enum1, *enum2;
@@ -655,7 +649,7 @@ static void test_enum_media_types(void)
     IPin *pin;
     BOOL ret;
 
-    IBaseFilter_FindPin(filter, sink_name, &pin);
+    IBaseFilter_FindPin(filter, L"input pin", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -686,7 +680,7 @@ static void test_enum_media_types(void)
     IEnumMediaTypes_Release(enum2);
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, source_name, &pin);
+    IBaseFilter_FindPin(filter, L"output", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
