@@ -445,6 +445,9 @@ static HRESULT WINAPI ItemMonikerImpl_BindToObject(IMoniker* iface,
     hr = IMoniker_BindToObject(pmkToLeft, pbc, NULL, &IID_IOleItemContainer, (void **)&container);
     if (SUCCEEDED(hr))
     {
+        if (FAILED(hr = set_container_lock(container, pbc)))
+            WARN("Failed to lock container, hr %#x.\n", hr);
+
         hr = IOleItemContainer_GetObject(container, This->itemName, get_bind_speed_from_bindctx(pbc), pbc,
                 riid, ppvResult);
         IOleItemContainer_Release(container);
