@@ -84,7 +84,6 @@ static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};
 /* FilterData property in media category Moniker (not CLSID_ActiveMovieCategories) */
 static const WCHAR wszFilterDataName[] = {'F','i','l','t','e','r','D','a','t','a',0};
 /* For filters registered with IFilterMapper */
-static const WCHAR wszFilterSlash[] = {'F','i','l','t','e','r','\\',0};
 static const WCHAR wszFilter[] = {'F','i','l','t','e','r',0};
 /* For pins registered with IFilterMapper */
 static const WCHAR wszPins[] = {'P','i','n','s',0};
@@ -1119,53 +1118,39 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
 }
 
 
-static HRESULT WINAPI FilterMapper_RegisterFilter(IFilterMapper * iface, CLSID clsid, LPCWSTR szName, DWORD dwMerit)
+static HRESULT WINAPI FilterMapper_RegisterFilter(IFilterMapper * iface,
+        CLSID clsid, const WCHAR *name, DWORD merit)
 {
-    HRESULT hr;
-    LPWSTR wszClsid = NULL;
-    HKEY hKey;
-    LONG lRet;
-    WCHAR wszKeyName[ARRAY_SIZE(wszFilterSlash)-1 + (CHARS_IN_GUID-1) + 1];
+    WCHAR keypath[46], guidstr[39];
+    HKEY key;
+    LONG ret;
 
-    TRACE("(%p)->(%s, %s, %x)\n", iface, debugstr_guid(&clsid), debugstr_w(szName), dwMerit);
+    TRACE("iface %p, clsid %s, name %s, merit %#x.\n",
+            iface, debugstr_guid(&clsid), debugstr_w(name), merit);
 
-    hr = StringFromCLSID(&clsid, &wszClsid);
+    StringFromGUID2(&clsid, guidstr, ARRAY_SIZE(guidstr));
 
-    if (SUCCEEDED(hr))
+    wcscpy(keypath, L"Filter\\");
+    wcscat(keypath, guidstr);
+    if ((ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, keypath, 0, NULL, 0, KEY_WRITE, NULL, &key, NULL)))
+        return HRESULT_FROM_WIN32(ret);
+
+    if ((ret = RegSetValueExW(key, NULL, 0, REG_SZ, (const BYTE *)name, (wcslen(name) + 1) * sizeof(WCHAR))))
+        ERR("Failed to set filter name, error %u.\n", ret);
+    RegCloseKey(key);
+
+    wcscpy(keypath, L"CLSID\\");
+    wcscat(keypath, guidstr);
+    if (!(ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, keypath, 0, NULL, 0, KEY_WRITE, NULL, &key, NULL)))
     {
-        lstrcpyW(wszKeyName, wszFilterSlash);
-        lstrcatW(wszKeyName, wszClsid);
-    
-        lRet = RegCreateKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
-        hr = HRESULT_FROM_WIN32(lRet);
+        if ((ret = RegSetValueExW(key, L"Merit", 0, REG_DWORD, (const BYTE *)&merit, sizeof(DWORD))))
+            ERR("Failed to set merit, error %u.\n", ret);
+        RegCloseKey(key);
     }
+    else
+        ERR("Failed to create CLSID key, error %u.\n", ret);
 
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegSetValueExW(hKey, NULL, 0, REG_SZ, (const BYTE*)szName, (lstrlenW(szName) + 1) * sizeof(WCHAR));
-        hr = HRESULT_FROM_WIN32(lRet);
-        RegCloseKey(hKey);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        lstrcpyW(wszKeyName, wszClsidSlash);
-        lstrcatW(wszKeyName, wszClsid);
-    
-        lRet = RegCreateKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegSetValueExW(hKey, wszMeritName, 0, REG_DWORD, (LPBYTE)&dwMerit, sizeof(dwMerit));
-        hr = HRESULT_FROM_WIN32(lRet);
-        RegCloseKey(hKey);
-    }
-    
-    CoTaskMemFree(wszClsid);
-
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI FilterMapper_RegisterFilterInstance(IFilterMapper * iface, CLSID clsid, LPCWSTR szName, CLSID *MRId)
