@@ -73,7 +73,6 @@ static inline FilterMapper3Impl *impl_from_IUnknown( IUnknown *iface )
 }
 
 static const WCHAR wszClsidSlash[] = {'C','L','S','I','D','\\',0};
-static const WCHAR wszSlashInstance[] = {'\\','I','n','s','t','a','n','c','e','\\',0};
 static const WCHAR wszSlash[] = {'\\',0};
 
 /* CLSID property in media category Moniker */
@@ -293,49 +292,26 @@ static HRESULT WINAPI FilterMapper3_CreateCategory(IFilterMapper3 *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI FilterMapper3_UnregisterFilter(
-    IFilterMapper3 * iface,
-    const CLSID *pclsidCategory,
-    const OLECHAR *szInstance,
-    REFCLSID Filter)
+static HRESULT WINAPI FilterMapper3_UnregisterFilter(IFilterMapper3 *iface,
+        const CLSID *category, const WCHAR *instance, REFCLSID clsid)
 {
-    WCHAR wszKeyName[MAX_PATH];
-    LPWSTR wClsidCategory = NULL;
-    LPWSTR wFilter = NULL;
-    HRESULT hr;
+    WCHAR keypath[93];
 
-    TRACE("(%p, %s, %s)\n", pclsidCategory, debugstr_w(szInstance), debugstr_guid(Filter));
+    TRACE("iface %p, category %s, instance %s, clsid %s.\n",
+            iface, debugstr_guid(category), debugstr_w(instance), debugstr_guid(clsid));
 
-    if (!pclsidCategory)
-        pclsidCategory = &CLSID_LegacyAmFilterCategory;
+    if (!category)
+        category = &CLSID_LegacyAmFilterCategory;
 
-    hr = StringFromCLSID(pclsidCategory, &wClsidCategory);
+    wcscpy(keypath, L"CLSID\\");
+    StringFromGUID2(category, keypath + wcslen(keypath), ARRAY_SIZE(keypath) - wcslen(keypath));
+    wcscat(keypath, L"\\Instance\\");
+    if (instance)
+        wcscat(keypath, instance);
+    else
+        StringFromGUID2(clsid, keypath + wcslen(keypath), ARRAY_SIZE(keypath) - wcslen(keypath));
 
-    if (SUCCEEDED(hr))
-    {
-        lstrcpyW(wszKeyName, wszClsidSlash);
-        lstrcatW(wszKeyName, wClsidCategory);
-        lstrcatW(wszKeyName, wszSlashInstance);
-        if (szInstance)
-            lstrcatW(wszKeyName, szInstance);
-        else
-        {
-            hr = StringFromCLSID(Filter, &wFilter);
-            if (SUCCEEDED(hr))
-                lstrcatW(wszKeyName, wFilter);
-        }
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        LONG lRet = RegDeleteKeyW(HKEY_CLASSES_ROOT, wszKeyName);
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
-
-    CoTaskMemFree(wClsidCategory);
-    CoTaskMemFree(wFilter);
-
-    return hr;
+    return HRESULT_FROM_WIN32(RegDeleteKeyW(HKEY_CLASSES_ROOT, keypath));
 }
 
 static HRESULT FM2_WriteFriendlyName(IPropertyBag * pPropBag, LPCWSTR szName)
