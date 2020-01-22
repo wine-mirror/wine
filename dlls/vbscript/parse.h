@@ -133,6 +133,7 @@ typedef enum {
 
 typedef struct _statement_t {
     statement_type_t type;
+    unsigned loc;
     struct _statement_t *next;
 } statement_t;
 
@@ -204,6 +205,7 @@ typedef struct _class_decl_t {
 typedef struct _elseif_decl_t {
     expression_t *expr;
     statement_t *stat;
+    unsigned loc;
     struct _elseif_decl_t *next;
 } elseif_decl_t;
 
@@ -298,5 +300,5 @@ typedef struct {
 
 HRESULT parse_script(parser_ctx_t*,const WCHAR*,const WCHAR*,DWORD) DECLSPEC_HIDDEN;
 void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
-int parser_lex(void*,parser_ctx_t*) DECLSPEC_HIDDEN;
+int parser_lex(void*,unsigned*,parser_ctx_t*) DECLSPEC_HIDDEN;
 void *parser_alloc(parser_ctx_t*,size_t) DECLSPEC_HIDDEN;

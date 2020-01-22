@@ -344,11 +344,12 @@ static int comment_line(parser_ctx_t *ctx)
     return tNL;
 }
 
-static int parse_next_token(void *lval, parser_ctx_t *ctx)
+static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
 {
     WCHAR c;
 
     skip_spaces(ctx);
+    *loc = ctx->ptr - ctx->code;
     if(ctx->ptr == ctx->end)
         return ctx->last_token == tNL ? tEOF : tNL;
 
@@ -450,7 +451,7 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
     return 0;
 }
 
-int parser_lex(void *lval, parser_ctx_t *ctx)
+int parser_lex(void *lval, unsigned *loc, parser_ctx_t *ctx)
 {
     int ret;
 
@@ -461,7 +462,7 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
     }
 
     while(1) {
-        ret = parse_next_token(lval, ctx);
+        ret = parse_next_token(lval, loc, ctx);
         if(ret == '_') {
             skip_spaces(ctx);
             if(*ctx->ptr != '\n' && *ctx->ptr != '\r') {
