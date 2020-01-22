@@ -286,6 +286,7 @@ typedef struct {
     BOOL option_explicit;
     BOOL is_html;
     HRESULT hres;
+    int error_loc;
 
     int last_token;
     unsigned last_nl;

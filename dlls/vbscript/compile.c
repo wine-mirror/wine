@@ -1917,27 +1917,25 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     vbscode_t *code;
     HRESULT hres;
 
+    memset(&ctx, 0, sizeof(ctx));
     code = ctx.code = alloc_vbscode(&ctx, src, cookie, start_line);
     if(!ctx.code)
         return E_OUTOFMEMORY;
 
     hres = parse_script(&ctx.parser, code->source, delimiter, flags);
     if(FAILED(hres)) {
+        if(ctx.parser.error_loc != -1)
+            ctx.loc = ctx.parser.error_loc;
         hres = compile_error(script, hres);
         release_vbscode(code);
         return hres;
     }
 
-    ctx.func_decls = NULL;
-    ctx.labels = NULL;
-    ctx.global_consts = NULL;
-    ctx.stat_ctx = NULL;
-    ctx.labels_cnt = ctx.labels_size = 0;
-
     hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->main_code);
     if(FAILED(hres)) {
+        hres = compile_error(script, hres);
         release_compiler(&ctx);
-        return compile_error(script, hres);
+        return hres;
     }
 
     ctx.global_consts = ctx.const_decls;
@@ -1947,8 +1945,9 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     for(func_decl = ctx.func_decls; func_decl; func_decl = func_decl->next) {
         hres = create_function(&ctx, func_decl, &new_func);
         if(FAILED(hres)) {
+            hres = compile_error(script, hres);
             release_compiler(&ctx);
-            return compile_error(script, hres);
+            return hres;
         }
 
         new_func->next = ctx.code->funcs;

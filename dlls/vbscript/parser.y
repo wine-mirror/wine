@@ -505,6 +505,8 @@ StSep
 
 static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
 {
+    if(ctx->error_loc == -1)
+        ctx->error_loc = *loc;
     if(ctx->hres == S_OK) {
         FIXME("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
         ctx->hres = E_FAIL;
@@ -1142,6 +1144,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     heap_pool_init(&ctx->heap);
 
     ctx->hres = S_OK;
+    ctx->error_loc = -1;
     ctx->last_token = tNL;
     ctx->last_nl = 0;
     ctx->stats = ctx->stats_tail = NULL;
