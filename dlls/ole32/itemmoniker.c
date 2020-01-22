@@ -777,7 +777,6 @@ static HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker *iface, IBindCtx
     ItemMonikerImpl *This = impl_from_IMoniker(iface);
     IOleItemContainer *container;
     IParseDisplayName *parser;
-    LPOLESTR displayName;
     HRESULT hr;
 
     TRACE("%p, %p, %p, %s, %p, %p.\n", iface, pbc, pmkToLeft, debugstr_w(displayname), eaten, ppmkOut);
@@ -792,9 +791,7 @@ static HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker *iface, IBindCtx
                 &IID_IParseDisplayName, (void **)&parser);
         if (SUCCEEDED(hr))
         {
-            hr = IMoniker_GetDisplayName(iface,pbc,NULL,&displayName);
-
-            hr = IParseDisplayName_ParseDisplayName(parser, pbc, displayName, eaten, ppmkOut);
+            hr = IParseDisplayName_ParseDisplayName(parser, pbc, displayname, eaten, ppmkOut);
 
             IParseDisplayName_Release(parser);
         }
