@@ -335,8 +335,11 @@ struct _function_t {
 
 struct _vbscode_t {
     instr_t *instrs;
-    WCHAR *source;
     unsigned ref;
+
+    WCHAR *source;
+    DWORD_PTR cookie;
+    unsigned start_line;
 
     BOOL option_explicit;
 
@@ -363,8 +366,8 @@ static inline void grab_vbscode(vbscode_t *code)
 }
 
 void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
-HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD,vbscode_t**) DECLSPEC_HIDDEN;
-HRESULT compile_procedure(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD,class_desc_t**) DECLSPEC_HIDDEN;
+HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,vbscode_t**) DECLSPEC_HIDDEN;
+HRESULT compile_procedure(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,class_desc_t**) DECLSPEC_HIDDEN;
 HRESULT exec_script(script_ctx_t*,BOOL,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
 void release_dynamic_var(dynamic_var_t*) DECLSPEC_HIDDEN;
 IDispatch *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;

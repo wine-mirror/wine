@@ -1856,7 +1856,7 @@ void release_vbscode(vbscode_t *code)
     heap_free(code);
 }
 
-static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
+static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source, DWORD_PTR cookie, unsigned start_line)
 {
     vbscode_t *ret;
     size_t len;
@@ -1877,6 +1877,9 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
     if(len)
         memcpy(ret->source, source, len * sizeof(WCHAR));
     ret->source[len] = 0;
+
+    ret->cookie = cookie;
+    ret->start_line = start_line;
 
     ret->instrs = heap_alloc(32*sizeof(instr_t));
     if(!ret->instrs) {
@@ -1904,7 +1907,8 @@ static void release_compiler(compile_ctx_t *ctx)
         release_vbscode(ctx->code);
 }
 
-HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD flags, vbscode_t **ret)
+HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD_PTR cookie,
+                       unsigned start_line, DWORD flags, vbscode_t **ret)
 {
     function_decl_t *func_decl;
     class_decl_t *class_decl;
@@ -1913,7 +1917,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     vbscode_t *code;
     HRESULT hres;
 
-    code = ctx.code = alloc_vbscode(&ctx, src);
+    code = ctx.code = alloc_vbscode(&ctx, src, cookie, start_line);
     if(!ctx.code)
         return E_OUTOFMEMORY;
 
@@ -1978,13 +1982,14 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     return S_OK;
 }
 
-HRESULT compile_procedure(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD flags, class_desc_t **ret)
+HRESULT compile_procedure(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD_PTR cookie,
+                          unsigned start_line, DWORD flags, class_desc_t **ret)
 {
     class_desc_t *desc;
     vbscode_t *code;
     HRESULT hres;
 
-    hres = compile_script(script, src, delimiter, flags & ~SCRIPTTEXT_ISPERSISTENT, &code);
+    hres = compile_script(script, src, delimiter, cookie, start_line, flags & ~SCRIPTTEXT_ISPERSISTENT, &code);
     if(FAILED(hres))
         return hres;
 
