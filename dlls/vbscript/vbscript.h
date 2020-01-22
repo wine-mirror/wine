@@ -294,6 +294,7 @@ typedef union {
 
 typedef struct {
     vbsop_t op;
+    unsigned loc;
     instr_arg_t arg1;
     instr_arg_t arg2;
 } instr_t;

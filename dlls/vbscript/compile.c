@@ -44,6 +44,7 @@ typedef struct {
     unsigned instr_size;
     vbscode_t *code;
 
+    unsigned loc;
     statement_ctx_t *stat_ctx;
 
     unsigned *labels;
@@ -162,6 +163,7 @@ static unsigned push_instr(compile_ctx_t *ctx, vbsop_t op)
     }
 
     ctx->code->instrs[ctx->instr_cnt].op = op;
+    ctx->code->instrs[ctx->instr_cnt].loc = ctx->loc;
     return ctx->instr_cnt++;
 }
 
@@ -630,6 +632,8 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
     for(elseif_decl = stat->elseifs; elseif_decl; elseif_decl = elseif_decl->next) {
         instr_ptr(ctx, cnd_jmp)->arg1.uint = ctx->instr_cnt;
 
+        ctx->loc = elseif_decl->loc;
+
         hres = compile_expression(ctx, elseif_decl->expr);
         if(FAILED(hres))
             return hres;
@@ -723,6 +727,7 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
     if(FAILED(hres))
         return hres;
 
+    ctx->loc = stat->stat.loc;
     if(stat->expr) {
         hres = compile_expression(ctx, stat->expr);
         if(FAILED(hres))
@@ -778,6 +783,7 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
         return hres;
 
     /* We need a separated enumnext here, because we need to jump out of the loop on exception. */
+    ctx->loc = stat->stat.loc;
     hres = push_instr_uint_bstr(ctx, OP_enumnext, loop_ctx.for_end_label, stat->identifier);
     if(FAILED(hres))
         return hres;
@@ -1295,6 +1301,8 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_ctx_t *stat_ctx, 
     }
 
     while(stat) {
+        ctx->loc = stat->loc;
+
         switch(stat->type) {
         case STAT_ASSIGN:
             hres = compile_assign_statement(ctx, (assign_statement_t*)stat, FALSE);
