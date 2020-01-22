@@ -120,24 +120,42 @@ static HRESULT WINAPI chord_track_Play(IDirectMusicTrack8 *iface, void *pStateDa
   return S_OK;
 }
 
-static HRESULT WINAPI chord_track_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
+static HRESULT WINAPI chord_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
+        MUSIC_TIME *next, void *param)
 {
     IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-    FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
 
-    if (!rguidType)
+    TRACE("(%p, %s, %d, %p, %p):\n", This, debugstr_dmguid(type), time, next, param);
+
+    if (!type)
         return E_POINTER;
 
-    return S_OK;
+    if (IsEqualGUID(type, &GUID_ChordParam)) {
+        FIXME("GUID_ChordParam not handled yet\n");
+        return S_OK;
+    } else if (IsEqualGUID(type, &GUID_RhythmParam)) {
+        FIXME("GUID_RhythmParam not handled yet\n");
+        return S_OK;
+    }
+
+    return DMUS_E_GET_UNSUPPORTED;
 }
 
-static HRESULT WINAPI chord_track_SetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, void *pParam)
+static HRESULT WINAPI chord_track_SetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
+        void *param)
 {
-  IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %s, %d, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
-  return S_OK;
+    IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(type), time, param);
+
+    if (!type)
+        return E_POINTER;
+    if (!IsEqualGUID(type, &GUID_ChordParam))
+        return DMUS_E_SET_UNSUPPORTED;
+
+    FIXME("GUID_ChordParam not handled yet\n");
+
+    return S_OK;
 }
 
 static HRESULT WINAPI chord_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID type)
