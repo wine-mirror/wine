@@ -40,8 +40,8 @@
 #include "winbase.h"
 #include "winedump.h"
 
-static void*			dump_base;
-static unsigned long		dump_total_len;
+void *dump_base = NULL;
+unsigned long dump_total_len = 0;
 
 void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix )
 {
@@ -239,6 +239,7 @@ dumpers[] =
     {SIG_EMF,           get_kind_emf,   emf_dump},
     {SIG_FNT,           get_kind_fnt,   fnt_dump},
     {SIG_TLB,           get_kind_tlb,   tlb_dump},
+    {SIG_NLS,           get_kind_nls,   nls_dump},
     {SIG_UNKNOWN,       NULL,           NULL} /* sentinel */
 };
 
