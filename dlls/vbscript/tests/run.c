@@ -1829,21 +1829,22 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, S
 }
 
 static IActiveScriptError **store_script_error;
+static ULONG error_line;
+static LONG error_char;
 
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *pscripterror)
 {
     HRESULT hr = onerror_hres, hres;
 
+    hres = IActiveScriptError_GetSourcePosition(pscripterror, NULL, &error_line, &error_char);
+    ok(hres == S_OK, "GetSourcePosition failed: %08x\n", hres);
+
     if(!expect_OnScriptError) {
         EXCEPINFO info;
-        ULONG line;
-        HRESULT hres;
 
-        hres = IActiveScriptError_GetSourcePosition(pscripterror, NULL, &line, NULL);
+        hres = IActiveScriptError_GetExceptionInfo(pscripterror, &info);
         if(SUCCEEDED(hres))
-            hres = IActiveScriptError_GetExceptionInfo(pscripterror, &info);
-        if(SUCCEEDED(hres))
-            trace("Error in line %u: %x %s\n", line+1, info.wCode, wine_dbgstr_w(info.bstrDescription));
+            trace("Error in line %u: %x %s\n", error_line + 1, info.wCode, wine_dbgstr_w(info.bstrDescription));
     }else {
         IDispatchEx *dispex;
 
@@ -2390,60 +2391,151 @@ static void test_gc(void)
 
 static void test_parse_errors(void)
 {
-    static const char *invalid_scripts[] =
+    static const struct
     {
-        /* If...End If */
-        "If 0 > 1 Then\n"
-        "    x = 0 End If\n",
-
-        /* While...End While */
-        "While False\n"
-        "    x = 0 End While\n",
-
-        /* While...Wend */
-        "While False\n"
-        "    x = 0 Wend\n",
-
-        /* Do While...Loop */
-        "Do While False\n"
-        "    x = 0 Loop\n",
-
-        /* Do Until...Loop */
-        "Do Until True\n"
-        "    x = 0 Loop\n",
-
-        /* Do...Loop While */
-        "Do\n"
-        "    x = 0 Loop While False\n",
-
-        /* Do...Loop Until */
-        "Do\n"
-        "    x = 0 Loop Until True\n",
-
-        /* Select...End Select */
-        "x = False\n"
-        "Select Case 42\n"
-        "    Case 0\n"
-        "        Call ok(False, \"unexpected case\")\n"
-        "    Case 42\n"
-        "        x = True End Select\n"
-        "Call ok(x, \"wrong case\")\n",
-
-        /* Class...End Class  (empty) */
-        "Class C End Class",
-
-        /* invalid use of parentheses for call statement */
-        "strcomp(\"x\", \"y\")"
+        const char *src;
+        unsigned error_line;
+        int error_char;
+    }
+    invalid_scripts[] =
+    {
+        {
+            /* If...End If */
+            "If 0 > 1 Then\n"
+            "    x = 0 End If\n",
+            1, 10
+        },
+        {
+            /* While...End While */
+            "While False\n"
+            "    x = 0 End While\n",
+            1, 10
+        },
+        {
+            /* While...Wend */
+            "While False\n"
+            "    x = 0 Wend\n",
+            1, 10
+        },
+        {
+            /* Do While...Loop */
+            "Do While False\n"
+            "    x = 0 Loop\n",
+            1, 10
+        },
+        {
+            /* Do Until...Loop */
+            "Do Until True\n"
+            "    x = 0 Loop\n",
+            1, 10
+        },
+        {
+            /* Do...Loop While */
+            "Do\n"
+            "    x = 0 Loop While False\n",
+            1, 10
+        },
+        {
+            /* Do...Loop Until */
+            "Do\n"
+            "    x = 0 Loop Until True\n",
+            1, 10
+        },
+        {
+            /* Select...End Select */
+            "x = False\n"
+            "Select Case 42\n"
+            "    Case 0\n"
+            "        Call ok(False, \"unexpected case\")\n"
+            "    Case 42\n"
+            "        x = True End Select\n"
+            "Call ok(x, \"wrong case\")\n",
+            5, 17
+        },
+        {
+            /* Class...End Class  (empty) */
+            "Class C End Class",
+            0, 8
+        },
+        {
+            /* Class...End Class  (empty) */
+            "Class C _\nEnd Class",
+            1, 0
+        },
+        {
+            /* invalid use of parentheses for call statement */
+            "strcomp(\"x\", \"y\")",
+            0, -17
+        },
+        {
+            "\n\n\n  cint _\n   throwInt(&h80001234&)",
+            3, 2
+        },
+        {
+            "dim x\n"
+            "if true then throwInt(&h80001234&)",
+            1, 13
+        },
+        {
+            "dim x\n"
+            "if x = throwInt(&h80001234&) then x = 1",
+            1, 0
+        },
+        {
+            "sub test\n"
+            "    dim x\n"
+            "    if x = throwInt(&h80001234&) then x = 1\n"
+            "end sub\n"
+            "test\n",
+            2, 4
+        },
+        {
+            "dim x\n"
+            "do\n"
+            "    x = 1\n"
+            "loop until throwInt(&h80001234&)\n",
+            3, 0
+        },
+        {
+            "\n  select case 3\n"
+            "    case 2\n"
+            "        ok false, \"unexpected case\"\n"
+            "    case throwInt(&h80001234&)\n"
+            "        throwInt &h87001234&\n"
+            "end select\n",
+            1, 2
+        },
+        {
+            "if false then\n"
+            "    ok false, \"unexpected case\"\n"
+            " elseif throwInt(&h80001234&) then\n"
+            "    throwInt &h87001234&\n"
+            "else\n"
+            "    throwInt &h87001234&\n"
+            "end if\n",
+            2, 1
+        }
     };
     HRESULT hres;
     UINT i;
 
     for (i = 0; i < ARRAY_SIZE(invalid_scripts); i++)
     {
+        error_line = ~0;
+        error_char = -1;
+        onerror_hres = S_OK;
+
         SET_EXPECT(OnScriptError);
-        hres = parse_script_ar(invalid_scripts[i]);
-        ok(FAILED(hres), "[%u] script did not fail\n", i);
+        hres = parse_script_ar(invalid_scripts[i].src);
+        ok(hres == SCRIPT_E_REPORTED, "[%u] script returned: %08x\n", i, hres);
         CHECK_CALLED(OnScriptError);
+
+        todo_wine_if(invalid_scripts[i].error_line)
+        ok(error_line == invalid_scripts[i].error_line, "[%u] error line %u expected %u\n",
+           i, error_line, invalid_scripts[i].error_line);
+        todo_wine_if(invalid_scripts[i].error_char)
+        ok(error_char == abs(invalid_scripts[i].error_char), "[%u] error char %d expected %d\n",
+           i, error_char, invalid_scripts[i].error_char);
     }
 }
 
