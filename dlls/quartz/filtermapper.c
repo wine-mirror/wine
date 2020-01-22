@@ -1214,81 +1214,43 @@ static HRESULT WINAPI FilterMapper_RegisterPin(IFilterMapper *iface, CLSID clsid
 }
 
 
-static HRESULT WINAPI FilterMapper_RegisterPinType(
-    IFilterMapper * iface,
-    CLSID clsFilter,
-    LPCWSTR szName,
-    CLSID clsMajorType,
-    CLSID clsSubType)
+static HRESULT WINAPI FilterMapper_RegisterPinType(IFilterMapper *iface,
+        CLSID clsid, const WCHAR *pin, CLSID majortype, CLSID subtype)
 {
-    HRESULT hr;
-    LONG lRet;
-    LPWSTR wszClsid = NULL;
-    LPWSTR wszClsidMajorType = NULL;
-    LPWSTR wszClsidSubType = NULL;
-    HKEY hKey = NULL;
-    WCHAR * wszTypesKey;
-    WCHAR wszKeyName[MAX_PATH];
+    WCHAR *keypath, type_keypath[38 + 1 + 38 + 1];
+    HKEY key, type_key;
+    size_t len;
+    LONG ret;
 
-    TRACE("(%p)->(%s, %s, %s, %s)\n", iface, debugstr_guid(&clsFilter), debugstr_w(szName),
-                    debugstr_guid(&clsMajorType), debugstr_guid(&clsSubType));
+    TRACE("iface %p, clsid %s, pin %s, majortype %s, subtype %s.\n", iface,
+            debugstr_guid(&clsid), debugstr_w(pin), debugstr_guid(&majortype), debugstr_guid(&subtype));
 
-    hr = StringFromCLSID(&clsFilter, &wszClsid);
+    len = 6 + 38 + 6 + wcslen(pin) + 6 + 1;
+    if (!(keypath = malloc(len * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(hr))
+    wcscpy(keypath, L"CLSID\\");
+    StringFromGUID2(&clsid, keypath + wcslen(keypath), len - wcslen(keypath));
+    wcscat(keypath, L"\\Pins\\");
+    wcscat(keypath, pin);
+    wcscat(keypath, L"\\Types");
+    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, keypath, 0, KEY_CREATE_SUB_KEY, &key)))
     {
-        hr = StringFromCLSID(&clsMajorType, &wszClsidMajorType);
+        free(keypath);
+        return HRESULT_FROM_WIN32(ret);
     }
+    free(keypath);
 
-    if (SUCCEEDED(hr))
-    {
-        hr = StringFromCLSID(&clsSubType, &wszClsidSubType);
-    }
+    StringFromGUID2(&majortype, type_keypath, ARRAY_SIZE(type_keypath));
+    wcscat(type_keypath, L"\\");
+    StringFromGUID2(&subtype, type_keypath + wcslen(type_keypath), ARRAY_SIZE(type_keypath) - wcslen(type_keypath));
+    if (!(ret = RegCreateKeyExW(key, type_keypath, 0, NULL, 0, 0, NULL, &type_key, NULL)))
+        RegCloseKey(type_key);
+    else
+        ERR("Failed to create type key, error %u.\n", ret);
 
-    if (SUCCEEDED(hr))
-    {
-        wszTypesKey = CoTaskMemAlloc((lstrlenW(wszClsidSlash) + lstrlenW(wszClsid) + lstrlenW(wszPins) +
-                        lstrlenW(szName) + lstrlenW(wszTypes) + 3 + 1) * 2);
-        if (!wszTypesKey)
-            hr = E_OUTOFMEMORY;
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        lstrcpyW(wszTypesKey, wszClsidSlash);
-        lstrcatW(wszTypesKey, wszClsid);
-        lstrcatW(wszTypesKey, wszSlash);
-        lstrcatW(wszTypesKey, wszPins);
-        lstrcatW(wszTypesKey, wszSlash);
-        lstrcatW(wszTypesKey, szName);
-        lstrcatW(wszTypesKey, wszSlash);
-        lstrcatW(wszTypesKey, wszTypes);
-
-        lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszTypesKey, 0, KEY_WRITE, &hKey);
-        hr = HRESULT_FROM_WIN32(lRet);
-        CoTaskMemFree(wszTypesKey);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        HKEY hkeyDummy = NULL;
-
-        lstrcpyW(wszKeyName, wszClsidMajorType);
-        lstrcatW(wszKeyName, wszSlash);
-        lstrcatW(wszKeyName, wszClsidSubType);
-
-        lRet = RegCreateKeyExW(hKey, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hkeyDummy, NULL);
-        hr = HRESULT_FROM_WIN32(lRet);
-        RegCloseKey(hKey);
-
-        if (hkeyDummy) RegCloseKey(hkeyDummy);
-    }
-
-    CoTaskMemFree(wszClsid);
-    CoTaskMemFree(wszClsidMajorType);
-    CoTaskMemFree(wszClsidSubType);
-
-    return hr;
+    RegCloseKey(key);
+    return HRESULT_FROM_WIN32(ret);
 }
 
 static HRESULT WINAPI FilterMapper_UnregisterFilter(IFilterMapper * iface, CLSID Filter)
