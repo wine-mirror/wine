@@ -72,9 +72,6 @@ static inline FilterMapper3Impl *impl_from_IUnknown( IUnknown *iface )
     return CONTAINING_RECORD(iface, FilterMapper3Impl, IUnknown_inner);
 }
 
-static const WCHAR wszClsidSlash[] = {'C','L','S','I','D','\\',0};
-static const WCHAR wszSlash[] = {'\\',0};
-
 /* CLSID property in media category Moniker */
 static const WCHAR wszClsidName[] = {'C','L','S','I','D',0};
 /* FriendlyName property in media category Moniker */
@@ -83,8 +80,6 @@ static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a',
 static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};
 /* FilterData property in media category Moniker (not CLSID_ActiveMovieCategories) */
 static const WCHAR wszFilterDataName[] = {'F','i','l','t','e','r','D','a','t','a',0};
-/* For pins registered with IFilterMapper */
-static const WCHAR wszPins[] = {'P','i','n','s',0};
 
 
 /* registry format for REGFILTER2 */
@@ -1290,54 +1285,29 @@ static HRESULT WINAPI FilterMapper_UnregisterFilterInstance(IFilterMapper * ifac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID Filter, LPCWSTR Name)
+static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID clsid, const WCHAR *name)
 {
-    HRESULT hr;
-    LONG lRet;
-    LPWSTR wszClsid = NULL;
-    HKEY hKey = NULL;
-    WCHAR * wszPinNameKey;
-    WCHAR wszKeyName[ARRAY_SIZE(wszClsidSlash)-1 + (CHARS_IN_GUID-1) + 1];
+    WCHAR keypath[6 + 38 + 5 + 1];
+    LONG ret;
+    HKEY key;
 
-    TRACE("(%p)->(%s, %s)\n", iface, debugstr_guid(&Filter), debugstr_w(Name));
+    TRACE("iface %p, clsid %s, name %s.\n", iface, debugstr_guid(&clsid), debugstr_w(name));
 
-    if (!Name)
+    if (!name)
         return E_INVALIDARG;
 
-    hr = StringFromCLSID(&Filter, &wszClsid);
+    wcscpy(keypath, L"CLSID\\");
+    StringFromGUID2(&clsid, keypath + wcslen(keypath), ARRAY_SIZE(keypath) - wcslen(keypath));
+    wcscat(keypath, L"\\Pins");
+    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, keypath, 0, 0, &key)))
+        return HRESULT_FROM_WIN32(ret);
 
-    if (SUCCEEDED(hr))
-    {
-        lstrcpyW(wszKeyName, wszClsidSlash);
-        lstrcatW(wszKeyName, wszClsid);
+    if ((ret = RegDeleteTreeW(key, name)))
+        ERR("Failed to delete subkey, error %u.\n", ret);
 
-        lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, KEY_WRITE, &hKey);
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
+    RegCloseKey(key);
 
-    if (SUCCEEDED(hr))
-    {
-        wszPinNameKey = CoTaskMemAlloc((lstrlenW(wszPins) + 1 + lstrlenW(Name) + 1) * 2);
-        if (!wszPinNameKey)
-            hr = E_OUTOFMEMORY;
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        lstrcpyW(wszPinNameKey, wszPins);
-        lstrcatW(wszPinNameKey, wszSlash);
-        lstrcatW(wszPinNameKey, Name);
-
-        lRet = RegDeleteTreeW(hKey, wszPinNameKey);
-        hr = HRESULT_FROM_WIN32(lRet);
-        CoTaskMemFree(wszPinNameKey);
-    }
-
-    CoTaskMemFree(wszClsid);
-    if (hKey)
-        RegCloseKey(hKey);
-
-    return hr;
+    return S_OK;
 }
 
 static const IFilterMapperVtbl fmvtbl =
