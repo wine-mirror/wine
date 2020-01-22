@@ -87,10 +87,6 @@ static const WCHAR wszFilterDataName[] = {'F','i','l','t','e','r','D','a','t','a
 static const WCHAR wszFilter[] = {'F','i','l','t','e','r',0};
 /* For pins registered with IFilterMapper */
 static const WCHAR wszPins[] = {'P','i','n','s',0};
-static const WCHAR wszAllowedMany[] = {'A','l','l','o','w','e','d','M','a','n','y',0};
-static const WCHAR wszAllowedZero[] = {'A','l','l','o','w','e','d','Z','e','r','o',0};
-static const WCHAR wszDirection[] = {'D','i','r','e','c','t','i','o','n',0};
-static const WCHAR wszIsRendered[] = {'I','s','R','e','n','d','e','r','e','d',0};
 /* For types registered with IFilterMapper */
 static const WCHAR wszTypes[] = {'T','y','p','e','s',0};
 
@@ -1162,98 +1158,59 @@ static HRESULT WINAPI FilterMapper_RegisterFilterInstance(IFilterMapper * iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FilterMapper_RegisterPin(
-    IFilterMapper * iface,
-    CLSID Filter,
-    LPCWSTR szName,
-    BOOL bRendered,
-    BOOL bOutput,
-    BOOL bZero,
-    BOOL bMany,
-    CLSID ConnectsToFilter,
-    LPCWSTR ConnectsToPin)
+static HRESULT WINAPI FilterMapper_RegisterPin(IFilterMapper *iface, CLSID clsid,
+        const WCHAR *name, BOOL rendered, BOOL output, BOOL zero, BOOL many,
+        CLSID external_filter, const WCHAR *external_pin)
 {
-    HRESULT hr;
-    LONG lRet;
-    LPWSTR wszClsid = NULL;
-    HKEY hKey = NULL;
-    HKEY hPinsKey = NULL;
-    WCHAR * wszPinsKeyName;
-    WCHAR wszKeyName[ARRAY_SIZE(wszClsidSlash)-1 + (CHARS_IN_GUID-1) + 1];
+    WCHAR keypath[6 + 38 + 1], *pin_keypath;
+    HKEY key, pin_key, type_key;
+    LONG ret;
 
-    TRACE("(%p)->(%s, %s, %d, %d, %d, %d, %s, %s)\n", iface, debugstr_guid(&Filter), debugstr_w(szName), bRendered,
-                bOutput, bZero, bMany, debugstr_guid(&ConnectsToFilter), debugstr_w(ConnectsToPin));
+    TRACE("iface %p, clsid %s, name %s, rendered %d, output %d, zero %d, "
+            "many %d, external_filter %s, external_pin %s.\n",
+            iface, debugstr_guid(&clsid), debugstr_w(name), rendered, output,
+            zero, many, debugstr_guid(&external_filter), debugstr_w(external_pin));
 
-    hr = StringFromCLSID(&Filter, &wszClsid);
+    wcscpy(keypath, L"CLSID\\");
+    StringFromGUID2(&clsid, keypath + wcslen(keypath), ARRAY_SIZE(keypath) - wcslen(keypath));
+    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, keypath, 0, KEY_WRITE, &key)))
+        return HRESULT_FROM_WIN32(ret);
 
-    if (SUCCEEDED(hr))
+    if (!(pin_keypath = malloc((5 + wcslen(name) + 1) * sizeof(WCHAR))))
     {
-        lstrcpyW(wszKeyName, wszClsidSlash);
-        lstrcatW(wszKeyName, wszClsid);
-
-        lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, KEY_WRITE, &hKey);
-        hr = HRESULT_FROM_WIN32(lRet);
+        RegCloseKey(key);
+        return E_OUTOFMEMORY;
     }
+    wcscpy(pin_keypath, L"Pins\\");
+    wcscat(pin_keypath, name);
 
-    if (SUCCEEDED(hr))
+    if ((ret = RegCreateKeyExW(key, pin_keypath, 0, NULL, 0, KEY_WRITE, NULL, &pin_key, NULL)))
     {
-        wszPinsKeyName = CoTaskMemAlloc((lstrlenW(wszPins) + 1 + lstrlenW(szName) + 1) * 2);
-        if (!wszPinsKeyName)
-             hr = E_OUTOFMEMORY;
+        ERR("Failed to open pin key, error %u.\n", ret);
+        free(pin_keypath);
+        RegCloseKey(key);
+        return HRESULT_FROM_WIN32(ret);
     }
+    free(pin_keypath);
 
-    if (SUCCEEDED(hr))
-    {
-        lstrcpyW(wszPinsKeyName, wszPins);
-        lstrcatW(wszPinsKeyName, wszSlash);
-        lstrcatW(wszPinsKeyName, szName);
-    
-        lRet = RegCreateKeyExW(hKey, wszPinsKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hPinsKey, NULL);
-        hr = HRESULT_FROM_WIN32(lRet);
-        CoTaskMemFree(wszPinsKeyName);
-    }
+    if ((ret = RegSetValueExW(pin_key, L"AllowedMany", 0, REG_DWORD, (const BYTE *)&many, sizeof(DWORD))))
+        ERR("Failed to set AllowedMany value, error %u.\n", ret);
+    if ((ret = RegSetValueExW(pin_key, L"AllowedZero", 0, REG_DWORD, (const BYTE *)&zero, sizeof(DWORD))))
+        ERR("Failed to set AllowedZero value, error %u.\n", ret);
+    if ((ret = RegSetValueExW(pin_key, L"Direction", 0, REG_DWORD, (const BYTE *)&output, sizeof(DWORD))))
+        ERR("Failed to set Direction value, error %u.\n", ret);
+    if ((ret = RegSetValueExW(pin_key, L"IsRendered", 0, REG_DWORD, (const BYTE *)&rendered, sizeof(DWORD))))
+        ERR("Failed to set IsRendered value, error %u.\n", ret);
 
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegSetValueExW(hPinsKey, wszAllowedMany, 0, REG_DWORD, (LPBYTE)&bMany, sizeof(bMany));
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
+    if (!(ret = RegCreateKeyExW(pin_key, L"Types", 0, NULL, 0, 0, NULL, &type_key, NULL)))
+        RegCloseKey(type_key);
+    else
+        ERR("Failed to create Types subkey, error %u.\n", ret);
 
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegSetValueExW(hPinsKey, wszAllowedZero, 0, REG_DWORD, (LPBYTE)&bZero, sizeof(bZero));
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
+    RegCloseKey(pin_key);
+    RegCloseKey(key);
 
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegSetValueExW(hPinsKey, wszDirection, 0, REG_DWORD, (LPBYTE)&bOutput, sizeof(bOutput));
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegSetValueExW(hPinsKey, wszIsRendered, 0, REG_DWORD, (LPBYTE)&bRendered, sizeof(bRendered));
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        HKEY hkeyDummy = NULL;
-
-        lRet = RegCreateKeyExW(hPinsKey, wszTypes, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hkeyDummy, NULL);
-        hr = HRESULT_FROM_WIN32(lRet);
-
-        if (hkeyDummy) RegCloseKey(hkeyDummy);
-    }
-
-    CoTaskMemFree(wszClsid);
-    if (hKey)
-        RegCloseKey(hKey);
-    if (hPinsKey)
-        RegCloseKey(hPinsKey);
-
-    return hr;
+    return S_OK;
 }
 
 
