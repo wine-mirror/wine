@@ -1342,8 +1342,8 @@ static void test_pathgradientcenterpoint(void)
 
     status = GdipGetPathGradientCenterPoint(grad, &point);
     expect(Ok, status);
-    todo_wine expectf(1.0, point.X);
-    todo_wine expectf(4.0/3.0, point.Y);
+    expectf(1.0, point.X);
+    expectf(4.0/3.0, point.Y);
 
     status = GdipDeleteBrush((GpBrush*)grad);
     expect(Ok, status);
@@ -1359,7 +1359,7 @@ static void test_pathgradientcenterpoint(void)
 
     status = GdipGetPathGradientCenterPoint(grad, &point);
     expect(Ok, status);
-    todo_wine expectf(700.0/13.0, point.X);
+    expectf(700.0/13.0, point.X);
     expectf(25.0, point.Y);
 
     status = GdipDeletePath(path);
