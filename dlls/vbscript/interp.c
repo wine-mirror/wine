@@ -275,6 +275,14 @@ void clear_ei(EXCEPINFO *ei)
     memset(ei, 0, sizeof(*ei));
 }
 
+static void clear_error_loc(script_ctx_t *ctx)
+{
+    if(ctx->error_loc_code) {
+        release_vbscode(ctx->error_loc_code);
+        ctx->error_loc_code = NULL;
+    }
+}
+
 static inline VARIANT *stack_pop(exec_ctx_t *ctx)
 {
     assert(ctx->top);
@@ -2396,6 +2404,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
 
                 TRACE("unwind jmp %d stack_off %d\n", exec.instr->arg1.uint, exec.instr->arg2.uint);
 
+                clear_error_loc(ctx);
                 stack_off = exec.instr->arg2.uint;
                 instr_jmp(&exec, exec.instr->arg1.uint);
 
@@ -2414,7 +2423,11 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
 
                 continue;
             }else {
-                WARN("Failed %08x\n", hres);
+                if(!ctx->error_loc_code) {
+                    grab_vbscode(exec.code);
+                    ctx->error_loc_code = exec.code;
+                    ctx->error_loc_offset = exec.instr->loc;
+                }
                 stack_popn(&exec, exec.top);
                 break;
             }
@@ -2426,12 +2439,13 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     assert(!exec.top);
 
     if(extern_caller) {
-        IActiveScriptSite_OnLeaveScript(ctx->site);
         if(FAILED(hres)) {
             if(!ctx->ei.scode)
                 ctx->ei.scode = hres;
-            hres = report_script_error(ctx);
+            hres = report_script_error(ctx, ctx->error_loc_code, ctx->error_loc_offset);
+            clear_error_loc(ctx);
         }
+        IActiveScriptSite_OnLeaveScript(ctx->site);
     }
 
     if(SUCCEEDED(hres) && res) {

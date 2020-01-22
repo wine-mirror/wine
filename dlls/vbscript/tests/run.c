@@ -2530,10 +2530,9 @@ static void test_parse_errors(void)
         ok(hres == SCRIPT_E_REPORTED, "[%u] script returned: %08x\n", i, hres);
         CHECK_CALLED(OnScriptError);
 
-        todo_wine_if(invalid_scripts[i].error_line)
         ok(error_line == invalid_scripts[i].error_line, "[%u] error line %u expected %u\n",
            i, error_line, invalid_scripts[i].error_line);
-        todo_wine_if(invalid_scripts[i].error_char)
+        todo_wine_if(invalid_scripts[i].error_char < 0)
         ok(error_char == abs(invalid_scripts[i].error_char), "[%u] error char %d expected %d\n",
            i, error_char, invalid_scripts[i].error_char);
     }

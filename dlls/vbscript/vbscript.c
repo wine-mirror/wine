@@ -61,6 +61,9 @@ typedef struct {
     IActiveScriptError IActiveScriptError_iface;
     LONG ref;
     EXCEPINFO ei;
+    DWORD_PTR cookie;
+    unsigned line;
+    unsigned character;
 } VBScriptError;
 
 static inline WCHAR *heap_pool_strdup(heap_pool_t *heap, const WCHAR *str)
@@ -377,14 +380,14 @@ static HRESULT WINAPI VBScriptError_GetSourcePosition(IActiveScriptError *iface,
 {
     VBScriptError *This = impl_from_IActiveScriptError(iface);
 
-    FIXME("(%p)->(%p %p %p)\n", This, source_context, line, character);
+    TRACE("(%p)->(%p %p %p)\n", This, source_context, line, character);
 
     if(source_context)
-        *source_context = 0;
+        *source_context = This->cookie;
     if(line)
-        *line = 0;
+        *line = This->line;
     if(character)
-        *character = 0;
+        *character = This->character;
     return S_OK;
 }
 
@@ -404,9 +407,10 @@ static const IActiveScriptErrorVtbl VBScriptErrorVtbl = {
     VBScriptError_GetSourceLineText
 };
 
-HRESULT report_script_error(script_ctx_t *ctx)
+HRESULT report_script_error(script_ctx_t *ctx, const vbscode_t *code, unsigned loc)
 {
     VBScriptError *error;
+    const WCHAR *p, *nl;
     HRESULT hres, result;
 
     if(!(error = heap_alloc(sizeof(*error))))
@@ -417,6 +421,16 @@ HRESULT report_script_error(script_ctx_t *ctx)
     error->ei = ctx->ei;
     memset(&ctx->ei, 0, sizeof(ctx->ei));
     result = error->ei.scode;
+
+    p = code->source;
+    error->cookie = code->cookie;
+    error->line = code->start_line;
+    for(nl = p = code->source; p < code->source + loc; p++) {
+        if(*p != '\n') continue;
+        error->line++;
+        nl = p + 1;
+    }
+    error->character = code->source + loc - nl;
 
     hres = IActiveScriptSite_OnScriptError(ctx->site, &error->IActiveScriptError_iface);
     IActiveScriptError_Release(&error->IActiveScriptError_iface);

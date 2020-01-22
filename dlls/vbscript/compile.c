@@ -374,7 +374,7 @@ static inline BOOL emit_catch(compile_ctx_t *ctx, unsigned off)
     return emit_catch_jmp(ctx, off, ctx->instr_cnt);
 }
 
-static HRESULT compile_error(script_ctx_t *ctx, HRESULT error)
+static HRESULT compile_error(script_ctx_t *ctx, compile_ctx_t *compiler, HRESULT error)
 {
     if(error == SCRIPT_E_REPORTED)
         return error;
@@ -383,7 +383,7 @@ static HRESULT compile_error(script_ctx_t *ctx, HRESULT error)
     ctx->ei.scode = error = map_hres(error);
     ctx->ei.bstrSource = get_vbscript_string(VBS_COMPILE_ERROR);
     ctx->ei.bstrDescription = get_vbscript_error_string(error);
-    return report_script_error(ctx);
+    return report_script_error(ctx, compiler->code, compiler->loc);
 }
 
 static expression_t *lookup_const_decls(compile_ctx_t *ctx, const WCHAR *name, BOOL lookup_global)
@@ -1926,18 +1926,19 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     if(FAILED(hres)) {
         if(ctx.parser.error_loc != -1)
             ctx.loc = ctx.parser.error_loc;
-        hres = compile_error(script, hres);
+        hres = compile_error(script, &ctx, hres);
         release_vbscode(code);
         return hres;
     }
 
     hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->main_code);
     if(FAILED(hres)) {
-        hres = compile_error(script, hres);
+        hres = compile_error(script, &ctx, hres);
         release_compiler(&ctx);
         return hres;
     }
 
+    code->option_explicit = ctx.parser.option_explicit;
     ctx.global_consts = ctx.const_decls;
     code->option_explicit = ctx.parser.option_explicit;
 
@@ -1945,7 +1946,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     for(func_decl = ctx.func_decls; func_decl; func_decl = func_decl->next) {
         hres = create_function(&ctx, func_decl, &new_func);
         if(FAILED(hres)) {
-            hres = compile_error(script, hres);
+            hres = compile_error(script, &ctx, hres);
             release_compiler(&ctx);
             return hres;
         }
@@ -1957,15 +1958,17 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     for(class_decl = ctx.parser.class_decls; class_decl; class_decl = class_decl->next) {
         hres = compile_class(&ctx, class_decl);
         if(FAILED(hres)) {
+            hres = compile_error(script, &ctx, hres);
             release_compiler(&ctx);
-            return compile_error(script, hres);
+            return hres;
         }
     }
 
     hres = check_script_collisions(&ctx, script);
     if(FAILED(hres)) {
+        hres = compile_error(script, &ctx, hres);
         release_compiler(&ctx);
-        return compile_error(script, hres);
+        return hres;
     }
 
     code->is_persistent = (flags & SCRIPTTEXT_ISPERSISTENT) != 0;
