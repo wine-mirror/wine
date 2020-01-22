@@ -320,8 +320,6 @@ static void test_track(void)
 
         hr = IDirectMusicTrack8_GetParam(dmt8, NULL, 0, NULL, NULL);
         ok(hr == E_POINTER, "IDirectMusicTrack8_GetParam failed: %08x\n", hr);
-        hr = IDirectMusicTrack8_SetParam(dmt8, NULL, 0, NULL);
-        todo_wine ok(hr == E_POINTER, "IDirectMusicTrack8_SetParam failed: %08x\n", hr);
 
         hr = IDirectMusicTrack8_IsParamSupported(dmt8, NULL);
         ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
