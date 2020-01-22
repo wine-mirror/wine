@@ -1851,16 +1851,24 @@ void release_vbscode(vbscode_t *code)
 static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
 {
     vbscode_t *ret;
+    size_t len;
+
+    len = source ? lstrlenW(source) : 0;
+    if(len > INT32_MAX)
+        return NULL;
 
     ret = heap_alloc_zero(sizeof(*ret));
     if(!ret)
         return NULL;
 
-    ret->source = heap_strdupW(source);
+    ret->source = heap_alloc((len + 1) * sizeof(WCHAR));
     if(!ret->source) {
         heap_free(ret);
         return NULL;
     }
+    if(len)
+        memcpy(ret->source, source, len * sizeof(WCHAR));
+    ret->source[len] = 0;
 
     ret->instrs = heap_alloc(32*sizeof(instr_t));
     if(!ret->instrs) {
@@ -1871,8 +1879,6 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
     ctx->instr_cnt = 1;
     ctx->instr_size = 32;
     heap_pool_init(&ret->heap);
-
-    ret->option_explicit = ctx->parser.option_explicit;
 
     ret->main_code.type = FUNC_GLOBAL;
     ret->main_code.code_ctx = ret;
@@ -1899,15 +1905,16 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     vbscode_t *code;
     HRESULT hres;
 
-    if (!src) src = L"";
-
-    hres = parse_script(&ctx.parser, src, delimiter, flags);
-    if(FAILED(hres))
-        return compile_error(script, hres);
-
     code = ctx.code = alloc_vbscode(&ctx, src);
     if(!ctx.code)
-        return compile_error(script, E_OUTOFMEMORY);
+        return E_OUTOFMEMORY;
+
+    hres = parse_script(&ctx.parser, code->source, delimiter, flags);
+    if(FAILED(hres)) {
+        hres = compile_error(script, hres);
+        release_vbscode(code);
+        return hres;
+    }
 
     ctx.func_decls = NULL;
     ctx.labels = NULL;
@@ -1922,6 +1929,8 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     }
 
     ctx.global_consts = ctx.const_decls;
+    code->option_explicit = ctx.parser.option_explicit;
+
 
     for(func_decl = ctx.func_decls; func_decl; func_decl = func_decl->next) {
         hres = create_function(&ctx, func_decl, &new_func);
