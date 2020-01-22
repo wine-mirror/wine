@@ -253,62 +253,44 @@ static ULONG WINAPI FilterMapper3_Release(IFilterMapper3 * iface)
 
 /*** IFilterMapper3 methods ***/
 
-static HRESULT WINAPI FilterMapper3_CreateCategory(
-    IFilterMapper3 * iface,
-    REFCLSID clsidCategory,
-    DWORD dwCategoryMerit,
-    LPCWSTR szDescription)
+static HRESULT WINAPI FilterMapper3_CreateCategory(IFilterMapper3 *iface,
+        REFCLSID category, DWORD merit, const WCHAR *description)
 {
-    LPWSTR wClsidAMCat = NULL;
-    LPWSTR wClsidCategory = NULL;
-    WCHAR wszKeyName[ARRAY_SIZE(wszClsidSlash)-1 + ARRAY_SIZE(wszSlashInstance)-1 + (CHARS_IN_GUID-1) * 2 + 1];
-    HKEY hKey = NULL;
-    LONG lRet;
-    HRESULT hr;
+    WCHAR guidstr[39], keypath[93];
+    HKEY key;
+    LONG ret;
 
-    TRACE("(%s, %x, %s)\n", debugstr_guid(clsidCategory), dwCategoryMerit, debugstr_w(szDescription));
+    TRACE("iface %p, category %s, merit %#x, description %s.\n", iface,
+            debugstr_guid(category), merit, debugstr_w(description));
 
-    hr = StringFromCLSID(&CLSID_ActiveMovieCategories, &wClsidAMCat);
+    StringFromGUID2(category, guidstr, ARRAY_SIZE(guidstr));
+    wcscpy(keypath, L"CLSID\\{da4e3da0-d07d-11d0-bd50-00a0c911ce86}\\Instance\\");
+    wcscat(keypath, guidstr);
 
-    if (SUCCEEDED(hr))
+    if ((ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, keypath, 0, NULL, 0, KEY_WRITE, NULL, &key, NULL)))
+        return HRESULT_FROM_WIN32(ret);
+
+    if ((ret = RegSetValueExW(key, L"FriendlyName", 0, REG_SZ,
+            (const BYTE *)description, (wcslen(description) + 1) * sizeof(WCHAR))))
     {
-        hr = StringFromCLSID(clsidCategory, &wClsidCategory);
+        RegCloseKey(key);
+        return HRESULT_FROM_WIN32(ret);
     }
 
-    if (SUCCEEDED(hr))
+    if ((ret = RegSetValueExW(key, L"CLSID", 0, REG_SZ, (const BYTE *)guidstr, sizeof(guidstr))))
     {
-        lstrcpyW(wszKeyName, wszClsidSlash);
-        lstrcatW(wszKeyName, wClsidAMCat);
-        lstrcatW(wszKeyName, wszSlashInstance);
-        lstrcatW(wszKeyName, wClsidCategory);
-
-        lRet = RegCreateKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
-        hr = HRESULT_FROM_WIN32(lRet);
+        RegCloseKey(key);
+        return HRESULT_FROM_WIN32(ret);
     }
 
-    if (SUCCEEDED(hr))
+    if ((ret = RegSetValueExW(key, L"Merit", 0, REG_DWORD, (const BYTE *)&merit, sizeof(DWORD))))
     {
-        lRet = RegSetValueExW(hKey, wszFriendlyName, 0, REG_SZ, (const BYTE*)szDescription, (lstrlenW(szDescription) + 1) * sizeof(WCHAR));
-        hr = HRESULT_FROM_WIN32(lRet);
+        RegCloseKey(key);
+        return HRESULT_FROM_WIN32(ret);
     }
 
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegSetValueExW(hKey, wszClsidName, 0, REG_SZ, (LPBYTE)wClsidCategory, (lstrlenW(wClsidCategory) + 1) * sizeof(WCHAR));
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegSetValueExW(hKey, wszMeritName, 0, REG_DWORD, (LPBYTE)&dwCategoryMerit, sizeof(dwCategoryMerit));
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
-
-    RegCloseKey(hKey);
-    CoTaskMemFree(wClsidCategory);
-    CoTaskMemFree(wClsidAMCat);
-
-    return hr;
+    RegCloseKey(key);
+    return S_OK;
 }
 
 static HRESULT WINAPI FilterMapper3_UnregisterFilter(
