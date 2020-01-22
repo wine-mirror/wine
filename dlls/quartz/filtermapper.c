@@ -83,12 +83,8 @@ static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a',
 static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};
 /* FilterData property in media category Moniker (not CLSID_ActiveMovieCategories) */
 static const WCHAR wszFilterDataName[] = {'F','i','l','t','e','r','D','a','t','a',0};
-/* For filters registered with IFilterMapper */
-static const WCHAR wszFilter[] = {'F','i','l','t','e','r',0};
 /* For pins registered with IFilterMapper */
 static const WCHAR wszPins[] = {'P','i','n','s',0};
-/* For types registered with IFilterMapper */
-static const WCHAR wszTypes[] = {'T','y','p','e','s',0};
 
 
 /* registry format for REGFILTER2 */
@@ -1253,59 +1249,36 @@ static HRESULT WINAPI FilterMapper_RegisterPinType(IFilterMapper *iface,
     return HRESULT_FROM_WIN32(ret);
 }
 
-static HRESULT WINAPI FilterMapper_UnregisterFilter(IFilterMapper * iface, CLSID Filter)
+static HRESULT WINAPI FilterMapper_UnregisterFilter(IFilterMapper *iface, CLSID clsid)
 {
-    HRESULT hr;
-    LONG lRet;
-    LPWSTR wszClsid = NULL;
-    HKEY hKey;
-    WCHAR wszKeyName[ARRAY_SIZE(wszClsidSlash)-1 + (CHARS_IN_GUID-1) + 1];
+    WCHAR guidstr[39], keypath[6 + 38 + 1];
+    LONG ret;
+    HKEY key;
 
-    TRACE("(%p)->(%s)\n", iface, debugstr_guid(&Filter));
+    TRACE("iface %p, clsid %s.\n", iface, debugstr_guid(&clsid));
 
-    hr = StringFromCLSID(&Filter, &wszClsid);
+    StringFromGUID2(&clsid, guidstr, ARRAY_SIZE(guidstr));
 
-    if (SUCCEEDED(hr))
+    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, L"Filter", 0, 0, &key)))
+        return HRESULT_FROM_WIN32(ret);
+    if ((ret = RegDeleteKeyW(key, guidstr)))
+        ERR("Failed to delete filter key, error %u.\n", ret);
+    RegCloseKey(key);
+
+    wcscpy(keypath, L"CLSID\\");
+    wcscat(keypath, guidstr);
+    if (!(ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, keypath, 0, KEY_WRITE, &key)))
     {
-        lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszFilter, 0, KEY_WRITE, &hKey);
-        hr = HRESULT_FROM_WIN32(lRet);
+        if ((ret = RegDeleteValueW(key, L"Merit")))
+            ERR("Failed to delete Merit value, error %u.\n", ret);
+        if ((ret = RegDeleteTreeW(key, L"Pins")))
+            ERR("Failed to delete Pins key, error %u.\n", ret);
+        RegCloseKey(key);
     }
+    else
+        ERR("Failed to open CLSID key, error %u.\n", ret);
 
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegDeleteKeyW(hKey, wszClsid);
-        hr = HRESULT_FROM_WIN32(lRet);
-        RegCloseKey(hKey);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        lstrcpyW(wszKeyName, wszClsidSlash);
-        lstrcatW(wszKeyName, wszClsid);
-
-        lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, KEY_WRITE, &hKey);
-        if (lRet == ERROR_FILE_NOT_FOUND)
-            goto done;
-        hr = HRESULT_FROM_WIN32(lRet);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        lRet = RegDeleteValueW(hKey, wszMeritName);
-        if (lRet != ERROR_SUCCESS && lRet != ERROR_FILE_NOT_FOUND)
-            hr = HRESULT_FROM_WIN32(lRet);
-
-        lRet = RegDeleteTreeW(hKey, wszPins);
-        if (lRet != ERROR_SUCCESS && lRet != ERROR_FILE_NOT_FOUND)
-            hr = HRESULT_FROM_WIN32(lRet);
-
-        RegCloseKey(hKey);
-    }
-
-done:
-    CoTaskMemFree(wszClsid);
-
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI FilterMapper_UnregisterFilterInstance(IFilterMapper * iface, CLSID MRId)
