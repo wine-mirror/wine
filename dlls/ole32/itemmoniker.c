@@ -790,13 +790,15 @@ static HRESULT WINAPI ItemMonikerImpl_ParseDisplayName(IMoniker *iface, IBindCtx
     {
         hr = IOleItemContainer_GetObject(container, This->itemName, get_bind_speed_from_bindctx(pbc), pbc,
                 &IID_IParseDisplayName, (void **)&parser);
+        if (SUCCEEDED(hr))
+        {
+            hr = IMoniker_GetDisplayName(iface,pbc,NULL,&displayName);
 
-        hr = IMoniker_GetDisplayName(iface,pbc,NULL,&displayName);
+            hr = IParseDisplayName_ParseDisplayName(parser, pbc, displayName, eaten, ppmkOut);
 
-        hr = IParseDisplayName_ParseDisplayName(parser, pbc, displayName, eaten, ppmkOut);
-
+            IParseDisplayName_Release(parser);
+        }
         IOleItemContainer_Release(container);
-        IParseDisplayName_Release(parser);
     }
 
     return hr;
