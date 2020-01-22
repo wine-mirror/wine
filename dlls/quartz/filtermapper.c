@@ -314,39 +314,6 @@ static HRESULT WINAPI FilterMapper3_UnregisterFilter(IFilterMapper3 *iface,
     return HRESULT_FROM_WIN32(RegDeleteKeyW(HKEY_CLASSES_ROOT, keypath));
 }
 
-static HRESULT FM2_WriteFriendlyName(IPropertyBag * pPropBag, LPCWSTR szName)
-{
-    VARIANT var;
-    HRESULT ret;
-    BSTR value;
-
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = value = SysAllocString(szName);
-
-    ret = IPropertyBag_Write(pPropBag, wszFriendlyName, &var);
-    SysFreeString(value);
-
-    return ret;
-}
-
-static HRESULT FM2_WriteClsid(IPropertyBag * pPropBag, REFCLSID clsid)
-{
-    LPWSTR wszClsid = NULL;
-    VARIANT var;
-    HRESULT hr;
-
-    hr = StringFromCLSID(clsid, &wszClsid);
-
-    if (SUCCEEDED(hr))
-    {
-        V_VT(&var) = VT_BSTR;
-        V_BSTR(&var) = wszClsid;
-        hr = IPropertyBag_Write(pPropBag, wszClsidName, &var);
-    }
-    CoTaskMemFree(wszClsid);
-    return hr;
-}
-
 static HRESULT FM2_WriteFilterData(const REGFILTER2 * prf2, BYTE **ppData, ULONG *pcbData)
 {
     int size = sizeof(struct REG_RF);
@@ -577,36 +544,26 @@ static void FM2_DeleteRegFilter(REGFILTER2 * prf2)
     CoTaskMemFree((LPVOID)prf2->u.s2.rgPins2);
 }
 
-static HRESULT WINAPI FilterMapper3_RegisterFilter(
-    IFilterMapper3 * iface,
-    REFCLSID clsidFilter,
-    LPCWSTR szName,
-    IMoniker **ppMoniker,
-    const CLSID *pclsidCategory,
-    const OLECHAR *szInstance,
-    const REGFILTER2 *prf2)
+static HRESULT WINAPI FilterMapper3_RegisterFilter(IFilterMapper3 *iface,
+        REFCLSID clsid, const WCHAR *name, IMoniker **ret_moniker,
+        const CLSID *category, const WCHAR *instance, const REGFILTER2 *prf2)
 {
-    IParseDisplayName * pParser = NULL;
-    IBindCtx * pBindCtx = NULL;
-    IMoniker * pMoniker = NULL;
-    IPropertyBag * pPropBag = NULL;
+    WCHAR *display_name, clsid_string[39];
+    IParseDisplayName *parser;
+    IPropertyBag *prop_bag;
+    ULONG filter_data_len;
+    IMoniker *moniker;
+    BYTE *filter_data;
+    VARIANT var;
+    ULONG eaten;
     HRESULT hr;
-    LPWSTR pwszParseName = NULL;
-    LPWSTR pCurrent;
-    static const WCHAR wszDevice[] = {'@','d','e','v','i','c','e',':','s','w',':',0};
-    int nameLen;
-    ULONG ulEaten;
-    LPWSTR szClsidTemp = NULL;
+    size_t len;
     REGFILTER2 regfilter2;
     REGFILTERPINS2* pregfp2 = NULL;
 
-    TRACE("(%s, %s, %p, %s, %s, %p)\n",
-        debugstr_guid(clsidFilter),
-        debugstr_w(szName),
-        ppMoniker,
-        debugstr_guid(pclsidCategory),
-        debugstr_w(szInstance),
-        prf2);
+    TRACE("iface %p, clsid %s, name %s, ret_moniker %p, category %s, instance %s, prf2 %p.\n",
+            iface, debugstr_guid(clsid), debugstr_w(name), ret_moniker,
+            debugstr_guid(category), debugstr_w(instance), prf2);
 
     if (prf2->dwVersion == 2)
     {
@@ -648,135 +605,80 @@ static HRESULT WINAPI FilterMapper3_RegisterFilter(
         return E_NOTIMPL;
     }
 
-    if (ppMoniker)
-        *ppMoniker = NULL;
+    if (ret_moniker)
+        *ret_moniker = NULL;
 
-    if (!pclsidCategory)
-        /* MSDN mentions the inexistent CLSID_ActiveMovieFilters GUID.
-         * In fact this is the CLSID_LegacyAmFilterCategory one */
-        pclsidCategory = &CLSID_LegacyAmFilterCategory;
+    if (!category)
+        category = &CLSID_LegacyAmFilterCategory;
 
-    /* sizeof... will include the null terminator and
-     * the + 1 is for the separator ('\\'). The -1 is
-     * because CHARS_IN_GUID includes the null terminator
-     */
-    nameLen = ARRAY_SIZE(wszDevice) + CHARS_IN_GUID - 1 + 1;
+    StringFromGUID2(clsid, clsid_string, ARRAY_SIZE(clsid_string));
 
-    if (szInstance)
-        nameLen += lstrlenW(szInstance);
-    else
-        nameLen += CHARS_IN_GUID - 1; /* CHARS_IN_GUID includes null terminator */
-
-    pCurrent = pwszParseName = CoTaskMemAlloc(nameLen*sizeof(WCHAR));
-    if (!pwszParseName)
+    len = 50 + (instance ? wcslen(instance) : 38) + 1;
+    if (!(display_name = malloc(len * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
 
-    lstrcpyW(pwszParseName, wszDevice);
-    pCurrent += lstrlenW(wszDevice);
+    wcscpy(display_name, L"@device:sw:");
+    StringFromGUID2(category, display_name + wcslen(display_name), len - wcslen(display_name));
+    wcscat(display_name, L"\\");
+    wcscat(display_name, instance ? instance : clsid_string);
 
-    hr = StringFromCLSID(pclsidCategory, &szClsidTemp);
+    if (FAILED(hr = CoCreateInstance(&CLSID_CDeviceMoniker, NULL, CLSCTX_INPROC,
+            &IID_IParseDisplayName, (void **)&parser)))
+        return hr;
 
-    if (SUCCEEDED(hr))
+    if (FAILED(hr = IParseDisplayName_ParseDisplayName(parser, NULL, display_name, &eaten, &moniker)))
     {
-        memcpy(pCurrent, szClsidTemp, CHARS_IN_GUID * sizeof(WCHAR));
-        pCurrent += CHARS_IN_GUID - 1;
-        pCurrent[0] = '\\';
-
-        if (szInstance)
-            lstrcpyW(pCurrent+1, szInstance);
-        else
-        {
-            CoTaskMemFree(szClsidTemp);
-            szClsidTemp = NULL;
-
-            hr = StringFromCLSID(clsidFilter, &szClsidTemp);
-            if (SUCCEEDED(hr))
-                lstrcpyW(pCurrent+1, szClsidTemp);
-        }
+        ERR("Failed to parse display name, hr %#x.\n", hr);
+        IParseDisplayName_Release(parser);
+        return hr;
     }
 
-    if (SUCCEEDED(hr))
-        hr = CoCreateInstance(&CLSID_CDeviceMoniker, NULL, CLSCTX_INPROC, &IID_IParseDisplayName, (LPVOID *)&pParser);
+    IParseDisplayName_Release(parser);
 
-    if (SUCCEEDED(hr))
-        hr = CreateBindCtx(0, &pBindCtx);
-
-    if (SUCCEEDED(hr))
-        hr = IParseDisplayName_ParseDisplayName(pParser, pBindCtx, pwszParseName, &ulEaten, &pMoniker);
-
-    if (pBindCtx)
-        IBindCtx_Release(pBindCtx);
-    if (pParser)
-        IParseDisplayName_Release(pParser);
-
-    if (SUCCEEDED(hr))
-        hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
-
-    if (SUCCEEDED(hr))
-        hr = FM2_WriteFriendlyName(pPropBag, szName);
-
-    if (SUCCEEDED(hr))
-        hr = FM2_WriteClsid(pPropBag, clsidFilter);
-
-    if (SUCCEEDED(hr))
+    if (FAILED(hr = IMoniker_BindToStorage(moniker, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag)))
     {
-        BYTE *pData;
-        ULONG cbData;
-
-        hr = FM2_WriteFilterData(&regfilter2, &pData, &cbData);
-        if (SUCCEEDED(hr))
-        {
-            VARIANT var;
-            SAFEARRAY *psa;
-            SAFEARRAYBOUND saBound;
-
-            saBound.lLbound = 0;
-            saBound.cElements = cbData;
-            psa = SafeArrayCreate(VT_UI1, 1, &saBound);
-            if (!psa)
-            {
-                ERR("Couldn't create SAFEARRAY\n");
-                hr = E_FAIL;
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                LPBYTE pbSAData;
-                hr = SafeArrayAccessData(psa, (LPVOID *)&pbSAData);
-                if (SUCCEEDED(hr))
-                {
-                    memcpy(pbSAData, pData, cbData);
-                    hr = SafeArrayUnaccessData(psa);
-                }
-            }
-
-            V_VT(&var) = VT_ARRAY | VT_UI1;
-            V_ARRAY(&var) = psa;
-
-            if (SUCCEEDED(hr))
-                hr = IPropertyBag_Write(pPropBag, wszFilterDataName, &var);
-
-            if (psa)
-                SafeArrayDestroy(psa);
-            CoTaskMemFree(pData);
-        }
+        ERR("Failed to get property bag, hr %#x.\n", hr);
+        IMoniker_Release(moniker);
+        return hr;
     }
 
-    if (pPropBag)
-        IPropertyBag_Release(pPropBag);
-    CoTaskMemFree(szClsidTemp);
-    CoTaskMemFree(pwszParseName);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(name);
+    if (FAILED(hr = IPropertyBag_Write(prop_bag, L"FriendlyName", &var)))
+        ERR("Failed to write friendly name, hr %#x.\n", hr);
+    VariantClear(&var);
 
-    if (SUCCEEDED(hr) && ppMoniker)
-        *ppMoniker = pMoniker;
-    else if (pMoniker)
-        IMoniker_Release(pMoniker);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(clsid_string);
+    if (FAILED(hr = IPropertyBag_Write(prop_bag, L"CLSID", &var)))
+        ERR("Failed to write class ID, hr %#x.\n", hr);
+    VariantClear(&var);
+
+    if (SUCCEEDED(FM2_WriteFilterData(&regfilter2, &filter_data, &filter_data_len)))
+    {
+        V_VT(&var) = VT_ARRAY | VT_UI1;
+        if ((V_ARRAY(&var) = SafeArrayCreateVector(VT_UI1, 0, filter_data_len)))
+        {
+            memcpy(V_ARRAY(&var)->pvData, filter_data, filter_data_len);
+            if (FAILED(hr = IPropertyBag_Write(prop_bag, L"FilterData", &var)))
+                ERR("Failed to write filter data, hr %#x.\n", hr);
+            VariantClear(&var);
+        }
+
+        CoTaskMemFree(filter_data);
+    }
+
+    IPropertyBag_Release(prop_bag);
+    free(display_name);
+
+    if (ret_moniker)
+        *ret_moniker = moniker;
+    else
+        IMoniker_Release(moniker);
 
     CoTaskMemFree(pregfp2);
 
-    TRACE("-- returning %x\n", hr);
-
-    return hr;
+    return S_OK;
 }
 
 /* internal helper function */
