@@ -100,7 +100,9 @@ struct tagActiveDS
     struct jpeg_decompress_struct	jd;
     struct jpeg_error_mgr		jerr;
 #endif
-} activeDS DECLSPEC_HIDDEN;
+};
+
+extern struct tagActiveDS activeDS DECLSPEC_HIDDEN;
 
 /* Helper functions */
 extern TW_UINT16 GPHOTO2_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action) DECLSPEC_HIDDEN;

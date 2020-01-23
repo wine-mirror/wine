@@ -33,6 +33,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
+struct tagActiveDS activeDS;
+
 DSMENTRYPROC GPHOTO2_dsmentry;
 
 #ifdef HAVE_GPHOTO2
