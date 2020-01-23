@@ -10180,10 +10180,11 @@ static void test_overlay_rect(void)
     ok(!pos_x, "Got unexpected pos_x %d.\n", pos_x);
     ok(!pos_y, "Got unexpected pos_y %d.\n", pos_y);
 
-    IDirectDrawSurface_Release(overlay);
 done:
     if (primary)
         IDirectDrawSurface_Release(primary);
+    if (overlay)
+        IDirectDrawSurface_Release(overlay);
     IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
 }
