@@ -1089,8 +1089,8 @@ enum OPENTYPE_STRING_ID
     OPENTYPE_STRING_LICENSE_DESCRIPTION,
     OPENTYPE_STRING_LICENSE_INFO_URL,
     OPENTYPE_STRING_RESERVED_ID15,
-    OPENTYPE_STRING_PREFERRED_FAMILY_NAME,
-    OPENTYPE_STRING_PREFERRED_SUBFAMILY_NAME,
+    OPENTYPE_STRING_TYPOGRAPHIC_FAMILY_NAME,
+    OPENTYPE_STRING_TYPOGRAPHIC_SUBFAMILY_NAME,
     OPENTYPE_STRING_COMPATIBLE_FULLNAME,
     OPENTYPE_STRING_SAMPLE_TEXT,
     OPENTYPE_STRING_POSTSCRIPT_CID_NAME,
@@ -1113,8 +1113,8 @@ static const UINT16 dwriteid_to_opentypeid[DWRITE_INFORMATIONAL_STRING_POSTSCRIP
     OPENTYPE_STRING_LICENSE_INFO_URL,
     OPENTYPE_STRING_FAMILY_NAME,
     OPENTYPE_STRING_SUBFAMILY_NAME,
-    OPENTYPE_STRING_PREFERRED_FAMILY_NAME,
-    OPENTYPE_STRING_PREFERRED_SUBFAMILY_NAME,
+    OPENTYPE_STRING_TYPOGRAPHIC_FAMILY_NAME,
+    OPENTYPE_STRING_TYPOGRAPHIC_SUBFAMILY_NAME,
     OPENTYPE_STRING_SAMPLE_TEXT,
     OPENTYPE_STRING_FULL_FONTNAME,
     OPENTYPE_STRING_POSTSCRIPT_FONTNAME,
@@ -2138,7 +2138,7 @@ HRESULT opentype_get_font_familyname(struct file_stream_desc *stream_desc, IDWri
         hr = E_FAIL;
 
     if (FAILED(hr))
-        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_PREFERRED_FAMILY_NAME, names);
+        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_TYPOGRAPHIC_FAMILY_NAME, names);
     if (FAILED(hr))
         hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_FAMILY_NAME, names);
 
@@ -2175,7 +2175,7 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
         hr = E_FAIL;
 
     if (FAILED(hr))
-        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_PREFERRED_SUBFAMILY_NAME, names);
+        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_TYPOGRAPHIC_SUBFAMILY_NAME, names);
     if (FAILED(hr))
         hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_SUBFAMILY_NAME, names);
 
