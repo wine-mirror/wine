@@ -65,6 +65,7 @@ static void test_Recordset(void)
     Field *field;
     LONG refs, count, state;
     VARIANT missing, val, index;
+    CursorLocationEnum location;
     BSTR name;
     HRESULT hr;
 
@@ -131,6 +132,11 @@ static void test_Recordset(void)
     hr = _Recordset_get_State( recordset, &state );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == adStateClosed, "got %d\n", state );
+
+    location = -1;
+    hr = _Recordset_get_CursorLocation( recordset, &location );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( location == adUseServer, "got %d\n", location );
 
     VariantInit( &missing );
     hr = _Recordset_AddNew( recordset, missing, missing );

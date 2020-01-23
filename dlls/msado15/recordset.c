@@ -43,6 +43,7 @@ struct recordset
     LONG               allocated;
     LONG               index;
     VARIANT           *data;
+    CursorLocationEnum cursor_location;
 };
 
 struct fields
@@ -1229,14 +1230,24 @@ static HRESULT WINAPI recordset_CancelBatch( _Recordset *iface, AffectEnum affec
 
 static HRESULT WINAPI recordset_get_CursorLocation( _Recordset *iface, CursorLocationEnum *cursor_loc )
 {
-    FIXME( "%p, %p\n", iface, cursor_loc );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %p\n", iface, cursor_loc );
+
+    *cursor_loc = recordset->cursor_location;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_put_CursorLocation( _Recordset *iface, CursorLocationEnum cursor_loc )
 {
-    FIXME( "%p, %u\n", iface, cursor_loc );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %u\n", iface, cursor_loc );
+
+    recordset->cursor_location = cursor_loc;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_NextRecordset( _Recordset *iface, VARIANT *records_affected, _Recordset **record_set )
@@ -1524,6 +1535,7 @@ HRESULT Recordset_create( void **obj )
     recordset->ISupportErrorInfo_iface.lpVtbl = &recordset_supporterrorinfo_vtbl;
     recordset->refs = 1;
     recordset->index = -1;
+    recordset->cursor_location = adUseServer;
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );
