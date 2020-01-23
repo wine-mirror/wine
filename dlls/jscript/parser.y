@@ -26,7 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-static int parser_error(parser_ctx_t*,const char*);
+static int parser_error(unsigned*,parser_ctx_t*,const char*);
 static void set_error(parser_ctx_t*,UINT);
 static BOOL explicit_error(parser_ctx_t*,void*,WCHAR);
 static BOOL allow_auto_semicolon(parser_ctx_t*);
@@ -137,6 +137,9 @@ static expression_t *new_prop_and_value_expression(parser_ctx_t*,property_list_t
 static source_elements_t *new_source_elements(parser_ctx_t*);
 static source_elements_t *source_elements_add_statement(source_elements_t*,statement_t*);
 
+#define YYLTYPE unsigned
+#define YYLLOC_DEFAULT(Cur, Rhs, N) Cur = YYRHSLOC((Rhs), (N) ? 1 : 0)
+
 %}
 
 %lex-param { parser_ctx_t *ctx }
@@ -146,7 +149,6 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 
 %union {
     int                     ival;
-    const WCHAR             *srcptr;
     jsstr_t                 *str;
     literal_t               *literal;
     struct _argument_list_t *argument_list;
@@ -170,8 +172,6 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %token <identifier> kBREAK kCASE kCATCH kCONTINUE kDEFAULT kDELETE kDO kELSE kFUNCTION kIF kFINALLY kFOR kGET kIN kSET
 %token <identifier> kINSTANCEOF kNEW kNULL kRETURN kSWITCH kTHIS kTHROW kTRUE kFALSE kTRY kTYPEOF kVAR kVOID kWHILE kWITH
 %token tANDAND tOROR tINC tDEC tHTMLCOMMENT kDIVEQ kDCOL
-
-%token <srcptr> '}'
 
 /* tokens */
 %token <identifier> tIdentifier
@@ -244,7 +244,6 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %type <property_definition> PropertyDefinition
 %type <literal> PropertyName
 %type <literal> BooleanLiteral
-%type <srcptr> KFunction left_bracket
 %type <ival> AssignOper
 %type <identifier> IdentifierName ReservedAsIdentifier
 
@@ -270,15 +269,12 @@ SourceElements
 
 /* ECMA-262 3rd Edition    13 */
 FunctionExpression
-        : KFunction left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
-                                { $$ = new_function_expression(ctx, NULL, $3, $6, NULL, $1, $7-$1+1); }
-        | KFunction tIdentifier left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
-                                { $$ = new_function_expression(ctx, $2, $4, $7, NULL, $1, $8-$1+1); }
-        | KFunction tIdentifier kDCOL tIdentifier left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
-                                { $$ = new_function_expression(ctx, $4, $6, $9, $2, $1, $10-$1+1); }
-
-KFunction
-        : kFUNCTION             { $$ = ctx->ptr - 8; }
+        : kFUNCTION left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
+                                { $$ = new_function_expression(ctx, NULL, $3, $6, NULL, ctx->begin + @1, @7 - @1 + 1); }
+        | kFUNCTION tIdentifier left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
+                                { $$ = new_function_expression(ctx, $2, $4, $7, NULL, ctx->begin + @1, @8 - @1 + 1); }
+        | kFUNCTION tIdentifier kDCOL tIdentifier left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
+                                { $$ = new_function_expression(ctx, $4, $6, $9, $2, ctx->begin + @1, @10 - @1 + 1); }
 
 /* ECMA-262 3rd Edition    13 */
 FunctionBody
@@ -809,7 +805,7 @@ PropertyDefinition
 
 GetterSetterMethod
         : left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
-                                { $$ = new_function_expression(ctx, NULL, $2, $5, NULL, $1, $6-$1); }
+                                { $$ = new_function_expression(ctx, NULL, $2, $5, NULL, ctx->begin + @1, @6 - @1 + 1); }
 
 /* Ecma-262 3rd Edition    11.1.5 */
 PropertyName
@@ -889,7 +885,7 @@ semicolon_opt
         | error                 { if(!allow_auto_semicolon(ctx)) {YYABORT;} }
 
 left_bracket
-        : '('                   { $$ = ctx->ptr; }
+        : '('
         | error                 { set_error(ctx, JS_E_MISSING_LBRACKET); YYABORT; }
 
 right_bracket
@@ -1461,7 +1457,7 @@ static expression_t *new_call_expression(parser_ctx_t *ctx, expression_t *expres
     return &ret->expr;
 }
 
-static int parser_error(parser_ctx_t *ctx, const char *str)
+static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
 {
     return 0;
 }

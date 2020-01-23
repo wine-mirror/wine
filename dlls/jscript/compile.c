@@ -2245,6 +2245,11 @@ void release_bytecode(bytecode_t *code)
 
 static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source)
 {
+    size_t len = source ? lstrlenW(source) : 0;
+
+    if(len > INT32_MAX)
+        return E_OUTOFMEMORY;
+
     compiler->code = heap_alloc_zero(sizeof(bytecode_t));
     if(!compiler->code)
         return E_OUTOFMEMORY;
@@ -2252,11 +2257,14 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source)
     compiler->code->ref = 1;
     heap_pool_init(&compiler->code->heap);
 
-    compiler->code->source = heap_strdupW(source);
+    compiler->code->source = heap_alloc((len + 1) * sizeof(WCHAR));
     if(!compiler->code->source) {
         release_bytecode(compiler->code);
         return E_OUTOFMEMORY;
     }
+    if(len)
+        memcpy(compiler->code->source, source, len * sizeof(WCHAR));
+    compiler->code->source[len] = 0;
 
     compiler->code->instrs = heap_alloc(64 * sizeof(instr_t));
     if(!compiler->code->instrs) {

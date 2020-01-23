@@ -51,7 +51,7 @@ typedef struct _parser_ctx_t {
 HRESULT script_parse(script_ctx_t*,struct _compiler_ctx_t*,const WCHAR*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;
 void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
 
-int parser_lex(void*,parser_ctx_t*) DECLSPEC_HIDDEN;
+int parser_lex(void*,unsigned*,parser_ctx_t*) DECLSPEC_HIDDEN;
 
 static inline void *parser_alloc(parser_ctx_t *ctx, DWORD size)
 {

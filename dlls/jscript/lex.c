@@ -543,12 +543,15 @@ static BOOL parse_numeric_literal(parser_ctx_t *ctx, double *ret)
     return TRUE;
 }
 
-static int next_token(parser_ctx_t *ctx, void *lval)
+static int next_token(parser_ctx_t *ctx, unsigned *loc, void *lval)
 {
     do {
-        if(!skip_spaces(ctx))
+        if(!skip_spaces(ctx)) {
+            *loc  = ctx->ptr - ctx->begin;
             return tEOF;
+        }
     }while(skip_comment(ctx) || skip_html_comment(ctx));
+    *loc  = ctx->ptr - ctx->begin;
 
     if(ctx->implicit_nl_semicolon) {
         if(ctx->nl)
@@ -576,6 +579,7 @@ static int next_token(parser_ctx_t *ctx, void *lval)
 
     switch(*ctx->ptr) {
     case '{':
+    case '}':
     case '(':
     case ')':
     case '[':
@@ -585,10 +589,6 @@ static int next_token(parser_ctx_t *ctx, void *lval)
     case '~':
     case '?':
         return *ctx->ptr++;
-
-    case '}':
-        *(const WCHAR**)lval = ctx->ptr++;
-        return '}';
 
     case '.':
         if(ctx->ptr+1 < ctx->end && is_digit(ctx->ptr[1])) {
@@ -1099,14 +1099,14 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
     return tBooleanLiteral;
 }
 
-int parser_lex(void *lval, parser_ctx_t *ctx)
+int parser_lex(void *lval, unsigned *loc, parser_ctx_t *ctx)
 {
     int ret;
 
     ctx->nl = ctx->ptr == ctx->begin;
 
     do {
-        ret = next_token(ctx, lval);
+        ret = next_token(ctx, loc, lval);
     } while(ret == '@' && !(ret = cc_token(ctx, lval)));
 
     return ret;
