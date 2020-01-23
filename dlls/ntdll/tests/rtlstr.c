@@ -597,7 +597,6 @@ static void test_RtlUpcaseUnicodeChar(void)
 	} else {
 	    expected_upper_ch = ch;
 	}
-todo_wine_if(ch == 0xb5)
 	ok(upper_ch == expected_upper_ch,
 	   "RtlUpcaseUnicodeChar('%c'[=0x%x]) has result '%c'[=0x%x], expected: '%c'[=0x%x]\n",
 	   ch, ch, upper_ch, upper_ch, expected_upper_ch, expected_upper_ch);
@@ -647,7 +646,6 @@ static void test_RtlUpcaseUnicodeString(void)
 
     pRtlUpcaseUnicodeString(&result_str, &ascii_str, 0);
     for (i = 0; i <= 255; i++) {
-todo_wine_if(ascii_str.Buffer[i] == 0xb5)
 	ok(result_str.Buffer[i] == upper_str.Buffer[i],
 	   "RtlUpcaseUnicodeString works wrong: '%c'[=0x%x] is converted to '%c'[=0x%x], expected: '%c'[=0x%x]\n",
 	   ascii_str.Buffer[i], ascii_str.Buffer[i],

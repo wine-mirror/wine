@@ -622,6 +622,21 @@ sub READ_DEFAULTS($)
         my $flag = $ctype{$cat};
         foreach my $i (@{$special_categories{$cat}}) { $category_table[$i] |= $flag; }
     }
+
+    # remove case mappings that don't round-trip
+
+    for (my $i = 0; $i < @toupper_table; $i++)
+    {
+        next unless defined $toupper_table[$i];
+        my $ch = $toupper_table[$i];
+        $toupper_table[$i] = undef unless defined $tolower_table[$ch] && $tolower_table[$ch] == $i;
+    }
+    for (my $i = 0; $i < @tolower_table; $i++)
+    {
+        next unless defined $tolower_table[$i];
+        my $ch = $tolower_table[$i];
+        $tolower_table[$i] = undef unless defined $toupper_table[$ch] && $toupper_table[$ch] == $i;
+    }
 }
 
 
