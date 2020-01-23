@@ -548,7 +548,7 @@ static int next_token(parser_ctx_t *ctx, unsigned *loc, void *lval)
     do {
         if(!skip_spaces(ctx)) {
             *loc  = ctx->ptr - ctx->begin;
-            return tEOF;
+            return 0;
         }
     }while(skip_comment(ctx) || skip_html_comment(ctx));
     *loc  = ctx->ptr - ctx->begin;
@@ -1118,7 +1118,6 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
     BOOL in_class = FALSE;
     DWORD re_len, flags;
     literal_t *ret;
-    HRESULT hres;
 
     TRACE("\n");
 
@@ -1147,6 +1146,7 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
 
     if(ctx->ptr == ctx->end || *ctx->ptr != '/') {
         WARN("pre-parsing failed\n");
+        ctx->hres = JS_E_SYNTAX;
         return NULL;
     }
 
@@ -1156,8 +1156,8 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
     while(ctx->ptr < ctx->end && iswalnum(*ctx->ptr))
         ctx->ptr++;
 
-    hres = parse_regexp_flags(flags_ptr, ctx->ptr-flags_ptr, &flags);
-    if(FAILED(hres))
+    ctx->hres = parse_regexp_flags(flags_ptr, ctx->ptr-flags_ptr, &flags);
+    if(FAILED(ctx->hres))
         return NULL;
 
     ret = parser_alloc(ctx, sizeof(literal_t));

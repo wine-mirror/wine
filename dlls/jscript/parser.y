@@ -30,7 +30,6 @@ static int parser_error(unsigned*,parser_ctx_t*,const char*);
 static void set_error(parser_ctx_t*,UINT);
 static BOOL explicit_error(parser_ctx_t*,void*,WCHAR);
 static BOOL allow_auto_semicolon(parser_ctx_t*);
-static void program_parsed(parser_ctx_t*,source_elements_t*);
 
 typedef struct _statement_list_t {
     statement_t *head;
@@ -178,7 +177,6 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %token <ival> tAssignOper tEqOper tShiftOper tRelOper
 %token <literal> tNumericLiteral tBooleanLiteral
 %token <str> tStringLiteral
-%token tEOF
 
 %type <source_elements> SourceElements
 %type <source_elements> FunctionBody
@@ -254,12 +252,11 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 
 /* ECMA-262 3rd Edition    14 */
 Program
-       : SourceElements HtmlComment tEOF
-                                { program_parsed(ctx, $1); }
+       : SourceElements HtmlComment { ctx->source = $1; }
 
 HtmlComment
-        : tHTMLCOMMENT          {}
-        | /* empty */           {}
+        : tHTMLCOMMENT
+        | /* empty */
 
 /* ECMA-262 3rd Edition    14 */
 SourceElements
@@ -783,6 +780,7 @@ ObjectLiteral
         {
             if(ctx->script->version < 2) {
                 WARN("Trailing comma in object literal is illegal in legacy mode.\n");
+                ctx->hres = JS_E_SYNTAX;
                 YYABORT;
             }
             $$ = new_prop_and_value_expression(ctx, $2);
@@ -826,6 +824,7 @@ IdentifierName
             if(ctx->script->version < SCRIPTLANGUAGEVERSION_ES5) {
                 WARN("%s keyword used as an identifier in legacy mode.\n",
                      debugstr_w($1));
+                ctx->hres = JS_E_SYNTAX;
                 YYABORT;
             }
             $$ = $1;
@@ -882,7 +881,7 @@ BooleanLiteral
 
 semicolon_opt
         : ';'
-        | error                 { if(!allow_auto_semicolon(ctx)) {YYABORT;} }
+        | error                 { if(!allow_auto_semicolon(ctx)) {YYABORT;} else { ctx->hres = S_OK; } }
 
 left_bracket
         : '('
@@ -1459,6 +1458,9 @@ static expression_t *new_call_expression(parser_ctx_t *ctx, expression_t *expres
 
 static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
 {
+    if(ctx->hres == S_OK)
+        ctx->hres = JS_E_SYNTAX;
+    WARN("%s: %s\n", debugstr_w(ctx->begin + *loc), str);
     return 0;
 }
 
@@ -1548,13 +1550,6 @@ static statement_list_t *statement_list_add(statement_list_t *list, statement_t 
     return list;
 }
 
-static void program_parsed(parser_ctx_t *ctx, source_elements_t *source)
-{
-    ctx->source = source;
-    if(!ctx->lexer_error)
-        ctx->hres = S_OK;
-}
-
 void parser_release(parser_ctx_t *ctx)
 {
     script_release(ctx->script);
@@ -1575,7 +1570,6 @@ HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, const 
     if(!parser_ctx)
         return E_OUTOFMEMORY;
 
-    parser_ctx->hres = JS_E_SYNTAX;
     parser_ctx->is_html = delimiter && !wcsicmp(delimiter, html_tagW);
 
     parser_ctx->begin = parser_ctx->ptr = code;
