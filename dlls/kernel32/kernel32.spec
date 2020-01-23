@@ -853,7 +853,7 @@
 @ stdcall -import GetThreadGroupAffinity(long ptr)
 @ stdcall -import GetThreadIOPendingFlag(long ptr)
 @ stdcall -import GetThreadId(ptr)
-# @ stub GetThreadIdealProcessorEx
+@ stdcall -import GetThreadIdealProcessorEx(long ptr)
 @ stdcall -import GetThreadLocale()
 @ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr)
 @ stdcall -import GetThreadPriority(long)

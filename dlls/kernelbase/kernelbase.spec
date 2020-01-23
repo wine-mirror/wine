@@ -716,7 +716,7 @@
 @ stdcall GetThreadGroupAffinity(long ptr)
 @ stdcall GetThreadIOPendingFlag(long ptr)
 @ stdcall GetThreadId(ptr)
-# @ stub GetThreadIdealProcessorEx
+@ stdcall GetThreadIdealProcessorEx(long ptr)
 # @ stub GetThreadInformation
 @ stdcall GetThreadLocale()
 @ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr) kernel32.GetThreadPreferredUILanguages

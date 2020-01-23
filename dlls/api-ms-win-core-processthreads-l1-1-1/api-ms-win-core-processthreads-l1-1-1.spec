@@ -28,7 +28,7 @@
 @ stdcall GetStartupInfoW(ptr) kernel32.GetStartupInfoW
 @ stdcall GetThreadContext(long ptr) kernel32.GetThreadContext
 @ stdcall GetThreadId(ptr) kernel32.GetThreadId
-@ stub GetThreadIdealProcessorEx
+@ stdcall GetThreadIdealProcessorEx(long ptr) kernel32.GetThreadIdealProcessorEx
 @ stdcall GetThreadPriority(long) kernel32.GetThreadPriority
 @ stdcall GetThreadPriorityBoost(long ptr) kernel32.GetThreadPriorityBoost
 @ stdcall GetThreadTimes(long ptr ptr ptr ptr) kernel32.GetThreadTimes
