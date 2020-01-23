@@ -418,11 +418,6 @@ static const struct dwrite_fonttable *get_fontface_cpal(struct dwrite_fontface *
     return &fontface->cpal;
 }
 
-static const void* get_fontface_colr(struct dwrite_fontface *fontface)
-{
-    return get_fontface_table(&fontface->IDWriteFontFace5_iface, MS_COLR_TAG, &fontface->colr);
-}
-
 static void addref_font_data(struct dwrite_font_data *data)
 {
     InterlockedIncrement(&data->ref);
@@ -1121,7 +1116,7 @@ static BOOL WINAPI dwritefontface2_IsColorFont(IDWriteFontFace5 *iface)
 
     TRACE("%p.\n", iface);
 
-    return get_fontface_cpal(fontface) && get_fontface_colr(fontface);
+    return !!(fontface->flags & FONT_IS_COLORED);
 }
 
 static UINT32 WINAPI dwritefontface2_GetColorPaletteCount(IDWriteFontFace5 *iface)
@@ -1774,19 +1769,10 @@ static BOOL WINAPI dwritefont1_IsMonospacedFont(IDWriteFont3 *iface)
 static BOOL WINAPI dwritefont2_IsColorFont(IDWriteFont3 *iface)
 {
     struct dwrite_font *font = impl_from_IDWriteFont3(iface);
-    IDWriteFontFace5 *fontface;
-    HRESULT hr;
-    BOOL ret;
 
     TRACE("%p.\n", iface);
 
-    hr = get_fontface_from_font(font, &fontface);
-    if (FAILED(hr))
-        return FALSE;
-
-    ret = IDWriteFontFace5_IsColorFont(fontface);
-    IDWriteFontFace5_Release(fontface);
-    return ret;
+    return !!(font->data->flags & FONT_IS_COLORED);
 }
 
 static HRESULT WINAPI dwritefont3_CreateFontFace(IDWriteFont3 *iface, IDWriteFontFace3 **fontface)
@@ -4698,7 +4684,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         fontface->panose = desc->font_data->panose;
         fontface->fontsig = desc->font_data->fontsig;
         fontface->lf = desc->font_data->lf;
-        fontface->flags |= desc->font_data->flags & (FONT_IS_SYMBOL | FONT_IS_MONOSPACED);
+        fontface->flags |= desc->font_data->flags & (FONT_IS_SYMBOL | FONT_IS_MONOSPACED | FONT_IS_COLORED);
     }
     else
     {
@@ -4718,7 +4704,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         fontface->panose = data->panose;
         fontface->fontsig = data->fontsig;
         fontface->lf = data->lf;
-        fontface->flags |= data->flags & (FONT_IS_SYMBOL | FONT_IS_MONOSPACED);
+        fontface->flags |= data->flags & (FONT_IS_SYMBOL | FONT_IS_MONOSPACED | FONT_IS_COLORED);
 
         IDWriteLocalizedStrings_Release(names);
         release_font_data(data);

@@ -39,6 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_GLYF_TAG DWRITE_MAKE_OPENTYPE_TAG('g','l','y','f')
 #define MS_CFF__TAG DWRITE_MAKE_OPENTYPE_TAG('C','F','F',' ')
 #define MS_CFF2_TAG DWRITE_MAKE_OPENTYPE_TAG('C','F','F','2')
+#define MS_CPAL_TAG DWRITE_MAKE_OPENTYPE_TAG('C','P','A','L')
 #define MS_COLR_TAG DWRITE_MAKE_OPENTYPE_TAG('C','O','L','R')
 #define MS_SVG__TAG DWRITE_MAKE_OPENTYPE_TAG('S','V','G',' ')
 #define MS_SBIX_TAG DWRITE_MAKE_OPENTYPE_TAG('s','b','i','x')
@@ -1715,7 +1716,7 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
 
 void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct dwrite_font_props *props)
 {
-    struct dwrite_fonttable os2, head;
+    struct dwrite_fonttable os2, head, colr, cpal;
     BOOL is_symbol, is_monospaced;
     const TT_OS2_V2 *tt_os2;
     const TT_HEAD *tt_head;
@@ -1793,6 +1794,7 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
 
     props->lf.lfWeight = props->weight;
 
+    /* FONT_IS_SYMBOL */
     if (!(is_symbol = props->panose.familyKind == DWRITE_PANOSE_FAMILY_SYMBOL))
     {
         struct dwrite_fonttable cmap;
@@ -1824,6 +1826,7 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     if (is_symbol)
         props->flags |= FONT_IS_SYMBOL;
 
+    /* FONT_IS_MONOSPACED */
     if (!(is_monospaced = props->panose.text.proportion == DWRITE_PANOSE_PROPORTION_MONOSPACED))
     {
         struct dwrite_fonttable post;
@@ -1839,6 +1842,20 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     }
     if (is_monospaced)
         props->flags |= FONT_IS_MONOSPACED;
+
+    /* FONT_IS_COLORED */
+    opentype_get_font_table(stream_desc, MS_COLR_TAG, &colr);
+    if (colr.data)
+    {
+        opentype_get_font_table(stream_desc, MS_CPAL_TAG, &cpal);
+        if (cpal.data)
+        {
+            props->flags |= FONT_IS_COLORED;
+            IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, cpal.context);
+        }
+
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, colr.context);
+    }
 
     TRACE("stretch=%d, weight=%d, style %d\n", props->stretch, props->weight, props->style);
 

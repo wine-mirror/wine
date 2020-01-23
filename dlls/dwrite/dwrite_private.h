@@ -187,8 +187,9 @@ enum font_flags
 {
     FONT_IS_SYMBOL                 = 1 << 0,
     FONT_IS_MONOSPACED             = 1 << 1,
-    FONTFACE_HAS_KERNING_PAIRS     = 1 << 2,
-    FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 3
+    FONT_IS_COLORED                = 1 << 2, /* CPAL/COLR support */
+    FONTFACE_HAS_KERNING_PAIRS     = 1 << 3,
+    FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 4
 };
 
 struct dwrite_fontface
