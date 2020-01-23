@@ -253,7 +253,6 @@ int main(int argc,char *argv[])
 			break;
 		case 'v':
 			show_languages();
-			show_codepages();
 			exit(0);
 			/* No return */
 		case 'V':
