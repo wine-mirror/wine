@@ -85,22 +85,22 @@ static variable_declaration_t *new_variable_declaration(parser_ctx_t*,const WCHA
 static variable_list_t *new_variable_list(parser_ctx_t*,variable_declaration_t*);
 static variable_list_t *variable_list_add(parser_ctx_t*,variable_list_t*,variable_declaration_t*);
 
-static void *new_statement(parser_ctx_t*,statement_type_t,size_t);
-static statement_t *new_block_statement(parser_ctx_t*,statement_list_t*);
-static statement_t *new_var_statement(parser_ctx_t*,variable_list_t*);
-static statement_t *new_expression_statement(parser_ctx_t*,expression_t*);
-static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,statement_t*);
-static statement_t *new_while_statement(parser_ctx_t*,BOOL,expression_t*,statement_t*);
-static statement_t *new_for_statement(parser_ctx_t*,variable_list_t*,expression_t*,expression_t*,
+static void *new_statement(parser_ctx_t*,statement_type_t,size_t,unsigned);
+static statement_t *new_block_statement(parser_ctx_t*,unsigned,statement_list_t*);
+static statement_t *new_var_statement(parser_ctx_t*,unsigned,variable_list_t*);
+static statement_t *new_expression_statement(parser_ctx_t*,unsigned,expression_t*);
+static statement_t *new_if_statement(parser_ctx_t*,unsigned,expression_t*,statement_t*,statement_t*);
+static statement_t *new_while_statement(parser_ctx_t*,unsigned,BOOL,expression_t*,statement_t*);
+static statement_t *new_for_statement(parser_ctx_t*,unsigned,variable_list_t*,expression_t*,expression_t*,
         expression_t*,statement_t*);
-static statement_t *new_forin_statement(parser_ctx_t*,variable_declaration_t*,expression_t*,expression_t*,statement_t*);
-static statement_t *new_continue_statement(parser_ctx_t*,const WCHAR*);
-static statement_t *new_break_statement(parser_ctx_t*,const WCHAR*);
-static statement_t *new_return_statement(parser_ctx_t*,expression_t*);
-static statement_t *new_with_statement(parser_ctx_t*,expression_t*,statement_t*);
-static statement_t *new_labelled_statement(parser_ctx_t*,const WCHAR*,statement_t*);
-static statement_t *new_switch_statement(parser_ctx_t*,expression_t*,case_clausule_t*);
-static statement_t *new_throw_statement(parser_ctx_t*,expression_t*);
+static statement_t *new_forin_statement(parser_ctx_t*,unsigned,variable_declaration_t*,expression_t*,expression_t*,statement_t*);
+static statement_t *new_continue_statement(parser_ctx_t*,unsigned,const WCHAR*);
+static statement_t *new_break_statement(parser_ctx_t*,unsigned,const WCHAR*);
+static statement_t *new_return_statement(parser_ctx_t*,unsigned,expression_t*);
+static statement_t *new_with_statement(parser_ctx_t*,unsigned,expression_t*,statement_t*);
+static statement_t *new_labelled_statement(parser_ctx_t*,unsigned,const WCHAR*,statement_t*);
+static statement_t *new_switch_statement(parser_ctx_t*,unsigned,expression_t*,case_clausule_t*);
+static statement_t *new_throw_statement(parser_ctx_t*,unsigned,expression_t*);
 static statement_t *new_try_statement(parser_ctx_t*,statement_t*,catch_block_t*,statement_t*);
 
 struct statement_list_t {
@@ -293,7 +293,7 @@ Statement
         : Block                 { $$ = $1; }
         | VariableStatement     { $$ = $1; }
         | EmptyStatement        { $$ = $1; }
-        | FunctionExpression    { $$ = new_expression_statement(ctx, $1); }
+        | FunctionExpression    { $$ = new_expression_statement(ctx, @$, $1); }
         | ExpressionStatement   { $$ = $1; }
         | IfStatement           { $$ = $1; }
         | IterationStatement    { $$ = $1; }
@@ -319,13 +319,13 @@ StatementList_opt
 
 /* ECMA-262 3rd Edition    12.1 */
 Block
-        : '{' StatementList '}' { $$ = new_block_statement(ctx, $2); }
-        | '{' '}'               { $$ = new_block_statement(ctx, NULL); }
+        : '{' StatementList '}' { $$ = new_block_statement(ctx, @2, $2); }
+        | '{' '}'               { $$ = new_block_statement(ctx, @$, NULL); }
 
 /* ECMA-262 3rd Edition    12.2 */
 VariableStatement
         : kVAR VariableDeclarationList semicolon_opt
-                                { $$ = new_var_statement(ctx, $2); }
+                                { $$ = new_var_statement(ctx, @$, $2); }
 
 /* ECMA-262 3rd Edition    12.2 */
 VariableDeclarationList
@@ -372,72 +372,72 @@ InitialiserNoIn
 
 /* ECMA-262 3rd Edition    12.3 */
 EmptyStatement
-        : ';'                   { $$ = new_statement(ctx, STAT_EMPTY, 0); }
+        : ';'                   { $$ = new_statement(ctx, STAT_EMPTY, 0, @$); }
 
 /* ECMA-262 3rd Edition    12.4 */
 ExpressionStatement
         : Expression semicolon_opt
-                                { $$ = new_expression_statement(ctx, $1); }
+                                { $$ = new_expression_statement(ctx, @$,  $1); }
 
 /* ECMA-262 3rd Edition    12.5 */
 IfStatement
         : kIF left_bracket Expression_err right_bracket Statement kELSE Statement
-                                { $$ = new_if_statement(ctx, $3, $5, $7); }
+                                { $$ = new_if_statement(ctx, @$, $3, $5, $7); }
         | kIF left_bracket Expression_err right_bracket Statement %prec LOWER_THAN_ELSE
-                                { $$ = new_if_statement(ctx, $3, $5, NULL); }
+                                { $$ = new_if_statement(ctx, @$, $3, $5, NULL); }
 
 /* ECMA-262 3rd Edition    12.6 */
 IterationStatement
         : kDO Statement kWHILE left_bracket Expression_err right_bracket semicolon_opt
-                                { $$ = new_while_statement(ctx, TRUE, $5, $2); }
+                                { $$ = new_while_statement(ctx, @3, TRUE, $5, $2); }
         | kWHILE left_bracket Expression_err right_bracket Statement
-                                { $$ = new_while_statement(ctx, FALSE, $3, $5); }
+                                { $$ = new_while_statement(ctx, @$, FALSE, $3, $5); }
         | kFOR left_bracket ExpressionNoIn_opt
                                 { if(!explicit_error(ctx, $3, ';')) YYABORT; }
-        semicolon  Expression_opt
+          semicolon  Expression_opt
                                 { if(!explicit_error(ctx, $6, ';')) YYABORT; }
-        semicolon Expression_opt right_bracket Statement
-                                { $$ = new_for_statement(ctx, NULL, $3, $6, $9, $11); }
+          semicolon Expression_opt right_bracket Statement
+                                { $$ = new_for_statement(ctx, @$, NULL, $3, $6, $9, $11); }
         | kFOR left_bracket kVAR VariableDeclarationListNoIn
                                 { if(!explicit_error(ctx, $4, ';')) YYABORT; }
-        semicolon Expression_opt
+          semicolon Expression_opt
                                 { if(!explicit_error(ctx, $7, ';')) YYABORT; }
-        semicolon Expression_opt right_bracket Statement
-                                { $$ = new_for_statement(ctx, $4, NULL, $7, $10, $12); }
+          semicolon Expression_opt right_bracket Statement
+                                { $$ = new_for_statement(ctx, @$, $4, NULL, $7, $10, $12); }
         | kFOR left_bracket LeftHandSideExpression kIN Expression_err right_bracket Statement
-                                { $$ = new_forin_statement(ctx, NULL, $3, $5, $7); }
+                                { $$ = new_forin_statement(ctx, @$, NULL, $3, $5, $7); }
         | kFOR left_bracket kVAR VariableDeclarationNoIn kIN Expression_err right_bracket Statement
-                                { $$ = new_forin_statement(ctx, $4, NULL, $6, $8); }
+                                { $$ = new_forin_statement(ctx, @$,  $4, NULL, $6, $8); }
 
 /* ECMA-262 3rd Edition    12.7 */
 ContinueStatement
         : kCONTINUE /* NONL */ Identifier_opt semicolon_opt
-                                { $$ = new_continue_statement(ctx, $2); }
+                                { $$ = new_continue_statement(ctx, @$, $2); }
 
 /* ECMA-262 3rd Edition    12.8 */
 BreakStatement
         : kBREAK /* NONL */ Identifier_opt semicolon_opt
-                                { $$ = new_break_statement(ctx, $2); }
+                                { $$ = new_break_statement(ctx, @$, $2); }
 
 /* ECMA-262 3rd Edition    12.9 */
 ReturnStatement
         : kRETURN /* NONL */ Expression_opt semicolon_opt
-                                { $$ = new_return_statement(ctx, $2); }
+                                { $$ = new_return_statement(ctx, @$, $2); }
 
 /* ECMA-262 3rd Edition    12.10 */
 WithStatement
         : kWITH left_bracket Expression right_bracket Statement
-                                { $$ = new_with_statement(ctx, $3, $5); }
+                                { $$ = new_with_statement(ctx, @$, $3, $5); }
 
 /* ECMA-262 3rd Edition    12.12 */
 LabelledStatement
         : tIdentifier ':' Statement
-                                { $$ = new_labelled_statement(ctx, $1, $3); }
+                                { $$ = new_labelled_statement(ctx, @$, $1, $3); }
 
 /* ECMA-262 3rd Edition    12.11 */
 SwitchStatement
         : kSWITCH left_bracket Expression right_bracket CaseBlock
-                                { $$ = new_switch_statement(ctx, $3, $5); }
+                                { $$ = new_switch_statement(ctx, @$, $3, $5); }
 
 /* ECMA-262 3rd Edition    12.11 */
 CaseBlock
@@ -470,7 +470,7 @@ DefaultClausule
 /* ECMA-262 3rd Edition    12.13 */
 ThrowStatement
         : kTHROW /* NONL */ Expression semicolon_opt
-                                { $$ = new_throw_statement(ctx, $2); }
+                                { $$ = new_throw_statement(ctx, @$, $2); }
 
 /* ECMA-262 3rd Edition    12.14 */
 TryStatement
@@ -902,7 +902,7 @@ static BOOL allow_auto_semicolon(parser_ctx_t *ctx)
     return ctx->nl || ctx->ptr == ctx->end || *(ctx->ptr-1) == '}';
 }
 
-static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size)
+static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size, unsigned loc)
 {
     statement_t *stat;
 
@@ -911,6 +911,7 @@ static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size
         return NULL;
 
     stat->type = type;
+    stat->loc  = loc;
     stat->next = NULL;
 
     return stat;
@@ -1101,11 +1102,11 @@ static case_clausule_t *new_case_block(parser_ctx_t *ctx, case_list_t *case_list
     return ret;
 }
 
-static statement_t *new_block_statement(parser_ctx_t *ctx, statement_list_t *list)
+static statement_t *new_block_statement(parser_ctx_t *ctx, unsigned loc, statement_list_t *list)
 {
     block_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_BLOCK, sizeof(*ret));
+    ret = new_statement(ctx, STAT_BLOCK, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1142,11 +1143,11 @@ static variable_list_t *variable_list_add(parser_ctx_t *ctx, variable_list_t *li
     return list;
 }
 
-static statement_t *new_var_statement(parser_ctx_t *ctx, variable_list_t *variable_list)
+static statement_t *new_var_statement(parser_ctx_t *ctx, unsigned loc, variable_list_t *variable_list)
 {
     var_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_VAR, sizeof(*ret));
+    ret = new_statement(ctx, STAT_VAR, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1155,11 +1156,11 @@ static statement_t *new_var_statement(parser_ctx_t *ctx, variable_list_t *variab
     return &ret->stat;
 }
 
-static statement_t *new_expression_statement(parser_ctx_t *ctx, expression_t *expr)
+static statement_t *new_expression_statement(parser_ctx_t *ctx, unsigned loc, expression_t *expr)
 {
     expression_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_EXPR, sizeof(*ret));
+    ret = new_statement(ctx, STAT_EXPR, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1168,11 +1169,12 @@ static statement_t *new_expression_statement(parser_ctx_t *ctx, expression_t *ex
     return &ret->stat;
 }
 
-static statement_t *new_if_statement(parser_ctx_t *ctx, expression_t *expr, statement_t *if_stat, statement_t *else_stat)
+static statement_t *new_if_statement(parser_ctx_t *ctx, unsigned loc, expression_t *expr,
+                                     statement_t *if_stat, statement_t *else_stat)
 {
     if_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_IF, sizeof(*ret));
+    ret = new_statement(ctx, STAT_IF, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1183,11 +1185,11 @@ static statement_t *new_if_statement(parser_ctx_t *ctx, expression_t *expr, stat
     return &ret->stat;
 }
 
-static statement_t *new_while_statement(parser_ctx_t *ctx, BOOL dowhile, expression_t *expr, statement_t *stat)
+static statement_t *new_while_statement(parser_ctx_t *ctx, unsigned loc, BOOL dowhile, expression_t *expr, statement_t *stat)
 {
     while_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_WHILE, sizeof(*ret));
+    ret = new_statement(ctx, STAT_WHILE, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1198,12 +1200,12 @@ static statement_t *new_while_statement(parser_ctx_t *ctx, BOOL dowhile, express
     return &ret->stat;
 }
 
-static statement_t *new_for_statement(parser_ctx_t *ctx, variable_list_t *variable_list, expression_t *begin_expr,
+static statement_t *new_for_statement(parser_ctx_t *ctx, unsigned loc, variable_list_t *variable_list, expression_t *begin_expr,
         expression_t *expr, expression_t *end_expr, statement_t *statement)
 {
     for_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_FOR, sizeof(*ret));
+    ret = new_statement(ctx, STAT_FOR, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1216,12 +1218,12 @@ static statement_t *new_for_statement(parser_ctx_t *ctx, variable_list_t *variab
     return &ret->stat;
 }
 
-static statement_t *new_forin_statement(parser_ctx_t *ctx, variable_declaration_t *variable, expression_t *expr,
+static statement_t *new_forin_statement(parser_ctx_t *ctx, unsigned loc, variable_declaration_t *variable, expression_t *expr,
         expression_t *in_expr, statement_t *statement)
 {
     forin_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_FORIN, sizeof(*ret));
+    ret = new_statement(ctx, STAT_FORIN, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1233,11 +1235,11 @@ static statement_t *new_forin_statement(parser_ctx_t *ctx, variable_declaration_
     return &ret->stat;
 }
 
-static statement_t *new_continue_statement(parser_ctx_t *ctx, const WCHAR *identifier)
+static statement_t *new_continue_statement(parser_ctx_t *ctx, unsigned loc, const WCHAR *identifier)
 {
     branch_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_CONTINUE, sizeof(*ret));
+    ret = new_statement(ctx, STAT_CONTINUE, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1246,11 +1248,11 @@ static statement_t *new_continue_statement(parser_ctx_t *ctx, const WCHAR *ident
     return &ret->stat;
 }
 
-static statement_t *new_break_statement(parser_ctx_t *ctx, const WCHAR *identifier)
+static statement_t *new_break_statement(parser_ctx_t *ctx, unsigned loc, const WCHAR *identifier)
 {
     branch_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_BREAK, sizeof(*ret));
+    ret = new_statement(ctx, STAT_BREAK, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1259,11 +1261,11 @@ static statement_t *new_break_statement(parser_ctx_t *ctx, const WCHAR *identifi
     return &ret->stat;
 }
 
-static statement_t *new_return_statement(parser_ctx_t *ctx, expression_t *expr)
+static statement_t *new_return_statement(parser_ctx_t *ctx, unsigned loc, expression_t *expr)
 {
     expression_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_RETURN, sizeof(*ret));
+    ret = new_statement(ctx, STAT_RETURN, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1272,11 +1274,11 @@ static statement_t *new_return_statement(parser_ctx_t *ctx, expression_t *expr)
     return &ret->stat;
 }
 
-static statement_t *new_with_statement(parser_ctx_t *ctx, expression_t *expr, statement_t *statement)
+static statement_t *new_with_statement(parser_ctx_t *ctx, unsigned loc, expression_t *expr, statement_t *statement)
 {
     with_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_WITH, sizeof(*ret));
+    ret = new_statement(ctx, STAT_WITH, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1286,11 +1288,11 @@ static statement_t *new_with_statement(parser_ctx_t *ctx, expression_t *expr, st
     return &ret->stat;
 }
 
-static statement_t *new_labelled_statement(parser_ctx_t *ctx, const WCHAR *identifier, statement_t *statement)
+static statement_t *new_labelled_statement(parser_ctx_t *ctx, unsigned loc, const WCHAR *identifier, statement_t *statement)
 {
     labelled_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_LABEL, sizeof(*ret));
+    ret = new_statement(ctx, STAT_LABEL, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1300,11 +1302,11 @@ static statement_t *new_labelled_statement(parser_ctx_t *ctx, const WCHAR *ident
     return &ret->stat;
 }
 
-static statement_t *new_switch_statement(parser_ctx_t *ctx, expression_t *expr, case_clausule_t *case_list)
+static statement_t *new_switch_statement(parser_ctx_t *ctx, unsigned loc, expression_t *expr, case_clausule_t *case_list)
 {
     switch_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_SWITCH, sizeof(*ret));
+    ret = new_statement(ctx, STAT_SWITCH, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1314,11 +1316,11 @@ static statement_t *new_switch_statement(parser_ctx_t *ctx, expression_t *expr, 
     return &ret->stat;
 }
 
-static statement_t *new_throw_statement(parser_ctx_t *ctx, expression_t *expr)
+static statement_t *new_throw_statement(parser_ctx_t *ctx, unsigned loc, expression_t *expr)
 {
     expression_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_THROW, sizeof(*ret));
+    ret = new_statement(ctx, STAT_THROW, sizeof(*ret), loc);
     if(!ret)
         return NULL;
 
@@ -1332,7 +1334,7 @@ static statement_t *new_try_statement(parser_ctx_t *ctx, statement_t *try_statem
 {
     try_statement_t *ret;
 
-    ret = new_statement(ctx, STAT_TRY, sizeof(*ret));
+    ret = new_statement(ctx, STAT_TRY, sizeof(*ret), try_statement->loc);
     if(!ret)
         return NULL;
 
