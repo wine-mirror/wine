@@ -15015,6 +15015,16 @@ static void test_viewport(void)
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
+    /* Well, by default the vertices without color info should be white, and without any texture
+     * ops this should just show up in the output, but the r200 driver begs to differ and draws a
+     * random color. */
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_TEXTUREFACTOR, 0x00ffffff);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
     hr = IDirect3DDevice7_SetViewport(device, NULL);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
