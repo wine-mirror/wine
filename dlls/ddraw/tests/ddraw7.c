@@ -12476,7 +12476,7 @@ static void test_getdc(void)
     IDirectDrawSurface7 *surface, *surface2, *tmp;
     DDSURFACEDESC2 surface_desc, map_desc;
     IDirectDraw7 *ddraw;
-    unsigned int i;
+    unsigned int i, screen_bpp;
     HWND window;
     HDC dc, dc2;
     HRESULT hr;
@@ -12540,6 +12540,11 @@ static void test_getdc(void)
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDraw7_GetDisplayMode(ddraw, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get display mode, hr %#x.\n", hr);
+    screen_bpp = U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount;
+
     for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
@@ -12599,8 +12604,11 @@ static void test_getdc(void)
             ok(dib.dsBm.bmBitsPixel == U1(test_data[i].format).dwRGBBitCount,
                     "Got unexpected bit count %d for format %s.\n",
                     dib.dsBm.bmBitsPixel, test_data[i].name);
-            ok(!!dib.dsBm.bmBits, "Got unexpected bits %p for format %s.\n",
-                    dib.dsBm.bmBits, test_data[i].name);
+            /* Windows XP sets bmBits == NULL for formats that match the screen at least on my r200 GPU. I
+             * suspect this applies to all HW accelerated pre-WDDM drivers because they can handle gdi access
+             * to ddraw surfaces themselves instead of going through a sysmem DIB section. */
+            ok(!!dib.dsBm.bmBits || broken(!pDwmIsCompositionEnabled && dib.dsBm.bmBitsPixel == screen_bpp),
+                    "Got unexpected bits %p for format %s.\n", dib.dsBm.bmBits, test_data[i].name);
 
             ok(dib.dsBmih.biSize == sizeof(dib.dsBmih), "Got unexpected size %u for format %s.\n",
                     dib.dsBmih.biSize, test_data[i].name);
