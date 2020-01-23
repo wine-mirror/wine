@@ -188,9 +188,9 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     IDirectSoundBufferImpl **ppdsb,
     IDirectSoundBufferImpl *pdsb) DECLSPEC_HIDDEN;
 void secondarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
-const IDirectSound3DListenerVtbl ds3dlvt DECLSPEC_HIDDEN;
-const IDirectSound3DBufferVtbl ds3dbvt DECLSPEC_HIDDEN;
-const IKsPropertySetVtbl iksbvt DECLSPEC_HIDDEN;
+extern const IDirectSound3DListenerVtbl ds3dlvt DECLSPEC_HIDDEN;
+extern const IDirectSound3DBufferVtbl ds3dbvt DECLSPEC_HIDDEN;
+extern const IKsPropertySetVtbl iksbvt DECLSPEC_HIDDEN;
 
 HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 
