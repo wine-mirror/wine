@@ -310,7 +310,8 @@ extern const void* get_fontface_table(IDWriteFontFace5 *fontface, UINT32 tag,
         struct dwrite_fonttable *table) DECLSPEC_HIDDEN;
 
 extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,BOOL*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,UINT32*) DECLSPEC_HIDDEN;
-extern HRESULT opentype_get_font_table(struct file_stream_desc*,UINT32,const void**,void**,UINT32*,BOOL*) DECLSPEC_HIDDEN;
+extern HRESULT opentype_try_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag, const void **data,
+        void **context, UINT32 *size, BOOL *exists) DECLSPEC_HIDDEN;
 extern HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *table, unsigned int max_count,
         DWRITE_UNICODE_RANGE *ranges, unsigned int *count) DECLSPEC_HIDDEN;
 extern void opentype_get_font_properties(struct file_stream_desc*,struct dwrite_font_props*) DECLSPEC_HIDDEN;

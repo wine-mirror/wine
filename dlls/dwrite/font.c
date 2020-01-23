@@ -707,7 +707,7 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace5 *iface, UI
     stream_desc.stream = fontface->stream;
     stream_desc.face_type = fontface->type;
     stream_desc.face_index = fontface->index;
-    return opentype_get_font_table(&stream_desc, table_tag, table_data, context, table_size, exists);
+    return opentype_try_get_font_table(&stream_desc, table_tag, table_data, context, table_size, exists);
 }
 
 static void WINAPI dwritefontface_ReleaseFontTable(IDWriteFontFace5 *iface, void *table_context)

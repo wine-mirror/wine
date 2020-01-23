@@ -1366,7 +1366,7 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, BOOL *supported, DW
     return S_OK;
 }
 
-HRESULT opentype_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag, const void **table_data,
+HRESULT opentype_try_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag, const void **table_data,
     void **table_context, UINT32 *table_size, BOOL *found)
 {
     void *table_directory_context, *sfnt_context;
@@ -1432,6 +1432,12 @@ HRESULT opentype_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag
     }
 
     return hr;
+}
+
+static HRESULT opentype_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag,
+        struct dwrite_fonttable *table)
+{
+    return opentype_try_get_font_table(stream_desc, tag, (const void **)&table->data, &table->context, &table->size, &table->exists);
 }
 
 /**********
@@ -1555,15 +1561,15 @@ HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *cmap, un
 
 void opentype_get_font_typo_metrics(struct file_stream_desc *stream_desc, unsigned int *ascent, unsigned int *descent)
 {
+    struct dwrite_fonttable os2;
     const TT_OS2_V2 *data;
-    unsigned int size;
-    void *context;
 
-    opentype_get_font_table(stream_desc, MS_OS2_TAG, (const void **)&data, &context, &size, NULL);
+    opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
+    data = (const TT_OS2_V2 *)os2.data;
 
     *ascent = *descent = 0;
 
-    if (size >= FIELD_OFFSET(TT_OS2_V2, sTypoLineGap))
+    if (os2.size >= FIELD_OFFSET(TT_OS2_V2, sTypoLineGap))
     {
         SHORT value = GET_BE_WORD(data->sTypoDescender);
         *ascent = GET_BE_WORD(data->sTypoAscender);
@@ -1571,12 +1577,12 @@ void opentype_get_font_typo_metrics(struct file_stream_desc *stream_desc, unsign
     }
 
     if (data)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, context);
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
 }
 
 void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT_METRICS1 *metrics, DWRITE_CARET_METRICS *caret)
 {
-    void *os2_context, *head_context, *post_context, *hhea_context;
+    struct dwrite_fonttable os2, head, post, hhea;
     const TT_OS2_V2 *tt_os2;
     const TT_HEAD *tt_head;
     const TT_POST *tt_post;
@@ -1584,10 +1590,15 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
 
     memset(metrics, 0, sizeof(*metrics));
 
-    opentype_get_font_table(stream_desc, MS_OS2_TAG,  (const void**)&tt_os2, &os2_context, NULL, NULL);
-    opentype_get_font_table(stream_desc, MS_HEAD_TAG, (const void**)&tt_head, &head_context, NULL, NULL);
-    opentype_get_font_table(stream_desc, MS_POST_TAG, (const void**)&tt_post, &post_context, NULL, NULL);
-    opentype_get_font_table(stream_desc, MS_HHEA_TAG, (const void**)&tt_hhea, &hhea_context, NULL, NULL);
+    opentype_get_font_table(stream_desc, MS_OS2_TAG,  &os2);
+    opentype_get_font_table(stream_desc, MS_HEAD_TAG, &head);
+    opentype_get_font_table(stream_desc, MS_POST_TAG, &post);
+    opentype_get_font_table(stream_desc, MS_HHEA_TAG, &hhea);
+
+    tt_head = (const TT_HEAD *)head.data;
+    tt_os2 = (const TT_OS2_V2 *)os2.data;
+    tt_post = (const TT_POST *)post.data;
+    tt_hhea = (const TT_HHEA *)hhea.data;
 
     if (tt_head) {
         metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
@@ -1597,7 +1608,8 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
         metrics->glyphBoxBottom = GET_BE_WORD(tt_head->yMin);
     }
 
-    if (caret) {
+    if (caret)
+    {
         if (tt_hhea) {
             caret->slopeRise = GET_BE_WORD(tt_hhea->caretSlopeRise);
             caret->slopeRun = GET_BE_WORD(tt_hhea->caretSlopeRun);
@@ -1679,23 +1691,26 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
         metrics->capHeight = metrics->designUnitsPerEm * 7 / 10;
 
     if (tt_os2)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2_context);
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
     if (tt_head)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, head_context);
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, head.context);
     if (tt_post)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, post_context);
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, post.context);
     if (tt_hhea)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, hhea_context);
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, hhea.context);
 }
 
 void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct dwrite_font_props *props)
 {
-    void *os2_context, *head_context;
+    struct dwrite_fonttable os2, head;
     const TT_OS2_V2 *tt_os2;
     const TT_HEAD *tt_head;
 
-    opentype_get_font_table(stream_desc, MS_OS2_TAG,  (const void**)&tt_os2, &os2_context, NULL, NULL);
-    opentype_get_font_table(stream_desc, MS_HEAD_TAG, (const void**)&tt_head, &head_context, NULL, NULL);
+    opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
+    opentype_get_font_table(stream_desc, MS_HEAD_TAG, &head);
+
+    tt_os2 = (const TT_OS2_V2 *)os2.data;
+    tt_head = (const TT_HEAD *)head.data;
 
     /* default stretch, weight and style to normal */
     props->stretch = DWRITE_FONT_STRETCH_NORMAL;
@@ -1767,10 +1782,10 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
 
     TRACE("stretch=%d, weight=%d, style %d\n", props->stretch, props->weight, props->style);
 
-    if (tt_os2)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2_context);
-    if (tt_head)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, head_context);
+    if (os2.data)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
+    if (head.data)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, head.context);
 }
 
 static UINT get_name_record_codepage(enum OPENTYPE_PLATFORM_ID platform, USHORT encoding)
@@ -2026,13 +2041,16 @@ HRESULT opentype_get_font_info_strings(const void *table_data, DWRITE_INFORMATIO
    have 'Preferred Family Name' in WWS format, then WWS name is not used. */
 HRESULT opentype_get_font_familyname(struct file_stream_desc *stream_desc, IDWriteLocalizedStrings **names)
 {
+    struct dwrite_fonttable os2, name;
     const TT_OS2_V2 *tt_os2;
-    void *os2_context, *name_context;
     const void *name_table;
     HRESULT hr;
 
-    opentype_get_font_table(stream_desc, MS_OS2_TAG,  (const void**)&tt_os2, &os2_context, NULL, NULL);
-    opentype_get_font_table(stream_desc, MS_NAME_TAG, &name_table, &name_context, NULL, NULL);
+    opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
+    opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
+
+    tt_os2 = (const TT_OS2_V2 *)os2.data;
+    name_table = (const void *)name.data;
 
     *names = NULL;
 
@@ -2047,10 +2065,10 @@ HRESULT opentype_get_font_familyname(struct file_stream_desc *stream_desc, IDWri
     if (FAILED(hr))
         hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_FAMILY_NAME, names);
 
-    if (tt_os2)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2_context);
-    if (name_context)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, name_context);
+    if (os2.context)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
+    if (name.context)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, name.context);
 
     return hr;
 }
@@ -2059,14 +2077,17 @@ HRESULT opentype_get_font_familyname(struct file_stream_desc *stream_desc, IDWri
    have 'Preferred Face Name' in WWS format, then WWS name is not used. */
 HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *lfname, IDWriteLocalizedStrings **names)
 {
+    struct dwrite_fonttable os2, name;
     IDWriteLocalizedStrings *lfnames;
-    void *os2_context, *name_context;
     const TT_OS2_V2 *tt_os2;
     const void *name_table;
     HRESULT hr;
 
-    opentype_get_font_table(stream_desc, MS_OS2_TAG,  (const void**)&tt_os2, &os2_context, NULL, NULL);
-    opentype_get_font_table(stream_desc, MS_NAME_TAG, &name_table, &name_context, NULL, NULL);
+    opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
+    opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
+
+    tt_os2 = (const TT_OS2_V2 *)os2.data;
+    name_table = name.data;
 
     *names = NULL;
 
@@ -2113,10 +2134,10 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
         IDWriteLocalizedStrings_Release(lfnames);
     }
 
-    if (tt_os2)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2_context);
-    if (name_context)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, name_context);
+    if (os2.context)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
+    if (name.context)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, name.context);
 
     return hr;
 }
