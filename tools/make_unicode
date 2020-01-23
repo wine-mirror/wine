@@ -822,10 +822,10 @@ sub READ_JIS0208_FILE($)
 
 ################################################################
 # build the sort keys table
-sub READ_SORTKEYS_FILE()
+sub dump_sortkeys($)
 {
+    my $filename = shift;
     my @sortkeys = ();
-    for (my $i = 0; $i < 65536; $i++) { $sortkeys[$i] = [ -1, 0, 0, 0, 0 ] };
 
     my $INPUT = open_data_file( $REPORTS, $SORTKEYS );
     while (<$INPUT>)
@@ -863,10 +863,10 @@ sub READ_SORTKEYS_FILE()
     my @keys = (-1, -1, -1, -1, -1 );
     my @flatkeys = ();
 
-    for (my $i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i < @sortkeys; $i++)
     {
+        next unless defined $sortkeys[$i];
         my @current = @{$sortkeys[$i]};
-        next if $current[0] == -1;
         if ($current[1] == $keys[1])
         {
             if ($current[2] == $keys[2])
@@ -906,30 +906,8 @@ sub READ_SORTKEYS_FILE()
 
         $flatkeys[$current[0]] = ($current[1] << 16) | ($current[2] << 8) | ($current[3] << 4) | $current[4];
     }
-    return @flatkeys;
-}
 
-
-################################################################
-# build the sort keys table
-sub dump_sortkeys($@)
-{
-    my ($filename, @keys) = @_;
-
-    # count the number of 256-key ranges that contain something
-
-    my @offsets = ();
-    my $ranges = 2;
-    for (my $i = 0; $i < 256; $i++) { $offsets[$i] = 256; }
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        next unless defined $keys[$i];
-        $offsets[$i >> 8] = $ranges * 256;
-        $ranges++;
-        $i |= 255;
-    }
-
-    # output the range offsets
+    my @array = compress_array( 256, 0xffffffff, @flatkeys[0..65535] );
 
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     printf "Building $filename\n";
@@ -938,24 +916,9 @@ sub dump_sortkeys($@)
     printf OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    printf OUTPUT "const unsigned int DECLSPEC_HIDDEN collation_table[%d] =\n{\n", $ranges*256;
-    printf OUTPUT "    /* index */\n";
-    printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%08x", 0, @offsets );
-
-    # output the default values
-
-    printf OUTPUT "    /* defaults */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%08x", 0, (0xffffffff) x 256 );
-
-    # output all the key ranges
-
-    for (my $i = 0; $i < 256; $i++)
-    {
-        next if $offsets[$i] == 256;
-        printf OUTPUT ",\n    /* 0x%02x00 .. 0x%02xff */\n", $i, $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%08x", 0xffffffff, @keys[($i<<8) .. ($i<<8)+255] );
-    }
-    printf OUTPUT "\n};\n";
+    printf OUTPUT "const unsigned int DECLSPEC_HIDDEN collation_table[%d] =\n{\n", scalar @array;
+    printf OUTPUT "    /* offsets */\n%s,\n", DUMP_ARRAY( "0x%08x", 0, @array[0..255] );
+    printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%08x", 0, @array[256..$#array] );
     close OUTPUT;
     save_file($filename);
 }
@@ -1947,7 +1910,7 @@ sub compress_array($$@)
     for (my $row = 0; $row < $rows; $row++)
     {
         my @table_row = map { defined($_) ? $_ : $def; } @table[($row * $len)..($row * $len + $len - 1)];
-        my $rowtxt = pack "S*", @table_row;
+        my $rowtxt = pack "L*", @table_row;
         if (defined($sequences{$rowtxt}))
         {
             # reuse an existing row
@@ -2884,8 +2847,8 @@ sub REPLACE_IN_FILE($@)
 chdir ".." if -f "./make_unicode";
 READ_DEFAULTS( $DEFAULTS );
 dump_case_mappings( "libs/port/casemap.c" );
-dump_sortkeys( "libs/port/collation.c", READ_SORTKEYS_FILE() );
-dump_sortkeys( "dlls/kernelbase/collation.c", READ_SORTKEYS_FILE() );
+dump_sortkeys( "libs/port/collation.c" );
+dump_sortkeys( "dlls/kernelbase/collation.c" );
 dump_compose_table( "libs/port/compose.c" );
 dump_compose_table( "dlls/kernelbase/compose.c" );
 dump_decompose_table( "libs/port/decompose.c", 1 );
