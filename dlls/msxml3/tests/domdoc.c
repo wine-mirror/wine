@@ -2221,7 +2221,7 @@ static void test_domnode( void )
     ok(r == E_INVALIDARG, "get_nodeValue ret %08x\n", r );
 
     r = IXMLDOMDocument_get_nodeValue( doc, &var );
-    ok( r == S_FALSE, "nextNode returned wrong code\n");
+    ok( r == S_FALSE, "get_nodeValue returned wrong code\n");
     ok( V_VT(&var) == VT_NULL, "variant wasn't empty\n");
     ok( V_BSTR(&var) == NULL, "variant value wasn't null\n");
 
@@ -2391,7 +2391,7 @@ static void test_domnode( void )
     {
         type = NODE_INVALID;
         r = IXMLDOMNode_get_nodeType( node, &type);
-        ok( r == S_OK, "getNamedItem returned wrong code\n");
+        ok( r == S_OK, "get_nodeType returned wrong code\n");
         ok( type == NODE_ATTRIBUTE, "node not an attribute\n");
 
         str = NULL;
@@ -2424,7 +2424,7 @@ static void test_domnode( void )
 
             type = NODE_INVALID;
             r = IXMLDOMNode_get_nodeType( next, &type);
-            ok( r == S_OK, "getNamedItem returned wrong code\n");
+            ok( r == S_OK, "get_nodeType returned wrong code\n");
             ok( type == NODE_TEXT, "node not text\n");
 
             str = (void *)0xdeadbeef;
@@ -2513,7 +2513,7 @@ static void test_domnode( void )
     {
         type = NODE_INVALID;
         r = IXMLDOMNode_get_nodeType( node, &type);
-        ok( r == S_OK, "getNamedItem returned wrong code\n");
+        ok( r == S_OK, "get_nodeType returned wrong code\n");
         ok( type == NODE_ELEMENT, "node not text\n");
 
         r = IXMLDOMNode_hasChildNodes( node, NULL );
