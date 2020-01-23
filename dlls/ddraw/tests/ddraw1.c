@@ -13010,7 +13010,6 @@ static void test_caps(void)
             | DDSCAPS_FRONTBUFFER
             | DDSCAPS_3DDEVICE
             | DDSCAPS_VIDEOMEMORY
-            | DDSCAPS_OWNDC
             | DDSCAPS_LOCALVIDMEM
             | DDSCAPS_NONLOCALVIDMEM;
 
