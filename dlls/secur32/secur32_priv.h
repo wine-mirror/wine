@@ -190,9 +190,6 @@ void SECUR32_arc4Cleanup(arc4_info *a4i) DECLSPEC_HIDDEN;
 #define NTLMSSP_NEGOTIATE_56                        0x80000000
 
 
-SecPkgInfoW *ntlm_package_infoW DECLSPEC_HIDDEN;
-SecPkgInfoA *ntlm_package_infoA DECLSPEC_HIDDEN;
-
 /* schannel internal interface */
 typedef struct schan_imp_session_opaque *schan_imp_session;
 

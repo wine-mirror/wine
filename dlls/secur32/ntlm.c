@@ -1387,8 +1387,8 @@ static const SecPkgInfoA infoA = {
     ntlm_comment_A
 };
 
-SecPkgInfoA *ntlm_package_infoA = (SecPkgInfoA *)&infoA;
-SecPkgInfoW *ntlm_package_infoW = (SecPkgInfoW *)&infoW;
+static SecPkgInfoA *ntlm_package_infoA = (SecPkgInfoA *)&infoA;
+static SecPkgInfoW *ntlm_package_infoW = (SecPkgInfoW *)&infoW;
 
 static SecPkgInfoW *build_package_infoW( const SecPkgInfoW *info )
 {
