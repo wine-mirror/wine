@@ -917,8 +917,8 @@ sub dump_sortkeys($)
     print OUTPUT "#include \"windef.h\"\n\n";
 
     printf OUTPUT "const unsigned int DECLSPEC_HIDDEN collation_table[%d] =\n{\n", scalar @array;
-    printf OUTPUT "    /* offsets */\n%s,\n", DUMP_ARRAY( "0x%08x", 0, @array[0..255] );
-    printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%08x", 0, @array[256..$#array] );
+    printf OUTPUT "    /* offsets */\n%s,\n", dump_array( 32, 0, @array[0..255] );
+    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( 32, 0, @array[256..$#array] );
     close OUTPUT;
     save_file($filename);
 }
@@ -993,9 +993,10 @@ sub add_default_mappings($)
 
 ################################################################
 # dump an array of integers
-sub DUMP_ARRAY($$@)
+sub dump_array($$@)
 {
-    my ($format,$default,@array) = @_;
+    my ($bit_width, $default, @array) = @_;
+    my $format = sprintf "0x%%0%ux", $bit_width / 4;
     my $i;
     my $ret = "    ";
     for ($i = 0; $i < $#array; $i++)
@@ -1065,7 +1066,6 @@ sub dump_uni2cp_table($$)
 
     printf OUTPUT "static const unsigned %s uni2cp_low[] =\n{\n", $width == 8 ? "char" : "short";
 
-    my $format = $width == 8 ? "0x%02x" : "0x%04x";
     for (my $i = $index = 0; $i < 257; $i++)
     {
         next if $filled[$i] == -1;
@@ -1074,12 +1074,12 @@ sub dump_uni2cp_table($$)
         if ($i == 256)
         {
             print OUTPUT "    /* defaults */\n";
-            printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( $format, 0, ($def) x ($end - $start + 1) );
+            printf OUTPUT "%s\n};\n\n", dump_array( $width, 0, ($def) x ($end - $start + 1) );
         }
         else
         {
             printf OUTPUT "    /* 0x%04x .. 0x%04x */\n", $start, $end;
-            printf OUTPUT "%s,\n", DUMP_ARRAY( $format, $def, @uni2cp[$start .. $end] );
+            printf OUTPUT "%s,\n", dump_array( $width, $def, @uni2cp[$start .. $end] );
         }
         $index++;
     }
@@ -1091,7 +1091,7 @@ sub dump_uni2cp_table($$)
         if ($filled[$i] == -1) { $filled[$i] = $filled[256]; }
     }
     printf OUTPUT "static const unsigned short uni2cp_high[256] =\n";
-    printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, @filled[0..255] );
+    printf OUTPUT "{\n%s\n};\n\n", dump_array( 16, 0, @filled[0..255] );
 }
 
 ################################################################
@@ -1106,14 +1106,14 @@ sub dump_sbcs_table($$$$$)
     if ($has_glyphs)
     {
         printf OUTPUT "static const WCHAR cp2uni[512] =\n";
-        printf OUTPUT "{\n%s", DUMP_ARRAY( "0x%04x", $defw, @cp2uni[0 .. 255] );
+        printf OUTPUT "{\n%s", dump_array( 16, $defw, @cp2uni[0 .. 255] );
         printf OUTPUT ",\n    /* glyphs */\n%s\n};\n\n",
-                      DUMP_ARRAY( "0x%04x", $defw, get_glyphs_mapping(@cp2uni[0 .. 255]) );
+                      dump_array( 16, $defw, get_glyphs_mapping(@cp2uni[0 .. 255]) );
     }
     else
     {
         printf OUTPUT "static const WCHAR cp2uni[256] =\n";
-        printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", $defw, @cp2uni[0 .. 255] );
+        printf OUTPUT "{\n%s\n};\n\n", dump_array( 16, $defw, @cp2uni[0 .. 255] );
     }
 
     dump_uni2cp_table( 8, $def );
@@ -1158,14 +1158,14 @@ sub dump_dbcs_table($$$$@)
     # output the ascii->unicode table for the single byte chars
 
     printf OUTPUT "static const WCHAR cp2uni[%d] =\n", 256 * ($#lblist + 2 + $unused);
-    printf OUTPUT "{\n%s,\n", DUMP_ARRAY( "0x%04x", $defw, @cp2uni[0 .. 255] );
+    printf OUTPUT "{\n%s,\n", dump_array( 16, $defw, @cp2uni[0 .. 255] );
 
     # output the default table for unused lead bytes
 
     if ($unused)
     {
         printf OUTPUT "    /* unused lead bytes */\n";
-        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", 0, ($defw) x 256 );
+        printf OUTPUT "%s,\n", dump_array( 16, 0, ($defw) x 256 );
     }
 
     # output the ascii->unicode table for each DBCS lead byte
@@ -1174,7 +1174,7 @@ sub dump_dbcs_table($$$$@)
     {
         my $base = $lblist[$y] << 8;
         printf OUTPUT "    /* lead byte %02x */\n", $lblist[$y];
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", $defw, @cp2uni[$base .. $base+255] );
+        printf OUTPUT "%s", dump_array( 16, $defw, @cp2uni[$base .. $base+255] );
         printf OUTPUT ($y < $#lblist) ? ",\n" : "\n};\n\n";
     }
 
@@ -1188,7 +1188,7 @@ sub dump_dbcs_table($$$$@)
         for (my $x = 0; $x <= $#lead_bytes; $x++) { $offsets[$lead_bytes[$x]]++; }
     }
     printf OUTPUT "static const unsigned char cp2uni_leadbytes[256] =\n";
-    printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%02x", 0, @offsets );
+    printf OUTPUT "{\n%s\n};\n\n", dump_array( 8, 0, @offsets );
 
     dump_uni2cp_table( 16, $def );
 
@@ -1201,7 +1201,7 @@ sub dump_dbcs_table($$$$@)
     printf OUTPUT "    cp2uni_leadbytes,\n";
     printf OUTPUT "    uni2cp_low,\n";
     printf OUTPUT "    uni2cp_high,\n";
-    printf OUTPUT "    {\n    %s\n    }\n", DUMP_ARRAY( "0x%02x", 0, @lb_ranges, 0, 0 );
+    printf OUTPUT "    {\n    %s\n    }\n", dump_array( 8, 0, @lb_ranges, 0, 0 );
     printf OUTPUT "};\n";
 }
 
@@ -1880,16 +1880,15 @@ sub dump_case_table($@)
 
     printf OUTPUT "const WCHAR %s[%d] =\n", $name, $index * 256 + 512 - $removed;
     printf OUTPUT "{\n    /* index */\n";
-    printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", 256, @filled );
+    printf OUTPUT "%s,\n", dump_array( 16, 256, @filled );
     printf OUTPUT "    /* defaults */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, (0) x 256 );
+    printf OUTPUT "%s", dump_array( 16, 0, (0) x 256 );
     $index = 0;
     for (my $i = 0; $i < 256; $i++)
     {
         next unless $filled[$i];
         printf OUTPUT ",\n    /* 0x%02x%02x .. 0x%02xff */\n", $i, $lowerbounds[$index], $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0,
-                      @table[($i<<8) + $lowerbounds[$index] .. ($i<<8)+255] );
+        printf OUTPUT "%s", dump_array( 16, 0, @table[($i<<8) + $lowerbounds[$index] .. ($i<<8)+255] );
         $index++;
     }
     printf OUTPUT "\n};\n";
@@ -1935,8 +1934,8 @@ sub dump_simple_mapping($$@)
     my @array = compress_array( 256, $def, @_[0..65535] );
 
     printf OUTPUT "const unsigned short %s[%d] =\n{\n", $name, $#array+1;
-    printf OUTPUT "    /* offsets */\n%s,\n", DUMP_ARRAY( "0x%04x", 0, @array[0..255] );
-    printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
+    printf OUTPUT "    /* offsets */\n%s,\n", dump_array( 16, 0, @array[0..255] );
+    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( 16, 0, @array[256..$#array] );
 }
 
 ################################################################
@@ -1951,9 +1950,9 @@ sub dump_two_level_mapping($$@)
     for (my $i = 256; $i < @array; $i++) { $array[$i] += @array - 4096; }
 
     printf OUTPUT "const unsigned short DECLSPEC_HIDDEN %s[%d] =\n{\n", $name, @array + @row_array - 4096;
-    printf OUTPUT "    /* level 1 offsets */\n%s,\n", DUMP_ARRAY( "0x%04x", 0, @array[0..255] );
-    printf OUTPUT "    /* level 2 offsets */\n%s,\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
-    printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @row_array[4096..$#row_array] );
+    printf OUTPUT "    /* level 1 offsets */\n%s,\n", dump_array( 16, 0, @array[0..255] );
+    printf OUTPUT "    /* level 2 offsets */\n%s,\n", dump_array( 16, 0, @array[256..$#array] );
+    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( 16, 0, @row_array[4096..$#row_array] );
 }
 
 ################################################################
@@ -2137,8 +2136,8 @@ sub dump_nameprep($)
     # dump the main index
     printf OUTPUT "const unsigned short DECLSPEC_HIDDEN nameprep_mapping[%d] =\n", $total;
     printf OUTPUT "{\n    /* index */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @filled_idx );
-    printf OUTPUT ",\n    /* null sub-index */\n%s", DUMP_ARRAY( "0x%04x", 0, ($null_offset) x 16 );
+    printf OUTPUT "%s", dump_array( 16, 0, @filled_idx );
+    printf OUTPUT ",\n    /* null sub-index */\n%s", dump_array( 16, 0, ($null_offset) x 16 );
 
     # dump the second-level indexes
     for (my $i = 0; $i < 256; $i++)
@@ -2147,12 +2146,12 @@ sub dump_nameprep($)
         my @table = @filled[($i<<4)..($i<<4)+15];
         for (my $j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
         printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table );
+        printf OUTPUT "%s", dump_array( 16, 0, @table );
     }
 
     # dump the 16-char subsets
     printf OUTPUT ",\n    /* null mapping */\n";
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, (0) x 48 );
+    printf OUTPUT "%s", dump_array( 16, 0, (0) x 48 );
 
     for (my $i = 0; $i < 4096; $i++)
     {
@@ -2168,7 +2167,7 @@ sub dump_nameprep($)
             }
         }
         printf OUTPUT ",\n    /* 0x%03x0 .. 0x%03xf */\n", $i, $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table );
+        printf OUTPUT "%s", dump_array( 16, 0, @table );
     }
 
     printf OUTPUT "\n};\n";
@@ -2297,7 +2296,7 @@ sub dump_compose_table($)
     # terminator with last position
     push @table, 0, $pos;
     printf OUTPUT "static const WCHAR table[0x%x] =\n{\n", 2*$pos;
-    printf OUTPUT "    /* second chars + offsets */\n%s", DUMP_ARRAY( "0x%04x", 0, @table );
+    printf OUTPUT "    /* second chars + offsets */\n%s", dump_array( 16, 0, @table );
 
     # build the table of first chars and mappings
 
@@ -2310,7 +2309,7 @@ sub dump_compose_table($)
         {
             push @table, $list[$j][0], $list[$j][1];
         }
-        printf OUTPUT ",\n    /* 0x%04x */\n%s", $i, DUMP_ARRAY( "0x%04x", 0, @table );
+        printf OUTPUT ",\n    /* 0x%04x */\n%s", $i, dump_array( 16, 0, @table );
     }
     print OUTPUT "\n};\n\n";
     print OUTPUT <<"EOF";
@@ -2387,8 +2386,8 @@ sub dump_full_compat_table()
 
     printf OUTPUT "static const WCHAR compatmap_table[%d] =\n", $total + $data_total;
     printf OUTPUT "{\n    /* index */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @filled_idx );
-    printf OUTPUT ",\n    /* null sub-index */\n%s", DUMP_ARRAY( "0x%04x", 0, ($null_offset) x 16 );
+    printf OUTPUT "%s", dump_array( 16, 0, @filled_idx );
+    printf OUTPUT ",\n    /* null sub-index */\n%s", dump_array( 16, 0, ($null_offset) x 16 );
 
     # dump the second-level indexes
 
@@ -2398,13 +2397,13 @@ sub dump_full_compat_table()
         my @table = @filled[($i<<4)..($i<<4)+15];
         for (my $j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
         printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table );
+        printf OUTPUT "%s", dump_array( 16, 0, @table );
     }
 
     # dump the 16-char offsets
 
     printf OUTPUT ",\n    /* null offsets */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, ($total) x (16) );
+    printf OUTPUT "%s", dump_array( 16, 0, ($total) x (16) );
 
     $pos = $total;
 
@@ -2423,15 +2422,15 @@ sub dump_full_compat_table()
             }
         }
         printf OUTPUT ",\n    /* offsets 0x%03x0 .. 0x%03xf */\n", $i, $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table );
+        printf OUTPUT "%s", dump_array( 16, 0, @table );
     }
 
     my @sentinel = $pos;
     printf OUTPUT ",\n    /* offset sentinel */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @sentinel );
+    printf OUTPUT "%s", dump_array( 16, 0, @sentinel );
 
     printf OUTPUT ",\n    /* data */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @data );
+    printf OUTPUT "%s", dump_array( 16, 0, @data );
 
     printf OUTPUT "\n};\n\n";
 }
@@ -2488,8 +2487,8 @@ sub dump_decompose_table($$)
 
     printf OUTPUT "static const WCHAR table[%d] =\n", $total;
     printf OUTPUT "{\n    /* index */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @filled_idx );
-    printf OUTPUT ",\n    /* null sub-index */\n%s", DUMP_ARRAY( "0x%04x", 0, ($null_offset) x 16 );
+    printf OUTPUT "%s", dump_array( 16, 0, @filled_idx );
+    printf OUTPUT ",\n    /* null sub-index */\n%s", dump_array( 16, 0, ($null_offset) x 16 );
 
     # dump the second-level indexes
 
@@ -2499,13 +2498,13 @@ sub dump_decompose_table($$)
         my @table = @filled[($i<<4)..($i<<4)+15];
         for (my $j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
         printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table );
+        printf OUTPUT "%s", dump_array( 16, 0, @table );
     }
 
     # dump the 16-char subsets
 
     printf OUTPUT ",\n    /* null mapping */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, (0) x 32 );
+    printf OUTPUT "%s", dump_array( 16, 0, (0) x 32 );
 
     for (my $i = 0; $i < 4096; $i++)
     {
@@ -2520,7 +2519,7 @@ sub dump_decompose_table($$)
             }
         }
         printf OUTPUT ",\n    /* 0x%03x0 .. 0x%03xf */\n", $i, $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table );
+        printf OUTPUT "%s", dump_array( 16, 0, @table );
     }
 
     print OUTPUT "\n};\n\n";
