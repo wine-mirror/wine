@@ -303,19 +303,6 @@ HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT
     return S_OK;
 }
 
-BOOL freetype_is_monospaced(IDWriteFontFace5 *fontface)
-{
-    BOOL is_monospaced = FALSE;
-    FT_Face face;
-
-    EnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
-        is_monospaced = !!FT_IS_FIXED_WIDTH(face);
-    LeaveCriticalSection(&freetype_cs);
-
-    return is_monospaced;
-}
-
 struct decompose_context {
     IDWriteGeometrySink *sink;
     D2D1_POINT_2F offset;
@@ -923,11 +910,6 @@ void freetype_notify_cacheremove(IDWriteFontFace5 *fontface)
 HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
 {
     return E_NOTIMPL;
-}
-
-BOOL freetype_is_monospaced(IDWriteFontFace5 *fontface)
-{
-    return FALSE;
 }
 
 HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 const *glyphs,

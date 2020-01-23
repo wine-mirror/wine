@@ -955,7 +955,7 @@ static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace5 *iface)
 
     TRACE("%p.\n", iface);
 
-    return !!(fontface->flags & FONTFACE_IS_MONOSPACED);
+    return !!(fontface->flags & FONT_IS_MONOSPACED);
 }
 
 static int fontface_get_design_advance(struct dwrite_fontface *fontface, DWRITE_MEASURING_MODE measuring_mode,
@@ -1765,19 +1765,10 @@ static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont3 *iface, UINT32 m
 static BOOL WINAPI dwritefont1_IsMonospacedFont(IDWriteFont3 *iface)
 {
     struct dwrite_font *font = impl_from_IDWriteFont3(iface);
-    IDWriteFontFace5 *fontface;
-    HRESULT hr;
-    BOOL ret;
 
     TRACE("%p.\n", iface);
 
-    hr = get_fontface_from_font(font, &fontface);
-    if (FAILED(hr))
-        return FALSE;
-
-    ret = IDWriteFontFace5_IsMonospacedFont(fontface);
-    IDWriteFontFace5_Release(fontface);
-    return ret;
+    return !!(font->data->flags & FONT_IS_MONOSPACED);
 }
 
 static BOOL WINAPI dwritefont2_IsColorFont(IDWriteFont3 *iface)
@@ -4690,8 +4681,6 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->charmap = freetype_get_charmap_index(&fontface->IDWriteFontFace5_iface);
     if (freetype_has_kerning_pairs(&fontface->IDWriteFontFace5_iface))
         fontface->flags |= FONTFACE_HAS_KERNING_PAIRS;
-    if (freetype_is_monospaced(&fontface->IDWriteFontFace5_iface))
-        fontface->flags |= FONTFACE_IS_MONOSPACED;
     if (opentype_has_vertical_variants(&fontface->IDWriteFontFace5_iface))
         fontface->flags |= FONTFACE_HAS_VERTICAL_VARIANTS;
     fontface->glyph_image_formats = opentype_get_glyph_image_formats(&fontface->IDWriteFontFace5_iface);
@@ -4709,8 +4698,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         fontface->panose = desc->font_data->panose;
         fontface->fontsig = desc->font_data->fontsig;
         fontface->lf = desc->font_data->lf;
-        if (desc->font_data->flags & FONT_IS_SYMBOL)
-            fontface->flags |= FONT_IS_SYMBOL;
+        fontface->flags |= desc->font_data->flags & (FONT_IS_SYMBOL | FONT_IS_MONOSPACED);
     }
     else
     {
@@ -4730,8 +4718,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         fontface->panose = data->panose;
         fontface->fontsig = data->fontsig;
         fontface->lf = data->lf;
-        if (data->flags & FONT_IS_SYMBOL)
-            fontface->flags |= FONT_IS_SYMBOL;
+        fontface->flags |= data->flags & (FONT_IS_SYMBOL | FONT_IS_MONOSPACED);
 
         IDWriteLocalizedStrings_Release(names);
         release_font_data(data);

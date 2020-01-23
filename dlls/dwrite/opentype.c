@@ -1716,9 +1716,9 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
 void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct dwrite_font_props *props)
 {
     struct dwrite_fonttable os2, head;
+    BOOL is_symbol, is_monospaced;
     const TT_OS2_V2 *tt_os2;
     const TT_HEAD *tt_head;
-    BOOL is_symbol;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
     opentype_get_font_table(stream_desc, MS_HEAD_TAG, &head);
@@ -1733,6 +1733,7 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     memset(&props->panose, 0, sizeof(props->panose));
     memset(&props->fontsig, 0, sizeof(props->fontsig));
     memset(&props->lf, 0, sizeof(props->lf));
+    props->flags = 0;
 
     /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
     if (tt_os2)
@@ -1822,6 +1823,22 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     }
     if (is_symbol)
         props->flags |= FONT_IS_SYMBOL;
+
+    if (!(is_monospaced = props->panose.text.proportion == DWRITE_PANOSE_PROPORTION_MONOSPACED))
+    {
+        struct dwrite_fonttable post;
+
+        opentype_get_font_table(stream_desc, MS_POST_TAG, &post);
+
+        if (post.data)
+        {
+            is_monospaced = !!table_read_dword(&post, FIELD_OFFSET(TT_POST, fixed_pitch));
+
+            IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, post.context);
+        }
+    }
+    if (is_monospaced)
+        props->flags |= FONT_IS_MONOSPACED;
 
     TRACE("stretch=%d, weight=%d, style %d\n", props->stretch, props->weight, props->style);
 

@@ -4990,9 +4990,7 @@ static void test_IsMonospacedFont(void)
 
             IDWriteFont1_GetPanose(font1, &panose);
 
-            /* FIXME: failures disabled on Wine for now */
             is_monospaced_expected = get_expected_is_monospaced(fontface1, &panose);
-        todo_wine_if(is_monospaced_expected != is_monospaced_face)
             ok(is_monospaced_expected == is_monospaced_face, "Unexpected is_monospaced flag %d for %s, font %d.\n",
                     is_monospaced_face, wine_dbgstr_w(nameW), j);
 

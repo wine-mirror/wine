@@ -186,7 +186,7 @@ struct fontfacecached
 enum font_flags
 {
     FONT_IS_SYMBOL                 = 1 << 0,
-    FONTFACE_IS_MONOSPACED         = 1 << 1,
+    FONT_IS_MONOSPACED             = 1 << 1,
     FONTFACE_HAS_KERNING_PAIRS     = 1 << 2,
     FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 3
 };
@@ -391,7 +391,6 @@ extern void release_freetype(void) DECLSPEC_HIDDEN;
 extern HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph,
         DWRITE_GLYPH_METRICS *metrics) DECLSPEC_HIDDEN;
 extern void freetype_notify_cacheremove(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
-extern BOOL freetype_is_monospaced(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
 extern HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float emsize, UINT16 const *glyphs,
         float const *advances, DWRITE_GLYPH_OFFSET const *offsets, unsigned int count, BOOL is_rtl,
         IDWriteGeometrySink *sink) DECLSPEC_HIDDEN;
