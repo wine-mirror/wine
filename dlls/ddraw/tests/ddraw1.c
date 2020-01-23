@@ -5233,7 +5233,7 @@ static void test_pixel_format(void)
     IDirectDraw *ddraw = NULL;
     IDirectDrawClipper *clipper = NULL;
     DDSURFACEDESC ddsd;
-    IDirectDrawSurface *primary = NULL;
+    IDirectDrawSurface *primary = NULL, *offscreen;
     DDBLTFX fx;
     HRESULT hr;
 
@@ -5352,10 +5352,24 @@ static void test_pixel_format(void)
         ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
     }
 
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    ddsd.dwWidth = ddsd.dwHeight = 64;
+    hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &offscreen, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
+
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
-    hr = IDirectDrawSurface_Blt(primary, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    hr = IDirectDrawSurface_Blt(offscreen, NULL, NULL, NULL, DDBLT_WAIT | DDBLT_COLORFILL, &fx);
     ok(SUCCEEDED(hr), "Failed to clear source surface, hr %#x.\n", hr);
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    hr = IDirectDrawSurface_Blt(primary, NULL, offscreen, NULL, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to blit to primary surface, hr %#x.\n", hr);
 
     test_format = GetPixelFormat(hdc);
     ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
@@ -5365,6 +5379,8 @@ static void test_pixel_format(void)
         test_format = GetPixelFormat(hdc2);
         ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
     }
+
+    IDirectDrawSurface_Release(offscreen);
 
 cleanup:
     if (primary) IDirectDrawSurface_Release(primary);
