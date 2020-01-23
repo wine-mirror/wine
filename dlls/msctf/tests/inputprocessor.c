@@ -2406,6 +2406,7 @@ static void test_AssociateFocus(void)
     ITfThreadMgr_SetFocus(g_tm,dmorig);
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
+    test_OnInitDocumentMgr = test_OnPushContext = SINK_OPTIONAL; /* Win10 1709+ */
     test_CurrentFocus = FOCUS_SAVE;
     test_PrevFocus = FOCUS_SAVE;
     test_OnSetFocus = SINK_SAVE;
@@ -2422,11 +2423,13 @@ static void test_AssociateFocus(void)
     ok(olddm == dm1, "incorrect old DocumentMgr returned\n");
     ITfDocumentMgr_Release(olddm);
 
+    test_OnInitDocumentMgr = test_OnPushContext = SINK_OPTIONAL; /* Win10 1709+ */
     test_OnSetFocus = SINK_IGNORE; /* OnSetFocus fires a couple of times on Win7 */
     test_CurrentFocus = FOCUS_IGNORE;
     test_PrevFocus = FOCUS_IGNORE;
     SetFocus(wnd2);
     processPendingMessages();
+    test_OnInitDocumentMgr = test_OnPushContext = SINK_OPTIONAL; /* Win10 1709+ */
     SetFocus(wnd1);
     processPendingMessages();
 
@@ -2444,6 +2447,7 @@ static void test_AssociateFocus(void)
 
     ITfDocumentMgr_Release(dm1);
 
+    test_OnPopContext = SINK_OPTIONAL; /* Win10 1709+ */
     test_CurrentFocus = dmorig;
     test_PrevFocus = FOCUS_IGNORE;
     test_OnSetFocus  = SINK_OPTIONAL;
@@ -2454,8 +2458,9 @@ static void test_AssociateFocus(void)
     test_CurrentFocus = FOCUS_IGNORE;
     test_PrevFocus = FOCUS_IGNORE;
     DestroyWindow(wnd1);
+    test_OnPopContext = SINK_OPTIONAL; /* Win10 1709+ */
     DestroyWindow(wnd2);
-    test_OnPopContext = SINK_OPTIONAL; /* Vista and greater */
+    test_OnPopContext = SINK_IGNORE; /* Vista+, twice Win10 1709+ */
     test_OnSetFocus = SINK_OPTIONAL; /* Vista and greater */
     ITfThreadMgr_GetFocus(g_tm, &test_PrevFocus);
     test_CurrentFocus = NULL;
