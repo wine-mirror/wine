@@ -69,7 +69,8 @@ struct dwrite_font_propvec {
     FLOAT weight;
 };
 
-struct dwrite_font_data {
+struct dwrite_font_data
+{
     LONG ref;
 
     DWRITE_FONT_STYLE style;
@@ -77,6 +78,7 @@ struct dwrite_font_data {
     DWRITE_FONT_WEIGHT weight;
     DWRITE_PANOSE panose;
     FONTSIGNATURE fontsig;
+    UINT32 flags; /* enum font_flags */
     struct dwrite_font_propvec propvec;
 
     DWRITE_FONT_METRICS1 metrics;
@@ -205,13 +207,6 @@ struct dwrite_colorglyphenum
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
 #define GLYPH_BLOCK_MASK  (GLYPH_BLOCK_SIZE - 1)
 #define GLYPH_MAX         65536
-
-enum fontface_flags {
-    FONTFACE_IS_SYMBOL             = 1 << 0,
-    FONTFACE_IS_MONOSPACED         = 1 << 1,
-    FONTFACE_HAS_KERNING_PAIRS     = 1 << 2,
-    FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 3
-};
 
 struct dwrite_fontfile {
     IDWriteFontFile IDWriteFontFile_iface;
@@ -621,7 +616,7 @@ static BOOL WINAPI dwritefontface_IsSymbolFont(IDWriteFontFace5 *iface)
 
     TRACE("%p.\n", iface);
 
-    return !!(fontface->flags & FONTFACE_IS_SYMBOL);
+    return !!(fontface->flags & FONT_IS_SYMBOL);
 }
 
 static void WINAPI dwritefontface_GetMetrics(IDWriteFontFace5 *iface, DWRITE_FONT_METRICS *metrics)
@@ -1618,19 +1613,10 @@ static DWRITE_FONT_STYLE WINAPI dwritefont_GetStyle(IDWriteFont3 *iface)
 static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont3 *iface)
 {
     struct dwrite_font *font = impl_from_IDWriteFont3(iface);
-    IDWriteFontFace5 *fontface;
-    HRESULT hr;
-    BOOL ret;
 
     TRACE("%p.\n", iface);
 
-    hr = get_fontface_from_font(font, &fontface);
-    if (FAILED(hr))
-        return FALSE;
-
-    ret = IDWriteFontFace5_IsSymbolFont(fontface);
-    IDWriteFontFace5_Release(fontface);
-    return ret;
+    return !!(font->data->flags & FONT_IS_SYMBOL);
 }
 
 static HRESULT WINAPI dwritefont_GetFaceNames(IDWriteFont3 *iface, IDWriteLocalizedStrings **names)
@@ -3695,6 +3681,7 @@ static HRESULT init_font_data(const struct fontface_desc *desc, IDWriteLocalized
     data->panose = props.panose;
     data->fontsig = props.fontsig;
     data->lf = props.lf;
+    data->flags = props.flags;
 
     fontstrings_get_en_string(*family_name, familyW, ARRAY_SIZE(familyW));
     fontstrings_get_en_string(data->names, faceW, ARRAY_SIZE(faceW));
@@ -4651,8 +4638,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
 {
     struct file_stream_desc stream_desc;
     struct dwrite_fontface *fontface;
-    HRESULT hr = S_OK;
-    BOOL is_symbol;
+    HRESULT hr;
     int i;
 
     *ret = NULL;
@@ -4701,9 +4687,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         }
     }
 
-    fontface->charmap = freetype_get_charmap_index(&fontface->IDWriteFontFace5_iface, &is_symbol);
-    if (is_symbol)
-        fontface->flags |= FONTFACE_IS_SYMBOL;
+    fontface->charmap = freetype_get_charmap_index(&fontface->IDWriteFontFace5_iface);
     if (freetype_has_kerning_pairs(&fontface->IDWriteFontFace5_iface))
         fontface->flags |= FONTFACE_HAS_KERNING_PAIRS;
     if (freetype_is_monospaced(&fontface->IDWriteFontFace5_iface))
@@ -4717,15 +4701,19 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
 
        If face is created directly from factory we have to go through properties resolution.
     */
-    if (desc->font_data) {
+    if (desc->font_data)
+    {
         fontface->weight = desc->font_data->weight;
         fontface->style = desc->font_data->style;
         fontface->stretch = desc->font_data->stretch;
         fontface->panose = desc->font_data->panose;
         fontface->fontsig = desc->font_data->fontsig;
         fontface->lf = desc->font_data->lf;
+        if (desc->font_data->flags & FONT_IS_SYMBOL)
+            fontface->flags |= FONT_IS_SYMBOL;
     }
-    else {
+    else
+    {
         IDWriteLocalizedStrings *names;
         struct dwrite_font_data *data;
 
@@ -4742,6 +4730,8 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         fontface->panose = data->panose;
         fontface->fontsig = data->fontsig;
         fontface->lf = data->lf;
+        if (data->flags & FONT_IS_SYMBOL)
+            fontface->flags |= FONT_IS_SYMBOL;
 
         IDWriteLocalizedStrings_Release(names);
         release_font_data(data);

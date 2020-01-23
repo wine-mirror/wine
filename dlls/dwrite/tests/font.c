@@ -406,7 +406,7 @@ struct cmap_encoding_record
 struct cmap_header
 {
     WORD version;
-    WORD numTables;
+    WORD num_tables;
     struct cmap_encoding_record tables[1];
 };
 
@@ -3544,7 +3544,7 @@ static UINT32 opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *ta
 
     *ranges = NULL;
 
-    num_tables = table_read_be_word(table, 0, FIELD_OFFSET(struct cmap_header, numTables));
+    num_tables = table_read_be_word(table, 0, FIELD_OFFSET(struct cmap_header, num_tables));
     tables = table->data + FIELD_OFFSET(struct cmap_header, tables);
 
     for (i = 0; i < num_tables; ++i)
@@ -7260,10 +7260,7 @@ static BOOL get_expected_is_symbol(IDWriteFontFace *fontface)
 
     if (tt_os2)
     {
-        if (tt_os2->version)
-            is_symbol = !!(GET_BE_DWORD(tt_os2->ulCodePageRange1) & FS_SYMBOL);
-        if (!is_symbol)
-            is_symbol = tt_os2->panose.bFamilyType == PAN_FAMILY_PICTORIAL;
+        is_symbol = tt_os2->panose.bFamilyType == PAN_FAMILY_PICTORIAL;
         IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
     }
 
@@ -7275,7 +7272,7 @@ static BOOL get_expected_is_symbol(IDWriteFontFace *fontface)
     if (FAILED(hr) || !exists)
         return is_symbol;
 
-    num_tables = table_read_be_word(&cmap, 0, FIELD_OFFSET(struct cmap_header, numTables));
+    num_tables = table_read_be_word(&cmap, 0, FIELD_OFFSET(struct cmap_header, num_tables));
     tables = cmap.data + FIELD_OFFSET(struct cmap_header, tables);
 
     for (i = 0; i < num_tables; ++i)
@@ -7345,9 +7342,7 @@ static void test_IsSymbolFont(void)
             is_symbol_face = IDWriteFontFace_IsSymbolFont(fontface);
             ok(is_symbol_font == is_symbol_face, "Unexpected symbol flag.\n");
 
-            /* FIXME: failures disabled on Wine for now */
             is_symbol_expected = get_expected_is_symbol(fontface);
-        todo_wine_if(is_symbol_expected != is_symbol_face)
             ok(is_symbol_expected == is_symbol_face, "Unexpected is_symbol flag %d for %s, font %d.\n",
                     is_symbol_face, wine_dbgstr_w(nameW), j);
 

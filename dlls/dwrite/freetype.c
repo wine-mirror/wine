@@ -855,29 +855,19 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     return ret;
 }
 
-INT freetype_get_charmap_index(IDWriteFontFace5 *fontface, BOOL *is_symbol)
+INT freetype_get_charmap_index(IDWriteFontFace5 *fontface)
 {
     INT charmap_index = -1;
     FT_Face face;
 
-    *is_symbol = FALSE;
-
     EnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0) {
-        TT_OS2 *os2 = pFT_Get_Sfnt_Table(face, ft_sfnt_os2);
+    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
+    {
         FT_Int i;
 
-        if (os2) {
-            FT_UInt dummy;
-            if (os2->version == 0)
-                *is_symbol = pFT_Get_First_Char(face, &dummy) >= 0x100;
-            else
-                *is_symbol = !!(os2->ulCodePageRange1 & FS_SYMBOL);
-        }
-
         for (i = 0; i < face->num_charmaps; i++)
-            if (face->charmaps[i]->encoding == FT_ENCODING_MS_SYMBOL) {
-                *is_symbol = TRUE;
+            if (face->charmaps[i]->encoding == FT_ENCODING_MS_SYMBOL)
+            {
                 charmap_index = i;
                 break;
             }
@@ -978,9 +968,8 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     return FALSE;
 }
 
-INT freetype_get_charmap_index(IDWriteFontFace5 *fontface, BOOL *is_symbol)
+INT freetype_get_charmap_index(IDWriteFontFace5 *fontface)
 {
-    *is_symbol = FALSE;
     return -1;
 }
 

@@ -183,6 +183,14 @@ struct fontfacecached
 #define GLYPH_BLOCK_MASK  (GLYPH_BLOCK_SIZE - 1)
 #define GLYPH_MAX         65536
 
+enum font_flags
+{
+    FONT_IS_SYMBOL                 = 1 << 0,
+    FONTFACE_IS_MONOSPACED         = 1 << 1,
+    FONTFACE_HAS_KERNING_PAIRS     = 1 << 2,
+    FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 3
+};
+
 struct dwrite_fontface
 {
     IDWriteFontFace5 IDWriteFontFace5_iface;
@@ -206,7 +214,7 @@ struct dwrite_fontface
         unsigned int descent;
     } typo_metrics;
     INT charmap;
-    UINT16 flags;
+    UINT32 flags;
 
     struct dwrite_fonttable cmap;
     struct dwrite_fonttable vdmx;
@@ -291,13 +299,15 @@ extern float fontface_get_scaled_design_advance(struct dwrite_fontface *fontface
 extern struct dwrite_fontface *unsafe_impl_from_IDWriteFontFace(IDWriteFontFace *iface) DECLSPEC_HIDDEN;
 
 /* Opentype font table functions */
-struct dwrite_font_props {
+struct dwrite_font_props
+{
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_PANOSE panose;
     FONTSIGNATURE fontsig;
     LOGFONTW lf;
+    UINT32 flags;
 };
 
 struct file_stream_desc {
@@ -392,7 +402,7 @@ extern BOOL freetype_has_kerning_pairs(IDWriteFontFace5 *fontface) DECLSPEC_HIDD
 extern INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace5 *fontface, UINT16 left, UINT16 right) DECLSPEC_HIDDEN;
 extern void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap_desc) DECLSPEC_HIDDEN;
 extern BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap*) DECLSPEC_HIDDEN;
-extern INT freetype_get_charmap_index(IDWriteFontFace5 *fontface, BOOL *is_symbol) DECLSPEC_HIDDEN;
+extern INT freetype_get_charmap_index(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
 extern INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emsize, UINT16 index,
         DWRITE_MEASURING_MODE measuring_mode, BOOL *has_contours) DECLSPEC_HIDDEN;
 extern void freetype_get_design_glyph_bbox(IDWriteFontFace4*,UINT16,UINT16,RECT*) DECLSPEC_HIDDEN;

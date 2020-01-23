@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_SBIX_TAG DWRITE_MAKE_OPENTYPE_TAG('s','b','i','x')
 #define MS_MAXP_TAG DWRITE_MAKE_OPENTYPE_TAG('m','a','x','p')
 #define MS_CBLC_TAG DWRITE_MAKE_OPENTYPE_TAG('C','B','L','C')
+#define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
 
 /* 'sbix' formats */
 #define MS_PNG__TAG DWRITE_MAKE_OPENTYPE_TAG('p','n','g',' ')
@@ -129,6 +130,18 @@ enum OPENTYPE_CMAP_TABLE_FORMAT
 {
     OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING = 4,
     OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE = 12
+};
+
+enum opentype_cmap_table_platform
+{
+    OPENTYPE_CMAP_TABLE_PLATFORM_WIN = 3,
+};
+
+enum opentype_cmap_table_encoding
+{
+    OPENTYPE_CMAP_TABLE_ENCODING_SYMBOL = 0,
+    OPENTYPE_CMAP_TABLE_ENCODING_UNICODE_BMP = 1,
+    OPENTYPE_CMAP_TABLE_ENCODING_UNICODE_FULL = 10,
 };
 
 /* PANOSE is 10 bytes in size, need to pack the structure properly */
@@ -1705,6 +1718,7 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     struct dwrite_fonttable os2, head;
     const TT_OS2_V2 *tt_os2;
     const TT_HEAD *tt_head;
+    BOOL is_symbol;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
     opentype_get_font_table(stream_desc, MS_HEAD_TAG, &head);
@@ -1721,7 +1735,8 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     memset(&props->lf, 0, sizeof(props->lf));
 
     /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
-    if (tt_os2) {
+    if (tt_os2)
+    {
         USHORT version = GET_BE_WORD(tt_os2->version);
         USHORT fsSelection = GET_BE_WORD(tt_os2->fsSelection);
         USHORT usWeightClass = GET_BE_WORD(tt_os2->usWeightClass);
@@ -1752,11 +1767,8 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
         props->fontsig.fsUsb[2] = GET_BE_DWORD(tt_os2->ulUnicodeRange3);
         props->fontsig.fsUsb[3] = GET_BE_DWORD(tt_os2->ulUnicodeRange4);
 
-        if (GET_BE_WORD(tt_os2->version) == 0) {
-            props->fontsig.fsCsb[0] = 0;
-            props->fontsig.fsCsb[1] = 0;
-        }
-        else {
+        if (version)
+        {
             props->fontsig.fsCsb[0] = GET_BE_DWORD(tt_os2->ulCodePageRange1);
             props->fontsig.fsCsb[1] = GET_BE_DWORD(tt_os2->ulCodePageRange2);
         }
@@ -1779,6 +1791,37 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     }
 
     props->lf.lfWeight = props->weight;
+
+    if (!(is_symbol = props->panose.familyKind == DWRITE_PANOSE_FAMILY_SYMBOL))
+    {
+        struct dwrite_fonttable cmap;
+        int i, offset, num_tables;
+
+        opentype_get_font_table(stream_desc, MS_CMAP_TAG, &cmap);
+
+        if (cmap.data)
+        {
+            num_tables = table_read_be_word(&cmap, FIELD_OFFSET(struct cmap_header, num_tables));
+            offset = FIELD_OFFSET(struct cmap_header, tables);
+
+            for (i = 0; !is_symbol && i < num_tables; ++i)
+            {
+                WORD platform, encoding;
+
+                platform = table_read_be_word(&cmap, offset + i * sizeof(struct cmap_encoding_record) +
+                        FIELD_OFFSET(struct cmap_encoding_record, platformID));
+                encoding = table_read_be_word(&cmap, offset + i * sizeof(struct cmap_encoding_record) +
+                        FIELD_OFFSET(struct cmap_encoding_record, encodingID));
+
+                is_symbol = platform == OPENTYPE_CMAP_TABLE_PLATFORM_WIN &&
+                        encoding == OPENTYPE_CMAP_TABLE_ENCODING_SYMBOL;
+            }
+
+            IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, cmap.context);
+        }
+    }
+    if (is_symbol)
+        props->flags |= FONT_IS_SYMBOL;
 
     TRACE("stretch=%d, weight=%d, style %d\n", props->stretch, props->weight, props->style);
 
