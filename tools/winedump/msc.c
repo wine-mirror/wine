@@ -206,6 +206,7 @@ static int numeric_leaf(int* value, const unsigned short int* leaf)
     {
     case fv_integer: *value = fv.v.i; break;
     case fv_longlong: *value = (unsigned)fv.v.llu; printf("bad conversion\n"); break;
+    default: assert( 0 ); *value = 0;
     }
     return len;
 }
