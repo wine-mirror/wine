@@ -2276,6 +2276,12 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
                      (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
     rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
                       (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+    /* If the font unit is not pixels scaling should not be applied */
+    if (font->unit != UnitPixel && font->unit != UnitWorld)
+    {
+        rel_width /= graphics->scale;
+        rel_height /= graphics->scale;
+    }
 
     get_log_fontW(font, graphics, &lfw);
     lfw.lfHeight = -gdip_round(font_height * rel_height);
