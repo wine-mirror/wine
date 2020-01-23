@@ -54,5 +54,5 @@ DEVICE_OBJECT* bus_enumerate_hid_devices(const platform_vtbl *vtbl, enum_func fu
 DWORD check_bus_option(const UNICODE_STRING *option, DWORD default_value) DECLSPEC_HIDDEN;
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 
-HANDLE driver_key DECLSPEC_HIDDEN;
-DEVICE_OBJECT *bus_pdo DECLSPEC_HIDDEN;
+extern HANDLE driver_key DECLSPEC_HIDDEN;
+extern DEVICE_OBJECT *bus_pdo DECLSPEC_HIDDEN;
