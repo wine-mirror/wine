@@ -23,6 +23,7 @@ typedef struct _xinput_controller
     XINPUT_CAPABILITIES caps;
     void *platform_private; /* non-NULL when device is valid; validity may be read without holding crit */
     XINPUT_STATE state;
+    XINPUT_GAMEPAD last_keystroke;
     XINPUT_VIBRATION vibration;
 } xinput_controller;
 
