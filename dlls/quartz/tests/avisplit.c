@@ -526,14 +526,21 @@ static void test_media_types(void)
 {
     static const VIDEOINFOHEADER expect_vih =
     {
-        {0}, {0}, 0, 0, 1000 * 10000,
-        {sizeof(BITMAPINFOHEADER), 32, 24, 1, 12, mmioFOURCC('I','4','2','0'), 32*24*12/8}
+        .AvgTimePerFrame = 1000 * 10000,
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 24,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biBitCount = 12,
+        .bmiHeader.biCompression = mmioFOURCC('I','4','2','0'),
+        .bmiHeader.biSizeImage = 32 * 24 * 12 / 8,
     };
 
     const WCHAR *filename = load_resource(L"test.avi");
     IBaseFilter *filter = create_avi_splitter();
     AM_MEDIA_TYPE mt = {{0}}, *pmt;
     IEnumMediaTypes *enummt;
+    VIDEOINFOHEADER *vih;
     IFilterGraph2 *graph;
     HRESULT hr;
     ULONG ref;
@@ -629,6 +636,28 @@ static void test_media_types(void)
     hr = IPin_QueryAccept(pin, pmt);
     todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->formattype = FORMAT_VideoInfo;
+
+    vih = (VIDEOINFOHEADER *)pmt->pbFormat;
+
+    vih->AvgTimePerFrame = 10000;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    vih->AvgTimePerFrame = 1000 * 10000;
+
+    vih->dwBitRate = 1000000;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    vih->dwBitRate = 0;
+
+    SetRect(&vih->rcSource, 0, 0, 32, 24);
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    SetRect(&vih->rcSource, 0, 0, 0, 0);
+
+    vih->bmiHeader.biCompression = BI_RGB;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    vih->bmiHeader.biCompression = mmioFOURCC('I','4','2','0');
 
     CoTaskMemFree(pmt->pbFormat);
     CoTaskMemFree(pmt);

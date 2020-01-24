@@ -20,6 +20,7 @@
 
 #define COBJMACROS
 #include "dshow.h"
+#include "mmreg.h"
 #include "wine/test.h"
 
 static IBaseFilter *create_wave_parser(void)
@@ -525,6 +526,7 @@ static void test_media_types(void)
     AM_MEDIA_TYPE mt = {{0}}, *pmt;
     IEnumMediaTypes *enummt;
     IFilterGraph2 *graph;
+    WAVEFORMATEX *wfx;
     HRESULT hr;
     ULONG ref;
     IPin *pin;
@@ -618,6 +620,20 @@ static void test_media_types(void)
     pmt->formattype = FORMAT_None;
     hr = IPin_QueryAccept(pin, pmt);
     todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    wfx = (WAVEFORMATEX *)pmt->pbFormat;
+
+    wfx->nChannels = wfx->nBlockAlign = 2;
+    wfx->nAvgBytesPerSec = 44100 * 2;
+    wfx->nBlockAlign = 2;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    *wfx = expect_wfx;
+
+    wfx->wFormatTag = WAVE_FORMAT_IMA_ADPCM;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    *wfx = expect_wfx;
 
     CoTaskMemFree(pmt->pbFormat);
     CoTaskMemFree(pmt);

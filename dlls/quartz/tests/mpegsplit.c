@@ -529,7 +529,9 @@ static void test_media_types(void)
     const WCHAR *filename = load_resource(L"test.mp3");
     AM_MEDIA_TYPE mt = {{0}}, *pmt, expect_mt = {{0}};
     IBaseFilter *filter = create_mpeg_splitter();
+    MPEGLAYER3WAVEFORMAT *mp3wfx;
     IEnumMediaTypes *enummt;
+    MPEG1WAVEFORMAT *wfx;
     IFilterGraph2 *graph;
     HRESULT hr;
     ULONG ref;
@@ -595,41 +597,47 @@ static void test_media_types(void)
     mt.subtype = MEDIASUBTYPE_MPEG1Video;
     hr = IPin_QueryAccept(pin, &mt);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1VideoCD;
     hr = IPin_QueryAccept(pin, &mt);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1System;
     hr = IPin_QueryAccept(pin, &mt);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1AudioPayload;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1Payload;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1Packet;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-
     mt.subtype = GUID_NULL;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.subtype = MEDIASUBTYPE_MPEG1Audio;
 
     mt.majortype = MEDIATYPE_Audio;
-    mt.subtype = MEDIASUBTYPE_MPEG1Audio;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-
+    mt.majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     mt.majortype = MEDIATYPE_Stream;
+
+    mt.formattype = FORMAT_None;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_VideoInfo;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_WaveFormatEx;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     mt.bFixedSizeSamples = TRUE;
     mt.bTemporalCompression = TRUE;
     mt.lSampleSize = 123;
-    mt.formattype = FORMAT_WaveFormatEx;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -688,6 +696,9 @@ static void test_media_types(void)
     pmt->majortype = MEDIATYPE_Video;
     hr = IPin_QueryAccept(pin, pmt);
     todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->majortype = MEDIATYPE_Audio;
 
     pmt->subtype = MEDIASUBTYPE_MPEG1Audio;
@@ -708,6 +719,18 @@ static void test_media_types(void)
     hr = IPin_QueryAccept(pin, pmt);
     todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->formattype = FORMAT_WaveFormatEx;
+
+    wfx = (MPEG1WAVEFORMAT *)pmt->pbFormat;
+
+    wfx->fwHeadLayer = ACM_MPEG_LAYER2;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    wfx->fwHeadLayer = ACM_MPEG_LAYER3;
+
+    wfx->wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    wfx->wfx.wFormatTag = WAVE_FORMAT_MPEG;
 
     CoTaskMemFree(pmt->pbFormat);
     CoTaskMemFree(pmt);
@@ -785,6 +808,18 @@ static void test_media_types(void)
     hr = IPin_QueryAccept(pin, pmt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->formattype = FORMAT_WaveFormatEx;
+
+    mp3wfx = (MPEGLAYER3WAVEFORMAT *)pmt->pbFormat;
+
+    mp3wfx->fdwFlags = MPEGLAYER3_FLAG_PADDING_OFF;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mp3wfx->fdwFlags = MPEGLAYER3_FLAG_PADDING_ISO;
+
+    mp3wfx->wfx.wFormatTag = WAVE_FORMAT_MPEG;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mp3wfx->wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
 
     CoTaskMemFree(pmt->pbFormat);
     CoTaskMemFree(pmt);
