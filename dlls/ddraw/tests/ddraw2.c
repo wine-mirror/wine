@@ -8953,7 +8953,7 @@ static void test_color_fill(void)
                 float f, g;
 
                 expected = tests[i].result & mask;
-                f = ceilf(log2f(expected + 1.0f));
+                f = ceilf(logf(expected + 1.0f) / logf(2.0f));
                 g = (f + 1.0f) / 2.0f;
                 g -= (int)g;
                 expected_broken = (expected / exp2f(f) - g) * 256;
