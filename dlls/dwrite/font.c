@@ -83,6 +83,7 @@ struct dwrite_font_data
 
     DWRITE_FONT_METRICS1 metrics;
     IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1];
+    IDWriteLocalizedStrings *family_names;
     IDWriteLocalizedStrings *names;
 
     /* data needed to create fontface instance */
@@ -437,6 +438,9 @@ static void release_font_data(struct dwrite_font_data *data)
     if (data->names)
         IDWriteLocalizedStrings_Release(data->names);
 
+    if (data->family_names)
+        IDWriteLocalizedStrings_Release(data->family_names);
+
     IDWriteFontFile_Release(data->file);
     heap_free(data->facename);
     heap_free(data);
@@ -541,6 +545,8 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
         heap_free(fontface->files);
         if (fontface->names)
             IDWriteLocalizedStrings_Release(fontface->names);
+        if (fontface->family_names)
+            IDWriteLocalizedStrings_Release(fontface->family_names);
 
         for (i = 0; i < ARRAY_SIZE(fontface->glyphs); i++)
             heap_free(fontface->glyphs[i]);
@@ -1254,9 +1260,11 @@ static DWRITE_FONT_STYLE WINAPI dwritefontface3_GetStyle(IDWriteFontFace5 *iface
 
 static HRESULT WINAPI dwritefontface3_GetFamilyNames(IDWriteFontFace5 *iface, IDWriteLocalizedStrings **names)
 {
-    FIXME("%p, %p: stub\n", iface, names);
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, names);
+
+    return clone_localizedstrings(fontface->family_names, names);
 }
 
 static HRESULT WINAPI dwritefontface3_GetFaceNames(IDWriteFontFace5 *iface, IDWriteLocalizedStrings **names)
@@ -3622,8 +3630,7 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     return TRUE;
 }
 
-static HRESULT init_font_data(const struct fontface_desc *desc, IDWriteLocalizedStrings **family_name,
-        struct dwrite_font_data **ret)
+static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_font_data **ret)
 {
     struct file_stream_desc stream_desc;
     struct dwrite_font_props props;
@@ -3654,7 +3661,7 @@ static HRESULT init_font_data(const struct fontface_desc *desc, IDWriteLocalized
     opentype_get_font_facename(&stream_desc, props.lf.lfFaceName, &data->names);
 
     /* get family name from font file */
-    hr = opentype_get_font_familyname(&stream_desc, family_name);
+    hr = opentype_get_font_familyname(&stream_desc, &data->family_names);
     if (FAILED(hr)) {
         WARN("unable to get family name from font\n");
         release_font_data(data);
@@ -3669,10 +3676,10 @@ static HRESULT init_font_data(const struct fontface_desc *desc, IDWriteLocalized
     data->lf = props.lf;
     data->flags = props.flags;
 
-    fontstrings_get_en_string(*family_name, familyW, ARRAY_SIZE(familyW));
+    fontstrings_get_en_string(data->family_names, familyW, ARRAY_SIZE(familyW));
     fontstrings_get_en_string(data->names, faceW, ARRAY_SIZE(faceW));
     if (font_apply_differentiation_rules(data, familyW, faceW)) {
-        set_en_localizedstring(*family_name, familyW);
+        set_en_localizedstring(data->family_names, familyW);
         set_en_localizedstring(data->names, faceW);
     }
 
@@ -3703,6 +3710,7 @@ static HRESULT init_font_data_from_font(const struct dwrite_font_data *src, DWRI
     memset(data->info_strings, 0, sizeof(data->info_strings));
     data->names = NULL;
     IDWriteFontFile_AddRef(data->file);
+    IDWriteLocalizedStrings_AddRef(data->family_names);
 
     create_localizedstrings(&data->names);
     add_localizedstring(data->names, enusW, facenameW);
@@ -4033,8 +4041,8 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
         fileenum->file = file;
         list_add_tail(&scannedfiles, &fileenum->entry);
 
-        for (i = 0; i < face_count; i++) {
-            IDWriteLocalizedStrings *family_name = NULL;
+        for (i = 0; i < face_count; ++i)
+        {
             struct dwrite_font_data *font_data;
             struct fontface_desc desc;
             WCHAR familyW[255];
@@ -4049,20 +4057,21 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
             desc.simulations = DWRITE_FONT_SIMULATIONS_NONE;
             desc.font_data = NULL;
 
-            /* alloc and init new font data structure */
-            hr = init_font_data(&desc, &family_name, &font_data);
-            if (FAILED(hr)) {
+            /* Allocate an initialize new font data structure. */
+            hr = init_font_data(&desc, &font_data);
+            if (FAILED(hr))
+            {
                 /* move to next one */
                 hr = S_OK;
                 continue;
             }
 
-            fontstrings_get_en_string(family_name, familyW, ARRAY_SIZE(familyW));
+            fontstrings_get_en_string(font_data->family_names, familyW, ARRAY_SIZE(familyW));
 
             /* ignore dot named faces */
-            if (familyW[0] == '.') {
+            if (familyW[0] == '.')
+            {
                 WARN("Ignoring face %s\n", debugstr_w(familyW));
-                IDWriteLocalizedStrings_Release(family_name);
                 release_font_data(font_data);
                 continue;
             }
@@ -4074,7 +4083,7 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
                 struct dwrite_fontfamily_data *family_data;
 
                 /* create and init new family */
-                hr = init_fontfamily_data(family_name, &family_data);
+                hr = init_fontfamily_data(font_data->family_names, &family_data);
                 if (hr == S_OK) {
                     /* add font to family, family - to collection */
                     hr = fontfamily_add_font(family_data, font_data);
@@ -4085,8 +4094,6 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
                         release_fontfamily_data(family_data);
                 }
             }
-
-            IDWriteLocalizedStrings_Release(family_name);
 
             if (FAILED(hr))
                 break;
@@ -4394,11 +4401,9 @@ static HRESULT eudc_collection_add_family(IDWriteFactory7 *factory, struct dwrit
         desc.simulations = DWRITE_FONT_SIMULATIONS_NONE;
         desc.font_data = NULL;
 
-        hr = init_font_data(&desc, &names, &font_data);
+        hr = init_font_data(&desc, &font_data);
         if (FAILED(hr))
             continue;
-
-        IDWriteLocalizedStrings_Release(names);
 
         /* add font to family */
         hr = fontfamily_add_font(family_data, font_data);
@@ -4693,16 +4698,12 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     }
     else
     {
-        IDWriteLocalizedStrings *names;
-
-        hr = init_font_data(desc, &names, &font_data);
+        hr = init_font_data(desc, &font_data);
         if (FAILED(hr))
         {
             IDWriteFontFace5_Release(&fontface->IDWriteFontFace5_iface);
             return hr;
         }
-
-        IDWriteLocalizedStrings_Release(names);
     }
 
     fontface->weight = font_data->weight;
@@ -4715,6 +4716,9 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->names = font_data->names;
     if (fontface->names)
         IDWriteLocalizedStrings_AddRef(fontface->names);
+    fontface->family_names = font_data->family_names;
+    if (fontface->family_names)
+        IDWriteLocalizedStrings_AddRef(fontface->family_names);
     release_font_data(font_data);
 
     fontface->cached = factory_cache_fontface(fontface->factory, cached_list, &fontface->IDWriteFontFace5_iface);

@@ -1677,9 +1677,11 @@ if (0) /* crashes on native */
 
 static void test_GetFamilyNames(void)
 {
-    IDWriteFontFamily *family;
     IDWriteLocalizedStrings *names, *names2;
+    IDWriteFontFace3 *fontface3;
     IDWriteGdiInterop *interop;
+    IDWriteFontFamily *family;
+    IDWriteFontFace *fontface;
     IDWriteFactory *factory;
     IDWriteFont *font;
     LOGFONTW logfont;
@@ -1761,10 +1763,32 @@ static void test_GetFamilyNames(void)
 
     buffer[0] = 0;
     hr = IDWriteLocalizedStrings_GetString(names, 0, buffer, len+1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(buffer[0] != 0, "got %x\n", buffer[0]);
+    ok(hr == S_OK, "Failed to get a string, hr %#x.\n", hr);
+    ok(!lstrcmpW(buffer, L"Tahoma"), "Unexpected family name %s.\n", wine_dbgstr_w(buffer));
 
     IDWriteLocalizedStrings_Release(names);
+
+    /* GetFamilyNames() on font face */
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
+
+    if (SUCCEEDED(IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace3, (void **)&fontface3)))
+    {
+        hr = IDWriteFontFace3_GetFamilyNames(fontface3, &names);
+        ok(hr == S_OK, "Failed to get family names, hr %#x.\n", hr);
+
+        buffer[0] = 0;
+        hr = IDWriteLocalizedStrings_GetString(names, 0, buffer, len+1);
+        ok(hr == S_OK, "Failed to get a string, hr %#x.\n", hr);
+        ok(!lstrcmpW(buffer, L"Tahoma"), "Unexpected family name %s.\n", wine_dbgstr_w(buffer));
+
+        IDWriteLocalizedStrings_Release(names);
+        IDWriteFontFace3_Release(fontface3);
+    }
+    else
+        win_skip("IDWriteFontFace3::GetFamilyNames() is not supported.\n");
+
+    IDWriteFontFace_Release(fontface);
 
     IDWriteFontFamily_Release(family);
     IDWriteFont_Release(font);
