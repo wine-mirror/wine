@@ -113,8 +113,9 @@ static unsigned short add_url_v1(HANDLE queue)
     for (port = 50000; port < 51000; ++port)
     {
         swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
-        if ((ret = HttpAddUrl(queue, url, NULL)) != ERROR_SHARING_VIOLATION)
+        if (!(ret = HttpAddUrl(queue, url, NULL)))
             return port;
+        ok(ret == ERROR_SHARING_VIOLATION, "Failed to add %s, error %u.\n", debugstr_w(url), ret);
     }
     ok(0, "Failed to add url %s, error %u.\n", debugstr_w(url), ret);
     return 0;
@@ -129,8 +130,9 @@ static ULONG add_url_v2(HTTP_URL_GROUP_ID group)
     for (port = 50010; port < 51000; ++port)
     {
         swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
-        if ((ret = pHttpAddUrlToUrlGroup(group, url, 0xdeadbeef, 0)) != ERROR_SHARING_VIOLATION)
+        if (!(ret = pHttpAddUrlToUrlGroup(group, url, 0xdeadbeef, 0)))
             return port;
+        ok(ret == ERROR_SHARING_VIOLATION, "Failed to add %s, error %u.\n", debugstr_w(url), ret);
     }
     ok(0, "Failed to add url %s, error %u.\n", debugstr_w(url), ret);
     return 0;

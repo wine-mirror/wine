@@ -1104,10 +1104,15 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     addr.sin_addr.S_un.S_addr = INADDR_ANY;
     if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) == -1)
     {
-        ERR("Failed to bind socket, error %u.\n", WSAGetLastError());
         LeaveCriticalSection(&http_cs);
         closesocket(s);
         heap_free(url);
+        if (WSAGetLastError() == WSAEADDRINUSE)
+        {
+            WARN("Address %s is already in use.\n", debugstr_a(params->url));
+            return STATUS_SHARING_VIOLATION;
+        }
+        ERR("Failed to bind socket, error %u.\n", WSAGetLastError());
         return STATUS_UNSUCCESSFUL;
     }
 
