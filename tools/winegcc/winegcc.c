@@ -437,8 +437,8 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         else strarray_add( flags, opts->gui_app ? "-mwindows" : "-mconsole" );
 
         if (opts->unicode_app) strarray_add( flags, "-municode" );
-        if (opts->nodefaultlibs || opts->wine_builtin) strarray_add( flags, "-nodefaultlibs" );
-        if (opts->nostartfiles || opts->wine_builtin) strarray_add( flags, "-nostartfiles" );
+        if (opts->nodefaultlibs || opts->use_msvcrt) strarray_add( flags, "-nodefaultlibs" );
+        if (opts->nostartfiles || opts->use_msvcrt) strarray_add( flags, "-nostartfiles" );
         if (opts->subsystem) strarray_add( flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
 
         strarray_add( flags, "-Wl,--nxcompat" );
@@ -1096,7 +1096,7 @@ static void build(struct options* opts)
         {
             if (opts->subsystem && !strcmp( opts->subsystem, "native" ))
                 entry_point = opts->target_cpu == CPU_x86 ? "_DriverEntry@8" : "DriverEntry";
-            else if(opts->wine_builtin && !opts->shared && !opts->win16_app)
+            else if(opts->use_msvcrt && !opts->shared && !opts->win16_app)
             {
                 if (opts->unicode_app)
                     entry_point = opts->target_cpu == CPU_x86 ? "_wmainCRTStartup" : "wmainCRTStartup";
@@ -1196,7 +1196,7 @@ static void build(struct options* opts)
     /* link everything together now */
     link_args = get_link_args( opts, output_name );
 
-    if ((opts->nodefaultlibs || opts->wine_builtin) && is_pe)
+    if ((opts->nodefaultlibs || opts->use_msvcrt) && is_pe)
     {
         libgcc = find_libgcc(opts->prefix, link_args);
         if (!libgcc) libgcc = "-lgcc";
