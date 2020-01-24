@@ -2331,11 +2331,9 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_IsEqual(moniker, moniker2);
-todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_IsEqual(moniker2, moniker);
-todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_Hash(moniker, &hash);
@@ -2374,11 +2372,9 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_IsEqual(moniker, moniker2);
-todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_IsEqual(moniker2, moniker);
-todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_Hash(moniker, &hash);
@@ -2403,7 +2399,6 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_IsEqual(moniker, NULL);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IStream_Release(stream);

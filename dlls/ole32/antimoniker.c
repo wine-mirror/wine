@@ -53,6 +53,7 @@ static inline AntiMonikerImpl *impl_from_IROTData(IROTData *iface)
     return CONTAINING_RECORD(iface, AntiMonikerImpl, IROTData_iface);
 }
 
+static AntiMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface);
 
 /*******************************************************************************
  *        AntiMoniker_QueryInterface
@@ -308,22 +309,20 @@ AntiMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoniker
 /******************************************************************************
  *        AntiMoniker_IsEqual
  ******************************************************************************/
-static HRESULT WINAPI
-AntiMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
+static HRESULT WINAPI AntiMonikerImpl_IsEqual(IMoniker *iface, IMoniker *other)
 {
-    DWORD mkSys;
+    AntiMonikerImpl *moniker = impl_from_IMoniker(iface), *other_moniker;
 
-    TRACE("(%p,%p)\n",iface,pmkOtherMoniker);
+    TRACE("%p, %p.\n", iface, other);
 
-    if (pmkOtherMoniker==NULL)
+    if (!other)
+        return E_INVALIDARG;
+
+    other_moniker = unsafe_impl_from_IMoniker(other);
+    if (!other_moniker)
         return S_FALSE;
 
-    IMoniker_IsSystemMoniker(pmkOtherMoniker,&mkSys);
-
-    if (mkSys==MKSYS_ANTIMONIKER)
-        return S_OK;
-    else
-        return S_FALSE;
+    return moniker->count == other_moniker->count ? S_OK : S_FALSE;
 }
 
 /******************************************************************************
@@ -587,6 +586,13 @@ static const IMonikerVtbl VT_AntiMonikerImpl =
     AntiMonikerImpl_ParseDisplayName,
     AntiMonikerImpl_IsSystemMoniker
 };
+
+static AntiMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface)
+{
+    if (iface->lpVtbl != &VT_AntiMonikerImpl)
+        return NULL;
+    return CONTAINING_RECORD(iface, AntiMonikerImpl, IMoniker_iface);
+}
 
 /********************************************************************************/
 /* Virtual function table for the IROTData class.                               */
