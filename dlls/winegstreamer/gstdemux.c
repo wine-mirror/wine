@@ -57,7 +57,8 @@ struct gstdemux
     struct strmbase_sink sink;
     IAsyncReader *reader;
     IMemAllocator *alloc;
-    struct gstdemux_source **ppPins;
+
+    struct gstdemux_source **sources;
     LONG cStreams;
 
     LONGLONG filesize;
@@ -842,7 +843,7 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
     TRACE("%p %p %p\n", This, bin, pad);
 
     for (x = 0; x < This->cStreams; ++x) {
-        if (This->ppPins[x]->their_src == pad)
+        if (This->sources[x]->their_src == pad)
             break;
     }
     if (x == This->cStreams)
@@ -853,7 +854,7 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
         return;
     }
 
-    pin = This->ppPins[x];
+    pin = This->sources[x];
 
     if(pin->flipfilter)
         gst_pad_unlink(pin->their_src, pin->flip_sink);
@@ -994,7 +995,7 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
     }
 
     for (x = 0; x < This->cStreams; ++x) {
-        struct gstdemux_source *pin = This->ppPins[x];
+        struct gstdemux_source *pin = This->sources[x];
         if (!pin->their_src) {
             gst_segment_init(pin->segment, GST_FORMAT_TIME);
 
@@ -1215,7 +1216,7 @@ static struct strmbase_pin *gstdemux_get_pin(struct strmbase_filter *base, unsig
     if (!index)
         return &filter->sink.pin;
     else if (index <= filter->cStreams)
-        return &filter->ppPins[index - 1]->pin.pin;
+        return &filter->sources[index - 1]->pin.pin;
     return NULL;
 }
 
@@ -1280,7 +1281,7 @@ static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
 
     for (i = 0; i < filter->cStreams; ++i)
     {
-        if (SUCCEEDED(pin_hr = BaseOutputPinImpl_Active(&filter->ppPins[i]->pin)))
+        if (SUCCEEDED(pin_hr = BaseOutputPinImpl_Active(&filter->sources[i]->pin)))
             hr = pin_hr;
     }
     return hr;
@@ -1496,10 +1497,10 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
 
     WaitForSingleObject(filter->no_more_pads_event, INFINITE);
 
-    gst_pad_query_duration(filter->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
+    gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration);
     for (i = 0; i < filter->cStreams; ++i)
     {
-        struct gstdemux_source *pin = filter->ppPins[i];
+        struct gstdemux_source *pin = filter->sources[i];
         const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
         pin->seek.llDuration = pin->seek.llStop = duration / 100;
@@ -1947,9 +1948,9 @@ static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *
     struct gstdemux_source *pin, **new_array;
     char pad_name[19];
 
-    if (!(new_array = heap_realloc(filter->ppPins, (filter->cStreams + 1) * sizeof(*new_array))))
+    if (!(new_array = heap_realloc(filter->sources, (filter->cStreams + 1) * sizeof(*new_array))))
         return NULL;
-    filter->ppPins = new_array;
+    filter->sources = new_array;
 
     if (!(pin = heap_alloc_zero(sizeof(*pin))))
         return NULL;
@@ -1970,7 +1971,7 @@ static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *
     gst_pad_set_event_function(pin->my_sink, event_sink_wrapper);
     gst_pad_set_query_function(pin->my_sink, query_sink_wrapper);
 
-    filter->ppPins[filter->cStreams++] = pin;
+    filter->sources[filter->cStreams++] = pin;
     return pin;
 }
 
@@ -1990,11 +1991,11 @@ static HRESULT GST_RemoveOutputPins(struct gstdemux *This)
     This->my_src = This->their_sink = NULL;
 
     for (i = 0; i < This->cStreams; ++i)
-        free_source_pin(This->ppPins[i]);
+        free_source_pin(This->sources[i]);
 
     This->cStreams = 0;
-    heap_free(This->ppPins);
-    This->ppPins = NULL;
+    heap_free(This->sources);
+    This->sources = NULL;
     gst_element_set_bus(This->container, NULL);
     gst_object_unref(This->container);
     This->container = NULL;
@@ -2317,10 +2318,10 @@ static BOOL avi_splitter_init_gst(struct gstdemux *filter)
 
     WaitForSingleObject(filter->no_more_pads_event, INFINITE);
 
-    gst_pad_query_duration(filter->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
+    gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration);
     for (i = 0; i < filter->cStreams; ++i)
     {
-        struct gstdemux_source *pin = filter->ppPins[i];
+        struct gstdemux_source *pin = filter->sources[i];
         const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
         pin->seek.llDuration = pin->seek.llStop = duration / 100;
