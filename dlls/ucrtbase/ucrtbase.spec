@@ -2579,7 +2579,7 @@
 @ cdecl wcstod(wstr ptr) MSVCRT_wcstod
 @ cdecl wcstof(ptr ptr) MSVCRT_wcstof
 @ stub wcstoimax
-@ cdecl wcstok(wstr wstr) MSVCRT_wcstok
+@ cdecl wcstok(wstr wstr ptr) MSVCRT_wcstok
 @ cdecl wcstok_s(ptr wstr ptr) MSVCRT_wcstok_s
 @ cdecl wcstol(wstr ptr long) MSVCRT_wcstol
 @ stub wcstold

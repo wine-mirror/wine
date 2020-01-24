@@ -170,7 +170,7 @@
 @ cdecl wcsnlen(wstr long) ucrtbase.wcsnlen
 @ cdecl wcspbrk(wstr wstr) ucrtbase.wcspbrk
 @ cdecl wcsspn(wstr wstr) ucrtbase.wcsspn
-@ cdecl wcstok(wstr wstr) ucrtbase.wcstok
+@ cdecl wcstok(wstr wstr ptr) ucrtbase.wcstok
 @ cdecl wcstok_s(ptr wstr ptr) ucrtbase.wcstok_s
 @ cdecl wcsxfrm(ptr wstr long) ucrtbase.wcsxfrm
 @ cdecl wctype(str) ucrtbase.wctype

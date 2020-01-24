@@ -1630,10 +1630,19 @@ MSVCRT_wchar_t * CDECL MSVCRT_wcstok_s( MSVCRT_wchar_t *str, const MSVCRT_wchar_
 /*********************************************************************
  *		wcstok  (MSVCRT.@)
  */
+#if _MSVCR_VER>=140
+MSVCRT_wchar_t * CDECL MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim, MSVCRT_wchar_t **ctx )
+{
+    if (!ctx)
+        ctx = &msvcrt_get_thread_data()->wcstok_next;
+    return MSVCRT_wcstok_s(str, delim, ctx);
+}
+#else
 MSVCRT_wchar_t * CDECL MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim )
 {
     return MSVCRT_wcstok_s(str, delim, &msvcrt_get_thread_data()->wcstok_next);
 }
+#endif
 
 /*********************************************************************
  *		_wctomb_s_l (MSVCRT.@)

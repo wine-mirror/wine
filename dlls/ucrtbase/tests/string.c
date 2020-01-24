@@ -89,6 +89,7 @@ static void (__cdecl *p__free_locale)(_locale_t);
 static int (__cdecl *p__getmbcp)(void);
 static int (__cdecl *p__setmbcp)(int);
 static size_t (__cdecl *p__mbsspn)(const unsigned char*, const unsigned char*);
+static wchar_t* (__cdecl *p_wcstok)(wchar_t*, const wchar_t*, wchar_t**);
 
 static BOOL init(void)
 {
@@ -122,6 +123,7 @@ static BOOL init(void)
     p__getmbcp = (void*)GetProcAddress(module, "_getmbcp");
     p__setmbcp = (void*)GetProcAddress(module, "_setmbcp");
     p__mbsspn = (void*)GetProcAddress(module, "_mbsspn");
+    p_wcstok = (void*)GetProcAddress(module, "wcstok");
     return TRUE;
 }
 
@@ -456,6 +458,33 @@ static void test_mbsspn( void)
     p__setmbcp(cp);
 }
 
+static void test_wcstok(void)
+{
+    static const wchar_t *input = L"two words";
+    wchar_t buffer[16];
+    wchar_t *token;
+    wchar_t *next;
+
+    next = NULL;
+    wcscpy(buffer, input);
+    token = p_wcstok(buffer, L" ", &next);
+    ok(!wcscmp(L"two", token), "expected \"two\", got \"%ls\"\n", token);
+    ok(next == token + 4, "expected %p, got %p\n", token + 4, next);
+    token = p_wcstok(NULL, L" ", &next);
+    ok(!wcscmp(L"words", token), "expected \"words\", got \"%ls\"\n", token);
+    ok(next == token + 5, "expected %p, got %p\n", token + 5, next);
+    token = p_wcstok(NULL, L" ", &next);
+    ok(!token, "expected NULL, got %p\n", token);
+
+    wcscpy(buffer, input);
+    token = p_wcstok(buffer, L" ", NULL);
+    ok(!wcscmp(L"two", token), "expected \"two\", got \"%ls\"\n", token);
+    token = p_wcstok(NULL, L" ", NULL);
+    ok(!wcscmp(L"words", token), "expected \"words\", got \"%ls\"\n", token);
+    token = p_wcstok(NULL, L" ", NULL);
+    ok(!token, "expected NULL, got %p\n", token);
+}
+
 START_TEST(string)
 {
     if (!init()) return;
@@ -465,4 +494,5 @@ START_TEST(string)
     test___strncnt();
     test_C_locale();
     test_mbsspn();
+    test_wcstok();
 }
