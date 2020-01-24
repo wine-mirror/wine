@@ -4410,8 +4410,10 @@ static void test_GetFaceNames(void)
     static const WCHAR obliqueW[] = {'O','b','l','i','q','u','e',0};
     static const WCHAR enus2W[] = {'e','n','-','U','s',0};
     static const WCHAR enusW[] = {'e','n','-','u','s',0};
-    IDWriteLocalizedStrings *strings, *strings2;
+    IDWriteLocalizedStrings *strings, *strings2, *strings3;
+    IDWriteFontFace3 *fontface3;
     IDWriteGdiInterop *interop;
+    IDWriteFontFace *fontface;
     IDWriteFactory *factory;
     UINT32 count, index;
     IDWriteFont *font;
@@ -4469,6 +4471,32 @@ static void test_GetFaceNames(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, obliqueW), "got %s\n", wine_dbgstr_w(buffW));
     IDWriteLocalizedStrings_Release(strings);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "Failed to create a font face, hr %#x.\n", hr);
+
+    if (SUCCEEDED(IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace3, (void **)&fontface3)))
+    {
+        hr = IDWriteFontFace3_GetFaceNames(fontface3, &strings2);
+        ok(hr == S_OK, "Failed to get face names, hr %#x.\n", hr);
+
+        hr = IDWriteFontFace3_GetFaceNames(fontface3, &strings3);
+        ok(hr == S_OK, "Failed to get face names, hr %#x.\n", hr);
+        ok(strings2 != strings3, "Unexpected instance.\n");
+        IDWriteLocalizedStrings_Release(strings3);
+
+        buffW[0] = 0;
+        hr = IDWriteLocalizedStrings_GetString(strings2, 0, buffW, ARRAY_SIZE(buffW));
+        ok(hr == S_OK, "Failed to get a string, hr %#x.\n", hr);
+        ok(!lstrcmpW(buffW, obliqueW), "Unexpected name %s.\n", wine_dbgstr_w(buffW));
+        IDWriteLocalizedStrings_Release(strings2);
+
+        IDWriteFontFace3_Release(fontface3);
+    }
+    else
+        win_skip("GetFaceNames() is not supported.\n");
+
+    IDWriteFontFace_Release(fontface);
 
     IDWriteFont_Release(font);
     IDWriteGdiInterop_Release(interop);
