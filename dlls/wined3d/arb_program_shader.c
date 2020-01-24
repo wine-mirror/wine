@@ -237,6 +237,7 @@ struct shader_arb_ctx_priv
         NV3
     } target_version;
 
+    const struct wined3d_gl_info *gl_info;
     const struct arb_vs_compile_args    *cur_vs_args;
     const struct arb_ps_compile_args    *cur_ps_args;
     const struct arb_ps_compiled_shader *compiled_fprog;
@@ -1438,7 +1439,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
 
         case WINED3D_SHADER_RESOURCE_TEXTURE_2D:
             if (pshader && priv->cur_ps_args->super.np2_fixup & (1u << sampler_idx)
-                    && ins->ctx->gl_info->supported[ARB_TEXTURE_RECTANGLE])
+                    && priv->gl_info->supported[ARB_TEXTURE_RECTANGLE])
                 tex_type = "RECT";
             else
                 tex_type = "2D";
@@ -3301,7 +3302,7 @@ static void shader_hw_ret(const struct wined3d_shader_instruction *ins)
     if(vshader)
     {
         if (priv->in_main_func) vshader_add_footer(priv, shader->backend_data,
-                priv->cur_vs_args, ins->ctx->reg_maps, ins->ctx->gl_info, buffer);
+                priv->cur_vs_args, ins->ctx->reg_maps, priv->gl_info, buffer);
     }
 
     shader_addline(buffer, "RET;\n");
@@ -3555,6 +3556,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
 
     /*  Create the hw ARB shader */
     memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.gl_info = gl_info;
     priv_ctx.cur_ps_args = args;
     priv_ctx.compiled_fprog = compiled;
     priv_ctx.cur_np2fixup_info = &compiled->np2fixup_info;
@@ -4113,6 +4115,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     unsigned int i;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.gl_info = gl_info;
     priv_ctx.cur_vs_args = args;
     list_init(&priv_ctx.control_frames);
     init_output_registers(shader, ps_input_sig, &priv_ctx, compiled);

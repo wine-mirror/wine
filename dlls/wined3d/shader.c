@@ -2624,7 +2624,6 @@ HRESULT shader_generate_code(const struct wined3d_shader *shader, struct wined3d
     state.in_subroutine = FALSE;
 
     ctx.shader = shader;
-    ctx.gl_info = &device->adapter->gl_info;
     ctx.reg_maps = reg_maps;
     ctx.buffer = buffer;
     ctx.tex_mx = &tex_mx;

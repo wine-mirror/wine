@@ -79,6 +79,7 @@
 struct wined3d_fragment_pipe_ops;
 struct wined3d_adapter;
 struct wined3d_context;
+struct wined3d_gl_info;
 struct wined3d_state;
 struct wined3d_swapchain_gl;
 struct wined3d_texture_gl;
@@ -1084,7 +1085,6 @@ struct wined3d_shader_parser_state
 struct wined3d_shader_context
 {
     const struct wined3d_shader *shader;
-    const struct wined3d_gl_info *gl_info;
     const struct wined3d_shader_reg_maps *reg_maps;
     struct wined3d_string_buffer *buffer;
     struct wined3d_shader_tex_mx *tex_mx;
