@@ -71,7 +71,12 @@ static const CLSID CLSID_JScript =
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
 DEFINE_EXPECT(testArgConv);
+DEFINE_EXPECT(OnEnterScript);
+DEFINE_EXPECT(OnLeaveScript);
 
 static IVariantChangeType *script_change_type;
 static IDispatch *stored_obj;
@@ -92,9 +97,19 @@ static void _call_change_type(unsigned line, IVariantChangeType *change_type, VA
     HRESULT hres;
 
     VariantInit(dst);
+    if(V_VT(src) == VT_DISPATCH && vt != VT_BOOL) {
+        SET_EXPECT(OnEnterScript);
+        SET_EXPECT(OnLeaveScript);
+    }
     hres = IVariantChangeType_ChangeType(change_type, dst, src, 0, vt);
     ok_(__FILE__,line)(hres == S_OK, "ChangeType(%d) failed: %08x\n", vt, hres);
     ok_(__FILE__,line)(V_VT(dst) == vt, "V_VT(dst) = %d\n", V_VT(dst));
+    if(V_VT(src) == VT_DISPATCH && vt != VT_BOOL) {
+        todo_wine
+        CHECK_CALLED(OnEnterScript);
+        todo_wine
+        CHECK_CALLED(OnLeaveScript);
+    }
 }
 
 #define change_type_fail(a,b,c,d) _change_type_fail(__LINE__,a,b,c,d)
@@ -341,7 +356,9 @@ static HRESULT WINAPI Test_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WO
         ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
         ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(rgvarg) = %d\n", V_VT(pdp->rgvarg));
 
+        CHECK_CALLED(OnEnterScript);
         test_caller(pspCaller, V_DISPATCH(pdp->rgvarg));
+        SET_EXPECT(OnLeaveScript);
 
         stored_obj = V_DISPATCH(pdp->rgvarg);
         IDispatch_AddRef(stored_obj);
@@ -440,11 +457,13 @@ static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, I
 
 static HRESULT WINAPI ActiveScriptSite_OnEnterScript(IActiveScriptSite *iface)
 {
+    CHECK_EXPECT(OnEnterScript);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ActiveScriptSite_OnLeaveScript(IActiveScriptSite *iface)
 {
+    CHECK_EXPECT(OnLeaveScript);
     return E_NOTIMPL;
 }
 
@@ -515,6 +534,7 @@ static void run_scripts(void)
     hres = IActiveScriptParse_QueryInterface(parser, &IID_IVariantChangeType, (void**)&script_change_type);
     ok(hres == S_OK, "Could not get IVariantChangeType iface: %08x\n", hres);
 
+    SET_EXPECT(OnEnterScript); /* checked in callback */
     SET_EXPECT(testArgConv);
     parse_script(parser,
                  L"var obj = {"
@@ -523,6 +543,7 @@ static void run_scripts(void)
                  L"};"
                  L"testArgConv(obj);");
     CHECK_CALLED(testArgConv);
+    CHECK_CALLED(OnLeaveScript); /* set in callback */
 
     test_change_types(script_change_type, stored_obj);
     IDispatch_Release(stored_obj);
@@ -541,9 +562,12 @@ static BOOL check_jscript(void)
     if(!parser)
         return FALSE;
 
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
     hres = IActiveScriptParse_ParseScriptText(parser, L"if(!('localeCompare' in String.prototype)) throw 1;",
                                               NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-
+    CLEAR_CALLED(OnEnterScript);
+    CLEAR_CALLED(OnLeaveScript);
     if(hres == S_OK)
         hres = IActiveScriptParse_QueryInterface(parser, &IID_IActiveScriptProperty, (void**)&script_prop);
     IActiveScriptParse_Release(parser);
