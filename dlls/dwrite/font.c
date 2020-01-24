@@ -82,7 +82,7 @@ struct dwrite_font_data
     struct dwrite_font_propvec propvec;
 
     DWRITE_FONT_METRICS1 metrics;
-    IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1];
+    IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_WEIGHT_STRETCH_STYLE_FAMILY_NAME + 1];
     IDWriteLocalizedStrings *family_names;
     IDWriteLocalizedStrings *names;
 
@@ -1291,8 +1291,11 @@ static HRESULT get_font_info_strings(const struct file_stream_desc *stream_desc,
     *exists = FALSE;
     *ret = NULL;
 
-    if (stringid > DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME || stringid == DWRITE_INFORMATIONAL_STRING_NONE)
+    if (stringid > DWRITE_INFORMATIONAL_STRING_WEIGHT_STRETCH_STYLE_FAMILY_NAME
+            || stringid == DWRITE_INFORMATIONAL_STRING_NONE)
+    {
         return S_OK;
+    }
 
     if (!strings_cache[stringid])
     {
@@ -1301,7 +1304,7 @@ static HRESULT get_font_info_strings(const struct file_stream_desc *stream_desc,
         if (!desc.stream)
             hr = get_filestream_from_file(file, &desc.stream);
         if (SUCCEEDED(hr))
-            hr = opentype_get_font_info_strings(&desc, stringid, &strings_cache[stringid]);
+            opentype_get_font_info_strings(&desc, stringid, &strings_cache[stringid]);
 
         if (!stream_desc->stream && desc.stream)
             IDWriteFontFileStream_Release(desc.stream);
