@@ -158,7 +158,9 @@ typedef struct {
     variable_declaration_t *variable_list;
     expression_t *begin_expr;
     expression_t *expr;
+    unsigned expr_loc;
     expression_t *end_expr;
+    unsigned end_loc;
     statement_t *statement;
 } for_statement_t;
 
@@ -189,6 +191,7 @@ typedef struct {
 
 typedef struct _case_clausule_t {
     expression_t *expr;
+    unsigned loc;
     statement_t *stat;
 
     struct _case_clausule_t *next;
@@ -210,6 +213,7 @@ typedef struct {
     statement_t *try_statement;
     catch_block_t *catch_block;
     statement_t *finally_statement;
+    unsigned finally_loc;
 } try_statement_t;
 
 typedef enum {

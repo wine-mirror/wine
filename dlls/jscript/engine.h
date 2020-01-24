@@ -125,6 +125,7 @@ typedef enum {
 
 typedef struct {
     jsop_t op;
+    unsigned loc;
     union {
         instr_arg_t arg[2];
         double dbl;

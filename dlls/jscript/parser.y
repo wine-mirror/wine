@@ -71,7 +71,7 @@ typedef struct _case_list_t {
 } case_list_t;
 
 static catch_block_t *new_catch_block(parser_ctx_t*,const WCHAR*,statement_t*);
-static case_clausule_t *new_case_clausule(parser_ctx_t*,expression_t*,statement_list_t*);
+static case_clausule_t *new_case_clausule(parser_ctx_t*,unsigned,expression_t*,statement_list_t*);
 static case_list_t *new_case_list(parser_ctx_t*,case_clausule_t*);
 static case_list_t *case_list_add(parser_ctx_t*,case_list_t*,case_clausule_t*);
 static case_clausule_t *new_case_block(parser_ctx_t*,case_list_t*,case_clausule_t*,case_list_t*);
@@ -91,8 +91,8 @@ static statement_t *new_var_statement(parser_ctx_t*,unsigned,variable_list_t*);
 static statement_t *new_expression_statement(parser_ctx_t*,unsigned,expression_t*);
 static statement_t *new_if_statement(parser_ctx_t*,unsigned,expression_t*,statement_t*,statement_t*);
 static statement_t *new_while_statement(parser_ctx_t*,unsigned,BOOL,expression_t*,statement_t*);
-static statement_t *new_for_statement(parser_ctx_t*,unsigned,variable_list_t*,expression_t*,expression_t*,
-        expression_t*,statement_t*);
+static statement_t *new_for_statement(parser_ctx_t*,unsigned,variable_list_t*,expression_t*,expression_t*,unsigned,
+                                      expression_t*,unsigned,statement_t*);
 static statement_t *new_forin_statement(parser_ctx_t*,unsigned,variable_declaration_t*,expression_t*,expression_t*,statement_t*);
 static statement_t *new_continue_statement(parser_ctx_t*,unsigned,const WCHAR*);
 static statement_t *new_break_statement(parser_ctx_t*,unsigned,const WCHAR*);
@@ -101,7 +101,7 @@ static statement_t *new_with_statement(parser_ctx_t*,unsigned,expression_t*,stat
 static statement_t *new_labelled_statement(parser_ctx_t*,unsigned,const WCHAR*,statement_t*);
 static statement_t *new_switch_statement(parser_ctx_t*,unsigned,expression_t*,case_clausule_t*);
 static statement_t *new_throw_statement(parser_ctx_t*,unsigned,expression_t*);
-static statement_t *new_try_statement(parser_ctx_t*,statement_t*,catch_block_t*,statement_t*);
+static statement_t *new_try_statement(parser_ctx_t*,statement_t*,catch_block_t*,statement_t*,unsigned);
 
 struct statement_list_t {
    statement_t *head;
@@ -397,13 +397,13 @@ IterationStatement
           semicolon  Expression_opt
                                 { if(!explicit_error(ctx, $6, ';')) YYABORT; }
           semicolon Expression_opt right_bracket Statement
-                                { $$ = new_for_statement(ctx, @$, NULL, $3, $6, $9, $11); }
+                                { $$ = new_for_statement(ctx, @3, NULL, $3, $6, @6, $9, @9, $11); }
         | kFOR left_bracket kVAR VariableDeclarationListNoIn
                                 { if(!explicit_error(ctx, $4, ';')) YYABORT; }
           semicolon Expression_opt
                                 { if(!explicit_error(ctx, $7, ';')) YYABORT; }
           semicolon Expression_opt right_bracket Statement
-                                { $$ = new_for_statement(ctx, @$, $4, NULL, $7, $10, $12); }
+                                { $$ = new_for_statement(ctx, @3, $4, NULL, $7, @7, $10, @10, $12); }
         | kFOR left_bracket LeftHandSideExpression kIN Expression_err right_bracket Statement
                                 { $$ = new_forin_statement(ctx, @$, NULL, $3, $5, $7); }
         | kFOR left_bracket kVAR VariableDeclarationNoIn kIN Expression_err right_bracket Statement
@@ -460,12 +460,12 @@ CaseClausules
 /* ECMA-262 3rd Edition    12.11 */
 CaseClausule
         : kCASE Expression ':' StatementList_opt
-                                 { $$ = new_case_clausule(ctx, $2, $4); }
+                                 { $$ = new_case_clausule(ctx, @$, $2, $4); }
 
 /* ECMA-262 3rd Edition    12.11 */
 DefaultClausule
         : kDEFAULT ':' StatementList_opt
-                                 { $$ = new_case_clausule(ctx, NULL, $3); }
+                                 { $$ = new_case_clausule(ctx, @$, NULL, $3); }
 
 /* ECMA-262 3rd Edition    12.13 */
 ThrowStatement
@@ -474,10 +474,10 @@ ThrowStatement
 
 /* ECMA-262 3rd Edition    12.14 */
 TryStatement
-        : kTRY Block Catch      { $$ = new_try_statement(ctx, $2, $3, NULL); }
-        | kTRY Block Finally    { $$ = new_try_statement(ctx, $2, NULL, $3); }
+        : kTRY Block Catch      { $$ = new_try_statement(ctx, $2, $3, NULL, 0); }
+        | kTRY Block Finally    { $$ = new_try_statement(ctx, $2, NULL, $3, @3); }
         | kTRY Block Catch Finally
-                                { $$ = new_try_statement(ctx, $2, $3, $4); }
+                                { $$ = new_try_statement(ctx, $2, $3, $4, @4); }
 
 /* ECMA-262 3rd Edition    12.14 */
 Catch
@@ -486,7 +486,7 @@ Catch
 
 /* ECMA-262 3rd Edition    12.14 */
 Finally
-        : kFINALLY Block        { $$ = $2; }
+        : kFINALLY Block        { @$ = @2; $$ = $2; }
 
 /* ECMA-262 3rd Edition    11.14 */
 Expression_opt
@@ -1025,12 +1025,13 @@ static catch_block_t *new_catch_block(parser_ctx_t *ctx, const WCHAR *identifier
     return ret;
 }
 
-static case_clausule_t *new_case_clausule(parser_ctx_t *ctx, expression_t *expr, statement_list_t *stat_list)
+static case_clausule_t *new_case_clausule(parser_ctx_t *ctx, unsigned loc, expression_t *expr, statement_list_t *stat_list)
 {
     case_clausule_t *ret = parser_alloc(ctx, sizeof(case_clausule_t));
 
     ret->expr = expr;
     ret->stat = stat_list ? stat_list->head : NULL;
+    ret->loc = loc;
     ret->next = NULL;
 
     return ret;
@@ -1201,7 +1202,7 @@ static statement_t *new_while_statement(parser_ctx_t *ctx, unsigned loc, BOOL do
 }
 
 static statement_t *new_for_statement(parser_ctx_t *ctx, unsigned loc, variable_list_t *variable_list, expression_t *begin_expr,
-        expression_t *expr, expression_t *end_expr, statement_t *statement)
+        expression_t *expr, unsigned expr_loc, expression_t *end_expr, unsigned end_loc, statement_t *statement)
 {
     for_statement_t *ret;
 
@@ -1212,7 +1213,9 @@ static statement_t *new_for_statement(parser_ctx_t *ctx, unsigned loc, variable_
     ret->variable_list = variable_list ? variable_list->head : NULL;
     ret->begin_expr = begin_expr;
     ret->expr = expr;
+    ret->expr_loc = expr_loc;
     ret->end_expr = end_expr;
+    ret->end_loc = end_loc;
     ret->statement = statement;
 
     return &ret->stat;
@@ -1330,7 +1333,7 @@ static statement_t *new_throw_statement(parser_ctx_t *ctx, unsigned loc, express
 }
 
 static statement_t *new_try_statement(parser_ctx_t *ctx, statement_t *try_statement,
-       catch_block_t *catch_block, statement_t *finally_statement)
+        catch_block_t *catch_block, statement_t *finally_statement, unsigned finally_loc)
 {
     try_statement_t *ret;
 
@@ -1341,6 +1344,7 @@ static statement_t *new_try_statement(parser_ctx_t *ctx, statement_t *try_statem
     ret->try_statement = try_statement;
     ret->catch_block = catch_block;
     ret->finally_statement = finally_statement;
+    ret->finally_loc = finally_loc;
 
     return &ret->stat;
 }

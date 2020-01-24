@@ -67,6 +67,8 @@ typedef struct _compiler_ctx_t {
     statement_ctx_t *stat_ctx;
     function_code_t *func;
 
+    unsigned loc;
+
     function_expression_t *func_head;
     function_expression_t *func_tail;
 
@@ -208,6 +210,11 @@ static BSTR compiler_alloc_bstr_len(compiler_ctx_t *ctx, const WCHAR *str, size_
     return ctx->code->bstr_pool[ctx->code->bstr_cnt++];
 }
 
+void set_compiler_loc(compiler_ctx_t *ctx, unsigned loc)
+{
+    ctx->loc = loc;
+}
+
 static unsigned push_instr(compiler_ctx_t *ctx, jsop_t op)
 {
     assert(ctx->code_size >= ctx->code_off);
@@ -224,6 +231,7 @@ static unsigned push_instr(compiler_ctx_t *ctx, jsop_t op)
     }
 
     ctx->code->instrs[ctx->code_off].op = op;
+    ctx->code->instrs[ctx->code_off].loc = ctx->loc;
     return ctx->code_off++;
 }
 
@@ -1245,6 +1253,7 @@ static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *s
     if(FAILED(hres))
         return hres;
 
+    set_compiler_loc(ctx, stat->stat.loc);
     if(stat->do_while) {
         label_set_addr(ctx, stat_ctx.continue_label);
         hres = compile_expression(ctx, stat->expr, TRUE);
@@ -1292,6 +1301,7 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
     expr_off = ctx->code_off;
 
     if(stat->expr) {
+        set_compiler_loc(ctx, stat->expr_loc);
         hres = compile_expression(ctx, stat->expr, TRUE);
         if(FAILED(hres))
             return hres;
@@ -1308,6 +1318,7 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
     label_set_addr(ctx, stat_ctx.continue_label);
 
     if(stat->end_expr) {
+        set_compiler_loc(ctx, stat->end_loc);
         hres = compile_expression(ctx, stat->end_expr, FALSE);
         if(FAILED(hres))
             return hres;
@@ -1613,6 +1624,7 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
             continue;
         }
 
+        set_compiler_loc(ctx, iter->loc);
         hres = compile_expression(ctx, iter->expr, TRUE);
         if(FAILED(hres))
             break;
@@ -1751,6 +1763,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
         if(FAILED(hres))
             return hres;
 
+        set_compiler_loc(ctx, stat->finally_loc);
         if(!push_instr(ctx, OP_end_finally))
             return E_OUTOFMEMORY;
     }
@@ -1771,6 +1784,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
         stat_ctx->next = ctx->stat_ctx;
         ctx->stat_ctx = stat_ctx;
     }
+
+    set_compiler_loc(ctx, stat->loc);
 
     switch(stat->type) {
     case STAT_BLOCK:
