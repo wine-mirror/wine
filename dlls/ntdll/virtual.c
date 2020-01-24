@@ -3134,6 +3134,63 @@ static NTSTATUS get_basic_memory_info( HANDLE process, LPCVOID addr,
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
+                                    MEMORY_WORKING_SET_EX_INFORMATION *info,
+                                    SIZE_T len, SIZE_T *res_len )
+{
+    FILE *f;
+    MEMORY_WORKING_SET_EX_INFORMATION *p;
+    sigset_t sigset;
+
+    if (process != NtCurrentProcess())
+    {
+        FIXME( "(process=%p,addr=%p) Unimplemented information class: MemoryWorkingSetExInformation\n", process, addr );
+        return STATUS_INVALID_INFO_CLASS;
+    }
+
+    f = fopen( "/proc/self/pagemap", "rb" );
+    if (!f)
+    {
+        static int once;
+        if (!once++) WARN( "unable to open /proc/self/pagemap\n" );
+    }
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    for (p = info; (UINT_PTR)(p + 1) <= (UINT_PTR)info + len; p++)
+    {
+        BYTE vprot;
+        UINT64 pagemap;
+        struct file_view *view;
+
+        memset( &p->VirtualAttributes, 0, sizeof(p->VirtualAttributes) );
+
+        /* If we don't have pagemap information, default to invalid. */
+        if (!f || fseek( f, ((UINT_PTR)p->VirtualAddress >> 12) * sizeof(pagemap), SEEK_SET ) == -1 ||
+                fread( &pagemap, sizeof(pagemap), 1, f ) != 1)
+        {
+            pagemap = 0;
+        }
+
+        if ((view = VIRTUAL_FindView( p->VirtualAddress, 0 )) &&
+                get_committed_size( view, p->VirtualAddress, &vprot ) &&
+                (vprot & VPROT_COMMITTED))
+        {
+            p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && (pagemap >> 63);
+            p->VirtualAttributes.Shared = !is_view_valloc( view ) && ((pagemap >> 61) & 1);
+            if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
+                p->VirtualAttributes.ShareCount = 1; /* FIXME */
+            if (p->VirtualAttributes.Valid)
+                p->VirtualAttributes.Win32Protection = VIRTUAL_GetWin32Prot( vprot, view->protect );
+        }
+    }
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+
+    if (f)
+        fclose( f );
+    if (res_len)
+        *res_len = (UINT_PTR)p - (UINT_PTR)info;
+    return STATUS_SUCCESS;
+}
 
 #define UNIMPLEMENTED_INFO_CLASS(c) \
     case c: \
@@ -3155,6 +3212,9 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     {
         case MemoryBasicInformation:
             return get_basic_memory_info( process, addr, buffer, len, res_len );
+
+        case MemoryWorkingSetExInformation:
+            return get_working_set_ex( process, addr, buffer, len, res_len );
 
         UNIMPLEMENTED_INFO_CLASS(MemoryWorkingSetList);
         UNIMPLEMENTED_INFO_CLASS(MemorySectionName);

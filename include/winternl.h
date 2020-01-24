@@ -1051,13 +1051,32 @@ typedef enum _MEMORY_INFORMATION_CLASS {
     MemoryBasicInformation,
     MemoryWorkingSetList,
     MemorySectionName,
-    MemoryBasicVlmInformation
+    MemoryBasicVlmInformation,
+    MemoryWorkingSetExInformation
 } MEMORY_INFORMATION_CLASS;
 
 typedef struct _MEMORY_SECTION_NAME
 {
     UNICODE_STRING SectionFileName;
 } MEMORY_SECTION_NAME, *PMEMORY_SECTION_NAME;
+
+typedef union _MEMORY_WORKING_SET_EX_BLOCK {
+    ULONG_PTR Flags;
+    struct {
+        ULONG_PTR Valid : 1;
+        ULONG_PTR ShareCount : 3;
+        ULONG_PTR Win32Protection : 11;
+        ULONG_PTR Shared : 1;
+        ULONG_PTR Node : 6;
+        ULONG_PTR Locked : 1;
+        ULONG_PTR LargePage : 1;
+    } DUMMYSTRUCTNAME;
+} MEMORY_WORKING_SET_EX_BLOCK, *PMEMORY_WORKING_SET_EX_BLOCK;
+
+typedef struct _MEMORY_WORKING_SET_EX_INFORMATION {
+    PVOID                       VirtualAddress;
+    MEMORY_WORKING_SET_EX_BLOCK VirtualAttributes;
+} MEMORY_WORKING_SET_EX_INFORMATION, *PMEMORY_WORKING_SET_EX_INFORMATION;
 
 typedef enum _MUTANT_INFORMATION_CLASS
 {
