@@ -2430,8 +2430,6 @@ todo_wine
     hr = IMoniker_IsEqual(moniker, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    IStream_Release(stream);
-
     /* Reduce() */
     hr = IMoniker_Reduce(moniker, NULL, MKRREDUCE_ALL, NULL, &reduced);
     ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
@@ -2453,6 +2451,70 @@ todo_wine
 todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
+    /* CommonPrefixWith() */
+    stream_write_dword(stream, 0);
+
+    hr = IMoniker_Load(moniker, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &moniker3);
+    ok(hr == MK_S_ME, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker, "Unexpected prefix moniker.\n");
+    IMoniker_Release(moniker3);
+
+    hr = IMoniker_CommonPrefixWith(moniker2, moniker, &moniker3);
+    ok(hr == MK_S_HIM, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker, "Unexpected prefix moniker.\n");
+    IMoniker_Release(moniker3);
+
+    stream_write_dword(stream, 10);
+
+    hr = IMoniker_Load(moniker, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    stream_write_dword(stream, 5);
+
+    hr = IMoniker_Load(moniker2, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &moniker3);
+    ok(hr == MK_S_HIM, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker2, "Unexpected prefix moniker.\n");
+    IMoniker_Release(moniker3);
+
+    hr = IMoniker_CommonPrefixWith(moniker2, moniker, &moniker3);
+    ok(hr == MK_S_ME, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker2, "Unexpected prefix moniker.\n");
+    IMoniker_Release(moniker3);
+
+    /* Now same length, 0 or 2 */
+    stream_write_dword(stream, 0);
+    hr = IMoniker_Load(moniker, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    stream_write_dword(stream, 0);
+    hr = IMoniker_Load(moniker2, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &moniker3);
+    ok(hr == MK_S_US, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker, "Unexpected prefix moniker.\n");
+    IMoniker_Release(moniker3);
+
+    stream_write_dword(stream, 2);
+    hr = IMoniker_Load(moniker, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    stream_write_dword(stream, 2);
+    hr = IMoniker_Load(moniker2, stream);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &moniker3);
+    ok(hr == MK_S_US, "Unexpected hr %#x.\n", hr);
+    ok(moniker3 == moniker, "Unexpected prefix moniker.\n");
+    IMoniker_Release(moniker3);
+
+    IStream_Release(stream);
     IBindCtx_Release(bindctx);
     IMoniker_Release(moniker);
     IMoniker_Release(moniker2);

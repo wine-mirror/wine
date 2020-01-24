@@ -400,25 +400,32 @@ AntiMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk)
 /******************************************************************************
  *        AntiMoniker_CommonPrefixWith
  ******************************************************************************/
-static HRESULT WINAPI
-AntiMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** ppmkPrefix)
+static HRESULT WINAPI AntiMonikerImpl_CommonPrefixWith(IMoniker *iface, IMoniker *other, IMoniker **prefix)
 {
-    DWORD mkSys;
+    AntiMonikerImpl *moniker = impl_from_IMoniker(iface), *other_moniker;
+    HRESULT hr;
 
-    IMoniker_IsSystemMoniker(pmkOther,&mkSys);
+    TRACE("%p, %p, %p.\n", iface, other, prefix);
 
-    if(mkSys==MKSYS_ANTIMONIKER){
+    other_moniker = unsafe_impl_from_IMoniker(other);
+    if (other_moniker)
+    {
+        if (moniker->count <= other_moniker->count)
+        {
+            *prefix = iface;
+            hr = moniker->count == other_moniker->count ? MK_S_US : MK_S_ME;
+        }
+        else
+        {
+            *prefix = other;
+            hr = MK_S_HIM;
+        }
 
-        IMoniker_AddRef(iface);
-
-        *ppmkPrefix=iface;
-
-        IMoniker_AddRef(iface);
-
-        return MK_S_US;
+        IMoniker_AddRef(*prefix);
+        return hr;
     }
-    else
-        return MonikerCommonPrefixWith(iface,pmkOther,ppmkPrefix);
+
+    return MonikerCommonPrefixWith(iface, other, prefix);
 }
 
 /******************************************************************************
