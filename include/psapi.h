@@ -45,6 +45,24 @@ typedef struct _PROCESS_MEMORY_COUNTERS {
 } PROCESS_MEMORY_COUNTERS;
 typedef PROCESS_MEMORY_COUNTERS *PPROCESS_MEMORY_COUNTERS;
 
+typedef union _PSAPI_WORKING_SET_EX_BLOCK {
+    ULONG_PTR Flags;
+    struct {
+        ULONG_PTR Valid  :1;
+        ULONG_PTR ShareCount  :3;
+        ULONG_PTR Win32Protection  :11;
+        ULONG_PTR Shared  :1;
+        ULONG_PTR Node  :6;
+        ULONG_PTR Locked  :1;
+        ULONG_PTR LargePage  :1;
+    } DUMMYSTRUCTNAME;
+} PSAPI_WORKING_SET_EX_BLOCK, *PPSAPI_WORKING_SET_EX_BLOCK;
+
+typedef struct _PSAPI_WORKING_SET_EX_INFORMATION {
+    PVOID                      VirtualAddress;
+    PSAPI_WORKING_SET_EX_BLOCK VirtualAttributes;
+} PSAPI_WORKING_SET_EX_INFORMATION, *PPSAPI_WORKING_SET_EX_INFORMATION;
+
 typedef struct _PSAPI_WS_WATCH_INFORMATION {
   LPVOID FaultingPc;
   LPVOID FaultingVa;
