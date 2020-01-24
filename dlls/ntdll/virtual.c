@@ -3011,39 +3011,15 @@ static int get_free_mem_state_callback( void *start, size_t size, void *arg )
     return 1;
 }
 
-#define UNIMPLEMENTED_INFO_CLASS(c) \
-    case c: \
-        FIXME("(process=%p,addr=%p) Unimplemented information class: " #c "\n", process, addr); \
-        return STATUS_INVALID_INFO_CLASS
-
-/***********************************************************************
- *             NtQueryVirtualMemory   (NTDLL.@)
- *             ZwQueryVirtualMemory   (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
-                                      MEMORY_INFORMATION_CLASS info_class, PVOID buffer,
-                                      SIZE_T len, SIZE_T *res_len )
+/* get basic information about a memory block */
+static NTSTATUS get_basic_memory_info( HANDLE process, LPCVOID addr,
+                                       MEMORY_BASIC_INFORMATION *info,
+                                       SIZE_T len, SIZE_T *res_len )
 {
     struct file_view *view;
     char *base, *alloc_base = 0, *alloc_end = working_set_limit;
     struct wine_rb_entry *ptr;
-    MEMORY_BASIC_INFORMATION *info = buffer;
     sigset_t sigset;
-
-    if (info_class != MemoryBasicInformation)
-    {
-        switch(info_class)
-        {
-            UNIMPLEMENTED_INFO_CLASS(MemoryWorkingSetList);
-            UNIMPLEMENTED_INFO_CLASS(MemorySectionName);
-            UNIMPLEMENTED_INFO_CLASS(MemoryBasicVlmInformation);
-
-            default:
-                FIXME("(%p,%p,info_class=%d,%p,%ld,%p) Unknown information class\n", 
-                      process, addr, info_class, buffer, len, res_len);
-                return STATUS_INVALID_INFO_CLASS;
-        }
-    }
 
     if (len < sizeof(MEMORY_BASIC_INFORMATION))
         return STATUS_INFO_LENGTH_MISMATCH;
@@ -3156,6 +3132,39 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
     if (res_len) *res_len = sizeof(*info);
     return STATUS_SUCCESS;
+}
+
+
+#define UNIMPLEMENTED_INFO_CLASS(c) \
+    case c: \
+        FIXME("(process=%p,addr=%p) Unimplemented information class: " #c "\n", process, addr); \
+        return STATUS_INVALID_INFO_CLASS
+
+/***********************************************************************
+ *             NtQueryVirtualMemory   (NTDLL.@)
+ *             ZwQueryVirtualMemory   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
+                                      MEMORY_INFORMATION_CLASS info_class,
+                                      PVOID buffer, SIZE_T len, SIZE_T *res_len )
+{
+    TRACE("(%p, %p, info_class=%d, %p, %ld, %p)\n",
+          process, addr, info_class, buffer, len, res_len);
+
+    switch(info_class)
+    {
+        case MemoryBasicInformation:
+            return get_basic_memory_info( process, addr, buffer, len, res_len );
+
+        UNIMPLEMENTED_INFO_CLASS(MemoryWorkingSetList);
+        UNIMPLEMENTED_INFO_CLASS(MemorySectionName);
+        UNIMPLEMENTED_INFO_CLASS(MemoryBasicVlmInformation);
+
+        default:
+            FIXME("(%p,%p,info_class=%d,%p,%ld,%p) Unknown information class\n",
+                  process, addr, info_class, buffer, len, res_len);
+            return STATUS_INVALID_INFO_CLASS;
+    }
 }
 
 
