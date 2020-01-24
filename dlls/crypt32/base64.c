@@ -477,6 +477,49 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
     return ret;
 }
 
+static BOOL BinaryToHexW(const BYTE *bin, DWORD nbin, DWORD flags, LPWSTR str, DWORD *nstr)
+{
+    static const WCHAR hex[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
+    DWORD needed;
+
+    if (flags & CRYPT_STRING_NOCRLF)
+        needed = 0;
+    else if (flags & CRYPT_STRING_NOCR)
+        needed = 1;
+    else
+        needed = 2;
+
+    needed += nbin * 2 + 1;
+    if (needed > *nstr)
+    {
+        SetLastError(ERROR_MORE_DATA);
+        return FALSE;
+    }
+
+    *nstr = needed;
+    if (!str)
+        return TRUE;
+
+    while (nbin--)
+    {
+        *str++ = hex[(*bin >> 4) & 0xf];
+        *str++ = hex[*bin & 0xf];
+        bin++;
+    }
+
+    if (flags & CRYPT_STRING_NOCR)
+        *str++ = '\n';
+    else if (!(flags & CRYPT_STRING_NOCRLF))
+    {
+        *str++ = '\r';
+        *str++ = '\n';
+    }
+
+    *str = 0;
+    *nstr = needed - 1;
+    return TRUE;
+}
+
 BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
  DWORD cbBinary, DWORD dwFlags, LPWSTR pszString, DWORD *pcchString)
 {
@@ -506,6 +549,9 @@ BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
     case CRYPT_STRING_BASE64REQUESTHEADER:
     case CRYPT_STRING_BASE64X509CRLHEADER:
         encoder = BinaryToBase64W;
+        break;
+    case CRYPT_STRING_HEXRAW:
+        encoder = BinaryToHexW;
         break;
     case CRYPT_STRING_HEX:
     case CRYPT_STRING_HEXASCII:
