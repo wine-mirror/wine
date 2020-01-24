@@ -2042,7 +2042,6 @@ static void test_sel_notify(void)
         got_MCN_SELECT = got_MCN_SELCHANGE = FALSE;
         SendMessageA(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(mchit.pt.x, mchit.pt.y));
         if (styles[i].val & MCS_MULTISELECT)
-todo_wine
             ok(got_MCN_SELCHANGE, "%d: MCN_SELCHANGE should be sent\n", i);
         else
             ok(!got_MCN_SELCHANGE, "%d: MCN_SELCHANGE should not be sent\n", i);
