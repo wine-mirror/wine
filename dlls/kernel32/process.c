@@ -722,7 +722,7 @@ BOOL WINAPI K32QueryWorkingSetEx( HANDLE process, LPVOID buffer, DWORD size )
 {
     TRACE( "(%p, %p, %d)\n", process, buffer, size );
 
-    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer,  size, NULL ));
+    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetExInformation, buffer,  size, NULL ));
 }
 
 /***********************************************************************
