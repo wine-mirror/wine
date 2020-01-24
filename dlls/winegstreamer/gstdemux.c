@@ -60,6 +60,7 @@ struct gstdemux
 
     struct gstdemux_source **sources;
     unsigned int source_count;
+    BOOL enum_sink_first;
 
     LONGLONG filesize;
 
@@ -1214,10 +1215,20 @@ static struct strmbase_pin *gstdemux_get_pin(struct strmbase_filter *base, unsig
 {
     struct gstdemux *filter = impl_from_strmbase_filter(base);
 
-    if (!index)
-        return &filter->sink.pin;
-    else if (index <= filter->source_count)
-        return &filter->sources[index - 1]->pin.pin;
+    if (filter->enum_sink_first)
+    {
+        if (!index)
+            return &filter->sink.pin;
+        else if (index <= filter->source_count)
+            return &filter->sources[index - 1]->pin.pin;
+    }
+    else
+    {
+        if (index < filter->source_count)
+            return &filter->sources[index]->pin.pin;
+        else if (index == filter->source_count)
+            return &filter->sink.pin;
+    }
     return NULL;
 }
 
@@ -2510,6 +2521,7 @@ IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr)
     object->duration_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     object->init_gst = mpeg_splitter_init_gst;
+    object->enum_sink_first = TRUE;
     *phr = S_OK;
 
     TRACE("Created MPEG-1 splitter %p.\n", object);

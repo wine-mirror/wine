@@ -421,7 +421,6 @@ static void test_find_pin(void)
 
     hr = IBaseFilter_FindPin(filter, L"output", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-todo_wine
     ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
     IPin_Release(pin);
     IPin_Release(pin2);
@@ -431,7 +430,6 @@ todo_wine
 
     hr = IBaseFilter_FindPin(filter, L"input pin", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-todo_wine
     ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
     IPin_Release(pin);
     IPin_Release(pin2);
