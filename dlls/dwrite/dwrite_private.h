@@ -231,6 +231,7 @@ struct dwrite_fontface
     FONTSIGNATURE fontsig;
     UINT32 glyph_image_formats;
 
+    IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1];
     IDWriteLocalizedStrings *family_names;
     IDWriteLocalizedStrings *names;
 

@@ -431,7 +431,8 @@ static void release_font_data(struct dwrite_font_data *data)
     if (InterlockedDecrement(&data->ref) > 0)
         return;
 
-    for (i = DWRITE_INFORMATIONAL_STRING_NONE; i < ARRAY_SIZE(data->info_strings); i++) {
+    for (i = 0; i < ARRAY_SIZE(data->info_strings); ++i)
+    {
         if (data->info_strings[i])
             IDWriteLocalizedStrings_Release(data->info_strings[i]);
     }
@@ -547,6 +548,11 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
             IDWriteLocalizedStrings_Release(fontface->names);
         if (fontface->family_names)
             IDWriteLocalizedStrings_Release(fontface->family_names);
+        for (i = 0; i < ARRAY_SIZE(fontface->info_strings); ++i)
+        {
+            if (fontface->info_strings[i])
+                IDWriteLocalizedStrings_Release(fontface->info_strings[i]);
+        }
 
         for (i = 0; i < ARRAY_SIZE(fontface->glyphs); i++)
             heap_free(fontface->glyphs[i]);
@@ -1276,12 +1282,53 @@ static HRESULT WINAPI dwritefontface3_GetFaceNames(IDWriteFontFace5 *iface, IDWr
     return clone_localizedstrings(fontface->names, names);
 }
 
+static HRESULT get_font_info_strings(const struct file_stream_desc *stream_desc, IDWriteFontFile *file,
+        DWRITE_INFORMATIONAL_STRING_ID stringid, IDWriteLocalizedStrings **strings_cache,
+        IDWriteLocalizedStrings **ret, BOOL *exists)
+{
+    HRESULT hr = S_OK;
+
+    *exists = FALSE;
+    *ret = NULL;
+
+    if (stringid > DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME || stringid == DWRITE_INFORMATIONAL_STRING_NONE)
+        return S_OK;
+
+    if (!strings_cache[stringid])
+    {
+        struct file_stream_desc desc = *stream_desc;
+
+        if (!desc.stream)
+            hr = get_filestream_from_file(file, &desc.stream);
+        if (SUCCEEDED(hr))
+            hr = opentype_get_font_info_strings(&desc, stringid, &strings_cache[stringid]);
+
+        if (!stream_desc->stream && desc.stream)
+            IDWriteFontFileStream_Release(desc.stream);
+    }
+
+    if (SUCCEEDED(hr) && strings_cache[stringid])
+    {
+        hr = clone_localizedstrings(strings_cache[stringid], ret);
+        if (SUCCEEDED(hr))
+            *exists = TRUE;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI dwritefontface3_GetInformationalStrings(IDWriteFontFace5 *iface,
         DWRITE_INFORMATIONAL_STRING_ID stringid, IDWriteLocalizedStrings **strings, BOOL *exists)
 {
-    FIXME("%p, %u, %p, %p: stub\n", iface, stringid, strings, exists);
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
+    struct file_stream_desc stream_desc;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %p.\n", iface, stringid, strings, exists);
+
+    stream_desc.stream = fontface->stream;
+    stream_desc.face_index = fontface->index;
+    stream_desc.face_type = fontface->type;
+    return get_font_info_strings(&stream_desc, NULL, stringid, fontface->info_strings, strings, exists);
 }
 
 static BOOL WINAPI dwritefontface3_HasCharacter(IDWriteFontFace5 *iface, UINT32 ch)
@@ -1640,39 +1687,15 @@ static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont3 *iface,
 {
     struct dwrite_font *font = impl_from_IDWriteFont3(iface);
     struct dwrite_font_data *data = font->data;
-    HRESULT hr = S_OK;
+    struct file_stream_desc stream_desc;
 
     TRACE("%p, %d, %p, %p.\n", iface, stringid, strings, exists);
 
-    *exists = FALSE;
-    *strings = NULL;
-
-    if (stringid > DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME || stringid == DWRITE_INFORMATIONAL_STRING_NONE)
-        return S_OK;
-
-    if (!data->info_strings[stringid])
-    {
-        struct file_stream_desc stream_desc;
-
-        if (SUCCEEDED(hr = get_filestream_from_file(data->file, &stream_desc.stream)))
-        {
-            stream_desc.face_type = data->face_type;
-            stream_desc.face_index = data->face_index;
-
-            hr = opentype_get_font_info_strings(&stream_desc, stringid, &data->info_strings[stringid]);
-
-            IDWriteFontFileStream_Release(stream_desc.stream);
-        }
-    }
-
-    if (SUCCEEDED(hr) && data->info_strings[stringid])
-    {
-        hr = clone_localizedstrings(data->info_strings[stringid], strings);
-        if (SUCCEEDED(hr))
-            *exists = TRUE;
-    }
-
-    return hr;
+    /* Stream will be created if necessary. */
+    stream_desc.stream = NULL;
+    stream_desc.face_index = data->face_index;
+    stream_desc.face_type = data->face_type;
+    return get_font_info_strings(&stream_desc, data->file, stringid, data->info_strings, strings, exists);
 }
 
 static DWRITE_FONT_SIMULATIONS WINAPI dwritefont_GetSimulations(IDWriteFont3 *iface)
@@ -4709,6 +4732,12 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->family_names = font_data->family_names;
     if (fontface->family_names)
         IDWriteLocalizedStrings_AddRef(fontface->family_names);
+    memcpy(fontface->info_strings, font_data->info_strings, sizeof(fontface->info_strings));
+    for (i = 0; i < ARRAY_SIZE(fontface->info_strings); ++i)
+    {
+        if (fontface->info_strings[i])
+            IDWriteLocalizedStrings_AddRef(fontface->info_strings[i]);
+    }
     release_font_data(font_data);
 
     fontface->cached = factory_cache_fontface(fontface->factory, cached_list, &fontface->IDWriteFontFace5_iface);

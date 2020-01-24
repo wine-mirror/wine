@@ -4026,6 +4026,8 @@ static void test_GetInformationalStrings(void)
 {
     IDWriteLocalizedStrings *strings, *strings2;
     IDWriteFontCollection *collection;
+    IDWriteFontFace3 *fontface3;
+    IDWriteFontFace *fontface;
     IDWriteFontFamily *family;
     IDWriteFactory *factory;
     IDWriteFont *font;
@@ -4072,6 +4074,24 @@ static void test_GetInformationalStrings(void)
 
     IDWriteLocalizedStrings_Release(strings);
     IDWriteLocalizedStrings_Release(strings2);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace3, (void **)&fontface3)))
+    {
+        hr = IDWriteFontFace3_GetInformationalStrings(fontface3, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES,
+                &strings, &exists);
+        ok(hr == S_OK, "Failed to get info strings, hr %#x.\n", hr);
+        IDWriteLocalizedStrings_Release(strings);
+
+        IDWriteFontFace3_Release(fontface3);
+    }
+    else
+        win_skip("IDWriteFontFace3::GetInformationalStrings() is not supported.\n");
+
+    IDWriteFontFace_Release(fontface);
+
     IDWriteFont_Release(font);
     IDWriteFontFamily_Release(family);
     IDWriteFontCollection_Release(collection);
