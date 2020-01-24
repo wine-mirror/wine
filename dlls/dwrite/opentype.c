@@ -1380,7 +1380,7 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, BOOL *supported, DW
     return S_OK;
 }
 
-HRESULT opentype_try_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag, const void **table_data,
+HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag, const void **table_data,
     void **table_context, UINT32 *table_size, BOOL *found)
 {
     void *table_directory_context, *sfnt_context;
@@ -1448,7 +1448,7 @@ HRESULT opentype_try_get_font_table(struct file_stream_desc *stream_desc, UINT32
     return hr;
 }
 
-static HRESULT opentype_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag,
+static HRESULT opentype_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag,
         struct dwrite_fonttable *table)
 {
     return opentype_try_get_font_table(stream_desc, tag, (const void **)&table->data, &table->context, &table->size, &table->exists);
@@ -2109,9 +2109,20 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
 }
 
 /* Provides a conversion from DWRITE to OpenType name ids, input id should be valid, it's not checked. */
-HRESULT opentype_get_font_info_strings(const void *table_data, DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings)
+HRESULT opentype_get_font_info_strings(const struct file_stream_desc *stream_desc, DWRITE_INFORMATIONAL_STRING_ID id,
+        IDWriteLocalizedStrings **strings)
 {
-    return opentype_get_font_strings_from_id(table_data, dwriteid_to_opentypeid[id], strings);
+    struct dwrite_fonttable name;
+    HRESULT hr;
+
+    opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
+
+    hr = opentype_get_font_strings_from_id(name.data, dwriteid_to_opentypeid[id], strings);
+
+    if (name.context)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, name.context);
+
+    return hr;
 }
 
 /* FamilyName locating order is WWS Family Name -> Preferred Family Name -> Family Name. If font claims to

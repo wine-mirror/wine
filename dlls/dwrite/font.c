@@ -1640,7 +1640,7 @@ static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont3 *iface,
 {
     struct dwrite_font *font = impl_from_IDWriteFont3(iface);
     struct dwrite_font_data *data = font->data;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("%p, %d, %p, %p.\n", iface, stringid, strings, exists);
 
@@ -1652,37 +1652,27 @@ static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont3 *iface,
 
     if (!data->info_strings[stringid])
     {
-        IDWriteFontFace5 *fontface;
-        const void *table_data;
-        BOOL table_exists;
-        void *context;
-        UINT32 size;
+        struct file_stream_desc stream_desc;
 
-        hr = get_fontface_from_font(font, &fontface);
-        if (FAILED(hr))
-            return hr;
-
-        table_exists = FALSE;
-        hr = IDWriteFontFace5_TryGetFontTable(fontface, MS_NAME_TAG, &table_data, &size, &context, &table_exists);
-        if (FAILED(hr) || !table_exists)
-            WARN("no NAME table found.\n");
-
-        if (table_exists)
+        if (SUCCEEDED(hr = get_filestream_from_file(data->file, &stream_desc.stream)))
         {
-            hr = opentype_get_font_info_strings(table_data, stringid, &data->info_strings[stringid]);
-            IDWriteFontFace5_ReleaseFontTable(fontface, context);
-            if (FAILED(hr) || !data->info_strings[stringid])
-                return hr;
+            stream_desc.face_type = data->face_type;
+            stream_desc.face_index = data->face_index;
+
+            hr = opentype_get_font_info_strings(&stream_desc, stringid, &data->info_strings[stringid]);
+
+            IDWriteFontFileStream_Release(stream_desc.stream);
         }
-        IDWriteFontFace5_Release(fontface);
     }
 
-    hr = clone_localizedstrings(data->info_strings[stringid], strings);
-    if (FAILED(hr))
-        return hr;
+    if (SUCCEEDED(hr) && data->info_strings[stringid])
+    {
+        hr = clone_localizedstrings(data->info_strings[stringid], strings);
+        if (SUCCEEDED(hr))
+            *exists = TRUE;
+    }
 
-    *exists = TRUE;
-    return S_OK;
+    return hr;
 }
 
 static DWRITE_FONT_SIMULATIONS WINAPI dwritefont_GetSimulations(IDWriteFont3 *iface)
