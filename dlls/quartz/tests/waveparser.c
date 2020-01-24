@@ -606,20 +606,20 @@ static void test_media_types(void)
 
     pmt->majortype = GUID_NULL;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->majortype = MEDIATYPE_Audio;
 
     pmt->subtype = GUID_NULL;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->subtype = MEDIASUBTYPE_WAVE;
 
     pmt->formattype = GUID_NULL;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->formattype = FORMAT_None;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     wfx = (WAVEFORMATEX *)pmt->pbFormat;
 
@@ -627,12 +627,12 @@ static void test_media_types(void)
     wfx->nAvgBytesPerSec = 44100 * 2;
     wfx->nBlockAlign = 2;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     *wfx = expect_wfx;
 
     wfx->wFormatTag = WAVE_FORMAT_IMA_ADPCM;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     *wfx = expect_wfx;
 
     CoTaskMemFree(pmt->pbFormat);

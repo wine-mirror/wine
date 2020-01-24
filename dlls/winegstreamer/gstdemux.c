@@ -75,6 +75,7 @@ struct gstdemux
     HANDLE push_thread;
 
     BOOL (*init_gst)(struct gstdemux *filter);
+    HRESULT (*source_query_accept)(struct gstdemux_source *pin, const AM_MEDIA_TYPE *mt);
 };
 
 struct gstdemux_source
@@ -1531,6 +1532,11 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
     return TRUE;
 }
 
+static HRESULT gstdecoder_source_query_accept(struct gstdemux_source *pin, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
 {
     struct gstdemux *object;
@@ -1555,6 +1561,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     object->init_gst = gstdecoder_init_gst;
+    object->source_query_accept = gstdecoder_source_query_accept;
     *phr = S_OK;
 
     TRACE("Created GStreamer demuxer %p.\n", object);
@@ -1859,10 +1866,11 @@ static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, vo
     return S_OK;
 }
 
-static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
+static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
-    FIXME("(%p) stub\n", base);
-    return S_OK;
+    struct gstdemux_source *pin = impl_source_from_IPin(&iface->IPin_iface);
+    struct gstdemux *filter = impl_from_strmbase_filter(iface->filter);
+    return filter->source_query_accept(pin, mt);
 }
 
 static HRESULT source_get_media_type(struct strmbase_pin *iface, unsigned int iPosition, AM_MEDIA_TYPE *pmt)
@@ -2164,6 +2172,15 @@ void start_dispatch_thread(void)
     CloseHandle(CreateThread(NULL, 0, &dispatch_thread, NULL, 0, NULL));
 }
 
+static BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
+{
+    return IsEqualGUID(&a->majortype, &b->majortype)
+            && IsEqualGUID(&a->subtype, &b->subtype)
+            && IsEqualGUID(&a->formattype, &b->formattype)
+            && a->cbFormat == b->cbFormat
+            && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
+}
+
 static HRESULT wave_parser_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
@@ -2246,6 +2263,11 @@ static BOOL wave_parser_init_gst(struct gstdemux *filter)
     return TRUE;
 }
 
+static HRESULT wave_parser_source_query_accept(struct gstdemux_source *pin, const AM_MEDIA_TYPE *mt)
+{
+    return compare_media_types(mt, &pin->mt) ? S_OK : S_FALSE;
+}
+
 IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
@@ -2269,6 +2291,7 @@ IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &wave_parser_sink_ops, NULL);
     object->init_gst = wave_parser_init_gst;
     object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    object->source_query_accept = wave_parser_source_query_accept;
     *phr = S_OK;
 
     TRACE("Created WAVE parser %p.\n", object);
@@ -2352,6 +2375,11 @@ static BOOL avi_splitter_init_gst(struct gstdemux *filter)
     return TRUE;
 }
 
+static HRESULT avi_splitter_source_query_accept(struct gstdemux_source *pin, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
 IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
@@ -2376,6 +2404,7 @@ IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr)
     object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     object->init_gst = avi_splitter_init_gst;
+    object->source_query_accept = avi_splitter_source_query_accept;
     *phr = S_OK;
 
     TRACE("Created AVI splitter %p.\n", object);
@@ -2469,6 +2498,11 @@ static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
     return TRUE;
 }
 
+static HRESULT mpeg_splitter_source_query_accept(struct gstdemux_source *pin, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
 static HRESULT mpeg_splitter_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
     struct gstdemux *filter = impl_from_strmbase_filter(iface);
@@ -2521,6 +2555,7 @@ IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr)
     object->duration_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     object->init_gst = mpeg_splitter_init_gst;
+    object->source_query_accept = mpeg_splitter_source_query_accept;
     object->enum_sink_first = TRUE;
     *phr = S_OK;
 
