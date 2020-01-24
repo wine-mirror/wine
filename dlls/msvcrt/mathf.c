@@ -40,4 +40,5 @@ float ceilf(float x) { return ceil(x); }
 
 #if _MSVCR_VER < 120
 double exp2(double x) { return pow(2.0, x); }
+float exp2f(float x) { return powf(2.0f, x); }
 #endif
