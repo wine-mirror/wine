@@ -40,6 +40,7 @@ typedef struct AntiMonikerImpl{
     IROTData IROTData_iface;
     LONG ref;
     IUnknown *pMarshal; /* custom marshaler */
+    DWORD count;
 } AntiMonikerImpl;
 
 static inline AntiMonikerImpl *impl_from_IMoniker(IMoniker *iface)
@@ -168,30 +169,35 @@ AntiMonikerImpl_IsDirty(IMoniker* iface)
 /******************************************************************************
  *        AntiMoniker_Load
  ******************************************************************************/
-static HRESULT WINAPI
-AntiMonikerImpl_Load(IMoniker* iface,IStream* pStm)
+static HRESULT WINAPI AntiMonikerImpl_Load(IMoniker *iface, IStream *stream)
 {
-    DWORD constant=1,dwbuffer;
-    HRESULT res;
+    AntiMonikerImpl *moniker = impl_from_IMoniker(iface);
+    DWORD count = 0;
+    HRESULT hr;
 
-    /* data read by this function is only a DWORD constant (must be 1) ! */
-    res=IStream_Read(pStm,&dwbuffer,sizeof(DWORD),NULL);
+    TRACE("%p, %p.\n", iface, stream);
 
-    if (SUCCEEDED(res)&& dwbuffer!=constant)
-        return E_FAIL;
+    if (FAILED(hr = IStream_Read(stream, &count, sizeof(count), NULL)))
+        return hr;
 
-    return res;
+    if (count > 0xfffff)
+        return E_INVALIDARG;
+
+    moniker->count = count;
+
+    return S_OK;
 }
 
 /******************************************************************************
  *        AntiMoniker_Save
  ******************************************************************************/
-static HRESULT WINAPI
-AntiMonikerImpl_Save(IMoniker* iface,IStream* pStm,BOOL fClearDirty)
+static HRESULT WINAPI AntiMonikerImpl_Save(IMoniker *iface, IStream *stream, BOOL clear_dirty)
 {
-    static const DWORD constant = 1;
-    /* data written by this function is only a DWORD constant set to 1 ! */
-    return IStream_Write(pStm,&constant,sizeof(constant),NULL);
+    AntiMonikerImpl *moniker = impl_from_IMoniker(iface);
+
+    TRACE("%p, %p, %d.\n", iface, stream, clear_dirty);
+
+    return IStream_Write(stream, &moniker->count, sizeof(moniker->count), NULL);
 }
 
 /******************************************************************************
@@ -323,12 +329,16 @@ AntiMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
 /******************************************************************************
  *        AntiMoniker_Hash
  ******************************************************************************/
-static HRESULT WINAPI AntiMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
+static HRESULT WINAPI AntiMonikerImpl_Hash(IMoniker *iface, DWORD *hash)
 {
-    if (pdwHash==NULL)
+    AntiMonikerImpl *moniker = impl_from_IMoniker(iface);
+
+    TRACE("%p, %p.\n", iface, hash);
+
+    if (!hash)
         return E_POINTER;
 
-    *pdwHash = 0x80000001;
+    *hash = 0x80000000 | moniker->count;
 
     return S_OK;
 }
@@ -434,14 +444,16 @@ AntiMonikerImpl_RelativePathTo(IMoniker* iface,IMoniker* pmOther, IMoniker** ppm
  *        AntiMoniker_GetDisplayName
  ******************************************************************************/
 static HRESULT WINAPI
-AntiMonikerImpl_GetDisplayName(IMoniker* iface, IBindCtx* pbc,
-                               IMoniker* pmkToLeft, LPOLESTR *ppszDisplayName)
+AntiMonikerImpl_GetDisplayName(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft, LPOLESTR *displayname)
 {
-    static const WCHAR back[]={'\\','.','.',0};
+    AntiMonikerImpl *moniker = impl_from_IMoniker(iface);
+    static const WCHAR nameW[] = {'\\','.','.'};
+    WCHAR *ptrW;
+    int i;
 
-    TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,ppszDisplayName);
+    TRACE("%p, %p, %p, %p.\n", iface, pbc, pmkToLeft, displayname);
 
-    if (ppszDisplayName==NULL)
+    if (!displayname)
         return E_POINTER;
 
     if (pmkToLeft!=NULL){
@@ -449,12 +461,13 @@ AntiMonikerImpl_GetDisplayName(IMoniker* iface, IBindCtx* pbc,
         return E_NOTIMPL;
     }
 
-    *ppszDisplayName=CoTaskMemAlloc(sizeof(back));
-
-    if (*ppszDisplayName==NULL)
+    *displayname = ptrW = CoTaskMemAlloc((moniker->count * ARRAY_SIZE(nameW) + 1) * sizeof(WCHAR));
+    if (!*displayname)
         return E_OUTOFMEMORY;
 
-    lstrcpyW(*ppszDisplayName,back);
+    for (i = 0; i < moniker->count; ++i)
+        memcpy(ptrW + i * ARRAY_SIZE(nameW), nameW, sizeof(nameW));
+    ptrW[moniker->count * ARRAY_SIZE(nameW)] = 0;
 
     return S_OK;
 }
@@ -598,6 +611,7 @@ static HRESULT AntiMonikerImpl_Construct(AntiMonikerImpl* This)
     This->IROTData_iface.lpVtbl = &VT_ROTDataImpl;
     This->ref          = 0;
     This->pMarshal     = NULL;
+    This->count        = 1;
 
     return S_OK;
 }

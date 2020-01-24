@@ -2328,7 +2328,6 @@ todo_wine
     stream_write_dword(stream, 2);
 
     hr = IMoniker_Load(moniker, stream);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_IsEqual(moniker, moniker2);
@@ -2341,13 +2340,11 @@ todo_wine
 
     hr = IMoniker_Hash(moniker, &hash);
     ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
-todo_wine
     ok(hash == 0x80000002, "Unexpected hash value %#x.\n", hash);
 
     /* Display name reflects anti combination. */
     hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &name);
     ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
-todo_wine
     ok(!lstrcmpW(name, L"\\..\\.."), "Unexpected display name %s.\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
@@ -2355,30 +2352,25 @@ todo_wine
     stream_write_dword(stream, 0xfffff);
 
     hr = IMoniker_Load(moniker, stream);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_Hash(moniker, &hash);
     ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
-todo_wine
     ok(hash == 0x800fffff, "Unexpected hash value %#x.\n", hash);
 
     stream_write_dword(stream, 0xfffff + 1);
 
     hr = IMoniker_Load(moniker, stream);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_Hash(moniker, &hash);
     ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
-todo_wine
     ok(hash == 0x800fffff, "Unexpected hash value %#x.\n", hash);
 
     /* Zero combining counter is also valid. */
     stream_write_dword(stream, 0);
 
     hr = IMoniker_Load(moniker, stream);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_IsEqual(moniker, moniker2);
@@ -2391,12 +2383,10 @@ todo_wine
 
     hr = IMoniker_Hash(moniker, &hash);
     ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
-todo_wine
     ok(hash == 0x80000000, "Unexpected hash value %#x.\n", hash);
 
     hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &name);
     ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
-todo_wine
     ok(!lstrcmpW(name, L""), "Unexpected display name %s.\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
