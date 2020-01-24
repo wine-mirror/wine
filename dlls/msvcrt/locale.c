@@ -186,7 +186,7 @@ typedef struct {
   char search_language[MAX_ELEM_LEN];
   char search_country[MAX_ELEM_LEN];
   char search_codepage[MAX_ELEM_LEN];
-  char found_codepage[MAX_ELEM_LEN];
+  DWORD found_codepage;
   unsigned int match_flags;
   LANGID found_lang_id;
 } locale_search_t;
@@ -269,7 +269,7 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
   {
     TRACE("Found codepage:%s->%s\n", res->search_codepage, buff);
     flags |= FOUND_CODEPAGE;
-    memcpy(res->found_codepage,res->search_codepage,MAX_ELEM_LEN);
+    res->found_codepage = atoi(res->search_codepage);
   }
   else if (!flags && (res->match_flags & FOUND_CODEPAGE))
   {
@@ -357,40 +357,39 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *s
         /* Even if a codepage is not enumerated for a locale
          * it can be set if valid */
         if (search.search_codepage[0]) {
-            if (IsValidCodePage(atoi(search.search_codepage)))
-                memcpy(search.found_codepage,search.search_codepage,MAX_ELEM_LEN);
-            else {
+            search.found_codepage = atoi(search.search_codepage);
+            if (!IsValidCodePage(atoi(search.search_codepage)))
+            {
                 /* Special codepage values: OEM & ANSI */
                 if (!MSVCRT__stricmp(search.search_codepage,"OCP")) {
-                    GetLocaleInfoA(lcid, LOCALE_IDEFAULTCODEPAGE,
-                            search.found_codepage, MAX_ELEM_LEN);
+                    GetLocaleInfoW(lcid, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
+                                   (WCHAR *)&search.found_codepage, sizeof(DWORD)/sizeof(WCHAR));
                 } else if (!MSVCRT__stricmp(search.search_codepage,"ACP")) {
-                    GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
-                            search.found_codepage, MAX_ELEM_LEN);
+                    GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                                   (WCHAR *)&search.found_codepage, sizeof(DWORD)/sizeof(WCHAR));
                 } else
                     return -1;
-
-                if (!atoi(search.found_codepage))
+                if (!search.found_codepage)
                     return -1;
             }
         } else {
             /* Prefer ANSI codepages if present */
-            GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
-                    search.found_codepage, MAX_ELEM_LEN);
-            if (!search.found_codepage[0] || !atoi(search.found_codepage))
-                GetLocaleInfoA(lcid, LOCALE_IDEFAULTCODEPAGE,
-                        search.found_codepage, MAX_ELEM_LEN);
+            GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                           (WCHAR *)&search.found_codepage, sizeof(DWORD)/sizeof(WCHAR));
+            if (!search.found_codepage)
+                GetLocaleInfoW(lcid, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
+                               (WCHAR *)&search.found_codepage, sizeof(DWORD)/sizeof(WCHAR));
         }
     }
     if (codepage)
-        *codepage = atoi(search.found_codepage);
+        *codepage = search.found_codepage;
     if (sname)
         *sname = (search.match_flags & FOUND_SNAME) != 0;
 
     if (strlen(locale) < sizeof(data->cached_locale)) {
         strcpy(data->cached_locale, locale);
         data->cached_lcid = lcid;
-        data->cached_cp = codepage ? *codepage : atoi(search.found_codepage);
+        data->cached_cp = codepage ? *codepage : search.found_codepage;
         data->cached_sname = (search.match_flags & FOUND_SNAME) != 0;
     }
 
