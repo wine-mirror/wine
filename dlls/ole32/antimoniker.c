@@ -540,19 +540,18 @@ static ULONG WINAPI AntiMonikerROTDataImpl_Release(IROTData* iface)
  *        AntiMonikerIROTData_GetComparisonData
  ******************************************************************************/
 static HRESULT WINAPI
-AntiMonikerROTDataImpl_GetComparisonData(IROTData* iface, BYTE* pbData,
-                                          ULONG cbMax, ULONG* pcbData)
+AntiMonikerROTDataImpl_GetComparisonData(IROTData *iface, BYTE *data, ULONG data_len, ULONG *data_req)
 {
-    DWORD constant = 1;
+    AntiMonikerImpl *moniker = impl_from_IROTData(iface);
 
-    TRACE("(%p, %u, %p)\n", pbData, cbMax, pcbData);
+    TRACE("%p, %p, %u, %p.\n", iface, data, data_len, data_req);
 
-    *pcbData = sizeof(CLSID) + sizeof(DWORD);
-    if (cbMax < *pcbData)
+    *data_req = sizeof(CLSID) + sizeof(DWORD);
+    if (data_len < *data_req)
         return E_OUTOFMEMORY;
 
-    memcpy(pbData, &CLSID_AntiMoniker, sizeof(CLSID));
-    memcpy(pbData+sizeof(CLSID), &constant, sizeof(DWORD));
+    memcpy(data, &CLSID_AntiMoniker, sizeof(CLSID));
+    memcpy(data + sizeof(CLSID), &moniker->count, sizeof(moniker->count));
 
     return S_OK;
 }
