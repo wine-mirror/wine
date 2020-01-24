@@ -1002,13 +1002,15 @@ void wined3d_device_create_primary_opengl_context_cs(void *object)
         context_release(context);
         return;
     }
-    wined3d_ffp_blitter_create(&device->blitter, &device->adapter->gl_info);
-    if (!wined3d_glsl_blitter_create(&device->blitter, device))
-        wined3d_arbfp_blitter_create(&device->blitter, device);
-    wined3d_fbo_blitter_create(&device->blitter, &device->adapter->gl_info);
-    wined3d_raw_blitter_create(&device->blitter, &device->adapter->gl_info);
 
     context_gl = wined3d_context_gl(context);
+
+    wined3d_ffp_blitter_create(&device->blitter, context_gl->gl_info);
+    if (!wined3d_glsl_blitter_create(&device->blitter, device))
+        wined3d_arbfp_blitter_create(&device->blitter, device);
+    wined3d_fbo_blitter_create(&device->blitter, context_gl->gl_info);
+    wined3d_raw_blitter_create(&device->blitter, context_gl->gl_info);
+
     wined3d_device_gl_create_dummy_textures(wined3d_device_gl(device), context_gl);
     wined3d_device_create_default_samplers(device, context);
     context_release(context);
