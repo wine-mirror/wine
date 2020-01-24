@@ -59,7 +59,7 @@ struct gstdemux
     IMemAllocator *alloc;
 
     struct gstdemux_source **sources;
-    LONG cStreams;
+    unsigned int source_count;
 
     LONGLONG filesize;
 
@@ -836,33 +836,32 @@ static DWORD CALLBACK push_data_init(LPVOID iface)
 
 static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
-    struct gstdemux *This = user;
-    int x;
-    struct gstdemux_source *pin;
+    struct gstdemux *filter = user;
+    unsigned int i;
+    char *name;
 
-    TRACE("%p %p %p\n", This, bin, pad);
+    TRACE("filter %p, bin %p, pad %p.\n", filter, bin, pad);
 
-    for (x = 0; x < This->cStreams; ++x) {
-        if (This->sources[x]->their_src == pad)
-            break;
-    }
-    if (x == This->cStreams)
+    for (i = 0; i < filter->source_count; ++i)
     {
-        char *name = gst_pad_get_name(pad);
-        WARN("No pin matching pad %s found.\n", debugstr_a(name));
-        g_free(name);
-        return;
+        struct gstdemux_source *pin = filter->sources[i];
+
+        if (pin->their_src == pad)
+        {
+            if(pin->flipfilter)
+                gst_pad_unlink(pin->their_src, pin->flip_sink);
+            else
+                gst_pad_unlink(pin->their_src, pin->my_sink);
+
+            gst_object_unref(pin->their_src);
+            pin->their_src = NULL;
+            return;
+        }
     }
 
-    pin = This->sources[x];
-
-    if(pin->flipfilter)
-        gst_pad_unlink(pin->their_src, pin->flip_sink);
-    else
-        gst_pad_unlink(pin->their_src, pin->my_sink);
-
-    gst_object_unref(pin->their_src);
-    pin->their_src = NULL;
+    name = gst_pad_get_name(pad);
+    WARN("No pin matching pad %s found.\n", debugstr_a(name));
+    g_free(name);
 }
 
 static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *This)
@@ -878,7 +877,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
 
     TRACE("%p %p %p\n", This, bin, pad);
 
-    sprintfW(nameW, formatW, This->cStreams);
+    sprintfW(nameW, formatW, This->source_count);
 
     name = gst_pad_get_name(pad);
     TRACE("Name: %s\n", name);
@@ -981,7 +980,8 @@ exit:
 static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct gstdemux *This = user;
-    int x, ret;
+    unsigned int i;
+    int ret;
 
     TRACE("%p %p %p\n", This, bin, pad);
 
@@ -994,8 +994,9 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
         return;
     }
 
-    for (x = 0; x < This->cStreams; ++x) {
-        struct gstdemux_source *pin = This->sources[x];
+    for (i = 0; i < This->source_count; ++i)
+    {
+        struct gstdemux_source *pin = This->sources[i];
         if (!pin->their_src) {
             gst_segment_init(pin->segment, GST_FORMAT_TIME);
 
@@ -1215,7 +1216,7 @@ static struct strmbase_pin *gstdemux_get_pin(struct strmbase_filter *base, unsig
 
     if (!index)
         return &filter->sink.pin;
-    else if (index <= filter->cStreams)
+    else if (index <= filter->source_count)
         return &filter->sources[index - 1]->pin.pin;
     return NULL;
 }
@@ -1279,7 +1280,7 @@ static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
     if (filter->no_more_pads_event)
         WaitForSingleObject(filter->no_more_pads_event, INFINITE);
 
-    for (i = 0; i < filter->cStreams; ++i)
+    for (i = 0; i < filter->source_count; ++i)
     {
         if (SUCCEEDED(pin_hr = BaseOutputPinImpl_Active(&filter->sources[i]->pin)))
             hr = pin_hr;
@@ -1498,7 +1499,7 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
     WaitForSingleObject(filter->no_more_pads_event, INFINITE);
 
     gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration);
-    for (i = 0; i < filter->cStreams; ++i)
+    for (i = 0; i < filter->source_count; ++i)
     {
         struct gstdemux_source *pin = filter->sources[i];
         const HANDLE events[2] = {pin->caps_event, filter->error_event};
@@ -1948,7 +1949,7 @@ static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *
     struct gstdemux_source *pin, **new_array;
     char pad_name[19];
 
-    if (!(new_array = heap_realloc(filter->sources, (filter->cStreams + 1) * sizeof(*new_array))))
+    if (!(new_array = heap_realloc(filter->sources, (filter->source_count + 1) * sizeof(*new_array))))
         return NULL;
     filter->sources = new_array;
 
@@ -1964,20 +1965,20 @@ static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *
             GST_ChangeCurrent, GST_ChangeRate);
     BaseFilterImpl_IncrementPinVersion(&filter->filter);
 
-    sprintf(pad_name, "qz_sink_%u", filter->cStreams);
+    sprintf(pad_name, "qz_sink_%u", filter->source_count);
     pin->my_sink = gst_pad_new(pad_name, GST_PAD_SINK);
     gst_pad_set_element_private(pin->my_sink, pin);
     gst_pad_set_chain_function(pin->my_sink, got_data_sink_wrapper);
     gst_pad_set_event_function(pin->my_sink, event_sink_wrapper);
     gst_pad_set_query_function(pin->my_sink, query_sink_wrapper);
 
-    filter->sources[filter->cStreams++] = pin;
+    filter->sources[filter->source_count++] = pin;
     return pin;
 }
 
 static HRESULT GST_RemoveOutputPins(struct gstdemux *This)
 {
-    ULONG i;
+    unsigned int i;
 
     TRACE("(%p)\n", This);
     mark_wine_thread();
@@ -1990,10 +1991,10 @@ static HRESULT GST_RemoveOutputPins(struct gstdemux *This)
     gst_object_unref(This->their_sink);
     This->my_src = This->their_sink = NULL;
 
-    for (i = 0; i < This->cStreams; ++i)
+    for (i = 0; i < This->source_count; ++i)
         free_source_pin(This->sources[i]);
 
-    This->cStreams = 0;
+    This->source_count = 0;
     heap_free(This->sources);
     This->sources = NULL;
     gst_element_set_bus(This->container, NULL);
@@ -2319,7 +2320,7 @@ static BOOL avi_splitter_init_gst(struct gstdemux *filter)
     WaitForSingleObject(filter->no_more_pads_event, INFINITE);
 
     gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration);
-    for (i = 0; i < filter->cStreams; ++i)
+    for (i = 0; i < filter->source_count; ++i)
     {
         struct gstdemux_source *pin = filter->sources[i];
         const HANDLE events[2] = {pin->caps_event, filter->error_event};
