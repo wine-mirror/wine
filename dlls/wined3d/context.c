@@ -1493,6 +1493,74 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
     wined3d_context_cleanup(&context_gl->c);
 }
 
+BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDeviceSize size,
+        VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    VkMemoryRequirements memory_requirements;
+    struct wined3d_adapter_vk *adapter_vk;
+    VkMemoryAllocateInfo allocate_info;
+    VkBufferCreateInfo create_info;
+    VkResult vr;
+
+    adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
+
+    create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    create_info.pNext = NULL;
+    create_info.flags = 0;
+    create_info.size = size;
+    create_info.usage = usage;
+    create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    create_info.queueFamilyIndexCount = 0;
+    create_info.pQueueFamilyIndices = NULL;
+
+    if ((vr = VK_CALL(vkCreateBuffer(device_vk->vk_device, &create_info, NULL, &bo->vk_buffer))) < 0)
+    {
+        ERR("Failed to create Vulkan buffer, vr %s.\n", wined3d_debug_vkresult(vr));
+        return FALSE;
+    }
+
+    VK_CALL(vkGetBufferMemoryRequirements(device_vk->vk_device, bo->vk_buffer, &memory_requirements));
+
+    allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocate_info.pNext = NULL;
+    allocate_info.allocationSize = memory_requirements.size;
+    allocate_info.memoryTypeIndex = wined3d_adapter_vk_get_memory_type_index(adapter_vk,
+            memory_requirements.memoryTypeBits, memory_type);
+    if (allocate_info.memoryTypeIndex == ~0u)
+    {
+        ERR("Failed to find suitable memory type.\n");
+        VK_CALL(vkDestroyBuffer(device_vk->vk_device, bo->vk_buffer, NULL));
+        return FALSE;
+    }
+    if ((vr = VK_CALL(vkAllocateMemory(device_vk->vk_device, &allocate_info, NULL, &bo->vk_memory))) < 0)
+    {
+        ERR("Failed to allocate buffer memory, vr %s.\n", wined3d_debug_vkresult(vr));
+        VK_CALL(vkDestroyBuffer(device_vk->vk_device, bo->vk_buffer, NULL));
+        return FALSE;
+    }
+
+    if ((vr = VK_CALL(vkBindBufferMemory(device_vk->vk_device, bo->vk_buffer, bo->vk_memory, 0))) < 0)
+    {
+        ERR("Failed to bind buffer memory, vr %s.\n", wined3d_debug_vkresult(vr));
+        VK_CALL(vkFreeMemory(device_vk->vk_device, bo->vk_memory, NULL));
+        VK_CALL(vkDestroyBuffer(device_vk->vk_device, bo->vk_buffer, NULL));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const struct wined3d_bo_vk *bo)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+
+    VK_CALL(vkDestroyBuffer(device_vk->vk_device, bo->vk_buffer, NULL));
+    VK_CALL(vkFreeMemory(device_vk->vk_device, bo->vk_memory, NULL));
+}
+
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
 {
     wined3d_context_cleanup(&context_vk->c);
@@ -2344,9 +2412,13 @@ fail:
 
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wined3d_swapchain *swapchain)
 {
+    struct wined3d_adapter_vk *adapter_vk;
+
     TRACE("context_vk %p, swapchain %p.\n", context_vk, swapchain);
 
     wined3d_context_init(&context_vk->c, swapchain);
+    adapter_vk = wined3d_adapter_vk(swapchain->device->adapter);
+    context_vk->vk_info = &adapter_vk->vk_info;
 
     return WINED3D_OK;
 }

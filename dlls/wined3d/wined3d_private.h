@@ -1512,6 +1512,12 @@ do {                                                                \
 #define checkGLcall(A) do {} while(0)
 #endif
 
+struct wined3d_bo_vk
+{
+    VkBuffer vk_buffer;
+    VkDeviceMemory vk_memory;
+};
+
 struct wined3d_bo_address
 {
     UINT_PTR buffer_object;
@@ -2155,9 +2161,20 @@ void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context
 struct wined3d_context_vk
 {
     struct wined3d_context c;
+
+    const struct wined3d_vk_info *vk_info;
 };
 
+static inline struct wined3d_context_vk *wined3d_context_vk(struct wined3d_context *context)
+{
+    return CONTAINING_RECORD(context, struct wined3d_context_vk, c);
+}
+
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDeviceSize size,
+        VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
+void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk,
+        const struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 
@@ -2929,6 +2946,8 @@ static inline struct wined3d_adapter_vk *wined3d_adapter_vk(struct wined3d_adapt
 
 struct wined3d_adapter *wined3d_adapter_vk_create(unsigned int ordinal,
         unsigned int wined3d_creation_flags) DECLSPEC_HIDDEN;
+unsigned int wined3d_adapter_vk_get_memory_type_index(const struct wined3d_adapter_vk *adapter_vk,
+        uint32_t memory_type_mask, VkMemoryPropertyFlags flags) DECLSPEC_HIDDEN;
 
 struct wined3d_caps_gl_ctx
 {
@@ -4208,6 +4227,8 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
 struct wined3d_buffer_vk
 {
     struct wined3d_buffer b;
+
+    struct wined3d_bo_vk bo;
 };
 
 static inline struct wined3d_buffer_vk *wined3d_buffer_vk(struct wined3d_buffer *buffer)

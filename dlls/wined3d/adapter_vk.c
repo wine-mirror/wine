@@ -555,6 +555,23 @@ static void adapter_vk_destroy_swapchain(struct wined3d_swapchain *swapchain)
     heap_free(swapchain);
 }
 
+unsigned int wined3d_adapter_vk_get_memory_type_index(const struct wined3d_adapter_vk *adapter_vk,
+        uint32_t memory_type_mask, VkMemoryPropertyFlags flags)
+{
+    const VkPhysicalDeviceMemoryProperties *memory_info = &adapter_vk->memory_properties;
+    unsigned int i;
+
+    for (i = 0; i < memory_info->memoryTypeCount; ++i)
+    {
+        if (!(memory_type_mask & (1u << i)))
+            continue;
+        if ((memory_info->memoryTypes[i].propertyFlags & flags) == flags)
+            return i;
+    }
+
+    return ~0u;
+}
+
 static HRESULT adapter_vk_create_buffer(struct wined3d_device *device,
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)

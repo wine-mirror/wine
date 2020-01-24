@@ -1554,6 +1554,44 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
     return wined3d_buffer_init(&buffer_gl->b, device, desc, data, parent, parent_ops, &wined3d_buffer_gl_ops);
 }
 
+static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buffer_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_resource *resource = &buffer_vk->b.resource;
+    uint32_t bind_flags = resource->bind_flags;
+    VkMemoryPropertyFlags memory_type;
+    VkBufferUsageFlags usage;
+
+    usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    if (bind_flags & WINED3D_BIND_VERTEX_BUFFER)
+        usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    if (bind_flags & WINED3D_BIND_INDEX_BUFFER)
+        usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    if (bind_flags & WINED3D_BIND_CONSTANT_BUFFER)
+        usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    if (bind_flags & WINED3D_BIND_SHADER_RESOURCE)
+        usage |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+    if (bind_flags & WINED3D_BIND_UNORDERED_ACCESS)
+        usage |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
+    if (bind_flags & WINED3D_BIND_INDIRECT_BUFFER)
+        usage |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+    if (bind_flags & (WINED3D_BIND_STREAM_OUTPUT | WINED3D_BIND_RENDER_TARGET | WINED3D_BIND_DEPTH_STENCIL))
+        FIXME("Ignoring some bind flags %#x.\n", bind_flags);
+    memory_type = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+            | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+            | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    if (!(wined3d_context_vk_create_bo(context_vk, resource->size, usage, memory_type, &buffer_vk->bo)))
+    {
+        WARN("Failed to create Vulkan buffer.\n");
+        return FALSE;
+    }
+
+    buffer_vk->b.buffer_object = (uintptr_t)&buffer_vk->bo;
+    buffer_invalidate_bo_range(&buffer_vk->b, 0, 0);
+
+    return TRUE;
+}
+
 static BOOL wined3d_buffer_vk_prepare_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, unsigned int location)
 {
@@ -1563,8 +1601,10 @@ static BOOL wined3d_buffer_vk_prepare_location(struct wined3d_buffer *buffer,
             return wined3d_resource_prepare_sysmem(&buffer->resource);
 
         case WINED3D_LOCATION_BUFFER:
-            /* The Vulkan buffer is created during resource creation. */
-            return TRUE;
+            if (buffer->buffer_object)
+                return TRUE;
+
+            return wined3d_buffer_vk_create_buffer_object(wined3d_buffer_vk(buffer), wined3d_context_vk(context));
 
         default:
             FIXME("Unhandled location %s.\n", wined3d_debug_location(location));
@@ -1575,7 +1615,24 @@ static BOOL wined3d_buffer_vk_prepare_location(struct wined3d_buffer *buffer,
 static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, unsigned int location)
 {
-    FIXME("buffer %p, context %p, location %s.\n", buffer, context, wined3d_debug_location(location));
+    struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
+    struct wined3d_buffer_vk *buffer_vk = wined3d_buffer_vk(buffer);
+
+    TRACE("buffer %p, context %p, location %s.\n", buffer, context, wined3d_debug_location(location));
+
+    switch (location)
+    {
+        case WINED3D_LOCATION_BUFFER:
+            wined3d_context_vk_destroy_bo(context_vk, &buffer_vk->bo);
+            buffer_vk->bo.vk_buffer = VK_NULL_HANDLE;
+            buffer_vk->bo.vk_memory = VK_NULL_HANDLE;
+            buffer_vk->b.buffer_object = 0u;
+            break;
+
+        default:
+            ERR("Unhandled location %s.\n", wined3d_debug_location(location));
+            break;
+    }
 }
 
 static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
@@ -1604,6 +1661,9 @@ HRESULT wined3d_buffer_vk_init(struct wined3d_buffer_vk *buffer_vk, struct wined
 {
     TRACE("buffer_vk %p, device %p, desc %p, data %p, parent %p, parent_ops %p.\n",
             buffer_vk, device, desc, data, parent, parent_ops);
+
+    if (desc->access & WINED3D_RESOURCE_ACCESS_GPU)
+        buffer_vk->b.flags |= WINED3D_BUFFER_USE_BO;
 
     return wined3d_buffer_init(&buffer_vk->b, device, desc, data, parent, parent_ops, &wined3d_buffer_vk_ops);
 }
