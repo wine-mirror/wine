@@ -355,21 +355,9 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
             IDispatch_AddRef(get_object(val));
         V_DISPATCH(retv) = get_object(val);
         return S_OK;
-    case JSV_STRING: {
-        jsstr_t *str = get_string(val);
-
+    case JSV_STRING:
         V_VT(retv) = VT_BSTR;
-        if(is_null_bstr(str)) {
-            V_BSTR(retv) = NULL;
-        }else {
-            V_BSTR(retv) = SysAllocStringLen(NULL, jsstr_length(str));
-            if(V_BSTR(retv))
-                jsstr_flush(str, V_BSTR(retv));
-            else
-                return E_OUTOFMEMORY;
-        }
-        return S_OK;
-    }
+        return jsstr_to_bstr(get_string(val), &V_BSTR(retv));
     case JSV_NUMBER: {
         double n = get_number(val);
 
@@ -945,16 +933,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
         if(FAILED(hres))
             break;
 
-        if(is_null_bstr(str)) {
-            V_BSTR(dst) = NULL;
-            break;
-        }
-
-        V_BSTR(dst) = SysAllocStringLen(NULL, jsstr_length(str));
-        if(V_BSTR(dst))
-            jsstr_flush(str, V_BSTR(dst));
-        else
-            hres = E_OUTOFMEMORY;
+        hres = jsstr_to_bstr(str, &V_BSTR(dst));
         break;
     }
     case VT_EMPTY:
