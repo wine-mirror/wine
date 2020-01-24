@@ -294,6 +294,7 @@ extern const struct min_lookup minMipLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HI
 extern const GLenum magLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
 
 GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f) DECLSPEC_HIDDEN;
+VkAccessFlags vk_access_mask_from_bind_flags(uint32_t bind_flags) DECLSPEC_HIDDEN;
 
 static inline enum wined3d_cmp_func wined3d_sanitize_cmp_func(enum wined3d_cmp_func func)
 {
@@ -2158,11 +2159,29 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl, 
 void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state) DECLSPEC_HIDDEN;
 
+struct wined3d_command_buffer_vk
+{
+    uint64_t id;
+    VkCommandBuffer vk_command_buffer;
+    VkFence vk_fence;
+};
+
 struct wined3d_context_vk
 {
     struct wined3d_context c;
 
     const struct wined3d_vk_info *vk_info;
+
+    VkCommandPool vk_command_pool;
+    struct wined3d_command_buffer_vk current_command_buffer;
+    uint64_t completed_command_buffer_id;
+
+    struct
+    {
+        struct wined3d_command_buffer_vk *buffers;
+        SIZE_T buffers_size;
+        SIZE_T buffer_count;
+    } submitted;
 };
 
 static inline struct wined3d_context_vk *wined3d_context_vk(struct wined3d_context *context)
@@ -2175,8 +2194,11 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
         VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk,
         const struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
+VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
+void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+void wined3d_context_vk_wait_command_buffer(struct wined3d_context_vk *context_vk, uint64_t id) DECLSPEC_HIDDEN;
 
 typedef void (*APPLYSTATEFUNC)(struct wined3d_context *ctx, const struct wined3d_state *state, DWORD state_id);
 
@@ -3350,6 +3372,7 @@ struct wined3d_device_vk
 
     VkDevice vk_device;
     VkQueue vk_queue;
+    uint32_t vk_queue_family_index;
 
     struct wined3d_vk_info vk_info;
 };
