@@ -38,10 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
 
 static const WCHAR wGstreamer_Splitter[] =
 {'G','S','t','r','e','a','m','e','r',' ','s','p','l','i','t','t','e','r',' ','f','i','l','t','e','r',0};
-static const WCHAR wGstreamer_YUV2RGB[] =
-{'G','S','t','r','e','a','m','e','r',' ','Y','U','V',' ','t','o',' ','R','G','B',' ','f','i','l','t','e','r',0};
-static const WCHAR wGstreamer_YUV2ARGB[] =
-{'G','S','t','r','e','a','m','e','r',' ','Y','U','V',' ','t','o',' ','A','R','G','B',' ','f','i','l','t','e','r',0};
 static const WCHAR wGstreamer_Mp3[] =
 {'G','S','t','r','e','a','m','e','r',' ','M','p','3',' ','f','i','l','t','e','r',0};
 static const WCHAR wGstreamer_AudioConvert[] =
@@ -98,40 +94,6 @@ static const AMOVIESETUP_FILTER amfSplitter =
     MERIT_PREFERRED,
     3,
     amfSplitPin
-};
-
-static const AMOVIESETUP_PIN amfYUVPin[] =
-{   {   wNull,
-        FALSE, FALSE, FALSE, FALSE,
-        &GUID_NULL,
-        NULL,
-        1,
-        amfMTvideo
-    },
-    {
-        wNull,
-        FALSE, TRUE, FALSE, FALSE,
-        &GUID_NULL,
-        NULL,
-        1,
-        amfMTvideo
-    },
-};
-
-static const AMOVIESETUP_FILTER amfYUV2RGB =
-{   &CLSID_Gstreamer_YUV2RGB,
-    wGstreamer_YUV2RGB,
-    MERIT_UNLIKELY,
-    2,
-    amfYUVPin
-};
-
-static const AMOVIESETUP_FILTER amfYUV2ARGB =
-{   &CLSID_Gstreamer_YUV2ARGB,
-    wGstreamer_YUV2ARGB,
-    MERIT_UNLIKELY,
-    2,
-    amfYUVPin
 };
 
 AMOVIESETUP_PIN amfMp3Pin[] =
@@ -325,20 +287,6 @@ FactoryTemplate const g_Templates[] = {
         Gstreamer_Splitter_create,
         NULL,
         &amfSplitter,
-    },
-    {
-        wGstreamer_YUV2RGB,
-        &CLSID_Gstreamer_YUV2RGB,
-        Gstreamer_YUV2RGB_create,
-        NULL,
-        &amfYUV2RGB,
-    },
-    {
-        wGstreamer_YUV2ARGB,
-        &CLSID_Gstreamer_YUV2ARGB,
-        Gstreamer_YUV2ARGB_create,
-        NULL,
-        &amfYUV2ARGB,
     },
     {
         wGstreamer_Mp3,
