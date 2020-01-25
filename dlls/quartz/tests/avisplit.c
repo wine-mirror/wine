@@ -621,42 +621,42 @@ static void test_media_types(void)
 
     pmt->majortype = GUID_NULL;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->majortype = MEDIATYPE_Video;
 
     pmt->subtype = GUID_NULL;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->subtype = MEDIASUBTYPE_I420;
 
     pmt->formattype = GUID_NULL;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->formattype = FORMAT_None;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->formattype = FORMAT_VideoInfo;
 
     vih = (VIDEOINFOHEADER *)pmt->pbFormat;
 
     vih->AvgTimePerFrame = 10000;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     vih->AvgTimePerFrame = 1000 * 10000;
 
     vih->dwBitRate = 1000000;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     vih->dwBitRate = 0;
 
     SetRect(&vih->rcSource, 0, 0, 32, 24);
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     SetRect(&vih->rcSource, 0, 0, 0, 0);
 
     vih->bmiHeader.biCompression = BI_RGB;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     vih->bmiHeader.biCompression = mmioFOURCC('I','4','2','0');
 
     CoTaskMemFree(pmt->pbFormat);
