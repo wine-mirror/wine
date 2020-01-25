@@ -41,6 +41,7 @@
 #include "mmreg.h"
 #include "ks.h"
 #include "initguid.h"
+#include "wmcodecdsp.h"
 #include "ksmedia.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
@@ -384,19 +385,96 @@ static gboolean amt_from_gst_caps(const GstCaps *caps, AM_MEDIA_TYPE *mt)
     }
 }
 
-static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
+static GstCaps *amt_to_gst_caps_video(const AM_MEDIA_TYPE *mt)
 {
-    struct gstdemux_source *pin = gst_pad_get_element_private(pad);
-    gchar *caps_str = gst_caps_to_string(caps);
-    AM_MEDIA_TYPE mt;
-    gboolean ret;
+    static const struct
+    {
+        const GUID *subtype;
+        GstVideoFormat format;
+    }
+    format_map[] =
+    {
+        {&MEDIASUBTYPE_ARGB32,  GST_VIDEO_FORMAT_BGRA},
+        {&MEDIASUBTYPE_RGB32,   GST_VIDEO_FORMAT_BGRx},
+        {&MEDIASUBTYPE_RGB24,   GST_VIDEO_FORMAT_BGR},
+        {&MEDIASUBTYPE_RGB565,  GST_VIDEO_FORMAT_BGR16},
+        {&MEDIASUBTYPE_RGB555,  GST_VIDEO_FORMAT_BGR15},
+    };
 
-    TRACE("pin %p, caps %s.\n", pin, debugstr_a(caps_str));
-    g_free(caps_str);
+    const VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)mt->pbFormat;
+    GstVideoFormat format = GST_VIDEO_FORMAT_UNKNOWN;
+    GstVideoInfo info;
+    unsigned int i;
+    GstCaps *caps;
 
-    if ((ret = amt_from_gst_caps(caps, &mt)))
-        FreeMediaType(&mt);
-    return ret;
+    for (i = 0; i < ARRAY_SIZE(format_map); ++i)
+    {
+        if (IsEqualGUID(&mt->subtype, format_map[i].subtype))
+        {
+            format = format_map[i].format;
+            break;
+        }
+    }
+
+    if (format == GST_VIDEO_FORMAT_UNKNOWN)
+        format = gst_video_format_from_fourcc(vih->bmiHeader.biCompression);
+
+    if (format == GST_VIDEO_FORMAT_UNKNOWN)
+    {
+        FIXME("Unknown video format (subtype %s, compression %#x).\n",
+                debugstr_guid(&mt->subtype), vih->bmiHeader.biCompression);
+        return NULL;
+    }
+
+    gst_video_info_set_format(&info, format, vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
+    if ((caps = gst_video_info_to_caps(&info)))
+    {
+        /* Clear the framerate; we don't actually care about it. (Yes,
+         * VIDEOINFOHEADER has an AvgTimePerFrame field, but that shouldn't
+         * matter for checking compatible caps.) */
+        for (i = 0; i < gst_caps_get_size(caps); ++i)
+            gst_structure_remove_field(gst_caps_get_structure(caps, i), "framerate");
+    }
+    return caps;
+}
+
+static GstCaps *amt_to_gst_caps_audio(const AM_MEDIA_TYPE *mt)
+{
+    const WAVEFORMATEX *wfx = (WAVEFORMATEX *)mt->pbFormat;
+    GstAudioFormat format = GST_AUDIO_FORMAT_UNKNOWN;
+    GstAudioInfo info;
+
+    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_PCM))
+        format = gst_audio_format_build_integer(wfx->wBitsPerSample != 8,
+                G_LITTLE_ENDIAN, wfx->wBitsPerSample, wfx->wBitsPerSample);
+    else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_IEEE_FLOAT))
+    {
+        if (wfx->wBitsPerSample == 32)
+            format = GST_AUDIO_FORMAT_F32LE;
+        else if (wfx->wBitsPerSample == 64)
+            format = GST_AUDIO_FORMAT_F64LE;
+    }
+
+    if (format == GST_AUDIO_FORMAT_UNKNOWN)
+    {
+        FIXME("Unknown audio format (subtype %s, depth %u).\n",
+                debugstr_guid(&mt->subtype), wfx->wBitsPerSample);
+        return NULL;
+    }
+
+    gst_audio_info_set_format(&info, format, wfx->nSamplesPerSec, wfx->nChannels, NULL);
+    return gst_audio_info_to_caps(&info);
+}
+
+static GstCaps *amt_to_gst_caps(const AM_MEDIA_TYPE *mt)
+{
+    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
+        return amt_to_gst_caps_video(mt);
+    else if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
+        return amt_to_gst_caps_audio(mt);
+
+    FIXME("Unknown major type %s.\n", debugstr_guid(&mt->majortype));
+    return NULL;
 }
 
 static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
@@ -424,15 +502,90 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
 
 static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
 {
-    switch (GST_QUERY_TYPE (query)) {
+    struct gstdemux_source *pin = gst_pad_get_element_private(pad);
+
+    TRACE("pin %p, type \"%s\".\n", pin, gst_query_type_get_name(query->type));
+
+    switch (query->type)
+    {
+        case GST_QUERY_CAPS:
+        {
+            GstCaps *caps, *filter, *temp;
+
+            gst_query_parse_caps(query, &filter);
+
+            if (pin->pin.pin.peer)
+                caps = amt_to_gst_caps(&pin->pin.pin.mt);
+            else
+                caps = gst_caps_new_any();
+            if (!caps)
+                return FALSE;
+
+            if (filter)
+            {
+                temp = gst_caps_intersect(caps, filter);
+                gst_caps_unref(caps);
+                caps = temp;
+            }
+
+            gst_query_set_caps_result(query, caps);
+            gst_caps_unref(caps);
+            return TRUE;
+        }
         case GST_QUERY_ACCEPT_CAPS:
         {
+            gboolean ret = TRUE;
+            AM_MEDIA_TYPE mt;
             GstCaps *caps;
-            gboolean res;
+
+            if (!pin->pin.pin.peer)
+            {
+                gst_query_set_accept_caps_result(query, TRUE);
+                return TRUE;
+            }
+
             gst_query_parse_accept_caps(query, &caps);
-            res = accept_caps_sink(pad, caps);
-            gst_query_set_accept_caps_result(query, res);
-            return TRUE; /* FIXME */
+            if (!amt_from_gst_caps(caps, &mt))
+                return FALSE;
+
+            if (!IsEqualGUID(&mt.majortype, &pin->pin.pin.mt.majortype)
+                    || !IsEqualGUID(&mt.subtype, &pin->pin.pin.mt.subtype)
+                    || !IsEqualGUID(&mt.formattype, &pin->pin.pin.mt.formattype))
+                ret = FALSE;
+
+            if (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video))
+            {
+                const VIDEOINFOHEADER *req_vih = (VIDEOINFOHEADER *)mt.pbFormat;
+                const VIDEOINFOHEADER *our_vih = (VIDEOINFOHEADER *)pin->pin.pin.mt.pbFormat;
+
+                if (req_vih->bmiHeader.biWidth != our_vih->bmiHeader.biWidth
+                        || req_vih->bmiHeader.biHeight != our_vih->bmiHeader.biHeight
+                        || req_vih->bmiHeader.biBitCount != our_vih->bmiHeader.biBitCount
+                        || req_vih->bmiHeader.biCompression != our_vih->bmiHeader.biCompression)
+                    ret = FALSE;
+            }
+            else if (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio))
+            {
+                const WAVEFORMATEX *req_wfx = (WAVEFORMATEX *)mt.pbFormat;
+                const WAVEFORMATEX *our_wfx = (WAVEFORMATEX *)pin->pin.pin.mt.pbFormat;
+
+                if (req_wfx->nChannels != our_wfx->nChannels
+                        || req_wfx->nSamplesPerSec != our_wfx->nSamplesPerSec
+                        || req_wfx->wBitsPerSample != our_wfx->wBitsPerSample)
+                    ret = FALSE;
+            }
+
+            FreeMediaType(&mt);
+
+            if (!ret && WARN_ON(gstreamer))
+            {
+                gchar *str = gst_caps_to_string(caps);
+                WARN("Rejecting caps \"%s\".\n", debugstr_a(str));
+                g_free(str);
+            }
+
+            gst_query_set_accept_caps_result(query, ret);
+            return TRUE;
         }
         default:
             return gst_pad_query_default (pad, parent, query);
@@ -1535,16 +1688,63 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
 
 static HRESULT gstdecoder_source_query_accept(struct gstdemux_source *pin, const AM_MEDIA_TYPE *mt)
 {
+    /* At least make sure we can convert it to GstCaps. */
+    GstCaps *caps = amt_to_gst_caps(mt);
+
+    if (!caps)
+        return S_FALSE;
+    gst_caps_unref(caps);
     return S_OK;
 }
 
 static HRESULT gstdecoder_source_get_media_type(struct gstdemux_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    if (index > 0)
-        return VFW_S_NO_MORE_ITEMS;
-    CopyMediaType(mt, &pin->mt);
-    return S_OK;
+    static const struct
+    {
+        const GUID *subtype;
+        WORD bpp;
+        DWORD compression;
+    }
+    video_types[] =
+    {
+        /* Roughly ordered by preference from videoflip. */
+        {&MEDIASUBTYPE_AYUV, 32, mmioFOURCC('A','Y','U','V')},
+        {&MEDIASUBTYPE_ARGB32, 32, BI_RGB},
+        {&MEDIASUBTYPE_RGB32, 32, BI_RGB},
+        {&MEDIASUBTYPE_RGB24, 24, BI_RGB},
+        {&MEDIASUBTYPE_I420, 12, mmioFOURCC('I','4','2','0')},
+        {&MEDIASUBTYPE_YV12, 12, mmioFOURCC('Y','V','1','2')},
+        {&MEDIASUBTYPE_IYUV, 12, mmioFOURCC('I','Y','U','V')},
+        {&MEDIASUBTYPE_YUY2, 16, mmioFOURCC('Y','U','Y','2')},
+        {&MEDIASUBTYPE_UYVY, 16, mmioFOURCC('U','Y','V','Y')},
+        {&MEDIASUBTYPE_YVYU, 16, mmioFOURCC('Y','V','Y','U')},
+        {&MEDIASUBTYPE_NV12, 12, mmioFOURCC('N','V','1','2')},
+    };
+
+    if (!index)
+    {
+        CopyMediaType(mt, &pin->mt);
+        return S_OK;
+    }
+    else if (IsEqualGUID(&pin->mt.majortype, &MEDIATYPE_Video)
+            && index - 1 < ARRAY_SIZE(video_types))
+    {
+        VIDEOINFOHEADER *vih;
+
+        *mt = pin->mt;
+        mt->subtype = *video_types[index - 1].subtype;
+        mt->pbFormat = CoTaskMemAlloc(pin->mt.cbFormat);
+        memcpy(mt->pbFormat, pin->mt.pbFormat, pin->mt.cbFormat);
+        vih = (VIDEOINFOHEADER *)mt->pbFormat;
+        vih->bmiHeader.biBitCount = video_types[index - 1].bpp;
+        vih->bmiHeader.biCompression = video_types[index - 1].compression;
+        vih->bmiHeader.biSizeImage = vih->bmiHeader.biWidth
+                * vih->bmiHeader.biHeight * vih->bmiHeader.biBitCount / 8;
+        return S_OK;
+    }
+
+    return VFW_S_NO_MORE_ITEMS;
 }
 
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
