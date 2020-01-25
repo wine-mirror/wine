@@ -2500,7 +2500,7 @@ static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
 
 static HRESULT mpeg_splitter_source_query_accept(struct gstdemux_source *pin, const AM_MEDIA_TYPE *mt)
 {
-    return S_OK;
+    return compare_media_types(mt, &pin->mt) ? S_OK : S_FALSE;
 }
 
 static HRESULT mpeg_splitter_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
