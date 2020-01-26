@@ -42,12 +42,6 @@ static WCHAR *CoDupStrW(const char* src)
   return szTemp;
 }
 
-static inline int strcmpW(const WCHAR *str1, const WCHAR *str2)
-{
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
 static void test_StrRetToStringNA(void)
 {
     trace("StrRetToStringNAW is Ascii\n");
@@ -68,14 +62,14 @@ static void test_StrRetToStringNW(void)
     U(strret).pOleStr = CoDupStrW("Test");
     memset(buff, 0xff, sizeof(buff));
     ret = pStrRetToStrNAW(buff, ARRAY_SIZE(buff), &strret, NULL);
-    ok(ret == TRUE && !strcmpW(buff, szTestW),
+    ok(ret == TRUE && !wcscmp(buff, szTestW),
        "STRRET_WSTR: dup failed, ret=%d\n", ret);
 
     strret.uType = STRRET_CSTR;
     lstrcpyA(U(strret).cStr, "Test");
     memset(buff, 0xff, sizeof(buff));
     ret = pStrRetToStrNAW(buff, ARRAY_SIZE(buff), &strret, NULL);
-    ok(ret == TRUE && !strcmpW(buff, szTestW),
+    ok(ret == TRUE && !wcscmp(buff, szTestW),
        "STRRET_CSTR: dup failed, ret=%d\n", ret);
 
     strret.uType = STRRET_OFFSET;
@@ -83,7 +77,7 @@ static void test_StrRetToStringNW(void)
     strcpy((char*)&iidl, " Test");
     memset(buff, 0xff, sizeof(buff));
     ret = pStrRetToStrNAW(buff, ARRAY_SIZE(buff), &strret, iidl);
-    ok(ret == TRUE && !strcmpW(buff, szTestW),
+    ok(ret == TRUE && !wcscmp(buff, szTestW),
        "STRRET_OFFSET: dup failed, ret=%d\n", ret);
 
     /* The next test crashes on W2K, WinXP and W2K3, so we don't test. */
