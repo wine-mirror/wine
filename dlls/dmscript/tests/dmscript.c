@@ -207,6 +207,7 @@ static void test_scripttrack(void)
     IPersistStream *ps;
     CLSID class;
     ULARGE_INTEGER size;
+    char buf[64] = { 0 };
     HRESULT hr;
 #define X(guid)        &guid, #guid
     const struct {
@@ -260,14 +261,22 @@ static void test_scripttrack(void)
     ok(hr == E_POINTER, "IDirectMusicTrack8_EndPlay failed: %08x\n", hr);
     hr = IDirectMusicTrack8_Play(dmt, NULL, 0, 0, 0, 0, NULL, NULL, 0);
     ok(hr == E_POINTER, "IDirectMusicTrack8_Play failed: %08x\n", hr);
+    }
     hr = IDirectMusicTrack8_GetParam(dmt, NULL, 0, NULL, NULL);
     ok(hr == DMUS_E_GET_UNSUPPORTED, "IDirectMusicTrack8_GetParam failed: %08x\n", hr);
-    }
     for (i = 0; i < ARRAY_SIZE(unsupported); i++) {
         hr = IDirectMusicTrack8_IsParamSupported(dmt, unsupported[i].type);
         ok(hr == DMUS_E_TYPE_UNSUPPORTED,
                 "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
                     unsupported[i].name, hr);
+        hr = IDirectMusicTrack8_GetParam(dmt, unsupported[i].type, 0, NULL, buf);
+        ok(hr == DMUS_E_GET_UNSUPPORTED,
+                "GetParam(%s) failed: %08x, expected DMUS_E_GET_UNSUPPORTED\n",
+                unsupported[i].name, hr);
+        hr = IDirectMusicTrack8_SetParam(dmt, unsupported[i].type, 0, buf);
+        ok(hr == DMUS_E_SET_UNSUPPORTED,
+                "SetParam(%s) failed: %08x, expected DMUS_E_SET_UNSUPPORTED\n",
+                unsupported[i].name, hr);
     }
     hr = IDirectMusicTrack8_AddNotificationType(dmt, NULL);
     ok(hr == E_NOTIMPL, "IDirectMusicTrack8_AddNotificationType failed: %08x\n", hr);

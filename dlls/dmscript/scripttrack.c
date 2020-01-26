@@ -124,20 +124,24 @@ static HRESULT WINAPI script_track_Play(IDirectMusicTrack8 *iface, void *pStateD
 	return S_OK;
 }
 
-static HRESULT WINAPI script_track_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
+static HRESULT WINAPI script_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type,
+        MUSIC_TIME time, MUSIC_TIME *next, void *param)
 {
-	DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
-	return S_OK;
+    DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p, %p): not supported\n", This, debugstr_dmguid(type), time, next, param);
+
+    return DMUS_E_GET_UNSUPPORTED;
 }
 
-static HRESULT WINAPI script_track_SetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, void *pParam)
+static HRESULT WINAPI script_track_SetParam(IDirectMusicTrack8 *iface, REFGUID type,
+        MUSIC_TIME time, void *param)
 {
-	DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, %d, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
-	return S_OK;
+    DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p): not supported\n", This, debugstr_dmguid(type), time, param);
+
+    return DMUS_E_SET_UNSUPPORTED;
 }
 
 static HRESULT WINAPI script_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID type)
