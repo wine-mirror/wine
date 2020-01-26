@@ -297,18 +297,6 @@ static BOOL wstr_contains(const WCHAR *strw, const char *stra)
     return strstr(buf, stra) != NULL;
 }
 
-static const WCHAR *strstrW( const WCHAR *str, const WCHAR *sub )
-{
-    while (*str)
-    {
-        const WCHAR *p1 = str, *p2 = sub;
-        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
-        if (!*p2) return str;
-        str++;
-    }
-    return NULL;
-}
-
 static BSTR a2bstr(const char *str)
 {
     BSTR ret;
@@ -7853,7 +7841,7 @@ static void test_cookies(IHTMLDocument2 *doc)
     ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
     if(str2)
-        ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
+        ok(wcsstr(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
     SysFreeString(str);
     SysFreeString(str2);
 
@@ -7870,7 +7858,7 @@ static void test_cookies(IHTMLDocument2 *doc)
     ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
     if(str2)
-        ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
+        ok(wcsstr(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
     SysFreeString(str);
     SysFreeString(str2);
 }
