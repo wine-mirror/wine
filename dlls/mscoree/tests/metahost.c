@@ -74,13 +74,6 @@ static void cleanup(void)
     FreeLibrary(hmscoree);
 }
 
-static WCHAR *strrchrW( WCHAR *str, WCHAR ch )
-{
-    WCHAR *ret = NULL;
-    do { if (*str == ch) ret = str; } while (*str++);
-    return ret;
-}
-
 static void test_getruntime(WCHAR *version)
 {
     static const WCHAR dotzero[] = {'.','0',0};
@@ -106,7 +99,7 @@ static void test_getruntime(WCHAR *version)
     ICLRRuntimeInfo_Release(info);
 
     /* Versions must match exactly. */
-    dot = strrchrW(version, '.');
+    dot = wcsrchr(version, '.');
     lstrcpyW(dot, dotzero);
     hr = ICLRMetaHost_GetRuntime(metahost, version, &IID_ICLRRuntimeInfo, (void**)&info);
     ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%x\n", hr);
