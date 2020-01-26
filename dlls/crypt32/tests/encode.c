@@ -1922,13 +1922,6 @@ static void test_encodeUnicodeNameValue(DWORD dwEncoding)
     }
 }
 
-static inline int strncmpW( const WCHAR *str1, const WCHAR *str2, int n )
-{
-    if (n <= 0) return 0;
-    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
 static void test_decodeUnicodeNameValue(DWORD dwEncoding)
 {
     DWORD i;
@@ -1951,7 +1944,7 @@ static void test_decodeUnicodeNameValue(DWORD dwEncoding)
             ok(value->dwValueType == unicodeResults[i].valueType,
              "Expected value type %d, got %d\n", unicodeResults[i].valueType,
              value->dwValueType);
-            ok(!strncmpW((LPWSTR)value->Value.pbData, unicodeResults[i].str,
+            ok(!wcsncmp((LPWSTR)value->Value.pbData, unicodeResults[i].str,
              value->Value.cbData / sizeof(WCHAR)),
              "Unexpected decoded value for index %d (value type %d)\n", i,
              unicodeResults[i].valueType);
