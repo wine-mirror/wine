@@ -99,12 +99,6 @@ static ULONG ptTypes[] = {
     PT_STRING8, PT_BINARY, PT_UNICODE
 };
 
-static inline int strcmpW(const WCHAR *str1, const WCHAR *str2)
-{
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
 static void test_PropCopyMore(void)
 {
     static char szHiA[] = "Hi!";
@@ -168,7 +162,7 @@ static void test_PropCopyMore(void)
                    "PropCopyMore: Ascii string differs\n");
                 break;
             case PT_UNICODE:
-                ok(strcmpW(lpDest->Value.lpszW, lpSrc->Value.lpszW) == 0,
+                ok(wcscmp(lpDest->Value.lpszW, lpSrc->Value.lpszW) == 0,
                    "PropCopyMore: Unicode string differs\n");
                 break;
             case PT_BINARY:
