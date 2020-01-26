@@ -1202,21 +1202,6 @@ static void test_menu_add_string( void )
     DestroyMenu( hmenu );
 }
 
-/* define building blocks for the menu item info tests */
-static int strncmpW( const WCHAR *str1, const WCHAR *str2, int n )
-{
-    if (n <= 0) return 0;
-    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
-static  WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
-{
-    WCHAR *p = dst;
-    while ((*p++ = *src++));
-    return dst;
-}
-
 static void insert_menu_item( int line, HMENU hmenu, BOOL ansi, UINT mask, UINT type, UINT state, UINT id,
                               HMENU submenu, HBITMAP checked, HBITMAP unchecked, ULONG_PTR data,
                               void *type_data, UINT len, HBITMAP item, BOOL expect )
@@ -1307,7 +1292,7 @@ static void check_menu_item_info( int line, HMENU hmenu, BOOL ansi, UINT mask, U
             ok_(__FILE__, line)( !strncmp( expname, info.dwTypeData, out_len ),
                                  "menu item name differed from '%s' '%s'\n", expname, info.dwTypeData );
         else
-            ok_(__FILE__, line)( !strncmpW( (WCHAR *)expname, (WCHAR *)info.dwTypeData, out_len ),
+            ok_(__FILE__, line)( !wcsncmp( (WCHAR *)expname, (WCHAR *)info.dwTypeData, out_len ),
                                  "menu item name wrong\n" );
 
         SetLastError( 0xdeadbeef );
@@ -1364,7 +1349,7 @@ static void set_menu_item_info( int line, HMENU hmenu, BOOL ansi, UINT mask, UIN
     hmenu = CreateMenu();\
     submenu = CreateMenu();\
     if(ansi)strcpy( string, init );\
-    else strcpyW( string, init );\
+    else wcscpy( string, init );\
     insert_menu_item( __LINE__, hmenu, ansi, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, eret1 )
 
 /* GetMenuItemInfo + GetMenuString  */
