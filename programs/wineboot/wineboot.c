@@ -1267,7 +1267,6 @@ static BOOL ProcessStartupItems(void)
 {
     BOOL ret = FALSE;
     HRESULT hr;
-    IMalloc *ppM = NULL;
     IShellFolder *psfDesktop = NULL, *psfStartup = NULL;
     LPITEMIDLIST pidlStartup = NULL, pidlItem;
     ULONG NumPIDLs;
@@ -1276,13 +1275,6 @@ static BOOL ProcessStartupItems(void)
     WCHAR wszCommand[MAX_PATH];
 
     WINE_TRACE("Processing items in the StartUp folder.\n");
-
-    hr = SHGetMalloc(&ppM);
-    if (FAILED(hr))
-    {
-	WINE_ERR("Couldn't get IMalloc object.\n");
-	goto done;
-    }
 
     hr = SHGetDesktopFolder(&psfDesktop);
     if (FAILED(hr))
@@ -1333,7 +1325,7 @@ static BOOL ProcessStartupItems(void)
             }
 	}
 
-	IMalloc_Free(ppM, pidlItem);
+        ILFree(pidlItem);
     }
 
     /* Return success */
@@ -1342,7 +1334,7 @@ static BOOL ProcessStartupItems(void)
 done:
     if (iEnumList) IEnumIDList_Release(iEnumList);
     if (psfStartup) IShellFolder_Release(psfStartup);
-    if (pidlStartup) IMalloc_Free(ppM, pidlStartup);
+    if (pidlStartup) ILFree(pidlStartup);
 
     return ret;
 }
