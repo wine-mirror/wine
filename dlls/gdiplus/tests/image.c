@@ -866,7 +866,7 @@ static void test_LockBits_UserBuf(void)
 struct BITMAPINFOWITHBITFIELDS
 {
     BITMAPINFOHEADER bmiHeader;
-    DWORD masks[3];
+    DWORD masks[255];
 };
 
 union BITMAPINFOUNION
@@ -882,7 +882,10 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     HPALETTE hpal = NULL;
     GpStatus stat;
     BYTE buff[1000];
-    LOGPALETTE* LogPal = NULL;
+    char logpalette_buf[sizeof(LOGPALETTE) + sizeof(PALETTEENTRY) * 255];
+    LOGPALETTE *LogPal = (LOGPALETTE *)logpalette_buf;
+    char colorpalette_buf[sizeof(ColorPalette) + sizeof(ARGB) * 255];
+    ColorPalette *palette = (ColorPalette *)colorpalette_buf;
     REAL width, height;
     const REAL WIDTH1 = 5;
     const REAL HEIGHT1 = 15;
@@ -892,6 +895,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     union BITMAPINFOUNION bmi;
     BYTE *bits;
     PixelFormat format;
+    int i;
 
     stat = GdipCreateBitmapFromHBITMAP(NULL, NULL, NULL);
     expect(InvalidParameter, stat);
@@ -905,6 +909,9 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
     expectf(WIDTH1,  width);
     expectf(HEIGHT1, height);
+    stat = GdipGetImagePixelFormat((GpImage*)gpbm, &format);
+    expect(Ok, stat);
+    expect(PixelFormat1bppIndexed, format);
     if (stat == Ok)
         GdipDisposeImage((GpImage*)gpbm);
     DeleteObject(hbm);
@@ -915,6 +922,10 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     expect(Ok, stat);
     /* raw format */
     expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)gpbm, __LINE__, FALSE);
+
+    stat = GdipGetImagePixelFormat((GpImage*)gpbm, &format);
+    expect(Ok, stat);
+    expect(PixelFormat1bppIndexed, format);
 
     expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
     expectf(WIDTH2,  width);
@@ -943,6 +954,9 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
     expectf(WIDTH1,  width);
     expectf(HEIGHT1, height);
+    stat = GdipGetImagePixelFormat((GpImage*)gpbm, &format);
+    expect(Ok, stat);
+    expect(PixelFormat24bppRGB, format);
     if (stat == Ok)
     {
         /* test whether writing to the bitmap affects the original */
@@ -954,21 +968,77 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
         GdipDisposeImage((GpImage*)gpbm);
     }
 
-    LogPal = GdipAlloc(sizeof(LOGPALETTE));
-    ok(LogPal != NULL, "unable to allocate LOGPALETTE\n");
     LogPal->palVersion = 0x300;
-    LogPal->palNumEntries = 1;
+    LogPal->palNumEntries = 8;
+    for (i = 0; i < 8; i++)
+    {
+        LogPal->palPalEntry[i].peRed = i;
+        LogPal->palPalEntry[i].peGreen = i;
+        LogPal->palPalEntry[i].peBlue = i;
+        LogPal->palPalEntry[i].peFlags = 0;
+    }
+
     hpal = CreatePalette(LogPal);
     ok(hpal != NULL, "CreatePalette failed\n");
-    GdipFree(LogPal);
 
     stat = GdipCreateBitmapFromHBITMAP(hbm, hpal, &gpbm);
     expect(Ok, stat);
+    stat = GdipGetImagePalette((GpImage *)gpbm, palette, sizeof(colorpalette_buf));
+    expect(Ok, stat);
+    expect(0, palette->Count);
+    GdipDisposeImage((GpImage*)gpbm);
+    DeleteObject(hbm);
 
-    if (stat == Ok)
-        GdipDisposeImage((GpImage*)gpbm);
+    for (i = 0; i < 16; i++)
+    {
+        RGBQUAD *colors = bmi.bi.bmiColors;
+        BYTE clr = 255 - i;
+        colors[i].rgbBlue = clr;
+        colors[i].rgbGreen = clr;
+        colors[i].rgbRed = clr;
+        colors[i].rgbReserved = 0;
+    }
+
+    bmi.bi.bmiHeader.biBitCount = 8;
+    bmi.bi.bmiHeader.biClrUsed = 16;
+    bmi.bi.bmiHeader.biClrImportant = 16;
+    hbm = CreateDIBSection(hdc, &bmi.bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hbm != NULL, "CreateDIBSection failed\n");
+
+    stat = GdipCreateBitmapFromHBITMAP(hbm, hpal, &gpbm);
+    expect(Ok, stat);
+    stat = GdipGetImagePixelFormat((GpImage*)gpbm, &format);
+    expect(Ok, stat);
+    expect(PixelFormat8bppIndexed, format);
+    stat = GdipGetImagePalette((GpImage *)gpbm, palette, sizeof(colorpalette_buf));
+    expect(Ok, stat);
+    expect(256, palette->Count);
+    for (i = 0; i < 16; i++)
+    {
+        BYTE clr = 255 - i;
+        ARGB argb = 0xff000000 | (clr << 16) | (clr << 8) | clr;
+        ok(palette->Entries[i] == argb, "got %08x, expected %08x\n", palette->Entries[i], argb);
+    }
+    GdipDisposeImage((GpImage*)gpbm);
 
     DeleteObject(hpal);
+
+    stat = GdipCreateBitmapFromHBITMAP(hbm, 0, &gpbm);
+    expect(Ok, stat);
+    stat = GdipGetImagePixelFormat((GpImage*)gpbm, &format);
+    expect(Ok, stat);
+    expect(PixelFormat8bppIndexed, format);
+    stat = GdipGetImagePalette((GpImage *)gpbm, palette, sizeof(colorpalette_buf));
+    expect(Ok, stat);
+    expect(256, palette->Count);
+    for (i = 0; i < 16; i++)
+    {
+        BYTE clr = 255 - i;
+        ARGB argb = 0xff000000 | (clr << 16) | (clr << 8) | clr;
+        ok(palette->Entries[i] == argb, "got %08x, expected %08x\n", palette->Entries[i], argb);
+    }
+    GdipDisposeImage((GpImage*)gpbm);
+
     DeleteObject(hbm);
 
     /* 16-bit 555 dib, rgb */
@@ -999,7 +1069,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     DeleteObject(hbm);
 
     /* 16-bit 555 dib, with bitfields */
-    bmi.bi.bmiHeader.biSize = sizeof(bmi);
+    bmi.bi.bmiHeader.biSize = sizeof(bmi.bi.bmiHeader);
     bmi.bi.bmiHeader.biCompression = BI_BITFIELDS;
     bmi.bf.masks[0] = 0x7c00;
     bmi.bf.masks[1] = 0x3e0;
