@@ -16695,7 +16695,7 @@ static void test_surface_format_conversion_alpha(void)
         const char *name;
         unsigned int block_size, x_blocks, y_blocks;
         DWORD support_flag;
-        BOOL broken_software_blit;
+        BOOL broken_software_blit, broken_hardware_blit;
     }
     formats[] =
     {
@@ -16735,7 +16735,7 @@ static void test_surface_format_conversion_alpha(void)
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                 {16}, {0x00007c00}, {0x000003e0}, {0x0000001f}, {0x00008000}
             },
-            "R5G5B5A1", 2, 4, 4,
+            "R5G5B5A1", 2, 4, 4, 0, FALSE, TRUE,
         },
         {
             {
@@ -16863,6 +16863,9 @@ static void test_surface_format_conversion_alpha(void)
         {
             if (!is_wine && ((test_caps[j].src_caps | test_caps[j].dst_caps) & DDSCAPS_SYSTEMMEMORY)
                     && (src_format->broken_software_blit || dst_format->broken_software_blit))
+                continue;
+            if (!is_wine && (test_caps[j].dst_caps & DDSCAPS_VIDEOMEMORY)
+                    && dst_format->broken_hardware_blit)
                 continue;
 
             U4(surface_desc).ddpfPixelFormat = src_format->fmt;
