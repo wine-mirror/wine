@@ -46,6 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_MAXP_TAG DWRITE_MAKE_OPENTYPE_TAG('m','a','x','p')
 #define MS_CBLC_TAG DWRITE_MAKE_OPENTYPE_TAG('C','B','L','C')
 #define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
+#define MS_META_TAG DWRITE_MAKE_OPENTYPE_TAG('m','e','t','a')
 
 /* 'sbix' formats */
 #define MS_PNG__TAG DWRITE_MAKE_OPENTYPE_TAG('p','n','g',' ')
@@ -54,6 +55,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 #define MS_WOFF_TAG DWRITE_MAKE_OPENTYPE_TAG('w','O','F','F')
 #define MS_WOF2_TAG DWRITE_MAKE_OPENTYPE_TAG('w','O','F','2')
+
+/* 'meta' tags */
+#define MS_DLNG_TAG DWRITE_MAKE_OPENTYPE_TAG('d','l','n','g')
+#define MS_SLNG_TAG DWRITE_MAKE_OPENTYPE_TAG('s','l','n','g')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -1164,6 +1169,22 @@ struct colr_layer_record
     USHORT palette_index;
 };
 
+struct meta_data_map
+{
+    DWORD tag;
+    DWORD offset;
+    DWORD length;
+};
+
+struct meta_header
+{
+    DWORD version;
+    DWORD flags;
+    DWORD reserved;
+    DWORD data_maps_count;
+    struct meta_data_map maps[1];
+};
+
 static const void *table_read_ensure(const struct dwrite_fonttable *table, unsigned int offset, unsigned int size)
 {
     if (size > table->size || offset > table->size - size)
@@ -2109,21 +2130,133 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
     return exists ? S_OK : E_FAIL;
 }
 
-/* Provides a conversion from DWRITE to OpenType name ids, input id should be valid, it's not checked. */
+static WCHAR *meta_get_lng_name(WCHAR *str, WCHAR **ctx)
+{
+    static const WCHAR delimW[] = {',',' ',0};
+    WCHAR *ret;
+
+    if (!str) str = *ctx;
+    while (*str && strchrW(delimW, *str)) str++;
+    if (!*str) return NULL;
+    ret = str++;
+    while (*str && !strchrW(delimW, *str)) str++;
+    if (*str) *str++ = 0;
+    *ctx = str;
+
+    return ret;
+}
+
+static HRESULT opentype_get_font_strings_from_meta(const struct file_stream_desc *stream_desc,
+        DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **ret)
+{
+    static const WCHAR emptyW[] = { 0 };
+    const struct meta_data_map *maps;
+    IDWriteLocalizedStrings *strings;
+    struct dwrite_fonttable meta;
+    DWORD version, i, count, tag;
+    HRESULT hr;
+
+    *ret = NULL;
+
+    hr = create_localizedstrings(&strings);
+    if (FAILED(hr))
+        return hr;
+
+    switch (id)
+    {
+        case DWRITE_INFORMATIONAL_STRING_DESIGN_SCRIPT_LANGUAGE_TAG:
+            tag = MS_DLNG_TAG;
+            break;
+        case DWRITE_INFORMATIONAL_STRING_SUPPORTED_SCRIPT_LANGUAGE_TAG:
+            tag = MS_SLNG_TAG;
+            break;
+        default:
+            WARN("Unexpected id %d.\n", id);
+            return S_OK;
+    }
+
+    opentype_get_font_table(stream_desc, MS_META_TAG, &meta);
+
+    if (meta.data)
+    {
+        version = table_read_be_dword(&meta, 0);
+        if (version != 1)
+        {
+            WARN("Unexpected meta table version %d.\n", version);
+            goto end;
+        }
+
+        count = table_read_be_dword(&meta, FIELD_OFFSET(struct meta_header, data_maps_count));
+        if (!(maps = table_read_ensure(&meta, FIELD_OFFSET(struct meta_header, maps),
+                count * sizeof(struct meta_data_map))))
+            goto end;
+
+        for (i = 0; i < count; ++i)
+        {
+            const char *data;
+
+            if (maps[i].tag == tag && maps[i].length)
+            {
+                DWORD length = GET_BE_DWORD(maps[i].length), j;
+
+                if ((data = table_read_ensure(&meta, GET_BE_DWORD(maps[i].offset), length)))
+                {
+                    WCHAR *ptrW = heap_alloc((length + 1) * sizeof(WCHAR)), *ctx, *token;
+
+                    if (!ptrW)
+                    {
+                        hr = E_OUTOFMEMORY;
+                        goto end;
+                    }
+
+                    /* Data is stored in comma separated list, ASCII range only. */
+                    for (j = 0; j < length; ++j)
+                        ptrW[j] = data[j];
+                    ptrW[length] = 0;
+
+                    token = meta_get_lng_name(ptrW, &ctx);
+
+                    while (token)
+                    {
+                        add_localizedstring(strings, emptyW, token);
+                        token = meta_get_lng_name(NULL, &ctx);
+                    }
+
+                    heap_free(ptrW);
+                }
+            }
+        }
+end:
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, meta.context);
+    }
+
+    if (IDWriteLocalizedStrings_GetCount(strings))
+        *ret = strings;
+    else
+        IDWriteLocalizedStrings_Release(strings);
+
+    return hr;
+}
+
 HRESULT opentype_get_font_info_strings(const struct file_stream_desc *stream_desc, DWRITE_INFORMATIONAL_STRING_ID id,
         IDWriteLocalizedStrings **strings)
 {
     struct dwrite_fonttable name;
-    HRESULT hr;
 
-    opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
+    switch (id)
+    {
+        case DWRITE_INFORMATIONAL_STRING_DESIGN_SCRIPT_LANGUAGE_TAG:
+        case DWRITE_INFORMATIONAL_STRING_SUPPORTED_SCRIPT_LANGUAGE_TAG:
+            opentype_get_font_strings_from_meta(stream_desc, id, strings);
+            break;
+        default:
+            opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
+            opentype_get_font_strings_from_id(name.data, dwriteid_to_opentypeid[id], strings);
+            if (name.context)
+                IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, name.context);
+    }
 
-    hr = opentype_get_font_strings_from_id(name.data, dwriteid_to_opentypeid[id], strings);
-
-    if (name.context)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, name.context);
-
-    return hr;
+    return S_OK;
 }
 
 /* FamilyName locating order is WWS Family Name -> Preferred Family Name -> Family Name. If font claims to

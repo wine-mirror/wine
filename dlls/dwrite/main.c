@@ -446,10 +446,13 @@ HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale,
     struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
     size_t i, count = strings->count;
 
-    /* make sure there's no duplicates */
-    for (i = 0; i < count; i++)
-        if (!strcmpW(strings->data[i].locale, locale))
-            return S_OK;
+    /* Make sure there's no duplicates, unless it's empty. This is used by dlng/slng entries of 'meta' table. */
+    if (*locale)
+    {
+        for (i = 0; i < count; i++)
+            if (!strcmpW(strings->data[i].locale, locale))
+                return S_OK;
+    }
 
     if (!dwrite_array_reserve((void **)&strings->data, &strings->size, strings->count + 1, sizeof(*strings->data)))
         return E_OUTOFMEMORY;
