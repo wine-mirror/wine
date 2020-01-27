@@ -1521,22 +1521,28 @@ static unsigned int opentype_cmap_get_unicode_ranges_count(const struct dwrite_f
     return count;
 }
 
-HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *cmap, unsigned int max_count,
+HRESULT opentype_cmap_get_unicode_ranges(const struct file_stream_desc *stream_desc, unsigned int max_count,
         DWRITE_UNICODE_RANGE *ranges, unsigned int *count)
 {
     unsigned int i, num_tables, k = 0;
     const struct cmap_header *header;
+    struct dwrite_fonttable cmap;
 
-    if (!cmap->exists)
+    opentype_get_font_table(stream_desc, MS_CMAP_TAG, &cmap);
+
+    if (!cmap.exists)
         return E_FAIL;
 
-    *count = opentype_cmap_get_unicode_ranges_count(cmap);
+    *count = opentype_cmap_get_unicode_ranges_count(&cmap);
 
-    num_tables = table_read_be_word(cmap, FIELD_OFFSET(struct cmap_header, num_tables));
-    header = table_read_ensure(cmap, 0, FIELD_OFFSET(struct cmap_header, tables[num_tables]));
+    num_tables = table_read_be_word(&cmap, FIELD_OFFSET(struct cmap_header, num_tables));
+    header = table_read_ensure(&cmap, 0, FIELD_OFFSET(struct cmap_header, tables[num_tables]));
 
     if (!header)
+    {
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, cmap.context);
         return S_OK;
+    }
 
     for (i = 0; i < num_tables && k < max_count; ++i)
     {
@@ -1547,18 +1553,18 @@ HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *cmap, un
 
         offset = GET_BE_DWORD(header->tables[i].offset);
 
-        format = table_read_be_word(cmap, offset);
+        format = table_read_be_word(&cmap, offset);
         switch (format)
         {
             case OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING:
             {
-                unsigned int segment_count = table_read_be_word(cmap, offset +
+                unsigned int segment_count = table_read_be_word(&cmap, offset +
                         FIELD_OFFSET(struct cmap_segment_mapping, seg_count_x2)) / 2;
-                const UINT16 *start_code = table_read_ensure(cmap, offset,
+                const UINT16 *start_code = table_read_ensure(&cmap, offset,
                         FIELD_OFFSET(struct cmap_segment_mapping, end_code[segment_count]) +
                         2 /* reservedPad */ +
                         2 * segment_count /* start code array */);
-                const UINT16 *end_code = table_read_ensure(cmap, offset,
+                const UINT16 *end_code = table_read_ensure(&cmap, offset,
                         FIELD_OFFSET(struct cmap_segment_mapping, end_code[segment_count]));
 
                 if (!start_code || !end_code)
@@ -1573,11 +1579,11 @@ HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *cmap, un
             }
             case OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE:
             {
-                unsigned int num_groups = table_read_be_dword(cmap, offset +
+                unsigned int num_groups = table_read_be_dword(&cmap, offset +
                         FIELD_OFFSET(struct cmap_segmented_coverage, num_groups));
                 const struct cmap_segmented_coverage *coverage;
 
-                coverage = table_read_ensure(cmap, offset,
+                coverage = table_read_ensure(&cmap, offset,
                         FIELD_OFFSET(struct cmap_segmented_coverage, groups[num_groups]));
 
                 for (j = 0; j < num_groups && k < max_count; j++, k++)
@@ -1591,6 +1597,8 @@ HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *cmap, un
                 FIXME("table format %u unhandled.\n", format);
         }
     }
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, cmap.context);
 
     return *count > max_count ? E_NOT_SUFFICIENT_BUFFER : S_OK;
 }

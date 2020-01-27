@@ -972,6 +972,7 @@ static HRESULT WINAPI dwritefontface1_GetUnicodeRanges(IDWriteFontFace5 *iface, 
     DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
+    struct file_stream_desc stream_desc;
 
     TRACE("%p, %u, %p, %p.\n", iface, max_count, ranges, count);
 
@@ -979,8 +980,10 @@ static HRESULT WINAPI dwritefontface1_GetUnicodeRanges(IDWriteFontFace5 *iface, 
     if (max_count && !ranges)
         return E_INVALIDARG;
 
-    get_fontface_table(iface, MS_CMAP_TAG, &fontface->cmap);
-    return opentype_cmap_get_unicode_ranges(&fontface->cmap, max_count, ranges, count);
+    stream_desc.stream = fontface->stream;
+    stream_desc.face_index = fontface->index;
+    stream_desc.face_type = fontface->type;
+    return opentype_cmap_get_unicode_ranges(&stream_desc, max_count, ranges, count);
 }
 
 static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace5 *iface)
@@ -1795,20 +1798,25 @@ static void WINAPI dwritefont1_GetPanose(IDWriteFont3 *iface, DWRITE_PANOSE *pan
     *panose = This->data->panose;
 }
 
-static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont3 *iface, UINT32 max_count, DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
+static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont3 *iface, UINT32 max_count, DWRITE_UNICODE_RANGE *ranges,
+        UINT32 *count)
 {
     struct dwrite_font *font = impl_from_IDWriteFont3(iface);
-    IDWriteFontFace5 *fontface;
+    struct file_stream_desc stream_desc;
     HRESULT hr;
 
     TRACE("%p, %u, %p, %p.\n", iface, max_count, ranges, count);
 
-    hr = get_fontface_from_font(font, &fontface);
-    if (FAILED(hr))
-        return hr;
+    *count = 0;
+    if (max_count && !ranges)
+        return E_INVALIDARG;
 
-    hr = IDWriteFontFace5_GetUnicodeRanges(fontface, max_count, ranges, count);
-    IDWriteFontFace5_Release(fontface);
+    if (FAILED(hr = get_filestream_from_file(font->data->file, &stream_desc.stream)))
+        return hr;
+    stream_desc.face_index = font->data->face_index;
+    stream_desc.face_type = font->data->face_type;
+    hr = opentype_cmap_get_unicode_ranges(&stream_desc, max_count, ranges, count);
+    IDWriteFontFileStream_Release(stream_desc.stream);
     return hr;
 }
 
