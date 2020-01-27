@@ -104,6 +104,16 @@ static BOOL adapter_is_warp(const D3DADAPTER_IDENTIFIER9 *identifier)
     return !strcmp(identifier->Driver, "d3d10warp.dll");
 }
 
+static BOOL adapter_is_vendor(const D3DADAPTER_IDENTIFIER9 *identifier, DWORD vendor)
+{
+    return identifier->VendorId == vendor;
+}
+
+static BOOL adapter_is_amd(const D3DADAPTER_IDENTIFIER9 *identifier)
+{
+    return adapter_is_vendor(identifier, 0x1002);
+}
+
 /* Locks a given surface and returns the color at (x,y).  It's the caller's
  * responsibility to only pass in lockable surfaces and valid x,y coordinates */
 static DWORD getPixelColorFromSurface(IDirect3DSurface9 *surface, UINT x, UINT y)
@@ -26592,7 +26602,7 @@ static void test_alpha_to_coverage(void)
         nvidia_mode = FALSE;
         hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-        if (identifier.VendorId != 0x1002 /* AMD */)
+        if (!adapter_is_amd(&identifier))
         {
             skip("Alpha to coverage is not supported.\n");
             refcount = IDirect3DDevice9_Release(device);
