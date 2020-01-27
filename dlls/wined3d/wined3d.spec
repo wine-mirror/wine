@@ -37,6 +37,7 @@
 @ cdecl wined3d_buffer_incref(ptr)
 
 @ cdecl wined3d_device_acquire_focus_window(ptr ptr)
+@ cdecl wined3d_device_apply_stateblock(ptr ptr)
 @ cdecl wined3d_device_begin_scene(ptr)
 @ cdecl wined3d_device_clear(ptr long ptr long ptr float long)
 @ cdecl wined3d_device_clear_rendertarget_view(ptr ptr ptr long ptr float long)
