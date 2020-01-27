@@ -1899,27 +1899,33 @@ sub compress_array($$@)
     my $def = shift;
     my @table = @_;
     my $len = @table / $rows;
-    my @array = (0) x $rows;
-    my %sequences;
+    my @array;
+    my $data = "";
 
     # try to merge table rows
     for (my $row = 0; $row < $rows; $row++)
     {
-        my @table_row = map { defined($_) ? $_ : $def; } @table[($row * $len)..($row * $len + $len - 1)];
-        my $rowtxt = pack "L*", @table_row;
-        if (defined($sequences{$rowtxt}))
+        my $rowtxt = pack "U*", map { defined($_) ? $_ : $def; } @table[($row * $len)..(($row + 1) * $len - 1)];
+        my $pos = index $data, $rowtxt;
+        if ($pos == -1)
         {
-            # reuse an existing row
-            $array[$row] = $sequences{$rowtxt};
+            # check if the tail of the data can match the start of the new row
+            my $first = substr( $rowtxt, 0, 1 );
+            for (my $i = length($data) - 1; $i > 0; $i--)
+            {
+                $pos = index( substr( $data, -$i ), $first );
+                last if $pos == -1;
+                $i -= $pos;
+                next unless substr( $data, -$i ) eq substr( $rowtxt, 0, $i );
+                substr( $data, -$i ) = "";
+                last;
+            }
+            $pos = length $data;
+            $data .= $rowtxt;
         }
-        else
-        {
-            # create a new row
-            $sequences{$rowtxt} = $array[$row] = $#array + 1;
-            push @array, @table_row;
-        }
+        $array[$row] = $rows + $pos;
     }
-    return @array;
+    return @array, unpack "U*", $data;
 }
 
 ################################################################
