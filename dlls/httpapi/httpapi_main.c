@@ -760,3 +760,14 @@ ULONG WINAPI HttpCloseRequestQueue(HANDLE handle)
         return GetLastError();
     return ERROR_SUCCESS;
 }
+
+/***********************************************************************
+ *        HttpSetRequestQueueProperty     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpSetRequestQueueProperty(HANDLE queue, HTTP_SERVER_PROPERTY property,
+        void *value, ULONG length, ULONG reserved1, void *reserved2)
+{
+    FIXME("queue %p, property %u, value %p, length %u, reserved1 %#x, reserved2 %p, stub!\n",
+            queue, property, value, length, reserved1, reserved2);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

@@ -51,6 +51,7 @@
 @ stub HttpSetAppPoolInformation
 @ stub HttpSetConfigGroupInformation
 @ stub HttpSetControlChannelInformation
+@ stdcall HttpSetRequestQueueProperty(ptr long ptr long long ptr)
 @ stub HttpSetServerContextInformation
 @ stdcall HttpSetServiceConfiguration(ptr long ptr long ptr)
 @ stdcall HttpSetUrlGroupProperty(int64 long ptr long)
