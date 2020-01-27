@@ -24,7 +24,6 @@
 
 #include "rpc.h"
 #include "rpcndr.h"
-#include "winternl.h"
 
 #include "wine/debug.h"
 
@@ -55,7 +54,7 @@ typedef struct _RpcContextHandle
     NDR_RUNDOWN rundown_routine;
     void *ctx_guard;
     UUID uuid;
-    RTL_RWLOCK rw_lock;
+    CRITICAL_SECTION lock;
     unsigned int refs;
 } RpcContextHandle;
 
@@ -463,12 +462,13 @@ RPC_STATUS RpcServerAssoc_AllocateContextHandle(RpcAssoc *assoc, void *CtxGuard,
         return RPC_S_OUT_OF_MEMORY;
 
     context_handle->ctx_guard = CtxGuard;
-    RtlInitializeResource(&context_handle->rw_lock);
+    InitializeCriticalSection(&context_handle->lock);
+    context_handle->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcContextHandle.lock");
     context_handle->refs = 1;
 
     /* lock here to mirror unmarshall, so we don't need to special-case the
      * freeing of a non-marshalled context handle */
-    RtlAcquireResourceExclusive(&context_handle->rw_lock, TRUE);
+    EnterCriticalSection(&context_handle->lock);
 
     EnterCriticalSection(&assoc->cs);
     list_add_tail(&assoc->context_handle_list, &context_handle->entry);
@@ -500,7 +500,7 @@ RPC_STATUS RpcServerAssoc_FindContextHandle(RpcAssoc *assoc, const UUID *uuid,
             {
                 LeaveCriticalSection(&assoc->cs);
                 TRACE("found %p\n", context_handle);
-                RtlAcquireResourceExclusive(&context_handle->rw_lock, TRUE);
+                EnterCriticalSection(&context_handle->lock);
                 return RPC_S_OK;
             }
         }
@@ -555,7 +555,8 @@ static void RpcContextHandle_Destroy(RpcContextHandle *context_handle)
         context_handle->rundown_routine(context_handle->user_context);
     }
 
-    RtlDeleteResource(&context_handle->rw_lock);
+    context_handle->lock.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&context_handle->lock);
 
     HeapFree(GetProcessHeap(), 0, context_handle);
 }
@@ -566,7 +567,7 @@ unsigned int RpcServerAssoc_ReleaseContextHandle(RpcAssoc *assoc, NDR_SCONTEXT S
     unsigned int refs;
 
     if (release_lock)
-        RtlReleaseResource(&context_handle->rw_lock);
+        LeaveCriticalSection(&context_handle->lock);
 
     EnterCriticalSection(&assoc->cs);
     refs = --context_handle->refs;
