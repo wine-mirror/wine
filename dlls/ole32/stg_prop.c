@@ -81,6 +81,8 @@ static inline StorageImpl *impl_from_IPropertySetStorage( IPropertySetStorage *i
 #define CFTAG_FMTID     (-3L)
 #define CFTAG_NODATA      0L
 
+#define ALIGNED_LENGTH(_Len, _Align) (((_Len)+(_Align))&~(_Align))
+
 typedef struct tagPROPERTYSETHEADER
 {
     WORD  wByteOrder; /* always 0xfffe */
@@ -1175,55 +1177,6 @@ static void PropertyStorage_ByteSwapString(LPWSTR str, size_t len)
 #define PropertyStorage_ByteSwapString(s, l)
 #endif
 
-/* Reads the dictionary from the memory buffer beginning at ptr.  Interprets
- * the entries according to the values of This->codePage and This->locale.
- * FIXME: there isn't any checking whether the read property extends past the
- * end of the buffer.
- */
-static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
- BYTE *ptr)
-{
-    DWORD numEntries, i;
-    HRESULT hr = S_OK;
-
-    assert(This->name_to_propid);
-    assert(This->propid_to_name);
-
-    StorageUtl_ReadDWord(ptr, 0, &numEntries);
-    TRACE("Reading %d entries:\n", numEntries);
-    ptr += sizeof(DWORD);
-    for (i = 0; SUCCEEDED(hr) && i < numEntries; i++)
-    {
-        PROPID propid;
-        DWORD cbEntry;
-
-        StorageUtl_ReadDWord(ptr, 0, &propid);
-        ptr += sizeof(PROPID);
-        StorageUtl_ReadDWord(ptr, 0, &cbEntry);
-        ptr += sizeof(DWORD);
-        /* Make sure the source string is NULL-terminated */
-        if (This->codePage != CP_UNICODE)
-            ptr[cbEntry - 1] = '\0';
-        else
-            ((WCHAR *)ptr)[cbEntry - 1] = '\0';
-
-        TRACE("Reading entry with ID %#x, %d chars, name %s.\n", propid, cbEntry, This->codePage == CP_UNICODE ?
-                debugstr_wn((WCHAR *)ptr, cbEntry) : debugstr_an((char *)ptr, cbEntry));
-
-        hr = PropertyStorage_StoreNameWithId(This, (char*)ptr, This->codePage, propid);
-        if (This->codePage == CP_UNICODE)
-        {
-            cbEntry *= sizeof(WCHAR);
-
-            /* Unicode entries are padded to DWORD boundaries */
-            if (cbEntry % sizeof(DWORD))
-                ptr += sizeof(DWORD) - (cbEntry % sizeof(DWORD));
-        }
-        ptr += cbEntry;
-    }
-    return hr;
-}
-
 static void* WINAPI Allocate_CoTaskMemAlloc(void *this, ULONG size)
 {
     return CoTaskMemAlloc(size);
@@ -1701,6 +1654,71 @@ static HRESULT PropertyStorage_ReadSectionHeaderFromStream(IStream *stm,
     return hr;
 }
 
+/* Reads the dictionary from the memory buffer beginning at ptr.  Interprets
+ * the entries according to the values of This->codePage and This->locale.
+ */
+static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This, const struct read_buffer *buffer,
+        size_t offset)
+{
+    DWORD numEntries, i;
+    HRESULT hr;
+
+    assert(This->name_to_propid);
+    assert(This->propid_to_name);
+
+    if (FAILED(hr = buffer_read_dword(buffer, offset, &numEntries)))
+        return hr;
+
+    TRACE("Reading %d entries:\n", numEntries);
+
+    offset += sizeof(DWORD);
+
+    for (i = 0; SUCCEEDED(hr) && i < numEntries; i++)
+    {
+        PROPID propid;
+        DWORD cbEntry;
+        WCHAR ch = 0;
+
+        if (SUCCEEDED(hr = buffer_read_dword(buffer, offset, &propid)))
+            hr = buffer_read_dword(buffer, offset + sizeof(PROPID), &cbEntry);
+        if (FAILED(hr))
+            break;
+
+        offset += sizeof(PROPID) + sizeof(DWORD);
+
+        if (FAILED(hr = buffer_test_offset(buffer, offset, This->codePage == CP_UNICODE ?
+                ALIGNED_LENGTH(cbEntry * sizeof(WCHAR), 3) : cbEntry)))
+        {
+            WARN("Broken name length for entry %d.\n", i);
+            return hr;
+        }
+
+        /* Make sure the source string is NULL-terminated */
+        if (This->codePage != CP_UNICODE)
+            buffer_read_byte(buffer, offset + cbEntry - 1, (BYTE *)&ch);
+        else
+            buffer_read_word(buffer, offset + (cbEntry - 1) * sizeof(WCHAR), &ch);
+
+        if (ch)
+        {
+            WARN("Dictionary entry name %d is not null-terminated.\n", i);
+            return E_FAIL;
+        }
+
+        TRACE("Reading entry with ID %#x, %d chars, name %s.\n", propid, cbEntry, This->codePage == CP_UNICODE ?
+                debugstr_wn((WCHAR *)buffer->data, cbEntry) : debugstr_an((char *)buffer->data, cbEntry));
+
+        hr = PropertyStorage_StoreNameWithId(This, (char *)buffer->data + offset, This->codePage, propid);
+        /* Unicode entries are padded to DWORD boundaries */
+        if (This->codePage == CP_UNICODE)
+            cbEntry = ALIGNED_LENGTH(cbEntry * sizeof(WCHAR), 3);
+
+        offset += cbEntry;
+    }
+
+    return hr;
+}
+
 static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
 {
     struct read_buffer read_buffer;
@@ -1877,8 +1895,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
         This->locale = LOCALE_SYSTEM_DEFAULT;
     TRACE("Code page is %d, locale is %d\n", This->codePage, This->locale);
     if (dictOffset)
-        hr = PropertyStorage_ReadDictionary(This,
-         buf + dictOffset - sizeof(PROPERTYSECTIONHEADER));
+        hr = PropertyStorage_ReadDictionary(This, &read_buffer, dictOffset - sizeof(PROPERTYSECTIONHEADER));
 
 end:
     HeapFree(GetProcessHeap(), 0, buf);
