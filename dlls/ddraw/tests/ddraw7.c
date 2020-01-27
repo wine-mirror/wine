@@ -17080,6 +17080,9 @@ static void test_compressed_surface_stretch(void)
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
 
+    memset(&lock, 0, sizeof(lock));
+    lock.dwSize = sizeof(lock);
+
     for (i = 0; i < ARRAY_SIZE(test_caps); ++i)
     {
         src_surface_desc.ddsCaps.dwCaps = test_caps[i].src_caps;
