@@ -405,7 +405,6 @@ static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile* iface, LPCOLEST
 static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile* iface, LPOLESTR *filename)
 {
     IShellLinkImpl *This = impl_from_IPersistFile(iface);
-    IMalloc *pMalloc;
 
     TRACE("(%p)->(%p)\n", This, filename);
 
@@ -415,8 +414,7 @@ static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile* iface, LPOLESTR *f
         return S_FALSE;
     }
 
-    SHGetMalloc(&pMalloc);
-    *filename = IMalloc_Alloc(pMalloc, (strlenW(This->filepath)+1)*sizeof(WCHAR));
+    *filename = CoTaskMemAlloc((strlenW(This->filepath) + 1) * sizeof(WCHAR));
     if (!*filename) return E_OUTOFMEMORY;
 
     strcpyW(*filename, This->filepath);
