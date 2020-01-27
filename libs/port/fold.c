@@ -23,7 +23,8 @@
 static inline WCHAR to_unicode_digit( WCHAR ch )
 {
     extern const WCHAR wine_digitmap[] DECLSPEC_HIDDEN;
-    return ch + wine_digitmap[wine_digitmap[ch >> 8] + (ch & 0xff)];
+    WCHAR ret = wine_digitmap[wine_digitmap[wine_digitmap[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
+    return ret ? ret : ch;
 }
 
 static inline WCHAR to_unicode_native( WCHAR ch )

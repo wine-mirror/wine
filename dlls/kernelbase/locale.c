@@ -869,7 +869,10 @@ static int fold_digits( const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
     if (!dstlen) return srclen;
     if (srclen > dstlen) return 0;
     for (i = 0; i < srclen; i++)
-        dst[i] = src[i] + wine_digitmap[wine_digitmap[src[i] >> 8] + (src[i] & 0xff)];
+    {
+        WCHAR digit = get_table_entry( wine_digitmap, src[i] );
+        dst[i] = digit ? digit : src[i];
+    }
     return srclen;
 }
 

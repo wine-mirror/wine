@@ -1796,7 +1796,7 @@ sub dump_digit_folding($$)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_case_table( "DECLSPEC_HIDDEN wine_digitmap",  @digitmap_table );
+    dump_two_level_mapping( "wine_digitmap", 0, @digitmap_table );
     if ($compat)
     {
         print OUTPUT "\n";
