@@ -56,7 +56,7 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
 
                 if (flags & NORM_IGNORECASE) wch = tolowerW(wch);
 
-                ce = collation_table[collation_table[wch >> 8] + (wch & 0xff)];
+                ce = collation_table[collation_table[collation_table[wch >> 8] + ((wch >> 4) & 0x0f)] + (wch & 0xf)];
                 if (ce != (unsigned int)-1)
                 {
                     if (ce >> 16) key_len[0] += 2;
@@ -113,7 +113,7 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
 
                 if (flags & NORM_IGNORECASE) wch = tolowerW(wch);
 
-                ce = collation_table[collation_table[wch >> 8] + (wch & 0xff)];
+                ce = collation_table[collation_table[collation_table[wch >> 8] + ((wch >> 4) & 0x0f)] + (wch & 0xf)];
                 if (ce != (unsigned int)-1)
                 {
                     WCHAR key;
@@ -164,7 +164,7 @@ static unsigned int get_weight(WCHAR ch, enum weight type)
 {
     unsigned int ret;
 
-    ret = collation_table[collation_table[ch >> 8] + (ch & 0xff)];
+    ret = collation_table[collation_table[collation_table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
     if (ret == (unsigned int)-1)
         return ch;
 

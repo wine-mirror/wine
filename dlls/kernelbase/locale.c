@@ -1837,7 +1837,7 @@ static int get_sortkey( DWORD flags, const WCHAR *src, int srclen, char *dst, in
 
                 if (flags & NORM_IGNORECASE) wch = casemap( nls_info.LowerCaseTable, wch );
 
-                ce = collation_table[collation_table[wch >> 8] + (wch & 0xff)];
+                ce = collation_table[collation_table[collation_table[wch >> 8] + ((wch >> 4) & 0x0f)] + (wch & 0xf)];
                 if (ce != (unsigned int)-1)
                 {
                     if (ce >> 16) key_len[0] += 2;
@@ -1891,7 +1891,7 @@ static int get_sortkey( DWORD flags, const WCHAR *src, int srclen, char *dst, in
 
                 if (flags & NORM_IGNORECASE) wch = casemap( nls_info.LowerCaseTable, wch );
 
-                ce = collation_table[collation_table[wch >> 8] + (wch & 0xff)];
+                ce = collation_table[collation_table[collation_table[wch >> 8] + ((wch >> 4) & 0x0f)] + (wch & 0xf)];
                 if (ce != (unsigned int)-1)
                 {
                     WCHAR key;
@@ -2148,8 +2148,10 @@ enum weight { UNICODE_WEIGHT, DIACRITIC_WEIGHT, CASE_WEIGHT };
 
 static unsigned int get_weight( WCHAR ch, enum weight type )
 {
-    unsigned int ret = collation_table[collation_table[ch >> 8] + (ch & 0xff)];
-    if (ret == (unsigned int)-1) return ch;
+    unsigned int ret;
+
+    ret = collation_table[collation_table[collation_table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
+    if (ret == ~0u) return ch;
 
     switch (type)
     {

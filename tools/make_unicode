@@ -907,8 +907,6 @@ sub dump_sortkeys($)
         $flatkeys[$current[0]] = ($current[1] << 16) | ($current[2] << 8) | ($current[3] << 4) | $current[4];
     }
 
-    my @array = compress_array( 256, 0xffffffff, @flatkeys[0..65535] );
-
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     printf "Building $filename\n";
     printf OUTPUT "/* Unicode collation element table */\n";
@@ -916,9 +914,8 @@ sub dump_sortkeys($)
     printf OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    printf OUTPUT "const unsigned int DECLSPEC_HIDDEN collation_table[%d] =\n{\n", scalar @array;
-    printf OUTPUT "    /* offsets */\n%s,\n", dump_array( 32, 0, @array[0..255] );
-    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( 32, 0, @array[256..$#array] );
+    dump_two_level_mapping( "collation_table", 0xffffffff, 32, @flatkeys );
+
     close OUTPUT;
     save_file($filename);
 }
@@ -1305,7 +1302,7 @@ sub dump_indic($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "indic_syllabic_table", $indic_types{'Other'}, @indic_table );
+    dump_two_level_mapping( "indic_syllabic_table", $indic_types{'Other'}, 16, @indic_table );
 
     close OUTPUT;
     save_file($filename);
@@ -1370,7 +1367,7 @@ sub dump_linebreak($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "wine_linebreak_table", $break_types{'XX'}, @break_table );
+    dump_two_level_mapping( "wine_linebreak_table", $break_types{'XX'}, 16, @break_table );
 
     close OUTPUT;
     save_file($filename);
@@ -1605,7 +1602,7 @@ sub dump_scripts($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "wine_scripts_table", 0, @scripts_table );
+    dump_two_level_mapping( "wine_scripts_table", 0, 16, @scripts_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -1638,7 +1635,7 @@ sub dump_mirroring($)
     print OUTPUT "/* generated from $UNIDATA/BidiMirroring.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
-    dump_two_level_mapping( "wine_mirror_map", 0, @mirror_table );
+    dump_two_level_mapping( "wine_mirror_map", 0, 16, @mirror_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -1676,7 +1673,7 @@ sub dump_bracket($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "bidi_bracket_table", 0, @bracket_table );
+    dump_two_level_mapping( "bidi_bracket_table", 0, 16, @bracket_table );
 
     close OUTPUT;
     save_file($filename);
@@ -1717,7 +1714,7 @@ sub dump_shaping($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "wine_shaping_table", 0, @joining_table );
+    dump_two_level_mapping( "wine_shaping_table", 0, 16, @joining_table );
 
     print OUTPUT "\nconst unsigned short DECLSPEC_HIDDEN wine_shaping_forms[256][4] =\n{\n";
     for (my $i = 0x600; $i <= 0x6ff; $i++)
@@ -1778,7 +1775,7 @@ sub dump_vertical($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "vertical_orientation_table", $vertical_types{'R'}, @vertical_table );
+    dump_two_level_mapping( "vertical_orientation_table", $vertical_types{'R'}, 16, @vertical_table );
 
     close OUTPUT;
     save_file($filename);
@@ -1796,7 +1793,7 @@ sub dump_digit_folding($$)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "wine_digitmap", 0, @digitmap_table );
+    dump_two_level_mapping( "wine_digitmap", 0, 16, @digitmap_table );
     if ($compat)
     {
         print OUTPUT "\n";
@@ -1944,15 +1941,17 @@ sub dump_two_level_mapping($$@)
 {
     my $name = shift;
     my $def = shift;
+    my $size = shift;
+    my $type = $size == 16 ? "unsigned short" : "unsigned int";
     my @row_array = compress_array( 4096, $def, @_[0..65535] );
     my @array = compress_array( 256, 0, @row_array[0..4095] );
 
     for (my $i = 256; $i < @array; $i++) { $array[$i] += @array - 4096; }
 
-    printf OUTPUT "const unsigned short DECLSPEC_HIDDEN %s[%d] =\n{\n", $name, @array + @row_array - 4096;
-    printf OUTPUT "    /* level 1 offsets */\n%s,\n", dump_array( 16, 0, @array[0..255] );
-    printf OUTPUT "    /* level 2 offsets */\n%s,\n", dump_array( 16, 0, @array[256..$#array] );
-    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( 16, 0, @row_array[4096..$#row_array] );
+    printf OUTPUT "const %s DECLSPEC_HIDDEN %s[%d] =\n{\n", $type, $name, @array + @row_array - 4096;
+    printf OUTPUT "    /* level 1 offsets */\n%s,\n", dump_array( $size, 0, @array[0..255] );
+    printf OUTPUT "    /* level 2 offsets */\n%s,\n", dump_array( $size, 0, @array[256..$#array] );
+    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( $size, 0, @row_array[4096..$#row_array] );
 }
 
 ################################################################
@@ -2098,7 +2097,7 @@ sub dump_nameprep($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "nameprep_char_type", 0, @flags_table );
+    dump_two_level_mapping( "nameprep_char_type", 0, 16, @flags_table );
 
     ######### mapping table
     # first determine all the 16-char subsets that contain something
@@ -2196,7 +2195,7 @@ sub dump_string_type_table($)
         $table[$i] |= $c2_types{$direction_table[$i]} << 12 if defined $direction_table[$i];
     }
 
-    dump_two_level_mapping( "wctype_table", 0, @table );
+    dump_two_level_mapping( "wctype_table", 0, 16, @table );
 
     close OUTPUT;
     save_file($filename);
@@ -2221,7 +2220,7 @@ sub dump_bidi_dir_table($)
         $table[$i] = $bidi_types{$direction_table[$i]} if defined $direction_table[$i];
     }
 
-    dump_two_level_mapping( "bidi_direction_table", $bidi_types{"L"}, @table );
+    dump_two_level_mapping( "bidi_direction_table", $bidi_types{"L"}, 16, @table );
 
     close OUTPUT;
     save_file($filename);
@@ -2612,7 +2611,7 @@ sub dump_combining_class($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "combining_class_table", 0, @combining_class_table );
+    dump_two_level_mapping( "combining_class_table", 0, 16, @combining_class_table );
     close OUTPUT;
     save_file($filename);
 }
