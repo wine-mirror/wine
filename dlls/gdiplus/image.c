@@ -5106,6 +5106,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
     GpStatus retval;
     PixelFormat format;
     BitmapData lockeddata;
+    char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
 
     TRACE("%p %p %p\n", hbm, hpal, bitmap);
 
@@ -5155,8 +5157,6 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
         if (retval == Ok)
         {
             HDC hdc;
-            char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
-            BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
             INT src_height;
 
             hdc = CreateCompatibleDC(NULL);
@@ -5176,29 +5176,28 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
             GdipBitmapUnlockBits(*bitmap, &lockeddata);
         }
 
-        if (retval == Ok && hpal)
+        /* According to the tests hpal is ignored */
+        if (retval == Ok && pbmi->bmiHeader.biBitCount <= 8)
         {
-            PALETTEENTRY entry[256];
-            ColorPalette *palette=NULL;
+            ColorPalette *palette;
             int i, num_palette_entries;
 
-            num_palette_entries = GetPaletteEntries(hpal, 0, 256, entry);
+            num_palette_entries = pbmi->bmiHeader.biClrUsed;
             if (!num_palette_entries)
-                retval = GenericError;
+                num_palette_entries = 1 << pbmi->bmiHeader.biBitCount;
 
             palette = heap_alloc_zero(sizeof(ColorPalette) + sizeof(ARGB) * (num_palette_entries-1));
             if (!palette)
                 retval = OutOfMemory;
-
-            if (retval == Ok)
+            else
             {
                 palette->Flags = 0;
                 palette->Count = num_palette_entries;
 
                 for (i=0; i<num_palette_entries; i++)
                 {
-                    palette->Entries[i] = 0xff000000 | entry[i].peRed << 16 |
-                                          entry[i].peGreen << 8 | entry[i].peBlue;
+                    palette->Entries[i] = 0xff000000 | pbmi->bmiColors[i].rgbRed << 16 |
+                                          pbmi->bmiColors[i].rgbGreen << 8 | pbmi->bmiColors[i].rgbBlue;
                 }
 
                 retval = GdipSetImagePalette(&(*bitmap)->image, palette);
