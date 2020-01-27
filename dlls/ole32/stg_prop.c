@@ -623,15 +623,24 @@ static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop, const PROPVARI
 
     assert(prop);
     assert(propvar);
-    if (propvar->vt == VT_LPSTR)
+
+    switch (propvar->vt)
     {
-        hr = PropertyStorage_StringCopy(propvar->u.pszVal, srcCP,
-         &prop->u.pszVal, targetCP);
+    case VT_LPSTR:
+        hr = PropertyStorage_StringCopy(propvar->u.pszVal, srcCP, &prop->u.pszVal, targetCP);
         if (SUCCEEDED(hr))
             prop->vt = VT_LPSTR;
+        break;
+    case VT_BSTR:
+        if ((prop->u.bstrVal = SysAllocStringLen(propvar->u.bstrVal, SysStringLen(propvar->u.bstrVal))))
+            prop->vt = VT_BSTR;
+        else
+            hr = E_OUTOFMEMORY;
+        break;
+    default:
+        hr = PropVariantCopy(prop, propvar);
     }
-    else
-        PropVariantCopy(prop, propvar);
+
     return hr;
 }
 
@@ -1881,11 +1890,11 @@ end:
 static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
  DWORD propNum, DWORD propid, const PROPVARIANT *var, DWORD *sectionOffset)
 {
+    DWORD len, dwType, dwTemp, bytesWritten;
     HRESULT hr;
     LARGE_INTEGER seek;
     PROPERTYIDOFFSET propIdOffset;
     ULONG count;
-    DWORD dwType, bytesWritten;
 
     assert(var);
     assert(sectionOffset);
@@ -1938,8 +1947,6 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     case VT_I4:
     case VT_UI4:
     {
-        DWORD dwTemp;
-
         StorageUtl_WriteDWord(&dwTemp, 0, var->u.lVal);
         hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
         bytesWritten = count;
@@ -1947,8 +1954,6 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     }
     case VT_LPSTR:
     {
-        DWORD len, dwTemp;
-
         if (This->codePage == CP_UNICODE)
             len = (lstrlenW(var->u.pwszVal) + 1) * sizeof(WCHAR);
         else
@@ -1961,9 +1966,45 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         bytesWritten = count + sizeof(DWORD);
         break;
     }
+    case VT_BSTR:
+    {
+        if (This->codePage == CP_UNICODE)
+        {
+            len = SysStringByteLen(var->u.bstrVal) + sizeof(WCHAR);
+            StorageUtl_WriteDWord(&dwTemp, 0, len);
+            hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
+            if (SUCCEEDED(hr))
+                hr = IStream_Write(This->stm, var->u.bstrVal, len, &count);
+        }
+        else
+        {
+            char *str;
+
+            len = WideCharToMultiByte(This->codePage, 0, var->u.bstrVal, SysStringLen(var->u.bstrVal) + 1,
+                    NULL, 0, NULL, NULL);
+
+            str = heap_alloc(len);
+            if (!str)
+            {
+                hr = E_OUTOFMEMORY;
+                goto end;
+            }
+
+            WideCharToMultiByte(This->codePage, 0, var->u.bstrVal, SysStringLen(var->u.bstrVal),
+                    str, len, NULL, NULL);
+            StorageUtl_WriteDWord(&dwTemp, 0, len);
+            hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
+            if (SUCCEEDED(hr))
+                hr = IStream_Write(This->stm, str, len, &count);
+            heap_free(str);
+        }
+
+        bytesWritten = count + sizeof(DWORD);
+        break;
+    }
     case VT_LPWSTR:
     {
-        DWORD len = lstrlenW(var->u.pwszVal) + 1, dwTemp;
+        len = lstrlenW(var->u.pwszVal) + 1;
 
         StorageUtl_WriteDWord(&dwTemp, 0, len);
         hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
@@ -1985,7 +2026,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
     }
     case VT_CF:
     {
-        DWORD cf_hdr[2], len;
+        DWORD cf_hdr[2];
 
         len = var->u.pclipdata->cbSize;
         StorageUtl_WriteDWord(&cf_hdr[0], 0, len + 8);
