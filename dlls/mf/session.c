@@ -1976,6 +1976,13 @@ static HRESULT clock_change_state(struct presentation_clock *clock, enum clock_c
         /* CLOCK_CMD_PAUSE    */ MFCLOCK_STATE_PAUSED,
         /* CLOCK_CMD_SET_RATE */ 0, /* Unused */
     };
+    static const enum clock_notification notifications[CLOCK_CMD_MAX] =
+    {
+        /* CLOCK_CMD_START    */ CLOCK_NOTIFY_START,
+        /* CLOCK_CMD_STOP     */ CLOCK_NOTIFY_STOP,
+        /* CLOCK_CMD_PAUSE    */ CLOCK_NOTIFY_PAUSE,
+        /* CLOCK_CMD_SET_RATE */ CLOCK_NOTIFY_SET_RATE,
+    };
     enum clock_notification notification;
     struct clock_sink *sink;
     IUnknown *notify_object;
@@ -1994,26 +2001,13 @@ static HRESULT clock_change_state(struct presentation_clock *clock, enum clock_c
 
     system_time = MFGetSystemTime();
 
-    switch (command)
+    if (command == CLOCK_CMD_START && clock->state == MFCLOCK_STATE_PAUSED &&
+            param.u.offset == PRESENTATION_CURRENT_POSITION)
     {
-        case CLOCK_CMD_START:
-            if (clock->state == MFCLOCK_STATE_PAUSED && param.u.offset == PRESENTATION_CURRENT_POSITION)
-                notification = CLOCK_NOTIFY_RESTART;
-            else
-                notification = CLOCK_NOTIFY_START;
-            break;
-        case CLOCK_CMD_STOP:
-            notification = CLOCK_NOTIFY_STOP;
-            break;
-        case CLOCK_CMD_PAUSE:
-            notification = CLOCK_NOTIFY_PAUSE;
-            break;
-        case CLOCK_CMD_SET_RATE:
-            notification = CLOCK_NOTIFY_SET_RATE;
-            break;
-        default:
-            ;
+        notification = CLOCK_NOTIFY_RESTART;
     }
+    else
+        notification = notifications[command];
 
     if (FAILED(hr = clock_call_state_change(system_time, param, notification, clock->time_source_sink)))
         return hr;
