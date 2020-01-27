@@ -136,6 +136,9 @@ static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
 static int (__cdecl *p__vsnwprintf)(wchar_t *buffer,size_t count, const wchar_t *format, __ms_va_list valist);
 static size_t (__cdecl *p___strncnt)(const char *str, size_t count);
 static int (__cdecl *p_swscanf)(const wchar_t *str, const wchar_t* format, ...);
+static int (__cdecl *p____mb_cur_max_l_func)(_locale_t locale);
+static _locale_t (__cdecl *p__create_locale)(int, const char*);
+static void (__cdecl *p__free_locale)(_locale_t);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -402,6 +405,9 @@ static BOOL init(void)
     SET(p__vsnwprintf, "_vsnwprintf");
     SET(p___strncnt, "__strncnt");
     SET(p_swscanf, "swscanf");
+    SET(p____mb_cur_max_l_func, "___mb_cur_max_l_func");
+    SET(p__create_locale, "_create_locale");
+    SET(p__free_locale, "_free_locale");
 
     if (sizeof(void *) == 8)
     {
@@ -1936,6 +1942,25 @@ static void test_swscanf(void)
     ok( ret == (short)WEOF, "ret = %d\n", ret );
 }
 
+static void test____mb_cur_max_l_func(void)
+{
+    int ret;
+    _locale_t l;
+
+    ret = p____mb_cur_max_l_func(NULL);
+    ok( ret == 1, "MB_CUR_MAX_L(NULL) = %d\n", ret );
+
+    l = p__create_locale(LC_ALL, "chinese-traditional");
+    if (!l)
+    {
+        skip("DBCS locale not available\n");
+        return;
+    }
+    ret = p____mb_cur_max_l_func(l);
+    ok( ret == 2, "MB_CUR_MAX_L(cht) = %d\n", ret );
+    p__free_locale(l);
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1975,4 +2000,5 @@ START_TEST(msvcr90)
 #endif
     test___strncnt();
     test_swscanf();
+    test____mb_cur_max_l_func();
 }

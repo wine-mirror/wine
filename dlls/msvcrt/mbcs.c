@@ -184,7 +184,7 @@ int CDECL MSVCRT____mb_cur_max_func(void)
 /*********************************************************************
  *		___mb_cur_max_l_func  (MSVCR80.@)
  */
-int* CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
+int CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
 {
   MSVCRT_pthreadlocinfo locinfo;
 
@@ -193,7 +193,7 @@ int* CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
   else
     locinfo = locale->locinfo;
 
-  return &locinfo->mb_cur_max;
+  return locinfo->mb_cur_max;
 }
 #endif
 
