@@ -1638,7 +1638,7 @@ sub dump_mirroring($)
     print OUTPUT "/* generated from $UNIDATA/BidiMirroring.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
-    dump_case_table( "DECLSPEC_HIDDEN wine_mirror_map", @mirror_table );
+    dump_two_level_mapping( "wine_mirror_map", 0, @mirror_table );
     close OUTPUT;
     save_file($filename);
 }
