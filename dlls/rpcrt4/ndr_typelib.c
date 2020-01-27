@@ -1265,14 +1265,16 @@ static HRESULT get_iface_info(ITypeInfo *typeinfo, WORD *funcs, WORD *parentfunc
     if (FAILED(hr))
         goto err;
     hr = ITypeInfo_GetRefTypeInfo(*real_typeinfo, reftype, &parentinfo);
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetTypeAttr(parentinfo, &typeattr);
+        ITypeInfo_Release(parentinfo);
+    }
     if (FAILED(hr))
         goto err;
-    hr = ITypeInfo_GetTypeAttr(parentinfo, &typeattr);
-    if (FAILED(hr))
-        goto err;
+
     *parentiid = typeattr->guid;
     ITypeInfo_ReleaseTypeAttr(parentinfo, typeattr);
-    ITypeInfo_Release(parentinfo);
 
     return S_OK;
 
