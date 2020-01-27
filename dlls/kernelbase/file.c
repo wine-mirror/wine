@@ -432,6 +432,26 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileA( LPCSTR name, DWORD access, DWORD sh
     return CreateFileW( nameW, access, sharing, sa, creation, attributes, template );
 }
 
+static UINT get_nt_file_options( DWORD attributes )
+{
+    UINT options = 0;
+
+    if (attributes & FILE_FLAG_BACKUP_SEMANTICS)
+        options |= FILE_OPEN_FOR_BACKUP_INTENT;
+    else
+        options |= FILE_NON_DIRECTORY_FILE;
+    if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
+        options |= FILE_DELETE_ON_CLOSE;
+    if (attributes & FILE_FLAG_NO_BUFFERING)
+        options |= FILE_NO_INTERMEDIATE_BUFFERING;
+    if (!(attributes & FILE_FLAG_OVERLAPPED))
+        options |= FILE_SYNCHRONOUS_IO_NONALERT;
+    if (attributes & FILE_FLAG_RANDOM_ACCESS)
+        options |= FILE_RANDOM_ACCESS;
+    if (attributes & FILE_FLAG_WRITE_THROUGH)
+        options |= FILE_WRITE_THROUGH;
+    return options;
+}
 
 /*************************************************************************
  *	CreateFileW   (kernelbase.@)
@@ -441,7 +461,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
                                              DWORD attributes, HANDLE template )
 {
     NTSTATUS status;
-    UINT options;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     IO_STATUS_BLOCK io;
@@ -543,25 +562,8 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
 
     /* now call NtCreateFile */
 
-    options = 0;
-    if (attributes & FILE_FLAG_BACKUP_SEMANTICS)
-        options |= FILE_OPEN_FOR_BACKUP_INTENT;
-    else
-        options |= FILE_NON_DIRECTORY_FILE;
     if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
-    {
-        options |= FILE_DELETE_ON_CLOSE;
         access |= DELETE;
-    }
-    if (attributes & FILE_FLAG_NO_BUFFERING)
-        options |= FILE_NO_INTERMEDIATE_BUFFERING;
-    if (!(attributes & FILE_FLAG_OVERLAPPED))
-        options |= FILE_SYNCHRONOUS_IO_NONALERT;
-    if (attributes & FILE_FLAG_RANDOM_ACCESS)
-        options |= FILE_RANDOM_ACCESS;
-    if (attributes & FILE_FLAG_WRITE_THROUGH)
-        options |= FILE_WRITE_THROUGH;
-    attributes &= FILE_ATTRIBUTE_VALID_FLAGS;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -582,8 +584,9 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
 
     status = NtCreateFile( &ret, access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io,
-                           NULL, attributes, sharing, nt_disposition[creation - CREATE_NEW],
-                           options, NULL, 0 );
+                           NULL, attributes & FILE_ATTRIBUTE_VALID_FLAGS, sharing,
+                           nt_disposition[creation - CREATE_NEW],
+                           get_nt_file_options( attributes ), NULL, 0 );
     if (status)
     {
         if (vxd_name && vxd_name[0])
@@ -2550,10 +2553,41 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenFileById( HANDLE handle, LPFILE_ID_DESCRIPTO
 /***********************************************************************
  *	ReOpenFile   (kernelbase.@)
  */
-HANDLE WINAPI /* DECLSPEC_HOTPATCH */ ReOpenFile( HANDLE handle, DWORD access, DWORD sharing, DWORD flags )
+HANDLE WINAPI DECLSPEC_HOTPATCH ReOpenFile( HANDLE handle, DWORD access, DWORD sharing, DWORD attributes )
 {
-    FIXME( "(%p, %d, %d, %d): stub\n", handle, access, sharing, flags );
-    return INVALID_HANDLE_VALUE;
+    SECURITY_QUALITY_OF_SERVICE qos;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING empty = { 0 };
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE file;
+
+    TRACE("handle %p, access %#x, sharing %#x, attributes %#x.\n", handle, access, sharing, attributes);
+
+    if (attributes & 0x7ffff) /* FILE_ATTRIBUTE_* flags are invalid */
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
+        access |= DELETE;
+
+    InitializeObjectAttributes( &attr, &empty, OBJ_CASE_INSENSITIVE, handle, NULL );
+    if (attributes & SECURITY_SQOS_PRESENT)
+    {
+        qos.Length = sizeof(qos);
+        qos.ImpersonationLevel = (attributes >> 16) & 0x3;
+        qos.ContextTrackingMode = attributes & SECURITY_CONTEXT_TRACKING ? SECURITY_DYNAMIC_TRACKING : SECURITY_STATIC_TRACKING;
+        qos.EffectiveOnly = (attributes & SECURITY_EFFECTIVE_ONLY) != 0;
+        attr.SecurityQualityOfService = &qos;
+    }
+
+    status = NtCreateFile( &file, access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io, NULL,
+                           0, sharing, FILE_OPEN, get_nt_file_options( attributes ), NULL, 0 );
+    if (!set_ntstatus( status ))
+        return INVALID_HANDLE_VALUE;
+    return file;
 }
 
 
