@@ -1229,7 +1229,7 @@
 @ cdecl _isnan(double) msvcr120._isnan
 @ cdecl -arch=x86_64 _isnanf(float) msvcr120._isnanf
 @ cdecl _isprint_l(long ptr) msvcr120._isprint_l
-@ stub _ispunct_l
+@ cdecl _ispunct_l(long ptr) msvcr120._ispunct_l
 @ cdecl _isspace_l(long ptr) msvcr120._isspace_l
 @ cdecl _isupper_l(long ptr) msvcr120._isupper_l
 @ cdecl _iswalnum_l(long ptr) msvcr120._iswalnum_l

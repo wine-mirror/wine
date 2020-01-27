@@ -245,6 +245,14 @@ int CDECL MSVCRT_ispunct(int c)
 }
 
 /*********************************************************************
+ *		_ispunct_l (MSVCR80.@)
+ */
+int CDECL MSVCRT__ispunct_l(int c, MSVCRT__locale_t locale)
+{
+  return MSVCRT__isctype_l( c, MSVCRT__PUNCT, locale );
+}
+
+/*********************************************************************
  *		_isspace_l (MSVCRT.@)
  */
 int CDECL MSVCRT__isspace_l(int c, MSVCRT__locale_t locale)

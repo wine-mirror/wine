@@ -1013,7 +1013,7 @@
 @ cdecl _isnan(double) MSVCRT__isnan
 @ cdecl -arch=x86_64 _isnanf(float) MSVCRT__isnanf
 @ cdecl _isprint_l(long ptr) MSVCRT__isprint_l
-@ stub _ispunct_l
+@ cdecl _ispunct_l(long ptr) MSVCRT__ispunct_l
 @ cdecl _isspace_l(long ptr) MSVCRT__isspace_l
 @ cdecl _isupper_l(long ptr) MSVCRT__isupper_l
 @ cdecl _iswalnum_l(long ptr) MSVCRT__iswalnum_l
