@@ -8,7 +8,7 @@
 @ stub CM_Get_Class_Property_Keys
 @ stdcall CM_Get_Class_Registry_PropertyW(ptr long ptr ptr long long ptr) setupapi.CM_Get_Class_Registry_PropertyW
 @ stub CM_Get_Depth
-@ stub CM_Get_DevNode_PropertyW
+@ stdcall CM_Get_DevNode_PropertyW(long ptr ptr ptr ptr long) setupapi.CM_Get_DevNode_PropertyW
 @ stub CM_Get_DevNode_Property_Keys
 @ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr ptr long) setupapi.CM_Get_DevNode_Registry_PropertyW
 @ stdcall CM_Get_DevNode_Status(ptr ptr long long) setupapi.CM_Get_DevNode_Status

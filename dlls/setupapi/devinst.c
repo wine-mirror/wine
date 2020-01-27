@@ -4177,47 +4177,26 @@ BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
     return (have_guid || have_name);
 }
 
-/***********************************************************************
- *              SetupDiGetDevicePropertyW (SETUPAPI.@)
- */
-BOOL WINAPI SetupDiGetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_data,
-                const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type, BYTE *prop_buff,
-                DWORD prop_buff_size, DWORD *required_size, DWORD flags)
+static LSTATUS get_device_property(struct device *device, const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type,
+                BYTE *prop_buff, DWORD prop_buff_size, DWORD *required_size, DWORD flags)
 {
-    static const WCHAR formatW[] = {'\\', '%', '0', '4', 'X', 0};
-    WCHAR key_path[55] = {'P', 'r', 'o', 'p', 'e', 'r', 't', 'i', 'e', 's', '\\'};
+    WCHAR key_path[55] = L"Properties\\";
     HKEY hkey;
     DWORD value_type;
     DWORD value_size = 0;
     LSTATUS ls;
-    struct device *device;
-
-    TRACE("%p, %p, %p, %p, %p, %d, %p, %#x\n", devinfo, device_data, prop_key, prop_type, prop_buff, prop_buff_size,
-          required_size, flags);
-
-    if (!(device = get_device(devinfo, device_data)))
-        return FALSE;
 
     if (!prop_key)
-    {
-        SetLastError(ERROR_INVALID_DATA);
-        return FALSE;
-    }
+        return ERROR_INVALID_DATA;
 
     if (!prop_type || (!prop_buff && prop_buff_size))
-    {
-        SetLastError(ERROR_INVALID_USER_BUFFER);
-        return FALSE;
-    }
+        return ERROR_INVALID_USER_BUFFER;
 
     if (flags)
-    {
-        SetLastError(ERROR_INVALID_FLAGS);
-        return FALSE;
-    }
+        return ERROR_INVALID_FLAGS;
 
     SETUPDI_GuidToString(&prop_key->fmtid, key_path + 11);
-    swprintf(key_path + 49, ARRAY_SIZE(key_path) - 49, formatW, prop_key->pid);
+    swprintf(key_path + 49, ARRAY_SIZE(key_path) - 49, L"\\%04X", prop_key->pid);
 
     ls = RegOpenKeyExW(device->key, key_path, 0, KEY_QUERY_VALUE, &hkey);
     if (!ls)
@@ -4248,8 +4227,78 @@ BOOL WINAPI SetupDiGetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
     if (required_size)
         *required_size = value_size;
 
+    return ls;
+}
+
+/***********************************************************************
+ *              SetupDiGetDevicePropertyW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_data,
+                const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type, BYTE *prop_buff,
+                DWORD prop_buff_size, DWORD *required_size, DWORD flags)
+{
+    struct device *device;
+    LSTATUS ls;
+
+    TRACE("%p, %p, %p, %p, %p, %d, %p, %#x\n", devinfo, device_data, prop_key, prop_type, prop_buff, prop_buff_size,
+          required_size, flags);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    ls = get_device_property(device, prop_key, prop_type, prop_buff, prop_buff_size, required_size, flags);
+
     SetLastError(ls);
     return !ls;
+}
+
+/***********************************************************************
+ *              CM_Get_DevNode_Property_ExW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Property_ExW(DEVINST devnode, const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type,
+    BYTE *prop_buff, ULONG *prop_buff_size, ULONG flags, HMACHINE machine)
+{
+    struct device *device = get_devnode_device(devnode);
+    LSTATUS ls;
+
+    TRACE("%u, %p, %p, %p, %p, %#x, %p\n", devnode, prop_key, prop_type, prop_buff, prop_buff_size,
+          flags, machine);
+
+    if (machine)
+        return CR_MACHINE_UNAVAILABLE;
+
+    if (!device)
+        return CR_NO_SUCH_DEVINST;
+
+    if (!prop_buff_size)
+        return CR_INVALID_POINTER;
+
+    ls = get_device_property(device, prop_key, prop_type, prop_buff, *prop_buff_size, prop_buff_size, flags);
+    switch (ls)
+    {
+    case NO_ERROR:
+        return CR_SUCCESS;
+    case ERROR_INVALID_DATA:
+        return CR_INVALID_DATA;
+    case ERROR_INVALID_USER_BUFFER:
+        return CR_INVALID_POINTER;
+    case ERROR_INVALID_FLAGS:
+        return CR_INVALID_FLAG;
+    case ERROR_INSUFFICIENT_BUFFER:
+        return CR_BUFFER_SMALL;
+    case ERROR_NOT_FOUND:
+        return CR_NO_SUCH_VALUE;
+    }
+    return CR_FAILURE;
+}
+
+/***********************************************************************
+ *              CM_Get_DevNode_PropertyW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_PropertyW(DEVINST dev, const DEVPROPKEY *key, DEVPROPTYPE *type,
+    PVOID buf, PULONG len, ULONG flags)
+{
+    return CM_Get_DevNode_Property_ExW(dev, key, type, buf, len, flags, NULL);
 }
 
 /***********************************************************************
