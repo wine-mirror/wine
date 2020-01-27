@@ -144,6 +144,7 @@ DEFINE_EXPECT(OnLeaveScript);
 #define DISPID_GLOBAL_TESTERROROBJECT 1023
 #define DISPID_GLOBAL_THROWWITHDESC   1024
 #define DISPID_GLOBAL_PROPARGSET      1025
+#define DISPID_GLOBAL_UNKOBJ          1026
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -214,6 +215,8 @@ static const char *vt2a(VARIANT *v)
         return "VT_BSTR";
     case VT_DISPATCH:
         return "VT_DISPATCH";
+    case VT_UNKNOWN:
+        return "VT_UNKNOWN";
     case VT_BOOL:
         return "VT_BOOL";
     case VT_ARRAY|VT_VARIANT:
@@ -594,6 +597,35 @@ static void _test_grfdex(unsigned line, DWORD grfdex, DWORD expect)
 }
 
 static IDispatchEx enumDisp;
+
+static HRESULT WINAPI unkObj_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI unkObj_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI unkObj_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl unkObjVtbl = {
+    unkObj_QueryInterface,
+    unkObj_AddRef,
+    unkObj_Release
+};
+
+static IUnknown unkObj = { &unkObjVtbl };
 
 static HRESULT WINAPI EnumVARIANT_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
 {
@@ -1138,7 +1170,8 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         { L"throwInt",        DISPID_GLOBAL_THROWINT },
         { L"testOptionalArg", DISPID_GLOBAL_TESTOPTIONALARG },
         { L"testErrorObject", DISPID_GLOBAL_TESTERROROBJECT },
-        { L"throwWithDesc",   DISPID_GLOBAL_THROWWITHDESC }
+        { L"throwWithDesc",   DISPID_GLOBAL_THROWWITHDESC },
+        { L"unkObj",          DISPID_GLOBAL_UNKOBJ }
     };
 
     test_grfdex(grfdex, fdexNameCaseInsensitive);
@@ -1657,6 +1690,10 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(hres == S_OK, "Invoke failed: %08x\n", hres);
         return S_OK;
     }
+    case DISPID_GLOBAL_UNKOBJ:
+        V_VT(pvarRes) = VT_UNKNOWN;
+        V_UNKNOWN(pvarRes) = &unkObj;
+        return S_OK;
     }
 
     ok(0, "unexpected call %d\n", id);

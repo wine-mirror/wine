@@ -458,22 +458,22 @@ static HRESULT stack_assume_disp(exec_ctx_t *ctx, unsigned n, IDispatch **disp)
 {
     VARIANT *v = stack_top(ctx, n), *ref;
 
-    if(V_VT(v) != VT_DISPATCH) {
+    if(V_VT(v) != VT_DISPATCH && (disp || V_VT(v) != VT_UNKNOWN)) {
         if(V_VT(v) != (VT_VARIANT|VT_BYREF)) {
             FIXME("not supported type: %s\n", debugstr_variant(v));
             return E_FAIL;
         }
 
         ref = V_VARIANTREF(v);
-        if(V_VT(ref) != VT_DISPATCH) {
+        if(V_VT(ref) != VT_DISPATCH && (disp || V_VT(ref) != VT_UNKNOWN)) {
             FIXME("not disp %s\n", debugstr_variant(ref));
             return E_FAIL;
         }
 
-        V_VT(v) = VT_DISPATCH;
-        V_DISPATCH(v) = V_DISPATCH(ref);
-        if(V_DISPATCH(v))
-            IDispatch_AddRef(V_DISPATCH(v));
+        V_VT(v) = V_VT(ref);
+        V_UNKNOWN(v) = V_UNKNOWN(ref);
+        if(V_UNKNOWN(v))
+            IUnknown_AddRef(V_UNKNOWN(v));
     }
 
     if(disp)

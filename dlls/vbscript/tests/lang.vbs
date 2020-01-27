@@ -1197,6 +1197,12 @@ Call ok(obj.Test1 = 6, "obj.Test1 is not 6")
 obj.AddToTest1(5)
 Call ok(obj.Test1 = 11, "obj.Test1 is not 11")
 
+set obj = unkObj
+set x = obj
+call ok(getVT(obj) = "VT_UNKNOWN*", "getVT(obj) = " & getVT(obj))
+call ok(getVT(x) = "VT_UNKNOWN*", "getVT(x) = " & getVT(x))
+call ok(getVT(unkObj) = "VT_UNKNOWN", "getVT(unkObj) = " & getVT(unkObj))
+
 ' Array tests
 
 Call ok(getVT(arr) = "VT_EMPTY*", "getVT(arr) = " & getVT(arr))
