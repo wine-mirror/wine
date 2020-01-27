@@ -2793,7 +2793,7 @@ static const builtin_prop_t global_props[] = {
     {L"vbFormFeed",                NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbFormFeed},
     {L"vbFriday",                  NULL, BP_GET, VT_I2, 6},
     {L"vbGeneralDate",             NULL, BP_GET, VT_I2, 0},
-    {L"vbGreen",                   NULL, BP_GET, VT_I4, 0x00ff00},
+    {L"vbGreen",                   NULL, BP_GET, VT_I4, (INT16)0x00ff00},
     {L"vbIgnore",                  NULL, BP_GET, VT_I2, IDIGNORE},
     {L"vbInformation",             NULL, BP_GET, VT_I2, MB_ICONASTERISK},
     {L"vbInteger",                 NULL, BP_GET, VT_I2, VT_I2},
@@ -2840,7 +2840,7 @@ static const builtin_prop_t global_props[] = {
     {L"vbVerticalTab",             NULL, BP_GET, VT_BSTR, (UINT_PTR)&vbVerticalTab},
     {L"vbWednesday",               NULL, BP_GET, VT_I2, 4},
     {L"vbWhite",                   NULL, BP_GET, VT_I4, 0xffffff},
-    {L"vbYellow",                  NULL, BP_GET, VT_I4, 0x00ffff},
+    {L"vbYellow",                  NULL, BP_GET, VT_I4, (INT16)0x00ffff},
     {L"vbYes",                     NULL, BP_GET, VT_I2, IDYES},
     {L"vbYesNo",                   NULL, BP_GET, VT_I2, MB_YESNO},
     {L"vbYesNoCancel",             NULL, BP_GET, VT_I2, MB_YESNOCANCEL},
@@ -2945,7 +2945,7 @@ static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
     if(SUCCEEDED(hres)) {
         script_ctx_t *ctx = This->ctx;
 
-        error = (code & ~0xffff) ? map_hres(code) : MAKE_VBSERROR(code);
+        error = (code == (INT16)code) ? MAKE_VBSERROR((UINT16)code) : map_hres(code);
 
         if(source) {
             SysFreeString(ctx->ei.bstrSource);

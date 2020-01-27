@@ -310,7 +310,7 @@ static int hex_to_int(WCHAR c)
 static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
 {
     const WCHAR *begin = ctx->ptr;
-    LONG l = 0, d;
+    unsigned l = 0, d;
 
     while((d = hex_to_int(*++ctx->ptr)) != -1)
         l = l*16 + d;
@@ -323,7 +323,7 @@ static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
     if(*ctx->ptr == '&')
         ctx->ptr++;
 
-    *ret = l;
+    *ret = l == (UINT16)l ? (INT16)l : l;
     return tInt;
 }
 
