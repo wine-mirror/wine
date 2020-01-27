@@ -1290,24 +1290,18 @@ static HRESULT buffer_read_len(const struct read_buffer *buffer, size_t offset, 
     return hr;
 }
 
-static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read_buffer *buffer,
-        size_t offset, UINT codepage, void* (WINAPI *allocate)(void *this, ULONG size), void *allocate_data)
+static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_buffer *buffer, size_t offset,
+        UINT codepage, void* (WINAPI *allocate)(void *this, ULONG size), void *allocate_data)
 {
     HRESULT hr;
-    DWORD vt;
 
-    assert(prop);
-    assert(buffer->data);
+    assert(!(prop->vt & (VT_ARRAY | VT_VECTOR)));
 
-    if (FAILED(hr = buffer_read_dword(buffer, offset, &vt)))
-        return hr;
-
-    offset += sizeof(DWORD);
-    prop->vt = vt;
     switch (prop->vt)
     {
     case VT_EMPTY:
     case VT_NULL:
+        hr = S_OK;
         break;
     case VT_I1:
         hr = buffer_read_byte(buffer, offset, (BYTE *)&prop->u.cVal);
@@ -1512,6 +1506,105 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read
         FIXME("unsupported type %d\n", prop->vt);
         hr = STG_E_INVALIDPARAMETER;
     }
+
+    return hr;
+}
+
+static size_t propertystorage_get_elemsize(const PROPVARIANT *prop)
+{
+    if (!(prop->vt & VT_VECTOR))
+        return 0;
+
+    switch (prop->vt & ~VT_VECTOR)
+    {
+        case VT_I1: return sizeof(*prop->u.cac.pElems);
+        case VT_UI1: return sizeof(*prop->u.caub.pElems);
+        case VT_I2: return sizeof(*prop->u.cai.pElems);
+        case VT_UI2: return sizeof(*prop->u.caui.pElems);
+        case VT_BOOL: return sizeof(*prop->u.cabool.pElems);
+        case VT_I4: return sizeof(*prop->u.cal.pElems);
+        case VT_UI4: return sizeof(*prop->u.caul.pElems);
+        case VT_R4: return sizeof(*prop->u.caflt.pElems);
+        case VT_ERROR: return sizeof(*prop->u.cascode.pElems);
+        case VT_I8: return sizeof(*prop->u.cah.pElems);
+        case VT_UI8: return sizeof(*prop->u.cauh.pElems);
+        case VT_R8: return sizeof(*prop->u.cadbl.pElems);
+        case VT_CY: return sizeof(*prop->u.cacy.pElems);
+        case VT_DATE: return sizeof(*prop->u.cadate.pElems);
+        case VT_FILETIME: return sizeof(*prop->u.cafiletime.pElems);
+        case VT_CLSID: return sizeof(*prop->u.cauuid.pElems);
+        case VT_VARIANT: return sizeof(*prop->u.capropvar.pElems);
+        default:
+            FIXME("Unhandled type %#x.\n", prop->vt);
+            return 0;
+    }
+}
+
+static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read_buffer *buffer,
+        size_t offset, UINT codepage, void* (WINAPI *allocate)(void *this, ULONG size), void *allocate_data)
+{
+    HRESULT hr;
+    DWORD vt;
+
+    assert(prop);
+    assert(buffer->data);
+
+    if (FAILED(hr = buffer_read_dword(buffer, offset, &vt)))
+        return hr;
+
+    offset += sizeof(DWORD);
+    prop->vt = vt;
+
+    if (prop->vt & VT_VECTOR)
+    {
+        DWORD count, i;
+
+        switch (prop->vt & VT_VECTOR)
+        {
+            case VT_BSTR:
+            case VT_VARIANT:
+            case VT_LPSTR:
+            case VT_LPWSTR:
+            case VT_CF:
+                FIXME("Vector with variable length elements are not supported.\n");
+                return STG_E_INVALIDPARAMETER;
+            default:
+                ;
+        }
+
+        if (SUCCEEDED(hr = buffer_read_dword(buffer, offset, &count)))
+        {
+            size_t elemsize = propertystorage_get_elemsize(prop);
+            PROPVARIANT elem;
+
+            offset += sizeof(DWORD);
+
+            if ((prop->u.capropvar.pElems = allocate(allocate_data, elemsize * count)))
+            {
+                prop->u.capropvar.cElems = count;
+                elem.vt = prop->vt & ~VT_VECTOR;
+
+                for (i = 0; i < count; ++i)
+                {
+                    if (SUCCEEDED(hr = propertystorage_read_scalar(&elem, buffer, offset + i * elemsize, codepage,
+                            allocate, allocate_data)))
+                    {
+                        memcpy(&prop->u.capropvar.pElems[i], &elem.u.lVal, elemsize);
+                    }
+                }
+            }
+            else
+                hr = STG_E_INSUFFICIENTMEMORY;
+        }
+    }
+    else if (prop->vt & VT_ARRAY)
+    {
+        FIXME("VT_ARRAY properties are not supported.\n");
+        hr = STG_E_INVALIDPARAMETER;
+    }
+    else
+        hr = propertystorage_read_scalar(prop, buffer, offset, codepage, allocate, allocate_data);
+
     return hr;
 }
 
