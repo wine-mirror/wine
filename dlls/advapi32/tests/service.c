@@ -720,6 +720,17 @@ static void test_get_displayname(void)
     CloseServiceHandle(scm_handle);
 }
 
+static int is_printable_ascii_str(const char *s)
+{
+    while (*s)
+    {
+        if (*s < 32 || *s >= 127)
+            return 0;
+        s++;
+    }
+    return 1;
+}
+
 static void test_get_servicekeyname(void)
 {
     SC_HANDLE scm_handle, svc_handle;
@@ -861,6 +872,14 @@ static void test_get_servicekeyname(void)
     servicesize = 0;
     ret = GetServiceKeyNameA(scm_handle, displayname, NULL, &servicesize);
     ok(!ret, "Expected failure\n");
+    if (!is_printable_ascii_str(displayname) &&
+        GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST)
+    {
+        win_skip("GetServiceKeyName() does not support non-ASCII display names: %s\n", displayname); /* Windows 7 */
+        CloseServiceHandle(scm_handle);
+        return; /* All the tests that follow will fail too */
+    }
+
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
