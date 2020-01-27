@@ -2331,22 +2331,11 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_SetRenderState(IDirect3DDevi
         D3DRENDERSTATETYPE state, DWORD value)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    struct wined3d_color factor;
 
     TRACE("iface %p, state %#x, value %#x.\n", iface, state, value);
 
     wined3d_mutex_lock();
     wined3d_stateblock_set_render_state(device->update_state, state, value);
-    if (!device->recording)
-    {
-        if (state == D3DRS_BLENDFACTOR)
-        {
-            wined3d_color_from_d3dcolor(&factor, value);
-            wined3d_device_set_blend_state(device->wined3d_device, NULL, &factor);
-        }
-        else
-            wined3d_device_set_render_state(device->wined3d_device, state, value);
-    }
     if (state == D3DRS_POINTSIZE && value == D3D9_RESZ_CODE)
         resolve_depth_buffer(device);
     wined3d_mutex_unlock();
