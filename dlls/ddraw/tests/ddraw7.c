@@ -148,6 +148,11 @@ static BOOL ddraw_is_vmware(IDirectDraw7 *ddraw)
     return ddraw_is_vendor(ddraw, 0x15ad);
 }
 
+static BOOL ddraw_is_amd(IDirectDraw7 *ddraw)
+{
+    return ddraw_is_vendor(ddraw, 0x1002);
+}
+
 static IDirectDrawSurface7 *create_overlay(IDirectDraw7 *ddraw,
         unsigned int width, unsigned int height, DWORD format)
 {
@@ -12854,6 +12859,7 @@ static void test_draw_primitive(void)
     IDirect3DVertexBuffer7 *vb;
     IDirect3DDevice7 *device;
     IDirect3D7 *d3d;
+    IDirectDraw7 *ddraw;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -12869,6 +12875,8 @@ static void test_draw_primitive(void)
 
     hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
     ok(SUCCEEDED(hr), "Failed to get D3D interface, hr %#x.\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get DirectDraw7 interface, hr %#x.\n", hr);
 
     memset(&vb_desc, 0, sizeof(vb_desc));
     vb_desc.dwSize = sizeof(vb_desc);
@@ -12891,19 +12899,21 @@ static void test_draw_primitive(void)
     hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 0, NULL, 0, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    /* r200 rejects 0 vertices */
+    ok(SUCCEEDED(hr) || broken(ddraw_is_amd(ddraw) && hr == E_FAIL), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitiveStrided(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 0, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr) || broken(ddraw_is_amd(ddraw) && hr == E_FAIL), "Failed to draw, hr %#x.\n", hr);
 
     hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, indices, 4, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawIndexedPrimitiveStrided(device,
             D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, indices, 4, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    /* Interestingly r200 rejects this, but not the call with a NULL index buffer and 0 indices. */
     hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 0, indices, 4, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr) || broken(ddraw_is_amd(ddraw) && hr == E_FAIL), "Failed to draw, hr %#x.\n", hr);
 
     strided.position.lpvData = quad;
     strided.position.dwStride = sizeof(*quad);
@@ -12917,11 +12927,14 @@ static void test_draw_primitive(void)
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawIndexedPrimitiveStrided(device,
             D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 4, NULL, 0, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    /* r200 again fails this, this time with E_OUTOFMEMORY. */
+    ok(SUCCEEDED(hr) || broken(ddraw_is_amd(ddraw) && hr == E_OUTOFMEMORY), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 4, NULL, 0, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    /* Now this draw should work, but r200 rejects it too - presumably earlier tests broke
+     * driver internal state. */
     hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr) || broken(ddraw_is_amd(ddraw) && hr == E_FAIL), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitiveStrided(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 4, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 4, 0);
@@ -12936,6 +12949,7 @@ static void test_draw_primitive(void)
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
     IDirect3DVertexBuffer7_Release(vb);
+    IDirectDraw7_Release(ddraw);
     refcount = IDirect3DDevice7_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(window);
