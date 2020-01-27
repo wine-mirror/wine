@@ -2467,6 +2467,67 @@ static void test_GetSpecialFolder(void)
     IFolder_Release(folder);
 }
 
+static void test_MoveFile(void)
+{
+    ITextStream *stream;
+    BSTR str, src, dst;
+    HRESULT hr;
+
+    str = SysAllocString(L"test.txt");
+    hr = IFileSystem3_CreateTextFile(fs3, str, VARIANT_FALSE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    str = SysAllocString(L"test");
+    hr = ITextStream_Write(stream, str);
+    ok(hr == S_OK, "Write failed: %08x\n", hr);
+    SysFreeString(str);
+
+    ITextStream_Release(stream);
+
+    str = SysAllocString(L"test2.txt");
+    hr = IFileSystem3_CreateTextFile(fs3, str, VARIANT_FALSE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+    ITextStream_Release(stream);
+
+    src = SysAllocString(L"test.txt");
+    dst = SysAllocString(L"test3.txt");
+    hr = IFileSystem3_MoveFile(fs3, src, dst);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(src);
+    SysFreeString(dst);
+
+    str = SysAllocString(L"test.txt");
+    hr = IFileSystem3_DeleteFile(fs3, str, VARIANT_TRUE);
+    ok(hr == CTL_E_FILENOTFOUND, "DeleteFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
+    SysFreeString(str);
+
+    src = SysAllocString(L"test3.txt");
+    dst = SysAllocString(L"test2.txt"); /* already exists */
+    hr = IFileSystem3_MoveFile(fs3, src, dst);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "got 0x%08x, expected CTL_E_FILEALREADYEXISTS\n", hr);
+    SysFreeString(src);
+    SysFreeString(dst);
+
+    src = SysAllocString(L"nonexistent.txt");
+    dst = SysAllocString(L"test4.txt");
+    hr = IFileSystem3_MoveFile(fs3, src, dst);
+    ok(hr == CTL_E_FILENOTFOUND, "got 0x%08x, expected CTL_E_FILENOTFOUND\n", hr);
+    SysFreeString(src);
+    SysFreeString(dst);
+
+    str = SysAllocString(L"test3.txt");
+    hr = IFileSystem3_DeleteFile(fs3, str, VARIANT_TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    str = SysAllocString(L"test2.txt");
+    hr = IFileSystem3_DeleteFile(fs3, str, VARIANT_TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -2506,6 +2567,7 @@ START_TEST(filesystem)
     test_SerialNumber();
     test_GetExtensionName();
     test_GetSpecialFolder();
+    test_MoveFile();
 
     IFileSystem3_Release(fs3);
 

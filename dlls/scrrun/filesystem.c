@@ -3638,12 +3638,11 @@ static HRESULT WINAPI filesys_DeleteFolder(IFileSystem3 *iface, BSTR FolderSpec,
     return delete_folder(FolderSpec, SysStringLen(FolderSpec), Force);
 }
 
-static HRESULT WINAPI filesys_MoveFile(IFileSystem3 *iface, BSTR Source,
-                                            BSTR Destination)
+static HRESULT WINAPI filesys_MoveFile(IFileSystem3 *iface, BSTR source, BSTR destination)
 {
-    FIXME("%p %s %s\n", iface, debugstr_w(Source), debugstr_w(Destination));
+    TRACE("%p %s %s\n", iface, debugstr_w(source), debugstr_w(destination));
 
-    return E_NOTIMPL;
+    return MoveFileW(source, destination) ? S_OK : create_error(GetLastError());
 }
 
 static HRESULT WINAPI filesys_MoveFolder(IFileSystem3 *iface,BSTR Source,
