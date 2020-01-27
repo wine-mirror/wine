@@ -1020,8 +1020,6 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
             device->auto_mipmaps = 0;
             wined3d_stateblock_set_render_state(device->state, WINED3D_RS_ZENABLE,
                     !!swapchain_desc.enable_auto_depth_stencil);
-            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZENABLE,
-                    !!swapchain_desc.enable_auto_depth_stencil);
             device_reset_viewport_state(device);
         }
 
@@ -4673,8 +4671,6 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
 
     wined3d_stateblock_set_render_state(device->state, WINED3D_RS_ZENABLE,
             !!swapchain_desc->enable_auto_depth_stencil);
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_ZENABLE, !!swapchain_desc->enable_auto_depth_stencil);
     device_reset_viewport_state(device);
 
     if (FAILED(hr = d3d9_device_get_swapchains(device)))
