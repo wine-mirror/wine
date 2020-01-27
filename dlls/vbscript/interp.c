@@ -1928,75 +1928,57 @@ static HRESULT interp_case(exec_ctx_t *ctx)
     return S_OK;
 }
 
-static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, VARIANT_BOOL *ret)
-{
-    IObjectIdentity *identity;
-    IUnknown *unk1, *unk2;
-    HRESULT hres;
-
-    if(disp1 == disp2) {
-        *ret = VARIANT_TRUE;
-        return S_OK;
-    }
-
-    if(!disp1 || !disp2) {
-        *ret = VARIANT_FALSE;
-        return S_OK;
-    }
-
-    hres = IDispatch_QueryInterface(disp1, &IID_IUnknown, (void**)&unk1);
-    if(FAILED(hres))
-        return hres;
-
-    hres = IDispatch_QueryInterface(disp2, &IID_IUnknown, (void**)&unk2);
-    if(FAILED(hres)) {
-        IUnknown_Release(unk1);
-        return hres;
-    }
-
-    if(unk1 == unk2) {
-        *ret = VARIANT_TRUE;
-    }else {
-        hres = IUnknown_QueryInterface(unk1, &IID_IObjectIdentity, (void**)&identity);
-        if(SUCCEEDED(hres)) {
-            hres = IObjectIdentity_IsEqualObject(identity, unk2);
-            IObjectIdentity_Release(identity);
-            *ret = hres == S_OK ? VARIANT_TRUE : VARIANT_FALSE;
-        }else {
-            *ret = VARIANT_FALSE;
-        }
-    }
-
-    IUnknown_Release(unk1);
-    IUnknown_Release(unk2);
-    return S_OK;
-}
-
 static HRESULT interp_is(exec_ctx_t *ctx)
 {
-    IDispatch *l, *r;
-    VARIANT v;
-    HRESULT hres;
+    IUnknown *l = NULL, *r = NULL;
+    variant_val_t v;
+    HRESULT hres = S_OK;
 
     TRACE("\n");
 
-    hres = stack_pop_disp(ctx, &r);
+    stack_pop_deref(ctx, &v);
+    if(V_VT(v.v) != VT_DISPATCH && V_VT(v.v) != VT_UNKNOWN) {
+        FIXME("Unhandled type %s\n", debugstr_variant(v.v));
+        hres = E_NOTIMPL;
+    }else if(V_UNKNOWN(v.v)) {
+        hres = IUnknown_QueryInterface(V_UNKNOWN(v.v), &IID_IUnknown, (void**)&r);
+    }
+    if(v.owned) VariantClear(v.v);
     if(FAILED(hres))
         return hres;
 
-    hres = stack_pop_disp(ctx, &l);
+    stack_pop_deref(ctx, &v);
+    if(V_VT(v.v) != VT_DISPATCH && V_VT(v.v) != VT_UNKNOWN) {
+        FIXME("Unhandled type %s\n", debugstr_variant(v.v));
+        hres = E_NOTIMPL;
+    }else if(V_UNKNOWN(v.v)) {
+        hres = IUnknown_QueryInterface(V_UNKNOWN(v.v), &IID_IUnknown, (void**)&l);
+    }
+    if(v.owned) VariantClear(v.v);
+
     if(SUCCEEDED(hres)) {
-        V_VT(&v) = VT_BOOL;
-        hres = disp_cmp(l, r, &V_BOOL(&v));
-        if(l)
-            IDispatch_Release(l);
+        VARIANT res;
+        V_VT(&res) = VT_BOOL;
+        if(r == l)
+            V_BOOL(&res) = VARIANT_TRUE;
+        else if(!r || !l)
+            V_BOOL(&res) = VARIANT_FALSE;
+        else {
+            IObjectIdentity *identity;
+            hres = IUnknown_QueryInterface(l, &IID_IObjectIdentity, (void**)&identity);
+            if(SUCCEEDED(hres)) {
+                hres = IObjectIdentity_IsEqualObject(identity, r);
+                IObjectIdentity_Release(identity);
+            }
+            V_BOOL(&res) = hres == S_OK ? VARIANT_TRUE : VARIANT_FALSE;
+        }
+        hres = stack_push(ctx, &res);
     }
     if(r)
-        IDispatch_Release(r);
-    if(FAILED(hres))
-        return hres;
-
-    return stack_push(ctx, &v);
+        IUnknown_Release(r);
+    if(l)
+        IUnknown_Release(l);
+    return hres;
 }
 
 static HRESULT interp_concat(exec_ctx_t *ctx)

@@ -1202,6 +1202,7 @@ set x = obj
 call ok(getVT(obj) = "VT_UNKNOWN*", "getVT(obj) = " & getVT(obj))
 call ok(getVT(x) = "VT_UNKNOWN*", "getVT(x) = " & getVT(x))
 call ok(getVT(unkObj) = "VT_UNKNOWN", "getVT(unkObj) = " & getVT(unkObj))
+call ok(obj is unkObj, "obj is not unkObj")
 
 ' Array tests
 
