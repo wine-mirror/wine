@@ -47,6 +47,9 @@
 
 #define D3D9_TEXTURE_MIPMAP_DIRTY 0x1
 
+#define D3DFMT_RESZ MAKEFOURCC('R','E','S','Z')
+#define D3D9_RESZ_CODE 0x7fa05000
+
 extern const struct wined3d_parent_ops d3d9_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
 HRESULT vdecl_convert_fvf(DWORD FVF, D3DVERTEXELEMENT9 **ppVertexElements) DECLSPEC_HIDDEN;
