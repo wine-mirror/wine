@@ -554,7 +554,7 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, UINT srcCP, LPSTR *dst, UI
             len = (lstrlenW((LPCWSTR)src) + 1) * sizeof(WCHAR);
         else
             len = strlen(src) + 1;
-        *dst = CoTaskMemAlloc(len * sizeof(WCHAR));
+        *dst = CoTaskMemAlloc(len);
         if (!*dst)
             hr = STG_E_INSUFFICIENTMEMORY;
         else
