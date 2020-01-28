@@ -467,6 +467,10 @@ struct d2d_geometry
     {
         struct
         {
+            D2D1_ELLIPSE ellipse;
+        } ellipse;
+        struct
+        {
             ID2D1GeometrySink ID2D1GeometrySink_iface;
 
             struct d2d_figure *figures;
@@ -501,6 +505,8 @@ struct d2d_geometry
     } u;
 };
 
+HRESULT d2d_ellipse_geometry_init(struct d2d_geometry *geometry,
+        ID2D1Factory *factory, const D2D1_ELLIPSE *ellipse) DECLSPEC_HIDDEN;
 void d2d_path_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory) DECLSPEC_HIDDEN;
 HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry,
         ID2D1Factory *factory, const D2D1_RECT_F *rect) DECLSPEC_HIDDEN;
@@ -634,6 +640,14 @@ static inline const char *debug_d2d_rounded_rect(const D2D1_ROUNDED_RECT *rounde
         return "(null)";
     return wine_dbg_sprintf("(%.8e, %.8e)-(%.8e, %.8e)[%.8e, %.8e]", rounded_rect->rect.left, rounded_rect->rect.top,
             rounded_rect->rect.right, rounded_rect->rect.bottom, rounded_rect->radiusX, rounded_rect->radiusY);
+}
+
+static inline const char *debug_d2d_ellipse(const D2D1_ELLIPSE *ellipse)
+{
+    if (!ellipse)
+        return "(null)";
+    return wine_dbg_sprintf("(%.8e, %.8e)[%.8e, %.8e]",
+            ellipse->point.x, ellipse->point.y, ellipse->radiusX, ellipse->radiusY);
 }
 
 #endif /* __WINE_D2D1_PRIVATE_H */
