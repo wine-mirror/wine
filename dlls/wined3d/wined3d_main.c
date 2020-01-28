@@ -374,8 +374,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
             TRACE("Limiting PS shader model to %u.\n", wined3d_settings.max_sm_ps);
         if (!get_config_key_dword(hkey, appkey, "MaxShaderModelCS", &wined3d_settings.max_sm_cs))
             TRACE("Limiting CS shader model to %u.\n", wined3d_settings.max_sm_cs);
-        if (!get_config_key(hkey, appkey, "renderer", buffer, size)
-                || !get_config_key(hkey, appkey, "DirectDrawRenderer", buffer, size))
+        if (!get_config_key(hkey, appkey, "renderer", buffer, size))
         {
             if (!strcmp(buffer, "vulkan"))
             {
