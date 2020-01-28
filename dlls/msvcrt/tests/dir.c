@@ -597,6 +597,20 @@ static void test_searchenv(void)
         ok(!strcmp(result, exp), "got %s, expected '%s'\n", result, exp);
     }
 
+    strcpy(env1, "TEST_PATH=");
+    strcat(env1, tmppath);
+    strcat(env1, "\"\\search_env_test\\\"d\"i\"r\"1");
+    putenv(env1);
+    strcpy(exp, tmppath);
+    strcat(exp, files[0]);
+    _searchenv("1.dat", "TEST_PATH", result);
+    ok(!strcmp(result, exp), "got %s, expected '%s'\n", result, exp);
+
+    strcat(env1, ";");
+    putenv(env1);
+    _searchenv("1.dat", "TEST_PATH", result);
+    ok(!result[0], "got %s, expected ''\n", result);
+
     putenv("TEST_PATH=");
 
     for (i=ARRAY_SIZE(files)-1; i>=0; i--) {
