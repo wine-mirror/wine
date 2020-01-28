@@ -978,6 +978,9 @@ static D3DRMPROJECTIONTYPE WINAPI d3drm_viewport2_GetProjection(IDirect3DRMViewp
 
     TRACE("iface %p.\n", iface);
 
+    if (!viewport->d3d_viewport)
+        return ~0u;
+
     return viewport->projection;
 }
 
