@@ -81,22 +81,6 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
-static const WCHAR *strstr_wa(const WCHAR *str, const char *suba)
-{
-    BSTR sub;
-    const WCHAR *ret = NULL;
-    sub = a2bstr(suba);
-    while (*str)
-    {
-        const WCHAR *p1 = str, *p2 = sub;
-        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
-        if (!*p2) {ret = str; break;}
-        str++;
-    }
-    SysFreeString(sub);
-    return ret;
-}
-
 #define test_var_bstr(a,b) _test_var_bstr(__LINE__,a,b)
 static void _test_var_bstr(unsigned line, const VARIANT *v, const char *expect)
 {
@@ -2920,14 +2904,13 @@ static void test_body_style(IHTMLStyle *style)
     if (hres != E_INVALIDARG) {
         hres = IHTMLStyle_get_listStyle(style, &str);
         ok(hres == S_OK, "get_listStyle failed: %08x\n", hres);
-        ok(strstr_wa(str, "decimal-leading-zero") &&
-           strstr_wa(str, "inside") != NULL,
+        ok(wcsstr(str, L"decimal-leading-zero") && wcsstr(str, L"inside"),
             "listStyle = %s\n", wine_dbgstr_w(str));
         if(compat_mode < COMPAT_IE9)
-            ok(strstr_wa(str, "none") != NULL, "listStyle = %s\n", wine_dbgstr_w(str));
+            ok(wcsstr(str, L"none") != NULL, "listStyle = %s\n", wine_dbgstr_w(str));
         else
             todo_wine
-            ok(!strstr_wa(str, "none"), "listStyle = %s\n", wine_dbgstr_w(str));
+            ok(!wcsstr(str, L"none"), "listStyle = %s\n", wine_dbgstr_w(str));
 
         SysFreeString(str);
     }  else {
