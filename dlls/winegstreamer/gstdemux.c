@@ -1745,6 +1745,24 @@ static HRESULT gstdecoder_source_get_media_type(struct gstdemux_source *pin,
                 * vih->bmiHeader.biHeight * vih->bmiHeader.biBitCount / 8;
         return S_OK;
     }
+    else if (IsEqualGUID(&pin->mt.majortype, &MEDIATYPE_Audio) && index == 1)
+    {
+        const WAVEFORMATEX *our_format = (WAVEFORMATEX *)pin->mt.pbFormat;
+        WAVEFORMATEX *format;
+
+        *mt = pin->mt;
+        mt->subtype = MEDIASUBTYPE_PCM;
+        mt->pbFormat = CoTaskMemAlloc(sizeof(WAVEFORMATEX));
+        format = (WAVEFORMATEX *)mt->pbFormat;
+        format->wFormatTag = WAVE_FORMAT_PCM;
+        format->nChannels = 2;
+        format->nSamplesPerSec = our_format->nSamplesPerSec;
+        format->wBitsPerSample = 16;
+        format->nBlockAlign = 4;
+        format->nAvgBytesPerSec = format->nSamplesPerSec * 4;
+        format->cbSize = 0;
+        return S_OK;
+    }
 
     return VFW_S_NO_MORE_ITEMS;
 }
