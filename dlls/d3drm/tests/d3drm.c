@@ -2165,7 +2165,7 @@ static void test_Viewport(void)
     hr = IDirect3DRMViewport_SetBack(viewport, 100.0f);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DRMViewport_SetProjection(viewport, D3DRMPROJECT_PERSPECTIVE);
-    todo_wine ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
 
     /* Test all failures together */
     hr = IDirect3DRMViewport_Init(viewport, NULL, frame, rc.left, rc.top, rc.right, rc.bottom);
@@ -2358,7 +2358,7 @@ static void test_Viewport(void)
     hr = IDirect3DRMViewport2_SetBack(viewport2, 100.0f);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DRMViewport2_SetProjection(viewport2, D3DRMPROJECT_PERSPECTIVE);
-    todo_wine ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DRMViewport2_Init(viewport2, NULL, frame3, rc.left, rc.top, rc.right, rc.bottom);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
