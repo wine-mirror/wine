@@ -2387,7 +2387,10 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
     if (WIN_IsCurrentThread( hwnd ))
         return USER_SetWindowPos( &winpos, 0, 0 );
 
-    return SendMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
+    if (flags & SWP_ASYNCWINDOWPOS)
+        return SendNotifyMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
+    else
+        return SendMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
 }
 
 
