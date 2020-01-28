@@ -3790,13 +3790,7 @@ static void test_rounded_rectangle_geometry(void)
 
     set_rounded_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
     hr = ID2D1Factory_CreateRoundedRectangleGeometry(factory, &rect, &geometry);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
-    if (FAILED(hr))
-    {
-        ID2D1Factory_Release(factory);
-        return;
-    }
 
     ID2D1RoundedRectangleGeometry_GetRoundedRect(geometry, &rect2);
     ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
