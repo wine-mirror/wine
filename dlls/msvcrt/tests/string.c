@@ -90,6 +90,7 @@ static int (__cdecl *p_wcslwr_s)(wchar_t*,size_t);
 static errno_t (__cdecl *p_mbsupr_s)(unsigned char *str, size_t numberOfElements);
 static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements);
 static int (__cdecl *p_wctob)(wint_t);
+static wint_t (__cdecl *p_btowc)(int);
 static size_t (__cdecl *p_wcrtomb)(char*, wchar_t, mbstate_t*);
 static int (__cdecl *p_wcrtomb_s)(size_t*, char*, size_t, wchar_t, mbstate_t*);
 static int (__cdecl *p_tolower)(int);
@@ -2880,6 +2881,82 @@ static void test_wctob(void)
     _setmbcp(cp);
 }
 
+static void test_btowc(void)
+{
+    wint_t ret;
+    int cp = _getmbcp();
+
+    if(!p_btowc || !setlocale(LC_ALL, "chinese-traditional")) {
+        win_skip("Skipping btowc tests\n");
+        return;
+    }
+
+    ret = p_btowc(EOF);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    ret = p_btowc(0x61);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    ret = p_btowc(0x81);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    ret = p_btowc(0xe0);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    _setmbcp(1250);
+    ret = p_btowc(0x61);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    ret = p_btowc(0x81);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    ret = p_btowc(0xe0);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    if(!setlocale(LC_CTYPE, ".1250")) {
+        win_skip("No codepage 1250 support\n");
+        setlocale(LC_ALL, "C");
+        _setmbcp(cp);
+        return;
+    }
+
+    ret = p_btowc(0x61);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    ret = p_btowc(0x81);
+    ok(ret == 0x81, "ret = %x\n", ret);
+
+    ret = p_btowc(0xe0);
+    ok(ret == 0x155, "ret = %x\n", ret);
+
+    ret = p_btowc(0x100);
+    ok(ret == 0x00, "ret = %x\n", ret);
+
+    ret = p_btowc(0x1e0);
+    ok(ret == 0x155, "ret = %x\n", ret);
+
+    setlocale(LC_ALL, "C");
+    ret = p_btowc(0x61);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    ret = p_btowc(0x81);
+    ok(ret == 0x81, "ret = %x\n", ret);
+
+    ret = p_btowc(0x9f);
+    ok(ret == 0x9f, "ret = %x\n", ret);
+
+    ret = p_btowc(0xe0);
+    ok(ret == 0xe0, "ret = %x\n", ret);
+
+    ret = p_btowc(0x100);
+    ok(ret == 0x00, "ret = %x\n", ret);
+
+    ret = p_btowc(0x1e0);
+    ok(ret == 0xe0, "ret = %x\n", ret);
+
+    _setmbcp(cp);
+}
+
 static void test_wctomb(void)
 {
     mbstate_t state;
@@ -4127,6 +4204,7 @@ START_TEST(string)
     p_wcslwr_s = (void*)GetProcAddress(hMsvcrt, "_wcslwr_s");
     p_mbsupr_s = (void*)GetProcAddress(hMsvcrt, "_mbsupr_s");
     p_mbslwr_s = (void*)GetProcAddress(hMsvcrt, "_mbslwr_s");
+    p_btowc = (void*)GetProcAddress(hMsvcrt, "btowc");
     p_wctob = (void*)GetProcAddress(hMsvcrt, "wctob");
     p_wcrtomb = (void*)GetProcAddress(hMsvcrt, "wcrtomb");
     p_wcrtomb_s = (void*)GetProcAddress(hMsvcrt, "wcrtomb_s");
@@ -4204,6 +4282,7 @@ START_TEST(string)
     test__mbsupr_s();
     test__mbslwr_s();
     test_wctob();
+    test_btowc();
     test_wctomb();
     test__atodbl();
     test__stricmp();

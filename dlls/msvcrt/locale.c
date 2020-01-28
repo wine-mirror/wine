@@ -786,9 +786,13 @@ MSVCRT_wint_t CDECL MSVCRT_btowc(int c)
     unsigned char letter = c;
     MSVCRT_wchar_t ret;
 
-    if(!MultiByteToWideChar(get_locinfo()->lc_handle[MSVCRT_LC_CTYPE],
-                0, (LPCSTR)&letter, 1, &ret, 1))
-        return 0;
+    if(c == MSVCRT_EOF)
+        return MSVCRT_WEOF;
+    if(!get_locinfo()->lc_codepage)
+        return c & 255;
+    if(!MultiByteToWideChar(get_locinfo()->lc_codepage,
+                MB_ERR_INVALID_CHARS, (LPCSTR)&letter, 1, &ret, 1))
+        return MSVCRT_WEOF;
 
     return ret;
 }
