@@ -178,9 +178,25 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRoundedRectangleGeometry(ID2D
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateEllipseGeometry(ID2D1Factory2 *iface,
         const D2D1_ELLIPSE *ellipse, ID2D1EllipseGeometry **geometry)
 {
-    FIXME("iface %p, ellipse %p, geometry %p stub!\n", iface, ellipse, geometry);
+    struct d2d_geometry *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, ellipse %s, geometry %p.\n", iface, debug_d2d_ellipse(ellipse), geometry);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_ellipse_geometry_init(object, (ID2D1Factory *)iface, ellipse)))
+    {
+        WARN("Failed to initialize ellipse geometry, hr %#x.\n", hr);
+        heap_free(object);
+        return hr;
+    }
+
+    TRACE("Created ellipse geometry %p.\n", object);
+    *geometry = (ID2D1EllipseGeometry *)&object->ID2D1Geometry_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateGeometryGroup(ID2D1Factory2 *iface,
