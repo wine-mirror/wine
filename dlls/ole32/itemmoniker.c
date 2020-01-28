@@ -462,33 +462,31 @@ static HRESULT WINAPI ItemMonikerImpl_BindToObject(IMoniker* iface,
 /******************************************************************************
  *        ItemMoniker_BindToStorage
  ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_BindToStorage(IMoniker* iface,
-                                                    IBindCtx* pbc,
-                                                    IMoniker* pmkToLeft,
-                                                    REFIID riid,
-                                                    VOID** ppvResult)
+static HRESULT WINAPI ItemMonikerImpl_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft, REFIID riid,
+        void **ppvResult)
 {
-    ItemMonikerImpl *This = impl_from_IMoniker(iface);
-    HRESULT   res;
-    IOleItemContainer *poic=0;
+    ItemMonikerImpl *moniker = impl_from_IMoniker(iface);
+    IOleItemContainer *container;
+    HRESULT hr;
 
-    TRACE("(%p,%p,%p,%s,%p)\n",iface,pbc,pmkToLeft,debugstr_guid(riid),ppvResult);
+    TRACE("%p, %p, %p, %s, %p.\n", iface, pbc, pmkToLeft, debugstr_guid(riid), ppvResult);
 
-    *ppvResult=0;
+    *ppvResult = 0;
 
-    if(pmkToLeft==NULL)
+    if (!pmkToLeft)
         return E_INVALIDARG;
 
-    res=IMoniker_BindToObject(pmkToLeft,pbc,NULL,&IID_IOleItemContainer,(void**)&poic);
+    hr = IMoniker_BindToObject(pmkToLeft, pbc, NULL, &IID_IOleItemContainer, (void **)&container);
+    if (SUCCEEDED(hr))
+    {
+        if (FAILED(hr = set_container_lock(container, pbc)))
+            WARN("Failed to lock container, hr %#x.\n", hr);
 
-    if (SUCCEEDED(res)){
-
-        res=IOleItemContainer_GetObjectStorage(poic,This->itemName,pbc,riid,ppvResult);
-
-        IOleItemContainer_Release(poic);
+        hr = IOleItemContainer_GetObjectStorage(container, moniker->itemName, pbc, riid, ppvResult);
+        IOleItemContainer_Release(container);
     }
 
-    return res;
+    return hr;
 }
 
 /******************************************************************************

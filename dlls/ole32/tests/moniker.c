@@ -380,7 +380,7 @@ static HRESULT WINAPI test_item_container_GetObject(IOleItemContainer *iface, LP
 static HRESULT WINAPI test_item_container_GetObjectStorage(IOleItemContainer *iface, LPOLESTR item,
         IBindCtx *pbc, REFIID riid, void **obj)
 {
-    return E_NOTIMPL;
+    return 0x8bee0001;
 }
 
 static HRESULT WINAPI test_item_container_IsRunning(IOleItemContainer *iface, LPOLESTR item)
@@ -2234,6 +2234,9 @@ todo_wine
     /* BindToStorage() */
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_BindToStorage(moniker, bindctx, &container_moniker->IMoniker_iface, &IID_IUnknown, (void **)&unknown);
+    ok(hr == 0x8bee0001, "Unexpected hr %#x.\n", hr);
 
     /* ParseDisplayName() */
     hr = IMoniker_ParseDisplayName(moniker, bindctx, NULL, displayname, &eaten, &moniker2);
