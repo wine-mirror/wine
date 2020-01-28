@@ -1715,6 +1715,7 @@ static void test_Viewport(void)
     IDirect3DRMFrame3 *frame3, *d3drm_frame3, *tmp_frame3;
     IDirect3DRMFrame *frame, *d3drm_frame, *tmp_frame1;
     float field, left, top, right, bottom, front, back;
+    D3DRMPROJECTIONTYPE projection;
     IDirectDrawClipper *clipper;
     HRESULT hr;
     IDirect3DRM *d3drm1;
@@ -2150,6 +2151,8 @@ static void test_Viewport(void)
     ok(front == -1.0f, "Got unexpected front %.8e\n", front);
     back = IDirect3DRMViewport_GetBack(viewport);
     ok(back == -1.0f, "Got unexpected back %.8e\n", back);
+    projection = IDirect3DRMViewport_GetProjection(viewport);
+    todo_wine ok(projection == ~0u, "Got unexpected projection type %#x.\n", projection);
 
     hr = IDirect3DRMViewport_SetCamera(viewport, frame);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
@@ -2161,6 +2164,8 @@ static void test_Viewport(void)
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DRMViewport_SetBack(viewport, 100.0f);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMViewport_SetProjection(viewport, D3DRMPROJECT_PERSPECTIVE);
+    todo_wine ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
 
     /* Test all failures together */
     hr = IDirect3DRMViewport_Init(viewport, NULL, frame, rc.left, rc.top, rc.right, rc.bottom);
@@ -2236,6 +2241,8 @@ static void test_Viewport(void)
     ok(front == 1.0f, "Got unexpected front %.8e.\n", front);
     back = IDirect3DRMViewport_GetBack(viewport);
     ok(back == 100.0f, "Got unexpected back %.8e.\n", back);
+    projection = IDirect3DRMViewport_GetProjection(viewport);
+    ok(projection == D3DRMPROJECT_PERSPECTIVE, "Got unexpected projection type %#x.\n", projection);
 
     hr = IDirect3DRMViewport_SetField(viewport, 1.0f);
     ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
@@ -2266,6 +2273,10 @@ static void test_Viewport(void)
     ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
     back = IDirect3DRMViewport_GetBack(viewport);
     ok(back == 200.0f, "Got unexpected back %.8e.\n", back);
+    hr = IDirect3DRMViewport_SetProjection(viewport, D3DRMPROJECT_ORTHOGRAPHIC);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    projection = IDirect3DRMViewport_GetProjection(viewport);
+    ok(projection == D3DRMPROJECT_ORTHOGRAPHIC, "Got unexpected projection type %#x.\n", projection);
 
     hr = IDirect3DRMViewport_Init(viewport, device1, frame, rc.left, rc.top, rc.right, rc.bottom);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
@@ -2333,6 +2344,8 @@ static void test_Viewport(void)
     ok(front == -1.0f, "Got unexpected front %.8e\n", front);
     back = IDirect3DRMViewport2_GetBack(viewport2);
     ok(back == -1.0f, "Got unexpected back %.8e\n", back);
+    projection = IDirect3DRMViewport2_GetProjection(viewport2);
+    todo_wine ok(projection == ~0u, "Got unexpected projection type %#x.\n", projection);
 
     hr = IDirect3DRMViewport2_SetCamera(viewport2, frame3);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
@@ -2344,6 +2357,8 @@ static void test_Viewport(void)
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DRMViewport2_SetBack(viewport2, 100.0f);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMViewport2_SetProjection(viewport2, D3DRMPROJECT_PERSPECTIVE);
+    todo_wine ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DRMViewport2_Init(viewport2, NULL, frame3, rc.left, rc.top, rc.right, rc.bottom);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
@@ -2412,6 +2427,8 @@ static void test_Viewport(void)
     ok(front == 1.0f, "Got unexpected front %.8e.\n", front);
     back = IDirect3DRMViewport2_GetBack(viewport2);
     ok(back == 100.0f, "Got unexpected back %.8e.\n", back);
+    projection = IDirect3DRMViewport2_GetProjection(viewport2);
+    ok(projection == D3DRMPROJECT_PERSPECTIVE, "Got unexpected projection type %#x.\n", projection);
 
     hr = IDirect3DRMViewport2_SetField(viewport2, 1.0f);
     ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
@@ -2442,6 +2459,10 @@ static void test_Viewport(void)
     ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
     back = IDirect3DRMViewport2_GetBack(viewport2);
     ok(back == 200.0f, "Got unexpected back %.8e.\n", back);
+    hr = IDirect3DRMViewport2_SetProjection(viewport2, D3DRMPROJECT_ORTHOGRAPHIC);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    projection = IDirect3DRMViewport2_GetProjection(viewport2);
+    ok(projection == D3DRMPROJECT_ORTHOGRAPHIC, "Got unexpected projection type %#x.\n", projection);
 
     hr = IDirect3DRMViewport2_Init(viewport2, device3, frame3, rc.left, rc.top, rc.right, rc.bottom);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
