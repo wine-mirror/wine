@@ -648,53 +648,51 @@ static HRESULT WINAPI ItemMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
 /******************************************************************************
  *        ItemMoniker_IsRunning
  ******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_IsRunning(IMoniker* iface,
-                                                IBindCtx* pbc,
-                                                IMoniker* pmkToLeft,
-                                                IMoniker* pmkNewlyRunning)
+static HRESULT WINAPI ItemMonikerImpl_IsRunning(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
+        IMoniker *pmkNewlyRunning)
 {
-    ItemMonikerImpl *This = impl_from_IMoniker(iface);
+    ItemMonikerImpl *moniker = impl_from_IMoniker(iface);
+    IOleItemContainer *container;
     IRunningObjectTable* rot;
-    HRESULT res;
-    IOleItemContainer *poic=0;
+    HRESULT hr;
 
     TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pmkNewlyRunning);
 
-    /* If pmkToLeft is NULL, this method returns TRUE if pmkNewlyRunning is non-NULL and is equal to this */
-    /* moniker. Otherwise, the method checks the ROT to see whether this moniker is running.              */
-    if (pmkToLeft==NULL)
-        if ((pmkNewlyRunning!=NULL)&&(IMoniker_IsEqual(pmkNewlyRunning,iface)==S_OK))
-            return S_OK;
-        else {
-            if (pbc==NULL)
-                return E_INVALIDARG;
+    if (!pbc)
+        return E_INVALIDARG;
 
-            res=IBindCtx_GetRunningObjectTable(pbc,&rot);
-
-            if (FAILED(res))
-                return res;
-
-            res = IRunningObjectTable_IsRunning(rot,iface);
-
-            IRunningObjectTable_Release(rot);
+    if (!pmkToLeft)
+    {
+        if (pmkNewlyRunning)
+        {
+            return IMoniker_IsEqual(iface, pmkNewlyRunning);
         }
-    else{
+        else
+        {
+            hr = IBindCtx_GetRunningObjectTable(pbc, &rot);
+            if (SUCCEEDED(hr))
+            {
+                hr = IRunningObjectTable_IsRunning(rot, iface);
+                IRunningObjectTable_Release(rot);
+            }
+        }
+    }
+    else
+    {
+        /* Container itself must be running too. */
+        hr = IMoniker_IsRunning(pmkToLeft, pbc, NULL, NULL);
+        if (hr != S_OK)
+            return hr;
 
-        /* If pmkToLeft is non-NULL, the method calls IMoniker::BindToObject on the pmkToLeft parameter,         */
-        /* requesting an IOleItemContainer interface pointer. The method then calls IOleItemContainer::IsRunning,*/
-        /* passing the string contained within this moniker. */
-
-        res=IMoniker_BindToObject(pmkToLeft,pbc,NULL,&IID_IOleItemContainer,(void**)&poic);
-
-        if (SUCCEEDED(res)){
-
-            res=IOleItemContainer_IsRunning(poic,This->itemName);
-
-            IOleItemContainer_Release(poic);
+        hr = IMoniker_BindToObject(pmkToLeft, pbc, NULL, &IID_IOleItemContainer, (void **)&container);
+        if (SUCCEEDED(hr))
+        {
+            hr = IOleItemContainer_IsRunning(container, moniker->itemName);
+            IOleItemContainer_Release(container);
         }
     }
 
-    return res;
+    return hr;
 }
 
 /******************************************************************************

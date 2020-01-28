@@ -385,6 +385,7 @@ static HRESULT WINAPI test_item_container_GetObjectStorage(IOleItemContainer *if
 
 static HRESULT WINAPI test_item_container_IsRunning(IOleItemContainer *iface, LPOLESTR item)
 {
+    ok(0, "Unexpected call.\n");
     return E_NOTIMPL;
 }
 
@@ -569,7 +570,7 @@ Moniker_IsRunning(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft,
                           IMoniker* pmkNewlyRunning)
 {
     CHECK_EXPECTED_METHOD("Moniker_IsRunning");
-    return E_NOTIMPL;
+    return 0x8beef000;
 }
 
 static HRESULT WINAPI
@@ -1999,6 +2000,11 @@ static void test_item_moniker(void)
         { L"%", L"A", 0x41 },
         { L"%", L"a", 0x41 },
     };
+    static const char *methods_isrunning[] =
+    {
+        "Moniker_IsRunning",
+        NULL
+    };
     IMoniker *moniker, *moniker2, *reduced;
     HRESULT hr;
     DWORD moniker_type, i;
@@ -2012,10 +2018,12 @@ static void test_item_moniker(void)
     struct test_moniker *container_moniker;
     WCHAR displayname[16] = L"display name";
     IEnumMoniker *enummoniker;
+    IRunningObjectTable *rot;
     WCHAR *display_name;
     BIND_OPTS bind_opts;
     LARGE_INTEGER pos;
     IStream *stream;
+    DWORD cookie;
 
     hr = CreateItemMoniker(NULL, wszObjectName, &moniker);
     ok(hr == S_OK, "Failed to create item moniker, hr %#x.\n", hr);
@@ -2139,18 +2147,64 @@ todo_wine
         "dwMkSys != MKSYS_ITEMMONIKER, instead was 0x%08x\n",
         moniker_type);
 
+    container_moniker = create_test_moniker();
+
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "IMoniker_IsRunning should return E_INVALIDARG, not 0x%08x\n", hr);
 
+    hr = IMoniker_IsRunning(moniker, NULL, &container_moniker->IMoniker_iface, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
     ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08x\n", hr);
+
+    hr = CreateItemMoniker(wszDelimiter, wszObjectName, &moniker2);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMoniker_Release(moniker2);
+
+    /* Different moniker as newly running. */
+    hr = CreateItemMoniker(wszDelimiter, L"Item123", &moniker2);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, moniker2);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IBindCtx_GetRunningObjectTable(bindctx, &rot);
+    ok(hr == S_OK, "Failed to get ROT, hr %#x.\n", hr);
+
+    hr = IRunningObjectTable_Register(rot, ROTFLAGS_REGISTRATIONKEEPSALIVE, (IUnknown *)moniker, moniker, &cookie);
+    ok(hr == S_OK, "Failed to register, hr %#x.\n", hr);
+
+    hr = IRunningObjectTable_IsRunning(rot, moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, moniker2);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IRunningObjectTable_Revoke(rot, cookie);
+    ok(hr == S_OK, "Failed to revoke registration, hr %#x.\n", hr);
+
+    IRunningObjectTable_Release(rot);
+
+    expected_method_list = methods_isrunning;
+    hr = IMoniker_IsRunning(moniker, bindctx, &container_moniker->IMoniker_iface, NULL);
+    ok(hr == 0x8beef000, "Unexpected hr %#x.\n", hr);
+
+    expected_method_list = methods_isrunning;
+    hr = IMoniker_IsRunning(moniker, bindctx, &container_moniker->IMoniker_iface, moniker2);
+    ok(hr == 0x8beef000, "Unexpected hr %#x.\n", hr);
+
+    IMoniker_Release(moniker2);
 
     /* BindToObject() */
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
     ok(hr == E_INVALIDARG, "IMoniker_BindToStorage should return E_INVALIDARG, not 0x%08x\n", hr);
-
-    container_moniker = create_test_moniker();
 
     hr = IMoniker_BindToObject(moniker, bindctx, &container_moniker->IMoniker_iface, &IID_IUnknown, (void **)&unknown);
     ok(hr == (0x8bee0000 | BINDSPEED_INDEFINITE), "Unexpected hr %#x.\n", hr);
@@ -2274,6 +2328,9 @@ todo_wine
         expected_item_moniker_saved_data6, sizeof(expected_item_moniker_saved_data6),
         expected_item_moniker_comparison_data6, sizeof(expected_item_moniker_comparison_data6),
         34, L"");
+
+    hr = CoCreateInstance(&CLSID_ItemMoniker, (IUnknown *)moniker, CLSCTX_SERVER, &IID_IMoniker, (void **)&moniker2);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
 
     IMoniker_Release(moniker);
 }
@@ -2622,8 +2679,7 @@ todo_wine
     ok(hr == E_INVALIDARG, "IMoniker_IsRunning should return E_INVALIDARG, not 0x%08x\n", hr);
 
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
-    todo_wine
-    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08x\n", hr);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
     ok(hr == MK_E_NOTBINDABLE, "IMoniker_GetTimeOfLastChange should return MK_E_NOTBINDABLE, not 0x%08x\n", hr);
