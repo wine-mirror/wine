@@ -2625,7 +2625,7 @@ todo_wine
 
 static void test_pointer_moniker(void)
 {
-    IMoniker *moniker, *inverse;
+    IMoniker *moniker, *moniker2, *prefix, *inverse;
     IEnumMoniker *enummoniker;
     HRESULT hr;
     DWORD moniker_type;
@@ -2746,6 +2746,45 @@ todo_wine
     hr = IMoniker_Enum(moniker, FALSE, &enummoniker);
 todo_wine
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    IMoniker_Release(moniker);
+
+    /* CommonPrefixWith() */
+    hr = CreatePointerMoniker((IUnknown *)&Test_ClassFactory, &moniker);
+    ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
+
+    hr = CreatePointerMoniker((IUnknown *)&Test_ClassFactory, &moniker2);
+    ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker, moniker2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_CommonPrefixWith(moniker, NULL, &prefix);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &prefix);
+    ok(hr == MK_S_US, "Unexpected hr %#x.\n", hr);
+    ok(prefix == moniker, "Unexpected pointer.\n");
+    IMoniker_Release(prefix);
+
+    IMoniker_Release(moniker2);
+
+    hr = CreatePointerMoniker((IUnknown *)moniker, &moniker2);
+    ok(hr == S_OK, "Failed to create moniker, hr %#x.\n", hr);
+
+    hr = IMoniker_IsEqual(moniker, moniker2);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_CommonPrefixWith(moniker, moniker2, &prefix);
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+
+    IMoniker_Release(moniker2);
 
     IMoniker_Release(moniker);
 }

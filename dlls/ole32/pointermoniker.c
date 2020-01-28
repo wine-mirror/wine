@@ -48,9 +48,10 @@ typedef struct PointerMonikerImpl{
 
 static inline PointerMonikerImpl *impl_from_IMoniker(IMoniker *iface)
 {
-return CONTAINING_RECORD(iface, PointerMonikerImpl, IMoniker_iface);
+    return CONTAINING_RECORD(iface, PointerMonikerImpl, IMoniker_iface);
 }
 
+static PointerMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface);
 static HRESULT WINAPI
 PointerMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
 {
@@ -58,7 +59,6 @@ PointerMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
 
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
-    /* Perform a sanity check on the parameters.*/
     if ( (This==0) || (ppvObject==0) )
 	return E_INVALIDARG;
 
@@ -337,26 +337,20 @@ PointerMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoni
 /******************************************************************************
  *        PointerMoniker_IsEqual
  ******************************************************************************/
-static HRESULT WINAPI
-PointerMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
+static HRESULT WINAPI PointerMonikerImpl_IsEqual(IMoniker *iface, IMoniker *other)
 {
-    PointerMonikerImpl *This = impl_from_IMoniker(iface);
-    DWORD mkSys;
+    PointerMonikerImpl *moniker = impl_from_IMoniker(iface), *other_moniker;
 
-    TRACE("(%p,%p)\n",iface,pmkOtherMoniker);
+    TRACE("%p, %p.\n", iface, other);
 
-    if (pmkOtherMoniker==NULL)
+    if (!other)
+        return E_INVALIDARG;
+
+    other_moniker = unsafe_impl_from_IMoniker(other);
+    if (!other_moniker)
         return S_FALSE;
 
-    IMoniker_IsSystemMoniker(pmkOtherMoniker,&mkSys);
-
-    if (mkSys==MKSYS_POINTERMONIKER)
-    {
-        PointerMonikerImpl *pOtherMoniker = impl_from_IMoniker(pmkOtherMoniker);
-        return This->pObject == pOtherMoniker->pObject ? S_OK : S_FALSE;
-    }
-    else
-        return S_FALSE;
+    return moniker->pObject == other_moniker->pObject ? S_OK : S_FALSE;
 }
 
 /******************************************************************************
@@ -412,18 +406,20 @@ PointerMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk)
 /******************************************************************************
  *        PointerMoniker_CommonPrefixWith
  ******************************************************************************/
-static HRESULT WINAPI
-PointerMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** ppmkPrefix)
+static HRESULT WINAPI PointerMonikerImpl_CommonPrefixWith(IMoniker *iface, IMoniker *other, IMoniker **prefix)
 {
-    TRACE("(%p, %p)\n", pmkOther, ppmkPrefix);
+    TRACE("%p, %p, %p.\n", iface, other, prefix);
 
-    *ppmkPrefix = NULL;
+    if (!prefix || !other)
+        return E_INVALIDARG;
 
-    if (PointerMonikerImpl_IsEqual(iface, pmkOther))
+    *prefix = NULL;
+
+    if (PointerMonikerImpl_IsEqual(iface, other) == S_OK)
     {
         IMoniker_AddRef(iface);
 
-        *ppmkPrefix=iface;
+        *prefix = iface;
 
         return MK_S_US;
     }
@@ -538,6 +534,13 @@ static const IMonikerVtbl VT_PointerMonikerImpl =
     PointerMonikerImpl_ParseDisplayName,
     PointerMonikerImpl_IsSystemMoniker
 };
+
+static PointerMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface)
+{
+    if (iface->lpVtbl != &VT_PointerMonikerImpl)
+        return NULL;
+    return CONTAINING_RECORD(iface, PointerMonikerImpl, IMoniker_iface);
+}
 
 /******************************************************************************
  *         PointerMoniker_Construct (local function)
