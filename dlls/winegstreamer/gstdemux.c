@@ -85,10 +85,7 @@ struct gstdemux_source
     struct strmbase_source pin;
     IQualityControl IQualityControl_iface;
 
-    GstElement *flipfilter;
-    GstPad *flip_sink, *flip_src;
-    GstPad *their_src;
-    GstPad *my_sink;
+    GstPad *their_src, *post_sink, *post_src, *my_sink;
     AM_MEDIA_TYPE mt;
     HANDLE caps_event;
     GstSegment *segment;
@@ -1004,11 +1001,10 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 
         if (pin->their_src == pad)
         {
-            if(pin->flipfilter)
-                gst_pad_unlink(pin->their_src, pin->flip_sink);
+            if (pin->post_sink)
+                gst_pad_unlink(pin->their_src, pin->post_sink);
             else
                 gst_pad_unlink(pin->their_src, pin->my_sink);
-
             gst_object_unref(pin->their_src);
             pin->their_src = NULL;
             return;
@@ -1052,85 +1048,91 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
 
     if (!strcmp(typename, "video/x-raw"))
     {
-        GstElement *vconv;
+        GstElement *vconv, *flip;
 
-        TRACE("setting up videoflip filter for pin %p, my_sink: %p, their_src: %p\n",
-                pin, pin->my_sink, pad);
-
-        /* gstreamer outputs video top-down, but dshow expects bottom-up, so
-         * make new transform filter to invert video */
-        vconv = gst_element_factory_make("videoconvert", NULL);
-        if(!vconv){
-            ERR("Missing videoconvert filter?\n");
-            ret = -1;
-            goto exit;
+        /* decodebin considers many YUV formats to be "raw", but some quartz
+         * filters can't handle those. Also, videoflip can't handle all "raw"
+         * formats either. Add a videoconvert to swap color spaces. */
+        if (!(vconv = gst_element_factory_make("videoconvert", NULL)))
+        {
+            ERR("Failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
+                    8 * (int)sizeof(void *));
+            return;
         }
 
-        pin->flipfilter = gst_element_factory_make("videoflip", NULL);
-        if(!pin->flipfilter){
-            ERR("Missing videoflip filter?\n");
-            ret = -1;
-            goto exit;
+        /* GStreamer outputs video top-down, but DirectShow expects bottom-up. */
+        if (!(flip = gst_element_factory_make("videoflip", NULL)))
+        {
+            ERR("Failed to create videoflip, are %u-bit GStreamer \"good\" plugins installed?\n",
+                    8 * (int)sizeof(void *));
+            return;
         }
 
-        gst_util_set_object_arg(G_OBJECT(pin->flipfilter), "method", "vertical-flip");
+        gst_util_set_object_arg(G_OBJECT(flip), "method", "vertical-flip");
 
         gst_bin_add(GST_BIN(This->container), vconv); /* bin takes ownership */
         gst_element_sync_state_with_parent(vconv);
-        gst_bin_add(GST_BIN(This->container), pin->flipfilter); /* bin takes ownership */
-        gst_element_sync_state_with_parent(pin->flipfilter);
+        gst_bin_add(GST_BIN(This->container), flip); /* bin takes ownership */
+        gst_element_sync_state_with_parent(flip);
 
-        gst_element_link (vconv, pin->flipfilter);
+        gst_element_link(vconv, flip);
 
-        pin->flip_sink = gst_element_get_static_pad(vconv, "sink");
-        if(!pin->flip_sink){
-            WARN("Couldn't find sink on flip filter\n");
-            pin->flipfilter = NULL;
-            ret = -1;
-            goto exit;
+        pin->post_sink = gst_element_get_static_pad(vconv, "sink");
+        pin->post_src = gst_element_get_static_pad(flip, "src");
+    }
+    else if (!strcmp(typename, "audio/x-raw"))
+    {
+        GstElement *convert;
+
+        /* Currently our dsound can't handle 64-bit formats or all
+         * surround-sound configurations. Native dsound can't always handle
+         * 64-bit formats either. Add an audioconvert to allow changing bit
+         * depth and channel count. */
+        if (!(convert = gst_element_factory_make("audioconvert", NULL)))
+        {
+            ERR("Failed to create audioconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
+                    8 * (int)sizeof(void *));
+            return;
         }
 
-        ret = gst_pad_link(pad, pin->flip_sink);
-        if(ret < 0){
-            WARN("gst_pad_link failed: %d\n", ret);
-            gst_object_unref(pin->flip_sink);
-            pin->flip_sink = NULL;
-            pin->flipfilter = NULL;
-            goto exit;
+        gst_bin_add(GST_BIN(This->container), convert);
+        gst_element_sync_state_with_parent(convert);
+
+        pin->post_sink = gst_element_get_static_pad(convert, "sink");
+        pin->post_src = gst_element_get_static_pad(convert, "src");
+    }
+
+    if (pin->post_sink)
+    {
+        if ((ret = gst_pad_link(pad, pin->post_sink)) < 0)
+        {
+            ERR("Failed to link decodebin source pad to post-processing elements, error %s.\n",
+                    gst_pad_link_get_name(ret));
+            gst_object_unref(pin->post_sink);
+            pin->post_sink = NULL;
+            return;
         }
 
-        pin->flip_src = gst_element_get_static_pad(pin->flipfilter, "src");
-        if(!pin->flip_src){
-            WARN("Couldn't find src on flip filter\n");
-            gst_object_unref(pin->flip_sink);
-            pin->flip_sink = NULL;
-            pin->flipfilter = NULL;
-            ret = -1;
-            goto exit;
+        if ((ret = gst_pad_link(pin->post_src, pin->my_sink)) < 0)
+        {
+            ERR("Failed to link post-processing elements to our sink pad, error %s.\n",
+                    gst_pad_link_get_name(ret));
+            gst_object_unref(pin->post_src);
+            pin->post_src = NULL;
+            gst_object_unref(pin->post_sink);
+            pin->post_sink = NULL;
+            return;
         }
-
-        ret = gst_pad_link(pin->flip_src, pin->my_sink);
-        if(ret < 0){
-            WARN("gst_pad_link failed: %d\n", ret);
-            gst_object_unref(pin->flip_src);
-            pin->flip_src = NULL;
-            gst_object_unref(pin->flip_sink);
-            pin->flip_sink = NULL;
-            pin->flipfilter = NULL;
-            goto exit;
-        }
-    } else
-        ret = gst_pad_link(pad, pin->my_sink);
+    }
+    else if ((ret = gst_pad_link(pad, pin->my_sink)) < 0)
+    {
+        ERR("Failed to link decodebin source pad to our sink pad, error %s.\n",
+                gst_pad_link_get_name(ret));
+        return;
+    }
 
     gst_pad_set_active(pin->my_sink, 1);
-
-exit:
-    TRACE("Linking: %i\n", ret);
-
-    if (ret >= 0) {
-        pin->their_src = pad;
-        gst_object_ref(pin->their_src);
-    }
+    gst_object_ref(pin->their_src = pad);
 }
 
 static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
@@ -1156,8 +1158,8 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
         if (!pin->their_src) {
             gst_segment_init(pin->segment, GST_FORMAT_TIME);
 
-            if (pin->flipfilter)
-                ret = gst_pad_link(pad, pin->flip_sink);
+            if (pin->post_sink)
+                ret = gst_pad_link(pad, pin->post_sink);
             else
                 ret = gst_pad_link(pad, pin->my_sink);
 
@@ -2136,14 +2138,13 @@ static void free_source_pin(struct gstdemux_source *pin)
 
     if (pin->their_src)
     {
-        if (pin->flipfilter)
+        if (pin->post_sink)
         {
-            gst_pad_unlink(pin->their_src, pin->flip_sink);
-            gst_pad_unlink(pin->flip_src, pin->my_sink);
-            gst_object_unref(pin->flip_src);
-            gst_object_unref(pin->flip_sink);
-            pin->flipfilter = NULL;
-            pin->flip_src = pin->flip_sink = NULL;
+            gst_pad_unlink(pin->their_src, pin->post_sink);
+            gst_pad_unlink(pin->post_src, pin->my_sink);
+            gst_object_unref(pin->post_src);
+            gst_object_unref(pin->post_sink);
+            pin->post_src = pin->post_sink = NULL;
         }
         else
             gst_pad_unlink(pin->their_src, pin->my_sink);
