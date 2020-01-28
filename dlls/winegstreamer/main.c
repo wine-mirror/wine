@@ -40,8 +40,6 @@ static const WCHAR wGstreamer_Splitter[] =
 {'G','S','t','r','e','a','m','e','r',' ','s','p','l','i','t','t','e','r',' ','f','i','l','t','e','r',0};
 static const WCHAR wGstreamer_Mp3[] =
 {'G','S','t','r','e','a','m','e','r',' ','M','p','3',' ','f','i','l','t','e','r',0};
-static const WCHAR wGstreamer_AudioConvert[] =
-{'G','S','t','r','e','a','m','e','r',' ','A','u','d','i','o','C','o','n','v','e','r','t',' ','f','i','l','t','e','r',0};
 static const WCHAR wave_parserW[] =
 {'W','a','v','e',' ','P','a','r','s','e','r',0};
 static const WCHAR avi_splitterW[] =
@@ -120,32 +118,6 @@ AMOVIESETUP_FILTER const amfMp3 =
     MERIT_NORMAL,
     2,
     amfMp3Pin
-};
-
-AMOVIESETUP_PIN amfAudioConvertPin[] =
-{   {   wNull,
-        FALSE, FALSE, FALSE, FALSE,
-        &GUID_NULL,
-        NULL,
-        1,
-        amfMTaudio
-    },
-    {
-        wNull,
-        FALSE, TRUE, FALSE, FALSE,
-        &GUID_NULL,
-        NULL,
-        1,
-        amfMTaudio
-    },
-};
-
-AMOVIESETUP_FILTER const amfAudioConvert =
-{   &CLSID_Gstreamer_AudioConvert,
-    wGstreamer_AudioConvert,
-    MERIT_UNLIKELY,
-    2,
-    amfAudioConvertPin
 };
 
 static const AMOVIESETUP_MEDIATYPE wave_parser_sink_type_data[] =
@@ -294,13 +266,6 @@ FactoryTemplate const g_Templates[] = {
         Gstreamer_Mp3_create,
         NULL,
         &amfMp3,
-    },
-    {
-        wGstreamer_AudioConvert,
-        &CLSID_Gstreamer_AudioConvert,
-        Gstreamer_AudioConvert_create,
-        NULL,
-        &amfAudioConvert,
     },
     {
         wave_parserW,
