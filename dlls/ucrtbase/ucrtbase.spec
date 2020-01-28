@@ -1856,8 +1856,8 @@
 @ cdecl _putwch_nolock(long)
 @ cdecl _putws(wstr) MSVCRT__putws
 @ stub _query_app_type
-@ stub _query_new_handler
-@ stub _query_new_mode
+@ cdecl _query_new_handler() MSVCRT__query_new_handler
+@ cdecl _query_new_mode() MSVCRT__query_new_mode
 @ cdecl _read(long ptr long) MSVCRT__read
 @ cdecl _realloc_base(ptr long)
 @ cdecl _recalloc(ptr long long)
