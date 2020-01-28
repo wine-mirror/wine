@@ -37,6 +37,7 @@ struct connection
     LONG              refs;
     ObjectStateEnum   state;
     LONG              timeout;
+    WCHAR            *datasource;
 };
 
 static inline struct connection *impl_from_Connection( _Connection *iface )
@@ -62,6 +63,7 @@ static ULONG WINAPI connection_Release( _Connection *iface )
     if (!refs)
     {
         TRACE( "destroying %p\n", connection );
+        heap_free( connection->datasource );
         heap_free( connection );
     }
     return refs;
@@ -125,14 +127,27 @@ static HRESULT WINAPI connection_get_Properties( _Connection *iface, Properties 
 
 static HRESULT WINAPI connection_get_ConnectionString( _Connection *iface, BSTR *str )
 {
-    FIXME( "%p, %p\n", iface, str );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    BSTR source = NULL;
+
+    TRACE( "%p, %p\n", connection, str );
+
+    if (connection->datasource && !(source = SysAllocString( connection->datasource ))) return E_OUTOFMEMORY;
+    *str = source;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_put_ConnectionString( _Connection *iface, BSTR str )
 {
-    FIXME( "%p, %s\n", iface, debugstr_w(str) );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    WCHAR *source = NULL;
+
+    TRACE( "%p, %s\n", connection, debugstr_w( !wcsstr( str, L"Password" ) ? L"<hidden>" : str ) );
+
+    if (str && !(source = strdupW( str ))) return E_OUTOFMEMORY;
+    heap_free( connection->datasource );
+    connection->datasource = source;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_get_CommandTimeout( _Connection *iface, LONG *timeout )
@@ -392,6 +407,7 @@ HRESULT Connection_create( void **obj )
     connection->refs = 1;
     connection->state = adStateClosed;
     connection->timeout = 30;
+    connection->datasource = NULL;
 
     *obj = &connection->Connection_iface;
     TRACE( "returning iface %p\n", *obj );
