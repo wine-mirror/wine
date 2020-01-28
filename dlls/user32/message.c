@@ -2829,6 +2829,9 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             break;
         case MSG_NOTIFY:
             info.flags = ISMEX_NOTIFY;
+            if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
+                                 &info.msg.lParam, &buffer, size ))
+                continue;
             break;
         case MSG_CALLBACK:
             info.flags = ISMEX_CALLBACK;
@@ -3128,7 +3131,7 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
     }
 
     memset( &data, 0, sizeof(data) );
-    if (info->type == MSG_OTHER_PROCESS)
+    if (info->type == MSG_OTHER_PROCESS || info->type == MSG_NOTIFY)
     {
         *reply_size = pack_message( info->hwnd, info->msg, info->wparam, info->lparam, &data );
         if (data.count == -1)
