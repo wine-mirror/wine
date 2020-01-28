@@ -169,6 +169,7 @@ static gboolean amt_from_gst_caps_audio_raw(const GstCaps *caps, AM_MEDIA_TYPE *
         wfe->dwChannelMask = 0;
     }
     if (GST_AUDIO_INFO_IS_FLOAT(&ainfo)) {
+        amt->subtype = MEDIASUBTYPE_IEEE_FLOAT;
         wfe->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
         wfx->wBitsPerSample = wfe->Samples.wValidBitsPerSample = 32;
     } else {
