@@ -1750,6 +1750,12 @@ static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, LPCSCROLLINFO info, BOOL b
                 action |= SA_SSI_SHOW;
         }
 
+        if (nBar == SB_CTL && bRedraw && IsWindowVisible(hwnd) &&
+               (new_flags == ESB_ENABLE_BOTH || new_flags == ESB_DISABLE_BOTH))
+        {
+            EnableWindow(hwnd, new_flags == ESB_ENABLE_BOTH);
+        }
+
         if (infoPtr->flags != new_flags) /* check arrow flags */
         {
             infoPtr->flags = new_flags;

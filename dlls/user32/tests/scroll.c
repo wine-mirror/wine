@@ -634,7 +634,6 @@ static void test_SetScrollInfo(void)
     si.nPage = 50;
     SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
     ret = IsWindowEnabled(hScroll);
-todo_wine
     ok(ret, "Unexpected enabled state.\n");
 
     si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
@@ -657,7 +656,6 @@ todo_wine
     si.nPage = 100;
     SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
     ret = IsWindowEnabled(hScroll);
-todo_wine
     ok(!ret, "Unexpected enabled state.\n");
 
     EnableScrollBar(hScroll, SB_CTL, ESB_DISABLE_BOTH);
@@ -671,7 +669,6 @@ todo_wine
     si.nPage = 41;
     SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
     ret = IsWindowEnabled(hScroll);
-todo_wine
     ok(ret, "Unexpected enabled state.\n");
 
     DestroyWindow(hScroll);
