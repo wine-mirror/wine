@@ -667,6 +667,7 @@ static void test_Connection(void)
     IRunnableObject *runtime;
     ISupportErrorInfo *errorinfo;
     LONG state, timeout;
+    BSTR str, str2;
 
     hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER, &IID__Connection, (void**)&connection);
     ok( hr == S_OK, "got %08x\n", hr );
@@ -702,6 +703,35 @@ if (0)   /* Crashes on windows */
     ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
     ok(timeout == 300, "Unexpected timeout value %d\n", timeout);
 
+    str = (BSTR)0xdeadbeef;
+    hr = _Connection_get_ConnectionString(connection, &str);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    ok(str == NULL, "got %p\n", str);
+
+    str = SysAllocString(L"Provider=MSDASQL.1;Persist Security Info=False;Data Source=wine_test");
+    hr = _Connection_put_ConnectionString(connection, str);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+
+if (0) /* Crashes on windows */
+{
+    hr = _Connection_get_ConnectionString(connection, NULL);
+    ok(hr == E_POINTER, "Failed, hr 0x%08x\n", hr);
+}
+
+    str2 = NULL;
+    hr = _Connection_get_ConnectionString(connection, &str2);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    ok(!wcscmp(str, str2), "wrong string %s\n", wine_dbgstr_w(str2));
+    SysFreeString(str);
+    SysFreeString(str2);
+
+    hr = _Connection_put_ConnectionString(connection, NULL);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+
+    str = (BSTR)0xdeadbeef;
+    hr = _Connection_get_ConnectionString(connection, &str);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    ok(str == NULL, "got %p\n", str);
     _Connection_Release(connection);
 }
 
