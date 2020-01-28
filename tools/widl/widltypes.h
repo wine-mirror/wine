@@ -538,6 +538,9 @@ struct _typelib_t {
     const attr_list_t *attrs;
     struct list importlibs;
     statement_list_t *stmts;
+
+    type_t **reg_ifaces;
+    unsigned int reg_iface_count;
 };
 
 struct _user_type_t {

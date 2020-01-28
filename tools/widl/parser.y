@@ -1792,6 +1792,7 @@ static type_t *make_safearray(type_t *type)
 static typelib_t *make_library(const char *name, const attr_list_t *attrs)
 {
     typelib_t *typelib = xmalloc(sizeof(*typelib));
+    memset(typelib, 0, sizeof(*typelib));
     typelib->name = xstrdup(name);
     typelib->attrs = attrs;
     list_init( &typelib->importlibs );
