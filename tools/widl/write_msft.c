@@ -2068,6 +2068,10 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
             if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
                 idx++;
     }
+
+        typelib->typelib->reg_ifaces = xrealloc(typelib->typelib->reg_ifaces,
+                (typelib->typelib->reg_iface_count + 1) * sizeof(dispinterface));
+    typelib->typelib->reg_ifaces[typelib->typelib->reg_iface_count++] = dispinterface;
 }
 
 static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
@@ -2141,6 +2145,13 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
         var_t *func = stmt_func->u.var;
         if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
             idx++;
+    }
+
+    if (is_attr(interface->attrs, ATTR_OLEAUTOMATION) || is_attr(interface->attrs, ATTR_DUAL))
+    {
+        typelib->typelib->reg_ifaces = xrealloc(typelib->typelib->reg_ifaces,
+                (typelib->typelib->reg_iface_count + 1) * sizeof(interface));
+        typelib->typelib->reg_ifaces[typelib->typelib->reg_iface_count++] = interface;
     }
 }
 

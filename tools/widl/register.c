@@ -119,8 +119,6 @@ static void write_typelib_interface( const type_t *iface, const typelib_t *typel
 
     if (!uuid) return;
     if (!is_object( iface )) return;
-    if (!is_attr( iface->attrs, ATTR_OLEAUTOMATION ) && !is_attr( iface->attrs, ATTR_DISPINTERFACE ))
-        return;
     put_str( indent, "'%s' = s '%s'\n", format_uuid( uuid ), iface->name );
     put_str( indent, "{\n" );
     indent++;
@@ -137,13 +135,10 @@ static void write_typelib_interface( const type_t *iface, const typelib_t *typel
 
 static void write_typelib_interfaces( const typelib_t *typelib )
 {
-    const statement_t *stmt;
+    unsigned int i;
 
-    if (typelib->stmts) LIST_FOR_EACH_ENTRY( stmt, typelib->stmts, const statement_t, entry )
-    {
-        if (stmt->type == STMT_TYPE && type_get_type( stmt->u.type ) == TYPE_INTERFACE)
-            write_typelib_interface( stmt->u.type, typelib );
-    }
+    for (i = 0; i < typelib->reg_iface_count; ++i)
+        write_typelib_interface( typelib->reg_ifaces[i], typelib );
 }
 
 static int write_coclass( const type_t *class, const typelib_t *typelib )
