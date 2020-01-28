@@ -137,8 +137,6 @@ static HRESULT set_container_lock(IOleItemContainer *container, IBindCtx *pbc)
     return hr;
 }
 
-static HRESULT ItemMonikerImpl_Destroy(ItemMonikerImpl* iface);
-
 /*******************************************************************************
  *        ItemMoniker_QueryInterface
  *******************************************************************************/
@@ -195,17 +193,20 @@ static ULONG WINAPI ItemMonikerImpl_AddRef(IMoniker* iface)
  ******************************************************************************/
 static ULONG WINAPI ItemMonikerImpl_Release(IMoniker* iface)
 {
-    ItemMonikerImpl *This = impl_from_IMoniker(iface);
-    ULONG ref;
+    ItemMonikerImpl *moniker = impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedDecrement(&moniker->ref);
 
-    TRACE("(%p)\n",This);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    ref = InterlockedDecrement(&This->ref);
+    if (!refcount)
+    {
+        if (moniker->pMarshal) IUnknown_Release(moniker->pMarshal);
+        heap_free(moniker->itemName);
+        heap_free(moniker->itemDelimiter);
+        heap_free(moniker);
+    }
 
-    /* destroy the object if there are no more references to it */
-    if (ref == 0) ItemMonikerImpl_Destroy(This);
-
-    return ref;
+    return refcount;
 }
 
 /******************************************************************************
@@ -1008,107 +1009,72 @@ static const IROTDataVtbl VT_ROTDataImpl =
 };
 
 /******************************************************************************
- *         ItemMoniker_Construct (local function)
- *******************************************************************************/
-static HRESULT ItemMonikerImpl_Construct(ItemMonikerImpl* This, const WCHAR *delimiter, const WCHAR *name)
+ *        CreateItemMoniker	[OLE32.@]
+ ******************************************************************************/
+HRESULT WINAPI CreateItemMoniker(const WCHAR *delimiter, const WCHAR *name, IMoniker **ret)
 {
+    ItemMonikerImpl *moniker;
     int str_len;
+    HRESULT hr;
 
-    TRACE("(%p, %s, %s)\n", This, debugstr_w(delimiter), debugstr_w(name));
+    TRACE("%s, %s, %p.\n", debugstr_w(delimiter), debugstr_w(name), ret);
 
-    /* Initialize the virtual function table. */
-    This->IMoniker_iface.lpVtbl = &VT_ItemMonikerImpl;
-    This->IROTData_iface.lpVtbl = &VT_ROTDataImpl;
-    This->ref          = 0;
-    This->pMarshal     = NULL;
-    This->itemDelimiter = NULL;
+    if (!(moniker = heap_alloc_zero(sizeof(*moniker))))
+        return E_OUTOFMEMORY;
+
+    moniker->IMoniker_iface.lpVtbl = &VT_ItemMonikerImpl;
+    moniker->IROTData_iface.lpVtbl = &VT_ROTDataImpl;
+    moniker->ref = 1;
 
     str_len = (lstrlenW(name) + 1) * sizeof(WCHAR);
-    This->itemName = heap_alloc(str_len);
-    if (!This->itemName)
-	return E_OUTOFMEMORY;
-    memcpy(This->itemName, name, str_len);
+    moniker->itemName = heap_alloc(str_len);
+    if (!moniker->itemName)
+    {
+        hr = E_OUTOFMEMORY;
+        goto failed;
+    }
+    memcpy(moniker->itemName, name, str_len);
 
     if (delimiter)
     {
         str_len = (lstrlenW(delimiter) + 1) * sizeof(WCHAR);
-        This->itemDelimiter = heap_alloc(str_len);
-        if (!This->itemDelimiter)
+        moniker->itemDelimiter = heap_alloc(str_len);
+        if (!moniker->itemDelimiter)
         {
-            heap_free(This->itemName);
-            return E_OUTOFMEMORY;
+            hr = E_OUTOFMEMORY;
+            goto failed;
         }
-        memcpy(This->itemDelimiter, delimiter, str_len);
+        memcpy(moniker->itemDelimiter, delimiter, str_len);
     }
 
-    return S_OK;
-}
-
-/******************************************************************************
- *        ItemMoniker_Destroy (local function)
- *******************************************************************************/
-static HRESULT ItemMonikerImpl_Destroy(ItemMonikerImpl* This)
-{
-    TRACE("(%p)\n",This);
-
-    if (This->pMarshal) IUnknown_Release(This->pMarshal);
-    HeapFree(GetProcessHeap(),0,This->itemName);
-    HeapFree(GetProcessHeap(),0,This->itemDelimiter);
-    HeapFree(GetProcessHeap(),0,This);
+    *ret = &moniker->IMoniker_iface;
 
     return S_OK;
+
+failed:
+    IMoniker_Release(&moniker->IMoniker_iface);
+
+    return hr;
 }
 
-/******************************************************************************
- *        CreateItemMoniker	[OLE32.@]
- ******************************************************************************/
-HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, IMoniker **ppmk)
+HRESULT WINAPI ItemMoniker_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
-    ItemMonikerImpl* newItemMoniker;
-    HRESULT        hr;
+    static const WCHAR emptyW[] = { 0 };
+    IMoniker *moniker;
+    HRESULT hr;
 
-    TRACE("(%s,%s,%p)\n",debugstr_w(lpszDelim),debugstr_w(lpszItem),ppmk);
-
-    newItemMoniker = HeapAlloc(GetProcessHeap(), 0, sizeof(ItemMonikerImpl));
-
-    if (!newItemMoniker)
-        return STG_E_INSUFFICIENTMEMORY;
-
-    hr = ItemMonikerImpl_Construct(newItemMoniker,lpszDelim,lpszItem);
-
-    if (FAILED(hr)){
-        HeapFree(GetProcessHeap(),0,newItemMoniker);
-        return hr;
-    }
-
-    return ItemMonikerImpl_QueryInterface(&newItemMoniker->IMoniker_iface,&IID_IMoniker,
-                                          (void**)ppmk);
-}
-
-HRESULT WINAPI ItemMoniker_CreateInstance(IClassFactory *iface,
-    IUnknown *pUnk, REFIID riid, void **ppv)
-{
-    ItemMonikerImpl* newItemMoniker;
-    HRESULT  hr;
-    static const WCHAR wszEmpty[] = { 0 };
-
-    TRACE("(%p, %s, %p)\n", pUnk, debugstr_guid(riid), ppv);
+    TRACE("(%p, %s, %p)\n", outer, debugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
-    if (pUnk)
+    if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    newItemMoniker = HeapAlloc(GetProcessHeap(), 0, sizeof(ItemMonikerImpl));
-    if (!newItemMoniker)
-        return E_OUTOFMEMORY;
+    if (FAILED(hr = CreateItemMoniker(emptyW, emptyW, &moniker)))
+        return hr;
 
-    hr = ItemMonikerImpl_Construct(newItemMoniker, wszEmpty, wszEmpty);
-
-    if (SUCCEEDED(hr))
-        hr = ItemMonikerImpl_QueryInterface(&newItemMoniker->IMoniker_iface, riid, ppv);
-    if (FAILED(hr))
-        HeapFree(GetProcessHeap(),0,newItemMoniker);
+    hr = IMoniker_QueryInterface(moniker, riid, ppv);
+    IMoniker_Release(moniker);
 
     return hr;
 }
