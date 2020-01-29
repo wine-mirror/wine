@@ -37,19 +37,12 @@
 
 IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr) DECLSPEC_HIDDEN;
 IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr) DECLSPEC_HIDDEN;
-IUnknown * CALLBACK Gstreamer_Mp3_create(IUnknown *pUnkOuter, HRESULT *phr);
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr);
 IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr) DECLSPEC_HIDDEN;
 
 BOOL init_gstreamer(void) DECLSPEC_HIDDEN;
 
-GstFlowReturn got_data(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
-GstFlowReturn request_buffer(GstPad *pad, guint64 ofs, guint size, GstCaps *caps, GstBuffer **buf) DECLSPEC_HIDDEN;
-void Gstreamer_transform_pad_added(GstElement *filter, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
-
 void start_dispatch_thread(void) DECLSPEC_HIDDEN;
-
-extern const char *media_quark_string DECLSPEC_HIDDEN;
 
 extern HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
 extern HRESULT mfplat_can_unload_now(void) DECLSPEC_HIDDEN;

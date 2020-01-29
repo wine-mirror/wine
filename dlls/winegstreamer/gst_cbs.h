@@ -39,12 +39,10 @@ enum CB_TYPE {
     EVENT_SRC,
     EVENT_SINK,
     GOT_DATA_SINK,
-    GOT_DATA,
     REMOVED_DECODED_PAD,
     AUTOPLUG_BLACKLIST,
     UNKNOWN_TYPE,
     RELEASE_SAMPLE,
-    TRANSFORM_PAD_ADDED,
     QUERY_SINK
 };
 
@@ -105,12 +103,6 @@ struct cb_data {
             GstBuffer *buf;
             GstFlowReturn ret;
         } got_data_sink_data;
-        struct got_data_data {
-            GstPad *pad;
-            GstObject *parent;
-            GstBuffer *buf;
-            GstFlowReturn ret;
-        } got_data_data;
         struct removed_decoded_pad_data {
             GstElement *bin;
             GstPad *pad;
@@ -133,11 +125,6 @@ struct cb_data {
         struct release_sample_data {
             gpointer data;
         } release_sample_data;
-        struct transform_pad_added_data {
-            GstElement *filter;
-            GstPad *pad;
-            gpointer user;
-        } transform_pad_added_data;
         struct query_sink_data {
             GstPad *pad;
             GstObject *parent;

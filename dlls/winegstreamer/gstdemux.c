@@ -97,7 +97,7 @@ static inline struct gstdemux *impl_from_strmbase_filter(struct strmbase_filter 
     return CONTAINING_RECORD(iface, struct gstdemux, filter);
 }
 
-const char* media_quark_string = "media-sample";
+static const char *media_quark_string = "media-sample";
 
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const IMediaSeekingVtbl GST_Seeking_Vtbl;
@@ -2313,12 +2313,6 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
             cbdata->u.got_data_sink_data.ret = got_data_sink(data->pad, data->parent, data->buf);
             break;
         }
-    case GOT_DATA:
-        {
-            struct got_data_data *data = &cbdata->u.got_data_data;
-            cbdata->u.got_data_data.ret = got_data(data->pad, data->parent, data->buf);
-            break;
-        }
     case REMOVED_DECODED_PAD:
         {
             struct removed_decoded_pad_data *data = &cbdata->u.removed_decoded_pad_data;
@@ -2342,12 +2336,6 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
         {
             struct release_sample_data *data = &cbdata->u.release_sample_data;
             release_sample(data->data);
-            break;
-        }
-    case TRANSFORM_PAD_ADDED:
-        {
-            struct transform_pad_added_data *data = &cbdata->u.transform_pad_added_data;
-            Gstreamer_transform_pad_added(data->filter, data->pad, data->user);
             break;
         }
     case QUERY_SINK:

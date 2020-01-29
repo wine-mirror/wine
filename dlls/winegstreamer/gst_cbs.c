@@ -188,19 +188,6 @@ GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstObject *parent, GstBuffer *b
     return cbdata.u.got_data_sink_data.ret;
 }
 
-GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf)
-{
-    struct cb_data cbdata = { GOT_DATA };
-
-    cbdata.u.got_data_data.pad = pad;
-    cbdata.u.got_data_data.parent = parent;
-    cbdata.u.got_data_data.buf = buf;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.got_data_data.ret;
-}
-
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { REMOVED_DECODED_PAD };
@@ -245,17 +232,6 @@ void release_sample_wrapper(gpointer data)
     struct cb_data cbdata = { RELEASE_SAMPLE };
 
     cbdata.u.release_sample_data.data = data;
-
-    call_cb(&cbdata);
-}
-
-void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpointer user)
-{
-    struct cb_data cbdata = { TRANSFORM_PAD_ADDED };
-
-    cbdata.u.transform_pad_added_data.filter = filter;
-    cbdata.u.transform_pad_added_data.pad = pad;
-    cbdata.u.transform_pad_added_data.user = user;
 
     call_cb(&cbdata);
 }

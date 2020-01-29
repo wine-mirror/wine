@@ -10,14 +10,12 @@ C_SRCS = \
 	filter.c \
 	gst_cbs.c \
 	gstdemux.c \
-	gsttffilter.c \
 	main.c \
 	mediatype.c \
 	mfplat.c \
 	pin.c \
 	qualitycontrol.c \
-	seeking.c \
-	transform.c
+	seeking.c
 
 IDL_SRCS = mfplat.idl
 
