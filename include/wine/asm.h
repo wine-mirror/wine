@@ -128,4 +128,10 @@
 
 #endif  /* __i386__ */
 
+#if defined(__GNUC__) && !defined(_WIN32) && !defined(__APPLE__) && !defined(__ANDROID__)
+#define __ASM_OBSOLETE(func) __asm__( ".symver " #func "_obsolete," #func "@WINE_1.0" )
+#else
+#undef __ASM_OBSOLETE
+#endif
+
 #endif  /* __WINE_WINE_ASM_H */

@@ -72,11 +72,6 @@ extern WCHAR **__wine_main_wargv;
 extern void __wine_dll_register( const IMAGE_NT_HEADERS *header, const char *filename );
 extern void wine_init( int argc, char *argv[], char *error, int error_size );
 
-/* portability */
-
-extern void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, void *stack );
-extern int wine_call_on_stack( int (*func)(void *), void *arg, void *stack );
-
 /* memory mappings */
 
 extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );

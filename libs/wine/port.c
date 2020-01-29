@@ -20,6 +20,9 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
 
 #include <stdlib.h>
 #include <string.h>
@@ -28,11 +31,9 @@
 #define WINE_UNICODE_INLINE  /* nothing */
 #include "wine/unicode.h"
 #include "wine/library.h"
-#include "wine/asm.h"
 
 /* functions from libwine_port that are also exported from libwine for backwards compatibility,
  * on platforms that require it */
-#ifndef __ANDROID__
 const void *libwine_port_functions[] =
 {
     strtolW,
@@ -48,7 +49,6 @@ const void *libwine_port_functions[] =
     wine_utf8_mbstowcs,
     wine_utf8_wcstombs
 };
-#endif
 
 /* no longer used, for backwards compatibility only */
 struct wine_pthread_functions;
@@ -57,7 +57,7 @@ static void *pthread_functions[8];
 /***********************************************************************
  *           wine_pthread_get_functions
  */
-void wine_pthread_get_functions( struct wine_pthread_functions *functions, size_t size )
+void wine_pthread_get_functions_obsolete( struct wine_pthread_functions *functions, size_t size )
 {
     memcpy( functions, &pthread_functions, min( size, sizeof(pthread_functions) ));
 }
@@ -66,21 +66,9 @@ void wine_pthread_get_functions( struct wine_pthread_functions *functions, size_
 /***********************************************************************
  *           wine_pthread_set_functions
  */
-void wine_pthread_set_functions( const struct wine_pthread_functions *functions, size_t size )
+void wine_pthread_set_functions_obsolete( const struct wine_pthread_functions *functions, size_t size )
 {
     memcpy( &pthread_functions, functions, min( size, sizeof(pthread_functions) ));
-}
-
-
-/***********************************************************************
- *           wine_switch_to_stack
- *
- * Switch to the specified stack and call the function.
- */
-void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, void *stack )
-{
-    wine_call_on_stack( (int (*)(void *))func, arg, stack );
-    abort();
 }
 
 
@@ -90,8 +78,9 @@ void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, vo
  * Switch to the specified stack to call the function and return.
  */
 
+extern int wine_call_on_stack_obsolete( int (*func)(void *), void *arg, void *stack );
 #if defined(__i386__) && defined(__GNUC__)
-__ASM_GLOBAL_FUNC( wine_call_on_stack,
+__ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
@@ -117,25 +106,8 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret" )
-#elif defined(__i386__) && defined(_MSC_VER)
-__declspec(naked) int wine_call_on_stack( int (*func)(void *), void *arg, void *stack )
-{
-  __asm push ebp;
-  __asm push esi;
-  __asm mov ecx, 12[esp];
-  __asm mov edx, 16[esp];
-  __asm mov esi, 20[esp];
-  __asm xchg esp, esi;
-  __asm push edx;
-  __asm xor ebp, ebp;
-  __asm call [ecx];
-  __asm mov esp, esi;
-  __asm pop esi;
-  __asm pop ebp;
-  __asm ret;
-}
 #elif defined(__x86_64__) && defined(__GNUC__)
-__ASM_GLOBAL_FUNC( wine_call_on_stack,
+__ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
                    "pushq %rbp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
@@ -153,7 +125,7 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    __ASM_CFI(".cfi_same_value %rbp\n\t")
                    "ret")
 #elif defined(__powerpc__) && defined(__GNUC__)
-__ASM_GLOBAL_FUNC( wine_call_on_stack,
+__ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
                    "mflr 0\n\t"         /* get return address */
                    "stw 0, 4(1)\n\t"    /* save return address */
                    "subi 5, 5, 16\n\t" /* reserve space on new stack */
@@ -170,7 +142,7 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    "mtlr 0\n\t"         /* return address -> lr */
                    "blr")               /* return */
 #elif defined(__arm__) && defined(__GNUC__)
-__ASM_GLOBAL_FUNC( wine_call_on_stack,
+__ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
                    "push {r4,LR}\n\t"   /* save return address on stack */
                    "mov r4, sp\n\t"     /* store old sp in local var */
                    "mov sp, r2\n\t"     /* stack */
@@ -180,7 +152,7 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    "mov sp, r4\n\t"     /* restore old sp from local var */
                    "pop {r4,PC}")       /* fetch return address into pc */
 #elif defined(__aarch64__) && defined(__GNUC__)
-__ASM_GLOBAL_FUNC( wine_call_on_stack,
+__ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
                    "stp x29, x30, [sp,#-32]!\n\t"    /* save return address on stack */
                    "str x19, [sp,#16]\n\t"           /* save register on stack */
                    "mov x19, sp\n\t"                 /* store old sp in local var */
@@ -192,6 +164,22 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    "ldr x19, [sp,#16]\n\t"           /* restore register from stack */
                    "ldp x29, x30, [sp],#32\n\t"      /* restore return address */
                    "ret")                            /* return */
-#else
-#error You must implement wine_call_on_stack for your platform
 #endif
+
+/***********************************************************************
+ *           wine_switch_to_stack
+ *
+ * Switch to the specified stack and call the function.
+ */
+void DECLSPEC_NORETURN wine_switch_to_stack_obsolete( void (*func)(void *), void *arg, void *stack )
+{
+    wine_call_on_stack_obsolete( (int (*)(void *))func, arg, stack );
+    abort();
+}
+
+__ASM_OBSOLETE(wine_pthread_get_functions);
+__ASM_OBSOLETE(wine_pthread_set_functions);
+__ASM_OBSOLETE(wine_call_on_stack);
+__ASM_OBSOLETE(wine_switch_to_stack);
+
+#endif  /* __ASM_OBSOLETE */

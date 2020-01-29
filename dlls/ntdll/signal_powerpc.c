@@ -1178,6 +1178,18 @@ struct startup_info
     BOOL                   suspend;
 };
 
+/* FIXME: should set the full context instead */
+extern void DECLSPEC_NORETURN switch_to_stack( void (*func)(void *), void *arg, void *stack );
+__ASM_GLOBAL_FUNC( switch_to_stack,
+                   "subi 5, 5, 16\n\t"  /* reserve space on new stack */
+                   "mtctr 3\n\t"        /* func -> ctr */
+                   "mr 3,4\n\t"         /* args -> function param 1 (r3) */
+                   "mr 1,5\n\t"         /* stack */
+                   "li 0, 0\n\t"        /* zero */
+                   "stw 0, 0(1)\n\t"    /* bottom of stack */
+                   "stwu 1, -16(1)\n\t" /* create a frame for this function */
+                   "bctrl" )            /* call ctr */
+
 /***********************************************************************
  *           thread_startup
  */
@@ -1210,7 +1222,7 @@ static void thread_startup( void *param )
 void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
     struct startup_info info = { call_thread_entry_point, entry, arg, suspend };
-    wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
+    switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
 }
 
 /**********************************************************************
@@ -1224,7 +1236,7 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
     struct startup_info info = { kernel32_start_process, entry, NtCurrentTeb()->Peb, suspend };
-    wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
+    switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
 }
 
 /***********************************************************************
