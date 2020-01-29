@@ -347,7 +347,6 @@ static void test_enum_pins(void)
     graph = connect_input(filter, filename);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-todo_wine
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Reset(enum1);

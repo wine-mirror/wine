@@ -122,7 +122,7 @@ static HRESULT WINAPI enum_pins_Next(IEnumPins *iface, ULONG count, IPin **pins,
         *ret_count = 0;
 
     if (enum_pins->version != enum_pins->filter->pin_version)
-        return VFW_E_ENUM_OUT_OF_SYNC;
+        return S_FALSE;
 
     for (i = 0; i < count; ++i)
     {
