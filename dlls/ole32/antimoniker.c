@@ -30,6 +30,7 @@
 #include "winerror.h"
 #include "objbase.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "moniker.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -38,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 typedef struct AntiMonikerImpl{
     IMoniker IMoniker_iface;
     IROTData IROTData_iface;
-    LONG ref;
+    LONG refcount;
     IUnknown *pMarshal; /* custom marshaler */
     DWORD count;
 } AntiMonikerImpl;
@@ -103,37 +104,33 @@ AntiMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
 /******************************************************************************
  *        AntiMoniker_AddRef
  ******************************************************************************/
-static ULONG WINAPI
-AntiMonikerImpl_AddRef(IMoniker* iface)
+static ULONG WINAPI AntiMonikerImpl_AddRef(IMoniker *iface)
 {
-    AntiMonikerImpl *This = impl_from_IMoniker(iface);
+    AntiMonikerImpl *moniker = impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedIncrement(&moniker->refcount);
 
-    TRACE("(%p)\n",This);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    return InterlockedIncrement(&This->ref);
+    return refcount;
 }
 
 /******************************************************************************
  *        AntiMoniker_Release
  ******************************************************************************/
-static ULONG WINAPI
-AntiMonikerImpl_Release(IMoniker* iface)
+static ULONG WINAPI AntiMonikerImpl_Release(IMoniker *iface)
 {
-    AntiMonikerImpl *This = impl_from_IMoniker(iface);
-    ULONG ref;
+    AntiMonikerImpl *moniker = impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedDecrement(&moniker->refcount);
 
-    TRACE("(%p)\n",This);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    ref = InterlockedDecrement(&This->ref);
-
-    /* destroy the object if there are no more references to it */
-    if (ref == 0)
+    if (!refcount)
     {
-        if (This->pMarshal) IUnknown_Release(This->pMarshal);
-        HeapFree(GetProcessHeap(),0,This);
+        if (moniker->pMarshal) IUnknown_Release(moniker->pMarshal);
+        heap_free(moniker);
     }
 
-    return ref;
+    return refcount;
 }
 
 /******************************************************************************
@@ -610,20 +607,20 @@ static const IROTDataVtbl VT_ROTDataImpl =
     AntiMonikerROTDataImpl_GetComparisonData
 };
 
-/******************************************************************************
- *         AntiMoniker_Construct (local function)
- *******************************************************************************/
-static HRESULT AntiMonikerImpl_Construct(AntiMonikerImpl* This)
+static HRESULT create_anti_moniker(DWORD order, IMoniker **ret)
 {
+    AntiMonikerImpl *moniker;
 
-    TRACE("(%p)\n",This);
+    moniker = heap_alloc_zero(sizeof(*moniker));
+    if (!moniker)
+        return E_OUTOFMEMORY;
 
-    /* Initialize the virtual function table. */
-    This->IMoniker_iface.lpVtbl = &VT_AntiMonikerImpl;
-    This->IROTData_iface.lpVtbl = &VT_ROTDataImpl;
-    This->ref          = 0;
-    This->pMarshal     = NULL;
-    This->count        = 1;
+    moniker->IMoniker_iface.lpVtbl = &VT_AntiMonikerImpl;
+    moniker->IROTData_iface.lpVtbl = &VT_ROTDataImpl;
+    moniker->refcount = 1;
+    moniker->count = order;
+
+    *ret = &moniker->IMoniker_iface;
 
     return S_OK;
 }
@@ -631,27 +628,11 @@ static HRESULT AntiMonikerImpl_Construct(AntiMonikerImpl* This)
 /******************************************************************************
  *        CreateAntiMoniker	[OLE32.@]
  ******************************************************************************/
-HRESULT WINAPI CreateAntiMoniker(IMoniker **ppmk)
+HRESULT WINAPI CreateAntiMoniker(IMoniker **moniker)
 {
-    AntiMonikerImpl* newAntiMoniker;
-    HRESULT hr;
+    TRACE("%p.\n", moniker);
 
-    TRACE("(%p)\n",ppmk);
-
-    newAntiMoniker = HeapAlloc(GetProcessHeap(), 0, sizeof(AntiMonikerImpl));
-
-    if (newAntiMoniker == 0)
-        return STG_E_INSUFFICIENTMEMORY;
-
-    hr = AntiMonikerImpl_Construct(newAntiMoniker);
-    if (FAILED(hr))
-    {
-        HeapFree(GetProcessHeap(),0,newAntiMoniker);
-        return hr;
-    }
-
-    return AntiMonikerImpl_QueryInterface(&newAntiMoniker->IMoniker_iface, &IID_IMoniker,
-            (void**)ppmk);
+    return create_anti_moniker(1, moniker);
 }
 
 HRESULT WINAPI AntiMoniker_CreateInstance(IClassFactory *iface,
