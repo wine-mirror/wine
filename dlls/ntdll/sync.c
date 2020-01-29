@@ -2504,7 +2504,6 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
              * but we don't want to wait */
             abs_timeout = 0;
             user_apc = TRUE;
-            size = 0;
         }
     }
 
