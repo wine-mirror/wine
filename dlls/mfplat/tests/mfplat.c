@@ -77,6 +77,7 @@ static HRESULT (WINAPI *pMFRemovePeriodicCallback)(DWORD key);
 static HRESULT (WINAPI *pMFRegisterLocalByteStreamHandler)(const WCHAR *extension, const WCHAR *mime,
         IMFActivate *activate);
 static HRESULT (WINAPI *pMFRegisterLocalSchemeHandler)(const WCHAR *scheme, IMFActivate *activate);
+static HRESULT (WINAPI *pMFCreateTransformActivate)(IMFActivate **activate);
 
 static const WCHAR mp4file[] = {'t','e','s','t','.','m','p','4',0};
 static const WCHAR fileschemeW[] = {'f','i','l','e',':','/','/',0};
@@ -527,6 +528,7 @@ static void init_functions(void)
     X(MFRegisterLocalByteStreamHandler);
     X(MFRegisterLocalSchemeHandler);
     X(MFRemovePeriodicCallback);
+    X(MFCreateTransformActivate);
 #undef X
 
     if ((mod = LoadLibraryA("d3d11.dll")))
@@ -3799,6 +3801,28 @@ static void test_dxgi_device_manager(void)
     IMFDXGIDeviceManager_Release(manager2);
 }
 
+static void test_MFCreateTransformActivate(void)
+{
+    IMFActivate *activate;
+    UINT32 count;
+    HRESULT hr;
+
+    if (!pMFCreateTransformActivate)
+    {
+        win_skip("MFCreateTransformActivate() is not available.\n");
+        return;
+    }
+
+    hr = pMFCreateTransformActivate(&activate);
+    ok(hr == S_OK, "Failed to create activator, hr %#x.\n", hr);
+
+    hr = IMFActivate_GetCount(activate, &count);
+    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
+    ok(!count, "Unexpected attribute count %u.\n", count);
+
+    IMFActivate_Release(activate);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -3837,6 +3861,7 @@ START_TEST(mfplat)
     test_local_handlers();
     test_create_property_store();
     test_dxgi_device_manager();
+    test_MFCreateTransformActivate();
 
     CoUninitialize();
 }

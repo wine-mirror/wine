@@ -66,7 +66,7 @@
 @ stdcall MFCreateSystemTimeSource(ptr)
 @ stub MFCreateSystemUnderlyingClock
 @ stub MFCreateTempFile
-@ stub MFCreateTransformActivate
+@ stdcall MFCreateTransformActivate(ptr)
 @ stub MFCreateURLFromPath
 @ stub MFCreateUdpSockets
 @ stub MFCreateVideoMediaType

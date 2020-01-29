@@ -65,6 +65,12 @@ static CRITICAL_SECTION local_handlers_section = { NULL, -1, 0, 0, 0, 0 };
 static struct list local_scheme_handlers = LIST_INIT(local_scheme_handlers);
 static struct list local_bytestream_handlers = LIST_INIT(local_bytestream_handlers);
 
+struct transform_activate
+{
+    struct attributes attributes;
+    IMFActivate IMFActivate_iface;
+};
+
 struct system_clock
 {
     IMFClock IMFClock_iface;
@@ -105,6 +111,416 @@ static struct system_time_source *impl_from_IMFClockStateSink(IMFClockStateSink 
 static struct system_clock *impl_from_IMFClock(IMFClock *iface)
 {
     return CONTAINING_RECORD(iface, struct system_clock, IMFClock_iface);
+}
+
+static struct transform_activate *impl_from_IMFActivate(IMFActivate *iface)
+{
+    return CONTAINING_RECORD(iface, struct transform_activate, IMFActivate_iface);
+}
+
+static HRESULT WINAPI transform_activate_QueryInterface(IMFActivate *iface, REFIID riid, void **out)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFActivate) ||
+            IsEqualIID(riid, &IID_IMFAttributes) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFActivate_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI transform_activate_AddRef(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+    ULONG refcount = InterlockedIncrement(&activate->attributes.ref);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI transform_activate_Release(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+    ULONG refcount = InterlockedDecrement(&activate->attributes.ref);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        clear_attributes_object(&activate->attributes);
+        heap_free(activate);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI transform_activate_GetItem(IMFActivate *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetItem(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetItemType(IMFActivate *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
+
+    return attributes_GetItemType(&activate->attributes, key, type);
+}
+
+static HRESULT WINAPI transform_activate_CompareItem(IMFActivate *iface, REFGUID key, REFPROPVARIANT value,
+        BOOL *result)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_propvar(value), result);
+
+    return attributes_CompareItem(&activate->attributes, key, value, result);
+}
+
+static HRESULT WINAPI transform_activate_Compare(IMFActivate *iface, IMFAttributes *theirs,
+        MF_ATTRIBUTES_MATCH_TYPE match_type, BOOL *ret)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %p, %d, %p.\n", iface, theirs, match_type, ret);
+
+    return attributes_Compare(&activate->attributes, theirs, match_type, ret);
+}
+
+static HRESULT WINAPI transform_activate_GetUINT32(IMFActivate *iface, REFGUID key, UINT32 *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT32(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetUINT64(IMFActivate *iface, REFGUID key, UINT64 *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT64(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetDouble(IMFActivate *iface, REFGUID key, double *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetDouble(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetGUID(IMFActivate *iface, REFGUID key, GUID *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetGUID(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetStringLength(IMFActivate *iface, REFGUID key, UINT32 *length)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
+
+    return attributes_GetStringLength(&activate->attributes, key, length);
+}
+
+static HRESULT WINAPI transform_activate_GetString(IMFActivate *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), value, size, length);
+
+    return attributes_GetString(&activate->attributes, key, value, size, length);
+}
+
+static HRESULT WINAPI transform_activate_GetAllocatedString(IMFActivate *iface, REFGUID key, WCHAR **value,
+        UINT32 *length)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
+
+    return attributes_GetAllocatedString(&activate->attributes, key, value, length);
+}
+
+static HRESULT WINAPI transform_activate_GetBlobSize(IMFActivate *iface, REFGUID key, UINT32 *size)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
+
+    return attributes_GetBlobSize(&activate->attributes, key, size);
+}
+
+static HRESULT WINAPI transform_activate_GetBlob(IMFActivate *iface, REFGUID key, UINT8 *buf, UINT32 bufsize,
+        UINT32 *blobsize)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
+
+    return attributes_GetBlob(&activate->attributes, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI transform_activate_GetAllocatedBlob(IMFActivate *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_GetAllocatedBlob(&activate->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI transform_activate_GetUnknown(IMFActivate *iface, REFGUID key, REFIID riid, void **out)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), out);
+
+    return attributes_GetUnknown(&activate->attributes, key, riid, out);
+}
+
+static HRESULT WINAPI transform_activate_SetItem(IMFActivate *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_propvar(value));
+
+    return attributes_SetItem(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_DeleteItem(IMFActivate *iface, REFGUID key)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_attr(key));
+
+    return attributes_DeleteItem(&activate->attributes, key);
+}
+
+static HRESULT WINAPI transform_activate_DeleteAllItems(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_DeleteAllItems(&activate->attributes);
+}
+
+static HRESULT WINAPI transform_activate_SetUINT32(IMFActivate *iface, REFGUID key, UINT32 value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetUINT32(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetUINT64(IMFActivate *iface, REFGUID key, UINT64 value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
+
+    return attributes_SetUINT64(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetDouble(IMFActivate *iface, REFGUID key, double value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetDouble(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetGUID(IMFActivate *iface, REFGUID key, REFGUID value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
+
+    return attributes_SetGUID(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetString(IMFActivate *iface, REFGUID key, const WCHAR *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
+
+    return attributes_SetString(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetBlob(IMFActivate *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_SetBlob(&activate->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI transform_activate_SetUnknown(IMFActivate *iface, REFGUID key, IUnknown *unknown)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
+
+    return attributes_SetUnknown(&activate->attributes, key, unknown);
+}
+
+static HRESULT WINAPI transform_activate_LockStore(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_LockStore(&activate->attributes);
+}
+
+static HRESULT WINAPI transform_activate_UnlockStore(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_UnlockStore(&activate->attributes);
+}
+
+static HRESULT WINAPI transform_activate_GetCount(IMFActivate *iface, UINT32 *count)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return attributes_GetCount(&activate->attributes, count);
+}
+
+static HRESULT WINAPI transform_activate_GetItemByIndex(IMFActivate *iface, UINT32 index, GUID *key,
+        PROPVARIANT *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return attributes_GetItemByIndex(&activate->attributes, index, key, value);
+}
+
+static HRESULT WINAPI transform_activate_CopyAllItems(IMFActivate *iface, IMFAttributes *dest)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return attributes_CopyAllItems(&activate->attributes, dest);
+}
+
+static HRESULT WINAPI transform_activate_ActivateObject(IMFActivate *iface, REFIID riid, void **obj)
+{
+    FIXME("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI transform_activate_ShutdownObject(IMFActivate *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI transform_activate_DetachObject(IMFActivate *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const IMFActivateVtbl transform_activate_vtbl =
+{
+    transform_activate_QueryInterface,
+    transform_activate_AddRef,
+    transform_activate_Release,
+    transform_activate_GetItem,
+    transform_activate_GetItemType,
+    transform_activate_CompareItem,
+    transform_activate_Compare,
+    transform_activate_GetUINT32,
+    transform_activate_GetUINT64,
+    transform_activate_GetDouble,
+    transform_activate_GetGUID,
+    transform_activate_GetStringLength,
+    transform_activate_GetString,
+    transform_activate_GetAllocatedString,
+    transform_activate_GetBlobSize,
+    transform_activate_GetBlob,
+    transform_activate_GetAllocatedBlob,
+    transform_activate_GetUnknown,
+    transform_activate_SetItem,
+    transform_activate_DeleteItem,
+    transform_activate_DeleteAllItems,
+    transform_activate_SetUINT32,
+    transform_activate_SetUINT64,
+    transform_activate_SetDouble,
+    transform_activate_SetGUID,
+    transform_activate_SetString,
+    transform_activate_SetBlob,
+    transform_activate_SetUnknown,
+    transform_activate_LockStore,
+    transform_activate_UnlockStore,
+    transform_activate_GetCount,
+    transform_activate_GetItemByIndex,
+    transform_activate_CopyAllItems,
+    transform_activate_ActivateObject,
+    transform_activate_ShutdownObject,
+    transform_activate_DetachObject,
+};
+
+HRESULT WINAPI MFCreateTransformActivate(IMFActivate **activate)
+{
+    struct transform_activate *object;
+    HRESULT hr;
+
+    TRACE("%p.\n", activate);
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
+
+    object->IMFActivate_iface.lpVtbl = &transform_activate_vtbl;
+
+    *activate = &object->IMFActivate_iface;
+
+    return S_OK;
 }
 
 static const WCHAR transform_keyW[] = {'M','e','d','i','a','F','o','u','n','d','a','t','i','o','n','\\',

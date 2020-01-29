@@ -121,3 +121,5 @@ interface IMFTransform : IUnknown
     [local] HRESULT ProcessOutput([in] DWORD flags, [in] DWORD count, [in,out,size_is(count)] MFT_OUTPUT_DATA_BUFFER *samples,
                                   [out] DWORD *status);
 }
+
+cpp_quote("HRESULT WINAPI MFCreateTransformActivate(IMFActivate **activate);")
