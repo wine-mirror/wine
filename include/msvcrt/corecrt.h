@@ -137,6 +137,18 @@
 # endif
 #endif
 
+#ifndef _ACRTIMP
+# ifdef _CRTIMP
+#  define _ACRTIMP _CRTIMP
+# elif defined(_MSC_VER)
+#  define _ACRTIMP __declspec(dllimport)
+# elif defined(__MINGW32__) || defined(__CYGWIN__)
+#  define _ACRTIMP __attribute__((dllimport))
+# else
+#  define _ACRTIMP
+# endif
+#endif
+
 #define _ARGMAX 100
 
 #ifndef _MSVCRT_LONG_DEFINED
