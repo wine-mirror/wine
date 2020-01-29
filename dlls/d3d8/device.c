@@ -927,9 +927,6 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
         wined3d_stateblock_set_render_state(device->state, WINED3D_RS_POINTSIZE_MIN, 0);
         wined3d_stateblock_set_render_state(device->state, WINED3D_RS_ZENABLE,
                 !!swapchain_desc.enable_auto_depth_stencil);
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_POINTSIZE_MIN, 0);
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZENABLE,
-                !!swapchain_desc.enable_auto_depth_stencil);
         device_reset_viewport_state(device);
         device->device_state = D3D8_DEVICE_STATE_OK;
     }
@@ -3769,9 +3766,6 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     wined3d_stateblock_set_render_state(device->state, WINED3D_RS_ZENABLE,
             !!swapchain_desc.enable_auto_depth_stencil);
     wined3d_stateblock_set_render_state(device->state, WINED3D_RS_POINTSIZE_MIN, 0);
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_ZENABLE, !!swapchain_desc.enable_auto_depth_stencil);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_POINTSIZE_MIN, 0);
     device_reset_viewport_state(device);
     wined3d_mutex_unlock();
 
