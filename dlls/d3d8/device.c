@@ -1885,8 +1885,6 @@ static HRESULT WINAPI d3d8_device_SetRenderState(IDirect3DDevice8 *iface,
     if (state == D3DRS_ZBIAS)
         state = WINED3D_RS_DEPTHBIAS;
     wined3d_stateblock_set_render_state(device->update_state, state, value);
-    if (!device->recording)
-        wined3d_device_set_render_state(device->wined3d_device, state, value);
     if (state == D3DRS_POINTSIZE && value == D3D8_RESZ_CODE)
         resolve_depth_buffer(device);
     wined3d_mutex_unlock();
