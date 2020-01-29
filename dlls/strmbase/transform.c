@@ -38,14 +38,6 @@ static inline TransformFilter *impl_from_sink_IPin(IPin *iface)
 
 static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *pmt)
 {
-    TransformFilter *pTransform = impl_from_sink_IPin(&iface->IPin_iface);
-
-    TRACE("%p\n", iface);
-
-    if (pTransform->pFuncsTable->pfnCheckInputType)
-        return pTransform->pFuncsTable->pfnCheckInputType(pTransform, pmt);
-    /* Assume OK if there's no query method (the connection will fail if
-       needed) */
     return S_OK;
 }
 
@@ -239,13 +231,9 @@ static HRESULT sink_eos(struct strmbase_sink *iface)
 static HRESULT sink_begin_flush(struct strmbase_sink *iface)
 {
     TransformFilter *filter = impl_from_sink_IPin(&iface->pin.IPin_iface);
-    HRESULT hr = S_OK;
-
-    if (filter->pFuncsTable->pfnBeginFlush)
-        hr = filter->pFuncsTable->pfnBeginFlush(filter);
-    if (SUCCEEDED(hr) && filter->source.pin.peer)
-        hr = IPin_BeginFlush(filter->source.pin.peer);
-    return hr;
+    if (filter->source.pin.peer)
+        return IPin_BeginFlush(filter->source.pin.peer);
+    return S_OK;
 }
 
 static HRESULT sink_end_flush(struct strmbase_sink *iface)
@@ -264,13 +252,9 @@ static HRESULT sink_new_segment(struct strmbase_sink *iface,
         REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
 {
     TransformFilter *filter = impl_from_sink_IPin(&iface->pin.IPin_iface);
-    HRESULT hr = S_OK;
-
-    if (filter->pFuncsTable->pfnNewSegment)
-        hr = filter->pFuncsTable->pfnNewSegment(filter, start, stop, rate);
-    if (SUCCEEDED(hr) && filter->source.pin.peer)
-        hr = IPin_NewSegment(filter->source.pin.peer, start, stop, rate);
-    return hr;
+    if (filter->source.pin.peer)
+        return IPin_NewSegment(filter->source.pin.peer, start, stop, rate);
+    return S_OK;
 }
 
 static const struct strmbase_sink_ops sink_ops =
