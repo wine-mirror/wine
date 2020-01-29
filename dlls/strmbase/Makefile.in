@@ -3,7 +3,6 @@ MODULE    = libstrmbase.a
 C_SRCS = \
 	dispatch.c \
 	dllfunc.c \
-	enumpins.c \
 	filter.c \
 	mediatype.c \
 	outputqueue.c \

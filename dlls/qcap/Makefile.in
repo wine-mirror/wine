@@ -9,7 +9,6 @@ C_SRCS = \
 	avimux.c \
 	capturegraph.c \
 	dllfunc.c \
-	enumpins.c \
 	filter.c \
 	mediatype.c \
 	pin.c \

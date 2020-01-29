@@ -5,7 +5,6 @@ PARENTSRC = ../strmbase
 
 C_SRCS = \
 	dllfunc.c \
-	enumpins.c \
 	filter.c \
 	main.c \
 	mediatype.c \

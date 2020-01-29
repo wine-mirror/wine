@@ -6,7 +6,6 @@ PARENTSRC = ../strmbase
 
 C_SRCS = \
 	dllfunc.c \
-	enumpins.c \
 	filter.c \
 	gst_cbs.c \
 	gstdemux.c \
