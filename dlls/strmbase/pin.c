@@ -27,6 +27,182 @@ static const IMemInputPinVtbl MemInputPin_Vtbl;
 
 typedef HRESULT (*SendPinFunc)( IPin *to, LPVOID arg );
 
+struct enum_media_types
+{
+    IEnumMediaTypes IEnumMediaTypes_iface;
+    LONG refcount;
+
+    unsigned int index, count;
+    struct strmbase_pin *pin;
+};
+
+static const IEnumMediaTypesVtbl enum_media_types_vtbl;
+
+static HRESULT enum_media_types_create(struct strmbase_pin *pin, IEnumMediaTypes **out)
+{
+    struct enum_media_types *object;
+    AM_MEDIA_TYPE mt;
+
+    if (!out)
+        return E_POINTER;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+    {
+        *out = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    object->IEnumMediaTypes_iface.lpVtbl = &enum_media_types_vtbl;
+    object->refcount = 1;
+    object->pin = pin;
+    IPin_AddRef(&pin->IPin_iface);
+
+    while (pin->pFuncsTable->pin_get_media_type(pin, object->count, &mt) == S_OK)
+    {
+        FreeMediaType(&mt);
+        ++object->count;
+    }
+
+    TRACE("Created enumerator %p.\n", object);
+    *out = &object->IEnumMediaTypes_iface;
+
+    return S_OK;
+}
+
+static struct enum_media_types *impl_from_IEnumMediaTypes(IEnumMediaTypes *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_media_types, IEnumMediaTypes_iface);
+}
+
+static HRESULT WINAPI enum_media_types_QueryInterface(IEnumMediaTypes *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IEnumMediaTypes))
+    {
+        IEnumMediaTypes_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enum_media_types_AddRef(IEnumMediaTypes *iface)
+{
+    struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
+    ULONG refcount = InterlockedIncrement(&enummt->refcount);
+    TRACE("%p increasing refcount to %u.\n", enummt, refcount);
+    return refcount;
+}
+
+static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
+{
+    struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
+    ULONG refcount = InterlockedDecrement(&enummt->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", enummt, refcount);
+    if (!refcount)
+    {
+        IPin_Release(&enummt->pin->IPin_iface);
+        heap_free(enummt);
+    }
+    return refcount;
+}
+
+static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
+        AM_MEDIA_TYPE **mts, ULONG *ret_count)
+{
+    struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
+    unsigned int i;
+    HRESULT hr;
+
+    TRACE("enummt %p, count %u, mts %p, ret_count %p.\n", enummt, count, mts, ret_count);
+
+    for (i = 0; i < count; ++i)
+    {
+        if ((mts[i] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
+            hr = enummt->pin->pFuncsTable->pin_get_media_type(enummt->pin, enummt->index + i, mts[i]);
+        else
+            hr = E_OUTOFMEMORY;
+        if (FAILED(hr))
+        {
+            while (i--)
+                DeleteMediaType(mts[i]);
+            *ret_count = 0;
+            return E_OUTOFMEMORY;
+        }
+        else if (hr != S_OK)
+            break;
+
+        if (TRACE_ON(strmbase))
+        {
+            TRACE("Returning media type %u:\n", enummt->index + i);
+            strmbase_dump_media_type(mts[i]);
+        }
+    }
+
+    if (count != 1 || ret_count)
+        *ret_count = i;
+    enummt->index += i;
+    return i == count ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI enum_media_types_Skip(IEnumMediaTypes *iface, ULONG count)
+{
+    struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
+
+    TRACE("enummt %p, count %u.\n", enummt, count);
+
+    enummt->index += count;
+
+    return enummt->index > enummt->count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI enum_media_types_Reset(IEnumMediaTypes *iface)
+{
+    struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
+    AM_MEDIA_TYPE mt;
+
+    TRACE("enummt %p.\n", enummt);
+
+    enummt->count = 0;
+    while (enummt->pin->pFuncsTable->pin_get_media_type(enummt->pin, enummt->count, &mt) == S_OK)
+    {
+        FreeMediaType(&mt);
+        ++enummt->count;
+    }
+
+    enummt->index = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_media_types_Clone(IEnumMediaTypes *iface, IEnumMediaTypes **out)
+{
+    struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
+    HRESULT hr;
+
+    TRACE("enummt %p, out %p.\n", enummt, out);
+
+    if (FAILED(hr = enum_media_types_create(enummt->pin, out)))
+        return hr;
+    return IEnumMediaTypes_Skip(*out, enummt->index);
+}
+
+static const IEnumMediaTypesVtbl enum_media_types_vtbl =
+{
+    enum_media_types_QueryInterface,
+    enum_media_types_AddRef,
+    enum_media_types_Release,
+    enum_media_types_Next,
+    enum_media_types_Skip,
+    enum_media_types_Reset,
+    enum_media_types_Clone,
+};
+
 static inline struct strmbase_pin *impl_from_IPin(IPin *iface)
 {
     return CONTAINING_RECORD(iface, struct strmbase_pin, IPin_iface);
