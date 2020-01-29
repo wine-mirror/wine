@@ -296,12 +296,12 @@ int is_valid_codepage(int id)
     return IsValidCodePage( id );
 }
 
-int wrc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+static int wrc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
     return MultiByteToWideChar( codepage, flags, src, srclen, dst, dstlen );
 }
 
-int wrc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+static int wrc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
 {
     return WideCharToMultiByte( codepage, flags, src, srclen, dst, dstlen, NULL, NULL );
 }
@@ -315,25 +315,145 @@ int is_valid_codepage(int cp)
     return cp == CP_UTF8 || wine_cp_get_table(cp);
 }
 
-int wrc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+static int wrc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
-    if (codepage == CP_UTF8) return wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
     return wine_cp_mbstowcs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen );
 }
 
-int wrc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+static int wrc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
 {
-    if (codepage == CP_UTF8) return wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
     return wine_cp_wcstombs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen, NULL, NULL );
 }
 
 #endif  /* _WIN32 */
+
+static WCHAR *utf8_to_unicode( const char *src, int srclen, int *dstlen )
+{
+    static const char utf8_length[128] =
+    {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x80-0x8f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x90-0x9f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xa0-0xaf */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xb0-0xbf */
+        0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xc0-0xcf */
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xd0-0xdf */
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xe0-0xef */
+        3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0  /* 0xf0-0xff */
+    };
+    static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
+
+    const char *srcend = src + srclen;
+    int len, res;
+    WCHAR *ret, *dst;
+
+    dst = ret = xmalloc( (srclen + 1) * sizeof(WCHAR) );
+    while (src < srcend)
+    {
+        unsigned char ch = *src++;
+        if (ch < 0x80)  /* special fast case for 7-bit ASCII */
+        {
+            *dst++ = ch;
+            continue;
+        }
+        len = utf8_length[ch - 0x80];
+        if (len && src + len <= srcend)
+        {
+            res = ch & utf8_mask[len];
+            switch (len)
+            {
+            case 3:
+                if ((ch = *src ^ 0x80) >= 0x40) break;
+                res = (res << 6) | ch;
+                src++;
+                if (res < 0x10) break;
+            case 2:
+                if ((ch = *src ^ 0x80) >= 0x40) break;
+                res = (res << 6) | ch;
+                if (res >= 0x110000 >> 6) break;
+                src++;
+                if (res < 0x20) break;
+                if (res >= 0xd800 >> 6 && res <= 0xdfff >> 6) break;
+            case 1:
+                if ((ch = *src ^ 0x80) >= 0x40) break;
+                res = (res << 6) | ch;
+                src++;
+                if (res < 0x80) break;
+                if (res <= 0xffff) *dst++ = res;
+                else
+                {
+                    res -= 0x10000;
+                    *dst++ = 0xd800 | (res >> 10);
+                    *dst++ = 0xdc00 | (res & 0x3ff);
+                }
+                continue;
+            }
+        }
+        *dst++ = 0xfffd;
+    }
+    *dst = 0;
+    *dstlen = dst - ret;
+    return ret;
+}
+
+static char *unicode_to_utf8( const WCHAR *src, int srclen, int *dstlen )
+{
+    char *ret, *dst;
+
+    dst = ret = xmalloc( srclen * 3 + 1 );
+    for ( ; srclen; srclen--, src++)
+    {
+        unsigned int ch = *src;
+
+        if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
+        {
+            *dst++ = ch;
+            continue;
+        }
+        if (ch < 0x800)  /* 0x80-0x7ff: 2 bytes */
+        {
+            dst[1] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[0] = 0xc0 | ch;
+            dst += 2;
+            continue;
+        }
+        if (ch >= 0xd800 && ch <= 0xdbff && srclen > 1 && src[1] >= 0xdc00 && src[1] <= 0xdfff)
+        {
+            /* 0x10000-0x10ffff: 4 bytes */
+            ch = 0x10000 + ((ch & 0x3ff) << 10) + (src[1] & 0x3ff);
+            dst[3] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[2] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[1] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[0] = 0xf0 | ch;
+            dst += 4;
+            src++;
+            srclen--;
+            continue;
+        }
+        if (ch >= 0xd800 && ch <= 0xdfff) ch = 0xfffd;  /* invalid surrogate pair */
+
+        /* 0x800-0xffff: 3 bytes */
+        dst[2] = 0x80 | (ch & 0x3f);
+        ch >>= 6;
+        dst[1] = 0x80 | (ch & 0x3f);
+        ch >>= 6;
+        dst[0] = 0xe0 | ch;
+        dst += 3;
+    }
+    *dst = 0;
+    *dstlen = dst - ret;
+    return ret;
+}
 
 string_t *convert_string(const string_t *str, enum str_e type, int codepage)
 {
     string_t *ret = xmalloc(sizeof(*ret));
     int res;
 
+    ret->type = type;
     ret->loc = str->loc;
 
     if (!codepage && str->type != type)
@@ -341,27 +461,33 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
 
     if((str->type == str_char) && (type == str_unicode))
     {
-        ret->type = str_unicode;
-        ret->size = wrc_mbstowcs( codepage, 0, str->str.cstr, str->size, NULL, 0 );
-        ret->str.wstr = xmalloc( (ret->size+1) * sizeof(WCHAR) );
-        res = wrc_mbstowcs( codepage, MB_ERR_INVALID_CHARS, str->str.cstr, str->size,
-                            ret->str.wstr, ret->size );
-        if (res == -2)
-            parser_error( "Invalid character in string '%.*s' for codepage %u",
-                   str->size, str->str.cstr, codepage );
-        ret->str.wstr[ret->size] = 0;
+        if (codepage == CP_UTF8)
+            ret->str.wstr = utf8_to_unicode( str->str.cstr, str->size, &ret->size );
+        else
+        {
+            ret->str.wstr = xmalloc( (str->size + 1) * sizeof(WCHAR) );
+            res = wrc_mbstowcs( codepage, MB_ERR_INVALID_CHARS, str->str.cstr, str->size,
+                                ret->str.wstr, str->size );
+            if (res == -2)
+                parser_error( "Invalid character in string '%.*s' for codepage %u",
+                              str->size, str->str.cstr, codepage );
+            ret->size = res;
+            ret->str.wstr[ret->size] = 0;
+        }
     }
     else if((str->type == str_unicode) && (type == str_char))
     {
-        ret->type = str_char;
-        ret->size = wrc_wcstombs( codepage, 0, str->str.wstr, str->size, NULL, 0 );
-        ret->str.cstr = xmalloc( ret->size + 1 );
-        wrc_wcstombs( codepage, 0, str->str.wstr, str->size, ret->str.cstr, ret->size );
-        ret->str.cstr[ret->size] = 0;
+        if (codepage == CP_UTF8)
+            ret->str.cstr = unicode_to_utf8( str->str.wstr, str->size, &ret->size );
+        else
+        {
+            ret->str.cstr = xmalloc( str->size * 2 + 1 );
+            ret->size = wrc_wcstombs( codepage, 0, str->str.wstr, str->size, ret->str.cstr, str->size * 2 );
+            ret->str.cstr[ret->size] = 0;
+        }
     }
     else if(str->type == str_unicode)
     {
-        ret->type     = str_unicode;
         ret->size     = str->size;
         ret->str.wstr = xmalloc(sizeof(WCHAR)*(ret->size+1));
         memcpy( ret->str.wstr, str->str.wstr, ret->size * sizeof(WCHAR) );
@@ -369,7 +495,6 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
     }
     else /* str->type == str_char */
     {
-        ret->type     = str_char;
         ret->size     = str->size;
         ret->str.cstr = xmalloc( ret->size + 1 );
         memcpy( ret->str.cstr, str->str.cstr, ret->size );
@@ -389,22 +514,26 @@ void free_string(string_t *str)
 /* check if the string is valid utf8 despite a different codepage being in use */
 int check_valid_utf8( const string_t *str, int codepage )
 {
-    unsigned int i;
+    int i, count;
+    WCHAR *wstr;
 
     if (!check_utf8) return 0;
     if (!codepage) return 0;
     if (codepage == CP_UTF8) return 0;
     if (!is_valid_codepage( codepage )) return 0;
 
-    for (i = 0; i < str->size; i++)
+    for (i = count = 0; i < str->size; i++)
     {
         if ((unsigned char)str->str.cstr[i] >= 0xf5) goto done;
-        if ((unsigned char)str->str.cstr[i] >= 0xc2) break;
+        if ((unsigned char)str->str.cstr[i] >= 0xc2) { count++; continue; }
         if ((unsigned char)str->str.cstr[i] >= 0x80) goto done;
     }
-    if (i == str->size) return 0;  /* no 8-bit chars at all */
+    if (!count) return 0;  /* no 8-bit chars at all */
 
-    if (wrc_mbstowcs( CP_UTF8, MB_ERR_INVALID_CHARS, str->str.cstr, str->size, NULL, 0 ) >= 0) return 1;
+    wstr = utf8_to_unicode( str->str.cstr, str->size, &count );
+    for (i = 0; i < count; i++) if (wstr[i] == 0xfffd) break;
+    free( wstr );
+    return (i == count);
 
 done:
     check_utf8 = 0;  /* at least one 8-bit non-utf8 string found, stop checking */
