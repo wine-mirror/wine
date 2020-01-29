@@ -18,11 +18,7 @@ WINE_1.0
     wine_cpsymbol_wcstombs;
     wine_dlclose;
     wine_dll_enum_load_path;
-    wine_dll_get_owner;
-    wine_dll_load;
-    wine_dll_load_main_exe;
     wine_dll_set_callback;
-    wine_dll_unload;
     wine_dlopen;
     wine_dlsym;
     wine_exec_wine_binary;
@@ -117,6 +113,10 @@ WINE_1.0
     wine_dbg_sprintf;
     wine_dbgstr_an;
     wine_dbgstr_wn;
+    wine_dll_get_owner;
+    wine_dll_load;
+    wine_dll_load_main_exe;
+    wine_dll_unload;
     wine_pthread_get_functions;
     wine_pthread_set_functions;
     wine_switch_to_stack;

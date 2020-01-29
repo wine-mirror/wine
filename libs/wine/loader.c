@@ -62,6 +62,7 @@ extern char **environ;
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
+#include "wine/asm.h"
 #include "wine/library.h"
 
 /* argc/argv for the Windows application */
@@ -159,56 +160,6 @@ static void build_dll_path(void)
     }
 }
 
-/* check if the library is the correct architecture */
-/* only returns false for a valid library of the wrong arch */
-static int check_library_arch( int fd )
-{
-#ifdef __APPLE__
-    struct  /* Mach-O header */
-    {
-        unsigned int magic;
-        unsigned int cputype;
-    } header;
-
-    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
-    if (header.magic != 0xfeedface) return 1;
-    if (sizeof(void *) == sizeof(int)) return !(header.cputype >> 24);
-    else return (header.cputype >> 24) == 1; /* CPU_ARCH_ABI64 */
-#else
-    struct  /* ELF header */
-    {
-        unsigned char magic[4];
-        unsigned char class;
-        unsigned char data;
-        unsigned char version;
-    } header;
-
-    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
-    if (memcmp( header.magic, "\177ELF", 4 )) return 1;
-    if (header.version != 1 /* EV_CURRENT */) return 1;
-#ifdef WORDS_BIGENDIAN
-    if (header.data != 2 /* ELFDATA2MSB */) return 1;
-#else
-    if (header.data != 1 /* ELFDATA2LSB */) return 1;
-#endif
-    if (sizeof(void *) == sizeof(int)) return header.class == 1; /* ELFCLASS32 */
-    else return header.class == 2; /* ELFCLASS64 */
-#endif
-}
-
-/* check if a given file can be opened */
-static inline int file_exists( const char *name )
-{
-    int ret = 0;
-    int fd = open( name, O_RDONLY );
-    if (fd != -1)
-    {
-        ret = check_library_arch( fd );
-        close( fd );
-    }
-    return ret;
-}
-
 static inline char *prepend( char *buffer, const char *str, size_t len )
 {
     return memcpy( buffer - len, str, len );
@@ -275,26 +226,6 @@ static char *first_dll_path( const char *name, int win16, struct dll_path_contex
 static inline void free_dll_path( struct dll_path_context *context )
 {
     free( context->buffer );
-}
-
-
-/* open a library for a given dll, searching in the dll path
- * 'name' must be the Windows dll name (e.g. "kernel32.dll") */
-static void *dlopen_dll( const char *name, char *error, int errorsize,
-                         int test_only, int *exists )
-{
-    struct dll_path_context context;
-    char *path;
-    void *ret = NULL;
-
-    *exists = 0;
-    for (path = first_dll_path( name, 0, &context ); path; path = next_dll_path( &context ))
-    {
-        if (!test_only && (ret = wine_dlopen( path, RTLD_NOW, error, errorsize ))) break;
-        if ((*exists = file_exists( path ))) break; /* exists but cannot be loaded, return the error */
-    }
-    free_dll_path( &context );
-    return ret;
 }
 
 
@@ -564,11 +495,95 @@ void wine_dll_set_callback( load_dll_callback_t load )
 
 
 /***********************************************************************
+ *           wine_dll_enum_load_path
+ *
+ * Enumerate the dll load path.
+ */
+const char *wine_dll_enum_load_path( unsigned int index )
+{
+    if (index >= nb_dll_paths) return NULL;
+    return dll_paths[index];
+}
+
+
+#ifdef __ASM_OBSOLETE
+
+/* check if the library is the correct architecture */
+/* only returns false for a valid library of the wrong arch */
+static int check_library_arch( int fd )
+{
+#ifdef __APPLE__
+    struct  /* Mach-O header */
+    {
+        unsigned int magic;
+        unsigned int cputype;
+    } header;
+
+    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
+    if (header.magic != 0xfeedface) return 1;
+    if (sizeof(void *) == sizeof(int)) return !(header.cputype >> 24);
+    else return (header.cputype >> 24) == 1; /* CPU_ARCH_ABI64 */
+#else
+    struct  /* ELF header */
+    {
+        unsigned char magic[4];
+        unsigned char class;
+        unsigned char data;
+        unsigned char version;
+    } header;
+
+    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
+    if (memcmp( header.magic, "\177ELF", 4 )) return 1;
+    if (header.version != 1 /* EV_CURRENT */) return 1;
+#ifdef WORDS_BIGENDIAN
+    if (header.data != 2 /* ELFDATA2MSB */) return 1;
+#else
+    if (header.data != 1 /* ELFDATA2LSB */) return 1;
+#endif
+    if (sizeof(void *) == sizeof(int)) return header.class == 1; /* ELFCLASS32 */
+    else return header.class == 2; /* ELFCLASS64 */
+#endif
+}
+
+/* check if a given file can be opened */
+static int file_exists( const char *name )
+{
+    int ret = 0;
+    int fd = open( name, O_RDONLY );
+    if (fd != -1)
+    {
+        ret = check_library_arch( fd );
+        close( fd );
+    }
+    return ret;
+}
+
+/* open a library for a given dll, searching in the dll path
+ * 'name' must be the Windows dll name (e.g. "kernel32.dll") */
+static void *dlopen_dll( const char *name, char *error, int errorsize,
+                         int test_only, int *exists )
+{
+    struct dll_path_context context;
+    char *path;
+    void *ret = NULL;
+
+    *exists = 0;
+    for (path = first_dll_path( name, 0, &context ); path; path = next_dll_path( &context ))
+    {
+        if (!test_only && (ret = wine_dlopen( path, RTLD_NOW, error, errorsize ))) break;
+        if ((*exists = file_exists( path ))) break; /* exists but cannot be loaded, return the error */
+    }
+    free_dll_path( &context );
+    return ret;
+}
+
+
+/***********************************************************************
  *           wine_dll_load
  *
  * Load a builtin dll.
  */
-void *wine_dll_load( const char *filename, char *error, int errorsize, int *file_exists )
+void *wine_dll_load_obsolete( const char *filename, char *error, int errorsize, int *file_exists )
 {
     int i;
 
@@ -598,7 +613,7 @@ void *wine_dll_load( const char *filename, char *error, int errorsize, int *file
  *
  * Unload a builtin dll.
  */
-void wine_dll_unload( void *handle )
+void wine_dll_unload_obsolete( void *handle )
 {
     if (handle != (void *)1)
 	wine_dlclose( handle, NULL, 0 );
@@ -610,22 +625,10 @@ void wine_dll_unload( void *handle )
  *
  * Try to load the .so for the main exe.
  */
-void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
-                              int test_only, int *file_exists )
+void *wine_dll_load_main_exe_obsolete( const char *name, char *error, int errorsize,
+                                       int test_only, int *file_exists )
 {
     return dlopen_dll( name, error, errorsize, test_only, file_exists );
-}
-
-
-/***********************************************************************
- *           wine_dll_enum_load_path
- *
- * Enumerate the dll load path.
- */
-const char *wine_dll_enum_load_path( unsigned int index )
-{
-    if (index >= nb_dll_paths) return NULL;
-    return dll_paths[index];
 }
 
 
@@ -635,7 +638,7 @@ const char *wine_dll_enum_load_path( unsigned int index )
  * Retrieve the name of the 32-bit owner dll for a 16-bit dll.
  * Return 0 if OK, -1 on error.
  */
-int wine_dll_get_owner( const char *name, char *buffer, int size, int *exists )
+int wine_dll_get_owner_obsolete( const char *name, char *buffer, int size, int *exists )
 {
     int ret = -1;
     char *path;
@@ -661,6 +664,12 @@ int wine_dll_get_owner( const char *name, char *buffer, int size, int *exists )
     return ret;
 }
 
+__ASM_OBSOLETE(wine_dll_get_owner);
+__ASM_OBSOLETE(wine_dll_load);
+__ASM_OBSOLETE(wine_dll_load_main_exe);
+__ASM_OBSOLETE(wine_dll_unload);
+
+#endif /* __ASM_OBSOLETE */
 
 /***********************************************************************
  *           set_max_limit

@@ -3582,7 +3582,7 @@ static void free_modref( WINE_MODREF *wm )
     free_tls_slot( &wm->ldr );
     RtlReleaseActivationContext( wm->ldr.ActivationContext );
     if ((wm->ldr.Flags & LDR_WINE_INTERNAL) && wm->ldr.SectionHandle)
-        wine_dll_unload( wm->ldr.SectionHandle );
+        wine_dlclose( wm->ldr.SectionHandle, NULL, 0 );
     NtUnmapViewOfSection( NtCurrentProcess(), wm->ldr.BaseAddress );
     if (cached_modref == wm) cached_modref = NULL;
     RtlFreeUnicodeString( &wm->ldr.FullDllName );
