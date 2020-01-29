@@ -222,13 +222,11 @@ int is_valid_codepage(int id)
 
 int wmc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
-    if (codepage == CP_UTF8) return wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
     return wine_cp_mbstowcs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen );
 }
 
 int wmc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
 {
-    if (codepage == CP_UTF8) return wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
     return wine_cp_wcstombs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen, NULL, NULL );
 }
 

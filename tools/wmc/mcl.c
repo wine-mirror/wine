@@ -198,9 +198,18 @@ try_again:
 			xyyerror(err_fatalread);
 		else if(!cptr)
 			return 0;
-                n = wmc_mbstowcs(codepage, 0, xlatebuffer, strlen(xlatebuffer)+1, inputbuffer, INPUTBUFFER_SIZE);
-		if(n < 0)
-			internal_error(__FILE__, __LINE__, "Could not translate to unicode (%d)\n", n);
+		if (codepage == CP_UTF8)
+		{
+			WCHAR *buf = utf8_to_unicode( xlatebuffer, strlen(xlatebuffer), &n );
+			memcpy( inputbuffer, buf, (n + 1) * sizeof(WCHAR) );
+			free( buf );
+		}
+		else
+		{
+			n = wmc_mbstowcs(codepage, 0, xlatebuffer, strlen(xlatebuffer)+1, inputbuffer, INPUTBUFFER_SIZE);
+			if(n < 0)
+				internal_error(__FILE__, __LINE__, "Could not translate to unicode (%d)\n", n);
+		}
 		if(n <= 1)
 			goto try_again;	/* Should not happen */
 		n--;	/* Strip added conversion '\0' from input length */

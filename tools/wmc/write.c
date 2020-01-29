@@ -94,17 +94,13 @@ static const char str_header[] =
 	"\n"
         ;
 
-static char *dup_u2c(int cp, const WCHAR *uc)
+static char *dup_u2c(const WCHAR *uc)
 {
-	int len;
-	char *cptr;
+	int i;
+	char *cptr = xmalloc( unistrlen(uc)+1 );
 
-        if (!cp) cp = CP_UTF8;
-        len = wmc_wcstombs(cp, 0, uc, unistrlen(uc)+1, NULL, 0);
-	cptr = xmalloc(len);
-        len = wmc_wcstombs(cp, 0, uc, unistrlen(uc)+1, cptr, len);
-	if (len < 0)
-		internal_error(__FILE__, __LINE__, "Buffer overflow? code %d\n", len);
+        for (i = 0; *uc; i++, uc++) cptr[i] = (*uc <= 0xff) ? *uc : '_';
+        cptr[i] = 0;
 	return cptr;
 }
 
@@ -183,7 +179,7 @@ void write_h_file(const char *fname)
 	{
 		if(ttab[i].type == tok_severity && ttab[i].alias)
 		{
-			cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ttab[i].alias);
+			cptr = dup_u2c(ttab[i].alias);
 			fprintf(fp, "#define %s\t0x%x\n", cptr, ttab[i].token);
 			free(cptr);
 		}
@@ -195,7 +191,7 @@ void write_h_file(const char *fname)
 	{
 		if(ttab[i].type == tok_facility && ttab[i].alias)
 		{
-			cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ttab[i].alias);
+			cptr = dup_u2c(ttab[i].alias);
 			fprintf(fp, "#define %s\t0x%x\n", cptr, ttab[i].token);
 			free(cptr);
 		}
@@ -209,7 +205,7 @@ void write_h_file(const char *fname)
 		switch(ndp->type)
 		{
 		case nd_comment:
-			cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ndp->u.comment+1);
+			cptr = dup_u2c(ndp->u.comment+1);
 			killnl(cptr, 0);
 			killcomment(cptr);
 			if(*cptr)
@@ -237,14 +233,14 @@ void write_h_file(const char *fname)
 				fprintf(fp, "\n");
 			}
 			fprintf(fp, "/* MessageId  : 0x%08x */\n", ndp->u.msg->realid);
-			cptr = dup_u2c(ndp->u.msg->msgs[idx_en]->cp, ndp->u.msg->msgs[idx_en]->msg);
+			cptr = dup_u2c(ndp->u.msg->msgs[idx_en]->msg);
 			killnl(cptr, 0);
 			killcomment(cptr);
 			fprintf(fp, "/* Approximate msg: %s */\n", cptr);
 			free(cptr);
-			cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ndp->u.msg->sym);
+			cptr = dup_u2c(ndp->u.msg->sym);
 			if(ndp->u.msg->cast)
-				cast = dup_u2c(WMC_DEFAULT_CODEPAGE, ndp->u.msg->cast);
+				cast = dup_u2c(ndp->u.msg->cast);
 			else
 				cast = NULL;
 			switch(ndp->u.msg->base)
@@ -299,7 +295,7 @@ static void write_rcbin(FILE *fp)
 			if(ttab[i].type == tok_language && ttab[i].token == lbp->lan)
 			{
 				if(ttab[i].alias)
-					cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ttab[i].alias);
+					cptr = dup_u2c(ttab[i].alias);
 				break;
 			}
 		}
@@ -317,7 +313,7 @@ static char *make_string(WCHAR *uc, int len, int codepage)
 	int i;
 	int b;
 
-	if(!codepage)
+	if (!codepage || codepage == CP_UTF8)
 	{
 		*cptr++ = ' ';
 		*cptr++ = 'L';
@@ -379,8 +375,10 @@ static char *make_string(WCHAR *uc, int len, int codepage)
 	else
 	{
 		char *tmp, *cc;
+		int unilen = unistrlen(uc) + 1;
 
-		cc = tmp = dup_u2c(codepage, uc);
+		cc = tmp = xmalloc( unilen * 2 );
+		wmc_wcstombs( codepage, 0, uc, unilen, cptr, unilen * 2 );
 		*cptr++ = ' ';
 		*cptr++ = '"';
 		for(i = b = 0; i < len; i++, cc++)
@@ -539,7 +537,7 @@ void write_bin_files(void)
         {
             if (ttab[i].type == tok_language && ttab[i].token == lbp->lan)
             {
-                if (ttab[i].alias) cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ttab[i].alias);
+                if (ttab[i].alias) cptr = dup_u2c(ttab[i].alias);
                 break;
             }
         }

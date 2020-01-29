@@ -272,6 +272,127 @@ int unistrcmp(const WCHAR *s1, const WCHAR *s2)
 	return *s1 - *s2;
 }
 
+WCHAR *utf8_to_unicode( const char *src, int srclen, int *dstlen )
+{
+    static const char utf8_length[128] =
+    {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x80-0x8f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x90-0x9f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xa0-0xaf */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xb0-0xbf */
+        0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xc0-0xcf */
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xd0-0xdf */
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xe0-0xef */
+        3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0  /* 0xf0-0xff */
+    };
+    static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
+
+    const char *srcend = src + srclen;
+    int len, res;
+    WCHAR *ret, *dst;
+
+    dst = ret = xmalloc( (srclen + 1) * sizeof(WCHAR) );
+    while (src < srcend)
+    {
+        unsigned char ch = *src++;
+        if (ch < 0x80)  /* special fast case for 7-bit ASCII */
+        {
+            *dst++ = ch;
+            continue;
+        }
+        len = utf8_length[ch - 0x80];
+        if (len && src + len <= srcend)
+        {
+            res = ch & utf8_mask[len];
+            switch (len)
+            {
+            case 3:
+                if ((ch = *src ^ 0x80) >= 0x40) break;
+                res = (res << 6) | ch;
+                src++;
+                if (res < 0x10) break;
+            case 2:
+                if ((ch = *src ^ 0x80) >= 0x40) break;
+                res = (res << 6) | ch;
+                if (res >= 0x110000 >> 6) break;
+                src++;
+                if (res < 0x20) break;
+                if (res >= 0xd800 >> 6 && res <= 0xdfff >> 6) break;
+            case 1:
+                if ((ch = *src ^ 0x80) >= 0x40) break;
+                res = (res << 6) | ch;
+                src++;
+                if (res < 0x80) break;
+                if (res <= 0xffff) *dst++ = res;
+                else
+                {
+                    res -= 0x10000;
+                    *dst++ = 0xd800 | (res >> 10);
+                    *dst++ = 0xdc00 | (res & 0x3ff);
+                }
+                continue;
+            }
+        }
+        *dst++ = 0xfffd;
+    }
+    *dst = 0;
+    *dstlen = dst - ret;
+    return ret;
+}
+
+char *unicode_to_utf8( const WCHAR *src, int srclen, int *dstlen )
+{
+    char *ret, *dst;
+
+    dst = ret = xmalloc( srclen * 3 + 1 );
+    for ( ; srclen; srclen--, src++)
+    {
+        unsigned int ch = *src;
+
+        if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
+        {
+            *dst++ = ch;
+            continue;
+        }
+        if (ch < 0x800)  /* 0x80-0x7ff: 2 bytes */
+        {
+            dst[1] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[0] = 0xc0 | ch;
+            dst += 2;
+            continue;
+        }
+        if (ch >= 0xd800 && ch <= 0xdbff && srclen > 1 && src[1] >= 0xdc00 && src[1] <= 0xdfff)
+        {
+            /* 0x10000-0x10ffff: 4 bytes */
+            ch = 0x10000 + ((ch & 0x3ff) << 10) + (src[1] & 0x3ff);
+            dst[3] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[2] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[1] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[0] = 0xf0 | ch;
+            dst += 4;
+            src++;
+            srclen--;
+            continue;
+        }
+        if (ch >= 0xd800 && ch <= 0xdfff) ch = 0xfffd;  /* invalid surrogate pair */
+
+        /* 0x800-0xffff: 3 bytes */
+        dst[2] = 0x80 | (ch & 0x3f);
+        ch >>= 6;
+        dst[1] = 0x80 | (ch & 0x3f);
+        ch >>= 6;
+        dst[0] = 0xe0 | ch;
+        dst += 3;
+    }
+    *dst = 0;
+    *dstlen = dst - ret;
+    return ret;
+}
+
 /*******************************************************************
  *         buffer management
  *

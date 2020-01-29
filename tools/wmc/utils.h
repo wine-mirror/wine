@@ -49,6 +49,8 @@ WCHAR *unistrcpy(WCHAR *dst, const WCHAR *src);
 int unistrlen(const WCHAR *s);
 int unistricmp(const WCHAR *s1, const WCHAR *s2);
 int unistrcmp(const WCHAR *s1, const WCHAR *s2);
+WCHAR *utf8_to_unicode( const char *src, int srclen, int *dstlen );
+char *unicode_to_utf8( const WCHAR *src, int srclen, int *dstlen );
 
 /* buffer management */
 
