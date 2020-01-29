@@ -42,6 +42,9 @@
 #define D3D8_MAX_VERTEX_SHADER_CONSTANTF 256
 #define D3D8_MAX_STREAMS 16
 
+#define D3DFMT_RESZ MAKEFOURCC('R','E','S','Z')
+#define D3D8_RESZ_CODE 0x7fa05000
+
 /* CreateVertexShader can return > 0xFFFF */
 #define VS_HIGHESTFIXEDFXF 0xF0000000
 

@@ -1846,6 +1846,34 @@ static HRESULT WINAPI d3d8_device_GetClipPlane(IDirect3DDevice8 *iface, DWORD in
     return hr;
 }
 
+static void resolve_depth_buffer(struct d3d8_device *device)
+{
+    const struct wined3d_stateblock_state *state = wined3d_stateblock_get_state(device->state);
+    struct wined3d_rendertarget_view *wined3d_dsv;
+    struct wined3d_resource *dst_resource;
+    struct wined3d_texture *dst_texture;
+    struct wined3d_resource_desc desc;
+    struct d3d8_surface *d3d8_dsv;
+
+    if (!(dst_texture = state->textures[0]))
+        return;
+    dst_resource = wined3d_texture_get_resource(dst_texture);
+    wined3d_resource_get_desc(dst_resource, &desc);
+    if (desc.format != WINED3DFMT_D24_UNORM_S8_UINT
+            && desc.format != WINED3DFMT_X8D24_UNORM
+            && desc.format != WINED3DFMT_DF16
+            && desc.format != WINED3DFMT_DF24
+            && desc.format != WINED3DFMT_INTZ)
+        return;
+
+    if (!(wined3d_dsv = wined3d_device_get_depth_stencil_view(device->wined3d_device)))
+        return;
+    d3d8_dsv = wined3d_rendertarget_view_get_sub_resource_parent(wined3d_dsv);
+
+    wined3d_device_resolve_sub_resource(device->wined3d_device, dst_resource, 0,
+            wined3d_rendertarget_view_get_resource(wined3d_dsv), d3d8_dsv->sub_resource_idx, desc.format);
+}
+
 static HRESULT WINAPI d3d8_device_SetRenderState(IDirect3DDevice8 *iface,
         D3DRENDERSTATETYPE state, DWORD value)
 {
@@ -1859,6 +1887,8 @@ static HRESULT WINAPI d3d8_device_SetRenderState(IDirect3DDevice8 *iface,
     wined3d_stateblock_set_render_state(device->update_state, state, value);
     if (!device->recording)
         wined3d_device_set_render_state(device->wined3d_device, state, value);
+    if (state == D3DRS_POINTSIZE && value == D3D8_RESZ_CODE)
+        resolve_depth_buffer(device);
     wined3d_mutex_unlock();
 
     return D3D_OK;
