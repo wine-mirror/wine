@@ -3707,7 +3707,7 @@ static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_Widen(ID2D1EllipseGeometry
     return E_NOTIMPL;
 }
 
-static void STDMETHODCALLTYPE d2d_ellipse_geometry_GetRoundedRect(ID2D1EllipseGeometry *iface, D2D1_ELLIPSE *ellipse)
+static void STDMETHODCALLTYPE d2d_ellipse_geometry_GetEllipse(ID2D1EllipseGeometry *iface, D2D1_ELLIPSE *ellipse)
 {
     struct d2d_geometry *geometry = impl_from_ID2D1EllipseGeometry(iface);
 
@@ -3735,7 +3735,7 @@ static const struct ID2D1EllipseGeometryVtbl d2d_ellipse_geometry_vtbl =
     d2d_ellipse_geometry_ComputeLength,
     d2d_ellipse_geometry_ComputePointAtLength,
     d2d_ellipse_geometry_Widen,
-    d2d_ellipse_geometry_GetRoundedRect,
+    d2d_ellipse_geometry_GetEllipse,
 };
 
 HRESULT d2d_ellipse_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory, const D2D1_ELLIPSE *ellipse)
