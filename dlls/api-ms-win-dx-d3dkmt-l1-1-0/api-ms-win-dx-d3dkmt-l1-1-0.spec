@@ -80,7 +80,7 @@
 @ stub D3DKMTSetDisplayPrivateDriverFormat
 @ stub D3DKMTSetGammaRamp
 @ stub D3DKMTSetProcessSchedulingPriorityClass
-@ stub D3DKMTSetQueuedLimit
+@ stdcall D3DKMTSetQueuedLimit(ptr) gdi32.D3DKMTSetQueuedLimit
 @ stub D3DKMTSetStereoEnabled
 @ stdcall D3DKMTSetVidPnSourceOwner(ptr) gdi32.D3DKMTSetVidPnSourceOwner
 @ stub D3DKMTShareObjects

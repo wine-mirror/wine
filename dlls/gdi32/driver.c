@@ -1471,6 +1471,15 @@ NTSTATUS WINAPI D3DKMTQueryStatistics(D3DKMT_QUERYSTATISTICS *stats)
 }
 
 /******************************************************************************
+ *		D3DKMTSetQueuedLimit [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTSetQueuedLimit( D3DKMT_SETQUEUEDLIMIT *desc )
+{
+    FIXME( "(%p): stub\n", desc );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  *		D3DKMTSetVidPnSourceOwner [GDI32.@]
  */
 NTSTATUS WINAPI D3DKMTSetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )

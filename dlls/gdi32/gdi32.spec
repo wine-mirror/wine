@@ -90,6 +90,7 @@
 @ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr)
 @ stdcall D3DKMTOpenAdapterFromHdc(ptr)
 @ stdcall D3DKMTQueryStatistics(ptr)
+@ stdcall D3DKMTSetQueuedLimit(ptr)
 @ stdcall D3DKMTSetVidPnSourceOwner(ptr)
 @ stdcall DPtoLP(long ptr long)
 @ stdcall DeleteColorSpace(long)
