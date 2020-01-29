@@ -1606,6 +1606,7 @@ static HRESULT WINAPI d3d8_device_Clear(IDirect3DDevice8 *iface, DWORD rect_coun
     }
 
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = wined3d_device_clear(device->wined3d_device, rect_count, (const RECT *)rects, flags, &c, z, stencil);
     wined3d_mutex_unlock();
 
@@ -2287,6 +2288,7 @@ static HRESULT WINAPI d3d8_device_ValidateDevice(IDirect3DDevice8 *iface, DWORD 
     TRACE("iface %p, pass_count %p.\n", iface, pass_count);
 
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = wined3d_device_validate_device(device->wined3d_device, pass_count);
     wined3d_mutex_unlock();
 
@@ -2417,6 +2419,7 @@ static HRESULT WINAPI d3d8_device_DrawPrimitive(IDirect3DDevice8 *iface,
 
     vertex_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     d3d8_device_upload_sysmem_vertex_buffers(device, start_vertex, vertex_count);
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type, 0);
     hr = wined3d_device_draw_primitive(device->wined3d_device, start_vertex, vertex_count);
@@ -2439,6 +2442,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitive(IDirect3DDevice8 *iface,
 
     index_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     base_vertex_index = wined3d_device_get_base_vertex_index(device->wined3d_device);
     d3d8_device_upload_sysmem_vertex_buffers(device, base_vertex_index + min_vertex_idx, vertex_count);
     d3d8_device_upload_sysmem_index_buffer(device, start_idx, index_count);
@@ -2509,6 +2513,7 @@ static HRESULT WINAPI d3d8_device_DrawPrimitiveUP(IDirect3DDevice8 *iface,
     }
 
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = d3d8_device_prepare_vertex_buffer(device, size);
     if (FAILED(hr))
         goto done;
@@ -2610,6 +2615,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
 
     wined3d_mutex_lock();
 
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = d3d8_device_prepare_vertex_buffer(device, vtx_size);
     if (FAILED(hr))
         goto done;
@@ -2688,6 +2694,8 @@ static HRESULT WINAPI d3d8_device_ProcessVertices(IDirect3DDevice8 *iface, UINT 
             iface, src_start_idx, dst_idx, vertex_count, dst_buffer, flags);
 
     wined3d_mutex_lock();
+
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
 
     /* Note that an alternative approach would be to simply create these
      * buffers with WINED3D_RESOURCE_ACCESS_MAP_R and update them here like we
