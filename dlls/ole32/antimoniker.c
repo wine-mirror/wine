@@ -56,6 +56,21 @@ static inline AntiMonikerImpl *impl_from_IROTData(IROTData *iface)
 
 static AntiMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface);
 
+BOOL is_anti_moniker(IMoniker *iface, DWORD *order)
+{
+    AntiMonikerImpl *moniker = unsafe_impl_from_IMoniker(iface);
+
+    if (!moniker)
+    {
+        *order = 0;
+        return FALSE;
+    }
+
+    *order = moniker->count;
+
+    return TRUE;
+}
+
 /*******************************************************************************
  *        AntiMoniker_QueryInterface
  *******************************************************************************/
@@ -607,7 +622,7 @@ static const IROTDataVtbl VT_ROTDataImpl =
     AntiMonikerROTDataImpl_GetComparisonData
 };
 
-static HRESULT create_anti_moniker(DWORD order, IMoniker **ret)
+HRESULT create_anti_moniker(DWORD order, IMoniker **ret)
 {
     AntiMonikerImpl *moniker;
 

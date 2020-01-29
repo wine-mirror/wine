@@ -262,7 +262,7 @@ PointerMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
 {
 
     HRESULT res=S_OK;
-    DWORD mkSys,mkSys2;
+    DWORD mkSys,mkSys2, order;
     IEnumMoniker* penumMk=0;
     IMoniker *pmostLeftMk=0;
     IMoniker* tempMkComposite=0;
@@ -274,15 +274,15 @@ PointerMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
 
     *ppmkComposite=0;
 
-    IMoniker_IsSystemMoniker(pmkRight,&mkSys);
-
-    /* If pmkRight is an anti-moniker, the returned moniker is NULL */
-    if(mkSys==MKSYS_ANTIMONIKER)
-        return res;
-
+    if (is_anti_moniker(pmkRight, &order))
+    {
+        return order > 1 ? create_anti_moniker(order - 1, ppmkComposite) : S_OK;
+    }
     else
+    {
         /* if pmkRight is a composite whose leftmost component is an anti-moniker,           */
         /* the returned moniker is the composite after the leftmost anti-moniker is removed. */
+        IMoniker_IsSystemMoniker(pmkRight,&mkSys);
 
          if(mkSys==MKSYS_GENERICCOMPOSITE){
 
@@ -326,6 +326,7 @@ PointerMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
 
             else
                 return MK_E_NEEDGENERIC;
+    }
 }
 
 /******************************************************************************
