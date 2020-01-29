@@ -451,6 +451,7 @@ HRESULT WINAPI MFUnlockPlatform(void);
 HRESULT WINAPI MFUnlockWorkQueue(DWORD queue);
 HRESULT WINAPI MFTUnregister(CLSID clsid);
 HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory);
+HRESULT WINAPI MFTUnregisterLocalByCLSID(CLSID clsid);
 HRESULT WINAPI MFGetPluginControl(IMFPluginControl**);
 HRESULT WINAPI MFWrapMediaType(IMFMediaType *original, REFGUID major, REFGUID subtype, IMFMediaType **wrapped);
 HRESULT WINAPI MFUnwrapMediaType(IMFMediaType *wrapped, IMFMediaType **original);

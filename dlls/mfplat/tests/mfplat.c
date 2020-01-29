@@ -78,6 +78,14 @@ static HRESULT (WINAPI *pMFRegisterLocalByteStreamHandler)(const WCHAR *extensio
         IMFActivate *activate);
 static HRESULT (WINAPI *pMFRegisterLocalSchemeHandler)(const WCHAR *scheme, IMFActivate *activate);
 static HRESULT (WINAPI *pMFCreateTransformActivate)(IMFActivate **activate);
+static HRESULT (WINAPI *pMFTRegisterLocal)(IClassFactory *factory, REFGUID category, LPCWSTR name,
+        UINT32 flags, UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 coutput,
+        const MFT_REGISTER_TYPE_INFO* output_types);
+static HRESULT (WINAPI *pMFTRegisterLocalByCLSID)(REFCLSID clsid, REFGUID category, LPCWSTR name, UINT32 flags,
+        UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
+        const MFT_REGISTER_TYPE_INFO *output_types);
+static HRESULT (WINAPI *pMFTUnregisterLocal)(IClassFactory *factory);
+static HRESULT (WINAPI *pMFTUnregisterLocalByCLSID)(CLSID clsid);
 
 static const WCHAR mp4file[] = {'t','e','s','t','.','m','p','4',0};
 static const WCHAR fileschemeW[] = {'f','i','l','e',':','/','/',0};
@@ -529,6 +537,10 @@ static void init_functions(void)
     X(MFRegisterLocalSchemeHandler);
     X(MFRemovePeriodicCallback);
     X(MFCreateTransformActivate);
+    X(MFTRegisterLocal);
+    X(MFTRegisterLocalByCLSID);
+    X(MFTUnregisterLocal);
+    X(MFTUnregisterLocalByCLSID);
 #undef X
 
     if ((mod = LoadLibraryA("d3d11.dll")))
@@ -3823,6 +3835,97 @@ static void test_MFCreateTransformActivate(void)
     IMFActivate_Release(activate);
 }
 
+static HRESULT WINAPI test_mft_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IClassFactory) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_mft_factory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_mft_factory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_mft_factory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **obj)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_mft_factory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    return S_OK;
+}
+
+static const IClassFactoryVtbl test_mft_factory_vtbl =
+{
+    test_mft_factory_QueryInterface,
+    test_mft_factory_AddRef,
+    test_mft_factory_Release,
+    test_mft_factory_CreateInstance,
+    test_mft_factory_LockServer,
+};
+
+static void test_MFTRegisterLocal(void)
+{
+    IClassFactory test_factory = { &test_mft_factory_vtbl };
+    MFT_REGISTER_TYPE_INFO input_types[1];
+    HRESULT hr;
+
+    if (!pMFTRegisterLocal)
+    {
+        win_skip("MFTRegisterLocal() is not available.\n");
+        return;
+    }
+
+    input_types[0].guidMajorType = MFMediaType_Audio;
+    input_types[0].guidSubtype = MFAudioFormat_PCM;
+    hr = pMFTRegisterLocal(&test_factory, &MFT_CATEGORY_OTHER, L"Local MFT name", 0, 1, input_types, 0, NULL);
+    ok(hr == S_OK, "Failed to register MFT, hr %#x.\n", hr);
+
+    hr = pMFTRegisterLocal(&test_factory, &MFT_CATEGORY_OTHER, L"Local MFT name", 0, 1, input_types, 0, NULL);
+    ok(hr == S_OK, "Failed to register MFT, hr %#x.\n", hr);
+
+    hr = pMFTUnregisterLocal(&test_factory);
+    ok(hr == S_OK, "Failed to unregister MFT, hr %#x.\n", hr);
+
+    hr = pMFTUnregisterLocal(&test_factory);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Unexpected hr %#x.\n", hr);
+
+    hr = pMFTUnregisterLocal(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFTRegisterLocalByCLSID(&MFT_CATEGORY_OTHER, &MFT_CATEGORY_OTHER, L"Local MFT name 2", 0, 1, input_types,
+            0, NULL);
+    ok(hr == S_OK, "Failed to register MFT, hr %#x.\n", hr);
+
+    hr = pMFTUnregisterLocal(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFTUnregisterLocalByCLSID(MFT_CATEGORY_OTHER);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Unexpected hr %#x.\n", hr);
+
+    hr = pMFTRegisterLocalByCLSID(&MFT_CATEGORY_OTHER, &MFT_CATEGORY_OTHER, L"Local MFT name 2", 0, 1, input_types,
+            0, NULL);
+    ok(hr == S_OK, "Failed to register MFT, hr %#x.\n", hr);
+
+    hr = pMFTUnregisterLocalByCLSID(MFT_CATEGORY_OTHER);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -3862,6 +3965,7 @@ START_TEST(mfplat)
     test_create_property_store();
     test_dxgi_device_manager();
     test_MFCreateTransformActivate();
+    test_MFTRegisterLocal();
 
     CoUninitialize();
 }

@@ -150,7 +150,7 @@
 @ stdcall MFTRegisterLocalByCLSID(ptr ptr wstr long long ptr long ptr)
 @ stdcall MFTUnregister(int128)
 @ stdcall MFTUnregisterLocal(ptr)
-@ stub MFTUnregisterLocalByCLSID
+@ stdcall MFTUnregisterLocalByCLSID(int128)
 @ stub MFTraceError
 @ stub MFTraceFuncEnter
 @ stub MFUnblockThread

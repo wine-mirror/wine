@@ -43,6 +43,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+static HRESULT heap_strdupW(const WCHAR *str, WCHAR **dest)
+{
+    HRESULT hr = S_OK;
+
+    if (str)
+    {
+        unsigned int size;
+
+        size = (lstrlenW(str) + 1) * sizeof(WCHAR);
+        *dest = heap_alloc(size);
+        if (*dest)
+            memcpy(*dest, str, size);
+        else
+            hr = E_OUTOFMEMORY;
+    }
+    else
+        *dest = NULL;
+
+    return hr;
+}
+
 static LONG platform_lock;
 
 struct local_handler
@@ -64,6 +85,24 @@ static CRITICAL_SECTION local_handlers_section = { NULL, -1, 0, 0, 0, 0 };
 
 static struct list local_scheme_handlers = LIST_INIT(local_scheme_handlers);
 static struct list local_bytestream_handlers = LIST_INIT(local_bytestream_handlers);
+
+struct local_mft
+{
+    struct list entry;
+    IClassFactory *factory;
+    CLSID clsid;
+    GUID category;
+    WCHAR *name;
+    DWORD flags;
+    MFT_REGISTER_TYPE_INFO *input_types;
+    UINT32 input_types_count;
+    MFT_REGISTER_TYPE_INFO *output_types;
+    UINT32 output_types_count;
+};
+
+static CRITICAL_SECTION local_mfts_section = { NULL, -1, 0, 0, 0, 0 };
+
+static struct list local_mfts = LIST_INIT(local_mfts);
 
 struct transform_activate
 {
@@ -736,32 +775,164 @@ HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags
     return hr;
 }
 
-HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWSTR name,
-                           UINT32 flags, UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types,
-                           UINT32 coutput, const MFT_REGISTER_TYPE_INFO* output_types)
+static void release_local_mft(struct local_mft *mft)
 {
-    FIXME("(%p, %s, %s, %x, %u, %p, %u, %p)\n", factory, debugstr_guid(category), debugstr_w(name),
-                                                flags, cinput, input_types, coutput, output_types);
+    if (mft->factory)
+        IClassFactory_Release(mft->factory);
+    heap_free(mft->name);
+    heap_free(mft->input_types);
+    heap_free(mft->output_types);
+    heap_free(mft);
+}
 
-    return S_OK;
+static HRESULT mft_register_local(IClassFactory *factory, REFCLSID clsid, REFGUID category, LPCWSTR name, UINT32 flags,
+        UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
+        const MFT_REGISTER_TYPE_INFO *output_types)
+{
+    struct local_mft *mft, *cur, *unreg_mft = NULL;
+    HRESULT hr;
+
+    if (!factory && !clsid)
+    {
+        WARN("Can't register without factory or CLSID.\n");
+        return E_FAIL;
+    }
+
+    mft = heap_alloc_zero(sizeof(*mft));
+    if (!mft)
+        return E_OUTOFMEMORY;
+
+    mft->factory = factory;
+    if (mft->factory)
+        IClassFactory_AddRef(mft->factory);
+    if (clsid)
+        mft->clsid = *clsid;
+    mft->category = *category;
+    mft->flags = flags;
+    if (FAILED(hr = heap_strdupW(name, &mft->name)))
+        goto failed;
+
+    if (input_count && input_types)
+    {
+        mft->input_types_count = input_count;
+        if (!(mft->input_types = heap_calloc(mft->input_types_count, sizeof(*input_types))))
+        {
+            hr = E_OUTOFMEMORY;
+            goto failed;
+        }
+        memcpy(mft->input_types, input_types, mft->input_types_count * sizeof(*input_types));
+    }
+
+    if (output_count && output_types)
+    {
+        mft->output_types_count = output_count;
+        if (!(mft->output_types = heap_calloc(mft->output_types_count, sizeof(*output_types))))
+        {
+            hr = E_OUTOFMEMORY;
+            goto failed;
+        }
+        memcpy(mft->output_types, output_types, mft->output_types_count * sizeof(*output_types));
+    }
+
+    EnterCriticalSection(&local_mfts_section);
+
+    LIST_FOR_EACH_ENTRY(cur, &local_mfts, struct local_mft, entry)
+    {
+        if (cur->factory == factory)
+        {
+            unreg_mft = cur;
+            list_remove(&cur->entry);
+            break;
+        }
+    }
+    list_add_tail(&local_mfts, &mft->entry);
+
+    LeaveCriticalSection(&local_mfts_section);
+
+    if (unreg_mft)
+        release_local_mft(unreg_mft);
+
+failed:
+    if (FAILED(hr))
+        release_local_mft(mft);
+
+    return hr;
+}
+
+HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWSTR name, UINT32 flags,
+        UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
+        const MFT_REGISTER_TYPE_INFO *output_types)
+{
+    TRACE("%p, %s, %s, %#x, %u, %p, %u, %p.\n", factory, debugstr_guid(category), debugstr_w(name), flags, input_count,
+            input_types, output_count, output_types);
+
+    return mft_register_local(factory, NULL, category, name, flags, input_count, input_types, output_count, output_types);
 }
 
 HRESULT WINAPI MFTRegisterLocalByCLSID(REFCLSID clsid, REFGUID category, LPCWSTR name, UINT32 flags,
         UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
         const MFT_REGISTER_TYPE_INFO *output_types)
 {
-
-    FIXME("%s, %s, %s, %#x, %u, %p, %u, %p.\n", debugstr_guid(clsid), debugstr_guid(category), debugstr_w(name), flags,
+    TRACE("%s, %s, %s, %#x, %u, %p, %u, %p.\n", debugstr_guid(clsid), debugstr_guid(category), debugstr_w(name), flags,
             input_count, input_types, output_count, output_types);
 
-    return E_NOTIMPL;
+    return mft_register_local(NULL, clsid, category, name, flags, input_count, input_types, output_count, output_types);
+}
+
+static HRESULT mft_unregister_local(IClassFactory *factory, REFCLSID clsid)
+{
+    struct local_mft *cur, *cur2;
+    BOOL unregister_all = !factory && !clsid;
+    struct list unreg;
+
+    list_init(&unreg);
+
+    EnterCriticalSection(&local_mfts_section);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &local_mfts, struct local_mft, entry)
+    {
+        if (!unregister_all)
+        {
+            if ((factory && cur->factory == factory) || IsEqualCLSID(&cur->clsid, clsid))
+            {
+                list_remove(&cur->entry);
+                list_add_tail(&unreg, &cur->entry);
+                break;
+            }
+        }
+        else
+        {
+            list_remove(&cur->entry);
+            list_add_tail(&unreg, &cur->entry);
+        }
+    }
+
+    LeaveCriticalSection(&local_mfts_section);
+
+    if (!unregister_all && list_empty(&unreg))
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &unreg, struct local_mft, entry)
+    {
+        list_remove(&cur->entry);
+        release_local_mft(cur);
+    }
+
+    return S_OK;
+}
+
+HRESULT WINAPI MFTUnregisterLocalByCLSID(CLSID clsid)
+{
+    TRACE("%s.\n", debugstr_guid(&clsid));
+
+    return mft_unregister_local(NULL, &clsid);
 }
 
 HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory)
 {
-    FIXME("(%p)\n", factory);
+    TRACE("%p.\n", factory);
 
-    return S_OK;
+    return mft_unregister_local(factory, NULL);
 }
 
 MFTIME WINAPI MFGetSystemTime(void)
@@ -7682,27 +7853,6 @@ static const IMFAsyncCallbackVtbl async_create_file_callback_vtbl =
     async_create_file_callback_GetParameters,
     async_create_file_callback_Invoke,
 };
-
-static HRESULT heap_strdupW(const WCHAR *str, WCHAR **dest)
-{
-    HRESULT hr = S_OK;
-
-    if (str)
-    {
-        unsigned int size;
-
-        size = (lstrlenW(str) + 1) * sizeof(WCHAR);
-        *dest = heap_alloc(size);
-        if (*dest)
-            memcpy(*dest, str, size);
-        else
-            hr = E_OUTOFMEMORY;
-    }
-    else
-        *dest = NULL;
-
-    return hr;
-}
 
 /***********************************************************************
  *      MFBeginCreateFile (mfplat.@)
