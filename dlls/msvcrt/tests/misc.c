@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <math.h>
-#include "msvcrt.h"
 #include <process.h>
 
 static inline BOOL almost_equal(double d1, double d2) {
@@ -33,14 +32,14 @@ static inline BOOL almost_equal(double d1, double d2) {
 
 static int (__cdecl *prand_s)(unsigned int *);
 static int (__cdecl *pI10_OUTPUT)(long double, int, int, void*);
-static int (__cdecl *pstrerror_s)(char *, MSVCRT_size_t, int);
+static int (__cdecl *pstrerror_s)(char *, size_t, int);
 static int (__cdecl *p_get_doserrno)(int *);
 static int (__cdecl *p_get_errno)(int *);
 static int (__cdecl *p_set_doserrno)(int);
 static int (__cdecl *p_set_errno)(int);
 static void (__cdecl *p__invalid_parameter)(const wchar_t*,
         const wchar_t*, const wchar_t*, unsigned int, uintptr_t);
-static void (__cdecl *p_qsort_s)(void*, MSVCRT_size_t, MSVCRT_size_t,
+static void (__cdecl *p_qsort_s)(void*, size_t, size_t,
         int (__cdecl*)(void*, const void*, const void*), void*);
 static double (__cdecl *p_atan)(double);
 static double (__cdecl *p_exp)(double);
