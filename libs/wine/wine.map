@@ -1,9 +1,6 @@
 WINE_1.0
 {
   global:
-    __wine_dbg_get_channel_flags;
-    __wine_dbg_set_channel_flags;
-    __wine_dbg_set_functions;
     __wine_dll_register;
     __wine_main_argc;
     __wine_main_argv;
@@ -19,11 +16,6 @@ WINE_1.0
     wine_cp_wcstombs;
     wine_cpsymbol_mbstowcs;
     wine_cpsymbol_wcstombs;
-    wine_dbg_log;
-    wine_dbg_printf;
-    wine_dbg_sprintf;
-    wine_dbgstr_an;
-    wine_dbgstr_wn;
     wine_dlclose;
     wine_dll_enum_load_path;
     wine_dll_get_owner;
@@ -76,6 +68,9 @@ WINE_1.0
 
     /* the following functions are obsolete and only exported for backwards compatibility */
 
+    __wine_dbg_get_channel_flags;
+    __wine_dbg_set_channel_flags;
+    __wine_dbg_set_functions;
     atoiW;
     atolW;
     get_char_typeW;
@@ -117,6 +112,11 @@ WINE_1.0
     vsnprintfW;
     vsprintfW;
     wine_call_on_stack;
+    wine_dbg_log;
+    wine_dbg_printf;
+    wine_dbg_sprintf;
+    wine_dbgstr_an;
+    wine_dbgstr_wn;
     wine_pthread_get_functions;
     wine_pthread_set_functions;
     wine_switch_to_stack;

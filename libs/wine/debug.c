@@ -20,6 +20,9 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,12 +33,6 @@
 # include <sys/stat.h>
 #endif
 
-#define __wine_dbg_get_channel_flags __wine_dbg_get_channel_flags_inline
-#define wine_dbg_sprintf wine_dbg_sprintf_inline
-#define wine_dbg_printf wine_dbg_printf_inline
-#define wine_dbg_log wine_dbg_log_inline
-#define wine_dbgstr_an wine_dbgstr_an_inline
-#define wine_dbgstr_wn wine_dbgstr_wn_inline
 #include "wine/debug.h"
 #include "wine/library.h"
 
@@ -70,8 +67,7 @@ static int cmp_name( const void *p1, const void *p2 )
 }
 
 /* get the flags to use for a given channel, possibly setting them too in case of lazy init */
-#undef __wine_dbg_get_channel_flags
-unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
+unsigned char __wine_dbg_get_channel_flags_obsolete( struct __wine_debug_channel *channel )
 {
     if (nb_debug_options == -1) debug_init();
 
@@ -87,8 +83,8 @@ unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel
 }
 
 /* set the flags to use for a given channel; return 0 if the channel is not available to set */
-int __wine_dbg_set_channel_flags( struct __wine_debug_channel *channel,
-                                  unsigned char set, unsigned char clear )
+int __wine_dbg_set_channel_flags_obsolete( struct __wine_debug_channel *channel,
+                                           unsigned char set, unsigned char clear )
 {
     if (nb_debug_options == -1) debug_init();
 
@@ -228,8 +224,7 @@ static void debug_init(void)
 }
 
 /* varargs wrapper for funcs.dbg_vprintf */
-#undef wine_dbg_printf
-int wine_dbg_printf( const char *format, ... )
+int wine_dbg_printf_obsolete( const char *format, ... )
 {
     int ret;
     va_list valist;
@@ -241,8 +236,7 @@ int wine_dbg_printf( const char *format, ... )
 }
 
 /* printf with temp buffer allocation */
-#undef wine_dbg_sprintf
-const char *wine_dbg_sprintf( const char *format, ... )
+const char *wine_dbg_sprintf_obsolete( const char *format, ... )
 {
     static const int max_size = 200;
     char *ret;
@@ -260,14 +254,13 @@ const char *wine_dbg_sprintf( const char *format, ... )
 
 
 /* varargs wrapper for funcs.dbg_vlog */
-#undef wine_dbg_log
-int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
-                  const char *func, const char *format, ... )
+int wine_dbg_log_obsolete( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                           const char *func, const char *format, ... )
 {
     int ret;
     va_list valist;
 
-    if (!(__wine_dbg_get_channel_flags( channel ) & (1 << cls))) return -1;
+    if (!(__wine_dbg_get_channel_flags_obsolete( channel ) & (1 << cls))) return -1;
 
     va_start(valist, format);
     ret = funcs.dbg_vlog( cls, channel, func, format, valist );
@@ -424,7 +417,7 @@ static int default_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_ch
     int ret = 0;
 
     if (cls < ARRAY_SIZE(debug_classes))
-        ret += wine_dbg_printf( "%s:%s:%s ", debug_classes[cls], channel->name, func );
+        ret += wine_dbg_printf_obsolete( "%s:%s:%s ", debug_classes[cls], channel->name, func );
     if (format)
         ret += funcs.dbg_vprintf( format, args );
     return ret;
@@ -432,20 +425,18 @@ static int default_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_ch
 
 /* wrappers to use the function pointers */
 
-#undef wine_dbgstr_an
-const char *wine_dbgstr_an( const char * s, int n )
+const char *wine_dbgstr_an_obsolete( const char * s, int n )
 {
     return funcs.dbgstr_an(s, n);
 }
 
-#undef wine_dbgstr_wn
-const char *wine_dbgstr_wn( const WCHAR *s, int n )
+const char *wine_dbgstr_wn_obsolete( const WCHAR *s, int n )
 {
     return funcs.dbgstr_wn(s, n);
 }
 
-void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
-                               struct __wine_debug_functions *old_funcs, size_t size )
+void __wine_dbg_set_functions_obsolete( const struct __wine_debug_functions *new_funcs,
+                                        struct __wine_debug_functions *old_funcs, size_t size )
 {
     if (old_funcs) memcpy( old_funcs, &funcs, min(sizeof(funcs),size) );
     if (new_funcs) memcpy( &funcs, new_funcs, min(sizeof(funcs),size) );
@@ -460,3 +451,14 @@ static struct __wine_debug_functions funcs =
     default_dbg_vprintf,
     default_dbg_vlog
 };
+
+__ASM_OBSOLETE(__wine_dbg_get_channel_flags);
+__ASM_OBSOLETE(__wine_dbg_set_channel_flags);
+__ASM_OBSOLETE(__wine_dbg_set_functions);
+__ASM_OBSOLETE(wine_dbg_log);
+__ASM_OBSOLETE(wine_dbg_printf);
+__ASM_OBSOLETE(wine_dbg_sprintf);
+__ASM_OBSOLETE(wine_dbgstr_an);
+__ASM_OBSOLETE(wine_dbgstr_wn);
+
+#endif  /* __ASM_OBSOLETE */
