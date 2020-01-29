@@ -37,18 +37,24 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 /* PointerMoniker data structure */
-typedef struct PointerMonikerImpl{
-
+typedef struct PointerMonikerImpl
+{
     IMoniker IMoniker_iface;
+    IMarshal IMarshal_iface;
 
     LONG ref; /* reference counter for this object */
 
-    IUnknown *pObject; /* custom marshaler */
+    IUnknown *pObject;
 } PointerMonikerImpl;
 
 static inline PointerMonikerImpl *impl_from_IMoniker(IMoniker *iface)
 {
     return CONTAINING_RECORD(iface, PointerMonikerImpl, IMoniker_iface);
+}
+
+static PointerMonikerImpl *impl_from_IMarshal(IMarshal *iface)
+{
+    return CONTAINING_RECORD(iface, PointerMonikerImpl, IMarshal_iface);
 }
 
 static PointerMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface);
@@ -70,7 +76,11 @@ PointerMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
         IsEqualIID(&IID_IPersist, riid) ||
         IsEqualIID(&IID_IPersistStream, riid) ||
         IsEqualIID(&IID_IMoniker, riid))
+    {
         *ppvObject = iface;
+    }
+    else if (IsEqualIID(&IID_IMarshal, riid))
+        *ppvObject = &This->IMarshal_iface;
 
     /* Check that we obtained an interface.*/
     if ((*ppvObject)==0)
@@ -542,6 +552,117 @@ static PointerMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface)
     return CONTAINING_RECORD(iface, PointerMonikerImpl, IMoniker_iface);
 }
 
+static HRESULT WINAPI pointer_moniker_marshal_QueryInterface(IMarshal *iface, REFIID riid, LPVOID *ppv)
+{
+    PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), ppv);
+
+    return IMoniker_QueryInterface(&moniker->IMoniker_iface, riid, ppv);
+}
+
+static ULONG WINAPI pointer_moniker_marshal_AddRef(IMarshal *iface)
+{
+    PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
+
+    TRACE("%p.\n",iface);
+
+    return IMoniker_AddRef(&moniker->IMoniker_iface);
+}
+
+static ULONG WINAPI pointer_moniker_marshal_Release(IMarshal *iface)
+{
+    PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
+
+    TRACE("%p.\n",iface);
+
+    return IMoniker_Release(&moniker->IMoniker_iface);
+}
+
+static HRESULT WINAPI pointer_moniker_marshal_GetUnmarshalClass(IMarshal *iface, REFIID riid, void *pv,
+        DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, CLSID *clsid)
+{
+    PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
+
+    TRACE("%p, %s, %p, %x, %p, %x, %p.\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
+            mshlflags, clsid);
+
+    return IMoniker_GetClassID(&moniker->IMoniker_iface, clsid);
+}
+
+static HRESULT WINAPI pointer_moniker_marshal_GetMarshalSizeMax(IMarshal *iface, REFIID riid, void *pv,
+        DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, DWORD *size)
+{
+    PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
+
+    TRACE("%p, %s, %p, %d, %p, %#x, %p.\n", iface, debugstr_guid(riid), pv, dwDestContext, pvDestContext,
+            mshlflags, size);
+
+    return CoGetMarshalSizeMax(size, &IID_IUnknown, moniker->pObject, dwDestContext, pvDestContext, mshlflags);
+}
+
+static HRESULT WINAPI pointer_moniker_marshal_MarshalInterface(IMarshal *iface, IStream *stream, REFIID riid,
+        void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags)
+{
+    PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
+
+    TRACE("%p, %s, %p, %x, %p, %x.\n", stream, debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags);
+
+    return CoMarshalInterface(stream, &IID_IUnknown, moniker->pObject, dwDestContext,
+                pvDestContext, mshlflags);
+}
+
+static HRESULT WINAPI pointer_moniker_marshal_UnmarshalInterface(IMarshal *iface, IStream *stream,
+        REFIID riid, void **ppv)
+{
+    PointerMonikerImpl *moniker = impl_from_IMarshal(iface);
+    IUnknown *object;
+    HRESULT hr;
+
+    TRACE("%p, %p, %s, %p.\n", iface, stream, debugstr_guid(riid), ppv);
+
+    hr = CoUnmarshalInterface(stream, &IID_IUnknown, (void **)&object);
+    if (FAILED(hr))
+    {
+        ERR("Couldn't unmarshal moniker, hr = %#x.\n", hr);
+        return hr;
+    }
+
+    if (moniker->pObject)
+        IUnknown_Release(moniker->pObject);
+    moniker->pObject = object;
+
+    return IMoniker_QueryInterface(&moniker->IMoniker_iface, riid, ppv);
+}
+
+static HRESULT WINAPI pointer_moniker_marshal_ReleaseMarshalData(IMarshal *iface, IStream *stream)
+{
+    TRACE("%p, %p.\n", iface, stream);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI pointer_moniker_marshal_DisconnectObject(IMarshal *iface, DWORD reserved)
+{
+    TRACE("%p, %#x.\n", iface, reserved);
+
+    return S_OK;
+}
+
+static const IMarshalVtbl pointer_moniker_marshal_vtbl =
+{
+    pointer_moniker_marshal_QueryInterface,
+    pointer_moniker_marshal_AddRef,
+    pointer_moniker_marshal_Release,
+    pointer_moniker_marshal_GetUnmarshalClass,
+    pointer_moniker_marshal_GetMarshalSizeMax,
+    pointer_moniker_marshal_MarshalInterface,
+    pointer_moniker_marshal_UnmarshalInterface,
+    pointer_moniker_marshal_ReleaseMarshalData,
+    pointer_moniker_marshal_DisconnectObject
+};
+
 /******************************************************************************
  *         PointerMoniker_Construct (local function)
  *******************************************************************************/
@@ -549,8 +670,8 @@ static void PointerMonikerImpl_Construct(PointerMonikerImpl* This, IUnknown *pun
 {
     TRACE("(%p)\n",This);
 
-    /* Initialize the virtual function table. */
     This->IMoniker_iface.lpVtbl = &VT_PointerMonikerImpl;
+    This->IMarshal_iface.lpVtbl = &pointer_moniker_marshal_vtbl;
     This->ref = 1;
     if (punk)
         IUnknown_AddRef(punk);

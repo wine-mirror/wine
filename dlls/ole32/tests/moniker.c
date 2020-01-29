@@ -2722,16 +2722,18 @@ todo_wine
 static void test_pointer_moniker(void)
 {
     IMoniker *moniker, *moniker2, *prefix, *inverse;
+    DWORD moniker_type, hash, size;
     IEnumMoniker *enummoniker;
     HRESULT hr;
-    DWORD moniker_type;
-    DWORD hash;
     IBindCtx *bindctx;
     FILETIME filetime;
     IUnknown *unknown;
     IStream *stream;
     IROTData *rotdata;
     LPOLESTR display_name;
+    IMarshal *marshal;
+    LARGE_INTEGER pos;
+    CLSID clsid;
 
     cLocks = 0;
 
@@ -2749,6 +2751,35 @@ todo_wine
         ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
         IUnknown_Release(unknown);
     }
+
+    hr = IMoniker_QueryInterface(moniker, &IID_IMarshal, (void **)&marshal);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    hr = IMarshal_GetUnmarshalClass(marshal, NULL, NULL, 0, NULL, 0, &clsid);
+    ok(hr == S_OK, "Failed to get class, hr %#x.\n", hr);
+    ok(IsEqualGUID(&clsid, &CLSID_PointerMoniker), "Unexpected class.\n");
+
+    hr = IMarshal_GetMarshalSizeMax(marshal, &IID_IMoniker, NULL, CLSCTX_INPROC, NULL, 0, &size);
+    ok(hr == S_OK, "Failed to get marshal size, hr %#x.\n", hr);
+    ok(size > 0, "Unexpected size %d.\n", size);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+
+    hr = CoMarshalInterface(stream, &IID_IMoniker, (IUnknown *)moniker, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == S_OK, "Failed to marshal moniker, hr %#x.\n", hr);
+
+    pos.QuadPart = 0;
+    IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(stream, &IID_IMoniker, (void **)&moniker2);
+    ok(hr == S_OK, "Failed to unmarshal, hr %#x.\n", hr);
+    hr = IMoniker_IsEqual(moniker, moniker2);
+    ok(hr == S_OK, "Expected equal moniker, hr %#x.\n", hr);
+    IMoniker_Release(moniker2);
+
+    IStream_Release(stream);
+
+    IMarshal_Release(marshal);
 
     ok_more_than_one_lock();
 
@@ -2821,7 +2852,8 @@ todo_wine
 
     IMoniker_Release(moniker);
 
-    ok_no_locks();
+todo_wine
+    ok(cLocks == 0, "Number of locks should be 0, but actually is %d.\n", cLocks);
 
     hr = CreatePointerMoniker(NULL, &moniker);
     ok_ole_success(hr, CreatePointerMoniker);
