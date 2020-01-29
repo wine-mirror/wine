@@ -651,6 +651,7 @@ typedef DWORD FLONG;
 /* status values for ContinueDebugEvent */
 #define DBG_EXCEPTION_HANDLED       ((DWORD) 0x00010001)
 #define DBG_CONTINUE                ((DWORD) 0x00010002)
+#define DBG_REPLY_LATER             ((DWORD) 0x40010001)
 #define DBG_TERMINATE_THREAD        ((DWORD) 0x40010003)
 #define DBG_TERMINATE_PROCESS       ((DWORD) 0x40010004)
 #define DBG_CONTROL_C               ((DWORD) 0x40010005)
