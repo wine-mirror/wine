@@ -1833,12 +1833,27 @@ int CDECL MSVCRT__wsearchenv_s(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t*
   for(; *penv; penv = (*end ? end + 1 : end))
   {
     end = penv;
-    while(*end && *end != ';') end++; /* Find end of next path */
-    path_len = end - penv;
+    path_len = 0;
+    while(*end && *end != ';' && path_len < MAX_PATH)
+    {
+        if (*end == '"')
+        {
+            end++;
+            while(*end && *end != '"' && path_len < MAX_PATH)
+            {
+                path[path_len++] = *end;
+                end++;
+            }
+            if (*end == '"') end++;
+            continue;
+        }
+
+        path[path_len++] = *end;
+        end++;
+    }
     if (!path_len || path_len >= MAX_PATH)
       continue;
 
-    memcpy(path, penv, path_len * sizeof(MSVCRT_wchar_t));
     if (path[path_len - 1] != '/' && path[path_len - 1] != '\\')
       path[path_len++] = '\\';
     if (path_len + fname_len >= MAX_PATH)
