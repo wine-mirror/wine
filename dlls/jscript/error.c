@@ -404,7 +404,8 @@ static HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str, j
     if(FAILED(hres))
         return hres;
 
-    jsval_release(ctx->ei->value);
+    reset_ei(ctx->ei);
+    ctx->ei->valid_value = TRUE;
     ctx->ei->value = jsval_obj(err);
     return error;
 }

@@ -855,13 +855,21 @@ static HRESULT interp_case(script_ctx_t *ctx)
     return S_OK;
 }
 
+static void set_error_value(script_ctx_t *ctx, jsval_t value)
+{
+    jsexcept_t *ei = ctx->ei;
+
+    reset_ei(ei);
+    ei->valid_value = TRUE;
+    ei->value = value;
+}
+
 /* ECMA-262 3rd Edition    12.13 */
 static HRESULT interp_throw(script_ctx_t *ctx)
 {
     TRACE("\n");
 
-    jsval_release(ctx->ei->value);
-    ctx->ei->value = stack_pop(ctx);
+    set_error_value(ctx, stack_pop(ctx));
     return DISP_E_EXCEPTION;
 }
 
@@ -957,7 +965,7 @@ static HRESULT interp_end_finally(script_ctx_t *ctx)
     if(!get_bool(v)) {
         TRACE("passing exception\n");
 
-        ctx->ei->value = stack_pop(ctx);
+        set_error_value(ctx, stack_pop(ctx));
         return DISP_E_EXCEPTION;
     }
 
@@ -2713,6 +2721,7 @@ static void print_backtrace(script_ctx_t *ctx)
 static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
 {
     except_frame_t *except_frame;
+    jsexcept_t *ei = ctx->ei;
     call_frame_t *frame;
     jsval_t except_val;
     unsigned catch_off;
@@ -2724,8 +2733,8 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
 
         static const WCHAR messageW[] = {'m','e','s','s','a','g','e',0};
 
-        WARN("Exception %08x %s", exception_hres, debugstr_jsval(ctx->ei->value));
-        if(jsval_type(ctx->ei->value) == JSV_OBJECT) {
+        WARN("Exception %08x %s", exception_hres, debugstr_jsval(ei->valid_value ? ei->value : jsval_undefined()));
+        if(ei->valid_value && jsval_type(ctx->ei->value) == JSV_OBJECT) {
             error_obj = to_jsdisp(get_object(ctx->ei->value));
             if(error_obj) {
                 hres = jsdisp_propget_name(error_obj, messageW, &msg);
@@ -2766,8 +2775,12 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     frame->ip = catch_off ? catch_off : except_frame->finally_off;
     if(catch_off) assert(frame->bytecode->instrs[frame->ip].op == OP_enter_catch);
 
-    except_val = ctx->ei->value;
-    ctx->ei->value = jsval_undefined();
+    if(ei->valid_value) {
+        except_val = ctx->ei->value;
+        ctx->ei->valid_value = FALSE;
+    }else {
+        except_val = jsval_undefined();
+    }
 
     /* keep current except_frame if we're entering catch block with finally block associated */
     if(catch_off && except_frame->finally_off) {

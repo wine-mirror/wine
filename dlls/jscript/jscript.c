@@ -103,8 +103,10 @@ static inline BOOL is_started(script_ctx_t *ctx)
 
 void reset_ei(jsexcept_t *ei)
 {
-    jsval_release(ei->value);
-    ei->value = jsval_undefined();
+    if(ei->valid_value) {
+        jsval_release(ei->value);
+        ei->valid_value = FALSE;
+    }
 }
 
 void enter_script(script_ctx_t *ctx, jsexcept_t *ei)

@@ -222,7 +222,9 @@ static inline scope_chain_t *scope_addref(scope_chain_t *scope)
 }
 
 struct _jsexcept_t {
+    BOOL valid_value;
     jsval_t value;
+
     jsexcept_t *prev;
 };
 
