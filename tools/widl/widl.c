@@ -150,6 +150,7 @@ static char *idfile_name;
 char *temp_name;
 const char *prefix_client = "";
 const char *prefix_server = "";
+static const char *includedir;
 
 int line_number = 1;
 
@@ -572,6 +573,27 @@ void write_id_data(const statement_list_t *stmts)
   fclose(idfile);
 }
 
+static void init_argv0_dir( const char *argv0 )
+{
+#ifndef _WIN32
+    char *p, *dir;
+
+#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+    dir = realpath( "/proc/self/exe", NULL );
+#elif defined (__FreeBSD__) || defined(__DragonFly__)
+    dir = realpath( "/proc/curproc/file", NULL );
+#else
+    dir = realpath( argv0, NULL );
+#endif
+    if (!dir) return;
+    if (!(p = strrchr( dir, '/' ))) return;
+    if (p == dir) p++;
+    *p = 0;
+    includedir = strmake( "%s/%s", dir, BIN_TO_INCLUDEDIR );
+    free( dir );
+#endif
+}
+
 int main(int argc,char *argv[])
 {
   int i, optc;
@@ -585,6 +607,7 @@ int main(int argc,char *argv[])
 #ifdef SIGHUP
   signal( SIGHUP, exit_on_signal );
 #endif
+  init_argv0_dir( argv[0] );
 
   now = time(NULL);
 
@@ -751,6 +774,11 @@ int main(int argc,char *argv[])
   {
       static const char *incl_dirs[] = { INCLUDEDIR, "/usr/include", "/usr/local/include" };
 
+      if (includedir)
+      {
+          wpp_add_include_path( strmake( "%s/wine/msvcrt", includedir ));
+          wpp_add_include_path( strmake( "%s/wine/windows", includedir ));
+      }
       for (i = 0; i < ARRAY_SIZE(incl_dirs); i++)
       {
           if (i && !strcmp( incl_dirs[i], incl_dirs[0] )) continue;
