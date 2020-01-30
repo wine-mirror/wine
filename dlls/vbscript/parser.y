@@ -763,15 +763,8 @@ static statement_t *new_assign_statement(parser_ctx_t *ctx, unsigned loc, expres
     if(!stat)
         return NULL;
 
+    stat->left_expr = left;
     stat->value_expr = right;
-
-    if(left->type == EXPR_CALL) {
-        stat->left_expr = (call_expression_t*)left;
-    }else {
-        stat->left_expr = new_call_expression(ctx, left, NULL);
-        if(!stat->left_expr)
-            return NULL;
-    }
 
     return &stat->stat;
 }
@@ -785,7 +778,7 @@ static statement_t *new_set_statement(parser_ctx_t *ctx, unsigned loc, member_ex
         return NULL;
 
     stat->value_expr = right;
-    stat->left_expr = new_call_expression(ctx, &left->expr, arguments);
+    stat->left_expr = (expression_t*)new_call_expression(ctx, &left->expr, arguments);
     if(!stat->left_expr)
         return NULL;
 

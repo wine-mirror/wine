@@ -993,15 +993,27 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
     return S_OK;
 }
 
-static HRESULT compile_assignment(compile_ctx_t *ctx, call_expression_t *left, expression_t *value_expr, BOOL is_set)
+static HRESULT compile_assignment(compile_ctx_t *ctx, expression_t *left, expression_t *value_expr, BOOL is_set)
 {
+    call_expression_t *call_expr = NULL;
     member_expression_t *member_expr;
-    unsigned args_cnt;
+    unsigned args_cnt = 0;
     vbsop_t op;
     HRESULT hres;
 
-    assert(left->call_expr->type == EXPR_MEMBER);
-    member_expr = (member_expression_t*)left->call_expr;
+    switch(left->type) {
+    case EXPR_MEMBER:
+        member_expr = (member_expression_t*)left;
+        break;
+    case EXPR_CALL:
+        call_expr = (call_expression_t*)left;
+        assert(call_expr->call_expr->type == EXPR_MEMBER);
+        member_expr = (member_expression_t*)call_expr->call_expr;
+        break;
+    default:
+        assert(0);
+        return E_FAIL;
+    }
 
     if(member_expr->obj_expr) {
         hres = compile_expression(ctx, member_expr->obj_expr);
@@ -1017,9 +1029,11 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, call_expression_t *left, e
     if(FAILED(hres))
         return hres;
 
-    hres = compile_args(ctx, left->args, &args_cnt);
-    if(FAILED(hres))
-        return hres;
+    if(call_expr) {
+        hres = compile_args(ctx, call_expr->args, &args_cnt);
+        if(FAILED(hres))
+            return hres;
+    }
 
     hres = push_instr_bstr_uint(ctx, op, member_expr->identifier, args_cnt);
     if(FAILED(hres))

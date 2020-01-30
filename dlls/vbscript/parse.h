@@ -145,7 +145,7 @@ typedef struct {
 
 typedef struct {
     statement_t stat;
-    call_expression_t *left_expr;
+    expression_t *left_expr;
     expression_t *value_expr;
 } assign_statement_t;
 
