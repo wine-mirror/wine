@@ -64,6 +64,12 @@ typedef struct {
     struct list queued_code;
 } JScript;
 
+typedef struct {
+    IActiveScriptError IActiveScriptError_iface;
+    LONG ref;
+    jsexcept_t ei;
+} JScriptError;
+
 void script_release(script_ctx_t *ctx)
 {
     if(--ctx->ref)
@@ -101,6 +107,106 @@ static inline BOOL is_started(script_ctx_t *ctx)
         || ctx->state == SCRIPTSTATE_DISCONNECTED;
 }
 
+static inline JScriptError *impl_from_IActiveScriptError(IActiveScriptError *iface)
+{
+    return CONTAINING_RECORD(iface, JScriptError, IActiveScriptError_iface);
+}
+
+static HRESULT WINAPI JScriptError_QueryInterface(IActiveScriptError *iface, REFIID riid, void **ppv)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptError_iface;
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptError)) {
+        TRACE("(%p)->(IID_IActiveScriptError %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptError_iface;
+    }else {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI JScriptError_AddRef(IActiveScriptError *iface)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI JScriptError_Release(IActiveScriptError *iface)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        reset_ei(&This->ei);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI JScriptError_GetExceptionInfo(IActiveScriptError *iface, EXCEPINFO *excepinfo)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+
+    TRACE("(%p)->(%p)\n", This, excepinfo);
+
+    if(!excepinfo)
+        return E_POINTER;
+
+    memset(excepinfo, 0, sizeof(*excepinfo));
+    excepinfo->scode = This->ei.error;
+    return S_OK;
+}
+
+static HRESULT WINAPI JScriptError_GetSourcePosition(IActiveScriptError *iface, DWORD *source_context, ULONG *line, LONG *character)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+
+    FIXME("(%p)->(%p %p %p)\n", This, source_context, line, character);
+
+    if(source_context)
+        *source_context = 0;
+    if(line)
+        *line = 0;
+    if(character)
+        *character = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI JScriptError_GetSourceLineText(IActiveScriptError *iface, BSTR *source)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+
+    FIXME("(%p)->(%p)\n", This, source);
+
+    if(!source)
+        return E_POINTER;
+    *source = NULL;
+    return E_FAIL;
+}
+
+static const IActiveScriptErrorVtbl JScriptErrorVtbl = {
+    JScriptError_QueryInterface,
+    JScriptError_AddRef,
+    JScriptError_Release,
+    JScriptError_GetExceptionInfo,
+    JScriptError_GetSourcePosition,
+    JScriptError_GetSourceLineText
+};
+
 void reset_ei(jsexcept_t *ei)
 {
     ei->error = S_OK;
@@ -121,14 +227,33 @@ void enter_script(script_ctx_t *ctx, jsexcept_t *ei)
 HRESULT leave_script(script_ctx_t *ctx, HRESULT result)
 {
     jsexcept_t *ei = ctx->ei;
+    JScriptError *error;
 
     TRACE("ctx %p ei %p prev %p\n", ctx, ei, ei->prev);
 
     ctx->ei = ei->prev;
-    if(result == DISP_E_EXCEPTION)
+    if(result == DISP_E_EXCEPTION) {
         result = ei->error;
-    if(FAILED(result))
+    }else {
+        reset_ei(ei);
+        ei->error = result;
+    }
+    if(FAILED(result)) {
         WARN("%08x\n", result);
+        if(ctx->site && (error = heap_alloc(sizeof(*error)))) {
+            HRESULT hres;
+
+            error->IActiveScriptError_iface.lpVtbl = &JScriptErrorVtbl;
+            error->ref = 1;
+            error->ei = *ei;
+            memset(ei, 0, sizeof(*ei));
+
+            hres = IActiveScriptSite_OnScriptError(ctx->site, &error->IActiveScriptError_iface);
+            IActiveScriptError_Release(&error->IActiveScriptError_iface);
+            if(hres == S_OK)
+                result = SCRIPT_E_REPORTED;
+        }
+    }
     if(ei->enter_notified && ctx->site)
         IActiveScriptSite_OnLeaveScript(ctx->site);
     reset_ei(ei);
@@ -162,12 +287,14 @@ static void exec_queued_code(JScript *This)
 {
     bytecode_t *iter;
     jsexcept_t ei;
-    HRESULT hres;
+    HRESULT hres = S_OK;
 
     LIST_FOR_EACH_ENTRY(iter, &This->queued_code, bytecode_t, entry) {
         enter_script(This->ctx, &ei);
         hres = exec_source(This->ctx, EXEC_GLOBAL, iter, &iter->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, NULL);
         leave_script(This->ctx, hres);
+        if(FAILED(hres))
+            break;
     }
 
     clear_script_queue(This);

@@ -2265,9 +2265,10 @@ static void test_error_reports(void)
         script_error = NULL;
         SET_EXPECT(ActiveScriptSite_OnScriptError);
         hres = IActiveScriptParse_ParseScriptText(parser, tests[i].script, NULL, NULL, NULL, 10, 0, 0, NULL, NULL);
-        todo_wine
-        ok(hres == SCRIPT_E_REPORTED || (tests[i].error == JS_E_EXCEPTION_THROWN && hres == SCRIPT_E_PROPAGATE), "[%u] got: 0x%08x\n", i, hres);
-        todo_wine
+        todo_wine_if(tests[i].todo_flags & ERROR_TODO_PARSE)
+        ok(hres == SCRIPT_E_REPORTED || (tests[i].error == JS_E_EXCEPTION_THROWN && hres == SCRIPT_E_PROPAGATE),
+           "[%u] got: 0x%08x for %s\n", i, hres, wine_dbgstr_w(tests[i].script));
+        todo_wine_if(tests[i].todo_flags & ERROR_TODO_PARSE)
         CHECK_CALLED(ActiveScriptSite_OnScriptError);
 
         if (script_error)
@@ -2284,16 +2285,19 @@ static void test_error_reports(void)
             source_context = 0xdeadbeef;
             hres = IActiveScriptError_GetSourcePosition(script_error, &source_context, NULL, NULL);
             ok(hres == S_OK, "GetSourcePosition failed0x%08x\n", hres);
+            todo_wine
             ok(source_context == 10, "source_context = %x\n", source_context);
 
             line_number = 0xdeadbeef;
             hres = IActiveScriptError_GetSourcePosition(script_error, NULL, &line_number, NULL);
             ok(hres == S_OK, "GetSourcePosition failed%08x\n", hres);
+            todo_wine_if(tests[i].line)
             ok(line_number == tests[i].line, "[%u] line = %u expected %u\n", i, line_number, tests[i].line);
 
             character = 0xdeadbeef;
             hres = IActiveScriptError_GetSourcePosition(script_error, NULL, NULL, &character);
             ok(hres == S_OK, "GetSourcePosition failed: %08x\n", hres);
+            todo_wine_if(tests[i].character)
             ok(character == tests[i].character, "[%u] character = %u expected %u\n", i, character, tests[i].character);
 
             hres = IActiveScriptError_GetSourceLineText(script_error, NULL);
@@ -2341,12 +2345,13 @@ static void test_error_reports(void)
             if (is_lang_english())
             {
                 if(tests[i].error_source)
+                    todo_wine
                     ok(ei.bstrSource && !lstrcmpW(ei.bstrSource, tests[i].error_source), "[%u] bstrSource = %s expected %s\n",
                        i, wine_dbgstr_w(ei.bstrSource), wine_dbgstr_w(tests[i].error_source));
                 else
                     ok(!ei.bstrSource, "[%u] bstrSource = %s expected NULL\n", i, wine_dbgstr_w(ei.bstrSource));
                 if(tests[i].description)
-                    todo_wine_if(tests[i].todo_flags & ERROR_TODO_DESCRIPTION)
+                    todo_wine
                     ok(ei.bstrDescription && !lstrcmpW(ei.bstrDescription, tests[i].description),
                        "[%u] bstrDescription = %s expected %s\n", i, wine_dbgstr_w(ei.bstrDescription), wine_dbgstr_w(tests[i].description));
                 else
