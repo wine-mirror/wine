@@ -5761,6 +5761,7 @@ static void test_draw_geometry(void)
     ID2D1TransformedGeometry *transformed_geometry[4];
     ID2D1RectangleGeometry *rect_geometry[2];
     D2D1_POINT_2F point = {0.0f, 0.0f};
+    D2D1_ROUNDED_RECT rounded_rect;
     ID2D1SolidColorBrush *brush;
     ID2D1PathGeometry *geometry;
     IDXGISwapChain *swapchain;
@@ -5892,6 +5893,194 @@ static void test_draw_geometry(void)
             "FDwUPBQ8FDwUPBQ8FD0UOhQ+FDoUPhQ6FD4UOhQ+FDoUPxQ4FEAUOBRAFDgUQRQ2FEIUNhRDFDQU"
             "RBQ0FEUUMhRGFDIURxQwFEgUMBRJFC4USxQsFEwVKhVNFSgVTxQoFFEUJhRTFCQUVRUgFVcVHhVZ"
             "FRwVWxUaFV4VFhVhFhIWZBYOFmgXCBdsMnAudSh7IoMBGIQw");
+    todo_wine ok(match, "Figure does not match.\n");
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    set_color(&color, 0.396f, 0.180f, 0.537f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+
+    set_rounded_rect(&rounded_rect, 40.0f, 160.0f, 40.0f, 160.0f, 10.0f, 10.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 100.0f, 160.0f, 140.0f, 160.0f, 10.0f, 10.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 200.0f, 80.0f, 200.0f, 240.0f, 10.0f, 10.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 260.0f, 240.0f, 300.0f, 80.0f, 10.0f, 10.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+
+    set_rounded_rect(&rounded_rect, 40.0f, 480.0f, 40.0f, 480.0f, 10.0f, 20.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 100.0f, 480.0f, 140.0f, 480.0f, 10.0f, 20.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 200.0f, 400.0f, 200.0f, 560.0f, 10.0f, 20.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 260.0f, 560.0f, 300.0f, 400.0f, 10.0f, 20.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+
+    set_rounded_rect(&rounded_rect, 40.0f, 800.0f, 40.0f, 800.0f, 10.0f, 5.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 100.0f, 800.0f, 140.0f, 800.0f, 10.0f, 5.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 200.0f, 720.0f, 200.0f, 880.0f, 10.0f, 5.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 260.0f, 880.0f, 300.0f, 720.0f, 10.0f, 5.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+
+    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0,
+            "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 0,
+            "3C4oaUZVUExYRlxCHCgcPxU4FT0UPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FD0VOBU/YEJcRlhMUFVG7S8A");
+    todo_wine ok(match, "Figure does not match.\n");
+
+    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0,
+            "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 8,
+            "3C4obT5dSFRQTlRKGCgYRhYwFkMVNBVBFTYVPxU5FD4UOhQ9FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPRQ6FD4UOhQ/FTYVQRU0FUMWMBZGWEpVTVBTSltA8C8A");
+    todo_wine ok(match, "Figure does not match.\n");
+
+    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0,
+            "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 0,
+            "3C4oZU5NWERgP2I9HigePBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZD1iP2BEWE1O6S8A");
+    todo_wine ok(match, "Figure does not match.\n");
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    set_color(&color, 0.396f, 0.180f, 0.537f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+
+    set_rounded_rect(&rounded_rect, 40.0f, 160.0f, 40.0f, 160.0f, 1000.0f, 1000.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 100.0f, 160.0f, 140.0f, 160.0f, 1000.0f, 1000.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 200.0f, 80.0f, 200.0f, 240.0f, 1000.0f, 1000.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 260.0f, 240.0f, 300.0f, 80.0f, 1000.0f, 1000.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+
+    set_rounded_rect(&rounded_rect, 40.0f, 480.0f, 40.0f, 480.0f, 10.0f, 1000.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 100.0f, 480.0f, 140.0f, 480.0f, 10.0f, 1000.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 200.0f, 400.0f, 200.0f, 560.0f, 10.0f, 1000.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 260.0f, 560.0f, 300.0f, 400.0f, 10.0f, 1000.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+
+    set_rounded_rect(&rounded_rect, 40.0f, 800.0f, 40.0f, 800.0f, 1000.0f, 10.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 100.0f, 800.0f, 140.0f, 800.0f, 1000.0f, 10.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 200.0f, 720.0f, 200.0f, 880.0f, 1000.0f, 10.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rounded_rect(&rounded_rect, 260.0f, 880.0f, 300.0f, 720.0f, 1000.0f, 10.0f);
+    ID2D1RenderTarget_DrawRoundedRectangle(rt, &rounded_rect, (ID2D1Brush *)brush, 10.0f, NULL);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+
+    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0,
+            "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 16,
+            "hDAYgwEieyh1LnAybBcIF2gWDhZkFhIWYRUWFV4WGRVbFRwVWRUeFVcVIBVVFSMUUxQmFFEVJxRP"
+            "FSgVTRUqFUwULBRLFC4USRUvFEgUMBRHFDIURhQyFEUUNBREFDQUQxQ2FEIUNhRBFDgUQBQ4FEAU"
+            "OBQ/FTkUPhQ6FD4UOhQ+FDoUPhQ6FD0UPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FD0UOhQ+FDoUPhQ6FD4UOhQ+FDoUPxQ4FEAUOBRAFDgUQRQ2FEIUNhRDFDQU"
+            "RBQ0FEUUMhRGFDIURxQwFEgUMBRJFC4USxQsFEwVKhVNFSgVTxQoFFEUJhRTFCQUVRUgFVcVHhVZ"
+            "FRwVWxUaFV4VFhVhFhIWZBYOFmgWChZsMnAudCp6IoMBGIQw");
+    todo_wine ok(match, "Figure does not match.\n");
+
+    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0,
+            "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 16,
+            "3C4obzpjQF5EWkhXFSAVVRQkFFMUJhRRFCgUTxQqFE0VKhVMFCwUSxQuFEoULhVIFDAUSBQwFUYU"
+            "MhRGFDIURRQ0FEQUNBRDFTQVQhQ2FEIUNhRCFDYUQRQ4FEAUOBRAFDgUQBQ4FD8UOhQ+FDoUPhQ6"
+            "FD4UOhQ+FDoUPhQ6FD0VOxQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBU7FD0UOhQ+FDoUPhQ6FD4UOhQ+FDoUPhQ6FD8UOBRA"
+            "FDgUQBQ4FEAUOBRBFDYUQhQ2FEIUNhRCFTQVQxQ0FEQUNBRFFDIURhQyFEYVMBVHFDAUSBUuFUkU"
+            "LhRLFCwUTBUrFE0UKhRPFCgUURQmFFMUJBRVSldIWUZdQWI78i8A");
+    todo_wine ok(match, "Figure does not match.\n");
+
+    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0,
+            "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 8,
+            "9i80ZERWUExYRV5AHCocPRY4FjwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FToVPRssG0BeRFpLUFVGYzT2LwAA");
     todo_wine ok(match, "Figure does not match.\n");
 
     hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
