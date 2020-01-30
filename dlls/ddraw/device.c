@@ -1332,18 +1332,19 @@ static HRESULT WINAPI d3d_device1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIX
  *
  *****************************************************************************/
 static HRESULT WINAPI d3d_device1_SetMatrix(IDirect3DDevice *iface,
-        D3DMATRIXHANDLE D3DMatHandle, D3DMATRIX *D3DMatrix)
+        D3DMATRIXHANDLE matrix_handle, D3DMATRIX *matrix)
 {
-    struct d3d_device *This = impl_from_IDirect3DDevice(iface);
+    struct d3d_device *device = impl_from_IDirect3DDevice(iface);
     D3DMATRIX *m;
 
-    TRACE("iface %p, matrix_handle %#x, matrix %p.\n", iface, D3DMatHandle, D3DMatrix);
+    TRACE("iface %p, matrix_handle %#x, matrix %p.\n", iface, matrix_handle, matrix);
 
-    if (!D3DMatrix) return DDERR_INVALIDPARAMS;
+    if (!matrix)
+        return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
 
-    m = ddraw_get_object(&This->handle_table, D3DMatHandle - 1, DDRAW_HANDLE_MATRIX);
+    m = ddraw_get_object(&device->handle_table, matrix_handle - 1, DDRAW_HANDLE_MATRIX);
     if (!m)
     {
         WARN("Invalid matrix handle.\n");
@@ -1352,21 +1353,33 @@ static HRESULT WINAPI d3d_device1_SetMatrix(IDirect3DDevice *iface,
     }
 
     if (TRACE_ON(ddraw))
-        dump_D3DMATRIX(D3DMatrix);
+        dump_D3DMATRIX(matrix);
 
-    *m = *D3DMatrix;
+    *m = *matrix;
 
-    if (D3DMatHandle == This->world)
-        wined3d_device_set_transform(This->wined3d_device,
-                WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)D3DMatrix);
+    if (matrix_handle == device->world)
+    {
+        wined3d_stateblock_set_transform(device->state,
+                WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)matrix);
+        wined3d_device_set_transform(device->wined3d_device,
+                WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)matrix);
+    }
 
-    if (D3DMatHandle == This->view)
-        wined3d_device_set_transform(This->wined3d_device,
-                WINED3D_TS_VIEW, (struct wined3d_matrix *)D3DMatrix);
+    if (matrix_handle == device->view)
+    {
+        wined3d_stateblock_set_transform(device->state,
+                WINED3D_TS_VIEW, (struct wined3d_matrix *)matrix);
+        wined3d_device_set_transform(device->wined3d_device,
+                WINED3D_TS_VIEW, (struct wined3d_matrix *)matrix);
+    }
 
-    if (D3DMatHandle == This->proj)
-        wined3d_device_set_transform(This->wined3d_device,
-                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)D3DMatrix);
+    if (matrix_handle == device->proj)
+    {
+        wined3d_stateblock_set_transform(device->state,
+                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)matrix);
+        wined3d_device_set_transform(device->wined3d_device,
+                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)matrix);
+    }
 
     wined3d_mutex_unlock();
 
