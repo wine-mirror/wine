@@ -38,6 +38,8 @@ static void update_clip_space(struct d3d_device *device,
     D3DMATRIX projection;
 
     multiply_matrix(&projection, &clip_space, &device->legacy_projection);
+    wined3d_stateblock_set_transform(device->state,
+            WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
     wined3d_device_set_transform(device->wined3d_device,
             WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
     device->legacy_clipspace = clip_space;
