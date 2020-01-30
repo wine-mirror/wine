@@ -353,7 +353,7 @@ static void async_reader_destroy(struct strmbase_filter *iface)
         {
             for (i = 0; i < filter->max_requests; ++i)
                 CloseHandle(filter->requests[i].ovl.hEvent);
-            CoTaskMemFree(filter->requests);
+            free(filter->requests);
         }
         CloseHandle(filter->file);
         filter->sample_cs.DebugInfo->Spare[0] = 0;
@@ -702,88 +702,54 @@ static ULONG WINAPI FileAsyncReader_Release(IAsyncReader * iface)
     return IPin_Release(&filter->source.pin.IPin_iface);
 }
 
-#define DEF_ALIGNMENT 1
-
-static HRESULT WINAPI FileAsyncReader_RequestAllocator(IAsyncReader * iface, IMemAllocator * pPreferred, ALLOCATOR_PROPERTIES * pProps, IMemAllocator ** ppActual)
+static HRESULT WINAPI FileAsyncReader_RequestAllocator(IAsyncReader *iface,
+        IMemAllocator *preferred, ALLOCATOR_PROPERTIES *props, IMemAllocator **ret_allocator)
 {
-    AsyncReader *This = impl_from_IAsyncReader(iface);
-    HRESULT hr = S_OK;
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
+    IMemAllocator *allocator;
+    unsigned int i;
+    HRESULT hr;
 
-    TRACE("%p->(%p, %p, %p)\n", This, pPreferred, pProps, ppActual);
+    TRACE("filter %p, preferred %p, props %p, ret_allocator %p.\n", filter, preferred, props, ret_allocator);
 
-    if (!pProps->cbAlign || (pProps->cbAlign % DEF_ALIGNMENT) != 0)
-        pProps->cbAlign = DEF_ALIGNMENT;
+    if (!props->cbAlign)
+        props->cbAlign = 1;
 
-    if (pPreferred)
+    *ret_allocator = NULL;
+
+    if (preferred)
+        IMemAllocator_AddRef(allocator = preferred);
+    else if (FAILED(hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL,
+            CLSCTX_INPROC, &IID_IMemAllocator, (void **)&allocator)))
+        return hr;
+
+    if (FAILED(hr = IMemAllocator_SetProperties(allocator, props, props)))
     {
-        hr = IMemAllocator_SetProperties(pPreferred, pProps, pProps);
-        /* FIXME: check we are still aligned */
-        if (SUCCEEDED(hr))
-        {
-            IMemAllocator_AddRef(pPreferred);
-            *ppActual = pPreferred;
-            TRACE("FileAsyncReader_RequestAllocator -- %x\n", hr);
-            goto done;
-        }
+        IMemAllocator_Release(allocator);
+        return hr;
     }
 
-    pPreferred = NULL;
-
-    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC, &IID_IMemAllocator, (LPVOID *)&pPreferred);
-
-    if (SUCCEEDED(hr))
+    if (filter->requests)
     {
-        hr = IMemAllocator_SetProperties(pPreferred, pProps, pProps);
-        /* FIXME: check we are still aligned */
-        if (SUCCEEDED(hr))
-        {
-            *ppActual = pPreferred;
-            TRACE("FileAsyncReader_RequestAllocator -- %x\n", hr);
-        }
+        for (i = 0; i < filter->max_requests; ++i)
+            CloseHandle(filter->requests[i].ovl.hEvent);
+        free(filter->requests);
     }
 
-done:
-    if (SUCCEEDED(hr))
+    filter->max_requests = props->cBuffers;
+    TRACE("Maximum request count: %u.\n", filter->max_requests);
+    if (!(filter->requests = calloc(filter->max_requests, sizeof(filter->requests[0]))))
     {
-        if (This->requests)
-        {
-            unsigned int i;
-
-            for (i = 0; i < This->max_requests; ++i)
-                CloseHandle(This->requests[i].ovl.hEvent);
-            CoTaskMemFree(This->requests);
-        }
-
-        This->max_requests = pProps->cBuffers;
-        TRACE("Maximum request count: %u.\n", This->max_requests);
-        This->requests = CoTaskMemAlloc(sizeof(This->requests[0]) * pProps->cBuffers);
-
-        if (This->requests)
-        {
-            int x;
-            ZeroMemory(This->requests, sizeof(This->requests[0]) * pProps->cBuffers);
-            for (x = 0; x < This->max_requests; ++x)
-                This->requests[x].ovl.hEvent = CreateEventW(NULL, 0, 0, NULL);
-            This->allocProps = *pProps;
-        }
-        else
-        {
-            hr = E_OUTOFMEMORY;
-            CoTaskMemFree(This->requests);
-            This->max_requests = 0;
-            This->requests = NULL;
-        }
+        IMemAllocator_Release(allocator);
+        return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr))
-    {
-        *ppActual = NULL;
-        if (pPreferred)
-            IMemAllocator_Release(pPreferred);
-    }
+    for (i = 0; i < filter->max_requests; ++i)
+        filter->requests[i].ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    filter->allocProps = *props;
 
-    TRACE("-- %x\n", hr);
-    return hr;
+    *ret_allocator = allocator;
+    return S_OK;
 }
 
 static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader *iface, IMediaSample *sample, DWORD_PTR cookie)
