@@ -2258,7 +2258,7 @@ void release_bytecode(bytecode_t *code)
     heap_free(code);
 }
 
-static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source)
+static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source, UINT64 source_context, unsigned start_line)
 {
     size_t len = source ? lstrlenW(source) : 0;
 
@@ -2270,6 +2270,8 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source)
         return E_OUTOFMEMORY;
 
     compiler->code->ref = 1;
+    compiler->code->source_context = source_context;
+    compiler->code->start_line = start_line;
     heap_pool_init(&compiler->code->heap);
 
     compiler->code->source = heap_alloc((len + 1) * sizeof(WCHAR));
@@ -2482,13 +2484,13 @@ static HRESULT compile_arguments(compiler_ctx_t *ctx, const WCHAR *args)
     return parse_arguments(ctx, args, ctx->code->global_code.params, NULL);
 }
 
-HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *args, const WCHAR *delimiter,
-        BOOL from_eval, BOOL use_decode, bytecode_t **ret)
+HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, UINT64 source_context, unsigned start_line,
+                       const WCHAR *args, const WCHAR *delimiter, BOOL from_eval, BOOL use_decode, bytecode_t **ret)
 {
     compiler_ctx_t compiler = {0};
     HRESULT hres;
 
-    hres = init_code(&compiler, code);
+    hres = init_code(&compiler, code, source_context, start_line);
     if(FAILED(hres))
         return hres;
 

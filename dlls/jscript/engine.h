@@ -182,6 +182,8 @@ struct _bytecode_t {
     function_code_t global_code;
 
     WCHAR *source;
+    UINT64 source_context;
+    unsigned start_line;
 
     BSTR *bstr_pool;
     unsigned bstr_pool_size;
@@ -194,7 +196,7 @@ struct _bytecode_t {
     struct list entry;
 };
 
-HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
+HRESULT compile_script(script_ctx_t*,const WCHAR*,UINT64,unsigned,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
 void release_bytecode(bytecode_t*) DECLSPEC_HIDDEN;
 
 static inline bytecode_t *bytecode_addref(bytecode_t *code)
