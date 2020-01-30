@@ -3193,6 +3193,8 @@ static HRESULT WINAPI d3d_device3_SetTransform(IDirect3DDevice3 *iface,
 
         wined3d_mutex_lock();
         multiply_matrix(&projection, &device->legacy_clipspace, matrix);
+        wined3d_stateblock_set_transform(device->state,
+                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
         wined3d_device_set_transform(device->wined3d_device,
                 WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
         device->legacy_projection = *matrix;
@@ -3404,6 +3406,8 @@ static HRESULT WINAPI d3d_device3_MultiplyTransform(IDirect3DDevice3 *iface,
         wined3d_mutex_lock();
         multiply_matrix(&tmp, &device->legacy_projection, matrix);
         multiply_matrix(&projection, &device->legacy_clipspace, &tmp);
+        wined3d_stateblock_set_transform(device->state,
+                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
         wined3d_device_set_transform(device->wined3d_device,
                 WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
         device->legacy_projection = tmp;
