@@ -1941,11 +1941,51 @@ HRESULT jsdisp_call_name(jsdisp_t *disp, const WCHAR *name, WORD flags, unsigned
     return invoke_prop_func(disp, to_disp(disp), prop, flags, argc, argv, r, NULL);
 }
 
-HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, unsigned argc, jsval_t *argv, jsval_t *ret)
+static HRESULT disp_invoke(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DISPPARAMS *params, VARIANT *r)
 {
     IDispatchEx *dispex;
-    jsdisp_t *jsdisp;
+    EXCEPINFO ei;
+    HRESULT hres;
+
+    memset(&ei, 0, sizeof(ei));
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(SUCCEEDED(hres)) {
+        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, params, r, &ei, &ctx->jscaller->IServiceProvider_iface);
+        IDispatchEx_Release(dispex);
+    }else {
+        UINT err = 0;
+
+        if(flags == DISPATCH_CONSTRUCT) {
+            WARN("IDispatch cannot be constructor\n");
+            return DISP_E_MEMBERNOTFOUND;
+        }
+
+        if(params->cNamedArgs == 1 && params->rgdispidNamedArgs[0] == DISPID_THIS) {
+            params->cNamedArgs = 0;
+            params->rgdispidNamedArgs = NULL;
+            params->cArgs--;
+            params->rgvarg++;
+        }
+
+        TRACE("using IDispatch\n");
+        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, params, r, &ei, &err);
+    }
+
+    if(hres == DISP_E_EXCEPTION) {
+        TRACE("DISP_E_EXCEPTION: %08x %s %s\n", ei.scode, debugstr_w(ei.bstrSource), debugstr_w(ei.bstrDescription));
+        hres = SUCCEEDED(ei.scode) ? E_FAIL : ei.scode;
+        SysFreeString(ei.bstrSource);
+        SysFreeString(ei.bstrDescription);
+        SysFreeString(ei.bstrHelpFile);
+    }
+
+    return hres;
+}
+
+HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, unsigned argc, jsval_t *argv, jsval_t *ret)
+{
     VARIANT buf[6], retv;
+    jsdisp_t *jsdisp;
     DISPPARAMS dp;
     unsigned i;
     HRESULT hres;
@@ -1980,7 +2020,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
         dp.rgdispidNamedArgs = NULL;
     }
 
-    if(argc > 6) {
+    if(dp.cArgs > ARRAY_SIZE(buf)) {
         dp.rgvarg = heap_alloc(argc*sizeof(VARIANT));
         if(!dp.rgvarg)
             return E_OUTOFMEMORY;
@@ -2000,48 +2040,29 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
     }
 
     V_VT(&retv) = VT_EMPTY;
-    clear_ei(ctx);
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(SUCCEEDED(hres)) {
-        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, &dp, ret ? &retv : NULL, &ctx->ei.ei,
-                &ctx->jscaller->IServiceProvider_iface);
-        IDispatchEx_Release(dispex);
-    }else {
-        UINT err = 0;
-
-        if(flags == DISPATCH_CONSTRUCT) {
-            WARN("IDispatch cannot be constructor\n");
-            return DISP_E_MEMBERNOTFOUND;
-        }
-
-        TRACE("using IDispatch\n");
-        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, &dp, ret ? &retv : NULL, &ctx->ei.ei, &err);
-    }
+    hres = disp_invoke(ctx, disp, id, flags, &dp, ret ? &retv : NULL);
 
     for(i=0; i<argc; i++)
         VariantClear(dp.rgvarg+argc-i-1);
     if(dp.rgvarg != buf)
         heap_free(dp.rgvarg);
-    if(FAILED(hres))
-        return hres;
 
-    if(ret) {
+    if(SUCCEEDED(hres) && ret)
         hres = variant_to_jsval(&retv, ret);
-        VariantClear(&retv);
-    }
-
+    VariantClear(&retv);
     return hres;
 }
 
 HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
+    VARIANT buf[6], retv, *args = buf;
     jsdisp_t *jsdisp;
-    IDispatchEx *dispex;
-    VARIANT buf[6], retv;
     DISPPARAMS dp;
     unsigned i;
-    HRESULT hres;
+    HRESULT hres = S_OK;
+
+    static DISPID this_id = DISPID_THIS;
 
     assert(!(flags & ~(DISPATCH_METHOD|DISPATCH_CONSTRUCT|DISPATCH_JSCRIPT_INTERNAL_MASK)));
 
@@ -2058,17 +2079,8 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     if(r && argc && flags == DISPATCH_METHOD)
         flags |= DISPATCH_PROPERTYGET;
 
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(FAILED(hres)) {
-        TRACE("using IDispatch\n");
-        dispex = NULL;
-        jsthis = NULL;
-    }
-
     if(jsthis) {
-        static DISPID this_id = DISPID_THIS;
-
-        dp.cArgs = argc+1;
+        dp.cArgs = argc + 1;
         dp.cNamedArgs = 1;
         dp.rgdispidNamedArgs = &this_id;
     }else {
@@ -2077,57 +2089,25 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
         dp.rgdispidNamedArgs = NULL;
     }
 
-    if(dp.cArgs > ARRAY_SIZE(buf)) {
-        dp.rgvarg = heap_alloc(dp.cArgs*sizeof(VARIANT));
-        if(!dp.rgvarg) {
-            if(dispex)
-                IDispatchEx_Release(dispex);
-            return E_OUTOFMEMORY;
-        }
-    }else {
-        dp.rgvarg = buf;
-    }
+    if(argc > ARRAY_SIZE(buf) && !(args = heap_alloc(argc * sizeof(VARIANT))))
+        return E_OUTOFMEMORY;
+    dp.rgvarg = args;
 
-    for(i=0; i<argc; i++) {
+    V_VT(dp.rgvarg) = VT_DISPATCH;
+    V_DISPATCH(dp.rgvarg) = jsthis;
+
+    for(i=0; SUCCEEDED(hres) && i < argc; i++)
         hres = jsval_to_variant(argv[i], dp.rgvarg+dp.cArgs-i-1);
-        if(FAILED(hres)) {
-            while(i--)
-                VariantClear(dp.rgvarg+dp.cArgs-i-1);
-            if(dp.rgvarg != buf)
-                heap_free(dp.rgvarg);
-            if(dispex)
-                IDispatchEx_Release(dispex);
-            return hres;
-        }
-    }
-    if(jsthis) {
-        V_VT(dp.rgvarg) = VT_DISPATCH;
-        V_DISPATCH(dp.rgvarg) = jsthis;
+
+    if(SUCCEEDED(hres)) {
+        V_VT(&retv) = VT_EMPTY;
+        hres = disp_invoke(ctx, disp, DISPID_VALUE, flags, &dp, r ? &retv : NULL);
     }
 
-    V_VT(&retv) = VT_EMPTY;
-    clear_ei(ctx);
-    if(dispex) {
-        hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, ctx->lcid, flags, &dp, r ? &retv : NULL, &ctx->ei.ei,
-                &ctx->jscaller->IServiceProvider_iface);
-        IDispatchEx_Release(dispex);
-    }else {
-        UINT err = 0;
-
-        if(flags == DISPATCH_CONSTRUCT) {
-            WARN("IDispatch cannot be constructor\n");
-            return DISP_E_MEMBERNOTFOUND;
-        }
-
-        hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, ctx->lcid, flags, &dp, r ? &retv : NULL, &ctx->ei.ei, &err);
-    }
-
-    for(i=0; i<argc; i++)
-        VariantClear(dp.rgvarg+dp.cArgs-i-1);
-    if(dp.rgvarg != buf)
-        heap_free(dp.rgvarg);
-    if(FAILED(hres))
-        return hres;
+    for(i = 0; i < argc&&0; i++)
+        VariantClear(dp.rgvarg + dp.cArgs - i - 1);
+    if(args != buf)
+        heap_free(args);
 
     if(!r)
         return S_OK;
@@ -2185,7 +2165,6 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val)
         DWORD flags = DISPATCH_PROPERTYPUT;
         VARIANT var;
         DISPPARAMS dp  = {&var, &dispid, 1, 1};
-        IDispatchEx *dispex;
 
         hres = jsval_to_variant(val, &var);
         if(FAILED(hres))
@@ -2194,19 +2173,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val)
         if(V_VT(&var) == VT_DISPATCH)
             flags |= DISPATCH_PROPERTYPUTREF;
 
-        clear_ei(ctx);
-        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-        if(SUCCEEDED(hres)) {
-            hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, &dp, NULL, &ctx->ei.ei,
-                    &ctx->jscaller->IServiceProvider_iface);
-            IDispatchEx_Release(dispex);
-        }else {
-            ULONG err = 0;
-
-            TRACE("using IDispatch\n");
-            hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, &dp, NULL, &ctx->ei.ei, &err);
-        }
-
+        hres = disp_invoke(ctx, disp, id, flags, &dp, NULL);
         VariantClear(&var);
     }
 
@@ -2266,7 +2233,6 @@ HRESULT jsdisp_propget(jsdisp_t *jsdisp, DISPID id, jsval_t *val)
 HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val)
 {
     DISPPARAMS dp  = {NULL,NULL,0,0};
-    IDispatchEx *dispex;
     jsdisp_t *jsdisp;
     VARIANT var;
     HRESULT hres;
@@ -2279,23 +2245,11 @@ HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val
     }
 
     V_VT(&var) = VT_EMPTY;
-    clear_ei(ctx);
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    hres = disp_invoke(ctx, disp, id, INVOKE_PROPERTYGET, &dp, &var);
     if(SUCCEEDED(hres)) {
-        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, INVOKE_PROPERTYGET, &dp, &var, &ctx->ei.ei,
-                &ctx->jscaller->IServiceProvider_iface);
-        IDispatchEx_Release(dispex);
-    }else {
-        ULONG err = 0;
-
-        TRACE("using IDispatch\n");
-        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, INVOKE_PROPERTYGET, &dp, &var, &ctx->ei.ei, &err);
+        hres = variant_to_jsval(&var, val);
+        VariantClear(&var);
     }
-    if(FAILED(hres))
-        return hres;
-
-    hres = variant_to_jsval(&var, val);
-    VariantClear(&var);
     return hres;
 }
 
