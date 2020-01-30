@@ -19,6 +19,7 @@
 #define COBJMACROS
 #include <limits.h>
 #include <math.h>
+#include <float.h>
 #include "d2d1_1.h"
 #include "wincrypt.h"
 #include "wine/test.h"
@@ -2379,12 +2380,15 @@ static void test_radial_brush(void)
     DestroyWindow(window);
 }
 
-static void fill_geometry_sink(ID2D1GeometrySink *sink)
+static void fill_geometry_sink(ID2D1GeometrySink *sink, unsigned int hollow_count)
 {
+    D2D1_FIGURE_BEGIN begin;
+    unsigned int idx = 0;
     D2D1_POINT_2F point;
 
     set_point(&point, 15.0f,  20.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     line_to(sink, 55.0f,  20.0f);
     line_to(sink, 55.0f, 220.0f);
     line_to(sink, 25.0f, 220.0f);
@@ -2403,7 +2407,8 @@ static void fill_geometry_sink(ID2D1GeometrySink *sink)
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     set_point(&point, 155.0f, 300.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     line_to(sink, 155.0f, 160.0f);
     line_to(sink,  85.0f, 160.0f);
     line_to(sink,  85.0f, 300.0f);
@@ -2418,37 +2423,44 @@ static void fill_geometry_sink(ID2D1GeometrySink *sink)
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     set_point(&point, 165.0f,  20.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     line_to(sink, 165.0f, 300.0f);
     line_to(sink, 235.0f, 300.0f);
     line_to(sink, 235.0f,  20.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
     set_point(&point, 225.0f,  60.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     line_to(sink, 225.0f, 260.0f);
     line_to(sink, 175.0f, 260.0f);
     line_to(sink, 175.0f,  60.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
     set_point(&point, 215.0f, 220.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     line_to(sink, 185.0f, 220.0f);
     line_to(sink, 185.0f, 100.0f);
     line_to(sink, 215.0f, 100.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
     set_point(&point, 195.0f, 180.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     line_to(sink, 205.0f, 180.0f);
     line_to(sink, 205.0f, 140.0f);
     line_to(sink, 195.0f, 140.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 }
 
-static void fill_geometry_sink_bezier(ID2D1GeometrySink *sink)
+static void fill_geometry_sink_bezier(ID2D1GeometrySink *sink, unsigned int hollow_count)
 {
+    D2D1_FIGURE_BEGIN begin;
+    unsigned int idx = 0;
     D2D1_POINT_2F point;
 
     set_point(&point, 5.0f, 160.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     quadratic_to(sink, 40.0f, 160.0f, 40.0f,  20.0f);
     quadratic_to(sink, 40.0f, 160.0f, 75.0f, 160.0f);
     quadratic_to(sink, 40.0f, 160.0f, 40.0f, 300.0f);
@@ -2456,7 +2468,8 @@ static void fill_geometry_sink_bezier(ID2D1GeometrySink *sink)
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     set_point(&point, 20.0f, 160.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     quadratic_to(sink, 20.0f,  80.0f, 40.0f,  80.0f);
     quadratic_to(sink, 60.0f,  80.0f, 60.0f, 160.0f);
     quadratic_to(sink, 60.0f, 240.0f, 40.0f, 240.0f);
@@ -2464,7 +2477,8 @@ static void fill_geometry_sink_bezier(ID2D1GeometrySink *sink)
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     set_point(&point, 5.0f, 612.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     quadratic_to(sink, 40.0f, 612.0f, 40.0f, 752.0f);
     quadratic_to(sink, 40.0f, 612.0f, 75.0f, 612.0f);
     quadratic_to(sink, 40.0f, 612.0f, 40.0f, 472.0f);
@@ -2472,7 +2486,8 @@ static void fill_geometry_sink_bezier(ID2D1GeometrySink *sink)
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     set_point(&point, 20.0f, 612.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    begin = idx++ < hollow_count ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+    ID2D1GeometrySink_BeginFigure(sink, point, begin);
     quadratic_to(sink, 20.0f, 692.0f, 40.0f, 692.0f);
     quadratic_to(sink, 60.0f, 692.0f, 60.0f, 612.0f);
     quadratic_to(sink, 60.0f, 532.0f, 40.0f, 532.0f);
@@ -3061,7 +3076,7 @@ static void test_path_geometry(void)
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
-    fill_geometry_sink_bezier(sink);
+    fill_geometry_sink_bezier(sink, 0);
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
     ID2D1GeometrySink_Release(sink);
@@ -3085,13 +3100,71 @@ static void test_path_geometry(void)
 
     ID2D1PathGeometry_Release(geometry);
 
+    /* GetBounds() with bezier segments and some hollow components. */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    fill_geometry_sink_bezier(sink, 2);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, 5.0f, 472.0f, 75.0f, 752.0f, 0);
+    todo_wine ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 80.0f, 640.0f);
+    scale_matrix(&matrix, 2.0f, 0.5f);
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, 90.0f, 876.0f, 230.0f, 1016.0f, 0);
+    todo_wine ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    ID2D1PathGeometry_Release(geometry);
+
+    /* GetBounds() with bezier segments and all hollow components. */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    fill_geometry_sink_bezier(sink, 4);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, INFINITY, INFINITY, FLT_MAX, FLT_MAX, 0);
+    todo_wine ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 80.0f, 640.0f);
+    scale_matrix(&matrix, 2.0f, 0.5f);
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, INFINITY, INFINITY, FLT_MAX, FLT_MAX, 0);
+    todo_wine ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    ID2D1PathGeometry_Release(geometry);
+
     hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
     /* The fillmode that's used is the last one set before the sink is closed. */
     ID2D1GeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
-    fill_geometry_sink(sink);
+    fill_geometry_sink(sink, 0);
     ID2D1GeometrySink_SetFillMode(sink, D2D1_FILL_MODE_ALTERNATE);
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
@@ -3186,7 +3259,7 @@ static void test_path_geometry(void)
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
-    fill_geometry_sink(sink);
+    fill_geometry_sink(sink, 0);
     ID2D1GeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
@@ -3244,7 +3317,7 @@ static void test_path_geometry(void)
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
-    fill_geometry_sink_bezier(sink);
+    fill_geometry_sink_bezier(sink, 0);
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
     hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
@@ -3346,7 +3419,7 @@ static void test_path_geometry(void)
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
-    fill_geometry_sink_bezier(sink);
+    fill_geometry_sink_bezier(sink, 0);
     ID2D1GeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
