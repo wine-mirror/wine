@@ -1951,7 +1951,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
     HRESULT hres;
 
     jsdisp = iface_to_jsdisp(disp);
-    if(jsdisp) {
+    if(jsdisp && jsdisp->ctx == ctx) {
         if(flags & DISPATCH_PROPERTYPUT) {
             FIXME("disp_call(propput) on builtin object\n");
             return E_FAIL;
@@ -2046,7 +2046,7 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     assert(!(flags & ~(DISPATCH_METHOD|DISPATCH_CONSTRUCT|DISPATCH_JSCRIPT_INTERNAL_MASK)));
 
     jsdisp = iface_to_jsdisp(disp);
-    if(jsdisp) {
+    if(jsdisp && jsdisp->ctx == ctx) {
         if(ctx != jsdisp->ctx)
             flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
         hres = jsdisp_call_value(jsdisp, jsthis, flags, argc, argv, r);
@@ -2170,7 +2170,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val)
     HRESULT hres;
 
     jsdisp = iface_to_jsdisp(disp);
-    if(jsdisp) {
+    if(jsdisp && jsdisp->ctx == ctx) {
         dispex_prop_t *prop;
 
         prop = get_prop(jsdisp, id);
@@ -2272,7 +2272,7 @@ HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val
     HRESULT hres;
 
     jsdisp = iface_to_jsdisp(disp);
-    if(jsdisp) {
+    if(jsdisp && jsdisp->ctx == ctx) {
         hres = jsdisp_propget(jsdisp, id, val);
         jsdisp_release(jsdisp);
         return hres;
