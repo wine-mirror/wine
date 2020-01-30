@@ -3097,10 +3097,22 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
 
     if (!transform)
     {
-        if (geometry->u.path.bounds.left > geometry->u.path.bounds.right)
+        if (geometry->u.path.bounds.left > geometry->u.path.bounds.right
+                && !isinf(geometry->u.path.bounds.left))
         {
             for (i = 0; i < geometry->u.path.figure_count; ++i)
+            {
+                if (geometry->u.path.figures[i].flags & D2D_FIGURE_FLAG_HOLLOW)
+                    continue;
                 d2d_rect_union(&geometry->u.path.bounds, &geometry->u.path.figures[i].bounds);
+            }
+            if (geometry->u.path.bounds.left > geometry->u.path.bounds.right)
+            {
+                geometry->u.path.bounds.left = INFINITY;
+                geometry->u.path.bounds.right = FLT_MAX;
+                geometry->u.path.bounds.top = INFINITY;
+                geometry->u.path.bounds.bottom = FLT_MAX;
+            }
         }
 
         *bounds = geometry->u.path.bounds;
@@ -3114,6 +3126,9 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
         D2D1_RECT_F bezier_bounds;
         D2D1_POINT_2F p, p1, p2;
         size_t j, bezier_idx;
+
+        if (figure->flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
 
         /* Single vertex figures are reduced by CloseFigure(). */
         if (figure->vertex_count == 0)
@@ -3179,6 +3194,14 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
             d2d_rect_get_bezier_bounds(&bezier_bounds, &p, &p1, &p2);
             d2d_rect_union(bounds, &bezier_bounds);
         }
+    }
+
+    if (bounds->left > bounds->right)
+    {
+        bounds->left = INFINITY;
+        bounds->right = FLT_MAX;
+        bounds->top = INFINITY;
+        bounds->bottom = FLT_MAX;
     }
 
     return S_OK;

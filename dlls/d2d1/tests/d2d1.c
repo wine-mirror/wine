@@ -3114,7 +3114,7 @@ static void test_path_geometry(void)
     hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
     ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
     match = compare_rect(&rect, 5.0f, 472.0f, 75.0f, 752.0f, 0);
-    todo_wine ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
 
     set_matrix_identity(&matrix);
@@ -3124,7 +3124,7 @@ static void test_path_geometry(void)
     hr = ID2D1PathGeometry_GetBounds(geometry, &matrix, &rect);
     ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
     match = compare_rect(&rect, 90.0f, 876.0f, 230.0f, 1016.0f, 0);
-    todo_wine ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
 
     ID2D1PathGeometry_Release(geometry);
@@ -3143,7 +3143,7 @@ static void test_path_geometry(void)
     hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
     ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
     match = compare_rect(&rect, INFINITY, INFINITY, FLT_MAX, FLT_MAX, 0);
-    todo_wine ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
 
     set_matrix_identity(&matrix);
@@ -3153,7 +3153,7 @@ static void test_path_geometry(void)
     hr = ID2D1PathGeometry_GetBounds(geometry, &matrix, &rect);
     ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
     match = compare_rect(&rect, INFINITY, INFINITY, FLT_MAX, FLT_MAX, 0);
-    todo_wine ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
 
     ID2D1PathGeometry_Release(geometry);
