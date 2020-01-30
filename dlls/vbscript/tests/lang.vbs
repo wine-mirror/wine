@@ -1630,6 +1630,10 @@ x.prop.prop.prop = 2
 call ok(x.getProp().getProp.prop = 2, "x.getProp().getProp.prop = " & x.getProp().getProp.prop)
 x.getprop.getprop().prop = 3
 call ok(x.getProp.prop.prop = 3, "x.getProp.prop.prop = " & x.getProp.prop.prop)
+set x.getprop.getprop().prop = new emptyclass
+set obj = new emptyclass
+set x.getprop.getprop().prop = obj
+call ok(x.getprop.getprop().prop is obj, "x.getprop.getprop().prop is not obj (emptyclass)")
 
 ok getVT(x) = "VT_DISPATCH*", "getVT(x) = " & getVT(x)
 todo_wine_ok getVT(x()) = "VT_BSTR", "getVT(x()) = " & getVT(x())

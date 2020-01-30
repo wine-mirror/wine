@@ -48,7 +48,7 @@ static call_expression_t *make_call_expression(parser_ctx_t*,expression_t*,expre
 static void *new_statement(parser_ctx_t*,statement_type_t,size_t,unsigned);
 static statement_t *new_call_statement(parser_ctx_t*,unsigned,BOOL,expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,unsigned,expression_t*,expression_t*);
-static statement_t *new_set_statement(parser_ctx_t*,unsigned,member_expression_t*,expression_t*,expression_t*);
+static statement_t *new_set_statement(parser_ctx_t*,unsigned,expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,unsigned,dim_decl_t*);
 static statement_t *new_redim_statement(parser_ctx_t*,unsigned,const WCHAR*,BOOL,expression_t*);
 static statement_t *new_while_statement(parser_ctx_t*,unsigned,statement_type_t,expression_t*,statement_t*);
@@ -136,7 +136,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression SignExpression
 %type <expression> ConstExpression NumericLiteralExpression
 %type <member> MemberExpression
-%type <expression> Arguments Arguments_opt ArgumentList ArgumentList_opt Step_opt ExpressionList
+%type <expression> Arguments ArgumentList ArgumentList_opt Step_opt ExpressionList
 %type <boolean> DoType Preserve_opt
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl PropertyDecl
@@ -216,8 +216,7 @@ SimpleStatement
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0, @$); CHECK_ERROR; }
     | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0, @$); CHECK_ERROR; }
     | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0, @$); CHECK_ERROR; }
-    | tSET MemberExpression Arguments_opt '=' Expression
-                                            { $$ = new_set_statement(ctx, @$, $2, $3, $5); CHECK_ERROR; }
+    | tSET CallExpression '=' Expression    { $$ = new_set_statement(ctx, @$, $2, $4); CHECK_ERROR; }
     | tSTOP                                 { $$ = new_statement(ctx, STAT_STOP, 0, @$); CHECK_ERROR; }
     | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, @$, TRUE); CHECK_ERROR; }
     | tON tERROR tGOTO '0'                  { $$ = new_onerror_statement(ctx, @$, FALSE); CHECK_ERROR; }
@@ -309,10 +308,6 @@ CaseClausules
 Arguments
     : tEMPTYBRACKETS                { $$ = NULL; }
     | '(' ArgumentList ')'          { $$ = $2; }
-
-Arguments_opt
-    : /* empty */                   { $$ = NULL; }
-    | Arguments                     { $$ = $1; }
 
 ArgumentList_opt
     : /* empty */                   { $$ = NULL; }
@@ -769,7 +764,7 @@ static statement_t *new_assign_statement(parser_ctx_t *ctx, unsigned loc, expres
     return &stat->stat;
 }
 
-static statement_t *new_set_statement(parser_ctx_t *ctx, unsigned loc, member_expression_t *left, expression_t *arguments, expression_t *right)
+static statement_t *new_set_statement(parser_ctx_t *ctx, unsigned loc, expression_t *left, expression_t *right)
 {
     assign_statement_t *stat;
 
@@ -777,10 +772,8 @@ static statement_t *new_set_statement(parser_ctx_t *ctx, unsigned loc, member_ex
     if(!stat)
         return NULL;
 
+    stat->left_expr = left;
     stat->value_expr = right;
-    stat->left_expr = (expression_t*)new_call_expression(ctx, &left->expr, arguments);
-    if(!stat->left_expr)
-        return NULL;
 
     return &stat->stat;
 }
