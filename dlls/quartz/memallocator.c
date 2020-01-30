@@ -166,6 +166,9 @@ static HRESULT WINAPI BaseMemAllocator_SetProperties(IMemAllocator * iface, ALLO
 
     TRACE("(%p)->(%p, %p)\n", This, pRequest, pActual);
 
+    TRACE("Requested %d buffers, size %d, alignment %d, prefix %d.\n",
+            pRequest->cBuffers, pRequest->cbBuffer, pRequest->cbAlign, pRequest->cbPrefix);
+
     EnterCriticalSection(This->pCritSect);
     {
         if (!list_empty(&This->used_list))
