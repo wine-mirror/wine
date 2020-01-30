@@ -925,12 +925,6 @@ static HRESULT get_param_pointer_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int 
         ITypeInfo_ReleaseTypeAttr(refinfo, attr);
         ITypeInfo_Release(refinfo);
         break;
-    case VT_BSTR:
-        *flags |= IsSimpleRef | MustFree;
-        *tfs_tdesc = tdesc;
-        if (!is_in && is_out)
-            *server_size = sizeof(void *);
-        break;
     default:
         *flags |= IsSimpleRef;
         *tfs_tdesc = tdesc;
@@ -938,6 +932,8 @@ static HRESULT get_param_pointer_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int 
             *server_size = type_memsize(typeinfo, tdesc);
         if ((*basetype = get_basetype(typeinfo, tdesc)))
             *flags |= IsBasetype;
+        else
+            *flags |= MustFree;
         break;
     }
 
