@@ -3717,45 +3717,49 @@ msgstr "Očekáván objekt JScript"
 msgid "Syntax error in regular expression"
 msgstr ""
 
-#: jscript.rc:64
-msgid "URI to be encoded contains invalid characters"
-msgstr ""
-
 #: jscript.rc:63
-msgid "URI to be decoded is incorrect"
+msgid "Exception thrown and not caught"
 msgstr ""
 
 #: jscript.rc:65
+msgid "URI to be encoded contains invalid characters"
+msgstr ""
+
+#: jscript.rc:64
+msgid "URI to be decoded is incorrect"
+msgstr ""
+
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "Počet desetinných čísel je mimo rozsah"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "Přesnost je mimo rozsah"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "Rozměr pole musí být konečné kladné celé číslo"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "Očekáván objekt typu pole"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

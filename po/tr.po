@@ -3752,31 +3752,35 @@ msgstr "Beklenen JScript nesnesi"
 msgid "Syntax error in regular expression"
 msgstr "Düzenli ifadede sözdizimi hatası"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "Kodlanacak URI geçersiz karakterler içeriyor"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "Kodu çözülecek URI geçersiz"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "Kesirli rakam sayısı aralık dışı"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "Aralık erişim dışında"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "Dizi adı pozitif sonlu bir sayı olmalıdır"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "Beklenen dizi nesnesi"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3784,15 +3788,15 @@ msgstr ""
 "Nesne açıklayıcısındaki 'yazılabilir' özelliği bu nesnede 'doğru' olarak "
 "ayarlananmıyor"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "'|' yapılandırılamayan nesnesi yeniden tanımlanamıyor"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr "'|' yazılamayan nesnesi değiştirilemiyor"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr "Nesnenin erişimcisi ve değeri birden olamaz"
 

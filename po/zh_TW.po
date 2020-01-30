@@ -3746,45 +3746,49 @@ msgstr "預期為 JScript 物件"
 msgid "Syntax error in regular expression"
 msgstr "正規表示式語法發生錯誤"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "要編碼的 URI 內含無效字元"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "要解碼的 URI 不正確"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "小數位數超出範圍"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "精確度超出範圍"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "陣列長度必須是有限正整數"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "預期為陣列物件"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

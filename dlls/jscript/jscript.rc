@@ -59,6 +59,7 @@ STRINGTABLE
     IDS_NOT_VBARRAY         "VBArray object expected"
     IDS_JSCRIPT_EXPECTED    "JScript object expected"
     IDS_REGEXP_SYNTAX_ERROR "Syntax error in regular expression"
+    IDS_EXCEPTION_THROWN    "Exception thrown and not caught"
     IDS_URI_INVALID_CODING  "URI to be decoded is incorrect"
     IDS_URI_INVALID_CHAR    "URI to be encoded contains invalid characters"
     IDS_FRACTION_DIGITS_OUT_OF_RANGE "Number of fraction digits is out of range"

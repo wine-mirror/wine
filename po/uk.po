@@ -3763,46 +3763,50 @@ msgstr "Очікується об'єкт JScript"
 msgid "Syntax error in regular expression"
 msgstr "Синтаксична помилка в регулярному виразі"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI, що буде закодований, містить неприпустимі символи"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "URI, що буде закодований, некоректний"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "Кількість знаків після коми поза діапазоном"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "Точність поза діапазоном"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "Довжиною масиву повинне бути скінченне додатнє ціле число"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "Очікується об'єкт Array"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 "Властивість 'writable' не може бути встановлена на 'true' для цього об'єкта"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Неможливо перевизначити властивість, яка не підлягає налаштуванню '|'"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr "Неможливо змінити властивість, яка не підлягає запису '|'"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr "Властивість не може одночасно мати доступ і значення"
 

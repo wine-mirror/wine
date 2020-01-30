@@ -3778,45 +3778,49 @@ msgstr "JScript-objekt förväntades"
 msgid "Syntax error in regular expression"
 msgstr "Syntaxfel i reguljärt uttryck"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "Den URI som ska kodas innehåller ogiltiga tecken"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "Den URI som ska avkodas är felaktig"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "Antal decimaler är utanför giltigt intervall"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "Precision är utanför giltigt intervall"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "Array-längd måste vara ett positivt ändligt heltal"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "Array-objekt förväntades"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

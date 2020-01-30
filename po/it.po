@@ -3839,49 +3839,53 @@ msgstr "Previsto un oggetto JScript"
 msgid "Syntax error in regular expression"
 msgstr "Errore di sintassi nell'espressione regolare"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI da codificare contiene caratteri non validi"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "L'URI da decodificare non è corretto"
 
-#: jscript.rc:65
+#: jscript.rc:66
 #, fuzzy
 #| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
 msgstr "Valore dell'enumerazione fuori portata.\n"
 
-#: jscript.rc:66
+#: jscript.rc:67
 #, fuzzy
 #| msgid "Subscript out of range"
 msgid "Precision is out of range"
 msgstr "Sottoscript fuori portata"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "La lunghezza dell'array deve essere un intero finito e positivo"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "Previsto un oggetto array"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

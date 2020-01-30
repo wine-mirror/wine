@@ -858,10 +858,29 @@ static HRESULT interp_case(script_ctx_t *ctx)
 static void set_error_value(script_ctx_t *ctx, jsval_t value)
 {
     jsexcept_t *ei = ctx->ei;
+    jsdisp_t *obj;
 
     reset_ei(ei);
+    ei->error = JS_E_EXCEPTION_THROWN;
     ei->valid_value = TRUE;
     ei->value = value;
+
+    if(is_object_instance(value) && get_object(value) && (obj = to_jsdisp(get_object(value)))) {
+        UINT32 number;
+        jsval_t v;
+        HRESULT hres;
+
+        /* FIXME: We should check if object is an error instance */
+
+        hres = jsdisp_propget_name(obj, L"number", &v);
+        if(SUCCEEDED(hres)) {
+            hres = to_uint32(ctx, v, &number);
+            if(SUCCEEDED(hres))
+                ei->error = FAILED(number) ? number : E_FAIL;
+            jsval_release(v);
+        }
+    }
+
 }
 
 /* ECMA-262 3rd Edition    12.13 */

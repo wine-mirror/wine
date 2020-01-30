@@ -103,6 +103,7 @@ static inline BOOL is_started(script_ctx_t *ctx)
 
 void reset_ei(jsexcept_t *ei)
 {
+    ei->error = S_OK;
     if(ei->valid_value) {
         jsval_release(ei->value);
         ei->valid_value = FALSE;
@@ -124,6 +125,8 @@ HRESULT leave_script(script_ctx_t *ctx, HRESULT result)
     TRACE("ctx %p ei %p prev %p\n", ctx, ei, ei->prev);
 
     ctx->ei = ei->prev;
+    if(result == DISP_E_EXCEPTION)
+        result = ei->error;
     if(FAILED(result))
         WARN("%08x\n", result);
     reset_ei(ei);
