@@ -3951,3 +3951,12 @@ PEPROCESS WINAPI IoGetRequestorProcess(IRP *irp)
     TRACE("irp %p.\n", irp);
     return irp->Tail.Overlay.Thread->kthread.process;
 }
+
+/***********************************************************************
+ *           RtlIsNtDdiVersionAvailable   (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI RtlIsNtDdiVersionAvailable(ULONG version)
+{
+    FIXME("stub: %d\n", version);
+    return FALSE;
+}

@@ -1117,6 +1117,7 @@
 @ stub RtlIsGenericTableEmpty
 @ stub RtlIsGenericTableEmptyAvl
 @ stdcall RtlIsNameLegalDOS8Dot3(ptr ptr ptr)
+@ stdcall RtlIsNtDdiVersionAvailable(long)
 @ stub RtlIsRangeAvailable
 @ stub RtlIsValidOemCharacter
 @ stdcall -arch=win32 -ret64 RtlLargeIntegerAdd(int64 int64)
