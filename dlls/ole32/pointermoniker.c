@@ -328,17 +328,16 @@ PointerMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
 /******************************************************************************
  *        PointerMoniker_Enum
  ******************************************************************************/
-static HRESULT WINAPI
-PointerMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoniker)
+static HRESULT WINAPI PointerMonikerImpl_Enum(IMoniker *iface, BOOL fForward, IEnumMoniker **ppenumMoniker)
 {
-    TRACE("(%p,%d,%p)\n",iface,fForward,ppenumMoniker);
+    TRACE("%p, %d, %p.\n", iface, fForward, ppenumMoniker);
 
-    if (ppenumMoniker == NULL)
+    if (!ppenumMoniker)
         return E_POINTER;
 
     *ppenumMoniker = NULL;
 
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 /******************************************************************************

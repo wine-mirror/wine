@@ -3008,11 +3008,9 @@ todo_wine
 
     /* Enum() */
     hr = IMoniker_Enum(moniker, TRUE, &enummoniker);
-todo_wine
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_Enum(moniker, FALSE, &enummoniker);
-todo_wine
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
     IMoniker_Release(moniker);
