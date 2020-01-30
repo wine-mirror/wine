@@ -62,7 +62,7 @@ typedef struct AsyncReader
     IAsyncReader IAsyncReader_iface;
 
     LPOLESTR pszFileName;
-    AM_MEDIA_TYPE *pmt;
+    AM_MEDIA_TYPE mt;
     ALLOCATOR_PROPERTIES allocProps;
     HANDLE file, port, io_thread;
     CRITICAL_SECTION sample_cs;
@@ -359,6 +359,9 @@ static void async_reader_destroy(struct strmbase_filter *iface)
         filter->sample_cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&filter->sample_cs);
         strmbase_source_cleanup(&filter->source);
+
+        CoTaskMemFree(filter->pszFileName);
+        FreeMediaType(&filter->mt);
     }
 
     PostQueuedCompletionStatus(filter->port, 0, 1, NULL);
@@ -366,9 +369,6 @@ static void async_reader_destroy(struct strmbase_filter *iface)
     CloseHandle(filter->io_thread);
     CloseHandle(filter->port);
 
-    CoTaskMemFree(filter->pszFileName);
-    if (filter->pmt)
-        DeleteMediaType(filter->pmt);
     strmbase_filter_cleanup(&filter->filter);
     CoTaskMemFree(filter);
 }
@@ -446,7 +446,6 @@ HRESULT AsyncReader_create(IUnknown *outer, void **out)
     pAsyncRead->IAsyncReader_iface.lpVtbl = &FileAsyncReader_Vtbl;
 
     pAsyncRead->pszFileName = NULL;
-    pAsyncRead->pmt = NULL;
 
     InitializeCriticalSection(&pAsyncRead->sample_cs);
     pAsyncRead->sample_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FileAsyncReader.sample_cs");
@@ -502,7 +501,12 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    free(This->pszFileName);
+    if (This->pszFileName)
+    {
+        free(This->pszFileName);
+        FreeMediaType(&This->mt);
+    }
+
     if (!(This->pszFileName = wcsdup(pszFileName)))
     {
         CloseHandle(hFile);
@@ -516,30 +520,26 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     This->flushing = FALSE;
     This->requests = NULL;
 
-    if (This->pmt)
-        DeleteMediaType(This->pmt);
-
-    This->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
     if (!pmt)
     {
-        CopyMediaType(This->pmt, &default_mt);
-        if (get_media_type(pszFileName, &This->pmt->majortype, &This->pmt->subtype, NULL))
+        CopyMediaType(&This->mt, &default_mt);
+        if (get_media_type(pszFileName, &This->mt.majortype, &This->mt.subtype, NULL))
         {
             TRACE("Found major type %s, subtype %s.\n",
-                    debugstr_guid(&This->pmt->majortype), debugstr_guid(&This->pmt->subtype));
+                    debugstr_guid(&This->mt.majortype), debugstr_guid(&This->mt.subtype));
         }
     }
     else
-        CopyMediaType(This->pmt, pmt);
+        CopyMediaType(&This->mt, pmt);
 
     return S_OK;
 }
 
-static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR * ppszFileName, AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter *iface, LPOLESTR *ppszFileName, AM_MEDIA_TYPE *mt)
 {
     AsyncReader *This = impl_from_IFileSourceFilter(iface);
-    
-    TRACE("%p->(%p, %p)\n", This, ppszFileName, pmt);
+
+    TRACE("filter %p, filename %p, mt %p.\n", This, ppszFileName, mt);
 
     if (!ppszFileName)
         return E_POINTER;
@@ -549,16 +549,14 @@ static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR 
     {
         *ppszFileName = CoTaskMemAlloc((wcslen(This->pszFileName) + 1) * sizeof(WCHAR));
         wcscpy(*ppszFileName, This->pszFileName);
+        if (mt)
+            CopyMediaType(mt, &This->mt);
     }
     else
-        *ppszFileName = NULL;
-
-    if (pmt)
     {
-        if (This->pmt)
-            CopyMediaType(pmt, This->pmt);
-        else
-            ZeroMemory(pmt, sizeof(*pmt));
+        *ppszFileName = NULL;
+        if (mt)
+            memset(mt, 0, sizeof(AM_MEDIA_TYPE));
     }
 
     return S_OK;
@@ -588,12 +586,12 @@ static inline AsyncReader *impl_from_IAsyncReader(IAsyncReader *iface)
     return CONTAINING_RECORD(iface, AsyncReader, IAsyncReader_iface);
 }
 
-static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *pmt)
+static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     AsyncReader *filter = impl_from_strmbase_pin(iface);
 
-    if (IsEqualGUID(&pmt->majortype, &filter->pmt->majortype) &&
-        IsEqualGUID(&pmt->subtype, &filter->pmt->subtype))
+    if (IsEqualGUID(&mt->majortype, &filter->mt.majortype)
+            && IsEqualGUID(&mt->subtype, &filter->mt.subtype))
         return S_OK;
 
     return S_FALSE;
@@ -607,7 +605,7 @@ static HRESULT source_get_media_type(struct strmbase_pin *iface, unsigned int in
         return VFW_S_NO_MORE_ITEMS;
 
     if (index == 0)
-        CopyMediaType(mt, filter->pmt);
+        CopyMediaType(mt, &filter->mt);
     else if (index == 1)
         CopyMediaType(mt, &default_mt);
     return S_OK;
