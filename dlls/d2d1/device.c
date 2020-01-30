@@ -942,6 +942,7 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
     if (geometry->fill.bezier_vertex_count)
     {
         buffer_desc.ByteWidth = geometry->fill.bezier_vertex_count * sizeof(*geometry->fill.bezier_vertices);
+        buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
         buffer_data.pSysMem = geometry->fill.bezier_vertices;
 
         if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &vb)))

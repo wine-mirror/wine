@@ -1548,6 +1548,9 @@ static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *ge
     {
         figure = &geometry->u.path.figures[i];
 
+        if (figure->flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
+
         /* Degenerate figure. */
         if (figure->vertex_count < 2)
             continue;
@@ -2011,6 +2014,8 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
 
     for (i = 0, vertex_count = 0; i < geometry->u.path.figure_count; ++i)
     {
+        if (geometry->u.path.figures[i].flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
         vertex_count += geometry->u.path.figures[i].vertex_count;
     }
 
@@ -2025,6 +2030,8 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
 
     for (i = 0, j = 0; i < geometry->u.path.figure_count; ++i)
     {
+        if (geometry->u.path.figures[i].flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
         memcpy(&vertices[j], geometry->u.path.figures[i].vertices,
                 geometry->u.path.figures[i].vertex_count * sizeof(*vertices));
         j += geometry->u.path.figures[i].vertex_count;
@@ -2455,9 +2462,6 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
         return;
     }
 
-    if (figure_begin != D2D1_FIGURE_BEGIN_FILLED)
-        FIXME("Ignoring figure_begin %#x.\n", figure_begin);
-
     if (!d2d_path_geometry_add_figure(geometry))
     {
         ERR("Failed to add figure.\n");
@@ -2620,7 +2624,7 @@ static BOOL d2d_geometry_get_bezier_segment_idx(struct d2d_geometry *geometry, s
     {
         struct d2d_figure *figure = &geometry->u.path.figures[idx->figure_idx];
 
-        if (!figure->bezier_control_count)
+        if (!figure->bezier_control_count || figure->flags & D2D_FIGURE_FLAG_HOLLOW)
             continue;
 
         for (; idx->vertex_idx < figure->vertex_count; ++idx->vertex_idx)
@@ -2816,6 +2820,8 @@ static HRESULT d2d_geometry_resolve_beziers(struct d2d_geometry *geometry)
 
     for (i = 0; i < geometry->u.path.figure_count; ++i)
     {
+        if (geometry->u.path.figures[i].flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
         geometry->fill.bezier_vertex_count += 3 * geometry->u.path.figures[i].bezier_control_count;
     }
 

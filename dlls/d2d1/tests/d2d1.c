@@ -7480,13 +7480,13 @@ static void test_fill_geometry(void)
     ID2D1TransformedGeometry_Release(transformed_geometry[0]);
 
     match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     match = compare_figure(surface, 160,   0, 320, 160, 0xff652e89, 0, "gJAD");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     match = compare_figure(surface,   0, 160, 160, 320, 0xff652e89, 0, "gJAD");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     match = compare_figure(surface, 160, 160, 320, 320, 0xff652e89, 0, "gKAG");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
     ID2D1RenderTarget_Release(rt);
