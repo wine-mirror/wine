@@ -15,7 +15,9 @@ C_SRCS = \
 LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
-wrc_EXTRADEFS = -DINCLUDEDIR="\"${includedir}\""
+wrc_EXTRADEFS = \
+	-DINCLUDEDIR="\"${includedir}\"" \
+	-DBIN_TO_INCLUDEDIR=\"`$(MAKEDEP) -R ${bindir} ${includedir}`\"
 
 EXTRALIBS = $(GETTEXTPO_LIBS) -lwpp
 
