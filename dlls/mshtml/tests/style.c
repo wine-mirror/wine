@@ -59,13 +59,6 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     return lstrcmpA(stra, buf);
 }
 
-static BOOL wstr_contains(const WCHAR *strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return strstr(buf, stra) != NULL;
-}
-
 #define test_var_bstr(a,b) _test_var_bstr(__LINE__,a,b)
 static void _test_var_bstr(unsigned line, const VARIANT *v, const char *expect)
 {
@@ -753,7 +746,7 @@ static void test_style6(IHTMLStyle6 *style)
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle6_get_outline(style, &str);
     ok(hres == S_OK, "get_outline failed: %08x\n", hres);
-    ok(wstr_contains(str, "1px"), "outline = %s\n", wine_dbgstr_w(str));
+    ok(wcsstr(str, L"1px") != NULL, "outline = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     str = (void*)0xdeadbeef;
