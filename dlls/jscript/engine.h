@@ -221,6 +221,15 @@ static inline scope_chain_t *scope_addref(scope_chain_t *scope)
     return scope;
 }
 
+struct _jsexcept_t {
+    jsval_t value;
+    jsexcept_t *prev;
+};
+
+void enter_script(script_ctx_t*,jsexcept_t*) DECLSPEC_HIDDEN;
+HRESULT leave_script(script_ctx_t*,HRESULT) DECLSPEC_HIDDEN;
+void reset_ei(jsexcept_t*) DECLSPEC_HIDDEN;
+
 typedef struct _except_frame_t except_frame_t;
 struct _parser_ctx_t;
 

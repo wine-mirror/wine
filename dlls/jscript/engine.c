@@ -418,13 +418,6 @@ static void scope_pop(scope_chain_t **scope)
     scope_release(tmp);
 }
 
-void clear_ei(script_ctx_t *ctx)
-{
-    memset(&ctx->ei.ei, 0, sizeof(ctx->ei.ei));
-    jsval_release(ctx->ei.val);
-    ctx->ei.val = jsval_undefined();
-}
-
 void scope_release(scope_chain_t *scope)
 {
     if(--scope->ref)
@@ -867,8 +860,8 @@ static HRESULT interp_throw(script_ctx_t *ctx)
 {
     TRACE("\n");
 
-    jsval_release(ctx->ei.val);
-    ctx->ei.val = stack_pop(ctx);
+    jsval_release(ctx->ei->value);
+    ctx->ei->value = stack_pop(ctx);
     return DISP_E_EXCEPTION;
 }
 
@@ -964,7 +957,7 @@ static HRESULT interp_end_finally(script_ctx_t *ctx)
     if(!get_bool(v)) {
         TRACE("passing exception\n");
 
-        ctx->ei.val = stack_pop(ctx);
+        ctx->ei->value = stack_pop(ctx);
         return DISP_E_EXCEPTION;
     }
 
@@ -2731,9 +2724,9 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
 
         static const WCHAR messageW[] = {'m','e','s','s','a','g','e',0};
 
-        WARN("Exception %08x %s", exception_hres, debugstr_jsval(ctx->ei.val));
-        if(jsval_type(ctx->ei.val) == JSV_OBJECT) {
-            error_obj = to_jsdisp(get_object(ctx->ei.val));
+        WARN("Exception %08x %s", exception_hres, debugstr_jsval(ctx->ei->value));
+        if(jsval_type(ctx->ei->value) == JSV_OBJECT) {
+            error_obj = to_jsdisp(get_object(ctx->ei->value));
             if(error_obj) {
                 hres = jsdisp_propget_name(error_obj, messageW, &msg);
                 if(SUCCEEDED(hres)) {
@@ -2773,9 +2766,8 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     frame->ip = catch_off ? catch_off : except_frame->finally_off;
     if(catch_off) assert(frame->bytecode->instrs[frame->ip].op == OP_enter_catch);
 
-    except_val = ctx->ei.val;
-    ctx->ei.val = jsval_undefined();
-    clear_ei(ctx);
+    except_val = ctx->ei->value;
+    ctx->ei->value = jsval_undefined();
 
     /* keep current except_frame if we're entering catch block with finally block associated */
     if(catch_off && except_frame->finally_off) {

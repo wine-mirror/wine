@@ -286,10 +286,8 @@ static INT index_from_val(script_ctx_t *ctx, jsval_t v)
     HRESULT hres;
 
     hres = to_number(ctx, v, &n);
-    if(FAILED(hres)) {
-        clear_ei(ctx); /* FIXME: Move ignoring exceptions to to_primitive */
+    if(FAILED(hres))
         return 0;
-    }
 
     n = floor(n);
     return is_int32(n) ? n : 0;

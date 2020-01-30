@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include "jscript.h"
+#include "engine.h"
 
 #include "wine/debug.h"
 
@@ -403,8 +404,8 @@ static HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str, j
     if(FAILED(hres))
         return hres;
 
-    jsval_release(ctx->ei.val);
-    ctx->ei.val = jsval_obj(err);
+    jsval_release(ctx->ei->value);
+    ctx->ei->value = jsval_obj(err);
     return error;
 }
 

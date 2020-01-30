@@ -48,6 +48,7 @@
 
 typedef struct _jsval_t jsval_t;
 typedef struct _jsstr_t jsstr_t;
+typedef struct _jsexcept_t jsexcept_t;
 typedef struct _script_ctx_t script_ctx_t;
 typedef struct _dispex_prop_t dispex_prop_t;
 typedef struct _property_desc_t property_desc_t;
@@ -399,11 +400,6 @@ struct _property_desc_t {
 };
 
 typedef struct {
-    EXCEPINFO ei;
-    jsval_t val;
-} jsexcept_t;
-
-typedef struct {
     unsigned index;
     unsigned length;
 } match_result_t;
@@ -424,7 +420,7 @@ struct _script_ctx_t {
     LCID lcid;
     cc_ctx_t *cc;
     JSCaller *jscaller;
-    jsexcept_t ei;
+    jsexcept_t *ei;
 
     heap_pool_t tmp_heap;
 
@@ -462,7 +458,6 @@ struct _script_ctx_t {
 };
 
 void script_release(script_ctx_t*) DECLSPEC_HIDDEN;
-void clear_ei(script_ctx_t*) DECLSPEC_HIDDEN;
 
 static inline void script_addref(script_ctx_t *ctx)
 {

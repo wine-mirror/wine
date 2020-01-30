@@ -1512,6 +1512,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
     dispex_prop_t *prop;
+    jsexcept_t ei;
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
@@ -1525,7 +1526,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return DISP_E_MEMBERNOTFOUND;
     }
 
-    clear_ei(This->ctx);
+    enter_script(This->ctx, &ei);
 
     switch(wFlags) {
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
@@ -1538,7 +1539,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
         hres = convert_params(pdp, buf, &argc, &argv);
         if(FAILED(hres))
-            return hres;
+            break;
 
         hres = invoke_prop_func(This, get_this(pdp), prop, wFlags, argc, argv, pvarRes ? &r : NULL, pspCaller);
         if(argv != buf)
@@ -1570,12 +1571,13 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
         if(i == pdp->cNamedArgs) {
             TRACE("no value to set\n");
-            return DISP_E_PARAMNOTOPTIONAL;
+            hres = DISP_E_PARAMNOTOPTIONAL;
+            break;
         }
 
         hres = variant_to_jsval(pdp->rgvarg+i, &val);
         if(FAILED(hres))
-            return hres;
+            break;
 
         hres = prop_put(This, prop, val);
         jsval_release(val);
@@ -1583,12 +1585,11 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     }
     default:
         FIXME("Unimplemented flags %x\n", wFlags);
-        return E_INVALIDARG;
+        hres = E_INVALIDARG;
+        break;
     }
 
-    if(pei)
-        *pei = This->ctx->ei.ei;
-    return hres;
+    return leave_script(This->ctx, hres);
 }
 
 static HRESULT delete_prop(dispex_prop_t *prop, BOOL *ret)

@@ -873,13 +873,15 @@ HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
 
 HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTYPE vt)
 {
+    jsexcept_t ei;
     jsval_t val;
     HRESULT hres;
 
-    clear_ei(ctx);
     hres = variant_to_jsval(src, &val);
     if(FAILED(hres))
         return hres;
+
+    enter_script(ctx, &ei);
 
     switch(vt) {
     case VT_I2:
@@ -948,6 +950,7 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
     }
 
     jsval_release(val);
+    leave_script(ctx, hres);
     if(FAILED(hres))
         return hres;
 
