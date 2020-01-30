@@ -646,9 +646,7 @@ HRESULT WINAPI AntiMoniker_CreateInstance(IClassFactory *iface,
         return hr;
 
     hr = IMoniker_QueryInterface(pMoniker, riid, ppv);
-
-    if (FAILED(hr))
-        IMoniker_Release(pMoniker);
+    IMoniker_Release(pMoniker);
 
     return hr;
 }
