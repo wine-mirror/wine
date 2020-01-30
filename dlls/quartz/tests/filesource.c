@@ -916,12 +916,23 @@ static void test_request(IAsyncReader *reader, IMemAllocator *allocator)
     IMediaSample_Release(sample2);
 }
 
+static DWORD CALLBACK wait_thread(void *arg)
+{
+    IAsyncReader *reader = arg;
+    IMediaSample *sample;
+    DWORD_PTR cookie;
+    HRESULT hr = IAsyncReader_WaitForNext(reader, 2000, &sample, &cookie);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    return 0;
+}
+
 static void test_flush(IAsyncReader *reader, IMemAllocator *allocator)
 {
     REFERENCE_TIME start_time, end_time;
     IMediaSample *sample, *ret_sample;
     BYTE buffer[20], *data;
     DWORD_PTR cookie;
+    HANDLE thread;
     HRESULT hr;
     int i;
 
@@ -973,12 +984,23 @@ static void test_flush(IAsyncReader *reader, IMemAllocator *allocator)
     for (i = 0; i < 512; i++)
         ok(data[i] == i % 111, "Got wrong byte %02x at %u.\n", data[i], i);
 
+    thread = CreateThread(NULL, 0, wait_thread, reader, 0, NULL);
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Expected timeout.\n");
+
+    hr = IAsyncReader_BeginFlush(reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!WaitForSingleObject(thread, 1000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    hr = IAsyncReader_EndFlush(reader);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     IMediaSample_Release(sample);
 }
 
 static void test_async_reader(void)
 {
-    ALLOCATOR_PROPERTIES req_props = {2, 1024, 512, 0}, ret_props;
+    ALLOCATOR_PROPERTIES req_props = {100, 1024, 512, 0}, ret_props;
     IBaseFilter *filter = create_file_source();
     IFileSourceFilter *filesource;
     LONGLONG length, available;
@@ -1048,7 +1070,7 @@ static void test_async_reader(void)
     ret_props = req_props;
     hr = IAsyncReader_RequestAllocator(reader, NULL, &ret_props, &allocator);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(ret_props.cBuffers == 2, "Got %d buffers.\n", ret_props.cBuffers);
+    ok(ret_props.cBuffers == 100, "Got %d buffers.\n", ret_props.cBuffers);
     ok(ret_props.cbBuffer == 1024, "Got size %d.\n", ret_props.cbBuffer);
     ok(ret_props.cbAlign == 512, "Got alignment %d.\n", ret_props.cbAlign);
     ok(ret_props.cbPrefix == 0, "Got prefix %d.\n", ret_props.cbPrefix);
