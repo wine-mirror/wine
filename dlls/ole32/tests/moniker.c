@@ -1958,16 +1958,12 @@ todo_wine
     anti = create_antimoniker(2);
     hr = IMoniker_ComposeWith(moniker1, anti, TRUE, &moniker2);
     ok(hr == S_OK, "Failed to compose, hr %#x.\n", hr);
-todo_wine
-    ok(!!moniker2, "Unexpected pointer.\n");
-if (moniker2)
-{
     TEST_MONIKER_TYPE(moniker2, MKSYS_ANTIMONIKER);
     hr = IMoniker_Hash(moniker2, &hash);
     ok(hr == S_OK, "Failed to get hash, hr %#x.\n", hr);
     ok(hash == 0x80000001, "Unexpected hash.\n");
     IMoniker_Release(moniker2);
-}
+
     IMoniker_Release(anti);
 
     IMoniker_Release(moniker1);

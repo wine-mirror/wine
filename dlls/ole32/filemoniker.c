@@ -666,7 +666,7 @@ FileMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
     static const WCHAR bkSlash[]={'\\',0};
     IBindCtx *bind=0;
     int i=0,j=0,lastIdx1=0,lastIdx2=0;
-    DWORD mkSys;
+    DWORD mkSys, order;
 
     TRACE("(%p,%p,%d,%p)\n",iface,pmkRight,fOnlyIfNotGeneric,ppmkComposite);
 
@@ -735,10 +735,9 @@ FileMonikerImpl_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
 
         return res;
     }
-    else if(mkSys==MKSYS_ANTIMONIKER){
-
-        *ppmkComposite=NULL;
-        return S_OK;
+    else if (is_anti_moniker(pmkRight, &order))
+    {
+        return order > 1 ? create_anti_moniker(order - 1, ppmkComposite) : S_OK;
     }
     else if (fOnlyIfNotGeneric){
 
