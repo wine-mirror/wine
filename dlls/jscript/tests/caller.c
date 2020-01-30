@@ -105,9 +105,7 @@ static void _call_change_type(unsigned line, IVariantChangeType *change_type, VA
     ok_(__FILE__,line)(hres == S_OK, "ChangeType(%d) failed: %08x\n", vt, hres);
     ok_(__FILE__,line)(V_VT(dst) == vt, "V_VT(dst) = %d\n", V_VT(dst));
     if(V_VT(src) == VT_DISPATCH && vt != VT_BOOL) {
-        todo_wine
         CHECK_CALLED(OnEnterScript);
-        todo_wine
         CHECK_CALLED(OnLeaveScript);
     }
 }

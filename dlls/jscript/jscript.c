@@ -129,20 +129,10 @@ HRESULT leave_script(script_ctx_t *ctx, HRESULT result)
         result = ei->error;
     if(FAILED(result))
         WARN("%08x\n", result);
+    if(ei->enter_notified && ctx->site)
+        IActiveScriptSite_OnLeaveScript(ctx->site);
     reset_ei(ei);
     return result;
-}
-
-static HRESULT exec_global_code(JScript *This, bytecode_t *code)
-{
-    HRESULT hres;
-
-    IActiveScriptSite_OnEnterScript(This->site);
-
-    hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, NULL);
-
-    IActiveScriptSite_OnLeaveScript(This->site);
-    return hres;
 }
 
 static void clear_script_queue(JScript *This)
@@ -176,7 +166,7 @@ static void exec_queued_code(JScript *This)
 
     LIST_FOR_EACH_ENTRY(iter, &This->queued_code, bytecode_t, entry) {
         enter_script(This->ctx, &ei);
-        hres = exec_global_code(This, iter);
+        hres = exec_source(This->ctx, EXEC_GLOBAL, iter, &iter->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, NULL);
         leave_script(This->ctx, hres);
     }
 
@@ -818,8 +808,6 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(dwFlags & SCRIPTTEXT_ISEXPRESSION) {
         jsval_t r;
 
-        IActiveScriptSite_OnEnterScript(This->site);
-
         hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, &r);
         if(SUCCEEDED(hres)) {
             if(pvarResult)
@@ -827,7 +815,6 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
             jsval_release(r);
         }
 
-        IActiveScriptSite_OnLeaveScript(This->site);
         return leave_script(This->ctx, hres);
     }
 
@@ -840,8 +827,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(!pvarResult && !is_started(This->ctx)) {
         list_add_tail(&This->queued_code, &code->entry);
     }else {
-        hres = exec_global_code(This, code);
-
+        hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, NULL);
         if(code->is_persistent)
             list_add_tail(&This->persistent_code, &code->entry);
         else

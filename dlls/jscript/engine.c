@@ -2977,6 +2977,11 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     unsigned i;
     HRESULT hres;
 
+    if(!ctx->ei->enter_notified) {
+        ctx->ei->enter_notified = TRUE;
+        IActiveScriptSite_OnEnterScript(ctx->site);
+    }
+
     for(i = 0; i < function->func_cnt; i++) {
         jsdisp_t *func_obj;
 
