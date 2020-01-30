@@ -2886,6 +2886,9 @@ static void test_pointer_moniker(void)
     hr = CreatePointerMoniker((IUnknown *)&Test_ClassFactory, &moniker);
     ok_ole_success(hr, CreatePointerMoniker);
 
+    hr = IMoniker_QueryInterface(moniker, &IID_IMoniker, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     hr = IMoniker_QueryInterface(moniker, &CLSID_PointerMoniker, (void **)&unknown);
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

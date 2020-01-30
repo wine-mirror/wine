@@ -58,20 +58,18 @@ static PointerMonikerImpl *impl_from_IMarshal(IMarshal *iface)
 }
 
 static PointerMonikerImpl *unsafe_impl_from_IMoniker(IMoniker *iface);
-static HRESULT WINAPI
-PointerMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
+
+static HRESULT WINAPI PointerMonikerImpl_QueryInterface(IMoniker *iface, REFIID riid, void **ppvObject)
 {
-    PointerMonikerImpl *This = impl_from_IMoniker(iface);
+    PointerMonikerImpl *moniker = impl_from_IMoniker(iface);
 
-    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), ppvObject);
 
-    if ( (This==0) || (ppvObject==0) )
-	return E_INVALIDARG;
+    if (!ppvObject)
+        return E_INVALIDARG;
 
-    /* Initialize the return parameter */
     *ppvObject = 0;
 
-    /* Compare the riid with the interface IDs implemented by this object.*/
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IPersist, riid) ||
         IsEqualIID(&IID_IPersistStream, riid) ||
@@ -80,13 +78,11 @@ PointerMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
         *ppvObject = iface;
     }
     else if (IsEqualIID(&IID_IMarshal, riid))
-        *ppvObject = &This->IMarshal_iface;
+        *ppvObject = &moniker->IMarshal_iface;
 
-    /* Check that we obtained an interface.*/
-    if ((*ppvObject)==0)
+    if (!*ppvObject)
         return E_NOINTERFACE;
 
-    /* always increase the reference count by one when it is successful */
     IMoniker_AddRef(iface);
 
     return S_OK;
