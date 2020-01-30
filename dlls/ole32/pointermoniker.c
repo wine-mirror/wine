@@ -32,6 +32,7 @@
 #include "objbase.h"
 #include "oleidl.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "moniker.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -42,7 +43,7 @@ typedef struct PointerMonikerImpl
     IMoniker IMoniker_iface;
     IMarshal IMarshal_iface;
 
-    LONG ref; /* reference counter for this object */
+    LONG refcount;
 
     IUnknown *pObject;
 } PointerMonikerImpl;
@@ -88,40 +89,30 @@ static HRESULT WINAPI PointerMonikerImpl_QueryInterface(IMoniker *iface, REFIID 
     return S_OK;
 }
 
-/******************************************************************************
- *        PointerMoniker_AddRef
- ******************************************************************************/
-static ULONG WINAPI
-PointerMonikerImpl_AddRef(IMoniker* iface)
+static ULONG WINAPI PointerMonikerImpl_AddRef(IMoniker *iface)
 {
-    PointerMonikerImpl *This = impl_from_IMoniker(iface);
+    PointerMonikerImpl *moniker = impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedIncrement(&moniker->refcount);
 
-    TRACE("(%p)\n",This);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    return InterlockedIncrement(&This->ref);
+    return refcount;
 }
 
-/******************************************************************************
- *        PointerMoniker_Release
- ******************************************************************************/
-static ULONG WINAPI
-PointerMonikerImpl_Release(IMoniker* iface)
+static ULONG WINAPI PointerMonikerImpl_Release(IMoniker *iface)
 {
-    PointerMonikerImpl *This = impl_from_IMoniker(iface);
-    ULONG ref;
+    PointerMonikerImpl *moniker = impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedDecrement(&moniker->refcount);
 
-    TRACE("(%p)\n",This);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    ref = InterlockedDecrement(&This->ref);
-
-    /* destroy the object if there are no more references on it */
-    if (ref == 0)
+    if (!refcount)
     {
-        if (This->pObject) IUnknown_Release(This->pObject);
-        HeapFree(GetProcessHeap(),0,This);
+        if (moniker->pObject) IUnknown_Release(moniker->pObject);
+        heap_free(moniker);
     }
 
-    return ref;
+    return refcount;
 }
 
 /******************************************************************************
@@ -659,52 +650,34 @@ static const IMarshalVtbl pointer_moniker_marshal_vtbl =
     pointer_moniker_marshal_DisconnectObject
 };
 
-/******************************************************************************
- *         PointerMoniker_Construct (local function)
- *******************************************************************************/
-static void PointerMonikerImpl_Construct(PointerMonikerImpl* This, IUnknown *punk)
-{
-    TRACE("(%p)\n",This);
-
-    This->IMoniker_iface.lpVtbl = &VT_PointerMonikerImpl;
-    This->IMarshal_iface.lpVtbl = &pointer_moniker_marshal_vtbl;
-    This->ref = 1;
-    if (punk)
-        IUnknown_AddRef(punk);
-    This->pObject      = punk;
-}
-
 /***********************************************************************
  *           CreatePointerMoniker (OLE32.@)
- *
- * Creates a moniker which represents a pointer.
- *
- * PARAMS
- *  punk [I] Pointer to the object to represent.
- *  ppmk [O] Address that receives the pointer to the created moniker.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: Any HRESULT code.
  */
-HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER *ppmk)
+HRESULT WINAPI CreatePointerMoniker(IUnknown *object, IMoniker **ret)
 {
-    PointerMonikerImpl *This;
+    PointerMonikerImpl *moniker;
 
-    TRACE("(%p, %p)\n", punk, ppmk);
+    TRACE("(%p, %p)\n", object, ret);
 
-    if (!ppmk)
+    if (!ret)
         return E_INVALIDARG;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
-    if (!This)
+    moniker = heap_alloc(sizeof(*moniker));
+    if (!moniker)
     {
-        *ppmk = NULL;
+        *ret = NULL;
         return E_OUTOFMEMORY;
     }
 
-    PointerMonikerImpl_Construct(This, punk);
-    *ppmk = &This->IMoniker_iface;
+    moniker->IMoniker_iface.lpVtbl = &VT_PointerMonikerImpl;
+    moniker->IMarshal_iface.lpVtbl = &pointer_moniker_marshal_vtbl;
+    moniker->refcount = 1;
+    moniker->pObject = object;
+    if (moniker->pObject)
+        IUnknown_AddRef(moniker->pObject);
+
+    *ret = &moniker->IMoniker_iface;
+
     return S_OK;
 }
 
