@@ -1186,6 +1186,37 @@ case 3:
     expect(ret, "try");
 })();
 
+(function() {
+    var e;
+    var E_FAIL = -2147467259;
+    var JS_E_SUBSCRIPT_OUT_OF_RANGE = -2146828279;
+
+    try {
+        throwInt(E_FAIL);
+    }catch(ex) {
+        e = ex;
+    }
+    ok(e.name === "Error", "e.name = " + e.name);
+    ok(e.message === "", "e.message = " + e.message);
+    ok(e.number === E_FAIL, "e.number = " + e.number);
+
+    try {
+        throwInt(JS_E_SUBSCRIPT_OUT_OF_RANGE);
+    }catch(ex) {
+        e = ex;
+    }
+    ok(e.name === "RangeError", "e.name = " + e.name);
+    ok(e.number === JS_E_SUBSCRIPT_OUT_OF_RANGE, "e.number = " + e.number);
+
+    try {
+        throwEI(JS_E_SUBSCRIPT_OUT_OF_RANGE);
+    }catch(ex) {
+        e = ex;
+    }
+    ok(e.name === "RangeError", "e.name = " + e.name);
+    ok(e.number === JS_E_SUBSCRIPT_OUT_OF_RANGE, "e.number = " + e.number);
+})();
+
 tmp = eval("1");
 ok(tmp === 1, "eval(\"1\") !== 1");
 eval("{ ok(tmp === 1, 'eval: tmp !== 1'); } tmp = 2;");

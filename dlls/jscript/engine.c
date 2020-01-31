@@ -2753,8 +2753,8 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
         static const WCHAR messageW[] = {'m','e','s','s','a','g','e',0};
 
         WARN("Exception %08x %s", exception_hres, debugstr_jsval(ei->valid_value ? ei->value : jsval_undefined()));
-        if(ei->valid_value && jsval_type(ctx->ei->value) == JSV_OBJECT) {
-            error_obj = to_jsdisp(get_object(ctx->ei->value));
+        if(ei->valid_value && jsval_type(ei->value) == JSV_OBJECT) {
+            error_obj = to_jsdisp(get_object(ei->value));
             if(error_obj) {
                 hres = jsdisp_propget_name(error_obj, messageW, &msg);
                 if(SUCCEEDED(hres)) {
@@ -2768,6 +2768,9 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
         print_backtrace(ctx);
     }
 
+    if(exception_hres != DISP_E_EXCEPTION)
+        ei->error = exception_hres;
+
     for(frame = ctx->call_ctx; !frame->except_frame; frame = ctx->call_ctx) {
         DWORD flags;
 
@@ -2779,7 +2782,7 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
         flags = frame->flags;
         pop_call_frame(ctx);
         if(!(flags & EXEC_RETURN_TO_INTERP))
-            return exception_hres;
+            return DISP_E_EXCEPTION;
     }
 
     except_frame = frame->except_frame;
@@ -2792,13 +2795,16 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
         scope_pop(&frame->scope);
 
     frame->ip = catch_off ? catch_off : except_frame->finally_off;
-    if(catch_off) assert(frame->bytecode->instrs[frame->ip].op == OP_enter_catch);
+    assert(!catch_off || frame->bytecode->instrs[frame->ip].op == OP_enter_catch);
 
     if(ei->valid_value) {
         except_val = ctx->ei->value;
-        ctx->ei->valid_value = FALSE;
+        ei->valid_value = FALSE;
     }else {
-        except_val = jsval_undefined();
+        jsdisp_t *err;
+        if(!(err = create_builtin_error(ctx)))
+            return E_OUTOFMEMORY;
+        except_val = jsval_obj(err);
     }
 
     /* keep current except_frame if we're entering catch block with finally block associated */

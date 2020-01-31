@@ -320,6 +320,7 @@ HRESULT throw_regexp_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
 HRESULT throw_syntax_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
 HRESULT throw_type_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
 HRESULT throw_uri_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+jsdisp_t *create_builtin_error(script_ctx_t *ctx) DECLSPEC_HIDDEN;
 
 HRESULT create_object(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_math(script_ctx_t*,jsdisp_t**) DECLSPEC_HIDDEN;

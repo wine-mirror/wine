@@ -18,6 +18,7 @@
 
 
 #include <math.h>
+#include <assert.h>
 
 #include "jscript.h"
 #include "engine.h"
@@ -443,4 +444,83 @@ HRESULT throw_type_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
 HRESULT throw_uri_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
 {
     return throw_error(ctx, error, str, ctx->uri_error_constr);
+}
+
+jsdisp_t *create_builtin_error(script_ctx_t *ctx)
+{
+    jsdisp_t *constr = ctx->error_constr, *r;
+    jsexcept_t *ei = ctx->ei;
+    HRESULT hres;
+
+    assert(FAILED(ei->error) && ei->error != DISP_E_EXCEPTION);
+
+    if(is_jscript_error(ei->error)) {
+        switch(ei->error) {
+        case JS_E_SYNTAX:
+        case JS_E_MISSING_SEMICOLON:
+        case JS_E_MISSING_LBRACKET:
+        case JS_E_MISSING_RBRACKET:
+        case JS_E_EXPECTED_IDENTIFIER:
+        case JS_E_EXPECTED_ASSIGN:
+        case JS_E_INVALID_CHAR:
+        case JS_E_UNTERMINATED_STRING:
+        case JS_E_MISPLACED_RETURN:
+        case JS_E_INVALID_BREAK:
+        case JS_E_INVALID_CONTINUE:
+        case JS_E_LABEL_REDEFINED:
+        case JS_E_LABEL_NOT_FOUND:
+        case JS_E_EXPECTED_CCEND:
+        case JS_E_DISABLED_CC:
+        case JS_E_EXPECTED_AT:
+            constr = ctx->syntax_error_constr;
+            break;
+
+        case JS_E_TO_PRIMITIVE:
+        case JS_E_INVALIDARG:
+        case JS_E_OBJECT_REQUIRED:
+        case JS_E_INVALID_PROPERTY:
+        case JS_E_INVALID_ACTION:
+        case JS_E_MISSING_ARG:
+        case JS_E_FUNCTION_EXPECTED:
+        case JS_E_DATE_EXPECTED:
+        case JS_E_NUMBER_EXPECTED:
+        case JS_E_OBJECT_EXPECTED:
+        case JS_E_UNDEFINED_VARIABLE:
+        case JS_E_BOOLEAN_EXPECTED:
+        case JS_E_VBARRAY_EXPECTED:
+        case JS_E_INVALID_DELETE:
+        case JS_E_JSCRIPT_EXPECTED:
+        case JS_E_ENUMERATOR_EXPECTED:
+        case JS_E_ARRAY_EXPECTED:
+        case JS_E_NONCONFIGURABLE_REDEFINED:
+        case JS_E_NONWRITABLE_MODIFIED:
+        case JS_E_PROP_DESC_MISMATCH:
+        case JS_E_INVALID_WRITABLE_PROP_DESC:
+            constr = ctx->type_error_constr;
+            break;
+
+        case JS_E_SUBSCRIPT_OUT_OF_RANGE:
+        case JS_E_FRACTION_DIGITS_OUT_OF_RANGE:
+        case JS_E_PRECISION_OUT_OF_RANGE:
+        case JS_E_INVALID_LENGTH:
+            constr = ctx->range_error_constr;
+            break;
+
+        case JS_E_ILLEGAL_ASSIGN:
+            constr = ctx->reference_error_constr;
+            break;
+
+        case JS_E_REGEXP_SYNTAX:
+            constr = ctx->regexp_error_constr;
+            break;
+
+        case JS_E_INVALID_URI_CODING:
+        case JS_E_INVALID_URI_CHAR:
+            constr = ctx->uri_error_constr;
+            break;
+        }
+    }
+
+    hres = create_error(ctx, constr, ei->error, jsstr_empty(), &r);
+    return SUCCEEDED(hres) ? r : NULL;
 }
