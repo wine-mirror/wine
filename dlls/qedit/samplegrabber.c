@@ -80,8 +80,6 @@ static inline SG_Impl *impl_from_IMemInputPin(IMemInputPin *iface)
 static void SampleGrabber_cleanup(SG_Impl *This)
 {
     TRACE("(%p)\n", This);
-    if (This->filter.filterInfo.pGraph)
-        WARN("(%p) still joined to filter graph %p\n", This, This->filter.filterInfo.pGraph);
     if (This->allocator)
         IMemAllocator_Release(This->allocator);
     if (This->grabberIface)

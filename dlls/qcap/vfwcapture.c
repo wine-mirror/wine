@@ -216,9 +216,9 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
     }
 
     hr = qcap_driver_set_format(This->driver_info, pmt);
-    if (SUCCEEDED(hr) && This->filter.filterInfo.pGraph && This->source.pin.peer)
+    if (SUCCEEDED(hr) && This->filter.graph && This->source.pin.peer)
     {
-        hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph, &This->source.pin.IPin_iface);
+        hr = IFilterGraph_Reconnect(This->filter.graph, &This->source.pin.IPin_iface);
         if (SUCCEEDED(hr))
             TRACE("Reconnection completed, with new media format..\n");
     }

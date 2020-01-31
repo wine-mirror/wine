@@ -772,8 +772,7 @@ static HRESULT WINAPI ConfigInterleaving_put_Mode(
 
     if(This->mode != mode) {
         if(This->source.pin.peer) {
-            HRESULT hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph,
-                    &This->source.pin.IPin_iface);
+            HRESULT hr = IFilterGraph_Reconnect(This->filter.graph, &This->source.pin.IPin_iface);
             if(FAILED(hr))
                 return hr;
         }
@@ -1152,7 +1151,7 @@ static HRESULT WINAPI AviMuxOut_AttemptConnection(struct strmbase_source *iface,
         if (!filter->in[i]->pin.pin.peer)
             continue;
 
-        hr = IFilterGraph_Reconnect(filter->filter.filterInfo.pGraph, &filter->in[i]->pin.pin.IPin_iface);
+        hr = IFilterGraph_Reconnect(filter->filter.graph, &filter->in[i]->pin.pin.IPin_iface);
         if (FAILED(hr))
         {
             IPin_Disconnect(&iface->pin.IPin_iface);

@@ -443,35 +443,37 @@ static HRESULT WINAPI filter_FindPin(IBaseFilter *iface, const WCHAR *id, IPin *
     return VFW_E_NOT_FOUND;
 }
 
-static HRESULT WINAPI filter_QueryFilterInfo(IBaseFilter *iface, FILTER_INFO *pInfo)
+static HRESULT WINAPI filter_QueryFilterInfo(IBaseFilter *iface, FILTER_INFO *info)
 {
-    struct strmbase_filter *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%p)\n", This, pInfo);
+    struct strmbase_filter *filter = impl_from_IBaseFilter(iface);
 
-    lstrcpyW(pInfo->achName, This->filterInfo.achName);
-    pInfo->pGraph = This->filterInfo.pGraph;
+    TRACE("filter %p, info %p.\n", filter, info);
 
-    if (pInfo->pGraph)
-        IFilterGraph_AddRef(pInfo->pGraph);
+    lstrcpyW(info->achName, filter->name);
+    info->pGraph = filter->graph;
+
+    if (info->pGraph)
+        IFilterGraph_AddRef(info->pGraph);
 
     return S_OK;
 }
 
-static HRESULT WINAPI filter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *pGraph, const WCHAR *pName)
+static HRESULT WINAPI filter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *graph, const WCHAR *name)
 {
-    struct strmbase_filter *This = impl_from_IBaseFilter(iface);
+    struct strmbase_filter *filter = impl_from_IBaseFilter(iface);
 
-    TRACE("(%p)->(%p, %s)\n", This, pGraph, debugstr_w(pName));
+    TRACE("filter %p, graph %p, name %s.\n", filter, graph, debugstr_w(name));
 
-    EnterCriticalSection(&This->csFilter);
-    {
-        if (pName)
-            lstrcpynW(This->filterInfo.achName, pName, MAX_FILTER_NAME);
-        else
-            *This->filterInfo.achName = '\0';
-        This->filterInfo.pGraph = pGraph; /* NOTE: do NOT increase ref. count */
-    }
-    LeaveCriticalSection(&This->csFilter);
+    EnterCriticalSection(&filter->csFilter);
+
+    if (name)
+        lstrcpynW(filter->name, name, ARRAY_SIZE(filter->name));
+    else
+        filter->name[0] = 0;
+    /* The graph references us, so we cannot also reference the graph. */
+    filter->graph = graph;
+
+    LeaveCriticalSection(&filter->csFilter);
 
     return S_OK;
 }

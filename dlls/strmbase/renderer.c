@@ -199,7 +199,7 @@ static void sink_disconnect(struct strmbase_sink *iface)
 static HRESULT sink_eos(struct strmbase_sink *iface)
 {
     struct strmbase_renderer *filter = impl_from_IPin(&iface->pin.IPin_iface);
-    IFilterGraph *graph = filter->filter.filterInfo.pGraph;
+    IFilterGraph *graph = filter->filter.graph;
     IMediaEventSink *event_sink;
     HRESULT hr = S_OK;
 

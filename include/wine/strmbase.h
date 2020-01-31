@@ -130,7 +130,8 @@ struct strmbase_filter
 
     FILTER_STATE state;
     IReferenceClock * pClock;
-    FILTER_INFO filterInfo;
+    WCHAR name[128];
+    IFilterGraph *graph;
     CLSID clsid;
     LONG pin_version;
 
