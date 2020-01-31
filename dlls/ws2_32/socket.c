@@ -9044,6 +9044,17 @@ INT WINAPI WSCWriteProviderOrder( LPDWORD entry, DWORD number )
 }
 
 /***********************************************************************
+ *              WSCSetApplicationCategory                    (WS2_32.@)
+ */
+INT WINAPI WSCSetApplicationCategory( LPCWSTR path, DWORD len, LPCWSTR extra, DWORD extralen,
+                                      DWORD lspcat, DWORD *prev_lspcat, LPINT err )
+{
+    FIXME("(%s %d %s %d %d %p) Stub!\n", debugstr_w(path), len, debugstr_w(extra),
+           extralen, lspcat, prev_lspcat);
+    return 0;
+}
+
+/***********************************************************************
  *              WSANSPIoctl                       (WS2_32.91)
  */
 INT WINAPI WSANSPIoctl( HANDLE hLookup, DWORD dwControlCode, LPVOID lpvInBuffer,
