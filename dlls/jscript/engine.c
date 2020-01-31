@@ -898,7 +898,7 @@ static HRESULT interp_throw_ref(script_ctx_t *ctx)
 
     TRACE("%08x\n", arg);
 
-    return throw_reference_error(ctx, arg, NULL);
+    return arg;
 }
 
 static HRESULT interp_throw_type(script_ctx_t *ctx)
@@ -1161,7 +1161,7 @@ static HRESULT interp_refval(script_ctx_t *ctx)
     TRACE("\n");
 
     if(!stack_topn_exprval(ctx, 0, &ref))
-        return throw_reference_error(ctx, JS_E_ILLEGAL_ASSIGN, NULL);
+        return JS_E_ILLEGAL_ASSIGN;
 
     hres = exprval_propget(ctx, &ref, &v);
     if(FAILED(hres))
@@ -2527,7 +2527,7 @@ static HRESULT interp_assign(script_ctx_t *ctx)
 
     if(!stack_pop_exprval(ctx, &ref)) {
         jsval_release(v);
-        return throw_reference_error(ctx, JS_E_ILLEGAL_ASSIGN, NULL);
+        return JS_E_ILLEGAL_ASSIGN;
     }
 
     hres = exprval_propput(ctx, &ref, v);
@@ -2551,7 +2551,7 @@ static HRESULT interp_assign_call(script_ctx_t *ctx)
     TRACE("%u\n", argc);
 
     if(!stack_topn_exprval(ctx, argc+1, &ref))
-        return throw_reference_error(ctx, JS_E_ILLEGAL_ASSIGN, NULL);
+        return JS_E_ILLEGAL_ASSIGN;
 
     hres = exprval_call(ctx, &ref, DISPATCH_PROPERTYPUT, argc+1, stack_args(ctx, argc+1), NULL);
     if(FAILED(hres))
