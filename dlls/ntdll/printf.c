@@ -561,6 +561,12 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
                 }
                 else if( *(p+1) == '3' && *(p+2) == '2' )
                     p += 3;
+                else if( p[1] && strchr( "diouxX", p[1] ) )
+                {
+                    if( sizeof(void *) == 8 )
+                        flags.IntegerDouble = *p;
+                    p++;
+                }
                 else if( isDigit(*(p+1)) || *(p+1) == 0 )
                     break;
                 else

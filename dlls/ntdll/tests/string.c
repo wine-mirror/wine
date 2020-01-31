@@ -1362,7 +1362,7 @@ static void test__snprintf(void)
     {
         res = p__snprintf(buffer, sizeof(buffer), "%Ix %d", (ULONG_PTR)0x1234567890, 1);
         ok(res == strlen(buffer), "wrong size %d\n", res);
-        todo_wine ok(!strcmp(buffer, "1234567890 1"), "got %s\n", debugstr_a(buffer));
+        ok(!strcmp(buffer, "1234567890 1"), "got %s\n", debugstr_a(buffer));
     }
     else
     {
