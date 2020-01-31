@@ -2454,13 +2454,9 @@ static void test_anti_moniker(void)
     ok_ole_success(hr, CreateAntiMoniker);
 
     hr = IMoniker_QueryInterface(moniker, &CLSID_AntiMoniker, (void **)&unknown);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
-        IUnknown_Release(unknown);
-    }
+    ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
+    IUnknown_Release(unknown);
 
     test_moniker("anti moniker", moniker, 
         expected_anti_moniker_marshal_data, sizeof(expected_anti_moniker_marshal_data),
