@@ -1139,7 +1139,7 @@ BOOL WINAPI IsOS(DWORD);
 typedef struct
 {
     const IID *piid;
-    int        dwOffset;
+    DWORD dwOffset;
 } QITAB, *LPQITAB;
 
 HRESULT WINAPI QISearch(void* base, const QITAB *pqit, REFIID riid, void **ppv);
