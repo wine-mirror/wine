@@ -1349,7 +1349,28 @@ static void test__snprintf(void)
     memset(buffer, 0x7c, sizeof(buffer));
     res = p__snprintf(buffer, 3, "test");
     ok(res == -1, "res = %d\n", res);
- }
+
+    res = p__snprintf(buffer, sizeof(buffer), "%I64x %d", (ULONGLONG)0x1234567890, 1);
+    ok(res == strlen(buffer), "wrong size %d\n", res);
+    ok(!strcmp(buffer, "1234567890 1"), "got %s\n", debugstr_a(buffer));
+
+    res = p__snprintf(buffer, sizeof(buffer), "%I32x %d", 0x123456, 1);
+    ok(res == strlen(buffer), "wrong size %d\n", res);
+    ok(!strcmp(buffer, "123456 1"), "got %s\n", debugstr_a(buffer));
+
+    if (sizeof(void *) == 8)
+    {
+        res = p__snprintf(buffer, sizeof(buffer), "%Ix %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        todo_wine ok(!strcmp(buffer, "1234567890 1"), "got %s\n", debugstr_a(buffer));
+    }
+    else
+    {
+        res = p__snprintf(buffer, sizeof(buffer), "%Ix %d", (ULONG_PTR)0x123456, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "123456 1"), "got %s\n", debugstr_a(buffer));
+    }
+}
 
 static void test__snprintf_s(void)
 {
