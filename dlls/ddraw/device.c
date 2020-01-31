@@ -3578,7 +3578,6 @@ static void setup_lighting(const struct d3d_device *device, DWORD fvf, DWORD fla
         enable = FALSE;
 
     wined3d_stateblock_set_render_state(device->state, WINED3D_RS_LIGHTING, enable);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_LIGHTING, enable);
 }
 
 
@@ -7060,22 +7059,13 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
 
     wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_ZENABLE,
             d3d_device_update_depth_stencil(device));
-    wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_ZENABLE,
-            d3d_device_update_depth_stencil(device));
     if (version == 1) /* Color keying is initially enabled for version 1 devices. */
-    {
         wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_COLORKEYENABLE, TRUE);
-        wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_COLORKEYENABLE, TRUE);
-    }
     else if (version == 2)
-    {
         wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_SPECULARENABLE, TRUE);
-        wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_SPECULARENABLE, TRUE);
-    }
     if (version < 7)
     {
         wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_NORMALIZENORMALS, TRUE);
-        wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_NORMALIZENORMALS, TRUE);
         IDirect3DDevice3_SetRenderState(&device->IDirect3DDevice3_iface,
                 D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
     }

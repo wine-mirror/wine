@@ -6089,8 +6089,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
             wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_ZENABLE,
                     !!swapchain_desc.enable_auto_depth_stencil);
-            wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_ZENABLE,
-                    !!swapchain_desc.enable_auto_depth_stencil);
         }
     }
 
