@@ -2501,14 +2501,6 @@ static HRESULT WINAPI d3d_device2_GetRenderState(IDirect3DDevice2 *iface,
     return IDirect3DDevice3_GetRenderState(&device->IDirect3DDevice3_iface, state, value);
 }
 
-static void d3d_device_set_render_state(struct d3d_device *device,
-        enum wined3d_render_state state, DWORD value)
-{
-    wined3d_stateblock_set_render_state(device->update_state, state, value);
-    if (!device->recording)
-        wined3d_device_set_render_state(device->wined3d_device, state, value);
-}
-
 static void d3d_device_set_sampler_state(struct d3d_device *device,
         UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
 {
@@ -2649,7 +2641,7 @@ static HRESULT d3d_device7_SetRenderState(IDirect3DDevice7 *iface,
             break;
 
         case D3DRENDERSTATE_ZBIAS:
-            d3d_device_set_render_state(device, WINED3D_RS_DEPTHBIAS, value);
+            wined3d_stateblock_set_render_state(device->update_state, WINED3D_RS_DEPTHBIAS, value);
             break;
 
         default:
@@ -2661,7 +2653,7 @@ static HRESULT d3d_device7_SetRenderState(IDirect3DDevice7 *iface,
                 break;
             }
 
-            d3d_device_set_render_state(device, state, value);
+            wined3d_stateblock_set_render_state(device->update_state, state, value);
             break;
     }
     wined3d_mutex_unlock();
