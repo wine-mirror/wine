@@ -277,6 +277,7 @@ static HRESULT WINAPI d3d_vertex_buffer7_ProcessVertices(IDirect3DVertexBuffer7 
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device_impl->wined3d_device, device_impl->state);
 
     /* WineD3D doesn't know d3d7 vertex operation, it uses
      * render states instead. Set the render states according to

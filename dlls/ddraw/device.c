@@ -3520,6 +3520,7 @@ static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
     size = vertex_count * stride;
 
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = d3d_device_prepare_vertex_buffer(device, size);
     if (FAILED(hr))
         goto done;
@@ -3713,6 +3714,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     /* Set the D3DDevice's FVF */
     wined3d_mutex_lock();
 
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = d3d_device_prepare_vertex_buffer(device, vtx_size);
     if (FAILED(hr))
         goto done;
@@ -4057,6 +4059,7 @@ static HRESULT d3d_device7_DrawPrimitiveStrided(IDirect3DDevice7 *iface, D3DPRIM
     }
 
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = d3d_device_prepare_vertex_buffer(device, dst_size);
     if (FAILED(hr))
         goto done;
@@ -4173,6 +4176,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
 
     wined3d_mutex_lock();
 
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = d3d_device_prepare_vertex_buffer(device, vtx_dst_size);
     if (FAILED(hr))
         goto done;
@@ -4330,6 +4334,7 @@ static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVE
     }
 
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     wined3d_device_set_vertex_declaration(device->wined3d_device, vb_impl->wined3d_declaration);
     if (FAILED(hr = wined3d_device_set_stream_source(device->wined3d_device,
             0, vb_impl->wined3d_buffer, 0, stride)))
@@ -4452,6 +4457,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     wined3d_mutex_lock();
 
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     wined3d_device_set_vertex_declaration(device->wined3d_device, vb_impl->wined3d_declaration);
 
     hr = d3d_device_prepare_index_buffer(device, index_count * sizeof(WORD));
@@ -5251,6 +5257,7 @@ static HRESULT d3d_device7_ValidateDevice(IDirect3DDevice7 *iface, DWORD *pass_c
     TRACE("iface %p, pass_count %p.\n", iface, pass_count);
 
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = wined3d_device_validate_device(device->wined3d_device, pass_count);
     wined3d_mutex_unlock();
 
@@ -5313,7 +5320,7 @@ static HRESULT d3d_device7_Clear(IDirect3DDevice7 *iface, DWORD count,
         (color & 0xff) / 255.0f,
         ((color >> 24) & 0xff) / 255.0f,
     };
-    struct d3d_device *This = impl_from_IDirect3DDevice7(iface);
+    struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
     HRESULT hr;
 
     TRACE("iface %p, count %u, rects %p, flags %#x, color 0x%08x, z %.8e, stencil %#x.\n",
@@ -5326,7 +5333,8 @@ static HRESULT d3d_device7_Clear(IDirect3DDevice7 *iface, DWORD count,
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_device_clear(This->wined3d_device, count, (RECT *)rects, flags, &c, z, stencil);
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    hr = wined3d_device_clear(device->wined3d_device, count, (RECT *)rects, flags, &c, z, stencil);
     wined3d_mutex_unlock();
 
     return hr;
