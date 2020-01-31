@@ -74,7 +74,8 @@ static HRESULT WINAPI PointerMonikerImpl_QueryInterface(IMoniker *iface, REFIID 
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IPersist, riid) ||
         IsEqualIID(&IID_IPersistStream, riid) ||
-        IsEqualIID(&IID_IMoniker, riid))
+        IsEqualIID(&IID_IMoniker, riid) ||
+        IsEqualGUID(&CLSID_PointerMoniker, riid))
     {
         *ppvObject = iface;
     }

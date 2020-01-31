@@ -2886,13 +2886,8 @@ static void test_pointer_moniker(void)
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_QueryInterface(moniker, &CLSID_PointerMoniker, (void **)&unknown);
-todo_wine
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
-        IUnknown_Release(unknown);
-    }
+    ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
+    IUnknown_Release(unknown);
 
     hr = IMoniker_QueryInterface(moniker, &IID_IMarshal, (void **)&marshal);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
