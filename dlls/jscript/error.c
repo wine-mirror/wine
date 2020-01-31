@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include <assert.h>
+#include <wchar.h>
 
 #include "jscript.h"
 #include "engine.h"
@@ -374,9 +375,42 @@ HRESULT init_error_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
     return S_OK;
 }
 
+static jsstr_t *format_error_message(HRESULT error, const WCHAR *arg)
+{
+    size_t len, arg_len = 0;
+    const WCHAR *res, *pos;
+    WCHAR *buf, *p;
+    jsstr_t *r;
+
+    if(!is_jscript_error(error))
+        return jsstr_empty();
+
+    len = LoadStringW(jscript_hinstance, HRESULT_CODE(error), (WCHAR*)&res, 0);
+
+    pos = wmemchr(res, '|', len);
+    if(pos && arg)
+        arg_len = lstrlenW(arg);
+    r = jsstr_alloc_buf(len + arg_len - (pos ? 1 : 0), &buf);
+    if(!r)
+        return jsstr_empty();
+
+    p = buf;
+    if(pos > res) {
+        memcpy(p, res, (pos - res) * sizeof(WCHAR));
+        p += pos - res;
+    }
+    pos = pos ? pos + 1 : res;
+    if(arg_len) {
+        memcpy(p, arg, arg_len * sizeof(WCHAR));
+        p += arg_len;
+    }
+    if(pos != res + len)
+        memcpy(p, pos, (res + len - pos) * sizeof(WCHAR));
+    return r;
+}
+
 static HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str, jsdisp_t *constr)
 {
-    WCHAR buf[1024], *pos = NULL;
     jsdisp_t *err;
     jsstr_t *msg;
     HRESULT hres;
@@ -384,21 +418,11 @@ static HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str, j
     if(!is_jscript_error(error))
         return error;
 
-    buf[0] = '\0';
-    LoadStringW(jscript_hinstance, HRESULT_CODE(error), buf, ARRAY_SIZE(buf));
-
-    if(str) pos = wcschr(buf, '|');
-    if(pos) {
-        int len = lstrlenW(str);
-        memmove(pos+len, pos+1, (lstrlenW(pos+1)+1)*sizeof(WCHAR));
-        memcpy(pos, str, len*sizeof(WCHAR));
-    }
-
-    WARN("%s\n", debugstr_w(buf));
-
-    msg = jsstr_alloc(buf);
+    msg = format_error_message(error, str);
     if(!msg)
         return E_OUTOFMEMORY;
+
+    WARN("%s\n", debugstr_jsstr(msg));
 
     hres = create_error(ctx, constr, error, msg, &err);
     jsstr_release(msg);
