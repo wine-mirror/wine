@@ -114,7 +114,6 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 {
     ScriptDisp *script_obj = ctx->script->script_obj;
     named_item_t *item;
-    IDispatch *disp;
     unsigned i;
     DISPID id;
     HRESULT hres;
@@ -196,10 +195,10 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         return S_OK;
     }
 
-    disp = lookup_named_item(ctx->script, name, SCRIPTITEM_ISVISIBLE);
-    if(disp) {
+    item = lookup_named_item(ctx->script, name, SCRIPTITEM_ISVISIBLE);
+    if(item && item->disp) {
         ref->type = REF_OBJ;
-        ref->u.obj = disp;
+        ref->u.obj = item->disp;
         return S_OK;
     }
 

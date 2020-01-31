@@ -189,7 +189,7 @@ static void exec_queued_code(script_ctx_t *ctx)
     }
 }
 
-IDispatch *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flags)
+named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flags)
 {
     named_item_t *item;
     HRESULT hres;
@@ -214,7 +214,7 @@ IDispatch *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flag
                 }
             }
 
-            return item->disp;
+            return item;
         }
     }
 
@@ -870,7 +870,7 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     VBScript *This = impl_from_IActiveScriptParse(iface);
-    IDispatch *context = NULL;
+    named_item_t *item = NULL;
     vbscode_t *code;
     HRESULT hres;
 
@@ -882,9 +882,9 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
         return E_UNEXPECTED;
 
     if(pstrItemName) {
-        context = lookup_named_item(This->ctx, pstrItemName, 0);
-        if(!context) {
-            WARN("Inknown context %s\n", debugstr_w(pstrItemName));
+        item = lookup_named_item(This->ctx, pstrItemName, 0);
+        if(!item) {
+            WARN("Unknown context %s\n", debugstr_w(pstrItemName));
             return E_INVALIDARG;
         }
     }
@@ -893,8 +893,8 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(FAILED(hres))
         return hres;
 
-    if(context)
-        IDispatch_AddRef(code->context = context);
+    if(item && item->disp)
+        IDispatch_AddRef(code->context = item->disp);
 
     if(!(dwFlags & SCRIPTTEXT_ISEXPRESSION) && !is_started(This)) {
         code->pending_exec = TRUE;

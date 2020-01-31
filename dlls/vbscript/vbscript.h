@@ -372,7 +372,7 @@ HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigne
 HRESULT compile_procedure(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,class_desc_t**) DECLSPEC_HIDDEN;
 HRESULT exec_script(script_ctx_t*,BOOL,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
 void release_dynamic_var(dynamic_var_t*) DECLSPEC_HIDDEN;
-IDispatch *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
+named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
 void clear_ei(EXCEPINFO*) DECLSPEC_HIDDEN;
 HRESULT report_script_error(script_ctx_t*,const vbscode_t*,unsigned) DECLSPEC_HIDDEN;
 void detach_global_objects(script_ctx_t*) DECLSPEC_HIDDEN;
