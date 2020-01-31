@@ -380,36 +380,38 @@ static HRESULT WINAPI filter_GetState(IBaseFilter *iface, DWORD timeout, FILTER_
     return hr;
 }
 
-static HRESULT WINAPI filter_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
+static HRESULT WINAPI filter_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
 {
-    struct strmbase_filter *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%p)\n", This, pClock);
+    struct strmbase_filter *filter = impl_from_IBaseFilter(iface);
 
-    EnterCriticalSection(&This->csFilter);
-    {
-        if (This->pClock)
-            IReferenceClock_Release(This->pClock);
-        This->pClock = pClock;
-        if (This->pClock)
-            IReferenceClock_AddRef(This->pClock);
-    }
-    LeaveCriticalSection(&This->csFilter);
+    TRACE("filter %p, clock %p.\n", filter, clock);
+
+    EnterCriticalSection(&filter->csFilter);
+
+    if (filter->clock)
+        IReferenceClock_Release(filter->clock);
+    filter->clock = clock;
+    if (filter->clock)
+        IReferenceClock_AddRef(filter->clock);
+
+    LeaveCriticalSection(&filter->csFilter);
 
     return S_OK;
 }
 
-static HRESULT WINAPI filter_GetSyncSource(IBaseFilter *iface, IReferenceClock **ppClock)
+static HRESULT WINAPI filter_GetSyncSource(IBaseFilter *iface, IReferenceClock **clock)
 {
-    struct strmbase_filter *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%p)\n", This, ppClock);
+    struct strmbase_filter *filter = impl_from_IBaseFilter(iface);
 
-    EnterCriticalSection(&This->csFilter);
-    {
-        *ppClock = This->pClock;
-        if (This->pClock)
-            IReferenceClock_AddRef(This->pClock);
-    }
-    LeaveCriticalSection(&This->csFilter);
+    TRACE("filter %p, clock %p.\n", filter, clock);
+
+    EnterCriticalSection(&filter->csFilter);
+
+    *clock = filter->clock;
+    if (filter->clock)
+        IReferenceClock_AddRef(filter->clock);
+
+    LeaveCriticalSection(&filter->csFilter);
 
     return S_OK;
 }
@@ -528,8 +530,8 @@ void strmbase_filter_init(struct strmbase_filter *filter, IUnknown *outer,
 
 void strmbase_filter_cleanup(struct strmbase_filter *This)
 {
-    if (This->pClock)
-        IReferenceClock_Release(This->pClock);
+    if (This->clock)
+        IReferenceClock_Release(This->clock);
 
     This->IBaseFilter_iface.lpVtbl = NULL;
     DeleteCriticalSection(&This->csFilter);

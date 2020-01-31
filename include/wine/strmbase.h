@@ -129,7 +129,7 @@ struct strmbase_filter
     CRITICAL_SECTION csFilter;
 
     FILTER_STATE state;
-    IReferenceClock * pClock;
+    IReferenceClock *clock;
     WCHAR name[128];
     IFilterGraph *graph;
     CLSID clsid;

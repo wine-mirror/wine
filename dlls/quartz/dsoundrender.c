@@ -141,9 +141,9 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
 
     DSoundRender_UpdatePositions(This, &writepos, &min_writepos);
     playpos = This->last_playpos;
-    if (This->renderer.filter.pClock)
+    if (This->renderer.filter.clock)
     {
-        IReferenceClock_GetTime(This->renderer.filter.pClock, &cur);
+        IReferenceClock_GetTime(This->renderer.filter.clock, &cur);
         cur -= This->renderer.stream_start;
     } else
         write_at = -1;
@@ -363,10 +363,10 @@ static HRESULT WINAPI DSoundRender_DoRenderSample(struct strmbase_renderer *ifac
     TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
 
     hr = DSoundRender_SendSampleData(This, tStart, tStop, pbSrcStream, cbSrcStream);
-    if (This->renderer.filter.state == State_Running && This->renderer.filter.pClock && tStart >= 0) {
+    if (This->renderer.filter.state == State_Running && This->renderer.filter.clock && tStart >= 0) {
         REFERENCE_TIME jitter, now = 0;
         Quality q;
-        IReferenceClock_GetTime(This->renderer.filter.pClock, &now);
+        IReferenceClock_GetTime(This->renderer.filter.clock, &now);
         jitter = now - This->renderer.stream_start - tStart;
         if (jitter <= -DSoundRenderer_Max_Fill)
             jitter += DSoundRenderer_Max_Fill;

@@ -160,7 +160,7 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv)
 
     TRACE("%p\n", priv);
 
-    if (!priv->pin->filter->pClock || priv->current_rstart < 0)
+    if (!priv->pin->filter->clock || priv->current_rstart < 0)
         return;
 
     start = priv->current_rstart;
@@ -276,7 +276,7 @@ void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME s
     if (start >= 0)
     {
         REFERENCE_TIME now;
-        IReferenceClock_GetTime(This->pin->filter->pClock, &now);
+        IReferenceClock_GetTime(This->pin->filter->clock, &now);
         This->current_jitter = (now - This->clockstart) - start;
     }
     else
@@ -291,10 +291,10 @@ void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME s
     else
         This->rendered++;
 
-    if (!This->pin->filter->pClock)
+    if (!This->pin->filter->clock)
         return;
 
-    IReferenceClock_GetTime(This->pin->filter->pClock, &This->start);
+    IReferenceClock_GetTime(This->pin->filter->clock, &This->start);
 
     TRACE("Starting at %s.\n", debugstr_time(This->start));
 }
@@ -305,8 +305,8 @@ void QualityControlRender_EndRender(QualityControlImpl *This)
 
     TRACE("%p\n", This);
 
-    if (!This->pin->filter->pClock || This->start < 0
-            || FAILED(IReferenceClock_GetTime(This->pin->filter->pClock, &This->stop)))
+    if (!This->pin->filter->clock || This->start < 0
+            || FAILED(IReferenceClock_GetTime(This->pin->filter->clock, &This->stop)))
         return;
 
     elapsed = This->start - This->stop;

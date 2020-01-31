@@ -331,7 +331,7 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
         SetEvent(This->state_event);
 
     /* Wait for render Time */
-    if (This->filter.pClock && SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
+    if (This->filter.clock && SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
     {
         hr = S_FALSE;
         RendererPosPassThru_RegisterMediaTime(This->pPosition, start);
@@ -345,20 +345,20 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
             REFERENCE_TIME now;
             DWORD_PTR cookie;
 
-            IReferenceClock_GetTime(This->filter.pClock, &now);
+            IReferenceClock_GetTime(This->filter.clock, &now);
 
             if (now - This->stream_start - start <= -10000)
             {
                 HANDLE handles[2] = {This->advise_event, This->flush_event};
                 DWORD ret;
 
-                IReferenceClock_AdviseTime(This->filter.pClock, This->stream_start,
+                IReferenceClock_AdviseTime(This->filter.clock, This->stream_start,
                         start, (HEVENT)This->advise_event, &cookie);
 
                 LeaveCriticalSection(&This->csRenderLock);
 
                 ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
-                IReferenceClock_Unadvise(This->filter.pClock, cookie);
+                IReferenceClock_Unadvise(This->filter.clock, cookie);
 
                 if (ret == 1)
                 {
