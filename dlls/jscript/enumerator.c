@@ -103,7 +103,7 @@ static HRESULT Enumerator_atEnd(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     EnumeratorInstance *This;
 
     if (!(This = enumerator_this(jsthis)))
-        return throw_type_error(ctx, JS_E_ENUMERATOR_EXPECTED, NULL);
+        return JS_E_ENUMERATOR_EXPECTED;
 
     TRACE("%d\n", This->atend);
 
@@ -120,7 +120,7 @@ static HRESULT Enumerator_item(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     TRACE("\n");
 
     if (!(This = enumerator_this(jsthis)))
-        return throw_type_error(ctx, JS_E_ENUMERATOR_EXPECTED, NULL);
+        return JS_E_ENUMERATOR_EXPECTED;
 
     return r ? jsval_copy(This->item, r) : S_OK;
 }
@@ -134,7 +134,7 @@ static HRESULT Enumerator_moveFirst(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     TRACE("\n");
 
     if (!(This = enumerator_this(jsthis)))
-        return throw_type_error(ctx, JS_E_ENUMERATOR_EXPECTED, NULL);
+        return JS_E_ENUMERATOR_EXPECTED;
 
     if (This->enumvar)
     {
@@ -162,7 +162,7 @@ static HRESULT Enumerator_moveNext(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     TRACE("\n");
 
     if (!(This = enumerator_this(jsthis)))
-        return throw_type_error(ctx, JS_E_ENUMERATOR_EXPECTED, NULL);
+        return JS_E_ENUMERATOR_EXPECTED;
 
     if (This->enumvar)
     {

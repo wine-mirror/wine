@@ -153,7 +153,7 @@ static HRESULT stack_pop_object(script_ctx_t *ctx, IDispatch **r)
     v = stack_pop(ctx);
     if(is_object_instance(v)) {
         if(!get_object(v))
-            return throw_type_error(ctx, JS_E_OBJECT_REQUIRED, NULL);
+            return JS_E_OBJECT_REQUIRED;
         *r = get_object(v);
         return S_OK;
     }
@@ -1183,11 +1183,11 @@ static HRESULT interp_new(script_ctx_t *ctx)
     /* NOTE: Should use to_object here */
 
     if(is_null(constr))
-        return throw_type_error(ctx, JS_E_OBJECT_EXPECTED, NULL);
+        return JS_E_OBJECT_EXPECTED;
     else if(!is_object_instance(constr))
-        return throw_type_error(ctx, JS_E_INVALID_ACTION, NULL);
+        return JS_E_INVALID_ACTION;
     else if(!get_object(constr))
-        return throw_type_error(ctx, JS_E_INVALID_PROPERTY, NULL);
+        return JS_E_INVALID_PROPERTY;
 
     clear_acc(ctx);
     return disp_call_value(ctx, get_object(constr), NULL, DISPATCH_CONSTRUCT | DISPATCH_JSCRIPT_CALLEREXECSSOURCE,
@@ -1205,7 +1205,7 @@ static HRESULT interp_call(script_ctx_t *ctx)
 
     obj = stack_topn(ctx, argn);
     if(!is_object_instance(obj))
-        return throw_type_error(ctx, JS_E_INVALID_PROPERTY, NULL);
+        return JS_E_INVALID_PROPERTY;
 
     clear_acc(ctx);
     return disp_call_value(ctx, get_object(obj), NULL, DISPATCH_METHOD | DISPATCH_JSCRIPT_CALLEREXECSSOURCE,
@@ -1222,7 +1222,7 @@ static HRESULT interp_call_member(script_ctx_t *ctx)
     TRACE("%d %d\n", argn, do_ret);
 
     if(!stack_topn_exprval(ctx, argn, &ref))
-        return throw_type_error(ctx, ref.u.hres, NULL);
+        return ref.u.hres;
 
     clear_acc(ctx);
     return exprval_call(ctx, &ref, DISPATCH_METHOD | DISPATCH_JSCRIPT_CALLEREXECSSOURCE,
@@ -1619,7 +1619,7 @@ static HRESULT interp_instanceof(script_ctx_t *ctx)
     v = stack_pop(ctx);
     if(!is_object_instance(v) || !get_object(v)) {
         jsval_release(v);
-        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        return JS_E_FUNCTION_EXPECTED;
     }
 
     obj = iface_to_jsdisp(get_object(v));
@@ -1632,7 +1632,7 @@ static HRESULT interp_instanceof(script_ctx_t *ctx)
     if(is_class(obj, JSCLASS_FUNCTION)) {
         hres = jsdisp_propget_name(obj, prototypeW, &prot);
     }else {
-        hres = throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        hres = JS_E_FUNCTION_EXPECTED;
     }
     jsdisp_release(obj);
     if(FAILED(hres))
@@ -1679,7 +1679,7 @@ static HRESULT interp_in(script_ctx_t *ctx)
     obj = stack_pop(ctx);
     if(!is_object_instance(obj) || !get_object(obj)) {
         jsval_release(obj);
-        return throw_type_error(ctx, JS_E_OBJECT_EXPECTED, NULL);
+        return JS_E_OBJECT_EXPECTED;
     }
 
     v = stack_pop(ctx);
@@ -2090,7 +2090,7 @@ static HRESULT interp_postinc(script_ctx_t *ctx)
     TRACE("%d\n", arg);
 
     if(!stack_pop_exprval(ctx, &ref))
-        return throw_type_error(ctx, JS_E_OBJECT_EXPECTED, NULL);
+        return JS_E_OBJECT_EXPECTED;
 
     hres = exprval_propget(ctx, &ref, &v);
     if(SUCCEEDED(hres)) {
@@ -2121,7 +2121,7 @@ static HRESULT interp_preinc(script_ctx_t *ctx)
     TRACE("%d\n", arg);
 
     if(!stack_pop_exprval(ctx, &ref))
-        return throw_type_error(ctx, JS_E_OBJECT_EXPECTED, NULL);
+        return JS_E_OBJECT_EXPECTED;
 
     hres = exprval_propget(ctx, &ref, &v);
     if(SUCCEEDED(hres)) {

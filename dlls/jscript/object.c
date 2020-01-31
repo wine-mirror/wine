@@ -399,9 +399,9 @@ static HRESULT to_property_descriptor(script_ctx_t *ctx, jsdisp_t *attr_obj, pro
 
     if(desc->explicit_getter || desc->explicit_setter) {
         if(desc->explicit_value)
-            hres = throw_type_error(ctx, JS_E_PROP_DESC_MISMATCH, NULL);
+            hres = JS_E_PROP_DESC_MISMATCH;
         else if(desc->mask & PROPF_WRITABLE)
-            hres = throw_type_error(ctx, JS_E_INVALID_WRITABLE_PROP_DESC, NULL);
+            hres = JS_E_INVALID_WRITABLE_PROP_DESC;
     }
 
     if(FAILED(hres))
@@ -472,7 +472,7 @@ static HRESULT Object_defineProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
     TRACE("\n");
 
     if(argc < 1 || !is_object_instance(argv[0]))
-        return throw_type_error(ctx, JS_E_OBJECT_EXPECTED, NULL);
+        return JS_E_OBJECT_EXPECTED;
     obj = to_jsdisp(get_object(argv[0]));
     if(!obj) {
         FIXME("not implemented non-JS object\n");
@@ -492,7 +492,7 @@ static HRESULT Object_defineProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
             hres = E_NOTIMPL;
         }
     }else {
-        hres = throw_type_error(ctx, JS_E_OBJECT_EXPECTED, NULL);
+        hres = JS_E_OBJECT_EXPECTED;
     }
     jsstr_release(name_str);
     if(FAILED(hres))
@@ -536,7 +536,7 @@ static HRESULT Object_getOwnPropertyDescriptor(script_ctx_t *ctx, vdisp_t *jsthi
     TRACE("\n");
 
     if(argc < 1 || !is_object_instance(argv[0]))
-        return throw_type_error(ctx, JS_E_OBJECT_EXPECTED, NULL);
+        return JS_E_OBJECT_EXPECTED;
     obj = to_jsdisp(get_object(argv[0]));
     if(!obj) {
         FIXME("not implemented non-JS object\n");

@@ -445,7 +445,7 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *ret, hint_t hint)
         jsdisp_release(jsdisp);
 
         WARN("failed\n");
-        return throw_type_error(ctx, JS_E_TO_PRIMITIVE, NULL);
+        return JS_E_TO_PRIMITIVE;
     }
 
     return jsval_copy(val, ret);
@@ -850,7 +850,7 @@ HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
     case JSV_UNDEFINED:
     case JSV_NULL:
         WARN("object expected\n");
-        return throw_type_error(ctx, JS_E_OBJECT_EXPECTED, NULL);
+        return JS_E_OBJECT_EXPECTED;
     case JSV_VARIANT:
         switch(V_VT(get_variant(val))) {
         case VT_ARRAY|VT_VARIANT:

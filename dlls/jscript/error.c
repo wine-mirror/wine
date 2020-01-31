@@ -129,7 +129,7 @@ static HRESULT Error_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        return JS_E_FUNCTION_EXPECTED;
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;

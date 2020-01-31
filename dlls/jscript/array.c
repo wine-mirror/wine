@@ -86,7 +86,7 @@ static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsdisp_t **jsthis, 
     }
 
     if(!is_jsdisp(vdisp))
-        return throw_type_error(ctx, JS_E_JSCRIPT_EXPECTED, NULL);
+        return JS_E_JSCRIPT_EXPECTED;
 
     hres = jsdisp_propget_name(vdisp->u.jsdisp, lengthW, &val);
     if(FAILED(hres))
@@ -934,7 +934,7 @@ static HRESULT Array_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
     array = array_this(jsthis);
     if(!array)
-        return throw_type_error(ctx, JS_E_ARRAY_EXPECTED, NULL);
+        return JS_E_ARRAY_EXPECTED;
 
     return array_join(ctx, &array->dispex, array->length, default_separatorW,
                       lstrlenW(default_separatorW), r);

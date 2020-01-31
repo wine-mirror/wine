@@ -292,7 +292,7 @@ static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     TRACE("\n");
 
     if(!(function = function_this(jsthis)))
-        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        return JS_E_FUNCTION_EXPECTED;
 
     hres = function->vtbl->toString(function, &str);
     if(FAILED(hres))
@@ -352,7 +352,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     TRACE("\n");
 
     if(!(function = function_this(jsthis)) && (jsthis->flags & VDISP_JSDISP))
-        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        return JS_E_FUNCTION_EXPECTED;
 
     if(argc) {
         if(!is_undefined(argv[0]) && !is_null(argv[0])) {
@@ -417,7 +417,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     TRACE("\n");
 
     if(!(function = function_this(jsthis)))
-        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        return JS_E_FUNCTION_EXPECTED;
 
     if(argc) {
         if(!is_undefined(argv[0]) && !is_null(argv[0])) {
@@ -446,7 +446,7 @@ static HRESULT Function_bind(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     TRACE("\n");
 
     if(!(function = function_this(jsthis)))
-        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        return JS_E_FUNCTION_EXPECTED;
 
     if(argc < 1) {
         FIXME("no this argument\n");

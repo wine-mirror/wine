@@ -1908,7 +1908,7 @@ HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsig
 
         if(!jsfunc->builtin_info->value_prop.invoke) {
             WARN("Not a function\n");
-            return throw_type_error(jsfunc->ctx, JS_E_FUNCTION_EXPECTED, NULL);
+            return JS_E_FUNCTION_EXPECTED;
         }
 
         set_disp(&vdisp, jsthis);
