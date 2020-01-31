@@ -1031,7 +1031,7 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
     DWORD location;
 
     /* If we would need to copy from a renderbuffer or drawable, we'd probably
-     * be better of using the FBO blitter directly, since we'd need to use it
+     * be better off using the FBO blitter directly, since we'd need to use it
      * to copy the resource contents to the texture anyway. */
     if (op != WINED3D_BLIT_OP_RAW_BLIT
             || (src_texture->resource.format->id == dst_texture->resource.format->id
