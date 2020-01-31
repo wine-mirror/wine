@@ -870,7 +870,6 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     VBScript *This = impl_from_IActiveScriptParse(iface);
-    named_item_t *item = NULL;
     vbscode_t *code;
     HRESULT hres;
 
@@ -881,20 +880,10 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    if(pstrItemName) {
-        item = lookup_named_item(This->ctx, pstrItemName, 0);
-        if(!item) {
-            WARN("Unknown context %s\n", debugstr_w(pstrItemName));
-            return E_INVALIDARG;
-        }
-    }
-
-    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, dwSourceContextCookie, ulStartingLine, dwFlags, &code);
+    hres = compile_script(This->ctx, pstrCode, pstrItemName, pstrDelimiter, dwSourceContextCookie,
+                          ulStartingLine, dwFlags, &code);
     if(FAILED(hres))
         return hres;
-
-    if(item && item->disp)
-        IDispatch_AddRef(code->context = item->disp);
 
     if(!(dwFlags & SCRIPTTEXT_ISEXPRESSION) && !is_started(This)) {
         code->pending_exec = TRUE;
@@ -953,8 +942,8 @@ static HRESULT WINAPI VBScriptParseProcedure_ParseProcedureText(IActiveScriptPar
     if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_procedure(This->ctx, pstrCode, pstrDelimiter, dwSourceContextCookie, ulStartingLineNumber,
-                             dwFlags, &desc);
+    hres = compile_procedure(This->ctx, pstrCode, pstrItemName, pstrDelimiter, dwSourceContextCookie,
+                             ulStartingLineNumber, dwFlags, &desc);
     if(FAILED(hres))
         return hres;
 

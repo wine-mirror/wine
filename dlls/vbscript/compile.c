@@ -1921,15 +1921,24 @@ static void release_compiler(compile_ctx_t *ctx)
         release_vbscode(ctx->code);
 }
 
-HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD_PTR cookie,
-                       unsigned start_line, DWORD flags, vbscode_t **ret)
+HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item_name, const WCHAR *delimiter,
+                       DWORD_PTR cookie, unsigned start_line, DWORD flags, vbscode_t **ret)
 {
     function_decl_t *func_decl;
+    named_item_t *item = NULL;
     class_decl_t *class_decl;
     function_t *new_func;
     compile_ctx_t ctx;
     vbscode_t *code;
     HRESULT hres;
+
+    if(item_name) {
+        item = lookup_named_item(script, item_name, 0);
+        if(!item) {
+            WARN("Unknown context %s\n", debugstr_w(item_name));
+            return E_INVALIDARG;
+        }
+    }
 
     memset(&ctx, 0, sizeof(ctx));
     code = ctx.code = alloc_vbscode(&ctx, src, cookie, start_line);
@@ -1993,19 +2002,23 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     ctx.code = NULL;
     release_compiler(&ctx);
 
+    if(item && item->disp)
+        IDispatch_AddRef(code->context = item->disp);
+
     list_add_tail(&script->code_list, &code->entry);
     *ret = code;
     return S_OK;
 }
 
-HRESULT compile_procedure(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD_PTR cookie,
-                          unsigned start_line, DWORD flags, class_desc_t **ret)
+HRESULT compile_procedure(script_ctx_t *script, const WCHAR *src, const WCHAR *item_name, const WCHAR *delimiter,
+                          DWORD_PTR cookie, unsigned start_line, DWORD flags, class_desc_t **ret)
 {
     class_desc_t *desc;
     vbscode_t *code;
     HRESULT hres;
 
-    hres = compile_script(script, src, delimiter, cookie, start_line, flags & ~SCRIPTTEXT_ISPERSISTENT, &code);
+    hres = compile_script(script, src, item_name, delimiter, cookie, start_line,
+                          flags & ~SCRIPTTEXT_ISPERSISTENT, &code);
     if(FAILED(hres))
         return hres;
 
