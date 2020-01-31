@@ -163,7 +163,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
             goto error;
         }
 
-        TRACE("Sample start time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
+        TRACE("Sample start time: %s.\n", debugstr_time(tStart));
         if (ash.cbSrcLengthUsed == cbSrcStream)
         {
             IMediaSample_SetTime(pOutSample, &tStart, &tStop);
@@ -196,7 +196,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
             IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
         }
 
-        TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
+        TRACE("Sample stop time: %s\n", debugstr_time(tStart));
 
         hr = IMemInputPin_Receive(This->tf.source.pMemInputPin, pOutSample);
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {

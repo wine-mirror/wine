@@ -2500,6 +2500,8 @@ static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface, LONGLON
     }
 
     LeaveCriticalSection(&graph->cs);
+
+    TRACE("Returning %s (%s seconds).\n", wine_dbgstr_longlong(*stop), debugstr_time(*stop));
     return hr;
 }
 
@@ -2525,7 +2527,7 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONG
 
     LeaveCriticalSection(&graph->cs);
 
-    TRACE("Returning %s.\n", wine_dbgstr_longlong(ret));
+    TRACE("Returning %s (%s seconds).\n", wine_dbgstr_longlong(ret), debugstr_time(ret));
     *current = ret;
 
     return S_OK;
@@ -2565,6 +2567,12 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
     TRACE("graph %p, current %s, current_flags %#x, stop %s, stop_flags %#x.\n", graph,
             current_ptr ? wine_dbgstr_longlong(*current_ptr) : "<null>", current_flags,
             stop_ptr ? wine_dbgstr_longlong(*stop_ptr): "<null>", stop_flags);
+    if (current_ptr)
+        TRACE("Setting current position to %s (%s seconds).\n",
+                wine_dbgstr_longlong(*current_ptr), debugstr_time(*current_ptr));
+    if (stop_ptr)
+        TRACE("Setting stop position to %s (%s seconds).\n",
+                wine_dbgstr_longlong(*stop_ptr), debugstr_time(*stop_ptr));
 
     if ((current_flags & 0x7) != AM_SEEKING_AbsolutePositioning
             && (current_flags & 0x7) != AM_SEEKING_NoPositioning)
@@ -5249,7 +5257,7 @@ static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME start)
     IFilterGraphImpl *graph = impl_from_IMediaFilter(iface);
     REFERENCE_TIME stream_start = start;
 
-    TRACE("graph %p, start %s.\n", graph, wine_dbgstr_longlong(start));
+    TRACE("graph %p, start %s.\n", graph, debugstr_time(start));
 
     EnterCriticalSection(&graph->cs);
 

@@ -171,7 +171,7 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
         *ret_writepos = writepos;
     } else if (delta_t < 0) {
         REFERENCE_TIME past, min_writepos_t;
-        WARN("Delta too big %i/%i, overwriting old data or even skipping\n", (int)delta_t / 10000, (int)max_lag / 10000);
+        WARN("Delta too big %s/%s, overwriting old data or even skipping\n", debugstr_time(delta_t), debugstr_time(max_lag));
         if (min_writepos >= playpos)
             min_writepos_t = cur + time_from_pos(This, min_writepos - playpos);
         else
@@ -189,7 +189,7 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
         }
     } else /* delta_t > 0 */ {
         DWORD aheadbytes;
-        WARN("Delta too big %i/%i, too far ahead\n", (int)delta_t / 10000, (int)max_lag / 10000);
+        WARN("Delta too big %s/%s, too far ahead\n", debugstr_time(delta_t), debugstr_time(max_lag));
         aheadbytes = pos_from_time(This, delta_t);
         WARN("Advancing %u bytes\n", aheadbytes);
         if (delta_t >= DSoundRenderer_Max_Fill)
@@ -204,7 +204,8 @@ end:
     else
         *pfree = This->buf_size + playpos - *ret_writepos;
     if (time_from_pos(This, This->buf_size - *pfree) >= DSoundRenderer_Max_Fill) {
-        TRACE("Blocked: too full %i / %i\n", (int)(time_from_pos(This, This->buf_size - *pfree)/10000), (int)(DSoundRenderer_Max_Fill / 10000));
+        TRACE("Blocked: too full %s / %s\n", debugstr_time(time_from_pos(This, This->buf_size - *pfree)),
+                debugstr_time(DSoundRenderer_Max_Fill));
         return S_FALSE;
     }
     return S_OK;
