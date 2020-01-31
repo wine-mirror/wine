@@ -1877,13 +1877,9 @@ static void test_file_moniker(WCHAR* path)
     ok_ole_success(hr, CreateFileMoniker); 
 
     hr = IMoniker_QueryInterface(moniker1, &CLSID_FileMoniker, (void **)&unk);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(unk == (IUnknown *)moniker1, "Unexpected interface.\n");
-        IUnknown_Release(unk);
-    }
+    ok(unk == (IUnknown *)moniker1, "Unexpected interface.\n");
+    IUnknown_Release(unk);
 
     hr = IMoniker_Inverse(moniker1, &inverse);
     ok(hr == S_OK, "Failed to get inverse, hr %#x.\n", hr);
