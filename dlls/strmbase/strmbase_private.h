@@ -34,15 +34,17 @@
 
 static inline const char *debugstr_time(REFERENCE_TIME time)
 {
+    ULONGLONG abstime = time >= 0 ? time : -time;
     unsigned int i = 0, j = 0;
-    char buffer[22], rev[22];
+    char buffer[23], rev[23];
 
-    while (time || i <= 8)
+    while (abstime || i <= 8)
     {
-        buffer[i++] = '0' + (time % 10);
-        time /= 10;
+        buffer[i++] = '0' + (abstime % 10);
+        abstime /= 10;
         if (i == 7) buffer[i++] = '.';
     }
+    if (time < 0) buffer[i++] = '-';
 
     while (i--) rev[j++] = buffer[i];
     rev[j] = 0;
