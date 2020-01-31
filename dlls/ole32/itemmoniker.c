@@ -140,21 +140,23 @@ static HRESULT set_container_lock(IOleItemContainer *container, IBindCtx *pbc)
 /*******************************************************************************
  *        ItemMoniker_QueryInterface
  *******************************************************************************/
-static HRESULT WINAPI ItemMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
+static HRESULT WINAPI ItemMonikerImpl_QueryInterface(IMoniker *iface, REFIID riid, void **ppvObject)
 {
     ItemMonikerImpl *This = impl_from_IMoniker(iface);
 
-    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), ppvObject);
 
     if (!ppvObject)
         return E_INVALIDARG;
 
-    /* Compare the riid with the interface IDs implemented by this object.*/
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IPersist, riid) ||
         IsEqualIID(&IID_IPersistStream, riid) ||
-        IsEqualIID(&IID_IMoniker, riid))
+        IsEqualIID(&IID_IMoniker, riid) ||
+        IsEqualGUID(&CLSID_ItemMoniker, riid))
+    {
         *ppvObject = iface;
+    }
     else if (IsEqualIID(&IID_IROTData, riid))
         *ppvObject = &This->IROTData_iface;
     else if (IsEqualIID(&IID_IMarshal, riid))

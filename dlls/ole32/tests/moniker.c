@@ -2087,13 +2087,9 @@ static void test_item_moniker(void)
     ok(hr == S_OK, "Failed to create item moniker, hr %#x.\n", hr);
 
     hr = IMoniker_QueryInterface(moniker, &CLSID_ItemMoniker, (void **)&unknown);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
-        IUnknown_Release(unknown);
-    }
+    ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
+    IUnknown_Release(unknown);
 
     test_moniker("item moniker 2", moniker,
         expected_item_moniker_marshal_data2, sizeof(expected_item_moniker_marshal_data2),
