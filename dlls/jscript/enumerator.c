@@ -303,7 +303,7 @@ static HRESULT EnumeratorConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD fl
     switch(flags) {
     case DISPATCH_CONSTRUCT: {
         if (argc > 1)
-            return throw_syntax_error(ctx, JS_E_INVALIDARG, NULL);
+            return JS_E_INVALIDARG;
 
         hres = create_enumerator(ctx, (argc == 1) ? &argv[0] : 0, &obj);
         if(FAILED(hres))
