@@ -514,7 +514,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
                         }
                         break;
                     default:
-                        FIXME("Unsupported attribute %#lx.\n", attrs->attrs[i].attr);
+                        FIXME("Unsupported attribute %#Ix.\n", attrs->attrs[i].attr);
                         break;
                 }
             }
