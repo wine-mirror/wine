@@ -149,7 +149,7 @@ static HRESULT Array_set_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t val
 
     len = floor(len);
     if(len!=(DWORD)len)
-        return throw_range_error(ctx, JS_E_INVALID_LENGTH, NULL);
+        return JS_E_INVALID_LENGTH;
 
     for(i=len; i < This->length; i++) {
         hres = jsdisp_delete_idx(&This->dispex, i);
@@ -1281,7 +1281,7 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
             double n = get_number(argv[0]);
 
             if(n < 0 || !is_int32(n))
-                return throw_range_error(ctx, JS_E_INVALID_LENGTH, NULL);
+                return JS_E_INVALID_LENGTH;
 
             hres = create_array(ctx, n, &obj);
             if(FAILED(hres))

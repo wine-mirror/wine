@@ -80,7 +80,7 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, un
         return throw_type_error(ctx, JS_E_VBARRAY_EXPECTED, NULL);
 
     if(argc < SafeArrayGetDim(vbarray->safearray))
-        return throw_range_error(ctx, JS_E_SUBSCRIPT_OUT_OF_RANGE, NULL);
+        return JS_E_SUBSCRIPT_OUT_OF_RANGE;
 
     indexes = heap_alloc(sizeof(int)*argc);
     if(!indexes)
@@ -97,7 +97,7 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, un
     hres = SafeArrayGetElement(vbarray->safearray, indexes, (void*)&out);
     heap_free(indexes);
     if(hres == DISP_E_BADINDEX)
-        return throw_range_error(ctx, JS_E_SUBSCRIPT_OUT_OF_RANGE, NULL);
+        return JS_E_SUBSCRIPT_OUT_OF_RANGE;
     else if(FAILED(hres))
         return hres;
 
@@ -130,7 +130,7 @@ static HRESULT VBArray_lbound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, uns
 
     hres = SafeArrayGetLBound(vbarray->safearray, dim, &dim);
     if(hres == DISP_E_BADINDEX)
-        return throw_range_error(ctx, JS_E_SUBSCRIPT_OUT_OF_RANGE, NULL);
+        return JS_E_SUBSCRIPT_OUT_OF_RANGE;
     else if(FAILED(hres))
         return hres;
 
@@ -216,7 +216,7 @@ static HRESULT VBArray_ubound(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, uns
 
     hres = SafeArrayGetUBound(vbarray->safearray, dim, &dim);
     if(hres == DISP_E_BADINDEX)
-        return throw_range_error(ctx, JS_E_SUBSCRIPT_OUT_OF_RANGE, NULL);
+        return JS_E_SUBSCRIPT_OUT_OF_RANGE;
     else if(FAILED(hres))
         return hres;
 

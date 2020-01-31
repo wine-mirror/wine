@@ -375,8 +375,8 @@ static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         if(FAILED(hres))
             return hres;
 
-        if(prec<0 || prec>20)
-            return throw_range_error(ctx, JS_E_FRACTION_DIGITS_OUT_OF_RANGE, NULL);
+        if(prec < 0 || prec > 20)
+            return JS_E_FRACTION_DIGITS_OUT_OF_RANGE;
     }
 
     val = number->value;
@@ -416,8 +416,8 @@ static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
         if(FAILED(hres))
             return hres;
 
-        if(prec<0 || prec>20)
-            return throw_range_error(ctx, JS_E_FRACTION_DIGITS_OUT_OF_RANGE, NULL);
+        if(prec < 0 || prec > 20)
+            return JS_E_FRACTION_DIGITS_OUT_OF_RANGE;
     }
 
     val = number->value;
@@ -458,7 +458,7 @@ static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             return hres;
 
         if(prec<1 || prec>21)
-            return throw_range_error(ctx, JS_E_PRECISION_OUT_OF_RANGE, NULL);
+            return JS_E_PRECISION_OUT_OF_RANGE;
     }
 
     val = number->value;
