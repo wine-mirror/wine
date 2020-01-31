@@ -1773,13 +1773,9 @@ static void test_class_moniker(void)
     ok_ole_success(hr, CreateClassMoniker);
 
     hr = IMoniker_QueryInterface(moniker, &CLSID_ClassMoniker, (void **)&unknown);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
-        IUnknown_Release(unknown);
-    }
+    ok(unknown == (IUnknown *)moniker, "Unexpected interface.\n");
+    IUnknown_Release(unknown);
 
     test_moniker("class moniker", moniker, 
         expected_class_moniker_marshal_data, sizeof(expected_class_moniker_marshal_data),
