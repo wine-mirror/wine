@@ -141,7 +141,6 @@ static void test_createfont(void)
     expect(Ok, stat);
     stat = GdipGetFamilyName(fontfamily2, familyname, 0);
     expect(Ok, stat);
-todo_wine
     ok (fontfamily == fontfamily2, "Unexpected family instance.\n");
     ok (lstrcmpiW(Tahoma, familyname) == 0, "Expected Tahoma, got %s\n",
             wine_dbgstr_w(familyname));
@@ -345,7 +344,6 @@ static void test_fontfamily (void)
     ZeroMemory (itsName, sizeof(itsName));
     stat = GdipCloneFontFamily(family, &clonedFontFamily);
     expect (Ok, stat);
-todo_wine
     ok (family == clonedFontFamily, "Unexpected family instance.\n");
     GdipDeleteFontFamily(family);
     stat = GdipGetFamilyName(clonedFontFamily, itsName, LANG_NEUTRAL);
@@ -1238,7 +1236,6 @@ static void test_GdipGetFontCollectionFamilyList(void)
     status = GdipGetFontCollectionFamilyList(collection, 1, &family2, &found);
     ok(status == Ok, "Failed to get family list, status %d.\n", status);
     ok(found == 1, "Unexpected list count %d.\n", found);
-todo_wine
     ok(family2 == family, "Unexpected family instance.\n");
 
     status = GdipDeleteFontFamily(family);
@@ -1338,7 +1335,6 @@ static void test_CloneFont(void)
     expect(Ok, status);
 
     ret = is_family_in_collection(collection, family);
-todo_wine
     ok(ret, "family is not in collection\n");
 
     status = GdipCreateFont(family, 30.0f, FontStyleRegular, UnitPixel, &font);
@@ -1358,7 +1354,6 @@ todo_wine
 
     status = GdipGetFamily(font, &family2);
     expect(Ok, status);
-todo_wine
     ok(family == family2, "got %p\n", family2);
 
     status = GdipCloneFont(font, &font2);
@@ -1378,7 +1373,6 @@ todo_wine
 
     status = GdipGetFamily(font2, &family2);
     expect(Ok, status);
-todo_wine
     ok(family == family2, "got %p\n", family2);
 
     GdipDeleteFont(font2);
