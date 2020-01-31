@@ -632,7 +632,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             i = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, NULL, 0, NULL, NULL)*3;
             if(!i) {
                 jsstr_release(str);
-                return throw_uri_error(ctx, JS_E_INVALID_URI_CHAR, NULL);
+                return JS_E_INVALID_URI_CHAR;
             }
 
             len += i;
@@ -710,7 +710,7 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
             if(!res) {
                 jsstr_release(str);
-                return throw_uri_error(ctx, JS_E_INVALID_URI_CODING, NULL);
+                return JS_E_INVALID_URI_CODING;
             }
 
             ptr += i*3+2;
@@ -783,7 +783,7 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
             size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, NULL, 0, NULL, NULL);
             if(!size) {
                 jsstr_release(str);
-                return throw_uri_error(ctx, JS_E_INVALID_URI_CHAR, NULL);
+                return JS_E_INVALID_URI_CHAR;
             }
             len += size*3;
         }

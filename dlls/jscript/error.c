@@ -445,11 +445,6 @@ HRESULT throw_type_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
     return throw_error(ctx, error, str, ctx->type_error_constr);
 }
 
-HRESULT throw_uri_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->uri_error_constr);
-}
-
 jsdisp_t *create_builtin_error(script_ctx_t *ctx)
 {
     jsdisp_t *constr = ctx->error_constr, *r;
