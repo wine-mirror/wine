@@ -435,11 +435,6 @@ static HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str, j
     return error;
 }
 
-HRESULT throw_regexp_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->regexp_error_constr);
-}
-
 HRESULT throw_syntax_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
 {
     return throw_error(ctx, error, str, ctx->syntax_error_constr);

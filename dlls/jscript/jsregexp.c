@@ -935,7 +935,7 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                     if(is_class(jsdisp, JSCLASS_REGEXP)) {
                         if(argc > 1 && !is_undefined(argv[1])) {
                             jsdisp_release(jsdisp);
-                            return throw_regexp_error(ctx, JS_E_REGEXP_SYNTAX, NULL);
+                            return JS_E_REGEXP_SYNTAX;
                         }
 
                         if(r)
