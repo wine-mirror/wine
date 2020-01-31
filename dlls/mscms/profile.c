@@ -1565,6 +1565,16 @@ BOOL WINAPI WcsGetDefaultColorProfileSize( WCS_PROFILE_MANAGEMENT_SCOPE scope, P
 }
 
 /******************************************************************************
+ * WcsGetDefaultRednderingIntent      [MSCMS.@]
+ */
+BOOL WINAPI WcsGetDefaultRenderingIntent( WCS_PROFILE_MANAGEMENT_SCOPE scope, PDWORD intent)
+{
+    FIXME( "%d %p\n", scope, intent );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+/******************************************************************************
  * WcsOpenColorProfileA               [MSCMS.@]
  */
 HPROFILE WINAPI WcsOpenColorProfileA( PROFILE *cdm, PROFILE *camp, PROFILE *gmmp, DWORD access, DWORD sharing,
