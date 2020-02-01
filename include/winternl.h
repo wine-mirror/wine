@@ -1456,7 +1456,9 @@ typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
     LARGE_INTEGER liKeSystemTime;
     LARGE_INTEGER liExpTimeZoneBias;
     ULONG uCurrentTimeZoneId;
-    DWORD dwUnknown1[5];
+    ULONG Reserved;
+    ULONGLONG BootTimeBias;
+    ULONGLONG SleepTimeBias;
 #else
     BYTE Reserved1[48];
 #endif
