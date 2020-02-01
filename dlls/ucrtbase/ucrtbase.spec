@@ -357,7 +357,7 @@
 @ cdecl _fwrite_nolock(ptr long long ptr) MSVCRT__fwrite_nolock
 @ cdecl _gcvt(double long str) MSVCRT__gcvt
 @ cdecl _gcvt_s(ptr long  double long) MSVCRT__gcvt_s
-@ stub _get_FMA3_enable
+@ cdecl -arch=win64 _get_FMA3_enable() MSVCRT__get_FMA3_enable
 @ cdecl _get_current_locale() MSVCRT__get_current_locale
 @ cdecl _get_daylight(ptr)
 @ cdecl _get_doserrno(ptr)

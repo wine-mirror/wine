@@ -119,6 +119,20 @@ int CDECL MSVCRT__set_SSE2_enable(int flag)
 
 #if defined(_WIN64) && _MSVCR_VER>=120
 /*********************************************************************
+ *      _get_FMA3_enable (MSVCR120.@)
+ */
+int CDECL MSVCRT__get_FMA3_enable(void)
+{
+    #if !defined(__FMA__) && defined(__AVX2__)
+        #define __FMA__ 1
+    #endif
+    #if defined(__FMA__)
+        return 1;
+    #endif
+    return 0;
+}
+
+/*********************************************************************
  *      _set_FMA3_enable (MSVCR120.@)
  */
 int CDECL MSVCRT__set_FMA3_enable(int flag)

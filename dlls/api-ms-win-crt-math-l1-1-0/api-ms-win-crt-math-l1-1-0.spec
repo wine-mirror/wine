@@ -81,7 +81,7 @@
 @ cdecl _fpclass(double) ucrtbase._fpclass
 @ stub _fpclassf
 @ cdecl -arch=i386 -ret64 _ftol() ucrtbase._ftol
-@ stub _get_FMA3_enable
+@ cdecl -arch=win64 _get_FMA3_enable() ucrtbase._get_FMA3_enable
 @ cdecl _hypot(double double) ucrtbase._hypot
 @ cdecl _hypotf(float float) ucrtbase._hypotf
 @ cdecl _isnan(double) ucrtbase._isnan
