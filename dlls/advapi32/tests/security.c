@@ -2928,11 +2928,11 @@ static void test_process_security(void)
     dom_size = sizeof(domain);
     ret = LookupAccountSidA( NULL, UsersSid, account, &acc_size, domain, &dom_size, &use );
     ok(ret, "LookupAccountSid failed with %d\n", ret);
-    todo_wine ok(use == SidTypeGroup, "expect SidTypeGroup, got %d\n", use);
+    ok(use == SidTypeGroup, "expect SidTypeGroup, got %d\n", use);
     if (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH)
         skip("Non-English locale (test with hardcoded 'None')\n");
     else
-        todo_wine ok(!strcmp(account, "None"), "expect None, got %s\n", account);
+        ok(!strcmp(account, "None"), "expect None, got %s\n", account);
 
     res = GetTokenInformation( token, TokenUser, NULL, 0, &size );
     ok(!res, "Expected failure, got %d\n", res);
