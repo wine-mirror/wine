@@ -403,6 +403,7 @@ static void test_LsaLookupSids(void)
 
     ok(names[0].Use == SidTypeUnknown, "got type %u\n", names[0].Use);
     ok(names[0].DomainIndex == -1, "got index %u\n", names[0].DomainIndex);
+    check_unicode_string(&names[0].Name, L"S-1-1234-5678-1234-5678");
 
     LsaFreeMemory(names);
     LsaFreeMemory(list);

@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "sddl.h"
 #include "advapi32_misc.h"
 
 #include "wine/debug.h"
@@ -486,6 +487,7 @@ NTSTATUS WINAPI LsaLookupSids(
     WCHAR *name_buffer;
     char *domain_data;
     SID_NAME_USE use;
+    WCHAR *strsid;
 
     TRACE("(%p, %u, %p, %p, %p)\n", PolicyHandle, Count, Sids, ReferencedDomains, Names);
 
@@ -561,6 +563,14 @@ NTSTATUS WINAPI LsaLookupSids(
                 domain.MaximumLength = sizeof(WCHAR);
             }
         }
+        else if (ConvertSidToStringSidW(Sids[i], &strsid))
+        {
+            (*Names)[i].Name.Length = strlenW(strsid) * sizeof(WCHAR);
+            (*Names)[i].Name.MaximumLength = (strlenW(strsid) + 1) * sizeof(WCHAR);
+            name_fullsize += (strlenW(strsid) + 1) * sizeof(WCHAR);
+
+            LocalFree(strsid);
+        }
     }
 
     /* now we have full length needed for both */
@@ -576,6 +586,8 @@ NTSTATUS WINAPI LsaLookupSids(
     for (i = 0; i < Count; i++)
     {
         name_size = domain_size = 0;
+
+        (*Names)[i].Name.Buffer = name_buffer;
 
         if (!LookupAccountSidW(NULL, Sids[i], NULL, &name_size, NULL, &domain_size, &use) &&
             GetLastError() == ERROR_INSUFFICIENT_BUFFER)
@@ -596,15 +608,19 @@ NTSTATUS WINAPI LsaLookupSids(
 
             domain.Buffer = heap_alloc(domain.MaximumLength);
 
-            (*Names)[i].Name.Buffer = name_buffer;
             LookupAccountSidW(NULL, Sids[i], (*Names)[i].Name.Buffer, &name_size, domain.Buffer, &domain_size, &use);
             (*Names)[i].Use = use;
 
             (*Names)[i].DomainIndex = lsa_reflist_add_domain(*ReferencedDomains, &domain, &domain_data);
             heap_free(domain.Buffer);
         }
+        else if (ConvertSidToStringSidW(Sids[i], &strsid))
+        {
+            strcpyW((*Names)[i].Name.Buffer, strsid);
+            LocalFree(strsid);
+        }
 
-        name_buffer += name_size;
+        name_buffer += strlenW(name_buffer) + 1;
     }
     TRACE("mapped %u out of %u\n", mapped, Count);
 
