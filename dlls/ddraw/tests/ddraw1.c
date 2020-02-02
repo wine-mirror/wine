@@ -1254,8 +1254,8 @@ static void test_coop_level_threaded(void)
     hr = IDirectDraw_SetCooperativeLevel(ddraw, p.window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
-    IDirectDraw_Release(ddraw);
     destroy_window_thread(&p);
+    IDirectDraw_Release(ddraw);
 }
 
 static ULONG get_refcount(IUnknown *test_iface)

@@ -1314,8 +1314,8 @@ static void test_coop_level_threaded(void)
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, p.window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
-    IDirectDraw4_Release(ddraw);
     destroy_window_thread(&p);
+    IDirectDraw4_Release(ddraw);
 }
 
 static void test_depth_blit(void)
