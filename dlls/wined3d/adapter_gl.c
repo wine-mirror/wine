@@ -4851,7 +4851,7 @@ static void wined3d_view_gl_destroy(struct wined3d_device *device,
     ctx->free = ctx != &c ? ctx : NULL;
 
     wined3d_cs_destroy_object(device->cs, wined3d_view_gl_destroy_object, ctx);
-    if (!ctx->free)
+    if (ctx == &c)
         device->cs->ops->finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 }
 
