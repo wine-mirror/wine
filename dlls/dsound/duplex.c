@@ -28,7 +28,6 @@
 #include "winuser.h"
 #include "mmsystem.h"
 #include "mmddk.h"
-#include "winternl.h"
 #include "wine/debug.h"
 #include "dsound.h"
 #include "dsound_private.h"

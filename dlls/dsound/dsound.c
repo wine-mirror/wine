@@ -30,7 +30,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "winternl.h"
 #include "mmddk.h"
 #include "wingdi.h"
 #include "mmreg.h"

@@ -41,7 +41,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "mmsystem.h"
-#include "winternl.h"
 #include "wine/debug.h"
 #include "dsound.h"
 #include "dsound_private.h"

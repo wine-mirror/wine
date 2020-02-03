@@ -28,7 +28,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "mmsystem.h"
-#include "winternl.h"
 #include "winnls.h"
 #include "vfwmsgs.h"
 #include "mmddk.h"

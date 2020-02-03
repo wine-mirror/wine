@@ -136,7 +136,7 @@ struct IDirectSoundBufferImpl
     LONG                        ref, refn, ref3D, refiks;
     /* IDirectSoundBufferImpl fields */
     DirectSoundDevice*          device;
-    RTL_RWLOCK                  lock;
+    SRWLOCK                     lock;
     PWAVEFORMATEX               pwfx;
     BufferMemory*               buffer;
     DWORD                       playflags,state,leadin;

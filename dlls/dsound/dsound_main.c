@@ -43,7 +43,6 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "mmsystem.h"
-#include "winternl.h"
 #include "mmddk.h"
 #include "wine/debug.h"
 #include "dsound.h"
