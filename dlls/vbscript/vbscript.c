@@ -465,7 +465,7 @@ static HRESULT WINAPI VBScript_QueryInterface(IActiveScript *iface, REFIID riid,
         TRACE("(%p)->(IID_IObjectSafety %p)\n", This, ppv);
         *ppv = &This->IObjectSafety_iface;
     }else {
-        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
         return E_NOINTERFACE;
     }
