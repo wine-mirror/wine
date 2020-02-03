@@ -6034,12 +6034,10 @@ static void test_NormalizeString(void)
             dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, NULL, 0 );
             ok( dstlen > lstrlenW(ptest->str), "%s:%d: wrong len %d / %d\n",
                 wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW(ptest->str) );
-            todo_wine
             ok(GetLastError() == ERROR_SUCCESS, "%s:%d: got error %u\n",
                wine_dbgstr_w(ptest->str), i, GetLastError());
             SetLastError(0xdeadbeef);
             dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, dst, dstlen );
-            todo_wine
             ok(GetLastError() == ERROR_SUCCESS, "%s:%d: got error %u\n",
                wine_dbgstr_w(ptest->str), i, GetLastError());
             ok(dstlen == lstrlenW( dst )+1, "%s:%d: Copied length differed: was %d, should be %d\n",
@@ -6086,33 +6084,33 @@ static void test_NormalizeString(void)
 
     SetLastError(0xdeadbeef);
     dstlen = pNormalizeString( NormalizationD, part0_str1, -1, dst, 1 );
-    todo_wine ok( dstlen <= 0, "wrong len %d\n", dstlen );
+    ok( dstlen <= 0, "wrong len %d\n", dstlen );
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     dstlen = pNormalizeString( NormalizationC, part0_str2, -1, dst, 1 );
-    todo_wine ok( dstlen <= 0, "wrong len %d\n", dstlen );
+    ok( dstlen <= 0, "wrong len %d\n", dstlen );
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     dstlen = pNormalizeString( NormalizationC, part0_str2, -1, NULL, 0 );
     ok( dstlen == 12, "wrong len %d\n", dstlen );
-    todo_wine ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     dstlen = pNormalizeString( NormalizationC, part0_str2, -1, dst, 3 );
     ok( dstlen == 3, "wrong len %d\n", dstlen );
-    todo_wine ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     dstlen = pNormalizeString( NormalizationC, part0_str2, 0, NULL, 0 );
     ok( dstlen == 0, "wrong len %d\n", dstlen );
-    todo_wine ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     dstlen = pNormalizeString( NormalizationC, part0_str2, 0, dst, 3 );
     ok( dstlen == 0, "wrong len %d\n", dstlen );
-    todo_wine ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
 
     /* size estimations */
 
@@ -6144,11 +6142,11 @@ static void test_NormalizeString(void)
         if (i == 0 || i == 2)
         {
             ok( dstlen == srclen, "%d: wrong len %d\n", i, dstlen );
-            todo_wine ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+            ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
         }
         else
         {
-            todo_wine ok( dstlen < -expect, "%d: wrong len %d\n", i, dstlen );
+            ok( dstlen < -expect, "%d: wrong len %d\n", i, dstlen );
             ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
         }
         if (pRtlNormalizeString)
@@ -6185,12 +6183,13 @@ static void test_NormalizeString(void)
         case NormalizationKD:
         case 13:  /* Idn */
             todo_wine_if (i == 13)
+            {
             ok( dstlen > 0, "%d: wrong len %d\n", i, dstlen );
-            todo_wine ok( GetLastError() == ERROR_SUCCESS, "%d: got error %u\n", i, GetLastError());
+            ok( GetLastError() == ERROR_SUCCESS, "%d: got error %u\n", i, GetLastError());
+            }
             break;
         default:
             ok( dstlen <= 0, "%d: wrong len %d\n", i, dstlen );
-            todo_wine_if (i)
             ok( GetLastError() == ERROR_INVALID_PARAMETER, "%d: got error %u\n", i, GetLastError());
             break;
         }

@@ -4923,7 +4923,19 @@ INT WINAPI DECLSPEC_HOTPATCH MultiByteToWideChar( UINT codepage, DWORD flags, co
 INT WINAPI DECLSPEC_HOTPATCH NormalizeString(NORM_FORM form, const WCHAR *src, INT src_len,
                                              WCHAR *dst, INT dst_len)
 {
-    set_ntstatus( RtlNormalizeString( form, src, src_len, dst, &dst_len ));
+    NTSTATUS status = RtlNormalizeString( form, src, src_len, dst, &dst_len );
+
+    switch (status)
+    {
+    case STATUS_OBJECT_NAME_NOT_FOUND:
+        status = STATUS_INVALID_PARAMETER;
+        break;
+    case STATUS_BUFFER_TOO_SMALL:
+    case STATUS_NO_UNICODE_TRANSLATION:
+        dst_len = -dst_len;
+        break;
+    }
+    SetLastError( RtlNtStatusToDosError( status ));
     return dst_len;
 }
 
