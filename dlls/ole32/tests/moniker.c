@@ -92,6 +92,24 @@ todo_wine_if(todo)
     ok_(__FILE__, line)(type2 == type, "Unexpected moniker type %d.\n", type2);
 }
 
+#define TEST_DISPLAY_NAME(m,name) _test_moniker_name(m, name, __LINE__)
+static void _test_moniker_name(IMoniker *moniker, const WCHAR *name, int line)
+{
+    WCHAR *display_name;
+    IBindCtx *pbc;
+    HRESULT hr;
+
+    hr = CreateBindCtx(0, &pbc);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
+
+    hr = IMoniker_GetDisplayName(moniker, pbc, NULL, &display_name);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
+    ok_(__FILE__, line)(!lstrcmpW(display_name, name), "Unexpected display name %s.\n", wine_dbgstr_w(display_name));
+
+    CoTaskMemFree(display_name);
+    IBindCtx_Release(pbc);
+}
+
 static IMoniker *create_antimoniker(DWORD level)
 {
     LARGE_INTEGER pos;
@@ -3221,6 +3239,104 @@ static void test_save_load_filemoniker(void)
     IStream_Release(pStm);
 }
 
+static void test_MonikerCommonPrefixWith(void)
+{
+    IMoniker *moniker, *item, *file1, *file2, *composite, *composite2;
+    HRESULT hr;
+
+    moniker = (void *)0xdeadbeef;
+    hr = MonikerCommonPrefixWith(NULL, NULL, &moniker);
+todo_wine {
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+    ok(!moniker, "Unexpected pointer.\n");
+}
+    if (hr == E_NOTIMPL)
+        return;
+
+    hr = CreateItemMoniker(L"!", L"Item", &item);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    hr = MonikerCommonPrefixWith(item, NULL, &moniker);
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+
+    hr = MonikerCommonPrefixWith(NULL, item, &moniker);
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+
+    hr = MonikerCommonPrefixWith(item, item, &moniker);
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+
+    hr = CreateFileMoniker(L"C:\\test.txt", &file1);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    hr = MonikerCommonPrefixWith(file1, NULL, &moniker);
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+
+    hr = MonikerCommonPrefixWith(NULL, file1, &moniker);
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+
+    /* F x F */
+    hr = MonikerCommonPrefixWith(file1, file1, &moniker);
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+
+    hr = CreateFileMoniker(L"C:\\a\\test.txt", &file2);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    /* F1 x F2 */
+    hr = MonikerCommonPrefixWith(file1, file2, &moniker);
+    ok(hr == MK_E_NOPREFIX, "Unexpected hr %#x.\n", hr);
+
+    hr = CreateGenericComposite(file1, item, &composite);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    hr = CreateGenericComposite(file2, item, &composite2);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+
+    /* F x (F,I) -> F */
+    hr = MonikerCommonPrefixWith(file1, composite, &moniker);
+    ok(hr == MK_S_ME, "Unexpected hr %#x.\n", hr);
+    ok(moniker == file1, "Unexpected pointer.\n");
+    IMoniker_Release(moniker);
+
+    /* F1 x (F2,I) -> F */
+    hr = MonikerCommonPrefixWith(file1, composite2, &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker, MKSYS_FILEMONIKER);
+    TEST_DISPLAY_NAME(moniker, L"C:\\");
+    IMoniker_Release(moniker);
+
+    /* (F2,I) x F1 -> F */
+    hr = MonikerCommonPrefixWith(composite2, file1, &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker, MKSYS_FILEMONIKER);
+    TEST_DISPLAY_NAME(moniker, L"C:\\");
+    IMoniker_Release(moniker);
+
+    /* (F,I) x (F) -> F */
+    hr = MonikerCommonPrefixWith(composite, file1, &moniker);
+    ok(hr == MK_S_HIM, "Unexpected hr %#x.\n", hr);
+    ok(moniker == file1, "Unexpected pointer.\n");
+    IMoniker_Release(moniker);
+
+    /* (F,I) x (F,I) -> (F,I) */
+    hr = MonikerCommonPrefixWith(composite, composite, &moniker);
+    ok(hr == MK_S_US, "Unexpected hr %#x.\n", hr);
+    TEST_MONIKER_TYPE(moniker, MKSYS_GENERICCOMPOSITE);
+    TEST_DISPLAY_NAME(moniker, L"C:\\test.txt!Item");
+    ok(moniker != composite, "Unexpected pointer.\n");
+    IMoniker_Release(moniker);
+
+    /* (F1,I) x (F2,I) -> () */
+    hr = MonikerCommonPrefixWith(composite, composite2, &moniker);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!moniker, "Unexpected pointer %p.\n", moniker);
+
+    IMoniker_Release(composite2);
+    IMoniker_Release(composite);
+    IMoniker_Release(file2);
+    IMoniker_Release(file1);
+    IMoniker_Release(item);
+}
+
 START_TEST(moniker)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -3235,6 +3351,7 @@ START_TEST(moniker)
     test_generic_composite_moniker();
     test_pointer_moniker();
     test_save_load_filemoniker();
+    test_MonikerCommonPrefixWith();
 
     /* FIXME: test moniker creation funcs and parsing other moniker formats */
 
