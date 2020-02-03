@@ -1686,7 +1686,7 @@ fi
 WINE_NOTICE_WITH(udev,[test "x$UDEV_LIBS" = "x"],
                  [libudev ${notice_platform}development files not found, plug and play won't be supported.])
 
-dnl **** Check for libuwind ****
+dnl **** Check for libunwind ****
 if test "x$with_unwind" != xno
 then
     WINE_PACKAGE_FLAGS(UNWIND,[libunwind],[-lunwind],,,
