@@ -459,12 +459,12 @@ static MSVCRT_size_t MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcst
 
     if(!mbstr) {
         tmp = WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
-                *wcstr, -1, NULL, 0, NULL, &used_default)-1;
+                *wcstr, -1, NULL, 0, NULL, &used_default);
         if(!tmp || used_default) {
             *MSVCRT__errno() = MSVCRT_EILSEQ;
             return -1;
         }
-        return tmp;
+        return tmp-1;
     }
 
     while(**wcstr) {

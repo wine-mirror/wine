@@ -2300,7 +2300,7 @@ static void test__wcstombs_s_l(void)
         { L"text",   _TRUNCATE, "",     1, 1,  STRUNCATE, NULL, FALSE, TRUE },
         { L"text",   5,         "",     3, 0,  ERANGE,    NULL, TRUE },
 
-        { L"",       0,         NULL,   0, 1,  0,         "English_United States.1252", TRUE, TRUE },
+        { L"",       0,         NULL,   0, 1,  0,         "English_United States.1252" },
         { L"\xfffd", 1,         NULL,   0, 0,  EILSEQ,    "English_United States.1252", TRUE },
         { L"\xfffd", 1,         "",     1, 0,  EILSEQ,    "English_United States.1252", TRUE },
         { L"\xfffd", 1,         "",     6, 0,  EILSEQ,    "English_United States.1252", TRUE },
