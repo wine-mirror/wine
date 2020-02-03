@@ -223,6 +223,10 @@ void reset_ei(jsexcept_t *ei)
         jsstr_release(ei->source);
         ei->source = NULL;
     }
+    if(ei->message) {
+        jsstr_release(ei->message);
+        ei->message = NULL;
+    }
 }
 
 void enter_script(script_ctx_t *ctx, jsexcept_t *ei)

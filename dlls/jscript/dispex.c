@@ -1978,6 +1978,8 @@ static HRESULT disp_invoke(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD f
         ctx->ei->error = (SUCCEEDED(ei.scode) || ei.scode == DISP_E_EXCEPTION) ? E_FAIL : ei.scode;
         if(ei.bstrSource)
             ctx->ei->source = jsstr_alloc_len(ei.bstrSource, SysStringLen(ei.bstrSource));
+        if(ei.bstrDescription)
+            ctx->ei->message = jsstr_alloc_len(ei.bstrDescription, SysStringLen(ei.bstrDescription));
         SysFreeString(ei.bstrSource);
         SysFreeString(ei.bstrDescription);
         SysFreeString(ei.bstrHelpFile);

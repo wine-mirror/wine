@@ -228,6 +228,7 @@ struct _jsexcept_t {
     jsval_t value;
 
     jsstr_t *source;
+    jsstr_t *message;
 
     bytecode_t *code;
     unsigned loc;

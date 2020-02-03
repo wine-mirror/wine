@@ -867,6 +867,7 @@ static void set_error_value(script_ctx_t *ctx, jsval_t value)
 
     if(is_object_instance(value) && get_object(value) && (obj = to_jsdisp(get_object(value)))) {
         UINT32 number;
+        jsstr_t *str;
         jsval_t v;
         HRESULT hres;
 
@@ -879,8 +880,15 @@ static void set_error_value(script_ctx_t *ctx, jsval_t value)
                 ei->error = FAILED(number) ? number : E_FAIL;
             jsval_release(v);
         }
-    }
 
+        hres = jsdisp_propget_name(obj, L"description", &v);
+        if(SUCCEEDED(hres)) {
+            hres = to_string(ctx, v, &str);
+            if(SUCCEEDED(hres))
+                ei->message = str;
+            jsval_release(v);
+        }
+    }
 }
 
 /* ECMA-262 3rd Edition    12.13 */
@@ -2769,8 +2777,10 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     }
 
     frame = ctx->call_ctx;
-    if(exception_hres != DISP_E_EXCEPTION)
+    if(exception_hres != DISP_E_EXCEPTION) {
+        reset_ei(ei);
         ei->error = exception_hres;
+    }
     set_error_location(ei, frame->bytecode, frame->bytecode->instrs[frame->ip].loc, IDS_RUNTIME_ERROR);
 
     while(!frame->except_frame) {

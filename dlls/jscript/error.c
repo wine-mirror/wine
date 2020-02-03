@@ -455,6 +455,8 @@ void set_error_location(jsexcept_t *ei, bytecode_t *code, unsigned loc, unsigned
             len = LoadStringW(jscript_hinstance, source_id, (WCHAR*)&res, 0);
             ei->source = jsstr_alloc_len(res, len);
         }
+        if(!ei->message)
+            ei->message = format_error_message(ei->error, NULL);
     }
 
     TRACE("source %s in %s\n", debugstr_w(code->source + loc), debugstr_w(code->source));
@@ -538,6 +540,6 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         }
     }
 
-    hres = create_error(ctx, constr, ei->error, jsstr_empty(), &r);
+    hres = create_error(ctx, constr, ei->error, ei->message ? ei->message : jsstr_empty(), &r);
     return SUCCEEDED(hres) ? r : NULL;
 }
