@@ -836,9 +836,10 @@ static const WCHAR *get_ligature( WCHAR wc )
 }
 
 
-static int expand_ligatures( const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
+static NTSTATUS expand_ligatures( const WCHAR *src, int srclen, WCHAR *dst, int *dstlen )
 {
     int i, len, pos = 0;
+    NTSTATUS ret = STATUS_SUCCESS;
     const WCHAR *expand;
 
     for (i = 0; i < srclen; i++)
@@ -850,30 +851,93 @@ static int expand_ligatures( const WCHAR *src, int srclen, WCHAR *dst, int dstle
         }
         else len = lstrlenW( expand );
 
-        if (dstlen)
+        if (*dstlen && ret == STATUS_SUCCESS)
         {
-            if (pos + len > dstlen) break;
-            memcpy( dst + pos, expand, len * sizeof(WCHAR) );
+            if (pos + len <= *dstlen) memcpy( dst + pos, expand, len * sizeof(WCHAR) );
+            else ret = STATUS_BUFFER_TOO_SMALL;
         }
         pos += len;
     }
-    return pos;
+    *dstlen = pos;
+    return ret;
 }
 
 
-static int fold_digits( const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
+static NTSTATUS fold_digits( const WCHAR *src, int srclen, WCHAR *dst, int *dstlen )
 {
     extern const WCHAR wine_digitmap[] DECLSPEC_HIDDEN;
-    int i;
+    int i, len = *dstlen;
 
-    if (!dstlen) return srclen;
-    if (srclen > dstlen) return 0;
+    *dstlen = srclen;
+    if (!len) return STATUS_SUCCESS;
+    if (srclen > len) return STATUS_BUFFER_TOO_SMALL;
     for (i = 0; i < srclen; i++)
     {
         WCHAR digit = get_table_entry( wine_digitmap, src[i] );
         dst[i] = digit ? digit : src[i];
     }
-    return srclen;
+    return STATUS_SUCCESS;
+}
+
+
+static NTSTATUS fold_string( DWORD flags, const WCHAR *src, int srclen, WCHAR *dst, int *dstlen )
+{
+    NTSTATUS ret;
+    WCHAR *tmp;
+
+    switch (flags)
+    {
+    case MAP_PRECOMPOSED:
+        return RtlNormalizeString( NormalizationC, src, srclen, dst, dstlen );
+    case MAP_FOLDCZONE:
+    case MAP_PRECOMPOSED | MAP_FOLDCZONE:
+        return RtlNormalizeString( NormalizationKC, src, srclen, dst, dstlen );
+    case MAP_COMPOSITE:
+        return RtlNormalizeString( NormalizationD, src, srclen, dst, dstlen );
+    case MAP_COMPOSITE | MAP_FOLDCZONE:
+        return RtlNormalizeString( NormalizationKD, src, srclen, dst, dstlen );
+    case MAP_FOLDDIGITS:
+        return fold_digits( src, srclen, dst, dstlen );
+    case MAP_EXPAND_LIGATURES:
+    case MAP_EXPAND_LIGATURES | MAP_FOLDCZONE:
+        return expand_ligatures( src, srclen, dst, dstlen );
+    case MAP_FOLDDIGITS | MAP_PRECOMPOSED:
+        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) )))
+            return STATUS_NO_MEMORY;
+        fold_digits( src, srclen, tmp, &srclen );
+        ret = RtlNormalizeString( NormalizationC, tmp, srclen, dst, dstlen );
+        break;
+    case MAP_FOLDDIGITS | MAP_FOLDCZONE:
+    case MAP_FOLDDIGITS | MAP_PRECOMPOSED | MAP_FOLDCZONE:
+        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) )))
+            return STATUS_NO_MEMORY;
+        fold_digits( src, srclen, tmp, &srclen );
+        ret = RtlNormalizeString( NormalizationKC, tmp, srclen, dst, dstlen );
+        break;
+    case MAP_FOLDDIGITS | MAP_COMPOSITE:
+        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) )))
+            return STATUS_NO_MEMORY;
+        fold_digits( src, srclen, tmp, &srclen );
+        ret = RtlNormalizeString( NormalizationD, tmp, srclen, dst, dstlen );
+        break;
+    case MAP_FOLDDIGITS | MAP_COMPOSITE | MAP_FOLDCZONE:
+        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) )))
+            return STATUS_NO_MEMORY;
+        fold_digits( src, srclen, tmp, &srclen );
+        ret = RtlNormalizeString( NormalizationKD, tmp, srclen, dst, dstlen );
+        break;
+    case MAP_EXPAND_LIGATURES | MAP_FOLDDIGITS:
+    case MAP_EXPAND_LIGATURES | MAP_FOLDDIGITS | MAP_FOLDCZONE:
+        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) )))
+            return STATUS_NO_MEMORY;
+        fold_digits( src, srclen, tmp, &srclen );
+        ret = expand_ligatures( tmp, srclen, dst, dstlen );
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER_1;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, tmp );
+    return ret;
 }
 
 
@@ -3280,8 +3344,9 @@ INT WINAPI DECLSPEC_HOTPATCH FindStringOrdinal( DWORD flag, const WCHAR *src, IN
  */
 INT WINAPI DECLSPEC_HOTPATCH FoldStringW( DWORD flags, LPCWSTR src, INT srclen, LPWSTR dst, INT dstlen )
 {
-    WCHAR *tmp;
-    int ret;
+    NTSTATUS status;
+    WCHAR *buf = dst;
+    int len = dstlen;
 
     if (!src || !srclen || dstlen < 0 || (dstlen && !dst) || src == dst)
     {
@@ -3290,60 +3355,36 @@ INT WINAPI DECLSPEC_HOTPATCH FoldStringW( DWORD flags, LPCWSTR src, INT srclen, 
     }
     if (srclen == -1) srclen = lstrlenW(src) + 1;
 
-    switch (flags)
+    if (!dstlen && (flags & (MAP_PRECOMPOSED | MAP_FOLDCZONE | MAP_COMPOSITE)))
     {
-    case MAP_PRECOMPOSED:
-        return NormalizeString( NormalizationC, src, srclen, dst, dstlen );
-    case MAP_FOLDCZONE:
-    case MAP_PRECOMPOSED | MAP_FOLDCZONE:
-        return NormalizeString( NormalizationKC, src, srclen, dst, dstlen );
-    case MAP_COMPOSITE:
-        return NormalizeString( NormalizationD, src, srclen, dst, dstlen );
-    case MAP_COMPOSITE | MAP_FOLDCZONE:
-        return NormalizeString( NormalizationKD, src, srclen, dst, dstlen );
-    case MAP_FOLDDIGITS:
-        return fold_digits( src, srclen, dst, dstlen );
-    case MAP_EXPAND_LIGATURES:
-    case MAP_EXPAND_LIGATURES | MAP_FOLDCZONE:
-        return expand_ligatures( src, srclen, dst, dstlen );
-    case MAP_FOLDDIGITS | MAP_PRECOMPOSED:
-        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) ))) break;
-        if (!(ret = fold_digits( src, srclen, tmp, srclen ))) break;
-        ret = NormalizeString( NormalizationC, tmp, srclen, dst, dstlen );
-        break;
-    case MAP_FOLDDIGITS | MAP_FOLDCZONE:
-    case MAP_FOLDDIGITS | MAP_PRECOMPOSED | MAP_FOLDCZONE:
-        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) ))) break;
-        if (!(ret = fold_digits( src, srclen, tmp, srclen ))) break;
-        ret = NormalizeString( NormalizationKC, tmp, srclen, dst, dstlen );
-        break;
-    case MAP_FOLDDIGITS | MAP_COMPOSITE:
-        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) ))) break;
-        if (!(ret = fold_digits( src, srclen, tmp, srclen ))) break;
-        ret = NormalizeString( NormalizationD, tmp, srclen, dst, dstlen );
-        break;
-    case MAP_FOLDDIGITS | MAP_COMPOSITE | MAP_FOLDCZONE:
-        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) ))) break;
-        if (!(ret = fold_digits( src, srclen, tmp, srclen ))) break;
-        ret = NormalizeString( NormalizationKD, tmp, srclen, dst, dstlen );
-        break;
-    case MAP_EXPAND_LIGATURES | MAP_FOLDDIGITS:
-    case MAP_EXPAND_LIGATURES | MAP_FOLDDIGITS | MAP_FOLDCZONE:
-        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, srclen * sizeof(WCHAR) ))) break;
-        if (!(ret = fold_digits( src, srclen, tmp, srclen ))) break;
-        ret = expand_ligatures( tmp, srclen, dst, dstlen );
-        break;
-    default:
+        len = srclen * 4;
+        if (!(buf = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+    }
+
+    for (;;)
+    {
+        status = fold_string( flags, src, srclen, buf, &len );
+        if (buf != dst) RtlFreeHeap( GetProcessHeap(), 0, buf );
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
+        if (!(buf = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+    }
+    if (status == STATUS_INVALID_PARAMETER_1)
+    {
         SetLastError( ERROR_INVALID_FLAGS );
         return 0;
     }
-    if (!tmp)
-    {
-        SetLastError( ERROR_OUTOFMEMORY );
-        return 0;
-    }
-    RtlFreeHeap( GetProcessHeap(), 0, tmp );
-    return ret;
+    if (!set_ntstatus( status )) return 0;
+
+    if (dstlen && dstlen < len) SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    return len;
 }
 
 
