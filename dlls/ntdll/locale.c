@@ -82,6 +82,10 @@ static NLSTABLEINFO nls_info;
 static HMODULE kernel32_handle;
 static const union cptable *unix_table; /* NULL if UTF8 */
 
+extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
+extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
+extern const unsigned short combining_class_table[] DECLSPEC_HIDDEN;
+
 static NTSTATUS load_string( ULONG id, LANGID lang, WCHAR *buffer, ULONG len )
 {
     const IMAGE_RESOURCE_DATA_ENTRY *data;
@@ -146,6 +150,130 @@ static WCHAR casemap_ascii( WCHAR ch )
 {
     if (ch >= 'a' && ch <= 'z') ch -= 'a' - 'A';
     return ch;
+}
+
+
+static BYTE get_combining_class( WCHAR c )
+{
+    return combining_class_table[combining_class_table[combining_class_table[c >> 8] + ((c >> 4) & 0xf)] + (c & 0xf)];
+}
+
+
+static BOOL is_starter( WCHAR c )
+{
+    return !get_combining_class( c );
+}
+
+
+static BOOL reorderable_pair( WCHAR c1, WCHAR c2 )
+{
+    BYTE ccc1, ccc2;
+
+    /* reorderable if ccc1 > ccc2 > 0 */
+    ccc1 = get_combining_class( c1 );
+    if (ccc1 < 2) return FALSE;
+    ccc2 = get_combining_class( c2 );
+    return ccc2 && (ccc1 > ccc2);
+}
+
+
+static void canonical_order_substring( WCHAR *str, unsigned int len )
+{
+    unsigned int i;
+    BOOL swapped;
+
+    do
+    {
+        swapped = FALSE;
+        for (i = 0; i < len - 1; i++)
+        {
+            if (reorderable_pair( str[i], str[i + 1] ))
+            {
+                WCHAR tmp = str[i];
+                str[i] = str[i + 1];
+                str[i + 1] = tmp;
+                swapped = TRUE;
+            }
+        }
+    } while (swapped);
+}
+
+
+/****************************************************************************
+ *             canonical_order_string
+ *
+ * Reorder the string into canonical order - D108/D109.
+ *
+ * Starters (chars with combining class == 0) don't move, so look for continuous
+ * substrings of non-starters and only reorder those.
+ */
+static void canonical_order_string( WCHAR *str, unsigned int len )
+{
+    unsigned int i, next = 0;
+
+    for (i = 1; i <= len; i++)
+    {
+        if (i == len || is_starter( str[i] ))
+        {
+            if (i > next + 1) /* at least two successive non-starters */
+                canonical_order_substring( str + next, i - next );
+            next = i + 1;
+        }
+    }
+}
+
+
+static unsigned int decompose_string( int flags, const WCHAR *src, unsigned int src_len,
+                                      WCHAR *dst, unsigned int dst_len )
+{
+    unsigned int src_pos, dst_pos = 0, decomp_len;
+
+    for (src_pos = 0; src_pos < src_len; src_pos++)
+    {
+        if (dst_pos == dst_len) return 0;
+        decomp_len = wine_decompose( flags, src[src_pos], dst + dst_pos, dst_len - dst_pos );
+        if (decomp_len == 0) return 0;
+        dst_pos += decomp_len;
+    }
+
+    if (flags & WINE_DECOMPOSE_REORDER) canonical_order_string( dst, dst_pos );
+    return dst_pos;
+}
+
+
+static BOOL is_blocked( WCHAR *starter, WCHAR *ptr )
+{
+    if (ptr == starter + 1) return FALSE;
+    /* Because the string is already canonically ordered, the chars are blocked
+       only if the previous char's combining class is equal to the test char. */
+    if (get_combining_class( *(ptr - 1) ) == get_combining_class( *ptr )) return TRUE;
+    return FALSE;
+}
+
+
+static unsigned int compose_string( WCHAR *str, unsigned int len )
+{
+    unsigned int i, last_starter = len;
+    WCHAR pair[2], comp;
+
+    for (i = 0; i < len; i++)
+    {
+        pair[1] = str[i];
+        if (last_starter == len || is_blocked( str + last_starter, str + i ) || !(comp = wine_compose( pair )))
+        {
+            if (is_starter( str[i] ))
+            {
+                last_starter = i;
+                pair[0] = str[i];
+            }
+            continue;
+        }
+        str[last_starter] = pair[0] = comp;
+        len--;
+        memmove( str + i, str + i + 1, (len - i) * sizeof(WCHAR) );
+        i = last_starter;
+    }
+    return len;
 }
 
 
@@ -646,7 +774,7 @@ int ntdll_umbstowcs( DWORD flags, const char *src, int srclen, WCHAR *dst, int d
     if (status && status != STATUS_SOME_NOT_MAPPED) return -1;
     reslen /= sizeof(WCHAR);
 #ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
-    if (reslen && dst) RtlNormalizeString( NormalizationC, dst, reslen, dst, (int *)&reslen );
+    if (reslen && dst) reslen = compose_string( dst, reslen );
 #endif
     return reslen;
 }
@@ -1574,7 +1702,7 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
 
     if (!compose && *dst_len)
     {
-        res = wine_decompose_string( flags, src, src_len, dst, *dst_len );
+        res = decompose_string( flags, src, src_len, dst, *dst_len );
         if (!res)
         {
             status = STATUS_BUFFER_TOO_SMALL;
@@ -1582,23 +1710,24 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
         }
         buf = dst;
     }
-    else
+    else if (src_len)
     {
         buf_len = src_len * 4;
         for (;;)
         {
             buf = RtlAllocateHeap( GetProcessHeap(), 0, buf_len * sizeof(WCHAR) );
             if (!buf) return STATUS_NO_MEMORY;
-            res = wine_decompose_string( flags, src, src_len, buf, buf_len );
+            res = decompose_string( flags, src, src_len, buf, buf_len );
             if (res) break;
             buf_len *= 2;
             RtlFreeHeap( GetProcessHeap(), 0, buf );
         }
     }
+    else res = 0;
 
     if (compose)
     {
-        res = wine_compose_string( buf, res );
+        res = compose_string( buf, res );
         if (*dst_len >= res) memcpy( dst, buf, res * sizeof(WCHAR) );
     }
 

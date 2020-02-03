@@ -93,7 +93,6 @@ C_SRCS = \
 	lstat.c \
 	mbtowc.c \
 	mkstemps.c \
-	normalize.c \
 	poll.c \
 	pread.c \
 	pwrite.c \
