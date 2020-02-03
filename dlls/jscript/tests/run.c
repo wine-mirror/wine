@@ -2285,19 +2285,16 @@ static void test_error_reports(void)
             source_context = 0xdeadbeef;
             hres = IActiveScriptError_GetSourcePosition(script_error, &source_context, NULL, NULL);
             ok(hres == S_OK, "GetSourcePosition failed0x%08x\n", hres);
-            todo_wine
             ok(source_context == 10, "source_context = %x\n", source_context);
 
             line_number = 0xdeadbeef;
             hres = IActiveScriptError_GetSourcePosition(script_error, NULL, &line_number, NULL);
             ok(hres == S_OK, "GetSourcePosition failed%08x\n", hres);
-            todo_wine_if(tests[i].line)
             ok(line_number == tests[i].line, "[%u] line = %u expected %u\n", i, line_number, tests[i].line);
 
             character = 0xdeadbeef;
             hres = IActiveScriptError_GetSourcePosition(script_error, NULL, NULL, &character);
             ok(hres == S_OK, "GetSourcePosition failed: %08x\n", hres);
-            todo_wine_if(tests[i].character)
             ok(character == tests[i].character, "[%u] character = %u expected %u\n", i, character, tests[i].character);
 
             hres = IActiveScriptError_GetSourceLineText(script_error, NULL);

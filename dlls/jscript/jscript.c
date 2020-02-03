@@ -178,15 +178,32 @@ static HRESULT WINAPI JScriptError_GetExceptionInfo(IActiveScriptError *iface, E
 static HRESULT WINAPI JScriptError_GetSourcePosition(IActiveScriptError *iface, DWORD *source_context, ULONG *line, LONG *character)
 {
     JScriptError *This = impl_from_IActiveScriptError(iface);
+    bytecode_t *code = This->ei.code;
+    const WCHAR *nl, *p;
+    unsigned l;
 
-    FIXME("(%p)->(%p %p %p)\n", This, source_context, line, character);
+    TRACE("(%p)->(%p %p %p)\n", This, source_context, line, character);
+
+    if(!This->ei.code) {
+        FIXME("unknown position\n");
+        return E_FAIL;
+    }
 
     if(source_context)
-        *source_context = 0;
+        *source_context = This->ei.code->source_context;
+    if(!line && !character)
+        return S_OK;
+
+    l = code->start_line;
+    for(nl = p = code->source; p < code->source + This->ei.loc; p++) {
+        if(*p != '\n') continue;
+        l++;
+        nl = p + 1;
+    }
     if(line)
-        *line = 0;
+        *line = l;
     if(character)
-        *character = 0;
+        *character = code->source + This->ei.loc - nl;
     return S_OK;
 }
 
