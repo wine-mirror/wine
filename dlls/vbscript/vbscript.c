@@ -559,7 +559,7 @@ static HRESULT WINAPI VBScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE 
         return S_OK;
     }
 
-    if(!This->is_initialized || !This->ctx->site)
+    if(!This->is_initialized || (!This->ctx->site && ss != SCRIPTSTATE_CLOSED))
         return E_UNEXPECTED;
 
     switch(ss) {
@@ -572,6 +572,9 @@ static HRESULT WINAPI VBScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE 
         break;
     case SCRIPTSTATE_INITIALIZED:
         decrease_state(This, SCRIPTSTATE_INITIALIZED);
+        return S_OK;
+    case SCRIPTSTATE_CLOSED:
+        decrease_state(This, SCRIPTSTATE_CLOSED);
         return S_OK;
     case SCRIPTSTATE_DISCONNECTED:
         FIXME("unimplemented SCRIPTSTATE_DISCONNECTED\n");

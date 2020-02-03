@@ -1520,7 +1520,78 @@ static void test_vbscript_uninitializing(void)
     hres = IActiveScriptParse_InitNew(parse);
     ok(hres == E_UNEXPECTED, "InitNew failed: %08x\n", hres);
 
+    /* initialize again and use SetScriptState(SCRIPTSTATE_CLOSED) to uninitialize it */
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CLOSED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CLOSED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    test_state(script, SCRIPTSTATE_CLOSED);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CLOSED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CLOSED) failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_INITIALIZED);
+    ok(hres == E_UNEXPECTED, "SetScriptState(SCRIPTSTATE_INITIALIZED) failed: %08x\n", hres);
+
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    test_state(script, SCRIPTSTATE_CLOSED);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CLOSED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CLOSED) failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_INITIALIZED);
+    ok(hres == E_UNEXPECTED, "SetScriptState(SCRIPTSTATE_INITIALIZED) failed: %08x\n", hres);
+
     IActiveScriptParse_Release(parse);
+
+    ref = IActiveScript_Release(script);
+    ok(!ref, "ref = %d\n", ref);
+
+    script = create_vbscript();
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CLOSED);
+    ok(hres == E_UNEXPECTED, "SetScriptState(SCRIPTSTATE_CLOSED) failed: %08x\n", hres);
 
     ref = IActiveScript_Release(script);
     ok(!ref, "ref = %d\n", ref);
