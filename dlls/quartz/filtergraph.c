@@ -872,33 +872,13 @@ static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface, IPin *ppi
     return hr;
 }
 
-static HRESULT WINAPI FilterGraph2_Reconnect(IFilterGraph2 *iface, IPin *ppin)
+static HRESULT WINAPI FilterGraph2_Reconnect(IFilterGraph2 *iface, IPin *pin)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
-    IPin *pConnectedTo = NULL;
-    HRESULT hr;
-    PIN_DIRECTION pindir;
+    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
 
-    IPin_QueryDirection(ppin, &pindir);
-    hr = IPin_ConnectedTo(ppin, &pConnectedTo);
+    TRACE("graph %p, pin %p.\n", graph, pin);
 
-    TRACE("(%p/%p)->(%p) -- %p\n", This, iface, ppin, pConnectedTo);
-
-    if (FAILED(hr)) {
-        TRACE("Querying connected to failed: %x\n", hr);
-        return hr; 
-    }
-    IPin_Disconnect(ppin);
-    IPin_Disconnect(pConnectedTo);
-    if (pindir == PINDIR_INPUT)
-        hr = IPin_Connect(pConnectedTo, ppin, NULL);
-    else
-        hr = IPin_Connect(ppin, pConnectedTo, NULL);
-    IPin_Release(pConnectedTo);
-    if (FAILED(hr))
-        WARN("Reconnecting pins failed, pins are not connected now..\n");
-    TRACE("-> %08x\n", hr);
-    return hr;
+    return IFilterGraph2_ReconnectEx(iface, pin, NULL);
 }
 
 static HRESULT WINAPI FilterGraph2_Disconnect(IFilterGraph2 *iface, IPin *ppin)
@@ -1830,15 +1810,29 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilterForMoniker(IFilterGraph2 *ifac
     return S_OK;
 }
 
-static HRESULT WINAPI FilterGraph2_ReconnectEx(IFilterGraph2 *iface, IPin *ppin,
-        const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI FilterGraph2_ReconnectEx(IFilterGraph2 *iface, IPin *pin, const AM_MEDIA_TYPE *mt)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    PIN_DIRECTION dir;
+    HRESULT hr;
+    IPin *peer;
 
-    TRACE("(%p/%p)->(%p %p): stub !!!\n", This, iface, ppin, pmt);
-    strmbase_dump_media_type(pmt);
+    TRACE("graph %p, pin %p, mt %p.\n", graph, pin, mt);
 
-    return S_OK;
+    if (FAILED(hr = IPin_ConnectedTo(pin, &peer)))
+        return hr;
+
+    IPin_QueryDirection(pin, &dir);
+    IFilterGraph2_Disconnect(iface, peer);
+    IFilterGraph2_Disconnect(iface, pin);
+
+    if (dir == PINDIR_INPUT)
+        hr = IFilterGraph2_ConnectDirect(iface, peer, pin, mt);
+    else
+        hr = IFilterGraph2_ConnectDirect(iface, pin, peer, mt);
+
+    IPin_Release(peer);
+    return hr;
 }
 
 static HRESULT WINAPI FilterGraph2_RenderEx(IFilterGraph2 *iface, IPin *pPinOut, DWORD dwFlags,
