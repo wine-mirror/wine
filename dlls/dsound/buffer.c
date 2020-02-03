@@ -643,7 +643,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(IDirectSoundBuffer8 *iface, 
 
 	if (x1 || x2)
 	{
-		RtlAcquireResourceShared(&This->device->buffer_list_lock, TRUE);
+		AcquireSRWLockShared(&This->device->buffer_list_lock);
 		LIST_FOR_EACH_ENTRY(iter, &This->buffer->buffers, IDirectSoundBufferImpl, entry )
 		{
 			RtlAcquireResourceShared(&iter->lock, TRUE);
@@ -664,7 +664,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(IDirectSoundBuffer8 *iface, 
 			}
 			RtlReleaseResource(&iter->lock);
 		}
-		RtlReleaseResource(&This->device->buffer_list_lock);
+		ReleaseSRWLockShared(&This->device->buffer_list_lock);
 	}
 
 	return hres;

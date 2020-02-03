@@ -767,9 +767,9 @@ DWORD CALLBACK DSOUND_mixthread(void *p)
 		if (!dev->ref)
 			break;
 
-		RtlAcquireResourceShared(&(dev->buffer_list_lock), TRUE);
+		AcquireSRWLockShared(&dev->buffer_list_lock);
 		DSOUND_PerformMix(dev);
-		RtlReleaseResource(&(dev->buffer_list_lock));
+		ReleaseSRWLockShared(&dev->buffer_list_lock);
 	}
 	return 0;
 }

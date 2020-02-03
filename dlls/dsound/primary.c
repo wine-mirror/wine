@@ -472,7 +472,7 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	}
 
 	/* **** */
-	RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
+	AcquireSRWLockExclusive(&device->buffer_list_lock);
 	EnterCriticalSection(&(device->mixlock));
 
 	if (device->priolevel == DSSCL_WRITEPRIMARY) {
@@ -508,7 +508,7 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 
 out:
 	LeaveCriticalSection(&(device->mixlock));
-	RtlReleaseResource(&(device->buffer_list_lock));
+	ReleaseSRWLockExclusive(&device->buffer_list_lock);
 	/* **** */
 
 	return err;

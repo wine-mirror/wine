@@ -181,7 +181,7 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     InitializeCriticalSection(&(device->mixlock));
     device->mixlock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DirectSoundDevice.mixlock");
 
-    RtlInitializeResource(&(device->buffer_list_lock));
+    InitializeSRWLock(&device->buffer_list_lock);
 
    *ppDevice = device;
 
@@ -238,7 +238,6 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
         HeapFree(GetProcessHeap(), 0, device->tmp_buffer);
         HeapFree(GetProcessHeap(), 0, device->cp_buffer);
         HeapFree(GetProcessHeap(), 0, device->buffer);
-        RtlDeleteResource(&device->buffer_list_lock);
         device->mixlock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&device->mixlock);
         HeapFree(GetProcessHeap(),0,device);
@@ -612,7 +611,7 @@ HRESULT DirectSoundDevice_AddBuffer(
 
     TRACE("(%p, %p)\n", device, pDSB);
 
-    RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
+    AcquireSRWLockExclusive(&device->buffer_list_lock);
 
     if (device->buffers)
         newbuffers = HeapReAlloc(GetProcessHeap(),0,device->buffers,sizeof(IDirectSoundBufferImpl*)*(device->nrofbuffers+1));
@@ -629,7 +628,7 @@ HRESULT DirectSoundDevice_AddBuffer(
         hr = DSERR_OUTOFMEMORY;
     }
 
-    RtlReleaseResource(&(device->buffer_list_lock));
+    ReleaseSRWLockExclusive(&device->buffer_list_lock);
 
     return hr;
 }
@@ -644,7 +643,7 @@ void DirectSoundDevice_RemoveBuffer(DirectSoundDevice * device, IDirectSoundBuff
 
     TRACE("(%p, %p)\n", device, pDSB);
 
-    RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
+    AcquireSRWLockExclusive(&device->buffer_list_lock);
 
     if (device->nrofbuffers == 1) {
         assert(device->buffers[0] == pDSB);
@@ -662,7 +661,7 @@ void DirectSoundDevice_RemoveBuffer(DirectSoundDevice * device, IDirectSoundBuff
     device->nrofbuffers--;
     TRACE("buffer count is now %d\n", device->nrofbuffers);
 
-    RtlReleaseResource(&(device->buffer_list_lock));
+    ReleaseSRWLockExclusive(&device->buffer_list_lock);
 }
 
 /*******************************************************************************
@@ -869,14 +868,14 @@ static HRESULT WINAPI IDirectSound8Impl_SetCooperativeLevel(IDirectSound8 *iface
              level==DSSCL_PRIORITY ? "DSSCL_PRIORITY" : "DSSCL_EXCLUSIVE");
     }
 
-    RtlAcquireResourceExclusive(&device->buffer_list_lock, TRUE);
+    AcquireSRWLockExclusive(&device->buffer_list_lock);
     EnterCriticalSection(&device->mixlock);
     if ((level == DSSCL_WRITEPRIMARY) != (device->priolevel == DSSCL_WRITEPRIMARY))
         hr = DSOUND_ReopenDevice(device, level == DSSCL_WRITEPRIMARY);
     if (SUCCEEDED(hr))
         device->priolevel = level;
     LeaveCriticalSection(&device->mixlock);
-    RtlReleaseResource(&device->buffer_list_lock);
+    ReleaseSRWLockExclusive(&device->buffer_list_lock);
     return hr;
 }
 
