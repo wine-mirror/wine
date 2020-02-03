@@ -7775,9 +7775,8 @@ static void test_HasCharacter(void)
 
 static void test_CreateFontFaceReference(void)
 {
-    static const WCHAR dummyW[] = {'d','u','m','m','y',0};
+    IDWriteFontFaceReference *ref, *ref1, *ref3;
     IDWriteFontFace3 *fontface, *fontface1;
-    IDWriteFontFaceReference *ref, *ref1;
     IDWriteFontCollection1 *collection;
     IDWriteFontFile *file, *file1;
     IDWriteFactory3 *factory;
@@ -7821,7 +7820,7 @@ todo_wine
     IDWriteFontFaceReference_Release(ref);
 
     /* path however has to be valid */
-    hr = IDWriteFactory3_CreateFontFaceReference(factory, dummyW, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
+    hr = IDWriteFactory3_CreateFontFaceReference(factory, L"dummy", NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
 todo_wine
     ok(hr == DWRITE_E_FILENOTFOUND, "got 0x%08x\n", hr);
     if (hr == S_OK)
@@ -7939,34 +7938,31 @@ todo_wine
             IDWriteFontFaceReference_Release(ref1);
 
             hr = IDWriteFontFace3_GetFontFaceReference(fontface, &ref);
-        todo_wine
             ok(hr == S_OK, "Failed to get a reference, hr %#x.\n", hr);
+            EXPECT_REF(fontface, 2);
 
             hr = IDWriteFontFace3_GetFontFaceReference(fontface, &ref1);
-        todo_wine
             ok(hr == S_OK, "Failed to get a reference, hr %#x.\n", hr);
-        if (hr == S_OK)
             ok(ref == ref1, "Unexpected reference %p, %p.\n", ref1, ref);
+            EXPECT_REF(fontface, 3);
 
-        if (hr == S_OK) {
+            hr = IDWriteFontFace3_QueryInterface(fontface, &IID_IDWriteFontFaceReference, (void **)&ref3);
+            ok(hr == S_OK || broken(FAILED(hr)), "Failed to get interface, hr %#x.\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                ok(ref == ref3, "Unexpected reference %p.\n", ref3);
+                IDWriteFontFaceReference_Release(ref3);
+            }
+
             hr = IDWriteFontFaceReference_CreateFontFace(ref, &fontface1);
             ok(hr == S_OK, "Failed to create fontface, hr %#x.\n", hr);
             ok(fontface1 == fontface, "Unexpected fontface %p, %p.\n", fontface1, fontface);
             IDWriteFontFace3_Release(fontface1);
 
-            if (SUCCEEDED(hr = IDWriteFontFaceReference_QueryInterface(ref, &IID_IDWriteFontFaceReference1,
-                    (void **)&ref2)))
-            {
-                UINT32 axis_count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref2);
-                ok(!axis_count, "Unexpected axis value count.\n");
-                IDWriteFontFaceReference1_Release(ref2);
-            }
-
             IDWriteFontFaceReference_Release(ref);
             IDWriteFontFaceReference_Release(ref1);
-        }
-            IDWriteFontFace3_Release(fontface);
 
+            IDWriteFontFace3_Release(fontface);
             IDWriteFont3_Release(font3);
         }
 

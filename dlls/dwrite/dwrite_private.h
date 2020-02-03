@@ -195,6 +195,7 @@ enum font_flags
 struct dwrite_fontface
 {
     IDWriteFontFace5 IDWriteFontFace5_iface;
+    IDWriteFontFaceReference IDWriteFontFaceReference_iface;
     LONG refcount;
 
     IDWriteFontFileStream *stream;
