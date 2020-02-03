@@ -918,7 +918,7 @@ static HRESULT interp_throw_type(script_ctx_t *ctx)
     TRACE("%08x %s\n", hres, debugstr_jsstr(str));
 
     ptr = jsstr_flatten(str);
-    return ptr ? throw_type_error(ctx, hres, ptr) : E_OUTOFMEMORY;
+    return ptr ? throw_error(ctx, hres, ptr) : E_OUTOFMEMORY;
 }
 
 /* ECMA-262 3rd Edition    12.14 */
@@ -1287,7 +1287,7 @@ static HRESULT identifier_value(script_ctx_t *ctx, BSTR identifier)
         return hres;
 
     if(exprval.type == EXPRVAL_INVALID)
-        return throw_type_error(ctx, exprval.u.hres, identifier);
+        return throw_error(ctx, exprval.u.hres, identifier);
 
     hres = exprval_to_value(ctx, &exprval, &v);
     if(FAILED(hres))
@@ -2777,10 +2777,8 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     }
 
     frame = ctx->call_ctx;
-    if(exception_hres != DISP_E_EXCEPTION) {
-        reset_ei(ei);
-        ei->error = exception_hres;
-    }
+    if(exception_hres != DISP_E_EXCEPTION)
+        throw_error(ctx, exception_hres, NULL);
     set_error_location(ei, frame->bytecode, frame->bytecode->instrs[frame->ip].loc, IDS_RUNTIME_ERROR);
 
     while(!frame->except_frame) {

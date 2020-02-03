@@ -409,40 +409,15 @@ static jsstr_t *format_error_message(HRESULT error, const WCHAR *arg)
     return r;
 }
 
-static HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str, jsdisp_t *constr)
+HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
 {
-    jsdisp_t *err;
-    jsstr_t *msg;
-    HRESULT hres;
-
-    if(!is_jscript_error(error))
-        return error;
-
-    msg = format_error_message(error, str);
-    if(!msg)
-        return E_OUTOFMEMORY;
-
-    WARN("%s\n", debugstr_jsstr(msg));
-
-    hres = create_error(ctx, constr, error, msg, &err);
-    jsstr_release(msg);
-    if(FAILED(hres))
-        return hres;
-
-    reset_ei(ctx->ei);
-    ctx->ei->valid_value = TRUE;
-    ctx->ei->value = jsval_obj(err);
-    return error;
-}
-
-HRESULT throw_syntax_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->syntax_error_constr);
-}
-
-HRESULT throw_type_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->type_error_constr);
+    jsexcept_t *ei = ctx->ei;
+    TRACE("%08x\n", error);
+    reset_ei(ei);
+    ei->error = error;
+    if(str)
+        ei->message = format_error_message(error, str);
+    return DISP_E_EXCEPTION;
 }
 
 void set_error_location(jsexcept_t *ei, bytecode_t *code, unsigned loc, unsigned source_id)

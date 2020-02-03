@@ -312,7 +312,7 @@ HRESULT Function_get_value(script_ctx_t*,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
 struct _function_code_t *Function_get_code(jsdisp_t*) DECLSPEC_HIDDEN;
 #define DEFAULT_FUNCTION_VALUE {NULL, Function_value,0, Function_get_value}
 
-HRESULT throw_type_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT throw_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;
 jsdisp_t *create_builtin_error(script_ctx_t *ctx) DECLSPEC_HIDDEN;
 
 HRESULT create_object(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
