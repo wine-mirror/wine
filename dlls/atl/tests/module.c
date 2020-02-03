@@ -113,9 +113,9 @@ static void test_winmodule(void)
     ok(winmod.m_pCreateWndList == create_data+1, "winmod.m_pCreateWndList != create_data\n");
 }
 
-static DWORD cb_val;
+static DWORD_PTR cb_val;
 
-static void WINAPI term_callback(DWORD dw)
+static void WINAPI term_callback(DWORD_PTR dw)
 {
     cb_val = dw;
 }
@@ -123,33 +123,36 @@ static void WINAPI term_callback(DWORD dw)
 static void test_term(void)
 {
     _ATL_MODULEW test;
+    ULONG_PTR ex;
     HRESULT hres;
+
+    ex = (ULONG_PTR)-37;
 
     test.cbSize = sizeof(_ATL_MODULEW);
 
     hres = AtlModuleInit(&test, NULL, NULL);
-    ok (hres == S_OK, "AtlModuleInit failed (0x%x).\n", (int)hres);
+    ok (hres == S_OK, "AtlModuleInit failed (0x%x).\n", hres);
 
-    hres = AtlModuleAddTermFunc(&test, term_callback, 0x22);
-    ok (hres == S_OK, "AtlModuleAddTermFunc failed (0x%x).\n", (int)hres);
+    hres = AtlModuleAddTermFunc(&test, term_callback, ex);
+    ok (hres == S_OK, "AtlModuleAddTermFunc failed (0x%x).\n", hres);
 
     cb_val = 0xdeadbeef;
     hres = AtlModuleTerm(&test);
-    ok (hres == S_OK, "AtlModuleTerm failed (0x%x).\n", (int)hres);
-    ok (cb_val == 0x22, "wrong callback value (0x%x).\n", (int)cb_val);
+    ok (hres == S_OK, "AtlModuleTerm failed (0x%x).\n", hres);
+    ok (cb_val == ex, "wrong callback value (0x%lx).\n", cb_val);
 
     test.cbSize = FIELD_OFFSET(_ATL_MODULEW, dwAtlBuildVer);
 
     hres = AtlModuleInit(&test, NULL, NULL);
-    ok (hres == S_OK, "AtlModuleInit failed (0x%x).\n", (int)hres);
+    ok (hres == S_OK, "AtlModuleInit failed (0x%x).\n", hres);
 
     hres = AtlModuleAddTermFunc(&test, term_callback, 0x23);
-    ok (hres == S_OK, "AtlModuleAddTermFunc failed (0x%x).\n", (int)hres);
+    ok (hres == S_OK, "AtlModuleAddTermFunc failed (0x%x).\n", hres);
 
     cb_val = 0xdeadbeef;
     hres = AtlModuleTerm(&test);
-    ok (hres == S_OK, "AtlModuleTerm failed (0x%x).\n", (int)hres);
-    ok (cb_val == 0xdeadbeef, "wrong callback value (0x%x).\n", (int)cb_val);
+    ok (hres == S_OK, "AtlModuleTerm failed (0x%x).\n", hres);
+    ok (cb_val == 0xdeadbeef, "wrong callback value (0x%lx).\n", cb_val);
 }
 
 START_TEST(module)
