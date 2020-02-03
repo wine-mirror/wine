@@ -320,10 +320,12 @@ static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
         return 0;
     }
 
-    if(*ctx->ptr == '&')
+    if(*ctx->ptr == '&') {
         ctx->ptr++;
-
-    *ret = l == (UINT16)l ? (INT16)l : l;
+        *ret = l;
+    }else {
+        *ret = l == (UINT16)l ? (INT16)l : l;
+    }
     return tInt;
 }
 
