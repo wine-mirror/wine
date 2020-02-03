@@ -591,7 +591,8 @@ static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TY
     AsyncReader *filter = impl_from_strmbase_pin(iface);
 
     if (IsEqualGUID(&mt->majortype, &filter->mt.majortype)
-            && IsEqualGUID(&mt->subtype, &filter->mt.subtype))
+            && (!IsEqualGUID(&mt->subtype, &GUID_NULL)
+            || IsEqualGUID(&filter->mt.subtype, &GUID_NULL)))
         return S_OK;
 
     return S_FALSE;

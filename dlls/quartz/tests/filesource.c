@@ -389,7 +389,7 @@ static void test_file_source_filter(void)
         mt.formattype = FORMAT_VideoInfo;
         mt.subtype = MEDIASUBTYPE_RGB32;
         hr = IPin_QueryAccept(pin, &mt);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         mt.majortype = MEDIATYPE_Video;
         hr = IPin_QueryAccept(pin, &mt);
