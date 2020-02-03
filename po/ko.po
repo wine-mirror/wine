@@ -3691,6 +3691,20 @@ msgstr "조건부 컴파일이 해제되어 있음"
 msgid "Expected '@'"
 msgstr "'@'가 필요합니다"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "알 수 없는 오류"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "숫자가 필요합니다"

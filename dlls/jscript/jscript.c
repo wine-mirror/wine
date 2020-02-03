@@ -214,6 +214,15 @@ void reset_ei(jsexcept_t *ei)
         jsval_release(ei->value);
         ei->valid_value = FALSE;
     }
+    if(ei->code) {
+        release_bytecode(ei->code);
+        ei->code = NULL;
+        ei->loc = 0;
+    }
+    if(ei->source) {
+        jsstr_release(ei->source);
+        ei->source = NULL;
+    }
 }
 
 void enter_script(script_ctx_t *ctx, jsexcept_t *ei)

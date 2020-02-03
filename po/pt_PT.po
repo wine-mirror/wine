@@ -3755,6 +3755,20 @@ msgstr "A compilação condicional está desactivada"
 msgid "Expected '@'"
 msgstr "Esperado '@'"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "Erro desconhecido"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "Número esperado"

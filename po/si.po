@@ -3642,6 +3642,20 @@ msgstr ""
 msgid "Expected '@'"
 msgstr "අපේක්ෂා කරේ '='"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "දන්නේ නැති දෝෂයක්"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "නොම්බරයක් අපේක්ෂා කරේ"

@@ -3701,6 +3701,20 @@ msgstr "Ehdollinen kääntäminen on pois käytöstä"
 msgid "Expected '@'"
 msgstr "Odotettiin merkkiä '@'"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "Tuntematon virhe"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "Odotettiin lukua"

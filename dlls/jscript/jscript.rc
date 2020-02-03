@@ -70,6 +70,10 @@ STRINGTABLE
     IDS_NONCONFIGURABLE_REDEFINED  "Cannot redefine non-configurable property '|'"
     IDS_NONWRITABLE_MODIFIED       "Cannot modify non-writable property '|'"
     IDS_PROP_DESC_MISMATCH         "Property cannot have both accessors and a value"
+
+    IDS_COMPILATION_ERROR   "Microsoft JScript compilation error"
+    IDS_RUNTIME_ERROR       "Microsoft JScript runtime error"
+    IDS_UNKNOWN_ERROR       "Unknown runtime error"
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

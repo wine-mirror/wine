@@ -3769,6 +3769,20 @@ msgstr "Betinget kompilering er slået fra"
 msgid "Expected '@'"
 msgstr "Forventet ';'"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "Ukendt fejl"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "Nummer forventet"

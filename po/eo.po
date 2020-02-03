@@ -3649,6 +3649,20 @@ msgstr ""
 msgid "Expected '@'"
 msgstr ""
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown printer driver."
+msgid "Unknown runtime error"
+msgstr "Nekonata printilzorgilo."
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr ""

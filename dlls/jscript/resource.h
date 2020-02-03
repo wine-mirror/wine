@@ -71,3 +71,7 @@
 /* FIXME: This is not compatible with native, but we would
  * conflict with IDS_UNSUPPORTED_ACTION otherwise */
 #define IDS_PROP_DESC_MISMATCH              0x1F00
+
+#define IDS_COMPILATION_ERROR               0x1000
+#define IDS_RUNTIME_ERROR                   0x1001
+#define IDS_UNKNOWN_ERROR                   0x1002

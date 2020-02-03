@@ -3742,6 +3742,19 @@ msgstr ""
 msgid "Expected '@'"
 msgstr ""
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+msgid "Unknown runtime error"
+msgstr "Пре&гледай изходния код"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr ""

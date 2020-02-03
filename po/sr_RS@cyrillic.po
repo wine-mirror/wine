@@ -3768,6 +3768,19 @@ msgstr ""
 msgid "Expected '@'"
 msgstr "Очекивано ';'"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+msgid "Unknown runtime error"
+msgstr "Непознат извор"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "Очекивани број"

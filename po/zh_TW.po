@@ -3702,6 +3702,20 @@ msgstr "條件編譯已被關閉"
 msgid "Expected '@'"
 msgstr "預期為 ;"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "未知錯誤"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "預期為編號"

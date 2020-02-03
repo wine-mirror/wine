@@ -2768,10 +2768,12 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
         print_backtrace(ctx);
     }
 
+    frame = ctx->call_ctx;
     if(exception_hres != DISP_E_EXCEPTION)
         ei->error = exception_hres;
+    set_error_location(ei, frame->bytecode, frame->bytecode->instrs[frame->ip].loc, IDS_RUNTIME_ERROR);
 
-    for(frame = ctx->call_ctx; !frame->except_frame; frame = ctx->call_ctx) {
+    while(!frame->except_frame) {
         DWORD flags;
 
         while(frame->scope != frame->base_scope)
@@ -2783,6 +2785,7 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
         pop_call_frame(ctx);
         if(!(flags & EXEC_RETURN_TO_INTERP))
             return DISP_E_EXCEPTION;
+        frame = ctx->call_ctx;
     }
 
     except_frame = frame->except_frame;

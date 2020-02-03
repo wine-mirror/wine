@@ -445,6 +445,24 @@ HRESULT throw_type_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
     return throw_error(ctx, error, str, ctx->type_error_constr);
 }
 
+void set_error_location(jsexcept_t *ei, bytecode_t *code, unsigned loc, unsigned source_id)
+{
+    if(is_jscript_error(ei->error)) {
+        if(!ei->source) {
+            const WCHAR *res;
+            size_t len;
+
+            len = LoadStringW(jscript_hinstance, source_id, (WCHAR*)&res, 0);
+            ei->source = jsstr_alloc_len(res, len);
+        }
+    }
+
+    TRACE("source %s in %s\n", debugstr_w(code->source + loc), debugstr_w(code->source));
+
+    ei->code = bytecode_addref(code);
+    ei->loc = loc;
+}
+
 jsdisp_t *create_builtin_error(script_ctx_t *ctx)
 {
     jsdisp_t *constr = ctx->error_constr, *r;

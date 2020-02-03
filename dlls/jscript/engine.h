@@ -227,6 +227,11 @@ struct _jsexcept_t {
     BOOL valid_value;
     jsval_t value;
 
+    jsstr_t *source;
+
+    bytecode_t *code;
+    unsigned loc;
+
     BOOL enter_notified;
     jsexcept_t *prev;
 };
@@ -234,6 +239,7 @@ struct _jsexcept_t {
 void enter_script(script_ctx_t*,jsexcept_t*) DECLSPEC_HIDDEN;
 HRESULT leave_script(script_ctx_t*,HRESULT) DECLSPEC_HIDDEN;
 void reset_ei(jsexcept_t*) DECLSPEC_HIDDEN;
+void set_error_location(jsexcept_t*,bytecode_t*,unsigned,unsigned) DECLSPEC_HIDDEN;
 
 typedef struct _except_frame_t except_frame_t;
 struct _parser_ctx_t;
