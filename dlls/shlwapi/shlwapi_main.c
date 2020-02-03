@@ -156,3 +156,13 @@ UINT WINAPI WhichPlatform(void)
 
     return state;
 }
+
+/***********************************************************************
+ *             SHGetViewStatePropertyBag [SHLWAPI.515]
+ */
+HRESULT WINAPI SHGetViewStatePropertyBag(PCIDLIST_ABSOLUTE pidl, PCWSTR bag_name, DWORD flags, REFIID riid, void **ppv)
+{
+    FIXME("%p, %s, %#x, %s, %p stub.\n", pidl, debugstr_w(bag_name), flags, debugstr_guid(riid), ppv);
+
+    return E_NOTIMPL;
+}
