@@ -2288,25 +2288,23 @@ static void test__wcstombs_s_l(void)
         size_t ret;
         int err;
         const char *locale;
-        BOOL todo_ret;
-        BOOL todo_err;
     } tests[] = {
         /* wstr                 str        ret err        locale */
         { L"",       0,         NULL,   0, 1,  0,         NULL },
         { L"\xfffd", 1,         NULL,   0, 2,  0,         NULL },
-        { L"\xfffd", 1,         "",     1, 0,  EILSEQ,    NULL, TRUE },
-        { L"\xfffd", 1,         "",     6, 0,  EILSEQ,    NULL, TRUE },
+        { L"\xfffd", 1,         "",     1, 0,  EILSEQ,    NULL },
+        { L"\xfffd", 1,         "",     6, 0,  EILSEQ,    NULL },
         { L"text",   _TRUNCATE, "text", 5, 5,  0,         NULL },
-        { L"text",   _TRUNCATE, "",     1, 1,  STRUNCATE, NULL, FALSE, TRUE },
-        { L"text",   5,         "",     3, 0,  ERANGE,    NULL, TRUE },
+        { L"text",   _TRUNCATE, "",     1, 1,  STRUNCATE, NULL },
+        { L"text",   5,         "",     3, 0,  ERANGE,    NULL },
 
         { L"",       0,         NULL,   0, 1,  0,         "English_United States.1252" },
-        { L"\xfffd", 1,         NULL,   0, 0,  EILSEQ,    "English_United States.1252", TRUE },
-        { L"\xfffd", 1,         "",     1, 0,  EILSEQ,    "English_United States.1252", TRUE },
-        { L"\xfffd", 1,         "",     6, 0,  EILSEQ,    "English_United States.1252", TRUE },
+        { L"\xfffd", 1,         NULL,   0, 0,  EILSEQ,    "English_United States.1252" },
+        { L"\xfffd", 1,         "",     1, 0,  EILSEQ,    "English_United States.1252" },
+        { L"\xfffd", 1,         "",     6, 0,  EILSEQ,    "English_United States.1252" },
         { L"text",   _TRUNCATE, "text", 5, 5,  0,         "English_United States.1252" },
-        { L"text",   _TRUNCATE, "",     1, 1,  STRUNCATE, "English_United States.1252", FALSE, TRUE },
-        { L"text",   5,         "",     3, 0,  ERANGE,    "English_United States.1252", TRUE },
+        { L"text",   _TRUNCATE, "",     1, 1,  STRUNCATE, "English_United States.1252" },
+        { L"text",   5,         "",     3, 0,  ERANGE,    "English_United States.1252" },
     };
     _locale_t locale;
     char out[6];
@@ -2333,10 +2331,8 @@ static void test__wcstombs_s_l(void)
         memset(out, 0xcc, sizeof(out));
         err = p_wcstombs_s_l(&ret, tests[i].str ? out : NULL, tests[i].len,
                              tests[i].wstr, tests[i].wlen, locale);
-        todo_wine_if(tests[i].todo_ret)
         ok(ret == tests[i].ret, "%d: expected ret %d, got %d for '%s' in locale %s\n", i, tests[i].ret, ret,
             wine_dbgstr_w(tests[i].wstr), tests[i].locale);
-        todo_wine_if(tests[i].todo_err)
         ok(err == tests[i].err, "%d: expected err %d, got %d for '%s' in locale %s\n", i, tests[i].err, err,
             wine_dbgstr_w(tests[i].wstr), tests[i].locale);
         if(tests[i].str)

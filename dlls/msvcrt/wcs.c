@@ -530,13 +530,14 @@ static int MSVCRT_wcsrtombs_s_l(MSVCRT_size_t *ret, char *mbstr,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
     MSVCRT_size_t conv;
+    int err;
 
     if(!mbstr && !size && wcstr) {
         conv = MSVCRT_wcsrtombs_l(NULL, wcstr, 0, locale);
-        if(conv == -1)
-            return *MSVCRT__errno();
         if(ret)
             *ret = conv+1;
+        if(conv == -1)
+            return *MSVCRT__errno();
         return 0;
     }
 
@@ -550,25 +551,30 @@ static int MSVCRT_wcsrtombs_s_l(MSVCRT_size_t *ret, char *mbstr,
     else
         conv = count;
 
+    err = 0;
     conv = MSVCRT_wcsrtombs_l(mbstr, wcstr, conv, locale);
     if(conv == -1) {
+        conv = 0;
         if(size)
             mbstr[0] = '\0';
-        return *MSVCRT__errno();
+        err = *MSVCRT__errno();
     }else if(conv < size)
         mbstr[conv++] = '\0';
-    else if(conv==size && (count==MSVCRT__TRUNCATE || mbstr[conv-1]=='\0'))
+    else if(conv==size && (count==MSVCRT__TRUNCATE || mbstr[conv-1]=='\0')) {
         mbstr[conv-1] = '\0';
-    else {
+        if(count==MSVCRT__TRUNCATE)
+            err = MSVCRT_STRUNCATE;
+    }else {
         MSVCRT_INVALID_PMT("mbstr[size] is too small", MSVCRT_ERANGE);
+        conv = 0;
         if(size)
             mbstr[0] = '\0';
-        return MSVCRT_ERANGE;
+        err = MSVCRT_ERANGE;
     }
 
     if(ret)
         *ret = conv;
-    return 0;
+    return err;
 }
 
 /*********************************************************************
