@@ -76,6 +76,7 @@ static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static __int64 (__cdecl *p_wcstoi64)(const wchar_t *, wchar_t **, int);
 static unsigned __int64 (__cdecl *p_wcstoui64)(const wchar_t *, wchar_t **, int);
 static int (__cdecl *pwcstombs_s)(size_t*,char*,size_t,const wchar_t*,size_t);
+static int (__cdecl *p_wcstombs_s_l)(size_t*,char*,size_t,const wchar_t*,size_t,_locale_t);
 static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
 static size_t (__cdecl *p_mbsrtowcs)(wchar_t*, const char**, size_t, mbstate_t*);
 static int (__cdecl *p_mbsrtowcs_s)(size_t*,wchar_t*,size_t,const char**,size_t,mbstate_t*);
@@ -2277,6 +2278,76 @@ static void test_mbstowcs(void)
     setlocale(LC_ALL, "C");
 }
 
+static void test__wcstombs_s_l(void)
+{
+    struct test {
+        const wchar_t *wstr;
+        size_t wlen;
+        const char *str;
+        size_t len;
+        size_t ret;
+        int err;
+        const char *locale;
+        BOOL todo_ret;
+        BOOL todo_err;
+    } tests[] = {
+        /* wstr                 str        ret err        locale */
+        { L"",       0,         NULL,   0, 1,  0,         NULL },
+        { L"\xfffd", 1,         NULL,   0, 2,  0,         NULL },
+        { L"\xfffd", 1,         "",     1, 0,  EILSEQ,    NULL, TRUE },
+        { L"\xfffd", 1,         "",     6, 0,  EILSEQ,    NULL, TRUE },
+        { L"text",   _TRUNCATE, "text", 5, 5,  0,         NULL },
+        { L"text",   _TRUNCATE, "",     1, 1,  STRUNCATE, NULL, FALSE, TRUE },
+        { L"text",   5,         "",     3, 0,  ERANGE,    NULL, TRUE },
+
+        { L"",       0,         NULL,   0, 1,  0,         "English_United States.1252", TRUE, TRUE },
+        { L"\xfffd", 1,         NULL,   0, 0,  EILSEQ,    "English_United States.1252", TRUE },
+        { L"\xfffd", 1,         "",     1, 0,  EILSEQ,    "English_United States.1252", TRUE },
+        { L"\xfffd", 1,         "",     6, 0,  EILSEQ,    "English_United States.1252", TRUE },
+        { L"text",   _TRUNCATE, "text", 5, 5,  0,         "English_United States.1252" },
+        { L"text",   _TRUNCATE, "",     1, 1,  STRUNCATE, "English_United States.1252", FALSE, TRUE },
+        { L"text",   5,         "",     3, 0,  ERANGE,    "English_United States.1252", TRUE },
+    };
+    _locale_t locale;
+    char out[6];
+    size_t ret;
+    int err;
+    int i;
+
+    if(!p__create_locale) {
+        win_skip("_create_locale not available\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        if(tests[i].locale)
+        {
+            locale = p__create_locale(LC_ALL, tests[i].locale);
+            ok(locale != NULL, "_create_locale failed for %s\n", tests[i].locale);
+        }
+        else
+            locale = NULL;
+
+        ret = ~0;
+        memset(out, 0xcc, sizeof(out));
+        err = p_wcstombs_s_l(&ret, tests[i].str ? out : NULL, tests[i].len,
+                             tests[i].wstr, tests[i].wlen, locale);
+        todo_wine_if(tests[i].todo_ret)
+        ok(ret == tests[i].ret, "%d: expected ret %d, got %d for '%s' in locale %s\n", i, tests[i].ret, ret,
+            wine_dbgstr_w(tests[i].wstr), tests[i].locale);
+        todo_wine_if(tests[i].todo_err)
+        ok(err == tests[i].err, "%d: expected err %d, got %d for '%s' in locale %s\n", i, tests[i].err, err,
+            wine_dbgstr_w(tests[i].wstr), tests[i].locale);
+        if(tests[i].str)
+            ok(!memcmp(out, tests[i].str, strlen(tests[i].str)+1),
+                "%d: expected out %s, got %s for '%s' in locale %s\n", i, tests[i].str, out,
+                wine_dbgstr_w(tests[i].wstr), tests[i].locale);
+
+        p__free_locale(locale);
+    }
+}
+
 static void test_gcvt(void)
 {
     char buf[1024], *res;
@@ -4196,6 +4267,7 @@ START_TEST(string)
     p_wcstoui64 = (void *)GetProcAddress(hMsvcrt, "_wcstoui64");
     pmbstowcs_s = (void *)GetProcAddress(hMsvcrt, "mbstowcs_s");
     pwcstombs_s = (void *)GetProcAddress(hMsvcrt, "wcstombs_s");
+    p_wcstombs_s_l = (void *)GetProcAddress(hMsvcrt, "_wcstombs_s_l");
     pwcsrtombs = (void *)GetProcAddress(hMsvcrt, "wcsrtombs");
     p_gcvt_s = (void *)GetProcAddress(hMsvcrt, "_gcvt_s");
     p_itoa_s = (void *)GetProcAddress(hMsvcrt, "_itoa_s");
@@ -4272,6 +4344,7 @@ START_TEST(string)
     test__strtoi64();
     test__strtod();
     test_mbstowcs();
+    test__wcstombs_s_l();
     test_gcvt();
     test__itoa_s();
     test__strlwr_s();
