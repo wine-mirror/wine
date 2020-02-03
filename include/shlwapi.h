@@ -1135,6 +1135,9 @@ BOOL WINAPI IsOS(DWORD);
 #define FDTF_RTLDATE            0x00000200
 #define FDTF_NOAUTOREADINGORDER 0x00000400
 
+int WINAPI SHFormatDateTimeA(const FILETIME UNALIGNED *filetime, DWORD *flags, LPSTR buffer, UINT size);
+int WINAPI SHFormatDateTimeW(const FILETIME UNALIGNED *filetime, DWORD *flags, LPWSTR buffer, UINT size);
+
 typedef struct
 {
     const IID *piid;
