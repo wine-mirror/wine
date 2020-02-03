@@ -2878,8 +2878,41 @@ todo_wine
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(source_pin.mt == &mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
+    hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Test Reconnect[Ex](). */
+
+    hr = IFilterGraph2_Reconnect(graph, &source_pin.IPin_iface);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Reconnect(graph, &sink_pin.IPin_iface);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Reconnect(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(!source_pin.mt, "Got mt %p.\n", source_pin.mt);
+    ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
+    hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    sink_pin.peer = &source_pin.IPin_iface;
+    IPin_AddRef(sink_pin.peer);
+    hr = IFilterGraph2_Reconnect(graph, &sink_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(!source_pin.mt, "Got mt %p.\n", source_pin.mt);
+    ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
+    hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Both pins are disconnected when a filter is removed. */
+    hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     sink_pin.peer = &source_pin.IPin_iface;
     IPin_AddRef(sink_pin.peer);
     hr = IFilterGraph2_RemoveFilter(graph, &source.IBaseFilter_iface);
