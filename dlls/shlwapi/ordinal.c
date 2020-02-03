@@ -3565,24 +3565,6 @@ HRESULT WINAPI SHGetInverseCMAP(LPDWORD dest, DWORD dwSize)
 }
 
 /*************************************************************************
- *      SHIsLowMemoryMachine	[SHLWAPI.@]
- *
- * Determine if the current computer has low memory.
- *
- * PARAMS
- *  x [I] FIXME
- *
- * RETURNS
- *  TRUE if the users machine has 16 Megabytes of memory or less,
- *  FALSE otherwise.
- */
-BOOL WINAPI SHIsLowMemoryMachine (DWORD x)
-{
-  FIXME("(0x%08x) stub\n", x);
-  return FALSE;
-}
-
-/*************************************************************************
  *      GetMenuPosFromID	[SHLWAPI.@]
  *
  * Return the position of a menu item from its Id.

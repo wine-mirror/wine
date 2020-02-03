@@ -166,3 +166,13 @@ HRESULT WINAPI SHGetViewStatePropertyBag(PCIDLIST_ABSOLUTE pidl, PCWSTR bag_name
 
     return E_NOTIMPL;
 }
+
+/*************************************************************************
+ *      SHIsLowMemoryMachine    [SHLWAPI.@]
+ */
+BOOL WINAPI SHIsLowMemoryMachine(DWORD type)
+{
+    FIXME("%d stub\n", type);
+
+    return FALSE;
+}

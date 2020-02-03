@@ -1167,6 +1167,10 @@ UINT WINAPI WhichPlatform(void);
 
 HRESULT WINAPI SHGetViewStatePropertyBag(PCIDLIST_ABSOLUTE pidl, PCWSTR bagname, DWORD flags, REFIID riid, void **ppv);
 
+#define ILMM_IE4 0
+
+BOOL WINAPI SHIsLowMemoryMachine(DWORD type);
+
 #include <poppack.h> 
 
 #ifdef __cplusplus
