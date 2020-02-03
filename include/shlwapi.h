@@ -1135,7 +1135,6 @@ BOOL WINAPI IsOS(DWORD);
 #define FDTF_RTLDATE            0x00000200
 #define FDTF_NOAUTOREADINGORDER 0x00000400
 
-
 typedef struct
 {
     const IID *piid;
@@ -1143,6 +1142,13 @@ typedef struct
 } QITAB, *LPQITAB;
 
 HRESULT WINAPI QISearch(void* base, const QITAB *pqit, REFIID riid, void **ppv);
+
+#define PLATFORM_UNKNOWN     0
+#define PLATFORM_IE3         1
+#define PLATFORM_BROWSERONLY 1
+#define PLATFORM_INTEGRATED  2
+
+UINT WINAPI WhichPlatform(void);
 
 #include <poppack.h> 
 

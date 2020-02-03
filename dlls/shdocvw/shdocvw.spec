@@ -2,7 +2,7 @@
 101 stdcall -noname IEWinMain(str long)
 102 stub -noname CreateShortcutInDirA
 103 stub -noname CreateShortcutInDirW
-104 stdcall -noname WhichPlatformFORWARD()
+104 stdcall -noname WhichPlatform() shlwapi.WhichPlatform
 105 stub -noname CreateShortcutInDirEx
 106 stub HlinkFindFrame
 107 stub SetShellOfflineState

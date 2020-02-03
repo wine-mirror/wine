@@ -284,17 +284,6 @@ static void* fetch_shlwapi_ordinal(UINT_PTR ord)
 }
 
 /******************************************************************
- *		WhichPlatformFORWARD            (SHDOCVW.@)
- */
-DWORD WINAPI WhichPlatformFORWARD(void)
-{
-    static DWORD (WINAPI *p)(void);
-
-    if (p || (p = fetch_shlwapi_ordinal(276))) return p();
-    return 1; /* not integrated, see shlwapi.WhichPlatform */
-}
-
-/******************************************************************
  *		StopWatchModeFORWARD            (SHDOCVW.@)
  */
 void WINAPI StopWatchModeFORWARD(void)
