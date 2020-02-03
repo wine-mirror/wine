@@ -1225,7 +1225,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Nom d'usuari:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Contrasenya:"
 
@@ -3194,7 +3194,7 @@ msgstr "&Inici"
 msgid "&Stop"
 msgstr "&Atura"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Actualitza"
 
@@ -8339,6 +8339,78 @@ msgstr "Proveïdor"
 #: version.rc:45
 msgid "Select the data you want to connect to:"
 msgstr "Seleccioneu les dades a les qualles voleu connectar:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "Connexions"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the data you want to connect to:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Seleccioneu les dades a les qualles voleu connectar:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Si us plau, introduïu el vostre nom"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "Connexions restablertes"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "Connexions"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "A&fegeix..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "&Nom d'usuari:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Pàgina en &blanc"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "La contrasenya està equivocada.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "Connexions restablertes"
 
 #: version.rc:36
 msgid "Data Link Properties"

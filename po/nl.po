@@ -1236,7 +1236,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Gebruikersnaam:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Wachtwoord:"
 
@@ -3221,7 +3221,7 @@ msgstr "Start&pagina"
 msgid "&Stop"
 msgstr "&Stop"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "A&ctualiseren"
 
@@ -8691,6 +8691,78 @@ msgstr "video"
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Selecteer het formaat dat u wilt gebruiken:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connection"
+msgstr "LAN Verbinding"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Selecteer het formaat dat u wilt gebruiken:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Voer uw naam in"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "Opnieuw verbinden"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Connection string:"
+msgstr "LAN Verbinding"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "&Add..."
+msgid "B&uild..."
+msgstr "&Toevoegen..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "&Gebruikersnaam:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "&Lege pagina"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "Verkeerd wachtwoord.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "Opnieuw verbinden"
 
 #: version.rc:36
 #, fuzzy

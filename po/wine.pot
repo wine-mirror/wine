@@ -1179,7 +1179,7 @@ msgstr ""
 msgid "&User name:"
 msgstr ""
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr ""
 
@@ -3063,7 +3063,7 @@ msgstr ""
 msgid "&Stop"
 msgstr ""
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr ""
 
@@ -8142,6 +8142,58 @@ msgstr ""
 
 #: version.rc:45
 msgid "Select the data you want to connect to:"
+msgstr ""
+
+#: version.rc:52
+msgid "Connection"
+msgstr ""
+
+#: version.rc:55
+msgid "Specify the following to connect to ODBC data:"
+msgstr ""
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+msgid "Use &data source name"
+msgstr ""
+
+#: version.rc:60
+msgid "Use c&onnection string"
+msgstr ""
+
+#: version.rc:61
+msgid "&Connection string:"
+msgstr ""
+
+#: version.rc:63
+msgid "B&uild..."
+msgstr ""
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+msgid "User &name:"
+msgstr ""
+
+#: version.rc:69
+msgid "&Blank password"
+msgstr ""
+
+#: version.rc:70
+msgid "Allow &saving password"
+msgstr ""
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+msgid "&Test Connection"
 msgstr ""
 
 #: version.rc:36

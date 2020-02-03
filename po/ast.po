@@ -1212,7 +1212,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr ""
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Contraseña:"
 
@@ -3096,7 +3096,7 @@ msgstr ""
 msgid "&Stop"
 msgstr ""
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Refrescar"
 
@@ -8286,6 +8286,72 @@ msgstr "videu"
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Esbilla'l formatu que quies usar:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "Conexones"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Esbilla'l formatu que quies usar:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+msgid "Use &data source name"
+msgstr ""
+
+#: version.rc:60
+#, fuzzy
+#| msgid "Connections"
+msgid "Use c&onnection string"
+msgstr "Conexones"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "Conexones"
+
+#: version.rc:63
+msgid "B&uild..."
+msgstr ""
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "Value name:"
+msgid "User &name:"
+msgstr "Nome del valor:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Páxina &balera"
+
+#: version.rc:70
+msgid "Allow &saving password"
+msgstr ""
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Current Connections"
+msgid "&Test Connection"
+msgstr "Conexones actuales"
 
 #: version.rc:36
 #, fuzzy

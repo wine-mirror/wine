@@ -1244,7 +1244,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Felhasználónév:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Jelszó:"
 
@@ -3227,7 +3227,7 @@ msgstr "Kezdőlap"
 msgid "&Stop"
 msgstr "Me&gállítás"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "F&rissítés"
 
@@ -8648,6 +8648,78 @@ msgstr "videó"
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Válassza ki a használni kívánt formátumot:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connection"
+msgstr "LAN kapcsolat"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Válassza ki a használni kívánt formátumot:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Kérem, írja be a nevét"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Use c&onnection string"
+msgstr "LAN kapcsolat"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Connection string:"
+msgstr "LAN kapcsolat"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "&Add..."
+msgid "B&uild..."
+msgstr "Hozzá&ad..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "&Felhasználónév:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "&Üres oldal"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "Rossz jelszó.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Test Connection"
+msgstr "LAN kapcsolat"
 
 #: version.rc:36
 #, fuzzy

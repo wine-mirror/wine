@@ -1243,7 +1243,7 @@ msgstr "мм"
 msgid "&User name:"
 msgstr "&Корисничко име:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Лозинка:"
 
@@ -3200,7 +3200,7 @@ msgstr "Почетна"
 msgid "&Stop"
 msgstr "Заустави"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Освежи"
 
@@ -8756,6 +8756,70 @@ msgstr "видео запис"
 #: version.rc:45
 msgid "Select the data you want to connect to:"
 msgstr ""
+
+#: version.rc:52
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connection"
+msgstr "LAN веза"
+
+#: version.rc:55
+msgid "Specify the following to connect to ODBC data:"
+msgstr ""
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+msgid "Use &data source name"
+msgstr ""
+
+#: version.rc:60
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Use c&onnection string"
+msgstr "LAN веза"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Connection string:"
+msgstr "LAN веза"
+
+#: version.rc:63
+msgid "B&uild..."
+msgstr ""
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "&Корисничко име:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Празна &страна"
+
+#: version.rc:70
+msgid "Allow &saving password"
+msgstr ""
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Test Connection"
+msgstr "LAN веза"
 
 #: version.rc:36
 #, fuzzy

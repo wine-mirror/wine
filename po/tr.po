@@ -1222,7 +1222,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Kullanıcı adı:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Parola:"
 
@@ -3178,7 +3178,7 @@ msgstr "&Ev"
 msgid "&Stop"
 msgstr "&Durdur"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Yenile"
 
@@ -8321,6 +8321,78 @@ msgstr "Sağlayıcı"
 #: version.rc:45
 msgid "Select the data you want to connect to:"
 msgstr "Bağlanmak istediğiniz veriyi seçin:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "Bağlantılar"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the data you want to connect to:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Bağlanmak istediğiniz veriyi seçin:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Lütfen adınızı girin"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "Bağlantıları Sıfırla"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "Bağlantılar"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "&Ekle..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "&Kullanıcı adı:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Boş sa&yfa"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "Hatalı şifre.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "Bağlantıları Sıfırla"
 
 #: version.rc:36
 msgid "Data Link Properties"

@@ -1250,7 +1250,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Nome Utente:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Password:"
 
@@ -3237,7 +3237,7 @@ msgstr "&Inizio"
 msgid "&Stop"
 msgstr "&Ferma"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "A&ggiorna"
 
@@ -8717,6 +8717,78 @@ msgstr "Video"
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Seleziona il formato che vuoi usare:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connection"
+msgstr "Connessione LAN"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Seleziona il formato che vuoi usare:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Inserisci il tuo nome"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Use c&onnection string"
+msgstr "Connessione LAN"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Connection string:"
+msgstr "Connessione LAN"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "&Add..."
+msgid "B&uild..."
+msgstr "Aggiungi..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "&Nome Utente:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Pagina &vuota"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "Password sbagliata.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Test Connection"
+msgstr "Connessione LAN"
 
 #: version.rc:36
 #, fuzzy

@@ -1242,7 +1242,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "Nome de &Utlizador:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Palavra Chave:"
 
@@ -3215,7 +3215,7 @@ msgstr "&Início"
 msgid "&Stop"
 msgstr "Pa&rar"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "Actuali&zar"
 
@@ -8495,6 +8495,78 @@ msgstr "vídeo"
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Seleccione o formato que deseja utilizar:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connection"
+msgstr "Ligação LAN"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Seleccione o formato que deseja utilizar:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Por favor, indique o seu nome"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "Restabelecer ligações"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Connection string:"
+msgstr "Ligação LAN"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "&Adicionar..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "Nome de &Utlizador:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Página &vazia"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "Palavra-passe errada.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "Restabelecer ligações"
 
 #: version.rc:36
 #, fuzzy

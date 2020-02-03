@@ -1219,7 +1219,7 @@ msgstr "毫米"
 msgid "&User name:"
 msgstr "使用者名稱(&U)："
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "密碼(&P)："
 
@@ -3157,7 +3157,7 @@ msgstr "首頁(&H)"
 msgid "&Stop"
 msgstr "停止(&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "重新整理(&R)"
 
@@ -8584,6 +8584,78 @@ msgstr "視訊"
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "請選擇您要使用的格式："
+
+#: version.rc:52
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connection"
+msgstr "區域網路連線"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "請選擇您要使用的格式："
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "請輸入您的姓名"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "重置的連線"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Connection string:"
+msgstr "區域網路連線"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "加入(&D)..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "使用者名稱(&U)："
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "空白頁面(&B)"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "密碼錯誤。\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "重置的連線"
 
 #: version.rc:36
 #, fuzzy

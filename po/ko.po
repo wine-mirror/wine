@@ -1221,7 +1221,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "사용자 이름(&U):"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "암호(&P):"
 
@@ -3163,7 +3163,7 @@ msgstr "홈(&H)"
 msgid "&Stop"
 msgstr "멈추기(&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "다시 읽기(&R)"
 
@@ -8302,6 +8302,78 @@ msgstr "비디오"
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "사용할 파일 형식 선택:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "연결"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "사용할 파일 형식 선택:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "이름을 입력해 주세요"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "연결 재설정"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "연결"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "추가(&D)..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "사용자 이름(&U):"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "빈 페이지(&B)"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "잘못된 암호.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "연결 재설정"
 
 #: version.rc:36
 #, fuzzy

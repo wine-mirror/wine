@@ -1227,7 +1227,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "පරිශීලක නම (&U):"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "මුර පදය:"
 
@@ -3120,7 +3120,7 @@ msgstr "මුල (&H)"
 msgid "&Stop"
 msgstr "නවත්තන්න (&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "නැවුම් කරන්න (&R)"
 
@@ -8276,6 +8276,78 @@ msgstr "වීඩියෝ"
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "ඔබට පාවිච්චි කරන්න ඕනේ ආකෘතිය තෝරන්න:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "සබැඳුම්"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "ඔබට පාවිච්චි කරන්න ඕනේ ආකෘතිය තෝරන්න:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "කරුණාකරලා ඔබගේ නම ඇතුල්කරන්න"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "Connection is being made"
+msgid "Use c&onnection string"
+msgstr "සබැඳුම දැන් හදනවා"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "සබැඳුම්"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "එක් කරන්න (&D)"
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "පරිශීලක නම (&U):"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "හිස් පිටුවක් (&B)"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "වැරදි මුර පදය.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Connections"
+msgid "&Test Connection"
+msgstr "සබැඳුම්"
 
 #: version.rc:36
 #, fuzzy

@@ -1249,7 +1249,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Uporabniško ime:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Geslo:"
 
@@ -3231,7 +3231,7 @@ msgstr "&Domov"
 msgid "&Stop"
 msgstr "&Zaustavi"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Osveži"
 
@@ -8709,6 +8709,78 @@ msgstr "video"
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Izberite obliko, ki jo želite uporabiti:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Connection"
+msgstr "Povezava LAN"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Izberite obliko, ki jo želite uporabiti:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Vnesite svoje ime"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "Use c&onnection string"
+msgstr "Povezava LAN"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Connection string:"
+msgstr "Povezava LAN"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "&Add..."
+msgid "B&uild..."
+msgstr "&Dodaj ..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "&Uporabniško ime:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "&Prazna stran"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "Napačno geslo.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "LAN Connection"
+msgid "&Test Connection"
+msgstr "Povezava LAN"
 
 #: version.rc:36
 #, fuzzy

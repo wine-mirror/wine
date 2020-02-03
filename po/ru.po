@@ -1225,7 +1225,7 @@ msgstr "мм"
 msgid "&User name:"
 msgstr "По&льзователь:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:67
 msgid "&Password:"
 msgstr "&Пароль:"
 
@@ -3185,7 +3185,7 @@ msgstr "&Начало"
 msgid "&Stop"
 msgstr "Останов&ить"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "О&бновить"
 
@@ -8324,6 +8324,78 @@ msgstr "Провайдер"
 #: version.rc:45
 msgid "Select the data you want to connect to:"
 msgstr "Выберите формат для подключения:"
+
+#: version.rc:52
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "Подключения"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "Select the data you want to connect to:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Выберите формат для подключения:"
+
+#: version.rc:56
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:57
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Введите ваше имя"
+
+#: version.rc:60
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "Сброшено подключений"
+
+#: version.rc:61
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "Подключения"
+
+#: version.rc:63
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "&Добавить..."
+
+#: version.rc:64
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:65
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "По&льзователь:"
+
+#: version.rc:69
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Пу&стая страница"
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "Неверный пароль.\n"
+
+#: version.rc:71
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "Сброшено подключений"
 
 #: version.rc:36
 msgid "Data Link Properties"
