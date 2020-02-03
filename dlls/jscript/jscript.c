@@ -168,6 +168,10 @@ static HRESULT WINAPI JScriptError_GetExceptionInfo(IActiveScriptError *iface, E
 
     memset(excepinfo, 0, sizeof(*excepinfo));
     excepinfo->scode = This->ei.error;
+    if(This->ei.source)
+        jsstr_to_bstr(This->ei.source, &excepinfo->bstrSource);
+    if(This->ei.message)
+        jsstr_to_bstr(This->ei.message, &excepinfo->bstrDescription);
     return S_OK;
 }
 

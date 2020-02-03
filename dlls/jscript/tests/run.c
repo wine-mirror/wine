@@ -2345,13 +2345,12 @@ static void test_error_reports(void)
             if (is_lang_english())
             {
                 if(tests[i].error_source)
-                    todo_wine
                     ok(ei.bstrSource && !lstrcmpW(ei.bstrSource, tests[i].error_source), "[%u] bstrSource = %s expected %s\n",
                        i, wine_dbgstr_w(ei.bstrSource), wine_dbgstr_w(tests[i].error_source));
                 else
                     ok(!ei.bstrSource, "[%u] bstrSource = %s expected NULL\n", i, wine_dbgstr_w(ei.bstrSource));
                 if(tests[i].description)
-                    todo_wine
+                    todo_wine_if(tests[i].todo_flags & ERROR_TODO_DESCRIPTION)
                     ok(ei.bstrDescription && !lstrcmpW(ei.bstrDescription, tests[i].description),
                        "[%u] bstrDescription = %s expected %s\n", i, wine_dbgstr_w(ei.bstrDescription), wine_dbgstr_w(tests[i].description));
                 else
