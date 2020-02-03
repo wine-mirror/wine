@@ -6370,7 +6370,7 @@ static void test_navigator(IHTMLDocument2 *doc)
     hres = ObtainUserAgentString(0, bufa, &size);
     ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
 
-    MultiByteToWideChar(CP_ACP, 0, bufa, size, buf, sizeof(buf));
+    MultiByteToWideChar(CP_ACP, 0, bufa, size, buf, ARRAY_SIZE(buf));
 
     bstr = NULL;
     hres = IOmNavigator_get_userAgent(navigator, &bstr);
@@ -6390,7 +6390,7 @@ static void test_navigator(IHTMLDocument2 *doc)
 
     hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, ua, sizeof(ua), 0);
     ok(hres == S_OK, "UrlMkSetSessionOption failed: %08x\n", hres);
-    MultiByteToWideChar(CP_ACP, 0, ua, -1, buf, sizeof(buf));
+    MultiByteToWideChar(CP_ACP, 0, ua, -1, buf, ARRAY_SIZE(buf));
 
     hres = IOmNavigator_get_appVersion(navigator, &bstr);
     ok(hres == S_OK, "get_appVersion failed: %08x\n", hres);
