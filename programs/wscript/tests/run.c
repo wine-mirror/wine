@@ -74,17 +74,6 @@ static const GUID CLSID_TestObj =
 static const char *script_name;
 static HANDLE wscript_process;
 
-static const WCHAR* mystrrchr(const WCHAR *str, WCHAR ch)
-{
-    const WCHAR *pos = NULL, *current = str;
-    while(*current != 0) {
-        if(*current == ch)
-            pos = current;
-        ++current;
-    }
-    return pos;
-}
-
 static BSTR a2bstr(const char *str)
 {
     BSTR ret;
@@ -232,7 +221,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         res = GetModuleFileNameExW(wscript_process, NULL, fullPath, ARRAY_SIZE(fullPath));
         if(res == 0)
             return E_FAIL;
-        pos = mystrrchr(fullPath, '\\');
+        pos = wcsrchr(fullPath, '\\');
         if(!(V_BSTR(pVarResult) = SysAllocStringLen(fullPath, pos-fullPath)))
             return E_OUTOFMEMORY;
         break;
