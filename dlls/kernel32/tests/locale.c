@@ -6032,7 +6032,7 @@ static void test_NormalizeString(void)
         {
             SetLastError(0xdeadbeef);
             dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, NULL, 0 );
-            ok( dstlen > 0, "%s:%d: wrong len %d / %d\n",
+            ok( dstlen > lstrlenW(ptest->str), "%s:%d: wrong len %d / %d\n",
                 wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW(ptest->str) );
             todo_wine
             ok(GetLastError() == ERROR_SUCCESS, "%s:%d: got error %u\n",
@@ -6064,7 +6064,7 @@ static void test_NormalizeString(void)
                 dstlen = 0;
                 status = pRtlNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), NULL, &dstlen );
                 ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
-                ok( dstlen > 0, "%s:%d: wrong len %d / %d\n",
+                ok( dstlen > lstrlenW(ptest->str), "%s:%d: wrong len %d / %d\n",
                     wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW(ptest->str) );
                 memset(dst, 0, sizeof(dst));
                 status = pRtlNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), dst, &dstlen );
@@ -6086,17 +6086,17 @@ static void test_NormalizeString(void)
 
     SetLastError(0xdeadbeef);
     dstlen = pNormalizeString( NormalizationD, part0_str1, -1, dst, 1 );
-    ok( dstlen <= 0, "wrong len %d\n", dstlen );
+    todo_wine ok( dstlen <= 0, "wrong len %d\n", dstlen );
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     dstlen = pNormalizeString( NormalizationC, part0_str2, -1, dst, 1 );
     todo_wine ok( dstlen <= 0, "wrong len %d\n", dstlen );
-    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     dstlen = pNormalizeString( NormalizationC, part0_str2, -1, NULL, 0 );
-    todo_wine ok( dstlen == 12, "wrong len %d\n", dstlen );
+    ok( dstlen == 12, "wrong len %d\n", dstlen );
     todo_wine ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -6124,13 +6124,13 @@ static void test_NormalizeString(void)
             int expect = (i < 2) ? j * 3 : j * 18;
             if (expect > 64) expect = max( 64, j + j / 8 );
             dstlen = pNormalizeString( norm_forms[i], dst, j, NULL, 0 );
-            todo_wine ok( dstlen == expect, "%d: %d -> wrong len %d\n", i, j, dstlen );
+            ok( dstlen == expect, "%d: %d -> wrong len %d\n", i, j, dstlen );
             if (pRtlNormalizeString)
             {
                 dstlen = 0;
                 status = pRtlNormalizeString( norm_forms[i], dst, j, NULL, &dstlen );
                 ok( !status, "%d: failed %x\n", i, status );
-                todo_wine ok( dstlen == expect, "%d: %d -> wrong len %d\n", i, j, dstlen );
+                ok( dstlen == expect, "%d: %d -> wrong len %d\n", i, j, dstlen );
             }
         }
     }
@@ -6139,7 +6139,7 @@ static void test_NormalizeString(void)
         int srclen = ARRAY_SIZE( composite_src );
         int expect = max( 64, srclen + srclen / 8 );
         dstlen = pNormalizeString( norm_forms[i], composite_src, srclen, NULL, 0 );
-        todo_wine ok( dstlen == expect, "%d: wrong len %d\n", i, dstlen );
+        ok( dstlen == expect, "%d: wrong len %d\n", i, dstlen );
         dstlen = pNormalizeString( norm_forms[i], composite_src, srclen, dst, dstlen );
         if (i == 0 || i == 2)
         {
@@ -6149,14 +6149,14 @@ static void test_NormalizeString(void)
         else
         {
             todo_wine ok( dstlen < -expect, "%d: wrong len %d\n", i, dstlen );
-            todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+            ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
         }
         if (pRtlNormalizeString)
         {
             dstlen = 0;
             status = pRtlNormalizeString( norm_forms[i], composite_src, srclen, NULL, &dstlen );
             ok( !status, "%d: failed %x\n", i, status );
-            todo_wine ok( dstlen == expect, "%d: wrong len %d\n", i, dstlen );
+            ok( dstlen == expect, "%d: wrong len %d\n", i, dstlen );
             status = pRtlNormalizeString( norm_forms[i], composite_src, srclen, dst, &dstlen );
             if (i == 0 || i == 2)
             {
@@ -6165,7 +6165,7 @@ static void test_NormalizeString(void)
             }
             else
             {
-                todo_wine ok( status == STATUS_BUFFER_TOO_SMALL, "%d: failed %x\n", i, status );
+                ok( status == STATUS_BUFFER_TOO_SMALL, "%d: failed %x\n", i, status );
                 ok( dstlen > expect, "%d: wrong len %d\n", i, dstlen );
             }
         }
@@ -6223,13 +6223,13 @@ static void test_NormalizeString(void)
     for (i = 0; i < 4; i++)
     {
         dstlen = pNormalizeString( norm_forms[i], L"AB\xd800Z", -1, NULL, 0 );
-        todo_wine ok( dstlen == (i < 2 ? 15 : 64), "%d: wrong len %d\n", i, dstlen );
+        ok( dstlen == (i < 2 ? 15 : 64), "%d: wrong len %d\n", i, dstlen );
         SetLastError( 0xdeadbeef );
         dstlen = pNormalizeString( norm_forms[i], L"AB\xd800Z", -1, dst, ARRAY_SIZE(dst) );
         todo_wine ok( dstlen == -3, "%d: wrong len %d\n", i, dstlen );
         todo_wine ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "%d: wrong error %d\n", i, GetLastError() );
         dstlen = pNormalizeString( norm_forms[i], L"ABCD\xdc12Z", -1, NULL, 0 );
-        todo_wine ok( dstlen == (i < 2 ? 21 : 64), "%d: wrong len %d\n", i, dstlen );
+        ok( dstlen == (i < 2 ? 21 : 64), "%d: wrong len %d\n", i, dstlen );
         SetLastError( 0xdeadbeef );
         dstlen = pNormalizeString( norm_forms[i], L"ABCD\xdc12Z", -1, dst, ARRAY_SIZE(dst) );
         todo_wine ok( dstlen == -4, "%d: wrong len %d\n", i, dstlen );
@@ -6237,23 +6237,22 @@ static void test_NormalizeString(void)
         SetLastError( 0xdeadbeef );
         dstlen = pNormalizeString( norm_forms[i], L"ABCD\xdc12Z", -1, dst, 2 );
         todo_wine ok( dstlen == (i < 2 ? -18 : -74), "%d: wrong len %d\n", i, dstlen );
-        todo_wine_if (i == 0 || i == 2)
         ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "%d: wrong error %d\n", i, GetLastError() );
         if (pRtlNormalizeString)
         {
             dstlen = 0;
             status = pRtlNormalizeString( norm_forms[i], L"AB\xd800Z", -1, NULL, &dstlen );
             ok( !status, "%d: failed %x\n", i, status );
-            todo_wine ok( dstlen == (i < 2 ? 15 : 64), "%d: wrong len %d\n", i, dstlen );
+            ok( dstlen == (i < 2 ? 15 : 64), "%d: wrong len %d\n", i, dstlen );
             dstlen = ARRAY_SIZE(dst);
             status = pRtlNormalizeString( norm_forms[i], L"AB\xd800Z", -1, dst, &dstlen );
             todo_wine ok( status == STATUS_NO_UNICODE_TRANSLATION, "%d: failed %x\n", i, status );
             todo_wine ok( dstlen == 3, "%d: wrong len %d\n", i, dstlen );
             dstlen = 1;
             status = pRtlNormalizeString( norm_forms[i], L"AB\xd800Z", -1, dst, &dstlen );
-            todo_wine_if (i == 0 || i == 2)
             ok( status == STATUS_BUFFER_TOO_SMALL, "%d: failed %x\n", i, status );
-            todo_wine ok( dstlen == (i < 2 ? 14 : 73), "%d: wrong len %d\n", i, dstlen );
+            todo_wine_if (i != 3)
+            ok( dstlen == (i < 2 ? 14 : 73), "%d: wrong len %d\n", i, dstlen );
             dstlen = 2;
             status = pRtlNormalizeString( norm_forms[i], L"AB\xd800Z", -1, dst, &dstlen );
             todo_wine ok( status == STATUS_NO_UNICODE_TRANSLATION, "%d: failed %x\n", i, status );

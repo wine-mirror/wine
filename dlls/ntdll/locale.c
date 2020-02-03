@@ -223,21 +223,25 @@ static void canonical_order_string( WCHAR *str, unsigned int len )
 }
 
 
-static unsigned int decompose_string( int flags, const WCHAR *src, unsigned int src_len,
-                                      WCHAR *dst, unsigned int dst_len )
+static NTSTATUS decompose_string( int flags, const WCHAR *src, int src_len, WCHAR *dst, int *dst_len )
 {
-    unsigned int src_pos, dst_pos = 0, decomp_len;
+    int src_pos, dst_pos = 0, decomp_len;
 
     for (src_pos = 0; src_pos < src_len; src_pos++)
     {
-        if (dst_pos == dst_len) return 0;
-        decomp_len = wine_decompose( flags, src[src_pos], dst + dst_pos, dst_len - dst_pos );
-        if (decomp_len == 0) return 0;
+        if (dst_pos == *dst_len) break;
+        decomp_len = wine_decompose( flags, src[src_pos], dst + dst_pos, *dst_len - dst_pos );
+        if (decomp_len == 0) break;
         dst_pos += decomp_len;
     }
-
-    if (flags & WINE_DECOMPOSE_REORDER) canonical_order_string( dst, dst_pos );
-    return dst_pos;
+    if (src_pos < src_len)
+    {
+        *dst_len += (src_len - src_pos) * (flags & WINE_DECOMPOSE_COMPAT ? 18 : 3);
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    canonical_order_string( dst, dst_pos );
+    *dst_len = dst_pos;
+    return STATUS_SUCCESS;
 }
 
 
@@ -1687,8 +1691,7 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
  */
 NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, WCHAR *dst, INT *dst_len )
 {
-    int flags = 0, compose, compat;
-    unsigned int res, buf_len;
+    int flags = 0, compose, compat, buf_len;
     WCHAR *buf = NULL;
     NTSTATUS status = STATUS_SUCCESS;
 
@@ -1706,42 +1709,38 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
 
     if (src_len == -1) src_len = strlenW(src) + 1;
 
+    if (!*dst_len)
+    {
+        *dst_len = compat ? src_len * 18 : src_len * 3;
+        if (*dst_len > 64) *dst_len = max( 64, src_len + src_len / 8 );
+        return STATUS_SUCCESS;
+    }
+    if (!src_len)
+    {
+        *dst_len = 0;
+        return STATUS_SUCCESS;
+    }
+
     if (compat) flags |= WINE_DECOMPOSE_COMPAT;
-    if (compose || *dst_len) flags |= WINE_DECOMPOSE_REORDER;
 
-    if (!compose && *dst_len)
-    {
-        res = decompose_string( flags, src, src_len, dst, *dst_len );
-        if (!res)
-        {
-            status = STATUS_BUFFER_TOO_SMALL;
-            goto done;
-        }
-        buf = dst;
-    }
-    else if (src_len)
-    {
-        buf_len = src_len * 4;
-        for (;;)
-        {
-            buf = RtlAllocateHeap( GetProcessHeap(), 0, buf_len * sizeof(WCHAR) );
-            if (!buf) return STATUS_NO_MEMORY;
-            res = decompose_string( flags, src, src_len, buf, buf_len );
-            if (res) break;
-            buf_len *= 2;
-            RtlFreeHeap( GetProcessHeap(), 0, buf );
-        }
-    }
-    else res = 0;
+    if (!compose) return decompose_string( flags, src, src_len, dst, dst_len );
 
-    if (compose)
+    buf_len = src_len * 4;
+    for (;;)
     {
-        res = compose_string( buf, res );
-        if (*dst_len >= res) memcpy( dst, buf, res * sizeof(WCHAR) );
+        buf = RtlAllocateHeap( GetProcessHeap(), 0, buf_len * sizeof(WCHAR) );
+        if (!buf) return STATUS_NO_MEMORY;
+        status = decompose_string( flags, src, src_len, buf, &buf_len );
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
+        RtlFreeHeap( GetProcessHeap(), 0, buf );
     }
-
-done:
-    if (buf != dst) RtlFreeHeap( GetProcessHeap(), 0, buf );
-    *dst_len = res;
+    if (!status)
+    {
+        buf_len = compose_string( buf, buf_len );
+        if (*dst_len >= buf_len) memcpy( dst, buf, buf_len * sizeof(WCHAR) );
+        else status = STATUS_BUFFER_TOO_SMALL;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, buf );
+    *dst_len = buf_len;
     return status;
 }
