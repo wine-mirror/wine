@@ -2166,10 +2166,6 @@ static HRESULT opentype_get_font_strings_from_meta(const struct file_stream_desc
 
     *ret = NULL;
 
-    hr = create_localizedstrings(&strings);
-    if (FAILED(hr))
-        return hr;
-
     switch (id)
     {
         case DWRITE_INFORMATIONAL_STRING_DESIGN_SCRIPT_LANGUAGE_TAG:
@@ -2182,6 +2178,9 @@ static HRESULT opentype_get_font_strings_from_meta(const struct file_stream_desc
             WARN("Unexpected id %d.\n", id);
             return S_OK;
     }
+
+    if (FAILED(hr = create_localizedstrings(&strings)))
+        return hr;
 
     opentype_get_font_table(stream_desc, MS_META_TAG, &meta);
 
