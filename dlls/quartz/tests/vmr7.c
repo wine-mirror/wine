@@ -872,31 +872,18 @@ static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDI
     return S_OK;
 }
 
-static HRESULT WINAPI testsource_AttemptConnection(struct strmbase_source *iface,
-        IPin *peer, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
+        IMemInputPin *peer, IMemAllocator **allocator)
 {
-    HRESULT hr;
-
-    iface->pin.peer = peer;
-    IPin_AddRef(peer);
-    CopyMediaType(&iface->pin.mt, mt);
-
-    if (FAILED(hr = IPin_ReceiveConnection(peer, &iface->pin.IPin_iface, mt)))
-    {
-        ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
-        IPin_Release(peer);
-        iface->pin.peer = NULL;
-        FreeMediaType(&iface->pin.mt);
-    }
-
-    return hr;
+    return S_OK;
 }
 
 static const struct strmbase_source_ops testsource_ops =
 {
     .base.pin_query_accept = testsource_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
-    .pfnAttemptConnection = testsource_AttemptConnection,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = testsource_DecideAllocator,
 };
 
 static void testfilter_init(struct testfilter *filter)
