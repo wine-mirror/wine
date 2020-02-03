@@ -1687,17 +1687,26 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
  */
 NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, WCHAR *dst, INT *dst_len )
 {
-    int flags = 0, compose = 0;
+    int flags = 0, compose, compat;
     unsigned int res, buf_len;
     WCHAR *buf = NULL;
     NTSTATUS status = STATUS_SUCCESS;
 
     TRACE( "%x %s %d %p %d\n", form, debugstr_wn(src, src_len), src_len, dst, *dst_len );
 
+    switch (form)
+    {
+    case NormalizationC:  compose = 1; compat = 0; break;
+    case NormalizationD:  compose = 0; compat = 0; break;
+    case NormalizationKC: compose = 1; compat = 1; break;
+    case NormalizationKD: compose = 0; compat = 1; break;
+    case 0: return STATUS_INVALID_PARAMETER;
+    default: return STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+
     if (src_len == -1) src_len = strlenW(src) + 1;
 
-    if (form == NormalizationKC || form == NormalizationKD) flags |= WINE_DECOMPOSE_COMPAT;
-    if (form == NormalizationC || form == NormalizationKC) compose = 1;
+    if (compat) flags |= WINE_DECOMPOSE_COMPAT;
     if (compose || *dst_len) flags |= WINE_DECOMPOSE_REORDER;
 
     if (!compose && *dst_len)

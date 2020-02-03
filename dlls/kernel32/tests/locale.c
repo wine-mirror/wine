@@ -6184,12 +6184,14 @@ static void test_NormalizeString(void)
         case NormalizationKC:
         case NormalizationKD:
         case 13:  /* Idn */
+            todo_wine_if (i == 13)
             ok( dstlen > 0, "%d: wrong len %d\n", i, dstlen );
             todo_wine ok( GetLastError() == ERROR_SUCCESS, "%d: got error %u\n", i, GetLastError());
             break;
         default:
-            todo_wine ok( dstlen <= 0, "%d: wrong len %d\n", i, dstlen );
-            todo_wine ok( GetLastError() == ERROR_INVALID_PARAMETER, "%d: got error %u\n", i, GetLastError());
+            ok( dstlen <= 0, "%d: wrong len %d\n", i, dstlen );
+            todo_wine_if (i)
+            ok( GetLastError() == ERROR_INVALID_PARAMETER, "%d: got error %u\n", i, GetLastError());
             break;
         }
         if (pRtlNormalizeString)
@@ -6199,17 +6201,18 @@ static void test_NormalizeString(void)
             switch (i)
             {
             case 0:
-                todo_wine ok( status == STATUS_INVALID_PARAMETER, "%d: failed %x\n", i, status );
+                ok( status == STATUS_INVALID_PARAMETER, "%d: failed %x\n", i, status );
                 break;
             case NormalizationC:
             case NormalizationD:
             case NormalizationKC:
             case NormalizationKD:
             case 13:  /* Idn */
+                todo_wine_if (i == 13)
                 ok( status == STATUS_SUCCESS, "%d: failed %x\n", i, status );
                 break;
             default:
-                todo_wine ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%d: failed %x\n", i, status );
+                ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%d: failed %x\n", i, status );
                 break;
             }
         }
