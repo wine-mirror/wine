@@ -2429,21 +2429,19 @@ static HRESULT WINAPI dwritefontfamily1_GetFont(IDWriteFontFamily2 *iface, UINT3
 static HRESULT WINAPI dwritefontfamily1_GetFontFaceReference(IDWriteFontFamily2 *iface, UINT32 index,
         IDWriteFontFaceReference **reference)
 {
-    IDWriteFont3 *font;
-    HRESULT hr;
+    struct dwrite_fontfamily *family = impl_from_IDWriteFontFamily2(iface);
+    const struct dwrite_font_data *font;
 
     TRACE("%p, %u, %p.\n", iface, index, reference);
 
     *reference = NULL;
 
-    hr = IDWriteFontFamily2_GetFont(iface, index, &font);
-    if (FAILED(hr))
-        return hr;
+    if (index >= family->data->count)
+        return E_FAIL;
 
-    hr = IDWriteFont3_GetFontFaceReference(font, reference);
-    IDWriteFont3_Release(font);
-
-    return hr;
+    font = family->data->fonts[index];
+    return IDWriteFactory5_CreateFontFaceReference_((IDWriteFactory5 *)family->collection->factory,
+            font->file, font->face_index, font->simulations, reference);
 }
 
 static HRESULT WINAPI dwritefontfamily2_GetMatchingFonts(IDWriteFontFamily2 *iface,
