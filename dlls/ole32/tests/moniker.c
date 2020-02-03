@@ -1605,24 +1605,12 @@ static void test_moniker(
     BOOL same;
     BYTE buffer[128];
     IMoniker * moniker_proxy;
-    LPOLESTR display_name;
-    IBindCtx *bindctx;
 
     hr = IMoniker_IsDirty(moniker);
     ok(hr == S_FALSE, "%s: IMoniker_IsDirty should return S_FALSE, not 0x%08x\n", testname, hr);
 
     /* Display Name */
-
-    hr = CreateBindCtx(0, &bindctx);
-    ok_ole_success(hr, CreateBindCtx);
-
-    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &display_name);
-    ok_ole_success(hr, IMoniker_GetDisplayName);
-    ok(!lstrcmpW(display_name, expected_display_name), "%s: unexpected display name %s, %s.\n", testname,
-            wine_dbgstr_w(display_name), wine_dbgstr_w(expected_display_name));
-
-    CoTaskMemFree(display_name);
-    IBindCtx_Release(bindctx);
+    TEST_DISPLAY_NAME(moniker, expected_display_name);
 
     hr = IMoniker_IsDirty(moniker);
     ok(hr == S_FALSE, "%s: IMoniker_IsDirty should return S_FALSE, not 0x%08x\n", testname, hr);
@@ -2096,7 +2084,6 @@ static void test_item_moniker(void)
     WCHAR displayname[16] = L"display name";
     IEnumMoniker *enummoniker;
     IRunningObjectTable *rot;
-    WCHAR *display_name;
     BIND_OPTS bind_opts;
     LARGE_INTEGER pos;
     IStream *stream;
@@ -2174,12 +2161,7 @@ static void test_item_moniker(void)
         hr = IMoniker_Load(moniker2, stream);
         ok(hr == S_OK, "Failed to load moniker, hr %#x.\n", hr);
 
-        hr = IMoniker_GetDisplayName(moniker2, bindctx, NULL, &display_name);
-        ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
-        ok(!lstrcmpW(display_name, item_moniker_data[i].display_name), "%d: unexpected display name %s.\n",
-                i, wine_dbgstr_w(display_name));
-
-        CoTaskMemFree(display_name);
+        TEST_DISPLAY_NAME(moniker2, item_moniker_data[i].display_name);
     }
 
     IStream_Release(stream);
@@ -2454,7 +2436,6 @@ static void test_anti_moniker(void)
     static const WCHAR expected_display_name[] = { '\\','.','.',0 };
     IEnumMoniker *enummoniker;
     IStream *stream;
-    WCHAR *name;
 
     hr = CreateAntiMoniker(&moniker);
     ok_ole_success(hr, CreateAntiMoniker);
@@ -2545,10 +2526,7 @@ static void test_anti_moniker(void)
     ok(hash == 0x80000002, "Unexpected hash value %#x.\n", hash);
 
     /* Display name reflects anti combination. */
-    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &name);
-    ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
-    ok(!lstrcmpW(name, L"\\..\\.."), "Unexpected display name %s.\n", wine_dbgstr_w(name));
-    CoTaskMemFree(name);
+    TEST_DISPLAY_NAME(moniker, L"\\..\\..");
 
     /* Limit is at 0xfffff. */
     stream_write_dword(stream, 0xfffff);
@@ -2585,10 +2563,7 @@ static void test_anti_moniker(void)
     ok(hr == S_OK, "Failed to get hash value, hr %#x.\n", hr);
     ok(hash == 0x80000000, "Unexpected hash value %#x.\n", hash);
 
-    hr = IMoniker_GetDisplayName(moniker, bindctx, NULL, &name);
-    ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
-    ok(!lstrcmpW(name, L""), "Unexpected display name %s.\n", wine_dbgstr_w(name));
-    CoTaskMemFree(name);
+    TEST_DISPLAY_NAME(moniker, L"");
 
     /* Back to initial value. */
     stream_write_dword(stream, 1);
@@ -2704,22 +2679,16 @@ static void test_generic_composite_moniker(void)
     IBindCtx *bindctx;
     FILETIME filetime;
     IUnknown *unknown;
-    static const WCHAR wszDelimiter1[] = {'!',0};
-    static const WCHAR wszObjectName1[] = {'T','e','s','t',0};
-    static const WCHAR wszDelimiter2[] = {'#',0};
-    static const WCHAR wszObjectName2[] = {'W','i','n','e',0};
-    static const WCHAR expected_display_name[] = { '!','T','e','s','t','#','W','i','n','e',0 };
-    WCHAR *name;
 
     hr = CreateBindCtx(0, &bindctx);
     ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
 
-    hr = CreateItemMoniker(wszDelimiter1, wszObjectName1, &moniker1);
-    ok_ole_success(hr, CreateItemMoniker);
-    hr = CreateItemMoniker(wszDelimiter2, wszObjectName2, &moniker2);
-    ok_ole_success(hr, CreateItemMoniker);
+    hr = CreateItemMoniker(L"!", L"Test", &moniker1);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
+    hr = CreateItemMoniker(L"#", L"Wine", &moniker2);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
     hr = CreateGenericComposite(moniker1, moniker2, &moniker);
-    ok_ole_success(hr, CreateGenericComposite);
+    ok(hr == S_OK, "Failed to create a moniker, hr %#x.\n", hr);
 
     /* Compose with itself. */
     EXPECT_REF(moniker1, 2);
@@ -2786,10 +2755,7 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     TEST_MONIKER_TYPE(moniker4, MKSYS_GENERICCOMPOSITE);
 
-    hr = IMoniker_GetDisplayName(moniker4, bindctx, NULL, &name);
-    ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
-    ok(!lstrcmpW(name, L"!Test#Wine"), "Unexpected name %s.\n", wine_dbgstr_w(name));
-    CoTaskMemFree(name);
+    TEST_DISPLAY_NAME(moniker4, L"!Test#Wine");
 
     IMoniker_Release(moniker4);
     IMoniker_Release(moniker3);
@@ -2807,7 +2773,7 @@ todo_wine
         expected_gc_moniker_marshal_data, sizeof(expected_gc_moniker_marshal_data),
         expected_gc_moniker_saved_data, sizeof(expected_gc_moniker_saved_data),
         expected_gc_moniker_comparison_data, sizeof(expected_gc_moniker_comparison_data),
-        160, expected_display_name);
+        160, L"!Test#Wine");
 
     /* Hashing */
 
