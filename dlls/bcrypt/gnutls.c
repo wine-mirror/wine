@@ -1141,8 +1141,8 @@ static unsigned int get_signature_length( enum alg_id id )
     }
 }
 
-NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signature, UCHAR *output,
-                                  ULONG output_len, ULONG *ret_len )
+static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signature,
+                                         UCHAR *output, ULONG output_len, ULONG *ret_len )
 {
     switch (type)
     {
