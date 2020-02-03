@@ -498,7 +498,6 @@ static int run_test( const char *name )
         printf( "Fatal: test '%s' does not exist.\n", name );
         exit_process(1);
     }
-    successes = failures = todo_successes = todo_failures = 0;
     tls_index=TlsAlloc();
     current_test = test;
     test->func();
