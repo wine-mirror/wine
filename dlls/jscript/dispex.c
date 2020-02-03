@@ -1974,7 +1974,8 @@ static HRESULT disp_invoke(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD f
 
     if(hres == DISP_E_EXCEPTION) {
         TRACE("DISP_E_EXCEPTION: %08x %s %s\n", ei.scode, debugstr_w(ei.bstrSource), debugstr_w(ei.bstrDescription));
-        hres = SUCCEEDED(ei.scode) ? E_FAIL : ei.scode;
+        reset_ei(ctx->ei);
+        ctx->ei->error = (SUCCEEDED(ei.scode) || ei.scode == DISP_E_EXCEPTION) ? E_FAIL : ei.scode;
         SysFreeString(ei.bstrSource);
         SysFreeString(ei.bstrDescription);
         SysFreeString(ei.bstrHelpFile);
