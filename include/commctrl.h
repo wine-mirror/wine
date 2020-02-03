@@ -5346,6 +5346,24 @@ typedef struct _tagEDITBALLOONTIP
 #define EM_GETHILITE              (ECM_FIRST + 6)
 #define EM_NOSETFOCUS             (ECM_FIRST + 7)
 #define EM_TAKEFOCUS              (ECM_FIRST + 8)
+#define EM_SETEXTENDEDSTYLE       (ECM_FIRST + 10)
+#define EM_GETEXTENDEDSTYLE       (ECM_FIRST + 11)
+#define EM_SETENDOFLINE           (ECM_FIRST + 12)
+#define EM_GETENDOFLINE           (ECM_FIRST + 13)
+#define EM_ENABLESEARCHWEB        (ECM_FIRST + 14)
+#define EM_SEARCHWEB              (ECM_FIRST + 15)
+#define EM_SETCARETINDEX          (ECM_FIRST + 17)
+#define EM_GETCARETINDEX          (ECM_FIRST + 18)
+#define EM_FILELINEFROMCHAR       (ECM_FIRST + 19)
+#define EM_FILELINEINDEX          (ECM_FIRST + 20)
+#define EM_FILELINELENGTH         (ECM_FIRST + 21)
+#define EM_GETFILELINE            (ECM_FIRST + 22)
+#define EM_GETFILELINECOUNT       (ECM_FIRST + 23)
+
+#define EM_GETZOOM                (WM_USER + 224)
+#define EM_SETZOOM                (WM_USER + 225)
+
+#define EN_SEARCHWEB              (EN_FIRST)
 
 #define Edit_SetCueBannerText(hwnd, text) \
         (BOOL)SNDMSG((hwnd), EM_SETCUEBANNER, 0, (LPARAM)(text))
