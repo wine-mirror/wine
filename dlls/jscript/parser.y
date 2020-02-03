@@ -27,7 +27,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 static int parser_error(unsigned*,parser_ctx_t*,const char*);
-static void set_error(parser_ctx_t*,UINT);
+static void set_error(parser_ctx_t*,unsigned,HRESULT);
 static BOOL explicit_error(parser_ctx_t*,void*,WCHAR);
 static BOOL allow_auto_semicolon(parser_ctx_t*);
 
@@ -495,7 +495,7 @@ Expression_opt
 
 Expression_err
         : Expression            { $$ = $1; }
-        | error                 { set_error(ctx, JS_E_SYNTAX); YYABORT; }
+        | error                 { set_error(ctx, @$, JS_E_SYNTAX); YYABORT; }
 
 /* ECMA-262 3rd Edition    11.14 */
 Expression
@@ -881,19 +881,19 @@ BooleanLiteral
 
 semicolon_opt
         : ';'
-        | error                 { if(!allow_auto_semicolon(ctx)) {YYABORT;} else { ctx->hres = S_OK; } }
+        | error                 { if(!allow_auto_semicolon(ctx)) {YYABORT;} else { ctx->hres = S_OK; ctx->error_loc = -1; } }
 
 left_bracket
         : '('
-        | error                 { set_error(ctx, JS_E_MISSING_LBRACKET); YYABORT; }
+        | error                 { set_error(ctx, @$, JS_E_MISSING_LBRACKET); YYABORT; }
 
 right_bracket
         : ')'
-        | error                 { set_error(ctx, JS_E_MISSING_RBRACKET); YYABORT; }
+        | error                 { set_error(ctx, @$, JS_E_MISSING_RBRACKET); YYABORT; }
 
 semicolon
         : ';'
-        | error                 { set_error(ctx, JS_E_MISSING_SEMICOLON); YYABORT; }
+        | error                 { set_error(ctx,  @$, JS_E_MISSING_SEMICOLON); YYABORT; }
 
 %%
 
@@ -1464,22 +1464,25 @@ static expression_t *new_call_expression(parser_ctx_t *ctx, expression_t *expres
 
 static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
 {
+    if(ctx->error_loc == -1)
+        ctx->error_loc = *loc;
     if(ctx->hres == S_OK)
         ctx->hres = JS_E_SYNTAX;
     WARN("%s: %s\n", debugstr_w(ctx->begin + *loc), str);
     return 0;
 }
 
-static void set_error(parser_ctx_t *ctx, UINT error)
+static void set_error(parser_ctx_t *ctx, unsigned loc, HRESULT error)
 {
     ctx->hres = error;
+    ctx->error_loc = loc;
 }
 
 static BOOL explicit_error(parser_ctx_t *ctx, void *obj, WCHAR next)
 {
     if(obj || *(ctx->ptr-1)==next) return TRUE;
 
-    set_error(ctx, JS_E_SYNTAX);
+    set_error(ctx, ctx->ptr - ctx->begin /* FIXME */, JS_E_SYNTAX);
     return FALSE;
 }
 
@@ -1563,7 +1566,7 @@ void parser_release(parser_ctx_t *ctx)
     heap_free(ctx);
 }
 
-HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, const WCHAR *code, const WCHAR *delimiter, BOOL from_eval,
+HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, bytecode_t *code, const WCHAR *delimiter, BOOL from_eval,
         parser_ctx_t **ret)
 {
     parser_ctx_t *parser_ctx;
@@ -1576,9 +1579,10 @@ HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, const 
     if(!parser_ctx)
         return E_OUTOFMEMORY;
 
+    parser_ctx->error_loc = -1;
     parser_ctx->is_html = delimiter && !wcsicmp(delimiter, html_tagW);
 
-    parser_ctx->begin = parser_ctx->ptr = code;
+    parser_ctx->begin = parser_ctx->ptr = code->source;
     parser_ctx->end = parser_ctx->begin + lstrlenW(parser_ctx->begin);
 
     script_addref(ctx);
@@ -1596,8 +1600,11 @@ HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, const 
     if(FAILED(hres)) {
         WARN("parser failed around %s\n",
             debugstr_w(parser_ctx->begin+20 > parser_ctx->ptr ? parser_ctx->begin : parser_ctx->ptr-20));
+
+        throw_error(ctx, hres, NULL);
+        set_error_location(ctx->ei, code, parser_ctx->error_loc, IDS_COMPILATION_ERROR);
         parser_release(parser_ctx);
-        return hres;
+        return DISP_E_EXCEPTION;
     }
 
     *ret = parser_ctx;

@@ -19,6 +19,7 @@
 typedef struct _source_elements_t source_elements_t;
 typedef struct _expression_t expression_t;
 typedef struct _statement_t statement_t;
+struct _bytecode_t;
 
 typedef struct {
     BOOL is_num;
@@ -41,6 +42,7 @@ typedef struct _parser_ctx_t {
     BOOL is_html;
     BOOL lexer_error;
     HRESULT hres;
+    unsigned error_loc;
 
     ccval_t ccval;
     unsigned cc_if_depth;
@@ -48,7 +50,7 @@ typedef struct _parser_ctx_t {
     heap_pool_t heap;
 } parser_ctx_t;
 
-HRESULT script_parse(script_ctx_t*,struct _compiler_ctx_t*,const WCHAR*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;
+HRESULT script_parse(script_ctx_t*,struct _compiler_ctx_t*,struct _bytecode_t*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;
 void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
 
 int parser_lex(void*,unsigned*,parser_ctx_t*) DECLSPEC_HIDDEN;

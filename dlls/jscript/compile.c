@@ -2508,7 +2508,7 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, UINT64 source_conte
         }
     }
 
-    hres = script_parse(ctx, &compiler, compiler.code->source, delimiter, from_eval, &compiler.parser);
+    hres = script_parse(ctx, &compiler, compiler.code, delimiter, from_eval, &compiler.parser);
     if(FAILED(hres)) {
         release_bytecode(compiler.code);
         return hres;
