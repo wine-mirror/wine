@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-12-13 10:36+0200\n"
+"PO-Revision-Date: 2020-02-03 23:24+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3712,17 +3712,15 @@ msgstr "Tikėtasi „@“"
 
 #: jscript.rc:75
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript kompiliavimo klaida"
 
 #: jscript.rc:76
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Microsoft JScript vykdymo klaida"
 
 #: jscript.rc:77
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown runtime error"
-msgstr "Nežinoma klaida"
+msgstr "Nežinoma vykdymo klaida"
 
 #: jscript.rc:54
 msgid "Number expected"
@@ -3770,7 +3768,7 @@ msgstr "Sintaksės klaida reguliariajame reiškinyje"
 
 #: jscript.rc:63
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "Išimtinė situacija sugeneruota ir neapdorota"
 
 #: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
