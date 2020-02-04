@@ -2475,11 +2475,12 @@ DWORD WINAPIV CallProc32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, 
 DWORD WINAPIV CallProcEx32W16( DWORD nrofargs, DWORD argconvmask, FARPROC proc32, VA_LIST16 valist )
 {
     DWORD args[32];
-    unsigned int i;
+    unsigned int i, count = min( 32, nrofargs & ~CPEX_DEST_CDECL );
 
-    TRACE("(%d,%d,%p args[",nrofargs,argconvmask,proc32);
+    TRACE("(%s,%d,%d,%p args[", nrofargs & CPEX_DEST_CDECL ? "cdecl": "stdcall",
+          nrofargs & ~CPEX_DEST_CDECL, argconvmask, proc32);
 
-    for (i=0;i<nrofargs;i++)
+    for (i = 0; i < count; i++)
     {
         if (argconvmask & (1<<i))
         {
