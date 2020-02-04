@@ -2232,6 +2232,13 @@ static void test_error_reports(void)
             NULL,
             ERROR_TODO_SCODE | ERROR_TODO_DESCRIPTION
         },
+        {
+            L"f(1\n,\n2,\n ,,3\n);\n",
+            JS_E_SYNTAX, 3, 1,
+            L"Microsoft JScript compilation error",
+            L"Syntax error",
+            L" ,,3"
+        },
     };
 
     if (!is_lang_english())
@@ -2304,9 +2311,7 @@ static void test_error_reports(void)
             hres = IActiveScriptError_GetSourceLineText(script_error, &line_text);
             if (tests[i].line_text)
             {
-                todo_wine
                 ok(hres == S_OK, "GetSourceLineText failed: %08x\n", hres);
-                todo_wine
                 ok(line_text != NULL && !lstrcmpW(line_text, tests[i].line_text), "[%u] GetSourceLineText returned %s expected %s\n",
                    i, wine_dbgstr_w(line_text), wine_dbgstr_w(tests[i].line_text));
             }

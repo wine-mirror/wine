@@ -211,12 +211,17 @@ static HRESULT WINAPI JScriptError_GetSourceLineText(IActiveScriptError *iface, 
 {
     JScriptError *This = impl_from_IActiveScriptError(iface);
 
-    FIXME("(%p)->(%p)\n", This, source);
+    TRACE("(%p)->(%p)\n", This, source);
 
     if(!source)
         return E_POINTER;
-    *source = NULL;
-    return E_FAIL;
+
+    if(!This->ei.line) {
+        *source = NULL;
+        return E_FAIL;
+    }
+
+    return jsstr_to_bstr(This->ei.line, source);
 }
 
 static const IActiveScriptErrorVtbl JScriptErrorVtbl = {
@@ -247,6 +252,10 @@ void reset_ei(jsexcept_t *ei)
     if(ei->message) {
         jsstr_release(ei->message);
         ei->message = NULL;
+    }
+    if(ei->line) {
+        jsstr_release(ei->line);
+        ei->line = NULL;
     }
 }
 

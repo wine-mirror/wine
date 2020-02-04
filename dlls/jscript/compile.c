@@ -2521,7 +2521,7 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, UINT64 source_conte
     if(FAILED(hres)) {
         if(hres != DISP_E_EXCEPTION)
             throw_error(ctx, hres, NULL);
-        set_error_location(ctx->ei, compiler.code, compiler.loc, IDS_COMPILATION_ERROR);
+        set_error_location(ctx->ei, compiler.code, compiler.loc, IDS_COMPILATION_ERROR, NULL);
         release_bytecode(compiler.code);
         return DISP_E_EXCEPTION;
     }

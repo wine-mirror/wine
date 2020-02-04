@@ -2779,7 +2779,7 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     frame = ctx->call_ctx;
     if(exception_hres != DISP_E_EXCEPTION)
         throw_error(ctx, exception_hres, NULL);
-    set_error_location(ei, frame->bytecode, frame->bytecode->instrs[frame->ip].loc, IDS_RUNTIME_ERROR);
+    set_error_location(ei, frame->bytecode, frame->bytecode->instrs[frame->ip].loc, IDS_RUNTIME_ERROR, NULL);
 
     while(!frame->except_frame) {
         DWORD flags;

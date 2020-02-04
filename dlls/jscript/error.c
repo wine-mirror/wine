@@ -420,7 +420,7 @@ HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
     return DISP_E_EXCEPTION;
 }
 
-void set_error_location(jsexcept_t *ei, bytecode_t *code, unsigned loc, unsigned source_id)
+void set_error_location(jsexcept_t *ei, bytecode_t *code, unsigned loc, unsigned source_id, jsstr_t *line)
 {
     if(is_jscript_error(ei->error)) {
         if(!ei->source) {
@@ -438,6 +438,8 @@ void set_error_location(jsexcept_t *ei, bytecode_t *code, unsigned loc, unsigned
 
     ei->code = bytecode_addref(code);
     ei->loc = loc;
+    if(line)
+        ei->line = jsstr_addref(line);
 }
 
 jsdisp_t *create_builtin_error(script_ctx_t *ctx)

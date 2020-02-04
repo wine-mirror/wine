@@ -1598,12 +1598,24 @@ HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, byteco
     heap_pool_clear(mark);
     hres = parser_ctx->hres;
     if(FAILED(hres)) {
-        WARN("parser failed around %s\n",
-            debugstr_w(parser_ctx->begin+20 > parser_ctx->ptr ? parser_ctx->begin : parser_ctx->ptr-20));
+        const WCHAR *line_start = code->source + parser_ctx->error_loc, *line_end = line_start;
+        jsstr_t *line_str;
+
+        while(line_start > code->source && line_start[-1] != '\n')
+            line_start--;
+        while(*line_end && *line_end != '\n')
+            line_end++;
+        line_str = jsstr_alloc_len(line_start, line_end - line_start);
+
+        WARN("parser failed around %s in line %s\n",
+             debugstr_w(parser_ctx->begin+20 > parser_ctx->ptr ? parser_ctx->begin : parser_ctx->ptr-20),
+             debugstr_jsstr(line_str));
 
         throw_error(ctx, hres, NULL);
-        set_error_location(ctx->ei, code, parser_ctx->error_loc, IDS_COMPILATION_ERROR);
+        set_error_location(ctx->ei, code, parser_ctx->error_loc, IDS_COMPILATION_ERROR, line_str);
         parser_release(parser_ctx);
+        if(line_str)
+            jsstr_release(line_str);
         return DISP_E_EXCEPTION;
     }
 
