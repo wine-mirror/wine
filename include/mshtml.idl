@@ -28027,23 +28027,23 @@ interface ILineInfo : IUnknown
 ]
 interface IHTMLComputedStyle : IUnknown
 {
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_BOLD)] HRESULT bold([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_ITALIC)] HRESULT italic([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_UNDERLINE)] HRESULT underline([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_OVERLINE)] HRESULT overline([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_STRIKEOUT)] HRESULT strikeOut([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_SUBSCRIPT)] HRESULT subScript([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_SUPERSCRIPT)] HRESULT superScript([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_EXPLICITFACE)] HRESULT explicitFace([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_FONTWEIGHT)] HRESULT fontWeight([retval, out] long **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_FONTSIZE)] HRESULT fontSize([retval, out] long **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_FONTNAME)] HRESULT fontName([retval, out] WCHAR **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_HASBGCOLOR)] HRESULT hasBgColor([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_TEXTCOLOR)] HRESULT textColor([retval, out] DWORD **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_BACKGROUNDCOLOR)] HRESULT backgroundColor([retval, out] DWORD **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_PREFORMATTED)] HRESULT *preFormatted([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_DIRECTION)] HRESULT direction([retval, out] VARIANT_BOOL **p);
-    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_BLOCKDIRECTION)] HRESULT blockDirection([retval, out] VARIANT_BOOL **p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_BOLD)] HRESULT bold([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_ITALIC)] HRESULT italic([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_UNDERLINE)] HRESULT underline([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_OVERLINE)] HRESULT overline([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_STRIKEOUT)] HRESULT strikeOut([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_SUBSCRIPT)] HRESULT subScript([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_SUPERSCRIPT)] HRESULT superScript([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_EXPLICITFACE)] HRESULT explicitFace([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_FONTWEIGHT)] HRESULT fontWeight([retval, out] long *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_FONTSIZE)] HRESULT fontSize([retval, out] long *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_FONTNAME)] HRESULT fontName([retval, out] WCHAR *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_HASBGCOLOR)] HRESULT hasBgColor([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_TEXTCOLOR)] HRESULT textColor([retval, out] DWORD *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_BACKGROUNDCOLOR)] HRESULT backgroundColor([retval, out] DWORD *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_PREFORMATTED)] HRESULT preFormatted([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_DIRECTION)] HRESULT direction([retval, out] VARIANT_BOOL *p);
+    [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_BLOCKDIRECTION)] HRESULT blockDirection([retval, out] VARIANT_BOOL *p);
     [propget, id(DISPID_IHTMLCOMPUTEDSTYLE_OL)] HRESULT OL([retval, out] VARIANT_BOOL *p);
     HRESULT IsEqual([in] IHTMLComputedStyle *pComputedStyle,[out] VARIANT_BOOL *pfEqual);
 };
