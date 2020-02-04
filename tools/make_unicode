@@ -588,7 +588,7 @@ sub READ_DEFAULTS($)
                 # Single char decomposition
                 if (hex $1 < 65536)
                 {
-                    $decomp_table[$src] = [ hex $1, 0 ];
+                    $decomp_table[$src] = [ hex $1 ];
                 }
 
                 if (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd))
@@ -2346,8 +2346,12 @@ EOF
     save_file($filename);
 }
 
-sub dump_full_compat_table()
+################################################################
+# dump a decomposition table
+sub dump_decompositions($@)
 {
+    my ($name, @decomp) = @_;
+
     # first determine all the 16-char subsets that contain something
 
     my @filled = (0) x 4096;
@@ -2355,13 +2359,13 @@ sub dump_full_compat_table()
     my $data_total = 0;
     for (my $i = 0; $i < 65536; $i++)
     {
-        next unless defined $full_compatmap_table[$i];
+        next unless defined $decomp[$i];
         if ($filled[$i >> 4] == 0)
         {
             $filled[$i >> 4] = $pos;
             $pos += 16;
         }
-        $data_total += $#{$full_compatmap_table[$i]} + 1;
+        $data_total += @{$decomp[$i]};
     }
     my $total = $pos;
 
@@ -2389,7 +2393,7 @@ sub dump_full_compat_table()
 
     # dump the main index
 
-    printf OUTPUT "static const WCHAR compatmap_table[%d] =\n", $total + $data_total;
+    printf OUTPUT "static const WCHAR %s[%d] =\n", $name, $total + $data_total;
     printf OUTPUT "{\n    /* index */\n";
     printf OUTPUT "%s", dump_array( 16, 0, @filled_idx );
     printf OUTPUT ",\n    /* null sub-index */\n%s", dump_array( 16, 0, ($null_offset) x 16 );
@@ -2420,10 +2424,10 @@ sub dump_full_compat_table()
         for (my $j = 0; $j < 16; $j++)
         {
             $table[$j] = $pos;
-            if (defined $full_compatmap_table[($i<<4) + $j])
+            if (defined $decomp[($i<<4) + $j])
             {
-                $pos += $#{$full_compatmap_table[($i<<4) + $j]} + 1;
-                push @data, @{$full_compatmap_table[($i<<4) + $j]};
+                $pos += $#{$decomp[($i<<4) + $j]} + 1;
+                push @data, @{$decomp[($i<<4) + $j]};
             }
         }
         printf OUTPUT ",\n    /* offsets 0x%03x0 .. 0x%03xf */\n", $i, $i;
@@ -2453,119 +2457,34 @@ sub dump_decompose_table($$)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    # first determine all the 16-char subsets that contain something
+    dump_decompositions( "table", @decomp_table );
 
-    my @filled = (0) x 4096;
-    my $pos = 16*2;  # for the null subset
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        next unless defined $decomp_table[$i];
-        $filled[$i >> 4] = $pos;
-        $pos += 16*2;
-        $i |= 15;
-    }
-    my $total = $pos;
-
-    # now count the 256-char subsets that contain something
-
-    my @filled_idx = (256) x 256;
-    $pos = 256 + 16;
-    for (my $i = 0; $i < 4096; $i++)
-    {
-        next unless $filled[$i];
-        $filled_idx[$i >> 4] = $pos;
-        $pos += 16;
-        $i |= 15;
-    }
-    my $null_offset = $pos;  # null mapping
-    $total += $pos;
-
-    # add the index offsets to the subsets positions
-
-    for (my $i = 0; $i < 4096; $i++)
-    {
-        next unless $filled[$i];
-        $filled[$i] += $null_offset;
-    }
-
-    # dump the main index
-
-    printf OUTPUT "static const WCHAR table[%d] =\n", $total;
-    printf OUTPUT "{\n    /* index */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, @filled_idx );
-    printf OUTPUT ",\n    /* null sub-index */\n%s", dump_array( 16, 0, ($null_offset) x 16 );
-
-    # dump the second-level indexes
-
-    for (my $i = 0; $i < 256; $i++)
-    {
-        next unless ($filled_idx[$i] > 256);
-        my @table = @filled[($i<<4)..($i<<4)+15];
-        for (my $j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
-        printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
-        printf OUTPUT "%s", dump_array( 16, 0, @table );
-    }
-
-    # dump the 16-char subsets
-
-    printf OUTPUT ",\n    /* null mapping */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, (0) x 32 );
-
-    for (my $i = 0; $i < 4096; $i++)
-    {
-        next unless $filled[$i];
-        my @table = (0) x 32;
-        for (my $j = 0; $j < 16; $j++)
-        {
-            if (defined $decomp_table[($i<<4) + $j])
-            {
-                $table[2 * $j] = ${$decomp_table[($i << 4) + $j]}[0];
-                $table[2 * $j + 1] = ${$decomp_table[($i << 4) + $j]}[1];
-            }
-        }
-        printf OUTPUT ",\n    /* 0x%03x0 .. 0x%03xf */\n", $i, $i;
-        printf OUTPUT "%s", dump_array( 16, 0, @table );
-    }
-
-    print OUTPUT "\n};\n\n";
     if ($compat)
     {
-        dump_full_compat_table();
+        dump_decompositions( "compatmap_table", @full_compatmap_table );
         print OUTPUT <<"EOF";
 #include "wine/unicode.h"
 
-static const WCHAR *get_compatmap_entry( WCHAR ch, unsigned int *len )
+static const WCHAR *get_table_entry( const WCHAR *table, WCHAR ch, unsigned int *len )
 {
-    unsigned short offset_offs = compatmap_table[compatmap_table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
-    unsigned short start = compatmap_table[offset_offs];
-    unsigned short end = compatmap_table[offset_offs + 1];
+    unsigned short offset_offs = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
+    unsigned short start = table[offset_offs];
+    unsigned short end = table[offset_offs + 1];
 
-    if (end > start)
-    {
-        *len = end - start;
-        return compatmap_table + start;
-    }
-
-    return NULL;
+    *len = end - start;
+    return table + start;
 }
 
 unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
 {
-    const WCHAR *ptr = NULL;
-    unsigned int res, len, dst_pos = 0;
+    const WCHAR *ptr;
+    unsigned int res, len = 0, dst_pos = 0;
 
     *dst = ch;
 
-    if (flags & WINE_DECOMPOSE_COMPAT)
-        ptr = get_compatmap_entry( ch, &len );
-
-    if (!ptr)
-    {
-        ptr = table + table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + 2 * (ch & 0xf);
-        len = ptr[1] ? 2 : 1;
-    }
-
-    if (!*ptr) return 1;
+    if (flags & WINE_DECOMPOSE_COMPAT) ptr = get_table_entry( compatmap_table, ch, &len );
+    if (!len) ptr = get_table_entry( table, ch, &len );
+    if (!len) return 1;
     if (dstlen < len) return 0;
     /* apply the decomposition recursively */
     while (len--)
@@ -2581,14 +2500,23 @@ EOF
     else
     {
             print OUTPUT <<"EOF";
+static const WCHAR *get_table_entry( const WCHAR *table, WCHAR ch, unsigned int *len )
+{
+    unsigned short offset_offs = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
+    unsigned short start = table[offset_offs];
+    unsigned short end = table[offset_offs + 1];
+
+    *len = end - start;
+    return table + start;
+}
+
 unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
 {
-    const WCHAR *ptr = table + table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + 2 * (ch & 0xf);
-    unsigned int res, len, dst_pos = 0;
+    unsigned int res, len = 0, dst_pos = 0;
+    const WCHAR *ptr = get_table_entry( table, ch, &len );
 
     *dst = ch;
-    if (!*ptr) return 1;
-    len = ptr[1] ? 2 : 1;
+    if (!len) return 1;
     if (dstlen < len) return 0;
     /* apply the decomposition recursively */
     while (len--)
