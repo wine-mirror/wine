@@ -3747,15 +3747,16 @@ static HRESULT WINAPI d3d9_device_SetStreamSourceFreq(IDirect3DDevice9Ex *iface,
 static HRESULT WINAPI d3d9_device_GetStreamSourceFreq(IDirect3DDevice9Ex *iface, UINT stream_idx, UINT *freq)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
+    const struct wined3d_stream_state *stream;
 
     TRACE("iface %p, stream_idx %u, freq %p.\n", iface, stream_idx, freq);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_stream_source_freq(device->wined3d_device, stream_idx, freq);
+    stream = &wined3d_stateblock_get_state(device->state)->streams[stream_idx];
+    *freq = stream->flags | stream->frequency;
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_SetIndices(IDirect3DDevice9Ex *iface, IDirect3DIndexBuffer9 *buffer)
