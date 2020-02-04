@@ -3083,43 +3083,277 @@ static void test_metrics_for_dpi( int custom_dpi )
     }
 }
 
+static BOOL get_primary_adapter_name(CHAR *name)
+{
+    DISPLAY_DEVICEA dd;
+    DWORD adapter;
+
+    dd.cb = sizeof(dd);
+    for (adapter = 0; EnumDisplayDevicesA(NULL, adapter, &dd, 0); ++adapter)
+    {
+        if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+        {
+            lstrcpyA(name, dd.DeviceName);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+static BOOL CALLBACK test_enum_display_settings(HMONITOR hmonitor, HDC hdc, LPRECT rect, LPARAM lparam)
+{
+    CHAR primary_adapter[CCHDEVICENAME];
+    INT width, height;
+    BOOL primary, ret;
+    MONITORINFOEXA mi;
+    DEVMODEA dm;
+
+    memset(&mi, 0, sizeof(mi));
+    mi.cbSize = sizeof(mi);
+    ret = GetMonitorInfoA(hmonitor, (MONITORINFO *)&mi);
+    ok(ret, "GetMonitorInfoA failed, error %#x\n", GetLastError());
+
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+    ret = EnumDisplaySettingsA(mi.szDevice, ENUM_CURRENT_SETTINGS, &dm);
+    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
+
+    todo_wine ok((dm.dmFields & (DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT)) == (DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT),
+            "Unexpected dmFields %#x.\n", dm.dmFields);
+    /* Wine currently reports primary adapter positions for all adapters, same for other todo_wines in this function */
+    ret = get_primary_adapter_name(primary_adapter);
+    ok(ret, "get_primary_adapter_name failed\n");
+    primary = !lstrcmpA(primary_adapter, mi.szDevice);
+    todo_wine_if(!primary && dm.dmPosition.x != mi.rcMonitor.left)
+    ok(dm.dmPosition.x == mi.rcMonitor.left, "Expect dmPosition.x %d, got %d\n", mi.rcMonitor.left, dm.dmPosition.x);
+    todo_wine_if(!primary && dm.dmPosition.y != mi.rcMonitor.top)
+    ok(dm.dmPosition.y == mi.rcMonitor.top, "Expect dmPosition.y %d, got %d\n", mi.rcMonitor.top, dm.dmPosition.y);
+    width = mi.rcMonitor.right - mi.rcMonitor.left;
+    todo_wine_if(!primary && dm.dmPelsWidth != width)
+    ok(dm.dmPelsWidth == width, "Expect dmPelsWidth %d, got %d\n", width, dm.dmPelsWidth);
+    height = mi.rcMonitor.bottom - mi.rcMonitor.top;
+    todo_wine_if(!primary && dm.dmPelsHeight != height)
+    ok(dm.dmPelsHeight == height, "Expect dmPelsHeight %d, got %d\n", height, dm.dmPelsHeight);
+
+    return TRUE;
+}
+
 static void test_EnumDisplaySettings(void)
 {
-    DEVMODEA devmode;
-    DWORD val;
+    static const DWORD mode_fields = DM_DISPLAYORIENTATION | DM_BITSPERPEL |
+            DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
+    static const DWORD setting_fields = mode_fields | DM_POSITION;
+    CHAR primary_adapter[CCHDEVICENAME];
+    DPI_AWARENESS_CONTEXT ctx = NULL;
+    DWORD err, val, device, mode;
+    BOOL attached, ret;
+    DISPLAY_DEVICEA dd;
+    DEVMODEA dm, dm2;
+    DEVMODEW dmW;
     HDC hdc;
-    DWORD num;
 
-    memset(&devmode, 0, sizeof(devmode));
-    EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+    /* Test invalid device names */
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+    SetLastError(0xdeadbeef);
+    ret = EnumDisplaySettingsA("invalid", ENUM_CURRENT_SETTINGS, &dm);
+    todo_wine ok(!ret, "EnumDisplaySettingsA succeeded\n");
+    ok(GetLastError() == 0xdeadbeef, "Expect error 0xdeadbeef, got %#x\n", GetLastError());
+    todo_wine ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
 
+    /* Monitor device names are invalid */
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+    SetLastError(0xdeadbeef);
+    ret = EnumDisplaySettingsA("\\\\.\\DISPLAY1\\Monitor0", ENUM_CURRENT_SETTINGS, &dm);
+    todo_wine ok(!ret, "EnumDisplaySettingsA succeeded\n");
+    ok(GetLastError() == 0xdeadbeef, "Expect error 0xdeadbeef, got %#x\n", GetLastError());
+    todo_wine ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
+
+    /* Test that passing NULL to device name parameter means to use the primary adapter */
+    memset(&dm, 0, sizeof(dm));
+    memset(&dm2, 0, sizeof(dm2));
+    dm.dmSize = sizeof(dm);
+    dm2.dmSize = sizeof(dm2);
+    ret = get_primary_adapter_name(primary_adapter);
+    ok(ret, "get_primary_adapter_name failed\n");
+    ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
+    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
+    ret = EnumDisplaySettingsA(primary_adapter, ENUM_CURRENT_SETTINGS, &dm2);
+    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
+    ok(!memcmp(&dm, &dm2, sizeof(dm)), "Expect NULL device is the primary device.\n");
+
+    /* Test dmSize */
+    /* EnumDisplaySettingsA/W modify dmSize and don't check for insufficient dmSize */
+    memset(&dm, 0, sizeof(dm));
+    ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
+    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
+    ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmICMMethod), "Expect dmSize %u, got %u\n",
+            FIELD_OFFSET(DEVMODEA, dmICMMethod), dm.dmSize);
+    todo_wine ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+            setting_fields, dm.dmFields);
+
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+    ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
+    ok(ret, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
+    ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmICMMethod), "Expect dmSize %u, got %u\n",
+            FIELD_OFFSET(DEVMODEA, dmICMMethod), dm.dmSize);
+    todo_wine ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+            setting_fields, dm.dmFields);
+
+    memset(&dmW, 0, sizeof(dmW));
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &dmW);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %u, got %u\n",
+            FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
+    todo_wine ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+            setting_fields, dmW.dmFields);
+
+    memset(&dmW, 0, sizeof(dmW));
+    dmW.dmSize = sizeof(dmW);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &dmW);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %u, got %u\n",
+            FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
+    todo_wine ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+            setting_fields, dmW.dmFields);
+
+    /* EnumDisplaySettingsExA/W need dmSize to be at least FIELD_OFFSET(DEVMODEA/W, dmFields) + 1 to have valid dmFields */
+    /* Crash on Windows when dmSize is zero */
+    if (0)
+    {
+        memset(&dm, 0, sizeof(dm));
+        ret = EnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &dm, 0);
+        ok(!ret, "EnumDisplaySettingsExA succeed\n");
+
+        memset(&dmW, 0, sizeof(dmW));
+        ret = EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &dmW, 0);
+        ok(!ret, "EnumDisplaySettingsExA succeed\n");
+    }
+
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = FIELD_OFFSET(DEVMODEA, dmFields);
+    ret = EnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &dm, 0);
+    ok(ret, "EnumDisplaySettingsExA failed, error %#x\n", GetLastError());
+    todo_wine ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmFields), "Expect dmSize unchanged, got %u\n", dm.dmSize);
+    todo_wine ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
+
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = FIELD_OFFSET(DEVMODEA, dmFields) + 1;
+    ret = EnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &dm, 0);
+    ok(ret, "EnumDisplaySettingsExA failed, error %#x\n", GetLastError());
+    todo_wine ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmFields) + 1, "Expect dmSize unchanged, got %u\n", dm.dmSize);
+    todo_wine ok((dm.dmFields & setting_fields) == (DM_POSITION | DM_DISPLAYORIENTATION),
+            "Expect dmFields to contain %#lx, got %#x\n", DM_POSITION | DM_DISPLAYORIENTATION, dm.dmFields);
+    /* Fields beyond dmSize don't get written */
+    todo_wine ok(dm.dmPelsWidth == 0, "Expect dmPelsWidth unwritten\n");
+
+    memset(&dmW, 0, sizeof(dmW));
+    dmW.dmSize = FIELD_OFFSET(DEVMODEW, dmFields);
+    ret = EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &dmW, 0);
+    ok(ret, "EnumDisplaySettingsExW failed, error %#x\n", GetLastError());
+    todo_wine ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmFields), "Expect dmSize unchanged, got %u\n", dmW.dmSize);
+    todo_wine ok(dmW.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dmW.dmFields);
+
+    memset(&dmW, 0, sizeof(dmW));
+    dmW.dmSize = FIELD_OFFSET(DEVMODEW, dmFields) + 1;
+    ret = EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &dmW, 0);
+    ok(ret, "EnumDisplaySettingsExW failed, error %#x\n", GetLastError());
+    todo_wine ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmFields) + 1, "Expect dmSize unchanged, got %u\n", dmW.dmSize);
+    todo_wine ok((dmW.dmFields & setting_fields) == (DM_POSITION | DM_DISPLAYORIENTATION),
+            "Expect dmFields to contain %#lx, got %#x\n", DM_POSITION | DM_DISPLAYORIENTATION, dmW.dmFields);
+    /* Fields beyond dmSize don't get written */
+    todo_wine ok(dmW.dmPelsWidth == 0, "Expect dmPelsWidth unwritten\n");
+
+    /* Test dmBitsPerPel */
     hdc = GetDC(0);
     val = GetDeviceCaps(hdc, BITSPIXEL);
-    ok(devmode.dmBitsPerPel == val,
-        "GetDeviceCaps(BITSPIXEL) returned %d, EnumDisplaySettings returned %d\n",
-        val, devmode.dmBitsPerPel);
+
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+    ret = EnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &dm, 0);
+    ok(ret, "EnumDisplaySettingsExA failed, error %#x\n", GetLastError());
+    todo_wine ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#x, got %#x\n",
+            setting_fields, dm.dmFields);
+    ok(dm.dmBitsPerPel == val, "Expect dmBitsPerPel %d, got %d\n", val, dm.dmBitsPerPel);
 
     val = GetDeviceCaps(hdc, NUMCOLORS);
-    if(devmode.dmBitsPerPel <= 8) {
-        ok(val == 256, "Screen bpp is %d, NUMCOLORS returned %d\n", devmode.dmBitsPerPel, val);
-    } else {
-        ok(val == -1, "Screen bpp is %d, NUMCOLORS returned %d\n", devmode.dmBitsPerPel, val);
+    if (dm.dmBitsPerPel <= 8)
+    {
+        ok(val == 256, "Screen bpp is %d, NUMCOLORS returned %d\n", dm.dmBitsPerPel, val);
+    }
+    else
+    {
+        ok(val == -1, "Screen bpp is %d, NUMCOLORS returned %d\n", dm.dmBitsPerPel, val);
     }
 
     ReleaseDC(0, hdc);
 
-    num = 1;
-    while (1) {
-        SetLastError (0xdeadbeef);
-        if (!EnumDisplaySettingsA(NULL, num, &devmode)) {
-            DWORD le = GetLastError();
-            ok(le == ERROR_NO_MORE_FILES ||
-               le == ERROR_MOD_NOT_FOUND /* Win8 */ ||
-               le == 0xdeadbeef, /* XP, 2003 */
-               "Expected ERROR_NO_MORE_FILES, ERROR_MOD_NOT_FOUND or 0xdeadbeef, got %d for %d\n", le, num);
-            break;
-	}
-	num++;
+    /* Test dmPosition, dmPelsWidth and dmPelsHeight */
+    /* Set DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE so that GetMonitorInfo() returns physical pixels */
+    if (pSetThreadDpiAwarenessContext)
+        ctx = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+    EnumDisplayMonitors(NULL, NULL, test_enum_display_settings, 0);
+    if (pSetThreadDpiAwarenessContext && ctx)
+        pSetThreadDpiAwarenessContext(ctx);
+
+    /* Test mode enumeration and other fields */
+    dd.cb = sizeof(dd);
+    for (device = 0; EnumDisplayDevicesA(NULL, device, &dd, 0); ++device)
+    {
+        INT number;
+
+        /* Skip software devices */
+        if (sscanf(dd.DeviceName, "\\\\.\\DISPLAY%d", &number) != 1)
+            continue;
+
+        attached = dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
+
+        memset(&dm, 0, sizeof(dm));
+        dm.dmSize = sizeof(dm);
+        SetLastError(0xdeadbeef);
+        for (mode = ENUM_REGISTRY_SETTINGS; EnumDisplaySettingsA(dd.DeviceName, mode, &dm); ++mode)
+        {
+            if (mode == ENUM_CURRENT_SETTINGS)
+            {
+                todo_wine ok((dm.dmFields & setting_fields) == setting_fields,
+                        "Expect dmFields to contain %#x, got %#x\n", setting_fields, dm.dmFields);
+            }
+            else
+            {
+                todo_wine ok((dm.dmFields & mode_fields) == mode_fields, "Expect dmFields to contain %#x, got %#x\n",
+                        mode_fields, dm.dmFields);
+            }
+
+            ok(dm.dmDisplayOrientation == DMDO_DEFAULT, "Expect dmDisplayOrientation DMDO_DEFAULT, got %#x\n",
+                    dm.dmDisplayOrientation);
+            ok(dm.dmDisplayFlags == 0, "Expect dmDisplayFlags zero\n");
+
+            if (mode == ENUM_CURRENT_SETTINGS && !attached)
+            {
+                todo_wine ok(dm.dmBitsPerPel == 0, "Expect dmBitsPerPel zero, got %u\n", dm.dmBitsPerPel);
+                todo_wine ok(dm.dmPelsWidth == 0, "Expect dmPelsWidth zero, got %u\n", dm.dmPelsWidth);
+                todo_wine ok(dm.dmPelsHeight == 0, "Expect dmPelsHeight zero, got %u\n", dm.dmPelsHeight);
+                todo_wine ok(dm.dmDisplayFrequency == 0, "Expect dmDisplayFrequency zero, got %u\n", dm.dmDisplayFrequency);
+            }
+            else if (mode != ENUM_REGISTRY_SETTINGS)
+            {
+                ok(dm.dmBitsPerPel, "Expect dmBitsPerPel not zero\n");
+                ok(dm.dmPelsWidth, "Expect dmPelsWidth not zero\n");
+                ok(dm.dmPelsHeight, "Expect dmPelsHeight not zero\n");
+                ok(dm.dmDisplayFrequency, "Expect dmDisplayFrequency not zero\n");
+            }
+        }
+
+        ok(mode >= 1, "Expect at least one valid mode gets enumerated.\n");
+
+        err = GetLastError();
+        ok(err == ERROR_NO_MORE_FILES ||
+                err == ERROR_MOD_NOT_FOUND /* Win8 */ ||
+                err == 0xdeadbeef, /* XP, 2003 */
+                "Expected ERROR_NO_MORE_FILES, ERROR_MOD_NOT_FOUND or 0xdeadbeef, got %#x\n", err);
     }
 }
 
