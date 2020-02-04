@@ -563,20 +563,6 @@ static const elem_type_info_t elem_type_infos[] = {
     {L"tspan",     tspan_iids,       NULL}
 };
 
-static BOOL is_prefix_wa(const WCHAR *strw, const char *prefix)
-{
-    int len, prefix_len;
-    CHAR buf[512];
-
-    len = WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, ARRAY_SIZE(buf), NULL, NULL)-1;
-    prefix_len = lstrlenA(prefix);
-    if(len < prefix_len)
-        return FALSE;
-
-    buf[prefix_len] = 0;
-    return !lstrcmpA(buf, prefix);
-}
-
 static BSTR a2bstr(const char *str)
 {
     BSTR ret;
@@ -8255,7 +8241,7 @@ static void test_iframe_elem(IHTMLElement *elem)
 }
 
 #define test_stylesheet_csstext(a,b,c) _test_stylesheet_csstext(__LINE__,a,b,c)
-static void _test_stylesheet_csstext(unsigned line, IHTMLStyleSheet *stylesheet, const char *exstr, BOOL is_todo)
+static void _test_stylesheet_csstext(unsigned line, IHTMLStyleSheet *stylesheet, const WCHAR *exstr, BOOL is_todo)
 {
     BSTR str;
     HRESULT hres;
@@ -8264,7 +8250,7 @@ static void _test_stylesheet_csstext(unsigned line, IHTMLStyleSheet *stylesheet,
     ok_(__FILE__,line)(hres == S_OK, "get_cssText failed: %08x\n", hres);
     todo_wine_if(is_todo) {
         if(exstr)
-            ok_(__FILE__,line)(is_prefix_wa(str, exstr), "cssText = %s\n", wine_dbgstr_w(str));
+            ok_(__FILE__,line)(str && !wcsncmp(str, exstr, lstrlenW(exstr)), "cssText = %s\n", wine_dbgstr_w(str));
         else
             ok_(__FILE__,line)(!str, "cssText = %s\n", wine_dbgstr_w(str));
     }
@@ -8310,13 +8296,13 @@ static void test_stylesheet(IDispatch *disp)
     ok(href == NULL, "got href != NULL\n");
     SysFreeString(href);
 
-    test_stylesheet_csstext(stylesheet, ".body {", FALSE);
+    test_stylesheet_csstext(stylesheet, L".body {", FALSE);
     set_stylesheet_csstext(stylesheet, ".div { margin-right: 1px; }\n.body { margin-right: 2px; }", TRUE);
-    test_stylesheet_csstext(stylesheet, ".div {", TRUE);
+    test_stylesheet_csstext(stylesheet, L".div {", TRUE);
     set_stylesheet_csstext(stylesheet, "", FALSE);
     test_stylesheet_csstext(stylesheet, NULL, FALSE);
     set_stylesheet_csstext(stylesheet, ".div { margin-right: 1px; }", FALSE);
-    test_stylesheet_csstext(stylesheet, ".div {", FALSE);
+    test_stylesheet_csstext(stylesheet, L".div {", FALSE);
 
     hres = IHTMLStyleSheet_get_rules(stylesheet, &col);
     ok(hres == S_OK, "get_rules failed: %08x\n", hres);
