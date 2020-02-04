@@ -5862,6 +5862,36 @@ static void test_SetThreadUILanguage(void)
     "expected %d got %d\n", MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN), res);
 }
 
+static int put_utf16( WCHAR *str, unsigned int c )
+{
+    if (c < 0x10000)
+    {
+        *str = c;
+        return 1;
+    }
+    c -= 0x10000;
+    str[0] = 0xd800 | (c >> 10);
+    str[1] = 0xdc00 | (c & 0x3ff);
+    return 2;
+}
+
+/* read a Unicode string from NormalizationTest.txt format; helper for test_NormalizeString */
+static int read_str( char *str, WCHAR res[32] )
+{
+    int pos = 0;
+    char *end;
+
+    while (*str && pos < 31)
+    {
+        unsigned int c = strtoul( str, &end, 16 );
+        pos += put_utf16( res + pos, c );
+        while (*end == ' ') end++;
+        str = end;
+    }
+    res[pos] = 0;
+    return pos;
+}
+
 static void test_NormalizeString(void)
 {
     /* part 0: specific cases */
@@ -6010,8 +6040,10 @@ static void test_NormalizeString(void)
     const struct test_data_normal *ptest = test_arr;
     const int norm_forms[] = { NormalizationC, NormalizationD, NormalizationKC, NormalizationKD };
     WCHAR dst[256];
+    BOOLEAN ret;
     NTSTATUS status;
     int dstlen, str_cmp, i, j;
+    FILE *f;
 
     if (!pNormalizeString)
     {
@@ -6057,8 +6089,6 @@ static void test_NormalizeString(void)
 
             if (pRtlNormalizeString)
             {
-                BOOLEAN ret = FALSE;
-
                 dstlen = 0;
                 status = pRtlNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), NULL, &dstlen );
                 ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
@@ -6072,6 +6102,7 @@ static void test_NormalizeString(void)
                 str_cmp = wcsncmp( ptest->expected[i], dst, dstlen );
                 ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
                     wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
+                ret = FALSE;
                 status = pRtlIsNormalizedString( norm_forms[i], dst, dstlen, &ret );
                 todo_wine ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
                 todo_wine ok( ret, "%s:%d: not normalized\n", wine_dbgstr_w(ptest->str), i );
@@ -6256,6 +6287,86 @@ static void test_NormalizeString(void)
             status = pRtlNormalizeString( norm_forms[i], L"AB\xd800Z", -1, dst, &dstlen );
             todo_wine ok( status == STATUS_NO_UNICODE_TRANSLATION, "%d: failed %x\n", i, status );
             todo_wine ok( dstlen == 3, "%d: wrong len %d\n", i, dstlen );
+        }
+    }
+
+    /* optionally run the full test file from Unicode.org
+     * available at http://www.unicode.org/Public/UCD/latest/ucd/NormalizationTest.txt
+     */
+    if ((f = fopen( "NormalizationTest.txt", "r" )))
+    {
+        char *p, buffer[1024];
+        WCHAR str[3], srcW[32], dstW[32], resW[4][32];
+        int i, line = 0, part = 0, ch;
+        char tested[0x110000 / 8];
+
+        while (fgets( buffer, sizeof(buffer), f ))
+        {
+            line++;
+            if ((p = strchr( buffer, '#' ))) *p = 0;
+            if (!strncmp( buffer, "@Part", 5 ))
+            {
+                part = atoi( buffer + 5 );
+                continue;
+            }
+            if (!(p = strtok( buffer, ";" ))) continue;
+            read_str( p, srcW );
+            for (i = 0; i < 4; i++)
+            {
+                p = strtok( NULL, ";" );
+                read_str( p, &resW[i][0] );
+            }
+            if (part == 1)
+            {
+                ch = srcW[0];
+                if (ch >= 0xd800 && ch <= 0xdbff)
+                    ch = 0x10000 + ((srcW[0] & 0x3ff) << 10) + (srcW[1] & 0x3ff);
+                tested[ch / 8] |= 1 << (ch % 8);
+            }
+            for (i = 0; i < 4; i++)
+            {
+                memset( dstW, 0xcc, sizeof(dstW) );
+                dstlen = pNormalizeString( norm_forms[i], srcW, -1, dstW, ARRAY_SIZE(dstW) );
+                ok( !wcscmp( dstW, resW[i] ),
+                    "line %u form %u: wrong result %s for %s expected %s\n", line, i,
+                    wine_dbgstr_w( dstW ), wine_dbgstr_w( srcW ), wine_dbgstr_w( resW[i] ));
+            }
+        }
+        fclose( f );
+
+        /* test chars that are not in the @Part1 list */
+        for (ch = 0; ch < 0x110000; ch++)
+        {
+            if (tested[ch / 8] & (1 << (ch % 8))) continue;
+            str[put_utf16( str, ch )] = 0;
+            for (i = 0; i < 4; i++)
+            {
+                memset( dstW, 0xcc, sizeof(dstW) );
+                SetLastError( 0xdeadbeef );
+                dstlen = pNormalizeString( norm_forms[i], str, -1, dstW, ARRAY_SIZE(dstW) );
+                if ((ch >= 0xd800 && ch <= 0xdfff) ||
+                    (ch >= 0xfdd0 && ch <= 0xfdef) ||
+                    ((ch & 0xffff) >= 0xfffe))
+                {
+                    ok( dstlen <= 0, "char %04x form %u: wrong result %d %s expected error\n",
+                        ch, i, dstlen, wine_dbgstr_w( dstW ));
+                    ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION,
+                        "char %04x form %u: error %u\n", str[0], i, GetLastError() );
+                    status = pRtlIsNormalizedString( norm_forms[i], str, -1, &ret );
+                    ok( status == STATUS_NO_UNICODE_TRANSLATION,
+                        "char %04x form %u: failed %x\n", ch, i, status );
+                }
+                else
+                {
+                    ok( !wcscmp( dstW, str ),
+                        "char %04x form %u: wrong result %s expected unchanged\n",
+                        ch, i, wine_dbgstr_w( dstW ));
+                    ret = FALSE;
+                    status = pRtlIsNormalizedString( norm_forms[i], str, -1, &ret );
+                    ok( !status, "char %04x form %u: failed %x\n", ch, i, status );
+                    ok( ret, "char %04x form %u: not normalized\n", ch, i );
+                }
+            }
         }
     }
 }
