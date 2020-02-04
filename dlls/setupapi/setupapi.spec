@@ -380,7 +380,7 @@
 @ stdcall SetupDiOpenDeviceInfoA(ptr str ptr long ptr)
 @ stdcall SetupDiOpenDeviceInfoW(ptr wstr ptr long ptr)
 @ stdcall SetupDiOpenDeviceInterfaceA(ptr str long ptr)
-@ stub SetupDiOpenDeviceInterfaceRegKey
+@ stdcall SetupDiOpenDeviceInterfaceRegKey(ptr ptr long long)
 @ stdcall SetupDiOpenDeviceInterfaceW(ptr wstr long ptr)
 @ stdcall SetupDiRegisterCoDeviceInstallers(ptr ptr)
 @ stdcall SetupDiRegisterDeviceInfo(ptr ptr long ptr ptr ptr)
