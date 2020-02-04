@@ -2701,6 +2701,25 @@ static void add_explicit_handle_if_necessary(const type_t *iface, var_t *func)
 static void check_functions(const type_t *iface, int is_inside_library)
 {
     const statement_t *stmt;
+    /* check for duplicates */
+    if (is_attr(iface->attrs, ATTR_DISPINTERFACE))
+    {
+        var_list_t *methods = type_dispiface_get_methods(iface);
+        var_t *func, *func_iter;
+
+        if (methods) LIST_FOR_EACH_ENTRY( func, methods, var_t, entry )
+        {
+            LIST_FOR_EACH_ENTRY( func_iter, methods, var_t, entry )
+            {
+                if (func == func_iter) break;
+                if (strcmp(func->name, func_iter->name)) continue;
+                if (is_attr(func->attrs, ATTR_PROPGET) != is_attr(func_iter->attrs, ATTR_PROPGET)) continue;
+                if (is_attr(func->attrs, ATTR_PROPPUT) != is_attr(func_iter->attrs, ATTR_PROPPUT)) continue;
+                if (is_attr(func->attrs, ATTR_PROPPUTREF) != is_attr(func_iter->attrs, ATTR_PROPPUTREF)) continue;
+                error_loc_info(&func->loc_info, "duplicated function \'%s\'\n", func->name);
+            }
+        }
+    }
     if (is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE))
     {
         STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
