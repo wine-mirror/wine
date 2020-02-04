@@ -321,26 +321,16 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
     return TRUE;
 }
 
-
-struct desktop_resize_data
-{
-    RECT  old_virtual_rect;
-    RECT  new_virtual_rect;
-};
-
 static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam )
 {
     struct x11drv_win_data *data;
-    struct desktop_resize_data *resize_data = (struct desktop_resize_data *)lparam;
-    int mask = 0;
+    UINT mask = (UINT)lparam;
 
     if (!(data = get_win_data( hwnd ))) return TRUE;
 
     /* update the full screen state */
     update_net_wm_states( data );
 
-    if (resize_data->old_virtual_rect.left != resize_data->new_virtual_rect.left) mask |= CWX;
-    if (resize_data->old_virtual_rect.top != resize_data->new_virtual_rect.top) mask |= CWY;
     if (mask && data->whole_window)
     {
         POINT pos = virtual_screen_to_root( data->whole_rect.left, data->whole_rect.top );
@@ -399,14 +389,18 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
  */
 void X11DRV_resize_desktop( unsigned int width, unsigned int height )
 {
+    RECT old_virtual_rect, new_virtual_rect;
     HWND hwnd = GetDesktopWindow();
-    struct desktop_resize_data resize_data;
+    UINT mask = 0;
 
-    resize_data.old_virtual_rect = get_virtual_screen_rect();
+    old_virtual_rect = get_virtual_screen_rect();
     desktop_width = width;
     desktop_height = height;
     X11DRV_DisplayDevices_Init( TRUE );
-    resize_data.new_virtual_rect = get_virtual_screen_rect();
+    new_virtual_rect = get_virtual_screen_rect();
+
+    if (old_virtual_rect.left != new_virtual_rect.left) mask |= CWX;
+    if (old_virtual_rect.top != new_virtual_rect.top) mask |= CWY;
 
     if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
     {
@@ -416,14 +410,13 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
     {
         TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
         update_desktop_fullscreen( width, height );
-        SetWindowPos( hwnd, 0, resize_data.new_virtual_rect.left, resize_data.new_virtual_rect.top,
-                      resize_data.new_virtual_rect.right - resize_data.new_virtual_rect.left,
-                      resize_data.new_virtual_rect.bottom - resize_data.new_virtual_rect.top,
+        SetWindowPos( hwnd, 0, new_virtual_rect.left, new_virtual_rect.top,
+                      new_virtual_rect.right - new_virtual_rect.left, new_virtual_rect.bottom - new_virtual_rect.top,
                       SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
         ungrab_clipping_window();
         SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp,
                              MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
     }
 
-    EnumWindows( update_windows_on_desktop_resize, (LPARAM)&resize_data );
+    EnumWindows( update_windows_on_desktop_resize, (LPARAM)mask );
 }
