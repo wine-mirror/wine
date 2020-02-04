@@ -4,7 +4,7 @@
 
 #include "windef.h"
 
-static const WCHAR table[6061] =
+const WCHAR DECLSPEC_HIDDEN nfd_table[6061] =
 {
     /* index */
     0x0110, 0x0120, 0x0130, 0x0140, 0x0150, 0x0100, 0x0160, 0x0100,
@@ -957,17 +957,3 @@ static const WCHAR table[6061] =
     0x05e9, 0x05bc, 0x05ea, 0x05bc, 0x05d5, 0x05b9, 0x05d1, 0x05bf,
     0x05db, 0x05bf, 0x05e4, 0x05bf
 };
-
-unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
-{
-    unsigned short offset = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
-    unsigned short start = table[offset];
-    unsigned short end = table[offset + 1];
-    unsigned int len = end - start;
-
-    *dst = ch;
-    if (!len) return 1;
-    if (dstlen < len) return 0;
-    memcpy( dst, table + start, len * sizeof(WCHAR) );
-    return len;
-}

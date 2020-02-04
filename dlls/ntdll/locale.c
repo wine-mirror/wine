@@ -83,8 +83,9 @@ static HMODULE kernel32_handle;
 static const union cptable *unix_table; /* NULL if UTF8 */
 
 extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
-extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
 extern const unsigned short combining_class_table[] DECLSPEC_HIDDEN;
+extern const unsigned short nfd_table[] DECLSPEC_HIDDEN;
+extern const unsigned short nfkd_table[] DECLSPEC_HIDDEN;
 
 static NTSTATUS load_string( ULONG id, LANGID lang, WCHAR *buffer, ULONG len )
 {
@@ -150,6 +151,18 @@ static WCHAR casemap_ascii( WCHAR ch )
 {
     if (ch >= 'a' && ch <= 'z') ch -= 'a' - 'A';
     return ch;
+}
+
+
+static const WCHAR *get_decomposition( const unsigned short *table, WCHAR ch, unsigned int *len )
+{
+    unsigned short offset = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
+    unsigned short start = table[offset];
+    unsigned short end = table[offset + 1];
+
+    if ((*len = end - start)) return table + start;
+    *len = 1;
+    return NULL;
 }
 
 
@@ -223,20 +236,27 @@ static void canonical_order_string( WCHAR *str, unsigned int len )
 }
 
 
-static NTSTATUS decompose_string( int flags, const WCHAR *src, int src_len, WCHAR *dst, int *dst_len )
+static NTSTATUS decompose_string( int compat, const WCHAR *src, int src_len, WCHAR *dst, int *dst_len )
 {
-    int src_pos, dst_pos = 0, decomp_len;
+    const unsigned short *table = compat ? nfkd_table : nfd_table;
+    int src_pos, dst_pos = 0;
+    unsigned int decomp_len;
+    const WCHAR *decomp;
 
     for (src_pos = 0; src_pos < src_len; src_pos++)
     {
         if (dst_pos == *dst_len) break;
-        decomp_len = wine_decompose( flags, src[src_pos], dst + dst_pos, *dst_len - dst_pos );
-        if (decomp_len == 0) break;
+        if ((decomp = get_decomposition( table, src[src_pos], &decomp_len )))
+        {
+            if (dst_pos + decomp_len > *dst_len) break;
+            memcpy( dst + dst_pos, decomp, decomp_len * sizeof(WCHAR) );
+        }
+        else dst[dst_pos] = src[src_pos];
         dst_pos += decomp_len;
     }
     if (src_pos < src_len)
     {
-        *dst_len += (src_len - src_pos) * (flags & WINE_DECOMPOSE_COMPAT ? 18 : 3);
+        *dst_len += (src_len - src_pos) * (compat ? 18 : 3);
         return STATUS_BUFFER_TOO_SMALL;
     }
     canonical_order_string( dst, dst_pos );
@@ -1691,7 +1711,7 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
  */
 NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, WCHAR *dst, INT *dst_len )
 {
-    int flags = 0, compose, compat, buf_len;
+    int compose, compat, buf_len;
     WCHAR *buf = NULL;
     NTSTATUS status = STATUS_SUCCESS;
 
@@ -1721,16 +1741,14 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
         return STATUS_SUCCESS;
     }
 
-    if (compat) flags |= WINE_DECOMPOSE_COMPAT;
-
-    if (!compose) return decompose_string( flags, src, src_len, dst, dst_len );
+    if (!compose) return decompose_string( compat, src, src_len, dst, dst_len );
 
     buf_len = src_len * 4;
     for (;;)
     {
         buf = RtlAllocateHeap( GetProcessHeap(), 0, buf_len * sizeof(WCHAR) );
         if (!buf) return STATUS_NO_MEMORY;
-        status = decompose_string( flags, src, src_len, buf, &buf_len );
+        status = decompose_string( compat, src, src_len, buf, &buf_len );
         if (status != STATUS_BUFFER_TOO_SMALL) break;
         RtlFreeHeap( GetProcessHeap(), 0, buf );
     }

@@ -19,8 +19,19 @@
  */
 #include "wine/unicode.h"
 
-extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen );
 extern const unsigned int collation_table[];
+extern const unsigned short nfd_table[] DECLSPEC_HIDDEN;
+
+static const WCHAR *get_decomposition( WCHAR ch, unsigned int *len )
+{
+    unsigned short offset = nfd_table[nfd_table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
+    unsigned short start = nfd_table[offset];
+    unsigned short end = nfd_table[offset + 1];
+
+    if ((*len = end - start)) return nfd_table + start;
+    *len = 1;
+    return NULL;
+}
 
 /*
  * flags - normalization NORM_* flags
@@ -180,7 +191,7 @@ static unsigned int get_weight(WCHAR ch, enum weight type)
     }
 }
 
-static void inc_str_pos(const WCHAR **str, int *len, int *dpos, int *dlen)
+static void inc_str_pos(const WCHAR **str, int *len, unsigned int *dpos, unsigned int *dlen)
 {
     (*dpos)++;
     if (*dpos == *dlen)
@@ -194,9 +205,8 @@ static void inc_str_pos(const WCHAR **str, int *len, int *dpos, int *dlen)
 static inline int compare_weights(int flags, const WCHAR *str1, int len1,
                                   const WCHAR *str2, int len2, enum weight type)
 {
-    int dpos1 = 0, dpos2 = 0, dlen1 = 0, dlen2 = 0;
-    WCHAR dstr1[4], dstr2[4];
-    unsigned int ce1, ce2;
+    unsigned int ce1, ce2, dpos1 = 0, dpos2 = 0, dlen1 = 0, dlen2 = 0;
+    const WCHAR *dstr1 = NULL, *dstr2 = NULL;
 
     /* 32-bit collation element table format:
      * unicode weight - high 16 bit, diacritic weight - high 8 bit of low 16 bit,
@@ -204,8 +214,8 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
      */
     while (len1 > 0 && len2 > 0)
     {
-        if (!dlen1) dlen1 = wine_decompose(0, *str1, dstr1, 4);
-        if (!dlen2) dlen2 = wine_decompose(0, *str2, dstr2, 4);
+        if (!dlen1 && !(dstr1 = get_decomposition( *str1, &dlen1 ))) dstr1 = str1;
+        if (!dlen2 && !(dstr2 = get_decomposition( *str2, &dlen2 ))) dstr2 = str2;
 
         if (flags & NORM_IGNORESYMBOLS)
         {
@@ -264,16 +274,14 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
     }
     while (len1)
     {
-        if (!dlen1) dlen1 = wine_decompose(0, *str1, dstr1, 4);
-
+        if (!dlen1 && !(dstr1 = get_decomposition( *str1, &dlen1 ))) dstr1 = str1;
         ce1 = get_weight(dstr1[dpos1], type);
         if (ce1) break;
         inc_str_pos(&str1, &len1, &dpos1, &dlen1);
     }
     while (len2)
     {
-        if (!dlen2) dlen2 = wine_decompose(0, *str2, dstr2, 4);
-
+        if (!dlen2 && !(dstr2 = get_decomposition( *str2, &dlen2 ))) dstr2 = str2;
         ce2 = get_weight(dstr2[dpos2], type);
         if (ce2) break;
         inc_str_pos(&str2, &len2, &dpos2, &dlen2);

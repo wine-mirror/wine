@@ -2380,8 +2380,6 @@ sub dump_decompositions($@)
 {
     my ($name, @decomp) = @_;
 
-    @decomp = build_decompositions( @decomp );
-
     # first determine all the 16-char subsets that contain something
 
     my @filled = (0) x 4096;
@@ -2423,7 +2421,7 @@ sub dump_decompositions($@)
 
     # dump the main index
 
-    printf OUTPUT "static const WCHAR %s[%d] =\n", $name, $total + $data_total;
+    printf OUTPUT "\nconst WCHAR DECLSPEC_HIDDEN %s[%d] =\n", $name, $total + $data_total;
     printf OUTPUT "{\n    /* index */\n";
     printf OUTPUT "%s", dump_array( 16, 0, @filled_idx );
     printf OUTPUT ",\n    /* null sub-index */\n%s", dump_array( 16, 0, ($null_offset) x 16 );
@@ -2471,7 +2469,7 @@ sub dump_decompositions($@)
     printf OUTPUT ",\n    /* data */\n";
     printf OUTPUT "%s", dump_array( 16, 0, @data );
 
-    printf OUTPUT "\n};\n\n";
+    printf OUTPUT "\n};\n";
 }
 
 ################################################################
@@ -2485,50 +2483,11 @@ sub dump_decompose_table($$)
     print OUTPUT "/* Unicode char composition */\n";
     print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"windef.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n";
 
-    dump_decompositions( $compat ? "decomp_table" : "table", @decomp_table );
+    dump_decompositions( "nfd_table", build_decompositions( @decomp_table ));
+    dump_decompositions( "nfkd_table", build_decompositions( @decomp_compat_table )) if $compat;
 
-    if ($compat)
-    {
-        dump_decompositions( "compatmap_table", @decomp_compat_table );
-        print OUTPUT <<"EOF";
-#include "wine/unicode.h"
-
-unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
-{
-    const WCHAR *table = (flags & WINE_DECOMPOSE_COMPAT) ? compatmap_table : decomp_table;
-    unsigned short offset = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
-    unsigned short start = table[offset];
-    unsigned short end = table[offset + 1];
-    unsigned int len = end - start;
-
-    *dst = ch;
-    if (!len) return 1;
-    if (dstlen < len) return 0;
-    memcpy( dst, table + start, len * sizeof(WCHAR) );
-    return len;
-}
-EOF
-    }
-    else
-    {
-            print OUTPUT <<"EOF";
-unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
-{
-    unsigned short offset = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
-    unsigned short start = table[offset];
-    unsigned short end = table[offset + 1];
-    unsigned int len = end - start;
-
-    *dst = ch;
-    if (!len) return 1;
-    if (dstlen < len) return 0;
-    memcpy( dst, table + start, len * sizeof(WCHAR) );
-    return len;
-}
-EOF
-    }
     close OUTPUT;
     save_file($filename);
 }

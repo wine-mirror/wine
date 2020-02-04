@@ -4,7 +4,7 @@
 
 #include "windef.h"
 
-static const WCHAR decomp_table[6061] =
+const WCHAR DECLSPEC_HIDDEN nfd_table[6061] =
 {
     /* index */
     0x0110, 0x0120, 0x0130, 0x0140, 0x0150, 0x0100, 0x0160, 0x0100,
@@ -958,7 +958,7 @@ static const WCHAR decomp_table[6061] =
     0x05db, 0x05bf, 0x05e4, 0x05bf
 };
 
-static const WCHAR compatmap_table[13479] =
+const WCHAR DECLSPEC_HIDDEN nfkd_table[13479] =
 {
     /* index */
     0x0110, 0x0120, 0x0130, 0x0140, 0x0150, 0x0160, 0x0170, 0x0100,
@@ -3039,20 +3039,3 @@ static const WCHAR compatmap_table[13479] =
     0x00a3, 0x00ac, 0x0020, 0x0304, 0x00a6, 0x00a5, 0x20a9, 0x2502,
     0x2190, 0x2191, 0x2192, 0x2193, 0x25a0, 0x25cb
 };
-
-#include "wine/unicode.h"
-
-unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
-{
-    const WCHAR *table = (flags & WINE_DECOMPOSE_COMPAT) ? compatmap_table : decomp_table;
-    unsigned short offset = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
-    unsigned short start = table[offset];
-    unsigned short end = table[offset + 1];
-    unsigned int len = end - start;
-
-    *dst = ch;
-    if (!len) return 1;
-    if (dstlen < len) return 0;
-    memcpy( dst, table + start, len * sizeof(WCHAR) );
-    return len;
-}

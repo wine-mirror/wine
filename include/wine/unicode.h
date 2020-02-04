@@ -97,9 +97,6 @@ extern int wine_compare_string( int flags, const WCHAR *str1, int len1, const WC
 extern int wine_get_sortkey( int flags, const WCHAR *src, int srclen, char *dst, int dstlen );
 extern int wine_fold_string( int flags, const WCHAR *src, int srclen , WCHAR *dst, int dstlen );
 
-#define WINE_DECOMPOSE_COMPAT     1
-#define WINE_DECOMPOSE_REORDER    2
-
 extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
 extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
 extern int memicmpW( const WCHAR *str1, const WCHAR *str2, int n );

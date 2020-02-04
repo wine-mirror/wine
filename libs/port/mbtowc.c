@@ -22,7 +22,18 @@
 
 #include "wine/unicode.h"
 
-extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
+extern const unsigned short nfd_table[] DECLSPEC_HIDDEN;
+
+static const WCHAR *get_decomposition( WCHAR ch, unsigned int *len )
+{
+    unsigned short offset = nfd_table[nfd_table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
+    unsigned short start = nfd_table[offset];
+    unsigned short end = nfd_table[offset + 1];
+
+    if ((*len = end - start)) return nfd_table + start;
+    *len = 1;
+    return NULL;
+}
 
 /* check the code whether it is in Unicode Private Use Area (PUA). */
 /* MB_ERR_INVALID_CHARS raises an error converting from 1-byte character to PUA. */
@@ -119,22 +130,24 @@ static int mbstowcs_sbcs_decompose( const struct sbcs_table *table, int flags,
                                     WCHAR *dst, unsigned int dstlen )
 {
     const WCHAR * const cp2uni = (flags & MB_USEGLYPHCHARS) ? table->cp2uni_glyphs : table->cp2uni;
-    unsigned int len;
+    const WCHAR *decomp;
+    unsigned int len, decomp_len;
 
     if (!dstlen)  /* compute length */
     {
-        WCHAR dummy[4]; /* no decomposition is larger than 4 chars */
-        for (len = 0; srclen; srclen--, src++)
-            len += wine_decompose( 0, cp2uni[*src], dummy, 4 );
+        for (len = 0; srclen; srclen--, src++, len += decomp_len)
+            get_decomposition( cp2uni[*src], &decomp_len );
         return len;
     }
 
-    for (len = dstlen; srclen && len; srclen--, src++)
+    for (len = dstlen; srclen && len; srclen--, src++, dst += decomp_len, len -= decomp_len)
     {
-        unsigned int res = wine_decompose( 0, cp2uni[*src], dst, len );
-        if (!res) break;
-        len -= res;
-        dst += res;
+        if ((decomp = get_decomposition( cp2uni[*src], &decomp_len )))
+        {
+            if (len < decomp_len) break;
+            memcpy( dst, decomp, decomp_len * sizeof(WCHAR) );
+        }
+        else *dst = cp2uni[*src];
     }
     if (srclen) return -1;  /* overflow */
     return dstlen - len;
@@ -221,13 +234,13 @@ static int mbstowcs_dbcs_decompose( const struct dbcs_table *table,
 {
     const WCHAR * const cp2uni = table->cp2uni;
     const unsigned char * const cp2uni_lb = table->cp2uni_leadbytes;
-    unsigned int len, res;
+    const WCHAR *decomp;
+    unsigned int len, decomp_len;
     WCHAR ch;
 
     if (!dstlen)  /* compute length */
     {
-        WCHAR dummy[4]; /* no decomposition is larger than 4 chars */
-        for (len = 0; srclen; srclen--, src++)
+        for (len = 0; srclen; srclen--, src++, len += decomp_len)
         {
             unsigned char off = cp2uni_lb[*src];
             if (off && srclen > 1 && src[1])
@@ -237,12 +250,12 @@ static int mbstowcs_dbcs_decompose( const struct dbcs_table *table,
                 ch = cp2uni[(off << 8) + *src];
             }
             else ch = cp2uni[*src];
-            len += wine_decompose( 0, ch, dummy, 4 );
+            get_decomposition( ch, &decomp_len );
         }
         return len;
     }
 
-    for (len = dstlen; srclen && len; srclen--, src++)
+    for (len = dstlen; srclen && len; srclen--, src++, dst += decomp_len, len -= decomp_len)
     {
         unsigned char off = cp2uni_lb[*src];
         if (off && srclen > 1 && src[1])
@@ -252,9 +265,13 @@ static int mbstowcs_dbcs_decompose( const struct dbcs_table *table,
             ch = cp2uni[(off << 8) + *src];
         }
         else ch = cp2uni[*src];
-        if (!(res = wine_decompose( 0, ch, dst, len ))) break;
-        dst += res;
-        len -= res;
+
+        if ((decomp = get_decomposition( ch, &decomp_len )))
+        {
+            if (len < decomp_len) break;
+            memcpy( dst, decomp, decomp_len * sizeof(WCHAR) );
+        }
+        else *dst = ch;
     }
     if (srclen) return -1;  /* overflow */
     return dstlen - len;

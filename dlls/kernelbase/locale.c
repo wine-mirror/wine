@@ -42,11 +42,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 #define CALINFO_MAX_YEAR 2029
 
 extern UINT CDECL __wine_get_unix_codepage(void);
-extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
 extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
 
 extern const unsigned short wctype_table[] DECLSPEC_HIDDEN;
 extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
+extern const unsigned short nfd_table[] DECLSPEC_HIDDEN;
 
 static HANDLE kernel32_handle;
 
@@ -675,6 +675,18 @@ static inline WCHAR casemap( const USHORT *table, WCHAR ch )
 }
 
 
+static const WCHAR *get_decomposition( WCHAR ch, unsigned int *len )
+{
+    unsigned short offset = nfd_table[nfd_table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
+    unsigned short start = nfd_table[offset];
+    unsigned short end = nfd_table[offset + 1];
+
+    if ((*len = end - start)) return nfd_table + start;
+    *len = 1;
+    return NULL;
+}
+
+
 static UINT get_lcid_codepage( LCID lcid, ULONG flags )
 {
     UINT ret = GetACP();
@@ -1138,15 +1150,17 @@ static int check_invalid_chars( const CPTABLEINFO *info, const unsigned char *sr
 static int mbstowcs_decompose( const CPTABLEINFO *info, const unsigned char *src, int srclen,
                                WCHAR *dst, int dstlen )
 {
-    WCHAR ch, dummy[4]; /* no decomposition is larger than 4 chars */
+    WCHAR ch;
     USHORT off;
-    int len, res;
+    int len;
+    const WCHAR *decomp;
+    unsigned int decomp_len;
 
     if (info->DBCSOffsets)
     {
         if (!dstlen)  /* compute length */
         {
-            for (len = 0; srclen; srclen--, src++)
+            for (len = 0; srclen; srclen--, src++, len += decomp_len)
             {
                 if ((off = info->DBCSOffsets[*src]))
                 {
@@ -1159,12 +1173,12 @@ static int mbstowcs_decompose( const CPTABLEINFO *info, const unsigned char *src
                     else ch = info->UniDefaultChar;
                 }
                 else ch = info->MultiByteTable[*src];
-                len += wine_decompose( 0, ch, dummy, 4 );
+                get_decomposition( ch, &decomp_len );
             }
             return len;
         }
 
-        for (len = dstlen; srclen && len; srclen--, src++)
+        for (len = dstlen; srclen && len; srclen--, src++, dst += decomp_len, len -= decomp_len)
         {
             if ((off = info->DBCSOffsets[*src]))
             {
@@ -1177,25 +1191,33 @@ static int mbstowcs_decompose( const CPTABLEINFO *info, const unsigned char *src
                 else ch = info->UniDefaultChar;
             }
             else ch = info->MultiByteTable[*src];
-            if (!(res = wine_decompose( 0, ch, dst, len ))) break;
-            dst += res;
-            len -= res;
+
+            if ((decomp = get_decomposition( ch, &decomp_len )))
+            {
+                if (len < decomp_len) break;
+                memcpy( dst, decomp, decomp_len * sizeof(WCHAR) );
+            }
+            else *dst = ch;
         }
     }
     else
     {
         if (!dstlen)  /* compute length */
         {
-            for (len = 0; srclen; srclen--, src++)
-                len += wine_decompose( 0, info->MultiByteTable[*src], dummy, 4 );
+            for (len = 0; srclen; srclen--, src++, len += decomp_len)
+                get_decomposition( info->MultiByteTable[*src], &decomp_len );
             return len;
         }
 
-        for (len = dstlen; srclen && len; srclen--, src++)
+        for (len = dstlen; srclen && len; srclen--, src++, dst += decomp_len, len -= decomp_len)
         {
-            if (!(res = wine_decompose( 0, info->MultiByteTable[*src], dst, len ))) break;
-            len -= res;
-            dst += res;
+            ch = info->MultiByteTable[*src];
+            if ((decomp = get_decomposition( ch, &decomp_len )))
+            {
+                if (len < decomp_len) break;
+                memcpy( dst, decomp, decomp_len * sizeof(WCHAR) );
+            }
+            else *dst = ch;
         }
     }
 
@@ -2227,7 +2249,7 @@ static unsigned int get_weight( WCHAR ch, enum weight type )
 }
 
 
-static void inc_str_pos( const WCHAR **str, int *len, int *dpos, int *dlen )
+static void inc_str_pos( const WCHAR **str, int *len, unsigned int *dpos, unsigned int *dlen )
 {
     (*dpos)++;
     if (*dpos == *dlen)
@@ -2242,14 +2264,13 @@ static void inc_str_pos( const WCHAR **str, int *len, int *dpos, int *dlen )
 static int compare_weights(int flags, const WCHAR *str1, int len1,
                            const WCHAR *str2, int len2, enum weight type )
 {
-    int dpos1 = 0, dpos2 = 0, dlen1 = 0, dlen2 = 0;
-    WCHAR dstr1[4], dstr2[4];
-    unsigned int ce1, ce2;
+    unsigned int ce1, ce2, dpos1 = 0, dpos2 = 0, dlen1 = 0, dlen2 = 0;
+    const WCHAR *dstr1 = NULL, *dstr2 = NULL;
 
     while (len1 > 0 && len2 > 0)
     {
-        if (!dlen1) dlen1 = wine_decompose( 0, *str1, dstr1, 4 );
-        if (!dlen2) dlen2 = wine_decompose( 0, *str2, dstr2, 4 );
+        if (!dlen1 && !(dstr1 = get_decomposition( *str1, &dlen1 ))) dstr1 = str1;
+        if (!dlen2 && !(dstr2 = get_decomposition( *str2, &dlen2 ))) dstr2 = str2;
 
         if (flags & NORM_IGNORESYMBOLS)
         {
@@ -2308,14 +2329,14 @@ static int compare_weights(int flags, const WCHAR *str1, int len1,
     }
     while (len1)
     {
-        if (!dlen1) dlen1 = wine_decompose( 0, *str1, dstr1, 4 );
+        if (!dlen1 && !(dstr1 = get_decomposition( *str1, &dlen1 ))) dstr1 = str1;
         ce1 = get_weight( dstr1[dpos1], type );
         if (ce1) break;
         inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
     }
     while (len2)
     {
-        if (!dlen2) dlen2 = wine_decompose( 0, *str2, dstr2, 4 );
+        if (!dlen2 && !(dstr2 = get_decomposition( *str2, &dlen2 ))) dstr2 = str2;
         ce2 = get_weight( dstr2[dpos2], type );
         if (ce2) break;
         inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
