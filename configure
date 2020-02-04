@@ -1617,6 +1617,7 @@ enable_vssapi
 enable_vulkan_1
 enable_wbemdisp
 enable_wbemprox
+enable_wbemuuid
 enable_wdscore
 enable_webservices
 enable_wer
@@ -20930,6 +20931,7 @@ wine_fn_config_makefile dlls/wbemdisp enable_wbemdisp
 wine_fn_config_makefile dlls/wbemdisp/tests enable_tests
 wine_fn_config_makefile dlls/wbemprox enable_wbemprox
 wine_fn_config_makefile dlls/wbemprox/tests enable_tests
+wine_fn_config_makefile dlls/wbemuuid enable_wbemuuid
 wine_fn_config_makefile dlls/wdscore enable_wdscore
 wine_fn_config_makefile dlls/webservices enable_webservices
 wine_fn_config_makefile dlls/webservices/tests enable_tests
