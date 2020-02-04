@@ -44,6 +44,7 @@ typedef struct tagDocumentMgr {
     /* Aggregation */
     ITfCompartmentMgr  *CompartmentMgr;
 
+    ITfContext* initialContext;
     ITfContext*  contextStack[2]; /* limit of 2 contexts */
     ITfThreadMgrEventSink* ThreadMgrSink;
 
@@ -87,6 +88,8 @@ static void DocumentMgr_Destructor(DocumentMgr *This)
         ITfThreadMgr_Release(tm);
     }
 
+    if (This->initialContext)
+        ITfContext_Release(This->initialContext);
     if (This->contextStack[0])
         ITfContext_Release(This->contextStack[0]);
     if (This->contextStack[1])
@@ -222,14 +225,21 @@ static HRESULT WINAPI DocumentMgr_Pop(ITfDocumentMgr *iface, DWORD dwFlags)
 static HRESULT WINAPI DocumentMgr_GetTop(ITfDocumentMgr *iface, ITfContext **ppic)
 {
     DocumentMgr *This = impl_from_ITfDocumentMgr(iface);
+    ITfContext *tgt;
+
     TRACE("(%p)\n",This);
     if (!ppic)
         return E_INVALIDARG;
 
     if (This->contextStack[0])
-        ITfContext_AddRef(This->contextStack[0]);
+        tgt = This->contextStack[0];
+    else
+        tgt = This->initialContext;
 
-    *ppic = This->contextStack[0];
+    if (tgt)
+        ITfContext_AddRef(tgt);
+
+    *ppic = tgt;
 
     return S_OK;
 }
@@ -245,8 +255,10 @@ static HRESULT WINAPI DocumentMgr_GetBase(ITfDocumentMgr *iface, ITfContext **pp
 
     if (This->contextStack[1])
         tgt = This->contextStack[1];
-    else
+    else if (This->contextStack[0])
         tgt = This->contextStack[0];
+    else
+        tgt = This->initialContext;
 
     if (tgt)
         ITfContext_AddRef(tgt);
@@ -342,6 +354,7 @@ static const ITfSourceVtbl DocumentMgrSourceVtbl =
 HRESULT DocumentMgr_Constructor(ITfThreadMgrEventSink *ThreadMgrSink, ITfDocumentMgr **ppOut)
 {
     DocumentMgr *This;
+    DWORD cookie;
 
     This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DocumentMgr));
     if (This == NULL)
@@ -354,6 +367,7 @@ HRESULT DocumentMgr_Constructor(ITfThreadMgrEventSink *ThreadMgrSink, ITfDocumen
     list_init(&This->TransitoryExtensionSink);
 
     CompartmentMgr_Constructor((IUnknown*)&This->ITfDocumentMgr_iface, &IID_IUnknown, (IUnknown**)&This->CompartmentMgr);
+    Context_Constructor(processId,NULL,&This->ITfDocumentMgr_iface, &This->initialContext, &cookie);
 
     *ppOut = &This->ITfDocumentMgr_iface;
     TRACE("returning %p\n", *ppOut);

@@ -1639,10 +1639,10 @@ static HRESULT TextEditSink_Constructor(ITfTextEditSink **ppOut)
 static void test_startSession(void)
 {
     HRESULT hr;
-    DWORD cnt;
+    DWORD cnt, initial_ctx_cnt;
     DWORD editCookie;
     ITfDocumentMgr *dmtest;
-    ITfContext *cxt,*cxt2,*cxt3,*cxtTest;
+    ITfContext *cxt,*cxt2,*cxt3,*cxtTest,*initial_ctx;
     ITextStoreACP *ts = NULL;
     TfClientId cid2 = 0;
     ITfThreadMgrEx *tmex;
@@ -1683,6 +1683,23 @@ static void test_startSession(void)
 
     hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&g_dm);
     ok(SUCCEEDED(hr),"CreateDocumentMgr failed\n");
+
+    test_OnPushContext = SINK_EXPECTED;
+    test_OnInitDocumentMgr = SINK_EXPECTED;
+
+    /* For some reason, even when the object isn't initialized, this yields a context */
+    hr = ITfDocumentMgr_GetBase(g_dm, &initial_ctx);
+    ok(SUCCEEDED(hr), "GetBase Failed\n");
+    hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr), "GetTop Failed\n");
+    ok(cxtTest == initial_ctx, "GetTop != GetBase\n");
+
+    ok(initial_ctx != NULL, "Expected initial context\n");
+    initial_ctx_cnt = check_context_refcount(initial_ctx);
+    hr = ITfContext_GetDocumentMgr(initial_ctx,&dmtest);
+    ok(hr == S_OK, "ITfContext_GetDocumentMgr failed with %x\n",hr);
+    ok(dmtest == g_dm, "Wrong documentmgr\n");
+    ITfDocumentMgr_Release(dmtest);
 
     test_EnumDocumentMgr(g_tm,g_dm,NULL);
 
@@ -1740,6 +1757,7 @@ static void test_startSession(void)
     test_OnPushContext = SINK_EXPECTED;
     test_ACP_AdviseSink = SINK_EXPECTED;
     test_OnInitDocumentMgr = SINK_EXPECTED;
+
     hr = ITfDocumentMgr_Push(g_dm, cxt);
     ok(SUCCEEDED(hr),"Push Failed\n");
     ok(check_context_refcount(cxt) > cnt, "Ref count did not increase\n");
@@ -1748,6 +1766,9 @@ static void test_startSession(void)
     sink_check_ok(&test_ACP_AdviseSink,"TextStoreACP_AdviseSink");
 
     test_EnumContexts(g_dm, cxt);
+
+    /* the initial context is released with the document manager */
+    ok(initial_ctx_cnt == check_context_refcount(initial_ctx), "Context ref count changed after documentmgr initialization\n");
 
     hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
     ok(SUCCEEDED(hr),"GetTop Failed\n");
@@ -1859,6 +1880,7 @@ static void test_startSession(void)
     ITfContext_Release(cxt);
     ITfContext_Release(cxt2);
     ITfContext_Release(cxt3);
+    ITfContext_Release(initial_ctx);
     ITextStoreACP_Release(ts);
 }
 
