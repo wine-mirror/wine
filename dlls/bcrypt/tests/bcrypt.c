@@ -155,13 +155,6 @@ static void format_hash(const UCHAR *bytes, ULONG size, char *buf)
     return;
 }
 
-static int strcmp_wa(const WCHAR *strw, const char *stra)
-{
-    WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
-    return lstrcmpW(strw, buf);
-}
-
 #define test_object_length(a) _test_object_length(__LINE__,a)
 static void _test_object_length(unsigned line, void *handle)
 {
@@ -211,7 +204,7 @@ static void _test_hash_length(unsigned line, void *handle, ULONG exlen)
 }
 
 #define test_alg_name(a,b) _test_alg_name(__LINE__,a,b)
-static void _test_alg_name(unsigned line, void *handle, const char *exname)
+static void _test_alg_name(unsigned line, void *handle, const WCHAR *exname)
 {
     ULONG size = 0xdeadbeef;
     UCHAR buf[256];
@@ -220,13 +213,14 @@ static void _test_alg_name(unsigned line, void *handle, const char *exname)
 
     status = pBCryptGetProperty(handle, BCRYPT_ALGORITHM_NAME, buf, sizeof(buf), &size, 0);
     ok_(__FILE__,line)(status == STATUS_SUCCESS, "BCryptGetProperty failed: %08x\n", status);
-    ok_(__FILE__,line)(size == (strlen(exname)+1)*sizeof(WCHAR), "got %u\n", size);
-    ok_(__FILE__,line)(!strcmp_wa(name, exname), "alg name = %s, expected %s\n", wine_dbgstr_w(name), exname);
+    ok_(__FILE__,line)(size == (lstrlenW(exname)+1)*sizeof(WCHAR), "got %u\n", size);
+    ok_(__FILE__,line)(!lstrcmpW(name, exname), "alg name = %s, expected %s\n", wine_dbgstr_w(name),
+                       wine_dbgstr_w(exname));
 }
 
 struct hash_test
 {
-    const char *alg;
+    const WCHAR *alg;
     unsigned hash_size;
     const char *hash;
     const char *hash2;
@@ -239,15 +233,12 @@ static void test_hash(const struct hash_test *test)
     BCRYPT_ALG_HANDLE alg;
     BCRYPT_HASH_HANDLE hash;
     UCHAR buf[512], buf_hmac[1024], hash_buf[128], hmac_hash[128];
-    WCHAR alg_name[64];
     char str[512];
     NTSTATUS ret;
     ULONG len;
 
-    MultiByteToWideChar(CP_ACP, 0, test->alg, -1, alg_name, ARRAY_SIZE(alg_name));
-
     alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, alg_name, MS_PRIMITIVE_PROVIDER, 0);
+    ret = pBCryptOpenAlgorithmProvider(&alg, test->alg, MS_PRIMITIVE_PROVIDER, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(alg != NULL, "alg not set\n");
 
@@ -312,7 +303,7 @@ static void test_hash(const struct hash_test *test)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, alg_name, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
+    ret = pBCryptOpenAlgorithmProvider(&alg, test->alg, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(alg != NULL, "alg not set\n");
 
@@ -380,19 +371,19 @@ static void test_hashes(void)
 {
     static const struct hash_test tests[] =
     {
-        { "SHA1", 20,
+        { L"SHA1", 20,
         "961fa64958818f767707072755d7018dcd278e94",
         "9314f62ff64197143c91fc86de37e9ae776a3fb8",
         "2472cf65d0e090618d769d3e46f0d9446cf212da",
         "b2d2ba8cfd714d474cf0d9622cc5d15e1f53d53f",
         },
-        { "SHA256", 32,
+        { L"SHA256", 32,
         "ceb73749c899693706ede1e30c9929b3fd5dd926163831c2fb8bd41e6efb1126",
         "ea0938c118a7b15954f41b85195f2b42aec3a9429c63f593cfa65c137ffaa986",
         "34c1aa473a4468a91d06e7cdbc75bc4f93b830ccfc2a47ffd74e8e6ed29e4c72",
         "55feb7052060bd99e33f36eb0982c7f4856eb6a84fbefe19a1afd9faafc3af6f",
         },
-        { "SHA384", 48,
+        { L"SHA384", 48,
         "62b21e90c9022b101671ba1f808f8631a8149f0f12904055839a35c1ca78ae53"
         "63eed1e743a692d70e0504b0cfd12ef9",
         "724db7c0bbc51ef1ac3fc793083fc54c0e5c423faec9b11378c01c236b19aaaf"
@@ -402,7 +393,7 @@ static void test_hashes(void)
         "03e1818e5c165a0e54619e513acb06c393e1a6cb0ddbb4036b5f29617b334642"
         "e6e0be8b214d8508595b17a8c4b4e7db",
         },
-        { "SHA512", 64,
+        { L"SHA512", 64,
         "d55ced17163bf5386f2cd9ff21d6fd7fe576a915065c24744d09cfae4ec84ee1"
         "ef6ef11bfbc5acce3639bab725b50a1fe2c204f8c820d6d7db0df0ecbc49c5ca",
         "7752d707b54d2b00e7d1c09120d189475b0fd2e31ebb988cf0a01fc8492ddc0b"
@@ -412,19 +403,19 @@ static void test_hashes(void)
         "1487bcecba46ae677622fa499e4cb2f0fdf92f6f3427cba76382d537a06e49c3"
         "3e70a2fc1fc730092bf21128c3704cc6387f6dfbf7e2f9f315bbb894505a1205",
         },
-        { "MD2", 16,
+        { L"MD2", 16,
         "1bb33606ba908912a84221109d29cd7e",
         "b9a6ad9323b17e2d0cd389dddd6ef78a",
         "7f05b0638d77f4a27f3a9c4d353cd648",
         "05980873e6bfdd05dd7b30078de7e42a",
         },
-        { "MD4", 16,
+        { L"MD4", 16,
         "74b5db93c0b41e36ca7074338fc0b637",
         "a14a9ff2059a8c28f47b01e6bc48a1bf",
         "bc2e8ac4d8248ed21b8d26227a30ea3a",
         "b609db0eb4b8669db74f2c20099701e4",
         },
-        { "MD5", 16,
+        { L"MD5", 16,
         "e2a3e68d23ce348b8f68b3079de3d4c9",
         "bcdd7ca574342aa9db0e212348eacb16",
         "7bda029b93fa8d817fcc9e13d6bdf092",
@@ -460,7 +451,7 @@ static void test_BcryptHash(void)
     ok(alg != NULL, "alg not set\n");
 
     test_hash_length(alg, 16);
-    test_alg_name(alg, "MD5");
+    test_alg_name(alg, L"MD5");
 
     memset(md5, 0, sizeof(md5));
     ret = pBCryptHash(alg, NULL, 0, (UCHAR *)"test", sizeof("test"), md5, sizeof(md5));
@@ -541,7 +532,7 @@ static void test_BcryptDeriveKeyPBKDF2(void)
     ok(alg != NULL, "alg not set\n");
 
     test_hash_length(alg, 20);
-    test_alg_name(alg, "SHA1");
+    test_alg_name(alg, L"SHA1");
 
     ret = pBCryptDeriveKeyPBKDF2(alg, rfc6070[0].pwd, rfc6070[0].pwd_len, rfc6070[0].salt, rfc6070[0].salt_len,
                                  0, buf, rfc6070[0].dk_len, 0);
@@ -581,7 +572,7 @@ static void test_rng(void)
     ret = pBCryptGetProperty(alg, BCRYPT_HASH_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
     ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
 
-    test_alg_name(alg, "RNG");
+    test_alg_name(alg, L"RNG");
 
     memset(buf, 0, 16);
     ret = pBCryptGenRandom(alg, buf, 8, 0);
@@ -654,7 +645,7 @@ static void test_aes(void)
     ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_GCM), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
     ok(size == 64, "got %u\n", size);
 
-    test_alg_name(alg, "AES");
+    test_alg_name(alg, L"AES");
 
     ret = pBCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
