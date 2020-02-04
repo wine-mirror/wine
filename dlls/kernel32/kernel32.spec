@@ -516,7 +516,7 @@
 @ stdcall -import FlsGetValue(long)
 @ stdcall -import FlsSetValue(long ptr)
 @ stdcall FlushConsoleInputBuffer(long)
-@ stdcall -import FlushFileBuffers(long)
+@ stdcall FlushFileBuffers(long) KERNEL32_FlushFileBuffers
 @ stdcall -import FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers()
 @ stdcall -import FlushViewOfFile(ptr long)
