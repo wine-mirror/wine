@@ -7929,7 +7929,6 @@ todo_wine
                     (void **)&ref2)))
             {
                 UINT32 axis_count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref2);
-            todo_wine
                 ok(axis_count > 0, "Unexpected axis value count.\n");
                 IDWriteFontFaceReference1_Release(ref2);
             }

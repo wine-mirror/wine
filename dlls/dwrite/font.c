@@ -80,6 +80,8 @@ struct dwrite_font_data
     FONTSIGNATURE fontsig;
     UINT32 flags; /* enum font_flags */
     struct dwrite_font_propvec propvec;
+    /* Static axis for weight/width/italic. */
+    DWRITE_FONT_AXIS_VALUE axis[3];
 
     DWRITE_FONT_METRICS1 metrics;
     IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_SUPPORTED_SCRIPT_LANGUAGE_TAG + 1];
@@ -2061,8 +2063,9 @@ static HRESULT WINAPI dwritefont3_GetFontFaceReference(IDWriteFont3 *iface, IDWr
 
     TRACE("%p, %p.\n", iface, reference);
 
-    return IDWriteFactory5_CreateFontFaceReference_((IDWriteFactory5 *)font->family->collection->factory,
-            font->data->file, font->data->face_index, font->data->simulations, reference);
+    return IDWriteFactory7_CreateFontFaceReference(font->family->collection->factory, font->data->file,
+            font->data->face_index, font->data->simulations, font->data->axis, ARRAY_SIZE(font->data->axis),
+            (IDWriteFontFaceReference1 **)reference);
 }
 
 static BOOL WINAPI dwritefont3_HasCharacter(IDWriteFont3 *iface, UINT32 ch)
@@ -3857,6 +3860,20 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
 
 static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_font_data **ret)
 {
+    static const float width_axis_values[] =
+    {
+        0.0f, /* DWRITE_FONT_STRETCH_UNDEFINED */
+        50.0f, /* DWRITE_FONT_STRETCH_ULTRA_CONDENSED */
+        62.5f, /* DWRITE_FONT_STRETCH_EXTRA_CONDENSED */
+        75.0f, /* DWRITE_FONT_STRETCH_CONDENSED */
+        87.5f, /* DWRITE_FONT_STRETCH_SEMI_CONDENSED */
+        100.0f, /* DWRITE_FONT_STRETCH_NORMAL */
+        112.5f, /* DWRITE_FONT_STRETCH_SEMI_EXPANDED */
+        125.0f, /* DWRITE_FONT_STRETCH_EXPANDED */
+        150.0f, /* DWRITE_FONT_STRETCH_EXTRA_EXPANDED */
+        200.0f, /* DWRITE_FONT_STRETCH_ULTRA_EXPANDED */
+    };
+
     struct file_stream_desc stream_desc;
     struct dwrite_font_props props;
     struct dwrite_font_data *data;
@@ -3909,6 +3926,13 @@ static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_fo
     }
 
     init_font_prop_vec(data->weight, data->stretch, data->style, &data->propvec);
+
+    data->axis[0].axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
+    data->axis[0].value = props.weight;
+    data->axis[1].axisTag = DWRITE_FONT_AXIS_TAG_WIDTH;
+    data->axis[1].value = width_axis_values[props.stretch];
+    data->axis[2].axisTag = DWRITE_FONT_AXIS_TAG_ITALIC;
+    data->axis[2].value = data->style == DWRITE_FONT_STYLE_ITALIC ? 1.0f : 0.0f;
 
     *ret = data;
     return S_OK;
