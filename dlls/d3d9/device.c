@@ -2818,19 +2818,21 @@ static void d3d9_generate_auto_mipmaps(struct d3d9_device *device)
 static void d3d9_device_upload_sysmem_vertex_buffers(struct d3d9_device *device,
         int base_vertex, unsigned int start_vertex, unsigned int vertex_count)
 {
+    const struct wined3d_stateblock_state *state = wined3d_stateblock_get_state(device->state);
     struct wined3d_vertex_declaration *wined3d_decl;
     struct wined3d_box box = {0, 0, 0, 1, 0, 1};
+    const struct wined3d_stream_state *stream;
     struct d3d9_vertexbuffer *d3d9_buffer;
     struct wined3d_resource *dst_resource;
     struct d3d9_vertex_declaration *decl;
-    unsigned int i, offset, stride, map;
     struct wined3d_buffer *dst_buffer;
     struct wined3d_resource_desc desc;
+    unsigned int stride, map;
     HRESULT hr;
 
     if (!device->sysmem_vb)
         return;
-    wined3d_decl = wined3d_device_get_vertex_declaration(device->wined3d_device);
+    wined3d_decl = state->vertex_declaration;
     if (!wined3d_decl)
         return;
 
@@ -2843,14 +2845,14 @@ static void d3d9_device_upload_sysmem_vertex_buffers(struct d3d9_device *device,
     map = decl->stream_map & device->sysmem_vb;
     while (map)
     {
-        i = wined3d_bit_scan(&map);
+        stream = &state->streams[wined3d_bit_scan(&map)];
+        dst_buffer = stream->buffer;
+        stride = stream->stride;
 
-        if (FAILED(hr = wined3d_device_get_stream_source(device->wined3d_device, i, &dst_buffer, &offset, &stride)))
-            ERR("Failed to get stream source.\n");
         d3d9_buffer = wined3d_buffer_get_parent(dst_buffer);
         dst_resource = wined3d_buffer_get_resource(dst_buffer);
         wined3d_resource_get_desc(dst_resource, &desc);
-        box.left = offset + start_vertex * stride;
+        box.left = stream->offset + start_vertex * stride;
         box.right = min(box.left + vertex_count * stride, desc.size);
         if (FAILED(hr = wined3d_device_copy_sub_resource_region(device->wined3d_device,
                 dst_resource, 0, box.left, 0, 0,
@@ -2862,25 +2864,26 @@ static void d3d9_device_upload_sysmem_vertex_buffers(struct d3d9_device *device,
 static void d3d9_device_upload_sysmem_index_buffer(struct d3d9_device *device,
         unsigned int start_idx, unsigned int idx_count)
 {
+    const struct wined3d_stateblock_state *state = wined3d_stateblock_get_state(device->state);
     struct wined3d_box box = {0, 0, 0, 1, 0, 1};
     struct wined3d_resource *dst_resource;
     struct d3d9_indexbuffer *d3d9_buffer;
     struct wined3d_buffer *dst_buffer;
     struct wined3d_resource_desc desc;
     enum wined3d_format_id format;
-    unsigned int offset, idx_size;
+    unsigned int idx_size;
     HRESULT hr;
 
     if (!device->sysmem_ib)
         return;
 
-    if (!(dst_buffer = wined3d_device_get_index_buffer(device->wined3d_device, &format, &offset)))
-        ERR("Failed to get index buffer.\n");
+    dst_buffer = state->index_buffer;
+    format = state->index_format;
     d3d9_buffer = wined3d_buffer_get_parent(dst_buffer);
     dst_resource = wined3d_buffer_get_resource(dst_buffer);
     wined3d_resource_get_desc(dst_resource, &desc);
     idx_size = format == WINED3DFMT_R16_UINT ? 2 : 4;
-    box.left = offset + start_idx * idx_size;
+    box.left = start_idx * idx_size;
     box.right = min(box.left + idx_count * idx_size, desc.size);
     if (FAILED(hr = wined3d_device_copy_sub_resource_region(device->wined3d_device,
             dst_resource, 0, box.left, 0, 0,
@@ -2938,13 +2941,13 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitive(IDirect3DDevice9Ex *iface
         WARN("Called without a valid vertex declaration set.\n");
         return D3DERR_INVALIDCALL;
     }
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     index_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
     d3d9_device_upload_sysmem_vertex_buffers(device, base_vertex_idx, min_vertex_idx, vertex_count);
     d3d9_device_upload_sysmem_index_buffer(device, start_idx, index_count);
     d3d9_generate_auto_mipmaps(device);
-    wined3d_device_set_base_vertex_index(device->wined3d_device, base_vertex_idx);
+    wined3d_stateblock_set_base_vertex_index(device->state, base_vertex_idx);
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type, 0);
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, start_idx, index_count);
     if (SUCCEEDED(hr))
         d3d9_rts_flag_auto_gen_mipmap(device);
@@ -3025,7 +3028,6 @@ static HRESULT WINAPI d3d9_device_DrawPrimitiveUP(IDirect3DDevice9Ex *iface,
         return D3DERR_INVALIDCALL;
     }
 
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = d3d9_device_prepare_vertex_buffer(device, size);
     if (FAILED(hr))
         goto done;
@@ -3048,14 +3050,15 @@ static HRESULT WINAPI d3d9_device_DrawPrimitiveUP(IDirect3DDevice9Ex *iface,
     wined3d_resource_unmap(vb, 0);
     device->vertex_buffer_pos = vb_pos + size;
 
-    hr = wined3d_device_set_stream_source(device->wined3d_device, 0, device->vertex_buffer, 0, stride);
+    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer, 0, stride);
     if (FAILED(hr))
         goto done;
 
     d3d9_generate_auto_mipmaps(device);
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type, 0);
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = wined3d_device_draw_primitive(device->wined3d_device, vb_pos / stride, vtx_count);
-    wined3d_device_set_stream_source(device->wined3d_device, 0, NULL, 0, 0);
+    wined3d_stateblock_set_stream_source(device->state, 0, NULL, 0, 0);
     if (SUCCEEDED(hr))
         d3d9_rts_flag_auto_gen_mipmap(device);
 
@@ -3142,7 +3145,6 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitiveUP(IDirect3DDevice9Ex *ifa
         return D3DERR_INVALIDCALL;
     }
 
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = d3d9_device_prepare_vertex_buffer(device, vtx_size);
     if (FAILED(hr))
         goto done;
@@ -3187,20 +3189,21 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitiveUP(IDirect3DDevice9Ex *ifa
     wined3d_resource_unmap(ib, 0);
     device->index_buffer_pos = ib_pos + idx_size;
 
-    hr = wined3d_device_set_stream_source(device->wined3d_device, 0, device->vertex_buffer, 0, vertex_stride);
+    hr = wined3d_stateblock_set_stream_source(device->state, 0, device->vertex_buffer, 0, vertex_stride);
     if (FAILED(hr))
         goto done;
 
     d3d9_generate_auto_mipmaps(device);
-    wined3d_device_set_index_buffer(device->wined3d_device, device->index_buffer,
-            wined3dformat_from_d3dformat(index_format), 0);
-    wined3d_device_set_base_vertex_index(device->wined3d_device, vb_pos / vertex_stride - min_vertex_idx);
+    wined3d_stateblock_set_index_buffer(device->state, device->index_buffer,
+            wined3dformat_from_d3dformat(index_format));
+    wined3d_stateblock_set_base_vertex_index(device->state, vb_pos / vertex_stride - min_vertex_idx);
 
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type, 0);
     hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / idx_fmt_size, idx_count);
 
-    wined3d_device_set_stream_source(device->wined3d_device, 0, NULL, 0, 0);
-    wined3d_device_set_index_buffer(device->wined3d_device, NULL, WINED3DFMT_UNKNOWN, 0);
+    wined3d_stateblock_set_stream_source(device->state, 0, NULL, 0, 0);
+    wined3d_stateblock_set_index_buffer(device->state, NULL, WINED3DFMT_UNKNOWN);
 
     if (SUCCEEDED(hr))
         d3d9_rts_flag_auto_gen_mipmap(device);
@@ -3217,17 +3220,17 @@ static HRESULT WINAPI d3d9_device_ProcessVertices(IDirect3DDevice9Ex *iface,
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_vertexbuffer *dst_impl = unsafe_impl_from_IDirect3DVertexBuffer9(dst_buffer);
     struct d3d9_vertex_declaration *decl_impl = unsafe_impl_from_IDirect3DVertexDeclaration9(declaration);
+    const struct wined3d_stateblock_state *state;
+    const struct wined3d_stream_state *stream;
     struct d3d9_vertexbuffer *d3d9_buffer;
-    struct wined3d_buffer *wined3d_buffer;
-    unsigned int i, offset, stride, map;
+    unsigned int i, map;
     HRESULT hr;
 
     TRACE("iface %p, src_start_idx %u, dst_idx %u, vertex_count %u, dst_buffer %p, declaration %p, flags %#x.\n",
             iface, src_start_idx, dst_idx, vertex_count, dst_buffer, declaration, flags);
 
     wined3d_mutex_lock();
-
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    state = wined3d_stateblock_get_state(device->state);
 
     /* Note that an alternative approach would be to simply create these
      * buffers with WINED3D_RESOURCE_ACCESS_MAP_R and update them here like we
@@ -3238,16 +3241,15 @@ static HRESULT WINAPI d3d9_device_ProcessVertices(IDirect3DDevice9Ex *iface,
     while (map)
     {
         i = wined3d_bit_scan(&map);
+        stream = &state->streams[i];
 
-        if (FAILED(wined3d_device_get_stream_source(device->wined3d_device,
-                i, &wined3d_buffer, &offset, &stride)))
-            ERR("Failed to get stream source.\n");
-        d3d9_buffer = wined3d_buffer_get_parent(wined3d_buffer);
-        if (FAILED(wined3d_device_set_stream_source(device->wined3d_device,
-                i, d3d9_buffer->wined3d_buffer, offset, stride)))
+        d3d9_buffer = wined3d_buffer_get_parent(stream->buffer);
+        if (FAILED(wined3d_stateblock_set_stream_source(device->state,
+                i, d3d9_buffer->wined3d_buffer, stream->offset, stream->stride)))
             ERR("Failed to set stream source.\n");
     }
 
+    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     hr = wined3d_device_process_vertices(device->wined3d_device, src_start_idx, dst_idx, vertex_count,
             dst_impl->wined3d_buffer, decl_impl ? decl_impl->wined3d_declaration : NULL,
             flags, dst_impl->fvf);
@@ -3256,13 +3258,11 @@ static HRESULT WINAPI d3d9_device_ProcessVertices(IDirect3DDevice9Ex *iface,
     while (map)
     {
         i = wined3d_bit_scan(&map);
+        stream = &state->streams[i];
 
-        if (FAILED(wined3d_device_get_stream_source(device->wined3d_device,
-                i, &wined3d_buffer, &offset, &stride)))
-            ERR("Failed to get stream source.\n");
-        d3d9_buffer = wined3d_buffer_get_parent(wined3d_buffer);
-        if (FAILED(wined3d_device_set_stream_source(device->wined3d_device,
-                i, d3d9_buffer->draw_buffer, offset, stride)))
+        d3d9_buffer = wined3d_buffer_get_parent(stream->buffer);
+        if (FAILED(wined3d_stateblock_set_stream_source(device->state,
+                i, d3d9_buffer->draw_buffer, stream->offset, stream->stride)))
             ERR("Failed to set stream source.\n");
     }
 
@@ -3663,8 +3663,12 @@ static HRESULT WINAPI d3d9_device_SetStreamSource(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
     if (!buffer_impl)
-        wined3d_device_get_stream_source(device->wined3d_device, stream_idx, &wined3d_buffer,
-                &offset, &stride);
+    {
+        const struct wined3d_stream_state *stream = &wined3d_stateblock_get_state(device->state)->streams[stream_idx];
+        wined3d_buffer = stream->buffer;
+        offset = stream->offset;
+        stride = stream->stride;
+    }
 
     if (!buffer_impl)
         wined3d_buffer = NULL;
@@ -3695,9 +3699,8 @@ static HRESULT WINAPI d3d9_device_GetStreamSource(IDirect3DDevice9Ex *iface,
         UINT stream_idx, IDirect3DVertexBuffer9 **buffer, UINT *offset, UINT *stride)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    const struct wined3d_stream_state *stream;
     struct d3d9_vertexbuffer *buffer_impl;
-    struct wined3d_buffer *wined3d_buffer;
-    HRESULT hr;
 
     TRACE("iface %p, stream_idx %u, buffer %p, offset %p, stride %p.\n",
             iface, stream_idx, buffer, offset, stride);
@@ -3705,23 +3708,28 @@ static HRESULT WINAPI d3d9_device_GetStreamSource(IDirect3DDevice9Ex *iface,
     if (!buffer)
         return D3DERR_INVALIDCALL;
 
-    wined3d_mutex_lock();
-    hr = wined3d_device_get_stream_source(device->wined3d_device, stream_idx, &wined3d_buffer, offset, stride);
-    if (SUCCEEDED(hr) && wined3d_buffer)
+    if (stream_idx > WINED3D_MAX_STREAMS)
     {
-        buffer_impl = wined3d_buffer_get_parent(wined3d_buffer);
+        WARN("Stream index %u out of range.\n", stream_idx);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    wined3d_mutex_lock();
+    stream = &wined3d_stateblock_get_state(device->state)->streams[stream_idx];
+    if (stream->buffer)
+    {
+        buffer_impl = wined3d_buffer_get_parent(stream->buffer);
         *buffer = &buffer_impl->IDirect3DVertexBuffer9_iface;
         IDirect3DVertexBuffer9_AddRef(*buffer);
     }
     else
-    {
-        if (FAILED(hr))
-            FIXME("Call to GetStreamSource failed %p %p\n", offset, stride);
         *buffer = NULL;
-    }
+    if (offset)
+        *offset = stream->offset;
+    *stride = stream->stride;
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_SetStreamSourceFreq(IDirect3DDevice9Ex *iface, UINT stream_idx, UINT freq)
@@ -3784,7 +3792,6 @@ static HRESULT WINAPI d3d9_device_SetIndices(IDirect3DDevice9Ex *iface, IDirect3
 static HRESULT WINAPI d3d9_device_GetIndices(IDirect3DDevice9Ex *iface, IDirect3DIndexBuffer9 **buffer)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    enum wined3d_format_id wined3d_format;
     struct wined3d_buffer *wined3d_buffer;
     struct d3d9_indexbuffer *buffer_impl;
 
@@ -3794,7 +3801,7 @@ static HRESULT WINAPI d3d9_device_GetIndices(IDirect3DDevice9Ex *iface, IDirect3
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    if ((wined3d_buffer = wined3d_device_get_index_buffer(device->wined3d_device, &wined3d_format, NULL)))
+    if ((wined3d_buffer = wined3d_stateblock_get_state(device->state)->index_buffer))
     {
         buffer_impl = wined3d_buffer_get_parent(wined3d_buffer);
         *buffer = &buffer_impl->IDirect3DIndexBuffer9_iface;
