@@ -967,7 +967,7 @@ static HRESULT WINAPI stream_descriptor_GetMediaTypeHandler(IMFStreamDescriptor 
     TRACE("%p, %p.\n", iface, handler);
 
     *handler = &stream_desc->IMFMediaTypeHandler_iface;
-    IMFStreamDescriptor_AddRef(iface);
+    IMFMediaTypeHandler_AddRef(*handler);
 
     return S_OK;
 }
