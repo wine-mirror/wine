@@ -3737,8 +3737,6 @@ static HRESULT WINAPI d3d9_device_SetStreamSourceFreq(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
     hr = wined3d_stateblock_set_stream_source_freq(device->update_state, stream_idx, freq);
-    if (SUCCEEDED(hr) && !device->recording)
-        hr = wined3d_device_set_stream_source_freq(device->wined3d_device, stream_idx, freq);
     wined3d_mutex_unlock();
 
     return hr;
