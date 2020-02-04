@@ -428,6 +428,14 @@ my %joining_forms =
    "medial" => []
 );
 
+sub get_utf16($)
+{
+    my $ch = shift;
+    return $ch if ($ch < 0x10000);
+    $ch -= 0x10000;
+    return ( 0xd800 | ($ch >> 10), 0xdc00 | ($ch & 0x3ff) );
+}
+
 ################################################################
 # fetch a unicode.org file and open it
 sub open_data_file($$)
@@ -453,7 +461,7 @@ sub get_decomposition($$)
     my ($char, $table) = @_;
     my @ret;
 
-    return $char unless defined ${$table}[$char];
+    return get_utf16($char) unless defined ${$table}[$char];
     foreach my $ch (@{${$table}[$char]})
     {
         push @ret, get_decomposition( $ch, $table );
@@ -614,10 +622,7 @@ sub load_data($)
             elsif ($decomp =~ /^([0-9a-fA-F]+)$/)
             {
                 # Single char decomposition
-                if (hex $1 < 65536)
-                {
-                    $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1 ];
-                }
+                $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1 ];
 
                 if (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd))
                 {
