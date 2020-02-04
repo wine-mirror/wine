@@ -22,6 +22,7 @@
 #include "ndr_misc.h"
 #include "rpc_assoc.h"
 #include "rpcndr.h"
+#include "cguid.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"

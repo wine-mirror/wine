@@ -37,6 +37,7 @@
 #include "winioctl.h"
 #include "rpc.h"
 #include "rpcdce.h"
+#include "cguid.h"
 
 #include "setupapi_private.h"
 

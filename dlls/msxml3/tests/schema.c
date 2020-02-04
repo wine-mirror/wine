@@ -30,6 +30,7 @@
 #undef CLSID_DOMDocument
 #include "msxml2did.h"
 #include "dispex.h"
+#include "cguid.h"
 
 #include "wine/test.h"
 
