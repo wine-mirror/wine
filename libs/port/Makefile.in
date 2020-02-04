@@ -76,7 +76,6 @@ C_SRCS = \
 	c_950.c \
 	casemap.c \
 	collation.c \
-	combclass.c \
 	compose.c \
 	cpsymbol.c \
 	cptable.c \
