@@ -3680,14 +3680,10 @@ static HRESULT WINAPI d3d9_device_SetStreamSource(IDirect3DDevice9Ex *iface,
     hr = wined3d_stateblock_set_stream_source(device->update_state, stream_idx, wined3d_buffer, offset, stride);
     if (SUCCEEDED(hr) && !device->recording)
     {
-        hr = wined3d_device_set_stream_source(device->wined3d_device, stream_idx, wined3d_buffer, offset, stride);
-        if (SUCCEEDED(hr))
-        {
-            if (buffer_impl && buffer_impl->draw_buffer)
-                device->sysmem_vb |= (1u << stream_idx);
-            else
-                device->sysmem_vb &= ~(1u << stream_idx);
-        }
+        if (buffer_impl && buffer_impl->draw_buffer)
+            device->sysmem_vb |= (1u << stream_idx);
+        else
+            device->sysmem_vb &= ~(1u << stream_idx);
     }
 
     wined3d_mutex_unlock();
