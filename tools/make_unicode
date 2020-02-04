@@ -416,7 +416,7 @@ my @direction_table = ();
 my @decomp_table = ();
 my @compose_table = ();
 my @combining_class_table = ();
-my @full_compatmap_table = ();
+my @decomp_compat_table = ();
 my $default_char;
 my $default_wchar;
 
@@ -446,8 +446,40 @@ sub open_data_file($$)
 }
 
 ################################################################
-# read in the defaults file
-sub READ_DEFAULTS($)
+# recursively get the decomposition for a character
+sub get_decomposition($$);
+sub get_decomposition($$)
+{
+    my ($char, $table) = @_;
+    my @ret;
+
+    return $char unless defined ${$table}[$char];
+    foreach my $ch (@{${$table}[$char]})
+    {
+        push @ret, get_decomposition( $ch, $table );
+    }
+    return @ret;
+}
+
+################################################################
+# recursively build decompositions
+sub build_decompositions(@)
+{
+    my @src = @_;
+    my @dst;
+
+    for (my $i = 0; $i < 65536; $i++)
+    {
+        next unless defined $src[$i];
+        my @decomp = get_decomposition( $i, \@src );
+        $dst[$i] = \@decomp;
+    }
+    return @dst;
+}
+
+################################################################
+# read in the Unicode database files
+sub load_data($)
 {
     my $filename = shift;
     my $start;
@@ -535,12 +567,8 @@ sub READ_DEFAULTS($)
 
         if ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)/)
         {
-            my @seq = ();
-            for my $ch (split /\s+/, (split /\s+/, $decomp, 2)[1])
-            {
-                push @seq, (hex $ch);
-            }
-            $full_compatmap_table[$src] = \@seq;
+            my @seq = map { hex $_; } (split /\s+/, (split /\s+/, $decomp, 2)[1]);
+            $decomp_compat_table[$src] = \@seq;
         }
 
         if ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)$/)
@@ -580,7 +608,7 @@ sub READ_DEFAULTS($)
             # store decomposition if it contains two chars
             if ($decomp =~ /^([0-9a-fA-F]+)\s+([0-9a-fA-F]+)$/)
             {
-                $decomp_table[$src] = [ hex $1, hex $2 ];
+                $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1, hex $2 ];
                 push @compose_table, [ hex $1, hex $2, $src ];
             }
             elsif ($decomp =~ /^([0-9a-fA-F]+)$/)
@@ -588,7 +616,7 @@ sub READ_DEFAULTS($)
                 # Single char decomposition
                 if (hex $1 < 65536)
                 {
-                    $decomp_table[$src] = [ hex $1 ];
+                    $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1 ];
                 }
 
                 if (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd))
@@ -2352,6 +2380,8 @@ sub dump_decompositions($@)
 {
     my ($name, @decomp) = @_;
 
+    @decomp = build_decompositions( @decomp );
+
     # first determine all the 16-char subsets that contain something
 
     my @filled = (0) x 4096;
@@ -2457,74 +2487,45 @@ sub dump_decompose_table($$)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_decompositions( "table", @decomp_table );
+    dump_decompositions( $compat ? "decomp_table" : "table", @decomp_table );
 
     if ($compat)
     {
-        dump_decompositions( "compatmap_table", @full_compatmap_table );
+        dump_decompositions( "compatmap_table", @decomp_compat_table );
         print OUTPUT <<"EOF";
 #include "wine/unicode.h"
 
-static const WCHAR *get_table_entry( const WCHAR *table, WCHAR ch, unsigned int *len )
-{
-    unsigned short offset_offs = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
-    unsigned short start = table[offset_offs];
-    unsigned short end = table[offset_offs + 1];
-
-    *len = end - start;
-    return table + start;
-}
-
 unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
 {
-    const WCHAR *ptr;
-    unsigned int res, len = 0, dst_pos = 0;
+    const WCHAR *table = (flags & WINE_DECOMPOSE_COMPAT) ? compatmap_table : decomp_table;
+    unsigned short offset = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
+    unsigned short start = table[offset];
+    unsigned short end = table[offset + 1];
+    unsigned int len = end - start;
 
     *dst = ch;
-
-    if (flags & WINE_DECOMPOSE_COMPAT) ptr = get_table_entry( compatmap_table, ch, &len );
-    if (!len) ptr = get_table_entry( table, ch, &len );
     if (!len) return 1;
     if (dstlen < len) return 0;
-    /* apply the decomposition recursively */
-    while (len--)
-    {
-        if (!(res = wine_decompose( flags, *ptr++, dst + dst_pos, dstlen - dst_pos - len ))) return 0;
-        dst_pos += res;
-    }
-
-    return dst_pos;
+    memcpy( dst, table + start, len * sizeof(WCHAR) );
+    return len;
 }
 EOF
     }
     else
     {
             print OUTPUT <<"EOF";
-static const WCHAR *get_table_entry( const WCHAR *table, WCHAR ch, unsigned int *len )
-{
-    unsigned short offset_offs = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
-    unsigned short start = table[offset_offs];
-    unsigned short end = table[offset_offs + 1];
-
-    *len = end - start;
-    return table + start;
-}
-
 unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
 {
-    unsigned int res, len = 0, dst_pos = 0;
-    const WCHAR *ptr = get_table_entry( table, ch, &len );
+    unsigned short offset = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
+    unsigned short start = table[offset];
+    unsigned short end = table[offset + 1];
+    unsigned int len = end - start;
 
     *dst = ch;
     if (!len) return 1;
     if (dstlen < len) return 0;
-    /* apply the decomposition recursively */
-    while (len--)
-    {
-        if (!(res = wine_decompose( flags, *ptr++, dst + dst_pos, dstlen - dst_pos - len ))) return 0;
-        dst_pos += res;
-    }
-    return dst_pos;
+    memcpy( dst, table + start, len * sizeof(WCHAR) );
+    return len;
 }
 EOF
     }
@@ -2777,7 +2778,7 @@ sub REPLACE_IN_FILE($@)
 # main routine
 
 chdir ".." if -f "./make_unicode";
-READ_DEFAULTS( $DEFAULTS );
+load_data( $DEFAULTS );
 dump_case_mappings( "libs/port/casemap.c" );
 dump_sortkeys( "libs/port/collation.c" );
 dump_sortkeys( "dlls/kernelbase/collation.c" );
