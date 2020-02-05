@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-02-03 23:24+0200\n"
+"PO-Revision-Date: 2020-02-05 23:25+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -8321,76 +8321,56 @@ msgid "Select the data you want to connect to:"
 msgstr "Išrinkite duomenis, prie kurių norite jungtis:"
 
 #: version.rc:52
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
-msgstr "Ryšiai"
+msgstr "Ryšys"
 
 #: version.rc:55
-#, fuzzy
-#| msgid "Select the data you want to connect to:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "Išrinkite duomenis, prie kurių norite jungtis:"
+msgstr "Prisijungimui prie ODBC duomenų nurodykite:"
 
 #: version.rc:56
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Nurodykite duomenų šaltinį:"
 
 #: version.rc:57
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "Įveskite savo vardą"
+msgstr "Naudoti &duomenų šaltinio vardą"
 
 #: version.rc:60
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "Panaikinti ryšiai"
+msgstr "Naudoti r&yšio eilutę"
 
 #: version.rc:61
-#, fuzzy
-#| msgid "Connections"
 msgid "&Connection string:"
-msgstr "Ryšiai"
+msgstr "&Ryšio eilutė:"
 
 #: version.rc:63
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "Pri&dėti..."
+msgstr "&Sukurti..."
 
 #: version.rc:64
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Įveskite informaciją prisijungimui prie serverio"
 
 #: version.rc:65
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Naudotojo vardas:"
 
 #: version.rc:69
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "&Tuščias puslapis"
+msgstr "T&uščias slaptažodis"
 
 #: version.rc:70
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "Neteisingas slaptažodis.\n"
+msgstr "Leisti &išsaugoti slaptažodį"
 
 #: version.rc:71
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Įveskite &pradinį katalogą naudojimui:"
 
 #: version.rc:73
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "Panaikinti ryšiai"
+msgstr "&Tikrinti ryšį"
 
 #: version.rc:36
 msgid "Data Link Properties"
