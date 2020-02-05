@@ -95,7 +95,6 @@ extern int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *ds
 
 extern int wine_compare_string( int flags, const WCHAR *str1, int len1, const WCHAR *str2, int len2 );
 extern int wine_get_sortkey( int flags, const WCHAR *src, int srclen, char *dst, int dstlen );
-extern int wine_fold_string( int flags, const WCHAR *src, int srclen , WCHAR *dst, int dstlen );
 
 extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
 extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );

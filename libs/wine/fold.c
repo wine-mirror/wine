@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "wine/unicode.h"
 
 static inline WCHAR to_unicode_digit( WCHAR ch )
@@ -116,7 +120,7 @@ static inline const WCHAR* get_ligature( WCHAR wc )
 }
 
 /* fold a unicode string */
-int wine_fold_string( int flags, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
+int wine_fold_string_obsolete( int flags, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
 {
     WCHAR *dstbase = dst;
     const WCHAR *expand;
@@ -197,3 +201,7 @@ int wine_fold_string( int flags, const WCHAR *src, int srclen, WCHAR *dst, int d
     }
     return dst - dstbase;
 }
+
+__ASM_OBSOLETE(wine_fold_string);
+
+#endif  /* __ASM_OBSOLETE */

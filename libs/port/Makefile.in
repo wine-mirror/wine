@@ -82,7 +82,6 @@ C_SRCS = \
 	decompose.c \
 	digitmap.c \
 	ffs.c \
-	fold.c \
 	fstatvfs.c \
 	getopt.c \
 	interlocked.c \

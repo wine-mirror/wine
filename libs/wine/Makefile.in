@@ -4,6 +4,7 @@ EXTRALIBS = $(DL_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS) $(I386_LIBS)
 C_SRCS = \
 	config.c \
 	debug.c \
+	fold.c \
 	ldt.c \
 	loader.c \
 	mmap.c \

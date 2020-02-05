@@ -22,7 +22,6 @@ WINE_1.0
     wine_dlopen;
     wine_dlsym;
     wine_exec_wine_binary;
-    wine_fold_string;
     wine_get_build_dir;
     wine_get_build_id;
     wine_get_config_dir;
@@ -117,6 +116,7 @@ WINE_1.0
     wine_dll_load;
     wine_dll_load_main_exe;
     wine_dll_unload;
+    wine_fold_string;
     wine_pthread_get_functions;
     wine_pthread_set_functions;
     wine_switch_to_stack;
