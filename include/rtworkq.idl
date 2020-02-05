@@ -18,6 +18,15 @@
 
 import "unknwn.idl";
 
+typedef enum
+{
+    RTWQ_STANDARD_WORKQUEUE = 0,
+    RTWQ_WINDOW_WORKQUEUE = 1,
+    RTWQ_MULTITHREADED_WORKQUEUE = 2,
+} RTWQ_WORKQUEUE_TYPE;
+
+typedef unsigned __int64 RTWQWORKITEM_KEY;
+
 [
     object,
     uuid(ac6b7889-0740-4d51-8619-905994a55cc6),
@@ -59,4 +68,6 @@ cpp_quote("} RTWQASYNCRESULT;")
 
 cpp_quote("HRESULT WINAPI RtwqCreateAsyncResult(IUnknown *object, IRtwqAsyncCallback *callback, IUnknown *state, IRtwqAsyncResult **result);")
 cpp_quote("HRESULT WINAPI RtwqLockPlatform(void);")
+cpp_quote("HRESULT WINAPI RtwqShutdown(void);")
+cpp_quote("HRESULT WINAPI RtwqStartup(void);")
 cpp_quote("HRESULT WINAPI RtwqUnlockPlatform(void);")

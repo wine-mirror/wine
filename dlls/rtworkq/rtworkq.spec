@@ -28,8 +28,8 @@
 @ stub RtwqSetDeadline
 @ stub RtwqSetDeadline2
 @ stub RtwqSetLongRunning
-@ stub RtwqShutdown
-@ stub RtwqStartup
+@ stdcall RtwqShutdown()
+@ stdcall RtwqStartup()
 @ stub RtwqUnjoinWorkQueue
 @ stdcall RtwqUnlockPlatform()
 @ stub RtwqUnlockWorkQueue
