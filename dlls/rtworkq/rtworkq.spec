@@ -13,7 +13,7 @@
 @ stub RtwqGetWorkQueueMMCSSClass
 @ stub RtwqGetWorkQueueMMCSSPriority
 @ stub RtwqGetWorkQueueMMCSSTaskId
-@ stub RtwqInvokeCallback
+@ stdcall RtwqInvokeCallback(ptr)
 @ stub RtwqJoinWorkQueue
 @ stdcall RtwqLockPlatform()
 @ stub RtwqLockSharedWorkQueue
@@ -24,7 +24,7 @@
 @ stub RtwqRegisterPlatformEvents
 @ stub RtwqRegisterPlatformWithMMCSS
 @ stub RtwqRemovePeriodicCallback
-@ stub RtwqScheduleWorkItem
+@ stdcall RtwqScheduleWorkItem(ptr int64 ptr)
 @ stub RtwqSetDeadline
 @ stub RtwqSetDeadline2
 @ stub RtwqSetLongRunning

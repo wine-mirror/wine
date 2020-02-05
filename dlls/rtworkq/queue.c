@@ -428,6 +428,39 @@ static void CALLBACK waiting_item_cancelable_callback(TP_CALLBACK_INSTANCE *inst
     release_work_item(item);
 }
 
+static void CALLBACK scheduled_item_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_TIMER *timer)
+{
+    struct work_item *item = context;
+
+    TRACE("result object %p.\n", item->result);
+
+    invoke_async_callback(item->result);
+
+    release_work_item(item);
+}
+
+static void CALLBACK scheduled_item_cancelable_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_TIMER *timer)
+{
+    struct work_item *item = context;
+
+    TRACE("result object %p.\n", item->result);
+
+    queue_release_pending_item(item);
+
+    invoke_async_callback(item->result);
+
+    release_work_item(item);
+}
+
+static void CALLBACK periodic_item_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_TIMER *timer)
+{
+    struct work_item *item = grab_work_item(context);
+
+    invoke_async_callback(item->result);
+
+    release_work_item(item);
+}
+
 static void queue_mark_item_pending(DWORD mask, struct work_item *item, RTWQWORKITEM_KEY *key)
 {
     *key = generate_item_key(mask);
@@ -459,6 +492,40 @@ static HRESULT queue_submit_wait(struct queue *queue, HANDLE event, LONG priorit
     item->u.wait_object = CreateThreadpoolWait(callback, item,
             (TP_CALLBACK_ENVIRON *)&queue->envs[TP_CALLBACK_PRIORITY_NORMAL]);
     SetThreadpoolWait(item->u.wait_object, event, NULL);
+
+    TRACE("dispatched %p.\n", result);
+
+    return S_OK;
+}
+
+static HRESULT queue_submit_timer(struct queue *queue, IRtwqAsyncResult *result, INT64 timeout, DWORD period,
+        RTWQWORKITEM_KEY *key)
+{
+    PTP_TIMER_CALLBACK callback;
+    struct work_item *item;
+    FILETIME filetime;
+    LARGE_INTEGER t;
+
+    if (!(item = alloc_work_item(queue, result)))
+        return E_OUTOFMEMORY;
+
+    if (key)
+    {
+        queue_mark_item_pending(SCHEDULED_ITEM_KEY_MASK, item, key);
+    }
+
+    if (period)
+        callback = periodic_item_callback;
+    else
+        callback = key ? scheduled_item_cancelable_callback : scheduled_item_callback;
+
+    t.QuadPart = timeout * 1000 * 10;
+    filetime.dwLowDateTime = t.u.LowPart;
+    filetime.dwHighDateTime = t.u.HighPart;
+
+    item->u.timer_object = CreateThreadpoolTimer(callback, item,
+            (TP_CALLBACK_ENVIRON *)&queue->envs[TP_CALLBACK_PRIORITY_NORMAL]);
+    SetThreadpoolTimer(item->u.timer_object, &filetime, period, 0);
 
     TRACE("dispatched %p.\n", result);
 
@@ -751,6 +818,26 @@ HRESULT WINAPI RtwqPutWaitingWorkItem(HANDLE event, LONG priority, IRtwqAsyncRes
     return hr;
 }
 
+static HRESULT schedule_work_item(IRtwqAsyncResult *result, INT64 timeout, RTWQWORKITEM_KEY *key)
+{
+    struct queue *queue;
+    HRESULT hr;
+
+    if (FAILED(hr = grab_queue(RTWQ_CALLBACK_QUEUE_TIMER, &queue)))
+        return hr;
+
+    TRACE("%p, %s, %p.\n", result, wine_dbgstr_longlong(timeout), key);
+
+    return queue_submit_timer(queue, result, timeout, 0, key);
+}
+
+HRESULT WINAPI RtwqScheduleWorkItem(IRtwqAsyncResult *result, INT64 timeout, RTWQWORKITEM_KEY *key)
+{
+    TRACE("%p, %s, %p.\n", result, wine_dbgstr_longlong(timeout), key);
+
+    return schedule_work_item(result, timeout, key);
+}
+
 HRESULT WINAPI RtwqCancelWorkItem(RTWQWORKITEM_KEY key)
 {
     struct queue *queue;
@@ -762,6 +849,13 @@ HRESULT WINAPI RtwqCancelWorkItem(RTWQWORKITEM_KEY key)
         return hr;
 
     return queue_cancel_item(queue, key);
+}
+
+HRESULT WINAPI RtwqInvokeCallback(IRtwqAsyncResult *result)
+{
+    TRACE("%p.\n", result);
+
+    return invoke_async_callback(result);
 }
 
 HRESULT WINAPI RtwqLockWorkQueue(DWORD queue)
