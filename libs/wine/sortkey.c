@@ -17,6 +17,11 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "wine/unicode.h"
 
 extern const unsigned int collation_table[];
@@ -38,7 +43,7 @@ static const WCHAR *get_decomposition( WCHAR ch, unsigned int *len )
  *
  * FIXME: 'variable' flag not handled
  */
-int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dstlen)
+int wine_get_sortkey_obsolete(int flags, const WCHAR *src, int srclen, char *dst, int dstlen)
 {
     WCHAR dummy[4]; /* no decomposition is larger than 4 chars */
     int key_len[4];
@@ -289,8 +294,8 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
     return len1 - len2;
 }
 
-int wine_compare_string(int flags, const WCHAR *str1, int len1,
-                        const WCHAR *str2, int len2)
+int wine_compare_string_obsolete(int flags, const WCHAR *str1, int len1,
+                                 const WCHAR *str2, int len2)
 {
     int ret;
 
@@ -304,3 +309,8 @@ int wine_compare_string(int flags, const WCHAR *str1, int len1,
     }
     return ret;
 }
+
+__ASM_OBSOLETE(wine_get_sortkey);
+__ASM_OBSOLETE(wine_compare_string);
+
+#endif /* __ASM_OBSOLETE */

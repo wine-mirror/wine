@@ -96,7 +96,6 @@ C_SRCS = \
 	pwrite.c \
 	readlink.c \
 	rint.c \
-	sortkey.c \
 	spawn.c \
 	statvfs.c \
 	string.c \

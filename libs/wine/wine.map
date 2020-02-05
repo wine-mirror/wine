@@ -9,7 +9,6 @@ WINE_1.0
     wine_anon_mmap;
     wine_casemap_lower;
     wine_casemap_upper;
-    wine_compare_string;
     wine_cp_enum_table;
     wine_cp_get_table;
     wine_cp_mbstowcs;
@@ -32,7 +31,6 @@ WINE_1.0
     wine_get_fs;
     wine_get_gs;
     wine_get_server_dir;
-    wine_get_sortkey;
     wine_get_ss;
     wine_get_user_name;
     wine_get_version;
@@ -107,6 +105,7 @@ WINE_1.0
     vsnprintfW;
     vsprintfW;
     wine_call_on_stack;
+    wine_compare_string;
     wine_dbg_log;
     wine_dbg_printf;
     wine_dbg_sprintf;
@@ -117,6 +116,7 @@ WINE_1.0
     wine_dll_load_main_exe;
     wine_dll_unload;
     wine_fold_string;
+    wine_get_sortkey;
     wine_pthread_get_functions;
     wine_pthread_set_functions;
     wine_switch_to_stack;
