@@ -1789,6 +1789,11 @@ static void debug_dump_instr_list(const struct list *list)
     }
 }
 
+static void debug_dump_src(const struct hlsl_ir_node *node)
+{
+    TRACE("%p", node);
+}
+
 static void debug_dump_ir_var(const struct hlsl_ir_var *var)
 {
     if (var->modifiers)
@@ -1808,13 +1813,13 @@ static void debug_dump_ir_deref(const struct hlsl_ir_deref *deref)
             TRACE(")");
             break;
         case HLSL_IR_DEREF_ARRAY:
-            debug_dump_instr(deref->v.array.array);
+            debug_dump_src(deref->v.array.array);
             TRACE("[");
-            debug_dump_instr(deref->v.array.index);
+            debug_dump_src(deref->v.array.index);
             TRACE("]");
             break;
         case HLSL_IR_DEREF_RECORD:
-            debug_dump_instr(deref->v.record.record);
+            debug_dump_src(deref->v.record.record);
             TRACE(".%s", debugstr_a(deref->v.record.field->name));
             break;
     }
@@ -1945,7 +1950,7 @@ static void debug_dump_ir_expr(const struct hlsl_ir_expr *expr)
     TRACE("%s (", debug_expr_op(expr));
     for (i = 0; i < 3 && expr->operands[i]; ++i)
     {
-        debug_dump_instr(expr->operands[i]);
+        debug_dump_src(expr->operands[i]);
         TRACE(" ");
     }
     TRACE(")");
@@ -1958,7 +1963,7 @@ static void debug_dump_ir_constructor(const struct hlsl_ir_constructor *construc
     TRACE("%s (", debug_hlsl_type(constructor->node.data_type));
     for (i = 0; i < constructor->args_count; ++i)
     {
-        debug_dump_instr(constructor->args[i]);
+        debug_dump_src(constructor->args[i]);
         TRACE(" ");
     }
     TRACE(")");
@@ -1986,11 +1991,11 @@ static const char *debug_writemask(DWORD writemask)
 static void debug_dump_ir_assignment(const struct hlsl_ir_assignment *assign)
 {
     TRACE("= (");
-    debug_dump_instr(assign->lhs);
+    debug_dump_src(assign->lhs);
     if (assign->writemask != BWRITERSP_WRITEMASK_ALL)
         TRACE("%s", debug_writemask(assign->writemask));
     TRACE(" ");
-    debug_dump_instr(assign->rhs);
+    debug_dump_src(assign->rhs);
     TRACE(")");
 }
 
@@ -1998,7 +2003,7 @@ static void debug_dump_ir_swizzle(const struct hlsl_ir_swizzle *swizzle)
 {
     unsigned int i;
 
-    debug_dump_instr(swizzle->val);
+    debug_dump_src(swizzle->val);
     TRACE(".");
     if (swizzle->val->data_type->dimy > 1)
     {
@@ -2030,7 +2035,7 @@ static void debug_dump_ir_jump(const struct hlsl_ir_jump *jump)
         case HLSL_IR_JUMP_RETURN:
             TRACE("return ");
             if (jump->return_value)
-                debug_dump_instr(jump->return_value);
+                debug_dump_src(jump->return_value);
             TRACE(";");
             break;
     }
@@ -2039,7 +2044,7 @@ static void debug_dump_ir_jump(const struct hlsl_ir_jump *jump)
 static void debug_dump_ir_if(const struct hlsl_ir_if *if_node)
 {
     TRACE("if (");
-    debug_dump_instr(if_node->condition);
+    debug_dump_src(if_node->condition);
     TRACE(")\n{\n");
     debug_dump_instr_list(if_node->then_instrs);
     TRACE("}\n");
@@ -2053,6 +2058,7 @@ static void debug_dump_ir_if(const struct hlsl_ir_if *if_node)
 
 static void debug_dump_instr(const struct hlsl_ir_node *instr)
 {
+    TRACE("%p: ", instr);
     switch (instr->type)
     {
         case HLSL_IR_EXPR:
