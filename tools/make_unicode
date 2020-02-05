@@ -409,7 +409,6 @@ my @unicode_aliases = ();
 my @tolower_table = ();
 my @toupper_table = ();
 my @digitmap_table = ();
-my @compatmap_table = ();
 my @category_table = ();
 my @joining_table = ();
 my @direction_table = ();
@@ -582,11 +581,6 @@ sub load_data($)
         if ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)$/)
         {
             # decomposition of the form "<foo> 1234" -> use char if type is known
-            if (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd))
-            {
-                # Single char decomposition in the compatibility range
-                $compatmap_table[$src] = hex $2;
-            }
             if ($1 eq "isolated" || $1 eq "final" || $1 eq "initial" || $1 eq "medial")
             {
                 ${joining_forms{$1}}[hex $2] = $src;
@@ -623,12 +617,6 @@ sub load_data($)
             {
                 # Single char decomposition
                 $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1 ];
-
-                if (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd))
-                {
-                    # Single char decomposition in the compatibility range
-                    $compatmap_table[$src] = hex $1;
-                }
             }
         }
         else
@@ -1816,9 +1804,9 @@ sub dump_vertical($)
 
 ################################################################
 # dump the digit folding tables
-sub dump_digit_folding($$)
+sub dump_digit_folding($)
 {
-    my ($filename, $compat) = @_;
+    my ($filename) = shift;
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode digit folding mappings */\n";
@@ -1827,11 +1815,6 @@ sub dump_digit_folding($$)
     print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "wine_digitmap", 0, 16, @digitmap_table );
-    if ($compat)
-    {
-        print OUTPUT "\n";
-        dump_case_table( "DECLSPEC_HIDDEN wine_compatmap", @compatmap_table );
-    }
     close OUTPUT;
     save_file($filename);
 }
@@ -2755,8 +2738,7 @@ dump_bidi_dir_table( "dlls/gdi32/direction.c" );
 dump_bidi_dir_table( "dlls/usp10/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
 dump_string_type_table( "dlls/kernelbase/wctype.c" );
-dump_digit_folding( "libs/port/digitmap.c", 1 );
-dump_digit_folding( "dlls/kernelbase/digitmap.c", 0 );
+dump_digit_folding( "dlls/kernelbase/digitmap.c" );
 dump_combining_class( "dlls/ntdll/combclass.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
 dump_mirroring( "dlls/dwrite/mirror.c" );

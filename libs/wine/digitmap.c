@@ -2,6 +2,10 @@
 /* generated from http://www.unicode.org/Public/12.1.0/ucd/UnicodeData.txt */
 /* DO NOT EDIT!! */
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "windef.h"
 
 const unsigned short DECLSPEC_HIDDEN wine_digitmap[619] =
@@ -287,3 +291,5 @@ const WCHAR DECLSPEC_HIDDEN wine_compatmap[1497] =
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
 };
+
+#endif /* __ASM_OBSOLETE */

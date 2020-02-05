@@ -5,6 +5,7 @@ C_SRCS = \
 	config.c \
 	cpsymbol.c \
 	debug.c \
+	digitmap.c \
 	fold.c \
 	ldt.c \
 	loader.c \

@@ -79,7 +79,6 @@ C_SRCS = \
 	compose.c \
 	cptable.c \
 	decompose.c \
-	digitmap.c \
 	ffs.c \
 	fstatvfs.c \
 	getopt.c \
