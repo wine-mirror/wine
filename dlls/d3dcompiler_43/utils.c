@@ -1767,6 +1767,7 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
         "HLSL_IR_DEREF",
         "HLSL_IR_EXPR",
         "HLSL_IR_IF",
+        "HLSL_IR_LOOP",
         "HLSL_IR_JUMP",
         "HLSL_IR_SWIZZLE",
     };
@@ -2056,6 +2057,13 @@ static void debug_dump_ir_if(const struct hlsl_ir_if *if_node)
     }
 }
 
+static void debug_dump_ir_loop(const struct hlsl_ir_loop *loop)
+{
+    wine_dbg_printf("for (;;)\n{\n");
+    debug_dump_instr_list(loop->body);
+    wine_dbg_printf("}\n");
+}
+
 static void debug_dump_instr(const struct hlsl_ir_node *instr)
 {
     wine_dbg_printf("%p: ", instr);
@@ -2084,6 +2092,9 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
             break;
         case HLSL_IR_IF:
             debug_dump_ir_if(if_from_node(instr));
+            break;
+        case HLSL_IR_LOOP:
+            debug_dump_ir_loop(loop_from_node(instr));
             break;
         default:
             wine_dbg_printf("<No dump function for %s>", debug_node_type(instr->type));
