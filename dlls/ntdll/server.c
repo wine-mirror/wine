@@ -601,11 +601,13 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
     apc_call_t call;
     apc_result_t result;
     timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
+    sigset_t old_set;
 
     memset( &result, 0, sizeof(result) );
 
     do
     {
+        pthread_sigmask( SIG_BLOCK, &server_block_set, &old_set );
         for (;;)
         {
             SERVER_START_REQ( select )
@@ -616,7 +618,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 req->timeout  = abs_timeout;
                 wine_server_add_data( req, &result, sizeof(result) );
                 wine_server_add_data( req, select_op, size );
-                ret = wine_server_call( req );
+                ret = server_call_unlocked( req );
                 abs_timeout = reply->timeout;
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;
@@ -630,6 +632,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
             if (ret != STATUS_KERNEL_APC) break;
             invoke_apc( &call, &result );
         }
+        pthread_sigmask( SIG_SETMASK, &old_set, NULL );
 
         if (ret == STATUS_USER_APC)
         {
