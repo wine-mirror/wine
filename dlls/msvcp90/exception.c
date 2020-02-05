@@ -314,7 +314,7 @@ logic_error* __thiscall MSVCP_logic_error_ctor( logic_error *this, exception_nam
 #if _MSVCP_VER == 60
     MSVCP_exception_ctor(&this->e, "");
 #else
-    MSVCP_exception_ctor(&this->e, NULL);
+    MSVCP_exception_default_ctor(&this->e);
 #endif
     MSVCP_basic_string_char_ctor_cstr(&this->str, EXCEPTION_STR(name));
 #else
@@ -560,7 +560,7 @@ static runtime_error* MSVCP_runtime_error_ctor( runtime_error *this, exception_n
 #if _MSVCP_VER == 60
     MSVCP_exception_ctor(&this->e, "");
 #else
-    MSVCP_exception_ctor(&this->e, NULL);
+    MSVCP_exception_default_ctor(&this->e);
 #endif
     MSVCP_basic_string_char_ctor_cstr(&this->str, EXCEPTION_STR(name));
 #else
