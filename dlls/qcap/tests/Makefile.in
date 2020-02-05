@@ -1,5 +1,5 @@
 TESTDLL   = qcap.dll
-IMPORTS   = strmiids uuid oleaut32 ole32 advapi32 msvfw32
+IMPORTS   = strmbase strmiids uuid oleaut32 ole32 advapi32 msvfw32
 
 C_SRCS = \
 	audiorecord.c \
