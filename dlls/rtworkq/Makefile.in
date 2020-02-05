@@ -1,0 +1,4 @@
+MODULE    = rtworkq.dll
+IMPORTLIB = rtworkq
+
+EXTRADLLFLAGS = -mno-cygwin
