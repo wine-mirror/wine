@@ -747,7 +747,7 @@ static int check_wait( struct thread *thread )
     assert( wait );
 
     if ((wait->flags & SELECT_INTERRUPTIBLE) && !list_empty( &thread->system_apc ))
-        return STATUS_USER_APC;
+        return STATUS_KERNEL_APC;
 
     /* Suspended threads may not acquire locks, but they can run system APCs */
     if (thread->process->suspend + thread->suspend > 0) return -1;
@@ -1081,12 +1081,11 @@ void thread_cancel_apc( struct thread *thread, struct object *owner, enum apc_ty
 }
 
 /* remove the head apc from the queue; the returned object must be released by the caller */
-static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only )
+static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system )
 {
     struct thread_apc *apc = NULL;
-    struct list *ptr = list_head( &thread->system_apc );
+    struct list *ptr = list_head( system ? &thread->system_apc : &thread->user_apc );
 
-    if (!ptr && !system_only) ptr = list_head( &thread->user_apc );
     if (ptr)
     {
         apc = LIST_ENTRY( ptr, struct thread_apc, entry );
@@ -1581,7 +1580,7 @@ DECL_HANDLER(select)
 
     while (get_error() == STATUS_USER_APC)
     {
-        if (!(apc = thread_dequeue_apc( current, !(req->flags & SELECT_ALERTABLE) )))
+        if (!(apc = thread_dequeue_apc( current, 0 )))
             break;
         /* Optimization: ignore APC_NONE calls, they are only used to
          * wake up a thread, but since we got here the thread woke up already.
@@ -1595,6 +1594,19 @@ DECL_HANDLER(select)
         }
         apc->executed = 1;
         wake_up( &apc->obj, 0 );
+        release_object( apc );
+    }
+
+    if (get_error() == STATUS_KERNEL_APC)
+    {
+        apc = thread_dequeue_apc( current, 1 );
+        if ((reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
+            reply->call = apc->call;
+        else
+        {
+            apc->executed = 1;
+            wake_up( &apc->obj, 0 );
+        }
         release_object( apc );
     }
 }

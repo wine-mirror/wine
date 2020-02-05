@@ -624,7 +624,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
         }
         SERVER_END_REQ;
         if (ret == STATUS_PENDING) ret = wait_select_reply( &cookie );
-        if (ret != STATUS_USER_APC) break;
+        if (ret != STATUS_USER_APC && ret != STATUS_KERNEL_APC) break;
         if (invoke_apc( &call, &result ))
         {
             /* if we ran a user apc we have to check once more if additional apcs are queued,
