@@ -465,6 +465,33 @@ static HRESULT queue_submit_wait(struct queue *queue, HANDLE event, LONG priorit
     return S_OK;
 }
 
+static HRESULT queue_cancel_item(struct queue *queue, RTWQWORKITEM_KEY key)
+{
+    HRESULT hr = RTWQ_E_NOT_FOUND;
+    struct work_item *item;
+
+    EnterCriticalSection(&queue->cs);
+    LIST_FOR_EACH_ENTRY(item, &queue->pending_items, struct work_item, entry)
+    {
+        if (item->key == key)
+        {
+            key >>= 32;
+            if ((key & WAIT_ITEM_KEY_MASK) == WAIT_ITEM_KEY_MASK)
+                CloseThreadpoolWait(item->u.wait_object);
+            else if ((key & SCHEDULED_ITEM_KEY_MASK) == SCHEDULED_ITEM_KEY_MASK)
+                CloseThreadpoolTimer(item->u.timer_object);
+            else
+                WARN("Unknown item key mask %#x.\n", (DWORD)key);
+            queue_release_pending_item(item);
+            hr = S_OK;
+            break;
+        }
+    }
+    LeaveCriticalSection(&queue->cs);
+
+    return hr;
+}
+
 struct async_result
 {
     RTWQASYNCRESULT result;
@@ -722,6 +749,19 @@ HRESULT WINAPI RtwqPutWaitingWorkItem(HANDLE event, LONG priority, IRtwqAsyncRes
     hr = queue_submit_wait(queue, event, priority, result, key);
 
     return hr;
+}
+
+HRESULT WINAPI RtwqCancelWorkItem(RTWQWORKITEM_KEY key)
+{
+    struct queue *queue;
+    HRESULT hr;
+
+    TRACE("%s.\n", wine_dbgstr_longlong(key));
+
+    if (FAILED(hr = grab_queue(RTWQ_CALLBACK_QUEUE_TIMER, &queue)))
+        return hr;
+
+    return queue_cancel_item(queue, key);
 }
 
 HRESULT WINAPI RtwqLockWorkQueue(DWORD queue)

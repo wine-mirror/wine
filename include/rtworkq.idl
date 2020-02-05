@@ -75,6 +75,7 @@ cpp_quote("    DWORD dwBytesTransferred;")
 cpp_quote("    HANDLE hEvent;")
 cpp_quote("} RTWQASYNCRESULT;")
 
+cpp_quote("HRESULT WINAPI RtwqCancelWorkItem(RTWQWORKITEM_KEY key);")
 cpp_quote("HRESULT WINAPI RtwqCreateAsyncResult(IUnknown *object, IRtwqAsyncCallback *callback, IUnknown *state, IRtwqAsyncResult **result);")
 cpp_quote("HRESULT WINAPI RtwqLockPlatform(void);")
 cpp_quote("HRESULT WINAPI RtwqLockWorkQueue(DWORD queue);")

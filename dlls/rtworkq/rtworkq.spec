@@ -5,7 +5,7 @@
 @ stub RtwqBeginUnregisterWorkQueueWithMMCSS
 @ stub RtwqCancelDeadline
 @ stub RtwqCancelMultipleWaitingWorkItem
-@ stub RtwqCancelWorkItem
+@ stdcall RtwqCancelWorkItem(int64)
 @ stdcall RtwqCreateAsyncResult(ptr ptr ptr ptr)
 @ stub RtwqEndRegisterWorkQueueWithMMCSS
 @ stub RtwqEndUnregisterWorkQueueWithMMCSS
