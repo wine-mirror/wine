@@ -2099,7 +2099,9 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 
 #define E_PENDING                                          _HRESULT_TYPEDEF_(0x8000000A)
 #define E_BOUNDS                                           _HRESULT_TYPEDEF_(0x8000000B)
-
+#define E_CHANGED_STATE                                    _HRESULT_TYPEDEF_(0x8000000C)
+#define E_ILLEGAL_STATE_CHANGE                             _HRESULT_TYPEDEF_(0x8000000D)
+#define E_ILLEGAL_METHOD_CALL                              _HRESULT_TYPEDEF_(0x8000000E)
 
 #define E_NOTIMPL                                          _HRESULT_TYPEDEF_(0x80004001)
 #define E_NOINTERFACE                                      _HRESULT_TYPEDEF_(0x80004002)
