@@ -2757,7 +2757,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         /* restart with larger buffer */
     }
 
-    if (!info->lpAssemblyManifestPath || !info->lpAssemblyDirectoryName)
+    if (!info->lpAssemblyManifestPath)
     {
         status = STATUS_SXS_KEY_NOT_FOUND;
         goto done;
@@ -2768,7 +2768,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         DWORD dirlen = info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
 
         p++;
-        if (strncmpiW( p, info->lpAssemblyDirectoryName, dirlen ) || strcmpiW( p + dirlen, dotManifestW ))
+        if (!dirlen || strncmpiW( p, info->lpAssemblyDirectoryName, dirlen ) || strcmpiW( p + dirlen, dotManifestW ))
         {
             /* manifest name does not match directory name, so it's not a global
              * windows/winsxs manifest; use the manifest directory name instead */
@@ -2784,6 +2784,12 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
             strcpyW( p, libname );
             goto done;
         }
+    }
+
+    if (!info->lpAssemblyDirectoryName)
+    {
+        status = STATUS_SXS_KEY_NOT_FOUND;
+        goto done;
     }
 
     needed = (strlenW(user_shared_data->NtSystemRoot) * sizeof(WCHAR) +
