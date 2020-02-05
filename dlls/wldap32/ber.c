@@ -26,7 +26,9 @@
 #include "winldap.h"
 #include "wine/debug.h"
 
+#ifdef HAVE_LDAP
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
+#endif
 
 #ifndef LBER_ERROR
 # define LBER_ERROR (~0U)
