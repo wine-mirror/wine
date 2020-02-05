@@ -291,10 +291,10 @@ static const char *debug_print_swizzle(DWORD arg)
             return ".w";
     }
 
-    swizzle[0] = (arg >> (BWRITERVS_SWIZZLE_SHIFT + 0)) & 0x03;
-    swizzle[1] = (arg >> (BWRITERVS_SWIZZLE_SHIFT + 2)) & 0x03;
-    swizzle[2] = (arg >> (BWRITERVS_SWIZZLE_SHIFT + 4)) & 0x03;
-    swizzle[3] = (arg >> (BWRITERVS_SWIZZLE_SHIFT + 6)) & 0x03;
+    swizzle[0] = arg & 3;
+    swizzle[1] = (arg >> 2) & 3;
+    swizzle[2] = (arg >> 4) & 3;
+    swizzle[3] = (arg >> 6) & 3;
 
     ret[0] = '.';
     for (i = 0; i < 4; ++i)

@@ -342,8 +342,6 @@ static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
 /* bwriter -> d3d9 conversion functions. */
 static DWORD d3d9_swizzle(DWORD bwriter_swizzle)
 {
-    /* Currently a NOP, but this allows changing the internal definitions
-     * without side effects. */
     DWORD ret = 0;
 
     if ((bwriter_swizzle & BWRITERVS_X_X) == BWRITERVS_X_X) ret |= D3DVS_X_X;
@@ -1270,9 +1268,7 @@ static void instr_ps_1_0123_texld(struct bc_writer *This,
         This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
     } else if(instr->src[0].type == BWRITERSPR_TEMP) {
 
-        swizzlemask = (3 << BWRITERVS_SWIZZLE_SHIFT) |
-            (3 << (BWRITERVS_SWIZZLE_SHIFT + 2)) |
-            (3 << (BWRITERVS_SWIZZLE_SHIFT + 4));
+        swizzlemask = 3 | (3 << 2) | (3 << 4);
         if((instr->src[0].u.swizzle & swizzlemask) == (BWRITERVS_X_X | BWRITERVS_Y_Y | BWRITERVS_Z_Z)) {
             TRACE("writing texreg2rgb\n");
             This->funcs->opcode(This, instr, D3DSIO_TEXREG2RGB & D3DSI_OPCODE_MASK, buffer);

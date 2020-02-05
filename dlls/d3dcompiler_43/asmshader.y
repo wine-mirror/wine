@@ -1148,11 +1148,11 @@ swizzle:              /* empty */
                             else {
                                 DWORD last, i;
 
-                                $$ = $2.swizzle << BWRITERVS_SWIZZLE_SHIFT;
+                                $$ = $2.swizzle;
                                 /* Fill the swizzle by extending the last component */
                                 last = ($2.swizzle >> 2 * ($2.idx - 1)) & 0x03;
                                 for(i = $2.idx; i < 4; i++){
-                                    $$ |= last << (BWRITERVS_SWIZZLE_SHIFT + 2 * i);
+                                    $$ |= last << (2 * i);
                                 }
                                 TRACE("Got a swizzle: %08x\n", $$);
                             }
