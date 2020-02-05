@@ -87,10 +87,6 @@ extern HRESULT attributes_GetItemByIndex(struct attributes *object, UINT32 index
         PROPVARIANT *value) DECLSPEC_HIDDEN;
 extern HRESULT attributes_CopyAllItems(struct attributes *object, IMFAttributes *dest) DECLSPEC_HIDDEN;
 
-extern void init_system_queues(void) DECLSPEC_HIDDEN;
-extern void shutdown_system_queues(void) DECLSPEC_HIDDEN;
-extern BOOL is_platform_locked(void) DECLSPEC_HIDDEN;
-
 static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
     size_t new_capacity, max_capacity;

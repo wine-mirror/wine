@@ -40,6 +40,7 @@
 #include "mfreadwrite.h"
 #include "propvarutil.h"
 #include "strsafe.h"
+#include "rtworkq.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -63,8 +64,6 @@ static HRESULT heap_strdupW(const WCHAR *str, WCHAR **dest)
 
     return hr;
 }
-
-static LONG platform_lock;
 
 struct local_handler
 {
@@ -1128,10 +1127,7 @@ HRESULT WINAPI MFStartup(ULONG version, DWORD flags)
     if (version != MF_VERSION_XP && version != MF_VERSION_WIN7)
         return MF_E_BAD_STARTUP_VERSION;
 
-    if (InterlockedIncrement(&platform_lock) == 1)
-    {
-        init_system_queues();
-    }
+    RtwqStartup();
 
     return S_OK;
 }
@@ -1143,43 +1139,9 @@ HRESULT WINAPI MFShutdown(void)
 {
     TRACE("\n");
 
-    if (platform_lock <= 0)
-        return S_OK;
-
-    if (InterlockedExchangeAdd(&platform_lock, -1) == 1)
-    {
-        shutdown_system_queues();
-    }
+    RtwqShutdown();
 
     return S_OK;
-}
-
-/***********************************************************************
- *      MFLockPlatform (mfplat.@)
- */
-HRESULT WINAPI MFLockPlatform(void)
-{
-    InterlockedIncrement(&platform_lock);
-
-    return S_OK;
-}
-
-/***********************************************************************
- *      MFUnlockPlatform (mfplat.@)
- */
-HRESULT WINAPI MFUnlockPlatform(void)
-{
-    if (InterlockedDecrement(&platform_lock) == 0)
-    {
-        shutdown_system_queues();
-    }
-
-    return S_OK;
-}
-
-BOOL is_platform_locked(void)
-{
-    return platform_lock > 0;
 }
 
 /***********************************************************************

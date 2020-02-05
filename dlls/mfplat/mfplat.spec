@@ -15,9 +15,9 @@
 @ stub GetAMSubtypeFromD3DFormat
 @ stub GetD3DFormatFromMFSubtype
 @ stub LFGetGlobalPool
-@ stdcall MFAddPeriodicCallback(ptr ptr ptr)
+@ stdcall MFAddPeriodicCallback(ptr ptr ptr) rtworkq.RtwqAddPeriodicCallback
 @ stdcall MFAllocateWorkQueue(ptr)
-@ stdcall MFAllocateWorkQueueEx(long ptr)
+@ stdcall MFAllocateWorkQueueEx(long ptr) rtworkq.RtwqAllocateWorkQueue
 @ stub MFAppendCollection
 @ stub MFAverageTimePerFrameToFrameRate
 @ stdcall MFBeginCreateFile(long long long wstr ptr ptr ptr)
@@ -28,7 +28,7 @@
 @ stub MFCalculateBitmapImageSize
 @ stdcall MFCalculateImageSize(ptr long long ptr)
 @ stdcall MFCancelCreateFile(ptr)
-@ stdcall MFCancelWorkItem(int64)
+@ stdcall MFCancelWorkItem(int64) rtworkq.RtwqCancelWorkItem
 @ stdcall MFCompareFullToPartialMediaType(ptr ptr)
 @ stub MFCompareSockaddrAddresses
 @ stub MFConvertColorInfoFromDXVA
@@ -121,9 +121,9 @@
 @ stub MFInitVideoFormat_RGB
 @ stdcall MFInvokeCallback(ptr)
 @ stub MFJoinIoPort
-@ stdcall MFLockPlatform()
-@ stdcall MFLockWorkQueue(long)
-@ stdcall MFPutWaitingWorkItem(long long ptr ptr)
+@ stdcall MFLockPlatform() rtworkq.RtwqLockPlatform
+@ stdcall MFLockWorkQueue(long) rtworkq.RtwqLockWorkQueue
+@ stdcall MFPutWaitingWorkItem(long long ptr ptr) rtworkq.RtwqPutWaitingWorkItem
 @ stdcall MFPutWorkItem(long ptr ptr)
 @ stdcall MFPutWorkItem2(long long ptr ptr)
 @ stdcall MFPutWorkItemEx(long ptr)
@@ -131,7 +131,7 @@
 @ stub MFRecordError
 @ stdcall MFRegisterLocalByteStreamHandler(wstr wstr ptr)
 @ stdcall MFRegisterLocalSchemeHandler(wstr ptr)
-@ stdcall MFRemovePeriodicCallback(long)
+@ stdcall MFRemovePeriodicCallback(long) rtworkq.RtwqRemovePeriodicCallback
 @ stdcall MFScheduleWorkItem(ptr ptr int64 ptr)
 @ stdcall MFScheduleWorkItemEx(ptr int64 ptr)
 @ stub MFSerializeAttributesToStream
@@ -154,8 +154,8 @@
 @ stub MFTraceError
 @ stub MFTraceFuncEnter
 @ stub MFUnblockThread
-@ stdcall MFUnlockPlatform()
-@ stdcall MFUnlockWorkQueue(long)
+@ stdcall MFUnlockPlatform() rtworkq.RtwqUnlockPlatform
+@ stdcall MFUnlockWorkQueue(long) rtworkq.RtwqUnlockWorkQueue
 @ stdcall MFUnwrapMediaType(ptr ptr)
 @ stub MFValidateMediaTypeSize
 @ stdcall MFWrapMediaType(ptr ptr ptr ptr)
