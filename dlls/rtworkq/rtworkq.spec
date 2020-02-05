@@ -6,7 +6,7 @@
 @ stub RtwqCancelDeadline
 @ stub RtwqCancelMultipleWaitingWorkItem
 @ stub RtwqCancelWorkItem
-@ stub RtwqCreateAsyncResult
+@ stdcall RtwqCreateAsyncResult(ptr ptr ptr ptr)
 @ stub RtwqEndRegisterWorkQueueWithMMCSS
 @ stub RtwqEndUnregisterWorkQueueWithMMCSS
 @ stub RtwqGetPlatform
@@ -15,7 +15,7 @@
 @ stub RtwqGetWorkQueueMMCSSTaskId
 @ stub RtwqInvokeCallback
 @ stub RtwqJoinWorkQueue
-@ stub RtwqLockPlatform
+@ stdcall RtwqLockPlatform()
 @ stub RtwqLockSharedWorkQueue
 @ stub RtwqLockWorkQueue
 @ stub RtwqPutMultipleWaitingWorkItem
@@ -31,7 +31,7 @@
 @ stub RtwqShutdown
 @ stub RtwqStartup
 @ stub RtwqUnjoinWorkQueue
-@ stub RtwqUnlockPlatform
+@ stdcall RtwqUnlockPlatform()
 @ stub RtwqUnlockWorkQueue
 @ stub RtwqUnregisterPlatformEvents
 @ stub RtwqUnregisterPlatformFromMMCSS

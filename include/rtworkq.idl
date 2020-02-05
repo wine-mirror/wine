@@ -1,0 +1,62 @@
+/*
+ * Copyright 2020 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+
+[
+    object,
+    uuid(ac6b7889-0740-4d51-8619-905994a55cc6),
+    local
+]
+interface IRtwqAsyncResult : IUnknown
+{
+    HRESULT GetState([out] IUnknown **state);
+    HRESULT GetStatus();
+    HRESULT SetStatus([in] HRESULT status);
+    HRESULT GetObject([out] IUnknown **object);
+    IUnknown *GetStateNoAddRef();
+}
+
+[
+    object,
+    uuid(a27003cf-2354-4f2a-8d6a-ab7cff15437e),
+    local
+]
+interface IRtwqAsyncCallback : IUnknown
+{
+    HRESULT GetParameters([out] DWORD *flags, [out] DWORD *queue);
+    HRESULT Invoke([in] IRtwqAsyncResult *result);
+}
+
+cpp_quote("#ifdef __WINESRC__")
+cpp_quote("typedef struct tagRTWQASYNCRESULT")
+cpp_quote("{")
+cpp_quote("    IRtwqAsyncResult AsyncResult;")
+cpp_quote("#else")
+cpp_quote("typedef struct tagRTWQASYNCRESULT : public IRtwqAsyncResult {")
+cpp_quote("#endif")
+cpp_quote("    OVERLAPPED overlapped;")
+cpp_quote("    IRtwqAsyncCallback *pCallback;")
+cpp_quote("    HRESULT hrStatusResult;")
+cpp_quote("    DWORD dwBytesTransferred;")
+cpp_quote("    HANDLE hEvent;")
+cpp_quote("} RTWQASYNCRESULT;")
+
+cpp_quote("HRESULT WINAPI RtwqCreateAsyncResult(IUnknown *object, IRtwqAsyncCallback *callback, IUnknown *state, IRtwqAsyncResult **result);")
+cpp_quote("HRESULT WINAPI RtwqLockPlatform(void);")
+cpp_quote("HRESULT WINAPI RtwqUnlockPlatform(void);")
