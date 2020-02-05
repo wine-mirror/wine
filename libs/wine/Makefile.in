@@ -3,6 +3,7 @@ EXTRALIBS = $(DL_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS) $(I386_LIBS)
 
 C_SRCS = \
 	config.c \
+	cpsymbol.c \
 	debug.c \
 	fold.c \
 	ldt.c \

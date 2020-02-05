@@ -88,8 +88,6 @@ extern int wine_cp_mbstowcs( const union cptable *table, int flags,
 extern int wine_cp_wcstombs( const union cptable *table, int flags,
                              const WCHAR *src, int srclen,
                              char *dst, int dstlen, const char *defchar, int *used );
-extern int wine_cpsymbol_mbstowcs( const char *src, int srclen, WCHAR *dst, int dstlen );
-extern int wine_cpsymbol_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen );
 extern int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen );
 extern int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen );
 

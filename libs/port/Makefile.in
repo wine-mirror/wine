@@ -77,7 +77,6 @@ C_SRCS = \
 	casemap.c \
 	collation.c \
 	compose.c \
-	cpsymbol.c \
 	cptable.c \
 	decompose.c \
 	digitmap.c \

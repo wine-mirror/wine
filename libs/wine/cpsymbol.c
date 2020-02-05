@@ -19,10 +19,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "wine/unicode.h"
 
 /* return -1 on dst buffer overflow */
-int wine_cpsymbol_mbstowcs( const char *src, int srclen, WCHAR *dst, int dstlen)
+int wine_cpsymbol_mbstowcs_obsolete( const char *src, int srclen, WCHAR *dst, int dstlen)
 {
     int len, i;
 
@@ -38,7 +42,7 @@ int wine_cpsymbol_mbstowcs( const char *src, int srclen, WCHAR *dst, int dstlen)
 }
 
 /* return -1 on dst buffer overflow, -2 on invalid character */
-int wine_cpsymbol_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen)
+int wine_cpsymbol_wcstombs_obsolete( const WCHAR *src, int srclen, char *dst, int dstlen)
 {
     int len, i;
 
@@ -56,3 +60,8 @@ int wine_cpsymbol_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen)
     if (srclen > len) return -1;
     return len;
 }
+
+__ASM_OBSOLETE(wine_cpsymbol_mbstowcs);
+__ASM_OBSOLETE(wine_cpsymbol_wcstombs);
+
+#endif /* __ASM_OBSOLETE */
