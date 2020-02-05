@@ -2470,7 +2470,7 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
 
     memset( &result, 0, sizeof(result) );
 
-    for (;;)
+    do
     {
         RtlEnterCriticalSection( &addr_section );
         if (!compare_addr( addr, cmp, size ))
@@ -2496,16 +2496,18 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
 
         RtlLeaveCriticalSection( &addr_section );
 
-        if (ret == STATUS_PENDING) ret = wait_select_reply( &cookie );
-        if (ret != STATUS_USER_APC && ret != STATUS_KERNEL_APC) break;
-        if (invoke_apc( &call, &result ))
+        if ((ret == STATUS_USER_APC || ret == STATUS_KERNEL_APC) &&
+            invoke_apc( &call, &result ))
         {
             /* if we ran a user apc we have to check once more if additional apcs are queued,
              * but we don't want to wait */
             abs_timeout = 0;
             user_apc = TRUE;
         }
+
+        if (ret == STATUS_PENDING) ret = wait_select_reply( &cookie );
     }
+    while (ret == STATUS_USER_APC || ret == STATUS_KERNEL_APC);
 
     if (ret == STATUS_TIMEOUT && user_apc) ret = STATUS_USER_APC;
 

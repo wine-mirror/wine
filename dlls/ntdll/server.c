@@ -607,7 +607,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
 
     memset( &result, 0, sizeof(result) );
 
-    for (;;)
+    do
     {
         SERVER_START_REQ( select )
         {
@@ -623,9 +623,13 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
             call        = reply->call;
         }
         SERVER_END_REQ;
-        if (ret == STATUS_PENDING) ret = wait_select_reply( &cookie );
-        if (ret != STATUS_USER_APC && ret != STATUS_KERNEL_APC) break;
-        if (invoke_apc( &call, &result ))
+
+        /* don't signal multiple times */
+        if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
+            size = offsetof( select_op_t, signal_and_wait.signal );
+
+        if ((ret == STATUS_USER_APC || ret == STATUS_KERNEL_APC) &&
+            invoke_apc( &call, &result ))
         {
             /* if we ran a user apc we have to check once more if additional apcs are queued,
              * but we don't want to wait */
@@ -634,10 +638,9 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
             size = 0;
         }
 
-        /* don't signal multiple times */
-        if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
-            size = offsetof( select_op_t, signal_and_wait.signal );
+        if (ret == STATUS_PENDING) ret = wait_select_reply( &cookie );
     }
+    while (ret == STATUS_USER_APC || ret == STATUS_KERNEL_APC);
 
     if (ret == STATUS_TIMEOUT && user_apc) ret = STATUS_USER_APC;
 
