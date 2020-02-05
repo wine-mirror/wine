@@ -7620,9 +7620,15 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     if (vertical_metrics) load_flags |= FT_LOAD_VERTICAL_LAYOUT;
 
     err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
+    if (err && !(load_flags & FT_LOAD_NO_HINTING))
+    {
+        WARN("Failed to load glyph %#x, retrying without hinting. Error %#x.\n", glyph_index, err);
+        load_flags |= FT_LOAD_NO_HINTING;
+        err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
+    }
 
     if(err) {
-        WARN("FT_Load_Glyph on index %x returns %d\n", glyph_index, err);
+        WARN("Failed to load glyph %#x, error %#x.\n", glyph_index, err);
         return GDI_ERROR;
     }
 
