@@ -42,30 +42,45 @@ typedef struct _GUID
 #endif
 
 /* Macros for __uuidof emulation */
-#if defined(__cplusplus) && !defined(_MSC_VER)
+#ifdef __cplusplus
+# if defined(__MINGW32__)
+#  define __WINE_UUID_ATTR __attribute__((selectany))
+# elif defined(__GNUC__)
+#  define __WINE_UUID_ATTR __attribute__((visibility("hidden"),weak))
+# endif
+#endif
+
+#ifdef __WINE_UUID_ATTR
 
 extern "C++" {
-    template<typename T> const GUID &__wine_uuidof();
+    template<typename T> struct __wine_uuidof;
+
+    template<typename T> struct __wine_uuidof_type {
+        typedef __wine_uuidof<T> inst;
+    };
+    template<typename T> struct __wine_uuidof_type<T *> {
+        typedef __wine_uuidof<T> inst;
+    };
+    template<typename T> struct __wine_uuidof_type<T * const> {
+        typedef __wine_uuidof<T> inst;
+    };
 }
 
 #define __CRT_UUID_DECL(type,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8)           \
     extern "C++" {                                                      \
-    template<> inline const GUID &__wine_uuidof<type>() {               \
-        static const IID __uuid_inst = {l,w1,w2, {b1,b2,b3,b4,b5,b6,b7,b8}}; \
-        return __uuid_inst;                                             \
-    }                                                                   \
-    template<> inline const GUID &__wine_uuidof<type*>() {              \
-        return __wine_uuidof<type>();                                   \
-    }                                                                   \
+        template<> struct __wine_uuidof<type> {                         \
+            static const GUID uuid;                                     \
+        };                                                              \
+        __WINE_UUID_ATTR const GUID __wine_uuidof<type>::uuid = {l,w1,w2,{b1,b2,b3,b4,b5,b6,b7,b8}}; \
     }
 
-#define __uuidof(type) __wine_uuidof<typeof(type)>()
+#define __uuidof(type) __wine_uuidof_type<typeof(type)>::inst::uuid
 
-#else
+#else /* __WINE_UUID_ATTR */
 
 #define __CRT_UUID_DECL(type,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8)
 
-#endif
+#endif /* __WINE_UUID_ATTR */
 
 #endif
 
