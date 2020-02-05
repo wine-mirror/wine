@@ -1579,26 +1579,23 @@ DECL_HANDLER(select)
 
     reply->timeout = select_on( &select_op, op_size, req->cookie, req->flags, req->timeout );
 
-    if (get_error() == STATUS_USER_APC)
+    while (get_error() == STATUS_USER_APC)
     {
-        for (;;)
+        if (!(apc = thread_dequeue_apc( current, !(req->flags & SELECT_ALERTABLE) )))
+            break;
+        /* Optimization: ignore APC_NONE calls, they are only used to
+         * wake up a thread, but since we got here the thread woke up already.
+         */
+        if (apc->call.type != APC_NONE &&
+            (reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
         {
-            if (!(apc = thread_dequeue_apc( current, !(req->flags & SELECT_ALERTABLE) )))
-                break;
-            /* Optimization: ignore APC_NONE calls, they are only used to
-             * wake up a thread, but since we got here the thread woke up already.
-             */
-            if (apc->call.type != APC_NONE &&
-                (reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
-            {
-                reply->call = apc->call;
-                release_object( apc );
-                break;
-            }
-            apc->executed = 1;
-            wake_up( &apc->obj, 0 );
+            reply->call = apc->call;
             release_object( apc );
+            break;
         }
+        apc->executed = 1;
+        wake_up( &apc->obj, 0 );
+        release_object( apc );
     }
 }
 
