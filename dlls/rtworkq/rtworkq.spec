@@ -17,9 +17,9 @@
 @ stub RtwqJoinWorkQueue
 @ stdcall RtwqLockPlatform()
 @ stub RtwqLockSharedWorkQueue
-@ stub RtwqLockWorkQueue
+@ stdcall RtwqLockWorkQueue(long)
 @ stub RtwqPutMultipleWaitingWorkItem
-@ stub RtwqPutWaitingWorkItem
+@ stdcall RtwqPutWaitingWorkItem(long long ptr ptr)
 @ stub RtwqPutWorkItem
 @ stub RtwqRegisterPlatformEvents
 @ stub RtwqRegisterPlatformWithMMCSS
@@ -32,6 +32,6 @@
 @ stdcall RtwqStartup()
 @ stub RtwqUnjoinWorkQueue
 @ stdcall RtwqUnlockPlatform()
-@ stub RtwqUnlockWorkQueue
+@ stdcall RtwqUnlockWorkQueue(long)
 @ stub RtwqUnregisterPlatformEvents
 @ stub RtwqUnregisterPlatformFromMMCSS

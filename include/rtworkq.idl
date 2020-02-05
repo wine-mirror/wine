@@ -52,6 +52,15 @@ interface IRtwqAsyncCallback : IUnknown
     HRESULT Invoke([in] IRtwqAsyncResult *result);
 }
 
+cpp_quote("#define RTWQ_E_ERROR(x)            ((HRESULT)(0xc00d0000L+x))")
+cpp_quote("#define RTWQ_E_BUFFERTOOSMALL      RTWQ_E_ERROR(14001)")
+cpp_quote("#define RTWQ_E_NOT_INITIALIZED     RTWQ_E_ERROR(14006)")
+cpp_quote("#define RTWQ_E_UNEXPECTED          RTWQ_E_ERROR(14011)")
+cpp_quote("#define RTWQ_E_NOT_FOUND           RTWQ_E_ERROR(14037)")
+cpp_quote("#define RTWQ_E_OPERATION_CANCELLED RTWQ_E_ERROR(14061)")
+cpp_quote("#define RTWQ_E_INVALID_WORKQUEUE   RTWQ_E_ERROR(14079)")
+cpp_quote("#define RTWQ_E_SHUTDOWN            RTWQ_E_ERROR(16005)")
+
 cpp_quote("#ifdef __WINESRC__")
 cpp_quote("typedef struct tagRTWQASYNCRESULT")
 cpp_quote("{")
@@ -68,6 +77,9 @@ cpp_quote("} RTWQASYNCRESULT;")
 
 cpp_quote("HRESULT WINAPI RtwqCreateAsyncResult(IUnknown *object, IRtwqAsyncCallback *callback, IUnknown *state, IRtwqAsyncResult **result);")
 cpp_quote("HRESULT WINAPI RtwqLockPlatform(void);")
+cpp_quote("HRESULT WINAPI RtwqLockWorkQueue(DWORD queue);")
+cpp_quote("HRESULT WINAPI RtwqPutWaitingWorkItem(HANDLE event, LONG priority, IRtwqAsyncResult *result, RTWQWORKITEM_KEY *key);")
 cpp_quote("HRESULT WINAPI RtwqShutdown(void);")
 cpp_quote("HRESULT WINAPI RtwqStartup(void);")
 cpp_quote("HRESULT WINAPI RtwqUnlockPlatform(void);")
+cpp_quote("HRESULT WINAPI RtwqUnlockWorkQueue(DWORD queue);")
