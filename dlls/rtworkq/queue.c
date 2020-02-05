@@ -54,6 +54,8 @@ struct queue_handle
 
 static struct queue_handle user_queues[MAX_USER_QUEUE_HANDLES];
 static struct queue_handle *next_free_user_queue;
+static struct queue_handle *next_unused_user_queue = user_queues;
+static WORD queue_generation;
 
 static CRITICAL_SECTION queues_section;
 static CRITICAL_SECTION_DEBUG queues_critsect_debug =
@@ -559,6 +561,49 @@ static HRESULT queue_cancel_item(struct queue *queue, RTWQWORKITEM_KEY key)
     return hr;
 }
 
+static HRESULT alloc_user_queue(RTWQ_WORKQUEUE_TYPE queue_type, DWORD *queue_id)
+{
+    struct queue_handle *entry;
+    struct queue *queue;
+    unsigned int idx;
+
+    *queue_id = RTWQ_CALLBACK_QUEUE_UNDEFINED;
+
+    if (platform_lock <= 0)
+        return RTWQ_E_SHUTDOWN;
+
+    queue = heap_alloc_zero(sizeof(*queue));
+    if (!queue)
+        return E_OUTOFMEMORY;
+    init_work_queue(queue_type, queue);
+
+    EnterCriticalSection(&queues_section);
+
+    entry = next_free_user_queue;
+    if (entry)
+        next_free_user_queue = entry->obj;
+    else if (next_unused_user_queue < user_queues + MAX_USER_QUEUE_HANDLES)
+        entry = next_unused_user_queue++;
+    else
+    {
+        LeaveCriticalSection(&queues_section);
+        heap_free(queue);
+        WARN("Out of user queue handles.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    entry->refcount = 1;
+    entry->obj = queue;
+    if (++queue_generation == 0xffff) queue_generation = 1;
+    entry->generation = queue_generation;
+    idx = entry - user_queues + FIRST_USER_QUEUE_HANDLE;
+    *queue_id = (idx << 16) | entry->generation;
+
+    LeaveCriticalSection(&queues_section);
+
+    return S_OK;
+}
+
 struct async_result
 {
     RTWQASYNCRESULT result;
@@ -997,6 +1042,20 @@ HRESULT WINAPI RtwqInvokeCallback(IRtwqAsyncResult *result)
     TRACE("%p.\n", result);
 
     return invoke_async_callback(result);
+}
+
+HRESULT WINAPI RtwqPutWorkItem(DWORD queue, LONG priority, IRtwqAsyncResult *result)
+{
+    TRACE("%d, %d, %p.\n", queue, priority, result);
+
+    return queue_put_work_item(queue, priority, result);
+}
+
+HRESULT WINAPI RtwqAllocateWorkQueue(RTWQ_WORKQUEUE_TYPE queue_type, DWORD *queue)
+{
+    TRACE("%d, %p.\n", queue_type, queue);
+
+    return alloc_user_queue(queue_type, queue);
 }
 
 HRESULT WINAPI RtwqLockWorkQueue(DWORD queue)

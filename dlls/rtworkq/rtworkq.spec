@@ -1,6 +1,6 @@
 @ stdcall RtwqAddPeriodicCallback(ptr ptr ptr)
 @ stub RtwqAllocateSerialWorkQueue
-@ stub RtwqAllocateWorkQueue
+@ stdcall RtwqAllocateWorkQueue(long ptr)
 @ stub RtwqBeginRegisterWorkQueueWithMMCSS
 @ stub RtwqBeginUnregisterWorkQueueWithMMCSS
 @ stub RtwqCancelDeadline
@@ -20,7 +20,7 @@
 @ stdcall RtwqLockWorkQueue(long)
 @ stub RtwqPutMultipleWaitingWorkItem
 @ stdcall RtwqPutWaitingWorkItem(long long ptr ptr)
-@ stub RtwqPutWorkItem
+@ stdcall RtwqPutWorkItem(long long ptr)
 @ stub RtwqRegisterPlatformEvents
 @ stub RtwqRegisterPlatformWithMMCSS
 @ stdcall RtwqRemovePeriodicCallback(long)
