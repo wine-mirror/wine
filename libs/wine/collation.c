@@ -2,6 +2,10 @@
 /* generated from http://www.unicode.org/reports/tr10/allkeys.txt */
 /* DO NOT EDIT!! */
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "windef.h"
 
 const unsigned int DECLSPEC_HIDDEN collation_table[11044] =
@@ -1391,3 +1395,5 @@ const unsigned int DECLSPEC_HIDDEN collation_table[11044] =
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0x00000000, 0x00000000, 0x00000000, 0x09bf0111, 0x09c00111, 0xffffffff, 0xffffffff
 };
+
+#endif /* __ASM_OBSOLETE */
