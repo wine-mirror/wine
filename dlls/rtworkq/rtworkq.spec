@@ -1,4 +1,4 @@
-@ stub RtwqAddPeriodicCallback
+@ stdcall RtwqAddPeriodicCallback(ptr ptr ptr)
 @ stub RtwqAllocateSerialWorkQueue
 @ stub RtwqAllocateWorkQueue
 @ stub RtwqBeginRegisterWorkQueueWithMMCSS
@@ -23,7 +23,7 @@
 @ stub RtwqPutWorkItem
 @ stub RtwqRegisterPlatformEvents
 @ stub RtwqRegisterPlatformWithMMCSS
-@ stub RtwqRemovePeriodicCallback
+@ stdcall RtwqRemovePeriodicCallback(long)
 @ stdcall RtwqScheduleWorkItem(ptr int64 ptr)
 @ stub RtwqSetDeadline
 @ stub RtwqSetDeadline2

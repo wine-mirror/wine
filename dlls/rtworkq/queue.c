@@ -838,6 +838,147 @@ HRESULT WINAPI RtwqScheduleWorkItem(IRtwqAsyncResult *result, INT64 timeout, RTW
     return schedule_work_item(result, timeout, key);
 }
 
+struct periodic_callback
+{
+    IRtwqAsyncCallback IRtwqAsyncCallback_iface;
+    LONG refcount;
+    RTWQPERIODICCALLBACK callback;
+};
+
+static struct periodic_callback *impl_from_IRtwqAsyncCallback(IRtwqAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct periodic_callback, IRtwqAsyncCallback_iface);
+}
+
+static HRESULT WINAPI periodic_callback_QueryInterface(IRtwqAsyncCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IRtwqAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IRtwqAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI periodic_callback_AddRef(IRtwqAsyncCallback *iface)
+{
+    struct periodic_callback *callback = impl_from_IRtwqAsyncCallback(iface);
+    ULONG refcount = InterlockedIncrement(&callback->refcount);
+
+    TRACE("%p, %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI periodic_callback_Release(IRtwqAsyncCallback *iface)
+{
+    struct periodic_callback *callback = impl_from_IRtwqAsyncCallback(iface);
+    ULONG refcount = InterlockedDecrement(&callback->refcount);
+
+    TRACE("%p, %u.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(callback);
+
+    return refcount;
+}
+
+static HRESULT WINAPI periodic_callback_GetParameters(IRtwqAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI periodic_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
+{
+    struct periodic_callback *callback = impl_from_IRtwqAsyncCallback(iface);
+    IUnknown *context = NULL;
+
+    if (FAILED(IRtwqAsyncResult_GetObject(result, &context)))
+        WARN("Expected object to be set for result object.\n");
+
+    callback->callback(context);
+
+    if (context)
+        IUnknown_Release(context);
+
+    return S_OK;
+}
+
+static const IRtwqAsyncCallbackVtbl periodic_callback_vtbl =
+{
+    periodic_callback_QueryInterface,
+    periodic_callback_AddRef,
+    periodic_callback_Release,
+    periodic_callback_GetParameters,
+    periodic_callback_Invoke,
+};
+
+static HRESULT create_periodic_callback_obj(RTWQPERIODICCALLBACK callback, IRtwqAsyncCallback **out)
+{
+    struct periodic_callback *object;
+
+    object = heap_alloc(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IRtwqAsyncCallback_iface.lpVtbl = &periodic_callback_vtbl;
+    object->refcount = 1;
+    object->callback = callback;
+
+    *out = &object->IRtwqAsyncCallback_iface;
+
+    return S_OK;
+}
+
+HRESULT WINAPI RtwqAddPeriodicCallback(RTWQPERIODICCALLBACK callback, IUnknown *context, DWORD *key)
+{
+    IRtwqAsyncCallback *periodic_callback;
+    RTWQWORKITEM_KEY workitem_key;
+    IRtwqAsyncResult *result;
+    struct queue *queue;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p.\n", callback, context, key);
+
+    if (FAILED(hr = grab_queue(RTWQ_CALLBACK_QUEUE_TIMER, &queue)))
+        return hr;
+
+    if (FAILED(hr = create_periodic_callback_obj(callback, &periodic_callback)))
+        return hr;
+
+    hr = create_async_result(context, periodic_callback, NULL, &result);
+    IRtwqAsyncCallback_Release(periodic_callback);
+    if (FAILED(hr))
+        return hr;
+
+    /* Same period MFGetTimerPeriodicity() returns. */
+    hr = queue_submit_timer(queue, result, 0, 10, key ? &workitem_key : NULL);
+
+    IRtwqAsyncResult_Release(result);
+
+    if (key)
+        *key = workitem_key;
+
+    return S_OK;
+}
+
+HRESULT WINAPI RtwqRemovePeriodicCallback(DWORD key)
+{
+    struct queue *queue;
+    HRESULT hr;
+
+    TRACE("%#x.\n", key);
+
+    if (FAILED(hr = grab_queue(RTWQ_CALLBACK_QUEUE_TIMER, &queue)))
+        return hr;
+
+    return queue_cancel_item(queue, get_item_key(SCHEDULED_ITEM_KEY_MASK, key));
+}
+
 HRESULT WINAPI RtwqCancelWorkItem(RTWQWORKITEM_KEY key)
 {
     struct queue *queue;
