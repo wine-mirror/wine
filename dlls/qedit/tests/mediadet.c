@@ -21,7 +21,6 @@
 #define COBJMACROS
 #define CONST_VTABLE
 
-#include "initguid.h"
 #include "ole2.h"
 #include "vfwmsgs.h"
 #include "uuids.h"
