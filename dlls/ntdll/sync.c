@@ -2479,24 +2479,29 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
             return STATUS_SUCCESS;
         }
 
-        SERVER_START_REQ( select )
+        for (;;)
         {
-            req->flags    = SELECT_INTERRUPTIBLE;
-            req->cookie   = wine_server_client_ptr( &cookie );
-            req->prev_apc = apc_handle;
-            req->timeout  = abs_timeout;
-            wine_server_add_data( req, &result, sizeof(result) );
-            wine_server_add_data( req, &select_op, sizeof(select_op.keyed_event) );
-            ret = wine_server_call( req );
-            abs_timeout = reply->timeout;
-            apc_handle  = reply->apc_handle;
-            call        = reply->call;
+            SERVER_START_REQ( select )
+            {
+                req->flags    = SELECT_INTERRUPTIBLE;
+                req->cookie   = wine_server_client_ptr( &cookie );
+                req->prev_apc = apc_handle;
+                req->timeout  = abs_timeout;
+                wine_server_add_data( req, &result, sizeof(result) );
+                wine_server_add_data( req, &select_op, sizeof(select_op.keyed_event) );
+                ret = wine_server_call( req );
+                abs_timeout = reply->timeout;
+                apc_handle  = reply->apc_handle;
+                call        = reply->call;
+            }
+            SERVER_END_REQ;
+
+            if (ret != STATUS_KERNEL_APC) break;
+            invoke_apc( &call, &result );
         }
-        SERVER_END_REQ;
 
         RtlLeaveCriticalSection( &addr_section );
 
-        if (ret == STATUS_KERNEL_APC) invoke_apc( &call, &result );
         if (ret == STATUS_USER_APC)
         {
             invoke_apc( &call, &result );

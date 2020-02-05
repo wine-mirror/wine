@@ -606,26 +606,31 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
 
     do
     {
-        SERVER_START_REQ( select )
+        for (;;)
         {
-            req->flags    = flags;
-            req->cookie   = wine_server_client_ptr( &cookie );
-            req->prev_apc = apc_handle;
-            req->timeout  = abs_timeout;
-            wine_server_add_data( req, &result, sizeof(result) );
-            wine_server_add_data( req, select_op, size );
-            ret = wine_server_call( req );
-            abs_timeout = reply->timeout;
-            apc_handle  = reply->apc_handle;
-            call        = reply->call;
+            SERVER_START_REQ( select )
+            {
+                req->flags    = flags;
+                req->cookie   = wine_server_client_ptr( &cookie );
+                req->prev_apc = apc_handle;
+                req->timeout  = abs_timeout;
+                wine_server_add_data( req, &result, sizeof(result) );
+                wine_server_add_data( req, select_op, size );
+                ret = wine_server_call( req );
+                abs_timeout = reply->timeout;
+                apc_handle  = reply->apc_handle;
+                call        = reply->call;
+            }
+            SERVER_END_REQ;
+
+            /* don't signal multiple times */
+            if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
+                size = offsetof( select_op_t, signal_and_wait.signal );
+
+            if (ret != STATUS_KERNEL_APC) break;
+            invoke_apc( &call, &result );
         }
-        SERVER_END_REQ;
 
-        /* don't signal multiple times */
-        if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
-            size = offsetof( select_op_t, signal_and_wait.signal );
-
-        if (ret == STATUS_KERNEL_APC) invoke_apc( &call, &result );
         if (ret == STATUS_USER_APC)
         {
             invoke_apc( &call, &result );
