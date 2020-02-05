@@ -10,7 +10,8 @@ C_SRCS = \
 	loader.c \
 	mmap.c \
 	port.c \
-	sortkey.c
+	sortkey.c \
+	utf8.c
 
 EXTRA_OBJS = version.o
 

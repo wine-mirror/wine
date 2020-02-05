@@ -53,8 +53,6 @@ WINE_1.0
     wine_mmap_remove_reserved_area;
     wine_set_fs;
     wine_set_gs;
-    wine_utf8_mbstowcs;
-    wine_utf8_wcstombs;
     wine_wctype_table;
 
     /* the following functions are obsolete and only exported for backwards compatibility */
@@ -120,6 +118,8 @@ WINE_1.0
     wine_pthread_get_functions;
     wine_pthread_set_functions;
     wine_switch_to_stack;
+    wine_utf8_mbstowcs;
+    wine_utf8_wcstombs;
 
   local: *;
 };

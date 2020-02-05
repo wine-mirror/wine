@@ -20,6 +20,10 @@
 
 #include <string.h>
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "wine/unicode.h"
 
 extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
@@ -95,7 +99,7 @@ static inline int get_length_wcs_utf8( int flags, const WCHAR *src, unsigned int
 
 /* wide char to UTF-8 string conversion */
 /* return -1 on dst buffer overflow, -2 on invalid input char */
-int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+int wine_utf8_wcstombs_obsolete( int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
 {
     int len;
 
@@ -301,7 +305,7 @@ static inline int get_length_mbs_utf8( int flags, const char *src, int srclen )
 
 /* UTF-8 to wide char string conversion */
 /* return -1 on dst buffer overflow, -2 on invalid input char */
-int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+int wine_utf8_mbstowcs_obsolete( int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
     unsigned int res;
     const char *srcend = src + srclen;
@@ -336,3 +340,8 @@ int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int 
     if (src < srcend) return -1;  /* overflow */
     return dstlen - (dstend - dst);
 }
+
+__ASM_OBSOLETE(wine_utf8_wcstombs);
+__ASM_OBSOLETE(wine_utf8_mbstowcs);
+
+#endif /* __ASM_OBSOLETE */
