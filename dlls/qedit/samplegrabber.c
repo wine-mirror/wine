@@ -519,12 +519,11 @@ static HRESULT sample_grabber_sink_connect(struct strmbase_sink *iface,
             && !IsEqualGUID(&filter->mtype.majortype, &mt->majortype))
         return VFW_E_TYPE_NOT_ACCEPTED;
 
-    if (!IsEqualGUID(&filter->mtype.subtype,&MEDIASUBTYPE_None)
+    if (!IsEqualGUID(&filter->mtype.subtype, &GUID_NULL)
             && !IsEqualGUID(&filter->mtype.subtype, &mt->subtype))
         return VFW_E_TYPE_NOT_ACCEPTED;
 
     if (!IsEqualGUID(&filter->mtype.formattype, &GUID_NULL)
-            && !IsEqualGUID(&filter->mtype.formattype, &FORMAT_None)
             && !IsEqualGUID(&filter->mtype.formattype, &mt->formattype))
         return VFW_E_TYPE_NOT_ACCEPTED;
 
@@ -626,9 +625,6 @@ HRESULT SampleGrabber_create(IUnknown *outer, void **out)
     strmbase_sink_init(&obj->sink, &obj->filter, L"In", &sink_ops, NULL);
     strmbase_source_init(&obj->source, &obj->filter, L"Out", &source_ops);
 
-    obj->mtype.majortype = GUID_NULL;
-    obj->mtype.subtype = MEDIASUBTYPE_None;
-    obj->mtype.formattype = FORMAT_None;
     obj->allocator = NULL;
     obj->grabberIface = NULL;
     obj->grabberMethod = -1;
