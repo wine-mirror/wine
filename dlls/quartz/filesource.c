@@ -87,37 +87,19 @@ static inline AsyncReader *impl_from_IFileSourceFilter(IFileSourceFilter *iface)
 static const IFileSourceFilterVtbl FileSource_Vtbl;
 static const IAsyncReaderVtbl FileAsyncReader_Vtbl;
 
-static unsigned char byte_from_hex_char(WCHAR wHex)
+static int byte_from_hex_char(WCHAR c)
 {
-    switch (towlower(wHex))
-    {
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-        return (wHex - '0') & 0xf;
-    case 'a':
-    case 'b':
-    case 'c':
-    case 'd':
-    case 'e':
-    case 'f':
-        return (wHex - 'a' + 10) & 0xf;
-    default:
-        return 0;
-    }
+    if ('0' <= c && c <= '9') return c - '0';
+    if ('a' <= c && c <= 'f') return c - 'a' + 10;
+    if ('A' <= c && c <= 'F') return c - 'A' + 10;
+    return -1;
 }
 
 static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
 {
     ULONG size, offset, i, ret_size;
     BYTE *mask, *expect, *actual;
+    int d;
     BOOL ret = TRUE;
 
     /* format: "offset, size, mask, value" */
@@ -140,15 +122,15 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
         return FALSE;
     }
     pattern++;
-    while (!iswxdigit(*pattern) && (*pattern != ','))
+    while (byte_from_hex_char(*pattern) == -1 && (*pattern != ','))
         pattern++;
 
-    for (i = 0; iswxdigit(*pattern) && (i/2 < size); pattern++, i++)
+    for (i = 0; (d = byte_from_hex_char(*pattern)) != -1 && (i/2 < size); pattern++, i++)
     {
         if (i % 2)
-            mask[i / 2] |= byte_from_hex_char(*pattern);
+            mask[i / 2] |= d;
         else
-            mask[i / 2] = byte_from_hex_char(*pattern) << 4;
+            mask[i / 2] = d << 4;
     }
 
     if (!(pattern = wcschr(pattern, ',')))
@@ -158,15 +140,15 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
         return FALSE;
     }
     pattern++;
-    while (!iswxdigit(*pattern) && (*pattern != ','))
+    while (byte_from_hex_char(*pattern) == -1 && (*pattern != ','))
         pattern++;
 
-    for (i = 0; iswxdigit(*pattern) && (i/2 < size); pattern++, i++)
+    for (i = 0; (d = byte_from_hex_char(*pattern)) != -1 && (i/2 < size); pattern++, i++)
     {
         if (i % 2)
-            expect[i / 2] |= byte_from_hex_char(*pattern);
+            expect[i / 2] |= d;
         else
-            expect[i / 2] = byte_from_hex_char(*pattern) << 4;
+            expect[i / 2] = d << 4;
     }
 
     actual = heap_alloc(size);
