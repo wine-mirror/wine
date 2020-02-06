@@ -428,96 +428,81 @@ static inline struct strmbase_source *impl_source_from_IPin( IPin *iface )
     return CONTAINING_RECORD(iface, struct strmbase_source, pin.IPin_iface);
 }
 
-static HRESULT WINAPI source_Connect(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
 {
+    struct strmbase_source *pin = impl_source_from_IPin(iface);
+    AM_MEDIA_TYPE *candidate;
+    IEnumMediaTypes *enummt;
+    ULONG count;
     HRESULT hr;
-    struct strmbase_source *This = impl_source_from_IPin(iface);
 
-    TRACE("pin %p %s:%s, peer %p, mt %p.\n", This, debugstr_w(This->pin.filter->name),
-            debugstr_w(This->pin.name), pReceivePin, pmt);
-    strmbase_dump_media_type(pmt);
+    TRACE("pin %p %s:%s, peer %p, mt %p.\n", pin, debugstr_w(pin->pin.filter->name),
+            debugstr_w(pin->pin.name), peer, mt);
+    strmbase_dump_media_type(mt);
 
-    if (!pReceivePin)
+    if (!peer)
         return E_POINTER;
 
     /* If we try to connect to ourselves, we will definitely deadlock.
      * There are other cases where we could deadlock too, but this
      * catches the obvious case */
-    assert(pReceivePin != iface);
+    assert(peer != iface);
 
-    EnterCriticalSection(&This->pin.filter->csFilter);
+    EnterCriticalSection(&pin->pin.filter->csFilter);
+
+    if (pin->pin.filter->state != State_Stopped)
     {
-        if (This->pin.filter->state != State_Stopped)
+        LeaveCriticalSection(&pin->pin.filter->csFilter);
+        WARN("Filter is not stopped; returning VFW_E_NOT_STOPPED.\n");
+        return VFW_E_NOT_STOPPED;
+    }
+
+    if (mt && !IsEqualGUID(&mt->majortype, &GUID_NULL) && !IsEqualGUID(&mt->subtype, &GUID_NULL))
+    {
+        hr = pin->pFuncsTable->pfnAttemptConnection(pin, peer, mt);
+        LeaveCriticalSection(&pin->pin.filter->csFilter);
+        return hr;
+    }
+
+    if (SUCCEEDED(IPin_EnumMediaTypes(iface, &enummt)))
+    {
+        while (IEnumMediaTypes_Next(enummt, 1, &candidate, NULL) == S_OK)
         {
-            LeaveCriticalSection(&This->pin.filter->csFilter);
-            WARN("Filter is not stopped; returning VFW_E_NOT_STOPPED.\n");
-            return VFW_E_NOT_STOPPED;
+            if ((!mt || CompareMediaTypes(mt, candidate, TRUE))
+                    && pin->pFuncsTable->pfnAttemptConnection(pin, peer, candidate) == S_OK)
+            {
+                LeaveCriticalSection(&pin->pin.filter->csFilter);
+                DeleteMediaType(candidate);
+                IEnumMediaTypes_Release(enummt);
+                return S_OK;
+            }
+            DeleteMediaType(candidate);
         }
 
-        /* if we have been a specific type to connect with, then we can either connect
-         * with that or fail. We cannot choose different AM_MEDIA_TYPE */
-        if (pmt && !IsEqualGUID(&pmt->majortype, &GUID_NULL) && !IsEqualGUID(&pmt->subtype, &GUID_NULL))
-            hr = This->pFuncsTable->pfnAttemptConnection(This, pReceivePin, pmt);
-        else
+        IEnumMediaTypes_Release(enummt);
+    }
+
+    if (SUCCEEDED(IPin_EnumMediaTypes(peer, &enummt)))
+    {
+        while (IEnumMediaTypes_Next(enummt, 1, &candidate, &count) == S_OK)
         {
-            /* negotiate media type */
-
-            IEnumMediaTypes * pEnumCandidates;
-            AM_MEDIA_TYPE * pmtCandidate = NULL; /* Candidate media type */
-
-            if (SUCCEEDED(hr = IPin_EnumMediaTypes(iface, &pEnumCandidates)))
+            if ((!mt || CompareMediaTypes(mt, candidate, TRUE))
+                    && pin->pFuncsTable->pfnAttemptConnection(pin, peer, candidate) == S_OK)
             {
-                hr = VFW_E_NO_ACCEPTABLE_TYPES; /* Assume the worst, but set to S_OK if connected successfully */
-
-                /* try this filter's media types first */
-                while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, NULL))
-                {
-                    assert(pmtCandidate);
-                    if (!IsEqualGUID(&FORMAT_None, &pmtCandidate->formattype)
-                        && !IsEqualGUID(&GUID_NULL, &pmtCandidate->formattype))
-                        assert(pmtCandidate->pbFormat);
-                    if ((!pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE))
-                            && This->pFuncsTable->pfnAttemptConnection(This, pReceivePin, pmtCandidate) == S_OK)
-                    {
-                        hr = S_OK;
-                        DeleteMediaType(pmtCandidate);
-                        break;
-                    }
-                    DeleteMediaType(pmtCandidate);
-                    pmtCandidate = NULL;
-                }
-                IEnumMediaTypes_Release(pEnumCandidates);
+                LeaveCriticalSection(&pin->pin.filter->csFilter);
+                DeleteMediaType(candidate);
+                IEnumMediaTypes_Release(enummt);
+                return S_OK;
             }
+            DeleteMediaType(candidate);
+        }
 
-            /* then try receiver filter's media types */
-            if (hr != S_OK && SUCCEEDED(hr = IPin_EnumMediaTypes(pReceivePin, &pEnumCandidates))) /* if we haven't already connected successfully */
-            {
-                ULONG fetched;
+        IEnumMediaTypes_Release(enummt);
+    }
 
-                hr = VFW_E_NO_ACCEPTABLE_TYPES; /* Assume the worst, but set to S_OK if connected successfully */
+    LeaveCriticalSection(&pin->pin.filter->csFilter);
 
-                while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, &fetched))
-                {
-                    assert(pmtCandidate);
-                    strmbase_dump_media_type(pmtCandidate);
-                    if ((!pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE))
-                            && This->pFuncsTable->pfnAttemptConnection(This, pReceivePin, pmtCandidate) == S_OK)
-                    {
-                        hr = S_OK;
-                        DeleteMediaType(pmtCandidate);
-                        break;
-                    }
-                    DeleteMediaType(pmtCandidate);
-                    pmtCandidate = NULL;
-                } /* while */
-                IEnumMediaTypes_Release(pEnumCandidates);
-            } /* if not found */
-        } /* if negotiate media type */
-    } /* if succeeded */
-    LeaveCriticalSection(&This->pin.filter->csFilter);
-
-    TRACE(" -- %x\n", hr);
-    return hr;
+    return VFW_E_NO_ACCEPTABLE_TYPES;
 }
 
 static HRESULT WINAPI source_ReceiveConnection(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
