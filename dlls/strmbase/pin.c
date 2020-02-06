@@ -735,8 +735,8 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
 
     TRACE("(%p)->(%p, %p)\n", This, pReceivePin, pmt);
 
-    if ((hr = This->pFuncsTable->base.pin_query_accept(&This->pin, pmt)) != S_OK)
-        return hr;
+    if (This->pFuncsTable->base.pin_query_accept(&This->pin, pmt) != S_OK)
+        return VFW_E_TYPE_NOT_ACCEPTED;
 
     This->pin.peer = pReceivePin;
     IPin_AddRef(pReceivePin);
