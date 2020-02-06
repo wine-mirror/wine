@@ -48,7 +48,7 @@ static const char textA[] =
 "        val 'dword_quoted_hex' = d '0xA' \n"
 "        val 'dword_unquoted_hex' = d 0xA \n"
 "        val 'binary_quoted' = b 'deadbeef' \n"
-"        val 'binary_unquoted' = b deadbeef \n"
+"        val 'binary_unquoted' = b dead0123 \n"
 "    } \n"
 "}";
 
@@ -124,7 +124,7 @@ static void test_registrar(void)
         size = 4;
         lret = RegQueryValueExA(key, "binary_unquoted", NULL, NULL, bytes, &size);
         ok(lret == ERROR_SUCCESS, "RegQueryValueA, failed, error %d\n", lret);
-        ok(bytes[0] == 0xde && bytes[1] == 0xad && bytes[2] == 0xbe && bytes[3] == 0xef,
+        ok(bytes[0] == 0xde && bytes[1] == 0xad && bytes[2] == 0x01 && bytes[3] == 0x23,
             "binary unquoted value was not preserved (it's 0x%02X%02X%02X%02X)\n",
             0xff & bytes[0], 0xff & bytes[1], 0xff & bytes[2], 0xff & bytes[3]);
 

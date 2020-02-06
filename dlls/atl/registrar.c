@@ -99,6 +99,14 @@ static void strbuf_write(LPCOLESTR str, strbuf *buf, int len)
     buf->str[buf->len] = '\0';
 }
 
+static int xdigit_to_int(WCHAR c)
+{
+    if('0' <= c && c <= '9') return c - '0';
+    if('a' <= c && c <= 'f') return c - 'a' + 10;
+    if('A' <= c && c <= 'F') return c - 'A' + 10;
+    return -1;
+}
+
 static HRESULT get_word(LPCOLESTR *str, strbuf *buf)
 {
     LPCOLESTR iter, iter2 = *str;
@@ -303,15 +311,12 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
                         break;
                     }
                     for(i = 0; i < count && buf->str[2*i]; i++) {
-                        WCHAR digits[3];
-                        if(!iswxdigit(buf->str[2*i]) || !iswxdigit(buf->str[2*i + 1])) {
+                        int d1, d2;
+                        if((d1 = xdigit_to_int(buf->str[2*i])) == -1 || (d2 = xdigit_to_int(buf->str[2*i + 1])) == -1) {
                             hres = E_FAIL;
                             break;
                         }
-                        digits[0] = buf->str[2*i];
-                        digits[1] = buf->str[2*i + 1];
-                        digits[2] = 0;
-                        bytes[i] = (BYTE) wcstoul(digits, NULL, 16);
+                        bytes[i] = (d1 << 4) | d2;
                     }
                     if(SUCCEEDED(hres)) {
                         lres = RegSetValueExW(hkey, name.len ? name.str :  NULL, 0, REG_BINARY,
