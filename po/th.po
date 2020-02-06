@@ -332,7 +332,7 @@ msgstr ""
 msgid "< &Back"
 msgstr "< ย้อนกลับ"
 
-#: comctl32.rc:85 version.rc:47
+#: comctl32.rc:85 version.rc:55
 msgid "&Next >"
 msgstr "ต่อไป >"
 
@@ -1212,7 +1212,7 @@ msgstr "มม."
 msgid "&User name:"
 msgstr "แฟ้ม"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:67
+#: credui.rc:48 cryptui.rc:402 version.rc:75
 msgid "&Password:"
 msgstr ""
 
@@ -3070,7 +3070,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:94 wldap32.rc:112
 msgid "Other"
 msgstr ""
 
@@ -3137,7 +3137,7 @@ msgstr ""
 msgid "&Stop"
 msgstr ""
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
 msgid "&Refresh"
 msgstr ""
 
@@ -8404,70 +8404,102 @@ msgstr "เปิด"
 msgid "Off"
 msgstr "ปิด"
 
-#: version.rc:42
+#: version.rc:50
 msgid "Provider"
 msgstr ""
 
-#: version.rc:45
+#: version.rc:53
 msgid "Select the data you want to connect to:"
-msgstr ""
-
-#: version.rc:52
-#, fuzzy
-msgid "Connection"
-msgstr "รายละเอียด"
-
-#: version.rc:55
-msgid "Specify the following to connect to ODBC data:"
-msgstr ""
-
-#: version.rc:56
-msgid "1. Specify the source of data:"
-msgstr ""
-
-#: version.rc:57
-msgid "Use &data source name"
 msgstr ""
 
 #: version.rc:60
 #, fuzzy
+msgid "Connection"
+msgstr "รายละเอียด"
+
+#: version.rc:63
+msgid "Specify the following to connect to ODBC data:"
+msgstr ""
+
+#: version.rc:64
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:65
+msgid "Use &data source name"
+msgstr ""
+
+#: version.rc:68
+#, fuzzy
 msgid "Use c&onnection string"
 msgstr "รายละเอียด"
 
-#: version.rc:61
+#: version.rc:69
 #, fuzzy
 msgid "&Connection string:"
 msgstr "รายละเอียด"
 
-#: version.rc:63
+#: version.rc:71
 msgid "B&uild..."
 msgstr ""
 
-#: version.rc:64
+#: version.rc:72
 msgid "2. Enter information to log on to the server"
-msgstr ""
-
-#: version.rc:65
-#, fuzzy
-msgid "User &name:"
-msgstr "แฟ้ม"
-
-#: version.rc:69
-msgid "&Blank password"
-msgstr ""
-
-#: version.rc:70
-msgid "Allow &saving password"
-msgstr ""
-
-#: version.rc:71
-msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
 #: version.rc:73
 #, fuzzy
+msgid "User &name:"
+msgstr "แฟ้ม"
+
+#: version.rc:77
+msgid "&Blank password"
+msgstr ""
+
+#: version.rc:78
+msgid "Allow &saving password"
+msgstr ""
+
+#: version.rc:79
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:81
+#, fuzzy
 msgid "&Test Connection"
 msgstr "รายละเอียด"
+
+#: version.rc:86 winemine.rc:65
+msgid "Advanced"
+msgstr ""
+
+#: version.rc:89
+msgid "Network settings"
+msgstr ""
+
+#: version.rc:90
+msgid "&Impersonation level:"
+msgstr ""
+
+#: version.rc:92
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:95
+#, fuzzy
+msgid "Connect:"
+msgstr "ไม่พบแฟ้ม"
+
+#: version.rc:97
+#, fuzzy
+#| msgid "&Seconds"
+msgid "seconds."
+msgstr "วินาที"
+
+#: version.rc:98
+#, fuzzy
+msgid "A&ccess:"
+msgstr "วันที่"
 
 #: version.rc:36
 #, fuzzy
@@ -8476,6 +8508,37 @@ msgstr "ปรับแต่งนาฬิกา"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
+msgstr ""
+
+#: version.rc:39
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "พร้อม"
+
+#: version.rc:40
+#, fuzzy
+msgid "ReadWrite"
+msgstr "พร้อม"
+
+#: version.rc:41
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:42
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:43
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:45
+msgid "Write"
 msgstr ""
 
 #: oledlg.rc:55
@@ -16071,10 +16134,6 @@ msgstr "ลบ\tDel"
 
 #: winemine.rc:64
 msgid "Beginner"
-msgstr ""
-
-#: winemine.rc:65
-msgid "Advanced"
 msgstr ""
 
 #: winemine.rc:66

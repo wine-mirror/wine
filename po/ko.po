@@ -346,7 +346,7 @@ msgstr "마법사"
 msgid "< &Back"
 msgstr "< 뒤로(&B)"
 
-#: comctl32.rc:85 version.rc:47
+#: comctl32.rc:85 version.rc:55
 msgid "&Next >"
 msgstr "다음(&N) >"
 
@@ -1221,7 +1221,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "사용자 이름(&U):"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:67
+#: credui.rc:48 cryptui.rc:402 version.rc:75
 msgid "&Password:"
 msgstr "암호(&P):"
 
@@ -3098,7 +3098,7 @@ msgstr "기호"
 msgid "OEM/DOS"
 msgstr "OEM/도"
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:94 wldap32.rc:112
 msgid "Other"
 msgstr "다른 문제"
 
@@ -3163,7 +3163,7 @@ msgstr "홈(&H)"
 msgid "&Stop"
 msgstr "멈추기(&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "다시 읽기(&R)"
 
@@ -8291,89 +8291,127 @@ msgstr "작동"
 msgid "Off"
 msgstr "비작동"
 
-#: version.rc:42
+#: version.rc:50
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "비디오"
 
-#: version.rc:45
+#: version.rc:53
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "사용할 파일 형식 선택:"
 
-#: version.rc:52
+#: version.rc:60
 #, fuzzy
 #| msgid "Connections"
 msgid "Connection"
 msgstr "연결"
 
-#: version.rc:55
+#: version.rc:63
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "사용할 파일 형식 선택:"
 
-#: version.rc:56
+#: version.rc:64
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:57
+#: version.rc:65
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "이름을 입력해 주세요"
 
-#: version.rc:60
+#: version.rc:68
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "연결 재설정"
 
-#: version.rc:61
+#: version.rc:69
 #, fuzzy
 #| msgid "Connections"
 msgid "&Connection string:"
 msgstr "연결"
 
-#: version.rc:63
+#: version.rc:71
 #, fuzzy
 #| msgid "A&dd..."
 msgid "B&uild..."
 msgstr "추가(&D)..."
 
-#: version.rc:64
+#: version.rc:72
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:65
+#: version.rc:73
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "사용자 이름(&U):"
 
-#: version.rc:69
+#: version.rc:77
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "빈 페이지(&B)"
 
-#: version.rc:70
+#: version.rc:78
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "잘못된 암호.\n"
 
-#: version.rc:71
+#: version.rc:79
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:73
+#: version.rc:81
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "연결 재설정"
+
+#: version.rc:86 winemine.rc:65
+msgid "Advanced"
+msgstr "중급자"
+
+#: version.rc:89
+#, fuzzy
+#| msgid "Network share"
+msgid "Network settings"
+msgstr "네트워크 공유"
+
+#: version.rc:90
+#, fuzzy
+#| msgid "Bad impersonation level.\n"
+msgid "&Impersonation level:"
+msgstr "나쁜 가장 수준.\n"
+
+#: version.rc:92
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Connected"
+msgid "Connect:"
+msgstr "연결됨"
+
+#: version.rc:97
+#, fuzzy
+#| msgid "seconds"
+msgid "seconds."
+msgstr "초"
+
+#: version.rc:98
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "성공"
 
 #: version.rc:36
 #, fuzzy
@@ -8384,6 +8422,40 @@ msgstr "속성"
 #: version.rc:37
 msgid "OLE DB Provider(s)"
 msgstr ""
+
+#: version.rc:39
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "준비"
+
+#: version.rc:40
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "주의사항:"
+
+#: version.rc:41
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:42
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:43
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:45
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "I/O 쓰기"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -16354,10 +16426,6 @@ msgstr "최단 시간"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "초보자"
-
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "중급자"
 
 #: winemine.rc:66
 msgid "Expert"

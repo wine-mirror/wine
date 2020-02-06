@@ -354,7 +354,7 @@ msgstr ""
 msgid "< &Back"
 msgstr "< ה&קודם"
 
-#: comctl32.rc:85 version.rc:47
+#: comctl32.rc:85 version.rc:55
 msgid "&Next >"
 msgstr "ה&בא >"
 
@@ -1241,7 +1241,7 @@ msgstr "מ״מ"
 msgid "&User name:"
 msgstr "&שם המשתמש:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:67
+#: credui.rc:48 cryptui.rc:402 version.rc:75
 msgid "&Password:"
 msgstr "&ססמה:"
 
@@ -3124,7 +3124,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:94 wldap32.rc:112
 msgid "Other"
 msgstr "אחר"
 
@@ -3189,7 +3189,7 @@ msgstr "&עמוד הבית"
 msgid "&Stop"
 msgstr "ע&צירה"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&רענון"
 
@@ -8711,85 +8711,120 @@ msgstr "פעיל"
 msgid "Off"
 msgstr "כבוי"
 
-#: version.rc:42
+#: version.rc:50
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "וידאו"
 
-#: version.rc:45
+#: version.rc:53
 #, fuzzy
 msgid "Select the data you want to connect to:"
 msgstr "נא לציין את הקובץ אותו ברצונך לייבא."
 
-#: version.rc:52
+#: version.rc:60
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "Connection"
 msgstr "חיבור רשת מקומית"
 
-#: version.rc:55
+#: version.rc:63
 #, fuzzy
 msgid "Specify the following to connect to ODBC data:"
 msgstr "נא לציין את הקובץ אותו ברצונך לייבא."
 
-#: version.rc:56
+#: version.rc:64
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:57
+#: version.rc:65
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "נא להזין את שמך"
 
-#: version.rc:60
+#: version.rc:68
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "Reset Connections"
 
-#: version.rc:61
+#: version.rc:69
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "&Connection string:"
 msgstr "חיבור רשת מקומית"
 
-#: version.rc:63
+#: version.rc:71
 #, fuzzy
 msgid "B&uild..."
 msgstr "הו&ספה"
 
-#: version.rc:64
+#: version.rc:72
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:65
+#: version.rc:73
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "&שם המשתמש:"
 
-#: version.rc:69
+#: version.rc:77
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "עמוד &ריק"
 
-#: version.rc:70
+#: version.rc:78
 #, fuzzy
 msgid "Allow &saving password"
 msgstr "נא להזין ססמה.\n"
 
-#: version.rc:71
+#: version.rc:79
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:73
+#: version.rc:81
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "Reset Connections"
+
+#: version.rc:86 winemine.rc:65
+msgid "Advanced"
+msgstr "מתקדמים"
+
+#: version.rc:89
+#, fuzzy
+msgid "Network settings"
+msgstr "שיתוף רשת"
+
+#: version.rc:90
+msgid "&Impersonation level:"
+msgstr ""
+
+#: version.rc:92
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Disconnected"
+msgid "Connect:"
+msgstr "Disconnected"
+
+#: version.rc:97
+#, fuzzy
+#| msgid "&Seconds"
+msgid "seconds."
+msgstr "&שניות"
+
+#: version.rc:98
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "הצלחה"
 
 #: version.rc:36
 #, fuzzy
@@ -8800,6 +8835,40 @@ msgstr "מאפיינים"
 #: version.rc:37
 msgid "OLE DB Provider(s)"
 msgstr ""
+
+#: version.rc:39
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "מוכן"
+
+#: version.rc:40
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "מידע לקריאה:"
+
+#: version.rc:41
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:42
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:43
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:45
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "כתיבות קלט/פלט"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -16715,10 +16784,6 @@ msgstr "שיאים"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "מתחילים"
-
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "מתקדמים"
 
 #: winemine.rc:66
 msgid "Expert"

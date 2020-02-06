@@ -351,7 +351,7 @@ msgstr "Assistent"
 msgid "< &Back"
 msgstr "< &Enrere"
 
-#: comctl32.rc:85 version.rc:47
+#: comctl32.rc:85 version.rc:55
 msgid "&Next >"
 msgstr "&Següent >"
 
@@ -1225,7 +1225,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Nom d'usuari:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:67
+#: credui.rc:48 cryptui.rc:402 version.rc:75
 msgid "&Password:"
 msgstr "&Contrasenya:"
 
@@ -3129,7 +3129,7 @@ msgstr "Símbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:94 wldap32.rc:112
 msgid "Other"
 msgstr "Altra"
 
@@ -3194,7 +3194,7 @@ msgstr "&Inici"
 msgid "&Stop"
 msgstr "&Atura"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Actualitza"
 
@@ -8332,85 +8332,123 @@ msgstr "Actiu"
 msgid "Off"
 msgstr "Inactiu"
 
-#: version.rc:42
+#: version.rc:50
 msgid "Provider"
 msgstr "Proveïdor"
 
-#: version.rc:45
+#: version.rc:53
 msgid "Select the data you want to connect to:"
 msgstr "Seleccioneu les dades a les qualles voleu connectar:"
 
-#: version.rc:52
+#: version.rc:60
 #, fuzzy
 #| msgid "Connections"
 msgid "Connection"
 msgstr "Connexions"
 
-#: version.rc:55
+#: version.rc:63
 #, fuzzy
 #| msgid "Select the data you want to connect to:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Seleccioneu les dades a les qualles voleu connectar:"
 
-#: version.rc:56
+#: version.rc:64
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:57
+#: version.rc:65
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "Si us plau, introduïu el vostre nom"
 
-#: version.rc:60
+#: version.rc:68
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "Connexions restablertes"
 
-#: version.rc:61
+#: version.rc:69
 #, fuzzy
 #| msgid "Connections"
 msgid "&Connection string:"
 msgstr "Connexions"
 
-#: version.rc:63
+#: version.rc:71
 #, fuzzy
 #| msgid "A&dd..."
 msgid "B&uild..."
 msgstr "A&fegeix..."
 
-#: version.rc:64
+#: version.rc:72
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:65
+#: version.rc:73
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Nom d'usuari:"
 
-#: version.rc:69
+#: version.rc:77
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "Pàgina en &blanc"
 
-#: version.rc:70
+#: version.rc:78
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "La contrasenya està equivocada.\n"
 
-#: version.rc:71
+#: version.rc:79
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:73
+#: version.rc:81
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "Connexions restablertes"
+
+#: version.rc:86 winemine.rc:65
+msgid "Advanced"
+msgstr "Avançat"
+
+#: version.rc:89
+#, fuzzy
+#| msgid "Network share"
+msgid "Network settings"
+msgstr "Recurs compartit de xarxa"
+
+#: version.rc:90
+#, fuzzy
+#| msgid "Bad impersonation level.\n"
+msgid "&Impersonation level:"
+msgstr "El nivell de suplantació és dolent.\n"
+
+#: version.rc:92
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Connected"
+msgid "Connect:"
+msgstr "Connectat"
+
+#: version.rc:97
+#, fuzzy
+#| msgid "seconds"
+msgid "seconds."
+msgstr "segons"
+
+#: version.rc:98
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "Èxit"
 
 #: version.rc:36
 msgid "Data Link Properties"
@@ -8419,6 +8457,40 @@ msgstr "Propietats d'enllaç de dades"
 #: version.rc:37
 msgid "OLE DB Provider(s)"
 msgstr "Proveïdors de base de dades OLE"
+
+#: version.rc:39
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "Llest"
+
+#: version.rc:40
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "Llegiu-me:"
+
+#: version.rc:41
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:42
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:43
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:45
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "Escriptures d'E/S"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -16532,10 +16604,6 @@ msgstr "Millors temps"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Principiant"
-
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "Avançat"
 
 #: winemine.rc:66
 msgid "Expert"

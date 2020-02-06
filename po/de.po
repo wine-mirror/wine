@@ -349,7 +349,7 @@ msgstr "Assistent"
 msgid "< &Back"
 msgstr "< &Zurück"
 
-#: comctl32.rc:85 version.rc:47
+#: comctl32.rc:85 version.rc:55
 msgid "&Next >"
 msgstr "&Weiter >"
 
@@ -1223,7 +1223,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Benutzername:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:67
+#: credui.rc:48 cryptui.rc:402 version.rc:75
 msgid "&Password:"
 msgstr "&Kennwort:"
 
@@ -3118,7 +3118,7 @@ msgstr "Symbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:94 wldap32.rc:112
 msgid "Other"
 msgstr "Andere"
 
@@ -3183,7 +3183,7 @@ msgstr "St&art"
 msgid "&Stop"
 msgstr "&Stopp"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "A&ktualisieren"
 
@@ -8321,65 +8321,103 @@ msgstr "Ein"
 msgid "Off"
 msgstr "Aus"
 
-#: version.rc:42
+#: version.rc:50
 msgid "Provider"
 msgstr "Anbieter"
 
-#: version.rc:45
+#: version.rc:53
 msgid "Select the data you want to connect to:"
 msgstr "Wählen Sie die zu verbindenden Daten aus:"
 
-#: version.rc:52
+#: version.rc:60
 msgid "Connection"
 msgstr "Verbindung"
 
-#: version.rc:55
+#: version.rc:63
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Geben Sie folgendes an, um sich mit ODBC-Daten zu verbinden:"
 
-#: version.rc:56
+#: version.rc:64
 msgid "1. Specify the source of data:"
 msgstr "1. Geben Sie die Datenquelle an:"
 
-#: version.rc:57
+#: version.rc:65
 msgid "Use &data source name"
 msgstr "&Datenquellennamen verwenden"
 
-#: version.rc:60
+#: version.rc:68
 msgid "Use c&onnection string"
 msgstr "Verbindungs-Zeichenkette &verwenden"
 
-#: version.rc:61
+#: version.rc:69
 msgid "&Connection string:"
 msgstr "Verbindungs-&Zeichenkette:"
 
-#: version.rc:63
+#: version.rc:71
 msgid "B&uild..."
 msgstr "B&uild..."
 
-#: version.rc:64
+#: version.rc:72
 msgid "2. Enter information to log on to the server"
 msgstr "2. Zugangsdaten zum Login auf Server"
 
-#: version.rc:65
+#: version.rc:73
 msgid "User &name:"
 msgstr "&Benutzername:"
 
-#: version.rc:69
+#: version.rc:77
 msgid "&Blank password"
 msgstr "&Leeres Kennwort"
 
-#: version.rc:70
+#: version.rc:78
 msgid "Allow &saving password"
 msgstr "Kennwort &speichern"
 
-#: version.rc:71
+#: version.rc:79
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Folgenden Initialkatalog verwenden:"
 
-#: version.rc:73
+#: version.rc:81
 msgid "&Test Connection"
 msgstr "Verbindung &testen"
+
+#: version.rc:86 winemine.rc:65
+msgid "Advanced"
+msgstr "Fortgeschrittene"
+
+#: version.rc:89
+#, fuzzy
+#| msgid "Network share"
+msgid "Network settings"
+msgstr "Netzwerkfreigabe"
+
+#: version.rc:90
+#, fuzzy
+#| msgid "Bad impersonation level.\n"
+msgid "&Impersonation level:"
+msgstr "Fehlerhafte Imitationsstufe.\n"
+
+#: version.rc:92
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Connected"
+msgid "Connect:"
+msgstr "Verbunden"
+
+#: version.rc:97
+#, fuzzy
+#| msgid "seconds"
+msgid "seconds."
+msgstr "Sekunden"
+
+#: version.rc:98
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "Erfolgreich"
 
 #: version.rc:36
 msgid "Data Link Properties"
@@ -8388,6 +8426,40 @@ msgstr "Eigenschaften der Datenverbindung"
 #: version.rc:37
 msgid "OLE DB Provider(s)"
 msgstr "OLE DB-Anbieter"
+
+#: version.rc:39
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "Bereit"
+
+#: version.rc:40
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "Liesmich:"
+
+#: version.rc:41
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:42
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:43
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:45
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "E/A (Schreiben)"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -16487,10 +16559,6 @@ msgstr "Beste Zeiten"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Anfänger"
-
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "Fortgeschrittene"
 
 #: winemine.rc:66
 msgid "Expert"

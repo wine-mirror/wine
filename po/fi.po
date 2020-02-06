@@ -343,7 +343,7 @@ msgstr "Velho"
 msgid "< &Back"
 msgstr "< &Edellinen"
 
-#: comctl32.rc:85 version.rc:47
+#: comctl32.rc:85 version.rc:55
 msgid "&Next >"
 msgstr "&Seuraava >"
 
@@ -1216,7 +1216,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Käyttäjänimi:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:67
+#: credui.rc:48 cryptui.rc:402 version.rc:75
 msgid "&Password:"
 msgstr "&Salasana:"
 
@@ -3106,7 +3106,7 @@ msgstr "Symbolit"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:94 wldap32.rc:112
 msgid "Other"
 msgstr "Muu"
 
@@ -3171,7 +3171,7 @@ msgstr "&Alkuun"
 msgid "&Stop"
 msgstr "&Pysäytä"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:59 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "P&äivitä"
 
@@ -8302,65 +8302,103 @@ msgstr "Päällä"
 msgid "Off"
 msgstr "Pois päältä"
 
-#: version.rc:42
+#: version.rc:50
 msgid "Provider"
 msgstr "Tarjoaja"
 
-#: version.rc:45
+#: version.rc:53
 msgid "Select the data you want to connect to:"
 msgstr "Valitse tietolähde, johon haluat yhdistää:"
 
-#: version.rc:52
+#: version.rc:60
 msgid "Connection"
 msgstr "Yhteys"
 
-#: version.rc:55
+#: version.rc:63
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Määritä seuraavat, jotta voit yhdistää ODBC-tietolähteeseen:"
 
-#: version.rc:56
+#: version.rc:64
 msgid "1. Specify the source of data:"
 msgstr "1. Määritä tietolähde:"
 
-#: version.rc:57
+#: version.rc:65
 msgid "Use &data source name"
 msgstr "Käytä tietolähteen &nimeä"
 
-#: version.rc:60
+#: version.rc:68
 msgid "Use c&onnection string"
 msgstr "Syötä yhteysasetukset &merkkijonona"
 
-#: version.rc:61
+#: version.rc:69
 msgid "&Connection string:"
 msgstr "Yhteys&asetukset:"
 
-#: version.rc:63
+#: version.rc:71
 msgid "B&uild..."
 msgstr "&Luo..."
 
-#: version.rc:64
+#: version.rc:72
 msgid "2. Enter information to log on to the server"
 msgstr "2. Syötä palvelimen kirjautumistiedot"
 
-#: version.rc:65
+#: version.rc:73
 msgid "User &name:"
 msgstr "&Tunnus:"
 
-#: version.rc:69
+#: version.rc:77
 msgid "&Blank password"
 msgstr "&Ei salasanaa"
 
-#: version.rc:70
+#: version.rc:78
 msgid "Allow &saving password"
 msgstr "Sa&lli salasanan tallennus"
 
-#: version.rc:71
+#: version.rc:79
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Syötä ensiksi käytettävä &katalogi:"
 
-#: version.rc:73
+#: version.rc:81
 msgid "&Test Connection"
 msgstr "Testaa y&hteyttä"
+
+#: version.rc:86 winemine.rc:65
+msgid "Advanced"
+msgstr "Kehittynyt"
+
+#: version.rc:89
+#, fuzzy
+#| msgid "Network share"
+msgid "Network settings"
+msgstr "Verkkojako"
+
+#: version.rc:90
+#, fuzzy
+#| msgid "Bad impersonation level.\n"
+msgid "&Impersonation level:"
+msgstr "Tekeytymistaso ei kelpaa.\n"
+
+#: version.rc:92
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Connected"
+msgid "Connect:"
+msgstr "Yhdistetty"
+
+#: version.rc:97
+#, fuzzy
+#| msgid "seconds"
+msgid "seconds."
+msgstr "sekuntia"
+
+#: version.rc:98
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "Onnistui"
 
 #: version.rc:36
 msgid "Data Link Properties"
@@ -8369,6 +8407,40 @@ msgstr "Datayhteyden ominaisuudet"
 #: version.rc:37
 msgid "OLE DB Provider(s)"
 msgstr "OLE DB -tarjoaja(t)"
+
+#: version.rc:39
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "Valmis"
+
+#: version.rc:40
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "Ohjeet:"
+
+#: version.rc:41
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:42
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:43
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:45
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "I/O – kirjoituksia"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -16348,10 +16420,6 @@ msgstr "Nopeimmat ajat"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Aloittelija"
-
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "Kehittynyt"
 
 #: winemine.rc:66
 msgid "Expert"

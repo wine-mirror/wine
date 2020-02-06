@@ -380,11 +380,67 @@ static LRESULT CALLBACK data_link_connection_dlg_proc(HWND hwnd, UINT msg, WPARA
     return 0;
 }
 
+static void advanced_fill_permission_list(HWND parent)
+{
+    LVITEMW item;
+    LVCOLUMNW column;
+    RECT rc;
+    int resources[] = {IDS_PERM_READ, IDS_PERM_READWRITE, IDS_PERM_SHAREDENYNONE,
+                        IDS_PERM_SHAREDENYREAD, IDS_PERM_SHAREDENYWRITE, IDS_PERM_SHAREEXCLUSIVE,
+                        IDS_PERM_WRITE};
+    int i;
+    WCHAR buf[256];
+    HWND lv = GetDlgItem(parent, IDC_LST_PERMISSIONS);
+    if (!lv)
+        return;
+
+    SendMessageW(lv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_CHECKBOXES);
+    GetWindowRect(lv, &rc);
+    column.mask = LVCF_WIDTH | LVCF_FMT;
+    column.fmt = LVCFMT_FIXED_WIDTH;
+    column.cx = (rc.right - rc.left) - 25;
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+
+    for(i =0; i < ARRAY_SIZE(resources); i++)
+    {
+        item.mask = LVIF_TEXT;
+        item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+        item.iSubItem = 0;
+        LoadStringW(instance, resources[i], buf, ARRAY_SIZE(buf));
+        item.pszText = buf;
+        SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+    }
+}
+
+static LRESULT CALLBACK data_link_advanced_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            EnableWindow(GetDlgItem(hwnd, IDC_LBL_LEVEL), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_CBO_LEVEL), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_LBL_PROTECTION), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_CBO_PROTECTION), FALSE);
+
+            advanced_fill_permission_list(hwnd);
+
+            break;
+        }
+        default:
+            break;
+    }
+    return 0;
+}
+
 static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch **connection)
 {
     DSLocatorImpl *This = impl_from_IDataSourceLocator(iface);
     PROPSHEETHEADERW hdr;
-    PROPSHEETPAGEW pages[2];
+    PROPSHEETPAGEW pages[3];
     INT_PTR ret;
 
     FIXME("(%p, %p) Semi-stub\n", iface, connection);
@@ -405,6 +461,11 @@ static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch *
     pages[1].hInstance = instance;
     pages[1].u.pszTemplate = MAKEINTRESOURCEW(IDD_CONNECTION);
     pages[1].pfnDlgProc = data_link_connection_dlg_proc;
+
+    pages[2].dwSize = sizeof(PROPSHEETPAGEW);
+    pages[2].hInstance = instance;
+    pages[2].u.pszTemplate = MAKEINTRESOURCEW(IDD_ADVANCED);
+    pages[2].pfnDlgProc = data_link_advanced_dlg_proc;
 
     memset(&hdr, 0, sizeof(hdr));
     hdr.dwSize = sizeof(hdr);
