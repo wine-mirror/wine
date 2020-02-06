@@ -39,16 +39,17 @@ struct strmbase_pin
     IPin *peer;
     AM_MEDIA_TYPE mt;
 
-    const struct BasePinFuncTable* pFuncsTable;
+    const struct strmbase_pin_ops *ops;
 };
 
-typedef struct BasePinFuncTable {
+struct strmbase_pin_ops
+{
     /* Required for QueryAccept(), Connect(), ReceiveConnection(). */
     HRESULT (*pin_query_accept)(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt);
     /* Required for EnumMediaTypes(). */
     HRESULT (*pin_get_media_type)(struct strmbase_pin *pin, unsigned int index, AM_MEDIA_TYPE *mt);
     HRESULT (*pin_query_interface)(struct strmbase_pin *pin, REFIID iid, void **out);
-} BasePinFuncTable;
+};
 
 struct strmbase_source
 {
@@ -65,14 +66,14 @@ typedef HRESULT (WINAPI *BaseOutputPin_DecideAllocator)(struct strmbase_source *
 
 struct strmbase_source_ops
 {
-	BasePinFuncTable base;
+    struct strmbase_pin_ops base;
 
-        /* Required for Connect(). */
-        BaseOutputPin_AttemptConnection pfnAttemptConnection;
-	/* Required for BaseOutputPinImpl_DecideAllocator */
-	BaseOutputPin_DecideBufferSize pfnDecideBufferSize;
-	/* Required for BaseOutputPinImpl_AttemptConnection */
-	BaseOutputPin_DecideAllocator pfnDecideAllocator;
+    /* Required for Connect(). */
+    BaseOutputPin_AttemptConnection pfnAttemptConnection;
+    /* Required for BaseOutputPinImpl_DecideAllocator */
+    BaseOutputPin_DecideBufferSize pfnDecideBufferSize;
+    /* Required for BaseOutputPinImpl_AttemptConnection */
+    BaseOutputPin_DecideAllocator pfnDecideAllocator;
 };
 
 struct strmbase_sink
@@ -91,7 +92,7 @@ typedef HRESULT (WINAPI *BaseInputPin_Receive)(struct strmbase_sink *This, IMedi
 
 struct strmbase_sink_ops
 {
-    BasePinFuncTable base;
+    struct strmbase_pin_ops base;
     BaseInputPin_Receive pfnReceive;
     HRESULT (*sink_connect)(struct strmbase_sink *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
     void (*sink_disconnect)(struct strmbase_sink *pin);

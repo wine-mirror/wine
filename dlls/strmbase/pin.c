@@ -57,7 +57,7 @@ static HRESULT enum_media_types_create(struct strmbase_pin *pin, IEnumMediaTypes
     object->pin = pin;
     IPin_AddRef(&pin->IPin_iface);
 
-    while (pin->pFuncsTable->pin_get_media_type(pin, object->count, &mt) == S_OK)
+    while (pin->ops->pin_get_media_type(pin, object->count, &mt) == S_OK)
     {
         FreeMediaType(&mt);
         ++object->count;
@@ -124,7 +124,7 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
     for (i = 0; i < count; ++i)
     {
         if ((mts[i] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
-            hr = enummt->pin->pFuncsTable->pin_get_media_type(enummt->pin, enummt->index + i, mts[i]);
+            hr = enummt->pin->ops->pin_get_media_type(enummt->pin, enummt->index + i, mts[i]);
         else
             hr = E_OUTOFMEMORY;
         if (FAILED(hr))
@@ -169,7 +169,7 @@ static HRESULT WINAPI enum_media_types_Reset(IEnumMediaTypes *iface)
     TRACE("enummt %p.\n", enummt);
 
     enummt->count = 0;
-    while (enummt->pin->pFuncsTable->pin_get_media_type(enummt->pin, enummt->count, &mt) == S_OK)
+    while (enummt->pin->ops->pin_get_media_type(enummt->pin, enummt->count, &mt) == S_OK)
     {
         FreeMediaType(&mt);
         ++enummt->count;
@@ -267,8 +267,7 @@ static HRESULT WINAPI pin_QueryInterface(IPin *iface, REFIID iid, void **out)
 
     *out = NULL;
 
-    if (pin->pFuncsTable->pin_query_interface
-            && SUCCEEDED(hr = pin->pFuncsTable->pin_query_interface(pin, iid, out)))
+    if (pin->ops->pin_query_interface && SUCCEEDED(hr = pin->ops->pin_query_interface(pin, iid, out)))
         return hr;
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IPin))
@@ -392,7 +391,7 @@ static HRESULT WINAPI pin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
     TRACE("pin %p %s:%s, mt %p.\n", pin, debugstr_w(pin->filter->name), debugstr_w(pin->name), mt);
     strmbase_dump_media_type(mt);
 
-    return (pin->pFuncsTable->pin_query_accept(pin, mt) == S_OK ? S_OK : S_FALSE);
+    return (pin->ops->pin_query_accept(pin, mt) == S_OK ? S_OK : S_FALSE);
 }
 
 static HRESULT WINAPI pin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)
@@ -404,7 +403,7 @@ static HRESULT WINAPI pin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_med
     TRACE("pin %p %s:%s, enum_media_types %p.\n", pin, debugstr_w(pin->filter->name),
             debugstr_w(pin->name), enum_media_types);
 
-    if (FAILED(hr = pin->pFuncsTable->pin_get_media_type(pin, 0, &mt)))
+    if (FAILED(hr = pin->ops->pin_get_media_type(pin, 0, &mt)))
         return hr;
     if (hr == S_OK)
         FreeMediaType(&mt);
@@ -791,7 +790,7 @@ void strmbase_source_init(struct strmbase_source *pin, struct strmbase_filter *f
     pin->pin.filter = filter;
     pin->pin.dir = PINDIR_OUTPUT;
     lstrcpyW(pin->pin.name, name);
-    pin->pin.pFuncsTable = &func_table->base;
+    pin->pin.ops = &func_table->base;
     pin->pFuncsTable = func_table;
 }
 
@@ -844,7 +843,7 @@ static HRESULT WINAPI sink_ReceiveConnection(IPin *iface, IPin *pReceivePin, con
         if (This->pin.peer)
             hr = VFW_E_ALREADY_CONNECTED;
 
-        if (SUCCEEDED(hr) && This->pin.pFuncsTable->pin_query_accept(&This->pin, pmt) != S_OK)
+        if (SUCCEEDED(hr) && This->pin.ops->pin_query_accept(&This->pin, pmt) != S_OK)
             hr = VFW_E_TYPE_NOT_ACCEPTED; /* FIXME: shouldn't we just map common errors onto
                                            * VFW_E_TYPE_NOT_ACCEPTED and pass the value on otherwise? */
 
@@ -1171,7 +1170,7 @@ void strmbase_sink_init(struct strmbase_sink *pin, struct strmbase_filter *filte
     pin->pin.filter = filter;
     pin->pin.dir = PINDIR_INPUT;
     lstrcpyW(pin->pin.name, name);
-    pin->pin.pFuncsTable = &func_table->base;
+    pin->pin.ops = &func_table->base;
     pin->pFuncsTable = func_table;
     pin->pAllocator = pin->preferred_allocator = allocator;
     if (pin->preferred_allocator)
