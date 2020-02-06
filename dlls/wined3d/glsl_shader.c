@@ -3125,7 +3125,7 @@ static void shader_glsl_get_swizzle(const struct wined3d_shader_src_param *param
 }
 
 static void shader_glsl_sprintf_cast(struct wined3d_string_buffer *dst_param, const char *src_param,
-        enum wined3d_data_type dst_data_type, enum wined3d_data_type src_data_type)
+        enum wined3d_data_type dst_data_type, enum wined3d_data_type src_data_type, unsigned int size)
 {
     if (dst_data_type == src_data_type)
     {
@@ -3156,10 +3156,22 @@ static void shader_glsl_sprintf_cast(struct wined3d_string_buffer *dst_param, co
         return;
     }
 
-    if (src_data_type == WINED3D_DATA_INT && dst_data_type == WINED3D_DATA_FLOAT)
+    if (src_data_type == WINED3D_DATA_INT)
     {
-        string_buffer_sprintf(dst_param, "intBitsToFloat(%s)", src_param);
-        return;
+        switch (dst_data_type)
+        {
+            case WINED3D_DATA_FLOAT:
+                string_buffer_sprintf(dst_param, "intBitsToFloat(%s)", src_param);
+                return;
+            case WINED3D_DATA_UINT:
+                if (size == 1)
+                    string_buffer_sprintf(dst_param, "uint(%s)", src_param);
+                else
+                    string_buffer_sprintf(dst_param, "uvec%u(%s)", size, src_param);
+                return;
+            default:
+                break;
+        }
     }
 
     FIXME("Unhandled cast from %#x to %#x.\n", src_data_type, dst_data_type);
@@ -3179,6 +3191,7 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_context *c
     enum wined3d_data_type param_data_type;
     BOOL is_color = FALSE;
     char swizzle_str[6];
+    unsigned int size;
 
     glsl_src->param_str[0] = '\0';
     swizzle_str[0] = '\0';
@@ -3190,24 +3203,30 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_context *c
     {
         case WINED3DSPR_IMMCONST:
             param_data_type = data_type;
+            size = wined3d_src->reg.immconst_type == WINED3D_IMMCONST_SCALAR ? 1 : 4;
             break;
         case WINED3DSPR_FORKINSTID:
         case WINED3DSPR_GSINSTID:
         case WINED3DSPR_JOININSTID:
-        case WINED3DSPR_LOCALTHREADID:
         case WINED3DSPR_LOCALTHREADINDEX:
         case WINED3DSPR_OUTPOINTID:
         case WINED3DSPR_PRIMID:
+            param_data_type = WINED3D_DATA_INT;
+            size = 1;
+            break;
+        case WINED3DSPR_LOCALTHREADID:
         case WINED3DSPR_THREADGROUPID:
         case WINED3DSPR_THREADID:
             param_data_type = WINED3D_DATA_INT;
+            size = 3;
             break;
         default:
             param_data_type = WINED3D_DATA_FLOAT;
+            size = 4;
             break;
     }
 
-    shader_glsl_sprintf_cast(param_str, reg_name->buffer, data_type, param_data_type);
+    shader_glsl_sprintf_cast(param_str, reg_name->buffer, data_type, param_data_type, size);
     shader_glsl_gen_modifier(wined3d_src->modifiers, param_str->buffer, swizzle_str, glsl_src->param_str);
 
     string_buffer_release(priv->string_buffers, reg_name);
@@ -7520,7 +7539,7 @@ static void shader_glsl_generate_color_output(struct wined3d_string_buffer *buff
             dst_data_type = component_type_info[output->component_type].data_type;
             shader_addline(buffer, "color_out%u = ", output->semantic_idx);
             string_buffer_sprintf(src, "ps_out[%u]", output->semantic_idx);
-            shader_glsl_sprintf_cast(assignment, src->buffer, dst_data_type, WINED3D_DATA_FLOAT);
+            shader_glsl_sprintf_cast(assignment, src->buffer, dst_data_type, WINED3D_DATA_FLOAT, 4);
             swizzle = args->rt_alpha_swizzle & (1u << output->semantic_idx) ? ".argb" : "";
             shader_addline(buffer, "%s%s;\n", assignment->buffer, swizzle);
         }
