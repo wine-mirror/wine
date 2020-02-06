@@ -23,6 +23,7 @@
 
 #define IDB_BITMAP_128x15       10
 #define IDB_BITMAP_80x15        11
+#define IDB_BITMAP_1x1_32BPP    12
 
 #define IDS_TBADD1      16
 #define IDS_TBADD2      17
