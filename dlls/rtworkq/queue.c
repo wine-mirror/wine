@@ -1092,3 +1092,10 @@ HRESULT WINAPI RtwqSetLongRunning(DWORD queue_id, BOOL enable)
 
     return hr;
 }
+
+HRESULT WINAPI RtwqLockSharedWorkQueue(const WCHAR *usageclass, LONG priority, DWORD *taskid, DWORD *queue)
+{
+    FIXME("%s, %d, %p, %p.\n", debugstr_w(usageclass), priority, taskid, queue);
+
+    return RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, queue);
+}

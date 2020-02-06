@@ -16,7 +16,7 @@
 @ stdcall RtwqInvokeCallback(ptr)
 @ stub RtwqJoinWorkQueue
 @ stdcall RtwqLockPlatform()
-@ stub RtwqLockSharedWorkQueue
+@ stdcall RtwqLockSharedWorkQueue(wstr long ptr ptr)
 @ stdcall RtwqLockWorkQueue(long)
 @ stub RtwqPutMultipleWaitingWorkItem
 @ stdcall RtwqPutWaitingWorkItem(long long ptr ptr)
