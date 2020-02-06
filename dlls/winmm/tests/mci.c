@@ -163,13 +163,6 @@ static void test_notification_dbg(HWND hwnd, const char* command, WPARAM type, i
     else ok_(__FILE__,line)(msg.wParam == type, "got %04lx instead of MCI_NOTIFY_xyz %04lx from command %s\n", msg.wParam, type, command);
 }
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
-    return lstrcmpA(buf, stra);
-}
-
 static void test_mciParser(HWND hwnd)
 {
     MCIERROR err;
@@ -464,7 +457,7 @@ static void test_openCloseWAVE(HWND hwnd)
     /* MCI_..._PARMSA and PARMSW share the same layout, use one for both tests. */
     err = mciSendCommandW(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
     ok(!err || broken(err==MMSYSERR_NOTSUPPORTED/* Win9x */), "mciCommandW MCI_SYSINFO all name 1 open buffer[8]: %s\n", dbg_mcierr(err));
-    if(!err) ok(!strcmp_wa((LPWSTR)buf,"mysound"), "sysinfo name 1 open contents\n");
+    if (!err) ok(!lstrcmpW((LPWSTR)buf, L"mysound"), "sysinfo name 1 open contents\n");
 
     memset(buf, 0, sizeof(buf));
     buf[0] = 'Y';
