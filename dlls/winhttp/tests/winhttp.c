@@ -43,22 +43,6 @@ static const WCHAR test_winehq[] = {'t','e','s','t','.','w','i','n','e','h','q',
 static const WCHAR test_winehq_https[] = {'h','t','t','p','s',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',':','4','4','3',0};
 static const WCHAR localhostW[] = {'l','o','c','a','l','h','o','s','t',0};
 
-static WCHAR *a2w(const char *str)
-{
-    int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    WCHAR *ret = heap_alloc(len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    return ret;
-}
-
-static int strcmp_wa(const WCHAR *str1, const char *stra)
-{
-    WCHAR *str2 = a2w(stra);
-    int r = lstrcmpW(str1, str2);
-    heap_free(str2);
-    return r;
-}
-
 static BOOL proxy_active(void)
 {
     WINHTTP_PROXY_INFO proxy_info;
@@ -2869,7 +2853,7 @@ static void test_multi_authentication(int port)
     size = sizeof(buf);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_CUSTOM, www_authenticateW, buf, &size, &index);
     ok(ret, "expected success\n");
-    ok(!strcmp_wa(buf, "Bearer"), "buf = %s\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L"Bearer"), "buf = %s\n", wine_dbgstr_w(buf));
     ok(size == lstrlenW(buf) * sizeof(WCHAR), "size = %u\n", size);
     ok(index == 1, "index = %u\n", index);
 
