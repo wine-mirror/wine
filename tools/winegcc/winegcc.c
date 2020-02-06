@@ -865,10 +865,12 @@ static strarray *get_winebuild_args(struct options *opts)
         binary = opts->winebuild;
     else if (opts->wine_objdir)
         binary = strmake( "%s/tools/winebuild/winebuild%s", opts->wine_objdir, EXEEXT );
+    else if (winebuild)
+        binary = find_binary( opts->prefix, winebuild );
     else if (bindir)
         binary = strmake( "%s/winebuild%s", bindir, EXEEXT );
     else
-        binary = find_binary( opts->prefix, winebuild ? winebuild : "winebuild" );
+        binary = find_binary( opts->prefix, "winebuild" );
     strarray_add( spec_args, binary );
     if (verbose) strarray_add( spec_args, "-v" );
     if (keep_generated) strarray_add( spec_args, "--save-temps" );
