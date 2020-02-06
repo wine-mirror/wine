@@ -247,12 +247,6 @@ static HRESULT SendFurther(struct strmbase_sink *sink, SendPinFunc func, void *a
     return hr;
 }
 
-static BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards)
-{
-    return (((bWildcards && (IsEqualGUID(&pmt1->majortype, &GUID_NULL) || IsEqualGUID(&pmt2->majortype, &GUID_NULL))) || IsEqualGUID(&pmt1->majortype, &pmt2->majortype)) &&
-            ((bWildcards && (IsEqualGUID(&pmt1->subtype, &GUID_NULL)   || IsEqualGUID(&pmt2->subtype, &GUID_NULL)))   || IsEqualGUID(&pmt1->subtype, &pmt2->subtype)));
-}
-
 HRESULT strmbase_pin_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
     return VFW_S_NO_MORE_ITEMS;
@@ -428,6 +422,24 @@ static inline struct strmbase_source *impl_source_from_IPin( IPin *iface )
     return CONTAINING_RECORD(iface, struct strmbase_source, pin.IPin_iface);
 }
 
+static BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
+{
+    if (!a)
+        return TRUE;
+
+    if (!IsEqualGUID(&a->majortype, &b->majortype)
+            && !IsEqualGUID(&a->majortype, &GUID_NULL)
+            && !IsEqualGUID(&b->majortype, &GUID_NULL))
+        return FALSE;
+
+    if (!IsEqualGUID(&a->subtype, &b->subtype)
+            && !IsEqualGUID(&a->subtype, &GUID_NULL)
+            && !IsEqualGUID(&b->subtype, &GUID_NULL))
+        return FALSE;
+
+    return TRUE;
+}
+
 static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
 {
     struct strmbase_source *pin = impl_source_from_IPin(iface);
@@ -468,7 +480,7 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
     for (i = 0; pin->pFuncsTable->base.pin_get_media_type(&pin->pin, i, &candidate) == S_OK; ++i)
     {
         strmbase_dump_media_type(&candidate);
-        if ((!mt || CompareMediaTypes(mt, &candidate, TRUE))
+        if (compare_media_types(mt, &candidate)
                 && pin->pFuncsTable->pfnAttemptConnection(pin, peer, &candidate) == S_OK)
         {
             LeaveCriticalSection(&pin->pin.filter->csFilter);
@@ -482,7 +494,7 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
     {
         while (IEnumMediaTypes_Next(enummt, 1, &candidate_ptr, &count) == S_OK)
         {
-            if ((!mt || CompareMediaTypes(mt, candidate_ptr, TRUE))
+            if (compare_media_types(mt, candidate_ptr)
                     && pin->pFuncsTable->pfnAttemptConnection(pin, peer, candidate_ptr) == S_OK)
             {
                 LeaveCriticalSection(&pin->pin.filter->csFilter);
