@@ -126,6 +126,7 @@ FILE *yyin;
 
 static enum
 {
+    FORMAT_UNKNOWN,
     FORMAT_RC,
     FORMAT_RES,
     FORMAT_POT
@@ -287,6 +288,15 @@ int main(int argc,char *argv[])
 		input_name = argv[optind];
 	}
 
+        /* Guess output format */
+        if (output_format == FORMAT_UNKNOWN)
+        {
+            if (output_name && strendswith( output_name, ".res" )) output_format = FORMAT_RES;
+            else if (output_name && strendswith( output_name, ".pot" )) output_format = FORMAT_POT;
+            else output_format = FORMAT_RC;
+        }
+        if (output_format == FORMAT_RES) unicodeout = 1;
+
 	/* Generate appropriate outfile names */
 	if(!output_name)
 	{
@@ -339,6 +349,8 @@ int main(int argc,char *argv[])
             break;
         case FORMAT_POT:
             write_pot_file( output_name );
+            break;
+        default:
             break;
         }
 	output_name = NULL;

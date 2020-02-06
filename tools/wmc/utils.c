@@ -200,6 +200,13 @@ char *strmake( const char* fmt, ... )
     }
 }
 
+int strendswith( const char *str, const char *end )
+{
+    int l = strlen(str);
+    int m = strlen(end);
+    return l >= m && !strcmp( str + l - m, end );
+}
+
 int unistrlen(const WCHAR *s)
 {
 	int n;

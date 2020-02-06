@@ -2757,11 +2757,15 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
 static void output_source_mc( struct makefile *make, struct incl_file *source, const char *obj )
 {
     unsigned int i;
+    char *obj_path = obj_dir_path( make, obj );
 
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
     strarray_add( &make->clean_files, strmake( "%s.pot", obj ));
-    output( "%s.res: %s\n", obj_dir_path( make, obj ), source->filename );
-    output( "\t%s -U -O res -o $@ %s", tools_path( make, "wmc" ), source->filename );
+    output( "%s.pot %s.res: %s", obj_path, obj_path, source->filename );
+    output_filename( tools_path( make, "wmc" ));
+    output_filenames( source->dependencies );
+    output( "\n" );
+    output( "\t%s -u -o $@ %s", tools_path( make, "wmc" ), source->filename );
     if (linguas.count)
     {
         char *po_dir = top_obj_dir_path( make, "po" );
@@ -2771,13 +2775,6 @@ static void output_source_mc( struct makefile *make, struct incl_file *source, c
         for (i = 0; i < linguas.count; i++)
             output_filename( strmake( "%s/%s.mo", po_dir, linguas.str[i] ));
     }
-    output( "\n" );
-    output( "%s.pot: %s\n", obj_dir_path( make, obj ), source->filename );
-    output( "\t%s -O pot -o $@ %s", tools_path( make, "wmc" ), source->filename );
-    output( "\n" );
-    output( "%s.pot %s.res:", obj_dir_path( make, obj ), obj_dir_path( make, obj ));
-    output_filename( tools_path( make, "wmc" ));
-    output_filenames( source->dependencies );
     output( "\n" );
 }
 
