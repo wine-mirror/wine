@@ -94,11 +94,6 @@ int pedantic = 0;
 int unicodein = 0;
 
 /*
- * Unicode output (-U option)
- */
-int unicodeout = 0;
-
-/*
  * Inline the messagetables (don't write *.bin files; -i option)
  */
 int rcinline = 0;
@@ -249,8 +244,7 @@ int main(int argc,char *argv[])
 		case 'u':
 			unicodein = 1;
 			break;
-		case 'U':
-			unicodeout = 1;
+		case 'U':  /* ignored for backwards compatibility */
 			break;
 		case 'v':
 			show_languages();
@@ -295,7 +289,6 @@ int main(int argc,char *argv[])
             else if (output_name && strendswith( output_name, ".pot" )) output_format = FORMAT_POT;
             else output_format = FORMAT_RC;
         }
-        if (output_format == FORMAT_RES) unicodeout = 1;
 
 	/* Generate appropriate outfile names */
 	if(!output_name)

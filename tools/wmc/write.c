@@ -306,131 +306,67 @@ static void write_rcbin(FILE *fp)
 	}
 }
 
-static char *make_string(WCHAR *uc, int len, int codepage)
+static char *make_string(WCHAR *uc, int len)
 {
-	char *str = xmalloc(7*len + 1);
-	char *cptr = str;
-	int i;
-	int b;
+    char *str = xmalloc(7*len + 12);
+    char *cptr = str;
+    int i;
+    int b;
 
-	if (!codepage || codepage == CP_UTF8)
-	{
-		*cptr++ = ' ';
-		*cptr++ = 'L';
-		*cptr++ = '"';
-		for(i = b = 0; i < len; i++, uc++)
-		{
-                        switch(*uc)
-                        {
-                        case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
-                        case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
-                        case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
-                        case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
-                        case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
-                        case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
-                        case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
-                        case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
-                        case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
-                        default:
-                            if (*uc < 0x100 && isprint(*uc))
-                            {
-                                *cptr++ = *uc;
-                                b++;
-                            }
-                            else
-                            {
-                                int n = sprintf(cptr, "\\x%04x", *uc & 0xffff);
-                                cptr += n;
-                                b += n;
-                            }
-                            break;
-                        }
-			if(i < len-1 && b >= 72)
-			{
-				*cptr++ = '"';
-				*cptr++ = ',';
-				*cptr++ = '\n';
-				*cptr++ = ' ';
-				*cptr++ = 'L';
-				*cptr++ = '"';
-				b = 0;
-			}
-		}
-		if (unicodeout)
-		    len = (len + 1) & ~1;
-		else
-		    len = (len + 3) & ~3;
-		for(; i < len; i++)
-		{
-			*cptr++ = '\\';
-			*cptr++ = 'x';
-			*cptr++ = '0';
-			*cptr++ = '0';
-			*cptr++ = '0';
-			*cptr++ = '0';
-		}
-		*cptr++ = '"';
-		*cptr = '\0';
-	}
-	else
-	{
-		char *tmp, *cc;
-		int unilen = unistrlen(uc) + 1;
-
-		cc = tmp = xmalloc( unilen * 2 );
-		wmc_wcstombs( codepage, 0, uc, unilen, cptr, unilen * 2 );
-		*cptr++ = ' ';
-		*cptr++ = '"';
-		for(i = b = 0; i < len; i++, cc++)
-		{
-                        switch(*cc)
-                        {
-                        case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
-                        case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
-                        case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
-                        case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
-                        case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
-                        case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
-                        case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
-                        case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
-                        case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
-                        default:
-                            if(isprint(*cc))
-                            {
-                                *cptr++ = *cc;
-                                b++;
-                            }
-                            else
-                            {
-                                int n = sprintf(cptr, "\\x%02x", *cc & 0xff);
-                                cptr += n;
-                                b += n;
-                            }
-                            break;
-			}
-			if(i < len-1 && b >= 72)
-			{
-				*cptr++ = '"';
-				*cptr++ = ',';
-				*cptr++ = '\n';
-				*cptr++ = ' ';
-				*cptr++ = '"';
-				b = 0;
-			}
-		}
-		len = (len + 3) & ~3;
-		for(; i < len; i++)
-		{
-			*cptr++ = '\\';
-			*cptr++ = 'x';
-			*cptr++ = '0';
-			*cptr++ = '0';
-		}
-		*cptr++ = '"';
-		*cptr = '\0';
-		free(tmp);
-	}
-	return str;
+    *cptr++ = ' ';
+    *cptr++ = 'L';
+    *cptr++ = '"';
+    for(i = b = 0; i < len; i++, uc++)
+    {
+        switch(*uc)
+        {
+        case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
+        case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
+        case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
+        case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
+        case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
+        case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
+        case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
+        case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
+        case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
+        default:
+            if (*uc < 0x100 && isprint(*uc))
+            {
+                *cptr++ = *uc;
+                b++;
+            }
+            else
+            {
+                int n = sprintf(cptr, "\\x%04x", *uc);
+                cptr += n;
+                b += n;
+            }
+            break;
+        }
+        if(i < len-1 && b >= 72)
+        {
+            *cptr++ = '"';
+            *cptr++ = ',';
+            *cptr++ = '\n';
+            *cptr++ = ' ';
+            *cptr++ = 'L';
+            *cptr++ = '"';
+            b = 0;
+        }
+    }
+    len = (len + 1) & ~1;
+    for(; i < len; i++)
+    {
+        *cptr++ = '\\';
+        *cptr++ = 'x';
+        *cptr++ = '0';
+        *cptr++ = '0';
+        *cptr++ = '0';
+        *cptr++ = '0';
+    }
+    *cptr++ = '"';
+    *cptr = '\0';
+    return str;
 }
 
 static void write_rcinline(FILE *fp)
@@ -462,11 +398,9 @@ static void write_rcinline(FILE *fp)
 				char *cptr;
 				int l = blk->msgs[j]->len;
 				const char *comma = j == blk->nmsg-1  && i == lbp->nblk-1 ? "" : ",";
-				cptr = make_string(blk->msgs[j]->msg, l, unicodeout ? 0 : blk->msgs[j]->cp);
-				fprintf(fp, "\n /* Msg 0x%08x */ 0x%04x, 0x000%c,\n",
-					blk->idlo + j,
-					(unicodeout ? (l*2+3)&~3 : (l+3)&~3) + 4,
-					unicodeout ? '1' : '0');
+				cptr = make_string(blk->msgs[j]->msg, l);
+				fprintf(fp, "\n /* Msg 0x%08x */ 0x%04x, 0x0001,\n",
+					blk->idlo + j, ((l * 2 + 3) & ~3) + 4 );
 				fprintf(fp, "%s%s\n", cptr, comma);
 				free(cptr);
 			}

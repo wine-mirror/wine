@@ -42,7 +42,6 @@ extern int byteorder;
 extern int decimal;
 extern int custombit;
 extern int unicodein;
-extern int unicodeout;
 extern int rcinline;
 
 extern char *output_name;

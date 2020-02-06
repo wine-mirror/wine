@@ -59,10 +59,8 @@ gettext convention, in particular in must contain one \fI.po\fR file for
 each language, and a LINGUAS file listing the available languages.
 .TP
 .B \-u
-Assume that the inputfile is in unicode.
-.TP
-.B \-U
-Write resource output in unicode formatted messagetable(s).
+Assume that the input file is in Unicode or UTF-8 format and skip
+codepage conversions.
 .TP
 .B \-v
 Show all supported codepages and languages.

@@ -188,14 +188,6 @@ const language_t *find_language(unsigned id)
 
 #ifdef _WIN32
 
-static BOOL CALLBACK proc( char *cp )
-{
-    CPINFOEXA info;
-    GetCPInfoExA( atoi(cp), 0, &info );
-    printf("%-5s %s\n", cp, info.CodePageName );
-    return TRUE;
-}
-
 int is_valid_codepage(int id)
 {
     return IsValidCodePage( id );
@@ -204,11 +196,6 @@ int is_valid_codepage(int id)
 int wmc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
     return MultiByteToWideChar( codepage, flags, src, srclen, dst, dstlen );
-}
-
-int wmc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
-{
-    return WideCharToMultiByte( codepage, flags, src, srclen, dst, dstlen, NULL, NULL );
 }
 
 #else  /* _WIN32 */
@@ -223,11 +210,6 @@ int is_valid_codepage(int id)
 int wmc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
     return wine_cp_mbstowcs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen );
-}
-
-int wmc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
-{
-    return wine_cp_wcstombs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen, NULL, NULL );
 }
 
 #endif  /* _WIN32 */
