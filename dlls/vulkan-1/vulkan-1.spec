@@ -158,9 +158,9 @@
 @ stdcall vkGetBufferMemoryRequirements(ptr int64 ptr) winevulkan.wine_vkGetBufferMemoryRequirements
 @ stdcall vkGetBufferMemoryRequirements2(ptr ptr ptr) winevulkan.wine_vkGetBufferMemoryRequirements2
 @ stdcall vkGetDescriptorSetLayoutSupport(ptr ptr ptr) winevulkan.wine_vkGetDescriptorSetLayoutSupport
-@ stdcall vkGetDeviceGroupPeerMemoryFeatures(ptr long long long long) winevulkan.wine_vkGetDeviceGroupPeerMemoryFeatures
+@ stdcall vkGetDeviceGroupPeerMemoryFeatures(ptr long long long ptr) winevulkan.wine_vkGetDeviceGroupPeerMemoryFeatures
 @ stdcall vkGetDeviceGroupPresentCapabilitiesKHR(ptr ptr) winevulkan.wine_vkGetDeviceGroupPresentCapabilitiesKHR
-@ stdcall vkGetDeviceGroupSurfacePresentModesKHR(ptr int64 long) winevulkan.wine_vkGetDeviceGroupSurfacePresentModesKHR
+@ stdcall vkGetDeviceGroupSurfacePresentModesKHR(ptr int64 ptr) winevulkan.wine_vkGetDeviceGroupSurfacePresentModesKHR
 @ stdcall vkGetDeviceMemoryCommitment(ptr int64 ptr) winevulkan.wine_vkGetDeviceMemoryCommitment
 @ stdcall vkGetDeviceProcAddr(ptr str) winevulkan.wine_vkGetDeviceProcAddr
 @ stdcall vkGetDeviceQueue(ptr long long ptr) winevulkan.wine_vkGetDeviceQueue
@@ -198,7 +198,7 @@
 @ stdcall vkGetPhysicalDeviceSparseImageFormatProperties2(ptr ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceSparseImageFormatProperties2
 @ stdcall vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ptr int64 ptr) winevulkan.wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR
 @ stdcall vkGetPhysicalDeviceSurfaceFormatsKHR(ptr int64 ptr ptr) winevulkan.wine_vkGetPhysicalDeviceSurfaceFormatsKHR
-@ stdcall vkGetPhysicalDeviceSurfacePresentModesKHR(ptr int64 ptr long) winevulkan.wine_vkGetPhysicalDeviceSurfacePresentModesKHR
+@ stdcall vkGetPhysicalDeviceSurfacePresentModesKHR(ptr int64 ptr ptr) winevulkan.wine_vkGetPhysicalDeviceSurfacePresentModesKHR
 @ stdcall vkGetPhysicalDeviceSurfaceSupportKHR(ptr long int64 ptr) winevulkan.wine_vkGetPhysicalDeviceSurfaceSupportKHR
 @ stdcall vkGetPhysicalDeviceWin32PresentationSupportKHR(ptr long) winevulkan.wine_vkGetPhysicalDeviceWin32PresentationSupportKHR
 @ stdcall vkGetPipelineCacheData(ptr int64 ptr ptr) winevulkan.wine_vkGetPipelineCacheData

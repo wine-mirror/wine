@@ -1491,12 +1491,12 @@ class VkParam(object):
     def spec(self):
         """ Generate spec file entry for this parameter. """
 
-        if self.type_info["category"] in ["bitmask", "enum"]:
-            return "long"
         if self.is_pointer() and self.type == "char":
             return "str"
         if self.is_dispatchable() or self.is_pointer() or self.is_static_array():
             return "ptr"
+        if self.type_info["category"] in ["bitmask", "enum"]:
+            return "long"
         if self.is_handle() and not self.is_dispatchable():
             return "int64"
         if self.type == "float":
