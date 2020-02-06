@@ -57,13 +57,6 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
 }
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
-}
-
 static void test_PSStringFromPropertyKey(void)
 {
     static const WCHAR fillerW[] = {'X','X','X','X','X','X','X','X','X','X','X','X','X','X','X','X','X','X','X','X',
@@ -479,10 +472,10 @@ static void test_InitPropVariantFromGUIDAsString(void)
 
     const struct {
         REFGUID guid;
-        const char *str;
+        const WCHAR *str;
     } testcases[] = {
-        {&IID_NULL,             "{00000000-0000-0000-0000-000000000000}" },
-        {&dummy_guid,           "{DEADBEEF-DEAD-BEEF-DEAD-BEEFCAFEBABE}" },
+        {&IID_NULL,             L"{00000000-0000-0000-0000-000000000000}" },
+        {&dummy_guid,           L"{DEADBEEF-DEAD-BEEF-DEAD-BEEFCAFEBABE}" },
     };
 
     hres = InitPropVariantFromGUIDAsString(NULL, &propvar);
@@ -502,7 +495,7 @@ static void test_InitPropVariantFromGUIDAsString(void)
         hres = InitPropVariantFromGUIDAsString(testcases[i].guid, &propvar);
         ok(hres == S_OK, "%d) InitPropVariantFromGUIDAsString returned %x\n", i, hres);
         ok(propvar.vt == VT_LPWSTR, "%d) propvar.vt = %d\n", i, propvar.vt);
-        ok(!strcmp_wa(propvar.u.pwszVal, testcases[i].str), "%d) propvar.u.pwszVal = %s\n",
+        ok(!lstrcmpW(propvar.u.pwszVal, testcases[i].str), "%d) propvar.u.pwszVal = %s\n",
                 i, wine_dbgstr_w(propvar.u.pwszVal));
         CoTaskMemFree(propvar.u.pwszVal);
 
@@ -512,7 +505,7 @@ static void test_InitPropVariantFromGUIDAsString(void)
         ok(V_VT(&var) == VT_BSTR, "%d) V_VT(&var) = %d\n", i, V_VT(&var));
         ok(SysStringLen(V_BSTR(&var)) == 38, "SysStringLen returned %d\n",
                 SysStringLen(V_BSTR(&var)));
-        ok(!strcmp_wa(V_BSTR(&var), testcases[i].str), "%d) V_BSTR(&var) = %s\n",
+        ok(!lstrcmpW(V_BSTR(&var), testcases[i].str), "%d) V_BSTR(&var) = %s\n",
                 i, wine_dbgstr_w(V_BSTR(&var)));
         VariantClear(&var);
     }
@@ -1443,7 +1436,7 @@ static void test_PropVariantToString(void)
     U(propvar).lVal = 22;
     hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
     todo_wine ok(hr == S_OK, "PropVariantToString failed: 0x%08x.\n", hr);
-    todo_wine ok(!strcmp_wa(bufferW, "22"), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
+    todo_wine ok(!lstrcmpW(bufferW, L"22"), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
     memset(bufferW, 0, sizeof(bufferW));
     PropVariantClear(&propvar);
 
