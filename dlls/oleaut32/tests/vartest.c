@@ -661,19 +661,13 @@ static void test_var_call2( int line, HRESULT (WINAPI *func)(LPVARIANT,LPVARIANT
     VariantClear( &result );
 }
 
-static int strcmp_wa(const WCHAR *strw, const char *stra)
-{
-    WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
-    return lstrcmpW(strw, buf);
-}
-
 #define test_bstr_var(a,b) _test_bstr_var(__LINE__,a,b)
-static void _test_bstr_var(unsigned line, const VARIANT *v, const char *str)
+static void _test_bstr_var(unsigned line, const VARIANT *v, const WCHAR *str)
 {
     ok_(__FILE__,line)(V_VT(v) == VT_BSTR, "unexpected vt=%d\n", V_VT(v));
     if(V_VT(v) == VT_BSTR)
-        ok(!strcmp_wa(V_BSTR(v), str), "v=%s, expected %s\n", wine_dbgstr_w(V_BSTR(v)), str);
+        ok(!lstrcmpW(V_BSTR(v), str), "v=%s, expected %s\n", wine_dbgstr_w(V_BSTR(v)),
+           wine_dbgstr_w(str));
 }
 
 static void test_VariantInit(void)
@@ -6136,7 +6130,7 @@ static void test_VarCat(void)
     hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
     CHECK_CALLED(dispatch_invoke);
-    ok(!strcmp_wa(V_BSTR(&result), "1234"), "got %s\n", wine_dbgstr_w(V_BSTR(&result)));
+    ok(!lstrcmpW(V_BSTR(&result), L"1234"), "got %s\n", wine_dbgstr_w(V_BSTR(&result)));
 
     VariantClear(&left);
     VariantClear(&right);
@@ -6179,20 +6173,20 @@ static void test_VarCat(void)
     ok(hres == S_OK, "VarCat failed: %08x\n", hres);
     VariantClear(&right);
 
-    cmp = strcmp_wa(V_BSTR(&result), "True");
+    cmp = lstrcmpW(V_BSTR(&result), L"True");
     VariantClear(&result);
     if(!cmp) {
         V_VT(&right) = VT_BOOL;
         V_BOOL(&right) = 100;
         hres = pVarCat(&left, &right, &result);
         ok(hres == S_OK, "VarCat failed: %08x\n", hres);
-        test_bstr_var(&result, "TrueTrue");
+        test_bstr_var(&result, L"TrueTrue");
         VariantClear(&result);
 
         V_BOOL(&right) = VARIANT_FALSE;
         hres = pVarCat(&left, &right, &result);
         ok(hres == S_OK, "VarCat failed: %08x\n", hres);
-        test_bstr_var(&result, "TrueFalse");
+        test_bstr_var(&result, L"TrueFalse");
         VariantClear(&result);
     }else {
         skip("Got %s as True, assuming non-English locale\n", wine_dbgstr_w(V_BSTR(&result)));
