@@ -1071,3 +1071,24 @@ HRESULT WINAPI RtwqUnlockWorkQueue(DWORD queue)
 
     return unlock_user_queue(queue);
 }
+
+HRESULT WINAPI RtwqSetLongRunning(DWORD queue_id, BOOL enable)
+{
+    struct queue *queue;
+    HRESULT hr;
+    int i;
+
+    TRACE("%#x, %d.\n", queue_id, enable);
+
+    lock_user_queue(queue_id);
+
+    if (SUCCEEDED(hr = grab_queue(queue_id, &queue)))
+    {
+        for (i = 0; i < ARRAY_SIZE(queue->envs); ++i)
+            queue->envs[i].u.s.LongFunction = !!enable;
+    }
+
+    unlock_user_queue(queue_id);
+
+    return hr;
+}

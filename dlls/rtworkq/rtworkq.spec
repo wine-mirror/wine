@@ -27,7 +27,7 @@
 @ stdcall RtwqScheduleWorkItem(ptr int64 ptr)
 @ stub RtwqSetDeadline
 @ stub RtwqSetDeadline2
-@ stub RtwqSetLongRunning
+@ stdcall RtwqSetLongRunning(long long)
 @ stdcall RtwqShutdown()
 @ stdcall RtwqStartup()
 @ stub RtwqUnjoinWorkQueue
