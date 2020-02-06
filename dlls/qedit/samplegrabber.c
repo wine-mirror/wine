@@ -84,7 +84,7 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         IMemAllocator_Release(This->allocator);
     if (This->grabberIface)
         ISampleGrabberCB_Release(This->grabberIface);
-    CoTaskMemFree(This->filter_mt.pbFormat);
+    FreeMediaType(&This->filter_mt);
     CoTaskMemFree(This->bufferData);
     if(This->seekthru_unk)
         IUnknown_Release(This->seekthru_unk);
@@ -225,44 +225,36 @@ SampleGrabber_ISampleGrabber_SetOneShot(ISampleGrabber *iface, BOOL oneShot)
 }
 
 /* ISampleGrabber */
-static HRESULT WINAPI
-SampleGrabber_ISampleGrabber_SetMediaType(ISampleGrabber *iface, const AM_MEDIA_TYPE *type)
+static HRESULT WINAPI SampleGrabber_ISampleGrabber_SetMediaType(ISampleGrabber *iface, const AM_MEDIA_TYPE *mt)
 {
-    SG_Impl *This = impl_from_ISampleGrabber(iface);
-    TRACE("(%p)->(%p)\n", This, type);
-    if (!type)
+    SG_Impl *filter = impl_from_ISampleGrabber(iface);
+
+    TRACE("filter %p, mt %p.\n", filter, mt);
+    strmbase_dump_media_type(mt);
+
+    if (!mt)
         return E_POINTER;
-    TRACE("Media type: %s/%s ssize: %u format: %s (%u bytes)\n",
-	debugstr_guid(&type->majortype), debugstr_guid(&type->subtype),
-	type->lSampleSize,
-	debugstr_guid(&type->formattype), type->cbFormat);
-    CoTaskMemFree(This->filter_mt.pbFormat);
-    This->filter_mt = *type;
-    This->filter_mt.pUnk = NULL;
-    if (type->cbFormat) {
-        This->filter_mt.pbFormat = CoTaskMemAlloc(type->cbFormat);
-        CopyMemory(This->filter_mt.pbFormat, type->pbFormat, type->cbFormat);
-    }
-    else
-        This->filter_mt.pbFormat = NULL;
+
+    FreeMediaType(&filter->filter_mt);
+    CopyMediaType(&filter->filter_mt, mt);
     return S_OK;
 }
 
 /* ISampleGrabber */
 static HRESULT WINAPI
-SampleGrabber_ISampleGrabber_GetConnectedMediaType(ISampleGrabber *iface, AM_MEDIA_TYPE *type)
+SampleGrabber_ISampleGrabber_GetConnectedMediaType(ISampleGrabber *iface, AM_MEDIA_TYPE *mt)
 {
-    SG_Impl *This = impl_from_ISampleGrabber(iface);
-    TRACE("(%p)->(%p)\n", This, type);
-    if (!type)
+    SG_Impl *filter = impl_from_ISampleGrabber(iface);
+
+    TRACE("filter %p, mt %p.\n", filter, mt);
+
+    if (!mt)
         return E_POINTER;
-    if (!This->sink.pin.peer)
+
+    if (!filter->sink.pin.peer)
         return VFW_E_NOT_CONNECTED;
-    *type = This->filter_mt;
-    if (type->cbFormat) {
-        type->pbFormat = CoTaskMemAlloc(type->cbFormat);
-        CopyMemory(type->pbFormat, This->filter_mt.pbFormat, type->cbFormat);
-    }
+
+    CopyMediaType(mt, &filter->filter_mt);
     return S_OK;
 }
 
