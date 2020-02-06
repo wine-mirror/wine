@@ -495,7 +495,7 @@ HRESULT WINAPI PSPropertyKeyFromString(LPCWSTR pszString, PROPERTYKEY *pkey)
     }
 
     /* Overflow is not checked. */
-    while (iswdigit(*pszString))
+    while ('0' <= *pszString && *pszString <= '9')
     {
         pkey->pid *= 10;
         pkey->pid += (*pszString - '0');

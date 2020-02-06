@@ -346,6 +346,9 @@ static void test_PSPropertyKeyFromString(void)
     static const WCHAR fmtid_normalpidW[] = {'{','1','2','3','4','5','6','7','8','-','1','2','3','4','-',
                                              '1','2','3','4','-','1','2','3','4','-',
                                              '1','2','3','4','5','6','7','8','9','0','1','2','}',' ','1','3','5','7','9',0};
+    static const WCHAR fmtid_udigitW[] = {'{','1','2','3','4','5','6','7','8','-','1','2','3','4','-',
+                                          '1','2','3','4','-','1','2','3','4','-',
+                                          '1','2','3','4','5','6','7','8','9','0','1','2','}',' ','1','2','3',0x661,'5','7','9',0};
     PROPERTYKEY out_init = {GUID_MEMBERS(dummy_guid), 0xdeadbeef};
     PROPERTYKEY out;
     HRESULT ret;
@@ -422,6 +425,7 @@ static void test_PSPropertyKeyFromString(void)
         {fmtid_commanegspcpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0U}},
         {fmtid_negcommapidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
         {fmtid_normalpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_udigitW, &out, S_OK, {GUID_MEMBERS(expect_guid), 123}},
     };
 
     int i;
