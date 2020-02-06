@@ -3,7 +3,7 @@
 @ stdcall RtwqAllocateWorkQueue(long ptr)
 @ stub RtwqBeginRegisterWorkQueueWithMMCSS
 @ stub RtwqBeginUnregisterWorkQueueWithMMCSS
-@ stub RtwqCancelDeadline
+@ stdcall RtwqCancelDeadline(long)
 @ stub RtwqCancelMultipleWaitingWorkItem
 @ stdcall RtwqCancelWorkItem(int64)
 @ stdcall RtwqCreateAsyncResult(ptr ptr ptr ptr)
@@ -25,8 +25,8 @@
 @ stub RtwqRegisterPlatformWithMMCSS
 @ stdcall RtwqRemovePeriodicCallback(long)
 @ stdcall RtwqScheduleWorkItem(ptr int64 ptr)
-@ stub RtwqSetDeadline
-@ stub RtwqSetDeadline2
+@ stdcall RtwqSetDeadline(long int64 ptr)
+@ stdcall RtwqSetDeadline2(long int64 int64 ptr)
 @ stdcall RtwqSetLongRunning(long long)
 @ stdcall RtwqShutdown()
 @ stdcall RtwqStartup()

@@ -1099,3 +1099,24 @@ HRESULT WINAPI RtwqLockSharedWorkQueue(const WCHAR *usageclass, LONG priority, D
 
     return RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, queue);
 }
+
+HRESULT WINAPI RtwqSetDeadline(DWORD queue_id, LONGLONG deadline, HANDLE *request)
+{
+    FIXME("%#x, %s, %p.\n", queue_id, wine_dbgstr_longlong(deadline), request);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqSetDeadline2(DWORD queue_id, LONGLONG deadline, LONGLONG predeadline, HANDLE *request)
+{
+    FIXME("%#x, %s, %s, %p.\n", queue_id, wine_dbgstr_longlong(deadline), wine_dbgstr_longlong(predeadline), request);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqCancelDeadline(HANDLE request)
+{
+    FIXME("%p.\n", request);
+
+    return E_NOTIMPL;
+}
