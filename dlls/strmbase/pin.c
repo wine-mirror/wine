@@ -431,8 +431,9 @@ static inline struct strmbase_source *impl_source_from_IPin( IPin *iface )
 static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
 {
     struct strmbase_source *pin = impl_source_from_IPin(iface);
-    AM_MEDIA_TYPE *candidate;
+    AM_MEDIA_TYPE candidate, *candidate_ptr;
     IEnumMediaTypes *enummt;
+    unsigned int i;
     ULONG count;
     HRESULT hr;
 
@@ -464,37 +465,32 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
         return hr;
     }
 
-    if (SUCCEEDED(IPin_EnumMediaTypes(iface, &enummt)))
+    for (i = 0; pin->pFuncsTable->base.pin_get_media_type(&pin->pin, i, &candidate) == S_OK; ++i)
     {
-        while (IEnumMediaTypes_Next(enummt, 1, &candidate, NULL) == S_OK)
+        strmbase_dump_media_type(&candidate);
+        if ((!mt || CompareMediaTypes(mt, &candidate, TRUE))
+                && pin->pFuncsTable->pfnAttemptConnection(pin, peer, &candidate) == S_OK)
         {
-            if ((!mt || CompareMediaTypes(mt, candidate, TRUE))
-                    && pin->pFuncsTable->pfnAttemptConnection(pin, peer, candidate) == S_OK)
-            {
-                LeaveCriticalSection(&pin->pin.filter->csFilter);
-                DeleteMediaType(candidate);
-                IEnumMediaTypes_Release(enummt);
-                return S_OK;
-            }
-            DeleteMediaType(candidate);
+            LeaveCriticalSection(&pin->pin.filter->csFilter);
+            FreeMediaType(&candidate);
+            return S_OK;
         }
-
-        IEnumMediaTypes_Release(enummt);
+        FreeMediaType(&candidate);
     }
 
     if (SUCCEEDED(IPin_EnumMediaTypes(peer, &enummt)))
     {
-        while (IEnumMediaTypes_Next(enummt, 1, &candidate, &count) == S_OK)
+        while (IEnumMediaTypes_Next(enummt, 1, &candidate_ptr, &count) == S_OK)
         {
-            if ((!mt || CompareMediaTypes(mt, candidate, TRUE))
-                    && pin->pFuncsTable->pfnAttemptConnection(pin, peer, candidate) == S_OK)
+            if ((!mt || CompareMediaTypes(mt, candidate_ptr, TRUE))
+                    && pin->pFuncsTable->pfnAttemptConnection(pin, peer, candidate_ptr) == S_OK)
             {
                 LeaveCriticalSection(&pin->pin.filter->csFilter);
-                DeleteMediaType(candidate);
+                DeleteMediaType(candidate_ptr);
                 IEnumMediaTypes_Release(enummt);
                 return S_OK;
             }
-            DeleteMediaType(candidate);
+            DeleteMediaType(candidate_ptr);
         }
 
         IEnumMediaTypes_Release(enummt);
