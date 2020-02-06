@@ -575,16 +575,12 @@ static HRESULT sample_grabber_source_get_media_type(struct strmbase_pin *iface,
     return VFW_S_NO_MORE_ITEMS;
 }
 
-static HRESULT WINAPI sample_grabber_source_AttemptConnection(struct strmbase_source *iface,
-        IPin *peer, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI sample_grabber_source_DecideAllocator(struct strmbase_source *iface,
+        IMemInputPin *peer, IMemAllocator **allocator)
 {
     SG_Impl *filter = impl_from_source_pin(&iface->pin);
-    HRESULT hr;
+    const AM_MEDIA_TYPE *mt = &iface->pin.mt;
 
-    if (filter->source.pin.peer)
-        return VFW_E_ALREADY_CONNECTED;
-    if (filter->filter.state != State_Stopped)
-        return VFW_E_NOT_STOPPED;
     if (!IsEqualGUID(&mt->majortype, &filter->mtype.majortype))
         return VFW_E_TYPE_NOT_ACCEPTED;
     if (!IsEqualGUID(&mt->subtype, &filter->mtype.subtype))
@@ -598,19 +594,7 @@ static HRESULT WINAPI sample_grabber_source_AttemptConnection(struct strmbase_so
             && !mt->pbFormat)
         return VFW_E_TYPE_NOT_ACCEPTED;
 
-    IPin_AddRef(filter->source.pin.peer = peer);
-    CopyMediaType(&filter->source.pin.mt, mt);
-    if (SUCCEEDED(hr = IPin_ReceiveConnection(peer, &filter->source.pin.IPin_iface, mt)))
-        hr = IPin_QueryInterface(peer, &IID_IMemInputPin, (void **)&filter->source.pMemInputPin);
-
-    if (FAILED(hr))
-    {
-        IPin_Release(filter->source.pin.peer);
-        filter->source.pin.peer = NULL;
-        FreeMediaType(&filter->source.pin.mt);
-    }
-
-    return hr;
+    return S_OK;
 }
 
 static const struct strmbase_source_ops source_ops =
@@ -618,7 +602,8 @@ static const struct strmbase_source_ops source_ops =
     .base.pin_query_interface = sample_grabber_source_query_interface,
     .base.pin_query_accept = sample_grabber_source_query_accept,
     .base.pin_get_media_type = sample_grabber_source_get_media_type,
-    .pfnAttemptConnection = sample_grabber_source_AttemptConnection,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = sample_grabber_source_DecideAllocator,
 };
 
 HRESULT SampleGrabber_create(IUnknown *outer, void **out)
