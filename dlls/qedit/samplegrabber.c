@@ -43,7 +43,7 @@ typedef struct _SG_Impl {
     IUnknown *seekthru_unk;
 
     struct strmbase_sink sink;
-    AM_MEDIA_TYPE mtype;
+    AM_MEDIA_TYPE filter_mt;
     IMemInputPin IMemInputPin_iface;
     IMemAllocator *allocator;
 
@@ -84,7 +84,7 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         IMemAllocator_Release(This->allocator);
     if (This->grabberIface)
         ISampleGrabberCB_Release(This->grabberIface);
-    CoTaskMemFree(This->mtype.pbFormat);
+    CoTaskMemFree(This->filter_mt.pbFormat);
     CoTaskMemFree(This->bufferData);
     if(This->seekthru_unk)
         IUnknown_Release(This->seekthru_unk);
@@ -236,15 +236,15 @@ SampleGrabber_ISampleGrabber_SetMediaType(ISampleGrabber *iface, const AM_MEDIA_
 	debugstr_guid(&type->majortype), debugstr_guid(&type->subtype),
 	type->lSampleSize,
 	debugstr_guid(&type->formattype), type->cbFormat);
-    CoTaskMemFree(This->mtype.pbFormat);
-    This->mtype = *type;
-    This->mtype.pUnk = NULL;
+    CoTaskMemFree(This->filter_mt.pbFormat);
+    This->filter_mt = *type;
+    This->filter_mt.pUnk = NULL;
     if (type->cbFormat) {
-        This->mtype.pbFormat = CoTaskMemAlloc(type->cbFormat);
-        CopyMemory(This->mtype.pbFormat, type->pbFormat, type->cbFormat);
+        This->filter_mt.pbFormat = CoTaskMemAlloc(type->cbFormat);
+        CopyMemory(This->filter_mt.pbFormat, type->pbFormat, type->cbFormat);
     }
     else
-        This->mtype.pbFormat = NULL;
+        This->filter_mt.pbFormat = NULL;
     return S_OK;
 }
 
@@ -258,10 +258,10 @@ SampleGrabber_ISampleGrabber_GetConnectedMediaType(ISampleGrabber *iface, AM_MED
         return E_POINTER;
     if (!This->sink.pin.peer)
         return VFW_E_NOT_CONNECTED;
-    *type = This->mtype;
+    *type = This->filter_mt;
     if (type->cbFormat) {
         type->pbFormat = CoTaskMemAlloc(type->cbFormat);
-        CopyMemory(type->pbFormat, This->mtype.pbFormat, type->cbFormat);
+        CopyMemory(type->pbFormat, This->filter_mt.pbFormat, type->cbFormat);
     }
     return S_OK;
 }
@@ -500,7 +500,7 @@ static HRESULT sample_grabber_sink_get_media_type(struct strmbase_pin *iface,
 
     if (!index)
     {
-        CopyMediaType(mt, &filter->mtype);
+        CopyMediaType(mt, &filter->filter_mt);
         return S_OK;
     }
     return VFW_S_NO_MORE_ITEMS;
@@ -515,20 +515,20 @@ static HRESULT sample_grabber_sink_connect(struct strmbase_sink *iface,
             && !IsEqualGUID(&mt->formattype, &GUID_NULL) && !mt->pbFormat)
         return VFW_E_INVALIDMEDIATYPE;
 
-    if (!IsEqualGUID(&filter->mtype.majortype, &GUID_NULL)
-            && !IsEqualGUID(&filter->mtype.majortype, &mt->majortype))
+    if (!IsEqualGUID(&filter->filter_mt.majortype, &GUID_NULL)
+            && !IsEqualGUID(&filter->filter_mt.majortype, &mt->majortype))
         return VFW_E_TYPE_NOT_ACCEPTED;
 
-    if (!IsEqualGUID(&filter->mtype.subtype, &GUID_NULL)
-            && !IsEqualGUID(&filter->mtype.subtype, &mt->subtype))
+    if (!IsEqualGUID(&filter->filter_mt.subtype, &GUID_NULL)
+            && !IsEqualGUID(&filter->filter_mt.subtype, &mt->subtype))
         return VFW_E_TYPE_NOT_ACCEPTED;
 
-    if (!IsEqualGUID(&filter->mtype.formattype, &GUID_NULL)
-            && !IsEqualGUID(&filter->mtype.formattype, &mt->formattype))
+    if (!IsEqualGUID(&filter->filter_mt.formattype, &GUID_NULL)
+            && !IsEqualGUID(&filter->filter_mt.formattype, &mt->formattype))
         return VFW_E_TYPE_NOT_ACCEPTED;
 
-    FreeMediaType(&filter->mtype);
-    CopyMediaType(&filter->mtype, mt);
+    FreeMediaType(&filter->filter_mt);
+    CopyMediaType(&filter->filter_mt, mt);
 
     return S_OK;
 }
@@ -568,7 +568,7 @@ static HRESULT sample_grabber_source_get_media_type(struct strmbase_pin *iface,
 
     if (!index)
     {
-        CopyMediaType(mt, &filter->mtype);
+        CopyMediaType(mt, &filter->filter_mt);
         return S_OK;
     }
     return VFW_S_NO_MORE_ITEMS;
@@ -580,13 +580,13 @@ static HRESULT WINAPI sample_grabber_source_DecideAllocator(struct strmbase_sour
     SG_Impl *filter = impl_from_source_pin(&iface->pin);
     const AM_MEDIA_TYPE *mt = &iface->pin.mt;
 
-    if (!IsEqualGUID(&mt->majortype, &filter->mtype.majortype))
+    if (!IsEqualGUID(&mt->majortype, &filter->filter_mt.majortype))
         return VFW_E_TYPE_NOT_ACCEPTED;
-    if (!IsEqualGUID(&mt->subtype, &filter->mtype.subtype))
+    if (!IsEqualGUID(&mt->subtype, &filter->filter_mt.subtype))
         return VFW_E_TYPE_NOT_ACCEPTED;
     if (!IsEqualGUID(&mt->formattype, &FORMAT_None)
             && !IsEqualGUID(&mt->formattype, &GUID_NULL)
-            && !IsEqualGUID(&mt->formattype, &filter->mtype.formattype))
+            && !IsEqualGUID(&mt->formattype, &filter->filter_mt.formattype))
         return VFW_E_TYPE_NOT_ACCEPTED;
     if (!IsEqualGUID(&mt->formattype, &FORMAT_None)
             && !IsEqualGUID(&mt->formattype, &GUID_NULL)
