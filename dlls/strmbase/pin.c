@@ -463,6 +463,13 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
 
     EnterCriticalSection(&pin->pin.filter->csFilter);
 
+    if (pin->pin.peer)
+    {
+        LeaveCriticalSection(&pin->pin.filter->csFilter);
+        WARN("Pin is already connected, returning VFW_E_ALREADY_CONNECTED.\n");
+        return VFW_E_ALREADY_CONNECTED;
+    }
+
     if (pin->pin.filter->state != State_Stopped)
     {
         LeaveCriticalSection(&pin->pin.filter->csFilter);
