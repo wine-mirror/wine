@@ -42,8 +42,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-#define SetResSize(res, tag)	set_dword((res), (tag), (res)->size - get_dword((res), (tag)))
-
 res_t *new_res(void)
 {
 	res_t *r;
@@ -245,6 +243,13 @@ static DWORD get_dword(res_t *res, int ofs)
 		       | (res->data[ofs+1] <<  8)
 		       |  res->data[ofs+0];
 	}
+}
+
+static res_t *end_res(res_t *res, int ofs)
+{
+    set_dword( res, ofs, res->size - get_dword( res, ofs ));
+    if (win32) put_pad( res );
+    return res;
 }
 
 /*
@@ -606,9 +611,7 @@ static res_t *accelerator2res(name_id_t *name, accelerator_t *acc)
 			ev = ev->next;
 		}
 	}
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -804,9 +807,7 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 		/* Set number of controls */
 		((char *)res->data)[tag_nctrl] = (char)nctrl;
 	}
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -912,10 +913,9 @@ static res_t *menu2res(name_id_t *name, menu_t *men)
 	assert(men != NULL);
 
 	res = new_res();
+	restag = put_res_header(res, WRC_RT_MENU, NULL, name, men->memopt, &men->lvc);
 	if(win32)
 	{
-		restag = put_res_header(res, WRC_RT_MENU, NULL, name, men->memopt, &(men->lvc));
-
 		if (men->is_ex)
 		{
 			put_word(res, 1);		/* Menuheader: Version */
@@ -929,20 +929,13 @@ static res_t *menu2res(name_id_t *name, menu_t *men)
 			put_dword(res, 0);		/* Menuheader: Version and HeaderSize */
 			menuitem2res(res, men->items, men->lvc.language);
 		}
-		/* Set ResourceSize */
-		SetResSize(res, restag);
-		put_pad(res);
 	}
 	else /* win16 */
 	{
-		restag = put_res_header(res, WRC_RT_MENU, NULL, name, men->memopt, NULL);
-
 		put_dword(res, 0);		/* Menuheader: Version and HeaderSize */
 		menuitem2res(res, men->items, NULL);
-		/* Set ResourceSize */
-		SetResSize(res, restag);
 	}
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1009,11 +1002,7 @@ static res_t *cursorgroup2res(name_id_t *name, cursor_group_t *curg)
         put_word(res, cur->id);
     }
 
-	SetResSize(res, restag);	/* Set ResourceSize */
-	if(win32)
-		put_pad(res);
-
-	return res;
+    return end_res(res, restag);
 }
 
 /*
@@ -1043,11 +1032,7 @@ static res_t *cursor2res(cursor_t *cur)
 	put_word(res, cur->yhot);
 	put_raw_data(res, cur->data, 0);
 
-	SetResSize(res, restag);	/* Set ResourceSize */
-	if(win32)
-		put_pad(res);
-
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1094,11 +1079,7 @@ static res_t *icongroup2res(name_id_t *name, icon_group_t *icog)
         put_word(res, ico->id);
     }
 
-	SetResSize(res, restag);	/* Set ResourceSize */
-	if(win32)
-		put_pad(res);
-
-	return res;
+    return end_res(res, restag);
 }
 
 /*
@@ -1126,11 +1107,7 @@ static res_t *icon2res(icon_t *ico)
 	restag = put_res_header(res, WRC_RT_ICON, NULL, &name, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, &(ico->lvc));
 	put_raw_data(res, ico->data, 0);
 
-	SetResSize(res, restag);	/* Set ResourceSize */
-	if(win32)
-		put_pad(res);
-
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1160,11 +1137,7 @@ static res_t *anicurico2res(name_id_t *name, ani_curico_t *ani, enum res_e type)
 	restag = put_res_header(res, type == res_anicur ? WRC_RT_ANICURSOR : WRC_RT_ANIICON,
 				NULL, name, ani->memopt, NULL);
 	put_raw_data(res, ani->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1201,11 +1174,7 @@ static res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
 	{
 		put_raw_data(res, bmp->data, 0);
 	}
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1230,11 +1199,7 @@ static res_t *font2res(name_id_t *name, font_t *fnt)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_FONT, NULL, name, fnt->memopt, &(fnt->data->lvc));
 	put_raw_data(res, fnt->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1259,11 +1224,7 @@ static res_t *fontdir2res(name_id_t *name, fontdir_t *fnd)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_FONTDIR, NULL, name, fnd->memopt, &(fnd->data->lvc));
 	put_raw_data(res, fnd->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1288,11 +1249,7 @@ static res_t *html2res(name_id_t *name, html_t *html)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_HTML, NULL, name, html->memopt, &(html->data->lvc));
 	put_raw_data(res, html->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1317,11 +1274,7 @@ static res_t *rcdata2res(name_id_t *name, rcdata_t *rdt)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_RCDATA, NULL, name, rdt->memopt, &(rdt->data->lvc));
 	put_raw_data(res, rdt->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1347,11 +1300,7 @@ static res_t *messagetable2res(name_id_t *name, messagetable_t *msg)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_MESSAGETABLE, NULL, name, msg->memopt, &(msg->data->lvc));
 	put_raw_data(res, msg->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1401,10 +1350,7 @@ static res_t *stringtable2res(stringtable_t *stt)
 					put_byte(res, 0);
 			}
 		}
-		/* Set ResourceSize */
-		SetResSize(res, restag - lastsize);
-		if(win32)
-			put_pad(res);
+		end_res(res, restag - lastsize);
 		lastsize = res->size;
 	}
 	return res;
@@ -1432,11 +1378,7 @@ static res_t *user2res(name_id_t *name, user_t *usr)
 	res = new_res();
 	restag = put_res_header(res, 0, usr->type, name, usr->memopt, &(usr->data->lvc));
 	put_raw_data(res, usr->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1587,12 +1529,8 @@ static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 	/* Set root block's size */
 	set_word(res, rootblocksizetag, (WORD)(res->size - rootblocksizetag));
 
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-
 	free(vsvi.str.cstr);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1636,29 +1574,18 @@ static res_t *toolbar2res(name_id_t *name, toolbar_t *toolbar)
 	assert(name != NULL);
 	assert(toolbar != NULL);
 
-	res = new_res();
-	if(win32)
-	{
-		restag = put_res_header(res, WRC_RT_TOOLBAR, NULL, name, toolbar->memopt, &(toolbar->lvc));
+	if (!win32) return NULL;
 
-		put_word(res, 1);		/* Menuheader: Version */
-		put_word(res, toolbar->button_width); /* (in pixels?) */
-		put_word(res, toolbar->button_height); /* (in pixels?) */
-		put_word(res, toolbar->nitems);
-		put_pad(res);
-		toolbaritem2res(res, toolbar->items);
-		/* Set ResourceSize */
-		SetResSize(res, restag);
-		put_pad(res);
-	}
-	else /* win16 */
-	{
-		/* Do not generate anything in 16-bit mode */
-		free(res->data);
-		free(res);
-		return NULL;
-	}
-	return res;
+	res = new_res();
+	restag = put_res_header(res, WRC_RT_TOOLBAR, NULL, name, toolbar->memopt, &(toolbar->lvc));
+
+	put_word(res, 1);		/* Menuheader: Version */
+	put_word(res, toolbar->button_width); /* (in pixels?) */
+	put_word(res, toolbar->button_height); /* (in pixels?) */
+	put_word(res, toolbar->nitems);
+	put_pad(res);
+	toolbaritem2res(res, toolbar->items);
+	return end_res(res, restag);
 }
 
 /*
@@ -1683,11 +1610,7 @@ static res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_DLGINIT, NULL, name, dit->memopt, &(dit->data->lvc));
 	put_raw_data(res, dit->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
