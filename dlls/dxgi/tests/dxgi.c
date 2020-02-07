@@ -4899,6 +4899,128 @@ static void flush_events(void)
     }
 }
 
+struct adapter_info
+{
+    const WCHAR *name;
+    HMONITOR monitor;
+};
+
+static BOOL CALLBACK enum_monitor_proc(HMONITOR monitor, HDC dc, RECT *rect, LPARAM lparam)
+{
+    struct adapter_info *adapter_info = (struct adapter_info *)lparam;
+    MONITORINFOEXW monitor_info;
+
+    monitor_info.cbSize = sizeof(monitor_info);
+    if (GetMonitorInfoW(monitor, (MONITORINFO *)&monitor_info)
+            && !lstrcmpiW(adapter_info->name, monitor_info.szDevice))
+    {
+        adapter_info->monitor = monitor;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static HMONITOR get_monitor(const WCHAR *adapter_name)
+{
+    struct adapter_info info = {adapter_name, NULL};
+
+    EnumDisplayMonitors(NULL, NULL, enum_monitor_proc, (LPARAM)&info);
+    return info.monitor;
+}
+
+static void test_multi_adapter(void)
+{
+    unsigned int output_count = 0, expected_output_count = 0;
+    unsigned int adapter_index, output_index, device_index;
+    DISPLAY_DEVICEW display_device;
+    DXGI_OUTPUT_DESC output_desc;
+    MONITORINFO monitor_info;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    IDXGIOutput *output;
+    HMONITOR monitor;
+    BOOL found;
+    HRESULT hr;
+
+    if (FAILED(hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory)))
+    {
+        skip("Failed to create IDXGIFactory, hr %#x.\n", hr);
+        return;
+    }
+
+    hr = IDXGIFactory_EnumAdapters(factory, 0, &adapter);
+    if (hr == DXGI_ERROR_NOT_FOUND)
+    {
+        skip("Could not enumerate adapters.\n");
+        IDXGIFactory_Release(factory);
+        return;
+    }
+    ok(hr == S_OK, "Failed to enumerate adapter, hr %#x.\n", hr);
+
+    for (adapter_index = 0; SUCCEEDED(IDXGIFactory_EnumAdapters(factory, adapter_index, &adapter)); ++adapter_index)
+    {
+        for (output_index = 0; SUCCEEDED(IDXGIAdapter_EnumOutputs(adapter, output_index, &output)); ++output_index)
+        {
+            hr = IDXGIOutput_GetDesc(output, &output_desc);
+            ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+            found = FALSE;
+            display_device.cb = sizeof(display_device);
+            for (device_index = 0; EnumDisplayDevicesW(NULL, device_index, &display_device, 0); ++device_index)
+            {
+                if (!lstrcmpiW(display_device.DeviceName, output_desc.DeviceName))
+                {
+                    found = TRUE;
+                    break;
+                }
+            }
+            ok(found, "Failed to find device %s for adapter %u, output %u.\n",
+                    wine_dbgstr_w(output_desc.DeviceName), adapter_index, output_index);
+
+            ok(display_device.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP,
+                    "Got unexpected state flags %#x for adapter %u, output %u.\n",
+                    display_device.StateFlags, adapter_index, output_index);
+            if (!adapter_index && !output_index)
+                ok(display_device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE,
+                        "Got unexpected state flags %#x for adapter %u, output %u.\n",
+                        display_device.StateFlags, adapter_index, output_index);
+            else
+                ok(!(display_device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE),
+                        "Got unexpected state flags %#x for adapter %u, output %u.\n",
+                        display_device.StateFlags, adapter_index, output_index);
+
+            /* Should have the same monitor handle. */
+            monitor = get_monitor(display_device.DeviceName);
+            ok(!!monitor, "Failed to find monitor %s.\n", wine_dbgstr_w(display_device.DeviceName));
+            ok(monitor == output_desc.Monitor, "Got unexpected monitor %p, expected %p.\n",
+                    monitor, output_desc.Monitor);
+
+            /* Should have the same monitor rectangle. */
+            monitor_info.cbSize = sizeof(monitor_info);
+            ok(GetMonitorInfoA(monitor, &monitor_info),
+                    "Failed to get monitor info for adapter %u, output %u, error %#x.\n",
+                    adapter_index, output_index, GetLastError());
+            ok(EqualRect(&monitor_info.rcMonitor, &output_desc.DesktopCoordinates),
+                    "Got unexpected output rect %s, expected %s for adapter %u, output %u.\n",
+                    wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&output_desc.DesktopCoordinates),
+                    adapter_index, output_index);
+
+            IDXGIOutput_Release(output);
+            ++output_count;
+        }
+
+        IDXGIAdapter_Release(adapter);
+    }
+
+    IDXGIFactory_Release(factory);
+
+    expected_output_count = GetSystemMetrics(SM_CMONITORS);
+    todo_wine_if(expected_output_count > 1)
+        ok(output_count == expected_output_count, "Expect output count %d, got %d\n",
+                expected_output_count, output_count);
+}
+
 struct message
 {
     unsigned int message;
@@ -5824,6 +5946,7 @@ START_TEST(dxgi)
     queue_test(test_maximum_frame_latency);
     queue_test(test_output_desc);
     queue_test(test_object_wrapping);
+    queue_test(test_multi_adapter);
 
     run_queued_tests();
 
