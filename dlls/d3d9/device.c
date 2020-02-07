@@ -2739,8 +2739,6 @@ static HRESULT WINAPI d3d9_device_SetScissorRect(IDirect3DDevice9Ex *iface, cons
 
     wined3d_mutex_lock();
     wined3d_stateblock_set_scissor_rect(device->update_state, rect);
-    if (!device->recording)
-        wined3d_device_set_scissor_rects(device->wined3d_device, 1, rect);
     wined3d_mutex_unlock();
 
     return D3D_OK;
