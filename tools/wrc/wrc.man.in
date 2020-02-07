@@ -124,6 +124,9 @@ To disable preprocessing, use \fB--preprocessor=cat\fR.
 .I \fB\-\-sysroot=\fIdir\fR
 Prefix the standard include paths with \fIdir\fR.
 .TP
+.I \fB\-\-utf8\fR, \fB\-u\fR
+Set the default codepage of the input file to UTF-8.
+.TP
 .I \fB\-U\fR, \fB\-\-undefine\fR=\fIid\fR
 Undefine preprocessor identifier \fIid\fR.  Please note that only macros 
 defined up to this point are undefined by this command. However, these 

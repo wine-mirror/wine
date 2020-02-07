@@ -2710,7 +2710,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
     output( "%s.res: %s\n", obj_dir_path( make, obj ), source->filename );
-    output( "\t%s -o $@", tools_path( make, "wrc" ) );
+    output( "\t%s -u -o $@", tools_path( make, "wrc" ) );
     if (make->is_win16) output_filename( "-m16" );
     else output_filenames( target_flags );
     output_filename( "--nostdinc" );
@@ -2735,7 +2735,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     {
         strarray_add( &make->clean_files, strmake( "%s.pot", obj ));
         output( "%s.pot: %s\n", obj_dir_path( make, obj ), source->filename );
-        output( "\t%s -O pot -o $@", tools_path( make, "wrc" ) );
+        output( "\t%s -u -O pot -o $@", tools_path( make, "wrc" ) );
         if (make->is_win16) output_filename( "-m16" );
         else output_filenames( target_flags );
         output_filename( "--nostdinc" );
@@ -3019,7 +3019,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     strarray_add( &make->clean_files, dll_name );
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
     output( "%s.res: %s\n", obj_dir_path( make, obj ), obj_dir_path( make, dll_name ));
-    output( "\techo \"%s.dll TESTDLL \\\"%s\\\"\" | %s -o $@\n", obj,
+    output( "\techo \"%s.dll TESTDLL \\\"%s\\\"\" | %s -u -o $@\n", obj,
             obj_dir_path( make, dll_name ), tools_path( make, "wrc" ));
 
     output( "%s:", obj_dir_path( make, dll_name ));
@@ -3492,7 +3492,7 @@ static void output_test_module( struct makefile *make )
         output( "all: %s/%s\n", top_obj_dir_path( make, "programs/winetest" ), testres );
     output( "%s/%s: %s%s\n", top_obj_dir_path( make, "programs/winetest" ), testres,
             obj_dir_path( make, stripped ), ext );
-    output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | %s -o $@\n",
+    output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | %s -u -o $@\n",
             testmodule, obj_dir_path( make, stripped ), ext, tools_path( make, "wrc" ));
 
     output_filenames_obj_dir( make, make->ok_files );

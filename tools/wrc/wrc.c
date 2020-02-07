@@ -144,6 +144,8 @@ int preprocess_only = 0;
  */
 int no_preprocess = 0;
 
+int utf8_input = 0;
+
 int check_utf8 = 1;  /* whether to check for valid utf8 */
 
 static int pointer_size = sizeof(void *);
@@ -184,7 +186,7 @@ enum long_options_values
 };
 
 static const char short_options[] =
-	"b:D:Ef:F:hi:I:J:l:m:o:O:rU:v";
+	"b:D:Ef:F:hi:I:J:l:m:o:O:ruU:v";
 static const struct option long_options[] = {
 	{ "debug", 1, NULL, LONG_OPT_DEBUG },
 	{ "define", 1, NULL, 'D' },
@@ -203,6 +205,7 @@ static const struct option long_options[] = {
 	{ "preprocessor", 1, NULL, LONG_OPT_PREPROCESSOR },
 	{ "sysroot", 1, NULL, LONG_OPT_SYSROOT },
 	{ "target", 1, NULL, 'F' },
+	{ "utf8", 0, NULL, 'u' },
 	{ "undefine", 1, NULL, 'U' },
 	{ "use-temp-file", 0, NULL, LONG_OPT_TMPFILE },
 	{ "verbose", 0, NULL, 'v' },
@@ -502,6 +505,9 @@ int main(int argc,char *argv[])
 			break;
 		case 'r':
 			/* ignored for compatibility with rc */
+			break;
+		case 'u':
+			utf8_input = 1;
 			break;
 		case 'U':
 			wpp_del_define(optarg);

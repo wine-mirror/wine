@@ -121,7 +121,7 @@ ws	[ \f\t\r]
 /* Always update the current character position within a line */
 #define YY_USER_ACTION	char_number+=yyleng; wanted_id = want_id; want_id = 0;
 
-#define YY_USER_INIT current_codepage = -1;
+#define YY_USER_INIT current_codepage = utf8_input ? CP_UTF8 : -1;
 
 static void addcchar(char c);
 static void addwchar(WCHAR s);
