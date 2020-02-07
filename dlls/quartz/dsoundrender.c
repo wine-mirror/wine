@@ -64,11 +64,6 @@ static inline DSoundRenderImpl *impl_from_strmbase_renderer(struct strmbase_rend
     return CONTAINING_RECORD(iface, DSoundRenderImpl, renderer);
 }
 
-static inline DSoundRenderImpl *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, DSoundRenderImpl, renderer.filter.IBaseFilter_iface);
-}
-
 static inline DSoundRenderImpl *impl_from_IBasicAudio(IBasicAudio *iface)
 {
     return CONTAINING_RECORD(iface, DSoundRenderImpl, IBasicAudio_iface);

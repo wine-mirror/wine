@@ -68,11 +68,6 @@ static inline VideoRendererImpl *impl_from_strmbase_renderer(struct strmbase_ren
     return CONTAINING_RECORD(iface, VideoRendererImpl, renderer);
 }
 
-static inline VideoRendererImpl *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, VideoRendererImpl, renderer.filter.IBaseFilter_iface);
-}
-
 static inline VideoRendererImpl *impl_from_IVideoWindow(IVideoWindow *iface)
 {
     return CONTAINING_RECORD(iface, VideoRendererImpl, baseControlWindow.IVideoWindow_iface);
