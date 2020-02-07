@@ -5576,23 +5576,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             device_load_logo(device, wined3d_settings.logo);
     }
     else if ((view = device->back_buffer_view))
-    {
-        struct wined3d_state *state = &device->state;
-
         wined3d_device_set_rendertarget_view(device, 0, view, FALSE);
-
-        /* Note the min_z / max_z is not reset. */
-        state->viewports[0].x = 0;
-        state->viewports[0].y = 0;
-        state->viewports[0].width = view->width;
-        state->viewports[0].height = view->height;
-        state->viewport_count = 1;
-        wined3d_cs_emit_set_viewports(device->cs, 1, state->viewports);
-
-        SetRect(&state->scissor_rects[0], 0, 0, view->width, view->height);
-        state->scissor_rect_count = 1;
-        wined3d_cs_emit_set_scissor_rects(device->cs, 1, state->scissor_rects);
-    }
 
     if (device->d3d_initialized && reset_state)
         hr = device->adapter->adapter_ops->adapter_init_3d(device);

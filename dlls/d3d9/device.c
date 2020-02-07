@@ -1039,6 +1039,24 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
             present_parameters->BackBufferCount = swapchain_desc.backbuffer_count;
 
             device->device_state = D3D9_DEVICE_STATE_OK;
+
+            if (extended)
+            {
+                const struct wined3d_viewport *current = &wined3d_stateblock_get_state(device->state)->viewport;
+                struct wined3d_viewport vp;
+                RECT rect;
+
+                vp.x = 0;
+                vp.y = 0;
+                vp.width = swapchain_desc.backbuffer_width;
+                vp.height = swapchain_desc.backbuffer_height;
+                vp.min_z = current->min_z;
+                vp.max_z = current->max_z;
+                wined3d_stateblock_set_viewport(device->state, &vp);
+
+                SetRect(&rect, 0, 0, swapchain_desc.backbuffer_width, swapchain_desc.backbuffer_height);
+                wined3d_stateblock_set_scissor_rect(device->state, &rect);
+            }
         }
 
         rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0);
@@ -2158,7 +2176,7 @@ static HRESULT WINAPI d3d9_device_GetViewport(IDirect3DDevice9Ex *iface, D3DVIEW
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
     wined3d_mutex_lock();
-    wined3d_device_get_viewports(device->wined3d_device, NULL, &wined3d_viewport);
+    wined3d_viewport = wined3d_stateblock_get_state(device->state)->viewport;
     wined3d_mutex_unlock();
 
     viewport->X = wined3d_viewport.x;
@@ -2737,7 +2755,7 @@ static HRESULT WINAPI d3d9_device_GetScissorRect(IDirect3DDevice9Ex *iface, RECT
     TRACE("iface %p, rect %p.\n", iface, rect);
 
     wined3d_mutex_lock();
-    wined3d_device_get_scissor_rects(device->wined3d_device, NULL, rect);
+    *rect = wined3d_stateblock_get_state(device->state)->scissor_rect;
     wined3d_mutex_unlock();
 
     return D3D_OK;
