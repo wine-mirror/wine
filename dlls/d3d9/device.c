@@ -3338,7 +3338,7 @@ static HRESULT WINAPI d3d9_device_GetVertexDeclaration(IDirect3DDevice9Ex *iface
     if (!declaration) return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    if ((wined3d_declaration = wined3d_device_get_vertex_declaration(device->wined3d_device)))
+    if ((wined3d_declaration = wined3d_stateblock_get_state(device->state)->vertex_declaration))
     {
         declaration_impl = wined3d_vertex_declaration_get_parent(wined3d_declaration);
         *declaration = &declaration_impl->IDirect3DVertexDeclaration9_iface;
@@ -3460,7 +3460,7 @@ static HRESULT WINAPI d3d9_device_GetFVF(IDirect3DDevice9Ex *iface, DWORD *fvf)
     TRACE("iface %p, fvf %p.\n", iface, fvf);
 
     wined3d_mutex_lock();
-    if ((wined3d_declaration = wined3d_device_get_vertex_declaration(device->wined3d_device)))
+    if ((wined3d_declaration = wined3d_stateblock_get_state(device->state)->vertex_declaration))
     {
         d3d9_declaration = wined3d_vertex_declaration_get_parent(wined3d_declaration);
         *fvf = d3d9_declaration->fvf;
