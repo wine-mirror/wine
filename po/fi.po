@@ -3703,17 +3703,15 @@ msgstr "Odotettiin merkkiä '@'"
 
 #: jscript.rc:75
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript -käännösvirhe"
 
 #: jscript.rc:76
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Microsoft JScript -suoritusvirhe"
 
 #: jscript.rc:77
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown runtime error"
-msgstr "Tuntematon virhe"
+msgstr "Tuntematon ajonaikainen virhe"
 
 #: jscript.rc:54
 msgid "Number expected"
@@ -3761,7 +3759,7 @@ msgstr "Syntaksivirhe säännöllisessä lausekkeessa"
 
 #: jscript.rc:63
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "Poikkeusta ei otettu kiinni"
 
 #: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
@@ -8310,79 +8308,59 @@ msgstr "Tarjoaja"
 
 #: version.rc:45
 msgid "Select the data you want to connect to:"
-msgstr "Valitse data, johon haluat yhdistää:"
+msgstr "Valitse tietolähde, johon haluat yhdistää:"
 
 #: version.rc:52
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
-msgstr "Yhteydet"
+msgstr "Yhteys"
 
 #: version.rc:55
-#, fuzzy
-#| msgid "Select the data you want to connect to:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "Valitse data, johon haluat yhdistää:"
+msgstr "Määritä seuraavat, jotta voit yhdistää ODBC-tietolähteeseen:"
 
 #: version.rc:56
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Määritä tietolähde:"
 
 #: version.rc:57
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "Anna nimesi"
+msgstr "Käytä tietolähteen &nimeä"
 
 #: version.rc:60
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "Nollattuja yhteyksiä"
+msgstr "Syötä yhteysasetukset &merkkijonona"
 
 #: version.rc:61
-#, fuzzy
-#| msgid "Connections"
 msgid "&Connection string:"
-msgstr "Yhteydet"
+msgstr "Yhteys&asetukset:"
 
 #: version.rc:63
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "&Lisää..."
+msgstr "&Luo..."
 
 #: version.rc:64
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Syötä palvelimen kirjautumistiedot"
 
 #: version.rc:65
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
-msgstr "&Käyttäjänimi:"
+msgstr "&Tunnus:"
 
 #: version.rc:69
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "&Tyhjä sivu"
+msgstr "&Ei salasanaa"
 
 #: version.rc:70
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "Väärä salasana.\n"
+msgstr "Sa&lli salasanan tallennus"
 
 #: version.rc:71
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Syötä ensiksi käytettävä &katalogi:"
 
 #: version.rc:73
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "Nollattuja yhteyksiä"
+msgstr "Testaa y&hteyttä"
 
 #: version.rc:36
 msgid "Data Link Properties"
