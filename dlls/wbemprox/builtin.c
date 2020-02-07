@@ -1694,17 +1694,17 @@ static WCHAR *convert_bios_date( const WCHAR *str )
     while (len && iswspace( p[len - 1] )) { len--; }
 
     q = p;
-    while (len && iswdigit( *q )) { q++; len--; };
+    while (len && is_digit( *q )) { q++; len--; };
     if (q - p != 2 || !len || *q != '/') return NULL;
     month = (p[0] - '0') * 10 + p[1] - '0';
 
     p = ++q; len--;
-    while (len && iswdigit( *q )) { q++; len--; };
+    while (len && is_digit( *q )) { q++; len--; };
     if (q - p != 2 || !len || *q != '/') return NULL;
     day = (p[0] - '0') * 10 + p[1] - '0';
 
     p = ++q; len--;
-    while (len && iswdigit( *q )) { q++; len--; };
+    while (len && is_digit( *q )) { q++; len--; };
     if (q - p == 4) year = (p[0] - '0') * 1000 + (p[1] - '0') * 100 + (p[2] - '0') * 10 + p[3] - '0';
     else if (q - p == 2) year = 1900 + (p[0] - '0') * 10 + p[1] - '0';
     else return NULL;

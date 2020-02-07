@@ -272,6 +272,11 @@ static inline WCHAR *heap_strdupAW( const char *src )
     return dst;
 }
 
+static inline BOOL is_digit(WCHAR c)
+{
+    return '0' <= c && c <= '9';
+}
+
 static const WCHAR class_processW[] = {'W','i','n','3','2','_','P','r','o','c','e','s','s',0};
 static const WCHAR class_serviceW[] = {'W','i','n','3','2','_','S','e','r','v','i','c','e',0};
 static const WCHAR class_stdregprovW[] = {'S','t','d','R','e','g','P','r','o','v',0};

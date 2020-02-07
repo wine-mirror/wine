@@ -785,7 +785,7 @@ static int get_token( const WCHAR *s, int *token )
         *token = TK_STRING;
         return i;
     case '.':
-        if (!iswdigit( s[1] ))
+        if (!is_digit( s[1] ))
         {
             *token = TK_DOT;
             return 1;
@@ -794,7 +794,7 @@ static int get_token( const WCHAR *s, int *token )
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
         *token = TK_INTEGER;
-        for (i = 1; iswdigit( s[i] ); i++) {}
+        for (i = 1; is_digit( s[i] ); i++) {}
         return i;
     default:
         if (!id_char[*s]) break;
