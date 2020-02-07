@@ -589,8 +589,14 @@ int main(int argc,char *argv[])
 		verify_translations(resource_top);
 		exit(0);
 	}
+        if (!po_mode && output_name)
+        {
+            if (strendswith( output_name, ".po" )) po_mode = 1;
+            else if (strendswith( output_name, ".pot" )) po_mode = 2;
+        }
 	if (po_mode)
 	{
+            if (!win32) error( "PO files are not supported in 16-bit mode\n" );
             if (po_mode == 2)  /* pot file */
             {
                 if (!output_name)
@@ -604,7 +610,7 @@ int main(int argc,char *argv[])
             output_name = NULL;
             exit(0);
 	}
-        add_translations( po_dir );
+        if (win32) add_translations( po_dir );
 
 	/* Convert the internal lists to binary data */
 	resources2res(resource_top);

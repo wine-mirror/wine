@@ -219,6 +219,13 @@ char *xstrdup(const char *str)
 	return strcpy(s, str);
 }
 
+int strendswith( const char *str, const char *end )
+{
+    int l = strlen(str);
+    int m = strlen(end);
+    return l >= m && !strcmp( str + l - m, end );
+}
+
 int compare_striA( const char *str1, const char *str2 )
 {
     for (;;)

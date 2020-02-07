@@ -2705,49 +2705,36 @@ static void output_source_h( struct makefile *make, struct incl_file *source, co
 static void output_source_rc( struct makefile *make, struct incl_file *source, const char *obj )
 {
     struct strarray defines = get_source_defines( make, source, obj );
+    char *po_dir = NULL;
     unsigned int i;
 
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
+    if (linguas.count && (source->file->flags & FLAG_RC_PO)) po_dir = top_obj_dir_path( make, "po" );
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
-    output( "%s.res: %s\n", obj_dir_path( make, obj ), source->filename );
+    if (source->file->flags & FLAG_RC_PO && !(source->file->flags & FLAG_PARENTDIR))
+    {
+        strarray_add( &make->clean_files, strmake( "%s.pot", obj ));
+        output( "%s.pot ", obj_dir_path( make, obj ) );
+    }
+    output( "%s.res: %s", obj_dir_path( make, obj ), source->filename );
+    output_filename( tools_path( make, "wrc" ));
+    output_filenames( source->dependencies );
+    output( "\n" );
     output( "\t%s -u -o $@", tools_path( make, "wrc" ) );
     if (make->is_win16) output_filename( "-m16" );
     else output_filenames( target_flags );
     output_filename( "--nostdinc" );
+    if (po_dir) output_filename( strmake( "--po-dir=%s", po_dir ));
     output_filenames( defines );
-    if (linguas.count && (source->file->flags & FLAG_RC_PO))
+    output_filename( source->filename );
+    output( "\n" );
+    if (po_dir)
     {
-        char *po_dir = top_obj_dir_path( make, "po" );
-        output_filename( strmake( "--po-dir=%s", po_dir ));
-        output_filename( source->filename );
-        output( "\n" );
         output( "%s.res:", obj_dir_path( make, obj ));
         for (i = 0; i < linguas.count; i++)
             output_filename( strmake( "%s/%s.mo", po_dir, linguas.str[i] ));
         output( "\n" );
     }
-    else
-    {
-        output_filename( source->filename );
-        output( "\n" );
-    }
-    if (source->file->flags & FLAG_RC_PO && !(source->file->flags & FLAG_PARENTDIR))
-    {
-        strarray_add( &make->clean_files, strmake( "%s.pot", obj ));
-        output( "%s.pot: %s\n", obj_dir_path( make, obj ), source->filename );
-        output( "\t%s -u -O pot -o $@", tools_path( make, "wrc" ) );
-        if (make->is_win16) output_filename( "-m16" );
-        else output_filenames( target_flags );
-        output_filename( "--nostdinc" );
-        output_filenames( defines );
-        output_filename( source->filename );
-        output( "\n" );
-        output( "%s.pot ", obj_dir_path( make, obj ));
-    }
-    output( "%s.res:", obj_dir_path( make, obj ));
-    output_filename( tools_path( make, "wrc" ));
-    output_filenames( source->dependencies );
-    output( "\n" );
 }
 
 
