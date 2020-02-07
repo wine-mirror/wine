@@ -2161,8 +2161,6 @@ static HRESULT WINAPI d3d9_device_SetViewport(IDirect3DDevice9Ex *iface, const D
 
     wined3d_mutex_lock();
     wined3d_stateblock_set_viewport(device->update_state, &vp);
-    if (!device->recording)
-        wined3d_device_set_viewports(device->wined3d_device, 1, &vp);
     wined3d_mutex_unlock();
 
     return D3D_OK;
