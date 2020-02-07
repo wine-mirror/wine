@@ -158,7 +158,7 @@ static DWORD parse_port( const WCHAR *str, DWORD len, INTERNET_PORT *ret )
 {
     const WCHAR *p = str;
     DWORD port = 0;
-    while (len && iswdigit( *p ))
+    while (len && '0' <= *p && *p <= '9')
     {
         if ((port = port * 10 + *p - '0') > 65535) return ERROR_WINHTTP_INVALID_URL;
         p++; len--;
