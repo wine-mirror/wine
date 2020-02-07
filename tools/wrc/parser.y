@@ -2161,19 +2161,17 @@ static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid)
 static raw_data_t *load_file(string_t *filename, language_t *lang)
 {
 	FILE *fp = NULL;
-	char *path;
+	char *path, *name;
 	raw_data_t *rd;
-	string_t *name;
-	int codepage = get_language_codepage(lang->id, lang->sub);
 
-	/* FIXME: we may want to use utf-8 here */
-	if (codepage <= 0 && filename->type != str_char)
-		yyerror("Cannot convert filename to ASCII string");
-	name = convert_string( filename, str_char, codepage );
-	if (!(path = wpp_find_include(name->str.cstr, input_name)))
-		yyerror("Cannot open file %s", name->str.cstr);
+	if (filename->type == str_unicode)
+		name = convert_string_utf8( filename, 0 );
+        else
+		name = xstrdup( filename->str.cstr );
+	if (!(path = wpp_find_include(name, input_name)))
+		yyerror("Cannot open file %s", name);
 	if (!(fp = fopen( path, "rb" )))
-		yyerror("Cannot open file %s", name->str.cstr);
+		yyerror("Cannot open file %s", name);
 	free( path );
 	rd = new_raw_data();
 	fseek(fp, 0, SEEK_END);
@@ -2187,7 +2185,7 @@ static raw_data_t *load_file(string_t *filename, language_t *lang)
 	else rd->data = NULL;
 	fclose(fp);
 	rd->lvc.language = lang;
-	free_string(name);
+	free(name);
 	return rd;
 }
 

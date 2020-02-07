@@ -557,14 +557,6 @@ static void po_xerror2( int severity, po_message_t message1,
 
 static const struct po_xerror_handler po_xerror_handler = { po_xerror, po_xerror2 };
 
-static string_t *convert_string_utf8( const string_t *str, int codepage )
-{
-    string_t *wstr = convert_string( str, str_unicode, codepage );
-    string_t *ustr = convert_string( wstr, str_char, CP_UTF8 );
-    free_string( wstr );
-    return ustr;
-}
-
 static po_message_t find_message( po_file_t po, const char *msgid, const char *msgctxt,
                                   po_message_iterator_t *iterator )
 {
@@ -589,8 +581,7 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
     po_message_t msg;
     po_message_iterator_t iterator;
     int codepage;
-    string_t *str_buffer = NULL;
-    char *id, *id_buffer, *context, *str = NULL;
+    char *id, *id_buffer, *context, *str = NULL, *str_buffer = NULL;
 
     if (!msgid->size) return;
 
@@ -608,8 +599,7 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
         if (lang) codepage = get_language_codepage( lang->id, lang->sub );
         else codepage = get_language_codepage( 0, 0 );
         assert( codepage != -1 );
-        str_buffer = convert_string_utf8( msgstr, codepage );
-        str = str_buffer->str.cstr;
+        str = str_buffer = convert_string_utf8( msgstr, codepage );
         if (is_english( lang )) get_message_context( &str );
     }
     if (!(msg = find_message( po, id, context, &iterator )))
@@ -623,7 +613,7 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
     if (msgid->loc.file) po_message_add_filepos( msg, msgid->loc.file, msgid->loc.line );
     po_message_iterator_free( iterator );
     free( id_buffer );
-    if (str_buffer) free_string( str_buffer );
+    free( str_buffer );
 }
 
 struct po_file_lang

@@ -47,6 +47,7 @@ void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
 char *dup_basename(const char *name, const char *ext);
 int compare_name_id(const name_id_t *n1, const name_id_t *n2);
 string_t *convert_string(const string_t *str, enum str_e type, int codepage);
+char *convert_string_utf8( const string_t *str, int codepage );
 void free_string( string_t *str );
 int check_valid_utf8( const string_t *str, int codepage );
 int check_unicode_conversion( const string_t *str_a, const string_t *str_w, int codepage );

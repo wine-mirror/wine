@@ -503,6 +503,14 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
     return ret;
 }
 
+char *convert_string_utf8( const string_t *str, int codepage )
+{
+    int len;
+    string_t *wstr = convert_string( str, str_unicode, codepage );
+    char *ret = unicode_to_utf8( wstr->str.wstr, wstr->size, &len );
+    free_string( wstr );
+    return ret;
+}
 
 void free_string(string_t *str)
 {
