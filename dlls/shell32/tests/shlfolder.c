@@ -1782,7 +1782,7 @@ static void test_SHGetFolderPathAndSubDirA(void)
     static const char wine[] = "wine";
     static const char winetemp[] = "wine\\temp";
     static char appdata[MAX_PATH];
-    static char testpath[MAX_PATH];
+    static char testpath[2 * MAX_PATH];
     static char toolongpath[MAX_PATH+1];
 
     if(FAILED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, appdata)))
