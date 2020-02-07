@@ -1459,10 +1459,10 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
         return;
     }
 
-    if (stage > WINED3D_MAX_TEXTURES)
+    if (stage >= WINED3D_MAX_TEXTURES)
     {
         WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring.\n",
-                stage, WINED3D_MAX_TEXTURES);
+                stage, WINED3D_MAX_TEXTURES - 1);
         return;
     }
 
