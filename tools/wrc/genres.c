@@ -363,33 +363,21 @@ static int parse_accel_string( const string_t *key, int flags )
 static void put_string(res_t *res, const string_t *str, int isterm, const language_t *lang)
 {
     int cnt, codepage;
-    string_t *newstr;
-
-    assert(res != NULL);
-    assert(str != NULL);
-
-    if (lang) codepage = get_language_codepage( lang->id, lang->sub );
-    else codepage = get_language_codepage( 0, 0 );
-
-    assert( codepage != -1 );
 
     if (win32)
     {
-        newstr = convert_string(str, str_unicode, codepage);
-        if (str->type == str_char)
+        string_t *newstr;
+
+        if (lang) codepage = get_language_codepage( lang->id, lang->sub );
+        else codepage = get_language_codepage( 0, 0 );
+        assert( codepage != -1 );
+
+        newstr = convert_string_unicode( str, codepage );
+        if (str->type == str_char && check_valid_utf8( str, codepage ))
         {
-            if (!check_unicode_conversion( str, newstr, codepage ))
-            {
-                print_location( &str->loc );
-                error( "String %s does not convert identically to Unicode and back in codepage %d. "
-                       "Try using a Unicode string instead\n", str->str.cstr, codepage );
-            }
-            if (check_valid_utf8( str, codepage ))
-            {
-                print_location( &str->loc );
-                warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use.\n",
-                         str->str.cstr, codepage );
-            }
+            print_location( &str->loc );
+            warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use, maybe use --utf8?\n",
+                     str->str.cstr, codepage );
         }
         if (!isterm) put_word(res, newstr->size);
         for(cnt = 0; cnt < newstr->size; cnt++)
@@ -399,20 +387,22 @@ static void put_string(res_t *res, const string_t *str, int isterm, const langua
             put_word(res, c);
         }
         if (isterm) put_word(res, 0);
+        free_string(newstr);
     }
     else
     {
-        newstr = convert_string(str, str_char, codepage);
-        if (!isterm) put_byte(res, newstr->size);
-        for(cnt = 0; cnt < newstr->size; cnt++)
+        if (str->type == str_unicode)
+            internal_error(__FILE__, __LINE__, "Unicode string %s in 16-bit\n",
+                           convert_string_utf8( str, 0 ));
+        if (!isterm) put_byte(res, str->size);
+        for(cnt = 0; cnt < str->size; cnt++)
         {
-            char c = newstr->str.cstr[cnt];
+            char c = str->str.cstr[cnt];
             if (isterm && !c) break;
             put_byte(res, c);
         }
         if (isterm) put_byte(res, 0);
     }
-    free_string(newstr);
 }
 
 /*
@@ -1458,20 +1448,14 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 */
 static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 {
-	int restag;
-	int rootblocksizetag;
-	int valsizetag;
-	int tag;
+	static const char info[] = "VS_VERSION_INFO";
+	unsigned int i;
+	int restag, rootblocksizetag, valsizetag, tag;
 	res_t *res;
-	string_t vsvi;
 	ver_block_t *blk;
 
 	assert(name != NULL);
 	assert(ver != NULL);
-
-	vsvi.type = str_char;
-	vsvi.str.cstr = xstrdup("VS_VERSION_INFO");
-	vsvi.size = 15; /* Excl. termination */
 
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_VERSION, NULL, name, ver->memopt, &(ver->lvc));
@@ -1480,10 +1464,15 @@ static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 	valsizetag = res->size;
 	put_word(res, 0);	/* ValueSize filled in later*/
 	if(win32)
+	{
 		put_word(res, 0);	/* Tree-level ? */
-	put_string(res, &vsvi, TRUE, NULL);
-	if(win32)
+		for (i = 0; i < sizeof(info); i++) put_word(res, info[i]);
 		put_pad(res);
+	}
+	else
+	{
+		for (i = 0; i < sizeof(info); i++) put_byte(res, info[i]);
+	}
 	tag = res->size;
 	put_dword(res, VS_FFI_SIGNATURE);
 	put_dword(res, VS_FFI_STRUCVERSION);
@@ -1505,8 +1494,6 @@ static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 		versionblock2res(res, blk, 0, win32 ? ver->lvc.language : NULL);
 	/* Set root block's size */
 	set_word(res, rootblocksizetag, (WORD)(res->size - rootblocksizetag));
-
-	free(vsvi.str.cstr);
 	return end_res(res, restag);
 }
 

@@ -301,11 +301,6 @@ static int wrc_mbstowcs( int codepage, int flags, const char *src, int srclen, W
     return MultiByteToWideChar( codepage, flags, src, srclen, dst, dstlen );
 }
 
-static int wrc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
-{
-    return WideCharToMultiByte( codepage, flags, src, srclen, dst, dstlen, NULL, NULL );
-}
-
 #else  /* _WIN32 */
 
 #include "wine/unicode.h"
@@ -318,11 +313,6 @@ int is_valid_codepage(int cp)
 static int wrc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
     return wine_cp_mbstowcs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen );
-}
-
-static int wrc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
-{
-    return wine_cp_wcstombs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen, NULL, NULL );
 }
 
 #endif  /* _WIN32 */
@@ -448,19 +438,18 @@ static char *unicode_to_utf8( const WCHAR *src, int srclen, int *dstlen )
     return ret;
 }
 
-string_t *convert_string(const string_t *str, enum str_e type, int codepage)
+string_t *convert_string_unicode( const string_t *str, int codepage )
 {
     string_t *ret = xmalloc(sizeof(*ret));
     int res;
 
-    ret->type = type;
+    ret->type = str_unicode;
     ret->loc = str->loc;
 
-    if (!codepage && str->type != type)
-        parser_error( "Current language is Unicode only, cannot convert string" );
-
-    if((str->type == str_char) && (type == str_unicode))
+    if (str->type == str_char)
     {
+        if (!codepage) parser_error( "Current language is Unicode only, cannot convert string" );
+
         if (codepage == CP_UTF8)
             ret->str.wstr = utf8_to_unicode( str->str.cstr, str->size, &ret->size );
         else
@@ -475,30 +464,12 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
             ret->str.wstr[ret->size] = 0;
         }
     }
-    else if((str->type == str_unicode) && (type == str_char))
-    {
-        if (codepage == CP_UTF8)
-            ret->str.cstr = unicode_to_utf8( str->str.wstr, str->size, &ret->size );
-        else
-        {
-            ret->str.cstr = xmalloc( str->size * 2 + 1 );
-            ret->size = wrc_wcstombs( codepage, 0, str->str.wstr, str->size, ret->str.cstr, str->size * 2 );
-            ret->str.cstr[ret->size] = 0;
-        }
-    }
-    else if(str->type == str_unicode)
+    else
     {
         ret->size     = str->size;
         ret->str.wstr = xmalloc(sizeof(WCHAR)*(ret->size+1));
         memcpy( ret->str.wstr, str->str.wstr, ret->size * sizeof(WCHAR) );
         ret->str.wstr[ret->size] = 0;
-    }
-    else /* str->type == str_char */
-    {
-        ret->size     = str->size;
-        ret->str.cstr = xmalloc( ret->size + 1 );
-        memcpy( ret->str.cstr, str->str.cstr, ret->size );
-        ret->str.cstr[ret->size] = 0;
     }
     return ret;
 }
@@ -506,7 +477,7 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
 char *convert_string_utf8( const string_t *str, int codepage )
 {
     int len;
-    string_t *wstr = convert_string( str, str_unicode, codepage );
+    string_t *wstr = convert_string_unicode( str, codepage );
     char *ret = unicode_to_utf8( wstr->str.wstr, wstr->size, &len );
     free_string( wstr );
     return ret;
@@ -546,32 +517,6 @@ int check_valid_utf8( const string_t *str, int codepage )
 done:
     check_utf8 = 0;  /* at least one 8-bit non-utf8 string found, stop checking */
     return 0;
-}
-
-int check_unicode_conversion( const string_t *str_a, const string_t *str_w, int codepage )
-{
-    int ok;
-    string_t *teststr = convert_string( str_w, str_char, codepage );
-
-    ok = (teststr->size == str_a->size && !memcmp( teststr->str.cstr, str_a->str.cstr, str_a->size ));
-
-    if (!ok)
-    {
-        int i;
-
-        fprintf( stderr, "Source: %s", str_a->str.cstr );
-        for (i = 0; i < str_a->size; i++)
-            fprintf( stderr, " %02x", (unsigned char)str_a->str.cstr[i] );
-        fprintf( stderr, "\nUnicode: " );
-        for (i = 0; i < str_w->size; i++)
-            fprintf( stderr, " %04x", str_w->str.wstr[i] );
-        fprintf( stderr, "\nBack: %s", teststr->str.cstr );
-        for (i = 0; i < teststr->size; i++)
-            fprintf( stderr, " %02x", (unsigned char)teststr->str.cstr[i] );
-        fprintf( stderr, "\n" );
-    }
-    free_string( teststr );
-    return ok;
 }
 
 
