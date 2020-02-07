@@ -9760,6 +9760,48 @@ static void test_get_display_mode(void)
     DestroyWindow(window);
 }
 
+static void test_multi_adapter(void)
+{
+    unsigned int i, adapter_count, expected_adapter_count = 0;
+    DISPLAY_DEVICEA display_device;
+    MONITORINFO monitor_info;
+    HMONITOR monitor;
+    IDirect3D8 *d3d;
+
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    display_device.cb = sizeof(display_device);
+    for (i = 0; EnumDisplayDevicesA(NULL, i, &display_device, 0); ++i)
+    {
+        if (display_device.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
+            ++expected_adapter_count;
+    }
+
+    adapter_count = IDirect3D8_GetAdapterCount(d3d);
+    todo_wine_if(expected_adapter_count > 1)
+        ok(adapter_count == expected_adapter_count, "Got unexpected adapter count %u, expected %u.\n",
+                adapter_count, expected_adapter_count);
+
+    for (i = 0; i < adapter_count; ++i)
+    {
+        monitor = IDirect3D8_GetAdapterMonitor(d3d, i);
+        ok(!!monitor, "Failed to get monitor for adapter %u.\n", i);
+
+        monitor_info.cbSize = sizeof(monitor_info);
+        ok(GetMonitorInfoA(monitor, &monitor_info),
+                "Failed to get monitor info for adapter %u, error %#x.\n", i, GetLastError());
+
+        if (!i)
+            ok(monitor_info.dwFlags == MONITORINFOF_PRIMARY,
+                    "Got unexpected monitor flags %#x for adapter %u.\n", monitor_info.dwFlags, i);
+        else
+            ok(!monitor_info.dwFlags, "Got unexpected monitor flags %#x for adapter %u.\n", monitor_info.dwFlags, i);
+    }
+
+    IDirect3D8_Release(d3d);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = GetModuleHandleA("d3d8.dll");
@@ -9876,6 +9918,7 @@ START_TEST(device)
     test_multiply_transform();
     test_draw_primitive();
     test_get_display_mode();
+    test_multi_adapter();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
