@@ -1,5 +1,5 @@
 /* Unicode Script IDs */
-/* generated from http://www.unicode.org/Public/12.1.0/ucd/Scripts.txt */
+/* generated from http://www.unicode.org/Public/12.1.0/ucd/UCD.zip:Scripts.txt */
 /* DO NOT EDIT!! */
 
 #include "windef.h"

@@ -1,5 +1,5 @@
 /* Unicode case mappings */
-/* generated from http://www.unicode.org/Public/12.1.0/ucd/UnicodeData.txt */
+/* generated from http://www.unicode.org/Public/12.1.0/ucd/UCD.zip:UnicodeData.txt */
 /* DO NOT EDIT!! */
 
 #include "windef.h"

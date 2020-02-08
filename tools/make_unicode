@@ -23,7 +23,7 @@ use strict;
 
 # base URLs for www.unicode.org files
 my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/12.1.0/ucd";
+my $UNIDATA = "http://www.unicode.org/Public/12.1.0/ucd/UCD.zip";
 my $REPORTS = "http://www.unicode.org/reports";
 my $RFCS = "http://www.rfc-editor.org/rfc";
 
@@ -444,9 +444,22 @@ sub open_data_file($$)
     local *FILE;
     unless (-f "data/$name")
     {
-        print "Fetching $base/$name...\n";
         system "mkdir", "-p", $dir;
-        !system "wget", "-q", "-O", "data/$name", "$base/$name" or die "cannot fetch $base/$name";
+        if ($base =~ /.*\/([^\/]+\.zip)$/)
+        {
+            my $zip = $1;
+            unless (-f "data/$zip")
+            {
+                print "Fetching $base...\n";
+                !system "wget", "-q", "-O", "data/$zip", "$base" or die "cannot fetch $base";
+            }
+            !system "unzip", "-q", "-d", "data", "data/$zip", $name or die "cannot extract $name from $zip";
+        }
+        else
+        {
+            print "Fetching $base/$name...\n";
+            !system "wget", "-q", "-O", "data/$name", "$base/$name" or die "cannot fetch $base/$name";
+        }
     }
     open FILE, "<data/$name" or die "cannot open data/$name";
     return *FILE;
@@ -1333,8 +1346,8 @@ sub dump_indic($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Indic Syllabic Category */\n";
-    print OUTPUT "/* generated from $UNIDATA/IndicSyllabicCategory.txt */\n";
-    print OUTPUT "/*       and from $UNIDATA/IndicPositionalCategory.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:IndicSyllabicCategory.txt */\n";
+    print OUTPUT "/*       and from $UNIDATA:IndicPositionalCategory.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -1399,7 +1412,7 @@ sub dump_linebreak($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Line Break Properties */\n";
-    print OUTPUT "/* generated from $UNIDATA/LineBreak.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:LineBreak.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -1616,7 +1629,7 @@ sub dump_scripts($)
     open OUTPUT,">$header.new" or die "Cannot create $header";
     print "Building $header\n";
     print OUTPUT "/* Unicode Script IDs */\n";
-    print OUTPUT "/* generated from $UNIDATA/Scripts.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:Scripts.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
 
     print OUTPUT "enum unicode_script_id {\n";
@@ -1634,7 +1647,7 @@ sub dump_scripts($)
     open OUTPUT,">$filename.new" or die "Cannot create $header";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Script IDs */\n";
-    print OUTPUT "/* generated from $UNIDATA/Scripts.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:Scripts.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -1668,7 +1681,7 @@ sub dump_mirroring($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode BiDi mirroring */\n";
-    print OUTPUT "/* generated from $UNIDATA/BidiMirroring.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:BidiMirroring.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
     dump_two_level_mapping( "wine_mirror_map", 0, 16, @mirror_table );
@@ -1705,7 +1718,7 @@ sub dump_bracket($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Bidirectional Bracket table */\n";
-    print OUTPUT "/* generated from $UNIDATA/BidiBrackets.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:BidiBrackets.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -1746,7 +1759,7 @@ sub dump_shaping($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Arabic shaping */\n";
-    print OUTPUT "/* generated from $UNIDATA/ArabicShaping.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:ArabicShaping.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -1807,7 +1820,7 @@ sub dump_vertical($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Vertical Orientation */\n";
-    print OUTPUT "/* generated from $UNIDATA/VerticalOrientation.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:VerticalOrientation.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -1825,7 +1838,7 @@ sub dump_digit_folding($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode digit folding mappings */\n";
-    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -1843,7 +1856,7 @@ sub dump_case_mappings($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode case mappings */\n";
-    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -2299,7 +2312,7 @@ sub dump_compose_table($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode char composition */\n";
-    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
@@ -2484,7 +2497,7 @@ sub dump_decompose_table($$)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode char composition */\n";
-    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n";
 
@@ -2504,7 +2517,7 @@ sub dump_combining_class($)
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode Combining Classes */\n";
-    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* generated from $UNIDATA:UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 

@@ -1,5 +1,5 @@
 /* Unicode Line Break Properties */
-/* generated from http://www.unicode.org/Public/12.1.0/ucd/LineBreak.txt */
+/* generated from http://www.unicode.org/Public/12.1.0/ucd/UCD.zip:LineBreak.txt */
 /* DO NOT EDIT!! */
 
 #include "windef.h"
