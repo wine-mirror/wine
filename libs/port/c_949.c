@@ -1,5 +1,5 @@
 /* code page 949 (ANSI/OEM Korean Unified Hangul) */
-/* generated from http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit949.txt */
+/* generated from https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows Supported Code Page Data Files.zip:CodpageFiles/949.txt */
 /* DO NOT EDIT!! */
 
 #include "wine/unicode.h"
