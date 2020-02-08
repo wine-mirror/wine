@@ -97,7 +97,7 @@ my @allfiles =
     [ 10082, "VENDORS/APPLE/CROATIAN.TXT",        0, "Mac Croatian" ],
     [ 20127, undef,                               0, "US-ASCII (7bit)" ],
     [ 20866, "VENDORS/MISC/KOI8-R.TXT",           0, "Russian KOI8" ],
-    [ 20932, "OBSOLETE/EASTASIA/JIS/JIS0208.TXT", 0, "EUC-JP", 0, 0x3f, 0x30fb  ],
+    [ 20932, "OBSOLETE/EASTASIA/JIS",             0, "EUC-JP", 0, 0x3f, 0x30fb  ],
     [ 21866, "VENDORS/MISC/KOI8-U.TXT",           0, "Ukrainian KOI8" ],
     [ 28591, "ISO8859/8859-1.TXT",                0, "ISO 8859-1 Latin 1" ],
     [ 28592, "ISO8859/8859-2.TXT",                0, "ISO 8859-2 Latin 2 (East European)" ],
@@ -780,47 +780,49 @@ sub get_glyphs_mapping(@)
 }
 
 ################################################################
-# build EUC-JP table from the JIS 0208 file
-# FIXME: for proper EUC-JP we should probably read JIS 0212 too
-# but this would require 3-byte DBCS characters
-sub READ_JIS0208_FILE($)
+# build EUC-JP table from the JIS 0208/0212 files
+sub read_eucjp_files($)
 {
-    my $name = shift;
+    my $dir = shift;
+
+    $default_char = $DEF_CHAR;
+    $default_wchar = 0x30fb;
 
     # ASCII chars
-    for (my $i = 0x00; $i <= 0x7f; $i++)
-    {
-        $cp2uni[$i] = $i;
-        $uni2cp[$i] = $i;
-    }
-
-    # JIS X 0201 right plane
-    for (my $i = 0xa1; $i <= 0xdf; $i++)
-    {
-        $cp2uni[0x8e00 + $i] = 0xfec0 + $i;
-        $uni2cp[0xfec0 + $i] = 0x8e00 + $i;
-    }
+    foreach my $i (0x00 .. 0x7f) { add_mapping( $i, $i ); }
 
     # lead bytes
-    foreach my $i (0x8e, 0x8f, 0xa1 .. 0xfe)
-    {
-        add_lead_byte($i);
-    }
+    foreach my $i (0x8e, 0xa1 .. 0xfe) { add_lead_byte($i); }
+
+    # JIS X 0201 right plane
+    foreach my $i (0xa1 .. 0xdf) { add_mapping( 0x8e00 + $i, 0xfec0 + $i ); }
 
     # undefined chars
-    foreach my $i (0x80 .. 0x8d, 0x90 .. 0xa0, 0xff)
-    {
-        $cp2uni[$i] = $DEF_CHAR;
-    }
-
-    # Shift-JIS compatibility
-    $uni2cp[0x00a5] = 0x5c;
-    $uni2cp[0x203e] = 0x7e;
+    foreach my $i (0x80 .. 0x8d, 0x8f .. 0x9f) { $cp2uni[$i] = $i; }
+    $cp2uni[0xa0] = 0xf8f0;
+    $cp2uni[0xff] = 0xf8f3;
 
     # Fix backslash conversion
-    $cp2uni[0xa1c0] = 0xff3c;
-    $uni2cp[0xff3c] = 0xa1c0;
+    add_mapping( 0xa1c0, 0xff3c );
 
+    # Add private mappings for rows undefined in JIS 0208/0212
+    my $private = 0xe000;
+    foreach my $hi (0xf5 .. 0xfe)
+    {
+        foreach my $lo (0xa1 .. 0xfe)
+        {
+            add_mapping( ($hi << 8) + $lo, $private++ );
+        }
+    }
+    foreach my $hi (0xf5 .. 0xfe)
+    {
+        foreach my $lo (0x21 .. 0x7e)
+        {
+            add_mapping( ($hi << 8) + $lo, $private++ );
+        }
+    }
+
+    my $name = "$dir/JIS0208.TXT";
     my $INPUT = open_data_file( $MAPPINGS, $name );
     while (<$INPUT>)
     {
@@ -829,10 +831,23 @@ sub READ_JIS0208_FILE($)
         next if /\x1a/;  # skip ^Z
         if (/^0x[0-9a-fA-F]+\s+0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(\#.*)?/)
         {
-            my $cp = 0x8080 + hex $1;
-            my $uni = hex $2;
-            $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
-            $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
+            add_mapping( 0x8080 + hex $1, hex $2 );
+            next;
+        }
+        die "$name: Unrecognized line $_\n";
+    }
+    close $INPUT;
+
+    $name = "$dir/JIS0212.TXT";
+    $INPUT = open_data_file( $MAPPINGS, $name );
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(\#.*)?/)
+        {
+            add_mapping( 0x8000 + hex $1, hex $2 );
             next;
         }
         die "$name: Unrecognized line $_\n";
@@ -2624,8 +2639,7 @@ sub HANDLE_FILE(@)
     # some codepage files are special
     if ($codepage == 20932)
     {
-        READ_JIS0208_FILE( $filename );
-        add_default_mappings( $first_private );
+        read_eucjp_files( $filename );
     }
     elsif ($codepage == 20127)
     {
