@@ -254,7 +254,7 @@ SampleGrabber_ISampleGrabber_GetConnectedMediaType(ISampleGrabber *iface, AM_MED
     if (!filter->sink.pin.peer)
         return VFW_E_NOT_CONNECTED;
 
-    CopyMediaType(mt, &filter->filter_mt);
+    CopyMediaType(mt, &filter->sink.pin.mt);
     return S_OK;
 }
 
@@ -518,9 +518,6 @@ static HRESULT sample_grabber_sink_connect(struct strmbase_sink *iface,
     if (!IsEqualGUID(&filter->filter_mt.formattype, &GUID_NULL)
             && !IsEqualGUID(&filter->filter_mt.formattype, &mt->formattype))
         return VFW_E_TYPE_NOT_ACCEPTED;
-
-    FreeMediaType(&filter->filter_mt);
-    CopyMediaType(&filter->filter_mt, mt);
 
     return S_OK;
 }
