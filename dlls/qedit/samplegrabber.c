@@ -576,12 +576,26 @@ static HRESULT sample_grabber_source_get_media_type(struct strmbase_pin *iface,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
     SG_Impl *filter = impl_from_source_pin(iface);
+    IEnumMediaTypes *enummt;
+    AM_MEDIA_TYPE *pmt;
+    HRESULT hr;
 
-    if (!index)
+    if (!filter->sink.pin.peer)
+        return VFW_E_NOT_CONNECTED;
+
+    if (FAILED(hr = IPin_EnumMediaTypes(filter->sink.pin.peer, &enummt)))
+        return hr;
+
+    if ((!index || IEnumMediaTypes_Skip(enummt, index) == S_OK)
+            && IEnumMediaTypes_Next(enummt, 1, &pmt, NULL) == S_OK)
     {
-        CopyMediaType(mt, &filter->filter_mt);
+        CopyMediaType(mt, pmt);
+        DeleteMediaType(pmt);
+        IEnumMediaTypes_Release(enummt);
         return S_OK;
     }
+
+    IEnumMediaTypes_Release(enummt);
     return VFW_S_NO_MORE_ITEMS;
 }
 

@@ -486,8 +486,7 @@ static void test_media_types(void)
     if (hr == S_OK) IEnumMediaTypes_Release(enummt);
 
     hr = IPin_EnumMediaTypes(source, &enummt);
-    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK) IEnumMediaTypes_Release(enummt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     hr = IPin_QueryAccept(sink, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -502,8 +501,7 @@ static void test_media_types(void)
     if (hr == S_OK) IEnumMediaTypes_Release(enummt);
 
     hr = IPin_EnumMediaTypes(source, &enummt);
-    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK) IEnumMediaTypes_Release(enummt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     hr = IPin_QueryAccept(sink, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -832,7 +830,7 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(compare_media_types(pmt, &testsource.source_mt), "Media types didn't match.\n");
+    ok(compare_media_types(pmt, &testsource.source_mt), "Media types didn't match.\n");
     IEnumMediaTypes_Release(enummt);
 
     req_mt.majortype = MEDIATYPE_Video;
@@ -912,24 +910,18 @@ static void test_connect_pin(void)
 
     testsource.source_mt.bTemporalCompression = TRUE;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
-        ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
+    todo_wine ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
 
     req_mt.majortype = GUID_NULL;
     req_mt.bTemporalCompression = FALSE;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
-        ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
+    todo_wine ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
 
@@ -939,18 +931,20 @@ static void test_connect_pin(void)
 
     req_mt.subtype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
-        ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
+    todo_wine ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
 
     req_mt.formattype = FORMAT_None;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        IFilterGraph2_Disconnect(graph, source);
+        IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+    }
 
     req_mt.majortype = MEDIATYPE_Video;
     req_mt.subtype = MEDIASUBTYPE_RGB8;
@@ -971,12 +965,9 @@ static void test_connect_pin(void)
 
     req_mt.subtype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
-        ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
+    todo_wine ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
 
@@ -987,28 +978,40 @@ static void test_connect_pin(void)
     testsource.source_mt.majortype = testsource.source_mt.subtype = testsource.source_mt.formattype = GUID_NULL;
     req_mt.majortype = req_mt.subtype = req_mt.formattype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
-        ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, &testsource.source_mt), "Media types didn't match.\n");
+    todo_wine ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
 
     req_mt.majortype = MEDIATYPE_Video;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        IFilterGraph2_Disconnect(graph, source);
+        IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+    }
     req_mt.majortype = GUID_NULL;
 
     req_mt.subtype = MEDIASUBTYPE_RGB8;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        IFilterGraph2_Disconnect(graph, source);
+        IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+    }
     req_mt.subtype = GUID_NULL;
 
     req_mt.formattype = FORMAT_None;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        IFilterGraph2_Disconnect(graph, source);
+        IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+    }
     req_mt.formattype = GUID_NULL;
 
     testsink.sink_mt = &req_mt;
