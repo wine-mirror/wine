@@ -503,10 +503,6 @@ static HRESULT sample_grabber_sink_connect(struct strmbase_sink *iface,
 {
     SG_Impl *filter = impl_from_sink_pin(&iface->pin);
 
-    if (!IsEqualGUID(&mt->formattype, &FORMAT_None)
-            && !IsEqualGUID(&mt->formattype, &GUID_NULL) && !mt->pbFormat)
-        return VFW_E_INVALIDMEDIATYPE;
-
     if (!IsEqualGUID(&filter->filter_mt.majortype, &GUID_NULL)
             && !IsEqualGUID(&filter->filter_mt.majortype, &mt->majortype))
         return VFW_E_TYPE_NOT_ACCEPTED;
