@@ -547,6 +547,28 @@ static HRESULT sample_grabber_source_query_interface(struct strmbase_pin *iface,
 
 static HRESULT sample_grabber_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
+    SG_Impl *filter = impl_from_source_pin(iface);
+
+    if (filter->sink.pin.peer && IPin_QueryAccept(filter->sink.pin.peer, mt) != S_OK)
+        return S_FALSE;
+
+    strmbase_dump_media_type(&filter->filter_mt);
+
+    if (IsEqualGUID(&filter->filter_mt.majortype, &GUID_NULL))
+        return S_OK;
+    if (!IsEqualGUID(&filter->filter_mt.majortype, &mt->majortype))
+        return S_FALSE;
+
+    if (IsEqualGUID(&filter->filter_mt.subtype, &GUID_NULL))
+        return S_OK;
+    if (!IsEqualGUID(&filter->filter_mt.subtype, &mt->subtype))
+        return S_FALSE;
+
+    if (IsEqualGUID(&filter->filter_mt.formattype, &GUID_NULL))
+        return S_OK;
+    if (!IsEqualGUID(&filter->filter_mt.formattype, &mt->formattype))
+        return S_FALSE;
+
     return S_OK;
 }
 
@@ -566,22 +588,6 @@ static HRESULT sample_grabber_source_get_media_type(struct strmbase_pin *iface,
 static HRESULT WINAPI sample_grabber_source_DecideAllocator(struct strmbase_source *iface,
         IMemInputPin *peer, IMemAllocator **allocator)
 {
-    SG_Impl *filter = impl_from_source_pin(&iface->pin);
-    const AM_MEDIA_TYPE *mt = &iface->pin.mt;
-
-    if (!IsEqualGUID(&mt->majortype, &filter->filter_mt.majortype))
-        return VFW_E_TYPE_NOT_ACCEPTED;
-    if (!IsEqualGUID(&mt->subtype, &filter->filter_mt.subtype))
-        return VFW_E_TYPE_NOT_ACCEPTED;
-    if (!IsEqualGUID(&mt->formattype, &FORMAT_None)
-            && !IsEqualGUID(&mt->formattype, &GUID_NULL)
-            && !IsEqualGUID(&mt->formattype, &filter->filter_mt.formattype))
-        return VFW_E_TYPE_NOT_ACCEPTED;
-    if (!IsEqualGUID(&mt->formattype, &FORMAT_None)
-            && !IsEqualGUID(&mt->formattype, &GUID_NULL)
-            && !mt->pbFormat)
-        return VFW_E_TYPE_NOT_ACCEPTED;
-
     return S_OK;
 }
 
