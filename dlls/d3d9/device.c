@@ -3524,7 +3524,7 @@ static HRESULT WINAPI d3d9_device_GetVertexShader(IDirect3DDevice9Ex *iface, IDi
     TRACE("iface %p, shader %p.\n", iface, shader);
 
     wined3d_mutex_lock();
-    if ((wined3d_shader = wined3d_device_get_vertex_shader(device->wined3d_device)))
+    if ((wined3d_shader = wined3d_stateblock_get_state(device->state)->vs))
     {
         shader_impl = wined3d_shader_get_parent(wined3d_shader);
         *shader = &shader_impl->IDirect3DVertexShader9_iface;
