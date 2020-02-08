@@ -595,9 +595,35 @@ static HRESULT sample_grabber_source_get_media_type(struct strmbase_pin *iface,
     return VFW_S_NO_MORE_ITEMS;
 }
 
+static inline BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
+{
+    return !memcmp(a, b, offsetof(AM_MEDIA_TYPE, pbFormat))
+            && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
+}
+
 static HRESULT WINAPI sample_grabber_source_DecideAllocator(struct strmbase_source *iface,
         IMemInputPin *peer, IMemAllocator **allocator)
 {
+    SG_Impl *filter = impl_from_source_pin(&iface->pin);
+    const AM_MEDIA_TYPE *mt = &iface->pin.mt;
+
+    if (!compare_media_types(mt, &filter->sink.pin.mt))
+    {
+        IFilterGraph2 *graph;
+        HRESULT hr;
+
+        if (FAILED(hr = IFilterGraph_QueryInterface(filter->filter.graph,
+                &IID_IFilterGraph2, (void **)&graph)))
+        {
+            ERR("Failed to get IFilterGraph2 interface, hr %#x.\n", hr);
+            return hr;
+        }
+
+        hr = IFilterGraph2_ReconnectEx(graph, &filter->sink.pin.IPin_iface, mt);
+        IFilterGraph2_Release(graph);
+        return hr;
+    }
+
     return S_OK;
 }
 
