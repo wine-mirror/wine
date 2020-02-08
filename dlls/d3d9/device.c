@@ -3872,7 +3872,7 @@ static HRESULT WINAPI d3d9_device_GetPixelShader(IDirect3DDevice9Ex *iface, IDir
     if (!shader) return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    if ((wined3d_shader = wined3d_device_get_pixel_shader(device->wined3d_device)))
+    if ((wined3d_shader = wined3d_stateblock_get_state(device->state)->ps))
     {
         shader_impl = wined3d_shader_get_parent(wined3d_shader);
         *shader = &shader_impl->IDirect3DPixelShader9_iface;
