@@ -126,13 +126,6 @@ static WCHAR *a2w(const char *str)
     return ret;
 }
 
-static int strcmp_wa(const WCHAR *strw, const char *stra)
-{
-    WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
-    return lstrcmpW(strw, buf);
-}
-
 static void test_CreateVirtualStream(void)
 {
     HRESULT hr;
@@ -1196,7 +1189,7 @@ static void test_MimeOleGetPropertySchema(void)
 typedef struct {
     const char *url;
     const char *content;
-    const char *mime;
+    const WCHAR *mime;
     const char *data;
 } mhtml_binding_test_t;
 
@@ -1204,13 +1197,13 @@ static const mhtml_binding_test_t binding_tests[] = {
     {
         "mhtml:file://%s",
         mhtml_page1,
-        "text/html",
+        L"text/html",
         "<HTML></HTML>"
     },
     {
         "mhtml:file://%s!http://winehq.org/mhtmltest.html",
         mhtml_page1,
-        "Image/Jpeg",
+        L"Image/Jpeg",
         "Test"
     }
 };
@@ -1348,7 +1341,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     switch(ulStatusCode) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
         CHECK_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
-        ok(!strcmp_wa(szStatusText, current_binding_test->mime), "status text %s\n", wine_dbgstr_w(szStatusText));
+        ok(!lstrcmpW(szStatusText, current_binding_test->mime), "status text %s\n", wine_dbgstr_w(szStatusText));
         return S_OK;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
         CHECK_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
@@ -1462,41 +1455,41 @@ static void test_mhtml_protocol_binding(const mhtml_binding_test_t *test)
 static const struct {
     const char *base_url;
     const char *relative_url;
-    const char *expected_result;
+    const WCHAR *expected_result;
     BOOL todo;
 } combine_tests[] = {
     {
         "mhtml:file:///c:/dir/test.mht", "http://test.org",
-        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org"
+        L"mhtml:file:///c:/dir/test.mht!x-usc:http://test.org"
     }, {
         "mhtml:file:///c:/dir/test.mht", "3D\"http://test.org\"",
-        "mhtml:file:///c:/dir/test.mht!x-usc:3D\"http://test.org\""
+        L"mhtml:file:///c:/dir/test.mht!x-usc:3D\"http://test.org\""
     }, {
         "mhtml:file:///c:/dir/test.mht", "123abc",
-        "mhtml:file:///c:/dir/test.mht!x-usc:123abc"
+        L"mhtml:file:///c:/dir/test.mht!x-usc:123abc"
     }, {
         "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "123abc",
-        "mhtml:file:///c:/dir/test.mht!x-usc:123abc"
+        L"mhtml:file:///c:/dir/test.mht!x-usc:123abc"
     }, {
         "MhtMl:file:///c:/dir/test.mht!x-usc:http://test.org/dir/dir2/file.html", "../..",
-        "mhtml:file:///c:/dir/test.mht!x-usc:../.."
+        L"mhtml:file:///c:/dir/test.mht!x-usc:../.."
     }, {"mhtml:file:///c:/dir/test.mht!x-usc:file:///c:/dir/dir2/file.html", "../..",
-        "mhtml:file:///c:/dir/test.mht!x-usc:../.."
+        L"mhtml:file:///c:/dir/test.mht!x-usc:../.."
     }, {
         "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "",
-        "mhtml:file:///c:/dir/test.mht"
+        L"mhtml:file:///c:/dir/test.mht"
     }, {
         "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "mhtml:file:///d:/file.html",
-        "file:///d:/file.html", TRUE
+        L"file:///d:/file.html", TRUE
     }, {
         "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "mhtml:file:///c:/dir2/test.mht!x-usc:http://test.org",
-        "mhtml:file:///c:/dir2/test.mht!x-usc:http://test.org", TRUE
+        L"mhtml:file:///c:/dir2/test.mht!x-usc:http://test.org", TRUE
     }, {
         "mhtml:file:///c:/dir/test.mht!http://test.org", "123abc",
-        "mhtml:file:///c:/dir/test.mht!x-usc:123abc"
+        L"mhtml:file:///c:/dir/test.mht!x-usc:123abc"
     }, {
         "mhtml:file:///c:/dir/test.mht!http://test.org", "",
-        "mhtml:file:///c:/dir/test.mht"
+        L"mhtml:file:///c:/dir/test.mht"
     }
 };
 
@@ -1524,10 +1517,10 @@ static void test_mhtml_protocol_info(void)
         todo_wine_if(combine_tests[i].todo)
         ok(hres == S_OK, "[%u] CombineUrl failed: %08x\n", i, hres);
         if(SUCCEEDED(hres)) {
-            exlen = strlen(combine_tests[i].expected_result);
+            exlen = lstrlenW(combine_tests[i].expected_result);
             ok(combined_len == exlen, "[%u] combined len is %u, expected %u\n", i, combined_len, exlen);
-            ok(!strcmp_wa(combined_url, combine_tests[i].expected_result), "[%u] combined URL is %s, expected %s\n",
-               i, wine_dbgstr_w(combined_url), combine_tests[i].expected_result);
+            ok(!lstrcmpW(combined_url, combine_tests[i].expected_result), "[%u] combined URL is %s, expected %s\n",
+               i, wine_dbgstr_w(combined_url), wine_dbgstr_w(combine_tests[i].expected_result));
 
             combined_len = 0xdeadbeef;
             hres = IInternetProtocolInfo_CombineUrl(protocol_info, base_url, relative_url, ICU_BROWSER_MODE,
@@ -1620,12 +1613,12 @@ static void test_MimeOleObjectFromMoniker(void)
 
     static const struct {
         const char *url;
-        const char *mhtml_url;
+        const WCHAR *mhtml_url;
     } tests[] = {
-        {"file:///x:\\dir\\file.mht", "mhtml:file://x:\\dir\\file.mht"},
-        {"file:///x:/dir/file.mht", "mhtml:file://x:\\dir\\file.mht"},
-        {"http://www.winehq.org/index.html?query#hash", "mhtml:http://www.winehq.org/index.html?query#hash"},
-        {"../test.mht", "mhtml:../test.mht"}
+        {"file:///x:\\dir\\file.mht", L"mhtml:file://x:\\dir\\file.mht"},
+        {"file:///x:/dir/file.mht", L"mhtml:file://x:\\dir\\file.mht"},
+        {"http://www.winehq.org/index.html?query#hash", L"mhtml:http://www.winehq.org/index.html?query#hash"},
+        {"../test.mht", L"mhtml:../test.mht"}
     };
 
     for(i = 0; i < ARRAY_SIZE(tests); i++) {
@@ -1648,7 +1641,7 @@ static void test_MimeOleObjectFromMoniker(void)
 
         hres = IMoniker_GetDisplayName(new_mon, NULL, NULL, &mhtml_url);
         ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
-        ok(!strcmp_wa(mhtml_url, tests[i].mhtml_url), "[%d] unexpected mhtml URL: %s\n", i, wine_dbgstr_w(mhtml_url));
+        ok(!lstrcmpW(mhtml_url, tests[i].mhtml_url), "[%d] unexpected mhtml URL: %s\n", i, wine_dbgstr_w(mhtml_url));
         CoTaskMemFree(mhtml_url);
 
         IUnknown_Release(unk);
