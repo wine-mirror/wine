@@ -2719,13 +2719,12 @@ DWORD build_udp6_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE
             ptr = fgets( buf, sizeof(buf), fp );
             while ((ptr = fgets( buf, sizeof(buf), fp )))
             {
-                DWORD in6_addr32[4];
+                DWORD *local_addr = (DWORD *)&row.ucLocalAddr;
 
                 if (sscanf( ptr, "%u: %8x%8x%8x%8x:%x %*s %*s %*s %*s %*s %*s %*s %d", &dummy,
-                    &in6_addr32[0], &in6_addr32[1], &in6_addr32[2], &in6_addr32[3],
+                    &local_addr[0], &local_addr[1], &local_addr[2], &local_addr[3],
                     &row.dwLocalPort, &inode ) != 7)
                     continue;
-                memcpy(&row.ucLocalAddr, in6_addr32, sizeof(row.ucLocalAddr));
                 row.dwLocalScopeId = find_ipv6_addr_scope((const IN6_ADDR *)&row.ucLocalAddr, addr_scopes, addr_scopes_size);
                 row.dwLocalPort = htons( row.dwLocalPort );
 
