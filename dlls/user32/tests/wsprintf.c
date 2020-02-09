@@ -188,12 +188,11 @@ static void wsprintfWTest(void)
         memset(buf, 0x11, sizeof(buf));
         rc = wsprintfW(buf, testcase[i].fmt, testcase[i].input);
 
-        todo_wine_if (i == 2)
         ok(rc == testcase[i].rc,
            "%u: expected %d, got %d\n",
            i, testcase[i].rc, rc);
 
-        todo_wine ok(!memcmp(buf, testcase[i].str, (testcase[i].rc + 1) * sizeof(WCHAR)),
+        ok(!memcmp(buf, testcase[i].str, (testcase[i].rc + 1) * sizeof(WCHAR)),
            "%u: expected %s, got %s\n", i,
            wine_dbgstr_wn(testcase[i].str, testcase[i].rc + 1),
            wine_dbgstr_wn(buf, rc + 1));

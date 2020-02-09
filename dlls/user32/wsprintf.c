@@ -259,8 +259,22 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
         return (format->precision = 1);
     case WPR_STRING:
         if (!arg->lpcstr_view) arg->lpcstr_view = null_stringA;
-        for (len = 0; !format->precision || (len < format->precision); len++)
-            if (!*(arg->lpcstr_view + len)) break;
+        if (dst_is_wide)
+        {
+            LPCSTR p = arg->lpcstr_view;
+            for (len = 0; (!format->precision || len < format->precision) && *p; p++)
+            {
+                /* This isn't applicable for UTF-8 and UTF-7 */
+                if (IsDBCSLeadByte( *p )) p++;
+                len++;
+                if (!*p) break;
+            }
+        }
+        else
+        {
+            for (len = 0; !format->precision || (len < format->precision); len++)
+                if (!*(arg->lpcstr_view + len)) break;
+        }
         if (len > maxlen) len = maxlen;
         return (format->precision = len);
     case WPR_WSTRING:
@@ -494,7 +508,14 @@ static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, __ms_va_list a
         case WPR_STRING:
             {
                 LPCSTR ptr = argData.lpcstr_view;
-                for (i = 0; i < len; i++) *p++ = (BYTE)*ptr++;
+                for (i = 0; i < len; i++)
+                {
+                    WCHAR buf[2]; /* for LeadByte + NUL case, we need 2 WCHARs. */
+                    int ret, mb_len = IsDBCSLeadByte( *ptr ) ? 2 : 1;
+                    ret = MultiByteToWideChar( CP_ACP, 0, ptr, mb_len, buf, ARRAY_SIZE( buf ));
+                    *p++ = buf[ret - 1];
+                    ptr += mb_len;
+                }
             }
             break;
         case WPR_WSTRING:
