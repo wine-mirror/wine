@@ -112,20 +112,6 @@ static const char mhtml_page1[] =
     "\r\n\t\t\t\tVGVzdA==\r\n\r\n"
     "------=_NextPart_000_00--";
 
-static WCHAR *a2w(const char *str)
-{
-    WCHAR *ret;
-    int len;
-
-    if(!str)
-        return NULL;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    return ret;
-}
-
 static void test_CreateVirtualStream(void)
 {
     HRESULT hr;
@@ -1453,49 +1439,50 @@ static void test_mhtml_protocol_binding(const mhtml_binding_test_t *test)
 }
 
 static const struct {
-    const char *base_url;
-    const char *relative_url;
+    const WCHAR *base_url;
+    const WCHAR *relative_url;
     const WCHAR *expected_result;
     BOOL todo;
 } combine_tests[] = {
     {
-        "mhtml:file:///c:/dir/test.mht", "http://test.org",
+        L"mhtml:file:///c:/dir/test.mht", L"http://test.org",
         L"mhtml:file:///c:/dir/test.mht!x-usc:http://test.org"
     }, {
-        "mhtml:file:///c:/dir/test.mht", "3D\"http://test.org\"",
+        L"mhtml:file:///c:/dir/test.mht", L"3D\"http://test.org\"",
         L"mhtml:file:///c:/dir/test.mht!x-usc:3D\"http://test.org\""
     }, {
-        "mhtml:file:///c:/dir/test.mht", "123abc",
+        L"mhtml:file:///c:/dir/test.mht", L"123abc",
         L"mhtml:file:///c:/dir/test.mht!x-usc:123abc"
     }, {
-        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "123abc",
+        L"mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", L"123abc",
         L"mhtml:file:///c:/dir/test.mht!x-usc:123abc"
     }, {
-        "MhtMl:file:///c:/dir/test.mht!x-usc:http://test.org/dir/dir2/file.html", "../..",
-        L"mhtml:file:///c:/dir/test.mht!x-usc:../.."
-    }, {"mhtml:file:///c:/dir/test.mht!x-usc:file:///c:/dir/dir2/file.html", "../..",
+        L"MhtMl:file:///c:/dir/test.mht!x-usc:http://test.org/dir/dir2/file.html", L"../..",
         L"mhtml:file:///c:/dir/test.mht!x-usc:../.."
     }, {
-        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "",
+        L"mhtml:file:///c:/dir/test.mht!x-usc:file:///c:/dir/dir2/file.html", L"../..",
+        L"mhtml:file:///c:/dir/test.mht!x-usc:../.."
+    }, {
+        L"mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", L"",
         L"mhtml:file:///c:/dir/test.mht"
     }, {
-        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "mhtml:file:///d:/file.html",
+        L"mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", L"mhtml:file:///d:/file.html",
         L"file:///d:/file.html", TRUE
     }, {
-        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "mhtml:file:///c:/dir2/test.mht!x-usc:http://test.org",
+        L"mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", L"mhtml:file:///c:/dir2/test.mht!x-usc:http://test.org",
         L"mhtml:file:///c:/dir2/test.mht!x-usc:http://test.org", TRUE
     }, {
-        "mhtml:file:///c:/dir/test.mht!http://test.org", "123abc",
+        L"mhtml:file:///c:/dir/test.mht!http://test.org", L"123abc",
         L"mhtml:file:///c:/dir/test.mht!x-usc:123abc"
     }, {
-        "mhtml:file:///c:/dir/test.mht!http://test.org", "",
+        L"mhtml:file:///c:/dir/test.mht!http://test.org", L"",
         L"mhtml:file:///c:/dir/test.mht"
     }
 };
 
 static void test_mhtml_protocol_info(void)
 {
-    WCHAR *base_url, *relative_url, combined_url[INTERNET_MAX_URL_LENGTH];
+    WCHAR combined_url[INTERNET_MAX_URL_LENGTH];
     IInternetProtocolInfo *protocol_info;
     DWORD combined_len;
     unsigned i, exlen;
@@ -1508,11 +1495,9 @@ static void test_mhtml_protocol_info(void)
     ok(hres == S_OK, "Could not create protocol info: %08x\n", hres);
 
     for(i = 0; i < ARRAY_SIZE(combine_tests); i++) {
-        base_url = a2w(combine_tests[i].base_url);
-        relative_url = a2w(combine_tests[i].relative_url);
-
         combined_len = 0xdeadbeef;
-        hres = IInternetProtocolInfo_CombineUrl(protocol_info, base_url, relative_url, ICU_BROWSER_MODE,
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, combine_tests[i].base_url,
+                                                combine_tests[i].relative_url, ICU_BROWSER_MODE,
                                                 combined_url, ARRAY_SIZE(combined_url), &combined_len, 0);
         todo_wine_if(combine_tests[i].todo)
         ok(hres == S_OK, "[%u] CombineUrl failed: %08x\n", i, hres);
@@ -1523,14 +1508,12 @@ static void test_mhtml_protocol_info(void)
                i, wine_dbgstr_w(combined_url), wine_dbgstr_w(combine_tests[i].expected_result));
 
             combined_len = 0xdeadbeef;
-            hres = IInternetProtocolInfo_CombineUrl(protocol_info, base_url, relative_url, ICU_BROWSER_MODE,
+            hres = IInternetProtocolInfo_CombineUrl(protocol_info, combine_tests[i].base_url,
+                                                    combine_tests[i].relative_url, ICU_BROWSER_MODE,
                                                     combined_url, exlen, &combined_len, 0);
             ok(hres == E_FAIL, "[%u] CombineUrl returned: %08x\n", i, hres);
             ok(!combined_len, "[%u] combined_len = %u\n", i, combined_len);
         }
-
-        HeapFree(GetProcessHeap(), 0, base_url);
-        HeapFree(GetProcessHeap(), 0, relative_url);
     }
 
     hres = IInternetProtocolInfo_CombineUrl(protocol_info, http_url, http_url, ICU_BROWSER_MODE,
@@ -1605,27 +1588,25 @@ static void test_mhtml_protocol(void)
 static void test_MimeOleObjectFromMoniker(void)
 {
     IMoniker *mon, *new_mon;
-    WCHAR *mhtml_url, *url;
+    WCHAR *mhtml_url;
     IBindCtx *bind_ctx;
     IUnknown *unk;
     unsigned i;
     HRESULT hres;
 
     static const struct {
-        const char *url;
+        const WCHAR *url;
         const WCHAR *mhtml_url;
     } tests[] = {
-        {"file:///x:\\dir\\file.mht", L"mhtml:file://x:\\dir\\file.mht"},
-        {"file:///x:/dir/file.mht", L"mhtml:file://x:\\dir\\file.mht"},
-        {"http://www.winehq.org/index.html?query#hash", L"mhtml:http://www.winehq.org/index.html?query#hash"},
-        {"../test.mht", L"mhtml:../test.mht"}
+        {L"file:///x:\\dir\\file.mht", L"mhtml:file://x:\\dir\\file.mht"},
+        {L"file:///x:/dir/file.mht", L"mhtml:file://x:\\dir\\file.mht"},
+        {L"http://www.winehq.org/index.html?query#hash", L"mhtml:http://www.winehq.org/index.html?query#hash"},
+        {L"../test.mht", L"mhtml:../test.mht"}
     };
 
     for(i = 0; i < ARRAY_SIZE(tests); i++) {
-        url = a2w(tests[i].url);
-        hres = CreateURLMoniker(NULL, url, &mon);
+        hres = CreateURLMoniker(NULL, tests[i].url, &mon);
         ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
-        HeapFree(GetProcessHeap(), 0, url);
 
         hres = CreateBindCtx(0, &bind_ctx);
         ok(hres == S_OK, "CreateBindCtx failed: %08x\n", hres);
