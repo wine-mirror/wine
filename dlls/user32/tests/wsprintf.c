@@ -61,16 +61,14 @@ static void wsprintfATest(void)
         const char *fmt;
         const char *str;
         int rc;
-        BOOL todo_rc;
-        BOOL todo_str;
     }
     testcase[] = {
-        { starW, "%.1S", partial, 1, TRUE,  TRUE },
-        { starW, "%.2S", star,    2, FALSE, TRUE },
-        { starW, "%.3S", star,    2, FALSE, TRUE },
-        { fffeW, "%.1S", "?",     1, FALSE, TRUE },
-        { fffeW, "%.2S", "?",     1, FALSE, TRUE },
-        { wineW, "%.2S", "??",    2, FALSE, TRUE },
+        { starW, "%.1S", partial, 1 },
+        { starW, "%.2S", star,    2 },
+        { starW, "%.3S", star,    2 },
+        { fffeW, "%.1S", "?",     1 },
+        { fffeW, "%.2S", "?",     1 },
+        { wineW, "%.2S", "??",    2 },
         { star,  "%.1s", partial, 1 },
     };
     CPINFO cpinfo;
@@ -110,12 +108,10 @@ static void wsprintfATest(void)
         memset(buf, 0x11, sizeof(buf));
         rc = wsprintfA(buf, testcase[i].fmt, testcase[i].input);
 
-        todo_wine_if(testcase[i].todo_rc)
         ok(rc == testcase[i].rc,
            "%u: expected %d, got %d\n",
            i, testcase[i].rc, rc);
 
-        todo_wine_if(testcase[i].todo_str)
         ok(!strcmp(buf, testcase[i].str),
            "%u: expected %s, got %s\n",
            i, wine_dbgstr_a(testcase[i].str), wine_dbgstr_an(buf, rc));
