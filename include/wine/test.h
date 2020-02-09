@@ -62,6 +62,9 @@ extern int winetest_interactive;
 /* report successful tests (BOOL) */
 extern int winetest_report_success;
 
+/* silence todos and skips above this threshold */
+extern int winetest_mute_threshold;
+
 /* current platform */
 extern const char *winetest_platform;
 
@@ -211,6 +214,9 @@ const char *winetest_platform = "windows";
 /* report successful tests (BOOL) */
 int winetest_report_success = 0;
 
+/* silence todos and skips above this threshold */
+int winetest_mute_threshold = 42;
+
 /* passing arguments around */
 static int winetest_argc;
 static char** winetest_argv;
@@ -222,6 +228,12 @@ static LONG failures;        /* number of failures */
 static LONG skipped;         /* number of skipped test chunks */
 static LONG todo_successes;  /* number of successful tests inside todo block */
 static LONG todo_failures;   /* number of failures inside todo block */
+static LONG muted_traces;    /* number of silenced traces */
+static LONG muted_skipped;   /* same as skipped but silent */
+static LONG muted_todo_successes; /* same as todo_successes but silent */
+
+/* counts how many times a given line printed a message */
+static LONG line_counters[16384];
 
 /* The following data must be kept track of on a per-thread basis */
 struct tls_data
@@ -284,6 +296,25 @@ int broken( int condition )
     return (strcmp(winetest_platform, "windows") == 0) && condition;
 }
 
+static LONG winetest_add_line( void )
+{
+    struct tls_data *data;
+    int index, count;
+
+    if (winetest_debug > 1)
+        return 0;
+
+    data = get_tls_data();
+    index = data->current_line % ARRAY_SIZE(line_counters);
+    count = InterlockedIncrement(line_counters + index) - 1;
+    if (count == winetest_mute_threshold)
+        printf( "%s:%d Line has been silenced after %d occurrences\n",
+                data->current_file, data->current_line,
+                winetest_mute_threshold);
+
+    return count;
+}
+
 /*
  * Checks condition.
  * Parameters:
@@ -310,13 +341,19 @@ int winetest_vok( int condition, const char *msg, __winetest_va_list args )
         }
         else
         {
-            if (winetest_debug > 0)
+            if (!winetest_debug ||
+                winetest_add_line() < winetest_mute_threshold)
             {
-                printf( "%s:%d: Test marked todo: ",
-                        data->current_file, data->current_line );
-                vprintf(msg, args);
+                if (winetest_debug > 0)
+                {
+                    printf( "%s:%d Test marked todo: ",
+                            data->current_file, data->current_line );
+                    vprintf(msg, args);
+                }
+                InterlockedIncrement(&todo_successes);
             }
-            InterlockedIncrement(&todo_successes);
+            else
+                InterlockedIncrement(&muted_todo_successes);
             return 1;
         }
     }
@@ -353,24 +390,32 @@ void __winetest_cdecl winetest_ok( int condition, const char *msg, ... )
 void __winetest_cdecl winetest_trace( const char *msg, ... )
 {
     __winetest_va_list valist;
-    struct tls_data *data = get_tls_data();
 
-    if (winetest_debug > 0)
+    if (!winetest_debug)
+        return;
+    if (winetest_add_line() < winetest_mute_threshold)
     {
-        printf( "%s:%d: ", data->current_file, data->current_line );
+        struct tls_data *data = get_tls_data();
+        printf( "%s:%d ", data->current_file, data->current_line );
         __winetest_va_start(valist, msg);
         vprintf(msg, valist);
         __winetest_va_end(valist);
     }
+    else
+        InterlockedIncrement(&muted_traces);
 }
 
 void winetest_vskip( const char *msg, __winetest_va_list args )
 {
-    struct tls_data *data = get_tls_data();
-
-    printf( "%s:%d: Tests skipped: ", data->current_file, data->current_line );
-    vprintf(msg, args);
-    skipped++;
+    if (winetest_add_line() < winetest_mute_threshold)
+    {
+        struct tls_data *data = get_tls_data();
+        printf( "%s:%d Tests skipped: ", data->current_file, data->current_line );
+        vprintf(msg, args);
+        InterlockedIncrement(&skipped);
+    }
+    else
+        InterlockedIncrement(&muted_skipped);
 }
 
 void __winetest_cdecl winetest_skip( const char *msg, ... )
@@ -504,7 +549,11 @@ static int run_test( const char *name )
 
     if (winetest_debug)
     {
-        printf( "%04x:%s: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
+        if (muted_todo_successes || muted_skipped || muted_traces)
+            printf( "%04x:%s Silenced %d todos, %d skips and %d traces.\n",
+                    GetCurrentProcessId(), test->name,
+                    muted_todo_successes, muted_skipped, muted_traces);
+        printf( "%04x:%s %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
                 GetCurrentProcessId(), test->name,
                 successes + failures + todo_successes + todo_failures,
                 todo_successes, failures + todo_failures,
