@@ -59,18 +59,6 @@ DEFINE_EXPECT(Invoke_NAVIGATECOMPLETE2);
 
 static BOOL navigate_complete;
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
@@ -223,7 +211,7 @@ static void test_window(IWebBrowser2 *wb)
     ok(!strcmp(buf, "IEFrame"), "Unexpected class name %s\n", buf);
 }
 
-static void test_navigate(IWebBrowser2 *wb, const char *url)
+static void test_navigate(IWebBrowser2 *wb, const WCHAR *url)
 {
     VARIANT urlv, emptyv;
     MSG msg;
@@ -232,7 +220,7 @@ static void test_navigate(IWebBrowser2 *wb, const char *url)
     SET_EXPECT(Invoke_NAVIGATECOMPLETE2);
 
     V_VT(&urlv) = VT_BSTR;
-    V_BSTR(&urlv) = a2bstr(url);
+    V_BSTR(&urlv) = SysAllocString(url);
     V_VT(&emptyv) = VT_EMPTY;
     hres = IWebBrowser2_Navigate2(wb, &urlv, &emptyv, &emptyv, &emptyv, &emptyv);
     ok(hres == S_OK, "Navigate2 failed: %08x\n", hres);
@@ -284,7 +272,7 @@ static void test_InternetExplorer(void)
     test_visible(wb);
     test_html_window(wb);
     test_window(wb);
-    test_navigate(wb, "http://test.winehq.org/tests/hello.html");
+    test_navigate(wb, L"http://test.winehq.org/tests/hello.html");
 
     advise_cp(unk, FALSE);
 
