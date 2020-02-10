@@ -5880,17 +5880,6 @@ static void TLB_FreeVarDesc(VARDESC *var_desc)
     SysFreeString((BSTR)var_desc);
 }
 
-HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const FUNCDESC **ppFuncDesc )
-{
-    ITypeInfoImpl *This = impl_from_ITypeInfo(iface);
-
-    if (index >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
-
-    *ppFuncDesc = &This->funcdescs[index].funcdesc;
-    return S_OK;
-}
-
 /* internal function to make the inherited interfaces' methods appear
  * part of the interface */
 static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
@@ -5932,8 +5921,27 @@ static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
     
     if (index < implemented_funcs)
         return E_INVALIDARG;
-    return ITypeInfoImpl_GetInternalFuncDesc(iface, index - implemented_funcs,
-                                             ppFuncDesc);
+    index -= implemented_funcs;
+
+    if (index >= This->typeattr.cFuncs)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    *ppFuncDesc = &This->funcdescs[index].funcdesc;
+    return S_OK;
+}
+
+static HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const FUNCDESC **func_desc, UINT *hrefoffset )
+{
+    ITypeInfoImpl *This = impl_from_ITypeInfo(iface);
+
+    if (This->typeattr.typekind == TKIND_DISPATCH)
+        return ITypeInfoImpl_GetInternalDispatchFuncDesc(iface, index, func_desc, NULL, hrefoffset);
+
+    if (index >= This->typeattr.cFuncs)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    *func_desc = &This->funcdescs[index].funcdesc;
+    return S_OK;
 }
 
 static inline void ITypeInfoImpl_ElemDescAddHrefOffset( LPELEMDESC pElemDesc, UINT hrefoffset)
@@ -5989,13 +5997,8 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
     if (This->needs_layout)
         ICreateTypeInfo2_LayOut(&This->ICreateTypeInfo2_iface);
 
-    if (This->typeattr.typekind == TKIND_DISPATCH)
-        hr = ITypeInfoImpl_GetInternalDispatchFuncDesc((ITypeInfo *)iface, index,
-                                                       &internal_funcdesc, NULL,
-                                                       &hrefoffset);
-    else
-        hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index,
-                                               &internal_funcdesc);
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index,
+                                           &internal_funcdesc, &hrefoffset);
     if (FAILED(hr))
     {
         WARN("description for function %d not found\n", index);
