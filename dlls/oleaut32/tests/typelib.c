@@ -4798,13 +4798,17 @@ static void test_dump_typelib(const WCHAR *name)
 {
     ITypeLib *typelib;
     int ticount = ARRAY_SIZE(info);
+    CUSTDATA cust_data;
     int iface, func;
+    VARIANT v;
+    HRESULT hr;
 
     ole_check(LoadTypeLibEx(name, REGKIND_NONE, &typelib));
     expect_eq(ITypeLib_GetTypeInfoCount(typelib), ticount, UINT, "%d");
     for (iface = 0; iface < ticount; iface++)
     {
         const type_info *ti = &info[iface];
+        ITypeInfo2 *typeinfo2;
         ITypeInfo *typeinfo;
         TYPEATTR *typeattr;
         BSTR bstrIfName;
@@ -4844,6 +4848,9 @@ static void test_dump_typelib(const WCHAR *name)
             ok(hr == S_OK || (IsEqualGUID(&guid, &IID_NULL) && hr == TYPE_E_ELEMENTNOTFOUND), "got 0x%08x\n", hr);
             if (hr == S_OK) ITypeInfo_Release(typeinfo2);
         }
+
+        hr = ITypeInfo_QueryInterface(typeinfo, &IID_ITypeInfo2, (void**)&typeinfo2);
+        ok(hr == S_OK, "Could not get ITypeInfo2: %08x\n", hr);
 
         for (func = 0; func < typeattr->cFuncs; func++)
         {
@@ -4893,10 +4900,27 @@ static void test_dump_typelib(const WCHAR *name)
             }
             expect_int(fn_info->params[desc->cParams].vt, (VARTYPE)-1);
 
+            V_VT(&v) = VT_ERROR;
+            hr = ITypeInfo2_GetFuncCustData(typeinfo2, func, &IID_NULL, &v);
+            ok(hr == S_OK, "GetFuncCustData failed: %08x\n", hr);
+            ok(V_VT(&v) == VT_EMPTY, "V_VT(&v) = %d\n", V_VT(&v));
+            VariantClear(&v);
+
+            V_VT(&v) = VT_ERROR;
+            hr = ITypeInfo2_GetFuncCustData(typeinfo2, func, &IID_IBaseIface, &v);
+            ok(hr == S_OK, "GetFuncCustData failed: %08x\n", hr);
+            ok(V_VT(&v) == VT_EMPTY, "V_VT(&v) = %d\n", V_VT(&v));
+            VariantClear(&v);
+
+            memset(&cust_data, 0, sizeof(cust_data));
+            hr = ITypeInfo2_GetAllCustData(typeinfo2, &cust_data);
             ITypeInfo_ReleaseFuncDesc(typeinfo, desc);
+            ClearCustData(&cust_data);
         }
 
         ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+
+        ITypeInfo2_Release(typeinfo2);
         ITypeInfo_Release(typeinfo);
     }
     ITypeLib_Release(typelib);

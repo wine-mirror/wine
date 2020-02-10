@@ -8387,8 +8387,8 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncCustData(
 	VARIANT *pVarVal)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    TLBCustData *pCData;
     const TLBFuncDesc *desc;
+    TLBCustData *data;
     UINT hrefoffset;
     HRESULT hr;
 
@@ -8401,14 +8401,9 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncCustData(
         return hr;
     }
 
-    pCData = TLB_get_custdata_by_guid(&desc->custdata_list, guid);
-    if(!pCData)
-        return TYPE_E_ELEMENTNOTFOUND;
-
     VariantInit(pVarVal);
-    VariantCopy(pVarVal, &pCData->data);
-
-    return S_OK;
+    data = TLB_get_custdata_by_guid(&desc->custdata_list, guid);
+    return data ? VariantCopy(pVarVal, &data->data) : S_OK;
 }
 
 /* ITypeInfo2::GetParamCustData
