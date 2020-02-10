@@ -4810,6 +4810,7 @@ static void test_PARGB_conversion(void)
 {
     BYTE pargb[8] = { 0x62,0x77,0x99,0x77, 0x62,0x77,0x99,0 };
     BYTE argb[8] = { 0xd1,0xfe,0xff,0x77, 0x62,0x77,0x99,0 };
+    BYTE pargb2[8] = { 0x01,0x01,0x00,0x01, 0xfe,0x7f,0x7f,0xfe };
     BYTE *bits;
     GpBitmap *bitmap;
     BitmapData data;
@@ -4831,6 +4832,28 @@ static void test_PARGB_conversion(void)
     {
         bits = data.Scan0;
         trace("format %#x, bits %02x,%02x,%02x,%02x %02x,%02x,%02x,%02x\n", PixelFormat32bppARGB,
+               bits[0], bits[1], bits[2], bits[3], bits[4], bits[5], bits[6], bits[7]);
+    }
+    status = GdipBitmapUnlockBits(bitmap, &data);
+    expect(Ok, status);
+
+    /* Testing SetPixel 32-bit ARGB to PARGB */
+    status = GdipBitmapSetPixel(bitmap, 0, 0, 0x017f80ff);
+    expect(Ok, status);
+    status = GdipBitmapSetPixel(bitmap, 1, 0, 0xfe7f80ff);
+    expect(Ok, status);
+    status = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, PixelFormat32bppPARGB, &data);
+    expect(Ok, status);
+    ok(data.Width == 2, "expected 2, got %d\n", data.Width);
+    ok(data.Height == 1, "expected 1, got %d\n", data.Height);
+    ok(data.Stride == 8, "expected 8, got %d\n", data.Stride);
+    ok(data.PixelFormat == PixelFormat32bppPARGB, "expected PixelFormat32bppPARGB, got %d\n", data.PixelFormat);
+    match = !memcmp(data.Scan0, pargb2, sizeof(pargb2));
+    ok(match, "bits don't match\n");
+    if (!match)
+    {
+        bits = data.Scan0;
+        trace("format %#x, bits %02x,%02x,%02x,%02x %02x,%02x,%02x,%02x\n", PixelFormat32bppPARGB,
                bits[0], bits[1], bits[2], bits[3], bits[4], bits[5], bits[6], bits[7]);
     }
     status = GdipBitmapUnlockBits(bitmap, &data);

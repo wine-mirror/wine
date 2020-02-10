@@ -459,9 +459,9 @@ static inline void setpixel_32bppARGB(BYTE r, BYTE g, BYTE b, BYTE a,
 static inline void setpixel_32bppPARGB(BYTE r, BYTE g, BYTE b, BYTE a,
     BYTE *row, UINT x)
 {
-    r = r * a / 255;
-    g = g * a / 255;
-    b = b * a / 255;
+    r = (r * a + 127) / 255;
+    g = (g * a + 127) / 255;
+    b = (b * a + 127) / 255;
     *((DWORD*)(row)+x) = (a<<24)|(r<<16)|(g<<8)|b;
 }
 
