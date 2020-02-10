@@ -612,8 +612,16 @@ DECL_HANDLER(wait_debug_event)
 /* Continue a debug event */
 DECL_HANDLER(continue_debug_event)
 {
-    struct process *process = get_process_from_id( req->pid );
-    if (process)
+    struct process *process;
+
+    if (req->status != DBG_EXCEPTION_NOT_HANDLED &&
+        req->status != DBG_CONTINUE)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if ((process = get_process_from_id( req->pid )))
     {
         struct thread *thread = get_thread_from_id( req->tid );
         if (thread)

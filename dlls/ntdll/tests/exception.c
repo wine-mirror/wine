@@ -1000,6 +1000,10 @@ static void test_debugger(void)
         continuestatus = DBG_CONTINUE;
         ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
 
+        ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
+        ok(!ret, "ContinueDebugEvent unexpectedly succeeded\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected last error: %u\n", GetLastError());
+
         if (de.dwThreadId != pi.dwThreadId)
         {
             trace("event %d not coming from main thread, ignoring\n", de.dwDebugEventCode);
