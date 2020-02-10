@@ -17,5 +17,6 @@ RC_SRCS = tmarshal.rc
 
 IDL_SRCS = \
 	test_reg.idl \
+	test_simple.idl \
 	test_tlb.idl \
 	tmarshal.idl

@@ -41,6 +41,7 @@
 
 #include "test_reg.h"
 #include "test_tlb.h"
+#include "test_simple.h"
 
 #define expect_eq(expr, value, type, format) { type _ret = (expr); ok((value) == _ret, #expr " expected " format " got " format "\n", value, _ret); }
 #define expect_int(expr, value) expect_eq(expr, (int)(value), int, "%d")
@@ -775,7 +776,7 @@ static void test_CreateDispTypeInfo(void)
     SysFreeString(methdata[3].szName);
 }
 
-static void write_typelib(int res_no, const WCHAR *filename)
+static void write_typelib(int res_no, const WCHAR *filename, const WCHAR *type)
 {
     DWORD written;
     HANDLE file;
@@ -785,8 +786,8 @@ static void write_typelib(int res_no, const WCHAR *filename)
     file = CreateFileW( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
     if (file == INVALID_HANDLE_VALUE) return;
-    res = FindResourceA( GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(res_no), "TYPELIB" );
-    ok( res != 0, "couldn't find resource\n" );
+    res = FindResourceW( GetModuleHandleA(NULL), (const WCHAR *)MAKEINTRESOURCE(res_no), type );
+    ok( res != 0, "couldn't find resource %d %s\n", res_no, debugstr_w(type) );
     ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
     WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
     ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
@@ -820,12 +821,12 @@ static void test_invoke_func(ITypeInfo *typeinfo)
     ok(hres == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hres);
 }
 
-static WCHAR *create_test_typelib(int res_no)
+static WCHAR *create_test_typelib(int res_no, const WCHAR *type)
 {
     static WCHAR filename[MAX_PATH];
 
     GetTempFileNameW(L".", L"tlb", 0, filename);
-    write_typelib(res_no, filename);
+    write_typelib(res_no, filename, type);
     return filename;
 }
 
@@ -1028,7 +1029,7 @@ static void test_TypeInfo(void)
     ITypeInfo_Release(pTypeInfo);
     ITypeLib_Release(pTypeLib);
 
-    filename = create_test_typelib(3);
+    filename = create_test_typelib(3, L"TYPELIB");
     hr = LoadTypeLib(filename, &pTypeLib);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -5036,7 +5037,7 @@ static void test_register_typelib(BOOL system_registration)
     if (pIsWow64Process)
         pIsWow64Process(GetCurrentProcess(), &is_wow64);
 
-    filename = create_test_typelib(3);
+    filename = create_test_typelib(3, L"TYPELIB");
 
     hr = LoadTypeLibEx(filename, REGKIND_NONE, &typelib);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -5787,8 +5788,8 @@ static void test_LoadRegTypeLib(void)
     DeleteFileA("main.manifest");
 
     /* create typelib file */
-    write_typelib(1, L"test_actctx_tlb.tlb");
-    write_typelib(3, L"test_actctx_tlb2.tlb");
+    write_typelib(1, L"test_actctx_tlb.tlb", L"TYPELIB");
+    write_typelib(3, L"test_actctx_tlb2.tlb", L"TYPELIB");
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &tl);
     ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
@@ -6388,11 +6389,11 @@ static void test_dep(void) {
 
     trace("Starting typelib dependency tests\n");
 
-    refFilename = create_test_typelib(2);
+    refFilename = create_test_typelib(4, L"TL");
     hr = LoadTypeLibEx(refFilename, REGKIND_NONE, &preftLib);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    hr = ITypeLib_GetTypeInfoOfGuid(preftLib, &IID_ISimpleIface, &preftInfo);
+    hr = ITypeLib_GetTypeInfoOfGuid(preftLib, &IID_IBaseIface, &preftInfo);
     ok(hr == S_OK, "got %08x\n", hr);
 
     GetTempFileNameA(".", "tlb", 0, filename);
@@ -6448,11 +6449,37 @@ static void test_dep(void) {
     ok(hr == S_OK, "got: %x\n", hr);
 
     hr = ITypeInfo_GetRefTypeInfo(ptInfo, refType, &ptInfoExt);
-    ok(hr == S_OK || broken(hr == TYPE_E_CANTLOADLIBRARY) /* win 2000 */, "got: %x\n", hr);
+    ok(hr == TYPE_E_CANTLOADLIBRARY, "got: %x\n", hr);
 
     ITypeInfo_Release(ptInfo);
     if(ptInfoExt)
         ITypeInfo_Release(ptInfoExt);
+    ITypeLib_Release(ptLib);
+
+    hr = LoadTypeLibEx(filenameW, REGKIND_NONE, &ptLib);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfo(ptLib, 0, &ptInfo);
+    ok(hr == S_OK, "GetTypeInfo failed: %08x\n", hr);
+
+    hr = ITypeInfo_GetRefTypeOfImplType(ptInfo, 0, &refType);
+    ok(hr == S_OK, "GetRefTypeOfImplType failed: %08x\n", hr);
+
+    hr = ITypeInfo_GetRefTypeInfo(ptInfo, refType, &ptInfoExt);
+    ok(hr == TYPE_E_CANTLOADLIBRARY, "got: %x\n", hr);
+
+    refFilename = create_test_typelib(4, L"TL");
+    hr = LoadTypeLibEx(refFilename, REGKIND_NONE, &preftLib);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeInfo_GetRefTypeInfo(ptInfo, refType, &ptInfoExt);
+    ok(hr == S_OK, "got: %x\n", hr);
+    ITypeInfo_Release(ptInfoExt);
+
+    ITypeLib_Release(preftLib);
+    DeleteFileW(refFilename);
+
+    ITypeInfo_Release(ptInfo);
     ITypeLib_Release(ptLib);
 
     DeleteFileW(filenameW);
@@ -6580,7 +6607,7 @@ START_TEST(typelib)
     test_SetDocString();
     test_FindName();
 
-    if ((filename = create_test_typelib(2)))
+    if ((filename = create_test_typelib(2, L"TYPELIB")))
     {
         test_dump_typelib( filename );
         DeleteFileW( filename );
