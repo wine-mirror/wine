@@ -86,6 +86,7 @@ static BOOL (WINAPI *pFlsFree)(DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 static BOOL (WINAPI *pWow64DisableWow64FsRedirection)(void **);
 static BOOL (WINAPI *pWow64RevertWow64FsRedirection)(void *);
+static HMODULE (WINAPI *pLoadPackagedLibrary)(LPCWSTR lpwLibFileName, DWORD Reserved);
 
 static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
 {
@@ -3917,6 +3918,22 @@ static void test_dll_file( const char *name )
 #undef OK_FIELD
 }
 
+static void test_LoadPackagedLibrary(void)
+{
+    HMODULE h;
+
+    if (!pLoadPackagedLibrary)
+    {
+        win_skip("LoadPackagedLibrary is not available.\n");
+        return;
+    }
+
+    SetLastError( 0xdeadbeef );
+    h = pLoadPackagedLibrary(L"kernel32.dll", 0);
+    ok(!h && GetLastError() == APPMODEL_ERROR_NO_PACKAGE, "Got unexpected handle %p, GetLastError() %u.\n",
+            h, GetLastError());
+}
+
 START_TEST(loader)
 {
     int argc;
@@ -3954,6 +3971,7 @@ START_TEST(loader)
     pWow64DisableWow64FsRedirection = (void *)GetProcAddress(kernel32, "Wow64DisableWow64FsRedirection");
     pWow64RevertWow64FsRedirection = (void *)GetProcAddress(kernel32, "Wow64RevertWow64FsRedirection");
     pResolveDelayLoadedAPI = (void *)GetProcAddress(kernel32, "ResolveDelayLoadedAPI");
+    pLoadPackagedLibrary = (void *)GetProcAddress(kernel32, "LoadPackagedLibrary");
 
     if (pIsWow64Process) pIsWow64Process( GetCurrentProcess(), &is_wow64 );
     GetSystemInfo( &si );
@@ -3986,6 +4004,7 @@ START_TEST(loader)
     test_import_resolution();
     test_ExitProcess();
     test_InMemoryOrderModuleList();
+    test_LoadPackagedLibrary();
     test_wow64_redirection();
     test_dll_file( "ntdll.dll" );
     test_dll_file( "kernel32.dll" );

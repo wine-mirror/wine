@@ -535,6 +535,17 @@ HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryExW( LPCWSTR name, HANDLE file, DWOR
 }
 
 
+/***********************************************************************
+ *      LoadPackagedLibrary    (kernelbase.@)
+ */
+HMODULE WINAPI /* DECLSPEC_HOTPATCH */ LoadPackagedLibrary( LPCWSTR name, DWORD reserved )
+{
+    FIXME( "semi-stub, name %s, reserved %#x.\n", debugstr_w(name), reserved );
+    SetLastError( APPMODEL_ERROR_NO_PACKAGE );
+    return NULL;
+}
+
+
 /****************************************************************************
  *	RemoveDllDirectory   (kernelbase.@)
  */

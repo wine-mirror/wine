@@ -926,7 +926,7 @@
 @ stdcall LoadLibraryExA( str long long)
 @ stdcall LoadLibraryExW(wstr long long)
 @ stdcall LoadLibraryW(wstr)
-# @ stub LoadPackagedLibrary
+@ stdcall LoadPackagedLibrary(wstr long)
 @ stdcall LoadResource(long long)
 @ stdcall LoadStringA(long long ptr long)
 @ stub LoadStringBaseExW

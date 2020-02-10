@@ -1049,6 +1049,7 @@
 @ stdcall -import LoadLibraryExW(wstr long long)
 @ stdcall -import LoadLibraryW(wstr)
 @ stdcall LoadModule(str ptr)
+@ stdcall -import LoadPackagedLibrary(wstr long)
 @ stdcall -import LoadResource(long long)
 # @ stub LoadStringBaseExW
 # @ stub LoadStringBaseW
