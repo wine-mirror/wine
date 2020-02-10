@@ -3200,6 +3200,71 @@ LONG WINAPI ChangeDisplaySettingsExA( LPCSTR devname, LPDEVMODEA devmode, HWND h
     return ret;
 }
 
+#define _X_FIELD(prefix, bits)                            \
+    if ((fields) & prefix##_##bits)                       \
+    {                                                     \
+        p += sprintf(p, "%s%s", first ? "" : ",", #bits); \
+        first = FALSE;                                    \
+    }
+
+static const CHAR *_CDS_flags(DWORD fields)
+{
+    BOOL first = TRUE;
+    CHAR buf[128];
+    CHAR *p = buf;
+
+    _X_FIELD(CDS, UPDATEREGISTRY)
+    _X_FIELD(CDS, TEST)
+    _X_FIELD(CDS, FULLSCREEN)
+    _X_FIELD(CDS, GLOBAL)
+    _X_FIELD(CDS, SET_PRIMARY)
+    _X_FIELD(CDS, RESET)
+    _X_FIELD(CDS, SETRECT)
+    _X_FIELD(CDS, NORESET)
+
+    *p = 0;
+    return wine_dbg_sprintf("%s", buf);
+}
+
+static const CHAR *_DM_fields(DWORD fields)
+{
+    BOOL first = TRUE;
+    CHAR buf[128];
+    CHAR *p = buf;
+
+    _X_FIELD(DM, BITSPERPEL)
+    _X_FIELD(DM, PELSWIDTH)
+    _X_FIELD(DM, PELSHEIGHT)
+    _X_FIELD(DM, DISPLAYFLAGS)
+    _X_FIELD(DM, DISPLAYFREQUENCY)
+    _X_FIELD(DM, POSITION)
+    _X_FIELD(DM, DISPLAYORIENTATION)
+
+    *p = 0;
+    return wine_dbg_sprintf("%s", buf);
+}
+
+#undef _X_FIELD
+
+static void trace_devmode(const DEVMODEW *devmode)
+{
+    TRACE("dmFields=%s ", _DM_fields(devmode->dmFields));
+    if (devmode->dmFields & DM_BITSPERPEL)
+        TRACE("dmBitsPerPel=%u ", devmode->dmBitsPerPel);
+    if (devmode->dmFields & DM_PELSWIDTH)
+        TRACE("dmPelsWidth=%u ", devmode->dmPelsWidth);
+    if (devmode->dmFields & DM_PELSHEIGHT)
+        TRACE("dmPelsHeight=%u ", devmode->dmPelsHeight);
+    if (devmode->dmFields & DM_DISPLAYFREQUENCY)
+        TRACE("dmDisplayFrequency=%u ", devmode->dmDisplayFrequency);
+    if (devmode->dmFields & DM_POSITION)
+        TRACE("dmPosition=(%d,%d) ", devmode->u1.s2.dmPosition.x, devmode->u1.s2.dmPosition.y);
+    if (devmode->dmFields & DM_DISPLAYFLAGS)
+        TRACE("dmDisplayFlags=%#x ", devmode->u2.dmDisplayFlags);
+    if (devmode->dmFields & DM_DISPLAYORIENTATION)
+        TRACE("dmDisplayOrientation=%u ", devmode->u1.s2.dmDisplayOrientation);
+    TRACE("\n");
+}
 
 /***********************************************************************
  *		ChangeDisplaySettingsExW (USER32.@)
@@ -3207,7 +3272,50 @@ LONG WINAPI ChangeDisplaySettingsExA( LPCSTR devname, LPDEVMODEA devmode, HWND h
 LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND hwnd,
                                       DWORD flags, LPVOID lparam )
 {
-    return USER_Driver->pChangeDisplaySettingsEx( devname, devmode, hwnd, flags, lparam );
+    BOOL def_mode = TRUE;
+    DEVMODEW dm;
+
+    TRACE("%s %p %p %#x %p\n", debugstr_w(devname), devmode, hwnd, flags, lparam);
+    TRACE("flags=%s\n", _CDS_flags(flags));
+
+    if (devmode)
+    {
+        trace_devmode(devmode);
+
+        /* This is the minimal dmSize that XP accepts */
+        if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmFields))
+            return DISP_CHANGE_FAILED;
+
+        if (devmode->dmSize >= FIELD_OFFSET(DEVMODEW, dmFields) + sizeof(devmode->dmFields))
+        {
+            if (((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
+                ((devmode->dmFields & DM_PELSWIDTH) && devmode->dmPelsWidth) ||
+                ((devmode->dmFields & DM_PELSHEIGHT) && devmode->dmPelsHeight) ||
+                ((devmode->dmFields & DM_DISPLAYFREQUENCY) && devmode->dmDisplayFrequency))
+                def_mode = FALSE;
+        }
+    }
+
+    if (def_mode)
+    {
+        dm.dmSize = sizeof(dm);
+        if (!EnumDisplaySettingsExW(devname, ENUM_REGISTRY_SETTINGS, &dm, 0))
+        {
+            ERR("Default mode not found!\n");
+            return DISP_CHANGE_BADMODE;
+        }
+
+        TRACE("Return to original display mode\n");
+        devmode = &dm;
+    }
+
+    if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
+    {
+        WARN("devmode doesn't specify the resolution: %#x\n", devmode->dmFields);
+        return DISP_CHANGE_BADMODE;
+    }
+
+    return USER_Driver->pChangeDisplaySettingsEx(devname, devmode, hwnd, flags, lparam);
 }
 
 

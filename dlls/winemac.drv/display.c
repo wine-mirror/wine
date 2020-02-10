@@ -755,8 +755,6 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
 {
     LONG ret = DISP_CHANGE_BADMODE;
     int bpp;
-    DEVMODEW dm;
-    BOOL def_mode = TRUE;
     struct macdrv_display *displays;
     int num_displays;
     CFArrayRef display_modes;
@@ -769,40 +767,6 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     TRACE("%s %p %p 0x%08x %p\n", debugstr_w(devname), devmode, hwnd, flags, lpvoid);
 
     init_original_display_mode();
-
-    if (devmode)
-    {
-        /* this is the minimal dmSize that XP accepts */
-        if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmFields))
-            return DISP_CHANGE_FAILED;
-
-        if (devmode->dmSize >= FIELD_OFFSET(DEVMODEW, dmFields) + sizeof(devmode->dmFields))
-        {
-            if (((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
-                ((devmode->dmFields & DM_PELSWIDTH) && devmode->dmPelsWidth) ||
-                ((devmode->dmFields & DM_PELSHEIGHT) && devmode->dmPelsHeight) ||
-                ((devmode->dmFields & DM_DISPLAYFREQUENCY) && devmode->dmDisplayFrequency))
-                def_mode = FALSE;
-        }
-    }
-
-    if (def_mode)
-    {
-        if (!macdrv_EnumDisplaySettingsEx(devname, ENUM_REGISTRY_SETTINGS, &dm, 0))
-        {
-            ERR("Default mode not found!\n");
-            return DISP_CHANGE_BADMODE;
-        }
-
-        TRACE("Return to original display mode\n");
-        devmode = &dm;
-    }
-
-    if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
-    {
-        WARN("devmode doesn't specify the resolution: %04x\n", devmode->dmFields);
-        return DISP_CHANGE_BADMODE;
-    }
 
     if (macdrv_get_displays(&displays, &num_displays))
         return DISP_CHANGE_FAILED;

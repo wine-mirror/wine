@@ -311,30 +311,6 @@ BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmo
     return FALSE;
 }
 
-#define _X_FIELD(prefix, bits) if ((fields) & prefix##_##bits) {p+=sprintf(p, "%s%s", first ? "" : ",", #bits); first=FALSE;}
-static const char * _CDS_flags(DWORD fields)
-{
-    BOOL first = TRUE;
-    char buf[128];
-    char *p = buf;
-    _X_FIELD(CDS,UPDATEREGISTRY);_X_FIELD(CDS,TEST);_X_FIELD(CDS,FULLSCREEN);
-    _X_FIELD(CDS,GLOBAL);_X_FIELD(CDS,SET_PRIMARY);_X_FIELD(CDS,RESET);
-    _X_FIELD(CDS,SETRECT);_X_FIELD(CDS,NORESET);
-    *p = 0;
-    return wine_dbg_sprintf("%s", buf);
-}
-static const char * _DM_fields(DWORD fields)
-{
-    BOOL first = TRUE;
-    char buf[128];
-    char *p = buf;
-    _X_FIELD(DM,BITSPERPEL);_X_FIELD(DM,PELSWIDTH);_X_FIELD(DM,PELSHEIGHT);
-    _X_FIELD(DM,DISPLAYFLAGS);_X_FIELD(DM,DISPLAYFREQUENCY);_X_FIELD(DM,POSITION);
-    *p = 0;
-    return wine_dbg_sprintf("%s", buf);
-}
-#undef _X_FIELD
-
 /***********************************************************************
  *		ChangeDisplaySettingsEx  (X11DRV.@)
  *
@@ -342,57 +318,14 @@ static const char * _DM_fields(DWORD fields)
 LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
                                            HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
-    DWORD i, dwBpp = 0;
-    DEVMODEW dm;
-    BOOL def_mode = TRUE;
     char bpp_buffer[16], freq_buffer[18];
-
-    TRACE("(%s,%p,%p,0x%08x,%p)\n",debugstr_w(devname),devmode,hwnd,flags,lpvoid);
-    TRACE("flags=%s\n",_CDS_flags(flags));
-    if (devmode)
-    {
-        /* this is the minimal dmSize that XP accepts */
-        if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmFields))
-            return DISP_CHANGE_FAILED;
-
-        TRACE("DM_fields=%s\n",_DM_fields(devmode->dmFields));
-        TRACE("width=%d height=%d bpp=%d freq=%d (%s)\n",
-              devmode->dmPelsWidth,devmode->dmPelsHeight,
-              devmode->dmBitsPerPel,devmode->dmDisplayFrequency, handler_name);
-
-        dwBpp = devmode->dmBitsPerPel;
-        if (devmode->dmFields & DM_BITSPERPEL) def_mode &= !dwBpp;
-        if (devmode->dmFields & DM_PELSWIDTH)  def_mode &= !devmode->dmPelsWidth;
-        if (devmode->dmFields & DM_PELSHEIGHT) def_mode &= !devmode->dmPelsHeight;
-        if (devmode->dmFields & DM_DISPLAYFREQUENCY) def_mode &= !devmode->dmDisplayFrequency;
-    }
-
-    if (def_mode || !dwBpp)
-    {
-        if (!X11DRV_EnumDisplaySettingsEx(devname, ENUM_REGISTRY_SETTINGS, &dm, 0))
-        {
-            ERR("Default mode not found!\n");
-            return DISP_CHANGE_BADMODE;
-        }
-        if (def_mode)
-        {
-            TRACE("Return to original display mode (%s)\n", handler_name);
-            devmode = &dm;
-        }
-        dwBpp = dm.dmBitsPerPel;
-    }
-
-    if ((devmode->dmFields & (DM_PELSWIDTH | DM_PELSHEIGHT)) != (DM_PELSWIDTH | DM_PELSHEIGHT))
-    {
-        WARN("devmode doesn't specify the resolution: %04x\n", devmode->dmFields);
-        return DISP_CHANGE_BADMODE;
-    }
+    DWORD i;
 
     for (i = 0; i < dd_mode_count; i++)
     {
         if (devmode->dmFields & DM_BITSPERPEL)
         {
-            if (dwBpp != dd_modes[i].bpp)
+            if (devmode->dmBitsPerPel != dd_modes[i].bpp)
                 continue;
         }
         if (devmode->dmFields & DM_PELSWIDTH)
