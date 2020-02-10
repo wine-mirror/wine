@@ -35,16 +35,12 @@ my $SORTKEYS = "tr10/allkeys.txt";
 # RFC3454 (stringprep data)
 my $STRINGPREP = "rfc3454.txt";
 
-# Defaults mapping
-my $DEFAULTS = "tools/unicode-defaults";
-
 # Default char for undefined mappings
 my $DEF_CHAR = ord '?';
 
 my @allfiles =
 (
     [ 37,    "CodpageFiles/037.txt",    "IBM EBCDIC US Canada" ],
-    [ 424,   "VENDORS/MISC/CP424.TXT",  "IBM EBCDIC Hebrew" ],
     [ 437,   "CodpageFiles/437.txt",    "OEM United States" ],
     [ 500,   "CodpageFiles/500.txt",    "IBM EBCDIC International" ],
     [ 737,   "CodpageFiles/737.txt",    "OEM Greek 437G" ],
@@ -52,7 +48,6 @@ my @allfiles =
     [ 850,   "CodpageFiles/850.txt",    "OEM Multilingual Latin 1" ],
     [ 852,   "CodpageFiles/852.txt",    "OEM Slovak Latin 2" ],
     [ 855,   "CodpageFiles/855.txt",    "OEM Cyrillic" ],
-    [ 856,   "VENDORS/MISC/CP856.TXT",  "Hebrew PC" ],
     [ 857,   "CodpageFiles/857.txt",    "OEM Turkish" ],
     [ 860,   "CodpageFiles/860.txt",    "OEM Portuguese" ],
     [ 861,   "CodpageFiles/861.txt",    "OEM Icelandic" ],
@@ -64,12 +59,10 @@ my @allfiles =
     [ 869,   "CodpageFiles/869.txt",    "OEM Greek" ],
     [ 874,   "CodpageFiles/874.txt",    "ANSI/OEM Thai" ],
     [ 875,   "CodpageFiles/875.txt",    "IBM EBCDIC Greek" ],
-    [ 878,   "VENDORS/MISC/KOI8-R.TXT", "Russian KOI8" ],
     [ 932,   "CodpageFiles/932.txt",    "ANSI/OEM Japanese Shift-JIS" ],
     [ 936,   "CodpageFiles/936.txt",    "ANSI/OEM Simplified Chinese GBK" ],
     [ 949,   "CodpageFiles/949.txt",    "ANSI/OEM Korean Unified Hangul" ],
     [ 950,   "CodpageFiles/950.txt",    "ANSI/OEM Traditional Chinese Big5" ],
-    [ 1006,  "VENDORS/MISC/CP1006.TXT", "IBM Arabic" ],
     [ 1026,  "CodpageFiles/1026.txt",   "IBM EBCDIC Latin 5 Turkish" ],
     [ 1250,  "CodpageFiles/1250.txt",   "ANSI Eastern Europe" ],
     [ 1251,  "CodpageFiles/1251.txt",   "ANSI Cyrillic" ],
@@ -110,12 +103,8 @@ my @allfiles =
     [ 28597, "CodpageFiles/28597.txt",  "ISO 8859-7 Greek" ],
     [ 28598, "CodpageFiles/28598.txt",  "ISO 8859-8 Hebrew" ],
     [ 28599, "CodpageFiles/28599.txt",  "ISO 8859-9 Latin 5 (Turkish)" ],
-    [ 28600, "ISO8859/8859-10.TXT",     "ISO 8859-10 Latin 6 (Nordic)" ],
-    [ 28601, "ISO8859/8859-11.TXT",     "ISO 8859-11 Latin (Thai)" ],
     [ 28603, "CodpageFiles/28603.txt",  "ISO 8859-13 Latin 7 (Baltic)" ],
-    [ 28604, "ISO8859/8859-14.TXT",     "ISO 8859-14 Latin 8 (Celtic)" ],
     [ 28605, "CodpageFiles/28605.txt",  "ISO 8859-15 Latin 9 (Euro)" ],
-    [ 28606, "ISO8859/8859-16.TXT",     "ISO 8859-16 Latin 10 (Balkan)" ]
 );
 
 
@@ -407,8 +396,6 @@ my @cp2uni = ();
 my @glyph2uni = ();
 my @lead_bytes = ();
 my @uni2cp = ();
-my @unicode_defaults = ();
-my @unicode_aliases = ();
 my @tolower_table = ();
 my @toupper_table = ();
 my @digitmap_table = ();
@@ -502,37 +489,9 @@ sub build_decompositions(@)
 
 ################################################################
 # read in the Unicode database files
-sub load_data($)
+sub load_data()
 {
-    my $filename = shift;
     my $start;
-
-    # first setup a few default mappings
-
-    open DEFAULTS, "$filename" or die "Cannot open $filename";
-    print "Loading $filename\n";
-    while (<DEFAULTS>)
-    {
-        next if /^\#/;  # skip comments
-        next if /^$/;  # skip empty lines
-        if (/^(([0-9a-fA-F]+)(,[0-9a-fA-F]+)*)\s+([0-9a-fA-F]+|'.'|none)\s+(\#.*)?/)
-        {
-            my @src = map hex, split /,/,$1;
-            my $dst = $4;
-            my $comment = $5;
-            if ($#src > 0) { push @unicode_aliases, \@src; }
-            next if ($dst eq "none");
-            $dst = ($dst =~ /\'.\'/) ? ord substr($dst,1,1) : hex $dst;
-            foreach my $src (@src)
-            {
-                die "Duplicate value" if defined($unicode_defaults[$src]);
-                $unicode_defaults[$src] = $dst;
-            }
-            next;
-        }
-        die "Unrecognized line $_\n";
-    }
-    close DEFAULTS;
 
     # now build mappings from the decomposition field of the Unicode database
 
@@ -639,16 +598,6 @@ sub load_data($)
         {
             next;
         }
-
-        next if defined($unicode_defaults[$src]);  # may have been set in the defaults file
-
-        # check for loops
-        for (my $i = $dst; ; $i = $unicode_defaults[$i])
-        {
-            die sprintf("loop detected for %04x -> %04x",$src,$dst) if $i == $src;
-            last unless defined($unicode_defaults[$i]);
-        }
-        $unicode_defaults[$src] = $dst;
     }
     close $UNICODE_DATA;
 
@@ -696,59 +645,6 @@ sub add_mapping($$)
     $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
     if ($cp > 0xff) { add_lead_byte( $cp >> 8 ); }
 }
-
-################################################################
-# parse a standard codepage file
-sub output_codepage($$$)
-{
-    my ($codepage, $name, $comment) = @_;
-    my $INPUT = open_data_file( $MAPPINGS, $name );
-
-    while (<$INPUT>)
-    {
-        next if /^\#/;  # skip comments
-        next if /^$/;  # skip empty lines
-        next if /\x1a/;  # skip ^Z
-        next if (/^0x([0-9a-fA-F]+)\s+\#UNDEFINED/);  # undefined char
-
-        if (/^0x([0-9a-fA-F]+)\s+\#DBCS LEAD BYTE/)
-        {
-            add_lead_byte( hex $1 );
-            next;
-        }
-        # 0x12 0x3456
-        if (/^0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(\#.*)?/)
-        {
-            add_mapping( hex $1, hex $2 );
-            next;
-        }
-        # 0x12 0x3456+0x7890
-        if (/^0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\+.*\s+(\#.*)?/)
-        {
-            add_mapping( hex $1, hex $2 );
-            next;
-        }
-        # 0x12 <LR>+0x3456
-        if (/^0x([0-9a-fA-F]+)\s+<LR>\+0x([0-9a-fA-F]+)\s+(\#.*)?/)
-        {
-            add_mapping( hex $1, hex $2 );
-            next;
-        }
-        # 0x12 <RL>+0x3456
-        if (/^0x([0-9a-fA-F]+)\s+<RL>\+0x([0-9a-fA-F]+)\s+(\#.*)?/)
-        {
-            my $uni = hex $2;
-            add_mapping( hex $1, $uni ) if $uni >= 0x80;
-            next;
-        }
-        die "$name: Unrecognized line $_\n";
-    }
-    close $INPUT;
-
-    add_default_mappings();
-    output_codepage_file( $codepage, "$MAPPINGS/$name", $comment );
-}
-
 
 ################################################################
 # get a mapping including glyph chars for MB_USEGLYPHCHARS
@@ -942,58 +838,6 @@ sub dump_sortkeys($)
     save_file($filename);
 }
 
-
-################################################################
-# add default mappings once the file had been read
-sub add_default_mappings()
-{
-    # Apply aliases
-
-    foreach my $alias (@unicode_aliases)
-    {
-        my $target = undef;
-        foreach my $src (@$alias)
-        {
-            if (defined($uni2cp[$src]))
-            {
-                $target = $uni2cp[$src];
-                last;
-            }
-        }
-        next unless defined($target);
-
-        # At least one char of the alias set is defined, set the others to the same value
-        foreach my $src (@$alias)
-        {
-            $uni2cp[$src] = $target unless defined($uni2cp[$src]);
-        }
-    }
-
-    # For every src -> target mapping in the defaults table,
-    # make uni2cp[src] = uni2cp[target] if uni2cp[target] is defined
-
-    for (my $src = 0; $src < 65536; $src++)
-    {
-        next if defined($uni2cp[$src]);  # source has a definition already
-        next unless defined($unicode_defaults[$src]);  # no default for this char
-        my $target = $unicode_defaults[$src];
-
-        # do a recursive mapping until we find a target char that is defined
-        while (!defined($uni2cp[$target]) &&
-               defined($unicode_defaults[$target])) { $target = $unicode_defaults[$target]; }
-
-        if (defined($uni2cp[$target])) { $uni2cp[$src] = $uni2cp[$target]; }
-    }
-
-    # Add an identity mapping for all undefined chars
-
-    for (my $i = 0; $i < 256; $i++)
-    {
-        next if defined($cp2uni[$i]);
-        next if defined($uni2cp[$i]);
-        $cp2uni[$i] = $uni2cp[$i] = $i;
-    }
-}
 
 ################################################################
 # dump an array of integers
@@ -2615,13 +2459,9 @@ sub handle_codepage_file(@)
     {
         output_eucjp_codepage( $filename, $comment );
     }
-    elsif ($filename =~ /^CodpageFiles\//)
-    {
-        output_msdata_codepage( $filename, $comment );
-    }
     else
     {
-        output_codepage( $codepage, $filename, $comment );
+        output_msdata_codepage( $filename, $comment );
     }
 }
 
@@ -2697,7 +2537,7 @@ sub REPLACE_IN_FILE($@)
 # main routine
 
 chdir ".." if -f "./make_unicode";
-load_data( $DEFAULTS );
+load_data();
 dump_case_mappings( "libs/port/casemap.c" );
 dump_sortkeys( "dlls/kernelbase/collation.c" );
 dump_compose_table( "libs/port/compose.c" );

@@ -25,7 +25,6 @@
 /* Everything below this line is generated automatically by make_unicode */
 /* ### cpmap begin ### */
 extern union cptable cptable_037;
-extern union cptable cptable_424;
 extern union cptable cptable_437;
 extern union cptable cptable_500;
 extern union cptable cptable_737;
@@ -33,7 +32,6 @@ extern union cptable cptable_775;
 extern union cptable cptable_850;
 extern union cptable cptable_852;
 extern union cptable cptable_855;
-extern union cptable cptable_856;
 extern union cptable cptable_857;
 extern union cptable cptable_860;
 extern union cptable cptable_861;
@@ -45,12 +43,10 @@ extern union cptable cptable_866;
 extern union cptable cptable_869;
 extern union cptable cptable_874;
 extern union cptable cptable_875;
-extern union cptable cptable_878;
 extern union cptable cptable_932;
 extern union cptable cptable_936;
 extern union cptable cptable_949;
 extern union cptable cptable_950;
-extern union cptable cptable_1006;
 extern union cptable cptable_1026;
 extern union cptable cptable_1250;
 extern union cptable cptable_1251;
@@ -91,17 +87,12 @@ extern union cptable cptable_28596;
 extern union cptable cptable_28597;
 extern union cptable cptable_28598;
 extern union cptable cptable_28599;
-extern union cptable cptable_28600;
-extern union cptable cptable_28601;
 extern union cptable cptable_28603;
-extern union cptable cptable_28604;
 extern union cptable cptable_28605;
-extern union cptable cptable_28606;
 
-static const union cptable * const cptables[73] =
+static const union cptable * const cptables[65] =
 {
     &cptable_037,
-    &cptable_424,
     &cptable_437,
     &cptable_500,
     &cptable_737,
@@ -109,7 +100,6 @@ static const union cptable * const cptables[73] =
     &cptable_850,
     &cptable_852,
     &cptable_855,
-    &cptable_856,
     &cptable_857,
     &cptable_860,
     &cptable_861,
@@ -121,12 +111,10 @@ static const union cptable * const cptables[73] =
     &cptable_869,
     &cptable_874,
     &cptable_875,
-    &cptable_878,
     &cptable_932,
     &cptable_936,
     &cptable_949,
     &cptable_950,
-    &cptable_1006,
     &cptable_1026,
     &cptable_1250,
     &cptable_1251,
@@ -167,12 +155,8 @@ static const union cptable * const cptables[73] =
     &cptable_28597,
     &cptable_28598,
     &cptable_28599,
-    &cptable_28600,
-    &cptable_28601,
     &cptable_28603,
-    &cptable_28604,
     &cptable_28605,
-    &cptable_28606,
 };
 /* ### cpmap end ### */
 /* Everything above this line is generated automatically by make_unicode */
