@@ -134,7 +134,20 @@ static void test_set_text(void)
     DestroyWindow(hStatic);
 }
 
-static void test_image(HBITMAP image, BOOL is_dib, BOOL is_premult)
+static void remove_alpha(HBITMAP hbitmap)
+{
+    BITMAP bm;
+    BYTE *ptr;
+    int i;
+
+    GetObjectW(hbitmap, sizeof(bm), &bm);
+    ok(bm.bmBits != NULL, "bmBits is NULL\n");
+
+    for (i = 0, ptr = bm.bmBits; i < bm.bmWidth * bm.bmHeight; i++, ptr += 4)
+        ptr[3] = 0;
+}
+
+static void test_image(HBITMAP image, BOOL is_dib, BOOL is_premult, BOOL is_alpha)
 {
     BITMAP bm;
     HDC hdc;
@@ -153,8 +166,11 @@ static void test_image(HBITMAP image, BOOL is_dib, BOOL is_premult)
 todo_wine
             ok(bits[0] == 0x05 &&  bits[1] == 0x09 &&  bits[2] == 0x0e && bits[3] == 0x44,
                "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
-        else
+        else if (is_alpha)
             ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0x44,
+               "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
+        else
+            ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0,
                "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
     }
     else
@@ -180,8 +196,11 @@ todo_wine
 todo_wine
         ok(bits[0] == 0x05 &&  bits[1] == 0x09 &&  bits[2] == 0x0e && bits[3] == 0x44,
            "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
-    else
+    else if (is_alpha)
         ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0x44,
+           "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
+    else
+        ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0,
            "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
 }
 
@@ -193,7 +212,7 @@ static void test_set_image(void)
     image = LoadImageW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDB_BITMAP_1x1_32BPP), IMAGE_BITMAP, 0, 0, 0);
     ok(image != NULL, "LoadImage failed\n");
 
-    test_image(image, FALSE, FALSE);
+    test_image(image, FALSE, FALSE, TRUE);
 
     bmp1 = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
     ok(bmp1 == NULL, "got not NULL\n");
@@ -204,17 +223,42 @@ static void test_set_image(void)
     bmp1 = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
     ok(bmp1 != NULL, "got NULL\n");
     ok(bmp1 != image, "bmp == image\n");
-    test_image(bmp1, TRUE, TRUE);
+    test_image(bmp1, TRUE, TRUE, TRUE);
 
     bmp2 = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
     ok(bmp2 != NULL, "got NULL\n");
     ok(bmp2 != image, "bmp == image\n");
     ok(bmp1 == bmp2, "bmp1 != bmp2\n");
-    test_image(bmp2, TRUE, TRUE);
+    test_image(bmp2, TRUE, TRUE, TRUE);
+
+    DeleteObject(image);
+
+    image = LoadImageW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDB_BITMAP_1x1_32BPP), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+    ok(image != NULL, "LoadImage failed\n");
+
+    test_image(image, TRUE, FALSE, TRUE);
+    remove_alpha(image);
+    test_image(image, TRUE, FALSE, FALSE);
+
+    bmp1 = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
+    ok(bmp1 != NULL, "got NULL\n");
+    ok(bmp1 != image, "bmp == image\n");
+    test_image(bmp1, TRUE, TRUE, TRUE);
+
+    bmp2 = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
+    ok(bmp2 != NULL, "got NULL\n");
+    ok(bmp2 != image, "bmp == image\n");
+    ok(bmp1 == bmp2, "bmp1 != bmp2\n");
+    test_image(bmp1, TRUE, TRUE, FALSE);
+
+    bmp2 = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
+    ok(bmp2 != NULL, "got NULL\n");
+    ok(bmp2 == image, "bmp1 != image\n");
+    test_image(bmp2, TRUE, FALSE, FALSE);
 
     DestroyWindow(hwnd);
 
-    test_image(bmp2, TRUE, TRUE);
+    test_image(image, TRUE, FALSE, FALSE);
 
     DeleteObject(image);
 }
