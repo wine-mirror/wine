@@ -5264,7 +5264,7 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation2(
     return result;
 }
 
-static HRESULT TLB_copy_all_custdata(struct list *custdata_list, CUSTDATA *pCustData)
+static HRESULT TLB_copy_all_custdata(const struct list *custdata_list, CUSTDATA *pCustData)
 {
     TLBCustData *pCData;
     unsigned int ct;
@@ -8418,14 +8418,17 @@ static HRESULT WINAPI ITypeInfo2_fnGetParamCustData(
 	VARIANT *pVarVal)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
+    const TLBFuncDesc *pFDesc;
     TLBCustData *pCData;
-    TLBFuncDesc *pFDesc = &This->funcdescs[indexFunc];
+    UINT hrefoffset;
+    HRESULT hr;
 
     TRACE("%p %u %u %s %p\n", This, indexFunc, indexParam,
             debugstr_guid(guid), pVarVal);
 
-    if(indexFunc >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, indexFunc, &pFDesc, &hrefoffset);
+    if (FAILED(hr))
+        return hr;
 
     if(indexParam >= pFDesc->funcdesc.cParams)
         return TYPE_E_ELEMENTNOTFOUND;
@@ -8587,12 +8590,15 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllFuncCustData(
 	CUSTDATA *pCustData)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    TLBFuncDesc *pFDesc = &This->funcdescs[index];
+    const TLBFuncDesc *pFDesc;
+    UINT hrefoffset;
+    HRESULT hr;
 
     TRACE("%p %u %p\n", This, index, pCustData);
 
-    if(index >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index, &pFDesc, &hrefoffset);
+    if (FAILED(hr))
+        return hr;
 
     return TLB_copy_all_custdata(&pFDesc->custdata_list, pCustData);
 }
@@ -8606,12 +8612,15 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllParamCustData( ITypeInfo2 * iface,
     UINT indexFunc, UINT indexParam, CUSTDATA *pCustData)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    TLBFuncDesc *pFDesc = &This->funcdescs[indexFunc];
+    const TLBFuncDesc *pFDesc;
+    UINT hrefoffset;
+    HRESULT hr;
 
     TRACE("%p %u %u %p\n", This, indexFunc, indexParam, pCustData);
 
-    if(indexFunc >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, indexFunc, &pFDesc, &hrefoffset);
+    if (FAILED(hr))
+        return hr;
 
     if(indexParam >= pFDesc->funcdesc.cParams)
         return TYPE_E_ELEMENTNOTFOUND;
