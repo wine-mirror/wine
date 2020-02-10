@@ -722,17 +722,26 @@ HRESULT WINAPI RegisterTypeLib(ITypeLib *ptlib, const WCHAR *szFullPath, const W
             KEY_WRITE, NULL, &subKey, &disposition) == ERROR_SUCCESS)
         {
             BSTR freeHelpDir = NULL;
-            OLECHAR* pIndexStr;
+            WCHAR *file_name;
 
             /* if we created a new key, and helpDir was null, set the helpdir
                to the directory which contains the typelib. However,
                if we just opened an existing key, we leave the helpdir alone */
             if ((disposition == REG_CREATED_NEW_KEY) && (szHelpDir == NULL)) {
                 szHelpDir = freeHelpDir = SysAllocString(szFullPath);
-                pIndexStr = wcsrchr(szHelpDir, '\\');
-                if (pIndexStr) {
-                    *pIndexStr = 0;
+                file_name = wcsrchr(szHelpDir, '\\');
+                if (file_name && file_name[0]) {
+                    /* possible remove a numeric \index (resource-id) */
+                    WCHAR *end_ptr = file_name + 1;
+                    while ('0' <= *end_ptr && *end_ptr <= '9') end_ptr++;
+                    if (!*end_ptr)
+                    {
+                        *file_name = 0;
+                        file_name = wcsrchr(szHelpDir, '\\');
+                    }
                 }
+                if (file_name)
+                    *file_name = 0;
             }
 
             /* if we have an szHelpDir, set it! */
