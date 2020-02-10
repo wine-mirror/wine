@@ -239,12 +239,17 @@ static inline void getpixel_32bppPARGB(BYTE *r, BYTE *g, BYTE *b, BYTE *a,
 {
     *a = row[x*4+3];
     if (*a == 0)
-        *r = *g = *b = 0;
+    {
+        *r = row[x*4+2];
+        *g = row[x*4+1];
+        *b = row[x*4];
+    }
     else
     {
-        *r = row[x*4+2] * 255 / *a;
-        *g = row[x*4+1] * 255 / *a;
-        *b = row[x*4] * 255 / *a;
+        DWORD scaled_q = (255 << 15) / *a;
+        *r = (row[x*4+2] > *a) ? 0xff : (row[x*4+2] * scaled_q) >> 15;
+        *g = (row[x*4+1] > *a) ? 0xff : (row[x*4+1] * scaled_q) >> 15;
+        *b = (row[x*4] > *a) ? 0xff : (row[x*4] * scaled_q) >> 15;
     }
 }
 

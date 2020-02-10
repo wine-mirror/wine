@@ -4806,6 +4806,39 @@ static void test_ARGB_conversion(void)
     GdipDisposeImage((GpImage *)bitmap);
 }
 
+static void test_PARGB_conversion(void)
+{
+    BYTE pargb[8] = { 0x62,0x77,0x99,0x77, 0x62,0x77,0x99,0 };
+    BYTE argb[8] = { 0xd1,0xfe,0xff,0x77, 0x62,0x77,0x99,0 };
+    BYTE *bits;
+    GpBitmap *bitmap;
+    BitmapData data;
+    GpStatus status;
+    int match;
+
+    status = GdipCreateBitmapFromScan0(2, 1, 8, PixelFormat32bppPARGB, pargb, &bitmap);
+    expect(Ok, status);
+
+    status = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, PixelFormat32bppARGB, &data);
+    expect(Ok, status);
+    ok(data.Width == 2, "expected 2, got %d\n", data.Width);
+    ok(data.Height == 1, "expected 1, got %d\n", data.Height);
+    ok(data.Stride == 8, "expected 8, got %d\n", data.Stride);
+    ok(data.PixelFormat == PixelFormat32bppARGB, "expected PixelFormat32bppARGB, got %d\n", data.PixelFormat);
+    match = !memcmp(data.Scan0, argb, sizeof(argb));
+    ok(match, "bits don't match\n");
+    if (!match)
+    {
+        bits = data.Scan0;
+        trace("format %#x, bits %02x,%02x,%02x,%02x %02x,%02x,%02x,%02x\n", PixelFormat32bppARGB,
+               bits[0], bits[1], bits[2], bits[3], bits[4], bits[5], bits[6], bits[7]);
+    }
+    status = GdipBitmapUnlockBits(bitmap, &data);
+    expect(Ok, status);
+
+    GdipDisposeImage((GpImage *)bitmap);
+}
+
 
 static void test_CloneBitmapArea(void)
 {
@@ -5626,6 +5659,7 @@ START_TEST(image)
     test_supported_encoders();
     test_CloneBitmapArea();
     test_ARGB_conversion();
+    test_PARGB_conversion();
     test_DrawImage_scale();
     test_image_format();
     test_DrawImage();
