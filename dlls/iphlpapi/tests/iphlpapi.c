@@ -169,28 +169,25 @@ static void freeIPHlpApi(void)
 /* replacement for inet_ntoa */
 static const char *ntoa( DWORD ip )
 {
-    static char buffer[40];
+    static char buffers[4][16];
+    static int i = -1;
 
     ip = htonl(ip);
-    sprintf( buffer, "%u.%u.%u.%u", (ip >> 24) & 0xff, (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff );
-    return buffer;
+    i = (i + 1) % ARRAY_SIZE(buffers);
+    sprintf( buffers[i], "%u.%u.%u.%u", (ip >> 24) & 0xff, (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff );
+    return buffers[i];
 }
 
 static const char *ntoa6( IN6_ADDR *ip )
 {
-    static char buffer[40];
-    char *buf = buffer;
+    static char buffers[4][40];
+    static int i = -1;
     unsigned short *p = ip->u.Word;
-    unsigned int i = 0;
 
-    while (i < 8)
-    {
-        if (i > 0)
-            *buf++ = ':';
-        buf += sprintf( buf, "%x", htons(p[i]) );
-        i++;
-    }
-    return buffer;
+    i = (i + 1) % ARRAY_SIZE(buffers);
+    sprintf( buffers[i], "%x:%x:%x:%x:%x:%x:%x:%x",
+             htons(p[0]), htons(p[1]), htons(p[2]), htons(p[3]), htons(p[4]), htons(p[5]), htons(p[6]), htons(p[7]) );
+    return buffers[i];
 }
 
 /*
@@ -382,8 +379,6 @@ static void testGetIpForwardTable(void)
           trace( "IP forward table: %u entries\n", buf->dwNumEntries );
           for (i = 0; i < buf->dwNumEntries; i++)
           {
-              char buffer[100];
-
               if (!U1(buf->table[i]).dwForwardDest) /* Default route */
               {
 todo_wine
@@ -403,9 +398,8 @@ todo_wine
                    * value so it is not worth testing in this case. */
               }
 
-              sprintf( buffer, "dest %s", ntoa( buf->table[i].dwForwardDest ));
-              sprintf( buffer + strlen(buffer), " mask %s", ntoa( buf->table[i].dwForwardMask ));
-              trace( "%u: %s gw %s if %u type %u proto %u\n", i, buffer,
+              trace( "%u: dest %s mask %s gw %s if %u type %u proto %u\n", i,
+                     ntoa( buf->table[i].dwForwardDest ), ntoa( buf->table[i].dwForwardMask ),
                      ntoa( buf->table[i].dwForwardNextHop ), buf->table[i].dwForwardIfIndex,
                      U1(buf->table[i]).dwForwardType, U1(buf->table[i]).dwForwardProto );
           }
@@ -890,12 +884,10 @@ static void testGetTcpTable(void)
           trace( "TCP table: %u entries\n", buf->dwNumEntries );
           for (i = 0; i < buf->dwNumEntries; i++)
           {
-              char buffer[40];
-              sprintf( buffer, "local %s:%u",
-                       ntoa(buf->table[i].dwLocalAddr), ntohs(buf->table[i].dwLocalPort) );
-              trace( "%u: %s remote %s:%u state %u\n",
-                     i, buffer, ntoa( buf->table[i].dwRemoteAddr ),
-                     ntohs(buf->table[i].dwRemotePort), U(buf->table[i]).dwState );
+              trace( "%u: local %s:%u remote %s:%u state %u\n", i,
+                     ntoa(buf->table[i].dwLocalAddr), ntohs(buf->table[i].dwLocalPort),
+                     ntoa(buf->table[i].dwRemoteAddr), ntohs(buf->table[i].dwRemotePort),
+                     U(buf->table[i]).dwState );
           }
       }
       HeapFree(GetProcessHeap(), 0, buf);
