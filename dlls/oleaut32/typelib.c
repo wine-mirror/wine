@@ -1727,7 +1727,7 @@ static inline TLBVarDesc *TLB_get_vardesc_by_name(ITypeInfoImpl *typeinfo, const
     return NULL;
 }
 
-static inline TLBCustData *TLB_get_custdata_by_guid(struct list *custdata_list, REFGUID guid)
+static inline TLBCustData *TLB_get_custdata_by_guid(const struct list *custdata_list, REFGUID guid)
 {
     TLBCustData *cust_data;
     LIST_FOR_EACH_ENTRY(cust_data, custdata_list, TLBCustData, entry)
@@ -8388,14 +8388,20 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncCustData(
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
     TLBCustData *pCData;
-    TLBFuncDesc *pFDesc = &This->funcdescs[index];
+    const TLBFuncDesc *desc;
+    UINT hrefoffset;
+    HRESULT hr;
 
     TRACE("%p %u %s %p\n", This, index, debugstr_guid(guid), pVarVal);
 
-    if(index >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index, &desc, &hrefoffset);
+    if (FAILED(hr))
+    {
+        WARN("description for function %d not found\n", index);
+        return hr;
+    }
 
-    pCData = TLB_get_custdata_by_guid(&pFDesc->custdata_list, guid);
+    pCData = TLB_get_custdata_by_guid(&desc->custdata_list, guid);
     if(!pCData)
         return TYPE_E_ELEMENTNOTFOUND;
 
