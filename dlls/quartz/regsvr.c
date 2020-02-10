@@ -158,8 +158,6 @@ static HRESULT unregister_filters(struct regsvr_filter const *list)
     HRESULT hr;
     IFilterMapper2* pFM2;
 
-    CoInitialize(NULL);
-    
     hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pFM2);
 
     if (SUCCEEDED(hr)) {
@@ -168,8 +166,6 @@ static HRESULT unregister_filters(struct regsvr_filter const *list)
 	IFilterMapper2_Release(pFM2);
     }
 
-    CoUninitialize();
-    
     return hr;
 }
 
