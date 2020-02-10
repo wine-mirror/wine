@@ -147,18 +147,15 @@ static void test_image(HBITMAP image, BOOL is_dib, BOOL is_premult)
     ok(bm.bmBitsPixel == 32, "got %d\n", bm.bmBitsPixel);
     if (is_dib)
     {
-todo_wine
         ok(bm.bmBits != NULL, "bmBits is NULL\n");
-if (bm.bmBits)
-{
         memcpy(bits, bm.bmBits, 4);
         if (is_premult)
+todo_wine
             ok(bits[0] == 0x05 &&  bits[1] == 0x09 &&  bits[2] == 0x0e && bits[3] == 0x44,
                "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
         else
             ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0x44,
                "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
-}
     }
     else
         ok(bm.bmBits == NULL, "bmBits is not NULL\n");
@@ -206,13 +203,11 @@ static void test_set_image(void)
 
     bmp1 = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
     ok(bmp1 != NULL, "got NULL\n");
-todo_wine
     ok(bmp1 != image, "bmp == image\n");
     test_image(bmp1, TRUE, TRUE);
 
     bmp2 = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
     ok(bmp2 != NULL, "got NULL\n");
-todo_wine
     ok(bmp2 != image, "bmp == image\n");
     ok(bmp1 == bmp2, "bmp1 != bmp2\n");
     test_image(bmp2, TRUE, TRUE);

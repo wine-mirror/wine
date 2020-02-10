@@ -60,6 +60,7 @@ struct static_extra_info
         HBITMAP hbitmap;
         HENHMETAFILE hemf;
     } image;
+    BOOL image_has_alpha;
 };
 
 typedef void (*pfPaint)( HWND hwnd, HDC hdc, DWORD style );
@@ -163,6 +164,52 @@ static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
     return prevIcon;
 }
 
+static HBITMAP create_alpha_bitmap( HBITMAP hbitmap )
+{
+    BITMAP bm;
+    HBITMAP alpha;
+    BITMAPINFO info;
+    HDC hdc;
+    void *bits;
+    DWORD i;
+    BYTE *ptr;
+    BOOL has_alpha = FALSE;
+
+    GetObjectW( hbitmap, sizeof(bm), &bm );
+    if (bm.bmBitsPixel != 32) return 0;
+
+    if (!(hdc = CreateCompatibleDC( 0 ))) return 0;
+
+    info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info.bmiHeader.biWidth = bm.bmWidth;
+    info.bmiHeader.biHeight = -bm.bmHeight;
+    info.bmiHeader.biPlanes = 1;
+    info.bmiHeader.biBitCount = 32;
+    info.bmiHeader.biCompression = BI_RGB;
+    info.bmiHeader.biSizeImage = bm.bmWidth * bm.bmHeight * 4;
+    info.bmiHeader.biXPelsPerMeter = 0;
+    info.bmiHeader.biYPelsPerMeter = 0;
+    info.bmiHeader.biClrUsed = 0;
+    info.bmiHeader.biClrImportant = 0;
+    if ((alpha = CreateDIBSection( hdc, &info, DIB_RGB_COLORS, &bits, NULL, 0 )))
+    {
+        GetDIBits( hdc, hbitmap, 0, bm.bmHeight, bits, &info, DIB_RGB_COLORS );
+
+        for (i = 0, ptr = bits; i < bm.bmWidth * bm.bmHeight; i++, ptr += 4)
+            if ((has_alpha = (ptr[3] != 0))) break;
+
+        if (!has_alpha)
+        {
+            DeleteObject( alpha );
+            alpha = 0;
+        }
+    }
+
+    DeleteDC( hdc );
+
+    return alpha;
+}
+
 /***********************************************************************
  *           STATIC_SetBitmap
  *
@@ -170,7 +217,7 @@ static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
  */
 static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
 {
-    HBITMAP hOldBitmap;
+    HBITMAP hOldBitmap, alpha;
     struct static_extra_info *extra;
 
     if ((style & SS_TYPEMASK) != SS_BITMAP) return 0;
@@ -185,10 +232,23 @@ static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
 
     hOldBitmap = extra->image.hbitmap;
     extra->image.hbitmap = hBitmap;
+    extra->image_has_alpha = FALSE;
+
+    if (hBitmap)
+    {
+        alpha = create_alpha_bitmap( hBitmap );
+        if (alpha)
+        {
+            extra->image.hbitmap = alpha;
+            extra->image_has_alpha = TRUE;
+        }
+    }
+
     if (hBitmap && !(style & SS_CENTERIMAGE) && !(style & SS_REALSIZECONTROL))
     {
         BITMAP bm;
         GetObjectW(hBitmap, sizeof(bm), &bm);
+
         /* Windows currently doesn't implement SS_RIGHTJUST */
         /*
         if ((style & SS_RIGHTJUST) != 0)
@@ -386,7 +446,12 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
         if (style == SS_ICON)
         {
             struct static_extra_info *extra = get_extra_ptr( hwnd, FALSE );
-            heap_free( extra );
+            if (extra)
+            {
+                if (extra->image_has_alpha)
+                    DeleteObject( extra->image.hbitmap );
+                heap_free( extra );
+            }
 /*
  * FIXME
  *           DestroyIcon32( STATIC_SetIcon( wndPtr, 0 ) );
@@ -765,6 +830,8 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
         BITMAP bm;
         RECT rcClient;
         LOGBRUSH brush;
+        BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+        struct static_extra_info *extra = get_extra_ptr( hwnd, FALSE );
 
         GetObjectW(hBitmap, sizeof(bm), &bm);
         oldbitmap = SelectObject(hMemDC, hBitmap);
@@ -785,7 +852,13 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
             rcClient.right = rcClient.left + bm.bmWidth;
             rcClient.bottom = rcClient.top + bm.bmHeight;
         }
-        StretchBlt(hdc, rcClient.left, rcClient.top, rcClient.right - rcClient.left,
+
+        if (extra->image_has_alpha)
+            GdiAlphaBlend(hdc, rcClient.left, rcClient.top, rcClient.right - rcClient.left,
+                   rcClient.bottom - rcClient.top, hMemDC,
+                   0, 0, bm.bmWidth, bm.bmHeight, blend);
+        else
+            StretchBlt(hdc, rcClient.left, rcClient.top, rcClient.right - rcClient.left,
                    rcClient.bottom - rcClient.top, hMemDC,
                    0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
         SelectObject(hMemDC, oldbitmap);
