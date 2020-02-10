@@ -53,6 +53,8 @@ struct device_desc
 
 static DEVMODEW registry_mode;
 
+static void *(WINAPI *Direct3DShaderValidatorCreate9)(void);
+
 static const DWORD simple_vs[] =
 {
     0xfffe0101,                                                             /* vs_1_1                       */
@@ -13405,8 +13407,69 @@ static void test_get_display_mode(void)
     DestroyWindow(window);
 }
 
+typedef HRESULT (WINAPI *shader_validator_cb)(const char *file, int line,
+        DWORD_PTR arg3, DWORD_PTR message_id, const char *message, void *context);
+
+typedef struct IDirect3DShaderValidator9 IDirect3DShaderValidator9;
+
+struct IDirect3DShaderValidator9Vtbl
+{
+    HRESULT (WINAPI *QueryInterface)(IDirect3DShaderValidator9 *iface, REFIID iid, void **out);
+    ULONG (WINAPI *AddRef)(IDirect3DShaderValidator9 *iface);
+    ULONG (WINAPI *Release)(IDirect3DShaderValidator9 *iface);
+    HRESULT (WINAPI *Begin)(IDirect3DShaderValidator9 *iface,
+            shader_validator_cb callback, void *context, DWORD_PTR arg3);
+    HRESULT (WINAPI *Instruction)(IDirect3DShaderValidator9 *iface,
+            const char *file, int line, const DWORD *tokens, DWORD token_count);
+    HRESULT (WINAPI *End)(IDirect3DShaderValidator9 *iface);
+};
+
+struct IDirect3DShaderValidator9
+{
+    const struct IDirect3DShaderValidator9Vtbl *vtbl;
+};
+
+HRESULT WINAPI test_shader_validator_cb(const char *file, int line, DWORD_PTR arg3,
+        DWORD_PTR message_id, const char *message, void *context)
+{
+    ok(0, "Unexpected call.\n");
+    return S_OK;
+}
+
+static void test_shader_validator(void)
+{
+    IDirect3DShaderValidator9 *validator;
+    ULONG refcount;
+    HRESULT hr;
+
+    validator = Direct3DShaderValidatorCreate9();
+
+    hr = validator->vtbl->Begin(validator, test_shader_validator_cb, NULL, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[0], 1);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[1], 3);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[4], 4);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[8], 4);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[12], 4);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[16], 4);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[20], 1);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->End(validator);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount = validator->vtbl->Release(validator);
+    todo_wine ok(!refcount, "Validator has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
+    HMODULE d3d9_handle = GetModuleHandleA("d3d9.dll");
     WNDCLASSA wc = {0};
     IDirect3D9 *d3d9;
     DEVMODEW current_mode;
@@ -13433,6 +13496,8 @@ START_TEST(device)
     wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "d3d9_test_wc";
     RegisterClassA(&wc);
+
+    Direct3DShaderValidatorCreate9 = (void *)GetProcAddress(d3d9_handle, "Direct3DShaderValidatorCreate9");
 
     test_get_set_vertex_declaration();
     test_get_declaration();
@@ -13532,6 +13597,7 @@ START_TEST(device)
     test_multiply_transform();
     test_vertex_buffer_read_write();
     test_get_display_mode();
+    test_shader_validator();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
