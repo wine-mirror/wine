@@ -3285,18 +3285,14 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
     {
         trace_devmode(devmode);
 
-        /* This is the minimal dmSize that XP accepts */
-        if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmFields))
-            return DISP_CHANGE_FAILED;
+        if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmICMMethod))
+            return DISP_CHANGE_BADMODE;
 
-        if (devmode->dmSize >= FIELD_OFFSET(DEVMODEW, dmFields) + sizeof(devmode->dmFields))
-        {
-            if (((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
-                ((devmode->dmFields & DM_PELSWIDTH) && devmode->dmPelsWidth) ||
-                ((devmode->dmFields & DM_PELSHEIGHT) && devmode->dmPelsHeight) ||
-                ((devmode->dmFields & DM_DISPLAYFREQUENCY) && devmode->dmDisplayFrequency))
+        if (((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
+            ((devmode->dmFields & DM_PELSWIDTH) && devmode->dmPelsWidth) ||
+            ((devmode->dmFields & DM_PELSHEIGHT) && devmode->dmPelsHeight) ||
+            ((devmode->dmFields & DM_DISPLAYFREQUENCY) && devmode->dmDisplayFrequency))
                 def_mode = FALSE;
-        }
     }
 
     if (def_mode)

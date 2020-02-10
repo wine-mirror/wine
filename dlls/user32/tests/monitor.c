@@ -401,11 +401,11 @@ static void test_ChangeDisplaySettingsEx(void)
 
     dmW.dmSize = FIELD_OFFSET(DEVMODEW, dmICMMethod) - 1;
     res = ChangeDisplaySettingsW(&dmW, CDS_TEST);
-    todo_wine ok(res == DISP_CHANGE_BADMODE, "ChangeDisplaySettingsW returned %d, expect DISP_CHANGE_BADMODE\n", res);
+    ok(res == DISP_CHANGE_BADMODE, "ChangeDisplaySettingsW returned %d, expect DISP_CHANGE_BADMODE\n", res);
 
     dmW.dmSize = FIELD_OFFSET(DEVMODEW, dmICMMethod) - 1;
     res = ChangeDisplaySettingsExW(NULL, &dmW, NULL, CDS_TEST, NULL);
-    todo_wine ok(res == DISP_CHANGE_BADMODE, "ChangeDisplaySettingsExW returned %d, expect DISP_CHANGE_BADMODE\n", res);
+    ok(res == DISP_CHANGE_BADMODE, "ChangeDisplaySettingsExW returned %d, expect DISP_CHANGE_BADMODE\n", res);
 
     dmW.dmSize = FIELD_OFFSET(DEVMODEW, dmICMMethod);
     res = ChangeDisplaySettingsW(&dmW, CDS_TEST);
