@@ -7981,21 +7981,49 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
                 ITypeLib_AddRef(pTLib);
                 result = S_OK;
             } else {
-                static const WCHAR TYPELIBW[] = {'T','Y','P','E','L','I','B',0};
-                struct search_res_tlb_params params;
-                BSTR libnam;
+                /* Search in cached typelibs */
+                ITypeLibImpl *entry;
 
-                TRACE("typeinfo in imported typelib that isn't already loaded\n");
-
-                /* Search in resource table */
-                params.guid  = TLB_get_guid_null(ref_type->pImpTLInfo->guid);
-                params.pTLib = NULL;
-                EnumResourceNamesW(NULL, TYPELIBW, search_res_tlb, (LONG_PTR)&params);
-                pTLib  = params.pTLib;
-                result = S_OK;
+                EnterCriticalSection(&cache_section);
+                LIST_FOR_EACH_ENTRY(entry, &tlb_cache, ITypeLibImpl, entry)
+                {
+                    if (entry->guid
+                        && IsEqualIID(&entry->guid->guid, TLB_get_guid_null(ref_type->pImpTLInfo->guid))
+                        && entry->ver_major == ref_type->pImpTLInfo->wVersionMajor
+                        && entry->ver_minor == ref_type->pImpTLInfo->wVersionMinor
+                        && entry->set_lcid == ref_type->pImpTLInfo->lcid)
+                    {
+                        TRACE("got cached %p\n", entry);
+                        pTLib = (ITypeLib*)&entry->ITypeLib2_iface;
+                        ITypeLib_AddRef(pTLib);
+                        result = S_OK;
+                        break;
+                    }
+                }
+                LeaveCriticalSection(&cache_section);
 
                 if (!pTLib)
                 {
+                    static const WCHAR TYPELIBW[] = {'T','Y','P','E','L','I','B',0};
+                    struct search_res_tlb_params params;
+
+                    TRACE("typeinfo in imported typelib that isn't already loaded\n");
+
+                    /* Search in resource table */
+                    params.guid  = TLB_get_guid_null(ref_type->pImpTLInfo->guid);
+                    params.pTLib = NULL;
+                    EnumResourceNamesW(NULL, TYPELIBW, search_res_tlb, (LONG_PTR)&params);
+                    if(params.pTLib)
+                    {
+                        pTLib  = params.pTLib;
+                        result = S_OK;
+                    }
+                }
+
+                if (!pTLib)
+                {
+                    BSTR libnam;
+
                     /* Search on disk */
                     result = query_typelib_path(TLB_get_guid_null(ref_type->pImpTLInfo->guid),
                             ref_type->pImpTLInfo->wVersionMajor,
