@@ -1125,6 +1125,7 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
     if (flags & SPINST_REGSVR)
     {
         struct register_dll_info info;
+        HRESULT hr;
 
         info.unregister    = FALSE;
         info.modules_size  = 0;
@@ -1142,14 +1143,21 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         else
             return FALSE;
 
+        hr = CoInitialize(NULL);
+
         ret = iterate_section_fields( hinf, section, RegisterDlls, register_dlls_callback, &info );
         for (i = 0; i < info.modules_count; i++) FreeLibrary( info.modules[i] );
+
+        if (SUCCEEDED(hr))
+            CoUninitialize();
+
         HeapFree( GetProcessHeap(), 0, info.modules );
         if (!ret) return FALSE;
     }
     if (flags & SPINST_UNREGSVR)
     {
         struct register_dll_info info;
+        HRESULT hr;
 
         info.unregister    = TRUE;
         info.modules_size  = 0;
@@ -1162,8 +1170,14 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         }
         else info.callback = NULL;
 
+        hr = CoInitialize(NULL);
+
         ret = iterate_section_fields( hinf, section, UnregisterDlls, register_dlls_callback, &info );
         for (i = 0; i < info.modules_count; i++) FreeLibrary( info.modules[i] );
+
+        if (SUCCEEDED(hr))
+            CoUninitialize();
+
         HeapFree( GetProcessHeap(), 0, info.modules );
         if (!ret) return FALSE;
     }
