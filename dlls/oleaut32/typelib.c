@@ -5883,7 +5883,7 @@ static void TLB_FreeVarDesc(VARDESC *var_desc)
 /* internal function to make the inherited interfaces' methods appear
  * part of the interface */
 static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
-    UINT index, const FUNCDESC **ppFuncDesc, UINT *funcs, UINT *hrefoffset)
+    UINT index, const TLBFuncDesc **ppFuncDesc, UINT *funcs, UINT *hrefoffset)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo(iface);
     HRESULT hr;
@@ -5926,11 +5926,11 @@ static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
     if (index >= This->typeattr.cFuncs)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    *ppFuncDesc = &This->funcdescs[index].funcdesc;
+    *ppFuncDesc = &This->funcdescs[index];
     return S_OK;
 }
 
-static HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const FUNCDESC **func_desc, UINT *hrefoffset )
+static HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const TLBFuncDesc **func_desc, UINT *hrefoffset )
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo(iface);
 
@@ -5940,7 +5940,7 @@ static HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, 
     if (index >= This->typeattr.cFuncs)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    *func_desc = &This->funcdescs[index].funcdesc;
+    *func_desc = &This->funcdescs[index];
     return S_OK;
 }
 
@@ -5985,7 +5985,7 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
         LPFUNCDESC  *ppFuncDesc)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    const FUNCDESC *internal_funcdesc;
+    const TLBFuncDesc *internal_funcdesc;
     HRESULT hr;
     UINT hrefoffset = 0;
 
@@ -6006,7 +6006,7 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
     }
 
     hr = TLB_AllocAndInitFuncDesc(
-        internal_funcdesc,
+        &internal_funcdesc->funcdesc,
         ppFuncDesc,
         This->typeattr.typekind == TKIND_DISPATCH);
 
