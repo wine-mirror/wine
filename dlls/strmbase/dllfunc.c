@@ -149,8 +149,6 @@ HRESULT WINAPI AMovieDllRegisterServer2(BOOL bRegister)
     if (bRegister)
         hr = SetupRegisterAllClasses(g_Templates, g_cTemplates, szFileName, TRUE );
 
-    CoInitialize(NULL);
-
     TRACE("Getting IFilterMapper2\r\n");
     hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IFilterMapper2, (void **)&pIFM2);
@@ -161,10 +159,6 @@ HRESULT WINAPI AMovieDllRegisterServer2(BOOL bRegister)
     /* release interface */
     if (pIFM2)
         IFilterMapper2_Release(pIFM2);
-
-    /* and clear up */
-    CoFreeUnusedLibraries();
-    CoUninitialize();
 
     /* if unregistering, unregister all OLE servers */
     if (SUCCEEDED(hr) && !bRegister)
