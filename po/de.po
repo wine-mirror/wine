@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-12-06 16:25+0100\n"
+"PO-Revision-Date: 2020-02-10 17:39+0100\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3717,17 +3717,15 @@ msgstr "'@' erwartet"
 
 #: jscript.rc:75
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript Übersetzungsfehler"
 
 #: jscript.rc:76
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Microsoft JScript Laufzeitfehler"
 
 #: jscript.rc:77
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown runtime error"
-msgstr "Unbekannter Fehler"
+msgstr "Unbekannter Laufzeitfehler"
 
 #: jscript.rc:54
 msgid "Number expected"
@@ -3775,7 +3773,7 @@ msgstr "Syntaxfehler in regulärem Ausdruck"
 
 #: jscript.rc:63
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "Exception ausgelöst und nicht abgefangen"
 
 #: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
@@ -8324,98 +8322,72 @@ msgid "Off"
 msgstr "Aus"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "Video"
+msgstr "Anbieter"
 
 #: version.rc:45
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "Wählen Sie das gewünschte Format:"
+msgstr "Wählen Sie die zu verbindenden Daten aus:"
 
 #: version.rc:52
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
-msgstr "Verbindungen"
+msgstr "Verbindung"
 
 #: version.rc:55
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "Wählen Sie das gewünschte Format:"
+msgstr "Geben Sie folgendes an, um sich mit ODBC-Daten zu verbinden:"
 
 #: version.rc:56
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Geben Sie die Datenquelle an:"
 
 #: version.rc:57
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "Bitte geben Sie Ihren Namen ein"
+msgstr "&Datenquellennamen verwenden"
 
 #: version.rc:60
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "Zurückgesetzte Verbindungen"
+msgstr "Verbindungs-Zeichenkette &verwenden"
 
 #: version.rc:61
-#, fuzzy
-#| msgid "Connections"
 msgid "&Connection string:"
-msgstr "Verbindungen"
+msgstr "Verbindungs-&Zeichenkette:"
 
 #: version.rc:63
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "&Hinzufügen..."
+msgstr "B&uild..."
 
 #: version.rc:64
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Zugangsdaten zum Login auf Server"
 
 #: version.rc:65
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Benutzername:"
 
 #: version.rc:69
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "&Leere Seite"
+msgstr "&Leeres Kennwort"
 
 #: version.rc:70
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "Falsches Passwort.\n"
+msgstr "Kennwort &speichern"
 
 #: version.rc:71
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Folgenden Initialkatalog verwenden:"
 
 #: version.rc:73
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "Zurückgesetzte Verbindungen"
+msgstr "Verbindung &testen"
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "&Eigenschaften"
+msgstr "Eigenschaften der Datenverbindung"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "OLE DB-Anbieter"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -8431,15 +8403,15 @@ msgstr "Ergebnis"
 
 #: oledlg.rc:65
 msgid "Create New"
-msgstr "&Neu erstellen"
+msgstr "Neu erstellen"
 
 #: oledlg.rc:67
 msgid "Create Control"
-msgstr "S&teuerelement erstellen"
+msgstr "Steuerelement erstellen"
 
 #: oledlg.rc:69
 msgid "Create From File"
-msgstr "A&us Datei erstellen"
+msgstr "Aus Datei erstellen"
 
 #: oledlg.rc:72
 msgid "&Add Control..."
@@ -8447,7 +8419,7 @@ msgstr "Steuerelement hin&zufügen..."
 
 #: oledlg.rc:73
 msgid "Display As Icon"
-msgstr "Als &Symbol anzeigen"
+msgstr "Als Symbol anzeigen"
 
 #: oledlg.rc:75 setupapi.rc:61
 msgid "Browse..."
