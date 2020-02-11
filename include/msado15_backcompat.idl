@@ -430,12 +430,12 @@ typedef [uuid(00000574-0000-0010-8000-00aa006d2ea4)] enum CopyRecordOptionsEnum
 
 typedef [uuid(00000570-0000-0010-8000-00aa006d2ea4)] enum RecordCreateOptionsEnum
 {
-    adCreateCollection = 0x00002000,
-    adCreateStructDoc = 0x80000000,
-    adCreateNonCollection = 0x00000000,
-    adOpenIfExists = 0x02000000,
-    adCreateOverwrite = 0x04000000,
-    adFailIfNotExists = -1
+    adCreateCollection = (int) 0x00002000,
+    adCreateStructDoc = (int) 0x80000000,
+    adCreateNonCollection = (int) 0x00000000,
+    adOpenIfExists = (int) 0x02000000,
+    adCreateOverwrite = (int) 0x04000000,
+    adFailIfNotExists = (int) -1
 } RecordCreateOptionsEnum;
 
 typedef [uuid(00000571-0000-0010-8000-00aa006d2ea4)] enum RecordOpenOptionsEnum
