@@ -6263,9 +6263,21 @@ static HRESULT WINAPI fontfacereference_EnqueueFileFragmentDownloadRequest(IDWri
 
 static HRESULT WINAPI fontfacereference1_CreateFontFace(IDWriteFontFaceReference1 *iface, IDWriteFontFace5 **fontface)
 {
-    FIXME("%p, %p.\n", iface, fontface);
+    struct dwrite_fontfacereference *reference = impl_from_IDWriteFontFaceReference1(iface);
+    IDWriteFontFace3 *fontface3;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, fontface);
+
+    /* FIXME: created instance should likely respect given axis. */
+    if (SUCCEEDED(hr = IDWriteFontFaceReference1_CreateFontFaceWithSimulations(iface, reference->simulations,
+            &fontface3)))
+    {
+        hr = IDWriteFontFace3_QueryInterface(fontface3, &IID_IDWriteFontFace5, (void **)fontface);
+        IDWriteFontFace3_Release(fontface3);
+    }
+
+    return hr;
 }
 
 static UINT32 WINAPI fontfacereference1_GetFontAxisValueCount(IDWriteFontFaceReference1 *iface)

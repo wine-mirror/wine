@@ -9537,6 +9537,10 @@ static void test_font_resource(void)
     ok(hr == S_OK, "Failed to get axis values, hr %#x.\n", hr);
     ok(axis_values[0].axisTag == DWRITE_FONT_AXIS_TAG_WEIGHT, "Unexpected axis tag.\n");
 
+    hr = IDWriteFontFaceReference1_CreateFontFace(reference, &fontface5);
+    ok(hr == S_OK, "Failed to create a font face, hr %#x.\n", hr);
+    IDWriteFontFace5_Release(fontface5);
+
     IDWriteFontFaceReference1_Release(reference);
 
     IDWriteFontFile_Release(fontfile);
