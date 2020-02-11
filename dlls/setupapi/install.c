@@ -119,13 +119,31 @@ static WCHAR *dup_section_line_field( HINF hinf, const WCHAR *section, const WCH
  */
 static BOOL copy_files_callback( HINF hinf, PCWSTR field, void *arg )
 {
+    INFCONTEXT context;
     struct files_callback_info *info = arg;
     WCHAR src_root[MAX_PATH], *p;
 
     if (!info->src_root)
     {
-        lstrcpyW( src_root, PARSER_get_inf_filename( hinf ) );
-        if ((p = wcsrchr( src_root, '\\' ))) *p = 0;
+        const WCHAR *build_dir = _wgetenv( L"WINEBUILDDIR" );
+        const WCHAR *data_dir = _wgetenv( L"WINEDATADIR" );
+
+        if ((build_dir || data_dir) && SetupFindFirstLineW( hinf, L"WineSourceDirs", field, &context ))
+        {
+            lstrcpyW( src_root, build_dir ? build_dir : data_dir );
+            src_root[1] = '\\';  /* change \??\ to \\?\ */
+            p = src_root + lstrlenW(src_root);
+            *p++ = '\\';
+            if (!build_dir || !SetupGetStringFieldW( &context, 2, p, MAX_PATH - (p - src_root), NULL ))
+            {
+                if (!SetupGetStringFieldW( &context, 1, p, MAX_PATH - (p - src_root), NULL )) p[-1] = 0;
+            }
+        }
+        else
+        {
+            lstrcpyW( src_root, PARSER_get_inf_filename( hinf ) );
+            if ((p = wcsrchr( src_root, '\\' ))) *p = 0;
+        }
     }
 
     if (field[0] == '@')  /* special case: copy single file */
