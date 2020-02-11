@@ -620,63 +620,59 @@ static HRESULT WINAPI VMR9_GetSourceRect(BaseControlVideo* This, RECT *pSourceRe
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo* This, LONG *pBufferSize, LONG *pDIBImage)
+static HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo *iface, LONG *size, LONG *image)
 {
-    struct quartz_vmr* pVMR9 = impl_from_BaseControlVideo(This);
-    AM_MEDIA_TYPE *amt = &pVMR9->renderer.sink.pin.mt;
-    BITMAPINFOHEADER *bmiHeader;
-    LONG needed_size;
-    char *ptr;
+    struct quartz_vmr *filter = impl_from_BaseControlVideo(iface);
+    const AM_MEDIA_TYPE *mt = &filter->renderer.sink.pin.mt;
+    IDirect3DSurface9 *rt = NULL, *surface = NULL;
+    D3DLOCKED_RECT locked_rect;
+    IDirect3DDevice9 *device;
+    BITMAPINFOHEADER bih;
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(%p, %p): partial stub\n", pVMR9, This, pBufferSize, pDIBImage);
+    TRACE("filter %p, size %d, image %p.\n", filter, *size, image);
 
-    EnterCriticalSection(&pVMR9->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.csRenderLock);
+    device = filter->allocator_d3d9_dev;
 
-    if (!pVMR9->renderer.pMediaSample)
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        bih = ((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    else if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2))
+        bih = ((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+    bih.biSizeImage = bih.biWidth * bih.biHeight * bih.biBitCount / 8;
+
+    if (!image)
     {
-         LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
-         return (pVMR9->renderer.filter.state == State_Paused ? E_UNEXPECTED : VFW_E_NOT_PAUSED);
-    }
-
-    if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo))
-    {
-        bmiHeader = &((VIDEOINFOHEADER *)amt->pbFormat)->bmiHeader;
-    }
-    else if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo2))
-    {
-        bmiHeader = &((VIDEOINFOHEADER2 *)amt->pbFormat)->bmiHeader;
-    }
-    else
-    {
-        FIXME("Unknown type %s\n", debugstr_guid(&amt->subtype));
-        LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
-        return VFW_E_RUNTIME_ERROR;
-    }
-
-    needed_size = bmiHeader->biSize;
-    needed_size += IMediaSample_GetActualDataLength(pVMR9->renderer.pMediaSample);
-
-    if (!pDIBImage)
-    {
-        *pBufferSize = needed_size;
-        LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
+        *size = sizeof(BITMAPINFOHEADER) + bih.biSizeImage;
+        LeaveCriticalSection(&filter->renderer.csRenderLock);
         return S_OK;
     }
 
-    if (needed_size < *pBufferSize)
-    {
-        ERR("Buffer too small %u/%u\n", needed_size, *pBufferSize);
-        LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
-        return E_FAIL;
-    }
-    *pBufferSize = needed_size;
+    if (FAILED(hr = IDirect3DDevice9_GetRenderTarget(device, 0, &rt)))
+        goto out;
 
-    memcpy(pDIBImage, bmiHeader, bmiHeader->biSize);
-    IMediaSample_GetPointer(pVMR9->renderer.pMediaSample, (BYTE **)&ptr);
-    memcpy((char *)pDIBImage + bmiHeader->biSize, ptr, IMediaSample_GetActualDataLength(pVMR9->renderer.pMediaSample));
+    if (FAILED(hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, bih.biWidth,
+            bih.biHeight, D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &surface, NULL)))
+        goto out;
 
-    LeaveCriticalSection(&pVMR9->renderer.filter.csFilter);
-    return S_OK;
+    if (FAILED(hr = IDirect3DDevice9_GetRenderTargetData(device, rt, surface)))
+        goto out;
+
+    if (FAILED(hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_READONLY)))
+        goto out;
+
+    memcpy(image, &bih, min(*size, sizeof(BITMAPINFOHEADER)));
+    if (*size > sizeof(BITMAPINFOHEADER))
+        memcpy((char *)image + sizeof(BITMAPINFOHEADER), locked_rect.pBits,
+                min(*size - sizeof(BITMAPINFOHEADER), bih.biSizeImage));
+
+    IDirect3DSurface9_UnlockRect(surface);
+
+out:
+    if (surface) IDirect3DSurface9_Release(surface);
+    if (rt) IDirect3DSurface9_Release(rt);
+    LeaveCriticalSection(&filter->renderer.csRenderLock);
+    return hr;
 }
 
 static HRESULT WINAPI VMR9_GetTargetRect(BaseControlVideo* This, RECT *pTargetRect)
