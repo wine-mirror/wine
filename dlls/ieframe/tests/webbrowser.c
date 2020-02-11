@@ -168,7 +168,7 @@ static HWND container_hwnd, shell_embedding_hwnd;
 static BOOL is_downloading, do_download, is_first_load, use_container_olecmd, test_close, is_http, use_container_dochostui;
 static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
 static HRESULT hr_site_TranslateAccelerator = E_NOTIMPL;
-static const char *current_url;
+static const WCHAR *current_url;
 static int wb_version, expect_update_commands_enable, set_update_commands_enable;
 static BOOL nav_back_todo, nav_forward_todo; /* FIXME */
 
@@ -208,13 +208,6 @@ static BOOL is_lang_english(void)
     return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
 }
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
-}
-
 static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 {
     IUnknown *unk1, *unk2;
@@ -228,18 +221,6 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
     IUnknown_Release(unk2);
 
     return unk1 == unk2;
-}
-
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
 }
 
 #define create_webbrowser() _create_webbrowser(__LINE__)
@@ -257,7 +238,7 @@ static IWebBrowser2 *_create_webbrowser(unsigned line)
 }
 
 #define test_LocationURL(a,b) _test_LocationURL(__LINE__,a,b)
-static void _test_LocationURL(unsigned line, IWebBrowser2 *wb, const char *exurl)
+static void _test_LocationURL(unsigned line, IWebBrowser2 *wb, const WCHAR *exurl)
 {
     BSTR url = (void*)0xdeadbeef;
     HRESULT hres;
@@ -266,7 +247,7 @@ static void _test_LocationURL(unsigned line, IWebBrowser2 *wb, const char *exurl
     ok_(__FILE__,line) (hres == (*exurl ? S_OK : S_FALSE), "get_LocationURL failed: %08x\n", hres);
     if (SUCCEEDED(hres))
     {
-        ok_(__FILE__,line) (!strcmp_wa(url, exurl), "unexpected URL: %s\n", wine_dbgstr_w(url));
+        ok_(__FILE__,line) (!lstrcmpW(url, exurl), "unexpected URL: %s\n", wine_dbgstr_w(url));
         SysFreeString(url);
     }
 }
@@ -726,8 +707,8 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
         ok(V_VT(V_VARIANTREF(url)) == VT_BSTR, "V_VT(V_VARIANTREF(url))=%d, expected VT_BSTR\n",
            V_VT(V_VARIANTREF(url)));
         ok(V_BSTR(V_VARIANTREF(url)) != NULL, "V_BSTR(V_VARIANTREF(url)) == NULL\n");
-        ok(!strcmp_wa(V_BSTR(V_VARIANTREF(url)), current_url), "unexpected url %s, expected %s\n",
-           wine_dbgstr_w(V_BSTR(V_VARIANTREF(url))), current_url);
+        ok(!lstrcmpW(V_BSTR(V_VARIANTREF(url)), current_url), "unexpected url %s, expected %s\n",
+           wine_dbgstr_w(V_BSTR(V_VARIANTREF(url))), wine_dbgstr_w(current_url));
     }
 
     ok(V_VT(flags) == (VT_BYREF|VT_VARIANT), "V_VT(flags)=%x, expected VT_BYREF|VT_VARIANT\n",
@@ -792,7 +773,7 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
         ok(V_VT(V_VARIANTREF(headers)) == VT_BSTR, "V_VT(V_VARIANTREF(headers))=%d, expected VT_BSTR\n",
            V_VT(V_VARIANTREF(headers)));
         str = V_BSTR(V_VARIANTREF(headers));
-        ok(!str || !strcmp_wa(str, "Referer: http://test.winehq.org/tests/hello.html\r\n"),
+        ok(!str || !lstrcmpW(str, L"Referer: http://test.winehq.org/tests/hello.html\r\n"),
            "V_BSTR(V_VARIANTREF(headers)) = %s, expected NULL\n", wine_dbgstr_w(str));
     }
 
@@ -816,7 +797,8 @@ static void test_navigatecomplete2(DISPPARAMS *dp)
     ok(V_VT(dp->rgvarg) == (VT_BYREF|VT_VARIANT), "V_VT(dp->rgvarg) = %d\n", V_VT(dp->rgvarg));
     v = V_VARIANTREF(dp->rgvarg);
     ok(V_VT(v) == VT_BSTR, "V_VT(url) = %d\n", V_VT(v));
-    ok(!strcmp_wa(V_BSTR(v), current_url), "url=%s, expected %s\n", wine_dbgstr_w(V_BSTR(v)), current_url);
+    ok(!lstrcmpW(V_BSTR(v), current_url), "url=%s, expected %s\n", wine_dbgstr_w(V_BSTR(v)),
+       wine_dbgstr_w(current_url));
 
     ok(V_VT(dp->rgvarg+1) == VT_DISPATCH, "V_VT(dp->rgvarg+1) = %d\n", V_VT(dp->rgvarg+1));
     ok(V_DISPATCH(dp->rgvarg+1) == (IDispatch*)wb, "V_DISPATCH=%p, wb=%p\n", V_DISPATCH(dp->rgvarg+1), wb);
@@ -839,7 +821,8 @@ static void test_documentcomplete(DISPPARAMS *dp)
     ok(V_VT(dp->rgvarg) == (VT_BYREF|VT_VARIANT), "V_VT(dp->rgvarg) = %d\n", V_VT(dp->rgvarg));
     v = V_VARIANTREF(dp->rgvarg);
     ok(V_VT(v) == VT_BSTR, "V_VT(url) = %d\n", V_VT(v));
-    ok(!strcmp_wa(V_BSTR(v), current_url), "url=%s, expected %s\n", wine_dbgstr_w(V_BSTR(v)), current_url);
+    ok(!lstrcmpW(V_BSTR(v), current_url), "url=%s, expected %s\n", wine_dbgstr_w(V_BSTR(v)),
+       wine_dbgstr_w(current_url));
 
     ok(V_VT(dp->rgvarg+1) == VT_DISPATCH, "V_VT(dp->rgvarg+1) = %d\n", V_VT(dp->rgvarg+1));
     ok(V_DISPATCH(dp->rgvarg+1) == (IDispatch*)wb, "V_DISPATCH=%p, wb=%p\n", V_DISPATCH(dp->rgvarg+1), wb);
@@ -2463,7 +2446,7 @@ static void test_ie_funcs(IWebBrowser2 *wb)
     hres = IWebBrowser2_get_Name(wb, &sName);
     ok(hres == S_OK, "getName failed: %08x, expected S_OK\n", hres);
     if (is_lang_english())
-        ok(!strcmp_wa(sName, "Microsoft Web Browser Control"), "got '%s', expected 'Microsoft Web Browser Control'\n", wine_dbgstr_w(sName));
+        ok(!lstrcmpW(sName, L"Microsoft Web Browser Control"), "got '%s', expected 'Microsoft Web Browser Control'\n", wine_dbgstr_w(sName));
     else /* Non-English cannot be blank. */
         ok(sName!=NULL, "get_Name return a NULL string.\n");
     SysFreeString(sName);
@@ -2757,20 +2740,20 @@ static void test_ConnectionPoint(IWebBrowser2 *unk, BOOL init)
     IConnectionPoint_Release(point);
 }
 
-static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
+static void test_Navigate2(IWebBrowser2 *webbrowser, const WCHAR *nav_url)
 {
     VARIANT url;
     BOOL is_file;
     HRESULT hres;
 
-    test_LocationURL(webbrowser, is_first_load ? "" : current_url);
+    test_LocationURL(webbrowser, is_first_load ? L"" : current_url);
     test_ready_state(is_first_load ? READYSTATE_UNINITIALIZED : READYSTATE_COMPLETE, VARIANT_FALSE);
 
     is_http = !memcmp(nav_url, "http:", 5);
     V_VT(&url) = VT_BSTR;
-    V_BSTR(&url) = a2bstr(current_url = nav_url);
+    V_BSTR(&url) = SysAllocString(current_url = nav_url);
 
-    if((is_file = !strncasecmp(nav_url, "file://", 7)))
+    if((is_file = !wcsnicmp(nav_url, L"file://", 7)))
         current_url = nav_url + 7;
 
     if(is_first_load) {
@@ -3178,14 +3161,14 @@ static void test_IServiceProvider(IWebBrowser2 *unk)
     IServiceProvider_Release(servprov);
 }
 
-static void test_put_href(IWebBrowser2 *unk, const char *url)
+static void test_put_href(IWebBrowser2 *unk, const WCHAR *url)
 {
     IHTMLLocation *location;
     IHTMLDocument2 *doc;
     BSTR str;
     HRESULT hres;
 
-    trace("put_href(%s)...\n", url);
+    trace("put_href(%s)...\n", wine_dbgstr_w(url));
 
     doc = get_document(unk);
 
@@ -3195,7 +3178,7 @@ static void test_put_href(IWebBrowser2 *unk, const char *url)
     ok(hres == S_OK, "get_location failed: %08x\n", hres);
     ok(location != NULL, "location == NULL\n");
 
-    is_http = !memcmp(url, "http:", 5);
+    is_http = !wcsncmp(url, L"http:", 5);
 
     SET_EXPECT(TranslateUrl);
     SET_EXPECT(Invoke_BEFORENAVIGATE2);
@@ -3204,7 +3187,7 @@ static void test_put_href(IWebBrowser2 *unk, const char *url)
 
     dwl_flags = DWL_FROM_PUT_HREF;
 
-    str = a2bstr(current_url = url);
+    str = SysAllocString(current_url = url);
     is_first_load = FALSE;
     hres = IHTMLLocation_put_href(location, str);
 
@@ -3220,7 +3203,7 @@ static void test_put_href(IWebBrowser2 *unk, const char *url)
     test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
 }
 
-static void test_go_back(IWebBrowser2 *wb, const char *back_url, int back_enable, int forward_enable, int forward_todo)
+static void test_go_back(IWebBrowser2 *wb, const WCHAR *back_url, int back_enable, int forward_enable, int forward_todo)
 {
     HRESULT hres;
 
@@ -3262,7 +3245,7 @@ static void test_go_back(IWebBrowser2 *wb, const char *back_url, int back_enable
     CLEAR_CALLED(Invoke_PROPERTYCHANGE); /* called by IE11 */
 }
 
-static void test_go_forward(IWebBrowser2 *wb, const char *forward_url, int back_enable, int forward_enable)
+static void test_go_forward(IWebBrowser2 *wb, const WCHAR *forward_url, int back_enable, int forward_enable)
 {
     HRESULT hres;
 
@@ -3456,7 +3439,7 @@ static void test_TranslateAccelerator(IWebBrowser2 *unk)
         {5, 5}
     };
 
-    test_Navigate2(unk, "about:blank");
+    test_Navigate2(unk, L"about:blank");
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceActiveObject, (void**)&pao);
     ok(hres == S_OK, "Got 0x%08x\n", hres);
@@ -3749,14 +3732,14 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
     test_ready_state(READYSTATE_UNINITIALIZED, BUSY_FAIL);
     test_ClassInfo(webbrowser);
     test_EnumVerbs(webbrowser);
-    test_LocationURL(webbrowser, "");
+    test_LocationURL(webbrowser, L"");
     test_ConnectionPoint(webbrowser, TRUE);
     test_ClientSite(webbrowser, &ClientSite, !do_download);
     test_Extent(webbrowser);
     test_wb_funcs(webbrowser, TRUE);
     test_DoVerb(webbrowser);
     test_olecmd(webbrowser, FALSE);
-    test_Navigate2(webbrowser, "about:blank");
+    test_Navigate2(webbrowser, L"about:blank");
     test_QueryStatusWB(webbrowser, TRUE);
 
     if(do_download) {
@@ -3766,14 +3749,14 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
         test_olecmd(webbrowser, TRUE);
         doc = get_document(webbrowser);
 
-        test_put_href(webbrowser, "about:test");
+        test_put_href(webbrowser, L"about:test");
         test_download(DWL_FROM_PUT_HREF);
         doc2 = get_document(webbrowser);
         ok(doc == doc2, "doc != doc2\n");
         IHTMLDocument2_Release(doc2);
 
         trace("Navigate2 repeated...\n");
-        test_Navigate2(webbrowser, "about:blank");
+        test_Navigate2(webbrowser, L"about:blank");
         test_download(DWL_EXPECT_BEFORE_NAVIGATE);
         doc2 = get_document(webbrowser);
         ok(doc == doc2, "doc != doc2\n");
@@ -3783,7 +3766,7 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
         if(!do_close) {
             trace("Navigate2 http URL...\n");
             test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
-            test_Navigate2(webbrowser, "http://test.winehq.org/tests/hello.html");
+            test_Navigate2(webbrowser, L"http://test.winehq.org/tests/hello.html");
             nav_back_todo = TRUE;
             test_download(DWL_EXPECT_BEFORE_NAVIGATE|DWL_HTTP);
             nav_back_todo = FALSE;
@@ -3792,31 +3775,31 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
             test_Refresh(webbrowser, TRUE);
 
             trace("put_href http URL...\n");
-            test_put_href(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/");
+            test_put_href(webbrowser, L"http://test.winehq.org/tests/winehq_snapshot/");
             test_download(DWL_FROM_PUT_HREF|DWL_HTTP|DWL_BACK_ENABLE);
 
             trace("GoBack...\n");
             nav_back_todo = TRUE;
-            test_go_back(webbrowser, "http://test.winehq.org/tests/hello.html", 0, 0, 1);
+            test_go_back(webbrowser, L"http://test.winehq.org/tests/hello.html", 0, 0, 1);
             test_download(DWL_FROM_GOBACK|DWL_HTTP);
             nav_back_todo = FALSE;
 
             trace("GoForward...\n");
-            test_go_forward(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/", -1, 0);
+            test_go_forward(webbrowser, L"http://test.winehq.org/tests/winehq_snapshot/", -1, 0);
             test_download(DWL_FROM_GOFORWARD|DWL_HTTP);
 
             trace("GoBack...\n");
             nav_back_todo = TRUE;
-            test_go_back(webbrowser, "http://test.winehq.org/tests/hello.html", 0, -1, 0);
+            test_go_back(webbrowser, L"http://test.winehq.org/tests/hello.html", 0, -1, 0);
             test_download(DWL_FROM_GOBACK|DWL_HTTP);
             nav_back_todo = FALSE;
 
             trace("GoForward...\n");
-            test_go_forward(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/", -1, 0);
+            test_go_forward(webbrowser, L"http://test.winehq.org/tests/winehq_snapshot/", -1, 0);
             test_download(DWL_FROM_GOFORWARD|DWL_HTTP);
         }else {
             trace("Navigate2 repeated with the same URL...\n");
-            test_Navigate2(webbrowser, "about:blank");
+            test_Navigate2(webbrowser, L"about:blank");
             test_download(DWL_EXPECT_BEFORE_NAVIGATE);
         }
 
@@ -3882,7 +3865,7 @@ static void test_WebBrowser_slim_container(void)
     test_ConnectionPoint(webbrowser, TRUE);
     test_ClientSite(webbrowser, &ClientSite, TRUE);
     test_DoVerb(webbrowser);
-    test_Navigate2(webbrowser, "about:blank");
+    test_Navigate2(webbrowser, L"about:blank");
 
     /* Tests of interest */
     test_QueryStatusWB(webbrowser, TRUE);
@@ -3969,13 +3952,13 @@ static void test_FileProtocol(void)
     IWebBrowser2 *webbrowser;
     HANDLE file;
     ULONG ref;
-    char file_path[MAX_PATH];
-    char file_url[MAX_PATH] = "File://";
+    WCHAR file_path[MAX_PATH];
+    WCHAR file_url[MAX_PATH] = L"File://";
 
-    static const char test_file[] = "wine_test.html";
+    static const WCHAR test_file[] = L"wine_test.html";
 
-    GetTempPathA(MAX_PATH, file_path);
-    strcat(file_path, test_file);
+    GetTempPathW(MAX_PATH, file_path);
+    lstrcatW(file_path, test_file);
 
     webbrowser = create_webbrowser();
     if(!webbrowser)
@@ -3983,16 +3966,15 @@ static void test_FileProtocol(void)
 
     init_test(webbrowser, 0);
 
-    file = CreateFileA(file_path, GENERIC_WRITE, 0, NULL,
-            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    file = CreateFileW(file_path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
     if(file == INVALID_HANDLE_VALUE && GetLastError() != ERROR_FILE_EXISTS){
         ok(0, "CreateFile failed\n");
         return;
     }
     CloseHandle(file);
 
-    GetLongPathNameA(file_path, file_path, sizeof(file_path));
-    strcat(file_url, file_path);
+    GetLongPathNameW(file_path, file_path, sizeof(file_path));
+    lstrcatW(file_url, file_path);
 
     test_ConnectionPoint(webbrowser, TRUE);
     test_ClientSite(webbrowser, &ClientSite, TRUE);
@@ -4004,7 +3986,7 @@ static void test_FileProtocol(void)
     ok(ref == 0, "ref=%u, expected 0\n", ref);
 
     if(file != INVALID_HANDLE_VALUE)
-        DeleteFileA(file_path);
+        DeleteFileW(file_path);
 }
 
 static HRESULT WINAPI sink_QueryInterface( IAdviseSink *iface, REFIID riid, void **obj)
