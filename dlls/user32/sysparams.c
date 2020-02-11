@@ -3293,11 +3293,20 @@ static void trace_devmode(const DEVMODEW *devmode)
 LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND hwnd,
                                       DWORD flags, LPVOID lparam )
 {
+    WCHAR primary_adapter[CCHDEVICENAME];
     BOOL def_mode = TRUE;
     DEVMODEW dm;
 
     TRACE("%s %p %p %#x %p\n", debugstr_w(devname), devmode, hwnd, flags, lparam);
     TRACE("flags=%s\n", _CDS_flags(flags));
+
+    if (!devname && devmode)
+    {
+        if (!get_primary_adapter(primary_adapter))
+            return DISP_CHANGE_FAILED;
+
+        devname = primary_adapter;
+    }
 
     if (devmode)
     {
