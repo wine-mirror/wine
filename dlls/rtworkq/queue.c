@@ -109,8 +109,9 @@ enum system_queue_index
 
 struct work_item
 {
-    struct list entry;
+    IUnknown IUnknown_iface;
     LONG refcount;
+    struct list entry;
     IRtwqAsyncResult *result;
     struct queue *queue;
     RTWQWORKITEM_KEY key;
@@ -120,6 +121,11 @@ struct work_item
         TP_TIMER *timer_object;
     } u;
 };
+
+static struct work_item *work_item_impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct work_item, IUnknown_iface);
+}
 
 static const TP_CALLBACK_PRIORITY priorities[] =
 {
@@ -158,32 +164,59 @@ static void CALLBACK standard_queue_cleanup_callback(void *object_data, void *gr
 {
 }
 
+static HRESULT WINAPI work_item_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI work_item_AddRef(IUnknown *iface)
+{
+    struct work_item *item = work_item_impl_from_IUnknown(iface);
+    return InterlockedIncrement(&item->refcount);
+}
+
+static ULONG WINAPI work_item_Release(IUnknown *iface)
+{
+    struct work_item *item = work_item_impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&item->refcount);
+
+    if (!refcount)
+    {
+         IRtwqAsyncResult_Release(item->result);
+         heap_free(item);
+    }
+
+    return refcount;
+}
+
+static const IUnknownVtbl work_item_vtbl =
+{
+    work_item_QueryInterface,
+    work_item_AddRef,
+    work_item_Release,
+};
+
 static struct work_item * alloc_work_item(struct queue *queue, IRtwqAsyncResult *result)
 {
     struct work_item *item;
 
     item = heap_alloc_zero(sizeof(*item));
+
+    item->IUnknown_iface.lpVtbl = &work_item_vtbl;
     item->result = result;
     IRtwqAsyncResult_AddRef(item->result);
     item->refcount = 1;
     item->queue = queue;
     list_init(&item->entry);
 
-    return item;
-}
-
-static void release_work_item(struct work_item *item)
-{
-    if (InterlockedDecrement(&item->refcount) == 0)
-    {
-         IRtwqAsyncResult_Release(item->result);
-         heap_free(item);
-    }
-}
-
-static struct work_item *grab_work_item(struct work_item *item)
-{
-    InterlockedIncrement(&item->refcount);
     return item;
 }
 
@@ -294,7 +327,7 @@ static void shutdown_queue(struct queue *queue)
     LIST_FOR_EACH_ENTRY_SAFE(item, item2, &queue->pending_items, struct work_item, entry)
     {
         list_remove(&item->entry);
-        release_work_item(item);
+        IUnknown_Release(&item->IUnknown_iface);
     }
     LeaveCriticalSection(&queue->cs);
 
@@ -335,7 +368,7 @@ static void CALLBACK standard_queue_worker(TP_CALLBACK_INSTANCE *instance, void 
 
     IRtwqAsyncCallback_Invoke(result->pCallback, item->result);
 
-    release_work_item(item);
+    IUnknown_Release(&item->IUnknown_iface);
 }
 
 static HRESULT queue_submit_item(struct queue *queue, LONG priority, IRtwqAsyncResult *result)
@@ -399,7 +432,7 @@ static void queue_release_pending_item(struct work_item *item)
     {
         list_remove(&item->entry);
         item->key = 0;
-        release_work_item(item);
+        IUnknown_Release(&item->IUnknown_iface);
     }
     LeaveCriticalSection(&item->queue->cs);
 }
@@ -413,7 +446,7 @@ static void CALLBACK waiting_item_callback(TP_CALLBACK_INSTANCE *instance, void 
 
     invoke_async_callback(item->result);
 
-    release_work_item(item);
+    IUnknown_Release(&item->IUnknown_iface);
 }
 
 static void CALLBACK waiting_item_cancelable_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_WAIT *wait,
@@ -427,7 +460,7 @@ static void CALLBACK waiting_item_cancelable_callback(TP_CALLBACK_INSTANCE *inst
 
     invoke_async_callback(item->result);
 
-    release_work_item(item);
+    IUnknown_Release(&item->IUnknown_iface);
 }
 
 static void CALLBACK scheduled_item_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_TIMER *timer)
@@ -438,7 +471,7 @@ static void CALLBACK scheduled_item_callback(TP_CALLBACK_INSTANCE *instance, voi
 
     invoke_async_callback(item->result);
 
-    release_work_item(item);
+    IUnknown_Release(&item->IUnknown_iface);
 }
 
 static void CALLBACK scheduled_item_cancelable_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_TIMER *timer)
@@ -451,16 +484,18 @@ static void CALLBACK scheduled_item_cancelable_callback(TP_CALLBACK_INSTANCE *in
 
     invoke_async_callback(item->result);
 
-    release_work_item(item);
+    IUnknown_Release(&item->IUnknown_iface);
 }
 
 static void CALLBACK periodic_item_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_TIMER *timer)
 {
-    struct work_item *item = grab_work_item(context);
+    struct work_item *item = context;
+
+    IUnknown_AddRef(&item->IUnknown_iface);
 
     invoke_async_callback(item->result);
 
-    release_work_item(item);
+    IUnknown_Release(&item->IUnknown_iface);
 }
 
 static void queue_mark_item_pending(DWORD mask, struct work_item *item, RTWQWORKITEM_KEY *key)
@@ -470,7 +505,7 @@ static void queue_mark_item_pending(DWORD mask, struct work_item *item, RTWQWORK
 
     EnterCriticalSection(&item->queue->cs);
     list_add_tail(&item->queue->pending_items, &item->entry);
-    grab_work_item(item);
+    IUnknown_AddRef(&item->IUnknown_iface);
     LeaveCriticalSection(&item->queue->cs);
 }
 
