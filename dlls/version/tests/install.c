@@ -31,7 +31,7 @@ static void test_find_file(void)
     DWORD ret;
     UINT dwCur, dwOut ;
     char tmp[MAX_PATH];
-    char appdir[MAX_PATH];
+    char appdir[MAX_PATH + 12];
     char curdir[MAX_PATH];
     char filename[MAX_PATH];
     char outBuf[MAX_PATH];
