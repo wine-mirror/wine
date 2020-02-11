@@ -290,18 +290,6 @@ static BOOL wstr_contains(const WCHAR *strw, const char *stra)
     return strstr(buf, stra) != NULL;
 }
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 /* Returns true if the user interface is in English. Note that this does not
  * presume of the formatting of dates, numbers, etc.
  */
@@ -5366,7 +5354,7 @@ static void test_doscroll(IUnknown *unk)
     ok(hres == S_OK, "Could not get IHTMLElement2 iface: %08x\n", hres);
 
     V_VT(&v) = VT_BSTR;
-    V_BSTR(&v) = a2bstr("left");
+    V_BSTR(&v) = SysAllocString(L"left");
     hres = IHTMLElement2_doScroll(elem2, v);
     SysFreeString(V_BSTR(&v));
     IHTMLElement2_Release(elem2);
@@ -6099,7 +6087,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const WCHAR *hr
         SET_EXPECT(Exec_ShellDocView_84);
 
         str = SysAllocString(nav_url);
-        str2 = a2bstr("");
+        str2 = SysAllocString(L"");
         V_VT(&vempty) = VT_EMPTY;
         hres = IHTMLPrivateWindow_SuperNavigate(priv_window, str, str2, NULL, NULL, &vempty, &vempty, 0);
         SysFreeString(str);
@@ -6254,7 +6242,7 @@ static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
 
     url = SysAllocString(nav_serv_url = nav_url = L"about:blank");
-    name = a2bstr("test");
+    name = SysAllocString(L"test");
     new_window = (void*)0xdeadbeef;
 
     trace("open...\n");
@@ -7826,7 +7814,7 @@ static void test_cookies(IHTMLDocument2 *doc)
         SysFreeString(str);
     }
 
-    str = a2bstr("test=testval");
+    str = SysAllocString(L"test=testval");
     hres = IHTMLDocument2_put_cookie(doc, str);
     ok(hres == S_OK, "put_cookie failed: %08x\n", hres);
 
@@ -7843,7 +7831,7 @@ static void test_cookies(IHTMLDocument2 *doc)
     SysFreeString(str);
     SysFreeString(str2);
 
-    str = a2bstr("test=testval2");
+    str = SysAllocString(L"test=testval2");
     hres = IHTMLDocument2_put_cookie(doc, str);
     ok(hres == S_OK, "put_cookie failed: %08x\n", hres);
 
@@ -7871,7 +7859,7 @@ static void test_doc_domain(IHTMLDocument2 *doc)
     ok(!lstrcmpW(str, L"test.winehq.org"), "domain = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
-    str = a2bstr("winehq.org");
+    str = SysAllocString(L"winehq.org");
     hres = IHTMLDocument2_put_domain(doc, str);
     ok(hres == S_OK, "put_domain failed: %08x\n", hres);
     SysFreeString(str);
@@ -7881,7 +7869,7 @@ static void test_doc_domain(IHTMLDocument2 *doc)
     ok(!lstrcmpW(str, L"winehq.org"), "domain = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
-    str = a2bstr("winehq.com");
+    str = SysAllocString(L"winehq.com");
     hres = IHTMLDocument2_put_domain(doc, str);
     ok(hres == E_INVALIDARG, "put_domain failed: %08x, expected E_INVALIDARG\n", hres);
     SysFreeString(str);
@@ -7970,9 +7958,9 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     ok(!ref, "ref=%d, expected 0\n", ref);
 }
 
-static void put_inner_html(IHTMLElement *elem, const char *html)
+static void put_inner_html(IHTMLElement *elem, const WCHAR *html)
 {
-    BSTR str = a2bstr(html);
+    BSTR str = SysAllocString(html);
     HRESULT hres;
 
     hres = IHTMLElement_put_innerHTML(elem, str);
@@ -7981,10 +7969,10 @@ static void put_inner_html(IHTMLElement *elem, const char *html)
     SysFreeString(str);
 }
 
-static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, const char *id)
+static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, const WCHAR *id)
 {
     IHTMLDocument3 *doc3;
-    BSTR str = a2bstr(id);
+    BSTR str = SysAllocString(id);
     IHTMLElement *ret;
     HRESULT hres;
 
@@ -8055,10 +8043,10 @@ static void test_submit(void)
     ok(hres == S_OK, "get_body failed: %08x\n", hres);
     ok(body != NULL, "body = NULL\n");
 
-    put_inner_html(body, "<form action='test_submit' method='post' id='fid'><input type='hidden' name='cmd' value='TEST'></form>");
+    put_inner_html(body, L"<form action='test_submit' method='post' id='fid'><input type='hidden' name='cmd' value='TEST'></form>");
     IHTMLElement_Release(body);
 
-    form_elem = get_elem_by_id(doc, "fid");
+    form_elem = get_elem_by_id(doc, L"fid");
     ok(form_elem != NULL, "form = NULL\n");
 
     hres = IHTMLElement_QueryInterface(form_elem, &IID_IHTMLFormElement, (void**)&form);
@@ -8380,7 +8368,7 @@ static void test_editing_mode(BOOL do_load, BOOL use_design_mode)
         SET_EXPECT(InPlaceFrame_SetBorderSpace);
         SET_EXPECT(OnChanged_1014);
 
-        on = a2bstr("On");
+        on = SysAllocString(L"On");
         hres = IHTMLDocument2_put_designMode(doc, on);
         SysFreeString(on);
         ok(hres == S_OK, "put_designMode failed: %08x\n", hres);
