@@ -927,3 +927,13 @@ NTSTATUS WINAPI HidP_GetData(HIDP_REPORT_TYPE ReportType, HIDP_DATA *DataList, U
 
     return rc;
 }
+
+NTSTATUS WINAPI HidP_GetLinkCollectionNodes(HIDP_LINK_COLLECTION_NODE *LinkCollectionNode,
+    ULONG *LinkCollectionNodeLength, PHIDP_PREPARSED_DATA PreparsedData)
+{
+    FIXME("stub (%p, %p, %p)\n", LinkCollectionNode, LinkCollectionNodeLength, PreparsedData);
+
+    *LinkCollectionNodeLength = 0;
+
+    return STATUS_NOT_IMPLEMENTED;
+}
