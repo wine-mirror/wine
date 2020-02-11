@@ -2088,7 +2088,7 @@ DWORD build_tcp_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
         {
             char buf[512], *ptr;
             struct pid_map *map = NULL;
-            unsigned int dummy, num_entries = 0;
+            unsigned int num_entries = 0;
             int inode;
 
             if (class >= TCP_TABLE_OWNER_PID_LISTENER) map = get_pid_map( &num_entries );
@@ -2097,9 +2097,9 @@ DWORD build_tcp_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
             ptr = fgets(buf, sizeof(buf), fp);
             while ((ptr = fgets(buf, sizeof(buf), fp)))
             {
-                if (sscanf( ptr, "%x: %x:%x %x:%x %x %*s %*s %*s %*s %*s %d", &dummy,
+                if (sscanf( ptr, "%*x: %x:%x %x:%x %x %*s %*s %*s %*s %*s %d",
                             &row.dwLocalAddr, &row.dwLocalPort, &row.dwRemoteAddr,
-                            &row.dwRemotePort, &row.dwState, &inode ) != 7)
+                            &row.dwRemotePort, &row.dwState, &inode ) != 6)
                     continue;
                 row.dwLocalPort = htons( row.dwLocalPort );
                 row.dwRemotePort = htons( row.dwRemotePort );
@@ -2386,7 +2386,7 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
         {
             char buf[512], *ptr;
             struct pid_map *map = NULL;
-            unsigned int dummy, num_entries = 0;
+            unsigned int num_entries = 0;
             int inode;
 
             if (class >= UDP_TABLE_OWNER_PID) map = get_pid_map( &num_entries );
@@ -2395,8 +2395,8 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
             ptr = fgets( buf, sizeof(buf), fp );
             while ((ptr = fgets( buf, sizeof(buf), fp )))
             {
-                if (sscanf( ptr, "%u: %x:%x %*s %*s %*s %*s %*s %*s %*s %d", &dummy,
-                    &row.dwLocalAddr, &row.dwLocalPort, &inode ) != 4)
+                if (sscanf( ptr, "%*u: %x:%x %*s %*s %*s %*s %*s %*s %*s %d",
+                    &row.dwLocalAddr, &row.dwLocalPort, &inode ) != 3)
                     continue;
                 row.dwLocalPort = htons( row.dwLocalPort );
 
@@ -2708,7 +2708,6 @@ DWORD build_udp6_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE
             unsigned int num_entries = 0;
             struct ipv6_addr_scope *addr_scopes;
             unsigned int addr_scopes_size = 0;
-            unsigned int dummy;
             int inode;
 
             addr_scopes = get_ipv6_addr_scope_table(&addr_scopes_size);
@@ -2721,9 +2720,9 @@ DWORD build_udp6_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE
             {
                 DWORD *local_addr = (DWORD *)&row.ucLocalAddr;
 
-                if (sscanf( ptr, "%u: %8x%8x%8x%8x:%x %*s %*s %*s %*s %*s %*s %*s %d", &dummy,
+                if (sscanf( ptr, "%*u: %8x%8x%8x%8x:%x %*s %*s %*s %*s %*s %*s %*s %d",
                     &local_addr[0], &local_addr[1], &local_addr[2], &local_addr[3],
-                    &row.dwLocalPort, &inode ) != 7)
+                    &row.dwLocalPort, &inode ) != 6)
                     continue;
                 row.dwLocalScopeId = find_ipv6_addr_scope((const IN6_ADDR *)&row.ucLocalAddr, addr_scopes, addr_scopes_size);
                 row.dwLocalPort = htons( row.dwLocalPort );
