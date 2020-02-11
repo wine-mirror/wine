@@ -79,6 +79,8 @@ DWORD WINAPI GetIpStatisticsEx(PMIB_IPSTATS pStats, DWORD dwFamily);
 
 DWORD WINAPI GetIcmpStatistics(PMIB_ICMP pStats);
 
+DWORD WINAPI GetIcmpStatisticsEx(PMIB_ICMP_EX pStats, DWORD dwFamily);
+
 DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS pStats);
 
 DWORD WINAPI GetTcpStatisticsEx(PMIB_TCPSTATS pStats, DWORD dwFamily);
