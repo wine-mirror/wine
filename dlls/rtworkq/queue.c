@@ -136,6 +136,11 @@ static const TP_CALLBACK_PRIORITY priorities[] =
     TP_CALLBACK_PRIORITY_LOW,
 };
 
+struct queue_desc
+{
+    RTWQ_WORKQUEUE_TYPE queue_type;
+};
+
 struct queue
 {
     TP_POOL *pool;
@@ -228,7 +233,7 @@ static struct work_item * alloc_work_item(struct queue *queue, LONG priority, IR
     return item;
 }
 
-static void init_work_queue(RTWQ_WORKQUEUE_TYPE queue_type, struct queue *queue)
+static void init_work_queue(const struct queue_desc *desc, struct queue *queue)
 {
     TP_CALLBACK_ENVIRON_V3 env;
     unsigned int max_thread, i;
@@ -250,12 +255,12 @@ static void init_work_queue(RTWQ_WORKQUEUE_TYPE queue_type, struct queue *queue)
     list_init(&queue->pending_items);
     InitializeCriticalSection(&queue->cs);
 
-    max_thread = (queue_type == RTWQ_STANDARD_WORKQUEUE || queue_type == RTWQ_WINDOW_WORKQUEUE) ? 1 : 4;
+    max_thread = (desc->queue_type == RTWQ_STANDARD_WORKQUEUE || desc->queue_type == RTWQ_WINDOW_WORKQUEUE) ? 1 : 4;
 
     SetThreadpoolThreadMinimum(queue->pool, 1);
     SetThreadpoolThreadMaximum(queue->pool, max_thread);
 
-    if (queue_type == RTWQ_WINDOW_WORKQUEUE)
+    if (desc->queue_type == RTWQ_WINDOW_WORKQUEUE)
         FIXME("RTWQ_WINDOW_WORKQUEUE is not supported.\n");
 }
 
@@ -277,6 +282,8 @@ static HRESULT grab_queue(DWORD queue_id, struct queue **ret)
     }
     else if (queue)
     {
+        struct queue_desc desc;
+
         EnterCriticalSection(&queues_section);
         switch (queue_id)
         {
@@ -288,7 +295,9 @@ static HRESULT grab_queue(DWORD queue_id, struct queue **ret)
             default:
                 queue_type = RTWQ_STANDARD_WORKQUEUE;
         }
-        init_work_queue(queue_type, queue);
+
+        desc.queue_type = queue_type;
+        init_work_queue(&desc, queue);
         LeaveCriticalSection(&queues_section);
         *ret = queue;
         return S_OK;
@@ -604,7 +613,7 @@ static HRESULT queue_cancel_item(struct queue *queue, RTWQWORKITEM_KEY key)
     return hr;
 }
 
-static HRESULT alloc_user_queue(RTWQ_WORKQUEUE_TYPE queue_type, DWORD *queue_id)
+static HRESULT alloc_user_queue(const struct queue_desc *desc, DWORD *queue_id)
 {
     struct queue_handle *entry;
     struct queue *queue;
@@ -618,7 +627,8 @@ static HRESULT alloc_user_queue(RTWQ_WORKQUEUE_TYPE queue_type, DWORD *queue_id)
     queue = heap_alloc_zero(sizeof(*queue));
     if (!queue)
         return E_OUTOFMEMORY;
-    init_work_queue(queue_type, queue);
+
+    init_work_queue(desc, queue);
 
     EnterCriticalSection(&queues_section);
 
@@ -839,6 +849,8 @@ HRESULT WINAPI RtwqUnlockPlatform(void)
 
 static void init_system_queues(void)
 {
+    struct queue_desc desc;
+
     /* Always initialize standard queue, keep the rest lazy. */
 
     EnterCriticalSection(&queues_section);
@@ -849,7 +861,8 @@ static void init_system_queues(void)
         return;
     }
 
-    init_work_queue(RTWQ_STANDARD_WORKQUEUE, &system_queues[SYS_QUEUE_STANDARD]);
+    desc.queue_type = RTWQ_STANDARD_WORKQUEUE;
+    init_work_queue(&desc, &system_queues[SYS_QUEUE_STANDARD]);
 
     LeaveCriticalSection(&queues_section);
 }
@@ -1096,9 +1109,12 @@ HRESULT WINAPI RtwqPutWorkItem(DWORD queue, LONG priority, IRtwqAsyncResult *res
 
 HRESULT WINAPI RtwqAllocateWorkQueue(RTWQ_WORKQUEUE_TYPE queue_type, DWORD *queue)
 {
+    struct queue_desc desc;
+
     TRACE("%d, %p.\n", queue_type, queue);
 
-    return alloc_user_queue(queue_type, queue);
+    desc.queue_type = queue_type;
+    return alloc_user_queue(&desc, queue);
 }
 
 HRESULT WINAPI RtwqLockWorkQueue(DWORD queue)
