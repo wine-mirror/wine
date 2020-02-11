@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-02-05 23:25+0200\n"
+"PO-Revision-Date: 2020-02-11 09:01+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.4\n"
+"X-Generator: Poedit 2.3\n"
 "X-Project-Style: default\n"
 
 #: appwiz.rc:58
@@ -8377,38 +8377,28 @@ msgid "Advanced"
 msgstr "Pažengęs"
 
 #: version.rc:89
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Tinklo diskas"
+msgstr "Tinklo nuostatos"
 
 #: version.rc:90
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "Blogas apsimetimo lygis.\n"
+msgstr "&Apsimetimo lygis:"
 
 #: version.rc:92
 msgid "P&rotection level:"
-msgstr ""
+msgstr "Ap&saugos lygis:"
 
 #: version.rc:95
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "Prijungta"
+msgstr "Prisijungti:"
 
 #: version.rc:97
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
-msgstr "sek."
+msgstr "sekundės."
 
 #: version.rc:98
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "Sėkmė"
+msgstr "&Prieiga:"
 
 #: version.rc:36
 msgid "Data Link Properties"
@@ -8419,38 +8409,32 @@ msgid "OLE DB Provider(s)"
 msgstr "OLE DB tiekėjai"
 
 #: version.rc:39
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Parengta"
+msgstr "Skaitymas"
 
 #: version.rc:40
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "Skaityk:"
+msgstr "SkaitymasRašymas"
 
 #: version.rc:41
 msgid "Share Deny None"
-msgstr ""
+msgstr "Bendra nieko nedrausti"
 
 #: version.rc:42
 msgid "Share Deny Read"
-msgstr ""
+msgstr "Bendra drausti skaitymą"
 
 #: version.rc:43
 msgid "Share Deny Write"
-msgstr ""
+msgstr "Bendra drausti rašymą"
 
 #: version.rc:44
 msgid "Share Exclusive"
-msgstr ""
+msgstr "Bendra išskirtinė"
 
 #: version.rc:45
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "I/O rašymai"
+msgstr "Rašymas"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -8663,7 +8647,7 @@ msgstr "µs"
 
 #: serialui.rc:28
 msgid "Settings for %s"
-msgstr "%s nustatymai"
+msgstr "%s nuostatos"
 
 #: serialui.rc:31
 msgid "Baud Rate"
@@ -12032,7 +12016,7 @@ msgstr ""
 "\n"
 "Aplinkos pakeitimai padaryti po SETLOCAL yra lokalūs komandų faile ir\n"
 "išlaikomi iki kol sutinkamas kitas ENDLOCAL (arba failo pabaiga, kas\n"
-"pasitaiko pirmiau), tada atkuriami ankstesnės aplinkos nustatymai.\n"
+"pasitaiko pirmiau), tada atkuriamos ankstesnės aplinkos nuostatos.\n"
 
 #: cmd.rc:275
 msgid ""
@@ -13177,7 +13161,7 @@ msgstr "Atverti TypeLib failą ir peržiūrėti jo turinį"
 
 #: oleview.rc:107
 msgid "Change machine wide Distributed COM settings"
-msgstr "Keisti paskirstytojo COM kompiuterio nustatymus"
+msgstr "Keisti paskirstytojo COM kompiuterio nuostatas"
 
 #: oleview.rc:108
 msgid "Run the Wine registry editor"
@@ -16049,7 +16033,7 @@ msgstr "Pulto parametrai"
 
 #: wineconsole.rc:132
 msgid "Retain these settings for later sessions"
-msgstr "Išsaugoti vėlesniems seansams"
+msgstr "Išsaugoti nuostatas vėlesniems seansams"
 
 #: wineconsole.rc:133
 msgid "Modify only current session"
