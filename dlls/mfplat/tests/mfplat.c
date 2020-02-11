@@ -1342,6 +1342,7 @@ static void test_file_stream(void)
     IMFByteStream *bytestream, *bytestream2;
     IMFAttributes *attributes = NULL;
     MF_ATTRIBUTE_TYPE item_type;
+    QWORD bytestream_length;
     WCHAR pathW[MAX_PATH];
     DWORD caps, count;
     WCHAR *filename;
@@ -1404,6 +1405,15 @@ static void test_file_stream(void)
     ok(item_type == MF_ATTRIBUTE_BLOB, "Unexpected item type.\n");
 
     IMFAttributes_Release(attributes);
+
+    /* Length. */
+    hr = IMFByteStream_GetLength(bytestream, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    bytestream_length = 0;
+    hr = IMFByteStream_GetLength(bytestream, &bytestream_length);
+    ok(hr == S_OK, "Failed to get bytestream length, hr %#x.\n", hr);
+    ok(bytestream_length > 0, "Unexpected bytestream length %s.\n", wine_dbgstr_longlong(bytestream_length));
 
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST,
                       MF_FILEFLAGS_NONE, filename, &bytestream2);
