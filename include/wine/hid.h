@@ -48,6 +48,17 @@ typedef struct __WINE_HID_REPORT
     DWORD elementIdx;
 } WINE_HID_REPORT;
 
+typedef struct __WINE_HID_LINK_COLLECTION_NODE {
+    USAGE  LinkUsage;
+    USAGE  LinkUsagePage;
+    USHORT Parent;
+    USHORT NumberOfChildren;
+    USHORT NextSibling;
+    USHORT FirstChild;
+    BYTE   CollectionType;
+    BYTE   IsAlias;
+} WINE_HID_LINK_COLLECTION_NODE;
+
 typedef struct __WINE_HIDP_PREPARSED_DATA
 {
     DWORD magic;
@@ -55,6 +66,7 @@ typedef struct __WINE_HIDP_PREPARSED_DATA
     HIDP_CAPS caps;
 
     DWORD elementOffset;
+    DWORD nodesOffset;
     DWORD reportCount[3];
     BYTE reportIdx[3][256];
 
@@ -65,5 +77,6 @@ typedef struct __WINE_HIDP_PREPARSED_DATA
 #define HID_OUTPUT_REPORTS(d) ((d)->reports + (d)->reportCount[0])
 #define HID_FEATURE_REPORTS(d) ((d)->reports + (d)->reportCount[0] + (d)->reportCount[1])
 #define HID_ELEMS(d) ((WINE_HID_ELEMENT*)((BYTE*)(d) + (d)->elementOffset))
+#define HID_NODES(d) ((WINE_HID_LINK_COLLECTION_NODE*)((BYTE*)(d) + (d)->nodesOffset))
 
 #endif /* __WINE_PARSE_H */

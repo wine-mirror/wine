@@ -835,12 +835,14 @@ static void create_preparse_ctx(const struct collection *base, struct preparse_c
         create_preparse_ctx(c, ctx);
 }
 
-static void preparse_collection(const struct collection *base,
+static void preparse_collection(const struct collection *root, const struct collection *base,
         WINE_HIDP_PREPARSED_DATA *data, struct preparse_ctx *ctx)
 {
     WINE_HID_ELEMENT *elem = HID_ELEMS(data);
+    WINE_HID_LINK_COLLECTION_NODE *nodes = HID_NODES(data);
     struct feature *f;
     struct collection *c;
+    struct list *entry;
 
     LIST_FOR_EACH_ENTRY(f, &base->features, struct feature, entry)
     {
@@ -885,11 +887,29 @@ static void preparse_collection(const struct collection *base,
         }
     }
 
+    if (root != base)
+    {
+        nodes[base->index].LinkUsagePage = base->caps.UsagePage;
+        nodes[base->index].LinkUsage = base->caps.u.NotRange.Usage;
+        nodes[base->index].Parent = base->parent == root ? 0 : base->parent->index;
+        nodes[base->index].CollectionType = base->type;
+        nodes[base->index].IsAlias = 0;
+
+        if ((entry = list_head(&base->collections)))
+            nodes[base->index].FirstChild = LIST_ENTRY(entry, struct collection, entry)->index;
+    }
+
     LIST_FOR_EACH_ENTRY(c, &base->collections, struct collection, entry)
-        preparse_collection(c, data, ctx);
+    {
+        preparse_collection(root, c, data, ctx);
+
+        if ((entry = list_next(&base->collections, &c->entry)))
+            nodes[c->index].NextSibling = LIST_ENTRY(entry, struct collection, entry)->index;
+        if (root != base) nodes[base->index].NumberOfChildren++;
+    }
 }
 
-static WINE_HIDP_PREPARSED_DATA* build_PreparseData(struct collection *base_collection)
+static WINE_HIDP_PREPARSED_DATA* build_PreparseData(struct collection *base_collection, unsigned int node_count)
 {
     WINE_HIDP_PREPARSED_DATA *data;
     unsigned int report_count;
@@ -897,6 +917,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(struct collection *base_coll
 
     struct preparse_ctx ctx;
     unsigned int element_off;
+    unsigned int nodes_offset;
 
     memset(&ctx, 0, sizeof(ctx));
     create_preparse_ctx(base_collection, &ctx);
@@ -906,14 +927,19 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(struct collection *base_coll
     element_off = FIELD_OFFSET(WINE_HIDP_PREPARSED_DATA, reports[report_count]);
     size = element_off + (ctx.elem_count * sizeof(WINE_HID_ELEMENT));
 
+    nodes_offset = size;
+    size += node_count * sizeof(WINE_HID_LINK_COLLECTION_NODE);
+
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     data->magic = HID_MAGIC;
     data->dwSize = size;
     data->caps.Usage = base_collection->caps.u.NotRange.Usage;
     data->caps.UsagePage = base_collection->caps.UsagePage;
+    data->caps.NumberLinkCollectionNodes = node_count;
     data->elementOffset = element_off;
+    data->nodesOffset = nodes_offset;
 
-    preparse_collection(base_collection, data, &ctx);
+    preparse_collection(base_collection, base_collection, data, &ctx);
     return data;
 }
 
@@ -981,7 +1007,7 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
         }
     }
 
-    data = build_PreparseData(base);
+    data = build_PreparseData(base, cidx);
     debug_print_preparsed(data);
     free_collection(base);
 

@@ -51,17 +51,14 @@ static void test_device_info(HANDLE device)
     trace("Found device %s (%02x, %02x)\n", wine_dbgstr_w(device_name), Caps.UsagePage, Caps.Usage);
 
     trace("LinkCollectionNodes: (%d)\n", Caps.NumberLinkCollectionNodes);
-    todo_wine
     ok(Caps.NumberLinkCollectionNodes > 0, "Expected at least one link collection\n");
 
     nodes_count = 0;
     status = HidP_GetLinkCollectionNodes(nodes, &nodes_count, ppd);
-    todo_wine
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetLinkCollectionNodes succeeded:%x\n", status);
 
     nodes_count = ARRAY_SIZE(nodes);
     status = HidP_GetLinkCollectionNodes(nodes, &nodes_count, ppd);
-    todo_wine
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes failed:%x\n", status);
 
     for (i = 0; i < nodes_count; ++i)
@@ -74,13 +71,9 @@ static void test_device_info(HANDLE device)
               nodes[i].CollectionType, nodes[i].IsAlias, nodes[i].UserContext);
     }
 
-    todo_wine
     ok(nodes_count > 0, "Unexpected number of link collection nodes:%u.\n", nodes_count);
-    todo_wine
     ok(nodes[0].LinkUsagePage == Caps.UsagePage, "Unexpected top collection usage page:%x\n", nodes[0].LinkUsagePage);
-    todo_wine
     ok(nodes[0].LinkUsage == Caps.Usage, "Unexpected top collection usage:%x\n", nodes[0].LinkUsage);
-    todo_wine
     ok(nodes[0].CollectionType == 1, "Unexpected top collection type:%x\n", nodes[0].CollectionType);
 
     rc = HidD_FreePreparsedData(ppd);
