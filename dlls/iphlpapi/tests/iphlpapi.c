@@ -2313,7 +2313,7 @@ static void test_ParseNetworkString(void)
 
     if (!pParseNetworkString)
     {
-        skip("ParseNetworkString not available\n");
+        win_skip("ParseNetworkString not available\n");
         return;
     }
 
