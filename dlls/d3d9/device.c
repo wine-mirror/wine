@@ -3556,11 +3556,6 @@ static HRESULT WINAPI d3d9_device_SetVertexShaderConstantF(IDirect3DDevice9Ex *i
     wined3d_mutex_lock();
     hr = wined3d_stateblock_set_vs_consts_f(device->update_state, reg_idx,
             count, (const struct wined3d_vec4 *)data);
-    if (SUCCEEDED(hr) && !device->recording)
-    {
-        hr = wined3d_device_set_vs_consts_f(device->wined3d_device,
-                reg_idx, count, (const struct wined3d_vec4 *)data);
-    }
     wined3d_mutex_unlock();
 
     return hr;
@@ -3603,9 +3598,6 @@ static HRESULT WINAPI d3d9_device_SetVertexShaderConstantI(IDirect3DDevice9Ex *i
     wined3d_mutex_lock();
     hr = wined3d_stateblock_set_vs_consts_i(device->update_state,
             reg_idx, count, (const struct wined3d_ivec4 *)data);
-    if (SUCCEEDED(hr) && !device->recording)
-        hr = wined3d_device_set_vs_consts_i(device->wined3d_device,
-                reg_idx, count, (const struct wined3d_ivec4 *)data);
     wined3d_mutex_unlock();
 
     return hr;
@@ -3642,8 +3634,6 @@ static HRESULT WINAPI d3d9_device_SetVertexShaderConstantB(IDirect3DDevice9Ex *i
 
     wined3d_mutex_lock();
     hr = wined3d_stateblock_set_vs_consts_b(device->update_state, reg_idx, count, data);
-    if (SUCCEEDED(hr) && !device->recording)
-        hr = wined3d_device_set_vs_consts_b(device->wined3d_device, reg_idx, count, data);
     wined3d_mutex_unlock();
 
     return hr;
