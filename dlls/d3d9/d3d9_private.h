@@ -114,7 +114,7 @@ struct d3d9_device
 
     DWORD auto_mipmaps; /* D3D9_MAX_TEXTURE_UNITS */
 
-    unsigned int max_user_clip_planes;
+    unsigned int max_user_clip_planes, vs_uniform_count;
 
     UINT implicit_swapchain_count;
     struct wined3d_swapchain **implicit_swapchains;

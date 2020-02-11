@@ -3567,26 +3567,29 @@ static HRESULT WINAPI d3d9_device_SetVertexShaderConstantF(IDirect3DDevice9Ex *i
 }
 
 static HRESULT WINAPI d3d9_device_GetVertexShaderConstantF(IDirect3DDevice9Ex *iface,
-        UINT reg_idx, float *data, UINT count)
+        UINT start_idx, float *constants, UINT count)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
+    const struct wined3d_vec4 *src;
 
-    TRACE("iface %p, reg_idx %u, data %p, count %u.\n", iface, reg_idx, data, count);
+    TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (reg_idx + count > D3D9_MAX_VERTEX_SHADER_CONSTANTF)
+    if (!constants)
+        return D3DERR_INVALIDCALL;
+
+    if (start_idx >= device->vs_uniform_count || count > device->vs_uniform_count - start_idx)
     {
         WARN("Trying to access %u constants, but d3d9 only supports %u\n",
-             reg_idx + count, D3D9_MAX_VERTEX_SHADER_CONSTANTF);
+             start_idx + count, device->vs_uniform_count);
         return D3DERR_INVALIDCALL;
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_vs_consts_f(device->wined3d_device,
-            reg_idx, count, (struct wined3d_vec4 *)data);
+    src = wined3d_stateblock_get_state(device->state)->vs_consts_f;
+    memcpy(constants, &src[start_idx], count * sizeof(*src));
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_SetVertexShaderConstantI(IDirect3DDevice9Ex *iface,
@@ -3609,19 +3612,24 @@ static HRESULT WINAPI d3d9_device_SetVertexShaderConstantI(IDirect3DDevice9Ex *i
 }
 
 static HRESULT WINAPI d3d9_device_GetVertexShaderConstantI(IDirect3DDevice9Ex *iface,
-        UINT reg_idx, int *data, UINT count)
+        UINT start_idx, int *constants, UINT count)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
+    const struct wined3d_ivec4 *src;
 
-    TRACE("iface %p, reg_idx %u, data %p, count %u.\n", iface, reg_idx, data, count);
+    TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
+        return WINED3DERR_INVALIDCALL;
+    if (count > WINED3D_MAX_CONSTS_I - start_idx)
+        count = WINED3D_MAX_CONSTS_I - start_idx;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_vs_consts_i(device->wined3d_device,
-            reg_idx, count, (struct wined3d_ivec4 *)data);
+    src = wined3d_stateblock_get_state(device->state)->vs_consts_i;
+    memcpy(constants, &src[start_idx], count * sizeof(*src));
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_SetVertexShaderConstantB(IDirect3DDevice9Ex *iface,
@@ -3642,18 +3650,22 @@ static HRESULT WINAPI d3d9_device_SetVertexShaderConstantB(IDirect3DDevice9Ex *i
 }
 
 static HRESULT WINAPI d3d9_device_GetVertexShaderConstantB(IDirect3DDevice9Ex *iface,
-        UINT reg_idx, BOOL *data, UINT count)
+        UINT start_idx, BOOL *constants, UINT count)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
 
-    TRACE("iface %p, reg_idx %u, data %p, count %u.\n", iface, reg_idx, data, count);
+    TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
+        return WINED3DERR_INVALIDCALL;
+    if (count > WINED3D_MAX_CONSTS_B - start_idx)
+        count = WINED3D_MAX_CONSTS_B - start_idx;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_vs_consts_b(device->wined3d_device, reg_idx, count, data);
+    memcpy(constants, &wined3d_stateblock_get_state(device->state)->vs_consts_b[start_idx], count * sizeof(*constants));
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d9_device_SetStreamSource(IDirect3DDevice9Ex *iface,
@@ -4609,6 +4621,7 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
 
     wined3d_get_device_caps(wined3d, adapter, device_type, &caps);
     device->max_user_clip_planes = caps.MaxUserClipPlanes;
+    device->vs_uniform_count = caps.MaxVertexShaderConst;
     if (flags & D3DCREATE_ADAPTERGROUP_DEVICE)
         count = caps.NumberOfAdaptersInGroup;
 
