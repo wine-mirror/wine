@@ -142,18 +142,6 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     return lstrcmpA(stra, buf);
 }
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len-1);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 {
     IUnknown *unk1, *unk2;
@@ -292,14 +280,14 @@ static IHTMLElement *_doc_get_body(unsigned line, IHTMLDocument2 *doc)
 }
 
 #define get_elem_id(d,i) _get_elem_id(__LINE__,d,i)
-static IHTMLElement *_get_elem_id(unsigned line, IHTMLDocument2 *doc, const char *id)
+static IHTMLElement *_get_elem_id(unsigned line, IHTMLDocument2 *doc, const WCHAR *id)
 {
     IHTMLDocument3 *doc3 = _get_doc3_iface(line, (IUnknown*)doc);
     IHTMLElement *elem;
     BSTR str;
     HRESULT hres;
 
-    str = a2bstr(id);
+    str = SysAllocString(id);
     hres = IHTMLDocument3_getElementById(doc3, str, &elem);
     SysFreeString(str);
     IHTMLDocument3_Release(doc3);
@@ -341,19 +329,19 @@ static IHTMLEventObj *_get_event_obj(unsigned line)
 }
 
 #define set_elem_innerhtml(e,t) _set_elem_innerhtml(__LINE__,e,t)
-static void _set_elem_innerhtml(unsigned line, IHTMLElement *elem, const char *inner_html)
+static void _set_elem_innerhtml(unsigned line, IHTMLElement *elem, const WCHAR *inner_html)
 {
     BSTR html;
     HRESULT hres;
 
-    html = a2bstr(inner_html);
+    html = SysAllocString(inner_html);
     hres = IHTMLElement_put_innerHTML(elem, html);
     ok_(__FILE__,line)(hres == S_OK, "put_innerHTML failed: %08x\n", hres);
     SysFreeString(html);
 }
 
 #define elem_fire_event(a,b,c) _elem_fire_event(__LINE__,a,b,c)
-static void _elem_fire_event(unsigned line, IUnknown *unk, const char *event, VARIANT *evobj)
+static void _elem_fire_event(unsigned line, IUnknown *unk, const WCHAR *event, VARIANT *evobj)
 {
     IHTMLElement3 *elem3 = _get_elem3_iface(line, unk);
     VARIANT_BOOL b;
@@ -361,7 +349,7 @@ static void _elem_fire_event(unsigned line, IUnknown *unk, const char *event, VA
     HRESULT hres;
 
     b = 100;
-    str = a2bstr(event);
+    str = SysAllocString(event);
     in_fire_event++;
     hres = IHTMLElement3_fireEvent(elem3, str, evobj, &b);
     in_fire_event--;
@@ -744,14 +732,14 @@ static void _test_event_obj(unsigned line, const char *type, const xy_test_t *xy
 }
 
 #define elem_attach_event(a,b,c) _elem_attach_event(__LINE__,a,b,c)
-static void _elem_attach_event(unsigned line, IUnknown *unk, const char *namea, IDispatch *disp)
+static void _elem_attach_event(unsigned line, IUnknown *unk, const WCHAR *namew, IDispatch *disp)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     VARIANT_BOOL res;
     BSTR name;
     HRESULT hres;
 
-    name = a2bstr(namea);
+    name = SysAllocString(namew);
     hres = IHTMLElement2_attachEvent(elem, name, disp, &res);
     IHTMLElement2_Release(elem);
     SysFreeString(name);
@@ -760,7 +748,7 @@ static void _elem_attach_event(unsigned line, IUnknown *unk, const char *namea, 
 }
 
 #define add_event_listener(a,b,c,d) _add_event_listener(__LINE__,a,b,c,d)
-static void _add_event_listener(unsigned line, IUnknown *unk, const char *type, IDispatch *listener, VARIANT_BOOL use_capture)
+static void _add_event_listener(unsigned line, IUnknown *unk, const WCHAR *type, IDispatch *listener, VARIANT_BOOL use_capture)
 {
     IEventTarget *event_target;
     BSTR str;
@@ -769,7 +757,7 @@ static void _add_event_listener(unsigned line, IUnknown *unk, const char *type, 
     hres = IUnknown_QueryInterface(unk, &IID_IEventTarget, (void**)&event_target);
     ok_(__FILE__,line)(hres == S_OK, "Could not get IEventTarget iface: %08x\n", hres);
 
-    str = a2bstr(type);
+    str = SysAllocString(type);
     hres = IEventTarget_addEventListener(event_target, str, listener, use_capture);
     SysFreeString(str);
     ok_(__FILE__,line)(hres == S_OK, "addEventListener failed: %08x\n", hres);
@@ -778,7 +766,7 @@ static void _add_event_listener(unsigned line, IUnknown *unk, const char *type, 
 }
 
 #define remove_event_listener(a,b,c,d) _remove_event_listener(__LINE__,a,b,c,d)
-static void _remove_event_listener(unsigned line, IUnknown *unk, const char *type, IDispatch *listener, VARIANT_BOOL use_capture)
+static void _remove_event_listener(unsigned line, IUnknown *unk, const WCHAR *type, IDispatch *listener, VARIANT_BOOL use_capture)
 {
     IEventTarget *event_target;
     BSTR str;
@@ -787,7 +775,7 @@ static void _remove_event_listener(unsigned line, IUnknown *unk, const char *typ
     hres = IUnknown_QueryInterface(unk, &IID_IEventTarget, (void**)&event_target);
     ok_(__FILE__,line)(hres == S_OK, "Could not get IEventTarget iface: %08x\n", hres);
 
-    str = a2bstr(type);
+    str = SysAllocString(type);
     hres = IEventTarget_removeEventListener(event_target, str, listener, use_capture);
     SysFreeString(str);
     ok_(__FILE__,line)(hres == S_OK, "removeEventListener failed: %08x\n", hres);
@@ -796,13 +784,13 @@ static void _remove_event_listener(unsigned line, IUnknown *unk, const char *typ
 }
 
 #define elem_detach_event(a,b,c) _elem_detach_event(__LINE__,a,b,c)
-static void _elem_detach_event(unsigned line, IUnknown *unk, const char *namea, IDispatch *disp)
+static void _elem_detach_event(unsigned line, IUnknown *unk, const WCHAR *namew, IDispatch *disp)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     BSTR name;
     HRESULT hres;
 
-    name = a2bstr(namea);
+    name = SysAllocString(namew);
     hres = IHTMLElement2_detachEvent(elem, name, disp);
     IHTMLElement2_Release(elem);
     SysFreeString(name);
@@ -810,14 +798,14 @@ static void _elem_detach_event(unsigned line, IUnknown *unk, const char *namea, 
 }
 
 #define doc_attach_event(a,b,c) _doc_attach_event(__LINE__,a,b,c)
-static void _doc_attach_event(unsigned line, IHTMLDocument2 *doc, const char *namea, IDispatch *disp)
+static void _doc_attach_event(unsigned line, IHTMLDocument2 *doc, const WCHAR *namew, IDispatch *disp)
 {
     IHTMLDocument3 *doc3 = _get_doc3_iface(line, (IUnknown*)doc);
     VARIANT_BOOL res;
     BSTR name;
     HRESULT hres;
 
-    name = a2bstr(namea);
+    name = SysAllocString(namew);
     hres = IHTMLDocument3_attachEvent(doc3, name, disp, &res);
     IHTMLDocument3_Release(doc3);
     SysFreeString(name);
@@ -826,13 +814,13 @@ static void _doc_attach_event(unsigned line, IHTMLDocument2 *doc, const char *na
 }
 
 #define doc_detach_event(a,b,c) _doc_detach_event(__LINE__,a,b,c)
-static void _doc_detach_event(unsigned line, IHTMLDocument2 *doc, const char *namea, IDispatch *disp)
+static void _doc_detach_event(unsigned line, IHTMLDocument2 *doc, const WCHAR *namew, IDispatch *disp)
 {
     IHTMLDocument3 *doc3 = _get_doc3_iface(line, (IUnknown*)doc);
     BSTR name;
     HRESULT hres;
 
-    name = a2bstr(namea);
+    name = SysAllocString(namew);
     hres = IHTMLDocument3_detachEvent(doc3, name, disp);
     IHTMLDocument3_Release(doc3);
     SysFreeString(name);
@@ -1813,7 +1801,7 @@ static const IDispatchVtbl EventDispatchVtbl = {
 
 static IDispatch EventDispatch = { &EventDispatchVtbl };
 
-static void set_body_html(IHTMLDocument2 *doc, const char *html)
+static void set_body_html(IHTMLDocument2 *doc, const WCHAR *html)
 {
     IHTMLElement *body = doc_get_body(doc);
     set_elem_innerhtml(body, html);
@@ -1829,17 +1817,17 @@ static void test_onclick(IHTMLDocument2 *doc)
 
     trace("onclick tests in document mode %d\n", document_mode);
 
-    set_body_html(doc, "<div id=\"clickdiv\""
+    set_body_html(doc, L"<div id=\"clickdiv\""
                        " style=\"text-align: center; background: red; font-size: 32\">"
                        "click here"
                        "</div>");
 
     register_cp((IUnknown*)doc, &IID_IDispatch, (IUnknown*)&EventDispatch);
 
-    div = get_elem_id(doc, "clickdiv");
+    div = get_elem_id(doc, L"clickdiv");
 
-    elem_attach_event((IUnknown*)div, "abcde", (IDispatch*)&nocall_obj);
-    elem_attach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_attached_obj);
+    elem_attach_event((IUnknown*)div, L"abcde", (IDispatch*)&nocall_obj);
+    elem_attach_event((IUnknown*)div, L"onclick", (IDispatch*)&div_onclick_attached_obj);
 
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLElement_get_onclick(div, &v);
@@ -1856,7 +1844,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     ok(V_VT(&v) == VT_NULL, "V_VT(onclick) = %d\n", V_VT(&v));
 
     V_VT(&v) = VT_BSTR;
-    V_BSTR(&v) = a2bstr("function();");
+    V_BSTR(&v) = SysAllocString(L"function();");
     hres = IHTMLElement_put_onclick(div, v);
     ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
     SysFreeString(V_BSTR(&v));
@@ -1907,8 +1895,8 @@ static void test_onclick(IHTMLDocument2 *doc)
     VariantClear(&v);
 
     if(document_mode >= 9) {
-        add_event_listener((IUnknown*)div, "click", (IDispatch*)&div_onclick_capture_obj, VARIANT_TRUE);
-        add_event_listener((IUnknown*)div, "click", (IDispatch*)&div_onclick_bubble_obj, VARIANT_FALSE);
+        add_event_listener((IUnknown*)div, L"click", (IDispatch*)&div_onclick_capture_obj, VARIANT_TRUE);
+        add_event_listener((IUnknown*)div, L"click", (IDispatch*)&div_onclick_bubble_obj, VARIANT_FALSE);
     }
 
     body = doc_get_body(doc);
@@ -1962,7 +1950,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     SET_EXPECT(invoke_onclick);
 
     V_VT(&v) = VT_EMPTY;
-    elem_fire_event((IUnknown*)div, "onclick", &v);
+    elem_fire_event((IUnknown*)div, L"onclick", &v);
 
     CHECK_CALLED(div_onclick);
     CHECK_CALLED(div_onclick_attached);
@@ -1972,8 +1960,8 @@ static void test_onclick(IHTMLDocument2 *doc)
 
     events_cp_cookie = register_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, (IUnknown*)&doccp_obj);
     events2_cp_cookie = register_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents2, (IUnknown*)&doccp2_obj);
-    elem_attach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
-    doc_attach_event(doc, "onclick", (IDispatch*)&doc_onclick_attached_obj);
+    elem_attach_event((IUnknown*)div, L"onclick", (IDispatch*)&div_onclick_disp);
+    doc_attach_event(doc, L"onclick", (IDispatch*)&doc_onclick_attached_obj);
 
     SET_EXPECT(div_onclick);
     SET_EXPECT(div_onclick_disp);
@@ -2055,14 +2043,14 @@ static void test_onclick(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_onclick failed: %08x\n", hres);
     ok(V_VT(&v) == VT_NULL, "get_onclick returned vt %d\n", V_VT(&v));
 
-    elem_detach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
-    elem_detach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
-    elem_detach_event((IUnknown*)div, "test", (IDispatch*)&div_onclick_disp);
-    doc_detach_event(doc, "onclick", (IDispatch*)&doc_onclick_attached_obj);
+    elem_detach_event((IUnknown*)div, L"onclick", (IDispatch*)&div_onclick_disp);
+    elem_detach_event((IUnknown*)div, L"onclick", (IDispatch*)&div_onclick_disp);
+    elem_detach_event((IUnknown*)div, L"test", (IDispatch*)&div_onclick_disp);
+    doc_detach_event(doc, L"onclick", (IDispatch*)&doc_onclick_attached_obj);
 
     if(document_mode >= 9) {
-        remove_event_listener((IUnknown*)div, "click", (IDispatch*)&div_onclick_capture_obj, VARIANT_TRUE);
-        remove_event_listener((IUnknown*)div, "click", (IDispatch*)&div_onclick_bubble_obj, VARIANT_FALSE);
+        remove_event_listener((IUnknown*)div, L"click", (IDispatch*)&div_onclick_capture_obj, VARIANT_TRUE);
+        remove_event_listener((IUnknown*)div, L"click", (IDispatch*)&div_onclick_bubble_obj, VARIANT_FALSE);
     }
 
     SET_EXPECT(div_onclick_attached);
@@ -2091,7 +2079,7 @@ static void test_onreadystatechange(IHTMLDocument2 *doc)
     BSTR str;
     HRESULT hres;
 
-    elem = get_elem_id(doc, "iframe");
+    elem = get_elem_id(doc, L"iframe");
     elem2 = get_elem2_iface((IUnknown*)elem);
     IHTMLElement_Release(elem);
 
@@ -2115,7 +2103,7 @@ static void test_onreadystatechange(IHTMLDocument2 *doc)
     IHTMLElement2_Release(elem2);
     ok(hres == S_OK, "Could not get IHTMLFrameBase iface: %08x\n", hres);
 
-    hres = IHTMLFrameBase_put_src(iframe, (str = a2bstr("about:blank")));
+    hres = IHTMLFrameBase_put_src(iframe, (str = SysAllocString(L"about:blank")));
     SysFreeString(str);
     ok(hres == S_OK, "put_src failed: %08x\n", hres);
 
@@ -2140,7 +2128,7 @@ static void test_imgload(IHTMLDocument2 *doc)
     BSTR str;
     HRESULT hres;
 
-    elem = get_elem_id(doc, "imgid");
+    elem = get_elem_id(doc, L"imgid");
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLImgElement, (void**)&img);
     IHTMLElement_Release(elem);
     ok(hres == S_OK, "Could not get IHTMLImgElement iface: %08x\n", hres);
@@ -2174,7 +2162,7 @@ static void test_imgload(IHTMLDocument2 *doc)
     ok(V_DISPATCH(&v) == (IDispatch*)&img_onerror_obj, "V_DISPATCH(onerror) != onerrorFunc\n");
     VariantClear(&v);
 
-    str = a2bstr("http://test.winehq.org/tests/winehq_snapshot/index_files/winehq_logo_text.png");
+    str = SysAllocString(L"http://test.winehq.org/tests/winehq_snapshot/index_files/winehq_logo_text.png");
     hres = IHTMLImgElement_put_src(img, str);
     ok(hres == S_OK, "put_src failed: %08x\n", hres);
     SysFreeString(str);
@@ -2185,7 +2173,7 @@ static void test_imgload(IHTMLDocument2 *doc)
 
     SET_EXPECT(img_onerror);
 
-    str = a2bstr("about:blank");
+    str = SysAllocString(L"about:blank");
     hres = IHTMLImgElement_put_src(img, str);
     ok(hres == S_OK, "put_src failed: %08x\n", hres);
     SysFreeString(str);
@@ -2197,7 +2185,7 @@ static void test_imgload(IHTMLDocument2 *doc)
     IHTMLImgElement_Release(img);
 
     /* test onload on unattached image */
-    hres = IHTMLDocument2_createElement(doc, (str = a2bstr("img")), &elem);
+    hres = IHTMLDocument2_createElement(doc, (str = SysAllocString(L"img")), &elem);
     SysFreeString(str);
     ok(hres == S_OK, "createElement(img) failed: %08x\n", hres);
 
@@ -2222,7 +2210,7 @@ static void test_imgload(IHTMLDocument2 *doc)
     ok(V_DISPATCH(&v) == (IDispatch*)&unattached_img_onload_obj, "incorrect V_DISPATCH(onload)\n");
     VariantClear(&v);
 
-    str = a2bstr("http://test.winehq.org/tests/winehq_snapshot/index_files/winehq_logo_text.png?v=1");
+    str = SysAllocString(L"http://test.winehq.org/tests/winehq_snapshot/index_files/winehq_logo_text.png?v=1");
     hres = IHTMLImgElement_put_src(img, str);
     ok(hres == S_OK, "put_src failed: %08x\n", hres);
     SysFreeString(str);
@@ -2242,7 +2230,7 @@ static void test_link_load(IHTMLDocument2 *doc)
     BSTR str;
     HRESULT hres;
 
-    elem = get_elem_id(doc, "linkid");
+    elem = get_elem_id(doc, L"linkid");
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLLinkElement, (void**)&link);
     IHTMLElement_Release(elem);
     ok(hres == S_OK, "Could not get IHTMLLinkElement iface: %08x\n", hres);
@@ -2264,7 +2252,7 @@ static void test_link_load(IHTMLDocument2 *doc)
     ok(V_DISPATCH(&v) == (IDispatch*)&link_onload_obj, "V_DISPATCH(onload) != onloadkFunc\n");
     VariantClear(&v);
 
-    str = a2bstr("http://test.winehq.org/tests/winehq_snapshot/index_files/styles.css");
+    str = SysAllocString(L"http://test.winehq.org/tests/winehq_snapshot/index_files/styles.css");
     hres = IHTMLLinkElement_put_href(link, str);
     ok(hres == S_OK, "put_src failed: %08x\n", hres);
     SysFreeString(str);
@@ -2284,11 +2272,11 @@ static void test_focus(IHTMLDocument2 *doc)
     VARIANT v;
     HRESULT hres;
 
-    elem = get_elem_id(doc, "inputid");
+    elem = get_elem_id(doc, L"inputid");
     elem2 = get_elem2_iface((IUnknown*)elem);
     IHTMLElement_Release(elem);
 
-    elem = get_elem_id(doc, "divid");
+    elem = get_elem_id(doc, L"divid");
     div = get_elem4_iface((IUnknown*)elem);
     IHTMLElement_Release(elem);
 
@@ -2350,7 +2338,7 @@ static void test_focus(IHTMLDocument2 *doc)
 
     SET_EXPECT(div_onfocusin);
     V_VT(&v) = VT_EMPTY;
-    elem_fire_event((IUnknown*)elem2, "onfocusin", &v);
+    elem_fire_event((IUnknown*)elem2, L"onfocusin", &v);
     CHECK_CALLED(div_onfocusin);
 
     V_VT(&v) = VT_DISPATCH;
@@ -2387,12 +2375,12 @@ static void test_submit(IHTMLDocument2 *doc)
     HRESULT hres;
 
     set_body_html(doc,
-                  "<form id=\"formid\" method=\"post\" action=\"about:blank\">"
+                  L"<form id=\"formid\" method=\"post\" action=\"about:blank\">"
                   "<input type=\"text\" value=\"test\" name=\"i\"/>"
                   "<input type=\"submit\" id=\"submitid\" />"
                   "</form>");
 
-    elem = get_elem_id(doc, "formid");
+    elem = get_elem_id(doc, L"formid");
 
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)&form_onclick_obj;
@@ -2410,7 +2398,7 @@ static void test_submit(IHTMLDocument2 *doc)
 
     IHTMLFormElement_Release(form);
 
-    submit = get_elem_id(doc, "submitid");
+    submit = get_elem_id(doc, L"submitid");
 
     SET_EXPECT(form_onclick);
     SET_EXPECT(form_onsubmit);
@@ -2431,7 +2419,7 @@ static void test_submit(IHTMLDocument2 *doc)
     CHECK_CALLED(form_onclick);
     CHECK_CALLED(submit_onclick);
 
-    elem_attach_event((IUnknown*)submit, "onclick", (IDispatch*)&submit_onclick_attached_obj);
+    elem_attach_event((IUnknown*)submit, L"onclick", (IDispatch*)&submit_onclick_attached_obj);
 
     SET_EXPECT(form_onclick);
     SET_EXPECT(submit_onclick);
@@ -2453,7 +2441,7 @@ static void test_submit(IHTMLDocument2 *doc)
     CHECK_CALLED(form_onclick);
     CHECK_CALLED(submit_onclick_attached);
 
-    elem_detach_event((IUnknown*)submit, "onclick", (IDispatch*)&submit_onclick_attached_obj);
+    elem_detach_event((IUnknown*)submit, L"onclick", (IDispatch*)&submit_onclick_attached_obj);
 
     cp_cookie = register_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, (IUnknown*)&doccp_onclick_cancel_obj);
 
@@ -2517,8 +2505,8 @@ static void test_submit(IHTMLDocument2 *doc)
     CHECK_CALLED(submit_onclick_setret);
     CHECK_CALLED(form_onclick);
 
-    elem_attach_event((IUnknown*)submit, "onclick", (IDispatch*)&submit_onclick_attached_obj);
-    elem_attach_event((IUnknown*)submit, "onclick", (IDispatch*)&submit_onclick_attached_check_cancel_obj);
+    elem_attach_event((IUnknown*)submit, L"onclick", (IDispatch*)&submit_onclick_attached_obj);
+    elem_attach_event((IUnknown*)submit, L"onclick", (IDispatch*)&submit_onclick_attached_check_cancel_obj);
 
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)&submit_onclick_cancel_obj;
@@ -2650,7 +2638,7 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 
     trace("iframe tests...\n");
 
-    element = get_elem_id(doc, "ifr");
+    element = get_elem_id(doc, L"ifr");
     iframe = get_iframe_iface((IUnknown*)element);
     IHTMLElement_Release(element);
 
@@ -2680,7 +2668,7 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 
         IHTMLFrameBase2_Release(frame_base2);
 
-        str = a2bstr("about:blank");
+        str = SysAllocString(L"about:blank");
         hres = IHTMLDocument2_put_URL(iframes_doc, str);
         ok(hres == S_OK, "put_URL failed: %08x\n", hres);
         SysFreeString(str);
@@ -2689,7 +2677,7 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
         pump_msgs(&called_iframe_onload);
         CHECK_CALLED(iframe_onload);
 
-        str = a2bstr("about:test");
+        str = SysAllocString(L"about:test");
         hres = IHTMLDocument2_put_URL(iframes_doc, str);
         ok(hres == S_OK, "put_URL failed: %08x\n", hres);
         SysFreeString(str);
@@ -2724,7 +2712,7 @@ static void test_create_event(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IDocumentEvent, (void**)&doc_event);
     ok(hres == S_OK, "Could not get IDocumentEvent iface: %08x\n", hres);
 
-    str = a2bstr("Event");
+    str = SysAllocString(L"Event");
     hres = IDocumentEvent_createEvent(doc_event, str, &event);
     SysFreeString(str);
     ok(hres == S_OK, "createEvent failed: %08x\n", hres);
@@ -2771,7 +2759,7 @@ static void test_create_event(IHTMLDocument2 *doc)
 
     IDOMEvent_Release(event);
 
-    str = a2bstr("MouseEvent");
+    str = SysAllocString(L"MouseEvent");
     hres = IDocumentEvent_createEvent(doc_event, str, &event);
     SysFreeString(str);
     ok(hres == S_OK, "createEvent failed: %08x\n", hres);
@@ -2785,7 +2773,7 @@ static void test_create_event(IHTMLDocument2 *doc)
 
     IDOMEvent_Release(event);
 
-    str = a2bstr("UIEvent");
+    str = SysAllocString(L"UIEvent");
     hres = IDocumentEvent_createEvent(doc_event, str, &event);
     SysFreeString(str);
     ok(hres == S_OK, "createEvent failed: %08x\n", hres);
@@ -2798,7 +2786,7 @@ static void test_create_event(IHTMLDocument2 *doc)
 
     IDOMEvent_Release(event);
 
-    str = a2bstr("KeyboardEvent");
+    str = SysAllocString(L"KeyboardEvent");
     hres = IDocumentEvent_createEvent(doc_event, str, &event);
     SysFreeString(str);
     ok(hres == S_OK, "createEvent failed: %08x\n", hres);
@@ -2812,7 +2800,7 @@ static void test_create_event(IHTMLDocument2 *doc)
 
     IDOMEvent_Release(event);
 
-    str = a2bstr("CustomEvent");
+    str = SysAllocString(L"CustomEvent");
     hres = IDocumentEvent_createEvent(doc_event, str, &event);
     SysFreeString(str);
     ok(hres == S_OK, "createEvent failed: %08x\n", hres);
