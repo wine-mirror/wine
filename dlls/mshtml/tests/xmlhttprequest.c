@@ -40,13 +40,6 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
-}
-
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -318,7 +311,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         hres = IHTMLDocument2_get_readyState(notif_doc, &state);
         ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
 
-        if(!strcmp_wa(state, "complete"))
+        if(!lstrcmpW(state, L"complete"))
             doc_complete = TRUE;
 
         SysFreeString(state);
@@ -382,7 +375,7 @@ static void pump_msgs(BOOL *b)
 
 struct HEADER_TYPE {
     const char *key;
-    const char *value;
+    const WCHAR *value;
 };
 
 static void create_xmlhttprequest(IHTMLDocument2 *doc)
@@ -424,17 +417,14 @@ static void create_xmlhttprequest(IHTMLDocument2 *doc)
 static void test_header(const struct HEADER_TYPE expect[], int num)
 {
     int i;
-    BSTR key, text, all_header;
+    BSTR key, text, all;
     HRESULT hres;
-    char all[4096], buf[512];
+    WCHAR buf[512];
 
-    all_header = NULL;
-    hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, &all_header);
+    all = NULL;
+    hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, &all);
     ok(hres == S_OK, "getAllResponseHeader failed: %08x\n", hres);
-    ok(all_header != NULL, "all_header == NULL\n");
-
-    WideCharToMultiByte(CP_UTF8, 0, all_header, -1, all, sizeof(all), NULL, NULL);
-    SysFreeString(all_header);
+    ok(all != NULL, "all == NULL\n");
 
     for(i = 0; i < num; ++i) {
         text = NULL;
@@ -442,16 +432,17 @@ static void test_header(const struct HEADER_TYPE expect[], int num)
         hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, key, &text);
         ok(hres == S_OK, "getResponseHeader failed, got %08x\n", hres);
         ok(text != NULL, "text == NULL\n");
-        ok(!strcmp_wa(text, expect[i].value),
-            "Expect %s: %s, got %s\n", expect[i].key, expect[i].value, wine_dbgstr_w(text));
+        ok(!lstrcmpW(text, expect[i].value),
+            "Expect %s: %s, got %s\n", expect[i].key, wine_dbgstr_w(expect[i].value), wine_dbgstr_w(text));
         SysFreeString(key);
         SysFreeString(text);
 
-        strcpy(buf, expect[i].key);
-        strcat(buf, ": ");
-        strcat(buf, expect[i].value);
-        ok(strstr(all, buf) != NULL, "AllResponseHeaders(%s) don't have expected substr(%s)\n", all, buf);
+        wsprintfW(buf, L"%S: %s", expect[i].key, expect[i].value);
+        ok(wcsstr(all, buf) != NULL, "AllResponseHeaders(%s) don't have expected substr(%s)\n",
+           wine_dbgstr_w(all), wine_dbgstr_w(buf));
     }
+
+    SysFreeString(all);
 }
 
 static void test_illegal_xml(IXMLDOMDocument *xmldom)
@@ -476,7 +467,7 @@ static void test_illegal_xml(IXMLDOMDocument *xmldom)
     VariantClear(&variant);
 
     hres = IXMLDOMDocument_get_text(xmldom, &bstr);
-    ok(!strcmp_wa(bstr, ""), "text = %s\n", wine_dbgstr_w(bstr));
+    ok(!lstrcmpW(bstr, L""), "text = %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     hres = IXMLDOMDocument_get_firstChild(xmldom, NULL);
@@ -506,7 +497,7 @@ static void _set_request_header(unsigned line, IHTMLXMLHttpRequest *xhr, const c
     SysFreeString(value);
 }
 
-static void test_responseXML(const char *expect_text)
+static void test_responseXML(const WCHAR *expect_text)
 {
     IDispatch *disp;
     IXMLDOMDocument *xmldom;
@@ -563,7 +554,7 @@ static HRESULT _xhr_open(unsigned line, const char *url_a, const char *method_a)
 }
 
 #define test_response_text(a) _test_response_text(__LINE__,a)
-static void _test_response_text(unsigned line, const char *expect_text)
+static void _test_response_text(unsigned line, const WCHAR *expect_text)
 {
     BSTR text = NULL;
     HRESULT hres;
@@ -577,13 +568,13 @@ static void _test_response_text(unsigned line, const char *expect_text)
         len = SysStringLen(text);
         if(text[len-1] == '\n')
             text[len-1] = 0;
-        ok_(__FILE__,line)(!strcmp_wa(text, expect_text), "expect %s, got %s\n",
-                           expect_text, wine_dbgstr_w(text));
+        ok_(__FILE__,line)(!lstrcmpW(text, expect_text), "expect %s, got %s\n",
+                           wine_dbgstr_w(expect_text), wine_dbgstr_w(text));
     }
     SysFreeString(text);
 }
 
-static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url, const char *expect_text)
+static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url, const WCHAR *expect_text)
 {
     VARIANT vbool, vempty, var;
     BSTR method, url;
@@ -591,8 +582,8 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url, const char *
     LONG val;
     HRESULT hres;
     static const struct HEADER_TYPE expect_headers[] = {
-        {"Content-Length", "51"},
-        {"Content-Type", "application/xml"}
+        {"Content-Length", L"51"},
+        {"Content-Type", L"application/xml"}
     };
 
     trace("test_sync_xhr\n");
@@ -726,7 +717,7 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url, const char *
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
     ok(hres == S_OK, "get_statusText failed: %08x\n", hres);
     ok(text != NULL, "text == NULL\n");
-    ok(!strcmp_wa(text, "OK"),
+    ok(!lstrcmpW(text, L"OK"),
         "Expected \"OK\", got %s\n", wine_dbgstr_w(text));
     SysFreeString(text);
 
@@ -742,15 +733,15 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url, const char *
     xhr = NULL;
 }
 
-static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url, const char *expect_text)
+static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url, const WCHAR *expect_text)
 {
     VARIANT var, vempty;
     BSTR text;
     LONG val;
     HRESULT hres;
     static const struct HEADER_TYPE expect_headers[] = {
-        {"Content-Length", "51"},
-        {"Content-Type", "application/xml"}
+        {"Content-Length", L"51"},
+        {"Content-Type", L"application/xml"}
     };
 
     create_xmlhttprequest(doc);
@@ -885,7 +876,7 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url, const char 
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
     ok(hres == S_OK, "get_statusText failed: %08x\n", hres);
     ok(text != NULL, "text == NULL\n");
-    ok(!strcmp_wa(text, "OK"), "Expected \"OK\", got %s\n", wine_dbgstr_w(text));
+    ok(!lstrcmpW(text, L"OK"), "Expected \"OK\", got %s\n", wine_dbgstr_w(text));
     SysFreeString(text);
 
     val = 0xdeadbeef;
@@ -1016,7 +1007,7 @@ static void test_xhr_post(IHTMLDocument2 *doc)
 
     SysFreeString(V_BSTR(&v));
 
-    test_response_text("X => Testing");
+    test_response_text(L"X => Testing");
 
     IHTMLXMLHttpRequest_Release(xhr);
     xhr = NULL;
@@ -1070,7 +1061,7 @@ START_TEST(xmlhttprequest)
     static const char start_url[] = "http://test.winehq.org/tests/hello.html";
     static const char xml_url[] = "http://test.winehq.org/tests/xmltest.xml";
     static const char large_page_url[] = "http://test.winehq.org/tests/data.php";
-    static const char expect_response_text[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<a>TEST</a>";
+    static const WCHAR expect_response_text[] = L"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<a>TEST</a>";
 
     CoInitialize(NULL);
 
