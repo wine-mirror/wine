@@ -1287,7 +1287,7 @@ static void test_LoadImage_working_directory(void)
     char executable_path[MAX_PATH];
     int pos_slash;
     char old_PATH[10000];
-    char new_PATH[10000];
+    char new_PATH[10000 + MAX_PATH];
     BOOL ret;
 
     GetCurrentDirectoryA(ARRAY_SIZE(old_working_dir), old_working_dir);
