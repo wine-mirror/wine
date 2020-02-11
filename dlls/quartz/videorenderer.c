@@ -56,6 +56,7 @@ typedef struct VideoRendererImpl
     DWORD saved_style;
 
     HANDLE run_event;
+    IMediaSample *current_sample;
 } VideoRendererImpl;
 
 static inline VideoRendererImpl *impl_from_BaseWindow(BaseWindow *iface)
@@ -177,9 +178,13 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
     {
         const HANDLE events[2] = {filter->run_event, filter->renderer.flush_event};
 
+        filter->current_sample = pSample;
+
         LeaveCriticalSection(&filter->renderer.csRenderLock);
         WaitForMultipleObjects(2, events, FALSE, INFINITE);
         EnterCriticalSection(&filter->renderer.csRenderLock);
+
+        filter->current_sample = NULL;
     }
 
     return S_OK;
@@ -381,7 +386,7 @@ static HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo *iface, LONG
         return VFW_E_NOT_PAUSED;
     }
 
-    if (!filter->renderer.pMediaSample)
+    if (!filter->current_sample)
     {
         LeaveCriticalSection(&filter->renderer.csRenderLock);
         return E_UNEXPECTED;
@@ -394,7 +399,7 @@ static HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo *iface, LONG
     }
 
     memcpy(image, bih, sizeof(BITMAPINFOHEADER));
-    IMediaSample_GetPointer(filter->renderer.pMediaSample, &sample_data);
+    IMediaSample_GetPointer(filter->current_sample, &sample_data);
     memcpy((char *)image + sizeof(BITMAPINFOHEADER), sample_data, image_size);
 
     LeaveCriticalSection(&filter->renderer.csRenderLock);
