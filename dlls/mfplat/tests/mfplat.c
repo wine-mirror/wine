@@ -2251,7 +2251,7 @@ static void test_serial_queue(void)
 
     if (!pMFAllocateSerialWorkQueue)
     {
-        skip("Serial queues are not supported.\n");
+        win_skip("Serial queues are not supported.\n");
         return;
     }
 
