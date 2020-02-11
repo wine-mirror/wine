@@ -200,14 +200,14 @@ static int find_drive_rootW( LPCWSTR *ppath )
     while (lenW > 1 && IS_SEPARATOR(path[lenW - 1])) lenW--;
 
     /* convert path to Unix encoding */
-    lenA = ntdll_wcstoumbs( 0, path, lenW, NULL, 0, NULL, NULL );
-    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, lenA + 1 ))) return -1;
-    lenA = ntdll_wcstoumbs( 0, path, lenW, buffer, lenA, NULL, NULL );
-    buffer[lenA] = 0;
-    for (p = buffer; *p; p++) if (*p == '\\') *p = '/';
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, lenW * 3 + 1 ))) return -1;
 
     for (;;)
     {
+        lenA = ntdll_wcstoumbs( path, lenW, buffer, lenW * 3, FALSE );
+        buffer[lenA] = 0;
+        for (p = buffer; *p; p++) if (*p == '\\') *p = '/';
+
         if (!stat( buffer, &st ) && S_ISDIR( st.st_mode ))
         {
             /* Find the drive */
@@ -226,10 +226,6 @@ static int find_drive_rootW( LPCWSTR *ppath )
         }
         if (lenW <= 1) break;  /* reached root */
         lenW = remove_last_componentW( path, lenW );
-
-        /* we only need the new length, buffer already contains the converted string */
-        lenA = ntdll_wcstoumbs( 0, path, lenW, NULL, 0, NULL, NULL );
-        buffer[lenA] = 0;
     }
     RtlFreeHeap( GetProcessHeap(), 0, buffer );
     return -1;
@@ -1117,17 +1113,16 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRIN
     {
         if (status == STATUS_OBJECT_PATH_NOT_FOUND)
         {
-            lenW = ntdll_umbstowcs( 0, path, lenA, NULL, 0 );
             nt->Buffer = RtlAllocateHeap( GetProcessHeap(), 0,
-                                          (lenW + 1) * sizeof(WCHAR) + sizeof(unix_prefixW) );
+                                          (lenA + 1) * sizeof(WCHAR) + sizeof(unix_prefixW) );
             if (nt->Buffer == NULL)
             {
                 status = STATUS_NO_MEMORY;
                 goto done;
             }
             memcpy( nt->Buffer, unix_prefixW, sizeof(unix_prefixW) );
-            ntdll_umbstowcs( 0, path, lenA, nt->Buffer + ARRAY_SIZE( unix_prefixW ), lenW );
-            lenW += ARRAY_SIZE( unix_prefixW );
+            lenW = ARRAY_SIZE( unix_prefixW );
+            lenW += ntdll_umbstowcs( path, lenA, nt->Buffer + lenW, lenA );
             nt->Buffer[lenW] = 0;
             nt->Length = lenW * sizeof(WCHAR);
             nt->MaximumLength = nt->Length + sizeof(WCHAR);
@@ -1138,9 +1133,8 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRIN
     }
     while (lenA && path[0] == '/') { lenA--; path++; }
 
-    lenW = ntdll_umbstowcs( 0, path, lenA, NULL, 0 );
     if (!(nt->Buffer = RtlAllocateHeap( GetProcessHeap(), 0,
-                                        (lenW + 1) * sizeof(WCHAR) + sizeof(prefixW) )))
+                                        (lenA + 1) * sizeof(WCHAR) + sizeof(prefixW) )))
     {
         status = STATUS_NO_MEMORY;
         goto done;
@@ -1148,8 +1142,8 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRIN
 
     memcpy( nt->Buffer, prefixW, sizeof(prefixW) );
     nt->Buffer[4] += drive;
-    ntdll_umbstowcs( 0, path, lenA, nt->Buffer + ARRAY_SIZE( prefixW ), lenW );
-    lenW += ARRAY_SIZE( prefixW );
+    lenW = ARRAY_SIZE( prefixW );
+    lenW += ntdll_umbstowcs( path, lenA, nt->Buffer + lenW, lenA );
     nt->Buffer[lenW] = 0;
     nt->Length = lenW * sizeof(WCHAR);
     nt->MaximumLength = nt->Length + sizeof(WCHAR);

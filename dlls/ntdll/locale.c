@@ -35,6 +35,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "ntdll_misc.h"
+#include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -80,7 +81,7 @@ LCID user_lcid = 0, system_lcid = 0;
 static LANGID user_ui_language, system_ui_language;
 static NLSTABLEINFO nls_info;
 static HMODULE kernel32_handle;
-static const union cptable *unix_table; /* NULL if UTF8 */
+static CPTABLEINFO unix_table;
 
 extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
 extern const unsigned short combining_class_table[] DECLSPEC_HIDDEN;
@@ -498,6 +499,37 @@ static const struct { const char *name; UINT cp; } charset_names[] =
     { "UTF8", CP_UTF8 }
 };
 
+static void load_unix_cptable( unsigned int cp )
+{
+    const char *build_dir = wine_get_build_dir();
+    const char *data_dir = wine_get_data_dir();
+    const char *dir = build_dir ? build_dir : data_dir;
+    struct stat st;
+    char *name;
+    USHORT *data;
+    int fd;
+
+    if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, strlen(dir) + 22 ))) return;
+    sprintf( name, "%s/nls/c_%03u.nls", dir, cp );
+    if ((fd = open( name, O_RDONLY )) != -1)
+    {
+        fstat( fd, &st );
+        if ((data = RtlAllocateHeap( GetProcessHeap(), 0, st.st_size )) &&
+            st.st_size > 0x10000 &&
+            read( fd, data, st.st_size ) == st.st_size)
+        {
+            RtlInitCodePageTable( data, &unix_table );
+        }
+        else
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, data );
+        }
+        close( fd );
+    }
+    else ERR( "failed to load %s\n", debugstr_a(name) );
+    RtlFreeHeap( GetProcessHeap(), 0, name );
+}
+
 void init_unix_codepage(void)
 {
     char charset_name[16];
@@ -519,8 +551,7 @@ void init_unix_codepage(void)
         int res = _strnicmp( charset_names[pos].name, charset_name, -1 );
         if (!res)
         {
-            if (charset_names[pos].cp == CP_UTF8) return;
-            unix_table = wine_cp_get_table( charset_names[pos].cp );
+            if (charset_names[pos].cp != CP_UTF8) load_unix_cptable( charset_names[pos].cp );
             return;
         }
         if (res > 0) max = pos - 1;
@@ -547,6 +578,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
     static const WCHAR latnW[] = {'-','L','a','t','n',0};
     WCHAR buffer[LOCALE_NAME_MAX_LENGTH], win_name[LOCALE_NAME_MAX_LENGTH];
     WCHAR *p, *country = NULL, *modifier = NULL;
+    DWORD len;
     LCID lcid;
 
     if (!unix_name || !unix_name[0] || !strcmp( unix_name, "C" ))
@@ -555,7 +587,9 @@ static LCID unix_locale_to_lcid( const char *unix_name )
         if (!unix_name || !unix_name[0]) return 0;
     }
 
-    if (ntdll_umbstowcs( 0, unix_name, strlen(unix_name) + 1, buffer, ARRAY_SIZE(buffer) ) < 0) return 0;
+    len = ntdll_umbstowcs( unix_name, strlen(unix_name), buffer, ARRAY_SIZE(buffer) );
+    if (len == ARRAY_SIZE(buffer)) return 0;
+    buffer[len] = 0;
 
     if (!(p = strpbrkW( buffer, sepW )))
     {
@@ -702,16 +736,15 @@ void init_locale( HMODULE module )
 /******************************************************************
  *      ntdll_umbstowcs
  */
-int ntdll_umbstowcs( DWORD flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
 {
     DWORD reslen;
-    NTSTATUS status;
 
-    if (unix_table) return wine_cp_mbstowcs( unix_table, flags, src, srclen, dst, dstlen );
+    if (unix_table.CodePage)
+        RtlCustomCPToUnicodeN( &unix_table, dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
+    else
+        RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
 
-    if (!dstlen) dst = NULL;
-    status = RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
-    if (status && status != STATUS_SOME_NOT_MAPPED) return -1;
     reslen /= sizeof(WCHAR);
 #ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
     if (reslen && dst) reslen = compose_string( dst, reslen );
@@ -723,18 +756,50 @@ int ntdll_umbstowcs( DWORD flags, const char *src, int srclen, WCHAR *dst, int d
 /******************************************************************
  *      ntdll_wcstoumbs
  */
-int ntdll_wcstoumbs( DWORD flags, const WCHAR *src, int srclen, char *dst, int dstlen,
-                     const char *defchar, int *used )
+int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
 {
-    DWORD reslen;
-    NTSTATUS status;
+    DWORD i, reslen;
 
-    if (unix_table) return wine_cp_wcstombs( unix_table, flags, src, srclen, dst, dstlen, defchar, used );
-
-    if (used) *used = 0;  /* all chars are valid for UTF-8 */
-    if (!dstlen) dst = NULL;
-    status = RtlUnicodeToUTF8N( dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
-    if (status && status != STATUS_SOME_NOT_MAPPED) return -1;
+    if (!unix_table.CodePage)
+        RtlUnicodeToUTF8N( dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
+    else if (!strict)
+        RtlUnicodeToCustomCPN( &unix_table, dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
+    else  /* do it by hand to make sure every character roundtrips correctly */
+    {
+        if (unix_table.DBCSOffsets)
+        {
+            const unsigned short *uni2cp = unix_table.WideCharTable;
+            for (i = dstlen; srclen && i; i--, srclen--, src++)
+            {
+                unsigned short ch = uni2cp[*src];
+                if (ch >> 8)
+                {
+                    if (unix_table.DBCSOffsets[unix_table.DBCSOffsets[ch >> 8] + (ch & 0xff)] != *src)
+                        return -1;
+                    if (i == 1) break;  /* do not output a partial char */
+                    i--;
+                    *dst++ = ch >> 8;
+                }
+                else
+                {
+                    if (unix_table.MultiByteTable[ch] != *src) return -1;
+                    *dst++ = (char)ch;
+                }
+            }
+            reslen = dstlen - i;
+        }
+        else
+        {
+            const unsigned char *uni2cp = unix_table.WideCharTable;
+            reslen = min( srclen, dstlen );
+            for (i = 0; i < reslen; i++)
+            {
+                unsigned char ch = uni2cp[src[i]];
+                if (unix_table.MultiByteTable[ch] != src[i]) return -1;
+                dst[i] = ch;
+            }
+        }
+    }
     return reslen;
 }
 
@@ -744,8 +809,8 @@ int ntdll_wcstoumbs( DWORD flags, const WCHAR *src, int srclen, char *dst, int d
  */
 UINT CDECL __wine_get_unix_codepage(void)
 {
-    if (!unix_table) return CP_UTF8;
-    return unix_table->info.codepage;
+    if (!unix_table.CodePage) return CP_UTF8;
+    return unix_table.CodePage;
 }
 
 

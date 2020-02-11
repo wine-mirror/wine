@@ -1773,7 +1773,7 @@ static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS st
                     if (event->name[i] == '/') event->name[i] = '\\';
 
                 pfni->Action = event->action;
-                pfni->FileNameLength = ntdll_umbstowcs( 0, event->name, event->len, pfni->FileName,
+                pfni->FileNameLength = ntdll_umbstowcs( event->name, event->len, pfni->FileName,
                              (left - offsetof(FILE_NOTIFY_INFORMATION, FileName)) / sizeof(WCHAR));
                 last_entry_offset = &pfni->NextEntryOffset;
 

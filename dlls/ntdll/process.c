@@ -814,9 +814,9 @@ static char **build_argv( const UNICODE_STRING *cmdlineW, int reserved )
     char *arg, *s, *d, *cmdline;
     int in_quotes, bcount, len;
 
-    len = ntdll_wcstoumbs( 0, cmdlineW->Buffer, cmdlineW->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    if (!(cmdline = RtlAllocateHeap( GetProcessHeap(), 0, len + 1 ))) return NULL;
-    ntdll_wcstoumbs( 0, cmdlineW->Buffer, cmdlineW->Length / sizeof(WCHAR), cmdline, len, NULL, NULL );
+    len = cmdlineW->Length / sizeof(WCHAR);
+    if (!(cmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * 3 + 1 ))) return NULL;
+    len = ntdll_wcstoumbs( cmdlineW->Buffer, len, cmdline, len * 3, FALSE );
     cmdline[len++] = 0;
 
     argc = reserved + 1;
@@ -1436,9 +1436,9 @@ static ULONG get_env_size( const RTL_USER_PROCESS_PARAMETERS *params, char **win
         static const WCHAR WINEDEBUG[] = {'W','I','N','E','D','E','B','U','G','=',0};
         if (!*winedebug && !strncmpW( ptr, WINEDEBUG, ARRAY_SIZE( WINEDEBUG ) - 1 ))
         {
-            DWORD len = ntdll_wcstoumbs( 0, ptr, strlenW(ptr) + 1, NULL, 0, NULL, NULL );
+            DWORD len = strlenW(ptr) * 3 + 1;
             if ((*winedebug = RtlAllocateHeap( GetProcessHeap(), 0, len )))
-                ntdll_wcstoumbs( 0, ptr, strlenW(ptr) + 1, *winedebug, len, NULL, NULL );
+                ntdll_wcstoumbs( ptr, strlenW(ptr) + 1, *winedebug, len, FALSE );
         }
         ptr += strlenW(ptr) + 1;
     }

@@ -1451,8 +1451,8 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
     WCHAR short_nameW[13];
     UNICODE_STRING str;
 
-    long_len = ntdll_umbstowcs( 0, long_name, strlen(long_name), long_nameW, MAX_DIR_ENTRY_LEN );
-    if (long_len == -1) return TRUE;
+    long_len = ntdll_umbstowcs( long_name, strlen(long_name), long_nameW, ARRAY_SIZE(long_nameW) );
+    if (long_len == ARRAY_SIZE(long_nameW)) return TRUE;
     long_nameW[long_len] = 0;
 
     str.Buffer = long_nameW;
@@ -1461,9 +1461,8 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
 
     if (short_name)
     {
-        short_len = ntdll_umbstowcs( 0, short_name, strlen(short_name),
+        short_len = ntdll_umbstowcs( short_name, strlen(short_name),
                                      short_nameW, ARRAY_SIZE( short_nameW ) - 1 );
-        if (short_len == -1) short_len = ARRAY_SIZE( short_nameW ) - 1;
         for (i = 0; i < short_len; i++) short_nameW[i] = toupperW( short_nameW[i] );
     }
     else  /* generate a short name if necessary */
@@ -1795,12 +1794,10 @@ static NTSTATUS read_directory_data( struct dir_data *data, int fd, const UNICOD
     if (!has_wildcard( mask ))
     {
         /* convert the mask to a Unix name and check for it */
-        int ret, used_default;
         char unix_name[MAX_DIR_ENTRY_LEN * 3 + 1];
-
-        ret = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR),
-                               unix_name, sizeof(unix_name) - 1, NULL, &used_default );
-        if (ret > 0 && !used_default)
+        int ret = ntdll_wcstoumbs( mask->Buffer, mask->Length / sizeof(WCHAR),
+                                   unix_name, sizeof(unix_name) - 1, TRUE );
+        if (ret > 0)
         {
             unix_name[ret] = 0;
 #ifdef HAVE_GETATTRLIST
@@ -2047,16 +2044,13 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     DIR *dir;
     struct dirent *de;
     struct stat st;
-    int ret, used_default;
+    int ret;
 
     /* try a shortcut for this directory */
 
     unix_name[pos++] = '/';
-    ret = ntdll_wcstoumbs( 0, name, length, unix_name + pos, MAX_DIR_ENTRY_LEN,
-                           NULL, &used_default );
-    /* if we used the default char, the Unix name won't round trip properly back to Unicode */
-    /* so it cannot match the file we are looking for */
-    if (ret >= 0 && !used_default)
+    ret = ntdll_wcstoumbs( name, length, unix_name + pos, MAX_DIR_ENTRY_LEN + 1, TRUE );
+    if (ret >= 0 && ret <= MAX_DIR_ENTRY_LEN)
     {
         unix_name[pos + ret] = 0;
         if (!stat( unix_name, &st ))
@@ -2106,7 +2100,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
 
                     if (kde[1].d_name[0])
                     {
-                        ret = ntdll_umbstowcs( 0, kde[1].d_name, strlen(kde[1].d_name),
+                        ret = ntdll_umbstowcs( kde[1].d_name, strlen(kde[1].d_name),
                                                buffer, MAX_DIR_ENTRY_LEN );
                         if (ret == length && !strncmpiW( buffer, name, length))
                         {
@@ -2116,7 +2110,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                             goto success;
                         }
                     }
-                    ret = ntdll_umbstowcs( 0, kde[0].d_name, strlen(kde[0].d_name),
+                    ret = ntdll_umbstowcs( kde[0].d_name, strlen(kde[0].d_name),
                                            buffer, MAX_DIR_ENTRY_LEN );
                     if (ret == length && !strncmpiW( buffer, name, length))
                     {
@@ -2151,7 +2145,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     str.MaximumLength = sizeof(buffer);
     while ((de = readdir( dir )))
     {
-        ret = ntdll_umbstowcs( 0, de->d_name, strlen(de->d_name), buffer, MAX_DIR_ENTRY_LEN );
+        ret = ntdll_umbstowcs( de->d_name, strlen(de->d_name), buffer, MAX_DIR_ENTRY_LEN );
         if (ret == length && !strncmpiW( buffer, name, length ))
         {
             strcpy( unix_name + pos, de->d_name );
@@ -2564,7 +2558,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
                                   UINT disposition, BOOLEAN check_case )
 {
     NTSTATUS status;
-    int ret, used_default, len;
+    int ret, len;
     struct stat st;
     char *unix_name = *buffer;
     const BOOL redirect = nb_redirects && ntdll_get_thread_data()->wow64_redir;
@@ -2578,10 +2572,8 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
     }
 
     unix_name[pos] = '/';
-    ret = ntdll_wcstoumbs( 0, name, name_len, unix_name + pos + 1, unix_len - pos - 2,
-                           NULL, &used_default );
-
-    if (ret >= 0 && !used_default)  /* if we used the default char the name didn't convert properly */
+    ret = ntdll_wcstoumbs( name, name_len, unix_name + pos + 1, unix_len - pos - 1, TRUE );
+    if (ret >= 0 && ret < unix_len - pos - 1)
     {
         char *p;
         unix_name[pos + 1 + ret] = 0;
@@ -2637,9 +2629,8 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
                 status = STATUS_OBJECT_NAME_NOT_FOUND;
                 if (disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
                 {
-                    ret = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
-                                           MAX_DIR_ENTRY_LEN, NULL, &used_default );
-                    if (ret > 0 && !used_default)
+                    ret = ntdll_wcstoumbs( name, end - name, unix_name + pos + 1, MAX_DIR_ENTRY_LEN + 1, TRUE );
+                    if (ret > 0 && ret <= MAX_DIR_ENTRY_LEN)
                     {
                         unix_name[pos] = '/';
                         unix_name[pos + 1 + ret] = 0;
@@ -2699,8 +2690,7 @@ NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *
     for (p = name; p < name + name_len; p++)
         if (*p < 32 || strchrW( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
 
-    unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
-    unix_len += MAX_DIR_ENTRY_LEN + 3;
+    unix_len = name_len * 3 + MAX_DIR_ENTRY_LEN + 3;
     if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
         return STATUS_NO_MEMORY;
     unix_name[0] = '.';
@@ -2765,7 +2755,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     const WCHAR *name, *p;
     struct stat st;
     char *unix_name;
-    int pos, ret, name_len, unix_len, prefix_len, used_default;
+    int pos, ret, name_len, unix_len, prefix_len;
     WCHAR prefix[MAX_DIR_ENTRY_LEN];
     BOOLEAN is_unix = FALSE;
 
@@ -2815,9 +2805,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
             if (*p < 32 || strchrW( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
     }
 
-    unix_len = ntdll_wcstoumbs( 0, prefix, prefix_len, NULL, 0, NULL, NULL );
-    unix_len += ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
-    unix_len += MAX_DIR_ENTRY_LEN + 3;
+    unix_len = (prefix_len + name_len) * 3 + MAX_DIR_ENTRY_LEN + 3;
     unix_len += strlen(config_dir) + sizeof("/dosdevices/");
     if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
         return STATUS_NO_MEMORY;
@@ -2825,9 +2813,8 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     strcat( unix_name, "/dosdevices/" );
     pos = strlen(unix_name);
 
-    ret = ntdll_wcstoumbs( 0, prefix, prefix_len, unix_name + pos, unix_len - pos - 1,
-                           NULL, &used_default );
-    if (!ret || used_default)
+    ret = ntdll_wcstoumbs( prefix, prefix_len, unix_name + pos, unix_len - pos - 1, TRUE );
+    if (ret <= 0)
     {
         RtlFreeHeap( GetProcessHeap(), 0, unix_name );
         return STATUS_OBJECT_NAME_INVALID;

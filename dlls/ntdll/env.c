@@ -478,7 +478,7 @@ static WCHAR *build_initial_environment( char **env )
     for (e = env; *e; e++)
     {
         if (is_special_env_var( *e )) continue;
-        size += ntdll_umbstowcs( 0, *e, strlen(*e) + 1, NULL, 0 );
+        size += strlen(*e) + 1;
     }
 
     if (!(ptr = RtlAllocateHeap( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return NULL;
@@ -498,7 +498,7 @@ static WCHAR *build_initial_environment( char **env )
         }
         else if (is_special_env_var( str )) continue;  /* skip it */
 
-        ntdll_umbstowcs( 0, str, strlen(str) + 1, p, size - (p - ptr) );
+        ntdll_umbstowcs( str, strlen(str) + 1, p, size - (p - ptr) );
         p += strlenW(p) + 1;
     }
     *p = 0;
@@ -522,9 +522,8 @@ char **build_envp( const WCHAR *envW )
     unsigned int i;
 
     lenW = get_env_length( envW );
-    length = ntdll_wcstoumbs( 0, envW, lenW, NULL, 0, NULL, NULL );
-    if (!(env = RtlAllocateHeap( GetProcessHeap(), 0, length ))) return NULL;
-    ntdll_wcstoumbs( 0, envW, lenW, env, length, NULL, NULL );
+    if (!(env = RtlAllocateHeap( GetProcessHeap(), 0, lenW * 3 ))) return NULL;
+    length = ntdll_wcstoumbs( envW, lenW, env, lenW * 3, FALSE );
 
     for (p = env; *p; p += strlen(p) + 1, count++)
         if (is_special_env_var( p )) length += 4; /* prefix it with "WINE" */
@@ -676,11 +675,10 @@ static void get_image_path( const char *argv0, UNICODE_STRING *path )
 {
     static const WCHAR exeW[] = {'.','e','x','e',0};
     WCHAR *load_path, *file_part, *name, full_name[MAX_PATH];
-    DWORD len;
+    DWORD len = strlen(argv0) + 1;
 
-    len = ntdll_umbstowcs( 0, argv0, strlen(argv0) + 1, NULL, 0 );
     if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto failed;
-    ntdll_umbstowcs( 0, argv0, strlen(argv0) + 1, name, len );
+    ntdll_umbstowcs( argv0, len, name, len );
 
     if (RtlDetermineDosPathNameType_U( name ) != RELATIVE_PATH ||
         strchrW( name, '/' ) || strchrW( name, '\\' ))
@@ -739,8 +737,7 @@ static void set_library_wargv( char **argv, const UNICODE_STRING *image )
     DWORD total = 0;
 
     if (image) total += 1 + image->Length / sizeof(WCHAR);
-    for (argc = (image != NULL); argv[argc]; argc++)
-        total += ntdll_umbstowcs( 0, argv[argc], strlen(argv[argc]) + 1, NULL, 0 );
+    for (argc = (image != NULL); argv[argc]; argc++) total += strlen(argv[argc]) + 1;
 
     wargv = RtlAllocateHeap( GetProcessHeap(), 0,
                              total * sizeof(WCHAR) + (argc + 1) * sizeof(*wargv) );
@@ -754,7 +751,7 @@ static void set_library_wargv( char **argv, const UNICODE_STRING *image )
     }
     for (argc = (image != NULL); argv[argc]; argc++)
     {
-        DWORD reslen = ntdll_umbstowcs( 0, argv[argc], strlen(argv[argc]) + 1, p, total );
+        DWORD reslen = ntdll_umbstowcs( argv[argc], strlen(argv[argc]) + 1, p, total );
         wargv[argc] = p;
         p += reslen;
         total -= reslen;
