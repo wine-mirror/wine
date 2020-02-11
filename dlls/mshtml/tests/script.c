@@ -172,21 +172,6 @@ static BOOL skip_loadobject_tests;
 static IActiveScriptSite *site;
 static SCRIPTSTATE state;
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    if(!str)
-        return NULL;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 static BOOL init_key(const char *key_name, const char *def_value, BOOL init)
 {
     HKEY hkey;
@@ -296,7 +281,7 @@ static HRESULT WINAPI VariantChangeType_ChangeType(IVariantChangeType *iface, VA
     ok(vt == VT_BSTR, "vt = %d\n", vt);
 
     V_VT(dst) = VT_BSTR;
-    V_BSTR(dst) = a2bstr("red");
+    V_BSTR(dst) = SysAllocString(L"red");
     return S_OK;
 }
 
@@ -1943,7 +1928,7 @@ static void test_func(IDispatchEx *obj)
     VARIANT var;
     HRESULT hres;
 
-    str = a2bstr("toString");
+    str = SysAllocString(L"toString");
     hres = IDispatchEx_GetDispID(obj, str, fdexNameCaseSensitive, &id);
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
@@ -2023,7 +2008,7 @@ static void test_nextdispid(IDispatchEx *dispex)
     VARIANT var;
     HRESULT hres;
 
-    name = a2bstr("dynVal");
+    name = SysAllocString(L"dynVal");
     hres = IDispatchEx_GetDispID(dispex, name, fdexNameCaseSensitive|fdexNameEnsure, &dyn_id);
     ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
     SysFreeString(name);
@@ -2066,7 +2051,7 @@ static void test_global_id(void)
 
     SET_EXPECT(GetScriptDispatch);
     SET_EXPECT(script_divid_d);
-    tmp = a2bstr("divid");
+    tmp = SysAllocString(L"divid");
     hres = IDispatchEx_GetDispID(window_dispex, tmp, fdexNameCaseSensitive, &id);
     ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
     SysFreeString(tmp);
@@ -2157,7 +2142,7 @@ static void test_default_arg_conv(IHTMLWindow2 *window)
     test_elem_disabled(elem, VARIANT_FALSE);
 
     V_VT(&v) = VT_BSTR;
-    V_BSTR(&v) = a2bstr("test");
+    V_BSTR(&v) = SysAllocString(L"test");
     hres = dispex_propput(dispex, DISPID_IHTMLELEMENT3_DISABLED, 0, &v, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
     SysFreeString(V_BSTR(&v));
@@ -2395,7 +2380,7 @@ static void test_script_run(void)
     test_default_arg_conv(window);
     IHTMLWindow2_Release(window);
 
-    tmp = a2bstr("test");
+    tmp = SysAllocString(L"test");
     hres = IDispatchEx_DeleteMemberByName(dispex, tmp, fdexNameCaseSensitive);
     ok(hres == E_NOTIMPL, "DeleteMemberByName failed: %08x\n", hres);
 
@@ -2405,7 +2390,7 @@ static void test_script_run(void)
 
     SET_EXPECT(GetScriptDispatch);
     SET_EXPECT(script_testprop_d);
-    tmp = a2bstr("testProp");
+    tmp = SysAllocString(L"testProp");
     hres = IDispatchEx_GetDispID(window_dispex, tmp, fdexNameCaseSensitive, &id);
     ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
     ok(id != DISPID_SCRIPT_TESTPROP, "id == DISPID_SCRIPT_TESTPROP\n");
@@ -2413,7 +2398,7 @@ static void test_script_run(void)
     CHECK_CALLED(script_testprop_d);
     SysFreeString(tmp);
 
-    tmp = a2bstr("testProp");
+    tmp = SysAllocString(L"testProp");
     hres = IDispatchEx_GetDispID(window_dispex, tmp, fdexNameCaseSensitive, &id);
     ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
     ok(id != DISPID_SCRIPT_TESTPROP, "id == DISPID_SCRIPT_TESTPROP\n");
@@ -2431,7 +2416,7 @@ static void test_script_run(void)
 
     SET_EXPECT(GetScriptDispatch);
     SET_EXPECT(script_testprop2_d);
-    tmp = a2bstr("testProp2");
+    tmp = SysAllocString(L"testProp2");
     hres = IDispatchEx_GetDispID(window_dispex, tmp, fdexNameCaseSensitive|fdexNameEnsure, &id);
     ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
     ok(id != DISPID_SCRIPT_TESTPROP2, "id == DISPID_SCRIPT_TESTPROP2\n");
@@ -2439,7 +2424,7 @@ static void test_script_run(void)
     CHECK_CALLED(script_testprop2_d);
     SysFreeString(tmp);
 
-    tmp = a2bstr("test");
+    tmp = SysAllocString(L"test");
     hres = IDispatchEx_DeleteMemberByName(window_dispex, tmp, fdexNameCaseSensitive);
     ok(hres == E_NOTIMPL, "DeleteMemberByName failed: %08x\n", hres);
 
@@ -2835,7 +2820,7 @@ static void report_data(ProtocolHandler *This)
 
     CoTaskMemFree(addl_headers);
 
-    headers = a2bstr("HTTP/1.1 200 OK\r\n\r\n");
+    headers = SysAllocString(L"HTTP/1.1 200 OK\r\n\r\n");
     hres = IHttpNegotiate_OnResponse(http_negotiate, 200, headers, NULL, NULL);
     ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
     SysFreeString(headers);
@@ -3253,7 +3238,7 @@ static const char simple_script_str[] =
     "<script language=\"TestScript\">simple script</script>"
     "</body></html>";
 
-static void test_exec_script(IHTMLDocument2 *doc, const char *codea, const char *langa)
+static void test_exec_script(IHTMLDocument2 *doc, const WCHAR *codew, const WCHAR *langw)
 {
     IHTMLWindow2 *window;
     BSTR code, lang;
@@ -3263,8 +3248,8 @@ static void test_exec_script(IHTMLDocument2 *doc, const char *codea, const char 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
 
-    code = a2bstr(codea);
-    lang = a2bstr(langa);
+    code = SysAllocString(codew);
+    lang = SysAllocString(langw);
 
     SET_EXPECT(ParseScriptText_execScript);
     hres = IHTMLWindow2_execScript(window, code, lang, &v);
@@ -3274,7 +3259,7 @@ static void test_exec_script(IHTMLDocument2 *doc, const char *codea, const char 
     CHECK_CALLED(ParseScriptText_execScript);
     SysFreeString(lang);
 
-    lang = a2bstr("invalid");
+    lang = SysAllocString(L"invalid");
     V_VT(&v) = 100;
     hres = IHTMLWindow2_execScript(window, code, lang, &v);
     ok(hres == CO_E_CLASSSTRING, "execScript failed: %08x, expected CO_E_CLASSSTRING\n", hres);
@@ -3323,7 +3308,7 @@ static void test_simple_script(void)
     CHECK_CALLED(ParseScriptText_script);
     CHECK_CALLED(SetScriptState_CONNECTED);
 
-    test_exec_script(doc, "execScript call", "TestScript");
+    test_exec_script(doc, L"execScript call", L"TestScript");
 
     if(site)
         IActiveScriptSite_Release(site);
@@ -3395,17 +3380,17 @@ static void run_js_script(const char *test_name)
     IMoniker_Release(mon);
 }
 
-static void run_from_path(const char *path, const char *opt)
+static void run_from_path(const WCHAR *path, const char *opt)
 {
-    char buf[255] = "http://winetest.example.org";
+    WCHAR buf[255] = L"http://winetest.example.org";
     IMoniker *mon;
     BSTR url;
     HRESULT hres;
 
-    strcat(buf, path);
+    lstrcatW(buf, path);
     if(opt)
-        sprintf(buf + strlen(buf), "?%s", opt);
-    url = a2bstr(buf);
+        wsprintfW(buf + lstrlenW(buf), L"?%S", opt);
+    url = SysAllocString(buf);
     hres = CreateURLMoniker(NULL, url, &mon);
     SysFreeString(url);
     ok(hres == S_OK, "CreateUrlMoniker failed: %08x\n", hres);
@@ -3436,7 +3421,7 @@ static void run_script_as_http_with_mode(const char *script, const char *opt, co
             document_mode ? "\">" : "",
             script);
 
-    run_from_path("/index.html", opt ? opt : script);
+    run_from_path(L"/index.html", opt ? opt : script);
 }
 
 static void init_protocol_handler(void)
