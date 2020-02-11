@@ -2,6 +2,7 @@
  * Implementation of the Active Directory Service Interface
  *
  * Copyright 2005 Detlef Riekenberg
+ * Copyright 2019 Dmitry Timoshkov
  *
  * This file contains only stubs to get the printui.dll up and running
  * activeds.dll is much much more than this
@@ -30,8 +31,10 @@
 #include "winuser.h"
 
 #include "objbase.h"
+#include "initguid.h"
 #include "iads.h"
 #include "adshlp.h"
+#include "adserr.h"
 
 #include "wine/debug.h"
 
@@ -112,11 +115,80 @@ HRESULT WINAPI ADsBuildVarArrayInt(LPDWORD lpdwObjectTypes, DWORD dwObjectTypes,
 /*****************************************************
  * ADsOpenObject     [ACTIVEDS.9]
  */
-HRESULT WINAPI ADsOpenObject(LPCWSTR lpszPathName, LPCWSTR lpszUserName, LPCWSTR lpszPassword, DWORD dwReserved, REFIID riid, VOID** ppObject)
+HRESULT WINAPI ADsOpenObject(LPCWSTR path, LPCWSTR user, LPCWSTR password, DWORD reserved, REFIID riid, void **obj)
 {
-    FIXME("(%s,%s,%u,%s,%p)!stub\n", debugstr_w(lpszPathName),
-          debugstr_w(lpszUserName), dwReserved, debugstr_guid(riid), ppObject);
-    return E_NOTIMPL;
+    HRESULT hr;
+    HKEY hkey, hprov;
+    WCHAR provider[MAX_PATH], progid[MAX_PATH];
+    DWORD idx = 0;
+
+    TRACE("(%s,%s,%u,%s,%p)\n", debugstr_w(path), debugstr_w(user), reserved, debugstr_guid(riid), obj);
+
+    if (!path || !riid || !obj)
+        return E_INVALIDARG;
+
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\ADs\\Providers", 0, KEY_READ, &hkey))
+        return E_ADS_BAD_PATHNAME;
+
+    hr = E_ADS_BAD_PATHNAME;
+
+    for (;;)
+    {
+        if (RegEnumKeyW(hkey, idx++, provider, ARRAY_SIZE(provider)))
+            break;
+
+        TRACE("provider %s\n", debugstr_w(provider));
+
+        if (!wcsnicmp(path, provider, wcslen(provider)) && path[wcslen(provider)] == ':')
+        {
+            LONG size;
+
+            if (RegOpenKeyExW(hkey, provider, 0, KEY_READ, &hprov))
+                break;
+
+            size = ARRAY_SIZE(progid);
+            if (!RegQueryValueW(hprov, NULL, progid, &size))
+            {
+                CLSID clsid;
+
+                if (CLSIDFromProgID(progid, &clsid) == S_OK)
+                {
+                    IADsOpenDSObject *adsopen;
+                    IDispatch *disp;
+
+                    TRACE("ns %s => clsid %s\n", debugstr_w(progid), wine_dbgstr_guid(&clsid));
+                    if (CoCreateInstance(&clsid, 0, CLSCTX_INPROC_SERVER, &IID_IADsOpenDSObject, (void **)&adsopen) == S_OK)
+                    {
+                        BSTR bpath, buser, bpassword;
+
+                        bpath = SysAllocString(path);
+                        buser = SysAllocString(user);
+                        bpassword = SysAllocString(password);
+
+                        hr = IADsOpenDSObject_OpenDSObject(adsopen, bpath, buser, bpassword, reserved, &disp);
+                        if (hr == S_OK)
+                        {
+                            hr = IDispatch_QueryInterface(disp, riid, obj);
+                            IDispatch_Release(disp);
+                        }
+
+                        SysFreeString(bpath);
+                        SysFreeString(buser);
+                        SysFreeString(bpassword);
+
+                        IADsOpenDSObject_Release(adsopen);
+                    }
+                }
+            }
+
+            RegCloseKey(hprov);
+            break;
+        }
+    }
+
+    RegCloseKey(hkey);
+
+    return hr;
 }
 
 /*****************************************************

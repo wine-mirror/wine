@@ -795,6 +795,20 @@ interface IDirectorySearch : IUnknown
 }
 
 /*****************************************************************************
+ *    IID_IADsOpenDSObject interface
+ */
+[
+    odl,
+    uuid(ddf2891e-0f9c-11d0-8ad4-00c04fd8d503),
+    dual,
+    oleautomation
+]
+interface IADsOpenDSObject : IDispatch
+{
+    HRESULT OpenDSObject([in] BSTR path, [in] BSTR user, [in] BSTR password, [in] long reserved, [out,retval] IDispatch **obj);
+}
+
+/*****************************************************************************
  *    IADsADSystemInfo interface
  */
 [
