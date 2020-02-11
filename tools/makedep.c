@@ -2921,7 +2921,7 @@ static void output_source_svg( struct makefile *make, struct incl_file *source, 
 static void output_source_nls( struct makefile *make, struct incl_file *source, const char *obj )
 {
     add_install_rule( make, source->name, source->name,
-                      strmake( "D$(datadir)/wine/%s", source->name ));
+                      strmake( "D$(nlsdir)/%s", source->name ));
     output_srcdir_symlink( make, strmake( "%s.nls", obj ));
 }
 

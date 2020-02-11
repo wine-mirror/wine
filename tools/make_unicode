@@ -2560,10 +2560,10 @@ dump_linebreak( "dlls/usp10/linebreak.c" );
 dump_linebreak( "dlls/dwrite/linebreak.c" );
 dump_scripts( "dlls/dwrite/scripts" );
 dump_indic( "dlls/usp10/indicsyllable.c" );
-dump_intl_nls("loader/l_intl.nls");
 dump_vertical( "dlls/gdi32/vertical.c" );
 dump_vertical( "dlls/wineps.drv/vertical.c" );
 dump_nameprep( "dlls/kernel32/nameprep.c" );
+dump_intl_nls("nls/l_intl.nls");
 
 foreach my $file (@allfiles) { handle_codepage_file( @{$file} ); }
 

@@ -1714,6 +1714,7 @@ enable_port
 enable_wine
 enable_wpp
 enable_loader
+enable_nls
 enable_po
 enable_arp
 enable_aspnet_regiis
@@ -21064,6 +21065,7 @@ wine_fn_config_makefile libs/port enable_port
 wine_fn_config_makefile libs/wine enable_wine
 wine_fn_config_makefile libs/wpp enable_wpp
 wine_fn_config_makefile loader enable_loader
+wine_fn_config_makefile nls enable_nls
 wine_fn_config_makefile po enable_po
 wine_fn_config_makefile programs/arp enable_arp
 wine_fn_config_makefile programs/aspnet_regiis enable_aspnet_regiis
@@ -21250,10 +21252,10 @@ else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
 fonts \
-loader/l_intl.nls \
 loader/wine.inf \
 loader/winebus.inf \
 loader/winehid.inf \
+nls \
 programs/msidb/msidb \
 programs/msiexec/msiexec \
 programs/notepad/notepad \

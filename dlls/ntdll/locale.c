@@ -316,8 +316,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     static const WCHAR langfmtW[] = {'%','0','4','x',0};
     static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
     static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
-    static const WCHAR dataprefixW[] = {'\\',0};
-    static const WCHAR buildprefixW[] = {'\\','l','o','a','d','e','r','\\',0};
+    static const WCHAR dataprefixW[] = {'\\','n','l','s','\\',0};
     static const WCHAR cpdefaultW[] = {'c','_','%','0','3','d','.','n','l','s',0};
     static const WCHAR intlW[] = {'l','_','i','n','t','l','.','n','l','s',0};
     static const WCHAR normnfcW[] = {'n','o','r','m','n','f','c','.','n','l','s',0};
@@ -332,7 +331,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW, valueW;
     WCHAR buffer[MAX_PATH], value[10];
-    const WCHAR *name = NULL, *prefix = buildprefixW;
+    const WCHAR *name = NULL;
     KEY_VALUE_PARTIAL_INFORMATION *info;
 
     /* get filename from registry */
@@ -413,16 +412,15 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     if (RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ) != STATUS_BUFFER_TOO_SMALL)
     {
         RtlInitUnicodeString( &nameW, winedatadirW );
-        prefix = dataprefixW;
         if (RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ) != STATUS_BUFFER_TOO_SMALL)
             return status;
     }
-    valueW.MaximumLength = valueW.Length + sizeof(buildprefixW) + strlenW(name) * sizeof(WCHAR);
+    valueW.MaximumLength = valueW.Length + sizeof(dataprefixW) + strlenW(name) * sizeof(WCHAR);
     if (!(valueW.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, valueW.MaximumLength )))
         return STATUS_NO_MEMORY;
     if (!RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ))
     {
-        strcatW( valueW.Buffer, prefix );
+        strcatW( valueW.Buffer, dataprefixW );
         strcatW( valueW.Buffer, name );
         valueW.Length = strlenW(valueW.Buffer) * sizeof(WCHAR);
         InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );

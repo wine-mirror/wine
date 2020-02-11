@@ -1,5 +1,4 @@
 SOURCES = \
-	l_intl.nls \
 	main.c \
 	preloader.c \
 	preloader_mac.c \

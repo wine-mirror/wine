@@ -28,6 +28,7 @@ datadir         = @datadir@
 mandir          = @mandir@
 includedir      = @includedir@
 fontdir         = ${datadir}/wine/fonts
+nlsdir          = ${datadir}/wine/nls
 dlldir          = ${libdir}/wine
 top_srcdir      = @top_srcdir@
 top_builddir    = @top_builddir@

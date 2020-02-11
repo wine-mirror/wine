@@ -3871,6 +3871,7 @@ WINE_CONFIG_MAKEFILE(libs/port)
 WINE_CONFIG_MAKEFILE(libs/wine)
 WINE_CONFIG_MAKEFILE(libs/wpp)
 WINE_CONFIG_MAKEFILE(loader)
+WINE_CONFIG_MAKEFILE(nls)
 WINE_CONFIG_MAKEFILE(po)
 WINE_CONFIG_MAKEFILE(programs/arp)
 WINE_CONFIG_MAKEFILE(programs/aspnet_regiis)
@@ -4074,10 +4075,10 @@ else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
 fonts \
-loader/l_intl.nls \
 loader/wine.inf \
 loader/winebus.inf \
 loader/winehid.inf \
+nls \
 programs/msidb/msidb \
 programs/msiexec/msiexec \
 programs/notepad/notepad \
