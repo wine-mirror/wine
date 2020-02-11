@@ -567,6 +567,24 @@ RECT get_virtual_screen_rect(void)
     return info.virtual_rect;
 }
 
+static BOOL get_primary_adapter(WCHAR *name)
+{
+    DISPLAY_DEVICEW dd;
+    DWORD i;
+
+    dd.cb = sizeof(dd);
+    for (i = 0; EnumDisplayDevicesW(NULL, i, &dd, 0); ++i)
+    {
+        if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+        {
+            lstrcpyW(name, dd.DeviceName);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 /* get text metrics and/or "average" char width of the specified logfont 
  * for the specified dc */
 static void get_text_metr_size( HDC hdc, LOGFONTW *plf, TEXTMETRICW * ptm, UINT *psz)
@@ -3394,6 +3412,18 @@ BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
 BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
                                    LPDEVMODEW lpDevMode, DWORD dwFlags)
 {
+    WCHAR primary_adapter[CCHDEVICENAME];
+
+    TRACE("%s %u %p %#x\n", wine_dbgstr_w(lpszDeviceName), iModeNum, lpDevMode, dwFlags);
+
+    if (!lpszDeviceName)
+    {
+        if (!get_primary_adapter(primary_adapter))
+            return FALSE;
+
+        lpszDeviceName = primary_adapter;
+    }
+
     return USER_Driver->pEnumDisplaySettingsEx(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
 }
 
