@@ -4785,8 +4785,9 @@ GpStatus WINGDIPAPI GdipGetNearestColor(GpGraphics *graphics, ARGB* argb)
 
     if (graphics->image->type == ImageTypeBitmap)
     {
+        static int once;
         GpBitmap *bitmap = (GpBitmap *)graphics->image;
-        if (IsIndexedPixelFormat(bitmap->format))
+        if (IsIndexedPixelFormat(bitmap->format) && !once++)
             FIXME("(%p, %p): Passing color unmodified\n", graphics, argb);
     }
 
