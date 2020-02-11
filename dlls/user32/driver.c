@@ -41,7 +41,7 @@ static char driver_load_error[80];
 
 static BOOL CDECL nodrv_CreateWindow( HWND hwnd );
 
-static HMODULE load_desktop_driver( HWND hwnd )
+static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
 {
     static const WCHAR display_device_guid_propW[] = {
         '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
@@ -53,7 +53,8 @@ static HMODULE load_desktop_driver( HWND hwnd )
         'V','i','d','e','o','\\','{',0};
     static const WCHAR displayW[] = {'}','\\','0','0','0','0',0};
     static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
-    HMODULE ret = 0;
+    static const WCHAR nullW[] = {'n','u','l','l',0};
+    BOOL ret = FALSE;
     HKEY hkey;
     DWORD size;
     WCHAR path[MAX_PATH];
@@ -76,8 +77,9 @@ static HMODULE load_desktop_driver( HWND hwnd )
     size = sizeof(path);
     if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size ))
     {
-        if (!(ret = LoadLibraryW( path ))) ERR( "failed to load %s\n", debugstr_w(path) );
-        TRACE( "%s %p\n", debugstr_w(path), ret );
+        ret = !strcmpW( path, nullW ) || (*module = LoadLibraryW( path ));
+        if (!ret) ERR( "failed to load %s\n", debugstr_w(path) );
+        TRACE( "%s %p\n", debugstr_w(path), *module );
     }
     else
     {
@@ -98,8 +100,17 @@ static const USER_DRIVER *load_driver(void)
     driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
     *driver = null_driver;
 
-    graphics_driver = load_desktop_driver( GetDesktopWindow() );
-    if (graphics_driver)
+    if (!load_desktop_driver( GetDesktopWindow(), &graphics_driver ))
+    {
+        USEROBJECTFLAGS flags;
+        HWINSTA winstation;
+
+        winstation = GetProcessWindowStation();
+        if (!GetUserObjectInformationA(winstation, UOI_FLAGS, &flags, sizeof(flags), NULL)
+            || (flags.dwFlags & WSF_VISIBLE))
+            driver->pCreateWindow = nodrv_CreateWindow;
+    }
+    else if (graphics_driver)
     {
 #define GET_USER_FUNC(name) \
     do { if ((ptr = GetProcAddress( graphics_driver, #name ))) driver->p##name = ptr; } while(0)
@@ -152,16 +163,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(SystemParametersInfo);
         GET_USER_FUNC(ThreadDetach);
 #undef GET_USER_FUNC
-    }
-    else
-    {
-        USEROBJECTFLAGS flags;
-        HWINSTA winstation;
-
-        winstation = GetProcessWindowStation();
-        if (!GetUserObjectInformationA(winstation, UOI_FLAGS, &flags, sizeof(flags), NULL)
-            || (flags.dwFlags & WSF_VISIBLE))
-            driver->pCreateWindow = nodrv_CreateWindow;
     }
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );
