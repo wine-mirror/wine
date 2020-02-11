@@ -195,18 +195,6 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
     }
 }
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 static IOleClientSite *client_site;
 static IDispatch *sink_disp;
 static READYSTATE plugin_readystate = READYSTATE_UNINITIALIZED;
@@ -1527,7 +1515,7 @@ static void test_elem_dispex(IDispatchEx *dispex)
     BSTR str;
     HRESULT hres;
 
-    str = a2bstr("scriptprop");
+    str = SysAllocString(L"scriptprop");
     SET_EXPECT(GetIDsOfNames_scriptprop);
     hres = IDispatchEx_GetDispID(dispex, str, 0, &id);
     CHECK_CALLED(GetIDsOfNames_scriptprop);
@@ -1625,7 +1613,7 @@ static void test_object_elem(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
     ok(hres == S_OK, "Could not get IHTMLDocument3 iface: %08x\n", hres);
 
-    str = a2bstr("objid");
+    str = SysAllocString(L"objid");
     elem = (void*)0xdeadbeef;
     hres = IHTMLDocument3_getElementById(doc3, str, &elem);
     IHTMLDocument3_Release(doc3);
@@ -2596,7 +2584,7 @@ static void test_nooleobj_ax(void)
     release_doc(doc);
 }
 
-static void test_exec_script(IHTMLDocument2 *doc, const char *codea, const char *langa)
+static void test_exec_script(IHTMLDocument2 *doc, const WCHAR *codew, const WCHAR *langw)
 {
     IHTMLWindow2 *window;
     BSTR code, lang;
@@ -2606,8 +2594,8 @@ static void test_exec_script(IHTMLDocument2 *doc, const char *codea, const char 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
 
-    code = a2bstr(codea);
-    lang = a2bstr(langa);
+    code = SysAllocString(codew);
+    lang = SysAllocString(langw);
 
     hres = IHTMLWindow2_execScript(window, code, lang, &v);
     ok(hres == S_OK, "execScript failed: %08x\n", hres);
@@ -2635,9 +2623,9 @@ static void test_create_element(void)
     SET_EXPECT(FreezeEvents_FALSE);
 
     test_exec_script(doc,
-                     "var test_elem = document.createElement('object');"
+                     L"var test_elem = document.createElement('object');"
                      "test_elem.classid = 'CLSID:178fc163-f585-4e24-9c13-4bb7f6680746';",
-                     "javascript");
+                     L"javascript");
 
     CHECK_CALLED(CreateInstance);
     todo_wine CHECK_CALLED(FreezeEvents_TRUE);
@@ -2650,8 +2638,8 @@ static void test_create_element(void)
 
     SET_EXPECT(DoVerb);
     test_exec_script(doc,
-                     "document.body.appendChild(test_elem);",
-                     "javascript");
+                     L"document.body.appendChild(test_elem);",
+                     L"javascript");
     todo_wine CHECK_CALLED(DoVerb);
 
     SET_EXPECT(InPlaceDeactivate);
