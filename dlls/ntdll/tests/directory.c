@@ -737,7 +737,7 @@ done:
 static void set_up_case_test(const char *testdir)
 {
     BOOL ret;
-    char buf[MAX_PATH];
+    char buf[MAX_PATH + 5];
     HANDLE h;
 
     ret = CreateDirectoryA(testdir, NULL);
