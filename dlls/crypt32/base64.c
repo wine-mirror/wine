@@ -490,15 +490,18 @@ static BOOL BinaryToHexW(const BYTE *bin, DWORD nbin, DWORD flags, LPWSTR str, D
         needed = 2;
 
     needed += nbin * 2 + 1;
+
+    if (!str)
+    {
+        *nstr = needed;
+        return TRUE;
+    }
+
     if (needed > *nstr)
     {
         SetLastError(ERROR_MORE_DATA);
         return FALSE;
     }
-
-    *nstr = needed;
-    if (!str)
-        return TRUE;
 
     while (nbin--)
     {

@@ -366,10 +366,8 @@ static void test_CryptBinaryToString(void)
     /* Systems that don't support HEXRAW format convert to BASE64 instead - 3 bytes in -> 4 chars + crlf + 1 null out. */
     strLen = 0;
     ret = CryptBinaryToStringW(input, 3, CRYPT_STRING_HEXRAW, NULL, &strLen);
-todo_wine {
     ok(ret, "Failed to get string length.\n");
     ok(strLen == 9 || broken(strLen == 7), "Unexpected string length %d.\n", strLen);
-}
     if (strLen == 7)
     {
         win_skip("CryptBinaryToString(HEXRAW) not supported\n");
@@ -383,10 +381,9 @@ todo_wine {
     {
         strLen = 0;
         ret = CryptBinaryToStringW(input, sizeof(input), CRYPT_STRING_HEXRAW|flags[i], NULL, &strLen);
-todo_wine {
         ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
         ok(strLen > 0, "Unexpected string length.\n");
-}
+
         strLen = ~0;
         ret = CryptBinaryToStringW(input, sizeof(input), CRYPT_STRING_HEXRAW|flags[i],
                                    NULL, &strLen);
