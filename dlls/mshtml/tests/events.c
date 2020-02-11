@@ -135,13 +135,6 @@ static const char input_doc_str[] =
 static const char iframe_doc_str[] =
     "<html><body><iframe id=\"ifr\">Testing</iframe></body></html>";
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
-}
-
 static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 {
     IUnknown *unk1, *unk2;
@@ -298,7 +291,7 @@ static IHTMLElement *_get_elem_id(unsigned line, IHTMLDocument2 *doc, const WCHA
 }
 
 #define test_elem_tag(u,n) _test_elem_tag(__LINE__,u,n)
-static void _test_elem_tag(unsigned line, IUnknown *unk, const char *extag)
+static void _test_elem_tag(unsigned line, IUnknown *unk, const WCHAR *extag)
 {
     IHTMLElement *elem = _get_elem_iface(line, unk);
     BSTR tag;
@@ -307,7 +300,7 @@ static void _test_elem_tag(unsigned line, IUnknown *unk, const char *extag)
     hres = IHTMLElement_get_tagName(elem, &tag);
     IHTMLElement_Release(elem);
     ok_(__FILE__, line) (hres == S_OK, "get_tagName failed: %08x\n", hres);
-    ok_(__FILE__, line) (!strcmp_wa(tag, extag), "got tag: %s, expected %s\n", wine_dbgstr_w(tag), extag);
+    ok_(__FILE__, line) (!lstrcmpW(tag, extag), "got tag: %s, expected %s\n", wine_dbgstr_w(tag), wine_dbgstr_w(extag));
 
     SysFreeString(tag);
 }
@@ -452,7 +445,7 @@ static IHTMLElement *_get_event_src(unsigned line)
 }
 
 #define test_event_src(t) _test_event_src(__LINE__,t)
-static void _test_event_src(unsigned line, const char *src_tag)
+static void _test_event_src(unsigned line, const WCHAR *src_tag)
 {
     IHTMLElement *src_elem = _get_event_src(line);
 
@@ -506,7 +499,7 @@ static void _test_event_cancelbubble(unsigned line, IHTMLEventObj *event, VARIAN
     ok_(__FILE__,line)(b == exval, "cancelBubble = %x, expected %x\n", b, exval);
 }
 
-static void _test_event_fromelem(unsigned line, IHTMLEventObj *event, const char *from_tag)
+static void _test_event_fromelem(unsigned line, IHTMLEventObj *event, const WCHAR *from_tag)
 {
     IHTMLElement *elem;
     HRESULT hres;
@@ -521,7 +514,7 @@ static void _test_event_fromelem(unsigned line, IHTMLEventObj *event, const char
         IHTMLElement_Release(elem);
 }
 
-static void _test_event_toelem(unsigned line, IHTMLEventObj *event, const char *to_tag)
+static void _test_event_toelem(unsigned line, IHTMLEventObj *event, const WCHAR *to_tag)
 {
     IHTMLElement *elem;
     HRESULT hres;
@@ -654,17 +647,17 @@ static void _test_event_screeny(unsigned line, IHTMLEventObj *event, LONG exl)
         ok_(__FILE__,line)(l == exl, "screenY = %d, expected %d\n", l, exl);
 }
 
-static void _test_event_type(unsigned line, IHTMLEventObj *event, const char *exstr)
+static void _test_event_type(unsigned line, IHTMLEventObj *event, const WCHAR *exstr)
 {
     BSTR str;
     HRESULT hres;
 
     hres = IHTMLEventObj_get_type(event, &str);
     ok_(__FILE__,line)(hres == S_OK, "get_type failed: %08x\n", hres);
-    ok_(__FILE__,line)(!strcmp_wa(str, exstr), "type = %s, expected %s\n", wine_dbgstr_w(str), exstr);
+    ok_(__FILE__,line)(!lstrcmpW(str, exstr), "type = %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(exstr));
 }
 
-static void _test_event_qualifier(unsigned line, IHTMLEventObj *event, const char *exstr)
+static void _test_event_qualifier(unsigned line, IHTMLEventObj *event, const WCHAR *exstr)
 {
     BSTR str;
     HRESULT hres;
@@ -672,7 +665,8 @@ static void _test_event_qualifier(unsigned line, IHTMLEventObj *event, const cha
     hres = IHTMLEventObj_get_qualifier(event, &str);
     ok_(__FILE__,line)(hres == S_OK, "get_qualifier failed: %08x\n", hres);
     if(exstr)
-        ok_(__FILE__,line)(!strcmp_wa(str, exstr), "qualifier = %s, expected %s\n", wine_dbgstr_w(str), exstr);
+        ok_(__FILE__,line)(!lstrcmpW(str, exstr), "qualifier = %s, expected %s\n", wine_dbgstr_w(str),
+                           wine_dbgstr_w(exstr));
     else
         ok_(__FILE__,line)(!str, "qualifier != NULL\n");
 }
@@ -688,7 +682,7 @@ static void _test_event_srcfilter(unsigned line, IHTMLEventObj *event)
 }
 
 #define test_event_obj(t,x) _test_event_obj(__LINE__,t,x)
-static void _test_event_obj(unsigned line, const char *type, const xy_test_t *xy)
+static void _test_event_obj(unsigned line, const WCHAR *type, const xy_test_t *xy)
 {
     IHTMLEventObj *event = _get_event_obj(line);
     IDOMEvent *dom_event;
@@ -970,8 +964,8 @@ static HRESULT WINAPI document_onclick(IDispatchEx *iface, DISPID id, LCID lcid,
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     doc3 = get_doc3_iface((IUnknown*)V_DISPATCH(pdp->rgvarg));
     IHTMLDocument3_Release(doc3);
-    test_event_src("DIV");
-    test_event_obj("click", &no_xy);
+    test_event_src(L"DIV");
+    test_event_obj(L"click", &no_xy);
     return S_OK;
 }
 
@@ -982,8 +976,8 @@ static HRESULT WINAPI div_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WORD
 {
     CHECK_EXPECT(div_onclick);
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("DIV");
-    test_event_obj("click", &no_xy);
+    test_event_src(L"DIV");
+    test_event_obj(L"click", &no_xy);
     return S_OK;
 }
 
@@ -995,7 +989,7 @@ static HRESULT WINAPI div_onclick_attached(IDispatchEx *iface, DISPID id, LCID l
     CHECK_EXPECT(div_onclick_attached);
 
     test_attached_event_args(id, wFlags, pdp, pvarRes, pei);
-    test_event_src("DIV");
+    test_event_src(L"DIV");
     return S_OK;
 }
 
@@ -1007,7 +1001,7 @@ static HRESULT WINAPI doc_onclick_attached(IDispatchEx *iface, DISPID id, LCID l
     CHECK_EXPECT(doc_onclick_attached);
 
     test_attached_event_args(id, wFlags, pdp, pvarRes, pei);
-    test_event_src("DIV");
+    test_event_src(L"DIV");
     return S_OK;
 }
 
@@ -1019,7 +1013,7 @@ static HRESULT WINAPI body_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WOR
     CHECK_EXPECT(body_onclick);
     /* Native IE returns undocumented DIID in IE9+ mode */
     test_event_args(document_mode < 9 ? &DIID_DispHTMLBody : NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("DIV");
+    test_event_src(L"DIV");
     return S_OK;
 }
 
@@ -1031,7 +1025,7 @@ static HRESULT WINAPI div_onclick_capture(IDispatchEx *iface, DISPID id, LCID lc
     CHECK_EXPECT(div_onclick_capture);
 
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("DIV");
+    test_event_src(L"DIV");
     return S_OK;
 }
 
@@ -1043,7 +1037,7 @@ static HRESULT WINAPI div_onclick_bubble(IDispatchEx *iface, DISPID id, LCID lci
     CHECK_EXPECT(div_onclick_bubble);
 
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("DIV");
+    test_event_src(L"DIV");
     return S_OK;
 }
 
@@ -1054,7 +1048,7 @@ static HRESULT WINAPI img_onload(IDispatchEx *iface, DISPID id, LCID lcid, WORD 
 {
     CHECK_EXPECT(img_onload);
     test_event_args(&DIID_DispHTMLImg, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("IMG");
+    test_event_src(L"IMG");
     return S_OK;
 }
 
@@ -1065,7 +1059,7 @@ static HRESULT WINAPI link_onload(IDispatchEx *iface, DISPID id, LCID lcid, WORD
 {
     CHECK_EXPECT(link_onload);
     test_event_args(&DIID_DispHTMLLinkElement, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("LINK");
+    test_event_src(L"LINK");
     return S_OK;
 }
 
@@ -1094,7 +1088,7 @@ static HRESULT WINAPI img_onerror(IDispatchEx *iface, DISPID id, LCID lcid, WORD
 {
     CHECK_EXPECT(img_onerror);
     test_event_args(&DIID_DispHTMLImg, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("IMG");
+    test_event_src(L"IMG");
     return S_OK;
 }
 
@@ -1105,7 +1099,7 @@ static HRESULT WINAPI input_onfocus(IDispatchEx *iface, DISPID id, LCID lcid, WO
 {
     CHECK_EXPECT(input_onfocus);
     test_event_args(&DIID_DispHTMLInputElement, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("INPUT");
+    test_event_src(L"INPUT");
     return S_OK;
 }
 
@@ -1116,7 +1110,7 @@ static HRESULT WINAPI div_onfocusin(IDispatchEx *iface, DISPID id, LCID lcid, WO
 {
     CHECK_EXPECT(div_onfocusin);
     test_event_args(NULL /* FIXME: &DIID_DispHTMLDivElement */, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("INPUT");
+    test_event_src(L"INPUT");
     return S_OK;
 }
 
@@ -1127,7 +1121,7 @@ static HRESULT WINAPI div_onfocusout(IDispatchEx *iface, DISPID id, LCID lcid, W
 {
     CHECK_EXPECT(div_onfocusout);
     test_event_args(NULL /* FIXME: &DIID_DispHTMLDivElement */, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("INPUT");
+    test_event_src(L"INPUT");
     return S_OK;
 }
 
@@ -1138,7 +1132,7 @@ static HRESULT WINAPI input_onblur(IDispatchEx *iface, DISPID id, LCID lcid, WOR
 {
     CHECK_EXPECT(input_onblur);
     test_event_args(&DIID_DispHTMLInputElement, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("INPUT");
+    test_event_src(L"INPUT");
     return S_OK;
 }
 
@@ -1149,7 +1143,7 @@ static HRESULT WINAPI form_onsubmit(IDispatchEx *iface, DISPID id, LCID lcid, WO
 {
     CHECK_EXPECT(form_onsubmit);
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("FORM");
+    test_event_src(L"FORM");
 
     V_VT(pvarRes) = VT_BOOL;
     V_BOOL(pvarRes) = VARIANT_FALSE;
@@ -1174,7 +1168,7 @@ static HRESULT WINAPI submit_onclick(IDispatchEx *iface, DISPID id, LCID lcid, W
 {
     CHECK_EXPECT(submit_onclick);
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("INPUT");
+    test_event_src(L"INPUT");
 
     V_VT(pvarRes) = VT_BOOL;
     V_BOOL(pvarRes) = VARIANT_FALSE;
@@ -1188,7 +1182,7 @@ static HRESULT WINAPI iframe_onload(IDispatchEx *iface, DISPID id, LCID lcid, WO
 {
     CHECK_EXPECT(iframe_onload);
     test_event_args(&DIID_DispHTMLIFrame, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("IFRAME");
+    test_event_src(L"IFRAME");
     return S_OK;
 }
 
@@ -1199,7 +1193,7 @@ static HRESULT WINAPI submit_onclick_attached(IDispatchEx *iface, DISPID id, LCI
 {
     CHECK_EXPECT(submit_onclick_attached);
     test_attached_event_args(id, wFlags, pdp, pvarRes, pei);
-    test_event_src("INPUT");
+    test_event_src(L"INPUT");
 
     V_VT(pvarRes) = VT_BOOL;
     V_BOOL(pvarRes) = VARIANT_FALSE;
@@ -1216,7 +1210,7 @@ static HRESULT WINAPI submit_onclick_attached_check_cancel(IDispatchEx *iface, D
 
     CHECK_EXPECT(submit_onclick_attached_check_cancel);
     test_attached_event_args(id, wFlags, pdp, pvarRes, pei);
-    test_event_src("INPUT");
+    test_event_src(L"INPUT");
 
     event = NULL;
     hres = IHTMLWindow2_get_event(window, &event);
@@ -1240,7 +1234,7 @@ static HRESULT WINAPI submit_onclick_setret(IDispatchEx *iface, DISPID id, LCID 
 
     CHECK_EXPECT(submit_onclick_setret);
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("INPUT");
+    test_event_src(L"INPUT");
 
     event = NULL;
     hres = IHTMLWindow2_get_event(window, &event);
@@ -1280,7 +1274,7 @@ static HRESULT WINAPI submit_onclick_cancel(IDispatchEx *iface, DISPID id, LCID 
 
     CHECK_EXPECT(submit_onclick_cancel);
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("INPUT");
+    test_event_src(L"INPUT");
 
     event = NULL;
     hres = IHTMLWindow2_get_event(window, &event);
@@ -1331,7 +1325,7 @@ static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, L
     HRESULT hres;
 
     test_event_args(document_mode < 9 ? &DIID_DispHTMLIFrame : NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
-    test_event_src("IFRAME");
+    test_event_src(L"IFRAME");
 
     elem = get_event_src();
     elem2 = get_elem2_iface((IUnknown*)elem);
@@ -1365,16 +1359,16 @@ static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, L
     ok(!lstrcmpW(str, str2), "unexpected document readyState %s\n", wine_dbgstr_w(str2));
     SysFreeString(str2);
 
-    if(!strcmp_wa(str, "loading")) {
+    if(!lstrcmpW(str, L"loading")) {
         CHECK_EXPECT(iframe_onreadystatechange_loading);
 
         V_VT(&v) = VT_DISPATCH;
         V_DISPATCH(&v) = (IDispatch*)&iframedoc_onreadystatechange_obj;
         hres = IHTMLDocument2_put_onreadystatechange(iframe_doc, v);
         ok(hres == S_OK, "put_onreadystatechange: %08x\n", hres);
-    }else if(!strcmp_wa(str, "interactive"))
+    }else if(!lstrcmpW(str, L"interactive"))
         CHECK_EXPECT(iframe_onreadystatechange_interactive);
-    else if(!strcmp_wa(str, "complete"))
+    else if(!lstrcmpW(str, L"complete"))
         CHECK_EXPECT(iframe_onreadystatechange_complete);
     else
         ok(0, "unexpected state %s\n", wine_dbgstr_w(str));
@@ -1854,7 +1848,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_onclick failed: %08x\n", hres);
     if(document_mode < 9) {
         ok(V_VT(&v) == VT_BSTR, "V_VT(onclick) = %d\n", V_VT(&v));
-        ok(!strcmp_wa(V_BSTR(&v), "function();"), "V_BSTR(onclick) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+        ok(!lstrcmpW(V_BSTR(&v), L"function();"), "V_BSTR(onclick) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     }else {
         todo_wine
         ok(V_VT(&v) == VT_NULL, "V_VT(onclick) = %d\n", V_VT(&v));
@@ -3216,7 +3210,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         hres = IHTMLDocument2_get_readyState(notif_doc, &state);
         ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
 
-        if(!strcmp_wa(state, "complete"))
+        if(!lstrcmpW(state, L"complete"))
             doc_complete = TRUE;
 
         SysFreeString(state);
