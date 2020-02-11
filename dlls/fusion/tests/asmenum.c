@@ -381,7 +381,7 @@ static void test_enumerate_name(void)
     IAssemblyName *asmname, *next;
     WCHAR buf[MAX_PATH];
     CHAR gac[MAX_PATH];
-    CHAR path[MAX_PATH];
+    CHAR path[MAX_PATH + 40];
     CHAR disp[MAX_PATH];
     WCHAR namestr[MAX_PATH];
     CHAR exp[6][MAX_PATH];
