@@ -1620,8 +1620,8 @@ void pp_do_include(char *fname, int type)
 	pp_incl_state.ppp = NULL;
 
 	if(pp_status.debug)
-		fprintf(stderr, "pp_do_include: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n",
-                        pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ppp, pp_incl_state.ifdepth);
+		fprintf(stderr, "pp_do_include: %s:%d: include_state=%d, include_ifdepth=%d\n",
+                        pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ifdepth);
 	pp_status.file = fp;
 	ppy__switch_to_buffer(ppy__create_buffer(NULL, YY_BUF_SIZE));
 
