@@ -10370,6 +10370,68 @@ fi
 $as_echo "$ac_cv_crosscflags__Wno_format" >&6; }
 if test "x$ac_cv_crosscflags__Wno_format" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-format"
+fi
+                  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wformat-overflow" >&5
+$as_echo_n "checking whether the cross-compiler supports -Wformat-overflow... " >&6; }
+if ${ac_cv_crosscflags__Wformat_overflow+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_cc=$CC
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -Wformat-overflow"
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_crosscflags__Wformat_overflow=yes
+else
+  ac_cv_crosscflags__Wformat_overflow=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+CC=$ac_wine_try_cflags_saved_cc
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wformat_overflow" >&5
+$as_echo "$ac_cv_crosscflags__Wformat_overflow" >&6; }
+if test "x$ac_cv_crosscflags__Wformat_overflow" = xyes; then :
+  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wformat-overflow"
+fi
+                  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wnonnull" >&5
+$as_echo_n "checking whether the cross-compiler supports -Wnonnull... " >&6; }
+if ${ac_cv_crosscflags__Wnonnull+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_cc=$CC
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -Wnonnull"
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_crosscflags__Wnonnull=yes
+else
+  ac_cv_crosscflags__Wnonnull=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+CC=$ac_wine_try_cflags_saved_cc
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wnonnull" >&5
+$as_echo "$ac_cv_crosscflags__Wnonnull" >&6; }
+if test "x$ac_cv_crosscflags__Wnonnull" = xyes; then :
+  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wnonnull"
 fi ;;
         esac
 

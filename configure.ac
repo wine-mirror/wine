@@ -1063,7 +1063,9 @@ then
 
         case $host_cpu in
           *i[[3456789]]86*) WINE_TRY_CROSSCFLAGS([-fno-omit-frame-pointer]) ;;
-          x86_64) WINE_TRY_CROSSCFLAGS([-Wno-format]) ;;
+          x86_64) WINE_TRY_CROSSCFLAGS([-Wno-format])
+                  WINE_TRY_CROSSCFLAGS([-Wformat-overflow])
+                  WINE_TRY_CROSSCFLAGS([-Wnonnull]) ;;
         esac
 
         dnl Default to dwarf-2 debug info
