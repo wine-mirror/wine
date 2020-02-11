@@ -1550,18 +1550,6 @@ static void test_State(void)
     IScriptControl_Release(sc);
 }
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len - 1);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 #define CHECK_ERROR(sc,exp_num) _check_error(sc, exp_num, __LINE__)
 static void _check_error(IScriptControl *sc, LONG exp_num, int line)
 {
@@ -1597,7 +1585,7 @@ static void test_IScriptControl_Eval(void)
     hr = IScriptControl_Eval(sc, NULL, NULL);
     ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08x.\n", hr);
 
-    script_str = a2bstr("1 + 1");
+    script_str = SysAllocString(L"1 + 1");
     hr = IScriptControl_Eval(sc, script_str, NULL);
     ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08x.\n", hr);
     SysFreeString(script_str);
@@ -1610,7 +1598,7 @@ static void test_IScriptControl_Eval(void)
        V_VT(&var), V_I4(&var));
     todo_wine CHECK_ERROR(sc, 0);
 
-    script_str = a2bstr("1 + 1");
+    script_str = SysAllocString(L"1 + 1");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1619,14 +1607,14 @@ static void test_IScriptControl_Eval(void)
        V_VT(&var), V_I4(&var));
     SysFreeString(script_str);
 
-    language = a2bstr("jscript");
+    language = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, language);
     ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
     hr = IScriptControl_get_State(sc, &state);
     ok(hr == S_OK, "IScriptControl_get_State failed: 0x%08x.\n", hr);
     ok(state == Initialized, "got wrong state: %d\n", state);
     SysFreeString(language);
-    script_str = a2bstr("var1 = 1 + 1");
+    script_str = SysAllocString(L"var1 = 1 + 1");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1638,7 +1626,7 @@ static void test_IScriptControl_Eval(void)
     ok(state == Initialized, "got wrong state: %d\n", state);
     SysFreeString(script_str);
 
-    script_str = a2bstr("var2 = 10 + var1");
+    script_str = SysAllocString(L"var2 = 10 + var1");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1647,7 +1635,7 @@ static void test_IScriptControl_Eval(void)
        V_VT(&var), V_I4(&var));
     SysFreeString(script_str);
 
-    script_str = a2bstr("invalid syntax");
+    script_str = SysAllocString(L"invalid syntax");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1658,7 +1646,7 @@ static void test_IScriptControl_Eval(void)
     SysFreeString(script_str);
     todo_wine CHECK_ERROR(sc, 1004);
 
-    script_str = a2bstr("var2 = var1 + var2");
+    script_str = SysAllocString(L"var2 = var1 + var2");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1667,12 +1655,12 @@ static void test_IScriptControl_Eval(void)
        V_VT(&var), V_I4(&var));
     SysFreeString(script_str);
 
-    script_str = a2bstr("\"Hello\"");
+    script_str = SysAllocString(L"\"Hello\"");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
     ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-    expected_string = a2bstr("Hello");
+    expected_string = SysAllocString(L"Hello");
     ok((V_VT(&var) == VT_BSTR) && (!lstrcmpW(V_BSTR(&var), expected_string)),
        "V_VT(var) = %d, V_BSTR(var) = %s.\n", V_VT(&var), wine_dbgstr_w(V_BSTR(&var)));
     SysFreeString(expected_string);
@@ -1692,7 +1680,7 @@ static void test_IScriptControl_Eval(void)
         SET_EXPECT(QI_IActiveScriptParse);
         SET_EXPECT(InitNew);
 
-        language= a2bstr("testscript");
+        language= SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, language);
         ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
         SysFreeString(language);
@@ -1706,7 +1694,7 @@ static void test_IScriptControl_Eval(void)
         SET_EXPECT(SetScriptState_STARTED);
         SET_EXPECT(ParseScriptText);
         parse_flags = SCRIPTTEXT_ISEXPRESSION;
-        script_str = a2bstr("var1 = 1 + 1");
+        script_str = SysAllocString(L"var1 = 1 + 1");
         V_VT(&var) = VT_NULL;
         hr = IScriptControl_Eval(sc, script_str, &var);
         ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
@@ -1716,7 +1704,7 @@ static void test_IScriptControl_Eval(void)
         CHECK_CALLED(ParseScriptText);
 
         SET_EXPECT(ParseScriptText);
-        script_str = a2bstr("var2 = 10 + var1");
+        script_str = SysAllocString(L"var2 = 10 + var1");
         V_VT(&var) = VT_NULL;
         V_I4(&var) = 0xdeadbeef;
         hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1733,7 +1721,7 @@ static void test_IScriptControl_Eval(void)
 
         SET_EXPECT(SetScriptState_STARTED);
         SET_EXPECT(ParseScriptText);
-        script_str = a2bstr("var2 = 10 + var1");
+        script_str = SysAllocString(L"var2 = 10 + var1");
         V_VT(&var) = VT_NULL;
         V_I4(&var) = 0xdeadbeef;
         hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1765,7 +1753,7 @@ static void test_IScriptControl_AddCode(void)
                           &IID_IScriptControl, (void **)&sc);
     ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
 
-    code_str = a2bstr("1 + 1");
+    code_str = SysAllocString(L"1 + 1");
     hr = IScriptControl_AddCode(sc, code_str);
     ok(hr == E_FAIL, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
     SysFreeString(code_str);
@@ -1773,18 +1761,18 @@ static void test_IScriptControl_AddCode(void)
     hr = IScriptControl_AddCode(sc, NULL);
     ok(hr == E_FAIL, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
 
-    language = a2bstr("jscript");
+    language = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, language);
     ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
     SysFreeString(language);
 
-    code_str = a2bstr("1 + 1");
+    code_str = SysAllocString(L"1 + 1");
     hr = IScriptControl_AddCode(sc, code_str);
     ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
     SysFreeString(code_str);
     todo_wine CHECK_ERROR(sc, 0);
 
-    code_str = a2bstr("invalid syntax");
+    code_str = SysAllocString(L"invalid syntax");
     hr = IScriptControl_AddCode(sc, code_str);
     todo_wine ok(hr == 0x800a03ec, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
     SysFreeString(code_str);
@@ -1805,7 +1793,7 @@ static void test_IScriptControl_AddCode(void)
         SET_EXPECT(QI_IActiveScriptParse);
         SET_EXPECT(InitNew);
 
-        language = a2bstr("testscript");
+        language = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, language);
         ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
         SysFreeString(language);
@@ -1819,7 +1807,7 @@ static void test_IScriptControl_AddCode(void)
         SET_EXPECT(SetScriptState_STARTED);
         SET_EXPECT(ParseScriptText);
         parse_flags = SCRIPTTEXT_ISVISIBLE;
-        code_str = a2bstr("1 + 1");
+        code_str = SysAllocString(L"1 + 1");
         hr = IScriptControl_AddCode(sc, code_str);
         ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
         SysFreeString(code_str);
@@ -1827,7 +1815,7 @@ static void test_IScriptControl_AddCode(void)
         CHECK_CALLED(ParseScriptText);
 
         SET_EXPECT(ParseScriptText);
-        code_str = a2bstr("0x100");
+        code_str = SysAllocString(L"0x100");
         hr = IScriptControl_AddCode(sc, code_str);
         ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
         SysFreeString(code_str);
@@ -1836,7 +1824,7 @@ static void test_IScriptControl_AddCode(void)
         /* Call Eval() after AddCode() for checking if it will call SetScriptState() again. */
         SET_EXPECT(ParseScriptText);
         parse_flags = SCRIPTTEXT_ISEXPRESSION;
-        code_str = a2bstr("var2 = 10 + var1");
+        code_str = SysAllocString(L"var2 = 10 + var1");
         V_VT(&var) = VT_NULL;
         hr = IScriptControl_Eval(sc, code_str, &var);
         ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
@@ -1864,7 +1852,7 @@ static void test_IScriptControl_ExecuteStatement(void)
                           &IID_IScriptControl, (void**)&sc);
     ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
 
-    str = a2bstr("1 + 1");
+    str = SysAllocString(L"1 + 1");
     hr = IScriptControl_ExecuteStatement(sc, str);
     ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
     SysFreeString(str);
@@ -1872,18 +1860,18 @@ static void test_IScriptControl_ExecuteStatement(void)
     hr = IScriptControl_ExecuteStatement(sc, NULL);
     ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
 
-    str = a2bstr("jscript");
+    str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
     ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
     SysFreeString(str);
 
-    str = a2bstr("1 + 1");
+    str = SysAllocString(L"1 + 1");
     hr = IScriptControl_ExecuteStatement(sc, str);
     ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
     SysFreeString(str);
     todo_wine CHECK_ERROR(sc, 0);
 
-    str = a2bstr("invalid syntax");
+    str = SysAllocString(L"invalid syntax");
     hr = IScriptControl_ExecuteStatement(sc, str);
     todo_wine ok(hr == 0x800a03ec, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
     SysFreeString(str);
@@ -1904,7 +1892,7 @@ static void test_IScriptControl_ExecuteStatement(void)
         SET_EXPECT(QI_IActiveScriptParse);
         SET_EXPECT(InitNew);
 
-        str = a2bstr("testscript");
+        str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
         ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
         SysFreeString(str);
@@ -1918,7 +1906,7 @@ static void test_IScriptControl_ExecuteStatement(void)
         SET_EXPECT(SetScriptState_STARTED);
         SET_EXPECT(ParseScriptText);
         parse_flags = 0;
-        str = a2bstr("1 + 1");
+        str = SysAllocString(L"1 + 1");
         hr = IScriptControl_ExecuteStatement(sc, str);
         ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
         SysFreeString(str);
@@ -1926,7 +1914,7 @@ static void test_IScriptControl_ExecuteStatement(void)
         CHECK_CALLED(ParseScriptText);
 
         SET_EXPECT(ParseScriptText);
-        str = a2bstr("0x100");
+        str = SysAllocString(L"0x100");
         hr = IScriptControl_ExecuteStatement(sc, str);
         ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
         SysFreeString(str);
@@ -1958,7 +1946,7 @@ static void test_IScriptControl_Run(void)
     ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
 
     params = NULL;
-    str = a2bstr("identifier");
+    str = SysAllocString(L"identifier");
     hr = IScriptControl_Run(sc, str, &params, &var);
     ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08x.\n", hr);
 
@@ -1984,29 +1972,29 @@ static void test_IScriptControl_Run(void)
     hr = IScriptControl_Run(sc, NULL, &params, &var);
     ok(hr == E_FAIL, "IScriptControl_Run returned: 0x%08x.\n", hr);
 
-    str = a2bstr("jscript");
+    str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
     ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
     SysFreeString(str);
 
-    str = a2bstr("foobar");
+    str = SysAllocString(L"foobar");
     hr = IScriptControl_Run(sc, str, &params, &var);
     ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08x.\n", hr);
     todo_wine CHECK_ERROR(sc, 0);
     SysFreeString(str);
 
-    str = a2bstr("function subtract(a, b) { return a - b; }\n");
+    str = SysAllocString(L"function subtract(a, b) { return a - b; }\n");
     hr = IScriptControl_AddCode(sc, str);
     ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
     todo_wine CHECK_ERROR(sc, 0);
     SysFreeString(str);
 
-    str = a2bstr("Subtract");
+    str = SysAllocString(L"Subtract");
     hr = IScriptControl_Run(sc, str, &params, &var);
     ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08x.\n", hr);
     SysFreeString(str);
 
-    str = a2bstr("subtract");
+    str = SysAllocString(L"subtract");
     hr = IScriptControl_Run(sc, str, &params, NULL);
     ok(hr == E_POINTER, "IScriptControl_Run failed: 0x%08x.\n", hr);
     todo_wine CHECK_ERROR(sc, 0);
@@ -2056,7 +2044,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(SetScriptSite);
         SET_EXPECT(QI_IActiveScriptParse);
         SET_EXPECT(InitNew);
-        str = a2bstr("testscript");
+        str = SysAllocString(L"testscript");
         hr = IScriptControl_put_Language(sc, str);
         ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
         SysFreeString(str);
@@ -2071,7 +2059,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(QI_IDispatchEx);
         SET_EXPECT(GetIDsOfNames);
         SET_EXPECT(Invoke);
-        Dispatch_expected_name = a2bstr("function");
+        Dispatch_expected_name = SysAllocString(L"function");
         hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
         ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
         ok((V_VT(&var) == VT_R8) && (V_R8(&var) == 4.2), "V_VT(var) = %d, V_R8(var) = %lf.\n", V_VT(&var), V_R8(&var));
@@ -2087,7 +2075,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(QI_IDispatchEx);
         SET_EXPECT(GetIDsOfNames);
         SET_EXPECT(Invoke);
-        Dispatch_expected_name = a2bstr("BarFoo");
+        Dispatch_expected_name = SysAllocString(L"BarFoo");
         hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
         ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
         SysFreeString(Dispatch_expected_name);
@@ -2102,7 +2090,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(QI_IDispatchEx);
         SET_EXPECT(GetIDsOfNames);
         SET_EXPECT(InvokeEx);
-        Dispatch_expected_name = a2bstr("FooBar");
+        Dispatch_expected_name = SysAllocString(L"FooBar");
         hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
         ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
         ok((V_VT(&var) == VT_I2) && (V_I2(&var) == 42), "V_VT(var) = %d, V_I2(var) = %d.\n", V_VT(&var), V_I2(&var));
@@ -2117,7 +2105,7 @@ static void test_IScriptControl_Run(void)
         SET_EXPECT(QI_IDispatchEx);
         SET_EXPECT(GetIDsOfNames);
         SET_EXPECT(InvokeEx);
-        Dispatch_expected_name = a2bstr("1");
+        Dispatch_expected_name = SysAllocString(L"1");
         hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
         ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
         SysFreeString(Dispatch_expected_name);
