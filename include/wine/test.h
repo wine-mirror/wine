@@ -550,10 +550,10 @@ static int run_test( const char *name )
     if (winetest_debug)
     {
         if (muted_todo_successes || muted_skipped || muted_traces)
-            printf( "%04x:%s Silenced %d todos, %d skips and %d traces.\n",
+            printf( "%04x:%s: Silenced %d todos, %d skips and %d traces.\n",
                     GetCurrentProcessId(), test->name,
                     muted_todo_successes, muted_skipped, muted_traces);
-        printf( "%04x:%s %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
+        printf( "%04x:%s: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
                 GetCurrentProcessId(), test->name,
                 successes + failures + todo_successes + todo_failures,
                 todo_successes, failures + todo_failures,
