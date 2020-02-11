@@ -29,7 +29,7 @@
 static SERVICE_STATUS_HANDLE (WINAPI *pRegisterServiceCtrlHandlerExA)(LPCSTR,LPHANDLER_FUNCTION_EX,LPVOID);
 
 static HANDLE pipe_handle = INVALID_HANDLE_VALUE;
-static char service_name[100], named_pipe_name[100];
+static char service_name[100], named_pipe_name[114];
 static SERVICE_STATUS_HANDLE service_handle;
 
 /* Service process global variables */
