@@ -350,62 +350,54 @@ static HRESULT WINAPI VideoRenderer_GetSourceRect(BaseControlVideo* iface, RECT 
     return S_OK;
 }
 
-static HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo* iface, LONG *pBufferSize, LONG *pDIBImage)
+static HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo *iface, LONG *size, LONG *image)
 {
-    VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
-    AM_MEDIA_TYPE *amt = &This->renderer.sink.pin.mt;
-    BITMAPINFOHEADER *bmiHeader;
-    LONG needed_size;
-    char *ptr;
+    VideoRendererImpl *filter = impl_from_BaseControlVideo(iface);
+    const AM_MEDIA_TYPE *mt = &filter->renderer.sink.pin.mt;
+    const BITMAPINFOHEADER *bih;
+    size_t image_size;
+    BYTE *sample_data;
 
-    FIXME("(%p/%p)->(%p, %p): partial stub\n", This, iface, pBufferSize, pDIBImage);
+    TRACE("filter %p, size %p, image %p.\n", filter, size, image);
 
-    EnterCriticalSection(&This->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.csRenderLock);
 
-    if (!This->renderer.pMediaSample)
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        bih = &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    else /* if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2)) */
+        bih = &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+    image_size = bih->biWidth * bih->biHeight * bih->biBitCount / 8;
+
+    if (!image)
     {
-         LeaveCriticalSection(&This->renderer.filter.csFilter);
-         return (This->renderer.filter.state == State_Paused ? E_UNEXPECTED : VFW_E_NOT_PAUSED);
-    }
-
-    if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo))
-    {
-        bmiHeader = &((VIDEOINFOHEADER *)amt->pbFormat)->bmiHeader;
-    }
-    else if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo2))
-    {
-        bmiHeader = &((VIDEOINFOHEADER2 *)amt->pbFormat)->bmiHeader;
-    }
-    else
-    {
-        FIXME("Unknown type %s\n", debugstr_guid(&amt->subtype));
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
-        return VFW_E_RUNTIME_ERROR;
-    }
-
-    needed_size = bmiHeader->biSize;
-    needed_size += IMediaSample_GetActualDataLength(This->renderer.pMediaSample);
-
-    if (!pDIBImage)
-    {
-        *pBufferSize = needed_size;
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
+        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        *size = sizeof(BITMAPINFOHEADER) + image_size;
         return S_OK;
     }
 
-    if (needed_size < *pBufferSize)
+    if (filter->renderer.filter.state != State_Paused)
     {
-        ERR("Buffer too small %u/%u\n", needed_size, *pBufferSize);
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
-        return E_FAIL;
+        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        return VFW_E_NOT_PAUSED;
     }
-    *pBufferSize = needed_size;
 
-    memcpy(pDIBImage, bmiHeader, bmiHeader->biSize);
-    IMediaSample_GetPointer(This->renderer.pMediaSample, (BYTE **)&ptr);
-    memcpy((char *)pDIBImage + bmiHeader->biSize, ptr, IMediaSample_GetActualDataLength(This->renderer.pMediaSample));
+    if (!filter->renderer.pMediaSample)
+    {
+        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        return E_UNEXPECTED;
+    }
 
-    LeaveCriticalSection(&This->renderer.filter.csFilter);
+    if (*size < sizeof(BITMAPINFOHEADER) + image_size)
+    {
+        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        return E_OUTOFMEMORY;
+    }
+
+    memcpy(image, bih, sizeof(BITMAPINFOHEADER));
+    IMediaSample_GetPointer(filter->renderer.pMediaSample, &sample_data);
+    memcpy((char *)image + sizeof(BITMAPINFOHEADER), sample_data, image_size);
+
+    LeaveCriticalSection(&filter->renderer.csRenderLock);
     return S_OK;
 }
 

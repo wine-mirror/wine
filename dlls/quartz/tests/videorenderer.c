@@ -1117,8 +1117,8 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
 
     size = sizeof(BITMAPINFOHEADER) + 32 * 16 * 2 - 1;
     hr = IBasicVideo_GetCurrentImage(video, &size, buffer);
-    todo_wine ok(hr == E_OUTOFMEMORY, "Got hr %#x.\n", hr);
-    todo_wine ok(size == sizeof(BITMAPINFOHEADER) + 32 * 16 * 2 - 1, "Got size %d.\n", size);
+    ok(hr == E_OUTOFMEMORY, "Got hr %#x.\n", hr);
+    ok(size == sizeof(BITMAPINFOHEADER) + 32 * 16 * 2 - 1, "Got size %d.\n", size);
 
     size = sizeof(BITMAPINFOHEADER) + 32 * 16 * 2;
     memset(buffer, 0xcc, sizeof(buffer));
