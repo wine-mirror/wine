@@ -316,6 +316,7 @@ static void test_read_device(void)
     CloseHandle(overlapped.hEvent);
     rc = HidD_FreePreparsedData(ppd);
     ok(rc, "Failed to free preparsed data(0x%x)\n", GetLastError());
+    CancelIo(device);
     CloseHandle(device);
     HeapFree(GetProcessHeap(), 0, data);
     HeapFree(GetProcessHeap(), 0, report);
