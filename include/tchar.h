@@ -244,8 +244,10 @@ typedef unsigned short wctype_t;
 #endif
 
 #ifndef __TCHAR_DEFINED
-#ifdef WINE_UNICODE_NATIVE
+#if defined(WINE_UNICODE_NATIVE)
 typedef wchar_t       _TCHAR;
+#elif defined(WINE_UNICODE_CHAR16)
+typedef char16_t      _TCHAR;
 #else
 typedef unsigned short _TCHAR;
 #endif

@@ -463,11 +463,14 @@ typedef int             LONG,       *PLONG;
 #endif
 
 /* Some systems might have wchar_t, but we really need 16 bit characters */
-#ifdef WINE_UNICODE_NATIVE
-typedef wchar_t         WCHAR,      *PWCHAR;
+#if defined(WINE_UNICODE_NATIVE)
+typedef wchar_t         WCHAR;
+#elif defined(WINE_UNICODE_CHAR16)
+typedef char16_t        WCHAR;
 #else
-typedef unsigned short  WCHAR,      *PWCHAR;
+typedef unsigned short  WCHAR;
 #endif
+typedef WCHAR          *PWCHAR;
 
 typedef ULONG           UCSCHAR;
 #define MIN_UCSCHAR                 (0)
