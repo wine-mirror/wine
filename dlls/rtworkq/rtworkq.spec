@@ -1,5 +1,5 @@
 @ stdcall RtwqAddPeriodicCallback(ptr ptr ptr)
-@ stub RtwqAllocateSerialWorkQueue
+@ stdcall RtwqAllocateSerialWorkQueue(long ptr)
 @ stdcall RtwqAllocateWorkQueue(long ptr)
 @ stub RtwqBeginRegisterWorkQueueWithMMCSS
 @ stub RtwqBeginUnregisterWorkQueueWithMMCSS
