@@ -4253,10 +4253,16 @@ static void load_sources( struct makefile *make )
 
     add_generated_sources( make );
 
+    if (!make->use_msvcrt && !has_object_file( make ))
+    {
+        strarray_add( &make->extradllflags, "-mno-cygwin" );
+        make->use_msvcrt = 1;
+    }
+
     LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
     LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry ) get_dependencies( file, file );
 
-    if (crosstarget) make->is_cross = (make->testdll || make->use_msvcrt || !has_object_file( make ));
+    make->is_cross = crosstarget && make->use_msvcrt;
 
     if (make->is_cross)
     {
