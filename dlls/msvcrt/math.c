@@ -117,7 +117,19 @@ int CDECL MSVCRT__set_SSE2_enable(int flag)
     return sse2_enabled;
 }
 
-#if defined(_WIN64) && _MSVCR_VER>=120
+#if defined(_WIN64)
+# if _MSVCR_VER>=140
+/*********************************************************************
+ *      _get_FMA3_enable (UCRTBASE.@)
+ */
+int CDECL MSVCRT__get_FMA3_enable(void)
+{
+    FIXME("() stub\n");
+    return 0;
+}
+# endif
+
+# if _MSVCR_VER>=120
 /*********************************************************************
  *      _set_FMA3_enable (MSVCR120.@)
  */
@@ -126,6 +138,7 @@ int CDECL MSVCRT__set_FMA3_enable(int flag)
     FIXME("(%x) stub\n", flag);
     return 0;
 }
+# endif
 #endif
 
 #if !defined(__i386__) || _MSVCR_VER>=120
