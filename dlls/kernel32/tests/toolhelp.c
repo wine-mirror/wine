@@ -284,7 +284,7 @@ START_TEST(toolhelp)
     DWORD               pid = GetCurrentProcessId();
     int                 r;
     char                *p, module[MAX_PATH];
-    char                buffer[MAX_PATH];
+    char                buffer[MAX_PATH + 21];
     SECURITY_ATTRIBUTES sa;
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;

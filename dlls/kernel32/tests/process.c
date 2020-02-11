@@ -598,7 +598,7 @@ static void ok_child_int( int line, const char *sect, const char *key, UINT expe
 
 static void test_Startup(void)
 {
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 25];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup,si;
     char *result;
@@ -884,8 +884,8 @@ static void test_Startup(void)
 
 static void test_CommandLine(void)
 {
-    char                buffer[MAX_PATH], fullpath[MAX_PATH], *lpFilePart, *p;
-    char                buffer2[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 65], fullpath[MAX_PATH], *lpFilePart, *p;
+    char                buffer2[MAX_PATH + 44];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
     BOOL                ret;
@@ -1093,7 +1093,7 @@ static void test_CommandLine(void)
 
 static void test_Directory(void)
 {
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 25];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
     char windir[MAX_PATH];
@@ -1137,7 +1137,7 @@ static void test_Directory(void)
 
 static void test_Toolhelp(void)
 {
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 27];
     STARTUPINFOA        startup;
     PROCESS_INFORMATION info;
     HANDLE              process, thread, snapshot;
@@ -1306,7 +1306,7 @@ static void cmpEnvironment(const char* gesA)
 
 static void test_Environment(void)
 {
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 25];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
     char                *child_env;
@@ -1397,7 +1397,7 @@ static void test_Environment(void)
 
 static  void    test_SuspendFlag(void)
 {
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 25];
     PROCESS_INFORMATION	info;
     STARTUPINFOA       startup, us;
     DWORD               exit_status;
@@ -1445,7 +1445,7 @@ static  void    test_SuspendFlag(void)
 
 static  void    test_DebuggingFlag(void)
 {
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 25];
     void               *processbase = NULL;
     PROCESS_INFORMATION	info;
     STARTUPINFOA       startup, us;
@@ -1512,7 +1512,7 @@ static BOOL is_console(HANDLE h)
 
 static void test_Console(void)
 {
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 35];
     PROCESS_INFORMATION	info;
     STARTUPINFOA       startup, us;
     SECURITY_ATTRIBUTES sa;
@@ -1700,7 +1700,7 @@ static void test_Console(void)
 
 static  void    test_ExitCode(void)
 {
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 35];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
     DWORD               code;
@@ -2415,7 +2415,7 @@ static void _test_completion(int line, HANDLE port, DWORD ekey, ULONG_PTR evalue
 static void _create_process(int line, const char *command, LPPROCESS_INFORMATION pi)
 {
     BOOL ret;
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH + 19];
     STARTUPINFOA si = {0};
 
     sprintf(buffer, "\"%s\" tests/process.c %s", selfname, command);
@@ -2830,7 +2830,7 @@ static HANDLE test_AddSelfToJob(void)
 
 static void test_jobInheritance(HANDLE job)
 {
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH + 23];
     PROCESS_INFORMATION pi;
     STARTUPINFOA si = {0};
     DWORD dwret;
@@ -2864,7 +2864,7 @@ static void test_BreakawayOk(HANDLE job)
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit_info;
     PROCESS_INFORMATION pi;
     STARTUPINFOA si = {0};
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH + 23];
     BOOL ret, out;
     DWORD dwret;
 
@@ -2934,7 +2934,7 @@ static void test_BreakawayOk(HANDLE job)
 static void test_StartupNoConsole(void)
 {
 #ifndef _WIN64
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 25];
     STARTUPINFOA        startup;
     PROCESS_INFORMATION info;
 
@@ -2962,7 +2962,7 @@ static void test_StartupNoConsole(void)
 static void test_DetachConsoleHandles(void)
 {
 #ifndef _WIN64
-    char                buffer[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 25];
     STARTUPINFOA        startup;
     PROCESS_INFORMATION info;
     UINT                result;
@@ -3385,7 +3385,7 @@ static void test_SuspendProcessState(void)
 static void test_DetachStdHandles(void)
 {
 #ifndef _WIN64
-    char                buffer[MAX_PATH], tempfile[MAX_PATH];
+    char                buffer[2 * MAX_PATH + 25], tempfile[MAX_PATH];
     STARTUPINFOA        startup;
     PROCESS_INFORMATION info;
     HANDLE              hstdin, hstdout, hstderr, htemp;
@@ -4034,7 +4034,7 @@ START_TEST(process)
         }
         else if (!strcmp(myARGV[2], "nested") && myARGC >= 4)
         {
-            char                buffer[MAX_PATH];
+            char                buffer[MAX_PATH + 26];
             STARTUPINFOA        startup;
             PROCESS_INFORMATION info;
 

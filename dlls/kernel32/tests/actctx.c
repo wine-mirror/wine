@@ -3207,9 +3207,9 @@ static void test_settings(void)
 typedef struct
 {
     char path_tmp[MAX_PATH];
-    char path_dll[MAX_PATH];
-    char path_manifest_exe[MAX_PATH];
-    char path_manifest_dll[MAX_PATH];
+    char path_dll[MAX_PATH + 11];
+    char path_manifest_exe[MAX_PATH + 12];
+    char path_manifest_dll[MAX_PATH + 16];
     ACTCTXA context;
     ULONG_PTR cookie;
     HANDLE handle_context;
@@ -3332,7 +3332,7 @@ cleanup1:
 static void test_one_sxs_and_one_local_1(void)
 {
     sxs_info dll;
-    char path_dll_local[MAX_PATH];
+    char path_dll_local[MAX_PATH + 11];
     char path_application[MAX_PATH];
     HMODULE module = NULL;
     char path1[MAX_PATH], path2[MAX_PATH];
@@ -3372,7 +3372,7 @@ cleanup:
 static void test_one_sxs_and_one_local_2(void)
 {
     sxs_info dll;
-    char path_dll_local[MAX_PATH];
+    char path_dll_local[MAX_PATH + 11];
     char path_application[MAX_PATH];
     HMODULE module = NULL;
     char path1[MAX_PATH], path2[MAX_PATH];
@@ -3413,7 +3413,7 @@ cleanup:
 static void test_one_with_sxs_and_GetModuleHandleA(void)
 {
     sxs_info dll;
-    char path_dll_local[MAX_PATH];
+    char path_dll_local[MAX_PATH + 11];
     char path_tmp[MAX_PATH];
     HMODULE module = NULL, module_temp;
     BOOL success;
@@ -3451,7 +3451,7 @@ cleanup:
 
 static void test_builtin_sxs(void)
 {
-    char path_manifest[MAX_PATH];
+    char path_manifest[MAX_PATH + 12];
     char path_tmp[MAX_PATH];
     HMODULE module_msvcp = 0, module_msvcr = 0;
     char path_msvcp[MAX_PATH], path_msvcr[MAX_PATH];

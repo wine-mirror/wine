@@ -108,10 +108,10 @@ static void test_ValidPathA(const CHAR *curdir, const CHAR *subdir, const CHAR *
                          CHAR *shortstr, SLpassfail *passfail, const CHAR *errstr)
 {
   CHAR tmpstr[MAX_PATH],
-       fullpath[MAX_PATH],      /*full path to the file (not short/long) */
+       fullpath[MAX_PATH + 1],      /*full path to the file (not short/long) */
        subpath[MAX_PATH],       /*relative path to the file */
-       fullpathshort[MAX_PATH], /*absolute path to the file (short format) */
-       fullpathlong[MAX_PATH],  /*absolute path to the file (long format) */
+       fullpathshort[2 * MAX_PATH], /*absolute path to the file (short format) */
+       fullpathlong[2 * MAX_PATH],  /*absolute path to the file (long format) */
        curdirshort[MAX_PATH],   /*absolute path to the current dir (short) */
        curdirlong[MAX_PATH];    /*absolute path to the current dir (long) */
   LPSTR strptr;                 /*ptr to the filename portion of the path */
@@ -333,7 +333,7 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
   CHAR tmppath[MAX_PATH], /*path to TEMP */
        tmpstr[MAX_PATH],
        tmpstr1[MAX_PATH],
-       invalid_dir[MAX_PATH];
+       invalid_dir[MAX_PATH + 29];
 
   DWORD len,len1,drives;
   INT id;
@@ -557,7 +557,7 @@ static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
 /* Cleanup the mess we made while executing these tests */
 static void test_CleanupPathA(CHAR *origdir, CHAR *curdir)
 {
-  CHAR tmpstr[MAX_PATH];
+  CHAR tmpstr[MAX_PATH + 35];
   sprintf(tmpstr,"%s\\%s\\%s",curdir,SHORTDIR,SHORTFILE);
   ok(DeleteFileA(tmpstr),"DeleteFileA failed\n");
   sprintf(tmpstr,"%s\\%s\\%s",curdir,SHORTDIR,LONGFILE);
@@ -602,7 +602,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 {
   CHAR curdir_short[MAX_PATH],
        longdir_short[MAX_PATH];
-  CHAR tmpstr[MAX_PATH],tmpstr1[MAX_PATH],tmpstr2[MAX_PATH];
+  CHAR tmpstr[MAX_PATH + 15],tmpstr1[MAX_PATH + 22],tmpstr2[2 * MAX_PATH + 15];
   LPSTR strptr;                 /*ptr to the filename portion of the path */
   DWORD len;
   INT i;
@@ -1780,7 +1780,7 @@ static void test_SearchPathA(void)
     static const CHAR testdeprelA[] = "./testdep.dll";
     static const CHAR kernel32A[] = "kernel32.dll";
     static const CHAR fileA[] = "";
-    CHAR pathA[MAX_PATH], buffA[MAX_PATH], path2A[MAX_PATH], path3A[MAX_PATH], curdirA[MAX_PATH];
+    CHAR pathA[MAX_PATH + 13], buffA[MAX_PATH], path2A[MAX_PATH], path3A[MAX_PATH + 13], curdirA[MAX_PATH];
     CHAR tmpdirA[MAX_PATH], *ptrA = NULL;
     ULONG_PTR cookie;
     HANDLE handle;
