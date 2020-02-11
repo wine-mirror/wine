@@ -487,10 +487,17 @@ sub update_makefiles(@)
 
 sub update_wine_inf()
 {
-    my @lines;
-
-    push @lines, "[NlsFiles]", @nls_files, "\n";
+    my @lines = ("[NlsFiles]", @nls_files, "\n" );
     replace_in_file "loader/wine.inf.in", '^\[NlsFiles\]', '^$', join( "\n", @lines );
+
+    my @codepages = grep /c_\d+\.nls/, @nls_files;
+    @lines = ( "[Nls]" );
+    foreach my $cp (sort { $a <=> $b; } map { /c_(\d+)\.nls/ && $1; } @codepages)
+    {
+        push @lines, sprintf "HKLM,System\\CurrentControlSet\\Control\\Nls\\Codepage,\"%u\",,\"c_%03u.nls\"", $cp, $cp;
+    }
+    push @lines, "\n";
+    replace_in_file "loader/wine.inf.in", '^\[Nls\]', '^$', join( "\n", @lines );
 }
 
 my $git_dir = $ENV{GIT_DIR} || ".git";

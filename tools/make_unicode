@@ -1055,13 +1055,75 @@ sub dump_dbcs_table($$$$@)
 
 
 ################################################################
+# dump an SBCS mapping table in binary format
+sub dump_binary_sbcs_table($)
+{
+    my $codepage = shift;
+
+    my @header = ( 13, $codepage, 1, $default_char, $default_wchar, $cp2uni[$default_char], $uni2cp[$default_wchar] );
+    my $wc_offset = 256 + 3 + (@glyph2uni ? 256 : 0);
+
+    print OUTPUT pack "S<*", @header;
+    print OUTPUT pack "C12", (0) x 12;
+    print OUTPUT pack "S<*", $wc_offset, map { $_ || 0; } @cp2uni[0 .. 255];
+
+    if (@glyph2uni)
+    {
+        print OUTPUT pack "S<*", 256, get_glyphs_mapping(@cp2uni[0 .. 255]);
+    }
+    else
+    {
+        print OUTPUT pack "S<*", 0;
+    }
+
+    print OUTPUT pack "S<*", 0, 0;
+
+    print OUTPUT pack "C*", map { defined $_ ? $_ : $default_char; } @uni2cp[0 .. 65535];
+}
+
+
+################################################################
+# dump a DBCS mapping table in binary format
+sub dump_binary_dbcs_table($)
+{
+    my $codepage = shift;
+    my @lb_ranges = get_lb_ranges();
+    my @header = ( 13, $codepage, 2, $default_char, $default_wchar, $cp2uni[$default_char], $uni2cp[$default_wchar] );
+
+    my @offsets = (0) x 256;
+    my $pos = 0;
+    foreach my $i (@lead_bytes)
+    {
+        $offsets[$i] = ($pos += 256);
+        $cp2uni[$i] = 0;
+    }
+
+    my $wc_offset = 256 + 3 + 256 * (1 + scalar @lead_bytes);
+
+    print OUTPUT pack "S<*", @header;
+    print OUTPUT pack "C12", @lb_ranges, 0 x 12;
+    print OUTPUT pack "S<*", $wc_offset, map { $_ || 0; } @cp2uni[0 .. 255];
+    print OUTPUT pack "S<*", 0, scalar @lb_ranges / 2, @offsets;
+
+    foreach my $i (@lead_bytes)
+    {
+        my $base = $i << 8;
+        print OUTPUT pack "S<*", map { defined $_ ? $_ : $default_wchar; } @cp2uni[$base .. $base + 255];
+    }
+
+    print OUTPUT pack "S<", 4;
+    print OUTPUT pack "S<*", map { defined $_ ? $_ : $default_char; } @uni2cp[0 .. 65535];
+}
+
+
+################################################################
 # get the list of defined lead byte ranges
 sub get_lb_ranges()
 {
     my @list = ();
     my @ranges = ();
-    my $i = 0;
-    foreach $i (@lead_bytes) { $list[$i] = 1; }
+
+    foreach my $i (@lead_bytes) { $list[$i] = 1; }
     my $on = 0;
     for (my $i = 0; $i < 256; $i++)
     {
@@ -2348,6 +2410,18 @@ sub output_codepage_file($$$)
 
     if (!@lead_bytes) { dump_sbcs_table( $codepage, $comment, $default_char, $default_wchar ); }
     else { dump_dbcs_table( $codepage, $comment, $default_char, $default_wchar, get_lb_ranges() ); }
+    close OUTPUT;
+    save_file($output);
+
+    # same thing in binary format
+
+    $output = sprintf "nls/c_%03d.nls", $codepage;
+    open OUTPUT,">$output.new" or die "Cannot create $output";
+
+    printf "Building %s\n", $output;
+    if (!@lead_bytes) { dump_binary_sbcs_table( $codepage ); }
+    else { dump_binary_dbcs_table( $codepage ); }
+
     close OUTPUT;
     save_file($output);
 }
