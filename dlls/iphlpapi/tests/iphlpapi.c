@@ -2233,37 +2233,40 @@ static void test_ConvertLengthToIpv4Mask(void)
 
 static void test_GetUdp6Table(void)
 {
-  if (pGetUdp6Table) {
     DWORD apiReturn;
     ULONG dwSize = 0;
 
+    if (!pGetUdp6Table) {
+        win_skip("GetUdp6Table not available\n");
+        return;
+    }
+
     apiReturn = pGetUdp6Table(NULL, &dwSize, FALSE);
     if (apiReturn == ERROR_NOT_SUPPORTED) {
-      skip("GetUdp6Table is not supported\n");
-      return;
+        skip("GetUdp6Table is not supported\n");
+        return;
     }
     ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
-     "GetUdp6Table(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
-     apiReturn);
-    if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
-      PMIB_UDP6TABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
-
-      apiReturn = pGetUdp6Table(buf, &dwSize, FALSE);
-      ok(apiReturn == NO_ERROR,
-       "GetUdp6Table(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
+       "GetUdp6Table(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
        apiReturn);
+    if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
+        PMIB_UDP6TABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
-      if (apiReturn == NO_ERROR && winetest_debug > 1)
-      {
-          DWORD i;
-          trace( "UDP6 table: %u entries\n", buf->dwNumEntries );
-          for (i = 0; i < buf->dwNumEntries; i++)
-              trace( "%u: %s%%%u:%u\n",
-                     i, ntoa6(&buf->table[i].dwLocalAddr), ntohs(buf->table[i].dwLocalScopeId), ntohs(buf->table[i].dwLocalPort) );
-      }
-      HeapFree(GetProcessHeap(), 0, buf);
+        apiReturn = pGetUdp6Table(buf, &dwSize, FALSE);
+        ok(apiReturn == NO_ERROR,
+           "GetUdp6Table(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
+           apiReturn);
+
+        if (apiReturn == NO_ERROR && winetest_debug > 1)
+        {
+            DWORD i;
+            trace( "UDP6 table: %u entries\n", buf->dwNumEntries );
+            for (i = 0; i < buf->dwNumEntries; i++)
+                trace( "%u: %s%%%u:%u\n",
+                       i, ntoa6(&buf->table[i].dwLocalAddr), ntohs(buf->table[i].dwLocalScopeId), ntohs(buf->table[i].dwLocalPort) );
+        }
+        HeapFree(GetProcessHeap(), 0, buf);
     }
-  }
 }
 
 static void test_ParseNetworkString(void)
