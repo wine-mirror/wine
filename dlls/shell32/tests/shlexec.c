@@ -1096,7 +1096,7 @@ static filename_tests_t noquotes_tests[]=
 
 static void test_lpFile_parsed(void)
 {
-    char fileA[MAX_PATH];
+    char fileA[MAX_PATH + 38];
     INT_PTR rc;
 
     if (skip_shlexec_tests)
@@ -1549,7 +1549,7 @@ static const argify_tests_t argify_tests[] =
 
 static void test_argify(void)
 {
-    char fileA[MAX_PATH], params[2*MAX_PATH+12];
+    char fileA[MAX_PATH + 18], params[2 * MAX_PATH + 28];
     INT_PTR rc;
     const argify_tests_t* test;
     const char *bad;
@@ -1607,7 +1607,7 @@ static void test_argify(void)
 
 static void test_filename(void)
 {
-    char filename[MAX_PATH];
+    char filename[MAX_PATH + 20];
     const filename_tests_t* test;
     char* c;
     INT_PTR rc;
@@ -1647,7 +1647,7 @@ static void test_filename(void)
         }
         else
         {
-            char quoted[MAX_PATH + 2];
+            char quoted[MAX_PATH + 22];
 
             quotedfile = TRUE;
             sprintf(quoted, "\"%s\"", filename);
@@ -1873,7 +1873,7 @@ static void test_fileurls(void)
 
 static void test_urls(void)
 {
-    char url[MAX_PATH];
+    char url[MAX_PATH + 15];
     INT_PTR rc;
 
     if (!create_test_class("fakeproto", FALSE))
@@ -1968,7 +1968,7 @@ static void test_urls(void)
 static void test_find_executable(void)
 {
     char notepad_path[MAX_PATH];
-    char filename[MAX_PATH];
+    char filename[MAX_PATH + 17];
     char command[MAX_PATH];
     const filename_tests_t* test;
     INT_PTR rc;
@@ -2114,8 +2114,8 @@ static filename_tests_t lnk_tests[]=
 
 static void test_lnks(void)
 {
-    char filename[MAX_PATH];
-    char params[MAX_PATH];
+    char filename[MAX_PATH + 26];
+    char params[MAX_PATH + 18];
     const filename_tests_t* test;
     INT_PTR rc;
 
@@ -2208,7 +2208,7 @@ static void test_lnks(void)
 
 static void test_exes(void)
 {
-    char filename[MAX_PATH];
+    char filename[2 * MAX_PATH + 17];
     char params[1024];
     INT_PTR rc;
 
@@ -2386,7 +2386,7 @@ static void hook_WaitForInputIdle(DWORD (WINAPI *new_func)(HANDLE, DWORD))
 
 static void test_dde(void)
 {
-    char filename[MAX_PATH], defApplication[MAX_PATH];
+    char filename[MAX_PATH + 14], defApplication[MAX_PATH];
     const dde_tests_t* test;
     char params[1024];
     INT_PTR rc;
@@ -2553,7 +2553,7 @@ static DWORD CALLBACK ddeThread(LPVOID arg)
 
 static void test_dde_default_app(void)
 {
-    char filename[MAX_PATH];
+    char filename[MAX_PATH + 14];
     HSZ hszApplication;
     dde_thread_info_t info = { filename, GetCurrentThreadId() };
     const dde_default_app_tests_t* test;
@@ -2655,7 +2655,7 @@ static void init_test(void)
 {
     HMODULE hdll;
     HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO*);
-    char filename[MAX_PATH];
+    char filename[MAX_PATH + 26];
     WCHAR lnkfile[MAX_PATH];
     char params[1024];
     const char* const * testfile;
@@ -2812,7 +2812,7 @@ static void cleanup_test(void)
 
 static void test_directory(void)
 {
-    char path[MAX_PATH], curdir[MAX_PATH];
+    char path[MAX_PATH + 10], curdir[MAX_PATH];
     char params[1024], dirpath[1024];
     INT_PTR rc;
 
