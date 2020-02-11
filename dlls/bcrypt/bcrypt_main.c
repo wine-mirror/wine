@@ -216,7 +216,7 @@ NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE handle, UCHAR *buffer, ULONG c
 
 NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR id, LPCWSTR implementation, DWORD flags )
 {
-    const DWORD supported_flags = BCRYPT_ALG_HANDLE_HMAC_FLAG;
+    const DWORD supported_flags = BCRYPT_ALG_HANDLE_HMAC_FLAG | BCRYPT_HASH_REUSABLE_FLAG;
     struct algorithm *alg;
     enum alg_id alg_id;
     ULONG i;
@@ -254,7 +254,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
     alg->hdr.magic = MAGIC_ALG;
     alg->id        = alg_id;
     alg->mode      = MODE_ID_CBC;
-    alg->hmac      = flags & BCRYPT_ALG_HANDLE_HMAC_FLAG;
+    alg->flags     = flags;
 
     *handle = alg;
     return STATUS_SUCCESS;
@@ -692,8 +692,9 @@ NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDL
     if (!(hash = heap_alloc_zero( sizeof(*hash) ))) return STATUS_NO_MEMORY;
     hash->hdr.magic = MAGIC_HASH;
     hash->alg_id    = alg->id;
-    if (alg->hmac) hash->flags = HASH_FLAG_HMAC;
-    if (flags & BCRYPT_HASH_REUSABLE_FLAG) hash->flags |= HASH_FLAG_REUSABLE;
+    if (alg->flags & BCRYPT_ALG_HANDLE_HMAC_FLAG) hash->flags = HASH_FLAG_HMAC;
+    if ((alg->flags & BCRYPT_HASH_REUSABLE_FLAG) || (flags & BCRYPT_HASH_REUSABLE_FLAG))
+        hash->flags |= HASH_FLAG_REUSABLE;
 
     if (secretlen && !(hash->secret = heap_alloc( secretlen )))
     {

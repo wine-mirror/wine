@@ -154,7 +154,7 @@ struct algorithm
     struct object hdr;
     enum alg_id   id;
     enum mode_id  mode;
-    BOOL          hmac;
+    ULONG         flags;
 };
 
 #if defined(HAVE_GNUTLS_CIPHER_INIT)
