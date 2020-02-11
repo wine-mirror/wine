@@ -483,7 +483,6 @@ struct strmbase_renderer
     /* Signaled when a flush or state change occurs, i.e. anything that needs
      * to immediately unblock the streaming thread. */
     HANDLE flush_event;
-    IMediaSample *pMediaSample;
     REFERENCE_TIME stream_start;
 
     IQualityControl *pQSink;
@@ -522,7 +521,6 @@ struct strmbase_renderer_ops
     HRESULT (*renderer_pin_query_interface)(struct strmbase_renderer *iface, REFIID iid, void **out);
 };
 
-HRESULT WINAPI BaseRendererImpl_ClearPendingSample(struct strmbase_renderer *filter);
 HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *filter, IMediaSample *sample);
 
 HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,

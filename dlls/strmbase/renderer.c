@@ -84,7 +84,6 @@ static HRESULT renderer_init_stream(struct strmbase_filter *iface)
     if (filter->sink.pin.peer)
         ResetEvent(filter->state_event);
     filter->eos = FALSE;
-    BaseRendererImpl_ClearPendingSample(filter);
     ResetEvent(filter->flush_event);
     if (filter->pFuncsTable->renderer_init_stream)
         filter->pFuncsTable->renderer_init_stream(filter);
@@ -228,7 +227,6 @@ static HRESULT sink_begin_flush(struct strmbase_sink *iface)
 {
     struct strmbase_renderer *filter = impl_from_IPin(&iface->pin.IPin_iface);
 
-    BaseRendererImpl_ClearPendingSample(filter);
     SetEvent(filter->flush_event);
 
     return S_OK;
@@ -279,7 +277,6 @@ void strmbase_renderer_cleanup(struct strmbase_renderer *filter)
     filter->csRenderLock.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&filter->csRenderLock);
 
-    BaseRendererImpl_ClearPendingSample(filter);
     CloseHandle(filter->state_event);
     CloseHandle(filter->advise_event);
     CloseHandle(filter->flush_event);
@@ -312,9 +309,6 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
         }
         DeleteMediaType(pmt);
     }
-
-    This->pMediaSample = pSample;
-    IMediaSample_AddRef(pSample);
 
     if (This->pFuncsTable->pfnPrepareReceive)
         hr = This->pFuncsTable->pfnPrepareReceive(This, pSample);
@@ -388,20 +382,9 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
 
     QualityControlRender_DoQOS(This->qcimpl);
 
-    BaseRendererImpl_ClearPendingSample(This);
     LeaveCriticalSection(&This->csRenderLock);
 
     return hr;
-}
-
-HRESULT WINAPI BaseRendererImpl_ClearPendingSample(struct strmbase_renderer *iface)
-{
-    if (iface->pMediaSample)
-    {
-        IMediaSample_Release(iface->pMediaSample);
-        iface->pMediaSample = NULL;
-    }
-    return S_OK;
 }
 
 HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
