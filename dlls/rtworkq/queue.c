@@ -115,6 +115,8 @@ struct work_item
     IRtwqAsyncResult *result;
     struct queue *queue;
     RTWQWORKITEM_KEY key;
+    LONG priority;
+    DWORD flags;
     union
     {
         TP_WAIT *wait_object;
@@ -204,8 +206,10 @@ static const IUnknownVtbl work_item_vtbl =
     work_item_Release,
 };
 
-static struct work_item * alloc_work_item(struct queue *queue, IRtwqAsyncResult *result)
+static struct work_item * alloc_work_item(struct queue *queue, LONG priority, IRtwqAsyncResult *result)
 {
+    RTWQASYNCRESULT *async_result = (RTWQASYNCRESULT *)result;
+    DWORD flags = 0, queue_id = 0;
     struct work_item *item;
 
     item = heap_alloc_zero(sizeof(*item));
@@ -216,6 +220,10 @@ static struct work_item * alloc_work_item(struct queue *queue, IRtwqAsyncResult 
     item->refcount = 1;
     item->queue = queue;
     list_init(&item->entry);
+    item->priority = priority;
+
+    if (SUCCEEDED(IRtwqAsyncCallback_GetParameters(async_result->pCallback, &flags, &queue_id)))
+        item->flags = flags;
 
     return item;
 }
@@ -377,7 +385,7 @@ static HRESULT queue_submit_item(struct queue *queue, LONG priority, IRtwqAsyncR
     struct work_item *item;
     TP_WORK *work_object;
 
-    if (!(item = alloc_work_item(queue, result)))
+    if (!(item = alloc_work_item(queue, priority, result)))
         return E_OUTOFMEMORY;
 
     if (priority == 0)
@@ -515,7 +523,7 @@ static HRESULT queue_submit_wait(struct queue *queue, HANDLE event, LONG priorit
     PTP_WAIT_CALLBACK callback;
     struct work_item *item;
 
-    if (!(item = alloc_work_item(queue, result)))
+    if (!(item = alloc_work_item(queue, priority, result)))
         return E_OUTOFMEMORY;
 
     if (key)
@@ -543,7 +551,7 @@ static HRESULT queue_submit_timer(struct queue *queue, IRtwqAsyncResult *result,
     FILETIME filetime;
     LARGE_INTEGER t;
 
-    if (!(item = alloc_work_item(queue, result)))
+    if (!(item = alloc_work_item(queue, 0, result)))
         return E_OUTOFMEMORY;
 
     if (key)
