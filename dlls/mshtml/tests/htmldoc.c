@@ -283,13 +283,6 @@ static const WCHAR wszTimesNewRoman[] =
 static const WCHAR wszArial[] =
     {'A','r','i','a','l',0};
 
-static BOOL wstr_contains(const WCHAR *strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return strstr(buf, stra) != NULL;
-}
-
 /* Returns true if the user interface is in English. Note that this does not
  * presume of the formatting of dates, numbers, etc.
  */
@@ -3484,7 +3477,7 @@ static HRESULT  WINAPI DocObjectService_FireBeforeNavigate2(IDocObjectService *i
     }else {
         ok(cbPostData == 9, "cbPostData = %d\n", cbPostData);
         ok(!memcmp(pPostData, "cmd=TEST", cbPostData), "pPostData = %p\n", pPostData);
-        ok(wstr_contains(lpszHeaders, "Content-Type: application/x-www-form-urlencoded\r\n"),
+        ok(wcsstr(lpszHeaders, L"Content-Type: application/x-www-form-urlencoded\r\n") != NULL,
            "lpszHeaders = %s\n", wine_dbgstr_w(lpszHeaders));
 
     }
