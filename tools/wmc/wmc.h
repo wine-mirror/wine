@@ -49,6 +49,8 @@ extern char *input_name;
 extern char *header_name;
 extern char *cmdline;
 
+extern const char *nlsdirs[];
+
 extern int line_number;
 extern int char_number;
 
