@@ -213,8 +213,7 @@ HRESULT WINAPI ADsGetLastError(LPDWORD perror, LPWSTR errorbuf, DWORD errorbufle
  */
 LPVOID WINAPI AllocADsMem(DWORD cb)
 {
-    FIXME("(%d)!stub\n",cb);
-    return NULL;
+    return HeapAlloc(GetProcessHeap(), 0, cb);
 }
 
 /*****************************************************
@@ -222,8 +221,7 @@ LPVOID WINAPI AllocADsMem(DWORD cb)
  */
 BOOL WINAPI FreeADsMem(LPVOID pMem)
 {
-    FIXME("(%p)!stub\n",pMem);
-    return FALSE;
+    return HeapFree(GetProcessHeap(), 0, pMem);
 }
 
 /*****************************************************
