@@ -40,71 +40,70 @@ my $DEF_CHAR = ord '?';
 
 my @allfiles =
 (
-    [ 37,    "CodpageFiles/037.txt",    "IBM EBCDIC US Canada" ],
-    [ 437,   "CodpageFiles/437.txt",    "OEM United States" ],
-    [ 500,   "CodpageFiles/500.txt",    "IBM EBCDIC International" ],
-    [ 737,   "CodpageFiles/737.txt",    "OEM Greek 437G" ],
-    [ 775,   "CodpageFiles/775.txt",    "OEM Baltic" ],
-    [ 850,   "CodpageFiles/850.txt",    "OEM Multilingual Latin 1" ],
-    [ 852,   "CodpageFiles/852.txt",    "OEM Slovak Latin 2" ],
-    [ 855,   "CodpageFiles/855.txt",    "OEM Cyrillic" ],
-    [ 857,   "CodpageFiles/857.txt",    "OEM Turkish" ],
-    [ 860,   "CodpageFiles/860.txt",    "OEM Portuguese" ],
-    [ 861,   "CodpageFiles/861.txt",    "OEM Icelandic" ],
-    [ 862,   "CodpageFiles/862.txt",    "OEM Hebrew" ],
-    [ 863,   "CodpageFiles/863.txt",    "OEM Canadian French" ],
-    [ 864,   "CodpageFiles/864.txt",    "OEM Arabic" ],
-    [ 865,   "CodpageFiles/865.txt",    "OEM Nordic" ],
-    [ 866,   "CodpageFiles/866.txt",    "OEM Russian" ],
-    [ 869,   "CodpageFiles/869.txt",    "OEM Greek" ],
-    [ 874,   "CodpageFiles/874.txt",    "ANSI/OEM Thai" ],
-    [ 875,   "CodpageFiles/875.txt",    "IBM EBCDIC Greek" ],
-    [ 932,   "CodpageFiles/932.txt",    "ANSI/OEM Japanese Shift-JIS" ],
-    [ 936,   "CodpageFiles/936.txt",    "ANSI/OEM Simplified Chinese GBK" ],
-    [ 949,   "CodpageFiles/949.txt",    "ANSI/OEM Korean Unified Hangul" ],
-    [ 950,   "CodpageFiles/950.txt",    "ANSI/OEM Traditional Chinese Big5" ],
-    [ 1026,  "CodpageFiles/1026.txt",   "IBM EBCDIC Latin 5 Turkish" ],
-    [ 1250,  "CodpageFiles/1250.txt",   "ANSI Eastern Europe" ],
-    [ 1251,  "CodpageFiles/1251.txt",   "ANSI Cyrillic" ],
-    [ 1252,  "CodpageFiles/1252.txt",   "ANSI Latin 1" ],
-    [ 1253,  "CodpageFiles/1253.txt",   "ANSI Greek" ],
-    [ 1254,  "CodpageFiles/1254.txt",   "ANSI Turkish" ],
-    [ 1255,  "CodpageFiles/1255.txt",   "ANSI Hebrew" ],
-    [ 1256,  "CodpageFiles/1256.txt",   "ANSI Arabic" ],
-    [ 1257,  "CodpageFiles/1257.txt",   "ANSI Baltic" ],
-    [ 1258,  "CodpageFiles/1258.txt",   "ANSI/OEM Viet Nam" ],
-    [ 1361,  "CodpageFiles/1361.txt",   "Korean Johab" ],
-    [ 10000, "CodpageFiles/10000.txt",  "Mac Roman" ],
-    [ 10001, "CodpageFiles/10001.txt",  "Mac Japanese" ],
-    [ 10002, "CodpageFiles/10002.txt",  "Mac Traditional Chinese" ],
-    [ 10003, "CodpageFiles/10003.txt",  "Mac Korean" ],
-    [ 10004, "CodpageFiles/10004.txt",  "Mac Arabic" ],
-    [ 10005, "CodpageFiles/10005.txt",  "Mac Hebrew" ],
-    [ 10006, "CodpageFiles/10006.txt",  "Mac Greek" ],
-    [ 10007, "CodpageFiles/10007.txt",  "Mac Cyrillic" ],
-    [ 10008, "CodpageFiles/10008.txt",  "Mac Simplified Chinese" ],
-    [ 10010, "CodpageFiles/10010.txt",  "Mac Romanian" ],
-    [ 10017, "CodpageFiles/10017.txt",  "Mac Ukrainian" ],
-    [ 10021, "CodpageFiles/10021.txt",  "Mac Thai" ],
-    [ 10029, "CodpageFiles/10029.txt",  "Mac Latin 2" ],
-    [ 10079, "CodpageFiles/10079.txt",  "Mac Icelandic" ],
-    [ 10081, "CodpageFiles/10081.txt",  "Mac Turkish" ],
-    [ 10082, "CodpageFiles/10082.txt",  "Mac Croatian" ],
-    [ 20127, "CodpageFiles/20127.txt",  "US-ASCII (7bit)" ],
-    [ 20866, "CodpageFiles/20866.txt",  "Russian KOI8" ],
-    [ 20932, "OBSOLETE/EASTASIA/JIS",   "EUC-JP" ],
-    [ 21866, "CodpageFiles/21866.txt",  "Ukrainian KOI8" ],
-    [ 28591, "CodpageFiles/28591.txt",  "ISO 8859-1 Latin 1" ],
-    [ 28592, "CodpageFiles/28592.txt",  "ISO 8859-2 Latin 2 (East European)" ],
-    [ 28593, "CodpageFiles/28593.txt",  "ISO 8859-3 Latin 3 (South European)" ],
-    [ 28594, "CodpageFiles/28594.txt",  "ISO 8859-4 Latin 4 (Baltic old)" ],
-    [ 28595, "CodpageFiles/28595.txt",  "ISO 8859-5 Cyrillic" ],
-    [ 28596, "CodpageFiles/28596.txt",  "ISO 8859-6 Arabic" ],
-    [ 28597, "CodpageFiles/28597.txt",  "ISO 8859-7 Greek" ],
-    [ 28598, "CodpageFiles/28598.txt",  "ISO 8859-8 Hebrew" ],
-    [ 28599, "CodpageFiles/28599.txt",  "ISO 8859-9 Latin 5 (Turkish)" ],
-    [ 28603, "CodpageFiles/28603.txt",  "ISO 8859-13 Latin 7 (Baltic)" ],
-    [ 28605, "CodpageFiles/28605.txt",  "ISO 8859-15 Latin 9 (Euro)" ],
+    "CodpageFiles/037.txt",
+    "CodpageFiles/437.txt",
+    "CodpageFiles/500.txt",
+    "CodpageFiles/737.txt",
+    "CodpageFiles/775.txt",
+    "CodpageFiles/850.txt",
+    "CodpageFiles/852.txt",
+    "CodpageFiles/855.txt",
+    "CodpageFiles/857.txt",
+    "CodpageFiles/860.txt",
+    "CodpageFiles/861.txt",
+    "CodpageFiles/862.txt",
+    "CodpageFiles/863.txt",
+    "CodpageFiles/864.txt",
+    "CodpageFiles/865.txt",
+    "CodpageFiles/866.txt",
+    "CodpageFiles/869.txt",
+    "CodpageFiles/874.txt",
+    "CodpageFiles/875.txt",
+    "CodpageFiles/932.txt",
+    "CodpageFiles/936.txt",
+    "CodpageFiles/949.txt",
+    "CodpageFiles/950.txt",
+    "CodpageFiles/1026.txt",
+    "CodpageFiles/1250.txt",
+    "CodpageFiles/1251.txt",
+    "CodpageFiles/1252.txt",
+    "CodpageFiles/1253.txt",
+    "CodpageFiles/1254.txt",
+    "CodpageFiles/1255.txt",
+    "CodpageFiles/1256.txt",
+    "CodpageFiles/1257.txt",
+    "CodpageFiles/1258.txt",
+    "CodpageFiles/1361.txt",
+    "CodpageFiles/10000.txt",
+    "CodpageFiles/10001.txt",
+    "CodpageFiles/10002.txt",
+    "CodpageFiles/10003.txt",
+    "CodpageFiles/10004.txt",
+    "CodpageFiles/10005.txt",
+    "CodpageFiles/10006.txt",
+    "CodpageFiles/10007.txt",
+    "CodpageFiles/10008.txt",
+    "CodpageFiles/10010.txt",
+    "CodpageFiles/10017.txt",
+    "CodpageFiles/10021.txt",
+    "CodpageFiles/10029.txt",
+    "CodpageFiles/10079.txt",
+    "CodpageFiles/10081.txt",
+    "CodpageFiles/10082.txt",
+    "CodpageFiles/20127.txt",
+    "CodpageFiles/20866.txt",
+    "CodpageFiles/21866.txt",
+    "CodpageFiles/28591.txt",
+    "CodpageFiles/28592.txt",
+    "CodpageFiles/28593.txt",
+    "CodpageFiles/28594.txt",
+    "CodpageFiles/28595.txt",
+    "CodpageFiles/28596.txt",
+    "CodpageFiles/28597.txt",
+    "CodpageFiles/28598.txt",
+    "CodpageFiles/28599.txt",
+    "CodpageFiles/28603.txt",
+    "CodpageFiles/28605.txt",
 );
 
 
@@ -661,10 +660,12 @@ sub get_glyphs_mapping(@)
 
 ################################################################
 # build EUC-JP table from the JIS 0208/0212 files
-sub output_eucjp_codepage($$)
+sub dump_eucjp_codepage()
 {
-    my ($dir, $comment) = @_;
-
+    @cp2uni = ();
+    @glyph2uni = ();
+    @lead_bytes = ();
+    @uni2cp = ();
     $default_char = $DEF_CHAR;
     $default_wchar = 0x30fb;
 
@@ -702,8 +703,7 @@ sub output_eucjp_codepage($$)
         }
     }
 
-    my $name = "$dir/JIS0208.TXT";
-    my $INPUT = open_data_file( $MAPPINGS, $name );
+    my $INPUT = open_data_file( $MAPPINGS, "OBSOLETE/EASTASIA/JIS/JIS0208.TXT" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -714,12 +714,11 @@ sub output_eucjp_codepage($$)
             add_mapping( 0x8080 + hex $1, hex $2 );
             next;
         }
-        die "$name: Unrecognized line $_\n";
+        die "Unrecognized line $_\n";
     }
     close $INPUT;
 
-    $name = "$dir/JIS0212.TXT";
-    $INPUT = open_data_file( $MAPPINGS, $name );
+    $INPUT = open_data_file( $MAPPINGS, "OBSOLETE/EASTASIA/JIS/JIS0212.TXT" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -730,11 +729,11 @@ sub output_eucjp_codepage($$)
             add_mapping( 0x8000 + hex $1, hex $2 );
             next;
         }
-        die "$name: Unrecognized line $_\n";
+        die "Unrecognized line $_\n";
     }
     close $INPUT;
 
-    output_codepage_file( 20932, "$MAPPINGS/$dir", $comment );
+    output_codepage_file( 20932 );
 }
 
 
@@ -854,203 +853,6 @@ sub dump_array($$@)
     }
     $ret .= sprintf($format, defined $array[$i] ? $array[$i] : $default);
     return $ret;
-}
-
-
-################################################################
-# dump a unicode->ascii mapping table
-sub dump_uni2cp_table($$)
-{
-    my ($width, $def) = @_;
-
-    # count the number of unicode->ascii subtables that contain something
-
-    my @lowerbounds;
-    my @upperbounds;
-    my $index = 0;
-    my @filled = (-1) x 256;
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        next unless defined $uni2cp[$i];
-        if ($filled[$i >> 8] == -1)
-        {
-          $lowerbounds[$index] = $i & 0xff;
-          $upperbounds[$index] = 0xff - $lowerbounds[$index];
-          $filled[$i >> 8] = $index * 256;
-          $index++;
-        }
-        else
-        {
-          $upperbounds[$index-1] = 0xff - ($i & 0xff);
-        }
-    }
-
-    # add defaults mapping at the end
-    $filled[256] = $index * 256;
-    $lowerbounds[$index] = 255;
-    $upperbounds[$index] = 0;
-    $index++;
-
-    # collapse blocks upwards if possible
-    my $removed = 0;
-    $index = 0;
-    for (my $i = 0; $i < 257; $i++)
-    {
-        next if $filled[$i] == -1;
-        if ($upperbounds[$index - 1] > $lowerbounds[$index])
-        {
-           $removed += $lowerbounds[$index];
-        }
-        else
-        {
-           $removed += $upperbounds[$index - 1];
-           $lowerbounds[$index] = $upperbounds[$index - 1];
-        }
-        $filled[$i] -= $removed;
-        $index++;
-    }
-
-    # output all the subtables into a single array
-
-    printf OUTPUT "static const unsigned %s uni2cp_low[] =\n{\n", $width == 8 ? "char" : "short";
-
-    for (my $i = $index = 0; $i < 257; $i++)
-    {
-        next if $filled[$i] == -1;
-        my $start = ($i << 8) + $lowerbounds[$index];
-        my $end = ($i << 8) + 255;
-        if ($i == 256)
-        {
-            print OUTPUT "    /* defaults */\n";
-            printf OUTPUT "%s\n};\n\n", dump_array( $width, 0, ($def) x ($end - $start + 1) );
-        }
-        else
-        {
-            printf OUTPUT "    /* 0x%04x .. 0x%04x */\n", $start, $end;
-            printf OUTPUT "%s,\n", dump_array( $width, $def, @uni2cp[$start .. $end] );
-        }
-        $index++;
-    }
-
-    # output a table of the offsets of the subtables in the previous array
-
-    for (my $i = 0; $i < 256; $i++)
-    {
-        if ($filled[$i] == -1) { $filled[$i] = $filled[256]; }
-    }
-    printf OUTPUT "static const unsigned short uni2cp_high[256] =\n";
-    printf OUTPUT "{\n%s\n};\n\n", dump_array( 16, 0, @filled[0..255] );
-}
-
-################################################################
-# dump an SBCS mapping table
-sub dump_sbcs_table($$$$)
-{
-    my ($codepage, $name, $def, $defw) = @_;
-    my $i;
-
-    # output the ascii->unicode table
-
-    if (@glyph2uni)
-    {
-        printf OUTPUT "static const WCHAR cp2uni[512] =\n";
-        printf OUTPUT "{\n%s", dump_array( 16, $defw, @cp2uni[0 .. 255] );
-        printf OUTPUT ",\n    /* glyphs */\n%s\n};\n\n",
-                      dump_array( 16, $defw, get_glyphs_mapping(@cp2uni[0 .. 255]) );
-    }
-    else
-    {
-        printf OUTPUT "static const WCHAR cp2uni[256] =\n";
-        printf OUTPUT "{\n%s\n};\n\n", dump_array( 16, $defw, @cp2uni[0 .. 255] );
-    }
-
-    dump_uni2cp_table( 8, $def );
-
-    # output the code page descriptor
-
-    printf OUTPUT "const struct sbcs_table DECLSPEC_HIDDEN cptable_%03d =\n{\n", $codepage;
-    printf OUTPUT "    { %d, 1, 0x%04x, 0x%04x, \"%s\" },\n",
-                  $codepage, $def, $defw, $name;
-    printf OUTPUT "    cp2uni,\n";
-    if (@glyph2uni) { printf OUTPUT "    cp2uni + 256,\n"; }
-    else { printf OUTPUT "    cp2uni,\n"; }
-    printf OUTPUT "    uni2cp_low,\n";
-    printf OUTPUT "    uni2cp_high\n};\n";
-}
-
-
-################################################################
-# dump a DBCS mapping table
-sub dump_dbcs_table($$$$@)
-{
-    my ($codepage, $name, $def, $defw, @lb_ranges) = @_;
-
-    # build a list of lead bytes that are actually used
-
-    my @lblist = ();
-    LBLOOP: for (my $y = 0; $y <= $#lead_bytes; $y++)
-    {
-        $cp2uni[$lead_bytes[$y]] = $defw;
-        my $base = $lead_bytes[$y] << 8;
-        for (my $x = 0; $x < 256; $x++)
-        {
-            if (defined $cp2uni[$base+$x])
-            {
-                push @lblist,$lead_bytes[$y];
-                next LBLOOP;
-            }
-        }
-    }
-    my $unused = ($#lead_bytes > $#lblist);
-
-    # output the ascii->unicode table for the single byte chars
-
-    printf OUTPUT "static const WCHAR cp2uni[%d] =\n", 256 * ($#lblist + 2 + $unused);
-    printf OUTPUT "{\n%s,\n", dump_array( 16, $defw, @cp2uni[0 .. 255] );
-
-    # output the default table for unused lead bytes
-
-    if ($unused)
-    {
-        printf OUTPUT "    /* unused lead bytes */\n";
-        printf OUTPUT "%s,\n", dump_array( 16, 0, ($defw) x 256 );
-    }
-
-    # output the ascii->unicode table for each DBCS lead byte
-
-    for (my $y = 0; $y <= $#lblist; $y++)
-    {
-        my $base = $lblist[$y] << 8;
-        printf OUTPUT "    /* lead byte %02x */\n", $lblist[$y];
-        printf OUTPUT "%s", dump_array( 16, $defw, @cp2uni[$base .. $base+255] );
-        printf OUTPUT ($y < $#lblist) ? ",\n" : "\n};\n\n";
-    }
-
-    # output the lead byte subtables offsets
-
-    my @offsets = (0) x 256;
-    for (my $x = 0; $x <= $#lblist; $x++) { $offsets[$lblist[$x]] = $x + 1; }
-    if ($unused)
-    {
-        # increment all lead bytes offset to take into account the unused table
-        for (my $x = 0; $x <= $#lead_bytes; $x++) { $offsets[$lead_bytes[$x]]++; }
-    }
-    printf OUTPUT "static const unsigned char cp2uni_leadbytes[256] =\n";
-    printf OUTPUT "{\n%s\n};\n\n", dump_array( 8, 0, @offsets );
-
-    dump_uni2cp_table( 16, $def );
-
-    # output the code page descriptor
-
-    printf OUTPUT "const struct dbcs_table DECLSPEC_HIDDEN cptable_%03d =\n{\n", $codepage;
-    printf OUTPUT "    { %d, 2, 0x%04x, 0x%04x, \"%s\" },\n",
-                  $codepage, $def, $defw, $name;
-    printf OUTPUT "    cp2uni,\n";
-    printf OUTPUT "    cp2uni_leadbytes,\n";
-    printf OUTPUT "    uni2cp_low,\n";
-    printf OUTPUT "    uni2cp_high,\n";
-    printf OUTPUT "    {\n    %s\n    }\n", dump_array( 8, 0, @lb_ranges, 0, 0 );
-    printf OUTPUT "};\n";
 }
 
 
@@ -2392,30 +2194,11 @@ sub dump_combining_class($)
 
 ################################################################
 # output a codepage definition file from the global tables
-sub output_codepage_file($$$)
+sub output_codepage_file($)
 {
-    my ($codepage, $filename, $comment) = @_;
+    my $codepage = shift;
 
-    my $output = sprintf "libs/port/c_%03d.c", $codepage;
-    open OUTPUT,">$output.new" or die "Cannot create $output";
-
-    printf "Building %s (%s)\n", $output, $comment;
-
-    # dump all tables
-
-    printf OUTPUT "/* code page %03d (%s) */\n", $codepage, $comment;
-    print OUTPUT "/* generated from $filename */\n";
-    print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
-
-    if (!@lead_bytes) { dump_sbcs_table( $codepage, $comment, $default_char, $default_wchar ); }
-    else { dump_dbcs_table( $codepage, $comment, $default_char, $default_wchar, get_lb_ranges() ); }
-    close OUTPUT;
-    save_file($output);
-
-    # same thing in binary format
-
-    $output = sprintf "nls/c_%03d.nls", $codepage;
+    my $output = sprintf "nls/c_%03d.nls", $codepage;
     open OUTPUT,">$output.new" or die "Cannot create $output";
 
     printf "Building %s\n", $output;
@@ -2428,12 +2211,20 @@ sub output_codepage_file($$$)
 
 ################################################################
 # output a codepage table from a Microsoft-style mapping file
-sub output_msdata_codepage($$)
+sub dump_msdata_codepage($)
 {
-    my ($filename, $comment) = @_;
+    my $filename = shift;
+
     my $state = "";
     my ($codepage, $width, $count);
     my ($lb_cur, $lb_end);
+
+    @cp2uni = ();
+    @glyph2uni = ();
+    @lead_bytes = ();
+    @uni2cp = ();
+    $default_char = $DEF_CHAR;
+    $default_wchar = $DEF_CHAR;
 
     my $INPUT = open_data_file( $MSCODEPAGES, $filename ) or die "Cannot open $filename";
 
@@ -2511,32 +2302,7 @@ sub output_msdata_codepage($$)
     }
     close $INPUT;
 
-    output_codepage_file( $codepage, "$MSCODEPAGES:$filename", $comment );
-}
-
-
-################################################################
-# read an input file and generate the corresponding .c file
-sub handle_codepage_file(@)
-{
-    my ($codepage, $filename, $comment) = @_;
-
-    @cp2uni = ();
-    @glyph2uni = ();
-    @lead_bytes = ();
-    @uni2cp = ();
-    $default_char = $DEF_CHAR;
-    $default_wchar = $DEF_CHAR;
-
-    # some codepage files are special
-    if ($codepage == 20932)
-    {
-        output_eucjp_codepage( $filename, $comment );
-    }
-    else
-    {
-        output_msdata_codepage( $filename, $comment );
-    }
+    output_codepage_file( $codepage );
 }
 
 
@@ -2613,8 +2379,8 @@ dump_vertical( "dlls/gdi32/vertical.c" );
 dump_vertical( "dlls/wineps.drv/vertical.c" );
 dump_nameprep( "dlls/kernel32/nameprep.c" );
 dump_intl_nls("nls/l_intl.nls");
-
-foreach my $file (@allfiles) { handle_codepage_file( @{$file} ); }
+foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
+dump_eucjp_codepage();
 
 exit 0;
 
