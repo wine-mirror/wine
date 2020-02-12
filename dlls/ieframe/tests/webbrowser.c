@@ -3973,7 +3973,7 @@ static void test_FileProtocol(void)
     }
     CloseHandle(file);
 
-    GetLongPathNameW(file_path, file_path, sizeof(file_path));
+    GetLongPathNameW(file_path, file_path, ARRAY_SIZE(file_path));
     lstrcatW(file_url, file_path);
 
     test_ConnectionPoint(webbrowser, TRUE);
