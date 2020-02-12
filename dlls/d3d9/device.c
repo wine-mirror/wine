@@ -2625,14 +2625,14 @@ static HRESULT WINAPI d3d9_device_GetTextureStageState(IDirect3DDevice9Ex *iface
 
     TRACE("iface %p, stage %u, state %#x, value %p.\n", iface, stage, state, value);
 
-    if (state >= ARRAY_SIZE(tss_lookup))
+    if (state >= ARRAY_SIZE(tss_lookup) || tss_lookup[state] == WINED3D_TSS_INVALID)
     {
         WARN("Invalid state %#x passed.\n", state);
         return D3D_OK;
     }
 
     wined3d_mutex_lock();
-    *value = wined3d_device_get_texture_stage_state(device->wined3d_device, stage, tss_lookup[state]);
+    *value = wined3d_stateblock_get_state(device->state)->texture_states[stage][tss_lookup[state]];
     wined3d_mutex_unlock();
 
     return D3D_OK;
