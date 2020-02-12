@@ -871,7 +871,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
             snd_seq_ev_clear(&event);
             snd_seq_ev_set_direct(&event);
             snd_seq_ev_set_source(&event, port_out);
-            snd_seq_ev_set_dest(&event, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
+            snd_seq_ev_set_subs(&event);
 	    
 	    switch (evt & 0xF0) {
 	    case MIDI_CMD_NOTE_OFF:
@@ -1040,8 +1040,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	snd_seq_ev_clear(&event);
 	snd_seq_ev_set_direct(&event);
 	snd_seq_ev_set_source(&event, port_out);
-	snd_seq_ev_set_dest(&event, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
-	TRACE("destination %d:%d\n", MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
+	snd_seq_ev_set_subs(&event);
 	snd_seq_ev_set_sysex(&event, lpMidiHdr->dwBufferLength + len_add, lpNewData ? lpNewData : lpData);
         EnterCriticalSection(&midiSeqLock);
 	snd_seq_event_output_direct(midiSeq, &event);
