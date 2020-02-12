@@ -66,6 +66,7 @@ static const char usage[] =
 	"   -J, --input-format=FORMAT  The input format (either `rc' or `rc16')\n"
 	"   -l, --language=LANG        Set default language to LANG (default is neutral {0, 0})\n"
 	"   -m16, -m32, -m64           Build for 16-bit, 32-bit resp. 64-bit platforms\n"
+	"   --nls-dir=DIR              Directory containing the NLS codepage mappings\n"
 	"   --no-use-temp-file         Ignored for compatibility with windres\n"
 	"   --nostdinc                 Disables searching the standard include path\n"
 	"   -o, --output=FILE          Output to file (default is infile.res)\n"
@@ -157,6 +158,7 @@ char *input_name = NULL;	/* The name given on the command-line */
 static char *temp_name = NULL;	/* Temporary file for preprocess pipe */
 
 static const char *includedir;
+const char *nlsdirs[3] = { NULL, NLSDIR, NULL };
 
 int line_number = 1;		/* The current line */
 int char_number = 1;		/* The current char pos within the line */
@@ -175,6 +177,7 @@ enum long_options_values
     LONG_OPT_NOSTDINC = 1,
     LONG_OPT_TMPFILE,
     LONG_OPT_NOTMPFILE,
+    LONG_OPT_NLS_DIR,
     LONG_OPT_PO_DIR,
     LONG_OPT_PREPROCESSOR,
     LONG_OPT_SYSROOT,
@@ -196,6 +199,7 @@ static const struct option long_options[] = {
 	{ "input", 1, NULL, 'i' },
 	{ "input-format", 1, NULL, 'J' },
 	{ "language", 1, NULL, 'l' },
+	{ "nls-dir", 1, NULL, LONG_OPT_NLS_DIR },
 	{ "no-use-temp-file", 0, NULL, LONG_OPT_NOTMPFILE },
 	{ "nostdinc", 0, NULL, LONG_OPT_NOSTDINC },
 	{ "output", 1, NULL, 'o' },
@@ -349,6 +353,8 @@ static void init_argv0_dir( const char *argv0 )
     if (p == dir) p++;
     *p = 0;
     includedir = strmake( "%s/%s", dir, BIN_TO_INCLUDEDIR );
+    if (strendswith( dir, "/tools/wrc" )) nlsdirs[0] = strmake( "%s/../../nls", dir );
+    else nlsdirs[0] = strmake( "%s/%s", dir, BIN_TO_NLSDIR );
     free( dir );
 #endif
 }
@@ -407,6 +413,9 @@ int main(int argc,char *argv[])
 			break;
 		case LONG_OPT_NOTMPFILE:
 			if (debuglevel) warning("--no-use-temp-file option not yet supported, ignored.\n");
+			break;
+		case LONG_OPT_NLS_DIR:
+			nlsdirs[0] = xstrdup( optarg );
 			break;
 		case LONG_OPT_PO_DIR:
 			po_dir = xstrdup( optarg );

@@ -80,6 +80,10 @@ Generate resources for 16-bit, 32-bit or 64-bit platforms respectively.
 The only difference between 32-bit and 64-bit is whether
 the _WIN64 preprocessor symbol is defined.
 .TP
+.I \fB\-\-nls-dir=\fIdir\fR
+Specify the directory to search for the NLS files containing the
+codepage mapping tables.
+.TP
 .I \fB\-\-nostdinc\fR
 Do not search the standard include path, look for include files only
 in the directories explicitly specified with the \fB\-I\fR option.
