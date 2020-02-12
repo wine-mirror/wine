@@ -20,6 +20,10 @@
 
 #include <stdlib.h>
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "wine/unicode.h"
 
 /* Everything below this line is generated automatically by make_unicode */
@@ -169,7 +173,7 @@ static int cmp_codepage( const void *codepage, const void *entry )
 
 
 /* get the table of a given code page */
-const union cptable *wine_cp_get_table( unsigned int codepage )
+const union cptable *wine_cp_get_table_obsolete( unsigned int codepage )
 {
     const union cptable **res;
 
@@ -180,8 +184,19 @@ const union cptable *wine_cp_get_table( unsigned int codepage )
 
 
 /* enum valid codepages */
-const union cptable *wine_cp_enum_table( unsigned int index )
+const union cptable *wine_cp_enum_table_obsolete( unsigned int index )
 {
     if (index >= ARRAY_SIZE( cptables )) return NULL;
     return cptables[index];
 }
+
+int wine_is_dbcs_leadbyte_obsolete( const union cptable *table, unsigned char ch )
+{
+    return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
+}
+
+__ASM_OBSOLETE(wine_cp_get_table);
+__ASM_OBSOLETE(wine_cp_enum_table);
+__ASM_OBSOLETE(wine_is_dbcs_leadbyte);
+
+#endif /* __ASM_OBSOLETE */

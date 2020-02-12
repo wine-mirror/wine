@@ -4,6 +4,7 @@ C_SRCS = \
 	collation.c \
 	config.c \
 	cpsymbol.c \
+	cptable.c \
 	debug.c \
 	digitmap.c \
 	fold.c \

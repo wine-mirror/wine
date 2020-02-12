@@ -79,9 +79,6 @@ union cptable
     struct dbcs_table dbcs;
 };
 
-extern const union cptable *wine_cp_get_table( unsigned int codepage );
-extern const union cptable *wine_cp_enum_table( unsigned int index );
-
 extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
 extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
 extern int memicmpW( const WCHAR *str1, const WCHAR *str2, int n );
@@ -92,11 +89,6 @@ extern int sprintfW( WCHAR *str, const WCHAR *format, ... );
 extern int snprintfW( WCHAR *str, size_t len, const WCHAR *format, ... );
 extern int vsprintfW( WCHAR *str, const WCHAR *format, va_list valist );
 extern int vsnprintfW( WCHAR *str, size_t len, const WCHAR *format, va_list valist );
-
-WINE_UNICODE_INLINE int wine_is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
-{
-    return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
-}
 
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch )
 {

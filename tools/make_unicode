@@ -2557,31 +2557,6 @@ sub save_file($)
 
 
 ################################################################
-# output the list of codepage tables into the cptable.c file
-sub output_cptable($)
-{
-    my $output = shift;
-    my @tables_decl = ();
-
-    printf "Building %s\n", $output;
-
-    foreach my $file (@allfiles)
-    {
-        my ($codepage,$filename) = @$file;
-        push @tables_decl, sprintf("extern union cptable cptable_%03d;\n",$codepage);
-    }
-
-    push @tables_decl, sprintf("\nstatic const union cptable * const cptables[%d] =\n{\n",$#allfiles+1);
-    foreach my $file (@allfiles)
-    {
-        my ($codepage,$filename) = @$file;
-        push @tables_decl, sprintf("    &cptable_%03d,\n", $codepage);
-    }
-    push @tables_decl, "};";
-    REPLACE_IN_FILE( $output, @tables_decl );
-}
-
-################################################################
 # replace the contents of a file between ### cpmap ### marks
 
 sub REPLACE_IN_FILE($@)
@@ -2640,8 +2615,6 @@ dump_nameprep( "dlls/kernel32/nameprep.c" );
 dump_intl_nls("nls/l_intl.nls");
 
 foreach my $file (@allfiles) { handle_codepage_file( @{$file} ); }
-
-output_cptable("libs/port/cptable.c");
 
 exit 0;
 

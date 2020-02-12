@@ -68,7 +68,6 @@ C_SRCS = \
 	c_950.c \
 	casemap.c \
 	compose.c \
-	cptable.c \
 	decompose.c \
 	ffs.c \
 	fstatvfs.c \

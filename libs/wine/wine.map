@@ -9,8 +9,6 @@ WINE_1.0
     wine_anon_mmap;
     wine_casemap_lower;
     wine_casemap_upper;
-    wine_cp_enum_table;
-    wine_cp_get_table;
     wine_dlclose;
     wine_dll_enum_load_path;
     wine_dll_set_callback;
@@ -32,7 +30,6 @@ WINE_1.0
     wine_get_version;
     wine_init;
     wine_init_argv0_path;
-    wine_is_dbcs_leadbyte;
     wine_ldt_alloc_entries;
     wine_ldt_alloc_fs;
     wine_ldt_copy;
@@ -100,6 +97,8 @@ WINE_1.0
     vsprintfW;
     wine_call_on_stack;
     wine_compare_string;
+    wine_cp_enum_table;
+    wine_cp_get_table;
     wine_cp_mbstowcs;
     wine_cp_wcstombs;
     wine_cpsymbol_mbstowcs;
@@ -115,6 +114,7 @@ WINE_1.0
     wine_dll_unload;
     wine_fold_string;
     wine_get_sortkey;
+    wine_is_dbcs_leadbyte;
     wine_pthread_get_functions;
     wine_pthread_set_functions;
     wine_switch_to_stack;

@@ -38,8 +38,6 @@ const void *libwine_port_functions[] =
 {
     strtolW,
     vsnprintfW,
-    wine_cp_enum_table,
-    wine_cp_get_table,
 };
 
 /* no longer used, for backwards compatibility only */
