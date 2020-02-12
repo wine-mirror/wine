@@ -23,7 +23,19 @@
 #pragma makedep implib
 #endif
 
-#include <math.h>
+#include <corecrt.h>
+
+double __cdecl sin(double);
+double __cdecl cos(double);
+double __cdecl tan(double);
+double __cdecl atan2(double, double);
+double __cdecl exp(double);
+double __cdecl log(double);
+double __cdecl pow(double, double);
+double __cdecl sqrt(double);
+double __cdecl floor(double);
+double __cdecl ceil(double);
+float __cdecl powf(float, float);
 
 #if defined(__i386__) || (_MSVCR_VER > 0 && _MSVCR_VER < 80)
 float sinf(float x) { return sin(x); }

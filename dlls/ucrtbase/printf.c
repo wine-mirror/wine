@@ -21,6 +21,7 @@
 #pragma makedep implib
 #endif
 
+#define _CRTIMP
 #include <stdarg.h>
 #include "msvcrt.h"
 

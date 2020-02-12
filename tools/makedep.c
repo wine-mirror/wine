@@ -1628,6 +1628,7 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
     source->files_size = file->deps_count;
     source->files = xmalloc( source->files_size * sizeof(*source->files) );
     if (file->flags & FLAG_C_UNIX) source->use_msvcrt = 0;
+    else if (file->flags & FLAG_C_IMPLIB) source->use_msvcrt = 1;
 
     if (source->sourcename)
     {

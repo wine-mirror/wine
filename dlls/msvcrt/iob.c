@@ -23,15 +23,15 @@
 #pragma makedep implib
 #endif
 
-#include "msvcrt.h"
+#include <stdio.h>
 
 #undef __iob_func
-extern MSVCRT_FILE * CDECL __iob_func(void);
+extern FILE * __cdecl __iob_func(void);
 
 /*********************************************************************
  *		__acrt_iob_func(UCRTBASE.@)
  */
-MSVCRT_FILE * CDECL __acrt_iob_func(unsigned idx)
+FILE * __cdecl __acrt_iob_func(unsigned idx)
 {
     return __iob_func() + idx;
 }
