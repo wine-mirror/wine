@@ -1254,3 +1254,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueueUserWorkItem( LPTHREAD_START_ROUTINE func, PV
 {
     return set_ntstatus( RtlQueueWorkItem( func, context, flags ));
 }
+
+/***********************************************************************
+ *           SetThreadpoolStackInformation   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetThreadpoolStackInformation( PTP_POOL pool, PTP_POOL_STACK_INFORMATION stack_info )
+{
+    return set_ntstatus( TpSetPoolStackInformation( pool, stack_info ));
+}
+
+/***********************************************************************
+ *           QueryThreadpoolStackInformation   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryThreadpoolStackInformation( PTP_POOL pool, PTP_POOL_STACK_INFORMATION stack_info )
+{
+    return set_ntstatus( TpQueryPoolStackInformation( pool, stack_info ));
+}

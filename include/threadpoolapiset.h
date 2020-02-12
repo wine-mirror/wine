@@ -43,9 +43,11 @@ WINBASEAPI void        WINAPI DisassociateCurrentThreadFromCallback(PTP_CALLBACK
 WINBASEAPI void        WINAPI FreeLibraryWhenCallbackReturns(PTP_CALLBACK_INSTANCE,HMODULE);
 WINBASEAPI BOOL        WINAPI IsThreadpoolTimerSet(PTP_TIMER);
 WINBASEAPI void        WINAPI LeaveCriticalSectionWhenCallbackReturns(PTP_CALLBACK_INSTANCE,RTL_CRITICAL_SECTION*);
+WINBASEAPI BOOL        WINAPI QueryThreadpoolStackInformation(PTP_POOL,PTP_POOL_STACK_INFORMATION);
 WINBASEAPI void        WINAPI ReleaseMutexWhenCallbackReturns(PTP_CALLBACK_INSTANCE,HANDLE);
 WINBASEAPI void        WINAPI ReleaseSemaphoreWhenCallbackReturns(PTP_CALLBACK_INSTANCE,HANDLE,DWORD);
 WINBASEAPI void        WINAPI SetEventWhenCallbackReturns(PTP_CALLBACK_INSTANCE,HANDLE);
+WINBASEAPI BOOL        WINAPI SetThreadpoolStackInformation(PTP_POOL,PTP_POOL_STACK_INFORMATION);
 WINBASEAPI void        WINAPI SetThreadpoolThreadMaximum(PTP_POOL,DWORD);
 WINBASEAPI BOOL        WINAPI SetThreadpoolThreadMinimum(PTP_POOL,DWORD);
 WINBASEAPI void        WINAPI SetThreadpoolTimer(PTP_TIMER,FILETIME*,DWORD,DWORD);

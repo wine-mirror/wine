@@ -22,12 +22,12 @@
 @ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) kernel32.FreeLibraryWhenCallbackReturns
 @ stdcall IsThreadpoolTimerSet(ptr) kernel32.IsThreadpoolTimerSet
 @ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) kernel32.LeaveCriticalSectionWhenCallbackReturns
-@ stub QueryThreadpoolStackInformation
+@ stdcall QueryThreadpoolStackInformation(ptr ptr) kernel32.QueryThreadpoolStackInformation
 @ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long) kernel32.RegisterWaitForSingleObjectEx
 @ stdcall ReleaseMutexWhenCallbackReturns(ptr long) kernel32.ReleaseMutexWhenCallbackReturns
 @ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) kernel32.ReleaseSemaphoreWhenCallbackReturns
 @ stdcall SetEventWhenCallbackReturns(ptr long) kernel32.SetEventWhenCallbackReturns
-@ stub SetThreadpoolStackInformation
+@ stdcall SetThreadpoolStackInformation(ptr ptr) kernel32.SetThreadpoolStackInformation
 @ stdcall SetThreadpoolThreadMaximum(ptr long) kernel32.SetThreadpoolThreadMaximum
 @ stdcall SetThreadpoolThreadMinimum(ptr long) kernel32.SetThreadpoolThreadMinimum
 @ stdcall SetThreadpoolTimer(ptr ptr long long) kernel32.SetThreadpoolTimer

@@ -1213,7 +1213,7 @@
 # @ stub QueryStateContainerCreatedNew
 # @ stub QueryStateContainerItemInfo
 @ stdcall QueryThreadCycleTime(long ptr) kernel32.QueryThreadCycleTime
-@ stub QueryThreadpoolStackInformation
+@ stdcall QueryThreadpoolStackInformation(ptr ptr)
 @ stdcall QueryUnbiasedInterruptTime(ptr) ntdll.RtlQueryUnbiasedInterruptTime
 # @ stub QueryUnbiasedInterruptTimePrecise
 # @ stub QueryVirtualMemoryInformation
@@ -1492,7 +1492,7 @@
 @ stdcall SetThreadStackGuarantee(ptr)
 @ stdcall SetThreadToken(ptr ptr)
 @ stdcall SetThreadUILanguage(long)
-@ stub SetThreadpoolStackInformation
+@ stdcall SetThreadpoolStackInformation(ptr ptr)
 @ stdcall SetThreadpoolThreadMaximum(ptr long) ntdll.TpSetPoolMaxThreads
 @ stdcall SetThreadpoolThreadMinimum(ptr long) ntdll.TpSetPoolMinThreads
 @ stdcall SetThreadpoolTimer(ptr ptr long long) ntdll.TpSetTimer
