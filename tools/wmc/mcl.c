@@ -153,8 +153,6 @@ static int codepage;
 void set_codepage(int cp)
 {
 	codepage = cp;
-	if (!is_valid_codepage( cp ))
-		xyyerror("Codepage %d not found; cannot process\n", codepage);
 }
 
 /*
@@ -226,8 +224,9 @@ static int fill_inputbuffer(void)
     {
     case INPUT_ASCII:
         if (!fgets( buffer + len, sizeof(buffer) - len, yyin )) break;
-        ninputbuffer = wmc_mbstowcs( codepage, 0, buffer, strlen(buffer), inputbuffer, INPUTBUFFER_SIZE );
-        if (ninputbuffer < 0) internal_error(__FILE__, __LINE__, "Could not translate to unicode\n");
+        wbuf = codepage_to_unicode( codepage, buffer, strlen(buffer), &ninputbuffer );
+        memcpy( inputbuffer, wbuf, ninputbuffer * sizeof(WCHAR) );
+        free( wbuf );
         return 1;
     case INPUT_UTF8:
         if (!fgets( buffer + len, sizeof(buffer) - len, yyin )) break;

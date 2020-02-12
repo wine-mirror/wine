@@ -185,31 +185,3 @@ const language_t *find_language(unsigned id)
 	return (const language_t *)bsearch(&id, languages, ARRAY_SIZE(languages),
 		sizeof(languages[0]), langcmp);
 }
-
-#ifdef _WIN32
-
-int is_valid_codepage(int id)
-{
-    return IsValidCodePage( id );
-}
-
-int wmc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
-{
-    return MultiByteToWideChar( codepage, flags, src, srclen, dst, dstlen );
-}
-
-#else  /* _WIN32 */
-
-#include "wine/unicode.h"
-
-int is_valid_codepage(int id)
-{
-    return id == CP_UTF8 || wine_cp_get_table(id);
-}
-
-int wmc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
-{
-    return wine_cp_mbstowcs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen );
-}
-
-#endif  /* _WIN32 */

@@ -29,6 +29,7 @@
 #include <ctype.h>
 
 #include "wmctypes.h"
+#include "winnls.h"
 #include "utils.h"
 #include "wmc.h"
 
@@ -399,6 +400,129 @@ char *unicode_to_utf8( const WCHAR *src, int srclen, int *dstlen )
     *dstlen = dst - ret;
     return ret;
 }
+
+#ifdef _WIN32
+
+int is_valid_codepage(int id)
+{
+    return IsValidCodePage( id );
+}
+
+WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstlen )
+{
+    WCHAR *dst = xmalloc( (srclen + 1) * sizeof(WCHAR) );
+    DWORD ret = MultiByteToWideChar( codepage, MB_ERR_INVALID_CHARS, src, srclen, dst, srclen );
+    if (!ret) return NULL;
+    dst[ret] = 0;
+    *dstlen = ret;
+    return dst;
+}
+
+#else  /* _WIN32 */
+
+struct nls_info
+{
+    unsigned short  codepage;
+    unsigned short  unidef;
+    unsigned short  trans_unidef;
+    unsigned short *cp2uni;
+    unsigned short *dbcs_offsets;
+};
+
+static struct nls_info nlsinfo[128];
+
+static void init_nls_info( struct nls_info *info, unsigned short *ptr )
+{
+    unsigned short hdr_size = ptr[0];
+
+    info->codepage      = ptr[1];
+    info->unidef        = ptr[4];
+    info->trans_unidef  = ptr[6];
+    ptr += hdr_size;
+    info->cp2uni = ++ptr;
+    ptr += 256;
+    if (*ptr++) ptr += 256;  /* glyph table */
+    info->dbcs_offsets  = *ptr ? ptr + 1 : NULL;
+}
+
+static const struct nls_info *get_nls_info( unsigned int codepage )
+{
+    struct stat st;
+    unsigned short *data;
+    char *path;
+    unsigned int i;
+    int fd;
+
+    for (i = 0; i < ARRAY_SIZE(nlsinfo) && nlsinfo[i].codepage; i++)
+        if (nlsinfo[i].codepage == codepage) return &nlsinfo[i];
+
+    assert( i < ARRAY_SIZE(nlsinfo) );
+
+    for (i = 0; nlsdirs[i]; i++)
+    {
+        path = strmake( "%s/c_%03u.nls", nlsdirs[i], codepage );
+        if ((fd = open( path, O_RDONLY )) != -1) break;
+        free( path );
+    }
+    if (!nlsdirs[i]) return NULL;
+
+    fstat( fd, &st );
+    data = xmalloc( st.st_size );
+    if (read( fd, data, st.st_size ) != st.st_size) error( "failed to load %s\n", path );
+    close( fd );
+    free( path );
+    init_nls_info( &nlsinfo[i], data );
+    return &nlsinfo[i];
+}
+
+int is_valid_codepage(int cp)
+{
+    return cp == CP_UTF8 || get_nls_info( cp );
+}
+
+WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstlen )
+{
+    const struct nls_info *info = get_nls_info( codepage );
+    unsigned int i;
+    WCHAR dbch, *dst = xmalloc( (srclen + 1) * sizeof(WCHAR) );
+
+    if (!info) error( "codepage %u not supported\n", codepage );
+
+    if (info->dbcs_offsets)
+    {
+        for (i = 0; srclen; i++, srclen--, src++)
+        {
+            unsigned short off = info->dbcs_offsets[(unsigned char)*src];
+            if (off)
+            {
+                if (srclen == 1) return NULL;
+                dbch = (src[0] << 8) | (unsigned char)src[1];
+                src++;
+                srclen--;
+                dst[i] = info->dbcs_offsets[off + (unsigned char)*src];
+                if (dst[i] == info->unidef && dbch != info->trans_unidef) return NULL;
+            }
+            else
+            {
+                dst[i] = info->cp2uni[(unsigned char)*src];
+                if (dst[i] == info->unidef && *src != info->trans_unidef) return NULL;
+            }
+        }
+    }
+    else
+    {
+        for (i = 0; i < srclen; i++)
+        {
+            dst[i] = info->cp2uni[(unsigned char)src[i]];
+            if (dst[i] == info->unidef && src[i] != info->trans_unidef) return NULL;
+        }
+    }
+    dst[i] = 0;
+    *dstlen = i;
+    return dst;
+}
+
+#endif  /* _WIN32 */
 
 /*******************************************************************
  *         buffer management
