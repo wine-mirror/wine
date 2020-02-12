@@ -28,7 +28,7 @@
 @ stub SetThreadpoolTimerEx
 @ stdcall SetThreadpoolWait(ptr long ptr) kernel32.SetThreadpoolWait
 @ stub SetThreadpoolWaitEx
-@ stub StartThreadpoolIo
+@ stdcall StartThreadpoolIo(ptr) kernel32.StartThreadpoolIo
 @ stdcall SubmitThreadpoolWork(ptr) kernel32.SubmitThreadpoolWork
 @ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr) kernel32.TrySubmitThreadpoolCallback
 @ stub WaitForThreadpoolIoCallbacks

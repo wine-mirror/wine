@@ -1490,7 +1490,7 @@
 @ stdcall -import SleepEx(long long)
 # @ stub SortCloseHandle
 # @ stub SortGetHandle
-# @ stub StartThreadpoolIo
+@ stdcall StartThreadpoolIo(ptr) ntdll.TpStartAsyncIoOperation
 @ stdcall SubmitThreadpoolWork(ptr) ntdll.TpPostWork
 @ stdcall -import SuspendThread(long)
 @ stdcall -import SwitchToFiber(ptr)

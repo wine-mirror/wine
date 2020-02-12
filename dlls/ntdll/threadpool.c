@@ -3031,3 +3031,11 @@ NTSTATUS WINAPI TpQueryPoolStackInformation( TP_POOL *pool, TP_POOL_STACK_INFORM
 
     return STATUS_SUCCESS;
 }
+
+/***********************************************************************
+ *           TpStartAsyncIoOperation    (NTDLL.@)
+ */
+void WINAPI TpStartAsyncIoOperation( TP_IO *io )
+{
+    FIXME( "%p\n", io );
+}

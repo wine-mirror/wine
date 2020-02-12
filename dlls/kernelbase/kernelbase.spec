@@ -1515,7 +1515,7 @@
 @ stdcall SleepConditionVariableSRW(ptr ptr long long)
 @ stdcall SleepEx(long long)
 @ stub SpecialMBToWC
-@ stub StartThreadpoolIo
+@ stdcall StartThreadpoolIo(ptr) ntdll.TpStartAsyncIoOperation
 # @ stub StmAlignSize
 # @ stub StmAllocateFlat
 # @ stub StmCoalesceChunks

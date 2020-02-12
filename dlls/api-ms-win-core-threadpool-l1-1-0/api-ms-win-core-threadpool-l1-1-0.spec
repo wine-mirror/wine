@@ -32,7 +32,7 @@
 @ stdcall SetThreadpoolThreadMinimum(ptr long) kernel32.SetThreadpoolThreadMinimum
 @ stdcall SetThreadpoolTimer(ptr ptr long long) kernel32.SetThreadpoolTimer
 @ stdcall SetThreadpoolWait(ptr long ptr) kernel32.SetThreadpoolWait
-@ stub StartThreadpoolIo
+@ stdcall StartThreadpoolIo(ptr) kernel32.StartThreadpoolIo
 @ stdcall SubmitThreadpoolWork(ptr) kernel32.SubmitThreadpoolWork
 @ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr) kernel32.TrySubmitThreadpoolCallback
 @ stdcall UnregisterWaitEx(long long) kernel32.UnregisterWaitEx
