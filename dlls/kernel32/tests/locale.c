@@ -2364,6 +2364,7 @@ static void test_LCMapStringA(void)
     ok(!ret, "src == dst without LCMAP_UPPERCASE or LCMAP_LOWERCASE must fail\n");
 
     /* test whether '\0' is always appended */
+    memset(buf, 0xff, sizeof(buf));
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
                        upper_case, -1, buf, sizeof(buf));
     ok(ret, "LCMapStringA must succeed\n");
