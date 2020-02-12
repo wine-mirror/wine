@@ -436,11 +436,57 @@ static LRESULT CALLBACK data_link_advanced_dlg_proc(HWND hwnd, UINT msg, WPARAM 
     return 0;
 }
 
+static void create_page_all_columns(HWND lv)
+{
+    RECT rc;
+    WCHAR buf[256];
+    LVCOLUMNW column;
+
+    SendMessageW(lv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+    GetWindowRect(lv, &rc);
+    LoadStringW(instance, IDS_COL_NAME, buf, ARRAY_SIZE(buf));
+    column.mask = LVCF_WIDTH | LVCF_TEXT;
+    column.cx = (rc.right / 2);
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+
+    LoadStringW(instance, IDS_COL_VALUE, buf, ARRAY_SIZE(buf));
+    column.mask = LVCF_WIDTH | LVCF_TEXT;
+    column.cx = (rc.right / 2);
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+}
+
+static LRESULT CALLBACK data_link_all_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            HWND lv = GetDlgItem(hwnd, IDC_LST_PROPERTIES);
+            create_page_all_columns(lv);
+            break;
+        }
+        case WM_COMMAND:
+        {
+            if (LOWORD(wp) == IDC_BTN_EDIT)
+            {
+                 /* TODO: Implement Connection dialog */
+                 MessageBoxA(hwnd, "Not implemented yet.", "Error", MB_OK | MB_ICONEXCLAMATION);
+            }
+         }
+     }
+
+     return 0;
+ }
+
 static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch **connection)
 {
     DSLocatorImpl *This = impl_from_IDataSourceLocator(iface);
     PROPSHEETHEADERW hdr;
-    PROPSHEETPAGEW pages[3];
+    PROPSHEETPAGEW pages[4];
     INT_PTR ret;
 
     FIXME("(%p, %p) Semi-stub\n", iface, connection);
@@ -466,6 +512,11 @@ static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch *
     pages[2].hInstance = instance;
     pages[2].u.pszTemplate = MAKEINTRESOURCEW(IDD_ADVANCED);
     pages[2].pfnDlgProc = data_link_advanced_dlg_proc;
+
+    pages[3].dwSize = sizeof(pages[0]);
+    pages[3].hInstance = instance;
+    pages[3].u.pszTemplate = MAKEINTRESOURCEW(IDD_ALL);
+    pages[3].pfnDlgProc = data_link_all_dlg_proc;
 
     memset(&hdr, 0, sizeof(hdr));
     hdr.dwSize = sizeof(hdr);

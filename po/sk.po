@@ -225,7 +225,8 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nešpecifikovaný"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr "Názov"
 
@@ -368,7 +369,7 @@ msgstr "Sprievodca"
 msgid "< &Back"
 msgstr "< &Naspäť"
 
-#: comctl32.rc:85 version.rc:55
+#: comctl32.rc:85 version.rc:57
 msgid "&Next >"
 msgstr "&Ďalej >"
 
@@ -1243,7 +1244,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Užívateľské meno:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:75
+#: credui.rc:48 cryptui.rc:402 version.rc:77
 msgid "&Password:"
 msgstr "&Heslo:"
 
@@ -2530,7 +2531,7 @@ msgstr ""
 msgid "Field"
 msgstr "Pole"
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr "Hodnota"
 
@@ -3073,7 +3074,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
-#: gdi32.rc:45 version.rc:94 wldap32.rc:112
+#: gdi32.rc:45 version.rc:96 wldap32.rc:112
 msgid "Other"
 msgstr ""
 
@@ -3138,7 +3139,7 @@ msgstr "&Domov"
 msgid "&Stop"
 msgstr "&Zastaviť"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:69 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Obnoviť"
 
@@ -8491,119 +8492,137 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
-#: version.rc:50
+#: version.rc:52
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "video"
 
-#: version.rc:53
+#: version.rc:55
 msgid "Select the data you want to connect to:"
 msgstr ""
 
-#: version.rc:60
+#: version.rc:62
 #, fuzzy
 #| msgid "Activation"
 msgid "Connection"
 msgstr "Aktivácia"
 
-#: version.rc:63
+#: version.rc:65
 msgid "Specify the following to connect to ODBC data:"
 msgstr ""
 
-#: version.rc:64
+#: version.rc:66
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:65
+#: version.rc:67
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "Prosím vložte svoje meno"
 
-#: version.rc:68
+#: version.rc:70
 #, fuzzy
 #| msgid "Activation"
 msgid "Use c&onnection string"
 msgstr "Aktivácia"
 
-#: version.rc:69
+#: version.rc:71
 #, fuzzy
 #| msgid "Activation"
 msgid "&Connection string:"
 msgstr "Aktivácia"
 
-#: version.rc:71
+#: version.rc:73
 #, fuzzy
 #| msgid "&Add..."
 msgid "B&uild..."
 msgstr "&Pridať..."
 
-#: version.rc:72
+#: version.rc:74
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:73
+#: version.rc:75
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Užívateľské meno:"
 
-#: version.rc:77
+#: version.rc:79
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "&Prázdna stránka"
 
-#: version.rc:78
+#: version.rc:80
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "Nesprávne heslo.\n"
 
-#: version.rc:79
+#: version.rc:81
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:81
+#: version.rc:83
 #, fuzzy
 #| msgid "Activation"
 msgid "&Test Connection"
 msgstr "Aktivácia"
 
-#: version.rc:86 winemine.rc:65
+#: version.rc:88 winemine.rc:65
 msgid "Advanced"
 msgstr "Pokročilý"
 
-#: version.rc:89
+#: version.rc:91
 #, fuzzy
 #| msgid "Window settings"
 msgid "Network settings"
 msgstr "Nastavenia okna"
 
-#: version.rc:90
+#: version.rc:92
 msgid "&Impersonation level:"
 msgstr ""
 
-#: version.rc:92
+#: version.rc:94
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:95
+#: version.rc:97
 #, fuzzy
 msgid "Connect:"
 msgstr "Súbor nenájdený"
 
-#: version.rc:97
+#: version.rc:99
 #, fuzzy
 #| msgid "&Seconds"
 msgid "seconds."
 msgstr "&Sekundy"
 
-#: version.rc:98
+#: version.rc:100
 #, fuzzy
 msgid "A&ccess:"
 msgstr "&Dátum"
+
+#: version.rc:106
+#, fuzzy
+#| msgid "&All"
+msgid "All"
+msgstr "Vytlačiť &všetko"
+
+#: version.rc:110
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:111
+#, fuzzy
+#| msgid "&Edit..."
+msgid "&Edit Value..."
+msgstr "&Upraviť..."
 
 #: version.rc:36
 #, fuzzy
@@ -8618,35 +8637,35 @@ msgstr ""
 msgid "OLE DB Provider(s)"
 msgstr ""
 
-#: version.rc:39
+#: version.rc:41
 #, fuzzy
 #| msgid "Ready"
 msgid "Read"
 msgstr "Pripravená"
 
-#: version.rc:40
+#: version.rc:42
 #, fuzzy
 #| msgid "Readme:"
 msgid "ReadWrite"
 msgstr "Čítaj ma:"
 
-#: version.rc:41
+#: version.rc:43
 msgid "Share Deny None"
 msgstr ""
 
-#: version.rc:42
+#: version.rc:44
 msgid "Share Deny Read"
 msgstr ""
 
-#: version.rc:43
+#: version.rc:45
 msgid "Share Deny Write"
 msgstr ""
 
-#: version.rc:44
+#: version.rc:46
 msgid "Share Exclusive"
 msgstr ""
 
-#: version.rc:45
+#: version.rc:47
 msgid "Write"
 msgstr ""
 

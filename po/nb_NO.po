@@ -206,7 +206,8 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ikke oppgitt"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr "Navn"
 
@@ -347,7 +348,7 @@ msgstr "Veiviser"
 msgid "< &Back"
 msgstr "< Til&bake"
 
-#: comctl32.rc:85 version.rc:55
+#: comctl32.rc:85 version.rc:57
 msgid "&Next >"
 msgstr "&Neste >"
 
@@ -1220,7 +1221,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "Br&ukernavn:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:75
+#: credui.rc:48 cryptui.rc:402 version.rc:77
 msgid "&Password:"
 msgstr "&Passord:"
 
@@ -2540,7 +2541,7 @@ msgstr "Dette sertifikatet er OK."
 msgid "Field"
 msgstr "Felt"
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr "Verdi"
 
@@ -3117,7 +3118,7 @@ msgstr "Symbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:94 wldap32.rc:112
+#: gdi32.rc:45 version.rc:96 wldap32.rc:112
 msgid "Other"
 msgstr "Annen"
 
@@ -3182,7 +3183,7 @@ msgstr "&Hjem"
 msgid "&Stop"
 msgstr "&Stopp"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:69 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "Oppdate&r"
 
@@ -8399,125 +8400,143 @@ msgstr "På"
 msgid "Off"
 msgstr "Av"
 
-#: version.rc:50
+#: version.rc:52
 msgid "Provider"
 msgstr "Tilbyder"
 
-#: version.rc:53
+#: version.rc:55
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Velg formatet du ønsker å bruke:"
 
-#: version.rc:60
+#: version.rc:62
 #, fuzzy
 #| msgid "Connections"
 msgid "Connection"
 msgstr "Nettverksforbindelser"
 
-#: version.rc:63
+#: version.rc:65
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Velg formatet du ønsker å bruke:"
 
-#: version.rc:64
+#: version.rc:66
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:65
+#: version.rc:67
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "Skriv inn navnet ditt"
 
-#: version.rc:68
+#: version.rc:70
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "Tilbakestill tilkoblinger"
 
-#: version.rc:69
+#: version.rc:71
 #, fuzzy
 #| msgid "Connections"
 msgid "&Connection string:"
 msgstr "Nettverksforbindelser"
 
-#: version.rc:71
+#: version.rc:73
 #, fuzzy
 #| msgid "A&dd..."
 msgid "B&uild..."
 msgstr "&Legg til..."
 
-#: version.rc:72
+#: version.rc:74
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:73
+#: version.rc:75
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "Br&ukernavn:"
 
-#: version.rc:77
+#: version.rc:79
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "&Tom side"
 
-#: version.rc:78
+#: version.rc:80
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "Feil passord.\n"
 
-#: version.rc:79
+#: version.rc:81
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:81
+#: version.rc:83
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "Tilbakestill tilkoblinger"
 
-#: version.rc:86 winemine.rc:65
+#: version.rc:88 winemine.rc:65
 msgid "Advanced"
 msgstr "Avansert"
 
-#: version.rc:89
+#: version.rc:91
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "Nettverksressurs"
 
-#: version.rc:90
+#: version.rc:92
 #, fuzzy
 #| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
 msgstr "Ugyldig personifiseringsnivå.\n"
 
-#: version.rc:92
+#: version.rc:94
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:95
+#: version.rc:97
 #, fuzzy
 #| msgid "Connected"
 msgid "Connect:"
 msgstr "Tilkoblet"
 
-#: version.rc:97
+#: version.rc:99
 #, fuzzy
 #| msgid "seconds"
 msgid "seconds."
 msgstr "sekunder"
 
-#: version.rc:98
+#: version.rc:100
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "Suksess"
+
+#: version.rc:106
+#, fuzzy
+#| msgid "&All"
+msgid "All"
+msgstr "&Alt"
+
+#: version.rc:110
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:111
+#, fuzzy
+#| msgid "&Edit..."
+msgid "&Edit Value..."
+msgstr "R&ediger..."
 
 #: version.rc:36
 #, fuzzy
@@ -8529,35 +8548,35 @@ msgstr "Egenskaper"
 msgid "OLE DB Provider(s)"
 msgstr ""
 
-#: version.rc:39
+#: version.rc:41
 #, fuzzy
 #| msgid "Ready"
 msgid "Read"
 msgstr "Klar"
 
-#: version.rc:40
+#: version.rc:42
 #, fuzzy
 #| msgid "Readme:"
 msgid "ReadWrite"
 msgstr "Lesmeg-fil:"
 
-#: version.rc:41
+#: version.rc:43
 msgid "Share Deny None"
 msgstr ""
 
-#: version.rc:42
+#: version.rc:44
 msgid "Share Deny Read"
 msgstr ""
 
-#: version.rc:43
+#: version.rc:45
 msgid "Share Deny Write"
 msgstr ""
 
-#: version.rc:44
+#: version.rc:46
 msgid "Share Exclusive"
 msgstr ""
 
-#: version.rc:45
+#: version.rc:47
 #, fuzzy
 #| msgid "I/O Writes"
 msgid "Write"

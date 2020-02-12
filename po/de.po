@@ -208,7 +208,8 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nicht angegeben"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr "Name"
 
@@ -349,7 +350,7 @@ msgstr "Assistent"
 msgid "< &Back"
 msgstr "< &Zurück"
 
-#: comctl32.rc:85 version.rc:55
+#: comctl32.rc:85 version.rc:57
 msgid "&Next >"
 msgstr "&Weiter >"
 
@@ -1223,7 +1224,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Benutzername:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:75
+#: credui.rc:48 cryptui.rc:402 version.rc:77
 msgid "&Password:"
 msgstr "&Kennwort:"
 
@@ -2540,7 +2541,7 @@ msgstr "Dieses Zertifikat ist gültig."
 msgid "Field"
 msgstr "Feld"
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr "Wert"
 
@@ -3118,7 +3119,7 @@ msgstr "Symbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:94 wldap32.rc:112
+#: gdi32.rc:45 version.rc:96 wldap32.rc:112
 msgid "Other"
 msgstr "Andere"
 
@@ -3183,7 +3184,7 @@ msgstr "St&art"
 msgid "&Stop"
 msgstr "&Stopp"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:69 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "A&ktualisieren"
 
@@ -8321,103 +8322,121 @@ msgstr "Ein"
 msgid "Off"
 msgstr "Aus"
 
-#: version.rc:50
+#: version.rc:52
 msgid "Provider"
 msgstr "Anbieter"
 
-#: version.rc:53
+#: version.rc:55
 msgid "Select the data you want to connect to:"
 msgstr "Wählen Sie die zu verbindenden Daten aus:"
 
-#: version.rc:60
+#: version.rc:62
 msgid "Connection"
 msgstr "Verbindung"
 
-#: version.rc:63
+#: version.rc:65
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Geben Sie folgendes an, um sich mit ODBC-Daten zu verbinden:"
 
-#: version.rc:64
+#: version.rc:66
 msgid "1. Specify the source of data:"
 msgstr "1. Geben Sie die Datenquelle an:"
 
-#: version.rc:65
+#: version.rc:67
 msgid "Use &data source name"
 msgstr "&Datenquellennamen verwenden"
 
-#: version.rc:68
+#: version.rc:70
 msgid "Use c&onnection string"
 msgstr "Verbindungs-Zeichenkette &verwenden"
 
-#: version.rc:69
+#: version.rc:71
 msgid "&Connection string:"
 msgstr "Verbindungs-&Zeichenkette:"
 
-#: version.rc:71
+#: version.rc:73
 msgid "B&uild..."
 msgstr "B&uild..."
 
-#: version.rc:72
+#: version.rc:74
 msgid "2. Enter information to log on to the server"
 msgstr "2. Zugangsdaten zum Login auf Server"
 
-#: version.rc:73
+#: version.rc:75
 msgid "User &name:"
 msgstr "&Benutzername:"
 
-#: version.rc:77
+#: version.rc:79
 msgid "&Blank password"
 msgstr "&Leeres Kennwort"
 
-#: version.rc:78
+#: version.rc:80
 msgid "Allow &saving password"
 msgstr "Kennwort &speichern"
 
-#: version.rc:79
+#: version.rc:81
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Folgenden Initialkatalog verwenden:"
 
-#: version.rc:81
+#: version.rc:83
 msgid "&Test Connection"
 msgstr "Verbindung &testen"
 
-#: version.rc:86 winemine.rc:65
+#: version.rc:88 winemine.rc:65
 msgid "Advanced"
 msgstr "Fortgeschrittene"
 
-#: version.rc:89
+#: version.rc:91
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "Netzwerkfreigabe"
 
-#: version.rc:90
+#: version.rc:92
 #, fuzzy
 #| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
 msgstr "Fehlerhafte Imitationsstufe.\n"
 
-#: version.rc:92
+#: version.rc:94
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:95
+#: version.rc:97
 #, fuzzy
 #| msgid "Connected"
 msgid "Connect:"
 msgstr "Verbunden"
 
-#: version.rc:97
+#: version.rc:99
 #, fuzzy
 #| msgid "seconds"
 msgid "seconds."
 msgstr "Sekunden"
 
-#: version.rc:98
+#: version.rc:100
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "Erfolgreich"
+
+#: version.rc:106
+#, fuzzy
+#| msgid "&All"
+msgid "All"
+msgstr "&Alles"
+
+#: version.rc:110
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:111
+#, fuzzy
+#| msgid "&Edit..."
+msgid "&Edit Value..."
+msgstr "&Bearbeiten..."
 
 #: version.rc:36
 msgid "Data Link Properties"
@@ -8427,35 +8446,35 @@ msgstr "Eigenschaften der Datenverbindung"
 msgid "OLE DB Provider(s)"
 msgstr "OLE DB-Anbieter"
 
-#: version.rc:39
+#: version.rc:41
 #, fuzzy
 #| msgid "Ready"
 msgid "Read"
 msgstr "Bereit"
 
-#: version.rc:40
+#: version.rc:42
 #, fuzzy
 #| msgid "Readme:"
 msgid "ReadWrite"
 msgstr "Liesmich:"
 
-#: version.rc:41
+#: version.rc:43
 msgid "Share Deny None"
 msgstr ""
 
-#: version.rc:42
+#: version.rc:44
 msgid "Share Deny Read"
 msgstr ""
 
-#: version.rc:43
+#: version.rc:45
 msgid "Share Deny Write"
 msgstr ""
 
-#: version.rc:44
+#: version.rc:46
 msgid "Share Exclusive"
 msgstr ""
 
-#: version.rc:45
+#: version.rc:47
 #, fuzzy
 #| msgid "I/O Writes"
 msgid "Write"

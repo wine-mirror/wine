@@ -190,7 +190,8 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr ""
 
@@ -331,7 +332,7 @@ msgstr "Βοηθός"
 msgid "< &Back"
 msgstr "< &Προηγούμενο"
 
-#: comctl32.rc:85 version.rc:55
+#: comctl32.rc:85 version.rc:57
 msgid "&Next >"
 msgstr "&Επόμενο >"
 
@@ -1210,7 +1211,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr ""
 
-#: credui.rc:48 cryptui.rc:402 version.rc:75
+#: credui.rc:48 cryptui.rc:402 version.rc:77
 msgid "&Password:"
 msgstr ""
 
@@ -2501,7 +2502,7 @@ msgstr ""
 msgid "Field"
 msgstr ""
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr ""
 
@@ -3052,7 +3053,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
-#: gdi32.rc:45 version.rc:94 wldap32.rc:112
+#: gdi32.rc:45 version.rc:96 wldap32.rc:112
 msgid "Other"
 msgstr ""
 
@@ -3120,7 +3121,7 @@ msgstr ""
 msgid "&Stop"
 msgstr "Τερματισμός"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:69 shdoclc.rc:59
 #, fuzzy
 msgid "&Refresh"
 msgstr "Ανανέωση"
@@ -8396,102 +8397,119 @@ msgstr "Ενεργό"
 msgid "Off"
 msgstr "Ανενεργό"
 
-#: version.rc:50
+#: version.rc:52
 msgid "Provider"
 msgstr ""
 
-#: version.rc:53
+#: version.rc:55
 msgid "Select the data you want to connect to:"
 msgstr ""
 
-#: version.rc:60
+#: version.rc:62
 #, fuzzy
 msgid "Connection"
 msgstr "Επιλογές"
 
-#: version.rc:63
+#: version.rc:65
 msgid "Specify the following to connect to ODBC data:"
 msgstr ""
 
-#: version.rc:64
+#: version.rc:66
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:65
+#: version.rc:67
 msgid "Use &data source name"
 msgstr ""
 
-#: version.rc:68
+#: version.rc:70
 #, fuzzy
 msgid "Use c&onnection string"
 msgstr "Επιλογές"
 
-#: version.rc:69
+#: version.rc:71
 #, fuzzy
 msgid "&Connection string:"
 msgstr "Επιλογές"
 
-#: version.rc:71
+#: version.rc:73
 msgid "B&uild..."
 msgstr ""
 
-#: version.rc:72
+#: version.rc:74
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:73
+#: version.rc:75
 #, fuzzy
 #| msgid "File &name:"
 msgid "User &name:"
 msgstr "Όνομα &αρχείου:"
 
-#: version.rc:77
+#: version.rc:79
 msgid "&Blank password"
 msgstr ""
 
-#: version.rc:78
+#: version.rc:80
 msgid "Allow &saving password"
 msgstr ""
 
-#: version.rc:79
+#: version.rc:81
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:81
+#: version.rc:83
 #, fuzzy
 msgid "&Test Connection"
 msgstr "Επιλογές"
 
-#: version.rc:86 winemine.rc:65
+#: version.rc:88 winemine.rc:65
 msgid "Advanced"
 msgstr ""
 
-#: version.rc:89
+#: version.rc:91
 #, fuzzy
 msgid "Network settings"
 msgstr "Επιλογές"
 
-#: version.rc:90
+#: version.rc:92
 msgid "&Impersonation level:"
 msgstr ""
 
-#: version.rc:92
+#: version.rc:94
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:95
+#: version.rc:97
 #, fuzzy
 msgid "Connect:"
 msgstr "Το αρχείο δε βρέθηκε"
 
-#: version.rc:97
+#: version.rc:99
 msgid "seconds."
 msgstr ""
 
-#: version.rc:98
+#: version.rc:100
 #, fuzzy
 msgid "A&ccess:"
 msgstr "Τοπικοί Σκληροί Δίσκοι"
+
+#: version.rc:106
+#, fuzzy
+#| msgid "&All"
+msgid "All"
+msgstr "&Όλα"
+
+#: version.rc:110
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:111
+#, fuzzy
+msgid "&Edit Value..."
+msgstr "Εκτύπωση"
 
 #: version.rc:36
 #, fuzzy
@@ -8502,34 +8520,34 @@ msgstr "Επιλογές"
 msgid "OLE DB Provider(s)"
 msgstr ""
 
-#: version.rc:39
+#: version.rc:41
 #, fuzzy
 #| msgid "Ready"
 msgid "Read"
 msgstr "Έτοιμο"
 
-#: version.rc:40
+#: version.rc:42
 #, fuzzy
 msgid "ReadWrite"
 msgstr "Έτοιμο"
 
-#: version.rc:41
+#: version.rc:43
 msgid "Share Deny None"
 msgstr ""
 
-#: version.rc:42
+#: version.rc:44
 msgid "Share Deny Read"
 msgstr ""
 
-#: version.rc:43
+#: version.rc:45
 msgid "Share Deny Write"
 msgstr ""
 
-#: version.rc:44
+#: version.rc:46
 msgid "Share Exclusive"
 msgstr ""
 
-#: version.rc:45
+#: version.rc:47
 msgid "Write"
 msgstr ""
 

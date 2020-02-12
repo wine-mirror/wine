@@ -57,3 +57,9 @@
 #define IDC_GRP_NETWORK       4005
 #define IDC_LBL_LEVEL         4006
 #define IDC_LBL_PROTECTION    4007
+
+#define IDD_ALL               5010
+#define IDC_BTN_EDIT_ALL      5011
+#define IDC_LST_PROPERTIES    5012
+#define IDS_COL_NAME          5013
+#define IDS_COL_VALUE         5014

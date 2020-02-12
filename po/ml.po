@@ -191,7 +191,8 @@ msgstr ""
 msgid "Not specified"
 msgstr "വ്യക്തമാക്കിയിട്ടില്ല"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr "പേര്"
 
@@ -331,7 +332,7 @@ msgstr ""
 msgid "< &Back"
 msgstr "< തിരികെ (&B)"
 
-#: comctl32.rc:85 version.rc:55
+#: comctl32.rc:85 version.rc:57
 msgid "&Next >"
 msgstr ""
 
@@ -1196,7 +1197,7 @@ msgstr ""
 msgid "&User name:"
 msgstr ""
 
-#: credui.rc:48 cryptui.rc:402 version.rc:75
+#: credui.rc:48 cryptui.rc:402 version.rc:77
 msgid "&Password:"
 msgstr ""
 
@@ -2489,7 +2490,7 @@ msgstr ""
 msgid "Field"
 msgstr ""
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr ""
 
@@ -3032,7 +3033,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
-#: gdi32.rc:45 version.rc:94 wldap32.rc:112
+#: gdi32.rc:45 version.rc:96 wldap32.rc:112
 msgid "Other"
 msgstr ""
 
@@ -3098,7 +3099,7 @@ msgstr ""
 msgid "&Stop"
 msgstr ""
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:67 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:69 shdoclc.rc:59
 msgid "&Refresh"
 msgstr ""
 
@@ -8207,98 +8208,113 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
-#: version.rc:50
+#: version.rc:52
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "വീഡിയോ"
 
-#: version.rc:53
+#: version.rc:55
 msgid "Select the data you want to connect to:"
 msgstr ""
 
-#: version.rc:60
+#: version.rc:62
 msgid "Connection"
 msgstr ""
 
-#: version.rc:63
+#: version.rc:65
 msgid "Specify the following to connect to ODBC data:"
 msgstr ""
 
-#: version.rc:64
+#: version.rc:66
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:65
+#: version.rc:67
 msgid "Use &data source name"
 msgstr ""
 
-#: version.rc:68
+#: version.rc:70
 msgid "Use c&onnection string"
 msgstr ""
 
-#: version.rc:69
+#: version.rc:71
 msgid "&Connection string:"
 msgstr ""
 
-#: version.rc:71
+#: version.rc:73
 msgid "B&uild..."
 msgstr ""
 
-#: version.rc:72
+#: version.rc:74
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:73
+#: version.rc:75
 msgid "User &name:"
 msgstr ""
 
-#: version.rc:77
+#: version.rc:79
 msgid "&Blank password"
 msgstr ""
 
-#: version.rc:78
+#: version.rc:80
 msgid "Allow &saving password"
 msgstr ""
 
-#: version.rc:79
+#: version.rc:81
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:81
+#: version.rc:83
 msgid "&Test Connection"
 msgstr ""
 
-#: version.rc:86 winemine.rc:65
+#: version.rc:88 winemine.rc:65
 msgid "Advanced"
 msgstr ""
 
-#: version.rc:89
+#: version.rc:91
 msgid "Network settings"
 msgstr ""
 
-#: version.rc:90
+#: version.rc:92
 msgid "&Impersonation level:"
 msgstr ""
 
-#: version.rc:92
+#: version.rc:94
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:95
+#: version.rc:97
 msgid "Connect:"
 msgstr ""
 
-#: version.rc:97
+#: version.rc:99
 #, fuzzy
 #| msgid "seconds"
 msgid "seconds."
 msgstr "സെക്കന്‍ഡുകള്‍"
 
-#: version.rc:98
+#: version.rc:100
 #, fuzzy
 msgid "A&ccess:"
 msgstr "_തീയതി"
+
+#: version.rc:106
+msgid "All"
+msgstr ""
+
+#: version.rc:110
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:111
+#, fuzzy
+msgid "&Edit Value..."
+msgstr "_അക്ഷരസഞ്ചയം..."
 
 #: version.rc:36
 #, fuzzy
@@ -8309,35 +8325,35 @@ msgstr "വി_വരം"
 msgid "OLE DB Provider(s)"
 msgstr ""
 
-#: version.rc:39
+#: version.rc:41
 #, fuzzy
 #| msgid "Readme:"
 msgid "Read"
 msgstr "എന്നെ വായിക്കൂ:"
 
-#: version.rc:40
+#: version.rc:42
 #, fuzzy
 #| msgid "Readme:"
 msgid "ReadWrite"
 msgstr "എന്നെ വായിക്കൂ:"
 
-#: version.rc:41
+#: version.rc:43
 msgid "Share Deny None"
 msgstr ""
 
-#: version.rc:42
+#: version.rc:44
 msgid "Share Deny Read"
 msgstr ""
 
-#: version.rc:43
+#: version.rc:45
 msgid "Share Deny Write"
 msgstr ""
 
-#: version.rc:44
+#: version.rc:46
 msgid "Share Exclusive"
 msgstr ""
 
-#: version.rc:45
+#: version.rc:47
 msgid "Write"
 msgstr ""
 

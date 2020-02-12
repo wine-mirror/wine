@@ -35,6 +35,8 @@ STRINGTABLE
 {
     IDS_PROPSHEET_TITLE    "Data Link Properties"
     IDS_COL_PROVIDER       "OLE DB Provider(s)"
+    IDS_COL_NAME           "Name"
+    IDS_COL_VALUE          "Value"
 
     IDS_PERM_READ           "Read"
     IDS_PERM_READWRITE      "ReadWrite"
@@ -97,4 +99,14 @@ BEGIN
     LTEXT           "seconds.",-1,133,75,28,8
     LTEXT           "A&ccess:",-1,14,91,100,8
     CONTROL         "",IDC_LST_PERMISSIONS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | LVS_NOLABELWRAP | LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,83,91,131,55
+END
+
+IDD_ALL DIALOG 0, 0, 227, 225
+STYLE DS_SETFONT | WS_CHILD | WS_CAPTION
+CAPTION "All"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "",IDC_LST_PROPERTIES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,33,213,155
+    LTEXT           "These are the initialization properties for this type of data. To edit a value, select a property, then choose Edit Value below.",-1,7,7,213,23
+    PUSHBUTTON      "&Edit Value...",IDC_BTN_EDIT_ALL,7,194,60,14
 END
