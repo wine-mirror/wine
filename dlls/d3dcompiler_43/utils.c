@@ -2186,7 +2186,6 @@ static void free_ir_constructor(struct hlsl_ir_constructor *constructor)
 
 static void free_ir_expr(struct hlsl_ir_expr *expr)
 {
-    free_instr_list(expr->subexpressions);
     d3dcompiler_free(expr);
 }
 

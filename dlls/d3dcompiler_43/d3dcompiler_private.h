@@ -879,7 +879,6 @@ struct hlsl_ir_expr
     struct hlsl_ir_node node;
     enum hlsl_ir_expr_op op;
     struct hlsl_ir_node *operands[3];
-    struct list *subexpressions;
 };
 
 enum hlsl_ir_jump_type
