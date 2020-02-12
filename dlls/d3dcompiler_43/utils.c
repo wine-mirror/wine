@@ -2202,6 +2202,12 @@ static void free_ir_if(struct hlsl_ir_if *if_node)
     d3dcompiler_free(if_node);
 }
 
+static void free_ir_loop(struct hlsl_ir_loop *loop)
+{
+    free_instr_list(loop->body);
+    d3dcompiler_free(loop);
+}
+
 static void free_ir_jump(struct hlsl_ir_jump *jump)
 {
     d3dcompiler_free(jump);
@@ -2231,6 +2237,9 @@ void free_instr(struct hlsl_ir_node *node)
             break;
         case HLSL_IR_IF:
             free_ir_if(if_from_node(node));
+            break;
+        case HLSL_IR_LOOP:
+            free_ir_loop(loop_from_node(node));
             break;
         case HLSL_IR_JUMP:
             free_ir_jump(jump_from_node(node));
