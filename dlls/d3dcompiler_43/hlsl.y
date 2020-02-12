@@ -2455,7 +2455,9 @@ expr:                     assignment_expr
                             }
                         | expr ',' assignment_expr
                             {
-                                FIXME("Comma expression\n");
+                                $$ = $1;
+                                list_move_tail($$, $3);
+                                d3dcompiler_free($3);
                             }
 
 %%
