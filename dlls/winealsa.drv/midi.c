@@ -243,33 +243,26 @@ static int midiOpenSeq(BOOL create_client)
 	    return -1;
 	}
 
-	if (create_client) {
-	    /* Setting the client name is the only init to do */
-	    snd_seq_set_client_name(midiSeq, "WINE midi driver");
+        if (create_client) {
+            /* Setting the client name is the only init to do */
+            snd_seq_set_client_name(midiSeq, "WINE midi driver");
 
-#if 0 /* FIXME: Is it possible to use a port for READ & WRITE ops */
-            port_in = port_out = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input/Output", SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_WRITE,
-	             	                                                 SND_SEQ_PORT_TYPE_APPLICATION);
+            port_out = snd_seq_create_simple_port(midiSeq, "WINE ALSA Output",
+                    SND_SEQ_PORT_CAP_READ,
+                    SND_SEQ_PORT_TYPE_APPLICATION);
             if (port_out < 0)
-               TRACE("Unable to create output port\n");
+                TRACE("Unable to create output port\n");
             else
-	       TRACE("Outport port %d created successfully\n", port_out);
-#else
-            port_out = snd_seq_create_simple_port(midiSeq, "WINE ALSA Output", SND_SEQ_PORT_CAP_READ,
-	                 	                                                 SND_SEQ_PORT_TYPE_APPLICATION);
-	    if (port_out < 0)
-		TRACE("Unable to create output port\n");
-	    else
-		TRACE("Outport port %d created successfully\n", port_out);
+                TRACE("Outport port %d created successfully\n", port_out);
 
-	    port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input", SND_SEQ_PORT_CAP_WRITE,
-	             	                                               SND_SEQ_PORT_TYPE_APPLICATION);
+            port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input",
+                    SND_SEQ_PORT_CAP_WRITE,
+                    SND_SEQ_PORT_TYPE_APPLICATION);
             if (port_in < 0)
                 TRACE("Unable to create input port\n");
             else
-	        TRACE("Input port %d created successfully\n", port_in);
-#endif
-       }
+                TRACE("Input port %d created successfully\n", port_in);
+        }
     }
     numOpenMidiSeq++;
     LeaveCriticalSection(&midiSeqLock);
