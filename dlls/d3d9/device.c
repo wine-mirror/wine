@@ -2661,14 +2661,26 @@ static HRESULT WINAPI d3d9_device_SetTextureStageState(IDirect3DDevice9Ex *iface
 }
 
 static HRESULT WINAPI d3d9_device_GetSamplerState(IDirect3DDevice9Ex *iface,
-        DWORD sampler, D3DSAMPLERSTATETYPE state, DWORD *value)
+        DWORD sampler_idx, D3DSAMPLERSTATETYPE state, DWORD *value)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    const struct wined3d_stateblock_state *device_state;
 
-    TRACE("iface %p, sampler %u, state %#x, value %p.\n", iface, sampler, state, value);
+    TRACE("iface %p, sampler_idx %u, state %#x, value %p.\n", iface, sampler_idx, state, value);
+
+    if (sampler_idx >= WINED3DVERTEXTEXTURESAMPLER0 && sampler_idx <= WINED3DVERTEXTEXTURESAMPLER3)
+        sampler_idx -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+
+    if (sampler_idx >= ARRAY_SIZE(device_state->sampler_states))
+    {
+        WARN("Invalid sampler %u.\n", sampler_idx);
+        *value = 0;
+        return D3D_OK;
+    }
 
     wined3d_mutex_lock();
-    *value = wined3d_device_get_sampler_state(device->wined3d_device, sampler, state);
+    device_state = wined3d_stateblock_get_state(device->state);
+    *value = device_state->sampler_states[sampler_idx][state];
     wined3d_mutex_unlock();
 
     return D3D_OK;
