@@ -346,7 +346,7 @@ int winetest_vok( int condition, const char *msg, __winetest_va_list args )
             {
                 if (winetest_debug > 0)
                 {
-                    printf( "%s:%d Test marked todo: ",
+                    printf( "%s:%d: Test marked todo: ",
                             data->current_file, data->current_line );
                     vprintf(msg, args);
                 }
@@ -396,7 +396,7 @@ void __winetest_cdecl winetest_trace( const char *msg, ... )
     if (winetest_add_line() < winetest_mute_threshold)
     {
         struct tls_data *data = get_tls_data();
-        printf( "%s:%d ", data->current_file, data->current_line );
+        printf( "%s:%d: ", data->current_file, data->current_line );
         __winetest_va_start(valist, msg);
         vprintf(msg, valist);
         __winetest_va_end(valist);
@@ -410,7 +410,7 @@ void winetest_vskip( const char *msg, __winetest_va_list args )
     if (winetest_add_line() < winetest_mute_threshold)
     {
         struct tls_data *data = get_tls_data();
-        printf( "%s:%d Tests skipped: ", data->current_file, data->current_line );
+        printf( "%s:%d: Tests skipped: ", data->current_file, data->current_line );
         vprintf(msg, args);
         InterlockedIncrement(&skipped);
     }
