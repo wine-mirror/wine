@@ -116,9 +116,9 @@ static HRESULT WINAPI d3d9_stateblock_Apply(IDirect3DStateBlock9 *iface)
 {
     struct d3d9_stateblock *stateblock = impl_from_IDirect3DStateBlock9(iface);
     struct wined3d_texture *wined3d_texture;
-    unsigned int i, offset, stride, stage;
     struct wined3d_buffer *wined3d_buffer;
     struct d3d9_vertexbuffer *buffer;
+    unsigned int i, offset, stride;
     enum wined3d_format_id format;
     struct d3d9_texture *texture;
     struct d3d9_device *device;
@@ -151,9 +151,7 @@ static HRESULT WINAPI d3d9_stateblock_Apply(IDirect3DStateBlock9 *iface)
     device->auto_mipmaps = 0;
     for (i = 0; i < D3D9_MAX_TEXTURE_UNITS; ++i)
     {
-        stage = i >= 16 ? i - 16 + D3DVERTEXTEXTURESAMPLER0 : i;
-
-        if ((wined3d_texture = wined3d_device_get_texture(device->wined3d_device, stage))
+        if ((wined3d_texture = wined3d_stateblock_get_state(device->state)->textures[i])
                 && (texture = wined3d_texture_get_parent(wined3d_texture))
                 && texture->usage & D3DUSAGE_AUTOGENMIPMAP)
             device->auto_mipmaps |= 1u << i;

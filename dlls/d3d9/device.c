@@ -2516,6 +2516,7 @@ static HRESULT WINAPI d3d9_device_GetTexture(IDirect3DDevice9Ex *iface, DWORD st
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_texture *wined3d_texture = NULL;
+    const struct wined3d_stateblock_state *state;
     struct d3d9_texture *texture_impl;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
@@ -2523,8 +2524,19 @@ static HRESULT WINAPI d3d9_device_GetTexture(IDirect3DDevice9Ex *iface, DWORD st
     if (!texture)
         return D3DERR_INVALIDCALL;
 
+    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
+        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+
+    if (stage >= ARRAY_SIZE(state->textures))
+    {
+        WARN("Ignoring invalid stage %u.\n", stage);
+        *texture = NULL;
+        return D3D_OK;
+    }
+
     wined3d_mutex_lock();
-    if ((wined3d_texture = wined3d_device_get_texture(device->wined3d_device, stage)))
+    state = wined3d_stateblock_get_state(device->state);
+    if ((wined3d_texture = state->textures[stage]))
     {
         texture_impl = wined3d_texture_get_parent(wined3d_texture);
         *texture = &texture_impl->IDirect3DBaseTexture9_iface;
@@ -2815,16 +2827,15 @@ static float WINAPI d3d9_device_GetNPatchMode(IDirect3DDevice9Ex *iface)
 /* wined3d critical section must be taken by the caller. */
 static void d3d9_generate_auto_mipmaps(struct d3d9_device *device)
 {
+    const struct wined3d_stateblock_state *state = wined3d_stateblock_get_state(device->state);
     struct wined3d_texture *texture;
-    unsigned int i, stage, map;
+    unsigned int i, map;
 
     map = device->auto_mipmaps;
     while (map)
     {
         i = wined3d_bit_scan(&map);
-
-        stage = i >= 16 ? i - 16 + D3DVERTEXTEXTURESAMPLER0 : i;
-        if ((texture = wined3d_device_get_texture(device->wined3d_device, stage)))
+        if ((texture = state->textures[i]))
             d3d9_texture_gen_auto_mipmap(wined3d_texture_get_parent(texture));
     }
 }
