@@ -82,10 +82,6 @@ union cptable
 extern const union cptable *wine_cp_get_table( unsigned int codepage );
 extern const union cptable *wine_cp_enum_table( unsigned int index );
 
-extern int wine_cp_wcstombs( const union cptable *table, int flags,
-                             const WCHAR *src, int srclen,
-                             char *dst, int dstlen, const char *defchar, int *used );
-
 extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
 extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
 extern int memicmpW( const WCHAR *str1, const WCHAR *str2, int n );

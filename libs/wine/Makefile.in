@@ -13,7 +13,8 @@ C_SRCS = \
 	mmap.c \
 	port.c \
 	sortkey.c \
-	utf8.c
+	utf8.c \
+	wctomb.c
 
 EXTRA_OBJS = version.o
 

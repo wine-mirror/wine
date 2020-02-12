@@ -91,5 +91,4 @@ C_SRCS = \
 	stubs.c \
 	symlink.c \
 	usleep.c \
-	wctomb.c \
 	wctype.c
