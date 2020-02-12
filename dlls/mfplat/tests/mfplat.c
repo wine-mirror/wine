@@ -1340,15 +1340,16 @@ static void test_MFCreateMFByteStreamOnStream(void)
 static void test_file_stream(void)
 {
     IMFByteStream *bytestream, *bytestream2;
+    QWORD bytestream_length, position;
     IMFAttributes *attributes = NULL;
     MF_ATTRIBUTE_TYPE item_type;
-    QWORD bytestream_length;
     WCHAR pathW[MAX_PATH];
     DWORD caps, count;
     WCHAR *filename;
     IUnknown *unk;
     HRESULT hr;
     WCHAR *str;
+    BOOL eos;
 
     static const WCHAR newfilename[] = {'n','e','w','.','m','p','4',0};
 
@@ -1414,6 +1415,23 @@ static void test_file_stream(void)
     hr = IMFByteStream_GetLength(bytestream, &bytestream_length);
     ok(hr == S_OK, "Failed to get bytestream length, hr %#x.\n", hr);
     ok(bytestream_length > 0, "Unexpected bytestream length %s.\n", wine_dbgstr_longlong(bytestream_length));
+
+    hr = IMFByteStream_SetCurrentPosition(bytestream, bytestream_length);
+    ok(hr == S_OK, "Failed to set bytestream position, hr %#x.\n", hr);
+
+    hr = IMFByteStream_IsEndOfStream(bytestream, &eos);
+    ok(hr == S_OK, "Failed query end of stream, hr %#x.\n", hr);
+    ok(eos == TRUE, "Unexpected IsEndOfStream result, %u.\n", eos);
+
+    hr = IMFByteStream_SetCurrentPosition(bytestream, 2 * bytestream_length);
+    ok(hr == S_OK, "Failed to set bytestream position, hr %#x.\n", hr);
+
+    hr = IMFByteStream_GetCurrentPosition(bytestream, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFByteStream_GetCurrentPosition(bytestream, &position);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(position == 2 * bytestream_length, "Unexpected position.\n");
 
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST,
                       MF_FILEFLAGS_NONE, filename, &bytestream2);
