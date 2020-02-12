@@ -20,6 +20,10 @@
 
 #include <string.h>
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "wine/unicode.h"
 
 extern const unsigned short nfd_table[] DECLSPEC_HIDDEN;
@@ -279,9 +283,8 @@ static int mbstowcs_dbcs_decompose( const struct dbcs_table *table,
 
 
 /* return -1 on dst buffer overflow, -2 on invalid input char */
-int wine_cp_mbstowcs( const union cptable *table, int flags,
-                      const char *s, int srclen,
-                      WCHAR *dst, int dstlen )
+int wine_cp_mbstowcs_obsolete( const union cptable *table, int flags,
+                               const char *s, int srclen, WCHAR *dst, int dstlen )
 {
     const unsigned char *src = (const unsigned char*) s;
 
@@ -310,3 +313,7 @@ int wine_cp_mbstowcs( const union cptable *table, int flags,
             return mbstowcs_dbcs_decompose( &table->dbcs, src, srclen, dst, dstlen );
     }
 }
+
+__ASM_OBSOLETE(wine_cp_mbstowcs);
+
+#endif /* __ASM_OBSOLETE */

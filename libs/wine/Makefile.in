@@ -9,6 +9,7 @@ C_SRCS = \
 	fold.c \
 	ldt.c \
 	loader.c \
+	mbtowc.c \
 	mmap.c \
 	port.c \
 	sortkey.c \

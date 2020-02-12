@@ -78,7 +78,6 @@ C_SRCS = \
 	isinf.c \
 	isnan.c \
 	lstat.c \
-	mbtowc.c \
 	mkstemps.c \
 	poll.c \
 	pread.c \
