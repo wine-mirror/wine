@@ -627,7 +627,10 @@ static HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo *iface, LONG *size, L
     IDirect3DSurface9 *rt = NULL, *surface = NULL;
     D3DLOCKED_RECT locked_rect;
     IDirect3DDevice9 *device;
+    unsigned int row_size;
     BITMAPINFOHEADER bih;
+    LONG i, size_left;
+    char *dst;
     HRESULT hr;
 
     TRACE("filter %p, size %d, image %p.\n", filter, *size, image);
@@ -661,10 +664,19 @@ static HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo *iface, LONG *size, L
     if (FAILED(hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_READONLY)))
         goto out;
 
-    memcpy(image, &bih, min(*size, sizeof(BITMAPINFOHEADER)));
-    if (*size > sizeof(BITMAPINFOHEADER))
-        memcpy((char *)image + sizeof(BITMAPINFOHEADER), locked_rect.pBits,
-                min(*size - sizeof(BITMAPINFOHEADER), bih.biSizeImage));
+    size_left = *size;
+    memcpy(image, &bih, min(size_left, sizeof(BITMAPINFOHEADER)));
+    size_left -= sizeof(BITMAPINFOHEADER);
+
+    dst = (char *)image + sizeof(BITMAPINFOHEADER);
+    row_size = bih.biWidth * bih.biBitCount / 8;
+
+    for (i = 0; i < bih.biHeight && size_left > 0; ++i)
+    {
+        memcpy(dst, (char *)locked_rect.pBits + (i * locked_rect.Pitch), min(row_size, size_left));
+        dst += row_size;
+        size_left -= row_size;
+    }
 
     IDirect3DSurface9_UnlockRect(surface);
 
