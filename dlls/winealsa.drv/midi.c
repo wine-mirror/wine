@@ -248,16 +248,16 @@ static int midiOpenSeq(BOOL create_client)
             snd_seq_set_client_name(midiSeq, "WINE midi driver");
 
             port_out = snd_seq_create_simple_port(midiSeq, "WINE ALSA Output",
-                    SND_SEQ_PORT_CAP_READ,
-                    SND_SEQ_PORT_TYPE_APPLICATION);
+                    SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
+                    SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
             if (port_out < 0)
                 TRACE("Unable to create output port\n");
             else
                 TRACE("Outport port %d created successfully\n", port_out);
 
             port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input",
-                    SND_SEQ_PORT_CAP_WRITE,
-                    SND_SEQ_PORT_TYPE_APPLICATION);
+                    SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
+                    SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
             if (port_in < 0)
                 TRACE("Unable to create input port\n");
             else
