@@ -1122,6 +1122,7 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
                 user_shared_data->ProcessorFeatures[PF_VIRT_FIRMWARE_ENABLED]        = (regs2[2] >> 2) & 1;
                 user_shared_data->ProcessorFeatures[PF_NX_ENABLED]                   = (regs2[3] >> 20) & 1;
                 user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] >> 31) & 1;
+                user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] >> 27) & 1;
                 if (regs2[3] >> 31) info->FeatureSet |= CPU_FEATURE_3DNOW;
             }
         }
@@ -1143,6 +1144,7 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             {
                 do_cpuid(0x80000001, regs2);  /* get vendor features */
                 user_shared_data->ProcessorFeatures[PF_NX_ENABLED] = (regs2[3] >> 20) & 1;
+                user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] >> 27) & 1;
             }
         }
         else
