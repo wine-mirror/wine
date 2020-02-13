@@ -14,6 +14,7 @@
 @ stdcall CoCreateGuid(ptr)
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr)
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr)
+@ stdcall CoDecrementMTAUsage(ptr)
 @ stdcall CoDisableCallCancellation(ptr)
 @ stdcall CoDisconnectObject(ptr long)
 @ stdcall CoDosDateTimeToFileTime(long long ptr) kernel32.DosDateTimeToFileTime
@@ -47,6 +48,7 @@
 @ stub CoGetTIDFromIPID
 @ stdcall CoGetTreatAsClass(ptr ptr)
 @ stdcall CoImpersonateClient()
+@ stdcall CoIncrementMTAUsage(ptr)
 @ stdcall CoInitialize(ptr)
 @ stdcall CoInitializeEx(ptr long)
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr)

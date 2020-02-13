@@ -287,12 +287,16 @@ typedef enum tagCOINIT
     COINIT_SPEED_OVER_MEMORY  = 0x8  /* Trade memory for speed */
 } COINIT;
 
+DECLARE_HANDLE(CO_MTA_USAGE_COOKIE);
+
 HRESULT WINAPI CoInitialize(LPVOID lpReserved);
 HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit);
 void WINAPI CoUninitialize(void);
 DWORD WINAPI CoGetCurrentProcess(void);
 HRESULT WINAPI CoGetCurrentLogicalThreadId(GUID *id);
 HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier);
+HRESULT WINAPI CoIncrementMTAUsage(CO_MTA_USAGE_COOKIE *cookie);
+HRESULT WINAPI CoDecrementMTAUsage(CO_MTA_USAGE_COOKIE cookie);
 
 HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree);
 void WINAPI CoFreeAllLibraries(void);

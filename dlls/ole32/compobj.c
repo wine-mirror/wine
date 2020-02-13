@@ -637,6 +637,7 @@ static APARTMENT *apartment_construct(DWORD model)
     list_init(&apt->proxies);
     list_init(&apt->stubmgrs);
     list_init(&apt->loaded_dlls);
+    list_init(&apt->usage_cookies);
     apt->ipidc = 0;
     apt->refs = 1;
     apt->remunk_exported = FALSE;
@@ -5266,6 +5267,72 @@ HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
     }
 
     return info->apt ? S_OK : CO_E_NOTINITIALIZED;
+}
+
+struct mta_cookie
+{
+    struct list entry;
+};
+
+/***********************************************************************
+ *           CoIncrementMTAUsage [OLE32.@]
+ */
+HRESULT WINAPI CoIncrementMTAUsage(CO_MTA_USAGE_COOKIE *cookie)
+{
+    struct mta_cookie *mta_cookie;
+
+    TRACE("%p\n", cookie);
+
+    *cookie = NULL;
+
+    if (!(mta_cookie = heap_alloc(sizeof(*mta_cookie))))
+        return E_OUTOFMEMORY;
+
+    EnterCriticalSection(&csApartment);
+
+    if (MTA)
+        apartment_addref(MTA);
+    else
+        MTA = apartment_construct(COINIT_MULTITHREADED);
+    list_add_head(&MTA->usage_cookies, &mta_cookie->entry);
+
+    LeaveCriticalSection(&csApartment);
+
+    *cookie = (CO_MTA_USAGE_COOKIE)mta_cookie;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *           CoDecrementMTAUsage [OLE32.@]
+ */
+HRESULT WINAPI CoDecrementMTAUsage(CO_MTA_USAGE_COOKIE cookie)
+{
+    struct mta_cookie *mta_cookie = (struct mta_cookie *)cookie;
+
+    TRACE("%p\n", cookie);
+
+    EnterCriticalSection(&csApartment);
+
+    if (MTA)
+    {
+        struct mta_cookie *cur;
+
+        LIST_FOR_EACH_ENTRY(cur, &MTA->usage_cookies, struct mta_cookie, entry)
+        {
+            if (mta_cookie == cur)
+            {
+                list_remove(&cur->entry);
+                heap_free(cur);
+                apartment_release(MTA);
+                break;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&csApartment);
+
+    return S_OK;
 }
 
 /***********************************************************************

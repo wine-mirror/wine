@@ -151,6 +151,8 @@ struct apartment
   HWND win;                /* message window (LOCK) */
   LPMESSAGEFILTER filter;  /* message filter (CS cs) */
   BOOL main;               /* is this a main-threaded-apartment? (RO) */
+  /* MTA-only */
+  struct list usage_cookies; /* Used for refcount control with CoIncrementMTAUsage()/CoDecrementMTAUsage(). */
 };
 
 struct init_spy
