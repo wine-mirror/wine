@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-02-11 09:01+0200\n"
+"PO-Revision-Date: 2020-02-13 10:10+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -8402,22 +8402,20 @@ msgid "A&ccess:"
 msgstr "&Prieiga:"
 
 #: version.rc:106
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "&Visą"
+msgstr "Visos"
 
 #: version.rc:110
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Tai yra šio duomenų tipo inicijavimo savybės. Reikšmei redaguoti pažymėkite "
+"savybę ir spauskite „Redaguoti reikšmę“."
 
 #: version.rc:111
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "&Redaguoti..."
+msgstr "&Redaguoti reikšmę..."
 
 #: version.rc:36
 msgid "Data Link Properties"
