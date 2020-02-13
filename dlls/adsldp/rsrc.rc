@@ -1,7 +1,5 @@
 /*
- * Active Directory services LDAP Provider
- *
- * Copyright 2018 Dmitry Timoshkov
+ * Copyright 2019 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,19 +16,5 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep register
-
-[
-    helpstring("LDAP Namespace Object"),
-    progid("LDAPNamespace"),
-    uuid(228d9a82-c302-11cf-9aa4-00aa004a5691),
-    threading(both)
-]
-coclass ADs { }
-
-[
-    helpstring("AD System Info Object"),
-    uuid(50b6327f-afd1-11d2-9cb9-0000f87a369e),
-    threading(both)
-]
-coclass ADSystemInfo { }
+/* @makedep: adsldp.rgs */
+1 WINE_REGISTRY adsldp.rgs
