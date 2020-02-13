@@ -9497,11 +9497,11 @@ msgstr "Hora padrão da China"
 msgid "China Daylight Time"
 msgstr "Horário de verão da China"
 
-#: tzres.rc:160
+#: tzres.rc:162
 msgid "North Asia Standard Time"
 msgstr "Hora padrão do Norte da Asia"
 
-#: tzres.rc:161
+#: tzres.rc:163
 msgid "North Asia Daylight Time"
 msgstr "Horário de verão Norte da Asia"
 
@@ -9513,11 +9513,11 @@ msgstr "Hora padrão da Georgia"
 msgid "Georgian Daylight Time"
 msgstr "Horário de verão da Georgia"
 
-#: tzres.rc:152
+#: tzres.rc:154
 msgid "Nepal Standard Time"
 msgstr "Hora padrão do Nepal"
 
-#: tzres.rc:153
+#: tzres.rc:155
 msgid "Nepal Daylight Time"
 msgstr "Horário de verão do Nepal"
 
@@ -9529,6 +9529,18 @@ msgstr "Hora padrão de Cabo Verde"
 msgid "Cape Verde Daylight Time"
 msgstr "Horário de verão de Cabo Verde"
 
+#: tzres.rc:114
+#, fuzzy
+#| msgid "Hawaiian Standard Time"
+msgid "Haiti Standard Time"
+msgstr "Hora padrão do Avaí"
+
+#: tzres.rc:115
+#, fuzzy
+#| msgid "Hawaiian Daylight Time"
+msgid "Haiti Daylight Time"
+msgstr "Horário de verão do Avaí"
+
 #: tzres.rc:74
 msgid "Central European Standard Time"
 msgstr "Hora padrão da Europa Central"
@@ -9537,11 +9549,11 @@ msgstr "Hora padrão da Europa Central"
 msgid "Central European Daylight Time"
 msgstr "Horário de verão da Europa Central"
 
-#: tzres.rc:140
+#: tzres.rc:142
 msgid "Morocco Standard Time"
 msgstr "Hora padrão do Marrocos"
 
-#: tzres.rc:141
+#: tzres.rc:143
 msgid "Morocco Daylight Time"
 msgstr "Horário de verão do Marrocos"
 
@@ -9553,35 +9565,35 @@ msgstr "Hora padrão da Europa Central"
 msgid "Central Europe Daylight Time"
 msgstr "Horário de verão da Europa Central"
 
-#: tzres.rc:118
+#: tzres.rc:120
 msgid "Iran Standard Time"
 msgstr "Hora padrão do Irã"
 
-#: tzres.rc:119
+#: tzres.rc:121
 msgid "Iran Daylight Time"
 msgstr "Horário de verão do Irã"
 
-#: tzres.rc:150
+#: tzres.rc:152
 msgid "Namibia Standard Time"
 msgstr "Hora padrão da Namíbia"
 
-#: tzres.rc:151
+#: tzres.rc:153
 msgid "Namibia Daylight Time"
 msgstr "Horário de verão da Namíbia"
 
-#: tzres.rc:200
+#: tzres.rc:202
 msgid "Tonga Standard Time"
 msgstr "Hora padrão de Tonga"
 
-#: tzres.rc:201
+#: tzres.rc:203
 msgid "Tonga Daylight Time"
 msgstr "Horário de verão de Tonga"
 
-#: tzres.rc:144
+#: tzres.rc:146
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Hora padrão de Montanha"
 
-#: tzres.rc:145
+#: tzres.rc:147
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Horário de verão de Montanha"
 
@@ -9609,35 +9621,35 @@ msgstr "Hora padrão Árabe"
 msgid "Arabic Daylight Time"
 msgstr "Horário de verão da Arábia"
 
-#: tzres.rc:132
+#: tzres.rc:134
 msgid "Magadan Standard Time"
 msgstr "Hora padrão de Magadan"
 
-#: tzres.rc:133
+#: tzres.rc:135
 msgid "Magadan Daylight Time"
 msgstr "Horário de verão Magadan"
 
-#: tzres.rc:156
+#: tzres.rc:158
 msgid "Newfoundland Standard Time"
 msgstr "Hora padrão de Terra Nova"
 
-#: tzres.rc:157
+#: tzres.rc:159
 msgid "Newfoundland Daylight Time"
 msgstr "Horário de verão Nova Zelândia"
 
-#: tzres.rc:224
+#: tzres.rc:226
 msgid "West Pacific Standard Time"
 msgstr "Hora padrão do Pacífico Ocidental"
 
-#: tzres.rc:225
+#: tzres.rc:227
 msgid "West Pacific Daylight Time"
 msgstr "Horário de verão Pacífico Oeste"
 
-#: tzres.rc:164
+#: tzres.rc:166
 msgid "Pacific Standard Time"
 msgstr "Hora padrão do Pacífico"
 
-#: tzres.rc:165
+#: tzres.rc:167
 msgid "Pacific Daylight Time"
 msgstr "Horário de verão Pacífico"
 
@@ -9649,59 +9661,59 @@ msgstr "Hora padrão do Azerbaijão"
 msgid "Azerbaijan Daylight Time"
 msgstr "Horário de verão do Azerbaijão"
 
-#: tzres.rc:182
+#: tzres.rc:184
 msgid "Samoa Standard Time"
 msgstr "Hora padrão de Samoa"
 
-#: tzres.rc:183
+#: tzres.rc:185
 msgid "Samoa Daylight Time"
 msgstr "Horário de verão de Samoa"
 
-#: tzres.rc:124
+#: tzres.rc:126
 msgid "Kaliningrad Standard Time"
 msgstr "Hora padrão de Kaliningrado"
 
-#: tzres.rc:125
+#: tzres.rc:127
 msgid "Kaliningrad Daylight Time"
 msgstr "Horário de verão de Kaliningrado"
 
-#: tzres.rc:166
+#: tzres.rc:168
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Hora padrão do Pacífico(México)"
 
-#: tzres.rc:167
+#: tzres.rc:169
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Horário de verão do Pacífico(México)"
 
-#: tzres.rc:136
+#: tzres.rc:138
 msgid "Middle East Standard Time"
 msgstr "Hora padrão do Oriente Médio"
 
-#: tzres.rc:137
+#: tzres.rc:139
 msgid "Middle East Daylight Time"
 msgstr "Horário de verão do Oriente Médio"
 
-#: tzres.rc:198
+#: tzres.rc:200
 msgid "Tokyo Standard Time"
 msgstr "Hora padrão de Tóquio"
 
-#: tzres.rc:199
+#: tzres.rc:201
 msgid "Tokyo Daylight Time"
 msgstr "Horário de verão Tóquio"
 
-#: tzres.rc:130
+#: tzres.rc:132
 msgid "Line Islands Standard Time"
 msgstr "Hora padrão das Ilhas Equatoriais"
 
-#: tzres.rc:131
+#: tzres.rc:133
 msgid "Line Islands Daylight Time"
 msgstr "Horário de verão das Ilhas Equatoriais"
 
-#: tzres.rc:122
+#: tzres.rc:124
 msgid "Jordan Standard Time"
 msgstr "Hora padrão da Jordânia"
 
-#: tzres.rc:123
+#: tzres.rc:125
 msgid "Jordan Daylight Time"
 msgstr "Horário de verão da Jordânia"
 
@@ -9721,11 +9733,11 @@ msgstr "Hora padrão de Açores"
 msgid "Azores Daylight Time"
 msgstr "Horário de verão de Açores"
 
-#: tzres.rc:158
+#: tzres.rc:160
 msgid "North Asia East Standard Time"
 msgstr "Hora padrão do Norte da Ásia"
 
-#: tzres.rc:159
+#: tzres.rc:161
 msgid "North Asia East Daylight Time"
 msgstr "Horário de verão Norte da Asia"
 
@@ -9737,23 +9749,23 @@ msgstr "Hora padrão da Argentina"
 msgid "Argentina Daylight Time"
 msgstr "Horário de verão da Argentina"
 
-#: tzres.rc:146
+#: tzres.rc:148
 msgid "Myanmar Standard Time"
 msgstr "Hora padrão de Myanmar"
 
-#: tzres.rc:147
+#: tzres.rc:149
 msgid "Myanmar Daylight Time"
 msgstr "Horário de verão de Myanmar"
 
-#: tzres.rc:210 tzres.rc:211
+#: tzres.rc:212 tzres.rc:213
 msgid "Coordinated Universal Time"
 msgstr "Tempo Universal Coordenado"
 
-#: tzres.rc:116
+#: tzres.rc:118
 msgid "India Standard Time"
 msgstr "Hora padrão da Índia"
 
-#: tzres.rc:117
+#: tzres.rc:119
 msgid "India Daylight Time"
 msgstr "Horário de verão da Índia"
 
@@ -9765,11 +9777,11 @@ msgstr "Hora padrão GTB"
 msgid "GTB Daylight Time"
 msgstr "Horário de verão GTB"
 
-#: tzres.rc:202
+#: tzres.rc:204
 msgid "Turkey Standard Time"
 msgstr "Hora padrão da Turquia"
 
-#: tzres.rc:203
+#: tzres.rc:205
 msgid "Turkey Daylight Time"
 msgstr "Horário de verão da Turquia"
 
@@ -9789,35 +9801,35 @@ msgstr "Hora padrão do Canadá Central"
 msgid "Canada Central Daylight Time"
 msgstr "Horário de verão Canada Central"
 
-#: tzres.rc:194
+#: tzres.rc:196
 msgid "Taipei Standard Time"
 msgstr "Hora padrão de Taipei"
 
-#: tzres.rc:195
+#: tzres.rc:197
 msgid "Taipei Daylight Time"
 msgstr "Horário de verão de Taipei"
 
-#: tzres.rc:220
+#: tzres.rc:222
 msgid "W. Europe Standard Time"
 msgstr "Hora padrão da Europa Ocidental"
 
-#: tzres.rc:221
+#: tzres.rc:223
 msgid "W. Europe Daylight Time"
 msgstr "Horário de verão Oeste da Europa"
 
-#: tzres.rc:138
+#: tzres.rc:140
 msgid "Montevideo Standard Time"
 msgstr "Hora padrão de Montevidéu"
 
-#: tzres.rc:139
+#: tzres.rc:141
 msgid "Montevideo Daylight Time"
 msgstr "Horário de verão de Montevidéu"
 
-#: tzres.rc:168
+#: tzres.rc:170
 msgid "Pakistan Standard Time"
 msgstr "Hora padrão do Paquistão"
 
-#: tzres.rc:169
+#: tzres.rc:171
 msgid "Pakistan Daylight Time"
 msgstr "Horário de verão do Paquistão"
 
@@ -9837,11 +9849,11 @@ msgstr "Hora padrão da Austrália Oriental"
 msgid "AUS Eastern Daylight Time"
 msgstr "Horário de verão da Austrália Oriental"
 
-#: tzres.rc:148
+#: tzres.rc:150
 msgid "N. Central Asia Standard Time"
 msgstr "Hora padrão do Norte da Ásia"
 
-#: tzres.rc:149
+#: tzres.rc:151
 msgid "N. Central Asia Daylight Time"
 msgstr "Horário de verão da Asia Central"
 
@@ -9869,27 +9881,27 @@ msgstr "Hora padrão do Atlântico"
 msgid "Atlantic Daylight Time"
 msgstr "Horário de verão do Atlântico"
 
-#: tzres.rc:142
+#: tzres.rc:144
 msgid "Mountain Standard Time"
 msgstr "Hora padrão de Montanha"
 
-#: tzres.rc:143
+#: tzres.rc:145
 msgid "Mountain Daylight Time"
 msgstr "Horário de verão de Montanha"
 
-#: tzres.rc:206
+#: tzres.rc:208
 msgid "US Eastern Standard Time"
 msgstr "Hora padrão do Leste dos EUA"
 
-#: tzres.rc:207
+#: tzres.rc:209
 msgid "US Eastern Daylight Time"
 msgstr "Horário de verão do Leste EUA"
 
-#: tzres.rc:196
+#: tzres.rc:198
 msgid "Tasmania Standard Time"
 msgstr "Hora padrão da Tasmânia"
 
-#: tzres.rc:197
+#: tzres.rc:199
 msgid "Tasmania Daylight Time"
 msgstr "Horário de verão da Tasmânia"
 
@@ -9901,19 +9913,19 @@ msgstr "Hora padrão da América Central"
 msgid "Central America Daylight Time"
 msgstr "Horário de verão da América Central"
 
-#: tzres.rc:208
+#: tzres.rc:210
 msgid "US Mountain Standard Time"
 msgstr "Hora padrão de Montanha(EUA)"
 
-#: tzres.rc:209
+#: tzres.rc:211
 msgid "US Mountain Daylight Time"
 msgstr "Horário de verão de Montanha(EUA)"
 
-#: tzres.rc:188
+#: tzres.rc:190
 msgid "South Africa Standard Time"
 msgstr "Hora padrão da África do Sul"
 
-#: tzres.rc:189
+#: tzres.rc:191
 msgid "South Africa Daylight Time"
 msgstr "Horário de verão da África do Sul"
 
@@ -9925,11 +9937,11 @@ msgstr "Hora padrão da Austrália"
 msgid "Cen. Australia Daylight Time"
 msgstr "Horário de verão da Austrália Central"
 
-#: tzres.rc:190
+#: tzres.rc:192
 msgid "Sri Lanka Standard Time"
 msgstr "Hora padrão do Sri Lanka"
 
-#: tzres.rc:191
+#: tzres.rc:193
 msgid "Sri Lanka Daylight Time"
 msgstr "Horário de verão do Sri Lanka"
 
@@ -9941,19 +9953,19 @@ msgstr "Hora padrão do Afeganistão"
 msgid "Afghanistan Daylight Time"
 msgstr "Horário de verão do Afeganistão"
 
-#: tzres.rc:226
+#: tzres.rc:228
 msgid "Yakutsk Standard Time"
 msgstr "Hora padrão de Iacutusque"
 
-#: tzres.rc:227
+#: tzres.rc:229
 msgid "Yakutsk Daylight Time"
 msgstr "Horário de verão de Iacutusque"
 
-#: tzres.rc:176
+#: tzres.rc:178
 msgid "SA Eastern Standard Time"
 msgstr "Hora padrão do Leste da América do Sul"
 
-#: tzres.rc:177
+#: tzres.rc:179
 msgid "SA Eastern Daylight Time"
 msgstr "Horário de verão do Leste da América do Sul"
 
@@ -9973,19 +9985,19 @@ msgstr "Hora padrão da Arábia Saudita"
 msgid "Arabian Daylight Time"
 msgstr "Horário de verão da Arábia Saudita"
 
-#: tzres.rc:174
+#: tzres.rc:176
 msgid "Russian Standard Time"
 msgstr "Hora padrão da Rússia"
 
-#: tzres.rc:175
+#: tzres.rc:177
 msgid "Russian Daylight Time"
 msgstr "Horário de verão da Rússia"
 
-#: tzres.rc:172
+#: tzres.rc:174
 msgid "Romance Standard Time"
 msgstr "Hora padrão Românica"
 
-#: tzres.rc:173
+#: tzres.rc:175
 msgid "Romance Daylight Time"
 msgstr "Horário de verão da România"
 
@@ -9997,11 +10009,11 @@ msgstr "Hora padrão de Ecaterimburgo"
 msgid "Ekaterinburg Daylight Time"
 msgstr "Horário de verão de Ecaterimburgo"
 
-#: tzres.rc:192
+#: tzres.rc:194
 msgid "Syria Standard Time"
 msgstr "Hora padrão da Síria"
 
-#: tzres.rc:193
+#: tzres.rc:195
 msgid "Syria Daylight Time"
 msgstr "Horário de verão da Síria"
 
@@ -10021,19 +10033,19 @@ msgstr "Hora padrão de Greenwich"
 msgid "Greenwich Daylight Time"
 msgstr "Horário de verão de Greenwich"
 
-#: tzres.rc:204
+#: tzres.rc:206
 msgid "Ulaanbaatar Standard Time"
 msgstr "Hora padrão do Norte da Ásia"
 
-#: tzres.rc:205
+#: tzres.rc:207
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Horário de verão de Ulaanbaatar"
 
-#: tzres.rc:120
+#: tzres.rc:122
 msgid "Israel Standard Time"
 msgstr "Hora padrão de Israel"
 
-#: tzres.rc:121
+#: tzres.rc:123
 msgid "Israel Daylight Time"
 msgstr "Horário de verão de Israel"
 
@@ -10045,19 +10057,19 @@ msgstr "Hora padrão de Bangladesh"
 msgid "Bangladesh Daylight Time"
 msgstr "Horário de verão de Bangladesh"
 
-#: tzres.rc:178
+#: tzres.rc:180
 msgid "SA Pacific Standard Time"
 msgstr "Hora padrão do Pacífico da América do Sul"
 
-#: tzres.rc:179
+#: tzres.rc:181
 msgid "SA Pacific Daylight Time"
 msgstr "Horário de verão do Pacífico América do Sul"
 
-#: tzres.rc:222
+#: tzres.rc:224
 msgid "West Asia Standard Time"
 msgstr "Hora padrão do Oeste da Ásia"
 
-#: tzres.rc:223
+#: tzres.rc:225
 msgid "West Asia Daylight Time"
 msgstr "Horário de verão do Oeste da Ásia"
 
@@ -10069,11 +10081,11 @@ msgstr "Hora padrão do Alasca"
 msgid "Alaskan Daylight Time"
 msgstr "Horário de verão do Alasca"
 
-#: tzres.rc:170
+#: tzres.rc:172
 msgid "Paraguay Standard Time"
 msgstr "Hora padrão do Paraguai"
 
-#: tzres.rc:171
+#: tzres.rc:173
 msgid "Paraguay Daylight Time"
 msgstr "Horário de verão do Paraguai"
 
@@ -10085,11 +10097,11 @@ msgstr "Hora padrão do Meridiano"
 msgid "Dateline Daylight Time"
 msgstr "Horário de verão do Meridiano"
 
-#: tzres.rc:128
+#: tzres.rc:130
 msgid "Libya Standard Time"
 msgstr "Hora padrão da Líbia"
 
-#: tzres.rc:129
+#: tzres.rc:131
 msgid "Libya Daylight Time"
 msgstr "Horário de verão da Líbia"
 
@@ -10101,35 +10113,35 @@ msgstr "Hora padrão da Bahia"
 msgid "Bahia Daylight Time"
 msgstr "Horário de verão da Bahia"
 
-#: tzres.rc:212
+#: tzres.rc:214
 msgid "Venezuela Standard Time"
 msgstr "Hora padrão da Venezuela"
 
-#: tzres.rc:213
+#: tzres.rc:215
 msgid "Venezuela Daylight Time"
 msgstr "Horário de verão da Venezuela"
 
-#: tzres.rc:114
+#: tzres.rc:116
 msgid "Hawaiian Standard Time"
 msgstr "Hora padrão do Avaí"
 
-#: tzres.rc:115
+#: tzres.rc:117
 msgid "Hawaiian Daylight Time"
 msgstr "Horário de verão do Avaí"
 
-#: tzres.rc:184
+#: tzres.rc:186
 msgid "SE Asia Standard Time"
 msgstr "Hora padrão do Sudeste da Ásia"
 
-#: tzres.rc:185
+#: tzres.rc:187
 msgid "SE Asia Daylight Time"
 msgstr "Horário de verão do Sudeste da Ásia"
 
-#: tzres.rc:154
+#: tzres.rc:156
 msgid "New Zealand Standard Time"
 msgstr "Hora padrão da Nova Zelândia"
 
-#: tzres.rc:155
+#: tzres.rc:157
 msgid "New Zealand Daylight Time"
 msgstr "Horário de verão da Nova Zelândia"
 
@@ -10149,11 +10161,11 @@ msgstr "Hora padrão de Belarus"
 msgid "Belarus Daylight Time"
 msgstr "Horário de verão de Belarus"
 
-#: tzres.rc:180
+#: tzres.rc:182
 msgid "SA Western Standard Time"
 msgstr "Hora padrão do Oeste da América do Sul"
 
-#: tzres.rc:181
+#: tzres.rc:183
 msgid "SA Western Daylight Time"
 msgstr "Horário de verão do Oeste da América do Sul"
 
@@ -10181,35 +10193,35 @@ msgstr "Hora padrão do Egito"
 msgid "Egypt Daylight Time"
 msgstr "Horário de verão do Egito"
 
-#: tzres.rc:134
+#: tzres.rc:136
 msgid "Mauritius Standard Time"
 msgstr "Hora padrão da Mauritânia"
 
-#: tzres.rc:135
+#: tzres.rc:137
 msgid "Mauritius Daylight Time"
 msgstr "Horário de verão da Mauritânia"
 
-#: tzres.rc:214
+#: tzres.rc:216
 msgid "Vladivostok Standard Time"
 msgstr "Hora padrão de Vladivostoque"
 
-#: tzres.rc:215
+#: tzres.rc:217
 msgid "Vladivostok Daylight Time"
 msgstr "Horário de verão de Vladivostoque"
 
-#: tzres.rc:186
+#: tzres.rc:188
 msgid "Singapore Standard Time"
 msgstr "Hora padrão de Singapura"
 
-#: tzres.rc:187
+#: tzres.rc:189
 msgid "Singapore Daylight Time"
 msgstr "Horário de verão de Singapura"
 
-#: tzres.rc:126
+#: tzres.rc:128
 msgid "Korea Standard Time"
 msgstr "Hora padrão da Coreia"
 
-#: tzres.rc:127
+#: tzres.rc:129
 msgid "Korea Daylight Time"
 msgstr "Horário de verão da Coreia"
 
@@ -10245,19 +10257,19 @@ msgstr "Hora padrão do Pacífico Central"
 msgid "Central Pacific Daylight Time"
 msgstr "Horário de verão do Pacífico Central"
 
-#: tzres.rc:218
+#: tzres.rc:220
 msgid "W. Central Africa Standard Time"
 msgstr "Hora padrão do Oeste da África Central"
 
-#: tzres.rc:219
+#: tzres.rc:221
 msgid "W. Central Africa Daylight Time"
 msgstr "Horário de verão do Oeste da África Central"
 
-#: tzres.rc:162
+#: tzres.rc:164
 msgid "Pacific SA Standard Time"
 msgstr "Hora padrão do Pacífico América do Sul"
 
-#: tzres.rc:163
+#: tzres.rc:165
 msgid "Pacific SA Daylight Time"
 msgstr "Horário de verão do Pacífico da América do Sul"
 
@@ -10269,11 +10281,11 @@ msgstr "Hora padrão da Austrália Oriental"
 msgid "E. Australia Daylight Time"
 msgstr "Horário de verão da Austrália Oriental"
 
-#: tzres.rc:216
+#: tzres.rc:218
 msgid "W. Australia Standard Time"
 msgstr "Hora padrão do Oeste da Austrália"
 
-#: tzres.rc:217
+#: tzres.rc:219
 msgid "W. Australia Daylight Time"
 msgstr "Horário de verão da Austrália Ocidental"
 
