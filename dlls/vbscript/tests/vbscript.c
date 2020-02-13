@@ -95,8 +95,11 @@ DEFINE_EXPECT(OnStateChange_CLOSED);
 DEFINE_EXPECT(OnStateChange_INITIALIZED);
 DEFINE_EXPECT(OnEnterScript);
 DEFINE_EXPECT(OnLeaveScript);
+DEFINE_EXPECT(OnScriptError);
+DEFINE_EXPECT(GetIDsOfNames);
 DEFINE_EXPECT(GetItemInfo_global);
 DEFINE_EXPECT(GetItemInfo_visible);
+DEFINE_EXPECT(GetItemInfo_visible_code);
 DEFINE_EXPECT(testCall);
 
 DEFINE_GUID(CLSID_VBScript, 0xb54f3741, 0x5b07, 0x11cf, 0xa4,0xb0, 0x00,0xaa,0x00,0x4a,0x55,0xe8);
@@ -137,7 +140,7 @@ static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, voi
     return E_NOINTERFACE;
 }
 
-static ULONG global_named_item_ref, visible_named_item_ref;
+static ULONG global_named_item_ref, visible_named_item_ref, visible_code_named_item_ref;
 
 static ULONG WINAPI global_AddRef(IDispatch *iface)
 {
@@ -159,6 +162,16 @@ static ULONG WINAPI visible_Release(IDispatch *iface)
     return --visible_named_item_ref;
 }
 
+static ULONG WINAPI visible_code_AddRef(IDispatch *iface)
+{
+    return ++visible_code_named_item_ref;
+}
+
+static ULONG WINAPI visible_code_Release(IDispatch *iface)
+{
+    return --visible_code_named_item_ref;
+}
+
 static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 {
     ok(0, "unexpected call\n");
@@ -174,9 +187,13 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOL
                                             LCID lcid, DISPID *ids)
 {
     ok(name_cnt == 1, "name_cnt = %u\n", name_cnt);
-    ok(!wcscmp(names[0], L"testCall"), "names[0] = %s\n", wine_dbgstr_w(names[0]));
-    *ids = 1;
-    return S_OK;
+    if(!wcscmp(names[0], L"testCall")) {
+        *ids = 1;
+        return S_OK;
+    }
+
+    CHECK_EXPECT2(GetIDsOfNames);
+    return DISP_E_UNKNOWNNAME;
 }
 
 static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID id, REFIID riid, LCID lcid, WORD flags,
@@ -213,6 +230,18 @@ static const IDispatchVtbl visible_named_item_vtbl = {
 };
 
 static IDispatch visible_named_item = { &visible_named_item_vtbl };
+
+static const IDispatchVtbl visible_code_named_item_vtbl = {
+    Dispatch_QueryInterface,
+    visible_code_AddRef,
+    visible_code_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    Dispatch_Invoke
+};
+
+static IDispatch visible_code_named_item = { &visible_code_named_item_vtbl };
 
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **ppv)
 {
@@ -259,6 +288,12 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
         CHECK_EXPECT(GetItemInfo_visible);
         IDispatch_AddRef(&visible_named_item);
         *item_unk = (IUnknown*)&visible_named_item;
+        return S_OK;
+    }
+    if(!wcscmp(name, L"visibleCodeItem")) {
+        CHECK_EXPECT(GetItemInfo_visible_code);
+        IDispatch_AddRef(&visible_code_named_item);
+        *item_unk = (IUnknown*)&visible_code_named_item;
         return S_OK;
     }
     ok(0, "unexpected call %s\n", wine_dbgstr_w(name));
@@ -308,7 +343,7 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, S
 
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *pscripterror)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(OnScriptError);
     return E_NOTIMPL;
 }
 
@@ -1704,6 +1739,7 @@ static void test_named_items(void)
 {
     IActiveScriptParse *parse;
     IActiveScript *script;
+    IDispatch *disp;
     ULONG ref;
     HRESULT hres;
 
@@ -1731,9 +1767,14 @@ static void test_named_items(void)
 
     hres = IActiveScript_AddNamedItem(script, L"visibleItem", SCRIPTITEM_ISVISIBLE);
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+    hres = IActiveScript_AddNamedItem(script, L"visibleCodeItem", SCRIPTITEM_ISVISIBLE | SCRIPTITEM_CODEONLY);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+    hres = IActiveScript_AddNamedItem(script, L"codeOnlyItem", SCRIPTITEM_CODEONLY);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
     ok(global_named_item_ref > 0, "global_named_item_ref = %u\n", global_named_item_ref);
     ok(visible_named_item_ref == 0, "visible_named_item_ref = %u\n", visible_named_item_ref);
+    ok(visible_code_named_item_ref == 0, "visible_code_named_item_ref = %u\n", visible_code_named_item_ref);
 
     SET_EXPECT(OnStateChange_INITIALIZED);
     hres = IActiveScriptParse_InitNew(parse);
@@ -1755,8 +1796,39 @@ static void test_named_items(void)
     CHECK_CALLED(GetItemInfo_visible);
     CHECK_CALLED(testCall);
 
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    SET_EXPECT(testCall);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"testCall\n", L"visibleCodeItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    CHECK_CALLED(testCall);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(GetIDsOfNames);
+    SET_EXPECT(OnScriptError);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"codeOnlyItem\n", L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(FAILED(hres), "ParseScriptText returned: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(GetIDsOfNames);
+    CHECK_CALLED(OnScriptError);
+    CHECK_CALLED(OnLeaveScript);
+
+    hres = IActiveScript_GetScriptDispatch(script, L"visibleCodeItem", &disp);
+    ok(hres == S_OK, "GetScriptDispatch returned: %08x\n", hres);
+    IDispatch_Release(disp);
+
+    SET_EXPECT(GetItemInfo_visible_code);
+    SET_EXPECT(testCall);
+    parse_script(parse, "visibleCodeItem.testCall\n");
+    CHECK_CALLED(GetItemInfo_visible_code);
+    CHECK_CALLED(testCall);
+
     ok(global_named_item_ref > 0, "global_named_item_ref = %u\n", global_named_item_ref);
     ok(visible_named_item_ref == 1, "visible_named_item_ref = %u\n", visible_named_item_ref);
+    ok(visible_code_named_item_ref == 1, "visible_code_named_item_ref = %u\n", visible_code_named_item_ref);
 
     SET_EXPECT(testCall);
     parse_script(parse, "visibleItem.testCall\n");
@@ -1773,6 +1845,7 @@ static void test_named_items(void)
 
     ok(global_named_item_ref == 0, "global_named_item_ref = %u\n", global_named_item_ref);
     ok(visible_named_item_ref == 0, "visible_named_item_ref = %u\n", visible_named_item_ref);
+    ok(visible_code_named_item_ref == 0, "visible_code_named_item_ref = %u\n", visible_code_named_item_ref);
 
     test_state(script, SCRIPTSTATE_CLOSED);
 

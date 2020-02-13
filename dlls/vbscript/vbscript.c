@@ -196,7 +196,7 @@ named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned f
 
     LIST_FOR_EACH_ENTRY(item, &ctx->named_items, named_item_t, entry) {
         if((item->flags & flags) == flags && !wcsicmp(item->name, name)) {
-            if(!item->disp) {
+            if(!item->disp && (flags || !(item->flags & SCRIPTITEM_CODEONLY))) {
                 IUnknown *unk;
 
                 hres = IActiveScriptSite_GetItemInfo(ctx->site, item->name,
