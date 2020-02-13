@@ -96,7 +96,7 @@ cpp_quote("#define DXVA2_ModeVC1_VLD           DXVA2_ModeVC1_D")
 cpp_quote("DEFINE_GUID(DXVA2_ModeVC1_D2010,    0x1b81bea4, 0xa0c7,0x11d3, 0xb9,0x84,0x00,0xc0,0x4f,0x2e,0x73,0xc5);")
 
 /* Encryption */
-cpp_quote("DEFINE_GUID(DXVA_NoEncrypt,         0x1b81bed0, 0xa0c7,0x11d3, 0xb9,0x84,0x00,0xc0,0x4f,0x2e,0x73,0xc5);")
+cpp_quote("DEFINE_GUID(DXVA2_NoEncrypt,        0x1b81bed0, 0xa0c7,0x11d3, 0xb9,0x84,0x00,0xc0,0x4f,0x2e,0x73,0xc5);")
 
 cpp_quote("DEFINE_GUID(DXVA2_VideoProcProgressiveDevice, 0x5a54a0c9, 0xc7ec,0x4bd9, 0x8e,0xde,0xf3,0xc7,0x5d,0xc4,0x39,0x3b);")
 cpp_quote("DEFINE_GUID(DXVA2_VideoProcBobDevice,         0x335aa36e, 0x7884,0x43a4, 0x9c,0x91,0x7f,0x87,0xfa,0xf3,0xe3,0x7e);")
@@ -520,6 +520,8 @@ typedef struct _DXVA2_VideoProcessBltParams
     DWORD DestData;
 } DXVA2_VideoProcessBltParams;
 
+cpp_quote("#ifdef _D3D9_H_")
+
 typedef struct _DXVA2_VideoSample
 {
     REFERENCE_TIME Start;
@@ -795,3 +797,31 @@ interface IDirectXVideoMemoryConfiguration : IUnknown
     HRESULT SetSurfaceType(
         [in] DXVA2_SurfaceType dwType);
 }
+
+cpp_quote("HRESULT WINAPI DXVA2CreateDirect3DDeviceManager9(UINT *pResetToken,IDirect3DDeviceManager9 **ppDXVAManager);")
+cpp_quote("HRESULT WINAPI DXVA2CreateVideoService(IDirect3DDevice9 *pDD,REFIID riid,void **ppService);")
+
+cpp_quote("#endif")
+
+cpp_quote("static inline DXVA2_Fixed32 DXVA2_Fixed32OpaqueAlpha(void) {")
+cpp_quote("  DXVA2_Fixed32 f32;")
+cpp_quote("  f32.ll = 0 + (1 << 16);")
+cpp_quote("  return f32;")
+cpp_quote("}")
+cpp_quote("")
+cpp_quote("static inline DXVA2_Fixed32 DXVA2_Fixed32TransparentAlpha(void) {")
+cpp_quote("  DXVA2_Fixed32 f32;")
+cpp_quote("  f32.ll = 0;")
+cpp_quote("  return f32;")
+cpp_quote("}")
+cpp_quote("")
+cpp_quote("static inline float DXVA2FixedToFloat(DXVA2_Fixed32 f32) {")
+cpp_quote("  return (float)f32.Value + (float)f32.Fraction / (1 << 16);")
+cpp_quote("}")
+cpp_quote("")
+cpp_quote("static inline DXVA2_Fixed32 DXVA2FloatToFixed(float f) {")
+cpp_quote("  DXVA2_Fixed32 f32;")
+cpp_quote("  f32.Value    = ((ULONG) (f * (1 << 16))) >> 16;")
+cpp_quote("  f32.Fraction = ((ULONG) (f * (1 << 16))) & 0xFFFF;")
+cpp_quote("  return f32;")
+cpp_quote("}")
