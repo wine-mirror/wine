@@ -90,6 +90,22 @@ typedef struct
 #define LOCAL_ARENA_HEADER( handle) ((handle) - LOCAL_ARENA_HEADER_SIZE)
 #define LOCAL_ARENA_PTR(ptr,arena)  ((LOCALARENA *)((char *)(ptr)+(arena)))
 
+#define MOVEABLE_PREFIX sizeof(HLOCAL16)
+
+/* Layout of a handle entry table
+ *
+ * WORD                     count of entries
+ * LOCALHANDLEENTRY[count]  entries
+ * WORD                     near ptr to next table
+ */
+typedef struct
+{
+    WORD addr;                /* Address of the MOVEABLE block */
+    BYTE flags;               /* Flags for this block */
+    BYTE lock;                /* Lock count */
+} LOCALHANDLEENTRY;
+
+
 typedef struct
 {
     WORD null;        /* Always 0 */
@@ -349,15 +365,35 @@ BOOL16 WINAPI LocalNext16( LOCALENTRY *pLocalEntry )
     WORD ds = GlobalHandleToSel16( pLocalEntry->hHeap );
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
     LOCALARENA *pArena;
+    WORD table, lhandle;
+    LOCALHEAPINFO *pInfo = get_local_heap( ds );
 
-    if (!get_local_heap( ds )) return FALSE;
+    if (!pInfo) return FALSE;
     if (!pLocalEntry->wNext) return FALSE;
+    table = pInfo->htable;
     pArena = LOCAL_ARENA_PTR( ptr, pLocalEntry->wNext );
-
-    pLocalEntry->hHandle   = pLocalEntry->wNext + LOCAL_ARENA_HEADER_SIZE;
-    pLocalEntry->wAddress  = pLocalEntry->hHandle;
+    pLocalEntry->wAddress  = pLocalEntry->wNext + LOCAL_ARENA_HEADER_SIZE;
     pLocalEntry->wFlags    = (pArena->prev & 3) + 1;
     pLocalEntry->wcLock    = 0;
+    /* Find the address in the entry tables */
+    lhandle = pLocalEntry->wAddress;
+    while (table)
+    {
+        WORD count = *(WORD *)(ptr + table);
+        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY*)(ptr+table+sizeof(WORD));
+        for (; count > 0; count--, pEntry++)
+            if (pEntry->addr == lhandle + MOVEABLE_PREFIX)
+            {
+                lhandle = (HLOCAL16)((char *)pEntry - ptr);
+                table = 0;
+                pLocalEntry->wAddress  = pEntry->addr;
+                pLocalEntry->wFlags    = pEntry->flags;
+                pLocalEntry->wcLock    = pEntry->lock;
+                break;
+            }
+        if (table) table = *(WORD *)pEntry;
+    }
+    pLocalEntry->hHandle   = lhandle;
     pLocalEntry->wType     = LT_NORMAL;
     if (pArena->next != pLocalEntry->wNext)  /* last one? */
         pLocalEntry->wNext = pArena->next;
