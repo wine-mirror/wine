@@ -287,7 +287,11 @@ typedef WCHAR OLECHAR;
 typedef [string] OLECHAR *LPOLESTR;
 typedef [string] const OLECHAR *LPCOLESTR;
 cpp_quote("#ifndef __WINESRC__")
-cpp_quote("#define OLESTR(str) L##str")
+cpp_quote("# ifdef WINE_UNICODE_NATIVE")
+cpp_quote("#  define OLESTR(str) L##str")
+cpp_quote("# else")
+cpp_quote("#  define OLESTR(str) u##str")
+cpp_quote("# endif")
 cpp_quote("#endif")
 
 typedef LONG SCODE;
