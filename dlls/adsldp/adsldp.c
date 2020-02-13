@@ -258,6 +258,7 @@ static HRESULT ADSystemInfo_create(REFIID riid, void **obj)
 typedef struct
 {
     IADs IADs_iface;
+    IADsOpenDSObject IADsOpenDSObject_iface;
     LONG ref;
 } LDAP_namespace;
 
@@ -268,6 +269,8 @@ static inline LDAP_namespace *impl_from_IADs(IADs *iface)
 
 static HRESULT WINAPI ldapns_QueryInterface(IADs *iface, REFIID riid, void **obj)
 {
+    LDAP_namespace *ldap = impl_from_IADs(iface);
+
     TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
 
     if (!riid || !obj) return E_INVALIDARG;
@@ -278,6 +281,13 @@ static HRESULT WINAPI ldapns_QueryInterface(IADs *iface, REFIID riid, void **obj
     {
         IADs_AddRef(iface);
         *obj = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_IADsOpenDSObject))
+    {
+        IADs_AddRef(iface);
+        *obj = &ldap->IADsOpenDSObject_iface;
         return S_OK;
     }
 
@@ -434,6 +444,97 @@ static const IADsVtbl IADs_vtbl =
     ldapns_GetInfoEx
 };
 
+static inline LDAP_namespace *impl_from_IADsOpenDSObject(IADsOpenDSObject *iface)
+{
+    return CONTAINING_RECORD(iface, LDAP_namespace, IADsOpenDSObject_iface);
+}
+
+static HRESULT WINAPI openobj_QueryInterface(IADsOpenDSObject *iface, REFIID riid, void **obj)
+{
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (!riid || !obj) return E_INVALIDARG;
+
+    if (IsEqualGUID(riid, &IID_IADsOpenDSObject) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IADsOpenDSObject_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI openobj_AddRef(IADsOpenDSObject *iface)
+{
+    LDAP_namespace *ldap = impl_from_IADsOpenDSObject(iface);
+    return InterlockedIncrement(&ldap->ref);
+}
+
+static ULONG WINAPI openobj_Release(IADsOpenDSObject *iface)
+{
+    LDAP_namespace *ldap = impl_from_IADsOpenDSObject(iface);
+    LONG ref = InterlockedDecrement(&ldap->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        HeapFree(GetProcessHeap(), 0, ldap);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI openobj_GetTypeInfoCount(IADsOpenDSObject *iface, UINT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI openobj_GetTypeInfo(IADsOpenDSObject *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p,%u,%#x,%p: stub\n", iface, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI openobj_GetIDsOfNames(IADsOpenDSObject *iface, REFIID riid, LPOLESTR *names,
+                                            UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI openobj_Invoke(IADsOpenDSObject *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                     DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, BSTR user, BSTR password,
+                                           LONG reserved, IDispatch **obj)
+{
+    FIXME("%p,%s,%s,%s,%d,%p: stub\n", iface, debugstr_w(path), debugstr_w(user), debugstr_w(password),
+          reserved, obj);
+    return E_NOTIMPL;
+}
+
+static const IADsOpenDSObjectVtbl IADsOpenDSObject_vtbl =
+{
+    openobj_QueryInterface,
+    openobj_AddRef,
+    openobj_Release,
+    openobj_GetTypeInfoCount,
+    openobj_GetTypeInfo,
+    openobj_GetIDsOfNames,
+    openobj_Invoke,
+    openobj_OpenDSObject
+};
+
 static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
 {
     LDAP_namespace *ldap;
@@ -443,6 +544,7 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     if (!ldap) return E_OUTOFMEMORY;
 
     ldap->IADs_iface.lpVtbl = &IADs_vtbl;
+    ldap->IADsOpenDSObject_iface.lpVtbl = &IADsOpenDSObject_vtbl;
     ldap->ref = 1;
 
     hr = IADs_QueryInterface(&ldap->IADs_iface, riid, obj);
