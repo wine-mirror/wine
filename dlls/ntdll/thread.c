@@ -222,6 +222,7 @@ static void set_process_name( int argc, char *argv[] )
  */
 TEB *thread_init(void)
 {
+    SYSTEM_BASIC_INFORMATION sbi;
     TEB *teb;
     void *addr;
     SIZE_T size;
@@ -309,6 +310,9 @@ TEB *thread_init(void)
     user_shared_data->TickCountLowDeprecated = user_shared_data->u.TickCount.LowPart;
     user_shared_data->TickCountMultiplier = 1 << 24;
     fill_cpu_info();
+
+    virtual_get_system_info( &sbi );
+    user_shared_data->NumberOfPhysicalPages = sbi.MmNumberOfPhysicalPages;
 
     return teb;
 }
