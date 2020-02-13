@@ -110,6 +110,22 @@ static BOOL lookup_global_vars(ScriptDisp *script, const WCHAR *name, ref_t *ref
     return FALSE;
 }
 
+static BOOL lookup_global_funcs(ScriptDisp *script, const WCHAR *name, ref_t *ref)
+{
+    function_t **funcs = script->global_funcs;
+    size_t i, cnt = script->global_funcs_cnt;
+
+    for(i = 0; i < cnt; i++) {
+        if(!wcsicmp(funcs[i]->name, name)) {
+            ref->type = REF_FUNC;
+            ref->u.f = funcs[i];
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_t invoke_type, ref_t *ref)
 {
     ScriptDisp *script_obj = ctx->script->script_obj;
@@ -177,15 +193,8 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 
     if(lookup_global_vars(script_obj, name, ref))
         return S_OK;
-
-    for(i = 0; i < script_obj->global_funcs_cnt; i++) {
-        function_t *func = script_obj->global_funcs[i];
-        if(!wcsicmp(func->name, name)) {
-            ref->type = REF_FUNC;
-            ref->u.f = func;
-            return S_OK;
-        }
-    }
+    if(lookup_global_funcs(script_obj, name, ref))
+        return S_OK;
 
     hres = get_builtin_id(ctx->script->global_obj, name, &id);
     if(SUCCEEDED(hres)) {
