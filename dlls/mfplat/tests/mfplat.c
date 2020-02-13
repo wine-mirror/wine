@@ -350,25 +350,62 @@ static const IMFAsyncCallbackVtbl test_create_from_file_handler_callback_vtbl =
     test_create_from_file_handler_callback_Invoke,
 };
 
+static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected_event_type, PROPVARIANT *value)
+{
+    MediaEventType event_type;
+    HRESULT hr, event_status;
+    IMFMediaEvent *event;
+
+    hr = IMFMediaEventGenerator_GetEvent(generator, 0, &event);
+    ok(hr == S_OK, "Failed to get event, hr %#x.\n", hr);
+
+    hr = IMFMediaEvent_GetStatus(event, &event_status);
+    ok(hr == S_OK, "Failed to get status code, hr %#x.\n", hr);
+    ok(event_status == S_OK, "Unexpected event status code %#x.\n", event_status);
+
+    hr = IMFMediaEvent_GetType(event, &event_type);
+    ok(hr == S_OK, "Failed to event type, hr %#x.\n", hr);
+    ok(event_type == expected_event_type, "Unexpected event type %u, expected %u.\n", event_type, expected_event_type);
+
+    if (event_type != expected_event_type)
+    {
+        IMFMediaEvent_Release(event);
+        return FALSE;
+    }
+
+    if (value)
+    {
+        hr = IMFMediaEvent_GetValue(event, value);
+        ok(hr == S_OK, "Failed to get value of event, hr %#x.\n", hr);
+    }
+
+    IMFMediaEvent_Release(event);
+
+    return TRUE;
+}
+
 static void test_source_resolver(void)
 {
-    static const WCHAR file_type[] = {'v','i','d','e','o','/','m','p','4',0};
     struct test_callback callback = { { &test_create_from_url_callback_vtbl } };
     struct test_callback callback2 = { { &test_create_from_file_handler_callback_vtbl } };
     IMFSourceResolver *resolver, *resolver2;
+    IMFPresentationDescriptor *descriptor;
     IMFSchemeHandler *scheme_handler;
+    IMFMediaStream *video_stream;
     IMFAttributes *attributes;
     IMFMediaSource *mediasource;
-    IMFPresentationDescriptor *descriptor;
     IMFMediaTypeHandler *handler;
+    IMFMediaType *media_type;
     BOOL selected, do_uninit;
     MF_OBJECT_TYPE obj_type;
     IMFStreamDescriptor *sd;
     IUnknown *cancel_cookie;
     IMFByteStream *stream;
     WCHAR pathW[MAX_PATH];
-    HRESULT hr;
+    int i, sample_count;
     WCHAR *filename;
+    PROPVARIANT var;
+    HRESULT hr;
     GUID guid;
 
     if (!pMFCreateSourceResolver)
@@ -428,7 +465,7 @@ static void test_source_resolver(void)
 
     hr = IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    hr = IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, file_type);
+    hr = IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, L"video/mp4");
     ok(hr == S_OK, "Failed to set string value, hr %#x.\n", hr);
     IMFAttributes_Release(attributes);
 
@@ -447,13 +484,101 @@ static void test_source_resolver(void)
 
     hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
     ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
+    IMFStreamDescriptor_Release(sd);
 
     hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
 todo_wine
     ok(hr == S_OK, "Failed to get stream major type, hr %#x.\n", hr);
+    if (FAILED(hr))
+        goto skip_source_tests;
+
+    /* Check major/minor type for the test media. */
+    ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected major type %s.\n", debugstr_guid(&guid));
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
+    ok(hr == S_OK, "Failed to get current media type, hr %#x.\n", hr);
+    hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
+    ok(hr == S_OK, "Failed to get media sub type, hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MFVideoFormat_M4S2), "Unexpected sub type %s.\n", debugstr_guid(&guid));
+    IMFMediaType_Release(media_type);
+
+    hr = IMFPresentationDescriptor_SelectStream(descriptor, 0);
+    ok(hr == S_OK, "Failed to select video stream, hr %#x.\n", hr);
+
+    var.vt = VT_EMPTY;
+    hr = IMFMediaSource_Start(mediasource, descriptor, &GUID_NULL, &var);
+    ok(hr == S_OK, "Failed to start media source, hr %#x.\n", hr);
+
+    get_event((IMFMediaEventGenerator *)mediasource, MENewStream, &var);
+    ok(var.vt == VT_UNKNOWN, "Unexpected value type %u from MENewStream event.\n", var.vt);
+    video_stream = (IMFMediaStream *)var.punkVal;
+
+    get_event((IMFMediaEventGenerator *)mediasource, MESourceStarted, NULL);
+
+    /* Request samples, our file is 10 frames at 25fps */
+    get_event((IMFMediaEventGenerator *)video_stream, MEStreamStarted, NULL);
+    sample_count = 10;
+
+    /* Request one beyond EOS, otherwise EndOfStream isn't queued. */
+    for (i = 0; i <= sample_count; ++i)
+    {
+        hr = IMFMediaStream_RequestSample(video_stream, NULL);
+        if (i == sample_count)
+            break;
+        ok(hr == S_OK, "Failed to request sample %u, hr %#x.\n", i + 1, hr);
+        if (hr != S_OK)
+            break;
+    }
+
+    for (i = 0; i < sample_count; ++i)
+    {
+        static const LONGLONG MILLI_TO_100_NANO = 10000;
+        LONGLONG duration, time;
+        DWORD buffer_count;
+        IMFSample *sample;
+        BOOL ret;
+
+        ret = get_event((IMFMediaEventGenerator *)video_stream, MEMediaSample, &var);
+        ok(ret, "Sample %u not received.\n", i + 1);
+        if (!ret)
+            break;
+
+        ok(var.vt == VT_UNKNOWN, "Unexpected value type %u from MEMediaSample event.\n", var.vt);
+        sample = (IMFSample *)var.punkVal;
+
+        hr = IMFSample_GetBufferCount(sample, &buffer_count);
+        ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+        ok(buffer_count == 1, "Unexpected buffer count %u.\n", buffer_count);
+
+        hr = IMFSample_GetSampleDuration(sample, &duration);
+        ok(hr == S_OK, "Failed to get sample duration, hr %#x.\n", hr);
+        ok(duration == 40 * MILLI_TO_100_NANO, "Unexpected duration %s.\n", wine_dbgstr_longlong(duration));
+
+        hr = IMFSample_GetSampleTime(sample, &time);
+        ok(hr == S_OK, "Failed to get sample time, hr %#x.\n", hr);
+        ok(time == i * 40 * MILLI_TO_100_NANO, "Unexpected time %s.\n", wine_dbgstr_longlong(time));
+
+        IMFSample_Release(sample);
+    }
+
+    if (i == sample_count)
+        get_event((IMFMediaEventGenerator *)video_stream, MEEndOfStream, NULL);
+
+    hr = IMFMediaStream_RequestSample(video_stream, NULL);
+    ok(hr == MF_E_END_OF_STREAM, "Unexpected hr %#x.\n", hr);
+    IMFMediaStream_Release(video_stream);
+
+    get_event((IMFMediaEventGenerator *)mediasource, MEEndOfPresentation, NULL);
 
     IMFMediaTypeHandler_Release(handler);
-    IMFStreamDescriptor_Release(sd);
+
+    hr = IMFMediaSource_Shutdown(mediasource);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, NULL);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+skip_source_tests:
 
     IMFPresentationDescriptor_Release(descriptor);
     IMFMediaSource_Release(mediasource);
