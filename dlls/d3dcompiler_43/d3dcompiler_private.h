@@ -984,6 +984,7 @@ struct parse_initializer
 {
     struct hlsl_ir_node **args;
     unsigned int args_count;
+    struct list *instrs;
 };
 
 struct parse_variable_def
@@ -1118,6 +1119,11 @@ static inline struct hlsl_ir_loop *loop_from_node(const struct hlsl_ir_node *nod
 {
     assert(node->type == HLSL_IR_LOOP);
     return CONTAINING_RECORD(node, struct hlsl_ir_loop, node);
+}
+
+static inline struct hlsl_ir_node *node_from_list(struct list *list)
+{
+    return LIST_ENTRY(list_tail(list), struct hlsl_ir_node, entry);
 }
 
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;

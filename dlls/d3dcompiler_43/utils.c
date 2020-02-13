@@ -1278,10 +1278,14 @@ static struct hlsl_type *expr_common_type(struct hlsl_type *t1, struct hlsl_type
 static struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_type *type,
         struct source_location *loc)
 {
+    struct hlsl_ir_expr *cast;
+
     if (compare_hlsl_types(node->data_type, type))
         return node;
     TRACE("Implicit conversion of expression to %s\n", debug_hlsl_type(type));
-    return &new_cast(node, type, loc)->node;
+    if ((cast = new_cast(node, type, loc)))
+        list_add_after(&node->entry, &cast->node.entry);
+    return &cast->node;
 }
 
 struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **operands,
@@ -1468,8 +1472,6 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
             hlsl_report_message(rhs->loc.file, rhs->loc.line, rhs->loc.col, HLSL_LEVEL_ERROR,
                     "can't implicitly convert %s to %s",
                     debug_hlsl_type(rhs->data_type), debug_hlsl_type(type));
-            free_instr(lhs);
-            free_instr(rhs);
             d3dcompiler_free(assign);
             return NULL;
         }
@@ -1481,8 +1483,6 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         if (!converted_rhs)
         {
             ERR("Couldn't implicitly convert expression to %s.\n", debug_hlsl_type(type));
-            free_instr(lhs);
-            free_instr(rhs);
             d3dcompiler_free(assign);
             return NULL;
         }
@@ -1502,11 +1502,9 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         }
         else
         {
-            struct hlsl_ir_deref *lhs_deref = deref_from_node(lhs), *new_deref;
-
             TRACE("Adding an expression for the compound assignment.\n");
-            new_deref = new_var_deref(lhs_deref->v.var);
-            expr = new_binary_expr(op, &new_deref->node, rhs, left->loc);
+            expr = new_binary_expr(op, lhs, rhs, lhs->loc);
+            list_add_after(&rhs->entry, &expr->entry);
             assign->rhs = expr;
         }
     }
@@ -2173,60 +2171,32 @@ static void free_ir_constant(struct hlsl_ir_constant *constant)
 
 static void free_ir_deref(struct hlsl_ir_deref *deref)
 {
-    switch (deref->type)
-    {
-        case HLSL_IR_DEREF_VAR:
-            /* Variables are shared among nodes in the tree. */
-            break;
-        case HLSL_IR_DEREF_ARRAY:
-            free_instr(deref->v.array.array);
-            free_instr(deref->v.array.index);
-            break;
-        case HLSL_IR_DEREF_RECORD:
-            free_instr(deref->v.record.record);
-            break;
-    }
     d3dcompiler_free(deref);
 }
 
 static void free_ir_swizzle(struct hlsl_ir_swizzle *swizzle)
 {
-    free_instr(swizzle->val);
     d3dcompiler_free(swizzle);
 }
 
 static void free_ir_constructor(struct hlsl_ir_constructor *constructor)
 {
-    unsigned int i;
-    for (i = 0; i < constructor->args_count; ++i)
-        free_instr(constructor->args[i]);
     d3dcompiler_free(constructor);
 }
 
 static void free_ir_expr(struct hlsl_ir_expr *expr)
 {
-    unsigned int i;
-
-    for (i = 0; i < 3; ++i)
-    {
-        if (!expr->operands[i])
-            break;
-        free_instr(expr->operands[i]);
-    }
     free_instr_list(expr->subexpressions);
     d3dcompiler_free(expr);
 }
 
 static void free_ir_assignment(struct hlsl_ir_assignment *assignment)
 {
-    free_instr(assignment->lhs);
-    free_instr(assignment->rhs);
     d3dcompiler_free(assignment);
 }
 
 static void free_ir_if(struct hlsl_ir_if *if_node)
 {
-    free_instr(if_node->condition);
     free_instr_list(if_node->then_instrs);
     free_instr_list(if_node->else_instrs);
     d3dcompiler_free(if_node);
@@ -2234,8 +2204,6 @@ static void free_ir_if(struct hlsl_ir_if *if_node)
 
 static void free_ir_jump(struct hlsl_ir_jump *jump)
 {
-    if (jump->type == HLSL_IR_JUMP_RETURN)
-        free_instr(jump->return_value);
     d3dcompiler_free(jump);
 }
 

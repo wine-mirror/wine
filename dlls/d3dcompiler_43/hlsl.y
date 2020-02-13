@@ -255,56 +255,49 @@ static void declare_predefined_types(struct hlsl_scope *scope)
     add_type_to_scope(scope, type);
 }
 
-static struct hlsl_ir_if *loop_condition(struct list *cond_list)
+static BOOL append_conditional_break(struct list *cond_list)
 {
-    struct hlsl_ir_node *cond, *not_cond;
-    struct hlsl_ir_if *out_cond;
+    struct hlsl_ir_node *condition, *not;
     struct hlsl_ir_jump *jump;
-    unsigned int count = list_count(cond_list);
+    struct hlsl_ir_if *iff;
 
-    if (!count)
-        return NULL;
-    if (count != 1)
-        ERR("Got multiple expressions in a for condition.\n");
+    /* E.g. "for (i = 0; ; ++i)". */
+    if (!list_count(cond_list))
+        return TRUE;
 
-    cond = LIST_ENTRY(list_head(cond_list), struct hlsl_ir_node, entry);
-    out_cond = d3dcompiler_alloc(sizeof(*out_cond));
-    if (!out_cond)
+    condition = node_from_list(cond_list);
+    if (!(not = new_unary_expr(HLSL_IR_UNOP_LOGIC_NOT, condition, condition->loc)))
     {
         ERR("Out of memory.\n");
-        return NULL;
+        return FALSE;
     }
-    out_cond->node.type = HLSL_IR_IF;
-    if (!(not_cond = new_unary_expr(HLSL_IR_UNOP_LOGIC_NOT, cond, cond->loc)))
+    list_add_tail(cond_list, &not->entry);
+
+    if (!(iff = d3dcompiler_alloc(sizeof(*iff))))
     {
         ERR("Out of memory.\n");
-        d3dcompiler_free(out_cond);
-        return NULL;
+        return FALSE;
     }
-    out_cond->condition = not_cond;
-    jump = d3dcompiler_alloc(sizeof(*jump));
-    if (!jump)
+    iff->node.type = HLSL_IR_IF;
+    iff->condition = not;
+    list_add_tail(cond_list, &iff->node.entry);
+
+    if (!(iff->then_instrs = d3dcompiler_alloc(sizeof(*iff->then_instrs))))
     {
         ERR("Out of memory.\n");
-        d3dcompiler_free(out_cond);
-        d3dcompiler_free(not_cond);
-        return NULL;
+        return FALSE;
+    }
+    list_init(iff->then_instrs);
+
+    if (!(jump = d3dcompiler_alloc(sizeof(*jump))))
+    {
+        ERR("Out of memory.\n");
+        return FALSE;
     }
     jump->node.type = HLSL_IR_JUMP;
     jump->type = HLSL_IR_JUMP_BREAK;
-    out_cond->then_instrs = d3dcompiler_alloc(sizeof(*out_cond->then_instrs));
-    if (!out_cond->then_instrs)
-    {
-        ERR("Out of memory.\n");
-        d3dcompiler_free(out_cond);
-        d3dcompiler_free(not_cond);
-        d3dcompiler_free(jump);
-        return NULL;
-    }
-    list_init(out_cond->then_instrs);
-    list_add_head(out_cond->then_instrs, &jump->node.entry);
-
-    return out_cond;
+    list_add_head(iff->then_instrs, &jump->node.entry);
+    return TRUE;
 }
 
 enum loop_type
@@ -315,7 +308,7 @@ enum loop_type
 };
 
 static struct list *create_loop(enum loop_type type, struct list *init, struct list *cond,
-        struct hlsl_ir_node *iter, struct list *body, struct source_location *loc)
+        struct list *iter, struct list *body, struct source_location *loc)
 {
     struct list *list = NULL;
     struct hlsl_ir_loop *loop = NULL;
@@ -340,20 +333,19 @@ static struct list *create_loop(enum loop_type type, struct list *init, struct l
         goto oom;
     list_init(loop->body);
 
-    cond_jump = loop_condition(cond);
-    if (!cond_jump)
+    if (!append_conditional_break(cond))
         goto oom;
 
     if (type != LOOP_DO_WHILE)
-        list_add_tail(loop->body, &cond_jump->node.entry);
+        list_move_tail(loop->body, cond);
 
     list_move_tail(loop->body, body);
 
     if (iter)
-        list_add_tail(loop->body, &iter->entry);
+        list_move_tail(loop->body, iter);
 
     if (type == LOOP_DO_WHILE)
-        list_add_tail(loop->body, &cond_jump->node.entry);
+        list_move_tail(loop->body, cond);
 
     d3dcompiler_free(init);
     d3dcompiler_free(cond);
@@ -369,7 +361,7 @@ oom:
     d3dcompiler_free(list);
     free_instr_list(init);
     free_instr_list(cond);
-    free_instr(iter);
+    free_instr_list(iter);
     free_instr_list(body);
     return NULL;
 }
@@ -388,9 +380,7 @@ static unsigned int initializer_size(const struct parse_initializer *initializer
 
 static void free_parse_initializer(struct parse_initializer *initializer)
 {
-    unsigned int i;
-    for (i = 0; i < initializer->args_count; ++i)
-        free_instr(initializer->args[i]);
+    free_instr_list(initializer->instrs);
     d3dcompiler_free(initializer->args);
 }
 
@@ -508,6 +498,9 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
         return;
     }
 
+    list_move_tail(list, initializer->instrs);
+    d3dcompiler_free(initializer->instrs);
+
     LIST_FOR_EACH_ENTRY(field, type->e.elements, struct hlsl_struct_field, entry)
     {
         struct hlsl_ir_node *node = initializer->args[i];
@@ -526,6 +519,7 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
                 break;
             }
             deref->node.loc = node->loc;
+            list_add_tail(list, &deref->node.entry);
             assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN, BWRITERSP_WRITEMASK_ALL, node);
             list_add_tail(list, &assignment->entry);
         }
@@ -533,9 +527,6 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
             FIXME("Initializing with \"mismatched\" fields is not supported yet.\n");
     }
 
-    /* Free initializer elements in excess. */
-    for (; i < initializer->args_count; ++i)
-        free_instr(initializer->args[i]);
     d3dcompiler_free(initializer->args);
 }
 
@@ -609,6 +600,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
         if (v->initializer.args_count)
         {
             unsigned int size = initializer_size(&v->initializer);
+            struct hlsl_ir_deref *deref;
 
             TRACE("Variable with initializer.\n");
             if (type->type <= HLSL_CLASS_LAST_NUMERIC
@@ -661,7 +653,12 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
                 continue;
             }
 
-            assignment = make_assignment(&new_var_deref(var)->node, ASSIGN_OP_ASSIGN,
+            list_move_tail(statements_list, v->initializer.instrs);
+            d3dcompiler_free(v->initializer.instrs);
+
+            deref = new_var_deref(var);
+            list_add_tail(statements_list, &deref->node.entry);
+            assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN,
                     BWRITERSP_WRITEMASK_ALL, v->initializer.args[0]);
             d3dcompiler_free(v->initializer.args);
             list_add_tail(statements_list, &assignment->entry);
@@ -880,6 +877,35 @@ static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tr
     return NULL;
 }
 
+static struct list *append_unop(struct list *list, struct hlsl_ir_node *node)
+{
+    list_add_tail(list, &node->entry);
+    return list;
+}
+
+static struct list *append_binop(struct list *first, struct list *second, struct hlsl_ir_node *node)
+{
+    list_move_tail(first, second);
+    d3dcompiler_free(second);
+    list_add_tail(first, &node->entry);
+    return first;
+}
+
+static struct list *make_list(struct hlsl_ir_node *node)
+{
+    struct list *list;
+
+    if (!(list = d3dcompiler_alloc(sizeof(*list))))
+    {
+        ERR("Out of memory.\n");
+        free_instr(node);
+        return NULL;
+    }
+    list_init(list);
+    list_add_tail(list, &node->entry);
+    return list;
+}
+
 %}
 
 %locations
@@ -1024,12 +1050,12 @@ static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tr
 %type <variable_def> type_spec
 %type <initializer> complex_initializer
 %type <initializer> initializer_expr_list
-%type <instr> initializer_expr
+%type <list> initializer_expr
 %type <modifiers> var_modifiers
 %type <list> field
 %type <list> parameters
 %type <list> param_list
-%type <instr> expr
+%type <list> expr
 %type <intval> array
 %type <list> statement
 %type <list> statement_list
@@ -1048,21 +1074,21 @@ static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tr
 %type <list> variables_def
 %type <list> variables_def_optional
 %type <if_body> if_body
-%type <instr> primary_expr
-%type <instr> postfix_expr
-%type <instr> unary_expr
-%type <instr> mul_expr
-%type <instr> add_expr
-%type <instr> shift_expr
-%type <instr> relational_expr
-%type <instr> equality_expr
-%type <instr> bitand_expr
-%type <instr> bitxor_expr
-%type <instr> bitor_expr
-%type <instr> logicand_expr
-%type <instr> logicor_expr
-%type <instr> conditional_expr
-%type <instr> assignment_expr
+%type <list> primary_expr
+%type <list> postfix_expr
+%type <list> unary_expr
+%type <list> mul_expr
+%type <list> add_expr
+%type <list> shift_expr
+%type <list> relational_expr
+%type <list> equality_expr
+%type <list> bitand_expr
+%type <list> bitxor_expr
+%type <list> bitor_expr
+%type <list> logicand_expr
+%type <list> logicor_expr
+%type <list> conditional_expr
+%type <list> assignment_expr
 %type <list> expr_statement
 %type <unary_op> unary_op
 %type <assign_op> assign_op
@@ -1615,7 +1641,7 @@ array:                    /* Empty */
                             {
                                 FIXME("Array.\n");
                                 $$ = 0;
-                                free_instr($2);
+                                free_instr_list($2);
                             }
 
 var_modifiers:            /* Empty */
@@ -1672,7 +1698,8 @@ complex_initializer:      initializer_expr
                                 $$.args_count = 1;
                                 if (!($$.args = d3dcompiler_alloc(sizeof(*$$.args))))
                                     YYABORT;
-                                $$.args[0] = $1;
+                                $$.args[0] = node_from_list($1);
+                                $$.instrs = $1;
                             }
                         | '{' initializer_expr_list '}'
                             {
@@ -1693,14 +1720,17 @@ initializer_expr_list:    initializer_expr
                                 $$.args_count = 1;
                                 if (!($$.args = d3dcompiler_alloc(sizeof(*$$.args))))
                                     YYABORT;
-                                $$.args[0] = $1;
+                                $$.args[0] = node_from_list($1);
+                                $$.instrs = $1;
                             }
                         | initializer_expr_list ',' initializer_expr
                             {
                                 $$ = $1;
                                 if (!($$.args = d3dcompiler_realloc($$.args, ($$.args_count + 1) * sizeof(*$$.args))))
                                     YYABORT;
-                                $$.args[$$.args_count++] = $3;
+                                $$.args[$$.args_count++] = node_from_list($3);
+                                list_move_tail($$.instrs, $3);
+                                d3dcompiler_free($3);
                             }
 
 boolean:                  KW_TRUE
@@ -1742,15 +1772,14 @@ jump_statement:           KW_RETURN expr ';'
                                 jump->node.type = HLSL_IR_JUMP;
                                 set_location(&jump->node.loc, &@1);
                                 jump->type = HLSL_IR_JUMP_RETURN;
-                                jump->node.data_type = $2->data_type;
-                                jump->return_value = $2;
+                                jump->node.data_type = node_from_list($2)->data_type;
+                                jump->return_value = node_from_list($2);
 
                                 FIXME("Check for valued return on void function.\n");
                                 FIXME("Implicit conversion to the return type if needed, "
 				        "error out if conversion not possible.\n");
 
-                                $$ = d3dcompiler_alloc(sizeof(*$$));
-                                list_init($$);
+                                $$ = $2;
                                 list_add_tail($$, &jump->node.entry);
                             }
 
@@ -1764,18 +1793,17 @@ selection_statement:      KW_IF '(' expr ')' if_body
                                 }
                                 instr->node.type = HLSL_IR_IF;
                                 set_location(&instr->node.loc, &@1);
-                                instr->condition = $3;
+                                instr->condition = node_from_list($3);
                                 instr->then_instrs = $5.then_instrs;
                                 instr->else_instrs = $5.else_instrs;
-                                if ($3->data_type->dimx > 1 || $3->data_type->dimy > 1)
+                                if (instr->condition->data_type->dimx > 1 || instr->condition->data_type->dimy > 1)
                                 {
                                     hlsl_report_message(instr->node.loc.file, instr->node.loc.line,
                                             instr->node.loc.col, HLSL_LEVEL_ERROR,
                                             "if condition requires a scalar");
                                 }
-                                $$ = d3dcompiler_alloc(sizeof(*$$));
-                                list_init($$);
-                                list_add_head($$, &instr->node.entry);
+                                $$ = $3;
+                                list_add_tail($$, &instr->node.entry);
                             }
 
 if_body:                  statement
@@ -1792,32 +1820,14 @@ if_body:                  statement
 loop_statement:           KW_WHILE '(' expr ')' statement
                             {
                                 struct source_location loc;
-                                struct list *cond = d3dcompiler_alloc(sizeof(*cond));
-
-                                if (!cond)
-                                {
-                                    ERR("Out of memory.\n");
-                                    YYABORT;
-                                }
-                                list_init(cond);
-                                list_add_head(cond, &$3->entry);
                                 set_location(&loc, &@1);
-                                $$ = create_loop(LOOP_WHILE, NULL, cond, NULL, $5, &loc);
+                                $$ = create_loop(LOOP_WHILE, NULL, $3, NULL, $5, &loc);
                             }
                         | KW_DO statement KW_WHILE '(' expr ')' ';'
                             {
                                 struct source_location loc;
-                                struct list *cond = d3dcompiler_alloc(sizeof(*cond));
-
-                                if (!cond)
-                                {
-                                    ERR("Out of memory.\n");
-                                    YYABORT;
-                                }
-                                list_init(cond);
-                                list_add_head(cond, &$5->entry);
                                 set_location(&loc, &@1);
-                                $$ = create_loop(LOOP_DO_WHILE, NULL, cond, NULL, $2, &loc);
+                                $$ = create_loop(LOOP_DO_WHILE, NULL, $5, NULL, $2, &loc);
                             }
                         | KW_FOR '(' scope_start expr_statement expr_statement expr ')' statement
                             {
@@ -1846,10 +1856,7 @@ expr_statement:           ';'
                             }
                         | expr ';'
                             {
-                                $$ = d3dcompiler_alloc(sizeof(*$$));
-                                list_init($$);
-                                if ($1)
-                                    list_add_head($$, &$1->entry);
+                                $$ = $1;
                             }
 
 primary_expr:             C_FLOAT
@@ -1864,7 +1871,8 @@ primary_expr:             C_FLOAT
                                 set_location(&c->node.loc, &yylloc);
                                 c->node.data_type = new_hlsl_type(d3dcompiler_strdup("float"), HLSL_CLASS_SCALAR, HLSL_TYPE_FLOAT, 1, 1);
                                 c->v.value.f[0] = $1;
-                                $$ = &c->node;
+                                if (!($$ = make_list(&c->node)))
+                                    YYABORT;
                             }
                         | C_INTEGER
                             {
@@ -1878,7 +1886,8 @@ primary_expr:             C_FLOAT
                                 set_location(&c->node.loc, &yylloc);
                                 c->node.data_type = new_hlsl_type(d3dcompiler_strdup("int"), HLSL_CLASS_SCALAR, HLSL_TYPE_INT, 1, 1);
                                 c->v.value.i[0] = $1;
-                                $$ = &c->node;
+                                if (!($$ = make_list(&c->node)))
+                                    YYABORT;
                             }
                         | boolean
                             {
@@ -1892,7 +1901,8 @@ primary_expr:             C_FLOAT
                                 set_location(&c->node.loc, &yylloc);
                                 c->node.data_type = new_hlsl_type(d3dcompiler_strdup("bool"), HLSL_CLASS_SCALAR, HLSL_TYPE_BOOL, 1, 1);
                                 c->v.value.b[0] = $1;
-                                $$ = &c->node;
+                                if (!($$ = make_list(&c->node)))
+                                    YYABORT;
                             }
                         | VAR_IDENTIFIER
                             {
@@ -1908,8 +1918,9 @@ primary_expr:             C_FLOAT
                                 }
                                 if ((deref = new_var_deref(var)))
                                 {
-                                    $$ = &deref->node;
-                                    set_location(&$$->loc, &@1);
+                                    set_location(&deref->node.loc, &@1);
+                                    if (!($$ = make_list(&deref->node)))
+                                        YYABORT;
                                 }
                                 else
                                     $$ = NULL;
@@ -1926,43 +1937,48 @@ postfix_expr:             primary_expr
                         | postfix_expr OP_INC
                             {
                                 struct source_location loc;
+                                struct hlsl_ir_node *inc;
 
                                 set_location(&loc, &@2);
-                                if ($1->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                if (node_from_list($1)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "modifying a const expression");
                                     YYABORT;
                                 }
-                                $$ = new_unary_expr(HLSL_IR_UNOP_POSTINC, $1, loc);
+                                inc = new_unary_expr(HLSL_IR_UNOP_POSTINC, node_from_list($1), loc);
                                 /* Post increment/decrement expressions are considered const */
-                                $$->data_type = clone_hlsl_type($$->data_type);
-                                $$->data_type->modifiers |= HLSL_MODIFIER_CONST;
+                                inc->data_type = clone_hlsl_type(inc->data_type);
+                                inc->data_type->modifiers |= HLSL_MODIFIER_CONST;
+                                $$ = append_unop($1, inc);
                             }
                         | postfix_expr OP_DEC
                             {
                                 struct source_location loc;
+                                struct hlsl_ir_node *inc;
 
                                 set_location(&loc, &@2);
-                                if ($1->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                if (node_from_list($1)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "modifying a const expression");
                                     YYABORT;
                                 }
-                                $$ = new_unary_expr(HLSL_IR_UNOP_POSTDEC, $1, loc);
+                                inc = new_unary_expr(HLSL_IR_UNOP_POSTDEC, node_from_list($1), loc);
                                 /* Post increment/decrement expressions are considered const */
-                                $$->data_type = clone_hlsl_type($$->data_type);
-                                $$->data_type->modifiers |= HLSL_MODIFIER_CONST;
+                                inc->data_type = clone_hlsl_type(inc->data_type);
+                                inc->data_type->modifiers |= HLSL_MODIFIER_CONST;
+                                $$ = append_unop($1, inc);
                             }
                         | postfix_expr '.' any_identifier
                             {
+                                struct hlsl_ir_node *node = node_from_list($1);
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                if ($1->data_type->type == HLSL_CLASS_STRUCT)
+                                if (node->data_type->type == HLSL_CLASS_STRUCT)
                                 {
-                                    struct hlsl_type *type = $1->data_type;
+                                    struct hlsl_type *type = node->data_type;
                                     struct hlsl_struct_field *field;
 
                                     $$ = NULL;
@@ -1970,7 +1986,7 @@ postfix_expr:             primary_expr
                                     {
                                         if (!strcmp($3, field->name))
                                         {
-                                            struct hlsl_ir_deref *deref = new_record_deref($1, field);
+                                            struct hlsl_ir_deref *deref = new_record_deref(node, field);
 
                                             if (!deref)
                                             {
@@ -1978,7 +1994,7 @@ postfix_expr:             primary_expr
                                                 YYABORT;
                                             }
                                             deref->node.loc = loc;
-                                            $$ = &deref->node;
+                                            $$ = append_unop($1, &deref->node);
                                             break;
                                         }
                                     }
@@ -1989,18 +2005,18 @@ postfix_expr:             primary_expr
                                         YYABORT;
                                     }
                                 }
-                                else if ($1->data_type->type <= HLSL_CLASS_LAST_NUMERIC)
+                                else if (node->data_type->type <= HLSL_CLASS_LAST_NUMERIC)
                                 {
                                     struct hlsl_ir_swizzle *swizzle;
 
-                                    swizzle = get_swizzle($1, $3, &loc);
+                                    swizzle = get_swizzle(node, $3, &loc);
                                     if (!swizzle)
                                     {
                                         hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                                 "invalid swizzle %s", debugstr_a($3));
                                         YYABORT;
                                     }
-                                    $$ = &swizzle->node;
+                                    $$ = append_unop($1, &swizzle->node);
                                 }
                                 else
                                 {
@@ -2015,7 +2031,7 @@ postfix_expr:             primary_expr
                                  * subcomponent access.
                                  * We store it as an array dereference in any case. */
                                 struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
-                                struct hlsl_type *expr_type = $1->data_type;
+                                struct hlsl_type *expr_type = node_from_list($1)->data_type;
                                 struct source_location loc;
 
                                 TRACE("Array dereference from type %s\n", debug_hlsl_type(expr_type));
@@ -2048,24 +2064,24 @@ postfix_expr:             primary_expr
                                         hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                                 "expression is not array-indexable");
                                     d3dcompiler_free(deref);
-                                    free_instr($1);
-                                    free_instr($3);
+                                    free_instr_list($1);
+                                    free_instr_list($3);
                                     YYABORT;
                                 }
-                                if ($3->data_type->type != HLSL_CLASS_SCALAR)
+                                if (node_from_list($3)->data_type->type != HLSL_CLASS_SCALAR)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "array index is not scalar");
                                     d3dcompiler_free(deref);
-                                    free_instr($1);
-                                    free_instr($3);
+                                    free_instr_list($1);
+                                    free_instr_list($3);
                                     YYABORT;
                                 }
                                 deref->type = HLSL_IR_DEREF_ARRAY;
-                                deref->v.array.array = $1;
-                                deref->v.array.index = $3;
+                                deref->v.array.array = node_from_list($1);
+                                deref->v.array.index = node_from_list($3);
 
-                                $$ = &deref->node;
+                                $$ = append_binop($1, $3, &deref->node);
                             }
                           /* "var_modifiers" doesn't make sense in this case, but it's needed
                              in the grammar to avoid shift/reduce conflicts. */
@@ -2104,7 +2120,7 @@ postfix_expr:             primary_expr
                                 constructor->args_count = $4.args_count;
                                 memcpy(constructor->args, $4.args, $4.args_count * sizeof(*$4.args));
                                 d3dcompiler_free($4.args);
-                                $$ = &constructor->node;
+                                $$ = append_unop($4.instrs, &constructor->node);
                             }
 
 unary_expr:               postfix_expr
@@ -2116,26 +2132,26 @@ unary_expr:               postfix_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@1);
-                                if ($2->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                if (node_from_list($2)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "modifying a const expression");
                                     YYABORT;
                                 }
-                                $$ = new_unary_expr(HLSL_IR_UNOP_PREINC, $2, loc);
+                                $$ = append_unop($2, new_unary_expr(HLSL_IR_UNOP_PREINC, node_from_list($2), loc));
                             }
                         | OP_DEC unary_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@1);
-                                if ($2->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                if (node_from_list($2)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "modifying a const expression");
                                     YYABORT;
                                 }
-                                $$ = new_unary_expr(HLSL_IR_UNOP_PREDEC, $2, loc);
+                                $$ = append_unop($2, new_unary_expr(HLSL_IR_UNOP_PREDEC, node_from_list($2), loc));
                             }
                         | unary_op unary_expr
                             {
@@ -2150,14 +2166,13 @@ unary_expr:               postfix_expr
                                 else
                                 {
                                     set_location(&loc, &@1);
-                                    $$ = new_unary_expr(ops[$1], $2, loc);
+                                    $$ = append_unop($2, new_unary_expr(ops[$1], node_from_list($2), loc));
                                 }
                             }
                           /* var_modifiers just to avoid shift/reduce conflicts */
                         | '(' var_modifiers type array ')' unary_expr
                             {
-                                struct hlsl_ir_expr *expr;
-                                struct hlsl_type *src_type = $6->data_type;
+                                struct hlsl_type *src_type = node_from_list($6)->data_type;
                                 struct hlsl_type *dst_type;
                                 struct source_location loc;
 
@@ -2182,8 +2197,7 @@ unary_expr:               postfix_expr
                                     YYABORT;
                                 }
 
-                                expr = new_cast($6, dst_type, &loc);
-                                $$ = expr ? &expr->node : NULL;
+                                $$ = append_unop($6, &new_cast(node_from_list($6), dst_type, &loc)->node);
                             }
 
 unary_op:                 '+'
@@ -2212,21 +2226,21 @@ mul_expr:                 unary_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_MUL, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_MUL, node_from_list($1), node_from_list($3), loc));
                             }
                         | mul_expr '/' unary_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_DIV, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_DIV, node_from_list($1), node_from_list($3), loc));
                             }
                         | mul_expr '%' unary_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_MOD, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_MOD, node_from_list($1), node_from_list($3), loc));
                             }
 
 add_expr:                 mul_expr
@@ -2238,14 +2252,14 @@ add_expr:                 mul_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_ADD, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_ADD, node_from_list($1), node_from_list($3), loc));
                             }
                         | add_expr '-' mul_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_SUB, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_SUB, node_from_list($1), node_from_list($3), loc));
                             }
 
 shift_expr:               add_expr
@@ -2270,28 +2284,28 @@ relational_expr:          shift_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_LESS, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_LESS, node_from_list($1), node_from_list($3), loc));
                             }
                         | relational_expr '>' shift_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_GREATER, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_GREATER, node_from_list($1), node_from_list($3), loc));
                             }
                         | relational_expr OP_LE shift_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_LEQUAL, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_LEQUAL, node_from_list($1), node_from_list($3), loc));
                             }
                         | relational_expr OP_GE shift_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_GEQUAL, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_GEQUAL, node_from_list($1), node_from_list($3), loc));
                             }
 
 equality_expr:            relational_expr
@@ -2303,14 +2317,14 @@ equality_expr:            relational_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_EQUAL, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_EQUAL, node_from_list($1), node_from_list($3), loc));
                             }
                         | equality_expr OP_NE relational_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = new_binary_expr(HLSL_IR_BINOP_NEQUAL, $1, $3, loc);
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_NEQUAL, node_from_list($1), node_from_list($3), loc));
                             }
 
 bitand_expr:              equality_expr
@@ -2374,18 +2388,20 @@ assignment_expr:          conditional_expr
                         | unary_expr assign_op assignment_expr
                             {
                                 struct source_location loc;
+                                struct hlsl_ir_node *instr;
 
                                 set_location(&loc, &@2);
-                                if ($1->data_type->modifiers & HLSL_MODIFIER_CONST)
+                                if (node_from_list($1)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "l-value is const");
                                     YYABORT;
                                 }
-                                $$ = make_assignment($1, $2, BWRITERSP_WRITEMASK_ALL, $3);
-                                if (!$$)
+                                if (!(instr = make_assignment(node_from_list($1), $2,
+                                        BWRITERSP_WRITEMASK_ALL, node_from_list($3))))
                                     YYABORT;
-                                $$->loc = loc;
+                                instr->loc = loc;
+                                $$ = append_binop($3, $1, instr);
                             }
 
 assign_op:                '='
