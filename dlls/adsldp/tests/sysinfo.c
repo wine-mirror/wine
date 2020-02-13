@@ -210,4 +210,6 @@ START_TEST(sysinfo)
     test_ComputerName();
     test_UserName();
     test_sysinfo();
+
+    CoUninitialize();
 }
