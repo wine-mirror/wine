@@ -855,8 +855,7 @@ interface IADsADSystemInfo : IDispatch
 ]
 coclass ADSystemInfo
 {
-    [default] interface IADsADSystemInfo;
-    interface IDispatch;
+    interface IADsADSystemInfo;
 }
 
 } /* library */
