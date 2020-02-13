@@ -1388,6 +1388,9 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
+    if (!This->ctx)
+        return E_UNEXPECTED;
+
     if (id & DISPID_FUNCTION_MASK)
     {
         id &= ~DISPID_FUNCTION_MASK;
