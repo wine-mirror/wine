@@ -624,39 +624,57 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_RemoveNotificationType(IDirec
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicPerformance8Impl_AddPort(IDirectMusicPerformance8 *iface,
-        IDirectMusicPort *pPort)
+static HRESULT perf_dmport_create(IDirectMusicPerformance8Impl *perf, DMUS_PORTPARAMS *params)
 {
-        IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
-	HRESULT hr = E_FAIL;
+    IDirectMusicPort *port;
+    GUID guid;
+    unsigned int i;
+    HRESULT hr;
 
-	FIXME("(%p, %p): stub\n", This, pPort);
-        if (!This->dmusic)
-          return DMUS_E_NOT_INIT;
-	if (NULL == pPort) {
-	  GUID port_guid;
-	  IDirectMusicPort* pDefaultPort = NULL;
-	  DMUS_PORTPARAMS params;
-          hr = IDirectMusic8_GetDefaultPort(This->dmusic, &port_guid);
-	  if (FAILED(hr)) return hr;
-	  ZeroMemory(&params, sizeof(params)); 
-	  params.dwSize = sizeof(params);
-	  params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_SHARE;
-	  params.dwChannelGroups = 1;
-	  params.fShare = TRUE;
-          hr = IDirectMusic8_CreatePort(This->dmusic, &port_guid, &params, &pDefaultPort, NULL);
-	  if (FAILED(hr)) return hr;
-	  hr = IDirectMusicPort_Activate(pDefaultPort, TRUE);
-	  if (FAILED(hr)) { IDirectMusicPort_Release(pDefaultPort); return hr; }
-          IDirectMusicPerformance8_AssignPChannelBlock(iface, 0, pDefaultPort, 1);
-	} else {
-	  IDirectMusicPort_AddRef(pPort);	  
-	}
-	/**
-	 * We should remember added Ports (for example using a list)
-	 * and control if Port is registered for each api who use ports
-	 */
-	return S_OK;
+    if (FAILED(hr = IDirectMusic8_GetDefaultPort(perf->dmusic, &guid)))
+        return hr;
+
+    params->dwSize = sizeof(params);
+    params->dwValidParams |= DMUS_PORTPARAMS_SHARE;
+    params->fShare = TRUE;
+
+    if (FAILED(hr = IDirectMusic8_CreatePort(perf->dmusic, &guid, params, &port, NULL)))
+        return hr;
+    if (FAILED(hr = IDirectMusicPort_Activate(port, TRUE))) {
+        IDirectMusicPort_Release(port);
+        return hr;
+    }
+    for (i = 0; i < params->dwChannelGroups; i++)
+        pchannel_block_set(&perf->pchannels, i, port, i + 1, FALSE);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI IDirectMusicPerformance8Impl_AddPort(IDirectMusicPerformance8 *iface,
+        IDirectMusicPort *port)
+{
+    IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
+
+    FIXME("(%p, %p): semi-stub\n", This, port);
+
+    if (!This->dmusic)
+        return DMUS_E_NOT_INIT;
+
+    if (!port) {
+        DMUS_PORTPARAMS params = {
+            .dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS,
+            .dwChannelGroups = 1
+        };
+
+        return perf_dmport_create(This, &params);
+    }
+
+    IDirectMusicPort_AddRef(port);
+    /**
+     * We should remember added Ports (for example using a list)
+     * and control if Port is registered for each api who use ports
+     */
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_RemovePort(IDirectMusicPerformance8 *iface,
