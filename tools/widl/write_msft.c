@@ -1630,6 +1630,9 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     unsigned char *namedata;
     int var_num = (typeinfo->typeinfo->cElement >> 16) & 0xffff;
 
+    if (!var->name)
+        var->name = gen_name();
+
     chat("add_var_desc(%d, %s)\n", index, var->name);
 
     id = 0x40000000 + index;
