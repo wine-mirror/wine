@@ -98,7 +98,6 @@ int    __cdecl _putw(int,FILE*);
 int    __cdecl _rmtmp(void);
 int    __cdecl _set_printf_count_output(int);
 int    __cdecl _setmaxstdio(int);
-int    WINAPIV _snprintf(char*,size_t,const char*,...);
 int    WINAPIV _snprintf_s(char*,size_t,size_t,const char*,...);
 char*  __cdecl _tempnam(const char*,const char*);
 int    __cdecl _unlink(const char*);
@@ -165,7 +164,6 @@ int    WINAPIV scanf(const char*,...);
 int    WINAPIV scanf_s(const char*,...);
 void   __cdecl setbuf(FILE*,char*);
 int    __cdecl setvbuf(FILE*,char*,int,size_t);
-int    WINAPIV sprintf(char*,const char*,...);
 int    WINAPIV sprintf_s(char*,size_t,const char*,...);
 int    WINAPIV _scprintf(const char *, ...);
 int    WINAPIV sscanf(const char*,const char*,...);
@@ -203,6 +201,28 @@ static inline int unlink(const char* path) { return _unlink(path); }
 #endif
 static inline int vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args) { return _vsnprintf(buffer,size,format,args); }
 #define snprintf _snprintf
+
+static inline int WINAPIV _snprintf(char *buffer, size_t size, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = _vsnprintf(buffer, size, format, args);
+    __ms_va_end(args);
+    return ret;
+}
+
+static inline int WINAPIV sprintf(char *buffer, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = _vsnprintf(buffer, (size_t)-1, format, args);
+    __ms_va_end(args);
+    return ret;
+}
 
 static inline wint_t fgetwchar(void) { return _fgetwchar(); }
 static inline wint_t fputwchar(wint_t wc) { return _fputwchar(wc); }

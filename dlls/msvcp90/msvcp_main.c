@@ -124,16 +124,6 @@ int WINAPIV _scprintf(const char* fmt, ...)
     __ms_va_end(valist);
     return ret;
 }
-
-int WINAPIV sprintf(char *buf, const char *fmt, ...)
-{
-    int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, fmt);
-    ret = _vsnprintf(buf, -1, fmt, valist);
-    __ms_va_end(valist);
-    return ret;
-}
 #endif
 
 static void init_cxx_funcs(void)
