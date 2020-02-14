@@ -55,14 +55,6 @@ typedef struct _vbscode_t vbscode_t;
 typedef struct _script_ctx_t script_ctx_t;
 typedef struct _vbdisp_t vbdisp_t;
 
-typedef struct named_item_t {
-    IDispatch *disp;
-    DWORD flags;
-    LPWSTR name;
-
-    struct list entry;
-} named_item_t;
-
 typedef enum {
     VBDISP_CALLGET,
     VBDISP_LET,
@@ -155,6 +147,14 @@ typedef struct {
     const builtin_prop_t *members;
     script_ctx_t *ctx;
 } BuiltinDisp;
+
+typedef struct named_item_t {
+    IDispatch *disp;
+    DWORD flags;
+    LPWSTR name;
+
+    struct list entry;
+} named_item_t;
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**) DECLSPEC_HIDDEN;
 HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
