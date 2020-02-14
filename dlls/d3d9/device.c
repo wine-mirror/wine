@@ -2107,8 +2107,6 @@ static HRESULT WINAPI d3d9_device_SetTransform(IDirect3DDevice9Ex *iface,
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
     wined3d_stateblock_set_transform(device->update_state, state, (const struct wined3d_matrix *)matrix);
-    if (!device->recording)
-        wined3d_device_set_transform(device->wined3d_device, state, (const struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -2139,7 +2137,6 @@ static HRESULT WINAPI d3d9_device_MultiplyTransform(IDirect3DDevice9Ex *iface,
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
     wined3d_stateblock_multiply_transform(device->state, state, (const struct wined3d_matrix *)matrix);
-    wined3d_device_multiply_transform(device->wined3d_device, state, (const struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
     return D3D_OK;
