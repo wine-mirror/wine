@@ -1,7 +1,7 @@
 /*
  *    Text layout/format tests
  *
- * Copyright 2012, 2014-2017 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2020 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,9 +28,6 @@
 #include "dwrite_3.h"
 
 #include "wine/test.h"
-
-static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
-static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
 struct testanalysissink
 {
@@ -900,7 +897,6 @@ static IUnknown *create_test_effect(void)
 
 static void test_CreateTextLayout(void)
 {
-    static const WCHAR strW[] = {'s','t','r','i','n','g',0};
     IDWriteTextLayout4 *layout4;
     IDWriteTextLayout2 *layout2 = NULL;
     IDWriteTextLayout *layout;
@@ -917,41 +913,41 @@ static void test_CreateTextLayout(void)
     ok(layout == NULL, "got %p\n", layout);
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, NULL, 0.0, 0.0, &layout);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, NULL, 0.0f, 0.0f, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, NULL, 1.0, 0.0, &layout);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, NULL, 1.0f, 0.0f, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, NULL, 0.0, 1.0, &layout);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, NULL, 0.0f, 1.0f, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, NULL, 1000.0, 1000.0, &layout);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, NULL, 1000.0f, 1000.0f, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create format, hr %#x.\n", hr);
 
     layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateTextLayout(factory, NULL, 0, format, 100.0f, 100.0f, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 0, format, 0.0f, 0.0f, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 0, format, 0.0f, 0.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     IDWriteTextLayout_Release(layout);
 
     EXPECT_REF(format, 1);
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     EXPECT_REF(format, 1);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
@@ -1025,7 +1021,6 @@ static DWRITE_MATRIX layoutcreate_transforms[] = {
 
 static void test_CreateGdiCompatibleTextLayout(void)
 {
-    static const WCHAR strW[] = {'s','t','r','i','n','g',0};
     IDWriteTextLayout *layout;
     IDWriteTextFormat *format;
     IDWriteFactory *factory;
@@ -1041,29 +1036,33 @@ static void test_CreateGdiCompatibleTextLayout(void)
     ok(layout == NULL, "got %p\n", layout);
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, NULL, 0.0, 0.0, 0.0, NULL, FALSE, &layout);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, NULL, 0.0f, 0.0f, 0.0f, NULL,
+            FALSE, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, NULL, 1.0, 0.0, 0.0, NULL, FALSE, &layout);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, NULL, 1.0f, 0.0f, 0.0f, NULL,
+            FALSE, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, NULL, 1.0, 0.0, 1.0, NULL, FALSE, &layout);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, NULL, 1.0f, 0.0f, 1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, NULL, 1000.0, 1000.0, 1.0, NULL, FALSE, &layout);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, NULL, 1000.0f, 1000.0f, 1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
     /* create with text format */
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
     EXPECT_REF(format, 1);
 
     layout = (void*)0xdeadbeef;
@@ -1071,8 +1070,9 @@ static void test_CreateGdiCompatibleTextLayout(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, 1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     EXPECT_REF(format, 1);
     EXPECT_REF(layout, 1);
 
@@ -1083,8 +1083,9 @@ static void test_CreateGdiCompatibleTextLayout(void)
     IDWriteTextLayout_Release(layout);
 
     /* zero length string is okay */
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 0, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 0, format, 100.0f, 100.0f, 1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     dimension = IDWriteTextLayout_GetMaxWidth(layout);
     ok(dimension == 100.0, "got %f\n", dimension);
@@ -1095,19 +1096,22 @@ static void test_CreateGdiCompatibleTextLayout(void)
     IDWriteTextLayout_Release(layout);
 
     /* negative, zero ppdip */
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 100.0, 100.0, -1.0, NULL, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 1, format, 100.0f, 100.0f, -1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     IDWriteTextLayout_Release(layout);
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 100.0, 100.0, 0.0, NULL, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 1, format, 100.0f, 100.0f, 0.0f, NULL,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     IDWriteTextLayout_Release(layout);
 
     /* transforms */
-    for (i = 0; i < ARRAY_SIZE(layoutcreate_transforms); i++) {
-        hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 100.0, 100.0, 1.0,
-            &layoutcreate_transforms[i], FALSE, &layout);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+    for (i = 0; i < ARRAY_SIZE(layoutcreate_transforms); ++i)
+    {
+        hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 1, format, 100.0f, 100.0f, 1.0f,
+                &layoutcreate_transforms[i], FALSE, &layout);
+        ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
         IDWriteTextLayout_Release(layout);
     }
 
@@ -1117,7 +1121,6 @@ static void test_CreateGdiCompatibleTextLayout(void)
 
 static void test_CreateTextFormat(void)
 {
-    static const WCHAR emptyW[] = {0};
     IDWriteFontCollection *collection, *syscoll;
     DWRITE_PARAGRAPH_ALIGNMENT paralign;
     DWRITE_READING_DIRECTION readdir;
@@ -1135,36 +1138,36 @@ static void test_CreateTextFormat(void)
     factory = create_factory();
 
     /* zero/negative font size */
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 0.0f, enusW, &format);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 0.0f, L"en-us", &format);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, -10.0f, enusW, &format);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, -10.0f, L"en-us", &format);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     /* invalid font properties */
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, 1000, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, 1000, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_ITALIC + 1,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STYLE_ITALIC + 1, DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_ITALIC,
-        10, 10.0f, enusW, &format);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_ITALIC,
+            10, 10.0f, L"en-us", &format);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     /* empty family name */
-    hr = IDWriteFactory_CreateTextFormat(factory, emptyW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
     IDWriteTextFormat_Release(format);
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     if (0) /* crashes on native */
         hr = IDWriteTextFormat_GetFontCollection(format, NULL);
@@ -1255,10 +1258,8 @@ static void test_CreateTextFormat(void)
 
 static void test_GetLocaleName(void)
 {
-    static const WCHAR strW[] = {'s','t','r','i','n','g',0};
-    static const WCHAR ruW[] = {'r','u',0};
-    IDWriteTextLayout *layout;
     IDWriteTextFormat *format, *format2;
+    IDWriteTextLayout *layout;
     IDWriteFactory *factory;
     WCHAR buff[10];
     UINT32 len;
@@ -1266,12 +1267,13 @@ static void test_GetLocaleName(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"ru", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 0, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 0, format, 100.0f, 100.0f, 1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat, (void**)&format2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1284,12 +1286,12 @@ static void test_GetLocaleName(void)
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
     hr = IDWriteTextFormat_GetLocaleName(format2, buff, len+1);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buff, ruW), "got %s\n", wine_dbgstr_w(buff));
+    ok(!lstrcmpW(buff, L"ru"), "Unexpected locale name %s.\n", wine_dbgstr_w(buff));
     hr = IDWriteTextFormat_GetLocaleName(format, buff, len);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
     hr = IDWriteTextFormat_GetLocaleName(format, buff, len+1);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buff, ruW), "got %s\n", wine_dbgstr_w(buff));
+    ok(!lstrcmpW(buff, L"ru"), "Unexpected locale name %s.\n", wine_dbgstr_w(buff));
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
@@ -1304,7 +1306,6 @@ static const struct drawcall_entry drawellipsis_seq[] = {
 
 static void test_CreateEllipsisTrimmingSign(void)
 {
-    static const WCHAR engbW[] = {'e','n','-','G','B',0};
     DWRITE_INLINE_OBJECT_METRICS metrics;
     DWRITE_BREAK_CONDITION before, after;
     struct renderer_context ctxt;
@@ -1316,9 +1317,9 @@ static void test_CreateEllipsisTrimmingSign(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, engbW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-GB", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     EXPECT_REF(format, 1);
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &sign);
@@ -1409,8 +1410,6 @@ if (0) {/* crashes on native */
 
 static void test_fontweight(void)
 {
-    static const WCHAR strW[] = {'s','t','r','i','n','g',0};
-    static const WCHAR ruW[] = {'r','u',0};
     IDWriteTextFormat *format, *fmt2;
     IDWriteTextLayout *layout;
     DWRITE_FONT_WEIGHT weight;
@@ -1421,12 +1420,13 @@ static void test_fontweight(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0, L"ru", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, 1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat, (void**)&fmt2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1515,24 +1515,22 @@ static void test_fontweight(void)
 
 static void test_SetInlineObject(void)
 {
-    static const WCHAR strW[] = {'s','t','r','i','n','g',0};
-    static const WCHAR ruW[] = {'r','u',0};
-
     IDWriteInlineObject *inlineobj, *inlineobj2, *inlinetest;
+    DWRITE_TEXT_RANGE range, r2;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
-    DWRITE_TEXT_RANGE range, r2;
     IDWriteFactory *factory;
     HRESULT hr;
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"ru", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, 1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &inlineobj);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1718,9 +1716,7 @@ static void test_Draw(void)
 {
     static const WCHAR str3W[] = {'1','2','3','-','5','2',0x64a,0x64f,0x633,0x627,0x648,0x650,
         0x64a,'7','1','.',0};
-    static const WCHAR strW[] = {'s','t','r','i','n','g',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a','b',0};
-    static const WCHAR ruW[] = {'r','u',0};
     IDWriteInlineObject *inlineobj;
     struct renderer_context ctxt;
     IDWriteTextFormat *format;
@@ -1736,12 +1732,12 @@ static void test_Draw(void)
     memset(&ctxt, 0, sizeof(ctxt));
     ctxt.snapping_disabled = TRUE;
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"ru", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 100.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &inlineobj);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1773,8 +1769,8 @@ static void test_Draw(void)
     IDWriteTextLayout_Release(layout);
 
     /* with reduced width DrawGlyphRun() is called for every line */
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 5.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, format, 5.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1796,8 +1792,8 @@ todo_wine
 
     /* strikethrough splits ranges from renderer point of view, but doesn't break
        shaping */
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, format, 500.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     flush_sequence(sequences, RENDERER_ID);
 
     range.startPosition = 0;
@@ -1810,9 +1806,9 @@ todo_wine
     ok_sequence(sequences, RENDERER_ID, draw_seq4, "draw test 4", FALSE);
     IDWriteTextLayout_Release(layout);
 
-    /* strikethrough somewhere in the middle */
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    /* Strike through somewhere in the middle */
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, format, 500.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     flush_sequence(sequences, RENDERER_ID);
 
     range.startPosition = 2;
@@ -1826,8 +1822,8 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     /* empty string */
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 0, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 0, format, 500.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
@@ -1839,8 +1835,9 @@ todo_wine
     ctxt.use_gdi_natural = TRUE;
 
     /* different parameter combinations with gdi-compatible layout */
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, TRUE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, 1.0f, NULL,
+            TRUE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1868,8 +1865,9 @@ todo_wine
     ctxt.gdicompat = TRUE;
     ctxt.use_gdi_natural = FALSE;
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, 1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1881,8 +1879,9 @@ todo_wine
 
     m.m11 = m.m22 = 2.0;
     m.m12 = m.m21 = m.dx = m.dy = 0.0;
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, &m, TRUE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, 1.0f, &m,
+            TRUE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1894,8 +1893,9 @@ todo_wine
 
     m.m11 = m.m22 = 2.0;
     m.m12 = m.m21 = m.dx = m.dy = 0.0;
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, &m, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, 1.0f, &m,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -2001,9 +2001,6 @@ static void test_GetClusterMetrics(void)
         'g',0x0085,'h',0x2028,'i',0x2029,0xad,0xa,0};
     static const WCHAR str3W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
-    static const WCHAR strW[] = {'a','b','c','d',0};
-    static const WCHAR str4W[] = {'a',' ',0};
-    static const WCHAR str6W[] = {'a',' ','b',0};
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
     DWRITE_CLUSTER_METRICS metrics[22];
     DWRITE_TEXT_METRICS text_metrics;
@@ -2021,9 +2018,9 @@ static void test_GetClusterMetrics(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteFactory_CreateTextLayout(factory, str3W, 7, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -2032,8 +2029,8 @@ static void test_GetClusterMetrics(void)
     ok(count == 7, "got %u\n", count);
     IDWriteTextLayout_Release(layout);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, NULL, 0, &count);
@@ -2170,8 +2167,8 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     /* single inline object that fails to report its metrics */
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     range.startPosition = 0;
     range.length = 4;
@@ -2224,8 +2221,8 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     /* zero length string */
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 0, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 0, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 1;
     memset(metrics, 0, sizeof(metrics));
@@ -2234,9 +2231,9 @@ todo_wine
     ok(count == 0, "got %u\n", count);
     IDWriteTextLayout_Release(layout);
 
-    /* whitespace */
-    hr = IDWriteFactory_CreateTextLayout(factory, str4W, 2, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    /* Whitespace */
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a ", 2, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 0;
     memset(metrics, 0, sizeof(metrics));
@@ -2249,9 +2246,9 @@ todo_wine
     ok(metrics[1].canWrapLineAfter == 1, "got %d\n", metrics[1].canWrapLineAfter);
     IDWriteTextLayout_Release(layout);
 
-    /* layout is fully covered by inline object with after condition DWRITE_BREAK_CONDITION_MAY_NOT_BREAK */
-    hr = IDWriteFactory_CreateTextLayout(factory, str4W, 2, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    /* Layout is fully covered by inline object with after condition DWRITE_BREAK_CONDITION_MAY_NOT_BREAK. */
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a ", 2, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     range.startPosition = 0;
     range.length = ~0u;
@@ -2268,8 +2265,8 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     /* compare natural cluster width with gdi layout */
-    hr = IDWriteFactory_CreateTextLayout(factory, str4W, 1, format, 100.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a ", 1, format, 100.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 0;
     memset(metrics, 0, sizeof(metrics));
@@ -2280,8 +2277,9 @@ todo_wine
 
     IDWriteTextLayout_Release(layout);
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, str4W, 1, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"a ", 1, format, 100.0f, 100.0f, 1.0f, NULL,
+            FALSE, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 0;
     memset(metrics, 0, sizeof(metrics));
@@ -2360,9 +2358,9 @@ todo_wine
 
     IDWriteTextLayout_Release(layout);
 
-    /* trigger line trimming */
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, lstrlenW(strW), format, 100.0f, 200.0f, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    /* Trigger line trimming. */
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 100.0f, 200.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 0;
     memset(metrics, 0, sizeof(metrics));
@@ -2404,8 +2402,8 @@ todo_wine
     hr = IDWriteTextFormat_SetWordWrapping(format, DWRITE_WORD_WRAPPING_NO_WRAP);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, str6W, lstrlenW(str6W), format, 1000.0f, 200.0f, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a b", 3, format, 1000.0f, 200.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 0;
     memset(metrics, 0, sizeof(metrics));
@@ -2420,7 +2418,7 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     /* Single cluster layout, trigger trimming. */
-    hr = IDWriteFactory_CreateTextLayout(factory, str6W, 1, format, 1000.0f, 200.0f, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a b", 1, format, 1000.0f, 200.0f, &layout);
     ok(hr == S_OK, "Failed to create layout, hr %#x.\n", hr);
 
     count = 0;
@@ -2464,9 +2462,7 @@ todo_wine
 
 static void test_SetLocaleName(void)
 {
-    static const WCHAR eNuSW[] = {'e','N','-','u','S',0};
-    static const WCHAR strW[] = {'a','b','c','d',0};
-    WCHAR buffW[LOCALE_NAME_MAX_LENGTH + ARRAY_SIZE(strW)];
+    WCHAR buffW[LOCALE_NAME_MAX_LENGTH + 5];
     IDWriteTextFormat *format, *format2;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
@@ -2476,50 +2472,50 @@ static void test_SetLocaleName(void)
     factory = create_factory();
 
     /* create format with mixed case locale name, get it back */
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, eNuSW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"eN-uS", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteTextFormat_GetLocaleName(format, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"en-us"), "Unexpected locale name %s.\n", wine_dbgstr_w(buffW));
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat, (void**)&format2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteTextFormat_GetLocaleName(format2, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"en-us"), "Unexpected locale name %s.\n", wine_dbgstr_w(buffW));
 
     hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, ARRAY_SIZE(buffW), NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"en-us"), "Unexpected locale name %s.\n", wine_dbgstr_w(buffW));
 
     IDWriteTextFormat_Release(format2);
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     range.startPosition = 0;
     range.length = 1;
-    hr = IDWriteTextLayout_SetLocaleName(layout, enusW, range);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteTextLayout_SetLocaleName(layout, L"en-us", range);
+    ok(hr == S_OK, "Failed to set locale name, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_SetLocaleName(layout, NULL, range);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     /* invalid locale name is allowed */
-    hr = IDWriteTextLayout_SetLocaleName(layout, strW, range);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteTextLayout_SetLocaleName(layout, L"abcd", range);
+    ok(hr == S_OK, "Failed to set locale name, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_GetLocaleName(layout, 0, NULL, 0, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -2531,7 +2527,7 @@ static void test_SetLocaleName(void)
     range.length = 0;
     hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, ARRAY_SIZE(buffW), &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buffW, strW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"abcd"), "Unexpected locale name %s.\n", wine_dbgstr_w(buffW));
     ok(range.startPosition == 0 && range.length == 1, "got %u,%u\n", range.startPosition, range.length);
 
     /* get with a shorter buffer */
@@ -2541,9 +2537,9 @@ static void test_SetLocaleName(void)
     ok(buffW[0] == 0, "got %x\n", buffW[0]);
 
     /* name is too long */
-    lstrcpyW(buffW, strW);
+    lstrcpyW(buffW, L"abcd");
     while (lstrlenW(buffW) <= LOCALE_NAME_MAX_LENGTH)
-        lstrcatW(buffW, strW);
+        lstrcatW(buffW, L"abcd");
 
     range.startPosition = 0;
     range.length = 1;
@@ -2553,19 +2549,19 @@ static void test_SetLocaleName(void)
     buffW[0] = 0;
     hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, ARRAY_SIZE(buffW), NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buffW, strW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"abcd"), "Unexpected locale name %s.\n", wine_dbgstr_w(buffW));
 
     /* set initial locale name for whole text, except with a different casing */
     range.startPosition = 0;
     range.length = 4;
-    hr = IDWriteTextLayout_SetLocaleName(layout, eNuSW, range);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteTextLayout_SetLocaleName(layout, L"eN-uS", range);
+    ok(hr == S_OK, "Failed to set locale name, hr %#x.\n", hr);
 
     buffW[0] = 0;
     range.length = 0;
     hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, ARRAY_SIZE(buffW), &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"en-us"), "Unexpected locale name %s.\n", wine_dbgstr_w(buffW));
     ok((range.startPosition == 0 && range.length == ~0u) ||
         broken(range.startPosition == 0 && range.length == 4) /* vista/win7 */, "got %u,%u\n", range.startPosition, range.length);
 
@@ -2574,7 +2570,7 @@ static void test_SetLocaleName(void)
     range.length = 0;
     hr = IDWriteTextLayout_GetLocaleName(layout, 100, buffW, ARRAY_SIZE(buffW), &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"en-us"), "Unexpected locale name %s.\n", wine_dbgstr_w(buffW));
     ok((range.startPosition == 0 && range.length == ~0u) ||
         broken(range.startPosition == 4 && range.length == ~0u-4) /* vista/win7 */, "got %u,%u\n", range.startPosition, range.length);
 
@@ -2598,9 +2594,9 @@ static void test_SetPairKerning(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -2668,7 +2664,6 @@ if (count == 3) {
 
 static void test_SetVerticalGlyphOrientation(void)
 {
-    static const WCHAR strW[] = {'a','b','c','d',0};
     DWRITE_VERTICAL_GLYPH_ORIENTATION orientation;
     IDWriteTextLayout2 *layout2;
     IDWriteTextFormat *format;
@@ -2678,12 +2673,12 @@ static void test_SetVerticalGlyphOrientation(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     IDWriteTextFormat_Release(format);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
@@ -2716,7 +2711,6 @@ static void test_DetermineMinWidth(void)
         { {'a','\n',' ',' ','b',0}, {'b',0} },
         { {'a','b','c','\n',' ',' ','b',0}, {'a','b','c',0} },
     };
-    static const WCHAR strW[] = {'a','b','c','d',0};
     DWRITE_CLUSTER_METRICS metrics[10];
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
@@ -2727,20 +2721,20 @@ static void test_DetermineMinWidth(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, lstrlenW(strW), format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_DetermineMinWidth(layout, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     IDWriteTextLayout_Release(layout);
 
     /* empty string */
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 0, format, 100.0f, 100.0f, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 0, format, 100.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     minwidth = 1.0f;
     hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
@@ -2780,7 +2774,6 @@ static void test_DetermineMinWidth(void)
 
 static void test_SetFontSize(void)
 {
-    static const WCHAR strW[] = {'a','b','c','d',0};
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
@@ -2790,12 +2783,12 @@ static void test_SetFontSize(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     /* negative/zero size */
     r.startPosition = 1;
@@ -2872,9 +2865,6 @@ static void test_SetFontSize(void)
 
 static void test_SetFontFamilyName(void)
 {
-    static const WCHAR taHomaW[] = {'T','a','H','o','m','a',0};
-    static const WCHAR arialW[] = {'A','r','i','a','l',0};
-    static const WCHAR strW[] = {'a','b','c','d',0};
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
@@ -2884,12 +2874,12 @@ static void test_SetFontFamilyName(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     /* NULL name */
     r.startPosition = 1;
@@ -2907,13 +2897,13 @@ static void test_SetFontFamilyName(void)
     /* set name only different in casing */
     r.startPosition = 1;
     r.length = 1;
-    hr = IDWriteTextLayout_SetFontFamilyName(layout, taHomaW, r);
+    hr = IDWriteTextLayout_SetFontFamilyName(layout, L"TaHoma", r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* zero length range */
     r.startPosition = 1;
     r.length = 0;
-    hr = IDWriteTextLayout_SetFontFamilyName(layout, arialW, r);
+    hr = IDWriteTextLayout_SetFontFamilyName(layout, L"Arial", r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     r.startPosition = 0;
@@ -2921,12 +2911,12 @@ static void test_SetFontFamilyName(void)
     nameW[0] = 0;
     hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, ARRAY_SIZE(nameW), &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(nameW, taHomaW), "got %s\n", wine_dbgstr_w(nameW));
+    ok(!lstrcmpW(nameW, L"TaHoma"), "Unexpected family name %s.\n", wine_dbgstr_w(nameW));
     ok(r.startPosition == 1 && r.length == 1, "got %u, %u\n", r.startPosition, r.length);
 
     r.startPosition = 1;
     r.length = 1;
-    hr = IDWriteTextLayout_SetFontFamilyName(layout, arialW, r);
+    hr = IDWriteTextLayout_SetFontFamilyName(layout, L"Arial", r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     r.startPosition = 1;
@@ -2937,14 +2927,14 @@ static void test_SetFontFamilyName(void)
 
     r.startPosition = 0;
     r.length = 4;
-    hr = IDWriteTextLayout_SetFontFamilyName(layout, arialW, r);
+    hr = IDWriteTextLayout_SetFontFamilyName(layout, L"Arial", r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     nameW[0] = 0;
     hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, ARRAY_SIZE(nameW), &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(r.startPosition == 0 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
-    ok(!lstrcmpW(nameW, arialW), "got name %s\n", wine_dbgstr_w(nameW));
+    ok(!lstrcmpW(nameW, L"Arial"), "Unexpected family name %s.\n", wine_dbgstr_w(nameW));
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
@@ -2953,7 +2943,6 @@ static void test_SetFontFamilyName(void)
 
 static void test_SetFontStyle(void)
 {
-    static const WCHAR strW[] = {'a','b','c','d',0};
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
@@ -2963,12 +2952,12 @@ static void test_SetFontStyle(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     /* invalid style value */
     r.startPosition = 1;
@@ -3041,7 +3030,6 @@ static void test_SetFontStyle(void)
 
 static void test_SetFontStretch(void)
 {
-    static const WCHAR strW[] = {'a','b','c','d',0};
     DWRITE_FONT_STRETCH stretch;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
@@ -3051,12 +3039,12 @@ static void test_SetFontStretch(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     /* invalid stretch value */
     r.startPosition = 1;
@@ -3136,7 +3124,6 @@ static void test_SetFontStretch(void)
 
 static void test_SetStrikethrough(void)
 {
-    static const WCHAR strW[] = {'a','b','c','d',0};
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
@@ -3146,12 +3133,12 @@ static void test_SetStrikethrough(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     r.startPosition = 1;
     r.length = 0;
@@ -3199,9 +3186,6 @@ static void test_SetStrikethrough(void)
 static void test_GetMetrics(void)
 {
     static const WCHAR str2W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
-    static const WCHAR strW[] = {'a','b','c','d',0};
-    static const WCHAR str3W[] = {'a',0};
-    static const WCHAR str4W[] = {' ',0};
     DWRITE_CLUSTER_METRICS clusters[4];
     DWRITE_TEXT_METRICS metrics;
     IDWriteTextFormat *format;
@@ -3213,12 +3197,12 @@ static void test_GetMetrics(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 500.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 4, &count);
@@ -3265,8 +3249,8 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     /* single cluster layout */
-    hr = IDWriteFactory_CreateTextLayout(factory, str3W, 1, format, 500.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 500.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 1, &count);
@@ -3288,7 +3272,7 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     /* Whitespace only. */
-    hr = IDWriteFactory_CreateTextLayout(factory, str4W, 1, format, 500.0, 1000.0, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, L" ", 1, format, 500.0f, 1000.0f, &layout);
     ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     memset(&metrics, 0xcc, sizeof(metrics));
@@ -3312,7 +3296,6 @@ todo_wine
 
 static void test_SetFlowDirection(void)
 {
-    static const WCHAR strW[] = {'a','b','c','d',0};
     DWRITE_READING_DIRECTION reading;
     DWRITE_FLOW_DIRECTION flow;
     IDWriteTextFormat *format;
@@ -3322,9 +3305,9 @@ static void test_SetFlowDirection(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     flow = IDWriteTextFormat_GetFlowDirection(format);
     ok(flow == DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM, "got %d\n", flow);
@@ -3332,15 +3315,16 @@ static void test_SetFlowDirection(void)
     reading = IDWriteTextFormat_GetReadingDirection(format);
     ok(reading == DWRITE_READING_DIRECTION_LEFT_TO_RIGHT, "got %d\n", reading);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 500.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     IDWriteTextLayout_Release(layout);
 
     hr = IDWriteTextFormat_SetFlowDirection(format, DWRITE_FLOW_DIRECTION_LEFT_TO_RIGHT);
     ok(hr == S_OK || broken(hr == E_INVALIDARG) /* vista,win7 */, "got 0x%08x\n", hr);
-    if (hr == S_OK) {
-        hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 500.0f, 1000.0f, &layout);
+        ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
         IDWriteTextLayout_Release(layout);
 
         hr = IDWriteTextFormat_SetReadingDirection(format, DWRITE_READING_DIRECTION_TOP_TO_BOTTOM);
@@ -3349,8 +3333,8 @@ static void test_SetFlowDirection(void)
         hr = IDWriteTextFormat_SetFlowDirection(format, DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 500.0f, 1000.0f, &layout);
+        ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
         IDWriteTextLayout_Release(layout);
     }
     else
@@ -3385,7 +3369,6 @@ static const struct drawcall_entry draweffect4_seq[] = {
 static void test_SetDrawingEffect(void)
 {
     static const WCHAR strW[] = {'a','e',0x0300,'d',0}; /* accent grave */
-    static const WCHAR str2W[] = {'a','e','c','d',0};
     IDWriteInlineObject *sign;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
@@ -3399,9 +3382,9 @@ static void test_SetDrawingEffect(void)
 
     effect = create_test_effect();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     /* string with combining mark */
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
@@ -3439,8 +3422,8 @@ static void test_SetDrawingEffect(void)
     IDWriteTextLayout_Release(layout);
 
     /* simple string */
-    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 4, format, 500.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"aecd", 4, format, 500.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     r.startPosition = 0;
     r.length = 2;
@@ -3457,8 +3440,8 @@ static void test_SetDrawingEffect(void)
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &sign);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 4, format, 500.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"aecd", 4, format, 500.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     r.startPosition = 0;
     r.length = 4;
@@ -3519,8 +3502,8 @@ static BOOL get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT3
     BOOL exists = FALSE;
     HRESULT hr;
 
-    hr = IDWriteLocalizedStrings_FindLocaleName(strings, enusW, &index, &exists);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteLocalizedStrings_FindLocaleName(strings, L"en-us", &index, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     if (exists) {
         hr = IDWriteLocalizedStrings_GetString(strings, index, buff, size);
@@ -3538,7 +3521,6 @@ static void test_GetLineMetrics(void)
     static const WCHAR strW[] = {'a','b','c','d',' ',0};
     static const WCHAR str2W[] = {'a','b','\r','c','d',0};
     static const WCHAR str4W[] = {'a','\r',0};
-    static const WCHAR emptyW[] = {0};
     IDWriteFontCollection *syscollection;
     DWRITE_FONT_METRICS fontmetrics;
     DWRITE_LINE_METRICS metrics[6];
@@ -3553,9 +3535,9 @@ static void test_GetLineMetrics(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 2048.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 2048.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 5, format, 30000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -3643,11 +3625,11 @@ static void test_GetLineMetrics(void)
 
         IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
         hr = IDWriteFactory_CreateTextFormat(factory, nameW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-            DWRITE_FONT_STRETCH_NORMAL, fontmetrics.designUnitsPerEm, enusW, &format);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+                DWRITE_FONT_STRETCH_NORMAL, fontmetrics.designUnitsPerEm, L"en-us", &format);
+        ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-        hr = IDWriteFactory_CreateTextLayout(factory, emptyW, 1, format, 30000.0f, 100.0f, &layout);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteFactory_CreateTextLayout(factory, L"", 1, format, 30000.0f, 100.0f, &layout);
+        ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
         memset(metrics, 0, sizeof(metrics));
         count = 0;
@@ -3672,9 +3654,9 @@ static void test_GetLineMetrics(void)
     }
     IDWriteFontCollection_Release(syscollection);
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 2048.0f, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 2048.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     fontface = get_fontface_from_format(format);
     ok(fontface != NULL, "got %p\n", fontface);
@@ -3696,9 +3678,9 @@ static void test_GetLineMetrics(void)
     IDWriteTextFormat_Release(format);
 
     /* line breaks */
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 12.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteFactory_CreateTextLayout(factory, str3W, 10, format, 100.0, 300.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -3867,8 +3849,6 @@ static void test_GetLineMetrics(void)
 
 static void test_SetTextAlignment(void)
 {
-    static const WCHAR strW[] = {'a',0};
-
     static const WCHAR stringsW[][10] = {
         {'a',0},
         {0}
@@ -3886,15 +3866,15 @@ static void test_SetTextAlignment(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 12.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     v = IDWriteTextFormat_GetTextAlignment(format);
     ok(v == DWRITE_TEXT_ALIGNMENT_LEADING, "got %d\n", v);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 500.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     v = IDWriteTextLayout_GetTextAlignment(layout);
     ok(v == DWRITE_TEXT_ALIGNMENT_LEADING, "got %d\n", v);
@@ -4034,7 +4014,6 @@ static void test_SetTextAlignment(void)
 
 static void test_SetParagraphAlignment(void)
 {
-    static const WCHAR strW[] = {'a',0};
     DWRITE_TEXT_METRICS metrics;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
@@ -4046,15 +4025,15 @@ static void test_SetParagraphAlignment(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 12.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     v = IDWriteTextFormat_GetParagraphAlignment(format);
     ok(v == DWRITE_PARAGRAPH_ALIGNMENT_NEAR, "got %d\n", v);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 500.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     v = IDWriteTextLayout_GetParagraphAlignment(layout);
     ok(v == DWRITE_PARAGRAPH_ALIGNMENT_NEAR, "got %d\n", v);
@@ -4111,8 +4090,8 @@ static void test_SetParagraphAlignment(void)
     hr = IDWriteTextFormat_SetParagraphAlignment(format, DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 500.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -4128,7 +4107,6 @@ static void test_SetParagraphAlignment(void)
 
 static void test_SetReadingDirection(void)
 {
-    static const WCHAR strW[] = {'a',0};
     DWRITE_CLUSTER_METRICS clusters[1];
     DWRITE_TEXT_METRICS metrics;
     IDWriteTextFormat *format;
@@ -4141,15 +4119,15 @@ static void test_SetReadingDirection(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 12.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     v = IDWriteTextFormat_GetReadingDirection(format);
     ok(v == DWRITE_READING_DIRECTION_LEFT_TO_RIGHT, "got %d\n", v);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 500.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     v = IDWriteTextLayout_GetReadingDirection(layout);
     ok(v == DWRITE_READING_DIRECTION_LEFT_TO_RIGHT, "got %d\n", v);
@@ -4316,7 +4294,6 @@ static DWRITE_MATRIX compattransforms[] = {
 
 static void test_pixelsnapping(void)
 {
-    static const WCHAR strW[] = {'a',0};
     IDWriteTextLayout *layout, *layout2;
     struct renderer_context ctxt;
     DWRITE_FONT_METRICS metrics;
@@ -4329,15 +4306,15 @@ static void test_pixelsnapping(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 12.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     fontface = get_fontface_from_format(format);
     IDWriteFontFace_GetMetrics(fontface, &metrics);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 500.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     /* disabled snapping */
     ctxt.snapping_disabled = TRUE;
@@ -4375,10 +4352,11 @@ static void test_pixelsnapping(void)
             i, ctxt.originY, expectedY, baseline);
 
         /* gdicompat layout transform doesn't affect snapping */
-        for (j = 0; j < ARRAY_SIZE(compattransforms); j++) {
-            hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 500.0, 100.0,
-                1.0, &compattransforms[j], FALSE, &layout2);
-            ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        for (j = 0; j < ARRAY_SIZE(compattransforms); ++j)
+        {
+            hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"a", 1, format, 500.0f, 100.0f,
+                    1.0f, &compattransforms[j], FALSE, &layout2);
+            ok(hr == S_OK, "%d: failed to create text layout, hr %#x.\n", i, hr);
 
             expectedY = snap_coord(&ctxt.m, ctxt.ppdip, baseline);
             hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, originX, 0.0);
@@ -4410,9 +4388,9 @@ static void test_SetWordWrapping(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 12.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     v = IDWriteTextFormat_GetWordWrapping(format);
     ok(v == DWRITE_WORD_WRAPPING_WRAP, "got %d\n", v);
@@ -4487,7 +4465,8 @@ static UINT32 WINAPI fontcollection_GetFontFamilyCount(IDWriteFontCollection *if
 
 static HRESULT WINAPI fontcollection_GetFontFamily(IDWriteFontCollection *iface, UINT32 index, IDWriteFontFamily **family)
 {
-    if (index == 123456) {
+    if (index == 123456)
+    {
         IDWriteFactory *factory = create_factory();
         IDWriteFontCollection *syscollection;
         BOOL exists;
@@ -4496,8 +4475,8 @@ static HRESULT WINAPI fontcollection_GetFontFamily(IDWriteFontCollection *iface,
         hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        hr = IDWriteFontCollection_FindFamilyName(syscollection, tahomaW, &index, &exists);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteFontCollection_FindFamilyName(syscollection, L"Tahoma", &index, &exists);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
         hr = IDWriteFontCollection_GetFontFamily(syscollection, index, family);
         ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -4506,6 +4485,7 @@ static HRESULT WINAPI fontcollection_GetFontFamily(IDWriteFontCollection *iface,
         IDWriteFactory_Release(factory);
         return S_OK;
     }
+
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
@@ -4541,7 +4521,6 @@ static IDWriteFontCollection fallbackcollection = { &fallbackcollectionvtbl };
 
 static void test_MapCharacters(void)
 {
-    static const WCHAR strW[] = {'a','b','c',0};
     static const WCHAR str2W[] = {'a',0x3058,'b',0};
     IDWriteLocalizedStrings *strings;
     IDWriteFontFallback *fallback;
@@ -4579,7 +4558,7 @@ static void test_MapCharacters(void)
     ok(font == NULL, "got %p\n", font);
 
     /* zero length source */
-    g_source = strW;
+    g_source = L"abc";
     mappedlength = 1;
     scale = 0.0f;
     font = (void*)0xdeadbeef;
@@ -4590,7 +4569,7 @@ static void test_MapCharacters(void)
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font == NULL, "got %p\n", font);
 
-    g_source = strW;
+    g_source = L"abc";
     mappedlength = 0;
     scale = 0.0f;
     font = NULL;
@@ -4606,8 +4585,8 @@ todo_wine
 if (font) {
     IDWriteFont_Release(font);
 }
-    /* same latin text, full length */
-    g_source = strW;
+    /* same Latin text, full length */
+    g_source = L"abc";
     mappedlength = 0;
     scale = 0.0f;
     font = NULL;
@@ -4680,7 +4659,7 @@ if (font) {
     ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
     hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buffW, tahomaW), "%s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"Tahoma"), "Unexpected string %s.\n", wine_dbgstr_w(buffW));
     IDWriteLocalizedStrings_Release(strings);
     IDWriteFont_Release(font);
 
@@ -4702,7 +4681,7 @@ if (font) {
     hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, ARRAY_SIZE(buffW));
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine
-    ok(lstrcmpW(buffW, tahomaW), "%s\n", wine_dbgstr_w(buffW));
+    ok(lstrcmpW(buffW, L"Tahoma"), "Unexpected string %s.\n", wine_dbgstr_w(buffW));
     IDWriteLocalizedStrings_Release(strings);
     IDWriteFont_Release(font);
 
@@ -4712,8 +4691,6 @@ todo_wine
 
 static void test_FontFallbackBuilder(void)
 {
-    static const WCHAR localeW[] = {'l','o','c','a','l','e',0};
-    static const WCHAR strW[] = {'A',0};
     IDWriteFontFallback *fallback, *fallback2;
     IDWriteFontFallbackBuilder *builder;
     IDWriteFontFallback1 *fallback1;
@@ -4816,7 +4793,7 @@ static void test_FontFallbackBuilder(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* fallback font missing from system collection */
-    g_source = strW;
+    g_source = L"A";
     mappedlength = 0;
     scale = 0.0f;
     font = (void*)0xdeadbeef;
@@ -4838,7 +4815,7 @@ todo_wine {
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    g_source = strW;
+    g_source = L"A";
     mappedlength = 0;
     scale = 0.0f;
     font = NULL;
@@ -4863,7 +4840,7 @@ todo_wine {
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    g_source = strW;
+    g_source = L"A";
     mappedlength = 0;
     scale = 0.0f;
     font = NULL;
@@ -4883,13 +4860,13 @@ todo_wine {
     /* explicit locale */
     range.first = 'A';
     range.last = 'B';
-    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, localeW, NULL, 6.0f);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, L"locale", NULL, 6.0f);
+    ok(hr == S_OK, "Failed to add mapping, hr %#x.\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    g_source = strW;
+    g_source = L"A";
     mappedlength = 0;
     scale = 0.0f;
     font = NULL;
@@ -4920,7 +4897,6 @@ todo_wine {
 
 static void test_fallback(void)
 {
-    static const WCHAR strW[] = {'a','b','c','d',0};
     IDWriteFontFallback *fallback, *fallback2;
     IDWriteFontFallback1 *fallback1;
     DWRITE_CLUSTER_METRICS clusters[4];
@@ -4939,10 +4915,10 @@ static void test_fallback(void)
 
     /* Font does not exist in system collection. */
     hr = IDWriteFactory_CreateTextFormat(factory, g_blahfontW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
     ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
     ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     count = 0;
@@ -4965,13 +4941,13 @@ todo_wine {
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     /* Existing font. */
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"abcd", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     IDWriteTextFormat_Release(format);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
@@ -5038,7 +5014,6 @@ todo_wine {
 
 static void test_SetTypography(void)
 {
-    static const WCHAR strW[] = {'a','f','i','b',0};
     IDWriteTypography *typography, *typography2;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
@@ -5048,12 +5023,12 @@ static void test_SetTypography(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"afib", 4, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
     IDWriteTextFormat_Release(format);
 
     hr = IDWriteFactory_CreateTypography(factory, &typography);
@@ -5094,7 +5069,6 @@ static void test_SetTypography(void)
 
 static void test_SetLastLineWrapping(void)
 {
-    static const WCHAR strW[] = {'a',0};
     IDWriteTextLayout2 *layout2;
     IDWriteTextFormat1 *format1;
     IDWriteTextLayout *layout;
@@ -5105,9 +5079,9 @@ static void test_SetLastLineWrapping(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat1, (void**)&format1);
     IDWriteTextFormat_Release(format);
@@ -5123,8 +5097,8 @@ static void test_SetLastLineWrapping(void)
     hr = IDWriteTextFormat1_SetLastLineWrapping(format1, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, (IDWriteTextFormat*)format1, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, (IDWriteTextFormat *)format1, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -5143,7 +5117,6 @@ static void test_SetLastLineWrapping(void)
 
 static void test_SetOpticalAlignment(void)
 {
-    static const WCHAR strW[] = {'a',0};
     DWRITE_OPTICAL_ALIGNMENT alignment;
     IDWriteTextLayout2 *layout2;
     IDWriteTextFormat1 *format1;
@@ -5154,9 +5127,9 @@ static void test_SetOpticalAlignment(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat1, (void**)&format1);
     IDWriteTextFormat_Release(format);
@@ -5169,8 +5142,8 @@ static void test_SetOpticalAlignment(void)
     alignment = IDWriteTextFormat1_GetOpticalAlignment(format1);
     ok(alignment == DWRITE_OPTICAL_ALIGNMENT_NONE, "got %d\n", alignment);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, (IDWriteTextFormat*)format1, 1000.0, 1000.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, (IDWriteTextFormat *)format1, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -5241,7 +5214,6 @@ static const struct drawcall_entry drawunderline4_seq[] = {
 
 static void test_SetUnderline(void)
 {
-    static const WCHAR encaW[] = {'e','n','-','C','A',0};
     static const WCHAR strW[] = {'a','e',0x0300,'d',0}; /* accent grave */
     IDWriteFontCollection *syscollection;
     DWRITE_CLUSTER_METRICS clusters[4];
@@ -5254,9 +5226,9 @@ static void test_SetUnderline(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -5308,7 +5280,7 @@ todo_wine
     /* now set different locale for second char, draw again */
     range.startPosition = 0;
     range.length = 1;
-    hr = IDWriteTextLayout_SetLocaleName(layout, encaW, range);
+    hr = IDWriteTextLayout_SetLocaleName(layout, L"en-CA", range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     flush_sequence(sequences, RENDERER_ID);
@@ -5414,8 +5386,8 @@ todo_wine
 
         IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
         hr = IDWriteFactory_CreateTextFormat(factory, nameW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-            DWRITE_FONT_STRETCH_NORMAL, fontmetrics.designUnitsPerEm, enusW, &format);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+                DWRITE_FONT_STRETCH_NORMAL, fontmetrics.designUnitsPerEm, L"en-us", &format);
+        ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
         /* Look for first supported character to avoid triggering fallback path. With fallback it's harder to test
            DrawUnderline() metrics, because actual resolved fontface is not passed to it. Grabbing fontface instance
@@ -5465,7 +5437,6 @@ todo_wine
 
 static void test_InvalidateLayout(void)
 {
-    static const WCHAR strW[] = {'a',0};
     IDWriteTextLayout3 *layout3;
     IDWriteTextLayout *layout;
     IDWriteTextFormat *format;
@@ -5474,12 +5445,12 @@ static void test_InvalidateLayout(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 1000.0f, 1000.0f, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout3, (void**)&layout3);
     if (hr == S_OK) {
@@ -5525,7 +5496,6 @@ static void test_InvalidateLayout(void)
 
 static void test_line_spacing(void)
 {
-    static const WCHAR strW[] = {'a',0};
     IDWriteTextFormat2 *format2;
     IDWriteTextLayout *layout;
     IDWriteTextFormat *format;
@@ -5534,9 +5504,9 @@ static void test_line_spacing(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0f, 0.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -5550,8 +5520,8 @@ static void test_line_spacing(void)
     hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_PROPORTIONAL+1, 0.0f, 0.0f);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 1000.0f, 1000.0f, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
 
     hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0f, 0.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -5627,7 +5597,6 @@ static void test_GetOverhangMetrics(void)
         { 16.0f, { 10.0f, 50.0f, 20.0f }, { -1.0f, 0.0f, -3.0f, 4.0f }, { -1.0f, 4.0f, -3.0f, 0.0f } },
         { 15.0f, { 10.0f, 50.0f, 20.0f }, { -1.0f, 10.0f, 3.0f, -4.0f }, { -1.0f, 15.0f, 3.0f, -9.0f } },
     };
-    static const WCHAR strW[] = {'A',0};
     IDWriteFactory *factory;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
@@ -5636,11 +5605,11 @@ static void test_GetOverhangMetrics(void)
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-            DWRITE_FONT_STRETCH_NORMAL, 100.0f, enusW, &format);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 100.0f, L"en-us", &format);
     ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 1000.0f, 1000.0f, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"A", 1, format, 1000.0f, 1000.0f, &layout);
     ok(hr == S_OK, "Failed to create text layout, hr %x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(overhangs_tests); i++) {
@@ -5686,7 +5655,6 @@ static void test_GetOverhangMetrics(void)
 
 static void test_tab_stops(void)
 {
-    static const WCHAR strW[] = {'\t','a','\t','b'};
     DWRITE_CLUSTER_METRICS clusters[4];
     IDWriteTextLayout *layout;
     IDWriteTextFormat *format;
@@ -5701,8 +5669,8 @@ static void test_tab_stops(void)
     /* Default tab stop value. */
     for (size = 1.0f; size < 25.0f; size += 5.0f)
     {
-        hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL,
-                DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, size, enusW, &format);
+        hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL,
+                DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, size, L"en-us", &format);
         ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
         tabstop = IDWriteTextFormat_GetIncrementalTabStop(format);
@@ -5711,8 +5679,8 @@ static void test_tab_stops(void)
         IDWriteTextFormat_Release(format);
     }
 
-    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL,
-            DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-us", &format);
     ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
     hr = IDWriteTextFormat_SetIncrementalTabStop(format, 0.0f);
@@ -5730,7 +5698,7 @@ static void test_tab_stops(void)
     tabstop = IDWriteTextFormat_GetIncrementalTabStop(format);
     ok(tabstop == 100.0f, "Unexpected tab stop %f.\n", tabstop);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0f, 1000.0f, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"\ta\tb", 4, format, 1000.0f, 1000.0f, &layout);
     ok(hr == S_OK, "Failed to create text layout, hr %x.\n", hr);
 
     hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 4, &count);
