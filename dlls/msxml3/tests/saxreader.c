@@ -2764,7 +2764,7 @@ static void test_saxreader_properties(void)
     hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-version"), &v);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-    ok(!lstrcmpW(V_BSTR(&v), _bstr_("1.0")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"1.0"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     ISAXXMLReader_Release(reader);
@@ -3163,7 +3163,7 @@ static void test_mxwriter_properties(void)
     str = (void*)0xdeadbeef;
     hr = IMXWriter_get_encoding(writer, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("UTF-16")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"UTF-16"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* invalid encoding name */
@@ -3178,7 +3178,7 @@ static void test_mxwriter_properties(void)
     str = (void*)0xdeadbeef;
     hr = IMXWriter_get_encoding(writer, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("utf-8")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"utf-8"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IMXWriter_put_encoding(writer, _bstr_("uTf-16"));
@@ -3186,7 +3186,7 @@ static void test_mxwriter_properties(void)
     str = (void*)0xdeadbeef;
     hr = IMXWriter_get_encoding(writer, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("uTf-16")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"uTf-16"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* how it affects document creation */
@@ -3202,7 +3202,7 @@ static void test_mxwriter_properties(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"yes\"?>\r\n"),
+    ok(!lstrcmpW(L"<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"yes\"?>\r\n",
         V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
     ISAXContentHandler_Release(content);
@@ -3212,7 +3212,7 @@ static void test_mxwriter_properties(void)
     /* default version is 'surprisingly' 1.0 */
     hr = IMXWriter_get_version(writer, &str);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(!lstrcmpW(str, _bstr_("1.0")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"1.0"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* store version string as is */
@@ -3226,21 +3226,21 @@ static void test_mxwriter_properties(void)
     ok(hr == S_OK, "got %08x\n", hr);
     hr = IMXWriter_get_version(writer, &str);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(!lstrcmpW(str, _bstr_("")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L""), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IMXWriter_put_version(writer, _bstr_("a.b"));
     ok(hr == S_OK, "got %08x\n", hr);
     hr = IMXWriter_get_version(writer, &str);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(!lstrcmpW(str, _bstr_("a.b")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"a.b"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IMXWriter_put_version(writer, _bstr_("2.0"));
     ok(hr == S_OK, "got %08x\n", hr);
     hr = IMXWriter_get_version(writer, &str);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(!lstrcmpW(str, _bstr_("2.0")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"2.0"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     IMXWriter_Release(writer);
@@ -3471,7 +3471,7 @@ static void test_mxwriter_startenddocument(void)
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
+    ok(!lstrcmpW(L"<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n", V_BSTR(&dest)),
         "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
@@ -3512,7 +3512,7 @@ static void test_mxwriter_startenddocument(void)
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_(""), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     ISAXContentHandler_Release(content);
@@ -3863,7 +3863,7 @@ static void test_mxwriter_startendelement(void)
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("b"), 1, NULL);
@@ -3873,7 +3873,7 @@ static void test_mxwriter_startendelement(void)
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<><b>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<><b>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_endElement(content, NULL, 0, NULL, 0, _bstr_("a:b"), 3);
@@ -3893,7 +3893,7 @@ static void test_mxwriter_startendelement(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<><b></b>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<><b></b>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_endDocument(content);
@@ -3907,7 +3907,7 @@ static void test_mxwriter_startendelement(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_(""), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_startDocument(content);
@@ -3920,7 +3920,7 @@ static void test_mxwriter_startendelement(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<abc>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<abc>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_endDocument(content);
@@ -3933,7 +3933,7 @@ static void test_mxwriter_startendelement(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<abc></abd>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<abc></abd>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     V_VT(&dest) = VT_EMPTY;
@@ -3947,7 +3947,7 @@ static void test_mxwriter_startendelement(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<a>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<a>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     ISAXContentHandler_Release(content);
@@ -4015,7 +4015,7 @@ static void test_mxwriter_characters(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("VbCharsTESTCHARDATA ."), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"VbCharsTESTCHARDATA .", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_endDocument(content);
@@ -4052,7 +4052,7 @@ static void test_mxwriter_characters(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<a></a>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<a></a>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     ISAXContentHandler_Release(content);
@@ -4339,7 +4339,7 @@ static void test_mxwriter_stream(void)
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "get_output failed: %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
+    ok(!lstrcmpW(L"<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n", V_BSTR(&dest)),
             "Got wrong content: %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
@@ -4428,7 +4428,7 @@ static void test_mxwriter_encoding(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
+    ok(!lstrcmpW(L"<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n", V_BSTR(&dest)),
             "got wrong content: %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
@@ -4468,7 +4468,7 @@ static void test_mxwriter_encoding(void)
     /* so output is unaffected, encoding name is stored however */
     hr = IMXWriter_get_encoding(writer, &s);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(s, _bstr_("UTF-16")), "got %s\n", wine_dbgstr_w(s));
+    ok(!lstrcmpW(s, L"UTF-16"), "got %s\n", wine_dbgstr_w(s));
     SysFreeString(s);
 
     IStream_Release(stream);
@@ -4729,7 +4729,7 @@ static void test_mxwriter_comment(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<!---->\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<!---->\r\n", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXLexicalHandler_comment(lexical, commentW, ARRAY_SIZE(commentW) - 1);
@@ -4739,7 +4739,7 @@ static void test_mxwriter_comment(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<!---->\r\n<!--comment-->\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<!---->\r\n<!--comment-->\r\n", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     ISAXContentHandler_Release(content);
@@ -4784,7 +4784,7 @@ static void test_mxwriter_cdata(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<![CDATA["), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<![CDATA[", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = IVBSAXLexicalHandler_startCDATA(vblexical);
@@ -4801,7 +4801,7 @@ static void test_mxwriter_cdata(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<![CDATA[<![CDATA[< > & \"]]>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<![CDATA[<![CDATA[< > & \"]]>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     ISAXContentHandler_Release(content);
@@ -4840,7 +4840,7 @@ static void test_mxwriter_pi(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<?\?>\r\n<?target?>\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<?\?>\r\n<?target?>\r\n", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_processingInstruction(content, targetW, 4, dataW, 4);
@@ -4850,7 +4850,7 @@ static void test_mxwriter_pi(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<?\?>\r\n<?target?>\r\n<?targ data?>\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<?\?>\r\n<?target?>\r\n<?targ data?>\r\n", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     V_VT(&dest) = VT_EMPTY;
@@ -4864,7 +4864,7 @@ static void test_mxwriter_pi(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<?target?>\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<?target?>\r\n", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
 
@@ -4903,7 +4903,7 @@ static void test_mxwriter_ignorablespaces(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("datad"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"datad", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     ISAXContentHandler_Release(content);
@@ -4973,7 +4973,7 @@ static void test_mxwriter_dtd(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<!DOCTYPE name [\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<!DOCTYPE name [\r\n", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     /* system id is required if public is present */
@@ -5028,7 +5028,7 @@ static void test_mxwriter_dtd(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<!ELEMENT name content>\r\n"),
+    ok(!lstrcmpW(L"<!ELEMENT name content>\r\n",
         V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
@@ -5043,7 +5043,7 @@ static void test_mxwriter_dtd(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<!ELEMENT name >\r\n"),
+    ok(!lstrcmpW(L"<!ELEMENT name >\r\n",
         V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
@@ -5061,7 +5061,7 @@ static void test_mxwriter_dtd(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<!ATTLIST element attribute CDATA #REQUIRED \"value\">\r\n"),
+    ok(!lstrcmpW(L"<!ATTLIST element attribute CDATA #REQUIRED \"value\">\r\n",
         V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
@@ -5106,7 +5106,7 @@ static void test_mxwriter_dtd(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<!ENTITY name \"value\">\r\n"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(L"<!ENTITY name \"value\">\r\n", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     /* external entities */
@@ -5517,7 +5517,7 @@ static void test_mxattr_clear(void)
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
     EXPECT_HR(hr, S_OK);
     ok(len == 5, "got %d\n", len);
-    ok(!lstrcmpW(ptr, _bstr_("qname")), "got %s\n", wine_dbgstr_w(ptr));
+    ok(!lstrcmpW(ptr, L"qname"), "got %s\n", wine_dbgstr_w(ptr));
 
     hr = IMXAttributes_clear(mxattr);
     EXPECT_HR(hr, S_OK);
@@ -5741,7 +5741,7 @@ static void test_mxwriter_indent(void)
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n<a><b>\r\n\t\t<c/>\r\n\t</b>\r\n</a>"), V_BSTR(&dest)),
+    ok(!lstrcmpW(L"<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n<a><b>\r\n\t\t<c/>\r\n\t</b>\r\n</a>", V_BSTR(&dest)),
         "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 

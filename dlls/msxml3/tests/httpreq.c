@@ -1588,7 +1588,7 @@ static void test_XMLHTTP(void)
     hr = IXMLHttpRequest_getAllResponseHeaders(xhr, &str);
     EXPECT_HR(hr, S_OK);
     /* status line is stripped already */
-    ok(memcmp(str, _bstr_("HTTP"), 4*sizeof(WCHAR)), "got response headers %s\n", wine_dbgstr_w(str));
+    ok(memcmp(str, L"HTTP", 4*sizeof(WCHAR)), "got response headers %s\n", wine_dbgstr_w(str));
     ok(*str, "got empty headers\n");
     hr = IXMLHttpRequest_getAllResponseHeaders(xhr, &str1);
     EXPECT_HR(hr, S_OK);
@@ -1616,7 +1616,7 @@ static void test_XMLHTTP(void)
 
     hr = IXMLHttpRequest_get_statusText(xhr, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("OK")), "got status %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"OK"), "got status %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* another ::send() after completed request */

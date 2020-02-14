@@ -1726,19 +1726,19 @@ if (0)
         /* get data Tests */
         r = IXMLDOMText_get_data(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect put_data string\n");
+        ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect put_data string\n");
         SysFreeString(str);
 
         /* Confirm XML text is good */
         r = IXMLDOMText_get_xml(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("This &amp;is a ; test &lt;&gt;\\") ), "incorrect xml string\n");
+        ok(!lstrcmpW(str, L"This &amp;is a ; test &lt;&gt;\\"), "incorrect xml string\n");
         SysFreeString(str);
 
         /* Confirm we get the put_data Text back */
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect xml string\n");
+        ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect xml string\n");
         SysFreeString(str);
 
         /* test substringData */
@@ -1772,19 +1772,19 @@ if (0)
         /* test substringData - Start of string */
         r = IXMLDOMText_substringData(nodetext, 0, 4, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("This") ), "incorrect substringData string\n");
+        ok(!lstrcmpW(str, L"This"), "incorrect substringData string\n");
         SysFreeString(str);
 
         /* test substringData - Middle of string */
         r = IXMLDOMText_substringData(nodetext, 13, 4, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("test") ), "incorrect substringData string\n");
+        ok(!lstrcmpW(str, L"test"), "incorrect substringData string\n");
         SysFreeString(str);
 
         /* test substringData - End of string */
         r = IXMLDOMText_substringData(nodetext, 20, 4, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("\\") ), "incorrect substringData string\n");
+        ok(!lstrcmpW(str, L"\\"), "incorrect substringData string\n");
         SysFreeString(str);
 
         /* test appendData */
@@ -1799,7 +1799,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"This &is a ; test <>\\Append"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* test insertData */
@@ -1840,7 +1840,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"Begin This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* delete data */
@@ -1874,7 +1874,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* delete from end */
@@ -1887,7 +1887,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("This &is a Middle; test <>\\Append") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"This &is a Middle; test <>\\Append"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* delete from inside */
@@ -1900,7 +1900,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L""), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* delete whole data ... */
@@ -1934,7 +1934,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("99") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"99"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* ::replaceData() */
@@ -1948,14 +1948,14 @@ if (0)
         ok(r == E_INVALIDARG, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         r = IXMLDOMText_replaceData(nodetext, 0, 0, NULL);
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* NULL pointer means delete */
@@ -1963,7 +1963,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"tr1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* empty string means delete */
@@ -1971,7 +1971,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"r1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* zero count means insert */
@@ -1979,7 +1979,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"ar1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         r = IXMLDOMText_replaceData(nodetext, 0, 2, NULL);
@@ -1989,7 +1989,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"m1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* nonempty string, count greater than its length */
@@ -1997,7 +1997,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"a1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* nonempty string, count less than its length */
@@ -2005,7 +2005,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+        ok(!lstrcmpW(str, L"wine1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         IXMLDOMText_Release( nodetext );
@@ -2094,26 +2094,26 @@ if (0)
         /* test nodeName */
         r = IXMLDOMProcessingInstruction_get_nodeName(nodePI, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect nodeName string\n");
+        ok(!lstrcmpW(str, L"xml"), "incorrect nodeName string\n");
         SysFreeString(str);
 
         /* test baseName */
         str = NULL;
         r = IXMLDOMProcessingInstruction_get_baseName(nodePI, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect nodeName string\n");
+        ok(!lstrcmpW(str, L"xml"), "incorrect nodeName string\n");
         SysFreeString(str);
 
         /* test Target */
         r = IXMLDOMProcessingInstruction_get_target(nodePI, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect target string\n");
+        ok(!lstrcmpW(str, L"xml"), "incorrect target string\n");
         SysFreeString(str);
 
         /* test get_data */
         r = IXMLDOMProcessingInstruction_get_data(nodePI, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("version=\"1.0\"") ), "incorrect data string\n");
+        ok(!lstrcmpW(str, L"version=\"1.0\""), "incorrect data string\n");
         SysFreeString(str);
 
         /* test put_data */
@@ -2129,7 +2129,7 @@ if (0)
 
         /* test get nodeName */
         r = IXMLDOMProcessingInstruction_get_nodeName(nodePI, &str);
-        ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect nodeName string\n");
+        ok(!lstrcmpW(str, L"xml"), "incorrect nodeName string\n");
         ok(r == S_OK, "ret %08x\n", r );
         SysFreeString(str);
 
@@ -3609,7 +3609,7 @@ static void test_get_childNodes(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("bs")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"bs"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
 
@@ -3617,7 +3617,7 @@ static void test_get_childNodes(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("bs")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"bs"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
 
@@ -3629,7 +3629,7 @@ static void test_get_childNodes(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("bs")), "got node name %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"bs"), "got node name %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
     VariantClear(&v);
@@ -3638,7 +3638,7 @@ static void test_get_childNodes(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("pr")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"pr"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
 
@@ -3669,7 +3669,7 @@ static void test_get_childNodes(void)
     str = NULL;
     hr = IXMLDOMNode_get_nodeName(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("xml")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"xml"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* it returns empty but valid node list */
@@ -5021,7 +5021,7 @@ if (0)
 
     hr = IXMLDOMNode_get_nodeName(rootNode, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("root")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"root"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(rootNode);
 
@@ -5168,7 +5168,7 @@ static void test_cloneNode(void )
 
     hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(V_BSTR(&v), _bstr_("XSLPattern")), "got prop value %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"XSLPattern"), "got prop value %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_BSTR(&v) = _bstr_("XPath");
@@ -5196,7 +5196,7 @@ static void test_cloneNode(void )
     /* cloned document inherits properties */
     hr = IXMLDOMDocument2_getProperty(doc_clone, _bstr_("SelectionLanguage"), &v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(V_BSTR(&v), _bstr_("XPath")), "got prop value %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"XPath"), "got prop value %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     IXMLDOMDocument2_Release(doc_clone);
@@ -5436,19 +5436,19 @@ static void test_xmlTypes(void)
                 /* get data Tests */
                 hr = IXMLDOMComment_get_data(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect get_data string\n");
+                ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect get_data string\n");
                 SysFreeString(str);
 
                 /* Confirm XML text is good */
                 hr = IXMLDOMComment_get_xml(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("<!--This &is a ; test <>\\-->") ), "incorrect xml string\n");
+                ok(!lstrcmpW(str, L"<!--This &is a ; test <>\\-->"), "incorrect xml string\n");
                 SysFreeString(str);
 
                 /* Confirm we get the put_data Text back */
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect xml string\n");
+                ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect xml string\n");
                 SysFreeString(str);
 
                 /* test length property */
@@ -5487,19 +5487,19 @@ static void test_xmlTypes(void)
                 /* test substringData - Start of string */
                 hr = IXMLDOMComment_substringData(pComment, 0, 4, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This") ), "incorrect substringData string\n");
+                ok(!lstrcmpW(str, L"This"), "incorrect substringData string\n");
                 SysFreeString(str);
 
                 /* test substringData - Middle of string */
                 hr = IXMLDOMComment_substringData(pComment, 13, 4, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("test") ), "incorrect substringData string\n");
+                ok(!lstrcmpW(str, L"test"), "incorrect substringData string\n");
                 SysFreeString(str);
 
                 /* test substringData - End of string */
                 hr = IXMLDOMComment_substringData(pComment, 20, 4, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("\\") ), "incorrect substringData string\n");
+                ok(!lstrcmpW(str, L"\\"), "incorrect substringData string\n");
                 SysFreeString(str);
 
                 /* test appendData */
@@ -5514,7 +5514,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"This &is a ; test <>\\Append"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* test insertData */
@@ -5555,7 +5555,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"Begin This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* delete data */
@@ -5589,7 +5589,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L" This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* delete from end */
@@ -5602,7 +5602,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append ") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L" This &is a Middle; test <>\\Append "), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* delete from inside */
@@ -5615,7 +5615,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("  ") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"  "), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* delete whole data ... */
@@ -5639,14 +5639,14 @@ static void test_xmlTypes(void)
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 hr = IXMLDOMComment_replaceData(pComment, 0, 0, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* NULL pointer means delete */
@@ -5654,7 +5654,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"tr1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* empty string means delete */
@@ -5662,7 +5662,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"r1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* zero count means insert */
@@ -5670,7 +5670,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"ar1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 hr = IXMLDOMComment_replaceData(pComment, 0, 2, NULL);
@@ -5680,7 +5680,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"m1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* nonempty string, count greater than its length */
@@ -5688,7 +5688,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"a1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* nonempty string, count less than its length */
@@ -5696,7 +5696,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"wine1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 IXMLDOMComment_Release(pComment);
@@ -5874,13 +5874,13 @@ static void test_xmlTypes(void)
                 /* Confirm XML text is good */
                 hr = IXMLDOMCDATASection_get_xml(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("<![CDATA[This &is a ; test <>\\]]>") ), "incorrect xml string\n");
+                ok(!lstrcmpW(str, L"<![CDATA[This &is a ; test <>\\]]>"), "incorrect xml string\n");
                 SysFreeString(str);
 
                 /* Confirm we get the put_data Text back */
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
+                ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect text string\n");
                 SysFreeString(str);
 
                 /* test length property */
@@ -5891,7 +5891,7 @@ static void test_xmlTypes(void)
                 /* test get data */
                 hr = IXMLDOMCDATASection_get_data(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
+                ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect text string\n");
                 SysFreeString(str);
 
                 /* test substringData */
@@ -5925,19 +5925,19 @@ static void test_xmlTypes(void)
                 /* test substringData - Start of string */
                 hr = IXMLDOMCDATASection_substringData(pCDataSec, 0, 4, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This") ), "incorrect substringData string\n");
+                ok(!lstrcmpW(str, L"This"), "incorrect substringData string\n");
                 SysFreeString(str);
 
                 /* test substringData - Middle of string */
                 hr = IXMLDOMCDATASection_substringData(pCDataSec, 13, 4, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("test") ), "incorrect substringData string\n");
+                ok(!lstrcmpW(str, L"test"), "incorrect substringData string\n");
                 SysFreeString(str);
 
                 /* test substringData - End of string */
                 hr = IXMLDOMCDATASection_substringData(pCDataSec, 20, 4, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("\\") ), "incorrect substringData string\n");
+                ok(!lstrcmpW(str, L"\\"), "incorrect substringData string\n");
                 SysFreeString(str);
 
                 /* test appendData */
@@ -5952,7 +5952,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"This &is a ; test <>\\Append"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* test insertData */
@@ -5993,7 +5993,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"Begin This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* delete data */
@@ -6027,7 +6027,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L" This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* delete from end */
@@ -6040,7 +6040,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append ") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L" This &is a Middle; test <>\\Append "), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* delete from inside */
@@ -6053,7 +6053,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("  ") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"  "), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* delete whole data ... */
@@ -6078,14 +6078,14 @@ static void test_xmlTypes(void)
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 0, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* NULL pointer means delete */
@@ -6093,7 +6093,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"tr1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* empty string means delete */
@@ -6101,7 +6101,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"r1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* zero count means insert */
@@ -6109,7 +6109,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"ar1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 2, NULL);
@@ -6119,7 +6119,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"m1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* nonempty string, count greater than its length */
@@ -6127,7 +6127,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"a1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 /* nonempty string, count less than its length */
@@ -6135,7 +6135,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+                ok(!lstrcmpW(str, L"wine1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
                 IXMLDOMCDATASection_Release(pCDataSec);
@@ -6603,7 +6603,7 @@ static void test_namespaces_change(void)
 
         hr = IXMLDOMElement_get_xml(elem, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW(str, _bstr_("<ns:elem xmlns:ns=\"ns/uri\"/>")), "got element %s for %s\n",
+        ok(!lstrcmpW(str, L"<ns:elem xmlns:ns=\"ns/uri\"/>"), "got element %s for %s\n",
            wine_dbgstr_w(str), class_ptr->name);
         SysFreeString(str);
 
@@ -6663,12 +6663,12 @@ static void test_namespaces_basic(void)
 
         hr = IXMLDOMNode_get_prefix(node2, &str);
         EXPECT_HR(hr, S_OK);
-        ok( !lstrcmpW( str, _bstr_("Model")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"Model"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = IXMLDOMNode_get_nodeName(node2, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW( str, _bstr_("Model:Package")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"Model:Package"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* Test get_namespaceURI */
@@ -6678,7 +6678,7 @@ static void test_namespaces_basic(void)
 
         hr = IXMLDOMNode_get_namespaceURI(node2, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW( str, _bstr_("http://omg.org/mof.Model/1.3")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"http://omg.org/mof.Model/1.3"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = IXMLDOMNode_QueryInterface(node2, &IID_IXMLDOMElement, (void**)&elem);
@@ -6689,12 +6689,12 @@ static void test_namespaces_basic(void)
 
         hr = IXMLDOMAttribute_get_nodeName(attr, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW( str, _bstr_("Model:name2")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"Model:name2"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = IXMLDOMAttribute_get_prefix(attr, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW( str, _bstr_("Model")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"Model"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         IXMLDOMAttribute_Release(attr);
@@ -6855,7 +6855,7 @@ static void test_nodeTypedValue(void)
         hr = IXMLDOMProcessingInstruction_get_nodeTypedValue(pi, &value);
         ok(hr == S_OK, "ret %08x\n", hr );
         ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
-        ok(!lstrcmpW(V_BSTR(&value), _bstr_("value")), "got wrong value\n");
+        ok(!lstrcmpW(V_BSTR(&value), L"value"), "got wrong value\n");
         IXMLDOMProcessingInstruction_Release(pi);
         VariantClear(&value);
     }
@@ -6868,7 +6868,7 @@ static void test_nodeTypedValue(void)
         hr = IXMLDOMCDATASection_get_nodeTypedValue(cdata, &value);
         ok(hr == S_OK, "ret %08x\n", hr );
         ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
-        ok(!lstrcmpW(V_BSTR(&value), _bstr_("[1]*2=3; &gee that's not right!")), "got wrong value\n");
+        ok(!lstrcmpW(V_BSTR(&value), L"[1]*2=3; &gee that's not right!"), "got wrong value\n");
         IXMLDOMCDATASection_Release(cdata);
         VariantClear(&value);
     }
@@ -6881,7 +6881,7 @@ static void test_nodeTypedValue(void)
         hr = IXMLDOMComment_get_nodeTypedValue(comment, &value);
         ok(hr == S_OK, "ret %08x\n", hr );
         ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
-        ok(!lstrcmpW(V_BSTR(&value), _bstr_("comment")), "got wrong value\n");
+        ok(!lstrcmpW(V_BSTR(&value), L"comment"), "got wrong value\n");
         IXMLDOMComment_Release(comment);
         VariantClear(&value);
     }
@@ -7804,11 +7804,11 @@ static inline void _check_default_props(int line, IXMLDOMDocument2* doc)
 
     VariantInit(&var);
     helper_ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &var));
-    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), _bstr_("XSLPattern")) == 0, "expected XSLPattern\n");
+    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), L"XSLPattern") == 0, "expected XSLPattern\n");
     VariantClear(&var);
 
     helper_ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var));
-    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), _bstr_("")) == 0, "expected empty string\n");
+    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), L"") == 0, "expected empty string\n");
     VariantClear(&var);
 
     helper_ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc, &b));
@@ -7827,11 +7827,11 @@ static inline void _check_set_props(int line, IXMLDOMDocument2* doc)
 
     VariantInit(&var);
     helper_ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &var));
-    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), _bstr_("XPath")) == 0, "expected XPath\n");
+    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), L"XPath") == 0, "expected XPath\n");
     VariantClear(&var);
 
     helper_ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var));
-    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    ok_(__FILE__, line)(lstrcmpW(V_BSTR(&var), L"xmlns:wi=\'www.winehq.org\'") == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
     VariantClear(&var);
 
     helper_ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc, &b));
@@ -8104,7 +8104,7 @@ static void test_setAttributeNode(void)
     str = NULL;
     hr = IXMLDOMAttribute_get_xml(attr, &str);
     ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(str, _bstr_("attr=\"attrvalue1\"")) == 0,
+    ok(lstrcmpW(str, L"attr=\"attrvalue1\"") == 0,
         "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -8120,7 +8120,7 @@ static void test_setAttributeNode(void)
 
     hr = IXMLDOMElement_get_xml(elem, &str);
     ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(str, _bstr_("<test attr=\"attrvalue1\"/>")) == 0,
+    ok(lstrcmpW(str, L"<test attr=\"attrvalue1\"/>") == 0,
         "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -8131,7 +8131,7 @@ static void test_setAttributeNode(void)
 
     hr = IXMLDOMElement_get_xml(elem, &str);
     ok( hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok( lstrcmpW(str, _bstr_("<test attr=\"attrvalue2\"/>")) == 0,
+    todo_wine ok(lstrcmpW(str, L"<test attr=\"attrvalue2\"/>") == 0,
         "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -8187,7 +8187,7 @@ todo_wine {
     prefix = NULL;
     hr = IXMLDOMNode_get_prefix(node, &prefix);
     ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok(lstrcmpW(prefix, _bstr_("ns1")) == 0, "wrong prefix\n");
+    ok(lstrcmpW(prefix, L"ns1") == 0, "wrong prefix\n");
     SysFreeString(prefix);
     IXMLDOMNode_Release(node);
 
@@ -8201,7 +8201,7 @@ todo_wine {
     /* check dump */
     hr = IXMLDOMNode_get_xml(node, &str);
     ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(str, _bstr_("<test xmlns=\"http://winehq.org/default\"/>")) == 0,
+    ok(lstrcmpW(str, L"<test xmlns=\"http://winehq.org/default\"/>") == 0,
         "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -8216,7 +8216,7 @@ todo_wine {
     str = NULL;
     hr = IXMLDOMElement_get_namespaceURI(elem, &str);
     ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(str, _bstr_("http://winehq.org/default")) == 0, "expected default namespace\n");
+    ok(lstrcmpW(str, L"http://winehq.org/default") == 0, "expected default namespace\n");
     SysFreeString(str);
 
     IXMLDOMElement_Release(elem);
@@ -8313,7 +8313,7 @@ static void test_get_prefix(void)
     str = (void*)0xdeadbeef;
     hr = IXMLDOMElement_get_prefix(element, &str);
     ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok( lstrcmpW(str, _bstr_("a")) == 0, "expected prefix \"a\"\n");
+    ok(lstrcmpW(str, L"a") == 0, "expected prefix \"a\"\n");
     SysFreeString(str);
 
     str = (void*)0xdeadbeef;
@@ -8537,7 +8537,7 @@ static void test_put_nodeTypedValue(void)
     hr = IXMLDOMElement_get_nodeTypedValue(elem, &type);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&type) == VT_BSTR, "got %d, expected VT_BSTR\n", V_VT(&type));
-    ok(memcmp(V_BSTR(&type), _bstr_("1"), 2*sizeof(WCHAR)) == 0,
+    ok(memcmp(V_BSTR(&type), L"1", 2*sizeof(WCHAR)) == 0,
        "got %s, expected \"1\"\n", wine_dbgstr_w(V_BSTR(&type)));
     VariantClear(&type);
 
@@ -8585,7 +8585,7 @@ static void test_put_nodeTypedValue(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_text(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("ABCD")), "%s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"ABCD"), "%s\n", wine_dbgstr_w(str));
     IXMLDOMNode_Release(node);
     SysFreeString(str);
 
@@ -8624,7 +8624,7 @@ static void test_put_nodeTypedValue(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_text(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("ZEdWemRBPQ==")), "%s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"ZEdWemRBPQ=="), "%s\n", wine_dbgstr_w(str));
     IXMLDOMNode_Release(node);
     SafeArrayDestroyData(array);
     SysFreeString(str);
@@ -8673,7 +8673,7 @@ static void test_put_nodeTypedValue(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_text(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("000102030405060708090a0b0c0d0e0f")), "%s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"000102030405060708090a0b0c0d0e0f"), "%s\n", wine_dbgstr_w(str));
     IXMLDOMNode_Release(node);
     SafeArrayDestroyData(array);
     SysFreeString(str);
@@ -9317,13 +9317,13 @@ static void test_insertBefore(void)
     p = NULL;
     hr = IXMLDOMElement_get_xml(elem1, &p);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(p, _bstr_("<elem1 xmlns=\"http://winehq.org/default\"/>")), "got %s\n", wine_dbgstr_w(p));
+    ok(!lstrcmpW(p, L"<elem1 xmlns=\"http://winehq.org/default\"/>"), "got %s\n", wine_dbgstr_w(p));
     SysFreeString(p);
 
     p = NULL;
     hr = IXMLDOMElement_get_xml(elem2, &p);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(p, _bstr_("<elem2 xmlns=\"http://winehq.org/default\"/>")), "got %s\n", wine_dbgstr_w(p));
+    ok(!lstrcmpW(p, L"<elem2 xmlns=\"http://winehq.org/default\"/>"), "got %s\n", wine_dbgstr_w(p));
     SysFreeString(p);
 
     V_VT(&v) = VT_NULL;
@@ -9335,14 +9335,14 @@ static void test_insertBefore(void)
     p = NULL;
     hr = IXMLDOMElement_get_xml(elem1, &p);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(!lstrcmpW(p, _bstr_("<elem1 xmlns=\"http://winehq.org/default\"><elem2/></elem1>")),
+    todo_wine ok(!lstrcmpW(p, L"<elem1 xmlns=\"http://winehq.org/default\"><elem2/></elem1>"),
         "got %s\n", wine_dbgstr_w(p));
     SysFreeString(p);
 
     p = NULL;
     hr = IXMLDOMElement_get_xml(elem2, &p);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(p, _bstr_("<elem2 xmlns=\"http://winehq.org/default\"/>")), "got %s\n", wine_dbgstr_w(p));
+    ok(!lstrcmpW(p, L"<elem2 xmlns=\"http://winehq.org/default\"/>"), "got %s\n", wine_dbgstr_w(p));
     SysFreeString(p);
 
     IXMLDOMElement_Release(elem1);
@@ -9372,7 +9372,7 @@ static void test_insertBefore(void)
     p = NULL;
     hr = IXMLDOMElement_get_xml(elem2, &p);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(p, _bstr_("<elem2/>")), "got %s\n", wine_dbgstr_w(p));
+    ok(!lstrcmpW(p, L"<elem2/>"), "got %s\n", wine_dbgstr_w(p));
     SysFreeString(p);
 
     hr = IXMLDOMElement_removeChild(elem1, (IXMLDOMNode*)elem2, NULL);
@@ -9381,7 +9381,7 @@ static void test_insertBefore(void)
     p = NULL;
     hr = IXMLDOMElement_get_xml(elem2, &p);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(p, _bstr_("<elem2/>")), "got %s\n", wine_dbgstr_w(p));
+    ok(!lstrcmpW(p, L"<elem2/>"), "got %s\n", wine_dbgstr_w(p));
     SysFreeString(p);
 
     IXMLDOMElement_Release(elem1);
@@ -9497,7 +9497,7 @@ static void test_get_tagName(void)
     str = NULL;
     hr = IXMLDOMElement_get_tagName(elem, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(str, _bstr_("element")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"element"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IXMLDOMDocument_createElement(doc, _bstr_("s:element"), &elem2);
@@ -9506,7 +9506,7 @@ static void test_get_tagName(void)
     str = NULL;
     hr = IXMLDOMElement_get_tagName(elem2, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(str, _bstr_("s:element")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"s:element"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     IXMLDOMElement_Release(elem);
@@ -9600,7 +9600,7 @@ static void test_get_nodeTypeString(void)
 
     hr = IXMLDOMDocument_get_nodeTypeString(doc, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(str, _bstr_("document")), "got string %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"document"), "got string %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     while (entry->type)
@@ -9702,7 +9702,7 @@ static void test_get_attributes(void)
 
         hr = IXMLDOMNode_get_nodeName(node2, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW(str, _bstr_("version")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"version"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         length = -1;
@@ -9717,12 +9717,12 @@ static void test_get_attributes(void)
 
         hr = IXMLDOMNode_get_xml(node, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW(str, _bstr_("<?xml version=\"1.0\"?>")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"<?xml version=\"1.0\"?>"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = IXMLDOMNode_get_text(node, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW(str, _bstr_("version=\"1.0\"")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"version=\"1.0\""), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = IXMLDOMNamedNodeMap_removeNamedItem(map, _bstr_("version"), NULL);
@@ -9735,12 +9735,12 @@ static void test_get_attributes(void)
 
         hr = IXMLDOMNode_get_xml(node, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW(str, _bstr_("<?xml version=\"1.0\"?>")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"<?xml version=\"1.0\"?>"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = IXMLDOMNode_get_text(node, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW(str, _bstr_("")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L""), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         IXMLDOMNamedNodeMap_Release(map);
@@ -9776,12 +9776,12 @@ static void test_get_attributes(void)
 
         hr = IXMLDOMNode_get_xml(node, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW(str, _bstr_("<?xml version=\"1.0\"?>")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"<?xml version=\"1.0\"?>"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = IXMLDOMNode_get_text(node, &str);
         EXPECT_HR(hr, S_OK);
-        ok(!lstrcmpW(str, _bstr_("encoding=\"UTF-8\"")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW(str, L"encoding=\"UTF-8\""), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         IXMLDOMNamedNodeMap_Release(map);
@@ -10095,7 +10095,7 @@ static void test_selection(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &name);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(name, _bstr_("a")), "got node name %s\n", wine_dbgstr_w(name));
+    ok(!lstrcmpW(name, L"a"), "got node name %s\n", wine_dbgstr_w(name));
     SysFreeString(name);
     IXMLDOMNode_Release(node);
     VariantClear(&v);
@@ -10105,7 +10105,7 @@ static void test_selection(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &name);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(name, _bstr_("c")), "got node name %s\n", wine_dbgstr_w(name));
+    ok(!lstrcmpW(name, L"c"), "got node name %s\n", wine_dbgstr_w(name));
     IXMLDOMNode_Release(node);
     SysFreeString(name);
 
@@ -10117,7 +10117,7 @@ static void test_selection(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &name);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(name, _bstr_("b")), "got node name %s\n", wine_dbgstr_w(name));
+    ok(!lstrcmpW(name, L"b"), "got node name %s\n", wine_dbgstr_w(name));
     SysFreeString(name);
     IXMLDOMNode_Release(node);
     VariantClear(&v);
@@ -10127,7 +10127,7 @@ static void test_selection(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &name);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(name, _bstr_("d")), "got node name %s\n", wine_dbgstr_w(name));
+    ok(!lstrcmpW(name, L"d"), "got node name %s\n", wine_dbgstr_w(name));
     IXMLDOMNode_Release(node);
     SysFreeString(name);
 
@@ -10564,7 +10564,7 @@ todo_wine {
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
     ok(len == 3, "got %d\n", len);
-    ok(!lstrcmpW(buffW, _bstr_("xml")), "got prefix %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"xml"), "got prefix %s\n", wine_dbgstr_w(buffW));
 
     /* getURI */
     hr = IMXNamespaceManager_getURI(nsmgr, NULL, NULL, NULL, NULL);
@@ -10652,14 +10652,14 @@ todo_wine {
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns1"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     len = 100;
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("http://www.w3.org/XML/1998/namespace"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("xml")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"xml"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     /* with null buffer it's possible to get required length */
@@ -10730,14 +10730,14 @@ todo_wine {
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns1"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     len = 100;
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns2 uri"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns2")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns2"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     len = 100;
@@ -10772,7 +10772,7 @@ todo_wine {
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns1"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     hr = IMXNamespaceManager_pushContext(nsmgr);
@@ -10782,7 +10782,7 @@ todo_wine {
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns1"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns2"), _bstr_("ns2 uri"));
@@ -10792,7 +10792,7 @@ todo_wine {
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns2 uri"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns2")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns2"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     hr = IMXNamespaceManager_pushContext(nsmgr);
@@ -10804,14 +10804,14 @@ todo_wine {
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns2 uri"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns2")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns2"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     len = 100;
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns1"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     hr = IMXNamespaceManager_popContext(nsmgr);
@@ -10831,7 +10831,7 @@ todo_wine {
     buffW[0] = 0x1;
     hr = IMXNamespaceManager_getPrefix(nsmgr, _bstr_("ns1 uri"), 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns1"), "got %s\n", wine_dbgstr_w(buffW));
     ok(len == 3, "got %d\n", len);
 
     IMXNamespaceManager_Release(nsmgr);
@@ -10855,7 +10855,7 @@ static void test_mxnamespacemanager_override(void)
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("xml")), "got prefix %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"xml"), "got prefix %s\n", wine_dbgstr_w(buffW));
 
     len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
@@ -10880,7 +10880,7 @@ static void test_mxnamespacemanager_override(void)
     buffW[0] = 0;
     hr = IMXNamespaceManager_getURI(nsmgr, _bstr_(""), NULL, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns0 uri")), "got uri %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns0 uri"), "got uri %s\n", wine_dbgstr_w(buffW));
 
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns0"), _bstr_("ns0 uri"));
     EXPECT_HR(hr, S_OK);
@@ -10889,19 +10889,19 @@ static void test_mxnamespacemanager_override(void)
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 0, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("xml")), "got prefix %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"xml"), "got prefix %s\n", wine_dbgstr_w(buffW));
 
     len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 1, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns0")), "got prefix %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns0"), "got prefix %s\n", wine_dbgstr_w(buffW));
 
     len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 2, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("")), "got prefix %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L""), "got prefix %s\n", wine_dbgstr_w(buffW));
 
     /* new prefix placed at index 1 always */
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_("ns1"), _bstr_("ns1 uri"));
@@ -10911,7 +10911,7 @@ static void test_mxnamespacemanager_override(void)
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 1, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns1")), "got prefix %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns1"), "got prefix %s\n", wine_dbgstr_w(buffW));
 
     hr = IMXNamespaceManager_declarePrefix(nsmgr, _bstr_(""), NULL);
     todo_wine EXPECT_HR(hr, E_FAIL);
@@ -10932,13 +10932,13 @@ static void test_mxnamespacemanager_override(void)
     buffW[0] = 0;
     hr = IMXNamespaceManager_getURI(nsmgr, _bstr_(""), NULL, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("ns0 uri override")), "got uri %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"ns0 uri override"), "got uri %s\n", wine_dbgstr_w(buffW));
 
     len = ARRAY_SIZE(buffW);
     buffW[0] = 0;
     hr = IMXNamespaceManager_getDeclaredPrefix(nsmgr, 3, buffW, &len);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(buffW, _bstr_("")), "got prefix %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L""), "got prefix %s\n", wine_dbgstr_w(buffW));
 
     IMXNamespaceManager_Release(nsmgr);
 
@@ -11471,19 +11471,19 @@ static void test_getAttribute(void)
     hr = IXMLDOMElement_getAttribute( elem, _bstr_("xmlns:foo"), &var );
     EXPECT_HR(hr, S_OK);
     ok( V_VT(&var) == VT_BSTR, "vt = %x\n", V_VT(&var));
-    ok( !lstrcmpW(V_BSTR(&var), _bstr_("urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29")), "wrong attr value: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    ok(!lstrcmpW(V_BSTR(&var), L"urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29"), "wrong attr value: %s\n", wine_dbgstr_w(V_BSTR(&var)));
     VariantClear(&var);
 
     hr = IXMLDOMElement_getAttribute( elem, _bstr_("a"), &var );
     EXPECT_HR(hr, S_OK);
     ok( V_VT(&var) == VT_BSTR, "vt = %x\n", V_VT(&var));
-    ok( !lstrcmpW(V_BSTR(&var), _bstr_("attr a")), "wrong attr value: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    ok(!lstrcmpW(V_BSTR(&var), L"attr a"), "wrong attr value: %s\n", wine_dbgstr_w(V_BSTR(&var)));
     VariantClear(&var);
 
     hr = IXMLDOMElement_getAttribute( elem, _bstr_("foo:b"), &var );
     EXPECT_HR(hr, S_OK);
     ok( V_VT(&var) == VT_BSTR, "vt = %x\n", V_VT(&var));
-    ok( !lstrcmpW(V_BSTR(&var), _bstr_("attr b")), "wrong attr value: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    ok(!lstrcmpW(V_BSTR(&var), L"attr b"), "wrong attr value: %s\n", wine_dbgstr_w(V_BSTR(&var)));
     VariantClear(&var);
 
     hr = IXMLDOMElement_getAttribute( elem, _bstr_("b"), &var );
@@ -11771,7 +11771,7 @@ static void test_xmlns_attribute(void)
     str = NULL;
     hr = IXMLDOMElement_get_xml(elem, &str);
     ok( hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok( lstrcmpW(str, _bstr_("<Testing xmlns:dt=\"urn:schemas-microsoft-com:datatypes\" dt:dt=\"bin.base64\"/>")) == 0,
+    todo_wine ok(lstrcmpW(str, L"<Testing xmlns:dt=\"urn:schemas-microsoft-com:datatypes\" dt:dt=\"bin.base64\"/>") == 0,
     "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -11886,12 +11886,12 @@ static void test_get_namespaces(void)
 
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 0, &s);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(s, _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(s));
+    ok(!lstrcmpW(s, L"http://blah.org"), "got %s\n", wine_dbgstr_w(s));
     SysFreeString(s);
 
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 1, &s);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(s, _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(s));
+    ok(!lstrcmpW(s, L"http://blahblah.org"), "got %s\n", wine_dbgstr_w(s));
     SysFreeString(s);
 
     s = (void*)0xdeadbeef;
@@ -11922,14 +11922,14 @@ static void test_get_namespaces(void)
     hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"http://blah.org"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_VT(&v) = VT_EMPTY;
     hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"http://blahblah.org"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_VT(&v) = VT_NULL;
@@ -12005,12 +12005,12 @@ static void test_get_namespaces(void)
 
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 0, &s);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(s, _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(s));
+    ok(!lstrcmpW(s, L"http://blah.org"), "got %s\n", wine_dbgstr_w(s));
     SysFreeString(s);
 
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 1, &s);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(s, _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(s));
+    ok(!lstrcmpW(s, L"http://blahblah.org"), "got %s\n", wine_dbgstr_w(s));
     SysFreeString(s);
 
     s = (void*)0xdeadbeef;
@@ -12028,14 +12028,14 @@ static void test_get_namespaces(void)
     hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"http://blah.org"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_VT(&v) = VT_EMPTY;
     hr = IEnumVARIANT_Next(enumv, 1, &v, NULL);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-    ok(!lstrcmpW(V_BSTR(&v), _bstr_("http://blahblah.org")), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"http://blahblah.org"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_VT(&v) = VT_NULL;
@@ -12202,7 +12202,7 @@ static void test_newline_normalization(void)
 
         hr = IXMLDOMText_get_data(text, &s);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!lstrcmpW(s, _bstr_("\n")), "got %s\n", wine_dbgstr_w(s));
+        ok(!lstrcmpW(s, L"\n"), "got %s\n", wine_dbgstr_w(s));
         SysFreeString(s);
 
         hr = IXMLDOMText_get_length(text, &length);
@@ -12211,7 +12211,7 @@ static void test_newline_normalization(void)
 
         hr = IXMLDOMText_get_xml(text, &s);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!lstrcmpW(s, _bstr_("\r\n")), "got %s\n", wine_dbgstr_w(s));
+        ok(!lstrcmpW(s, L"\r\n"), "got %s\n", wine_dbgstr_w(s));
         SysFreeString(s);
 
         /* \r\r\n is normalized to \n\n and back to \r\n\r\n */
@@ -12221,7 +12221,7 @@ static void test_newline_normalization(void)
 
         hr = IXMLDOMText_get_data(text, &s);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!lstrcmpW(s, _bstr_("\n\n")), "got %s\n", wine_dbgstr_w(s));
+        ok(!lstrcmpW(s, L"\n\n"), "got %s\n", wine_dbgstr_w(s));
         SysFreeString(s);
 
         hr = IXMLDOMText_get_length(text, &length);
@@ -12230,7 +12230,7 @@ static void test_newline_normalization(void)
 
         hr = IXMLDOMText_get_xml(text, &s);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!lstrcmpW(s, _bstr_("\r\n\r\n")), "got %s\n", wine_dbgstr_w(s));
+        ok(!lstrcmpW(s, L"\r\n\r\n"), "got %s\n", wine_dbgstr_w(s));
         SysFreeString(s);
 
         /* the same normalizations are applied when loading a document as a whole */
@@ -12240,12 +12240,12 @@ static void test_newline_normalization(void)
 
         hr = IXMLDOMDocument_get_text(doc, &s);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!lstrcmpW(s, _bstr_("foo\n\n\n\nbar")), "got %s\n", wine_dbgstr_w(s));
+        ok(!lstrcmpW(s, L"foo\n\n\n\nbar"), "got %s\n", wine_dbgstr_w(s));
         SysFreeString(s);
 
         hr = IXMLDOMDocument_get_xml(doc, &s);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!lstrcmpW(s, _bstr_("<?xml version=\"1.0\"?>\r\n<root>foo\r\n\r\n\r\n\r\nbar</root>\r\n")),
+        ok(!lstrcmpW(s, L"<?xml version=\"1.0\"?>\r\n<root>foo\r\n\r\n\r\n\r\nbar</root>\r\n"),
            "got %s\n", wine_dbgstr_w(s));
         SysFreeString(s);
 
@@ -12257,7 +12257,7 @@ static void test_newline_normalization(void)
 
         hr = IXMLDOMDocument_get_text(doc, &s);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!lstrcmpW(s, _bstr_("foo\n\n\n\nbar")), "got %s\n", wine_dbgstr_w(s));
+        ok(!lstrcmpW(s, L"foo\n\n\n\nbar"), "got %s\n", wine_dbgstr_w(s));
         SysFreeString(s);
 
         hr = IXMLDOMDocument_get_xml(doc, &s);
@@ -12277,7 +12277,7 @@ static void test_newline_normalization(void)
 
         hr = IXMLDOMDocument_get_text(doc, &s);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(!lstrcmpW(s, _bstr_("foo\n\n\n\nbar")), "got %s\n", wine_dbgstr_w(s));
+        ok(!lstrcmpW(s, L"foo\n\n\n\nbar"), "got %s\n", wine_dbgstr_w(s));
         SysFreeString(s);
 
         hr = IXMLDOMDocument_get_xml(doc, &s);
@@ -12286,12 +12286,12 @@ static void test_newline_normalization(void)
         {
             /* DOMDocument60 does the newline normalization but does not insert line breaks around the root node */
 todo_wine
-            ok(!lstrcmpW(s, _bstr_("<?xml version=\"1.0\"?><root>foo\r\n\r\n\r\n\r\nbar</root>")),
+            ok(!lstrcmpW(s, L"<?xml version=\"1.0\"?><root>foo\r\n\r\n\r\n\r\nbar</root>"),
                "got %s\n", wine_dbgstr_w(s));
         }
         else
         {
-            ok(!lstrcmpW(s, _bstr_("<?xml version=\"1.0\"?>\r\n<root>foo\r\n\r\n\r\n\r\nbar</root>\r\n")),
+            ok(!lstrcmpW(s, L"<?xml version=\"1.0\"?>\r\n<root>foo\r\n\r\n\r\n\r\nbar</root>\r\n"),
                "got %s\n", wine_dbgstr_w(s));
         }
         SysFreeString(s);
@@ -12448,7 +12448,7 @@ static void test_namedmap_newenum(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("attr1")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"attr1"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
 
@@ -12456,7 +12456,7 @@ static void test_namedmap_newenum(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("attr1")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"attr1"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
 
@@ -12468,7 +12468,7 @@ static void test_namedmap_newenum(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("attr1")), "got node name %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"attr1"), "got node name %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
     VariantClear(&v);
@@ -12477,7 +12477,7 @@ static void test_namedmap_newenum(void)
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMNode_get_nodeName(node, &str);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(str, _bstr_("attr2")), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"attr2"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
 
@@ -12537,7 +12537,7 @@ static void test_xsltext(void)
 
     hr = IXMLDOMDocument_transformNode(doc2, (IXMLDOMNode*)doc, &ret);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(ret, _bstr_("testdata")), "transform result %s\n", wine_dbgstr_w(ret));
+    ok(!lstrcmpW(ret, L"testdata"), "transform result %s\n", wine_dbgstr_w(ret));
     SysFreeString(ret);
 
     /* omit-xml-declaration */
@@ -12548,7 +12548,7 @@ static void test_xsltext(void)
 
     hr = IXMLDOMDocument_transformNode(doc2, (IXMLDOMNode*)doc, &ret);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(ret, _bstr_("<node>item1</node><node>item2</node>")), "transform result %s\n", wine_dbgstr_w(ret));
+    ok(!lstrcmpW(ret, L"<node>item1</node><node>item2</node>"), "transform result %s\n", wine_dbgstr_w(ret));
     SysFreeString(ret);
 
     IXMLDOMDocument_Release(doc2);
@@ -12641,7 +12641,7 @@ static void test_create_attribute(void)
     /* for some reason default namespace uri is not reported */
     hr = IXMLDOMNode_get_namespaceURI(node, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(str, _bstr_("")), "got uri %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L""), "got uri %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     IXMLDOMNode_Release(node);
