@@ -28,12 +28,6 @@
 
 #include "wine/test.h"
 
-static const WCHAR user_agent[] = {'w','i','n','e','t','e','s','t',0};
-static const WCHAR test_winehq[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
-static const WCHAR tests_hello_html[] = {'/','t','e','s','t','s','/','h','e','l','l','o','.','h','t','m','l',0};
-static const WCHAR tests_redirect[] = {'/','t','e','s','t','s','/','r','e','d','i','r','e','c','t',0};
-static const WCHAR localhostW[] = {'l','o','c','a','l','h','o','s','t',0};
-
 enum api
 {
     winhttp_connect = 1,
@@ -191,7 +185,7 @@ static void test_connection_cache( void )
     info.index = 0;
     info.wait = CreateEventW( NULL, FALSE, FALSE, NULL );
 
-    ses = WinHttpOpen( user_agent, 0, NULL, NULL, 0 );
+    ses = WinHttpOpen( L"winetest", 0, NULL, NULL, 0 );
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     event = CreateEventW( NULL, FALSE, FALSE, NULL );
@@ -208,11 +202,11 @@ static void test_connection_cache( void )
     ok(ret, "failed to set context value %u\n", GetLastError());
 
     setup_test( &info, winhttp_connect, __LINE__ );
-    con = WinHttpConnect( ses, test_winehq, 0, 0 );
+    con = WinHttpConnect( ses, L"test.winehq.org", 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     setup_test( &info, winhttp_open_request, __LINE__ );
-    req = WinHttpOpenRequest( con, NULL, tests_hello_html, NULL, NULL, NULL, 0 );
+    req = WinHttpOpenRequest( con, NULL, L"/tests/hello.html", NULL, NULL, NULL, 0 );
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     setup_test( &info, winhttp_send_request, __LINE__ );
@@ -240,7 +234,7 @@ static void test_connection_cache( void )
     WaitForSingleObject( info.wait, INFINITE );
 
     setup_test( &info, winhttp_open_request, __LINE__ );
-    req = WinHttpOpenRequest( con, NULL, tests_hello_html, NULL, NULL, NULL, 0 );
+    req = WinHttpOpenRequest( con, NULL, L"/tests/hello.html", NULL, NULL, NULL, 0 );
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSetOption( req, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
@@ -289,7 +283,7 @@ static void test_connection_cache( void )
     }
 
 
-    ses = WinHttpOpen( user_agent, 0, NULL, NULL, 0 );
+    ses = WinHttpOpen( L"winetest", 0, NULL, NULL, 0 );
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     if (unload)
@@ -304,11 +298,11 @@ static void test_connection_cache( void )
     ok(ret, "failed to set context value %u\n", GetLastError());
 
     setup_test( &info, winhttp_connect, __LINE__ );
-    con = WinHttpConnect( ses, test_winehq, 0, 0 );
+    con = WinHttpConnect( ses, L"test.winehq.org", 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     setup_test( &info, winhttp_open_request, __LINE__ );
-    req = WinHttpOpenRequest( con, NULL, tests_hello_html, NULL, NULL, NULL, 0 );
+    req = WinHttpOpenRequest( con, NULL, L"/tests/hello.html", NULL, NULL, NULL, 0 );
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSetOption( req, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
@@ -339,7 +333,7 @@ static void test_connection_cache( void )
     WaitForSingleObject( info.wait, INFINITE );
 
     setup_test( &info, winhttp_open_request, __LINE__ );
-    req = WinHttpOpenRequest( con, NULL, tests_hello_html, NULL, NULL, NULL, 0 );
+    req = WinHttpOpenRequest( con, NULL, L"/tests/hello.html", NULL, NULL, NULL, 0 );
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSetOption( req, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
@@ -431,7 +425,7 @@ static void test_redirect( void )
     info.index = 0;
     info.wait = CreateEventW( NULL, FALSE, FALSE, NULL );
 
-    ses = WinHttpOpen( user_agent, 0, NULL, NULL, 0 );
+    ses = WinHttpOpen( L"winetest", 0, NULL, NULL, 0 );
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     WinHttpSetStatusCallback( ses, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
@@ -440,11 +434,11 @@ static void test_redirect( void )
     ok(ret, "failed to set context value %u\n", GetLastError());
 
     setup_test( &info, winhttp_connect, __LINE__ );
-    con = WinHttpConnect( ses, test_winehq, 0, 0 );
+    con = WinHttpConnect( ses, L"test.winehq.org", 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     setup_test( &info, winhttp_open_request, __LINE__ );
-    req = WinHttpOpenRequest( con, NULL, tests_redirect, NULL, NULL, NULL, 0 );
+    req = WinHttpOpenRequest( con, NULL, L"/tests/redirect", NULL, NULL, NULL, 0 );
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     setup_test( &info, winhttp_send_request, __LINE__ );
@@ -512,7 +506,7 @@ static void test_async( void )
     info.index = 0;
     info.wait = CreateEventW( NULL, FALSE, FALSE, NULL );
 
-    ses = WinHttpOpen( user_agent, 0, NULL, NULL, WINHTTP_FLAG_ASYNC );
+    ses = WinHttpOpen( L"winetest", 0, NULL, NULL, WINHTTP_FLAG_ASYNC );
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     event = CreateEventW( NULL, FALSE, FALSE, NULL );
@@ -536,14 +530,14 @@ static void test_async( void )
 
     setup_test( &info, winhttp_connect, __LINE__ );
     SetLastError( 0xdeadbeef );
-    con = WinHttpConnect( ses, test_winehq, 0, 0 );
+    con = WinHttpConnect( ses, L"test.winehq.org", 0, 0 );
     err = GetLastError();
     ok(con != NULL, "failed to open a connection %u\n", err);
     ok(err == ERROR_SUCCESS || broken(err == WSAEINVAL) /* < win7 */, "got %u\n", err);
 
     setup_test( &info, winhttp_open_request, __LINE__ );
     SetLastError( 0xdeadbeef );
-    req = WinHttpOpenRequest( con, NULL, tests_hello_html, NULL, NULL, NULL, 0 );
+    req = WinHttpOpenRequest( con, NULL, L"/tests/hello.html", NULL, NULL, NULL, 0 );
     err = GetLastError();
     ok(req != NULL, "failed to open a request %u\n", err);
     ok(err == ERROR_SUCCESS, "got %u\n", err);
@@ -718,7 +712,7 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
     ses = WinHttpOpen(NULL, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
-    con = WinHttpConnect(ses, localhostW, port, 0);
+    con = WinHttpConnect(ses, L"localhost", port, 0);
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     req = WinHttpOpenRequest(con, verb, path, NULL, NULL, NULL, 0);
@@ -787,14 +781,14 @@ static void open_async_request(int port, struct test_request *req, struct info *
         info->count = ARRAY_SIZE( open_socket_request_test );
     }
 
-    req->session = WinHttpOpen( user_agent, 0, NULL, NULL, WINHTTP_FLAG_ASYNC );
+    req->session = WinHttpOpen( L"winetest", 0, NULL, NULL, WINHTTP_FLAG_ASYNC );
     ok(req->session != NULL, "failed to open session %u\n", GetLastError());
 
     WinHttpSetOption( req->session, WINHTTP_OPTION_CONTEXT_VALUE, &info, sizeof(struct info *) );
     WinHttpSetStatusCallback( req->session, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
 
     setup_test( info, winhttp_connect, __LINE__ );
-    req->connection = WinHttpConnect( req->session, localhostW, port, 0 );
+    req->connection = WinHttpConnect( req->session, L"localhost", port, 0 );
     ok(req->connection != NULL, "failed to open a connection %u\n", GetLastError());
 
     setup_test( info, winhttp_open_request, __LINE__ );
@@ -808,10 +802,8 @@ static void open_async_request(int port, struct test_request *req, struct info *
 
 static void open_socket_request(int port, struct test_request *req, struct info *info)
 {
-    static const WCHAR socketW[] = {'/','s','o','c','k','e','t',0};
-
     ResetEvent( server_socket_done );
-    open_async_request( port, req, info, socketW, FALSE );
+    open_async_request( port, req, info, L"/socket", FALSE );
     WaitForSingleObject( server_socket_available, INFINITE );
 }
 
@@ -951,8 +943,6 @@ static void test_persistent_connection(int port)
     struct test_request req;
     struct info info;
 
-    static const WCHAR testW[] = {'/','t','e','s','t',0};
-
     trace("Testing persistent connection...\n");
 
     info.wait = CreateEventW( NULL, FALSE, FALSE, NULL );
@@ -969,7 +959,7 @@ static void test_persistent_connection(int port)
     close_request( &req, &info, FALSE );
 
     /* chunked connection test */
-    open_async_request( port, &req, &info, testW, TRUE );
+    open_async_request( port, &req, &info, L"/test", TRUE );
     server_read_data( "GET /test HTTP/1.1\r\n" );
     server_send_reply( &req, &info,
                        "HTTP/1.1 200 OK\r\n"
@@ -983,7 +973,7 @@ static void test_persistent_connection(int port)
     close_request( &req, &info, FALSE );
 
     /* HTTP/1.1 connections are persistent by default, no additional header is needed */
-    open_async_request( port, &req, &info, testW, TRUE );
+    open_async_request( port, &req, &info, L"/test", TRUE );
     server_read_data( "GET /test HTTP/1.1\r\n" );
     server_send_reply( &req, &info,
                        "HTTP/1.1 200 OK\r\n"
@@ -994,7 +984,7 @@ static void test_persistent_connection(int port)
     read_request_data( &req, &info, "xx", FALSE );
     close_request( &req, &info, FALSE );
 
-    open_async_request( port, &req, &info, testW, TRUE );
+    open_async_request( port, &req, &info, L"/test", TRUE );
     server_read_data( "GET /test HTTP/1.1\r\n" );
     server_send_reply( &req, &info,
                        "HTTP/1.1 200 OK\r\n"
@@ -1011,7 +1001,6 @@ static void test_persistent_connection(int port)
 
 START_TEST (notification)
 {
-    static const WCHAR quitW[] = {'/','q','u','i','t',0};
     struct server_info si;
     HANDLE thread;
     DWORD ret;
@@ -1040,7 +1029,7 @@ START_TEST (notification)
     test_persistent_connection( si.port );
 
     /* send the basic request again to shutdown the server thread */
-    test_basic_request( si.port, NULL, quitW );
+    test_basic_request( si.port, NULL, L"/quit" );
 
     WaitForSingleObject( thread, 3000 );
     CloseHandle( thread );
