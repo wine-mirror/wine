@@ -1070,16 +1070,17 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateAudioPath(IDirectMusicP
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDirectMusicPerformance8 *iface,
-        DWORD dwType, DWORD dwPChannelCount, BOOL fActivate, IDirectMusicAudioPath **ppNewPath)
+        DWORD dwType, DWORD pchannel_count, BOOL fActivate, IDirectMusicAudioPath **ppNewPath)
 {
         IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
 	IDirectMusicAudioPath *pPath;
 	DSBUFFERDESC desc;
 	WAVEFORMATEX format;
+        DMUS_PORTPARAMS params = {0};
 	IDirectSoundBuffer *buffer, *primary_buffer;
 	HRESULT hr = S_OK;
 
-	FIXME("(%p)->(%d, %d, %d, %p): semi-stub\n", This, dwType, dwPChannelCount, fActivate, ppNewPath);
+        FIXME("(%p)->(%d, %d, %d, %p): semi-stub\n", This, dwType, pchannel_count, fActivate, ppNewPath);
 
 	if (NULL == ppNewPath) {
 	  return E_POINTER;
@@ -1126,7 +1127,13 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
 	        return E_INVALIDARG;
 	}
 
-	/* FIXME: Should we create one secondary buffer for each PChannel? */
+        /* Create a port */
+        params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_AUDIOCHANNELS;
+        params.dwChannelGroups = (pchannel_count + 15) / 16;
+        params.dwAudioChannels = format.nChannels;
+        if (FAILED(hr = perf_dmport_create(This, &params)))
+                return hr;
+
         hr = IDirectSound_CreateSoundBuffer(This->dsound, &desc, &buffer, NULL);
 	if (FAILED(hr))
 	        return DSERR_BUFFERLOST;

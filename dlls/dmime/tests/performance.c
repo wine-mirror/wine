@@ -82,6 +82,7 @@ static HRESULT test_InitAudio(void)
     IDirectSound *dsound;
     IDirectMusicPort *port;
     IDirectMusicAudioPath *path;
+    DWORD channel, group;
     HRESULT hr;
     ULONG ref;
 
@@ -215,6 +216,18 @@ static HRESULT test_InitAudio(void)
     ref = get_refcount(dmusic);
     ok(ref == 2, "dmusic ref count got %d expected 2\n", ref);
     destroy_performance(performance, dmusic, dsound);
+
+    /* InitAudio with perf channel count not a multiple of 16 rounds up */
+    create_performance(&performance, NULL, NULL, TRUE);
+    hr = IDirectMusicPerformance8_InitAudio(performance, NULL, NULL, NULL,
+            DMUS_APATH_SHARED_STEREOPLUSREVERB, 29, DMUS_AUDIOF_ALL, NULL);
+    ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
+    hr = IDirectMusicPerformance8_PChannelInfo(performance, 31, &port, &group, &channel);
+    todo_wine ok(hr == S_OK && group == 2 && channel == 15,
+            "PChannelInfo failed, got %08x, %u, %u\n", hr, group, channel);
+    hr = IDirectMusicPerformance8_PChannelInfo(performance, 32, &port, NULL, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
+    destroy_performance(performance, NULL, NULL);
 
     return S_OK;
 }
