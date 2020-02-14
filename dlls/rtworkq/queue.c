@@ -69,6 +69,7 @@ static CRITICAL_SECTION_DEBUG queues_critsect_debug =
 static CRITICAL_SECTION queues_section = { &queues_critsect_debug, -1, 0, 0, 0, 0 };
 
 static LONG platform_lock;
+static CO_MTA_USAGE_COOKIE mta_cookie;
 
 static struct queue_handle *get_queue_obj(DWORD handle)
 {
@@ -1117,6 +1118,7 @@ HRESULT WINAPI RtwqUnlockPlatform(void)
 static void init_system_queues(void)
 {
     struct queue_desc desc;
+    HRESULT hr;
 
     /* Always initialize standard queue, keep the rest lazy. */
 
@@ -1127,6 +1129,9 @@ static void init_system_queues(void)
         LeaveCriticalSection(&queues_section);
         return;
     }
+
+    if (FAILED(hr = CoIncrementMTAUsage(&mta_cookie)))
+        WARN("Failed to initialize MTA, hr %#x.\n", hr);
 
     desc.queue_type = RTWQ_STANDARD_WORKQUEUE;
     desc.ops = &pool_queue_ops;
@@ -1149,6 +1154,7 @@ HRESULT WINAPI RtwqStartup(void)
 static void shutdown_system_queues(void)
 {
     unsigned int i;
+    HRESULT hr;
 
     EnterCriticalSection(&queues_section);
 
@@ -1156,6 +1162,9 @@ static void shutdown_system_queues(void)
     {
         shutdown_queue(&system_queues[i]);
     }
+
+    if (FAILED(hr = CoDecrementMTAUsage(mta_cookie)))
+        WARN("Failed to uninitialize MTA, hr %#x.\n", hr);
 
     LeaveCriticalSection(&queues_section);
 }

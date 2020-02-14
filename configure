@@ -20864,6 +20864,7 @@ wine_fn_config_makefile dlls/rsaenh/tests enable_tests
 wine_fn_config_makefile dlls/rstrtmgr enable_rstrtmgr
 wine_fn_config_makefile dlls/rtutils enable_rtutils
 wine_fn_config_makefile dlls/rtworkq enable_rtworkq
+wine_fn_config_makefile dlls/rtworkq/tests enable_tests
 wine_fn_config_makefile dlls/samlib enable_samlib
 wine_fn_config_makefile dlls/sane.ds enable_sane_ds
 wine_fn_config_makefile dlls/sapi enable_sapi
