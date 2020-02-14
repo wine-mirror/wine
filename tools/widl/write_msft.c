@@ -2208,6 +2208,9 @@ static void add_union_typeinfo(msft_typelib_t *typelib, type_t *tunion)
     if (-1 < tunion->typelib_idx)
         return;
 
+    if (!tunion->name)
+        tunion->name = gen_name();
+
     tunion->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_UNION, tunion->name, tunion->attrs);
     msft_typeinfo->typeinfo->size = 0;
