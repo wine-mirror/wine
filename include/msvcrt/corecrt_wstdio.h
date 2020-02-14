@@ -8,6 +8,7 @@
 #define _WSTDIO_DEFINED
 
 #include <corecrt.h>
+#include <corecrt_stdio_config.h>
 
 #ifndef RC_INVOKED
 #include <stdarg.h>
