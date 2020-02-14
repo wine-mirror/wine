@@ -5264,6 +5264,7 @@ HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
         apartment_release(apt);
         *type = APTTYPE_MTA;
         *qualifier = APTTYPEQUALIFIER_IMPLICIT_MTA;
+        return S_OK;
     }
 
     return info->apt ? S_OK : CO_E_NOTINITIALIZED;

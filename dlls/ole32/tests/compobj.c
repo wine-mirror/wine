@@ -648,7 +648,8 @@ static void _test_apt_type(APTTYPE expected_type, APTTYPEQUALIFIER expected_qual
         return;
 
     hr = pCoGetApartmentType(&type, &qualifier);
-    ok_(__FILE__, line)(hr == S_OK || hr == CO_E_NOTINITIALIZED, "Unexpected return code: 0x%08x\n", hr);
+    ok_(__FILE__, line)(hr == S_OK || (type == APTTYPE_CURRENT && hr == CO_E_NOTINITIALIZED),
+            "Unexpected hr %#x.\n", hr);
     ok_(__FILE__, line)(type == expected_type, "Wrong apartment type %d, expected %d\n", type, expected_type);
     ok_(__FILE__, line)(qualifier == expected_qualifier, "Wrong apartment qualifier %d, expected %d\n", qualifier,
         expected_qualifier);
