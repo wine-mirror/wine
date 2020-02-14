@@ -56,6 +56,7 @@ static DWORD (WINAPI *pAllocateAndGetTcpExTableFromStack)(void**,BOOL,HANDLE,DWO
 static DWORD (WINAPI *pGetIfEntry2)(PMIB_IF_ROW2);
 static DWORD (WINAPI *pGetIfTable2)(PMIB_IF_TABLE2*);
 static DWORD (WINAPI *pGetIfTable2Ex)(MIB_IF_TABLE_LEVEL,PMIB_IF_TABLE2*);
+static DWORD (WINAPI *pGetTcp6Table)(PMIB_TCP6TABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetUdp6Table)(PMIB_UDP6TABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetUnicastIpAddressEntry)(MIB_UNICASTIPADDRESS_ROW*);
 static DWORD (WINAPI *pGetUnicastIpAddressTable)(ADDRESS_FAMILY,MIB_UNICASTIPADDRESS_TABLE**);
@@ -86,6 +87,7 @@ static void loadIPHlpApi(void)
     pGetIfEntry2 = (void *)GetProcAddress(hLibrary, "GetIfEntry2");
     pGetIfTable2 = (void *)GetProcAddress(hLibrary, "GetIfTable2");
     pGetIfTable2Ex = (void *)GetProcAddress(hLibrary, "GetIfTable2Ex");
+    pGetTcp6Table = (void *)GetProcAddress(hLibrary, "GetTcp6Table");
     pGetUdp6Table = (void *)GetProcAddress(hLibrary, "GetUdp6Table");
     pGetUnicastIpAddressEntry = (void *)GetProcAddress(hLibrary, "GetUnicastIpAddressEntry");
     pGetUnicastIpAddressTable = (void *)GetProcAddress(hLibrary, "GetUnicastIpAddressTable");
@@ -2095,6 +2097,51 @@ static void test_ConvertLengthToIpv4Mask(void)
     ok( mask == INADDR_NONE, "ConvertLengthToIpv4Mask mask value 0x%08x, expected 0x%08x\n", mask, INADDR_NONE );
 }
 
+static void test_GetTcp6Table(void)
+{
+    DWORD ret;
+    ULONG size = 0;
+    PMIB_TCP6TABLE buf;
+
+    if (!pGetTcp6Table)
+    {
+        win_skip("GetTcp6Table not available\n");
+        return;
+    }
+
+    ret = pGetTcp6Table(NULL, &size, FALSE);
+    if (ret == ERROR_NOT_SUPPORTED)
+    {
+        skip("GetTcp6Table is not supported\n");
+        return;
+    }
+    ok(ret == ERROR_INSUFFICIENT_BUFFER,
+       "GetTcp6Table(NULL, &size, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n", ret);
+    if (ret != ERROR_INSUFFICIENT_BUFFER) return;
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+
+    ret = pGetTcp6Table(buf, &size, FALSE);
+    ok(ret == NO_ERROR,
+       "GetTcp6Table(buf, &size, FALSE) returned %d, expected NO_ERROR\n", ret);
+
+    if (ret == NO_ERROR && winetest_debug > 1)
+    {
+        DWORD i;
+        trace("TCP6 table: %u entries\n", buf->dwNumEntries);
+        for (i = 0; i < buf->dwNumEntries; i++)
+        {
+            trace("%u: local %s%%%u:%u remote %s%%%u:%u state %u\n", i,
+                  ntoa6(&buf->table[i].LocalAddr), ntohs(buf->table[i].dwLocalScopeId),
+                  ntohs(buf->table[i].dwLocalPort), ntoa6(&buf->table[i].RemoteAddr),
+                  ntohs(buf->table[i].dwRemoteScopeId), ntohs(buf->table[i].dwRemotePort),
+                  buf->table[i].State);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, buf);
+}
+
 static void test_GetUdp6Table(void)
 {
     DWORD apiReturn;
@@ -2268,6 +2315,7 @@ START_TEST(iphlpapi)
     test_GetUnicastIpAddressEntry();
     test_GetUnicastIpAddressTable();
     test_ConvertLengthToIpv4Mask();
+    test_GetTcp6Table();
     test_GetUdp6Table();
     test_ParseNetworkString();
     freeIPHlpApi();
