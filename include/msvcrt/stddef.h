@@ -20,14 +20,6 @@
 
 #include <corecrt.h>
 
-#ifndef NULL
-#ifdef __cplusplus
-#define NULL  0
-#else
-#define NULL  ((void *)0)
-#endif
-#endif
-
 #ifdef __GNUC__
 #define offsetof(s,m)       __builtin_offsetof(s,m)
 #elif defined(_WIN64)

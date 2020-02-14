@@ -17,14 +17,6 @@
 extern "C" {
 #endif
 
-#ifndef NULL
-#ifdef __cplusplus
-#define NULL  0
-#else
-#define NULL  ((void *)0)
-#endif
-#endif
-
 #ifndef WCHAR_MIN  /* also in stdint.h */
 #define WCHAR_MIN 0U
 #define WCHAR_MAX 0xffffU

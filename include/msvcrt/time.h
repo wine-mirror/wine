@@ -29,14 +29,6 @@ typedef __msvcrt_long clock_t;
 #define _CLOCK_T_DEFINED
 #endif
 
-#ifndef NULL
-#ifdef __cplusplus
-#define NULL  0
-#else
-#define NULL  ((void *)0)
-#endif
-#endif
-
 #ifndef CLOCKS_PER_SEC
 #define CLOCKS_PER_SEC 1000
 #endif

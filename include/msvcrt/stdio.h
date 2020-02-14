@@ -19,14 +19,6 @@
 #define _IOSTRG          0x0040
 #define _IORW            0x0080
 
-#ifndef NULL
-#ifdef  __cplusplus
-#define NULL  0
-#else
-#define NULL  ((void *)0)
-#endif
-#endif
-
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
