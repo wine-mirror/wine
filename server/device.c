@@ -729,12 +729,17 @@ static void delete_file( struct device_file *file )
 {
     struct irp_call *irp, *next;
 
+    /* the pending requests may be the only thing holding a reference to the file */
+    grab_object( file );
+
     /* terminate all pending requests */
     LIST_FOR_EACH_ENTRY_SAFE( irp, next, &file->requests, struct irp_call, dev_entry )
     {
         list_remove( &irp->mgr_entry );
         set_irp_result( irp, STATUS_FILE_DELETED, NULL, 0, 0 );
     }
+
+    release_object( file );
 }
 
 static void delete_device( struct device *device )
