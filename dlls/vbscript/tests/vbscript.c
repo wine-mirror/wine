@@ -1767,6 +1767,7 @@ static void test_named_items(void)
     IActiveScriptParse *parse;
     IActiveScript *script;
     IDispatch *disp;
+    VARIANT var;
     unsigned i;
     DISPID id;
     ULONG ref;
@@ -1978,6 +1979,25 @@ static void test_named_items(void)
     hres = IActiveScriptParse_ParseScriptText(parse, L"testSub_global = 10\n", L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(FAILED(hres), "ParseScriptText returned: %08x\n", hres);
     CHECK_CALLED(OnScriptError);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"me", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == &global_named_item,
+        "Unexpected 'me': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
+    VariantClear(&var);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"me", L"codeOnlyItem", NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == (IDispatch*)script_disp2,
+        "Unexpected 'me': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
+    VariantClear(&var);
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
 

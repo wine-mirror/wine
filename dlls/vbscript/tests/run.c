@@ -2685,6 +2685,7 @@ static void test_isexpression(void)
 {
     IActiveScriptParse *parser;
     IActiveScript *engine;
+    IDispatch *disp;
     SCRIPTSTATE ss;
     HRESULT hres;
     VARIANT var;
@@ -2744,6 +2745,18 @@ static void test_isexpression(void)
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     ok(V_VT(&var) == VT_I2, "Expected VT_I2, got %s\n", vt2a(&var));
     ok(V_I2(&var) == 13, "Expected 13, got %d\n", V_I2(&var));
+    VariantClear(&var);
+    SysFreeString(str);
+
+    /* Without a global host or named item context, "me" returns the script dispatch */
+    hres = IActiveScript_GetScriptDispatch(engine, NULL, &disp);
+    ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
+    str = a2bstr("me");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "Expected VT_DISPATCH, got %s\n", vt2a(&var));
+    ok(V_DISPATCH(&var) == disp, "Wrong dispatch returned for 'me'\n");
+    IDispatch_Release(disp);
     VariantClear(&var);
     SysFreeString(str);
 

@@ -1494,9 +1494,7 @@ static HRESULT interp_retval(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    hres = stack_pop_val(ctx, &val);
-    if(FAILED(hres))
-        return hres;
+    stack_pop_deref(ctx, &val);
 
     if(val.owned) {
         VariantClear(&ctx->ret_val);
