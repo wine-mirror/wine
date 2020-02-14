@@ -270,35 +270,27 @@ static void test_createport(void)
 
     /* dwValidParams == 0 -> S_OK, filled struct */
     portparams.dwValidParams = 0;
-    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth,
-            &portparams, &port, NULL);
+    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth, &portparams, &port, NULL);
     ok(hr == S_OK, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-
+    todo_wine ok(portparams.dwValidParams, "portparams struct was not filled in\n");
     IDirectMusicPort_Release(port);
     port = NULL;
-
-    todo_wine ok(portparams.dwValidParams != 0, "portparams struct was not filled in\n");
 
     /* dwValidParams != 0, invalid param -> S_FALSE, filled struct */
     portparams.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS;
     portparams.dwChannelGroups = 0;
-    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth,
-            &portparams, &port, NULL);
+    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth, &portparams, &port, NULL);
     todo_wine ok(hr == S_FALSE, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-
+    ok(portparams.dwValidParams, "portparams struct was not filled in\n");
     IDirectMusicPort_Release(port);
     port = NULL;
 
-    ok(portparams.dwValidParams != 0, "portparams struct was not filled in\n");
-
     /* dwValidParams != 0, valid params -> S_OK */
-    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth,
-            &portparams, &port, NULL);
+    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth, &portparams, &port, NULL);
     ok(hr == S_OK, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-
     IDirectMusicPort_Release(port);
     port = NULL;
 
@@ -307,11 +299,9 @@ static void test_createport(void)
     hr = IDirectMusic_CreatePort(music, &GUID_NULL, &portparams, &port, NULL);
     ok(hr == S_OK, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-
+    todo_wine ok(portparams.dwValidParams, "portparams struct was not filled in\n");
     IDirectMusicPort_Release(port);
     port = NULL;
-
-    todo_wine ok(portparams.dwValidParams != 0, "portparams struct was not filled in\n");
 
     /* null GUID fails */
     portparams.dwValidParams = 0;
