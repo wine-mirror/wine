@@ -102,11 +102,12 @@ static HRESULT test_InitAudio(void)
         return hr;
     }
 
-    port = NULL;
     hr = IDirectMusicPerformance8_PChannelInfo(performance, 128, &port, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
     hr = IDirectMusicPerformance8_PChannelInfo(performance, 127, &port, NULL, NULL);
     ok(hr == S_OK, "PChannelInfo failed, got %08x\n", hr);
+    IDirectMusicPort_Release(port);
+    port = NULL;
     hr = IDirectMusicPerformance8_PChannelInfo(performance, 0, &port, NULL, NULL);
     ok(hr == S_OK, "PChannelInfo failed, got %08x\n", hr);
     ok(port != NULL, "IDirectMusicPort not set\n");
@@ -114,8 +115,7 @@ static HRESULT test_InitAudio(void)
     todo_wine ok(hr == DMUS_E_AUDIOPATHS_IN_USE, "AssignPChannel failed (%08x)\n", hr);
     hr = IDirectMusicPerformance8_AssignPChannelBlock(performance, 0, port, 0);
     todo_wine ok(hr == DMUS_E_AUDIOPATHS_IN_USE, "AssignPChannelBlock failed (%08x)\n", hr);
-    if (port)
-        IDirectMusicPort_Release(port);
+    IDirectMusicPort_Release(port);
 
     hr = IDirectMusicPerformance8_GetDefaultAudioPath(performance, &path);
     ok(hr == S_OK, "Failed to call GetDefaultAudioPath (%x)\n", hr);
@@ -132,7 +132,7 @@ static HRESULT test_InitAudio(void)
     hr = IDirectMusicPerformance8_InitAudio(performance, NULL, NULL, NULL, 0, 64, 0, NULL);
     ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
     hr = IDirectMusicPerformance8_PChannelInfo(performance, 0, &port, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
     destroy_performance(performance, NULL, NULL);
 
     /* Refcounts for auto generated dmusic and dsound */
@@ -223,10 +223,10 @@ static HRESULT test_InitAudio(void)
             DMUS_APATH_SHARED_STEREOPLUSREVERB, 29, DMUS_AUDIOF_ALL, NULL);
     ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
     hr = IDirectMusicPerformance8_PChannelInfo(performance, 31, &port, &group, &channel);
-    todo_wine ok(hr == S_OK && group == 2 && channel == 15,
+    ok(hr == S_OK && group == 2 && channel == 15,
             "PChannelInfo failed, got %08x, %u, %u\n", hr, group, channel);
     hr = IDirectMusicPerformance8_PChannelInfo(performance, 32, &port, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
+    ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
     destroy_performance(performance, NULL, NULL);
 
     return S_OK;
@@ -349,7 +349,7 @@ static void test_pchannel(void)
     hr = IDirectMusicPerformance8_Init(perf, NULL, NULL, NULL);
     ok(hr == S_OK, "Init failed: %08x\n", hr);
     hr = IDirectMusicPerformance8_PChannelInfo(perf, 0, &port, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG && !port, "PChannelInfo failed, got %08x, %p\n", hr, port);
+    ok(hr == E_INVALIDARG && !port, "PChannelInfo failed, got %08x, %p\n", hr, port);
 
     /* Add default port. Sets PChannels 0-15 to the corresponding channels in group 1 */
     hr = IDirectMusicPerformance8_AddPort(perf, NULL);
@@ -360,18 +360,16 @@ static void test_pchannel(void)
     ok(hr == S_OK && port, "PChannelInfo failed, got %08x, %p\n", hr, port);
     for (i = 1; i < 16; i++) {
         hr = IDirectMusicPerformance8_PChannelInfo(perf, i, &port2, &group, &channel);
-        todo_wine ok(hr == S_OK && port == port2 && group == 1 && channel == i,
+        ok(hr == S_OK && port == port2 && group == 1 && channel == i,
                 "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
         IDirectMusicPort_Release(port2);
     }
 
     /* Unset PChannels fail to retrieve */
-    todo_wine {
     hr = IDirectMusicPerformance8_PChannelInfo(perf, 16, &port2, NULL, NULL);
     ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x, %p\n", hr, port);
     hr = IDirectMusicPerformance8_PChannelInfo(perf, MAXDWORD - 16, &port2, NULL, NULL);
     ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x, %p\n", hr, port);
-    }
 
     /* Channel group 0 can be set just fine */
     hr = IDirectMusicPerformance8_AssignPChannel(perf, 0, port, 0, 0);
@@ -380,7 +378,7 @@ static void test_pchannel(void)
     ok(hr == S_OK, "AssignPChannelBlock failed, got %08x\n", hr);
     for (i = 1; i < 16; i++) {
         hr = IDirectMusicPerformance8_PChannelInfo(perf, i, &port2, &group, &channel);
-        todo_wine ok(hr == S_OK && port == port2 && group == 0 && channel == i,
+        ok(hr == S_OK && port == port2 && group == 0 && channel == i,
                 "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
         IDirectMusicPort_Release(port2);
     }
@@ -411,7 +409,7 @@ static void test_pchannel(void)
         hr = IDirectMusicPerformance8_AssignPChannel(perf, i, port, 1, 7);
         ok(hr == S_OK, "AssignPChannel failed, got %08x\n", hr);
         hr = IDirectMusicPerformance8_PChannelInfo(perf, i, &port2, &group, &channel);
-        todo_wine ok(hr == S_OK && port2 == port && group == 1 && channel == 7,
+        ok(hr == S_OK && port2 == port && group == 1 && channel == 7,
                 "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
         IDirectMusicPort_Release(port2);
     }
@@ -421,7 +419,7 @@ static void test_pchannel(void)
     ok(hr == S_OK, "AssignPChannelBlock failed, got %08x\n", hr);
     for (i = MAXDWORD - 47; i < MAXDWORD - 31; i++) {
         hr = IDirectMusicPerformance8_PChannelInfo(perf, i, &port2, &group, &channel);
-        todo_wine ok(hr == S_OK && port2 == port && group == 0 && channel == i % 16,
+        ok(hr == S_OK && port2 == port && group == 0 && channel == i % 16,
                 "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
         IDirectMusicPort_Release(port2);
     }
@@ -430,17 +428,17 @@ static void test_pchannel(void)
     hr = IDirectMusicPerformance8_AssignPChannel(perf, 4711, port, 1, 13);
     ok(hr == S_OK, "AssignPChannel failed, got %08x\n", hr);
     hr = IDirectMusicPerformance8_PChannelInfo(perf, 4711, &port2, &group, &channel);
-    todo_wine ok(hr == S_OK && port2 == port && group == 1 && channel == 13,
+    ok(hr == S_OK && port2 == port && group == 1 && channel == 13,
             "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
     IDirectMusicPort_Release(port2);
     group = channel = 0xdeadbeef;
     hr = IDirectMusicPerformance8_PChannelInfo(perf, 4712, &port2, &group, &channel);
-    todo_wine ok(hr == S_OK && port2 == port && group == 0 && channel == 8,
+    ok(hr == S_OK && port2 == port && group == 0 && channel == 8,
             "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
     IDirectMusicPort_Release(port2);
     group = channel = 0xdeadbeef;
     hr = IDirectMusicPerformance8_PChannelInfo(perf, 4719, &port2, &group, &channel);
-    todo_wine ok(hr == S_OK && port2 == port && group == 0 && channel == 15,
+    ok(hr == S_OK && port2 == port && group == 0 && channel == 15,
             "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
     IDirectMusicPort_Release(port2);
 
