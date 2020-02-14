@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-12-13 10:36+0200\n"
+"PO-Revision-Date: 2020-02-14 08:12+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -9506,16 +9506,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "Žaliojo Kyšulio vasaros laikas"
 
 #: tzres.rc:114
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "Havajų juostinis laikas"
+msgstr "Haičio juostinis laikas"
 
 #: tzres.rc:115
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "Havajų vasaros laikas"
+msgstr "Haičio vasaros laikas"
 
 #: tzres.rc:74
 msgid "Central European Standard Time"
