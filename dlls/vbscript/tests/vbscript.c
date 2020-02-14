@@ -466,14 +466,14 @@ static void test_safety(IActiveScript *script)
     IObjectSafety_Release(safety);
 }
 
-static IDispatchEx *get_script_dispatch(IActiveScript *script)
+static IDispatchEx *get_script_dispatch(IActiveScript *script, const WCHAR *item_name)
 {
     IDispatchEx *dispex;
     IDispatch *disp;
     HRESULT hres;
 
     disp = (void*)0xdeadbeef;
-    hres = IActiveScript_GetScriptDispatch(script, NULL, &disp);
+    hres = IActiveScript_GetScriptDispatch(script, item_name, &disp);
     ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
     if(FAILED(hres))
         return NULL;
@@ -566,7 +566,7 @@ static void test_scriptdisp(void)
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
     CHECK_CALLED(GetLCID);
 
-    script_disp2 = get_script_dispatch(vbscript);
+    script_disp2 = get_script_dispatch(vbscript, NULL);
 
     test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
 
@@ -584,7 +584,7 @@ static void test_scriptdisp(void)
 
     test_state(vbscript, SCRIPTSTATE_CONNECTED);
 
-    script_disp = get_script_dispatch(vbscript);
+    script_disp = get_script_dispatch(vbscript, NULL);
     ok(script_disp == script_disp2, "script_disp != script_disp2\n");
     IDispatchEx_Release(script_disp2);
 
@@ -711,7 +711,7 @@ static void test_code_persistence(void)
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
 
     /* Pending code does not add identifiers to the global scope */
-    script_disp = get_script_dispatch(vbscript);
+    script_disp = get_script_dispatch(vbscript, NULL);
     id = 0;
     get_disp_id(script_disp, "x", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
@@ -750,7 +750,7 @@ static void test_code_persistence(void)
     CHECK_CALLED_MULTI(OnLeaveScript, 2);
     test_state(vbscript, SCRIPTSTATE_CONNECTED);
 
-    script_disp = get_script_dispatch(vbscript);
+    script_disp = get_script_dispatch(vbscript, NULL);
     id = 0;
     get_disp_id(script_disp, "x", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
@@ -796,7 +796,7 @@ static void test_code_persistence(void)
     CHECK_CALLED(GetLCID);
     CHECK_CALLED(OnStateChange_INITIALIZED);
 
-    script_disp = get_script_dispatch(vbscript);
+    script_disp = get_script_dispatch(vbscript, NULL);
     id = 0;
     get_disp_id(script_disp, "z", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
@@ -812,7 +812,7 @@ static void test_code_persistence(void)
     CHECK_CALLED(OnLeaveScript);
     test_state(vbscript, SCRIPTSTATE_CONNECTED);
 
-    script_disp = get_script_dispatch(vbscript);
+    script_disp = get_script_dispatch(vbscript, NULL);
     id = 0;
     get_disp_id(script_disp, "z", S_OK, &id);
     ok(id != -1, "id = -1\n");
@@ -875,7 +875,7 @@ static void test_code_persistence(void)
     CHECK_CALLED(OnStateChange_CONNECTED);
     test_state(vbscript, SCRIPTSTATE_CONNECTED);
 
-    script_disp = get_script_dispatch(vbscript);
+    script_disp = get_script_dispatch(vbscript, NULL);
     id = 0;
     get_disp_id(script_disp, "y", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
@@ -988,7 +988,7 @@ static void test_script_typeinfo(void)
         "implicit = 10\n"
         "dim obj\nset obj = new C\n");
 
-    script_disp = get_script_dispatch(vbscript);
+    script_disp = get_script_dispatch(vbscript, NULL);
     hr = IDispatchEx_QueryInterface(script_disp, &IID_ITypeInfo, (void**)&typeinfo);
     ok(hr == E_NOINTERFACE, "QueryInterface(IID_ITypeInfo) returned: %08x\n", hr);
     hr = IDispatchEx_GetTypeInfo(script_disp, 1, LOCALE_USER_DEFAULT, &typeinfo);
@@ -1481,7 +1481,7 @@ static void test_vbscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_CONNECTED);
 
-    dispex = get_script_dispatch(script);
+    dispex = get_script_dispatch(script, NULL);
     ok(dispex != NULL, "dispex == NULL\n");
     if(dispex)
         IDispatchEx_Release(dispex);
@@ -1737,10 +1737,40 @@ static void test_vbscript_initializing(void)
 
 static void test_named_items(void)
 {
+    static const WCHAR *global_idents[] =
+    {
+        L"testSub_global",
+        L"testExplicitVar_global",
+        L"testVar_global"
+    };
+    static const WCHAR *global_code_test[] =
+    {
+        L"testSub_global\n",
+        L"if testExplicitVar_global <> 10 then err.raise 500\n",
+        L"if testVar_global <> 5 then err.raise 500\n",
+        L"set x = new testClass_global\n"
+    };
+    static const WCHAR *context_idents[] =
+    {
+        L"testSub",
+        L"testExplicitVar",
+        L"testVar"
+    };
+    static const WCHAR *context_code_test[] =
+    {
+        L"testSub\n",
+        L"if testExplicitVar <> 42 then err.raise 500\n",
+        L"if testVar <> 99 then err.raise 500\n",
+        L"set x = new testClass\n"
+    };
+    IDispatchEx *script_disp, *script_disp2;
     IActiveScriptParse *parse;
     IActiveScript *script;
     IDispatch *disp;
+    unsigned i;
+    DISPID id;
     ULONG ref;
+    BSTR bstr;
     HRESULT hres;
 
     script = create_vbscript();
@@ -1753,6 +1783,8 @@ static void test_named_items(void)
     hres = IActiveScript_AddNamedItem(script, L"visibleItem", SCRIPTITEM_ISVISIBLE);
     ok(hres == E_UNEXPECTED, "AddNamedItem returned: %08x\n", hres);
     hres = IActiveScript_AddNamedItem(script, L"globalItem", SCRIPTITEM_GLOBALMEMBERS);
+    ok(hres == E_UNEXPECTED, "AddNamedItem returned: %08x\n", hres);
+    hres = IActiveScript_AddNamedItem(script, L"codeOnlyItem", SCRIPTITEM_CODEONLY);
     ok(hres == E_UNEXPECTED, "AddNamedItem returned: %08x\n", hres);
 
     SET_EXPECT(GetLCID);
@@ -1775,6 +1807,13 @@ static void test_named_items(void)
     ok(global_named_item_ref > 0, "global_named_item_ref = %u\n", global_named_item_ref);
     ok(visible_named_item_ref == 0, "visible_named_item_ref = %u\n", visible_named_item_ref);
     ok(visible_code_named_item_ref == 0, "visible_code_named_item_ref = %u\n", visible_code_named_item_ref);
+
+    hres = IActiveScript_GetScriptDispatch(script, L"noContext", &disp);
+    ok(hres == E_INVALIDARG, "GetScriptDispatch returned: %08x\n", hres);
+
+    script_disp = get_script_dispatch(script, NULL);
+    script_disp2 = get_script_dispatch(script, L"codeONLYitem");
+    ok(script_disp != script_disp2, "get_script_dispatch returned same dispatch objects.\n");
 
     SET_EXPECT(OnStateChange_INITIALIZED);
     hres = IActiveScriptParse_InitNew(parse);
@@ -1833,6 +1872,231 @@ static void test_named_items(void)
     SET_EXPECT(testCall);
     parse_script(parse, "visibleItem.testCall\n");
     CHECK_CALLED(testCall);
+
+    hres = IActiveScriptParse_ParseScriptText(parse, L"sub testSub\nend sub\n", L"noContext", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == E_INVALIDARG, "ParseScriptText returned: %08x\n", hres);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(GetIDsOfNames);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L""
+        "sub testSub_global\nend sub\n"
+        "dim testExplicitVar_global\ntestExplicitVar_global = 10\n"
+        "testVar_global = 10\n"
+        "class testClass_global\nend class\n",
+        NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(GetIDsOfNames);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L""
+        "sub testSub\nend sub\n"
+        "dim testExplicitVar\ntestExplicitVar = 42\n"
+        "class testClass\nend class\n",
+        L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(GetIDsOfNames);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L""
+        "testVar = 99\n"
+        "testVar_global = 5\n",
+        L"CodeOnlyITEM", NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(GetIDsOfNames);
+    CHECK_CALLED(OnLeaveScript);
+
+    for (i = 0; i < ARRAY_SIZE(global_idents); i++)
+    {
+        bstr = SysAllocString(global_idents[i]);
+        id = 0;
+        hres = IDispatchEx_GetDispID(script_disp, bstr, 0, &id);
+        ok(hres == S_OK, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(global_idents[i]), hres);
+        ok(id != -1, "[%s] id = -1\n", wine_dbgstr_w(global_idents[i]));
+        id = 0;
+        hres = IDispatchEx_GetDispID(script_disp2, bstr, 0, &id);
+        ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(global_idents[i]), hres);
+        ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(global_idents[i]), id);
+        SysFreeString(bstr);
+    }
+    for (i = 0; i < ARRAY_SIZE(context_idents); i++)
+    {
+        bstr = SysAllocString(context_idents[i]);
+        id = 0;
+        hres = IDispatchEx_GetDispID(script_disp, bstr, 0, &id);
+        ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(context_idents[i]), hres);
+        ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(context_idents[i]), id);
+        id = 0;
+        hres = IDispatchEx_GetDispID(script_disp2, bstr, 0, &id);
+        ok(hres == S_OK, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(context_idents[i]), hres);
+        ok(id != -1, "[%s] id = -1\n", wine_dbgstr_w(context_idents[i]));
+        SysFreeString(bstr);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(global_code_test); i++)
+    {
+        SET_EXPECT(OnEnterScript);
+        SET_EXPECT(OnLeaveScript);
+        hres = IActiveScriptParse_ParseScriptText(parse, global_code_test[i], NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+        ok(hres == S_OK, "ParseScriptText(%s) failed: %08x\n", wine_dbgstr_w(global_code_test[i]), hres);
+        CHECK_CALLED(OnEnterScript);
+        CHECK_CALLED(OnLeaveScript);
+        SET_EXPECT(OnEnterScript);
+        SET_EXPECT(GetIDsOfNames);
+        SET_EXPECT(OnLeaveScript);
+        hres = IActiveScriptParse_ParseScriptText(parse, global_code_test[i], L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+        ok(hres == S_OK, "ParseScriptText(%s) failed: %08x\n", wine_dbgstr_w(global_code_test[i]), hres);
+        CHECK_CALLED(OnEnterScript);
+        CHECK_CALLED(OnLeaveScript);
+    }
+    for (i = 0; i < ARRAY_SIZE(context_code_test); i++)
+    {
+        SET_EXPECT(OnEnterScript);
+        SET_EXPECT(GetIDsOfNames);
+        SET_EXPECT(OnScriptError);
+        SET_EXPECT(OnLeaveScript);
+        hres = IActiveScriptParse_ParseScriptText(parse, context_code_test[i], NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+        ok(FAILED(hres), "ParseScriptText(%s) returned: %08x\n", wine_dbgstr_w(context_code_test[i]), hres);
+        CHECK_CALLED(OnEnterScript);
+        CHECK_CALLED(OnScriptError);
+        CHECK_CALLED(OnLeaveScript);
+        SET_EXPECT(OnEnterScript);
+        SET_EXPECT(GetIDsOfNames);
+        SET_EXPECT(OnLeaveScript);
+        hres = IActiveScriptParse_ParseScriptText(parse, context_code_test[i], L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+        ok(hres == S_OK, "ParseScriptText(%s) failed: %08x\n", wine_dbgstr_w(context_code_test[i]), hres);
+        CHECK_CALLED(OnEnterScript);
+        CHECK_CALLED(OnLeaveScript);
+    }
+    SET_EXPECT(OnScriptError);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"testSub_global = 10\n", L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(FAILED(hres), "ParseScriptText returned: %08x\n", hres);
+    CHECK_CALLED(OnScriptError);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    IDispatchEx_Release(script_disp2);
+    IDispatchEx_Release(script_disp);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_UNINITIALIZED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_UNINITIALIZED);
+    test_no_script_dispatch(script);
+
+    ok(global_named_item_ref == 0, "global_named_item_ref = %u\n", global_named_item_ref);
+    ok(visible_named_item_ref == 0, "visible_named_item_ref = %u\n", visible_named_item_ref);
+    ok(visible_code_named_item_ref == 0, "visible_code_named_item_ref = %u\n", visible_code_named_item_ref);
+
+    hres = IActiveScript_GetScriptDispatch(script, L"codeOnlyItem", &disp);
+    ok(hres == E_UNEXPECTED, "hres = %08x, expected E_UNEXPECTED\n", hres);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    hres = IActiveScript_AddNamedItem(script, L"codeOnlyItem", SCRIPTITEM_CODEONLY);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    SET_EXPECT_MULTI(OnEnterScript, 2);
+    SET_EXPECT_MULTI(OnLeaveScript, 2);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+    CHECK_CALLED_MULTI(OnEnterScript, 2);
+    CHECK_CALLED_MULTI(OnLeaveScript, 2);
+    test_state(script, SCRIPTSTATE_CONNECTED);
+
+    script_disp = get_script_dispatch(script, NULL);
+    for (i = 0; i < ARRAY_SIZE(global_idents); i++)
+    {
+        bstr = SysAllocString(global_idents[i]);
+        id = 0;
+        hres = IDispatchEx_GetDispID(script_disp, bstr, 0, &id);
+        ok(hres == S_OK, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(global_idents[i]), hres);
+        ok(id != -1, "[%s] id = -1\n", wine_dbgstr_w(global_idents[i]));
+        SysFreeString(bstr);
+    }
+    for (i = 0; i < ARRAY_SIZE(context_idents); i++)
+    {
+        bstr = SysAllocString(context_idents[i]);
+        id = 0;
+        hres = IDispatchEx_GetDispID(script_disp, bstr, 0, &id);
+        ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(context_idents[i]), hres);
+        ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(context_idents[i]), id);
+        SysFreeString(bstr);
+    }
+    IDispatchEx_Release(script_disp);
+
+    script_disp = get_script_dispatch(script, L"codeOnlyItem");
+    for (i = 0; i < ARRAY_SIZE(global_idents); i++)
+    {
+        bstr = SysAllocString(global_idents[i]);
+        id = 0;
+        hres = IDispatchEx_GetDispID(script_disp, bstr, 0, &id);
+        ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(global_idents[i]), hres);
+        ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(global_idents[i]), id);
+        SysFreeString(bstr);
+    }
+    for (i = 0; i < ARRAY_SIZE(context_idents); i++)
+    {
+        bstr = SysAllocString(context_idents[i]);
+        id = 0;
+        hres = IDispatchEx_GetDispID(script_disp, bstr, 0, &id);
+        ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(context_idents[i]), hres);
+        ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(context_idents[i]), id);
+        SysFreeString(bstr);
+    }
+    IDispatchEx_Release(script_disp);
+
+    for (i = 0; i < ARRAY_SIZE(global_code_test); i++)
+    {
+        SET_EXPECT(OnEnterScript);
+        SET_EXPECT(OnLeaveScript);
+        hres = IActiveScriptParse_ParseScriptText(parse, global_code_test[i], NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+        ok(hres == S_OK, "ParseScriptText(%s) failed: %08x\n", wine_dbgstr_w(global_code_test[i]), hres);
+        CHECK_CALLED(OnEnterScript);
+        CHECK_CALLED(OnLeaveScript);
+        SET_EXPECT(OnEnterScript);
+        SET_EXPECT(OnLeaveScript);
+        hres = IActiveScriptParse_ParseScriptText(parse, global_code_test[i], L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+        ok(hres == S_OK, "ParseScriptText(%s) failed: %08x\n", wine_dbgstr_w(global_code_test[i]), hres);
+        CHECK_CALLED(OnEnterScript);
+        CHECK_CALLED(OnLeaveScript);
+    }
+    for (i = 0; i < ARRAY_SIZE(context_code_test); i++)
+    {
+        SET_EXPECT(OnScriptError);
+        SET_EXPECT(OnEnterScript);
+        SET_EXPECT(OnLeaveScript);
+        hres = IActiveScriptParse_ParseScriptText(parse, context_code_test[i], NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+        ok(FAILED(hres), "ParseScriptText(%s) returned: %08x\n", wine_dbgstr_w(context_code_test[i]), hres);
+        CHECK_CALLED(OnScriptError);
+        CHECK_CALLED(OnEnterScript);
+        CHECK_CALLED(OnLeaveScript);
+        SET_EXPECT(OnScriptError);
+        SET_EXPECT(OnEnterScript);
+        SET_EXPECT(OnLeaveScript);
+        hres = IActiveScriptParse_ParseScriptText(parse, context_code_test[i], L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+        ok(FAILED(hres), "ParseScriptText(%s) returned: %08x\n", wine_dbgstr_w(context_code_test[i]), hres);
+        CHECK_CALLED(OnScriptError);
+        CHECK_CALLED(OnEnterScript);
+        CHECK_CALLED(OnLeaveScript);
+    }
 
     SET_EXPECT(OnStateChange_DISCONNECTED);
     SET_EXPECT(OnStateChange_INITIALIZED);
