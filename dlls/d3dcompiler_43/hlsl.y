@@ -530,6 +530,15 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
     d3dcompiler_free(initializer->args);
 }
 
+static void free_parse_variable_def(struct parse_variable_def *v)
+{
+    free_parse_initializer(&v->initializer);
+    d3dcompiler_free(v->name);
+    d3dcompiler_free((void *)v->semantic);
+    d3dcompiler_free(v->reg_reservation);
+    d3dcompiler_free(v);
+}
+
 static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, struct list *var_list)
 {
     struct hlsl_type *type;
@@ -543,7 +552,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
     {
         ERR("Out of memory.\n");
         LIST_FOR_EACH_ENTRY_SAFE(v, v_next, var_list, struct parse_variable_def, entry)
-            d3dcompiler_free(v);
+            free_parse_variable_def(v);
         d3dcompiler_free(var_list);
         return NULL;
     }
@@ -558,7 +567,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
         if (!var)
         {
             ERR("Out of memory.\n");
-            d3dcompiler_free(v);
+            free_parse_variable_def(v);
             continue;
         }
         if (v->array_size)
