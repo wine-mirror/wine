@@ -97,8 +97,6 @@ static inline struct gstdemux *impl_from_strmbase_filter(struct strmbase_filter 
     return CONTAINING_RECORD(iface, struct gstdemux, filter);
 }
 
-static const char *media_quark_string = "media-sample";
-
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const IMediaSeekingVtbl GST_Seeking_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
@@ -744,20 +742,19 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
     }
 }
 
-static void release_sample(void *data)
-{
-    ULONG ret;
-    ret = IMediaSample_Release((IMediaSample *)data);
-    TRACE("Releasing %p returns %u\n", data, ret);
-}
-
 static DWORD CALLBACK push_data(LPVOID iface)
 {
     LONGLONG maxlen, curlen;
     struct gstdemux *This = iface;
-    IMediaSample *buf;
-    DWORD_PTR user;
+    GstMapInfo mapping;
+    GstBuffer *buffer;
     HRESULT hr;
+
+    if (!(buffer = gst_buffer_new_allocate(NULL, 16384, NULL)))
+    {
+        ERR("Failed to allocate memory.\n");
+        return 0;
+    }
 
     IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
 
@@ -768,51 +765,30 @@ static DWORD CALLBACK push_data(LPVOID iface)
 
     TRACE("Starting..\n");
     for (;;) {
-        REFERENCE_TIME tStart, tStop;
         ULONG len;
-        GstBuffer *gstbuf;
-        gsize bufsize;
-        BYTE *data;
         int ret;
-
-        hr = IMemAllocator_GetBuffer(This->alloc, &buf, NULL, NULL, 0);
-        if (FAILED(hr))
-            break;
 
         if (This->nextofs >= maxlen)
             break;
-        len = IMediaSample_GetSize(buf);
-        if (This->nextofs + len > maxlen)
-            len = maxlen - This->nextofs;
+        len = min(16384, maxlen - This->nextofs);
 
-        tStart = MEDIATIME_FROM_BYTES(This->nextofs);
-        tStop = tStart + MEDIATIME_FROM_BYTES(len);
-        IMediaSample_SetTime(buf, &tStart, &tStop);
-
-        hr = IAsyncReader_Request(This->reader, buf, 0);
-        if (FAILED(hr)) {
-            IMediaSample_Release(buf);
+        if (!gst_buffer_map_range(buffer, -1, len, &mapping, GST_MAP_WRITE))
+        {
+            ERR("Failed to map buffer.\n");
             break;
         }
+        hr = IAsyncReader_SyncRead(This->reader, This->nextofs, len, mapping.data);
+        gst_buffer_unmap(buffer, &mapping);
+        if (hr != S_OK)
+        {
+            ERR("Failed to read data, hr %#x.\n", hr);
+            break;
+        }
+
         This->nextofs += len;
-        hr = IAsyncReader_WaitForNext(This->reader, -1, &buf, &user);
-        if (FAILED(hr) || !buf) {
-            if (buf)
-                IMediaSample_Release(buf);
-            break;
-        }
 
-        IMediaSample_GetPointer(buf, &data);
-        bufsize = IMediaSample_GetActualDataLength(buf);
-        gstbuf = gst_buffer_new_wrapped_full(0, data, bufsize, 0, bufsize, buf, release_sample_wrapper);
-        IMediaSample_AddRef(buf);
-        gst_mini_object_set_qdata(GST_MINI_OBJECT(gstbuf), g_quark_from_static_string(media_quark_string), buf, release_sample_wrapper);
-        if (!gstbuf) {
-            IMediaSample_Release(buf);
-            break;
-        }
-        gstbuf->duration = gstbuf->pts = -1;
-        ret = gst_pad_push(This->my_src, gstbuf);
+        buffer->duration = buffer->pts = -1;
+        ret = gst_pad_push(This->my_src, buffer);
         if (ret >= 0)
             hr = S_OK;
         else
@@ -825,14 +801,9 @@ static DWORD CALLBACK push_data(LPVOID iface)
             break;
     }
 
-    gst_pad_push_event(This->my_src, gst_event_new_eos());
+    gst_buffer_unref(buffer);
 
-    TRACE("Almost stopping.. %08x\n", hr);
-    do {
-        IAsyncReader_WaitForNext(This->reader, 0, &buf, &user);
-        if (buf)
-            IMediaSample_Release(buf);
-    } while (buf);
+    gst_pad_push_event(This->my_src, gst_event_new_eos());
 
     TRACE("Stopping.. %08x\n", hr);
 
@@ -2330,12 +2301,6 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
         {
             struct unknown_type_data *data = &cbdata->u.unknown_type_data;
             unknown_type(data->bin, data->pad, data->caps, data->user);
-            break;
-        }
-    case RELEASE_SAMPLE:
-        {
-            struct release_sample_data *data = &cbdata->u.release_sample_data;
-            release_sample(data->data);
             break;
         }
     case QUERY_SINK:

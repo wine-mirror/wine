@@ -227,15 +227,6 @@ void unknown_type_wrapper(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer 
     call_cb(&cbdata);
 }
 
-void release_sample_wrapper(gpointer data)
-{
-    struct cb_data cbdata = { RELEASE_SAMPLE };
-
-    cbdata.u.release_sample_data.data = data;
-
-    call_cb(&cbdata);
-}
-
 gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct cb_data cbdata = { QUERY_SINK };
