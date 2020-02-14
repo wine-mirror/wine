@@ -130,21 +130,6 @@ static void free_bstrs(void)
     alloced_bstrs_count = 0;
 }
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    if(!str)
-        return NULL;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 
 /* test IHTMLElementCollection */
 static HRESULT WINAPI htmlecoll_QueryInterface(IHTMLElementCollection *iface, REFIID riid, void **ppvObject)
@@ -496,7 +481,7 @@ static HRESULT WINAPI htmldoc2_put_URL(IHTMLDocument2 *iface, BSTR v)
 static HRESULT WINAPI htmldoc2_get_URL(IHTMLDocument2 *iface, BSTR *p)
 {
     CHECK_EXPECT2(htmldoc2_get_url);
-    *p = a2bstr("http://test.winehq.org/");
+    *p = SysAllocString(L"http://test.winehq.org/");
     return S_OK;
 }
 
@@ -1747,7 +1732,7 @@ static void test_XMLHTTP(void)
     set_xhr_site(xhr);
 
     test_open(xhr, "GET", "tests/referer.php", S_OK);
-    str1 = a2bstr("http://test.winehq.org/");
+    str1 = SysAllocString(L"http://test.winehq.org/");
 
     V_VT(&varbody) = VT_EMPTY;
     hr = IXMLHttpRequest_send(xhr, varbody);
