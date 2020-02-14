@@ -2393,15 +2393,25 @@ DWORD WINAPI GetExtendedTcpTable(PVOID pTcpTable, PDWORD pdwSize, BOOL bOrder,
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    if (ulAf != WS_AF_INET)
-    {
-        FIXME("ulAf = %u not supported\n", ulAf);
-        return ERROR_NOT_SUPPORTED;
-    }
     if (TableClass >= TCP_TABLE_OWNER_MODULE_LISTENER)
         FIXME("module classes not fully supported\n");
 
-    if ((ret = build_tcp_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size)))
+    switch (ulAf)
+    {
+        case WS_AF_INET:
+            ret = build_tcp_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size);
+            break;
+
+        case WS_AF_INET6:
+            ret = build_tcp6_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size);
+            break;
+
+        default:
+            FIXME("ulAf = %u not supported\n", ulAf);
+            ret = ERROR_NOT_SUPPORTED;
+    }
+
+    if (ret)
         return ret;
 
     if (!pTcpTable || *pdwSize < size)
@@ -3054,8 +3064,8 @@ ULONG WINAPI GetTcpTable2(PMIB_TCPTABLE2 table, PULONG size, BOOL order)
  */
 ULONG WINAPI GetTcp6Table(PMIB_TCP6TABLE table, PULONG size, BOOL order)
 {
-    FIXME("pTcp6Table %p, size %p, order %d: stub\n", table, size, order);
-    return ERROR_NOT_SUPPORTED;
+    TRACE("(table %p, size %p, order %d)\n", table, size, order);
+    return GetExtendedTcpTable(table, size, order, WS_AF_INET6, TCP_TABLE_BASIC_ALL, 0);
 }
 
 /******************************************************************

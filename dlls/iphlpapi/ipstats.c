@@ -2545,6 +2545,71 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
     return ret;
 }
 
+static DWORD get_tcp6_table_sizes( TCP_TABLE_CLASS class, DWORD row_count, DWORD *row_size )
+{
+    DWORD table_size;
+
+    switch (class)
+    {
+    case TCP_TABLE_BASIC_LISTENER:
+    case TCP_TABLE_BASIC_CONNECTIONS:
+    case TCP_TABLE_BASIC_ALL:
+    {
+        table_size = FIELD_OFFSET(MIB_TCP6TABLE, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_TCP6ROW);
+        break;
+    }
+    case TCP_TABLE_OWNER_PID_LISTENER:
+    case TCP_TABLE_OWNER_PID_CONNECTIONS:
+    case TCP_TABLE_OWNER_PID_ALL:
+    {
+        table_size = FIELD_OFFSET(MIB_TCP6TABLE_OWNER_PID, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_TCP6ROW_OWNER_PID);
+        break;
+    }
+    case TCP_TABLE_OWNER_MODULE_LISTENER:
+    case TCP_TABLE_OWNER_MODULE_CONNECTIONS:
+    case TCP_TABLE_OWNER_MODULE_ALL:
+    {
+        table_size = FIELD_OFFSET(MIB_TCP6TABLE_OWNER_MODULE, table[row_count]);
+        if (row_size) *row_size = sizeof(MIB_TCP6ROW_OWNER_MODULE);
+        break;
+    }
+    default:
+        ERR("unhandled class %u\n", class);
+        return 0;
+    }
+    return table_size;
+}
+
+static int compare_tcp6_basic_rows(const void *a, const void *b)
+{
+    const MIB_TCP6ROW *rowA = a;
+    const MIB_TCP6ROW *rowB = b;
+    int ret;
+
+    if ((ret = memcmp(&rowA->LocalAddr, &rowB->LocalAddr, sizeof(rowA->LocalAddr)) != 0)) return ret;
+    if ((ret = rowA->dwLocalScopeId - rowB->dwLocalScopeId) != 0) return ret;
+    if ((ret = rowA->dwLocalPort - rowB->dwLocalPort) != 0) return ret;
+    if ((ret = memcmp(&rowA->RemoteAddr, &rowB->RemoteAddr, sizeof(rowA->RemoteAddr)) != 0)) return ret;
+    if ((ret = rowA->dwRemoteScopeId - rowB->dwRemoteScopeId) != 0) return ret;
+    return rowA->dwRemotePort - rowB->dwRemotePort;
+}
+
+static int compare_tcp6_owner_rows(const void *a, const void *b)
+{
+    const MIB_TCP6ROW_OWNER_PID *rowA = a;
+    const MIB_TCP6ROW_OWNER_PID *rowB = b;
+    int ret;
+
+    if ((ret = memcmp(&rowA->ucLocalAddr, &rowB->ucLocalAddr, sizeof(rowA->ucLocalAddr)) != 0)) return ret;
+    if ((ret = rowA->dwLocalScopeId - rowB->dwLocalScopeId) != 0) return ret;
+    if ((ret = rowA->dwLocalPort - rowB->dwLocalPort) != 0) return ret;
+    if ((ret = memcmp(&rowA->ucRemoteAddr, &rowB->ucRemoteAddr, sizeof(rowA->ucRemoteAddr)) != 0)) return ret;
+    if ((ret = rowA->dwRemoteScopeId - rowB->dwRemoteScopeId) != 0) return ret;
+    return rowA->dwRemotePort - rowB->dwRemotePort;
+}
+
 static DWORD get_udp6_table_sizes( UDP_TABLE_CLASS class, DWORD row_count, DWORD *row_size )
 {
     DWORD table_size;
@@ -2679,6 +2744,109 @@ static DWORD find_ipv6_addr_scope(const IN6_ADDR *addr, const struct ipv6_addr_s
     }
 
     return -1;
+}
+
+DWORD build_tcp6_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE heap, DWORD flags,
+                        DWORD *size )
+{
+    MIB_TCP6TABLE *table;
+    MIB_TCP6ROW_OWNER_MODULE row;
+    DWORD ret = NO_ERROR, count = 16, table_size, row_size;
+
+    if (!(table_size = get_tcp6_table_sizes( class, count, &row_size )))
+        return ERROR_INVALID_PARAMETER;
+
+    if (!(table = HeapAlloc( heap, flags, table_size )))
+        return ERROR_OUTOFMEMORY;
+
+    table->dwNumEntries = 0;
+
+#ifdef __linux__
+    {
+        FILE *fp;
+
+        if ((fp = fopen( "/proc/net/tcp6", "r" )))
+        {
+            char buf[512], *ptr;
+            struct pid_map *map = NULL;
+            unsigned int num_entries = 0;
+            struct ipv6_addr_scope *addr_scopes;
+            unsigned int addr_scopes_size = 0;
+            int inode;
+
+            addr_scopes = get_ipv6_addr_scope_table(&addr_scopes_size);
+
+            if (class >= TCP_TABLE_OWNER_PID_LISTENER) map = get_pid_map( &num_entries );
+
+            /* skip header line */
+            ptr = fgets( buf, sizeof(buf), fp );
+            while ((ptr = fgets( buf, sizeof(buf), fp )))
+            {
+                DWORD *local_addr = (DWORD *)&row.ucLocalAddr;
+                DWORD *remote_addr = (DWORD *)&row.ucRemoteAddr;
+
+                if (sscanf( ptr, "%*u: %8x%8x%8x%8x:%x %8x%8x%8x%8x:%x %x %*s %*s %*s %*s %*s %*s %*s %d",
+                            &local_addr[0], &local_addr[1], &local_addr[2], &local_addr[3], &row.dwLocalPort,
+                            &remote_addr[0], &remote_addr[1], &remote_addr[2], &remote_addr[3], &row.dwRemotePort,
+                            &row.dwState, &inode ) != 12)
+                    continue;
+                row.dwState = TCPStateToMIBState( row.dwState );
+                if (!match_class( class, row.dwState )) continue;
+                row.dwLocalScopeId = find_ipv6_addr_scope((const IN6_ADDR *)&row.ucLocalAddr, addr_scopes, addr_scopes_size);
+                row.dwLocalPort = htons( row.dwLocalPort );
+                row.dwRemoteScopeId = find_ipv6_addr_scope((const IN6_ADDR *)&row.ucRemoteAddr, addr_scopes, addr_scopes_size);
+                row.dwRemotePort = htons( row.dwRemotePort );
+
+                if (class <= TCP_TABLE_BASIC_ALL)
+                {
+                    /* MIB_TCP6ROW has a different field order */
+                    MIB_TCP6ROW basic_row;
+                    basic_row.State = row.dwState;
+                    memcpy( &basic_row.LocalAddr, &row.ucLocalAddr, sizeof(row.ucLocalAddr) );
+                    basic_row.dwLocalScopeId = row.dwLocalScopeId;
+                    basic_row.dwLocalPort = row.dwLocalPort;
+                    memcpy( &basic_row.RemoteAddr, &row.ucRemoteAddr, sizeof(row.ucRemoteAddr) );
+                    basic_row.dwRemoteScopeId = row.dwRemoteScopeId;
+                    basic_row.dwRemotePort = row.dwRemotePort;
+                    if (!(table = append_table_row( heap, flags, table, &table_size, &count, &basic_row, row_size )))
+                        break;
+                    continue;
+                }
+
+                row.dwOwningPid = find_owning_pid( map, num_entries, inode );
+                if (class >= TCP_TABLE_OWNER_MODULE_LISTENER)
+                {
+                    row.liCreateTimestamp.QuadPart = 0; /* FIXME */
+                    memset( &row.OwningModuleInfo, 0, sizeof(row.OwningModuleInfo) );
+                }
+                if (!(table = append_table_row( heap, flags, table, &table_size, &count, &row, row_size )))
+                    break;
+            }
+            HeapFree( GetProcessHeap(), 0, map );
+            HeapFree( GetProcessHeap(), 0, addr_scopes );
+            fclose( fp );
+        }
+        else ret = ERROR_NOT_SUPPORTED;
+    }
+#else
+    FIXME( "not implemented\n" );
+    ret = ERROR_NOT_SUPPORTED;
+#endif
+
+    if (!table) return ERROR_OUTOFMEMORY;
+    if (!ret)
+    {
+        if (order && table->dwNumEntries)
+        {
+            qsort( table->table, table->dwNumEntries, row_size,
+                   class <= TCP_TABLE_BASIC_ALL ? compare_tcp6_basic_rows : compare_tcp6_owner_rows );
+        }
+        *tablep = table;
+    }
+    else HeapFree( heap, flags, table );
+    if (size) *size = get_tcp6_table_sizes( class, count, NULL );
+    TRACE( "returning ret %u table %p\n", ret, table );
+    return ret;
 }
 
 DWORD build_udp6_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE heap, DWORD flags,
