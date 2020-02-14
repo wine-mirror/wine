@@ -1398,7 +1398,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty(
             EnterCriticalSection(&This->crit);
 
             This->buffersize  = pd->dwData;
-            This->queue_len = min(This->buffersize, 20);
+            This->queue_len = min(This->buffersize, 1024);
             HeapFree(GetProcessHeap(), 0, This->data_queue);
 
             This->data_queue = !This->queue_len ? NULL : HeapAlloc(GetProcessHeap(), 0,
