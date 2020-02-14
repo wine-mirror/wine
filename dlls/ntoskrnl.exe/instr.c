@@ -522,7 +522,7 @@ static void store_reg_byte( CONTEXT *context, BYTE regmodrm, const BYTE *addr, i
  *
  * Return the address of an instruction operand (from the mod/rm byte).
  */
-static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
+static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr, int addl_instr_len,
                                    int long_addr, int rex, int segprefix, int *len )
 {
     int mod, rm, ss = 0, off, have_sib = 0;
@@ -566,6 +566,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
             if (!long_addr) base &= 0xffffffff;
             GET_VAL( &off, DWORD );
             base += (signed long)off;
+            base += (signed long)*len + (signed long)addl_instr_len;
         }
         break;
 
@@ -793,7 +794,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         case 0xb6: /* movzx Eb, Gv */
         case 0xb7: /* movzx Ew, Gv */
         {
-            BYTE *data = INSTR_GetOperandAddr( context, instr + 2, long_addr,
+            BYTE *data = INSTR_GetOperandAddr( context, instr + 2, prefixlen + 2, long_addr,
                                                rex, segprefix, &len );
             unsigned int data_size = (instr[1] == 0xb7) ? 2 : 1;
             SIZE_T offset = data - user_shared_data;
@@ -815,7 +816,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
     case 0x8a: /* mov Eb, Gb */
     case 0x8b: /* mov Ev, Gv */
     {
-        BYTE *data = INSTR_GetOperandAddr( context, instr + 1, long_addr,
+        BYTE *data = INSTR_GetOperandAddr( context, instr + 1, prefixlen + 1, long_addr,
                                            rex, segprefix, &len );
         unsigned int data_size = (*instr == 0x8b) ? get_op_size( long_op, rex ) : 1;
         SIZE_T offset = data - user_shared_data;
