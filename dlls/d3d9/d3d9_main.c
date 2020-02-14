@@ -151,7 +151,7 @@ static ULONG WINAPI shader_validator_Release(IDirect3DShaderValidator9 *iface)
 static HRESULT WINAPI shader_validator_Begin(IDirect3DShaderValidator9 *iface,
         shader_validator_cb callback, void *context, DWORD_PTR arg3)
 {
-    FIXME("iface %p, callback %p, context %p, arg3 %#Ix, stub!\n", iface, callback, context, arg3);
+    WARN("iface %p, callback %p, context %p, arg3 %#Ix, stub!\n", iface, callback, context, arg3);
 
     return S_OK;
 }
@@ -163,7 +163,7 @@ static HRESULT WINAPI shader_validator_Begin(IDirect3DShaderValidator9 *iface,
 static HRESULT WINAPI shader_validator_Instruction(IDirect3DShaderValidator9 *iface,
         const char *file, int line, const DWORD *tokens, DWORD token_count)
 {
-    FIXME("iface %p, file %s, line %u, tokens %p, token_count %u, stub!\n",
+    WARN("iface %p, file %s, line %u, tokens %p, token_count %u, stub!\n",
             iface, debugstr_a(file), line, tokens, token_count);
 
     return S_OK;
@@ -171,7 +171,7 @@ static HRESULT WINAPI shader_validator_Instruction(IDirect3DShaderValidator9 *if
 
 static HRESULT WINAPI shader_validator_End(IDirect3DShaderValidator9 *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
+    WARN("iface %p, stub!\n", iface);
 
     return S_OK;
 }
@@ -190,7 +190,7 @@ static IDirect3DShaderValidator9 shader_validator = {&shader_validator_vtbl};
 
 IDirect3DShaderValidator9 * WINAPI Direct3DShaderValidatorCreate9(void)
 {
-    TRACE("Returning validator %p.\n", &shader_validator);
+    FIXME("Returning stub validator %p.\n", &shader_validator);
 
     return &shader_validator;
 }
