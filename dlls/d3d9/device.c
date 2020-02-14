@@ -2297,17 +2297,16 @@ static HRESULT WINAPI d3d9_device_SetClipPlane(IDirect3DDevice9Ex *iface, DWORD 
 static HRESULT WINAPI d3d9_device_GetClipPlane(IDirect3DDevice9Ex *iface, DWORD index, float *plane)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
 
     TRACE("iface %p, index %u, plane %p.\n", iface, index, plane);
 
     index = min(index, device->max_user_clip_planes - 1);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_clip_plane(device->wined3d_device, index, (struct wined3d_vec4 *)plane);
+    memcpy(plane, &wined3d_stateblock_get_state(device->state)->clip_planes[index], sizeof(struct wined3d_vec4));
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static void resolve_depth_buffer(struct d3d9_device *device)
