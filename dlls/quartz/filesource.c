@@ -352,7 +352,7 @@ static void async_reader_destroy(struct strmbase_filter *iface)
     CloseHandle(filter->port);
 
     strmbase_filter_cleanup(&filter->filter);
-    CoTaskMemFree(filter);
+    free(filter);
 }
 
 static HRESULT async_reader_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
@@ -414,31 +414,24 @@ static DWORD CALLBACK io_thread(void *arg)
 
 HRESULT AsyncReader_create(IUnknown *outer, void **out)
 {
-    AsyncReader *pAsyncRead;
-    
-    pAsyncRead = CoTaskMemAlloc(sizeof(AsyncReader));
+    AsyncReader *object;
 
-    if (!pAsyncRead)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    strmbase_filter_init(&pAsyncRead->filter, outer, &CLSID_AsyncReader, &filter_ops);
+    strmbase_filter_init(&object->filter, outer, &CLSID_AsyncReader, &filter_ops);
 
-    pAsyncRead->IFileSourceFilter_iface.lpVtbl = &FileSource_Vtbl;
+    object->IFileSourceFilter_iface.lpVtbl = &FileSource_Vtbl;
+    object->IAsyncReader_iface.lpVtbl = &FileAsyncReader_Vtbl;
 
-    pAsyncRead->IAsyncReader_iface.lpVtbl = &FileAsyncReader_Vtbl;
+    InitializeCriticalSection(&object->sample_cs);
+    object->sample_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FileAsyncReader.sample_cs");
+    InitializeConditionVariable(&object->sample_cv);
+    object->port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+    object->io_thread = CreateThread(NULL, 0, io_thread, object, 0, NULL);
 
-    pAsyncRead->pszFileName = NULL;
-
-    InitializeCriticalSection(&pAsyncRead->sample_cs);
-    pAsyncRead->sample_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FileAsyncReader.sample_cs");
-    InitializeConditionVariable(&pAsyncRead->sample_cv);
-    pAsyncRead->port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
-    pAsyncRead->io_thread = CreateThread(NULL, 0, io_thread, pAsyncRead, 0, NULL);
-
-    *out = &pAsyncRead->filter.IUnknown_inner;
-
-    TRACE("-- created at %p\n", pAsyncRead);
-
+    TRACE("Created file source %p.\n", object);
+    *out = &object->filter.IUnknown_inner;
     return S_OK;
 }
 
