@@ -905,6 +905,7 @@ enable_largefile
 with_x
 enable_acledit
 enable_aclui
+enable_activeds_tlb
 enable_activeds
 enable_actxprxy
 enable_adsiid
@@ -20040,6 +20041,7 @@ fi
 
 wine_fn_config_makefile dlls/acledit enable_acledit
 wine_fn_config_makefile dlls/aclui enable_aclui
+wine_fn_config_makefile dlls/activeds.tlb enable_activeds_tlb
 wine_fn_config_makefile dlls/activeds enable_activeds
 wine_fn_config_makefile dlls/actxprxy enable_actxprxy
 wine_fn_config_makefile dlls/adsiid enable_adsiid

@@ -2785,6 +2785,7 @@ WINE_CONFIG_SYMLINK(wine64,tools/winewrapper,["x$enable_win64" != xno -o -n "$wi
 
 WINE_CONFIG_MAKEFILE(dlls/acledit)
 WINE_CONFIG_MAKEFILE(dlls/aclui)
+WINE_CONFIG_MAKEFILE(dlls/activeds.tlb)
 WINE_CONFIG_MAKEFILE(dlls/activeds)
 WINE_CONFIG_MAKEFILE(dlls/actxprxy)
 WINE_CONFIG_MAKEFILE(dlls/adsiid)
