@@ -97,6 +97,15 @@ static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res
     function_t *func_iter, **new_funcs;
     dynamic_var_t *var, **new_vars;
     size_t cnt, i;
+    HRESULT hres;
+
+    if(code->named_item) {
+        if(!code->named_item->script_obj) {
+            hres = create_script_disp(ctx, &code->named_item->script_obj);
+            if(FAILED(hres)) return hres;
+        }
+        obj = code->named_item->script_obj;
+    }
 
     cnt = obj->global_vars_cnt + code->main_code.var_cnt;
     if (cnt > obj->global_vars_size)
@@ -196,6 +205,10 @@ named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned f
 
     LIST_FOR_EACH_ENTRY(item, &ctx->named_items, named_item_t, entry) {
         if((item->flags & flags) == flags && !wcsicmp(item->name, name)) {
+            if(!item->script_obj) {
+                hres = create_script_disp(ctx, &item->script_obj);
+                if(FAILED(hres)) return NULL;
+            }
             if(!item->disp && (flags || !(item->flags & SCRIPTITEM_CODEONLY))) {
                 IUnknown *unk;
 
@@ -221,6 +234,23 @@ named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned f
     return NULL;
 }
 
+static void release_named_item_script_obj(named_item_t *item)
+{
+    if(!item->script_obj) return;
+
+    item->script_obj->ctx = NULL;
+    IDispatchEx_Release(&item->script_obj->IDispatchEx_iface);
+    item->script_obj = NULL;
+}
+
+void release_named_item(named_item_t *item)
+{
+    if(--item->ref) return;
+
+    heap_free(item->name);
+    heap_free(item);
+}
+
 static void release_script(script_ctx_t *ctx)
 {
     vbscode_t *code, *code_next;
@@ -234,6 +264,7 @@ static void release_script(script_ctx_t *ctx)
         {
             code->pending_exec = TRUE;
             if(code->last_class) code->last_class->next = NULL;
+            if(code->named_item) release_named_item_script_obj(code->named_item);
         }
         else
         {
@@ -248,8 +279,8 @@ static void release_script(script_ctx_t *ctx)
         list_remove(&iter->entry);
         if(iter->disp)
             IDispatch_Release(iter->disp);
-        heap_free(iter->name);
-        heap_free(iter);
+        release_named_item_script_obj(iter);
+        release_named_item(iter);
     }
 
     if(ctx->host_global) {
@@ -658,8 +689,10 @@ static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstr
         return E_OUTOFMEMORY;
     }
 
+    item->ref = 1;
     item->disp = disp;
     item->flags = dwFlags;
+    item->script_obj = NULL;
     item->name = heap_strdupW(pstrName);
     if(!item->name) {
         if(disp)
@@ -683,6 +716,7 @@ static HRESULT WINAPI VBScript_AddTypeLib(IActiveScript *iface, REFGUID rguidTyp
 static HRESULT WINAPI VBScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR pstrItemName, IDispatch **ppdisp)
 {
     VBScript *This = impl_from_IActiveScript(iface);
+    ScriptDisp *script_obj;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(pstrItemName), ppdisp);
 
@@ -694,7 +728,15 @@ static HRESULT WINAPI VBScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR
         return E_UNEXPECTED;
     }
 
-    *ppdisp = (IDispatch*)&This->ctx->script_obj->IDispatchEx_iface;
+    if(pstrItemName) {
+        named_item_t *item = lookup_named_item(This->ctx, pstrItemName, 0);
+        if(!item) return E_INVALIDARG;
+        script_obj = item->script_obj;
+    }
+    else
+        script_obj = This->ctx->script_obj;
+
+    *ppdisp = (IDispatch*)&script_obj->IDispatchEx_iface;
     IDispatch_AddRef(*ppdisp);
     return S_OK;
 }

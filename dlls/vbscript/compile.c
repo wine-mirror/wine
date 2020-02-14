@@ -1778,26 +1778,33 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
     return S_OK;
 }
 
-static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifier)
+static BOOL lookup_script_identifier(compile_ctx_t *ctx, script_ctx_t *script, const WCHAR *identifier)
 {
-    ScriptDisp *obj = script->script_obj;
+    ScriptDisp *contexts[] = {
+        ctx->code->named_item ? ctx->code->named_item->script_obj : NULL,
+        script->script_obj
+    };
     class_desc_t *class;
     vbscode_t *code;
-    unsigned i;
+    unsigned c, i;
 
-    for(i = 0; i < obj->global_vars_cnt; i++) {
-        if(!wcsicmp(obj->global_vars[i]->name, identifier))
-            return TRUE;
-    }
+    for(c = 0; c < ARRAY_SIZE(contexts); c++) {
+        if(!contexts[c]) continue;
 
-    for(i = 0; i < obj->global_funcs_cnt; i++) {
-        if(!wcsicmp(obj->global_funcs[i]->name, identifier))
-            return TRUE;
-    }
+        for(i = 0; i < contexts[c]->global_vars_cnt; i++) {
+            if(!wcsicmp(contexts[c]->global_vars[i]->name, identifier))
+                return TRUE;
+        }
 
-    for(class = obj->classes; class; class = class->next) {
-        if(!wcsicmp(class->name, identifier))
-            return TRUE;
+        for(i = 0; i < contexts[c]->global_funcs_cnt; i++) {
+            if(!wcsicmp(contexts[c]->global_funcs[i]->name, identifier))
+                return TRUE;
+        }
+
+        for(class = contexts[c]->classes; class; class = class->next) {
+            if(!wcsicmp(class->name, identifier))
+                return TRUE;
+        }
     }
 
     LIST_FOR_EACH_ENTRY(code, &script->code_list, vbscode_t, entry) {
@@ -1805,7 +1812,7 @@ static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifi
         var_desc_t *vars = code->main_code.vars;
         function_t *func;
 
-        if(!code->pending_exec)
+        if(!code->pending_exec || (code->named_item && code->named_item != ctx->code->named_item))
             continue;
 
         for(i = 0; i < var_cnt; i++) {
@@ -1834,14 +1841,14 @@ static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
     class_desc_t *class;
 
     for(i = 0; i < var_cnt; i++) {
-        if(lookup_script_identifier(script, vars[i].name)) {
+        if(lookup_script_identifier(ctx, script, vars[i].name)) {
             FIXME("%s: redefined\n", debugstr_w(vars[i].name));
             return E_FAIL;
         }
     }
 
     for(class = ctx->code->classes; class; class = class->next) {
-        if(lookup_script_identifier(script, class->name)) {
+        if(lookup_script_identifier(ctx, script, class->name)) {
             FIXME("%s: redefined\n", debugstr_w(class->name));
             return E_FAIL;
         }
@@ -1862,6 +1869,8 @@ void release_vbscode(vbscode_t *code)
 
     if(code->context)
         IDispatch_Release(code->context);
+    if(code->named_item)
+        release_named_item(code->named_item);
     heap_pool_free(&code->heap);
 
     heap_free(code->bstr_pool);
@@ -1944,6 +1953,10 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
     code = ctx.code = alloc_vbscode(&ctx, src, cookie, start_line);
     if(!ctx.code)
         return E_OUTOFMEMORY;
+    if(item) {
+        code->named_item = item;
+        item->ref++;
+    }
 
     hres = parse_script(&ctx.parser, code->source, delimiter, flags);
     if(FAILED(hres)) {

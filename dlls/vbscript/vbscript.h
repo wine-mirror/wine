@@ -149,7 +149,9 @@ typedef struct {
 } BuiltinDisp;
 
 typedef struct named_item_t {
+    ScriptDisp *script_obj;
     IDispatch *disp;
+    unsigned ref;
     DWORD flags;
     LPWSTR name;
 
@@ -349,6 +351,7 @@ struct _vbscode_t {
     BOOL is_persistent;
     function_t main_code;
     IDispatch *context;
+    named_item_t *named_item;
 
     BSTR *bstr_pool;
     unsigned bstr_pool_size;
@@ -373,6 +376,7 @@ HRESULT compile_procedure(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,D
 HRESULT exec_script(script_ctx_t*,BOOL,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
 void release_dynamic_var(dynamic_var_t*) DECLSPEC_HIDDEN;
 named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
+void release_named_item(named_item_t*) DECLSPEC_HIDDEN;
 void clear_ei(EXCEPINFO*) DECLSPEC_HIDDEN;
 HRESULT report_script_error(script_ctx_t*,const vbscode_t*,unsigned) DECLSPEC_HIDDEN;
 void detach_global_objects(script_ctx_t*) DECLSPEC_HIDDEN;
