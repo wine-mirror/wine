@@ -63,6 +63,8 @@ static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TY
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
         D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context);
 
+static HRESULT (WINAPI *pCoGetApartmentType)(APTTYPE *type, APTTYPEQUALIFIER *qualifier);
+
 static HRESULT (WINAPI *pMFCopyImage)(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride,
         DWORD width, DWORD lines);
 static HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
@@ -86,6 +88,7 @@ static HRESULT (WINAPI *pMFTRegisterLocalByCLSID)(REFCLSID clsid, REFGUID catego
         const MFT_REGISTER_TYPE_INFO *output_types);
 static HRESULT (WINAPI *pMFTUnregisterLocal)(IClassFactory *factory);
 static HRESULT (WINAPI *pMFTUnregisterLocalByCLSID)(CLSID clsid);
+static HRESULT (WINAPI *pMFAllocateWorkQueueEx)(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
 
 static const WCHAR mp4file[] = {'t','e','s','t','.','m','p','4',0};
 static const WCHAR fileschemeW[] = {'f','i','l','e',':','/','/',0};
@@ -122,6 +125,7 @@ struct test_callback
 {
     IMFAsyncCallback IMFAsyncCallback_iface;
     HANDLE event;
+    DWORD param;
 };
 
 static struct test_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -651,6 +655,7 @@ static void init_functions(void)
 #define X(f) p##f = (void*)GetProcAddress(mod, #f)
     X(MFAddPeriodicCallback);
     X(MFAllocateSerialWorkQueue);
+    X(MFAllocateWorkQueueEx);
     X(MFCopyImage);
     X(MFCreateDXGIDeviceManager);
     X(MFCreateSourceResolver);
@@ -666,12 +671,16 @@ static void init_functions(void)
     X(MFTRegisterLocalByCLSID);
     X(MFTUnregisterLocal);
     X(MFTUnregisterLocalByCLSID);
-#undef X
 
     if ((mod = LoadLibraryA("d3d11.dll")))
     {
-        pD3D11CreateDevice = (void *)GetProcAddress(mod, "D3D11CreateDevice");
+        X(D3D11CreateDevice);
     }
+
+    mod = GetModuleHandleA("ole32.dll");
+
+    X(CoGetApartmentType);
+#undef X
 
     is_win8_plus = pMFPutWaitingWorkItem != NULL;
 }
@@ -4079,11 +4088,153 @@ static void test_MFTRegisterLocal(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 }
 
+static void test_queue_com(void)
+{
+    static int system_queues[] =
+    {
+        MFASYNC_CALLBACK_QUEUE_STANDARD,
+        MFASYNC_CALLBACK_QUEUE_RT,
+        MFASYNC_CALLBACK_QUEUE_IO,
+        MFASYNC_CALLBACK_QUEUE_TIMER,
+        MFASYNC_CALLBACK_QUEUE_MULTITHREADED,
+        MFASYNC_CALLBACK_QUEUE_LONG_FUNCTION,
+    };
+
+    static int user_queues[] =
+    {
+        MF_STANDARD_WORKQUEUE,
+        MF_WINDOW_WORKQUEUE,
+        MF_MULTITHREADED_WORKQUEUE,
+    };
+
+    char path_name[MAX_PATH];
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    char **argv;
+    int i;
+
+    if (!pCoGetApartmentType)
+    {
+        win_skip("CoGetApartmentType() is not available.\n");
+        return;
+    }
+
+    winetest_get_mainargs(&argv);
+
+    for (i = 0; i < ARRAY_SIZE(system_queues); ++i)
+    {
+        memset(&startup, 0, sizeof(startup));
+        startup.cb = sizeof(startup);
+        sprintf(path_name, "%s mfplat s%d", argv[0], system_queues[i]);
+        ok(CreateProcessA( NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
+                "CreateProcess failed.\n" );
+        winetest_wait_child_process(info.hProcess);
+        CloseHandle(info.hProcess);
+        CloseHandle(info.hThread);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(user_queues); ++i)
+    {
+        memset(&startup, 0, sizeof(startup));
+        startup.cb = sizeof(startup);
+        sprintf(path_name, "%s mfplat u%d", argv[0], user_queues[i]);
+        ok(CreateProcessA( NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
+                "CreateProcess failed.\n" );
+        winetest_wait_child_process(info.hProcess);
+        CloseHandle(info.hProcess);
+        CloseHandle(info.hThread);
+    }
+}
+
+static HRESULT WINAPI test_queue_com_state_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+    APTTYPEQUALIFIER qualifier;
+    APTTYPE com_type;
+    HRESULT hr;
+
+    hr = pCoGetApartmentType(&com_type, &qualifier);
+    ok(SUCCEEDED(hr), "Failed to get apartment type, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+    todo_wine {
+        if (callback->param == MFASYNC_CALLBACK_QUEUE_LONG_FUNCTION)
+            ok(com_type == APTTYPE_MAINSTA && qualifier == APTTYPEQUALIFIER_NONE,
+                "%#x: unexpected type %u, qualifier %u.\n", callback->param, com_type, qualifier);
+        else
+            ok(com_type == APTTYPE_MTA && qualifier == APTTYPEQUALIFIER_NONE,
+                "%#x: unexpected type %u, qualifier %u.\n", callback->param, com_type, qualifier);
+    }
+    }
+
+    SetEvent(callback->event);
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl test_queue_com_state_callback_vtbl =
+{
+    testcallback_QueryInterface,
+    testcallback_AddRef,
+    testcallback_Release,
+    testcallback_GetParameters,
+    test_queue_com_state_callback_Invoke,
+};
+
+static void test_queue_com_state(const char *name)
+{
+    struct test_callback callback = { { &test_queue_com_state_callback_vtbl } };
+    DWORD queue, queue_type;
+    HRESULT hr;
+
+    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    if (name[0] == 's')
+    {
+        callback.param = name[1] - '0';
+        hr = MFPutWorkItem(callback.param, &callback.IMFAsyncCallback_iface, NULL);
+        ok(SUCCEEDED(hr), "Failed to queue work item, hr %#x.\n", hr);
+        WaitForSingleObject(callback.event, INFINITE);
+    }
+    else if (name[0] == 'u')
+    {
+        queue_type = name[1] - '0';
+
+        hr = pMFAllocateWorkQueueEx(queue_type, &queue);
+        ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+
+        callback.param = queue;
+        hr = MFPutWorkItem(queue, &callback.IMFAsyncCallback_iface, NULL);
+        ok(SUCCEEDED(hr), "Failed to queue work item, hr %#x.\n", hr);
+        WaitForSingleObject(callback.event, INFINITE);
+
+        hr = MFUnlockWorkQueue(queue);
+        ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+    }
+
+    CloseHandle(callback.event);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
-    CoInitialize(NULL);
+    char **argv;
+    int argc;
 
     init_functions();
+
+    argc = winetest_get_mainargs(&argv);
+    if (argc >= 3)
+    {
+        test_queue_com_state(argv[2]);
+        return;
+    }
+
+    CoInitialize(NULL);
 
     test_startup();
     test_register();
@@ -4119,6 +4270,7 @@ START_TEST(mfplat)
     test_dxgi_device_manager();
     test_MFCreateTransformActivate();
     test_MFTRegisterLocal();
+    test_queue_com();
 
     CoUninitialize();
 }
