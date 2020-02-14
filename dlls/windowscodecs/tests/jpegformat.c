@@ -47,6 +47,8 @@ static void test_decode_adobe_cmyk(void)
 {
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *framedecode;
+    IWICImagingFactory *factory;
+    IWICPalette *palette;
     HRESULT hr;
     HGLOBAL hjpegdata;
     char *jpegdata;
@@ -76,6 +78,10 @@ static void test_decode_adobe_cmyk(void)
         &IID_IWICBitmapDecoder, (void**)&decoder);
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void **)&factory);
+    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
 
     hjpegdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(jpeg_adobe_cmyk_1x5));
     ok(hjpegdata != 0, "GlobalAlloc failed\n");
@@ -125,13 +131,27 @@ static void test_decode_adobe_cmyk(void)
                             broken(!memcmp(imagedata, expected_imagedata_24bpp, sizeof(expected_imagedata))), /* xp/2003 */
                             "unexpected image data\n");
                 }
+
+                hr = IWICImagingFactory_CreatePalette(factory, &palette);
+                ok(SUCCEEDED(hr), "CreatePalette failed, hr=%x\n", hr);
+
+                hr = IWICBitmapDecoder_CopyPalette(decoder, palette);
+                ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Unexpected hr %#x.\n", hr);
+
+                hr = IWICBitmapFrameDecode_CopyPalette(framedecode, palette);
+                ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Unexpected hr %#x.\n", hr);
+
+                IWICPalette_Release(palette);
+
                 IWICBitmapFrameDecode_Release(framedecode);
             }
             IStream_Release(jpegstream);
         }
         GlobalFree(hjpegdata);
     }
+
     IWICBitmapDecoder_Release(decoder);
+    IWICImagingFactory_Release(factory);
 }
 
 
