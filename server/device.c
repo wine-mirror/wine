@@ -700,6 +700,7 @@ static struct device *create_device( struct object *root, const struct unicode_s
     {
         device->unix_path = NULL;
         device->manager = manager;
+        grab_object( device );
         list_add_tail( &manager->devices, &device->entry );
         list_init( &device->kernel_object );
         list_init( &device->files );
@@ -748,6 +749,7 @@ static void delete_device( struct device *device )
     unlink_named_object( &device->obj );
     list_remove( &device->entry );
     device->manager = NULL;
+    release_object( device );
 }
 
 
