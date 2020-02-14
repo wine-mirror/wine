@@ -215,7 +215,7 @@ void *alloc_object( const struct object_ops *ops )
 }
 
 /* free an object once it has been destroyed */
-void free_object( struct object *obj )
+static void free_object( struct object *obj )
 {
     free( obj->sd );
 #ifdef DEBUG_OBJECTS
