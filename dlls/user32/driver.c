@@ -77,7 +77,8 @@ static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
     size = sizeof(path);
     if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size ))
     {
-        ret = !strcmpW( path, nullW ) || (*module = LoadLibraryW( path ));
+        if ((ret = !strcmpW( path, nullW ))) *module = NULL;
+        else ret = (*module = LoadLibraryW( path )) != NULL;
         if (!ret) ERR( "failed to load %s\n", debugstr_w(path) );
         TRACE( "%s %p\n", debugstr_w(path), *module );
     }
