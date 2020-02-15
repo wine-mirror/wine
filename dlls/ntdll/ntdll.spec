@@ -1083,6 +1083,7 @@
 @ stdcall TpSetTimer(ptr ptr long long)
 @ stdcall TpSetWait(ptr long ptr)
 @ stdcall TpSimpleTryPost(ptr ptr ptr)
+@ stdcall TpStartAsyncIoOperation(ptr)
 @ stdcall TpWaitForTimer(ptr long)
 @ stdcall TpWaitForWait(ptr long)
 @ stdcall TpWaitForWork(ptr long)
