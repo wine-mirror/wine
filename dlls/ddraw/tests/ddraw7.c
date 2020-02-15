@@ -17141,6 +17141,23 @@ static void test_compressed_surface_stretch(void)
                     hr = IDirectDraw7_CreateSurface(ddraw, &dst_surface_desc, &dst_surf, NULL);
                     ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
 
+                    memset(&lock, 0, sizeof(lock));
+                    lock.dwSize = sizeof(lock);
+
+                    /* r200 does not init vidmem DXT3 surfaces to 0 correctly. Do it manually.
+                     * We can't use DDBLT_COLORFILL on compressed surfaces, so we need memset.
+                     *
+                     * Locking alone is not enough, so this isn't an accidental workaround that
+                     * forces a different codepath because the destination is currently in sysmem. */
+                    if (test_formats[l].fmt.dwFourCC == MAKEFOURCC('D', 'X', 'T', '3'))
+                    {
+                        hr = IDirectDrawSurface7_Lock(dst_surf, NULL, &lock, 0, NULL);
+                        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+                        memset(lock.lpSurface, 0, U1(lock).dwLinearSize);
+                        hr = IDirectDrawSurface7_Unlock(dst_surf, NULL);
+                        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+                    }
+
                     hr = IDirectDrawSurface7_Blt(dst_surf, &dst_rect, src_surf, &src_rect, DDBLT_WAIT, NULL);
                     todo_wine_if(test_formats[l].fmt.dwFlags == DDPF_FOURCC && test_sizes[j].todo_dst)
                     ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
