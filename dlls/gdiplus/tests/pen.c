@@ -175,7 +175,7 @@ static void test_dasharray(void)
     dashes[4] = 14.0;
     dashes[5] = -100.0;
     dashes[6] = -100.0;
-    dashes[7] = dashes[8] = dashes[9] = dashes[10] = dashes[11] = 0.0;
+    dashes[7] = dashes[8] = dashes[9] = dashes[10] = dashes[11] = 1.0;
 
     /* setting the array sets the type to custom */
     GdipGetPenDashStyle(pen, &style);
@@ -218,8 +218,11 @@ static void test_dasharray(void)
 
     /* Some invalid array values. */
     status = GdipSetPenDashArray(pen, &dashes[7], 5);
-    expect(InvalidParameter, status);
+    expect(Ok, status);
     dashes[9] = -1.0;
+    status = GdipSetPenDashArray(pen, &dashes[7], 5);
+    expect(InvalidParameter, status);
+    dashes[9] = 0.0;
     status = GdipSetPenDashArray(pen, &dashes[7], 5);
     expect(InvalidParameter, status);
 
