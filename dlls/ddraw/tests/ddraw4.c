@@ -8650,6 +8650,11 @@ static void test_p8_blit(void)
     hr = IDirectDrawSurface4_Unlock(dst_p8, NULL);
     ok(SUCCEEDED(hr), "Failed to unlock destination surface, hr %#x.\n", hr);
 
+    fx.dwSize = sizeof(fx);
+    fx.dwFillColor = 0xdeadbeef;
+    hr = IDirectDrawSurface4_Blt(dst, NULL, NULL, NULL, DDBLT_WAIT | DDBLT_COLORFILL, &fx);
+    ok(SUCCEEDED(hr), "Failed to color fill %#x.\n", hr);
+
     hr = IDirectDrawSurface4_SetPalette(src, palette);
     ok(SUCCEEDED(hr), "Failed to set palette, hr %#x.\n", hr);
     hr = IDirectDrawSurface4_Blt(dst, NULL, src, NULL, DDBLT_WAIT, NULL);
@@ -8663,14 +8668,15 @@ static void test_p8_blit(void)
         for (x = 0; x < ARRAY_SIZE(expected); x++)
         {
             color = get_surface_color(dst, x, 0);
-            todo_wine ok(compare_color(color, expected[x], 0),
+            /* WARP on 1709 and newer write zeroes on non-colorkeyed P8 -> RGB blits. For ckey
+             * blits see below. */
+            todo_wine ok(compare_color(color, expected[x], 0)
+                    || broken(is_warp && compare_color(color, 0x00000000, 0)),
                     "Pixel %u: Got color %#x, expected %#x.\n",
                     x, color, expected[x]);
         }
     }
 
-    memset(&fx, 0, sizeof(fx));
-    fx.dwSize = sizeof(fx);
     fx.ddckSrcColorkey.dwColorSpaceHighValue = 0x2;
     fx.ddckSrcColorkey.dwColorSpaceLowValue = 0x2;
     hr = IDirectDrawSurface4_Blt(dst_p8, NULL, src, NULL, DDBLT_WAIT | DDBLT_KEYSRCOVERRIDE, &fx);
@@ -8679,7 +8685,7 @@ static void test_p8_blit(void)
     hr = IDirectDrawSurface4_Lock(dst_p8, NULL, &surface_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to lock destination surface, hr %#x.\n", hr);
     /* A color keyed P8 blit doesn't do anything on WARP - it just leaves the data in the destination
-     * surface untouched. P8 blits without color keys work. Error checking (DDBLT_KEYSRC without a key
+     * surface untouched. Error checking (DDBLT_KEYSRC without a key
      * for example) also works as expected.
      *
      * Using DDBLT_KEYSRC instead of DDBLT_KEYSRCOVERRIDE doesn't change this. Doing this blit with
