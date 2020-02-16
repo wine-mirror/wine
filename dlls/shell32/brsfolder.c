@@ -1109,6 +1109,8 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
         return BrsFolder_OnCreate( hWnd, (browse_info*) lParam );
 
     info = GetPropW( hWnd, szBrowseFolderInfo );
+    if (!info)
+        return FALSE;
 
     switch (msg)
     {
