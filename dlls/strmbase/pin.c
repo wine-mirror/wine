@@ -482,8 +482,10 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
         return VFW_E_NOT_STOPPED;
     }
 
+    /* We don't check the subtype here. The rationale (as given by the DirectX
+     * documentation) is that the format type is supposed to provide at least
+     * as much information as the subtype. */
     if (mt && !IsEqualGUID(&mt->majortype, &GUID_NULL)
-            && !IsEqualGUID(&mt->subtype, &GUID_NULL)
             && !IsEqualGUID(&mt->formattype, &GUID_NULL))
     {
         hr = pin->pFuncsTable->pfnAttemptConnection(pin, peer, mt);

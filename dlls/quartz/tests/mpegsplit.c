@@ -1435,12 +1435,7 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     req_mt.subtype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, source);
-        IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
-    }
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     req_mt.subtype = MEDIASUBTYPE_MPEG1AudioPayload;
 
     /* Connection with wildcards. */
