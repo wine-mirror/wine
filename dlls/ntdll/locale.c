@@ -269,6 +269,16 @@ static void canonical_order_string( WCHAR *str, unsigned int len )
 }
 
 
+#define HANGUL_SBASE  0xac00
+#define HANGUL_LBASE  0x1100
+#define HANGUL_VBASE  0x1161
+#define HANGUL_TBASE  0x11a7
+#define HANGUL_LCOUNT 19
+#define HANGUL_VCOUNT 21
+#define HANGUL_TCOUNT 28
+#define HANGUL_NCOUNT (HANGUL_VCOUNT * HANGUL_TCOUNT)
+#define HANGUL_SCOUNT (HANGUL_LCOUNT * HANGUL_NCOUNT)
+
 static NTSTATUS decompose_string( int compat, const WCHAR *src, int src_len, WCHAR *dst, int *dst_len )
 {
     const unsigned short *table = compat ? nfkd_table : nfd_table;
@@ -276,8 +286,19 @@ static NTSTATUS decompose_string( int compat, const WCHAR *src, int src_len, WCH
     unsigned int ch, len, decomp_len;
     const WCHAR *decomp;
 
-    for (src_pos = dst_pos = 0; src_pos < src_len; src_pos += len, dst_pos += decomp_len)
+    for (src_pos = dst_pos = 0; src_pos < src_len; src_pos += len)
     {
+        if (src[src_pos] >= HANGUL_SBASE && src[src_pos] < HANGUL_SBASE + HANGUL_SCOUNT)
+        {
+            unsigned short sindex = src[src_pos] - HANGUL_SBASE;
+            unsigned short tindex = sindex % HANGUL_TCOUNT;
+            if (dst_pos + 2 + !!tindex > *dst_len) break;
+            dst[dst_pos++] = HANGUL_LBASE + sindex / HANGUL_NCOUNT;
+            dst[dst_pos++] = HANGUL_VBASE + (sindex % HANGUL_NCOUNT) / HANGUL_TCOUNT;
+            if (tindex) dst[dst_pos++] = HANGUL_TBASE + tindex;
+            len = 1;
+            continue;
+        }
         if (!(len = get_utf16( src + src_pos, src_len - src_pos, &ch )) ||
             (ch >= 0xfdd0 && ch <= 0xfdef) || ((ch & 0xffff) >= 0xfffe))
         {
@@ -288,6 +309,7 @@ static NTSTATUS decompose_string( int compat, const WCHAR *src, int src_len, WCH
         if (dst_pos + decomp_len > *dst_len) break;
         if (decomp) memcpy( dst + dst_pos, decomp, decomp_len * sizeof(WCHAR) );
         else put_utf16( dst + dst_pos, ch );
+        dst_pos += decomp_len;
     }
 
     if (src_pos < src_len)
@@ -301,6 +323,28 @@ static NTSTATUS decompose_string( int compat, const WCHAR *src, int src_len, WCH
 }
 
 
+static unsigned int compose_hangul( unsigned int ch1, unsigned int ch2 )
+{
+    if (ch1 >= HANGUL_LBASE && ch1 < HANGUL_LBASE + HANGUL_LCOUNT)
+    {
+        int lindex = ch1 - HANGUL_LBASE;
+        int vindex = ch2 - HANGUL_VBASE;
+        if (vindex >= 0 && vindex < HANGUL_VCOUNT)
+            return HANGUL_SBASE + (lindex * HANGUL_VCOUNT + vindex) * HANGUL_TCOUNT;
+    }
+    if (ch1 >= HANGUL_SBASE && ch1 < HANGUL_SBASE + HANGUL_SCOUNT)
+    {
+        int sindex = ch1 - HANGUL_SBASE;
+        if (!(sindex % HANGUL_TCOUNT))
+        {
+            int tindex = ch2 - HANGUL_TBASE;
+            if (tindex > 0 && tindex < HANGUL_TCOUNT) return ch1 + tindex;
+        }
+    }
+    return 0;
+}
+
+
 static unsigned int compose_string( WCHAR *str, unsigned int srclen )
 {
     unsigned int i, ch, comp, len, start_ch = 0, last_starter = srclen;
@@ -311,7 +355,7 @@ static unsigned int compose_string( WCHAR *str, unsigned int srclen )
         if (!(len = get_utf16( str + i, srclen - i, &ch ))) return 0;
         class = get_combining_class( ch );
         if (last_starter == srclen || (prev_class && prev_class >= class) ||
-            !(comp = wine_compose( start_ch, ch )))
+            (!(comp = compose_hangul( start_ch, ch )) && !(comp = wine_compose( start_ch, ch ))))
         {
             if (!class)
             {
