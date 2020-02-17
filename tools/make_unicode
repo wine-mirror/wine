@@ -407,6 +407,7 @@ my @direction_table = ();
 my @decomp_table = ();
 my @combining_class_table = ();
 my @decomp_compat_table = ();
+my @comp_exclusions = ();
 my $default_char;
 my $default_wchar;
 
@@ -490,6 +491,7 @@ sub get_composition($$)
     return () unless defined $decomp_table[$ch];  # no decomposition
     my @ret = @{$decomp_table[$ch]};
     return () if @ret < 2;                        # singleton decomposition
+    return () if $comp_exclusions[$ch];           # composition exclusion
     return () if $combining_class_table[$ch];     # non-starter
     return () if $combining_class_table[$ret[0]]; # first char is non-starter
     return () if $compat && !defined $decomp_table[$ret[0]] &&
@@ -648,6 +650,23 @@ sub load_data()
         my $ch = $tolower_table[$i];
         $tolower_table[$i] = undef unless defined $toupper_table[$ch] && $toupper_table[$ch] == $i;
     }
+
+    # load the composition exclusions
+
+    my $EXCL = open_data_file( $UNIDATA, "CompositionExclusions.txt" );
+    while (<$EXCL>)
+    {
+        s/\#.*//;  # remove comments
+        if (/^([0-9a-fA-F]+)\.\.([0-9a-fA-F]+)\s*$/)
+        {
+            foreach my $i (hex $1 .. hex $2) { $comp_exclusions[$i] = 1; }
+        }
+        elsif (/^([0-9a-fA-F]+)\s*$/)
+        {
+            $comp_exclusions[hex $1] = 1;
+        }
+    }
+    close $EXCL;
 }
 
 
