@@ -2232,13 +2232,14 @@ static HRESULT WINAPI d3d9_device_SetLight(IDirect3DDevice9Ex *iface, DWORD inde
 static HRESULT WINAPI d3d9_device_GetLight(IDirect3DDevice9Ex *iface, DWORD index, D3DLIGHT9 *light)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    BOOL enabled;
     HRESULT hr;
 
     TRACE("iface %p, index %u, light %p.\n", iface, index, light);
 
     /* Note: D3DLIGHT9 is compatible with struct wined3d_light. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_light(device->wined3d_device, index, (struct wined3d_light *)light);
+    hr = wined3d_stateblock_get_light(device->state, index, (struct wined3d_light *)light, &enabled);
     wined3d_mutex_unlock();
 
     return hr;
@@ -2260,15 +2261,16 @@ static HRESULT WINAPI d3d9_device_LightEnable(IDirect3DDevice9Ex *iface, DWORD i
     return hr;
 }
 
-static HRESULT WINAPI d3d9_device_GetLightEnable(IDirect3DDevice9Ex *iface, DWORD index, BOOL *enable)
+static HRESULT WINAPI d3d9_device_GetLightEnable(IDirect3DDevice9Ex *iface, DWORD index, BOOL *enabled)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    struct wined3d_light light;
     HRESULT hr;
 
-    TRACE("iface %p, index %u, enable %p.\n", iface, index, enable);
+    TRACE("iface %p, index %u, enabled %p.\n", iface, index, enabled);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_light_enable(device->wined3d_device, index, enable);
+    hr = wined3d_stateblock_get_light(device->state, index, &light, enabled);
     wined3d_mutex_unlock();
 
     return hr;

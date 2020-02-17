@@ -2726,6 +2726,8 @@ void __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
 HRESULT __cdecl wined3d_stateblock_create(struct wined3d_device *device, const struct wined3d_stateblock *device_state,
         enum wined3d_stateblock_type type, struct wined3d_stateblock **stateblock);
 ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);
+HRESULT __cdecl wined3d_stateblock_get_light(const struct wined3d_stateblock *stateblock,
+        UINT light_idx, struct wined3d_light *light, BOOL *enabled);
 const struct wined3d_stateblock_state * __cdecl wined3d_stateblock_get_state(const struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_init_contained_states(struct wined3d_stateblock *stateblock);

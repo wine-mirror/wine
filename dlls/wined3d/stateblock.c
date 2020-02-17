@@ -1699,6 +1699,21 @@ const struct wined3d_stateblock_state * CDECL wined3d_stateblock_get_state(const
     return &stateblock->stateblock_state;
 }
 
+HRESULT CDECL wined3d_stateblock_get_light(const struct wined3d_stateblock *stateblock,
+        UINT light_idx, struct wined3d_light *light, BOOL *enabled)
+{
+    struct wined3d_light_info *light_info;
+
+    if (!(light_info = wined3d_light_state_get_light(&stateblock->light_state, light_idx)))
+    {
+        TRACE("Light %u is not defined.\n", light_idx);
+        return WINED3DERR_INVALIDCALL;
+    }
+    *light = light_info->OriginalParms;
+    *enabled = light_info->enabled ? 128 : 0;
+    return WINED3D_OK;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union
