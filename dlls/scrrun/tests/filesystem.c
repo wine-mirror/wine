@@ -46,7 +46,7 @@ static inline ULONG get_refcount(IUnknown *iface)
 
 static const WCHAR crlfW[] = {'\r','\n',0};
 static const char utf16bom[] = {0xff,0xfe,0};
-static const WCHAR testfileW[] = {'t','e','s','t','.','t','x','t',0};
+static const WCHAR testfileW[] = L"test.txt";
 
 #define GET_REFCOUNT(iface) \
     get_refcount((IUnknown*)iface)
@@ -134,11 +134,6 @@ static void _test_provideclassinfo(IDispatch *disp, const GUID *guid, int line)
 
 static void test_interfaces(void)
 {
-    static const WCHAR nonexistent_dirW[] = {
-        'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', 0};
-    static const WCHAR pathW[] = {'p','a','t','h',0};
-    static const WCHAR file_kernel32W[] = {
-        '\\', 'k', 'e', 'r', 'n', 'e', 'l', '3', '2', '.', 'd', 'l', 'l', 0};
     HRESULT hr;
     IDispatch *disp;
     IDispatchEx *dispex;
@@ -152,7 +147,7 @@ static void test_interfaces(void)
 
     GetSystemDirectoryW(windows_path, MAX_PATH);
     lstrcpyW(file_path, windows_path);
-    lstrcatW(file_path, file_kernel32W);
+    lstrcatW(file_path, L"\\kernel32.dll");
 
     test_provideclassinfo(disp, &CLSID_FileSystemObject);
 
@@ -170,7 +165,7 @@ static void test_interfaces(void)
     hr = IFileSystem3_FileExists(fs3, NULL, NULL);
     ok(hr == E_POINTER, "got 0x%08x, expected 0x%08x\n", hr, E_POINTER);
 
-    path = SysAllocString(pathW);
+    path = SysAllocString(L"path");
     b = VARIANT_TRUE;
     hr = IFileSystem3_FileExists(fs3, path, &b);
     ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
@@ -201,7 +196,7 @@ static void test_interfaces(void)
     ok(b == VARIANT_TRUE, "Folder doesn't exists\n");
     SysFreeString(path);
 
-    path = SysAllocString(nonexistent_dirW);
+    path = SysAllocString(L"c:\\Nonexistent");
     hr = IFileSystem3_FolderExists(fs3, path, &b);
     ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
     ok(b == VARIANT_FALSE, "Folder exists\n");
@@ -369,8 +364,6 @@ todo_wine {
 
 static void test_GetFileVersion(void)
 {
-    static const WCHAR k32W[] = {'\\','k','e','r','n','e','l','3','2','.','d','l','l',0};
-    static const WCHAR k33W[] = {'\\','k','e','r','n','e','l','3','3','.','d','l','l',0};
     WCHAR pathW[MAX_PATH], filenameW[MAX_PATH];
     BSTR path, version;
     HRESULT hr;
@@ -378,7 +371,7 @@ static void test_GetFileVersion(void)
     GetSystemDirectoryW(pathW, ARRAY_SIZE(pathW));
 
     lstrcpyW(filenameW, pathW);
-    lstrcatW(filenameW, k32W);
+    lstrcatW(filenameW, L"\\kernel32.dll");
 
     path = SysAllocString(filenameW);
     hr = IFileSystem3_GetFileVersion(fs3, path, &version);
@@ -388,7 +381,7 @@ static void test_GetFileVersion(void)
     SysFreeString(path);
 
     lstrcpyW(filenameW, pathW);
-    lstrcatW(filenameW, k33W);
+    lstrcatW(filenameW, L"\\kernel33.dll");
 
     path = SysAllocString(filenameW);
     version = (void*)0xdeadbeef;
@@ -406,29 +399,20 @@ static void test_GetFileVersion(void)
 
 static void test_GetParentFolderName(void)
 {
-    static const WCHAR path1[] = {'a',0};
-    static const WCHAR path2[] = {'a','/','a','/','a',0};
-    static const WCHAR path3[] = {'a','\\','a','\\','a',0};
-    static const WCHAR path4[] = {'a','/','a','/','/','\\','\\',0};
-    static const WCHAR path5[] = {'c',':','\\','\\','a',0};
-    static const WCHAR path6[] = {'a','c',':','\\','a',0};
-    static const WCHAR result2[] = {'a','/','a',0};
-    static const WCHAR result3[] = {'a','\\','a',0};
-    static const WCHAR result4[] = {'a',0};
-    static const WCHAR result5[] = {'c',':','\\',0};
-    static const WCHAR result6[] = {'a','c',':',0};
-
-    static const struct {
+    static const struct
+    {
         const WCHAR *path;
         const WCHAR *result;
-    } tests[] = {
-        {NULL, NULL},
-        {path1, NULL},
-        {path2, result2},
-        {path3, result3},
-        {path4, result4},
-        {path5, result5},
-        {path6, result6}
+    }
+    tests[] =
+    {
+        { NULL, NULL },
+        { L"a", NULL },
+        { L"a/a/a", L"a/a" },
+        { L"a\\a\\a", L"a\\a" },
+        { L"a/a//\\\\", L"a" },
+        { L"c:\\\\a", L"c:\\" },
+        { L"ac:\\a", L"ac:" }
     };
 
     BSTR path, result;
@@ -454,24 +438,18 @@ static void test_GetParentFolderName(void)
 
 static void test_GetFileName(void)
 {
-    static const WCHAR path1[] = {'a',0};
-    static const WCHAR path2[] = {'a','/','a','.','b',0};
-    static const WCHAR path3[] = {'a','\\',0};
-    static const WCHAR path4[] = {'c',':',0};
-    static const WCHAR path5[] = {'/','\\',0};
-    static const WCHAR result2[] = {'a','.','b',0};
-    static const WCHAR result3[] = {'a',0};
-
-    static const struct {
+    static const struct
+    {
         const WCHAR *path;
         const WCHAR *result;
-    } tests[] = {
-        {NULL, NULL},
-        {path1, path1},
-        {path2, result2},
-        {path3, result3},
-        {path4, NULL},
-        {path5, NULL}
+    } tests[] =
+    {
+        { NULL, NULL },
+        { L"a", L"a" },
+        { L"a/a.b", L"a.b" },
+        { L"a\\", L"a" },
+        { L"c:", NULL },
+        { L"/\\", NULL }
     };
 
     BSTR path, result;
@@ -497,27 +475,20 @@ static void test_GetFileName(void)
 
 static void test_GetBaseName(void)
 {
-    static const WCHAR path1[] = {'a',0};
-    static const WCHAR path2[] = {'a','/','a','.','b','.','c',0};
-    static const WCHAR path3[] = {'a','.','b','\\',0};
-    static const WCHAR path4[] = {'c',':',0};
-    static const WCHAR path5[] = {'/','\\',0};
-    static const WCHAR path6[] = {'.','a',0};
-    static const WCHAR result1[] = {'a',0};
-    static const WCHAR result2[] = {'a','.','b',0};
-    static const WCHAR result6[] = {0};
-
-    static const struct {
+    static const struct
+    {
         const WCHAR *path;
         const WCHAR *result;
-    } tests[] = {
-        {NULL, NULL},
-        {path1, result1},
-        {path2, result2},
-        {path3, result1},
-        {path4, NULL},
-        {path5, NULL},
-        {path6, result6}
+    }
+    tests[] =
+    {
+        { NULL, NULL},
+        { L"a", L"a" },
+        { L"a/a.b.c", L"a.b" },
+        { L"a.b\\", L"a" },
+        { L"c:", NULL },
+        { L"/\\", NULL },
+        { L".a", L"" }
     };
 
     BSTR path, result;
@@ -543,11 +514,10 @@ static void test_GetBaseName(void)
 
 static void test_GetAbsolutePathName(void)
 {
-    static const WCHAR dir1[] = {'t','e','s','t','_','d','i','r','1',0};
-    static const WCHAR dir2[] = {'t','e','s','t','_','d','i','r','2',0};
-    static const WCHAR dir_match1[] = {'t','e','s','t','_','d','i','r','*',0};
-    static const WCHAR dir_match2[] = {'t','e','s','t','_','d','i','*',0};
-    static const WCHAR cur_dir[] = {'.',0};
+    static const WCHAR dir1[] = L"test_dir1";
+    static const WCHAR dir2[] = L"test_dir2";
+    static const WCHAR dir_match1[] = L"test_dir*";
+    static const WCHAR dir_match2[] = L"test_di*";
 
     WIN32_FIND_DATAW fdata;
     HANDLE find;
@@ -560,7 +530,7 @@ static void test_GetAbsolutePathName(void)
 
     hr = IFileSystem3_GetAbsolutePathName(fs3, NULL, &result);
     ok(hr == S_OK, "GetAbsolutePathName returned %x, expected S_OK\n", hr);
-    GetFullPathNameW(cur_dir, MAX_PATH, buf, NULL);
+    GetFullPathNameW(L".", MAX_PATH, buf, NULL);
     ok(!lstrcmpiW(buf, result), "result = %s, expected %s\n", wine_dbgstr_w(result), wine_dbgstr_w(buf));
     SysFreeString(result);
 
@@ -614,7 +584,6 @@ static void test_GetAbsolutePathName(void)
 
 static void test_GetFile(void)
 {
-    static const WCHAR slW[] = {'\\',0};
     BSTR path, str;
     WCHAR pathW[MAX_PATH];
     FileAttribute fa;
@@ -712,7 +681,7 @@ static void test_GetFile(void)
     SysFreeString(path);
 
     /* try with directory */
-    lstrcatW(pathW, slW);
+    lstrcatW(pathW, L"\\");
     ret = CreateDirectoryW(pathW, NULL);
     ok(ret, "got %d, error %d\n", ret, GetLastError());
 
@@ -741,11 +710,9 @@ static inline void create_path(const WCHAR *folder, const WCHAR *name, WCHAR *re
 
 static void test_CopyFolder(void)
 {
-    static const WCHAR filesystem3_dir[] = {'f','i','l','e','s','y','s','t','e','m','3','_','t','e','s','t',0};
-    static const WCHAR s1[] = {'s','r','c','1',0};
-    static const WCHAR s[] = {'s','r','c','*',0};
-    static const WCHAR d[] = {'d','s','t',0};
-    static const WCHAR empty[] = {0};
+    static const WCHAR filesystem3_dir[] = L"filesystem3_test";
+    static const WCHAR src1W[] = L"src1";
+    static const WCHAR dstW[] = L"dst";
 
     WCHAR tmp[MAX_PATH];
     BSTR bsrc, bdst;
@@ -756,9 +723,9 @@ static void test_CopyFolder(void)
         return;
     }
 
-    create_path(filesystem3_dir, s1, tmp);
+    create_path(filesystem3_dir, src1W, tmp);
     bsrc = SysAllocString(tmp);
-    create_path(filesystem3_dir, d, tmp);
+    create_path(filesystem3_dir, dstW, tmp);
     bdst = SysAllocString(tmp);
     hr = IFileSystem3_CopyFile(fs3, bsrc, bdst, VARIANT_TRUE);
     ok(hr == CTL_E_FILENOTFOUND, "CopyFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
@@ -791,32 +758,31 @@ static void test_CopyFolder(void)
 
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
     ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
-    create_path(tmp, s1, tmp);
+    create_path(tmp, src1W, tmp);
     ok(GetFileAttributesW(tmp) == INVALID_FILE_ATTRIBUTES,
             "%s file exists\n", wine_dbgstr_w(tmp));
 
-    create_path(filesystem3_dir, d, tmp);
-    create_path(tmp, empty, tmp);
+    create_path(filesystem3_dir, dstW, tmp);
+    create_path(tmp, L"", tmp);
     SysFreeString(bdst);
     bdst = SysAllocString(tmp);
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
     ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
-    create_path(tmp, s1, tmp);
+    create_path(tmp, src1W, tmp);
     ok(GetFileAttributesW(tmp) != INVALID_FILE_ATTRIBUTES,
             "%s directory doesn't exist\n", wine_dbgstr_w(tmp));
     ok(RemoveDirectoryW(tmp), "can't remove %s directory\n", wine_dbgstr_w(tmp));
-    create_path(filesystem3_dir, d, tmp);
+    create_path(filesystem3_dir, dstW, tmp);
     SysFreeString(bdst);
     bdst = SysAllocString(tmp);
 
-
-    create_path(filesystem3_dir, s, tmp);
+    create_path(filesystem3_dir, L"src*", tmp);
     SysFreeString(bsrc);
     bsrc = SysAllocString(tmp);
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
     ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
-    create_path(filesystem3_dir, d, tmp);
-    create_path(tmp, s1, tmp);
+    create_path(filesystem3_dir, dstW, tmp);
+    create_path(tmp, src1W, tmp);
     ok(GetFileAttributesW(tmp) != INVALID_FILE_ATTRIBUTES,
             "%s directory doesn't exist\n", wine_dbgstr_w(tmp));
 
@@ -826,10 +792,10 @@ static void test_CopyFolder(void)
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_TRUE);
     ok(hr == CTL_E_PATHNOTFOUND, "CopyFolder returned %x, expected CTL_E_PATHNOTFOUND\n", hr);
 
-    create_path(filesystem3_dir, s1, tmp);
+    create_path(filesystem3_dir, src1W, tmp);
     SysFreeString(bsrc);
     bsrc = SysAllocString(tmp);
-    create_path(tmp, s1, tmp);
+    create_path(tmp, src1W, tmp);
     ok(create_file(tmp), "can't create %s file\n", wine_dbgstr_w(tmp));
     hr = IFileSystem3_CopyFolder(fs3, bsrc, bdst, VARIANT_FALSE);
     ok(hr == S_OK, "CopyFolder returned %x, expected S_OK\n", hr);
@@ -938,7 +904,6 @@ static void test_BuildPath(void)
 
 static void test_GetFolder(void)
 {
-    static const WCHAR dummyW[] = {'d','u','m','m','y',0};
     WCHAR buffW[MAX_PATH];
     IFolder *folder;
     HRESULT hr;
@@ -953,7 +918,7 @@ static void test_GetFolder(void)
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
     /* something that doesn't exist */
-    str = SysAllocString(dummyW);
+    str = SysAllocString(L"dummy");
 
     hr = IFileSystem3_GetFolder(fs3, str, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
@@ -1031,10 +996,9 @@ static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, LONG cou
 /* Please keep the tests for IFolderCollection and IFileCollection in sync */
 static void test_FolderCollection(void)
 {
-    static const WCHAR fooW[] = {'f','o','o',0};
-    static const WCHAR aW[] = {'\\','a',0};
-    static const WCHAR bW[] = {'\\','b',0};
-    static const WCHAR cW[] = {'\\','c',0};
+    static const WCHAR aW[] = L"\\a";
+    static const WCHAR bW[] = L"\\b";
+    static const WCHAR cW[] = L"\\c";
     IFolderCollection *folders;
     WCHAR buffW[MAX_PATH], pathW[MAX_PATH];
     IEnumVARIANT *enumvar;
@@ -1047,7 +1011,7 @@ static void test_FolderCollection(void)
     BSTR str;
     int found_a = 0, found_b = 0, found_c = 0;
 
-    get_temp_path(fooW, buffW);
+    get_temp_path(L"foo", buffW);
     CreateDirectoryW(buffW, NULL);
 
     str = SysAllocString(buffW);
@@ -1205,10 +1169,9 @@ static void test_FolderCollection(void)
 /* Please keep the tests for IFolderCollection and IFileCollection in sync */
 static void test_FileCollection(void)
 {
-    static const WCHAR fooW[] = {'\\','f','o','o',0};
-    static const WCHAR aW[] = {'\\','a',0};
-    static const WCHAR bW[] = {'\\','b',0};
-    static const WCHAR cW[] = {'\\','c',0};
+    static const WCHAR aW[] = L"\\a";
+    static const WCHAR bW[] = L"\\b";
+    static const WCHAR cW[] = L"\\c";
     WCHAR buffW[MAX_PATH], pathW[MAX_PATH];
     IFolder *folder;
     IFileCollection *files;
@@ -1223,7 +1186,7 @@ static void test_FileCollection(void)
     HANDLE file_a, file_b, file_c;
     int found_a = 0, found_b = 0, found_c = 0;
 
-    get_temp_path(fooW, buffW);
+    get_temp_path(L"\\foo", buffW);
     CreateDirectoryW(buffW, NULL);
 
     str = SysAllocString(buffW);
@@ -1492,10 +1455,8 @@ static void test_DriveCollection(void)
 
 static void get_temp_filepath(const WCHAR *filename, WCHAR *path, WCHAR *dir)
 {
-    static const WCHAR scrrunW[] = {'s','c','r','r','u','n','\\',0};
-
     GetTempPathW(MAX_PATH, path);
-    lstrcatW(path, scrrunW);
+    lstrcatW(path, L"scrrun\\");
     lstrcpyW(dir, path);
     lstrcatW(path, filename);
 }
@@ -1646,8 +1607,8 @@ static void test_WriteLine(void)
 
 static void test_ReadAll(void)
 {
-    static const WCHAR secondlineW[] = {'s','e','c','o','n','d',0};
-    static const WCHAR aW[] = {'A',0};
+    static const WCHAR secondlineW[] = L"second";
+    static const WCHAR aW[] = L"A";
     WCHAR pathW[MAX_PATH], dirW[MAX_PATH], buffW[500];
     ITextStream *stream;
     BSTR nameW;
@@ -1773,8 +1734,7 @@ static void test_ReadAll(void)
 
 static void test_Read(void)
 {
-    static const WCHAR secondlineW[] = {'s','e','c','o','n','d',0};
-    static const WCHAR aW[] = {'A',0};
+    static const WCHAR secondlineW[] = L"second";
     WCHAR pathW[MAX_PATH], dirW[MAX_PATH], buffW[500];
     ITextStream *stream;
     BSTR nameW;
@@ -2016,7 +1976,7 @@ static void test_Read(void)
     /* 1. one byte content, not enough for Unicode read */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    str = SysAllocString(aW);
+    str = SysAllocString(L"A");
     hr = ITextStream_Write(stream, str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     SysFreeString(str);
