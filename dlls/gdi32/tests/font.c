@@ -4951,9 +4951,9 @@ static void test_GetCharacterPlacement(void)
     result.nGlyphs = 20;
     size2 = GetCharacterPlacementA(hdc, "Wine Test", 0, 0, &result, 0);
     ok(!size2, "Expected GetCharacterPlacementA to fail\n");
-    todo_wine ok(result.nGlyphs == 20, "Unexpected number of glyphs %u\n", result.nGlyphs);
+    ok(result.nGlyphs == 20, "Unexpected number of glyphs %u\n", result.nGlyphs);
     ok(glyphs[0] == '!', "Unexpected first glyph %s\n", wine_dbgstr_wn(glyphs, 1));
-    todo_wine ok(pos[0] == -1, "Unexpected caret position %d\n", pos[0]);
+    ok(pos[0] == -1, "Unexpected caret position %d\n", pos[0]);
 
     size2 = GetCharacterPlacementA(hdc, "Wine Test", 9, 0, NULL, 0);
     ok(size2, "GetCharacterPlacementA failed!\n");

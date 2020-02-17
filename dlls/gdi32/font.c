@@ -3313,6 +3313,9 @@ GetCharacterPlacementW(
     TRACE("%s, %d, %d, 0x%08x\n",
           debugstr_wn(lpString, uCount), uCount, nMaxExtent, dwFlags);
 
+    if (!uCount)
+        return 0;
+
     if (!lpResults)
         return GetTextExtentPoint32W(hdc, lpString, uCount, &size) ? MAKELONG(size.cx, size.cy) : 0;
 
