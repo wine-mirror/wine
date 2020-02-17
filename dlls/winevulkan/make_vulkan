@@ -296,7 +296,7 @@ class VkDefine(object):
         # Perform minimal parsing for Vulkan constants, which we don't need, but are referenced
         # elsewhere in vk.xml.
         # - VK_API_VERSION is a messy, deprecated constant and we don't want generate code for it.
-        # - AHardwareBuffer/ANativeWindow are forard declarations for Android types, which leaked
+        # - AHardwareBuffer/ANativeWindow are forward declarations for Android types, which leaked
         #   into the define region.
         if name in ["VK_API_VERSION", "AHardwareBuffer", "ANativeWindow", "CAMetalLayer"]:
             return VkDefine(name, None)
@@ -2729,7 +2729,7 @@ class VkRegistry(object):
                   VkRegistry._require_type(member.type_info["data"])
 
     def _parse_extensions(self, root):
-        """ Parse extensions section and pull in any types and commands for this extensioin. """
+        """ Parse extensions section and pull in any types and commands for this extension. """
         extensions = []
         exts = root.findall("./extensions/extension")
         for ext in exts:
