@@ -490,6 +490,10 @@ sub get_composition($$)
     return () unless defined $decomp_table[$ch];  # no decomposition
     my @ret = @{$decomp_table[$ch]};
     return () if @ret < 2;                        # singleton decomposition
+    return () if $combining_class_table[$ch];     # non-starter
+    return () if $combining_class_table[$ret[0]]; # first char is non-starter
+    return () if $compat && !defined $decomp_table[$ret[0]] &&
+        defined $decomp_compat_table[$ret[0]];   # first char has compat decomposition
     return @ret;
 }
 
