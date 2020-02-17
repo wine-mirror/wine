@@ -1522,6 +1522,7 @@ enable_prntvpt
 enable_propsys
 enable_psapi
 enable_pstorec
+enable_qasf
 enable_qcap
 enable_qedit
 enable_qmgr
@@ -20842,6 +20843,8 @@ wine_fn_config_makefile dlls/psapi enable_psapi
 wine_fn_config_makefile dlls/psapi/tests enable_tests
 wine_fn_config_makefile dlls/pstorec enable_pstorec
 wine_fn_config_makefile dlls/pstorec/tests enable_tests
+wine_fn_config_makefile dlls/qasf enable_qasf
+wine_fn_config_makefile dlls/qasf/tests enable_tests
 wine_fn_config_makefile dlls/qcap enable_qcap
 wine_fn_config_makefile dlls/qcap/tests enable_tests
 wine_fn_config_makefile dlls/qedit enable_qedit

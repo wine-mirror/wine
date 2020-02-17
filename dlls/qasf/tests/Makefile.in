@@ -1,0 +1,5 @@
+TESTDLL   = qasf.dll
+IMPORTS   = dmoguids strmiids uuid ole32
+
+C_SRCS = \
+	dmowrapper.c
