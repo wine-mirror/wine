@@ -260,6 +260,7 @@ struct method_call call_lists[][30] =
 };
 
 static int droptarget_refs;
+static int test_reentrance;
 
 /* helper macros to make tests a bit leaner */
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
@@ -359,7 +360,34 @@ static HRESULT WINAPI DropSource_QueryContinueDrag(
     BOOL fEscapePressed,
     DWORD grfKeyState)
 {
-    return check_expect(DS_QueryContinueDrag, 0, NULL);
+    HRESULT hr = check_expect(DS_QueryContinueDrag, 0, NULL);
+    if (test_reentrance)
+    {
+        MSG msg;
+        BOOL r;
+        int num = 0;
+
+        HWND hwnd = GetCapture();
+        ok(hwnd != 0, "Expected capture window\n");
+
+        /* send some fake events that should be ignored */
+        r = PostMessageA(hwnd, WM_MOUSEMOVE, 0, 0);
+        r &= PostMessageA(hwnd, WM_LBUTTONDOWN, 0, 0);
+        r &= PostMessageA(hwnd, WM_LBUTTONUP, 0, 0);
+        r &= PostMessageA(hwnd, WM_KEYDOWN, VK_ESCAPE, 0);
+        ok(r, "Unable to post messages\n");
+
+        /* run the message loop for this thread */
+        while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+            num++;
+        }
+
+        ok(num >= 4, "Expected at least 4 messages but %d were processed\n", num);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI DropSource_GiveFeedback(
@@ -701,17 +729,20 @@ static void test_DoDragDrop(void)
     GetWindowRect(hwnd, &rect);
     ok(SetCursorPos(rect.left+50, rect.top+50), "SetCursorPos failed\n");
 
-    for (seq = 0; seq < ARRAY_SIZE(call_lists); seq++)
+    for (test_reentrance = 0; test_reentrance < 2; test_reentrance++)
     {
-        DWORD effect_in;
-        trace("%d\n", seq);
-        call_ptr = call_lists[seq];
-        effect_in = call_ptr->set_param;
-        call_ptr++;
+        for (seq = 0; seq < ARRAY_SIZE(call_lists); seq++)
+        {
+            DWORD effect_in;
+            trace("%d\n", seq);
+            call_ptr = call_lists[seq];
+            effect_in = call_ptr->set_param;
+            call_ptr++;
 
-        hr = DoDragDrop(&DataObject, &DropSource, effect_in, &effect);
-        check_expect(DoDragDrop_ret, hr, NULL);
-        check_expect(DoDragDrop_effect_out, effect, NULL);
+            hr = DoDragDrop(&DataObject, &DropSource, effect_in, &effect);
+            check_expect(DoDragDrop_ret, hr, NULL);
+            check_expect(DoDragDrop_effect_out, effect, NULL);
+        }
     }
 
     OleUninitialize();
