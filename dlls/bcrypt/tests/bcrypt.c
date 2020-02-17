@@ -1786,7 +1786,7 @@ static void test_RSA(void)
     BCRYPT_KEY_HANDLE key;
     BCRYPT_RSAKEY_BLOB *rsablob;
     UCHAR sig[64];
-    ULONG len, size;
+    ULONG len, size, schemes;
     NTSTATUS ret;
     BYTE *buf;
 
@@ -1796,6 +1796,12 @@ static void test_RSA(void)
         win_skip("Failed to open RSA provider: %08x, skipping test\n", ret);
         return;
     }
+
+    schemes = size = 0;
+    ret = pBCryptGetProperty(alg, L"PaddingSchemes", (UCHAR *)&schemes, sizeof(schemes), &size, 0);
+    ok(!ret, "got %08x\n", ret);
+    ok(schemes, "schemes not set\n");
+    ok(size == sizeof(schemes), "got %u\n", size);
 
     ret = pBCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, rsaPublicBlob, sizeof(rsaPublicBlob), 0);
     ok(!ret, "pBCryptImportKeyPair failed: %08x\n", ret);

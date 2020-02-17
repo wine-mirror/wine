@@ -528,6 +528,20 @@ static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS get_rsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+{
+    if (!strcmpW( prop, BCRYPT_PADDING_SCHEMES ))
+    {
+        *ret_size = sizeof(ULONG);
+        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
+        if (buf) *(ULONG *)buf = BCRYPT_SUPPORTED_PAD_PKCS1_SIG;
+        return STATUS_SUCCESS;
+    }
+
+    FIXME( "unsupported property %s\n", debugstr_w(prop) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     NTSTATUS status;
@@ -540,6 +554,9 @@ NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop, UCHAR
     {
     case ALG_ID_AES:
         return get_aes_property( alg->mode, prop, buf, size, ret_size );
+
+    case ALG_ID_RSA:
+        return get_rsa_property( alg->mode, prop, buf, size, ret_size );
 
     default:
         break;
