@@ -90,8 +90,7 @@ static HRESULT (WINAPI *pMFTUnregisterLocal)(IClassFactory *factory);
 static HRESULT (WINAPI *pMFTUnregisterLocalByCLSID)(CLSID clsid);
 static HRESULT (WINAPI *pMFAllocateWorkQueueEx)(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
 
-static const WCHAR mp4file[] = {'t','e','s','t','.','m','p','4',0};
-static const WCHAR fileschemeW[] = {'f','i','l','e',':','/','/',0};
+static const WCHAR fileschemeW[] = L"file://";
 
 static WCHAR *load_resource(const WCHAR *name)
 {
@@ -177,7 +176,7 @@ static BOOL check_clsid(CLSID *clsids, UINT32 count)
 
 static void test_register(void)
 {
-    static WCHAR name[] = {'W','i','n','e',' ','t','e','s','t',0};
+    WCHAR name[] = L"Wine test";
     MFT_REGISTER_TYPE_INFO input[] =
     {
         { DUMMY_CLSID, DUMMY_GUID1 }
@@ -433,7 +432,7 @@ static void test_source_resolver(void)
 
     IMFSourceResolver_Release(resolver2);
 
-    filename = load_resource(mp4file);
+    filename = load_resource(L"test.mp4");
 
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -862,7 +861,7 @@ static void check_attr_type(IMFAttributes *obj, const GUID *key, MF_ATTRIBUTE_TY
 
 static void test_attributes(void)
 {
-    static const WCHAR stringW[] = {'W','i','n','e',0};
+    static const WCHAR stringW[] = L"Wine";
     static const UINT8 blob[] = {0,1,2,3,4,5};
     IMFAttributes *attributes, *attributes1;
     UINT8 blob_value[256], *blob_buf = NULL;
@@ -1473,6 +1472,7 @@ static void test_MFCreateMFByteStreamOnStream(void)
 
 static void test_file_stream(void)
 {
+    static const WCHAR newfilename[] = L"new.mp4";
     IMFByteStream *bytestream, *bytestream2;
     QWORD bytestream_length, position;
     IMFAttributes *attributes = NULL;
@@ -1485,9 +1485,7 @@ static void test_file_stream(void)
     WCHAR *str;
     BOOL eos;
 
-    static const WCHAR newfilename[] = {'n','e','w','.','m','p','4',0};
-
-    filename = load_resource(mp4file);
+    filename = load_resource(L"test.mp4");
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -3231,7 +3229,6 @@ static void test_MFCompareFullToPartialMediaType(void)
 
 static void test_attributes_serialization(void)
 {
-    static const WCHAR textW[] = {'T','e','x','t',0};
     static const UINT8 blob[] = {1,2,3};
     IMFAttributes *attributes, *dest;
     UINT32 size, count, value32;
@@ -3283,7 +3280,7 @@ static void test_attributes_serialization(void)
     IMFAttributes_SetDouble(attributes, &IID_IUnknown, 0.5);
     IMFAttributes_SetUnknown(attributes, &IID_IMFAttributes, (IUnknown *)attributes);
     IMFAttributes_SetGUID(attributes, &GUID_NULL, &IID_IUnknown);
-    IMFAttributes_SetString(attributes, &DUMMY_CLSID, textW);
+    IMFAttributes_SetString(attributes, &DUMMY_CLSID, L"Text");
     IMFAttributes_SetBlob(attributes, &DUMMY_GUID1, blob, sizeof(blob));
 
     hr = MFGetAttributesAsBlobSize(attributes, &size);
@@ -3313,7 +3310,7 @@ static void test_attributes_serialization(void)
     ok(IsEqualGUID(&guid, &IID_IUnknown), "Unexpected guid.\n");
     hr = IMFAttributes_GetAllocatedString(dest, &DUMMY_CLSID, &str, &size);
     ok(hr == S_OK, "Failed to get string value, hr %#x.\n", hr);
-    ok(!lstrcmpW(str, textW), "Unexpected string.\n");
+    ok(!lstrcmpW(str, L"Text"), "Unexpected string.\n");
     CoTaskMemFree(str);
     hr = IMFAttributes_GetAllocatedBlob(dest, &DUMMY_GUID1, &buffer, &size);
     ok(hr == S_OK, "Failed to get blob value, hr %#x.\n", hr);
@@ -3755,7 +3752,7 @@ static const IMFActivateVtbl activate_object_vtbl =
 static void test_local_handlers(void)
 {
     IMFActivate local_activate = { &activate_object_vtbl };
-    static const WCHAR localW[] = {'l','o','c','a','l',0};
+    static const WCHAR localW[] = L"local";
     HRESULT hr;
 
     if (!pMFRegisterLocalSchemeHandler)
