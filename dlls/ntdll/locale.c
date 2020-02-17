@@ -155,14 +155,14 @@ static WCHAR casemap_ascii( WCHAR ch )
 }
 
 
-static const WCHAR *get_decomposition( const unsigned short *table, WCHAR ch, unsigned int *len )
+static const WCHAR *get_decomposition( const unsigned short *table, unsigned int ch, unsigned int *len )
 {
     unsigned short offset = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
     unsigned short start = table[offset];
     unsigned short end = table[offset + 1];
 
     if ((*len = end - start)) return table + start;
-    *len = 1;
+    *len = 1 + (ch >= 0x10000);
     return NULL;
 }
 
@@ -174,13 +174,13 @@ static BYTE get_combining_class( unsigned int c )
 }
 
 
-static BOOL is_starter( WCHAR c )
+static BOOL is_starter( unsigned int c )
 {
     return !get_combining_class( c );
 }
 
 
-static BOOL reorderable_pair( WCHAR c1, WCHAR c2 )
+static BOOL reorderable_pair( unsigned int c1, unsigned int c2 )
 {
     BYTE ccc1, ccc2;
 
@@ -191,23 +191,52 @@ static BOOL reorderable_pair( WCHAR c1, WCHAR c2 )
     return ccc2 && (ccc1 > ccc2);
 }
 
+static int get_utf16( const WCHAR *src, unsigned int srclen, unsigned int *ch )
+{
+    if (IS_HIGH_SURROGATE( src[0] ))
+    {
+        if (srclen <= 1) return 0;
+        if (!IS_LOW_SURROGATE( src[1] )) return 0;
+        *ch = 0x10000 + ((src[0] & 0x3ff) << 10) + (src[1] & 0x3ff);
+        return 2;
+    }
+    if (IS_LOW_SURROGATE( src[0] )) return 0;
+    *ch = src[0];
+    return 1;
+}
+
+static void put_utf16( WCHAR *dst, unsigned int ch )
+{
+    if (ch >= 0x10000)
+    {
+        ch -= 0x10000;
+        dst[0] = 0xd800 | (ch >> 10);
+        dst[1] = 0xdc00 | (ch & 0x3ff);
+    }
+    else dst[0] = ch;
+}
 
 static void canonical_order_substring( WCHAR *str, unsigned int len )
 {
-    unsigned int i;
+    unsigned int i, ch1, ch2, len1, len2;
     BOOL swapped;
 
     do
     {
         swapped = FALSE;
-        for (i = 0; i < len - 1; i++)
+        for (i = 0; i < len - 1; i += len1)
         {
-            if (reorderable_pair( str[i], str[i + 1] ))
+            if (!(len1 = get_utf16( str + i, len - i, &ch1 ))) break;
+            if (i + len1 >= len) break;
+            if (!(len2 = get_utf16( str + i + len1, len - i - len1, &ch2 ))) break;
+            if (reorderable_pair( ch1, ch2 ))
             {
-                WCHAR tmp = str[i];
-                str[i] = str[i + 1];
-                str[i + 1] = tmp;
+                WCHAR tmp[2];
+                memcpy( tmp, str + i, len1 * sizeof(WCHAR) );
+                memcpy( str + i, str + i + len1, len2 * sizeof(WCHAR) );
+                memcpy( str + i + len2, tmp, len1 * sizeof(WCHAR) );
                 swapped = TRUE;
+                i += len2 - len1;
             }
         }
     } while (swapped);
@@ -224,38 +253,43 @@ static void canonical_order_substring( WCHAR *str, unsigned int len )
  */
 static void canonical_order_string( WCHAR *str, unsigned int len )
 {
-    unsigned int i, next = 0;
+    unsigned int ch, i, r, next = 0;
 
-    for (i = 1; i <= len; i++)
+    for (i = 0; i < len; i += r)
     {
-        if (i == len || is_starter( str[i] ))
+        if (!(r = get_utf16( str + i, len - i, &ch ))) return;
+        if (i && is_starter( ch ))
         {
             if (i > next + 1) /* at least two successive non-starters */
                 canonical_order_substring( str + next, i - next );
-            next = i + 1;
+            next = i + r;
         }
     }
+    if (i > next + 1) canonical_order_substring( str + next, i - next );
 }
 
 
 static NTSTATUS decompose_string( int compat, const WCHAR *src, int src_len, WCHAR *dst, int *dst_len )
 {
     const unsigned short *table = compat ? nfkd_table : nfd_table;
-    int src_pos, dst_pos = 0;
-    unsigned int decomp_len;
+    int src_pos, dst_pos;
+    unsigned int ch, len, decomp_len;
     const WCHAR *decomp;
 
-    for (src_pos = 0; src_pos < src_len; src_pos++)
+    for (src_pos = dst_pos = 0; src_pos < src_len; src_pos += len, dst_pos += decomp_len)
     {
-        if (dst_pos == *dst_len) break;
-        if ((decomp = get_decomposition( table, src[src_pos], &decomp_len )))
+        if (!(len = get_utf16( src + src_pos, src_len - src_pos, &ch )) ||
+            (ch >= 0xfdd0 && ch <= 0xfdef) || ((ch & 0xffff) >= 0xfffe))
         {
-            if (dst_pos + decomp_len > *dst_len) break;
-            memcpy( dst + dst_pos, decomp, decomp_len * sizeof(WCHAR) );
+            *dst_len = src_pos + IS_HIGH_SURROGATE( src[src_pos] );
+            return STATUS_NO_UNICODE_TRANSLATION;
         }
-        else dst[dst_pos] = src[src_pos];
-        dst_pos += decomp_len;
+        decomp = get_decomposition( table, ch, &decomp_len );
+        if (dst_pos + decomp_len > *dst_len) break;
+        if (decomp) memcpy( dst + dst_pos, decomp, decomp_len * sizeof(WCHAR) );
+        else put_utf16( dst + dst_pos, ch );
     }
+
     if (src_pos < src_len)
     {
         *dst_len += (src_len - src_pos) * (compat ? 18 : 3);
@@ -1554,21 +1588,6 @@ NTSTATUS WINAPI RtlUTF8ToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen, cons
 }
 
 
-/* get the next char value taking surrogates into account */
-static inline unsigned int get_surrogate_value( const WCHAR *src, unsigned int srclen )
-{
-    if (src[0] >= 0xd800 && src[0] <= 0xdfff)  /* surrogate pair */
-    {
-        if (src[0] > 0xdbff || /* invalid high surrogate */
-            srclen <= 1 ||     /* missing low surrogate */
-            src[1] < 0xdc00 || src[1] > 0xdfff) /* invalid low surrogate */
-            return 0;
-        return 0x10000 + ((src[0] & 0x3ff) << 10) + (src[1] & 0x3ff);
-    }
-    return src[0];
-}
-
-
 /**************************************************************************
  *	RtlUnicodeToUTF8N   (NTDLL.@)
  */
@@ -1592,7 +1611,7 @@ NTSTATUS WINAPI RtlUnicodeToUTF8N( char *dst, DWORD dstlen, DWORD *reslen, const
             else if (*src < 0x800) len += 2;  /* 0x80-0x7ff: 2 bytes */
             else
             {
-                if (!(val = get_surrogate_value( src, srclen )))
+                if (!get_utf16( src, srclen, &val ))
                 {
                     val = 0xfffd;
                     status = STATUS_SOME_NOT_MAPPED;
@@ -1629,7 +1648,7 @@ NTSTATUS WINAPI RtlUnicodeToUTF8N( char *dst, DWORD dstlen, DWORD *reslen, const
             dst += 2;
             continue;
         }
-        if (!(val = get_surrogate_value( src, srclen )))
+        if (!get_utf16( src, srclen, &val ))
         {
             val = 0xfffd;
             status = STATUS_SOME_NOT_MAPPED;

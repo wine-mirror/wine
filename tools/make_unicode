@@ -480,7 +480,7 @@ sub build_decompositions(@)
     my @src = @_;
     my @dst;
 
-    for (my $i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i < @src; $i++)
     {
         next unless defined $src[$i];
         my @decomp = get_decomposition( $i, \@src );
@@ -2092,10 +2092,13 @@ sub dump_decompositions($@)
 
     # first determine all the 16-char subsets that contain something
 
-    my @filled = (0) x 4096;
+    my $level1 = ($MAX_CHAR + 1) / 16;
+    my $level2 = $level1 / 16;
+
+    my @filled = (0) x $level1;
     my $pos = 16;  # for the null subset
     my $data_total = 0;
-    for (my $i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i <= $MAX_CHAR; $i++)
     {
         next unless defined $decomp[$i];
         if ($filled[$i >> 4] == 0)
@@ -2109,9 +2112,9 @@ sub dump_decompositions($@)
 
     # now count the 256-char subsets that contain something
 
-    my @filled_idx = (256) x 256;
-    $pos = 256 + 16;
-    for (my $i = 0; $i < 4096; $i++)
+    my @filled_idx = ($level2) x $level2;
+    $pos = $level2 + 16;
+    for (my $i = 0; $i < $level1; $i++)
     {
         next unless $filled[$i];
         $filled_idx[$i >> 4] = $pos;
@@ -2123,7 +2126,7 @@ sub dump_decompositions($@)
 
     # add the index offsets to the subsets positions
 
-    for (my $i = 0; $i < 4096; $i++)
+    for (my $i = 0; $i < $level1; $i++)
     {
         next unless $filled[$i];
         $filled[$i] += $null_offset;
@@ -2138,9 +2141,9 @@ sub dump_decompositions($@)
 
     # dump the second-level indexes
 
-    for (my $i = 0; $i < 256; $i++)
+    for (my $i = 0; $i < $level2; $i++)
     {
-        next unless ($filled_idx[$i] > 256);
+        next unless ($filled_idx[$i] > $level2);
         my @table = @filled[($i<<4)..($i<<4)+15];
         for (my $j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
         printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
@@ -2155,7 +2158,7 @@ sub dump_decompositions($@)
     $pos = $total;
 
     my @data;
-    for (my $i = 0; $i < 4096; $i++)
+    for (my $i = 0; $i < $level1; $i++)
     {
         next unless $filled[$i];
         my @table = (0) x (16);
