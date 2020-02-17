@@ -2,8 +2,6 @@ STATICLIB = libwine_port.a
 
 C_SRCS = \
 	casemap.c \
-	compose.c \
-	decompose.c \
 	ffs.c \
 	fstatvfs.c \
 	getopt.c \

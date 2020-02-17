@@ -2,6 +2,10 @@
 /* generated from http://www.unicode.org/Public/12.1.0/ucd/UCD.zip:UnicodeData.txt */
 /* DO NOT EDIT!! */
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "windef.h"
 
 const WCHAR DECLSPEC_HIDDEN nfd_table[6075] =
@@ -959,3 +963,5 @@ const WCHAR DECLSPEC_HIDDEN nfd_table[6075] =
     0x05ea, 0x05bc, 0x05d5, 0x05b9, 0x05d1, 0x05bf, 0x05db, 0x05bf,
     0x05e4, 0x05bf
 };
+
+#endif /* __ASM_OBSOLETE */

@@ -2,6 +2,10 @@
 /* generated from http://www.unicode.org/Public/12.1.0/ucd/UCD.zip:UnicodeData.txt */
 /* DO NOT EDIT!! */
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "windef.h"
 
 static const WCHAR table[0x85e] =
@@ -403,3 +407,5 @@ WCHAR DECLSPEC_HIDDEN wine_compose( const WCHAR *str )
         count = table[2 * pos + 3];
     }
 }
+
+#endif /* __ASM_OBSOLETE */

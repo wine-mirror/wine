@@ -67,10 +67,12 @@ C_SRCS = \
 	c_949.c \
 	c_950.c \
 	collation.c \
+	compose.c \
 	config.c \
 	cpsymbol.c \
 	cptable.c \
 	debug.c \
+	decompose.c \
 	digitmap.c \
 	fold.c \
 	ldt.c \
