@@ -4926,6 +4926,7 @@ static void test_GetCharacterPlacement(void)
     GCP_RESULTSA result;
     DWORD size, size2;
     WCHAR glyphs[20];
+    int pos[20];
     HDC hdc;
 
     hdc = CreateCompatibleDC(0);
@@ -4933,11 +4934,26 @@ static void test_GetCharacterPlacement(void)
 
     memset(&result, 0, sizeof(result));
     result.lStructSize = sizeof(result);
+    result.lpCaretPos = pos;
     result.lpGlyphs = glyphs;
     result.nGlyphs  = 20;
 
+    pos[0] = -1;
+    glyphs[0] = '!';
     size = GetCharacterPlacementA(hdc, "Wine Test", 9, 0, &result, 0);
     ok(size, "GetCharacterPlacementA failed!\n");
+    ok(result.nGlyphs == 9, "Unexpected number of glyphs %u\n", result.nGlyphs);
+    ok(glyphs[0] == 'W', "Unexpected first glyph %s\n", wine_dbgstr_wn(glyphs, 1));
+    ok(pos[0] == 0, "Unexpected caret position %d\n", pos[0]);
+
+    pos[0] = -1;
+    glyphs[0] = '!';
+    result.nGlyphs = 20;
+    size2 = GetCharacterPlacementA(hdc, "Wine Test", 0, 0, &result, 0);
+    ok(!size2, "Expected GetCharacterPlacementA to fail\n");
+    todo_wine ok(result.nGlyphs == 20, "Unexpected number of glyphs %u\n", result.nGlyphs);
+    ok(glyphs[0] == '!', "Unexpected first glyph %s\n", wine_dbgstr_wn(glyphs, 1));
+    todo_wine ok(pos[0] == -1, "Unexpected caret position %d\n", pos[0]);
 
     size2 = GetCharacterPlacementA(hdc, "Wine Test", 9, 0, NULL, 0);
     ok(size2, "GetCharacterPlacementA failed!\n");
@@ -4947,9 +4963,15 @@ static void test_GetCharacterPlacement(void)
     ok(size2, "GetCharacterPlacementA failed!\n");
     ok(size == size2, "GetCharacterPlacementA returned different result: %u vs %u\n", size2, size);
 
+    pos[0] = -1;
+    glyphs[0] = '!';
+    result.nGlyphs = 20;
     size = GetCharacterPlacementA(hdc, "Wine Test", 9, 1024, &result, GCP_REORDER);
     ok(size, "GetCharacterPlacementA failed!\n");
     ok(size == size2, "GetCharacterPlacementA returned different result: %u vs %u\n", size2, size);
+    ok(result.nGlyphs == 9, "Unexpected number of glyphs %u\n", result.nGlyphs);
+    ok(glyphs[0] == 'W', "Unexpected first glyph %s\n", wine_dbgstr_wn(glyphs, 1));
+    todo_wine ok(pos[0] == 0, "Unexpected caret position %d\n", pos[0]);
 
     DeleteDC(hdc);
 }
