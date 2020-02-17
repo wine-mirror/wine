@@ -2020,7 +2020,7 @@ sub dump_compose_table($)
     # count how many different second chars we have
 
     my $count = 0;
-    for (my $i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i <= $MAX_CHAR; $i++)
     {
         next unless defined $filled[$i];
         $count++;
@@ -2030,7 +2030,7 @@ sub dump_compose_table($)
 
     my $pos = $count + 1;
     my @table = ();
-    for (my $i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i <= $MAX_CHAR; $i++)
     {
         next unless defined $filled[$i];
         push @table, $i, $pos;
@@ -2038,12 +2038,12 @@ sub dump_compose_table($)
     }
     # terminator with last position
     push @table, 0, $pos;
-    printf OUTPUT "static const WCHAR table[0x%x] =\n{\n", 2*$pos;
-    printf OUTPUT "    /* second chars + offsets */\n%s", dump_array( 16, 0, @table );
+    printf OUTPUT "static const unsigned int table[%u] =\n{\n", 2*$pos;
+    printf OUTPUT "    /* second chars + offsets */\n%s", dump_array( 20, 0, @table );
 
     # build the table of first chars and mappings
 
-    for (my $i = 0; $i < 65536; $i++)
+    for (my $i = 0; $i <= $MAX_CHAR; $i++)
     {
         next unless defined $filled[$i];
         my @table = ();
@@ -2052,11 +2052,11 @@ sub dump_compose_table($)
         {
             push @table, $list[$j][0], $list[$j][1];
         }
-        printf OUTPUT ",\n    /* 0x%04x */\n%s", $i, dump_array( 16, 0, @table );
+        printf OUTPUT ",\n    /* 0x%04x */\n%s", $i, dump_array( 20, 0, @table );
     }
     print OUTPUT "\n};\n\n";
     print OUTPUT <<"EOF";
-static inline int binary_search( WCHAR ch, int low, int high )
+static inline int binary_search( unsigned int ch, int low, int high )
 {
     while (low <= high)
     {
@@ -2068,16 +2068,13 @@ static inline int binary_search( WCHAR ch, int low, int high )
     return -1;
 }
 
-WCHAR DECLSPEC_HIDDEN wine_compose( const WCHAR *str )
+unsigned int DECLSPEC_HIDDEN wine_compose( unsigned int ch1, unsigned int ch2 )
 {
-    int pos, idx = 1, start = 0, count = $count;
-    for (;;)
-    {
-        if ((pos = binary_search( str[idx], start, count - 1 )) == -1) return 0;
-        if (!idx--) return table[2 * pos + 1];
-        start = table[2 * pos + 1];
-        count = table[2 * pos + 3];
-    }
+    int pos;
+
+    if ((pos = binary_search( ch2, 0, $count - 1 )) == -1) return 0;
+    if ((pos = binary_search( ch1, table[2 * pos + 1], table[2 * pos + 3] - 1 )) == -1) return 0;
+    return table[2 * pos + 1];
 }
 EOF
     close OUTPUT;

@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 #define CALINFO_MAX_YEAR 2029
 
 extern UINT CDECL __wine_get_unix_codepage(void);
-extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
+extern unsigned int wine_compose( unsigned int ch1, unsigned int ch2 ) DECLSPEC_HIDDEN;
 
 extern const unsigned short wctype_table[] DECLSPEC_HIDDEN;
 extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
@@ -1628,18 +1628,24 @@ static int wcstombs_dbcs( const CPTABLEINFO *info, const WCHAR *src, unsigned in
 }
 
 
-static inline int is_valid_sbcs_mapping( const CPTABLEINFO *info, DWORD flags,
-                                         WCHAR wch, unsigned char ch )
+static inline int is_valid_sbcs_mapping( const CPTABLEINFO *info, DWORD flags, unsigned int wch )
 {
-    if ((flags & WC_NO_BEST_FIT_CHARS) || ch == info->DefaultChar)
-        return (info->MultiByteTable[ch] == wch);
+    const unsigned char *table = info->WideCharTable;
+
+    if (wch >= 0x10000) return 0;
+    if ((flags & WC_NO_BEST_FIT_CHARS) || table[wch] == info->DefaultChar)
+        return (info->MultiByteTable[table[wch]] == wch);
     return 1;
 }
 
 
-static inline int is_valid_dbcs_mapping( const CPTABLEINFO *info, DWORD flags,
-                                         WCHAR wch, unsigned short ch )
+static inline int is_valid_dbcs_mapping( const CPTABLEINFO *info, DWORD flags, unsigned int wch )
 {
+    const unsigned short *table = info->WideCharTable;
+    unsigned short ch;
+
+    if (wch >= 0x10000) return 0;
+    ch = table[wch];
     if ((flags & WC_NO_BEST_FIT_CHARS) || ch == info->DefaultChar)
     {
         if (ch >> 8) return info->DBCSOffsets[info->DBCSOffsets[ch >> 8] + (ch & 0xff)] == wch;
@@ -1656,7 +1662,8 @@ static int wcstombs_sbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
     const char def = defchar ? *defchar : (char)info->DefaultChar;
     int i;
     BOOL tmp;
-    WCHAR wch, composed;
+    WCHAR wch;
+    unsigned int composed;
 
     if (!used) used = &tmp;  /* avoid checking on every char */
     *used = FALSE;
@@ -1666,10 +1673,10 @@ static int wcstombs_sbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
         for (i = 0; srclen; i++, src++, srclen--)
         {
             wch = *src;
-            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src )))
+            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src[0], src[1] )))
             {
                 /* now check if we can use the composed char */
-                if (is_valid_sbcs_mapping( info, flags, composed, table[composed] ))
+                if (is_valid_sbcs_mapping( info, flags, composed ))
                 {
                     /* we have a good mapping, use it */
                     src++;
@@ -1691,7 +1698,7 @@ static int wcstombs_sbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
                 }
                 /* WC_SEPCHARS is the default */
             }
-            if (!*used) *used = !is_valid_sbcs_mapping( info, flags, wch, table[wch] );
+            if (!*used) *used = !is_valid_sbcs_mapping( info, flags, wch );
         }
         return i;
     }
@@ -1699,13 +1706,13 @@ static int wcstombs_sbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
     for (i = dstlen; srclen && i; dst++, i--, src++, srclen--)
     {
         wch = *src;
-        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src )))
+        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src[0], src[1] )))
         {
             /* now check if we can use the composed char */
-            *dst = table[composed];
-            if (is_valid_sbcs_mapping( info, flags, composed, table[composed] ))
+            if (is_valid_sbcs_mapping( info, flags, composed ))
             {
                 /* we have a good mapping, use it */
+                *dst = table[composed];
                 src++;
                 srclen--;
                 continue;
@@ -1728,7 +1735,7 @@ static int wcstombs_sbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
         }
 
         *dst = table[wch];
-        if (!is_valid_sbcs_mapping( info, flags, wch, table[wch] ))
+        if (!is_valid_sbcs_mapping( info, flags, wch ))
         {
             *dst = def;
             *used = TRUE;
@@ -1747,7 +1754,8 @@ static int wcstombs_dbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
                                char *dst, unsigned int dstlen, const char *defchar, BOOL *used )
 {
     const USHORT *table = info->WideCharTable;
-    WCHAR wch, composed, defchar_value;
+    WCHAR wch, defchar_value;
+    unsigned int composed;
     unsigned short res;
     BOOL tmp;
     int i;
@@ -1768,13 +1776,13 @@ static int wcstombs_dbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
         for (i = 0; srclen; srclen--, src++, i++)
         {
             wch = *src;
-            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src )))
+            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src[0], src[1] )))
             {
                 /* now check if we can use the composed char */
-                res = table[composed];
-                if (is_valid_dbcs_mapping( info, flags, composed, res ))
+                if (is_valid_dbcs_mapping( info, flags, composed ))
                 {
                     /* we have a good mapping for the composed char, use it */
+                    res = table[composed];
                     if (res & 0xff00) i++;
                     src++;
                     srclen--;
@@ -1798,7 +1806,7 @@ static int wcstombs_dbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
             }
 
             res = table[wch];
-            if (!is_valid_dbcs_mapping( info, flags, wch, res ))
+            if (!is_valid_dbcs_mapping( info, flags, wch ))
             {
                 res = defchar_value;
                 *used = TRUE;
@@ -1812,14 +1820,13 @@ static int wcstombs_dbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
     for (i = dstlen; srclen && i; i--, srclen--, src++)
     {
         wch = *src;
-        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src )))
+        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src[0], src[1] )))
         {
             /* now check if we can use the composed char */
-            res = table[composed];
-
-            if (is_valid_dbcs_mapping( info, flags, composed, res ))
+            if (is_valid_dbcs_mapping( info, flags, composed ))
             {
                 /* we have a good mapping for the composed char, use it */
+                res = table[composed];
                 src++;
                 srclen--;
                 goto output_char;
@@ -1842,7 +1849,7 @@ static int wcstombs_dbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
         }
 
         res = table[wch];
-        if (!is_valid_dbcs_mapping( info, flags, wch, res ))
+        if (!is_valid_dbcs_mapping( info, flags, wch ))
         {
             res = defchar_value;
             *used = TRUE;

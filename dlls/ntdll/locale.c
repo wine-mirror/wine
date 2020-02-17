@@ -83,7 +83,7 @@ static NLSTABLEINFO nls_info;
 static HMODULE kernel32_handle;
 static CPTABLEINFO unix_table;
 
-extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
+extern unsigned int wine_compose( unsigned int ch1, unsigned int ch2 ) DECLSPEC_HIDDEN;
 extern const unsigned short combining_class_table[] DECLSPEC_HIDDEN;
 extern const unsigned short nfd_table[] DECLSPEC_HIDDEN;
 extern const unsigned short nfkd_table[] DECLSPEC_HIDDEN;
@@ -301,39 +301,43 @@ static NTSTATUS decompose_string( int compat, const WCHAR *src, int src_len, WCH
 }
 
 
-static BOOL is_blocked( WCHAR *starter, WCHAR *ptr )
+static unsigned int compose_string( WCHAR *str, unsigned int srclen )
 {
-    if (ptr == starter + 1) return FALSE;
-    /* Because the string is already canonically ordered, the chars are blocked
-       only if the previous char's combining class is equal to the test char. */
-    if (get_combining_class( *(ptr - 1) ) == get_combining_class( *ptr )) return TRUE;
-    return FALSE;
-}
+    unsigned int i, ch, comp, len, start_ch = 0, last_starter = srclen;
+    BYTE class, prev_class = 0;
 
-
-static unsigned int compose_string( WCHAR *str, unsigned int len )
-{
-    unsigned int i, last_starter = len;
-    WCHAR pair[2], comp;
-
-    for (i = 0; i < len; i++)
+    for (i = 0; i < srclen; i += len)
     {
-        pair[1] = str[i];
-        if (last_starter == len || is_blocked( str + last_starter, str + i ) || !(comp = wine_compose( pair )))
+        if (!(len = get_utf16( str + i, srclen - i, &ch ))) return 0;
+        class = get_combining_class( ch );
+        if (last_starter == srclen || (prev_class && prev_class >= class) ||
+            !(comp = wine_compose( start_ch, ch )))
         {
-            if (is_starter( str[i] ))
+            if (!class)
             {
                 last_starter = i;
-                pair[0] = str[i];
+                start_ch = ch;
             }
-            continue;
+            prev_class = class;
         }
-        str[last_starter] = pair[0] = comp;
-        len--;
-        memmove( str + i, str + i + 1, (len - i) * sizeof(WCHAR) );
-        i = last_starter;
+        else
+        {
+            int comp_len = 1 + (comp >= 0x10000);
+            int start_len = 1 + (start_ch >= 0x10000);
+
+            if (comp_len != start_len)
+                memmove( str + last_starter + comp_len, str + last_starter + start_len,
+                         (i - (last_starter + start_len)) * sizeof(WCHAR) );
+            memmove( str + i + comp_len - start_len, str + i + len, (srclen - i - len) * sizeof(WCHAR) );
+            srclen += comp_len - start_len - len;
+            start_ch = comp;
+            i = last_starter;
+            len = comp_len;
+            prev_class = 0;
+            put_utf16( str + i, comp );
+        }
     }
-    return len;
+    return srclen;
 }
 
 
