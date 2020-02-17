@@ -62,7 +62,7 @@ static void test_interfaces(void)
     IBaseFilter *filter = create_dmo_wrapper();
 
     check_interface(filter, &IID_IBaseFilter, TRUE);
-    todo_wine check_interface(filter, &IID_IDMOWrapperFilter, TRUE);
+    check_interface(filter, &IID_IDMOWrapperFilter, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
     check_interface(filter, &IID_IPersist, TRUE);
     todo_wine check_interface(filter, &IID_IPersistStream, TRUE);
