@@ -405,7 +405,6 @@ my @category_table = ();
 my @joining_table = ();
 my @direction_table = ();
 my @decomp_table = ();
-my @compose_table = ();
 my @combining_class_table = ();
 my @decomp_compat_table = ();
 my $default_char;
@@ -419,12 +418,22 @@ my %joining_forms =
    "medial" => []
 );
 
-sub get_utf16($)
+sub to_utf16(@)
 {
-    my $ch = shift;
-    return $ch if ($ch < 0x10000);
-    $ch -= 0x10000;
-    return ( 0xd800 | ($ch >> 10), 0xdc00 | ($ch & 0x3ff) );
+    my @ret;
+    foreach my $ch (@_)
+    {
+        if ($ch < 0x10000)
+        {
+            push @ret, $ch;
+        }
+        else
+        {
+            my $val = $ch - 0x10000;
+            push @ret, 0xd800 | ($val >> 10), 0xdc00 | ($val & 0x3ff);
+        }
+    }
+    return @ret;
 }
 
 ################################################################
@@ -465,11 +474,22 @@ sub get_decomposition($$)
     my ($char, $table) = @_;
     my @ret;
 
-    return get_utf16($char) unless defined ${$table}[$char];
-    foreach my $ch (@{${$table}[$char]})
+    return $char unless defined $table->[$char];
+    foreach my $ch (@{$table->[$char]})
     {
         push @ret, get_decomposition( $ch, $table );
     }
+    return @ret;
+}
+
+################################################################
+# get the composition that results in a given character
+sub get_composition($$)
+{
+    my ($ch, $compat) = @_;
+    return () unless defined $decomp_table[$ch];  # no decomposition
+    my @ret = @{$decomp_table[$ch]};
+    return () if @ret < 2;                        # singleton decomposition
     return @ret;
 }
 
@@ -483,7 +503,7 @@ sub build_decompositions(@)
     for (my $i = 0; $i < @src; $i++)
     {
         next unless defined $src[$i];
-        my @decomp = get_decomposition( $i, \@src );
+        my @decomp = to_utf16( get_decomposition( $i, \@src ));
         $dst[$i] = \@decomp;
     }
     return @dst;
@@ -588,7 +608,6 @@ sub load_data()
             if ($decomp =~ /^([0-9a-fA-F]+)\s+([0-9a-fA-F]+)$/)
             {
                 $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1, hex $2 ];
-                push @compose_table, [ hex $1, hex $2, $src ];
             }
             elsif ($decomp =~ /^([0-9a-fA-F]+)$/)
             {
@@ -2010,21 +2029,13 @@ sub dump_compose_table($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    my @filled = ();
-    foreach my $i (@compose_table)
-    {
-        my @comp = @$i;
-        push @{$filled[$comp[1]]}, [ $comp[0], $comp[2] ];
-    }
-
-    # count how many different second chars we have
-
-    my $count = 0;
+    my @filled;
     for (my $i = 0; $i <= $MAX_CHAR; $i++)
     {
-        next unless defined $filled[$i];
-        $count++;
+        my @comp = get_composition( $i, 0 );
+        push @{$filled[$comp[1]]}, [ $comp[0], $i ] if @comp;
     }
+    my $count = scalar grep defined, @filled;
 
     # build the table of second chars and offsets
 
@@ -2047,10 +2058,9 @@ sub dump_compose_table($)
     {
         next unless defined $filled[$i];
         my @table = ();
-        my @list = sort { $a->[0] <=> $b->[0] } @{$filled[$i]};
-        for (my $j = 0; $j <= $#list; $j++)
+        foreach my $map (sort { $a->[0] <=> $b->[0] } @{$filled[$i]})
         {
-            push @table, $list[$j][0], $list[$j][1];
+            push @table, $map->[0], $map->[1];
         }
         printf OUTPUT ",\n    /* 0x%04x */\n%s", $i, dump_array( 20, 0, @table );
     }
