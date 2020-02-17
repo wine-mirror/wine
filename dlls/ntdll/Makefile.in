@@ -11,6 +11,7 @@ C_SRCS = \
 	atom.c \
 	cdrom.c \
 	combclass.c \
+	compose.c \
 	critsection.c \
 	crypt.c \
 	debugbuffer.c \
