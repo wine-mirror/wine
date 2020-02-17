@@ -167,9 +167,10 @@ static const WCHAR *get_decomposition( const unsigned short *table, WCHAR ch, un
 }
 
 
-static BYTE get_combining_class( WCHAR c )
+static BYTE get_combining_class( unsigned int c )
 {
-    return combining_class_table[combining_class_table[combining_class_table[c >> 8] + ((c >> 4) & 0xf)] + (c & 0xf)];
+    const unsigned short *table = combining_class_table;
+    return table[table[table[table[c >> 12] + ((c >> 8) & 0xf)] + ((c >> 4) & 0xf)] + (c & 0xf)];
 }
 
 

@@ -38,6 +38,9 @@ my $STRINGPREP = "rfc3454.txt";
 # Default char for undefined mappings
 my $DEF_CHAR = ord '?';
 
+# Last valid Unicode character
+my $MAX_CHAR = 0x10ffff;
+
 my @allfiles =
 (
     "CodpageFiles/037.txt",
@@ -1671,6 +1674,31 @@ sub dump_two_level_mapping($$@)
 }
 
 ################################################################
+# dump a char -> value mapping table using three-level tables
+sub dump_three_level_mapping($$@)
+{
+    my $name = shift;
+    my $def = shift;
+    my $size = shift;
+    my $type = $size == 16 ? "unsigned short" : "unsigned int";
+    my $level3 = ($MAX_CHAR + 1) / 16;
+    my $level2 = $level3 / 16;
+    my $level1 = $level2 / 16;
+    my @array3 = compress_array( $level3, $def, @_[0..$MAX_CHAR] );
+    my @array2 = compress_array( $level2, 0, @array3[0..$level3-1] );
+    my @array1 = compress_array( $level1, 0, @array2[0..$level2-1] );
+
+    for (my $i = $level2; $i < @array2; $i++) { $array2[$i] += @array1 + @array2 - $level2 - $level3; }
+    for (my $i = $level1; $i < @array1; $i++) { $array1[$i] += @array1 - $level2; }
+
+    printf OUTPUT "const %s DECLSPEC_HIDDEN %s[%u] =\n{\n", $type, $name, @array1 + (@array2 - $level2) + (@array3 - $level3);
+    printf OUTPUT "    /* level 1 offsets */\n%s,\n", dump_array( $size, 0, @array1[0..$level1-1] );
+    printf OUTPUT "    /* level 2 offsets */\n%s,\n", dump_array( $size, 0, @array1[$level1..$#array1] );
+    printf OUTPUT "    /* level 3 offsets */\n%s,\n", dump_array( $size, 0, @array2[$level2..$#array2] );
+    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( $size, 0, @array3[$level3..$#array3] );
+}
+
+################################################################
 # dump a binary case mapping table in l_intl.nls format
 sub dump_binary_case_table(@)
 {
@@ -2187,7 +2215,7 @@ sub dump_combining_class($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_two_level_mapping( "combining_class_table", 0, 16, @combining_class_table );
+    dump_three_level_mapping( "combining_class_table", 0, 16, @combining_class_table );
     close OUTPUT;
     save_file($filename);
 }
