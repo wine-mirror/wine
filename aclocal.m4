@@ -162,10 +162,10 @@ AC_CACHE_CHECK([whether the cross-compiler supports $1], ac_var,
 [ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_cc=$CC
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $1"
+CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs $1"
 CC="$CROSSCC"
 ac_exeext=".exe"
-AC_LINK_IFELSE([AC_LANG_SOURCE([[int main(int argc, char **argv) { return 0; }]])],
+AC_LINK_IFELSE([AC_LANG_SOURCE([[void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }]])],
                [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
 CFLAGS=$ac_wine_try_cflags_saved
 CC=$ac_wine_try_cflags_saved_cc
