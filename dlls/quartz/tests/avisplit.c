@@ -1073,6 +1073,7 @@ static void test_connect_pin(void)
     {
         .majortype = MEDIATYPE_Stream,
         .subtype = MEDIASUBTYPE_Avi,
+        .formattype = FORMAT_None,
         .lSampleSize = 888,
     };
     IBaseFilter *filter = create_avi_splitter(), *reader;
@@ -1235,26 +1236,20 @@ static void test_connect_pin(void)
 
     req_mt.formattype = FORMAT_None;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, source);
-        IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
-    }
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
 
     req_mt.majortype = MEDIATYPE_Video;
     req_mt.subtype = MEDIASUBTYPE_I420;
     req_mt.formattype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-        ok(compare_media_types(&testsink.sink.pin.mt, source_mt), "Media types didn't match.\n");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, source_mt), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
 
     req_mt.subtype = MEDIASUBTYPE_RGB32;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
 
     req_mt.subtype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);

@@ -1398,7 +1398,7 @@ static void test_connect_pin(void)
     req_mt.formattype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.pin.pin.IPin_iface, &req_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(compare_media_types(&testsink.pin.pin.mt, source_mt), "Media types didn't match.\n");
+    ok(compare_media_types(&testsink.pin.pin.mt, source_mt), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.pin.pin.IPin_iface);
 

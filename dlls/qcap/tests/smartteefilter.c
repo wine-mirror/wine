@@ -2831,29 +2831,19 @@ static void test_source_connection(AM_MEDIA_TYPE req_mt, IFilterGraph2 *graph,
 
     req_mt.formattype = FORMAT_WaveFormatEx;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, source);
-        IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
-    }
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
 
     req_mt = sink_mt;
     req_mt.formattype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &req_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(compare_media_types(&testsink->sink.pin.mt, &sink_mt), "Media types didn't match.\n");
+    ok(compare_media_types(&testsink->sink.pin.mt, &sink_mt), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
 
     req_mt.subtype = MEDIASUBTYPE_RGB32;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, source);
-        IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
-    }
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
 
     req_mt.subtype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &req_mt);

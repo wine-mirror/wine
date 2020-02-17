@@ -437,6 +437,11 @@ static BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
             && !IsEqualGUID(&b->subtype, &GUID_NULL))
         return FALSE;
 
+    if (!IsEqualGUID(&a->formattype, &b->formattype)
+            && !IsEqualGUID(&a->formattype, &GUID_NULL)
+            && !IsEqualGUID(&b->formattype, &GUID_NULL))
+        return FALSE;
+
     return TRUE;
 }
 
@@ -477,7 +482,9 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
         return VFW_E_NOT_STOPPED;
     }
 
-    if (mt && !IsEqualGUID(&mt->majortype, &GUID_NULL) && !IsEqualGUID(&mt->subtype, &GUID_NULL))
+    if (mt && !IsEqualGUID(&mt->majortype, &GUID_NULL)
+            && !IsEqualGUID(&mt->subtype, &GUID_NULL)
+            && !IsEqualGUID(&mt->formattype, &GUID_NULL))
     {
         hr = pin->pFuncsTable->pfnAttemptConnection(pin, peer, mt);
         LeaveCriticalSection(&pin->pin.filter->csFilter);

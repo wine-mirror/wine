@@ -1206,9 +1206,6 @@ static void test_connect_pin(void)
     req_mt.formattype = FORMAT_None;
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
-    req_mt.formattype = GUID_NULL;
-    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
-    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     req_mt.formattype = FORMAT_VideoInfo;
 
     peer = (IPin *)0xdeadbeef;

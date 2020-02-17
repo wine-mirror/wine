@@ -1310,6 +1310,7 @@ static void test_connect_pin(void)
     {
         .majortype = MEDIATYPE_Stream,
         .subtype = MEDIASUBTYPE_MPEG1Audio,
+        .formattype = FORMAT_WaveFormatEx,
         .lSampleSize = 888,
     };
     IBaseFilter *filter = create_mpeg_splitter(), *reader;
@@ -1471,12 +1472,7 @@ static void test_connect_pin(void)
 
     req_mt.formattype = FORMAT_None;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, source);
-        IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
-    }
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
 
     req_mt.majortype = MEDIATYPE_Audio;
     req_mt.subtype = MEDIASUBTYPE_MPEG1AudioPayload;
@@ -1490,7 +1486,7 @@ static void test_connect_pin(void)
 
     req_mt.subtype = MEDIASUBTYPE_PCM;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
 
     req_mt.subtype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
