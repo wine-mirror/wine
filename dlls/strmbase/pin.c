@@ -422,24 +422,21 @@ static inline struct strmbase_source *impl_source_from_IPin( IPin *iface )
     return CONTAINING_RECORD(iface, struct strmbase_source, pin.IPin_iface);
 }
 
-static BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
+static BOOL compare_media_types(const AM_MEDIA_TYPE *req_mt, const AM_MEDIA_TYPE *pin_mt)
 {
-    if (!a)
+    if (!req_mt)
         return TRUE;
 
-    if (!IsEqualGUID(&a->majortype, &b->majortype)
-            && !IsEqualGUID(&a->majortype, &GUID_NULL)
-            && !IsEqualGUID(&b->majortype, &GUID_NULL))
+    if (!IsEqualGUID(&req_mt->majortype, &pin_mt->majortype)
+            && !IsEqualGUID(&req_mt->majortype, &GUID_NULL))
         return FALSE;
 
-    if (!IsEqualGUID(&a->subtype, &b->subtype)
-            && !IsEqualGUID(&a->subtype, &GUID_NULL)
-            && !IsEqualGUID(&b->subtype, &GUID_NULL))
+    if (!IsEqualGUID(&req_mt->subtype, &pin_mt->subtype)
+            && !IsEqualGUID(&req_mt->subtype, &GUID_NULL))
         return FALSE;
 
-    if (!IsEqualGUID(&a->formattype, &b->formattype)
-            && !IsEqualGUID(&a->formattype, &GUID_NULL)
-            && !IsEqualGUID(&b->formattype, &GUID_NULL))
+    if (!IsEqualGUID(&req_mt->formattype, &pin_mt->formattype)
+            && !IsEqualGUID(&req_mt->formattype, &GUID_NULL))
         return FALSE;
 
     return TRUE;
