@@ -26,6 +26,8 @@ struct dmo_wrapper
 {
     struct strmbase_filter filter;
     IDMOWrapperFilter IDMOWrapperFilter_iface;
+
+    IUnknown *dmo;
 };
 
 static inline struct dmo_wrapper *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -58,9 +60,23 @@ static ULONG WINAPI dmo_wrapper_filter_Release(IDMOWrapperFilter *iface)
 
 static HRESULT WINAPI dmo_wrapper_filter_Init(IDMOWrapperFilter *iface, REFCLSID clsid, REFCLSID category)
 {
-    FIXME("iface %p, clsid %s, category %s, stub!\n",
-            iface, wine_dbgstr_guid(clsid), wine_dbgstr_guid(category));
-    return E_NOTIMPL;
+    struct dmo_wrapper *filter = impl_from_IDMOWrapperFilter(iface);
+    IUnknown *unk;
+    HRESULT hr;
+
+    TRACE("filter %p, clsid %s, category %s.\n", filter, debugstr_guid(clsid), debugstr_guid(category));
+
+    if (FAILED(hr = CoCreateInstance(clsid, &filter->filter.IUnknown_inner,
+            CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk)))
+        return hr;
+
+    EnterCriticalSection(&filter->filter.csFilter);
+
+    filter->dmo = unk;
+
+    LeaveCriticalSection(&filter->filter.csFilter);
+
+    return S_OK;
 }
 
 static const IDMOWrapperFilterVtbl dmo_wrapper_filter_vtbl =
@@ -80,6 +96,8 @@ static void dmo_wrapper_destroy(struct strmbase_filter *iface)
 {
     struct dmo_wrapper *filter = impl_from_strmbase_filter(iface);
 
+    if (filter->dmo)
+        IUnknown_Release(filter->dmo);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
 }
@@ -95,6 +113,8 @@ static HRESULT dmo_wrapper_query_interface(struct strmbase_filter *iface, REFIID
         return S_OK;
     }
 
+    if (filter->dmo && !IsEqualGUID(iid, &IID_IUnknown))
+        return IUnknown_QueryInterface(filter->dmo, iid, out);
     return E_NOINTERFACE;
 }
 

@@ -1,5 +1,5 @@
 MODULE    = qasf.dll
-IMPORTS   = strmbase dmoguids strmiids uuid
+IMPORTS   = strmbase dmoguids strmiids uuid ole32
 
 EXTRADLLFLAGS = -mno-cygwin
 
