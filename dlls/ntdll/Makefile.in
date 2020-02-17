@@ -15,6 +15,7 @@ C_SRCS = \
 	crypt.c \
 	debugbuffer.c \
 	debugtools.c \
+	decompose.c \
 	directory.c \
 	env.c \
 	error.c \
