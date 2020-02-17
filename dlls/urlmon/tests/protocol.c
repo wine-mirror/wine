@@ -223,13 +223,6 @@ static LONG obj_refcount(void *obj)
     return IUnknown_Release((IUnknown *)obj);
 }
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
-}
-
 static const char *w2a(LPCWSTR str)
 {
     static char buf[INTERNET_MAX_URL_LENGTH];
@@ -859,7 +852,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
                    !memcmp(szStatusText, text_plain, lstrlenW(text_plain)*sizeof(WCHAR)),
                    "szStatusText != text/plain\n");
             else if(empty_file)
-                ok(!strcmp_wa(szStatusText, "application/javascript"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
+                ok(!lstrcmpW(szStatusText, L"application/javascript"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
             else if((pi & PI_MIMEVERIFICATION) && emulate_prot && !mimefilter_test
                     && tested_protocol==HTTP_TEST && !short_read)
                 ok(lstrlenW(gifW) <= lstrlenW(szStatusText) &&
@@ -915,7 +908,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         CHECK_EXPECT(ReportProgress_VERIFIEDMIMETYPEAVAILABLE);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText)
-            ok(!strcmp_wa(szStatusText, "text/html"), "szStatusText != text/html\n");
+            ok(!lstrcmpW(szStatusText, L"text/html"), "szStatusText != text/html\n");
         break;
     case BINDSTATUS_PROTOCOLCLASSID:
         CHECK_EXPECT(ReportProgress_PROTOCOLCLASSID);
@@ -929,13 +922,13 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     case BINDSTATUS_REDIRECTING:
         CHECK_EXPECT(ReportProgress_REDIRECTING);
         if(test_redirect)
-            ok(!strcmp_wa(szStatusText, "http://test.winehq.org/tests/hello.html"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
+            ok(!lstrcmpW(szStatusText, L"http://test.winehq.org/tests/hello.html"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         else
             ok(szStatusText == NULL, "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_ENCODING:
         CHECK_EXPECT(ReportProgress_ENCODING);
-        ok(!strcmp_wa(szStatusText, "gzip"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
+        ok(!lstrcmpW(szStatusText, L"gzip"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_ACCEPTRANGES:
         CHECK_EXPECT(ReportProgress_ACCEPTRANGES);
@@ -1200,7 +1193,7 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
            "dwError == ERROR_SUCCESS\n");
 
     if(hrResult == INET_E_REDIRECT_FAILED)
-        ok(!strcmp_wa(szResult, "http://test.winehq.org/tests/hello.html"), "szResult = %s\n", wine_dbgstr_w(szResult));
+        ok(!lstrcmpW(szResult, L"http://test.winehq.org/tests/hello.html"), "szResult = %s\n", wine_dbgstr_w(szResult));
     else
         ok(!szResult, "szResult = %s\n", wine_dbgstr_w(szResult));
 
