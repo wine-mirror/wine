@@ -65,24 +65,8 @@ static void check_bstr_length(BSTR str, int line)
 
 static void test_wshshell(void)
 {
-    static const WCHAR notepadW[] = {'n','o','t','e','p','a','d','.','e','x','e',0};
-    static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
-    static const WCHAR lnk1W[] = {'f','i','l','e','.','l','n','k',0};
-    static const WCHAR pathW[] = {'%','P','A','T','H','%',0};
-    static const WCHAR sysW[] = {'S','Y','S','T','E','M',0};
-    static const WCHAR path2W[] = {'P','A','T','H',0};
-    static const WCHAR dummydirW[] = {'d','e','a','d','p','a','r','r','o','t',0};
-    static const WCHAR emptyW[] = {'e','m','p','t','y',0};
-    static const WCHAR cmdexeW[] = {'\\','c','m','d','.','e','x','e',0};
-    static const WCHAR testdirW[] = {'w','s','h','o','m',' ','t','e','s','t',' ','d','i','r',0};
-    static const WCHAR paramsW[] =
-        {' ','/','c',' ','r','d',' ','/','s',' ','/','q',' ','c',':','\\','n','o','s','u','c','h','d','i','r',0};
-    static const WCHAR cmdW[] =
-        {'c','m','d','.','e','x','e',' ','/','c',' ','r','d',' ','/','s',' ','/','q',' ','c',':','\\',
-         'n','o','s','u','c','h','d','i','r',0};
-    static const WCHAR cmd2W[] =
-        {'"','c','m','d','.','e','x','e',' ','"',' ','/','c',' ','r','d',' ','/','s',' ','/','q',' ','c',':','\\',
-         'n','o','s','u','c','h','d','i','r',0};
+    static const WCHAR emptyW[] = L"empty";
+    static const WCHAR cmdexeW[] = L"\\cmd.exe";
     WCHAR path[MAX_PATH], path2[MAX_PATH], buf[MAX_PATH];
     IWshEnvironment *env;
     IWshExec *shexec;
@@ -148,7 +132,7 @@ static void test_wshshell(void)
     ITypeInfo_ReleaseTypeAttr(ti, tattr);
 
     /* try to call Item() with normal IDispatch procedure */
-    str = SysAllocString(desktopW);
+    str = SysAllocString(L"Desktop");
     V_VT(&arg) = VT_BSTR;
     V_BSTR(&arg) = str;
     dp.rgvarg = &arg;
@@ -168,7 +152,7 @@ static void test_wshshell(void)
     VariantClear(&res);
 
     /* CreateShortcut() */
-    str = SysAllocString(lnk1W);
+    str = SysAllocString(L"file.lnk");
     hr = IWshShell3_CreateShortcut(sh3, str, &shortcut);
     EXPECT_HR(hr, S_OK);
     SysFreeString(str);
@@ -189,13 +173,13 @@ static void test_wshshell(void)
     hr = IWshShell3_ExpandEnvironmentStrings(sh3, NULL, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
-    str = SysAllocString(pathW);
+    str = SysAllocString(L"%PATH%");
     hr = IWshShell3_ExpandEnvironmentStrings(sh3, str, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
     SysFreeString(str);
 
     V_VT(&arg) = VT_BSTR;
-    V_BSTR(&arg) = SysAllocString(sysW);
+    V_BSTR(&arg) = SysAllocString(L"SYSTEM");
     hr = IWshShell3_get_Environment(sh3, &arg, &env);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     VariantClear(&arg);
@@ -211,7 +195,7 @@ static void test_wshshell(void)
     SysFreeString(ret);
 
     /* invalid var name */
-    str = SysAllocString(lnk1W);
+    str = SysAllocString(L"file.lnk");
     hr = IWshEnvironment_get_Item(env, str, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
@@ -224,7 +208,7 @@ static void test_wshshell(void)
     SysFreeString(str);
 
     /* valid name */
-    str = SysAllocString(path2W);
+    str = SysAllocString(L"PATH");
     hr = IWshEnvironment_get_Item(env, str, &ret);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(ret && *ret != 0, "got %s\n", wine_dbgstr_w(ret));
@@ -239,7 +223,7 @@ static void test_wshshell(void)
     V_VT(&arg2) = VT_ERROR;
     V_ERROR(&arg2) = DISP_E_PARAMNOTFOUND;
 
-    str = SysAllocString(notepadW);
+    str = SysAllocString(L"notepad.exe");
     hr = IWshShell3_Run(sh3, str, &arg, &arg2, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
@@ -265,14 +249,14 @@ static void test_wshshell(void)
     V_BOOL(&arg2) = VARIANT_TRUE;
 
     retval = 0xdeadbeef;
-    str = SysAllocString(cmdW);
+    str = SysAllocString(L"cmd.exe /c rd /s /q c:\\nosuchdir");
     hr = IWshShell3_Run(sh3, str, &arg, &arg2, &retval);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     todo_wine ok(retval == ERROR_FILE_NOT_FOUND, "got %u\n", retval);
     SysFreeString(str);
 
     retval = 0xdeadbeef;
-    str = SysAllocString(cmd2W);
+    str = SysAllocString(L"\"cmd.exe \" /c rd /s /q c:\\nosuchdir");
     hr = IWshShell3_Run(sh3, str, &arg, &arg2, &retval);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     todo_wine ok(retval == ERROR_FILE_NOT_FOUND, "got %u\n", retval);
@@ -285,7 +269,7 @@ static void test_wshshell(void)
 
     /* copy cmd.exe to a path with spaces */
     GetTempPathW(ARRAY_SIZE(path2), path2);
-    lstrcatW(path2, testdirW);
+    lstrcatW(path2, L"wshom test dir");
     CreateDirectoryW(path2, NULL);
     lstrcatW(path2, cmdexeW);
     CopyFileW(path, path2, FALSE);
@@ -293,7 +277,7 @@ static void test_wshshell(void)
     buf[0] = '"';
     lstrcpyW(buf + 1, path2);
     buf[lstrlenW(buf)] = '"';
-    lstrcpyW(buf + lstrlenW(path2) + 2, paramsW);
+    lstrcpyW(buf + lstrlenW(path2) + 2, L" /c rd /s /q c:\\nosuchdir");
 
     retval = 0xdeadbeef;
     str = SysAllocString(buf);
@@ -326,7 +310,7 @@ static void test_wshshell(void)
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
     SysFreeString(str);
 
-    str = SysAllocString(dummydirW);
+    str = SysAllocString(L"deadparrot");
     hr = IWshShell3_put_CurrentDirectory(sh3, str);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
     SysFreeString(str);
@@ -370,20 +354,8 @@ static DWORD delete_key(HKEY hkey)
 
 static void test_registry(void)
 {
-    static const WCHAR keypathW[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','\\',
-        'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','T','e','s','t','\\',0};
-    static const WCHAR regsz2W[] = {'r','e','g','s','z','2',0};
-    static const WCHAR regszW[] = {'r','e','g','s','z',0};
-    static const WCHAR regdwordW[] = {'r','e','g','d','w','o','r','d',0};
-    static const WCHAR regbinaryW[] = {'r','e','g','b','i','n','a','r','y',0};
-    static const WCHAR regmultiszW[] = {'r','e','g','m','u','l','t','i','s','z',0};
-
-    static const WCHAR regsz1W[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','\\',
-        'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','T','e','s','t','\\','r','e','g','s','z','1',0};
-    static const WCHAR foobarW[] = {'f','o','o','b','a','r',0};
-    static const WCHAR fooW[] = {'f','o','o',0};
-    static const WCHAR brokenW[] = {'H','K','E','Y','_','b','r','o','k','e','n','_','k','e','y',0};
-    static const WCHAR broken2W[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','a',0};
+    static const WCHAR keypathW[] = L"HKEY_CURRENT_USER\\Software\\Wine\\Test\\";
+    static const WCHAR regszW[] = L"regsz";
     WCHAR pathW[MAX_PATH];
     DWORD dwvalue, type;
     VARIANT value, v;
@@ -406,7 +378,7 @@ static void test_registry(void)
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
     ok(V_VT(&value) == VT_I2, "got %d\n", V_VT(&value));
 
-    name = SysAllocString(brokenW);
+    name = SysAllocString(L"HKEY_broken_key");
     hr = IWshShell3_RegRead(sh3, name, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
     V_VT(&value) = VT_I2;
@@ -415,7 +387,7 @@ static void test_registry(void)
     ok(V_VT(&value) == VT_I2, "got %d\n", V_VT(&value));
     SysFreeString(name);
 
-    name = SysAllocString(broken2W);
+    name = SysAllocString(L"HKEY_CURRENT_USERa");
     V_VT(&value) = VT_I2;
     hr = IWshShell3_RegRead(sh3, name, &value);
     ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "got 0x%08x\n", hr);
@@ -450,14 +422,14 @@ static void test_registry(void)
     hr = IWshShell3_RegRead(sh3, name, &value);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
-    ok(!lstrcmpW(V_BSTR(&value), foobarW), "got %s\n", wine_dbgstr_w(V_BSTR(&value)));
+    ok(!lstrcmpW(V_BSTR(&value), L"foobar"), "got %s\n", wine_dbgstr_w(V_BSTR(&value)));
     CHECK_BSTR_LENGTH(V_BSTR(&value));
     VariantClear(&value);
     SysFreeString(name);
 
     /* REG_SZ with embedded NULL */
     lstrcpyW(pathW, keypathW);
-    lstrcatW(pathW, regsz2W);
+    lstrcatW(pathW, L"regsz2");
     name = SysAllocString(pathW);
     VariantInit(&value);
     hr = IWshShell3_RegRead(sh3, name, &value);
@@ -470,7 +442,7 @@ static void test_registry(void)
 
     /* REG_DWORD */
     lstrcpyW(pathW, keypathW);
-    lstrcatW(pathW, regdwordW);
+    lstrcatW(pathW, L"regdword");
     name = SysAllocString(pathW);
     VariantInit(&value);
     hr = IWshShell3_RegRead(sh3, name, &value);
@@ -481,7 +453,7 @@ static void test_registry(void)
 
     /* REG_BINARY */
     lstrcpyW(pathW, keypathW);
-    lstrcatW(pathW, regbinaryW);
+    lstrcatW(pathW, L"regbinary");
     name = SysAllocString(pathW);
     VariantInit(&value);
     hr = IWshShell3_RegRead(sh3, name, &value);
@@ -513,7 +485,7 @@ static void test_registry(void)
 
     /* REG_MULTI_SZ */
     lstrcpyW(pathW, keypathW);
-    lstrcatW(pathW, regmultiszW);
+    lstrcatW(pathW, L"regmultisz");
     name = SysAllocString(pathW);
     VariantInit(&value);
     hr = IWshShell3_RegRead(sh3, name, &value);
@@ -540,12 +512,12 @@ static void test_registry(void)
     hr = SafeArrayGetElement(V_ARRAY(&value), &bound, &v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
-    ok(!lstrcmpW(V_BSTR(&v), fooW), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"foo"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     CHECK_BSTR_LENGTH(V_BSTR(&v));
     VariantClear(&v);
     VariantClear(&value);
 
-    name = SysAllocString(regsz1W);
+    name = SysAllocString(L"HKEY_CURRENT_USER\\Software\\Wine\\Test\\regsz1");
     V_VT(&value) = VT_I2;
     hr = IWshShell3_RegRead(sh3, name, &value);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
@@ -637,7 +609,6 @@ static void test_registry(void)
 
 static void test_popup(void)
 {
-    static const WCHAR textW[] = {'T','e','x','t',0};
     VARIANT timeout, type, title, optional;
     IWshShell *sh;
     int button;
@@ -649,7 +620,7 @@ static void test_popup(void)
     ok(hr == S_OK, "Failed to create WshShell object, hr %#x.\n", hr);
 
     button = 123;
-    text = SysAllocString(textW);
+    text = SysAllocString(L"Text");
 
     hr = IWshShell_Popup(sh, NULL, NULL, NULL, NULL, &button);
     ok(hr == E_POINTER, "Unexpected retval %#x.\n", hr);
