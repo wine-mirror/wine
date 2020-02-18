@@ -4098,6 +4098,89 @@ static void _SHCreateMyDocumentsSubDirs(const UINT * aidsMyStuff, const UINT num
 }
 
 /******************************************************************************
+ * _SHCreateMyDocumentsSymbolicLink  [Internal]
+ *
+ * Sets up a symbolic link for the 'My Documents' shell folder to point into
+ * the users home directory.
+ *
+ * PARAMS
+ *  aidsMyStuff [I] Array of IDS_* resources to create sub dirs for.
+ *  aids_num    [I] Number of elements in aidsMyStuff.
+ */
+static void _SHCreateMyDocumentsSymbolicLink(const UINT * aidsMyStuff, const UINT aids_num)
+{
+    static const char * const xdg_dirs[] = { "DOCUMENTS" };
+    static const unsigned int num = ARRAY_SIZE(xdg_dirs);
+    char szPersonalTarget[FILENAME_MAX], *pszPersonal;
+    struct stat statFolder;
+    const char *pszHome;
+    char ** xdg_results;
+
+    /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
+    pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_CREATE);
+    if (!pszPersonal) return;
+
+    _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
+
+    pszHome = getenv("HOME");
+    if (pszHome && !stat(pszHome, &statFolder) && S_ISDIR(statFolder.st_mode))
+    {
+        while (1)
+        {
+            /* Check if there's already a Wine-specific 'My Documents' folder */
+            strcpy(szPersonalTarget, pszHome);
+            if (_SHAppendToUnixPath(szPersonalTarget, MAKEINTRESOURCEW(IDS_PERSONAL)) &&
+                !stat(szPersonalTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
+            {
+                /* '$HOME/My Documents' exists. Create subfolders for
+                 * 'My Pictures', 'My Videos', 'My Music' etc. or fail silently
+                 * if they already exist.
+                 */
+                _SHCreateMyDocumentsSubDirs(aidsMyStuff, aids_num, szPersonalTarget);
+                break;
+            }
+
+            /* Try to point to the XDG Documents folder */
+            if (xdg_results && xdg_results[0] &&
+               !stat(xdg_results[0], &statFolder) &&
+               S_ISDIR(statFolder.st_mode))
+            {
+                strcpy(szPersonalTarget, xdg_results[0]);
+                break;
+            }
+
+            /* Or the hardcoded / OS X Documents folder */
+            strcpy(szPersonalTarget, pszHome);
+            if (_SHAppendToUnixPath(szPersonalTarget, DocumentsW) &&
+               !stat(szPersonalTarget, &statFolder) &&
+               S_ISDIR(statFolder.st_mode))
+                break;
+
+            /* As a last resort point to $HOME. */
+            strcpy(szPersonalTarget, pszHome);
+            break;
+        }
+
+        /* Replace 'My Documents' directory with a symlink or fail silently if not empty. */
+        remove(pszPersonal);
+        symlink(szPersonalTarget, pszPersonal);
+    }
+    else
+    {
+        /* '$HOME' doesn't exist. Create subdirs for 'My Pictures', 'My Videos',
+         * 'My Music' etc. in '%USERPROFILE%\My Documents' or fail silently if
+         * they already exist. */
+        pszHome = NULL;
+        strcpy(szPersonalTarget, pszPersonal);
+        _SHCreateMyDocumentsSubDirs(aidsMyStuff, aids_num, szPersonalTarget);
+    }
+
+    heap_free(pszPersonal);
+
+    _SHFreeXDGUserDirs(num, xdg_results);
+}
+
+/******************************************************************************
  * _SHCreateSymbolicLinks  [Internal]
  *
  * Sets up symbol links for various shell folders to point into the user's home
@@ -4132,7 +4215,7 @@ static void _SHCreateSymbolicLinks(void)
         CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC, CSIDL_DOWNLOADS, CSIDL_TEMPLATES
     };
     static const char * const xdg_dirs[] = {
-        "PICTURES", "VIDEOS", "MUSIC", "DOWNLOAD", "TEMPLATES", "DOCUMENTS", "DESKTOP"
+        "PICTURES", "VIDEOS", "MUSIC", "DOWNLOAD", "TEMPLATES", "DESKTOP"
     };
     static const unsigned int num = ARRAY_SIZE(xdg_dirs);
     char szPersonalTarget[FILENAME_MAX], *pszPersonal;
@@ -4144,64 +4227,22 @@ static void _SHCreateSymbolicLinks(void)
     char * xdg_desktop_dir;
     UINT i;
 
+    _SHCreateMyDocumentsSymbolicLink(aidsMyStuff, ARRAY_SIZE(aidsMyStuff));
+
     /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
     pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_CREATE);
     if (!pszPersonal) return;
 
+    strcpy(szPersonalTarget, pszPersonal);
+    if (!stat(pszPersonal, &statFolder) && S_ISLNK(statFolder.st_mode))
+    {
+        int cLen = readlink(pszPersonal, szPersonalTarget, FILENAME_MAX-1);
+        if (cLen >= 0) szPersonalTarget[cLen] = '\0';
+    }
+
     _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
 
     pszHome = getenv("HOME");
-    if (pszHome && !stat(pszHome, &statFolder) && S_ISDIR(statFolder.st_mode))
-    {
-        while (1)
-        {
-            /* Check if there's already a Wine-specific 'My Documents' folder */
-            strcpy(szPersonalTarget, pszHome);
-            if (_SHAppendToUnixPath(szPersonalTarget, MAKEINTRESOURCEW(IDS_PERSONAL)) &&
-                !stat(szPersonalTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
-            {
-                /* '$HOME/My Documents' exists. Create subfolders for
-                 * 'My Pictures', 'My Videos', 'My Music' etc. or fail silently
-                 * if they already exist.
-                 */
-                _SHCreateMyDocumentsSubDirs(aidsMyStuff, ARRAY_SIZE(aidsMyStuff), szPersonalTarget);
-                break;
-            }
-
-            /* Try to point to the XDG Documents folder */
-            if (xdg_results && xdg_results[num-2] &&
-               !stat(xdg_results[num-2], &statFolder) &&
-               S_ISDIR(statFolder.st_mode))
-            {
-                strcpy(szPersonalTarget, xdg_results[num-2]);
-                break;
-            }
-
-            /* Or the hardcoded / OS X Documents folder */
-            strcpy(szPersonalTarget, pszHome);
-            if (_SHAppendToUnixPath(szPersonalTarget, DocumentsW) &&
-               !stat(szPersonalTarget, &statFolder) &&
-               S_ISDIR(statFolder.st_mode))
-                break;
-
-            /* As a last resort point to $HOME. */
-            strcpy(szPersonalTarget, pszHome);
-            break;
-        }
-
-        /* Replace 'My Documents' directory with a symlink or fail silently if not empty. */
-        remove(pszPersonal);
-        symlink(szPersonalTarget, pszPersonal);
-    }
-    else
-    {
-        /* '$HOME' doesn't exist. Create subdirs for 'My Pictures', 'My Videos',
-         * 'My Music' etc. in '%USERPROFILE%\My Documents' or fail silently if
-         * they already exist. */
-        pszHome = NULL;
-        strcpy(szPersonalTarget, pszPersonal);
-        _SHCreateMyDocumentsSubDirs(aidsMyStuff, ARRAY_SIZE(aidsMyStuff), szPersonalTarget);
-    }
 
     /* Create symbolic links for 'My Pictures', 'My Videos', 'My Music' etc. */
     for (i=0; i < ARRAY_SIZE(aidsMyStuff); i++)
