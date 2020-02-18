@@ -95,7 +95,6 @@ char*  __cdecl _tempnam(const char*,const char*);
 int    __cdecl _unlink(const char*);
 int    WINAPIV _scprintf(const char*,...);
 int    __cdecl _vscprintf(const char*,__ms_va_list);
-int    __cdecl _vsnprintf(char*,size_t,const char*,__ms_va_list);
 int    __cdecl _vsnprintf_s(char*,size_t,size_t,const char*,__ms_va_list);
 int    __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
 
@@ -173,6 +172,31 @@ int    __cdecl vsprintf_s(char*,size_t,const char*,__ms_va_list);
 unsigned int __cdecl _get_output_format(void);
 unsigned int __cdecl _set_output_format(void);
 
+#ifdef _UCRT
+
+_ACRTIMP int __cdecl __stdio_common_vsprintf(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
+
+static inline int __cdecl vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args)
+{
+    int ret = __stdio_common_vsprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS | _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR,
+                                      buffer, size, format, NULL, args);
+    return ret < 0 ? -1 : ret;
+}
+
+static inline int __cdecl _vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args)
+{
+    int ret = __stdio_common_vsprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS | _CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION,
+                                      buffer, size, format, NULL, args);
+    return ret < 0 ? -1 : ret;
+}
+
+#else /* _UCRT */
+
+int __cdecl _vsnprintf(char*,size_t,const char*,__ms_va_list);
+static inline int vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args) { return _vsnprintf(buffer,size,format,args); }
+
+#endif /* _UCRT */
+
 #endif /* _STDIO_DEFINED */
 
 #ifdef __cplusplus
@@ -191,7 +215,6 @@ static inline char* tempnam(const char *dir, const char *prefix) { return _tempn
 static inline int unlink(const char* path) { return _unlink(path); }
 #define _UNLINK_DEFINED
 #endif
-static inline int vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args) { return _vsnprintf(buffer,size,format,args); }
 
 static inline int WINAPIV snprintf(char *buffer, size_t size, const char *format, ...)
 {
