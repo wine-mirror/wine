@@ -84,21 +84,6 @@ static HRESULT (WINAPI *pCoInternetIsFeatureEnabled)(INTERNETFEATURELIST,DWORD);
 static HRESULT (WINAPI *pCoInternetSetFeatureEnabled)(INTERNETFEATURELIST,DWORD,BOOL);
 static HRESULT (WINAPI *pIEInstallScope)(DWORD*);
 
-static WCHAR *a2w(const char *str)
-{
-    WCHAR *ret;
-    int len;
-
-    if(!str)
-        return NULL;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 static WCHAR *a2co(const char *str)
 {
     WCHAR *ret;
@@ -476,22 +461,22 @@ static void test_CoInternetQueryInfo(void)
 }
 
 static const struct {
-    const char *url;
+    const WCHAR *url;
     const WCHAR *mime;
     HRESULT hres;
     BOOL broken_failure;
     const WCHAR *broken_mime;
 } mime_tests[] = {
-    {"res://mshtml.dll/blank.htm", L"text/html", S_OK},
-    {"index.htm", L"text/html", S_OK},
-    {"file://c:\\Index.htm", L"text/html", S_OK},
-    {"file://c:\\Index.htm?q=test", L"text/html", S_OK, TRUE},
-    {"file://c:\\Index.htm#hash_part", L"text/html", S_OK, TRUE},
-    {"file://c:\\Index.htm#hash_part.txt", L"text/html", S_OK, FALSE, L"text/plain"},
-    {"file://some%20file%2ejpg", NULL, E_FAIL},
-    {"http://www.winehq.org", NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)},
-    {"about:blank", NULL, E_FAIL},
-    {"ftp://winehq.org/file.test", NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)}
+    {L"res://mshtml.dll/blank.htm", L"text/html", S_OK},
+    {L"index.htm", L"text/html", S_OK},
+    {L"file://c:\\Index.htm", L"text/html", S_OK},
+    {L"file://c:\\Index.htm?q=test", L"text/html", S_OK, TRUE},
+    {L"file://c:\\Index.htm#hash_part", L"text/html", S_OK, TRUE},
+    {L"file://c:\\Index.htm#hash_part.txt", L"text/html", S_OK, FALSE, L"text/plain"},
+    {L"file://some%20file%2ejpg", NULL, E_FAIL},
+    {L"http://www.winehq.org", NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)},
+    {L"about:blank", NULL, E_FAIL},
+    {L"ftp://winehq.org/file.test", NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)}
 };
 
 static BYTE data1[] = "test data\n";
@@ -599,8 +584,8 @@ static const struct {
     const WCHAR *mime;
     const WCHAR *mime_pjpeg;
     const WCHAR *broken_mime;
-    const char *url;
-    const char *proposed_mime;
+    const WCHAR *url;
+    const WCHAR *proposed_mime;
 } mime_tests2[] = {
     {data1, sizeof(data1), L"text/plain"},
     {data2, sizeof(data2), L"application/octet-stream", L"image/pjpeg"},
@@ -700,22 +685,22 @@ static const struct {
     {data96, sizeof(data96), L"text/plain"},
     {data97, sizeof(data97), L"text/html", L"text/plain"},
     {data98, sizeof(data98), L"text/html", L"text/plain"},
-    {data1, sizeof(data1), L"text/plain", NULL, NULL, "res://mshtml.dll/blank.htm"},
-    {NULL, 0, L"text/html", NULL, NULL, "res://mshtml.dll/blank.htm"},
-    {data1, sizeof(data1), L"text/plain", NULL, NULL, "res://mshtml.dll/blank.htm", "application/octet-stream"},
-    {data1, sizeof(data1), L"text/plain", NULL, NULL, "file:some%20file%2ejpg", "application/octet-stream"},
-    {NULL, sizeof(data1), L"text/html", NULL, NULL, "res://mshtml.dll/blank.htm"},
-    {data1, sizeof(data1), L"text/css", NULL, NULL, "http://www.winehq.org/test.css"},
-    {data2, sizeof(data2), L"text/css", NULL, NULL, "http://www.winehq.org/test.css"},
-    {data10, sizeof(data10), L"text/html", NULL, NULL, "http://www.winehq.org/test.css"},
-    {data1, sizeof(data1), L"text/css", NULL, NULL, "http://www.winehq.org/test.css", "text/plain"},
-    {data1, sizeof(data1), L"text/css", NULL, NULL, "http://www.winehq.org/test.css", "application/octet-stream"},
-    {data1, sizeof(data1), L"text/test", NULL, NULL, "http://www.winehq.org/test.css", "text/test"}
+    {data1, sizeof(data1), L"text/plain", NULL, NULL, L"res://mshtml.dll/blank.htm"},
+    {NULL, 0, L"text/html", NULL, NULL, L"res://mshtml.dll/blank.htm"},
+    {data1, sizeof(data1), L"text/plain", NULL, NULL, L"res://mshtml.dll/blank.htm", L"application/octet-stream"},
+    {data1, sizeof(data1), L"text/plain", NULL, NULL, L"file:some%20file%2ejpg", L"application/octet-stream"},
+    {NULL, sizeof(data1), L"text/html", NULL, NULL, L"res://mshtml.dll/blank.htm"},
+    {data1, sizeof(data1), L"text/css", NULL, NULL, L"http://www.winehq.org/test.css"},
+    {data2, sizeof(data2), L"text/css", NULL, NULL, L"http://www.winehq.org/test.css"},
+    {data10, sizeof(data10), L"text/html", NULL, NULL, L"http://www.winehq.org/test.css"},
+    {data1, sizeof(data1), L"text/css", NULL, NULL, L"http://www.winehq.org/test.css", L"text/plain"},
+    {data1, sizeof(data1), L"text/css", NULL, NULL, L"http://www.winehq.org/test.css", L"application/octet-stream"},
+    {data1, sizeof(data1), L"text/test", NULL, NULL, L"http://www.winehq.org/test.css", L"text/test"}
 };
 
 static void test_FindMimeFromData(void)
 {
-    WCHAR *mime, *proposed_mime, *url;
+    WCHAR *mime;
     HRESULT hres;
     BYTE b;
     int i;
@@ -728,8 +713,7 @@ static void test_FindMimeFromData(void)
 
     for(i = 0; i < ARRAY_SIZE(mime_tests); i++) {
         mime = (LPWSTR)0xf0f0f0f0;
-        url = a2w(mime_tests[i].url);
-        hres = pFindMimeFromData(NULL, url, NULL, 0, NULL, 0, &mime, 0);
+        hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, NULL, 0, &mime, 0);
         if(mime_tests[i].mime) {
             ok(hres == S_OK || broken(mime_tests[i].broken_failure), "[%d] FindMimeFromData failed: %08x\n", i, hres);
             if(hres == S_OK) {
@@ -746,32 +730,27 @@ static void test_FindMimeFromData(void)
         }
 
         mime = (LPWSTR)0xf0f0f0f0;
-        hres = pFindMimeFromData(NULL, url, NULL, 0, text_plainW, 0, &mime, 0);
+        hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, text_plainW, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         ok(!lstrcmpW(mime, L"text/plain"), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
 
         mime = (LPWSTR)0xf0f0f0f0;
-        hres = pFindMimeFromData(NULL, url, NULL, 0, app_octet_streamW, 0, &mime, 0);
+        hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, app_octet_streamW, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         ok(!lstrcmpW(mime, L"application/octet-stream"), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
-        heap_free(url);
     }
 
     for(i = 0; i < ARRAY_SIZE(mime_tests2); i++) {
-        url = a2w(mime_tests2[i].url);
-        proposed_mime = a2w(mime_tests2[i].proposed_mime);
-        hres = pFindMimeFromData(NULL, url, mime_tests2[i].data, mime_tests2[i].size,
-                proposed_mime, 0, &mime, 0);
+        hres = pFindMimeFromData(NULL, mime_tests2[i].url, mime_tests2[i].data, mime_tests2[i].size,
+                mime_tests2[i].proposed_mime, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         b = !lstrcmpW(mime, mime_tests2[i].mime);
         ok(b || broken(mime_tests2[i].broken_mime && !lstrcmpW(mime, mime_tests2[i].broken_mime)),
             "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
-        heap_free(proposed_mime);
-        heap_free(url);
         CoTaskMemFree(mime);
-        if(!b || url || proposed_mime)
+        if(!b || mime_tests2[i].url || mime_tests2[i].proposed_mime)
             continue;
 
         hres = pFindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
