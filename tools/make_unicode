@@ -1585,64 +1585,19 @@ sub dump_case_table($@)
 {
     my ($name,@table) = @_;
 
-    # count the number of sub tables that contain something
-    # also compute the low and upper populated bounds
-
-    my @lowerbounds = ( 0, 0 );
-    my @upperbounds = ( 0, 255 );
-    my $index = 0;
-    my @filled = ();
     for (my $i = 0; $i < 65536; $i++)
     {
         next unless defined $table[$i];
-        if (!defined $filled[$i >> 8])
-        {
-          $lowerbounds[$index] = $i & 0xff;
-          $upperbounds[$index] = 0xff - $lowerbounds[$index];
-          $filled[$i >> 8] = $index * 256 + 512;
-          $index++;
-        }
-        else
-        {
-          $upperbounds[$index-1] = 0xff - ($i & 0xff);
-        }
         $table[$i] = ($table[$i] - $i) & 0xffff;
     }
 
-    # Collapse blocks upwards if possible
-    my $removed = 0;
-    $index = 0;
-    for (my $i = 0; $i < 256; $i++)
-    {
-        next unless defined $filled[$i];
-        if ($upperbounds[$index - 1] > $lowerbounds[$index])
-        {
-           $removed = $removed + $lowerbounds[$index];
-        }
-        else
-        {
-           $removed = $removed + $upperbounds[$index - 1];
-           $lowerbounds[$index] = $upperbounds[$index - 1];
-        }
-        $filled[$i] = $filled[$i] - $removed;
-        $index++;
-    }
+    my @array = compress_array( 256, 0, @table[0..65535] );
 
-    # dump the table
-
-    printf OUTPUT "const WCHAR %s[%d] =\n", $name, $index * 256 + 512 - $removed;
+    printf OUTPUT "const WCHAR %s[%d] =\n", $name, scalar @array;
     printf OUTPUT "{\n    /* index */\n";
-    printf OUTPUT "%s,\n", dump_array( 16, 256, @filled );
-    printf OUTPUT "    /* defaults */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, (0) x 256 );
-    $index = 0;
-    for (my $i = 0; $i < 256; $i++)
-    {
-        next unless $filled[$i];
-        printf OUTPUT ",\n    /* 0x%02x%02x .. 0x%02xff */\n", $i, $lowerbounds[$index], $i;
-        printf OUTPUT "%s", dump_array( 16, 0, @table[($i<<8) + $lowerbounds[$index] .. ($i<<8)+255] );
-        $index++;
-    }
+    printf OUTPUT "%s,\n", dump_array( 16, 0, @array[0..255] );
+    printf OUTPUT "    /* data */\n";
+    printf OUTPUT "%s", dump_array( 16, 0, @array[256..$#array] );
     printf OUTPUT "\n};\n";
 }
 
