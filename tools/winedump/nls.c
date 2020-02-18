@@ -165,6 +165,187 @@ static void dump_codepage(void)
     printf( "\n" );
 }
 
+struct norm_table
+{
+    WCHAR   name[13];      /* 00 file name */
+    USHORT  checksum[3];   /* 1a checksum? */
+    USHORT  version[4];    /* 20 Unicode version */
+    USHORT  form;          /* 28 normalization form */
+    USHORT  len_factor;    /* 2a factor for length estimates */
+    USHORT  unknown1;      /* 2c */
+    USHORT  decomp_size;   /* 2e decomposition hash size */
+    USHORT  comp_size;     /* 30 composition hash size */
+    USHORT  unknown2;      /* 32 */
+    USHORT  classes;       /* 34 combining classes table offset */
+    USHORT  props_level1;  /* 36 char properties table level 1 offset */
+    USHORT  props_level2;  /* 38 char properties table level 2 offset */
+    USHORT  decomp_hash;   /* 3a decomposition hash table offset */
+    USHORT  decomp_map;    /* 3c decomposition character map table offset */
+    USHORT  decomp_seq;    /* 3e decomposition character sequences offset */
+    USHORT  comp_hash;     /* 40 composition hash table offset */
+    USHORT  comp_seq;      /* 42 composition character sequences offset */
+};
+
+static int offset_scale = 1;  /* older versions use byte offsets */
+
+#define GET_TABLE(info,table) ((const void *)((const BYTE *)info + (info->table * offset_scale)))
+
+static unsigned int get_utf16( const WCHAR *str )
+{
+    if (str[0] >= 0xd800 && str[0] <= 0xdbff &&
+        str[1] >= 0xdc00 && str[1] <= 0xdfff)
+        return 0x10000 + ((str[0] & 0x3ff) << 10) + (str[1] & 0x3ff);
+    return str[0];
+}
+
+static BYTE rol( BYTE val, BYTE count )
+{
+    return (val << count) | (val >> (8 - count));
+}
+
+static unsigned char get_char_props( const struct norm_table *info, unsigned int ch )
+{
+    const BYTE *level1 = GET_TABLE( info, props_level1 );
+    const BYTE *level2 = GET_TABLE( info, props_level2 );
+    BYTE off = level1[ch / 128];
+
+    if (!off || off >= 0xfb) return rol( off, 5 );
+    return level2[(off - 1) * 128 + ch % 128];
+}
+
+static const WCHAR *get_decomposition( const struct norm_table *info,
+                                       unsigned int ch, unsigned int *ret_len )
+{
+    const USHORT *hash_table = GET_TABLE( info, decomp_hash );
+    const WCHAR *seq = GET_TABLE(info, decomp_seq );
+    const WCHAR *ret;
+    unsigned int i, pos, end, len, hash;
+
+    *ret_len = 1 + (ch >= 0x10000);
+    if (!info->decomp_size) return NULL;
+    hash = ch % info->decomp_size;
+    pos = hash_table[hash];
+    if (pos >> 13)
+    {
+        if (get_char_props( info, ch ) != 0xbf) return NULL;
+        ret = seq + (pos & 0x1fff);
+        len = pos >> 13;
+    }
+    else
+    {
+        const struct { WCHAR src; USHORT dst; } *pairs = GET_TABLE( info, decomp_map );
+
+        /* find the end of the hash bucket */
+        for (i = hash + 1; i < info->decomp_size; i++) if (!(hash_table[i] >> 13)) break;
+        if (i < info->decomp_size) end = hash_table[i];
+        else for (end = pos; pairs[end].src; end++) ;
+
+        for ( ; pos < end; pos++)
+        {
+            if (pairs[pos].src != (WCHAR)ch) continue;
+            ret = seq + (pairs[pos].dst & 0x1fff);
+            len = pairs[pos].dst >> 13;
+            break;
+        }
+        if (pos >= end) return NULL;
+    }
+
+    if (len == 7) while (ret[len]) len++;
+    *ret_len = len;
+    return ret;
+}
+
+static int cmp_compos( const void *a, const void *b )
+{
+    int ret = ((unsigned int *)a)[0] - ((unsigned int *)b)[0];
+    if (!ret) ret = ((unsigned int *)a)[1] - ((unsigned int *)b)[1];
+    return ret;
+}
+
+static void dump_norm(void)
+{
+    const struct norm_table *info;
+    const BYTE *classes;
+    unsigned int i;
+    char name[13];
+
+    if (!(info = PRD( 0, sizeof(*info) ))) return;
+    for (i = 0; i < sizeof(name); i++) name[i] = info->name[i];
+    printf( "Name:    %s\n", name );
+    switch (info->form)
+    {
+    case 1:  printf( "Form:    NFC\n" ); break;
+    case 2:  printf( "Form:    NFD\n" ); break;
+    case 5:  printf( "Form:    NFKC\n" ); break;
+    case 6:  printf( "Form:    NFKD\n" ); break;
+    case 13: printf( "Form:    IDNA\n" ); break;
+    default: printf( "Form:    %u\n", info->form ); break;
+    }
+    printf( "Version: %u.%u.%u\n", info->version[0], info->version[1], info->version[2] );
+    printf( "Factor:  %u\n", info->len_factor );
+
+    if (info->classes == sizeof(*info) / 2) offset_scale = 2;
+    classes = GET_TABLE( info, classes );
+
+    printf( "\nCharacter classes:\n" );
+    for (i = 0; i < 0x110000; i++)
+    {
+        BYTE flags = get_char_props( info, i );
+
+        if (!(i % 16)) printf( "\n%06x:", i );
+        if (!flags || (flags & 0x3f) == 0x3f)
+        {
+            static const char *flagstr[4] = { ".....", "Undef", "QC=No", "Inval" };
+            printf( " %s", flagstr[flags >> 6] );
+        }
+        else
+        {
+            static const char flagschar[4] = ".+*M";
+            BYTE class = classes[flags & 0x3f];
+            printf( " %c.%03u", flagschar[flags >> 6], class );
+        }
+    }
+
+    printf( "\n\nDecompositions:\n\n" );
+    for (i = 0; i < 0x110000; i++)
+    {
+        unsigned int j, len;
+        const WCHAR *decomp = get_decomposition( info, i, &len );
+        if (!decomp) continue;
+        printf( "%04x ->", i );
+        for (j = 0; j < len; j++)
+        {
+            unsigned int ch = get_utf16( decomp + j );
+            printf( " %04x", ch );
+            if (ch >= 0x10000) j++;
+        }
+        printf( "\n" );
+    }
+    if (info->comp_size)
+    {
+        unsigned int pos, len = (dump_total_len - info->comp_seq * offset_scale) / sizeof(WCHAR);
+        const WCHAR *seq = GET_TABLE( info, comp_seq );
+        unsigned int *map = malloc( len * sizeof(*map) );
+
+        printf( "\nCompositions:\n\n" );
+
+        /* ignore hash table, simply dump all the sequences */
+        for (i = pos = 0; i < len; pos += 3)
+        {
+            map[pos] = get_utf16( seq + i );
+            i += 1 + (map[pos] >= 0x10000);
+            map[pos+1] = get_utf16( seq + i );
+            i += 1 + (map[pos+1] >= 0x10000);
+            map[pos+2] = get_utf16( seq + i );
+            i += 1 + (map[pos+2] >= 0x10000);
+        }
+        qsort( map, pos / 3, 3 * sizeof(*map), cmp_compos );
+        for (i = 0; i < pos; i += 3) printf( "%04x %04x -> %04x\n", map[i], map[i + 1], map[i + 2] );
+        free( map );
+    }
+    printf( "\n" );
+}
+
 void nls_dump(void)
 {
     const char *name = strrchr( globals.input_name, '/' );
@@ -172,6 +353,7 @@ void nls_dump(void)
     else name = globals.input_name;
     if (!strcasecmp( name, "l_intl.nls" )) return dump_casemap();
     if (!strncasecmp( name, "c_", 2 )) return dump_codepage();
+    if (!strncasecmp( name, "norm", 4 )) return dump_norm();
     fprintf( stderr, "Unrecognized file name '%s'\n", globals.input_name );
 }
 
