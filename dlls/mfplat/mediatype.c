@@ -514,13 +514,14 @@ static HRESULT WINAPI mediatype_IsEqual(IMFMediaType *iface, IMFMediaType *type,
     PropVariantInit(&right.value);
     right.hr = IMFAttributes_GetItem(right.type, &MF_MT_USER_DATA, &right.value);
 
-    if (SUCCEEDED(left.hr) && SUCCEEDED(left.hr))
+    /* Compare user data if both types have it, otherwise simply check if both don't. */
+    if (SUCCEEDED(left.hr) && SUCCEEDED(right.hr))
     {
         result = FALSE;
         IMFAttributes_CompareItem(left.type, &MF_MT_USER_DATA, &left.value, &result);
     }
-    else if (FAILED(left.hr) && FAILED(left.hr))
-        result = TRUE;
+    else
+        result = FAILED(left.hr) && FAILED(right.hr);
 
     PropVariantClear(&left.value);
     PropVariantClear(&right.value);

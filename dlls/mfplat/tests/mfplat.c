@@ -762,6 +762,19 @@ if(0)
     ok(flags == (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_DATA
             | MF_MEDIATYPE_EQUAL_FORMAT_USER_DATA), "Unexpected flags %#x.\n", flags);
 
+    /* Different user data. */
+    hr = IMFMediaType_SetBlob(mediatype, &MF_MT_USER_DATA, (const UINT8 *)&flags, sizeof(flags));
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    flags = 0;
+    hr = IMFMediaType_IsEqual(mediatype, mediatype2, &flags);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(flags == (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_DATA),
+            "Unexpected flags %#x.\n", flags);
+
+    hr = IMFMediaType_DeleteItem(mediatype, &MF_MT_USER_DATA);
+    ok(hr == S_OK, "Failed to delete item, hr %#x.\n", hr);
+
     hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
     ok(hr == S_OK, "Failed to set subtype, hr %#x.\n", hr);
 
