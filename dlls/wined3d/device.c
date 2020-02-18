@@ -529,6 +529,8 @@ void wined3d_device_cleanup(struct wined3d_device *device)
     if (device->swapchain_count)
         wined3d_device_uninit_3d(device);
 
+    wined3d_blend_state_decref(device->blend_state_atoc_enabled);
+
     wined3d_cs_destroy(device->cs);
 
     for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
@@ -3837,6 +3839,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
     const struct wined3d_saved_states *changed = &stateblock->changed;
+    struct wined3d_blend_state *blend_state;
+    struct wined3d_color colour;
     unsigned int i, j, count;
 
     TRACE("device %p, stateblock %p.\n", device, stateblock);
@@ -3941,18 +3945,32 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
     }
 
+    if (changed->blend_state)
+    {
+        if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_BLENDFACTOR))
+            wined3d_color_from_d3dcolor(&colour, stateblock->stateblock_state.rs[WINED3D_RS_BLENDFACTOR]);
+        else
+            wined3d_device_get_blend_state(device, &colour);
+
+        wined3d_device_set_blend_state(device, state->blend_state, &colour);
+    }
+
     for (i = 0; i < ARRAY_SIZE(state->rs); ++i)
     {
-        if (wined3d_bitmap_is_set(changed->renderState, i))
+        if (!wined3d_bitmap_is_set(changed->renderState, i))
+            continue;
+
+        if (i != WINED3D_RS_BLENDFACTOR)
         {
-            if (i == WINED3D_RS_BLENDFACTOR)
-            {
-                struct wined3d_color color;
-                wined3d_color_from_d3dcolor(&color, state->rs[i]);
-                wined3d_device_set_blend_state(device, NULL, &color);
-            }
-            else
-                wined3d_device_set_render_state(device, i, state->rs[i]);
+            wined3d_device_set_render_state(device, i, state->rs[i]);
+            continue;
+        }
+
+        if (!changed->blend_state)
+        {
+            blend_state = wined3d_device_get_blend_state(device, &colour);
+            wined3d_color_from_d3dcolor(&colour, state->rs[i]);
+            wined3d_device_set_blend_state(device, blend_state, &colour);
         }
     }
 
@@ -5760,6 +5778,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     struct wined3d_adapter *adapter = wined3d->adapters[adapter_idx];
     const struct wined3d_fragment_pipe_ops *fragment_pipeline;
     const struct wined3d_vertex_pipe_ops *vertex_pipeline;
+    struct wined3d_blend_state_desc blend_state_desc;
     unsigned int i;
     HRESULT hr;
 
@@ -5811,6 +5830,18 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
         WARN("Failed to create command stream.\n");
         state_cleanup(&device->state);
         hr = E_FAIL;
+        goto err;
+    }
+
+    memset(&blend_state_desc, 0, sizeof(blend_state_desc));
+    blend_state_desc.alpha_to_coverage = TRUE;
+
+    if (FAILED(hr = wined3d_blend_state_create(device, &blend_state_desc,
+            NULL, &wined3d_null_parent_ops, &device->blend_state_atoc_enabled)))
+    {
+        ERR("Failed to create blend state object, hr %#x.\n", hr);
+        wined3d_cs_destroy(device->cs);
+        state_cleanup(&device->state);
         goto err;
     }
 

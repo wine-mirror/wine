@@ -26679,8 +26679,8 @@ static void test_alpha_to_coverage(void)
     get_rt_readback(rt, &rb);
     colour = get_readback_color(&rb, 64, 64);
 
-    /* Nvidia is probably using some proprietary algorithm for averaging sample colour values. */
-    todo_wine ok(color_match(colour, 0x9f404080, 1) || color_match(colour, 0x9f485cbc, 1) /* Nvidia */,
+    /* NVIDIA is probably using some proprietary algorithm for averaging sample colour values. */
+    ok(color_match(colour, 0x9f404080, 1) || color_match(colour, 0x9f485cbc, 1) /* NVIDIA */,
             "Got unexpected colour %08x.\n", colour);
     release_surface_readback(&rb);
 

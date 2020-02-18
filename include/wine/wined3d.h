@@ -2168,6 +2168,7 @@ struct wined3d_stateblock_state
     RECT scissor_rect;
 
     struct wined3d_light_state *light_state;
+    struct wined3d_blend_state *blend_state;
 };
 
 struct wined3d_parent_ops

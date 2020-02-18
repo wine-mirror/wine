@@ -209,6 +209,7 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     states->pixelShader = 1;
     states->vertexShader = 1;
     states->scissorRect = 1;
+    states->blend_state = 1;
 
     /* Fixed size arrays */
     states->streamSource = 0xffff;
@@ -263,6 +264,7 @@ static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *state
 
     states->vertexDecl = 1;
     states->vertexShader = 1;
+    states->blend_state = 1;
 
     for (i = 0; i < ARRAY_SIZE(vertex_states_render); ++i)
     {
@@ -426,6 +428,7 @@ void state_unbind_resources(struct wined3d_state *state)
     struct wined3d_unordered_access_view *uav;
     struct wined3d_shader_resource_view *srv;
     struct wined3d_vertex_declaration *decl;
+    struct wined3d_blend_state *blend_state;
     struct wined3d_sampler *sampler;
     struct wined3d_texture *texture;
     struct wined3d_buffer *buffer;
@@ -519,12 +522,19 @@ void state_unbind_resources(struct wined3d_state *state)
             }
         }
     }
+
+    if ((blend_state = state->blend_state))
+    {
+        state->blend_state = NULL;
+        wined3d_blend_state_decref(blend_state);
+    }
 }
 
 void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state)
 {
     struct wined3d_light_info *light, *cursor;
     struct wined3d_vertex_declaration *decl;
+    struct wined3d_blend_state *blend_state;
     struct wined3d_texture *texture;
     struct wined3d_buffer *buffer;
     struct wined3d_shader *shader;
@@ -579,6 +589,12 @@ void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state)
             list_remove(&light->entry);
             heap_free(light);
         }
+    }
+
+    if ((blend_state = state->blend_state))
+    {
+        state->blend_state = NULL;
+        wined3d_blend_state_decref(blend_state);
     }
 }
 
@@ -1017,6 +1033,15 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
 
     wined3d_state_record_lights(stateblock->stateblock_state.light_state, state->light_state);
 
+    if (stateblock->changed.blend_state && stateblock->stateblock_state.blend_state != state->blend_state)
+    {
+        if (state->blend_state)
+            wined3d_blend_state_incref(state->blend_state);
+        if (stateblock->stateblock_state.blend_state)
+            wined3d_blend_state_decref(stateblock->stateblock_state.blend_state);
+        stateblock->stateblock_state.blend_state = state->blend_state;
+    }
+
     TRACE("Capture done.\n");
 }
 
@@ -1025,6 +1050,8 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
 {
     struct wined3d_stateblock_state *state = &device_state->stateblock_state;
     struct wined3d_device *device = stateblock->device;
+    struct wined3d_blend_state *blend_state;
+    struct wined3d_color colour;
     unsigned int i;
     DWORD map;
 
@@ -1113,20 +1140,41 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         wined3d_device_set_ps_consts_b(device, idx, 1, &stateblock->stateblock_state.ps_consts_b[idx]);
     }
 
+    if (stateblock->changed.blend_state)
+    {
+        if (stateblock->stateblock_state.blend_state)
+            wined3d_blend_state_incref(stateblock->stateblock_state.blend_state);
+        if (state->blend_state)
+            wined3d_blend_state_decref(state->blend_state);
+
+        state->blend_state = stateblock->stateblock_state.blend_state;
+
+        if (wined3d_bitmap_is_set(stateblock->changed.renderState, WINED3D_RS_BLENDFACTOR))
+            wined3d_color_from_d3dcolor(&colour, stateblock->stateblock_state.rs[WINED3D_RS_BLENDFACTOR]);
+        else
+            wined3d_device_get_blend_state(device, &colour);
+
+        wined3d_device_set_blend_state(device, stateblock->stateblock_state.blend_state, &colour);
+    }
+
     /* Render states. */
     for (i = 0; i < stateblock->num_contained_render_states; ++i)
     {
         enum wined3d_render_state rs = stateblock->contained_render_states[i];
 
         state->rs[rs] = stateblock->stateblock_state.rs[rs];
-        if (rs == WINED3D_RS_BLENDFACTOR)
+        if (rs != WINED3D_RS_BLENDFACTOR)
         {
-            struct wined3d_color color;
-            wined3d_color_from_d3dcolor(&color, stateblock->stateblock_state.rs[rs]);
-            wined3d_device_set_blend_state(device, NULL, &color);
-        }
-        else
             wined3d_device_set_render_state(device, rs, stateblock->stateblock_state.rs[rs]);
+            continue;
+        }
+
+        if (!stateblock->changed.blend_state)
+        {
+            blend_state = wined3d_device_get_blend_state(device, &colour);
+            wined3d_color_from_d3dcolor(&colour, stateblock->stateblock_state.rs[rs]);
+            wined3d_device_set_blend_state(device, blend_state, &colour);
+        }
     }
 
     /* Texture states. */
@@ -1426,6 +1474,23 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
 
     stateblock->stateblock_state.rs[state] = value;
     stateblock->changed.renderState[state >> 5] |= 1u << (state & 0x1f);
+
+    if (state == WINED3D_RS_POINTSIZE
+            && (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE || value == WINED3D_ALPHA_TO_COVERAGE_DISABLE))
+    {
+        stateblock->changed.blend_state = 1;
+
+        if (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE && !stateblock->stateblock_state.blend_state)
+        {
+            wined3d_blend_state_incref(stateblock->device->blend_state_atoc_enabled);
+            stateblock->stateblock_state.blend_state = stateblock->device->blend_state_atoc_enabled;
+        }
+        else if (value == WINED3D_ALPHA_TO_COVERAGE_DISABLE && stateblock->stateblock_state.blend_state)
+        {
+            wined3d_blend_state_decref(stateblock->stateblock_state.blend_state);
+            stateblock->stateblock_state.blend_state = NULL;
+        }
+    }
 }
 
 void CDECL wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *stateblock,

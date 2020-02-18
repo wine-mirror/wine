@@ -76,6 +76,9 @@
 
 #define WINED3D_MAX_DIRTY_REGION_COUNT 7
 
+#define WINED3D_ALPHA_TO_COVERAGE_ENABLE MAKEFOURCC('A','2','M','1')
+#define WINED3D_ALPHA_TO_COVERAGE_DISABLE MAKEFOURCC('A','2','M','0')
+
 struct wined3d_fragment_pipe_ops;
 struct wined3d_adapter;
 struct wined3d_context;
@@ -3314,6 +3317,7 @@ struct wined3d_device
     /* Context management */
     struct wined3d_context **contexts;
     UINT context_count;
+    struct wined3d_blend_state *blend_state_atoc_enabled;
 };
 
 void wined3d_device_cleanup(struct wined3d_device *device) DECLSPEC_HIDDEN;
@@ -3932,7 +3936,8 @@ struct wined3d_saved_states
     DWORD vertexShader : 1;
     DWORD scissorRect : 1;
     DWORD store_stream_offset : 1;
-    DWORD padding : 4;
+    DWORD blend_state : 1;
+    DWORD padding : 3;
 };
 
 struct StageState {
