@@ -237,8 +237,18 @@ LPVOID WINAPI ReallocADsMem(LPVOID pOldMem, DWORD cbOld, DWORD cbNew)
  */
 LPWSTR WINAPI AllocADsStr(LPWSTR pStr)
 {
-    FIXME("(%p)!stub\n",pStr);
-    return NULL;
+    LPWSTR ret;
+    SIZE_T len;
+
+    TRACE("(%p)\n", pStr);
+
+    if (!pStr) return NULL;
+
+    len = (wcslen(pStr) + 1) * sizeof(WCHAR);
+    ret = AllocADsMem(len);
+    if (ret) memcpy(ret, pStr, len);
+
+    return ret;
 }
 
 /*****************************************************
@@ -246,8 +256,9 @@ LPWSTR WINAPI AllocADsStr(LPWSTR pStr)
  */
 BOOL WINAPI FreeADsStr(LPWSTR pStr)
 {
-    FIXME("(%p)!stub\n",pStr);
-    return FALSE;
+    TRACE("(%p)\n", pStr);
+
+    return FreeADsMem(pStr);
 }
 
 /*****************************************************
