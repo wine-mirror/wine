@@ -4327,6 +4327,39 @@ static void _SHCreateDesktopSymbolicLink(void)
 }
 
 /******************************************************************************
+ * _SHCreateSymbolicLink  [Internal]
+ *
+ * Sets up a symbolic link for one of the special shell folders to point into
+ * the users home directory.
+ *
+ * PARAMS
+ *  nFolder [I] CSIDL identifying the folder.
+ */
+static void _SHCreateSymbolicLink(int nFolder)
+{
+    static const UINT aidsMyStuff[] = {
+        IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC, IDS_DOWNLOADS, IDS_TEMPLATES
+    };
+    DWORD folder = nFolder & CSIDL_FOLDER_MASK;
+
+    switch (folder) {
+        case CSIDL_PERSONAL:
+            _SHCreateMyDocumentsSymbolicLink(aidsMyStuff, ARRAY_SIZE(aidsMyStuff));
+            break;
+        case CSIDL_MYPICTURES:
+        case CSIDL_MYVIDEO:
+        case CSIDL_MYMUSIC:
+        case CSIDL_DOWNLOADS:
+        case CSIDL_TEMPLATES:
+            _SHCreateMyStuffSymbolicLink(folder);
+            break;
+        case CSIDL_DESKTOPDIRECTORY:
+            _SHCreateDesktopSymbolicLink();
+            break;
+    }
+}
+
+/******************************************************************************
  * _SHCreateSymbolicLinks  [Internal]
  *
  * Sets up symbol links for various shell folders to point into the user's home
@@ -4351,22 +4384,13 @@ static void _SHCreateDesktopSymbolicLink(void)
  */
 static void _SHCreateSymbolicLinks(void)
 {
-    static const UINT aidsMyStuff[] = {
-        IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC, IDS_DOWNLOADS, IDS_TEMPLATES
-    };
     static const int acsidlMyStuff[] = {
-        CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC, CSIDL_DOWNLOADS, CSIDL_TEMPLATES
+        CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC, CSIDL_DOWNLOADS, CSIDL_TEMPLATES, CSIDL_PERSONAL, CSIDL_DESKTOPDIRECTORY
     };
     UINT i;
 
-    _SHCreateMyDocumentsSymbolicLink(aidsMyStuff, ARRAY_SIZE(aidsMyStuff));
-
-    /* Create symbolic links for 'My Pictures', 'My Videos', 'My Music' etc. */
     for (i=0; i < ARRAY_SIZE(acsidlMyStuff); i++)
-        _SHCreateMyStuffSymbolicLink(acsidlMyStuff[i]);
-
-    /* Last but not least, the Desktop folder */
-    _SHCreateDesktopSymbolicLink();
+        _SHCreateSymbolicLink(acsidlMyStuff[i]);
 }
 
 /******************************************************************************
