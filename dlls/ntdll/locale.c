@@ -41,7 +41,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
-/* NLS file format:
+/* NLS codepage file format:
  *
  * header:
  *   WORD      offset to cp2uni table in words
@@ -76,17 +76,44 @@ UINT NlsAnsiCodePage = 0;
 BYTE NlsMbCodePageTag = 0;
 BYTE NlsMbOemCodePageTag = 0;
 
+/* NLS normalization file */
+struct norm_table
+{
+    WCHAR   name[13];      /* 00 file name */
+    USHORT  checksum[3];   /* 1a checksum? */
+    USHORT  version[4];    /* 20 Unicode version */
+    USHORT  form;          /* 28 normalization form */
+    USHORT  len_factor;    /* 2a factor for length estimates */
+    USHORT  unknown1;      /* 2c */
+    USHORT  decomp_size;   /* 2e decomposition hash size */
+    USHORT  comp_size;     /* 30 composition hash size */
+    USHORT  unknown2;      /* 32 */
+    USHORT  classes;       /* 34 combining classes table offset */
+    USHORT  props_level1;  /* 36 char properties table level 1 offset */
+    USHORT  props_level2;  /* 38 char properties table level 2 offset */
+    USHORT  decomp_hash;   /* 3a decomposition hash table offset */
+    USHORT  decomp_map;    /* 3c decomposition character map table offset */
+    USHORT  decomp_seq;    /* 3e decomposition character sequences offset */
+    USHORT  comp_hash;     /* 40 composition hash table offset */
+    USHORT  comp_seq;      /* 42 composition character sequences offset */
+    /* BYTE[]       combining class values */
+    /* BYTE[0x2200] char properties index level 1 */
+    /* BYTE[]       char properties index level 2 */
+    /* WORD[]       decomposition hash table */
+    /* WORD[]       decomposition character map */
+    /* WORD[]       decomposition character sequences */
+    /* WORD[]       composition hash table */
+    /* WORD[]       composition character sequences */
+};
+
 LCID user_lcid = 0, system_lcid = 0;
 
 static LANGID user_ui_language, system_ui_language;
 static NLSTABLEINFO nls_info;
 static HMODULE kernel32_handle;
 static CPTABLEINFO unix_table;
+static struct norm_table *norm_tables[16];
 
-extern unsigned int wine_compose( unsigned int ch1, unsigned int ch2 ) DECLSPEC_HIDDEN;
-extern const unsigned short combining_class_table[] DECLSPEC_HIDDEN;
-extern const unsigned short nfd_table[] DECLSPEC_HIDDEN;
-extern const unsigned short nfkd_table[] DECLSPEC_HIDDEN;
 
 static NTSTATUS load_string( ULONG id, LANGID lang, WCHAR *buffer, ULONG len )
 {
@@ -155,42 +182,6 @@ static WCHAR casemap_ascii( WCHAR ch )
 }
 
 
-static const WCHAR *get_decomposition( const unsigned short *table, unsigned int ch, unsigned int *len )
-{
-    unsigned short offset = table[table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
-    unsigned short start = table[offset];
-    unsigned short end = table[offset + 1];
-
-    if ((*len = end - start)) return table + start;
-    *len = 1 + (ch >= 0x10000);
-    return NULL;
-}
-
-
-static BYTE get_combining_class( unsigned int c )
-{
-    const unsigned short *table = combining_class_table;
-    return table[table[table[table[c >> 12] + ((c >> 8) & 0xf)] + ((c >> 4) & 0xf)] + (c & 0xf)];
-}
-
-
-static BOOL is_starter( unsigned int c )
-{
-    return !get_combining_class( c );
-}
-
-
-static BOOL reorderable_pair( unsigned int c1, unsigned int c2 )
-{
-    BYTE ccc1, ccc2;
-
-    /* reorderable if ccc1 > ccc2 > 0 */
-    ccc1 = get_combining_class( c1 );
-    if (ccc1 < 2) return FALSE;
-    ccc2 = get_combining_class( c2 );
-    return ccc2 && (ccc1 > ccc2);
-}
-
 static int get_utf16( const WCHAR *src, unsigned int srclen, unsigned int *ch )
 {
     if (IS_HIGH_SURROGATE( src[0] ))
@@ -216,7 +207,165 @@ static void put_utf16( WCHAR *dst, unsigned int ch )
     else dst[0] = ch;
 }
 
-static void canonical_order_substring( WCHAR *str, unsigned int len )
+
+static NTSTATUS load_norm_table( ULONG form, const struct norm_table **info )
+{
+    unsigned int i;
+    USHORT *data, *tables;
+    SIZE_T size;
+    NTSTATUS status;
+
+    if (!form) return STATUS_INVALID_PARAMETER;
+    if (form >= ARRAY_SIZE(norm_tables)) return STATUS_OBJECT_NAME_NOT_FOUND;
+
+    if (!norm_tables[form])
+    {
+        if ((status = NtGetNlsSectionPtr( NLS_SECTION_NORMALIZE, form, NULL, (void **)&data, &size )))
+            return status;
+
+        /* sanity checks */
+
+        if (size <= 0x44) goto invalid;
+        if (data[0x14] != form) goto invalid;
+        tables = data + 0x1a;
+        for (i = 0; i < 8; i++)
+        {
+            if (tables[i] > size / sizeof(USHORT)) goto invalid;
+            if (i && tables[i] < tables[i-1]) goto invalid;
+        }
+
+        if (interlocked_cmpxchg_ptr( (void **)&norm_tables[form], data, NULL ))
+            RtlFreeHeap( GetProcessHeap(), 0, data );
+    }
+    *info = norm_tables[form];
+    return STATUS_SUCCESS;
+
+invalid:
+    RtlFreeHeap( GetProcessHeap(), 0, data );
+    return STATUS_INVALID_PARAMETER;
+}
+
+
+static BYTE rol( BYTE val, BYTE count )
+{
+    return (val << count) | (val >> (8 - count));
+}
+
+
+static BYTE get_char_props( const struct norm_table *info, unsigned int ch )
+{
+    const BYTE *level1 = (const BYTE *)((const USHORT *)info + info->props_level1);
+    const BYTE *level2 = (const BYTE *)((const USHORT *)info + info->props_level2);
+    BYTE off = level1[ch / 128];
+
+    if (!off || off >= 0xfb) return rol( off, 5 );
+    return level2[(off - 1) * 128 + ch % 128];
+}
+
+
+#define HANGUL_SBASE  0xac00
+#define HANGUL_LBASE  0x1100
+#define HANGUL_VBASE  0x1161
+#define HANGUL_TBASE  0x11a7
+#define HANGUL_LCOUNT 19
+#define HANGUL_VCOUNT 21
+#define HANGUL_TCOUNT 28
+#define HANGUL_NCOUNT (HANGUL_VCOUNT * HANGUL_TCOUNT)
+#define HANGUL_SCOUNT (HANGUL_LCOUNT * HANGUL_NCOUNT)
+
+static const WCHAR *get_decomposition( const struct norm_table *info, unsigned int ch,
+                                       BYTE props, WCHAR *buffer, unsigned int *ret_len )
+{
+    const struct pair { WCHAR src; USHORT dst; } *pairs;
+    const USHORT *hash_table = (const USHORT *)info + info->decomp_hash;
+    const WCHAR *ret;
+    unsigned int i, pos, end, len, hash;
+
+    /* default to no decomposition */
+    put_utf16( buffer, ch );
+    *ret_len = 1 + (ch >= 0x10000);
+    if (!props || props == 0x7f) return buffer;
+
+    if (props == 0xff)  /* Hangul or invalid char */
+    {
+        if (ch >= HANGUL_SBASE && ch < HANGUL_SBASE + HANGUL_SCOUNT)
+        {
+            unsigned short sindex = ch - HANGUL_SBASE;
+            unsigned short tindex = sindex % HANGUL_TCOUNT;
+            buffer[0] = HANGUL_LBASE + sindex / HANGUL_NCOUNT;
+            buffer[1] = HANGUL_VBASE + (sindex % HANGUL_NCOUNT) / HANGUL_TCOUNT;
+            if (tindex) buffer[2] = HANGUL_TBASE + tindex;
+            *ret_len = 2 + !!tindex;
+            return buffer;
+        }
+        /* ignore other chars in Hangul range */
+        if (ch >= HANGUL_LBASE && ch < HANGUL_LBASE + 0x100) return buffer;
+        if (ch >= HANGUL_SBASE && ch < HANGUL_SBASE + 0x2c00) return buffer;
+        return NULL;
+    }
+
+    hash = ch % info->decomp_size;
+    pos = hash_table[hash];
+    if (pos >> 13)
+    {
+        if (props != 0xbf) return buffer;
+        ret = (const USHORT *)info + info->decomp_seq + (pos & 0x1fff);
+        len = pos >> 13;
+    }
+    else
+    {
+        pairs = (const struct pair *)((const USHORT *)info + info->decomp_map);
+
+        /* find the end of the hash bucket */
+        for (i = hash + 1; i < info->decomp_size; i++) if (!(hash_table[i] >> 13)) break;
+        if (i < info->decomp_size) end = hash_table[i];
+        else for (end = pos; pairs[end].src; end++) ;
+
+        for ( ; pos < end; pos++)
+        {
+            if (pairs[pos].src != (WCHAR)ch) continue;
+            ret = (const USHORT *)info + info->decomp_seq + (pairs[pos].dst & 0x1fff);
+            len = pairs[pos].dst >> 13;
+            break;
+        }
+        if (pos >= end) return buffer;
+    }
+
+    if (len == 7) while (ret[len]) len++;
+    if (!ret[0]) len = 0;  /* ignored char */
+    *ret_len = len;
+    return ret;
+}
+
+
+static BYTE get_combining_class( const struct norm_table *info, unsigned int c )
+{
+    const BYTE *classes = (const BYTE *)((const USHORT *)info + info->classes);
+    BYTE class = get_char_props( info, c ) & 0x3f;
+
+    if (class == 0x3f) return 0;
+    return classes[class];
+}
+
+
+static BOOL is_starter( const struct norm_table *info, unsigned int c )
+{
+    return !get_combining_class( info, c );
+}
+
+
+static BOOL reorderable_pair( const struct norm_table *info, unsigned int c1, unsigned int c2 )
+{
+    BYTE ccc1, ccc2;
+
+    /* reorderable if ccc1 > ccc2 > 0 */
+    ccc1 = get_combining_class( info, c1 );
+    if (ccc1 < 2) return FALSE;
+    ccc2 = get_combining_class( info, c2 );
+    return ccc2 && (ccc1 > ccc2);
+}
+
+static void canonical_order_substring( const struct norm_table *info, WCHAR *str, unsigned int len )
 {
     unsigned int i, ch1, ch2, len1, len2;
     BOOL swapped;
@@ -229,7 +378,7 @@ static void canonical_order_substring( WCHAR *str, unsigned int len )
             if (!(len1 = get_utf16( str + i, len - i, &ch1 ))) break;
             if (i + len1 >= len) break;
             if (!(len2 = get_utf16( str + i + len1, len - i - len1, &ch2 ))) break;
-            if (reorderable_pair( ch1, ch2 ))
+            if (reorderable_pair( info, ch1, ch2 ))
             {
                 WCHAR tmp[2];
                 memcpy( tmp, str + i, len1 * sizeof(WCHAR) );
@@ -251,73 +400,56 @@ static void canonical_order_substring( WCHAR *str, unsigned int len )
  * Starters (chars with combining class == 0) don't move, so look for continuous
  * substrings of non-starters and only reorder those.
  */
-static void canonical_order_string( WCHAR *str, unsigned int len )
+static void canonical_order_string( const struct norm_table *info, WCHAR *str, unsigned int len )
 {
     unsigned int ch, i, r, next = 0;
 
     for (i = 0; i < len; i += r)
     {
         if (!(r = get_utf16( str + i, len - i, &ch ))) return;
-        if (i && is_starter( ch ))
+        if (i && is_starter( info, ch ))
         {
             if (i > next + 1) /* at least two successive non-starters */
-                canonical_order_substring( str + next, i - next );
+                canonical_order_substring( info, str + next, i - next );
             next = i + r;
         }
     }
-    if (i > next + 1) canonical_order_substring( str + next, i - next );
+    if (i > next + 1) canonical_order_substring( info, str + next, i - next );
 }
 
 
-#define HANGUL_SBASE  0xac00
-#define HANGUL_LBASE  0x1100
-#define HANGUL_VBASE  0x1161
-#define HANGUL_TBASE  0x11a7
-#define HANGUL_LCOUNT 19
-#define HANGUL_VCOUNT 21
-#define HANGUL_TCOUNT 28
-#define HANGUL_NCOUNT (HANGUL_VCOUNT * HANGUL_TCOUNT)
-#define HANGUL_SCOUNT (HANGUL_LCOUNT * HANGUL_NCOUNT)
-
-static NTSTATUS decompose_string( int compat, const WCHAR *src, int src_len, WCHAR *dst, int *dst_len )
+static NTSTATUS decompose_string( const struct norm_table *info, const WCHAR *src, int src_len,
+                                  WCHAR *dst, int *dst_len )
 {
-    const unsigned short *table = compat ? nfkd_table : nfd_table;
+    BYTE props;
     int src_pos, dst_pos;
     unsigned int ch, len, decomp_len;
+    WCHAR buffer[3];
     const WCHAR *decomp;
 
     for (src_pos = dst_pos = 0; src_pos < src_len; src_pos += len)
     {
-        if (src[src_pos] >= HANGUL_SBASE && src[src_pos] < HANGUL_SBASE + HANGUL_SCOUNT)
-        {
-            unsigned short sindex = src[src_pos] - HANGUL_SBASE;
-            unsigned short tindex = sindex % HANGUL_TCOUNT;
-            if (dst_pos + 2 + !!tindex > *dst_len) break;
-            dst[dst_pos++] = HANGUL_LBASE + sindex / HANGUL_NCOUNT;
-            dst[dst_pos++] = HANGUL_VBASE + (sindex % HANGUL_NCOUNT) / HANGUL_TCOUNT;
-            if (tindex) dst[dst_pos++] = HANGUL_TBASE + tindex;
-            len = 1;
-            continue;
-        }
-        if (!(len = get_utf16( src + src_pos, src_len - src_pos, &ch )) ||
-            (ch >= 0xfdd0 && ch <= 0xfdef) || ((ch & 0xffff) >= 0xfffe))
+        if (!(len = get_utf16( src + src_pos, src_len - src_pos, &ch )))
         {
             *dst_len = src_pos + IS_HIGH_SURROGATE( src[src_pos] );
             return STATUS_NO_UNICODE_TRANSLATION;
         }
-        decomp = get_decomposition( table, ch, &decomp_len );
-        if (dst_pos + decomp_len > *dst_len) break;
-        if (decomp) memcpy( dst + dst_pos, decomp, decomp_len * sizeof(WCHAR) );
-        else put_utf16( dst + dst_pos, ch );
+        props = get_char_props( info, ch );
+        if (!(decomp = get_decomposition( info, ch, props, buffer, &decomp_len )))
+        {
+            *dst_len = src_pos;
+            return STATUS_NO_UNICODE_TRANSLATION;
+        }
+        if (dst_pos + decomp_len > *dst_len)
+        {
+            *dst_len += (src_len - src_pos) * info->len_factor;
+            return STATUS_BUFFER_TOO_SMALL;
+        }
+        memcpy( dst + dst_pos, decomp, decomp_len * sizeof(WCHAR) );
         dst_pos += decomp_len;
     }
 
-    if (src_pos < src_len)
-    {
-        *dst_len += (src_len - src_pos) * (compat ? 18 : 3);
-        return STATUS_BUFFER_TOO_SMALL;
-    }
-    canonical_order_string( dst, dst_pos );
+    canonical_order_string( info, dst, dst_pos );
     *dst_len = dst_pos;
     return STATUS_SUCCESS;
 }
@@ -345,7 +477,24 @@ static unsigned int compose_hangul( unsigned int ch1, unsigned int ch2 )
 }
 
 
-static unsigned int compose_string( WCHAR *str, unsigned int srclen )
+static unsigned int compose_chars( const struct norm_table *info, unsigned int ch1, unsigned int ch2 )
+{
+    const USHORT *table = (const USHORT *)info + info->comp_hash;
+    const WCHAR *chars = (const USHORT *)info + info->comp_seq;
+    unsigned int hash, start, end, i, len, ch[3];
+
+    hash = (ch1 + 95 * ch2) % info->comp_size;
+    start = table[hash];
+    end = table[hash + 1];
+    while (start < end)
+    {
+        for (i = 0; i < 3; i++, start += len) len = get_utf16( chars + start, end - start, ch + i );
+        if (ch[0] == ch1 && ch[1] == ch2) return ch[2];
+    }
+    return 0;
+}
+
+static unsigned int compose_string( const struct norm_table *info, WCHAR *str, unsigned int srclen )
 {
     unsigned int i, ch, comp, len, start_ch = 0, last_starter = srclen;
     BYTE class, prev_class = 0;
@@ -353,9 +502,10 @@ static unsigned int compose_string( WCHAR *str, unsigned int srclen )
     for (i = 0; i < srclen; i += len)
     {
         if (!(len = get_utf16( str + i, srclen - i, &ch ))) return 0;
-        class = get_combining_class( ch );
+        class = get_combining_class( info, ch );
         if (last_starter == srclen || (prev_class && prev_class >= class) ||
-            (!(comp = compose_hangul( start_ch, ch )) && !(comp = wine_compose( start_ch, ch ))))
+            (!(comp = compose_hangul( start_ch, ch )) &&
+             !(comp = compose_chars( info, start_ch, ch ))))
         {
             if (!class)
             {
@@ -643,7 +793,13 @@ void init_unix_codepage(void)
 
 #else  /* __APPLE__ || __ANDROID__ */
 
-void init_unix_codepage(void) { }
+void init_unix_codepage(void)
+{
+#ifdef __APPLE__
+    const struct norm_table *info;
+    load_norm_table( NormalizationC, &info );
+#endif
+}
 
 #endif  /* __APPLE__ || __ANDROID__ */
 
@@ -828,7 +984,8 @@ DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
 
     reslen /= sizeof(WCHAR);
 #ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
-    if (reslen && dst) reslen = compose_string( dst, reslen );
+    if (reslen && dst && norm_tables[NormalizationC])
+        reslen = compose_string( norm_tables[NormalizationC], dst, reslen );
 #endif
     return reslen;
 }
@@ -1749,27 +1906,20 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
  */
 NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, WCHAR *dst, INT *dst_len )
 {
-    int compose, compat, buf_len;
+    int buf_len;
     WCHAR *buf = NULL;
+    const struct norm_table *info;
     NTSTATUS status = STATUS_SUCCESS;
 
     TRACE( "%x %s %d %p %d\n", form, debugstr_wn(src, src_len), src_len, dst, *dst_len );
 
-    switch (form)
-    {
-    case NormalizationC:  compose = 1; compat = 0; break;
-    case NormalizationD:  compose = 0; compat = 0; break;
-    case NormalizationKC: compose = 1; compat = 1; break;
-    case NormalizationKD: compose = 0; compat = 1; break;
-    case 0: return STATUS_INVALID_PARAMETER;
-    default: return STATUS_OBJECT_NAME_NOT_FOUND;
-    }
+    if ((status = load_norm_table( form, &info ))) return status;
 
     if (src_len == -1) src_len = strlenW(src) + 1;
 
     if (!*dst_len)
     {
-        *dst_len = compat ? src_len * 18 : src_len * 3;
+        *dst_len = src_len * info->len_factor;
         if (*dst_len > 64) *dst_len = max( 64, src_len + src_len / 8 );
         return STATUS_SUCCESS;
     }
@@ -1779,20 +1929,20 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
         return STATUS_SUCCESS;
     }
 
-    if (!compose) return decompose_string( compat, src, src_len, dst, dst_len );
+    if (!info->comp_size) return decompose_string( info, src, src_len, dst, dst_len );
 
     buf_len = src_len * 4;
     for (;;)
     {
         buf = RtlAllocateHeap( GetProcessHeap(), 0, buf_len * sizeof(WCHAR) );
         if (!buf) return STATUS_NO_MEMORY;
-        status = decompose_string( compat, src, src_len, buf, &buf_len );
+        status = decompose_string( info, src, src_len, buf, &buf_len );
         if (status != STATUS_BUFFER_TOO_SMALL) break;
         RtlFreeHeap( GetProcessHeap(), 0, buf );
     }
     if (!status)
     {
-        buf_len = compose_string( buf, buf_len );
+        buf_len = compose_string( info, buf, buf_len );
         if (*dst_len >= buf_len) memcpy( dst, buf, buf_len * sizeof(WCHAR) );
         else status = STATUS_BUFFER_TOO_SMALL;
     }

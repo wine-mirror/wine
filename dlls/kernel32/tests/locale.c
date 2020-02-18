@@ -6222,11 +6222,8 @@ static void test_NormalizeString(void)
         case NormalizationKC:
         case NormalizationKD:
         case 13:  /* Idn */
-            todo_wine_if (i == 13)
-            {
             ok( dstlen > 0, "%d: wrong len %d\n", i, dstlen );
             ok( GetLastError() == ERROR_SUCCESS, "%d: got error %u\n", i, GetLastError());
-            }
             break;
         default:
             ok( dstlen <= 0, "%d: wrong len %d\n", i, dstlen );
@@ -6247,7 +6244,6 @@ static void test_NormalizeString(void)
             case NormalizationKC:
             case NormalizationKD:
             case 13:  /* Idn */
-                todo_wine_if (i == 13)
                 ok( status == STATUS_SUCCESS, "%d: failed %x\n", i, status );
                 break;
             default:
