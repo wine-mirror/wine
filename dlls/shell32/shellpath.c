@@ -4051,6 +4051,33 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
 }
 
 /******************************************************************************
+ * _SHCreateMyDocumentsSubDirs  [Internal]
+ *
+ * Create real directories for various shell folders under 'My Documents'. For
+ * Windows and homeless styles. Fails silently for already existing sub dirs.
+ *
+ * PARAMS
+ *  aidsMyStuff      [I] Array of IDS_* resources to create sub dirs for.
+ *  num              [I] Number of elements in aidsMyStuff.
+ *  szPersonalTarget [I] Unix path to 'My Documents' directory.
+ */
+static void _SHCreateMyDocumentsSubDirs(const UINT * aidsMyStuff, const UINT num, const char * szPersonalTarget)
+{
+    char szMyStuffTarget[FILENAME_MAX];
+    UINT i;
+
+    if (aidsMyStuff && szPersonalTarget)
+    {
+        for (i = 0; i < num; i++)
+        {
+            strcpy(szMyStuffTarget, szPersonalTarget);
+            if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])))
+                mkdir(szMyStuffTarget, 0777);
+        }
+    }
+}
+
+/******************************************************************************
  * _SHCreateSymbolicLinks  [Internal]
  *
  * Sets up symbol links for various shell folders to point into the user's home
@@ -4122,12 +4149,7 @@ static void _SHCreateSymbolicLinks(void)
                  * 'My Pictures', 'My Videos', 'My Music' etc. or fail silently
                  * if they already exist.
                  */
-                for (i = 0; i < ARRAY_SIZE(aidsMyStuff); i++)
-                {
-                    strcpy(szMyStuffTarget, szPersonalTarget);
-                    if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])))
-                        mkdir(szMyStuffTarget, 0777);
-                }
+                _SHCreateMyDocumentsSubDirs(aidsMyStuff, ARRAY_SIZE(aidsMyStuff), szPersonalTarget);
                 break;
             }
 
@@ -4163,11 +4185,7 @@ static void _SHCreateSymbolicLinks(void)
          * they already exist. */
         pszHome = NULL;
         strcpy(szPersonalTarget, pszPersonal);
-        for (i = 0; i < ARRAY_SIZE(aidsMyStuff); i++) {
-            strcpy(szMyStuffTarget, szPersonalTarget);
-            if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])))
-                mkdir(szMyStuffTarget, 0777);
-        }
+        _SHCreateMyDocumentsSubDirs(aidsMyStuff, ARRAY_SIZE(aidsMyStuff), szPersonalTarget);
     }
 
     /* Create symbolic links for 'My Pictures', 'My Videos', 'My Music' etc. */
