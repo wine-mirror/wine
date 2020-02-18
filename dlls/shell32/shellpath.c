@@ -4276,6 +4276,57 @@ static void _SHCreateMyStuffSymbolicLink(int nFolder)
 }
 
 /******************************************************************************
+ * _SHCreateDesktopSymbolicLink  [Internal]
+ *
+ * Sets up a symbolic link for the 'Desktop' shell folder to point into the
+ * users home directory.
+ */
+static void _SHCreateDesktopSymbolicLink(void)
+{
+    static const char * const xdg_dirs[] = { "DESKTOP" };
+    static const unsigned int num = ARRAY_SIZE(xdg_dirs);
+    char *pszPersonal;
+    char szDesktopTarget[FILENAME_MAX], *pszDesktop;
+    struct stat statFolder;
+    const char *pszHome;
+    char ** xdg_results;
+    char * xdg_desktop_dir;
+
+    /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
+    pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_CREATE);
+    if (!pszPersonal) return;
+
+    _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
+
+    pszHome = getenv("HOME");
+
+    if (pszHome)
+        strcpy(szDesktopTarget, pszHome);
+    else
+        strcpy(szDesktopTarget, pszPersonal);
+    heap_free(pszPersonal);
+
+    xdg_desktop_dir = xdg_results ? xdg_results[0] : NULL;
+    if (xdg_desktop_dir ||
+        (_SHAppendToUnixPath(szDesktopTarget, DesktopW) &&
+        !stat(szDesktopTarget, &statFolder) && S_ISDIR(statFolder.st_mode)))
+    {
+        pszDesktop = _SHGetFolderUnixPath(CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE);
+        if (pszDesktop)
+        {
+            remove(pszDesktop);
+            if (xdg_desktop_dir)
+                symlink(xdg_desktop_dir, pszDesktop);
+            else
+                symlink(szDesktopTarget, pszDesktop);
+            heap_free(pszDesktop);
+        }
+    }
+
+    _SHFreeXDGUserDirs(num, xdg_results);
+}
+
+/******************************************************************************
  * _SHCreateSymbolicLinks  [Internal]
  *
  * Sets up symbol links for various shell folders to point into the user's home
@@ -4306,14 +4357,6 @@ static void _SHCreateSymbolicLinks(void)
     static const int acsidlMyStuff[] = {
         CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC, CSIDL_DOWNLOADS, CSIDL_TEMPLATES
     };
-    static const char * const xdg_dirs[] = { "DESKTOP" };
-    static const unsigned int num = ARRAY_SIZE(xdg_dirs);
-    char *pszPersonal;
-    char szDesktopTarget[FILENAME_MAX], *pszDesktop;
-    struct stat statFolder;
-    const char *pszHome;
-    char ** xdg_results;
-    char * xdg_desktop_dir;
     UINT i;
 
     _SHCreateMyDocumentsSymbolicLink(aidsMyStuff, ARRAY_SIZE(aidsMyStuff));
@@ -4322,39 +4365,8 @@ static void _SHCreateSymbolicLinks(void)
     for (i=0; i < ARRAY_SIZE(acsidlMyStuff); i++)
         _SHCreateMyStuffSymbolicLink(acsidlMyStuff[i]);
 
-    /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
-    pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_CREATE);
-    if (!pszPersonal) return;
-
-    _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
-
-    pszHome = getenv("HOME");
-
     /* Last but not least, the Desktop folder */
-    if (pszHome)
-        strcpy(szDesktopTarget, pszHome);
-    else
-        strcpy(szDesktopTarget, pszPersonal);
-    heap_free(pszPersonal);
-
-    xdg_desktop_dir = xdg_results ? xdg_results[num - 1] : NULL;
-    if (xdg_desktop_dir ||
-        (_SHAppendToUnixPath(szDesktopTarget, DesktopW) &&
-        !stat(szDesktopTarget, &statFolder) && S_ISDIR(statFolder.st_mode)))
-    {
-        pszDesktop = _SHGetFolderUnixPath(CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE);
-        if (pszDesktop)
-        {
-            remove(pszDesktop);
-            if (xdg_desktop_dir)
-                symlink(xdg_desktop_dir, pszDesktop);
-            else
-                symlink(szDesktopTarget, pszDesktop);
-            heap_free(pszDesktop);
-        }
-    }
-
-    _SHFreeXDGUserDirs(num, xdg_results);
+    _SHCreateDesktopSymbolicLink();
 }
 
 /******************************************************************************
