@@ -22,8 +22,10 @@
 use strict;
 
 # base URLs for www.unicode.org files
+my $UNIVERSION = "12.1.0";
 my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/12.1.0/ucd/UCD.zip";
+my $UNIDATA = "http://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip";
+my $IDNADATA = "https://www.unicode.org/Public/idna/$UNIVERSION";
 my $REPORTS = "http://www.unicode.org/reports";
 my $RFCS = "http://www.rfc-editor.org/rfc";
 my $MSDATA = "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498";
@@ -408,6 +410,8 @@ my @decomp_table = ();
 my @combining_class_table = ();
 my @decomp_compat_table = ();
 my @comp_exclusions = ();
+my @idna_decomp_table = ();
+my @idna_disallowed = ();
 my $default_char;
 my $default_wchar;
 
@@ -494,8 +498,13 @@ sub get_composition($$)
     return () if $comp_exclusions[$ch];           # composition exclusion
     return () if $combining_class_table[$ch];     # non-starter
     return () if $combining_class_table[$ret[0]]; # first char is non-starter
-    return () if $compat && !defined $decomp_table[$ret[0]] &&
-        defined $decomp_compat_table[$ret[0]];   # first char has compat decomposition
+    return () if $compat == 1 && !defined $decomp_table[$ret[0]] &&
+        defined $decomp_compat_table[$ret[0]];    # first char has compat decomposition
+    return () if $compat == 2 && !defined $decomp_table[$ret[0]] &&
+        defined $idna_decomp_table[$ret[0]];      # first char has IDNA decomposition
+    return () if $compat == 2 && defined $idna_decomp_table[$ret[0]] &&
+        defined $idna_decomp_table[$idna_decomp_table[$ret[0]]->[0]];  # first char's decomposition has IDNA decomposition
+    return () if $compat == 2 && defined $idna_decomp_table[$ret[1]];  # second char has IDNA decomposition
     return @ret;
 }
 
@@ -513,6 +522,44 @@ sub build_decompositions(@)
         $dst[$i] = \@decomp;
     }
     return @dst;
+}
+
+################################################################
+# compose Hangul sequences
+sub compose_hangul(@)
+{
+    my $SBASE  = 0xac00;
+    my $LBASE  = 0x1100;
+    my $VBASE  = 0x1161;
+    my $TBASE  = 0x11a7;
+    my $LCOUNT = 19;
+    my $VCOUNT = 21;
+    my $TCOUNT = 28;
+    my $NCOUNT = $VCOUNT * $TCOUNT;
+    my $SCOUNT = $LCOUNT * $NCOUNT;
+
+    my @seq = @_;
+    my @ret;
+    my $i;
+
+    for ($i = 0; $i < @seq; $i++)
+    {
+        my $ch = $seq[$i];
+        if ($ch >= $LBASE && $ch < $LBASE + $LCOUNT && $i < @seq - 1 &&
+            $seq[$i+1] >= $VBASE && $seq[$i+1] < $VBASE + $VCOUNT)
+        {
+            $ch = $SBASE + (($seq[$i] - $LBASE) * $VCOUNT + ($seq[$i+1] - $VBASE)) * $TCOUNT;
+            $i++;
+        }
+        if ($ch >= $SBASE && $ch < $SBASE + $SCOUNT && !(($ch - $SBASE) % $TCOUNT) && $i < @seq - 1 &&
+            $seq[$i+1] > $TBASE && $seq[$i+1] < $TBASE + $TCOUNT)
+        {
+            $ch += $seq[$i+1] - $TBASE;
+            $i++;
+        }
+        push @ret, $ch;
+    }
+    return @ret;
 }
 
 ################################################################
@@ -556,10 +603,7 @@ sub load_data()
         {
             $digitmap_table[$src] = ord $dig;
         }
-        if ($comb ne "")
-        {
-            $combining_class_table[$src] = $comb;
-        }
+        $combining_class_table[$src] = ($cat ne "Co") ? $comb : 0x100; # Private Use
 
         # copy the category and direction for everything between First/Last pairs
         if ($name =~ /, First>/) { $start = $src; }
@@ -569,6 +613,7 @@ sub load_data()
             {
                 $category_table[$start] = $category_table[$src];
                 $direction_table[$start] = $direction_table[$src];
+                $combining_class_table[$start] = $combining_class_table[$src];
                 $start++;
             }
         }
@@ -667,6 +712,50 @@ sub load_data()
         }
     }
     close $EXCL;
+
+    # load the IDNA mappings
+
+    @idna_decomp_table = @decomp_compat_table;
+    my $IDNA = open_data_file( $IDNADATA, "IdnaMappingTable.txt" );
+    while (<$IDNA>)
+    {
+        s/\#.*//;  # remove comments
+        next if /^\s*$/;
+        my ($char, $type, $mapping) = split /;/;
+        my ($ch1, $ch2);
+        if ($char =~ /([0-9a-fA-F]+)\.\.([0-9a-fA-F]+)/)
+        {
+            $ch1 = hex $1;
+            $ch2 = hex $2;
+        }
+        elsif ($char =~ /([0-9a-fA-F]+)/)
+        {
+            $ch1 = $ch2 = hex $1;
+        }
+
+        if ($type =~ /mapped/ || $type =~ /deviation/)
+        {
+            $mapping =~ s/^\s*(([0-9a-fA-F]+\s+)+)\s*$/$1/;
+            my @seq = map { hex $_; } split /\s+/, $mapping;
+            foreach my $i ($ch1 .. $ch2) { $idna_decomp_table[$i] = @seq ? \@seq : [ 0 ]; }
+        }
+        elsif ($type =~ /valid/)
+        {
+        }
+        elsif ($type =~ /ignored/)
+        {
+            foreach my $i ($ch1 .. $ch2) { $idna_decomp_table[$i] = [ 0 ]; }
+        }
+        elsif ($type =~ /disallowed/)
+        {
+            foreach my $i ($ch1 .. $ch2)
+            {
+                $idna_decomp_table[$i] = undef;
+                $idna_disallowed[$i] = 1;
+            }
+        }
+    }
+    close $IDNA;
 }
 
 
@@ -2190,6 +2279,274 @@ sub dump_decompose_table($$)
     save_file($filename);
 }
 
+sub rol($$)
+{
+    my ($byte, $count) = @_;
+    return (($byte << $count) | ($byte >> (8 - $count))) & 0xff;
+}
+
+################################################################
+# compress the character properties table
+sub compress_char_props_table($@)
+{
+    my $rows = shift;
+    my @table = @_;
+    my $len = @table / $rows;
+    my $pos = 0;
+    my @array = (0) x $rows;
+    my %sequences;
+
+    # add some predefined sequences
+    foreach my $i (0, 0xfb .. 0xff) { $sequences{pack "L*", (rol($i,5)) x $len} = $i; }
+
+    # try to merge table rows
+    for (my $row = 0; $row < $rows; $row++)
+    {
+        my @table_row = map { defined $_ ? $_ : 0x7f; } @table[($row * $len)..(($row + 1) * $len - 1)];
+        my $rowtxt = pack "L*", @table_row;
+        if (defined($sequences{$rowtxt}))
+        {
+            # reuse an existing row
+            $array[$row] = $sequences{$rowtxt};
+        }
+        else
+        {
+            # create a new row
+            $sequences{$rowtxt} = $array[$row] = ++$pos;
+            push @array, @table_row;
+        }
+    }
+    return @array;
+}
+
+################################################################
+# dump a normalization table in binary format
+sub dump_norm_table($)
+{
+    my $filename = shift;
+
+    my %forms  = ( "nfc" => 1, "nfd" => 2, "nfkc" => 5, "nfkd" => 6, "idna" => 13 );
+    my %decomp = ( "nfc" => \@decomp_table,
+                   "nfd" => \@decomp_table,
+                   "nfkc" => \@decomp_compat_table,
+                   "nfkd" => \@decomp_compat_table ,
+                   "idna" => \@idna_decomp_table );
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+
+    my $type = $filename;
+    $type =~ s!.*/norm(\w+)\.nls!$1!;
+
+    my $compose = $forms{$type} & 1;
+    my $compat = !!($forms{$type} & 4) + ($type eq "idna");
+
+    my @version = split /\./, $UNIVERSION;
+
+    # combining classes
+
+    my @classes;
+    my @class_values;
+
+    foreach my $c (grep defined, @combining_class_table)
+    {
+        $classes[$c] = 1 if $c < 0x100;
+    }
+    for (my $i = 0; $i < @classes; $i++)
+    {
+        next unless defined $classes[$i];
+        $classes[$i] = @class_values;
+        push @class_values, $i;
+    }
+    push @class_values, 0 if (@class_values % 2);
+    die "too many classes" if @class_values >= 0x40;
+
+    # character properties
+
+    my @char_props;
+    my @decomposed;
+    my @comp_hash_table;
+    my $comp_hash_size = $compose ? 254 : 0;
+
+    for (my $i = 0; $i <= $MAX_CHAR; $i++)
+    {
+        next unless defined $combining_class_table[$i];
+        if (defined $decomp{$type}->[$i])
+        {
+            my @dec = get_decomposition( $i, $decomp{$type} );
+            if ($compose && (my @comp = get_composition( $i, $compat )))
+            {
+                my $hash = ($comp[0] + 95 * $comp[1]) % $comp_hash_size;
+                push @{$comp_hash_table[$hash]}, to_utf16( @comp, $i );
+
+                my $val = 0;
+                foreach my $d (@dec)
+                {
+                    $val = $combining_class_table[$d];
+                    last if $val;
+                }
+                $char_props[$i] = $classes[$val];
+            }
+            else
+            {
+                $char_props[$i] = 0xbf;
+            }
+            @dec = compose_hangul( @dec ) if $compose;
+            @dec = to_utf16( @dec );
+            push @dec, 0 if @dec >= 7;
+            $decomposed[$i] = \@dec;
+        }
+        else
+        {
+            if ($combining_class_table[$i] == 0x100)
+            {
+                $char_props[$i] = 0x7f;
+            }
+            elsif ($combining_class_table[$i])
+            {
+                $char_props[$i] = $classes[$combining_class_table[$i]] | 0x80;
+            }
+            elsif ($type eq "idna" && defined $idna_disallowed[$i])
+            {
+                $char_props[$i] = 0xff;
+            }
+            else
+            {
+                $char_props[$i] = 0;
+            }
+        }
+    }
+
+    if ($compose)
+    {
+        for (my $i = 0; $i <= $MAX_CHAR; $i++)
+        {
+            my @comp = get_composition( $i, $compat );
+            next unless @comp;
+            if ($combining_class_table[$comp[1]])
+            {
+                $char_props[$comp[0]] |= 0x40 unless $char_props[$comp[0]] & 0x80;
+                $char_props[$comp[1]] |= 0x40;
+            }
+            else
+            {
+                $char_props[$comp[0]] = ($char_props[$comp[0]] & ~0x40) | 0x80;
+                $char_props[$comp[1]] |= 0xc0;
+            }
+        }
+    }
+
+    # surrogates
+    foreach my $i (0xd800..0xdbff) { $char_props[$i] = 0xdf; }
+    foreach my $i (0xdc00..0xdfff) { $char_props[$i] = 0x9f; }
+
+    # Hangul
+    if ($type eq "nfc") { foreach my $i (0x1100..0x117f) { $char_props[$i] = 0xff; } }
+    elsif ($compose) { foreach my $i (0x1100..0x11ff) { $char_props[$i] = 0xff; } }
+    foreach my $i (0xac00..0xd7ff) { $char_props[$i] = 0xff; }
+
+    # invalid chars
+    if ($type eq "idna") { foreach my $i (0x00..0x1f, 0x7f) { $char_props[$i] = 0xff; } }
+    foreach my $i (0xfdd0..0xfdef) { $char_props[$i] = 0xff; }
+    foreach my $i (0x00..0x10)
+    {
+        $char_props[($i << 16) | 0xfffe] = 0xff;
+        $char_props[($i << 16) | 0xffff] = 0xff;
+    }
+
+    # decomposition hash table
+
+    my @decomp_hash_table;
+    my @decomp_hash_index;
+    my @decomp_hash_data;
+    my $decomp_hash_size = 944;
+
+    # build string of character data, reusing substrings when possible
+    my $decomp_char_data = "";
+    foreach my $i (sort { @{$b} <=> @{$a} } grep defined, @decomposed)
+    {
+        my $str = pack "U*", @{$i};
+        $decomp_char_data .= $str if index( $decomp_char_data, $str) == -1;
+    }
+    for (my $i = 0; $i < @decomposed; $i++)
+    {
+        next unless defined $decomposed[$i];
+        my $pos = index( $decomp_char_data, pack( "U*", @{$decomposed[$i]} ));
+        die "sequence not found" if $pos == -1;
+        my $len = @{$decomposed[$i]};
+        $len = 7 if $len > 7;
+        my $hash = $i % $decomp_hash_size;
+        push @{$decomp_hash_table[$hash]}, [ $i, ($len << 13) | $pos ];
+    }
+    for (my $i = 0; $i < $decomp_hash_size; $i++)
+    {
+        $decomp_hash_index[$i] = @decomp_hash_data / 2;
+        next unless defined $decomp_hash_table[$i];
+        if (@{$decomp_hash_table[$i]} == 1)
+        {
+            my $entry = $decomp_hash_table[$i]->[0];
+            if ($char_props[$entry->[0]] == 0xbf)
+            {
+                $decomp_hash_index[$i] = $entry->[1];
+                next;
+            }
+        }
+        foreach my $entry (@{$decomp_hash_table[$i]})
+        {
+            push @decomp_hash_data, $entry->[0] & 0xffff, $entry->[1];
+        }
+    }
+    push @decomp_hash_data, 0, 0;
+
+    # composition hash table
+
+    my @comp_hash_index;
+    my @comp_hash_data;
+    if (@comp_hash_table)
+    {
+        for (my $i = 0; $i < $comp_hash_size; $i++)
+        {
+            $comp_hash_index[$i] = @comp_hash_data;
+            push @comp_hash_data, @{$comp_hash_table[$i]} if defined $comp_hash_table[$i];
+        }
+        $comp_hash_index[$comp_hash_size] = @comp_hash_data;
+        push @comp_hash_data, 0, 0, 0;
+    }
+
+    my $level1 = ($MAX_CHAR + 1) / 128;
+    my @rows = compress_char_props_table( $level1, @char_props[0..$MAX_CHAR] );
+
+    my @header = ( $version[0], $version[1], $version[2], 0, $forms{$type}, $compat ? 18 : 3,
+                   0, $decomp_hash_size, $comp_hash_size, 0 );
+    my @tables = (0) x 8;
+
+    $tables[0] = 16 + @header + @tables;
+    $tables[1] = $tables[0] + @class_values / 2;
+    $tables[2] = $tables[1] + $level1 / 2;
+    $tables[3] = $tables[2] + (@rows - $level1) / 2;
+    $tables[4] = $tables[3] + @decomp_hash_index;
+    $tables[5] = $tables[4] + @decomp_hash_data;
+    $tables[6] = $tables[5] + length $decomp_char_data;
+    $tables[7] = $tables[6] + @comp_hash_index;
+
+    print OUTPUT pack "S<16", unpack "U*", "norm$type.nlp";
+    print OUTPUT pack "S<*", @header;
+    print OUTPUT pack "S<*", @tables;
+    print OUTPUT pack "C*", @class_values;
+
+    print OUTPUT pack "C*", @rows[0..$level1-1];
+    print OUTPUT pack "C*", @rows[$level1..$#rows];
+    print OUTPUT pack "S<*", @decomp_hash_index;
+    print OUTPUT pack "S<*", @decomp_hash_data;
+    print OUTPUT pack "S<*", unpack "U*", $decomp_char_data;
+    print OUTPUT pack "S<*", @comp_hash_index;
+    print OUTPUT pack "S<*", @comp_hash_data;
+
+    close OUTPUT;
+    save_file($filename);
+}
+
+
 ################################################################
 # dump the combining class table
 sub dump_combining_class($)
@@ -2203,7 +2560,7 @@ sub dump_combining_class($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_three_level_mapping( "combining_class_table", 0, 16, @combining_class_table );
+    dump_three_level_mapping( "combining_class_table", 0, 16, map { defined $_ ? $_ & 0xff : 0; } @combining_class_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -2395,6 +2752,11 @@ dump_vertical( "dlls/gdi32/vertical.c" );
 dump_vertical( "dlls/wineps.drv/vertical.c" );
 dump_nameprep( "dlls/kernel32/nameprep.c" );
 dump_intl_nls("nls/l_intl.nls");
+dump_norm_table( "nls/normnfc.nls" );
+dump_norm_table( "nls/normnfd.nls" );
+dump_norm_table( "nls/normnfkc.nls" );
+dump_norm_table( "nls/normnfkd.nls" );
+dump_norm_table( "nls/normidna.nls" );
 foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
 dump_eucjp_codepage();
 

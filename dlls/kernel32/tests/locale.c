@@ -4220,11 +4220,11 @@ static void test_GetCPInfo(void)
             case NormalizationKC:
             case NormalizationKD:
             case 13:  /* IDN */
-                todo_wine ok( !status, "%u: failed %x\n", i, status );
+                ok( !status, "%u: failed %x\n", i, status );
                 if (status) break;
                 ok( size > 0x8000 && size <= 0x30000 , "wrong size %lx\n", size );
                 ret = UnmapViewOfFile( ptr );
-                ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+                todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
                 break;
             default:
                 ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%u: failed %x\n", i, status );
