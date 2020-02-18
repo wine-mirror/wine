@@ -229,8 +229,7 @@ BOOL WINAPI FreeADsMem(LPVOID pMem)
  */
 LPVOID WINAPI ReallocADsMem(LPVOID pOldMem, DWORD cbOld, DWORD cbNew)
 {
-    FIXME("(%p,%d,%d)!stub\n", pOldMem, cbOld, cbNew);
-    return NULL;
+    return HeapReAlloc(GetProcessHeap(), 0, pOldMem, cbNew);
 }
 
 /*****************************************************
