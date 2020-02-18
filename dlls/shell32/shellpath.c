@@ -4181,29 +4181,15 @@ static void _SHCreateMyDocumentsSymbolicLink(const UINT * aidsMyStuff, const UIN
 }
 
 /******************************************************************************
- * _SHCreateSymbolicLinks  [Internal]
+ * _SHCreateMyStuffSymbolicLink  [Internal]
  *
- * Sets up symbol links for various shell folders to point into the user's home
- * directory. We do an educated guess about what the user would probably want:
- * - If there is a 'My Documents' directory in $HOME, the user probably wants
- *   wine's 'My Documents' to point there. Furthermore, we infer that the user
- *   is a Windows lover and has no problem with wine creating subfolders for
- *   'My Pictures', 'My Music', 'My Videos' etc. under '$HOME/My Documents', if
- *   those do not already exist. We put appropriate symbolic links in place for
- *   those, too.
- * - If there is no 'My Documents' directory in $HOME, we let 'My Documents'
- *   point directly to $HOME. We assume the user to be a unix hacker who does not
- *   want wine to create anything anywhere besides the .wine directory. So, if
- *   there already is a 'My Music' directory in $HOME, we symlink the 'My Music'
- *   shell folder to it. But if not, then we check XDG_MUSIC_DIR - "well known"
- *   directory, and try to link to that. If that fails, then we symlink to
- *   $HOME directly. The same holds for 'My Pictures', 'My Videos' etc.
- * - The Desktop shell folder is symlinked to XDG_DESKTOP_DIR. If that does not
- *   exist, then we try '$HOME/Desktop'. If that does not exist, then we leave
- *   it alone.
- * ('My Music',... above in fact means LoadString(IDS_MYMUSIC))
+ * Sets up a symbolic link for one of the 'My Whatever' shell folders to point
+ * into the users home directory.
+ *
+ * PARAMS
+ *  nFolder [I] CSIDL identifying the folder.
  */
-static void _SHCreateSymbolicLinks(void)
+static void _SHCreateMyStuffSymbolicLink(int nFolder)
 {
     static const UINT aidsMyStuff[] = {
         IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC, IDS_DOWNLOADS, IDS_TEMPLATES
@@ -4215,19 +4201,19 @@ static void _SHCreateSymbolicLinks(void)
         CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC, CSIDL_DOWNLOADS, CSIDL_TEMPLATES
     };
     static const char * const xdg_dirs[] = {
-        "PICTURES", "VIDEOS", "MUSIC", "DOWNLOAD", "TEMPLATES", "DESKTOP"
+        "PICTURES", "VIDEOS", "MUSIC", "DOWNLOAD", "TEMPLATES"
     };
     static const unsigned int num = ARRAY_SIZE(xdg_dirs);
     char szPersonalTarget[FILENAME_MAX], *pszPersonal;
     char szMyStuffTarget[FILENAME_MAX], *pszMyStuff;
-    char szDesktopTarget[FILENAME_MAX], *pszDesktop;
     struct stat statFolder;
     const char *pszHome;
     char ** xdg_results;
-    char * xdg_desktop_dir;
+    DWORD folder = nFolder & CSIDL_FOLDER_MASK;
     UINT i;
 
-    _SHCreateMyDocumentsSymbolicLink(aidsMyStuff, ARRAY_SIZE(aidsMyStuff));
+    for (i = 0; i < ARRAY_SIZE(acsidlMyStuff) && acsidlMyStuff[i] != folder; i++);
+    if (i >= ARRAY_SIZE(acsidlMyStuff)) return;
 
     /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
     pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_CREATE);
@@ -4239,17 +4225,17 @@ static void _SHCreateSymbolicLinks(void)
         int cLen = readlink(pszPersonal, szPersonalTarget, FILENAME_MAX-1);
         if (cLen >= 0) szPersonalTarget[cLen] = '\0';
     }
+    heap_free(pszPersonal);
 
     _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
 
     pszHome = getenv("HOME");
 
-    /* Create symbolic links for 'My Pictures', 'My Videos', 'My Music' etc. */
-    for (i=0; i < ARRAY_SIZE(aidsMyStuff); i++)
+    while (1)
     {
         /* Create the current 'My Whatever' folder and get its unix path. */
         pszMyStuff = _SHGetFolderUnixPath(acsidlMyStuff[i]|CSIDL_FLAG_CREATE);
-        if (!pszMyStuff) continue;
+        if (!pszMyStuff) break;
 
         while (1)
         {
@@ -4283,7 +4269,66 @@ static void _SHCreateSymbolicLinks(void)
         remove(pszMyStuff);
         symlink(szMyStuffTarget, pszMyStuff);
         heap_free(pszMyStuff);
+        break;
     }
+
+    _SHFreeXDGUserDirs(num, xdg_results);
+}
+
+/******************************************************************************
+ * _SHCreateSymbolicLinks  [Internal]
+ *
+ * Sets up symbol links for various shell folders to point into the user's home
+ * directory. We do an educated guess about what the user would probably want:
+ * - If there is a 'My Documents' directory in $HOME, the user probably wants
+ *   wine's 'My Documents' to point there. Furthermore, we infer that the user
+ *   is a Windows lover and has no problem with wine creating subfolders for
+ *   'My Pictures', 'My Music', 'My Videos' etc. under '$HOME/My Documents', if
+ *   those do not already exist. We put appropriate symbolic links in place for
+ *   those, too.
+ * - If there is no 'My Documents' directory in $HOME, we let 'My Documents'
+ *   point directly to $HOME. We assume the user to be a unix hacker who does not
+ *   want wine to create anything anywhere besides the .wine directory. So, if
+ *   there already is a 'My Music' directory in $HOME, we symlink the 'My Music'
+ *   shell folder to it. But if not, then we check XDG_MUSIC_DIR - "well known"
+ *   directory, and try to link to that. If that fails, then we symlink to
+ *   $HOME directly. The same holds for 'My Pictures', 'My Videos' etc.
+ * - The Desktop shell folder is symlinked to XDG_DESKTOP_DIR. If that does not
+ *   exist, then we try '$HOME/Desktop'. If that does not exist, then we leave
+ *   it alone.
+ * ('My Music',... above in fact means LoadString(IDS_MYMUSIC))
+ */
+static void _SHCreateSymbolicLinks(void)
+{
+    static const UINT aidsMyStuff[] = {
+        IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC, IDS_DOWNLOADS, IDS_TEMPLATES
+    };
+    static const int acsidlMyStuff[] = {
+        CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC, CSIDL_DOWNLOADS, CSIDL_TEMPLATES
+    };
+    static const char * const xdg_dirs[] = { "DESKTOP" };
+    static const unsigned int num = ARRAY_SIZE(xdg_dirs);
+    char *pszPersonal;
+    char szDesktopTarget[FILENAME_MAX], *pszDesktop;
+    struct stat statFolder;
+    const char *pszHome;
+    char ** xdg_results;
+    char * xdg_desktop_dir;
+    UINT i;
+
+    _SHCreateMyDocumentsSymbolicLink(aidsMyStuff, ARRAY_SIZE(aidsMyStuff));
+
+    /* Create symbolic links for 'My Pictures', 'My Videos', 'My Music' etc. */
+    for (i=0; i < ARRAY_SIZE(acsidlMyStuff); i++)
+        _SHCreateMyStuffSymbolicLink(acsidlMyStuff[i]);
+
+    /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
+    pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_CREATE);
+    if (!pszPersonal) return;
+
+    _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
+
+    pszHome = getenv("HOME");
 
     /* Last but not least, the Desktop folder */
     if (pszHome)
