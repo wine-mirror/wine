@@ -572,19 +572,15 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
 {
     struct image_file_map*      fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     BOOL                        ret = FALSE;
-    const IMAGE_DATA_DIRECTORY* dir;
-    const IMAGE_DEBUG_DIRECTORY*dbg = NULL;
-    int                         nDbg;
+    const IMAGE_DEBUG_DIRECTORY*dbg;
+    ULONG                       nDbg;
     void*                       mapping;
     IMAGE_NT_HEADERS*           nth;
 
     if (!(mapping = pe_map_full(fmap, &nth))) return FALSE;
     /* Read in debug directory */
-    dir = nth->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_DEBUG;
-    nDbg = dir->Size / sizeof(IMAGE_DEBUG_DIRECTORY);
-    if (!nDbg) goto done;
-
-    dbg = RtlImageRvaToVa(nth, mapping, dir->VirtualAddress, NULL);
+    dbg = RtlImageDirectoryEntryToData( mapping, FALSE, IMAGE_DIRECTORY_ENTRY_DEBUG, &nDbg );
+    if (!dbg || !(nDbg /= sizeof(IMAGE_DEBUG_DIRECTORY))) goto done;
 
     /* Parse debug directory */
     if (nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED)
