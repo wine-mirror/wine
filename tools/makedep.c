@@ -4172,7 +4172,7 @@ static void load_sources( struct makefile *make )
         "MANPAGES",
         NULL
     };
-    const char **var;
+    const char **var, *crt_dll = NULL;
     unsigned int i;
     struct strarray value;
     struct incl_file *file;
@@ -4265,11 +4265,23 @@ static void load_sources( struct makefile *make )
 
     make->is_cross = crosstarget && make->use_msvcrt;
 
+    if (make->use_msvcrt)
+    {
+        for (i = 0; i < make->imports.count; i++)
+        {
+            if (strncmp( make->imports.str[i], "msvcr", 5 ) && strncmp( make->imports.str[i], "ucrt", 4 )) continue;
+            if (crt_dll) fatal_error( "More than one crt DLL imported: %s %s\n", crt_dll, make->imports.str[i] );
+            crt_dll = make->imports.str[i];
+        }
+        if (!crt_dll) crt_dll = "msvcrt";
+        if (!strncmp( crt_dll, "ucrt", 4 )) strarray_add( &make->define_args, "-D_UCRT" );
+    }
+
     if (make->is_cross)
     {
         for (i = 0; i < make->imports.count; i++)
             strarray_add_uniq( &cross_import_libs, make->imports.str[i] );
-        if (make->use_msvcrt) strarray_add_uniq( &cross_import_libs, "msvcrt" );
+        if (crt_dll) strarray_add_uniq( &cross_import_libs, crt_dll );
         if (make->is_win16) strarray_add_uniq( &cross_import_libs, "kernel" );
         strarray_add_uniq( &cross_import_libs, "winecrt0" );
         strarray_add_uniq( &cross_import_libs, "kernel32" );
