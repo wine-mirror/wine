@@ -274,13 +274,40 @@ static LRESULT CALLBACK data_link_properties_dlg_proc(HWND hwnd, UINT msg, WPARA
 
             break;
         }
+        case WM_NOTIFY:
+        {
+            NMHDR *hdr = ((LPNMHDR)lp);
+            switch(hdr->code)
+            {
+                case PSN_KILLACTIVE:
+                {
+                    /*
+                     * FIXME: This needs to replace the connection page based off the selection.
+                     *   We only care about the ODBC for now which is the default.
+                     */
+
+                    HWND lv = GetDlgItem(hwnd, IDC_LST_CONNECTIONS);
+                    if (!SendMessageW(lv, LVM_GETSELECTEDCOUNT, 0, 0))
+                    {
+                        WCHAR title[256], msg[256];
+
+                        LoadStringW(instance, IDS_PROVIDER_TITLE, title, ARRAY_SIZE(title));
+                        LoadStringW(instance, IDS_PROVIDER_ERROR, msg, ARRAY_SIZE(msg));
+                        MessageBoxW(hwnd, msg, title, MB_OK | MB_ICONEXCLAMATION);
+                        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, TRUE);
+                        return TRUE;
+                    }
+
+                    return FALSE;
+                }
+            }
+
+            break;
+        }
         case WM_COMMAND:
         {
             if (LOWORD(wp) == IDC_BTN_NEXT)
-            {
-                /* TODO: Implement Connection dialog */
-                MessageBoxA(hwnd, "Not implemented yet.", "Error", MB_OK | MB_ICONEXCLAMATION);
-            }
+                SendMessageW(GetParent(hwnd), PSM_SETCURSEL, 1, 0);
             break;
         }
         default:

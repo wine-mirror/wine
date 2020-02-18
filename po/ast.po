@@ -344,7 +344,7 @@ msgstr "Encontu"
 msgid "< &Back"
 msgstr "< &Atrás"
 
-#: comctl32.rc:85 version.rc:57
+#: comctl32.rc:85 version.rc:60
 msgid "&Next >"
 msgstr "&Siguiente >"
 
@@ -1213,7 +1213,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr ""
 
-#: credui.rc:48 cryptui.rc:402 version.rc:77
+#: credui.rc:48 cryptui.rc:402 version.rc:80
 msgid "&Password:"
 msgstr "&Contraseña:"
 
@@ -3032,7 +3032,7 @@ msgstr "Símbolu"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:96 wldap32.rc:112
+#: gdi32.rc:45 version.rc:99 wldap32.rc:112
 msgid "Other"
 msgstr ""
 
@@ -3097,7 +3097,7 @@ msgstr ""
 msgid "&Stop"
 msgstr ""
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:69 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Refrescar"
 
@@ -8276,135 +8276,145 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
-#: version.rc:52
+#: version.rc:55
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "videu"
 
-#: version.rc:55
+#: version.rc:58
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Esbilla'l formatu que quies usar:"
 
-#: version.rc:62
+#: version.rc:65
 #, fuzzy
 #| msgid "Connections"
 msgid "Connection"
 msgstr "Conexones"
 
-#: version.rc:65
+#: version.rc:68
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Esbilla'l formatu que quies usar:"
 
-#: version.rc:66
+#: version.rc:69
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:67
+#: version.rc:70
 msgid "Use &data source name"
 msgstr ""
 
-#: version.rc:70
+#: version.rc:73
 #, fuzzy
 #| msgid "Connections"
 msgid "Use c&onnection string"
 msgstr "Conexones"
 
-#: version.rc:71
+#: version.rc:74
 #, fuzzy
 #| msgid "Connections"
 msgid "&Connection string:"
 msgstr "Conexones"
 
-#: version.rc:73
+#: version.rc:76
 msgid "B&uild..."
 msgstr ""
 
-#: version.rc:74
+#: version.rc:77
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:75
+#: version.rc:78
 #, fuzzy
 #| msgid "Value name:"
 msgid "User &name:"
 msgstr "Nome del valor:"
 
-#: version.rc:79
+#: version.rc:82
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "Páxina &balera"
 
-#: version.rc:80
+#: version.rc:83
 msgid "Allow &saving password"
 msgstr ""
 
-#: version.rc:81
+#: version.rc:84
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:83
+#: version.rc:86
 #, fuzzy
 #| msgid "Current Connections"
 msgid "&Test Connection"
 msgstr "Conexones actuales"
 
-#: version.rc:88 winemine.rc:65
+#: version.rc:91 winemine.rc:65
 msgid "Advanced"
 msgstr ""
 
-#: version.rc:91
+#: version.rc:94
 #, fuzzy
 #| msgid "Window settings"
 msgid "Network settings"
 msgstr "Axustes de ventanes"
 
-#: version.rc:92
+#: version.rc:95
 msgid "&Impersonation level:"
 msgstr ""
 
-#: version.rc:94
+#: version.rc:97
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:97
+#: version.rc:100
 #, fuzzy
 #| msgid "Connections"
 msgid "Connect:"
 msgstr "Conexones"
 
-#: version.rc:99
+#: version.rc:102
 #, fuzzy
 #| msgid "seconds"
 msgid "seconds."
 msgstr "segundos"
 
-#: version.rc:100
+#: version.rc:103
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "Ésitu"
 
-#: version.rc:106
+#: version.rc:109
 msgid "All"
 msgstr ""
 
-#: version.rc:110
+#: version.rc:113
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: version.rc:111
+#: version.rc:114
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
 msgstr "&Editar..."
+
+#: version.rc:49
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Error"
+msgstr "Propiedaes"
+
+#: version.rc:50
+msgid "Please select a provider."
+msgstr ""
 
 #: version.rc:36
 #, fuzzy

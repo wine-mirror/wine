@@ -353,7 +353,7 @@ msgstr ""
 msgid "< &Back"
 msgstr "< На&зад"
 
-#: comctl32.rc:85 version.rc:57
+#: comctl32.rc:85 version.rc:60
 msgid "&Next >"
 msgstr "На&пред >"
 
@@ -1248,7 +1248,7 @@ msgstr "мм"
 msgid "&User name:"
 msgstr "По &име"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:77
+#: credui.rc:48 cryptui.rc:402 version.rc:80
 msgid "&Password:"
 msgstr ""
 
@@ -3112,7 +3112,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
-#: gdi32.rc:45 version.rc:96 wldap32.rc:112
+#: gdi32.rc:45 version.rc:99 wldap32.rc:112
 msgid "Other"
 msgstr ""
 
@@ -3187,7 +3187,7 @@ msgstr ""
 msgid "&Stop"
 msgstr "Спри"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:69 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "Опр&есни"
 
@@ -8555,128 +8555,138 @@ msgstr "Включено"
 msgid "Off"
 msgstr "Изключено"
 
-#: version.rc:52
+#: version.rc:55
 msgid "Provider"
 msgstr ""
 
-#: version.rc:55
+#: version.rc:58
 msgid "Select the data you want to connect to:"
 msgstr ""
 
-#: version.rc:62
+#: version.rc:65
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "Connection"
 msgstr "LAN връзка"
 
-#: version.rc:65
+#: version.rc:68
 msgid "Specify the following to connect to ODBC data:"
 msgstr ""
 
-#: version.rc:66
+#: version.rc:69
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:67
+#: version.rc:70
 msgid "Use &data source name"
 msgstr ""
 
-#: version.rc:70
+#: version.rc:73
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "Use c&onnection string"
 msgstr "LAN връзка"
 
-#: version.rc:71
+#: version.rc:74
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "&Connection string:"
 msgstr "LAN връзка"
 
-#: version.rc:73
+#: version.rc:76
 #, fuzzy
 #| msgid "&Add..."
 msgid "B&uild..."
 msgstr "&Добави..."
 
-#: version.rc:74
+#: version.rc:77
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:75
+#: version.rc:78
 #, fuzzy
 msgid "User &name:"
 msgstr "По &име"
 
-#: version.rc:79
+#: version.rc:82
 #, fuzzy
 #| msgid "Password"
 msgid "&Blank password"
 msgstr "Парола"
 
-#: version.rc:80
+#: version.rc:83
 msgid "Allow &saving password"
 msgstr ""
 
-#: version.rc:81
+#: version.rc:84
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:83
+#: version.rc:86
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "&Test Connection"
 msgstr "LAN връзка"
 
-#: version.rc:88 winemine.rc:65
+#: version.rc:91 winemine.rc:65
 #, fuzzy
 msgid "Advanced"
 msgstr "Покажи допълнителните"
 
-#: version.rc:91
+#: version.rc:94
 #, fuzzy
 msgid "Network settings"
 msgstr " Настройка на прозорците "
 
-#: version.rc:92
+#: version.rc:95
 msgid "&Impersonation level:"
 msgstr ""
 
-#: version.rc:94
-msgid "P&rotection level:"
-msgstr ""
-
 #: version.rc:97
-#, fuzzy
-msgid "Connect:"
-msgstr "Файлът не е намерен"
-
-#: version.rc:99
-msgid "seconds."
+msgid "P&rotection level:"
 msgstr ""
 
 #: version.rc:100
 #, fuzzy
+msgid "Connect:"
+msgstr "Файлът не е намерен"
+
+#: version.rc:102
+msgid "seconds."
+msgstr ""
+
+#: version.rc:103
+#, fuzzy
 msgid "A&ccess:"
 msgstr "Локален порт"
 
-#: version.rc:106
+#: version.rc:109
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "&Всичко"
 
-#: version.rc:110
+#: version.rc:113
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: version.rc:111
+#: version.rc:114
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
 msgstr "&Редактирай..."
+
+#: version.rc:49
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Error"
+msgstr "Свойства"
+
+#: version.rc:50
+msgid "Please select a provider."
+msgstr ""
 
 #: version.rc:36
 #, fuzzy

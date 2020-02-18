@@ -357,7 +357,7 @@ msgstr "Kreator"
 msgid "< &Back"
 msgstr "< &Wstecz"
 
-#: comctl32.rc:85 version.rc:57
+#: comctl32.rc:85 version.rc:60
 msgid "&Next >"
 msgstr "&Naprzód >"
 
@@ -1237,7 +1237,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Użytkownik:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:77
+#: credui.rc:48 cryptui.rc:402 version.rc:80
 msgid "&Password:"
 msgstr "&Hasło:"
 
@@ -3146,7 +3146,7 @@ msgstr "Symbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:96 wldap32.rc:112
+#: gdi32.rc:45 version.rc:99 wldap32.rc:112
 msgid "Other"
 msgstr "Inne"
 
@@ -3211,7 +3211,7 @@ msgstr "&Start"
 msgid "&Stop"
 msgstr "Z&atrzymaj"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:69 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Odśwież"
 
@@ -8510,145 +8510,157 @@ msgstr "Włączone"
 msgid "Off"
 msgstr "Wyłączone"
 
-#: version.rc:52
+#: version.rc:55
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "obraz"
 
-#: version.rc:55
+#: version.rc:58
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Wybierz format, którego chcesz użyć:"
 
-#: version.rc:62
+#: version.rc:65
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "Connection"
 msgstr "Połączenie LAN"
 
-#: version.rc:65
+#: version.rc:68
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Wybierz format, którego chcesz użyć:"
 
-#: version.rc:66
+#: version.rc:69
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:67
+#: version.rc:70
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "Podaj swoje imię"
 
-#: version.rc:70
+#: version.rc:73
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "Wyzerowane połączenia"
 
-#: version.rc:71
+#: version.rc:74
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "&Connection string:"
 msgstr "Połączenie LAN"
 
-#: version.rc:73
+#: version.rc:76
 #, fuzzy
 #| msgid "A&dd..."
 msgid "B&uild..."
 msgstr "&Dodaj..."
 
-#: version.rc:74
+#: version.rc:77
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:75
+#: version.rc:78
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Użytkownik:"
 
-#: version.rc:79
+#: version.rc:82
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "Użyj pu&stej"
 
-#: version.rc:80
+#: version.rc:83
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "Nieprawidłowe hasło.\n"
 
-#: version.rc:81
+#: version.rc:84
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:83
+#: version.rc:86
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "Wyzerowane połączenia"
 
-#: version.rc:88 winemine.rc:65
+#: version.rc:91 winemine.rc:65
 msgid "Advanced"
 msgstr "Zaawansowany"
 
-#: version.rc:91
+#: version.rc:94
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "Zasób sieciowy"
 
-#: version.rc:92
+#: version.rc:95
 #, fuzzy
 #| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
 msgstr "Zły poziom bezosobowości.\n"
 
-#: version.rc:94
+#: version.rc:97
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:97
+#: version.rc:100
 #, fuzzy
 #| msgid "Connected"
 msgid "Connect:"
 msgstr "Włączone"
 
-#: version.rc:99
+#: version.rc:102
 #, fuzzy
 #| msgid "&Seconds"
 msgid "seconds."
 msgstr "&Sekundy"
 
-#: version.rc:100
+#: version.rc:103
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "Powodzenie"
 
-#: version.rc:106
+#: version.rc:109
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "&Cały rejestr"
 
-#: version.rc:110
+#: version.rc:113
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: version.rc:111
+#: version.rc:114
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
 msgstr "&Edycja..."
+
+#: version.rc:49
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Error"
+msgstr "Właściwości"
+
+#: version.rc:50
+#, fuzzy
+#| msgid "Please select a file."
+msgid "Please select a provider."
+msgstr "Proszę wybrać plik."
 
 #: version.rc:36
 #, fuzzy

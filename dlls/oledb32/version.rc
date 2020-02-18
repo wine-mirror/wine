@@ -45,6 +45,9 @@ STRINGTABLE
     IDS_PERM_SHAREDENYWRITE "Share Deny Write"
     IDS_PERM_SHAREEXCLUSIVE "Share Exclusive"
     IDS_PERM_WRITE          "Write"
+
+    IDS_PROVIDER_TITLE      "Data Link Error"
+    IDS_PROVIDER_ERROR      "Please select a provider."
 }
 
 IDD_PROVIDER DIALOG 0, 0, 227, 225

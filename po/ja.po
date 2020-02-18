@@ -350,7 +350,7 @@ msgstr "ウィザード"
 msgid "< &Back"
 msgstr "< 戻る(&B)"
 
-#: comctl32.rc:85 version.rc:57
+#: comctl32.rc:85 version.rc:60
 msgid "&Next >"
 msgstr "次へ(&N) >"
 
@@ -1225,7 +1225,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "ユーザ名(&U):"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:77
+#: credui.rc:48 cryptui.rc:402 version.rc:80
 msgid "&Password:"
 msgstr "パスワード(&P):"
 
@@ -3107,7 +3107,7 @@ msgstr "シンボル"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:96 wldap32.rc:112
+#: gdi32.rc:45 version.rc:99 wldap32.rc:112
 msgid "Other"
 msgstr "その他"
 
@@ -3172,7 +3172,7 @@ msgstr "ホーム(&H)"
 msgid "&Stop"
 msgstr "中止(&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:69 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "更新(&R)"
 
@@ -8305,145 +8305,157 @@ msgstr "On"
 msgid "Off"
 msgstr "Off"
 
-#: version.rc:52
+#: version.rc:55
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "ビデオ"
 
-#: version.rc:55
+#: version.rc:58
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "形式を選択してください:"
 
-#: version.rc:62
+#: version.rc:65
 #, fuzzy
 #| msgid "Connections"
 msgid "Connection"
 msgstr "接続"
 
-#: version.rc:65
+#: version.rc:68
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "形式を選択してください:"
 
-#: version.rc:66
+#: version.rc:69
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:67
+#: version.rc:70
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "名前を入力しましょう"
 
-#: version.rc:70
+#: version.rc:73
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "リセットされた接続"
 
-#: version.rc:71
+#: version.rc:74
 #, fuzzy
 #| msgid "Connections"
 msgid "&Connection string:"
 msgstr "接続"
 
-#: version.rc:73
+#: version.rc:76
 #, fuzzy
 #| msgid "A&dd..."
 msgid "B&uild..."
 msgstr "追加(&D)..."
 
-#: version.rc:74
+#: version.rc:77
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:75
+#: version.rc:78
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "ユーザ名(&U):"
 
-#: version.rc:79
+#: version.rc:82
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "空白(&B)"
 
-#: version.rc:80
+#: version.rc:83
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "パスワードが違います。\n"
 
-#: version.rc:81
+#: version.rc:84
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:83
+#: version.rc:86
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "リセットされた接続"
 
-#: version.rc:88 winemine.rc:65
+#: version.rc:91 winemine.rc:65
 msgid "Advanced"
 msgstr "中級"
 
-#: version.rc:91
+#: version.rc:94
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "ネットワーク共有"
 
-#: version.rc:92
+#: version.rc:95
 #, fuzzy
 #| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
 msgstr "不正な偽装レベルです。\n"
 
-#: version.rc:94
+#: version.rc:97
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:97
+#: version.rc:100
 #, fuzzy
 #| msgid "Connected"
 msgid "Connect:"
 msgstr "接続済み"
 
-#: version.rc:99
+#: version.rc:102
 #, fuzzy
 #| msgid "seconds"
 msgid "seconds."
 msgstr "秒"
 
-#: version.rc:100
+#: version.rc:103
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "成功"
 
-#: version.rc:106
+#: version.rc:109
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "すべて(&A)"
 
-#: version.rc:110
+#: version.rc:113
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: version.rc:111
+#: version.rc:114
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
 msgstr "編集(&E)..."
+
+#: version.rc:49
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Error"
+msgstr "プロパティ"
+
+#: version.rc:50
+#, fuzzy
+#| msgid "Please select a file."
+msgid "Please select a provider."
+msgstr "ファイルを選択してください。"
 
 #: version.rc:36
 #, fuzzy
