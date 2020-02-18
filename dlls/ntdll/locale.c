@@ -407,6 +407,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     static const WCHAR normnfdW[] = {'n','o','r','m','n','f','d','.','n','l','s',0};
     static const WCHAR normnfkcW[] = {'n','o','r','m','n','f','k','c','.','n','l','s',0};
     static const WCHAR normnfkdW[] = {'n','o','r','m','n','f','k','d','.','n','l','s',0};
+    static const WCHAR normidnaW[] = {'n','o','r','m','i','d','n','a','.','n','l','s',0};
 
     DWORD size;
     HANDLE handle;
@@ -471,6 +472,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
             case NormalizationD: name = normnfdW; break;
             case NormalizationKC: name = normnfkcW; break;
             case NormalizationKD: name = normnfkdW; break;
+            case 13: name = normidnaW; break;
             }
             break;
         }

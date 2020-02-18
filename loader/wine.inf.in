@@ -1153,6 +1153,12 @@ HKLM,System\CurrentControlSet\Control\Nls\Locale\Alternate Sorts,"00021004",,"a"
 HKLM,System\CurrentControlSet\Control\Nls\Locale\Alternate Sorts,"00021404",,"9"
 HKLM,System\CurrentControlSet\Control\Nls\Locale\Alternate Sorts,"00030404",,"9"
 
+HKLM,System\CurrentControlSet\Control\Nls\Normalization,"1",,"normnfc.nls"
+HKLM,System\CurrentControlSet\Control\Nls\Normalization,"2",,"normnfd.nls"
+HKLM,System\CurrentControlSet\Control\Nls\Normalization,"5",,"normnfkc.nls"
+HKLM,System\CurrentControlSet\Control\Nls\Normalization,"6",,"normnfkd.nls"
+HKLM,System\CurrentControlSet\Control\Nls\Normalization,"d",,"normidna.nls"
+
 [OLE]
 HKLM,"Software\Microsoft\OLE","EnableDCOM",,"Y"
 HKLM,"Software\Microsoft\OLE","EnableRemoteConnect",,"N"
