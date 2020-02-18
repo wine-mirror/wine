@@ -179,7 +179,7 @@
 @ stdcall IsValidInterface(ptr)
 @ stub IsValidPtrIn
 @ stub IsValidPtrOut
-@ stdcall MkParseDisplayName(ptr ptr ptr ptr)
+@ stdcall MkParseDisplayName(ptr wstr ptr ptr)
 @ stdcall MonikerCommonPrefixWith(ptr ptr ptr)
 @ stub MonikerRelativePathTo
 @ stdcall OleBuildVersion()
