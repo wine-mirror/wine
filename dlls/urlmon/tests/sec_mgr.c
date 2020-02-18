@@ -190,13 +190,6 @@ static inline LPWSTR a2w(LPCSTR str)
     return ret;
 }
 
-static inline DWORD strcmp_aw(LPCSTR strA, LPCWSTR strB) {
-    LPWSTR strAW = a2w(strA);
-    DWORD ret = lstrcmpW(strAW, strB);
-    heap_free(strAW);
-    return ret;
-}
-
 
 /* Based on RegDeleteTreeW from dlls/advapi32/registry.c */
 static LONG myRegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
@@ -1592,21 +1585,21 @@ static const struct {
     DWORD       create_flags;
     const char  *security_uri;
     HRESULT     security_hres;
-    const char  *default_uri;
+    const WCHAR *default_uri;
     HRESULT     default_hres;
     BOOL        todo;
 } sec_url_ex_tests[] = {
-    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,"*:index.html",S_OK,"*:index.htm",S_OK},
-    {"file://c:\\Index.htm",Uri_CREATE_FILE_USE_DOS_PATH,"file:///c:/Index.htm",S_OK,"file:///c:/Index.htm",S_OK},
-    {"file:some%20file%2ejpg",0,NULL,E_INVALIDARG,NULL,E_INVALIDARG},
-    {"file:some file.jpg",0,NULL,E_INVALIDARG,NULL,E_INVALIDARG},
-    {"http://www.zone3.winetest/",0,"http://www.zone3.winetest/",S_OK,"http://www.zone3.winetest/",S_OK},
-    {"about:blank",0,"about:blank",S_OK,"about:blank",S_OK},
-    {"ftp://zone3.winetest/file.test",0,"ftp://zone3.winetest/file.test",S_OK,"ftp://zone3.winetest/file.test",S_OK},
-    {"test:123abc",0,"test:123abc",S_OK,"test:123abc",S_OK},
-    {"http:google.com/test.file",0,"http:google.com/test.file",S_OK,"http:google.com/test.file",S_OK},
-    {"ftp://test@ftp.winehq.org/",0,"ftp://ftp.winehq.org/",S_OK,"ftp://ftp.winehq.org/",S_OK},
-    {"test://google@ftp.winehq.org/",0,"test://google@ftp.winehq.org/",S_OK,"test://google@ftp.winehq.org/",S_OK}
+    {"index.htm", Uri_CREATE_ALLOW_RELATIVE, "*:index.html", S_OK, L"*:index.htm", S_OK},
+    {"file://c:\\Index.htm", Uri_CREATE_FILE_USE_DOS_PATH, "file:///c:/Index.htm", S_OK, L"file:///c:/Index.htm", S_OK},
+    {"file:some%20file%2ejpg", 0, NULL, E_INVALIDARG, NULL, E_INVALIDARG},
+    {"file:some file.jpg", 0, NULL, E_INVALIDARG, NULL, E_INVALIDARG},
+    {"http://www.zone3.winetest/", 0, "http://www.zone3.winetest/", S_OK, L"http://www.zone3.winetest/", S_OK},
+    {"about:blank", 0, "about:blank", S_OK, L"about:blank", S_OK},
+    {"ftp://zone3.winetest/file.test", 0, "ftp://zone3.winetest/file.test", S_OK, L"ftp://zone3.winetest/file.test", S_OK},
+    {"test:123abc", 0, "test:123abc", S_OK, L"test:123abc", S_OK},
+    {"http:google.com/test.file", 0, "http:google.com/test.file", S_OK, L"http:google.com/test.file", S_OK},
+    {"ftp://test@ftp.winehq.org/", 0, "ftp://ftp.winehq.org/", S_OK, L"ftp://ftp.winehq.org/", S_OK},
+    {"test://google@ftp.winehq.org/", 0, "test://google@ftp.winehq.org/", S_OK, L"test://google@ftp.winehq.org/", S_OK}
 };
 
 static void test_InternetGetSecurityUrlEx(void)
@@ -1647,9 +1640,9 @@ static void test_InternetGetSecurityUrlEx(void)
                 ok(hr == S_OK, "GetDisplayUri returned 0x%08x on test %d\n", hr, i);
                 if(hr == S_OK) {
                     todo_wine_if (sec_url_ex_tests[i].todo) {
-                        ok(!strcmp_aw(sec_url_ex_tests[i].default_uri, received),
-                            "Expected %s but got %s on test %d\n", sec_url_ex_tests[i].default_uri,
-                            wine_dbgstr_w(received), i);
+                        ok(!lstrcmpW(sec_url_ex_tests[i].default_uri, received),
+                            "Expected %s but got %s on test %d\n",
+                            wine_dbgstr_w(sec_url_ex_tests[i].default_uri), wine_dbgstr_w(received), i);
                     }
                 }
                 SysFreeString(received);
@@ -1670,9 +1663,9 @@ static void test_InternetGetSecurityUrlEx(void)
                 ok(hr == S_OK, "GetDisplayUri returned 0x%08x on test %d\n", hr, i);
                 if(hr == S_OK) {
                     todo_wine_if (sec_url_ex_tests[i].todo) {
-                        ok(!strcmp_aw(sec_url_ex_tests[i].default_uri, received),
-                            "Expected %s but got %s on test %d\n", sec_url_ex_tests[i].default_uri,
-                            wine_dbgstr_w(received), i);
+                        ok(!lstrcmpW(sec_url_ex_tests[i].default_uri, received),
+                            "Expected %s but got %s on test %d\n",
+                            wine_dbgstr_w(sec_url_ex_tests[i].default_uri), wine_dbgstr_w(received), i);
                     }
                 }
                 SysFreeString(received);
