@@ -26591,19 +26591,20 @@ static void test_alpha_to_coverage(void)
         return;
     }
 
-    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
-            D3DRTYPE_SURFACE, MAKEFOURCC('A','T','O','C')) == D3D_OK)
+
+    hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    if (adapter_is_amd(&identifier))
     {
-        /* ATOC pseudo format is introduced by Nvidia. Some Intel GPUs support
-         * alpha to coverage the same way as Nvidia. */
-        nvidia_mode = TRUE;
+        nvidia_mode = FALSE;
     }
     else
     {
-        nvidia_mode = FALSE;
-        hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-        if (!adapter_is_amd(&identifier))
+        /* The ATOC pseudo format is introduced by NVIDIA. Some Intel GPUs
+         * support alpha to coverage the same way as NVIDIA. */
+        if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
+                D3DRTYPE_SURFACE, MAKEFOURCC('A','T','O','C')) != D3D_OK)
         {
             win_skip("Alpha to coverage is not supported.\n");
             refcount = IDirect3DDevice9_Release(device);
@@ -26612,6 +26613,7 @@ static void test_alpha_to_coverage(void)
             DestroyWindow(window);
             return;
         }
+        nvidia_mode = TRUE;
     }
 
     hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128,
