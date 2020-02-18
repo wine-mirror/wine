@@ -4051,6 +4051,26 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
 }
 
 /******************************************************************************
+ * _SHGetFolderUnixPath  [Internal]
+ *
+ * Create a shell folder and get its unix path.
+ *
+ * PARAMS
+ *  nFolder [I] CSIDL identifying the folder.
+ */
+static inline char * _SHGetFolderUnixPath(const int nFolder)
+{
+    WCHAR wszTempPath[MAX_PATH];
+    HRESULT hr;
+
+    hr = SHGetFolderPathW(NULL, nFolder, NULL,
+                          SHGFP_TYPE_DEFAULT, wszTempPath);
+    if (FAILED(hr)) return NULL;
+
+    return wine_get_unix_file_name(wszTempPath);
+}
+
+/******************************************************************************
  * _SHCreateMyDocumentsSubDirs  [Internal]
  *
  * Create real directories for various shell folders under 'My Documents'. For
@@ -4115,22 +4135,17 @@ static void _SHCreateSymbolicLinks(void)
         "PICTURES", "VIDEOS", "MUSIC", "DOWNLOAD", "TEMPLATES", "DOCUMENTS", "DESKTOP"
     };
     static const unsigned int num = ARRAY_SIZE(xdg_dirs);
-    WCHAR wszTempPath[MAX_PATH];
     char szPersonalTarget[FILENAME_MAX], *pszPersonal;
     char szMyStuffTarget[FILENAME_MAX], *pszMyStuff;
     char szDesktopTarget[FILENAME_MAX], *pszDesktop;
     struct stat statFolder;
     const char *pszHome;
-    HRESULT hr;
     char ** xdg_results;
     char * xdg_desktop_dir;
     UINT i;
 
     /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
-    hr = SHGetFolderPathW(NULL, CSIDL_PERSONAL|CSIDL_FLAG_CREATE, NULL,
-                          SHGFP_TYPE_DEFAULT, wszTempPath);
-    if (FAILED(hr)) return;
-    pszPersonal = wine_get_unix_file_name(wszTempPath);
+    pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_CREATE);
     if (!pszPersonal) return;
 
     _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
@@ -4192,11 +4207,7 @@ static void _SHCreateSymbolicLinks(void)
     for (i=0; i < ARRAY_SIZE(aidsMyStuff); i++)
     {
         /* Create the current 'My Whatever' folder and get its unix path. */
-        hr = SHGetFolderPathW(NULL, acsidlMyStuff[i]|CSIDL_FLAG_CREATE, NULL,
-                              SHGFP_TYPE_DEFAULT, wszTempPath);
-        if (FAILED(hr)) continue;
-
-        pszMyStuff = wine_get_unix_file_name(wszTempPath);
+        pszMyStuff = _SHGetFolderUnixPath(acsidlMyStuff[i]|CSIDL_FLAG_CREATE);
         if (!pszMyStuff) continue;
 
         while (1)
@@ -4245,9 +4256,8 @@ static void _SHCreateSymbolicLinks(void)
         (_SHAppendToUnixPath(szDesktopTarget, DesktopW) &&
         !stat(szDesktopTarget, &statFolder) && S_ISDIR(statFolder.st_mode)))
     {
-        hr = SHGetFolderPathW(NULL, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL,
-                              SHGFP_TYPE_DEFAULT, wszTempPath);
-        if (SUCCEEDED(hr) && (pszDesktop = wine_get_unix_file_name(wszTempPath)))
+        pszDesktop = _SHGetFolderUnixPath(CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE);
+        if (pszDesktop)
         {
             remove(pszDesktop);
             if (xdg_desktop_dir)
