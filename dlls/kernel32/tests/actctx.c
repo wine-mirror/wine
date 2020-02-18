@@ -560,20 +560,6 @@ static const WCHAR wndClass3W[] =
 static WCHAR app_dir[MAX_PATH], exe_path[MAX_PATH], work_dir[MAX_PATH], work_dir_subdir[MAX_PATH];
 static WCHAR app_manifest_path[MAX_PATH], manifest_path[MAX_PATH], depmanifest_path[MAX_PATH];
 
-static int strcmp_aw(LPCWSTR strw, const char *stra)
-{
-    WCHAR buf[1024];
-
-    if (!stra) return 1;
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
-    return lstrcmpW(strw, buf);
-}
-
-static DWORD strlen_aw(const char *str)
-{
-    return MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0) - 1;
-}
-
 static BOOL create_manifest_file(const char *filename, const char *manifest, int manifest_len,
                                  const char *depfile, const char *depmanifest)
 {
@@ -746,57 +732,57 @@ typedef struct {
     ULONG flags;
 /*    ULONG manifest_path_type; FIXME */
     LPCWSTR manifest_path;
-    LPCSTR encoded_assembly_id;
+    LPCWSTR encoded_assembly_id;
     BOOL has_assembly_dir;
 } info_in_assembly;
 
 static const info_in_assembly manifest1_info = {
     1, manifest_path,
-    "Wine.Test,type=\"win32\",version=\"1.0.0.0\"",
+    L"Wine.Test,type=\"win32\",version=\"1.0.0.0\"",
     FALSE
 };
 
 static const info_in_assembly manifest1_child_info = {
     1, app_manifest_path,
-    "Wine.Test,type=\"win32\",version=\"1.0.0.0\"",
+    L"Wine.Test,type=\"win32\",version=\"1.0.0.0\"",
     FALSE
 };
 
 static const info_in_assembly manifest2_info = {
     1, manifest_path,
-    "Wine.Test,type=\"win32\",version=\"1.2.3.4\"",
+    L"Wine.Test,type=\"win32\",version=\"1.2.3.4\"",
     FALSE
 };
 
 static const info_in_assembly manifest3_info = {
     1, manifest_path,
-    "Wine.Test,publicKeyToken=\"6595b6414666f1df\",type=\"win32\",version=\"1.2.3.4\"",
+    L"Wine.Test,publicKeyToken=\"6595b6414666f1df\",type=\"win32\",version=\"1.2.3.4\"",
     FALSE
 };
 
 static const info_in_assembly manifest4_info = {
     1, manifest_path,
-    "Wine.Test,type=\"win32\",version=\"1.2.3.4\"",
+    L"Wine.Test,type=\"win32\",version=\"1.2.3.4\"",
     FALSE
 };
 
 static const info_in_assembly depmanifest1_info = {
     0x10, depmanifest_path,
-    "testdep,processorArchitecture=\"" ARCH "\","
+    L"testdep,processorArchitecture=\"" ARCH "\","
     "type=\"win32\",version=\"6.5.4.3\"",
     TRUE
 };
 
 static const info_in_assembly depmanifest2_info = {
     0x10, depmanifest_path,
-    "testdep,processorArchitecture=\"" ARCH "\","
+    L"testdep,processorArchitecture=\"" ARCH "\","
     "type=\"win32\",version=\"6.5.4.3\"",
     TRUE
 };
 
 static const info_in_assembly depmanifest3_info = {
     0x10, depmanifest_path,
-    "testdep,processorArchitecture=\"" ARCH "\",type=\"win32\",version=\"6.5.4.3\"",
+    L"testdep,processorArchitecture=\"" ARCH "\",type=\"win32\",version=\"6.5.4.3\"",
     TRUE
 };
 
@@ -813,7 +799,7 @@ static void test_info_in_assembly(HANDLE handle, DWORD id, const info_in_assembl
 
     exsize = sizeof(ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION);
     if (exinfo->manifest_path) exsize += (lstrlenW(exinfo->manifest_path)+1) * sizeof(WCHAR);
-    if (exinfo->encoded_assembly_id) exsize += (strlen_aw(exinfo->encoded_assembly_id) + 1) * sizeof(WCHAR);
+    if (exinfo->encoded_assembly_id) exsize += (lstrlenW(exinfo->encoded_assembly_id) + 1) * sizeof(WCHAR);
 
     size = 0xdeadbeef;
     b = pQueryActCtxW(0, handle, &id,
@@ -851,7 +837,7 @@ static void test_info_in_assembly(HANDLE handle, DWORD id, const info_in_assembl
            info->ulFlags, exinfo->flags);
     }
     if(exinfo->encoded_assembly_id) {
-        len = strlen_aw(exinfo->encoded_assembly_id)*sizeof(WCHAR);
+        len = lstrlenW(exinfo->encoded_assembly_id)*sizeof(WCHAR);
         ok_(__FILE__, line)(info->ulEncodedAssemblyIdentityLength == len,
            "info->ulEncodedAssemblyIdentityLength = %u, expected %u\n",
            info->ulEncodedAssemblyIdentityLength, len);
@@ -893,9 +879,9 @@ static void test_info_in_assembly(HANDLE handle, DWORD id, const info_in_assembl
     ok_(__FILE__, line)(info->lpAssemblyEncodedAssemblyIdentity != NULL,
        "info->lpAssemblyEncodedAssemblyIdentity == NULL\n");
     if(info->lpAssemblyEncodedAssemblyIdentity && exinfo->encoded_assembly_id) {
-        ok_(__FILE__, line)(!strcmp_aw(info->lpAssemblyEncodedAssemblyIdentity, exinfo->encoded_assembly_id),
+        ok_(__FILE__, line)(!lstrcmpW(info->lpAssemblyEncodedAssemblyIdentity, exinfo->encoded_assembly_id),
            "unexpected info->lpAssemblyEncodedAssemblyIdentity %s / %s\n",
-           strw(info->lpAssemblyEncodedAssemblyIdentity), exinfo->encoded_assembly_id);
+           strw(info->lpAssemblyEncodedAssemblyIdentity), wine_dbgstr_w(exinfo->encoded_assembly_id));
     }
     if(exinfo->manifest_path) {
         ok_(__FILE__, line)(info->lpAssemblyManifestPath != NULL, "info->lpAssemblyManifestPath == NULL\n");
