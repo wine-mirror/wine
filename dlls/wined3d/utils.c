@@ -65,6 +65,7 @@ format_index_remap[] =
     {WINED3DFMT_R16,          WINED3D_FORMAT_FOURCC_BASE + 20},
     {WINED3DFMT_AL16,         WINED3D_FORMAT_FOURCC_BASE + 21},
     {WINED3DFMT_NV12,         WINED3D_FORMAT_FOURCC_BASE + 22},
+    {WINED3DFMT_ATOC,         WINED3D_FORMAT_FOURCC_BASE + 23},
 };
 
 #define WINED3D_FORMAT_COUNT (WINED3D_FORMAT_FOURCC_BASE + ARRAY_SIZE(format_index_remap))
@@ -135,6 +136,7 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_ATI1N,                      0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
     {WINED3DFMT_ATI2N,                      0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
     {WINED3DFMT_NVDB,                       0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
+    {WINED3DFMT_ATOC,                       0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
     {WINED3DFMT_INST,                       0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
     {WINED3DFMT_INTZ,                       0,  0,  0,  0,   0,  0,  0,  0,    4,  24,     8},
     {WINED3DFMT_RESZ,                       0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
@@ -339,6 +341,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_INST,                 WINED3DFMT_FLAG_EXTENSION},
     {WINED3DFMT_NULL,                 WINED3DFMT_FLAG_EXTENSION},
     {WINED3DFMT_NVDB,                 WINED3DFMT_FLAG_EXTENSION},
+    {WINED3DFMT_ATOC,                 WINED3DFMT_FLAG_EXTENSION},
     {WINED3DFMT_RESZ,                 WINED3DFMT_FLAG_EXTENSION},
 };
 
@@ -3673,6 +3676,12 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         format_set_flag(&format->f, WINED3DFMT_FLAG_TEXTURE);
     }
 
+    if (gl_info->supported[ARB_MULTISAMPLE])
+    {
+        format = get_format_gl_internal(adapter, WINED3DFMT_ATOC);
+        format_set_flag(&format->f, WINED3DFMT_FLAG_TEXTURE);
+    }
+
     /* RESZ aka AMD DX9-level hack for multisampled depth buffer resolve. You query for RESZ
      * support by checking for availability of MAKEFOURCC('R','E','S','Z') surfaces with
      * RENDERTARGET usage. */
@@ -4591,6 +4600,7 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_R16);
         FMT_TO_STR(WINED3DFMT_AL16);
         FMT_TO_STR(WINED3DFMT_NV12);
+        FMT_TO_STR(WINED3DFMT_ATOC);
 #undef FMT_TO_STR
         default:
         {

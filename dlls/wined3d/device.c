@@ -3842,6 +3842,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     struct wined3d_blend_state *blend_state;
     struct wined3d_color colour;
     unsigned int i, j, count;
+    BOOL set_blend_state;
 
     TRACE("device %p, stateblock %p.\n", device, stateblock);
 
@@ -3945,14 +3946,18 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
     }
 
-    if (changed->blend_state)
+    if ((set_blend_state = changed->blend_state
+            || wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_ADAPTIVETESS_Y)))
     {
+        blend_state = state->rs[WINED3D_RS_ADAPTIVETESS_Y] == WINED3DFMT_ATOC
+                ? device->blend_state_atoc_enabled : state->blend_state;
+
         if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_BLENDFACTOR))
             wined3d_color_from_d3dcolor(&colour, stateblock->stateblock_state.rs[WINED3D_RS_BLENDFACTOR]);
         else
             wined3d_device_get_blend_state(device, &colour);
 
-        wined3d_device_set_blend_state(device, state->blend_state, &colour);
+        wined3d_device_set_blend_state(device, blend_state, &colour);
     }
 
     for (i = 0; i < ARRAY_SIZE(state->rs); ++i)
@@ -3966,7 +3971,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             continue;
         }
 
-        if (!changed->blend_state)
+        if (!set_blend_state)
         {
             blend_state = wined3d_device_get_blend_state(device, &colour);
             wined3d_color_from_d3dcolor(&colour, state->rs[i]);

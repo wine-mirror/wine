@@ -1052,6 +1052,7 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
     struct wined3d_device *device = stateblock->device;
     struct wined3d_blend_state *blend_state;
     struct wined3d_color colour;
+    BOOL set_blend_state;
     unsigned int i;
     DWORD map;
 
@@ -1140,21 +1141,25 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         wined3d_device_set_ps_consts_b(device, idx, 1, &stateblock->stateblock_state.ps_consts_b[idx]);
     }
 
-    if (stateblock->changed.blend_state)
+    if ((set_blend_state = stateblock->changed.blend_state
+            || wined3d_bitmap_is_set(stateblock->changed.renderState, WINED3D_RS_ADAPTIVETESS_Y)))
     {
-        if (stateblock->stateblock_state.blend_state)
-            wined3d_blend_state_incref(stateblock->stateblock_state.blend_state);
+        blend_state = stateblock->stateblock_state.rs[WINED3D_RS_ADAPTIVETESS_Y] == WINED3DFMT_ATOC
+                ? device->blend_state_atoc_enabled : stateblock->stateblock_state.blend_state;
+
+        if (blend_state)
+            wined3d_blend_state_incref(blend_state);
         if (state->blend_state)
             wined3d_blend_state_decref(state->blend_state);
 
-        state->blend_state = stateblock->stateblock_state.blend_state;
+        state->blend_state = blend_state;
 
         if (wined3d_bitmap_is_set(stateblock->changed.renderState, WINED3D_RS_BLENDFACTOR))
             wined3d_color_from_d3dcolor(&colour, stateblock->stateblock_state.rs[WINED3D_RS_BLENDFACTOR]);
         else
             wined3d_device_get_blend_state(device, &colour);
 
-        wined3d_device_set_blend_state(device, stateblock->stateblock_state.blend_state, &colour);
+        wined3d_device_set_blend_state(device, blend_state, &colour);
     }
 
     /* Render states. */
@@ -1169,7 +1174,7 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
             continue;
         }
 
-        if (!stateblock->changed.blend_state)
+        if (!set_blend_state)
         {
             blend_state = wined3d_device_get_blend_state(device, &colour);
             wined3d_color_from_d3dcolor(&colour, stateblock->stateblock_state.rs[rs]);

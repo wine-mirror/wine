@@ -26604,7 +26604,7 @@ static void test_alpha_to_coverage(void)
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
         if (!adapter_is_amd(&identifier))
         {
-            skip("Alpha to coverage is not supported.\n");
+            win_skip("Alpha to coverage is not supported.\n");
             refcount = IDirect3DDevice9_Release(device);
             ok(!refcount, "Device has %u references left.\n", refcount);
             IDirect3D9_Release(d3d);
