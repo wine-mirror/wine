@@ -192,7 +192,17 @@ static inline int unlink(const char* path) { return _unlink(path); }
 #define _UNLINK_DEFINED
 #endif
 static inline int vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args) { return _vsnprintf(buffer,size,format,args); }
-#define snprintf _snprintf
+
+static inline int WINAPIV snprintf(char *buffer, size_t size, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = vsnprintf(buffer, size, format, args);
+    __ms_va_end(args);
+    return ret;
+}
 
 static inline int WINAPIV _snprintf(char *buffer, size_t size, const char *format, ...)
 {
