@@ -4116,8 +4116,8 @@ static void _SHCreateMyDocumentsSymbolicLink(const UINT * aidsMyStuff, const UIN
     const char *pszHome;
     char ** xdg_results;
 
-    /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
-    pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_CREATE);
+    /* Get the unix path of 'My Documents'. */
+    pszPersonal = _SHGetFolderUnixPath(CSIDL_PERSONAL|CSIDL_FLAG_DONT_VERIFY);
     if (!pszPersonal) return;
 
     _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
@@ -4161,8 +4161,8 @@ static void _SHCreateMyDocumentsSymbolicLink(const UINT * aidsMyStuff, const UIN
             break;
         }
 
-        /* Replace 'My Documents' directory with a symlink or fail silently if not empty. */
-        remove(pszPersonal);
+        /* Create symbolic link to 'My Documents' or fail silently if a directory
+         * or symlink exists. */
         symlink(szPersonalTarget, pszPersonal);
     }
     else
@@ -4233,8 +4233,8 @@ static void _SHCreateMyStuffSymbolicLink(int nFolder)
 
     while (1)
     {
-        /* Create the current 'My Whatever' folder and get its unix path. */
-        pszMyStuff = _SHGetFolderUnixPath(acsidlMyStuff[i]|CSIDL_FLAG_CREATE);
+        /* Get the current 'My Whatever' folder unix path. */
+        pszMyStuff = _SHGetFolderUnixPath(acsidlMyStuff[i]|CSIDL_FLAG_DONT_VERIFY);
         if (!pszMyStuff) break;
 
         while (1)
@@ -4266,7 +4266,6 @@ static void _SHCreateMyStuffSymbolicLink(int nFolder)
             strcpy(szMyStuffTarget, szPersonalTarget);
             break;
         }
-        remove(pszMyStuff);
         symlink(szMyStuffTarget, pszMyStuff);
         heap_free(pszMyStuff);
         break;
@@ -4311,10 +4310,9 @@ static void _SHCreateDesktopSymbolicLink(void)
         (_SHAppendToUnixPath(szDesktopTarget, DesktopW) &&
         !stat(szDesktopTarget, &statFolder) && S_ISDIR(statFolder.st_mode)))
     {
-        pszDesktop = _SHGetFolderUnixPath(CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE);
+        pszDesktop = _SHGetFolderUnixPath(CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_DONT_VERIFY);
         if (pszDesktop)
         {
-            remove(pszDesktop);
             if (xdg_desktop_dir)
                 symlink(xdg_desktop_dir, pszDesktop);
             else
@@ -4598,6 +4596,10 @@ HRESULT WINAPI SHGetFolderPathAndSubDirW(
         hr = HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
         goto end;
     }
+
+    /* create symbolic links rather than directories for specific
+     * user shell folders */
+    _SHCreateSymbolicLink(folder);
 
     /* create directory/directories */
     ret = SHCreateDirectoryExW(hwndOwner, szBuildPath, NULL);
@@ -5231,6 +5233,10 @@ HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE t
         hr = HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
         goto failed;
     }
+
+    /* create symbolic links rather than directories for specific
+     * user shell folders */
+    _SHCreateSymbolicLink(folder);
 
     /* create directory/directories */
     ret = SHCreateDirectoryExW(NULL, pathW, NULL);
