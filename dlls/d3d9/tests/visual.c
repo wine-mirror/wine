@@ -26560,6 +26560,7 @@ static void test_alpha_to_coverage(void)
     D3DADAPTER_IDENTIFIER9 identifier;
     struct surface_readback rb;
     IDirect3DTexture9 *texture;
+    IDirect3DStateBlock9 *sb;
     IDirect3DDevice9 *device;
     DWORD quality_levels;
     BOOL nvidia_mode;
@@ -26669,6 +26670,9 @@ static void test_alpha_to_coverage(void)
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     }
 
+    hr = IDirect3DDevice9_CreateStateBlock(device, D3DSBT_VERTEXSTATE, &sb);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
     fill_surface(surface, 0x40608000, 0);
 
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
@@ -26703,6 +26707,23 @@ static void test_alpha_to_coverage(void)
     get_rt_readback(rt, &rb);
     colour = get_readback_color(&rb, 64, 64);
     ok(colour == 0x40608000, "Got unexpected colour %08x.\n", colour);
+    release_surface_readback(&rb);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff2000ff, 0.0f, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DStateBlock9_Apply(sb);
+    IDirect3DStateBlock9_Release(sb);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt, NULL, D3DTEXF_POINT);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    get_rt_readback(rt, &rb);
+    colour = get_readback_color(&rb, 64, 64);
+    ok(color_match(colour, 0x9f404080, 1) || color_match(colour, 0x9f485cbc, 1) /* Nvidia */,
+            "Got unexpected colour %08x.\n", colour);
     release_surface_readback(&rb);
 
     hr = IDirect3DDevice9_EndScene(device);
