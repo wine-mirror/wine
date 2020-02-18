@@ -3949,6 +3949,43 @@ end:
 }
 
 /*************************************************************************
+ * _SHGetXDGUserDirs  [Internal]
+ *
+ * Get XDG directories paths from XDG configuration.
+ *
+ * PARAMS
+ *  xdg_dirs    [I] Array of XDG directories to look for.
+ *  num_dirs    [I] Number of elements in xdg_dirs.
+ *  xdg_results [O] An array of the XDG directories paths.
+ */
+static inline void _SHGetXDGUserDirs(const char * const *xdg_dirs, const unsigned int num_dirs, char *** xdg_results) {
+    HRESULT hr;
+
+    hr = XDG_UserDirLookup(xdg_dirs, num_dirs, xdg_results);
+    if (FAILED(hr)) *xdg_results = NULL;
+}
+
+/*************************************************************************
+ * _SHFreeXDGUserDirs  [Internal]
+ *
+ * Free resources allocated by XDG_UserDirLookup().
+ *
+ * PARAMS
+ *  num_dirs    [I] Number of elements in xdg_results.
+ *  xdg_results [I] An array of the XDG directories paths.
+ */
+static inline void _SHFreeXDGUserDirs(const unsigned int num_dirs, char ** xdg_results) {
+    UINT i;
+
+    if (xdg_results)
+    {
+        for (i = 0; i < num_dirs; i++)
+            heap_free(xdg_results[i]);
+        heap_free(xdg_results);
+    }
+}
+
+/*************************************************************************
  * _SHAppendToUnixPath  [Internal]
  *
  * Helper function for _SHCreateSymbolicLinks. Appends pwszSubPath (or the
@@ -4069,8 +4106,7 @@ static void _SHCreateSymbolicLinks(void)
     pszPersonal = wine_get_unix_file_name(wszTempPath);
     if (!pszPersonal) return;
 
-    hr = XDG_UserDirLookup(xdg_dirs, num, &xdg_results);
-    if (FAILED(hr)) xdg_results = NULL;
+    _SHGetXDGUserDirs(xdg_dirs, num, &xdg_results);
 
     pszHome = getenv("HOME");
     if (pszHome && !stat(pszHome, &statFolder) && S_ISDIR(statFolder.st_mode))
@@ -4204,13 +4240,7 @@ static void _SHCreateSymbolicLinks(void)
         }
     }
 
-    /* Free resources allocated by XDG_UserDirLookup() */
-    if (xdg_results)
-    {
-        for (i = 0; i < num; i++)
-            heap_free(xdg_results[i]);
-        heap_free(xdg_results);
-    }
+    _SHFreeXDGUserDirs(num, xdg_results);
 }
 
 /******************************************************************************
