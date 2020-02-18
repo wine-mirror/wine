@@ -6104,6 +6104,14 @@ static void test_NormalizeString(void)
                 ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
                     wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
                 ret = FALSE;
+                status = pRtlIsNormalizedString( norm_forms[i], ptest->str, -1, &ret );
+                todo_wine ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                if (!wcscmp( ptest->str, dst ))
+                    todo_wine
+                    ok( ret, "%s:%d: not normalized\n", wine_dbgstr_w(ptest->str), i );
+                else
+                    ok( !ret, "%s:%d: normalized (dst %s)\n", wine_dbgstr_w(ptest->str), i, wine_dbgstr_w(dst) );
+                ret = FALSE;
                 status = pRtlIsNormalizedString( norm_forms[i], dst, dstlen, &ret );
                 todo_wine ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
                 todo_wine ok( ret, "%s:%d: not normalized\n", wine_dbgstr_w(ptest->str), i );
@@ -6301,7 +6309,7 @@ static void test_NormalizeString(void)
     {
         char *p, buffer[1024];
         WCHAR str[3], srcW[32], dstW[32], resW[4][32];
-        int i, line = 0, part = 0, ch;
+        int line = 0, part = 0, ch;
         char tested[0x110000 / 8];
 
         while (fgets( buffer, sizeof(buffer), f ))
@@ -6334,6 +6342,28 @@ static void test_NormalizeString(void)
                 ok( !wcscmp( dstW, resW[i] ),
                     "line %u form %u: wrong result %s for %s expected %s\n", line, i,
                     wine_dbgstr_w( dstW ), wine_dbgstr_w( srcW ), wine_dbgstr_w( resW[i] ));
+
+                ret = FALSE;
+                status = pRtlIsNormalizedString( norm_forms[i], srcW, -1, &ret );
+                ok( !status, "line %u form %u: RtlIsNormalizedString failed %x\n", line, i, status );
+                if (!wcscmp( srcW, dstW ))
+                    ok( ret, "line %u form %u: source not normalized %s\n", line, i, wine_dbgstr_w(srcW) );
+                else
+                    ok( !ret, "line %u form %u: source normalized %s\n", line, i, wine_dbgstr_w(srcW) );
+                ret = FALSE;
+                status = pRtlIsNormalizedString( norm_forms[i], dstW, -1, &ret );
+                ok( !status, "line %u form %u: RtlIsNormalizedString failed %x\n", line, i, status );
+                ok( ret, "line %u form %u: dest not normalized %s\n", line, i, wine_dbgstr_w(dstW) );
+
+                for (j = 0; j < 4; j++)
+                {
+                    int expect = i | (j & 2);
+                    memset( dstW, 0xcc, sizeof(dstW) );
+                    dstlen = pNormalizeString( norm_forms[i], resW[j], -1, dstW, ARRAY_SIZE(dstW) );
+                    ok( !wcscmp( dstW, resW[expect] ),
+                        "line %u form %u res %u: wrong result %s for %s expected %s\n", line, i, j,
+                        wine_dbgstr_w( dstW ), wine_dbgstr_w( resW[j] ), wine_dbgstr_w( resW[expect] ));
+                }
             }
         }
         fclose( f );
