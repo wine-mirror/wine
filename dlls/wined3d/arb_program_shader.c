@@ -807,9 +807,7 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
 
             for (i = 0; i < shader->limits->constant_float; ++i)
             {
-                DWORD idx = i >> 5;
-                DWORD shift = i & 0x1f;
-                if (reg_maps->constf[idx] & (1u << shift))
+                if (wined3d_bitmap_is_set(reg_maps->constf, i))
                     highest_constf = i;
             }
 

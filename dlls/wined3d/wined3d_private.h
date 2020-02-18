@@ -5327,6 +5327,11 @@ static inline void wined3d_viewport_get_z_range(const struct wined3d_viewport *v
     *max_z = max(vp->max_z, vp->min_z + 0.001f);
 }
 
+static inline BOOL wined3d_bitmap_is_set(const uint32_t *map, unsigned int idx)
+{
+    return map[idx >> 5] & (1u << (idx & 0x1f));
+}
+
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
 
