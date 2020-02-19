@@ -433,6 +433,8 @@ GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage*,PROPID);
 GpStatus WINGDIPAPI GdipSaveImageToFile(GpImage*,GDIPCONST WCHAR*,GDIPCONST CLSID*,GDIPCONST EncoderParameters*);
 GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage*,IStream*,
     GDIPCONST CLSID*,GDIPCONST EncoderParameters*);
+GpStatus WINGDIPAPI GdipSaveAdd(GpImage*,GDIPCONST EncoderParameters*);
+GpStatus WINGDIPAPI GdipSaveAddImage(GpImage*,GpImage*,GDIPCONST EncoderParameters*);
 GpStatus WINGDIPAPI GdipSetImagePalette(GpImage*,GDIPCONST ColorPalette*);
 GpStatus WINGDIPAPI GdipSetPropertyItem(GpImage*,GDIPCONST PropertyItem*);
 

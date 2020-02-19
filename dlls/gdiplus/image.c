@@ -4681,11 +4681,31 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
 
 /*****************************************************************************
  * GdipSaveAdd [GDIPLUS.@]
+ *
+ * Like GdipSaveAddImage(), but encode the currently active frame of the given image into the file
+ * or stream that is currently being encoded.
  */
 GpStatus WINGDIPAPI GdipSaveAdd(GpImage *image, GDIPCONST EncoderParameters *params)
 {
     FIXME("(%p,%p): stub\n", image, params);
-    return Ok;
+    return NotImplemented;
+}
+
+/*****************************************************************************
+ * GdipSaveAddImage [GDIPLUS.@]
+ *
+ * Encode the currently active frame of additional_image into the file or stream that is currently
+ * being encoded by the image given in the image parameter. The first frame of a multi-frame image
+ * must be encoded using the normal GdipSaveImageToStream() or GdipSaveImageToFile() functions,
+ * but with the "MultiFrame" encoding parameter set. The multi-frame encoding process must be
+ * finished after adding the last frame by calling GdipSaveAdd() with the "Flush" encoding parameter
+ * set.
+ */
+GpStatus WINGDIPAPI GdipSaveAddImage(GpImage *image, GpImage *additional_image,
+    GDIPCONST EncoderParameters *params)
+{
+    FIXME("(%p,%p,%p): stub\n", image, additional_image, params);
+    return NotImplemented;
 }
 
 /*****************************************************************************

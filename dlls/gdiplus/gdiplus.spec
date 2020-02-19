@@ -472,7 +472,7 @@
 472 stdcall GdipRotateTextureTransform(ptr float long)
 473 stdcall GdipRotateWorldTransform(ptr float long)
 474 stdcall GdipSaveAdd(ptr ptr)
-475 stub GdipSaveAddImage
+475 stdcall GdipSaveAddImage(ptr ptr ptr)
 476 stdcall GdipSaveGraphics(ptr ptr)
 477 stdcall GdipSaveImageToFile(ptr wstr ptr ptr)
 478 stdcall GdipSaveImageToStream(ptr ptr ptr ptr)
