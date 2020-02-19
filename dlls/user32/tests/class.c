@@ -98,6 +98,7 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     LONG i;
     WCHAR str[20];
     ATOM classatom;
+    HINSTANCE hInstance2;
 
     cls.style         = CS_HREDRAW | CS_VREDRAW | (global?CS_GLOBALCLASS:0);
     cls.lpfnWndProc   = ClassTest_WndProc;
@@ -121,12 +122,40 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
         "RegisterClass of the same class should fail for the second time\n");
 
     /* Setup windows */
+    hInstance2 = (HINSTANCE)(((ULONG_PTR)hInstance & ~0xffff) | 0xdead);
+
+    hTestWnd = CreateWindowW (className, winName,
+       WS_OVERLAPPEDWINDOW + WS_HSCROLL + WS_VSCROLL,
+       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0,
+       0, hInstance2, 0);
+todo_wine_if (!global)
+    ok(hTestWnd != 0, "Failed to create window for hInstance %p\n", hInstance2);
+
+todo_wine_if (!global)
+    ok((HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE) == hInstance,
+       "Wrong GCL instance %p != %p\n",
+       (HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE), hInstance);
+todo_wine_if (!global)
+    ok((HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE) == hInstance2,
+       "Wrong GWL instance %p != %p\n",
+       (HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE), hInstance2);
+
+    DestroyWindow(hTestWnd);
+
     hTestWnd = CreateWindowW (className, winName,
        WS_OVERLAPPEDWINDOW + WS_HSCROLL + WS_VSCROLL,
        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0,
        0, hInstance, 0);
 
     ok(hTestWnd!=0, "Failed to create window\n");
+
+    ok((HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE) == hInstance,
+                        "Wrong GCL instance %p/%p\n",
+        (HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE), hInstance);
+    ok((HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE) == hInstance,
+       "Wrong GWL instance %p/%p\n",
+        (HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE), hInstance);
+
 
     /* test initial values of valid classwords */
     for(i=0; i<NUMCLASSWORDS; i++)
@@ -1491,6 +1520,8 @@ START_TEST(class)
 
     ClassTest(hInstance,FALSE);
     ClassTest(hInstance,TRUE);
+    ClassTest((HANDLE)((ULONG_PTR)hInstance | 0x1234), FALSE);
+    ClassTest((HANDLE)((ULONG_PTR)hInstance | 0x1234), TRUE);
     CreateDialogParamTest(hInstance);
     test_styles();
     test_builtinproc();
