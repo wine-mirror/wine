@@ -100,9 +100,12 @@ static struct window_class *find_class( struct process *process, atom_t atom, mo
 
     LIST_FOR_EACH( ptr, &process->classes )
     {
+        int is_win16;
         struct window_class *class = LIST_ENTRY( ptr, struct window_class, entry );
         if (class->atom != atom) continue;
-        if (!instance || !class->local || class->instance == instance) return class;
+        is_win16 = !(class->instance >> 16);
+        if (!instance || !class->local || class->instance == instance ||
+            (!is_win16 && ((class->instance & ~0xffff) == (instance & ~0xffff)))) return class;
     }
     return NULL;
 }

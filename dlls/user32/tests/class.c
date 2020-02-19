@@ -128,14 +128,11 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
        WS_OVERLAPPEDWINDOW + WS_HSCROLL + WS_VSCROLL,
        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0,
        0, hInstance2, 0);
-todo_wine_if (!global)
     ok(hTestWnd != 0, "Failed to create window for hInstance %p\n", hInstance2);
 
-todo_wine_if (!global)
     ok((HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE) == hInstance,
        "Wrong GCL instance %p != %p\n",
        (HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE), hInstance);
-todo_wine_if (!global)
     ok((HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE) == hInstance2,
        "Wrong GWL instance %p != %p\n",
        (HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE), hInstance2);
