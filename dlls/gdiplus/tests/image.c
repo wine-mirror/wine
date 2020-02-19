@@ -76,6 +76,36 @@ static void expect_rawformat(REFGUID expected, GpImage *img, int line, BOOL todo
     expect_guid(expected, &raw, line, todo);
 }
 
+static BOOL get_encoder_clsid(LPCWSTR mime, GUID *format, CLSID *clsid)
+{
+    GpStatus status;
+    UINT n_codecs, info_size, i;
+    ImageCodecInfo *info;
+    BOOL ret = FALSE;
+
+    status = GdipGetImageEncodersSize(&n_codecs, &info_size);
+    expect(Ok, status);
+
+    info = GdipAlloc(info_size);
+
+    status = GdipGetImageEncoders(n_codecs, info_size, info);
+    expect(Ok, status);
+
+    for (i = 0; i < n_codecs; i++)
+    {
+        if (!lstrcmpW(info[i].MimeType, mime))
+        {
+            *format = info[i].FormatID;
+            *clsid = info[i].Clsid;
+            ret = TRUE;
+            break;
+        }
+    }
+
+    GdipFree(info);
+    return ret;
+}
+
 static void test_bufferrawformat(void* buff, int size, REFGUID expected, int line, BOOL todo)
 {
     LPSTREAM stream;
@@ -485,6 +515,189 @@ static void test_SavingImages(void)
     if (bm)
         GdipDisposeImage((GpImage*)bm);
     ok(DeleteFileA(filenameA), "Delete failed.\n");
+}
+
+static void test_SavingMultiPageTiff(void)
+{
+    GpStatus stat;
+    BOOL result;
+    GpBitmap *bm1 = NULL, *bm2 = NULL, *check_bm = NULL;
+    const REAL WIDTH = 10.0, HEIGHT = 20.0;
+    REAL w, h;
+    GUID format, tiff_clsid;
+    EncoderParameters params;
+    ULONG32 paramValue = EncoderValueFrameDimensionPage;
+    UINT frame_count;
+    static const CHAR filename1A[] = "1.tif";
+    static const CHAR filename2A[] = "2.tif";
+    static const WCHAR filename1[] = { '1','.','t','i','f',0 };
+    static const WCHAR filename2[] = { '2','.','t','i','f',0 };
+    static const WCHAR tiff_mimetype[] = { 'i','m','a','g','e','/','t','i','f','f',0 };
+
+    params.Count = 1;
+    params.Parameter[0].Guid = EncoderSaveFlag;
+    params.Parameter[0].Type = EncoderParameterValueTypeLong;
+    params.Parameter[0].NumberOfValues = 1;
+    params.Parameter[0].Value = &paramValue;
+
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm1);
+    expect(Ok, stat);
+    stat = GdipCreateBitmapFromScan0(2 * WIDTH, 2 * HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm2);
+    expect(Ok, stat);
+    result = get_encoder_clsid(tiff_mimetype, &format, &tiff_clsid);
+    ok(result, "getting TIFF encoding clsid failed");
+
+    if (!bm1 || !bm2 || !result)
+        return;
+
+    /* invalid params: NULL */
+    stat = GdipSaveAdd(0, &params);
+    todo_wine expect(InvalidParameter, stat);
+    stat = GdipSaveAdd((GpImage*)bm1, 0);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipSaveAddImage((GpImage*)bm1, (GpImage*)bm2, 0);
+    todo_wine expect(InvalidParameter, stat);
+    stat = GdipSaveAddImage((GpImage*)bm1, 0, &params);
+    todo_wine expect(InvalidParameter, stat);
+    stat = GdipSaveAddImage(0, (GpImage*)bm2, &params);
+    todo_wine expect(InvalidParameter, stat);
+
+    /* win32 error: SaveAdd() can only be called after Save() with the MultiFrame param */
+    stat = GdipSaveAdd((GpImage*)bm1, &params);
+    todo_wine expect(Win32Error, stat);
+    stat = GdipSaveAddImage((GpImage*)bm1, (GpImage*)bm2, &params);
+    todo_wine expect(Win32Error, stat);
+
+    stat = GdipSaveImageToFile((GpImage*)bm1, filename1, &tiff_clsid, 0); /* param not set! */
+    expect(Ok, stat);
+    if (stat != Ok) goto cleanup;
+
+    stat = GdipSaveAdd((GpImage*)bm1, &params);
+    todo_wine expect(Win32Error, stat);
+    stat = GdipSaveAddImage((GpImage*)bm1, (GpImage*)bm2, &params);
+    todo_wine expect(Win32Error, stat);
+
+    /* win32 error: can't flush before starting the encoding process */
+    paramValue = EncoderValueFlush;
+    stat = GdipSaveAdd((GpImage*)bm1, &params);
+    todo_wine expect(Win32Error, stat);
+
+    /* win32 error: can't start encoding process through SaveAdd(), only Save() */
+    paramValue = EncoderValueMultiFrame;
+    stat = GdipSaveAdd((GpImage*)bm1, &params);
+    todo_wine expect(Win32Error, stat);
+
+    /* start encoding process: add first frame (bm1) */
+    paramValue = EncoderValueMultiFrame;
+    stat = GdipSaveImageToFile((GpImage*)bm1, filename1, &tiff_clsid, &params);
+    expect(Ok, stat);
+
+    /* re-start encoding process: add first frame (bm1), should re-create the file */
+    stat = GdipSaveImageToFile((GpImage*)bm1, filename1, &tiff_clsid, &params);
+    expect(Ok, stat);
+
+    /* add second frame (bm2) */
+    paramValue = EncoderValueFrameDimensionPage;
+    stat = GdipSaveAddImage((GpImage*)bm1, (GpImage*)bm2, &params);
+    todo_wine expect(Ok, stat);
+    if (stat != Ok) goto cleanup;
+
+    /* finish encoding process */
+    paramValue = EncoderValueFlush;
+    stat = GdipSaveAdd((GpImage*)bm1, &params);
+    expect(Ok, stat);
+
+    /* bm1 should be unchanged, only the saved file on disk has multiple frames */
+    stat = GdipImageGetFrameCount((GpImage*)bm1, &FrameDimensionPage, &frame_count);
+    expect(Ok, stat);
+    expect(1, frame_count);
+
+    /* win32 error: encoding process already finished */
+    paramValue = EncoderValueFrameDimensionPage;
+    stat = GdipSaveAddImage((GpImage*)bm1, (GpImage*)bm2, &params);
+    expect(Win32Error, stat);
+
+    stat = GdipSaveAdd((GpImage*)bm1, &params);
+    expect(Win32Error, stat);
+
+    GdipDisposeImage((GpImage*)bm1);
+    bm1 = 0;
+    GdipDisposeImage((GpImage*)bm2);
+    bm2 = 0;
+
+    /* re-load and check image stats */
+    stat = GdipLoadImageFromFile(filename1, (GpImage**)&check_bm);
+    expect(Ok, stat);
+
+    stat = GdipImageGetFrameCount((GpImage*)check_bm, &FrameDimensionPage, &frame_count);
+    expect(Ok, stat);
+    expect(2, frame_count);
+    if (stat != Ok || frame_count != 2) goto cleanup;
+
+    stat = GdipGetImageDimension((GpImage*)check_bm, &w, &h);
+    expect(Ok, stat);
+    expectf(WIDTH, w); /* frame index 0: bm1 stats */
+    expectf(HEIGHT, h);
+
+    stat = GdipImageSelectActiveFrame((GpImage*)check_bm, &FrameDimensionPage, 1);
+    expect(Ok, stat);
+
+    stat = GdipGetImageDimension((GpImage*)check_bm, &w, &h);
+    expectf(2 * WIDTH, w); /* frame index 1: bm2 stats */
+    expectf(2 * HEIGHT, h);
+
+    /* now proper API use for SaveAdd() to swap the frames in check_bm */
+    paramValue = EncoderValueMultiFrame;
+    stat = GdipSaveImageToFile((GpImage*)check_bm, filename2, &tiff_clsid, &params);
+    expect(Ok, stat); /* second frame is active: bm2 */
+
+    stat = GdipImageSelectActiveFrame((GpImage*)check_bm, &FrameDimensionPage, 0);
+    expect(Ok, stat);
+
+    paramValue = EncoderValueFrameDimensionPage;
+    stat = GdipSaveAdd((GpImage*)check_bm, &params);
+    expect(Ok, stat); /* first frame is active: bm1 */
+
+    paramValue = EncoderValueFlush;
+    stat = GdipSaveAdd((GpImage*)check_bm, &params);
+    expect(Ok, stat); /* flushed encoder (finished encoding process) */
+
+    GdipDisposeImage((GpImage*)check_bm);
+    check_bm = 0;
+
+    /* re-load and check image stats */
+    stat = GdipLoadImageFromFile(filename2, (GpImage**)&check_bm);
+    expect(Ok, stat);
+
+    stat = GdipImageGetFrameCount((GpImage*)check_bm, &FrameDimensionPage, &frame_count);
+    expect(Ok, stat);
+    expect(2, frame_count);
+
+    stat = GdipGetImageDimension((GpImage*)check_bm, &w, &h);
+    expect(Ok, stat);
+    expectf(2 * WIDTH, w); /* frame index 0: bm2 stats */
+    expectf(2 * HEIGHT, h);
+
+    stat = GdipImageSelectActiveFrame((GpImage*)check_bm, &FrameDimensionPage, 1);
+    expect(Ok, stat);
+
+    stat = GdipGetImageDimension((GpImage*)check_bm, &w, &h);
+    expectf(WIDTH, w); /* frame index 1: bm1 stats */
+    expectf(HEIGHT, h);
+
+ cleanup:
+    if (bm1)
+        GdipDisposeImage((GpImage*)bm1);
+    if (bm2)
+        GdipDisposeImage((GpImage*)bm2);
+    ok(DeleteFileA(filename1A), "Delete 1.tif failed.\n");
+
+    if (check_bm)
+    {
+        GdipDisposeImage((GpImage*)check_bm);
+        ok(DeleteFileA(filename2A), "Delete 2.tif failed.\n");
+    }
 }
 
 static void test_encoders(void)
@@ -4888,36 +5101,6 @@ static void test_CloneBitmapArea(void)
     GdipDisposeImage((GpImage *)bitmap);
 }
 
-static BOOL get_encoder_clsid(LPCWSTR mime, GUID *format, CLSID *clsid)
-{
-    GpStatus status;
-    UINT n_codecs, info_size, i;
-    ImageCodecInfo *info;
-    BOOL ret = FALSE;
-
-    status = GdipGetImageEncodersSize(&n_codecs, &info_size);
-    expect(Ok, status);
-
-    info = GdipAlloc(info_size);
-
-    status = GdipGetImageEncoders(n_codecs, info_size, info);
-    expect(Ok, status);
-
-    for (i = 0; i < n_codecs; i++)
-    {
-        if (!lstrcmpW(info[i].MimeType, mime))
-        {
-            *format = info[i].FormatID;
-            *clsid = info[i].Clsid;
-            ret = TRUE;
-            break;
-        }
-    }
-
-    GdipFree(info);
-    return ret;
-}
-
 static void test_supported_encoders(void)
 {
     static const WCHAR bmp_mimetype[] = { 'i', 'm', 'a','g', 'e', '/', 'b', 'm', 'p',0 };
@@ -5700,6 +5883,7 @@ START_TEST(image)
     test_GdipImageGetFrameDimensionsCount();
     test_LoadingImages();
     test_SavingImages();
+    test_SavingMultiPageTiff();
     test_encoders();
     test_LockBits();
     test_LockBits_UserBuf();
