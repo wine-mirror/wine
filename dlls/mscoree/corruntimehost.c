@@ -127,54 +127,19 @@ static void domain_restore(MonoDomain *prev_domain)
         mono_domain_set(prev_domain, FALSE);
 }
 
-static HRESULT RuntimeHost_AddDefaultDomain(RuntimeHost *This, MonoDomain **result)
-{
-    struct DomainEntry *entry;
-    HRESULT res=S_OK;
-
-    EnterCriticalSection(&This->lock);
-
-    entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
-    if (!entry)
-    {
-        res = E_OUTOFMEMORY;
-        goto end;
-    }
-
-    /* FIXME: Use exe filename to name the domain? */
-    entry->domain = mono_jit_init_version("mscorlib.dll", "v4.0.30319");
-
-    if (!entry->domain)
-    {
-        HeapFree(GetProcessHeap(), 0, entry);
-        res = E_FAIL;
-        goto end;
-    }
-
-    is_mono_started = TRUE;
-
-    list_add_tail(&This->domains, &entry->entry);
-
-    *result = entry->domain;
-
-end:
-    LeaveCriticalSection(&This->lock);
-
-    return res;
-}
-
 static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, const WCHAR *config_path, MonoDomain **result)
 {
     WCHAR config_dir[MAX_PATH];
     WCHAR base_dir[MAX_PATH];
     char *base_dirA, *config_pathA, *slash;
     HRESULT res=S_OK;
+    static BOOL configured_domain;
+
+    *result = get_root_domain();
 
     EnterCriticalSection(&This->lock);
 
-    if (This->default_domain) goto end;
-
-    res = RuntimeHost_AddDefaultDomain(This, &This->default_domain);
+    if (configured_domain) goto end;
 
     if (!config_path)
     {
@@ -213,38 +178,18 @@ static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, const WCHAR *conf
         *(slash + 1) = 0;
 
     TRACE("setting base_dir: %s, config_path: %s\n", base_dirA, config_pathA);
-    mono_domain_set_config(This->default_domain, base_dirA, config_pathA);
+    mono_domain_set_config(*result, base_dirA, config_pathA);
 
     HeapFree(GetProcessHeap(), 0, config_pathA);
     HeapFree(GetProcessHeap(), 0, base_dirA);
 
 end:
-    *result = This->default_domain;
+
+    configured_domain = TRUE;
 
     LeaveCriticalSection(&This->lock);
 
     return res;
-}
-
-static void RuntimeHost_DeleteDomain(RuntimeHost *This, MonoDomain *domain)
-{
-    struct DomainEntry *entry;
-
-    EnterCriticalSection(&This->lock);
-
-    LIST_FOR_EACH_ENTRY(entry, &This->domains, struct DomainEntry, entry)
-    {
-        if (entry->domain == domain)
-        {
-            list_remove(&entry->entry);
-            if (This->default_domain == domain)
-                This->default_domain = NULL;
-            HeapFree(GetProcessHeap(), 0, entry);
-            break;
-        }
-    }
-
-    LeaveCriticalSection(&This->lock);
 }
 
 static BOOL RuntimeHost_GetMethod(MonoDomain *domain, const char *assemblyname,
@@ -1529,8 +1474,6 @@ __int32 WINAPI _CorExeMain(void)
                 ERR("couldn't load %s, status=%d\n", debugstr_w(filename), status);
                 exit_code = -1;
             }
-
-            RuntimeHost_DeleteDomain(host, domain);
         }
         else
             exit_code = -1;
@@ -1616,8 +1559,6 @@ HRESULT RuntimeHost_Construct(CLRRuntimeInfo *runtime_version, RuntimeHost** res
 
     This->ref = 1;
     This->version = runtime_version;
-    list_init(&This->domains);
-    This->default_domain = NULL;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RuntimeHost.lock");
 

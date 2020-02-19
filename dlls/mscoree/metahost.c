@@ -298,6 +298,28 @@ fail:
     return E_FAIL;
 }
 
+MonoDomain* get_root_domain(void)
+{
+    static MonoDomain* root_domain;
+
+    if (root_domain != NULL)
+        return root_domain;
+
+    EnterCriticalSection(&runtime_list_cs);
+
+    if (root_domain == NULL)
+    {
+        /* FIXME: Use exe filename to name the domain? */
+        root_domain = mono_jit_init_version("mscorlib.dll", "v4.0.30319");
+
+        is_mono_started = TRUE;
+    }
+
+    LeaveCriticalSection(&runtime_list_cs);
+
+    return root_domain;
+}
+
 static void CDECL mono_shutdown_callback_fn(MonoProfiler *prof)
 {
     is_mono_shutdown = TRUE;
