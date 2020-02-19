@@ -421,12 +421,12 @@ static inline int wmemcmp(const wchar_t *s1, const wchar_t *s2, size_t n)
 
 static inline wchar_t* __cdecl wmemcpy(wchar_t *dst, const wchar_t *src, size_t n)
 {
-    return memcpy(dst, src, n * sizeof(wchar_t));
+    return (wchar_t*)memcpy(dst, src, n * sizeof(wchar_t));
 }
 
 static inline wchar_t* __cdecl wmemmove(wchar_t *dst, const wchar_t *src, size_t n)
 {
-    return memmove(dst, src, n * sizeof(wchar_t));
+    return (wchar_t*)memmove(dst, src, n * sizeof(wchar_t));
 }
 
 static inline wchar_t* __cdecl wmemset(wchar_t *s, wchar_t c, size_t n)
