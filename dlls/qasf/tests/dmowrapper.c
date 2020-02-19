@@ -61,6 +61,10 @@ static const IMediaObjectVtbl dmo_vtbl;
 static IMediaObject testdmo = {&dmo_vtbl};
 static IUnknown *testdmo_outer_unk;
 static LONG testdmo_refcount = 1;
+static AM_MEDIA_TYPE testdmo_input_mt;
+static BOOL testdmo_input_mt_set;
+
+static HRESULT testdmo_GetInputSizeInfo_hr = E_NOTIMPL;
 
 static HRESULT WINAPI dmo_inner_QueryInterface(IUnknown *iface, REFIID iid, void **out)
 {
@@ -121,8 +125,9 @@ static HRESULT WINAPI dmo_GetStreamCount(IMediaObject *iface, DWORD *input, DWOR
 
 static HRESULT WINAPI dmo_GetInputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    if (winetest_debug > 1) trace("GetInputStreamInfo(%u)\n", index);
+    *flags = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI dmo_GetOutputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
@@ -162,6 +167,13 @@ static HRESULT WINAPI dmo_SetInputType(IMediaObject *iface, DWORD index, const D
     strmbase_dump_media_type((AM_MEDIA_TYPE *)type);
     if (flags & DMO_SET_TYPEF_TEST_ONLY)
         return type->lSampleSize == 123 ? S_OK : S_FALSE;
+    if (flags & DMO_SET_TYPEF_CLEAR)
+    {
+        testdmo_input_mt_set = FALSE;
+        return S_OK;
+    }
+    MoCopyMediaType((DMO_MEDIA_TYPE *)&testdmo_input_mt, type);
+    testdmo_input_mt_set = TRUE;
     return S_OK;
 }
 
@@ -187,10 +199,13 @@ static HRESULT WINAPI dmo_GetOutputCurrentType(IMediaObject *iface, DWORD index,
 }
 
 static HRESULT WINAPI dmo_GetInputSizeInfo(IMediaObject *iface, DWORD index,
-        DWORD *size, DWORD *lookahead, DWORD *align)
+        DWORD *size, DWORD *lookahead, DWORD *alignment)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    if (winetest_debug > 1) trace("GetInputSizeInfo(%u)\n", index);
+    *size = 321;
+    *alignment = 64;
+    *lookahead = 0;
+    return testdmo_GetInputSizeInfo_hr;
 }
 
 static HRESULT WINAPI dmo_GetOutputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *alignment)
@@ -957,6 +972,255 @@ static void test_enum_media_types(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+struct testfilter
+{
+    struct strmbase_filter filter;
+    struct strmbase_source source;
+    struct strmbase_sink sink;
+    const AM_MEDIA_TYPE *sink_mt;
+};
+
+static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, filter);
+}
+
+static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, unsigned int index)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+    if (!index)
+        return &filter->source.pin;
+    else if (index == 1)
+        return &filter->sink.pin;
+    return NULL;
+}
+
+static void testfilter_destroy(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+    strmbase_source_cleanup(&filter->source);
+    strmbase_sink_cleanup(&filter->sink);
+    strmbase_filter_cleanup(&filter->filter);
+}
+
+static const struct strmbase_filter_ops testfilter_ops =
+{
+    .filter_get_pin = testfilter_get_pin,
+    .filter_destroy = testfilter_destroy,
+};
+
+static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
+        IMemInputPin *input, IMemAllocator **allocator)
+{
+    return S_OK;
+}
+
+static const struct strmbase_source_ops testsource_ops =
+{
+    .base.pin_query_accept = testsource_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = testsource_DecideAllocator,
+};
+
+static HRESULT testsink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT testsink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+    if (filter->sink_mt && !compare_media_types(mt, filter->sink_mt))
+        return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+    if (!index && filter->sink_mt)
+    {
+        CopyMediaType(mt, filter->sink_mt);
+        return S_OK;
+    }
+    return VFW_S_NO_MORE_ITEMS;
+}
+
+static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
+{
+    return S_OK;
+}
+
+static const struct strmbase_sink_ops testsink_ops =
+{
+    .base.pin_query_interface = testsink_query_interface,
+    .base.pin_query_accept = testsink_query_accept,
+    .base.pin_get_media_type = testsink_get_media_type,
+    .pfnReceive = testsink_Receive,
+};
+
+static void testfilter_init(struct testfilter *filter)
+{
+    static const GUID clsid = {0xabacab};
+    memset(filter, 0, sizeof(*filter));
+    strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
+    strmbase_source_init(&filter->source, &filter->filter, L"source", &testsource_ops);
+    strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
+}
+
+static void test_sink_allocator(IMemInputPin *input)
+{
+    IMemAllocator *req_allocator, *ret_allocator;
+    ALLOCATOR_PROPERTIES props;
+    HRESULT hr;
+
+    hr = IMemInputPin_GetAllocatorRequirements(input, &props);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    memset(&props, 0xcc, sizeof(props));
+    testdmo_GetInputSizeInfo_hr = S_OK;
+    hr = IMemInputPin_GetAllocatorRequirements(input, &props);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(props.cBuffers == 1, "Got %d buffers.\n", props.cBuffers);
+        ok(props.cbBuffer == 321, "Got size %d.\n", props.cbBuffer);
+        ok(props.cbAlign == 64, "Got alignment %d.\n", props.cbAlign);
+        ok(props.cbPrefix == 0xcccccccc, "Got prefix %d.\n", props.cbPrefix);
+    }
+
+    hr = IMemInputPin_GetAllocator(input, &ret_allocator);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    if (hr == S_OK)
+    {
+        hr = IMemAllocator_GetProperties(ret_allocator, &props);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!props.cBuffers, "Got %d buffers.\n", props.cBuffers);
+        ok(!props.cbBuffer, "Got size %d.\n", props.cbBuffer);
+        ok(!props.cbAlign, "Got alignment %d.\n", props.cbAlign);
+        ok(!props.cbPrefix, "Got prefix %d.\n", props.cbPrefix);
+
+        hr = IMemInputPin_NotifyAllocator(input, ret_allocator, TRUE);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IMemAllocator_Release(ret_allocator);
+    }
+
+    hr = IMemInputPin_NotifyAllocator(input, NULL, TRUE);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void **)&req_allocator);
+
+    hr = IMemInputPin_NotifyAllocator(input, req_allocator, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &ret_allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ret_allocator == req_allocator, "Allocators didn't match.\n");
+
+    IMemAllocator_Release(req_allocator);
+    IMemAllocator_Release(ret_allocator);
+}
+
+static void test_connect_pin(void)
+{
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = MEDIATYPE_Stream,
+        .subtype = MEDIASUBTYPE_Avi,
+        .formattype = FORMAT_None,
+    };
+    IBaseFilter *filter = create_dmo_wrapper();
+    struct testfilter testsource;
+    IMemInputPin *meminput;
+    IFilterGraph2 *graph;
+    IPin *sink, *peer;
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+    ULONG ref;
+
+    testfilter_init(&testsource);
+    CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    IFilterGraph2_AddFilter(graph, &testsource.filter.IBaseFilter_iface, L"source");
+    IFilterGraph2_AddFilter(graph, filter, L"DMO wrapper");
+    IBaseFilter_FindPin(filter, L"in0", &sink);
+    IPin_QueryInterface(sink, &IID_IMemInputPin, (void **)&meminput);
+
+    /* Test sink connection. */
+    peer = (IPin *)0xdeadbeef;
+    hr = IPin_ConnectedTo(sink, &peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+    ok(!peer, "Got peer %p.\n", peer);
+
+    hr = IPin_ConnectionMediaType(sink, &mt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    ok(!testdmo_input_mt_set, "Input type should not be set.\n");
+
+    req_mt.lSampleSize = 123;
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ConnectedTo(sink, &peer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(peer == &testsource.source.pin.IPin_iface, "Got peer %p.\n", peer);
+    IPin_Release(peer);
+
+    hr = IPin_ConnectionMediaType(sink, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
+
+    ok(testdmo_input_mt_set, "Input type should be set.\n");
+    ok(compare_media_types(&testdmo_input_mt, &req_mt), "Media types didn't match.\n");
+
+    test_sink_allocator(meminput);
+
+    hr = IFilterGraph2_Disconnect(graph, sink);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, sink);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(testsource.source.pin.peer == sink, "Got peer %p.\n", testsource.source.pin.peer);
+    IFilterGraph2_Disconnect(graph, &testsource.sink.pin.IPin_iface);
+
+    peer = (IPin *)0xdeadbeef;
+    hr = IPin_ConnectedTo(sink, &peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+    ok(!peer, "Got peer %p.\n", peer);
+
+    hr = IPin_ConnectionMediaType(sink, &mt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    ok(!testdmo_input_mt_set, "Input type should not be set.\n");
+
+    IPin_Release(sink);
+    IMemInputPin_Release(meminput);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&testsource.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(dmowrapper)
 {
     DWORD cookie;
@@ -983,6 +1247,7 @@ START_TEST(dmowrapper)
     test_pin_info();
     test_media_types();
     test_enum_media_types();
+    test_connect_pin();
 
     CoRevokeClassObject(cookie);
     DMOUnregister(&testdmo_clsid, &DMOCATEGORY_AUDIO_DECODER);

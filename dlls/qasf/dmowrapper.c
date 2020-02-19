@@ -94,11 +94,39 @@ static HRESULT dmo_wrapper_sink_get_media_type(struct strmbase_pin *iface, unsig
     return hr == S_OK ? S_OK : VFW_S_NO_MORE_ITEMS;
 }
 
+static HRESULT dmo_wrapper_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->pin.filter);
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    hr = IMediaObject_SetInputType(dmo, iface - filter->sinks, (const DMO_MEDIA_TYPE *)mt, 0);
+
+    IMediaObject_Release(dmo);
+    return hr;
+}
+
+static void dmo_wrapper_sink_disconnect(struct strmbase_sink *iface)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->pin.filter);
+    IMediaObject *dmo;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    IMediaObject_SetInputType(dmo, iface - filter->sinks, NULL, DMO_SET_TYPEF_CLEAR);
+
+    IMediaObject_Release(dmo);
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = dmo_wrapper_sink_query_interface,
     .base.pin_query_accept = dmo_wrapper_sink_query_accept,
     .base.pin_get_media_type = dmo_wrapper_sink_get_media_type,
+    .sink_connect = dmo_wrapper_sink_connect,
+    .sink_disconnect = dmo_wrapper_sink_disconnect,
 };
 
 static inline struct dmo_wrapper_source *impl_source_from_strmbase_pin(struct strmbase_pin *iface)
