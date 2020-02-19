@@ -1955,6 +1955,8 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
             *last_point = add_path_list_node(*last_point, endpoint->X - dy,
                 endpoint->Y + dx, PathPointTypeBezier);
         }
+        else if (add_last_point)
+            add_bevel_point(endpoint, nextpoint, pen, 0, last_point);
         break;
     }
     case LineCapTriangle:

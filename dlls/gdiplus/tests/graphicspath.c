@@ -1260,8 +1260,8 @@ static path_test_t widenline_capsquare_path[] = {
     };
 
 static path_test_t widenline_capround_path[] = {
-    {5.0, 5.0,        PathPointTypeStart,  0, 2}, /*0*/
-    {50.0, 5.0,       PathPointTypeLine,   0, 1}, /*1*/
+    {5.0, 5.0,        PathPointTypeStart,  0, 0}, /*0*/
+    {50.0, 5.0,       PathPointTypeLine,   0, 0}, /*1*/
     {52.761421, 5.0,  PathPointTypeBezier, 0, 0}, /*2*/
     {55.0, 7.238576,  PathPointTypeBezier, 0, 0}, /*3*/
     {55.0, 10.0,      PathPointTypeBezier, 0, 0}, /*4*/
@@ -1379,7 +1379,7 @@ static void test_widen_cap(void)
         { LineCapSquare, widenline_capsquare_path,
                 ARRAY_SIZE(widenline_capsquare_path) },
         { LineCapRound, widenline_capround_path,
-                ARRAY_SIZE(widenline_capround_path), TRUE },
+                ARRAY_SIZE(widenline_capround_path) },
         { LineCapTriangle, widenline_captriangle_path,
                 ARRAY_SIZE(widenline_captriangle_path), TRUE },
         { LineCapNoAnchor, widenline_capflat_path,
