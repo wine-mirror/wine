@@ -2068,6 +2068,30 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
 
         break;
     }
+    case LineCapDiamondAnchor:
+    {
+        REAL segment_dy = nextpoint->Y-endpoint->Y;
+        REAL segment_dx = nextpoint->X-endpoint->X;
+        REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        REAL par_dx, par_dy;
+        REAL perp_dx, perp_dy;
+
+        par_dx = -pen->width * segment_dx / segment_length;
+        par_dy = -pen->width * segment_dy / segment_length;
+
+        perp_dx = -pen->width * segment_dy / segment_length;
+        perp_dy = pen->width * segment_dx / segment_length;
+
+        *last_point = add_path_list_node(*last_point, endpoint->X + par_dx,
+            endpoint->Y + par_dy, PathPointTypeStart);
+        *last_point = add_path_list_node(*last_point, endpoint->X - perp_dx,
+            endpoint->Y - perp_dy, PathPointTypeLine);
+        *last_point = add_path_list_node(*last_point, endpoint->X - par_dx,
+            endpoint->Y - par_dy, PathPointTypeLine);
+        *last_point = add_path_list_node(*last_point, endpoint->X + perp_dx,
+            endpoint->Y + perp_dy, PathPointTypeLine);
+        break;
+    }
     }
 
     (*last_point)->type |= PathPointTypeCloseSubpath;
@@ -2323,10 +2347,10 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     {
         last_point = points;
 
-        if (pen->endcap > LineCapRoundAnchor)
+        if (pen->endcap > LineCapDiamondAnchor)
             FIXME("unimplemented end cap %x\n", pen->endcap);
 
-        if (pen->startcap > LineCapRoundAnchor)
+        if (pen->startcap > LineCapDiamondAnchor)
             FIXME("unimplemented start cap %x\n", pen->startcap);
 
         if (pen->dashcap != DashCapFlat)
