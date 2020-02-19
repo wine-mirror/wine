@@ -552,41 +552,41 @@ static void test_SavingMultiPageTiff(void)
 
     /* invalid params: NULL */
     stat = GdipSaveAdd(0, &params);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
     stat = GdipSaveAdd((GpImage*)bm1, 0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipSaveAddImage((GpImage*)bm1, (GpImage*)bm2, 0);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
     stat = GdipSaveAddImage((GpImage*)bm1, 0, &params);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
     stat = GdipSaveAddImage(0, (GpImage*)bm2, &params);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     /* win32 error: SaveAdd() can only be called after Save() with the MultiFrame param */
     stat = GdipSaveAdd((GpImage*)bm1, &params);
-    todo_wine expect(Win32Error, stat);
+    expect(Win32Error, stat);
     stat = GdipSaveAddImage((GpImage*)bm1, (GpImage*)bm2, &params);
-    todo_wine expect(Win32Error, stat);
+    expect(Win32Error, stat);
 
     stat = GdipSaveImageToFile((GpImage*)bm1, filename1, &tiff_clsid, 0); /* param not set! */
     expect(Ok, stat);
     if (stat != Ok) goto cleanup;
 
     stat = GdipSaveAdd((GpImage*)bm1, &params);
-    todo_wine expect(Win32Error, stat);
+    expect(Win32Error, stat);
     stat = GdipSaveAddImage((GpImage*)bm1, (GpImage*)bm2, &params);
-    todo_wine expect(Win32Error, stat);
+    expect(Win32Error, stat);
 
     /* win32 error: can't flush before starting the encoding process */
     paramValue = EncoderValueFlush;
     stat = GdipSaveAdd((GpImage*)bm1, &params);
-    todo_wine expect(Win32Error, stat);
+    expect(Win32Error, stat);
 
     /* win32 error: can't start encoding process through SaveAdd(), only Save() */
     paramValue = EncoderValueMultiFrame;
     stat = GdipSaveAdd((GpImage*)bm1, &params);
-    todo_wine expect(Win32Error, stat);
+    expect(Win32Error, stat);
 
     /* start encoding process: add first frame (bm1) */
     paramValue = EncoderValueMultiFrame;
@@ -600,7 +600,7 @@ static void test_SavingMultiPageTiff(void)
     /* add second frame (bm2) */
     paramValue = EncoderValueFrameDimensionPage;
     stat = GdipSaveAddImage((GpImage*)bm1, (GpImage*)bm2, &params);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
     if (stat != Ok) goto cleanup;
 
     /* finish encoding process */

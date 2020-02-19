@@ -4426,6 +4426,9 @@ GpStatus WINGDIPAPI GdipSaveImageToFile(GpImage *image, GDIPCONST WCHAR* filenam
     if (!image || !filename|| !clsidEncoder)
         return InvalidParameter;
 
+    /* this might release an old file stream held by the encoder so we can re-create it below */
+    terminate_encoder_wic(image);
+
     stat = GdipCreateStreamOnFile(filename, GENERIC_WRITE, &stream);
     if (stat != Ok)
         return GenericError;
@@ -4598,6 +4601,29 @@ static GpStatus encode_frame_wic(IWICBitmapEncoder *encoder, GpImage *image)
     return hresult_to_status(hr);
 }
 
+static BOOL has_encoder_param_long(GDIPCONST EncoderParameters *params, GUID param_guid, ULONG val)
+{
+    int param_idx, value_idx;
+
+    if (!params)
+        return FALSE;
+
+    for (param_idx = 0; param_idx < params->Count; param_idx++)
+    {
+        EncoderParameter param = params->Parameter[param_idx];
+        if (param.Type == EncoderParameterValueTypeLong && IsEqualCLSID(&param.Guid, &param_guid))
+        {
+            ULONG *value_array = (ULONG*) param.Value;
+            for (value_idx = 0; value_idx < param.NumberOfValues; value_idx++)
+            {
+                if (value_array[value_idx] == val)
+                    return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
+
 static GpStatus encode_image_wic(GpImage *image, IStream *stream,
     REFGUID container, GDIPCONST EncoderParameters *params)
 {
@@ -4611,10 +4637,13 @@ static GpStatus encode_image_wic(GpImage *image, IStream *stream,
     if (status == Ok)
         status = encode_frame_wic(image->encoder, image);
 
-    /* always try to terminate, but if something already failed earlier, keep the old status. */
-    terminate_status = terminate_encoder_wic(image);
-    if (status == Ok)
-        status = terminate_status;
+    if (!has_encoder_param_long(params, EncoderSaveFlag, EncoderValueMultiFrame))
+    {
+        /* always try to terminate, but if something already failed earlier, keep the old status. */
+        terminate_status = terminate_encoder_wic(image);
+        if (status == Ok)
+            status = terminate_status;
+    }
 
     return status;
 }
@@ -4687,8 +4716,7 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
  */
 GpStatus WINGDIPAPI GdipSaveAdd(GpImage *image, GDIPCONST EncoderParameters *params)
 {
-    FIXME("(%p,%p): stub\n", image, params);
-    return NotImplemented;
+    return GdipSaveAddImage(image, image, params);
 }
 
 /*****************************************************************************
@@ -4704,8 +4732,20 @@ GpStatus WINGDIPAPI GdipSaveAdd(GpImage *image, GDIPCONST EncoderParameters *par
 GpStatus WINGDIPAPI GdipSaveAddImage(GpImage *image, GpImage *additional_image,
     GDIPCONST EncoderParameters *params)
 {
-    FIXME("(%p,%p,%p): stub\n", image, additional_image, params);
-    return NotImplemented;
+    TRACE("%p, %p, %p\n", image, additional_image, params);
+
+    if (!image || !additional_image || !params)
+        return InvalidParameter;
+
+    if (!image->encoder)
+        return Win32Error;
+
+    if (has_encoder_param_long(params, EncoderSaveFlag, EncoderValueFlush))
+        return terminate_encoder_wic(image);
+    else if (has_encoder_param_long(params, EncoderSaveFlag, EncoderValueFrameDimensionPage))
+        return encode_frame_wic(image->encoder, additional_image);
+    else
+        return InvalidParameter;
 }
 
 /*****************************************************************************
