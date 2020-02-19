@@ -121,11 +121,20 @@ static void wsprintfATest(void)
     }
 }
 
+static WCHAR my_btowc(BYTE c)
+{
+    WCHAR wc;
+    if (!IsDBCSLeadByte(c) &&
+        MultiByteToWideChar(CP_ACP, 0, (const char *)&c, 1, &wc, 1) > 0)
+        return wc;
+    return 0;
+}
+
 static void wsprintfWTest(void)
 {
     static const WCHAR stars[] = L"*\x2606\x2605";
     WCHAR def_spc[] = L"*?\x2605 ";
-    WCHAR buf[25], fmt[25], res[25];
+    WCHAR buf[25], fmt[25], res[25], wcA1, wc99;
     char stars_mb[8], partial00[8], partialFF[8];
     const struct {
         const char *input;
@@ -165,6 +174,30 @@ static void wsprintfWTest(void)
         ok(rc == lstrlenW(res), "%u: wsprintfW length failure: rc=%d\n", i, rc);
         ok(!lstrcmpW(buf, res), "%u: wrong result [%s]\n", i, wine_dbgstr_w(buf));
     }
+
+    rc = wsprintfW(buf, L"%2c", L'*');
+    ok(rc == 2, "expected 2, got %d\n", rc);
+    ok(buf[0] == L' ', "expected \\x0020, got \\x%04x\n", buf[0]);
+    ok(buf[1] == L'*', "expected \\x%04x, got \\x%04x\n", L'*', buf[1]);
+
+    rc = wsprintfW(buf, L"%c", L'\x2605');
+    ok(rc == 1, "expected 1, got %d\n", rc);
+    ok(buf[0] == L'\x2605', "expected \\x%04x, got \\x%04x\n", L'\x2605', buf[0]);
+
+    wcA1 = my_btowc(0xA1);
+    rc = wsprintfW(buf, L"%C", 0xA1);
+    ok(rc == 1, "expected 1, got %d\n", rc);
+    todo_wine ok(buf[0] == wcA1, "expected \\x%04x, got \\x%04x\n", wcA1, buf[0]);
+
+    rc = wsprintfW(buf, L"%C", 0x81A1);
+    ok(rc == 1, "expected 1, got %d\n", rc);
+    todo_wine ok(buf[0] == wcA1, "expected \\x%04x, got \\x%04x\n", wcA1, buf[0]);
+
+    wc99 = my_btowc(0x99);
+    rc = wsprintfW(buf, L"%2C", 0xe199);
+    ok(rc == 2, "expected 1, got %d\n", rc);
+    ok(buf[0] == L' ', "expected \\x0020, got \\x%04x\n", buf[0]);
+    todo_wine ok(buf[1] == wc99, "expected \\x%04x, got \\x%04x\n", wc99, buf[1]);
 
     if (!GetCPInfoExW(CP_ACP, 0, &cpinfoex) || cpinfoex.MaxCharSize <= 1)
     {
