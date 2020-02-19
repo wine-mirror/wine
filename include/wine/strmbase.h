@@ -74,6 +74,8 @@ struct strmbase_source_ops
     BaseOutputPin_DecideBufferSize pfnDecideBufferSize;
     /* Required for BaseOutputPinImpl_AttemptConnection */
     BaseOutputPin_DecideAllocator pfnDecideAllocator;
+
+    void (*source_disconnect)(struct strmbase_source *pin);
 };
 
 struct strmbase_sink

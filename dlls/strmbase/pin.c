@@ -552,6 +552,9 @@ static HRESULT WINAPI source_Disconnect(IPin *iface)
             return VFW_E_NOT_STOPPED;
         }
 
+        if (This->pFuncsTable->source_disconnect)
+            This->pFuncsTable->source_disconnect(This);
+
         if (This->pMemInputPin)
         {
             IMemInputPin_Release(This->pMemInputPin);

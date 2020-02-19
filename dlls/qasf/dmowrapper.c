@@ -166,10 +166,56 @@ static HRESULT dmo_wrapper_source_get_media_type(struct strmbase_pin *iface, uns
     return hr == S_OK ? S_OK : VFW_S_NO_MORE_ITEMS;
 }
 
+static HRESULT WINAPI dmo_wrapper_source_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->pin.filter);
+    DWORD index = impl_source_from_strmbase_pin(&iface->pin) - filter->sources;
+    ALLOCATOR_PROPERTIES ret_props;
+    DWORD size = 0, alignment = 0;
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    if (SUCCEEDED(hr = IMediaObject_SetOutputType(dmo, index,
+            (const DMO_MEDIA_TYPE *)&iface->pin.mt, 0)))
+        hr = IMediaObject_GetOutputSizeInfo(dmo, index, &size, &alignment);
+
+    if (SUCCEEDED(hr))
+    {
+        props->cBuffers = max(props->cBuffers, 1);
+        props->cbBuffer = max(max(props->cbBuffer, size), 16384);
+        props->cbAlign = max(props->cbAlign, alignment);
+        hr = IMemAllocator_SetProperties(allocator, props, &ret_props);
+    }
+
+    IMediaObject_Release(dmo);
+
+    return hr;
+}
+
+static void dmo_wrapper_source_disconnect(struct strmbase_source *iface)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->pin.filter);
+    IMediaObject *dmo;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    IMediaObject_SetOutputType(dmo, impl_source_from_strmbase_pin(&iface->pin) - filter->sources,
+            NULL, DMO_SET_TYPEF_CLEAR);
+
+    IMediaObject_Release(dmo);
+}
+
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = dmo_wrapper_source_query_accept,
     .base.pin_get_media_type = dmo_wrapper_source_get_media_type,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
+    .pfnDecideBufferSize = dmo_wrapper_source_DecideBufferSize,
+    .source_disconnect = dmo_wrapper_source_disconnect,
 };
 
 static inline struct dmo_wrapper *impl_from_IDMOWrapperFilter(IDMOWrapperFilter *iface)
