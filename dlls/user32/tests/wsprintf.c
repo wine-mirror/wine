@@ -187,17 +187,17 @@ static void wsprintfWTest(void)
     wcA1 = my_btowc(0xA1);
     rc = wsprintfW(buf, L"%C", 0xA1);
     ok(rc == 1, "expected 1, got %d\n", rc);
-    todo_wine ok(buf[0] == wcA1, "expected \\x%04x, got \\x%04x\n", wcA1, buf[0]);
+    ok(buf[0] == wcA1, "expected \\x%04x, got \\x%04x\n", wcA1, buf[0]);
 
     rc = wsprintfW(buf, L"%C", 0x81A1);
     ok(rc == 1, "expected 1, got %d\n", rc);
-    todo_wine ok(buf[0] == wcA1, "expected \\x%04x, got \\x%04x\n", wcA1, buf[0]);
+    ok(buf[0] == wcA1, "expected \\x%04x, got \\x%04x\n", wcA1, buf[0]);
 
     wc99 = my_btowc(0x99);
     rc = wsprintfW(buf, L"%2C", 0xe199);
     ok(rc == 2, "expected 1, got %d\n", rc);
     ok(buf[0] == L' ', "expected \\x0020, got \\x%04x\n", buf[0]);
-    todo_wine ok(buf[1] == wc99, "expected \\x%04x, got \\x%04x\n", wc99, buf[1]);
+    ok(buf[1] == wc99, "expected \\x%04x, got \\x%04x\n", wc99, buf[1]);
 
     if (!GetCPInfoExW(CP_ACP, 0, &cpinfoex) || cpinfoex.MaxCharSize <= 1)
     {
