@@ -22,18 +22,127 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qasf);
 
+struct dmo_wrapper_source
+{
+    struct strmbase_source pin;
+};
+
 struct dmo_wrapper
 {
     struct strmbase_filter filter;
     IDMOWrapperFilter IDMOWrapperFilter_iface;
 
     IUnknown *dmo;
+
+    DWORD sink_count, source_count;
+    struct strmbase_sink *sinks;
+    struct dmo_wrapper_source *sources;
 };
 
 static inline struct dmo_wrapper *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, struct dmo_wrapper, filter);
 }
+
+static inline struct strmbase_sink *impl_sink_from_strmbase_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, struct strmbase_sink, pin);
+}
+
+static HRESULT dmo_wrapper_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct strmbase_sink *sink = impl_sink_from_strmbase_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &sink->IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT dmo_wrapper_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->filter);
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    hr = IMediaObject_SetInputType(dmo, impl_sink_from_strmbase_pin(iface) - filter->sinks,
+            (const DMO_MEDIA_TYPE *)mt, DMO_SET_TYPEF_TEST_ONLY);
+
+    IMediaObject_Release(dmo);
+
+    return hr;
+}
+
+static HRESULT dmo_wrapper_sink_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->filter);
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    hr = IMediaObject_GetInputType(dmo, impl_sink_from_strmbase_pin(iface) - filter->sinks,
+            index, (DMO_MEDIA_TYPE *)mt);
+
+    IMediaObject_Release(dmo);
+
+    return hr == S_OK ? S_OK : VFW_S_NO_MORE_ITEMS;
+}
+
+static const struct strmbase_sink_ops sink_ops =
+{
+    .base.pin_query_interface = dmo_wrapper_sink_query_interface,
+    .base.pin_query_accept = dmo_wrapper_sink_query_accept,
+    .base.pin_get_media_type = dmo_wrapper_sink_get_media_type,
+};
+
+static inline struct dmo_wrapper_source *impl_source_from_strmbase_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, struct dmo_wrapper_source, pin.pin);
+}
+
+static HRESULT dmo_wrapper_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->filter);
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    hr = IMediaObject_SetOutputType(dmo, impl_source_from_strmbase_pin(iface) - filter->sources,
+            (const DMO_MEDIA_TYPE *)mt, DMO_SET_TYPEF_TEST_ONLY);
+
+    IMediaObject_Release(dmo);
+
+    return hr;
+}
+
+static HRESULT dmo_wrapper_source_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->filter);
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    hr = IMediaObject_GetOutputType(dmo, impl_source_from_strmbase_pin(iface) - filter->sources,
+            index, (DMO_MEDIA_TYPE *)mt);
+
+    IMediaObject_Release(dmo);
+
+    return hr == S_OK ? S_OK : VFW_S_NO_MORE_ITEMS;
+}
+
+static const struct strmbase_source_ops source_ops =
+{
+    .base.pin_query_accept = dmo_wrapper_source_query_accept,
+    .base.pin_get_media_type = dmo_wrapper_source_get_media_type,
+};
 
 static inline struct dmo_wrapper *impl_from_IDMOWrapperFilter(IDMOWrapperFilter *iface)
 {
@@ -61,8 +170,14 @@ static ULONG WINAPI dmo_wrapper_filter_Release(IDMOWrapperFilter *iface)
 static HRESULT WINAPI dmo_wrapper_filter_Init(IDMOWrapperFilter *iface, REFCLSID clsid, REFCLSID category)
 {
     struct dmo_wrapper *filter = impl_from_IDMOWrapperFilter(iface);
+    struct dmo_wrapper_source *sources;
+    DWORD input_count, output_count;
+    struct strmbase_sink *sinks;
+    IMediaObject *dmo;
     IUnknown *unk;
+    WCHAR id[14];
     HRESULT hr;
+    DWORD i;
 
     TRACE("filter %p, clsid %s, category %s.\n", filter, debugstr_guid(clsid), debugstr_guid(category));
 
@@ -70,11 +185,49 @@ static HRESULT WINAPI dmo_wrapper_filter_Init(IDMOWrapperFilter *iface, REFCLSID
             CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk)))
         return hr;
 
+    if (FAILED(hr = IUnknown_QueryInterface(unk, &IID_IMediaObject, (void **)&dmo)))
+    {
+        IUnknown_Release(unk);
+        return hr;
+    }
+
+    if (FAILED(IMediaObject_GetStreamCount(dmo, &input_count, &output_count)))
+        input_count = output_count = 0;
+
+    sinks = calloc(sizeof(*sinks), input_count);
+    sources = calloc(sizeof(*sources), output_count);
+    if (!sinks || !sources)
+    {
+        free(sinks);
+        free(sources);
+        IMediaObject_Release(dmo);
+        IUnknown_Release(unk);
+        return hr;
+    }
+
+    for (i = 0; i < input_count; ++i)
+    {
+        swprintf(id, ARRAY_SIZE(id), L"in%u", i);
+        strmbase_sink_init(&sinks[i], &filter->filter, id, &sink_ops, NULL);
+    }
+
+    for (i = 0; i < output_count; ++i)
+    {
+        swprintf(id, ARRAY_SIZE(id), L"out%u", i);
+        strmbase_source_init(&sources[i].pin, &filter->filter, id, &source_ops);
+    }
+
     EnterCriticalSection(&filter->filter.csFilter);
 
     filter->dmo = unk;
+    filter->sink_count = input_count;
+    filter->source_count = output_count;
+    filter->sinks = sinks;
+    filter->sources = sources;
 
     LeaveCriticalSection(&filter->filter.csFilter);
+
+    IMediaObject_Release(dmo);
 
     return S_OK;
 }
@@ -89,15 +242,28 @@ static const IDMOWrapperFilterVtbl dmo_wrapper_filter_vtbl =
 
 static struct strmbase_pin *dmo_wrapper_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface);
+
+    if (index < filter->sink_count)
+        return &filter->sinks[index].pin;
+    else if (index < filter->sink_count + filter->source_count)
+        return &filter->sources[index - filter->sink_count].pin.pin;
     return NULL;
 }
 
 static void dmo_wrapper_destroy(struct strmbase_filter *iface)
 {
     struct dmo_wrapper *filter = impl_from_strmbase_filter(iface);
+    DWORD i;
 
     if (filter->dmo)
         IUnknown_Release(filter->dmo);
+    for (i = 0; i < filter->sink_count; ++i)
+        strmbase_sink_cleanup(&filter->sinks[i]);
+    for (i = 0; i < filter->source_count; ++i)
+        strmbase_source_cleanup(&filter->sources[i].pin);
+    free(filter->sinks);
+    free(filter->sources);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
 }
