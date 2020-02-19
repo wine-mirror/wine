@@ -3709,6 +3709,7 @@ static HRESULT WINAPI d3d9_device_GetStreamSource(IDirect3DDevice9Ex *iface,
         UINT stream_idx, IDirect3DVertexBuffer9 **buffer, UINT *offset, UINT *stride)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    const struct wined3d_stateblock_state *state;
     const struct wined3d_stream_state *stream;
     struct d3d9_vertexbuffer *buffer_impl;
 
@@ -3718,14 +3719,15 @@ static HRESULT WINAPI d3d9_device_GetStreamSource(IDirect3DDevice9Ex *iface,
     if (!buffer)
         return D3DERR_INVALIDCALL;
 
-    if (stream_idx > WINED3D_MAX_STREAMS)
+    if (stream_idx >= ARRAY_SIZE(state->streams))
     {
         WARN("Stream index %u out of range.\n", stream_idx);
         return WINED3DERR_INVALIDCALL;
     }
 
     wined3d_mutex_lock();
-    stream = &wined3d_stateblock_get_state(device->state)->streams[stream_idx];
+    state = wined3d_stateblock_get_state(device->state);
+    stream = &state->streams[stream_idx];
     if (stream->buffer)
     {
         buffer_impl = wined3d_buffer_get_parent(stream->buffer);
