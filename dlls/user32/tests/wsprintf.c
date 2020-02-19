@@ -53,9 +53,9 @@ static const struct
 static void wsprintfATest(void)
 {
     char buf[25], star[4], partial[4];
-    static const WCHAR starW[] = {0x2606, 0};
-    static const WCHAR fffeW[] = {0xfffe, 0};
-    static const WCHAR wineW[] = {0xd83c, 0xdf77, 0}; /* U+1F377: wine glass */
+    static const WCHAR starW[] = L"\x2606";
+    static const WCHAR fffeW[] = L"\xfffe";
+    static const WCHAR wineW[] = L"\xd83c\xdf77"; /* U+1F377: wine glass */
     const struct {
         const void *input;
         const char *fmt;
@@ -120,14 +120,8 @@ static void wsprintfATest(void)
 
 static void wsprintfWTest(void)
 {
-    static const WCHAR fmt_010ld[] = {'%','0','1','0','l','d','\0'};
-    static const WCHAR res_010ld[] = {'-','0','0','0','0','0','0','0','0','1', '\0'};
-    static const WCHAR fmt_I64x[] = {'%','I','6','4','x',0};
-    static const WCHAR fmt_dot3S[] = {'%','.','3','S',0};
-    static const WCHAR fmt__4S[] = {'%','-','4','S',0};
-    static const WCHAR stars[] = {'*', 0x2606, 0x2605, 0};
-    static const WCHAR nul_spc[] = {'*', 0, ' ', ' ', 0};
-    WCHAR def_spc[] = {'*','?', 0x2605, ' ', 0};
+    static const WCHAR stars[] = L"*\x2606\x2605";
+    WCHAR def_spc[] = L"*?\x2605 ";
     WCHAR buf[25], fmt[25], res[25];
     char stars_mb[8], partial00[8], partialFF[8];
     const struct {
@@ -137,25 +131,25 @@ static void wsprintfWTest(void)
         int rc;
     }
     testcase[] = {
-        { stars_mb, fmt_dot3S, stars, 3 },
-        { partial00, fmt__4S, nul_spc, 4 },
-        { partialFF, fmt__4S, def_spc, 4 },
+        { stars_mb, L"%.3S", stars, 3 },
+        { partial00, L"%-4S", L"*\0  ", 4 },
+        { partialFF, L"%-4S", def_spc, 4 },
     };
     CPINFOEXW cpinfoex;
     unsigned int i;
     int rc;
 
-    rc=wsprintfW(buf, fmt_010ld, -1);
+    rc=wsprintfW(buf, L"%010ld", -1);
     if (rc==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("wsprintfW is not implemented\n");
         return;
     }
     ok(rc == 10, "wsPrintfW length failure: rc=%d error=%d\n",rc,GetLastError());
-    ok((lstrcmpW(buf, res_010ld) == 0),
+    ok((lstrcmpW(buf, L"-000000001") == 0),
        "wsprintfW zero padded negative value failure\n");
-    rc = wsprintfW(buf, fmt_I64x, (ULONGLONG)0 );
-    if (rc == 4 && !lstrcmpW(buf, fmt_I64x + 1))
+    rc = wsprintfW(buf, L"%I64x", (ULONGLONG)0 );
+    if (rc == 4 && !lstrcmpW(buf, L"I64x"))
     {
         win_skip( "I64 formats not supported\n" );
         return;
