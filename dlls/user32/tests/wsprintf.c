@@ -111,12 +111,10 @@ static void wsprintfATest(void)
         memset(buf, 0x11, sizeof(buf));
         rc = wsprintfA(buf, testcase[i].fmt, testcase[i].input);
 
-        todo_wine_if( i == 7 )
         ok(rc == testcase[i].rc,
            "%u: expected %d, got %d\n",
            i, testcase[i].rc, rc);
 
-        todo_wine_if( i == 7 || i == 8 || i == 9 )
         ok(!strcmp(buf, testcase[i].str),
            "%u: expected %s, got %s\n",
            i, wine_dbgstr_a(testcase[i].str), wine_dbgstr_an(buf, rc));
