@@ -358,11 +358,25 @@ static HRESULT dmo_wrapper_query_interface(struct strmbase_filter *iface, REFIID
     return E_NOINTERFACE;
 }
 
+static HRESULT dmo_wrapper_cleanup_stream(struct strmbase_filter *iface)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface);
+    IMediaObject *dmo;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    IMediaObject_Flush(dmo);
+
+    IMediaObject_Release(dmo);
+    return S_OK;
+}
+
 static struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = dmo_wrapper_get_pin,
     .filter_destroy = dmo_wrapper_destroy,
     .filter_query_interface = dmo_wrapper_query_interface,
+    .filter_cleanup_stream = dmo_wrapper_cleanup_stream,
 };
 
 HRESULT dmo_wrapper_create(IUnknown *outer, IUnknown **out)
