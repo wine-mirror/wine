@@ -9,6 +9,7 @@
 #define __WINE_IO_H
 
 #include <corecrt.h>
+#include <corecrt_wio.h>
 
 #include <pshpack8.h>
 
@@ -20,11 +21,6 @@
 #define _A_VOLID  0x00000008
 #define _A_SUBDIR 0x00000010
 #define _A_ARCH   0x00000020
-
-#ifndef _FSIZE_T_DEFINED
-typedef __msvcrt_ulong _fsize_t;
-#define _FSIZE_T_DEFINED
-#endif
 
 #ifndef _FINDDATA_T_DEFINED
 #define _FINDDATA_T_DEFINED
@@ -58,27 +54,6 @@ struct _finddata64_t
   char           name[260];
 };
 #endif /* _FINDDATA_T_DEFINED */
-
-#ifndef _WFINDDATA_T_DEFINED
-#define _WFINDDATA_T_DEFINED
-struct _wfinddata_t {
-  unsigned attrib;
-  time_t   time_create;
-  time_t   time_access;
-  time_t   time_write;
-  _fsize_t size;
-  wchar_t  name[260];
-};
-
-struct _wfinddatai64_t {
-  unsigned attrib;
-  time_t  time_create;
-  time_t  time_access;
-  time_t  time_write;
-  __int64 DECLSPEC_ALIGN(8) size;
-  wchar_t name[260];
-};
-#endif /* _WFINDDATA_T_DEFINED */
 
 #ifdef __cplusplus
 extern "C" {
@@ -124,22 +99,6 @@ int         __cdecl _write(int,const void*,unsigned int);
 
 int         __cdecl remove(const char*);
 int         __cdecl rename(const char*,const char*);
-
-#ifndef _WIO_DEFINED
-#define _WIO_DEFINED
-int         __cdecl _waccess(const wchar_t*,int);
-int         __cdecl _wchmod(const wchar_t*,int);
-int         __cdecl _wcreat(const wchar_t*,int);
-intptr_t    __cdecl _wfindfirst(const wchar_t*,struct _wfinddata_t*);
-intptr_t    __cdecl _wfindfirsti64(const wchar_t*, struct _wfinddatai64_t*);
-int         __cdecl _wfindnext(intptr_t,struct _wfinddata_t*);
-int         __cdecl _wfindnexti64(intptr_t, struct _wfinddatai64_t*);
-wchar_t *   __cdecl _wmktemp(wchar_t*);
-int         WINAPIV _wopen(const wchar_t*,int,...);
-int         __cdecl _wrename(const wchar_t*,const wchar_t*);
-int         WINAPIV _wsopen(const wchar_t*,int,int,...);
-int         __cdecl _wunlink(const wchar_t*);
-#endif /* _WIO_DEFINED */
 
 #ifdef __cplusplus
 }
