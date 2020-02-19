@@ -1387,7 +1387,7 @@ static void test_widen_cap(void)
         { LineCapSquareAnchor, widenline_capsquareanchor_path,
                 ARRAY_SIZE(widenline_capsquareanchor_path) },
         { LineCapRoundAnchor, widenline_caproundanchor_path,
-                ARRAY_SIZE(widenline_caproundanchor_path), TRUE },
+                ARRAY_SIZE(widenline_caproundanchor_path) },
         { LineCapDiamondAnchor, widenline_capdiamondanchor_path,
                 ARRAY_SIZE(widenline_capdiamondanchor_path), TRUE },
         { LineCapArrowAnchor, widenline_caparrowanchor_path,

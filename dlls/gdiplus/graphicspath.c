@@ -2016,6 +2016,58 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
             endpoint->Y + par_dy - perp_dy, PathPointTypeLine);
         break;
     }
+    case LineCapRoundAnchor:
+    {
+        REAL segment_dy = nextpoint->Y-endpoint->Y;
+        REAL segment_dx = nextpoint->X-endpoint->X;
+        REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        REAL dx, dy, dx2, dy2;
+        const REAL control_point_distance = 0.55228475; /* 4/3 * (sqrt(2) - 1) */
+
+        dx = -pen->width * segment_dx / segment_length;
+        dy = -pen->width * segment_dy / segment_length;
+
+        dx2 = dx * control_point_distance;
+        dy2 = dy * control_point_distance;
+
+        /* starting point */
+        *last_point = add_path_list_node(*last_point, endpoint->X + dy,
+            endpoint->Y - dx, PathPointTypeStart);
+
+        /* first 90-degree arc */
+        *last_point = add_path_list_node(*last_point, endpoint->X + dy + dx2,
+            endpoint->Y - dx + dy2, PathPointTypeBezier);
+        *last_point = add_path_list_node(*last_point, endpoint->X + dx + dy2,
+            endpoint->Y + dy - dx2, PathPointTypeBezier);
+        *last_point = add_path_list_node(*last_point, endpoint->X + dx,
+            endpoint->Y + dy, PathPointTypeBezier);
+
+        /* second 90-degree arc */
+        *last_point = add_path_list_node(*last_point, endpoint->X + dx - dy2,
+            endpoint->Y + dy + dx2, PathPointTypeBezier);
+        *last_point = add_path_list_node(*last_point, endpoint->X - dy + dx2,
+            endpoint->Y + dx + dy2, PathPointTypeBezier);
+        *last_point = add_path_list_node(*last_point, endpoint->X - dy,
+            endpoint->Y + dx, PathPointTypeBezier);
+
+        /* third 90-degree arc */
+        *last_point = add_path_list_node(*last_point, endpoint->X - dy - dx2,
+            endpoint->Y + dx - dy2, PathPointTypeBezier);
+        *last_point = add_path_list_node(*last_point, endpoint->X - dx - dy2,
+            endpoint->Y - dy + dx2, PathPointTypeBezier);
+        *last_point = add_path_list_node(*last_point, endpoint->X - dx,
+            endpoint->Y - dy, PathPointTypeBezier);
+
+        /* fourth 90-degree arc */
+        *last_point = add_path_list_node(*last_point, endpoint->X - dx + dy2,
+            endpoint->Y - dy - dx2, PathPointTypeBezier);
+        *last_point = add_path_list_node(*last_point, endpoint->X + dy - dx2,
+            endpoint->Y - dx - dy2, PathPointTypeBezier);
+        *last_point = add_path_list_node(*last_point, endpoint->X + dy,
+            endpoint->Y - dx, PathPointTypeBezier);
+
+        break;
+    }
     }
 
     (*last_point)->type |= PathPointTypeCloseSubpath;
@@ -2271,10 +2323,10 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     {
         last_point = points;
 
-        if (pen->endcap > LineCapSquareAnchor)
+        if (pen->endcap > LineCapRoundAnchor)
             FIXME("unimplemented end cap %x\n", pen->endcap);
 
-        if (pen->startcap > LineCapSquareAnchor)
+        if (pen->startcap > LineCapRoundAnchor)
             FIXME("unimplemented start cap %x\n", pen->startcap);
 
         if (pen->dashcap != DashCapFlat)
