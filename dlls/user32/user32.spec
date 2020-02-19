@@ -205,6 +205,7 @@
 @ stdcall EmptyClipboard()
 @ stdcall EnableMenuItem(long long long)
 @ stdcall EnableMouseInPointer(long)
+@ stdcall EnableNonClientDpiScaling(long)
 @ stdcall EnableScrollBar(long long long)
 @ stdcall EnableWindow(long long)
 @ stdcall EndDeferWindowPos(long)

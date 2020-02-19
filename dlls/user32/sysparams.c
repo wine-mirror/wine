@@ -3664,6 +3664,16 @@ BOOL WINAPI IsProcessDPIAware(void)
     return GetAwarenessFromDpiAwarenessContext( GetThreadDpiAwarenessContext() ) != DPI_AWARENESS_UNAWARE;
 }
 
+/**********************************************************************
+ *              EnableNonClientDpiScaling   (USER32.@)
+ */
+BOOL WINAPI EnableNonClientDpiScaling( HWND hwnd )
+{
+    FIXME("(%p): stub\n", hwnd);
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /***********************************************************************
  *              GetDpiForSystem   (USER32.@)
  */
