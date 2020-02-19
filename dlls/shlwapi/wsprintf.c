@@ -254,8 +254,11 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
     switch(format->type)
     {
     case WPR_CHAR:
-    case WPR_WCHAR:
         return (format->precision = 1);
+    case WPR_WCHAR:
+        if (dst_is_wide) len = 1;
+        else len = WideCharToMultiByte( CP_ACP, 0, &arg->wchar_view, 1, NULL, 0, NULL, NULL );
+        return (format->precision = len);
     case WPR_STRING:
         if (!arg->lpcstr_view) arg->lpcstr_view = null_stringA;
         if (dst_is_wide)
@@ -397,7 +400,14 @@ INT WINAPI wvnsprintfA( LPSTR buffer, INT maxlen, LPCSTR spec, __ms_va_list args
         switch(format.type)
         {
         case WPR_WCHAR:
-            *p++ = argData.wchar_view;
+            {
+                CHAR mb[5];
+                if (WideCharToMultiByte( CP_ACP, 0, &argData.wchar_view, 1, mb, sizeof(mb), NULL, NULL ))
+                {
+                    memcpy( p, mb, len );
+                    p += len;
+                }
+            }
             break;
         case WPR_CHAR:
             *p++ = argData.char_view;
