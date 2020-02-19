@@ -69,6 +69,8 @@ static HRESULT testdmo_GetOutputSizeInfo_hr = S_OK;
 static DWORD testdmo_output_size = 123;
 static DWORD testdmo_output_alignment = 1;
 
+static unsigned int got_Flush;
+
 static HRESULT WINAPI dmo_inner_QueryInterface(IUnknown *iface, REFIID iid, void **out)
 {
     if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
@@ -240,8 +242,9 @@ static HRESULT WINAPI dmo_SetInputMaxLatency(IMediaObject *iface, DWORD index, R
 
 static HRESULT WINAPI dmo_Flush(IMediaObject *iface)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    if (winetest_debug > 1) trace("Flush()\n");
+    ++got_Flush;
+    return S_OK;
 }
 
 static HRESULT WINAPI dmo_Discontinuity(IMediaObject *iface, DWORD index)
@@ -252,14 +255,14 @@ static HRESULT WINAPI dmo_Discontinuity(IMediaObject *iface, DWORD index)
 
 static HRESULT WINAPI dmo_AllocateStreamingResources(IMediaObject *iface)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    if (winetest_debug > 1) trace("AllocateStreamingResources()\n");
+    return S_OK;
 }
 
 static HRESULT WINAPI dmo_FreeStreamingResources(IMediaObject *iface)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    if (winetest_debug > 1) trace("FreeStreamingResources()\n");
+    return S_OK;
 }
 
 static HRESULT WINAPI dmo_GetInputStatus(IMediaObject *iface, DWORD index, DWORD *flags)
@@ -1214,6 +1217,64 @@ static void test_source_allocator(IFilterGraph2 *graph, IPin *source, struct tes
 
 }
 
+static void test_filter_state(IMediaControl *control)
+{
+    OAFilterState state;
+    HRESULT hr;
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IMediaControl_Pause(control);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
+    hr = IMediaControl_Run(control);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+
+    hr = IMediaControl_Pause(control);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
+    ok(!got_Flush, "Unexpected IMediaObject::Flush().\n");
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(got_Flush, "Expected IMediaObject::Flush().\n");
+    got_Flush = 0;
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IMediaControl_Run(control);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+
+    ok(!got_Flush, "Unexpected IMediaObject::Flush().\n");
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(got_Flush, "Expected IMediaObject::Flush().\n");
+    got_Flush = 0;
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+}
+
 static void test_connect_pin(void)
 {
     AM_MEDIA_TYPE req_mt =
@@ -1225,6 +1286,7 @@ static void test_connect_pin(void)
     IBaseFilter *filter = create_dmo_wrapper();
     struct testfilter testsource, testsink;
     IPin *sink, *source, *peer;
+    IMediaControl *control;
     IMemInputPin *meminput;
     IFilterGraph2 *graph;
     AM_MEDIA_TYPE mt;
@@ -1235,6 +1297,7 @@ static void test_connect_pin(void)
     testfilter_init(&testsink);
     CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
             &IID_IFilterGraph2, (void **)&graph);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IFilterGraph2_AddFilter(graph, &testsource.filter.IBaseFilter_iface, L"source");
     IFilterGraph2_AddFilter(graph, &testsink.filter.IBaseFilter_iface, L"sink");
     IFilterGraph2_AddFilter(graph, filter, L"DMO wrapper");
@@ -1319,6 +1382,8 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     ok(!testdmo_output_mt_set, "Output type should not be set.\n");
+
+    test_filter_state(control);
 
     req_mt.lSampleSize = 0;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
@@ -1439,6 +1504,7 @@ static void test_connect_pin(void)
     IPin_Release(sink);
     IPin_Release(source);
     IMemInputPin_Release(meminput);
+    IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(filter);
