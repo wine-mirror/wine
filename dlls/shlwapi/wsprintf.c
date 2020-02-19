@@ -525,8 +525,15 @@ INT WINAPI wvnsprintfW( LPWSTR buffer, INT maxlen, LPCWSTR spec, __ms_va_list ar
             *p++ = argData.wchar_view;
             break;
         case WPR_CHAR:
-            *p++ = argData.char_view;
-            break;
+            {
+                WCHAR wc;
+                if (!IsDBCSLeadByte( (BYTE)argData.char_view )
+                    && MultiByteToWideChar( CP_ACP, 0, &argData.char_view, 1, &wc, 1 ) > 0)
+                    *p++ = wc;
+                else
+                    *p++ = 0;
+                break;
+            }
         case WPR_STRING:
             {
                 LPCSTR ptr = argData.lpcstr_view;
