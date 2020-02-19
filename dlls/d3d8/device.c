@@ -2967,7 +2967,7 @@ static HRESULT WINAPI d3d8_device_DeleteVertexShader(IDirect3DDevice8 *iface, DW
     }
 
     if (shader_impl->wined3d_shader
-            && wined3d_device_get_vertex_shader(device->wined3d_device) == shader_impl->wined3d_shader)
+            && wined3d_stateblock_get_state(device->state)->vs == shader_impl->wined3d_shader)
         IDirect3DDevice8_SetVertexShader(iface, 0);
 
     wined3d_mutex_unlock();
