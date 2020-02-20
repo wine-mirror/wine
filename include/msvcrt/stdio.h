@@ -154,7 +154,6 @@ int    WINAPIV _snscanf_l(const char*,size_t,const char*,_locale_t,...);
 FILE*  __cdecl tmpfile(void);
 char*  __cdecl tmpnam(char*);
 int    __cdecl ungetc(int,FILE*);
-int    __cdecl vfprintf(FILE*,const char*,__ms_va_list);
 int    __cdecl vfprintf_s(FILE*,const char*,__ms_va_list);
 int    __cdecl vprintf(const char*,__ms_va_list);
 int    __cdecl vprintf_s(const char*,__ms_va_list);
@@ -163,6 +162,7 @@ unsigned int __cdecl _set_output_format(void);
 
 #ifdef _UCRT
 
+_ACRTIMP int __cdecl __stdio_common_vfprintf(unsigned __int64,FILE*,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vsprintf(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vsprintf_p(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vsprintf_s(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
@@ -214,11 +214,17 @@ static inline int __cdecl _vsprintf_p_l(char *buffer, size_t size, const char *f
     return ret < 0 ? -1 : ret;
 }
 
+static inline int __cdecl vfprintf(FILE *file, const char *format, __ms_va_list args)
+{
+    return __stdio_common_vfprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, NULL, args);
+}
+
 #else /* _UCRT */
 
 _ACRTIMP int __cdecl _vscprintf(const char*,__ms_va_list);
 _ACRTIMP int __cdecl _vsnprintf_s(char*,size_t,size_t,const char*,__ms_va_list);
 _ACRTIMP int __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
+_ACRTIMP int __cdecl vfprintf(FILE*,const char*,__ms_va_list);
 _ACRTIMP int __cdecl vsprintf(char*,const char*,__ms_va_list);
 _ACRTIMP int __cdecl vsprintf_s(char*,size_t,const char*,__ms_va_list);
 
