@@ -42,11 +42,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 #define CALINFO_MAX_YEAR 2029
 
 extern UINT CDECL __wine_get_unix_codepage(void);
-extern unsigned int wine_compose( unsigned int ch1, unsigned int ch2 ) DECLSPEC_HIDDEN;
 
 extern const unsigned short wctype_table[] DECLSPEC_HIDDEN;
 extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
-extern const unsigned short nfd_table[] DECLSPEC_HIDDEN;
 
 static HANDLE kernel32_handle;
 
@@ -538,6 +536,36 @@ static const struct geoinfo geoinfodata[] =
     { 161832257, L"XX", L"XX", 10026358, 419, LOCATION_REGION }, /* Latin America and the Caribbean */
 };
 
+/* NLS normalization file */
+struct norm_table
+{
+    WCHAR   name[13];      /* 00 file name */
+    USHORT  checksum[3];   /* 1a checksum? */
+    USHORT  version[4];    /* 20 Unicode version */
+    USHORT  form;          /* 28 normalization form */
+    USHORT  len_factor;    /* 2a factor for length estimates */
+    USHORT  unknown1;      /* 2c */
+    USHORT  decomp_size;   /* 2e decomposition hash size */
+    USHORT  comp_size;     /* 30 composition hash size */
+    USHORT  unknown2;      /* 32 */
+    USHORT  classes;       /* 34 combining classes table offset */
+    USHORT  props_level1;  /* 36 char properties table level 1 offset */
+    USHORT  props_level2;  /* 38 char properties table level 2 offset */
+    USHORT  decomp_hash;   /* 3a decomposition hash table offset */
+    USHORT  decomp_map;    /* 3c decomposition character map table offset */
+    USHORT  decomp_seq;    /* 3e decomposition character sequences offset */
+    USHORT  comp_hash;     /* 40 composition hash table offset */
+    USHORT  comp_seq;      /* 42 composition character sequences offset */
+    /* BYTE[]       combining class values */
+    /* BYTE[0x2200] char properties index level 1 */
+    /* BYTE[]       char properties index level 2 */
+    /* WORD[]       decomposition hash table */
+    /* WORD[]       decomposition character map */
+    /* WORD[]       decomposition character sequences */
+    /* WORD[]       composition hash table */
+    /* WORD[]       composition character sequences */
+};
+
 static NLSTABLEINFO nls_info;
 static UINT mac_cp = 10000;
 static HKEY intl_key;
@@ -546,6 +574,8 @@ static HKEY tz_key;
 
 static CPTABLEINFO codepages[128];
 static unsigned int nb_codepages;
+
+static struct norm_table *norm_info;
 
 static CRITICAL_SECTION locale_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -581,6 +611,8 @@ void init_locale(void)
                     (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR) );
 
     NtGetNlsSectionPtr( 10, 0, 0, (void **)&casemap_ptr, &size );
+    NtGetNlsSectionPtr( 12, NormalizationC, NULL, (void **)&norm_info, &size );
+
     if (!ansi_cp || NtGetNlsSectionPtr( 11, ansi_cp, NULL, (void **)&ansi_ptr, &size ))
         NtGetNlsSectionPtr( 11, 1252, NULL, (void **)&ansi_ptr, &size );
     if (!oem_cp || NtGetNlsSectionPtr( 11, oem_cp, 0, (void **)&oem_ptr, &size ))
@@ -675,15 +707,85 @@ static inline WCHAR casemap( const USHORT *table, WCHAR ch )
 }
 
 
-static const WCHAR *get_decomposition( WCHAR ch, unsigned int *len )
+static BYTE rol( BYTE val, BYTE count )
 {
-    unsigned short offset = nfd_table[nfd_table[ch >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
-    unsigned short start = nfd_table[offset];
-    unsigned short end = nfd_table[offset + 1];
+    return (val << count) | (val >> (8 - count));
+}
 
-    if ((*len = end - start)) return nfd_table + start;
-    *len = 1;
-    return NULL;
+
+static BYTE get_char_props( const struct norm_table *info, unsigned int ch )
+{
+    const BYTE *level1 = (const BYTE *)((const USHORT *)info + info->props_level1);
+    const BYTE *level2 = (const BYTE *)((const USHORT *)info + info->props_level2);
+    BYTE off = level1[ch / 128];
+
+    if (!off || off >= 0xfb) return rol( off, 5 );
+    return level2[(off - 1) * 128 + ch % 128];
+}
+
+
+static const WCHAR *get_decomposition( WCHAR ch, unsigned int *ret_len )
+{
+    const struct pair { WCHAR src; USHORT dst; } *pairs;
+    const USHORT *hash_table = (const USHORT *)norm_info + norm_info->decomp_hash;
+    const WCHAR *ret;
+    unsigned int i, pos, end, len, hash;
+
+    *ret_len = 1;
+    hash = ch % norm_info->decomp_size;
+    pos = hash_table[hash];
+    if (pos >> 13)
+    {
+        if (get_char_props( norm_info, ch ) != 0xbf) return NULL;
+        ret = (const USHORT *)norm_info + norm_info->decomp_seq + (pos & 0x1fff);
+        len = pos >> 13;
+    }
+    else
+    {
+        pairs = (const struct pair *)((const USHORT *)norm_info + norm_info->decomp_map);
+
+        /* find the end of the hash bucket */
+        for (i = hash + 1; i < norm_info->decomp_size; i++) if (!(hash_table[i] >> 13)) break;
+        if (i < norm_info->decomp_size) end = hash_table[i];
+        else for (end = pos; pairs[end].src; end++) ;
+
+        for ( ; pos < end; pos++)
+        {
+            if (pairs[pos].src != (WCHAR)ch) continue;
+            ret = (const USHORT *)norm_info + norm_info->decomp_seq + (pairs[pos].dst & 0x1fff);
+            len = pairs[pos].dst >> 13;
+            break;
+        }
+        if (pos >= end) return NULL;
+    }
+
+    if (len == 7) while (ret[len]) len++;
+    if (!ret[0]) len = 0;  /* ignored char */
+    *ret_len = len;
+    return ret;
+}
+
+
+static WCHAR compose_chars( WCHAR ch1, WCHAR ch2 )
+{
+    const USHORT *table = (const USHORT *)norm_info + norm_info->comp_hash;
+    const WCHAR *chars = (const USHORT *)norm_info + norm_info->comp_seq;
+    unsigned int hash, start, end, i;
+    WCHAR ch[3];
+
+    hash = (ch1 + 95 * ch2) % norm_info->comp_size;
+    start = table[hash];
+    end = table[hash + 1];
+    while (start < end)
+    {
+        for (i = 0; i < 3; i++, start++)
+        {
+            ch[i] = chars[start];
+            if (IS_HIGH_SURROGATE( ch[i] )) start++;
+        }
+        if (ch[0] == ch1 && ch[1] == ch2) return ch[2];
+    }
+    return 0;
 }
 
 
@@ -1673,7 +1775,7 @@ static int wcstombs_sbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
         for (i = 0; srclen; i++, src++, srclen--)
         {
             wch = *src;
-            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src[0], src[1] )))
+            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = compose_chars( src[0], src[1] )))
             {
                 /* now check if we can use the composed char */
                 if (is_valid_sbcs_mapping( info, flags, composed ))
@@ -1706,7 +1808,7 @@ static int wcstombs_sbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
     for (i = dstlen; srclen && i; dst++, i--, src++, srclen--)
     {
         wch = *src;
-        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src[0], src[1] )))
+        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = compose_chars( src[0], src[1] )))
         {
             /* now check if we can use the composed char */
             if (is_valid_sbcs_mapping( info, flags, composed ))
@@ -1776,7 +1878,7 @@ static int wcstombs_dbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
         for (i = 0; srclen; srclen--, src++, i++)
         {
             wch = *src;
-            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src[0], src[1] )))
+            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = compose_chars( src[0], src[1] )))
             {
                 /* now check if we can use the composed char */
                 if (is_valid_dbcs_mapping( info, flags, composed ))
@@ -1820,7 +1922,7 @@ static int wcstombs_dbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
     for (i = dstlen; srclen && i; i--, srclen--, src++)
     {
         wch = *src;
-        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src[0], src[1] )))
+        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = compose_chars( src[0], src[1] )))
         {
             /* now check if we can use the composed char */
             if (is_valid_dbcs_mapping( info, flags, composed ))
