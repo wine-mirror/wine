@@ -6105,16 +6105,15 @@ static void test_NormalizeString(void)
                     wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
                 ret = FALSE;
                 status = pRtlIsNormalizedString( norm_forms[i], ptest->str, -1, &ret );
-                todo_wine ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
                 if (!wcscmp( ptest->str, dst ))
-                    todo_wine
                     ok( ret, "%s:%d: not normalized\n", wine_dbgstr_w(ptest->str), i );
                 else
                     ok( !ret, "%s:%d: normalized (dst %s)\n", wine_dbgstr_w(ptest->str), i, wine_dbgstr_w(dst) );
                 ret = FALSE;
                 status = pRtlIsNormalizedString( norm_forms[i], dst, dstlen, &ret );
-                todo_wine ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
-                todo_wine ok( ret, "%s:%d: not normalized\n", wine_dbgstr_w(ptest->str), i );
+                ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                ok( ret, "%s:%d: not normalized\n", wine_dbgstr_w(ptest->str), i );
             }
         }
         ptest++;

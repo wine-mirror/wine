@@ -1896,8 +1896,68 @@ NTSTATUS WINAPI RtlUnicodeToUTF8N( char *dst, DWORD dstlen, DWORD *reslen, const
  */
 NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BOOLEAN *res )
 {
-    FIXME( "%x %p %d\n", form, str, len );
-    return STATUS_NOT_IMPLEMENTED;
+    const struct norm_table *info;
+    NTSTATUS status;
+    BYTE props, class, last_class = 0;
+    unsigned int ch;
+    int i, r, result = 1;
+
+    if ((status = load_norm_table( form, &info ))) return status;
+
+    if (len == -1) len = strlenW( str );
+
+    for (i = 0; i < len && result; i += r)
+    {
+        if (!(r = get_utf16( str + i, len - i, &ch ))) return STATUS_NO_UNICODE_TRANSLATION;
+        if (info->comp_size)
+        {
+            if ((ch >= HANGUL_VBASE && ch < HANGUL_VBASE + HANGUL_VCOUNT) ||
+                (ch >= HANGUL_TBASE && ch < HANGUL_TBASE + HANGUL_TCOUNT))
+            {
+                result = -1;  /* QC=Maybe */
+                continue;
+            }
+        }
+        else if (ch >= HANGUL_SBASE && ch < HANGUL_SBASE + HANGUL_SCOUNT)
+        {
+            result = 0;  /* QC=No */
+            break;
+        }
+        props = get_char_props( info, ch );
+        class = props & 0x3f;
+        if (class == 0x3f)
+        {
+            last_class = 0;
+            if (props == 0xbf) result = 0;  /* QC=No */
+            else if (props == 0xff)
+            {
+                /* ignore other chars in Hangul range */
+                if (ch >= HANGUL_LBASE && ch < HANGUL_LBASE + 0x100) continue;
+                if (ch >= HANGUL_SBASE && ch < HANGUL_SBASE + 0x2c00) continue;
+                return STATUS_NO_UNICODE_TRANSLATION;
+            }
+        }
+        else if (props & 0x80)
+        {
+            if ((props & 0xc0) == 0xc0) result = -1;  /* QC=Maybe */
+            if (class && class < last_class) result = 0;  /* QC=No */
+            last_class = class;
+        }
+        else last_class = 0;
+    }
+
+    if (result == -1)
+    {
+        int dstlen = len * 4;
+        NTSTATUS status;
+        WCHAR *buffer = RtlAllocateHeap( GetProcessHeap(), 0, dstlen * sizeof(WCHAR) );
+        if (!buffer) return STATUS_NO_MEMORY;
+        status = RtlNormalizeString( form, str, len, buffer, &dstlen );
+        result = !status && (dstlen == len) && !strncmpW( buffer, str, len );
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    }
+    *res = result;
+    return STATUS_SUCCESS;
 }
 
 
