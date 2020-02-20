@@ -12,6 +12,7 @@
 #include <corecrt_wio.h>
 #include <corecrt_wtime.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <pshpack8.h>
 
@@ -24,134 +25,7 @@ extern "C" {
 #define WCHAR_MAX 0xffffU
 #endif
 
-#ifndef DECLSPEC_ALIGN
-# if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
-#  define DECLSPEC_ALIGN(x) __declspec(align(x))
-# elif defined(__GNUC__)
-#  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
-# else
-#  define DECLSPEC_ALIGN(x)
-# endif
-#endif
-
 typedef int mbstate_t;
-
-#ifndef _DEV_T_DEFINED
-typedef unsigned int   _dev_t;
-#define _DEV_T_DEFINED
-#endif
-
-#ifndef _INO_T_DEFINED
-typedef unsigned short _ino_t;
-#define _INO_T_DEFINED
-#endif
-
-#ifndef _OFF_T_DEFINED
-typedef int _off_t;
-#define _OFF_T_DEFINED
-#endif
-
-#ifndef _STAT_DEFINED
-#define _STAT_DEFINED
-
-struct _stat {
-  _dev_t st_dev;
-  _ino_t st_ino;
-  unsigned short st_mode;
-  short          st_nlink;
-  short          st_uid;
-  short          st_gid;
-  _dev_t st_rdev;
-  _off_t st_size;
-  time_t st_atime;
-  time_t st_mtime;
-  time_t st_ctime;
-};
-
-struct stat {
-  _dev_t st_dev;
-  _ino_t st_ino;
-  unsigned short st_mode;
-  short          st_nlink;
-  short          st_uid;
-  short          st_gid;
-  _dev_t st_rdev;
-  _off_t st_size;
-  time_t st_atime;
-  time_t st_mtime;
-  time_t st_ctime;
-};
-
-struct _stat32 {
-  _dev_t st_dev;
-  _ino_t st_ino;
-  unsigned short st_mode;
-  short st_nlink;
-  short st_uid;
-  short st_gid;
-  _dev_t st_rdev;
-  _off_t st_size;
-  __time32_t st_atime;
-  __time32_t st_mtime;
-  __time32_t st_ctime;
-};
-
-struct _stat32i64 {
-  _dev_t st_dev;
-  _ino_t st_ino;
-  unsigned short st_mode;
-  short st_nlink;
-  short st_uid;
-  short st_gid;
-  _dev_t st_rdev;
-  __int64 DECLSPEC_ALIGN(8) st_size;
-  time_t st_atime;
-  time_t st_mtime;
-  time_t st_ctime;
-};
-
-struct _stat64i32 {
-  _dev_t st_dev;
-  _ino_t st_ino;
-  unsigned short st_mode;
-  short st_nlink;
-  short st_uid;
-  short st_gid;
-  _dev_t st_rdev;
-  _off_t st_size;
-  __time64_t st_atime;
-  __time64_t st_mtime;
-  __time64_t st_ctime;
-};
-
-struct _stati64 {
-  _dev_t st_dev;
-  _ino_t st_ino;
-  unsigned short st_mode;
-  short          st_nlink;
-  short          st_uid;
-  short          st_gid;
-  _dev_t st_rdev;
-  __int64 DECLSPEC_ALIGN(8) st_size;
-  time_t st_atime;
-  time_t st_mtime;
-  time_t st_ctime;
-};
-
-struct _stat64 {
-  _dev_t st_dev;
-  _ino_t st_ino;
-  unsigned short st_mode;
-  short          st_nlink;
-  short          st_uid;
-  short          st_gid;
-  _dev_t st_rdev;
-  __int64 DECLSPEC_ALIGN(8) st_size;
-  __time64_t     st_atime;
-  __time64_t     st_mtime;
-  __time64_t     st_ctime;
-};
-#endif /* _STAT_DEFINED */
 
 /* ASCII char classification table - binary compatible */
 #define _UPPER        0x0001  /* C1_UPPER */
@@ -220,14 +94,6 @@ int      __cdecl _wspawnvp(int,const wchar_t*,const wchar_t* const *);
 int      __cdecl _wspawnvpe(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
 int      __cdecl _wsystem(const wchar_t*);
 #endif /* _WPROCESS_DEFINED */
-
-#ifndef _WSTAT_DEFINED
-#define _WSTAT_DEFINED
-int __cdecl _wstat(const wchar_t*,struct _stat*);
-int __cdecl _wstat32(const wchar_t*, struct _stat32*);
-int __cdecl _wstati64(const wchar_t*,struct _stati64*);
-int __cdecl _wstat64(const wchar_t*,struct _stat64*);
-#endif /* _WSTAT_DEFINED */
 
 #ifndef _WSTDLIB_DEFINED
 #define _WSTDLIB_DEFINED

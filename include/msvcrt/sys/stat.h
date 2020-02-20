@@ -167,14 +167,10 @@ int __cdecl _stati64(const char*,struct _stati64*);
 int __cdecl _fstat64(int,struct _stat64*);
 int __cdecl _stat64(const char*,struct _stat64*);
 int __cdecl _umask(int);
-
-#ifndef _WSTAT_DEFINED
-#define _WSTAT_DEFINED
 int __cdecl _wstat(const wchar_t*,struct _stat*);
 int __cdecl _wstat32(const wchar_t*, struct _stat32*);
 int __cdecl _wstati64(const wchar_t*,struct _stati64*);
 int __cdecl _wstat64(const wchar_t*,struct _stat64*);
-#endif /* _WSTAT_DEFINED */
 
 #ifdef __cplusplus
 }
