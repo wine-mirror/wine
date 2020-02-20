@@ -29,19 +29,8 @@
 #include "oaidl.h"
 #include "initguid.h"
 
-static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
-static HANDLE (WINAPI *pCreateActCtxA)(PCACTCTXA);
-static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
-static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
-static BOOL   (WINAPI *pFindActCtxSectionStringA)(DWORD,const GUID *,ULONG,LPCSTR,PACTCTX_SECTION_KEYED_DATA);
-static BOOL   (WINAPI *pFindActCtxSectionStringW)(DWORD,const GUID *,ULONG,LPCWSTR,PACTCTX_SECTION_KEYED_DATA);
-static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
 static BOOL   (WINAPI *pIsDebuggerPresent)(void);
-static BOOL   (WINAPI *pQueryActCtxW)(DWORD,HANDLE,PVOID,ULONG,PVOID,SIZE_T,SIZE_T*);
 static BOOL   (WINAPI *pQueryActCtxSettingsW)(DWORD,HANDLE,LPCWSTR,LPCWSTR,LPWSTR,SIZE_T,SIZE_T*);
-static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
-static BOOL   (WINAPI *pFindActCtxSectionGuid)(DWORD,const GUID*,ULONG,const GUID*,PACTCTX_SECTION_KEYED_DATA);
-static BOOL   (WINAPI *pZombifyActCtx)(HANDLE);
 
 static NTSTATUS(NTAPI *pRtlFindActivationContextSectionString)(DWORD,const GUID *,ULONG,PUNICODE_STRING,PACTCTX_SECTION_KEYED_DATA);
 static BOOLEAN (NTAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, PCSZ);
@@ -661,9 +650,8 @@ static void test_detailed_info(HANDLE handle, const detailed_info_t *exinfo, int
 
     if(exsize != sizeof(ACTIVATION_CONTEXT_DETAILED_INFORMATION)) {
         size = 0xdeadbeef;
-        b = pQueryActCtxW(0, handle, NULL,
-                          ActivationContextDetailedInformation, &detailed_info_tmp,
-                          sizeof(detailed_info_tmp), &size);
+        b = QueryActCtxW(0, handle, NULL, ActivationContextDetailedInformation, &detailed_info_tmp,
+                sizeof(detailed_info_tmp), &size);
         ok_(__FILE__, line)(!b, "QueryActCtx succeeded\n");
         ok_(__FILE__, line)(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetLastError() = %u\n", GetLastError());
         ok_(__FILE__, line)(size == exsize, "size=%ld, expected %ld\n", size, exsize);
@@ -673,9 +661,7 @@ static void test_detailed_info(HANDLE handle, const detailed_info_t *exinfo, int
 
     detailed_info = HeapAlloc(GetProcessHeap(), 0, size);
     memset(detailed_info, 0xfe, size);
-    b = pQueryActCtxW(0, handle, NULL,
-                      ActivationContextDetailedInformation, detailed_info,
-                      size, &retsize);
+    b = QueryActCtxW(0, handle, NULL, ActivationContextDetailedInformation, detailed_info, size, &retsize);
     ok_(__FILE__, line)(b, "QueryActCtx failed: %u\n", GetLastError());
     ok_(__FILE__, line)(retsize == exsize, "size=%ld, expected %ld\n", retsize, exsize);
 
@@ -802,9 +788,7 @@ static void test_info_in_assembly(HANDLE handle, DWORD id, const info_in_assembl
     if (exinfo->encoded_assembly_id) exsize += (lstrlenW(exinfo->encoded_assembly_id) + 1) * sizeof(WCHAR);
 
     size = 0xdeadbeef;
-    b = pQueryActCtxW(0, handle, &id,
-                      AssemblyDetailedInformationInActivationContext, &info_tmp,
-                      sizeof(info_tmp), &size);
+    b = QueryActCtxW(0, handle, &id, AssemblyDetailedInformationInActivationContext, &info_tmp, sizeof(info_tmp), &size);
     ok_(__FILE__, line)(!b, "QueryActCtx succeeded\n");
     ok_(__FILE__, line)(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetLastError() = %u\n", GetLastError());
 
@@ -820,8 +804,7 @@ static void test_info_in_assembly(HANDLE handle, DWORD id, const info_in_assembl
     memset(info, 0xfe, size);
 
     size = 0xdeadbeef;
-    b = pQueryActCtxW(0, handle, &id,
-                      AssemblyDetailedInformationInActivationContext, info, size, &size);
+    b = QueryActCtxW(0, handle, &id, AssemblyDetailedInformationInActivationContext, info, size, &size);
     ok_(__FILE__, line)(b, "QueryActCtx failed: %u\n", GetLastError());
     if (!exinfo->manifest_path)
         exsize += info->ulManifestPathLength + sizeof(WCHAR);
@@ -914,8 +897,7 @@ static void test_file_info(HANDLE handle, ULONG assid, ULONG fileid, LPCWSTR fil
         +(lstrlenW(filename)+1)*sizeof(WCHAR);
 
     size = 0xdeadbeef;
-    b = pQueryActCtxW(0, handle, &index,
-                      FileInformationInAssemblyOfAssemblyInActivationContext, &info_tmp,
+    b = QueryActCtxW(0, handle, &index, FileInformationInAssemblyOfAssemblyInActivationContext, &info_tmp,
                       sizeof(info_tmp), &size);
     ok_(__FILE__, line)(!b, "QueryActCtx succeeded\n");
     ok_(__FILE__, line)(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetLastError() = %u\n", GetLastError());
@@ -930,8 +912,7 @@ static void test_file_info(HANDLE handle, ULONG assid, ULONG fileid, LPCWSTR fil
     info = HeapAlloc(GetProcessHeap(), 0, size);
     memset(info, 0xfe, size);
 
-    b = pQueryActCtxW(0, handle, &index,
-                      FileInformationInAssemblyOfAssemblyInActivationContext, info, size, &size);
+    b = QueryActCtxW(0, handle, &index, FileInformationInAssemblyOfAssemblyInActivationContext, info, size, &size);
     ok_(__FILE__, line)(b, "QueryActCtx failed: %u\n", GetLastError());
     ok_(__FILE__, line)(!size, "size=%lu, expected 0\n", size);
 
@@ -979,8 +960,7 @@ static void test_runlevel_info(HANDLE handle, const runlevel_info_t *exinfo, int
     BOOL b;
 
     size = sizeof(runlevel_info);
-    b = pQueryActCtxW(0, handle, NULL,
-                      RunlevelInformationInActivationContext, &runlevel_info,
+    b = QueryActCtxW(0, handle, NULL, RunlevelInformationInActivationContext, &runlevel_info,
                       sizeof(runlevel_info), &retsize);
     if (!b && GetLastError() == ERROR_INVALID_PARAMETER)
     {
@@ -1009,7 +989,7 @@ static HANDLE test_create(const char *file)
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = path;
 
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     /* to be tested outside of this helper, including last error */
     if (handle == INVALID_HANDLE_VALUE) return handle;
 
@@ -1041,7 +1021,7 @@ static void test_create_and_fail(const char *manifest, const char *depmanifest, 
     actctx.lpSource = path;
 
     create_manifest_file("bad.manifest", manifest, -1, "testdep.manifest", depmanifest);
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     todo_wine_if(todo)
     {
         if (is_broken)
@@ -1053,7 +1033,7 @@ static void test_create_and_fail(const char *manifest, const char *depmanifest, 
         if (handle == INVALID_HANDLE_VALUE)
             ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "Unexpected error %d.\n", GetLastError());
     }
-    if (handle != INVALID_HANDLE_VALUE) pReleaseActCtx( handle );
+    if (handle != INVALID_HANDLE_VALUE) ReleaseActCtx( handle );
     DeleteFileA("bad.manifest");
     DeleteFileA("testdep.manifest");
 }
@@ -1070,11 +1050,11 @@ static void test_create_wide_and_fail(const char *manifest, BOOL fBOM)
     actctx.lpSource = path;
 
     create_wide_manifest("bad.manifest", manifest, fBOM, FALSE);
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "handle != INVALID_HANDLE_VALUE\n");
     ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "GetLastError == %u\n", GetLastError());
 
-    if (handle != INVALID_HANDLE_VALUE) pReleaseActCtx( handle );
+    if (handle != INVALID_HANDLE_VALUE) ReleaseActCtx( handle );
     DeleteFileA("bad.manifest");
 }
 
@@ -1089,7 +1069,7 @@ static void test_create_fail(void)
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = path;
 
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "handle != INVALID_HANDLE_VALUE\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError == %u\n", GetLastError());
 
@@ -1209,9 +1189,7 @@ static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid
     memset(&data, 0xfe, sizeof(data));
     data.cbSize = sizeof(data);
 
-    ret = pFindActCtxSectionStringW(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    libname, &data);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, libname, &data);
     ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u\n", GetLastError());
     if (!ret) return;
 
@@ -1243,9 +1221,8 @@ static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid
     memset(&data, 0xfe, sizeof(data));
     data.cbSize = sizeof(data);
 
-    ret = pFindActCtxSectionStringW(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    libname, &data);
+    ret = FindActCtxSectionStringW(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+            ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, libname, &data);
     ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u\n", GetLastError());
     if (!ret) return;
 
@@ -1263,7 +1240,7 @@ static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid
     ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
        data.ulAssemblyRosterIndex, exid);
 
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, int line)
@@ -1276,9 +1253,7 @@ static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, i
     memset(&data, 0xfe, sizeof(data));
     data.cbSize = sizeof(data);
 
-    ret = pFindActCtxSectionStringW(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
-                                    clsname, &data);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, clsname, &data);
     ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u, class %s\n", GetLastError(),
         wine_dbgstr_w(clsname));
     if (!ret) return;
@@ -1340,9 +1315,8 @@ static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, i
     memset(&data, 0xfe, sizeof(data));
     data.cbSize = sizeof(data);
 
-    ret = pFindActCtxSectionStringW(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
-                                    clsname, &data);
+    ret = FindActCtxSectionStringW(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+            ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, clsname, &data);
     ok_(__FILE__, line)(ret, "FindActCtxSectionStringW failed: %u, class %s\n", GetLastError(),
         wine_dbgstr_w(clsname));
     if (!ret) return;
@@ -1360,7 +1334,7 @@ static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, i
     ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "data.ulAssemblyRosterIndex=%u, expected %u\n",
        data.ulAssemblyRosterIndex, exid);
 
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 static void test_find_string_fail(void)
@@ -1368,34 +1342,29 @@ static void test_find_string_fail(void)
     ACTCTX_SECTION_KEYED_DATA data = {sizeof(data)};
     BOOL ret;
 
-    ret = pFindActCtxSectionStringW(0, NULL, 100, testlib_dll, &data);
+    ret = FindActCtxSectionStringW(0, NULL, 100, testlib_dll, &data);
     ok(!ret, "FindActCtxSectionStringW succeeded\n");
     ok(GetLastError() == ERROR_SXS_SECTION_NOT_FOUND, "GetLastError()=%u\n", GetLastError());
 
-    ret = pFindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    testlib2_dll, &data);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, testlib2_dll, &data);
     ok(!ret, "FindActCtxSectionStringW succeeded\n");
     ok(GetLastError() == ERROR_SXS_KEY_NOT_FOUND, "GetLastError()=%u\n", GetLastError());
 
-    ret = pFindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    testlib_dll, NULL);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, testlib_dll, NULL);
     ok(!ret, "FindActCtxSectionStringW succeeded\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError()=%u\n", GetLastError());
 
-    ret = pFindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    NULL, &data);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, NULL, &data);
     ok(!ret, "FindActCtxSectionStringW succeeded\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError()=%u\n", GetLastError());
 
     data.cbSize = 0;
-    ret = pFindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    testlib_dll, &data);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, testlib_dll, &data);
     ok(!ret, "FindActCtxSectionStringW succeeded\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError()=%u\n", GetLastError());
 
     data.cbSize = 35;
-    ret = pFindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    testlib_dll, &data);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, testlib_dll, &data);
     ok(!ret, "FindActCtxSectionStringW succeeded\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError()=%u\n", GetLastError());
 }
@@ -1407,8 +1376,7 @@ static void test_basic_info(HANDLE handle, int line)
     SIZE_T size;
     BOOL b;
 
-    b = pQueryActCtxW(QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL,
-                          ActivationContextBasicInformation, &basic,
+    b = QueryActCtxW(QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL, ActivationContextBasicInformation, &basic,
                           sizeof(basic), &size);
 
     ok_(__FILE__, line) (b,"ActivationContextBasicInformation failed\n");
@@ -1416,8 +1384,7 @@ static void test_basic_info(HANDLE handle, int line)
     ok_(__FILE__, line) (basic.dwFlags == 0, "unexpected flags %x\n",basic.dwFlags);
     ok_(__FILE__, line) (basic.hActCtx == handle, "unexpected handle\n");
 
-    b = pQueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX |
-                      QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL,
+    b = QueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX | QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL,
                           ActivationContextBasicInformation, &basic,
                           sizeof(basic), &size);
     if (handle)
@@ -1498,9 +1465,7 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
     memset(&data, 0xfe, sizeof(data));
     data.cbSize = sizeof(data);
 
-    ret = pFindActCtxSectionGuid(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
-                                    clsid, &data);
+    ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, clsid, &data);
     if (!ret)
     {
         skip("failed for guid %s\n", wine_dbgstr_guid(clsid));
@@ -1618,9 +1583,7 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
     /* generated guid for this class works as key guid in search */
     memset(&data2, 0xfe, sizeof(data2));
     data2.cbSize = sizeof(data2);
-    ret = pFindActCtxSectionGuid(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
-                                    &comclass->alias, &data2);
+    ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, &comclass->alias, &data2);
     ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
 
     comclass2 = (struct comclassredirect_data*)data2.lpData;
@@ -1656,9 +1619,7 @@ static void test_find_ifaceps_redirection(HANDLE handle, const GUID *iid, const 
     memset(&data, 0xfe, sizeof(data));
     data.cbSize = sizeof(data);
 
-    ret = pFindActCtxSectionGuid(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION,
-                                    iid, &data);
+    ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION, iid, &data);
     ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
 
     ifaceps = (struct ifacepsredirect_data*)data.lpData;
@@ -1727,9 +1688,7 @@ static void test_find_surrogate(HANDLE handle, const GUID *clsid, const WCHAR *n
     memset(&data, 0xfe, sizeof(data));
     data.cbSize = sizeof(data);
 
-    ret = pFindActCtxSectionGuid(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES,
-                                    clsid, &data);
+    ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES, clsid, &data);
     if (!ret)
     {
         skip("surrogate sections are not supported\n");
@@ -1789,9 +1748,7 @@ static void test_find_progid_redirection(HANDLE handle, const GUID *clsid, const
     memset(&data, 0xfe, sizeof(data));
     data.cbSize = sizeof(data);
 
-    ret = pFindActCtxSectionStringA(0, NULL,
-                                       ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION,
-                                       progid, &data);
+    ret = FindActCtxSectionStringA(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION, progid, &data);
     ok_(__FILE__, line)(ret, "FindActCtxSectionStringA failed: %u\n", GetLastError());
 
     progiddata = (struct progidredirect_data*)data.lpData;
@@ -1812,9 +1769,7 @@ static void test_find_progid_redirection(HANDLE handle, const GUID *clsid, const
 
         memset(&data2, 0, sizeof(data2));
         data2.cbSize = sizeof(data2);
-        ret = pFindActCtxSectionGuid(0, NULL,
-                                        ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
-                                        guid, &data2);
+        ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, guid, &data2);
         ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
 
         comclass = (struct comclassredirect_data*)data2.lpData;
@@ -1855,7 +1810,7 @@ static void test_wndclass_section(void)
     DeleteFileA("testdep2.manifest");
     DeleteFileA("main_wndcls.manifest");
 
-    ret = pActivateActCtx(handle, &cookie);
+    ret = ActivateActCtx(handle, &cookie);
     ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
 
     memset(&data, 0, sizeof(data));
@@ -1864,13 +1819,9 @@ static void test_wndclass_section(void)
     data2.cbSize = sizeof(data2);
 
     /* get data for two classes from different assemblies */
-    ret = pFindActCtxSectionStringW(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
-                                    wndClass1W, &data);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, wndClass1W, &data);
     ok(ret, "got %d\n", ret);
-    ret = pFindActCtxSectionStringW(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
-                                    wndClass3W, &data2);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, wndClass3W, &data2);
     ok(ret, "got %d\n", ret);
 
     section = (struct strsection_header*)data.lpSectionBase;
@@ -1891,10 +1842,10 @@ static void test_wndclass_section(void)
     ptrW = (WCHAR*)((BYTE*)data2.lpData + classdata->name_offset);
     ok(!lstrcmpW(ptrW, wndClass3W), "got %s\n", wine_dbgstr_w(ptrW));
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
 
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 static void test_dllredirect_section(void)
@@ -1919,7 +1870,7 @@ static void test_dllredirect_section(void)
     DeleteFileA("testdep2.manifest");
     DeleteFileA("main_wndcls.manifest");
 
-    ret = pActivateActCtx(handle, &cookie);
+    ret = ActivateActCtx(handle, &cookie);
     ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
 
     memset(&data, 0, sizeof(data));
@@ -1928,13 +1879,9 @@ static void test_dllredirect_section(void)
     data2.cbSize = sizeof(data2);
 
     /* get data for two files from different assemblies */
-    ret = pFindActCtxSectionStringW(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    testlib1W, &data);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, testlib1W, &data);
     ok(ret, "got %d\n", ret);
-    ret = pFindActCtxSectionStringW(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION,
-                                    testlib2W, &data2);
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, testlib2W, &data2);
     ok(ret, "got %d\n", ret);
 
     section = (struct strsection_header*)data.lpSectionBase;
@@ -1946,10 +1893,10 @@ static void test_dllredirect_section(void)
     ok(data.ulSectionTotalLength == data2.ulSectionTotalLength, "got %u, %u\n", data.ulSectionTotalLength,
         data2.ulSectionTotalLength);
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
 
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 static void test_typelib_section(void)
@@ -1974,7 +1921,7 @@ static void test_typelib_section(void)
     DeleteFileA("testdep2.manifest");
     DeleteFileA("main_wndcls.manifest");
 
-    ret = pActivateActCtx(handle, &cookie);
+    ret = ActivateActCtx(handle, &cookie);
     ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
 
     memset(&data, 0, sizeof(data));
@@ -1983,14 +1930,11 @@ static void test_typelib_section(void)
     data2.cbSize = sizeof(data2);
 
     /* get data for two typelibs from different assemblies */
-    ret = pFindActCtxSectionGuid(0, NULL,
-                                 ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION,
-                                 &IID_TlibTest, &data);
+    ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION, &IID_TlibTest, &data);
     ok(ret, "got %d\n", ret);
 
-    ret = pFindActCtxSectionGuid(0, NULL,
-                                 ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION,
-                                 &IID_TlibTest4, &data2);
+    ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION,
+            &IID_TlibTest4, &data2);
     ok(ret, "got %d\n", ret);
 
     section = (struct guidsection_header*)data.lpSectionBase;
@@ -2015,10 +1959,10 @@ static void test_typelib_section(void)
     ok(tlib->help_len == sizeof(helpW), "got %d\n", tlib->help_len);
     ok(tlib->flags == (LIBFLAG_FHIDDEN|LIBFLAG_FCONTROL|LIBFLAG_FRESTRICTED), "got %x\n", tlib->flags);
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
 
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 static void test_allowDelayedBinding(void)
@@ -2040,7 +1984,7 @@ static void test_allowDelayedBinding(void)
     DeleteFileA("testdep.manifest");
     if (handle != INVALID_HANDLE_VALUE) {
         test_basic_info(handle, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 }
 
@@ -2052,14 +1996,14 @@ static void test_actctx(void)
 
     trace("default actctx\n");
 
-    b = pGetCurrentActCtx(&handle);
+    b = GetCurrentActCtx(&handle);
     ok(handle == NULL, "handle = %p, expected NULL\n", handle);
     ok(b, "GetCurrentActCtx failed: %u\n", GetLastError());
     if(b) {
         test_basic_info(handle, __LINE__);
         test_detailed_info(handle, &detailed_info0, __LINE__);
         test_runlevel_info(handle, &runlevel_info0, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     /* test for whitespace handling in Eq ::= S? '=' S? */
@@ -2067,7 +2011,7 @@ static void test_actctx(void)
     handle = test_create("test1_1.manifest");
     ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     DeleteFileA("test1_1.manifest");
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 
     if(!create_manifest_file("test1.manifest", manifest1, -1, NULL, NULL)) {
         skip("Could not create manifest file\n");
@@ -2092,7 +2036,7 @@ static void test_actctx(void)
             ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() == %u\n", GetLastError());
         }
 
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     if(!create_manifest_file("test2.manifest", manifest2, -1, "testdep.manifest", testdep_manifest1)) {
@@ -2111,7 +2055,7 @@ static void test_actctx(void)
         test_detailed_info(handle, &detailed_info2, __LINE__);
         test_info_in_assembly(handle, 1, &manifest2_info, __LINE__);
         test_info_in_assembly(handle, 2, &depmanifest1_info, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     if(!create_manifest_file("test2-2.manifest", manifest2, -1, "testdep.manifest", testdep_manifest2)) {
@@ -2133,14 +2077,14 @@ static void test_actctx(void)
         test_file_info(handle, 1, 0, testlib_dll, __LINE__);
         test_file_info(handle, 1, 1, testlib2_dll, __LINE__);
 
-        b = pActivateActCtx(handle, &cookie);
+        b = ActivateActCtx(handle, &cookie);
         ok(b, "ActivateActCtx failed: %u\n", GetLastError());
         test_find_dll_redirection(handle, testlib_dll, 2, __LINE__);
         test_find_dll_redirection(handle, testlib2_dll, 2, __LINE__);
-        b = pDeactivateActCtx(0, cookie);
+        b = DeactivateActCtx(0, cookie);
         ok(b, "DeactivateActCtx failed: %u\n", GetLastError());
 
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     trace("manifest2 depmanifest3\n");
@@ -2162,16 +2106,16 @@ static void test_actctx(void)
         test_file_info(handle, 1, 0, testlib_dll, __LINE__);
         test_file_info(handle, 1, 1, testlib2_dll, __LINE__);
 
-        b = pActivateActCtx(handle, &cookie);
+        b = ActivateActCtx(handle, &cookie);
         ok(b, "ActivateActCtx failed: %u\n", GetLastError());
         test_find_dll_redirection(handle, testlib_dll, 2, __LINE__);
         test_find_dll_redirection(handle, testlib2_dll, 2, __LINE__);
         test_find_window_class(handle, wndClassW, 2, __LINE__);
         test_find_window_class(handle, wndClass2W, 2, __LINE__);
-        b = pDeactivateActCtx(0, cookie);
+        b = DeactivateActCtx(0, cookie);
         ok(b, "DeactivateActCtx failed: %u\n", GetLastError());
 
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     trace("manifest3\n");
@@ -2198,7 +2142,7 @@ static void test_actctx(void)
         test_info_in_assembly(handle, 1, &manifest3_info, __LINE__);
         test_file_info(handle, 0, 0, testlib_dll, __LINE__);
 
-        b = pActivateActCtx(handle, &cookie);
+        b = ActivateActCtx(handle, &cookie);
         ok(b, "ActivateActCtx failed: %u\n", GetLastError());
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
         test_find_dll_redirection(handle, testlib_dll, 1, __LINE__);
@@ -2225,9 +2169,9 @@ static void test_actctx(void)
         test_find_ifaceps_redirection(handle, &IID_Iifaceps3, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);
         test_find_string_fail();
 
-        b = pDeactivateActCtx(0, cookie);
+        b = DeactivateActCtx(0, cookie);
         ok(b, "DeactivateActCtx failed: %u\n", GetLastError());
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     trace("manifest6\n");
@@ -2241,7 +2185,7 @@ static void test_actctx(void)
         if(handle != INVALID_HANDLE_VALUE)
         {
             test_runlevel_info(handle, &runlevel_info6, __LINE__);
-            pReleaseActCtx(handle);
+            ReleaseActCtx(handle);
         }
     }
     else
@@ -2257,7 +2201,7 @@ static void test_actctx(void)
         if(handle != INVALID_HANDLE_VALUE)
         {
             test_runlevel_info(handle, &runlevel_info7, __LINE__);
-            pReleaseActCtx(handle);
+            ReleaseActCtx(handle);
         }
     }
     else
@@ -2273,7 +2217,7 @@ static void test_actctx(void)
         if(handle != INVALID_HANDLE_VALUE)
         {
             test_runlevel_info(handle, &runlevel_info8, __LINE__);
-            pReleaseActCtx(handle);
+            ReleaseActCtx(handle);
         }
     }
     else
@@ -2289,7 +2233,7 @@ static void test_actctx(void)
         if(handle != INVALID_HANDLE_VALUE)
         {
             test_runlevel_info(handle, &runlevel_info9, __LINE__);
-            pReleaseActCtx(handle);
+            ReleaseActCtx(handle);
         }
     }
     else
@@ -2303,7 +2247,7 @@ static void test_actctx(void)
         if(handle != INVALID_HANDLE_VALUE)
         {
             test_runlevel_info(handle, &runlevel_info8, __LINE__);
-            pReleaseActCtx(handle);
+            ReleaseActCtx(handle);
         }
     }
     else
@@ -2325,7 +2269,7 @@ static void test_actctx(void)
         test_detailed_info(handle, &detailed_info2, __LINE__);
         test_info_in_assembly(handle, 1, &manifest4_info, __LINE__);
         test_info_in_assembly(handle, 2, &manifest_comctrl_info, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     trace("manifest1 in subdir\n");
@@ -2344,7 +2288,7 @@ static void test_actctx(void)
             test_basic_info(handle, __LINE__);
             test_detailed_info(handle, &detailed_info1, __LINE__);
             test_info_in_assembly(handle, 1, &manifest1_info, __LINE__);
-            pReleaseActCtx(handle);
+            ReleaseActCtx(handle);
         }
         SetCurrentDirectoryW(work_dir);
     }
@@ -2365,7 +2309,7 @@ static void test_actctx(void)
         test_basic_info(handle, __LINE__);
         test_detailed_info(handle, &detailed_info1, __LINE__);
         test_info_in_assembly(handle, 1, &manifest1_info, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     trace("UTF-16 manifest1, reverse endian, with BOM\n");
@@ -2381,7 +2325,7 @@ static void test_actctx(void)
         test_basic_info(handle, __LINE__);
         test_detailed_info(handle, &detailed_info1, __LINE__);
         test_info_in_assembly(handle, 1, &manifest1_info, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     test_wndclass_section();
@@ -2397,14 +2341,14 @@ static void test_app_manifest(void)
 
     trace("child process manifest1\n");
 
-    b = pGetCurrentActCtx(&handle);
+    b = GetCurrentActCtx(&handle);
     ok(handle == NULL, "handle != NULL\n");
     ok(b, "GetCurrentActCtx failed: %u\n", GetLastError());
     if(b) {
         test_basic_info(handle, __LINE__);
         test_detailed_info(handle, &detailed_info1_child, __LINE__);
         test_info_in_assembly(handle, 1, &manifest1_child_info, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 }
 
@@ -2434,7 +2378,7 @@ static void kernel32_find(ULONG section, const char *string_to_find, BOOL should
     data.cbSize = sizeof(data);
 
     SetLastError(0);
-    ret = pFindActCtxSectionStringA(0, NULL, section, string_to_find, &data);
+    ret = FindActCtxSectionStringA(0, NULL, section, string_to_find, &data);
     err = GetLastError();
     ok_(__FILE__, line)(ret == should_find,
         "FindActCtxSectionStringA: expected ret = %u, got %u\n", should_find, ret);
@@ -2446,7 +2390,7 @@ static void kernel32_find(ULONG section, const char *string_to_find, BOOL should
     data.cbSize = sizeof(data);
 
     SetLastError(0);
-    ret = pFindActCtxSectionStringW(0, NULL, section, string_to_findW.Buffer, &data);
+    ret = FindActCtxSectionStringW(0, NULL, section, string_to_findW.Buffer, &data);
     err = GetLastError();
     ok_(__FILE__, line)(ret == should_find,
         "FindActCtxSectionStringW: expected ret = %u, got %u\n", should_find, ret);
@@ -2455,7 +2399,7 @@ static void kernel32_find(ULONG section, const char *string_to_find, BOOL should
         "FindActCtxSectionStringW: unexpected error %u\n", err);
 
     SetLastError(0);
-    ret = pFindActCtxSectionStringA(0, NULL, section, string_to_find, NULL);
+    ret = FindActCtxSectionStringA(0, NULL, section, string_to_find, NULL);
     err = GetLastError();
     ok_(__FILE__, line)(!ret,
         "FindActCtxSectionStringA: expected failure, got %u\n", ret);
@@ -2463,7 +2407,7 @@ static void kernel32_find(ULONG section, const char *string_to_find, BOOL should
         "FindActCtxSectionStringA: unexpected error %u\n", err);
 
     SetLastError(0);
-    ret = pFindActCtxSectionStringW(0, NULL, section, string_to_findW.Buffer, NULL);
+    ret = FindActCtxSectionStringW(0, NULL, section, string_to_findW.Buffer, NULL);
     err = GetLastError();
     ok_(__FILE__, line)(!ret,
         "FindActCtxSectionStringW: expected failure, got %u\n", ret);
@@ -2504,7 +2448,7 @@ static void test_findsectionstring(void)
     ULONG_PTR cookie;
 
     handle = create_manifest("test.manifest", testdep_manifest3, __LINE__);
-    ret = pActivateActCtx(handle, &cookie);
+    ret = ActivateActCtx(handle, &cookie);
     ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
 
     /* first we show the parameter validation from kernel32 */
@@ -2525,9 +2469,9 @@ static void test_findsectionstring(void)
     ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass2", TRUE, FALSE, __LINE__);
     ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass3", FALSE, FALSE, __LINE__);
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 static void run_child_process(void)
@@ -2652,9 +2596,9 @@ static void test_CreateActCtx(void)
     actctx.lpSource = path;
 
     /* create using lpSource without specified directory */
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
     ok(handle != INVALID_HANDLE_VALUE, "failed to generate context, error %u\n", GetLastError());
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 
     /* with specified directory, that doesn't contain dependent assembly */
     GetWindowsDirectoryA(dir, ARRAY_SIZE(dir));
@@ -2666,27 +2610,27 @@ static void test_CreateActCtx(void)
     actctx.lpSource = path;
 
     SetLastError(0xdeadbeef);
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
 todo_wine {
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
     ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "got error %d\n", GetLastError());
 }
-    if (handle != INVALID_HANDLE_VALUE) pReleaseActCtx(handle);
+    if (handle != INVALID_HANDLE_VALUE) ReleaseActCtx(handle);
 
     /* with specified directory, that does contain dependent assembly */
     GetTempPathA(ARRAY_SIZE(dir), dir);
     actctx.lpAssemblyDirectory = dir;
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
     ok(handle != INVALID_HANDLE_VALUE, "got handle %p\n", handle);
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 
     /* Should still work if we add a dll with the same name, but without manifest */
     strcpy(dll, dir);
     strcat(dll, "testdep1.dll");
     extract_resource("dummy.dll", "TESTDLL", dll);
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
     ok(handle != INVALID_HANDLE_VALUE || broken(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX) , "got error %d\n", GetLastError());
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
     DeleteFileA(dll);
 
     delete_manifest_file("main_wndcls.manifest");
@@ -2698,7 +2642,7 @@ todo_wine {
     actctx.cbSize = sizeof(ACTCTXA);
     actctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID;
     SetLastError(0xdeadbeef);
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
 todo_wine
     ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX || broken(GetLastError() == ERROR_NOT_ENOUGH_MEMORY) /* XP, win2k3 */,
@@ -2713,7 +2657,7 @@ todo_wine
     actctx.hModule = GetModuleHandleA(NULL);
 
     SetLastError(0xdeadbeef);
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
     ok(GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND, "got error %d\n", GetLastError());
 
@@ -2732,7 +2676,7 @@ todo_wine
     actctx.lpAssemblyDirectory = dir;
 
     SetLastError(0xdeadbeef);
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
     ok(GetLastError()==ERROR_PATH_NOT_FOUND ||
             broken(GetLastError()==ERROR_FILE_NOT_FOUND) /* WinXP */,
@@ -2746,7 +2690,7 @@ todo_wine
     actctx.lpAssemblyDirectory = dir;
 
     SetLastError(0xdeadbeef);
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %d\n", GetLastError());
     SetCurrentDirectoryW(work_dir);
@@ -2758,9 +2702,9 @@ todo_wine
     actctx.lpSource = "testdir.manifest";
     actctx.lpAssemblyDirectory = dir;
 
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
     ok(handle != INVALID_HANDLE_VALUE, "got handle %p\n", handle);
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 
     memset(&actctx, 0, sizeof(actctx));
     actctx.cbSize = sizeof(actctx);
@@ -2768,9 +2712,9 @@ todo_wine
     actctx.lpSource = path;
     actctx.lpAssemblyDirectory = dir;
 
-    handle = pCreateActCtxA(&actctx);
+    handle = CreateActCtxA(&actctx);
     ok(handle != INVALID_HANDLE_VALUE, "got handle %p\n", handle);
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 
     delete_manifest_file("testdir.manifest");
     delete_manifest_file("assembly_dir\\testdir.manifest");
@@ -2782,18 +2726,7 @@ static BOOL init_funcs(void)
     HMODULE hLibrary = GetModuleHandleA("kernel32.dll");
 
 #define X(f) if (!(p##f = (void*)GetProcAddress(hLibrary, #f))) return FALSE;
-    X(ActivateActCtx);
-    X(CreateActCtxA);
-    X(CreateActCtxW);
-    X(DeactivateActCtx);
-    X(FindActCtxSectionStringA);
-    X(FindActCtxSectionStringW);
-    X(GetCurrentActCtx);
     X(IsDebuggerPresent);
-    X(QueryActCtxW);
-    X(ReleaseActCtx);
-    X(FindActCtxSectionGuid);
-    X(ZombifyActCtx);
     pQueryActCtxSettingsW = (void *)GetProcAddress( hLibrary, "QueryActCtxSettingsW" );
 
     hLibrary = GetModuleHandleA("ntdll.dll");
@@ -2813,67 +2746,65 @@ static void test_ZombifyActCtx(void)
     BOOL ret;
 
     SetLastError(0xdeadbeef);
-    ret = pZombifyActCtx(NULL);
+    ret = ZombifyActCtx(NULL);
 todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
 
     handle = create_manifest("test.manifest", testdep_manifest3, __LINE__);
 
-    ret = pGetCurrentActCtx(&current);
+    ret = GetCurrentActCtx(&current);
     ok(ret, "got %d, error %d\n", ret, GetLastError());
     ok(current == NULL, "got %p\n", current);
 
-    ret = pActivateActCtx(handle, &cookie);
+    ret = ActivateActCtx(handle, &cookie);
     ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
 
-    ret = pGetCurrentActCtx(&current);
+    ret = GetCurrentActCtx(&current);
     ok(ret, "got %d, error %d\n", ret, GetLastError());
     ok(handle == current, "got %p, %p\n", current, handle);
 
     memset(&basicinfo, 0xff, sizeof(basicinfo));
-    ret = pQueryActCtxW(0, handle, 0, ActivationContextBasicInformation,
-        &basicinfo, sizeof(basicinfo), NULL);
+    ret = QueryActCtxW(0, handle, 0, ActivationContextBasicInformation, &basicinfo, sizeof(basicinfo), NULL);
     ok(ret, "got %d, error %d\n", ret, GetLastError());
     ok(basicinfo.hActCtx == handle, "got %p\n", basicinfo.hActCtx);
     ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
 
     memset(&basicinfo, 0xff, sizeof(basicinfo));
-    ret = pQueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, 0, ActivationContextBasicInformation,
+    ret = QueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, 0, ActivationContextBasicInformation,
         &basicinfo, sizeof(basicinfo), NULL);
     ok(ret, "got %d, error %d\n", ret, GetLastError());
     ok(basicinfo.hActCtx == handle, "got %p\n", basicinfo.hActCtx);
     ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
 
-    ret = pZombifyActCtx(handle);
+    ret = ZombifyActCtx(handle);
 todo_wine
     ok(ret, "got %d\n", ret);
 
     memset(&basicinfo, 0xff, sizeof(basicinfo));
-    ret = pQueryActCtxW(0, handle, 0, ActivationContextBasicInformation,
-        &basicinfo, sizeof(basicinfo), NULL);
+    ret = QueryActCtxW(0, handle, 0, ActivationContextBasicInformation, &basicinfo, sizeof(basicinfo), NULL);
     ok(ret, "got %d, error %d\n", ret, GetLastError());
     ok(basicinfo.hActCtx == handle, "got %p\n", basicinfo.hActCtx);
     ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
 
     memset(&basicinfo, 0xff, sizeof(basicinfo));
-    ret = pQueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, 0, ActivationContextBasicInformation,
-        &basicinfo, sizeof(basicinfo), NULL);
+    ret = QueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, 0, ActivationContextBasicInformation,
+            &basicinfo, sizeof(basicinfo), NULL);
     ok(ret, "got %d, error %d\n", ret, GetLastError());
     ok(basicinfo.hActCtx == handle, "got %p\n", basicinfo.hActCtx);
     ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
 
-    ret = pGetCurrentActCtx(&current);
+    ret = GetCurrentActCtx(&current);
     ok(ret, "got %d, error %d\n", ret, GetLastError());
     ok(current == handle, "got %p\n", current);
 
     /* one more time */
-    ret = pZombifyActCtx(handle);
+    ret = ZombifyActCtx(handle);
 todo_wine
     ok(ret, "got %d\n", ret);
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 /* Test structure to verify alignment */
@@ -2889,9 +2820,8 @@ static void test_no_compat(HANDLE handle, int line)
     BOOL b;
 
     memset(&compat_info, 0, sizeof(compat_info));
-    b = pQueryActCtxW(QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL,
-                      CompatibilityInformationInActivationContext, &compat_info,
-                      sizeof(compat_info), &size);
+    b = QueryActCtxW(QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL, CompatibilityInformationInActivationContext,
+            &compat_info, sizeof(compat_info), &size);
 
     ok_(__FILE__, line)(b, "CompatibilityInformationInActivationContext failed\n");
     ok_(__FILE__, line)(size == sizeof(DWORD), "size mismatch (got %lu, expected 4)\n", size);
@@ -2907,9 +2837,8 @@ static void test_with_compat(HANDLE handle, DWORD num_compat, const GUID* expect
     BOOL b;
 
     memset(&compat_info, 0, sizeof(compat_info));
-    b = pQueryActCtxW(QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL,
-                      CompatibilityInformationInActivationContext, &compat_info,
-                      sizeof(compat_info), &size);
+    b = QueryActCtxW(QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL, CompatibilityInformationInActivationContext,
+            &compat_info, sizeof(compat_info), &size);
 
     ok_(__FILE__, line)(b, "CompatibilityInformationInActivationContext failed\n");
     ok_(__FILE__, line)(size == expected, "size mismatch (got %lu, expected %lu)\n", size, expected);
@@ -2948,20 +2877,19 @@ static void test_compatibility(void)
         BOOL b;
 
         memset(buffer, 0, sizeof(buffer));
-        b = pQueryActCtxW(QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL,
-                          CompatibilityInformationInActivationContext, buffer,
-                          sizeof(buffer), &size);
+        b = QueryActCtxW(QUERY_ACTCTX_FLAG_NO_ADDREF, handle, NULL, CompatibilityInformationInActivationContext,
+                buffer, sizeof(buffer), &size);
 
         if (!b && GetLastError() == ERROR_INVALID_PARAMETER)
         {
             win_skip("CompatibilityInformationInActivationContext not supported.\n");
-            pReleaseActCtx(handle);
+            ReleaseActCtx(handle);
             return;
         }
 
         test_basic_info(handle, __LINE__);
         test_no_compat(handle, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     /* Still no compat results returned */
@@ -2978,7 +2906,7 @@ static void test_compatibility(void)
     {
         test_basic_info(handle, __LINE__);
         test_no_compat(handle, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     /* Just one result returned */
@@ -2999,7 +2927,7 @@ static void test_compatibility(void)
         };
         test_basic_info(handle, __LINE__);
         test_with_compat(handle, 1, expect_manifest, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     /* Show that the order is retained */
@@ -3024,7 +2952,7 @@ static void test_compatibility(void)
         };
         test_basic_info(handle, __LINE__);
         test_with_compat(handle, 5, expect_manifest, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     /* Show that even unknown GUID's are stored */
@@ -3045,7 +2973,7 @@ static void test_compatibility(void)
         };
         test_basic_info(handle, __LINE__);
         test_with_compat(handle, 1, expect_manifest, __LINE__);
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 }
 
@@ -3157,7 +3085,7 @@ static void test_settings(void)
     ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
     ok( buffer[0] == 0xcccc, "got %s\n", wine_dbgstr_w(buffer) );
     ok( size == ARRAY_SIZE(trueW), "wrong len %lu\n", size );
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 
     create_manifest_file( "manifest_settings2.manifest", settings_manifest2, -1, NULL, NULL );
     handle = test_create("manifest_settings2.manifest");
@@ -3173,7 +3101,7 @@ static void test_settings(void)
         ok( ret, "QueryActCtxSettingsW failed err %u\n", GetLastError() );
         ok( !lstrcmpW( buffer, trueW ), "got %s\n", wine_dbgstr_w(buffer) );
         ok( size == lstrlenW( buffer ) + 1, "wrong len %lu\n", size );
-        pReleaseActCtx(handle);
+        ReleaseActCtx(handle);
     }
 
     create_manifest_file( "manifest_settings3.manifest", settings_manifest3, -1, NULL, NULL );
@@ -3186,9 +3114,8 @@ static void test_settings(void)
     ret = pQueryActCtxSettingsW( 0, handle, NULL, dpiAwareW, buffer, 80, &size );
     ok( !ret, "QueryActCtxSettingsW succeeded\n" );
     ok( GetLastError() == ERROR_SXS_KEY_NOT_FOUND, "wrong error %u\n", GetLastError() );
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
-
 
 typedef struct
 {
