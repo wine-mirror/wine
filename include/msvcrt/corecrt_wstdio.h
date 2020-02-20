@@ -41,6 +41,12 @@ typedef struct _iobuf
 #define WEOF        (wint_t)(0xFFFF)
 #endif
 
+FILE *__cdecl __acrt_iob_func(unsigned index);
+
+#define stdin  (__acrt_iob_func(0))
+#define stdout (__acrt_iob_func(1))
+#define stderr (__acrt_iob_func(2))
+
 wint_t   __cdecl _fgetwc_nolock(FILE*);
 wint_t   __cdecl _fgetwchar(void);
 wint_t   __cdecl _fputwc_nolock(wint_t,FILE*);
