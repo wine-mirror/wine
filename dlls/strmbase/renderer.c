@@ -88,7 +88,7 @@ static HRESULT renderer_init_stream(struct strmbase_filter *iface)
     if (filter->pFuncsTable->renderer_init_stream)
         filter->pFuncsTable->renderer_init_stream(filter);
 
-    return S_OK;
+    return filter->sink.pin.peer ? S_FALSE : S_OK;
 }
 
 static HRESULT renderer_start_stream(struct strmbase_filter *iface, REFERENCE_TIME start)
