@@ -306,6 +306,7 @@ void enter_script(script_ctx_t *ctx, jsexcept_t *ei)
 HRESULT leave_script(script_ctx_t *ctx, HRESULT result)
 {
     jsexcept_t *ei = ctx->ei;
+    BOOL enter_notified = ei->enter_notified;
     JScriptError *error;
 
     TRACE("ctx %p ei %p prev %p\n", ctx, ei, ei->prev);
@@ -333,7 +334,7 @@ HRESULT leave_script(script_ctx_t *ctx, HRESULT result)
                 result = SCRIPT_E_REPORTED;
         }
     }
-    if(ei->enter_notified && ctx->site)
+    if(enter_notified && ctx->site)
         IActiveScriptSite_OnLeaveScript(ctx->site);
     reset_ei(ei);
     return result;
