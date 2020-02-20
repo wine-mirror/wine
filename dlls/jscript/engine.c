@@ -662,34 +662,12 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
         return S_OK;
     }
 
-    for(item = ctx->named_items; item; item = item->next) {
-        if((item->flags & SCRIPTITEM_ISVISIBLE) && !wcscmp(item->name, identifier)) {
-            if(!item->disp) {
-                IUnknown *unk;
-
-                if(!ctx->site)
-                    break;
-
-                hres = IActiveScriptSite_GetItemInfo(ctx->site, identifier,
-                                                     SCRIPTINFO_IUNKNOWN, &unk, NULL);
-                if(FAILED(hres)) {
-                    WARN("GetItemInfo failed: %08x\n", hres);
-                    break;
-                }
-
-                hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&item->disp);
-                IUnknown_Release(unk);
-                if(FAILED(hres)) {
-                    WARN("object does not implement IDispatch\n");
-                    break;
-                }
-            }
-
-            IDispatch_AddRef(item->disp);
-            ret->type = EXPRVAL_JSVAL;
-            ret->u.val = jsval_disp(item->disp);
-            return S_OK;
-        }
+    item = lookup_named_item(ctx, identifier, SCRIPTITEM_ISVISIBLE);
+    if(item) {
+        IDispatch_AddRef(item->disp);
+        ret->type = EXPRVAL_JSVAL;
+        ret->u.val = jsval_disp(item->disp);
+        return S_OK;
     }
 
     if(lookup_global_members(ctx, identifier, ret))

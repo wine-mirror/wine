@@ -212,6 +212,8 @@ typedef struct named_item_t {
     struct named_item_t *next;
 } named_item_t;
 
+named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
+
 typedef struct {
     const WCHAR *name;
     builtin_invoke_t invoke;

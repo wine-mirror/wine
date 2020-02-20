@@ -108,6 +108,41 @@ static inline BOOL is_started(script_ctx_t *ctx)
         || ctx->state == SCRIPTSTATE_DISCONNECTED;
 }
 
+named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *item_name, unsigned flags)
+{
+    named_item_t *item;
+    HRESULT hr;
+
+    for(item = ctx->named_items; item; item = item->next) {
+        if((item->flags & flags) == flags && !wcscmp(item->name, item_name)) {
+            if(!item->disp) {
+                IUnknown *unk;
+
+                if(!ctx->site)
+                    return NULL;
+
+                hr = IActiveScriptSite_GetItemInfo(ctx->site, item_name,
+                                                   SCRIPTINFO_IUNKNOWN, &unk, NULL);
+                if(FAILED(hr)) {
+                    WARN("GetItemInfo failed: %08x\n", hr);
+                    continue;
+                }
+
+                hr = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&item->disp);
+                IUnknown_Release(unk);
+                if(FAILED(hr)) {
+                    WARN("object does not implement IDispatch\n");
+                    continue;
+                }
+            }
+
+            return item;
+        }
+    }
+
+    return NULL;
+}
+
 static inline JScriptError *impl_from_IActiveScriptError(IActiveScriptError *iface)
 {
     return CONTAINING_RECORD(iface, JScriptError, IActiveScriptError_iface);
