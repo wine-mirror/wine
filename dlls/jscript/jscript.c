@@ -363,6 +363,8 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
                 return;
             /* FALLTHROUGH */
         case SCRIPTSTATE_INITIALIZED:
+            clear_script_queue(This);
+
             if(This->ctx->host_global) {
                 IDispatch_Release(This->ctx->host_global);
                 This->ctx->host_global = NULL;
@@ -402,7 +404,6 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
             /* FALLTHROUGH */
         case SCRIPTSTATE_UNINITIALIZED:
             change_state(This, state);
-            clear_script_queue(This);
             break;
         default:
             assert(0);
