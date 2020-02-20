@@ -159,13 +159,13 @@ int    __cdecl vfprintf(FILE*,const char*,__ms_va_list);
 int    __cdecl vfprintf_s(FILE*,const char*,__ms_va_list);
 int    __cdecl vprintf(const char*,__ms_va_list);
 int    __cdecl vprintf_s(const char*,__ms_va_list);
-int    __cdecl vsprintf_s(char*,size_t,const char*,__ms_va_list);
 unsigned int __cdecl _get_output_format(void);
 unsigned int __cdecl _set_output_format(void);
 
 #ifdef _UCRT
 
 _ACRTIMP int __cdecl __stdio_common_vsprintf(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
+_ACRTIMP int __cdecl __stdio_common_vsprintf_s(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vsnprintf_s(unsigned __int64,char*,size_t,size_t,const char*,_locale_t,__ms_va_list);
 
 static inline int __cdecl vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args)
@@ -202,11 +202,18 @@ static inline int __cdecl vsprintf(char *buffer, const char *format, __ms_va_lis
     return ret < 0 ? -1 : ret;
 }
 
+static inline int __cdecl vsprintf_s(char *buffer, const char *format, __ms_va_list args)
+{
+    int ret = __stdio_common_vsprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, -1, format, NULL, args);
+    return ret < 0 ? -1 : ret;
+}
+
 #else /* _UCRT */
 
 _ACRTIMP int __cdecl _vscprintf(const char*,__ms_va_list);
 _ACRTIMP int __cdecl _vsnprintf_s(char*,size_t,size_t,const char*,__ms_va_list);
 _ACRTIMP int __cdecl vsprintf(char*,const char*,__ms_va_list);
+_ACRTIMP int __cdecl vsprintf_s(char*,size_t,const char*,__ms_va_list);
 
 int __cdecl _vsnprintf(char*,size_t,const char*,__ms_va_list);
 static inline int vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args) { return _vsnprintf(buffer,size,format,args); }
