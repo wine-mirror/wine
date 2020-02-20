@@ -1455,6 +1455,7 @@ static HRESULT gstdemux_cleanup_stream(struct strmbase_filter *iface)
 {
     struct gstdemux *filter = impl_from_strmbase_filter(iface);
     GstStateChangeReturn ret;
+    unsigned int i;
 
     if (!filter->container)
         return S_OK;
@@ -1467,6 +1468,12 @@ static HRESULT gstdemux_cleanup_stream(struct strmbase_filter *iface)
     }
     gst_element_get_state(filter->container, NULL, NULL, GST_CLOCK_TIME_NONE);
     filter->ignore_flush = FALSE;
+
+    for (i = 0; i < filter->source_count; ++i)
+    {
+        if (filter->sources[i]->pin.pin.peer)
+            IMemAllocator_Decommit(filter->sources[i]->pin.pAllocator);
+    }
 
     return S_OK;
 }
