@@ -2318,7 +2318,7 @@ todo_wine
     IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
 
     hr = IFilterGraph2_Connect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface);
-    todo_wine ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
 
     parser1_pins[0].QueryInternalConnections_hr = S_OK;
     hr = IFilterGraph2_Connect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface);

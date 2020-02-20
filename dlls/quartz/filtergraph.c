@@ -1200,10 +1200,6 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         ppinOut = temp;
     }
 
-    hr = CheckCircularConnection(This, ppinOut, ppinIn);
-    if (FAILED(hr))
-        goto out;
-
     /* Try direct connection first */
     hr = IFilterGraph2_ConnectDirect(iface, ppinOut, ppinIn, NULL);
 
