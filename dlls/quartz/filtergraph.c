@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -150,9 +151,10 @@ typedef struct _ITF_CACHE_ENTRY {
 
 struct filter
 {
-    struct list entry;
+    struct list entry, sorted_entry;
     IBaseFilter *filter;
     WCHAR *name;
+    BOOL sorting;
 };
 
 typedef struct _IFilterGraphImpl {
@@ -183,8 +185,18 @@ typedef struct _IFilterGraphImpl {
     IUnknown *outer_unk;
     LONG ref;
     IUnknown *punkFilterMapper2;
-    struct list filters;
 
+    /* We keep two lists of filters, one unsorted and one topologically sorted.
+     * The former is necessary for functions like IGraphBuilder::Connect() and
+     * IGraphBuilder::Render() that iterate through the filter list but may
+     * add to it while doing so; the latter is for functions like
+     * IMediaControl::Run() that should propagate messages to all filters
+     * (including unconnected ones) but must do so in topological order from
+     * sinks to sources. We can easily guarantee that the loop in Connect() will
+     * touch each filter exactly once so long as we aren't reordering it, but
+     * using the sorted filters list there would be hard. This seems to be the
+     * easiest and clearest solution. */
+    struct list filters, sorted_filters;
     unsigned int name_index;
 
     IReferenceClock *refClock;
@@ -617,6 +629,8 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
 
     IBaseFilter_AddRef(entry->filter = filter);
     list_add_head(&graph->filters, &entry->entry);
+    list_add_head(&graph->sorted_filters, &entry->sorted_entry);
+    entry->sorting = FALSE;
     ++graph->version;
 
     return duplicate_name ? VFW_S_DUPLICATE_NAME : hr;
@@ -694,6 +708,7 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
                 IBaseFilter_SetSyncSource(pFilter, NULL);
                 IBaseFilter_Release(pFilter);
                 list_remove(&entry->entry);
+                list_remove(&entry->sorted_entry);
                 CoTaskMemFree(entry->name);
                 heap_free(entry);
                 This->version++;
@@ -818,6 +833,70 @@ out:
 #endif
 }
 
+static struct filter *find_sorted_filter(IFilterGraphImpl *graph, IBaseFilter *iface)
+{
+    struct filter *filter;
+
+    LIST_FOR_EACH_ENTRY(filter, &graph->sorted_filters, struct filter, sorted_entry)
+    {
+        if (filter->filter == iface)
+            return filter;
+    }
+
+    return NULL;
+}
+
+static void sort_filter_recurse(IFilterGraphImpl *graph, struct filter *filter, struct list *sorted)
+{
+    struct filter *peer_filter;
+    IEnumPins *enumpins;
+    PIN_DIRECTION dir;
+    IPin *pin, *peer;
+    PIN_INFO info;
+
+    TRACE("Sorting filter %p.\n", filter->filter);
+
+    /* Cyclic connections should be caught by CheckCircularConnection(). */
+    assert(!filter->sorting);
+
+    filter->sorting = TRUE;
+
+    IBaseFilter_EnumPins(filter->filter, &enumpins);
+    while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
+    {
+        IPin_QueryDirection(pin, &dir);
+
+        if (dir == PINDIR_INPUT && IPin_ConnectedTo(pin, &peer) == S_OK)
+        {
+            IPin_QueryPinInfo(peer, &info);
+            /* Note that the filter may have already been sorted. */
+            if ((peer_filter = find_sorted_filter(graph, info.pFilter)))
+                sort_filter_recurse(graph, peer_filter, sorted);
+            IBaseFilter_Release(info.pFilter);
+            IPin_Release(peer);
+        }
+        IPin_Release(pin);
+    }
+    IEnumPins_Release(enumpins);
+
+    filter->sorting = FALSE;
+
+    list_remove(&filter->sorted_entry);
+    list_add_head(sorted, &filter->sorted_entry);
+}
+
+static void sort_filters(IFilterGraphImpl *graph)
+{
+    struct list sorted = LIST_INIT(sorted), *cursor;
+
+    while ((cursor = list_head(&graph->sorted_filters)))
+    {
+        struct filter *filter = LIST_ENTRY(cursor, struct filter, sorted_entry);
+        sort_filter_recurse(graph, filter, &sorted);
+    }
+
+    list_move_tail(&graph->sorted_filters, &sorted);
+}
 
 /* NOTE: despite the implication, it doesn't matter which
  * way round you put in the input and output pins */
@@ -868,6 +947,9 @@ static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface, IPin *ppi
                 hr = IPin_Connect(ppinIn, ppinOut, pmt);
         }
     }
+
+    if (SUCCEEDED(hr))
+        sort_filters(This);
 
     return hr;
 }
@@ -5702,6 +5784,7 @@ static HRESULT filter_graph_common_create(IUnknown *outer, void **out, BOOL thre
     fimpl->IGraphVersion_iface.lpVtbl = &IGraphVersion_VTable;
     fimpl->ref = 1;
     list_init(&fimpl->filters);
+    list_init(&fimpl->sorted_filters);
     fimpl->name_index = 1;
     fimpl->refClock = NULL;
     fimpl->hEventCompletion = CreateEventW(0, TRUE, FALSE, 0);
