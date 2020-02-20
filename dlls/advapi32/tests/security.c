@@ -3010,7 +3010,7 @@ static void test_process_security(void)
     CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
     test_group_equal( event, UsersSid, __LINE__ );
 
-    sprintf(buffer, "%s tests/security.c test", myARGV[0]);
+    sprintf(buffer, "%s security test", myARGV[0]);
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
@@ -7186,7 +7186,7 @@ static void test_token_security_descriptor(void)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
 
-    sprintf(buffer, "%s tests/security.c test_token_sd", myARGV[0]);
+    sprintf(buffer, "%s security test_token_sd", myARGV[0]);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess failed with error %u\n", GetLastError());
     winetest_wait_child_process(info.hProcess);
