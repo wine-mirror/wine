@@ -10,6 +10,7 @@
 
 #include <corecrt_wstdio.h>
 #include <corecrt_wio.h>
+#include <corecrt_wtime.h>
 #include <string.h>
 
 #include <pshpack8.h>
@@ -49,21 +50,6 @@ typedef unsigned short _ino_t;
 typedef int _off_t;
 #define _OFF_T_DEFINED
 #endif
-
-#ifndef _TM_DEFINED
-#define _TM_DEFINED
-struct tm {
-    int tm_sec;
-    int tm_min;
-    int tm_hour;
-    int tm_mday;
-    int tm_mon;
-    int tm_year;
-    int tm_wday;
-    int tm_yday;
-    int tm_isdst;
-};
-#endif /* _TM_DEFINED */
 
 #ifndef _STAT_DEFINED
 #define _STAT_DEFINED
@@ -325,28 +311,6 @@ wchar_t* __cdecl wcsstr(const wchar_t*,const wchar_t*);
 wchar_t* __cdecl wcstok(wchar_t*,const wchar_t*);
 size_t   __cdecl wcsxfrm(wchar_t*,const wchar_t*,size_t);
 #endif /* _WSTRING_DEFINED */
-
-#ifndef _WTIME_DEFINED
-#define _WTIME_DEFINED
-
-#ifdef _USE_32BIT_TIME_T
-#define _wctime32 _wctime
-#endif
-
-wchar_t* __cdecl _wasctime(const struct tm*);
-size_t   __cdecl wcsftime(wchar_t*,size_t,const wchar_t*,const struct tm*);
-wchar_t* __cdecl _wctime32(const __time32_t*);
-wchar_t* __cdecl _wctime64(const __time64_t*);
-wchar_t* __cdecl _wstrdate(wchar_t*);
-errno_t  __cdecl _wstrdate_s(wchar_t*,size_t);
-wchar_t* __cdecl _wstrtime(wchar_t*);
-errno_t  __cdecl _wstrtime_s(wchar_t*,size_t);
-
-#ifndef _USE_32BIT_TIME_T
-static inline wchar_t* _wctime(const time_t *t) { return _wctime64(t); }
-#endif
-
-#endif /* _WTIME_DEFINED */
 
 wchar_t __cdecl btowc(int);
 size_t  __cdecl mbrlen(const char *,size_t,mbstate_t*);
