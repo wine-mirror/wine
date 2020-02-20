@@ -111,6 +111,11 @@ struct smbios_bios {
     BYTE date;
     BYTE size;
     UINT64 characteristics;
+    BYTE characteristics_ext[2];
+    BYTE system_bios_major_release;
+    BYTE system_bios_minor_release;
+    BYTE ec_firmware_major_release;
+    BYTE ec_firmware_minor_release;
 };
 
 struct smbios_system {
@@ -120,6 +125,9 @@ struct smbios_system {
     BYTE version;
     BYTE serial;
     BYTE uuid[16];
+    BYTE wake_up_type;
+    BYTE sku_number;
+    BYTE family;
 };
 
 struct smbios_board {
@@ -137,6 +145,10 @@ struct smbios_chassis {
     BYTE version;
     BYTE serial;
     BYTE asset_tag;
+    BYTE boot_state;
+    BYTE power_supply_state;
+    BYTE thermal_state;
+    BYTE security_status;
 };
 
 #include "poppack.h"
@@ -2142,6 +2154,8 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             size_t bios_vendor_len, bios_version_len, bios_date_len;
             char system_vendor[128], system_product[128], system_version[128], system_serial[128];
             size_t system_vendor_len, system_product_len, system_version_len, system_serial_len;
+            char system_sku[128], system_family[128];
+            size_t system_sku_len, system_family_len;
             char board_vendor[128], board_product[128], board_version[128], board_serial[128];
             size_t board_vendor_len, board_product_len, board_version_len, board_serial_len;
             char chassis_vendor[128], chassis_version[128], chassis_serial[128], chassis_asset_tag[128];
@@ -2163,6 +2177,8 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             system_product_len = get_smbios_string("/sys/class/dmi/id/product_name", S(system_product));
             system_version_len = get_smbios_string("/sys/class/dmi/id/product_version", S(system_version));
             system_serial_len = get_smbios_string("/sys/class/dmi/id/product_serial", S(system_serial));
+            system_sku_len = get_smbios_string("/sys/class/dmi/id/product_sku", S(system_sku));
+            system_family_len = get_smbios_string("/sys/class/dmi/id/product_family", S(system_family));
             board_vendor_len = get_smbios_string("/sys/class/dmi/id/board_vendor", S(board_vendor));
             board_product_len = get_smbios_string("/sys/class/dmi/id/board_name", S(board_product));
             board_version_len = get_smbios_string("/sys/class/dmi/id/board_version", S(board_version));
@@ -2181,7 +2197,7 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
 
             *required_len += sizeof(struct smbios_system);
             *required_len += max(system_vendor_len + system_product_len + system_version_len +
-                                 system_serial_len + 5, 2);
+                                 system_serial_len + system_sku_len + system_family_len + 7, 2);
 
             *required_len += sizeof(struct smbios_board);
             *required_len += max(board_vendor_len + board_product_len + board_version_len + board_serial_len + 5, 2);
@@ -2200,7 +2216,7 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             prologue = (struct smbios_prologue*)buffer;
             prologue->calling_method = 0;
             prologue->major_version = 2;
-            prologue->minor_version = 0;
+            prologue->minor_version = 4;
             prologue->revision = 0;
             prologue->length = sfti->TableBufferLength - sizeof(struct smbios_prologue);
             buffer += sizeof(struct smbios_prologue);
@@ -2216,6 +2232,12 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             bios->date = bios_date_len ? ++string_count : 0;
             bios->size = 0;
             bios->characteristics = 0x4; /* not supported */
+            bios->characteristics_ext[0] = 0;
+            bios->characteristics_ext[1] = 0;
+            bios->system_bios_major_release = 0xFF; /* not supported */
+            bios->system_bios_minor_release = 0xFF; /* not supported */
+            bios->ec_firmware_major_release = 0xFF; /* not supported */
+            bios->ec_firmware_minor_release = 0xFF; /* not supported */
             buffer += sizeof(struct smbios_bios);
 
             copy_smbios_string(&buffer, bios_vendor, bios_vendor_len);
@@ -2234,12 +2256,17 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             system->version = system_version_len ? ++string_count : 0;
             system->serial = system_serial_len ? ++string_count : 0;
             get_system_uuid( (GUID *)system->uuid );
+            system->wake_up_type = 0x02; /* unknown */
+            system->sku_number = system_sku_len ? ++string_count : 0;
+            system->family = system_family_len ? ++string_count : 0;
             buffer += sizeof(struct smbios_system);
 
             copy_smbios_string(&buffer, system_vendor, system_vendor_len);
             copy_smbios_string(&buffer, system_product, system_product_len);
             copy_smbios_string(&buffer, system_version, system_version_len);
             copy_smbios_string(&buffer, system_serial, system_serial_len);
+            copy_smbios_string(&buffer, system_sku, system_sku_len);
+            copy_smbios_string(&buffer, system_family, system_family_len);
             if (!string_count) *buffer++ = 0;
             *buffer++ = 0;
 
@@ -2271,6 +2298,10 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             chassis->version = chassis_version_len ? ++string_count : 0;
             chassis->serial = chassis_serial_len ? ++string_count : 0;
             chassis->asset_tag = chassis_asset_tag_len ? ++string_count : 0;
+            chassis->boot_state = 0x02; /* unknown */
+            chassis->power_supply_state = 0x02; /* unknown */
+            chassis->thermal_state = 0x02; /* unknown */
+            chassis->security_status = 0x02; /* unknown */
             buffer += sizeof(struct smbios_chassis);
 
             copy_smbios_string(&buffer, chassis_vendor, chassis_vendor_len);
