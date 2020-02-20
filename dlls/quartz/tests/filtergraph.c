@@ -2286,6 +2286,7 @@ todo_wine
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
     IFilterGraph2_Disconnect(graph, sink_pin.peer);
     IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
+    parser1_pins[1].QueryInternalConnections_hr = E_NOTIMPL;
 
     /* A pin whose name (not ID) begins with a tilde is not connected. */
 
@@ -2315,6 +2316,14 @@ todo_wine
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
     IFilterGraph2_Disconnect(graph, sink_pin.peer);
     IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
+
+    hr = IFilterGraph2_Connect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface);
+    todo_wine ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
+
+    parser1_pins[0].QueryInternalConnections_hr = S_OK;
+    hr = IFilterGraph2_Connect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    parser1_pins[0].QueryInternalConnections_hr = E_NOTIMPL;
 
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -2763,25 +2772,28 @@ static const IPinVtbl test_connect_direct_vtbl =
 
 static void test_connect_direct_init(struct testpin *pin, PIN_DIRECTION dir)
 {
-    memset(pin, 0, sizeof(*pin));
-    pin->IPin_iface.lpVtbl = &test_connect_direct_vtbl;
-    pin->ref = 1;
-    pin->dir = dir;
+    testpin_init(pin, &test_connect_direct_vtbl, dir);
 }
 
 static void test_connect_direct(void)
 {
-    struct testpin source_pin, sink_pin;
-    struct testfilter source, sink;
+    struct testpin source_pin, sink_pin, parser1_pins[2], parser2_pins[2];
+    struct testfilter source, sink, parser1, parser2;
 
     IFilterGraph2 *graph = create_graph();
     AM_MEDIA_TYPE mt;
     HRESULT hr;
 
     test_connect_direct_init(&source_pin, PINDIR_OUTPUT);
-    test_connect_direct_init(&sink_pin, PINDIR_INPUT);
     testfilter_init(&source, &source_pin, 1);
+    test_connect_direct_init(&sink_pin, PINDIR_INPUT);
     testfilter_init(&sink, &sink_pin, 1);
+    test_connect_direct_init(&parser1_pins[0], PINDIR_INPUT);
+    test_connect_direct_init(&parser1_pins[1], PINDIR_OUTPUT);
+    testfilter_init(&parser1, parser1_pins, 2);
+    test_connect_direct_init(&parser2_pins[0], PINDIR_INPUT);
+    test_connect_direct_init(&parser2_pins[1], PINDIR_OUTPUT);
+    testfilter_init(&parser2, parser2_pins, 2);
 
     hr = IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2933,6 +2945,42 @@ todo_wine
     ok(source_pin.mt == &mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
     hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* ConnectDirect() protects against cyclical connections. */
+    hr = IFilterGraph2_AddFilter(graph, &parser1.IBaseFilter_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_AddFilter(graph, &parser2.IBaseFilter_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface, NULL);
+    ok(hr == VFW_E_CIRCULAR_GRAPH, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &parser1_pins[1].IPin_iface, &parser2_pins[0].IPin_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph, &parser2_pins[1].IPin_iface, &parser1_pins[0].IPin_iface, NULL);
+    todo_wine ok(hr == VFW_E_CIRCULAR_GRAPH, "Got hr %#x.\n", hr);
+    IFilterGraph2_Disconnect(graph, &parser1_pins[1].IPin_iface);
+    IFilterGraph2_Disconnect(graph, &parser2_pins[0].IPin_iface);
+
+    parser1_pins[0].QueryInternalConnections_hr = S_OK;
+    hr = IFilterGraph2_ConnectDirect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!parser1_pins[0].peer, "Got peer %p.\n", parser1_pins[0].peer);
+    todo_wine ok(parser1_pins[1].peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", parser1_pins[1].peer);
+    IFilterGraph2_Disconnect(graph, &parser1_pins[0].IPin_iface);
+    IFilterGraph2_Disconnect(graph, &parser1_pins[1].IPin_iface);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &parser1_pins[1].IPin_iface, &parser2_pins[0].IPin_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph, &parser2_pins[1].IPin_iface, &parser1_pins[0].IPin_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IFilterGraph2_Disconnect(graph, &parser1_pins[1].IPin_iface);
+    IFilterGraph2_Disconnect(graph, &parser2_pins[0].IPin_iface);
+
+    hr = IFilterGraph2_RemoveFilter(graph, &parser1.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_RemoveFilter(graph, &parser2.IBaseFilter_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Both pins are disconnected when a filter is removed. */
