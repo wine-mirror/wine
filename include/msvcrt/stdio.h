@@ -286,7 +286,7 @@ static inline int WINAPIV sprintf(char *buffer, const char *format, ...)
     __ms_va_list args;
 
     __ms_va_start(args, format);
-    ret = _vsnprintf(buffer, (size_t)-1, format, args);
+    ret = _vsnprintf(buffer, (size_t)_CRT_INT_MAX, format, args);
     __ms_va_end(args);
     return ret;
 }
