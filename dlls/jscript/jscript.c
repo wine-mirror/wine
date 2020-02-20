@@ -57,6 +57,7 @@ typedef struct {
     DWORD version;
     BOOL html_mode;
     BOOL is_encode;
+    BOOL is_initialized;
 
     IActiveScriptSite *site;
 
@@ -343,23 +344,6 @@ static void exec_queued_code(JScript *This)
     clear_script_queue(This);
 }
 
-static HRESULT set_ctx_site(JScript *This)
-{
-    HRESULT hres;
-
-    This->ctx->lcid = This->lcid;
-
-    hres = init_global(This->ctx);
-    if(FAILED(hres))
-        return hres;
-
-    IActiveScriptSite_AddRef(This->site);
-    This->ctx->site = This->site;
-
-    change_state(This, SCRIPTSTATE_INITIALIZED);
-    return S_OK;
-}
-
 static void decrease_state(JScript *This, SCRIPTSTATE state)
 {
     if(This->ctx) {
@@ -641,6 +625,35 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
     if(InterlockedCompareExchange(&This->thread_id, GetCurrentThreadId(), 0))
         return E_UNEXPECTED;
 
+    if(!This->ctx) {
+        script_ctx_t *ctx = heap_alloc_zero(sizeof(script_ctx_t));
+        if(!ctx)
+            return E_OUTOFMEMORY;
+
+        ctx->ref = 1;
+        ctx->state = SCRIPTSTATE_UNINITIALIZED;
+        ctx->active_script = &This->IActiveScript_iface;
+        ctx->safeopt = This->safeopt;
+        ctx->version = This->version;
+        ctx->html_mode = This->html_mode;
+        ctx->acc = jsval_undefined();
+        heap_pool_init(&ctx->tmp_heap);
+
+        hres = create_jscaller(ctx);
+        if(FAILED(hres)) {
+            heap_free(ctx);
+            return hres;
+        }
+
+        ctx->last_match = jsstr_empty();
+
+        ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
+        if(ctx) {
+            script_release(ctx);
+            return E_UNEXPECTED;
+        }
+    }
+
     This->site = pass;
     IActiveScriptSite_AddRef(This->site);
 
@@ -648,7 +661,18 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
     if(hres == S_OK)
         This->lcid = lcid;
 
-    return This->ctx ? set_ctx_site(This) : S_OK;
+    This->ctx->lcid = This->lcid;
+
+    hres = init_global(This->ctx);
+    if(FAILED(hres))
+        return hres;
+
+    IActiveScriptSite_AddRef(This->site);
+    This->ctx->site = This->site;
+
+    if(This->is_initialized)
+        change_state(This, SCRIPTSTATE_INITIALIZED);
+    return S_OK;
 }
 
 static HRESULT WINAPI JScript_GetScriptSite(IActiveScript *iface, REFIID riid,
@@ -677,7 +701,7 @@ static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE s
         return S_OK;
     }
 
-    if(!This->ctx)
+    if(!This->is_initialized || !This->ctx)
         return E_UNEXPECTED;
 
     switch(ss) {
@@ -900,42 +924,16 @@ static ULONG WINAPI JScriptParse_Release(IActiveScriptParse *iface)
 static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
 {
     JScript *This = impl_from_IActiveScriptParse(iface);
-    script_ctx_t *ctx;
-    HRESULT hres;
 
     TRACE("(%p)\n", This);
 
-    if(This->ctx)
+    if(This->is_initialized)
         return E_UNEXPECTED;
+    This->is_initialized = TRUE;
 
-    ctx = heap_alloc_zero(sizeof(script_ctx_t));
-    if(!ctx)
-        return E_OUTOFMEMORY;
-
-    ctx->ref = 1;
-    ctx->state = SCRIPTSTATE_UNINITIALIZED;
-    ctx->active_script = &This->IActiveScript_iface;
-    ctx->safeopt = This->safeopt;
-    ctx->version = This->version;
-    ctx->html_mode = This->html_mode;
-    ctx->acc = jsval_undefined();
-    heap_pool_init(&ctx->tmp_heap);
-
-    hres = create_jscaller(ctx);
-    if(FAILED(hres)) {
-        heap_free(ctx);
-        return hres;
-    }
-
-    ctx->last_match = jsstr_empty();
-
-    ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
-    if(ctx) {
-        script_release(ctx);
-        return E_UNEXPECTED;
-    }
-
-    return This->site ? set_ctx_site(This) : S_OK;
+    if(This->site)
+        change_state(This, SCRIPTSTATE_INITIALIZED);
+    return S_OK;
 }
 
 static HRESULT WINAPI JScriptParse_AddScriptlet(IActiveScriptParse *iface,
