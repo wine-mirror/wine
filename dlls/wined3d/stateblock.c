@@ -1367,10 +1367,13 @@ static void wined3d_bitmap_set_bits(uint32_t *bitmap, unsigned int start, unsign
 HRESULT CDECL wined3d_stateblock_set_vs_consts_f(struct wined3d_stateblock *stateblock,
         unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
 {
+    const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
+
     TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n",
             stateblock, start_idx, count, constants);
 
-    if (!constants || start_idx >= WINED3D_MAX_VS_CONSTS_F || count > WINED3D_MAX_VS_CONSTS_F - start_idx)
+    if (!constants || start_idx >= d3d_info->limits.vs_uniform_count
+            || count > d3d_info->limits.vs_uniform_count - start_idx)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&stateblock->stateblock_state.vs_consts_f[start_idx], constants, count * sizeof(*constants));
@@ -1433,10 +1436,13 @@ void CDECL wined3d_stateblock_set_pixel_shader(struct wined3d_stateblock *stateb
 HRESULT CDECL wined3d_stateblock_set_ps_consts_f(struct wined3d_stateblock *stateblock,
         unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
 {
+    const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
+
     TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n",
             stateblock, start_idx, count, constants);
 
-    if (!constants || start_idx >= WINED3D_MAX_PS_CONSTS_F || count > WINED3D_MAX_PS_CONSTS_F - start_idx)
+    if (!constants || start_idx >= d3d_info->limits.ps_uniform_count
+            || count > d3d_info->limits.ps_uniform_count - start_idx)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&stateblock->stateblock_state.ps_consts_f[start_idx], constants, count * sizeof(*constants));
