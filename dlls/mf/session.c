@@ -278,7 +278,7 @@ static struct clock_timer *impl_clock_timer_from_IUnknown(IUnknown *iface)
     return CONTAINING_RECORD(iface, struct clock_timer, IUnknown_iface);
 }
 
-static struct sink_notification *impl_from_IUnknown(IUnknown *iface)
+static struct sink_notification *impl_sink_notification_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct sink_notification, IUnknown_iface);
 }
@@ -1918,7 +1918,7 @@ static HRESULT WINAPI sink_notification_QueryInterface(IUnknown *iface, REFIID r
 
 static ULONG WINAPI sink_notification_AddRef(IUnknown *iface)
 {
-    struct sink_notification *notification = impl_from_IUnknown(iface);
+    struct sink_notification *notification = impl_sink_notification_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&notification->refcount);
 
     TRACE("%p, refcount %u.\n", iface, refcount);
@@ -1928,7 +1928,7 @@ static ULONG WINAPI sink_notification_AddRef(IUnknown *iface)
 
 static ULONG WINAPI sink_notification_Release(IUnknown *iface)
 {
-    struct sink_notification *notification = impl_from_IUnknown(iface);
+    struct sink_notification *notification = impl_sink_notification_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&notification->refcount);
 
     TRACE("%p, refcount %u.\n", iface, refcount);
@@ -2496,7 +2496,7 @@ static HRESULT WINAPI present_clock_sink_callback_Invoke(IMFAsyncCallback *iface
     if (FAILED(hr = IMFAsyncResult_GetObject(result, &object)))
         return hr;
 
-    data = impl_from_IUnknown(object);
+    data = impl_sink_notification_from_IUnknown(object);
 
     clock_call_state_change(data->system_time, data->param, data->notification, data->sink);
 
