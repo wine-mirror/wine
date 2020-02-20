@@ -3961,18 +3961,6 @@ struct wined3d_stateblock
     unsigned int              num_contained_render_states;
     DWORD                     contained_transform_states[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
     unsigned int              num_contained_transform_states;
-    DWORD                     contained_vs_consts_i[WINED3D_MAX_CONSTS_I];
-    unsigned int              num_contained_vs_consts_i;
-    DWORD                     contained_vs_consts_b[WINED3D_MAX_CONSTS_B];
-    unsigned int              num_contained_vs_consts_b;
-    DWORD                     contained_vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
-    unsigned int              num_contained_vs_consts_f;
-    DWORD                     contained_ps_consts_i[WINED3D_MAX_CONSTS_I];
-    unsigned int              num_contained_ps_consts_i;
-    DWORD                     contained_ps_consts_b[WINED3D_MAX_CONSTS_B];
-    unsigned int              num_contained_ps_consts_b;
-    DWORD                     contained_ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
-    unsigned int              num_contained_ps_consts_f;
     struct StageState         contained_tss_states[WINED3D_MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1)];
     unsigned int              num_contained_tss_states;
     struct StageState         contained_sampler_states[WINED3D_MAX_COMBINED_SAMPLERS * WINED3D_HIGHEST_SAMPLER_STATE];
