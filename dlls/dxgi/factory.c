@@ -403,6 +403,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapterByLuid(IWineDXGIFactory
     TRACE("iface %p, luid %08x:%08x, iid %s, adapter %p.\n",
             iface, luid.HighPart, luid.LowPart, debugstr_guid(iid), adapter);
 
+    if (!adapter)
+        return DXGI_ERROR_INVALID_CALL;
+
     adapter_index = 0;
     while ((hr = dxgi_factory_EnumAdapters1(iface, adapter_index, &adapter1)) == S_OK)
     {
