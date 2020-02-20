@@ -158,6 +158,7 @@
 #endif
 
 #define _ARGMAX 100
+#define _CRT_INT_MAX 0x7fffffff
 
 #ifndef _MSVCRT_LONG_DEFINED
 #define _MSVCRT_LONG_DEFINED
