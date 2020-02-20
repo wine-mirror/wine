@@ -88,7 +88,6 @@ int    WINAPIV _snprintf_s(char*,size_t,size_t,const char*,...);
 char*  __cdecl _tempnam(const char*,const char*);
 int    __cdecl _unlink(const char*);
 int    WINAPIV _scprintf(const char*,...);
-int    __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
 
 size_t __cdecl _fread_nolock(void*,size_t,size_t,FILE*);
 size_t __cdecl _fread_nolock_s(void*,size_t,size_t,size_t,FILE*);
@@ -165,6 +164,7 @@ unsigned int __cdecl _set_output_format(void);
 #ifdef _UCRT
 
 _ACRTIMP int __cdecl __stdio_common_vsprintf(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
+_ACRTIMP int __cdecl __stdio_common_vsprintf_p(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vsprintf_s(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vsnprintf_s(unsigned __int64,char*,size_t,size_t,const char*,_locale_t,__ms_va_list);
 
@@ -208,10 +208,17 @@ static inline int __cdecl vsprintf_s(char *buffer, const char *format, __ms_va_l
     return ret < 0 ? -1 : ret;
 }
 
+static inline int __cdecl _vsprintf_p_l(char *buffer, size_t size, const char *format, _locale_t locale, __ms_va_list args)
+{
+    int ret = __stdio_common_vsprintf_p(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, locale, args);
+    return ret < 0 ? -1 : ret;
+}
+
 #else /* _UCRT */
 
 _ACRTIMP int __cdecl _vscprintf(const char*,__ms_va_list);
 _ACRTIMP int __cdecl _vsnprintf_s(char*,size_t,size_t,const char*,__ms_va_list);
+_ACRTIMP int __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl vsprintf(char*,const char*,__ms_va_list);
 _ACRTIMP int __cdecl vsprintf_s(char*,size_t,const char*,__ms_va_list);
 
