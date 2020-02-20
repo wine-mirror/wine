@@ -152,6 +152,11 @@ interface IMFRateControl : IUnknown
             [in, out, unique] float *rate);
 }
 
+typedef enum MFTIMER_FLAGS
+{
+    MFTIMER_RELATIVE = 0x00000001,
+} MFTIMER_FLAGS;
+
 [
     object,
     uuid(e56e4cbd-8f70-49d8-a0f8-edb3d6ab9bf2),
