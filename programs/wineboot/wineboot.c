@@ -188,6 +188,11 @@ static DWORD set_reg_value( HKEY hkey, const WCHAR *name, const WCHAR *value )
     return RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)value, (lstrlenW(value) + 1) * sizeof(WCHAR) );
 }
 
+static DWORD set_reg_value_dword( HKEY hkey, const WCHAR *name, DWORD value )
+{
+    return RegSetValueExW( hkey, name, 0, REG_DWORD, (const BYTE *)&value, sizeof(value) );
+}
+
 #if defined(__i386__) || defined(__x86_64__)
 
 #if defined(_MSC_VER)
@@ -299,6 +304,239 @@ static void get_namestring( WCHAR *buf ) { }
 
 #endif  /* __i386__ || __x86_64__ */
 
+#include "pshpack1.h"
+struct smbios_prologue
+{
+    BYTE  calling_method;
+    BYTE  major_version;
+    BYTE  minor_version;
+    BYTE  revision;
+    DWORD length;
+};
+
+enum smbios_type
+{
+    SMBIOS_TYPE_BIOS,
+    SMBIOS_TYPE_SYSTEM,
+    SMBIOS_TYPE_BASEBOARD,
+};
+
+struct smbios_header
+{
+    BYTE type;
+    BYTE length;
+    WORD handle;
+};
+
+struct smbios_baseboard
+{
+    struct smbios_header hdr;
+    BYTE                 vendor;
+    BYTE                 product;
+    BYTE                 version;
+    BYTE                 serial;
+};
+
+struct smbios_bios
+{
+    struct smbios_header hdr;
+    BYTE                 vendor;
+    BYTE                 version;
+    WORD                 start;
+    BYTE                 date;
+    BYTE                 size;
+    UINT64               characteristics;
+    BYTE                 characteristics_ext[2];
+    BYTE                 system_bios_major_release;
+    BYTE                 system_bios_minor_release;
+    BYTE                 ec_firmware_major_release;
+    BYTE                 ec_firmware_minor_release;
+};
+
+struct smbios_system
+{
+    struct smbios_header hdr;
+    BYTE                 vendor;
+    BYTE                 product;
+    BYTE                 version;
+    BYTE                 serial;
+    BYTE                 uuid[16];
+    BYTE                 wake_up_type;
+    BYTE                 sku;
+    BYTE                 family;
+};
+#include "poppack.h"
+
+#define RSMB (('R' << 24) | ('S' << 16) | ('M' << 8) | 'B')
+
+static const struct smbios_header *find_smbios_entry( enum smbios_type type, const char *buf, UINT len )
+{
+    const char *ptr, *start;
+    const struct smbios_prologue *prologue;
+    const struct smbios_header *hdr;
+
+    if (len < sizeof(struct smbios_prologue)) return NULL;
+    prologue = (const struct smbios_prologue *)buf;
+    if (prologue->length > len - sizeof(*prologue) || prologue->length < sizeof(*hdr)) return NULL;
+
+    start = (const char *)(prologue + 1);
+    hdr = (const struct smbios_header *)start;
+
+    for (;;)
+    {
+        if ((const char *)hdr - start >= prologue->length - sizeof(*hdr)) return NULL;
+
+        if (!hdr->length)
+        {
+            WARN( "invalid entry\n" );
+            return NULL;
+        }
+
+        if (hdr->type == type)
+        {
+            if ((const char *)hdr - start + hdr->length > prologue->length) return NULL;
+            break;
+        }
+        else /* skip other entries and their strings */
+        {
+            for (ptr = (const char *)hdr + hdr->length; ptr - buf < len && *ptr; ptr++)
+            {
+                for (; ptr - buf < len; ptr++) if (!*ptr) break;
+            }
+            if (ptr == (const char *)hdr + hdr->length) ptr++;
+            hdr = (const struct smbios_header *)(ptr + 1);
+        }
+    }
+
+    return hdr;
+}
+
+static inline WCHAR *heap_strdupAW( const char *src )
+{
+    int len;
+    WCHAR *dst;
+    if (!src) return NULL;
+    len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
+    if ((dst = HeapAlloc( GetProcessHeap(), 0, len * sizeof(*dst) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
+    return dst;
+}
+
+static WCHAR *get_smbios_string( BYTE id, const char *buf, UINT offset, UINT buflen )
+{
+    const char *ptr = buf + offset;
+    UINT i = 0;
+
+    if (!id || offset >= buflen) return NULL;
+    for (ptr = buf + offset; ptr - buf < buflen && *ptr; ptr++)
+    {
+        if (++i == id) return heap_strdupAW( ptr );
+        for (; ptr - buf < buflen; ptr++) if (!*ptr) break;
+    }
+    return NULL;
+}
+
+static void set_value_from_smbios_string( HKEY key, const WCHAR *value, BYTE id, const char *buf, UINT offset, UINT buflen )
+{
+    WCHAR *str;
+    str = get_smbios_string( id, buf, offset, buflen );
+    set_reg_value( key, value, str ? str : L"" );
+    HeapFree( GetProcessHeap(), 0, str );
+}
+
+static void create_bios_baseboard_values( HKEY bios_key, const char *buf, UINT len )
+{
+    const struct smbios_header *hdr;
+    const struct smbios_baseboard *baseboard;
+    UINT offset;
+
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BASEBOARD, buf, len ))) return;
+    baseboard = (const struct smbios_baseboard *)hdr;
+    offset = (const char *)baseboard - buf + baseboard->hdr.length;
+
+    set_value_from_smbios_string( bios_key, L"BaseBoardManufacturer", baseboard->vendor, buf, offset, len );
+    set_value_from_smbios_string( bios_key, L"BaseBoardProduct", baseboard->product, buf, offset, len );
+    set_value_from_smbios_string( bios_key, L"BaseBoardVersion", baseboard->version, buf, offset, len );
+}
+
+static void create_bios_bios_values( HKEY bios_key, const char *buf, UINT len )
+{
+    const struct smbios_header *hdr;
+    const struct smbios_bios *bios;
+    UINT offset;
+
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, buf, len ))) return;
+    bios = (const struct smbios_bios *)hdr;
+    offset = (const char *)bios - buf + bios->hdr.length;
+
+    set_value_from_smbios_string( bios_key, L"BIOSVendor", bios->vendor, buf, offset, len );
+    set_value_from_smbios_string( bios_key, L"BIOSVersion", bios->version, buf, offset, len );
+    set_value_from_smbios_string( bios_key, L"BIOSReleaseDate", bios->date, buf, offset, len );
+
+    if (bios->hdr.length >= 0x18)
+    {
+        set_reg_value_dword( bios_key, L"BiosMajorRelease", bios->system_bios_major_release );
+        set_reg_value_dword( bios_key, L"BiosMinorRelease", bios->system_bios_minor_release );
+        set_reg_value_dword( bios_key, L"ECFirmwareMajorVersion", bios->ec_firmware_major_release );
+        set_reg_value_dword( bios_key, L"ECFirmwareMinorVersion", bios->ec_firmware_minor_release );
+    }
+    else
+    {
+        set_reg_value_dword( bios_key, L"BiosMajorRelease", 0xFF );
+        set_reg_value_dword( bios_key, L"BiosMinorRelease", 0xFF );
+        set_reg_value_dword( bios_key, L"ECFirmwareMajorVersion", 0xFF );
+        set_reg_value_dword( bios_key, L"ECFirmwareMinorVersion", 0xFF );
+    }
+}
+
+static void create_bios_system_values( HKEY bios_key, const char *buf, UINT len )
+{
+    const struct smbios_header *hdr;
+    const struct smbios_system *system;
+    UINT offset;
+
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_SYSTEM, buf, len ))) return;
+    system = (const struct smbios_system *)hdr;
+    offset = (const char *)system - buf + system->hdr.length;
+
+    set_value_from_smbios_string( bios_key, L"SystemManufacturer", system->vendor, buf, offset, len );
+    set_value_from_smbios_string( bios_key, L"SystemProductName", system->product, buf, offset, len );
+    set_value_from_smbios_string( bios_key, L"SystemVersion", system->version, buf, offset, len );
+
+    if (system->hdr.length >= 0x1B)
+    {
+        set_value_from_smbios_string( bios_key, L"SystemSKU", system->sku, buf, offset, len );
+        set_value_from_smbios_string( bios_key, L"SystemFamily", system->family, buf, offset, len );
+    }
+    else
+    {
+        set_value_from_smbios_string( bios_key, L"SystemSKU", 0, buf, offset, len );
+        set_value_from_smbios_string( bios_key, L"SystemFamily", 0, buf, offset, len );
+    }
+}
+
+static void create_bios_key( HKEY system_key )
+{
+    HKEY bios_key;
+    UINT len;
+    char *buf;
+
+    if (RegCreateKeyExW( system_key, L"BIOS", 0, NULL, REG_OPTION_VOLATILE,
+                         KEY_ALL_ACCESS, NULL, &bios_key, NULL ))
+        return;
+
+    len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
+    if (!(buf = HeapAlloc( GetProcessHeap(), 0, len ))) goto done;
+    len = GetSystemFirmwareTable( RSMB, 0, buf, len );
+
+    create_bios_baseboard_values( bios_key, buf, len );
+    create_bios_bios_values( bios_key, buf, len );
+    create_bios_system_values( bios_key, buf, len );
+
+done:
+    HeapFree( GetProcessHeap(), 0, buf );
+    RegCloseKey( bios_key );
+}
+
 /* create the volatile hardware registry keys */
 static void create_hardware_registry_keys(void)
 {
@@ -409,6 +647,9 @@ static void create_hardware_registry_keys(void)
             RegCloseKey( hkey );
         }
     }
+
+    create_bios_key( system_key );
+
     RegCloseKey( fpu_key );
     RegCloseKey( cpu_key );
     RegCloseKey( system_key );
