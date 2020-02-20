@@ -1227,21 +1227,21 @@ static void test_filter_state(IMediaControl *control)
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IMediaControl_Pause(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IMediaControl_Pause(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1250,7 +1250,7 @@ static void test_filter_state(IMediaControl *control)
     ok(!got_Flush, "Unexpected IMediaObject::Flush().\n");
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(got_Flush, "Expected IMediaObject::Flush().\n");
+    ok(got_Flush, "Expected IMediaObject::Flush().\n");
     got_Flush = 0;
 
     hr = IMediaControl_GetState(control, 0, &state);
@@ -1258,7 +1258,7 @@ static void test_filter_state(IMediaControl *control)
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1267,7 +1267,7 @@ static void test_filter_state(IMediaControl *control)
     ok(!got_Flush, "Unexpected IMediaObject::Flush().\n");
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(got_Flush, "Expected IMediaObject::Flush().\n");
+    ok(got_Flush, "Expected IMediaObject::Flush().\n");
     got_Flush = 0;
 
     hr = IMediaControl_GetState(control, 0, &state);

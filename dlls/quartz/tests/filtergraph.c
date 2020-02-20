@@ -3104,8 +3104,8 @@ static void check_filter_state_(unsigned int line, IFilterGraph2 *graph, FILTER_
 
 static void test_filter_state(void)
 {
+    struct testfilter source, sink, dummy;
     struct testpin source_pin, sink_pin;
-    struct testfilter source, sink;
 
     IFilterGraph2 *graph = create_graph();
     REFERENCE_TIME start_time;
@@ -3120,6 +3120,7 @@ static void test_filter_state(void)
     testsink_init(&sink_pin);
     testfilter_init(&source, &source_pin, 1);
     testfilter_init(&sink, &sink_pin, 1);
+    testfilter_init(&dummy, NULL, 0);
 
     IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
@@ -3129,12 +3130,12 @@ static void test_filter_state(void)
 
     IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &dummy.IBaseFilter_iface, NULL);
     IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
 
     check_filter_state(graph, State_Stopped);
 
     hr = IMediaControl_Pause(control);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
@@ -3149,7 +3150,6 @@ todo_wine
     hr = IReferenceClock_GetTime(clock, &start_time);
     ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
     hr = IMediaControl_Run(control);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
@@ -3159,7 +3159,6 @@ todo_wine
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaControl_Pause(control);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
@@ -3168,7 +3167,6 @@ todo_wine
     check_filter_state(graph, State_Stopped);
 
     hr = IMediaControl_Run(control);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
 
@@ -3192,7 +3190,6 @@ todo_wine
     IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
 
     hr = IMediaFilter_Pause(filter);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
@@ -3203,25 +3200,23 @@ todo_wine
     ok(sink.clock == clock, "Expected %p, got %p.\n", clock, sink.clock);
 
     hr = IMediaFilter_Run(filter, 0xdeadbeef);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     ok(source.start_time == 0xdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == 0xdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaFilter_Pause(filter);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     hr = IMediaFilter_Run(filter, 0xdeadf00d);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     ok(source.start_time == 0xdeadf00d, "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == 0xdeadf00d, "Got time %s.\n", wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaFilter_Pause(filter);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     hr = IMediaFilter_Stop(filter);
@@ -3231,7 +3226,6 @@ todo_wine
     hr = IReferenceClock_GetTime(clock, &start_time);
     ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
     hr = IMediaFilter_Run(filter, 0);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
@@ -3242,11 +3236,11 @@ todo_wine
 
     Sleep(600);
     hr = IMediaFilter_Pause(filter);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     hr = IMediaFilter_Run(filter, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
         "Expected time near %s, got %s.\n",
@@ -3255,13 +3249,13 @@ todo_wine
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaFilter_Pause(filter);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
     Sleep(600);
 
     start_time += 550 * 10000;
     hr = IMediaFilter_Run(filter, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
         "Expected time near %s, got %s.\n",
@@ -3279,7 +3273,6 @@ todo_wine
     IMediaFilter_SetSyncSource(filter, NULL);
 
     hr = IMediaControl_Run(control);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
 todo_wine
@@ -3298,24 +3291,24 @@ todo_wine
 
     sink.state_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_GetState(control, 0, &state);
-    todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.state_hr = VFW_S_CANT_CUE;
     hr = IMediaControl_GetState(control, 0, &state);
-    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.state_hr = VFW_S_STATE_INTERMEDIATE;
     source.state_hr = VFW_S_CANT_CUE;
     hr = IMediaControl_GetState(control, 0, &state);
-    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.state_hr = VFW_S_CANT_CUE;
     source.state_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_GetState(control, 0, &state);
-    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.state_hr = source.state_hr = S_OK;
@@ -3323,7 +3316,6 @@ todo_wine
     /* Destroying the graph while it's running stops all filters. */
 
     hr = IMediaFilter_Run(filter, 0);
-todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
 todo_wine
@@ -3993,7 +3985,7 @@ static void test_graph_seeking(void)
      * SetPositions() and then adds the clock offset to the stream start. */
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Note that if the graph is running, it is paused while seeking. */
     current = 0;
@@ -4035,11 +4027,11 @@ static void test_graph_seeking(void)
     ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaControl_Pause(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     Sleep(100);
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -4062,7 +4054,7 @@ static void test_graph_seeking(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     Sleep(100);
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);

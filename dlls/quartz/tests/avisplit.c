@@ -1025,21 +1025,21 @@ static void test_filter_state(IMediaControl *control)
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IMediaControl_Pause(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IMediaControl_Pause(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1053,7 +1053,7 @@ static void test_filter_state(IMediaControl *control)
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

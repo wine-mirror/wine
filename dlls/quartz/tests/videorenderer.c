@@ -679,7 +679,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
 
     thread = send_frame(input);
 
@@ -712,7 +712,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
 
     thread = send_frame(input);
 
@@ -722,7 +722,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -735,7 +735,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
@@ -748,7 +748,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -757,7 +757,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
@@ -772,10 +772,10 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
@@ -837,7 +837,7 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = join_thread(thread);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -872,7 +872,7 @@ static void test_sample_time(IPin *pin, IMemInputPin *input, IFilterGraph2 *grap
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
 
     thread = send_frame_time(input, 1, 0x11); /* dark blue */
 
@@ -882,7 +882,7 @@ static void test_sample_time(IPin *pin, IMemInputPin *input, IFilterGraph2 *grap
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(thread, 500) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
@@ -984,7 +984,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     todo_wine ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     todo_wine ok(ret == 1, "Expected EC_COMPLETE.\n");
 
@@ -997,7 +997,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
      * done rendering. */
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = join_thread(send_frame(input));
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
@@ -1020,7 +1020,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     /* Test sending EOS while flushing. */
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = join_thread(send_frame(input));
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -1039,7 +1039,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     /* Test sending EOS and then flushing or stopping. */
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = join_thread(send_frame(input));
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
@@ -1133,7 +1133,7 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     }
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     join_thread(thread);
 
     hr = IBasicVideo_GetCurrentImage(video, &size, buffer);
