@@ -115,7 +115,7 @@ named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *item_name, unsig
 
     for(item = ctx->named_items; item; item = item->next) {
         if((item->flags & flags) == flags && !wcscmp(item->name, item_name)) {
-            if(!item->disp) {
+            if(!item->disp && (flags || !(item->flags & SCRIPTITEM_CODEONLY))) {
                 IUnknown *unk;
 
                 if(!ctx->site)
