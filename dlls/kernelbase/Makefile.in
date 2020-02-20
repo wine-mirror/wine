@@ -5,10 +5,8 @@ EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -mno-cygwin -Wl,--image-base,0x7b00
 
 C_SRCS = \
 	collation.c \
-	compose.c \
 	console.c \
 	debug.c \
-	decompose.c \
 	digitmap.c \
 	file.c \
 	loader.c \

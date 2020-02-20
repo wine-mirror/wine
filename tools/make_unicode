@@ -2083,202 +2083,6 @@ sub dump_ctype_tables($)
 }
 
 
-################################################################
-# dump the char composition table
-sub dump_compose_table($)
-{
-    my $filename = shift;
-
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    print "Building $filename\n";
-    print OUTPUT "/* Unicode char composition */\n";
-    print OUTPUT "/* generated from $UNIDATA:UnicodeData.txt */\n";
-    print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"windef.h\"\n\n";
-
-    my @filled;
-    for (my $i = 0; $i <= $MAX_CHAR; $i++)
-    {
-        my @comp = get_composition( $i, 0 );
-        push @{$filled[$comp[1]]}, [ $comp[0], $i ] if @comp;
-    }
-    my $count = scalar grep defined, @filled;
-
-    # build the table of second chars and offsets
-
-    my $pos = $count + 1;
-    my @table = ();
-    for (my $i = 0; $i <= $MAX_CHAR; $i++)
-    {
-        next unless defined $filled[$i];
-        push @table, $i, $pos;
-        $pos += @{$filled[$i]};
-    }
-    # terminator with last position
-    push @table, 0, $pos;
-    printf OUTPUT "static const unsigned int table[%u] =\n{\n", 2*$pos;
-    printf OUTPUT "    /* second chars + offsets */\n%s", dump_array( 20, 0, @table );
-
-    # build the table of first chars and mappings
-
-    for (my $i = 0; $i <= $MAX_CHAR; $i++)
-    {
-        next unless defined $filled[$i];
-        my @table = ();
-        foreach my $map (sort { $a->[0] <=> $b->[0] } @{$filled[$i]})
-        {
-            push @table, $map->[0], $map->[1];
-        }
-        printf OUTPUT ",\n    /* 0x%04x */\n%s", $i, dump_array( 20, 0, @table );
-    }
-    print OUTPUT "\n};\n\n";
-    print OUTPUT <<"EOF";
-static inline int binary_search( unsigned int ch, int low, int high )
-{
-    while (low <= high)
-    {
-        int pos = (low + high) / 2;
-        if (table[2 * pos] < ch) low = pos + 1;
-        else if (table[2 * pos] > ch) high = pos - 1;
-        else return pos;
-    }
-    return -1;
-}
-
-unsigned int DECLSPEC_HIDDEN wine_compose( unsigned int ch1, unsigned int ch2 )
-{
-    int pos;
-
-    if ((pos = binary_search( ch2, 0, $count - 1 )) == -1) return 0;
-    if ((pos = binary_search( ch1, table[2 * pos + 1], table[2 * pos + 3] - 1 )) == -1) return 0;
-    return table[2 * pos + 1];
-}
-EOF
-    close OUTPUT;
-    save_file($filename);
-}
-
-################################################################
-# dump a decomposition table
-sub dump_decompositions($@)
-{
-    my ($name, @decomp) = @_;
-
-    # first determine all the 16-char subsets that contain something
-
-    my $level1 = ($MAX_CHAR + 1) / 16;
-    my $level2 = $level1 / 16;
-
-    my @filled = (0) x $level1;
-    my $pos = 16;  # for the null subset
-    my $data_total = 0;
-    for (my $i = 0; $i <= $MAX_CHAR; $i++)
-    {
-        next unless defined $decomp[$i];
-        if ($filled[$i >> 4] == 0)
-        {
-            $filled[$i >> 4] = $pos;
-            $pos += 16;
-        }
-        $data_total += @{$decomp[$i]};
-    }
-    my $total = $pos;
-
-    # now count the 256-char subsets that contain something
-
-    my @filled_idx = ($level2) x $level2;
-    $pos = $level2 + 16;
-    for (my $i = 0; $i < $level1; $i++)
-    {
-        next unless $filled[$i];
-        $filled_idx[$i >> 4] = $pos;
-        $pos += 16;
-        $i |= 15;
-    }
-    my $null_offset = $pos;  # null mapping
-    $total += $pos + 1; # add the offset sentinel
-
-    # add the index offsets to the subsets positions
-
-    for (my $i = 0; $i < $level1; $i++)
-    {
-        next unless $filled[$i];
-        $filled[$i] += $null_offset;
-    }
-
-    # dump the main index
-
-    printf OUTPUT "\nconst WCHAR DECLSPEC_HIDDEN %s[%d] =\n", $name, $total + $data_total;
-    printf OUTPUT "{\n    /* index */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, @filled_idx );
-    printf OUTPUT ",\n    /* null sub-index */\n%s", dump_array( 16, 0, ($null_offset) x 16 );
-
-    # dump the second-level indexes
-
-    for (my $i = 0; $i < $level2; $i++)
-    {
-        next unless ($filled_idx[$i] > $level2);
-        my @table = @filled[($i<<4)..($i<<4)+15];
-        for (my $j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
-        printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
-        printf OUTPUT "%s", dump_array( 16, 0, @table );
-    }
-
-    # dump the 16-char offsets
-
-    printf OUTPUT ",\n    /* null offsets */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, ($total) x (16) );
-
-    $pos = $total;
-
-    my @data;
-    for (my $i = 0; $i < $level1; $i++)
-    {
-        next unless $filled[$i];
-        my @table = (0) x (16);
-        for (my $j = 0; $j < 16; $j++)
-        {
-            $table[$j] = $pos;
-            if (defined $decomp[($i<<4) + $j])
-            {
-                $pos += $#{$decomp[($i<<4) + $j]} + 1;
-                push @data, @{$decomp[($i<<4) + $j]};
-            }
-        }
-        printf OUTPUT ",\n    /* offsets 0x%03x0 .. 0x%03xf */\n", $i, $i;
-        printf OUTPUT "%s", dump_array( 16, 0, @table );
-    }
-
-    my @sentinel = $pos;
-    printf OUTPUT ",\n    /* offset sentinel */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, @sentinel );
-
-    printf OUTPUT ",\n    /* data */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, @data );
-
-    printf OUTPUT "\n};\n";
-}
-
-################################################################
-# dump the char decomposition table
-sub dump_decompose_table($$)
-{
-    my ($filename, $compat) = @_;
-
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    print "Building $filename\n";
-    print OUTPUT "/* Unicode char composition */\n";
-    print OUTPUT "/* generated from $UNIDATA:UnicodeData.txt */\n";
-    print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"windef.h\"\n";
-
-    dump_decompositions( "nfd_table", build_decompositions( @decomp_table ));
-    dump_decompositions( "nfkd_table", build_decompositions( @decomp_compat_table )) if $compat;
-
-    close OUTPUT;
-    save_file($filename);
-}
-
 sub rol($$)
 {
     my ($byte, $count) = @_;
@@ -2548,24 +2352,6 @@ sub dump_norm_table($)
 
 
 ################################################################
-# dump the combining class table
-sub dump_combining_class($)
-{
-    my $filename = shift;
-
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    print "Building $filename\n";
-    print OUTPUT "/* Unicode Combining Classes */\n";
-    print OUTPUT "/* generated from $UNIDATA:UnicodeData.txt */\n";
-    print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"windef.h\"\n\n";
-
-    dump_three_level_mapping( "combining_class_table", 0, 16, map { defined $_ ? $_ & 0xff : 0; } @combining_class_table );
-    close OUTPUT;
-    save_file($filename);
-}
-
-################################################################
 # output a codepage definition file from the global tables
 sub output_codepage_file($)
 {
@@ -2728,17 +2514,12 @@ chdir ".." if -f "./make_unicode";
 load_data();
 dump_case_mappings( "libs/port/casemap.c" );
 dump_sortkeys( "dlls/kernelbase/collation.c" );
-dump_compose_table( "dlls/ntdll/compose.c" );
-dump_compose_table( "dlls/kernelbase/compose.c" );
-dump_decompose_table( "dlls/ntdll/decompose.c", 1 );
-dump_decompose_table( "dlls/kernelbase/decompose.c", 0 );
 dump_ctype_tables( "libs/port/wctype.c" );
 dump_bidi_dir_table( "dlls/gdi32/direction.c" );
 dump_bidi_dir_table( "dlls/usp10/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
 dump_string_type_table( "dlls/kernelbase/wctype.c" );
 dump_digit_folding( "dlls/kernelbase/digitmap.c" );
-dump_combining_class( "dlls/ntdll/combclass.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
 dump_mirroring( "dlls/dwrite/mirror.c" );
 dump_bracket( "dlls/usp10/bracket.c" );
