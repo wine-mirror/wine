@@ -163,5 +163,7 @@
 
 #define MF_E_CLOCK_NO_TIME_SOURCE                     _HRESULT_TYPEDEF_(0xc00d9c41)
 #define MF_E_CLOCK_STATE_ALREADY_SET                  _HRESULT_TYPEDEF_(0xc00d9c42)
+#define MF_E_CLOCK_NOT_SIMPLE                         _HRESULT_TYPEDEF_(0xc00d9c43)
+#define MF_S_CLOCK_STOPPED                            _HRESULT_TYPEDEF_(0x000d9c44)
 
 #endif  /* __WINE_MFERROR_H */

@@ -6844,6 +6844,12 @@ msgstr "Başlama isteği zaten yapıldı.\n"
 msgid "Sink has not been finalized.\n"
 msgstr "Ses çıkışı bitirilmedi.\n"
 
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "Çıkış zaten durduruldu.\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr "Media Foundation platformu başlatılmadı.\n"
@@ -7221,6 +7227,12 @@ msgstr "Saatin zaman kaynağı ayarlanmamış.\n"
 #: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "Saat durumu zaten ayarlı.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "Saat kullanılamıyor.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

@@ -6875,6 +6875,12 @@ msgstr ""
 msgid "Sink has not been finalized.\n"
 msgstr "Súbor nenájdený.\n"
 
+#: mferror.mc:732
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "Clock was stopped\n"
+msgstr "Súbor už existuje.\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr ""
@@ -7353,6 +7359,12 @@ msgstr ""
 #| msgid "File already exists.\n"
 msgid "Clock state was already set.\n"
 msgstr "Súbor už existuje.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Help not available."
+msgid "Clock is not simple\n"
+msgstr "Nápoveda nedostupná."
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

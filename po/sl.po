@@ -6937,6 +6937,12 @@ msgstr ""
 msgid "Sink has not been finalized.\n"
 msgstr "UUID predmeta ni mogoče najti.\n"
 
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Clock was stopped\n"
+msgstr "Razred že obstaja.\n"
+
 #: mferror.mc:32
 #, fuzzy
 #| msgid "Installation platform not supported.\n"
@@ -7464,6 +7470,12 @@ msgstr ""
 #| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
 msgstr "Razred že obstaja.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Help not available."
+msgid "Clock is not simple\n"
+msgstr "Pomoč ni na voljo."
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

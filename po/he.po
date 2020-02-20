@@ -7131,6 +7131,11 @@ msgstr ""
 msgid "Sink has not been finalized.\n"
 msgstr "הקובץ לא נמצא.\n"
 
+#: mferror.mc:732
+#, fuzzy
+msgid "Clock was stopped\n"
+msgstr "הפתחה %s כבר קיימת.\n"
+
 #: mferror.mc:32
 #, fuzzy
 msgid "Media Foundation platform is not initialized.\n"
@@ -7570,6 +7575,11 @@ msgstr ""
 #, fuzzy
 msgid "Clock state was already set.\n"
 msgstr "הפתחה %s כבר קיימת.\n"
+
+#: mferror.mc:725
+#, fuzzy
+msgid "Clock is not simple\n"
+msgstr "לא זמינה; .\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

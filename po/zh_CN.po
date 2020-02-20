@@ -6789,6 +6789,12 @@ msgstr "已创建起始请求。\n"
 msgid "Sink has not been finalized.\n"
 msgstr "池尚未完成。\n"
 
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "池已被停止。\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr "Media Foundation 平台尚未初始化。\n"
@@ -7164,6 +7170,12 @@ msgstr "时钟未设置时间源。\n"
 #: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "已设置时钟状态。\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "时钟不可用。\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

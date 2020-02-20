@@ -6834,6 +6834,12 @@ msgstr "Aloituspyyntö on jo tehty.\n"
 msgid "Sink has not been finalized.\n"
 msgstr "Ulostuloa ei ole viimeistelty.\n"
 
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "Ulostulo oli jo pysäytetty.\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr "Media Foundation platform -kirjastoa ei ole alustettu.\n"
@@ -7209,6 +7215,12 @@ msgstr "Kellolle ei ole asetettu ajan lähdettä.\n"
 #: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "Kellon tila oli jo asetettu.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "Kello ei saatavilla.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

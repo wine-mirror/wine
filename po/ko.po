@@ -6825,6 +6825,12 @@ msgstr "시작 요청이 이미 이루어졌습니다.\n"
 msgid "Sink has not been finalized.\n"
 msgstr "싱크가 완료되지 않았습니다.\n"
 
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "싱크가 이미 중지되었습니다.\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr "미디어 기초 플랫폼이 최기화되지 않았습니다.\n"
@@ -7200,6 +7206,12 @@ msgstr "시계가 시간 소스 설정을 가지고 있지 않습니다.\n"
 #: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "시계 상태가 이미 설정되었습니다.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "시계를 사용할 수 없습니다.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

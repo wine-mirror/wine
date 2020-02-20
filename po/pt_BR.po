@@ -6860,6 +6860,12 @@ msgstr "Requisição inicial já foi feita.\n"
 msgid "Sink has not been finalized.\n"
 msgstr "Coletor não foi finalizado.\n"
 
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "Coletor já esta parado.\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr "Plataforma de Mídias não inicializada.\n"
@@ -7236,6 +7242,12 @@ msgstr "Relógio não tem origem de tempo configurada.\n"
 #: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "Estado do relógio já foi configurado.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "Relógio não disponível.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

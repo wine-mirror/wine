@@ -6802,6 +6802,10 @@ msgstr ""
 msgid "Sink has not been finalized.\n"
 msgstr ""
 
+#: mferror.mc:732
+msgid "Clock was stopped\n"
+msgstr ""
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr ""
@@ -7186,6 +7190,11 @@ msgstr ""
 #: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr ""
+
+#: mferror.mc:725
+#, fuzzy
+msgid "Clock is not simple\n"
+msgstr "INFUORMAZIUN.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"

@@ -715,3 +715,17 @@ SymbolicName=MF_E_CLOCK_STATE_ALREADY_SET
 Language=ENU
 Clock state was already set.
 .
+MessageId=40003
+Severity=Error
+Facility=MF
+SymbolicName=MF_E_CLOCK_NOT_SIMPLE
+Language=ENU
+Clock is not simple
+.
+MessageId=40004
+Severity=Success
+Facility=MF
+SymbolicName=MF_S_CLOCK_STOPPED
+Language=ENU
+Clock was stopped
+.

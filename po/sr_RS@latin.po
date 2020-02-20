@@ -7242,6 +7242,11 @@ msgstr ""
 msgid "Sink has not been finalized.\n"
 msgstr "%s putanja nije pronađena.\n"
 
+#: mferror.mc:732
+#, fuzzy
+msgid "Clock was stopped\n"
+msgstr "Port %s već postoji.\n"
+
 #: mferror.mc:32
 #, fuzzy
 msgid "Media Foundation platform is not initialized.\n"
@@ -7685,6 +7690,11 @@ msgstr ""
 #, fuzzy
 msgid "Clock state was already set.\n"
 msgstr "Port %s već postoji.\n"
+
+#: mferror.mc:725
+#, fuzzy
+msgid "Clock is not simple\n"
+msgstr "Nedostupno"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
