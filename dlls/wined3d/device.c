@@ -27,7 +27,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <stdio.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
 #endif
@@ -3854,7 +3853,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     count = 0;
     for (i = 0; i < d3d_info->limits.vs_uniform_count; ++i)
     {
-        if (changed->vs_consts_f[i])
+        if (wined3d_bitmap_is_set(changed->vs_consts_f, i))
             ++count;
         else if (count)
         {
@@ -3896,7 +3895,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     count = 0;
     for (i = 0; i < d3d_info->limits.ps_uniform_count; ++i)
     {
-        if (changed->ps_consts_f[i])
+        if (wined3d_bitmap_is_set(changed->ps_consts_f, i))
             ++count;
         else if (count)
         {

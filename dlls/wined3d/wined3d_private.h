@@ -3923,10 +3923,10 @@ struct wined3d_saved_states
     DWORD clipplane;                            /* WINED3D_MAX_USER_CLIP_PLANES, 32 */
     WORD pixelShaderConstantsB;                 /* WINED3D_MAX_CONSTS_B, 16 */
     WORD pixelShaderConstantsI;                 /* WINED3D_MAX_CONSTS_I, 16 */
-    BOOL ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
+    DWORD ps_consts_f[WINED3D_MAX_PS_CONSTS_F >> 5];
     WORD vertexShaderConstantsB;                /* WINED3D_MAX_CONSTS_B, 16 */
     WORD vertexShaderConstantsI;                /* WINED3D_MAX_CONSTS_I, 16 */
-    BOOL vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
+    DWORD vs_consts_f[WINED3D_MAX_VS_CONSTS_F >> 5];
     DWORD textures : 20;                        /* WINED3D_MAX_COMBINED_SAMPLERS, 20 */
     DWORD indices : 1;
     DWORD material : 1;
