@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-02-14 08:12+0200\n"
+"PO-Revision-Date: 2020-02-20 08:38+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -8418,16 +8418,12 @@ msgid "&Edit Value..."
 msgstr "&Redaguoti reikšmę..."
 
 #: version.rc:49
-#, fuzzy
-#| msgid "Data Link Properties"
 msgid "Data Link Error"
-msgstr "Duomenų saito savybės"
+msgstr "Duomenų saito klaida"
 
 #: version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "Išrinkite failą."
+msgstr "Išrinkite tiekėją."
 
 #: version.rc:36
 msgid "Data Link Properties"
