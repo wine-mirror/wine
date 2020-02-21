@@ -907,6 +907,8 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
     {
         session->state = SESSION_STATE_SHUT_DOWN;
         IMFMediaEventQueue_Shutdown(session->event_queue);
+        if (session->quality_manager)
+            IMFQualityManager_Shutdown(session->quality_manager);
     }
     LeaveCriticalSection(&session->cs);
 
