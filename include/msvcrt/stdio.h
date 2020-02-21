@@ -136,8 +136,6 @@ int    __cdecl rename(const char*,const char*);
 void   __cdecl rewind(FILE*);
 void   __cdecl setbuf(FILE*,char*);
 int    __cdecl setvbuf(FILE*,char*,int,size_t);
-int    WINAPIV sscanf(const char*,const char*,...);
-int    WINAPIV sscanf_s(const char*,const char*,...);
 int    WINAPIV _snscanf_l(const char*,size_t,const char*,_locale_t,...);
 FILE*  __cdecl tmpfile(void);
 char*  __cdecl tmpnam(char*);
@@ -155,6 +153,7 @@ _ACRTIMP int __cdecl __stdio_common_vsprintf_s(unsigned __int64,char*,size_t,con
 _ACRTIMP int __cdecl __stdio_common_vsnprintf_s(unsigned __int64,char*,size_t,size_t,const char*,_locale_t,__ms_va_list);
 
 _ACRTIMP int __cdecl __stdio_common_vfscanf(unsigned __int64,FILE*,const char*,_locale_t,__ms_va_list);
+_ACRTIMP int __cdecl __stdio_common_vsscanf(unsigned __int64,char const*,size_t,const char*,_locale_t,__ms_va_list);
 
 static inline int __cdecl vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args)
 {
@@ -300,6 +299,28 @@ static inline int WINAPIV printf_s(const char *format, ...)
     return ret;
 }
 
+static inline int WINAPIV sscanf(const char *buffer, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vsscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, buffer, -1, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
+static inline int WINAPIV sscanf_s(const char *buffer, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vsscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, buffer, -1, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
 static inline int WINAPIV fscanf(FILE *file, const char *format, ...)
 {
     int ret;
@@ -370,6 +391,8 @@ _ACRTIMP int WINAPIV fscanf(FILE*,const char*,...);
 _ACRTIMP int WINAPIV fscanf_s(FILE*,const char*,...);
 _ACRTIMP int WINAPIV scanf(const char*,...);
 _ACRTIMP int WINAPIV scanf_s(const char*,...);
+_ACRTIMP int WINAPIV sscanf(const char*,const char*,...);
+_ACRTIMP int WINAPIV sscanf_s(const char*,const char*,...);
 
 #endif /* _UCRT */
 
