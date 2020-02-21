@@ -2991,26 +2991,29 @@ static HRESULT WINAPI d3d8_device_SetVertexShaderConstant(IDirect3DDevice8 *ifac
 }
 
 static HRESULT WINAPI d3d8_device_GetVertexShaderConstant(IDirect3DDevice8 *iface,
-        DWORD start_register, void *data, DWORD count)
+        DWORD start_idx, void *constants, DWORD count)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
+    const struct wined3d_vec4 *src;
 
-    TRACE("iface %p, start_register %u, data %p, count %u.\n",
-            iface, start_register, data, count);
+    TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (start_register + count > D3D8_MAX_VERTEX_SHADER_CONSTANTF)
+    if (!constants)
+        return D3DERR_INVALIDCALL;
+
+    if (start_idx >= device->vs_uniform_count || count > device->vs_uniform_count - start_idx)
     {
-        WARN("Trying to access %u constants, but d3d8 only supports %u\n",
-             start_register + count, D3D8_MAX_VERTEX_SHADER_CONSTANTF);
+        WARN("Trying to access %u constants, but d3d8 only supports %u.\n",
+             start_idx + count, device->vs_uniform_count);
         return D3DERR_INVALIDCALL;
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_vs_consts_f(device->wined3d_device, start_register, count, data);
+    src = wined3d_stateblock_get_state(device->state)->vs_consts_f;
+    memcpy(constants, &src[start_idx], count * sizeof(*src));
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_GetVertexShaderDeclaration(IDirect3DDevice8 *iface,
@@ -3668,6 +3671,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_swapchain *wined3d_swapchain;
     struct d3d8_swapchain *d3d_swapchain;
+    struct wined3d_caps caps;
     HRESULT hr;
 
     static const enum wined3d_feature_level feature_levels[] =
@@ -3701,6 +3705,9 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
         heap_free(device->handle_table.entries);
         return hr;
     }
+
+    wined3d_get_device_caps(wined3d, adapter, device_type, &caps);
+    device->vs_uniform_count = caps.MaxVertexShaderConst;
 
     if (FAILED(hr = wined3d_stateblock_create(device->wined3d_device, NULL, WINED3D_SBT_PRIMARY, &device->state)))
     {

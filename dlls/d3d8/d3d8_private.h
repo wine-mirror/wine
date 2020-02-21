@@ -131,6 +131,8 @@ struct d3d8_device
     DWORD in_destruction : 1;
     DWORD padding : 14;
 
+    unsigned int vs_uniform_count;
+
     /* The d3d8 API supports only one implicit swapchain (no D3DCREATE_ADAPTERGROUP_DEVICE,
      * no GetSwapchain, GetBackBuffer doesn't accept a swapchain number). */
     struct wined3d_swapchain *implicit_swapchain;
