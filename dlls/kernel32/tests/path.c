@@ -80,12 +80,6 @@ static NTSTATUS (WINAPI *pRtlGetSearchPath)(LPWSTR*);
 static void     (WINAPI *pRtlReleasePath)(LPWSTR);
 static NTSTATUS (WINAPI *pLdrGetDllPath)(LPCWSTR,ULONG,LPWSTR*,LPWSTR*);
 
-static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
-static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
-static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
-static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
-static void   (WINAPI *pReleaseActCtx)(HANDLE);
-
 static BOOL (WINAPI *pCheckNameLegalDOS8Dot3W)(const WCHAR *, char *, DWORD, BOOL *, BOOL *);
 static BOOL (WINAPI *pCheckNameLegalDOS8Dot3A)(const char *, char *, DWORD, BOOL *, BOOL *);
 
@@ -1758,7 +1752,7 @@ static HANDLE test_create(const char *file)
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = manifest_path;
 
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     ok(handle != INVALID_HANDLE_VALUE, "failed to create context, error %u\n", GetLastError());
 
     ok(actctx.cbSize == sizeof(actctx), "cbSize=%d\n", actctx.cbSize);
@@ -1825,9 +1819,6 @@ static void test_SearchPathA(void)
 
     DeleteFileA(path2A);
 
-    if (!pActivateActCtx)
-        return;
-
     GetWindowsDirectoryA(pathA, ARRAY_SIZE(pathA));
 
     create_manifest_file("testdep1.manifest", manifest_dep);
@@ -1844,7 +1835,7 @@ static void test_SearchPathA(void)
     ret = SearchPathA(NULL, kernel32A, NULL, ARRAY_SIZE(path2A), path2A, NULL);
     ok(ret && ret == strlen(path2A), "got %d\n", ret);
 
-    ret = pActivateActCtx(handle, &cookie);
+    ret = ActivateActCtx(handle, &cookie);
     ok(ret, "failed to activate context, %u\n", GetLastError());
 
     /* works when activated */
@@ -1873,9 +1864,9 @@ static void test_SearchPathA(void)
     ok(ret && ret == strlen(buffA), "got %d\n", ret);
     ok(strcmp(buffA, path2A), "got wrong path %s, %s\n", buffA, path2A);
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "failed to deactivate context, %u\n", GetLastError());
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 
     /* test the search path priority of the working directory */
     GetTempPathA(sizeof(tmpdirA), tmpdirA);
@@ -1957,9 +1948,6 @@ if (0)
 
     DeleteFileW(path2W);
 
-    if (!pActivateActCtx)
-        return;
-
     GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
 
     create_manifest_file("testdep1.manifest", manifest_dep);
@@ -1983,7 +1971,7 @@ if (0)
 
     GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
 
-    ret = pActivateActCtx(handle, &cookie);
+    ret = ActivateActCtx(handle, &cookie);
     ok(ret, "failed to activate context, %u\n", GetLastError());
 
     /* works when activated */
@@ -2016,9 +2004,9 @@ if (0)
     ret = SearchPathW(NULL, ole32W, NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "failed to deactivate context, %u\n", GetLastError());
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 static void test_GetFullPathNameA(void)
@@ -2157,11 +2145,6 @@ static void init_pointers(void)
     MAKEFUNC(RemoveDllDirectory);
     MAKEFUNC(SetDllDirectoryW);
     MAKEFUNC(SetDefaultDllDirectories);
-    MAKEFUNC(ActivateActCtx);
-    MAKEFUNC(CreateActCtxW);
-    MAKEFUNC(DeactivateActCtx);
-    MAKEFUNC(GetCurrentActCtx);
-    MAKEFUNC(ReleaseActCtx);
     MAKEFUNC(CheckNameLegalDOS8Dot3W);
     MAKEFUNC(CheckNameLegalDOS8Dot3A);
     mod = GetModuleHandleA("ntdll.dll");
@@ -2694,10 +2677,6 @@ START_TEST(path)
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
 
     init_pointers();
-
-    /* Report only once */
-    if (!pActivateActCtx)
-        win_skip("Activation contexts not supported, some tests will be skipped\n");
 
     test_relative_path();
     test_InitPathA(curdir, &curDrive, &otherDrive);

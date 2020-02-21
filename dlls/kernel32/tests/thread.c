@@ -90,11 +90,6 @@ static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 static BOOL (WINAPI *pSetThreadErrorMode)(DWORD,PDWORD);
 static DWORD (WINAPI *pGetThreadErrorMode)(void);
 static DWORD (WINAPI *pRtlGetThreadErrorMode)(void);
-static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
-static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
-static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
-static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
-static void   (WINAPI *pReleaseActCtx)(HANDLE);
 static PTP_POOL (WINAPI *pCreateThreadpool)(PVOID);
 static void (WINAPI *pCloseThreadpool)(PTP_POOL);
 static PTP_WORK (WINAPI *pCreateThreadpoolWork)(PTP_WORK_CALLBACK,PVOID,PTP_CALLBACK_ENVIRON);
@@ -312,7 +307,7 @@ static DWORD WINAPI thread_actctx_func(void *p)
     BOOL ret;
 
     cur = (void*)0xdeadbeef;
-    ret = pGetCurrentActCtx(&cur);
+    ret = GetCurrentActCtx(&cur);
     ok(ret, "thread GetCurrentActCtx failed, %u\n", GetLastError());
     ok(cur == param->handle, "got %p, expected %p\n", cur, param->handle);
     param->thread_context = cur;
@@ -1852,7 +1847,7 @@ static HANDLE test_create(const char *file)
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = path;
 
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     ok(handle != INVALID_HANDLE_VALUE, "failed to create context, error %u\n", GetLastError());
 
     ok(actctx.cbSize == sizeof(actctx), "cbSize=%d\n", actctx.cbSize);
@@ -1876,12 +1871,6 @@ static void test_thread_actctx(void)
     DWORD tid, ret;
     BOOL b;
 
-    if (!pActivateActCtx)
-    {
-        win_skip("skipping activation context tests\n");
-        return;
-    }
-
     create_manifest_file("testdep1.manifest", manifest_dep);
     create_manifest_file("main.manifest", manifest_main);
 
@@ -1890,7 +1879,7 @@ static void test_thread_actctx(void)
     DeleteFileA("main.manifest");
 
     handle = (void*)0xdeadbeef;
-    b = pGetCurrentActCtx(&handle);
+    b = GetCurrentActCtx(&handle);
     ok(b, "GetCurrentActCtx failed: %u\n", GetLastError());
     ok(handle == 0, "active context %p\n", handle);
 
@@ -1905,17 +1894,17 @@ static void test_thread_actctx(void)
     ok(param.thread_context == NULL, "got wrong thread context %p\n", param.thread_context);
     CloseHandle(thread);
 
-    b = pActivateActCtx(context, &cookie);
+    b = ActivateActCtx(context, &cookie);
     ok(b, "activation failed: %u\n", GetLastError());
 
     handle = 0;
-    b = pGetCurrentActCtx(&handle);
+    b = GetCurrentActCtx(&handle);
     ok(b, "GetCurrentActCtx failed: %u\n", GetLastError());
     ok(handle != 0, "no active context\n");
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 
     param.handle = NULL;
-    b = pGetCurrentActCtx(&param.handle);
+    b = GetCurrentActCtx(&param.handle);
     ok(b && param.handle != NULL, "failed to get context, %u\n", GetLastError());
 
     param.thread_context = (void*)0xdeadbeef;
@@ -1925,7 +1914,7 @@ static void test_thread_actctx(void)
     ret = WaitForSingleObject(thread, 1000);
     ok(ret == WAIT_OBJECT_0, "wait timeout\n");
     ok(param.thread_context == context, "got wrong thread context %p, %p\n", param.thread_context, context);
-    pReleaseActCtx(param.thread_context);
+    ReleaseActCtx(param.thread_context);
     CloseHandle(thread);
 
     /* similar test for CreateRemoteThread() */
@@ -1936,16 +1925,15 @@ static void test_thread_actctx(void)
     ret = WaitForSingleObject(thread, 1000);
     ok(ret == WAIT_OBJECT_0, "wait timeout\n");
     ok(param.thread_context == context, "got wrong thread context %p, %p\n", param.thread_context, context);
-    pReleaseActCtx(param.thread_context);
+    ReleaseActCtx(param.thread_context);
     CloseHandle(thread);
 
-    pReleaseActCtx(param.handle);
+    ReleaseActCtx(param.handle);
 
-    b = pDeactivateActCtx(0, cookie);
+    b = DeactivateActCtx(0, cookie);
     ok(b, "DeactivateActCtx failed: %u\n", GetLastError());
-    pReleaseActCtx(context);
+    ReleaseActCtx(context);
 }
-
 
 static void WINAPI threadpool_workcallback(PTP_CALLBACK_INSTANCE instance, void *context, PTP_WORK work) {
     int *foo = (int*)context;
@@ -2267,11 +2255,6 @@ static void init_funcs(void)
     X(IsWow64Process);
     X(SetThreadErrorMode);
     X(GetThreadErrorMode);
-    X(ActivateActCtx);
-    X(CreateActCtxW);
-    X(DeactivateActCtx);
-    X(GetCurrentActCtx);
-    X(ReleaseActCtx);
 
     X(CreateThreadpool);
     X(CloseThreadpool);
