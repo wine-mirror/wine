@@ -1108,6 +1108,7 @@ struct testfilter
     struct strmbase_source source;
     struct strmbase_sink sink;
     const AM_MEDIA_TYPE *sink_mt;
+    unsigned int got_new_segment;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -1250,12 +1251,24 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     return S_OK;
 }
 
+static HRESULT testsink_new_segment(struct strmbase_sink *iface,
+        REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_new_segment;
+    ok(start == 10000, "Got start %s.\n", wine_dbgstr_longlong(start));
+    ok(stop == 20000, "Got stop %s.\n", wine_dbgstr_longlong(stop));
+    ok(rate == 1.0, "Got rate %.16e.\n", rate);
+    return 0xdeadbeef;
+}
+
 static const struct strmbase_sink_ops testsink_ops =
 {
     .base.pin_query_interface = testsink_query_interface,
     .base.pin_query_accept = testsink_query_accept,
     .base.pin_get_media_type = testsink_get_media_type,
     .pfnReceive = testsink_Receive,
+    .sink_new_segment = testsink_new_segment,
 };
 
 static void testfilter_init(struct testfilter *filter)
@@ -1601,6 +1614,25 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input)
     IMemAllocator_Release(allocator);
 }
 
+static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputPin *input,
+        struct testfilter *testsink, struct testfilter *testsink2)
+{
+    HRESULT hr;
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!testsink->got_new_segment, "Got %u calls to IPin::NewSegment().\n", testsink->got_new_segment);
+    ok(!testsink2->got_new_segment, "Got %u calls to IPin::NewSegment().\n", testsink2->got_new_segment);
+    hr = IPin_NewSegment(sink, 10000, 20000, 1.0);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(testsink->got_new_segment == 1, "Got %u calls to IPin::NewSegment().\n", testsink->got_new_segment);
+    ok(testsink2->got_new_segment == 1, "Got %u calls to IPin::NewSegment().\n", testsink2->got_new_segment);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
 static void test_connect_pin(void)
 {
     AM_MEDIA_TYPE req_mt =
@@ -1609,9 +1641,9 @@ static void test_connect_pin(void)
         .subtype = MEDIASUBTYPE_Avi,
         .formattype = FORMAT_None,
     };
+    struct testfilter testsource, testsink, testsink2;
     IBaseFilter *filter = create_dmo_wrapper();
-    struct testfilter testsource, testsink;
-    IPin *sink, *source, *peer;
+    IPin *sink, *source, *source2, *peer;
     IMediaControl *control;
     IMemInputPin *meminput;
     IFilterGraph2 *graph;
@@ -1621,14 +1653,17 @@ static void test_connect_pin(void)
 
     testfilter_init(&testsource);
     testfilter_init(&testsink);
+    testfilter_init(&testsink2);
     CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
             &IID_IFilterGraph2, (void **)&graph);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IFilterGraph2_AddFilter(graph, &testsource.filter.IBaseFilter_iface, L"source");
     IFilterGraph2_AddFilter(graph, &testsink.filter.IBaseFilter_iface, L"sink");
+    IFilterGraph2_AddFilter(graph, &testsink2.filter.IBaseFilter_iface, L"sink2");
     IFilterGraph2_AddFilter(graph, filter, L"DMO wrapper");
     IBaseFilter_FindPin(filter, L"in0", &sink);
     IBaseFilter_FindPin(filter, L"out0", &source);
+    IBaseFilter_FindPin(filter, L"out1", &source2);
     IPin_QueryInterface(sink, &IID_IMemInputPin, (void **)&meminput);
 
     /* Test sink connection. */
@@ -1694,6 +1729,17 @@ static void test_connect_pin(void)
 
     test_filter_state(control);
     test_sample_processing(control, meminput);
+
+    /* Streaming event tests are more interesting if multiple source pins are
+     * connected. */
+
+    hr = IFilterGraph2_ConnectDirect(graph, source2, &testsink2.sink.pin.IPin_iface, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    test_streaming_events(control, sink, meminput, &testsink, &testsink2);
+
+    IFilterGraph2_Disconnect(graph, source2);
+    IFilterGraph2_Disconnect(graph, &testsink2.sink.pin.IPin_iface);
 
     hr = IFilterGraph2_Disconnect(graph, source);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1830,6 +1876,7 @@ static void test_connect_pin(void)
 
     IPin_Release(sink);
     IPin_Release(source);
+    IPin_Release(source2);
     IMemInputPin_Release(meminput);
     IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
@@ -1839,6 +1886,8 @@ static void test_connect_pin(void)
     ref = IBaseFilter_Release(&testsource.filter.IBaseFilter_iface);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(&testsink.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&testsink2.filter.IBaseFilter_iface);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
