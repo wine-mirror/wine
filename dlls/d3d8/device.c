@@ -3298,19 +3298,22 @@ static HRESULT WINAPI d3d8_device_SetPixelShaderConstant(IDirect3DDevice8 *iface
 }
 
 static HRESULT WINAPI d3d8_device_GetPixelShaderConstant(IDirect3DDevice8 *iface,
-        DWORD start_register, void *data, DWORD count)
+        DWORD start_idx, void *constants, DWORD count)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
+    const struct wined3d_vec4 *src;
 
-    TRACE("iface %p, start_register %u, data %p, count %u.\n",
-            iface, start_register, data, count);
+    TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
+
+    if (!constants || start_idx >= WINED3D_MAX_PS_CONSTS_F || count > WINED3D_MAX_PS_CONSTS_F - start_idx)
+        return WINED3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_ps_consts_f(device->wined3d_device, start_register, count, data);
+    src = wined3d_stateblock_get_state(device->state)->ps_consts_f;
+    memcpy(constants, &src[start_idx], count * sizeof(*src));
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_GetPixelShaderFunction(IDirect3DDevice8 *iface,
