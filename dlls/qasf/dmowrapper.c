@@ -335,6 +335,32 @@ out:
     return hr;
 }
 
+static HRESULT dmo_wrapper_sink_eos(struct strmbase_sink *iface)
+{
+    struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->pin.filter);
+    DWORD index = iface - filter->sinks, i;
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
+
+    if (FAILED(hr = IMediaObject_Discontinuity(dmo, index)))
+        ERR("Discontinuity() failed, hr %#x.\n", hr);
+
+    process_output(filter, dmo);
+    if (FAILED(hr = IMediaObject_Flush(dmo)))
+        ERR("Flush() failed, hr %#x.\n", hr);
+
+    for (i = 0; i < filter->source_count; ++i)
+    {
+        if (filter->sources[i].pin.pin.peer)
+            IPin_EndOfStream(filter->sources[i].pin.pin.peer);
+    }
+
+    IMediaObject_Release(dmo);
+    return hr;
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = dmo_wrapper_sink_query_interface,
@@ -342,6 +368,7 @@ static const struct strmbase_sink_ops sink_ops =
     .base.pin_get_media_type = dmo_wrapper_sink_get_media_type,
     .sink_connect = dmo_wrapper_sink_connect,
     .sink_disconnect = dmo_wrapper_sink_disconnect,
+    .sink_eos = dmo_wrapper_sink_eos,
     .pfnReceive = dmo_wrapper_sink_Receive,
 };
 
