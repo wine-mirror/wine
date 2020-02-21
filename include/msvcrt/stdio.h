@@ -134,8 +134,6 @@ int    __cdecl puts(const char*);
 int    __cdecl remove(const char*);
 int    __cdecl rename(const char*,const char*);
 void   __cdecl rewind(FILE*);
-int    WINAPIV scanf(const char*,...);
-int    WINAPIV scanf_s(const char*,...);
 void   __cdecl setbuf(FILE*,char*);
 int    __cdecl setvbuf(FILE*,char*,int,size_t);
 int    WINAPIV sscanf(const char*,const char*,...);
@@ -324,6 +322,28 @@ static inline int WINAPIV fscanf_s(FILE *file, const char *format, ...)
     return ret;
 }
 
+static inline int WINAPIV scanf(const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, stdin, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
+static inline int WINAPIV scanf_s(const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, stdin, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
 #else /* _UCRT */
 
 _ACRTIMP int WINAPIV _scprintf(const char *,...);
@@ -348,6 +368,8 @@ static inline int vsnprintf(char *buffer, size_t size, const char *format, __ms_
 
 _ACRTIMP int WINAPIV fscanf(FILE*,const char*,...);
 _ACRTIMP int WINAPIV fscanf_s(FILE*,const char*,...);
+_ACRTIMP int WINAPIV scanf(const char*,...);
+_ACRTIMP int WINAPIV scanf_s(const char*,...);
 
 #endif /* _UCRT */
 
