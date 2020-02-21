@@ -1121,7 +1121,7 @@ struct testfilter
     struct strmbase_source source;
     struct strmbase_sink sink;
     const AM_MEDIA_TYPE *sink_mt;
-    unsigned int got_new_segment, got_eos;
+    unsigned int got_new_segment, got_eos, got_begin_flush, got_end_flush;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -1285,6 +1285,20 @@ static HRESULT testsink_eos(struct strmbase_sink *iface)
     return 0xdeadbeef;
 }
 
+static HRESULT testsink_begin_flush(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_begin_flush;
+    return 0xdeadbeef;
+}
+
+static HRESULT testsink_end_flush(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_end_flush;
+    return 0xdeadbeef;
+}
+
 static const struct strmbase_sink_ops testsink_ops =
 {
     .base.pin_query_interface = testsink_query_interface,
@@ -1293,6 +1307,8 @@ static const struct strmbase_sink_ops testsink_ops =
     .pfnReceive = testsink_Receive,
     .sink_new_segment = testsink_new_segment,
     .sink_eos = testsink_eos,
+    .sink_begin_flush = testsink_begin_flush,
+    .sink_end_flush = testsink_end_flush,
 };
 
 static void testfilter_init(struct testfilter *filter)
@@ -1692,6 +1708,35 @@ static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputP
 
     hr = IMemInputPin_Receive(input, sample);
     todo_wine ok(hr == VFW_E_SAMPLE_REJECTED_EOS, "Got hr %#x.\n", hr);
+
+    got_Flush = 0;
+    ok(!testsink->got_begin_flush, "Got %u calls to IPin::BeginFlush().\n", testsink->got_begin_flush);
+    ok(!testsink2->got_begin_flush, "Got %u calls to IPin::BeginFlush().\n", testsink2->got_begin_flush);
+    hr = IPin_BeginFlush(sink);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(testsink->got_begin_flush == 1, "Got %u calls to IPin::BeginFlush().\n", testsink->got_begin_flush);
+    ok(testsink2->got_begin_flush == 1, "Got %u calls to IPin::BeginFlush().\n", testsink2->got_begin_flush);
+
+    hr = IMemInputPin_Receive(input, sample);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndOfStream(sink);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    ok(!testsink->got_end_flush, "Got %u calls to IPin::EndFlush().\n", testsink->got_end_flush);
+    ok(!testsink2->got_end_flush, "Got %u calls to IPin::EndFlush().\n", testsink2->got_end_flush);
+    hr = IPin_EndFlush(sink);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(testsink->got_end_flush == 1, "Got %u calls to IPin::EndFlush().\n", testsink->got_end_flush);
+    ok(testsink2->got_end_flush == 1, "Got %u calls to IPin::EndFlush().\n", testsink2->got_end_flush);
+    ok(got_Flush, "Expected IMediaObject::Flush().\n");
+
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    todo_wine ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    todo_wine ok(got_Receive == 2, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
