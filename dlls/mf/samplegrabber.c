@@ -315,7 +315,7 @@ static HRESULT WINAPI sample_grabber_stream_GetMediaTypeHandler(IMFStreamSink *i
     return S_OK;
 }
 
-static HRESULT sample_grabber_report_sample(struct sample_grabber *grabber, IMFSample *sample)
+static HRESULT sample_grabber_report_sample(struct sample_grabber *grabber, IMFSample *sample, BOOL *sample_delivered)
 {
     LONGLONG sample_time, sample_duration = 0;
     IMFMediaBuffer *buffer;
@@ -323,6 +323,8 @@ static HRESULT sample_grabber_report_sample(struct sample_grabber *grabber, IMFS
     GUID major_type;
     BYTE *data;
     HRESULT hr;
+
+    *sample_delivered = FALSE;
 
     hr = IMFMediaType_GetMajorType(grabber->media_type, &major_type);
 
@@ -342,6 +344,8 @@ static HRESULT sample_grabber_report_sample(struct sample_grabber *grabber, IMFS
 
         if (SUCCEEDED(hr = IMFMediaBuffer_Lock(buffer, &data, NULL, &size)))
         {
+            *sample_delivered = TRUE;
+
             if (grabber->callback2)
             {
                 hr = IMFSample_CopyAllItems(sample, grabber->stream->sample_attributes);
@@ -414,9 +418,15 @@ static HRESULT stream_queue_sample(struct sample_grabber_stream *stream, IMFSamp
     return hr;
 }
 
+static void sample_grabber_stream_request_sample(struct sample_grabber_stream *stream)
+{
+    IMFStreamSink_QueueEvent(&stream->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+}
+
 static HRESULT WINAPI sample_grabber_stream_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
 {
     struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
+    BOOL sample_delivered;
     LONGLONG sampletime;
     HRESULT hr = S_OK;
 
@@ -437,7 +447,13 @@ static HRESULT WINAPI sample_grabber_stream_ProcessSample(IMFStreamSink *iface, 
         if (SUCCEEDED(hr))
         {
             if (stream->sink->ignore_clock)
-                hr = sample_grabber_report_sample(stream->sink, sample);
+            {
+                /* OnProcessSample() could return error code, which has to be propagated but isn't a blocker.
+                   Use additional flag indicating that user callback was called at all. */
+                hr = sample_grabber_report_sample(stream->sink, sample, &sample_delivered);
+                if (sample_delivered)
+                    sample_grabber_stream_request_sample(stream);
+            }
             else
                 hr = stream_queue_sample(stream, sample);
         }
@@ -725,15 +741,11 @@ static struct scheduled_item *stream_get_next_item(struct sample_grabber_stream 
     return item;
 }
 
-static void sample_grabber_stream_request_sample(struct sample_grabber_stream *stream)
-{
-    IMFStreamSink_QueueEvent(&stream->IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
-}
-
 static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct sample_grabber_stream *stream = impl_from_IMFAsyncCallback(iface);
     struct scheduled_item *item;
+    BOOL sample_delivered;
     HRESULT hr;
 
     EnterCriticalSection(&stream->cs);
@@ -746,7 +758,7 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallba
             switch (item->type)
             {
                 case ITEM_TYPE_SAMPLE:
-                    if (FAILED(hr = sample_grabber_report_sample(stream->sink, item->u.sample)))
+                    if (FAILED(hr = sample_grabber_report_sample(stream->sink, item->u.sample, &sample_delivered)))
                         WARN("Failed to report a sample, hr %#x.\n", hr);
                     stream_release_pending_item(item);
                     item = stream_get_next_item(stream);
