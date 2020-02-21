@@ -56,6 +56,13 @@ static inline BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TY
         && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
 }
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
 static const IMediaObjectVtbl dmo_vtbl;
 
 static IMediaObject testdmo = {&dmo_vtbl};
@@ -69,7 +76,11 @@ static HRESULT testdmo_GetOutputSizeInfo_hr = S_OK;
 static DWORD testdmo_output_size = 123;
 static DWORD testdmo_output_alignment = 1;
 
-static unsigned int got_Flush;
+static unsigned int got_Flush, got_Discontinuity, got_ProcessInput, got_ProcessOutput, got_Receive;
+
+static IMediaBuffer *testdmo_buffer;
+
+static int testmode;
 
 static HRESULT WINAPI dmo_inner_QueryInterface(IUnknown *iface, REFIID iid, void **out)
 {
@@ -249,8 +260,9 @@ static HRESULT WINAPI dmo_Flush(IMediaObject *iface)
 
 static HRESULT WINAPI dmo_Discontinuity(IMediaObject *iface, DWORD index)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    if (winetest_debug > 1) trace("Discontinuity(index %u)\n", index);
+    ++got_Discontinuity;
+    return S_OK;
 }
 
 static HRESULT WINAPI dmo_AllocateStreamingResources(IMediaObject *iface)
@@ -267,22 +279,132 @@ static HRESULT WINAPI dmo_FreeStreamingResources(IMediaObject *iface)
 
 static HRESULT WINAPI dmo_GetInputStatus(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    if (winetest_debug > 1) trace("GetInputStatus(index %u)\n", index);
+    *flags = DMO_INPUT_STATUSF_ACCEPT_DATA;
+    return S_OK;
 }
 
 static HRESULT WINAPI dmo_ProcessInput(IMediaObject *iface, DWORD index,
     IMediaBuffer *buffer, DWORD flags, REFERENCE_TIME timestamp, REFERENCE_TIME timelength)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    BYTE *data, expect[200];
+    DWORD len, i;
+    HRESULT hr;
+
+    if (winetest_debug > 1) trace("ProcessInput(index %u, flags %#x, timestamp %I64d, timelength %I64d)\n",
+            index, flags, timestamp, timelength);
+
+    ++got_ProcessInput;
+
+    hr = IMediaBuffer_GetBufferAndLength(buffer, &data, &len);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(len == 200, "Got length %u.\n", len);
+    for (i = 0; i < 200; ++i)
+        expect[i] = i;
+    ok(!memcmp(data, expect, 200), "Data didn't match.\n");
+
+    hr = IMediaBuffer_GetMaxLength(buffer, &len);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(len == 256, "Got length %u.\n", len);
+
+    if (testmode == 0)
+    {
+        ok(!flags, "Got flags %#x.\n", flags);
+        ok(!timestamp, "Got timestamp %s.\n", wine_dbgstr_longlong(timestamp));
+        ok(!timelength, "Got length %s.\n", wine_dbgstr_longlong(timelength));
+    }
+    else if (testmode == 1)
+    {
+        ok(flags == (DMO_INPUT_DATA_BUFFERF_TIME | DMO_INPUT_DATA_BUFFERF_TIMELENGTH), "Got flags %#x.\n", flags);
+        ok(timestamp == 20000, "Got timestamp %s.\n", wine_dbgstr_longlong(timestamp));
+        ok(timelength == 1, "Got length %s.\n", wine_dbgstr_longlong(timelength));
+    }
+    else if (testmode == 6)
+    {
+        ok(flags == (DMO_INPUT_DATA_BUFFERF_TIME | DMO_INPUT_DATA_BUFFERF_TIMELENGTH
+                | DMO_INPUT_DATA_BUFFERF_SYNCPOINT), "Got flags %#x.\n", flags);
+        ok(timestamp == 20000, "Got timestamp %s.\n", wine_dbgstr_longlong(timestamp));
+        ok(timelength == 10000, "Got length %s.\n", wine_dbgstr_longlong(timelength));
+    }
+    else
+    {
+        ok(flags == (DMO_INPUT_DATA_BUFFERF_TIME | DMO_INPUT_DATA_BUFFERF_TIMELENGTH), "Got flags %#x.\n", flags);
+        ok(timestamp == 20000, "Got timestamp %s.\n", wine_dbgstr_longlong(timestamp));
+        ok(timelength == 10000, "Got length %s.\n", wine_dbgstr_longlong(timelength));
+    }
+
+    testdmo_buffer = buffer;
+    IMediaBuffer_AddRef(buffer);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dmo_ProcessOutput(IMediaObject *iface, DWORD flags,
         DWORD count, DMO_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    DWORD len, i;
+    HRESULT hr;
+    BYTE *data;
+
+    if (winetest_debug > 1) trace("ProcessOutput(flags %#x, count %u)\n", flags, count);
+
+    ++got_ProcessOutput;
+
+    *status = 0;
+
+    ok(flags == DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER, "Got flags %#x.\n", flags);
+    ok(count == 2, "Got count %u.\n", count);
+
+    ok(!!buffers[0].pBuffer, "Expected a buffer.\n");
+    ok(!buffers[1].pBuffer, "Got unexpected buffer %p.\n", buffers[1].pBuffer);
+
+    buffers[1].dwStatus = DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE;
+
+    hr = IMediaBuffer_GetBufferAndLength(buffers[0].pBuffer, &data, &len);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!len, "Got length %u.\n", len);
+
+    hr = IMediaBuffer_GetMaxLength(buffers[0].pBuffer, &len);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(len == 16384, "Got length %u.\n", len);
+
+    buffers[0].dwStatus = DMO_OUTPUT_DATA_BUFFERF_TIME | DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH;
+    buffers[0].rtTimelength = 1000;
+    buffers[0].rtTimestamp = 5000;
+
+    if (testmode == 3)
+    {
+        hr = IMediaBuffer_SetLength(buffers[0].pBuffer, 16200);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        buffers[0].dwStatus |= DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE;
+        return S_OK;
+    }
+    else if (testmode == 5)
+    {
+        hr = IMediaBuffer_SetLength(buffers[0].pBuffer, 0);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IMediaBuffer_Release(testdmo_buffer);
+        return S_FALSE;
+    }
+    else
+    {
+        if (testmode == 7)
+            buffers[0].dwStatus |= DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT;
+        else if (testmode == 8)
+            buffers[0].dwStatus = DMO_OUTPUT_DATA_BUFFERF_TIME;
+        else if (testmode == 9)
+            buffers[0].dwStatus = 0;
+
+        for (i = 0; i < 300; ++i)
+            data[i] = 111 - i;
+        hr = IMediaBuffer_SetLength(buffers[0].pBuffer, 300);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (testmode != 10)
+            IMediaBuffer_Release(testdmo_buffer);
+        return S_OK;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dmo_Lock(IMediaObject *iface, LONG lock)
@@ -382,13 +504,6 @@ static IBaseFilter *create_dmo_wrapper(void)
     IDMOWrapperFilter_Release(wrapper);
 
     return filter;
-}
-
-static ULONG get_refcount(void *iface)
-{
-    IUnknown *unknown = iface;
-    IUnknown_AddRef(unknown);
-    return IUnknown_Release(unknown);
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -1077,6 +1192,61 @@ static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int 
 
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
+    REFERENCE_TIME start, stop;
+    LONG len, i;
+    HRESULT hr;
+
+    ++got_Receive;
+
+    len = IMediaSample_GetSize(sample);
+    ok(len == 16384, "Got size %u.\n", len);
+    len = IMediaSample_GetActualDataLength(sample);
+    if (testmode == 3)
+        ok(len == 16200, "Got length %u.\n", len);
+    else
+    {
+        BYTE *data, expect[300];
+
+        ok(len == 300, "Got length %u.\n", len);
+
+        hr = IMediaSample_GetPointer(sample, &data);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        for (i = 0; i < 300; ++i)
+            expect[i] = 111 - i;
+        ok(!memcmp(data, expect, 300), "Data didn't match.\n");
+    }
+
+    hr = IMediaSample_GetTime(sample, &start, &stop);
+    if (testmode == 8)
+    {
+        ok(hr == VFW_S_NO_STOP_TIME, "Got hr %#x.\n", hr);
+        ok(start == 5000, "Got start time %s.\n", wine_dbgstr_longlong(start));
+    }
+    else if (testmode == 9)
+        ok(hr == VFW_E_SAMPLE_TIME_NOT_SET, "Got hr %#x.\n", hr);
+    else
+    {
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(start == 5000, "Got start time %s.\n", wine_dbgstr_longlong(start));
+        ok(stop == 6000, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
+    }
+
+    hr = IMediaSample_GetMediaTime(sample, &start, &stop);
+    ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
+
+    hr = IMediaSample_IsDiscontinuity(sample);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IMediaSample_IsPreroll(sample);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IMediaSample_IsSyncPoint(sample);
+    ok(hr == (testmode == 7 ? S_OK : S_FALSE), "Got hr %#x.\n", hr);
+
+    if (testmode == 3)
+        testmode = 4;
+    if (testmode == 10)
+        testmode = 11;
+
     return S_OK;
 }
 
@@ -1100,7 +1270,7 @@ static void testfilter_init(struct testfilter *filter)
 static void test_sink_allocator(IMemInputPin *input)
 {
     IMemAllocator *req_allocator, *ret_allocator;
-    ALLOCATOR_PROPERTIES props;
+    ALLOCATOR_PROPERTIES props, ret_props;
     HRESULT hr;
 
     hr = IMemInputPin_GetAllocatorRequirements(input, &props);
@@ -1140,6 +1310,13 @@ static void test_sink_allocator(IMemInputPin *input)
 
     CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void **)&req_allocator);
+
+    props.cBuffers = 1;
+    props.cbBuffer = 256;
+    props.cbAlign = 1;
+    props.cbPrefix = 0;
+    hr = IMemAllocator_SetProperties(req_allocator, &props, &ret_props);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMemInputPin_NotifyAllocator(input, req_allocator, TRUE);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1275,6 +1452,155 @@ static void test_filter_state(IMediaControl *control)
     ok(state == State_Stopped, "Got state %u.\n", state);
 }
 
+static void test_sample_processing(IMediaControl *control, IMemInputPin *input)
+{
+    REFERENCE_TIME start, stop;
+    IMemAllocator *allocator;
+    IMediaSample *sample;
+    LONG size, i;
+    HRESULT hr;
+    BYTE *data;
+
+    hr = IMemInputPin_ReceiveCanBlock(input);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSample_GetPointer(sample, &data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    size = IMediaSample_GetSize(sample);
+    ok(size == 256, "Got size %d.\n", size);
+    for (i = 0; i < 200; ++i)
+        data[i] = i;
+    hr = IMediaSample_SetActualDataLength(sample, 200);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    start = 10000;
+    stop = 20000;
+    hr = IMediaSample_SetMediaTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSample_SetPreroll(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 0;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    start = 20000;
+    hr = IMediaSample_SetTime(sample, &start, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 1;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    stop = 30000;
+    hr = IMediaSample_SetTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 2;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    testmode = 3;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 2, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(got_Receive == 2, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    testmode = 5;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(!got_Receive, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    hr = IMediaSample_SetSyncPoint(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 6;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    hr = IMediaSample_SetSyncPoint(sample, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 7;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    testmode = 8;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    testmode = 9;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    hr = IMediaSample_SetDiscontinuity(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!got_Discontinuity, "Got %u calls to Discontinuity().\n", got_Discontinuity);
+    testmode = 10;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    ok(got_ProcessOutput == 2, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    ok(got_Receive == 2, "Got %u calls to Receive().\n", got_Receive);
+    ok(got_Discontinuity == 1, "Got %u calls to Discontinuity().\n", got_Discontinuity);
+    got_ProcessInput = got_ProcessOutput = got_Receive = 0;
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IMediaSample_Release(sample);
+    IMemAllocator_Release(allocator);
+}
+
 static void test_connect_pin(void)
 {
     AM_MEDIA_TYPE req_mt =
@@ -1366,6 +1692,9 @@ static void test_connect_pin(void)
     ok(testdmo_output_mt_set, "Ouput type should be set.\n");
     ok(compare_media_types(&testdmo_output_mt, &req_mt), "Media types didn't match.\n");
 
+    test_filter_state(control);
+    test_sample_processing(control, meminput);
+
     hr = IFilterGraph2_Disconnect(graph, source);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Disconnect(graph, source);
@@ -1382,8 +1711,6 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     ok(!testdmo_output_mt_set, "Output type should not be set.\n");
-
-    test_filter_state(control);
 
     req_mt.lSampleSize = 0;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
