@@ -140,7 +140,6 @@ int    WINAPIV scanf(const char*,...);
 int    WINAPIV scanf_s(const char*,...);
 void   __cdecl setbuf(FILE*,char*);
 int    __cdecl setvbuf(FILE*,char*,int,size_t);
-int    WINAPIV sprintf_s(char*,size_t,const char*,...);
 int    WINAPIV sscanf(const char*,const char*,...);
 int    WINAPIV sscanf_s(const char*,const char*,...);
 int    WINAPIV _snscanf_l(const char*,size_t,const char*,_locale_t,...);
@@ -220,6 +219,17 @@ static inline int __cdecl vsprintf_s(char *buffer, const char *format, __ms_va_l
 {
     int ret = __stdio_common_vsprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, -1, format, NULL, args);
     return ret < 0 ? -1 : ret;
+}
+
+static inline int WINAPIV sprintf_s(char *buffer, size_t size, size_t count, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vsprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, -1, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
 }
 
 static inline int __cdecl _vsprintf_p_l(char *buffer, size_t size, const char *format, _locale_t locale, __ms_va_list args)
@@ -303,6 +313,7 @@ _ACRTIMP int WINAPIV fprintf(FILE*,const char*,...);
 _ACRTIMP int WINAPIV fprintf_s(FILE*,const char*,...);
 _ACRTIMP int WINAPIV printf(const char*,...);
 _ACRTIMP int WINAPIV printf_s(const char*,...);
+_ACRTIMP int WINAPIV sprintf_s(char*,size_t,const char*,...);
 _ACRTIMP int __cdecl vfprintf(FILE*,const char*,__ms_va_list);
 _ACRTIMP int __cdecl vfprintf_s(FILE*,const char*,__ms_va_list);
 _ACRTIMP int __cdecl vprintf(const char*,__ms_va_list);
