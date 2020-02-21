@@ -613,7 +613,7 @@ static void test_Startup(void)
     startup.wShowWindow = SW_SHOWNORMAL;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -653,7 +653,7 @@ static void test_Startup(void)
     startup.dwFillAttribute = 0xA55A;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -693,7 +693,7 @@ static void test_Startup(void)
     startup.dwFillAttribute = 0xA55A;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -733,7 +733,7 @@ static void test_Startup(void)
     startup.dwFillAttribute = 0xA55A;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -773,7 +773,7 @@ static void test_Startup(void)
     startup.dwFillAttribute = 0xA55A;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -815,7 +815,7 @@ static void test_Startup(void)
     startup.dwFillAttribute = 0xA55A;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -855,7 +855,7 @@ static void test_Startup(void)
     startup.dwFillAttribute = 0xA55A;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -897,7 +897,7 @@ static void test_CommandLine(void)
 
     /* the basics */
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\" \"C:\\Program Files\\my nice app.exe\" \"\"\"\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\" \"C:\\Program Files\\my nice app.exe\" \"\"\"\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -921,7 +921,7 @@ static void test_CommandLine(void)
 
     /* test main()'s quotes handling */
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\" \"a\\\"b\\\\\" c\\\" d", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -942,7 +942,7 @@ static void test_CommandLine(void)
     /* Test for Bug1330 to show that XP doesn't change '/' to '\\' in argv[0]*/
     get_file_name(resfile);
     /* Use exename to avoid buffer containing things like 'C:' */
-    sprintf(buffer, "./%s tests/process.c dump \"%s\" \"a\\\"b\\\\\" c\\\" d", exename, resfile);
+    sprintf(buffer, "./%s process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -959,7 +959,7 @@ static void test_CommandLine(void)
 
     get_file_name(resfile);
     /* Use exename to avoid buffer containing things like 'C:' */
-    sprintf(buffer, ".\\%s tests/process.c dump \"%s\" \"a\\\"b\\\\\" c\\\" d", exename, resfile);
+    sprintf(buffer, ".\\%s process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -980,8 +980,8 @@ static void test_CommandLine(void)
     *(lpFilePart -1 ) = 0;
     p = strrchr(fullpath, '\\');
     /* Use exename to avoid buffer containing things like 'C:' */
-    if (p) sprintf(buffer, "..%s/%s tests/process.c dump \"%s\" \"a\\\"b\\\\\" c\\\" d", p, exename, resfile);
-    else sprintf(buffer, "./%s tests/process.c dump \"%s\" \"a\\\"b\\\\\" c\\\" d", exename, resfile);
+    if (p) sprintf(buffer, "..%s/%s process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", p, exename, resfile);
+    else sprintf(buffer, "./%s process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -1006,7 +1006,7 @@ static void test_CommandLine(void)
     /* Use exename to avoid buffer containing things like 'C:' */
     if (p) sprintf(buffer, "..%s/%s", p, exename);
     else sprintf(buffer, "./%s", exename);
-    sprintf(buffer2, "dummy tests/process.c dump \"%s\" \"a\\\"b\\\\\" c\\\" d", resfile);
+    sprintf(buffer2, "dummy process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(buffer, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -1016,7 +1016,7 @@ static void test_CommandLine(void)
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
     CloseHandle(info.hThread);
     CloseHandle(info.hProcess);
-    sprintf(buffer, "tests/process.c dump %s", resfile);
+    sprintf(buffer, "process dump %s", resfile);
     okChildString("Arguments", "argvA0", "dummy");
     okChildString("Arguments", "CommandLineA", buffer2);
     okChildStringWA("Arguments", "CommandLineW", buffer2);
@@ -1106,7 +1106,7 @@ static void test_Directory(void)
 
     /* the basics */
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     GetWindowsDirectoryA( windir, sizeof(windir) );
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, windir, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
@@ -1152,7 +1152,7 @@ static void test_Toolhelp(void)
     startup.wShowWindow = SW_SHOWNORMAL;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed\n");
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
     CloseHandle(info.hProcess);
@@ -1170,7 +1170,7 @@ static void test_Toolhelp(void)
     DeleteFileA(resfile);
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c nested \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process nested \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed\n");
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
 
@@ -1323,7 +1323,7 @@ static void test_Environment(void)
 
     /* the basics */
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -1342,7 +1342,7 @@ static void test_Environment(void)
 
     /* the basics */
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
 
     child_env_len = 0;
     ptr = env;
@@ -1410,7 +1410,7 @@ static  void    test_SuspendFlag(void)
     startup.wShowWindow = SW_SHOWNORMAL;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startup, &info), "CreateProcess\n");
 
     ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running\n");
@@ -1460,7 +1460,7 @@ static  void    test_DebuggingFlag(void)
     startup.wShowWindow = SW_SHOWNORMAL;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &startup, &info), "CreateProcess\n");
 
     /* get all startup events up to the entry point break exception */
@@ -1558,7 +1558,7 @@ static void test_Console(void)
     cpOut = GetConsoleOutputCP();
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\" console", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\" console", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info), "CreateProcess\n");
 
     /* wait for child to terminate */
@@ -1672,7 +1672,7 @@ static void test_Console(void)
     startup.hStdError = hChildOutInh;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\" stdhandle", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\" stdhandle", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup, &info), "CreateProcess\n");
     ok(CloseHandle(hChildInInh), "Closing handle\n");
     ok(CloseHandle(hChildOutInh), "Closing handle\n");
@@ -1712,7 +1712,7 @@ static  void    test_ExitCode(void)
     startup.wShowWindow = SW_SHOWNORMAL;
 
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\" exit_code", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\" exit_code", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info), "CreateProcess\n");
 
     /* wait for child to terminate */
@@ -2418,7 +2418,7 @@ static void _create_process(int line, const char *command, LPPROCESS_INFORMATION
     char buffer[MAX_PATH + 19];
     STARTUPINFOA si = {0};
 
-    sprintf(buffer, "\"%s\" tests/process.c %s", selfname, command);
+    sprintf(buffer, "\"%s\" process %s", selfname, command);
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, pi);
     ok_(__FILE__, line)(ret, "CreateProcess error %u\n", GetLastError());
@@ -2842,7 +2842,7 @@ static void test_jobInheritance(HANDLE job)
         return;
     }
 
-    sprintf(buffer, "\"%s\" tests/process.c %s", selfname, "exit");
+    sprintf(buffer, "\"%s\" process %s", selfname, "exit");
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcessA error %u\n", GetLastError());
@@ -2874,7 +2874,7 @@ static void test_BreakawayOk(HANDLE job)
         return;
     }
 
-    sprintf(buffer, "\"%s\" tests/process.c %s", selfname, "exit");
+    sprintf(buffer, "\"%s\" process %s", selfname, "exit");
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
     ok(!ret, "CreateProcessA expected failure\n");
@@ -2943,7 +2943,7 @@ static void test_StartupNoConsole(void)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
                       &info), "CreateProcess\n");
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -2975,7 +2975,7 @@ static void test_DetachConsoleHandles(void)
     startup.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
     startup.hStdError = GetStdHandle(STD_ERROR_HANDLE);
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
                       &info), "CreateProcess\n");
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -3404,7 +3404,7 @@ static void test_DetachStdHandles(void)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
 
     SetStdHandle(STD_INPUT_HANDLE, htemp);
     SetStdHandle(STD_OUTPUT_HANDLE, htemp);
@@ -3889,7 +3889,7 @@ void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
         ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
                 "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 
-        sprintf(buffer, "\"%s\" tests/process.c parent %u %p", selfname, 255, read_pipe);
+        sprintf(buffer, "\"%s\" process parent %u %p", selfname, 255, read_pipe);
 
 #if 0
         /* Crashes on some Windows installations, otherwise successfully creates process. */
@@ -3977,7 +3977,7 @@ void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
         ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
     }
 
-    sprintf(buffer, "\"%s\" tests/process.c parent %u %p", selfname, level + 1, read_pipe);
+    sprintf(buffer, "\"%s\" process parent %u %p", selfname, level + 1, read_pipe);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, level == 1, level == 1 ? EXTENDED_STARTUPINFO_PRESENT : 0,
             NULL, NULL, (STARTUPINFOA *)&si, &info);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
@@ -4043,7 +4043,7 @@ START_TEST(process)
             startup.dwFlags = STARTF_USESHOWWINDOW;
             startup.wShowWindow = SW_SHOWNORMAL;
 
-            sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, myARGV[3]);
+            sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, myARGV[3]);
             ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startup, &info), "CreateProcess failed\n");
             CloseHandle(info.hProcess);
             CloseHandle(info.hThread);
