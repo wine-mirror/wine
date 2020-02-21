@@ -114,16 +114,6 @@ void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func, const 
 {
    _invalid_parameter_noinfo();
 }
-
-int WINAPIV _scprintf(const char* fmt, ...)
-{
-    int ret;
-    __ms_va_list valist;
-    __ms_va_start(valist, fmt);
-    ret = _vsnprintf(NULL, 0, fmt, valist);
-    __ms_va_end(valist);
-    return ret;
-}
 #endif
 
 static void init_cxx_funcs(void)
