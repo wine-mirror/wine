@@ -1373,6 +1373,9 @@ static int is_linker_arg(const char* arg)
 	case 'f':
 	    if (strncmp("-fuse-ld=", arg, 9) == 0) return 1;
 	    break;
+        case 'r':
+            if (strncmp("-rtlib=", arg, 7) == 0) return 1;
+            break;
     }
 
     for (j = 0; j < ARRAY_SIZE(link_switches); j++)
