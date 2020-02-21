@@ -1779,7 +1779,7 @@ static void test_NonExistentPath(void)
                 STARTUPINFOA startup;
                 PROCESS_INFORMATION info;
 
-                sprintf(buffer, "%s tests/shellpath.c 1", selfname);
+                sprintf(buffer, "%s shellpath 1", selfname);
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
                 startup.dwFlags = STARTF_USESHOWWINDOW;
@@ -1794,7 +1794,7 @@ static void test_NonExistentPath(void)
                  strlen(originalPath) + 1);
                 RegFlushKey(key);
 
-                sprintf(buffer, "%s tests/shellpath.c 2", selfname);
+                sprintf(buffer, "%s shellpath 2", selfname);
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
                 startup.dwFlags = STARTF_USESHOWWINDOW;
