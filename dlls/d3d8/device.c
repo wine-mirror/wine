@@ -2203,9 +2203,6 @@ static HRESULT WINAPI d3d8_device_SetTexture(IDirect3DDevice8 *iface, DWORD stag
     wined3d_mutex_lock();
     wined3d_stateblock_set_texture(device->update_state, stage,
             texture_impl ? texture_impl->wined3d_texture : NULL);
-    if (!device->recording)
-        wined3d_device_set_texture(device->wined3d_device, stage,
-                texture_impl ? texture_impl->wined3d_texture : NULL);
     wined3d_mutex_unlock();
 
     return D3D_OK;
