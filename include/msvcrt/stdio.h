@@ -118,8 +118,6 @@ int    __cdecl fputs(const char*,FILE*);
 size_t __cdecl fread(void*,size_t,size_t,FILE*);
 size_t __cdecl fread_s(void*,size_t,size_t,size_t,FILE*);
 FILE*  __cdecl freopen(const char*,const char*,FILE*);
-int    WINAPIV fscanf(FILE*,const char*,...);
-int    WINAPIV fscanf_s(FILE*,const char*,...);
 int    __cdecl fseek(FILE*,__msvcrt_long,int);
 int    __cdecl _fseeki64(FILE*,__int64,int);
 int    __cdecl fsetpos(FILE*,fpos_t*);
@@ -157,6 +155,8 @@ _ACRTIMP int __cdecl __stdio_common_vsprintf(unsigned __int64,char*,size_t,const
 _ACRTIMP int __cdecl __stdio_common_vsprintf_p(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vsprintf_s(unsigned __int64,char*,size_t,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vsnprintf_s(unsigned __int64,char*,size_t,size_t,const char*,_locale_t,__ms_va_list);
+
+_ACRTIMP int __cdecl __stdio_common_vfscanf(unsigned __int64,FILE*,const char*,_locale_t,__ms_va_list);
 
 static inline int __cdecl vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args)
 {
@@ -302,6 +302,28 @@ static inline int WINAPIV printf_s(const char *format, ...)
     return ret;
 }
 
+static inline int WINAPIV fscanf(FILE *file, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, file, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
+static inline int WINAPIV fscanf_s(FILE *file, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, file, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
 #else /* _UCRT */
 
 _ACRTIMP int WINAPIV _scprintf(const char *,...);
@@ -323,6 +345,9 @@ _ACRTIMP int __cdecl vsprintf_s(char*,size_t,const char*,__ms_va_list);
 
 int __cdecl _vsnprintf(char*,size_t,const char*,__ms_va_list);
 static inline int vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args) { return _vsnprintf(buffer,size,format,args); }
+
+_ACRTIMP int WINAPIV fscanf(FILE*,const char*,...);
+_ACRTIMP int WINAPIV fscanf_s(FILE*,const char*,...);
 
 #endif /* _UCRT */
 
