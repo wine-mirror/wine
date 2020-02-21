@@ -84,7 +84,6 @@ int    __cdecl _putw(int,FILE*);
 int    __cdecl _rmtmp(void);
 int    __cdecl _set_printf_count_output(int);
 int    __cdecl _setmaxstdio(int);
-int    WINAPIV _snprintf_s(char*,size_t,size_t,const char*,...);
 char*  __cdecl _tempnam(const char*,const char*);
 int    __cdecl _unlink(const char*);
 
@@ -186,6 +185,17 @@ static inline int __cdecl _vsnprintf_s(char *buffer, size_t size, size_t count, 
     return ret < 0 ? -1 : ret;
 }
 
+static inline int __cdecl _snprintf_s(char *buffer, size_t size, size_t count, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vsnprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, count, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
 static inline int __cdecl _vscprintf(const char *format, __ms_va_list args)
 {
     int ret = __stdio_common_vsprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS | _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR,
@@ -237,6 +247,7 @@ static inline int __cdecl vfprintf_s(FILE *file, const char *format, __ms_va_lis
 #else /* _UCRT */
 
 _ACRTIMP int WINAPIV _scprintf(const char *,...);
+_ACRTIMP int WINAPIV _snprintf_s(char*,size_t,size_t,const char*,...);
 _ACRTIMP int __cdecl _vscprintf(const char*,__ms_va_list);
 _ACRTIMP int __cdecl _vsnprintf_s(char*,size_t,size_t,const char*,__ms_va_list);
 _ACRTIMP int __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
