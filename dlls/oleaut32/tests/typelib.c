@@ -89,10 +89,6 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 static HRESULT (WINAPI *pRegisterTypeLibForUser)(ITypeLib*,OLECHAR*,OLECHAR*);
 static HRESULT (WINAPI *pUnRegisterTypeLibForUser)(REFGUID,WORD,WORD,LCID,SYSKIND);
 
-static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
-static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
-static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
-static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE,LPBOOL);
 static LONG   (WINAPI *pRegDeleteKeyExW)(HKEY,LPCWSTR,REGSAM,DWORD);
 
@@ -296,10 +292,6 @@ static void init_function_pointers(void)
 
     pRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "RegisterTypeLibForUser");
     pUnRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "UnRegisterTypeLibForUser");
-    pActivateActCtx = (void *)GetProcAddress(hk32, "ActivateActCtx");
-    pCreateActCtxW = (void *)GetProcAddress(hk32, "CreateActCtxW");
-    pDeactivateActCtx = (void *)GetProcAddress(hk32, "DeactivateActCtx");
-    pReleaseActCtx = (void *)GetProcAddress(hk32, "ReleaseActCtx");
     pIsWow64Process = (void *)GetProcAddress(hk32, "IsWow64Process");
     pRegDeleteKeyExW = (void*)GetProcAddress(hadv, "RegDeleteKeyExW");
 }
@@ -5744,7 +5736,7 @@ static HANDLE create_actctx(const char *file)
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = path;
 
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
 
     ok(actctx.cbSize == sizeof(actctx), "actctx.cbSize=%d\n", actctx.cbSize);
@@ -5798,12 +5790,6 @@ static void test_LoadRegTypeLib(void)
     BSTR path;
     BOOL ret;
 
-    if (!pActivateActCtx)
-    {
-        win_skip("Activation contexts not supported, skipping LoadRegTypeLib tests\n");
-        return;
-    }
-
     create_manifest_file("testdep.manifest", manifest_dep);
     create_manifest_file("main.manifest", manifest_main);
 
@@ -5824,7 +5810,7 @@ static void test_LoadRegTypeLib(void)
     hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 0, LOCALE_NEUTRAL, &path);
     ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
 
-    ret = pActivateActCtx(handle, &cookie);
+    ret = ActivateActCtx(handle, &cookie);
     ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
 
     path = NULL;
@@ -5926,10 +5912,10 @@ static void test_LoadRegTypeLib(void)
     DeleteFileA("test_actctx_tlb.tlb");
     DeleteFileA("test_actctx_tlb2.tlb");
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
 
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 #define AUX_HREF 1
