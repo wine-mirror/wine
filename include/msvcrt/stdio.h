@@ -113,8 +113,6 @@ int    __cdecl fgetpos(FILE*,fpos_t*);
 char*  __cdecl fgets(char*,int,FILE*);
 FILE*  __cdecl fopen(const char*,const char*);
 errno_t __cdecl fopen_s(FILE**,const char*,const char*);
-int    WINAPIV fprintf(FILE*,const char*,...);
-int    WINAPIV fprintf_s(FILE*,const char*,...);
 int    __cdecl fputc(int,FILE*);
 int    __cdecl fputs(const char*,FILE*);
 size_t __cdecl fread(void*,size_t,size_t,FILE*);
@@ -239,9 +237,31 @@ static inline int __cdecl vfprintf(FILE *file, const char *format, __ms_va_list 
     return __stdio_common_vfprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, NULL, args);
 }
 
+static inline int WINAPIV fprintf(FILE *file, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
 static inline int __cdecl vfprintf_s(FILE *file, const char *format, __ms_va_list args)
 {
     return __stdio_common_vfprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, NULL, args);
+}
+
+static inline int WINAPIV fprintf_s(FILE *file, const char *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, file, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
 }
 
 #else /* _UCRT */
@@ -251,6 +271,8 @@ _ACRTIMP int WINAPIV _snprintf_s(char*,size_t,size_t,const char*,...);
 _ACRTIMP int __cdecl _vscprintf(const char*,__ms_va_list);
 _ACRTIMP int __cdecl _vsnprintf_s(char*,size_t,size_t,const char*,__ms_va_list);
 _ACRTIMP int __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
+_ACRTIMP int WINAPIV fprintf(FILE*,const char*,...);
+_ACRTIMP int WINAPIV fprintf_s(FILE*,const char*,...);
 _ACRTIMP int __cdecl vfprintf(FILE*,const char*,__ms_va_list);
 _ACRTIMP int __cdecl vfprintf_s(FILE*,const char*,__ms_va_list);
 _ACRTIMP int __cdecl vsprintf(char*,const char*,__ms_va_list);
