@@ -119,8 +119,22 @@ _ACRTIMP wchar_t* __cdecl wcspbrk(const wchar_t*,const wchar_t*);
 _ACRTIMP wchar_t* __cdecl wcsrchr(const wchar_t*,wchar_t wcFor);
 _ACRTIMP size_t   __cdecl wcsspn(const wchar_t*,const wchar_t*);
 _ACRTIMP wchar_t* __cdecl wcsstr(const wchar_t*,const wchar_t*);
-_ACRTIMP wchar_t* __cdecl wcstok(wchar_t*,const wchar_t*);
+_ACRTIMP wchar_t* __cdecl wcstok_s(wchar_t*,const wchar_t*,wchar_t**);
 _ACRTIMP size_t   __cdecl wcsxfrm(wchar_t*,const wchar_t*,size_t);
+
+#ifdef _UCRT
+_ACRTIMP wchar_t* __cdecl wcstok(wchar_t*,const wchar_t*,wchar_t**);
+static inline wchar_t* _wcstok(wchar_t* str, const wchar_t *delim) { return wcstok(str, delim, NULL); }
+#  ifdef __cplusplus
+extern "C++" inline wchar_t* wcstok(wchar_t* str, const wchar_t *delim) { return wcstok(str, delim, NULL); }
+#  elif defined(_CRT_NON_CONFORMING_WCSTOK)
+#    define wcstok _wcstok
+#  endif
+#else /* _UCRT */
+_ACRTIMP wchar_t* __cdecl wcstok(wchar_t*,const wchar_t*);
+#  define _wcstok wcstok
+#endif /* _UCRT */
+
 #endif /* _WSTRING_DEFINED */
 
 #ifdef __cplusplus
