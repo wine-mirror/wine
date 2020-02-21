@@ -2165,8 +2165,18 @@ static HRESULT WINAPI d3d8_device_GetTexture(IDirect3DDevice8 *iface, DWORD stag
     if (!texture)
         return D3DERR_INVALIDCALL;
 
+    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
+        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+
+    if (stage >= WINED3D_MAX_COMBINED_SAMPLERS)
+    {
+        WARN("Ignoring invalid stage %u.\n", stage);
+        *texture = NULL;
+        return D3D_OK;
+    }
+
     wined3d_mutex_lock();
-    if ((wined3d_texture = wined3d_device_get_texture(device->wined3d_device, stage)))
+    if ((wined3d_texture = wined3d_stateblock_get_state(device->state)->textures[stage]))
     {
         texture_impl = wined3d_texture_get_parent(wined3d_texture);
         *texture = &texture_impl->IDirect3DBaseTexture8_iface;
