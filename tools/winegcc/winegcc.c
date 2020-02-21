@@ -139,6 +139,7 @@ static const char* app_loader_template =
     "exec \"$WINELOADER\" \"$apppath\" \"$@\"\n"
 ;
 
+static const char *output_file_name;
 static int keep_generated = 0;
 static strarray* tmp_files;
 #ifdef HAVE_SIGSET_T
@@ -261,6 +262,11 @@ static enum target_platform build_platform = PLATFORM_WINDOWS;
 #else
 static enum target_platform build_platform = PLATFORM_UNSPECIFIED;
 #endif
+
+static void cleanup_output_files(void)
+{
+    if (output_file_name) unlink( output_file_name );
+}
 
 static void clean_temp_files(void)
 {
@@ -1305,6 +1311,9 @@ static void build(struct options* opts)
 
     if (libgcc) strarray_add(link_args, libgcc);
 
+    output_file_name = output_path;
+    atexit( cleanup_output_files );
+
     spawn(opts->prefix, link_args, 0);
     strarray_free (link_args);
 
@@ -1836,5 +1845,6 @@ int main(int argc, char **argv)
     else if (linking) build(&opts);
     else compile(&opts, lang);
 
+    output_file_name = NULL;
     return 0;
 }
