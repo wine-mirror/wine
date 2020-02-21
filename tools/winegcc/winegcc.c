@@ -1533,6 +1533,9 @@ int main(int argc, char **argv)
 		    if (strcmp("-framework", argv[i]) == 0)
 			next_is_arg = 1;
 		    break;
+                case 't':
+                    next_is_arg = strcmp("-target", argv[i]) == 0;
+                    break;
 		case '-':
 		    next_is_arg = (strcmp("--param", argv[i]) == 0 ||
                                    strcmp("--sysroot", argv[i]) == 0 ||
@@ -1697,6 +1700,13 @@ int main(int argc, char **argv)
                          */
                         opts.strip = 1;
                         raw_linker_arg = 0;
+                    }
+                    break;
+                case 't':
+                    if (is_option( argv, i, "-target", &option_arg ))
+                    {
+                        parse_target_option( &opts, option_arg );
+                        raw_compiler_arg = raw_linker_arg = 0;
                     }
                     break;
                 case 'v':
