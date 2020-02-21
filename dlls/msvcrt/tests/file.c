@@ -1464,7 +1464,7 @@ static void test_file_inherit( const char* selfname )
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
     arg_v[0] = get_base_name(selfname);
-    arg_v[1] = "tests/file.c";
+    arg_v[1] = "file";
     arg_v[2] = "inherit";
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
@@ -1477,7 +1477,7 @@ static void test_file_inherit( const char* selfname )
     
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY | O_NOINHERIT, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
-    arg_v[1] = "tests/file.c";
+    arg_v[1] = "file";
     arg_v[2] = "inherit_no";
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
@@ -2168,7 +2168,7 @@ static void test_pipes(const char* selfname)
     }
 
     arg_v[0] = get_base_name(selfname);
-    arg_v[1] = "tests/file.c";
+    arg_v[1] = "file";
     arg_v[2] = "pipes";
     arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
     arg_v[4] = str_fdw; sprintf(str_fdw, "%d", pipes[1]);
@@ -2197,7 +2197,7 @@ static void test_pipes(const char* selfname)
         return;
     }
 
-    arg_v[1] = "tests/file.c";
+    arg_v[1] = "file";
     arg_v[2] = "pipes";
     arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
     arg_v[4] = str_fdw; sprintf(str_fdw, "%d", pipes[1]);
