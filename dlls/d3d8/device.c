@@ -2251,26 +2251,38 @@ tss_lookup[] =
 };
 
 static HRESULT WINAPI d3d8_device_GetTextureStageState(IDirect3DDevice8 *iface,
-        DWORD stage, D3DTEXTURESTAGESTATETYPE Type, DWORD *value)
+        DWORD stage, D3DTEXTURESTAGESTATETYPE state, DWORD *value)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
+    const struct wined3d_stateblock_state *device_state;
     const struct tss_lookup *l;
 
-    TRACE("iface %p, stage %u, state %#x, value %p.\n", iface, stage, Type, value);
+    TRACE("iface %p, stage %u, state %#x, value %p.\n", iface, stage, state, value);
 
-    if (Type >= ARRAY_SIZE(tss_lookup))
+    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
+        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+
+    if (stage >= WINED3D_MAX_COMBINED_SAMPLERS)
     {
-        WARN("Invalid Type %#x passed.\n", Type);
+        WARN("Invalid stage %u.\n", stage);
+        *value = 0;
         return D3D_OK;
     }
 
-    l = &tss_lookup[Type];
+    if (state >= ARRAY_SIZE(tss_lookup))
+    {
+        WARN("Invalid state %#x.\n", state);
+        return D3D_OK;
+    }
+
+    l = &tss_lookup[state];
 
     wined3d_mutex_lock();
+    device_state = wined3d_stateblock_get_state(device->state);
     if (l->sampler_state)
-        *value = wined3d_device_get_sampler_state(device->wined3d_device, stage, l->u.sampler_state);
+        *value = device_state->sampler_states[stage][l->u.sampler_state];
     else
-        *value = wined3d_device_get_texture_stage_state(device->wined3d_device, stage, l->u.texture_state);
+        *value = device_state->texture_states[stage][l->u.texture_state];
     wined3d_mutex_unlock();
 
     return D3D_OK;
