@@ -2306,17 +2306,9 @@ static HRESULT WINAPI d3d8_device_SetTextureStageState(IDirect3DDevice8 *iface,
 
     wined3d_mutex_lock();
     if (l->sampler_state)
-    {
         wined3d_stateblock_set_sampler_state(device->update_state, stage, l->u.sampler_state, value);
-        if (!device->recording)
-            wined3d_device_set_sampler_state(device->wined3d_device, stage, l->u.sampler_state, value);
-    }
     else
-    {
         wined3d_stateblock_set_texture_stage_state(device->update_state, stage, l->u.texture_state, value);
-        if (!device->recording)
-            wined3d_device_set_texture_stage_state(device->wined3d_device, stage, l->u.texture_state, value);
-    }
     wined3d_mutex_unlock();
 
     return D3D_OK;
