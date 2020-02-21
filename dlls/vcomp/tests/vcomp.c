@@ -27,11 +27,6 @@ static HANDLE       vcomp_actctx_hctx;
 static ULONG_PTR    vcomp_actctx_cookie;
 static HMODULE      vcomp_handle;
 
-static HANDLE (WINAPI *pCreateActCtxA)(ACTCTXA*);
-static BOOL   (WINAPI *pActivateActCtx)(HANDLE, ULONG_PTR*);
-static BOOL   (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
-static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
-
 typedef CRITICAL_SECTION *omp_lock_t;
 typedef CRITICAL_SECTION *omp_nest_lock_t;
 
@@ -191,17 +186,9 @@ static const char vcomp_manifest[] =
 static void create_vcomp_manifest(void)
 {
     char temp_path[MAX_PATH];
-    HMODULE kernel32;
     DWORD written;
     ACTCTXA ctx;
     HANDLE file;
-
-    kernel32 = GetModuleHandleA("kernel32.dll");
-    pCreateActCtxA      = (void *)GetProcAddress(kernel32, "CreateActCtxA");
-    pActivateActCtx     = (void *)GetProcAddress(kernel32, "ActivateActCtx");
-    pDeactivateActCtx   = (void *)GetProcAddress(kernel32, "DeactivateActCtx");
-    pReleaseActCtx      = (void *)GetProcAddress(kernel32, "ReleaseActCtx");
-    if (!pCreateActCtxA) return;
 
     if (!GetTempPathA(sizeof(temp_path), temp_path) ||
         !GetTempFileNameA(temp_path, "vcomp", 0, vcomp_manifest_file))
@@ -231,7 +218,7 @@ static void create_vcomp_manifest(void)
     memset(&ctx, 0, sizeof(ctx));
     ctx.cbSize   = sizeof(ctx);
     ctx.lpSource = vcomp_manifest_file;
-    vcomp_actctx_hctx = pCreateActCtxA(&ctx);
+    vcomp_actctx_hctx = CreateActCtxA(&ctx);
     if (!vcomp_actctx_hctx)
     {
         ok(0, "failed to create activation context\n");
@@ -239,10 +226,10 @@ static void create_vcomp_manifest(void)
         return;
     }
 
-    if (!pActivateActCtx(vcomp_actctx_hctx, &vcomp_actctx_cookie))
+    if (!ActivateActCtx(vcomp_actctx_hctx, &vcomp_actctx_cookie))
     {
         win_skip("failed to activate context\n");
-        pReleaseActCtx(vcomp_actctx_hctx);
+        ReleaseActCtx(vcomp_actctx_hctx);
         DeleteFileA(vcomp_manifest_file);
         vcomp_actctx_hctx = NULL;
     }
@@ -255,8 +242,8 @@ static void release_vcomp(void)
 
     if (vcomp_actctx_hctx)
     {
-        pDeactivateActCtx(0, vcomp_actctx_cookie);
-        pReleaseActCtx(vcomp_actctx_hctx);
+        DeactivateActCtx(0, vcomp_actctx_cookie);
+        ReleaseActCtx(vcomp_actctx_hctx);
         DeleteFileA(vcomp_manifest_file);
     }
 }
