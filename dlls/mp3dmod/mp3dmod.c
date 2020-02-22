@@ -154,9 +154,11 @@ static HRESULT WINAPI MediaObject_GetInputStreamInfo(IMediaObject *iface, DWORD 
 
 static HRESULT WINAPI MediaObject_GetOutputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
 {
-    FIXME("(%p)->(%d, %p) stub!\n", iface, index, flags);
+    TRACE("iface %p, index %u, flags %p.\n", iface, index, flags);
 
-    return E_NOTIMPL;
+    *flags = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index, DMO_MEDIA_TYPE *type)

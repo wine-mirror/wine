@@ -306,6 +306,11 @@ static void test_stream_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!flags, "Got flags %#x.\n", flags);
 
+    flags = 0xdeadbeef;
+    hr = IMediaObject_GetOutputStreamInfo(dmo, 0, &flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!flags, "Got flags %#x.\n", flags);
+
     IMediaObject_Release(dmo);
 }
 
