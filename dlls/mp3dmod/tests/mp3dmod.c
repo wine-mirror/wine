@@ -316,6 +316,20 @@ static void test_stream_info(void)
 
 static void test_media_types(void)
 {
+    MPEGLAYER3WAVEFORMAT mp3fmt =
+    {
+        .wfx.nChannels = 2,
+        .wfx.nSamplesPerSec = 48000,
+    };
+    DMO_MEDIA_TYPE input_mt =
+    {
+        .majortype = MEDIATYPE_Audio,
+        .subtype = WMMEDIASUBTYPE_MP3,
+        .formattype = FORMAT_WaveFormatEx,
+        .cbFormat = sizeof(mp3fmt),
+        .pbFormat = (BYTE *)&mp3fmt,
+    };
+
     DMO_MEDIA_TYPE mt;
     IMediaObject *dmo;
     HRESULT hr;
@@ -340,6 +354,40 @@ static void test_media_types(void)
 
     hr = IMediaObject_GetInputType(dmo, 0, 1, &mt);
     ok(hr == DMO_E_NO_MORE_ITEMS, "Got hr %#x.\n", hr);
+
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    input_mt.majortype = GUID_NULL;
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    input_mt.majortype = MEDIATYPE_Stream;
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    input_mt.majortype = MEDIATYPE_Audio;
+
+    input_mt.subtype = GUID_NULL;
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    input_mt.subtype = MEDIASUBTYPE_PCM;
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    input_mt.subtype = WMMEDIASUBTYPE_MP3;
+
+    input_mt.formattype = GUID_NULL;
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    input_mt.formattype = FORMAT_None;
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    input_mt.formattype = FORMAT_WaveFormatEx;
+
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mp3fmt.wfx.nChannels = 1;
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMediaObject_Release(dmo);
 }

@@ -37,18 +37,23 @@
 DEFINE_GUID(WMMEDIATYPE_Audio, 0x73647561,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(WMMEDIASUBTYPE_MP3,0x00000055,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(WMMEDIASUBTYPE_PCM,0x00000001,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
+DEFINE_GUID(WMFORMAT_WaveFormatEx,  0x05589f81,0xc356,0x11ce,0xbf,0x01,0x00,0xaa,0x00,0x55,0x59,0x5a);
 
 WINE_DEFAULT_DEBUG_CHANNEL(mp3dmod);
 
 static HINSTANCE mp3dmod_instance;
 
-struct mp3_decoder {
+struct mp3_decoder
+{
     IUnknown IUnknown_inner;
     IMediaObject IMediaObject_iface;
     IUnknown *outer;
     LONG ref;
     mpg123_handle *mh;
-    DMO_MEDIA_TYPE outtype;
+
+    DMO_MEDIA_TYPE intype, outtype;
+    BOOL intype_set;
+
     IMediaBuffer *buffer;
     REFERENCE_TIME timestamp;
 };
@@ -98,6 +103,8 @@ static ULONG WINAPI Unknown_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        if (This->intype_set)
+            MoFreeMediaType(&This->intype);
         MoFreeMediaType(&This->outtype);
         mpg123_delete(This->mh);
         heap_free(This);
@@ -187,7 +194,30 @@ static HRESULT WINAPI MediaObject_GetOutputType(IMediaObject *iface, DWORD index
 
 static HRESULT WINAPI MediaObject_SetInputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("(%p)->(%d, %p, %#x) stub!\n", iface, index, type, flags);
+    struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %u, type %p, flags %#x.\n", iface, index, type, flags);
+
+    if (flags & DMO_SET_TYPEF_CLEAR)
+    {
+        if (dmo->intype_set)
+            MoFreeMediaType(&dmo->intype);
+        dmo->intype_set = FALSE;
+        return S_OK;
+    }
+
+    if (!IsEqualGUID(&type->majortype, &WMMEDIATYPE_Audio)
+            || !IsEqualGUID(&type->subtype, &WMMEDIASUBTYPE_MP3)
+            || !IsEqualGUID(&type->formattype, &WMFORMAT_WaveFormatEx))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    if (!(flags & DMO_SET_TYPEF_TEST_ONLY))
+    {
+        if (dmo->intype_set)
+            MoFreeMediaType(&dmo->intype);
+        MoCopyMediaType(&dmo->intype, type);
+        dmo->intype_set = TRUE;
+    }
 
     return S_OK;
 }
