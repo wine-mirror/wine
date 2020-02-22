@@ -301,6 +301,11 @@ static void test_stream_info(void)
     ok(input_count == 1, "Got input count %u.\n", input_count);
     ok(output_count == 1, "Got output count %u.\n", output_count);
 
+    flags = 0xdeadbeef;
+    hr = IMediaObject_GetInputStreamInfo(dmo, 0, &flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!flags, "Got flags %#x.\n", flags);
+
     IMediaObject_Release(dmo);
 }
 
