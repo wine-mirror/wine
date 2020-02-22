@@ -314,6 +314,36 @@ static void test_stream_info(void)
     IMediaObject_Release(dmo);
 }
 
+static void test_media_types(void)
+{
+    DMO_MEDIA_TYPE mt;
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_CMP3DecMediaObject, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaObject, (void **)&dmo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&mt, 0xcc, sizeof(DMO_MEDIA_TYPE));
+    hr = IMediaObject_GetInputType(dmo, 0, 0, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
+    ok(IsEqualGUID(&mt.subtype, &WMMEDIASUBTYPE_MP3), "Got subtype %s.\n", wine_dbgstr_guid(&mt.subtype));
+    ok(mt.bFixedSizeSamples == 0xcccccccc, "Got fixed size %d.\n", mt.bFixedSizeSamples);
+    ok(mt.bTemporalCompression == 0xcccccccc, "Got temporal compression %d.\n", mt.bTemporalCompression);
+    ok(mt.lSampleSize == 0xcccccccc, "Got sample size %u.\n", mt.lSampleSize);
+    ok(IsEqualGUID(&mt.formattype, &GUID_NULL), "Got format type %s.\n",
+            wine_dbgstr_guid(&mt.formattype));
+    ok(!mt.pUnk, "Got pUnk %p.\n", mt.pUnk);
+    ok(!mt.cbFormat, "Got format size %u.\n", mt.cbFormat);
+    ok(!mt.pbFormat, "Got format block %p.\n", mt.pbFormat);
+
+    hr = IMediaObject_GetInputType(dmo, 0, 1, &mt);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "Got hr %#x.\n", hr);
+
+    IMediaObject_Release(dmo);
+}
+
 START_TEST(mp3dmod)
 {
     IMediaObject *dmo;
@@ -333,6 +363,7 @@ START_TEST(mp3dmod)
     test_convert();
     test_aggregation();
     test_stream_info();
+    test_media_types();
 
     CoUninitialize();
 }

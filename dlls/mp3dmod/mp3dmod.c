@@ -163,9 +163,19 @@ static HRESULT WINAPI MediaObject_GetOutputStreamInfo(IMediaObject *iface, DWORD
 
 static HRESULT WINAPI MediaObject_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("(%p)->(%d, %d, %p) stub!\n", iface, index, type_index, type);
+    TRACE("iface %p, index %u, type_index %u, type %p.\n", iface, index, type_index, type);
 
-    return E_NOTIMPL;
+    if (type_index)
+        return DMO_E_NO_MORE_ITEMS;
+
+    type->majortype = WMMEDIATYPE_Audio;
+    type->subtype = WMMEDIASUBTYPE_MP3;
+    type->formattype = GUID_NULL;
+    type->pUnk = NULL;
+    type->cbFormat = 0;
+    type->pbFormat = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_GetOutputType(IMediaObject *iface, DWORD index, DWORD type_index, DMO_MEDIA_TYPE *type)
