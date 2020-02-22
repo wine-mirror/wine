@@ -286,6 +286,24 @@ static void test_aggregation(void)
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
 }
 
+static void test_stream_info(void)
+{
+    DWORD input_count, output_count, flags;
+    IMediaObject *dmo;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_CMP3DecMediaObject, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaObject, (void **)&dmo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaObject_GetStreamCount(dmo, &input_count, &output_count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(input_count == 1, "Got input count %u.\n", input_count);
+    ok(output_count == 1, "Got output count %u.\n", output_count);
+
+    IMediaObject_Release(dmo);
+}
+
 START_TEST(mp3dmod)
 {
     IMediaObject *dmo;
@@ -304,6 +322,7 @@ START_TEST(mp3dmod)
 
     test_convert();
     test_aggregation();
+    test_stream_info();
 
     CoUninitialize();
 }
