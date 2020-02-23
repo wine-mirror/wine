@@ -716,12 +716,16 @@ struct ShellFolderInfo {
     char szLinkTarget[FILENAME_MAX]; /* in unix locale */
 };
 
+#define CSIDL_DOWNLOADS 0x0047
+
 static struct ShellFolderInfo asfiInfo[] = {
     { CSIDL_DESKTOP,  "" },
     { CSIDL_PERSONAL, "" },
     { CSIDL_MYPICTURES, "" },
     { CSIDL_MYMUSIC, "" },
-    { CSIDL_MYVIDEO, "" }
+    { CSIDL_MYVIDEO, "" },
+    { CSIDL_DOWNLOADS, "" },
+    { CSIDL_TEMPLATES, "" }
 };
 
 static struct ShellFolderInfo *psfiSelected = NULL;
