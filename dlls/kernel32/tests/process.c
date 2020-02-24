@@ -2831,9 +2831,7 @@ static HANDLE test_AddSelfToJob(void)
 
 static void test_jobInheritance(HANDLE job)
 {
-    char buffer[MAX_PATH + 23];
     PROCESS_INFORMATION pi;
-    STARTUPINFOA si = {0};
     DWORD dwret;
     BOOL ret, out;
 
@@ -2843,10 +2841,7 @@ static void test_jobInheritance(HANDLE job)
         return;
     }
 
-    sprintf(buffer, "\"%s\" process %s", selfname, "exit");
-
-    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcessA error %u\n", GetLastError());
+    create_process("exit", &pi);
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
@@ -2875,8 +2870,7 @@ static void test_BreakawayOk(HANDLE job)
         return;
     }
 
-    sprintf(buffer, "\"%s\" process %s", selfname, "exit");
-
+    sprintf(buffer, "\"%s\" process exit", selfname);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
     ok(!ret, "CreateProcessA expected failure\n");
     expect_eq_d(ERROR_ACCESS_DENIED, GetLastError());
