@@ -1742,7 +1742,7 @@ static HRESULT WINAPI d3d8_device_GetMaterial(IDirect3DDevice8 *iface, D3DMATERI
 
     /* Note: D3DMATERIAL8 is compatible with struct wined3d_material. */
     wined3d_mutex_lock();
-    wined3d_device_get_material(device->wined3d_device, (struct wined3d_material *)material);
+    memcpy(material, &wined3d_stateblock_get_state(device->state)->material, sizeof(*material));
     wined3d_mutex_unlock();
 
     return D3D_OK;
