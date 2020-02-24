@@ -72,8 +72,6 @@ wchar_t* __cdecl fgetws(wchar_t*,int,FILE*);
 wint_t   __cdecl fputwc(wint_t,FILE*);
 int      __cdecl fputws(const wchar_t*,FILE*);
 int      __cdecl fputws(const wchar_t*,FILE*);
-int      WINAPIV fwscanf(FILE*,const wchar_t*,...);
-int      WINAPIV fwscanf_s(FILE*,const wchar_t*,...);
 wint_t   __cdecl getwc(FILE*);
 wint_t   __cdecl getwchar(void);
 wchar_t* __cdecl getws(wchar_t*);
@@ -99,6 +97,8 @@ _ACRTIMP int __cdecl __stdio_common_vfwprintf_s(unsigned __int64,FILE*,const wch
 _ACRTIMP int __cdecl __stdio_common_vsnwprintf_s(unsigned __int64,wchar_t*,size_t,size_t,const wchar_t*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vswprintf(unsigned __int64,wchar_t*,size_t,const wchar_t*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vswprintf_p(unsigned __int64,wchar_t*,size_t,const wchar_t*,_locale_t,__ms_va_list);
+
+_ACRTIMP int __cdecl __stdio_common_vfwscanf(unsigned __int64,FILE*,const wchar_t*,_locale_t,__ms_va_list);
 
 static inline int __cdecl _vsnwprintf(wchar_t *buffer, size_t size, const wchar_t *format, __ms_va_list args)
 {
@@ -232,6 +232,28 @@ static inline int WINAPIV fwprintf_s(FILE *file, const wchar_t *format, ...)
     return ret;
 }
 
+static inline int WINAPIV fwscanf(FILE *file, const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, file, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
+static inline int WINAPIV fwscanf_s(FILE *file, const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, file, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
 #else /* _UCRT */
 
 _ACRTIMP int WINAPIV _scwprintf(const wchar_t*,...);
@@ -263,6 +285,9 @@ static inline int WINAPIV swprintf(wchar_t *buffer, size_t size, const wchar_t *
     return ret;
 }
 #endif  /*  _CRT_NON_CONFORMING_SWPRINTFS */
+
+_ACRTIMP int WINAPIV fwscanf(FILE*,const wchar_t*,...);
+_ACRTIMP int WINAPIV fwscanf_s(FILE*,const wchar_t*,...);
 
 #endif /* _UCRT */
 
