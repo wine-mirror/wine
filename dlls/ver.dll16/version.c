@@ -30,6 +30,7 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "winternl.h"
+#include "winuser.h"
 #include "winver.h"
 #include "lzexpand.h"
 #include "wine/debug.h"
@@ -461,22 +462,23 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
 /*************************************************************************
  * GetFileVersionInfoSize                  [VER.6]
  */
-DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )
+DWORD WINAPI GetFileVersionInfoSize16( LPCSTR filename, LPDWORD handle )
 {
-    TRACE("(%s, %p)\n", debugstr_a(lpszFileName), lpdwHandle );
-    return GetFileVersionInfoSizeA( lpszFileName, lpdwHandle );
+    DWORD offset;
+
+    TRACE("(%s, %p)\n", debugstr_a(filename), handle );
+
+    return GetFileResourceSize16( filename, (LPCSTR)RT_VERSION, (LPCSTR)VS_VERSION_INFO, &offset );
 }
 
 /*************************************************************************
  * GetFileVersionInfo                      [VER.7]
  */
-DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
-                                   DWORD cbBuf, LPVOID lpvData )
+DWORD WINAPI GetFileVersionInfo16( LPCSTR filename, DWORD handle, DWORD datasize, LPVOID data )
 {
-    TRACE("(%s, %08x, %d, %p)\n",
-                debugstr_a(lpszFileName), handle, cbBuf, lpvData );
+    TRACE("(%s, %08x, %d, %p)\n", debugstr_a(filename), handle, datasize, data );
 
-    return GetFileVersionInfoA( lpszFileName, handle, cbBuf, lpvData );
+    return GetFileResource16( filename, (LPCSTR)RT_VERSION, (LPCSTR)VS_VERSION_INFO, 0, datasize, data );
 }
 
 /*************************************************************************
