@@ -1527,7 +1527,9 @@ static HRESULT interp_me(exec_ctx_t *ctx)
     if(ctx->vbthis)
         disp = (IDispatch*)&ctx->vbthis->IDispatchEx_iface;
     else if(ctx->code->named_item)
-        disp = (IDispatch*)&ctx->code->named_item->script_obj->IDispatchEx_iface;
+        disp = (ctx->code->named_item->flags & SCRIPTITEM_CODEONLY)
+               ? (IDispatch*)&ctx->code->named_item->script_obj->IDispatchEx_iface
+               : ctx->code->named_item->disp;
     else if(ctx->script->host_global)
         disp = ctx->script->host_global;
     else

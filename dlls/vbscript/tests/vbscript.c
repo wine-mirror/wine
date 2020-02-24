@@ -1858,6 +1858,15 @@ static void test_named_items(void)
 
     hres = IActiveScript_GetScriptDispatch(script, L"visibleCodeItem", &disp);
     ok(hres == S_OK, "GetScriptDispatch returned: %08x\n", hres);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"me", L"visibleCodeItem", NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == disp,
+        "Unexpected 'me': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
+    VariantClear(&var);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
     IDispatch_Release(disp);
 
     SET_EXPECT(GetItemInfo_visible_code);
@@ -1985,6 +1994,15 @@ static void test_named_items(void)
     SET_EXPECT(OnEnterScript);
     SET_EXPECT(OnLeaveScript);
     hres = IActiveScriptParse_ParseScriptText(parse, L"me", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == &global_named_item,
+        "Unexpected 'me': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
+    VariantClear(&var);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"me", L"globalItem", NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == &global_named_item,
         "Unexpected 'me': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
