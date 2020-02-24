@@ -78,11 +78,9 @@ wchar_t* __cdecl getws(wchar_t*);
 wint_t   __cdecl putwc(wint_t,FILE*);
 wint_t   __cdecl putwchar(wint_t);
 int      __cdecl putws(const wchar_t*);
-int      WINAPIV swprintf_s(wchar_t*,size_t,const wchar_t*,...);
 int      WINAPIV swscanf(const wchar_t*,const wchar_t*,...);
 int      WINAPIV swscanf_s(const wchar_t*,const wchar_t*,...);
 wint_t   __cdecl ungetwc(wint_t,FILE*);
-int      __cdecl vswprintf_s(wchar_t*,size_t,const wchar_t*,__ms_va_list);
 int      __cdecl vwprintf(const wchar_t*,__ms_va_list);
 int      __cdecl vwprintf_s(const wchar_t*,__ms_va_list);
 int      WINAPIV wprintf(const wchar_t*,...);
@@ -97,6 +95,7 @@ _ACRTIMP int __cdecl __stdio_common_vfwprintf_s(unsigned __int64,FILE*,const wch
 _ACRTIMP int __cdecl __stdio_common_vsnwprintf_s(unsigned __int64,wchar_t*,size_t,size_t,const wchar_t*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vswprintf(unsigned __int64,wchar_t*,size_t,const wchar_t*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vswprintf_p(unsigned __int64,wchar_t*,size_t,const wchar_t*,_locale_t,__ms_va_list);
+_ACRTIMP int __cdecl __stdio_common_vswprintf_s(unsigned __int64,wchar_t*,size_t,const wchar_t*,_locale_t,__ms_va_list);
 
 _ACRTIMP int __cdecl __stdio_common_vfwscanf(unsigned __int64,FILE*,const wchar_t*,_locale_t,__ms_va_list);
 
@@ -166,6 +165,23 @@ static inline int WINAPIV _swprintf(wchar_t *buffer, const wchar_t *format, ...)
     ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, -1, format, NULL, args);
     __ms_va_end(args);
     return ret < 0 ? -1 : ret;
+}
+
+static inline int WINAPIV vswprintf_s(wchar_t *buffer, size_t size, const wchar_t *format, __ms_va_list args)
+{
+    int ret = __stdio_common_vswprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, NULL, args);
+    return ret < 0 ? -1 : ret;
+}
+
+static inline int WINAPIV swprintf_s(wchar_t *buffer, size_t size, const wchar_t* format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vswprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
 }
 
 static inline int __cdecl _vscwprintf(const wchar_t *format, __ms_va_list args)
@@ -288,6 +304,8 @@ static inline int WINAPIV swprintf(wchar_t *buffer, size_t size, const wchar_t *
 
 _ACRTIMP int WINAPIV fwscanf(FILE*,const wchar_t*,...);
 _ACRTIMP int WINAPIV fwscanf_s(FILE*,const wchar_t*,...);
+_ACRTIMP int WINAPIV swprintf_s(wchar_t*,size_t,const wchar_t*,...);
+_ACRTIMP int __cdecl vswprintf_s(wchar_t*,size_t,const wchar_t*,__ms_va_list);
 
 #endif /* _UCRT */
 
