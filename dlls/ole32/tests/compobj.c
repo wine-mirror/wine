@@ -81,8 +81,6 @@ static HRESULT (WINAPI * pCoDecrementMTAUsage)(CO_MTA_USAGE_COOKIE cookie);
 static LONG (WINAPI * pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static LONG (WINAPI * pRegOverridePredefKey)(HKEY key, HKEY override);
 
-static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
-static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE, LPBOOL);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
@@ -242,8 +240,6 @@ static HANDLE activate_context(const char *manifest, ULONG_PTR *cookie)
     HANDLE handle;
     BOOL ret;
 
-    if (!pCreateActCtxW) return NULL;
-
     create_manifest_file("file.manifest", manifest);
 
     MultiByteToWideChar( CP_ACP, 0, "file.manifest", -1, path, MAX_PATH );
@@ -251,7 +247,7 @@ static HANDLE activate_context(const char *manifest, ULONG_PTR *cookie)
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = path;
 
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     ok(handle != INVALID_HANDLE_VALUE || broken(handle == INVALID_HANDLE_VALUE) /* some old XP/2k3 versions */,
         "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     if (handle == INVALID_HANDLE_VALUE)
@@ -274,7 +270,7 @@ static HANDLE activate_context(const char *manifest, ULONG_PTR *cookie)
 
     if (handle)
     {
-        ret = pActivateActCtx(handle, cookie);
+        ret = ActivateActCtx(handle, cookie);
         ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
     }
 
@@ -3826,8 +3822,6 @@ static void init_funcs(void)
     pRegDeleteKeyExA = (void*)GetProcAddress(hAdvapi32, "RegDeleteKeyExA");
     pRegOverridePredefKey = (void*)GetProcAddress(hAdvapi32, "RegOverridePredefKey");
 
-    pActivateActCtx = (void*)GetProcAddress(hkernel32, "ActivateActCtx");
-    pCreateActCtxW = (void*)GetProcAddress(hkernel32, "CreateActCtxW");
     pIsWow64Process = (void*)GetProcAddress(hkernel32, "IsWow64Process");
 }
 
@@ -3965,9 +3959,6 @@ START_TEST(compobj)
     SetCurrentDirectoryA(testlib);
     lstrcatA(testlib, "\\testlib.dll");
     extract_resource("testlib.dll", "TESTDLL", testlib);
-
-    if (!pCreateActCtxW)
-        win_skip("Activation contexts are not supported, some tests will be skipped.\n");
 
     test_ProgIDFromCLSID();
     test_CLSIDFromProgID();
