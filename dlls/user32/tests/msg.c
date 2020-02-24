@@ -74,13 +74,6 @@
 #define ARCH "none"
 #endif
 
-static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
-static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
-static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
-static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
-static BOOL   (WINAPI *pQueryActCtxW)(DWORD,HANDLE,void*,ULONG,void*,SIZE_T,SIZE_T*);
-static void   (WINAPI *pReleaseActCtx)(HANDLE);
-
 /* encoded DRAWITEMSTRUCT into an LPARAM */
 typedef struct
 {
@@ -8661,7 +8654,7 @@ static HANDLE test_create(const char *file)
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = path;
 
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     ok(handle != INVALID_HANDLE_VALUE, "failed to create context, error %u\n", GetLastError());
 
     ok(actctx.cbSize == sizeof(actctx), "cbSize=%d\n", actctx.cbSize);
@@ -8779,13 +8772,7 @@ static void test_interthread_messages(void)
     log_all_parent_messages--;
     DestroyWindow( wnd_event.hwnd );
 
-    /* activation context tests */
-    if (!pActivateActCtx)
-    {
-        win_skip("Activation contexts are not supported, skipping\n");
-        return;
-    }
-
+    /* Activation context tests */
     create_manifest_file("testdep1.manifest", manifest_dep);
     create_manifest_file("main.manifest", manifest_main);
 
@@ -8794,7 +8781,7 @@ static void test_interthread_messages(void)
     DeleteFileA("main.manifest");
 
     handle = (void*)0xdeadbeef;
-    ret = pGetCurrentActCtx(&handle);
+    ret = GetCurrentActCtx(&handle);
     ok(ret, "GetCurrentActCtx failed: %u\n", GetLastError());
     ok(handle == 0, "active context %p\n", handle);
 
@@ -8805,14 +8792,14 @@ static void test_interthread_messages(void)
     CloseHandle(wnd_event.start_event);
 
     /* context is activated after thread creation, so it doesn't inherit it by default */
-    ret = pActivateActCtx(context, &cookie);
+    ret = ActivateActCtx(context, &cookie);
     ok(ret, "activation failed: %u\n", GetLastError());
 
     handle = 0;
-    ret = pGetCurrentActCtx(&handle);
+    ret = GetCurrentActCtx(&handle);
     ok(ret, "GetCurrentActCtx failed: %u\n", GetLastError());
     ok(handle != 0, "active context %p\n", handle);
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 
     /* destination window will test for active context */
     ret = SendMessageA(wnd_event.hwnd, WM_USER+10, 0, 0);
@@ -8830,9 +8817,9 @@ static void test_interthread_messages(void)
     ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(hThread);
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
-    pReleaseActCtx(context);
+    ReleaseActCtx(context);
 }
 
 
@@ -9483,12 +9470,12 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	    BOOL ret;
 
 	    handle = (void*)0xdeadbeef;
-	    ret = pGetCurrentActCtx(&handle);
+	    ret = GetCurrentActCtx(&handle);
 	    ok(ret, "failed to get current context, %u\n", GetLastError());
 	    ok(handle == 0, "got active context %p\n", handle);
 
 	    memset(&basicinfo, 0xff, sizeof(basicinfo));
-	    ret = pQueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, handle, 0, ActivationContextBasicInformation,
+	    ret = QueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, handle, 0, ActivationContextBasicInformation,
 	        &basicinfo, sizeof(basicinfo), NULL);
 	    ok(ret, "got %d, error %d\n", ret, GetLastError());
 	    ok(basicinfo.hActCtx == NULL, "got %p\n", basicinfo.hActCtx);
@@ -17828,20 +17815,6 @@ static void test_invalid_window(void)
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError());
 }
 
-static void init_funcs(void)
-{
-    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
-
-#define X(f) p##f = (void*)GetProcAddress(hKernel32, #f)
-    X(ActivateActCtx);
-    X(CreateActCtxW);
-    X(DeactivateActCtx);
-    X(GetCurrentActCtx);
-    X(QueryActCtxW);
-    X(ReleaseActCtx);
-#undef X
-}
-
 START_TEST(msg)
 {
     char **test_argv;
@@ -17850,8 +17823,6 @@ START_TEST(msg)
     HMODULE hModuleImm32;
     BOOL (WINAPI *pImmDisableIME)(DWORD);
     int argc;
-
-    init_funcs();
 
     argc = winetest_get_mainargs( &test_argv );
     if (argc >= 3)
