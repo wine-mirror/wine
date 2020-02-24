@@ -1636,7 +1636,7 @@ static HRESULT WINAPI d3d8_device_GetTransform(IDirect3DDevice8 *iface,
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    wined3d_device_get_transform(device->wined3d_device, state, (struct wined3d_matrix *)matrix);
+    memcpy(matrix, &wined3d_stateblock_get_state(device->state)->transforms[state], sizeof(*matrix));
     wined3d_mutex_unlock();
 
     return D3D_OK;
