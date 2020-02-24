@@ -2809,6 +2809,7 @@ static void test_WaitForJobObject(void)
     dwret = WaitForSingleObject(job, 100);
     ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
 
+    WaitForSingleObject(pi.hProcess, 1000);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     CloseHandle(job);
