@@ -1829,15 +1829,20 @@ static HRESULT WINAPI d3d8_device_SetClipPlane(IDirect3DDevice8 *iface, DWORD in
 static HRESULT WINAPI d3d8_device_GetClipPlane(IDirect3DDevice8 *iface, DWORD index, float *plane)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
 
     TRACE("iface %p, index %u, plane %p.\n", iface, index, plane);
 
+    if (index >= device->max_user_clip_planes)
+    {
+        TRACE("Plane %u requested, but only %u planes are supported.\n", index, device->max_user_clip_planes);
+        return WINED3DERR_INVALIDCALL;
+    }
+
     wined3d_mutex_lock();
-    hr = wined3d_device_get_clip_plane(device->wined3d_device, index, (struct wined3d_vec4 *)plane);
+    memcpy(plane, &wined3d_stateblock_get_state(device->state)->clip_planes[index], sizeof(struct wined3d_vec4));
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static void resolve_depth_buffer(struct d3d8_device *device)
@@ -3710,6 +3715,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     }
 
     wined3d_get_device_caps(wined3d, adapter, device_type, &caps);
+    device->max_user_clip_planes = caps.MaxUserClipPlanes;
     device->vs_uniform_count = caps.MaxVertexShaderConst;
 
     if (FAILED(hr = wined3d_stateblock_create(device->wined3d_device, NULL, WINED3D_SBT_PRIMARY, &device->state)))
