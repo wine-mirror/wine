@@ -4783,7 +4783,7 @@ GpStatus WINGDIPAPI GdipGetNearestColor(GpGraphics *graphics, ARGB* argb)
     if(graphics->busy)
         return ObjectBusy;
 
-    if (graphics->image->type == ImageTypeBitmap)
+    if (graphics->image && graphics->image->type == ImageTypeBitmap)
     {
         static int once;
         GpBitmap *bitmap = (GpBitmap *)graphics->image;
