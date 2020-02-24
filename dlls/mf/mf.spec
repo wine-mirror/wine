@@ -56,7 +56,7 @@
 @ stub MFCreateSequencerSegmentOffset
 @ stdcall MFCreateSequencerSource(ptr ptr)
 @ stub MFCreateSequencerSourceRemoteStream
-@ stub MFCreateSimpleTypeHandler
+@ stdcall MFCreateSimpleTypeHandler(ptr)
 @ stdcall MFCreateSourceResolver(ptr) mfplat.MFCreateSourceResolver
 @ stdcall MFCreateStandardQualityManager(ptr)
 @ stdcall MFCreateTopoLoader(ptr)

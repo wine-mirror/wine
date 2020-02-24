@@ -2595,6 +2595,71 @@ static void test_evr(void)
     IMFActivate_Release(activate);
 }
 
+static void test_MFCreateSimpleTypeHandler(void)
+{
+    IMFMediaType *media_type, *media_type2;
+    IMFMediaTypeHandler *handler;
+    DWORD count;
+    HRESULT hr;
+    GUID guid;
+
+    hr = MFCreateSimpleTypeHandler(&handler);
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    count = 0;
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, &count);
+    ok(hr == S_OK, "Failed to get type count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    media_type = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!media_type, "Unexpected pointer.\n");
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, media_type);
+    ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 0, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(media_type2 == media_type, "Unexpected type.\n");
+    IMFMediaType_Release(media_type2);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 1, &media_type2);
+    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(media_type == media_type2, "Unexpected pointer.\n");
+    IMFMediaType_Release(media_type2);
+
+    IMFMediaType_Release(media_type);
+
+    hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, NULL);
+    ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    media_type = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!media_type, "Unexpected pointer.\n");
+
+    hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaTypeHandler_Release(handler);
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -2609,4 +2674,5 @@ START_TEST(mf)
     test_quality_manager();
     test_sar();
     test_evr();
+    test_MFCreateSimpleTypeHandler();
 }

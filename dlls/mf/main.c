@@ -1168,3 +1168,183 @@ HRESULT WINAPI MFCreateVideoRendererActivate(HWND hwnd, IMFActivate **activate)
 
     return create_activation_object(hwnd, &evr_activate_funcs, activate);
 }
+
+struct simple_type_handler
+{
+    IMFMediaTypeHandler IMFMediaTypeHandler_iface;
+    LONG refcount;
+    IMFMediaType *media_type;
+    CRITICAL_SECTION cs;
+};
+
+static struct simple_type_handler *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct simple_type_handler, IMFMediaTypeHandler_iface);
+}
+
+static HRESULT WINAPI simple_type_handler_QueryInterface(IMFMediaTypeHandler *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFMediaTypeHandler) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFMediaTypeHandler_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI simple_type_handler_AddRef(IMFMediaTypeHandler *iface)
+{
+    struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+    ULONG refcount = InterlockedIncrement(&handler->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI simple_type_handler_Release(IMFMediaTypeHandler *iface)
+{
+    struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+    ULONG refcount = InterlockedDecrement(&handler->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        if (handler->media_type)
+            IMFMediaType_Release(handler->media_type);
+        DeleteCriticalSection(&handler->cs);
+        heap_free(handler);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI simple_type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface, IMFMediaType *in_type,
+        IMFMediaType **out_type)
+{
+    FIXME("%p, %p, %p.\n", iface, in_type, out_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI simple_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
+{
+    TRACE("%p, %p.\n", iface, count);
+
+    if (!count)
+        return E_POINTER;
+
+    *count = 1;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI simple_type_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
+        IMFMediaType **type)
+{
+    struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+
+    TRACE("%p, %u, %p.\n", iface, index, type);
+
+    if (index > 0)
+        return MF_E_NO_MORE_TYPES;
+
+    EnterCriticalSection(&handler->cs);
+    *type = handler->media_type;
+    if (*type)
+        IMFMediaType_AddRef(*type);
+    LeaveCriticalSection(&handler->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI simple_type_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *media_type)
+{
+    struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+
+    TRACE("%p, %p.\n", iface, media_type);
+
+    EnterCriticalSection(&handler->cs);
+    if (handler->media_type)
+        IMFMediaType_Release(handler->media_type);
+    handler->media_type = media_type;
+    if (handler->media_type)
+        IMFMediaType_AddRef(handler->media_type);
+    LeaveCriticalSection(&handler->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI simple_type_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType **media_type)
+{
+    struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+
+    TRACE("%p, %p.\n", iface, media_type);
+
+    if (!media_type)
+        return E_POINTER;
+
+    EnterCriticalSection(&handler->cs);
+    *media_type = handler->media_type;
+    if (*media_type)
+        IMFMediaType_AddRef(*media_type);
+    LeaveCriticalSection(&handler->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI simple_type_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
+{
+    struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, type);
+
+    EnterCriticalSection(&handler->cs);
+    if (handler->media_type)
+        hr = IMFMediaType_GetGUID(handler->media_type, &MF_MT_MAJOR_TYPE, type);
+    else
+        hr = MF_E_NOT_INITIALIZED;
+    LeaveCriticalSection(&handler->cs);
+
+    return hr;
+}
+
+static const IMFMediaTypeHandlerVtbl simple_type_handler_vtbl =
+{
+    simple_type_handler_QueryInterface,
+    simple_type_handler_AddRef,
+    simple_type_handler_Release,
+    simple_type_handler_IsMediaTypeSupported,
+    simple_type_handler_GetMediaTypeCount,
+    simple_type_handler_GetMediaTypeByIndex,
+    simple_type_handler_SetCurrentMediaType,
+    simple_type_handler_GetCurrentMediaType,
+    simple_type_handler_GetMajorType,
+};
+
+HRESULT WINAPI MFCreateSimpleTypeHandler(IMFMediaTypeHandler **handler)
+{
+    struct simple_type_handler *object;
+
+    TRACE("%p.\n", handler);
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFMediaTypeHandler_iface.lpVtbl = &simple_type_handler_vtbl;
+    object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
+
+    *handler = &object->IMFMediaTypeHandler_iface;
+
+    return S_OK;
+}
