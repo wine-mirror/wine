@@ -895,10 +895,31 @@ static void test_CommandLine(void)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
 
+    /* failure case */
+    strcpy(buffer, "\"t:\\NotADir\\NotAFile.exe\"");
+    memset(&info, 0xa, sizeof(info));
+    ok(!CreateProcessA(buffer, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess unexpectedly succeeded\n");
+    /* Check that the effective STARTUPINFOA parameters are not modified */
+    ok(startup.cb == sizeof(startup), "unexpected cb %d\n", startup.cb);
+    ok(startup.lpDesktop == NULL, "lpDesktop is not NULL\n");
+    ok(startup.lpTitle == NULL, "lpTitle is not NULL\n");
+    ok(startup.dwFlags == STARTF_USESHOWWINDOW, "unexpected dwFlags %04x\n", startup.dwFlags);
+    ok(startup.wShowWindow == SW_SHOWNORMAL, "unexpected wShowWindow %d\n", startup.wShowWindow);
+    ok(!info.hProcess, "unexpected hProcess %p\n", info.hProcess);
+    ok(!info.hThread, "unexpected hThread %p\n", info.hThread);
+    ok(!info.dwProcessId, "unexpected dwProcessId %04x\n", info.dwProcessId);
+    ok(!info.dwThreadId, "unexpected dwThreadId %04x\n", info.dwThreadId);
+
     /* the basics */
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\" \"C:\\Program Files\\my nice app.exe\" \"\"\"\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
+    /* Check that the effective STARTUPINFOA parameters are not modified */
+    ok(startup.cb == sizeof(startup), "unexpected cb %d\n", startup.cb);
+    ok(startup.lpDesktop == NULL, "lpDesktop is not NULL\n");
+    ok(startup.lpTitle == NULL, "lpTitle is not NULL\n");
+    ok(startup.dwFlags == STARTF_USESHOWWINDOW, "unexpected dwFlags %04x\n", startup.dwFlags);
+    ok(startup.wShowWindow == SW_SHOWNORMAL, "unexpected wShowWindow %d\n", startup.wShowWindow);
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
     /* child process has changed result file, so let profile functions know about it */
@@ -913,11 +934,6 @@ static void test_CommandLine(void)
     okChildString("Arguments", "CommandLineA", buffer);
     release_memory();
     DeleteFileA(resfile);
-
-    memset(&startup, 0, sizeof(startup));
-    startup.cb = sizeof(startup);
-    startup.dwFlags = STARTF_USESHOWWINDOW;
-    startup.wShowWindow = SW_SHOWNORMAL;
 
     /* test main()'s quotes handling */
     get_file_name(resfile);
