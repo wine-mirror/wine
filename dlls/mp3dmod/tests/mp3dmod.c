@@ -21,7 +21,7 @@
 #include "wingdi.h"
 #include "mmreg.h"
 #include "mmsystem.h"
-#include "mediaerr.h"
+#include "dmo.h"
 #include "wmcodecdsp.h"
 #include "uuids.h"
 #include "wine/test.h"
@@ -330,9 +330,16 @@ static void test_media_types(void)
         .pbFormat = (BYTE *)&mp3fmt,
     };
 
+    WAVEFORMATEX expect_wfx =
+    {
+        .wFormatTag = WAVE_FORMAT_PCM,
+        .nSamplesPerSec = 48000,
+    };
+
     DMO_MEDIA_TYPE mt;
     IMediaObject *dmo;
     HRESULT hr;
+    DWORD i;
 
     hr = CoCreateInstance(&CLSID_CMP3DecMediaObject, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaObject, (void **)&dmo);
@@ -354,6 +361,10 @@ static void test_media_types(void)
 
     hr = IMediaObject_GetInputType(dmo, 0, 1, &mt);
     ok(hr == DMO_E_NO_MORE_ITEMS, "Got hr %#x.\n", hr);
+
+    memset(&mt, 0xcc, sizeof(DMO_MEDIA_TYPE));
+    hr = IMediaObject_GetOutputType(dmo, 0, 0, &mt);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
 
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -385,9 +396,65 @@ static void test_media_types(void)
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    for (i = 0; i < 4; ++i)
+    {
+        memset(&mt, 0xcc, sizeof(DMO_MEDIA_TYPE));
+        hr = IMediaObject_GetOutputType(dmo, 0, i, &mt);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
+        ok(IsEqualGUID(&mt.subtype, &MEDIASUBTYPE_PCM), "Got subtype %s.\n", wine_dbgstr_guid(&mt.subtype));
+        ok(mt.bFixedSizeSamples == 0xcccccccc, "Got fixed size %d.\n", mt.bFixedSizeSamples);
+        ok(mt.bTemporalCompression == 0xcccccccc, "Got temporal compression %d.\n", mt.bTemporalCompression);
+        ok(mt.lSampleSize == 0xcccccccc, "Got sample size %u.\n", mt.lSampleSize);
+        ok(IsEqualGUID(&mt.formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+                wine_dbgstr_guid(&mt.formattype));
+        ok(!mt.pUnk, "Got pUnk %p.\n", mt.pUnk);
+        ok(mt.cbFormat >= sizeof(WAVEFORMATEX), "Got format size %u.\n", mt.cbFormat);
+        ok(!!mt.pbFormat, "Got format block %p.\n", mt.pbFormat);
+
+        expect_wfx.nChannels = (i / 2) ? 1 : 2;
+        expect_wfx.wBitsPerSample = (i % 2) ? 8 : 16;
+        expect_wfx.nBlockAlign = expect_wfx.nChannels * expect_wfx.wBitsPerSample / 8;
+        expect_wfx.nAvgBytesPerSec = 48000 * expect_wfx.nBlockAlign;
+        ok(!memcmp(mt.pbFormat, &expect_wfx, sizeof(WAVEFORMATEX)), "Format blocks didn't match.\n");
+
+        MoFreeMediaType(&mt);
+    }
+
+    hr = IMediaObject_GetOutputType(dmo, 0, 4, &mt);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "Got hr %#x.\n", hr);
+
     mp3fmt.wfx.nChannels = 1;
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    for (i = 0; i < 2; ++i)
+    {
+        memset(&mt, 0xcc, sizeof(DMO_MEDIA_TYPE));
+        hr = IMediaObject_GetOutputType(dmo, 0, i, &mt);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
+        ok(IsEqualGUID(&mt.subtype, &MEDIASUBTYPE_PCM), "Got subtype %s.\n", wine_dbgstr_guid(&mt.subtype));
+        ok(mt.bFixedSizeSamples == 0xcccccccc, "Got fixed size %d.\n", mt.bFixedSizeSamples);
+        ok(mt.bTemporalCompression == 0xcccccccc, "Got temporal compression %d.\n", mt.bTemporalCompression);
+        ok(mt.lSampleSize == 0xcccccccc, "Got sample size %u.\n", mt.lSampleSize);
+        ok(IsEqualGUID(&mt.formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+                wine_dbgstr_guid(&mt.formattype));
+        ok(!mt.pUnk, "Got pUnk %p.\n", mt.pUnk);
+        ok(mt.cbFormat >= sizeof(WAVEFORMATEX), "Got format size %u.\n", mt.cbFormat);
+        ok(!!mt.pbFormat, "Got format block %p.\n", mt.pbFormat);
+
+        expect_wfx.nChannels = 1;
+        expect_wfx.wBitsPerSample = (i % 2) ? 8 : 16;
+        expect_wfx.nBlockAlign = expect_wfx.nChannels * expect_wfx.wBitsPerSample / 8;
+        expect_wfx.nAvgBytesPerSec = 48000 * expect_wfx.nBlockAlign;
+        ok(!memcmp(mt.pbFormat, &expect_wfx, sizeof(WAVEFORMATEX)), "Format blocks didn't match.\n");
+
+        MoFreeMediaType(&mt);
+    }
+
+    hr = IMediaObject_GetOutputType(dmo, 0, 2, &mt);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "Got hr %#x.\n", hr);
 
     IMediaObject_Release(dmo);
 }

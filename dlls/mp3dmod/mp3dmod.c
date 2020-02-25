@@ -187,9 +187,37 @@ static HRESULT WINAPI MediaObject_GetInputType(IMediaObject *iface, DWORD index,
 
 static HRESULT WINAPI MediaObject_GetOutputType(IMediaObject *iface, DWORD index, DWORD type_index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("(%p)->(%d, %d, %p) stub!\n", iface, index, type_index, type);
+    struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
+    const WAVEFORMATEX *input_format;
+    WAVEFORMATEX *format;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, type_index %u, type %p.\n", iface, index, type_index, type);
+
+    if (!dmo->intype_set)
+        return DMO_E_TYPE_NOT_SET;
+
+    input_format = (WAVEFORMATEX *)dmo->intype.pbFormat;
+
+    if (type_index >= (2 * input_format->nChannels))
+        return DMO_E_NO_MORE_ITEMS;
+
+    type->majortype = WMMEDIATYPE_Audio;
+    type->subtype = WMMEDIASUBTYPE_PCM;
+    type->formattype = WMFORMAT_WaveFormatEx;
+    type->pUnk = NULL;
+    type->cbFormat = sizeof(WAVEFORMATEX);
+    if (!(type->pbFormat = CoTaskMemAlloc(sizeof(WAVEFORMATEX))))
+        return E_OUTOFMEMORY;
+    format = (WAVEFORMATEX *)type->pbFormat;
+    format->wFormatTag = WAVE_FORMAT_PCM;
+    format->nSamplesPerSec = input_format->nSamplesPerSec;
+    format->nChannels = (type_index / 2) ? 1 : input_format->nChannels;
+    format->wBitsPerSample = (type_index % 2) ? 8 : 16;
+    format->nBlockAlign = format->nChannels * format->wBitsPerSample / 8;
+    format->nAvgBytesPerSec = format->nSamplesPerSec * format->nBlockAlign;
+    format->cbSize = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_SetInputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
