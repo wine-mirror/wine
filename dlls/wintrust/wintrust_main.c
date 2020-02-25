@@ -732,6 +732,7 @@ LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID, LPVOID ActionData )
         }
     }
 
+    if (err) SetLastError(err);
     TRACE("returning %08x\n", err);
     return err;
 }

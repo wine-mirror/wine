@@ -845,7 +845,9 @@ static void test_wintrust(void)
     file.pcwszFilePath = pathW;
     /* Test with an empty file */
     file.hFile = create_temp_file(pathW);
+    SetLastError(0xdeadbeef);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    ok(r == GetLastError(), "expected %08x, got %08x\n", GetLastError(), r);
     ok(r == TRUST_E_SUBJECT_FORM_UNKNOWN,
      "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n", r);
     CloseHandle(file.hFile);
@@ -853,18 +855,26 @@ static void test_wintrust(void)
     file.hFile = NULL;
     /* Test with a known file path, which we expect not have a signature */
     getNotepadPath(pathW, MAX_PATH);
+    SetLastError(0xdeadbeef);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    ok(r == GetLastError(), "expected %08x, got %08x\n", GetLastError(), r);
     ok(r == TRUST_E_NOSIGNATURE || r == CRYPT_E_FILE_ERROR,
      "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08x\n", r);
     wtd.dwStateAction = WTD_STATEACTION_CLOSE;
+    SetLastError(0xdeadbeef);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %08x\n", GetLastError());
     ok(r == S_OK, "WinVerifyTrust failed: %08x\n", r);
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
+    SetLastError(0xdeadbeef);
     hr = WinVerifyTrustEx(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    ok(hr == GetLastError(), "expected %08x, got %08x\n", GetLastError(), hr);
     ok(hr == TRUST_E_NOSIGNATURE || hr == CRYPT_E_FILE_ERROR,
      "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08x\n", hr);
     wtd.dwStateAction = WTD_STATEACTION_CLOSE;
+    SetLastError(0xdeadbeef);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %08x\n", GetLastError());
     ok(r == S_OK, "WinVerifyTrust failed: %08x\n", r);
 }
 
