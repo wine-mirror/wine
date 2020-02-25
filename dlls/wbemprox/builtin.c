@@ -557,6 +557,7 @@ static const struct column col_datafile[] =
 };
 static const struct column col_desktopmonitor[] =
 {
+    { prop_nameW,                  CIM_STRING },
     { prop_pixelsperxlogicalinchW, CIM_UINT32 }
 };
 static const struct column col_directory[] =
@@ -1041,6 +1042,7 @@ struct record_datafile
 };
 struct record_desktopmonitor
 {
+    const WCHAR *name;
     UINT32       pixelsperxlogicalinch;
 };
 struct record_directory
@@ -2490,6 +2492,7 @@ static enum fill_status fill_desktopmonitor( struct table *table, const struct e
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     rec = (struct record_desktopmonitor *)table->data;
+    rec->name                  = L"Generic Non-PnP Monitor";
     rec->pixelsperxlogicalinch = get_pixelsperxlogicalinch();
 
     if (match_row( table, row, cond, &status )) row++;
