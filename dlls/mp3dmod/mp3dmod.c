@@ -266,6 +266,9 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
         return S_OK;
     }
 
+    if (!IsEqualGUID(&type->formattype, &WMFORMAT_WaveFormatEx))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
     format = (WAVEFORMATEX *)type->pbFormat;
 
     if (format->wBitsPerSample == 8)

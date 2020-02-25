@@ -394,6 +394,21 @@ static void test_media_types(void)
         .nSamplesPerSec = 48000,
     };
 
+    WAVEFORMATEX output_format =
+    {
+        .nChannels = 1,
+        .nSamplesPerSec = 48000,
+        .nAvgBytesPerSec = 48000,
+        .nBlockAlign = 1,
+        .wBitsPerSample = 8,
+    };
+    DMO_MEDIA_TYPE output_mt =
+    {
+        .formattype = FORMAT_WaveFormatEx,
+        .cbFormat = sizeof(output_format),
+        .pbFormat = (BYTE *)&output_format,
+    };
+
     DMO_MEDIA_TYPE mt;
     IMediaObject *dmo;
     HRESULT hr;
@@ -513,6 +528,17 @@ static void test_media_types(void)
 
     hr = IMediaObject_GetOutputType(dmo, 0, 2, &mt);
     ok(hr == DMO_E_NO_MORE_ITEMS, "Got hr %#x.\n", hr);
+
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    output_mt.formattype = GUID_NULL;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    output_mt.formattype = FORMAT_None;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    output_mt.formattype = FORMAT_WaveFormatEx;
 
     IMediaObject_Release(dmo);
 }
