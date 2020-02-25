@@ -126,11 +126,11 @@ static void test_dos_devices(void)
     }
 
     ret = DefineDosDeviceA( 0, drivestr, "C:/windows/" );
-    todo_wine ok(ret, "failed to define drive %s, error %u\n", drivestr, GetLastError());
+    ok(ret, "failed to define drive %s, error %u\n", drivestr, GetLastError());
 
     ret = QueryDosDeviceA( drivestr, buf, sizeof(buf) );
-    todo_wine ok(ret, "failed to query drive %s, error %u\n", drivestr, GetLastError());
-    todo_wine ok(!strcmp(buf, "\\??\\C:\\windows\\"), "got path %s\n", debugstr_a(buf));
+    ok(ret, "failed to query drive %s, error %u\n", drivestr, GetLastError());
+    ok(!strcmp(buf, "\\??\\C:\\windows\\"), "got path %s\n", debugstr_a(buf));
 
     sprintf(buf, "%s/system32", drivestr);
     file = CreateFileA( buf, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
@@ -146,7 +146,7 @@ static void test_dos_devices(void)
     todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
 
     ret = DefineDosDeviceA(DDD_REMOVE_DEFINITION, drivestr, NULL);
-    todo_wine ok(ret, "failed to remove drive %s, error %u\n", drivestr, GetLastError());
+    ok(ret, "failed to remove drive %s, error %u\n", drivestr, GetLastError());
 
     ret = QueryDosDeviceA( drivestr, buf, sizeof(buf) );
     ok(!ret, "expected failure\n");
@@ -164,8 +164,8 @@ static void test_dos_devices(void)
     ok(ret, "failed to define drive %s, error %u\n", drivestr, GetLastError());
 
     ret = QueryDosDeviceA( drivestr, buf, sizeof(buf) );
-    todo_wine ok(ret, "failed to query drive %s, error %u\n", drivestr, GetLastError());
-    todo_wine ok(!strcmp(buf, "\\??\\C:\\windows\\"), "got path %s\n", debugstr_a(buf));
+    ok(ret, "failed to query drive %s, error %u\n", drivestr, GetLastError());
+    ok(!strcmp(buf, "\\??\\C:\\windows\\"), "got path %s\n", debugstr_a(buf));
 
     sprintf(buf, "%s/system32", drivestr);
     file = CreateFileA( buf, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,

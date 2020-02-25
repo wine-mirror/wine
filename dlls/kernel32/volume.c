@@ -39,6 +39,7 @@
 #include "ntddcdrm.h"
 #define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
+#include "ddk/wdm.h"
 #include "kernel_private.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
@@ -67,29 +68,6 @@ enum fs_type
     FS_ISO9660,
     FS_UDF       /* For reference [E] = Ecma-167.pdf, [U] = udf260.pdf */
 };
-
-/* get the path of a dos device symlink in the $WINEPREFIX/dosdevices directory */
-static char *get_dos_device_path( LPCWSTR name )
-{
-    const char *config_dir = wine_get_config_dir();
-    char *buffer, *dev;
-    int i;
-
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0,
-                              strlen(config_dir) + sizeof("/dosdevices/") + 5 )))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return NULL;
-    }
-    strcpy( buffer, config_dir );
-    strcat( buffer, "/dosdevices/" );
-    dev = buffer + strlen(buffer);
-    /* no codepage conversion, DOS device names are ASCII anyway */
-    for (i = 0; i < 5; i++)
-        if (!(dev[i] = (char)tolowerW(name[i]))) break;
-    dev[5] = 0;
-    return buffer;
-}
 
 /* read the contents of an NT symlink object */
 static NTSTATUS read_nt_symlink( const WCHAR *name, WCHAR *target, DWORD size )
@@ -1128,73 +1106,50 @@ err_ret:
 /***********************************************************************
  *           DefineDosDeviceW       (KERNEL32.@)
  */
-BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
+BOOL WINAPI DefineDosDeviceW( DWORD flags, const WCHAR *device, const WCHAR *target )
 {
-    DWORD len, dosdev;
-    BOOL ret = FALSE;
-    char *path = NULL, *target, *p;
+    WCHAR link_name[15] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
+    UNICODE_STRING nt_name, nt_target;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    HANDLE handle;
 
-    TRACE("%x, %s, %s\n", flags, debugstr_w(devname), debugstr_w(targetpath));
+    TRACE("%#x, %s, %s\n", flags, debugstr_w(device), debugstr_w(target));
 
-    if (!(flags & DDD_REMOVE_DEFINITION))
+    if (flags & ~(DDD_RAW_TARGET_PATH | DDD_REMOVE_DEFINITION))
+        FIXME("Ignoring flags %#x.\n", flags & ~(DDD_RAW_TARGET_PATH | DDD_REMOVE_DEFINITION));
+
+    strcatW( link_name, device );
+    RtlInitUnicodeString( &nt_name, link_name );
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if (flags & DDD_REMOVE_DEFINITION)
     {
-        if (!(flags & DDD_RAW_TARGET_PATH))
+        if (!set_ntstatus( NtOpenSymbolicLinkObject( &handle, 0, &attr ) ))
+            return FALSE;
+
+        SERVER_START_REQ( unlink_object )
         {
-            FIXME( "(0x%08x,%s,%s) DDD_RAW_TARGET_PATH flag not set, not supported yet\n",
-                   flags, debugstr_w(devname), debugstr_w(targetpath) );
-            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            req->handle = wine_server_obj_handle( handle );
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        NtClose( handle );
+
+        return set_ntstatus( status );
+    }
+
+    if (!(flags & DDD_RAW_TARGET_PATH))
+    {
+        if (!RtlDosPathNameToNtPathName_U( target, &nt_target, NULL, NULL))
+        {
+            SetLastError( ERROR_PATH_NOT_FOUND );
             return FALSE;
         }
-
-        len = WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, NULL, 0, NULL, NULL );
-        if ((target = HeapAlloc( GetProcessHeap(), 0, len )))
-        {
-            WideCharToMultiByte( CP_UNIXCP, 0, targetpath, -1, target, len, NULL, NULL );
-            for (p = target; *p; p++) if (*p == '\\') *p = '/';
-        }
-        else
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return FALSE;
-        }
     }
-    else target = NULL;
+    else
+        RtlInitUnicodeString( &nt_target, target );
 
-    /* first check for a DOS device */
-
-    if ((dosdev = RtlIsDosDeviceName_U( devname )))
-    {
-        WCHAR name[5];
-
-        memcpy( name, devname + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
-        name[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
-        path = get_dos_device_path( name );
-    }
-    else if (isalphaW(devname[0]) && devname[1] == ':' && !devname[2])  /* drive mapping */
-    {
-        path = get_dos_device_path( devname );
-    }
-    else SetLastError( ERROR_FILE_NOT_FOUND );
-
-    if (path)
-    {
-        if (target)
-        {
-            TRACE( "creating symlink %s -> %s\n", path, target );
-            unlink( path );
-            if (!symlink( target, path )) ret = TRUE;
-            else FILE_SetDosError();
-        }
-        else
-        {
-            TRACE( "removing symlink %s\n", path );
-            if (!unlink( path )) ret = TRUE;
-            else FILE_SetDosError();
-        }
-        HeapFree( GetProcessHeap(), 0, path );
-    }
-    HeapFree( GetProcessHeap(), 0, target );
-    return ret;
+    return set_ntstatus( NtCreateSymbolicLinkObject( &handle, SYMBOLIC_LINK_ALL_ACCESS, &attr, &nt_target ) );
 }
 
 
