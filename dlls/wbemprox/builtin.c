@@ -264,6 +264,8 @@ static const WCHAR prop_filesystemW[] =
     {'F','i','l','e','S','y','s','t','e','m',0};
 static const WCHAR prop_flavorW[] =
     {'F','l','a','v','o','r',0};
+static const WCHAR prop_formfactorW[] =
+    {'F','o','r','m','F','a','c','t','o','r',0};
 static const WCHAR prop_freespaceW[] =
     {'F','r','e','e','S','p','a','c','e',0};
 static const WCHAR prop_freephysicalmemoryW[] =
@@ -703,6 +705,7 @@ static const struct column col_physicalmemory[] =
     { prop_capacityW,             CIM_UINT64 },
     { prop_configuredclockspeedW, CIM_UINT32 },
     { prop_devicelocatorW,        CIM_STRING },
+    { prop_formfactorW,           CIM_UINT16 },
     { prop_memorytypeW,           CIM_UINT16 },
     { prop_partnumberW,           CIM_STRING }
 };
@@ -1186,6 +1189,7 @@ struct record_physicalmemory
     UINT64       capacity;
     UINT32       configuredclockspeed;
     const WCHAR *devicelocator;
+    UINT16       formfactor;
     UINT16       memorytype;
     const WCHAR *partnumber;
 };
@@ -3438,6 +3442,7 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     rec->capacity             = get_total_physical_memory();
     rec->configuredclockspeed = 0;
     rec->devicelocator        = dimm0W;
+    rec->formfactor           = 8; /* DIMM */
     rec->memorytype           = 9; /* RAM */
     rec->partnumber           = NULL;
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );

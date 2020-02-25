@@ -1338,6 +1338,7 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
 {
     static const WCHAR capacityW[] = {'C','a','p','a','c','i','t','y',0};
     static const WCHAR memorytypeW[] = {'M','e','m','o','r','y','T','y','p','e',0};
+    static const WCHAR formfactorW[] = {'F','o','r','m','F','a','c','t','o','r',0};
     static const WCHAR devicelocatorW[] = {'D','e','v','i','c','e','L','o','c','a','t','o','r',0};
     static const WCHAR queryW[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
@@ -1362,6 +1363,7 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
     {
         check_property( obj, capacityW, VT_BSTR, CIM_UINT64 );
         check_property( obj, devicelocatorW, VT_BSTR, CIM_STRING );
+        check_property( obj, formfactorW, VT_I4, CIM_UINT16 );
         check_property( obj, memorytypeW, VT_I4, CIM_UINT16 );
         IWbemClassObject_Release( obj );
     }
