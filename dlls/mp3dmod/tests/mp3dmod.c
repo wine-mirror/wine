@@ -342,11 +342,15 @@ static void test_stream_info(void)
 
     hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
 
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
 
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, 0);
@@ -357,6 +361,12 @@ static void test_stream_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!size, "Got size %u.\n", size);
     ok(lookahead == 0xdeadbeef, "Got lookahead %u.\n", lookahead);
+    ok(alignment == 1, "Got alignment %u.\n", alignment);
+
+    size = alignment = 0xdeadbeef;
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(size == 1152 * 4, "Got size %u.\n", size);
     ok(alignment == 1, "Got alignment %u.\n", alignment);
 
     IMediaObject_Release(dmo);

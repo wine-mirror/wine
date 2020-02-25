@@ -325,9 +325,16 @@ static HRESULT WINAPI MediaObject_GetInputSizeInfo(IMediaObject *iface,
 
 static HRESULT WINAPI MediaObject_GetOutputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *alignment)
 {
-    FIXME("(%p)->(%d, %p, %p) stub!\n", iface, index, size, alignment);
+    struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, size %p, alignment %p.\n", iface, index, size, alignment);
+
+    if (!dmo->intype_set || !dmo->outtype_set)
+        return DMO_E_TYPE_NOT_SET;
+
+    *size = 2 * 1152 * ((WAVEFORMATEX *)dmo->outtype.pbFormat)->wBitsPerSample / 8;
+    *alignment = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_GetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME *latency)
