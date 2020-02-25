@@ -64,7 +64,6 @@ F:	dlls/d2d*/
 Direct3D
 M:	Henri Verbeet <hverbeet@codeweavers.com>
 P:	Stefan Dösinger <stefan@codeweavers.com>
-P:	Józef Kucia <jkucia@codeweavers.com>
 P:	Matteo Bruni <mbruni@codeweavers.com>
 F:	dlls/d3d10*/
 F:	dlls/d3d11/
@@ -80,7 +79,6 @@ Direct3D helper libraries
 M:	Matteo Bruni <mbruni@codeweavers.com>
 P:	Henri Verbeet <hverbeet@codeweavers.com>
 P:	Stefan Dösinger <stefan@codeweavers.com>
-P:	Józef Kucia <jkucia@codeweavers.com>
 F:	dlls/d3dcompiler*/
 F:	dlls/d3dx10*/
 F:	dlls/d3dx11*/
