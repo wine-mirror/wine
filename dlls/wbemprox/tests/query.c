@@ -1710,6 +1710,32 @@ static void test_Win32_WinSAT( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_Win32_DesktopMonitor( IWbemServices *services )
+{
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( L"SELECT * FROM Win32_DesktopMonitor" );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        check_property( obj, L"Name", VT_BSTR, CIM_STRING );
+        check_property( obj, L"PixelsPerXlogicalInch", VT_I4, CIM_UINT32 );
+        IWbemClassObject_Release( obj );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 static void test_Win32_DisplayControllerConfiguration( IWbemServices *services )
 {
     static const WCHAR bitsperpixelW[] =
@@ -1835,6 +1861,7 @@ START_TEST(query)
     test_Win32_ComputerSystem( services );
     test_Win32_ComputerSystemProduct( services );
     test_Win32_Bios( services );
+    test_Win32_DesktopMonitor( services );
     test_Win32_DisplayControllerConfiguration( services );
     test_Win32_IP4RouteTable( services );
     test_Win32_OperatingSystem( services );
