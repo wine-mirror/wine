@@ -245,6 +245,7 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
 
         wined3d_device_set_rendertarget_view(This->wined3d_device, 0, NULL, FALSE);
 
+        wined3d_stateblock_decref(This->state);
         if (This->recording)
             wined3d_stateblock_decref(This->recording);
 
