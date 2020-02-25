@@ -52,7 +52,7 @@ struct mp3_decoder
     mpg123_handle *mh;
 
     DMO_MEDIA_TYPE intype, outtype;
-    BOOL intype_set;
+    BOOL intype_set, outtype_set;
 
     IMediaBuffer *buffer;
     REFERENCE_TIME timestamp;
@@ -262,6 +262,7 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
     if (flags & DMO_SET_TYPEF_CLEAR)
     {
         MoFreeMediaType(&This->outtype);
+        This->outtype_set = FALSE;
         return S_OK;
     }
 
@@ -287,6 +288,7 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
             return DMO_E_TYPE_NOT_ACCEPTED;
         }
         MoCopyMediaType(&This->outtype, type);
+        This->outtype_set = TRUE;
     }
 
     return S_OK;
@@ -306,11 +308,19 @@ static HRESULT WINAPI MediaObject_GetOutputCurrentType(IMediaObject *iface, DWOR
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MediaObject_GetInputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *max_lookahead, DWORD *alignment)
+static HRESULT WINAPI MediaObject_GetInputSizeInfo(IMediaObject *iface,
+        DWORD index, DWORD *size, DWORD *lookahead, DWORD *alignment)
 {
-    FIXME("(%p)->(%d, %p, %p, %p) stub!\n", iface, index, size, max_lookahead, alignment);
+    struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, size %p, lookahead %p, alignment %p.\n", iface, index, size, lookahead, alignment);
+
+    if (!dmo->intype_set || !dmo->outtype_set)
+        return DMO_E_TYPE_NOT_SET;
+
+    *size = 0;
+    *alignment = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_GetOutputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *alignment)

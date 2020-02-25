@@ -288,7 +288,36 @@ static void test_aggregation(void)
 
 static void test_stream_info(void)
 {
-    DWORD input_count, output_count, flags;
+    static const MPEGLAYER3WAVEFORMAT input_format =
+    {
+        .wfx.nChannels = 2,
+        .wfx.nSamplesPerSec = 48000,
+    };
+    DMO_MEDIA_TYPE input_mt =
+    {
+        .majortype = MEDIATYPE_Audio,
+        .subtype = WMMEDIASUBTYPE_MP3,
+        .formattype = FORMAT_WaveFormatEx,
+        .cbFormat = sizeof(input_format),
+        .pbFormat = (BYTE *)&input_format,
+    };
+
+    static const WAVEFORMATEX output_format =
+    {
+        .nChannels = 1,
+        .nSamplesPerSec = 48000,
+        .nAvgBytesPerSec = 2 * 48000,
+        .nBlockAlign = 2,
+        .wBitsPerSample = 16,
+    };
+    DMO_MEDIA_TYPE output_mt =
+    {
+        .formattype = FORMAT_WaveFormatEx,
+        .cbFormat = sizeof(output_format),
+        .pbFormat = (BYTE *)&output_format,
+    };
+
+    DWORD input_count, output_count, flags, size, lookahead, alignment;
     IMediaObject *dmo;
     HRESULT hr;
 
@@ -310,6 +339,25 @@ static void test_stream_info(void)
     hr = IMediaObject_GetOutputStreamInfo(dmo, 0, &flags);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!flags, "Got flags %#x.\n", flags);
+
+    hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
+
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
+
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    size = lookahead = alignment = 0xdeadbeef;
+    hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!size, "Got size %u.\n", size);
+    ok(lookahead == 0xdeadbeef, "Got lookahead %u.\n", lookahead);
+    ok(alignment == 1, "Got alignment %u.\n", alignment);
 
     IMediaObject_Release(dmo);
 }
