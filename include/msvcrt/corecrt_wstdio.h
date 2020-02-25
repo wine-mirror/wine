@@ -79,8 +79,6 @@ wint_t   __cdecl putwc(wint_t,FILE*);
 wint_t   __cdecl putwchar(wint_t);
 int      __cdecl putws(const wchar_t*);
 wint_t   __cdecl ungetwc(wint_t,FILE*);
-int      WINAPIV wscanf(const wchar_t*,...);
-int      WINAPIV wscanf_s(const wchar_t*,...);
 
 #ifdef _UCRT
 
@@ -319,6 +317,28 @@ static inline int WINAPIV fwscanf_s(FILE *file, const wchar_t *format, ...)
     return ret;
 }
 
+static inline int WINAPIV wscanf(FILE *file, const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, stdin, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
+static inline int WINAPIV wscanf_s(FILE *file, const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, format);
+    ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, stdin, format, NULL, args);
+    __ms_va_end(args);
+    return ret;
+}
+
 #else /* _UCRT */
 
 _ACRTIMP int WINAPIV _scwprintf(const wchar_t*,...);
@@ -361,6 +381,8 @@ _ACRTIMP int WINAPIV fwscanf(FILE*,const wchar_t*,...);
 _ACRTIMP int WINAPIV fwscanf_s(FILE*,const wchar_t*,...);
 _ACRTIMP int WINAPIV swscanf(const wchar_t*,const wchar_t*,...);
 _ACRTIMP int WINAPIV swscanf_s(const wchar_t*,const wchar_t*,...);
+_ACRTIMP int WINAPIV wscanf(const wchar_t*,...);
+_ACRTIMP int WINAPIV wscanf_s(const wchar_t*,...);
 
 #endif /* _UCRT */
 
