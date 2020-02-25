@@ -539,9 +539,6 @@ enum bwritershader_param_srcmod_type
 #define BWRITERPS_VERSION(major, minor) ((BWRITER_SM1_PS << 16) | ((major) << 8) | (minor))
 #define BWRITERVS_VERSION(major, minor) ((BWRITER_SM1_VS << 16) | ((major) << 8) | (minor))
 
-#define BWRITERVS_SWIZZLE_SHIFT      16
-#define BWRITERVS_SWIZZLE_MASK       (0xFF << BWRITERVS_SWIZZLE_SHIFT)
-
 #define BWRITERVS_X_X       (0)
 #define BWRITERVS_X_Y       (1)
 #define BWRITERVS_X_Z       (2)
