@@ -2096,6 +2096,55 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
     return S_OK;
 }
 
+static HRESULT create_variable_buffer(struct d3d10_effect_variable *v, D3D10_CBUFFER_TYPE type)
+{
+    D3D10_BUFFER_DESC buffer_desc;
+    D3D10_SUBRESOURCE_DATA subresource_data;
+    D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    ID3D10Device *device = v->effect->device;
+    HRESULT hr;
+
+    if (!(v->u.buffer.local_buffer = heap_alloc_zero(v->type->size_unpacked)))
+    {
+        ERR("Failed to allocate local constant buffer memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    buffer_desc.ByteWidth = v->type->size_unpacked;
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    if (type == D3D10_CT_CBUFFER)
+        buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    else
+        buffer_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+
+    subresource_data.pSysMem = v->u.buffer.local_buffer;
+    subresource_data.SysMemPitch = 0;
+    subresource_data.SysMemSlicePitch = 0;
+
+    if (FAILED(hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &subresource_data, &v->u.buffer.buffer)))
+            return hr;
+
+    if (type == D3D10_CT_TBUFFER)
+    {
+        srv_desc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
+        srv_desc.ViewDimension = D3D_SRV_DIMENSION_BUFFER;
+        srv_desc.Buffer.ElementOffset = 0;
+        srv_desc.Buffer.ElementWidth = v->type->size_unpacked / 16;
+        if (v->type->size_unpacked % 16)
+            WARN("Unexpected texture buffer size not a multiple of 16.\n");
+
+        if (FAILED(hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)v->u.buffer.buffer,
+                &srv_desc, &v->u.buffer.resource_view)))
+            return hr;
+    }
+    else
+        v->u.buffer.resource_view = NULL;
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
         const char **ptr, struct d3d10_effect_variable *l)
 {
@@ -2281,6 +2330,12 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     TRACE("\tPacked size %#x.\n", l->type->size_packed);
     TRACE("\tBasetype: %s.\n", debug_d3d10_shader_variable_type(l->type->basetype));
     TRACE("\tTypeclass: %s.\n", debug_d3d10_shader_variable_class(l->type->type_class));
+
+    if (l->type->size_unpacked)
+    {
+        if (FAILED(hr = create_variable_buffer(l, d3d10_cbuffer_type)))
+            return hr;
+    }
 
     return S_OK;
 }
@@ -2760,6 +2815,13 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
         }
         heap_free(l->annotations);
     }
+
+    heap_free(l->u.buffer.local_buffer);
+
+    if (l->u.buffer.buffer)
+        ID3D10Buffer_Release(l->u.buffer.buffer);
+    if (l->u.buffer.resource_view)
+        ID3D10ShaderResourceView_Release(l->u.buffer.resource_view);
 }
 
 /* IUnknown methods */

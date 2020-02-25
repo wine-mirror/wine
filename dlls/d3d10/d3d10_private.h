@@ -114,6 +114,15 @@ struct d3d10_effect_state_object_variable
     } object;
 };
 
+struct d3d10_effect_buffer_variable
+{
+    ID3D10Buffer *buffer;
+    ID3D10ShaderResourceView *resource_view;
+
+    BOOL changed;
+    BYTE *local_buffer;
+};
+
 /* ID3D10EffectType */
 struct d3d10_effect_type
 {
@@ -169,6 +178,7 @@ struct d3d10_effect_variable
     {
         struct d3d10_effect_state_object_variable state;
         struct d3d10_effect_shader_variable shader;
+        struct d3d10_effect_buffer_variable buffer;
     } u;
 };
 
