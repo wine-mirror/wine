@@ -12,8 +12,8 @@
 #include <corecrt_wio.h>
 #include <corecrt_wstdio.h>
 #include <corecrt_wstdlib.h>
+#include <corecrt_wstring.h>
 #include <corecrt_wtime.h>
-#include <string.h>
 #include <sys/stat.h>
 
 #ifdef __cplusplus
@@ -61,63 +61,6 @@ int      __cdecl _wspawnvp(int,const wchar_t*,const wchar_t* const *);
 int      __cdecl _wspawnvpe(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
 int      __cdecl _wsystem(const wchar_t*);
 #endif /* _WPROCESS_DEFINED */
-
-#ifndef _WSTRING_DEFINED
-#define _WSTRING_DEFINED
-int      __cdecl _wcscoll_l(const wchar_t*,const wchar_t*,_locale_t);
-wchar_t* __cdecl _wcsdup(const wchar_t*);
-int      __cdecl _wcsicmp(const wchar_t*,const wchar_t*);
-int      __cdecl _wcsicoll(const wchar_t*,const wchar_t*);
-int      __cdecl _wcsicoll_l(const wchar_t*,const wchar_t*,_locale_t);
-wchar_t* __cdecl _wcslwr(wchar_t*);
-errno_t  __cdecl _wcslwr_s(wchar_t*, size_t);
-int      __cdecl _wcsncoll(const wchar_t*,const wchar_t*,size_t);
-int      __cdecl _wcsncoll_l(const wchar_t*,const wchar_t*,size_t,_locale_t);
-int      __cdecl _wcsnicmp(const wchar_t*,const wchar_t*,size_t);
-int      __cdecl _wcsnicoll(const wchar_t*,const wchar_t*,size_t);
-int      __cdecl _wcsnicoll_l(const wchar_t*,const wchar_t*,size_t,_locale_t);
-wchar_t* __cdecl _wcsnset(wchar_t*,wchar_t,size_t);
-wchar_t* __cdecl _wcsrev(wchar_t*);
-wchar_t* __cdecl _wcsset(wchar_t*,wchar_t);
-wchar_t* __cdecl _wcsupr(wchar_t*);
-errno_t  __cdecl _wcsupr_s(wchar_t*, size_t);
-
-wchar_t* __cdecl wcscat(wchar_t*,const wchar_t*);
-errno_t  __cdecl wcscat_s(wchar_t*,size_t,const wchar_t*);
-wchar_t* __cdecl wcschr(const wchar_t*,wchar_t);
-int      __cdecl wcscmp(const wchar_t*,const wchar_t*);
-int      __cdecl wcscoll(const wchar_t*,const wchar_t*);
-wchar_t* __cdecl wcscpy(wchar_t*,const wchar_t*);
-errno_t  __cdecl wcscpy_s(wchar_t*,size_t,const wchar_t*);
-size_t   __cdecl wcscspn(const wchar_t*,const wchar_t*);
-size_t   __cdecl wcslen(const wchar_t*);
-wchar_t* __cdecl wcsncat(wchar_t*,const wchar_t*,size_t);
-errno_t  __cdecl wcsncat_s(wchar_t *, size_t, const wchar_t *, size_t);
-int      __cdecl wcsncmp(const wchar_t*,const wchar_t*,size_t);
-wchar_t* __cdecl wcsncpy(wchar_t*,const wchar_t*,size_t);
-errno_t  __cdecl wcsncpy_s(wchar_t*,size_t,const wchar_t*,size_t);
-size_t   __cdecl wcsnlen(const size_t*,size_t);
-wchar_t* __cdecl wcspbrk(const wchar_t*,const wchar_t*);
-wchar_t* __cdecl wcsrchr(const wchar_t*,wchar_t wcFor);
-size_t   __cdecl wcsspn(const wchar_t*,const wchar_t*);
-wchar_t* __cdecl wcsstr(const wchar_t*,const wchar_t*);
-wchar_t* __cdecl wcstok_s(wchar_t*,const wchar_t*,wchar_t**);
-size_t   __cdecl wcsxfrm(wchar_t*,const wchar_t*,size_t);
-
-#ifdef _UCRT
-wchar_t* __cdecl wcstok(wchar_t*,const wchar_t*,wchar_t**);
-static inline wchar_t* _wcstok(wchar_t* str, const wchar_t *delim) { return wcstok(str, delim, NULL); }
-#  ifdef __cplusplus
-extern "C++" inline wchar_t* wcstok(wchar_t* str, const wchar_t *delim) { return wcstok(str, delim, NULL); }
-#  elif defined(_CRT_NON_CONFORMING_WCSTOK)
-#    define wcstok _wcstok
-#  endif
-#else /* _UCRT */
-wchar_t* __cdecl wcstok(wchar_t*,const wchar_t*);
-#  define _wcstok wcstok
-#endif /* _UCRT */
-
-#endif /* _WSTRING_DEFINED */
 
 wchar_t __cdecl btowc(int);
 size_t  __cdecl mbrlen(const char *,size_t,mbstate_t*);
