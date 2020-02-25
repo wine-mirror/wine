@@ -26,12 +26,11 @@
 
 static void test_IClientSecurity(void)
 {
-    static const WCHAR rootW[] = {'R','O','O','T','\\','C','I','M','V','2',0};
     HRESULT hr;
     IWbemLocator *locator;
     IWbemServices *services;
     IClientSecurity *security;
-    BSTR path = SysAllocString( rootW );
+    BSTR path = SysAllocString( L"ROOT\\CIMV2" );
     ULONG refs;
 
     hr = CoCreateInstance( &CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (void **)&locator );
@@ -86,33 +85,6 @@ static void test_IClientSecurity(void)
 
 static void test_IWbemLocator(void)
 {
-    static const WCHAR path0W[] = {0};
-    static const WCHAR path1W[] = {'\\',0};
-    static const WCHAR path2W[] = {'\\','\\',0};
-    static const WCHAR path3W[] = {'\\','\\','.',0};
-    static const WCHAR path4W[] = {'\\','\\','.','\\',0};
-    static const WCHAR path5W[] = {'\\','R','O','O','T',0};
-    static const WCHAR path6W[] = {'\\','\\','R','O','O','T',0};
-    static const WCHAR path7W[] = {'\\','\\','.','R','O','O','T',0};
-    static const WCHAR path8W[] = {'\\','\\','.','\\','N','O','N','E',0};
-    static const WCHAR path9W[] = {'\\','\\','.','\\','R','O','O','T',0};
-    static const WCHAR path10W[] = {'\\','\\','\\','.','\\','R','O','O','T',0};
-    static const WCHAR path11W[] = {'\\','/','.','\\','R','O','O','T',0};
-    static const WCHAR path12W[] = {'/','/','.','\\','R','O','O','T',0};
-    static const WCHAR path13W[] = {'\\','\\','.','/','R','O','O','T',0};
-    static const WCHAR path14W[] = {'/','/','.','/','R','O','O','T',0};
-    static const WCHAR path15W[] = {'N','O','N','E',0};
-    static const WCHAR path16W[] = {'R','O','O','T',0};
-    static const WCHAR path17W[] = {'R','O','O','T','\\','N','O','N','E',0};
-    static const WCHAR path18W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
-    static const WCHAR path19W[] = {'R','O','O','T','\\','\\','C','I','M','V','2',0};
-    static const WCHAR path20W[] = {'R','O','O','T','\\','C','I','M','V','2','\\',0};
-    static const WCHAR path21W[] = {'R','O','O','T','/','C','I','M','V','2',0};
-    static const WCHAR path22W[] = {'r','o','o','t','\\','d','e','f','a','u','l','t',0};
-    static const WCHAR path23W[] = {'r','o','o','t','\\','c','i','m','v','0',0};
-    static const WCHAR path24W[] = {'r','o','o','t','\\','c','i','m','v','1',0};
-    static const WCHAR path25W[] = {'\\','\\','l','o','c','a','l','h','o','s','t','\\','R','O','O','T',0};
-    static const WCHAR path26W[] = {'\\','\\','L','O','C','A','L','H','O','S','T','\\','R','O','O','T',0};
     static const struct
     {
         const WCHAR *path;
@@ -122,33 +94,33 @@ static void test_IWbemLocator(void)
     }
     test[] =
     {
-        { path0W, WBEM_E_INVALID_NAMESPACE },
-        { path1W, WBEM_E_INVALID_NAMESPACE },
-        { path2W, WBEM_E_INVALID_NAMESPACE },
-        { path3W, WBEM_E_INVALID_NAMESPACE },
-        { path4W, WBEM_E_INVALID_NAMESPACE, FALSE, WBEM_E_INVALID_PARAMETER },
-        { path5W, WBEM_E_INVALID_NAMESPACE },
-        { path6W, 0x800706ba, TRUE },
-        { path7W, 0x800706ba, TRUE },
-        { path8W, WBEM_E_INVALID_NAMESPACE },
-        { path9W, S_OK },
-        { path10W, WBEM_E_INVALID_PARAMETER },
-        { path11W, S_OK, FALSE, WBEM_E_INVALID_PARAMETER },
-        { path12W, S_OK },
-        { path13W, S_OK },
-        { path14W, S_OK },
-        { path15W, WBEM_E_INVALID_NAMESPACE },
-        { path16W, S_OK },
-        { path17W, WBEM_E_INVALID_NAMESPACE },
-        { path18W, S_OK },
-        { path19W, WBEM_E_INVALID_NAMESPACE, FALSE, WBEM_E_INVALID_PARAMETER },
-        { path20W, WBEM_E_INVALID_NAMESPACE, FALSE, WBEM_E_INVALID_PARAMETER },
-        { path21W, S_OK },
-        { path22W, S_OK },
-        { path23W, WBEM_E_INVALID_NAMESPACE },
-        { path24W, WBEM_E_INVALID_NAMESPACE },
-        { path25W, S_OK },
-        { path26W, S_OK }
+        { L"", WBEM_E_INVALID_NAMESPACE },
+        { L"\\", WBEM_E_INVALID_NAMESPACE },
+        { L"\\\\", WBEM_E_INVALID_NAMESPACE },
+        { L"\\\\.", WBEM_E_INVALID_NAMESPACE },
+        { L"\\\\.\\", WBEM_E_INVALID_NAMESPACE, FALSE, WBEM_E_INVALID_PARAMETER },
+        { L"\\ROOT", WBEM_E_INVALID_NAMESPACE },
+        { L"\\\\ROOT", 0x800706ba, TRUE },
+        { L"\\\\.ROOT", 0x800706ba, TRUE },
+        { L"\\\\.\\NONE", WBEM_E_INVALID_NAMESPACE },
+        { L"\\\\.\\ROOT", S_OK },
+        { L"\\\\\\.\\ROOT", WBEM_E_INVALID_PARAMETER },
+        { L"\\/.\\ROOT", S_OK, FALSE, WBEM_E_INVALID_PARAMETER },
+        { L"//.\\ROOT", S_OK },
+        { L"\\\\./ROOT", S_OK },
+        { L"//./ROOT", S_OK },
+        { L"NONE", WBEM_E_INVALID_NAMESPACE },
+        { L"ROOT", S_OK },
+        { L"ROOT\\NONE", WBEM_E_INVALID_NAMESPACE },
+        { L"ROOT\\CIMV2", S_OK },
+        { L"ROOT\\\\CIMV2", WBEM_E_INVALID_NAMESPACE, FALSE, WBEM_E_INVALID_PARAMETER },
+        { L"ROOT\\CIMV2\\", WBEM_E_INVALID_NAMESPACE, FALSE, WBEM_E_INVALID_PARAMETER },
+        { L"ROOT/CIMV2", S_OK },
+        { L"root\\default", S_OK },
+        { L"root\\cimv0", WBEM_E_INVALID_NAMESPACE },
+        { L"root\\cimv1", WBEM_E_INVALID_NAMESPACE },
+        { L"\\\\localhost\\ROOT", S_OK },
+        { L"\\\\LOCALHOST\\ROOT", S_OK }
     };
     IWbemLocator *locator;
     IWbemServices *services;
