@@ -24,6 +24,7 @@
 #include "ntddstor.h"
 #include <stdio.h>
 #include "ddk/ntddcdvd.h"
+#include "ddk/mountmgr.h"
 
 #include <pshpack1.h>
 struct COMPLETE_DVD_LAYER_DESCRIPTOR
@@ -105,11 +106,12 @@ static void test_query_dos_deviceA(void)
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
-static void test_define_dos_deviceA(void)
+static void test_dos_devices(void)
 {
+    char buf[MAX_PATH], buf2[400];
     char drivestr[3];
-    char buf[MAX_PATH];
-    DWORD ret;
+    HANDLE file;
+    BOOL ret;
 
     /* Find an unused drive letter */
     drivestr[1] = ':';
@@ -123,20 +125,65 @@ static void test_define_dos_deviceA(void)
         return;
     }
 
-    /* Map it to point to the current directory */
-    ret = GetCurrentDirectoryA(sizeof(buf), buf);
-    ok(ret, "GetCurrentDir\n");
+    ret = DefineDosDeviceA( 0, drivestr, "C:/windows/" );
+    todo_wine ok(ret, "failed to define drive %s, error %u\n", drivestr, GetLastError());
 
-    ret = DefineDosDeviceA(0, drivestr, buf);
-    todo_wine
-    ok(ret, "Could not make drive %s point to %s!\n", drivestr, buf);
+    ret = QueryDosDeviceA( drivestr, buf, sizeof(buf) );
+    todo_wine ok(ret, "failed to query drive %s, error %u\n", drivestr, GetLastError());
+    todo_wine ok(!strcmp(buf, "\\??\\C:\\windows\\"), "got path %s\n", debugstr_a(buf));
 
-    if (!ret) {
-        skip("can't test removing fake drive\n");
-    } else {
-	ret = DefineDosDeviceA(DDD_REMOVE_DEFINITION, drivestr, NULL);
-	ok(ret, "Could not remove fake drive %s!\n", drivestr);
-    }
+    sprintf(buf, "%s/system32", drivestr);
+    file = CreateFileA( buf, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
+    todo_wine ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    CloseHandle( file );
+
+    /* but it's not a volume mount point */
+
+    sprintf(buf, "%s\\", drivestr);
+    ret = GetVolumeNameForVolumeMountPointA( buf, buf2, sizeof(buf2) );
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+
+    ret = DefineDosDeviceA(DDD_REMOVE_DEFINITION, drivestr, NULL);
+    todo_wine ok(ret, "failed to remove drive %s, error %u\n", drivestr, GetLastError());
+
+    ret = QueryDosDeviceA( drivestr, buf, sizeof(buf) );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %u\n", GetLastError());
+
+    sprintf(buf, "%s/system32", drivestr);
+    file = CreateFileA( buf, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
+    ok(file == INVALID_HANDLE_VALUE, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_PATH_NOT_FOUND, "got error %u\n", GetLastError());
+
+    /* try with DDD_RAW_TARGET_PATH */
+
+    ret = DefineDosDeviceA( DDD_RAW_TARGET_PATH, drivestr, "\\??\\C:\\windows\\" );
+    ok(ret, "failed to define drive %s, error %u\n", drivestr, GetLastError());
+
+    ret = QueryDosDeviceA( drivestr, buf, sizeof(buf) );
+    todo_wine ok(ret, "failed to query drive %s, error %u\n", drivestr, GetLastError());
+    todo_wine ok(!strcmp(buf, "\\??\\C:\\windows\\"), "got path %s\n", debugstr_a(buf));
+
+    sprintf(buf, "%s/system32", drivestr);
+    file = CreateFileA( buf, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
+    todo_wine ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    CloseHandle( file );
+
+    sprintf(buf, "%s\\", drivestr);
+    ret = GetVolumeNameForVolumeMountPointA( buf, buf2, sizeof(buf2) );
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+
+    ret = DefineDosDeviceA(DDD_REMOVE_DEFINITION, drivestr, NULL);
+    ok(ret, "failed to remove drive %s, error %u\n", drivestr, GetLastError());
+
+    ret = QueryDosDeviceA( drivestr, buf, sizeof(buf) );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %u\n", GetLastError());
 }
 
 static void test_FindFirstVolume(void)
@@ -1272,7 +1319,7 @@ START_TEST(volume)
     pGetVolumePathNamesForVolumeNameW = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameW");
 
     test_query_dos_deviceA();
-    test_define_dos_deviceA();
+    test_dos_devices();
     test_FindFirstVolume();
     test_GetVolumePathNameA();
     test_GetVolumePathNameW();
