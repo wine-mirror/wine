@@ -456,6 +456,20 @@ static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags
 
     buffers[0].dwStatus = 0;
 
+    if (!buffers[0].pBuffer)
+    {
+        while ((err = mpg123_read(This->mh, NULL, 0, &written)) == MPG123_NEW_FORMAT);
+        if (err == MPG123_NEED_MORE)
+            return S_OK;
+        else if (err == MPG123_ERR)
+            ERR("mpg123_read() failed: %s\n", mpg123_strerror(This->mh));
+        else if (err != MPG123_OK)
+            ERR("mpg123_read() returned %d\n", err);
+
+        buffers[0].dwStatus = DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE;
+        return S_OK;
+    }
+
     if (!This->buffer)
         return S_FALSE;
 

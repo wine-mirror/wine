@@ -235,8 +235,49 @@ static void test_convert(void)
     ok(hr == S_FALSE, "got %#x\n", hr);
     ok(output.dwStatus == 0, "got %#x\n", output.dwStatus);
 
+    output.pBuffer = NULL;
+    output.dwStatus = 0xdeadbeef;
+    output.rtTimestamp = 0xdeadbeef;
+    output.rtTimelength = 0xdeadbeef;
+    hr = IMediaObject_ProcessOutput(dmo, DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER, 1, &output, &status);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!output.pBuffer, "Got buffer %p.\n", output.pBuffer);
+    ok(!output.dwStatus, "Got status %#x.\n", output.dwStatus);
+    ok(output.rtTimestamp == 0xdeadbeef, "Got timestamp %s.\n", wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == 0xdeadbeef, "Got length %s.\n", wine_dbgstr_longlong(output.rtTimelength));
+
     hr = IMediaObject_ProcessInput(dmo, 0, &inbuf.IMediaBuffer_iface, 0, 0, 0);
     ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IMediaObject_ProcessInput(dmo, 0, &inbuf.IMediaBuffer_iface, 0, 0, 0);
+    ok(hr == DMO_E_NOTACCEPTING, "Got hr %#x.\n", hr);
+
+    output.pBuffer = NULL;
+    output.dwStatus = 0xdeadbeef;
+    output.rtTimestamp = 0xdeadbeef;
+    output.rtTimelength = 0xdeadbeef;
+    hr = IMediaObject_ProcessOutput(dmo, DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER, 1, &output, &status);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!output.pBuffer, "Got buffer %p.\n", output.pBuffer);
+    ok(output.dwStatus == O_INCOMPLETE, "Got status %#x.\n", output.dwStatus);
+    ok(output.rtTimestamp == 0xdeadbeef, "Got timestamp %s.\n", wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == 0xdeadbeef, "Got length %s.\n", wine_dbgstr_longlong(output.rtTimelength));
+    ok(inbuf.refcount == 2, "Got refcount %d.\n", inbuf.refcount);
+
+    hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!output.pBuffer, "Got buffer %p.\n", output.pBuffer);
+    ok(output.dwStatus == O_INCOMPLETE, "Got status %#x.\n", output.dwStatus);
+    ok(output.rtTimestamp == 0xdeadbeef, "Got timestamp %s.\n", wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == 0xdeadbeef, "Got length %s.\n", wine_dbgstr_longlong(output.rtTimelength));
+    ok(inbuf.refcount == 2, "Got refcount %d.\n", inbuf.refcount);
+
+    output.pBuffer = &outbuf.IMediaBuffer_iface;
+    outbuf.len = 0;
+    outbuf.maxlen = 5000;
+    hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(outbuf.len > 1152 && outbuf.len <= 5000, "got %u\n", written);
 
     IMediaObject_Release(dmo);
     ok(inbuf.refcount == 1, "Got outstanding refcount %d.\n", inbuf.refcount);
