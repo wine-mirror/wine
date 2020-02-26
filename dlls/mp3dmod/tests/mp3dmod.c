@@ -230,6 +230,7 @@ static void test_convert(void)
         "got %s\n", wine_dbgstr_longlong(output.rtTimelength));
     ok(inbuf.refcount == 1, "Got refcount %d.\n", inbuf.refcount);
     ok(outbuf.refcount == 1, "Got refcount %d.\n", inbuf.refcount);
+    written += outbuf.len;
 
     hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
     ok(hr == S_FALSE, "got %#x\n", hr);
@@ -277,7 +278,41 @@ static void test_convert(void)
     outbuf.maxlen = 5000;
     hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(outbuf.len > 1152 && outbuf.len <= 5000, "got %u\n", written);
+    ok(outbuf.len > 1152 && outbuf.len <= 5000, "Got length %u.\n", outbuf.len);
+    ok(output.dwStatus == (O_SYNCPOINT | O_TIME | O_TIMELENGTH | O_INCOMPLETE),
+            "Got status %#x.\n", output.dwStatus);
+    ok(output.rtTimestamp == samplelen(written, 48000), "Got timestamp %s.\n",
+            wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == samplelen(outbuf.len, 48000),
+            "Got length %s.\n", wine_dbgstr_longlong(output.rtTimelength));
+    ok(inbuf.refcount == 2, "Got refcount %d.\n", inbuf.refcount);
+    ok(outbuf.refcount == 1, "Got refcount %d.\n", inbuf.refcount);
+
+    hr = IMediaObject_Flush(dmo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(inbuf.refcount == 1, "Got refcount %d.\n", inbuf.refcount);
+
+    outbuf.len = 0;
+    outbuf.maxlen = 5000;
+    hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IMediaObject_Flush(dmo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaObject_ProcessInput(dmo, 0, &inbuf.IMediaBuffer_iface, 0, 0, 0);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(outbuf.len > 1152 && outbuf.len <= 5000, "Got length %u.\n", outbuf.len);
+    ok(output.dwStatus == (O_SYNCPOINT | O_TIME | O_TIMELENGTH | O_INCOMPLETE),
+            "Got status %#x.\n", output.dwStatus);
+    ok(!output.rtTimestamp, "Got timestamp %s.\n", wine_dbgstr_longlong(output.rtTimestamp));
+    ok(output.rtTimelength == samplelen(outbuf.len, 48000),
+            "Got length %s.\n", wine_dbgstr_longlong(output.rtTimelength));
+    ok(inbuf.refcount == 2, "Got refcount %d.\n", inbuf.refcount);
+    ok(outbuf.refcount == 1, "Got refcount %d.\n", inbuf.refcount);
 
     IMediaObject_Release(dmo);
     ok(inbuf.refcount == 1, "Got outstanding refcount %d.\n", inbuf.refcount);

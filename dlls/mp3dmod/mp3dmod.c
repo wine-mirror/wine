@@ -358,9 +358,20 @@ static HRESULT WINAPI MediaObject_SetInputMaxLatency(IMediaObject *iface, DWORD 
 
 static HRESULT WINAPI MediaObject_Flush(IMediaObject *iface)
 {
-    FIXME("(%p)->() stub!\n", iface);
+    struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    if (dmo->buffer)
+        IMediaBuffer_Release(dmo->buffer);
+    dmo->buffer = NULL;
+    dmo->timestamp = 0;
+
+    /* mpg123 doesn't give us a way to flush, so just close and reopen the feed. */
+    mpg123_close(dmo->mh);
+    mpg123_open_feed(dmo->mh);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_Discontinuity(IMediaObject *iface, DWORD index)
