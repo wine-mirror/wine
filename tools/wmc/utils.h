@@ -43,12 +43,17 @@ void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 
 char *dup_basename(const char *name, const char *ext);
+int strendswith( const char *str, const char *end );
 
 WCHAR *xunistrdup(const WCHAR * str);
 WCHAR *unistrcpy(WCHAR *dst, const WCHAR *src);
 int unistrlen(const WCHAR *s);
 int unistricmp(const WCHAR *s1, const WCHAR *s2);
 int unistrcmp(const WCHAR *s1, const WCHAR *s2);
+WCHAR *utf8_to_unicode( const char *src, int srclen, int *dstlen );
+char *unicode_to_utf8( const WCHAR *src, int srclen, int *dstlen );
+int is_valid_codepage(int id);
+WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstlen );
 
 /* buffer management */
 

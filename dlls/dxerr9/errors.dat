@@ -281,7 +281,7 @@ DDERR_INVALIDPIXELFORMAT                 pixel format was invalid as specified
 DDERR_INVALIDRECT                        Rectangle provided was invalid.
 DDERR_LOCKEDSURFACES                     Operation could not be carried out because one or more surfaces are locked
 DDERR_NO3D                               There is no 3D present.
-DDERR_NOALPHAHW                          Operation could not be carried out because there is no alpha accleration hardware present or available.
+DDERR_NOALPHAHW                          Operation could not be carried out because there is no alpha acceleration hardware present or available.
 DDERR_NOSTEREOHARDWARE                   Operation could not be carried out because there is no stereo hardware present or available.
 DDERR_NOSURFACELEFT                      Operation could not be carried out because there is no hardware present which supports stereo surfaces
 DDERR_NOCLIPLIST                         no clip list available
@@ -348,7 +348,7 @@ DDERR_NOBLTHW                            No blter.
 DDERR_NODDROPSHW                         No DirectDraw ROP hardware.
 DDERR_OVERLAYNOTVISIBLE                  returned when GetOverlayPosition is called on a hidden overlay
 DDERR_NOOVERLAYDEST                      returned when GetOverlayPosition is called on an overlay that UpdateOverlay has never been called on to establish a destination.
-DDERR_INVALIDPOSITION                    returned when the position of the overlay on the destination is no longer legal for that destionation.
+DDERR_INVALIDPOSITION                    returned when the position of the overlay on the destination is no longer legal for that destination.
 DDERR_NOTAOVERLAYSURFACE                 returned when an overlay member is called for a non-overlay surface
 DDERR_EXCLUSIVEMODEALREADYSET            An attempt was made to set the cooperative level when it was already set to exclusive.
 DDERR_NOTFLIPPABLE                       An attempt has been made to flip a surface that is not flippable.

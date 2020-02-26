@@ -1,0 +1,11 @@
+MODULE    = qasf.dll
+IMPORTS   = strmbase dmoguids strmiids uuid ole32
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	dmowrapper.c \
+	qasf_main.c
+
+IDL_SRCS = \
+	qasf_classes.idl

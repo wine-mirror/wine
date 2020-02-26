@@ -33,6 +33,7 @@
 #include "dmusici.h"
 
 #include "dmstyle_private.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
 

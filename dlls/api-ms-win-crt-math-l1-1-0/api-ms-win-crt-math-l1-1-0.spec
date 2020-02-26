@@ -77,11 +77,11 @@
 @ cdecl _fdtest(ptr) ucrtbase._fdtest
 @ stub _fdunscale
 @ cdecl _finite(double) ucrtbase._finite
-@ cdecl -arch=arm,x86_64,arm64 _finitef(float) ucrtbase._finitef
+@ cdecl -arch=!i386 _finitef(float) ucrtbase._finitef
 @ cdecl _fpclass(double) ucrtbase._fpclass
 @ stub _fpclassf
 @ cdecl -arch=i386 -ret64 _ftol() ucrtbase._ftol
-@ stub _get_FMA3_enable
+@ cdecl -arch=win64 _get_FMA3_enable() ucrtbase._get_FMA3_enable
 @ cdecl _hypot(double double) ucrtbase._hypot
 @ cdecl _hypotf(float float) ucrtbase._hypotf
 @ cdecl _isnan(double) ucrtbase._isnan
@@ -112,7 +112,7 @@
 @ cdecl -arch=i386 -norelay _libm_sse2_sqrt_precise() ucrtbase._libm_sse2_sqrt_precise
 @ cdecl -arch=i386 -norelay _libm_sse2_tan_precise() ucrtbase._libm_sse2_tan_precise
 @ cdecl _logb(double) ucrtbase._logb
-@ cdecl -arch=arm,x86_64,arm64 _logbf(float) ucrtbase._logbf
+@ cdecl -arch=!i386 _logbf(float) ucrtbase._logbf
 @ cdecl _nextafter(double double) ucrtbase._nextafter
 @ cdecl -arch=x86_64 _nextafterf(float float) ucrtbase._nextafterf
 @ cdecl _scalb(double long) ucrtbase._scalb
@@ -123,19 +123,19 @@
 @ cdecl _y1(double) ucrtbase._y1
 @ cdecl _yn(long double) ucrtbase._yn
 @ cdecl acos(double) ucrtbase.acos
-@ cdecl -arch=arm,x86_64,arm64 acosf(float) ucrtbase.acosf
+@ cdecl -arch=!i386 acosf(float) ucrtbase.acosf
 @ cdecl acosh(double) ucrtbase.acosh
 @ cdecl acoshf(float) ucrtbase.acoshf
 @ cdecl acoshl(double) ucrtbase.acoshl
 @ cdecl asin(double) ucrtbase.asin
-@ cdecl -arch=arm,x86_64,arm64 asinf(float) ucrtbase.asinf
+@ cdecl -arch=!i386 asinf(float) ucrtbase.asinf
 @ cdecl asinh(double) ucrtbase.asinh
 @ cdecl asinhf(float) ucrtbase.asinhf
 @ cdecl asinhl(double) ucrtbase.asinhl
 @ cdecl atan(double) ucrtbase.atan
 @ cdecl atan2(double double) ucrtbase.atan2
-@ cdecl -arch=arm,x86_64,arm64 atan2f(float float) ucrtbase.atan2f
-@ cdecl -arch=arm,x86_64,arm64 atanf(float) ucrtbase.atanf
+@ cdecl -arch=!i386 atan2f(float float) ucrtbase.atan2f
+@ cdecl -arch=!i386 atanf(float) ucrtbase.atanf
 @ cdecl atanh(double) ucrtbase.atanh
 @ cdecl atanhf(float) ucrtbase.atanhf
 @ cdecl atanhl(double) ucrtbase.atanhl
@@ -173,7 +173,7 @@
 @ stub ccoshl
 @ stub ccosl
 @ cdecl ceil(double) ucrtbase.ceil
-@ cdecl -arch=arm,x86_64,arm64 ceilf(float) ucrtbase.ceilf
+@ cdecl -arch=!i386 ceilf(float) ucrtbase.ceilf
 @ stub cexp
 @ stub cexpf
 @ stub cexpl
@@ -193,9 +193,9 @@
 @ cdecl copysignf(float float) ucrtbase.copysignf
 @ cdecl copysignl(double double) ucrtbase.copysignl
 @ cdecl cos(double) ucrtbase.cos
-@ cdecl -arch=arm,x86_64,arm64 cosf(float) ucrtbase.cosf
+@ cdecl -arch=!i386 cosf(float) ucrtbase.cosf
 @ cdecl cosh(double) ucrtbase.cosh
-@ cdecl -arch=arm,x86_64,arm64 coshf(float) ucrtbase.coshf
+@ cdecl -arch=!i386 coshf(float) ucrtbase.coshf
 @ stub cpow
 @ stub cpowf
 @ stub cpowl
@@ -230,20 +230,20 @@
 @ cdecl exp2(double) ucrtbase.exp2
 @ cdecl exp2f(float) ucrtbase.exp2f
 @ cdecl exp2l(double) ucrtbase.exp2l
-@ cdecl -arch=arm,x86_64,arm64 expf(float) ucrtbase.expf
+@ cdecl -arch=!i386 expf(float) ucrtbase.expf
 @ cdecl expm1(double) ucrtbase.expm1
 @ cdecl expm1f(float) ucrtbase.expm1f
 @ cdecl expm1l(double) ucrtbase.expm1l
 @ cdecl fabs(double) ucrtbase.fabs
 @ cdecl -arch=arm,arm64 fabsf(float) ucrtbase.fabsf
-@ stub fdim
-@ stub fdimf
-@ stub fdiml
+@ cdecl fdim(double double) ucrtbase.fdim
+@ cdecl fdimf(float float) ucrtbase.fdimf
+@ cdecl fdiml(double double) ucrtbase.fdiml
 @ cdecl floor(double) ucrtbase.floor
-@ cdecl -arch=arm,x86_64,arm64 floorf(float) ucrtbase.floorf
+@ cdecl -arch=!i386 floorf(float) ucrtbase.floorf
 @ cdecl fma(double double double) ucrtbase.fma
-@ cdecl -arch=arm,x86_64,arm64 fmaf(float float float) ucrtbase.fmaf
-@ stub fmal
+@ cdecl fmaf(float float float) ucrtbase.fmaf
+@ cdecl fmal(double double double) ucrtbase.fmal
 @ cdecl fmax(double double) ucrtbase.fmax
 @ cdecl fmaxf(float float) ucrtbase.fmaxf
 @ cdecl fmaxl(double double) ucrtbase.fmaxl
@@ -251,7 +251,7 @@
 @ cdecl fminf(float float) ucrtbase.fminf
 @ cdecl fminl(double double) ucrtbase.fminl
 @ cdecl fmod(double double) ucrtbase.fmod
-@ cdecl -arch=arm,x86_64,arm64 fmodf(float float) ucrtbase.fmodf
+@ cdecl -arch=!i386 fmodf(float float) ucrtbase.fmodf
 @ cdecl frexp(double ptr) ucrtbase.frexp
 @ cdecl hypot(double double) ucrtbase.hypot
 @ cdecl ilogb(double) ucrtbase.ilogb
@@ -269,7 +269,7 @@
 @ cdecl -ret64 llroundl(double) ucrtbase.llroundl
 @ cdecl log(double) ucrtbase.log
 @ cdecl log10(double) ucrtbase.log10
-@ cdecl -arch=arm,x86_64,arm64 log10f(float) ucrtbase.log10f
+@ cdecl -arch=!i386 log10f(float) ucrtbase.log10f
 @ cdecl log1p(double) ucrtbase.log1p
 @ cdecl log1pf(float) ucrtbase.log1pf
 @ cdecl log1pl(double) ucrtbase.log1pl
@@ -279,7 +279,7 @@
 @ cdecl logb(double) ucrtbase.logb
 @ cdecl logbf(float) ucrtbase.logbf
 @ cdecl logbl(double) ucrtbase.logbl
-@ cdecl -arch=arm,x86_64,arm64 logf(float) ucrtbase.logf
+@ cdecl -arch=!i386 logf(float) ucrtbase.logf
 @ cdecl lrint(double) ucrtbase.lrint
 @ cdecl lrintf(float) ucrtbase.lrintf
 @ cdecl lrintl(double) ucrtbase.lrintl
@@ -287,7 +287,7 @@
 @ cdecl lroundf(float) ucrtbase.lroundf
 @ cdecl lroundl(double) ucrtbase.lroundl
 @ cdecl modf(double ptr) ucrtbase.modf
-@ cdecl -arch=arm,x86_64,arm64 modff(float ptr) ucrtbase.modff
+@ cdecl -arch=!i386 modff(float ptr) ucrtbase.modff
 @ cdecl nan(str) ucrtbase.nan
 @ cdecl nanf(str) ucrtbase.nanf
 @ cdecl nanl(str) ucrtbase.nanl
@@ -304,7 +304,7 @@
 @ stub normf
 @ stub norml
 @ cdecl pow(double double) ucrtbase.pow
-@ cdecl -arch=arm,x86_64,arm64 powf(float float) ucrtbase.powf
+@ cdecl -arch=!i386 powf(float float) ucrtbase.powf
 @ cdecl remainder(double double) ucrtbase.remainder
 @ cdecl remainderf(float float) ucrtbase.remainderf
 @ cdecl remainderl(double double) ucrtbase.remainderl
@@ -324,18 +324,18 @@
 @ cdecl scalbnf(float long) ucrtbase.scalbnf
 @ cdecl scalbnl(double long) ucrtbase.scalbnl
 @ cdecl sin(double) ucrtbase.sin
-@ cdecl -arch=arm,x86_64,arm64 sinf(float) ucrtbase.sinf
+@ cdecl -arch=!i386 sinf(float) ucrtbase.sinf
 @ cdecl sinh(double) ucrtbase.sinh
-@ cdecl -arch=arm,x86_64,arm64 sinhf(float) ucrtbase.sinhf
+@ cdecl -arch=!i386 sinhf(float) ucrtbase.sinhf
 @ cdecl sqrt(double) ucrtbase.sqrt
-@ cdecl -arch=arm,x86_64,arm64 sqrtf(float) ucrtbase.sqrtf
+@ cdecl -arch=!i386 sqrtf(float) ucrtbase.sqrtf
 @ cdecl tan(double) ucrtbase.tan
-@ cdecl -arch=arm,x86_64,arm64 tanf(float) ucrtbase.tanf
+@ cdecl -arch=!i386 tanf(float) ucrtbase.tanf
 @ cdecl tanh(double) ucrtbase.tanh
-@ cdecl -arch=arm,x86_64,arm64 tanhf(float) ucrtbase.tanhf
-@ stub tgamma
-@ stub tgammaf
-@ stub tgammal
+@ cdecl -arch=!i386 tanhf(float) ucrtbase.tanhf
+@ cdecl tgamma(double) ucrtbase.tgamma
+@ cdecl tgammaf(float) ucrtbase.tgammaf
+@ cdecl tgammal(double) ucrtbase.tgammal
 @ cdecl trunc(double) ucrtbase.trunc
 @ cdecl truncf(float) ucrtbase.truncf
 @ cdecl truncl(double) ucrtbase.truncl

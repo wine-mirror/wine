@@ -1,5 +1,5 @@
 MODULE    = winebus.sys
-IMPORTS   = ntoskrnl setupapi advapi32
+IMPORTS   = ntoskrnl advapi32
 EXTRALIBS = $(IOKIT_LIBS) $(UDEV_LIBS)
 EXTRAINCL = $(UDEV_CFLAGS) $(SDL2_CFLAGS)
 EXTRADLLFLAGS = -Wl,--subsystem,native

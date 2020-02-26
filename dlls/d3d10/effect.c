@@ -24,6 +24,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
+#define MAKE_TAG(ch0, ch1, ch2, ch3) \
+    ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
+    ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
+#define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
+#define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
+#define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
+#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
+#define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
+
 #define D3D10_FX10_TYPE_COLUMN_SHIFT    11
 #define D3D10_FX10_TYPE_COLUMN_MASK     (0x7 << D3D10_FX10_TYPE_COLUMN_SHIFT)
 
@@ -240,6 +249,183 @@ static const struct d3d10_effect_state_storage_info d3d10_effect_state_storage_i
     {D3D10_SVT_BLEND,        sizeof(default_blend_desc),         &default_blend_desc        },
     {D3D10_SVT_SAMPLER,      sizeof(default_sampler_desc),       &default_sampler_desc      },
 };
+
+#define WINE_D3D10_TO_STR(x) case x: return #x
+
+static const char *debug_d3d10_shader_variable_class(D3D10_SHADER_VARIABLE_CLASS c)
+{
+    switch (c)
+    {
+        WINE_D3D10_TO_STR(D3D10_SVC_SCALAR);
+        WINE_D3D10_TO_STR(D3D10_SVC_VECTOR);
+        WINE_D3D10_TO_STR(D3D10_SVC_MATRIX_ROWS);
+        WINE_D3D10_TO_STR(D3D10_SVC_MATRIX_COLUMNS);
+        WINE_D3D10_TO_STR(D3D10_SVC_OBJECT);
+        WINE_D3D10_TO_STR(D3D10_SVC_STRUCT);
+        default:
+            FIXME("Unrecognised D3D10_SHADER_VARIABLE_CLASS %#x.\n", c);
+            return "unrecognised";
+    }
+}
+
+static const char *debug_d3d10_shader_variable_type(D3D10_SHADER_VARIABLE_TYPE t)
+{
+    switch (t)
+    {
+        WINE_D3D10_TO_STR(D3D10_SVT_VOID);
+        WINE_D3D10_TO_STR(D3D10_SVT_BOOL);
+        WINE_D3D10_TO_STR(D3D10_SVT_INT);
+        WINE_D3D10_TO_STR(D3D10_SVT_FLOAT);
+        WINE_D3D10_TO_STR(D3D10_SVT_STRING);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURE);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURE1D);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURE2D);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURE3D);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURECUBE);
+        WINE_D3D10_TO_STR(D3D10_SVT_SAMPLER);
+        WINE_D3D10_TO_STR(D3D10_SVT_PIXELSHADER);
+        WINE_D3D10_TO_STR(D3D10_SVT_VERTEXSHADER);
+        WINE_D3D10_TO_STR(D3D10_SVT_UINT);
+        WINE_D3D10_TO_STR(D3D10_SVT_UINT8);
+        WINE_D3D10_TO_STR(D3D10_SVT_GEOMETRYSHADER);
+        WINE_D3D10_TO_STR(D3D10_SVT_RASTERIZER);
+        WINE_D3D10_TO_STR(D3D10_SVT_DEPTHSTENCIL);
+        WINE_D3D10_TO_STR(D3D10_SVT_BLEND);
+        WINE_D3D10_TO_STR(D3D10_SVT_BUFFER);
+        WINE_D3D10_TO_STR(D3D10_SVT_CBUFFER);
+        WINE_D3D10_TO_STR(D3D10_SVT_TBUFFER);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURE1DARRAY);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURE2DARRAY);
+        WINE_D3D10_TO_STR(D3D10_SVT_RENDERTARGETVIEW);
+        WINE_D3D10_TO_STR(D3D10_SVT_DEPTHSTENCILVIEW);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURE2DMS);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURE2DMSARRAY);
+        WINE_D3D10_TO_STR(D3D10_SVT_TEXTURECUBEARRAY);
+        default:
+            FIXME("Unrecognised D3D10_SHADER_VARIABLE_TYPE %#x.\n", t);
+            return "unrecognised";
+    }
+}
+
+#undef WINE_D3D10_TO_STR
+
+static void read_dword(const char **ptr, DWORD *d)
+{
+    memcpy(d, *ptr, sizeof(*d));
+    *ptr += sizeof(*d);
+}
+
+static void write_dword(char **ptr, DWORD d)
+{
+    memcpy(*ptr, &d, sizeof(d));
+    *ptr += sizeof(d);
+}
+
+static BOOL require_space(size_t offset, size_t count, size_t size, size_t data_size)
+{
+    return !count || (data_size - offset) / count >= size;
+}
+
+static void skip_dword_unknown(const char *location, const char **ptr, unsigned int count)
+{
+    unsigned int i;
+    DWORD d;
+
+    FIXME("Skipping %u unknown DWORDs (%s):\n", count, location);
+    for (i = 0; i < count; ++i)
+    {
+        read_dword(ptr, &d);
+        FIXME("\t0x%08x\n", d);
+    }
+}
+
+static void write_dword_unknown(char **ptr, DWORD d)
+{
+    FIXME("Writing unknown DWORD 0x%08x\n", d);
+    write_dword(ptr, d);
+}
+
+static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
+        HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx)
+{
+    const char *ptr = data;
+    HRESULT hr = S_OK;
+    DWORD chunk_count;
+    DWORD total_size;
+    unsigned int i;
+    DWORD version;
+    DWORD tag;
+
+    if (!data)
+    {
+        WARN("No data supplied.\n");
+        return E_FAIL;
+    }
+
+    read_dword(&ptr, &tag);
+    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
+
+    if (tag != TAG_DXBC)
+    {
+        WARN("Wrong tag.\n");
+        return E_FAIL;
+    }
+
+    skip_dword_unknown("DXBC checksum", &ptr, 4);
+
+    read_dword(&ptr, &version);
+    TRACE("version: %#x.\n", version);
+    if (version != 0x00000001)
+    {
+        WARN("Got unexpected DXBC version %#x.\n", version);
+        return E_FAIL;
+    }
+
+    read_dword(&ptr, &total_size);
+    TRACE("total size: %#x\n", total_size);
+
+    if (data_size != total_size)
+    {
+        WARN("Wrong size supplied.\n");
+        return E_FAIL;
+    }
+
+    read_dword(&ptr, &chunk_count);
+    TRACE("chunk count: %#x\n", chunk_count);
+
+    for (i = 0; i < chunk_count; ++i)
+    {
+        DWORD chunk_tag, chunk_size;
+        const char *chunk_ptr;
+        DWORD chunk_offset;
+
+        read_dword(&ptr, &chunk_offset);
+        TRACE("chunk %u at offset %#x\n", i, chunk_offset);
+
+        if (chunk_offset >= data_size || !require_space(chunk_offset, 2, sizeof(DWORD), data_size))
+        {
+            WARN("Invalid chunk offset %#x (data size %#lx).\n", chunk_offset, data_size);
+            return E_FAIL;
+        }
+
+        chunk_ptr = data + chunk_offset;
+
+        read_dword(&chunk_ptr, &chunk_tag);
+        read_dword(&chunk_ptr, &chunk_size);
+
+        if (!require_space(chunk_ptr - data, 1, chunk_size, data_size))
+        {
+            WARN("Invalid chunk size %#x (data size %#lx, chunk offset %#x).\n",
+                    chunk_size, data_size, chunk_offset);
+            return E_FAIL;
+        }
+
+        if (FAILED(hr = chunk_handler(chunk_ptr, chunk_size, chunk_tag, ctx)))
+            break;
+    }
+
+    return hr;
+}
 
 static BOOL fx10_get_string(const char *data, size_t data_size, DWORD offset, const char **s, size_t *l)
 {
@@ -1910,6 +2096,55 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
     return S_OK;
 }
 
+static HRESULT create_variable_buffer(struct d3d10_effect_variable *v, D3D10_CBUFFER_TYPE type)
+{
+    D3D10_BUFFER_DESC buffer_desc;
+    D3D10_SUBRESOURCE_DATA subresource_data;
+    D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    ID3D10Device *device = v->effect->device;
+    HRESULT hr;
+
+    if (!(v->u.buffer.local_buffer = heap_alloc_zero(v->type->size_unpacked)))
+    {
+        ERR("Failed to allocate local constant buffer memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    buffer_desc.ByteWidth = v->type->size_unpacked;
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    if (type == D3D10_CT_CBUFFER)
+        buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    else
+        buffer_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+
+    subresource_data.pSysMem = v->u.buffer.local_buffer;
+    subresource_data.SysMemPitch = 0;
+    subresource_data.SysMemSlicePitch = 0;
+
+    if (FAILED(hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &subresource_data, &v->u.buffer.buffer)))
+            return hr;
+
+    if (type == D3D10_CT_TBUFFER)
+    {
+        srv_desc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
+        srv_desc.ViewDimension = D3D_SRV_DIMENSION_BUFFER;
+        srv_desc.Buffer.ElementOffset = 0;
+        srv_desc.Buffer.ElementWidth = v->type->size_unpacked / 16;
+        if (v->type->size_unpacked % 16)
+            WARN("Unexpected texture buffer size not a multiple of 16.\n");
+
+        if (FAILED(hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)v->u.buffer.buffer,
+                &srv_desc, &v->u.buffer.resource_view)))
+            return hr;
+    }
+    else
+        v->u.buffer.resource_view = NULL;
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
         const char **ptr, struct d3d10_effect_variable *l)
 {
@@ -2095,6 +2330,12 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     TRACE("\tPacked size %#x.\n", l->type->size_packed);
     TRACE("\tBasetype: %s.\n", debug_d3d10_shader_variable_type(l->type->basetype));
     TRACE("\tTypeclass: %s.\n", debug_d3d10_shader_variable_class(l->type->type_class));
+
+    if (l->type->size_unpacked)
+    {
+        if (FAILED(hr = create_variable_buffer(l, d3d10_cbuffer_type)))
+            return hr;
+    }
 
     return S_OK;
 }
@@ -2574,6 +2815,13 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
         }
         heap_free(l->annotations);
     }
+
+    heap_free(l->u.buffer.local_buffer);
+
+    if (l->u.buffer.buffer)
+        ID3D10Buffer_Release(l->u.buffer.buffer);
+    if (l->u.buffer.resource_view)
+        ID3D10ShaderResourceView_Release(l->u.buffer.resource_view);
 }
 
 /* IUnknown methods */
@@ -2716,14 +2964,14 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
     if (index >= This->local_buffer_count)
     {
         WARN("Invalid index specified\n");
-        return (ID3D10EffectConstantBuffer *)&null_local_buffer;
+        return (ID3D10EffectConstantBuffer *)&null_local_buffer.ID3D10EffectVariable_iface;
     }
 
     l = &This->local_buffers[index];
 
     TRACE("Returning buffer %p, %s.\n", l, debugstr_a(l->name));
 
-    return (ID3D10EffectConstantBuffer *)l;
+    return (ID3D10EffectConstantBuffer *)&l->ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByName(ID3D10Effect *iface,
@@ -2741,13 +2989,13 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
         if (l->name && !strcmp(l->name, name))
         {
             TRACE("Returning buffer %p.\n", l);
-            return (ID3D10EffectConstantBuffer *)l;
+            return (ID3D10EffectConstantBuffer *)&l->ID3D10EffectVariable_iface;
         }
     }
 
     WARN("Invalid name specified\n");
 
-    return (ID3D10EffectConstantBuffer *)&null_local_buffer;
+    return (ID3D10EffectConstantBuffer *)&null_local_buffer.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableByIndex(ID3D10Effect *iface, UINT index)
@@ -3529,7 +3777,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_variab
 
     TRACE("iface %p\n", iface);
 
-    return (ID3D10EffectConstantBuffer *)This->buffer;
+    return (ID3D10EffectConstantBuffer *)&This->buffer->ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectScalarVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsScalar(

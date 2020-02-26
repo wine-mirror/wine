@@ -306,7 +306,7 @@ includelogicentry_t *pp_includelogiclist = NULL;
 
 #define YY_INPUT(buf,result,max_size)					     \
 	{								     \
-		result = wpp_callbacks->read(pp_status.file, buf, max_size); \
+		result = fread(buf, 1, max_size, pp_status.file);	     \
 	}
 
 #define BUFFERINITIALCAPACITY 256
@@ -353,7 +353,7 @@ void pp_writestring(const char *format, ...)
 		va_end(valist);
 	}
 
-	wpp_callbacks->write(buffer, len);
+        fwrite(buffer, 1, len, ppy_out);
 }
 
 %}
@@ -1340,7 +1340,7 @@ static bufferstackentry_t *pop_buffer(void)
 
 		if(!bufferstack[bufferstackidx].should_pop)
 		{
-			wpp_callbacks->close(pp_status.file);
+			fclose(pp_status.file);
 			pp_writestring("# %d \"%s\" 2\n", bufferstack[bufferstackidx].line_number, bufferstack[bufferstackidx].filename);
 
 			/* We have EOF, check the include logic */
@@ -1561,7 +1561,7 @@ static void put_buffer(const char *s, int len)
 	if(top_macro())
 		add_text_to_macro(s, len);
 	else
-		wpp_callbacks->write(s, len);
+		fwrite(s, 1, len, ppy_out);
 }
 
 
@@ -1620,8 +1620,8 @@ void pp_do_include(char *fname, int type)
 	pp_incl_state.ppp = NULL;
 
 	if(pp_status.debug)
-		fprintf(stderr, "pp_do_include: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n",
-                        pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ppp, pp_incl_state.ifdepth);
+		fprintf(stderr, "pp_do_include: %s:%d: include_state=%d, include_ifdepth=%d\n",
+                        pp_status.input, pp_status.line_number, pp_incl_state.state, pp_incl_state.ifdepth);
 	pp_status.file = fp;
 	ppy__switch_to_buffer(ppy__create_buffer(NULL, YY_BUF_SIZE));
 

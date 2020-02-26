@@ -242,7 +242,6 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         bstr = next_token.u.bstrVal;
 
         end++;
-        p = end;
         while (*end && *end != '}' && end - start < elem->len)
         {
             if (*end == '\\') end++;

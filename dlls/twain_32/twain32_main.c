@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -31,7 +29,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
-extern HINSTANCE DSM_hinstance;
+TW_UINT16 DSM_twCC;
+activeDS *activeSources;
+HINSTANCE DSM_hinstance;
 
 BOOL WINAPI DllMain (HINSTANCE hinstance, DWORD reason, LPVOID reserved)
 {

@@ -1,0 +1,12 @@
+MODULE    = mfmediaengine.dll
+IMPORTLIB = mfmediaengine
+IMPORTS = mfuuid uuid
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	main.c
+
+IDL_SRCS = \
+	mediaengine.idl \
+	mediaengine_classes.idl

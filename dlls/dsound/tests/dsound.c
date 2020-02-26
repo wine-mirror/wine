@@ -1063,7 +1063,7 @@ static HRESULT test_notify(LPDIRECTSOUNDBUFFER dsb,
                            DWORD expected)
 {
     HRESULT rc;
-    DWORD ret;
+    DWORD ret, status;
 
     rc=IDirectSoundBuffer_SetCurrentPosition(dsb,0);
     ok(rc==DS_OK,
@@ -1076,13 +1076,22 @@ static HRESULT test_notify(LPDIRECTSOUNDBUFFER dsb,
     if(rc!=DS_OK)
         return rc;
 
+    rc = IDirectSoundBuffer_GetStatus(dsb, &status);
+    ok(rc == DS_OK,"Failed %08x\n",rc);
+    ok(status == DSBSTATUS_PLAYING,"got %08x\n", status);
+
     rc=IDirectSoundBuffer_Stop(dsb);
     ok(rc==DS_OK,"IDirectSoundBuffer_Stop failed %08x\n",rc);
     if(rc!=DS_OK)
         return rc;
 
-    ret=WaitForMultipleObjects(count,event,FALSE,0);
+    rc = IDirectSoundBuffer_GetStatus(dsb, &status);
+    ok(rc == DS_OK,"Failed %08x\n",rc);
+    ok(status == 0 /* Stopped */,"got %08x\n", status);
+
+    ret = WaitForMultipleObjects(count, event, FALSE, 3000);
     ok(ret==expected,"expected %d. got %d\n",expected,ret);
+
     return rc;
 }
 
@@ -1537,7 +1546,7 @@ static void test_notifications(LPGUID lpGuid)
     WAVEFORMATEX wfx;
     DSBPOSITIONNOTIFY notifies[2];
     HANDLE handles[2];
-    DWORD expect;
+    DWORD expect, status;
     int cycles;
 
     rc = pDirectSoundCreate(lpGuid, &dso, NULL);
@@ -1607,11 +1616,19 @@ static void test_notifications(LPGUID lpGuid)
         ok(wait <= WAIT_OBJECT_0 + 1 && wait - WAIT_OBJECT_0 == expect,
            "Got unexpected notification order or timeout: %u\n", wait);
 
+        rc = IDirectSoundBuffer_GetStatus(buf, &status);
+        ok(rc == DS_OK,"Failed %08x\n",rc);
+        ok(status == (DSBSTATUS_PLAYING | DSBSTATUS_LOOPING),"got %08x\n", status);
+
         expect = !expect;
     }
 
     rc = IDirectSoundBuffer_Stop(buf);
     ok(rc == DS_OK, "Stop: %08x\n", rc);
+
+    rc = IDirectSoundBuffer_GetStatus(buf, &status);
+    ok(rc == DS_OK,"Failed %08x\n",rc);
+    ok(status == 0,"got %08x\n", status);
 
     CloseHandle(notifies[0].hEventNotify);
     CloseHandle(notifies[1].hEventNotify);

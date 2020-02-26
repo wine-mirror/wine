@@ -28,6 +28,7 @@
 #include "winsvc.h"
 #include "irot.h"
 #include "epm.h"
+#include "irpcss.h"
 
 #include "wine/debug.h"
 
@@ -37,53 +38,71 @@ static WCHAR rpcssW[] = {'R','p','c','S','s',0};
 static HANDLE exit_event;
 static SERVICE_STATUS_HANDLE service_handle;
 
-static BOOL RPCSS_Initialize(void)
+HRESULT __cdecl irpcss_get_thread_seq_id(handle_t h, DWORD *id)
 {
-  static unsigned short irot_protseq[] = IROT_PROTSEQ;
-  static unsigned short irot_endpoint[] = IROT_ENDPOINT;
-  static unsigned short epm_protseq[] = {'n','c','a','c','n','_','n','p',0};
-  static unsigned short epm_endpoint[] = {'\\','p','i','p','e','\\','e','p','m','a','p','p','e','r',0};
-  static unsigned short epm_protseq_lrpc[] = {'n','c','a','l','r','p','c',0};
-  static unsigned short epm_endpoint_lrpc[] = {'e','p','m','a','p','p','e','r',0};
-  RPC_STATUS status;
+    static LONG thread_seq_id;
+    *id = InterlockedIncrement(&thread_seq_id);
+    return S_OK;
+}
 
-  WINE_TRACE("\n");
+static RPC_STATUS RPCSS_Initialize(void)
+{
+    static unsigned short irot_protseq[] = IROT_PROTSEQ;
+    static unsigned short irot_endpoint[] = IROT_ENDPOINT;
+    static unsigned short epm_protseq[] = {'n','c','a','c','n','_','n','p',0};
+    static unsigned short epm_endpoint[] = {'\\','p','i','p','e','\\','e','p','m','a','p','p','e','r',0};
+    static unsigned short epm_protseq_lrpc[] = {'n','c','a','l','r','p','c',0};
+    static unsigned short epm_endpoint_lrpc[] = {'e','p','m','a','p','p','e','r',0};
+    static unsigned short irpcss_protseq[] = IRPCSS_PROTSEQ;
+    static unsigned short irpcss_endpoint[] = IRPCSS_ENDPOINT;
+    static const struct protseq_map
+    {
+        unsigned short *protseq;
+        unsigned short *endpoint;
+    } protseqs[] =
+    {
+        { epm_protseq, epm_endpoint },
+        { epm_protseq_lrpc, epm_endpoint_lrpc },
+        { irot_protseq, irot_endpoint },
+        { irpcss_protseq, irpcss_endpoint },
+    };
+    RPC_IF_HANDLE ifspecs[] =
+    {
+        epm_v3_0_s_ifspec,
+        Irot_v0_2_s_ifspec,
+        Irpcss_v0_0_s_ifspec,
+    };
+    RPC_STATUS status;
+    int i, j;
 
-  status = RpcServerRegisterIf(epm_v3_0_s_ifspec, NULL, NULL);
-  if (status != RPC_S_OK)
-    return status;
-  status = RpcServerRegisterIf(Irot_v0_2_s_ifspec, NULL, NULL);
-  if (status != RPC_S_OK)
-  {
-    RpcServerUnregisterIf(epm_v3_0_s_ifspec, NULL, FALSE);
-    return FALSE;
-  }
+    WINE_TRACE("\n");
 
-  status = RpcServerUseProtseqEpW(epm_protseq, RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
-                                  epm_endpoint, NULL);
-  if (status != RPC_S_OK)
-    goto fail;
+    for (i = 0, j = 0; i < ARRAY_SIZE(ifspecs); ++i, j = i)
+    {
+        status = RpcServerRegisterIf(ifspecs[i], NULL, NULL);
+        if (status != RPC_S_OK)
+            goto fail;
+    }
 
-  status = RpcServerUseProtseqEpW(epm_protseq_lrpc, RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
-                                  epm_endpoint_lrpc, NULL);
-  if (status != RPC_S_OK)
-      goto fail;
+    for (i = 0; i < ARRAY_SIZE(protseqs); ++i)
+    {
+        status = RpcServerUseProtseqEpW(protseqs[i].protseq, RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
+                protseqs[i].endpoint, NULL);
+        if (status != RPC_S_OK)
+            goto fail;
+    }
 
-  status = RpcServerUseProtseqEpW(irot_protseq, RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
-                                  irot_endpoint, NULL);
-  if (status != RPC_S_OK)
-    goto fail;
+    status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
+    if (status != RPC_S_OK)
+        goto fail;
 
-  status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
-  if (status != RPC_S_OK)
-    goto fail;
-
-  return TRUE;
+    return RPC_S_OK;
 
 fail:
-  RpcServerUnregisterIf(epm_v3_0_s_ifspec, NULL, FALSE);
-  RpcServerUnregisterIf(Irot_v0_2_s_ifspec, NULL, FALSE);
-  return FALSE;
+    for (i = 0; i < j; ++i)
+        RpcServerUnregisterIf(ifspecs[i], NULL, FALSE);
+
+    return status;
 }
 
 static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_data, LPVOID context )
@@ -121,10 +140,15 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
 static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 {
     SERVICE_STATUS status;
+    RPC_STATUS ret;
 
     TRACE( "starting service\n" );
 
-    if (!RPCSS_Initialize()) return;
+    if ((ret = RPCSS_Initialize()))
+    {
+        WARN("Failed to initialize rpc interfaces, status %d.\n", ret);
+        return;
+    }
 
     exit_event = CreateEventW( NULL, TRUE, FALSE, NULL );
 
@@ -148,7 +172,7 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     TRACE( "service stopped\n" );
 }
 
-int wmain( int argc, WCHAR *argv[] )
+int __cdecl wmain( int argc, WCHAR *argv[] )
 {
     static const SERVICE_TABLE_ENTRYW service_table[] =
     {

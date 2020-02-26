@@ -46,6 +46,8 @@
 #endif /* WIDE_SCANF */
 
 #ifdef CONSOLE
+#define _GETC_FUNC_(file) _getch()
+#define _STRTOD_NAME_(func) console_ ## func
 #define _GETC_(file) (consumed++, _getch())
 #define _UNGETC_(nch, file) do { _ungetch(nch); consumed--; } while(0)
 #define _LOCK_FILE_(file) MSVCRT__lock_file(MSVCRT_stdin)
@@ -67,11 +69,17 @@
 #ifdef STRING
 #undef _EOF_
 #define _EOF_ 0
+#define _GETC_FUNC_(file) (*file++)
+#ifdef WIDE_SCANF
+#define _STRTOD_NAME_(func) wstr_ ## func
+#else
+#define _STRTOD_NAME_(func) str_ ## func
+#endif
 #ifdef STRING_LEN
 #ifdef WIDE_SCANF
-#define _GETC_(file) (consumed==length ? '\0' : (consumed++, *file++))
+#define _GETC_(file) (consumed++, consumed>length ? '\0' : *file++)
 #else /* WIDE_SCANF */
-#define _GETC_(file) (consumed==length ? '\0' : (consumed++, (unsigned char)*file++))
+#define _GETC_(file) (consumed++, consumed>length ? '\0' : (unsigned char)*file++)
 #endif /* WIDE_SCANF */
 #define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
 #define _LOCK_FILE_(file) do {} while(0)
@@ -114,6 +122,8 @@
 #endif /* STRING_LEN */
 #else /* STRING */
 #ifdef WIDE_SCANF
+#define _GETC_FUNC_(file) MSVCRT_fgetwc(file)
+#define _STRTOD_NAME_(func) filew_ ## func
 #define _GETC_(file) (consumed++, MSVCRT_fgetwc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetwc(nch, file); consumed--; } while(0)
 #define _LOCK_FILE_(file) MSVCRT__lock_file(file)
@@ -124,6 +134,8 @@
 #define _FUNCTION_ static int MSVCRT_vfwscanf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #else /* WIDE_SCANF */
+#define _GETC_FUNC_(file) MSVCRT_fgetc(file)
+#define _STRTOD_NAME_(func) file_ ## func
 #define _GETC_(file) (consumed++, MSVCRT_fgetc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetc(nch, file); consumed--; } while(0)
 #define _LOCK_FILE_(file) MSVCRT__lock_file(file)
@@ -136,6 +148,54 @@
 #endif /* WIDE_SCANF */
 #endif /* STRING */
 #endif /* CONSOLE */
+
+#if (!defined(SECURE) && !defined(STRING_LEN) && (!defined(CONSOLE) || !defined(WIDE_SCANF)))
+struct _STRTOD_NAME_(strtod_scanf_ctx) {
+    MSVCRT_pthreadlocinfo locinfo;
+#ifdef STRING
+    const _CHAR_ *file;
+#else
+    MSVCRT_FILE *file;
+#endif
+    int length;
+    int read;
+    int cur;
+    int unget;
+    BOOL err;
+};
+
+static MSVCRT_wchar_t _STRTOD_NAME_(strtod_scanf_get)(void *ctx)
+{
+    struct _STRTOD_NAME_(strtod_scanf_ctx) *context = ctx;
+
+    context->cur = _EOF_;
+    if (!context->length) return MSVCRT_WEOF;
+    if (context->unget != _EOF_) {
+        context->cur = context->unget;
+        context->unget = _EOF_;
+    } else {
+        context->cur = _GETC_FUNC_(context->file);
+        if (context->cur == _EOF_) return MSVCRT_WEOF;
+    }
+
+    if (context->length > 0) context->length--;
+    context->read++;
+    return context->cur;
+}
+
+static void _STRTOD_NAME_(strtod_scanf_unget)(void *ctx)
+{
+    struct _STRTOD_NAME_(strtod_scanf_ctx) *context = ctx;
+
+    if (context->length >= 0) context->length++;
+    context->read--;
+    if (context->unget != _EOF_ || context->cur == _EOF_) {
+        context->err = TRUE;
+        return;
+    }
+    context->unget = context->cur;
+}
+#endif
 
 _FUNCTION_ {
     MSVCRT_pthreadlocinfo locinfo;
@@ -197,14 +257,14 @@ _FUNCTION_ {
 		format++;
 		suppress=1;
 	    }
-	    /* look for width specification */
-	    while (_ISDIGIT_(*format)) {
-		width*=10;
-		width+=*format++ - '0';
-	    }
-	    if (width==0) width=-1; /* no width spec seen */
 	    /* read prefix (if any) */
 	    while (!prefix_finished) {
+                /* look for width specification */
+                while (_ISDIGIT_(*format)) {
+                    width *= 10;
+                    width += *format++ - '0';
+                }
+
 		switch(*format) {
 		case 'h': h_prefix++; break;
 		case 'l':
@@ -228,6 +288,7 @@ _FUNCTION_ {
 		}
 		if (!prefix_finished) format++;
 	    }
+	    if (width==0) width=-1; /* no width spec seen */
 	    /* read type */
             switch(*format) {
 	    case 'p':
@@ -321,116 +382,40 @@ _FUNCTION_ {
             case 'f':
             case 'g':
             case 'G': { /* read a float */
-                    long double cur = 1, expcnt = 10;
-                    ULONGLONG d, hlp;
-                    int exp = 0, negative = 0;
-                    unsigned fpcontrol;
-                    BOOL negexp;
+#ifdef CONSOLE
+                    struct _STRTOD_NAME_(strtod_scanf_ctx) ctx = {locinfo, 0, width};
+#else
+                    struct _STRTOD_NAME_(strtod_scanf_ctx) ctx = {locinfo, file, width};
+#endif
+                    int negative = 0;
+                    double cur;
 
                     /* skip initial whitespace */
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
+                    if (nch == _EOF_)
+                        break;
+                    ctx.unget = nch;
+#ifdef STRING
+                    ctx.file = file;
+#endif
+#ifdef STRING_LEN
+                    if(ctx.length > length-consumed+1) ctx.length = length-consumed+1;
+#endif
 
-                    /* get sign. */
-                    if (nch == '-' || nch == '+') {
-                        negative = (nch=='-');
-                        if (width>0) width--;
-                        if (width==0) break;
-                        nch = _GETC_(file);
+                    cur = parse_double(_STRTOD_NAME_(strtod_scanf_get),
+                            _STRTOD_NAME_(strtod_scanf_unget), &ctx, locinfo, NULL);
+                    if(!rd && ctx.err) {
+                        _UNLOCK_FILE_(file);
+                        return _EOF_RET;
                     }
-
-                    /* get first digit. */
-                    if (*locinfo->lconv->decimal_point != nch) {
-                        if (!_ISDIGIT_(nch)) break;
-                        d = nch - '0';
-                        nch = _GETC_(file);
-                        if (width>0) width--;
-                        /* read until no more digits */
-                        while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
-                            hlp = d*10 + nch - '0';
-                            nch = _GETC_(file);
-                            if (width>0) width--;
-                            if(d > (ULONGLONG)-1/10 || hlp<d) {
-                                exp++;
-                                break;
-                            }
-                            else
-                                d = hlp;
-                        }
-                        while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
-                            exp++;
-                            nch = _GETC_(file);
-                            if (width>0) width--;
-                        }
-                    } else {
-                        d = 0; /* Fix: .8 -> 0.8 */
-                    }
-
-                    /* handle decimals */
-                    if (width!=0 && nch == *locinfo->lconv->decimal_point) {
-                        nch = _GETC_(file);
-                        if (width>0) width--;
-
-                        while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
-                            hlp = d*10 + nch - '0';
-                            nch = _GETC_(file);
-                            if (width>0) width--;
-                            if(d > (ULONGLONG)-1/10 || hlp<d)
-                                break;
-
-                            d = hlp;
-                            exp--;
-                        }
-                        while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
-                            nch = _GETC_(file);
-                            if (width>0) width--;
-                        }
-                    }
-
-                    /* handle exponent */
-                    if (width!=0 && (nch == 'e' || nch == 'E')) {
-                        int sign = 1, e = 0;
-
-                        nch = _GETC_(file);
-                        if (width>0) width--;
-                        if (width!=0 && (nch=='+' || nch=='-')) {
-                            if(nch == '-')
-                                sign = -1;
-                            nch = _GETC_(file);
-                            if (width>0) width--;
-                        }
-
-                        /* exponent digits */
-                        while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
-                            if(e > INT_MAX/10 || (e = e*10 + nch - '0')<0)
-                                e = INT_MAX;
-                            nch = _GETC_(file);
-                            if (width>0) width--;
-                        }
-                        e *= sign;
-
-                        if(exp<0 && e<0 && e+exp>0) exp = INT_MIN;
-                        else if(exp>0 && e>0 && e+exp<0) exp = INT_MAX;
-                        else exp += e;
-                    }
-
-                    fpcontrol = _control87(0, 0);
-                    _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
-                            |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT, 0xffffffff);
-
-                    negexp = (exp < 0);
-                    if(negexp)
-                        exp = -exp;
-                    /* update 'cur' with this exponent. */
-                    while(exp) {
-                        if(exp & 1)
-                            cur *= expcnt;
-                        exp /= 2;
-                        expcnt = expcnt*expcnt;
-                    }
-                    cur = (negexp ? d/cur : d*cur);
-
-                    _control87(fpcontrol, 0xffffffff);
+                    if(ctx.err || !ctx.read)
+                        break;
+                    consumed += ctx.read;
+#ifdef STRING
+                    file = ctx.file;
+#endif
+                    nch = ctx.cur;
 
                     st = 1;
                     if (!suppress) {
@@ -487,6 +472,11 @@ _FUNCTION_ {
                         nch = _GETC_(file);
 			if (width>0) width--;
                     }
+                    /* if we have reached the EOF and output nothing then report EOF */
+                    if (nch==_EOF_ && rd==0 && st==0) {
+                        _UNLOCK_FILE_(file);
+                        return _EOF_RET;
+                    }
                     /* terminate */
                     if (st && !suppress) *sptr = 0;
                 }
@@ -517,6 +507,13 @@ _FUNCTION_ {
                         nch = _GETC_(file);
 			if (width>0) width--;
                     }
+#if _MSVCR_VER >= 80
+                    /* if we have reached the EOF and output nothing then report EOF */
+                    if (nch==_EOF_ && rd==0 && st==0) {
+                        _UNLOCK_FILE_(file);
+                        return _EOF_RET;
+                    }
+#endif
                     /* terminate */
                     if (st && !suppress) *sptr = 0;
                 }
@@ -726,6 +723,8 @@ _FUNCTION_ {
 #undef _CHAR2SUPPORTED_
 #undef _WIDE2SUPPORTED_
 #undef _CHAR2DIGIT_
+#undef _GETC_FUNC_
+#undef _STRTOD_NAME_
 #undef _GETC_
 #undef _UNGETC_
 #undef _LOCK_FILE_

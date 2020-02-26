@@ -1,6 +1,8 @@
 MODULE    = qmgr.dll
 IMPORTS   = uuid winhttp ole32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	enum_files.c \
 	enum_jobs.c \

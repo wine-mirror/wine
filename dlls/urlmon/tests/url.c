@@ -43,7 +43,6 @@ static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(IID_IBindStatusCallbackHolder,0x79eac9cc,0xbaf9,0x11ce,0x8c,0x82,0x00,0xaa,0x00,0x4b,0xa9,0x0b);
-static const IID IID_undocumentedIE11 = {0xd5ae15f6,0x2032,0x488e,{0x8f,0x96,0xf9,0x24,0x06,0xd8,0xd8,0xb4}};
 extern CLSID CLSID_AboutProtocol;
 
 #define DEFINE_EXPECT(func) \
@@ -366,7 +365,7 @@ static IInternetPriority InternetPriority = { &InternetPriorityVtbl };
 
 static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
-    static const IID IID_undocumentedIE10 = {0x7daf9908,0x8415,0x4005,{0x95,0xae,0xbd,0x27,0xf6,0xe3,0xdc,0x00}};
+    if (winetest_debug > 1) trace("IInternetProtocol::QueryInterface(%s)\n", debugstr_guid(riid));
 
     *ppv = NULL;
 
@@ -383,15 +382,6 @@ static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID r
         return S_OK;
     }
 
-    if(IsEqualGUID(&IID_IInternetProtocolEx, riid))
-        return E_NOINTERFACE; /* TODO */
-
-    if(IsEqualGUID(&IID_undocumentedIE10, riid)) {
-        trace("QI(%s)\n", wine_dbgstr_guid(riid));
-        return E_NOINTERFACE; /* TODO */
-    }
-
-    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1403,6 +1393,10 @@ static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
 static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
+    if (winetest_debug > 1)
+        trace("IServiceProvider::QueryService(service %s, iid %s)\n",
+                debugstr_guid(guidService), debugstr_guid(riid));
+
     if(IsEqualGUID(&IID_IAuthenticate, guidService)) {
         CHECK_EXPECT(QueryService_IAuthenticate);
         return E_NOTIMPL;
@@ -1430,19 +1424,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         return S_OK;
     }
 
-    if(IsEqualGUID(&IID_IGetBindHandle, guidService)) {
-        trace("QueryService(IID_IGetBindHandle)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    if(IsEqualGUID(&IID_undocumentedIE11, guidService)) {
-        trace("QueryService(IID_undocumentedIE11)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -1505,7 +1487,7 @@ static void test_WinInetHttpInfo(IWinInetHttpInfo *http_info, DWORD progress)
 
 static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REFIID riid, void **ppv)
 {
-    static const IID IID_undocumentedIE10 = {0xf286fa56,0xc1fd,0x4270,{0x8e,0x67,0xb3,0xeb,0x79,0x0a,0x81,0xe8}};
+    if (winetest_debug > 1) trace("IBindStatusCallback::QueryInterface(%s)\n", debugstr_guid(riid));
 
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
 
@@ -1554,20 +1536,6 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REF
     }else if(IsEqualGUID(&IID_IHttpSecurity, riid)) {
         CHECK_EXPECT2(QueryInterface_IHttpSecurity);
         return E_NOINTERFACE;
-    }else if(IsEqualGUID(&IID_IGetBindHandle, riid)) {
-        trace("QI(IID_IGetBindHandle)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }else if(IsEqualGUID(&IID_undocumentedIE10, riid)) {
-        trace("QI(IID_undocumentedIE10)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }else if(IsEqualGUID(&IID_undocumentedIE11, riid)) {
-        trace("QI(IID_undocumentedIE11)\n");
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }else {
-        ok(0, "unexpected interface %s\n", wine_dbgstr_guid(riid));
     }
 
     return E_NOINTERFACE;
@@ -1657,6 +1625,10 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
         ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
+
+    if (winetest_debug > 1)
+        trace("IBindStatusCallbackEx::OnProgress(progress %u/%u, code %u, text %s)\n",
+                ulProgress, ulProgressMax, ulStatusCode, debugstr_w(szStatusText));
 
     switch(ulStatusCode) {
     case BINDSTATUS_FINDINGRESOURCE:
@@ -1817,13 +1789,8 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
         ok(szStatusText == NULL, "Expected szStatusText to be NULL\n");
         break;
     case BINDSTATUS_PROXYDETECTING:
-        trace("BINDSTATUS_PROXYDETECTING\n");
-        break;
     case BINDSTATUS_COOKIE_SENT:
-        trace("BINDSTATUS_COOKIE_SENT\n");
-        break;
     case BINDSTATUS_DECODING:
-        trace("BINDSTATUS_DECODING\n");
         break;
     default:
         ok(0, "unexpected code %d\n", ulStatusCode);
@@ -1988,7 +1955,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
         DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
 {
     HRESULT hres;
-    DWORD readed;
+    DWORD read;
     BYTE buf[512];
     CHAR clipfmt[512];
 
@@ -2075,8 +2042,8 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
 
         if(callback_read) {
             do {
-                hres = IStream_Read(stream, buf, 512, &readed);
-                if(test_protocol == HTTP_TEST && emulate_protocol && readed)
+                hres = IStream_Read(stream, buf, 512, &read);
+                if(test_protocol == HTTP_TEST && emulate_protocol && read)
                     ok(buf[0] == (use_cache_file && !(bindf&BINDF_ASYNCHRONOUS) ? 'X' : '?'), "buf[0] = '%c'\n", buf[0]);
             }while(hres == S_OK);
             ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08x\n", hres);
@@ -2927,7 +2894,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     prot_state = 0;
     ResetEvent(complete_event);
 
-    trace("URL: %s\n", wine_dbgstr_w(current_url));
+    if (winetest_debug > 1) trace("URL: %s\n", wine_dbgstr_w(current_url));
 }
 
 static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
@@ -3245,7 +3212,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
 
     if(unk) {
         BYTE buf[512];
-        DWORD readed;
+        DWORD read;
         IStream *stream;
 
         hres = IUnknown_QueryInterface(unk, &IID_IStream, (void**)&stream);
@@ -3253,14 +3220,14 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         IUnknown_Release(unk);
 
         do {
-            readed = 0xdeadbeef;
-            hres = IStream_Read(stream, buf, sizeof(buf), &readed);
-            ok(readed != 0xdeadbeef, "readed = 0xdeadbeef\n");
-            if(emulate_protocol && test_protocol == HTTP_TEST && readed)
+            read = 0xdeadbeef;
+            hres = IStream_Read(stream, buf, sizeof(buf), &read);
+            ok(read != 0xdeadbeef, "read = 0xdeadbeef\n");
+            if(emulate_protocol && test_protocol == HTTP_TEST && read)
                 ok(buf[0] == (use_cache_file && !(bindf&BINDF_ASYNCHRONOUS) ? 'X' : '?'), "buf[0] = '%c'\n", buf[0]);
         }while(hres == S_OK);
         ok(hres == S_FALSE, "IStream_Read returned %08x\n", hres);
-        ok(!readed, "readed = %d\n", readed);
+        ok(!read, "read = %d\n", read);
 
         IStream_Release(stream);
     }
@@ -3911,7 +3878,8 @@ static BOOL can_do_https(void)
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
-    ok(ret || broken(GetLastError() == ERROR_INTERNET_CANNOT_CONNECT),
+    ok(ret || broken(GetLastError() == ERROR_INTERNET_CANNOT_CONNECT)
+           || broken(GetLastError() == ERROR_INTERNET_SECURITY_CHANNEL_ERROR) /* WinXP */,
         "request failed: %u\n", GetLastError());
 
     InternetCloseHandle(req);

@@ -8,3 +8,5 @@ C_SRCS = \
 
 IDL_SRCS = \
 	adsldp.idl
+
+RC_SRCS = rsrc.rc

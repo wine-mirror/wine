@@ -1,6 +1,8 @@
 MODULE    = scrrun.dll
 IMPORTS   = uuid oleaut32 version advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	dictionary.c \
 	filesystem.c \

@@ -70,6 +70,7 @@ static const char * const FlagNames[] =
     "ordinal",     /* FLAG_ORDINAL */
     "thiscall",    /* FLAG_THISCALL */
     "fastcall",    /* FLAG_FASTCALL */
+    "import",      /* FLAG_IMPORT */
     NULL
 };
 
@@ -469,7 +470,7 @@ static int parse_spec_extern( ORDDEF *odp, DLLSPEC *spec )
  */
 static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp )
 {
-    unsigned int i;
+    unsigned int i, cpu_mask = 0;
     const char *token;
 
     do
@@ -492,13 +493,14 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp )
                     odp->flags |= FLAG_CPU_WIN64;
                 else
                 {
-                    int cpu = get_cpu_from_name( cpu_name );
+                    int cpu = get_cpu_from_name( cpu_name + (cpu_name[0] == '!') );
                     if (cpu == -1)
                     {
                         error( "Unknown architecture '%s'\n", cpu_name );
                         return NULL;
                     }
-                    odp->flags |= FLAG_CPU( cpu );
+                    if (cpu_name[0] == '!') cpu_mask |= FLAG_CPU( cpu );
+                    else odp->flags |= FLAG_CPU( cpu );
                 }
                 cpu_name = strtok( NULL, "," );
             }
@@ -536,6 +538,7 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp )
         token = GetToken(0);
     } while (token && *token == '-');
 
+    if (cpu_mask) odp->flags |= FLAG_CPU_MASK & ~cpu_mask;
     return token;
 }
 

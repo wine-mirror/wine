@@ -119,12 +119,12 @@ enum cpu_type
 {
     CPU_x86, CPU_x86_64, CPU_POWERPC, CPU_ARM, CPU_ARM64
 };
-typedef int cpu_type_t;
+typedef int client_cpu_t;
 
 
 typedef struct
 {
-    cpu_type_t       cpu;
+    client_cpu_t     cpu;
     unsigned int     flags;
     union
     {
@@ -156,7 +156,7 @@ typedef struct
         struct { struct { unsigned __int64 low, high; } fpregs[32]; } x86_64_regs;
         struct { double fpr[32], fpscr; } powerpc_regs;
         struct { unsigned __int64 d[32]; unsigned int fpscr; } arm_regs;
-        struct { unsigned __int64 d[64]; unsigned int fpcr, fpsr; } arm64_regs;
+        struct { struct { unsigned __int64 low, high; } q[32]; unsigned int fpcr, fpsr; } arm64_regs;
     } fp;
     union
     {
@@ -449,7 +449,8 @@ enum apc_type
     APC_VIRTUAL_UNLOCK,
     APC_MAP_VIEW,
     APC_UNMAP_VIEW,
-    APC_CREATE_THREAD
+    APC_CREATE_THREAD,
+    APC_BREAK_PROCESS
 };
 
 typedef union
@@ -483,7 +484,7 @@ typedef union
         unsigned int     op_type;
         client_ptr_t     addr;
         mem_size_t       size;
-        unsigned int     zero_bits;
+        unsigned int     zero_bits_64;
         unsigned int     prot;
     } virtual_alloc;
     struct
@@ -535,7 +536,7 @@ typedef union
         mem_size_t       size;
         file_pos_t       offset;
         unsigned int     alloc_type;
-        unsigned short   zero_bits;
+        unsigned short   zero_bits_64;
         unsigned short   prot;
     } map_view;
     struct
@@ -638,6 +639,11 @@ typedef union
         thread_id_t      tid;
         obj_handle_t     handle;
     } create_thread;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+    } break_process;
 } apc_result_t;
 
 enum irp_type
@@ -737,7 +743,7 @@ typedef struct
     unsigned int   header_size;
     unsigned int   file_size;
     unsigned int   checksum;
-    cpu_type_t     cpu;
+    client_cpu_t   cpu;
     int            __pad;
 } pe_image_info_t;
 #define IMAGE_FLAGS_ComPlusNativeReady        0x01
@@ -763,16 +769,18 @@ struct rawinput_device
 struct new_process_request
 {
     struct request_header __header;
+    obj_handle_t parent_process;
     int          inherit_all;
     unsigned int create_flags;
     int          socket_fd;
     obj_handle_t exe_file;
     unsigned int access;
-    cpu_type_t   cpu;
+    client_cpu_t cpu;
     data_size_t  info_size;
     /* VARARG(objattr,object_attributes); */
     /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
+    char __pad_44[4];
 };
 struct new_process_reply
 {
@@ -789,8 +797,8 @@ struct exec_process_request
 {
     struct request_header __header;
     int          socket_fd;
-    obj_handle_t exe_file;
-    cpu_type_t   cpu;
+    client_cpu_t cpu;
+    char __pad_20[4];
 };
 struct exec_process_reply
 {
@@ -875,7 +883,7 @@ struct init_thread_request
     client_ptr_t entry;
     int          reply_fd;
     int          wait_fd;
-    cpu_type_t   cpu;
+    client_cpu_t cpu;
     char __pad_52[4];
 };
 struct init_thread_reply
@@ -940,7 +948,7 @@ struct get_process_info_reply
     timeout_t    end_time;
     int          exit_code;
     int          priority;
-    cpu_type_t   cpu;
+    client_cpu_t cpu;
     short int    debugger_present;
     short int    debug_children;
 };
@@ -1000,7 +1008,10 @@ struct get_thread_info_reply
     int          exit_code;
     int          priority;
     int          last;
-    char __pad_52[4];
+    int          suspend_count;
+    data_size_t  desc_len;
+    /* VARARG(desc,unicode_str); */
+    char __pad_60[4];
 };
 
 
@@ -1028,16 +1039,18 @@ struct set_thread_info_request
     affinity_t   affinity;
     client_ptr_t entry_point;
     obj_handle_t token;
+    /* VARARG(desc,unicode_str); */
     char __pad_44[4];
 };
 struct set_thread_info_reply
 {
     struct reply_header __header;
 };
-#define SET_THREAD_INFO_PRIORITY   0x01
-#define SET_THREAD_INFO_AFFINITY   0x02
-#define SET_THREAD_INFO_TOKEN      0x04
-#define SET_THREAD_INFO_ENTRYPOINT 0x08
+#define SET_THREAD_INFO_PRIORITY    0x01
+#define SET_THREAD_INFO_AFFINITY    0x02
+#define SET_THREAD_INFO_TOKEN       0x04
+#define SET_THREAD_INFO_ENTRYPOINT  0x08
+#define SET_THREAD_INFO_DESCRIPTION 0x10
 
 
 
@@ -1911,12 +1924,12 @@ struct attach_console_reply
 struct get_console_wait_event_request
 {
     struct request_header __header;
-    char __pad_12[4];
+    obj_handle_t handle;
 };
 struct get_console_wait_event_reply
 {
     struct reply_header __header;
-    obj_handle_t handle;
+    obj_handle_t event;
     char __pad_12[4];
 };
 
@@ -2068,8 +2081,10 @@ struct set_console_output_info_request
     short int    max_height;
     short int    font_width;
     short int    font_height;
-    /* VARARG(colors,uints); */
-    char __pad_52[4];
+    short int    font_weight;
+    short int    font_pitch_family;
+    /* VARARG(colors,uints,64); */
+    /* VARARG(face_name,unicode_str); */
 };
 struct set_console_output_info_reply
 {
@@ -2111,7 +2126,11 @@ struct get_console_output_info_reply
     short int    max_height;
     short int    font_width;
     short int    font_height;
-    /* VARARG(colors,uints); */
+    short int    font_weight;
+    short int    font_pitch_family;
+    /* VARARG(colors,uints,64); */
+    /* VARARG(face_name,unicode_str); */
+    char __pad_44[4];
 };
 
 
@@ -2542,20 +2561,6 @@ struct debug_process_request
 struct debug_process_reply
 {
     struct reply_header __header;
-};
-
-
-
-struct debug_break_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-};
-struct debug_break_reply
-{
-    struct reply_header __header;
-    int          self;
-    char __pad_12[4];
 };
 
 
@@ -5895,7 +5900,6 @@ enum request
     REQ_get_exception_status,
     REQ_continue_debug_event,
     REQ_debug_process,
-    REQ_debug_break,
     REQ_set_debugger_kill_on_exit,
     REQ_read_process_memory,
     REQ_write_process_memory,
@@ -6200,7 +6204,6 @@ union generic_request
     struct get_exception_status_request get_exception_status_request;
     struct continue_debug_event_request continue_debug_event_request;
     struct debug_process_request debug_process_request;
-    struct debug_break_request debug_break_request;
     struct set_debugger_kill_on_exit_request set_debugger_kill_on_exit_request;
     struct read_process_memory_request read_process_memory_request;
     struct write_process_memory_request write_process_memory_request;
@@ -6503,7 +6506,6 @@ union generic_reply
     struct get_exception_status_reply get_exception_status_reply;
     struct continue_debug_event_reply continue_debug_event_reply;
     struct debug_process_reply debug_process_reply;
-    struct debug_break_reply debug_break_reply;
     struct set_debugger_kill_on_exit_reply set_debugger_kill_on_exit_reply;
     struct read_process_memory_reply read_process_memory_reply;
     struct write_process_memory_reply write_process_memory_reply;
@@ -6702,6 +6704,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 585
+#define SERVER_PROTOCOL_VERSION 595
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

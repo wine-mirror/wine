@@ -57,9 +57,7 @@ static struct error *alloc_error(void)
 
     ret->magic      = ERROR_MAGIC;
     InitializeCriticalSection( &ret->cs );
-#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": error.cs");
-#endif
 
     prop_init( error_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
@@ -68,9 +66,7 @@ static struct error *alloc_error(void)
 
 static void free_error( struct error *error )
 {
-#ifndef __MINGW32__
     error->cs.DebugInfo->Spare[0] = 0;
-#endif
     DeleteCriticalSection( &error->cs );
     heap_free( error );
 }

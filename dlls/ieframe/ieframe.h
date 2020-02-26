@@ -170,6 +170,7 @@ struct DocHost {
 };
 
 struct WebBrowser {
+    IUnknown                 IUnknown_inner;
     IWebBrowser2             IWebBrowser2_iface;
     IOleObject               IOleObject_iface;
     IOleInPlaceObject        IOleInPlaceObject_iface;

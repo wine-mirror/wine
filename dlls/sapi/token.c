@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -387,7 +386,7 @@ static HRESULT parse_cat_id( const WCHAR *str, HKEY *root, const WCHAR **sub_key
         { NULL }
     };
     struct table *ptr;
-    int len = strlenW( str );
+    int len = lstrlenW( str );
 
     for (ptr = table; ptr->name; ptr++)
     {

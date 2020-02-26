@@ -39,12 +39,9 @@ enum CB_TYPE {
     EVENT_SRC,
     EVENT_SINK,
     GOT_DATA_SINK,
-    GOT_DATA,
     REMOVED_DECODED_PAD,
     AUTOPLUG_BLACKLIST,
     UNKNOWN_TYPE,
-    RELEASE_SAMPLE,
-    TRANSFORM_PAD_ADDED,
     QUERY_SINK
 };
 
@@ -105,12 +102,6 @@ struct cb_data {
             GstBuffer *buf;
             GstFlowReturn ret;
         } got_data_sink_data;
-        struct got_data_data {
-            GstPad *pad;
-            GstObject *parent;
-            GstBuffer *buf;
-            GstFlowReturn ret;
-        } got_data_data;
         struct removed_decoded_pad_data {
             GstElement *bin;
             GstPad *pad;
@@ -130,14 +121,6 @@ struct cb_data {
             GstCaps *caps;
             gpointer user;
         } unknown_type_data;
-        struct release_sample_data {
-            gpointer data;
-        } release_sample_data;
-        struct transform_pad_added_data {
-            GstElement *filter;
-            GstPad *pad;
-            gpointer user;
-        } transform_pad_added_data;
         struct query_sink_data {
             GstPad *pad;
             GstObject *parent;
@@ -172,7 +155,6 @@ GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) D
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 GstAutoplugSelectResult autoplug_blacklist_wrapper(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user) DECLSPEC_HIDDEN;
 void unknown_type_wrapper(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer user) DECLSPEC_HIDDEN;
-void release_sample_wrapper(gpointer data) DECLSPEC_HIDDEN;
 void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query) DECLSPEC_HIDDEN;
 

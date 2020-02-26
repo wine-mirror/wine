@@ -24,7 +24,7 @@
 /* @makedep: test.avi */
 test.avi RCDATA "test.avi"
 
-/* ffmpeg -f lavfi -i smptebars -f lavfi -i "sine=frequency=1000" -t 0.04 -r 25 -f mpeg -vcodec mpeg1video -vf scale=32x24 -acodec mp2 test.mpg */
+/* ffmpeg -f lavfi -i smptebars -f lavfi -i "sine=frequency=1000" -t 0.16 -r 25 -f mpeg -vcodec mpeg1video -vf scale=32x24 -acodec mp2 test.mpg */
 /* @makedep: test.mpg */
 test.mpg RCDATA "test.mpg"
 

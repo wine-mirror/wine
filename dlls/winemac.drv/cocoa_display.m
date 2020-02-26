@@ -18,9 +18,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #import <AppKit/AppKit.h>
+#ifdef HAVE_MTLDEVICE_REGISTRYID
+#import <Metal/Metal.h>
+#endif
 #include "macdrv_cocoa.h"
 
+static uint64_t dedicated_gpu_id;
+static uint64_t integrated_gpu_id;
 
 /***********************************************************************
  *              convert_display_rect
@@ -102,4 +109,579 @@ int macdrv_get_displays(struct macdrv_display** displays, int* count)
 void macdrv_free_displays(struct macdrv_display* displays)
 {
     free(displays);
+}
+
+/***********************************************************************
+ *              get_entry_property_uint32
+ *
+ * Get an io registry entry property of type uint32 and store it in value parameter.
+ *
+ * Returns non-zero value on failure.
+ */
+static int get_entry_property_uint32(io_registry_entry_t entry, CFStringRef property_name, uint32_t* value)
+{
+    CFDataRef data = IORegistryEntrySearchCFProperty(entry, kIOServicePlane, property_name, kCFAllocatorDefault, 0);
+    if (!data)
+        return -1;
+
+    if (CFGetTypeID(data) != CFDataGetTypeID() || CFDataGetLength(data) != sizeof(uint32_t))
+    {
+        CFRelease(data);
+        return -1;
+    }
+
+    CFDataGetBytes(data, CFRangeMake(0, sizeof(uint32_t)), (UInt8*)value);
+    CFRelease(data);
+    return 0;
+}
+
+/***********************************************************************
+ *              get_entry_property_string
+ *
+ * Get an io registry entry property of type string and write it in buffer parameter.
+ *
+ * Returns non-zero value on failure.
+ */
+static int get_entry_property_string(io_registry_entry_t entry, CFStringRef property_name, char* buffer,
+                                     size_t buffer_size)
+{
+    CFTypeRef type_ref;
+    CFDataRef data_ref;
+    CFStringRef string_ref;
+    size_t length;
+    int ret = -1;
+
+    type_ref = IORegistryEntrySearchCFProperty(entry, kIOServicePlane, property_name, kCFAllocatorDefault, 0);
+    if (!type_ref)
+        goto done;
+
+    if (CFGetTypeID(type_ref) == CFDataGetTypeID())
+    {
+        data_ref = type_ref;
+        length = CFDataGetLength(data_ref);
+        if (length + 1 > buffer_size)
+            goto done;
+        CFDataGetBytes(data_ref, CFRangeMake(0, length), (UInt8*)buffer);
+        buffer[length] = 0;
+    }
+    else if (CFGetTypeID(type_ref) == CFStringGetTypeID())
+    {
+        string_ref = type_ref;
+        if (!CFStringGetCString(string_ref, buffer, buffer_size, kCFStringEncodingUTF8))
+            goto done;
+    }
+    else
+        goto done;
+
+    ret = 0;
+done:
+    if (type_ref)
+        CFRelease(type_ref);
+    return ret;
+}
+
+/***********************************************************************
+ *              macdrv_get_gpu_info_from_entry
+ *
+ * Starting from entry, search upwards to find the PCI GPU. And get GPU information from the PCI GPU entry.
+ *
+ * Returns non-zero value on failure.
+ */
+static int macdrv_get_gpu_info_from_entry(struct macdrv_gpu* gpu, io_registry_entry_t entry)
+{
+    io_registry_entry_t parent_entry;
+    io_registry_entry_t gpu_entry;
+    kern_return_t result;
+    int ret = -1;
+    char buffer[64];
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+    gpu_entry = entry;
+    while (![@"IOPCIDevice" isEqualToString:[(NSString*)IOObjectCopyClass(gpu_entry) autorelease]]
+           || get_entry_property_string(gpu_entry, CFSTR("IOName"), buffer, sizeof(buffer))
+           || strcmp(buffer, "display"))
+    {
+        result = IORegistryEntryGetParentEntry(gpu_entry, kIOServicePlane, &parent_entry);
+        if (gpu_entry != entry)
+            IOObjectRelease(gpu_entry);
+        if (result != kIOReturnSuccess)
+        {
+            [pool release];
+            return ret;
+        }
+
+        gpu_entry = parent_entry;
+    }
+
+    if (IORegistryEntryGetRegistryEntryID(gpu_entry, &gpu->id) != kIOReturnSuccess)
+        goto done;
+    if (get_entry_property_uint32(gpu_entry, CFSTR("vendor-id"), &gpu->vendor_id))
+        goto done;
+    if (get_entry_property_uint32(gpu_entry, CFSTR("device-id"), &gpu->device_id))
+        goto done;
+    if (get_entry_property_uint32(gpu_entry, CFSTR("subsystem-id"), &gpu->subsys_id))
+        goto done;
+    if (get_entry_property_uint32(gpu_entry, CFSTR("revision-id"), &gpu->revision_id))
+        goto done;
+    if (get_entry_property_string(gpu_entry, CFSTR("model"), gpu->name, sizeof(gpu->name)))
+        goto done;
+
+    ret = 0;
+done:
+    if (gpu_entry != entry)
+        IOObjectRelease(gpu_entry);
+    [pool release];
+    return ret;
+}
+
+#ifdef HAVE_MTLDEVICE_REGISTRYID
+
+/***********************************************************************
+ *              macdrv_get_gpu_info_from_registry_id
+ *
+ * Get GPU information from a Metal device registry id.
+ *
+ * Returns non-zero value on failure.
+ */
+static int macdrv_get_gpu_info_from_registry_id(struct macdrv_gpu* gpu, uint64_t registry_id)
+{
+    int ret;
+    io_registry_entry_t entry;
+
+    entry = IOServiceGetMatchingService(kIOMasterPortDefault, IORegistryEntryIDMatching(registry_id));
+    ret = macdrv_get_gpu_info_from_entry(gpu, entry);
+    IOObjectRelease(entry);
+    return ret;
+}
+
+/***********************************************************************
+ *              macdrv_get_gpus_from_metal
+ *
+ * Get a list of GPUs from Metal.
+ *
+ * Returns non-zero value on failure with parameters unchanged and zero on success.
+ */
+static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
+{
+    struct macdrv_gpu* gpus = NULL;
+    struct macdrv_gpu primary_gpu;
+    id<MTLDevice> primary_device;
+    BOOL hide_integrated = FALSE;
+    int primary_index = 0, i;
+    int gpu_count = 0;
+    int ret = -1;
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+    /* Test if Metal is available */
+    if (&MTLCopyAllDevices == NULL)
+        goto done;
+    NSArray<id<MTLDevice>>* devices = [MTLCopyAllDevices() autorelease];
+    if (!devices.count || ![devices[0] respondsToSelector:@selector(registryID)])
+        goto done;
+
+    gpus = calloc(devices.count, sizeof(*gpus));
+    if (!gpus)
+        goto done;
+
+    /* Use MTLCreateSystemDefaultDevice instead of CGDirectDisplayCopyCurrentMetalDevice(CGMainDisplayID()) to get
+     * the primary GPU because we need to hide the integrated GPU for an automatic graphic switching pair to avoid apps
+     * using the integrated GPU. This is the behavior of Windows on a Mac. */
+    primary_device = [MTLCreateSystemDefaultDevice() autorelease];
+    if (macdrv_get_gpu_info_from_registry_id(&primary_gpu, primary_device.registryID))
+        goto done;
+
+    /* Hide the integrated GPU if the system default device is a dedicated GPU */
+    if (!primary_device.isLowPower)
+    {
+        dedicated_gpu_id = primary_gpu.id;
+        hide_integrated = TRUE;
+    }
+
+    for (i = 0; i < devices.count; i++)
+    {
+        if (macdrv_get_gpu_info_from_registry_id(&gpus[gpu_count], devices[i].registryID))
+            goto done;
+
+        if (hide_integrated && devices[i].isLowPower)
+        {
+            integrated_gpu_id = gpus[gpu_count].id;
+            continue;
+        }
+
+        if (gpus[gpu_count].id == primary_gpu.id)
+            primary_index = gpu_count;
+
+        gpu_count++;
+    }
+
+    /* Make sure the first GPU is primary */
+    if (primary_index)
+    {
+        struct macdrv_gpu tmp;
+        tmp = gpus[0];
+        gpus[0] = gpus[primary_index];
+        gpus[primary_index] = tmp;
+    }
+
+    *new_gpus = gpus;
+    *count = gpu_count;
+    ret = 0;
+done:
+    if (ret)
+        macdrv_free_gpus(gpus);
+    [pool release];
+    return ret;
+}
+
+#else
+
+static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
+{
+    return -1;
+}
+
+#endif
+
+/***********************************************************************
+ *              macdrv_get_gpu_info_from_display_id
+ *
+ * Get GPU information from a display id.
+ * This is a fallback for 32bit build or older Mac OS version where Metal is unavailable.
+ *
+ * Returns non-zero value on failure.
+ */
+static int macdrv_get_gpu_info_from_display_id(struct macdrv_gpu* gpu, CGDirectDisplayID display_id)
+{
+    io_registry_entry_t entry = CGDisplayIOServicePort(display_id);
+    return macdrv_get_gpu_info_from_entry(gpu, entry);
+}
+
+/***********************************************************************
+ *              macdrv_get_gpus_from_iokit
+ *
+ * Get a list of GPUs from IOKit.
+ * This is a fallback for 32bit build or older Mac OS version where Metal is unavailable.
+ *
+ * Returns non-zero value on failure with parameters unchanged and zero on success.
+ */
+static int macdrv_get_gpus_from_iokit(struct macdrv_gpu** new_gpus, int* count)
+{
+    static const int MAX_GPUS = 4;
+    struct macdrv_gpu primary_gpu = {0};
+    io_registry_entry_t entry;
+    io_iterator_t iterator;
+    struct macdrv_gpu* gpus;
+    int integrated_index = -1;
+    int primary_index = 0;
+    int gpu_count = 0;
+    int ret = -1;
+    int i;
+
+    gpus = calloc(MAX_GPUS, sizeof(*gpus));
+    if (!gpus)
+        goto done;
+
+    if (IOServiceGetMatchingServices(kIOMasterPortDefault, IOServiceMatching("IOPCIDevice"), &iterator)
+        != kIOReturnSuccess)
+        goto done;
+
+    while ((entry = IOIteratorNext(iterator)))
+    {
+        if (!macdrv_get_gpu_info_from_entry(&gpus[gpu_count], entry))
+        {
+            gpu_count++;
+            assert(gpu_count < MAX_GPUS);
+        }
+        IOObjectRelease(entry);
+    }
+    IOObjectRelease(iterator);
+
+    macdrv_get_gpu_info_from_display_id(&primary_gpu, CGMainDisplayID());
+
+    /* If there are more than two GPUs and an Intel card exists,
+     * assume an automatic graphics pair exists and hide the integrated GPU */
+    if (gpu_count > 1)
+    {
+        for (i = 0; i < gpu_count; i++)
+        {
+            /* FIXME:
+             * Find integrated GPU without Metal support.
+             * Assuming integrated GPU vendor is Intel for now */
+            if (gpus[i].vendor_id == 0x8086)
+            {
+                integrated_gpu_id = gpus[i].id;
+                integrated_index = i;
+            }
+
+            if (gpus[i].id == primary_gpu.id)
+            {
+                primary_index = i;
+            }
+        }
+
+        if (integrated_index != -1)
+        {
+            if (integrated_index != gpu_count - 1)
+                gpus[integrated_index] = gpus[gpu_count - 1];
+
+            /* FIXME:
+             * Find the dedicated GPU in an automatic graphics switching pair and use that as primary GPU.
+             * Choose the first dedicated GPU as primary */
+            if (primary_index == integrated_index)
+                primary_index = 0;
+            else if (primary_index == gpu_count - 1)
+                primary_index = integrated_index;
+
+            dedicated_gpu_id = gpus[primary_index].id;
+            gpu_count--;
+        }
+    }
+
+    /* Make sure the first GPU is primary */
+    if (primary_index)
+    {
+        struct macdrv_gpu tmp;
+        tmp = gpus[0];
+        gpus[0] = gpus[primary_index];
+        gpus[primary_index] = tmp;
+    }
+
+    *new_gpus = gpus;
+    *count = gpu_count;
+    ret = 0;
+done:
+    if (ret)
+        macdrv_free_gpus(gpus);
+    return ret;
+}
+
+/***********************************************************************
+ *              macdrv_get_gpus
+ *
+ * Get a list of GPUs currently in the system. The first GPU is primary.
+ * Call macdrv_free_gpus() when you are done using the data.
+ *
+ * Returns non-zero value on failure with parameters unchanged and zero on success.
+ */
+int macdrv_get_gpus(struct macdrv_gpu** new_gpus, int* count)
+{
+    integrated_gpu_id = 0;
+    dedicated_gpu_id = 0;
+
+    if (!macdrv_get_gpus_from_metal(new_gpus, count))
+        return 0;
+    else
+        return macdrv_get_gpus_from_iokit(new_gpus, count);
+}
+
+/***********************************************************************
+ *              macdrv_free_gpus
+ *
+ * Frees a GPU list allocated from macdrv_get_gpus()
+ */
+void macdrv_free_gpus(struct macdrv_gpu* gpus)
+{
+    if (gpus)
+        free(gpus);
+}
+
+/***********************************************************************
+ *              macdrv_get_adapters
+ *
+ * Get a list of adapters under gpu_id. The first adapter is primary if GPU is primary.
+ * Call macdrv_free_adapters() when you are done using the data.
+ *
+ * Returns non-zero value on failure with parameters unchanged and zero on success.
+ */
+int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** new_adapters, int* count)
+{
+    CGDirectDisplayID display_ids[16];
+    uint32_t display_id_count;
+    struct macdrv_adapter* adapters;
+    struct macdrv_gpu gpu;
+    int primary_index = 0;
+    int adapter_count = 0;
+    int ret = -1;
+    uint32_t i;
+
+    if (CGGetOnlineDisplayList(sizeof(display_ids) / sizeof(display_ids[0]), display_ids, &display_id_count)
+        != kCGErrorSuccess)
+        return -1;
+
+    if (!display_id_count)
+    {
+        *new_adapters = NULL;
+        *count = 0;
+        return 0;
+    }
+
+    /* Actual adapter count may be less */
+    adapters = calloc(display_id_count, sizeof(*adapters));
+    if (!adapters)
+        return -1;
+
+    for (i = 0; i < display_id_count; i++)
+    {
+        /* Mirrored displays are under the same adapter with primary display, so they doesn't increase adapter count */
+        if (CGDisplayMirrorsDisplay(display_ids[i]) != kCGNullDirectDisplay)
+            continue;
+
+        if (macdrv_get_gpu_info_from_display_id(&gpu, display_ids[i]))
+            goto done;
+
+        if (gpu.id == gpu_id || (gpu_id == dedicated_gpu_id && gpu.id == integrated_gpu_id))
+        {
+            adapters[adapter_count].id = display_ids[i];
+
+            if (CGDisplayIsMain(display_ids[i]))
+            {
+                adapters[adapter_count].state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
+                primary_index = adapter_count;
+            }
+
+            if (CGDisplayIsActive(display_ids[i]))
+                adapters[adapter_count].state_flags |= DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
+
+            adapter_count++;
+        }
+    }
+
+    /* Make sure the first adapter is primary if the GPU is primary */
+    if (primary_index)
+    {
+        struct macdrv_adapter tmp;
+        tmp = adapters[0];
+        adapters[0] = adapters[primary_index];
+        adapters[primary_index] = tmp;
+    }
+
+    *new_adapters = adapters;
+    *count = adapter_count;
+    ret = 0;
+done:
+    if (ret)
+        macdrv_free_adapters(adapters);
+    return ret;
+}
+
+/***********************************************************************
+ *              macdrv_free_adapters
+ *
+ * Frees an adapter list allocated from macdrv_get_adapters()
+ */
+void macdrv_free_adapters(struct macdrv_adapter* adapters)
+{
+    if (adapters)
+        free(adapters);
+}
+
+/***********************************************************************
+ *              macdrv_get_monitors
+ *
+ * Get a list of monitors under adapter_id. The first monitor is primary if adapter is primary.
+ * Call macdrv_free_monitors() when you are done using the data.
+ *
+ * Returns non-zero value on failure with parameters unchanged and zero on success.
+ */
+int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** new_monitors, int* count)
+{
+    struct macdrv_monitor* monitors = NULL;
+    struct macdrv_monitor* realloc_monitors;
+    struct macdrv_display* displays = NULL;
+    CGDirectDisplayID display_ids[16];
+    uint32_t display_id_count;
+    int primary_index = 0;
+    int monitor_count = 0;
+    int display_count;
+    int capacity;
+    int ret = -1;
+    int i, j;
+
+    /* 2 should be enough for most cases */
+    capacity = 2;
+    monitors = calloc(capacity, sizeof(*monitors));
+    if (!monitors)
+        return -1;
+
+    /* Report an inactive monitor */
+    if (!CGDisplayIsActive(adapter_id) && !CGDisplayIsInMirrorSet(adapter_id))
+    {
+        strcpy(monitors[monitor_count].name, "Generic Non-PnP Monitor");
+        monitors[monitor_count].state_flags = DISPLAY_DEVICE_ATTACHED;
+        monitor_count++;
+    }
+    /* Report active and mirrored monitors in the same mirroring set */
+    else
+    {
+        if (CGGetOnlineDisplayList(sizeof(display_ids) / sizeof(display_ids[0]), display_ids, &display_id_count)
+            != kCGErrorSuccess)
+            goto done;
+
+        if (macdrv_get_displays(&displays, &display_count))
+            goto done;
+
+        for (i = 0; i < display_id_count; i++)
+        {
+            if (display_ids[i] != adapter_id && CGDisplayMirrorsDisplay(display_ids[i]) != adapter_id)
+                continue;
+
+            /* Find and fill in monitor info */
+            for (j = 0; j < display_count; j++)
+            {
+                if (displays[j].displayID == display_ids[i]
+                    || CGDisplayMirrorsDisplay(display_ids[i]) == displays[j].displayID)
+                {
+                    /* Allocate more space if needed */
+                    if (monitor_count >= capacity)
+                    {
+                        capacity *= 2;
+                        realloc_monitors = realloc(monitors, sizeof(*monitors) * capacity);
+                        if (!realloc_monitors)
+                            goto done;
+                        monitors = realloc_monitors;
+                    }
+
+                    if (j == 0)
+                        primary_index = monitor_count;
+
+                    strcpy(monitors[monitor_count].name, "Generic Non-PnP Monitor");
+                    monitors[monitor_count].state_flags = DISPLAY_DEVICE_ATTACHED | DISPLAY_DEVICE_ACTIVE;
+                    monitors[monitor_count].rc_monitor = displays[j].frame;
+                    monitors[monitor_count].rc_work = displays[j].work_frame;
+                    monitor_count++;
+                    break;
+                }
+            }
+        }
+
+        /* Make sure the first monitor on primary adapter is primary */
+        if (primary_index)
+        {
+            struct macdrv_monitor tmp;
+            tmp = monitors[0];
+            monitors[0] = monitors[primary_index];
+            monitors[primary_index] = tmp;
+        }
+    }
+
+    *new_monitors = monitors;
+    *count = monitor_count;
+    ret = 0;
+done:
+    if (displays)
+        macdrv_free_displays(displays);
+    if (ret)
+        macdrv_free_monitors(monitors);
+    return ret;
+}
+
+/***********************************************************************
+ *              macdrv_free_monitors
+ *
+ * Frees an monitor list allocated from macdrv_get_monitors()
+ */
+void macdrv_free_monitors(struct macdrv_monitor* monitors)
+{
+    if (monitors)
+        free(monitors);
 }

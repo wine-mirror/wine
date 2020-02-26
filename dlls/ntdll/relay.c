@@ -777,9 +777,12 @@ DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigne
 extern INT_PTR WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack );
 __ASM_GLOBAL_FUNC( relay_call,
                    "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "leaq -0x48(%rbp),%rsp\n\t"
                    "andq $~15,%rsp\n\t"
@@ -831,7 +834,7 @@ __ASM_GLOBAL_FUNC( relay_call,
                    __ASM_CFI(".cfi_same_value %rsi\n\t")
                    "movq -8(%rbp),%rdi\n\t"
                    __ASM_CFI(".cfi_same_value %rdi\n\t")
-                   "movq %rbp,%rsp\n\t"
+                   "leaq 0(%rbp),%rsp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
                    "popq %rbp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")

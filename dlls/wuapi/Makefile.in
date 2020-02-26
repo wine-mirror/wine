@@ -1,6 +1,8 @@
 MODULE    = wuapi.dll
 IMPORTS   = uuid ole32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	downloader.c \
 	installer.c \

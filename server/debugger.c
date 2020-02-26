@@ -244,7 +244,7 @@ static const fill_event_func fill_debug_event[NB_DEBUG_EVENTS] =
 static void unlink_event( struct debug_ctx *debug_ctx, struct debug_event *event )
 {
     list_remove( &event->entry );
-    if (event->sender->debug_event == event) event->sender->debug_event = NULL;
+    if (event->sender->process->debug_event == event) event->sender->process->debug_event = NULL;
     release_object( event );
 }
 
@@ -256,7 +256,7 @@ static void link_event( struct debug_event *event )
     assert( debug_ctx );
     grab_object( event );
     list_add_tail( &debug_ctx->event_queue, &event->entry );
-    if (!event->sender->debug_event)
+    if (!event->sender->process->debug_event)
     {
         /* grab reference since debugger could be killed while trying to wake up */
         grab_object( debug_ctx );
@@ -273,7 +273,7 @@ static struct debug_event *find_event_to_send( struct debug_ctx *debug_ctx )
     LIST_FOR_EACH_ENTRY( event, &debug_ctx->event_queue, struct debug_event, entry )
     {
         if (event->state == EVENT_SENT) continue;  /* already sent */
-        if (event->sender->debug_event) continue;  /* thread busy with another one */
+        if (event->sender->process->debug_event) continue;  /* process busy with another one */
         return event;
     }
     return NULL;
@@ -371,7 +371,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
             if (event->state != EVENT_SENT) continue;
             if (event->sender == thread)
             {
-                assert( event->sender->debug_event == event );
+                assert( event->sender->process->debug_event == event );
 
                 event->status = status;
                 event->state  = EVENT_CONTINUED;
@@ -516,22 +516,28 @@ void generate_startup_debug_events( struct process *process, client_ptr_t entry 
     struct list *ptr;
     struct thread *thread, *first_thread = get_process_first_thread( process );
 
-    /* generate creation events */
-    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
-    {
-        if (thread == first_thread)
-            generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT, &entry );
-        else
-            generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
-    }
+    generate_debug_event( first_thread, CREATE_PROCESS_DEBUG_EVENT, &entry );
+    ptr = list_head( &process->dlls ); /* skip main module reported in create process event */
 
-    /* generate dll events (in loading order, i.e. reverse list order) */
-    ptr = list_tail( &process->dlls );
-    while (ptr != list_head( &process->dlls ))
+    /* generate ntdll.dll load event */
+    if (ptr && (ptr = list_next( &process->dlls, ptr )))
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
         generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );
-        ptr = list_prev( &process->dlls, ptr );
+    }
+
+    /* generate creation events */
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+    {
+        if (thread != first_thread)
+            generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
+    }
+
+    /* generate dll events (in loading order) */
+    while (ptr && (ptr = list_next( &process->dlls, ptr )))
+    {
+        struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
+        generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );
     }
 }
 
@@ -588,7 +594,7 @@ DECL_HANDLER(wait_debug_event)
     {
         data_size_t size = get_reply_max_size();
         event->state = EVENT_SENT;
-        event->sender->debug_event = event;
+        event->sender->process->debug_event = event;
         reply->pid = get_process_id( event->sender->process );
         reply->tid = get_thread_id( event->sender );
         if (size > sizeof(debug_event_t)) size = sizeof(debug_event_t);
@@ -606,8 +612,16 @@ DECL_HANDLER(wait_debug_event)
 /* Continue a debug event */
 DECL_HANDLER(continue_debug_event)
 {
-    struct process *process = get_process_from_id( req->pid );
-    if (process)
+    struct process *process;
+
+    if (req->status != DBG_EXCEPTION_NOT_HANDLED &&
+        req->status != DBG_CONTINUE)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if ((process = get_process_from_id( req->pid )))
     {
         struct thread *thread = get_thread_from_id( req->tid );
         if (thread)
@@ -632,7 +646,6 @@ DECL_HANDLER(debug_process)
     else if (debugger_attach( process, current ))
     {
         generate_startup_debug_events( process, 0 );
-        break_process( process );
         resume_process( process );
     }
     release_object( process );
@@ -705,20 +718,6 @@ DECL_HANDLER(get_exception_status)
         }
         else set_error( STATUS_PENDING );
         release_object( event );
-    }
-}
-
-/* simulate a breakpoint in a process */
-DECL_HANDLER(debug_break)
-{
-    struct process *process;
-
-    reply->self = 0;
-    if ((process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION /*FIXME*/ )))
-    {
-        if (process != current->process) break_process( process );
-        else reply->self = 1;
-        release_object( process );
     }
 }
 

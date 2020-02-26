@@ -4277,6 +4277,9 @@ static BOOL init_opengl(void)
         }
     }
 
+    if (!init_gl_info())
+        goto failed;
+
     /* redirect some standard OpenGL functions */
 #define REDIRECT(func) \
     do { p##func = opengl_funcs.gl.p_##func; opengl_funcs.gl.p_##func = macdrv_##func; } while(0)
@@ -4292,12 +4295,9 @@ static BOOL init_opengl(void)
 
     /* redirect some OpenGL extension functions */
 #define REDIRECT(func) \
-    do { if (opengl_funcs.ext.p_##func) { p##func = opengl_funcs.ext.p_##func; opengl_funcs.ext.p_##func = macdrv_##func; } } while(0)
+    do { if ((p##func = wine_dlsym(opengl_handle, #func, NULL, 0))) { opengl_funcs.ext.p_##func = macdrv_##func; } } while(0)
     REDIRECT(glCopyColorTable);
 #undef REDIRECT
-
-    if (!init_gl_info())
-        goto failed;
 
     if (gluCheckExtension((GLubyte*)"GL_APPLE_flush_render", (GLubyte*)gl_info.glExtensions))
         pglFlushRenderAPPLE = wine_dlsym(opengl_handle, "glFlushRenderAPPLE", NULL, 0);
@@ -4653,7 +4653,7 @@ static struct opengl_funcs opengl_funcs =
 /**********************************************************************
  *              macdrv_wine_get_wgl_driver
  */
-struct opengl_funcs *macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version)
+struct opengl_funcs * CDECL macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version)
 {
     if (version != WINE_WGL_DRIVER_VERSION)
     {

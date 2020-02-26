@@ -117,20 +117,38 @@ static HRESULT WINAPI IDirectMusicTrackImpl_Play(IDirectMusicTrack *iface, void 
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrackImpl_GetParam(IDirectMusicTrack *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
+static HRESULT WINAPI IDirectMusicTrackImpl_GetParam(IDirectMusicTrack *iface, REFGUID type,
+        MUSIC_TIME time, MUSIC_TIME *next, void *param)
 {
-        IDirectMusicTimeSigTrack *This = impl_from_IDirectMusicTrack(iface);
-	FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
-	return S_OK;
+    IDirectMusicTimeSigTrack *This = impl_from_IDirectMusicTrack(iface);
+
+    TRACE("(%p, %s, %d, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
+
+    if (IsEqualGUID(type, &GUID_TimeSignature)) {
+        FIXME("GUID_TimeSignature not handled yet\n");
+        return DMUS_E_NOT_FOUND;
+    }
+
+    return DMUS_E_GET_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IDirectMusicTrackImpl_SetParam(IDirectMusicTrack *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, void *pParam)
+static HRESULT WINAPI IDirectMusicTrackImpl_SetParam(IDirectMusicTrack *iface, REFGUID type,
+        MUSIC_TIME time, void *param)
 {
-        IDirectMusicTimeSigTrack *This = impl_from_IDirectMusicTrack(iface);
-	FIXME("(%p, %s, %d, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
-	return S_OK;
+    IDirectMusicTimeSigTrack *This = impl_from_IDirectMusicTrack(iface);
+
+    TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(type), time, param);
+
+    if (IsEqualGUID(type, &GUID_DisableTimeSig)) {
+        FIXME("GUID_DisableTimeSig not handled yet\n");
+        return S_OK;
+    }
+    if (IsEqualGUID(type, &GUID_EnableTimeSig)) {
+        FIXME("GUID_EnableTimeSig not handled yet\n");
+        return S_OK;
+    }
+
+    return DMUS_E_SET_UNSUPPORTED;
 }
 
 static HRESULT WINAPI IDirectMusicTrackImpl_IsParamSupported(IDirectMusicTrack *iface,

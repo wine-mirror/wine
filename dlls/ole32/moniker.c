@@ -21,9 +21,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <string.h>
 
@@ -39,12 +36,12 @@
 
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/exception.h"
 
 #include "compobj_private.h"
 #include "moniker.h"
 #include "irot.h"
+#include "irpcss.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -81,6 +78,7 @@ typedef struct RunningObjectTableImpl
 
 static RunningObjectTableImpl* runningObjectTableInstance = NULL;
 static IrotHandle irot_handle;
+static RPC_BINDING_HANDLE irpcss_handle;
 
 /* define the EnumMonikerImpl structure */
 typedef struct EnumMonikerImpl
@@ -106,28 +104,50 @@ static inline EnumMonikerImpl *impl_from_IEnumMoniker(IEnumMoniker *iface)
 static HRESULT EnumMonikerImpl_CreateEnumROTMoniker(InterfaceList *moniker_list,
     ULONG pos, IEnumMoniker **ppenumMoniker);
 
+static RPC_BINDING_HANDLE get_rpc_handle(unsigned short *protseq, unsigned short *endpoint)
+{
+    RPC_BINDING_HANDLE handle = NULL;
+    RPC_STATUS status;
+    RPC_WSTR binding;
+
+    status = RpcStringBindingComposeW(NULL, protseq, NULL, endpoint, NULL, &binding);
+    if (status == RPC_S_OK)
+    {
+        status = RpcBindingFromStringBindingW(binding, &handle);
+        RpcStringFreeW(&binding);
+    }
+
+    return handle;
+}
+
 static IrotHandle get_irot_handle(void)
 {
     if (!irot_handle)
     {
-        RPC_STATUS status;
-        RPC_WSTR binding;
-        IrotHandle new_handle;
-        unsigned short ncacn_np[] = IROT_PROTSEQ;
+        unsigned short protseq[] = IROT_PROTSEQ;
         unsigned short endpoint[] = IROT_ENDPOINT;
-        status = RpcStringBindingComposeW(NULL, ncacn_np, NULL, endpoint, NULL, &binding);
-        if (status == RPC_S_OK)
-        {
-            status = RpcBindingFromStringBindingW(binding, &new_handle);
-            RpcStringFreeW(&binding);
-        }
-        if (status != RPC_S_OK)
-            return NULL;
+
+        IrotHandle new_handle = get_rpc_handle(protseq, endpoint);
         if (InterlockedCompareExchangePointer(&irot_handle, new_handle, NULL))
             /* another thread beat us to it */
             RpcBindingFree(&new_handle);
     }
     return irot_handle;
+}
+
+static RPC_BINDING_HANDLE get_irpcss_handle(void)
+{
+    if (!irpcss_handle)
+    {
+        unsigned short protseq[] = IROT_PROTSEQ;
+        unsigned short endpoint[] = IROT_ENDPOINT;
+
+        RPC_BINDING_HANDLE new_handle = get_rpc_handle(protseq, endpoint);
+        if (InterlockedCompareExchangePointer(&irpcss_handle, new_handle, NULL))
+            /* another thread beat us to it */
+            RpcBindingFree(&new_handle);
+    }
+    return irpcss_handle;
 }
 
 static BOOL start_rpcss(void)
@@ -178,6 +198,33 @@ static BOOL start_rpcss(void)
     CloseServiceHandle( service );
     CloseServiceHandle( scm );
     return ret;
+}
+
+DWORD rpcss_get_next_seqid(void)
+{
+    DWORD id = 0;
+    HRESULT hr;
+
+    for (;;)
+    {
+        __TRY
+        {
+            hr = irpcss_get_thread_seq_id(get_irpcss_handle(), &id);
+        }
+        __EXCEPT(rpc_filter)
+        {
+            hr = HRESULT_FROM_WIN32(GetExceptionCode());
+        }
+        __ENDTRY
+        if (hr == HRESULT_FROM_WIN32(RPC_S_SERVER_UNAVAILABLE))
+        {
+            if (start_rpcss())
+                continue;
+        }
+        break;
+    }
+
+    return id;
 }
 
 static HRESULT create_stream_on_mip_ro(const InterfaceData *mip, IStream **stream)
@@ -282,7 +329,7 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MonikerComparison
             return hr;
         }
 
-        len = strlenW(pszDisplayName);
+        len = lstrlenW(pszDisplayName);
         *moniker_data = HeapAlloc(GetProcessHeap(), 0,
             FIELD_OFFSET(MonikerComparisonData, abData[sizeof(CLSID) + (len+1)*sizeof(WCHAR)]));
         if (!*moniker_data)
@@ -1152,7 +1199,7 @@ HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szDisplayName,
     *pchEaten = 0;
     *ppmk = NULL;
 
-    if (!strncmpiW(szDisplayName, wszClsidColon, ARRAY_SIZE(wszClsidColon)))
+    if (!wcsnicmp(szDisplayName, wszClsidColon, ARRAY_SIZE(wszClsidColon)))
     {
         hr = ClassMoniker_CreateFromDisplayName(pbc, szDisplayName, &chEaten, &moniker);
         if (FAILED(hr) && (hr != MK_E_SYNTAX))
@@ -1269,7 +1316,7 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
     absFile=pathDec[nbElm-1];
 
     /* failed if the path represents a directory and not an absolute file name*/
-    if (!lstrcmpW(absFile, bkslashW)) {
+    if (!wcscmp(absFile, bkslashW)) {
         CoTaskMemFree(pathDec);
         return MK_E_INVALIDEXTENSION;
     }
@@ -1280,7 +1327,7 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
     for(i = length-1; (i >= 0) && *(extension = &absFile[i]) != '.'; i--)
         /* nothing */;
 
-    if (!extension || !lstrcmpW(extension, dotW)) {
+    if (!extension || !wcscmp(extension, dotW)) {
         CoTaskMemFree(pathDec);
         return MK_E_INVALIDEXTENSION;
     }

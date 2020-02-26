@@ -2060,7 +2060,7 @@ static BOOL CRYPT_AsnEncodeNumericString(const CERT_NAME_VALUE *value,
             ptr += lenBytes;
             for (i = 0; ret && i < encodedLen; i++)
             {
-                if (isdigitW(str[i]))
+                if ('0' <= str[i] && str[i] <= '9')
                     *ptr++ = (BYTE)str[i];
                 else
                 {

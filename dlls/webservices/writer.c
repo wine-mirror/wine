@@ -16,21 +16,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <float.h>
 #include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winuser.h"
 #include "webservices.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "webservices_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
@@ -110,9 +110,7 @@ static struct writer *alloc_writer(void)
 
     ret->magic      = WRITER_MAGIC;
     InitializeCriticalSection( &ret->cs );
-#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": writer.cs");
-#endif
 
     prop_init( writer_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
@@ -126,9 +124,7 @@ static void free_writer( struct writer *writer )
     WsFreeHeap( writer->output_heap );
     heap_free( writer->stream_buf );
 
-#ifndef __MINGW32__
     writer->cs.DebugInfo->Spare[0] = 0;
-#endif
     DeleteCriticalSection( &writer->cs );
     heap_free( writer );
 }
@@ -905,10 +901,9 @@ static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
 
 static ULONG format_double( const double *ptr, unsigned char *buf )
 {
-#ifdef HAVE_POWL
-    static const long double precision = 0.0000000000000001;
+    static const double precision = 0.0000000000000001;
     unsigned char *p = buf;
-    long double val = *ptr;
+    double val = *ptr;
     int neg, mag, mag2, use_exp;
 
     if (isnan( val ))
@@ -938,12 +933,12 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
         val = -val;
     }
 
-    mag = log10l( val );
+    mag = log10( val );
     use_exp = (mag >= 15 || (neg && mag >= 1) || mag <= -1);
     if (use_exp)
     {
         if (mag < 0) mag -= 1;
-        val = val / powl( 10.0, mag );
+        val = val / pow( 10.0, mag );
         mag2 = mag;
         mag = 0;
     }
@@ -951,10 +946,10 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
 
     while (val > precision || mag >= 0)
     {
-        long double weight = powl( 10.0, mag );
+        double weight = pow( 10.0, mag );
         if (weight > 0 && !isinf( weight ))
         {
-            int digit = floorl( val / weight );
+            int digit = floor( val / weight );
             val -= digit * weight;
             *(p++) = '0' + digit;
         }
@@ -988,10 +983,6 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
     }
 
     return p - buf;
-#else
-    FIXME( "powl not found at build time\n" );
-    return 0;
-#endif
 }
 
 static inline int year_size( int year )
@@ -1203,12 +1194,12 @@ HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT *old, 
     {
         const WS_XML_DOUBLE_TEXT *double_text = (const WS_XML_DOUBLE_TEXT *)text;
         unsigned char buf[32]; /* "-1.1111111111111111E-308", oversized to address Valgrind limitations */
-        unsigned short fpword;
+        unsigned int fpword = _control87( 0, 0 );
         ULONG len;
 
-        if (!set_fpword( 0x37f, &fpword )) return E_NOTIMPL;
+        _control87( _MCW_EM | _RC_NEAR | _PC_64, _MCW_EM | _MCW_RC | _MCW_PC );
         len = format_double( &double_text->value, buf );
-        restore_fpword( fpword );
+        _control87( fpword, _MCW_EM | _MCW_RC | _MCW_PC );
         if (!len) return E_NOTIMPL;
 
         if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
@@ -3505,7 +3496,7 @@ static HRESULT write_type_wsz( struct writer *writer, WS_TYPE_MAPPING mapping,
     if (!option || option == WS_WRITE_REQUIRED_VALUE || option == WS_WRITE_NILLABLE_VALUE) return E_INVALIDARG;
     if ((hr = get_value_ptr( option, value, size, 0, (const void **)&ptr )) != S_OK) return hr;
     if (option == WS_WRITE_NILLABLE_POINTER && !ptr) return write_add_nil_attribute( writer );
-    if (!(len = strlenW( ptr ))) return S_OK;
+    if (!(len = lstrlenW( ptr ))) return S_OK;
 
     utf16.text.textType = WS_XML_TEXT_TYPE_UTF16;
     utf16.bytes         = (BYTE *)ptr;
@@ -3886,6 +3877,35 @@ static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping
     return S_OK;
 }
 
+static const WS_XML_STRING *get_enum_value_name( const WS_ENUM_DESCRIPTION *desc, int value )
+{
+    ULONG i;
+    for (i = 0; i < desc->valueCount; i++)
+    {
+        if (desc->values[i].value == value) return desc->values[i].name;
+    }
+    return NULL;
+}
+
+static HRESULT write_type_enum( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                const WS_ENUM_DESCRIPTION *desc, WS_WRITE_OPTION option,
+                                const void *value, ULONG size )
+{
+    const WS_XML_STRING *name;
+    WS_XML_UTF8_TEXT utf8;
+    const int *ptr;
+    HRESULT hr;
+
+    if (!desc) return E_INVALIDARG;
+    if ((hr = get_value_ptr( option, value, size, sizeof(*ptr), (const void **)&ptr )) != S_OK) return hr;
+    if (!(name = get_enum_value_name( desc, *ptr ))) return E_INVALIDARG;
+
+    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    utf8.value.bytes   = name->bytes;
+    utf8.value.length  = name->length;
+    return write_type_text( writer, mapping, &utf8.text );
+}
+
 static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TYPE type,
                            const void *desc, WS_WRITE_OPTION option, const void *value,
                            ULONG size )
@@ -3948,6 +3968,9 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 
     case WS_STRUCT_TYPE:
         return write_type_struct( writer, mapping, desc, option, value, size );
+
+    case WS_ENUM_TYPE:
+        return write_type_enum( writer, mapping, desc, option, value, size );
 
     default:
         FIXME( "type %u not supported\n", type );

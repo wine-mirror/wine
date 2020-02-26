@@ -374,7 +374,7 @@ static void print_full_information(void)
     }
 }
 
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     static const WCHAR slashHelp[] = {'/','?',0};
     static const WCHAR slashAll[] = {'/','a','l','l',0};

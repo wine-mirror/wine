@@ -17,9 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include "ddraw_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
@@ -41,6 +38,8 @@ static void update_clip_space(struct d3d_device *device,
     D3DMATRIX projection;
 
     multiply_matrix(&projection, &clip_space, &device->legacy_projection);
+    wined3d_stateblock_set_transform(device->state,
+            WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
     wined3d_device_set_transform(device->wined3d_device,
             WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
     device->legacy_clipspace = clip_space;
@@ -152,15 +151,10 @@ void viewport_alloc_active_light_index(struct d3d_light *light)
             }
         }
     }
-    map = vp->map_lights;
-    assert(vp->active_lights_count < DDRAW_MAX_ACTIVE_LIGHTS && map != ~0u);
 
-    i = 0;
-    while (map & 1)
-    {
-        map >>= 1;
-        ++i;
-    }
+    map = ~vp->map_lights;
+    assert(vp->active_lights_count < DDRAW_MAX_ACTIVE_LIGHTS && map);
+    i = wined3d_bit_scan(&map);
     light->active_light_index = i + 1;
     ++vp->active_lights_count;
     vp->map_lights |= 1u << i;
@@ -358,12 +352,13 @@ static HRESULT WINAPI d3d_viewport_GetViewport(IDirect3DViewport3 *iface, D3DVIE
         vp1.dwY = viewport->viewports.vp2.dwY;
         vp1.dwWidth = viewport->viewports.vp2.dwWidth;
         vp1.dwHeight = viewport->viewports.vp2.dwHeight;
-        vp1.dvMaxX = 0.0f;
-        vp1.dvMaxY = 0.0f;
-        vp1.dvScaleX = 0.0f;
-        vp1.dvScaleY = 0.0f;
-        vp1.dvMinZ = viewport->viewports.vp2.dvMinZ;
-        vp1.dvMaxZ = viewport->viewports.vp2.dvMaxZ;
+
+        vp1.dvScaleX = vp1.dwWidth / viewport->viewports.vp2.dvClipWidth;
+        vp1.dvScaleY = vp1.dwHeight / viewport->viewports.vp2.dvClipHeight;
+        vp1.dvMaxX = viewport->viewports.vp2.dvClipWidth + viewport->viewports.vp2.dvClipX;
+        vp1.dvMaxY = viewport->viewports.vp2.dvClipY;
+        vp1.dvMinZ = 0.0f;
+        vp1.dvMaxZ = 1.0f;
         memcpy(vp, &vp1, size);
     }
 
@@ -990,12 +985,13 @@ static HRESULT WINAPI d3d_viewport_GetViewport2(IDirect3DViewport3 *iface, D3DVI
         vp2.dwY = viewport->viewports.vp1.dwY;
         vp2.dwWidth = viewport->viewports.vp1.dwWidth;
         vp2.dwHeight = viewport->viewports.vp1.dwHeight;
-        vp2.dvClipX = 0.0f;
-        vp2.dvClipY = 0.0f;
-        vp2.dvClipWidth = 0.0f;
-        vp2.dvClipHeight = 0.0f;
-        vp2.dvMinZ = viewport->viewports.vp1.dvMinZ;
-        vp2.dvMaxZ = viewport->viewports.vp1.dvMaxZ;
+
+        vp2.dvClipWidth = viewport->viewports.vp1.dwWidth / viewport->viewports.vp1.dvScaleX;
+        vp2.dvClipHeight = viewport->viewports.vp1.dwHeight / viewport->viewports.vp1.dvScaleY;
+        vp2.dvClipX = -vp2.dvClipWidth / 2.0f;
+        vp2.dvClipY = vp2.dvClipHeight / 2.0f;
+        vp2.dvMinZ = 0.0f;
+        vp2.dvMaxZ = 1.0f;
         memcpy(vp, &vp2, size);
     }
 

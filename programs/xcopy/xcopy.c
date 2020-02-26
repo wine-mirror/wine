@@ -1087,7 +1087,7 @@ static int XCOPY_ProcessDestParm(WCHAR *supplieddestination, WCHAR *stem, WCHAR 
 
      Processes the args, and drives the actual copying
    ========================================================================= */
-int wmain (int argc, WCHAR *argvW[])
+int __cdecl wmain (int argc, WCHAR *argvW[])
 {
     int     rc = 0;
     WCHAR   suppliedsource[MAX_PATH] = {0};   /* As supplied on the cmd line */

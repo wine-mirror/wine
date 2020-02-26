@@ -108,6 +108,8 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_Release (IDirectMusicAudioPath *if
     TRACE("(%p): ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
+        if (This->pPrimary)
+            IDirectSoundBuffer_Release(This->pPrimary);
         if (This->pDSBuffer)
             IDirectSoundBuffer_Release(This->pDSBuffer);
         This->pPerf = NULL;
@@ -285,7 +287,7 @@ static HRESULT WINAPI path_IDirectMusicObject_ParseDescriptor(IDirectMusicObject
     desc->guidClass = CLSID_DirectMusicAudioPathConfig;
     desc->dwValidData |= DMUS_OBJ_CLASS;
 
-    TRACE("returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (desc));
+    dump_DMUS_OBJECTDESC(desc);
     return S_OK;
 }
 

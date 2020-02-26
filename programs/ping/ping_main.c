@@ -45,7 +45,7 @@ static void usage(void)
            "    -l  Length of send buffer.\n");
 }
 
-int main(int argc, char** argv)
+int __cdecl main(int argc, char** argv)
 {
     unsigned int n = 4, i, w = 4000, l = 32;
     int res;

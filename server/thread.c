@@ -184,8 +184,6 @@ static inline void init_thread_structure( struct thread *thread )
     thread->teb             = 0;
     thread->entry_point     = 0;
     thread->debug_ctx       = NULL;
-    thread->debug_event     = NULL;
-    thread->debug_break     = 0;
     thread->system_regs     = 0;
     thread->queue           = NULL;
     thread->wait            = NULL;
@@ -203,6 +201,8 @@ static inline void init_thread_structure( struct thread *thread )
     thread->suspend         = 0;
     thread->desktop_users   = 0;
     thread->token           = NULL;
+    thread->desc            = NULL;
+    thread->desc_len        = 0;
 
     thread->creation_time = current_time;
     thread->exit_time     = 0;
@@ -338,6 +338,7 @@ static void cleanup_thread( struct thread *thread )
             thread->inflight[i].client = thread->inflight[i].server = -1;
         }
     }
+    free( thread->desc );
     thread->req_data = NULL;
     thread->reply_data = NULL;
     thread->request_fd = NULL;
@@ -346,6 +347,8 @@ static void cleanup_thread( struct thread *thread )
     thread->context = NULL;
     thread->suspend_context = NULL;
     thread->desktop = 0;
+    thread->desc = NULL;
+    thread->desc_len = 0;
 }
 
 /* destroy a thread when its refcount is 0 */
@@ -553,6 +556,28 @@ static void set_thread_info( struct thread *thread,
         security_set_thread_token( thread, req->token );
     if (req->mask & SET_THREAD_INFO_ENTRYPOINT)
         thread->entry_point = req->entry_point;
+    if (req->mask & SET_THREAD_INFO_DESCRIPTION)
+    {
+        WCHAR *desc;
+        data_size_t desc_len = get_req_data_size();
+
+        if (desc_len)
+        {
+            if ((desc = mem_alloc( desc_len )))
+            {
+                memcpy( desc, get_req_data(), desc_len );
+                free( thread->desc );
+                thread->desc = desc;
+                thread->desc_len = desc_len;
+            }
+        }
+        else
+        {
+            free( thread->desc );
+            thread->desc = NULL;
+            thread->desc_len = 0;
+        }
+    }
 }
 
 /* stop a thread (at the Unix level) */
@@ -722,7 +747,7 @@ static int check_wait( struct thread *thread )
     assert( wait );
 
     if ((wait->flags & SELECT_INTERRUPTIBLE) && !list_empty( &thread->system_apc ))
-        return STATUS_USER_APC;
+        return STATUS_KERNEL_APC;
 
     /* Suspended threads may not acquire locks, but they can run system APCs */
     if (thread->process->suspend + thread->suspend > 0) return -1;
@@ -1056,12 +1081,11 @@ void thread_cancel_apc( struct thread *thread, struct object *owner, enum apc_ty
 }
 
 /* remove the head apc from the queue; the returned object must be released by the caller */
-static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only )
+static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system )
 {
     struct thread_apc *apc = NULL;
-    struct list *ptr = list_head( &thread->system_apc );
+    struct list *ptr = list_head( system ? &thread->system_apc : &thread->user_apc );
 
-    if (!ptr && !system_only) ptr = list_head( &thread->user_apc );
     if (ptr)
     {
         apc = LIST_ENTRY( ptr, struct thread_apc, entry );
@@ -1196,39 +1220,6 @@ static unsigned int get_context_system_regs( enum cpu_type cpu )
     case CPU_ARM64:   return SERVER_CTX_DEBUG_REGISTERS;
     }
     return 0;
-}
-
-/* trigger a breakpoint event in a given thread */
-void break_thread( struct thread *thread )
-{
-    debug_event_t data;
-
-    assert( thread->context );
-
-    memset( &data, 0, sizeof(data) );
-    data.exception.first     = 1;
-    data.exception.exc_code  = STATUS_BREAKPOINT;
-    data.exception.flags     = EXCEPTION_CONTINUABLE;
-    switch (thread->context->cpu)
-    {
-    case CPU_x86:
-        data.exception.address = thread->context->ctl.i386_regs.eip;
-        break;
-    case CPU_x86_64:
-        data.exception.address = thread->context->ctl.x86_64_regs.rip;
-        break;
-    case CPU_POWERPC:
-        data.exception.address = thread->context->ctl.powerpc_regs.iar;
-        break;
-    case CPU_ARM:
-        data.exception.address = thread->context->ctl.arm_regs.pc;
-        break;
-    case CPU_ARM64:
-        data.exception.address = thread->context->ctl.arm64_regs.pc;
-        break;
-    }
-    generate_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data );
-    thread->debug_break = 0;
 }
 
 /* take a snapshot of currently running threads */
@@ -1471,6 +1462,16 @@ DECL_HANDLER(get_thread_info)
         reply->priority       = thread->priority;
         reply->affinity       = thread->affinity;
         reply->last           = thread->process->running_threads == 1;
+        reply->suspend_count  = thread->suspend;
+        reply->desc_len       = thread->desc_len;
+
+        if (thread->desc && get_reply_max_size())
+        {
+            if (thread->desc_len <= get_reply_max_size())
+                set_reply_data( thread->desc, thread->desc_len );
+            else
+                set_error( STATUS_BUFFER_TOO_SMALL );
+        }
 
         release_object( thread );
     }
@@ -1577,26 +1578,36 @@ DECL_HANDLER(select)
 
     reply->timeout = select_on( &select_op, op_size, req->cookie, req->flags, req->timeout );
 
-    if (get_error() == STATUS_USER_APC)
+    while (get_error() == STATUS_USER_APC)
     {
-        for (;;)
+        if (!(apc = thread_dequeue_apc( current, 0 )))
+            break;
+        /* Optimization: ignore APC_NONE calls, they are only used to
+         * wake up a thread, but since we got here the thread woke up already.
+         */
+        if (apc->call.type != APC_NONE &&
+            (reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
         {
-            if (!(apc = thread_dequeue_apc( current, !(req->flags & SELECT_ALERTABLE) )))
-                break;
-            /* Optimization: ignore APC_NONE calls, they are only used to
-             * wake up a thread, but since we got here the thread woke up already.
-             */
-            if (apc->call.type != APC_NONE &&
-                (reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
-            {
-                reply->call = apc->call;
-                release_object( apc );
-                break;
-            }
+            reply->call = apc->call;
+            release_object( apc );
+            break;
+        }
+        apc->executed = 1;
+        wake_up( &apc->obj, 0 );
+        release_object( apc );
+    }
+
+    if (get_error() == STATUS_KERNEL_APC)
+    {
+        apc = thread_dequeue_apc( current, 1 );
+        if ((reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
+            reply->call = apc->call;
+        else
+        {
             apc->executed = 1;
             wake_up( &apc->obj, 0 );
-            release_object( apc );
         }
+        release_object( apc );
     }
 }
 
@@ -1643,6 +1654,7 @@ DECL_HANDLER(queue_apc)
         }
         break;
     case APC_CREATE_THREAD:
+    case APC_BREAK_PROCESS:
         process = get_process_from_handle( req->handle, PROCESS_CREATE_THREAD );
         break;
     default:
@@ -1828,7 +1840,6 @@ DECL_HANDLER(set_suspend_context)
         memcpy( current->suspend_context, get_req_data(), sizeof(context_t) );
         current->suspend_context->flags = 0;  /* to keep track of what is modified */
         current->context = current->suspend_context;
-        if (current->debug_break) break_thread( current );
     }
 }
 

@@ -131,6 +131,10 @@ struct font_info
 {
     short int width;
     short int height;
+    short int weight;
+    short int pitch_family;
+    WCHAR    *face_name;
+    data_size_t face_len;
 };
 
 struct screen_buffer
@@ -433,6 +437,10 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     screen_buffer->data           = NULL;
     screen_buffer->font.width     = 0;
     screen_buffer->font.height    = 0;
+    screen_buffer->font.weight    = FW_NORMAL;
+    screen_buffer->font.pitch_family  = FIXED_PITCH | FF_DONTCARE;
+    screen_buffer->font.face_name = NULL;
+    screen_buffer->font.face_len  = 0;
     memset( screen_buffer->color_map, 0, sizeof(screen_buffer->color_map) );
     list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
@@ -496,37 +504,37 @@ int free_console( struct process *process )
  *	2/ parent is a renderer which launches process, and process should attach to the console
  *	   rendered by parent
  */
-void inherit_console(struct thread *parent_thread, struct process *process, obj_handle_t hconin)
+void inherit_console( struct thread *parent_thread, struct process *parent, struct process *process,
+                      obj_handle_t hconin )
 {
     int done = 0;
-    struct process* parent = parent_thread->process;
 
     /* if parent is a renderer, then attach current process to its console
      * a bit hacky....
      */
-    if (hconin)
+    if (hconin && parent_thread)
     {
-	struct console_input* console;
+        struct console_input *console;
 
         /* FIXME: should we check some access rights ? */
-        if ((console = (struct console_input*)get_handle_obj( parent, hconin,
-                                                              0, &console_input_ops )))
-	{
+        if ((console = (struct console_input *)get_handle_obj( parent, hconin,
+                                                               0, &console_input_ops )))
+        {
             if (console->renderer == parent_thread)
-	    {
-		process->console = (struct console_input*)grab_object( console );
-		process->console->num_proc++;
-		done = 1;
-	    }
-	    release_object( console );
-	}
+            {
+                process->console = (struct console_input *)grab_object( console );
+                process->console->num_proc++;
+                done = 1;
+            }
+            release_object( console );
+        }
         else clear_error();  /* ignore error */
     }
     /* otherwise, if parent has a console, attach child to this console */
     if (!done && parent->console)
     {
-	process->console = (struct console_input*)grab_object( parent->console );
-	process->console->num_proc++;
+        process->console = (struct console_input *)grab_object( parent->console );
+        process->console->num_proc++;
     }
 }
 
@@ -896,6 +904,8 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
                                     const struct set_console_output_info_request *req )
 {
     struct console_renderer_event evt;
+    data_size_t font_name_len, offset;
+    WCHAR *font_name;
 
     memset(&evt.u, 0, sizeof(evt.u));
     if (req->mask & SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM)
@@ -1039,15 +1049,29 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
 	screen_buffer->max_width  = req->max_width;
 	screen_buffer->max_height = req->max_height;
     }
+    if (req->mask & SET_CONSOLE_OUTPUT_INFO_COLORTABLE)
+    {
+        memcpy( screen_buffer->color_map, get_req_data(), min( get_req_data_size(), sizeof(screen_buffer->color_map) ));
+    }
     if (req->mask & SET_CONSOLE_OUTPUT_INFO_FONT)
     {
         screen_buffer->font.width  = req->font_width;
         screen_buffer->font.height = req->font_height;
-    }
-    if (req->mask & SET_CONSOLE_OUTPUT_INFO_COLORTABLE)
-    {
-        memcpy( screen_buffer->color_map, get_req_data(),
-                min( sizeof(screen_buffer->color_map), get_req_data_size() ));
+        screen_buffer->font.weight = req->font_weight;
+        screen_buffer->font.pitch_family = req->font_pitch_family;
+        offset = req->mask & SET_CONSOLE_OUTPUT_INFO_COLORTABLE ? sizeof(screen_buffer->color_map) : 0;
+        if (get_req_data_size() > offset)
+        {
+            font_name_len = (get_req_data_size() - offset) / sizeof(WCHAR) * sizeof(WCHAR);
+            font_name = mem_alloc( font_name_len );
+            if (font_name)
+            {
+                memcpy( font_name, (char *)get_req_data() + offset, font_name_len );
+                free( screen_buffer->font.face_name );
+                screen_buffer->font.face_name = font_name;
+                screen_buffer->font.face_len  = font_name_len;
+            }
+        }
     }
 
     return 1;
@@ -1183,6 +1207,7 @@ static void screen_buffer_destroy( struct object *obj )
     }
     if (screen_buffer->fd) release_object( screen_buffer->fd );
     free( screen_buffer->data );
+    free( screen_buffer->font.face_name );
 }
 
 static struct fd *screen_buffer_get_fd( struct object *obj )
@@ -1731,6 +1756,8 @@ DECL_HANDLER(set_console_output_info)
 DECL_HANDLER(get_console_output_info)
 {
     struct screen_buffer *screen_buffer;
+    void *data;
+    data_size_t total;
 
     if ((screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, req->handle,
                                                                  FILE_READ_PROPERTIES, &screen_buffer_ops)))
@@ -1751,8 +1778,19 @@ DECL_HANDLER(get_console_output_info)
         reply->max_height     = screen_buffer->max_height;
         reply->font_width     = screen_buffer->font.width;
         reply->font_height    = screen_buffer->font.height;
-        set_reply_data( screen_buffer->color_map,
-                        min( sizeof(screen_buffer->color_map), get_reply_max_size() ));
+        reply->font_weight    = screen_buffer->font.weight;
+        reply->font_pitch_family = screen_buffer->font.pitch_family;
+        total = min( sizeof(screen_buffer->color_map) + screen_buffer->font.face_len, get_reply_max_size() );
+        if (total)
+        {
+            data = set_reply_data_size( total );
+            memcpy( data, screen_buffer->color_map, min( total, sizeof(screen_buffer->color_map) ));
+            if (screen_buffer->font.face_len && total > sizeof(screen_buffer->color_map))
+            {
+                memcpy( (char *)data + sizeof(screen_buffer->color_map), screen_buffer->font.face_name,
+                        min( total - sizeof(screen_buffer->color_map), screen_buffer->font.face_len ));
+            }
+        }
         release_object( screen_buffer );
     }
 }
@@ -1867,14 +1905,26 @@ static int cgwe_enum( struct process* process, void* user)
 DECL_HANDLER(get_console_wait_event)
 {
     struct console_input* console = NULL;
+    struct object *obj;
 
-    if (current->process->console)
-        console = (struct console_input*)grab_object( (struct object*)current->process->console );
+    if (req->handle)
+    {
+        if (!(obj = get_handle_obj( current->process, req->handle, FILE_READ_PROPERTIES, NULL ))) return;
+        if (obj->ops == &console_input_ops)
+            console = (struct console_input *)grab_object( obj );
+        else if (obj->ops == &screen_buffer_ops)
+            console = (struct console_input *)grab_object( ((struct screen_buffer *)obj)->input );
+        else
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        release_object( obj );
+    }
+    else if (current->process->console)
+        console = (struct console_input *)grab_object( current->process->console );
     else enum_processes(cgwe_enum, &console);
 
     if (console)
     {
-        reply->handle = alloc_handle( current->process, console->event, EVENT_ALL_ACCESS, 0 );
+        reply->event = alloc_handle( current->process, console->event, EVENT_ALL_ACCESS, 0 );
         release_object( console );
     }
     else set_error( STATUS_INVALID_PARAMETER );

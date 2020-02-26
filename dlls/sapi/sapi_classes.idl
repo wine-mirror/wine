@@ -50,3 +50,29 @@ coclass SpObjectTokenEnum
     interface ISpObjectTokenEnumBuilder;
     [default] interface IEnumSpObjectTokens;
 }
+
+[
+    uuid(96749377-3391-11d2-9ee3-00c04f797396),
+    helpstring("Speech Voice"),
+    progid("SAPI.SpVoice.1"),
+    vi_progid("SAPI.SpVoice"),
+    threading(both)
+]
+coclass SpVoice
+{
+    interface ISpVoice;
+    [default] interface ISpeechVoice;
+}
+
+[
+    uuid(947812b3-2ae1-4644-ba86-9e90ded7ec91),
+    helpstring("SpFileStream"),
+    progid("SAPI.SpFileStream.1"),
+    vi_progid("SAPI.SpFileStream"),
+    threading(both)
+]
+coclass SpFileStream
+{
+    interface ISpStream;
+    [default] interface ISpeechFileStream;
+}

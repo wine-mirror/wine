@@ -23,6 +23,7 @@
 #pragma makedep implib
 #endif
 
+#define _CRTIMP
 #include "msvcrt.h"
 #include "mtdll.h"
 

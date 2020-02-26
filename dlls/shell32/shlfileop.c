@@ -1799,3 +1799,13 @@ HRESULT WINAPI SHPathPrepareForWriteW(HWND hwnd, IUnknown *modless, LPCWSTR path
     else
         return HRESULT_FROM_WIN32(ERROR_DIRECTORY);
 }
+
+/*************************************************************************
+ * SHMultiFileProperties [SHELL32.@]
+ */
+
+HRESULT WINAPI SHMultiFileProperties(IDataObject *pdtobj, DWORD flags)
+{
+    FIXME("stub: %p %u\n", pdtobj, flags);
+    return E_NOTIMPL;
+}

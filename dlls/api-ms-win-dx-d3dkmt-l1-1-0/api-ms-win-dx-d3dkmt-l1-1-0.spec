@@ -5,7 +5,7 @@
 @ stub D3DKMTCheckMonitorPowerState
 @ stub D3DKMTCheckOcclusion
 @ stub D3DKMTCheckSharedResourceAccess
-@ stub D3DKMTCheckVidPnExclusiveOwnership
+@ stdcall D3DKMTCheckVidPnExclusiveOwnership(ptr) gdi32.D3DKMTCheckVidPnExclusiveOwnership
 @ stdcall D3DKMTCloseAdapter(ptr) gdi32.D3DKMTCloseAdapter
 @ stub D3DKMTConfigureSharedResource
 @ stub D3DKMTCreateAllocation
@@ -68,7 +68,7 @@
 @ stub D3DKMTQueryRemoteVidPnSourceFromGdiDisplayName
 @ stub D3DKMTQueryResourceInfo
 @ stub D3DKMTQueryResourceInfoFromNtHandle
-@ stub D3DKMTQueryStatistics
+@ stdcall D3DKMTQueryStatistics(ptr) gdi32.D3DKMTQueryStatistics
 @ stub D3DKMTReclaimAllocations
 @ stub D3DKMTReleaseKeyedMutex
 @ stub D3DKMTReleaseKeyedMutex2
@@ -80,9 +80,9 @@
 @ stub D3DKMTSetDisplayPrivateDriverFormat
 @ stub D3DKMTSetGammaRamp
 @ stub D3DKMTSetProcessSchedulingPriorityClass
-@ stub D3DKMTSetQueuedLimit
+@ stdcall D3DKMTSetQueuedLimit(ptr) gdi32.D3DKMTSetQueuedLimit
 @ stub D3DKMTSetStereoEnabled
-@ stub D3DKMTSetVidPnSourceOwner
+@ stdcall D3DKMTSetVidPnSourceOwner(ptr) gdi32.D3DKMTSetVidPnSourceOwner
 @ stub D3DKMTShareObjects
 @ stub D3DKMTSharedPrimaryLockNotification
 @ stub D3DKMTSharedPrimaryUnLockNotification

@@ -286,10 +286,8 @@ static INT index_from_val(script_ctx_t *ctx, jsval_t v)
     HRESULT hres;
 
     hres = to_number(ctx, v, &n);
-    if(FAILED(hres)) {
-        clear_ei(ctx); /* FIXME: Move ignoring exceptions to to_primitive */
+    if(FAILED(hres))
         return 0;
-    }
 
     n = floor(n);
     return is_int32(n) ? n : 0;
@@ -561,7 +559,7 @@ static HRESULT RegExp_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        return JS_E_FUNCTION_EXPECTED;
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -937,7 +935,7 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                     if(is_class(jsdisp, JSCLASS_REGEXP)) {
                         if(argc > 1 && !is_undefined(argv[1])) {
                             jsdisp_release(jsdisp);
-                            return throw_regexp_error(ctx, JS_E_REGEXP_SYNTAX, NULL);
+                            return JS_E_REGEXP_SYNTAX;
                         }
 
                         if(r)

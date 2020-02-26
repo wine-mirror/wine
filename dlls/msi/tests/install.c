@@ -966,8 +966,8 @@ static const CHAR fo_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescriptio
 static const CHAR fo_condition_dat[] = "Feature_\tLevel\tCondition\n"
                                        "s38\ti2\tS255\n"
                                        "Condition\tFeature_\tLevel\n"
-                                       "preselected\t0\tPreselected\n"
-                                       "notpreselected\t0\tNOT Preselected\n";
+                                       "preselected\t0\tPreselected AND NOT REMOVE\n"
+                                       "notpreselected\t0\tNOT Preselected AND NOT REMOVE\n";
 
 static const CHAR fo_feature_comp_dat[] = "Feature_\tComponent_\n"
                                           "s38\ts72\n"
@@ -1004,6 +1004,7 @@ static const CHAR fo_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "RegisterProduct\t\t5000\n"
                                               "PublishFeatures\t\t5100\n"
                                               "PublishProduct\t\t5200\n"
+                                              "UnpublishFeatures\t\t5300\n"
                                               "InstallFinalize\t\t6000\n";
 
 static const CHAR uc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
@@ -1051,6 +1052,7 @@ static const CHAR uc_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "RegisterProduct\t\t1000\n"
                                               "PublishFeatures\t\t1100\n"
                                               "PublishProduct\t\t1200\n"
+                                              "UnpublishFeatures\t\t1250\n"
                                               "InstallFinalize\t\t1300\n";
 
 static const char mixed_feature_dat[] =
@@ -1173,6 +1175,7 @@ static const char vp_install_exec_seq_dat[] =
     "RegisterProduct\t\t1600\n"
     "PublishFeatures\t\t1700\n"
     "PublishProduct\t\t1800\n"
+    "UnpublishFeatures\t\t1850\n"
     "InstallFinalize\t\t1900\n";
 
 static const char shc_property_dat[] =
@@ -1223,7 +1226,9 @@ static const char shc_custom_action_dat[] =
     "Action\tType\tSource\tTarget\tISComments\n"
     "s72\ti2\tS64\tS0\tS255\n"
     "CustomAction\tAction\n"
-    "TestComponentAction\t19\t\twrong component action on install\t\n";
+    "TestComponentAction\t19\t\twrong component action on install\t\n"
+    "TestDisallowedAction\t19\t\twrong component action on disallowed remove\t\n"
+    "TestRemoveAction\t19\t\twrong component action on remove\t\n";
 
 static const char shc_install_exec_seq_dat[] =
     "Action\tCondition\tSequence\n"
@@ -1233,6 +1238,7 @@ static const char shc_install_exec_seq_dat[] =
     "CostInitialize\t\t200\n"
     "FileCost\t\t300\n"
     "CostFinalize\t\t600\n"
+    "TestDisallowedAction\tREMOVE AND ($sharedcomponent <> -1)\t700\n"
     "InstallValidate\t\t900\n"
     "InstallInitialize\t\t1200\n"
     "ProcessComponents\t\t1300\n"
@@ -1242,6 +1248,28 @@ static const char shc_install_exec_seq_dat[] =
     "RegisterProduct\t\t1700\n"
     "PublishFeatures\t\t1800\n"
     "PublishProduct\t\t1900\n"
+    "UnpublishFeatures\t\t1950\n"
+    "InstallFinalize\t\t2000\n";
+
+static const char shc2_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "LaunchConditions\t\t100\n"
+    "CostInitialize\t\t200\n"
+    "FileCost\t\t300\n"
+    "CostFinalize\t\t600\n"
+    "TestRemoveAction\tREMOVE AND ($sharedcomponent <> 2)\t700\n"
+    "InstallValidate\t\t900\n"
+    "InstallInitialize\t\t1200\n"
+    "ProcessComponents\t\t1300\n"
+    "RemoveFiles\t\t1400\n"
+    "InstallFiles\t\t1500\n"
+    "TestComponentAction\tNOT REMOVE AND ($sharedcomponent <> 3)\t1600\n"
+    "RegisterProduct\t\t1700\n"
+    "PublishFeatures\t\t1800\n"
+    "PublishProduct\t\t1900\n"
+    "UnpublishFeatures\t\t1950\n"
     "InstallFinalize\t\t2000\n";
 
 static const char ft_file_dat[] =
@@ -1305,6 +1333,7 @@ static const char ft_install_exec_seq_dat[] =
     "RegisterProduct\t\t1200\n"
     "PublishFeatures\t\t1300\n"
     "PublishProduct\t\t1400\n"
+    "UnpublishFeatures\t\t1450\n"
     "InstallFinalize\t\t1500\n";
 
 static const char da_custom_action_dat[] =
@@ -1990,7 +2019,7 @@ static const msi_table shc2_tables[] =
     ADD_TABLE(shc_feature),
     ADD_TABLE(shc_feature_comp),
     ADD_TABLE(shc_custom_action),
-    ADD_TABLE(shc_install_exec_seq),
+    ADD_TABLE(shc2_install_exec_seq),
     ADD_TABLE(shc2_property)
 };
 
@@ -2715,15 +2744,14 @@ static void test_MsiInstallProduct(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
-    /* szPackagePath is NULL */
-    r = MsiInstallProductA(NULL, "INSTALL=ALL");
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    if (0) /* crashes on Win10 1709 */
+    {
+        r = MsiInstallProductA(NULL, "INSTALL=ALL");
+        ok(r == ERROR_INVALID_PARAMETER, "got %u\n", r);
 
-    /* both szPackagePath and szCommandLine are NULL */
-    r = MsiInstallProductA(NULL, NULL);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+        r = MsiInstallProductA(NULL, NULL);
+        ok(r == ERROR_INVALID_PARAMETER, "got %u\n", r);
+    }
 
     /* szPackagePath is empty */
     r = MsiInstallProductA("", "INSTALL=ALL");
@@ -2873,7 +2901,7 @@ static void test_MsiInstallProduct(void)
     res = RegOpenKeyA(HKEY_CURRENT_USER, "SOFTWARE\\Wine\\msitest", &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    r = MsiInstallProductA(msifile, "REMOVE=ALL FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
 error:
@@ -3788,7 +3816,7 @@ error:
 static void test_currentworkingdir(void)
 {
     UINT r;
-    CHAR drive[MAX_PATH], path[MAX_PATH];
+    CHAR drive[MAX_PATH], path[MAX_PATH + 12];
     LPSTR ptr;
 
     if (is_process_limited())
@@ -4750,7 +4778,7 @@ error:
 static void test_sourcedirprop(void)
 {
     UINT r;
-    CHAR props[MAX_PATH];
+    CHAR props[MAX_PATH + 18];
 
     if (is_process_limited())
     {
@@ -5309,7 +5337,7 @@ static void test_file_in_use(void)
     ok(delete_pf("msitest\\maximus", TRUE), "File not present\n");
     ok(delete_pf("msitest", FALSE), "Directory not present or not empty\n");
 
-    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    r = MsiInstallProductA(msifile, "REMOVE=ALL FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
 error:
@@ -5371,7 +5399,7 @@ static void test_file_in_use_cab(void)
     ok(delete_pf("msitest\\maximus", TRUE), "File not present\n");
     ok(delete_pf("msitest", FALSE), "Directory not present or not empty\n");
 
-    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    r = MsiInstallProductA(msifile, "REMOVE=ALL FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
 error:
@@ -5435,10 +5463,8 @@ static void test_feature_override(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(!delete_pf("msitest\\override.txt", TRUE), "file not removed\n");
-    todo_wine {
-    ok(delete_pf("msitest\\preselected.txt", TRUE), "file removed\n");
-    ok(delete_pf("msitest", FALSE), "directory removed\n");
-    }
+    ok(!delete_pf("msitest\\preselected.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -5451,10 +5477,8 @@ static void test_feature_override(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(!delete_pf("msitest\\override.txt", TRUE), "file not removed\n");
-    todo_wine {
-    ok(delete_pf("msitest\\preselected.txt", TRUE), "file removed\n");
-    ok(delete_pf("msitest", FALSE), "directory removed\n");
-    }
+    ok(!delete_pf("msitest\\preselected.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
     delete_key(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", access);
 
@@ -5525,7 +5549,7 @@ static void test_icon_table(void)
     lstrcatA(path, "\\testicon");
     ok(file_exists(path), "Per-user icon file isn't where it's expected (%s)\n", path);
 
-    res = MsiInstallProductA(msifile, "REMOVE=ALL");
+    res = MsiInstallProductA(msifile, "REMOVE=ALL FULL=1");
     ok(res == ERROR_SUCCESS, "Failed to uninstall per-user\n");
     ok(!file_exists(path), "Per-user icon file not removed (%s)\n", path);
 
@@ -5540,7 +5564,7 @@ static void test_icon_table(void)
     lstrcatA(path, "\\testicon");
     ok(file_exists(path), "System-wide icon file isn't where it's expected (%s)\n", path);
 
-    res = MsiInstallProductA(msifile, "REMOVE=ALL");
+    res = MsiInstallProductA(msifile, "REMOVE=ALL FULL=1");
     ok(res == ERROR_SUCCESS, "Failed to uninstall system-wide\n");
     ok(!file_exists(path), "System-wide icon file not removed (%s)\n", path);
 
@@ -6088,7 +6112,7 @@ static void check_file_matches(const char *filename, const char *text)
 
 static void test_deferred_action(void)
 {
-    char path[200], file[200], buffer[200];
+    char path[200], file[200], buffer[211];
     UINT r;
 
     GetTempPathA(sizeof(path), path);
@@ -6212,6 +6236,7 @@ START_TEST(install)
     BOOL ret = FALSE;
 
     init_functionpointers();
+    subtest("custom");
 
     if (pIsWow64Process)
         pIsWow64Process(GetCurrentProcess(), &is_wow64);

@@ -224,7 +224,7 @@ static HRESULT WINAPI parseError_get_line(
 {
     parse_error_t *This = impl_from_IXMLDOMParseError2( iface );
 
-    TRACE("(%p)->(%p): stub\n", This, line);
+    TRACE("%p, %p.\n", This, line);
 
     if (!line) return E_INVALIDARG;
 

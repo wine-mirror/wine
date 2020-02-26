@@ -28,7 +28,6 @@
 #include "shlguid.h"
 #include "shlobj.h"
 #include "shlwapi.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);

@@ -52,6 +52,14 @@ static const WORD PID_XBOX_CONTROLLERS[] =  {
     0x0719, /* Xbox 360 Wireless Adapter */
 };
 
+/* Windows uses this GUID for guidProduct on non-keyboard/mouse devices.
+ * Data1 contains the device VID (low word) and PID (high word).
+ * Data4 ends with the ASCII bytes "PIDVID".
+ */
+const GUID DInput_PIDVID_Product_GUID = { /* device_pidvid-0000-0000-0000-504944564944 */
+    0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x50, 0x49, 0x44, 0x56, 0x49, 0x44}
+};
+
 static inline JoystickGenericImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface), JoystickGenericImpl, base);
@@ -199,6 +207,12 @@ void dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid, DWORD dwFlags)
     TRACE("  - dwTriggerButton: %d\n", eff->dwTriggerButton);
     TRACE("  - dwTriggerRepeatInterval: %d\n", eff->dwTriggerRepeatInterval);
     TRACE("  - rglDirection: %p\n", eff->rglDirection);
+    if (dwFlags & DIEP_DIRECTION) {
+        TRACE("    ");
+        for (i = 0; i < eff->cAxes; ++i)
+            TRACE("%d ", eff->rglDirection[i]);
+        TRACE("\n");
+    }
     TRACE("  - cbTypeSpecificParams: %d\n", eff->cbTypeSpecificParams);
     TRACE("  - lpvTypeSpecificParams: %p\n", eff->lpvTypeSpecificParams);
 
@@ -700,7 +714,7 @@ HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo(
     /* we only support traditional joysticks for now */
     pdidi->dwDevType = This->devcaps.dwDevType;
     snprintf(pdidi->tszInstanceName, MAX_PATH, "Joystick %d", index);
-    strcpy(pdidi->tszProductName, This->name);
+    lstrcpynA(pdidi->tszProductName, This->name, MAX_PATH);
     if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3A)) {
         pdidi->guidFFDriver = GUID_NULL;
         pdidi->wUsagePage = 0;

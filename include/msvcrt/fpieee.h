@@ -5,7 +5,7 @@
 #ifndef __WINE_FPIEEE_H
 #define __WINE_FPIEEE_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,6 @@
 #ifndef __WINE_TASKSCHD_PRIVATE_H__
 #define __WINE_TASKSCHD_PRIVATE_H__
 
-#include "wine/unicode.h"
 #include "wine/heap.h"
 
 HRESULT TaskService_create(void **obj) DECLSPEC_HIDDEN;
@@ -37,7 +36,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *src)
     WCHAR *dst;
     unsigned len;
     if (!src) return NULL;
-    len = (strlenW(src) + 1) * sizeof(WCHAR);
+    len = (lstrlenW(src) + 1) * sizeof(WCHAR);
     if ((dst = heap_alloc(len))) memcpy(dst, src, len);
     return dst;
 }

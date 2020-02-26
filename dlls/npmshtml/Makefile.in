@@ -1,5 +1,7 @@
 MODULE    = npmshtml.dll
 IMPORTS   = mshtml
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = main.c
 RC_SRCS = rsrc.rc

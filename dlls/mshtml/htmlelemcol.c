@@ -523,7 +523,7 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
     nsAString_Finish(&tag_str);
     elem_vector_normalize(&buf);
 
-    TRACE("fount %d tags\n", buf.len);
+    TRACE("found %d tags\n", buf.len);
 
     *pdisp = (IDispatch*)HTMLElementCollection_Create(buf.buf, buf.len,
                                                       dispex_compat_mode(&This->dispex));
@@ -562,7 +562,7 @@ static HRESULT HTMLElementCollection_get_dispid(DispatchEx *dispex, BSTR name, D
     if(!*name)
         return DISP_E_UNKNOWNNAME;
 
-    for(ptr = name; *ptr && iswdigit(*ptr); ptr++)
+    for(ptr = name; *ptr && is_digit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
 
     if(*ptr) {

@@ -457,6 +457,8 @@ typedef struct tagME_Context
   RECT rcView;
   SIZE dpi;
   int nAvailWidth;
+  ME_Style *current_style;
+  HFONT orig_font;
 
   /* those are valid inside ME_WrapTextParagraph and related */
   ME_TextEditor *editor;

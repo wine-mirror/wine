@@ -14,6 +14,7 @@
 @ stdcall CoCreateGuid(ptr)
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr)
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr)
+@ stdcall CoDecrementMTAUsage(ptr)
 @ stdcall CoDisableCallCancellation(ptr)
 @ stdcall CoDisconnectObject(ptr long)
 @ stdcall CoDosDateTimeToFileTime(long long ptr) kernel32.DosDateTimeToFileTime
@@ -47,6 +48,7 @@
 @ stub CoGetTIDFromIPID
 @ stdcall CoGetTreatAsClass(ptr ptr)
 @ stdcall CoImpersonateClient()
+@ stdcall CoIncrementMTAUsage(ptr)
 @ stdcall CoInitialize(ptr)
 @ stdcall CoInitializeEx(ptr long)
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr)
@@ -171,13 +173,13 @@
 @ stdcall HWND_UserUnmarshal(ptr ptr ptr)
 @ stdcall IIDFromString(wstr ptr)
 @ stub I_RemoteMain
-@ stdcall IsAccelerator(long long ptr long)
+@ stdcall IsAccelerator(long long ptr ptr)
 @ stdcall IsEqualGUID(ptr ptr)
 @ stub IsValidIid
 @ stdcall IsValidInterface(ptr)
 @ stub IsValidPtrIn
 @ stub IsValidPtrOut
-@ stdcall MkParseDisplayName(ptr ptr ptr ptr)
+@ stdcall MkParseDisplayName(ptr wstr ptr ptr)
 @ stdcall MonikerCommonPrefixWith(ptr ptr ptr)
 @ stub MonikerRelativePathTo
 @ stdcall OleBuildVersion()
@@ -222,9 +224,9 @@
 @ stdcall OleQueryCreateFromData(ptr)
 @ stdcall OleQueryLinkFromData(ptr)
 @ stdcall OleRegEnumFormatEtc(ptr long ptr)
-@ stdcall OleRegEnumVerbs(long ptr)
+@ stdcall OleRegEnumVerbs(ptr ptr)
 @ stdcall OleRegGetMiscStatus(ptr long ptr)
-@ stdcall OleRegGetUserType(long long ptr)
+@ stdcall OleRegGetUserType(ptr long ptr)
 @ stdcall OleRun(ptr)
 @ stdcall OleSave(ptr ptr long)
 @ stdcall OleSaveToStream(ptr ptr)
@@ -275,7 +277,7 @@
 @ stdcall StgOpenPropStg(ptr ptr long long ptr)
 @ stdcall StgOpenStorage(wstr ptr long ptr long ptr)
 @ stdcall StgOpenStorageEx(wstr long long long ptr ptr ptr ptr)
-@ stdcall StgOpenStorageOnILockBytes(ptr ptr long long long ptr)
+@ stdcall StgOpenStorageOnILockBytes(ptr ptr long ptr long ptr)
 @ stdcall StgSetTimes(wstr ptr ptr ptr )
 @ stdcall StringFromCLSID(ptr ptr)
 @ stdcall StringFromGUID2(ptr ptr long)
@@ -287,7 +289,7 @@
 @ stub UtGetDvtd32Info
 @ stdcall WdtpInterfacePointer_UserFree(ptr)
 @ stdcall WdtpInterfacePointer_UserMarshal(ptr long ptr ptr ptr)
-@ stdcall WdtpInterfacePointer_UserSize(ptr long ptr long ptr)
+@ stdcall WdtpInterfacePointer_UserSize(ptr long long ptr ptr)
 @ stdcall WdtpInterfacePointer_UserUnmarshal(ptr ptr ptr ptr)
 @ stdcall WriteClassStg(ptr ptr)
 @ stdcall WriteClassStm(ptr ptr)

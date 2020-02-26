@@ -115,17 +115,12 @@ struct thiscall_thunk
 #include "poppack.h"
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
-static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
-static void * (WINAPI *call_thiscall_func3)( void *func, void *this, const void *a,
-        const void *b );
-static void * (WINAPI *call_thiscall_func4)( void *func, void *this, const void *a,
-        const void *b, const void *c );
-static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a,
-        const void *b, const void *c, const void *d );
-static void * (WINAPI *call_thiscall_func6)( void *func, void *this, const void *a,
-        const void *b, const void *c, const void *d, const void *e );
-static void * (WINAPI *call_thiscall_func7)( void *func, void *this, const void *a,
-        const void *b, const void *c, const void *d, const void *e, const void *f );
+static void * (WINAPI *call_thiscall_func2)( void *func, void *this, void *a );
+static void * (WINAPI *call_thiscall_func3)( void *func, void *this, void *a, void *b );
+static void * (WINAPI *call_thiscall_func4)( void *func, void *this, void *a, void *b, void *c );
+static void * (WINAPI *call_thiscall_func5)( void *func, void *this, void *a, void *b, void *c, void *d );
+static void * (WINAPI *call_thiscall_func6)( void *func, void *this, void *a, void *b, void *c, void *d, void *e );
+static void * (WINAPI *call_thiscall_func7)( void *func, void *this, void *a, void *b, void *c, void *d, void *e, void *f );
 
 static void init_thiscall_thunk(void)
 {
@@ -146,17 +141,12 @@ static void init_thiscall_thunk(void)
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
-#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
-#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)(a),\
-        (const void*)(b))
-#define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(const void*)(a),\
-        (const void*)(b),(const void*)(c))
-#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),\
-        (const void*)(b),(const void*)(c),(const void*)(d))
-#define call_func6(func,_this,a,b,c,d,e) call_thiscall_func6(func,_this,(const void*)(a),\
-        (const void*)(b),(const void*)(c),(const void*)(d),(const void*)(e))
-#define call_func7(func,_this,a,b,c,d,e,f) call_thiscall_func7(func,_this,(const void*)(a),\
-        (const void*)(b),(const void*)(c),(const void*)(d),(const void*)(e),(const void*)(f))
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(void*)(a))
+#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(void*)(a),(void*)(b))
+#define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(void*)(a),(void*)(b),(void*)(c))
+#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(void*)(a),(void*)(b),(void*)(c),(void*)(d))
+#define call_func6(func,_this,a,b,c,d,e) call_thiscall_func6(func,_this,(void*)(a),(void*)(b),(void*)(c),(void*)(d),(void*)(e))
+#define call_func7(func,_this,a,b,c,d,e,f) call_thiscall_func7(func,_this,(void*)(a),(void*)(b),(void*)(c),(void*)(d),(void*)(e),(void*)(f))
 #else
 
 #define init_thiscall_thunk()
@@ -1230,6 +1220,7 @@ static void test_tr2_sys__Equivalent(void)
     char temp_path[MAX_PATH], current_path[MAX_PATH];
     WCHAR testW[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','1',0};
     WCHAR testW2[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','2',0};
+    WCHAR test_dirW[] = {'t','r','2','_','t','e','s','t','_','d','i','r',0};
     struct {
         char const *path1;
         char const *path2;
@@ -1273,6 +1264,8 @@ static void test_tr2_sys__Equivalent(void)
     ok(val == 1, "tr2_sys__Equivalent(): expect: 1, got %d\n", val);
     val = p_tr2_sys__Equivalent_wchar(testW, testW2);
     ok(val == 0, "tr2_sys__Equivalent(): expect: 0, got %d\n", val);
+    val = p_tr2_sys__Equivalent_wchar(test_dirW, test_dirW);
+    ok(val == -1, "tr2_sys__Equivalent(): expect: -1, got %d\n", val);
 
     ok(DeleteFileA("tr2_test_dir/f1"), "expect tr2_test_dir/f1 to exist\n");
     ok(DeleteFileA("tr2_test_dir/f2"), "expect tr2_test_dir/f2 to exist\n");
@@ -1441,7 +1434,7 @@ static void test_tr2_sys__Copy_file(void)
         ok(errno == 0xdeadbeef, "test_tr2_sys__Copy_file(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
         if(ret == ERROR_SUCCESS)
             ok(p_tr2_sys__File_size(tests[i].source) == p_tr2_sys__File_size(tests[i].dest),
-                    "test_tr2_sys__Copy_file(): test %d failed, two files' size are not equal\n", i+1);
+                    "test_tr2_sys__Copy_file(): test %d failed, mismatched file sizes\n", i+1);
     }
     ret = p_tr2_sys__Copy_file_wchar(testW, testW2, TRUE);
     ok(ret == ERROR_SUCCESS, "test_tr2_sys__Copy_file_wchar() expect ERROR_SUCCESS, got %d\n", ret);
@@ -1883,7 +1876,7 @@ static void test_tr2_sys__Link(void)
         ok(errno == 0xdeadbeef, "tr2_sys__Link(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
         if(ret == ERROR_SUCCESS)
             ok(p_tr2_sys__File_size(tests[i].existing_path) == p_tr2_sys__File_size(tests[i].new_path),
-                    "tr2_sys__Link(): test %d failed, two files' size are not equal\n", i+1);
+                    "tr2_sys__Link(): test %d failed, mismatched file sizes\n", i+1);
     }
 
     ok(DeleteFileA("f1"), "expect f1 to exist\n");

@@ -1336,9 +1336,9 @@ static void test_file_write_read( void )
       /* test invalid utf8 sequence */
       lseek(tempfd, 5, SEEK_SET);
       ret = _read(tempfd, btext, sizeof(btext));
-      todo_wine ok(ret == 10, "_read returned %d, expected 10\n", ret);
+      ok(ret == 10, "_read returned %d, expected 10\n", ret);
       /* invalid char should be replaced by U+FFFD in MultiByteToWideChar */
-      todo_wine ok(!memcmp(btext, "\xfd\xff", 2), "invalid UTF8 character was not replaced by U+FFFD\n");
+      ok(!memcmp(btext, "\xfd\xff", 2), "invalid UTF8 character was not replaced by U+FFFD\n");
       ok(!memcmp(btext+ret-8, "\x62\x00\x7c\x01\x0d\x00\x0a\x00", 8), "btext is incorrect\n");
       _close(tempfd);
   }
@@ -1464,7 +1464,7 @@ static void test_file_inherit( const char* selfname )
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
     arg_v[0] = get_base_name(selfname);
-    arg_v[1] = "tests/file.c";
+    arg_v[1] = "file";
     arg_v[2] = "inherit";
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
@@ -1477,7 +1477,7 @@ static void test_file_inherit( const char* selfname )
     
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY | O_NOINHERIT, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
-    arg_v[1] = "tests/file.c";
+    arg_v[1] = "file";
     arg_v[2] = "inherit_no";
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
@@ -2168,7 +2168,7 @@ static void test_pipes(const char* selfname)
     }
 
     arg_v[0] = get_base_name(selfname);
-    arg_v[1] = "tests/file.c";
+    arg_v[1] = "file";
     arg_v[2] = "pipes";
     arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
     arg_v[4] = str_fdw; sprintf(str_fdw, "%d", pipes[1]);
@@ -2197,7 +2197,7 @@ static void test_pipes(const char* selfname)
         return;
     }
 
-    arg_v[1] = "tests/file.c";
+    arg_v[1] = "file";
     arg_v[2] = "pipes";
     arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
     arg_v[4] = str_fdw; sprintf(str_fdw, "%d", pipes[1]);
@@ -2548,7 +2548,7 @@ static void test__creat(void)
         pos = _tell(fd);
         ok(pos == 6, "expected pos 6 (text mode), got %d\n", pos);
     }
-    ok(_lseek(fd, SEEK_SET, 0) == 0, "_lseek failed\n");
+    ok(_lseek(fd, 0, SEEK_SET) == 0, "_lseek failed\n");
     count = _read(fd, buf, 6);
     ok(count == 4, "_read returned %d, expected 4\n", count);
     count = count > 0 ? count > 4 ? 4 : count : 0;
@@ -2568,7 +2568,7 @@ static void test__creat(void)
         pos = _tell(fd);
         ok(pos == 4, "expected pos 4 (binary mode), got %d\n", pos);
     }
-    ok(_lseek(fd, SEEK_SET, 0) == 0, "_lseek failed\n");
+    ok(_lseek(fd, 0, SEEK_SET) == 0, "_lseek failed\n");
     count = _read(fd, buf, 6);
     ok(count == 4, "_read returned %d, expected 4\n", count);
     count = count > 0 ? count > 4 ? 4 : count : 0;
@@ -2581,6 +2581,31 @@ static void test__creat(void)
 
     if (have_fmode)
         p__set_fmode(old_fmode);
+}
+
+static void test_lseek(void)
+{
+    int fd;
+    char testdata[4] = {'a', '\n', 'b', '\n'};
+
+    errno = 0xdeadbeef;
+    ok(_lseek(-42, 0, SEEK_SET) == -1, "expected failure\n");
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    fd = _creat("_creat.tst", _S_IWRITE);
+    ok(fd > 0, "_creat failed\n");
+    _write(fd, testdata, 4);
+
+    errno = 0xdeadbeef;
+    ok(_lseek(fd, 0, 42) == -1, "expected failure\n");
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ok(_lseek(fd, -42, SEEK_SET) == -1, "expected failure\n");
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    _close(fd);
+    DeleteFileA("_creat.tst");
 }
 
 START_TEST(file)
@@ -2654,6 +2679,7 @@ START_TEST(file)
     test_write_flush();
     test_close();
     test__creat();
+    test_lseek();
 
     /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
      * file contains lines in the correct order

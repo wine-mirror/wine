@@ -43,7 +43,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winuser.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "storage32.h"
@@ -519,7 +518,7 @@ static LONG entryNameCmp(
     /*
      * We compare the string themselves only when they are of the same length
      */
-    diff = toupperW(*name1++) - toupperW(*name2++);
+    diff = towupper(*name1++) - towupper(*name2++);
   }
 
   return diff;
@@ -1347,7 +1346,7 @@ static HRESULT StorageBaseImpl_CopyChildEntryTo(StorageBaseImpl *This,
 
     while ( *snb != NULL && !skip )
     {
-      if ( lstrcmpW(data.name, *snb) == 0 )
+      if ( wcscmp(data.name, *snb) == 0 )
         skip = TRUE;
       ++snb;
     }
@@ -1891,7 +1890,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
         currentEntryRef);
 
     /* Change the name of the element */
-    strcpyW(currentEntry.name, pwcsNewName);
+    lstrcpyW(currentEntry.name, pwcsNewName);
 
     /* Delete any sibling links */
     currentEntry.leftChild = DIRENTRY_NULL;
@@ -2013,7 +2012,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   if (newStreamEntry.sizeOfNameString > DIRENTRY_NAME_BUFFER_LEN)
     return STG_E_INVALIDNAME;
 
-  strcpyW(newStreamEntry.name, pwcsName);
+  lstrcpyW(newStreamEntry.name, pwcsName);
 
   newStreamEntry.stgType       = STGTY_STREAM;
   newStreamEntry.startingBlock = BLOCK_END_OF_CHAIN;
@@ -2209,7 +2208,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
     return STG_E_INVALIDNAME;
   }
 
-  strcpyW(newEntry.name, pwcsName);
+  lstrcpyW(newEntry.name, pwcsName);
 
   newEntry.stgType       = STGTY_STORAGE;
   newEntry.startingBlock = BLOCK_END_OF_CHAIN;
@@ -2357,7 +2356,7 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
 
         while ( *snb != NULL && fail )
         {
-          if ( lstrcmpW(data.name, *snb) == 0 )
+          if ( wcscmp(data.name, *snb) == 0 )
             fail = FALSE;
           ++snb;
         }
@@ -4768,7 +4767,7 @@ static HRESULT StorageImpl_Refresh(StorageImpl *This, BOOL new_object, BOOL crea
      * Initialize the directory table
      */
     memset(&rootEntry, 0, sizeof(rootEntry));
-    strcpyW(rootEntry.name, rootentryW);
+    lstrcpyW(rootEntry.name, rootentryW);
     rootEntry.sizeOfNameString = sizeof(rootentryW);
     rootEntry.stgType          = STGTY_ROOT;
     rootEntry.leftChild        = DIRENTRY_NULL;
@@ -6949,10 +6948,10 @@ void StorageUtl_ReadWord(const BYTE* buffer, ULONG offset, WORD* value)
   *value = lendian16toh(tmp);
 }
 
-void StorageUtl_WriteWord(BYTE* buffer, ULONG offset, WORD value)
+void StorageUtl_WriteWord(void *buffer, ULONG offset, WORD value)
 {
-  value = htole16(value);
-  memcpy(buffer+offset, &value, sizeof(WORD));
+    value = htole16(value);
+    memcpy((BYTE *)buffer + offset, &value, sizeof(WORD));
 }
 
 void StorageUtl_ReadDWord(const BYTE* buffer, ULONG offset, DWORD* value)
@@ -6963,10 +6962,10 @@ void StorageUtl_ReadDWord(const BYTE* buffer, ULONG offset, DWORD* value)
   *value = lendian32toh(tmp);
 }
 
-void StorageUtl_WriteDWord(BYTE* buffer, ULONG offset, DWORD value)
+void StorageUtl_WriteDWord(void *buffer, ULONG offset, DWORD value)
 {
-  value = htole32(value);
-  memcpy(buffer+offset, &value, sizeof(DWORD));
+    value = htole32(value);
+    memcpy((BYTE *)buffer + offset, &value, sizeof(DWORD));
 }
 
 void StorageUtl_ReadULargeInteger(const BYTE* buffer, ULONG offset,
@@ -6983,17 +6982,16 @@ void StorageUtl_ReadULargeInteger(const BYTE* buffer, ULONG offset,
 #endif
 }
 
-void StorageUtl_WriteULargeInteger(BYTE* buffer, ULONG offset,
- const ULARGE_INTEGER *value)
+void StorageUtl_WriteULargeInteger(void *buffer, ULONG offset, const ULARGE_INTEGER *value)
 {
 #ifdef WORDS_BIGENDIAN
     ULARGE_INTEGER tmp;
 
     tmp.u.LowPart = htole32(value->u.HighPart);
     tmp.u.HighPart = htole32(value->u.LowPart);
-    memcpy(buffer + offset, &tmp, sizeof(ULARGE_INTEGER));
+    memcpy((BYTE *)buffer + offset, &tmp, sizeof(ULARGE_INTEGER));
 #else
-    memcpy(buffer + offset, value, sizeof(ULARGE_INTEGER));
+    memcpy((BYTE *)buffer + offset, value, sizeof(ULARGE_INTEGER));
 #endif
 }
 
@@ -7006,13 +7004,13 @@ void StorageUtl_ReadGUID(const BYTE* buffer, ULONG offset, GUID* value)
   memcpy(value->Data4, buffer+offset+8, sizeof(value->Data4));
 }
 
-void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value)
+void StorageUtl_WriteGUID(void *buffer, ULONG offset, const GUID* value)
 {
   StorageUtl_WriteDWord(buffer, offset,   value->Data1);
   StorageUtl_WriteWord(buffer,  offset+4, value->Data2);
   StorageUtl_WriteWord(buffer,  offset+6, value->Data3);
 
-  memcpy(buffer+offset+8, value->Data4, sizeof(value->Data4));
+  memcpy((BYTE *)buffer + offset + 8, value->Data4, sizeof(value->Data4));
 }
 
 void StorageUtl_CopyDirEntryToSTATSTG(
@@ -7040,7 +7038,7 @@ void StorageUtl_CopyDirEntryToSTATSTG(
     destination->pwcsName =
       CoTaskMemAlloc((lstrlenW(source->name)+1)*sizeof(WCHAR));
 
-    strcpyW(destination->pwcsName, source->name);
+    lstrcpyW(destination->pwcsName, source->name);
   }
 
   switch (source->stgType)
@@ -7897,7 +7895,7 @@ static void SmallBlockChainStream_SetNextBlockInChain(
 
   offsetOfBlockInDepot.QuadPart  = (ULONGLONG)blockIndex * sizeof(ULONG);
 
-  StorageUtl_WriteDWord((BYTE *)&buffer, 0, nextBlock);
+  StorageUtl_WriteDWord(&buffer, 0, nextBlock);
 
   /*
    * Read those bytes in the buffer from the small block file.
@@ -8623,7 +8621,7 @@ end:
  *  pwcsName  [ I] Unicode string with filename (can be relative or NULL)
  *  grfMode   [ I] Access mode for opening the new storage object (see STGM_ constants)
  *  reserved  [ ?] unused?, usually 0
- *  ppstgOpen [IO] A pointer to IStorage pointer to the new onject
+ *  ppstgOpen [IO] A pointer to IStorage pointer to the new object
  *
  * RETURNS
  *  S_OK if the file was successfully created
@@ -9638,7 +9636,7 @@ typedef struct
  *
  *     Memory allocated for pData must be freed by the caller
  */
-static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *pData, BOOL bStrem1)
+static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *pData, BOOL bStream1)
 {
 	DWORD dwSize;
 	HRESULT hRes = S_OK;
@@ -9699,7 +9697,7 @@ static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM
 					}
 				}
 			}
-			if(bStrem1)
+			if(bStream1)
 			{
 				dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)&(pData->dwOleObjFileNameLength), sizeof(pData->dwOleObjFileNameLength));
 				if(dwSize != sizeof(pData->dwOleObjFileNameLength))
@@ -9753,7 +9751,7 @@ static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM
 
 			if(hRes == S_OK) /* I don't know what this 8 byte information is. We have to figure out */
 			{
-				if(!bStrem1) /* if it is a second OLE stream data */
+				if(!bStream1) /* if it is a second OLE stream data */
 				{
 					pData->dwDataLength -= 8;
 					dwSize = pOleStream->lpstbl->Get(pOleStream, pData->strUnknown, sizeof(pData->strUnknown));

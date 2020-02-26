@@ -104,6 +104,8 @@ static void test_create_env(void)
         { "USERPROFILE" }
     };
     static const struct profile_item common_win64_vars[] = {
+        { "ProgramFiles(x86)" },
+        { "CommonProgramFiles(x86)" },
         { "ProgramW6432" },
         { "CommonProgramW6432" }
     };
@@ -301,7 +303,7 @@ static void test_get_profiles_dir(void)
 static void test_get_user_profile_dir(void)
 {
     BOOL ret;
-    DWORD error, len;
+    DWORD error, len, len2;
     HANDLE token;
     char *dirA;
     WCHAR *dirW;
@@ -349,18 +351,23 @@ static void test_get_user_profile_dir(void)
     ret = GetUserProfileDirectoryA( token, dirA, &len );
     error = GetLastError();
     ok(!ret, "expected failure\n");
-    ok(error == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %u\n", error);
-    ok(len, "expected len > 0\n");
     HeapFree( GetProcessHeap(), 0, dirA );
+    if (error == ERROR_INSUFFICIENT_BUFFER)
+    {
+        ok(len, "expected len > 0\n");
 
-    dirA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
-    SetLastError( 0xdeadbeef );
-    ret = GetUserProfileDirectoryA( token, dirA, &len );
-    ok(ret, "expected success %u\n", GetLastError());
-    ok(len, "expected len > 0\n");
-    ok(lstrlenA( dirA ) == len - 1, "length mismatch %d != %d - 1\n", lstrlenA( dirA ), len );
-    trace("%s\n", dirA);
-    HeapFree( GetProcessHeap(), 0, dirA );
+        dirA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
+        SetLastError( 0xdeadbeef );
+        ret = GetUserProfileDirectoryA( token, dirA, &len );
+        ok(ret, "expected success %u\n", GetLastError());
+        ok(len, "expected len > 0\n");
+        ok(lstrlenA( dirA ) == len - 1, "length mismatch %d != %d - 1\n", lstrlenA( dirA ), len );
+        trace("%s\n", dirA);
+        HeapFree( GetProcessHeap(), 0, dirA );
+    }
+    else
+        ok(broken(error == ERROR_INVALID_PARAMETER) /* win10 1809+ */,
+           "unexpected error %u\n", error);
 
     SetLastError( 0xdeadbeef );
     ret = GetUserProfileDirectoryW( NULL, NULL, NULL );
@@ -397,6 +404,19 @@ static void test_get_user_profile_dir(void)
     ok(len, "expected len > 0\n");
     ok(lstrlenW( dirW ) == len - 1, "length mismatch %d != %d - 1\n", lstrlenW( dirW ), len );
     HeapFree( GetProcessHeap(), 0, dirW );
+
+    len2 = 0;
+    dirW = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 32 * sizeof(WCHAR) );
+    SetLastError( 0xdeadbeef );
+    ret = GetUserProfileDirectoryW( token, dirW, &len2 );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    HeapFree( GetProcessHeap(), 0, dirW );
+    if (error == ERROR_INSUFFICIENT_BUFFER)
+        ok(len2 == len, "expected %d, got %d\n", len, len2);
+    else
+        ok(broken(error == ERROR_INVALID_PARAMETER) /* win10 1809+ */,
+           "unexpected error %u\n", error);
 
     CloseHandle( token );
 }

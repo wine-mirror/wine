@@ -246,7 +246,7 @@ static ULONG send_http_request(HttpProtocol *This)
     BOOL res;
 
     send_buffer.lpcszHeader = This->full_header;
-    send_buffer.dwHeadersLength = send_buffer.dwHeadersTotal = strlenW(This->full_header);
+    send_buffer.dwHeadersLength = send_buffer.dwHeadersTotal = lstrlenW(This->full_header);
 
     if(This->base.bind_info.dwBindVerb != BINDVERB_GET) {
         switch(This->base.bind_info.stgmedData.tymed) {
@@ -408,7 +408,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
         return hres;
     }
 
-    len = addl_header ? strlenW(addl_header) : 0;
+    len = addl_header ? lstrlenW(addl_header) : 0;
 
     This->full_header = heap_alloc(len*sizeof(WCHAR)+sizeof(default_headersW));
     if(!This->full_header) {
@@ -561,7 +561,7 @@ static HRESULT HttpProtocol_start_downloading(Protocol *prot)
     content_type = query_http_info(This, HTTP_QUERY_CONTENT_TYPE);
     if(content_type) {
         /* remove the charset, if present */
-        LPWSTR p = strchrW(content_type, ';');
+        LPWSTR p = wcschr(content_type, ';');
         if (p) *p = '\0';
 
         IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
@@ -579,7 +579,7 @@ static HRESULT HttpProtocol_start_downloading(Protocol *prot)
 
     content_length = query_http_info(This, HTTP_QUERY_CONTENT_LENGTH);
     if(content_length) {
-        This->base.content_length = atoiW(content_length);
+        This->base.content_length = wcstol(content_length, NULL, 10);
         heap_free(content_length);
     }
 

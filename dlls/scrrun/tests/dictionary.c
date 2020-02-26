@@ -63,9 +63,6 @@ static void _test_provideclassinfo(IDispatch *disp, const GUID *guid, int line)
 
 static void test_interfaces(void)
 {
-    static const WCHAR key_add[] = {'a', 0};
-    static const WCHAR key_add_value[] = {'a', 0};
-    static const WCHAR key_non_exist[] = {'b', 0};
     HRESULT hr;
     IDispatch *disp;
     IDispatchEx *dispex;
@@ -94,9 +91,9 @@ static void test_interfaces(void)
     test_provideclassinfo(disp, &CLSID_Dictionary);
 
     V_VT(&key) = VT_BSTR;
-    V_BSTR(&key) = SysAllocString(key_add);
+    V_BSTR(&key) = SysAllocString(L"a");
     V_VT(&value) = VT_BSTR;
-    V_BSTR(&value) = SysAllocString(key_add_value);
+    V_BSTR(&value) = SysAllocString(L"a");
     hr = IDictionary_Add(dict, &key, &value);
     ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
     VariantClear(&value);
@@ -109,7 +106,7 @@ static void test_interfaces(void)
 
     exists = VARIANT_TRUE;
     V_VT(&key) = VT_BSTR;
-    V_BSTR(&key) = SysAllocString(key_non_exist);
+    V_BSTR(&key) = SysAllocString(L"b");
     hr = IDictionary_Exists(dict, &key, &exists);
     ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
     ok(exists == VARIANT_FALSE, "Expected FALSE but got TRUE.\n");
@@ -329,12 +326,13 @@ static IDispatch test_disp = { &test_disp_vtbl };
 static void test_hash_value(void)
 {
     /* string test data */
-    static const WCHAR str_hash_tests[][10] = {
-        {'a','b','c','d',0},
-        {'a','B','C','d','1',0},
-        {'1','2','3',0},
-        {'A',0},
-        {'a',0},
+    static const WCHAR str_hash_tests[][10] =
+    {
+        L"abcd",
+        L"aBCd1",
+        L"123",
+        L"A",
+        L"a",
         { 0 }
     };
 
@@ -926,7 +924,6 @@ static void test_Item(void)
 
 static void test_Add(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t','W',0};
     VARIANT key, item;
     IDictionary *dict;
     HRESULT hr;
@@ -936,7 +933,7 @@ static void test_Add(void)
             &IID_IDictionary, (void**)&dict);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    str = SysAllocString(testW);
+    str = SysAllocString(L"testW");
     V_VT(&key) = VT_I2;
     V_I2(&key) = 1;
     V_VT(&item) = VT_BSTR|VT_BYREF;

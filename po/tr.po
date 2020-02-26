@@ -58,9 +58,9 @@ msgstr "&Kaldır"
 msgid "Support Information"
 msgstr "Destek Bilgisi"
 
-#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
-#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:422
-#: comdlg32.rc:453 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
+#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:233
+#: comdlg32.rc:263 comdlg32.rc:307 comdlg32.rc:390 comdlg32.rc:424
+#: comdlg32.rc:455 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
 #: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
@@ -139,10 +139,10 @@ msgid "&Install"
 msgstr "&Yükle"
 
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
-#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
-#: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
-#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:423
-#: comdlg32.rc:454 comdlg32.rc:479 comdlg32.rc:505 comdlg32.rc:528 credui.rc:53
+#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:172 comdlg32.rc:194
+#: comdlg32.rc:212 comdlg32.rc:234 comdlg32.rc:264 comdlg32.rc:308
+#: comdlg32.rc:330 comdlg32.rc:350 comdlg32.rc:391 comdlg32.rc:425
+#: comdlg32.rc:456 comdlg32.rc:481 comdlg32.rc:507 comdlg32.rc:530 credui.rc:53
 #: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
 #: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
@@ -208,7 +208,8 @@ msgstr ""
 msgid "Not specified"
 msgstr "Belirlenmedi"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr "Ad"
 
@@ -333,11 +334,11 @@ msgstr "saat"
 msgid "Properties for %s"
 msgstr "%s Özellikleri"
 
-#: comctl32.rc:73 comdlg32.rc:264
+#: comctl32.rc:73 comdlg32.rc:265
 msgid "&Apply"
 msgstr "&Uygula"
 
-#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
+#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:309 user32.rc:88
 msgid "Help"
 msgstr "Yardım"
 
@@ -349,7 +350,7 @@ msgstr "Sihirbazı"
 msgid "< &Back"
 msgstr "< &Geri"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:60
 msgid "&Next >"
 msgstr "&İleri >"
 
@@ -370,9 +371,9 @@ msgstr "&Kapat"
 msgid "R&eset"
 msgstr "&Sıfırla"
 
-#: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
-#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
-#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:529 ieframe.rc:58 msacm32.rc:52
+#: comctl32.rc:102 comdlg32.rc:173 comdlg32.rc:195 comdlg32.rc:266
+#: comdlg32.rc:331 comdlg32.rc:351 comdlg32.rc:392 comdlg32.rc:426
+#: comdlg32.rc:482 comdlg32.rc:508 comdlg32.rc:531 ieframe.rc:58 msacm32.rc:52
 #: oledlg.rc:96 shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119
 #: oleview.rc:72 progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144
 #: progman.rc:160 progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77
@@ -446,413 +447,418 @@ msgstr "Bugün:"
 msgid "Go to today"
 msgstr "Bugüne git"
 
-#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
-#: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
+#: comdlg32.rc:158 comdlg32.rc:171 comdlg32.rc:462 comdlg32.rc:487
+#: comdlg32.rc:514 shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "Aç"
 
-#: comdlg32.rc:160 comdlg32.rc:182
+#: comdlg32.rc:161 comdlg32.rc:183
 msgid "File &Name:"
 msgstr "Dosya &Adı:"
 
-#: comdlg32.rc:163 comdlg32.rc:185
+#: comdlg32.rc:164 comdlg32.rc:186
 msgid "&Directories:"
 msgstr "&Dizinler:"
 
-#: comdlg32.rc:166 comdlg32.rc:188
+#: comdlg32.rc:167 comdlg32.rc:189
 msgid "List Files of &Type:"
 msgstr "Listelenecek Dosya &Türleri:"
 
-#: comdlg32.rc:168 comdlg32.rc:190
+#: comdlg32.rc:169 comdlg32.rc:191
 msgid "Dri&ves:"
 msgstr "Sürü&cüler:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: comdlg32.rc:174 comdlg32.rc:196 shell32.rc:370 shell32.rc:407
 #: winefile.rc:172
 msgid "&Read Only"
 msgstr "&Salt Okunur"
 
-#: comdlg32.rc:179
+#: comdlg32.rc:180
 msgid "Save As..."
 msgstr "Farklı Kaydet..."
 
-#: comdlg32.rc:192 comdlg32.rc:145
+#: comdlg32.rc:193 comdlg32.rc:146
 msgid "Save As"
 msgstr "Farklı Kaydet"
 
-#: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
+#: comdlg32.rc:202 comdlg32.rc:211 comdlg32.rc:358 comdlg32.rc:55 hhctrl.rc:49
 #: wordpad.rc:173
 msgid "Print"
 msgstr "Yazdır"
 
-#: comdlg32.rc:204
+#: comdlg32.rc:205
 msgid "Printer:"
 msgstr "Yazıcı:"
 
-#: comdlg32.rc:206 comdlg32.rc:373
+#: comdlg32.rc:207 comdlg32.rc:375
 msgid "Print range"
 msgstr "Yazdırma aralığı"
 
-#: comdlg32.rc:207 comdlg32.rc:374 regedit.rc:268
+#: comdlg32.rc:208 comdlg32.rc:376 regedit.rc:268
 msgid "&All"
 msgstr "&Tümü"
 
-#: comdlg32.rc:208
+#: comdlg32.rc:209
 msgid "S&election"
 msgstr "&Seçim"
 
-#: comdlg32.rc:209
+#: comdlg32.rc:210
 msgid "&Pages"
 msgstr "&Sayfalar"
 
-#: comdlg32.rc:212 comdlg32.rc:234
+#: comdlg32.rc:213 comdlg32.rc:235
 msgid "&Setup"
 msgstr "&Ayarla"
 
-#: comdlg32.rc:213
+#: comdlg32.rc:214
 msgid "&From:"
 msgstr "&Başlangıç:"
 
-#: comdlg32.rc:214
+#: comdlg32.rc:215
 msgid "&To:"
 msgstr "Biti&ş:"
 
-#: comdlg32.rc:215 wineps.rc:42
+#: comdlg32.rc:216 wineps.rc:42
 msgid "Print &Quality:"
 msgstr "Baskı &Kalitesi:"
 
-#: comdlg32.rc:217
+#: comdlg32.rc:218
 msgid "Print to Fi&le"
 msgstr "D&osyaya Yaz"
 
-#: comdlg32.rc:218
+#: comdlg32.rc:219
 msgid "Condensed"
 msgstr "Yoğun"
 
-#: comdlg32.rc:224 comdlg32.rc:395
+#: comdlg32.rc:225 comdlg32.rc:397
 msgid "Print Setup"
 msgstr "Yazdırma Ayarları"
 
-#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:398
+#: comdlg32.rc:228 comdlg32.rc:361 comdlg32.rc:400
 msgid "Printer"
 msgstr "Yazıcı"
 
-#: comdlg32.rc:228
+#: comdlg32.rc:229
 msgid "&Default Printer"
 msgstr "&Varsayılan Yazıcı"
 
-#: comdlg32.rc:229
+#: comdlg32.rc:230
 msgid "[none]"
 msgstr "[Hiçbiri]"
 
-#: comdlg32.rc:230
+#: comdlg32.rc:231
 msgid "Specific &Printer"
 msgstr "Özel &Yazıcı"
 
-#: comdlg32.rc:235 comdlg32.rc:417 comdlg32.rc:441 wineps.rc:34
+#: comdlg32.rc:236 comdlg32.rc:419 comdlg32.rc:443 wineps.rc:34
 msgid "Orientation"
 msgstr "Yönlendirme"
 
-#: comdlg32.rc:236
+#: comdlg32.rc:237
 msgid "Po&rtrait"
 msgstr "Po&rtre"
 
-#: comdlg32.rc:237 comdlg32.rc:443 wineps.rc:37
+#: comdlg32.rc:238 comdlg32.rc:445 wineps.rc:37
 msgid "&Landscape"
 msgstr "&Yatay"
 
-#: comdlg32.rc:240 comdlg32.rc:411 comdlg32.rc:436 wineps.rc:28
+#: comdlg32.rc:241 comdlg32.rc:413 comdlg32.rc:438 wineps.rc:28
 msgid "Paper"
 msgstr "Kağıt"
 
-#: comdlg32.rc:241
+#: comdlg32.rc:242
 msgid "Si&ze"
 msgstr "Bo&yut"
 
-#: comdlg32.rc:242
+#: comdlg32.rc:243
 msgid "&Source"
 msgstr "&Kaynak"
 
-#: comdlg32.rc:250 wineconsole.rc:85
+#: comdlg32.rc:251 wineconsole.rc:85
 msgid "Font"
 msgstr "Yazı Tipi"
 
-#: comdlg32.rc:253
+#: comdlg32.rc:254
 msgid "&Font:"
 msgstr "&Yazı Tipi:"
 
-#: comdlg32.rc:256
+#: comdlg32.rc:257
 msgid "Font St&yle:"
 msgstr "Yazı Tipi St&ili:"
 
-#: comdlg32.rc:259 comdlg32.rc:437 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
 msgid "&Size:"
 msgstr "&Boyut:"
 
-#: comdlg32.rc:266
+#: comdlg32.rc:267
 msgid "Effects"
 msgstr "Efektler"
 
-#: comdlg32.rc:267
+#: comdlg32.rc:268
 msgid "Stri&keout"
 msgstr "&Üstü Çizili"
 
-#: comdlg32.rc:268
+#: comdlg32.rc:269
 msgid "&Underline"
 msgstr "&Altı Çizili"
 
-#: comdlg32.rc:269 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:292
 msgid "&Color:"
 msgstr "&Renk:"
 
-#: comdlg32.rc:272
+#: comdlg32.rc:273
 msgid "Sample"
 msgstr "Örnek"
 
-#: comdlg32.rc:274
+#: comdlg32.rc:275
 msgid "Scr&ipt:"
 msgstr "Bet&ik:"
 
-#: comdlg32.rc:282
+#: comdlg32.rc:283 comdlg32.rc:288
 msgid "Color"
 msgstr "Renk"
 
-#: comdlg32.rc:285
+#: comdlg32.rc:286
 msgid "&Basic Colors:"
 msgstr "&Temel Renkler:"
 
-#: comdlg32.rc:286
+#: comdlg32.rc:287
 msgid "&Custom Colors:"
 msgstr "&Özel Renkler:"
 
-#: comdlg32.rc:287 comdlg32.rc:310
-msgid "Color |  Sol&id"
-msgstr "Renk |  Kat&ı"
+#: comdlg32.rc:289
+msgid "|S&olid"
+msgstr "|Kat&ı"
 
-#: comdlg32.rc:288
+#: comdlg32.rc:290
 msgid "&Red:"
 msgstr "&Kırmızı:"
 
-#: comdlg32.rc:290
+#: comdlg32.rc:292
 msgid "&Green:"
 msgstr "&Yeşil:"
 
-#: comdlg32.rc:292
+#: comdlg32.rc:294
 msgid "&Blue:"
 msgstr "&Mavi:"
 
-#: comdlg32.rc:294
+#: comdlg32.rc:296
 msgid "&Hue:"
 msgstr "&Ton:"
 
-#: comdlg32.rc:296
+#: comdlg32.rc:298
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Doy:"
 
-#: comdlg32.rc:298
+#: comdlg32.rc:300
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Par:"
 
-#: comdlg32.rc:308
+#: comdlg32.rc:310
 msgid "&Add to Custom Colors"
 msgstr "&Özel Renklere Ekle"
 
-#: comdlg32.rc:309
+#: comdlg32.rc:311
 msgid "&Define Custom Colors >>"
 msgstr "&Özel Renkleri Tanımla >>"
 
-#: comdlg32.rc:316 regedit.rc:275 regedit.rc:285
+#: comdlg32.rc:312
+msgctxt "Solid"
+msgid "&o"
+msgstr "&k"
+
+#: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
 msgstr "Bul"
 
-#: comdlg32.rc:319 comdlg32.rc:338
+#: comdlg32.rc:321 comdlg32.rc:340
 msgid "Fi&nd What:"
 msgstr "Şu&nu Bul:"
 
-#: comdlg32.rc:321 comdlg32.rc:342
+#: comdlg32.rc:323 comdlg32.rc:344
 msgid "Match &Whole Word Only"
 msgstr "Yalnızca &Tam Sözcükleri Bul"
 
-#: comdlg32.rc:322 comdlg32.rc:343
+#: comdlg32.rc:324 comdlg32.rc:345
 msgid "Match &Case"
 msgstr "BÜYÜK/küçük Harf &Duyarlı"
 
-#: comdlg32.rc:323 joy.rc:71
+#: comdlg32.rc:325 joy.rc:71
 msgid "Direction"
 msgstr "Yön"
 
-#: comdlg32.rc:324 view.rc:42
+#: comdlg32.rc:326 view.rc:42
 msgid "&Up"
 msgstr "&Yukarı"
 
-#: comdlg32.rc:325 view.rc:43
+#: comdlg32.rc:327 view.rc:43
 msgid "&Down"
 msgstr "A&şağı"
 
-#: comdlg32.rc:327 comdlg32.rc:345
+#: comdlg32.rc:329 comdlg32.rc:347
 msgid "&Find Next"
 msgstr "&Sonrakini Bul"
 
-#: comdlg32.rc:335
+#: comdlg32.rc:337
 msgid "Replace"
 msgstr "Değiştir"
 
-#: comdlg32.rc:340
+#: comdlg32.rc:342
 msgid "Re&place With:"
 msgstr "&Yeni Değer:"
 
-#: comdlg32.rc:346
+#: comdlg32.rc:348
 msgid "&Replace"
 msgstr "&Değiştir"
 
-#: comdlg32.rc:347
+#: comdlg32.rc:349
 msgid "Replace &All"
 msgstr "Tü&münü Değiştir"
 
-#: comdlg32.rc:361 comdlg32.rc:401 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:363 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Özellikler"
 
-#: comdlg32.rc:362
+#: comdlg32.rc:364
 msgid "Print to fi&le"
 msgstr "D&osyaya Yaz"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
+#: comdlg32.rc:365 comdlg32.rc:401 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Ad:"
 
-#: comdlg32.rc:364 comdlg32.rc:402
+#: comdlg32.rc:366 comdlg32.rc:404
 msgid "Status:"
 msgstr "Durum:"
 
-#: comdlg32.rc:366 comdlg32.rc:404
+#: comdlg32.rc:368 comdlg32.rc:406
 msgid "Type:"
 msgstr "Tür:"
 
-#: comdlg32.rc:368 comdlg32.rc:406
+#: comdlg32.rc:370 comdlg32.rc:408
 msgid "Where:"
 msgstr "Konum:"
 
-#: comdlg32.rc:370 comdlg32.rc:408
+#: comdlg32.rc:372 comdlg32.rc:410
 msgid "Comment:"
 msgstr "Açıklama:"
 
-#: comdlg32.rc:375
+#: comdlg32.rc:377
 msgid "Pa&ges"
 msgstr "Sa&yfalar"
 
-#: comdlg32.rc:376
+#: comdlg32.rc:378
 msgid "&Selection"
 msgstr "&Seçim"
 
-#: comdlg32.rc:379
+#: comdlg32.rc:381
 msgid "&from:"
 msgstr "&başlangıç:"
 
-#: comdlg32.rc:380
+#: comdlg32.rc:382
 msgid "&to:"
 msgstr "biti&ş:"
 
-#: comdlg32.rc:382
+#: comdlg32.rc:384
 msgid "Copies"
 msgstr "Kopyalar"
 
-#: comdlg32.rc:383
+#: comdlg32.rc:385
 msgid "Number of &copies:"
 msgstr "&Kopya sayısı:"
 
-#: comdlg32.rc:385
+#: comdlg32.rc:387
 msgid "C&ollate"
 msgstr "&Harmanla"
 
-#: comdlg32.rc:412 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:300
 msgid "Si&ze:"
 msgstr "&Size:"
 
-#: comdlg32.rc:414
+#: comdlg32.rc:416
 msgid "&Source:"
 msgstr "&Kaynak:"
 
-#: comdlg32.rc:419
+#: comdlg32.rc:421
 msgid "P&ortrait"
 msgstr "P&ortre"
 
-#: comdlg32.rc:420
+#: comdlg32.rc:422
 msgid "L&andscape"
 msgstr "M&anzara"
 
-#: comdlg32.rc:430
+#: comdlg32.rc:432
 msgid "Setup Page"
 msgstr "Sayfa Ayarları"
 
-#: comdlg32.rc:439
+#: comdlg32.rc:441
 msgid "&Tray:"
 msgstr "&Tepsi:"
 
-#: comdlg32.rc:442 wineps.rc:35
+#: comdlg32.rc:444 wineps.rc:35
 msgid "&Portrait"
 msgstr "&Düşey"
 
-#: comdlg32.rc:445
+#: comdlg32.rc:447
 msgid "L&eft:"
 msgstr "S&ol:"
 
-#: comdlg32.rc:447 notepad.rc:112
+#: comdlg32.rc:449 notepad.rc:112
 msgid "&Right:"
 msgstr "S&ağ:"
 
-#: comdlg32.rc:449
+#: comdlg32.rc:451
 msgid "T&op:"
 msgstr "&Üst:"
 
-#: comdlg32.rc:451 notepad.rc:114
+#: comdlg32.rc:453 notepad.rc:114
 msgid "&Bottom:"
 msgstr "A&lt:"
 
-#: comdlg32.rc:455
+#: comdlg32.rc:457
 msgid "P&rinter..."
 msgstr "Ya&zıcı..."
 
-#: comdlg32.rc:463 comdlg32.rc:488
+#: comdlg32.rc:465 comdlg32.rc:490
 msgid "Look &in:"
 msgstr "Bak&:"
 
-#: comdlg32.rc:469 comdlg32.rc:495
+#: comdlg32.rc:471 comdlg32.rc:497
 msgid "File &name:"
 msgstr "D&osya adı:"
 
-#: comdlg32.rc:473 comdlg32.rc:499
+#: comdlg32.rc:475 comdlg32.rc:501
 msgid "Files of &type:"
 msgstr "Dosya &türü:"
 
-#: comdlg32.rc:476 comdlg32.rc:502
+#: comdlg32.rc:478 comdlg32.rc:504
 msgid "Open as &read-only"
 msgstr "Salt-okunu&r aç"
 
-#: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:524 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "&Aç"
 
-#: comdlg32.rc:515
+#: comdlg32.rc:517
 msgid "File name:"
 msgstr "Dosya adı:"
 
-#: comdlg32.rc:518
+#: comdlg32.rc:520
 msgid "Files of type:"
 msgstr "Dosya türü:"
 
-#: comdlg32.rc:32
+#: comdlg32.rc:33
 msgid "File not found"
 msgstr "Dosya bulunamadı"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
 msgstr "Doğru dosya adı verildiğinden emin olun"
 
-#: comdlg32.rc:34
+#: comdlg32.rc:35
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
@@ -860,7 +866,7 @@ msgstr ""
 "Dosya mevcut değil.\n"
 "Dosyayı oluşturmak ister misiniz?"
 
-#: comdlg32.rc:35
+#: comdlg32.rc:36
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
@@ -868,11 +874,11 @@ msgstr ""
 "Dosya zaten var.\n"
 "Değiştirmek ister misiniz?"
 
-#: comdlg32.rc:36
+#: comdlg32.rc:37
 msgid "Invalid character(s) in path"
 msgstr "Dosya yolunda geçersiz karakter(ler)"
 
-#: comdlg32.rc:37
+#: comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
@@ -880,123 +886,123 @@ msgstr ""
 "Bir dosya adı aşağıdaki karakterleri içeremez:\n"
 "                          / : < > |"
 
-#: comdlg32.rc:38
+#: comdlg32.rc:39
 msgid "Path does not exist"
 msgstr "Dosya yolu mevcut değil"
 
-#: comdlg32.rc:39
+#: comdlg32.rc:40
 msgid "File does not exist"
 msgstr "Dosya mevcut değil"
 
-#: comdlg32.rc:40
+#: comdlg32.rc:41
 msgid "The selection contains a non-folder object"
 msgstr "Seçim dizin olmayan bir öge içeriyor"
 
-#: comdlg32.rc:45
+#: comdlg32.rc:46
 msgid "Up One Level"
 msgstr "Bir Dizin Yukarı"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:47
 msgid "Create New Folder"
 msgstr "Yeni Dizin Oluştur"
 
-#: comdlg32.rc:47
+#: comdlg32.rc:48
 msgid "List"
 msgstr "Liste"
 
-#: comdlg32.rc:48 cryptui.rc:201
+#: comdlg32.rc:49 cryptui.rc:201
 msgid "Details"
 msgstr "Ayrıntılar"
 
-#: comdlg32.rc:49
+#: comdlg32.rc:50
 msgid "Browse to Desktop"
 msgstr "Masaüstüne Git"
 
-#: comdlg32.rc:113
+#: comdlg32.rc:114
 msgid "Regular"
 msgstr "Düzenli"
 
-#: comdlg32.rc:114
+#: comdlg32.rc:115
 msgid "Bold"
 msgstr "Kalın"
 
-#: comdlg32.rc:115
+#: comdlg32.rc:116
 msgid "Italic"
 msgstr "Eğik"
 
-#: comdlg32.rc:116
+#: comdlg32.rc:117
 msgid "Bold Italic"
 msgstr "Kalın Eğik"
 
-#: comdlg32.rc:121 wordpad.rc:125
+#: comdlg32.rc:122 wordpad.rc:125
 msgid "Black"
 msgstr "Siyah"
 
-#: comdlg32.rc:122 wordpad.rc:126
+#: comdlg32.rc:123 wordpad.rc:126
 msgid "Maroon"
 msgstr "Koyu Kırmızı"
 
-#: comdlg32.rc:123 wordpad.rc:127
+#: comdlg32.rc:124 wordpad.rc:127
 msgid "Green"
 msgstr "Yeşil"
 
-#: comdlg32.rc:124 wordpad.rc:128
+#: comdlg32.rc:125 wordpad.rc:128
 msgid "Olive"
 msgstr "Koyu Sarı"
 
-#: comdlg32.rc:125 wordpad.rc:129
+#: comdlg32.rc:126 wordpad.rc:129
 msgid "Navy"
 msgstr "Koyu Mavi"
 
-#: comdlg32.rc:126 wordpad.rc:130
+#: comdlg32.rc:127 wordpad.rc:130
 msgid "Purple"
 msgstr "Mor"
 
-#: comdlg32.rc:127 wordpad.rc:131
+#: comdlg32.rc:128 wordpad.rc:131
 msgid "Teal"
 msgstr "Deniz Mavisi"
 
-#: comdlg32.rc:128 wordpad.rc:132
+#: comdlg32.rc:129 wordpad.rc:132
 msgid "Gray"
 msgstr "Gri"
 
-#: comdlg32.rc:129 wordpad.rc:133
+#: comdlg32.rc:130 wordpad.rc:133
 msgid "Silver"
 msgstr "Gümüş"
 
-#: comdlg32.rc:130 wordpad.rc:134
+#: comdlg32.rc:131 wordpad.rc:134
 msgid "Red"
 msgstr "Kırmızı"
 
-#: comdlg32.rc:131 wordpad.rc:135
+#: comdlg32.rc:132 wordpad.rc:135
 msgid "Lime"
 msgstr "Parlak Yeşil"
 
-#: comdlg32.rc:132 wordpad.rc:136
+#: comdlg32.rc:133 wordpad.rc:136
 msgid "Yellow"
 msgstr "Sarı"
 
-#: comdlg32.rc:133 wordpad.rc:137
+#: comdlg32.rc:134 wordpad.rc:137
 msgid "Blue"
 msgstr "Mavi"
 
-#: comdlg32.rc:134 wordpad.rc:138
+#: comdlg32.rc:135 wordpad.rc:138
 msgid "Fuchsia"
 msgstr "Pembe"
 
-#: comdlg32.rc:135 wordpad.rc:139
+#: comdlg32.rc:136 wordpad.rc:139
 msgid "Aqua"
 msgstr "Turkuaz"
 
-#: comdlg32.rc:136 wordpad.rc:140
+#: comdlg32.rc:137 wordpad.rc:140
 msgid "White"
 msgstr "Beyaz"
 
-#: comdlg32.rc:56
+#: comdlg32.rc:57
 msgid "Unreadable Entry"
 msgstr "Okunamayan Girdi"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:59
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
@@ -1004,11 +1010,11 @@ msgstr ""
 "Bu değer sayfa aralığında değil.\n"
 "Lütfen %1!d! ve %2!d! arasında bir değer girin."
 
-#: comdlg32.rc:60
+#: comdlg32.rc:61
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "'Başlangıç' değeri 'Bitiş' değerini geçemez."
 
-#: comdlg32.rc:62
+#: comdlg32.rc:63
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -1016,11 +1022,11 @@ msgstr ""
 "Kenarlıklar örtüşüyor ya da kağıt sınırlarının dışına çıkıyor.\n"
 "Lütfen kenarlıkları yeniden girin."
 
-#: comdlg32.rc:64
+#: comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "'Kopya sayısı' alanı boş olamaz."
 
-#: comdlg32.rc:66
+#: comdlg32.rc:67
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -1028,31 +1034,31 @@ msgstr ""
 "Bu kadar büyük sayıda kopya yazıcınız tarafından desteklenmiyor.\n"
 "Lütffen 1 ile %d arasında bir değer girin."
 
-#: comdlg32.rc:67
+#: comdlg32.rc:68
 msgid "A printer error occurred."
 msgstr "Bir yazıcı hatası oluştu."
 
-#: comdlg32.rc:68
+#: comdlg32.rc:69
 msgid "No default printer defined."
 msgstr "Varsayılan yazıcı tanımlanmamış."
 
-#: comdlg32.rc:69
+#: comdlg32.rc:70
 msgid "Cannot find the printer."
 msgstr "Yazıcı bulunamıyor."
 
-#: comdlg32.rc:70 progman.rc:76
+#: comdlg32.rc:71 progman.rc:76
 msgid "Out of memory."
 msgstr "Bellek dolu."
 
-#: comdlg32.rc:71
+#: comdlg32.rc:72
 msgid "An error occurred."
 msgstr "Bir hata oluştu."
 
-#: comdlg32.rc:72
+#: comdlg32.rc:73
 msgid "Unknown printer driver."
 msgstr "Bilinmeyen yazıcı sürücüsü."
 
-#: comdlg32.rc:75
+#: comdlg32.rc:76
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
@@ -1060,155 +1066,155 @@ msgstr ""
 "Sayfa düzeni veya belge yazdırmak gibi yazıcıyla ilgili işlemlerden önce bir "
 "yazıcı sürücüsü kurmalısınız. Lütfen bir tane kurun ve yeniden deneyin."
 
-#: comdlg32.rc:141
+#: comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "%1!d! ile %2!d! arasında bir yazı tipi boyutu seçin."
 
-#: comdlg32.rc:142 ieframe.rc:35
+#: comdlg32.rc:143 ieframe.rc:35
 msgid "&Save"
 msgstr "&Kaydet"
 
-#: comdlg32.rc:143
+#: comdlg32.rc:144
 msgid "Save &in:"
 msgstr "Kayıt &Yeri:"
 
-#: comdlg32.rc:144
+#: comdlg32.rc:145
 msgid "Save"
 msgstr "Kaydet"
 
-#: comdlg32.rc:146
+#: comdlg32.rc:147
 msgid "Open File"
 msgstr "Dosya Aç"
 
-#: comdlg32.rc:147
+#: comdlg32.rc:148
 msgid "Select Folder"
 msgstr "Dizin Seç"
 
-#: comdlg32.rc:148
+#: comdlg32.rc:149
 msgid "Font size has to be a number."
 msgstr "Yazı tipi boyutu bir sayı olmalıdır."
 
-#: comdlg32.rc:83 oleview.rc:98
+#: comdlg32.rc:84 oleview.rc:98
 msgid "Ready"
 msgstr "Hazır"
 
-#: comdlg32.rc:84
+#: comdlg32.rc:85
 msgid "Paused; "
 msgstr "Durakladı; "
 
-#: comdlg32.rc:85
+#: comdlg32.rc:86
 msgid "Error; "
 msgstr "Hata; "
 
-#: comdlg32.rc:86
+#: comdlg32.rc:87
 msgid "Pending deletion; "
 msgstr "Silme bekleniyor; "
 
-#: comdlg32.rc:87
+#: comdlg32.rc:88
 msgid "Paper jam; "
 msgstr "Kağıt sıkışması; "
 
-#: comdlg32.rc:88
+#: comdlg32.rc:89
 msgid "Out of paper; "
 msgstr "Kağıt yok; "
 
-#: comdlg32.rc:89
+#: comdlg32.rc:90
 msgid "Feed paper manual; "
 msgstr "El ile kağıt besleme; "
 
-#: comdlg32.rc:90
+#: comdlg32.rc:91
 msgid "Paper problem; "
 msgstr "Kağıt sorunu; "
 
-#: comdlg32.rc:91
+#: comdlg32.rc:92
 msgid "Printer offline; "
 msgstr "Yazıcı çevrimdışı; "
 
-#: comdlg32.rc:92
+#: comdlg32.rc:93
 msgid "I/O Active; "
 msgstr "G/Ç Etkin; "
 
-#: comdlg32.rc:93
+#: comdlg32.rc:94
 msgid "Busy; "
 msgstr "Meşgul; "
 
-#: comdlg32.rc:94
+#: comdlg32.rc:95
 msgid "Printing; "
 msgstr "Yazdırıyor; "
 
-#: comdlg32.rc:95
+#: comdlg32.rc:96
 msgid "Output tray is full; "
 msgstr "Çıkış tepsisi doldu; "
 
-#: comdlg32.rc:96
+#: comdlg32.rc:97
 msgid "Not available; "
 msgstr "Kullanılamıyor; "
 
-#: comdlg32.rc:97
+#: comdlg32.rc:98
 msgid "Waiting; "
 msgstr "Bekliyor; "
 
-#: comdlg32.rc:98
+#: comdlg32.rc:99
 msgid "Processing; "
 msgstr "İlerliyor; "
 
-#: comdlg32.rc:99
+#: comdlg32.rc:100
 msgid "Initializing; "
 msgstr "Hazırlanıyor; "
 
-#: comdlg32.rc:100
+#: comdlg32.rc:101
 msgid "Warming up; "
 msgstr "Isınıyor; "
 
-#: comdlg32.rc:101
+#: comdlg32.rc:102
 msgid "Toner low; "
 msgstr "Kartuş az; "
 
-#: comdlg32.rc:102
+#: comdlg32.rc:103
 msgid "No toner; "
 msgstr "Kartuş yok; "
 
-#: comdlg32.rc:103
+#: comdlg32.rc:104
 msgid "Page punt; "
 msgstr "Sayfa atışı; "
 
-#: comdlg32.rc:104
+#: comdlg32.rc:105
 msgid "Interrupted by user; "
 msgstr "Kullanıcı tarafından iptal edildi; "
 
-#: comdlg32.rc:105
+#: comdlg32.rc:106
 msgid "Out of memory; "
 msgstr "Bellek dolu; "
 
-#: comdlg32.rc:106
+#: comdlg32.rc:107
 msgid "The printer door is open; "
 msgstr "Yazıcı kapağı açık; "
 
-#: comdlg32.rc:107
+#: comdlg32.rc:108
 msgid "Print server unknown; "
 msgstr "Yazıcı sunucusu bilinmiyor; "
 
-#: comdlg32.rc:108
+#: comdlg32.rc:109
 msgid "Power save mode; "
 msgstr "Güç tasarruf kipi; "
 
-#: comdlg32.rc:77
+#: comdlg32.rc:78
 msgid "Default Printer; "
 msgstr "Varsayılan Yazıcı; "
 
-#: comdlg32.rc:78
+#: comdlg32.rc:79
 msgid "There are %d documents in the queue"
 msgstr "Kuyrukta %d belge var"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:80
 msgid "Margins [inches]"
 msgstr "Kenarlıklar [inç]"
 
-#: comdlg32.rc:80
+#: comdlg32.rc:81
 msgid "Margins [mm]"
 msgstr "Kenarlıklar [mm]"
 
-#: comdlg32.rc:81 sane.rc:33
+#: comdlg32.rc:82 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
@@ -1217,7 +1223,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Kullanıcı adı:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:80
 msgid "&Password:"
 msgstr "&Parola:"
 
@@ -2532,7 +2538,7 @@ msgstr "Bu sertifika sorunsuz."
 msgid "Field"
 msgstr "Alan"
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr "Değer"
 
@@ -3108,7 +3114,7 @@ msgstr "Simge"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:99 wldap32.rc:112
 msgid "Other"
 msgstr "Diğer"
 
@@ -3173,7 +3179,7 @@ msgstr "&Ev"
 msgid "&Stop"
 msgstr "&Durdur"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Yenile"
 
@@ -3703,6 +3709,20 @@ msgstr "Şartlı derleme kapatıldı"
 msgid "Expected '@'"
 msgstr "Beklenen '@'"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "Bilinmeyen hata"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "Beklenen sayı"
@@ -3747,31 +3767,35 @@ msgstr "Beklenen JScript nesnesi"
 msgid "Syntax error in regular expression"
 msgstr "Düzenli ifadede sözdizimi hatası"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "Kodlanacak URI geçersiz karakterler içeriyor"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "Kodu çözülecek URI geçersiz"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "Kesirli rakam sayısı aralık dışı"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "Aralık erişim dışında"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "Dizi adı pozitif sonlu bir sayı olmalıdır"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "Beklenen dizi nesnesi"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3779,15 +3803,15 @@ msgstr ""
 "Nesne açıklayıcısındaki 'yazılabilir' özelliği bu nesnede 'doğru' olarak "
 "ayarlananmıyor"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "'|' yapılandırılamayan nesnesi yeniden tanımlanamıyor"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr "'|' yazılamayan nesnesi değiştirilemiyor"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr "Nesnenin erişimcisi ve değeri birden olamaz"
 
@@ -6814,83 +6838,65 @@ msgstr "Posta Gönder"
 
 #: mferror.mc:249 mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "Başlama isteği zaten yapıldı.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "Nesne UUID'i bulunamadı.\n"
+msgstr "Ses çıkışı bitirilmedi.\n"
+
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "Çıkış zaten durduruldu.\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "Kurulum platformu desteklenmiyor.\n"
+msgstr "Media Foundation platformu başlatılmadı.\n"
 
 #: mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "Bit sayısı çok küçük.\n"
+msgstr "Tampon çok küçük.\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "Geçersiz sorgu sözdizimi.\n"
+msgstr "Geçersiz istek.\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "Geçersiz segment numarası.\n"
+msgstr "Geçersiz akış numarası.\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "Geçersiz veri türü.\n"
+msgstr "Geçersiz ortam türü.\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "Başka bir girdi yok.\n"
+msgstr "Başka giriş kabul edilmiyor.\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "Nesne UUID'i bulunamadı.\n"
+msgstr "Nesne başlatılmadı.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "İşlem desteklenmiyor.\n"
+msgstr "Temsil desteklenmiyor.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "Önerilen ortam türlerinde daha fazla tür yok.\n"
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen hizmet.\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "Beklenmeyen ağ hatası.\n"
+msgstr "Beklenmeyen hata.\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "Geçeriz zaman.\n"
+msgstr "Geçersiz tür.\n"
 
 #: mferror.mc:123
 #, fuzzy
@@ -6899,456 +6905,334 @@ msgid "Invalid file format.\n"
 msgstr "Geçersiz piksel biçimi.\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "Geçeriz zaman.\n"
+msgstr "Geçeriz zaman damgası.\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen şema.\n"
 
 #: mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen bit akış şeması.\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen zaman biçimi.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "Örnek için zaman damgası ayarlanmamış.\n"
 
 #: mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "Örnek için süre ayarlanmamış.\n"
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "Geçersiz veri.\n"
+msgstr "Geçersiz akış verisi.\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "Yardım kullanılamıyor."
+msgstr "Gerçek zamanlı destek kullanılamıyor.\n"
 
 #: mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen oran.\n"
 
 #: mferror.mc:200
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported thinning.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen sıkıştırma.\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "İstek desteklenmiyor.\n"
+msgstr "Geri sarma desteklenmiyor.\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "Desteklenmeyen yetkilendirme seviyesi.\n"
+msgstr "Desteklenmeyen oran çevrimi.\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "Oran değişimi öne alındı.\n"
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "Nesne UUID'i bulunamadı.\n"
+msgstr "Nesne veya değer bulunamadı.\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "Yardım kullanılamıyor."
+msgstr "Değer kullanılamıyor.\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "Yardım kullanılamıyor."
+msgstr "Saat kullanılamıyor.\n"
 
 #: mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "Genişletilmiş özellikler desteklenmiyor.\n"
+msgstr "Çoklu imzalayanlar desteklenmiyor.\n"
 
 #: mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "Sürücü etkinleştirilmemiş."
+msgstr "Zamanlayıcı tek kaldı.\n"
 
 #: mferror.mc:277
-#, fuzzy
-#| msgid "Character translation table open failed.\n"
 msgid "State transition is pending.\n"
-msgstr "Karakter çevrim tablosu açılamıyor.\n"
+msgstr "Durum değişimi bekliyor.\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported state transition.\n"
-msgstr "Desteklenmeyen yetkilendirme seviyesi.\n"
+msgstr "Desteklenmeyen hal değişimi.\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "Bir iç hata oluştu.\n"
+msgstr "Kurtarılamaz hata oluştu.\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "Örnekte çok fazla tampon var.\n"
 
 #: mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "Geçici klasöre yazılamıyor.\n"
+msgstr "Örneğe yazılamıyor.\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "Yol geçersiz.\n"
+msgstr "Anahtar geçersiz.\n"
 
 #: mferror.mc:319
-#, fuzzy
-#| msgid "Wrong stub version.\n"
 msgid "Bad startup version.\n"
-msgstr "Hatalı taslak sürümü.\n"
+msgstr "Hatalı başlangıç sürümü.\n"
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen başlık.\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "Geçersiz iş istasyonu.\n"
+msgstr "Geçersiz konum.\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "Dosya bulunamadı.\n"
+msgstr "Özellik bulunamadı.\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "Yönlendirme türüne izin verilmiyor.\n"
+msgstr "Özellik türüne izin verilmiyor.\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "İşlem desteklenmiyor.\n"
+msgstr "Özellik türü desteklenmiyor.\n"
 
 #: mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "Dizin boş değil.\n"
+msgstr "Özellik boş.\n"
 
 #: mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "Dizin boş değil.\n"
+msgstr "Özellik boş değil.\n"
 
 #: mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "Yönlendirme türüne izin verilmiyor.\n"
+msgstr "Vektör özelliğine izin verilmiyor.\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "Vektör özelliği gerekli.\n"
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "İşlem kullanıcı tarafından iptal edildi.\n"
+msgstr "İşlem iptal edildi.\n"
 
 #: mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "Sunucu devre dışı değil.\n"
+msgstr "Bit akışında arama yapılamıyor.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "Güvenli modda platform devre dışıdır.\n"
 
 #: mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "Hizmet iş parçacığı oluşturulamıyor.\n"
+msgstr "Bit akışı ayrılamıyor.\n"
 
 #: mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "Karşılıklı dışlama bayrakları, kaynak çözücüsüne geçirildi.\n"
 
 #: mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "Bilinmeyen arayüz.\n"
+msgstr "Bilinmeyen bit akış uzunluğu.\n"
 
 #: mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "Geçersiz dizin.\n"
+msgstr "Geçersiz iş kuyruğu dizini.\n"
 
 #: mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "Kullanılabilir oturum sunucusu yok.\n"
+msgstr "Olay yok.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "Desteklenmeyen yetkilendirme seviyesi.\n"
+msgstr "Desteklenmeyen ortam kaynağı durum çevrimi.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "Kayıt defteri kurtarıldı.\n"
+msgstr "Ortam akışının sonuna ulaşıldı.\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "Shutdown() işlevi çağırıldı.\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "Kayıt defteri kurtarıldı.\n"
+msgstr "Ortam akışına süre ayarlanmamış.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "Ortam biçimi tanındı ancak geçersiz.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "Özellik ayarı bulunamadı.\n"
+msgstr "Özellik bulunamadı.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "Dizin boş değil.\n"
+msgstr "Özellik salt okunur.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "Yönlendirme türüne izin verilmiyor.\n"
+msgstr "Özelliğe izin verilmiyor.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "Kaynak kullanımda.\n"
+msgstr "Ortam kaynağı başlatılmadı.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen ortam türü.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "Kaynak kullanımda.\n"
+msgstr "Ortam kaynağı yanlış durumda.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "Veri tespit edilemedi.\n"
+msgstr "Bir ortam akışı seçilmedi.\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "Desteklenmeyen tür.\n"
+msgstr "Desteklenmeyen ortam akış karakteristiği.\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "Akış çıkışı kaldırıldı.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "Akış çıkışı eşlenmedi.\n"
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "Kayıt defteri kurtarıldı.\n"
+msgstr "Ortam çıkışının akış çıkışları düzeltildi.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "Etki alanı zaten mevcut.\n"
+msgstr "Akış çıkışı zaten mevcut.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "İşlem kullanıcı tarafından iptal edildi.\n"
+msgstr "Örnek konumlandırması iptal edildi.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "Dizin boş değil.\n"
+msgstr "Örnek konumlandırıcısı boş.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "Sınıf zaten bulunuyor.\n"
+msgstr "Çıkış zaten durduruldu.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "ASF dosya çıkışı için bit oranı bilinmiyor.\n"
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "Veri tespit edilemedi.\n"
+msgstr "Çıkış için bir akış seçilmedi.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "Dosya adı çok uzun.\n"
+msgstr "Üst veri çok uzun.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "Çıkış tarafından bir örnek işlenmedi.\n"
 
 #: mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "Çıkış için gerekli üstbilgi sağlanmamış.\n"
 
 #: mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "Bağlantı geçersiz.\n"
+msgstr "Ek düğüm geçersiz.\n"
 
 #: mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "Yazıcı bulunamıyor."
+msgstr "Çözücü bulunamıyor.\n"
 
 #: mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "Modül bulunamadı.\n"
+msgstr "Codec bulunamadı.\n"
 
 #: mferror.mc:648
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "Çağrı işlemesi alınamıyor.\n"
+msgstr "Topoloji düğümlerine bağlanılamıyor.\n"
 
 #: mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "İstek desteklenmiyor.\n"
+msgstr "Topoloji isteği desteklenmiyor.\n"
 
 #: mferror.mc:662
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "Geçersiz grup özellikleri.\n"
+msgstr "Geçersiz topoloji zaman özellikleri.\n"
 
 #: mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "Topolojide döngü bulundu.\n"
 
 #: mferror.mc:676
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "Kurulum kaynağı yok.\n"
+msgstr "Sunum tanımlayıcısı yok.\n"
 
 #: mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "Dizin yok.\n"
+msgstr "Akış tanımlayıcısı yok.\n"
 
 #: mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "Aygıt bağlı değil.\n"
+msgstr "Akış tanımlayıcısı seçilmedi.\n"
 
 #: mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "Dizin yok.\n"
+msgstr "Kaynak yok.\n"
 
 #: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "Topoloji yükleyicisi çıkış etkinleşmesini desteklemiyor.\n"
 
 #: mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "Saatin zaman kaynağı ayarlanmamış.\n"
 
 #: mferror.mc:718
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "Sınıf zaten bulunuyor.\n"
+msgstr "Saat durumu zaten ayarlı.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "Saat kullanılamıyor.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8442,6 +8326,196 @@ msgstr "Açık"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Kapalı"
+
+#: version.rc:55
+msgid "Provider"
+msgstr "Sağlayıcı"
+
+#: version.rc:58
+msgid "Select the data you want to connect to:"
+msgstr "Bağlanmak istediğiniz veriyi seçin:"
+
+#: version.rc:65
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "Bağlantılar"
+
+#: version.rc:68
+#, fuzzy
+#| msgid "Select the data you want to connect to:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Bağlanmak istediğiniz veriyi seçin:"
+
+#: version.rc:69
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Lütfen adınızı girin"
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "Bağlantıları Sıfırla"
+
+#: version.rc:74
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "Bağlantılar"
+
+#: version.rc:76
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "&Ekle..."
+
+#: version.rc:77
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:78
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "&Kullanıcı adı:"
+
+#: version.rc:82
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Boş sa&yfa"
+
+#: version.rc:83
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "Hatalı şifre.\n"
+
+#: version.rc:84
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:86
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "Bağlantıları Sıfırla"
+
+#: version.rc:91 winemine.rc:65
+msgid "Advanced"
+msgstr "Gelişmiş"
+
+#: version.rc:94
+#, fuzzy
+#| msgid "Network share"
+msgid "Network settings"
+msgstr "Ağ paylaşımı"
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Bad impersonation level.\n"
+msgid "&Impersonation level:"
+msgstr "Geçersiz taklit seviyesi.\n"
+
+#: version.rc:97
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:100
+#, fuzzy
+#| msgid "Connected"
+msgid "Connect:"
+msgstr "Bağlı"
+
+#: version.rc:102
+#, fuzzy
+#| msgid "seconds"
+msgid "seconds."
+msgstr "saniye"
+
+#: version.rc:103
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "Başarılı"
+
+#: version.rc:109
+#, fuzzy
+#| msgid "&All"
+msgid "All"
+msgstr "&Tümü"
+
+#: version.rc:113
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:114
+#, fuzzy
+#| msgid "&Edit..."
+msgid "&Edit Value..."
+msgstr "&Düzenle..."
+
+#: version.rc:49
+#, fuzzy
+#| msgid "Data Link Properties"
+msgid "Data Link Error"
+msgstr "Veri Bağlantısı Özellikleri"
+
+#: version.rc:50
+#, fuzzy
+#| msgid "Please select a file."
+msgid "Please select a provider."
+msgstr "Lütfen bir dosya seçin."
+
+#: version.rc:36
+msgid "Data Link Properties"
+msgstr "Veri Bağlantısı Özellikleri"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr "OLE Veritabanı Sağlayıcısı"
+
+#: version.rc:41
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "Hazır"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "Benioku:"
+
+#: version.rc:43
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:45
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:46
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:47
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "G/Ç Yazım"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9552,7 +9626,7 @@ msgstr ""
 "BİR AMACA UYGUNLUĞU bile garanti edilmez. Daha fazla bilgi için GNU Kısıtlı "
 "Genel Kamu Lisansı'na bakın.\n"
 "\n"
-"Wine ile birlikte GNU Lesser Genel Kamu Lisansı'nın bir kopyasını almış "
+"Wine ile birlikte GNU Kısıtlı Genel Kamu Lisansı'nın bir kopyasını almış "
 "olmanız gereklidir. Eğer almamışsanız Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA adresine yazın."
 
@@ -9595,447 +9669,459 @@ msgstr " sn"
 msgid "Select Source"
 msgstr "Kaynak Seç"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "China Standard Time"
 msgstr "Çin Standart Saati"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "China Daylight Time"
 msgstr "Çin Yaz Saati"
 
-#: tzres.rc:160
+#: tzres.rc:164
 msgid "North Asia Standard Time"
 msgstr "Kuzey Asya Standart Saati"
 
-#: tzres.rc:161
+#: tzres.rc:165
 msgid "North Asia Daylight Time"
 msgstr "Kuzey Asya Yaz Saati"
 
-#: tzres.rc:104
+#: tzres.rc:106
 msgid "Georgian Standard Time"
 msgstr "Gürcistan Standart Saati"
 
-#: tzres.rc:105
+#: tzres.rc:107
 msgid "Georgian Daylight Time"
 msgstr "Gürcistan Yaz Saati"
 
-#: tzres.rc:152
+#: tzres.rc:156
 msgid "Nepal Standard Time"
 msgstr "Nepal Standart Saati"
 
-#: tzres.rc:153
+#: tzres.rc:157
 msgid "Nepal Daylight Time"
 msgstr "Nepal Yaz Saati"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Cape Verde Standard Time"
 msgstr "Yeşil Burun Adaları Standart Saati"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Cape Verde Daylight Time"
 msgstr "Yeşil Burun Adaları Yaz Saati"
 
-#: tzres.rc:74
+#: tzres.rc:116
+#, fuzzy
+#| msgid "Hawaiian Standard Time"
+msgid "Haiti Standard Time"
+msgstr "Hawaii Standart Saati"
+
+#: tzres.rc:117
+#, fuzzy
+#| msgid "Hawaiian Daylight Time"
+msgid "Haiti Daylight Time"
+msgstr "Hawaii Yaz Saati"
+
+#: tzres.rc:76
 msgid "Central European Standard Time"
 msgstr "Orta Avrupa Standart Saati"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central European Daylight Time"
 msgstr "Orta Avrupa Yaz Saati"
 
-#: tzres.rc:140
+#: tzres.rc:144
 msgid "Morocco Standard Time"
 msgstr "Fas Standart Saati"
 
-#: tzres.rc:141
+#: tzres.rc:145
 msgid "Morocco Daylight Time"
 msgstr "Fas Yaz Saati"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Europe Standard Time"
 msgstr "Orta Avrupa Standart Saati"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Europe Daylight Time"
 msgstr "Orta Avrupa Yaz Saati"
 
-#: tzres.rc:118
+#: tzres.rc:122
 msgid "Iran Standard Time"
 msgstr "İran Standart Saati"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Iran Daylight Time"
 msgstr "İran Yaz Saati"
 
-#: tzres.rc:150
+#: tzres.rc:154
 msgid "Namibia Standard Time"
 msgstr "Namibya Standart Saati"
 
-#: tzres.rc:151
+#: tzres.rc:155
 msgid "Namibia Daylight Time"
 msgstr "Namibya Yaz Saati"
 
-#: tzres.rc:200
+#: tzres.rc:204
 msgid "Tonga Standard Time"
 msgstr "Tonga Standart Saati"
 
-#: tzres.rc:201
+#: tzres.rc:205
 msgid "Tonga Daylight Time"
 msgstr "Tonga Yaz Saati"
 
-#: tzres.rc:144
+#: tzres.rc:148
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Dağ Standart Saati (Meksika)"
 
-#: tzres.rc:145
+#: tzres.rc:149
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Dağ Yaz Saati (Meksika)"
 
-#: tzres.rc:106
+#: tzres.rc:108
 msgid "GMT Standard Time"
 msgstr "GMT Standart Saati"
 
-#: tzres.rc:107
+#: tzres.rc:109
 msgid "GMT Daylight Time"
 msgstr "GMT Yaz Saati"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central Asia Standard Time"
 msgstr "Orta Asya Standart Saati"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central Asia Daylight Time"
 msgstr "Orta Asya Yaz Saati"
 
-#: tzres.rc:38
+#: tzres.rc:40
 msgid "Arabic Standard Time"
 msgstr "Arabistan Standart Saati"
 
-#: tzres.rc:39
+#: tzres.rc:41
 msgid "Arabic Daylight Time"
 msgstr "Arabistan Yaz Saati"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Magadan Standard Time"
 msgstr "Magadan Standart Saati"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Magadan Daylight Time"
 msgstr "Magadan Yaz Saati"
 
-#: tzres.rc:156
+#: tzres.rc:160
 msgid "Newfoundland Standard Time"
 msgstr "Newfoundland Standart Saati"
 
-#: tzres.rc:157
+#: tzres.rc:161
 msgid "Newfoundland Daylight Time"
 msgstr "Newfoundland Yaz Saati"
 
-#: tzres.rc:224
+#: tzres.rc:228
 msgid "West Pacific Standard Time"
 msgstr "Batı Pasifik Standart Saati"
 
-#: tzres.rc:225
+#: tzres.rc:229
 msgid "West Pacific Daylight Time"
 msgstr "Batı Pasifik Yaz Saati"
 
-#: tzres.rc:164
+#: tzres.rc:168
 msgid "Pacific Standard Time"
 msgstr "Pasifik Standart Saati"
 
-#: tzres.rc:165
+#: tzres.rc:169
 msgid "Pacific Daylight Time"
 msgstr "Pasifik Yaz Saati"
 
-#: tzres.rc:48
+#: tzres.rc:50
 msgid "Azerbaijan Standard Time"
 msgstr "Azerbaycan Standart Saati"
 
-#: tzres.rc:49
+#: tzres.rc:51
 msgid "Azerbaijan Daylight Time"
 msgstr "Azerbaycan Yaz Saati"
 
-#: tzres.rc:182
+#: tzres.rc:186
 msgid "Samoa Standard Time"
 msgstr "Samoa Standart Saati"
 
-#: tzres.rc:183
+#: tzres.rc:187
 msgid "Samoa Daylight Time"
 msgstr "Samoa Yaz Saati"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Kaliningrad Standard Time"
 msgstr "Kaliningrad Standart Saati"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Kaliningrad Daylight Time"
 msgstr "Kaliningrad Yaz Saati"
 
-#: tzres.rc:166
+#: tzres.rc:170
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Pasifik Standart Saati (Meksika)"
 
-#: tzres.rc:167
+#: tzres.rc:171
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Pasifik Yaz Saati (Meksika)"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Middle East Standard Time"
 msgstr "Ortadoğu Standart Saati"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Middle East Daylight Time"
 msgstr "Ortadoğu Yaz Saati"
 
-#: tzres.rc:198
+#: tzres.rc:202
 msgid "Tokyo Standard Time"
 msgstr "Tokyo Standart Saati"
 
-#: tzres.rc:199
+#: tzres.rc:203
 msgid "Tokyo Daylight Time"
 msgstr "Tokyo Yaz Saati"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Line Islands Standard Time"
 msgstr "Line Adaları Standart Saati"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Line Islands Daylight Time"
 msgstr "Line Adaları Yaz Saati"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Jordan Standard Time"
 msgstr "Ürdün Standart Saati"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Jordan Daylight Time"
 msgstr "Ürdün Yaz Saati"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Standard Time"
 msgstr "Orta Amerika Standart Time"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Daylight Time"
 msgstr "Orta Amerika Yaz Saati"
 
-#: tzres.rc:50
+#: tzres.rc:52
 msgid "Azores Standard Time"
 msgstr "Azor Adaları Standart Saati"
 
-#: tzres.rc:51
+#: tzres.rc:53
 msgid "Azores Daylight Time"
 msgstr "Azor Adaları Yaz Saati"
 
-#: tzres.rc:158
+#: tzres.rc:162
 msgid "North Asia East Standard Time"
 msgstr "Kuzey Asya Doğu Standart Saati"
 
-#: tzres.rc:159
+#: tzres.rc:163
 msgid "North Asia East Daylight Time"
 msgstr "Kuzey Asya Doğu Yaz Saati"
 
-#: tzres.rc:40
+#: tzres.rc:42
 msgid "Argentina Standard Time"
 msgstr "Arjantin Standart Saati"
 
-#: tzres.rc:41
+#: tzres.rc:43
 msgid "Argentina Daylight Time"
 msgstr "Arjantin Yaz Saati"
 
-#: tzres.rc:146
+#: tzres.rc:150
 msgid "Myanmar Standard Time"
 msgstr "Myanmar Standart Saati"
 
-#: tzres.rc:147
+#: tzres.rc:151
 msgid "Myanmar Daylight Time"
 msgstr "Myanmar Yaz Saati"
 
-#: tzres.rc:210 tzres.rc:211
+#: tzres.rc:214 tzres.rc:215
 msgid "Coordinated Universal Time"
 msgstr "Eşgüdümlü Evrensel Saat"
 
-#: tzres.rc:116
+#: tzres.rc:120
 msgid "India Standard Time"
 msgstr "Hindistan Standart Saati"
 
-#: tzres.rc:117
+#: tzres.rc:121
 msgid "India Daylight Time"
 msgstr "Hindistan Yaz Saati"
 
-#: tzres.rc:112
+#: tzres.rc:114
 msgid "GTB Standard Time"
 msgstr "GTB Standart Saati"
 
-#: tzres.rc:113
+#: tzres.rc:115
 msgid "GTB Daylight Time"
 msgstr "GTB Yaz Saati"
 
-#: tzres.rc:202
+#: tzres.rc:206
 msgid "Turkey Standard Time"
 msgstr "Türkiye Standart Saati"
 
-#: tzres.rc:203
+#: tzres.rc:207
 msgid "Turkey Daylight Time"
 msgstr "Türkiye Yaz Saati"
 
-#: tzres.rc:100
+#: tzres.rc:102
 msgid "Fiji Standard Time"
 msgstr "Fiji Standart Saati"
 
-#: tzres.rc:101
+#: tzres.rc:103
 msgid "Fiji Daylight Time"
 msgstr "Fiji Yaz Saati"
 
-#: tzres.rc:58
+#: tzres.rc:60
 msgid "Canada Central Standard Time"
 msgstr "Orta Kanada Standart Saati"
 
-#: tzres.rc:59
+#: tzres.rc:61
 msgid "Canada Central Daylight Time"
 msgstr "Orta Kanada Yaz Saati"
 
-#: tzres.rc:194
+#: tzres.rc:198
 msgid "Taipei Standard Time"
 msgstr "Taipei Standart Saati"
 
-#: tzres.rc:195
+#: tzres.rc:199
 msgid "Taipei Daylight Time"
 msgstr "Taipei Yaz Saati"
 
-#: tzres.rc:220
+#: tzres.rc:224
 msgid "W. Europe Standard Time"
 msgstr "Batı Avrupa Standart Saati"
 
-#: tzres.rc:221
+#: tzres.rc:225
 msgid "W. Europe Daylight Time"
 msgstr "Batı Avrupa Yaz Saati"
 
-#: tzres.rc:138
+#: tzres.rc:142
 msgid "Montevideo Standard Time"
 msgstr "Montevideo Standart Saati"
 
-#: tzres.rc:139
+#: tzres.rc:143
 msgid "Montevideo Daylight Time"
 msgstr "Montevideo Yaz Saati"
 
-#: tzres.rc:168
+#: tzres.rc:172
 msgid "Pakistan Standard Time"
 msgstr "Pakistan Standart Saati"
 
-#: tzres.rc:169
+#: tzres.rc:173
 msgid "Pakistan Daylight Time"
 msgstr "Pakistan Yaz Saati"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Caucasus Standard Time"
 msgstr "Kafkasya Standart Saati"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Caucasus Daylight Time"
 msgstr "Kanarya Yaz Saati"
 
-#: tzres.rc:46
+#: tzres.rc:48
 msgid "AUS Eastern Standard Time"
 msgstr "Doğu Avustralya Standart Saati"
 
-#: tzres.rc:47
+#: tzres.rc:49
 msgid "AUS Eastern Daylight Time"
 msgstr "Doğu Avustralya Yaz Saati"
 
-#: tzres.rc:148
+#: tzres.rc:152
 msgid "N. Central Asia Standard Time"
 msgstr "Kuzey Orta Asya Standart Saati"
 
-#: tzres.rc:149
+#: tzres.rc:153
 msgid "N. Central Asia Daylight Time"
 msgstr "Kuzey Orta Asya Yaz Saati"
 
-#: tzres.rc:94
+#: tzres.rc:96
 msgid "Eastern Standard Time"
 msgstr "Doğu Amerika Standart Saati"
 
-#: tzres.rc:95
+#: tzres.rc:97
 msgid "Eastern Daylight Time"
 msgstr "Doğu Amerika Yaz Saati"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time (Mexico)"
 msgstr "Orta Amerika Standart Saati (Meksika)"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time (Mexico)"
 msgstr "Orta Amerika Yaz Saati (Meksika)"
 
-#: tzres.rc:42
+#: tzres.rc:44
 msgid "Atlantic Standard Time"
 msgstr "Atlas Okyanusu Standart Saati"
 
-#: tzres.rc:43
+#: tzres.rc:45
 msgid "Atlantic Daylight Time"
 msgstr "Atlas Okyanusu Yaz Saati"
 
-#: tzres.rc:142
+#: tzres.rc:146
 msgid "Mountain Standard Time"
 msgstr "Dağlık Amerika Standart Saati"
 
-#: tzres.rc:143
+#: tzres.rc:147
 msgid "Mountain Daylight Time"
 msgstr "Dağlık Amerika Yaz Saati"
 
-#: tzres.rc:206
+#: tzres.rc:210
 msgid "US Eastern Standard Time"
 msgstr "Doğu Amerika Standart Saati"
 
-#: tzres.rc:207
+#: tzres.rc:211
 msgid "US Eastern Daylight Time"
 msgstr "Doğu Amerika Yaz Saati"
 
-#: tzres.rc:196
+#: tzres.rc:200
 msgid "Tasmania Standard Time"
 msgstr "Tazmanya Standart Saati"
 
-#: tzres.rc:197
+#: tzres.rc:201
 msgid "Tasmania Daylight Time"
 msgstr "Tazmanya Yaz Saati"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Central America Standard Time"
 msgstr "Orta Amerika Standart Saati"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Central America Daylight Time"
 msgstr "Orta Amerika Yaz Saati"
 
-#: tzres.rc:208
+#: tzres.rc:212
 msgid "US Mountain Standard Time"
 msgstr "Dağlık Amerika Standart Saati"
 
-#: tzres.rc:209
+#: tzres.rc:213
 msgid "US Mountain Daylight Time"
 msgstr "Dağlık Amerika Yaz Saati"
 
-#: tzres.rc:188
+#: tzres.rc:192
 msgid "South Africa Standard Time"
 msgstr "Güney Afrika Standart Saati"
 
-#: tzres.rc:189
+#: tzres.rc:193
 msgid "South Africa Daylight Time"
 msgstr "Güney Afrika Yaz Saati"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Cen. Australia Standard Time"
 msgstr "Orta Avustralya Standart Saati"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Cen. Australia Daylight Time"
 msgstr "Orta Avustralya Yaz Saati"
 
-#: tzres.rc:190
+#: tzres.rc:194
 msgid "Sri Lanka Standard Time"
 msgstr "Sri Lanka Standart Saati"
 
-#: tzres.rc:191
+#: tzres.rc:195
 msgid "Sri Lanka Daylight Time"
 msgstr "Sri Lanka Yaz Saati"
 
@@ -10047,123 +10133,123 @@ msgstr "Afganistan Standart Saati"
 msgid "Afghanistan Daylight Time"
 msgstr "Afganistan Yaz Saati"
 
-#: tzres.rc:226
+#: tzres.rc:230
 msgid "Yakutsk Standard Time"
 msgstr "Yakutsk Standart Saati"
 
-#: tzres.rc:227
+#: tzres.rc:231
 msgid "Yakutsk Daylight Time"
 msgstr "Yakutsk Yaz Saati"
 
-#: tzres.rc:176
+#: tzres.rc:180
 msgid "SA Eastern Standard Time"
 msgstr "Güney Amerika Doğu Standart Saati"
 
-#: tzres.rc:177
+#: tzres.rc:181
 msgid "SA Eastern Daylight Time"
 msgstr "Güney Amerika Doğu Yaz Saati"
 
-#: tzres.rc:34
+#: tzres.rc:36
 msgid "Arab Standard Time"
 msgstr "Arap Standart Saati"
 
-#: tzres.rc:35
+#: tzres.rc:37
 msgid "Arab Daylight Time"
 msgstr "Arap Yaz Saati"
 
-#: tzres.rc:36
+#: tzres.rc:38
 msgid "Arabian Standard Time"
 msgstr "Arabistan Standart Saati"
 
-#: tzres.rc:37
+#: tzres.rc:39
 msgid "Arabian Daylight Time"
 msgstr "Arabistan Yaz Saati"
 
-#: tzres.rc:174
+#: tzres.rc:178
 msgid "Russian Standard Time"
 msgstr "Rusya Standart Saati"
 
-#: tzres.rc:175
+#: tzres.rc:179
 msgid "Russian Daylight Time"
 msgstr "Rusya Yaz Saati"
 
-#: tzres.rc:172
+#: tzres.rc:176
 msgid "Romance Standard Time"
 msgstr "Romanya Standart Saati"
 
-#: tzres.rc:173
+#: tzres.rc:177
 msgid "Romance Daylight Time"
 msgstr "Romanya Yaz Saati"
 
-#: tzres.rc:98
+#: tzres.rc:100
 msgid "Ekaterinburg Standard Time"
 msgstr "Ekaterinburg Standart Saati"
 
-#: tzres.rc:99
+#: tzres.rc:101
 msgid "Ekaterinburg Daylight Time"
 msgstr "Ekaterinburg Yaz Saati"
 
-#: tzres.rc:192
+#: tzres.rc:196
 msgid "Syria Standard Time"
 msgstr "Suriye Standart Saati"
 
-#: tzres.rc:193
+#: tzres.rc:197
 msgid "Syria Daylight Time"
 msgstr "Suriye Yaz Saati"
 
-#: tzres.rc:44
+#: tzres.rc:46
 msgid "AUS Central Standard Time"
 msgstr "Orta Avustralya Standart Saati"
 
-#: tzres.rc:45
+#: tzres.rc:47
 msgid "AUS Central Daylight Time"
 msgstr "Orta Avustralya Yaz Saati"
 
-#: tzres.rc:110
+#: tzres.rc:112
 msgid "Greenwich Standard Time"
 msgstr "Greenwich Standart Saati"
 
-#: tzres.rc:111
+#: tzres.rc:113
 msgid "Greenwich Daylight Time"
 msgstr "Greenwich Yaz Saati"
 
-#: tzres.rc:204
+#: tzres.rc:208
 msgid "Ulaanbaatar Standard Time"
 msgstr "Ulan Bator Standart Saati"
 
-#: tzres.rc:205
+#: tzres.rc:209
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Ulan Bator Yaz Saati"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "Israel Standard Time"
 msgstr "İsrail Standart Saati"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "Israel Daylight Time"
 msgstr "İsrail Yaz Saati"
 
-#: tzres.rc:54
+#: tzres.rc:56
 msgid "Bangladesh Standard Time"
 msgstr "Bangladeş Standart Saati"
 
-#: tzres.rc:55
+#: tzres.rc:57
 msgid "Bangladesh Daylight Time"
 msgstr "Bangladeş Yaz Saati"
 
-#: tzres.rc:178
+#: tzres.rc:182
 msgid "SA Pacific Standard Time"
 msgstr "Güney Amerika Pasifik Standart Saati"
 
-#: tzres.rc:179
+#: tzres.rc:183
 msgid "SA Pacific Daylight Time"
 msgstr "Güney Amerika Pasifik Yaz Saati"
 
-#: tzres.rc:222
+#: tzres.rc:226
 msgid "West Asia Standard Time"
 msgstr "Batı Asya Standart Saati"
 
-#: tzres.rc:223
+#: tzres.rc:227
 msgid "West Asia Daylight Time"
 msgstr "Batı Asya Yaz Saati"
 
@@ -10175,211 +10261,223 @@ msgstr "Alaska Standart Saati"
 msgid "Alaskan Daylight Time"
 msgstr "Alaska Yaz Saati"
 
-#: tzres.rc:170
+#: tzres.rc:174
 msgid "Paraguay Standard Time"
 msgstr "Paraguay Standart Saati"
 
-#: tzres.rc:171
+#: tzres.rc:175
 msgid "Paraguay Daylight Time"
 msgstr "Paraguay Yaz Saati"
 
-#: tzres.rc:84
+#: tzres.rc:86
 msgid "Dateline Standard Time"
 msgstr "Tarih Değiştirme Çizgisi Standart Saati"
 
-#: tzres.rc:85
+#: tzres.rc:87
 msgid "Dateline Daylight Time"
 msgstr "Tarih Değiştirme Çizgisi Yaz Saati"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Libya Standard Time"
 msgstr "Libya Standart Saati"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Libya Daylight Time"
 msgstr "Libya Yaz Saati"
 
-#: tzres.rc:52
+#: tzres.rc:54
 msgid "Bahia Standard Time"
 msgstr "Bahia Standart Saati"
 
-#: tzres.rc:53
+#: tzres.rc:55
 msgid "Bahia Daylight Time"
 msgstr "Bahia Yaz Saati"
 
-#: tzres.rc:212
+#: tzres.rc:216
 msgid "Venezuela Standard Time"
 msgstr "Venezuela Standart Saati"
 
-#: tzres.rc:213
+#: tzres.rc:217
 msgid "Venezuela Daylight Time"
 msgstr "Venezuela Yaz Saati"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "Hawaiian Standard Time"
 msgstr "Hawaii Standart Saati"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "Hawaiian Daylight Time"
 msgstr "Hawaii Yaz Saati"
 
-#: tzres.rc:184
+#: tzres.rc:188
 msgid "SE Asia Standard Time"
 msgstr "Güneydoğu Asya Standart Saati"
 
-#: tzres.rc:185
+#: tzres.rc:189
 msgid "SE Asia Daylight Time"
 msgstr "Güneydoğu Asya Yaz Saati"
 
-#: tzres.rc:154
+#: tzres.rc:158
 msgid "New Zealand Standard Time"
 msgstr "Yeni Zelanda Standart Saati"
 
-#: tzres.rc:155
+#: tzres.rc:159
 msgid "New Zealand Daylight Time"
 msgstr "Yeni Zelanda Yaz Saati"
 
-#: tzres.rc:70
+#: tzres.rc:34
+#, fuzzy
+#| msgid "Argentina Standard Time"
+msgid "Aleutian Standard Time"
+msgstr "Arjantin Standart Saati"
+
+#: tzres.rc:35
+#, fuzzy
+#| msgid "Argentina Daylight Time"
+msgid "Aleutian Daylight Time"
+msgstr "Arjantin Yaz Saati"
+
+#: tzres.rc:72
 msgid "Central Brazilian Standard Time"
 msgstr "Orta Brezilya Standart Saati"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Brazilian Daylight Time"
 msgstr "Orta Brezilya Yaz Saati"
 
-#: tzres.rc:56
+#: tzres.rc:58
 msgid "Belarus Standard Time"
 msgstr "Belarus Standart Saati"
 
-#: tzres.rc:57
+#: tzres.rc:59
 msgid "Belarus Daylight Time"
 msgstr "Belarus Yaz Saati"
 
-#: tzres.rc:180
+#: tzres.rc:184
 msgid "SA Western Standard Time"
 msgstr "Güney Amerika Batı Standart Saati"
 
-#: tzres.rc:181
+#: tzres.rc:185
 msgid "SA Western Daylight Time"
 msgstr "Güney Amerika Batı Yaz Saati"
 
-#: tzres.rc:108
+#: tzres.rc:110
 msgid "Greenland Standard Time"
 msgstr "Grönland Standart Saati"
 
-#: tzres.rc:109
+#: tzres.rc:111
 msgid "Greenland Daylight Time"
 msgstr "Grönland Yaz Saati"
 
-#: tzres.rc:92
+#: tzres.rc:94
 msgid "Easter Island Standard Time"
 msgstr "Paskalya Adası Standart Saati"
 
-#: tzres.rc:93
+#: tzres.rc:95
 msgid "Easter Island Daylight Time"
 msgstr "Paskalya Adası Yaz Saati"
 
-#: tzres.rc:96
+#: tzres.rc:98
 msgid "Egypt Standard Time"
 msgstr "Mısır Standart Saati"
 
-#: tzres.rc:97
+#: tzres.rc:99
 msgid "Egypt Daylight Time"
 msgstr "Mısır Yaz Saati"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Mauritius Standard Time"
 msgstr "Mauritius Standart Saati"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Mauritius Daylight Time"
 msgstr "Mauritius Yaz Saati"
 
-#: tzres.rc:214
+#: tzres.rc:218
 msgid "Vladivostok Standard Time"
 msgstr "Vladivostok Standart Saati"
 
-#: tzres.rc:215
+#: tzres.rc:219
 msgid "Vladivostok Daylight Time"
 msgstr "Vladivostok Yaz Saati"
 
-#: tzres.rc:186
+#: tzres.rc:190
 msgid "Singapore Standard Time"
 msgstr "Singapur Standart Saati"
 
-#: tzres.rc:187
+#: tzres.rc:191
 msgid "Singapore Daylight Time"
 msgstr "Singapur Yaz Saati"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Korea Standard Time"
 msgstr "Kore Standart Saati"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Korea Daylight Time"
 msgstr "Kore Yaz Saati"
 
-#: tzres.rc:86
+#: tzres.rc:88
 msgid "E. Africa Standard Time"
 msgstr "Doğu Afrika Standart Saati"
 
-#: tzres.rc:87
+#: tzres.rc:89
 msgid "E. Africa Daylight Time"
 msgstr "Doğu Afrika Yaz Saati"
 
-#: tzres.rc:102
+#: tzres.rc:104
 msgid "FLE Standard Time"
 msgstr "Finladiya-Litvanya-Estonya Standart Saati"
 
-#: tzres.rc:103
+#: tzres.rc:105
 msgid "FLE Daylight Time"
 msgstr "Finlandiya-Litvanya-Estonya Yaz Saati"
 
-#: tzres.rc:90
+#: tzres.rc:92
 msgid "E. South America Standard Time"
 msgstr "Güney Amerika Doğu Standart Saati"
 
-#: tzres.rc:91
+#: tzres.rc:93
 msgid "E. South America Daylight Time"
 msgstr "Güney Amerika Doğu Yaz Saati"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central Pacific Standard Time"
 msgstr "Orta Pasifik Standart Saati"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central Pacific Daylight Time"
 msgstr "Orta Pasifik Yaz Saati"
 
-#: tzres.rc:218
+#: tzres.rc:222
 msgid "W. Central Africa Standard Time"
 msgstr "Orta Afrika Batı Standart Saati"
 
-#: tzres.rc:219
+#: tzres.rc:223
 msgid "W. Central Africa Daylight Time"
 msgstr "Orta Afrika Batı Yaz Saati"
 
-#: tzres.rc:162
+#: tzres.rc:166
 msgid "Pacific SA Standard Time"
 msgstr "Güney Amerika Pasifik Standart Saati"
 
-#: tzres.rc:163
+#: tzres.rc:167
 msgid "Pacific SA Daylight Time"
 msgstr "Güney Amerika Batı Yaz Saati"
 
-#: tzres.rc:88
+#: tzres.rc:90
 msgid "E. Australia Standard Time"
 msgstr "Doğu Avustralya Standart Saati"
 
-#: tzres.rc:89
+#: tzres.rc:91
 msgid "E. Australia Daylight Time"
 msgstr "Doğu Avustralya Yaz Saati"
 
-#: tzres.rc:216
+#: tzres.rc:220
 msgid "W. Australia Standard Time"
 msgstr "Batı Avustralya Standart Saati"
 
-#: tzres.rc:217
+#: tzres.rc:221
 msgid "W. Australia Daylight Time"
 msgstr "Batı Avustralya Yaz Saati"
 
@@ -11146,10 +11244,6 @@ msgstr ""
 "kullanamazsınız."
 
 #: winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
@@ -11170,10 +11264,6 @@ msgid "An error occurred with the specified port."
 msgstr "Belirtilen bağlantı noktasında hata oluştu."
 
 #: winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
@@ -15336,7 +15426,7 @@ msgstr "Genel Meta Dosya Görüntüleyicisi"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Meta dosyalar (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15507,10 +15597,6 @@ msgid "Drive configuration"
 msgstr "Sürücü yapılandırması"
 
 #: winecfg.rc:233
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -15801,12 +15887,6 @@ msgid "System drive"
 msgstr "Sistem sürücüsü"
 
 #: winecfg.rc:76
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -16484,10 +16564,6 @@ msgstr "En hızlı zamanlar"
 msgid "Beginner"
 msgstr "Acemi"
 
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "Gelişmiş"
-
 #: winemine.rc:66
 msgid "Expert"
 msgstr "Uzman"
@@ -16888,8 +16964,6 @@ msgid "Text documents (*.txt)"
 msgstr "Metin belgeleri (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
 msgstr "Unicode metin belgesi (*.txt)"
 
@@ -17093,42 +17167,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -17172,9 +17210,9 @@ msgstr ""
 "\n"
 "Nerede:\n"
 "\n"
-"[/I]  Hedef dizin bulunmuyorsa oluşturup iki veya daha fazla dosyaları\n"
-"\tkopyala.\n"
-"[/S]  Dizin ve alt dizinlerini kopyalar.\n"
+"[/I]  Hedef dizin bulunmuyorsa oluşturup iki veya daha fazla dosyayı\n"
+"\tkopyalar.\n"
+"[/S]  Dizin ve alt dizinleri kopyalar.\n"
 "[/E]  Boş olanlar hariç dizin ve alt dizinleri kopyalar.\n"
 "[/Q]  Kopyalama sırasında isimleri göstermez, işi sessiz yapar.\n"
 "[/F]  Kopyalama sırasında tüm kaynak ve hedef isimlerini gösterir.\n"

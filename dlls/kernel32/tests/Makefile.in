@@ -25,6 +25,7 @@ SOURCES = \
 	module.c \
 	path.c \
 	pipe.c \
+	power.c \
 	process.c \
 	profile.c \
 	resource.c \

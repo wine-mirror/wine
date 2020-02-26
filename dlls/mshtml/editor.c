@@ -822,7 +822,7 @@ static HRESULT exec_composesettings(HTMLDocumentNode *doc, DWORD cmdexecopt, VAR
     if(!ptr)
         return S_OK;
 
-    if(iswdigit(*++ptr)) {
+    if(is_digit(*++ptr)) {
         VARIANT v;
 
         V_VT(&v) = VT_I4;

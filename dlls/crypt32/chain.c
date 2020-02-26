@@ -3455,10 +3455,13 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
 {
     HTTPSPolicyCallbackData *sslPara = NULL;
-    DWORD checks = 0;
+    DWORD checks = 0, baseChecks = 0;
 
     if (pPolicyPara)
+    {
+        baseChecks = pPolicyPara->dwFlags;
         sslPara = pPolicyPara->pvExtraPolicyPara;
+    }
     if (TRACE_ON(chain))
         dump_ssl_extra_chain_policy_para(sslPara);
     if (sslPara && sslPara->u.cbSize >= sizeof(HTTPSPolicyCallbackData))
@@ -3474,7 +3477,8 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
      CERT_TRUST_IS_UNTRUSTED_ROOT &&
-     !(checks & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
+     !(checks & SECURITY_FLAG_IGNORE_UNKNOWN_CA) &&
+     !(baseChecks & CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG))
     {
         pPolicyStatus->dwError = CERT_E_UNTRUSTEDROOT;
         find_element_with_error(pChainContext,

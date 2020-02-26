@@ -26,15 +26,17 @@ the gcc manual for more information on those options.
 .B gcc options:
 All gcc options are supported, and are passed along to the backend
 compiler.
-.IP "\fB-B\fIprefix\fR"
-This option specifies where to find the executables, libraries,
-include files, and data files of the compiler itself. This is a 
-standard gcc option that has been extended to recognize a 
-\fIprefix\fR ending with '/tools/winebuild', in which case winegcc 
-enters a special mode for building Wine itself. Developers should 
-avoid prefixes ending with the magic suffix, or if that is not 
-possible, simply express it differently, such as '/tools/winebuild/',
-to avoid the special behaviour.
+.IP "\fB-b,--target \fItarget\fR"
+Specify the target architecture triplet for cross-compiling. winegcc
+will then invoke \fItarget\fR-gcc instead of gcc.
+.IP "\fB--wine-objdir \fIdir\fR"
+Specify the Wine object directory. This is used when building Wine
+itself, to use the includes and libraries from inside the build tree.
+.IP "\fB--winebuild \fIname\fR"
+Specifies the path and name of the \fBwinebuild\fR binary that will be
+launched automatically by \fBwinegcc\fR.  If not set, \fBwinegcc\fR
+will look for a file named \fIwinebuild\fR in the path. This takes
+precedence over the \fBWINEBUILD\fR environment variable.
 .IP \fB-fno-short-wchar\fR
 Override the underlying type for wchar_t to be the default for the 
 target, instead of using short unsigned int, which is the default 
@@ -71,9 +73,8 @@ commas, it is split into multiple options at the commas.
 .TP
 .B WINEBUILD
 Specifies the path and name of the \fBwinebuild\fR binary that will be
-launched automatically by \fBwinegcc\fR.
-If not set, \fBwinegcc\fR will look for a file named \fIwinebuild\fR
-in the path.
+launched automatically by \fBwinegcc\fR.  If not set, \fBwinegcc\fR
+will look for a file named \fIwinebuild\fR in the path.
 .SH DEFINES
 winegcc defines __WINE__, for code that needs to know when it is
 being compiled under Wine. It also defines WIN32, _WIN32, __WIN32, 

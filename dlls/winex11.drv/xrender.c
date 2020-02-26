@@ -824,7 +824,7 @@ static UINT get_xft_aa_flags( const LOGFONTW *lf )
 /**********************************************************************
  *	     xrenderdrv_SelectFont
  */
-static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+static HFONT CDECL xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 {
     LFANDSIZE lfsz;
     struct xrender_physdev *physdev = get_xrender_dev( dev );
@@ -938,8 +938,8 @@ static void set_color_info( XRenderPictFormat *format, BITMAPINFO *info )
 /**********************************************************************
  *	     xrenderdrv_CreateDC
  */
-static BOOL xrenderdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                                 LPCWSTR output, const DEVMODEW* initData )
+static BOOL CDECL xrenderdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
+                                       LPCWSTR output, const DEVMODEW* initData )
 {
     return create_xrender_dc( pdev, default_format );
 }
@@ -947,7 +947,7 @@ static BOOL xrenderdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 /**********************************************************************
  *	     xrenderdrv_CreateCompatibleDC
  */
-static BOOL xrenderdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+static BOOL CDECL xrenderdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
     if (orig)  /* chain to x11drv first */
     {
@@ -962,7 +962,7 @@ static BOOL xrenderdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 /**********************************************************************
  *	     xrenderdrv_DeleteDC
  */
-static BOOL xrenderdrv_DeleteDC( PHYSDEV dev )
+static BOOL CDECL xrenderdrv_DeleteDC( PHYSDEV dev )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
 
@@ -979,8 +979,8 @@ static BOOL xrenderdrv_DeleteDC( PHYSDEV dev )
 /**********************************************************************
  *           xrenderdrv_ExtEscape
  */
-static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
-                                 INT out_count, LPVOID out_data )
+static INT CDECL xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
+                                       INT out_count, LPVOID out_data )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
 
@@ -1005,7 +1005,7 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
 /***********************************************************************
  *           xrenderdrv_SetDeviceClipping
  */
-static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
+static void CDECL xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
 
@@ -1302,8 +1302,8 @@ static Picture get_mask_pict( int alpha )
 /***********************************************************************
  *           xrenderdrv_ExtTextOut
  */
-static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
-                                   const RECT *lprect, LPCWSTR wstr, UINT count, const INT *lpDx )
+static BOOL CDECL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+                                         const RECT *lprect, LPCWSTR wstr, UINT count, const INT *lpDx )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     gsCacheEntry *entry;
@@ -1472,12 +1472,10 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
     if (width_src < 0)
     {
         x_src += width_src + 1;
-        width_src = -width_src;
     }
     if (height_src < 0)
     {
         y_src += height_src + 1;
-        height_src = -height_src;
     }
     if (width_dst < 0)
     {
@@ -1722,8 +1720,8 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, Picture mask
 /***********************************************************************
  *           xrenderdrv_StretchBlt
  */
-static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                                   PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
+static BOOL CDECL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                         PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     struct xrender_physdev *physdev_dst = get_xrender_dev( dst_dev );
     struct xrender_physdev *physdev_src = get_xrender_dev( src_dev );
@@ -1779,9 +1777,9 @@ x11drv_fallback:
 /***********************************************************************
  *           xrenderdrv_PutImage
  */
-static DWORD xrenderdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
-                                  const struct gdi_image_bits *bits, struct bitblt_coords *src,
-                                  struct bitblt_coords *dst, DWORD rop )
+static DWORD CDECL xrenderdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
+                                        const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                                        struct bitblt_coords *dst, DWORD rop )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     DWORD ret;
@@ -1864,9 +1862,9 @@ x11drv_fallback:
 /***********************************************************************
  *           xrenderdrv_BlendImage
  */
-static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
-                                    struct bitblt_coords *src, struct bitblt_coords *dst,
-                                    BLENDFUNCTION func )
+static DWORD CDECL xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                                          struct bitblt_coords *src, struct bitblt_coords *dst,
+                                          BLENDFUNCTION func )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     DWORD ret;
@@ -1934,8 +1932,8 @@ update_format:
 /***********************************************************************
  *           xrenderdrv_AlphaBlend
  */
-static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                                   PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blendfn )
+static BOOL CDECL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                         PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blendfn )
 {
     struct xrender_physdev *physdev_dst = get_xrender_dev( dst_dev );
     struct xrender_physdev *physdev_src = get_xrender_dev( src_dev );
@@ -2018,8 +2016,8 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 /***********************************************************************
  *           xrenderdrv_GradientFill
  */
-static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
-                                     void * grad_array, ULONG ngrad, ULONG mode )
+static BOOL CDECL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                                           void * grad_array, ULONG ngrad, ULONG mode )
 {
 #ifdef HAVE_XRENDERCREATELINEARGRADIENT
     static const XFixed stops[2] = { 0, 1 << 16 };
@@ -2122,7 +2120,7 @@ fallback:
 /***********************************************************************
  *           xrenderdrv_SelectBrush
  */
-static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
+static HBRUSH CDECL xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     Pixmap pixmap;
@@ -2284,6 +2282,8 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
+    NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
+    NULL,                               /* pD3DKMTSetVidPnSourceOwner */
     NULL,                               /* wine_get_wgl_driver */
     NULL,                               /* wine_get_vulkan_driver */
     GDI_PRIORITY_GRAPHICS_DRV + 10      /* priority */

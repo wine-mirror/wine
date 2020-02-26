@@ -46,6 +46,7 @@
 #include "winsock2.h"
 #include "winternl.h"
 #include "ws2ipdef.h"
+#include "windns.h"
 #include "iphlpapi.h"
 #include "ifenum.h"
 #include "ipstats.h"
@@ -54,6 +55,7 @@
 #include "ifdef.h"
 #include "netioapi.h"
 #include "tcpestats.h"
+#include "ip2string.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -2391,15 +2393,25 @@ DWORD WINAPI GetExtendedTcpTable(PVOID pTcpTable, PDWORD pdwSize, BOOL bOrder,
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    if (ulAf != WS_AF_INET)
-    {
-        FIXME("ulAf = %u not supported\n", ulAf);
-        return ERROR_NOT_SUPPORTED;
-    }
     if (TableClass >= TCP_TABLE_OWNER_MODULE_LISTENER)
         FIXME("module classes not fully supported\n");
 
-    if ((ret = build_tcp_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size)))
+    switch (ulAf)
+    {
+        case WS_AF_INET:
+            ret = build_tcp_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size);
+            break;
+
+        case WS_AF_INET6:
+            ret = build_tcp6_table(TableClass, &table, bOrder, GetProcessHeap(), 0, &size);
+            break;
+
+        default:
+            FIXME("ulAf = %u not supported\n", ulAf);
+            ret = ERROR_NOT_SUPPORTED;
+    }
+
+    if (ret)
         return ret;
 
     if (!pTcpTable || *pdwSize < size)
@@ -2756,7 +2768,7 @@ DWORD WINAPI NotifyIpInterfaceChange(ADDRESS_FAMILY family, PIPINTERFACE_CHANGE_
     FIXME("(family %d, callback %p, context %p, init_notify %d, handle %p): stub\n",
           family, callback, context, init_notify, handle);
     if (handle) *handle = NULL;
-    return ERROR_NOT_SUPPORTED;
+    return NO_ERROR;
 }
 
 
@@ -3052,8 +3064,8 @@ ULONG WINAPI GetTcpTable2(PMIB_TCPTABLE2 table, PULONG size, BOOL order)
  */
 ULONG WINAPI GetTcp6Table(PMIB_TCP6TABLE table, PULONG size, BOOL order)
 {
-    FIXME("pTcp6Table %p, size %p, order %d: stub\n", table, size, order);
-    return ERROR_NOT_SUPPORTED;
+    TRACE("(table %p, size %p, order %d)\n", table, size, order);
+    return GetExtendedTcpTable(table, size, order, WS_AF_INET6, TCP_TABLE_BASIC_ALL, 0);
 }
 
 /******************************************************************
@@ -3332,4 +3344,63 @@ DWORD WINAPI GetBestRoute2(NET_LUID *luid, NET_IFINDEX index,
         return ERROR_INVALID_PARAMETER;
 
     return ERROR_NOT_SUPPORTED;
+}
+
+/******************************************************************
+ *    ParseNetworkString (IPHLPAPI.@)
+ */
+DWORD WINAPI ParseNetworkString(const WCHAR *str, DWORD type,
+                                NET_ADDRESS_INFO *info, USHORT *port, BYTE *prefix_len)
+{
+    IN_ADDR temp_addr4;
+    USHORT temp_port = 0;
+    NTSTATUS status;
+
+    TRACE("(%s, %d, %p, %p, %p)\n", debugstr_w(str), type, info, port, prefix_len);
+
+    if (!str)
+        return ERROR_INVALID_PARAMETER;
+
+    if (type & NET_STRING_IPV4_ADDRESS)
+    {
+        status = RtlIpv4StringToAddressExW(str, TRUE, &temp_addr4, &temp_port);
+        if (SUCCEEDED(status) && !temp_port)
+        {
+            if (info)
+            {
+                info->Format = NET_ADDRESS_IPV4;
+                info->u.Ipv4Address.sin_addr = temp_addr4;
+                info->u.Ipv4Address.sin_port = 0;
+            }
+            if (port) *port = 0;
+            if (prefix_len) *prefix_len = 255;
+            return ERROR_SUCCESS;
+        }
+    }
+    if (type & NET_STRING_IPV4_SERVICE)
+    {
+        status = RtlIpv4StringToAddressExW(str, TRUE, &temp_addr4, &temp_port);
+        if (SUCCEEDED(status) && temp_port)
+        {
+            if (info)
+            {
+                info->Format = NET_ADDRESS_IPV4;
+                info->u.Ipv4Address.sin_addr = temp_addr4;
+                info->u.Ipv4Address.sin_port = temp_port;
+            }
+            if (port) *port = ntohs(temp_port);
+            if (prefix_len) *prefix_len = 255;
+            return ERROR_SUCCESS;
+        }
+    }
+
+    if (info) info->Format = NET_ADDRESS_FORMAT_UNSPECIFIED;
+
+    if (type & ~(NET_STRING_IPV4_ADDRESS|NET_STRING_IPV4_SERVICE))
+    {
+        FIXME("Unimplemented type 0x%x\n", type);
+        return ERROR_NOT_SUPPORTED;
+    }
+
+    return ERROR_INVALID_PARAMETER;
 }

@@ -1002,6 +1002,14 @@ typedef struct tagNMHDFILTERBTNCLICK
   (BOOL)SNDMSG((hwnd),HDM_SETUNICODEFORMAT,(WPARAM)(fUnicode),0)
 #define Header_GetUnicodeFormat(hwnd) \
   (BOOL)SNDMSG((hwnd),HDM_GETUNICODEFORMAT,0,0)
+#define Header_GetItemDropDownRect(hwnd,iItem,lprc) \
+  (BOOL)SNDMSG((hwnd), HDM_GETITEMDROPDOWNRECT, (WPARAM)iItem, (LPARAM)lprc)
+#define Header_GetOverflowRect(hwnd, rc) \
+  (BOOL)SNDMSG((hwnd), HDM_GETOVERFLOWRECT, 0, (LPARAM)(rc))
+#define Header_GetFocusedItem(hwnd) \
+  (INT)SNDMSG((hwnd), HDM_GETFOCUSEDITEM, (WPARAM)(0), (LPARAM)(0))
+#define Header_SetFocusedItem(hwnd, item) \
+  (BOOL)SNDMSG((hwnd), HDM_SETFOCUSEDITEM, (WPARAM)(0), (LPARAM)(item))
 
 /* Win32 5.1 Button Theme */
 #define WC_BUTTONA       "Button"
@@ -1104,6 +1112,14 @@ typedef struct tagNMBCHOTITEM
   (BOOL)SNDMSG(button, BCM_SETTEXTMARGIN, 0, (LPARAM)(margin))
 #define Button_GetIdealSize(button, size)  \
   (BOOL)SNDMSG(button, BCM_GETIDEALSIZE, 0, (LPARAM)(size))
+#define Button_SetSplitInfo(hwnd, info) \
+  (BOOL)SNDMSG((hwnd), BCM_SETSPLITINFO, 0, (LPARAM)(info))
+#define Button_GetSplitInfo(hwnd, info) \
+  (BOOL)SNDMSG((hwnd), BCM_GETSPLITINFO, 0, (LPARAM)(info))
+#define Button_SetElevationRequiredState(hwnd, required) \
+  (LRESULT)SNDMSG((hwnd), BCM_SETSHIELD, 0, (LPARAM)required)
+#define Button_SetDropDownState(hwnd, dropdown) \
+  (BOOL)SNDMSG((hwnd), BCM_SETDROPDOWNSTATE, (WPARAM)(dropdown), 0)
 
 /* Toolbar */
 
@@ -2297,6 +2313,34 @@ typedef struct
     INT iHeight;
 } NMPGCALCSIZE, *LPNMPGCALCSIZE;
 
+#define Pager_SetChild(hwnd, child) \
+    SNDMSG((hwnd), PGM_SETCHILD, 0, (LPARAM)(child))
+#define Pager_RecalcSize(hwnd) \
+    SNDMSG((hwnd), PGM_RECALCSIZE, 0, 0)
+#define Pager_ForwardMouse(hwnd, forward) \
+    SNDMSG((hwnd), PGM_FORWARDMOUSE, (WPARAM)(forward), 0)
+#define Pager_SetBkColor(hwnd, clr) \
+    (COLORREF)SNDMSG((hwnd), PGM_SETBKCOLOR, 0, (LPARAM)(clr))
+#define Pager_GetBkColor(hwnd) \
+    (COLORREF)SNDMSG((hwnd), PGM_GETBKCOLOR, 0, 0)
+#define Pager_SetBorder(hwnd, border) \
+    (INT)SNDMSG((hwnd), PGM_SETBORDER, 0, (LPARAM)(border))
+#define Pager_GetBorder(hwnd) \
+    (INT)SNDMSG((hwnd), PGM_GETBORDER, 0, 0)
+#define Pager_SetPos(hwnd, pos) \
+    (INT)SNDMSG((hwnd), PGM_SETPOS, 0, (LPARAM)(pos))
+#define Pager_GetPos(hwnd) \
+    (INT)SNDMSG((hwnd), PGM_GETPOS, 0, 0)
+#define Pager_SetButtonSize(hwnd, size) \
+    (INT)SNDMSG((hwnd), PGM_SETBUTTONSIZE, 0, (LPARAM)(size))
+#define Pager_GetButtonSize(hwnd) \
+    (INT)SNDMSG((hwnd), PGM_GETBUTTONSIZE, 0, 0)
+#define Pager_GetButtonState(hwnd, button) \
+    (DWORD)SNDMSG((hwnd), PGM_GETBUTTONSTATE, 0, (LPARAM)(button))
+#define Pager_GetDropTarget(hwnd, dt) \
+    SNDMSG((hwnd), PGM_GETDROPTARGET, 0, (LPARAM)(dt))
+#define Pager_SetScrollInfo(hwnd, timeout, lines, pixels) \
+    SNDMSG((hwnd), PGM_SETSCROLLINFO, timeout, MAKELONG(lines, pixels))
 
 /* Treeview control */
 
@@ -3289,6 +3333,9 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVM_GETTOOLTIPS         (LVM_FIRST+78)
 #define LVM_GETUNICODEFORMAT    (CCM_GETUNICODEFORMAT)
 #define LVM_SETUNICODEFORMAT    (CCM_SETUNICODEFORMAT)
+#define LVM_GETGROUPSTATE       (LVM_FIRST + 92)
+#define LVM_GETFOCUSEDGROUP     (LVM_FIRST + 93)
+#define LVM_GETGROUPRECT        (LVM_FIRST + 98)
 #define LVM_SETSELECTEDCOLUMN   (LVM_FIRST + 140)
 #define LVM_SETTILEWIDTH        (LVM_FIRST + 141)
 #define LVM_SETVIEW             (LVM_FIRST + 142)
@@ -3298,6 +3345,8 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVM_GETGROUPINFO        (LVM_FIRST + 149)
 #define LVM_REMOVEGROUP         (LVM_FIRST + 150)
 #define LVM_MOVEGROUP           (LVM_FIRST + 151)
+#define LVM_GETGROUPCOUNT       (LVM_FIRST + 152)
+#define LVM_GETGROUPINFOBYINDEX (LVM_FIRST + 153)
 #define LVM_MOVEITEMTOGROUP     (LVM_FIRST + 154)
 #define LVM_SETGROUPMETRICS     (LVM_FIRST + 155)
 #define LVM_GETGROUPMETRICS     (LVM_FIRST + 156)
@@ -3756,7 +3805,7 @@ typedef struct LVINSERTMARK
 	DWORD dwFlags;
 	int iItem;
 	DWORD dwReserved;
-} LVINSERTMARK, *PLVINSERTMARK;
+} LVINSERTMARK, *LPLVINSERTMARK;
 
 typedef struct tagTCHITTESTINFO
 {
@@ -3836,6 +3885,17 @@ typedef struct NMLVSCROLL
     int dx;
     int dy;
 } NMLVSCROLL, *LPNMLVSCROLL;
+
+typedef struct tagLVITEMINDEX
+{
+    int iItem;
+    int iGroup;
+} LVITEMINDEX, *PLVITEMINDEX;
+
+#define LVGGR_GROUP      0
+#define LVGGR_HEADER     1
+#define LVGGR_LABEL      2
+#define LVGGR_SUBSETLINK 3
 
 #define ListView_SetItemCount(hwnd,count) \
     (BOOL)SNDMSG((hwnd),LVM_SETITEMCOUNT,(WPARAM)(INT)(count),0)
@@ -4113,6 +4173,31 @@ typedef struct NMLVSCROLL
     (BOOL)SNDMSG((hwnd), LVM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
 #define ListView_GetUnicodeFormat(hwnd) \
     (BOOL)SNDMSG((hwnd), LVM_GETUNICODEFORMAT, 0, 0)
+#define ListView_GetGroupInfoByIndex(hwnd, index, grp) \
+    SNDMSG((hwnd), LVM_GETGROUPINFOBYINDEX, (WPARAM)(index), (LPARAM)(grp))
+#define ListView_SetGroupState(hwnd, group, masks, states) \
+{   LVGROUP level;  level.cbSize = sizeof(level);  level.mask = LVGF_STATE; \
+    level.stateMask = masks; level.state = states; \
+    SNDMSG((hwnd), LVM_SETGROUPINFO, (WPARAM)(group), (LPARAM)(LVGROUP *)&level); }
+#define ListView_IsItemVisible(hwnd, index) \
+    (UINT)SNDMSG((hwnd), LVM_ISITEMVISIBLE, (WPARAM)(index), (LPARAM)0)
+#define ListView_GetGroupState(hwnd, group, mask) \
+    (UINT)SNDMSG((hwnd), LVM_GETGROUPSTATE, (WPARAM)(group), (LPARAM)(mask))
+#define ListView_GetFocusedGroup(hwnd) \
+    SNDMSG((hwnd), LVM_GETFOCUSEDGROUP, 0, 0)
+#define ListView_GetGroupRect(hwnd, group, type, rc) \
+    SNDMSG((hwnd), LVM_GETGROUPRECT, (WPARAM)(group), \
+      ((rc) ? (((RECT*)(rc))->top = type), (LPARAM)(RECT*)(rc) : (LPARAM)(RECT*)NULL))
+#define ListView_GetGroupCount(hwnd) \
+    SNDMSG((hwnd), LVM_GETGROUPCOUNT, (WPARAM)0, (LPARAM)0)
+#define ListView_GetItemIndexRect(hwnd, index, subitem, code, prc) \
+    (BOOL)SNDMSG((hwnd), LVM_GETITEMINDEXRECT, (WPARAM)(LVITEMINDEX*)(index), \
+      (prc ? ((((LPRECT)prc)->top = subitem), (((LPRECT)prc)->left = code), (LPARAM)prc) : (LPARAM)NULL)
+#define ListView_SetItemIndexState(hwndLV, index, data, mask) \
+{   LV_ITEM macro; macro.stateMask = (mask); macro.state = data; \
+    SNDMSG((hwndLV), LVM_SETITEMINDEXSTATE, (WPARAM)(LVITEMINDEX*)(index), (LPARAM)(LV_ITEM *)&macro); }
+#define ListView_GetNextItemIndex(hwnd, index, flags) \
+    (BOOL)SNDMSG((hwnd), LVM_GETNEXTITEMINDEX, (WPARAM)(LVITEMINDEX*)(index), MAKELPARAM((flags),0))
 
 /* Tab Control */
 
@@ -4540,6 +4625,7 @@ static const WCHAR ANIMATE_CLASSW[] = { 'S','y','s',
 #define ACM_OPEN                WINELIB_NAME_AW(ACM_OPEN)
 #define ACM_PLAY                (WM_USER+101)
 #define ACM_STOP                (WM_USER+102)
+#define ACM_ISPLAYING           (WM_USER+104)
 
 #define ACN_START               1
 #define ACN_STOP                2
@@ -4567,7 +4653,8 @@ static const WCHAR ANIMATE_CLASSW[] = { 'S','y','s',
     (BOOL)SNDMSG(hwnd,ACM_OPENA,0,0)
 #define Animate_Seek(hwnd,frame) \
     (BOOL)SNDMSG(hwnd,ACM_PLAY,1,(LPARAM)MAKELONG(frame,frame))
-
+#define Animate_IsPlaying(hwnd) \
+    (BOOL)SNDMSG(hwnd, ACM_ISPLAYING, 0, 0)
 
 /**************************************************************************
  * IP Address control
@@ -4720,6 +4807,11 @@ static const WCHAR MONTHCAL_CLASSW[] = { 'S','y','s',
 #define GMR_VISIBLE     0
 #define GMR_DAYSTATE    1
 
+#define MCMV_MONTH      0
+#define MCMV_YEAR       1
+#define MCMV_DECADE     2
+#define MCMV_CENTURY    3
+#define MCMV_MAX        MCMV_CENTURY
 
 /*  Month calendar's structures */
 
@@ -4756,6 +4848,21 @@ typedef struct tagNMDAYSTATE
     LPMONTHDAYSTATE prgDayState;
 } NMDAYSTATE, *LPNMDAYSTATE;
 
+typedef struct tagMCGRIDINFO
+{
+    UINT       cbSize;
+    DWORD      dwPart;
+    DWORD      dwFlags;
+    INT        iCalendar;
+    INT        iRow;
+    INT        iCol;
+    BOOL       bSelected;
+    SYSTEMTIME stStart;
+    SYSTEMTIME stEnd;
+    RECT       rc;
+    WCHAR      *pszName;
+    SIZE_T     cchName;
+} MCGRIDINFO, *PMCGRIDINFO;
 
 /* macros */
 
@@ -4805,7 +4912,24 @@ typedef struct tagNMDAYSTATE
         (BOOL)SNDMSG((hwnd), MCM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
 #define MonthCal_GetUnicodeFormat(hwnd)  \
         (BOOL)SNDMSG((hwnd), MCM_GETUNICODEFORMAT, 0, 0)
-
+#define MonthCal_SetCALID(hmc, calid) \
+        SNDMSG(hmc, MCM_SETCALID, (WPARAM)(calid), 0)
+#define MonthCal_GetCALID(hmc) \
+        (CALID)SNDMSG(hmc, MCM_GETCALID, 0, 0)
+#define MonthCal_GetCalendarCount(hmc) \
+        (DWORD)SNDMSG(hmc, MCM_GETCALENDARCOUNT, 0, 0)
+#define MonthCal_GetCurrentView(hmc) \
+        (DWORD)SNDMSG(hmc, MCM_GETCURRENTVIEW, 0, 0)
+#define MonthCal_SetCurrentView(hmc, view) \
+        (BOOL)SNDMSG(hmc, MCM_SETCURRENTVIEW, 0, (LPARAM)view)
+#define MonthCal_SizeRectToMin(hmc, prc) \
+        SNDMSG(hmc, MCM_SIZERECTTOMIN, 0, (LPARAM)prc)
+#define MonthCal_GetCalendarBorder(hmc) \
+        (INT)SNDMSG(hmc, MCM_GETCALENDARBORDER, 0, 0)
+#define MonthCal_SetCalendarBorder(hmc, reset, xy) \
+        SNDMSG(hmc, MCM_SETCALENDARBORDER, (WPARAM)reset, (LPARAM)xy)
+#define MonthCal_GetCalendarGridInfo(hmc, info) \
+        (BOOL)SNDMSG(hmc, MCM_GETCALENDARGRIDINFO, 0, (LPARAM)(PMCGRIDINFO)info)
 
 /**************************************************************************
  * Date and time picker control
@@ -4947,6 +5071,17 @@ typedef struct tagNMDATETIMEFORMATQUERYW
 DECL_WINELIB_TYPE_AW(NMDATETIMEFORMATQUERY)
 DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
 
+typedef struct tagDATETIMEPICKERINFO
+{
+    DWORD cbSize;
+    RECT  rcCheck;
+    DWORD stateCheck;
+    RECT  rcButton;
+    DWORD stateButton;
+    HWND  hwndEdit;
+    HWND  hwndUD;
+    HWND  hwndDropDown;
+} DATETIMEPICKERINFO, *LPDATETIMEPICKERINFO;
 
 
 #define GDT_ERROR    -1
@@ -4982,6 +5117,14 @@ DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
   SNDMSG (hdp, DTM_GETMCFONT, 0, 0)
 #define DateTime_GetIdealSize(hdp, sz) \
   (BOOL) SNDMSG (hdp, DTM_GETIDEALSIZE, 0, (LPARAM)sz)
+#define DateTime_SetMonthCalStyle(hdp, style) \
+  SNDMSG(hdp, DTM_SETMCSTYLE, 0, (LPARAM)style)
+#define DateTime_GetMonthCalStyle(hdp) \
+  SNDMSG(hdp, DTM_GETMCSTYLE, 0, 0)
+#define DateTime_GetDateTimePickerInfo(hdp, info) \
+  SNDMSG(hdp, DTM_GETDATETIMEPICKERINFO, 0, (LPARAM)info)
+#define DateTime_CloseMonthCal(hdp) \
+  SNDMSG(hdp, DTM_CLOSEMONTHCAL, 0, 0)
 
 #define DA_LAST         (0x7fffffff)
 #define DPA_APPEND      (0x7fffffff)
@@ -5166,9 +5309,13 @@ static const WCHAR WC_COMBOBOXW[] = { 'C','o','m','b','o','B','o','x',0 };
 #define CB_GETCUEBANNER           (CBM_FIRST + 4)
 
 #define ComboBox_GetMinVisible(hwnd) \
-        ((int)SendMessage((hwnd), CB_GETMINVISIBLE, 0, 0))
+        ((INT)SNDMSG((hwnd), CB_GETMINVISIBLE, 0, 0))
 #define ComboBox_SetMinVisible(hwnd, count) \
-        ((BOOL)SendMessage((hwnd), CB_SETMINVISIBLE, (WPARAM)(count), 0))
+        ((BOOL)SNDMSG((hwnd), CB_SETMINVISIBLE, (WPARAM)(count), 0))
+#define ComboBox_SetCueBannerText(hwnd, text) \
+        ((BOOL)SNDMSG((hwnd), CB_SETCUEBANNER, 0, (LPARAM)(text)))
+#define ComboBox_GetCueBannerText(hwnd, text, cnt) \
+        ((BOOL)SNDMSG((hwnd), CB_GETCUEBANNER, (WPARAM)(text), (LPARAM)(cnt)))
 
 /**************************************************************************
  * Edit control
@@ -5199,6 +5346,24 @@ typedef struct _tagEDITBALLOONTIP
 #define EM_GETHILITE              (ECM_FIRST + 6)
 #define EM_NOSETFOCUS             (ECM_FIRST + 7)
 #define EM_TAKEFOCUS              (ECM_FIRST + 8)
+#define EM_SETEXTENDEDSTYLE       (ECM_FIRST + 10)
+#define EM_GETEXTENDEDSTYLE       (ECM_FIRST + 11)
+#define EM_SETENDOFLINE           (ECM_FIRST + 12)
+#define EM_GETENDOFLINE           (ECM_FIRST + 13)
+#define EM_ENABLESEARCHWEB        (ECM_FIRST + 14)
+#define EM_SEARCHWEB              (ECM_FIRST + 15)
+#define EM_SETCARETINDEX          (ECM_FIRST + 17)
+#define EM_GETCARETINDEX          (ECM_FIRST + 18)
+#define EM_FILELINEFROMCHAR       (ECM_FIRST + 19)
+#define EM_FILELINEINDEX          (ECM_FIRST + 20)
+#define EM_FILELINELENGTH         (ECM_FIRST + 21)
+#define EM_GETFILELINE            (ECM_FIRST + 22)
+#define EM_GETFILELINECOUNT       (ECM_FIRST + 23)
+
+#define EM_GETZOOM                (WM_USER + 224)
+#define EM_SETZOOM                (WM_USER + 225)
+
+#define EN_SEARCHWEB              (EN_FIRST)
 
 #define Edit_SetCueBannerText(hwnd, text) \
         (BOOL)SNDMSG((hwnd), EM_SETCUEBANNER, 0, (LPARAM)(text))
@@ -5206,6 +5371,14 @@ typedef struct _tagEDITBALLOONTIP
         (BOOL)SNDMSG((hwnd), EM_SETCUEBANNER, (WPARAM)(drawfocused), (LPARAM)(text))
 #define Edit_GetCueBannerText(hwnd, buff, buff_size) \
         (BOOL)SNDMSG((hwnd), EM_GETCUEBANNER, (WPARAM)(buff), (LPARAM)(buff_size))
+#define Edit_SetHilite(hwnd, start, end) \
+        SNDMSG((hwnd), EM_SETHILITE, start, end)
+#define Edit_GetHilite(hwnd) \
+        ((DWORD)SNDMSG((hwnd), EM_GETHILITE, 0L, 0L))
+#define Edit_ShowBalloonTip(hwnd, tip) \
+        (BOOL)SNDMSG((hwnd), EM_SHOWBALLOONTIP, 0, (LPARAM)(tip))
+#define Edit_HideBalloonTip(hwnd) \
+        (BOOL)SNDMSG((hwnd), EM_HIDEBALLOONTIP, 0, 0)
 
 /**************************************************************************
  * Listbox control

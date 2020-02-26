@@ -831,7 +831,9 @@ static void fill_status_process(SERVICE_STATUS_PROCESS *status, struct service_e
 {
     struct process_entry *process = service->process;
     memcpy(status, &service->status, sizeof(service->status));
-    status->dwProcessId     = process ? process->process_id : 0;
+    status->dwProcessId = 0;
+    if (process && !(service->status.dwServiceType & SERVICE_DRIVER))
+        status->dwProcessId = process->process_id;
     status->dwServiceFlags  = 0;
 }
 
@@ -863,28 +865,31 @@ static void fill_notify(struct sc_notify_handle *notify, struct service_entry *s
     SetEvent(notify->event);
 }
 
-DWORD __cdecl svcctl_SetServiceStatus(
-    SC_RPC_HANDLE hServiceStatus,
-    LPSERVICE_STATUS lpServiceStatus)
+DWORD __cdecl svcctl_SetServiceStatus(SC_RPC_HANDLE handle, SERVICE_STATUS *status)
 {
     struct sc_service_handle *service, *service_handle;
     struct process_entry *process;
     DWORD err, mask;
 
-    WINE_TRACE("(%p, %p)\n", hServiceStatus, lpServiceStatus);
+    WINE_TRACE("(%p, %p)\n", handle, status);
 
-    if ((err = validate_service_handle(hServiceStatus, SERVICE_SET_STATUS, &service)) != 0)
+    if ((err = validate_service_handle(handle, SERVICE_SET_STATUS, &service)) != 0)
         return err;
 
     service_lock(service->service_entry);
 
     /* FIXME: be a bit more discriminant about what parts of the status we set
      * and check that fields are valid */
-    service->service_entry->status = *lpServiceStatus;
+    service->service_entry->status.dwCurrentState = status->dwCurrentState;
+    service->service_entry->status.dwControlsAccepted = status->dwControlsAccepted;
+    service->service_entry->status.dwWin32ExitCode = status->dwWin32ExitCode;
+    service->service_entry->status.dwServiceSpecificExitCode = status->dwServiceSpecificExitCode;
+    service->service_entry->status.dwCheckPoint = status->dwCheckPoint;
+    service->service_entry->status.dwWaitHint = status->dwWaitHint;
     SetEvent(service->service_entry->status_changed_event);
 
     if ((process = service->service_entry->process) &&
-        lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
+        status->dwCurrentState == SERVICE_STOPPED)
     {
         service->service_entry->process = NULL;
         if (!--process->use_count)

@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <string.h>
 
@@ -36,7 +33,6 @@
 #include "winuser.h"
 #include "psdrv.h"
 #include "winspool.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -371,8 +367,8 @@ static PSDRV_PDEVICE *create_psdrv_physdev( PRINTERINFO *pi )
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-static BOOL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                            LPCWSTR output, const DEVMODEW* initData )
+static BOOL CDECL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
+                                  LPCWSTR output, const DEVMODEW* initData )
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
@@ -415,7 +411,7 @@ static BOOL PSDRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 /**********************************************************************
  *	     PSDRV_CreateCompatibleDC
  */
-static BOOL PSDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+static BOOL CDECL PSDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
     HDC hdc = (*pdev)->hdc;
     PSDRV_PDEVICE *physDev, *orig_dev = get_psdrv_dev( orig );
@@ -435,7 +431,7 @@ static BOOL PSDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 /**********************************************************************
  *	     PSDRV_DeleteDC
  */
-static BOOL PSDRV_DeleteDC( PHYSDEV dev )
+static BOOL CDECL PSDRV_DeleteDC( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -452,7 +448,7 @@ static BOOL PSDRV_DeleteDC( PHYSDEV dev )
 /**********************************************************************
  *	     ResetDC   (WINEPS.@)
  */
-static HDC PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
+static HDC CDECL PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -467,7 +463,7 @@ static HDC PSDRV_ResetDC( PHYSDEV dev, const DEVMODEW *lpInitData )
 /***********************************************************************
  *           GetDeviceCaps    (WINEPS.@)
  */
-static INT PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
+static INT CDECL PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -650,7 +646,7 @@ static WCHAR *get_ppd_filename( HANDLE printer )
     if (!info) return NULL;
     GetPrinterDriverW( printer, NULL, 2, (BYTE*)info, needed, &needed );
     name = (WCHAR *)info;
-    memmove( name, info->pDataFile, (strlenW( info->pDataFile ) + 1) * sizeof(WCHAR) );
+    memmove( name, info->pDataFile, (lstrlenW( info->pDataFile ) + 1) * sizeof(WCHAR) );
     return name;
 }
 
@@ -674,15 +670,15 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 
     LIST_FOR_EACH_ENTRY( pi, &printer_list, PRINTERINFO, entry )
     {
-        if (!strcmpW( pi->friendly_name, name ))
+        if (!wcscmp( pi->friendly_name, name ))
             return pi;
     }
 
     pi = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*pi) );
     if (pi == NULL) return NULL;
 
-    if (!(pi->friendly_name = HeapAlloc( PSDRV_Heap, 0, (strlenW(name)+1)*sizeof(WCHAR) ))) goto fail;
-    strcpyW( pi->friendly_name, name );
+    if (!(pi->friendly_name = HeapAlloc( PSDRV_Heap, 0, (lstrlenW(name)+1)*sizeof(WCHAR) ))) goto fail;
+    lstrcpyW( pi->friendly_name, name );
 
     if (OpenPrinterW( pi->friendly_name, &hPrinter, NULL ) == 0) {
         ERR ("OpenPrinter failed with code %i\n", GetLastError ());
@@ -908,6 +904,8 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_StrokePath,                   /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
+    NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
+    NULL,                               /* pD3DKMTSetVidPnSourceOwner */
     NULL,                               /* wine_get_wgl_driver */
     NULL,                               /* wine_get_vulkan_driver */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */

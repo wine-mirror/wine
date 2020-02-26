@@ -79,8 +79,10 @@
             macdrv_set_view_backing_size((macdrv_view)self.view, view_backing);
 
             NSView* save = self.view;
-            [super clearDrawable];
-            [super setView:save];
+            OnMainThread(^{
+                [super clearDrawable];
+                [super setView:save];
+            });
             shouldClearToBlack = TRUE;
         }
     }
@@ -122,7 +124,11 @@
     - (void) setView:(NSView*)newView
     {
         NSView* oldView = [self view];
-        [super setView:newView];
+        if ([NSThread isMainThread])
+            [super setView:newView];
+        else OnMainThread(^{
+            [super setView:newView];
+        });
         [newView retain];
         [oldView release];
     }
@@ -130,7 +136,11 @@
     - (void) clearDrawable
     {
         NSView* oldView = [self view];
-        [super clearDrawable];
+        if ([NSThread isMainThread])
+            [super clearDrawable];
+        else OnMainThread(^{
+            [super clearDrawable];
+        });
         [oldView release];
 
         [self wine_updateBackingSize:NULL];

@@ -1,13 +1,22 @@
 MODULE    = wineqtdecoder.dll
-IMPORTS   = strmiids strmbase uuid ole32 advapi32
+IMPORTS   = strmiids uuid ole32 advapi32
 EXTRALIBS = $(QUICKTIME_LIBS)
+PARENTSRC = ../strmbase
 
 C_SRCS = \
+	dllfunc.c \
+	filter.c \
 	main.c \
+	mediatype.c \
+	outputqueue.c \
+	pin.c \
 	qtdatahandler.c \
 	qtsplitter.c \
 	qtutils.c \
-	qtvdecoder.c
+	qtvdecoder.c \
+	qualitycontrol.c \
+	seeking.c \
+	transform.c
 
 RC_SRCS = \
 	rsrc.rc

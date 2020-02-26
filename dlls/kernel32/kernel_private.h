@@ -23,11 +23,7 @@
 
 #include "wine/server.h"
 
-HANDLE  WINAPI OpenConsoleW(LPCWSTR, DWORD, BOOL, DWORD);
-BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
-HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);
-BOOL    WINAPI CloseConsoleHandle(HANDLE handle);
-HANDLE  WINAPI GetConsoleInputWaitHandle(void);
+NTSTATUS WINAPI BaseGetNamedObjectDirectory( HANDLE *dir );
 BOOL           CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params) DECLSPEC_HIDDEN;
 BOOL           CONSOLE_Exit(void) DECLSPEC_HIDDEN;
 
@@ -48,6 +44,12 @@ static inline obj_handle_t console_handle_unmap(HANDLE h)
     return wine_server_obj_handle( h != INVALID_HANDLE_VALUE ? (HANDLE)((UINT_PTR)h ^ 3) : INVALID_HANDLE_VALUE );
 }
 
+static inline BOOL set_ntstatus( NTSTATUS status )
+{
+    if (status) SetLastError( RtlNtStatusToDosError( status ));
+    return !status;
+}
+
 /* Some Wine specific values for Console inheritance (params->ConsoleHandle) */
 #define KERNEL32_CONSOLE_ALLOC          ((HANDLE)1)
 #define KERNEL32_CONSOLE_SHELL          ((HANDLE)2)
@@ -57,14 +59,10 @@ extern SYSTEM_BASIC_INFORMATION system_info DECLSPEC_HIDDEN;
 
 extern const WCHAR DIR_Windows[] DECLSPEC_HIDDEN;
 extern const WCHAR DIR_System[] DECLSPEC_HIDDEN;
-extern const WCHAR *DIR_SysWow64 DECLSPEC_HIDDEN;
 
 extern void FILE_SetDosError(void) DECLSPEC_HIDDEN;
 extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc ) DECLSPEC_HIDDEN;
 extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen ) DECLSPEC_HIDDEN;
-
-/* module.c */
-extern WCHAR *MODULE_get_dll_load_path( LPCWSTR module, int safe_mode ) DECLSPEC_HIDDEN;
 
 extern BOOL NLS_IsUnicodeOnlyLcid(LCID) DECLSPEC_HIDDEN;
 
@@ -73,13 +71,6 @@ extern void ENV_CopyStartupInformation(void) DECLSPEC_HIDDEN;
 
 /* computername.c */
 extern void COMPUTERNAME_Init(void) DECLSPEC_HIDDEN;
-
-/* locale.c */
-extern void LOCALE_Init(void) DECLSPEC_HIDDEN;
-extern void LOCALE_InitRegistry(void) DECLSPEC_HIDDEN;
-
-/* time.c */
-extern void TIMEZONE_InitRegistry(void) DECLSPEC_HIDDEN;
 
 /* oldconfig.c */
 extern void convert_old_config(void) DECLSPEC_HIDDEN;

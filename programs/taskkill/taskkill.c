@@ -525,7 +525,7 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
     return TRUE;
 }
 
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int status_code = 0;
 

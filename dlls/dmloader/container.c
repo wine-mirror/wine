@@ -18,11 +18,9 @@
  */
 
 #include "dmloader_private.h"
-#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
-WINE_DECLARE_DEBUG_CHANNEL(dmdump);
 
 #define DMUS_MAX_CATEGORY_SIZE DMUS_MAX_CATEGORY*sizeof(WCHAR)
 #define DMUS_MAX_NAME_SIZE     DMUS_MAX_NAME*sizeof(WCHAR)
@@ -298,32 +296,28 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 						TRACE_(dmfile)(": %s chunk (size = 0x%08X)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 						switch (Chunk.fccID) {
 							case DMUS_FOURCC_CONTAINER_CHUNK: {
-								TRACE_(dmfile)(": container header chunk\n");
 								IStream_Read (pStm, &This->Header, Chunk.dwSize, NULL);
-								TRACE_(dmdump)(": container header chunk:\n%s\n", debugstr_DMUS_IO_CONTAINER_HEADER(&This->Header));
+								TRACE_(dmfile)(": container header chunk:\n%s\n", debugstr_DMUS_IO_CONTAINER_HEADER(&This->Header));
 								break;	
 							}
 							case DMUS_FOURCC_GUID_CHUNK: {
 								TRACE_(dmfile)(": GUID chunk\n");
 								IStream_Read (pStm, &This->dmobj.desc.guidObject, Chunk.dwSize, NULL);
 								This->dmobj.desc.dwValidData |= DMUS_OBJ_OBJECT;
-								TRACE_(dmdump)(": GUID: %s\n", debugstr_guid(&This->dmobj.desc.guidObject));
 								break;
 							}
 							case DMUS_FOURCC_VERSION_CHUNK: {
 								TRACE_(dmfile)(": version chunk\n");
 								IStream_Read (pStm, &This->dmobj.desc.vVersion, Chunk.dwSize, NULL);
 								This->dmobj.desc.dwValidData |= DMUS_OBJ_VERSION;
-								TRACE_(dmdump)(": version: %s\n", debugstr_dmversion(&This->dmobj.desc.vVersion));
 								break;
 							}
 							case DMUS_FOURCC_DATE_CHUNK: {
 								TRACE_(dmfile)(": date chunk\n");
 								IStream_Read (pStm, &This->dmobj.desc.ftDate, Chunk.dwSize, NULL);
 								This->dmobj.desc.dwValidData |= DMUS_OBJ_DATE;
-								TRACE_(dmdump)(": date: %s\n", debugstr_filetime(&This->dmobj.desc.ftDate));
 								break;
-							}							
+							}
 							case DMUS_FOURCC_CATEGORY_CHUNK: {
 								TRACE_(dmfile)(": category chunk\n");
 								/* if it happens that string is too long,
@@ -336,7 +330,6 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 									IStream_Read (pStm, This->dmobj.desc.wszCategory, Chunk.dwSize, NULL);
 								}
 								This->dmobj.desc.dwValidData |= DMUS_OBJ_CATEGORY;
-								TRACE_(dmdump)(": category: %s\n", debugstr_w(This->dmobj.desc.wszCategory));
 								break;
 							}
 							case FOURCC_LIST: {
@@ -367,7 +360,6 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 														IStream_Read (pStm, This->dmobj.desc.wszName, Chunk.dwSize, NULL);
 													}
 													This->dmobj.desc.dwValidData |= DMUS_OBJ_NAME;
-													TRACE_(dmdump)(": name: %s\n", debugstr_w(This->dmobj.desc.wszName));
 													break;
 												}
 												default: {
@@ -408,14 +400,13 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 																		TRACE_(dmfile)(": alias chunk\n");
 																		pNewEntry->wszAlias = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
 																		IStream_Read (pStm, pNewEntry->wszAlias, Chunk.dwSize, NULL);
-																		TRACE_(dmdump)(": alias: %s\n", debugstr_w(pNewEntry->wszAlias));
+																		TRACE_(dmfile)(": alias: %s\n", debugstr_w(pNewEntry->wszAlias));
 																		break;
 																	}
 																	case DMUS_FOURCC_CONTAINED_OBJECT_CHUNK: {
 																		DMUS_IO_CONTAINED_OBJECT_HEADER tmpObjectHeader;
-																		TRACE_(dmfile)(": contained object header chunk\n");
 																		IStream_Read (pStm, &tmpObjectHeader, Chunk.dwSize, NULL);
-																		TRACE_(dmdump)(": contained object header:\n%s\n", debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER(&tmpObjectHeader));
+																		TRACE_(dmfile)(": contained object header:\n%s\n", debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER(&tmpObjectHeader));
 																		/* copy guidClass */
 																		pNewEntry->Desc.dwValidData |= DMUS_OBJ_CLASS;
 																		pNewEntry->Desc.guidClass = tmpObjectHeader.guidClassID;
@@ -606,6 +597,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 			}
 			TRACE_(dmfile)(": reading finished\n");
 			This->dmobj.desc.dwValidData |= DMUS_OBJ_LOADED;
+                        dump_DMUS_OBJECTDESC(&This->dmobj.desc);
 			break;
 		}
 		default: {
@@ -639,25 +631,6 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 	}
 	
 	IDirectMusicLoader_Release (pLoader); /* release loader */
-
-#if 0
-	/* DEBUG: dumps whole container object tree: */
-	if (TRACE_ON(dmloader)) {
-		int r = 0;
-		LPWINE_CONTAINER_ENTRY tmpEntry;
-		struct list *listEntry;
-
-		TRACE("*** IDirectMusicContainer (%p) ***\n", This->ContainerVtbl);
-		TRACE(" - Objects:\n");
-		LIST_FOR_EACH (listEntry, This->pContainedObjects) {
-			tmpEntry = LIST_ENTRY( listEntry, WINE_CONTAINER_ENTRY, entry );
-			TRACE("    - Object[%i]:\n", r);
-			TRACE("       - wszAlias: %s\n", debugstr_w(tmpEntry->wszAlias));
-			TRACE("       - Object descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC(&tmpEntry->Desc));
-			r++;
-		}
-	}
-#endif
 
 	return result;
 }

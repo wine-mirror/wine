@@ -2,6 +2,8 @@ MODULE    = sxs.dll
 IMPORTS   = oleaut32 ole32
 IMPORTLIB = sxs
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	cache.c \
 	name.c \

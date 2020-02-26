@@ -1,6 +1,8 @@
 MODULE    = taskschd.dll
 IMPORTS   = oleaut32 ole32 advapi32 xmllite rpcrt4
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	folder.c \
 	folder_collection.c \

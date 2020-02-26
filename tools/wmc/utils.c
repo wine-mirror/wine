@@ -29,6 +29,7 @@
 #include <ctype.h>
 
 #include "wmctypes.h"
+#include "winnls.h"
 #include "utils.h"
 #include "wmc.h"
 
@@ -200,6 +201,13 @@ char *strmake( const char* fmt, ... )
     }
 }
 
+int strendswith( const char *str, const char *end )
+{
+    int l = strlen(str);
+    int m = strlen(end);
+    return l >= m && !strcmp( str + l - m, end );
+}
+
 int unistrlen(const WCHAR *s)
 {
 	int n;
@@ -271,6 +279,250 @@ int unistrcmp(const WCHAR *s1, const WCHAR *s2)
 
 	return *s1 - *s2;
 }
+
+WCHAR *utf8_to_unicode( const char *src, int srclen, int *dstlen )
+{
+    static const char utf8_length[128] =
+    {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x80-0x8f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x90-0x9f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xa0-0xaf */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xb0-0xbf */
+        0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xc0-0xcf */
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xd0-0xdf */
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xe0-0xef */
+        3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0  /* 0xf0-0xff */
+    };
+    static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
+
+    const char *srcend = src + srclen;
+    int len, res;
+    WCHAR *ret, *dst;
+
+    dst = ret = xmalloc( (srclen + 1) * sizeof(WCHAR) );
+    while (src < srcend)
+    {
+        unsigned char ch = *src++;
+        if (ch < 0x80)  /* special fast case for 7-bit ASCII */
+        {
+            *dst++ = ch;
+            continue;
+        }
+        len = utf8_length[ch - 0x80];
+        if (len && src + len <= srcend)
+        {
+            res = ch & utf8_mask[len];
+            switch (len)
+            {
+            case 3:
+                if ((ch = *src ^ 0x80) >= 0x40) break;
+                res = (res << 6) | ch;
+                src++;
+                if (res < 0x10) break;
+            case 2:
+                if ((ch = *src ^ 0x80) >= 0x40) break;
+                res = (res << 6) | ch;
+                if (res >= 0x110000 >> 6) break;
+                src++;
+                if (res < 0x20) break;
+                if (res >= 0xd800 >> 6 && res <= 0xdfff >> 6) break;
+            case 1:
+                if ((ch = *src ^ 0x80) >= 0x40) break;
+                res = (res << 6) | ch;
+                src++;
+                if (res < 0x80) break;
+                if (res <= 0xffff) *dst++ = res;
+                else
+                {
+                    res -= 0x10000;
+                    *dst++ = 0xd800 | (res >> 10);
+                    *dst++ = 0xdc00 | (res & 0x3ff);
+                }
+                continue;
+            }
+        }
+        *dst++ = 0xfffd;
+    }
+    *dst = 0;
+    *dstlen = dst - ret;
+    return ret;
+}
+
+char *unicode_to_utf8( const WCHAR *src, int srclen, int *dstlen )
+{
+    char *ret, *dst;
+
+    dst = ret = xmalloc( srclen * 3 + 1 );
+    for ( ; srclen; srclen--, src++)
+    {
+        unsigned int ch = *src;
+
+        if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
+        {
+            *dst++ = ch;
+            continue;
+        }
+        if (ch < 0x800)  /* 0x80-0x7ff: 2 bytes */
+        {
+            dst[1] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[0] = 0xc0 | ch;
+            dst += 2;
+            continue;
+        }
+        if (ch >= 0xd800 && ch <= 0xdbff && srclen > 1 && src[1] >= 0xdc00 && src[1] <= 0xdfff)
+        {
+            /* 0x10000-0x10ffff: 4 bytes */
+            ch = 0x10000 + ((ch & 0x3ff) << 10) + (src[1] & 0x3ff);
+            dst[3] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[2] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[1] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[0] = 0xf0 | ch;
+            dst += 4;
+            src++;
+            srclen--;
+            continue;
+        }
+        if (ch >= 0xd800 && ch <= 0xdfff) ch = 0xfffd;  /* invalid surrogate pair */
+
+        /* 0x800-0xffff: 3 bytes */
+        dst[2] = 0x80 | (ch & 0x3f);
+        ch >>= 6;
+        dst[1] = 0x80 | (ch & 0x3f);
+        ch >>= 6;
+        dst[0] = 0xe0 | ch;
+        dst += 3;
+    }
+    *dst = 0;
+    *dstlen = dst - ret;
+    return ret;
+}
+
+#ifdef _WIN32
+
+int is_valid_codepage(int id)
+{
+    return IsValidCodePage( id );
+}
+
+WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstlen )
+{
+    WCHAR *dst = xmalloc( (srclen + 1) * sizeof(WCHAR) );
+    DWORD ret = MultiByteToWideChar( codepage, MB_ERR_INVALID_CHARS, src, srclen, dst, srclen );
+    if (!ret) return NULL;
+    dst[ret] = 0;
+    *dstlen = ret;
+    return dst;
+}
+
+#else  /* _WIN32 */
+
+struct nls_info
+{
+    unsigned short  codepage;
+    unsigned short  unidef;
+    unsigned short  trans_unidef;
+    unsigned short *cp2uni;
+    unsigned short *dbcs_offsets;
+};
+
+static struct nls_info nlsinfo[128];
+
+static void init_nls_info( struct nls_info *info, unsigned short *ptr )
+{
+    unsigned short hdr_size = ptr[0];
+
+    info->codepage      = ptr[1];
+    info->unidef        = ptr[4];
+    info->trans_unidef  = ptr[6];
+    ptr += hdr_size;
+    info->cp2uni = ++ptr;
+    ptr += 256;
+    if (*ptr++) ptr += 256;  /* glyph table */
+    info->dbcs_offsets  = *ptr ? ptr + 1 : NULL;
+}
+
+static const struct nls_info *get_nls_info( unsigned int codepage )
+{
+    struct stat st;
+    unsigned short *data;
+    char *path;
+    unsigned int i;
+    int fd;
+
+    for (i = 0; i < ARRAY_SIZE(nlsinfo) && nlsinfo[i].codepage; i++)
+        if (nlsinfo[i].codepage == codepage) return &nlsinfo[i];
+
+    assert( i < ARRAY_SIZE(nlsinfo) );
+
+    for (i = 0; nlsdirs[i]; i++)
+    {
+        path = strmake( "%s/c_%03u.nls", nlsdirs[i], codepage );
+        if ((fd = open( path, O_RDONLY )) != -1) break;
+        free( path );
+    }
+    if (!nlsdirs[i]) return NULL;
+
+    fstat( fd, &st );
+    data = xmalloc( st.st_size );
+    if (read( fd, data, st.st_size ) != st.st_size) error( "failed to load %s\n", path );
+    close( fd );
+    free( path );
+    init_nls_info( &nlsinfo[i], data );
+    return &nlsinfo[i];
+}
+
+int is_valid_codepage(int cp)
+{
+    return cp == CP_UTF8 || get_nls_info( cp );
+}
+
+WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstlen )
+{
+    const struct nls_info *info = get_nls_info( codepage );
+    unsigned int i;
+    WCHAR dbch, *dst = xmalloc( (srclen + 1) * sizeof(WCHAR) );
+
+    if (!info) error( "codepage %u not supported\n", codepage );
+
+    if (info->dbcs_offsets)
+    {
+        for (i = 0; srclen; i++, srclen--, src++)
+        {
+            unsigned short off = info->dbcs_offsets[(unsigned char)*src];
+            if (off)
+            {
+                if (srclen == 1) return NULL;
+                dbch = (src[0] << 8) | (unsigned char)src[1];
+                src++;
+                srclen--;
+                dst[i] = info->dbcs_offsets[off + (unsigned char)*src];
+                if (dst[i] == info->unidef && dbch != info->trans_unidef) return NULL;
+            }
+            else
+            {
+                dst[i] = info->cp2uni[(unsigned char)*src];
+                if (dst[i] == info->unidef && *src != info->trans_unidef) return NULL;
+            }
+        }
+    }
+    else
+    {
+        for (i = 0; i < srclen; i++)
+        {
+            dst[i] = info->cp2uni[(unsigned char)src[i]];
+            if (dst[i] == info->unidef && src[i] != info->trans_unidef) return NULL;
+        }
+    }
+    dst[i] = 0;
+    *dstlen = i;
+    return dst;
+}
+
+#endif  /* _WIN32 */
 
 /*******************************************************************
  *         buffer management

@@ -42,6 +42,8 @@
 #include <X11/extensions/Xrender.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -52,6 +54,8 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/library.h"
+#include "wine/list.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 WINE_DECLARE_DEBUG_CHANNEL(synchronous);
@@ -95,6 +99,25 @@ static unsigned long err_serial;             /* serial number of first request *
 static int (*old_error_handler)( Display *, XErrorEvent * );
 static BOOL use_xim = TRUE;
 static char input_style[20];
+
+static CRITICAL_SECTION x11drv_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &x11drv_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": x11drv_section") }
+};
+static CRITICAL_SECTION x11drv_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+struct d3dkmt_vidpn_source
+{
+    D3DKMT_VIDPNSOURCEOWNER_TYPE type;      /* VidPN source owner type */
+    D3DDDI_VIDEO_PRESENT_SOURCE_ID id;      /* VidPN present source id */
+    D3DKMT_HANDLE device;                   /* Kernel mode device context */
+    struct list entry;                      /* List entry */
+};
+
+static struct list d3dkmt_vidpn_sources = LIST_INIT( d3dkmt_vidpn_sources );   /* VidPN source information list */
 
 #define IS_OPTION_TRUE(ch) \
     ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
@@ -738,4 +761,144 @@ BOOL CDECL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_p
         break;
     }
     return FALSE;  /* let user32 handle it */
+}
+
+/**********************************************************************
+ *           X11DRV_D3DKMTSetVidPnSourceOwner
+ */
+NTSTATUS CDECL X11DRV_D3DKMTSetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )
+{
+    struct d3dkmt_vidpn_source *source, *source2;
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOL found;
+    UINT i;
+
+    TRACE("(%p)\n", desc);
+
+    EnterCriticalSection( &x11drv_section );
+
+    /* Check parameters */
+    for (i = 0; i < desc->VidPnSourceCount; ++i)
+    {
+        LIST_FOR_EACH_ENTRY( source, &d3dkmt_vidpn_sources, struct d3dkmt_vidpn_source, entry )
+        {
+            if (source->id == desc->pVidPnSourceId[i])
+            {
+                /* Same device */
+                if (source->device == desc->hDevice)
+                {
+                    if ((source->type == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE
+                         && (desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_SHARED
+                             || desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EMULATED))
+                        || (source->type == D3DKMT_VIDPNSOURCEOWNER_EMULATED
+                            && desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE))
+                    {
+                        status = STATUS_INVALID_PARAMETER;
+                        goto done;
+                    }
+                }
+                /* Different devices */
+                else
+                {
+                    if ((source->type == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE
+                         || source->type == D3DKMT_VIDPNSOURCEOWNER_EMULATED)
+                        && (desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE
+                            || desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EMULATED))
+                    {
+                        status = STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE;
+                        goto done;
+                    }
+                }
+            }
+        }
+
+        /* On Windows, it seems that all video present sources are owned by DMM clients, so any attempt to set
+         * D3DKMT_VIDPNSOURCEOWNER_SHARED come back STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE */
+        if (desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_SHARED)
+        {
+            status = STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE;
+            goto done;
+        }
+
+        /* FIXME: D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVEGDI unsupported */
+        if (desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVEGDI || desc->pType[i] > D3DKMT_VIDPNSOURCEOWNER_EMULATED)
+        {
+            status = STATUS_INVALID_PARAMETER;
+            goto done;
+        }
+    }
+
+    /* Remove owner */
+    if (!desc->VidPnSourceCount && !desc->pType && !desc->pVidPnSourceId)
+    {
+        LIST_FOR_EACH_ENTRY_SAFE( source, source2, &d3dkmt_vidpn_sources, struct d3dkmt_vidpn_source, entry )
+        {
+            if (source->device == desc->hDevice)
+            {
+                list_remove( &source->entry );
+                heap_free( source );
+            }
+        }
+        goto done;
+    }
+
+    /* Add owner */
+    for (i = 0; i < desc->VidPnSourceCount; ++i)
+    {
+        found = FALSE;
+        LIST_FOR_EACH_ENTRY( source, &d3dkmt_vidpn_sources, struct d3dkmt_vidpn_source, entry )
+        {
+            if (source->device == desc->hDevice && source->id == desc->pVidPnSourceId[i])
+            {
+                found = TRUE;
+                break;
+            }
+        }
+
+        if (found)
+            source->type = desc->pType[i];
+        else
+        {
+            source = heap_alloc( sizeof( *source ) );
+            if (!source)
+            {
+                status = STATUS_NO_MEMORY;
+                goto done;
+            }
+
+            source->id = desc->pVidPnSourceId[i];
+            source->type = desc->pType[i];
+            source->device = desc->hDevice;
+            list_add_tail( &d3dkmt_vidpn_sources, &source->entry );
+        }
+    }
+
+done:
+    LeaveCriticalSection( &x11drv_section );
+    return status;
+}
+
+/**********************************************************************
+ *           X11DRV_D3DKMTCheckVidPnExclusiveOwnership
+ */
+NTSTATUS CDECL X11DRV_D3DKMTCheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc )
+{
+    struct d3dkmt_vidpn_source *source;
+
+    TRACE("(%p)\n", desc);
+
+    if (!desc || !desc->hAdapter)
+        return STATUS_INVALID_PARAMETER;
+
+    EnterCriticalSection( &x11drv_section );
+    LIST_FOR_EACH_ENTRY( source, &d3dkmt_vidpn_sources, struct d3dkmt_vidpn_source, entry )
+    {
+        if (source->id == desc->VidPnSourceId && source->type == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE)
+        {
+            LeaveCriticalSection( &x11drv_section );
+            return STATUS_GRAPHICS_PRESENT_OCCLUDED;
+        }
+    }
+    LeaveCriticalSection( &x11drv_section );
+    return STATUS_SUCCESS;
 }

@@ -80,17 +80,11 @@ static VOID (WINAPI *pBuildTrusteeWithObjectsAndSidA)( PTRUSTEEA pTrustee,
                                                          GUID* pInheritedObjectGuid,
                                                          PSID pSid );
 static LPSTR (WINAPI *pGetTrusteeNameA)( PTRUSTEEA pTrustee );
-static BOOL (WINAPI *pMakeSelfRelativeSD)( PSECURITY_DESCRIPTOR, PSECURITY_DESCRIPTOR, LPDWORD );
-static BOOL (WINAPI *pConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 static BOOL (WINAPI *pCheckTokenMembership)(HANDLE, PSID, PBOOL);
-static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorA)(LPCSTR, DWORD,
-                                                                            PSECURITY_DESCRIPTOR*, PULONG );
 static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorW)(LPCWSTR, DWORD,
                                                                             PSECURITY_DESCRIPTOR*, PULONG );
 static BOOL (WINAPI *pConvertSecurityDescriptorToStringSecurityDescriptorA)(PSECURITY_DESCRIPTOR, DWORD,
                                                                             SECURITY_INFORMATION, LPSTR *, PULONG );
-static BOOL (WINAPI *pGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
-                                          PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
 static BOOL (WINAPI *pSetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR);
 static DWORD (WINAPI *pGetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
@@ -98,38 +92,26 @@ static DWORD (WINAPI *pGetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_IN
                                               PSECURITY_DESCRIPTOR*);
 static DWORD (WINAPI *pSetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
                                               PSID, PSID, PACL, PACL);
-static PDWORD (WINAPI *pGetSidSubAuthority)(PSID, DWORD);
-static PUCHAR (WINAPI *pGetSidSubAuthorityCount)(PSID);
-static BOOL (WINAPI *pIsValidSid)(PSID);
 static DWORD (WINAPI *pRtlAdjustPrivilege)(ULONG,BOOLEAN,BOOLEAN,PBOOLEAN);
-static BOOL (WINAPI *pCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
 static BOOL (WINAPI *pDuplicateTokenEx)(HANDLE,DWORD,LPSECURITY_ATTRIBUTES,
                                         SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,PHANDLE);
 
-static NTSTATUS (WINAPI *pLsaQueryInformationPolicy)(LSA_HANDLE,POLICY_INFORMATION_CLASS,PVOID*);
-static NTSTATUS (WINAPI *pLsaClose)(LSA_HANDLE);
-static NTSTATUS (WINAPI *pLsaFreeMemory)(PVOID);
-static NTSTATUS (WINAPI *pLsaOpenPolicy)(PLSA_UNICODE_STRING,PLSA_OBJECT_ATTRIBUTES,ACCESS_MASK,PLSA_HANDLE);
 static NTSTATUS (WINAPI *pNtQueryObject)(HANDLE,OBJECT_INFORMATION_CLASS,PVOID,ULONG,PULONG);
 static DWORD (WINAPI *pSetEntriesInAclW)(ULONG, PEXPLICIT_ACCESSW, PACL, PACL*);
-static DWORD (WINAPI *pSetEntriesInAclA)(ULONG, PEXPLICIT_ACCESSA, PACL, PACL*);
 static BOOL (WINAPI *pSetSecurityDescriptorControl)(PSECURITY_DESCRIPTOR, SECURITY_DESCRIPTOR_CONTROL,
                                                     SECURITY_DESCRIPTOR_CONTROL);
-static DWORD (WINAPI *pGetSecurityInfo)(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
-                                        PSID*, PSID*, PACL*, PACL*, PSECURITY_DESCRIPTOR*);
 static DWORD (WINAPI *pSetSecurityInfo)(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
                                         PSID, PSID, PACL, PACL);
 static NTSTATUS (WINAPI *pNtAccessCheck)(PSECURITY_DESCRIPTOR, HANDLE, ACCESS_MASK, PGENERIC_MAPPING,
                                          PPRIVILEGE_SET, PULONG, PULONG, NTSTATUS*);
 static BOOL (WINAPI *pCreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD,
                                              PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-static BOOL (WINAPI *pGetAclInformation)(PACL,LPVOID,DWORD,ACL_INFORMATION_CLASS);
-static BOOL (WINAPI *pGetAce)(PACL,DWORD,LPVOID*);
 static NTSTATUS (WINAPI *pNtSetSecurityObject)(HANDLE,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
 static NTSTATUS (WINAPI *pNtCreateFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,PLARGE_INTEGER,ULONG,ULONG,ULONG,ULONG,PVOID,ULONG);
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)(LPCWSTR,PUNICODE_STRING,PWSTR*,CURDIR*);
 static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING,PCANSI_STRING,BOOLEAN);
 static BOOL     (WINAPI *pGetWindowsAccountDomainSid)(PSID,PSID,DWORD*);
+static BOOL     (WINAPI *pEqualDomainSid)(PSID,PSID,BOOL*);
 static void     (WINAPI *pRtlInitAnsiString)(PANSI_STRING,PCSZ);
 static NTSTATUS (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 static PSID_IDENTIFIER_AUTHORITY (WINAPI *pGetSidIdentifierAuthority)(PSID);
@@ -139,27 +121,17 @@ static HMODULE hmod;
 static int     myARGC;
 static char**  myARGV;
 
-#define SID_SLOTS 4
-static char debugsid_str[SID_SLOTS][256];
-static int debugsid_index = 0;
 static const char* debugstr_sid(PSID sid)
 {
     LPSTR sidstr;
     DWORD le = GetLastError();
-    char* res = debugsid_str[debugsid_index];
-    debugsid_index = (debugsid_index + 1) % SID_SLOTS;
+    const char *res;
 
     if (!ConvertSidToStringSidA(sid, &sidstr))
-        sprintf(res, "ConvertSidToStringSidA failed le=%u", GetLastError());
-    else if (strlen(sidstr) > sizeof(*debugsid_str) - 1)
-    {
-        memcpy(res, sidstr, sizeof(*debugsid_str) - 4);
-        strcpy(res + sizeof(*debugsid_str) - 4, "...");
-        LocalFree(sidstr);
-    }
+        res = wine_dbg_sprintf("ConvertSidToStringSidA failed le=%u", GetLastError());
     else
     {
-        strcpy(res, sidstr);
+        res = __wine_dbg_strdup(sidstr);
         LocalFree(sidstr);
     }
     /* Restore the last error in case ConvertSidToStringSidA() modified it */
@@ -193,31 +165,19 @@ static void init(void)
     pAddAuditAccessAceEx = (void *)GetProcAddress(hmod, "AddAuditAccessAceEx");
     pAddMandatoryAce = (void *)GetProcAddress(hmod, "AddMandatoryAce");
     pCheckTokenMembership = (void *)GetProcAddress(hmod, "CheckTokenMembership");
-    pConvertStringSecurityDescriptorToSecurityDescriptorA =
-        (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorA" );
     pConvertStringSecurityDescriptorToSecurityDescriptorW =
         (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorW" );
     pConvertSecurityDescriptorToStringSecurityDescriptorA =
         (void *)GetProcAddress(hmod, "ConvertSecurityDescriptorToStringSecurityDescriptorA" );
-    pGetFileSecurityA = (void *)GetProcAddress(hmod, "GetFileSecurityA" );
     pSetFileSecurityA = (void *)GetProcAddress(hmod, "SetFileSecurityA" );
-    pCreateWellKnownSid = (void *)GetProcAddress( hmod, "CreateWellKnownSid" );
     pGetNamedSecurityInfoA = (void *)GetProcAddress(hmod, "GetNamedSecurityInfoA");
     pSetNamedSecurityInfoA = (void *)GetProcAddress(hmod, "SetNamedSecurityInfoA");
-    pGetSidSubAuthority = (void *)GetProcAddress(hmod, "GetSidSubAuthority");
-    pGetSidSubAuthorityCount = (void *)GetProcAddress(hmod, "GetSidSubAuthorityCount");
-    pIsValidSid = (void *)GetProcAddress(hmod, "IsValidSid");
-    pMakeSelfRelativeSD = (void *)GetProcAddress(hmod, "MakeSelfRelativeSD");
     pSetEntriesInAclW = (void *)GetProcAddress(hmod, "SetEntriesInAclW");
-    pSetEntriesInAclA = (void *)GetProcAddress(hmod, "SetEntriesInAclA");
     pSetSecurityDescriptorControl = (void *)GetProcAddress(hmod, "SetSecurityDescriptorControl");
-    pGetSecurityInfo = (void *)GetProcAddress(hmod, "GetSecurityInfo");
     pSetSecurityInfo = (void *)GetProcAddress(hmod, "SetSecurityInfo");
     pCreateRestrictedToken = (void *)GetProcAddress(hmod, "CreateRestrictedToken");
-    pConvertStringSidToSidA = (void *)GetProcAddress(hmod, "ConvertStringSidToSidA");
-    pGetAclInformation = (void *)GetProcAddress(hmod, "GetAclInformation");
-    pGetAce = (void *)GetProcAddress(hmod, "GetAce");
     pGetWindowsAccountDomainSid = (void *)GetProcAddress(hmod, "GetWindowsAccountDomainSid");
+    pEqualDomainSid = (void *)GetProcAddress(hmod, "EqualDomainSid");
     pGetSidIdentifierAuthority = (void *)GetProcAddress(hmod, "GetSidIdentifierAuthority");
     pDuplicateTokenEx = (void *)GetProcAddress(hmod, "DuplicateTokenEx");
     pGetExplicitEntriesFromAclW = (void *)GetProcAddress(hmod, "GetExplicitEntriesFromAclW");
@@ -356,13 +316,7 @@ static void test_sid(void)
     BOOL r, ret;
     LPSTR str = NULL;
 
-    if( !pConvertStringSidToSidA )
-    {
-        win_skip("ConvertSidToStringSidA or ConvertStringSidToSidA not available\n");
-        return;
-    }
-
-    r = pConvertStringSidToSidA( NULL, NULL );
+    r = ConvertStringSidToSidA( NULL, NULL );
     ok( !r, "expected failure with NULL parameters\n" );
     if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
         return;
@@ -370,24 +324,24 @@ static void test_sid(void)
      "expected GetLastError() is ERROR_INVALID_PARAMETER, got %d\n",
      GetLastError() );
 
-    r = pConvertStringSidToSidA( refs[0].refStr, NULL );
+    r = ConvertStringSidToSidA( refs[0].refStr, NULL );
     ok( !r && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected GetLastError() is ERROR_INVALID_PARAMETER, got %d\n",
      GetLastError() );
 
-    r = pConvertStringSidToSidA( NULL, &str );
+    r = ConvertStringSidToSidA( NULL, &psid );
     ok( !r && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected GetLastError() is ERROR_INVALID_PARAMETER, got %d\n",
      GetLastError() );
 
-    r = pConvertStringSidToSidA( noSubAuthStr, &psid );
+    r = ConvertStringSidToSidA( noSubAuthStr, &psid );
     ok( !r,
      "expected failure with no sub authorities\n" );
     ok( GetLastError() == ERROR_INVALID_SID,
      "expected GetLastError() is ERROR_INVALID_SID, got %d\n",
      GetLastError() );
 
-    ok(pConvertStringSidToSidA("S-1-5-21-93476-23408-4576", &psid), "ConvertStringSidToSidA failed\n");
+    ok(ConvertStringSidToSidA("S-1-5-21-93476-23408-4576", &psid), "ConvertStringSidToSidA failed\n");
     pisid = psid;
     ok(pisid->SubAuthorityCount == 4, "Invalid sub authority count - expected 4, got %d\n", pisid->SubAuthorityCount);
     ok(pisid->SubAuthority[0] == 21, "Invalid subauthority 0 - expected 21, got %d\n", pisid->SubAuthority[0]);
@@ -411,7 +365,7 @@ static void test_sid(void)
         if( psid )
             FreeSid( psid );
 
-        r = pConvertStringSidToSidA( refs[i].refStr, &psid );
+        r = ConvertStringSidToSidA( refs[i].refStr, &psid );
         ok( r, "failed to parse sid string\n" );
         pisid = psid;
         ok( pisid &&
@@ -840,11 +794,6 @@ static void test_FileSecurity(void)
                                        | GROUP_SECURITY_INFORMATION
                                        | DACL_SECURITY_INFORMATION;
 
-    if (!pGetFileSecurityA) {
-        win_skip ("GetFileSecurity is not available\n");
-        return;
-    }
-
     if (!pSetFileSecurityA) {
         win_skip ("SetFileSecurity is not available\n");
         return;
@@ -874,7 +823,7 @@ static void test_FileSecurity(void)
     /* Get size needed */
     retSize = 0;
     SetLastError(0xdeadbeef);
-    rc = pGetFileSecurityA (file, request, NULL, 0, &retSize);
+    rc = GetFileSecurityA (file, request, NULL, 0, &retSize);
     if (!rc && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) {
         win_skip("GetFileSecurityA is not implemented\n");
         goto cleanup;
@@ -891,7 +840,7 @@ static void test_FileSecurity(void)
     /* Get security descriptor for real */
     retSize = -1;
     SetLastError(0xdeadbeef);
-    rc = pGetFileSecurityA (file, request, sd, sdSize, &retSize);
+    rc = GetFileSecurityA (file, request, sd, sdSize, &retSize);
     ok (rc, "GetFileSecurityA "
         "was not expected to fail '%s': %d\n", file, GetLastError());
     ok (retSize == sdSize ||
@@ -911,7 +860,7 @@ static void test_FileSecurity(void)
     /* Get size needed */
     retSize = 0;
     SetLastError(0xdeadbeef);
-    rc = pGetFileSecurityA (path, request, NULL, 0, &retSize);
+    rc = GetFileSecurityA (path, request, NULL, 0, &retSize);
     ok (!rc, "GetFileSecurityA "
         "was expected to fail for '%s'\n", path);
     ok (GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetFileSecurityA "
@@ -924,7 +873,7 @@ static void test_FileSecurity(void)
     /* Get security descriptor for real */
     retSize = -1;
     SetLastError(0xdeadbeef);
-    rc = pGetFileSecurityA (path, request, sd, sdSize, &retSize);
+    rc = GetFileSecurityA (path, request, sd, sdSize, &retSize);
     ok (rc, "GetFileSecurityA "
         "was not expected to fail '%s': %d\n", path, GetLastError());
     ok (retSize == sdSize ||
@@ -941,7 +890,7 @@ static void test_FileSecurity(void)
     /* Old test */
     strcpy (wintmpdir, "\\Should not exist");
     SetLastError(0xdeadbeef);
-    rc = pGetFileSecurityA (wintmpdir, OWNER_SECURITY_INFORMATION, NULL, 0, &sdSize);
+    rc = GetFileSecurityA (wintmpdir, OWNER_SECURITY_INFORMATION, NULL, 0, &sdSize);
     ok (!rc, "GetFileSecurityA should fail for not existing directories/files\n");
     ok (GetLastError() == ERROR_FILE_NOT_FOUND,
         "last error ERROR_FILE_NOT_FOUND expected, got %d\n", GetLastError());
@@ -2124,28 +2073,22 @@ static void test_CreateWellKnownSid(void)
     BOOL ret;
     unsigned int i;
 
-    if (!pCreateWellKnownSid)
-    {
-        win_skip("CreateWellKnownSid not available\n");
-        return;
-    }
-
     size = 0;
     SetLastError(0xdeadbeef);
-    ret = pCreateWellKnownSid(WinInteractiveSid, NULL, NULL, &size);
+    ret = CreateWellKnownSid(WinInteractiveSid, NULL, NULL, &size);
     error = GetLastError();
     ok(!ret, "CreateWellKnownSid succeeded\n");
     ok(error == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %u\n", error);
     ok(size, "expected size > 0\n");
 
     SetLastError(0xdeadbeef);
-    ret = pCreateWellKnownSid(WinInteractiveSid, NULL, NULL, &size);
+    ret = CreateWellKnownSid(WinInteractiveSid, NULL, NULL, &size);
     error = GetLastError();
     ok(!ret, "CreateWellKnownSid succeeded\n");
     ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
 
     sid = HeapAlloc(GetProcessHeap(), 0, size);
-    ret = pCreateWellKnownSid(WinInteractiveSid, NULL, sid, &size);
+    ret = CreateWellKnownSid(WinInteractiveSid, NULL, sid, &size);
     ok(ret, "CreateWellKnownSid failed %u\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, sid);
 
@@ -2164,14 +2107,14 @@ static void test_CreateWellKnownSid(void)
 
         /* some SIDs aren't implemented by all Windows versions - detect it */
         cb = sizeof(sid_buffer);
-        if (!pCreateWellKnownSid(i, NULL, sid_buffer, &cb))
+        if (!CreateWellKnownSid(i, NULL, sid_buffer, &cb))
         {
             skip("Well known SID %u not implemented\n", i);
             continue;
         }
 
         cb = sizeof(sid_buffer);
-        ok(pCreateWellKnownSid(i, value->without_domain ? NULL : domainsid, sid_buffer, &cb), "Couldn't create well known sid %u\n", i);
+        ok(CreateWellKnownSid(i, value->without_domain ? NULL : domainsid, sid_buffer, &cb), "Couldn't create well known sid %u\n", i);
         expect_eq(GetSidLengthRequired(*GetSidSubAuthorityCount(sid_buffer)), cb, DWORD, "%d");
         ok(IsValidSid(sid_buffer), "The sid is not valid\n");
         ok(ConvertSidToStringSidA(sid_buffer, &str), "Couldn't convert SID to string\n");
@@ -2183,7 +2126,7 @@ static void test_CreateWellKnownSid(void)
         {
             char buf2[SECURITY_MAX_SID_SIZE];
             cb = sizeof(buf2);
-            ok(pCreateWellKnownSid(i, domainsid, buf2, &cb), "Couldn't create well known sid %u with optional domain\n", i);
+            ok(CreateWellKnownSid(i, domainsid, buf2, &cb), "Couldn't create well known sid %u with optional domain\n", i);
             expect_eq(GetSidLengthRequired(*GetSidSubAuthorityCount(sid_buffer)), cb, DWORD, "%d");
             ok(memcmp(buf2, sid_buffer, cb) == 0, "SID create with domain is different than without (%u)\n", i);
         }
@@ -2199,6 +2142,7 @@ static void test_LookupAccountSid(void)
     DWORD acc_sizeA, dom_sizeA, user_sizeA;
     DWORD real_acc_sizeA, real_dom_sizeA;
     WCHAR accountW[MAX_PATH], domainW[MAX_PATH];
+    LSA_OBJECT_ATTRIBUTES object_attributes;
     DWORD acc_sizeW, dom_sizeW;
     DWORD real_acc_sizeW, real_dom_sizeW;
     PSID pUsersSid = NULL;
@@ -2210,6 +2154,8 @@ static void test_LookupAccountSid(void)
     int i;
     HANDLE hToken;
     PTOKEN_USER ptiUser = NULL;
+    LSA_HANDLE handle;
+    NTSTATUS status;
 
     /* native windows crashes if account size, domain size, or name use is NULL */
 
@@ -2397,106 +2343,91 @@ static void test_LookupAccountSid(void)
     }
     HeapFree(GetProcessHeap(), 0, ptiUser);
 
-    if (pCreateWellKnownSid)
+    trace("Well Known SIDs:\n");
+    for (i = 0; i <= 60; i++)
     {
-        trace("Well Known SIDs:\n");
-        for (i = 0; i <= 60; i++)
+        size = SECURITY_MAX_SID_SIZE;
+        if (CreateWellKnownSid(i, NULL, &max_sid.sid, &size))
         {
-            size = SECURITY_MAX_SID_SIZE;
-            if (pCreateWellKnownSid(i, NULL, &max_sid.sid, &size))
+            if (ConvertSidToStringSidA(&max_sid.sid, &str_sidA))
             {
-                if (ConvertSidToStringSidA(&max_sid.sid, &str_sidA))
-                {
-                    acc_sizeA = MAX_PATH;
-                    dom_sizeA = MAX_PATH;
-                    if (LookupAccountSidA(NULL, &max_sid.sid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use))
-                        trace(" %d: %s %s\\%s %d\n", i, str_sidA, domainA, accountA, use);
-                    LocalFree(str_sidA);
-                }
+                acc_sizeA = MAX_PATH;
+                dom_sizeA = MAX_PATH;
+                if (LookupAccountSidA(NULL, &max_sid.sid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use))
+                    trace(" %d: %s %s\\%s %d\n", i, str_sidA, domainA, accountA, use);
+                LocalFree(str_sidA);
             }
+        }
+        else
+        {
+            if (GetLastError() != ERROR_INVALID_PARAMETER)
+                trace(" CreateWellKnownSid(%d) failed: %d\n", i, GetLastError());
             else
-            {
-                if (GetLastError() != ERROR_INVALID_PARAMETER)
-                    trace(" CreateWellKnownSid(%d) failed: %d\n", i, GetLastError());
-                else
-                    trace(" %d: not supported\n", i);
-            }
+                trace(" %d: not supported\n", i);
         }
+    }
 
-        pLsaQueryInformationPolicy = (void *)GetProcAddress( hmod, "LsaQueryInformationPolicy");
-        pLsaOpenPolicy = (void *)GetProcAddress( hmod, "LsaOpenPolicy");
-        pLsaFreeMemory = (void *)GetProcAddress( hmod, "LsaFreeMemory");
-        pLsaClose = (void *)GetProcAddress( hmod, "LsaClose");
+    ZeroMemory(&object_attributes, sizeof(object_attributes));
+    object_attributes.Length = sizeof(object_attributes);
 
-        if (pLsaQueryInformationPolicy && pLsaOpenPolicy && pLsaFreeMemory && pLsaClose)
+    status = LsaOpenPolicy( NULL, &object_attributes, POLICY_ALL_ACCESS, &handle);
+    ok(status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
+       "LsaOpenPolicy(POLICY_ALL_ACCESS) returned 0x%08x\n", status);
+
+    /* try a more restricted access mask if necessary */
+    if (status == STATUS_ACCESS_DENIED) {
+        trace("LsaOpenPolicy(POLICY_ALL_ACCESS) failed, trying POLICY_VIEW_LOCAL_INFORMATION\n");
+        status = LsaOpenPolicy( NULL, &object_attributes, POLICY_VIEW_LOCAL_INFORMATION, &handle);
+        ok(status == STATUS_SUCCESS, "LsaOpenPolicy(POLICY_VIEW_LOCAL_INFORMATION) returned 0x%08x\n", status);
+    }
+
+    if (status == STATUS_SUCCESS)
+    {
+        PPOLICY_ACCOUNT_DOMAIN_INFO info;
+        status = LsaQueryInformationPolicy(handle, PolicyAccountDomainInformation, (PVOID*)&info);
+        ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy() failed, returned 0x%08x\n", status);
+        if (status == STATUS_SUCCESS)
         {
-            NTSTATUS status;
-            LSA_HANDLE handle;
-            LSA_OBJECT_ATTRIBUTES object_attributes;
-
-            ZeroMemory(&object_attributes, sizeof(object_attributes));
-            object_attributes.Length = sizeof(object_attributes);
-
-            status = pLsaOpenPolicy( NULL, &object_attributes, POLICY_ALL_ACCESS, &handle);
-            ok(status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
-               "LsaOpenPolicy(POLICY_ALL_ACCESS) returned 0x%08x\n", status);
-
-            /* try a more restricted access mask if necessary */
-            if (status == STATUS_ACCESS_DENIED) {
-                trace("LsaOpenPolicy(POLICY_ALL_ACCESS) failed, trying POLICY_VIEW_LOCAL_INFORMATION\n");
-                status = pLsaOpenPolicy( NULL, &object_attributes, POLICY_VIEW_LOCAL_INFORMATION, &handle);
-                ok(status == STATUS_SUCCESS, "LsaOpenPolicy(POLICY_VIEW_LOCAL_INFORMATION) returned 0x%08x\n", status);
-            }
-
-            if (status == STATUS_SUCCESS)
+            ok(info->DomainSid!=0, "LsaQueryInformationPolicy(PolicyAccountDomainInformation) missing SID\n");
+            if (info->DomainSid)
             {
-                PPOLICY_ACCOUNT_DOMAIN_INFO info;
-                status = pLsaQueryInformationPolicy(handle, PolicyAccountDomainInformation, (PVOID*)&info);
-                ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy() failed, returned 0x%08x\n", status);
-                if (status == STATUS_SUCCESS)
-                {
-                    ok(info->DomainSid!=0, "LsaQueryInformationPolicy(PolicyAccountDomainInformation) missing SID\n");
-                    if (info->DomainSid)
-                    {
-                        int count = *GetSidSubAuthorityCount(info->DomainSid);
-                        CopySid(GetSidLengthRequired(count), &max_sid, info->DomainSid);
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_USER_RID_ADMIN;
-                        max_sid.sid.SubAuthorityCount = count + 1;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_USER_RID_GUEST;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_ADMINS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_USERS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_GUESTS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_COMPUTERS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_CONTROLLERS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_CERT_ADMINS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_SCHEMA_ADMINS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_ENTERPRISE_ADMINS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_POLICY_ADMINS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = DOMAIN_ALIAS_RID_RAS_SERVERS;
-                        test_sid_str((PSID)&max_sid.sid);
-                        max_sid.sid.SubAuthority[count] = 1000;	/* first user account */
-                        test_sid_str((PSID)&max_sid.sid);
-                    }
-
-                    pLsaFreeMemory((LPVOID)info);
-                }
-
-                status = pLsaClose(handle);
-                ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08x\n", status);
+                int count = *GetSidSubAuthorityCount(info->DomainSid);
+                CopySid(GetSidLengthRequired(count), &max_sid, info->DomainSid);
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_USER_RID_ADMIN;
+                max_sid.sid.SubAuthorityCount = count + 1;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_USER_RID_GUEST;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_ADMINS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_USERS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_GUESTS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_COMPUTERS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_CONTROLLERS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_CERT_ADMINS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_SCHEMA_ADMINS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_ENTERPRISE_ADMINS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_GROUP_RID_POLICY_ADMINS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = DOMAIN_ALIAS_RID_RAS_SERVERS;
+                test_sid_str((PSID)&max_sid.sid);
+                max_sid.sid.SubAuthority[count] = 1000;	/* first user account */
+                test_sid_str((PSID)&max_sid.sid);
             }
+
+            LsaFreeMemory(info);
         }
+
+        status = LsaClose(handle);
+        ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08x\n", status);
     }
 }
 
@@ -2546,7 +2477,7 @@ static void check_wellknown_name(const char* name, WELL_KNOWN_SID_TYPE result)
 
     AllocateAndInitializeSid(&ident, 6, SECURITY_NT_NON_UNIQUE, 12, 23, 34, 45, 56, 0, 0, &domainsid);
     cb = sizeof(wk_sid);
-    if (!pCreateWellKnownSid(result, domainsid, wk_sid, &cb))
+    if (!CreateWellKnownSid(result, domainsid, wk_sid, &cb))
     {
         win_skip("SID %i is not available on the system\n",result);
         goto cleanup;
@@ -2768,12 +2699,6 @@ static void test_LookupAccountName(void)
     }
 
     /* Well Known names */
-    if (!pCreateWellKnownSid)
-    {
-        win_skip("CreateWellKnownSid not available\n");
-        return;
-    }
-
     if (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH)
     {
         skip("Non-English locale (skipping well known name creation tests)\n");
@@ -2855,7 +2780,7 @@ static void test_security_descriptor(void)
         expect_eq(isDefault, FALSE, BOOL, "%d");
     }
 
-    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptorA(
         "O:SYG:S-1-5-21-93476-23408-4576D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)"
         "(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)"
         "(AU;NPSA;0x12019f;;;SU)", SDDL_REVISION_1, (void **)&sd_rel, NULL);
@@ -3003,8 +2928,11 @@ static void test_process_security(void)
     dom_size = sizeof(domain);
     ret = LookupAccountSidA( NULL, UsersSid, account, &acc_size, domain, &dom_size, &use );
     ok(ret, "LookupAccountSid failed with %d\n", ret);
-    todo_wine ok(use == SidTypeGroup, "expect SidTypeGroup, got %d\n", use);
-    todo_wine ok(!strcmp(account, "None"), "expect None, got %s\n", account);
+    ok(use == SidTypeGroup, "expect SidTypeGroup, got %d\n", use);
+    if (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH)
+        skip("Non-English locale (test with hardcoded 'None')\n");
+    else
+        ok(!strcmp(account, "None"), "expect None, got %s\n", account);
 
     res = GetTokenInformation( token, TokenUser, NULL, 0, &size );
     ok(!res, "Expected failure, got %d\n", res);
@@ -3082,7 +3010,7 @@ static void test_process_security(void)
     CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
     test_group_equal( event, UsersSid, __LINE__ );
 
-    sprintf(buffer, "%s tests/security.c test", myARGV[0]);
+    sprintf(buffer, "%s security test", myARGV[0]);
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
@@ -3454,14 +3382,8 @@ static void test_SetEntriesInAclA(void)
     static const CHAR szEveryone[] = {'E','v','e','r','y','o','n','e',0};
     static const CHAR szCurrentUser[] = { 'C','U','R','R','E','N','T','_','U','S','E','R','\0'};
 
-    if (!pSetEntriesInAclA)
-    {
-        win_skip("SetEntriesInAclA is not available\n");
-        return;
-    }
-
     NewAcl = (PACL)0xdeadbeef;
-    res = pSetEntriesInAclA(0, NULL, NULL, &NewAcl);
+    res = SetEntriesInAclA(0, NULL, NULL, &NewAcl);
     if(res == ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("SetEntriesInAclA is not implemented\n");
@@ -3501,7 +3423,7 @@ static void test_SetEntriesInAclA(void)
     ExplicitAccess.Trustee.ptstrName = EveryoneSid;
     ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     ExplicitAccess.Trustee.pMultipleTrustee = NULL;
-    res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+    res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
@@ -3509,7 +3431,7 @@ static void test_SetEntriesInAclA(void)
     ExplicitAccess.Trustee.TrusteeType = TRUSTEE_IS_UNKNOWN;
     ExplicitAccess.Trustee.pMultipleTrustee = NULL;
     ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
-    res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+    res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
@@ -3522,13 +3444,13 @@ static void test_SetEntriesInAclA(void)
     {
         ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
         ExplicitAccess.Trustee.ptstrName = (LPSTR)szEveryone;
-        res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+        res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
         ok(NewAcl != NULL, "returned acl was NULL\n");
         LocalFree(NewAcl);
 
         ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_BAD_FORM;
-        res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+        res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_INVALID_PARAMETER ||
             broken(res == ERROR_NOT_SUPPORTED), /* NT4 */
             "SetEntriesInAclA failed: %u\n", res);
@@ -3538,7 +3460,7 @@ static void test_SetEntriesInAclA(void)
 
         ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
         ExplicitAccess.Trustee.MultipleTrusteeOperation = TRUSTEE_IS_IMPERSONATE;
-        res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+        res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_INVALID_PARAMETER ||
             broken(res == ERROR_NOT_SUPPORTED), /* NT4 */
             "SetEntriesInAclA failed: %u\n", res);
@@ -3548,7 +3470,7 @@ static void test_SetEntriesInAclA(void)
 
         ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
         ExplicitAccess.grfAccessMode = SET_ACCESS;
-        res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+        res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
         ok(NewAcl != NULL, "returned acl was NULL\n");
         LocalFree(NewAcl);
@@ -3556,7 +3478,7 @@ static void test_SetEntriesInAclA(void)
 
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
     ExplicitAccess.Trustee.ptstrName = (LPSTR)szCurrentUser;
-    res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+    res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
@@ -3564,7 +3486,7 @@ static void test_SetEntriesInAclA(void)
     ExplicitAccess.grfAccessMode = REVOKE_ACCESS;
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
     ExplicitAccess.Trustee.ptstrName = UsersSid;
-    res = pSetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
+    res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %u\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
@@ -3600,7 +3522,7 @@ static void test_inherited_dacl(PACL dacl, PSID admin_sid, PSID user_sid, DWORD 
     ACCESS_ALLOWED_ACE *ace;
     BOOL bret;
 
-    bret = pGetAclInformation(dacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    bret = GetAclInformation(dacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok_(__FILE__, line)(bret, "GetAclInformation failed\n");
 
     todo_wine_if (todo_count)
@@ -3610,7 +3532,7 @@ static void test_inherited_dacl(PACL dacl, PSID admin_sid, PSID user_sid, DWORD 
 
     if (acl_size.AceCount > 0)
     {
-        bret = pGetAce(dacl, 0, (VOID **)&ace);
+        bret = GetAce(dacl, 0, (VOID **)&ace);
         ok_(__FILE__, line)(bret, "Failed to get Current User ACE\n");
 
         bret = EqualSid(&ace->SidStart, user_sid);
@@ -3628,7 +3550,7 @@ static void test_inherited_dacl(PACL dacl, PSID admin_sid, PSID user_sid, DWORD 
     }
     if (acl_size.AceCount > 1)
     {
-        bret = pGetAce(dacl, 1, (VOID **)&ace);
+        bret = GetAce(dacl, 1, (VOID **)&ace);
         ok_(__FILE__, line)(bret, "Failed to get Administators Group ACE\n");
 
         bret = EqualSid(&ace->SidStart, admin_sid);
@@ -3667,7 +3589,7 @@ static void test_CreateDirectoryA(void)
     DWORD error;
     PACL pDacl;
 
-    if (!pGetSecurityInfo || !pGetNamedSecurityInfoA || !pCreateWellKnownSid)
+    if (!pGetNamedSecurityInfoA)
     {
         win_skip("Required functions are not available\n");
         return;
@@ -3696,7 +3618,7 @@ static void test_CreateDirectoryA(void)
     sa.lpSecurityDescriptor = pSD;
     sa.bInheritHandle = TRUE;
     InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
-    pCreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &sid_size);
+    CreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &sid_size);
     pDacl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 100);
     bret = InitializeAcl(pDacl, 100, ACL_REVISION);
     ok(bret, "Failed to initialize ACL.\n");
@@ -3767,11 +3689,10 @@ static void test_CreateDirectoryA(void)
     ok(hTemp != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, pDacl);
 
-    error = pGetSecurityInfo(hTemp, SE_FILE_OBJECT,
-                             OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-                             (PSID *)&owner, NULL, &pDacl, NULL, &pSD);
+    error = GetSecurityInfo(hTemp, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+            (PSID *)&owner, NULL, &pDacl, NULL, &pSD);
     ok(error == ERROR_SUCCESS, "GetNamedSecurityInfo failed with error %d\n", error);
-    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    bret = GetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok(bret, "GetAclInformation failed\n");
     todo_wine
     ok(acl_size.AceCount == 0, "GetAclInformation returned unexpected entry count (%d != 0).\n",
@@ -3785,7 +3706,7 @@ static void test_CreateDirectoryA(void)
     ok(error == ERROR_SUCCESS, "GetNamedSecurityInfo failed with error %d\n", error);
     if (error == ERROR_SUCCESS)
     {
-        bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+        bret = GetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
         ok(bret, "GetAclInformation failed\n");
         todo_wine
         ok(acl_size.AceCount == 0, "GetAclInformation returned unexpected entry count (%d != 0).\n",
@@ -3847,11 +3768,10 @@ static void test_CreateDirectoryA(void)
     pRtlFreeUnicodeString(&tmpfileW);
     HeapFree(GetProcessHeap(), 0, pDacl);
 
-    error = pGetSecurityInfo(hTemp, SE_FILE_OBJECT,
-                             OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-                             (PSID *)&owner, NULL, &pDacl, NULL, &pSD);
+    error = GetSecurityInfo(hTemp, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+            (PSID *)&owner, NULL, &pDacl, NULL, &pSD);
     ok(error == ERROR_SUCCESS, "GetNamedSecurityInfo failed with error %d\n", error);
-    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    bret = GetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok(bret, "GetAclInformation failed\n");
     todo_wine
     ok(acl_size.AceCount == 0, "GetAclInformation returned unexpected entry count (%d != 0).\n",
@@ -3865,7 +3785,7 @@ static void test_CreateDirectoryA(void)
     ok(error == ERROR_SUCCESS, "GetNamedSecurityInfo failed with error %d\n", error);
     if (error == ERROR_SUCCESS)
     {
-        bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+        bret = GetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
         ok(bret, "GetAclInformation failed\n");
         todo_wine
         ok(acl_size.AceCount == 0, "GetAclInformation returned unexpected entry count (%d != 0).\n",
@@ -3911,7 +3831,7 @@ static void test_GetNamedSecurityInfoA(void)
     BYTE flags;
     NTSTATUS status;
 
-    if (!pSetNamedSecurityInfoA || !pGetNamedSecurityInfoA || !pCreateWellKnownSid)
+    if (!pSetNamedSecurityInfoA || !pGetNamedSecurityInfoA)
     {
         win_skip("Required functions are not available\n");
         return;
@@ -4004,7 +3924,7 @@ static void test_GetNamedSecurityInfoA(void)
     pSD = &sd;
     pDacl = HeapAlloc(GetProcessHeap(), 0, 100);
     InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
-    pCreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &sid_size);
+    CreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &sid_size);
     bret = InitializeAcl(pDacl, 100, ACL_REVISION);
     ok(bret, "Failed to initialize ACL.\n");
     bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
@@ -4040,11 +3960,11 @@ static void test_GetNamedSecurityInfoA(void)
     }
     ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
 
-    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    bret = GetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok(bret, "GetAclInformation failed\n");
     if (acl_size.AceCount > 0)
     {
-        bret = pGetAce(pDacl, 0, (VOID **)&ace);
+        bret = GetAce(pDacl, 0, (VOID **)&ace);
         ok(bret, "Failed to get Current User ACE.\n");
         bret = EqualSid(&ace->SidStart, user_sid);
         todo_wine ok(bret, "Current User ACE (%s) != Current User SID (%s).\n",
@@ -4056,7 +3976,7 @@ static void test_GetNamedSecurityInfoA(void)
     }
     if (acl_size.AceCount > 1)
     {
-        bret = pGetAce(pDacl, 1, (VOID **)&ace);
+        bret = GetAce(pDacl, 1, (VOID **)&ace);
         ok(bret, "Failed to get Administators Group ACE.\n");
         bret = EqualSid(&ace->SidStart, admin_sid);
         todo_wine ok(bret || broken(!bret) /* win2k */,
@@ -4082,11 +4002,11 @@ static void test_GetNamedSecurityInfoA(void)
             NULL, NULL, &pDacl, NULL, &pSD);
     ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
 
-    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    bret = GetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok(bret, "GetAclInformation failed\n");
     if (acl_size.AceCount > 0)
     {
-        bret = pGetAce(pDacl, 0, (VOID **)&ace);
+        bret = GetAce(pDacl, 0, (VOID **)&ace);
         ok(bret, "Failed to get ACE.\n");
         todo_wine ok(((ACE_HEADER *)ace)->AceFlags & INHERITED_ACE,
                 "ACE has unexpected flags: 0x%x\n", ((ACE_HEADER *)ace)->AceFlags);
@@ -4186,7 +4106,7 @@ static void test_GetNamedSecurityInfoA(void)
 
     /* Test querying the ownership of a built-in registry key */
     sid_size = sizeof(system_ptr);
-    pCreateWellKnownSid(WinLocalSystemSid, NULL, system_sid, &sid_size);
+    CreateWellKnownSid(WinLocalSystemSid, NULL, system_sid, &sid_size);
     error = pGetNamedSecurityInfoA(software_key, SE_REGISTRY_KEY,
                                    OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,
                                    NULL, NULL, NULL, NULL, &pSD);
@@ -4213,7 +4133,7 @@ static void test_GetNamedSecurityInfoA(void)
 
     /* Test querying the DACL of a built-in registry key */
     sid_size = sizeof(users_ptr);
-    pCreateWellKnownSid(WinBuiltinUsersSid, NULL, users_sid, &sid_size);
+    CreateWellKnownSid(WinBuiltinUsersSid, NULL, users_sid, &sid_size);
     error = pGetNamedSecurityInfoA(software_key, SE_REGISTRY_KEY, DACL_SECURITY_INFORMATION,
                                    NULL, NULL, NULL, NULL, &pSD);
     ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
@@ -4222,12 +4142,12 @@ static void test_GetNamedSecurityInfoA(void)
     ok(bret, "GetSecurityDescriptorDacl failed with error %d\n", GetLastError());
     ok(dacl_present, "DACL should be present\n");
     ok(pDacl && IsValidAcl(pDacl), "GetSecurityDescriptorDacl returned invalid DACL.\n");
-    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    bret = GetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok(bret, "GetAclInformation failed\n");
     ok(acl_size.AceCount != 0, "GetAclInformation returned no ACLs\n");
     for (i=0; i<acl_size.AceCount; i++)
     {
-        bret = pGetAce(pDacl, i, (VOID **)&ace);
+        bret = GetAce(pDacl, i, (VOID **)&ace);
         ok(bret, "Failed to get ACE %d.\n", i);
         bret = EqualSid(&ace->SidStart, users_sid);
         if (bret) users_ace_id = i;
@@ -4238,7 +4158,7 @@ static void test_GetNamedSecurityInfoA(void)
        "Builtin Users ACE not found.\n");
     if (users_ace_id != -1)
     {
-        bret = pGetAce(pDacl, users_ace_id, (VOID **)&ace);
+        bret = GetAce(pDacl, users_ace_id, (VOID **)&ace);
         ok(bret, "Failed to get Builtin Users ACE.\n");
         flags = ((ACE_HEADER *)ace)->AceFlags;
         ok(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE)
@@ -4255,7 +4175,7 @@ static void test_GetNamedSecurityInfoA(void)
     ok(admins_ace_id != -1, "Builtin Admins ACE not found.\n");
     if (admins_ace_id != -1)
     {
-        bret = pGetAce(pDacl, admins_ace_id, (VOID **)&ace);
+        bret = GetAce(pDacl, admins_ace_id, (VOID **)&ace);
         ok(bret, "Failed to get Builtin Admins ACE.\n");
         flags = ((ACE_HEADER *)ace)->AceFlags;
         ok(flags == 0x0
@@ -4325,18 +4245,12 @@ static void test_ConvertStringSecurityDescriptor(void)
         { "D:(D;;GA;;;Nonexistent account)", SDDL_REVISION_1, FALSE, ERROR_INVALID_ACL, ERROR_INVALID_SID } /* W2K */
     };
 
-    if (!pConvertStringSecurityDescriptorToSecurityDescriptorA)
-    {
-        win_skip("ConvertStringSecurityDescriptorToSecurityDescriptor is not available\n");
-        return;
-    }
-
     for (i = 0; i < ARRAY_SIZE(cssd); i++)
     {
         DWORD GLE;
 
         SetLastError(0xdeadbeef);
-        ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+        ret = ConvertStringSecurityDescriptorToSecurityDescriptorA(
             cssd[i].sidstring, cssd[i].revision, &pSD, NULL);
         GLE = GetLastError();
         ok(ret == cssd[i].ret, "(%02u) Expected %s (%d)\n", i, cssd[i].ret ? "success" : "failure", GLE);
@@ -4350,7 +4264,7 @@ static void test_ConvertStringSecurityDescriptor(void)
 
     /* test behaviour with NULL parameters */
     SetLastError(0xdeadbeef);
-    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptorA(
         NULL, 0xdeadbeef, &pSD, NULL);
     todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
@@ -4365,14 +4279,14 @@ static void test_ConvertStringSecurityDescriptor(void)
         GetLastError());
 
     SetLastError(0xdeadbeef);
-    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;ROB;;;WD)", 0xdeadbeef, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
         "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_PARAMETER instead of %d\n",
         GetLastError());
 
     SetLastError(0xdeadbeef);
-    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;ROB;;;WD)", SDDL_REVISION_1, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
         "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_PARAMETER instead of %d\n",
@@ -4386,7 +4300,7 @@ static void test_ConvertStringSecurityDescriptor(void)
     LocalFree(pSD);
 
     SetLastError(0xdeadbeef);
-    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:P(A;;GRGW;;;BA)(A;;GRGW;;;S-1-5-21-0-0-0-1000)S:(ML;;NWNR;;;S-1-16-12288)", SDDL_REVISION_1, &pSD, NULL);
     ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_DATATYPE) /* win2k */,
        "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %u\n", GetLastError());
@@ -4395,7 +4309,7 @@ static void test_ConvertStringSecurityDescriptor(void)
     /* empty DACL */
     size = 0;
     SetLastError(0xdeadbeef);
-    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA("D:", SDDL_REVISION_1, &pSD, &size);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptorA("D:", SDDL_REVISION_1, &pSD, &size);
     ok(ret, "unexpected error %u\n", GetLastError());
     ok(size == sizeof(SECURITY_DESCRIPTOR_RELATIVE) + sizeof(ACL), "got %u\n", size);
     acl = (ACL *)((char *)pSD + sizeof(SECURITY_DESCRIPTOR_RELATIVE));
@@ -4409,7 +4323,7 @@ static void test_ConvertStringSecurityDescriptor(void)
     /* empty SACL */
     size = 0;
     SetLastError(0xdeadbeef);
-    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA("S:", SDDL_REVISION_1, &pSD, &size);
+    ret = ConvertStringSecurityDescriptorToSecurityDescriptorA("S:", SDDL_REVISION_1, &pSD, &size);
     ok(ret, "unexpected error %u\n", GetLastError());
     ok(size == sizeof(SECURITY_DESCRIPTOR_RELATIVE) + sizeof(ACL), "got %u\n", size);
     acl = (ACL *)((char *)pSD + sizeof(SECURITY_DESCRIPTOR_RELATIVE));
@@ -4437,11 +4351,6 @@ static void test_ConvertSecurityDescriptorToString(void)
         win_skip("ConvertSecurityDescriptorToStringSecurityDescriptor is not available\n");
         return;
     }
-    if (!pCreateWellKnownSid)
-    {
-        win_skip("CreateWellKnownSid is not available\n");
-        return;
-    }
 
 /* It seems Windows XP adds an extra character to the length of the string for each ACE in an ACL. We
  * don't replicate this feature so we only test len >= strlen+1. */
@@ -4460,7 +4369,7 @@ static void test_ConvertSecurityDescriptorToString(void)
     CHECK_RESULT_AND_FREE("");
 
     size = 4096;
-    pCreateWellKnownSid(WinLocalSid, NULL, sid_buf, &size);
+    CreateWellKnownSid(WinLocalSid, NULL, sid_buf, &size);
     SetSecurityDescriptorOwner(&desc, sid_buf, FALSE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:S-1-2-0");
@@ -4470,12 +4379,12 @@ static void test_ConvertSecurityDescriptorToString(void)
     CHECK_RESULT_AND_FREE("O:S-1-2-0");
 
     size = sizeof(sid_buf);
-    pCreateWellKnownSid(WinLocalSystemSid, NULL, sid_buf, &size);
+    CreateWellKnownSid(WinLocalSystemSid, NULL, sid_buf, &size);
     SetSecurityDescriptorOwner(&desc, sid_buf, TRUE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:SY");
 
-    pConvertStringSidToSidA("S-1-5-21-93476-23408-4576", &psid);
+    ConvertStringSidToSidA("S-1-5-21-93476-23408-4576", &psid);
     SetSecurityDescriptorGroup(&desc, psid, TRUE);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576");
@@ -4493,7 +4402,7 @@ static void test_ConvertSecurityDescriptorToString(void)
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:");
 
-    pConvertStringSidToSidA("S-1-5-6", &psid2);
+    ConvertStringSidToSidA("S-1-5-6", &psid2);
     pAddAccessAllowedAceEx(pacl, ACL_REVISION, NO_PROPAGATE_INHERIT_ACE, 0xf0000000, psid2);
     ok(pConvertSecurityDescriptorToStringSecurityDescriptorA(&desc, SDDL_REVISION_1, sec_info, &string, &len), "Conversion failed\n");
     CHECK_RESULT_AND_FREE("O:SYG:S-1-5-21-93476-23408-4576D:(A;NP;GAGXGWGR;;;SU)");
@@ -4635,13 +4544,7 @@ static void test_PrivateObjectSecurity(void)
     PSECURITY_DESCRIPTOR buf;
     BOOL ret;
 
-    if (!pConvertStringSecurityDescriptorToSecurityDescriptorA)
-    {
-        win_skip("ConvertStringSecurityDescriptorToSecurityDescriptor is not available\n");
-        return;
-    }
-
-    ok(pConvertStringSecurityDescriptorToSecurityDescriptorA(
+    ok(ConvertStringSecurityDescriptorToSecurityDescriptorA(
         "O:SY"
         "G:S-1-5-21-93476-23408-4576"
         "D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)"
@@ -4653,7 +4556,7 @@ static void test_PrivateObjectSecurity(void)
 
     LocalFree(sec);
 
-    ok(pConvertStringSecurityDescriptorToSecurityDescriptorA(
+    ok(ConvertStringSecurityDescriptorToSecurityDescriptorA(
         "O:SY"
         "G:S-1-5-21-93476-23408-4576",
         SDDL_REVISION_1, &sec, &dwDescSize), "Creating descriptor failed\n");
@@ -4662,7 +4565,7 @@ static void test_PrivateObjectSecurity(void)
 
     LocalFree(sec);
 
-    ok(pConvertStringSecurityDescriptorToSecurityDescriptorA(
+    ok(ConvertStringSecurityDescriptorToSecurityDescriptorA(
         "O:SY"
         "G:S-1-5-21-93476-23408-4576"
         "D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)"
@@ -4791,7 +4694,7 @@ static void test_GetSecurityInfo(void)
     BYTE flags;
     DWORD ret;
 
-    if (!pGetSecurityInfo || !pSetSecurityInfo)
+    if (!pSetSecurityInfo)
     {
         win_skip("[Get|Set]SecurityInfo is not available\n");
         return;
@@ -4821,7 +4724,7 @@ static void test_GetSecurityInfo(void)
         return;
     }
 
-    ret = pGetSecurityInfo(obj, SE_FILE_OBJECT,
+    ret = GetSecurityInfo(obj, SE_FILE_OBJECT,
                           OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
                           &owner, &group, &pDacl, NULL, &pSD);
     if (ret == ERROR_CALL_NOT_IMPLEMENTED)
@@ -4841,16 +4744,9 @@ static void test_GetSecurityInfo(void)
 
     LocalFree(pSD);
 
-    if (!pCreateWellKnownSid)
-    {
-        win_skip("NULL parameter test would crash on NT4\n");
-        CloseHandle(obj);
-        return;
-    }
-
     /* If we don't ask for the security descriptor, Windows will still give us
        the other stuff, leaving us no way to free it.  */
-    ret = pGetSecurityInfo(obj, SE_FILE_OBJECT,
+    ret = GetSecurityInfo(obj, SE_FILE_OBJECT,
                           OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
                           &owner, &group, &pDacl, NULL, NULL);
     ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
@@ -4865,7 +4761,7 @@ static void test_GetSecurityInfo(void)
     pSD = &sd;
     pDacl = (PACL)&dacl;
     InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
-    pCreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &sid_size);
+    CreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &sid_size);
     bret = InitializeAcl(pDacl, sizeof(dacl), ACL_REVISION);
     ok(bret, "Failed to initialize ACL.\n");
     bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
@@ -4877,15 +4773,15 @@ static void test_GetSecurityInfo(void)
     ret = pSetSecurityInfo(obj, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
                           NULL, NULL, pDacl, NULL);
     ok(ret == ERROR_SUCCESS, "SetSecurityInfo returned %d\n", ret);
-    ret = pGetSecurityInfo(obj, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
+    ret = GetSecurityInfo(obj, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
                           NULL, NULL, &pDacl, NULL, &pSD);
     ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
     ok(pDacl && IsValidAcl(pDacl), "GetSecurityInfo returned invalid DACL.\n");
-    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    bret = GetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok(bret, "GetAclInformation failed\n");
     if (acl_size.AceCount > 0)
     {
-        bret = pGetAce(pDacl, 0, (VOID **)&ace);
+        bret = GetAce(pDacl, 0, (VOID **)&ace);
         ok(bret, "Failed to get Current User ACE.\n");
         bret = EqualSid(&ace->SidStart, user_sid);
         todo_wine ok(bret, "Current User ACE (%s) != Current User SID (%s).\n",
@@ -4897,7 +4793,7 @@ static void test_GetSecurityInfo(void)
     }
     if (acl_size.AceCount > 1)
     {
-        bret = pGetAce(pDacl, 1, (VOID **)&ace);
+        bret = GetAce(pDacl, 1, (VOID **)&ace);
         ok(bret, "Failed to get Administators Group ACE.\n");
         bret = EqualSid(&ace->SidStart, admin_sid);
         todo_wine ok(bret, "Administators Group ACE (%s) != Administators Group SID (%s).\n", debugstr_sid(&ace->SidStart), debugstr_sid(admin_sid));
@@ -4919,11 +4815,11 @@ static void test_GetSecurityInfo(void)
         return;
     }
     sid_size = sizeof(domain_users_ptr);
-    pCreateWellKnownSid(WinAccountDomainUsersSid, domain_sid, domain_users_sid, &sid_size);
+    CreateWellKnownSid(WinAccountDomainUsersSid, domain_sid, domain_users_sid, &sid_size);
     FreeSid(domain_sid);
 
     /* Test querying the ownership of a process */
-    ret = pGetSecurityInfo(GetCurrentProcess(), SE_KERNEL_OBJECT,
+    ret = GetSecurityInfo(GetCurrentProcess(), SE_KERNEL_OBJECT,
                            OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION,
                            NULL, NULL, NULL, NULL, &pSD);
     ok(!ret, "GetNamedSecurityInfo failed with error %d\n", ret);
@@ -4941,7 +4837,7 @@ static void test_GetSecurityInfo(void)
     LocalFree(pSD);
 
     /* Test querying the DACL of a process */
-    ret = pGetSecurityInfo(GetCurrentProcess(), SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION,
+    ret = GetSecurityInfo(GetCurrentProcess(), SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION,
                                    NULL, NULL, NULL, NULL, &pSD);
     ok(!ret, "GetSecurityInfo failed with error %d\n", ret);
 
@@ -4949,12 +4845,12 @@ static void test_GetSecurityInfo(void)
     ok(bret, "GetSecurityDescriptorDacl failed with error %d\n", GetLastError());
     ok(dacl_present, "DACL should be present\n");
     ok(pDacl && IsValidAcl(pDacl), "GetSecurityDescriptorDacl returned invalid DACL.\n");
-    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    bret = GetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok(bret, "GetAclInformation failed\n");
     ok(acl_size.AceCount != 0, "GetAclInformation returned no ACLs\n");
     for (i=0; i<acl_size.AceCount; i++)
     {
-        bret = pGetAce(pDacl, i, (VOID **)&ace);
+        bret = GetAce(pDacl, i, (VOID **)&ace);
         ok(bret, "Failed to get ACE %d.\n", i);
         bret = EqualSid(&ace->SidStart, domain_users_sid);
         if (bret) domain_users_ace_id = i;
@@ -4965,7 +4861,7 @@ static void test_GetSecurityInfo(void)
        "Domain Users ACE not found.\n");
     if (domain_users_ace_id != -1)
     {
-        bret = pGetAce(pDacl, domain_users_ace_id, (VOID **)&ace);
+        bret = GetAce(pDacl, domain_users_ace_id, (VOID **)&ace);
         ok(bret, "Failed to get Domain Users ACE.\n");
         flags = ((ACE_HEADER *)ace)->AceFlags;
         ok(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE),
@@ -4978,7 +4874,7 @@ static void test_GetSecurityInfo(void)
        "Builtin Admins ACE not found.\n");
     if (admins_ace_id != -1)
     {
-        bret = pGetAce(pDacl, admins_ace_id, (VOID **)&ace);
+        bret = GetAce(pDacl, admins_ace_id, (VOID **)&ace);
         ok(bret, "Failed to get Builtin Admins ACE.\n");
         flags = ((ACE_HEADER *)ace)->AceFlags;
         ok(flags == 0x0, "Builtin Admins ACE has unexpected flags (0x%x != 0x0)\n", flags);
@@ -4992,26 +4888,21 @@ static void test_GetSidSubAuthority(void)
 {
     PSID psid = NULL;
 
-    if (!pGetSidSubAuthority || !pConvertStringSidToSidA || !pIsValidSid || !pGetSidSubAuthorityCount)
-    {
-        win_skip("Some functions not available\n");
-        return;
-    }
     /* Note: on windows passing in an invalid index like -1, lets GetSidSubAuthority return 0x05000000 but
              still GetLastError returns ERROR_SUCCESS then. We don't test these unlikely cornercases here for now */
-    ok(pConvertStringSidToSidA("S-1-5-21-93476-23408-4576",&psid),"ConvertStringSidToSidA failed\n");
-    ok(pIsValidSid(psid),"Sid is not valid\n");
+    ok(ConvertStringSidToSidA("S-1-5-21-93476-23408-4576",&psid),"ConvertStringSidToSidA failed\n");
+    ok(IsValidSid(psid),"Sid is not valid\n");
     SetLastError(0xbebecaca);
-    ok(*pGetSidSubAuthorityCount(psid) == 4,"GetSidSubAuthorityCount gave %d expected 4\n",*pGetSidSubAuthorityCount(psid));
+    ok(*GetSidSubAuthorityCount(psid) == 4,"GetSidSubAuthorityCount gave %d expected 4\n", *GetSidSubAuthorityCount(psid));
     ok(GetLastError() == 0,"GetLastError returned %d instead of 0\n",GetLastError());
     SetLastError(0xbebecaca);
-    ok(*pGetSidSubAuthority(psid,0) == 21,"GetSidSubAuthority gave %d expected 21\n",*pGetSidSubAuthority(psid,0));
+    ok(*GetSidSubAuthority(psid,0) == 21,"GetSidSubAuthority gave %d expected 21\n", *GetSidSubAuthority(psid,0));
     ok(GetLastError() == 0,"GetLastError returned %d instead of 0\n",GetLastError());
     SetLastError(0xbebecaca);
-    ok(*pGetSidSubAuthority(psid,1) == 93476,"GetSidSubAuthority gave %d expected 93476\n",*pGetSidSubAuthority(psid,1));
+    ok(*GetSidSubAuthority(psid,1) == 93476,"GetSidSubAuthority gave %d expected 93476\n", *GetSidSubAuthority(psid,1));
     ok(GetLastError() == 0,"GetLastError returned %d instead of 0\n",GetLastError());
     SetLastError(0xbebecaca);
-    ok(pGetSidSubAuthority(psid,4) != NULL,"Expected out of bounds GetSidSubAuthority to return a non-NULL pointer\n");
+    ok(GetSidSubAuthority(psid,4) != NULL,"Expected out of bounds GetSidSubAuthority to return a non-NULL pointer\n");
     ok(GetLastError() == 0,"GetLastError returned %d instead of 0\n",GetLastError());
     LocalFree(psid);
 }
@@ -6377,7 +6268,7 @@ static void test_default_dacl_owner_sid(void)
 
     index = 0;
     found = FALSE;
-    while (pGetAce( dacl, index++, (void **)&ace ))
+    while (GetAce( dacl, index++, (void **)&ace ))
     {
         if (EqualSid( &ace->SidStart, owner )) found = TRUE;
     }
@@ -6538,7 +6429,7 @@ static void test_AddMandatoryAce(void)
 
     index = 0;
     found = FALSE;
-    while (pGetAce(acl, index++, (void **)&ace))
+    while (GetAce(acl, index++, (void **)&ace))
     {
         if (ace->Header.AceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
         ok(ace->Header.AceFlags == 0, "Expected flags 0, got %x\n", ace->Header.AceFlags);
@@ -6571,11 +6462,11 @@ static void test_AddMandatoryAce(void)
     ok(present, "SACL not present\n");
     ok(sacl != (void *)0xdeadbeef, "SACL not set\n");
     ok(!defaulted, "SACL defaulted\n");
-    ret = pGetAclInformation(sacl, &acl_size_info, sizeof(acl_size_info), AclSizeInformation);
+    ret = GetAclInformation(sacl, &acl_size_info, sizeof(acl_size_info), AclSizeInformation);
     ok(ret, "GetAclInformation failed with error %u\n", GetLastError());
     ok(acl_size_info.AceCount == 1, "SACL contains an unexpected ACE count %u\n", acl_size_info.AceCount);
 
-    ret = pGetAce(sacl, 0, (void **)&ace);
+    ret = GetAce(sacl, 0, (void **)&ace);
     ok(ret, "GetAce failed with error %u\n", GetLastError());
     ok (ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE, "Unexpected ACE type %#x\n", ace->Header.AceType);
     ok(!ace->Header.AceFlags, "Unexpected ACE flags %#x\n", ace->Header.AceFlags);
@@ -6610,7 +6501,7 @@ static void test_AddMandatoryAce(void)
 
     index = 0;
     found = found2 = FALSE;
-    while (pGetAce(sacl, index++, (void **)&ace))
+    while (GetAce(sacl, index++, (void **)&ace))
     {
         if (ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
         {
@@ -7087,7 +6978,7 @@ static void test_token_label(void)
         ok(!defaulted, "SACL defaulted\n");
         ok(sacl->AceCount == 1, "SACL contains an unexpected ACE count %u\n", sacl->AceCount);
 
-        ret = pGetAce(sacl, 0, (void **)&ace);
+        ret = GetAce(sacl, 0, (void **)&ace);
         ok(ret, "GetAce failed with error %u\n", GetLastError());
 
         ok(ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE,
@@ -7128,8 +7019,7 @@ static void test_token_security_descriptor(void)
     STARTUPINFOA startup;
     PSID psid;
 
-    if (!pDuplicateTokenEx || !pConvertStringSidToSidA || !pAddAccessAllowedAceEx || !pGetAce
-        || !pSetEntriesInAclW)
+    if (!pDuplicateTokenEx || !pAddAccessAllowedAceEx || !pSetEntriesInAclW)
     {
         win_skip("Some functions not available\n");
         return;
@@ -7146,7 +7036,7 @@ static void test_token_security_descriptor(void)
     ret = InitializeAcl(acl, 256, ACL_REVISION);
     ok(ret, "InitializeAcl failed with error %u\n", GetLastError());
 
-    ret = pConvertStringSidToSidA("S-1-5-6", &psid);
+    ret = ConvertStringSidToSidA("S-1-5-6", &psid);
     ok(ret, "ConvertStringSidToSidA failed with error %u\n", GetLastError());
 
     ret = pAddAccessAllowedAceEx(acl, ACL_REVISION, NO_PROPAGATE_INHERIT_ACE, GENERIC_ALL, psid);
@@ -7180,7 +7070,7 @@ static void test_token_security_descriptor(void)
     ok(acl2->AceCount == 1, "Expected 1 ACE, got %d\n", acl2->AceCount);
     ok(!defaulted, "acl2 defaulted\n");
 
-    ret = pGetAce(acl2, 0, (void **)&ace);
+    ret = GetAce(acl2, 0, (void **)&ace);
     ok(ret, "GetAce failed with error %u\n", GetLastError());
     ok(ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE, "Unexpected ACE type %#x\n", ace->Header.AceType);
     ok(EqualSid(&ace->SidStart, psid), "Expected access allowed ACE\n");
@@ -7217,7 +7107,7 @@ static void test_token_security_descriptor(void)
 
         index = 0;
         found = FALSE;
-        while (pGetAce(acl2, index++, (void **)&ace))
+        while (GetAce(acl2, index++, (void **)&ace))
         {
             if (ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE && EqualSid(&ace->SidStart, psid))
                 found = TRUE;
@@ -7296,7 +7186,7 @@ static void test_token_security_descriptor(void)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
 
-    sprintf(buffer, "%s tests/security.c test_token_sd", myARGV[0]);
+    sprintf(buffer, "%s security test_token_sd", myARGV[0]);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess failed with error %u\n", GetLastError());
     winetest_wait_child_process(info.hProcess);
@@ -7325,7 +7215,7 @@ static void test_child_token_sd(void)
     PSID psid;
     ACL *acl;
 
-    ret = pConvertStringSidToSidA("S-1-5-6", &psid);
+    ret = ConvertStringSidToSidA("S-1-5-6", &psid);
     ok(ret, "ConvertStringSidToSidA failed with error %u\n", GetLastError());
 
     ret = OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, &token);
@@ -7351,7 +7241,8 @@ static void test_child_token_sd(void)
     ok(acl->AceCount, "Expected at least one ACE\n");
     for (i = 0; i < acl->AceCount; i++)
     {
-        ok(pGetAce(acl, i, (void **)&acc_ace), "GetAce failed with error %u\n", GetLastError());
+        ret = GetAce(acl, i, (void **)&acc_ace);
+        ok(ret, "GetAce failed with error %u\n", GetLastError());
         ok(acc_ace->Header.AceType != ACCESS_ALLOWED_ACE_TYPE || !EqualSid(&acc_ace->SidStart, psid),
            "ACE inherited from the parent\n");
     }
@@ -7382,7 +7273,7 @@ static void test_child_token_sd(void)
     ok(acl && acl != (void *)0xdeadbeef, "Got invalid SACL\n");
     ok(!defaulted, "SACL defaulted\n");
     ok(acl->AceCount == 1, "Expected exactly one ACE\n");
-    ret = pGetAce(acl, 0, (void **)&ace_label);
+    ret = GetAce(acl, 0, (void **)&ace_label);
     ok(ret, "GetAce failed with error %u\n", GetLastError());
     ok(ace_label->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE,
        "Unexpected ACE type %#x\n", ace_label->Header.AceType);
@@ -7567,6 +7458,75 @@ static void test_BuildSecurityDescriptorW(void)
     LocalFree(new_sd);
 }
 
+static void test_EqualDomainSid(void)
+{
+    SID_IDENTIFIER_AUTHORITY ident = { SECURITY_NT_AUTHORITY };
+    char sid_buffer[SECURITY_MAX_SID_SIZE], sid_buffer2[SECURITY_MAX_SID_SIZE];
+    PSID domainsid, sid = sid_buffer, sid2 = sid_buffer2;
+    DWORD size;
+    BOOL ret, equal;
+    unsigned int i;
+
+    if (!pEqualDomainSid)
+    {
+        win_skip("EqualDomainSid not available\n");
+        return;
+    }
+
+    ret = AllocateAndInitializeSid(&ident, 6, SECURITY_NT_NON_UNIQUE, 12, 23, 34, 45, 56, 0, 0, &domainsid);
+    ok(ret, "AllocateAndInitializeSid error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pEqualDomainSid(NULL, NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_SID, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pEqualDomainSid(domainsid, domainsid, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(well_known_sid_values); i++)
+    {
+        SID *pisid = sid;
+
+        size = sizeof(sid_buffer);
+        if (!CreateWellKnownSid(i, NULL, sid, &size))
+        {
+            trace("Well known SID %u not supported\n", i);
+            continue;
+        }
+
+        equal = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = pEqualDomainSid(sid, domainsid, &equal);
+        if (pisid->SubAuthority[0] != SECURITY_BUILTIN_DOMAIN_RID)
+        {
+            ok(!ret, "%u: got %d\n", i, ret);
+            ok(GetLastError() == ERROR_NON_DOMAIN_SID, "%u: got %u\n", i, GetLastError());
+            ok(equal == 0xdeadbeef, "%u: got %d\n", i, equal);
+            continue;
+        }
+
+        ok(ret, "%u: got %d\n", i, ret);
+        ok(GetLastError() == 0, "%u: got %u\n", i, GetLastError());
+        ok(equal == 0, "%u: got %d\n", i, equal);
+
+        size = sizeof(sid_buffer2);
+        ret = CreateWellKnownSid(i, well_known_sid_values[i].without_domain ? NULL : domainsid, sid2, &size);
+        ok(ret, "%u: CreateWellKnownSid error %u\n", i, GetLastError());
+
+        equal = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = pEqualDomainSid(sid, sid2, &equal);
+        ok(ret, "%u: got %d\n", i, ret);
+        ok(GetLastError() == 0, "%u: got %u\n", i, GetLastError());
+        ok(equal == 1, "%u: got %d\n", i, equal);
+    }
+
+    FreeSid(domainsid);
+}
+
 START_TEST(security)
 {
     init();
@@ -7603,6 +7563,7 @@ START_TEST(security)
     test_PrivateObjectSecurity();
     test_acls();
     test_GetWindowsAccountDomainSid();
+    test_EqualDomainSid();
     test_GetSecurityInfo();
     test_GetSidSubAuthority();
     test_CheckTokenMembership();

@@ -3,6 +3,8 @@ IMPORTLIB = wintrust
 IMPORTS   = crypt32 user32 advapi32
 DELAYIMPORTS = cryptui imagehlp
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	asn.c \
 	crypt.c \

@@ -15,7 +15,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include "windef.h"
@@ -69,6 +68,27 @@ BOOL WINAPI WTSEnableChildSessions(BOOL enable)
 {
     FIXME("Stub %d\n", enable);
     return TRUE;
+}
+
+
+/************************************************************
+ *                WTSEnumerateProcessesExW  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateProcessesExW(HANDLE server, DWORD *level, DWORD session_id, WCHAR **info, DWORD *count)
+{
+    FIXME("Stub %p %p %d %p %p\n", server, level, session_id, info, count);
+    if (count) *count = 0;
+    return FALSE;
+}
+
+/************************************************************
+ *                WTSEnumerateProcessesExA  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateProcessesExA(HANDLE server, DWORD *level, DWORD session_id, char **info, DWORD *count)
+{
+    FIXME("Stub %p %p %d %p %p\n", server, level, session_id, info, count);
+    if (count) *count = 0;
+    return FALSE;
 }
 
 /************************************************************
@@ -129,6 +149,26 @@ BOOL WINAPI WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Versi
 
 
 /************************************************************
+ *                WTSEnumerateEnumerateSessionsExW  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateSessionsExW(HANDLE server, DWORD *level, DWORD filter, WTS_SESSION_INFO_1W* info, DWORD *count)
+{
+    FIXME("Stub %p %p %d %p %p\n", server, level, filter, info, count);
+    if (count) *count = 0;
+    return FALSE;
+}
+
+/************************************************************
+ *                WTSEnumerateEnumerateSessionsExA  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateSessionsExA(HANDLE server, DWORD *level, DWORD filter, WTS_SESSION_INFO_1A* info, DWORD *count)
+{
+    FIXME("Stub %p %p %d %p %p\n", server, level, filter, info, count);
+    if (count) *count = 0;
+    return FALSE;
+}
+
+/************************************************************
  *                WTSEnumerateEnumerateSessionsA  (WTSAPI32.@)
  */
 BOOL WINAPI WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version,
@@ -173,6 +213,27 @@ void WINAPI WTSFreeMemory(PVOID pMemory)
 }
 
 /************************************************************
+ *                WTSFreeMemoryExA (WTSAPI32.@)
+ */
+BOOL WINAPI WTSFreeMemoryExA(WTS_TYPE_CLASS type, void *ptr, ULONG nmemb)
+{
+    TRACE("%d %p %d\n", type, ptr, nmemb);
+    heap_free(ptr);
+    return TRUE;
+}
+
+/************************************************************
+ *                WTSFreeMemoryExW (WTSAPI32.@)
+ */
+BOOL WINAPI WTSFreeMemoryExW(WTS_TYPE_CLASS type, void *ptr, ULONG nmemb)
+{
+    TRACE("%d %p %d\n", type, ptr, nmemb);
+    heap_free(ptr);
+    return TRUE;
+}
+
+
+/************************************************************
  *                WTSLogoffSession (WTSAPI32.@)
  */
 BOOL WINAPI WTSLogoffSession(HANDLE hserver, DWORD session_id, BOOL bwait)
@@ -180,6 +241,27 @@ BOOL WINAPI WTSLogoffSession(HANDLE hserver, DWORD session_id, BOOL bwait)
     FIXME("(%p, 0x%x, %d): stub\n", hserver, session_id, bwait);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
+
+
+/************************************************************
+ *                WTSOpenServerExW (WTSAPI32.@)
+ */
+HANDLE WINAPI WTSOpenServerExW(WCHAR *server_name)
+{
+    FIXME("(%s) stub\n", debugstr_w(server_name));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+/************************************************************
+ *                WTSOpenServerExA (WTSAPI32.@)
+ */
+HANDLE WINAPI WTSOpenServerExA(char *server_name)
+{
+    FIXME("(%s) stub\n", debugstr_a(server_name));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
 }
 
 /************************************************************
@@ -303,7 +385,7 @@ BOOL WINAPI WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
 BOOL WINAPI WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
 {
     FIXME("Stub %p %p 0x%08x\n", hServer, hWnd, dwFlags);
-    return FALSE;
+    return TRUE;
 }
 
 

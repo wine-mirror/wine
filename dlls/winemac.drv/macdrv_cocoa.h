@@ -140,6 +140,7 @@ typedef struct macdrv_opaque_opengl_context* macdrv_opengl_context;
 #ifdef HAVE_METAL_METAL_H
 typedef struct macdrv_opaque_metal_device* macdrv_metal_device;
 typedef struct macdrv_opaque_metal_view* macdrv_metal_view;
+typedef struct macdrv_opaque_metal_layer* macdrv_metal_layer;
 #endif
 typedef struct macdrv_opaque_status_item* macdrv_status_item;
 struct macdrv_event;
@@ -257,10 +258,60 @@ extern int macdrv_clip_cursor(CGRect rect) DECLSPEC_HIDDEN;
 
 
 /* display */
+
+/* Used DISPLAY_DEVICE.StateFlags for adapters */
+#define DISPLAY_DEVICE_ATTACHED_TO_DESKTOP      0x00000001
+#define DISPLAY_DEVICE_PRIMARY_DEVICE           0x00000004
+/* Used DISPLAY_DEVICE.StateFlags for monitors */
+#define DISPLAY_DEVICE_ACTIVE                   0x00000001
+#define DISPLAY_DEVICE_ATTACHED                 0x00000002
+
+/* Represent a physical GPU in the PCI slots */
+struct macdrv_gpu
+{
+    /* PCI GPU io registry entry id */
+    uint64_t id;
+    /* Name, in UTF-8 encoding */
+    char name[128];
+    /* PCI ID */
+    uint32_t vendor_id;
+    uint32_t device_id;
+    uint32_t subsys_id;
+    uint32_t revision_id;
+};
+
+/* Represent an adapter in EnumDisplayDevices context */
+struct macdrv_adapter
+{
+    /* ID to uniquely identify an adapter. Currently it's a CGDirectDisplayID */
+    uint32_t id;
+    /* as StateFlags in DISPLAY_DEVICE struct */
+    uint32_t state_flags;
+};
+
+/* Represent a monitor in EnumDisplayDevices context */
+struct macdrv_monitor
+{
+    /* Name, in UTF-8 encoding */
+    char name[128];
+    /* as RcMonitor in MONITORINFO struct after conversion by rect_from_cgrect */
+    CGRect rc_monitor;
+    /* as RcWork in MONITORINFO struct after conversion by rect_from_cgrect */
+    CGRect rc_work;
+    /* StateFlags in DISPLAY_DEVICE struct */
+    uint32_t state_flags;
+};
+
 extern int macdrv_get_displays(struct macdrv_display** displays, int* count) DECLSPEC_HIDDEN;
 extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDEN;
 extern int macdrv_set_display_mode(const struct macdrv_display* display,
                                    CGDisplayModeRef display_mode) DECLSPEC_HIDDEN;
+extern int macdrv_get_gpus(struct macdrv_gpu** gpus, int* count) DECLSPEC_HIDDEN;
+extern void macdrv_free_gpus(struct macdrv_gpu* gpus) DECLSPEC_HIDDEN;
+extern int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** adapters, int* count) DECLSPEC_HIDDEN;
+extern void macdrv_free_adapters(struct macdrv_adapter* adapters) DECLSPEC_HIDDEN;
+extern int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** monitors, int* count) DECLSPEC_HIDDEN;
+extern void macdrv_free_monitors(struct macdrv_monitor* monitors) DECLSPEC_HIDDEN;
 
 
 /* event */
@@ -537,6 +588,7 @@ extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_conte
 extern macdrv_metal_device macdrv_create_metal_device(void) DECLSPEC_HIDDEN;
 extern void macdrv_release_metal_device(macdrv_metal_device d) DECLSPEC_HIDDEN;
 extern macdrv_metal_view macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d) DECLSPEC_HIDDEN;
+extern macdrv_metal_layer macdrv_view_get_metal_layer(macdrv_metal_view v) DECLSPEC_HIDDEN;
 extern void macdrv_view_release_metal_view(macdrv_metal_view v) DECLSPEC_HIDDEN;
 #endif
 extern int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2]) DECLSPEC_HIDDEN;

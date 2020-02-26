@@ -33,7 +33,7 @@
 @ cdecl _strtof_l(str ptr ptr) ucrtbase._strtof_l
 @ cdecl -ret64 _strtoi64(str ptr long) ucrtbase._strtoi64
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) ucrtbase._strtoi64_l
-@ stub _strtoimax_l
+@ cdecl -ret64 _strtoimax_l(str ptr long ptr) ucrtbase._strtoimax_l
 @ cdecl _strtol_l(str ptr long ptr) ucrtbase._strtol_l
 @ stub _strtold_l
 @ cdecl -ret64 _strtoll_l(str ptr long ptr) ucrtbase._strtoll_l
@@ -41,7 +41,7 @@
 @ cdecl -ret64 _strtoui64_l(str ptr long ptr) ucrtbase._strtoui64_l
 @ cdecl _strtoul_l(str ptr long ptr) ucrtbase._strtoul_l
 @ cdecl -ret64 _strtoull_l(str ptr long ptr) ucrtbase._strtoull_l
-@ stub _strtoumax_l
+@ cdecl -ret64 _strtoumax_l(str ptr long ptr) ucrtbase._strtoumax_l
 @ cdecl _ui64toa(int64 ptr long) ucrtbase._ui64toa
 @ cdecl _ui64toa_s(int64 ptr long long) ucrtbase._ui64toa_s
 @ cdecl _ui64tow(int64 ptr long) ucrtbase._ui64tow
@@ -94,15 +94,15 @@
 @ cdecl mbtowc(ptr str long) ucrtbase.mbtowc
 @ cdecl strtod(str ptr) ucrtbase.strtod
 @ cdecl strtof(str ptr) ucrtbase.strtof
-@ stub strtoimax
+@ cdecl -ret64 strtoimax(str ptr long) ucrtbase.strtoimax
 @ cdecl strtol(str ptr long) ucrtbase.strtol
 @ stub strtold
 @ cdecl -ret64 strtoll(str ptr long) ucrtbase.strtoll
 @ cdecl strtoul(str ptr long) ucrtbase.strtoul
 @ cdecl -ret64 strtoull(str ptr long) ucrtbase.strtoull
-@ stub strtoumax
+@ cdecl -ret64 strtoumax(str ptr long) ucrtbase.strtoumax
 @ cdecl wcrtomb(ptr long ptr) ucrtbase.wcrtomb
-@ stub wcrtomb_s
+@ cdecl wcrtomb_s(ptr ptr long long ptr) ucrtbase.wcrtomb_s
 @ cdecl wcsrtombs(ptr ptr long ptr) ucrtbase.wcsrtombs
 @ cdecl wcsrtombs_s(ptr ptr long ptr long ptr) ucrtbase.wcsrtombs_s
 @ cdecl wcstod(wstr ptr) ucrtbase.wcstod

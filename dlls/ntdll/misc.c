@@ -376,12 +376,34 @@ void WINAPI WinSqmSetDWORD(HANDLE session, DWORD datapoint_id, DWORD datapoint_v
 }
 
 /******************************************************************************
+ *                  EtwEventActivityIdControl (NTDLL.@)
+ */
+ULONG WINAPI EtwEventActivityIdControl(ULONG code, GUID *guid)
+{
+    static int once;
+
+    if (!once++) FIXME("0x%x, %p: stub\n", code, guid);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *                  EtwEventProviderEnabled (NTDLL.@)
+ */
+BOOLEAN WINAPI EtwEventProviderEnabled( REGHANDLE handle, UCHAR level, ULONGLONG keyword )
+{
+    FIXME("%s, %u, %s: stub\n", wine_dbgstr_longlong(handle), level, wine_dbgstr_longlong(keyword));
+    return FALSE;
+}
+
+/******************************************************************************
  *                  EtwEventRegister (NTDLL.@)
  */
 ULONG WINAPI EtwEventRegister( LPCGUID provider, PENABLECALLBACK callback, PVOID context,
                 PREGHANDLE handle )
 {
     FIXME("(%s, %p, %p, %p) stub.\n", debugstr_guid(provider), callback, context, handle);
+
+    if (!handle) return ERROR_INVALID_PARAMETER;
 
     *handle = 0xdeadbeef;
     return ERROR_SUCCESS;
@@ -403,6 +425,27 @@ ULONG WINAPI EtwEventSetInformation( REGHANDLE handle, EVENT_INFO_CLASS class, v
                                      ULONG length )
 {
     FIXME("(%s, %u, %p, %u) stub\n", wine_dbgstr_longlong(handle), class, info, length);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *                  EtwEventWriteString   (NTDLL.@)
+ */
+ULONG WINAPI EtwEventWriteString( REGHANDLE handle, UCHAR level, ULONGLONG keyword, PCWSTR string )
+{
+    FIXME("%s, %u, %s, %s: stub\n", wine_dbgstr_longlong(handle), level,
+          wine_dbgstr_longlong(keyword), debugstr_w(string));
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *                  EtwEventWriteTransfer   (NTDLL.@)
+ */
+ULONG WINAPI EtwEventWriteTransfer( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor, LPCGUID activity,
+                                    LPCGUID related, ULONG count, PEVENT_DATA_DESCRIPTOR data )
+{
+    FIXME("%s, %p, %s, %s, %u, %p: stub\n", wine_dbgstr_longlong(handle), descriptor,
+          debugstr_guid(activity), debugstr_guid(related), count, data);
     return ERROR_SUCCESS;
 }
 
@@ -493,12 +536,64 @@ ULONG WINAPI EtwEventWrite( REGHANDLE handle, const EVENT_DESCRIPTOR *descriptor
     return ERROR_SUCCESS;
 }
 
-/***********************************************************************
- *		    DbgUiRemoteBreakin (NTDLL.@)
+/******************************************************************************
+ *                  EtwGetTraceEnableFlags (NTDLL.@)
  */
-void WINAPI DbgUiRemoteBreakin( void *arg )
+ULONG WINAPI EtwGetTraceEnableFlags( TRACEHANDLE handle )
 {
-    FIXME("stub\n");
+    FIXME("(%s) stub\n", wine_dbgstr_longlong(handle));
+    return 0;
+}
+
+/******************************************************************************
+ *                  EtwGetTraceEnableLevel (NTDLL.@)
+ */
+UCHAR WINAPI EtwGetTraceEnableLevel( TRACEHANDLE handle )
+{
+    FIXME("(%s) stub\n", wine_dbgstr_longlong(handle));
+    return TRACE_LEVEL_VERBOSE;
+}
+
+/******************************************************************************
+ *                  EtwGetTraceLoggerHandle (NTDLL.@)
+ */
+TRACEHANDLE WINAPI EtwGetTraceLoggerHandle( PVOID buf )
+{
+    FIXME("(%p) stub\n", buf);
+    return INVALID_PROCESSTRACE_HANDLE;
+}
+
+/******************************************************************************
+ *                  EtwLogTraceEvent (NTDLL.@)
+ */
+ULONG WINAPI EtwLogTraceEvent( TRACEHANDLE SessionHandle, PEVENT_TRACE_HEADER EventTrace )
+{
+    FIXME("%s %p\n", wine_dbgstr_longlong(SessionHandle), EventTrace);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *                  EtwTraceMessageVa (NTDLL.@)
+ */
+ULONG WINAPI EtwTraceMessageVa( TRACEHANDLE handle, ULONG flags, LPGUID guid, USHORT number,
+                                __ms_va_list args )
+{
+    FIXME("(%s %x %s %d) : stub\n", wine_dbgstr_longlong(handle), flags, debugstr_guid(guid), number);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *                  EtwTraceMessage (NTDLL.@)
+ */
+ULONG WINAPIV EtwTraceMessage( TRACEHANDLE handle, ULONG flags, LPGUID guid, USHORT number, ... )
+{
+    __ms_va_list valist;
+    ULONG ret;
+
+    __ms_va_start( valist, number );
+    ret = EtwTraceMessageVa( handle, flags, guid, number, valist );
+    __ms_va_end( valist );
+    return ret;
 }
 
 NTSTATUS WINAPI NtCreateLowBoxToken(HANDLE *token_handle, HANDLE existing_token_handle, ACCESS_MASK desired_access,

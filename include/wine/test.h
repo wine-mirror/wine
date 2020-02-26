@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <windef.h>
 #include <winbase.h>
+#include <wine/debug.h>
 
 #ifdef __WINE_CONFIG_H
 #error config.h should not be used in Wine tests
@@ -34,9 +35,6 @@
 #endif
 #ifdef __WINE_WINE_UNICODE_H
 #error wine/unicode.h should not be used in Wine tests
-#endif
-#ifdef __WINE_WINE_DEBUG_H
-#error wine/debug.h should not be used in Wine tests
 #endif
 
 #ifndef INVALID_FILE_ATTRIBUTES
@@ -64,10 +62,14 @@ extern int winetest_interactive;
 /* report successful tests (BOOL) */
 extern int winetest_report_success;
 
+/* silence todos and skips above this threshold */
+extern int winetest_mute_threshold;
+
 /* current platform */
 extern const char *winetest_platform;
 
 extern void winetest_set_location( const char* file, int line );
+extern void winetest_subtest( const char* name );
 extern void winetest_start_todo( int is_todo );
 extern int winetest_loop_todo(void);
 extern void winetest_end_todo(void);
@@ -75,20 +77,6 @@ extern int winetest_get_mainargs( char*** pargv );
 extern LONG winetest_get_failures(void);
 extern void winetest_add_failures( LONG new_failures );
 extern void winetest_wait_child_process( HANDLE process );
-
-extern const char *wine_dbgstr_wn( const WCHAR *str, int n );
-extern const char *wine_dbgstr_guid( const GUID *guid );
-extern const char *wine_dbgstr_rect( const RECT *rect );
-static inline const char *wine_dbgstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, -1 ); }
-extern const char *wine_dbgstr_longlong( ULONGLONG ll );
-
-/* strcmpW is available for tests compiled under Wine, but not in standalone
- * builds under Windows, so we reimplement it under a different name. */
-static inline int winetest_strcmpW( const WCHAR *str1, const WCHAR *str2 )
-{
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
 
 #ifdef STANDALONE
 #define START_TEST(name) \
@@ -111,29 +99,26 @@ extern int broken( int condition );
 extern int winetest_vok( int condition, const char *msg, __winetest_va_list ap );
 extern void winetest_vskip( const char *msg, __winetest_va_list ap );
 
-#ifdef __GNUC__
-# define WINETEST_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
-#else
-# define WINETEST_PRINTF_ATTR(fmt,args)
-#endif
-
-extern void __winetest_cdecl winetest_ok( int condition, const char *msg, ... ) WINETEST_PRINTF_ATTR(2,3);
-extern void __winetest_cdecl winetest_skip( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
-extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
-extern void __winetest_cdecl winetest_trace( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
+extern void __winetest_cdecl winetest_ok( int condition, const char *msg, ... ) __WINE_PRINTF_ATTR(2,3);
+extern void __winetest_cdecl winetest_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+extern void __winetest_cdecl winetest_trace( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 
 #ifdef WINETEST_NO_LINE_NUMBERS
+# define subtest_(file, line)  (winetest_set_location(file, 0), 0) ? (void)0 : winetest_subtest
 # define ok_(file, line)       (winetest_set_location(file, 0), 0) ? (void)0 : winetest_ok
 # define skip_(file, line)     (winetest_set_location(file, 0), 0) ? (void)0 : winetest_skip
 # define win_skip_(file, line) (winetest_set_location(file, 0), 0) ? (void)0 : winetest_win_skip
 # define trace_(file, line)    (winetest_set_location(file, 0), 0) ? (void)0 : winetest_trace
 #else
+# define subtest_(file, line)  (winetest_set_location(file, line), 0) ? (void)0 : winetest_subtest
 # define ok_(file, line)       (winetest_set_location(file, line), 0) ? (void)0 : winetest_ok
 # define skip_(file, line)     (winetest_set_location(file, line), 0) ? (void)0 : winetest_skip
 # define win_skip_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : winetest_win_skip
 # define trace_(file, line)    (winetest_set_location(file, line), 0) ? (void)0 : winetest_trace
 #endif
 
+#define subtest  subtest_(__FILE__, __LINE__)
 #define ok       ok_(__FILE__, __LINE__)
 #define skip     skip_(__FILE__, __LINE__)
 #define win_skip win_skip_(__FILE__, __LINE__)
@@ -229,6 +214,9 @@ const char *winetest_platform = "windows";
 /* report successful tests (BOOL) */
 int winetest_report_success = 0;
 
+/* silence todos and skips above this threshold */
+int winetest_mute_threshold = 42;
+
 /* passing arguments around */
 static int winetest_argc;
 static char** winetest_argv;
@@ -240,6 +228,12 @@ static LONG failures;        /* number of failures */
 static LONG skipped;         /* number of skipped test chunks */
 static LONG todo_successes;  /* number of successful tests inside todo block */
 static LONG todo_failures;   /* number of failures inside todo block */
+static LONG muted_traces;    /* number of silenced traces */
+static LONG muted_skipped;   /* same as skipped but silent */
+static LONG muted_todo_successes; /* same as todo_successes but silent */
+
+/* counts how many times a given line printed a message */
+static LONG line_counters[16384];
 
 /* The following data must be kept track of on a per-thread basis */
 struct tls_data
@@ -270,24 +264,6 @@ static struct tls_data *get_tls_data(void)
     return data;
 }
 
-/* allocate some tmp space for a string */
-static char *get_temp_buffer( size_t n )
-{
-    struct tls_data *data = get_tls_data();
-    char *res = data->str_pos;
-
-    if (res + n >= &data->strings[sizeof(data->strings)]) res = data->strings;
-    data->str_pos = res + n;
-    return res;
-}
-
-/* release extra space that we requested in get_temp_buffer() */
-static void release_temp_buffer( char *ptr, size_t size )
-{
-    struct tls_data *data = get_tls_data();
-    data->str_pos = ptr + size;
-}
-
 static void exit_process( int code )
 {
     fflush( stdout );
@@ -308,9 +284,35 @@ void winetest_set_location( const char* file, int line )
     data->current_line=line;
 }
 
+void winetest_subtest( const char* name )
+{
+    struct tls_data *data = get_tls_data();
+    printf( "%s:%d: Subtest %s\n",
+            data->current_file, data->current_line, name);
+}
+
 int broken( int condition )
 {
     return (strcmp(winetest_platform, "windows") == 0) && condition;
+}
+
+static LONG winetest_add_line( void )
+{
+    struct tls_data *data;
+    int index, count;
+
+    if (winetest_debug > 1)
+        return 0;
+
+    data = get_tls_data();
+    index = data->current_line % ARRAY_SIZE(line_counters);
+    count = InterlockedIncrement(line_counters + index) - 1;
+    if (count == winetest_mute_threshold)
+        printf( "%s:%d Line has been silenced after %d occurrences\n",
+                data->current_file, data->current_line,
+                winetest_mute_threshold);
+
+    return count;
 }
 
 /*
@@ -339,13 +341,19 @@ int winetest_vok( int condition, const char *msg, __winetest_va_list args )
         }
         else
         {
-            if (winetest_debug > 0)
+            if (!winetest_debug ||
+                winetest_add_line() < winetest_mute_threshold)
             {
-                printf( "%s:%d: Test marked todo: ",
-                        data->current_file, data->current_line );
-                vprintf(msg, args);
+                if (winetest_debug > 0)
+                {
+                    printf( "%s:%d: Test marked todo: ",
+                            data->current_file, data->current_line );
+                    vprintf(msg, args);
+                }
+                InterlockedIncrement(&todo_successes);
             }
-            InterlockedIncrement(&todo_successes);
+            else
+                InterlockedIncrement(&muted_todo_successes);
             return 1;
         }
     }
@@ -382,24 +390,32 @@ void __winetest_cdecl winetest_ok( int condition, const char *msg, ... )
 void __winetest_cdecl winetest_trace( const char *msg, ... )
 {
     __winetest_va_list valist;
-    struct tls_data *data = get_tls_data();
 
-    if (winetest_debug > 0)
+    if (!winetest_debug)
+        return;
+    if (winetest_add_line() < winetest_mute_threshold)
     {
+        struct tls_data *data = get_tls_data();
         printf( "%s:%d: ", data->current_file, data->current_line );
         __winetest_va_start(valist, msg);
         vprintf(msg, valist);
         __winetest_va_end(valist);
     }
+    else
+        InterlockedIncrement(&muted_traces);
 }
 
 void winetest_vskip( const char *msg, __winetest_va_list args )
 {
-    struct tls_data *data = get_tls_data();
-
-    printf( "%s:%d: Tests skipped: ", data->current_file, data->current_line );
-    vprintf(msg, args);
-    skipped++;
+    if (winetest_add_line() < winetest_mute_threshold)
+    {
+        struct tls_data *data = get_tls_data();
+        printf( "%s:%d: Tests skipped: ", data->current_file, data->current_line );
+        vprintf(msg, args);
+        InterlockedIncrement(&skipped);
+    }
+    else
+        InterlockedIncrement(&muted_skipped);
 }
 
 void __winetest_cdecl winetest_skip( const char *msg, ... )
@@ -485,99 +501,6 @@ void winetest_wait_child_process( HANDLE process )
     }
 }
 
-const char *wine_dbgstr_wn( const WCHAR *str, int n )
-{
-    char *dst, *res;
-    size_t size;
-
-    if (!((ULONG_PTR)str >> 16))
-    {
-        if (!str) return "(null)";
-        res = get_temp_buffer( 6 );
-        sprintf( res, "#%04x", LOWORD(str) );
-        return res;
-    }
-    if (n == -1)
-    {
-        const WCHAR *end = str;
-        while (*end) end++;
-        n = end - str;
-    }
-    if (n < 0) n = 0;
-    size = 12 + min( 300, n * 5 );
-    dst = res = get_temp_buffer( size );
-    *dst++ = 'L';
-    *dst++ = '"';
-    while (n-- > 0 && dst <= res + size - 10)
-    {
-        WCHAR c = *str++;
-        switch (c)
-        {
-        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
-        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
-        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
-        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
-        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
-        default:
-            if (c >= ' ' && c <= 126)
-                *dst++ = (char)c;
-            else
-            {
-                *dst++ = '\\';
-                sprintf(dst,"%04x",c);
-                dst+=4;
-            }
-        }
-    }
-    *dst++ = '"';
-    if (n > 0)
-    {
-        *dst++ = '.';
-        *dst++ = '.';
-        *dst++ = '.';
-    }
-    *dst++ = 0;
-    release_temp_buffer( res, dst - res );
-    return res;
-}
-
-const char *wine_dbgstr_guid( const GUID *guid )
-{
-    char *res;
-
-    if (!guid) return "(null)";
-    res = get_temp_buffer( 39 ); /* CHARS_IN_GUID */
-    sprintf( res, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-             guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
-             guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
-             guid->Data4[5], guid->Data4[6], guid->Data4[7] );
-    return res;
-}
-
-const char *wine_dbgstr_rect( const RECT *rect )
-{
-    char *res;
-
-    if (!rect) return "(null)";
-    res = get_temp_buffer( 60 );
-    sprintf( res, "(%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
-    release_temp_buffer( res, strlen(res) + 1 );
-    return res;
-}
-
-const char *wine_dbgstr_longlong( ULONGLONG ll )
-{
-    char *res;
-
-    res = get_temp_buffer( 17 );
-    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
-        sprintf( res, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll );
-    else
-        sprintf( res, "%lx", (unsigned long)ll );
-    release_temp_buffer( res, strlen(res) + 1 );
-    return res;
-}
-
 /* Find a test by name */
 static const struct test *find_test( const char *name )
 {
@@ -620,13 +543,16 @@ static int run_test( const char *name )
         printf( "Fatal: test '%s' does not exist.\n", name );
         exit_process(1);
     }
-    successes = failures = todo_successes = todo_failures = 0;
     tls_index=TlsAlloc();
     current_test = test;
     test->func();
 
     if (winetest_debug)
     {
+        if (muted_todo_successes || muted_skipped || muted_traces)
+            printf( "%04x:%s: Silenced %d todos, %d skips and %d traces.\n",
+                    GetCurrentProcessId(), test->name,
+                    muted_todo_successes, muted_skipped, muted_traces);
         printf( "%04x:%s: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
                 GetCurrentProcessId(), test->name,
                 successes + failures + todo_successes + todo_failures,

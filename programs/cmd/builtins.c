@@ -2511,7 +2511,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
       heap_free(dirsToWalk->dirName);
       heap_free(dirsToWalk);
       dirsToWalk = nextDir;
-      if (dirsToWalk) WINE_TRACE("Moving to next directorty to iterate: %s\n",
+      if (dirsToWalk) WINE_TRACE("Moving to next directory to iterate: %s\n",
                                  wine_dbgstr_w(dirsToWalk->dirName));
       else WINE_TRACE("Finished all directories.\n");
     }
@@ -2549,7 +2549,7 @@ void WCMD_give_help (const WCHAR *args)
   size_t i;
 
   args = WCMD_skip_leading_spaces((WCHAR*) args);
-  if (lstrlenW(args) == 0) {
+  if (!*args) {
     WCMD_output_asis (WCMD_LoadMessage(WCMD_ALLHELP));
   }
   else {
@@ -2837,25 +2837,9 @@ static int evaluate_if_comparison(const WCHAR *leftOperand, const WCHAR *operato
     return -1;
 }
 
-/****************************************************************************
- * WCMD_if
- *
- * Batch file conditional.
- *
- * On entry, cmdlist will point to command containing the IF, and optionally
- *   the first command to execute (if brackets not found)
- *   If &&'s were found, this may be followed by a record flagged as isAmpersand
- *   If ('s were found, execute all within that bracket
- *   Command may optionally be followed by an ELSE - need to skip instructions
- *   in the else using the same logic
- *
- * FIXME: Much more syntax checking needed!
- */
-void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
+int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate)
 {
-  int negate; /* Negate condition */
-  int test;   /* Condition evaluation result */
-  WCHAR condition[MAX_PATH], *command;
+  WCHAR condition[MAX_PATH];
   static const WCHAR notW[]    = {'n','o','t','\0'};
   static const WCHAR errlvlW[] = {'e','r','r','o','r','l','e','v','e','l','\0'};
   static const WCHAR existW[]  = {'e','x','i','s','t','\0'};
@@ -2863,43 +2847,43 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
   static const WCHAR parmI[]   = {'/','I','\0'};
   int caseInsensitive = (wcsstr(quals, parmI) != NULL);
 
-  negate = !lstrcmpiW(param1,notW);
-  lstrcpyW(condition, (negate ? param2 : param1));
+  *negate = !lstrcmpiW(param1,notW);
+  lstrcpyW(condition, (*negate ? param2 : param1));
   WINE_TRACE("Condition: %s\n", wine_dbgstr_w(condition));
 
   if (!lstrcmpiW (condition, errlvlW)) {
-    WCHAR *param = WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE);
+    WCHAR *param = WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE);
     WCHAR *endptr;
     long int param_int = wcstol(param, &endptr, 10);
     if (*endptr) goto syntax_err;
-    test = ((long int)errorlevel >= param_int);
-    WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
+    *test = ((long int)errorlevel >= param_int);
+    WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
   }
   else if (!lstrcmpiW (condition, existW)) {
     WIN32_FIND_DATAW fd;
     HANDLE hff;
-    WCHAR *param = WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE);
+    WCHAR *param = WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE);
     int    len = lstrlenW(param);
 
     /* FindFirstFile does not like a directory path ending in '\', append a '.' */
     if (len && param[len-1] == '\\') lstrcatW(param, dotW);
 
     hff = FindFirstFileW(param, &fd);
-    test = (hff != INVALID_HANDLE_VALUE );
-    if (test) FindClose(hff);
+    *test = (hff != INVALID_HANDLE_VALUE );
+    if (*test) FindClose(hff);
 
-    WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
+    WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
   }
   else if (!lstrcmpiW (condition, defdW)) {
-    test = (GetEnvironmentVariableW(WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE),
+    *test = (GetEnvironmentVariableW(WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE),
                                     NULL, 0) > 0);
-    WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
+    WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
   }
   else { /* comparison operation */
     WCHAR leftOperand[MAXSTRING], rightOperand[MAXSTRING], operator[MAXSTRING];
     WCHAR *paramStart;
 
-    lstrcpyW(leftOperand, WCMD_parameter(p, negate+caseInsensitive, &paramStart, TRUE, FALSE));
+    lstrcpyW(leftOperand, WCMD_parameter(p, (*negate)+caseInsensitive, &paramStart, TRUE, FALSE));
     if (!*leftOperand)
       goto syntax_err;
 
@@ -2920,13 +2904,42 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
     if (!*rightOperand)
       goto syntax_err;
 
-    test = evaluate_if_comparison(leftOperand, operator, rightOperand, caseInsensitive);
-    if (test == -1)
+    *test = evaluate_if_comparison(leftOperand, operator, rightOperand, caseInsensitive);
+    if (*test == -1)
       goto syntax_err;
 
     p = paramStart + lstrlenW(rightOperand);
-    WCMD_parameter(p, 0, &command, FALSE, FALSE);
+    WCMD_parameter(p, 0, command, FALSE, FALSE);
   }
+
+  return 1;
+
+syntax_err:
+  return -1;
+}
+
+/****************************************************************************
+ * WCMD_if
+ *
+ * Batch file conditional.
+ *
+ * On entry, cmdlist will point to command containing the IF, and optionally
+ *   the first command to execute (if brackets not found)
+ *   If &&'s were found, this may be followed by a record flagged as isAmpersand
+ *   If ('s were found, execute all within that bracket
+ *   Command may optionally be followed by an ELSE - need to skip instructions
+ *   in the else using the same logic
+ *
+ * FIXME: Much more syntax checking needed!
+ */
+void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
+{
+  int negate; /* Negate condition */
+  int test;   /* Condition evaluation result */
+  WCHAR *command;
+
+  if (evaluate_if_condition(p, &command, &test, &negate) == -1)
+      goto syntax_err;
 
   /* Process rest of IF statement which is on the same line
      Note: This may process all or some of the cmdList (eg a GOTO) */
@@ -3447,7 +3460,8 @@ void WCMD_setshow_default (const WCHAR *args) {
   }
 
   GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
-  if (lstrlenW(args) == 0) {
+
+  if (!*args) {
     lstrcatW (cwd, newlineW);
     WCMD_output_asis (cwd);
   }
@@ -3539,7 +3553,7 @@ void WCMD_setshow_date (void) {
   DWORD count;
   static const WCHAR parmT[] = {'/','T','\0'};
 
-  if (lstrlenW(param1) == 0) {
+  if (!*param1) {
     if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, NULL, NULL, curdate, ARRAY_SIZE(curdate))) {
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTDATE), curdate);
       if (wcsstr (quals, parmT) == NULL) {
@@ -3700,7 +3714,7 @@ static int WCMD_peeknumber(VARSTACK **varstack) {
     if (!thisvar->isnum) {
       WCHAR tmpstr[MAXSTRING];
       if (GetEnvironmentVariableW(thisvar->variable, tmpstr, MAXSTRING)) {
-        result = wcstoul(tmpstr,NULL,0);
+        result = wcstol(tmpstr,NULL,0);
       }
       WINE_TRACE("Envvar %s converted to %d\n", wine_dbgstr_w(thisvar->variable), result);
     } else {
@@ -4181,7 +4195,7 @@ void WCMD_setshow_env (WCHAR *s) {
 
     /* Output the prompt */
     *p++ = '\0';
-    if (lstrlenW(p) != 0) WCMD_output_asis(p);
+    if (*p) WCMD_output_asis(p);
 
     /* Read the reply */
     WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count);
@@ -4255,7 +4269,7 @@ void WCMD_setshow_env (WCHAR *s) {
     }
     *p++ = '\0';
 
-    if (lstrlenW(p) == 0) p = NULL;
+    if (!*p) p = NULL;
     WINE_TRACE("set: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
                wine_dbgstr_w(p));
     status = SetEnvironmentVariableW(s, p);
@@ -4280,7 +4294,7 @@ void WCMD_setshow_path (const WCHAR *args) {
   static const WCHAR pathW[] = {'P','A','T','H','\0'};
   static const WCHAR pathEqW[] = {'P','A','T','H','=','\0'};
 
-  if (lstrlenW(param1) == 0 && lstrlenW(param2) == 0) {
+  if (!*param1 && !*param2) {
     status = GetEnvironmentVariableW(pathW, string, ARRAY_SIZE(string));
     if (status != 0) {
       WCMD_output_asis ( pathEqW);
@@ -4309,13 +4323,13 @@ void WCMD_setshow_prompt (void) {
   WCHAR *s;
   static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
 
-  if (lstrlenW(param1) == 0) {
+  if (!*param1) {
     SetEnvironmentVariableW(promptW, NULL);
   }
   else {
     s = param1;
     while ((*s == '=') || (*s == ' ') || (*s == '\t')) s++;
-    if (lstrlenW(s) == 0) {
+    if (!*s) {
       SetEnvironmentVariableW(promptW, NULL);
     }
     else SetEnvironmentVariableW(promptW, s);
@@ -4336,7 +4350,7 @@ void WCMD_setshow_time (void) {
   SYSTEMTIME st;
   static const WCHAR parmT[] = {'/','T','\0'};
 
-  if (lstrlenW(param1) == 0) {
+  if (!*param1) {
     GetLocalTime(&st);
     if (GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &st, NULL, curtime, ARRAY_SIZE(curtime))) {
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTTIME), curtime);
@@ -4561,8 +4575,8 @@ void WCMD_type (WCHAR *args) {
       errorlevel = 1;
     } else {
       if (writeHeaders) {
-        static const WCHAR fmt[] = {'\n','%','1','\n','\n','\0'};
-        WCMD_output(fmt, thisArg);
+        static const WCHAR fmt[] = {'\n','%','1','\n','\n','\n','\0'};
+        WCMD_output_stderr(fmt, thisArg);
       }
       while (WCMD_ReadFile(h, buffer, ARRAY_SIZE(buffer) - 1, &count)) {
         if (count == 0) break;	/* ReadFile reports success on EOF! */
@@ -4743,7 +4757,7 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
   WCHAR string[MAX_PATH], label[MAX_PATH], curdir[MAX_PATH];
   BOOL status;
 
-  if (lstrlenW(path) == 0) {
+  if (!*path) {
     status = GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir);
     if (!status) {
       WCMD_print_error ();
@@ -4781,7 +4795,7 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
       string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
     }
-    if (lstrlenW(path) != 0) {
+    if (*path) {
       if (!SetVolumeLabelW(curdir, string)) WCMD_print_error ();
     }
     else {

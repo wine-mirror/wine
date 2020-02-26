@@ -766,6 +766,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
 
     WCHAR buffer[MAX_PATH], libname[32], *name, *next;
     WCHAR key[ARRAY_SIZE( device_keyW ) + 39];
+    BOOL null_driver = FALSE;
     HMODULE module = 0;
     HKEY hkey;
     char error[80];
@@ -789,6 +790,13 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
     {
         next = wcschr( name, ',' );
         if (next) *next++ = 0;
+
+        if (!wcscmp( name, L"null" ))
+        {
+            TRACE( "display %s using null driver\n", debugstr_guid(guid) );
+            null_driver = TRUE;
+            break;
+        }
 
         swprintf( libname, ARRAY_SIZE( libname ), drv_formatW, name );
         if ((module = LoadLibraryW( libname )) != 0) break;
@@ -820,7 +828,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
     if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, key, 0, NULL,
                           REG_OPTION_VOLATILE, KEY_SET_VALUE, NULL, &hkey, NULL  ))
     {
-        if (module)
+        if (module || null_driver)
             RegSetValueExW( hkey, graphics_driverW, 0, REG_SZ,
                             (BYTE *)buffer, (lstrlenW(buffer) + 1) * sizeof(WCHAR) );
         else

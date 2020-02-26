@@ -725,7 +725,7 @@ static HANDLE test_OpenComm(BOOL doOverlap)
 
         ok(ret, "Unexpected error %u on open\n", GetLastError());
         ok(comstat.cbInQue == 0, "Unexpected %d chars in InQueue\n",comstat.cbInQue);
-        ok(comstat.cbOutQue == 0, "Still pending %d charcters in OutQueue\n", comstat.cbOutQue);
+        ok(comstat.cbOutQue == 0, "Still pending %d characters in OutQueue\n", comstat.cbOutQue);
         ok(errors == 0, "Unexpected errors 0x%08x\n", errors);
     }
     return hcom;
@@ -907,7 +907,6 @@ static void test_waittxempty(void)
             S(U(ovl_write)).Offset = 0;
             S(U(ovl_write)).OffsetHigh = 0;
             ovl_write.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-            before = GetTickCount();
             SetLastError(0xdeadbeef);
             res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, &ovl_write);
             ok((!res && GetLastError() == ERROR_IO_PENDING) || (res && bytes == sizeof(tbuf)),

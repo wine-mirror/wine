@@ -28,79 +28,42 @@ WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
 typedef struct NullRendererImpl
 {
-    BaseRenderer renderer;
+    struct strmbase_renderer renderer;
 } NullRendererImpl;
 
-static inline NullRendererImpl *impl_from_BaseRenderer(BaseRenderer *iface)
+static inline NullRendererImpl *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
 {
     return CONTAINING_RECORD(iface, NullRendererImpl, renderer);
 }
 
-static HRESULT WINAPI NullRenderer_DoRenderSample(BaseRenderer *iface, IMediaSample *pMediaSample)
+static HRESULT WINAPI NullRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
 {
     return S_OK;
 }
 
-static HRESULT WINAPI NullRenderer_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI NullRenderer_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     TRACE("Not a stub!\n");
     return S_OK;
 }
 
-static void null_renderer_destroy(BaseRenderer *iface)
+static void null_renderer_destroy(struct strmbase_renderer *iface)
 {
-    NullRendererImpl *filter = impl_from_BaseRenderer(iface);
+    NullRendererImpl *filter = impl_from_strmbase_renderer(iface);
 
     strmbase_renderer_cleanup(&filter->renderer);
     CoTaskMemFree(filter);
 }
 
-static const BaseRendererFuncTable RendererFuncTable = {
-    NullRenderer_CheckMediaType,
-    NullRenderer_DoRenderSample,
-    /**/
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    /**/
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    null_renderer_destroy,
-};
-
-static const IBaseFilterVtbl NullRenderer_Vtbl =
+static const struct strmbase_renderer_ops renderer_ops =
 {
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseRendererImpl_Stop,
-    BaseRendererImpl_Pause,
-    BaseRendererImpl_Run,
-    BaseRendererImpl_GetState,
-    BaseRendererImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
+    .pfnCheckMediaType = NullRenderer_CheckMediaType,
+    .pfnDoRenderSample = NullRenderer_DoRenderSample,
+    .renderer_destroy = null_renderer_destroy,
 };
 
 HRESULT NullRenderer_create(IUnknown *outer, void **out)
 {
-    static const WCHAR sink_name[] = {'I','n',0};
-
     HRESULT hr;
     NullRendererImpl *pNullRenderer;
 
@@ -108,9 +71,8 @@ HRESULT NullRenderer_create(IUnknown *outer, void **out)
 
     pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
 
-    hr = strmbase_renderer_init(&pNullRenderer->renderer, &NullRenderer_Vtbl, outer,
-            &CLSID_NullRenderer, sink_name,
-            (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), &RendererFuncTable);
+    hr = strmbase_renderer_init(&pNullRenderer->renderer, outer,
+            &CLSID_NullRenderer, L"In", &renderer_ops);
 
     if (FAILED(hr))
         CoTaskMemFree(pNullRenderer);

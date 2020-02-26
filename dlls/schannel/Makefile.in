@@ -1,6 +1,8 @@
 MODULE    = schannel.dll
 IMPORTS   = secur32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	lsamode.c \
 	schannel_main.c \

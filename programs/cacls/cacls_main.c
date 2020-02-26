@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cacls);
 
-int main(int argc, char** argv)
+int __cdecl main(int argc, char** argv)
 {
     int i;
 

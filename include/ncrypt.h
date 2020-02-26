@@ -32,11 +32,42 @@ typedef LONG SECURITY_STATUS;
 #define __SECSTATUS_DEFINED__
 #endif
 
+typedef struct _NCryptAlgorithmName {
+    LPWSTR pszName;
+    DWORD dwClass;
+    DWORD dwAlgOperations;
+    DWORD dwFlags;
+} NCryptAlgorithmName;
+
+typedef struct _NCryptBuffer {
+    ULONG cbBuffer;
+    ULONG BufferType;
+    PVOID pvBuffer;
+} NCryptBuffer, *PNCryptBuffer;
+
+typedef struct _NCryptBufferDesc {
+    ULONG ulVersion;
+    ULONG cBuffers;
+    PNCryptBuffer pBuffers;
+} NCryptBufferDesc, *PNCryptBufferDesc;
+
+typedef struct NCryptKeyName {
+    LPWSTR pszName;
+    LPWSTR pszAlgid;
+    DWORD dwLegacyKeySpec;
+    DWORD dwFlags;
+} NCryptKeyName;
+
 typedef ULONG_PTR NCRYPT_HANDLE;
 typedef ULONG_PTR NCRYPT_PROV_HANDLE;
 typedef ULONG_PTR NCRYPT_KEY_HANDLE;
 typedef ULONG_PTR NCRYPT_HASH_HANDLE;
 typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
+
+#define NCRYPT_KEY_STORAGE_INTERFACE        0x00010001
+#define NCRYPT_SCHANNEL_INTERFACE           0x00010002
+#define NCRYPT_SCHANNEL_SIGNATURE_INTERFACE 0x00010003
+#define NCRYPT_KEY_PROTECTION_INTERFACE     0x00010004
 
 SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE, NCRYPT_KEY_HANDLE *, const WCHAR *, const WCHAR *, DWORD, DWORD);
 SECURITY_STATUS WINAPI NCryptDecrypt(NCRYPT_KEY_HANDLE, BYTE *, DWORD, void *, BYTE *, DWORD, DWORD *, DWORD);

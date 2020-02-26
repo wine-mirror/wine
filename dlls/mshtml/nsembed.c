@@ -54,6 +54,16 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 #define NS_STRING_CONTAINER_INIT_DEPEND  0x0002
 #define NS_CSTRING_CONTAINER_INIT_DEPEND 0x0002
 
+#ifdef __i386__
+#define GECKO_ARCH_STRING "x86"
+#elif defined(__x86_64__)
+#define GECKO_ARCH_STRING "x86_64"
+#else
+#define GECKO_ARCH_STRING ""
+#endif
+
+#define GECKO_DIR_NAME "wine-gecko-" GECKO_VERSION "-" GECKO_ARCH_STRING
+
 typedef UINT32 PRUint32;
 
 static nsresult (CDECL *NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
@@ -432,6 +442,8 @@ static BOOL install_wine_gecko(void)
         CloseHandle(pi.hThread);
         WaitForSingleObject(pi.hProcess, INFINITE);
         CloseHandle(pi.hProcess);
+    }else {
+        WARN("installation failed\n");
     }
 
     return ret;
@@ -481,139 +493,6 @@ static void set_environment(LPCWSTR gre_path)
         SetEnvironmentVariableW(pathW, path);
     }
     heap_free(path);
-}
-
-static BOOL load_xul(const PRUnichar *gre_path)
-{
-    static const WCHAR xul_dllW[] = {'\\','x','u','l','.','d','l','l',0};
-    WCHAR file_name[MAX_PATH];
-
-    lstrcpyW(file_name, gre_path);
-    lstrcatW(file_name, xul_dllW);
-
-    TRACE("(%s)\n", debugstr_w(file_name));
-
-    set_environment(gre_path);
-
-    xul_handle = LoadLibraryExW(file_name, 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
-    if(!xul_handle) {
-        WARN("Could not load XUL: %d\n", GetLastError());
-        return FALSE;
-    }
-
-#define NS_DLSYM(func) \
-    func = (void *)GetProcAddress(xul_handle, #func); \
-    if(!func) \
-        ERR("Could not GetProcAddress(" #func ") failed\n")
-
-    NS_DLSYM(NS_InitXPCOM2);
-    NS_DLSYM(NS_ShutdownXPCOM);
-    NS_DLSYM(NS_GetComponentRegistrar);
-    NS_DLSYM(NS_StringContainerInit2);
-    NS_DLSYM(NS_CStringContainerInit2);
-    NS_DLSYM(NS_StringContainerFinish);
-    NS_DLSYM(NS_CStringContainerFinish);
-    NS_DLSYM(NS_StringSetData);
-    NS_DLSYM(NS_CStringSetData);
-    NS_DLSYM(NS_NewLocalFile);
-    NS_DLSYM(NS_StringGetData);
-    NS_DLSYM(NS_CStringGetData);
-    NS_DLSYM(NS_StringGetIsVoid);
-    NS_DLSYM(NS_Alloc);
-    NS_DLSYM(NS_Free);
-    NS_DLSYM(ccref_incr);
-    NS_DLSYM(ccref_decr);
-    NS_DLSYM(ccref_init);
-    NS_DLSYM(ccp_init);
-    NS_DLSYM(describe_cc_node);
-    NS_DLSYM(note_cc_edge);
-
-#undef NS_DLSYM
-
-    return TRUE;
-}
-
-static BOOL check_version(LPCWSTR gre_path, const char *version_string)
-{
-    WCHAR file_name[MAX_PATH];
-    char version[128];
-    DWORD read=0;
-    HANDLE hfile;
-
-    static const WCHAR wszVersion[] = {'\\','V','E','R','S','I','O','N',0};
-
-    lstrcpyW(file_name, gre_path);
-    lstrcatW(file_name, wszVersion);
-
-    hfile = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL,
-                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if(hfile == INVALID_HANDLE_VALUE) {
-        ERR("Could not open VERSION file\n");
-        return FALSE;
-    }
-
-    ReadFile(hfile, version, sizeof(version), &read, NULL);
-    version[read] = 0;
-    CloseHandle(hfile);
-
-    TRACE("%s\n", debugstr_a(version));
-
-    if(strcmp(version, version_string)) {
-        ERR("Unexpected version %s, expected %s\n", debugstr_a(version),
-            debugstr_a(version_string));
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOL load_wine_gecko_v(PRUnichar *gre_path, HKEY mshtml_key,
-        const char *version, const char *version_string)
-{
-    DWORD res, type, size = MAX_PATH;
-    HKEY hkey = mshtml_key;
-
-    static const WCHAR wszGeckoPath[] =
-        {'G','e','c','k','o','P','a','t','h',0};
-
-    if(version) {
-        /* @@ Wine registry key: HKLM\Software\Wine\MSHTML\<version> */
-        res = RegOpenKeyA(mshtml_key, version, &hkey);
-        if(res != ERROR_SUCCESS)
-            return FALSE;
-    }
-
-    res = RegQueryValueExW(hkey, wszGeckoPath, NULL, &type, (LPBYTE)gre_path, &size);
-    if(hkey != mshtml_key)
-        RegCloseKey(hkey);
-    if(res != ERROR_SUCCESS || type != REG_SZ)
-        return FALSE;
-
-    if(!check_version(gre_path, version_string))
-        return FALSE;
-
-    return load_xul(gre_path);
-}
-
-static BOOL load_wine_gecko(PRUnichar *gre_path)
-{
-    HKEY hkey;
-    DWORD res;
-    BOOL ret;
-
-    static const WCHAR wszMshtmlKey[] = {
-        'S','o','f','t','w','a','r','e','\\','W','i','n','e',
-        '\\','M','S','H','T','M','L',0};
-
-    /* @@ Wine registry key: HKLM\Software\Wine\MSHTML */
-    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, wszMshtmlKey, &hkey);
-    if(res != ERROR_SUCCESS)
-        return FALSE;
-
-    ret = load_wine_gecko_v(gre_path, hkey, GECKO_VERSION, GECKO_VERSION_STRING);
-
-    RegCloseKey(hkey);
-    return ret;
 }
 
 static void set_bool_pref(nsIPrefBranch *pref, const char *pref_name, BOOL val)
@@ -743,6 +622,174 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     return TRUE;
 }
 
+static BOOL load_xul(WCHAR *gecko_path)
+{
+    size_t len;
+
+    set_environment(gecko_path);
+
+    TRACE("(%s)\n", debugstr_w(gecko_path));
+
+    len = wcslen(gecko_path);
+    wcscpy(gecko_path + len, L"\\xul.dll");
+    xul_handle = LoadLibraryExW(gecko_path, 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
+    gecko_path[len] = 0;
+    if(!xul_handle) {
+        WARN("Could not load XUL: %d\n", GetLastError());
+        return FALSE;
+    }
+
+#define NS_DLSYM(func) \
+    func = (void *)GetProcAddress(xul_handle, #func); \
+    if(!func) \
+        ERR("Could not GetProcAddress(" #func ") failed\n")
+
+    NS_DLSYM(NS_InitXPCOM2);
+    NS_DLSYM(NS_ShutdownXPCOM);
+    NS_DLSYM(NS_GetComponentRegistrar);
+    NS_DLSYM(NS_StringContainerInit2);
+    NS_DLSYM(NS_CStringContainerInit2);
+    NS_DLSYM(NS_StringContainerFinish);
+    NS_DLSYM(NS_CStringContainerFinish);
+    NS_DLSYM(NS_StringSetData);
+    NS_DLSYM(NS_CStringSetData);
+    NS_DLSYM(NS_NewLocalFile);
+    NS_DLSYM(NS_StringGetData);
+    NS_DLSYM(NS_CStringGetData);
+    NS_DLSYM(NS_StringGetIsVoid);
+    NS_DLSYM(NS_Alloc);
+    NS_DLSYM(NS_Free);
+    NS_DLSYM(ccref_incr);
+    NS_DLSYM(ccref_decr);
+    NS_DLSYM(ccref_init);
+    NS_DLSYM(ccp_init);
+    NS_DLSYM(describe_cc_node);
+    NS_DLSYM(note_cc_edge);
+
+#undef NS_DLSYM
+
+    return init_xpcom(gecko_path);
+}
+
+static WCHAR *check_version(const WCHAR *path)
+{
+    WCHAR *file_name;
+    char version[128];
+    DWORD read=0;
+    size_t len;
+    HANDLE hfile;
+
+    if(!wcsncmp(path, L"\\??\\", 4))
+        path += 4;
+    if(path[1] != ':') {
+        TRACE("Skipping %s\n", debugstr_w(path));
+        return FALSE; /* Gecko needs to be accessible via dos path */
+    }
+
+    len = wcslen(path);
+    file_name = heap_alloc((len + 12) * sizeof(WCHAR));
+    if(!file_name)
+        return NULL;
+
+    PathCanonicalizeW(file_name, path);
+    len = lstrlenW(file_name);
+    wcscpy(file_name + len, L"\\VERSION");
+
+    hfile = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    file_name[len] = 0;
+    if(hfile == INVALID_HANDLE_VALUE) {
+        TRACE("%s not found\n", debugstr_w(file_name));
+        heap_free(file_name);
+        return NULL;
+    }
+
+    ReadFile(hfile, version, sizeof(version), &read, NULL);
+    version[read] = 0;
+    CloseHandle(hfile);
+
+    TRACE("%s: %s\n", debugstr_w(file_name), debugstr_a(version));
+
+    if(strcmp(version, GECKO_VERSION_STRING)) {
+        ERR("Unexpected version %s, expected \"%s\"\n", debugstr_a(version),
+            GECKO_VERSION_STRING);
+        heap_free(file_name);
+        return NULL;
+    }
+
+    return file_name;
+}
+
+static WCHAR *find_wine_gecko_reg(void)
+{
+    WCHAR buffer[MAX_PATH];
+    DWORD res, type, size;
+    HKEY hkey;
+
+    /* @@ Wine registry key: HKLM\Software\Wine\MSHTML\<version> */
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, L"Software\\Wine\\MSHTML\\" GECKO_VERSION, &hkey);
+    if(res != ERROR_SUCCESS)
+        return NULL;
+
+    size = ARRAY_SIZE(buffer);
+    res = RegQueryValueExW(hkey, L"GeckoPath", NULL, &type, (LPBYTE)buffer, &size);
+    RegCloseKey(hkey);
+    if(res != ERROR_SUCCESS || type != REG_SZ)
+        return FALSE;
+
+    return check_version(buffer);
+}
+
+static WCHAR *heap_strcat(const WCHAR *str1, const WCHAR *str2)
+{
+    size_t len1 = lstrlenW(str1);
+    size_t len2 = lstrlenW(str2);
+    WCHAR *ret = heap_alloc((len1 + len2 + 1) * sizeof(WCHAR));
+    if(!ret) return NULL;
+    memcpy(ret, str1, len1 * sizeof(WCHAR));
+    memcpy(ret + len1, str2, len2 * sizeof(WCHAR));
+    ret[len1 + len2] = 0;
+    return ret;
+}
+
+static WCHAR *find_wine_gecko_datadir(void)
+{
+    const WCHAR *data_dir;
+    WCHAR *path = NULL, *ret;
+
+    if((data_dir = _wgetenv(L"WINEDATADIR")))
+        path = heap_strcat(data_dir, L"\\gecko\\" GECKO_DIR_NAME);
+    else if((data_dir = _wgetenv(L"WINEBUILDDIR")))
+        path = heap_strcat(data_dir, L"\\..\\gecko\\" GECKO_DIR_NAME);
+    if(!path)
+        return NULL;
+
+    ret = check_version(path);
+    heap_free(path);
+    return ret;
+}
+
+static WCHAR *find_wine_gecko_unix(const char *unix_path)
+{
+    static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
+    WCHAR *dos_dir, *ret;
+
+    if(!p_wine_get_dos_file_name) {
+        p_wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleA("kernel32"), "wine_get_dos_file_name");
+        if(!p_wine_get_dos_file_name)
+            return FALSE;
+    }
+
+    dos_dir = p_wine_get_dos_file_name(unix_path);
+    if(!dos_dir)
+        return FALSE;
+
+    ret = check_version(dos_dir);
+
+    heap_free(dos_dir);
+    return ret;
+}
+
 static CRITICAL_SECTION cs_load_gecko;
 static CRITICAL_SECTION_DEBUG cs_load_gecko_dbg =
 {
@@ -754,12 +801,16 @@ static CRITICAL_SECTION cs_load_gecko = { &cs_load_gecko_dbg, -1, 0, 0, 0, 0 };
 
 BOOL load_gecko(void)
 {
-    PRUnichar gre_path[MAX_PATH];
     BOOL ret = FALSE;
 
     static DWORD loading_thread;
 
     TRACE("()\n");
+
+    if(!GECKO_ARCH_STRING[0]) {
+        FIXME("Wine Gecko is not supported on this architecture.\n");
+        return FALSE;
+    }
 
     /* load_gecko may be called recursively */
     if(loading_thread == GetCurrentThreadId())
@@ -768,13 +819,25 @@ BOOL load_gecko(void)
     EnterCriticalSection(&cs_load_gecko);
 
     if(!loading_thread) {
+        WCHAR *gecko_path;
+
         loading_thread = GetCurrentThreadId();
 
-        if(load_wine_gecko(gre_path)
-           || (install_wine_gecko() && load_wine_gecko(gre_path)))
-            ret = init_xpcom(gre_path);
-        else
-           MESSAGE("Could not load wine-gecko. HTML rendering will be disabled.\n");
+        if(!(gecko_path = find_wine_gecko_reg())
+           && !(gecko_path = find_wine_gecko_datadir())
+           && !(gecko_path = find_wine_gecko_unix(INSTALL_DATADIR "/wine/gecko/" GECKO_DIR_NAME))
+           && (!strcmp(INSTALL_DATADIR, "/usr/share") ||
+               !(gecko_path = find_wine_gecko_unix("/usr/share/wine/gecko/" GECKO_DIR_NAME)))
+           && !(gecko_path = find_wine_gecko_unix("/opt/wine/gecko/" GECKO_DIR_NAME))
+           && install_wine_gecko())
+            gecko_path = find_wine_gecko_reg();
+
+        if(gecko_path) {
+            ret = load_xul(gecko_path);
+            heap_free(gecko_path);
+        }else {
+           MESSAGE("Could not find Wine Gecko. HTML rendering will be disabled.\n");
+        }
     }else {
         ret = pCompMgr != NULL;
     }

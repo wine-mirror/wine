@@ -121,7 +121,7 @@ ws	[ \f\t\r]
 /* Always update the current character position within a line */
 #define YY_USER_ACTION	char_number+=yyleng; wanted_id = want_id; want_id = 0;
 
-#define YY_USER_INIT current_codepage = -1;
+#define YY_USER_INIT current_codepage = utf8_input ? CP_UTF8 : -1;
 
 static void addcchar(char c);
 static void addwchar(WCHAR s);
@@ -429,7 +429,7 @@ L\"			{
 				yy_push_state(tklstr);
 				wbufidx = 0;
 				if(!win32)
-					parser_warning("16bit resource contains unicode strings\n");
+					parser_error("16bit resource contains unicode strings\n");
 			}
 <tklstr>\"{ws}+	|
 <tklstr>\"		{
@@ -635,12 +635,9 @@ static string_t *get_buffered_cstring(void)
     }
     else  /* convert to Unicode before storing */
     {
-        string_t *str_w = convert_string( str, str_unicode, current_codepage );
-        if (!check_unicode_conversion( str, str_w, current_codepage ))
-            parser_error("String %s does not convert identically to Unicode and back in codepage %d. "
-                    "Try using a Unicode string instead", str->str.cstr, current_codepage );
+        string_t *str_w = convert_string_unicode( str, current_codepage );
         if (check_valid_utf8( str, current_codepage ))
-            parser_warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use.\n",
+            parser_warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use, maybe use --utf8?\n",
                             str->str.cstr, current_codepage );
         free_string( str );
         return str_w;
@@ -660,10 +657,13 @@ static string_t *get_buffered_wstring(void)
 
 static string_t *make_string(char *s)
 {
-	string_t *str = new_string();
+	string_t *ret, *str = new_string();
 	str->size = strlen(s);
 	str->type = str_char;
 	str->str.cstr = xmalloc(str->size+1);
 	memcpy(str->str.cstr, s, str->size+1);
-	return str;
+        if (current_codepage <= 0 || !win32) return str;
+	ret = convert_string_unicode( str, current_codepage );
+	free_string( str );
+	return ret;
 }

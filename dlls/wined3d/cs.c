@@ -530,7 +530,7 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
     swapchain->swapchain_ops->swapchain_present(swapchain, &op->src_rect, &op->dst_rect, op->swap_interval, op->flags);
 
     wined3d_resource_release(&swapchain->front_buffer->resource);
-    for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
+    for (i = 0; i < swapchain->state.desc.backbuffer_count; ++i)
     {
         wined3d_resource_release(&swapchain->back_buffers[i]->resource);
     }
@@ -558,7 +558,7 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     pending = InterlockedIncrement(&cs->pending_presents);
 
     wined3d_resource_acquire(&swapchain->front_buffer->resource);
-    for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
+    for (i = 0; i < swapchain->state.desc.backbuffer_count; ++i)
     {
         wined3d_resource_acquire(&swapchain->back_buffers[i]->resource);
     }
@@ -1008,12 +1008,11 @@ void wined3d_cs_emit_draw_indirect(struct wined3d_cs *cs, GLenum primitive_type,
 
 static void wined3d_cs_exec_flush(struct wined3d_cs *cs, const void *data)
 {
-    struct wined3d_context_gl *context_gl;
+    struct wined3d_context *context;
 
-    context_gl = wined3d_context_gl(context_acquire(cs->device, NULL, 0));
-    if (context_gl->valid)
-        context_gl->c.gl_info->gl_ops.gl.p_glFlush();
-    context_release(&context_gl->c);
+    context = context_acquire(cs->device, NULL, 0);
+    cs->device->adapter->adapter_ops->adapter_flush_context(context);
+    context_release(context);
 }
 
 void wined3d_cs_emit_flush(struct wined3d_cs *cs)
@@ -1137,7 +1136,7 @@ static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const 
     {
         struct wined3d_texture *prev_texture = texture_from_resource(prev->resource);
 
-        if (device->swapchains[0]->desc.flags & WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL
+        if (device->swapchains[0]->state.desc.flags & WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL
                 || prev_texture->flags & WINED3D_TEXTURE_DISCARD)
             wined3d_texture_validate_location(prev_texture,
                     prev->sub_resource_idx, WINED3D_LOCATION_DISCARDED);
@@ -1153,9 +1152,12 @@ static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const 
         device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILWRITEMASK));
         device_invalidate_state(device, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
     }
-    else if (prev && prev->format->depth_bias_scale != op->view->format->depth_bias_scale)
+    else if (prev)
     {
-        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
+        if (prev->format->depth_bias_scale != op->view->format->depth_bias_scale)
+            device_invalidate_state(device, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
+        if (prev->format->stencil_size != op->view->format->stencil_size)
+            device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILREF));
     }
 
     device_invalidate_state(device, STATE_FRAMEBUFFER);
@@ -2422,7 +2424,7 @@ static void wined3d_cs_exec_clear_unordered_access_view(struct wined3d_cs *cs, c
     struct wined3d_context *context;
 
     context = context_acquire(cs->device, NULL, 0);
-    wined3d_unordered_access_view_clear_uint(view, &op->clear_value, context);
+    cs->device->adapter->adapter_ops->adapter_clear_uav(context, view, &op->clear_value);
     context_release(context);
 
     wined3d_resource_release(view->resource);

@@ -58,6 +58,7 @@
 #define IDS_JSCRIPT_EXPECTED                0x1396
 #define IDS_NOT_ENUMERATOR                  0x1397
 #define IDS_REGEXP_SYNTAX_ERROR             0x1399
+#define IDS_EXCEPTION_THROWN                0x139E
 #define IDS_URI_INVALID_CHAR                0x13A0
 #define IDS_URI_INVALID_CODING              0x13A1
 #define IDS_FRACTION_DIGITS_OUT_OF_RANGE    0x13A2
@@ -70,3 +71,7 @@
 /* FIXME: This is not compatible with native, but we would
  * conflict with IDS_UNSUPPORTED_ACTION otherwise */
 #define IDS_PROP_DESC_MISMATCH              0x1F00
+
+#define IDS_COMPILATION_ERROR               0x1000
+#define IDS_RUNTIME_ERROR                   0x1001
+#define IDS_UNKNOWN_ERROR                   0x1002

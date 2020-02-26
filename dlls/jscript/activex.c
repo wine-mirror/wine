@@ -172,7 +172,7 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     obj = create_activex_object(ctx, progid);
     jsstr_release(progid_str);
     if(!obj)
-        return throw_generic_error(ctx, JS_E_CANNOT_CREATE_OBJ, NULL);
+        return JS_E_CANNOT_CREATE_OBJ;
 
     hres = IUnknown_QueryInterface(obj, &IID_IDispatch, (void**)&disp);
     IUnknown_Release(obj);

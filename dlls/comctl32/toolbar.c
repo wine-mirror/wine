@@ -5691,7 +5691,7 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
             if (nButton == infoPtr->nButtonDrag)
             {
-                /* if the button is moved sightly left and we have a
+                /* if the button is moved slightly left and we have a
                  * separator there then remove it */
                 if (pt.x < (btnPtr->rect.left + (btnPtr->rect.right - btnPtr->rect.left)/2))
                 {
@@ -6149,7 +6149,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
 
         TRACE("TBN_GETINFOTIPW - got string %s\n", debugstr_w(tbgit.pszText));
 
-        len = lstrlenW(tbgit.pszText);
+        len = tbgit.pszText ? lstrlenW(tbgit.pszText) : 0;
         if (len > ARRAY_SIZE(lpnmtdi->szText) - 1)
         {
             /* need to allocate temporary buffer in infoPtr as there

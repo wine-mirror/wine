@@ -876,7 +876,7 @@ HICON WINAPI ExtractAssociatedIconW(HINSTANCE hInst, LPWSTR lpIconPath, LPWORD l
       }
 
       if( hIcon == (HICON)1 )
-        *lpiIcon = 2;   /* MSDOS icon - we found .exe but no icons in it */
+        *lpiIcon = 2;   /* MS-DOS icon - we found .exe but no icons in it */
       else
         *lpiIcon = 6;   /* generic icon - found nothing */
 

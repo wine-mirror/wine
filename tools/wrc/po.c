@@ -97,32 +97,30 @@ static name_id_t *dup_name_id( name_id_t *id )
     if (!id || id->type != name_str) return id;
     new = new_name_id();
     *new = *id;
-    new->name.s_name = convert_string( id->name.s_name, str_unicode, 1252 );
+    new->name.s_name = convert_string_unicode( id->name.s_name, 1252 );
     return new;
 }
 
 static char *convert_msgid_ascii( const string_t *str, int error_on_invalid_char )
 {
     int i;
-    string_t *newstr = convert_string( str, str_unicode, 1252 );
-    char *buffer = xmalloc( newstr->size + 1 );
+    char *buffer = xmalloc( str->size + 1 );
 
-    for (i = 0; i < newstr->size; i++)
+    for (i = 0; i < str->size; i++)
     {
-        buffer[i] =  newstr->str.wstr[i];
-        if (newstr->str.wstr[i] >= 32 && newstr->str.wstr[i] <= 127) continue;
-        if (newstr->str.wstr[i] == '\t' || newstr->str.wstr[i] == '\n') continue;
+        WCHAR ch = (str->type == str_unicode ? str->str.wstr[i] : (unsigned char)str->str.cstr[i]);
+        buffer[i] = ch;
+        if (ch >= 32 && ch <= 127) continue;
+        if (ch == '\t' || ch == '\n') continue;
         if (error_on_invalid_char)
         {
-            print_location( &newstr->loc );
-            error( "Invalid character %04x in source string\n", newstr->str.wstr[i] );
+            print_location( &str->loc );
+            error( "Invalid character %04x in source string\n", ch );
         }
         free( buffer);
-        free_string( newstr );
         return NULL;
     }
     buffer[i] = 0;
-    free_string( newstr );
     return buffer;
 }
 
@@ -557,14 +555,6 @@ static void po_xerror2( int severity, po_message_t message1,
 
 static const struct po_xerror_handler po_xerror_handler = { po_xerror, po_xerror2 };
 
-static string_t *convert_string_utf8( const string_t *str, int codepage )
-{
-    string_t *wstr = convert_string( str, str_unicode, codepage );
-    string_t *ustr = convert_string( wstr, str_char, CP_UTF8 );
-    free_string( wstr );
-    return ustr;
-}
-
 static po_message_t find_message( po_file_t po, const char *msgid, const char *msgctxt,
                                   po_message_iterator_t *iterator )
 {
@@ -589,8 +579,7 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
     po_message_t msg;
     po_message_iterator_t iterator;
     int codepage;
-    string_t *str_buffer = NULL;
-    char *id, *id_buffer, *context, *str = NULL;
+    char *id, *id_buffer, *context, *str = NULL, *str_buffer = NULL;
 
     if (!msgid->size) return;
 
@@ -608,8 +597,7 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
         if (lang) codepage = get_language_codepage( lang->id, lang->sub );
         else codepage = get_language_codepage( 0, 0 );
         assert( codepage != -1 );
-        str_buffer = convert_string_utf8( msgstr, codepage );
-        str = str_buffer->str.cstr;
+        str = str_buffer = convert_string_utf8( msgstr, codepage );
         if (is_english( lang )) get_message_context( &str );
     }
     if (!(msg = find_message( po, id, context, &iterator )))
@@ -623,7 +611,7 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
     if (msgid->loc.file) po_message_add_filepos( msg, msgid->loc.file, msgid->loc.line );
     po_message_iterator_free( iterator );
     free( id_buffer );
-    if (str_buffer) free_string( str_buffer );
+    free( str_buffer );
 }
 
 struct po_file_lang
@@ -1215,7 +1203,7 @@ static string_t *translate_string( string_t *str, int *found )
     char *buffer, *msgid, *context;
 
     if (!str->size || !(buffer = convert_msgid_ascii( str, 0 )))
-        return convert_string( str, str_unicode, 1252 );
+        return convert_string_unicode( str, 1252 );
 
     msgid = buffer;
     context = get_message_context( &msgid );
@@ -1226,7 +1214,7 @@ static string_t *translate_string( string_t *str, int *found )
     ustr.str.cstr = (char *)transl;
     ustr.loc = str->loc;
 
-    new = convert_string( &ustr, str_unicode, CP_UTF8 );
+    new = convert_string_unicode( &ustr, CP_UTF8 );
     free( buffer );
     return new;
 }
@@ -1320,7 +1308,7 @@ static void translate_dialog( dialog_t *dlg, dialog_t *new, int *found )
         new->font = xmalloc( sizeof(*dlg->font) );
         *new->font = *dlg->font;
         if (uses_larger_font( new->lvc.language )) new->font->size++;
-        new->font->name = convert_string( dlg->font->name, str_unicode, 1252 );
+        new->font->name = convert_string_unicode( dlg->font->name, 1252 );
     }
     new->controls = translate_controls( dlg->controls, found );
 }
@@ -1393,12 +1381,12 @@ static ver_value_t *translate_stringfileinfo( ver_value_t *val, language_t *lang
                 {
                     if (!strcasecmp( name, english_block_name[i] ))
                     {
-                        string_t *str;
-                        str = new_string();
-                        str->type     = str_char;
-                        str->size     = strlen( block_name[i] ) + 1;
-                        str->str.cstr = xstrdup( block_name[i] );
-                        new_blk->name   = str;
+                        string_t str;
+                        str.type     = str_char;
+                        str.size     = strlen( block_name[i] ) + 1;
+                        str.str.cstr = block_name[i];
+                        str.loc      = blk->name->loc;
+                        new_blk->name   = convert_string_unicode( &str, CP_UTF8 );
                         new_blk->values = translate_langcharset_values( blk->values, lang, found );
                     }
                 }

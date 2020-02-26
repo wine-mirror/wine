@@ -248,7 +248,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(IExtractIconW * iface, UIN
 	{
 	  static const WCHAR drive[] = { 'D','r','i','v','e',0 };
 
-	  int icon_idx = -1;
+	  icon_idx = -1;
 
 	  if (_ILGetDrive(pSimplePidl, sTemp, MAX_PATH))
 	  {

@@ -43,8 +43,8 @@ static const SIZE_T size_max = ~(SIZE_T)0 >> 1;
 
 typedef struct pf_output_t
 {
-    int used;
-    int len;
+    SIZE_T used;
+    SIZE_T len;
     BOOL unicode;
     union {
         LPWSTR W;
@@ -68,24 +68,30 @@ typedef struct pf_flags_t
  */
 static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
 {
-    int space = out->len - out->used;
+    SIZE_T space = out->len - out->used;
 
     if( len < 0 )
         len = strlenW( str );
     if( out->unicode )
     {
         LPWSTR p = out->buf.W + out->used;
-        out->used += len;
 
         if (!out->buf.W)
+        {
+            out->used += len;
             return len;
+        }
         if( space >= len )
         {
             memcpy( p, str, len*sizeof(WCHAR) );
+            out->used += len;
             return len;
         }
         if( space > 0 )
+        {
             memcpy( p, str, space*sizeof(WCHAR) );
+            out->used += space;
+        }
     }
     else
     {
@@ -93,40 +99,53 @@ static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
         ULONG n;
 
         RtlUnicodeToMultiByteSize( &n, str, len * sizeof(WCHAR) );
-        out->used += n;
 
         if (!out->buf.A)
+        {
+            out->used += n;
             return len;
+        }
         if( space >= n )
         {
             RtlUnicodeToMultiByteN( p, n, NULL, str, len * sizeof(WCHAR) );
+            out->used += n;
             return len;
         }
-        if (space > 0) RtlUnicodeToMultiByteN( p, space, NULL, str, len * sizeof(WCHAR) );
+        if (space > 0)
+        {
+            RtlUnicodeToMultiByteN( p, space, NULL, str, len * sizeof(WCHAR) );
+            out->used += space;
+        }
     }
     return -1;
 }
 
 static inline int pf_output_stringA( pf_output *out, LPCSTR str, int len )
 {
-    int space = out->len - out->used;
+    SIZE_T space = out->len - out->used;
 
     if( len < 0 )
         len = strlen( str );
     if( !out->unicode )
     {
         LPSTR p = out->buf.A + out->used;
-        out->used += len;
 
         if (!out->buf.A)
+        {
+            out->used += len;
             return len;
+        }
         if( space >= len )
         {
             memcpy( p, str, len );
+            out->used += len;
             return len;
         }
         if( space > 0 )
+        {
             memcpy( p, str, space );
+            out->used += space;
+        }
     }
     else
     {
@@ -134,16 +153,23 @@ static inline int pf_output_stringA( pf_output *out, LPCSTR str, int len )
         ULONG n;
 
         RtlMultiByteToUnicodeSize( &n, str, len );
-        out->used += n / sizeof(WCHAR);
 
         if (!out->buf.W)
+        {
+            out->used += n / sizeof(WCHAR);
             return len;
+        }
         if (space >= n / sizeof(WCHAR))
         {
             RtlMultiByteToUnicodeN( p, n, NULL, str, len );
+            out->used += n / sizeof(WCHAR);
             return len;
         }
-        if (space > 0) RtlMultiByteToUnicodeN( p, space * sizeof(WCHAR), NULL, str, len );
+        if (space > 0)
+        {
+            RtlMultiByteToUnicodeN( p, space * sizeof(WCHAR), NULL, str, len );
+            out->used += space;
+        }
     }
     return -1;
 }
@@ -426,7 +452,6 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
     LPCWSTR q, p = format;
     pf_flags flags;
 
-    TRACE("format is %s\n",debugstr_w(format));
     while (*p)
     {
         q = strchrW( p, '%' );
@@ -536,6 +561,12 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
                 }
                 else if( *(p+1) == '3' && *(p+2) == '2' )
                     p += 3;
+                else if( p[1] && strchr( "diouxX", p[1] ) )
+                {
+                    if( sizeof(void *) == 8 )
+                        flags.IntegerDouble = *p;
+                    p++;
+                }
                 else if( isDigit(*(p+1)) || *(p+1) == 0 )
                     break;
                 else
@@ -657,9 +688,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
 
     /* check we reached the end, and null terminate the string */
     assert( *p == 0 );
-    pf_output_stringW( out, p, 1 );
-
-    return out->used - 1;
+    return out->used;
 }
 
 
@@ -686,6 +715,7 @@ int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, __ms_va_l
     }
     r = pf_vsnprintf( &out, formatW, args );
     RtlFreeHeap( GetProcessHeap(), 0, formatW );
+    if (out.used < len) str[out.used] = 0;
     return r;
 }
 
@@ -696,13 +726,16 @@ int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, __ms_va_l
 int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, __ms_va_list args )
 {
     pf_output out;
+    int r;
 
     out.unicode = TRUE;
     out.buf.W = str;
     out.used = 0;
     out.len = len;
 
-    return pf_vsnprintf( &out, format, args );
+    r = pf_vsnprintf( &out, format, args );
+    if (out.used < len) str[out.used] = 0;
+    return r;
 }
 
 
@@ -732,6 +765,51 @@ int WINAPIV NTDLL__snwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, ... )
     __ms_va_start(valist, format);
     ret = NTDLL__vsnwprintf( str, len, format, valist );
     __ms_va_end(valist);
+    return ret;
+}
+
+
+/*********************************************************************
+ *                  _vsnprintf_s   (NTDLL.@)
+ */
+int CDECL _vsnprintf_s( char *str, SIZE_T size, SIZE_T len, const char *format, __ms_va_list args )
+{
+    DWORD sz;
+    LPWSTR formatW = NULL;
+    pf_output out;
+    int r;
+
+    out.unicode = FALSE;
+    out.buf.A = str;
+    out.used = 0;
+    out.len = min( size, len );
+
+    if (format)
+    {
+        RtlMultiByteToUnicodeSize( &sz, format, strlen(format) + 1 );
+        if (!(formatW = RtlAllocateHeap( GetProcessHeap(), 0, sz ))) return -1;
+        RtlMultiByteToUnicodeN( formatW, sz, NULL, format, strlen(format) + 1 );
+    }
+    r = pf_vsnprintf( &out, formatW, args );
+    RtlFreeHeap( GetProcessHeap(), 0, formatW );
+    if (out.used < size) str[out.used] = 0;
+    else str[0] = 0;
+    if (r == size) r = -1;
+    return r;
+}
+
+
+/*********************************************************************
+ *                  _snprintf_s   (NTDLL.@)
+ */
+int WINAPIV _snprintf_s( char *str, SIZE_T size, SIZE_T len, const char *format, ... )
+{
+    int ret;
+    __ms_va_list valist;
+
+    __ms_va_start( valist, format );
+    ret = _vsnprintf_s( str, size, len, format, valist );
+    __ms_va_end( valist );
     return ret;
 }
 

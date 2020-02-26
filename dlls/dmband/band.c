@@ -158,7 +158,7 @@ static HRESULT WINAPI band_IDirectMusicObject_ParseDescriptor(IDirectMusicObject
     }
 
     TRACE("returning descriptor:\n");
-    debug_DMUS_OBJECTDESC(desc);
+    dump_DMUS_OBJECTDESC(desc);
     return S_OK;
 }
 
@@ -170,6 +170,8 @@ static const IDirectMusicObjectVtbl dmobject_vtbl = {
     dmobj_IDirectMusicObject_SetDescriptor,
     band_IDirectMusicObject_ParseDescriptor
 };
+
+#define DMUS_IO_INSTRUMENT_DX7_SIZE offsetof(DMUS_IO_INSTRUMENT, nPitchBendRange)
 
 /* IDirectMusicBandImpl IPersistStream part: */
 static HRESULT parse_instrument(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *pChunk,
@@ -199,8 +201,14 @@ static HRESULT parse_instrument(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_INSTRUMENT_CHUNK: {
       TRACE_(dmfile)(": Instrument chunk\n");
-      if (Chunk.dwSize != sizeof(DMUS_IO_INSTRUMENT)) return E_FAIL;
-      IStream_Read (pStm, &inst, sizeof(DMUS_IO_INSTRUMENT), NULL);
+      if (Chunk.dwSize != sizeof(DMUS_IO_INSTRUMENT) && Chunk.dwSize != DMUS_IO_INSTRUMENT_DX7_SIZE) {
+        ERR_(dmfile)("unexpected size %d\n", Chunk.dwSize);
+        return E_FAIL;
+      }
+      IStream_Read (pStm, &inst, Chunk.dwSize, NULL);
+      if (Chunk.dwSize != sizeof(DMUS_IO_INSTRUMENT))
+        inst.nPitchBendRange = 0;
+
       TRACE_(dmfile)(" - dwPatch: %u\n", inst.dwPatch);
       TRACE_(dmfile)(" - dwAssignPatch: %u\n", inst.dwAssignPatch);
       TRACE_(dmfile)(" - dwNoteRanges[0]: %u\n", inst.dwNoteRanges[0]);

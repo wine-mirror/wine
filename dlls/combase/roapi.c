@@ -21,6 +21,7 @@
 #include "initguid.h"
 #include "roapi.h"
 #include "roparameterizediid.h"
+#include "roerrorapi.h"
 #include "winstring.h"
 
 #include "wine/debug.h"
@@ -273,6 +274,24 @@ HRESULT WINAPI RoRegisterActivationFactories(HSTRING *classes, PFNGETACTIVATIONF
     FIXME("(%p, %p, %d, %p): stub\n", classes, callbacks, count, cookie);
 
     return S_OK;
+}
+
+/***********************************************************************
+ *      GetRestrictedErrorInfo (combase.@)
+ */
+HRESULT WINAPI GetRestrictedErrorInfo(IRestrictedErrorInfo **info)
+{
+    FIXME( "(%p)\n", info );
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      RoOriginateLanguageException (combase.@)
+ */
+BOOL WINAPI RoOriginateLanguageException(HRESULT error, HSTRING message, IUnknown *language_exception)
+{
+    FIXME("(%x %s %p) stub\n", error, debugstr_hstring(message), language_exception);
+    return FALSE;
 }
 
 /***********************************************************************

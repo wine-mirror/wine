@@ -650,6 +650,30 @@ typedef struct tagGESTURECONFIG {
 #define GIDC_ARRIVAL 1
 #define GIDC_REMOVAL 2
 
+#define GC_PAN                                 0x00000001
+#define GC_PAN_WITH_SINGLE_FINGER_VERTICALLY   0x00000002
+#define GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY 0x00000004
+#define GC_PAN_WITH_GUTTER                     0x00000008
+#define GC_PAN_WITH_INERTIA                    0x00000010
+
+#define GC_ALLGESTURES                         0x00000001
+#define GC_PRESSANDTAP                         0x00000001
+#define GC_ROLLOVER                            GC_PRESSANDTAP
+#define GC_ROTATE                              0x00000001
+#define GC_TWOFINGERTAP                        0x00000001
+#define GC_ZOOM                                0x00000001
+
+#define GESTURECONFIGMAXCOUNT                  256
+
+#define GID_BEGIN                              1
+#define GID_END                                2
+#define GID_ZOOM                               3
+#define GID_PAN                                4
+#define GID_ROTATE                             5
+#define GID_TWOFINGERTAP                       6
+#define GID_PRESSANDTAP                        7
+#define GID_ROLLOVER                           GID_PRESSANDTAP
+
 #if (_WIN32_WINNT >= 0x0601)
 #define GET_DEVICE_CHANGE_WPARAM(wParam) (LOWORD(wParam))
 #elif (_WIN32_WINNT >= 0x0501)
@@ -1477,15 +1501,17 @@ DECL_WINELIB_TYPE_AW(LPHELPWININFO)
 #define DISP_CHANGE_BADDUALVIEW (-6)
 
 /* ChangeDisplaySettings.dwFlags */
-#define	CDS_UPDATEREGISTRY	0x00000001
-#define	CDS_TEST		0x00000002
-#define	CDS_FULLSCREEN		0x00000004
-#define	CDS_GLOBAL		0x00000008
-#define	CDS_SET_PRIMARY		0x00000010
-#define	CDS_VIDEOPARAMETERS	0x00000020
-#define	CDS_NORESET		0x10000000
-#define	CDS_SETRECT		0x20000000
-#define	CDS_RESET		0x40000000
+#define CDS_UPDATEREGISTRY          0x00000001
+#define CDS_TEST                    0x00000002
+#define CDS_FULLSCREEN              0x00000004
+#define CDS_GLOBAL                  0x00000008
+#define CDS_SET_PRIMARY             0x00000010
+#define CDS_VIDEOPARAMETERS         0x00000020
+#define CDS_ENABLE_UNSAFE_MODES     0x00000100
+#define CDS_DISABLE_UNSAFE_MODES    0x00000200
+#define CDS_NORESET                 0x10000000
+#define CDS_RESET_EX                0x20000000
+#define CDS_RESET                   0x40000000
 
 typedef struct tagWNDCLASSEXA
 {
@@ -3425,6 +3451,15 @@ typedef struct tagAUDIODESCRIPTION
     LCID Locale;
 } AUDIODESCRIPTION, *LPAUDIODESCRIPTION;
 
+typedef struct tagMENUGETOBJECTINFO
+{
+    DWORD dwFlags;
+    UINT  uPos;
+    HMENU hmenu;
+    void  *riid;
+    void  *pvObj;
+} MENUGETOBJECTINFO, *PMENUGETOBJECTINFO;
+
 #if defined(_WINGDI_) && !defined(NOGDI)
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsA(LPDEVMODEA,DWORD);
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsW(LPDEVMODEW,DWORD);
@@ -3667,6 +3702,7 @@ WINUSERAPI INT         WINAPI DrawTextExW(HDC,LPWSTR,INT,LPRECT,UINT,LPDRAWTEXTP
 WINUSERAPI BOOL        WINAPI EmptyClipboard(void);
 WINUSERAPI BOOL        WINAPI EnableMenuItem(HMENU,UINT,UINT);
 WINUSERAPI BOOL        WINAPI EnableMouseInPointer(BOOL);
+WINUSERAPI BOOL        WINAPI EnableNonClientDpiScaling(HWND);
 WINUSERAPI BOOL        WINAPI EnableScrollBar(HWND,UINT,UINT);
 WINUSERAPI BOOL        WINAPI EnableWindow(HWND,BOOL);
 WINUSERAPI BOOL        WINAPI EndDeferWindowPos(HDWP);

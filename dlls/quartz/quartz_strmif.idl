@@ -85,20 +85,6 @@ coclass SeekingPassThru { interface ISeekingPassThru; }
 coclass AsyncReader { interface IBaseFilter; }
 
 [
-    helpstring("AVI Splitter"),
-    threading(both),
-    uuid(1b544c20-fd0b-11ce-8c63-00aa0044b51e)
-]
-coclass AviSplitter { interface IBaseFilter; }
-
-[
-    helpstring("MPEG-I Stream Splitter"),
-    threading(both),
-    uuid(336475d0-942a-11ce-a870-00aa002feab5)
-]
-coclass MPEG1Splitter { interface IBaseFilter; }
-
-[
     helpstring("AVI Decompressor"),
     threading(both),
     uuid(cf49d4e0-1115-11ce-b03a-0020af0ba770)
@@ -139,13 +125,6 @@ coclass VideoRendererDefault { interface IBaseFilter; }
     uuid(6a08cf80-0e18-11cf-a24d-0020afd79767)
 ]
 coclass ACMWrapper { interface IBaseFilter; }
-
-[
-    helpstring("Wave Parser"),
-    threading(both),
-    uuid(d51bd5a1-7548-11cf-a520-0080c77ef58a)
-]
-coclass WAVEParser { interface IBaseFilter; }
 
 [
     helpstring("Video Mixing Renderer"),

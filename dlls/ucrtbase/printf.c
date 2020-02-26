@@ -22,13 +22,13 @@
 #endif
 
 #include <stdarg.h>
-#include "msvcrt.h"
+#include <corecrt_stdio_config.h>
 
-int __cdecl __stdio_common_vsprintf(unsigned __int64 options, char *str, MSVCRT_size_t len,
-                                    const char *format, MSVCRT__locale_t locale, __ms_va_list valist);
+int __cdecl __stdio_common_vsprintf(unsigned __int64 options, char *str, size_t len,
+                                    const char *format, _locale_t locale, __ms_va_list valist);
 
-int __cdecl _vsnprintf( char *buf, MSVCRT_size_t size, const char *fmt, __ms_va_list args )
+int __cdecl _vsnprintf( char *buf, size_t size, const char *fmt, __ms_va_list args )
 {
-    return __stdio_common_vsprintf( UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR,
+    return __stdio_common_vsprintf( _CRT_INTERNAL_LOCAL_PRINTF_OPTIONS | _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR,
                                     buf, size, fmt, NULL, args );
 }

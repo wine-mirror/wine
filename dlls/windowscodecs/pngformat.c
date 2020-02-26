@@ -22,7 +22,7 @@
 
 #include <stdarg.h>
 
-#ifdef HAVE_PNG_H
+#ifdef SONAME_LIBPNG
 #include <png.h>
 #endif
 
@@ -2183,7 +2183,7 @@ HRESULT PngEncoder_CreateInstance(REFIID iid, void** ppv)
     return ret;
 }
 
-#else /* !HAVE_PNG_H */
+#else /* !SONAME_LIBPNG */
 
 HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv)
 {

@@ -992,10 +992,10 @@ static void test_TxGetScroll(void)
         return;
 
     ret = ITextServices_TxGetHScroll(txtserv, NULL, NULL, NULL, NULL, NULL);
-    ok(ret == S_OK, "ITextSerHices_GetVScroll failed: 0x%08x.\n", ret);
+    ok(ret == S_OK, "ITextServices_TxGetHScroll failed: 0x%08x.\n", ret);
 
     ret = ITextServices_TxGetVScroll(txtserv, NULL, NULL, NULL, NULL, NULL);
-    ok(ret == S_OK, "ITextServices_GetVScroll failed: 0x%08x.\n", ret);
+    ok(ret == S_OK, "ITextServices_TxGetVScroll failed: 0x%08x.\n", ret);
 
     ITextServices_Release(txtserv);
     ITextHost_Release(host);

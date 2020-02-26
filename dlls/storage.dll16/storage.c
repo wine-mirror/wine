@@ -21,16 +21,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <assert.h>
 #include <time.h>
 #include <stdarg.h>
 #include <string.h>
 #include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #define NONAMELESSUNION
 
@@ -40,7 +35,6 @@
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "wownt32.h"
-#include "wine/unicode.h"
 #include "objbase.h"
 #include "wine/debug.h"
 
@@ -687,7 +681,7 @@ STORAGE_look_for_named_pps(stream_access16*str,int n,LPOLESTR name) {
 	if (1!=STORAGE_get_pps_entry(str,n,&stde))
 		return -1;
 
-	if (!lstrcmpW(name,stde.pps_rawname))
+	if (!wcscmp(name,stde.pps_rawname))
 		return n;
 	if (stde.pps_prev != -1) {
 		ret=STORAGE_look_for_named_pps(str,stde.pps_prev,name);
@@ -778,7 +772,7 @@ STORAGE_init_storage(stream_access16 *str) {
 	stde = (struct storage_pps_entry*)block;
         MultiByteToWideChar(CP_ACP, 0, "RootEntry", -1, stde->pps_rawname,
                             ARRAY_SIZE(stde->pps_rawname));
-	stde->pps_sizeofname	= (strlenW(stde->pps_rawname)+1) * sizeof(WCHAR);
+	stde->pps_sizeofname	= (lstrlenW(stde->pps_rawname)+1) * sizeof(WCHAR);
 	stde->pps_type		= 5;
 	stde->pps_dir		= -1;
 	stde->pps_next		= -1;
@@ -1752,7 +1746,7 @@ HRESULT CDECL IStorage16_fnCreateStorage(IStorage16 *iface, LPCOLESTR16 pwcsName
 	assert(nPPSEntries == 1);
         MultiByteToWideChar(CP_ACP, 0, pwcsName, -1, lpstg->stde.pps_rawname,
                             ARRAY_SIZE(lpstg->stde.pps_rawname));
-	lpstg->stde.pps_sizeofname = (strlenW(lpstg->stde.pps_rawname)+1)*sizeof(WCHAR);
+	lpstg->stde.pps_sizeofname = (lstrlenW(lpstg->stde.pps_rawname)+1)*sizeof(WCHAR);
 	lpstg->stde.pps_next	= -1;
 	lpstg->stde.pps_prev	= -1;
 	lpstg->stde.pps_dir	= -1;
@@ -1815,7 +1809,7 @@ HRESULT CDECL IStorage16_fnCreateStream(IStorage16 *iface, LPCOLESTR16 pwcsName,
 	assert(nPPSEntries == 1);
         MultiByteToWideChar(CP_ACP, 0, pwcsName, -1, lpstr->stde.pps_rawname,
                             ARRAY_SIZE(lpstr->stde.pps_rawname));
-	lpstr->stde.pps_sizeofname = (strlenW(lpstr->stde.pps_rawname)+1) * sizeof(WCHAR);
+	lpstr->stde.pps_sizeofname = (lstrlenW(lpstr->stde.pps_rawname)+1) * sizeof(WCHAR);
 	lpstr->stde.pps_next	= -1;
 	lpstr->stde.pps_prev	= -1;
 	lpstr->stde.pps_dir	= -1;

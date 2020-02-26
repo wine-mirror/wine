@@ -583,21 +583,29 @@ static void test_LB_SETSEL(void)
 
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
     ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+    ret = SendMessageA(list, LB_GETCARETINDEX, 0, 0);
+    ok(ret == 0, "Unexpected caret index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, TRUE, 0);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
     ok(ret == 0, "Unexpected anchor index %d.\n", ret);
+    ret = SendMessageA(list, LB_GETCARETINDEX, 0, 0);
+    ok(ret == 0, "Unexpected caret index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, TRUE, 1);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
     ok(ret == 1, "Unexpected anchor index %d.\n", ret);
+    ret = SendMessageA(list, LB_GETCARETINDEX, 0, 0);
+    ok(ret == 1, "Unexpected caret index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, FALSE, 1);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
     ok(ret == 1, "Unexpected anchor index %d.\n", ret);
+    ret = SendMessageA(list, LB_GETCARETINDEX, 0, 0);
+    ok(ret == 1, "Unexpected caret index %d.\n", ret);
 
     DestroyWindow(list);
 
@@ -607,21 +615,29 @@ static void test_LB_SETSEL(void)
 
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
     ok(ret == -1, "Unexpected anchor index %d.\n", ret);
+    ret = SendMessageA(list, LB_GETCARETINDEX, 0, 0);
+    ok(ret == 0, "Unexpected caret index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, TRUE, 0);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
     ok(ret == 0, "Unexpected anchor index %d.\n", ret);
+    ret = SendMessageA(list, LB_GETCARETINDEX, 0, 0);
+    ok(ret == 0, "Unexpected caret index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, TRUE, 1);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
     ok(ret == 1, "Unexpected anchor index %d.\n", ret);
+    ret = SendMessageA(list, LB_GETCARETINDEX, 0, 0);
+    ok(ret == 1, "Unexpected caret index %d.\n", ret);
 
     ret = SendMessageA(list, LB_SETSEL, FALSE, 1);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ret = SendMessageA(list, LB_GETANCHORINDEX, 0, 0);
     ok(ret == 1, "Unexpected anchor index %d.\n", ret);
+    ret = SendMessageA(list, LB_GETCARETINDEX, 0, 0);
+    ok(ret == 1, "Unexpected caret index %d.\n", ret);
 
     DestroyWindow(list);
 }
@@ -1710,7 +1726,7 @@ static void test_listbox_dlgdir(void)
     ok (res == 0, "DlgDirSelectEx() with no selection returned %d, expected 0\n", res);
     /* WinXP-SP2 leaves pathBuffer untouched, but Win98 fills it with garbage. */
     /*
-    ok (strlen(pathBuffer) == 0, "DlgDirSelectEx() with no selection filled buffer with %s\n", pathBuffer);
+    ok (!*pathBuffer, "DlgDirSelectEx() with no selection filled buffer with %s\n", pathBuffer);
     */
     /* Test proper drive/dir/file recognition */
     itemCount = SendMessageA(g_listBox, LB_GETCOUNT, 0, 0);

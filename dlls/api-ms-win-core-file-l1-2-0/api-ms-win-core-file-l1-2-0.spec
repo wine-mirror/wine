@@ -45,8 +45,8 @@
 @ stdcall GetFullPathNameW(wstr long ptr ptr) kernel32.GetFullPathNameW
 @ stdcall GetLogicalDriveStringsW(long ptr) kernel32.GetLogicalDriveStringsW
 @ stdcall GetLogicalDrives() kernel32.GetLogicalDrives
-@ stdcall GetLongPathNameA(str long long) kernel32.GetLongPathNameA
-@ stdcall GetLongPathNameW(wstr long long) kernel32.GetLongPathNameW
+@ stdcall GetLongPathNameA(str ptr long) kernel32.GetLongPathNameA
+@ stdcall GetLongPathNameW(wstr ptr long) kernel32.GetLongPathNameW
 @ stdcall GetShortPathNameW(wstr ptr long) kernel32.GetShortPathNameW
 @ stdcall GetTempFileNameW(wstr wstr long ptr) kernel32.GetTempFileNameW
 @ stdcall GetTempPathW(long ptr) kernel32.GetTempPathW

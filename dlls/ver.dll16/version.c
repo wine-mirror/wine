@@ -30,18 +30,12 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "winternl.h"
+#include "winuser.h"
 #include "winver.h"
 #include "lzexpand.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
-
-#ifndef SEEK_SET
-#define SEEK_SET   0
-#define SEEK_CUR   1
-#define SEEK_END   2
-#endif
 
 /**********************************************************************
  *  find_entry_by_id
@@ -121,7 +115,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
         {
             pos = (min + max) / 2;
             str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const char *)root + entry[pos].u.s.NameOffset);
-            res = strncmpiW( nameW, str->NameString, str->Length );
+            res = wcsnicmp( nameW, str->NameString, str->Length );
             if (!res && namelen == str->Length)
             {
                 ret = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry[pos].u2.s2.OffsetToDirectory);
@@ -144,17 +138,17 @@ static int read_xx_header( HFILE lzfd )
     IMAGE_DOS_HEADER mzh;
     char magic[3];
 
-    LZSeek( lzfd, 0, SEEK_SET );
+    LZSeek( lzfd, 0, FILE_BEGIN );
     if ( sizeof(mzh) != LZRead( lzfd, (LPSTR)&mzh, sizeof(mzh) ) )
         return 0;
     if ( mzh.e_magic != IMAGE_DOS_SIGNATURE )
         return 0;
 
-    LZSeek( lzfd, mzh.e_lfanew, SEEK_SET );
+    LZSeek( lzfd, mzh.e_lfanew, FILE_BEGIN );
     if ( 2 != LZRead( lzfd, magic, 2 ) )
         return 0;
 
-    LZSeek( lzfd, mzh.e_lfanew, SEEK_SET );
+    LZSeek( lzfd, mzh.e_lfanew, FILE_BEGIN );
 
     if ( magic[0] == 'N' && magic[1] == 'E' )
         return IMAGE_OS2_SIGNATURE;
@@ -181,7 +175,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     int count;
 
     /* Read in NE header */
-    nehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
+    nehdoffset = LZSeek( lzfd, 0, FILE_CURRENT );
     if ( sizeof(nehd) != LZRead( lzfd, (LPSTR)&nehd, sizeof(nehd) ) ) return FALSE;
 
     resTabSize = nehd.ne_restab - nehd.ne_rsrctab;
@@ -195,7 +189,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     resTab = HeapAlloc( GetProcessHeap(), 0, resTabSize );
     if ( !resTab ) return FALSE;
 
-    LZSeek( lzfd, nehd.ne_rsrctab + nehdoffset, SEEK_SET );
+    LZSeek( lzfd, nehd.ne_rsrctab + nehdoffset, FILE_BEGIN );
     if ( resTabSize != LZRead( lzfd, (char*)resTab, resTabSize ) )
     {
         HeapFree( GetProcessHeap(), 0, resTab );
@@ -284,7 +278,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     BOOL ret = FALSE;
 
     /* Read in PE header */
-    pehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
+    pehdoffset = LZSeek( lzfd, 0, FILE_CURRENT );
     if ( sizeof(pehd) != LZRead( lzfd, (LPSTR)&pehd, sizeof(pehd) ) ) return FALSE;
 
     resDataDir = pehd.OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_RESOURCE;
@@ -303,7 +297,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     LZSeek( lzfd, pehdoffset +
                     sizeof(DWORD) + /* Signature */
                     sizeof(IMAGE_FILE_HEADER) +
-                    pehd.FileHeader.SizeOfOptionalHeader, SEEK_SET );
+                    pehd.FileHeader.SizeOfOptionalHeader, FILE_BEGIN );
 
     if ( nSections * sizeof(IMAGE_SECTION_HEADER) !=
          LZRead( lzfd, (LPSTR)sections, nSections * sizeof(IMAGE_SECTION_HEADER) ) )
@@ -335,7 +329,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
         return FALSE;
     }
 
-    LZSeek( lzfd, sections[i].PointerToRawData, SEEK_SET );
+    LZSeek( lzfd, sections[i].PointerToRawData, FILE_BEGIN );
     if ( resSectionSize != LZRead( lzfd, (char*)resSection, resSectionSize ) ) goto done;
 
     /* Find resource */
@@ -458,7 +452,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
         }
     }
 
-    LZSeek( lzfd, dwFileOffset, SEEK_SET );
+    LZSeek( lzfd, dwFileOffset, FILE_BEGIN );
     reslen = LZRead( lzfd, lpvData, min( reslen, dwResLen ) );
     LZClose( lzfd );
 
@@ -468,22 +462,23 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
 /*************************************************************************
  * GetFileVersionInfoSize                  [VER.6]
  */
-DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )
+DWORD WINAPI GetFileVersionInfoSize16( LPCSTR filename, LPDWORD handle )
 {
-    TRACE("(%s, %p)\n", debugstr_a(lpszFileName), lpdwHandle );
-    return GetFileVersionInfoSizeA( lpszFileName, lpdwHandle );
+    DWORD offset;
+
+    TRACE("(%s, %p)\n", debugstr_a(filename), handle );
+
+    return GetFileResourceSize16( filename, (LPCSTR)RT_VERSION, (LPCSTR)VS_VERSION_INFO, &offset );
 }
 
 /*************************************************************************
  * GetFileVersionInfo                      [VER.7]
  */
-DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
-                                   DWORD cbBuf, LPVOID lpvData )
+DWORD WINAPI GetFileVersionInfo16( LPCSTR filename, DWORD handle, DWORD datasize, LPVOID data )
 {
-    TRACE("(%s, %08x, %d, %p)\n",
-                debugstr_a(lpszFileName), handle, cbBuf, lpvData );
+    TRACE("(%s, %08x, %d, %p)\n", debugstr_a(filename), handle, datasize, data );
 
-    return GetFileVersionInfoA( lpszFileName, handle, cbBuf, lpvData );
+    return GetFileResource16( filename, (LPCSTR)RT_VERSION, (LPCSTR)VS_VERSION_INFO, 0, datasize, data );
 }
 
 /*************************************************************************

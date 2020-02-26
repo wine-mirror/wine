@@ -53,9 +53,9 @@ msgstr "删除(&R)"
 msgid "Support Information"
 msgstr "技术支持信息"
 
-#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
-#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:422
-#: comdlg32.rc:453 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
+#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:233
+#: comdlg32.rc:263 comdlg32.rc:307 comdlg32.rc:390 comdlg32.rc:424
+#: comdlg32.rc:455 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
 #: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
@@ -132,10 +132,10 @@ msgid "&Install"
 msgstr "安装(&I)"
 
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
-#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
-#: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
-#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:423
-#: comdlg32.rc:454 comdlg32.rc:479 comdlg32.rc:505 comdlg32.rc:528 credui.rc:53
+#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:172 comdlg32.rc:194
+#: comdlg32.rc:212 comdlg32.rc:234 comdlg32.rc:264 comdlg32.rc:308
+#: comdlg32.rc:330 comdlg32.rc:350 comdlg32.rc:391 comdlg32.rc:425
+#: comdlg32.rc:456 comdlg32.rc:481 comdlg32.rc:507 comdlg32.rc:530 credui.rc:53
 #: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
 #: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
@@ -196,7 +196,8 @@ msgstr "不能运行卸载程序 '%s'。您想把这个卸载条目从注册表�
 msgid "Not specified"
 msgstr "未指定"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr "名称"
 
@@ -319,11 +320,11 @@ msgstr "时"
 msgid "Properties for %s"
 msgstr "属性 %s"
 
-#: comctl32.rc:73 comdlg32.rc:264
+#: comctl32.rc:73 comdlg32.rc:265
 msgid "&Apply"
 msgstr "应用(&A)"
 
-#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
+#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:309 user32.rc:88
 msgid "Help"
 msgstr "帮助"
 
@@ -335,7 +336,7 @@ msgstr "向导"
 msgid "< &Back"
 msgstr "< 上一步(&B)"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:60
 msgid "&Next >"
 msgstr "下一步(&N) >"
 
@@ -356,9 +357,9 @@ msgstr "关闭(&C)"
 msgid "R&eset"
 msgstr "重置(&e)"
 
-#: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
-#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
-#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:529 ieframe.rc:58 msacm32.rc:52
+#: comctl32.rc:102 comdlg32.rc:173 comdlg32.rc:195 comdlg32.rc:266
+#: comdlg32.rc:331 comdlg32.rc:351 comdlg32.rc:392 comdlg32.rc:426
+#: comdlg32.rc:482 comdlg32.rc:508 comdlg32.rc:531 ieframe.rc:58 msacm32.rc:52
 #: oledlg.rc:96 shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119
 #: oleview.rc:72 progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144
 #: progman.rc:160 progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77
@@ -432,413 +433,420 @@ msgstr "今天："
 msgid "Go to today"
 msgstr "转到今天"
 
-#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
-#: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
+#: comdlg32.rc:158 comdlg32.rc:171 comdlg32.rc:462 comdlg32.rc:487
+#: comdlg32.rc:514 shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "打开"
 
-#: comdlg32.rc:160 comdlg32.rc:182
+#: comdlg32.rc:161 comdlg32.rc:183
 msgid "File &Name:"
 msgstr "文件名(&N)："
 
-#: comdlg32.rc:163 comdlg32.rc:185
+#: comdlg32.rc:164 comdlg32.rc:186
 msgid "&Directories:"
 msgstr "文件夹(&D)："
 
-#: comdlg32.rc:166 comdlg32.rc:188
+#: comdlg32.rc:167 comdlg32.rc:189
 msgid "List Files of &Type:"
 msgstr "文件类型(&T)："
 
-#: comdlg32.rc:168 comdlg32.rc:190
+#: comdlg32.rc:169 comdlg32.rc:191
 msgid "Dri&ves:"
 msgstr "驱动器(&V)："
 
-#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: comdlg32.rc:174 comdlg32.rc:196 shell32.rc:370 shell32.rc:407
 #: winefile.rc:172
 msgid "&Read Only"
 msgstr "只读(&R)"
 
-#: comdlg32.rc:179
+#: comdlg32.rc:180
 msgid "Save As..."
 msgstr "另存为..."
 
-#: comdlg32.rc:192 comdlg32.rc:145
+#: comdlg32.rc:193 comdlg32.rc:146
 msgid "Save As"
 msgstr "另存为"
 
-#: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
+#: comdlg32.rc:202 comdlg32.rc:211 comdlg32.rc:358 comdlg32.rc:55 hhctrl.rc:49
 #: wordpad.rc:173
 msgid "Print"
 msgstr "打印"
 
-#: comdlg32.rc:204
+#: comdlg32.rc:205
 msgid "Printer:"
 msgstr "打印机："
 
-#: comdlg32.rc:206 comdlg32.rc:373
+#: comdlg32.rc:207 comdlg32.rc:375
 msgid "Print range"
 msgstr "打印范围"
 
-#: comdlg32.rc:207 comdlg32.rc:374 regedit.rc:268
+#: comdlg32.rc:208 comdlg32.rc:376 regedit.rc:268
 msgid "&All"
 msgstr "全部(&A)"
 
-#: comdlg32.rc:208
+#: comdlg32.rc:209
 msgid "S&election"
 msgstr "选中的范围(&E)"
 
-#: comdlg32.rc:209
+#: comdlg32.rc:210
 msgid "&Pages"
 msgstr "页数(&G)"
 
-#: comdlg32.rc:212 comdlg32.rc:234
+#: comdlg32.rc:213 comdlg32.rc:235
 msgid "&Setup"
 msgstr "设置(&S)"
 
-#: comdlg32.rc:213
+#: comdlg32.rc:214
 msgid "&From:"
 msgstr "从(&F)："
 
-#: comdlg32.rc:214
+#: comdlg32.rc:215
 msgid "&To:"
 msgstr "到(&T)："
 
-#: comdlg32.rc:215 wineps.rc:42
+#: comdlg32.rc:216 wineps.rc:42
 msgid "Print &Quality:"
 msgstr "打印质量(&Q)："
 
-#: comdlg32.rc:217
+#: comdlg32.rc:218
 msgid "Print to Fi&le"
 msgstr "打印到文件(&L)"
 
-#: comdlg32.rc:218
+#: comdlg32.rc:219
 msgid "Condensed"
 msgstr "压小"
 
-#: comdlg32.rc:224 comdlg32.rc:395
+#: comdlg32.rc:225 comdlg32.rc:397
 msgid "Print Setup"
 msgstr "打印设置"
 
-#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:398
+#: comdlg32.rc:228 comdlg32.rc:361 comdlg32.rc:400
 msgid "Printer"
 msgstr "打印机"
 
-#: comdlg32.rc:228
+#: comdlg32.rc:229
 msgid "&Default Printer"
 msgstr "默认打印机(&D)"
 
-#: comdlg32.rc:229
+#: comdlg32.rc:230
 msgid "[none]"
 msgstr "[无]"
 
-#: comdlg32.rc:230
+#: comdlg32.rc:231
 msgid "Specific &Printer"
 msgstr "指定的打印机(&P)"
 
-#: comdlg32.rc:235 comdlg32.rc:417 comdlg32.rc:441 wineps.rc:34
+#: comdlg32.rc:236 comdlg32.rc:419 comdlg32.rc:443 wineps.rc:34
 msgid "Orientation"
 msgstr "方向"
 
-#: comdlg32.rc:236
+#: comdlg32.rc:237
 msgid "Po&rtrait"
 msgstr "纵向(&P)"
 
-#: comdlg32.rc:237 comdlg32.rc:443 wineps.rc:37
+#: comdlg32.rc:238 comdlg32.rc:445 wineps.rc:37
 msgid "&Landscape"
 msgstr "横向(&L)"
 
-#: comdlg32.rc:240 comdlg32.rc:411 comdlg32.rc:436 wineps.rc:28
+#: comdlg32.rc:241 comdlg32.rc:413 comdlg32.rc:438 wineps.rc:28
 msgid "Paper"
 msgstr "纸张"
 
-#: comdlg32.rc:241
+#: comdlg32.rc:242
 msgid "Si&ze"
 msgstr "纸张大小(&Z)"
 
-#: comdlg32.rc:242
+#: comdlg32.rc:243
 msgid "&Source"
 msgstr "纸张来源(&S)"
 
-#: comdlg32.rc:250 wineconsole.rc:85
+#: comdlg32.rc:251 wineconsole.rc:85
 msgid "Font"
 msgstr "字体"
 
-#: comdlg32.rc:253
+#: comdlg32.rc:254
 msgid "&Font:"
 msgstr "字体(&F)："
 
-#: comdlg32.rc:256
+#: comdlg32.rc:257
 msgid "Font St&yle:"
 msgstr "字体样式(&Y)："
 
-#: comdlg32.rc:259 comdlg32.rc:437 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
 msgid "&Size:"
 msgstr "大小(&S)："
 
-#: comdlg32.rc:266
+#: comdlg32.rc:267
 msgid "Effects"
 msgstr "效果"
 
-#: comdlg32.rc:267
+#: comdlg32.rc:268
 msgid "Stri&keout"
 msgstr "删除线(&K)"
 
-#: comdlg32.rc:268
+#: comdlg32.rc:269
 msgid "&Underline"
 msgstr "下划线(&U)"
 
-#: comdlg32.rc:269 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:292
 msgid "&Color:"
 msgstr "配色(&C)："
 
-#: comdlg32.rc:272
+#: comdlg32.rc:273
 msgid "Sample"
 msgstr "示例"
 
-#: comdlg32.rc:274
+#: comdlg32.rc:275
 msgid "Scr&ipt:"
 msgstr "书写系统(&I):"
 
-#: comdlg32.rc:282
+#: comdlg32.rc:283 comdlg32.rc:288
 msgid "Color"
 msgstr "颜色"
 
-#: comdlg32.rc:285
+#: comdlg32.rc:286
 msgid "&Basic Colors:"
 msgstr "基本颜色(&B)："
 
-#: comdlg32.rc:286
+#: comdlg32.rc:287
 msgid "&Custom Colors:"
 msgstr "自定义颜色(&C)："
 
-#: comdlg32.rc:287 comdlg32.rc:310
-msgid "Color |  Sol&id"
-msgstr "颜色|纯色(&O)"
+#: comdlg32.rc:289
+msgid "|S&olid"
+msgstr ""
 
-#: comdlg32.rc:288
+#: comdlg32.rc:290
 msgid "&Red:"
 msgstr "红(&R)："
 
-#: comdlg32.rc:290
+#: comdlg32.rc:292
 msgid "&Green:"
 msgstr "绿(&G)："
 
-#: comdlg32.rc:292
+#: comdlg32.rc:294
 msgid "&Blue:"
 msgstr "蓝(&B)："
 
-#: comdlg32.rc:294
+#: comdlg32.rc:296
 msgid "&Hue:"
 msgstr "色调(&E)："
 
-#: comdlg32.rc:296
+#: comdlg32.rc:298
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "饱和度(&S)："
 
-#: comdlg32.rc:298
+#: comdlg32.rc:300
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "亮度(&L)："
 
-#: comdlg32.rc:308
+#: comdlg32.rc:310
 msgid "&Add to Custom Colors"
 msgstr "添加到自定义颜色(&A)"
 
-#: comdlg32.rc:309
+#: comdlg32.rc:311
 msgid "&Define Custom Colors >>"
 msgstr "定义自定义颜色(&D) >>"
 
-#: comdlg32.rc:316 regedit.rc:275 regedit.rc:285
+#: comdlg32.rc:312
+#, fuzzy
+#| msgid "&No"
+msgctxt "Solid"
+msgid "&o"
+msgstr "否(&N)"
+
+#: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
 msgstr "查找"
 
-#: comdlg32.rc:319 comdlg32.rc:338
+#: comdlg32.rc:321 comdlg32.rc:340
 msgid "Fi&nd What:"
 msgstr "查找(&N)："
 
-#: comdlg32.rc:321 comdlg32.rc:342
+#: comdlg32.rc:323 comdlg32.rc:344
 msgid "Match &Whole Word Only"
 msgstr "全字匹配(&W)"
 
-#: comdlg32.rc:322 comdlg32.rc:343
+#: comdlg32.rc:324 comdlg32.rc:345
 msgid "Match &Case"
 msgstr "区分大小写(&C)"
 
-#: comdlg32.rc:323 joy.rc:71
+#: comdlg32.rc:325 joy.rc:71
 msgid "Direction"
 msgstr "方向"
 
-#: comdlg32.rc:324 view.rc:42
+#: comdlg32.rc:326 view.rc:42
 msgid "&Up"
 msgstr "上(&U)"
 
-#: comdlg32.rc:325 view.rc:43
+#: comdlg32.rc:327 view.rc:43
 msgid "&Down"
 msgstr "下(&D)"
 
-#: comdlg32.rc:327 comdlg32.rc:345
+#: comdlg32.rc:329 comdlg32.rc:347
 msgid "&Find Next"
 msgstr "找下一个(&F)"
 
-#: comdlg32.rc:335
+#: comdlg32.rc:337
 msgid "Replace"
 msgstr "替换"
 
-#: comdlg32.rc:340
+#: comdlg32.rc:342
 msgid "Re&place With:"
 msgstr "替换为(&P)："
 
-#: comdlg32.rc:346
+#: comdlg32.rc:348
 msgid "&Replace"
 msgstr "替换(&R)"
 
-#: comdlg32.rc:347
+#: comdlg32.rc:349
 msgid "Replace &All"
 msgstr "全部替换(&A)"
 
-#: comdlg32.rc:361 comdlg32.rc:401 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:363 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "属性(&P)"
 
-#: comdlg32.rc:362
+#: comdlg32.rc:364
 msgid "Print to fi&le"
 msgstr "打印到文件(&L)"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
+#: comdlg32.rc:365 comdlg32.rc:401 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "名称(&N)："
 
-#: comdlg32.rc:364 comdlg32.rc:402
+#: comdlg32.rc:366 comdlg32.rc:404
 msgid "Status:"
 msgstr "状态："
 
-#: comdlg32.rc:366 comdlg32.rc:404
+#: comdlg32.rc:368 comdlg32.rc:406
 msgid "Type:"
 msgstr "型号："
 
-#: comdlg32.rc:368 comdlg32.rc:406
+#: comdlg32.rc:370 comdlg32.rc:408
 msgid "Where:"
 msgstr "位置："
 
-#: comdlg32.rc:370 comdlg32.rc:408
+#: comdlg32.rc:372 comdlg32.rc:410
 msgid "Comment:"
 msgstr "备注："
 
-#: comdlg32.rc:375
+#: comdlg32.rc:377
 msgid "Pa&ges"
 msgstr "页数(&G)"
 
-#: comdlg32.rc:376
+#: comdlg32.rc:378
 msgid "&Selection"
 msgstr "选中的范围(&S)"
 
-#: comdlg32.rc:379
+#: comdlg32.rc:381
 msgid "&from:"
 msgstr "从(&F)："
 
-#: comdlg32.rc:380
+#: comdlg32.rc:382
 msgid "&to:"
 msgstr "到(&T)："
 
-#: comdlg32.rc:382
+#: comdlg32.rc:384
 msgid "Copies"
 msgstr "份数"
 
-#: comdlg32.rc:383
+#: comdlg32.rc:385
 msgid "Number of &copies:"
 msgstr "份数(&C)："
 
-#: comdlg32.rc:385
+#: comdlg32.rc:387
 msgid "C&ollate"
 msgstr "逐份打印(&O)"
 
-#: comdlg32.rc:412 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:300
 msgid "Si&ze:"
 msgstr "大小(&Z):"
 
-#: comdlg32.rc:414
+#: comdlg32.rc:416
 msgid "&Source:"
 msgstr "纸张来源(&S)："
 
-#: comdlg32.rc:419
+#: comdlg32.rc:421
 msgid "P&ortrait"
 msgstr "纵向(&P)"
 
-#: comdlg32.rc:420
+#: comdlg32.rc:422
 msgid "L&andscape"
 msgstr "横向(&L)"
 
-#: comdlg32.rc:430
+#: comdlg32.rc:432
 msgid "Setup Page"
 msgstr "页面设置"
 
-#: comdlg32.rc:439
+#: comdlg32.rc:441
 msgid "&Tray:"
 msgstr "托盘(&T)："
 
-#: comdlg32.rc:442 wineps.rc:35
+#: comdlg32.rc:444 wineps.rc:35
 msgid "&Portrait"
 msgstr "纵向(&P)"
 
-#: comdlg32.rc:445
+#: comdlg32.rc:447
 msgid "L&eft:"
 msgstr "左(&E)："
 
-#: comdlg32.rc:447 notepad.rc:112
+#: comdlg32.rc:449 notepad.rc:112
 msgid "&Right:"
 msgstr "右(&R)："
 
-#: comdlg32.rc:449
+#: comdlg32.rc:451
 msgid "T&op:"
 msgstr "上(&O)："
 
-#: comdlg32.rc:451 notepad.rc:114
+#: comdlg32.rc:453 notepad.rc:114
 msgid "&Bottom:"
 msgstr "下(&B)："
 
-#: comdlg32.rc:455
+#: comdlg32.rc:457
 msgid "P&rinter..."
 msgstr "打印机(&P)..."
 
-#: comdlg32.rc:463 comdlg32.rc:488
+#: comdlg32.rc:465 comdlg32.rc:490
 msgid "Look &in:"
 msgstr "浏览(&I)："
 
-#: comdlg32.rc:469 comdlg32.rc:495
+#: comdlg32.rc:471 comdlg32.rc:497
 msgid "File &name:"
 msgstr "文件名(&N):"
 
-#: comdlg32.rc:473 comdlg32.rc:499
+#: comdlg32.rc:475 comdlg32.rc:501
 msgid "Files of &type:"
 msgstr "文件类型(&T)："
 
-#: comdlg32.rc:476 comdlg32.rc:502
+#: comdlg32.rc:478 comdlg32.rc:504
 msgid "Open as &read-only"
 msgstr "以只读方式打开(&R)"
 
-#: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:524 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "打开(&O)"
 
-#: comdlg32.rc:515
+#: comdlg32.rc:517
 msgid "File name:"
 msgstr "文件名："
 
-#: comdlg32.rc:518
+#: comdlg32.rc:520
 msgid "Files of type:"
 msgstr "文件类型："
 
-#: comdlg32.rc:32
+#: comdlg32.rc:33
 msgid "File not found"
 msgstr "找不到文件"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
 msgstr "请检验是否给予正确的文件名称"
 
-#: comdlg32.rc:34
+#: comdlg32.rc:35
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
@@ -846,7 +854,7 @@ msgstr ""
 "文件不存在。\n"
 "是否创建新文件？"
 
-#: comdlg32.rc:35
+#: comdlg32.rc:36
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
@@ -854,11 +862,11 @@ msgstr ""
 "文件已经存在。\n"
 "是否替换？"
 
-#: comdlg32.rc:36
+#: comdlg32.rc:37
 msgid "Invalid character(s) in path"
 msgstr "路径中包含无效字符"
 
-#: comdlg32.rc:37
+#: comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
@@ -866,123 +874,123 @@ msgstr ""
 "文件名中不能包含任何以下字符：\n"
 "                          / : < > |"
 
-#: comdlg32.rc:38
+#: comdlg32.rc:39
 msgid "Path does not exist"
 msgstr "路径不存在"
 
-#: comdlg32.rc:39
+#: comdlg32.rc:40
 msgid "File does not exist"
 msgstr "文件不存在"
 
-#: comdlg32.rc:40
+#: comdlg32.rc:41
 msgid "The selection contains a non-folder object"
 msgstr "选中项包含非文件夹对象"
 
-#: comdlg32.rc:45
+#: comdlg32.rc:46
 msgid "Up One Level"
 msgstr "向上移一层"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:47
 msgid "Create New Folder"
 msgstr "新建文件夹"
 
-#: comdlg32.rc:47
+#: comdlg32.rc:48
 msgid "List"
 msgstr "列表"
 
-#: comdlg32.rc:48 cryptui.rc:201
+#: comdlg32.rc:49 cryptui.rc:201
 msgid "Details"
 msgstr "详细资料"
 
-#: comdlg32.rc:49
+#: comdlg32.rc:50
 msgid "Browse to Desktop"
 msgstr "查看桌面"
 
-#: comdlg32.rc:113
+#: comdlg32.rc:114
 msgid "Regular"
 msgstr "常规"
 
-#: comdlg32.rc:114
+#: comdlg32.rc:115
 msgid "Bold"
 msgstr "粗体"
 
-#: comdlg32.rc:115
+#: comdlg32.rc:116
 msgid "Italic"
 msgstr "斜体"
 
-#: comdlg32.rc:116
+#: comdlg32.rc:117
 msgid "Bold Italic"
 msgstr "粗斜体"
 
-#: comdlg32.rc:121 wordpad.rc:125
+#: comdlg32.rc:122 wordpad.rc:125
 msgid "Black"
 msgstr "黑色"
 
-#: comdlg32.rc:122 wordpad.rc:126
+#: comdlg32.rc:123 wordpad.rc:126
 msgid "Maroon"
 msgstr "栗色"
 
-#: comdlg32.rc:123 wordpad.rc:127
+#: comdlg32.rc:124 wordpad.rc:127
 msgid "Green"
 msgstr "绿色"
 
-#: comdlg32.rc:124 wordpad.rc:128
+#: comdlg32.rc:125 wordpad.rc:128
 msgid "Olive"
 msgstr "橄榄色"
 
-#: comdlg32.rc:125 wordpad.rc:129
+#: comdlg32.rc:126 wordpad.rc:129
 msgid "Navy"
 msgstr "藏青"
 
-#: comdlg32.rc:126 wordpad.rc:130
+#: comdlg32.rc:127 wordpad.rc:130
 msgid "Purple"
 msgstr "紫色"
 
-#: comdlg32.rc:127 wordpad.rc:131
+#: comdlg32.rc:128 wordpad.rc:131
 msgid "Teal"
 msgstr "鸭翅绿"
 
-#: comdlg32.rc:128 wordpad.rc:132
+#: comdlg32.rc:129 wordpad.rc:132
 msgid "Gray"
 msgstr "灰色"
 
-#: comdlg32.rc:129 wordpad.rc:133
+#: comdlg32.rc:130 wordpad.rc:133
 msgid "Silver"
 msgstr "银色"
 
-#: comdlg32.rc:130 wordpad.rc:134
+#: comdlg32.rc:131 wordpad.rc:134
 msgid "Red"
 msgstr "红色"
 
-#: comdlg32.rc:131 wordpad.rc:135
+#: comdlg32.rc:132 wordpad.rc:135
 msgid "Lime"
 msgstr "青柠色"
 
-#: comdlg32.rc:132 wordpad.rc:136
+#: comdlg32.rc:133 wordpad.rc:136
 msgid "Yellow"
 msgstr "黄色"
 
-#: comdlg32.rc:133 wordpad.rc:137
+#: comdlg32.rc:134 wordpad.rc:137
 msgid "Blue"
 msgstr "蓝色"
 
-#: comdlg32.rc:134 wordpad.rc:138
+#: comdlg32.rc:135 wordpad.rc:138
 msgid "Fuchsia"
 msgstr "洋红"
 
-#: comdlg32.rc:135 wordpad.rc:139
+#: comdlg32.rc:136 wordpad.rc:139
 msgid "Aqua"
 msgstr "水绿"
 
-#: comdlg32.rc:136 wordpad.rc:140
+#: comdlg32.rc:137 wordpad.rc:140
 msgid "White"
 msgstr "白色"
 
-#: comdlg32.rc:56
+#: comdlg32.rc:57
 msgid "Unreadable Entry"
 msgstr "数值不可读"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:59
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
@@ -990,11 +998,11 @@ msgstr ""
 "这个值不在页数范围内。\n"
 "请输入一个 %1!d! 和 %2!d! 之间的数。"
 
-#: comdlg32.rc:60
+#: comdlg32.rc:61
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "“从”项的值不能大于“到”项的值。"
 
-#: comdlg32.rc:62
+#: comdlg32.rc:63
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -1002,11 +1010,11 @@ msgstr ""
 "页边距重叠或落于纸外。\n"
 "请重新输入页边距。"
 
-#: comdlg32.rc:64
+#: comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "“份数”项不能空。"
 
-#: comdlg32.rc:66
+#: comdlg32.rc:67
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -1014,185 +1022,185 @@ msgstr ""
 "你的打印机不支持这么大的份数。\n"
 "请输入一个 1 和 %d 之间的数。"
 
-#: comdlg32.rc:67
+#: comdlg32.rc:68
 msgid "A printer error occurred."
 msgstr "打印机错误。"
 
-#: comdlg32.rc:68
+#: comdlg32.rc:69
 msgid "No default printer defined."
 msgstr "没有默认打印机。"
 
-#: comdlg32.rc:69
+#: comdlg32.rc:70
 msgid "Cannot find the printer."
 msgstr "找不到打印机。"
 
-#: comdlg32.rc:70 progman.rc:76
+#: comdlg32.rc:71 progman.rc:76
 msgid "Out of memory."
 msgstr "内存不足。"
 
-#: comdlg32.rc:71
+#: comdlg32.rc:72
 msgid "An error occurred."
 msgstr "出现了错误。"
 
-#: comdlg32.rc:72
+#: comdlg32.rc:73
 msgid "Unknown printer driver."
 msgstr "找不到打印机驱动程序。"
 
-#: comdlg32.rc:75
+#: comdlg32.rc:76
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr "在安装打印机后才能使用和打印机相关的功能。请安装后再试。"
 
-#: comdlg32.rc:141
+#: comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "选择 %1!d! 到 %2!d! 之间的字号。"
 
-#: comdlg32.rc:142 ieframe.rc:35
+#: comdlg32.rc:143 ieframe.rc:35
 msgid "&Save"
 msgstr "保存(&S)"
 
-#: comdlg32.rc:143
+#: comdlg32.rc:144
 msgid "Save &in:"
 msgstr "保存在(&I)："
 
-#: comdlg32.rc:144
+#: comdlg32.rc:145
 msgid "Save"
 msgstr "保存"
 
-#: comdlg32.rc:146
+#: comdlg32.rc:147
 msgid "Open File"
 msgstr "打开文件"
 
-#: comdlg32.rc:147
+#: comdlg32.rc:148
 msgid "Select Folder"
 msgstr "选择文件夹"
 
-#: comdlg32.rc:148
+#: comdlg32.rc:149
 msgid "Font size has to be a number."
 msgstr "字体大小必须是数字。"
 
-#: comdlg32.rc:83 oleview.rc:98
+#: comdlg32.rc:84 oleview.rc:98
 msgid "Ready"
 msgstr "待命"
 
-#: comdlg32.rc:84
+#: comdlg32.rc:85
 msgid "Paused; "
 msgstr "暂停；"
 
-#: comdlg32.rc:85
+#: comdlg32.rc:86
 msgid "Error; "
 msgstr "错误；"
 
-#: comdlg32.rc:86
+#: comdlg32.rc:87
 msgid "Pending deletion; "
 msgstr "等待删除；"
 
-#: comdlg32.rc:87
+#: comdlg32.rc:88
 msgid "Paper jam; "
 msgstr "卡纸；"
 
-#: comdlg32.rc:88
+#: comdlg32.rc:89
 msgid "Out of paper; "
 msgstr "缺纸；"
 
-#: comdlg32.rc:89
+#: comdlg32.rc:90
 msgid "Feed paper manual; "
 msgstr "手动进纸；"
 
-#: comdlg32.rc:90
+#: comdlg32.rc:91
 msgid "Paper problem; "
 msgstr "纸的问题；"
 
-#: comdlg32.rc:91
+#: comdlg32.rc:92
 msgid "Printer offline; "
 msgstr "打印机离线；"
 
-#: comdlg32.rc:92
+#: comdlg32.rc:93
 msgid "I/O Active; "
 msgstr "I/O 活动；"
 
-#: comdlg32.rc:93
+#: comdlg32.rc:94
 msgid "Busy; "
 msgstr "繁忙；"
 
-#: comdlg32.rc:94
+#: comdlg32.rc:95
 msgid "Printing; "
 msgstr "正在打印；"
 
-#: comdlg32.rc:95
+#: comdlg32.rc:96
 msgid "Output tray is full; "
 msgstr "出纸托盘已满；"
 
-#: comdlg32.rc:96
+#: comdlg32.rc:97
 msgid "Not available; "
 msgstr "不可用；"
 
-#: comdlg32.rc:97
+#: comdlg32.rc:98
 msgid "Waiting; "
 msgstr "等待；"
 
-#: comdlg32.rc:98
+#: comdlg32.rc:99
 msgid "Processing; "
 msgstr "正在处理；"
 
-#: comdlg32.rc:99
+#: comdlg32.rc:100
 msgid "Initializing; "
 msgstr "正在启动；"
 
-#: comdlg32.rc:100
+#: comdlg32.rc:101
 msgid "Warming up; "
 msgstr "预热；"
 
-#: comdlg32.rc:101
+#: comdlg32.rc:102
 msgid "Toner low; "
 msgstr "墨量低；"
 
-#: comdlg32.rc:102
+#: comdlg32.rc:103
 msgid "No toner; "
 msgstr "缺墨；"
 
-#: comdlg32.rc:103
+#: comdlg32.rc:104
 msgid "Page punt; "
 msgstr "页内存超支；"
 
-#: comdlg32.rc:104
+#: comdlg32.rc:105
 msgid "Interrupted by user; "
 msgstr "用户中断；"
 
-#: comdlg32.rc:105
+#: comdlg32.rc:106
 msgid "Out of memory; "
 msgstr "内存不够；"
 
-#: comdlg32.rc:106
+#: comdlg32.rc:107
 msgid "The printer door is open; "
 msgstr "打印机盖是打开的；"
 
-#: comdlg32.rc:107
+#: comdlg32.rc:108
 msgid "Print server unknown; "
 msgstr "未知的打印服务器；"
 
-#: comdlg32.rc:108
+#: comdlg32.rc:109
 msgid "Power save mode; "
 msgstr "省电状态；"
 
-#: comdlg32.rc:77
+#: comdlg32.rc:78
 msgid "Default Printer; "
 msgstr "默认打印机；"
 
-#: comdlg32.rc:78
+#: comdlg32.rc:79
 msgid "There are %d documents in the queue"
 msgstr "有 %d 个文档正在等待打印"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:80
 msgid "Margins [inches]"
 msgstr "页边距 [英寸]"
 
-#: comdlg32.rc:80
+#: comdlg32.rc:81
 msgid "Margins [mm]"
 msgstr "页边距 [毫米]"
 
-#: comdlg32.rc:81 sane.rc:33
+#: comdlg32.rc:82 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "毫米"
@@ -1201,7 +1209,7 @@ msgstr "毫米"
 msgid "&User name:"
 msgstr "用户名(&U)："
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:80
 msgid "&Password:"
 msgstr "密码(&P)："
 
@@ -2497,7 +2505,7 @@ msgstr "该证书没有问题。"
 msgid "Field"
 msgstr "域"
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr "亮度"
 
@@ -3059,7 +3067,7 @@ msgstr "符号"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:99 wldap32.rc:112
 msgid "Other"
 msgstr "其它"
 
@@ -3124,7 +3132,7 @@ msgstr "首页(&H)"
 msgid "&Stop"
 msgstr "停止(&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "刷新(&R)"
 
@@ -3649,6 +3657,20 @@ msgstr "条件编译已关闭"
 msgid "Expected '@'"
 msgstr "期望 '@'"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "未知错误"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "期望得到数字"
@@ -3693,45 +3715,49 @@ msgstr "期望得到 JScript 对象"
 msgid "Syntax error in regular expression"
 msgstr "正则表达式中出现语法错误"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "待编码的 URI 包含无效字符"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "待解码的 URI 不正确"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "分数位数的数字超出范围"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "精度超出范围"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "数组的长度必须为一个有限正整数"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "期望得到 Array 对象"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr "无法在此对象上更改属性描述符中的“writable”属性为“true”"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "无法重定义不可配置的属性“|”"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr "无法更改不可写的属性“|”"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr "属性不能同时包含存取器和值"
 
@@ -6763,6 +6789,12 @@ msgstr "已创建起始请求。\n"
 msgid "Sink has not been finalized.\n"
 msgstr "池尚未完成。\n"
 
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "池已被停止。\n"
+
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
 msgstr "Media Foundation 平台尚未初始化。\n"
@@ -7138,6 +7170,12 @@ msgstr "时钟未设置时间源。\n"
 #: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "已设置时钟状态。\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "时钟不可用。\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8225,6 +8263,202 @@ msgstr "开"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "关"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "视频"
+
+#: version.rc:58
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "选择您希望使用的格式："
+
+#: version.rc:65
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "连接"
+
+#: version.rc:68
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "选择您希望使用的格式："
+
+#: version.rc:69
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "请输入你的名字"
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "连接重置次数"
+
+#: version.rc:74
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "连接"
+
+#: version.rc:76
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "添加(&D)..."
+
+#: version.rc:77
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:78
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "用户名(&U)："
+
+#: version.rc:82
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "空白页面(&B)"
+
+#: version.rc:83
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "密码错误。\n"
+
+#: version.rc:84
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:86
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "连接重置次数"
+
+#: version.rc:91 winemine.rc:65
+msgid "Advanced"
+msgstr "高级"
+
+#: version.rc:94
+#, fuzzy
+#| msgid "Network share"
+msgid "Network settings"
+msgstr "网络共享文件夹"
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Bad impersonation level.\n"
+msgid "&Impersonation level:"
+msgstr "无效的模拟级别。\n"
+
+#: version.rc:97
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:100
+#, fuzzy
+#| msgid "Connected"
+msgid "Connect:"
+msgstr "已连接"
+
+#: version.rc:102
+#, fuzzy
+#| msgid "seconds"
+msgid "seconds."
+msgstr "秒"
+
+#: version.rc:103
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "成功"
+
+#: version.rc:109
+#, fuzzy
+#| msgid "&All"
+msgid "All"
+msgstr "全部(&A)"
+
+#: version.rc:113
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:114
+#, fuzzy
+#| msgid "&Edit..."
+msgid "&Edit Value..."
+msgstr "编辑(&E)..."
+
+#: version.rc:49
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Error"
+msgstr "属性"
+
+#: version.rc:50
+#, fuzzy
+#| msgid "Please select a file."
+msgid "Please select a provider."
+msgstr "请选择一个文件。"
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "属性"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
+
+#: version.rc:41
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "待命"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "产品说明："
+
+#: version.rc:43
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:45
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:46
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:47
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "I/O 写入"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9362,447 +9596,459 @@ msgstr " 秒"
 msgid "Select Source"
 msgstr "选择来源"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "China Standard Time"
 msgstr "中国标准时间"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "China Daylight Time"
 msgstr "中国夏令时"
 
-#: tzres.rc:160
+#: tzres.rc:164
 msgid "North Asia Standard Time"
 msgstr "北亚标准时间"
 
-#: tzres.rc:161
+#: tzres.rc:165
 msgid "North Asia Daylight Time"
 msgstr "北亚夏令时"
 
-#: tzres.rc:104
+#: tzres.rc:106
 msgid "Georgian Standard Time"
 msgstr "格鲁吉亚标准时间"
 
-#: tzres.rc:105
+#: tzres.rc:107
 msgid "Georgian Daylight Time"
 msgstr "格鲁吉亚夏令时"
 
-#: tzres.rc:152
+#: tzres.rc:156
 msgid "Nepal Standard Time"
 msgstr "尼泊尔标准时间"
 
-#: tzres.rc:153
+#: tzres.rc:157
 msgid "Nepal Daylight Time"
 msgstr "尼泊尔夏令时"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Cape Verde Standard Time"
 msgstr "佛得角标准时间"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Cape Verde Daylight Time"
 msgstr "佛得角夏令时"
 
-#: tzres.rc:74
+#: tzres.rc:116
+#, fuzzy
+#| msgid "Hawaiian Standard Time"
+msgid "Haiti Standard Time"
+msgstr "夏威夷标准时间"
+
+#: tzres.rc:117
+#, fuzzy
+#| msgid "Hawaiian Daylight Time"
+msgid "Haiti Daylight Time"
+msgstr "夏威夷夏令时"
+
+#: tzres.rc:76
 msgid "Central European Standard Time"
 msgstr "中欧标准时间"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central European Daylight Time"
 msgstr "中欧夏令时"
 
-#: tzres.rc:140
+#: tzres.rc:144
 msgid "Morocco Standard Time"
 msgstr "摩洛哥标准时间"
 
-#: tzres.rc:141
+#: tzres.rc:145
 msgid "Morocco Daylight Time"
 msgstr "摩洛哥夏令时"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Europe Standard Time"
 msgstr "中欧标准时间"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Europe Daylight Time"
 msgstr "中欧夏令时"
 
-#: tzres.rc:118
+#: tzres.rc:122
 msgid "Iran Standard Time"
 msgstr "伊朗标准时间"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Iran Daylight Time"
 msgstr "伊朗夏令时"
 
-#: tzres.rc:150
+#: tzres.rc:154
 msgid "Namibia Standard Time"
 msgstr "纳米比亚标准时间"
 
-#: tzres.rc:151
+#: tzres.rc:155
 msgid "Namibia Daylight Time"
 msgstr "纳米比亚夏令时"
 
-#: tzres.rc:200
+#: tzres.rc:204
 msgid "Tonga Standard Time"
 msgstr "汤加标准时间"
 
-#: tzres.rc:201
+#: tzres.rc:205
 msgid "Tonga Daylight Time"
 msgstr "汤加夏令时"
 
-#: tzres.rc:144
+#: tzres.rc:148
 msgid "Mountain Standard Time (Mexico)"
 msgstr "山地标准时间（墨西哥）"
 
-#: tzres.rc:145
+#: tzres.rc:149
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "山地夏令时（墨西哥）"
 
-#: tzres.rc:106
+#: tzres.rc:108
 msgid "GMT Standard Time"
 msgstr "格林尼治标准时间"
 
-#: tzres.rc:107
+#: tzres.rc:109
 msgid "GMT Daylight Time"
 msgstr "格林尼治夏令时"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central Asia Standard Time"
 msgstr "中亚标准时间"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central Asia Daylight Time"
 msgstr "中亚夏令时"
 
-#: tzres.rc:38
+#: tzres.rc:40
 msgid "Arabic Standard Time"
 msgstr "阿拉伯标准时间"
 
-#: tzres.rc:39
+#: tzres.rc:41
 msgid "Arabic Daylight Time"
 msgstr "阿拉伯夏令时"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Magadan Standard Time"
 msgstr "马加丹标准时间"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Magadan Daylight Time"
 msgstr "马加丹夏令时"
 
-#: tzres.rc:156
+#: tzres.rc:160
 msgid "Newfoundland Standard Time"
 msgstr "纽芬兰标准时间"
 
-#: tzres.rc:157
+#: tzres.rc:161
 msgid "Newfoundland Daylight Time"
 msgstr "纽芬兰夏令时"
 
-#: tzres.rc:224
+#: tzres.rc:228
 msgid "West Pacific Standard Time"
 msgstr "西太平洋标准时间"
 
-#: tzres.rc:225
+#: tzres.rc:229
 msgid "West Pacific Daylight Time"
 msgstr "西太平洋夏令时"
 
-#: tzres.rc:164
+#: tzres.rc:168
 msgid "Pacific Standard Time"
 msgstr "太平洋标准时间"
 
-#: tzres.rc:165
+#: tzres.rc:169
 msgid "Pacific Daylight Time"
 msgstr "太平洋夏令时"
 
-#: tzres.rc:48
+#: tzres.rc:50
 msgid "Azerbaijan Standard Time"
 msgstr "阿塞拜疆标准时间"
 
-#: tzres.rc:49
+#: tzres.rc:51
 msgid "Azerbaijan Daylight Time"
 msgstr "阿塞拜疆夏令时"
 
-#: tzres.rc:182
+#: tzres.rc:186
 msgid "Samoa Standard Time"
 msgstr "萨摩亚标准时间"
 
-#: tzres.rc:183
+#: tzres.rc:187
 msgid "Samoa Daylight Time"
 msgstr "萨摩亚夏令时"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Kaliningrad Standard Time"
 msgstr "加里宁格勒标准时间"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Kaliningrad Daylight Time"
 msgstr "加里宁格勒夏令时"
 
-#: tzres.rc:166
+#: tzres.rc:170
 msgid "Pacific Standard Time (Mexico)"
 msgstr "太平洋标准时间（墨西哥）"
 
-#: tzres.rc:167
+#: tzres.rc:171
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "太平洋夏令时（墨西哥）"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Middle East Standard Time"
 msgstr "中东标准时间"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Middle East Daylight Time"
 msgstr "中东夏令时"
 
-#: tzres.rc:198
+#: tzres.rc:202
 msgid "Tokyo Standard Time"
 msgstr "东京标准时间"
 
-#: tzres.rc:199
+#: tzres.rc:203
 msgid "Tokyo Daylight Time"
 msgstr "东京夏令时"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Line Islands Standard Time"
 msgstr "莱恩群岛标准时间"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Line Islands Daylight Time"
 msgstr "莱恩群岛夏令时"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Jordan Standard Time"
 msgstr "约旦标准时间"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Jordan Daylight Time"
 msgstr "约旦夏令时"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Standard Time"
 msgstr "中部标准时间"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Daylight Time"
 msgstr "中部夏令时"
 
-#: tzres.rc:50
+#: tzres.rc:52
 msgid "Azores Standard Time"
 msgstr "亚速尔群岛标准时间"
 
-#: tzres.rc:51
+#: tzres.rc:53
 msgid "Azores Daylight Time"
 msgstr "亚速尔群岛夏令时"
 
-#: tzres.rc:158
+#: tzres.rc:162
 msgid "North Asia East Standard Time"
 msgstr "北亚东部标准时间"
 
-#: tzres.rc:159
+#: tzres.rc:163
 msgid "North Asia East Daylight Time"
 msgstr "北亚东部夏令时"
 
-#: tzres.rc:40
+#: tzres.rc:42
 msgid "Argentina Standard Time"
 msgstr "阿根廷标准时间"
 
-#: tzres.rc:41
+#: tzres.rc:43
 msgid "Argentina Daylight Time"
 msgstr "阿根廷夏令时"
 
-#: tzres.rc:146
+#: tzres.rc:150
 msgid "Myanmar Standard Time"
 msgstr "缅甸标准时间"
 
-#: tzres.rc:147
+#: tzres.rc:151
 msgid "Myanmar Daylight Time"
 msgstr "缅甸夏令时"
 
-#: tzres.rc:210 tzres.rc:211
+#: tzres.rc:214 tzres.rc:215
 msgid "Coordinated Universal Time"
 msgstr "协调世界时"
 
-#: tzres.rc:116
+#: tzres.rc:120
 msgid "India Standard Time"
 msgstr "印度标准时间"
 
-#: tzres.rc:117
+#: tzres.rc:121
 msgid "India Daylight Time"
 msgstr "印度夏令时"
 
-#: tzres.rc:112
+#: tzres.rc:114
 msgid "GTB Standard Time"
 msgstr "GTB 标准时间"
 
-#: tzres.rc:113
+#: tzres.rc:115
 msgid "GTB Daylight Time"
 msgstr "GTB 夏令时"
 
-#: tzres.rc:202
+#: tzres.rc:206
 msgid "Turkey Standard Time"
 msgstr "土耳其标准时间"
 
-#: tzres.rc:203
+#: tzres.rc:207
 msgid "Turkey Daylight Time"
 msgstr "土耳其夏令时"
 
-#: tzres.rc:100
+#: tzres.rc:102
 msgid "Fiji Standard Time"
 msgstr "斐济标准时间"
 
-#: tzres.rc:101
+#: tzres.rc:103
 msgid "Fiji Daylight Time"
 msgstr "斐济夏令时"
 
-#: tzres.rc:58
+#: tzres.rc:60
 msgid "Canada Central Standard Time"
 msgstr "加拿大中部标准时间"
 
-#: tzres.rc:59
+#: tzres.rc:61
 msgid "Canada Central Daylight Time"
 msgstr "加拿大中部夏令时"
 
-#: tzres.rc:194
+#: tzres.rc:198
 msgid "Taipei Standard Time"
 msgstr "台北标准时间"
 
-#: tzres.rc:195
+#: tzres.rc:199
 msgid "Taipei Daylight Time"
 msgstr "台北夏令时"
 
-#: tzres.rc:220
+#: tzres.rc:224
 msgid "W. Europe Standard Time"
 msgstr "西欧标准时间"
 
-#: tzres.rc:221
+#: tzres.rc:225
 msgid "W. Europe Daylight Time"
 msgstr "西欧夏令时"
 
-#: tzres.rc:138
+#: tzres.rc:142
 msgid "Montevideo Standard Time"
 msgstr "蒙得维的亚标准时间"
 
-#: tzres.rc:139
+#: tzres.rc:143
 msgid "Montevideo Daylight Time"
 msgstr "蒙得维的亚夏令时"
 
-#: tzres.rc:168
+#: tzres.rc:172
 msgid "Pakistan Standard Time"
 msgstr "巴基斯坦标准时间"
 
-#: tzres.rc:169
+#: tzres.rc:173
 msgid "Pakistan Daylight Time"
 msgstr "巴基斯坦夏令时"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Caucasus Standard Time"
 msgstr "高加索标准时间"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Caucasus Daylight Time"
 msgstr "高加索夏令时"
 
-#: tzres.rc:46
+#: tzres.rc:48
 msgid "AUS Eastern Standard Time"
 msgstr "澳大利亚东部标准时间"
 
-#: tzres.rc:47
+#: tzres.rc:49
 msgid "AUS Eastern Daylight Time"
 msgstr "澳大利亚东部夏令时"
 
-#: tzres.rc:148
+#: tzres.rc:152
 msgid "N. Central Asia Standard Time"
 msgstr "中北亚标准时间"
 
-#: tzres.rc:149
+#: tzres.rc:153
 msgid "N. Central Asia Daylight Time"
 msgstr "中北亚夏令时"
 
-#: tzres.rc:94
+#: tzres.rc:96
 msgid "Eastern Standard Time"
 msgstr "东部标准时间"
 
-#: tzres.rc:95
+#: tzres.rc:97
 msgid "Eastern Daylight Time"
 msgstr "东部夏令时"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time (Mexico)"
 msgstr "中部标准时间（墨西哥）"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time (Mexico)"
 msgstr "中部夏令时（墨西哥）"
 
-#: tzres.rc:42
+#: tzres.rc:44
 msgid "Atlantic Standard Time"
 msgstr "大西洋标准时间"
 
-#: tzres.rc:43
+#: tzres.rc:45
 msgid "Atlantic Daylight Time"
 msgstr "大西洋夏令时"
 
-#: tzres.rc:142
+#: tzres.rc:146
 msgid "Mountain Standard Time"
 msgstr "山地标准时间"
 
-#: tzres.rc:143
+#: tzres.rc:147
 msgid "Mountain Daylight Time"
 msgstr "山地夏令时"
 
-#: tzres.rc:206
+#: tzres.rc:210
 msgid "US Eastern Standard Time"
 msgstr "美国东部标准时间"
 
-#: tzres.rc:207
+#: tzres.rc:211
 msgid "US Eastern Daylight Time"
 msgstr "美国东部夏令时"
 
-#: tzres.rc:196
+#: tzres.rc:200
 msgid "Tasmania Standard Time"
 msgstr "塔斯马尼亚标准时间"
 
-#: tzres.rc:197
+#: tzres.rc:201
 msgid "Tasmania Daylight Time"
 msgstr "塔斯马尼亚夏令时"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Central America Standard Time"
 msgstr "中美洲标准时间"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Central America Daylight Time"
 msgstr "中美洲夏令时"
 
-#: tzres.rc:208
+#: tzres.rc:212
 msgid "US Mountain Standard Time"
 msgstr "美国山地标准时间"
 
-#: tzres.rc:209
+#: tzres.rc:213
 msgid "US Mountain Daylight Time"
 msgstr "美国山地夏令时"
 
-#: tzres.rc:188
+#: tzres.rc:192
 msgid "South Africa Standard Time"
 msgstr "南非标准时间"
 
-#: tzres.rc:189
+#: tzres.rc:193
 msgid "South Africa Daylight Time"
 msgstr "南非夏令时"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Cen. Australia Standard Time"
 msgstr "澳大利亚中部标准时间"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Cen. Australia Daylight Time"
 msgstr "澳大利亚中部夏令时"
 
-#: tzres.rc:190
+#: tzres.rc:194
 msgid "Sri Lanka Standard Time"
 msgstr "斯里兰卡标准时间"
 
-#: tzres.rc:191
+#: tzres.rc:195
 msgid "Sri Lanka Daylight Time"
 msgstr "斯里兰卡夏令时"
 
@@ -9814,123 +10060,123 @@ msgstr "阿富汗标准时间"
 msgid "Afghanistan Daylight Time"
 msgstr "阿富汗夏令时"
 
-#: tzres.rc:226
+#: tzres.rc:230
 msgid "Yakutsk Standard Time"
 msgstr "雅库次克标准时间"
 
-#: tzres.rc:227
+#: tzres.rc:231
 msgid "Yakutsk Daylight Time"
 msgstr "雅库次克夏令时"
 
-#: tzres.rc:176
+#: tzres.rc:180
 msgid "SA Eastern Standard Time"
 msgstr "南美东部标准时间"
 
-#: tzres.rc:177
+#: tzres.rc:181
 msgid "SA Eastern Daylight Time"
 msgstr "南美东部夏令时"
 
-#: tzres.rc:34
+#: tzres.rc:36
 msgid "Arab Standard Time"
 msgstr "阿拉伯标准时间"
 
-#: tzres.rc:35
+#: tzres.rc:37
 msgid "Arab Daylight Time"
 msgstr "阿拉伯夏令时"
 
-#: tzres.rc:36
+#: tzres.rc:38
 msgid "Arabian Standard Time"
 msgstr "阿拉伯标准时间"
 
-#: tzres.rc:37
+#: tzres.rc:39
 msgid "Arabian Daylight Time"
 msgstr "阿拉伯夏令时"
 
-#: tzres.rc:174
+#: tzres.rc:178
 msgid "Russian Standard Time"
 msgstr "俄罗斯标准时间"
 
-#: tzres.rc:175
+#: tzres.rc:179
 msgid "Russian Daylight Time"
 msgstr "俄罗斯夏令时"
 
-#: tzres.rc:172
+#: tzres.rc:176
 msgid "Romance Standard Time"
 msgstr "罗曼标准时间"
 
-#: tzres.rc:173
+#: tzres.rc:177
 msgid "Romance Daylight Time"
 msgstr "罗曼夏令时"
 
-#: tzres.rc:98
+#: tzres.rc:100
 msgid "Ekaterinburg Standard Time"
 msgstr "叶卡捷琳堡标准时间"
 
-#: tzres.rc:99
+#: tzres.rc:101
 msgid "Ekaterinburg Daylight Time"
 msgstr "叶卡捷琳堡夏令时"
 
-#: tzres.rc:192
+#: tzres.rc:196
 msgid "Syria Standard Time"
 msgstr "叙利亚标准时间"
 
-#: tzres.rc:193
+#: tzres.rc:197
 msgid "Syria Daylight Time"
 msgstr "叙利亚夏令时"
 
-#: tzres.rc:44
+#: tzres.rc:46
 msgid "AUS Central Standard Time"
 msgstr "澳大利亚中部标准时间"
 
-#: tzres.rc:45
+#: tzres.rc:47
 msgid "AUS Central Daylight Time"
 msgstr "澳大利亚中部夏令时"
 
-#: tzres.rc:110
+#: tzres.rc:112
 msgid "Greenwich Standard Time"
 msgstr "格林威治标准时间"
 
-#: tzres.rc:111
+#: tzres.rc:113
 msgid "Greenwich Daylight Time"
 msgstr "格林威治夏令时"
 
-#: tzres.rc:204
+#: tzres.rc:208
 msgid "Ulaanbaatar Standard Time"
 msgstr "乌兰巴托标准时间"
 
-#: tzres.rc:205
+#: tzres.rc:209
 msgid "Ulaanbaatar Daylight Time"
 msgstr "乌兰巴托夏令时"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "Israel Standard Time"
 msgstr "以色列标准时间"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "Israel Daylight Time"
 msgstr "以色列夏令时"
 
-#: tzres.rc:54
+#: tzres.rc:56
 msgid "Bangladesh Standard Time"
 msgstr "孟加拉标准时间"
 
-#: tzres.rc:55
+#: tzres.rc:57
 msgid "Bangladesh Daylight Time"
 msgstr "孟加拉夏令时"
 
-#: tzres.rc:178
+#: tzres.rc:182
 msgid "SA Pacific Standard Time"
 msgstr "南美太平洋标准时间"
 
-#: tzres.rc:179
+#: tzres.rc:183
 msgid "SA Pacific Daylight Time"
 msgstr "南美太平洋夏令时"
 
-#: tzres.rc:222
+#: tzres.rc:226
 msgid "West Asia Standard Time"
 msgstr "西亚标准时间"
 
-#: tzres.rc:223
+#: tzres.rc:227
 msgid "West Asia Daylight Time"
 msgstr "西亚夏令时"
 
@@ -9942,211 +10188,223 @@ msgstr "阿拉斯加标准时间"
 msgid "Alaskan Daylight Time"
 msgstr "阿拉斯加夏令时"
 
-#: tzres.rc:170
+#: tzres.rc:174
 msgid "Paraguay Standard Time"
 msgstr "巴拉圭标准时间"
 
-#: tzres.rc:171
+#: tzres.rc:175
 msgid "Paraguay Daylight Time"
 msgstr "巴拉圭夏令时"
 
-#: tzres.rc:84
+#: tzres.rc:86
 msgid "Dateline Standard Time"
 msgstr "日期变更线标准时间"
 
-#: tzres.rc:85
+#: tzres.rc:87
 msgid "Dateline Daylight Time"
 msgstr "日期变更线夏令时"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Libya Standard Time"
 msgstr "利比亚标准时间"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Libya Daylight Time"
 msgstr "利比亚夏令时"
 
-#: tzres.rc:52
+#: tzres.rc:54
 msgid "Bahia Standard Time"
 msgstr "巴伊亚标准时间"
 
-#: tzres.rc:53
+#: tzres.rc:55
 msgid "Bahia Daylight Time"
 msgstr "巴伊亚夏令时"
 
-#: tzres.rc:212
+#: tzres.rc:216
 msgid "Venezuela Standard Time"
 msgstr "委内瑞拉标准时间"
 
-#: tzres.rc:213
+#: tzres.rc:217
 msgid "Venezuela Daylight Time"
 msgstr "委内瑞拉夏令时"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "Hawaiian Standard Time"
 msgstr "夏威夷标准时间"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "Hawaiian Daylight Time"
 msgstr "夏威夷夏令时"
 
-#: tzres.rc:184
+#: tzres.rc:188
 msgid "SE Asia Standard Time"
 msgstr "东南亚标准时间"
 
-#: tzres.rc:185
+#: tzres.rc:189
 msgid "SE Asia Daylight Time"
 msgstr "东南亚夏令时"
 
-#: tzres.rc:154
+#: tzres.rc:158
 msgid "New Zealand Standard Time"
 msgstr "新西兰标准时间"
 
-#: tzres.rc:155
+#: tzres.rc:159
 msgid "New Zealand Daylight Time"
 msgstr "新西兰夏令时"
 
-#: tzres.rc:70
+#: tzres.rc:34
+#, fuzzy
+#| msgid "Argentina Standard Time"
+msgid "Aleutian Standard Time"
+msgstr "阿根廷标准时间"
+
+#: tzres.rc:35
+#, fuzzy
+#| msgid "Argentina Daylight Time"
+msgid "Aleutian Daylight Time"
+msgstr "阿根廷夏令时"
+
+#: tzres.rc:72
 msgid "Central Brazilian Standard Time"
 msgstr "巴西中部标准时间"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Brazilian Daylight Time"
 msgstr "巴西中部夏令时"
 
-#: tzres.rc:56
+#: tzres.rc:58
 msgid "Belarus Standard Time"
 msgstr "白罗斯标准时间"
 
-#: tzres.rc:57
+#: tzres.rc:59
 msgid "Belarus Daylight Time"
 msgstr "白罗斯夏令时"
 
-#: tzres.rc:180
+#: tzres.rc:184
 msgid "SA Western Standard Time"
 msgstr "南美西部标准时间"
 
-#: tzres.rc:181
+#: tzres.rc:185
 msgid "SA Western Daylight Time"
 msgstr "南美西部夏令时"
 
-#: tzres.rc:108
+#: tzres.rc:110
 msgid "Greenland Standard Time"
 msgstr "格陵兰标准时间"
 
-#: tzres.rc:109
+#: tzres.rc:111
 msgid "Greenland Daylight Time"
 msgstr "格陵兰夏令时"
 
-#: tzres.rc:92
+#: tzres.rc:94
 msgid "Easter Island Standard Time"
 msgstr "复活节岛标准时间"
 
-#: tzres.rc:93
+#: tzres.rc:95
 msgid "Easter Island Daylight Time"
 msgstr "复活节岛夏令时"
 
-#: tzres.rc:96
+#: tzres.rc:98
 msgid "Egypt Standard Time"
 msgstr "埃及标准时间"
 
-#: tzres.rc:97
+#: tzres.rc:99
 msgid "Egypt Daylight Time"
 msgstr "埃及夏令时"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Mauritius Standard Time"
 msgstr "毛里求斯标准时间"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Mauritius Daylight Time"
 msgstr "毛里求斯夏令时"
 
-#: tzres.rc:214
+#: tzres.rc:218
 msgid "Vladivostok Standard Time"
 msgstr "符拉迪沃斯托克标准时间"
 
-#: tzres.rc:215
+#: tzres.rc:219
 msgid "Vladivostok Daylight Time"
 msgstr "符拉迪沃斯托克夏令时"
 
-#: tzres.rc:186
+#: tzres.rc:190
 msgid "Singapore Standard Time"
 msgstr "新加坡标准时间"
 
-#: tzres.rc:187
+#: tzres.rc:191
 msgid "Singapore Daylight Time"
 msgstr "新加坡夏令时"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Korea Standard Time"
 msgstr "韩国标准时间"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Korea Daylight Time"
 msgstr "韩国夏令时"
 
-#: tzres.rc:86
+#: tzres.rc:88
 msgid "E. Africa Standard Time"
 msgstr "东非标准时间"
 
-#: tzres.rc:87
+#: tzres.rc:89
 msgid "E. Africa Daylight Time"
 msgstr "东非夏令时"
 
-#: tzres.rc:102
+#: tzres.rc:104
 msgid "FLE Standard Time"
 msgstr "FLE 标准时间"
 
-#: tzres.rc:103
+#: tzres.rc:105
 msgid "FLE Daylight Time"
 msgstr "FLE 夏令时"
 
-#: tzres.rc:90
+#: tzres.rc:92
 msgid "E. South America Standard Time"
 msgstr "东南美洲标准时间"
 
-#: tzres.rc:91
+#: tzres.rc:93
 msgid "E. South America Daylight Time"
 msgstr "东南美洲夏令时"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central Pacific Standard Time"
 msgstr "中太平洋标准时间"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central Pacific Daylight Time"
 msgstr "中太平洋夏令时"
 
-#: tzres.rc:218
+#: tzres.rc:222
 msgid "W. Central Africa Standard Time"
 msgstr "西中非标准时间"
 
-#: tzres.rc:219
+#: tzres.rc:223
 msgid "W. Central Africa Daylight Time"
 msgstr "西中非夏令时"
 
-#: tzres.rc:162
+#: tzres.rc:166
 msgid "Pacific SA Standard Time"
 msgstr "太平洋南美标准时间"
 
-#: tzres.rc:163
+#: tzres.rc:167
 msgid "Pacific SA Daylight Time"
 msgstr "太平洋南美夏令时"
 
-#: tzres.rc:88
+#: tzres.rc:90
 msgid "E. Australia Standard Time"
 msgstr "澳大利亚东部标准时间"
 
-#: tzres.rc:89
+#: tzres.rc:91
 msgid "E. Australia Daylight Time"
 msgstr "澳大利亚东部夏令时"
 
-#: tzres.rc:216
+#: tzres.rc:220
 msgid "W. Australia Standard Time"
 msgstr "澳大利亚西部标准时间"
 
-#: tzres.rc:217
+#: tzres.rc:221
 msgid "W. Australia Daylight Time"
 msgstr "澳大利亚西部夏令时"
 
@@ -16036,10 +16294,6 @@ msgstr "最快时间"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "初学者"
-
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "高级"
 
 #: winemine.rc:66
 msgid "Expert"

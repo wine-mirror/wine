@@ -41,6 +41,11 @@ specification is in the standard autoconf format as returned by
 \fBconfig.sub\fR.
 .IP "\fB-m32, -m64, --win32, --win64\fR"
 Force the target architecture to 32-bit or 64-bit.
+.IP \fB\-\-sysroot=\fIdir\fR
+Prefix the standard include paths with \fIdir\fR.
+.IP \fB\-\-nostdinc\fR
+Do not search standard include paths like /usr/include and
+/usr/local/include.
 .PP
 .B Header options:
 .IP "\fB-h\fR"

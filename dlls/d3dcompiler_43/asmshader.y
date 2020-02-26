@@ -20,8 +20,6 @@
  */
 
 %{
-#include "config.h"
-#include "wine/port.h"
 #include "wine/debug.h"
 
 #include "d3dcompiler_private.h"
@@ -30,13 +28,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(asmshader);
 
 struct asm_parser asm_ctx;
 
-void asmparser_message(struct asm_parser *ctx, const char *fmt, ...)
+void WINAPIV asmparser_message(struct asm_parser *ctx, const char *fmt, ...)
 {
-    va_list args;
+    __ms_va_list args;
 
-    va_start(args, fmt);
+    __ms_va_start(args, fmt);
     compilation_message(&ctx->messages, fmt, args);
-    va_end(args);
+    __ms_va_end(args);
 }
 
 static void asmshader_error(char const *s) {
@@ -1150,11 +1148,11 @@ swizzle:              /* empty */
                             else {
                                 DWORD last, i;
 
-                                $$ = $2.swizzle << BWRITERVS_SWIZZLE_SHIFT;
+                                $$ = $2.swizzle;
                                 /* Fill the swizzle by extending the last component */
                                 last = ($2.swizzle >> 2 * ($2.idx - 1)) & 0x03;
                                 for(i = $2.idx; i < 4; i++){
-                                    $$ |= last << (BWRITERVS_SWIZZLE_SHIFT + 2 * i);
+                                    $$ |= last << (2 * i);
                                 }
                                 TRACE("Got a swizzle: %08x\n", $$);
                             }

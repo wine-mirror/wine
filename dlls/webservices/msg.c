@@ -27,7 +27,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "webservices_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
@@ -106,9 +105,7 @@ static struct msg *alloc_msg(void)
     ret->header_size = HEADER_ARRAY_SIZE;
 
     InitializeCriticalSection( &ret->cs );
-#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": msg.cs");
-#endif
 
     prop_init( msg_props, count, ret->prop, &ret[1] );
     ret->prop_count  = count;
@@ -164,9 +161,7 @@ static void free_msg( struct msg *msg )
     WsFreeHeap( msg->heap );
     heap_free( msg->header );
 
-#ifndef __MINGW32__
     msg->cs.DebugInfo->Spare[0] = 0;
-#endif
     DeleteCriticalSection( &msg->cs );
     heap_free( msg );
 }
@@ -457,16 +452,13 @@ HRESULT WINAPI WsAddressMessage( WS_MESSAGE *handle, const WS_ENDPOINT_ADDRESS *
     }
 
     if (msg->state < WS_MESSAGE_STATE_INITIALIZED || msg->is_addressed) hr = WS_E_INVALID_OPERATION;
-    else
+    else if (addr && addr->url.length)
     {
-        if (addr && addr->url.length)
+        if (!(msg->addr.chars = heap_alloc( addr->url.length * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
+        else
         {
-            if (!(msg->addr.chars = heap_alloc( addr->url.length * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
-            else
-            {
-                memcpy( msg->addr.chars, addr->url.chars, addr->url.length * sizeof(WCHAR) );
-                msg->addr.length = addr->url.length;
-            }
+            memcpy( msg->addr.chars, addr->url.chars, addr->url.length * sizeof(WCHAR) );
+            msg->addr.length = addr->url.length;
         }
     }
     if (hr == S_OK) msg->is_addressed = TRUE;
@@ -660,6 +652,16 @@ static HRESULT write_headers( struct msg *msg, WS_XML_WRITER *writer, const WS_X
     return WsWriteEndElement( writer, NULL ); /* </s:Header> */
 }
 
+static ULONG count_envelope_headers( struct msg *msg )
+{
+    ULONG i, ret = 0;
+    for (i = 0; i < msg->header_count; i++)
+    {
+        if (!msg->header[i]->mapped) ret++;
+    }
+    return ret;
+}
+
 static HRESULT write_headers_transport( struct msg *msg, WS_XML_WRITER *writer, const WS_XML_STRING *prefix,
                                         const WS_XML_STRING *ns )
 {
@@ -667,16 +669,19 @@ static HRESULT write_headers_transport( struct msg *msg, WS_XML_WRITER *writer, 
     HRESULT hr = S_OK;
     ULONG i;
 
-    if ((msg->header_count || !msg->action) &&
-        (hr = WsWriteStartElement( writer, prefix, &header, ns, NULL )) != S_OK) return hr;
-
-    for (i = 0; i < msg->header_count; i++)
+    if (count_envelope_headers( msg ) || !msg->action)
     {
-        if (msg->header[i]->mapped) continue;
-        if ((hr = WsWriteXmlBuffer( writer, msg->header[i]->u.buf, NULL )) != S_OK) return hr;
+        if ((hr = WsWriteStartElement( writer, prefix, &header, ns, NULL )) != S_OK) return hr;
+
+        for (i = 0; i < msg->header_count; i++)
+        {
+            if (msg->header[i]->mapped) continue;
+            if ((hr = WsWriteXmlBuffer( writer, msg->header[i]->u.buf, NULL )) != S_OK) return hr;
+        }
+
+        hr = WsWriteEndElement( writer, NULL ); /* </s:Header> */
     }
 
-    if (msg->header_count || !msg->action) hr = WsWriteEndElement( writer, NULL ); /* </s:Header> */
     return hr;
 }
 
@@ -1443,6 +1448,39 @@ static HRESULT build_mapped_header( const WS_XML_STRING *name, WS_TYPE type, WS_
     return S_OK;
 }
 
+static HRESULT add_mapped_header( struct msg *msg, const WS_XML_STRING *name, WS_TYPE type,
+                                  WS_WRITE_OPTION option, const void *value, ULONG size )
+{
+    struct header *header;
+    BOOL found = FALSE;
+    HRESULT hr;
+    ULONG i;
+
+    for (i = 0; i < msg->header_count; i++)
+    {
+        if (msg->header[i]->type || !msg->header[i]->mapped) continue;
+        if (WsXmlStringEquals( name, &msg->header[i]->name, NULL ) == S_OK)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) return hr;
+        i = msg->header_count;
+    }
+
+    if ((hr = build_mapped_header( name, type, option, value, size, &header )) != S_OK) return hr;
+
+    if (!found) msg->header_count++;
+    else free_header( msg->header[i] );
+
+    msg->header[i] = header;
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsAddMappedHeader		[webservices.@]
  */
@@ -1450,10 +1488,7 @@ HRESULT WINAPI WsAddMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
                                   WS_WRITE_OPTION option, const void *value, ULONG size, WS_ERROR *error )
 {
     struct msg *msg = (struct msg *)handle;
-    struct header *header;
-    BOOL found = FALSE;
     HRESULT hr;
-    ULONG i;
 
     TRACE( "%p %s %u %08x %p %u %p\n", handle, debugstr_xmlstr(name), type, option, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -1468,36 +1503,9 @@ HRESULT WINAPI WsAddMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
         return E_INVALIDARG;
     }
 
-    if (msg->state < WS_MESSAGE_STATE_INITIALIZED)
-    {
-        hr = WS_E_INVALID_OPERATION;
-        goto done;
-    }
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) hr = WS_E_INVALID_OPERATION;
+    else hr = add_mapped_header( msg, name, type, option, value, size );
 
-    for (i = 0; i < msg->header_count; i++)
-    {
-        if (msg->header[i]->type || !msg->header[i]->mapped) continue;
-        if (WsXmlStringEquals( name, &msg->header[i]->name, NULL ) == S_OK)
-        {
-            found = TRUE;
-            break;
-        }
-    }
-
-    if (!found)
-    {
-        if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) goto done;
-        i = msg->header_count;
-    }
-
-    if ((hr = build_mapped_header( name, type, option, value, size, &header )) != S_OK) goto done;
-
-    if (!found) msg->header_count++;
-    else free_header( msg->header[i] );
-
-    msg->header[i] = header;
-
-done:
     LeaveCriticalSection( &msg->cs );
     TRACE( "returning %08x\n", hr );
     return hr;
@@ -1538,6 +1546,117 @@ HRESULT WINAPI WsRemoveMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
             }
         }
     }
+
+    LeaveCriticalSection( &msg->cs );
+    TRACE( "returning %08x\n", hr );
+    return hr;
+}
+
+static HRESULT xmlstring_to_wsz( const WS_XML_STRING *str, WS_HEAP *heap, WCHAR **ret, int *len )
+{
+    *len = MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, NULL, 0 );
+    if (!(*ret = ws_alloc( heap, (*len + 1) * sizeof(WCHAR) ))) return WS_E_QUOTA_EXCEEDED;
+    MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, *ret, *len );
+    (*ret)[*len] = 0;
+    return S_OK;
+}
+
+static HRESULT get_header_value_wsz( struct header *header, WS_READ_OPTION option, WS_HEAP *heap, WCHAR **ret,
+                                     ULONG size )
+{
+    WCHAR *str = NULL;
+    int len = 0;
+    HRESULT hr;
+
+    if (header && (hr = xmlstring_to_wsz( header->u.text, heap, &str, &len )) != S_OK) return hr;
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_POINTER:
+        if (!str && !(str = ws_alloc_zero( heap, sizeof(*str) ))) return WS_E_QUOTA_EXCEEDED;
+        /* fall through */
+
+    case WS_READ_OPTIONAL_POINTER:
+    case WS_READ_NILLABLE_POINTER:
+        if (size != sizeof(str))
+        {
+            ws_free( heap, str, (len + 1) * sizeof(WCHAR) );
+            return E_INVALIDARG;
+        }
+        *ret = str;
+        break;
+
+    default:
+        FIXME( "read option %u not supported\n", option );
+        ws_free( heap, str, (len + 1) * sizeof(WCHAR) );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT get_mapped_header( struct msg *msg, const WS_XML_STRING *name, WS_TYPE type, WS_READ_OPTION option,
+                                  WS_HEAP *heap, void *value, ULONG size )
+{
+    struct header *header = NULL;
+    HRESULT hr;
+    ULONG i;
+
+    for (i = 0; i < msg->header_count; i++)
+    {
+        if (msg->header[i]->type || !msg->header[i]->mapped) continue;
+        if (WsXmlStringEquals( name, &msg->header[i]->name, NULL ) == S_OK)
+        {
+            header = msg->header[i];
+            break;
+        }
+    }
+
+    switch (type)
+    {
+    case WS_WSZ_TYPE:
+        hr = get_header_value_wsz( header, option, heap, value, size );
+        break;
+
+    default:
+        FIXME( "type %u not supported\n", option );
+        return WS_E_NOT_SUPPORTED;
+    }
+
+    return hr;
+}
+
+/**************************************************************************
+ *          WsGetMappedHeader		[webservices.@]
+ */
+HRESULT WINAPI WsGetMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name, WS_REPEATING_HEADER_OPTION option,
+                                  ULONG index, WS_TYPE type, WS_READ_OPTION read_option, WS_HEAP *heap, void *value,
+                                  ULONG size, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %s %u %u %u %u %p %p %u %p\n", handle, debugstr_xmlstr(name), option, index, type, read_option,
+           heap, value, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (option != WS_SINGLETON_HEADER)
+    {
+        FIXME( "option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    if (!msg || !name) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) hr = WS_E_INVALID_OPERATION;
+    else hr = get_mapped_header( msg, name, type, read_option, heap, value, size );
 
     LeaveCriticalSection( &msg->cs );
     TRACE( "returning %08x\n", hr );
@@ -1724,11 +1843,13 @@ HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
 
 static WCHAR *build_http_header( const WCHAR *name, const WCHAR *value, ULONG *ret_len )
 {
-    int len_name = strlenW( name ), len_value = strlenW( value );
-    WCHAR *ret = heap_alloc( (len_name + len_value) * sizeof(WCHAR) );
+    int len_name = lstrlenW( name ), len_value = lstrlenW( value );
+    WCHAR *ret = heap_alloc( (len_name + len_value + 2) * sizeof(WCHAR) );
 
     if (!ret) return NULL;
     memcpy( ret, name, len_name * sizeof(WCHAR) );
+    ret[len_name++] = ':';
+    ret[len_name++] = ' ';
     memcpy( ret + len_name, value, len_value * sizeof(WCHAR) );
     *ret_len = len_name + len_value;
     return ret;
@@ -1740,10 +1861,48 @@ static inline HRESULT insert_http_header( HINTERNET req, const WCHAR *header, UL
     return HRESULT_FROM_WIN32( GetLastError() );
 }
 
+static WCHAR *from_xml_string( const WS_XML_STRING *str )
+{
+    WCHAR *ret;
+    int len = MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, NULL, 0 );
+    if (!(ret = heap_alloc( (len + 1) * sizeof(*ret) ))) return NULL;
+    MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, ret, len );
+    ret[len] = 0;
+    return ret;
+}
+
+static HRESULT insert_mapped_headers( struct msg *msg, HINTERNET req )
+{
+    WCHAR *name, *value, *header;
+    ULONG i, len;
+    HRESULT hr;
+
+    for (i = 0; i < msg->header_count; i++)
+    {
+        if (!msg->header[i]->mapped) continue;
+
+        if (!(name = from_xml_string( &msg->header[i]->name ))) return E_OUTOFMEMORY;
+        if (!(value = from_xml_string( msg->header[i]->u.text )))
+        {
+            heap_free( name );
+            return E_OUTOFMEMORY;
+        }
+        header = build_http_header( name, value, &len );
+        heap_free( name );
+        heap_free( value );
+        if (!header) return E_OUTOFMEMORY;
+
+        hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_ADD|WINHTTP_ADDREQ_FLAG_REPLACE );
+        heap_free( header );
+        if (hr != S_OK) return hr;
+    }
+    return S_OK;
+}
+
 HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
 {
     static const WCHAR contenttypeW[] =
-        {'C','o','n','t','e','n','t','-','T','y','p','e',':',' ',0};
+        {'C','o','n','t','e','n','t','-','T','y','p','e',0};
     static const WCHAR soapxmlW[] =
         {'a','p','p','l','i','c','a','t','i','o','n','/','s','o','a','p','+','x','m','l',0};
     static const WCHAR textxmlW[] =
@@ -1793,7 +1952,7 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     {
     case WS_ENVELOPE_VERSION_SOAP_1_1:
     {
-        static const WCHAR soapactionW[] = {'S','O','A','P','A','c','t','i','o','n',':',' ',0};
+        static const WCHAR soapactionW[] = {'S','O','A','P','A','c','t','i','o','n',0};
 
         if (!(len = MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, NULL, 0 )))
             break;
@@ -1840,8 +1999,68 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
         hr = E_NOTIMPL;
     }
 
+    if (hr == S_OK) hr = insert_mapped_headers( msg, req );
+
 done:
     heap_free( header );
+    LeaveCriticalSection( &msg->cs );
+    TRACE( "returning %08x\n", hr );
+    return hr;
+}
+
+static HRESULT map_http_response_headers( struct msg *msg, HINTERNET req, const WS_HTTP_MESSAGE_MAPPING *mapping )
+{
+    ULONG i;
+    for (i = 0; i < mapping->responseHeaderMappingCount; i++)
+    {
+        WCHAR *name, *value;
+        DWORD size;
+
+        if (!(name = from_xml_string( &mapping->responseHeaderMappings[i]->headerName ))) return E_OUTOFMEMORY;
+
+        if (!WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM, name, NULL, &size, NULL ) &&
+            GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        {
+            HRESULT hr;
+            if (!(value = heap_alloc( size )))
+            {
+                heap_free( name );
+                return E_OUTOFMEMORY;
+            }
+            if (!WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM, name, value, &size, NULL ))
+            {
+                heap_free( name );
+                return HRESULT_FROM_WIN32( GetLastError() );
+            }
+            hr = add_mapped_header( msg, &mapping->responseHeaderMappings[i]->headerName, WS_WSZ_TYPE,
+                                    WS_WRITE_REQUIRED_POINTER, &value, sizeof(value) );
+            heap_free( value );
+            if (hr != S_OK)
+            {
+                heap_free( name );
+                return hr;
+            }
+        }
+        heap_free( name );
+    }
+    return S_OK;
+}
+
+HRESULT message_map_http_response_headers( WS_MESSAGE *handle, HINTERNET req, const WS_HTTP_MESSAGE_MAPPING *mapping )
+{
+    struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = map_http_response_headers( msg, req, mapping );
+
     LeaveCriticalSection( &msg->cs );
     TRACE( "returning %08x\n", hr );
     return hr;

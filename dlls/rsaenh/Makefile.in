@@ -2,6 +2,8 @@ MODULE    = rsaenh.dll
 IMPORTLIB = rsaenh
 IMPORTS   = bcrypt crypt32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	aes.c \
 	des.c \

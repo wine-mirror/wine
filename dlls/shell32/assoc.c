@@ -890,7 +890,7 @@ static HRESULT WINAPI ApplicationAssociationRegistration_QueryCurrentDefault(IAp
     IApplicationAssociationRegistrationImpl *This = impl_from_IApplicationAssociationRegistration(iface);
     static WCHAR urlassoc[] = {'U','r','l','A','s','s','o','c','i','a','t','i','o','n','s',0};
     static WCHAR mimeassoc[] = {'M','I','M','E','A','s','s','o','c','i','a','t','i','o','n','s',0};
-    static WCHAR assocations[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    static WCHAR associations[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
                                 'W','i','n','d','o','w','s','\\','S','h','e','l','l','\\',
                                 'A','s','s','o','c','i','a','t','i','o','n','s',0};
     static WCHAR slash[] = {'\\',0};
@@ -940,7 +940,7 @@ static HRESULT WINAPI ApplicationAssociationRegistration_QueryCurrentDefault(IAp
     }
     else
     {
-        ret = RegOpenKeyExW(HKEY_CURRENT_USER, assocations, 0, KEY_READ, &hkey);
+        ret = RegOpenKeyExW(HKEY_CURRENT_USER, associations, 0, KEY_READ, &hkey);
         if(ret == ERROR_SUCCESS)
         {
             if(type == AT_URLPROTOCOL)

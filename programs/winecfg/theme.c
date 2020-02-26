@@ -716,12 +716,16 @@ struct ShellFolderInfo {
     char szLinkTarget[FILENAME_MAX]; /* in unix locale */
 };
 
+#define CSIDL_DOWNLOADS 0x0047
+
 static struct ShellFolderInfo asfiInfo[] = {
     { CSIDL_DESKTOP,  "" },
     { CSIDL_PERSONAL, "" },
     { CSIDL_MYPICTURES, "" },
     { CSIDL_MYMUSIC, "" },
-    { CSIDL_MYVIDEO, "" }
+    { CSIDL_MYVIDEO, "" },
+    { CSIDL_DOWNLOADS, "" },
+    { CSIDL_TEMPLATES, "" }
 };
 
 static struct ShellFolderInfo *psfiSelected = NULL;
@@ -842,7 +846,7 @@ static void on_shell_folder_selection_changed(HWND hDlg, LPNMLISTVIEW lpnm) {
     if (lpnm->uNewState & LVIS_SELECTED) {
         psfiSelected = (struct ShellFolderInfo *)lpnm->lParam;
         EnableWindow(GetDlgItem(hDlg, IDC_LINK_SFPATH), 1);
-        if (strlen(psfiSelected->szLinkTarget)) {
+        if (*psfiSelected->szLinkTarget) {
             WCHAR *link;
             CheckDlgButton(hDlg, IDC_LINK_SFPATH, BST_CHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_EDIT_SFPATH), 1);

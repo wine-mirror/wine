@@ -1313,8 +1313,8 @@ static void test_file_full_size_information(void)
 
 static void test_file_basic_information(void)
 {
+    FILE_BASIC_INFORMATION fbi, fbi2;
     IO_STATUS_BLOCK io;
-    FILE_BASIC_INFORMATION fbi;
     HANDLE h;
     int res;
     int attrib_mask = FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_NORMAL;
@@ -1327,6 +1327,29 @@ static void test_file_basic_information(void)
     ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
     ok ( (fbi.FileAttributes & FILE_ATTRIBUTE_ARCHIVE) == FILE_ATTRIBUTE_ARCHIVE,
          "attribute %x not expected\n", fbi.FileAttributes );
+
+    memset(&fbi2, 0, sizeof(fbi2));
+    fbi2.LastWriteTime.QuadPart = -1;
+    U(io).Status = 0xdeadbeef;
+    res = pNtSetInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
+    ok ( U(io).Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %x\n", U(io).Status );
+
+    memset(&fbi2, 0, sizeof(fbi2));
+    res = pNtQueryInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
+    ok ( fbi2.LastWriteTime.QuadPart == fbi.LastWriteTime.QuadPart, "unexpected write time.\n");
+
+    memset(&fbi2, 0, sizeof(fbi2));
+    U(io).Status = 0xdeadbeef;
+    res = pNtSetInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
+    ok ( U(io).Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %x\n", U(io).Status );
+
+    memset(&fbi2, 0, sizeof(fbi2));
+    res = pNtQueryInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
+    ok ( fbi2.LastWriteTime.QuadPart == fbi.LastWriteTime.QuadPart, "unexpected write time.\n");
 
     /* Then SYSTEM */
     /* Clear fbi to avoid setting times */
@@ -3650,6 +3673,52 @@ static void test_file_access_information(void)
     CloseHandle( h );
 }
 
+static void test_file_attribute_tag_information(void)
+{
+    FILE_ATTRIBUTE_TAG_INFORMATION info;
+    FILE_BASIC_INFORMATION fbi = {};
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE h;
+
+    if (!(h = create_temp_file(0))) return;
+
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info) - 1, FileAttributeTagInformation );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %#x\n", status );
+
+    status = pNtQueryInformationFile( (HANDLE)0xdeadbeef, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok( status == STATUS_INVALID_HANDLE, "got %#x\n", status );
+
+    memset(&info, 0x11, sizeof(info));
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+    info.FileAttributes &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+    ok( info.FileAttributes == FILE_ATTRIBUTE_ARCHIVE, "got attributes %#x\n", info.FileAttributes );
+    ok( !info.ReparseTag, "got reparse tag %#x\n", info.ReparseTag );
+
+    fbi.FileAttributes = FILE_ATTRIBUTE_SYSTEM;
+    status = pNtSetInformationFile(h, &io, &fbi, sizeof(fbi), FileBasicInformation);
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+
+    memset(&info, 0x11, sizeof(info));
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+    todo_wine ok( info.FileAttributes == FILE_ATTRIBUTE_SYSTEM, "got attributes %#x\n", info.FileAttributes );
+    ok( !info.ReparseTag, "got reparse tag %#x\n", info.ReparseTag );
+
+    fbi.FileAttributes = FILE_ATTRIBUTE_HIDDEN;
+    status = pNtSetInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+
+    memset(&info, 0x11, sizeof(info));
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+    todo_wine ok( info.FileAttributes == FILE_ATTRIBUTE_HIDDEN, "got attributes %#x\n", info.FileAttributes );
+    ok( !info.ReparseTag, "got reparse tag %#x\n", info.ReparseTag );
+
+    CloseHandle( h );
+}
+
 static void test_file_mode(void)
 {
     UNICODE_STRING file_name, pipe_dev_name, mountmgr_dev_name, mailslot_dev_name;
@@ -4894,6 +4963,7 @@ START_TEST(file)
     test_file_completion_information();
     test_file_id_information();
     test_file_access_information();
+    test_file_attribute_tag_information();
     test_file_mode();
     test_file_readonly_access();
     test_query_volume_information_file();

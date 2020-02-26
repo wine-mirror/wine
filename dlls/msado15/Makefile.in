@@ -1,0 +1,15 @@
+MODULE    = msado15.dll
+IMPORTS   = oleaut32
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	command.c \
+	connection.c \
+	main.c \
+	recordset.c \
+	stream.c
+
+IDL_SRCS = \
+	msado15_classes.idl \
+	msado15_tlb.idl

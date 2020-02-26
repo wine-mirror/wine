@@ -327,7 +327,7 @@ typedef struct {
 } SLTG_BlkEntry;
 
 /* The order of the blocks in the file is given by starting at Block
-   entry firt_blk and stepping through using the next pointer */
+   entry first_blk and stepping through using the next pointer */
 
 /* These then get followed by this magic */
 typedef struct {

@@ -35,6 +35,7 @@ static const DWORD pixel_states_render[] =
     WINED3D_RS_ALPHAREF,
     WINED3D_RS_ALPHATESTENABLE,
     WINED3D_RS_ANTIALIASEDLINEENABLE,
+    WINED3D_RS_BLENDFACTOR,
     WINED3D_RS_BLENDOP,
     WINED3D_RS_BLENDOPALPHA,
     WINED3D_RS_BACK_STENCILFAIL,
@@ -188,7 +189,7 @@ static const DWORD vertex_states_sampler[] =
     WINED3D_SAMP_DMAP_OFFSET,
 };
 
-static inline void stateblock_set_bits(DWORD *map, UINT map_size)
+static inline void stateblock_set_all_bits(DWORD *map, UINT map_size)
 {
     DWORD mask = (1u << (map_size & 0x1f)) - 1;
     memset(map, 0xff, (map_size >> 5) * sizeof(*map));
@@ -200,7 +201,6 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
 {
     unsigned int i;
 
-    /* Single values */
     states->indices = 1;
     states->material = 1;
     states->viewport = 1;
@@ -210,12 +210,11 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     states->scissorRect = 1;
     states->blend_state = 1;
 
-    /* Fixed size arrays */
     states->streamSource = 0xffff;
     states->streamFreq = 0xffff;
     states->textures = 0xfffff;
-    stateblock_set_bits(states->transform, WINED3D_HIGHEST_TRANSFORM_STATE + 1);
-    stateblock_set_bits(states->renderState, WINEHIGHEST_RENDER_STATE + 1);
+    stateblock_set_all_bits(states->transform, WINED3D_HIGHEST_TRANSFORM_STATE + 1);
+    stateblock_set_all_bits(states->renderState, WINEHIGHEST_RENDER_STATE + 1);
     for (i = 0; i < WINED3D_MAX_TEXTURES; ++i) states->textureState[i] = 0x3ffff;
     for (i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = 0x3ffe;
     states->clipplane = (1u << WINED3D_MAX_CLIP_DISTANCES) - 1;
@@ -224,9 +223,8 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     states->vertexShaderConstantsB = 0xffff;
     states->vertexShaderConstantsI = 0xffff;
 
-    /* Dynamically sized arrays */
-    memset(states->ps_consts_f, TRUE, sizeof(BOOL) * ps_consts);
-    memset(states->vs_consts_f, TRUE, sizeof(BOOL) * vs_consts);
+    memset(states->ps_consts_f, 0xffu, sizeof(states->ps_consts_f));
+    memset(states->vs_consts_f, 0xffu, sizeof(states->vs_consts_f));
 }
 
 static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states, const DWORD num_constants)
@@ -236,7 +234,6 @@ static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states
     unsigned int i;
 
     states->pixelShader = 1;
-    states->blend_state = 1;
 
     for (i = 0; i < ARRAY_SIZE(pixel_states_render); ++i)
     {
@@ -253,7 +250,7 @@ static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states
     states->pixelShaderConstantsB = 0xffff;
     states->pixelShaderConstantsI = 0xffff;
 
-    memset(states->ps_consts_f, TRUE, sizeof(BOOL) * num_constants);
+    memset(states->ps_consts_f, 0xffu, sizeof(states->ps_consts_f));
 }
 
 static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *states, const DWORD num_constants)
@@ -264,6 +261,7 @@ static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *state
 
     states->vertexDecl = 1;
     states->vertexShader = 1;
+    states->blend_state = 1;
 
     for (i = 0; i < ARRAY_SIZE(vertex_states_render); ++i)
     {
@@ -280,12 +278,11 @@ static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *state
     states->vertexShaderConstantsB = 0xffff;
     states->vertexShaderConstantsI = 0xffff;
 
-    memset(states->vs_consts_f, TRUE, sizeof(BOOL) * num_constants);
+    memset(states->vs_consts_f, 0xffu, sizeof(states->vs_consts_f));
 }
 
-void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
+void CDECL wined3d_stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
 {
-    const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
     unsigned int i, j;
 
     for (i = 0; i <= WINEHIGHEST_RENDER_STATE >> 5; ++i)
@@ -309,60 +306,6 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
 
             stateblock->contained_transform_states[stateblock->num_contained_transform_states] = (i << 5) | j;
             ++stateblock->num_contained_transform_states;
-        }
-    }
-
-    for (i = 0; i < d3d_info->limits.vs_uniform_count; ++i)
-    {
-        if (stateblock->changed.vs_consts_f[i])
-        {
-            stateblock->contained_vs_consts_f[stateblock->num_contained_vs_consts_f] = i;
-            ++stateblock->num_contained_vs_consts_f;
-        }
-    }
-
-    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
-    {
-        if (stateblock->changed.vertexShaderConstantsI & (1u << i))
-        {
-            stateblock->contained_vs_consts_i[stateblock->num_contained_vs_consts_i] = i;
-            ++stateblock->num_contained_vs_consts_i;
-        }
-    }
-
-    for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
-    {
-        if (stateblock->changed.vertexShaderConstantsB & (1u << i))
-        {
-            stateblock->contained_vs_consts_b[stateblock->num_contained_vs_consts_b] = i;
-            ++stateblock->num_contained_vs_consts_b;
-        }
-    }
-
-    for (i = 0; i < d3d_info->limits.ps_uniform_count; ++i)
-    {
-        if (stateblock->changed.ps_consts_f[i])
-        {
-            stateblock->contained_ps_consts_f[stateblock->num_contained_ps_consts_f] = i;
-            ++stateblock->num_contained_ps_consts_f;
-        }
-    }
-
-    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
-    {
-        if (stateblock->changed.pixelShaderConstantsI & (1u << i))
-        {
-            stateblock->contained_ps_consts_i[stateblock->num_contained_ps_consts_i] = i;
-            ++stateblock->num_contained_ps_consts_i;
-        }
-    }
-
-    for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
-    {
-        if (stateblock->changed.pixelShaderConstantsB & (1u << i))
-        {
-            stateblock->contained_ps_consts_b[stateblock->num_contained_ps_consts_b] = i;
-            ++stateblock->num_contained_ps_consts_b;
         }
     }
 
@@ -395,7 +338,7 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
     }
 }
 
-static void stateblock_init_lights(struct list *dst_map, struct list *src_map)
+static void stateblock_init_lights(struct list *dst_map, const struct list *src_map)
 {
     unsigned int i;
 
@@ -427,6 +370,7 @@ void state_unbind_resources(struct wined3d_state *state)
     struct wined3d_unordered_access_view *uav;
     struct wined3d_shader_resource_view *srv;
     struct wined3d_vertex_declaration *decl;
+    struct wined3d_blend_state *blend_state;
     struct wined3d_sampler *sampler;
     struct wined3d_texture *texture;
     struct wined3d_buffer *buffer;
@@ -503,6 +447,7 @@ void state_unbind_resources(struct wined3d_state *state)
             if ((srv = state->shader_resource_view[i][j]))
             {
                 state->shader_resource_view[i][j] = NULL;
+                --srv->resource->srv_bind_count_device;
                 wined3d_shader_resource_view_decref(srv);
             }
         }
@@ -519,12 +464,19 @@ void state_unbind_resources(struct wined3d_state *state)
             }
         }
     }
+
+    if ((blend_state = state->blend_state))
+    {
+        state->blend_state = NULL;
+        wined3d_blend_state_decref(blend_state);
+    }
 }
 
 void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state)
 {
     struct wined3d_light_info *light, *cursor;
     struct wined3d_vertex_declaration *decl;
+    struct wined3d_blend_state *blend_state;
     struct wined3d_texture *texture;
     struct wined3d_buffer *buffer;
     struct wined3d_shader *shader;
@@ -574,11 +526,17 @@ void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state)
 
     for (i = 0; i < LIGHTMAP_SIZE; ++i)
     {
-        LIST_FOR_EACH_ENTRY_SAFE(light, cursor, &state->light_state.light_map[i], struct wined3d_light_info, entry)
+        LIST_FOR_EACH_ENTRY_SAFE(light, cursor, &state->light_state->light_map[i], struct wined3d_light_info, entry)
         {
             list_remove(&light->entry);
             heap_free(light);
         }
+    }
+
+    if ((blend_state = state->blend_state))
+    {
+        state->blend_state = NULL;
+        wined3d_blend_state_decref(blend_state);
     }
 }
 
@@ -756,13 +714,15 @@ static void wined3d_state_record_lights(struct wined3d_light_state *dst_state,
     }
 }
 
-void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
+void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
+        const struct wined3d_stateblock *device_state)
 {
-    const struct wined3d_stateblock_state *state = &stateblock->device->stateblock_state;
-    unsigned int i;
+    const unsigned int word_bit_count = sizeof(*stateblock->changed.vs_consts_f) * CHAR_BIT;
+    const struct wined3d_stateblock_state *state = &device_state->stateblock_state;
+    unsigned int i, j, idx;
     DWORD map;
 
-    TRACE("stateblock %p.\n", stateblock);
+    TRACE("stateblock %p, device_state %p.\n", stateblock, device_state);
 
     if (stateblock->changed.vertexShader && stateblock->stateblock_state.vs != state->vs)
     {
@@ -775,30 +735,34 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
         stateblock->stateblock_state.vs = state->vs;
     }
 
-    /* Vertex shader float constants. */
-    for (i = 0; i < stateblock->num_contained_vs_consts_f; ++i)
+    for (i = 0; i < ARRAY_SIZE(stateblock->changed.vs_consts_f); ++i)
     {
-        unsigned int idx = stateblock->contained_vs_consts_f[i];
+        map = stateblock->changed.vs_consts_f[i];
 
-        TRACE("Setting vs_consts_f[%u] to %s.\n", idx, debug_vec4(&state->vs_consts_f[idx]));
+        while (map)
+        {
+            j = wined3d_bit_scan(&map);
+            idx = i * word_bit_count + j;
 
-        stateblock->stateblock_state.vs_consts_f[idx] = state->vs_consts_f[idx];
+            TRACE("Setting vs_consts_f[%u] to %s.\n", idx, debug_vec4(&state->vs_consts_f[idx]));
+            stateblock->stateblock_state.vs_consts_f[idx] = state->vs_consts_f[idx];
+        }
     }
 
-    /* Vertex shader integer constants. */
-    for (i = 0; i < stateblock->num_contained_vs_consts_i; ++i)
+    map = stateblock->changed.vertexShaderConstantsI;
+    while (map)
     {
-        unsigned int idx = stateblock->contained_vs_consts_i[i];
+        idx = wined3d_bit_scan(&map);
 
         TRACE("Setting vs_consts_i[%u] to %s.\n", idx, debug_ivec4(&state->vs_consts_i[idx]));
 
         stateblock->stateblock_state.vs_consts_i[idx] = state->vs_consts_i[idx];
     }
 
-    /* Vertex shader boolean constants. */
-    for (i = 0; i < stateblock->num_contained_vs_consts_b; ++i)
+    map = stateblock->changed.vertexShaderConstantsB;
+    while (map)
     {
-        unsigned int idx = stateblock->contained_vs_consts_b[i];
+        idx = wined3d_bit_scan(&map);
 
         TRACE("Setting vs_consts_b[%u] to %s.\n",
                 idx, state->vs_consts_b[idx] ? "TRUE" : "FALSE");
@@ -806,30 +770,34 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
         stateblock->stateblock_state.vs_consts_b[idx] = state->vs_consts_b[idx];
     }
 
-    /* Pixel shader float constants. */
-    for (i = 0; i < stateblock->num_contained_ps_consts_f; ++i)
+    for (i = 0; i < ARRAY_SIZE(stateblock->changed.ps_consts_f); ++i)
     {
-        unsigned int idx = stateblock->contained_ps_consts_f[i];
+        map = stateblock->changed.ps_consts_f[i];
 
-        TRACE("Setting ps_consts_f[%u] to %s.\n", idx, debug_vec4(&state->ps_consts_f[idx]));
+        while (map)
+        {
+            j = wined3d_bit_scan(&map);
+            idx = i * word_bit_count + j;
 
-        stateblock->stateblock_state.ps_consts_f[idx] = state->ps_consts_f[idx];
+            TRACE("Setting ps_consts_f[%u] to %s.\n", idx, debug_vec4(&state->ps_consts_f[idx]));
+            stateblock->stateblock_state.ps_consts_f[idx] = state->ps_consts_f[idx];
+        }
     }
 
-    /* Pixel shader integer constants. */
-    for (i = 0; i < stateblock->num_contained_ps_consts_i; ++i)
+    map = stateblock->changed.pixelShaderConstantsI;
+    while (map)
     {
-        unsigned int idx = stateblock->contained_ps_consts_i[i];
+        idx = wined3d_bit_scan(&map);
 
         TRACE("Setting ps_consts_i[%u] to %s.\n", idx, debug_ivec4(&state->ps_consts_i[idx]));
 
         stateblock->stateblock_state.ps_consts_i[idx] = state->ps_consts_i[idx];
     }
 
-    /* Pixel shader boolean constants. */
-    for (i = 0; i < stateblock->num_contained_ps_consts_b; ++i)
+    map = stateblock->changed.pixelShaderConstantsB;
+    while (map)
     {
-        unsigned int idx = stateblock->contained_ps_consts_b[i];
+        idx = wined3d_bit_scan(&map);
 
         TRACE("Setting ps_consts_b[%u] to %s.\n",
                 idx, state->ps_consts_b[idx] ? "TRUE" : "FALSE");
@@ -899,15 +867,6 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
         TRACE("Updating scissor rect.\n");
 
         stateblock->stateblock_state.scissor_rect = state->scissor_rect;
-    }
-
-    if (stateblock->changed.blend_state
-            && memcmp(&state->blend_factor, &stateblock->stateblock_state.blend_factor,
-                    sizeof(stateblock->stateblock_state.blend_factor)))
-    {
-        TRACE("Updating blend factor.\n");
-
-        stateblock->stateblock_state.blend_factor = state->blend_factor;
     }
 
     map = stateblock->changed.streamSource;
@@ -1023,19 +982,33 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
         stateblock->stateblock_state.ps = state->ps;
     }
 
-    wined3d_state_record_lights(&stateblock->stateblock_state.light_state, &state->light_state);
+    wined3d_state_record_lights(stateblock->stateblock_state.light_state, state->light_state);
+
+    if (stateblock->changed.blend_state && stateblock->stateblock_state.blend_state != state->blend_state)
+    {
+        if (state->blend_state)
+            wined3d_blend_state_incref(state->blend_state);
+        if (stateblock->stateblock_state.blend_state)
+            wined3d_blend_state_decref(stateblock->stateblock_state.blend_state);
+        stateblock->stateblock_state.blend_state = state->blend_state;
+    }
 
     TRACE("Capture done.\n");
 }
 
-void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
+void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
+        struct wined3d_stateblock *device_state)
 {
-    struct wined3d_stateblock_state *state = &stateblock->device->stateblock_state;
+    const unsigned int word_bit_count = sizeof(*stateblock->changed.vs_consts_f) * CHAR_BIT;
+    struct wined3d_stateblock_state *state = &device_state->stateblock_state;
     struct wined3d_device *device = stateblock->device;
-    unsigned int i;
+    struct wined3d_blend_state *blend_state;
+    struct wined3d_color colour;
+    unsigned int i, j, idx;
+    BOOL set_blend_state;
     DWORD map;
 
-    TRACE("Applying stateblock %p to device %p.\n", stateblock, device);
+    TRACE("stateblock %p, device_state %p.\n", stateblock, device_state);
 
     if (stateblock->changed.vertexShader)
     {
@@ -1047,40 +1020,47 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
         wined3d_device_set_vertex_shader(device, stateblock->stateblock_state.vs);
     }
 
-    /* Vertex Shader Constants. */
-    for (i = 0; i < stateblock->num_contained_vs_consts_f; ++i)
+    for (i = 0; i < ARRAY_SIZE(stateblock->changed.vs_consts_f); ++i)
     {
-        unsigned int idx = stateblock->contained_vs_consts_f[i];
+        map = stateblock->changed.vs_consts_f[i];
 
-        state->vs_consts_f[idx] = stateblock->stateblock_state.vs_consts_f[idx];
-        wined3d_device_set_vs_consts_f(device, idx, 1, &stateblock->stateblock_state.vs_consts_f[idx]);
+        while (map)
+        {
+            j = wined3d_bit_scan(&map);
+            idx = i * word_bit_count + j;
+
+            state->vs_consts_f[idx] = stateblock->stateblock_state.vs_consts_f[idx];
+            wined3d_device_set_vs_consts_f(device, idx, 1, &stateblock->stateblock_state.vs_consts_f[idx]);
+        }
     }
-    for (i = 0; i < stateblock->num_contained_vs_consts_i; ++i)
+    map = stateblock->changed.vertexShaderConstantsI;
+    while (map)
     {
-        unsigned int idx = stateblock->contained_vs_consts_i[i];
+        idx = wined3d_bit_scan(&map);
 
         state->vs_consts_i[idx] = stateblock->stateblock_state.vs_consts_i[idx];
         wined3d_device_set_vs_consts_i(device, idx, 1, &stateblock->stateblock_state.vs_consts_i[idx]);
     }
-    for (i = 0; i < stateblock->num_contained_vs_consts_b; ++i)
+    map = stateblock->changed.vertexShaderConstantsB;
+    while (map)
     {
-        unsigned int idx = stateblock->contained_vs_consts_b[i];
+        idx = wined3d_bit_scan(&map);
 
         state->vs_consts_b[idx] = stateblock->stateblock_state.vs_consts_b[idx];
         wined3d_device_set_vs_consts_b(device, idx, 1, &stateblock->stateblock_state.vs_consts_b[idx]);
     }
 
-    for (i = 0; i < ARRAY_SIZE(stateblock->stateblock_state.light_state.light_map); ++i)
+    for (i = 0; i < ARRAY_SIZE(stateblock->stateblock_state.light_state->light_map); ++i)
     {
         const struct wined3d_light_info *light;
         struct wined3d_light_info *new_light;
 
-        LIST_FOR_EACH_ENTRY(light, &stateblock->stateblock_state.light_state.light_map[i], struct wined3d_light_info, entry)
+        LIST_FOR_EACH_ENTRY(light, &stateblock->stateblock_state.light_state->light_map[i], struct wined3d_light_info, entry)
         {
-            if (SUCCEEDED(wined3d_light_state_set_light(&state->light_state, light->OriginalIndex,
+            if (SUCCEEDED(wined3d_light_state_set_light(state->light_state, light->OriginalIndex,
                     &light->OriginalParms, &new_light)))
             {
-                wined3d_light_state_enable_light(&state->light_state, &device->adapter->d3d_info, new_light, light->glIndex != -1);
+                wined3d_light_state_enable_light(state->light_state, &device->adapter->d3d_info, new_light, light->glIndex != -1);
             }
             wined3d_device_set_light(device, light->OriginalIndex, &light->OriginalParms);
             wined3d_device_set_light_enable(device, light->OriginalIndex, light->glIndex != -1);
@@ -1097,27 +1077,55 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
         wined3d_device_set_pixel_shader(device, stateblock->stateblock_state.ps);
     }
 
-    /* Pixel Shader Constants. */
-    for (i = 0; i < stateblock->num_contained_ps_consts_f; ++i)
+    for (i = 0; i < ARRAY_SIZE(stateblock->changed.ps_consts_f); ++i)
     {
-        unsigned int idx = stateblock->contained_ps_consts_f[i];
+        map = stateblock->changed.ps_consts_f[i];
 
-        state->ps_consts_f[idx] = stateblock->stateblock_state.ps_consts_f[idx];
-        wined3d_device_set_ps_consts_f(device, idx, 1, &stateblock->stateblock_state.ps_consts_f[idx]);
+        while (map)
+        {
+            j = wined3d_bit_scan(&map);
+            idx = i * word_bit_count + j;
+
+            state->ps_consts_f[idx] = stateblock->stateblock_state.ps_consts_f[idx];
+            wined3d_device_set_ps_consts_f(device, idx, 1, &stateblock->stateblock_state.ps_consts_f[idx]);
+        }
     }
-    for (i = 0; i < stateblock->num_contained_ps_consts_i; ++i)
+    map = stateblock->changed.pixelShaderConstantsI;
+    while (map)
     {
-        unsigned int idx = stateblock->contained_ps_consts_i[i];
+        idx = wined3d_bit_scan(&map);
 
         state->ps_consts_i[idx] = stateblock->stateblock_state.ps_consts_i[idx];
         wined3d_device_set_ps_consts_i(device, idx, 1, &stateblock->stateblock_state.ps_consts_i[idx]);
     }
-    for (i = 0; i < stateblock->num_contained_ps_consts_b; ++i)
+    map = stateblock->changed.pixelShaderConstantsB;
+    while (map)
     {
-        unsigned int idx = stateblock->contained_ps_consts_b[i];
+        idx = wined3d_bit_scan(&map);
 
         state->ps_consts_b[idx] = stateblock->stateblock_state.ps_consts_b[idx];
         wined3d_device_set_ps_consts_b(device, idx, 1, &stateblock->stateblock_state.ps_consts_b[idx]);
+    }
+
+    if ((set_blend_state = stateblock->changed.blend_state
+            || wined3d_bitmap_is_set(stateblock->changed.renderState, WINED3D_RS_ADAPTIVETESS_Y)))
+    {
+        blend_state = stateblock->stateblock_state.rs[WINED3D_RS_ADAPTIVETESS_Y] == WINED3DFMT_ATOC
+                ? device->blend_state_atoc_enabled : stateblock->stateblock_state.blend_state;
+
+        if (blend_state)
+            wined3d_blend_state_incref(blend_state);
+        if (state->blend_state)
+            wined3d_blend_state_decref(state->blend_state);
+
+        state->blend_state = blend_state;
+
+        if (wined3d_bitmap_is_set(stateblock->changed.renderState, WINED3D_RS_BLENDFACTOR))
+            wined3d_color_from_d3dcolor(&colour, stateblock->stateblock_state.rs[WINED3D_RS_BLENDFACTOR]);
+        else
+            wined3d_device_get_blend_state(device, &colour);
+
+        wined3d_device_set_blend_state(device, blend_state, &colour);
     }
 
     /* Render states. */
@@ -1126,7 +1134,18 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
         enum wined3d_render_state rs = stateblock->contained_render_states[i];
 
         state->rs[rs] = stateblock->stateblock_state.rs[rs];
-        wined3d_device_set_render_state(device, rs, stateblock->stateblock_state.rs[rs]);
+        if (rs != WINED3D_RS_BLENDFACTOR)
+        {
+            wined3d_device_set_render_state(device, rs, stateblock->stateblock_state.rs[rs]);
+            continue;
+        }
+
+        if (!set_blend_state)
+        {
+            blend_state = wined3d_device_get_blend_state(device, &colour);
+            wined3d_color_from_d3dcolor(&colour, stateblock->stateblock_state.rs[rs]);
+            wined3d_device_set_blend_state(device, blend_state, &colour);
+        }
     }
 
     /* Texture states. */
@@ -1206,12 +1225,6 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
         wined3d_device_set_scissor_rects(device, 1, &stateblock->stateblock_state.scissor_rect);
     }
 
-    if (stateblock->changed.blend_state)
-    {
-        state->blend_factor = stateblock->stateblock_state.blend_factor;
-        wined3d_device_set_blend_state(device, NULL, &stateblock->stateblock_state.blend_factor);
-    }
-
     map = stateblock->changed.streamSource;
     for (i = 0; map; map >>= 1, ++i)
     {
@@ -1272,6 +1285,503 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     }
 
     TRACE("Applied stateblock %p.\n", stateblock);
+}
+
+void CDECL wined3d_stateblock_set_vertex_shader(struct wined3d_stateblock *stateblock, struct wined3d_shader *shader)
+{
+    TRACE("stateblock %p, shader %p.\n", stateblock, shader);
+
+    if (shader)
+        wined3d_shader_incref(shader);
+    if (stateblock->stateblock_state.vs)
+        wined3d_shader_decref(stateblock->stateblock_state.vs);
+    stateblock->stateblock_state.vs = shader;
+    stateblock->changed.vertexShader = TRUE;
+}
+
+static void wined3d_bitmap_set_bits(uint32_t *bitmap, unsigned int start, unsigned int count)
+{
+    const unsigned int word_bit_count = sizeof(*bitmap) * CHAR_BIT;
+    const unsigned int shift = start % word_bit_count;
+    uint32_t mask, last_mask;
+    unsigned int mask_size;
+
+    bitmap += start / word_bit_count;
+    mask = ~0u << shift;
+    mask_size = word_bit_count - shift;
+    last_mask = (1u << (start + count) % word_bit_count) - 1;
+    if (mask_size <= count)
+    {
+        *bitmap |= mask;
+        ++bitmap;
+        count -= mask_size;
+        mask = ~0u;
+    }
+    if (count >= word_bit_count)
+    {
+        memset(bitmap, 0xffu, count / word_bit_count * sizeof(*bitmap));
+        bitmap += count / word_bit_count;
+        count = count % word_bit_count;
+    }
+    if (count)
+        *bitmap |= mask & last_mask;
+}
+
+HRESULT CDECL wined3d_stateblock_set_vs_consts_f(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
+{
+    const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
+
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n",
+            stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= d3d_info->limits.vs_uniform_count
+            || count > d3d_info->limits.vs_uniform_count - start_idx)
+        return WINED3DERR_INVALIDCALL;
+
+    memcpy(&stateblock->stateblock_state.vs_consts_f[start_idx], constants, count * sizeof(*constants));
+    wined3d_bitmap_set_bits(stateblock->changed.vs_consts_f, start_idx, count);
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_set_vs_consts_i(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants)
+{
+    unsigned int i;
+
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n",
+            stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
+        return WINED3DERR_INVALIDCALL;
+
+    if (count > WINED3D_MAX_CONSTS_I - start_idx)
+        count = WINED3D_MAX_CONSTS_I - start_idx;
+
+    memcpy(&stateblock->stateblock_state.vs_consts_i[start_idx], constants, count * sizeof(*constants));
+    for (i = start_idx; i < count + start_idx; ++i)
+        stateblock->changed.vertexShaderConstantsI |= (1u << i);
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_set_vs_consts_b(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, const BOOL *constants)
+{
+    unsigned int i;
+
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n",
+            stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
+        return WINED3DERR_INVALIDCALL;
+
+    if (count > WINED3D_MAX_CONSTS_B - start_idx)
+        count = WINED3D_MAX_CONSTS_B - start_idx;
+
+    memcpy(&stateblock->stateblock_state.vs_consts_b[start_idx], constants, count * sizeof(*constants));
+    for (i = start_idx; i < count + start_idx; ++i)
+        stateblock->changed.vertexShaderConstantsB |= (1u << i);
+    return WINED3D_OK;
+}
+
+void CDECL wined3d_stateblock_set_pixel_shader(struct wined3d_stateblock *stateblock, struct wined3d_shader *shader)
+{
+    TRACE("stateblock %p, shader %p.\n", stateblock, shader);
+
+    if (shader)
+        wined3d_shader_incref(shader);
+    if (stateblock->stateblock_state.ps)
+        wined3d_shader_decref(stateblock->stateblock_state.ps);
+    stateblock->stateblock_state.ps = shader;
+    stateblock->changed.pixelShader = TRUE;
+}
+
+HRESULT CDECL wined3d_stateblock_set_ps_consts_f(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
+{
+    const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
+
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n",
+            stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= d3d_info->limits.ps_uniform_count
+            || count > d3d_info->limits.ps_uniform_count - start_idx)
+        return WINED3DERR_INVALIDCALL;
+
+    memcpy(&stateblock->stateblock_state.ps_consts_f[start_idx], constants, count * sizeof(*constants));
+    wined3d_bitmap_set_bits(stateblock->changed.ps_consts_f, start_idx, count);
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_set_ps_consts_i(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants)
+{
+    unsigned int i;
+
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n",
+            stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
+        return WINED3DERR_INVALIDCALL;
+
+    if (count > WINED3D_MAX_CONSTS_I - start_idx)
+        count = WINED3D_MAX_CONSTS_I - start_idx;
+
+    memcpy(&stateblock->stateblock_state.ps_consts_i[start_idx], constants, count * sizeof(*constants));
+    for (i = start_idx; i < count + start_idx; ++i)
+        stateblock->changed.pixelShaderConstantsI |= (1u << i);
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_set_ps_consts_b(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, const BOOL *constants)
+{
+    unsigned int i;
+
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n",
+            stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
+        return WINED3DERR_INVALIDCALL;
+
+    if (count > WINED3D_MAX_CONSTS_B - start_idx)
+        count = WINED3D_MAX_CONSTS_B - start_idx;
+
+    memcpy(&stateblock->stateblock_state.ps_consts_b[start_idx], constants, count * sizeof(*constants));
+    for (i = start_idx; i < count + start_idx; ++i)
+        stateblock->changed.pixelShaderConstantsB |= (1u << i);
+    return WINED3D_OK;
+}
+
+void CDECL wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *stateblock,
+        struct wined3d_vertex_declaration *declaration)
+{
+    TRACE("stateblock %p, declaration %p.\n", stateblock, declaration);
+
+    if (declaration)
+        wined3d_vertex_declaration_incref(declaration);
+    if (stateblock->stateblock_state.vertex_declaration)
+        wined3d_vertex_declaration_decref(stateblock->stateblock_state.vertex_declaration);
+    stateblock->stateblock_state.vertex_declaration = declaration;
+    stateblock->changed.vertexDecl = TRUE;
+}
+
+void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateblock,
+        enum wined3d_render_state state, DWORD value)
+{
+    TRACE("stateblock %p, state %s (%#x), value %#x.\n", stateblock, debug_d3drenderstate(state), state, value);
+
+    if (state > WINEHIGHEST_RENDER_STATE)
+    {
+        WARN("Unhandled render state %#x.\n", state);
+        return;
+    }
+
+    stateblock->stateblock_state.rs[state] = value;
+    stateblock->changed.renderState[state >> 5] |= 1u << (state & 0x1f);
+
+    if (state == WINED3D_RS_POINTSIZE
+            && (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE || value == WINED3D_ALPHA_TO_COVERAGE_DISABLE))
+    {
+        stateblock->changed.blend_state = 1;
+
+        if (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE && !stateblock->stateblock_state.blend_state)
+        {
+            wined3d_blend_state_incref(stateblock->device->blend_state_atoc_enabled);
+            stateblock->stateblock_state.blend_state = stateblock->device->blend_state_atoc_enabled;
+        }
+        else if (value == WINED3D_ALPHA_TO_COVERAGE_DISABLE && stateblock->stateblock_state.blend_state)
+        {
+            wined3d_blend_state_decref(stateblock->stateblock_state.blend_state);
+            stateblock->stateblock_state.blend_state = NULL;
+        }
+    }
+}
+
+void CDECL wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *stateblock,
+        UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
+{
+    TRACE("stateblock %p, sampler_idx %u, state %s, value %#x.\n",
+            stateblock, sampler_idx, debug_d3dsamplerstate(state), value);
+
+    if (sampler_idx >= WINED3DVERTEXTEXTURESAMPLER0 && sampler_idx <= WINED3DVERTEXTEXTURESAMPLER3)
+        sampler_idx -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+
+    if (sampler_idx >= ARRAY_SIZE(stateblock->stateblock_state.sampler_states))
+    {
+        WARN("Invalid sampler %u.\n", sampler_idx);
+        return;
+    }
+
+    stateblock->stateblock_state.sampler_states[sampler_idx][state] = value;
+    stateblock->changed.samplerState[sampler_idx] |= 1u << state;
+}
+
+void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock *stateblock,
+        UINT stage, enum wined3d_texture_stage_state state, DWORD value)
+{
+    TRACE("stateblock %p, stage %u, state %s, value %#x.\n",
+            stateblock, stage, debug_d3dtexturestate(state), value);
+
+    if (state > WINED3D_HIGHEST_TEXTURE_STATE)
+    {
+        WARN("Invalid state %#x passed.\n", state);
+        return;
+    }
+
+    if (stage >= WINED3D_MAX_TEXTURES)
+    {
+        WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring.\n",
+                stage, WINED3D_MAX_TEXTURES - 1);
+        return;
+    }
+
+    stateblock->stateblock_state.texture_states[stage][state] = value;
+    stateblock->changed.textureState[stage] |= 1u << state;
+}
+
+void CDECL wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock,
+        UINT stage, struct wined3d_texture *texture)
+{
+    TRACE("stateblock %p, stage %u, texture %p.\n", stateblock, stage, texture);
+
+    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
+        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+
+    if (stage >= ARRAY_SIZE(stateblock->stateblock_state.textures))
+    {
+        WARN("Ignoring invalid stage %u.\n", stage);
+        return;
+    }
+
+    if (texture)
+        wined3d_texture_incref(texture);
+    if (stateblock->stateblock_state.textures[stage])
+        wined3d_texture_decref(stateblock->stateblock_state.textures[stage]);
+    stateblock->stateblock_state.textures[stage] = texture;
+    stateblock->changed.textures |= 1u << stage;
+}
+
+void CDECL wined3d_stateblock_set_transform(struct wined3d_stateblock *stateblock,
+        enum wined3d_transform_state d3dts, const struct wined3d_matrix *matrix)
+{
+    TRACE("stateblock %p, state %s, matrix %p.\n", stateblock, debug_d3dtstype(d3dts), matrix);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_11, matrix->_12, matrix->_13, matrix->_14);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_21, matrix->_22, matrix->_23, matrix->_24);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_31, matrix->_32, matrix->_33, matrix->_34);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_41, matrix->_42, matrix->_43, matrix->_44);
+
+    stateblock->stateblock_state.transforms[d3dts] = *matrix;
+    stateblock->changed.transform[d3dts >> 5] |= 1u << (d3dts & 0x1f);
+}
+
+void CDECL wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stateblock,
+        enum wined3d_transform_state d3dts, const struct wined3d_matrix *matrix)
+{
+    struct wined3d_matrix *mat = &stateblock->stateblock_state.transforms[d3dts];
+
+    TRACE("stateblock %p, state %s, matrix %p.\n", stateblock, debug_d3dtstype(d3dts), matrix);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_11, matrix->_12, matrix->_13, matrix->_14);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_21, matrix->_22, matrix->_23, matrix->_24);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_31, matrix->_32, matrix->_33, matrix->_34);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_41, matrix->_42, matrix->_43, matrix->_44);
+
+    multiply_matrix(mat, mat, matrix);
+}
+
+HRESULT CDECL wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *stateblock,
+        UINT plane_idx, const struct wined3d_vec4 *plane)
+{
+    TRACE("stateblock %p, plane_idx %u, plane %p.\n", stateblock, plane_idx, plane);
+
+    if (plane_idx >= stateblock->device->adapter->d3d_info.limits.max_clip_distances)
+    {
+        TRACE("Application has requested clipplane this device doesn't support.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    stateblock->stateblock_state.clip_planes[plane_idx] = *plane;
+    stateblock->changed.clipplane |= 1u << plane_idx;
+    return S_OK;
+}
+
+void CDECL wined3d_stateblock_set_material(struct wined3d_stateblock *stateblock,
+        const struct wined3d_material *material)
+{
+    TRACE("stateblock %p, material %p.\n", stateblock, material);
+
+    stateblock->stateblock_state.material = *material;
+    stateblock->changed.material = TRUE;
+}
+
+void CDECL wined3d_stateblock_set_viewport(struct wined3d_stateblock *stateblock,
+        const struct wined3d_viewport *viewport)
+{
+    TRACE("stateblock %p, viewport %p.\n", stateblock, viewport);
+
+    stateblock->stateblock_state.viewport = *viewport;
+    stateblock->changed.viewport = TRUE;
+}
+
+void CDECL wined3d_stateblock_set_scissor_rect(struct wined3d_stateblock *stateblock, const RECT *rect)
+{
+    TRACE("stateblock %p, rect %s.\n", stateblock, wine_dbgstr_rect(rect));
+
+    stateblock->stateblock_state.scissor_rect = *rect;
+    stateblock->changed.scissorRect = TRUE;
+}
+
+void CDECL wined3d_stateblock_set_index_buffer(struct wined3d_stateblock *stateblock,
+        struct wined3d_buffer *buffer, enum wined3d_format_id format_id)
+{
+    TRACE("stateblock %p, buffer %p, format %s.\n", stateblock, buffer, debug_d3dformat(format_id));
+
+    if (buffer)
+        wined3d_buffer_incref(buffer);
+    if (stateblock->stateblock_state.index_buffer)
+        wined3d_buffer_decref(stateblock->stateblock_state.index_buffer);
+    stateblock->stateblock_state.index_buffer = buffer;
+    stateblock->stateblock_state.index_format = format_id;
+    stateblock->changed.indices = TRUE;
+}
+
+void CDECL wined3d_stateblock_set_base_vertex_index(struct wined3d_stateblock *stateblock, INT base_index)
+{
+    TRACE("stateblock %p, base_index %d.\n", stateblock, base_index);
+
+    stateblock->stateblock_state.base_vertex_index = base_index;
+}
+
+HRESULT CDECL wined3d_stateblock_set_stream_source(struct wined3d_stateblock *stateblock,
+        UINT stream_idx, struct wined3d_buffer *buffer, UINT offset, UINT stride)
+{
+    struct wined3d_stream_state *stream;
+
+    TRACE("stateblock %p, stream_idx %u, buffer %p, stride %u.\n",
+            stateblock, stream_idx, buffer, stride);
+
+    if (stream_idx >= WINED3D_MAX_STREAMS)
+    {
+        WARN("Stream index %u out of range.\n", stream_idx);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    stream = &stateblock->stateblock_state.streams[stream_idx];
+
+    if (buffer)
+        wined3d_buffer_incref(buffer);
+    if (stream->buffer)
+        wined3d_buffer_decref(stream->buffer);
+    stream->buffer = buffer;
+    stream->stride = stride;
+    stream->offset = offset;
+    stateblock->changed.streamSource |= 1u << stream_idx;
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_set_stream_source_freq(struct wined3d_stateblock *stateblock,
+        UINT stream_idx, UINT divider)
+{
+    struct wined3d_stream_state *stream;
+
+    TRACE("stateblock %p, stream_idx %u, divider %#x.\n", stateblock, stream_idx, divider);
+
+    if ((divider & WINED3DSTREAMSOURCE_INSTANCEDATA) && (divider & WINED3DSTREAMSOURCE_INDEXEDDATA))
+    {
+        WARN("INSTANCEDATA and INDEXEDDATA were set, returning D3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if ((divider & WINED3DSTREAMSOURCE_INSTANCEDATA) && !stream_idx)
+    {
+        WARN("INSTANCEDATA used on stream 0, returning D3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if (!divider)
+    {
+        WARN("Divider is 0, returning D3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    stream = &stateblock->stateblock_state.streams[stream_idx];
+    stream->flags = divider & (WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA);
+    stream->frequency = divider & 0x7fffff;
+    stateblock->changed.streamFreq |= 1u << stream_idx;
+    return WINED3D_OK;
+}
+HRESULT CDECL wined3d_stateblock_set_light(struct wined3d_stateblock *stateblock,
+        UINT light_idx, const struct wined3d_light *light)
+{
+    struct wined3d_light_info *object = NULL;
+
+    TRACE("stateblock %p, light_idx %u, light %p.\n", stateblock, light_idx, light);
+
+    /* Check the parameter range. Need for speed most wanted sets junk lights
+     * which confuse the GL driver. */
+    if (!light)
+        return WINED3DERR_INVALIDCALL;
+
+    switch (light->type)
+    {
+        case WINED3D_LIGHT_POINT:
+        case WINED3D_LIGHT_SPOT:
+        case WINED3D_LIGHT_GLSPOT:
+            /* Incorrect attenuation values can cause the gl driver to crash.
+             * Happens with Need for speed most wanted. */
+            if (light->attenuation0 < 0.0f || light->attenuation1 < 0.0f || light->attenuation2 < 0.0f)
+            {
+                WARN("Attenuation is negative, returning WINED3DERR_INVALIDCALL.\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+            break;
+
+        case WINED3D_LIGHT_DIRECTIONAL:
+        case WINED3D_LIGHT_PARALLELPOINT:
+            /* Ignores attenuation */
+            break;
+
+        default:
+            WARN("Light type out of range, returning WINED3DERR_INVALIDCALL.\n");
+            return WINED3DERR_INVALIDCALL;
+    }
+
+    return wined3d_light_state_set_light(stateblock->stateblock_state.light_state, light_idx, light, &object);
+}
+
+HRESULT CDECL wined3d_stateblock_set_light_enable(struct wined3d_stateblock *stateblock, UINT light_idx, BOOL enable)
+{
+    struct wined3d_light_state *light_state = stateblock->stateblock_state.light_state;
+    struct wined3d_light_info *light_info;
+    HRESULT hr;
+
+    TRACE("stateblock %p, light_idx %u, enable %#x.\n", stateblock, light_idx, enable);
+
+    if (!(light_info = wined3d_light_state_get_light(light_state, light_idx)))
+    {
+        if (FAILED(hr = wined3d_light_state_set_light(light_state, light_idx, &WINED3D_default_light, &light_info)))
+            return hr;
+    }
+    wined3d_light_state_enable_light(light_state, &stateblock->device->adapter->d3d_info, light_info, enable);
+    return S_OK;
+}
+
+const struct wined3d_stateblock_state * CDECL wined3d_stateblock_get_state(const struct wined3d_stateblock *stateblock)
+{
+    return &stateblock->stateblock_state;
+}
+
+HRESULT CDECL wined3d_stateblock_get_light(const struct wined3d_stateblock *stateblock,
+        UINT light_idx, struct wined3d_light *light, BOOL *enabled)
+{
+    struct wined3d_light_info *light_info;
+
+    if (!(light_info = wined3d_light_state_get_light(&stateblock->light_state, light_idx)))
+    {
+        TRACE("Light %u is not defined.\n", light_idx);
+        return WINED3DERR_INVALIDCALL;
+    }
+    *light = light_info->OriginalParms;
+    *enabled = light_info->enabled ? 128 : 0;
+    return WINED3D_OK;
 }
 
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
@@ -1398,6 +1908,7 @@ static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], c
     rs[WINED3D_RS_COLORWRITEENABLE1] = 0x0000000f;
     rs[WINED3D_RS_COLORWRITEENABLE2] = 0x0000000f;
     rs[WINED3D_RS_COLORWRITEENABLE3] = 0x0000000f;
+    rs[WINED3D_RS_BLENDFACTOR] = 0xffffffff;
     rs[WINED3D_RS_SRGBWRITEENABLE] = 0;
     rs[WINED3D_RS_DEPTHBIAS] = 0;
     rs[WINED3D_RS_WRAP8] = 0;
@@ -1542,11 +2053,6 @@ static void stateblock_state_init_default(struct wined3d_stateblock_state *state
 
     init_default_sampler_states(state->sampler_states);
 
-    state->blend_factor.r = 1.0f;
-    state->blend_factor.g = 1.0f;
-    state->blend_factor.b = 1.0f;
-    state->blend_factor.a = 1.0f;
-
     for (i = 0; i < WINED3D_MAX_STREAMS; ++i)
         state->streams[i].frequency = 1;
 }
@@ -1556,9 +2062,9 @@ void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state,
 {
     unsigned int i;
 
-    for (i = 0; i < ARRAY_SIZE(state->light_state.light_map); i++)
+    for (i = 0; i < ARRAY_SIZE(state->light_state->light_map); i++)
     {
-        list_init(&state->light_state.light_map[i]);
+        list_init(&state->light_state->light_map[i]);
     }
 
     if (flags & WINED3D_STATE_INIT_DEFAULT)
@@ -1566,18 +2072,20 @@ void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state,
 
 }
 
-static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
+static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
         struct wined3d_device *device, enum wined3d_stateblock_type type)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
 
     stateblock->ref = 1;
     stateblock->device = device;
-    wined3d_stateblock_state_init(&stateblock->stateblock_state, device, 0);
+    stateblock->stateblock_state.light_state = &stateblock->light_state;
+    wined3d_stateblock_state_init(&stateblock->stateblock_state, device,
+            type == WINED3D_SBT_PRIMARY ? WINED3D_STATE_INIT_DEFAULT : 0);
 
     stateblock->changed.store_stream_offset = 1;
 
-    if (type == WINED3D_SBT_RECORDED)
+    if (type == WINED3D_SBT_RECORDED || type == WINED3D_SBT_PRIMARY)
         return WINED3D_OK;
 
     TRACE("Updating changed flags appropriate for type %#x.\n", type);
@@ -1585,8 +2093,8 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
     switch (type)
     {
         case WINED3D_SBT_ALL:
-            stateblock_init_lights(stateblock->stateblock_state.light_state.light_map,
-                    device->stateblock_state.light_state.light_map);
+            stateblock_init_lights(stateblock->stateblock_state.light_state->light_map,
+                    device_state->stateblock_state.light_state->light_map);
             stateblock_savedstates_set_all(&stateblock->changed,
                     d3d_info->limits.vs_uniform_count, d3d_info->limits.ps_uniform_count);
             break;
@@ -1597,8 +2105,8 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
             break;
 
         case WINED3D_SBT_VERTEX_STATE:
-            stateblock_init_lights(stateblock->stateblock_state.light_state.light_map,
-                    device->stateblock_state.light_state.light_map);
+            stateblock_init_lights(stateblock->stateblock_state.light_state->light_map,
+                    device_state->stateblock_state.light_state->light_map);
             stateblock_savedstates_set_vertex(&stateblock->changed,
                     d3d_info->limits.vs_uniform_count);
             break;
@@ -1608,8 +2116,8 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
             break;
     }
 
-    stateblock_init_contained_states(stateblock);
-    wined3d_stateblock_capture(stateblock);
+    wined3d_stateblock_init_contained_states(stateblock);
+    wined3d_stateblock_capture(stateblock, device_state);
 
     /* According to the tests, stream offset is not updated in the captured state if
      * the state was captured on state block creation. This is not the case for
@@ -1620,19 +2128,19 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_stateblock_create(struct wined3d_device *device,
+HRESULT CDECL wined3d_stateblock_create(struct wined3d_device *device, const struct wined3d_stateblock *device_state,
         enum wined3d_stateblock_type type, struct wined3d_stateblock **stateblock)
 {
     struct wined3d_stateblock *object;
     HRESULT hr;
 
-    TRACE("device %p, type %#x, stateblock %p.\n",
-            device, type, stateblock);
+    TRACE("device %p, device_state %p, type %#x, stateblock %p.\n",
+            device, device_state, type, stateblock);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    hr = stateblock_init(object, device, type);
+    hr = stateblock_init(object, device_state, device, type);
     if (FAILED(hr))
     {
         WARN("Failed to initialize stateblock, hr %#x.\n", hr);
@@ -1644,4 +2152,14 @@ HRESULT CDECL wined3d_stateblock_create(struct wined3d_device *device,
     *stateblock = object;
 
     return WINED3D_OK;
+}
+
+void CDECL wined3d_stateblock_reset(struct wined3d_stateblock *stateblock)
+{
+    TRACE("stateblock %p.\n", stateblock);
+
+    wined3d_stateblock_state_cleanup(&stateblock->stateblock_state);
+    memset(&stateblock->stateblock_state, 0, sizeof(stateblock->stateblock_state));
+    stateblock->stateblock_state.light_state = &stateblock->light_state;
+    wined3d_stateblock_state_init(&stateblock->stateblock_state, stateblock->device, WINED3D_STATE_INIT_DEFAULT);
 }

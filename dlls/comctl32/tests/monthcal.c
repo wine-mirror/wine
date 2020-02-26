@@ -47,6 +47,7 @@ static BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
 static HWND parent_wnd;
+static BOOL got_MCN_SELECT, got_MCN_SELCHANGE;
 
 static const struct message create_parent_window_seq[] = {
     { WM_GETMINMAXINFO, sent },
@@ -544,6 +545,12 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
 
             if(GetWindowLongPtrA(nmchg->nmhdr.hwndFrom, GWLP_ID) != SEL_NOTIFY_TEST_ID)
               break;
+
+            if (hdr->code == MCN_SELECT)
+                got_MCN_SELECT = TRUE;
+            else
+                got_MCN_SELCHANGE = TRUE;
+
             SendMessageA(nmchg->nmhdr.hwndFrom, is_multisel ? MCM_GETSELRANGE : MCM_GETCURSEL,
                     0, (LPARAM)st);
 
@@ -2032,8 +2039,20 @@ static void test_sel_notify(void)
             mchit.pt.y++;
             SendMessageA(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
         }
+        got_MCN_SELECT = got_MCN_SELCHANGE = FALSE;
         SendMessageA(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(mchit.pt.x, mchit.pt.y));
+        if (styles[i].val & MCS_MULTISELECT)
+            ok(got_MCN_SELCHANGE, "%d: MCN_SELCHANGE should be sent\n", i);
+        else
+            ok(!got_MCN_SELCHANGE, "%d: MCN_SELCHANGE should not be sent\n", i);
+        ok(!got_MCN_SELECT, "%d: MCN_SELECT should not be sent\n", i);
+        got_MCN_SELECT = got_MCN_SELCHANGE = FALSE;
         SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(mchit.pt.x, mchit.pt.y));
+        if (styles[i].val & MCS_MULTISELECT)
+            ok(!got_MCN_SELCHANGE, "%d: MCN_SELCHANGE should not be sent\n", i);
+        else
+            ok(got_MCN_SELCHANGE, "%d: MCN_SELCHANGE should be sent\n", i);
+        ok(got_MCN_SELECT, "%d: MCN_SELECT should be sent\n", i);
         DestroyWindow(hwnd);
     }
 }

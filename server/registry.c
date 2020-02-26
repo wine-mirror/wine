@@ -48,7 +48,6 @@
 #include "security.h"
 
 #include "winternl.h"
-#include "wine/library.h"
 
 struct notify
 {

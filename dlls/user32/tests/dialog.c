@@ -148,6 +148,11 @@ static const h_entry hierarchy [] = {
     {0, 0, 0, 0}
 };
 
+static DWORD get_button_style(HWND button)
+{
+    return GetWindowLongW(button, GWL_STYLE) & BS_TYPEMASK;
+}
+
 static BOOL CreateWindows (HINSTANCE hinst)
 {
     const h_entry *p = hierarchy;
@@ -155,7 +160,7 @@ static BOOL CreateWindows (HINSTANCE hinst)
     while (p->id != 0)
     {
         DWORD style, exstyle;
-        char ctrlname[9];
+        char ctrlname[16];
 
         /* Basically assert that the hierarchy is valid and track the
          * maximum control number
@@ -633,76 +638,47 @@ static void test_WM_NEXTDLGCTL(void)
      * BS_DEFPUSHBUTTON with out making it default.
      */
 
+    /* Keep the focus on Edit control. */
+    SetFocus(g_hwndTestDlgEdit);
+    ok((GetFocus() == g_hwndTestDlgEdit), "Focus didn't set on Edit control\n");
+
+    /* Test message WM_NEXTDLGCTL */
+    DefDlgProcA(g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0);
+    ok((GetFocus() == g_hwndTestDlgBut1), "Focus didn't move to first button\n");
+
+    /* Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL" */
+    dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
+    ok(IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
+
     /*
-     * Keep the focus on Edit control.
+     * Check whether the style of the button which got the focus, changed to BS_DEFPUSHBUTTON and
+     * the style of default button changed to BS_PUSHBUTTON.
      */
+    ok(get_button_style(g_hwndTestDlgBut1) == BS_DEFPUSHBUTTON, "Button1's style not set to BS_DEFPUSHBUTTON");
+    ok(get_button_style(g_hwndTestDlgBut2) == BS_PUSHBUTTON, "Button2's style not set to BS_PUSHBUTTON");
 
-    if ( SetFocus( g_hwndTestDlgEdit ) )
-    {
-         ok ((GetFocus() == g_hwndTestDlgEdit), "Focus didn't set on Edit control\n");
+    /* Move focus to Button2 using "WM_NEXTDLGCTL" */
+    DefDlgProcA(g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0);
+    ok((GetFocus() == g_hwndTestDlgBut2), "Focus didn't move to second button\n");
 
-        /*
-         * Test message WM_NEXTDLGCTL
-         */
-        DefDlgProcA( g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0 );
-        ok ((GetFocus() == g_hwndTestDlgBut1), "Focus didn't move to first button\n");
+    /* Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL" */
+    dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
+    ok(IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
 
-        /*
-         * Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL"
-         */
-        dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
-        ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
+    /*
+     * Check whether the style of the button which got the focus, changed to BS_DEFPUSHBUTTON and
+     * the style of button which lost the focus changed to BS_PUSHBUTTON.
+     */
+    ok(get_button_style(g_hwndTestDlgBut1) == BS_PUSHBUTTON, "Button1's style not set to BS_PUSHBUTTON");
+    ok(get_button_style(g_hwndTestDlgBut2) == BS_DEFPUSHBUTTON, "Button2's style not set to BS_DEFPUSHBUTTON");
 
-        /*
-         * Check whether the style of the button which got the focus, changed to BS_DEFPUSHBUTTON and
-         * the style of default button changed to BS_PUSHBUTTON.
-         */
-        if ( IDCANCEL == (LOWORD(dwVal)) )
-        {
-                ok ( ((GetWindowLongA( g_hwndTestDlgBut1, GWL_STYLE)) & BS_DEFPUSHBUTTON),
-                        "Button1 style not set to BS_DEFPUSHBUTTON\n" );
+    /* Move focus to Edit control using "WM_NEXTDLGCTL" */
+    DefDlgProcA(g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0);
+    ok((GetFocus() == g_hwndTestDlgEdit), "Focus didn't move to Edit control\n");
 
-                ok ( !((GetWindowLongA( g_hwndTestDlgBut2, GWL_STYLE)) & BS_DEFPUSHBUTTON),
-                        "Button2's style not changed to BS_PUSHBUTTON\n" );
-        }
-
-        /*
-         * Move focus to Button2 using "WM_NEXTDLGCTL"
-         */
-        DefDlgProcA( g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0 );
-        ok ((GetFocus() == g_hwndTestDlgBut2), "Focus didn't move to second button\n");
-
-        /*
-         * Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL"
-         */
-        dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
-        ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
-
-        /*
-         * Check whether the style of the button which got the focus, changed to BS_DEFPUSHBUTTON and
-         * the style of button which lost the focus changed to BS_PUSHBUTTON.
-         */
-        if ( IDCANCEL == (LOWORD(dwVal)) )
-        {
-                ok ( ((GetWindowLongA( g_hwndTestDlgBut2, GWL_STYLE)) & BS_DEFPUSHBUTTON),
-                        "Button2 style not set to BS_DEFPUSHBUTTON\n" );
-
-                ok ( !((GetWindowLongA( g_hwndTestDlgBut1, GWL_STYLE)) & BS_DEFPUSHBUTTON),
-                        "Button1's style not changed to BS_PUSHBUTTON\n" );
-        }
-
-        /*
-         * Move focus to Edit control using "WM_NEXTDLGCTL"
-         */
-        DefDlgProcA( g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0 );
-        ok ((GetFocus() == g_hwndTestDlgEdit), "Focus didn't move to Edit control\n");
-
-        /*
-         * Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL"
-         */
-        dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
-        ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
-    }
+    /* Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL" */
+    dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
+    ok(IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
 
     /* test nested default buttons */
 
@@ -2008,6 +1984,8 @@ static void test_MessageBoxFontTest(void)
 
     ncMetrics.cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
     SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &ncMetrics, 0);
+    /* The height doesn't match on Windows 10 1709+. */
+    ncMetrics.lfMessageFont.lfHeight = lfStaticFont.lfHeight;
     ok( !memcmp(&lfStaticFont, &ncMetrics.lfMessageFont, FIELD_OFFSET(LOGFONTW, lfFaceName)) &&
         !lstrcmpW(lfStaticFont.lfFaceName, ncMetrics.lfMessageFont.lfFaceName),
         "dialog doesn't use message box font\n");

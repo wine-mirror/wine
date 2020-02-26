@@ -17,9 +17,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include "d3d11_private.h"
 #include "winternl.h"
 

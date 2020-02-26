@@ -1497,7 +1497,7 @@ static inline void IMAPIPROP_Unlock(IPropDataImpl *This)
  * Inherited method from the IUnknown Interface.
  * See IUnknown_QueryInterface.
  */
-static WINAPI HRESULT IPropData_fnQueryInterface(LPPROPDATA iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI IPropData_fnQueryInterface(LPPROPDATA iface, REFIID riid, LPVOID *ppvObj)
 {
     IPropDataImpl *This = impl_from_IPropData(iface);
 

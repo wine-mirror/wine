@@ -86,22 +86,19 @@ struct shellExpectedValues {
 
 static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO *);
 static HRESULT (WINAPI *pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
-static HRESULT (WINAPI *pSHGetFolderLocation)(HWND, int, HANDLE, DWORD,
- LPITEMIDLIST *);
 static BOOL    (WINAPI *pSHGetSpecialFolderPathA)(HWND, LPSTR, int, BOOL);
 static HRESULT (WINAPI *pSHGetSpecialFolderLocation)(HWND, int, LPITEMIDLIST *);
 static LPITEMIDLIST (WINAPI *pILFindLastID)(LPCITEMIDLIST);
 static int (WINAPI *pSHFileOperationA)(LPSHFILEOPSTRUCTA);
-static HRESULT (WINAPI *pSHGetMalloc)(LPMALLOC *);
 static UINT (WINAPI *pGetSystemWow64DirectoryA)(LPSTR,UINT);
 static HRESULT (WINAPI *pSHGetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
 static HRESULT (WINAPI *pSHSetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR);
 static HRESULT (WINAPI *pSHGetFolderPathEx)(REFKNOWNFOLDERID, DWORD, HANDLE, LPWSTR, DWORD);
 static BOOL (WINAPI *pPathYetAnotherMakeUniqueName)(PWSTR, PCWSTR, PCWSTR, PCWSTR);
 static HRESULT (WINAPI *pSHGetKnownFolderIDList)(REFKNOWNFOLDERID, DWORD, HANDLE, PIDLIST_ABSOLUTE*);
+static BOOL (WINAPI *pPathResolve)(PWSTR, PZPCWSTR, UINT);
 
 static DLLVERSIONINFO shellVersion = { 0 };
-static LPMALLOC pMalloc;
 static const BYTE guidType[] = { PT_GUID };
 static const BYTE controlPanelType[] = { PT_SHELLEXT, PT_GUID, PT_CPL };
 static const BYTE folderType[] = { PT_FOLDER, PT_FOLDERW };
@@ -195,7 +192,6 @@ static void loadShell32(void)
     GET_PROC(DllGetVersion)
     GET_PROC(SHGetFolderPathA)
     GET_PROC(SHGetFolderPathEx)
-    GET_PROC(SHGetFolderLocation)
     GET_PROC(SHGetKnownFolderPath)
     GET_PROC(SHSetKnownFolderPath)
     GET_PROC(SHGetSpecialFolderPathA)
@@ -204,18 +200,9 @@ static void loadShell32(void)
     if (!pILFindLastID)
         pILFindLastID = (void *)GetProcAddress(hShell32, (LPCSTR)16);
     GET_PROC(SHFileOperationA)
-    GET_PROC(SHGetMalloc)
     GET_PROC(PathYetAnotherMakeUniqueName)
     GET_PROC(SHGetKnownFolderIDList)
-
-    ok(pSHGetMalloc != NULL, "shell32 is missing SHGetMalloc\n");
-    if (pSHGetMalloc)
-    {
-        HRESULT hr = pSHGetMalloc(&pMalloc);
-
-        ok(hr == S_OK, "SHGetMalloc failed: 0x%08x\n", hr);
-        ok(pMalloc != NULL, "SHGetMalloc returned a NULL IMalloc\n");
-    }
+    GET_PROC(PathResolve);
 
     if (pDllGetVersion)
     {
@@ -1316,22 +1303,17 @@ static void test_parameters(void)
     char path[MAX_PATH];
     HRESULT hr;
 
-    if (pSHGetFolderLocation)
-    {
-        /* check a bogus CSIDL: */
-        pidl = NULL;
-        hr = pSHGetFolderLocation(NULL, 0xeeee, NULL, 0, &pidl);
-        ok(hr == E_INVALIDARG, "got 0x%08x, expected E_INVALIDARG\n", hr);
-        if (hr == S_OK) IMalloc_Free(pMalloc, pidl);
+    /* check a bogus CSIDL: */
+    pidl = NULL;
+    hr = SHGetFolderLocation(NULL, 0xeeee, NULL, 0, &pidl);
+    ok(hr == E_INVALIDARG, "got 0x%08x, expected E_INVALIDARG\n", hr);
 
-        /* check a bogus user token: */
-        pidl = NULL;
-        hr = pSHGetFolderLocation(NULL, CSIDL_FAVORITES, (HANDLE)2, 0, &pidl);
-        ok(hr == E_FAIL || hr == E_HANDLE, "got 0x%08x, expected E_FAIL or E_HANDLE\n", hr);
-        if (hr == S_OK) IMalloc_Free(pMalloc, pidl);
+    /* check a bogus user token: */
+    pidl = NULL;
+    hr = SHGetFolderLocation(NULL, CSIDL_FAVORITES, (HANDLE)2, 0, &pidl);
+    ok(hr == E_FAIL || hr == E_HANDLE, "got 0x%08x, expected E_FAIL or E_HANDLE\n", hr);
 
-        /* a NULL pidl pointer crashes, so don't test it */
-    }
+    /* a NULL pidl pointer crashes, so don't test it */
 
     if (pSHGetSpecialFolderLocation)
     {
@@ -1379,11 +1361,8 @@ static BYTE testSHGetFolderLocation(int folder)
     HRESULT hr;
     BYTE ret = 0xff;
 
-    /* treat absence of function as success */
-    if (!pSHGetFolderLocation) return TRUE;
-
     pidl = NULL;
-    hr = pSHGetFolderLocation(NULL, folder, NULL, 0, &pidl);
+    hr = SHGetFolderLocation(NULL, folder, NULL, 0, &pidl);
     if (hr == S_OK)
     {
         if (pidl)
@@ -1394,9 +1373,10 @@ static BYTE testSHGetFolderLocation(int folder)
              getFolderName(folder));
             if (pidlLast)
                 ret = pidlLast->mkid.abID[0];
-            IMalloc_Free(pMalloc, pidl);
+            ILFree(pidl);
         }
     }
+
     return ret;
 }
 
@@ -1422,7 +1402,7 @@ static BYTE testSHGetSpecialFolderLocation(int folder)
                 "%s: ILFindLastID failed\n", getFolderName(folder));
             if (pidlLast)
                 ret = pidlLast->mkid.abID[0];
-            IMalloc_Free(pMalloc, pidl);
+            ILFree(pidl);
         }
     }
     return ret;
@@ -1466,16 +1446,14 @@ static void test_ShellValues(const struct shellExpectedValues testEntries[],
         int j;
         BOOL foundTypeMatch = FALSE;
 
-        if (pSHGetFolderLocation)
-        {
-            type = testSHGetFolderLocation(testEntries[i].folder);
-            for (j = 0; !foundTypeMatch && j < testEntries[i].numTypes; j++)
-                if (testEntries[i].types[j] == type)
-                    foundTypeMatch = TRUE;
-            ok(foundTypeMatch || optional || broken(type == 0xff) /* Win9x */,
-             "%s has unexpected type %d (0x%02x)\n",
-             getFolderName(testEntries[i].folder), type, type);
-        }
+        type = testSHGetFolderLocation(testEntries[i].folder);
+        for (j = 0; !foundTypeMatch && j < testEntries[i].numTypes; j++)
+            if (testEntries[i].types[j] == type)
+                foundTypeMatch = TRUE;
+        ok(foundTypeMatch || optional || broken(type == 0xff) /* Win9x */,
+         "%s has unexpected type %d (0x%02x)\n",
+         getFolderName(testEntries[i].folder), type, type);
+
         type = testSHGetSpecialFolderLocation(testEntries[i].folder);
         for (j = 0, foundTypeMatch = FALSE; !foundTypeMatch &&
          j < testEntries[i].numTypes; j++)
@@ -1531,11 +1509,10 @@ static void matchGUID(int folder, const GUID *guid, const GUID *guid_alt)
     LPITEMIDLIST pidl;
     HRESULT hr;
 
-    if (!pSHGetFolderLocation) return;
     if (!guid) return;
 
     pidl = NULL;
-    hr = pSHGetFolderLocation(NULL, folder, NULL, 0, &pidl);
+    hr = SHGetFolderLocation(NULL, folder, NULL, 0, &pidl);
     if (hr == S_OK)
     {
         LPITEMIDLIST pidlLast = pILFindLastID(pidl);
@@ -1555,7 +1532,7 @@ static void matchGUID(int folder, const GUID *guid, const GUID *guid_alt)
               "%s: got GUID %s, expected %s or %s\n", getFolderName(folder),
               wine_dbgstr_guid(shellGuid), wine_dbgstr_guid(guid), wine_dbgstr_guid(guid_alt));
         }
-        IMalloc_Free(pMalloc, pidl);
+        ILFree(pidl);
     }
 }
 
@@ -1708,10 +1685,9 @@ static void doChild(const char *arg)
             "SHGetFolderPath returned 0x%08x, expected 0x80070002\n", hr);
 
         pidl = NULL;
-        hr = pSHGetFolderLocation(NULL, CSIDL_FAVORITES, NULL, 0, &pidl);
+        hr = SHGetFolderLocation(NULL, CSIDL_FAVORITES, NULL, 0, &pidl);
         ok(hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
             "SHGetFolderLocation returned 0x%08x\n", hr);
-        if (hr == S_OK && pidl) IMalloc_Free(pMalloc, pidl);
 
         ok(!pSHGetSpecialFolderPathA(NULL, path, CSIDL_FAVORITES, FALSE),
             "SHGetSpecialFolderPath succeeded, expected failure\n");
@@ -1720,8 +1696,6 @@ static void doChild(const char *arg)
         hr = pSHGetSpecialFolderLocation(NULL, CSIDL_FAVORITES, &pidl);
         ok(hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
             "SHGetFolderLocation returned 0x%08x\n", hr);
-
-        if (hr == S_OK && pidl) IMalloc_Free(pMalloc, pidl);
 
         /* now test success: */
         hr = pSHGetFolderPathA(NULL, CSIDL_FAVORITES | CSIDL_FLAG_CREATE, NULL,
@@ -1778,7 +1752,6 @@ static void test_NonExistentPath(void)
     HKEY key;
 
     if (!pSHGetFolderPathA) return;
-    if (!pSHGetFolderLocation) return;
     if (!pSHGetSpecialFolderPathA) return;
     if (!pSHGetSpecialFolderLocation) return;
     if (!pSHFileOperationA) return;
@@ -1806,7 +1779,7 @@ static void test_NonExistentPath(void)
                 STARTUPINFOA startup;
                 PROCESS_INFORMATION info;
 
-                sprintf(buffer, "%s tests/shellpath.c 1", selfname);
+                sprintf(buffer, "%s shellpath 1", selfname);
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
                 startup.dwFlags = STARTF_USESHOWWINDOW;
@@ -1821,7 +1794,7 @@ static void test_NonExistentPath(void)
                  strlen(originalPath) + 1);
                 RegFlushKey(key);
 
-                sprintf(buffer, "%s tests/shellpath.c 2", selfname);
+                sprintf(buffer, "%s shellpath 2", selfname);
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
                 startup.dwFlags = STARTF_USESHOWWINDOW;
@@ -1932,6 +1905,28 @@ if (0) { /* crashes */
 
     hr = pSHGetFolderPathEx(&FOLDERID_Desktop, 0, NULL, buffer, len + 1);
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+
+    path = NULL;
+    hr = pSHGetKnownFolderPath(&FOLDERID_ProgramFilesX64, 0, NULL, &path);
+#ifdef _WIN64
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(path != NULL, "path not set\n");
+    CoTaskMemFree(path);
+#else
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
+    ok(path == NULL, "path set\n");
+#endif
+
+    path = NULL;
+    hr = pSHGetKnownFolderPath(&FOLDERID_ProgramFilesCommonX64, 0, NULL, &path);
+#ifdef _WIN64
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(path != NULL, "path not set\n");
+    CoTaskMemFree(path);
+#else
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
+    ok(path == NULL, "path set\n");
+#endif
 }
 
 static BOOL is_in_strarray(const WCHAR *needle, const char *hay)
@@ -2842,6 +2837,122 @@ if (0) { /* crashes on native */
     ILFree(pidl);
 }
 
+static void test_PathResolve(void)
+{
+    WCHAR testfile[MAX_PATH], testfile_lnk[MAX_PATH], regedit_in_testdir[MAX_PATH], regedit_cmd[MAX_PATH];
+    WCHAR tempdir[MAX_PATH], path[MAX_PATH];
+    const WCHAR *dirs[2] = { tempdir, NULL };
+    HANDLE file, file2;
+    BOOL ret;
+    int i;
+    struct {
+        const WCHAR *path;
+        UINT flags;
+        BOOL expected;
+        const WCHAR *expected_path;
+    } tests[] = {
+        /* no flags */
+        { L"test", 0, FALSE, L"test" },
+        { L"C:\\test", 0, TRUE, L"C:\\test" },
+        { L"regedit", 0, FALSE, L"regedit" },
+        { testfile, 0, TRUE, testfile },
+
+        /* PRF_VERIFYEXISTS */
+        { L"test", PRF_VERIFYEXISTS, TRUE, testfile_lnk },
+        { L"C:\\test", PRF_VERIFYEXISTS, FALSE, L"C:\\test" },
+        /* common extensions are tried even if PRF_TRYPROGRAMEXTENSIONS isn't passed */
+        /* directories in dirs parameter are always searched first even if PRF_FIRSTDIRDEF isn't passed */
+        { L"regedit", PRF_VERIFYEXISTS, TRUE, regedit_cmd },
+        /* .dll is not tried */
+        { L"bcrypt", PRF_VERIFYEXISTS, FALSE, L"bcrypt" },
+        { testfile, PRF_VERIFYEXISTS, TRUE, testfile_lnk },
+        { regedit_in_testdir, PRF_VERIFYEXISTS, TRUE, regedit_cmd },
+
+        /* PRF_FIRSTDIRDEF */
+        { L"regedit", PRF_FIRSTDIRDEF, FALSE, L"regedit" },
+
+        /* RF_VERIFYEXISTS | PRF_FIRSTDIRDEF */
+        { L"regedit", PRF_VERIFYEXISTS | PRF_FIRSTDIRDEF, TRUE, regedit_cmd },
+
+        /* PRF_DONTFINDLNK */
+        { testfile, PRF_DONTFINDLNK, TRUE, testfile },
+        { regedit_in_testdir, PRF_DONTFINDLNK, TRUE, regedit_in_testdir },
+
+        /* RF_VERIFYEXISTS | PRF_DONTFINDLNK */
+        { testfile, PRF_VERIFYEXISTS | PRF_DONTFINDLNK, FALSE, testfile },
+        /* cmd is also ignored when passing PRF_VERIFYEXISTS | PRF_DONTFINDLNK */
+        { regedit_in_testdir, PRF_VERIFYEXISTS | PRF_DONTFINDLNK, FALSE, regedit_in_testdir },
+
+        /* PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE */
+        /* only PRF_VERIFYEXISTS matters*/
+        { L"test", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, testfile_lnk },
+        { L"C:\\test", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, FALSE, L"C:\\test" },
+        { L"regedit", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, regedit_cmd },
+        { testfile, PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, testfile_lnk },
+
+        /* PRF_TRYPROGRAMEXTENSIONS */
+        { L"test", PRF_TRYPROGRAMEXTENSIONS, TRUE, testfile_lnk},
+        { L"C:\\test", PRF_TRYPROGRAMEXTENSIONS, FALSE, L"C:\\test" },
+        { L"regedit", PRF_TRYPROGRAMEXTENSIONS, TRUE, regedit_cmd },
+        /* .dll is not tried */
+        { L"bcrypt", PRF_TRYPROGRAMEXTENSIONS, FALSE, L"bcrypt" },
+        { testfile, PRF_TRYPROGRAMEXTENSIONS, TRUE, testfile_lnk },
+        { regedit_in_testdir, PRF_TRYPROGRAMEXTENSIONS, TRUE, regedit_cmd },
+
+        /* PRF_TRYPROGRAMEXTENSIONS | PRF_DONTFINDLNK */
+        { testfile, PRF_TRYPROGRAMEXTENSIONS | PRF_DONTFINDLNK, FALSE, testfile },
+        /* cmd is also ignored when passing PRF_TRYPROGRAMEXTENSIONS | PRF_DONTFINDLNK */
+        { regedit_in_testdir, PRF_TRYPROGRAMEXTENSIONS | PRF_DONTFINDLNK, FALSE, regedit_in_testdir }
+    };
+
+    if (!pPathResolve)
+    {
+        win_skip("PathResolve not available\n");
+        return;
+    }
+
+    GetTempPathW(MAX_PATH, tempdir);
+
+    lstrcpyW(testfile, tempdir);
+    lstrcatW(testfile, L"test");
+    lstrcpyW(testfile_lnk, testfile);
+    lstrcatW(testfile_lnk, L".lnk");
+
+    file = CreateFileW(testfile_lnk, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
+
+    lstrcpyW(regedit_in_testdir, tempdir);
+    lstrcatW(regedit_in_testdir, L"regedit");
+    lstrcpyW(regedit_cmd, regedit_in_testdir);
+    lstrcatW(regedit_cmd, L".cmd");
+
+    file2 = CreateFileW(regedit_cmd, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok(file2 != INVALID_HANDLE_VALUE, "got %p\n", file);
+
+    /* show that resolving regedit with NULL dirs returns regedit.exe */
+    lstrcpyW(path, L"regedit");
+    ret = pPathResolve(path, NULL, PRF_VERIFYEXISTS);
+    ok(ret, "resolving regedit failed unexpectedly\n");
+    ok(!lstrcmpiW(path, L"C:\\windows\\regedit.exe") || !lstrcmpiW(path, L"C:\\windows\\system32\\regedit.exe"),
+            "unexpected path %s\n", wine_dbgstr_w(path));
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        lstrcpyW(path, tests[i].path);
+
+        if (!tests[i].expected) SetLastError(0xdeadbeef);
+        ret = pPathResolve(path, dirs, tests[i].flags);
+        ok(ret == tests[i].expected, "test %d: expected %d, got %d\n", i, tests[i].expected, ret);
+        ok(!lstrcmpiW(path, tests[i].expected_path),
+                "test %d: expected %s, got %s\n", i, wine_dbgstr_w(tests[i].expected_path), wine_dbgstr_w(path));
+        if (!tests[i].expected)
+            ok(GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_ALREADY_EXISTS, got %d\n", GetLastError());
+    }
+
+    CloseHandle(file);
+    CloseHandle(file2);
+}
+
 START_TEST(shellpath)
 {
     if (!init()) return;
@@ -2853,10 +2964,6 @@ START_TEST(shellpath)
         doChild(myARGV[2]);
     else
     {
-        /* Report missing functions once */
-        if (!pSHGetFolderLocation)
-            win_skip("SHGetFolderLocation is not available\n");
-
         /* first test various combinations of parameters: */
         test_parameters();
 
@@ -2872,5 +2979,6 @@ START_TEST(shellpath)
         test_DoEnvironmentSubst();
         test_PathYetAnotherMakeUniqueName();
         test_SHGetKnownFolderIDList();
+        test_PathResolve();
     }
 }

@@ -1179,7 +1179,7 @@ static LRESULT GetInfo(const CodecInfo *pi, ICINFO *icinfo, DWORD dwSize)
   icinfo->dwSize       = sizeof(ICINFO);
   icinfo->fccType      = ICTYPE_VIDEO;
   icinfo->fccHandler   = (pi != NULL ? pi->fccHandler : FOURCC_MRLE);
-  icinfo->dwFlags      = VIDCF_QUALITY | VIDCF_TEMPORAL | VIDCF_CRUNCH | VIDCF_FASTTEMPORALC;
+  icinfo->dwFlags      = VIDCF_QUALITY | VIDCF_TEMPORAL | VIDCF_CRUNCH;
   icinfo->dwVersion    = ICVERSION;
   icinfo->dwVersionICM = ICVERSION;
 

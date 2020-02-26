@@ -36,32 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 static int context_id = -1;
 static int scheduler_id = -1;
 
-#if defined(__i386__) && !defined(__MINGW32__)
-
-#define DEFINE_VTBL_WRAPPER(off)            \
-    __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \
-        "popl %eax\n\t"                     \
-        "popl %ecx\n\t"                     \
-        "pushl %eax\n\t"                    \
-        "movl 0(%ecx), %eax\n\t"            \
-        "jmp *" #off "(%eax)\n\t")
-
-DEFINE_VTBL_WRAPPER(0);
-DEFINE_VTBL_WRAPPER(4);
-DEFINE_VTBL_WRAPPER(8);
-DEFINE_VTBL_WRAPPER(12);
-DEFINE_VTBL_WRAPPER(16);
-DEFINE_VTBL_WRAPPER(20);
-DEFINE_VTBL_WRAPPER(24);
-DEFINE_VTBL_WRAPPER(28);
-DEFINE_VTBL_WRAPPER(32);
-DEFINE_VTBL_WRAPPER(36);
-DEFINE_VTBL_WRAPPER(40);
-DEFINE_VTBL_WRAPPER(44);
-DEFINE_VTBL_WRAPPER(48);
-
-#endif
-
 typedef enum {
     SchedulerKind,
     MaxConcurrency,
@@ -263,6 +237,7 @@ void __cdecl Context_Block(void)
 }
 
 /* ?Yield@Context@Concurrency@@SAXXZ */
+/* ?_Yield@_Context@details@Concurrency@@SAXXZ */
 void __cdecl Context_Yield(void)
 {
     FIXME("()\n");
@@ -1082,6 +1057,32 @@ void __cdecl _CurrentScheduler__ScheduleTask(void (__cdecl *proc)(void*), void *
     TRACE("(%p %p)\n", proc, data);
     CurrentScheduler_ScheduleTask(proc, data);
 }
+
+#if defined(__i386__) && !defined(__MINGW32__)
+
+#define DEFINE_VTBL_WRAPPER(off)            \
+    __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \
+        "popl %eax\n\t"                     \
+        "popl %ecx\n\t"                     \
+        "pushl %eax\n\t"                    \
+        "movl 0(%ecx), %eax\n\t"            \
+        "jmp *" #off "(%eax)\n\t")
+
+DEFINE_VTBL_WRAPPER(0);
+DEFINE_VTBL_WRAPPER(4);
+DEFINE_VTBL_WRAPPER(8);
+DEFINE_VTBL_WRAPPER(12);
+DEFINE_VTBL_WRAPPER(16);
+DEFINE_VTBL_WRAPPER(20);
+DEFINE_VTBL_WRAPPER(24);
+DEFINE_VTBL_WRAPPER(28);
+DEFINE_VTBL_WRAPPER(32);
+DEFINE_VTBL_WRAPPER(36);
+DEFINE_VTBL_WRAPPER(40);
+DEFINE_VTBL_WRAPPER(44);
+DEFINE_VTBL_WRAPPER(48);
+
+#endif
 
 extern const vtable_ptr MSVCRT_type_info_vtable;
 DEFINE_RTTI_DATA0(Context, 0, ".?AVContext@Concurrency@@")

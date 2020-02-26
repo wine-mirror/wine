@@ -145,7 +145,7 @@ static void parse_options( int *argc, char *argv[] )
     }
 }
 
-int main( int argc, char *argv[] )
+int __cdecl main( int argc, char *argv[] )
 {
     parse_options( &argc, argv );
 

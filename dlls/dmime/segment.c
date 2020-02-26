@@ -170,7 +170,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_GetTrack(IDirectMusicSegment8 *if
   IPersistStream* pCLSIDStream = NULL;
   HRESULT hr = S_OK;
 
-  TRACE("(%p, %s, %d, 0x%x, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, ppTrack);
+  TRACE("(%p, %s, %#x, %#x, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, ppTrack);
 
   if (NULL == ppTrack) {
     return E_POINTER;
@@ -224,7 +224,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_GetTrackGroup(IDirectMusicSegment
 
   LIST_FOR_EACH (pEntry, &This->Tracks) {
     pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
-    TRACE(" - %p -> %d,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
+    TRACE(" - %p -> %#x, %p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
     if (NULL != pIt && pIt->pTrack == pTrack) {
       *pdwGroupBits = pIt->dwGroupBits;
       return S_OK;
@@ -235,7 +235,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_GetTrackGroup(IDirectMusicSegment
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_InsertTrack(IDirectMusicSegment8 *iface,
-        IDirectMusicTrack *pTrack, DWORD dwGroupBits)
+        IDirectMusicTrack *pTrack, DWORD group)
 {
   IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
   DWORD i = 0;
@@ -243,12 +243,15 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_InsertTrack(IDirectMusicSegment8 
   LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
   LPDMUS_PRIVATE_SEGMENT_TRACK pNewSegTrack = NULL;
 
-  TRACE("(%p, %p, %d)\n", This, pTrack, dwGroupBits);
+  TRACE("(%p, %p, %#x)\n", This, pTrack, group);
+
+  if (!group)
+    return E_INVALIDARG;
 
   LIST_FOR_EACH (pEntry, &This->Tracks) {
     i++;
     pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
-    TRACE(" - #%u: %p -> %d,%p\n", i, pIt, pIt->dwGroupBits, pIt->pTrack);
+    TRACE(" - #%u: %p -> %#x, %p\n", i, pIt, pIt->dwGroupBits, pIt->pTrack);
     if (NULL != pIt && pIt->pTrack == pTrack) {
       ERR("(%p, %p): track is already in list\n", This, pTrack);
       return E_FAIL;
@@ -259,7 +262,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_InsertTrack(IDirectMusicSegment8 
   if (NULL == pNewSegTrack)
     return  E_OUTOFMEMORY;
 
-  pNewSegTrack->dwGroupBits = dwGroupBits;
+  pNewSegTrack->dwGroupBits = group;
   pNewSegTrack->pTrack = pTrack;
   IDirectMusicTrack_Init(pTrack, (IDirectMusicSegment *)iface);
   IDirectMusicTrack_AddRef(pTrack);
@@ -365,66 +368,45 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_RemoveNotificationType(IDirectMus
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_GetParam(IDirectMusicSegment8 *iface,
-        REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext,
-        void *pParam)
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetParam(IDirectMusicSegment8 *iface, REFGUID type,
+        DWORD group, DWORD index, MUSIC_TIME time, MUSIC_TIME *next, void *param)
 {
-  IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
-  CLSID pIt_clsid;
-  struct list* pEntry = NULL;
-  IDirectMusicTrack* pTrack = NULL;
-  IPersistStream* pCLSIDStream = NULL;
-  LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
-  HRESULT hr = S_OK;
+    IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
+    IDirectMusicTrack *track;
+    unsigned int i, count;
+    HRESULT hr = DMUS_E_TRACK_NOT_FOUND;
 
-  FIXME("(%p, %s, 0x%x, %d, %d, %p, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
-  
-  if (DMUS_SEG_ANYTRACK == dwIndex) {
-    
-    LIST_FOR_EACH (pEntry, &This->Tracks) {
-      pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
+    TRACE("(%p, %s, %#x, %u, %d, %p, %p)\n", This, debugstr_dmguid(type), group, index, time,
+            next, param);
 
-      hr = IDirectMusicTrack_QueryInterface(pIt->pTrack, &IID_IPersistStream, (void**) &pCLSIDStream);
-      if (FAILED(hr)) {
-	ERR("(%p): object %p don't implement IPersistStream Interface. Expect a crash (critical problem)\n", This, pIt->pTrack);
-	continue ;
-      }
+    if (!type)
+        return E_POINTER;
 
-      TRACE(" - %p -> 0x%x,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
+    /* Index is relative to the search pattern: group bits and supported param type */
+    for (i = 0, count = 0; i < DMUS_SEG_ANYTRACK && count <= index; i++) {
+        if (FAILED(IDirectMusicSegment8Impl_GetTrack(iface, &GUID_NULL, group, i, &track)))
+            break;
+        if (FAILED(IDirectMusicTrack_IsParamSupported(track, type)))
+            continue;
+        if (index == count || index == DMUS_SEG_ANYTRACK)
+            hr = IDirectMusicTrack_GetParam(track, type, time, next, param);
+        IDirectMusicTrack_Release(track);
 
-      if (0xFFFFFFFF != dwGroupBits && 0 == (pIt->dwGroupBits & dwGroupBits)) continue ;
-      hr = IPersistStream_GetClassID(pCLSIDStream, &pIt_clsid);
-      IPersistStream_Release(pCLSIDStream); pCLSIDStream = NULL;
-      if (FAILED(hr)) {
-	ERR("(%p): non-implemented GetClassID for object %p\n", This, pIt->pTrack);
-	continue ;
-      }
-      if (FALSE == IsEqualGUID(&pIt_clsid, rguidType)) continue ;
-      if (FAILED(IDirectMusicTrack_IsParamSupported(pIt->pTrack, rguidType))) continue ;
-      hr = IDirectMusicTrack_GetParam(pIt->pTrack, rguidType, mtTime, pmtNext, pParam);
-      if (SUCCEEDED(hr)) return hr;
+        if (SUCCEEDED(hr))
+            return hr;
+        count++;
     }
-    ERR("(%p): not found\n", This);
-    return DMUS_E_TRACK_NOT_FOUND;
-  } 
 
-  hr = IDirectMusicSegment8Impl_GetTrack(iface, &GUID_NULL, dwGroupBits, dwIndex, &pTrack);
-  if (FAILED(hr)) {
-    ERR("(%p): not found\n", This);
-    return DMUS_E_TRACK_NOT_FOUND;
-  }
+    TRACE("(%p): not found\n", This);
 
-  hr = IDirectMusicTrack_GetParam(pTrack, rguidType, mtTime, pmtNext, pParam);
-  IDirectMusicTrack_Release(pTrack); pTrack = NULL;
-
-  return hr;
+    return hr;
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_SetParam(IDirectMusicSegment8 *iface,
         REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void *pParam)
 {
   IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
-  FIXME("(%p, %s, %d, %d, %d, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
+  FIXME("(%p, %s, %#x, %d, %d, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
   return S_OK;
 }
 
@@ -463,17 +445,20 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_GetStartPoint(IDirectMusicSegment
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_SetLoopPoints(IDirectMusicSegment8 *iface,
-        MUSIC_TIME mtStart, MUSIC_TIME mtEnd)
+        MUSIC_TIME start, MUSIC_TIME end)
 {
-  IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
+    IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
 
-  TRACE("(%p, %d, %d)\n", This, mtStart, mtEnd);
-  if (mtStart >= This->header.mtLength || mtEnd > This->header.mtLength || mtStart > mtEnd) {
-    return DMUS_E_OUT_OF_RANGE;
-  }
-  This->header.mtLoopStart = mtStart;
-  This->header.mtLoopEnd   = mtEnd;
-  return S_OK;
+    TRACE("(%p, %d, %d)\n", This, start, end);
+
+    if ((end || start) &&
+            (start >= This->header.mtLength || end > This->header.mtLength || start > end))
+        return DMUS_E_OUT_OF_RANGE;
+
+    This->header.mtLoopStart = start;
+    This->header.mtLoopEnd = end;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_GetLoopPoints(IDirectMusicSegment8 *iface,
@@ -503,7 +488,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_SetTrackConfig(IDirectMusicSegmen
         DWORD dwFlagsOff)
 {
         IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
-	FIXME("(%p, %s, %d, %d, %d, %d): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
+	FIXME("(%p, %s, %#x, %d, %d, %d): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
 	return S_OK;
 }
 
@@ -607,7 +592,7 @@ static HRESULT WINAPI seg_IDirectMusicObject_ParseDescriptor(IDirectMusicObject 
     desc->guidClass = CLSID_DirectMusicSegment;
     desc->dwValidData |= DMUS_OBJ_CLASS;
 
-    TRACE("returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (desc));
+    dump_DMUS_OBJECTDESC(desc);
     return S_OK;
 }
 
@@ -629,6 +614,7 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, IStream *stream,
     IPersistStream *ps = NULL;
     IStream *clone;
     DMUS_IO_TRACK_HEADER thdr;
+    DMUS_IO_TRACK_EXTRAS_HEADER txhdr;
     HRESULT hr;
 
     TRACE("Parsing track form in %p: %s\n", stream, debugstr_chunk(riff));
@@ -642,7 +628,7 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, IStream *stream,
         return hr;
     TRACE("Found DMUS_IO_TRACK_HEADER\n");
     TRACE("\tclass: %s\n", debugstr_guid (&thdr.guidClassID));
-    TRACE("\tdwGroup: %d\n", thdr.dwGroup);
+    TRACE("\tdwGroup: %#x\n", thdr.dwGroup);
     TRACE("\tckid: %s\n", debugstr_fourcc (thdr.ckid));
     TRACE("\tfccType: %s\n", debugstr_fourcc (thdr.fccType));
 
@@ -659,8 +645,11 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, IStream *stream,
                  chunk.type == thdr.fccType))
             break;
 
-        if (chunk.id == DMUS_FOURCC_TRACK_EXTRAS_CHUNK)
+        if (chunk.id == DMUS_FOURCC_TRACK_EXTRAS_CHUNK &&
+                SUCCEEDED(stream_chunk_get_data(stream, &chunk, &txhdr, sizeof(txhdr)))) {
             FIXME("DMUS_IO_TRACK_EXTRAS_HEADER chunk not handled\n");
+            TRACE("dwFlags: %#x, dwPriority: %u\n", txhdr.dwFlags, txhdr.dwPriority);
+        }
     }
     if (hr != S_OK)
         return hr == S_FALSE ? DMUS_E_TRACK_NOT_FOUND : hr;

@@ -51,7 +51,7 @@ static void test_path_state(void)
     bi->bmiHeader.biBitCount = 32;
     bi->bmiHeader.biPlanes = 1;
     bi->bmiHeader.biCompression = BI_RGB;
-    dib = CreateDIBSection( 0, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0 );
+    dib = CreateDIBSection( 0, bi, DIB_RGB_COLORS, &bits, NULL, 0 );
     orig = SelectObject( hdc, dib );
 
     BeginPath( hdc );

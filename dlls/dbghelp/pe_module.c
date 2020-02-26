@@ -53,7 +53,7 @@ static void* pe_map_full(struct image_file_map* fmap, IMAGE_NT_HEADERS** nth)
         fmap->u.pe.full_count++;
         return fmap->u.pe.full_map;
     }
-    return IMAGE_NO_MAP;
+    return NULL;
 }
 
 static void pe_unmap_full(struct image_file_map* fmap)
@@ -572,19 +572,15 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
 {
     struct image_file_map*      fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     BOOL                        ret = FALSE;
-    const IMAGE_DATA_DIRECTORY* dir;
-    const IMAGE_DEBUG_DIRECTORY*dbg = NULL;
-    int                         nDbg;
+    const IMAGE_DEBUG_DIRECTORY*dbg;
+    ULONG                       nDbg;
     void*                       mapping;
     IMAGE_NT_HEADERS*           nth;
 
     if (!(mapping = pe_map_full(fmap, &nth))) return FALSE;
     /* Read in debug directory */
-    dir = nth->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_DEBUG;
-    nDbg = dir->Size / sizeof(IMAGE_DEBUG_DIRECTORY);
-    if (!nDbg) goto done;
-
-    dbg = RtlImageRvaToVa(nth, mapping, dir->VirtualAddress, NULL);
+    dbg = RtlImageDirectoryEntryToData( mapping, FALSE, IMAGE_DIRECTORY_ENTRY_DEBUG, &nDbg );
+    if (!dbg || !(nDbg /= sizeof(IMAGE_DEBUG_DIRECTORY))) goto done;
 
     /* Parse debug directory */
     if (nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED)
@@ -853,11 +849,25 @@ PVOID WINAPI ImageDirectoryEntryToDataEx( PVOID base, BOOLEAN image, USHORT dir,
     if (section) *section = NULL;
 
     if (!(nt = RtlImageNtHeader( base ))) return NULL;
-    if (dir >= nt->OptionalHeader.NumberOfRvaAndSizes) return NULL;
-    if (!(addr = nt->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
+    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        const IMAGE_NT_HEADERS64 *nt64 = (const IMAGE_NT_HEADERS64 *)nt;
 
-    *size = nt->OptionalHeader.DataDirectory[dir].Size;
-    if (image || addr < nt->OptionalHeader.SizeOfHeaders) return (char *)base + addr;
+        if (dir >= nt64->OptionalHeader.NumberOfRvaAndSizes) return NULL;
+        if (!(addr = nt64->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
+        *size = nt64->OptionalHeader.DataDirectory[dir].Size;
+        if (image || addr < nt64->OptionalHeader.SizeOfHeaders) return (char *)base + addr;
+    }
+    else if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+    {
+        const IMAGE_NT_HEADERS32 *nt32 = (const IMAGE_NT_HEADERS32 *)nt;
+
+        if (dir >= nt32->OptionalHeader.NumberOfRvaAndSizes) return NULL;
+        if (!(addr = nt32->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
+        *size = nt32->OptionalHeader.DataDirectory[dir].Size;
+        if (image || addr < nt32->OptionalHeader.SizeOfHeaders) return (char *)base + addr;
+    }
+    else return NULL;
 
     return RtlImageRvaToVa( nt, base, addr, section );
 }

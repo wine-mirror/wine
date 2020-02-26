@@ -20,12 +20,14 @@
 
 #include "windows.h"
 #include "initguid.h"
+#include "dispex.h"
 #include "ole2.h"
 #include "olectl.h"
 #include "objsafe.h"
 #include "activscp.h"
 #include "rpcproxy.h"
 #include "msscript.h"
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -71,6 +73,8 @@ typedef struct ScriptHost {
 
     IActiveScript *script;
     IActiveScriptParse *parse;
+    IDispatch *script_dispatch;
+    SCRIPTSTATE script_state;
     CLSID clsid;
 
     struct list named_items;
@@ -199,6 +203,40 @@ static struct named_item *host_get_named_item(ScriptHost *host, const WCHAR *nam
     return NULL;
 }
 
+static HRESULT get_script_dispatch(struct ScriptControl *control, IDispatch **disp)
+{
+    if (!control->host->script_dispatch)
+    {
+        HRESULT hr = IActiveScript_GetScriptDispatch(control->host->script, NULL, &control->host->script_dispatch);
+        if (FAILED(hr)) return hr;
+    }
+    *disp = control->host->script_dispatch;
+    return S_OK;
+}
+
+static HRESULT set_script_state(ScriptHost *host, SCRIPTSTATE state)
+{
+    HRESULT hr;
+
+    hr = IActiveScript_SetScriptState(host->script, state);
+    if (SUCCEEDED(hr))
+        host->script_state = state;
+    return hr;
+}
+
+static HRESULT start_script(struct ScriptControl *control)
+{
+    HRESULT hr = S_OK;
+
+    if (!control->host || control->state != Initialized)
+        return E_FAIL;
+
+    if (control->host->script_state != SCRIPTSTATE_STARTED)
+        hr = set_script_state(control->host, SCRIPTSTATE_STARTED);
+
+    return hr;
+}
+
 static inline ScriptControl *impl_from_IScriptControl(IScriptControl *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IScriptControl_iface);
@@ -305,7 +343,10 @@ static void release_script_engine(ScriptHost *host)
 
     if (host->parse)
         IActiveScriptParse_Release(host->parse);
+    if (host->script_dispatch)
+        IDispatch_Release(host->script_dispatch);
 
+    host->script_dispatch = NULL;
     host->parse = NULL;
     host->script = NULL;
 
@@ -528,6 +569,7 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
     host->ref = 1;
     host->script = NULL;
     host->parse = NULL;
+    host->script_dispatch = NULL;
     host->clsid = *clsid;
     list_init(&host->named_items);
 
@@ -568,6 +610,7 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
         WARN("InitNew failed, %#x\n", hr);
         goto failed;
     }
+    host->script_state = SCRIPTSTATE_INITIALIZED;
 
     *ret = host;
     return S_OK;
@@ -962,54 +1005,113 @@ static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
         return E_FAIL;
 
     clear_named_items(This->host);
-    return IActiveScript_SetScriptState(This->host->script, SCRIPTSTATE_INITIALIZED);
+    return set_script_state(This->host, SCRIPTSTATE_INITIALIZED);
+}
+
+static HRESULT parse_script_text(ScriptControl *control, BSTR script_text, DWORD flag, VARIANT *res)
+{
+    EXCEPINFO excepinfo;
+    HRESULT hr;
+
+    hr = start_script(control);
+    if (FAILED(hr)) return hr;
+
+    hr = IActiveScriptParse_ParseScriptText(control->host->parse, script_text, NULL,
+                                            NULL, NULL, 0, 1, flag, res, &excepinfo);
+    /* FIXME: more error handling */
+    return hr;
 }
 
 static HRESULT WINAPI ScriptControl_AddCode(IScriptControl *iface, BSTR code)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(code));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s).\n", This, debugstr_w(code));
+
+    return parse_script_text(This, code, SCRIPTTEXT_ISVISIBLE, NULL);
 }
 
 static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression, VARIANT *res)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    EXCEPINFO excepinfo;
-    HRESULT hr;
 
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(expression), res);
+    TRACE("(%p)->(%s, %p).\n", This, debugstr_w(expression), res);
 
     if (!res)
         return E_POINTER;
     V_VT(res) = VT_EMPTY;
 
-    if (!This->host || This->state != Initialized)
-        return E_FAIL;
-
-    hr = IActiveScript_SetScriptState(This->host->script, SCRIPTSTATE_STARTED);
-    if (FAILED(hr))
-        return hr;
-
-    hr = IActiveScriptParse_ParseScriptText(This->host->parse, expression, NULL, NULL, NULL,
-                                            0, 1, SCRIPTTEXT_ISEXPRESSION, res, &excepinfo);
-    /* FIXME: more error hanlding */
-
-    return hr;
+    return parse_script_text(This, expression, SCRIPTTEXT_ISEXPRESSION, res);
 }
 
 static HRESULT WINAPI ScriptControl_ExecuteStatement(IScriptControl *iface, BSTR statement)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(statement));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(statement));
+
+    return parse_script_text(This, statement, 0, NULL);
 }
 
 static HRESULT WINAPI ScriptControl_Run(IScriptControl *iface, BSTR procedure_name, SAFEARRAY **parameters, VARIANT *res)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(procedure_name), parameters, res);
-    return E_NOTIMPL;
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    SAFEARRAY *sa;
+    DISPPARAMS dp;
+    DISPID dispid;
+    HRESULT hr;
+    UINT i;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(procedure_name), parameters, res);
+
+    if (!parameters || !res) return E_POINTER;
+    if (!(sa = *parameters)) return E_POINTER;
+
+    V_VT(res) = VT_EMPTY;
+    if (sa->cDims == 0) return DISP_E_BADINDEX;
+    if (!(sa->fFeatures & FADF_VARIANT)) return DISP_E_BADVARTYPE;
+
+    hr = start_script(This);
+    if (FAILED(hr)) return hr;
+
+    hr = get_script_dispatch(This, &disp);
+    if (FAILED(hr)) return hr;
+
+    hr = IDispatch_GetIDsOfNames(disp, &IID_NULL, &procedure_name, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return hr;
+
+    dp.cArgs = sa->rgsabound[0].cElements;
+    dp.rgdispidNamedArgs = NULL;
+    dp.cNamedArgs = 0;
+    dp.rgvarg = heap_alloc(dp.cArgs * sizeof(*dp.rgvarg));
+    if (!dp.rgvarg) return E_OUTOFMEMORY;
+
+    hr = SafeArrayLock(sa);
+    if (SUCCEEDED(hr))
+    {
+        /* The DISPPARAMS are stored in reverse order */
+        for (i = 0; i < dp.cArgs; i++)
+            dp.rgvarg[i] = *(VARIANT*)((char*)(sa->pvData) + (dp.cArgs - i - 1) * sa->cbElements);
+        SafeArrayUnlock(sa);
+
+        hr = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+        if (FAILED(hr))
+        {
+            hr = IDispatch_Invoke(disp, dispid, &IID_NULL, LOCALE_USER_DEFAULT,
+                                  DISPATCH_METHOD, &dp, res, NULL, NULL);
+        }
+        else
+        {
+            hr = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_USER_DEFAULT,
+                                      DISPATCH_METHOD, &dp, res, NULL, NULL);
+            IDispatchEx_Release(dispex);
+        }
+    }
+    heap_free(dp.rgvarg);
+
+    return hr;
 }
 
 static const IScriptControlVtbl ScriptControlVtbl = {

@@ -314,7 +314,7 @@ static unsigned long get_mwm_decorations( struct x11drv_win_data *data,
 static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttributes *attr )
 {
     attr->override_redirect = !data->managed;
-    attr->colormap          = data->colormap ? data->colormap : default_colormap;
+    attr->colormap          = data->whole_colormap ? data->whole_colormap : default_colormap;
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
     attr->bit_gravity       = NorthWestGravity;
     attr->backing_store     = NotUseful;
@@ -1445,12 +1445,12 @@ Window create_client_window( HWND hwnd, const XVisualInfo *visual )
         TRACE( "%p reparent xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
     }
 
-    if (data->colormap) XFreeColormap( gdi_display, data->colormap );
-    data->colormap = XCreateColormap( gdi_display, dummy_parent, visual->visual,
-                                      (visual->class == PseudoColor ||
-                                       visual->class == GrayScale ||
-                                       visual->class == DirectColor) ? AllocAll : AllocNone );
-    attr.colormap = data->colormap;
+    if (data->client_colormap) XFreeColormap( gdi_display, data->client_colormap );
+    data->client_colormap = XCreateColormap( gdi_display, dummy_parent, visual->visual,
+                                            (visual->class == PseudoColor ||
+                                             visual->class == GrayScale ||
+                                             visual->class == DirectColor) ? AllocAll : AllocNone );
+    attr.colormap = data->client_colormap;
     attr.bit_gravity = NorthWestGravity;
     attr.win_gravity = NorthWestGravity;
     attr.backing_store = NotUseful;
@@ -1509,7 +1509,7 @@ static void create_whole_window( struct x11drv_win_data *data )
     data->shaped = (win_rgn != 0);
 
     if (data->vis.visualid != default_visual.visualid)
-        data->colormap = XCreateColormap( data->display, root_window, data->vis.visual, AllocNone );
+        data->whole_colormap = XCreateColormap( data->display, root_window, data->vis.visual, AllocNone );
 
     mask = get_window_attributes( data, &attr );
 
@@ -1586,9 +1586,9 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
         XDeleteContext( data->display, data->whole_window, winContext );
         if (!already_destroyed) XDestroyWindow( data->display, data->whole_window );
     }
-    if (data->colormap) XFreeColormap( data->display, data->colormap );
+    if (data->whole_colormap) XFreeColormap( data->display, data->whole_colormap );
     data->whole_window = data->client_window = 0;
-    data->colormap = 0;
+    data->whole_colormap = 0;
     data->wm_state = WithdrawnState;
     data->net_wm_state = 0;
     data->mapped = FALSE;
@@ -1694,6 +1694,7 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
     if (thread_data->last_xic_hwnd == hwnd) thread_data->last_xic_hwnd = 0;
     if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
     if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
+    if (data->client_colormap) XFreeColormap( data->display, data->client_colormap );
     HeapFree( GetProcessHeap(), 0, data->icon_bits );
     XDeleteContext( gdi_display, (XID)hwnd, win_data_context );
     release_win_data( data );
@@ -1793,9 +1794,19 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
     switch (msg)
     {
     case WM_WINE_NOTIFY_ACTIVITY:
-        XResetScreenSaver( gdi_display );
-        XFlush( gdi_display );
+    {
+        static ULONGLONG last = 0;
+        ULONGLONG now = GetTickCount64();
+        /* calling XResetScreenSaver too often can cause performance
+         * problems, so throttle it */
+        if (now > last + 5000)
+        {
+            XResetScreenSaver( gdi_display );
+            XFlush( gdi_display );
+            last = now;
+        }
         break;
+    }
     }
     return desktop_orig_wndproc( hwnd, msg, wp, lp );
 }
@@ -1822,6 +1833,7 @@ BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
         XFlush( data->display );
         SetPropA( hwnd, clip_window_prop, (HANDLE)data->clip_window );
         X11DRV_InitClipboard();
+        X11DRV_DisplayDevices_RegisterEventHandlers();
     }
     return TRUE;
 }
@@ -2462,7 +2474,7 @@ static BOOL hide_icon( struct x11drv_win_data *data )
 
     if (data->managed) return TRUE;
     /* hide icons in desktop mode when the taskbar is active */
-    if (root_window == DefaultRootWindow( gdi_display )) return FALSE;
+    if (!is_virtual_desktop()) return FALSE;
     return IsWindowVisible( FindWindowW( trayW, NULL ));
 }
 
@@ -2727,7 +2739,7 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
             set_window_cursor( x11drv_thread_data()->clip_window, (HCURSOR)lp );
         return 0;
     case WM_X11DRV_CLIP_CURSOR:
-        return clip_cursor_notify( hwnd, (HWND)lp );
+        return clip_cursor_notify( hwnd, (HWND)wp, (HWND)lp );
     default:
         FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );
         return 0;
@@ -2769,7 +2781,7 @@ static BOOL is_netwm_supported( Display *display, Atom atom )
  */
 static LRESULT start_screensaver(void)
 {
-    if (root_window == DefaultRootWindow(gdi_display))
+    if (!is_virtual_desktop())
     {
         const char *argv[3] = { "xdg-screensaver", "activate", NULL };
         int pid = _spawnvp( _P_DETACH, argv[0], argv );

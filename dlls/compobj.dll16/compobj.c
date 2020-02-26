@@ -45,50 +45,74 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-typedef LPSTR LPOLESTR16;
 typedef LPCSTR LPCOLESTR16;
-
-#define STDMETHOD16CALLTYPE __cdecl
-#define STDMETHOD16(m) HRESULT (STDMETHOD16CALLTYPE *m)
-#define STDMETHOD16_(t,m) t (STDMETHOD16CALLTYPE *m)
 
 #define CHARS_IN_GUID 39
 
-/***********************************************************************
- * IMalloc16 interface
- */
-
-typedef struct IMalloc16 *LPMALLOC16;
-
-#define INTERFACE IMalloc16
-DECLARE_INTERFACE_(IMalloc16,IUnknown)
+typedef struct
 {
-    /*** IUnknown methods ***/
-    STDMETHOD16_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
-    STDMETHOD16_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD16_(ULONG,Release)(THIS) PURE;
-    /*** IMalloc16 methods ***/
-    STDMETHOD16_(LPVOID,Alloc)(THIS_ DWORD   cb) PURE;
-    STDMETHOD16_(LPVOID,Realloc)(THIS_ LPVOID  pv, DWORD  cb) PURE;
-    STDMETHOD16_(void,Free)(THIS_ LPVOID  pv) PURE;
-    STDMETHOD16_(DWORD,GetSize)(THIS_ LPVOID  pv) PURE;
-    STDMETHOD16_(INT16,DidAlloc)(THIS_ LPVOID  pv) PURE;
-    STDMETHOD16_(LPVOID,HeapMinimize)(THIS) PURE;
-};
-#undef INTERFACE
+    SEGPTR QueryInterface;
+    SEGPTR AddRef;
+    SEGPTR Release;
+    SEGPTR Alloc;
+    SEGPTR Realloc;
+    SEGPTR Free;
+    SEGPTR GetSize;
+    SEGPTR DidAlloc;
+    SEGPTR HeapMinimize;
+} IMalloc16Vtbl;
+
+typedef struct
+{
+    SEGPTR lpVtbl;
+} IMalloc16;
+
+static ULONG call_IMalloc_AddRef(SEGPTR iface)
+{
+    IMalloc16 *malloc = MapSL(iface);
+    IMalloc16Vtbl *vtbl = MapSL(malloc->lpVtbl);
+    DWORD args[1], ret;
+
+    args[0] = iface;
+    WOWCallback16Ex(vtbl->AddRef, WCB16_CDECL, sizeof(args), args, &ret);
+    return ret;
+}
+
+static ULONG call_IMalloc_Release(SEGPTR iface)
+{
+    IMalloc16 *malloc = MapSL(iface);
+    IMalloc16Vtbl *vtbl = MapSL(malloc->lpVtbl);
+    DWORD args[1], ret;
+
+    args[0] = iface;
+    WOWCallback16Ex(vtbl->Release, WCB16_CDECL, sizeof(args), args, &ret);
+    return ret;
+}
+
+static SEGPTR call_IMalloc_Alloc(SEGPTR iface, DWORD size)
+{
+    IMalloc16 *malloc = MapSL(iface);
+    IMalloc16Vtbl *vtbl = MapSL(malloc->lpVtbl);
+    DWORD args[2], ret;
+
+    args[0] = iface;
+    args[1] = size;
+    WOWCallback16Ex(vtbl->Alloc, WCB16_CDECL, sizeof(args), args, &ret);
+    return ret;
+}
 
 static HTASK16 hETask = 0;
 static WORD Table_ETask[62];
 
-static LPMALLOC16 currentMalloc16=NULL;
+static SEGPTR compobj_malloc;
 
 /* --- IMalloc16 implementation */
 
 
 typedef struct
 {
-        IMalloc16 IMalloc16_iface;
-        DWORD     ref;
+    IMalloc16 IMalloc16_iface;
+    LONG refcount;
 } IMalloc16Impl;
 
 static inline IMalloc16Impl *impl_from_IMalloc16(IMalloc16 *iface)
@@ -115,21 +139,28 @@ HRESULT CDECL IMalloc16_fnQueryInterface(IMalloc16* iface,REFIID refiid,LPVOID *
 /******************************************************************************
  *		IMalloc16_AddRef	[COMPOBJ.501]
  */
-ULONG CDECL IMalloc16_fnAddRef(IMalloc16* iface) {
-        IMalloc16Impl *This = impl_from_IMalloc16(iface);
-
-	TRACE("(%p)->AddRef()\n",This);
-	return 1; /* cannot be freed */
+ULONG CDECL IMalloc16_fnAddRef(IMalloc16 *iface)
+{
+    IMalloc16Impl *malloc = impl_from_IMalloc16(iface);
+    ULONG refcount = InterlockedIncrement(&malloc->refcount);
+    TRACE("%p increasing refcount to %u.\n", malloc, refcount);
+    return refcount;
 }
 
 /******************************************************************************
  *		IMalloc16_Release	[COMPOBJ.502]
  */
-ULONG CDECL IMalloc16_fnRelease(IMalloc16* iface) {
-        IMalloc16Impl *This = impl_from_IMalloc16(iface);
-
-	TRACE("(%p)->Release()\n",This);
-	return 1; /* cannot be freed */
+ULONG CDECL IMalloc16_fnRelease(SEGPTR iface)
+{
+    IMalloc16Impl *malloc = impl_from_IMalloc16(MapSL(iface));
+    ULONG refcount = InterlockedDecrement(&malloc->refcount);
+    TRACE("%p decreasing refcount to %u.\n", malloc, refcount);
+    if (!refcount)
+    {
+        UnMapLS(iface);
+        HeapFree(GetProcessHeap(), 0, malloc);
+    }
+    return refcount;
 }
 
 /******************************************************************************
@@ -209,8 +240,7 @@ LPVOID CDECL IMalloc16_fnHeapMinimize(IMalloc16* iface) {
 /******************************************************************************
  * IMalloc16_Constructor [VTABLE]
  */
-static LPMALLOC16
-IMalloc16_Constructor(void)
+static SEGPTR IMalloc16_Constructor(void)
 {
     static IMalloc16Vtbl vt16;
     static SEGPTR msegvt16;
@@ -220,7 +250,7 @@ IMalloc16_Constructor(void)
     This = HeapAlloc( GetProcessHeap(), 0, sizeof(IMalloc16Impl) );
     if (!msegvt16)
     {
-#define VTENT(x) vt16.x = (void*)GetProcAddress16(hcomp,"IMalloc16_"#x);assert(vt16.x)
+#define VTENT(x) vt16.x = (SEGPTR)GetProcAddress16(hcomp,"IMalloc16_"#x);assert(vt16.x)
         VTENT(QueryInterface);
         VTENT(AddRef);
         VTENT(Release);
@@ -233,11 +263,10 @@ IMalloc16_Constructor(void)
 #undef VTENT
         msegvt16 = MapLS( &vt16 );
     }
-    This->IMalloc16_iface.lpVtbl = (const IMalloc16Vtbl*)msegvt16;
-    This->ref = 1;
-    return (LPMALLOC16)MapLS( This );
+    This->IMalloc16_iface.lpVtbl = msegvt16;
+    This->refcount = 1;
+    return MapLS(This);
 }
-
 
 /******************************************************************************
  *           CoBuildVersion [COMPOBJ.1]
@@ -248,43 +277,48 @@ DWORD WINAPI CoBuildVersion16(void)
 }
 
 /***********************************************************************
- *           CoGetMalloc    [COMPOBJ.4]
- *
- * Retrieve the current win16 IMalloc interface.
- *
- * RETURNS
- *	The current win16 IMalloc
+ *           CoGetMalloc   [COMPOBJ.4]
  */
-HRESULT WINAPI CoGetMalloc16(
-	DWORD dwMemContext,	/* [in] unknown */
-	LPMALLOC16 * lpMalloc	/* [out] current win16 malloc interface */
-) {
-    if(!currentMalloc16)
-	currentMalloc16 = IMalloc16_Constructor();
-    *lpMalloc = currentMalloc16;
+HRESULT WINAPI CoGetMalloc16(MEMCTX context, SEGPTR *malloc)
+{
+    call_IMalloc_AddRef(*malloc = compobj_malloc);
     return S_OK;
 }
 
 /***********************************************************************
  *           CoCreateStandardMalloc [COMPOBJ.71]
  */
-HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
-					  LPMALLOC16 *lpMalloc)
+HRESULT WINAPI CoCreateStandardMalloc16(MEMCTX context, SEGPTR *malloc)
 {
     /* FIXME: docu says we shouldn't return the same allocator as in
      * CoGetMalloc16 */
-    *lpMalloc = IMalloc16_Constructor();
+    *malloc = IMalloc16_Constructor();
     return S_OK;
 }
 
-/******************************************************************************
- *		CoInitialize	[COMPOBJ.2]
- * Set the win16 IMalloc used for memory management
+/***********************************************************************
+ *           CoMemAlloc [COMPOBJ.151]
  */
-HRESULT WINAPI CoInitialize16(
-	LPVOID lpReserved	/* [in] pointer to win16 malloc interface */
-) {
-    currentMalloc16 = (LPMALLOC16)lpReserved;
+SEGPTR WINAPI CoMemAlloc(DWORD size, MEMCTX context, DWORD unknown)
+{
+    TRACE("size %u, context %d, unknown %#x.\n", size, context, unknown);
+    if (context != MEMCTX_TASK)
+        FIXME("Ignoring context %d.\n", context);
+    if (unknown)
+        FIXME("Ignoring unknown parameter %#x.\n", unknown);
+
+    return call_IMalloc_Alloc(compobj_malloc, size);
+}
+
+/***********************************************************************
+ *           CoInitialize   [COMPOBJ.2]
+ */
+HRESULT WINAPI CoInitialize16(SEGPTR malloc)
+{
+    if (!malloc)
+        CoCreateStandardMalloc16(MEMCTX_TASK, &compobj_malloc);
+    else
+        call_IMalloc_AddRef(compobj_malloc = malloc);
     return S_OK;
 }
 
@@ -296,8 +330,11 @@ HRESULT WINAPI CoInitialize16(
  */
 void WINAPI CoUninitialize16(void)
 {
-  TRACE("()\n");
-  CoFreeAllLibraries();
+    TRACE("\n");
+
+    CoFreeAllLibraries();
+    call_IMalloc_Release(compobj_malloc);
+    compobj_malloc = 0;
 }
 
 /***********************************************************************
@@ -395,78 +432,23 @@ HRESULT WINAPI CLSIDFromString16(
   return S_OK;
 }
 
-/******************************************************************************
- *		_xmalloc16	[internal]
- * Allocates size bytes from the standard ole16 allocator.
- *
- * RETURNS
- *	the allocated segmented pointer and a HRESULT
+/***********************************************************************
+ *           StringFromCLSID   [COMPOBJ.151]
  */
-static HRESULT
-_xmalloc16(DWORD size, SEGPTR *ptr) {
-  LPMALLOC16 mllc;
-  DWORD args[2];
-
-  if (CoGetMalloc16(0,&mllc))
-    return E_OUTOFMEMORY;
-
-  args[0] = (DWORD)mllc;
-  args[1] = size;
-  /* No need for a Callback entry, we have WOWCallback16Ex which does
-   * everything we need.
-   */
-  if (!WOWCallback16Ex(
-      (DWORD)((const IMalloc16Vtbl*)MapSL(
-	  (SEGPTR)((LPMALLOC16)MapSL((SEGPTR)mllc))->lpVtbl  )
-      )->Alloc,
-      WCB16_CDECL,
-      2*sizeof(DWORD),
-      (LPVOID)args,
-      (LPDWORD)ptr
-  )) {
-      ERR("CallTo16 IMalloc16 (%d) failed\n",size);
-      return E_FAIL;
-  }
-  return S_OK;
-}
-
-/******************************************************************************
- *		StringFromCLSID	[COMPOBJ.19]
- *              StringFromIID   [COMPOBJ.14]
- * Converts a GUID into the respective string representation.
- * The target string is allocated using the OLE IMalloc.
- *
- * RETURNS
- *	the string representation and HRESULT
- */
-
-HRESULT WINAPI StringFromCLSID16(
-  REFCLSID id,		/* [in] the GUID to be converted */
-  LPOLESTR16 *idstr )	/* [out] a pointer to a to-be-allocated segmented pointer pointing to the resulting string */
+HRESULT WINAPI StringFromCLSID16(REFCLSID id, SEGPTR *str)
 {
     WCHAR buffer[40];
-    HRESULT ret;
-
-    ret = _xmalloc16(40,(SEGPTR*)idstr);
-    if (ret != S_OK)
-        return ret;
+    if (!(*str = CoMemAlloc(40, MEMCTX_TASK, 0)))
+        return E_OUTOFMEMORY;
     StringFromGUID2( id, buffer, 40 );
-    WideCharToMultiByte( CP_ACP, 0, buffer, -1, MapSL((SEGPTR)*idstr), 40, NULL, NULL );
-    return ret;
+    WideCharToMultiByte( CP_ACP, 0, buffer, -1, MapSL(*str), 40, NULL, NULL );
+    return S_OK;
 }
 
-/******************************************************************************
- * ProgIDFromCLSID [COMPOBJ.62]
- *
- * Converts a class id into the respective Program ID. (By using a registry lookup)
- *
- * RETURNS
- *  S_OK on success
- *  riid associated with the progid
+/***********************************************************************
+ *           ProgIDFromCLSID   [COMPOBJ.151]
  */
-HRESULT WINAPI ProgIDFromCLSID16(
-  REFCLSID clsid, /* [in] class id as found in registry */
-  LPOLESTR16 *lplpszProgID )/* [out] associated Program ID */
+HRESULT WINAPI ProgIDFromCLSID16(REFCLSID clsid, SEGPTR *str)
 {
     LPOLESTR progid;
     HRESULT ret;
@@ -475,9 +457,8 @@ HRESULT WINAPI ProgIDFromCLSID16(
     if (ret == S_OK)
     {
         INT len = WideCharToMultiByte( CP_ACP, 0, progid, -1, NULL, 0, NULL, NULL );
-        ret = _xmalloc16(len, (SEGPTR*)lplpszProgID);
-        if (ret == S_OK)
-            WideCharToMultiByte( CP_ACP, 0, progid, -1, MapSL((SEGPTR)*lplpszProgID), len, NULL, NULL );
+        if ((*str = CoMemAlloc(len, MEMCTX_TASK, 0)))
+            WideCharToMultiByte( CP_ACP, 0, progid, -1, MapSL(*str), len, NULL, NULL );
         CoTaskMemFree( progid );
     }
     return ret;
@@ -636,21 +617,6 @@ BOOL WINAPI COMPOBJ_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD
         return TRUE;
 }
 
-/***********************************************************************
- *           CoMemAlloc [COMPOBJ.151]
- */
-SEGPTR WINAPI CoMemAlloc(DWORD size, DWORD dwMemContext, DWORD x) {
-	HRESULT		hres;
-	SEGPTR		segptr;
-
-	/* FIXME: check context handling */
-	TRACE("(%d, 0x%08x, 0x%08x)\n", size, dwMemContext, x);
-	hres = _xmalloc16(size, &segptr);
-	if (hres != S_OK)
-		return 0;
-	return segptr;
-}
-
 /******************************************************************************
  *		CLSIDFromProgID [COMPOBJ.61]
  *
@@ -689,7 +655,7 @@ HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid)
 /******************************************************************************
  *		StringFromGUID2	[COMPOBJ.76]
  */
-INT16 WINAPI StringFromGUID216(REFGUID id, LPOLESTR16 str, INT16 cmax)
+INT16 WINAPI StringFromGUID216(REFGUID id, char *str, INT16 cmax)
 {
     static const char format[] = "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}";
     if (!id || cmax < CHARS_IN_GUID) return 0;

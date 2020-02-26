@@ -386,6 +386,30 @@ static BOOL CALLBACK enum_devices_callback(const DIDEVICEINSTANCEA *instance, vo
            wine_dbgstr_guid(&instance->guidProduct));
     }
 
+    if ((instance->dwDevType & 0xff) == DIDEVTYPE_KEYBOARD)
+        ok(IsEqualGUID(&instance->guidProduct, &GUID_SysKeyboard),
+           "Keyboard guidProduct (%s) does not match GUID_SysKeyboard (%s)\n",
+           wine_dbgstr_guid(&instance->guidProduct),
+           wine_dbgstr_guid(&GUID_SysMouse));
+    else if ((instance->dwDevType & 0xff) == DIDEVTYPE_MOUSE)
+        ok(IsEqualGUID(&instance->guidProduct, &GUID_SysMouse),
+           "Mouse guidProduct (%s) does not match GUID_SysMouse (%s)\n",
+           wine_dbgstr_guid(&instance->guidProduct),
+           wine_dbgstr_guid(&GUID_SysMouse));
+    else {
+        /* Non-keyboard/mouse devices use the "PIDVID" guidProduct */
+        static const GUID pidvid_product_guid = { /* device_pidvid-0000-0000-0000-504944564944 "PIDVID" */
+          0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x50, 0x49, 0x44, 0x56, 0x49, 0x44}
+        };
+
+        ok(instance->guidProduct.Data2 == pidvid_product_guid.Data2,
+           "guidProduct.Data2 is %04x\n", instance->guidProduct.Data2);
+        ok(instance->guidProduct.Data3 == pidvid_product_guid.Data3,
+           "guidProduct.Data3 is %04x\n", instance->guidProduct.Data3);
+        ok(!memcmp(instance->guidProduct.Data4, pidvid_product_guid.Data4, sizeof(pidvid_product_guid.Data4)),
+           "guidProduct.Data4 does not match: %s\n", wine_dbgstr_guid(&instance->guidProduct));
+    }
+
     enum_test->device_count++;
     return enum_test->return_value;
 }

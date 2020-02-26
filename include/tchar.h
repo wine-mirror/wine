@@ -23,10 +23,6 @@
 #error Wine should not include tchar.h internally
 #endif
 
-#if !defined(__MSVCRT__) && (defined(_UNICODE) || defined(_MBCS))
-#error You must use msvcrt when building in Unicode/MBCS mode [-mno-cygwin]
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -91,7 +87,9 @@ extern "C" {
 #define _istupper     WINE_tchar_routine(isupper,         _ismbcupper, iswupper)
 #define _istxdigit    WINE_tchar_routine(isxdigit,        isxdigit,    iswxdigit)
 #define _itot         WINE_tchar_routine(_itoa,           _itoa,       _itow)
+#define _itot_s       WINE_tchar_routine(_itoa_s,         _itoa_s,     _itow_s)
 #define _ltot         WINE_tchar_routine(_ltoa,           _ltoa,       _ltow)
+#define _ltot_s       WINE_tchar_routine(_ltoa_s,         _ltoa_s,     _ltow_s)
 #define _puttc        WINE_tchar_routine(putc,            putc,        putwc)
 #define _puttchar     WINE_tchar_routine(putchar,         putchar,     putwchar)
 #define _putts        WINE_tchar_routine(puts,            puts,        putws)
@@ -106,11 +104,13 @@ extern "C" {
 #define _tchmod       WINE_tchar_routine(chmod,           _chmod,      _wchmod)
 #define _tcreat       WINE_tchar_routine(creat,           _creat,      _wcreat)
 #define _tcscat       WINE_tchar_routine(strcat,          _mbscat,     wcscat)
+#define _tcscat_s     WINE_tchar_routine(strcat_s,        _mbscat_s,   wcscat_s)
 #define _tcschr       WINE_tchar_routine(strchr,          _mbschr,     wcschr)
 #define _tcsclen      WINE_tchar_routine(strlen,          _mbslen,     wcslen)
 #define _tcscmp       WINE_tchar_routine(strcmp,          _mbscmp,     wcscmp)
 #define _tcscoll      WINE_tchar_routine(strcoll,         _mbscoll,    wcscoll)
 #define _tcscpy       WINE_tchar_routine(strcpy,          _mbscpy,     wcscpy)
+#define _tcscpy_s     WINE_tchar_routine(strcpy_s,        _mbscpy_s,   wcscpy_s)
 #define _tcscspn      WINE_tchar_routine(strcspn,         _mbscspn,    wcscspn)
 #define _tcsdec       WINE_tchar_routine(_strdec,         _mbsdec,     _wcsdec)
 #define _tcsdup       WINE_tchar_routine(strdup,          _mbsdup,     _wcsdup)
@@ -120,8 +120,10 @@ extern "C" {
 #define _tcsinc       WINE_tchar_routine(_strinc,         _mbsinc,     _wcsinc)
 #define _tcslen       WINE_tchar_routine(strlen,          strlen,      wcslen)
 #define _tcslwr       WINE_tchar_routine(_strlwr,         _mbslwr,     _wcslwr)
+#define _tcslwr_s     WINE_tchar_routine(_strlwr_s,       _mbslwr_s,   _wcslwr_s)
 #define _tcsnbcnt     WINE_tchar_routine(_strncnt,        _mbsnbcnt,   _wcnscnt)
 #define _tcsncat      WINE_tchar_routine(strncat,         _mbsnbcat,   wcsncat)
+#define _tcsncat_s    WINE_tchar_routine(strncat_s,       _mbsncat_s,  wcsncat_s)
 #define _tcsnccat     WINE_tchar_routine(strncat,         _mbsncat,    wcsncat)
 #define _tcsncmp      WINE_tchar_routine(strncmp,         _mbsnbcmp,   wcsncmp)
 #define _tcsnccmp     WINE_tchar_routine(strncmp,         _mbsncmp,    wcsncmp)
@@ -129,12 +131,14 @@ extern "C" {
 #define _tcsnccpy     WINE_tchar_routine(strncpy,         _mbsncpy,    wcsncpy)
 #define _tcsncicmp    WINE_tchar_routine(_strnicmp,       _mbsnicmp,   _wcsnicmp)
 #define _tcsncpy      WINE_tchar_routine(strncpy,         _mbsnbcpy,   wcsncpy)
+#define _tcsncpy_s    WINE_tchar_routine(strncpy_s,       _mbsnbcpy_s, wcsncpy_s)
 #define _tcsncset     WINE_tchar_routine(_strnset,        _mbsnset,    _wcsnset)
 #define _tcsnextc     WINE_tchar_routine(_strnextc,       _mbsnextc,   _wcsnextc)
 #define _tcsnicmp     WINE_tchar_routine(_strnicmp,       _mbsnicmp,   _wcsnicmp)
 #define _tcsnicoll    WINE_tchar_routine(_strnicoll,      _strnicoll   _wcsnicoll)
 #define _tcsninc      WINE_tchar_routine(_strninc,        _mbsninc,    _wcsninc)
 #define _tcsnccnt     WINE_tchar_routine(_strncnt,        _mbsnccnt,   _wcsncnt)
+#define _tcsnlen      WINE_tchar_routine(strnlen,         _mbsnblen,   wcsnlen)
 #define _tcsnset      WINE_tchar_routine(_strnset,        _mbsnbset,   _wcsnset)
 #define _tcspbrk      WINE_tchar_routine(strpbrk,         _mbspbrk,    wcspbrk)
 #define _tcsspnp      WINE_tchar_routine(_strspnp,        _mbsspnp,    _wcsspnp)
@@ -144,10 +148,11 @@ extern "C" {
 #define _tcsspn       WINE_tchar_routine(strspn,          _mbsspn,     wcsspn)
 #define _tcsstr       WINE_tchar_routine(strstr,          _mbsstr,     wcsstr)
 #define _tcstod       WINE_tchar_routine(strtod,          strtod,      wcstod)
-#define _tcstok       WINE_tchar_routine(strtok,          _mbstok,     wcstok)
+#define _tcstok       WINE_tchar_routine(strtok,          _mbstok,     _wcstok)
 #define _tcstol       WINE_tchar_routine(strtol,          strtol,      wcstol)
 #define _tcstoul      WINE_tchar_routine(strtoul,         strtoul,     wcstoul)
 #define _tcsupr       WINE_tchar_routine(_strupr,         _mbsupr,     _wcsupr)
+#define _tcsupr_s     WINE_tchar_routine(_strupr_s,       _mbsupr_s,   _wcsupr_s)
 #define _tcsxfrm      WINE_tchar_routine(strxfrm,         strxfrm,     wcsxfrm)
 #define _tctime       WINE_tchar_routine(ctime,           ctime,       _wctime)
 #define _tenviron     WINE_tchar_routine(_environ,        _environ,    _wenviron)
@@ -172,6 +177,7 @@ extern "C" {
 #define _tgetenv      WINE_tchar_routine(getenv,          getenv,      _wgetenv)
 #define _tmain        WINE_tchar_routine(main,            main,        wmain)
 #define _tmakepath    WINE_tchar_routine(_makepath,       _makepath,   _wmakepath)
+#define _tmakepath_s  WINE_tchar_routine(_makepath_s,     _makepath_s, _wmakepath_s)
 #define _tmkdir       WINE_tchar_routine(mkdir,           _mkdir,      _wmkdir)
 #define _tmktemp      WINE_tchar_routine(mktemp,          _mktemp,     _wmktemp)
 #define _tperror      WINE_tchar_routine(perror,          perror,      _wperror)
@@ -196,6 +202,7 @@ extern "C" {
 #define _tspawnvp     WINE_tchar_routine(_spawnvp,        _spawnvp,    _tspawnvp)
 #define _tspawnvpe    WINE_tchar_routine(_spawnvpe,       _spawnvpe,   _tspawnvpe)
 #define _tsplitpath   WINE_tchar_routine(_splitpath,      _splitpath,  _wsplitpath)
+#define _tsplitpath_s WINE_tchar_routine(_splitpath_s,    _splitpath_s,_wsplitpath_s)
 #define _tstat        WINE_tchar_routine(_stat,           _stat,       _wstat)
 #define _tstati64     WINE_tchar_routine(_stati64,        _stati64,    _wstati64)
 #define _tstrdate     WINE_tchar_routine(_strdate,        _strdate,    _wstrdate)
@@ -208,6 +215,7 @@ extern "C" {
 #define _tutime       WINE_tchar_routine(utime,           _utime,      _wutime)
 #define _tWinMain     WINE_tchar_routine(WinMain,         WinMain,     wWinMain)
 #define _ultot        WINE_tchar_routine(_ultoa,          _ultoa,      _ultow)
+#define _ultot_s      WINE_tchar_routine(_ultoa_s,        _ultoa_s,    _ultow_s)
 #define _ungettc      WINE_tchar_routine(ungetc,          ungetc,      ungetwc)
 #define _vftprintf    WINE_tchar_routine(vfprintf,        vfprintf,    vfwprintf)
 #define _vsntprintf   WINE_tchar_routine(vsnprintf,       _vsnprintf,  _vsnwprintf)
@@ -230,8 +238,10 @@ typedef unsigned short wctype_t;
 #endif
 
 #ifndef __TCHAR_DEFINED
-#ifdef WINE_UNICODE_NATIVE
+#if defined(WINE_UNICODE_NATIVE)
 typedef wchar_t       _TCHAR;
+#elif defined(WINE_UNICODE_CHAR16)
+typedef char16_t      _TCHAR;
 #else
 typedef unsigned short _TCHAR;
 #endif

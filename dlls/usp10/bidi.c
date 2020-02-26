@@ -41,8 +41,6 @@
  * has been modified.
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include "windef.h"
@@ -74,7 +72,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bidi);
     Note:
 
       The list of bidirectional character types here is not grouped the
-      same way as the table 3-7, since the numberic values for the types
+      same way as the table 3-7, since the numeric values for the types
       are chosen to keep the state and action tables compact.
 ------------------------------------------------------------------------*/
 enum directions
@@ -640,7 +638,7 @@ typedef struct tagBracketPair
     int end;
 } BracketPair;
 
-static int compr(const void *a, const void* b)
+static int __cdecl compr(const void *a, const void* b)
 {
     return ((BracketPair*)a)->start - ((BracketPair*)b)->start;
 }
@@ -1085,7 +1083,7 @@ search:
 }
 
 /*************************************************************
- *    BIDI_DeterminLevels
+ *    BIDI_DetermineLevels
  */
 BOOL BIDI_DetermineLevels(
                 const WCHAR *lpString,  /* [in] The string for which information is to be returned */
@@ -1151,7 +1149,7 @@ BOOL BIDI_DetermineLevels(
     return TRUE;
 }
 
-/* reverse cch indexes */
+/* reverse cch indices */
 static void reverse(int *pidx, int cch)
 {
     int temp;
@@ -1187,7 +1185,7 @@ static void reverse(int *pidx, int cch)
 
     Note: this should be applied a line at a time
 -------------------------------------------------------------------------*/
-int BIDI_ReorderV2lLevel(int level, int *pIndexs, const BYTE* plevel, int cch, BOOL fReverse)
+int BIDI_ReorderV2lLevel(int level, int *pIndices, const BYTE* plevel, int cch, BOOL fReverse)
 {
     int ich = 0;
 
@@ -1202,19 +1200,19 @@ int BIDI_ReorderV2lLevel(int level, int *pIndexs, const BYTE* plevel, int cch, B
         }
         else if (plevel[ich] > level)
         {
-            ich += BIDI_ReorderV2lLevel(level + 1, pIndexs + ich, plevel + ich,
+            ich += BIDI_ReorderV2lLevel(level + 1, pIndices + ich, plevel + ich,
                 cch - ich, fReverse) - 1;
         }
     }
     if (fReverse)
     {
-        reverse(pIndexs, ich);
+        reverse(pIndices, ich);
     }
     return ich;
 }
 
 /* Applies the reorder in reverse. Taking an already reordered string and returning the original */
-int BIDI_ReorderL2vLevel(int level, int *pIndexs, const BYTE* plevel, int cch, BOOL fReverse)
+int BIDI_ReorderL2vLevel(int level, int *pIndices, const BYTE* plevel, int cch, BOOL fReverse)
 {
     int ich = 0;
     int newlevel = -1;
@@ -1231,7 +1229,7 @@ int BIDI_ReorderL2vLevel(int level, int *pIndexs, const BYTE* plevel, int cch, B
     }
     if (fReverse)
     {
-        reverse(pIndexs, ich);
+        reverse(pIndices, ich);
     }
 
     if (newlevel >= 0)
@@ -1241,7 +1239,7 @@ int BIDI_ReorderL2vLevel(int level, int *pIndexs, const BYTE* plevel, int cch, B
             if (plevel[ich] < level)
                 break;
             else if (plevel[ich] > level)
-                ich += BIDI_ReorderL2vLevel(level + 1, pIndexs + ich, plevel + ich,
+                ich += BIDI_ReorderL2vLevel(level + 1, pIndices + ich, plevel + ich,
                 cch - ich, fReverse) - 1;
     }
 

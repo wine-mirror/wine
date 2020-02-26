@@ -48,7 +48,7 @@
 @ stdcall CreateDCA(str str str ptr)
 @ stdcall CreateDCW(wstr wstr wstr ptr)
 @ stdcall CreateDIBPatternBrush(long long)
-@ stdcall CreateDIBPatternBrushPt(long long)
+@ stdcall CreateDIBPatternBrushPt(ptr long)
 @ stdcall CreateDIBSection(long ptr long ptr long long)
 @ stdcall CreateDIBitmap(long ptr long ptr ptr long)
 @ stdcall CreateDiscardableBitmap(long long long)
@@ -80,6 +80,7 @@
 @ stdcall CreateScalableFontResourceA(long str str str)
 @ stdcall CreateScalableFontResourceW(long wstr wstr wstr)
 @ stdcall CreateSolidBrush(long)
+@ stdcall D3DKMTCheckVidPnExclusiveOwnership(ptr)
 @ stdcall D3DKMTCloseAdapter(ptr)
 @ stdcall D3DKMTCreateDCFromMemory(ptr)
 @ stdcall D3DKMTCreateDevice(ptr)
@@ -88,6 +89,9 @@
 @ stdcall D3DKMTEscape(ptr)
 @ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr)
 @ stdcall D3DKMTOpenAdapterFromHdc(ptr)
+@ stdcall D3DKMTQueryStatistics(ptr)
+@ stdcall D3DKMTSetQueuedLimit(ptr)
+@ stdcall D3DKMTSetVidPnSourceOwner(ptr)
 @ stdcall DPtoLP(long ptr long)
 @ stdcall DeleteColorSpace(long)
 @ stdcall DeleteDC(long)
@@ -248,14 +252,14 @@
 @ stdcall GetCharABCWidthsFloatW(long long long ptr)
 @ stdcall GetCharABCWidthsI(long long long ptr ptr)
 @ stdcall GetCharABCWidthsW(long long long ptr)
-@ stdcall GetCharWidth32A(long long long long)
-@ stdcall GetCharWidth32W(long long long long)
-@ stdcall GetCharWidthA(long long long long) GetCharWidth32A
+@ stdcall GetCharWidth32A(long long long ptr)
+@ stdcall GetCharWidth32W(long long long ptr)
+@ stdcall GetCharWidthA(long long long ptr) GetCharWidth32A
 @ stdcall GetCharWidthFloatA(long long long ptr)
 @ stdcall GetCharWidthFloatW(long long long ptr)
 @ stdcall GetCharWidthI(ptr long long ptr ptr)
 @ stdcall GetCharWidthInfo(ptr ptr)
-@ stdcall GetCharWidthW(long long long long) GetCharWidth32W
+@ stdcall GetCharWidthW(long long long ptr) GetCharWidth32W
 @ stub GetCharWidthWOW
 @ stdcall GetCharacterPlacementA(long str long long ptr long)
 @ stdcall GetCharacterPlacementW(long wstr long long ptr long)

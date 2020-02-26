@@ -26,27 +26,24 @@
 #include <winerror.h>
 #include <dsrole.h>
 
-static DWORD (WINAPI *pDsRoleGetPrimaryDomainInformation)(LPCWSTR, DSROLE_PRIMARY_DOMAIN_INFO_LEVEL, PBYTE*);
-static void  (WINAPI *pDsRoleFreeMemory)(PVOID);
-
 static void test_params(void)
 {
     DWORD ret;
     PDSROLE_PRIMARY_DOMAIN_INFO_BASIC dpdi;
 
     SetLastError(0xdeadbeef);
-    ret = pDsRoleGetPrimaryDomainInformation(NULL, DsRolePrimaryDomainInfoBasic, NULL);
+    ret = DsRoleGetPrimaryDomainInformation(NULL, DsRolePrimaryDomainInfoBasic, NULL);
     ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%d)\n", ret);
 
     SetLastError(0xdeadbeef);
-    ret = pDsRoleGetPrimaryDomainInformation(NULL, 0, NULL);
+    ret = DsRoleGetPrimaryDomainInformation(NULL, 0, NULL);
     ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%d)\n", ret);
     SetLastError(0xdeadbeef);
-    ret = pDsRoleGetPrimaryDomainInformation(NULL, 4, NULL);
+    ret = DsRoleGetPrimaryDomainInformation(NULL, 4, NULL);
     ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%d)\n", ret);
 
     SetLastError(0xdeadbeef);
-    ret = pDsRoleGetPrimaryDomainInformation(NULL, 4, (PBYTE *)&dpdi);
+    ret = DsRoleGetPrimaryDomainInformation(NULL, 4, (BYTE **)&dpdi);
     ok( ret == ERROR_INVALID_PARAMETER, "Expected error ERROR_INVALID_PARAMETER, got (%d)\n", ret);
 }
 
@@ -58,36 +55,24 @@ static void test_get(void)
     PDSROLE_OPERATION_STATE_INFO dosi;
 
     SetLastError(0xdeadbeef);
-    ret = pDsRoleGetPrimaryDomainInformation(NULL, DsRolePrimaryDomainInfoBasic, (PBYTE *)&dpdi);
+    ret = DsRoleGetPrimaryDomainInformation(NULL, DsRolePrimaryDomainInfoBasic, (BYTE **)&dpdi);
     ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%d)\n", ret);
-    pDsRoleFreeMemory(dpdi);
+    DsRoleFreeMemory(dpdi);
 
     SetLastError(0xdeadbeef);
-    ret = pDsRoleGetPrimaryDomainInformation(NULL, DsRoleUpgradeStatus, (PBYTE *)&dusi);
+    ret = DsRoleGetPrimaryDomainInformation(NULL, DsRoleUpgradeStatus, (BYTE **)&dusi);
     todo_wine { ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%d)\n", ret); }
-    pDsRoleFreeMemory(dusi);
+    DsRoleFreeMemory(dusi);
    
     SetLastError(0xdeadbeef);
-    ret = pDsRoleGetPrimaryDomainInformation(NULL, DsRoleOperationState, (PBYTE *)&dosi);
+    ret = DsRoleGetPrimaryDomainInformation(NULL, DsRoleOperationState, (BYTE **)&dosi);
     todo_wine { ok( ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got (%d)\n", ret); }
-    pDsRoleFreeMemory(dosi);
+    DsRoleFreeMemory(dosi);
 }
 
 
 START_TEST(ds)
 {
-    HMODULE hnetapi32 = LoadLibraryA("netapi32.dll");
-
-    pDsRoleGetPrimaryDomainInformation=(void*)GetProcAddress(hnetapi32,"DsRoleGetPrimaryDomainInformation");
-    if (pDsRoleGetPrimaryDomainInformation)
-    {
-        pDsRoleFreeMemory=(void*)GetProcAddress(hnetapi32,"DsRoleFreeMemory");
-
-        test_params();
-        test_get();
-    }
-    else
-        win_skip("DsRoleGetPrimaryDomainInformation is not available\n");
-
-    FreeLibrary(hnetapi32);
+    test_params();
+    test_get();
 }

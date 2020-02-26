@@ -75,6 +75,25 @@ static HRESULT dxgi_output_find_closest_matching_mode(struct dxgi_output *output
     return hr;
 }
 
+static int dxgi_mode_desc_compare(const void *l, const void *r)
+{
+    const DXGI_MODE_DESC *left = l, *right = r;
+    int a, b;
+
+    if (left->Width != right->Width)
+        return left->Width - right->Width;
+
+    if (left->Height != right->Height)
+        return left->Height - right->Height;
+
+    a = left->RefreshRate.Numerator * right->RefreshRate.Denominator;
+    b = right->RefreshRate.Numerator * left->RefreshRate.Denominator;
+    if (a != b)
+        return a - b;
+
+    return 0;
+}
+
 enum dxgi_mode_struct_version
 {
     DXGI_MODE_STRUCT_VERSION_0,
@@ -150,6 +169,16 @@ static HRESULT dxgi_output_get_display_mode_list(struct dxgi_output *output,
         }
     }
     wined3d_mutex_unlock();
+
+    switch (struct_version)
+    {
+        case DXGI_MODE_STRUCT_VERSION_0:
+            qsort(modes, *mode_count, sizeof(DXGI_MODE_DESC), dxgi_mode_desc_compare);
+            break;
+        case DXGI_MODE_STRUCT_VERSION_1:
+            qsort(modes, *mode_count, sizeof(DXGI_MODE_DESC1), dxgi_mode_desc_compare);
+            break;
+    }
 
     return S_OK;
 }
@@ -335,14 +364,36 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_WaitForVBlank(IDXGIOutput4 *iface)
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_TakeOwnership(IDXGIOutput4 *iface, IUnknown *device, BOOL exclusive)
 {
-    FIXME("iface %p, device %p, exclusive %d stub!\n", iface, device, exclusive);
+    struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
+    struct wined3d_output *wined3d_output;
+    HRESULT hr = DXGI_ERROR_INVALID_CALL;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, device %p, exclusive %d.\n", iface, device, exclusive);
+
+    if (!device)
+        return DXGI_ERROR_INVALID_CALL;
+
+    wined3d_mutex_lock();
+    if ((wined3d_output = wined3d_get_adapter_output(output->adapter->factory->wined3d,
+            output->adapter->ordinal)))
+        hr = wined3d_output_take_ownership(wined3d_output, exclusive);
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static void STDMETHODCALLTYPE dxgi_output_ReleaseOwnership(IDXGIOutput4 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
+    struct wined3d_output *wined3d_output;
+
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+    if ((wined3d_output = wined3d_get_adapter_output(output->adapter->factory->wined3d,
+            output->adapter->ordinal)))
+        wined3d_output_release_ownership(wined3d_output);
+    wined3d_mutex_unlock();
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetGammaControlCapabilities(IDXGIOutput4 *iface,
@@ -521,6 +572,14 @@ static const struct IDXGIOutput4Vtbl dxgi_output_vtbl =
     /* IDXGIOutput4 methods */
     dxgi_output_CheckOverlayColorSpaceSupport,
 };
+
+struct dxgi_output *unsafe_impl_from_IDXGIOutput(IDXGIOutput *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == (IDXGIOutputVtbl *)&dxgi_output_vtbl);
+    return CONTAINING_RECORD(iface, struct dxgi_output, IDXGIOutput4_iface);
+}
 
 static void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter)
 {

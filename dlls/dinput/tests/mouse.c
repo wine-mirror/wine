@@ -148,15 +148,20 @@ static void test_acquire(IDirectInputA *pDI, HWND hwnd)
     ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
 
     mouse_event(MOUSEEVENTF_MOVE, 10, 10, 0, 0);
-    IDirectInputDevice_Unacquire(pMouse);
+    hr = IDirectInputDevice_Unacquire(pMouse);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
     cnt = 1;
     hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
     ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
 
-    IDirectInputDevice_Acquire(pMouse);
+    hr = IDirectInputDevice_Acquire(pMouse);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
     mouse_event(MOUSEEVENTF_MOVE, 10, 10, 0, 0);
-    IDirectInputDevice_Unacquire(pMouse);
-    IDirectInputDevice_Acquire(pMouse);
+    hr = IDirectInputDevice_Unacquire(pMouse);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
+
+    hr = IDirectInputDevice_Acquire(pMouse);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
     cnt = 1;
     hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
     ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
@@ -193,7 +198,15 @@ static void test_acquire(IDirectInputA *pDI, HWND hwnd)
     /* Granularity of Y axis should be 1! */
     ok(hr == S_OK && di_op.dwData == 1, "GetProperty(): %08x, dwData: %i but should be 1.\n", hr, di_op.dwData);
 
-    if (pMouse) IUnknown_Release(pMouse);
+    memset(&di_op, 0, sizeof(di_op));
+    di_op.diph.dwSize       = sizeof(DIPROPDWORD);
+    di_op.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    di_op.diph.dwHow        = DIPH_DEVICE;
+    di_op.diph.dwObj        = 0;
+    hr = IDirectInputDevice_GetProperty(pMouse, DIPROP_VIDPID, &di_op.diph);
+    ok(hr == DIERR_UNSUPPORTED, "got %08x\n", hr);
+
+    IUnknown_Release(pMouse);
 
     DestroyWindow( hwnd2 );
 }
@@ -254,7 +267,7 @@ static void test_mouse_EnumObjects(IDirectInputA *pDI)
     hr = IDirectInputDevice_EnumObjects(pMouse, EnumAxes, NULL, DIDFT_ALL);
     ok(hr==DI_OK,"IDirectInputDevice_EnumObjects() failed: %08x\n", hr);
 
-    if (pMouse) IUnknown_Release(pMouse);
+    IUnknown_Release(pMouse);
 }
 
 static void mouse_tests(void)

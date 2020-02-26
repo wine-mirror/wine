@@ -1668,9 +1668,8 @@ todo_wine
            "SO_PROTOCOL_INFO[A/W] comparison failed\n");
 
         /* Remove IF when WSAEnumProtocols support IPV6 data */
-        todo_wine_if (prottest[i].family == AF_INET6)
-            ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
-               prottest[i].family, infoA.iAddressFamily);
+        ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
+           prottest[i].family, infoA.iAddressFamily);
         ok(infoA.iSocketType == prottest[i].type, "socket type invalid, expected %d received %d\n",
            prottest[i].type, infoA.iSocketType);
         ok(infoA.iProtocol == prottest[i].proto, "socket protocol invalid, expected %d received %d\n",
@@ -2108,8 +2107,6 @@ static void test_ip_pktinfo(void)
         /* Setup the server side socket */
         rc=bind(s1, (struct sockaddr*)&s1addr, sizeof(s1addr));
         ok(rc != SOCKET_ERROR, "bind() failed error: %d\n", WSAGetLastError());
-        rc=setsockopt(s1, IPPROTO_IP, IP_PKTINFO, (const char*)&yes, sizeof(yes));
-        ok(rc == 0, "failed to set IPPROTO_IP flag IP_PKTINFO!\n");
 
         /* Build "client" side socket */
         addrlen = sizeof(s2addr);
@@ -2132,6 +2129,21 @@ static void test_ip_pktinfo(void)
         rc=pWSARecvMsg(s1, NULL, NULL, NULL, NULL);
         err=WSAGetLastError();
         ok(rc == SOCKET_ERROR && err == WSAEFAULT, "WSARecvMsg() failed error: %d (ret = %d)\n", err, rc);
+
+        /* Test that when no control data arrives, a 0-length NULL-valued control buffer should succeed */
+        SetLastError(0xdeadbeef);
+        rc=sendto(s2, msg, sizeof(msg), 0, (struct sockaddr*)&s2addr, sizeof(s2addr));
+        ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+        hdr.Control.buf = NULL;
+        hdr.Control.len = 0;
+        rc=pWSARecvMsg(s1, &hdr, &dwSize, NULL, NULL);
+        ok(rc == 0, "WSARecvMsg() failed error: %d\n", WSAGetLastError());
+        hdr.Control.buf = pktbuf;
+
+        /* Now start IP_PKTINFO for future tests */
+        rc=setsockopt(s1, IPPROTO_IP, IP_PKTINFO, (const char*)&yes, sizeof(yes));
+        ok(rc == 0, "failed to set IPPROTO_IP flag IP_PKTINFO!\n");
 
         /*
          * Send a packet from the client to the server and test for specifying
@@ -3036,9 +3048,8 @@ static void test_WSAEnumNetworkEvents(void)
                     "Test[%d]: WSAEnumNetworkEvents failed\n", i);
                 if (i >= 1 && j == 0) /* FD_WRITE is SET on first try for UDP and connected TCP */
                 {
-                    todo_wine_if (i == 0) /* Remove when fixed */
-                        ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %d\n",
-                            i, net_events.lNetworkEvents);
+                    ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %d\n",
+                        i, net_events.lNetworkEvents);
                 }
                 else
                 {
@@ -6599,7 +6610,7 @@ static void test_WSASendMsg(void)
     ok(!ret, "WSASendMsg should have worked\n");
     ok(GetLastError() == 0 || broken(GetLastError() == 0xdeadbeef) /* Win <= 2008 */,
        "Expected 0, got %d\n", GetLastError());
-    ok(bytesSent == iovec[0].len, "incorret bytes sent, expected %d, sent %d\n",
+    ok(bytesSent == iovec[0].len, "incorrect bytes sent, expected %d, sent %d\n",
        iovec[0].len, bytesSent);
 
     /* receive data */
@@ -6627,7 +6638,7 @@ static void test_WSASendMsg(void)
     SetLastError(0xdeadbeef);
     ret = pWSASendMsg(sock, &msg, 0, &bytesSent, NULL, NULL);
     ok(!ret, "WSASendMsg should have worked\n");
-    ok(bytesSent == iovec[0].len + iovec[1].len, "incorret bytes sent, expected %d, sent %d\n",
+    ok(bytesSent == iovec[0].len + iovec[1].len, "incorrect bytes sent, expected %d, sent %d\n",
        iovec[0].len + iovec[1].len, bytesSent);
     ok(GetLastError() == 0 || broken(GetLastError() == 0xdeadbeef) /* Win <= 2008 */,
        "Expected 0, got %d\n", GetLastError());
@@ -7605,11 +7616,36 @@ static void test_GetAddrInfoW(void)
     ok(result2 == NULL, "got %p\n", result2);
 }
 
+static struct completion_routine_test
+{
+    WSAOVERLAPPED  *overlapped;
+    DWORD           error;
+    ADDRINFOEXW   **result;
+    HANDLE          event;
+    DWORD           called;
+} completion_routine_test;
+
+static void CALLBACK completion_routine(DWORD error, DWORD byte_count, WSAOVERLAPPED *overlapped)
+{
+    struct completion_routine_test *test = &completion_routine_test;
+
+    ok(error == test->error, "got %u\n", error);
+    ok(!byte_count, "got %u\n", byte_count);
+    ok(overlapped == test->overlapped, "got %p\n", overlapped);
+    ok(overlapped->Internal == test->error, "got %lu\n", overlapped->Internal);
+    ok(overlapped->Pointer == test->result, "got %p\n", overlapped->Pointer);
+    ok(overlapped->hEvent == NULL, "got %p\n", overlapped->hEvent);
+
+    test->called++;
+    SetEvent(test->event);
+}
+
 static void test_GetAddrInfoExW(void)
 {
     static const WCHAR empty[] = {0};
     static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
     static const WCHAR winehq[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR nxdomain[] = {'n','x','d','o','m','a','i','n','.','w','i','n','e','h','q','.','o','r','g',0};
     ADDRINFOEXW *result;
     OVERLAPPED overlapped;
     HANDLE event;
@@ -7693,6 +7729,53 @@ static void test_GetAddrInfoExW(void)
     ret = WaitForSingleObject(event, 0);
     todo_wine_if(ret != WAIT_TIMEOUT) /* Remove when abowe todo_wines are fixed */
     ok(ret == WAIT_TIMEOUT, "wait failed\n");
+
+    /* event + completion routine */
+    result = (void*)0xdeadbeef;
+    memset(&overlapped, 0xcc, sizeof(overlapped));
+    overlapped.hEvent = event;
+    ResetEvent(event);
+    ret = pGetAddrInfoExW(localhost, NULL, NS_DNS, NULL, NULL, &result, NULL, &overlapped, completion_routine, NULL);
+    ok(ret == WSAEINVAL, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
+
+    /* completion routine, existing domain */
+    result = (void *)0xdeadbeef;
+    overlapped.hEvent = NULL;
+    completion_routine_test.overlapped = &overlapped;
+    completion_routine_test.error = ERROR_SUCCESS;
+    completion_routine_test.result = &result;
+    completion_routine_test.event = event;
+    completion_routine_test.called = 0;
+    ResetEvent(event);
+    ret = pGetAddrInfoExW(winehq, NULL, NS_DNS, NULL, NULL, &result, NULL, &overlapped, completion_routine, NULL);
+    ok(ret == ERROR_IO_PENDING, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
+    ok(!result, "result != NULL\n");
+    ok(WaitForSingleObject(event, 1000) == WAIT_OBJECT_0, "wait failed\n");
+    ret = pGetAddrInfoExOverlappedResult(&overlapped);
+    ok(!ret, "overlapped result is %d\n", ret);
+    ok(overlapped.hEvent == NULL, "hEvent changed %p\n", overlapped.hEvent);
+    ok(overlapped.Internal == ERROR_SUCCESS, "overlapped.Internal = %lx\n", overlapped.Internal);
+    ok(overlapped.Pointer == &result, "overlapped.Pointer != &result\n");
+    ok(completion_routine_test.called == 1, "got %u\n", completion_routine_test.called);
+    pFreeAddrInfoExW(result);
+
+    /* completion routine, non-existing domain */
+    result = (void *)0xdeadbeef;
+    completion_routine_test.overlapped = &overlapped;
+    completion_routine_test.error = WSAHOST_NOT_FOUND;
+    completion_routine_test.called = 0;
+    ResetEvent(event);
+    ret = pGetAddrInfoExW(nxdomain, NULL, NS_DNS, NULL, NULL, &result, NULL, &overlapped, completion_routine, NULL);
+    ok(ret == ERROR_IO_PENDING, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
+    ok(!result, "result != NULL\n");
+    ok(WaitForSingleObject(event, 1000) == WAIT_OBJECT_0, "wait failed\n");
+    ret = pGetAddrInfoExOverlappedResult(&overlapped);
+    ok(ret == WSAHOST_NOT_FOUND, "overlapped result is %d\n", ret);
+    ok(overlapped.hEvent == NULL, "hEvent changed %p\n", overlapped.hEvent);
+    ok(overlapped.Internal == WSAHOST_NOT_FOUND, "overlapped.Internal = %lx\n", overlapped.Internal);
+    ok(overlapped.Pointer == &result, "overlapped.Pointer != &result\n");
+    ok(completion_routine_test.called == 1, "got %u\n", completion_routine_test.called);
+    ok(result == NULL, "got %p\n", result);
 
     WSACloseEvent(event);
 }

@@ -449,7 +449,7 @@ START_TEST(progman_dde)
 
     /* Cleanup & Exit */
     ret = DdeDisconnect(hConv);
-    ok(ret, "DdeDisonnect() failed: %u\n", DdeGetLastError(instance));
+    ok(ret, "DdeDisconnect() failed: %u\n", DdeGetLastError(instance));
     ret = DdeUninitialize(instance);
     ok(ret, "DdeUninitialize() failed: %u\n", DdeGetLastError(instance));
 
@@ -472,7 +472,7 @@ START_TEST(progman_dde)
 
     /* Cleanup & Exit */
     ret = DdeDisconnect(hConv);
-    ok(ret, "DdeDisonnect() failed: %u\n", DdeGetLastError(instance));
+    ok(ret, "DdeDisconnect() failed: %u\n", DdeGetLastError(instance));
     ret = DdeUninitialize(instance);
     ok(ret, "DdeUninitialize() failed: %u\n", DdeGetLastError(instance));
 }

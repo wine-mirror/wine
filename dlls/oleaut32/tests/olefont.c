@@ -1033,9 +1033,6 @@ static void test_hfont_lifetime(void)
 
         hr = IFont_get_hFont(font, &hfont);
         EXPECT_HR(hr, S_OK);
-
-        obj_type = GetObjectType(last_hfont);
-        ok(obj_type == 0, "%d: got obj type %d\n", i, obj_type);
     }
 
     /* now show that if we take a reference on the hfont, it persists
@@ -1062,9 +1059,6 @@ static void test_hfont_lifetime(void)
     }
 
     IFont_Release(font);
-
-    obj_type = GetObjectType(first_hfont);
-    ok(obj_type == 0, "got obj type %d\n", obj_type);
 
     /* An AddRefHfont followed by a ReleaseHfont means the font doesn't not persist
        through re-realization */
@@ -1099,9 +1093,6 @@ static void test_hfont_lifetime(void)
 
         hr = IFont_ReleaseHfont(font, hfont);
         EXPECT_HR(hr, S_OK);
-
-        obj_type = GetObjectType(last_hfont);
-        ok(obj_type == 0, "%d: got obj type %d\n", i, obj_type);
     }
 
     /* Interestingly if we release a nonexistent reference on the hfont,
@@ -1129,9 +1120,6 @@ static void test_hfont_lifetime(void)
     }
 
     IFont_Release(font);
-
-    obj_type = GetObjectType(first_hfont);
-    ok(obj_type == 0, "got obj type %d\n", obj_type);
 
     /* If we take two internal references on a hfont then we can release
        it twice.  So it looks like there's a total reference count
@@ -1165,9 +1153,6 @@ todo_wine
     ok(obj_type == OBJ_FONT, "got obj type %d\n", obj_type);
 
     IFont_Release(font2);
-
-    obj_type = GetObjectType(hfont);
-    ok(obj_type == 0, "got obj type %d\n", obj_type);
 }
 
 static void test_realization(void)

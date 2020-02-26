@@ -141,7 +141,6 @@ static void test_createfont(void)
     expect(Ok, stat);
     stat = GdipGetFamilyName(fontfamily2, familyname, 0);
     expect(Ok, stat);
-todo_wine
     ok (fontfamily == fontfamily2, "Unexpected family instance.\n");
     ok (lstrcmpiW(Tahoma, familyname) == 0, "Expected Tahoma, got %s\n",
             wine_dbgstr_w(familyname));
@@ -345,7 +344,6 @@ static void test_fontfamily (void)
     ZeroMemory (itsName, sizeof(itsName));
     stat = GdipCloneFontFamily(family, &clonedFontFamily);
     expect (Ok, stat);
-todo_wine
     ok (family == clonedFontFamily, "Unexpected family instance.\n");
     GdipDeleteFontFamily(family);
     stat = GdipGetFamilyName(clonedFontFamily, itsName, LANG_NEUTRAL);
@@ -1238,7 +1236,6 @@ static void test_GdipGetFontCollectionFamilyList(void)
     status = GdipGetFontCollectionFamilyList(collection, 1, &family2, &found);
     ok(status == Ok, "Failed to get family list, status %d.\n", status);
     ok(found == 1, "Unexpected list count %d.\n", found);
-todo_wine
     ok(family2 == family, "Unexpected family instance.\n");
 
     status = GdipDeleteFontFamily(family);
@@ -1282,6 +1279,107 @@ static void test_GdipGetFontCollectionFamilyCount(void)
     ok(status == InvalidParameter, "Unexpected status %d.\n", status);
 }
 
+static BOOL is_family_in_collection(GpFontCollection *collection, GpFontFamily *family)
+{
+    GpStatus status;
+    GpFontFamily **list;
+    int count, i;
+    BOOL found = FALSE;
+
+    status = GdipGetFontCollectionFamilyCount(collection, &count);
+    expect(Ok, status);
+
+    list = GdipAlloc(count * sizeof(GpFontFamily *));
+    status = GdipGetFontCollectionFamilyList(collection, count, list, &count);
+    expect(Ok, status);
+
+    for (i = 0; i < count; i++)
+    {
+        if (list[i] == family)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+
+    GdipFree(list);
+
+    return found;
+}
+
+static void test_CloneFont(void)
+{
+    GpStatus status;
+    GpFontCollection *collection, *collection2;
+    GpFont *font, *font2;
+    GpFontFamily *family, *family2;
+    REAL height;
+    Unit unit;
+    int style;
+    BOOL ret;
+
+    status = GdipNewInstalledFontCollection(&collection);
+    expect(Ok, status);
+
+    status = GdipNewInstalledFontCollection(&collection2);
+    expect(Ok, status);
+    ok(collection == collection2, "got %p\n", collection2);
+
+    status = GdipCreateFontFamilyFromName(nonexistent, NULL, &family);
+    expect(FontFamilyNotFound, status);
+
+    status = GdipCreateFontFamilyFromName(nonexistent, collection, &family);
+    expect(FontFamilyNotFound, status);
+
+    status = GdipCreateFontFamilyFromName(Tahoma, NULL, &family);
+    expect(Ok, status);
+
+    ret = is_family_in_collection(collection, family);
+    ok(ret, "family is not in collection\n");
+
+    status = GdipCreateFont(family, 30.0f, FontStyleRegular, UnitPixel, &font);
+    expect(Ok, status);
+
+    status = GdipGetFontUnit(font, &unit);
+    expect(Ok, status);
+    ok(unit == UnitPixel, "got %u\n", unit);
+
+    status = GdipGetFontSize(font, &height);
+    expect(Ok, status);
+    ok(height == 30.0f, "got %f\n", height);
+
+    status = GdipGetFontStyle(font, &style);
+    expect(Ok, status);
+    ok(style == FontStyleRegular, "got %d\n", style);
+
+    status = GdipGetFamily(font, &family2);
+    expect(Ok, status);
+    ok(family == family2, "got %p\n", family2);
+
+    status = GdipCloneFont(font, &font2);
+    expect(Ok, status);
+
+    status = GdipGetFontUnit(font2, &unit);
+    expect(Ok, status);
+    ok(unit == UnitPixel, "got %u\n", unit);
+
+    status = GdipGetFontSize(font2, &height);
+    expect(Ok, status);
+    ok(height == 30.0f, "got %f\n", height);
+
+    status = GdipGetFontStyle(font2, &style);
+    expect(Ok, status);
+    ok(style == FontStyleRegular, "got %d\n", style);
+
+    status = GdipGetFamily(font2, &family2);
+    expect(Ok, status);
+    ok(family == family2, "got %p\n", family2);
+
+    GdipDeleteFont(font2);
+    GdipDeleteFont(font);
+    GdipDeleteFontFamily(family);
+}
+
 START_TEST(font)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1301,6 +1399,7 @@ START_TEST(font)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_CloneFont();
     test_long_name();
     test_font_transform();
     test_font_substitution();

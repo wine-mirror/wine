@@ -37,7 +37,6 @@
 #include "mscoree_private.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 typedef struct
 {

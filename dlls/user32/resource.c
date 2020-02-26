@@ -312,8 +312,7 @@ INT WINAPI DECLSPEC_HOTPATCH LoadStringA( HINSTANCE instance, UINT resource_id, 
 
         while (id--) p += *p + 1;
 
-        if (buflen != 1)
-            RtlUnicodeToMultiByteN( buffer, buflen - 1, &retval, p + 1, *p * sizeof(WCHAR) );
+        RtlUnicodeToMultiByteN( buffer, buflen - 1, &retval, p + 1, *p * sizeof(WCHAR) );
     }
     buffer[retval] = 0;
     TRACE("returning %s\n", debugstr_a(buffer));

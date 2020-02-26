@@ -17,9 +17,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define NONAMELESSUNION
 #include "d3d11_private.h"
 
@@ -3361,6 +3358,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeferredContext(ID3D11Device
 {
     FIXME("iface %p, flags %#x, context %p stub!\n", iface, flags, context);
 
+    *context = NULL;
     return E_NOTIMPL;
 }
 

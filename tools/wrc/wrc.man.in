@@ -80,6 +80,10 @@ Generate resources for 16-bit, 32-bit or 64-bit platforms respectively.
 The only difference between 32-bit and 64-bit is whether
 the _WIN64 preprocessor symbol is defined.
 .TP
+.I \fB\-\-nls-dir=\fIdir\fR
+Specify the directory to search for the NLS files containing the
+codepage mapping tables.
+.TP
 .I \fB\-\-nostdinc\fR
 Do not search the standard include path, look for include files only
 in the directories explicitly specified with the \fB\-I\fR option.
@@ -120,6 +124,12 @@ Ignored for compatibility with \fIrc\fR.
 This option may be used to specify the preprocessor to use, including any 
 leading arguments. If not specified, \fBwrc\fR uses its builtin processor.
 To disable preprocessing, use \fB--preprocessor=cat\fR.
+.TP
+.I \fB\-\-sysroot=\fIdir\fR
+Prefix the standard include paths with \fIdir\fR.
+.TP
+.I \fB\-\-utf8\fR, \fB\-u\fR
+Set the default codepage of the input file to UTF-8.
 .TP
 .I \fB\-U\fR, \fB\-\-undefine\fR=\fIid\fR
 Undefine preprocessor identifier \fIid\fR.  Please note that only macros 

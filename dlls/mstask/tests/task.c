@@ -626,7 +626,7 @@ static void test_Run(void)
      * This is how it's supposed to look like in the application
      * (the loop should be infinite):
      */
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 5; i++)
     {
         hr = ITaskScheduler_Activate(scheduler, wine_test_runW, &IID_ITask, (IUnknown **)&task);
         ok(hr == S_OK, "Activate error %#x\n", hr);
@@ -661,7 +661,7 @@ static void test_Run(void)
          * This is how it's supposed to look like in the application
          * (the loop should be infinite):
          */
-        for (i = 0; i < 3; i++)
+        for (i = 0; i < 5; i++)
         {
             hr = ITaskScheduler_Activate(scheduler, wine_test_runW, &IID_ITask, (IUnknown **)&task);
             ok(hr == S_OK, "Activate error %#x\n", hr);

@@ -848,7 +848,6 @@ static int NTDLL_vsscanf( const char *str, const char *format, __ms_va_list ap)
             int base;
             int h_prefix = 0;
             BOOLEAN l_prefix = FALSE;
-            BOOLEAN L_prefix = FALSE;
             BOOLEAN w_prefix = FALSE;
             BOOLEAN I64_prefix = FALSE;
             BOOLEAN prefix_finished = FALSE;
@@ -881,7 +880,6 @@ static int NTDLL_vsscanf( const char *str, const char *format, __ms_va_list ap)
                     l_prefix = TRUE;
                     break;
                 case 'w': w_prefix = TRUE; break;
-                case 'L': L_prefix = TRUE; break;
                 case 'I':
                     if (*(format + 1) == '6' &&
                         *(format + 2) == '4')
@@ -987,144 +985,6 @@ static int NTDLL_vsscanf( const char *str, const char *format, __ms_va_list ap)
                         else if (l_prefix) _SET_NUMBER_( LONG );
                         else if (h_prefix == 1) _SET_NUMBER_( short int );
                         else _SET_NUMBER_( int );
-                    }
-                }
-                break;
-            case 'e':
-            case 'E':
-            case 'f':
-            case 'g':
-            case 'G':
-                { /* read a float */
-                    long double cur = 1, expcnt = 10;
-                    ULONGLONG d, hlp;
-                    int exp = 0;
-                    BOOLEAN negative = FALSE;
-                    /*unsigned fpcontrol;*/
-                    BOOLEAN negexp;
-
-                    /* skip initial whitespace */
-                    while (nch != '\0' && isspace( nch ))
-                        nch = (consumed++, *str++);
-
-                    /* get sign */
-                    if (nch == '-' || nch == '+')
-                    {
-                        negative = (nch == '-');
-                        if (width > 0) width--;
-                        if (width == 0) break;
-                        nch = (consumed++, *str++);
-                    }
-
-                    /* get first digit */
-                    if ('.' != nch)
-                    {
-                        if (!isdigit( nch )) break;
-                        d = nch - '0';
-                        nch = (consumed++, *str++);
-                        if (width > 0) width--;
-                        /* read until no more digits */
-                        while (width != 0 && nch != '\0' && isdigit( nch ))
-                        {
-                            hlp = d * 10 + nch - '0';
-                            nch = (consumed++, *str++);
-                            if (width > 0) width--;
-                            if(d > (ULONGLONG)-1/10 || hlp < d)
-                            {
-                                exp++;
-                                break;
-                            }
-                            else
-                                d = hlp;
-                        }
-                        while (width != 0 && nch != '\0' && isdigit( nch ))
-                        {
-                            exp++;
-                            nch = (consumed++, *str++);
-                            if (width > 0) width--;
-                        }
-                    }
-                    else
-                        d = 0; /* Fix: .8 -> 0.8 */
-
-                    /* handle decimals */
-                    if (width != 0 && nch == '.')
-                    {
-                        nch = (consumed++, *str++);
-                        if (width > 0) width--;
-
-                        while (width != 0 && nch != '\0' && isdigit( nch ))
-                        {
-                            hlp = d * 10 + nch - '0';
-                            nch = (consumed++, *str++);
-                            if (width > 0) width--;
-                            if(d > (ULONGLONG)-1/10 || hlp < d)
-                                break;
-
-                            d = hlp;
-                            exp--;
-                        }
-                        while (width != 0 && nch != '\0' && isdigit( nch ))
-                        {
-                            nch = (consumed++, *str++);
-                            if (width > 0) width--;
-                        }
-                    }
-
-                    /* handle exponent */
-                    if (width != 0 && (nch == 'e' || nch == 'E'))
-                    {
-                        int sign = 1, e = 0;
-
-                        nch = (consumed++, *str++);
-                        if (width > 0) width--;
-                        if (width != 0 && (nch == '+' || nch == '-'))
-                        {
-                            if(nch == '-')
-                                sign = -1;
-                            nch = (consumed++, *str++);
-                            if (width > 0) width--;
-                        }
-
-                        /* exponent digits */
-                        while (width != 0 && nch != '\0' && isdigit( nch ))
-                        {
-                            if (e > INT_MAX/10 || (e = e * 10 + nch - '0') < 0)
-                                e = INT_MAX;
-                            nch = (consumed++, *str++);
-                            if (width > 0) width--;
-                        }
-                        e *= sign;
-
-                        if(exp < 0 && e < 0 && e+exp > 0) exp = INT_MIN;
-                        else if(exp > 0 && e > 0 && e+exp < 0) exp = INT_MAX;
-                        else exp += e;
-                    }
-
-                    /*fpcontrol = _control87(0, 0);
-                    _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
-                            |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT, 0xffffffff);*/
-
-                    negexp = (exp < 0);
-                    if (negexp)
-                        exp = -exp;
-                    /* update 'cur' with this exponent. */
-                    while (exp)
-                    {
-                        if(exp & 1)
-                            cur *= expcnt;
-                        exp /= 2;
-                        expcnt = expcnt*expcnt;
-                    }
-                    cur = (negexp ? d/cur : d*cur);
-
-                    /*_control87(fpcontrol, 0xffffffff);*/
-
-                    st = 1;
-                    if (!suppress)
-                    {
-                        if (L_prefix || l_prefix) _SET_NUMBER_( double );
-                        else _SET_NUMBER_( float );
                     }
                 }
                 break;

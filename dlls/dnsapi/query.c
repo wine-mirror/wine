@@ -71,7 +71,7 @@ static const char *dns_section_to_str( ns_sect section )
     case ns_s_ar:   return "Additional";
     default:
     {
-        static char tmp[5];
+        static char tmp[11];
         FIXME( "unknown section: 0x%02x\n", section );
         sprintf( tmp, "0x%02x", section );
         return tmp;

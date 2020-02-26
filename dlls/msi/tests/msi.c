@@ -827,7 +827,7 @@ static UINT set_summary_info(MSIHANDLE hdb, LPSTR prodcode)
 static MSIHANDLE create_package_db(LPSTR prodcode)
 {
     MSIHANDLE hdb = 0;
-    CHAR query[MAX_PATH];
+    CHAR query[MAX_PATH + 72];
     UINT res;
 
     DeleteFileA(msifile);
@@ -1318,8 +1318,7 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}");
     error = GetLastError();
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     /* same length as guid, but random */
     SetLastError(0xdeadbeef);
@@ -1334,8 +1333,7 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     error = GetLastError();
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
     lstrcatA(keypath, prod_squashed);
@@ -1348,8 +1346,7 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\");
     lstrcatA(keypath, prodcode);
@@ -1370,8 +1367,7 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     data = 1;
     res = RegSetValueExA(localkey, "WindowsInstaller", 0, REG_DWORD, (const BYTE *)&data, sizeof(DWORD));
@@ -1382,8 +1378,7 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     RegDeleteValueA(localkey, "WindowsInstaller");
     delete_key(localkey, "", access & KEY_WOW64_64KEY);
@@ -1409,8 +1404,7 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegCreateKeyExA(localkey, "InstallProperties", 0, NULL, 0, access, NULL, &props, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1420,8 +1414,7 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     data = 1;
     res = RegSetValueExA(props, "WindowsInstaller", 0, REG_DWORD, (const BYTE *)&data, sizeof(DWORD));
@@ -1431,9 +1424,21 @@ static void test_MsiQueryProductState(void)
     SetLastError(0xdeadbeef);
     state = MsiQueryProductStateA(prodcode);
     error = GetLastError();
+    if (state == INSTALLSTATE_ADVERTISED)
+    {
+        win_skip("broken result\n");
+        RegDeleteValueA(props, "WindowsInstaller");
+        delete_key(props, "", access & KEY_WOW64_64KEY);
+        RegCloseKey(props);
+        delete_key(localkey, "", access & KEY_WOW64_64KEY);
+        RegCloseKey(localkey);
+        RegDeleteKeyA(userkey, "");
+        RegCloseKey(userkey);
+        LocalFree(usersid);
+        return;
+    }
     ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     data = 2;
     res = RegSetValueExA(props, "WindowsInstaller", 0, REG_DWORD, (const BYTE *)&data, sizeof(DWORD));
@@ -1444,8 +1449,7 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     error = GetLastError();
     ok(state == INSTALLSTATE_DEFAULT, "Expected INSTALLSTATE_DEFAULT, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     RegDeleteKeyA(userkey, "");
 
@@ -1454,8 +1458,7 @@ static void test_MsiQueryProductState(void)
     state = MsiQueryProductStateA(prodcode);
     error = GetLastError();
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     RegDeleteValueA(props, "WindowsInstaller");
     delete_key(props, "", access & KEY_WOW64_64KEY);
@@ -1520,6 +1523,12 @@ static void test_MsiQueryProductState(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryProductStateA(prodcode);
@@ -1670,8 +1679,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}", "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_ALREADY_EXISTS) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     /* same length as guid, but random */
     SetLastError(0xdeadbeef);
@@ -1692,16 +1700,14 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "");
     error = GetLastError();
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     /* feature key does not exist yet */
     SetLastError(0xdeadbeef);
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     /* MSIINSTALLCONTEXT_USERUNMANAGED */
 
@@ -1716,8 +1722,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1727,8 +1732,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
     lstrcatA(keypath, usersid);
@@ -1752,8 +1756,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaa", 20);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1762,8 +1765,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_BADCONFIG, "Expected INSTALLSTATE_BADCONFIG, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaa", 21);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1772,8 +1774,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)"aaaaaaaaaaaaaaaaaaaaa", 22);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1782,8 +1783,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)comp_base85, 41);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1792,8 +1792,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
     lstrcatA(keypath, usersid);
@@ -1815,8 +1814,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"", 1);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1825,8 +1823,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 6);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1835,8 +1832,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(compkey2, prod_squashed, 0, REG_SZ, (const BYTE *)"orange", 7);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1846,8 +1842,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01\\", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1857,8 +1852,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01", 3);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1868,8 +1862,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01a", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1879,8 +1872,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_SOURCE, "Expected INSTALLSTATE_SOURCE, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"01", 3);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1890,8 +1882,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     error = GetLastError();
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    ok(error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* win2k */,
-       "expected ERROR_SUCCESS, got %u\n", error);
+    ok(error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", error);
 
     RegDeleteValueA(compkey, prod_squashed);
     RegDeleteValueA(compkey2, prod_squashed);
@@ -2018,6 +2009,12 @@ static void test_MsiQueryFeatureState(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &userkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* feature key exists */
@@ -2972,6 +2969,12 @@ static void test_MsiGetComponentPath(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* local classes product key exists */
@@ -3317,6 +3320,12 @@ static void test_MsiGetComponentPathEx(void)
     lstrcatA( path_key, prod_squashed );
 
     res = RegCreateKeyExA( HKEY_LOCAL_MACHINE, path_key, 0, NULL, 0, access, NULL, &key_prod, NULL );
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok( res == ERROR_SUCCESS, "got %d\n", res );
 
     /* local classes product key exists */
@@ -3739,6 +3748,12 @@ static void test_MsiGetProductCode(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* local classes product key exists */
@@ -3834,6 +3849,12 @@ static void test_MsiGetProductCode(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* local classes product key exists */
@@ -4687,6 +4708,12 @@ static void test_MsiGetProductInfo(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* classes product key exists */
@@ -8015,6 +8042,12 @@ static void test_MsiGetProductInfoEx(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* local classes product key exists */
@@ -8894,6 +8927,12 @@ static void test_MsiGetUserInfo(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* product key exists */
@@ -9243,6 +9282,12 @@ static void test_MsiOpenProduct(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* managed product key exists */
@@ -12732,6 +12777,12 @@ static void test_MsiGetPatchInfoEx(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* local product key exists */
@@ -13063,6 +13114,12 @@ static void test_MsiEnumProducts(void)
     HKEY key1, key2, key3;
     REGSAM access = KEY_ALL_ACCESS;
 
+    if (is_process_limited())
+    {
+        skip( "process is limited\n" );
+        return;
+    }
+
     create_test_guid(product1, product_squashed1);
     create_test_guid(product2, product_squashed2);
     create_test_guid(product3, product_squashed3);
@@ -13089,6 +13146,12 @@ static void test_MsiEnumProducts(void)
     strcat(keypath1, product_squashed1);
 
     r = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath1, 0, NULL, 0, access, NULL, &key1, NULL);
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     strcpy(keypath3, "Software\\Microsoft\\Installer\\Products\\");
@@ -13118,9 +13181,9 @@ static void test_MsiEnumProducts(void)
         if (!strcmp(product1, guid)) found1 = TRUE;
         if (!strcmp(product2, guid)) found2 = TRUE;
         if (!strcmp(product3, guid)) found3 = TRUE;
+        if (found1 && found2 && found3) break;
         index++;
     }
-    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %u\n", r);
     ok(found1, "product1 not found\n");
     ok(found2, "product2 not found\n");
     ok(found3, "product3 not found\n");
@@ -13188,6 +13251,7 @@ static void test_MsiEnumProductsEx(void)
     HKEY key1 = NULL, key2 = NULL, key3 = NULL;
     REGSAM access = KEY_ALL_ACCESS;
     char *usersid = get_user_sid();
+    BOOL found1, found2, found3;
 
     if (!pMsiEnumProductsExA)
     {
@@ -13219,6 +13283,11 @@ static void test_MsiEnumProductsEx(void)
     strcat( keypath1, product_squashed1 );
 
     r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath1, 0, NULL, 0, access, NULL, &key1, NULL );
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        goto done;
+    }
     ok( r == ERROR_SUCCESS, "got %u\n", r );
 
     strcpy( keypath3, usersid );
@@ -13303,6 +13372,7 @@ static void test_MsiEnumProductsEx(void)
     context = 0xdeadbeef;
     sid[0] = 0;
     len = sizeof(sid);
+    found1 = found2 = found3 = FALSE;
     while (!pMsiEnumProductsExA( NULL, "S-1-1-0", MSIINSTALLCONTEXT_ALL, index, guid, &context, sid, &len ))
     {
         if (!strcmp( product1, guid ))
@@ -13310,25 +13380,32 @@ static void test_MsiEnumProductsEx(void)
             ok( context == MSIINSTALLCONTEXT_MACHINE, "got %u\n", context );
             ok( !sid[0], "got \"%s\"\n", sid );
             ok( !len, "unexpected length %u\n", len );
+            found1 = TRUE;
         }
         if (!strcmp( product2, guid ))
         {
             ok( context == MSIINSTALLCONTEXT_USERMANAGED, "got %u\n", context );
             ok( sid[0], "empty sid\n" );
             ok( len == strlen(sid), "unexpected length %u\n", len );
+            found2 = TRUE;
         }
         if (!strcmp( product3, guid ))
         {
             ok( context == MSIINSTALLCONTEXT_USERUNMANAGED, "got %u\n", context );
             ok( sid[0], "empty sid\n" );
             ok( len == strlen(sid), "unexpected length %u\n", len );
+            found3 = TRUE;
         }
+        if (found1 && found2 && found3) break;
         index++;
         guid[0] = 0;
         context = 0xdeadbeef;
         sid[0] = 0;
         len = sizeof(sid);
     }
+    ok(found1, "product1 not found\n");
+    ok(found2, "product2 not found\n");
+    ok(found3, "product3 not found\n");
 
 done:
     delete_key( key1, "", access );
@@ -13351,6 +13428,12 @@ static void test_MsiEnumComponents(void)
     REGSAM access = KEY_ALL_ACCESS;
     char *usersid = get_user_sid();
     HKEY key1 = NULL, key2 = NULL;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_guid( comp1, comp_squashed1 );
     create_test_guid( comp2, comp_squashed2 );
@@ -13392,6 +13475,7 @@ static void test_MsiEnumComponents(void)
         if (!strcmp( guid, comp1 )) found1 = TRUE;
         if (!strcmp( guid, comp2 )) found2 = TRUE;
         ok( guid[0], "empty guid\n" );
+        if (found1 && found2) break;
         guid[0] = 0;
         index++;
     }
@@ -13424,6 +13508,12 @@ static void test_MsiEnumComponentsEx(void)
         win_skip( "MsiEnumComponentsExA not implemented\n" );
         return;
     }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_guid( comp1, comp_squashed1 );
     create_test_guid( comp2, comp_squashed2 );
 
@@ -14102,7 +14192,7 @@ static void test_lastusedsource(void)
     ok(!lstrcmpA(value, path), "expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "expected %d, got %d\n", lstrlenA(path), size);
 
-    r = MsiInstallProductA("msifile0.msi", "REMOVE=ALL");
+    r = MsiInstallProductA("msifile0.msi", "REMOVE=ALL FULL=1");
     ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
 
     /* separate cabinet file */
@@ -14128,7 +14218,7 @@ static void test_lastusedsource(void)
     ok(!lstrcmpA(value, path), "expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "expected %d, got %d\n", lstrlenA(path), size);
 
-    r = MsiInstallProductA("msifile1.msi", "REMOVE=ALL");
+    r = MsiInstallProductA("msifile1.msi", "REMOVE=ALL FULL=1");
     ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
 
     size = MAX_PATH;
@@ -14153,7 +14243,7 @@ static void test_lastusedsource(void)
     ok(!lstrcmpA(value, path), "expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "expected %d, got %d\n", lstrlenA(path), size);
 
-    r = MsiInstallProductA("msifile2.msi", "REMOVE=ALL");
+    r = MsiInstallProductA("msifile2.msi", "REMOVE=ALL FULL=1");
     ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
 
     size = MAX_PATH;

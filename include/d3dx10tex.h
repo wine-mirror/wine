@@ -103,17 +103,47 @@ typedef struct D3DX10_IMAGE_LOAD_INFO
 #endif
 } D3DX10_IMAGE_LOAD_INFO;
 
+typedef struct _D3DX10_TEXTURE_LOAD_INFO
+{
+    D3D10_BOX *pSrcBox;
+    D3D10_BOX *pDstBox;
+    UINT SrcFirstMip;
+    UINT DstFirstMip;
+    UINT NumMips;
+    UINT SrcFirstElement;
+    UINT DstFirstElement;
+    UINT NumElements;
+    UINT Filter;
+    UINT MipFilter;
+
+#ifdef __cplusplus
+    _D3DX10_TEXTURE_LOAD_INFO()
+    {
+        pSrcBox = NULL;
+        pDstBox = NULL;
+        SrcFirstMip = 0;
+        DstFirstMip = 0;
+        NumMips = D3DX10_DEFAULT;
+        SrcFirstElement = 0;
+        DstFirstElement = 0;
+        NumElements = D3DX10_DEFAULT;
+        Filter = D3DX10_DEFAULT;
+        MipFilter = D3DX10_DEFAULT;
+    }
+#endif
+} D3DX10_TEXTURE_LOAD_INFO;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *src_data, SIZE_T src_data_size,
         D3DX10_IMAGE_LOAD_INFO *loadinfo, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult);
-
 HRESULT WINAPI D3DX10FilterTexture(ID3D10Resource *texture, UINT src_level, UINT filter);
-
 HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *img_info, HRESULT *hresult);
+HRESULT WINAPI D3DX10LoadTextureFromTexture(ID3D10Resource *src_texture, D3DX10_TEXTURE_LOAD_INFO *load_info,
+        ID3D10Resource *dst_texture);
 
 #ifdef __cplusplus
 }

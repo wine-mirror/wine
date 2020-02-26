@@ -32,41 +32,54 @@ static inline BaseControlWindow *impl_from_BaseWindow(BaseWindow *iface)
     return CONTAINING_RECORD(iface, BaseControlWindow, baseWindow);
 }
 
-static LRESULT CALLBACK WndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WndProcW(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
     BaseWindow* This = (BaseWindow*)GetWindowLongPtrW(hwnd, 0);
+    BaseControlWindow *window = impl_from_BaseWindow(This);
 
     if (!This)
-        return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+        return DefWindowProcW(hwnd, message, wparam, lparam);
 
-    if (This->pFuncsTable->pfnOnReceiveMessage)
-        return This->pFuncsTable->pfnOnReceiveMessage(This, hwnd, uMsg, wParam, lParam);
-    else
-        return BaseWindowImpl_OnReceiveMessage(This, hwnd, uMsg, wParam, lParam);
-}
-
-LRESULT WINAPI BaseWindowImpl_OnReceiveMessage(BaseWindow *This, HWND hwnd, INT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    if (This->pFuncsTable->pfnPossiblyEatMessage && This->pFuncsTable->pfnPossiblyEatMessage(This, uMsg, wParam, lParam))
-        return 0;
-
-    switch (uMsg)
+    switch (message)
     {
-        case WM_SIZE:
-            if (This->pFuncsTable->pfnOnSize)
-                return This->pFuncsTable->pfnOnSize(This, LOWORD(lParam), HIWORD(lParam));
-            else
-                return BaseWindowImpl_OnSize(This, LOWORD(lParam), HIWORD(lParam));
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MOUSEACTIVATE:
+    case WM_MOUSEMOVE:
+    case WM_NCLBUTTONDBLCLK:
+    case WM_NCLBUTTONDOWN:
+    case WM_NCLBUTTONUP:
+    case WM_NCMBUTTONDBLCLK:
+    case WM_NCMBUTTONDOWN:
+    case WM_NCMBUTTONUP:
+    case WM_NCMOUSEMOVE:
+    case WM_NCRBUTTONDBLCLK:
+    case WM_NCRBUTTONDOWN:
+    case WM_NCRBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+        if (window->hwndDrain)
+        {
+            PostMessageW(window->hwndDrain, message, wparam, lparam);
+            return 0;
+        }
+        break;
+    case WM_SIZE:
+        if (This->pFuncsTable->pfnOnSize)
+            return This->pFuncsTable->pfnOnSize(This, LOWORD(lparam), HIWORD(lparam));
+
+        This->Width = LOWORD(lparam);
+        This->Height = HIWORD(lparam);
     }
 
-    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
-}
-
-BOOL WINAPI BaseWindowImpl_OnSize(BaseWindow *This, LONG Width, LONG Height)
-{
-    This->Width = Width;
-    This->Height = Height;
-    return TRUE;
+    return DefWindowProcW(hwnd, message, wparam, lparam);
 }
 
 HRESULT WINAPI BaseWindow_Init(BaseWindow *pBaseWindow, const BaseWindowFuncTable* pFuncsTable)
@@ -91,33 +104,24 @@ HRESULT WINAPI BaseWindow_Destroy(BaseWindow *This)
 
 HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
 {
-    WNDCLASSW winclass;
+    static const WCHAR class_nameW[] = {'w','i','n','e','_','s','t','r','m','b','a','s','e','_','w','i','n','d','o','w',0};
     static const WCHAR windownameW[] = { 'A','c','t','i','v','e','M','o','v','i','e',' ','W','i','n','d','o','w',0 };
+    WNDCLASSW winclass = {0};
 
-    This->pClassName = This->pFuncsTable->pfnGetClassWindowStyles(This, &This->ClassStyles, &This->WindowStyles, &This->WindowStylesEx);
-
-    winclass.style = This->ClassStyles;
     winclass.lpfnWndProc = WndProcW;
-    winclass.cbClsExtra = 0;
     winclass.cbWndExtra = sizeof(BaseWindow*);
-    winclass.hInstance = This->hInstance;
-    winclass.hIcon = NULL;
-    winclass.hCursor = NULL;
     winclass.hbrBackground = GetStockObject(BLACK_BRUSH);
-    winclass.lpszMenuName = NULL;
-    winclass.lpszClassName = This->pClassName;
+    winclass.lpszClassName = class_nameW;
     if (!RegisterClassW(&winclass) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
     {
         ERR("Unable to register window class: %u\n", GetLastError());
         return E_FAIL;
     }
 
-    This->hWnd = CreateWindowExW(This->WindowStylesEx,
-                                 This->pClassName, windownameW,
-                                 This->WindowStyles,
-                                 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                                 CW_USEDEFAULT, NULL, NULL, This->hInstance,
-                                 NULL);
+    This->hWnd = CreateWindowExW(0, class_nameW, windownameW,
+            WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+            CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            NULL, NULL, NULL, NULL);
 
     if (!This->hWnd)
     {
@@ -127,73 +131,29 @@ HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
 
     SetWindowLongPtrW(This->hWnd, 0, (LONG_PTR)This);
 
-    This->hDC = GetDC(This->hWnd);
-
     return S_OK;
 }
 
 HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
 {
+    BaseControlWindow *window = impl_from_BaseWindow(This);
+
     if (!This->hWnd)
         return S_OK;
 
-    if (This->hDC)
-        ReleaseDC(This->hWnd, This->hDC);
-    This->hDC = NULL;
+    /* Media Player Classic deadlocks if WM_PARENTNOTIFY is sent, so unparent
+     * the window first. */
+    IVideoWindow_put_Owner(&window->IVideoWindow_iface, 0);
 
-    DestroyWindow(This->hWnd);
+    SendMessageW(This->hWnd, WM_CLOSE, 0, 0);
     This->hWnd = NULL;
 
     return S_OK;
 }
 
-RECT WINAPI BaseWindowImpl_GetDefaultRect(BaseWindow *This)
-{
-    static RECT defRect = {0, 0, 800, 600};
-    return defRect;
-}
-
-BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    BaseControlWindow* pControlWindow = impl_from_BaseWindow(This);
-
-    if (pControlWindow->hwndDrain)
-    {
-        switch(uMsg)
-        {
-            case WM_KEYDOWN:
-            case WM_KEYUP:
-            case WM_LBUTTONDBLCLK:
-            case WM_LBUTTONDOWN:
-            case WM_LBUTTONUP:
-            case WM_MBUTTONDBLCLK:
-            case WM_MBUTTONDOWN:
-            case WM_MBUTTONUP:
-            case WM_MOUSEACTIVATE:
-            case WM_MOUSEMOVE:
-            case WM_NCLBUTTONDBLCLK:
-            case WM_NCLBUTTONDOWN:
-            case WM_NCLBUTTONUP:
-            case WM_NCMBUTTONDBLCLK:
-            case WM_NCMBUTTONDOWN:
-            case WM_NCMBUTTONUP:
-            case WM_NCMOUSEMOVE:
-            case WM_NCRBUTTONDBLCLK:
-            case WM_NCRBUTTONDOWN:
-            case WM_NCRBUTTONUP:
-            case WM_RBUTTONDBLCLK:
-            case WM_RBUTTONDOWN:
-            case WM_RBUTTONUP:
-                PostMessageW(pControlWindow->hwndDrain, uMsg, wParam, lParam);
-                return TRUE;
-            default:
-                break;
-        }
-    }
-    return FALSE;
-}
-
-HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow, const IVideoWindowVtbl *lpVtbl, BaseFilter *owner, CRITICAL_SECTION *lock, BasePin* pPin,const BaseWindowFuncTable *pFuncsTable)
+HRESULT WINAPI strmbase_window_init(BaseControlWindow *pControlWindow,
+        const IVideoWindowVtbl *lpVtbl, struct strmbase_filter *owner,
+        struct strmbase_pin *pPin, const BaseWindowFuncTable *pFuncsTable)
 {
     HRESULT hr;
 
@@ -201,11 +161,10 @@ HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow, const I
     if (SUCCEEDED(hr))
     {
         pControlWindow->IVideoWindow_iface.lpVtbl = lpVtbl;
-        pControlWindow->AutoShow = TRUE;
+        pControlWindow->AutoShow = OATRUE;
         pControlWindow->hwndDrain = NULL;
         pControlWindow->hwndOwner = NULL;
         pControlWindow->pFilter = owner;
-        pControlWindow->pInterfaceLock = lock;
         pControlWindow->pPin = pPin;
     }
     return hr;
@@ -295,15 +254,24 @@ HRESULT WINAPI BaseControlWindowImpl_put_Caption(IVideoWindow *iface, BSTR strCa
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_get_Caption(IVideoWindow *iface, BSTR *strCaption)
+HRESULT WINAPI BaseControlWindowImpl_get_Caption(IVideoWindow *iface, BSTR *caption)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    WCHAR *str;
+    int len;
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, strCaption);
+    TRACE("window %p, caption %p.\n", window, caption);
 
-    GetWindowTextW(This->baseWindow.hWnd, (LPWSTR)strCaption, 100);
+    *caption = NULL;
 
-    return S_OK;
+    len = GetWindowTextLengthW(window->baseWindow.hWnd) + 1;
+    if (!(str = heap_alloc(len * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+
+    GetWindowTextW(window->baseWindow.hWnd, str, len);
+    *caption = SysAllocString(str);
+    heap_free(str);
+    return *caption ? S_OK : E_OUTOFMEMORY;
 }
 
 HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG WindowStyle)
@@ -319,19 +287,19 @@ HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG W
         return E_INVALIDARG;
 
     SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, WindowStyle);
-    SetWindowPos(This->baseWindow.hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
-    This->baseWindow.WindowStyles = WindowStyle;
+    SetWindowPos(This->baseWindow.hWnd, 0, 0, 0, 0, 0,
+            SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_get_WindowStyle(IVideoWindow *iface, LONG *WindowStyle)
+HRESULT WINAPI BaseControlWindowImpl_get_WindowStyle(IVideoWindow *iface, LONG *style)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, WindowStyle);
+    TRACE("window %p, style %p.\n", window, style);
 
-    *WindowStyle = This->baseWindow.WindowStyles;
+    *style = GetWindowLongW(window->baseWindow.hWnd, GWL_STYLE);
 
     return S_OK;
 }
@@ -390,15 +358,22 @@ HRESULT WINAPI BaseControlWindowImpl_put_WindowState(IVideoWindow *iface, LONG W
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_get_WindowState(IVideoWindow *iface, LONG *WindowState)
+HRESULT WINAPI BaseControlWindowImpl_get_WindowState(IVideoWindow *iface, LONG *state)
 {
-    WINDOWPLACEMENT place;
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    DWORD style;
 
-    place.length = sizeof(place);
-    GetWindowPlacement(This->baseWindow.hWnd, &place);
-    TRACE("(%p/%p)->(%p)\n", This, iface, WindowState);
-    *WindowState = place.showCmd;
+    TRACE("window %p, state %p.\n", window, state);
+
+    style = GetWindowLongPtrW(window->baseWindow.hWnd, GWL_STYLE);
+    if (!(style & WS_VISIBLE))
+        *state = SW_HIDE;
+    else if (style & WS_MINIMIZE)
+        *state = SW_MINIMIZE;
+    else if (style & WS_MAXIMIZE)
+        *state = SW_MAXIMIZE;
+    else
+        *state = SW_SHOW;
 
     return S_OK;
 }
@@ -438,7 +413,7 @@ HRESULT WINAPI BaseControlWindowImpl_get_Visible(IVideoWindow *iface, LONG *pVis
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pVisible);
 
-    *pVisible = IsWindowVisible(This->baseWindow.hWnd);
+    *pVisible = IsWindowVisible(This->baseWindow.hWnd) ? OATRUE : OAFALSE;
 
     return S_OK;
 }
@@ -451,7 +426,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_Left(IVideoWindow *iface, LONG Left)
     TRACE("(%p/%p)->(%d)\n", This, iface, Left);
 
     GetWindowRect(This->baseWindow.hWnd, &WindowPos);
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, WindowPos.top, 0, 0, SWP_NOZORDER|SWP_NOSIZE))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, WindowPos.top, 0, 0,
+            SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE))
         return E_FAIL;
 
     return S_OK;
@@ -476,7 +452,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_Width(IVideoWindow *iface, LONG Width)
 
     TRACE("(%p/%p)->(%d)\n", This, iface, Width);
 
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, Width, This->baseWindow.Height, SWP_NOZORDER|SWP_NOMOVE))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, Width, This->baseWindow.Height,
+            SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE))
         return E_FAIL;
 
     This->baseWindow.Width = Width;
@@ -503,7 +480,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_Top(IVideoWindow *iface, LONG Top)
     TRACE("(%p/%p)->(%d)\n", This, iface, Top);
     GetWindowRect(This->baseWindow.hWnd, &WindowPos);
 
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, WindowPos.left, Top, 0, 0, SWP_NOZORDER|SWP_NOSIZE))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, WindowPos.left, Top, 0, 0,
+            SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE))
         return E_FAIL;
 
     return S_OK;
@@ -528,7 +506,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_Height(IVideoWindow *iface, LONG Height
 
     TRACE("(%p/%p)->(%d)\n", This, iface, Height);
 
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, This->baseWindow.Width, Height, SWP_NOZORDER|SWP_NOMOVE))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, This->baseWindow.Width,
+            Height, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE))
         return E_FAIL;
 
     This->baseWindow.Height = Height;
@@ -547,23 +526,22 @@ HRESULT WINAPI BaseControlWindowImpl_get_Height(IVideoWindow *iface, LONG *pHeig
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_put_Owner(IVideoWindow *iface, OAHWND Owner)
+HRESULT WINAPI BaseControlWindowImpl_put_Owner(IVideoWindow *iface, OAHWND owner)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    HWND hwnd = window->baseWindow.hWnd;
 
-    TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Owner);
+    TRACE("window %p, owner %#lx.\n", window, owner);
 
-    This->hwndOwner = (HWND)Owner;
-    SetParent(This->baseWindow.hWnd, This->hwndOwner);
-    if (This->baseWindow.WindowStyles & WS_CHILD)
-    {
-        LONG old = GetWindowLongW(This->baseWindow.hWnd, GWL_STYLE);
-        if (old != This->baseWindow.WindowStyles)
-        {
-            SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, This->baseWindow.WindowStyles);
-            SetWindowPos(This->baseWindow.hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
-        }
-    }
+    /* Make sure we are marked as WS_CHILD before reparenting ourselves, so that
+     * we do not steal focus. LEGO Island depends on this. */
+
+    window->hwndOwner = (HWND)owner;
+    if (owner)
+        SetWindowLongPtrW(hwnd, GWL_STYLE, GetWindowLongPtrW(hwnd, GWL_STYLE) | WS_CHILD);
+    else
+        SetWindowLongPtrW(hwnd, GWL_STYLE, GetWindowLongPtrW(hwnd, GWL_STYLE) & ~WS_CHILD);
+    SetParent(hwnd, (HWND)owner);
 
     return S_OK;
 }
@@ -632,29 +610,22 @@ HRESULT WINAPI BaseControlWindowImpl_put_FullScreenMode(IVideoWindow *iface, LON
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_SetWindowForeground(IVideoWindow *iface, LONG Focus)
+HRESULT WINAPI BaseControlWindowImpl_SetWindowForeground(IVideoWindow *iface, LONG focus)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
-    BOOL ret;
-    IPin* pPin;
-    HRESULT hr;
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    UINT flags = SWP_NOMOVE | SWP_NOSIZE;
 
-    TRACE("(%p/%p)->(%d)\n", This, iface, Focus);
+    TRACE("window %p, focus %d.\n", window, focus);
 
-    if ((Focus != FALSE) && (Focus != TRUE))
+    if (focus != OAFALSE && focus != OATRUE)
         return E_INVALIDARG;
 
-    hr = IPin_ConnectedTo(&This->pPin->IPin_iface, &pPin);
-    if ((hr != S_OK) || !pPin)
+    if (!window->pPin->peer)
         return VFW_E_NOT_CONNECTED;
 
-    if (Focus)
-        ret = SetForegroundWindow(This->baseWindow.hWnd);
-    else
-        ret = SetWindowPos(This->baseWindow.hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
-
-    if (!ret)
-        return E_FAIL;
+    if (!focus)
+        flags |= SWP_NOACTIVATE;
+    SetWindowPos(window->baseWindow.hWnd, HWND_TOP, 0, 0, 0, 0, flags);
 
     return S_OK;
 }
@@ -665,7 +636,7 @@ HRESULT WINAPI BaseControlWindowImpl_SetWindowPosition(IVideoWindow *iface, LONG
 
     TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
 
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, Top, Width, Height, SWP_NOZORDER))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, Top, Width, Height, SWP_NOACTIVATE | SWP_NOZORDER))
         return E_FAIL;
 
     This->baseWindow.Width = Width;
@@ -690,14 +661,28 @@ HRESULT WINAPI BaseControlWindowImpl_GetWindowPosition(IVideoWindow *iface, LONG
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_NotifyOwnerMessage(IVideoWindow *iface, OAHWND hwnd, LONG uMsg, LONG_PTR wParam, LONG_PTR lParam)
+HRESULT WINAPI BaseControlWindowImpl_NotifyOwnerMessage(IVideoWindow *iface,
+        OAHWND hwnd, LONG message, LONG_PTR wparam, LONG_PTR lparam)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
 
-    TRACE("(%p/%p)->(%08lx, %d, %08lx, %08lx)\n", This, iface, hwnd, uMsg, wParam, lParam);
+    TRACE("window %p, hwnd %#lx, message %#x, wparam %#lx, lparam %#lx.\n",
+            window, hwnd, message, wparam, lparam);
 
-    if (!PostMessageW(This->baseWindow.hWnd, uMsg, wParam, lParam))
-        return E_FAIL;
+    /* That these messages are forwarded, and no others, is stated by the
+     * DirectX documentation, and supported by manual testing. */
+    switch (message)
+    {
+    case WM_ACTIVATEAPP:
+    case WM_DEVMODECHANGE:
+    case WM_DISPLAYCHANGE:
+    case WM_PALETTECHANGED:
+    case WM_PALETTEISCHANGING:
+    case WM_QUERYNEWPALETTE:
+    case WM_SYSCOLORCHANGE:
+        SendMessageW(window->baseWindow.hWnd, message, wparam, lparam);
+        break;
+    }
 
     return S_OK;
 }

@@ -26,18 +26,6 @@
 #include "initguid.h"
 #include "oledlg.h"
 
-static const WCHAR *strstrW( const WCHAR *str, const WCHAR *sub )
-{
-    while (*str)
-    {
-        const WCHAR *p1 = str, *p2 = sub;
-        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
-        if (!*p2) return str;
-        str++;
-    }
-    return NULL;
-}
-
 static HRESULT WINAPI enumverbs_QueryInterface(IEnumOLEVERB *iface, REFIID riid, void **ppv)
 {
     if (IsEqualIID(riid, &IID_IEnumOLEVERB) || IsEqualIID(riid, &IID_IUnknown)) {
@@ -411,7 +399,7 @@ static void test_OleUIAddVerbMenu(void)
     ok(ret, "got %d\n", ret);
     /* Item string contains verb, usertype and localized string for 'Object' word,
        exact format depends on localization. */
-    ok(strstrW(buffW, verbW) != NULL, "str %s\n", wine_dbgstr_w(buffW));
+    ok(wcsstr(buffW, verbW) != NULL, "str %s\n", wine_dbgstr_w(buffW));
     ok(info.fState == 0, "got state 0x%08x\n", info.fState);
     ok(info.hSubMenu == NULL, "got submenu %p\n", info.hSubMenu);
 

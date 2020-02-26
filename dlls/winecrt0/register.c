@@ -94,7 +94,7 @@ static BOOL CALLBACK register_resource( HMODULE module, LPCWSTR type, LPWSTR nam
     return SUCCEEDED(info->result);
 }
 
-HRESULT __wine_register_resources( HMODULE module )
+HRESULT __cdecl __wine_register_resources( HMODULE module )
 {
     struct reg_info info;
 
@@ -106,7 +106,7 @@ HRESULT __wine_register_resources( HMODULE module )
     return info.result;
 }
 
-HRESULT __wine_unregister_resources( HMODULE module )
+HRESULT __cdecl __wine_unregister_resources( HMODULE module )
 {
     struct reg_info info;
 

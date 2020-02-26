@@ -111,7 +111,7 @@ static void test_getat(IPropertyStore *store)
     hr = IPropertyStore_GetCount(store, &propcount);
 
     ok(hr == S_OK, "Failed with %08x\n", hr);
-    ok(propcount > 0, "Propcount %d should be greather than zero\n", propcount);
+    ok(propcount > 0, "Propcount %d should be greater than zero\n", propcount);
 
     for (prop = 0; prop < propcount; prop++) {
 	hr = IPropertyStore_GetAt(store, prop, &pkey);

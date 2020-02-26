@@ -60,7 +60,7 @@ static const struct
 
 static LONG obj_ref, class_ref, server_locks;
 
-static const char *debugstr_guid(const GUID *guid)
+static const char *debugstr_ole_guid(const GUID *guid)
 {
     int i;
 
@@ -92,7 +92,7 @@ static HRESULT WINAPI UnknownImpl_QueryInterface(IUnknown *iface,
 {
     UnknownImpl *This = impl_from_IUnknown(iface);
 
-    trace("server: unknown_QueryInterface: %p,%s,%p\n", iface, debugstr_guid(iid), ppv);
+    trace("server: unknown_QueryInterface: %p,%s,%p\n", iface, debugstr_ole_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 
@@ -153,7 +153,7 @@ static HRESULT WINAPI ClassFactoryImpl_QueryInterface(IClassFactory *iface,
 {
     ClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
-    trace("server: factory_QueryInterface: %p,%s,%p\n", iface, debugstr_guid(iid), ppv);
+    trace("server: factory_QueryInterface: %p,%s,%p\n", iface, debugstr_ole_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 
@@ -197,7 +197,7 @@ static HRESULT WINAPI ClassFactoryImpl_CreateInstance(IClassFactory *iface,
     UnknownImpl *unknown;
     HRESULT hr;
 
-    trace("server: factory_CreateInstance: %p,%s,%p\n", iface, debugstr_guid(iid), ppv);
+    trace("server: factory_CreateInstance: %p,%s,%p\n", iface, debugstr_ole_guid(iid), ppv);
 
     if (punkouter) return CLASS_E_NOAGGREGATION;
 

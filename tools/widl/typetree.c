@@ -49,7 +49,6 @@ type_t *make_type(enum type_type type)
     t->type_type = type;
     t->attrs = NULL;
     t->c_name = NULL;
-    t->orig = NULL;
     memset(&t->details, 0, sizeof(t->details));
     t->typestring_offset = 0;
     t->ptrdesc = 0;
@@ -59,7 +58,6 @@ type_t *make_type(enum type_type type)
     t->user_types_registered = FALSE;
     t->tfswrite = FALSE;
     t->checked = FALSE;
-    t->is_alias = FALSE;
     t->typelib_idx = -1;
     init_loc_info(&t->loc_info);
     return t;
@@ -137,7 +135,7 @@ type_t *type_new_function(var_list_t *args)
     if (args)
     {
         arg = LIST_ENTRY(list_head(args), var_t, entry);
-        if (list_count(args) == 1 && !arg->name && arg->type && type_get_type(arg->type) == TYPE_VOID)
+        if (list_count(args) == 1 && !arg->name && arg->declspec.type && type_get_type(arg->declspec.type) == TYPE_VOID)
         {
             list_remove(&arg->entry);
             free(arg);
@@ -147,7 +145,7 @@ type_t *type_new_function(var_list_t *args)
     }
     if (args) LIST_FOR_EACH_ENTRY(arg, args, var_t, entry)
     {
-        if (arg->type && type_get_type(arg->type) == TYPE_VOID)
+        if (arg->declspec.type && type_get_type(arg->declspec.type) == TYPE_VOID)
             error_loc("argument '%s' has void type\n", arg->name);
         if (!arg->name)
         {
@@ -174,29 +172,24 @@ type_t *type_new_function(var_list_t *args)
     t = make_type(TYPE_FUNCTION);
     t->details.function = xmalloc(sizeof(*t->details.function));
     t->details.function->args = args;
-    t->details.function->idx = -1;
+    t->details.function->retval = make_var(xstrdup("_RetVal"));
     return t;
 }
 
-type_t *type_new_pointer(unsigned char pointer_default, type_t *ref, attr_list_t *attrs)
+type_t *type_new_pointer(type_t *ref)
 {
     type_t *t = make_type(TYPE_POINTER);
-    t->details.pointer.def_fc = pointer_default;
-    t->details.pointer.ref = ref;
-    t->attrs = attrs;
+    t->details.pointer.ref.type = ref;
     return t;
 }
 
-type_t *type_new_alias(type_t *t, const char *name)
+type_t *type_new_alias(const decl_spec_t *t, const char *name)
 {
-    type_t *a = duptype(t, 0);
+    type_t *a = make_type(TYPE_ALIAS);
 
     a->name = xstrdup(name);
     a->attrs = NULL;
-    a->orig = t;
-    a->is_alias = TRUE;
-    /* for pointer types */
-    a->details = t->details;
+    a->details.alias.aliasee = *t;
     init_loc_info(&a->loc_info);
 
     return a;
@@ -223,9 +216,8 @@ type_t *type_new_coclass(char *name)
 }
 
 
-type_t *type_new_array(const char *name, type_t *element, int declptr,
-                       unsigned int dim, expr_t *size_is, expr_t *length_is,
-                       unsigned char ptr_default_fc)
+type_t *type_new_array(const char *name, const decl_spec_t *element, int declptr,
+                       unsigned int dim, expr_t *size_is, expr_t *length_is)
 {
     type_t *t = make_type(TYPE_ARRAY);
     if (name) t->name = xstrdup(name);
@@ -235,8 +227,8 @@ type_t *type_new_array(const char *name, type_t *element, int declptr,
         t->details.array.size_is = size_is;
     else
         t->details.array.dim = dim;
-    t->details.array.elem = element;
-    t->details.array.ptr_def_fc = ptr_default_fc;
+    if (element)
+        t->details.array.elem = *element;
     return t;
 }
 
@@ -273,92 +265,117 @@ type_t *type_new_void(void)
 
 type_t *type_new_enum(const char *name, struct namespace *namespace, int defined, var_list_t *enums)
 {
-    type_t *tag_type = name ? find_type(name, namespace, tsENUM) : NULL;
-    type_t *t = make_type(TYPE_ENUM);
-    t->name = name;
-    t->namespace = namespace;
+    type_t *t = NULL;
 
-    if (tag_type && tag_type->details.enumeration)
-        t->details.enumeration = tag_type->details.enumeration;
-    else if (defined)
+    if (name)
+        t = find_type(name, namespace,tsENUM);
+
+    if (!t)
+    {
+        t = make_type(TYPE_ENUM);
+        t->name = name;
+        t->namespace = namespace;
+        if (name)
+            reg_type(t, name, namespace, tsENUM);
+    }
+
+    if (!t->defined && defined)
     {
         t->details.enumeration = xmalloc(sizeof(*t->details.enumeration));
         t->details.enumeration->enums = enums;
         t->defined = TRUE;
     }
+    else if (defined)
+        error_loc("redefinition of enum %s\n", name);
 
-    if (name)
-    {
-        if (defined)
-            reg_type(t, name, namespace, tsENUM);
-        else
-            add_incomplete(t);
-    }
     return t;
 }
 
 type_t *type_new_struct(char *name, struct namespace *namespace, int defined, var_list_t *fields)
 {
-    type_t *tag_type = name ? find_type(name, namespace, tsSTRUCT) : NULL;
-    type_t *t;
+    type_t *t = NULL;
 
-    /* avoid creating duplicate typelib type entries */
-    if (tag_type && do_typelib) return tag_type;
+    if (name)
+        t = find_type(name, namespace, tsSTRUCT);
 
-    t = make_type(TYPE_STRUCT);
-    t->name = name;
-    t->namespace = namespace;
+    if (!t)
+    {
+        t = make_type(TYPE_STRUCT);
+        t->name = name;
+        t->namespace = namespace;
+        if (name)
+            reg_type(t, name, namespace, tsSTRUCT);
+    }
 
-    if (tag_type && tag_type->details.structure)
-        t->details.structure = tag_type->details.structure;
-    else if (defined)
+    if (!t->defined && defined)
     {
         t->details.structure = xmalloc(sizeof(*t->details.structure));
         t->details.structure->fields = fields;
         t->defined = TRUE;
     }
-    if (name)
-    {
-        if (defined)
-            reg_type(t, name, namespace, tsSTRUCT);
-        else
-            add_incomplete(t);
-    }
+    else if (defined)
+        error_loc("redefinition of struct %s\n", name);
+
     return t;
 }
 
 type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields)
 {
-    type_t *tag_type = name ? find_type(name, NULL, tsUNION) : NULL;
-    type_t *t = make_type(TYPE_UNION);
-    t->name = name;
-    if (tag_type && tag_type->details.structure)
-        t->details.structure = tag_type->details.structure;
-    else if (defined)
+    type_t *t = NULL;
+
+    if (name)
+        t = find_type(name, NULL, tsUNION);
+
+    if (!t)
+    {
+        t = make_type(TYPE_UNION);
+        t->name = name;
+        if (name)
+            reg_type(t, name, NULL, tsUNION);
+    }
+
+    if (!t->defined && defined)
     {
         t->details.structure = xmalloc(sizeof(*t->details.structure));
         t->details.structure->fields = fields;
         t->defined = TRUE;
     }
-    if (name)
-    {
-        if (defined)
-            reg_type(t, name, NULL, tsUNION);
-        else
-            add_incomplete(t);
-    }
+    else if (defined)
+        error_loc("redefinition of union %s\n", name);
+
     return t;
 }
 
 type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
 {
-    type_t *t = get_type(TYPE_ENCAPSULATED_UNION, name, NULL, tsUNION);
-    if (!union_field) union_field = make_var( xstrdup("tagged_union") );
-    union_field->type = type_new_nonencapsulated_union(NULL, TRUE, cases);
-    t->details.structure = xmalloc(sizeof(*t->details.structure));
-    t->details.structure->fields = append_var( NULL, switch_field );
-    t->details.structure->fields = append_var( t->details.structure->fields, union_field );
-    t->defined = TRUE;
+    type_t *t = NULL;
+
+    if (name)
+        t = find_type(name, NULL, tsUNION);
+
+    if (!t)
+    {
+        t = make_type(TYPE_ENCAPSULATED_UNION);
+        t->name = name;
+        if (name)
+            reg_type(t, name, NULL, tsUNION);
+    }
+    t->type_type = TYPE_ENCAPSULATED_UNION;
+
+    if (!t->defined)
+    {
+        if (!union_field)
+            union_field = make_var(xstrdup("tagged_union"));
+        union_field->declspec.type = type_new_nonencapsulated_union(gen_name(), TRUE, cases);
+
+        t->details.structure = xmalloc(sizeof(*t->details.structure));
+        t->details.structure->fields = append_var(NULL, switch_field);
+        t->details.structure->fields = append_var(t->details.structure->fields, union_field);
+        t->defined = TRUE;
+    }
+    else
+        error_loc("redefinition of union %s\n", name);
+
     return t;
 }
 
@@ -413,9 +430,9 @@ type_t *type_new_bitfield(type_t *field, const expr_t *bits)
     return t;
 }
 
-static int compute_method_indexes(type_t *iface)
+static unsigned int compute_method_indexes(type_t *iface)
 {
-    int idx;
+    unsigned int idx;
     statement_t *stmt;
 
     if (!iface->details.iface)
@@ -430,7 +447,7 @@ static int compute_method_indexes(type_t *iface)
     {
         var_t *func = stmt->u.var;
         if (!is_callas(func->attrs))
-            func->type->details.function->idx = idx++;
+            func->func_idx = idx++;
     }
 
     return idx;

@@ -271,7 +271,8 @@ static void test_other_invalid_parameters(void)
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF8, 0, w_string, w_string_len, c_string, c_string_len, c_string, NULL);
-    ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%x\n", len, GetLastError());
+    ok((len == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+            || broken(len == 12) /* Win10 1709+ */, "len=%d error=%x\n", len, GetLastError());
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_SYMBOL, 0, w_string, w_string_len, c_string, c_string_len, c_string, NULL);
@@ -286,7 +287,8 @@ static void test_other_invalid_parameters(void)
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF8, 0, w_string, w_string_len, c_string, c_string_len, NULL, &used);
-    ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%x\n", len, GetLastError());
+    ok((len == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+            || broken(len == 12) /* Win10 1709+ */, "len=%d error=%x\n", len, GetLastError());
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_SYMBOL, 0, w_string, w_string_len, c_string, c_string_len, NULL, &used);
@@ -304,7 +306,9 @@ static void test_other_invalid_parameters(void)
     /* CP_UTF8, unrecognized flag and used not NULL => ERROR_INVALID_PARAMETER */
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF8, 0x100, w_string, w_string_len, c_string, c_string_len, NULL, &used);
-    ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%x\n", len, GetLastError());
+    ok(len == 0, "wrong ret %d\n", len);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER
+            || GetLastError() == ERROR_INVALID_FLAGS /* Win10 1709+ */, "wrong error %u\n", GetLastError());
 }
 
 static void test_overlapped_buffers(void)
@@ -997,22 +1001,26 @@ static void test_utf7_decoding(void)
 static void test_undefined_byte_char(void)
 {
     static const struct tag_testset {
-        INT codepage;
+        UINT codepage;
         LPCSTR str;
         BOOL is_error;
     } testset[] = {
+        {   37, "\x6f", FALSE },
         {  874, "\xdd", TRUE },
         {  932, "\xfe", TRUE },
         {  932, "\x80", FALSE },
+        {  932, "\x81\x45", FALSE },
         {  936, "\xff", TRUE },
         {  949, "\xff", TRUE },
         {  950, "\xff", TRUE },
+        { 1252, "?", FALSE },
         { 1252, "\x90", FALSE },
         { 1253, "\xaa", TRUE },
         { 1255, "\xff", TRUE },
         { 1257, "\xa5", TRUE },
     };
     INT i, ret;
+    DWORD err;
 
     for (i = 0; i < ARRAY_SIZE(testset); i++) {
         if (! IsValidCodePage(testset[i].codepage))
@@ -1024,23 +1032,22 @@ static void test_undefined_byte_char(void)
         SetLastError(0xdeadbeef);
         ret = MultiByteToWideChar(testset[i].codepage, MB_ERR_INVALID_CHARS,
                                   testset[i].str, -1, NULL, 0);
+        err = GetLastError();
         if (testset[i].is_error) {
-            ok(ret == 0 && GetLastError() == ERROR_NO_UNICODE_TRANSLATION,
-               "ret is %d, GetLastError is %u (cp %d)\n",
-               ret, GetLastError(), testset[i].codepage);
+            ok(err == ERROR_NO_UNICODE_TRANSLATION, "Test %u: err is %u\n", i, err);
+            ok(ret == 0, "Test %u: ret is %d\n", i, ret);
         }
         else {
-            ok(ret == strlen(testset[i].str)+1 && GetLastError() == 0xdeadbeef,
-               "ret is %d, GetLastError is %u (cp %d)\n",
-               ret, GetLastError(), testset[i].codepage);
+            ok(err == 0xdeadbeef, "Test %u: err is %u\n", i, err);
+            ok(ret == 2, "Test %u: ret is %d\n", i, ret);
         }
 
         SetLastError(0xdeadbeef);
         ret = MultiByteToWideChar(testset[i].codepage, 0,
                                   testset[i].str, -1, NULL, 0);
-        ok(ret == strlen(testset[i].str)+1 && GetLastError() == 0xdeadbeef,
-           "ret is %d, GetLastError is %u (cp %d)\n",
-           ret, GetLastError(), testset[i].codepage);
+        err = GetLastError();
+        ok(err == 0xdeadbeef, "Test %u: err is %u\n", i, err);
+        ok(ret == 2, "Test %u: ret is %d\n", i, ret);
     }
 }
 
@@ -1053,7 +1060,7 @@ static void test_threadcp(void)
     static const LCID JAPANESE = MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN),     SORT_DEFAULT);
     static const LCID CHINESE  = MAKELCID(MAKELANGID(LANG_CHINESE,  SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT);
 
-    BOOL islead, islead_acp;
+    BOOL islead, islead_default;
     CPINFOEXA cpi;
     UINT cp, acp;
     int  i, num;
@@ -1122,7 +1129,7 @@ static void test_threadcp(void)
 
         cp = 0xdeadbeef;
         GetLocaleInfoA(lcids[i].lcid, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER, (LPSTR)&cp, sizeof(cp));
-        ok(cp == lcids[i].threadcp, "wrong codepage %u for lcid %04x, should be %u\n", cp, lcids[i].threadcp, cp);
+        ok(cp == lcids[i].threadcp, "wrong codepage %u for lcid %04x, should be %u\n", cp, lcids[i].lcid, lcids[i].threadcp);
 
         /* GetCPInfoEx/GetCPInfo - CP_ACP */
         SetLastError(0xdeadbeef);
@@ -1148,8 +1155,8 @@ static void test_threadcp(void)
             ok(cpi.CodePage == lcids[i].threadcp, "wrong codepage %u for lcid %04x, should be %u\n",
                cpi.CodePage, lcids[i].lcid, lcids[i].threadcp);
         else
-            ok(cpi.CodePage == acp, "wrong codepage %u for lcid %04x, should be %u\n",
-               cpi.CodePage, lcids[i].lcid, acp);
+            ok(cpi.CodePage == acp || cpi.CodePage == CP_UTF8 /* Win10 1809+ */,
+                "wrong codepage %u for lcid %04x, should be %u\n", cpi.CodePage, lcids[i].lcid, acp);
 
         /* WideCharToMultiByte - CP_THREAD_ACP */
         num = WideCharToMultiByte(CP_THREAD_ACP, 0, foobarW, -1, NULL, 0, NULL, NULL);
@@ -1165,11 +1172,12 @@ static void test_threadcp(void)
     {
         SetThreadLocale(isleads_nocp[i].lcid);
 
-        islead_acp = IsDBCSLeadByteEx(CP_ACP,        isleads_nocp[i].testchar);
-        islead     = IsDBCSLeadByteEx(CP_THREAD_ACP, isleads_nocp[i].testchar);
+        GetCPInfoExA(CP_THREAD_ACP, 0, &cpi);
+        islead_default = IsDBCSLeadByteEx(cpi.CodePage, isleads_nocp[i].testchar);
+        islead = IsDBCSLeadByteEx(CP_THREAD_ACP, isleads_nocp[i].testchar);
 
-        ok(islead == islead_acp, "wrong islead %i for test char %x in lcid %04x.  should be %i\n",
-            islead, isleads_nocp[i].testchar, isleads_nocp[i].lcid, islead_acp);
+        ok(islead == islead_default, "wrong islead %i for test char %x in lcid %04x.  should be %i\n",
+            islead, isleads_nocp[i].testchar, isleads_nocp[i].lcid, islead_default);
     }
 
     /* IsDBCSLeadByteEx - locales with codepage */

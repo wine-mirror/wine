@@ -18,9 +18,10 @@
 
 #define COBJMACROS
 
-#include "config.h"
 #include <stdarg.h>
 #include <limits.h>
+#include <assert.h>
+#include <wchar.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -32,7 +33,6 @@
 #include "scrrun_private.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
@@ -124,9 +124,12 @@ struct textstream {
 
     IOMode mode;
     BOOL unicode;
-    BOOL first_read;
     LARGE_INTEGER size;
     HANDLE file;
+
+    BOOL eof;
+    WCHAR *read_buf;
+    size_t read_buf_size;
 };
 
 enum iotype {
@@ -205,8 +208,8 @@ static inline BOOL is_dir_data(const WIN32_FIND_DATAW *data)
     static const WCHAR dotW[] = {'.',0};
 
     return (data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-            strcmpW(data->cFileName, dotdotW) &&
-            strcmpW(data->cFileName, dotW);
+            wcscmp(data->cFileName, dotdotW) &&
+            wcscmp(data->cFileName, dotW);
 }
 
 static inline BOOL is_file_data(const WIN32_FIND_DATAW *data)
@@ -219,10 +222,10 @@ static BSTR get_full_path(BSTR path, const WIN32_FIND_DATAW *data)
     int len = SysStringLen(path);
     WCHAR buffW[MAX_PATH];
 
-    strcpyW(buffW, path);
+    lstrcpyW(buffW, path);
     if (path[len-1] != '\\')
-        strcatW(buffW, bsW);
-    strcatW(buffW, data->cFileName);
+        lstrcatW(buffW, bsW);
+    lstrcatW(buffW, data->cFileName);
 
     return SysAllocString(buffW);
 }
@@ -274,6 +277,7 @@ static ULONG WINAPI textstream_Release(ITextStream *iface)
 
     if (!ref)
     {
+        if (This->read_buf_size) heap_free(This->read_buf);
         CloseHandle(This->file);
         heap_free(This);
     }
@@ -357,7 +361,6 @@ static HRESULT WINAPI textstream_get_Column(ITextStream *iface, LONG *column)
 static HRESULT WINAPI textstream_get_AtEndOfStream(ITextStream *iface, VARIANT_BOOL *eos)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    LARGE_INTEGER pos, dist;
 
     TRACE("(%p)->(%p)\n", This, eos);
 
@@ -369,11 +372,7 @@ static HRESULT WINAPI textstream_get_AtEndOfStream(ITextStream *iface, VARIANT_B
         return CTL_E_BADFILEMODE;
     }
 
-    dist.QuadPart = 0;
-    if (!SetFilePointerEx(This->file, dist, &pos, FILE_CURRENT))
-        return E_FAIL;
-
-    *eos = This->size.QuadPart == pos.QuadPart ? VARIANT_TRUE : VARIANT_FALSE;
+    *eos = (This->eof && !This->read_buf_size) ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }
 
@@ -384,67 +383,89 @@ static HRESULT WINAPI textstream_get_AtEndOfLine(ITextStream *iface, VARIANT_BOO
     return E_NOTIMPL;
 }
 
-/*
-   Reads 'toread' bytes from a file, converts if needed
-   BOM is skipped if 'bof' is set.
- */
-static HRESULT textstream_read(struct textstream *stream, LONG toread, BOOL bof, BSTR *text)
+static HRESULT append_read_data(struct textstream *stream, const char *buf, size_t buf_size)
 {
-    HRESULT hr = S_OK;
-    DWORD read;
-    char *buff;
-    BOOL ret;
+    LARGE_INTEGER revert;
+    size_t len;
+    WCHAR *new_buf;
 
-    if (toread == 0) {
-        *text = SysAllocStringLen(NULL, 0);
-        return *text ? S_FALSE : E_OUTOFMEMORY;
+    revert.QuadPart = 0;
+    if (stream->unicode)
+    {
+        len = buf_size / sizeof(WCHAR);
+        if (buf_size & 1) revert.QuadPart = -1;
     }
-
-    if (toread < sizeof(WCHAR))
-        return CTL_E_ENDOFFILE;
-
-    buff = heap_alloc(toread);
-    if (!buff)
-        return E_OUTOFMEMORY;
-
-    ret = ReadFile(stream->file, buff, toread, &read, NULL);
-    if (!ret || toread != read) {
-        WARN("failed to read from file %d, %d, error %d\n", read, toread, GetLastError());
-        heap_free(buff);
-        return E_FAIL;
-    }
-
-    if (stream->unicode) {
-        int i = 0;
-
-        /* skip BOM */
-        if (bof && *(WCHAR*)buff == utf16bom) {
-            read -= sizeof(WCHAR);
-            i += sizeof(WCHAR);
+    else
+    {
+        for (len = 0; len < buf_size; len++)
+        {
+            if (!IsDBCSLeadByte(buf[len])) continue;
+            if (len + 1 == buf_size)
+            {
+                revert.QuadPart = -1;
+                buf_size--;
+                break;
+            }
+            len++;
         }
-
-        *text = SysAllocStringLen(read ? (WCHAR*)&buff[i] : NULL, read/sizeof(WCHAR));
-        if (!*text) hr = E_OUTOFMEMORY;
+        len = MultiByteToWideChar(CP_ACP, 0, buf, buf_size, NULL, 0);
     }
-    else {
-        INT len = MultiByteToWideChar(CP_ACP, 0, buff, read, NULL, 0);
-        *text = SysAllocStringLen(NULL, len);
-        if (*text)
-            MultiByteToWideChar(CP_ACP, 0, buff, read, *text, len);
-        else
-            hr = E_OUTOFMEMORY;
-    }
-    heap_free(buff);
+    if (!len)
+        return S_OK;
+    if (revert.QuadPart)
+        SetFilePointerEx(stream->file, revert, NULL, FILE_CURRENT);
 
-    return hr;
+    if (!stream->read_buf_size)
+        new_buf = heap_alloc(len * sizeof(WCHAR));
+    else
+        new_buf = heap_realloc(stream->read_buf, (len + stream->read_buf_size) * sizeof(WCHAR));
+    if (!new_buf) return E_OUTOFMEMORY;
+
+    if (stream->unicode)
+        memcpy(new_buf + stream->read_buf_size, buf, len * sizeof(WCHAR));
+    else
+        MultiByteToWideChar(CP_ACP, 0, buf, buf_size, new_buf + stream->read_buf_size, len);
+    stream->read_buf = new_buf;
+    stream->read_buf_size += len;
+    return S_OK;
+}
+
+static HRESULT read_more_data(struct textstream *stream)
+{
+    char buf[256];
+    DWORD read;
+
+    if (stream->eof) return S_OK;
+
+    if (!ReadFile(stream->file, buf, sizeof(buf), &read, NULL))
+    {
+        ITextStream_Release(&stream->ITextStream_iface);
+        return create_error(GetLastError());
+    }
+
+    stream->eof = read != sizeof(buf);
+    return append_read_data(stream, buf, read);
+}
+
+static BOOL read_from_buffer(struct textstream *stream, size_t len, BSTR *ret, size_t skip)
+{
+    assert(len + skip <= stream->read_buf_size);
+
+    if (!(*ret = SysAllocStringLen(stream->read_buf, len))) return FALSE;
+
+    len += skip;
+    stream->read_buf_size -= len;
+    if (stream->read_buf_size)
+        memmove(stream->read_buf, stream->read_buf + len, stream->read_buf_size * sizeof(WCHAR));
+    else
+        heap_free(stream->read_buf);
+    return TRUE;
 }
 
 static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    LARGE_INTEGER start, end, dist;
-    DWORD toread;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%d %p)\n", This, len, text);
 
@@ -458,44 +479,32 @@ static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
     if (textstream_check_iomode(This, IORead))
         return CTL_E_BADFILEMODE;
 
-    if (!This->first_read) {
-        VARIANT_BOOL eos;
-
-        /* check for EOF */
-        hr = ITextStream_get_AtEndOfStream(iface, &eos);
-        if (FAILED(hr))
+    while (!This->eof && len > This->read_buf_size)
+    {
+        if (FAILED(hr = read_more_data(This)))
             return hr;
-
-        if (eos == VARIANT_TRUE)
-            return CTL_E_ENDOFFILE;
     }
 
-    /* read everything from current position */
-    dist.QuadPart = 0;
-    SetFilePointerEx(This->file, dist, &start, FILE_CURRENT);
-    SetFilePointerEx(This->file, dist, &end, FILE_END);
-    toread = end.QuadPart - start.QuadPart;
-    /* rewind back */
-    dist.QuadPart = start.QuadPart;
-    SetFilePointerEx(This->file, dist, NULL, FILE_BEGIN);
+    if (This->eof && !This->read_buf_size)
+        return CTL_E_ENDOFFILE;
 
-    This->first_read = FALSE;
-    if (This->unicode) len *= sizeof(WCHAR);
+    if (len > This->read_buf_size)
+    {
+        len = This->read_buf_size;
+        hr = S_FALSE;
+    }
 
-    hr = textstream_read(This, min(toread, len), start.QuadPart == 0, text);
-    if (FAILED(hr))
-        return hr;
-    else
-        return toread <= len ? S_FALSE : S_OK;
+    return read_from_buffer(This, len, text, 0) ? hr : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    VARIANT_BOOL eos;
-    HRESULT hr;
+    unsigned int skip = 0;
+    const WCHAR *nl;
+    HRESULT hr = S_OK;
 
-    FIXME("(%p)->(%p): stub\n", This, text);
+    TRACE("(%p)->(%p)\n", This, text);
 
     if (!text)
         return E_POINTER;
@@ -504,22 +513,33 @@ static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
     if (textstream_check_iomode(This, IORead))
         return CTL_E_BADFILEMODE;
 
-    /* check for EOF */
-    hr = ITextStream_get_AtEndOfStream(iface, &eos);
-    if (FAILED(hr))
-        return hr;
+    while (!(nl = wmemchr(This->read_buf, '\n', This->read_buf_size)) && !This->eof)
+    {
+        if (FAILED(hr = read_more_data(This)))
+            return hr;
+    }
 
-    if (eos == VARIANT_TRUE)
+    if (This->eof && !This->read_buf_size)
         return CTL_E_ENDOFFILE;
 
-    return E_NOTIMPL;
+    if (!nl)
+    {
+        nl = This->read_buf + This->read_buf_size;
+        hr = S_FALSE;
+    }
+    else if (nl > This->read_buf && nl[-1] == '\r')
+    {
+        nl--;
+        skip = 2;
+    }
+    else skip = 1;
+
+    return read_from_buffer(This, nl - This->read_buf, text, skip) ? hr : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    LARGE_INTEGER start, end, dist;
-    DWORD toread;
     HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, text);
@@ -531,31 +551,16 @@ static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
     if (textstream_check_iomode(This, IORead))
         return CTL_E_BADFILEMODE;
 
-    if (!This->first_read) {
-        VARIANT_BOOL eos;
-
-        /* check for EOF */
-        hr = ITextStream_get_AtEndOfStream(iface, &eos);
-        if (FAILED(hr))
+    while (!This->eof)
+    {
+        if (FAILED(hr = read_more_data(This)))
             return hr;
-
-        if (eos == VARIANT_TRUE)
-            return CTL_E_ENDOFFILE;
     }
 
-    /* read everything from current position */
-    dist.QuadPart = 0;
-    SetFilePointerEx(This->file, dist, &start, FILE_CURRENT);
-    SetFilePointerEx(This->file, dist, &end, FILE_END);
-    toread = end.QuadPart - start.QuadPart;
-    /* rewind back */
-    dist.QuadPart = start.QuadPart;
-    SetFilePointerEx(This->file, dist, NULL, FILE_BEGIN);
+    if (This->eof && !This->read_buf_size)
+        return CTL_E_ENDOFFILE;
 
-    This->first_read = FALSE;
-
-    hr = textstream_read(This, toread, start.QuadPart == 0, text);
-    return FAILED(hr) ? hr : S_FALSE;
+    return read_from_buffer(This, This->read_buf_size, text, 0) ? S_FALSE : E_OUTOFMEMORY;
 }
 
 static HRESULT textstream_writestr(struct textstream *stream, BSTR text)
@@ -691,10 +696,11 @@ static const ITextStreamVtbl textstreamvtbl = {
     textstream_Close
 };
 
-static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMode mode, BOOL unicode, ITextStream **ret)
+static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMode mode, Tristate format, ITextStream **ret)
 {
     struct textstream *stream;
     DWORD access = 0;
+    HRESULT hr;
 
     /* map access mode */
     switch (mode)
@@ -706,7 +712,7 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
         access = GENERIC_WRITE;
         break;
     case ForAppending:
-        access = FILE_APPEND_DATA;
+        access = GENERIC_READ | GENERIC_WRITE;
         break;
     default:
         return E_INVALIDARG;
@@ -718,8 +724,9 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     stream->ITextStream_iface.lpVtbl = &textstreamvtbl;
     stream->ref = 1;
     stream->mode = mode;
-    stream->unicode = unicode;
-    stream->first_read = TRUE;
+    stream->eof = FALSE;
+    stream->read_buf = NULL;
+    stream->read_buf_size = 0;
 
     stream->file = CreateFileW(filename, access, 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
     if (stream->file == INVALID_HANDLE_VALUE)
@@ -734,14 +741,53 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     else
         stream->size.QuadPart = 0;
 
-    /* Write Unicode BOM */
-    if (unicode && mode == ForWriting && (disposition == CREATE_ALWAYS || disposition == CREATE_NEW)) {
-        DWORD written = 0;
-        BOOL ret = WriteFile(stream->file, &utf16bom, sizeof(utf16bom), &written, NULL);
-        if (!ret || written != sizeof(utf16bom)) {
-            ITextStream_Release(&stream->ITextStream_iface);
-            return create_error(GetLastError());
+    if (mode == ForWriting)
+    {
+        stream->unicode = format == TristateTrue;
+        /* Write Unicode BOM */
+        if (stream->unicode && (disposition == CREATE_ALWAYS || disposition == CREATE_NEW)) {
+            DWORD written = 0;
+            BOOL ret = WriteFile(stream->file, &utf16bom, sizeof(utf16bom), &written, NULL);
+            if (!ret || written != sizeof(utf16bom)) {
+                ITextStream_Release(&stream->ITextStream_iface);
+                return create_error(GetLastError());
+            }
         }
+    }
+    else
+    {
+        DWORD read, buf_offset = 0;
+        BYTE buf[64];
+
+        if (format == TristateUseDefault || mode == ForReading)
+        {
+            if (!ReadFile(stream->file, buf, sizeof(buf), &read, NULL))
+            {
+                ITextStream_Release(&stream->ITextStream_iface);
+                return create_error(GetLastError());
+            }
+        }
+
+        if (format == TristateUseDefault)
+            stream->unicode = IsTextUnicode(buf, read, NULL);
+        else
+            stream->unicode = format != TristateFalse;
+
+        if (mode == ForReading)
+        {
+            if (stream->unicode && read >= 2 && buf[0] == 0xff && buf[1] == 0xfe)
+                buf_offset += 2; /* skip utf16 BOM */
+
+            hr = append_read_data(stream, (const char *)buf + buf_offset, read - buf_offset);
+            if (FAILED(hr))
+            {
+                ITextStream_Release(&stream->ITextStream_iface);
+                return hr;
+            }
+
+            stream->eof = read != sizeof(buf);
+        }
+        else SetFilePointer(stream->file, 0, 0, FILE_END);
     }
 
     init_classinfo(&CLSID_TextStream, (IUnknown *)&stream->ITextStream_iface, &stream->classinfo);
@@ -1165,11 +1211,11 @@ static HANDLE start_enumeration(const WCHAR *path, WIN32_FIND_DATAW *data, BOOL 
     int len;
     HANDLE handle;
 
-    strcpyW(pathW, path);
-    len = strlenW(pathW);
+    lstrcpyW(pathW, path);
+    len = lstrlenW(pathW);
     if (len && pathW[len-1] != '\\')
-        strcatW(pathW, bsW);
-    strcatW(pathW, allW);
+        lstrcatW(pathW, bsW);
+    lstrcatW(pathW, allW);
     handle = FindFirstFileW(pathW, data);
     if (handle == INVALID_HANDLE_VALUE) return 0;
 
@@ -1738,8 +1784,8 @@ static HRESULT WINAPI foldercoll_get_Count(IFolderCollection *iface, LONG *count
 
     *count = 0;
 
-    strcpyW(pathW, This->path);
-    strcatW(pathW, allW);
+    lstrcpyW(pathW, This->path);
+    lstrcatW(pathW, allW);
     handle = FindFirstFileW(pathW, &data);
     if (handle == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(GetLastError());
@@ -1933,8 +1979,8 @@ static HRESULT WINAPI filecoll_get_Count(IFileCollection *iface, LONG *count)
 
     *count = 0;
 
-    strcpyW(pathW, This->path);
-    strcatW(pathW, allW);
+    lstrcpyW(pathW, This->path);
+    lstrcatW(pathW, allW);
     handle = FindFirstFileW(pathW, &data);
     if (handle == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(GetLastError());
@@ -2287,7 +2333,7 @@ static HRESULT WINAPI folder_get_Name(IFolder *iface, BSTR *name)
 
     *name = NULL;
 
-    ptr = strrchrW(This->path, '\\');
+    ptr = wcsrchr(This->path, '\\');
     if (ptr)
     {
         *name = SysAllocString(ptr+1);
@@ -2637,7 +2683,7 @@ static HRESULT WINAPI file_get_Name(IFile *iface, BSTR *name)
 
     *name = NULL;
 
-    ptr = strrchrW(This->path, '\\');
+    ptr = wcsrchr(This->path, '\\');
     if (ptr)
     {
         *name = SysAllocString(ptr+1);
@@ -2813,12 +2859,7 @@ static HRESULT WINAPI file_OpenAsTextStream(IFile *iface, IOMode mode, Tristate 
 
     TRACE("(%p)->(%d %d %p)\n", This, mode, format, stream);
 
-    if (format == TristateUseDefault) {
-        FIXME("default format not handled, defaulting to unicode\n");
-        format = TristateTrue;
-    }
-
-    return create_textstream(This->path, OPEN_EXISTING, mode, format == TristateTrue, stream);
+    return create_textstream(This->path, OPEN_EXISTING, mode, format, stream);
 }
 
 static const IFileVtbl file_vtbl = {
@@ -3031,9 +3072,9 @@ static HRESULT WINAPI filesys_BuildPath(IFileSystem3 *iface, BSTR Path,
             ret = SysAllocStringLen(NULL, path_len + name_len);
             if (ret)
             {
-                strcpyW(ret, Path);
+                lstrcpyW(ret, Path);
                 ret[path_len] = 0;
-                strcatW(ret, Name);
+                lstrcatW(ret, Name);
             }
         }
         else if (Path[path_len-1] != '\\' && Name[0] != '\\')
@@ -3041,10 +3082,10 @@ static HRESULT WINAPI filesys_BuildPath(IFileSystem3 *iface, BSTR Path,
             ret = SysAllocStringLen(NULL, path_len + name_len + 1);
             if (ret)
             {
-                strcpyW(ret, Path);
+                lstrcpyW(ret, Path);
                 if (Path[path_len-1] != ':')
-                    strcatW(ret, bsW);
-                strcatW(ret, Name);
+                    lstrcatW(ret, bsW);
+                lstrcatW(ret, Name);
             }
         }
         else
@@ -3052,8 +3093,8 @@ static HRESULT WINAPI filesys_BuildPath(IFileSystem3 *iface, BSTR Path,
             ret = SysAllocStringLen(NULL, path_len + name_len);
             if (ret)
             {
-                strcpyW(ret, Path);
-                strcatW(ret, Name);
+                lstrcpyW(ret, Path);
+                lstrcatW(ret, Name);
             }
         }
     }
@@ -3077,7 +3118,7 @@ static HRESULT WINAPI filesys_GetDriveName(IFileSystem3 *iface, BSTR path, BSTR 
 
     *drive = NULL;
 
-    if (path && strlenW(path) > 1 && path[1] == ':')
+    if (path && lstrlenW(path) > 1 && path[1] == ':')
         *drive = SysAllocStringLen(path, 2);
 
     return S_OK;
@@ -3147,7 +3188,7 @@ static HRESULT WINAPI filesys_GetFileName(IFileSystem3 *iface, BSTR Path,
         return S_OK;
     }
 
-    for(end=strlenW(Path)-1; end>=0; end--)
+    for(end=lstrlenW(Path)-1; end>=0; end--)
         if(Path[end]!='/' && Path[end]!='\\')
             break;
 
@@ -3182,7 +3223,7 @@ static HRESULT WINAPI filesys_GetBaseName(IFileSystem3 *iface, BSTR Path,
         return S_OK;
     }
 
-    for(end=strlenW(Path)-1; end>=0; end--)
+    for(end=lstrlenW(Path)-1; end>=0; end--)
         if(Path[end]!='/' && Path[end]!='\\')
             break;
 
@@ -3252,7 +3293,7 @@ static HRESULT WINAPI filesys_GetAbsolutePathName(IFileSystem3 *iface, BSTR Path
     if(!len)
         return E_FAIL;
 
-    buf[0] = toupperW(buf[0]);
+    buf[0] = towupper(buf[0]);
     if(len>3 && buf[len-1] == '\\')
         buf[--len] = 0;
 
@@ -3266,7 +3307,7 @@ static HRESULT WINAPI filesys_GetAbsolutePathName(IFileSystem3 *iface, BSTR Path
         if(fh == INVALID_HANDLE_VALUE)
             break;
 
-        exp_len = strlenW(fdata.cFileName);
+        exp_len = lstrlenW(fdata.cFileName);
         if(exp_len == i-beg)
             memcpy(buf+beg, fdata.cFileName, exp_len*sizeof(WCHAR));
         FindClose(fh);
@@ -3297,7 +3338,7 @@ static HRESULT WINAPI filesys_GetTempName(IFileSystem3 *iface, BSTR *pbstrResult
 
     if(!RtlGenRandom(&random, sizeof(random)))
         return E_FAIL;
-    sprintfW(*pbstrResult, fmt, random & 0xfffff);
+    swprintf(*pbstrResult, 12, fmt, random & 0xfffff);
     return S_OK;
 }
 
@@ -3314,7 +3355,7 @@ static HRESULT WINAPI filesys_DriveExists(IFileSystem3 *iface, BSTR DriveSpec,
     len = SysStringLen(DriveSpec);
 
     if (len >= 1) {
-        driveletter = toupperW(DriveSpec[0]);
+        driveletter = towupper(DriveSpec[0]);
         if (driveletter >= 'A' && driveletter <= 'Z'
                 && (len < 2 || DriveSpec[1] == ':')
                 && (len < 3 || DriveSpec[2] == '\\')) {
@@ -3372,7 +3413,7 @@ static HRESULT WINAPI filesys_GetDrive(IFileSystem3 *iface, BSTR DriveSpec,
     if (!len)
         return E_INVALIDARG;
     else if (len <= 3) {
-        driveletter = toupperW(DriveSpec[0]);
+        driveletter = towupper(DriveSpec[0]);
         if (driveletter < 'A' || driveletter > 'Z'
                 || (len >= 2 && DriveSpec[1] != ':')
                 || (len == 3 && DriveSpec[2] != '\\'))
@@ -3489,7 +3530,7 @@ static inline HRESULT delete_file(const WCHAR *file, DWORD file_len, VARIANT_BOO
         if(ffd.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE))
             continue;
 
-        name_len = strlenW(ffd.cFileName);
+        name_len = lstrlenW(ffd.cFileName);
         if(len+name_len+1 >= MAX_PATH) {
             FindClose(f);
             return E_FAIL;
@@ -3551,7 +3592,7 @@ static HRESULT delete_folder(const WCHAR *folder, DWORD folder_len, VARIANT_BOOL
                     (ffd.cFileName[1]=='.' && ffd.cFileName[2]==0)))
             continue;
 
-        name_len = strlenW(ffd.cFileName);
+        name_len = lstrlenW(ffd.cFileName);
         if(len+name_len+3 >= MAX_PATH) {
             FindClose(f);
             return E_FAIL;
@@ -3597,12 +3638,11 @@ static HRESULT WINAPI filesys_DeleteFolder(IFileSystem3 *iface, BSTR FolderSpec,
     return delete_folder(FolderSpec, SysStringLen(FolderSpec), Force);
 }
 
-static HRESULT WINAPI filesys_MoveFile(IFileSystem3 *iface, BSTR Source,
-                                            BSTR Destination)
+static HRESULT WINAPI filesys_MoveFile(IFileSystem3 *iface, BSTR source, BSTR destination)
 {
-    FIXME("%p %s %s\n", iface, debugstr_w(Source), debugstr_w(Destination));
+    TRACE("%p %s %s\n", iface, debugstr_w(source), debugstr_w(destination));
 
-    return E_NOTIMPL;
+    return MoveFileW(source, destination) ? S_OK : create_error(GetLastError());
 }
 
 static HRESULT WINAPI filesys_MoveFolder(IFileSystem3 *iface,BSTR Source,
@@ -3667,7 +3707,7 @@ static inline HRESULT copy_file(const WCHAR *source, DWORD source_len,
         if(ffd.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE))
             continue;
 
-        name_len = strlenW(ffd.cFileName);
+        name_len = lstrlenW(ffd.cFileName);
         if(src_len+name_len+1>=MAX_PATH || dst_len+name_len+1>=MAX_PATH) {
             FindClose(f);
             return E_FAIL;
@@ -3769,7 +3809,7 @@ static HRESULT copy_folder(const WCHAR *source, DWORD source_len, const WCHAR *d
                     (ffd.cFileName[1]=='.' && ffd.cFileName[2]==0)))
             continue;
 
-        name_len = strlenW(ffd.cFileName);
+        name_len = lstrlenW(ffd.cFileName);
         if(dst_len+name_len>=MAX_PATH || src_len+name_len+2>=MAX_PATH) {
             FindClose(f);
             return E_FAIL;
@@ -3853,7 +3893,7 @@ static HRESULT WINAPI filesys_CreateTextFile(IFileSystem3 *iface, BSTR filename,
     TRACE("%p %s %d %d %p\n", iface, debugstr_w(filename), overwrite, unicode, stream);
 
     disposition = overwrite == VARIANT_TRUE ? CREATE_ALWAYS : CREATE_NEW;
-    return create_textstream(filename, disposition, ForWriting, !!unicode, stream);
+    return create_textstream(filename, disposition, ForWriting, unicode ? TristateTrue : TristateFalse, stream);
 }
 
 static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
@@ -3863,14 +3903,9 @@ static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
     DWORD disposition;
 
     TRACE("(%p)->(%s %d %d %d %p)\n", iface, debugstr_w(filename), mode, create, format, stream);
+
     disposition = create == VARIANT_TRUE ? OPEN_ALWAYS : OPEN_EXISTING;
-
-    if (format == TristateUseDefault) {
-        FIXME("default format not handled, defaulting to unicode\n");
-        format = TristateTrue;
-    }
-
-    return create_textstream(filename, disposition, mode, format == TristateTrue, stream);
+    return create_textstream(filename, disposition, mode, format, stream);
 }
 
 static HRESULT WINAPI filesys_GetStandardStream(IFileSystem3 *iface,
@@ -3895,7 +3930,7 @@ static void get_versionstring(VS_FIXEDFILEINFO *info, WCHAR *ver)
     c = (WORD)((version >> 16) & 0xffff);
     d = (WORD)( version & 0xffff);
 
-    sprintfW(ver, fmtW, a, b, c, d);
+    swprintf(ver, 30, fmtW, a, b, c, d);
 }
 
 static HRESULT WINAPI filesys_GetFileVersion(IFileSystem3 *iface, BSTR name, BSTR *version)

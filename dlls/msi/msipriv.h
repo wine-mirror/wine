@@ -42,7 +42,7 @@
 #include "winemsi.h"
 
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
-BOOL is_wow64 DECLSPEC_HIDDEN;
+extern BOOL is_wow64 DECLSPEC_HIDDEN;
 
 #define MSI_DATASIZEMASK 0x00ff
 #define MSITYPE_VALID    0x0100
@@ -95,6 +95,14 @@ typedef struct tagMSITRANSFORM
     IStorage *stg;
 } MSITRANSFORM;
 
+/* integer versions of the MSIDBOPEN_* constants */
+#define MSI_OPEN_READONLY 0
+#define MSI_OPEN_TRANSACT 1
+#define MSI_OPEN_DIRECT 2
+#define MSI_OPEN_CREATE 3
+#define MSI_OPEN_CREATEDIRECT 4
+#define MSI_OPEN_PATCHFILE 32
+
 typedef struct tagMSIDATABASE
 {
     MSIOBJECTHDR hdr;
@@ -104,7 +112,7 @@ typedef struct tagMSIDATABASE
     LPWSTR path;
     LPWSTR deletefile;
     LPWSTR tempfolder;
-    LPCWSTR mode;
+    UINT mode;
     UINT media_transform_offset;
     UINT media_transform_disk_id;
     struct list tables;
@@ -355,7 +363,7 @@ typedef struct msi_dialog_tag msi_dialog;
 
 enum platform
 {
-    PLATFORM_UNKNOWN,
+    PLATFORM_UNRECOGNIZED,
     PLATFORM_INTEL,
     PLATFORM_INTEL64,
     PLATFORM_X64,

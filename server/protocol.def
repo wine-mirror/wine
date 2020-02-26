@@ -135,12 +135,12 @@ enum cpu_type
 {
     CPU_x86, CPU_x86_64, CPU_POWERPC, CPU_ARM, CPU_ARM64
 };
-typedef int cpu_type_t;
+typedef int client_cpu_t;
 
 /* context data */
 typedef struct
 {
-    cpu_type_t       cpu;        /* cpu type */
+    client_cpu_t     cpu;        /* cpu type */
     unsigned int     flags;      /* SERVER_CTX_* flags */
     union
     {
@@ -172,7 +172,7 @@ typedef struct
         struct { struct { unsigned __int64 low, high; } fpregs[32]; } x86_64_regs;
         struct { double fpr[32], fpscr; } powerpc_regs;
         struct { unsigned __int64 d[32]; unsigned int fpscr; } arm_regs;
-        struct { unsigned __int64 d[64]; unsigned int fpcr, fpsr; } arm64_regs;
+        struct { struct { unsigned __int64 low, high; } q[32]; unsigned int fpcr, fpsr; } arm64_regs;
     } fp;  /* selected by SERVER_CTX_FLOATING_POINT */
     union
     {
@@ -465,7 +465,8 @@ enum apc_type
     APC_VIRTUAL_UNLOCK,
     APC_MAP_VIEW,
     APC_UNMAP_VIEW,
-    APC_CREATE_THREAD
+    APC_CREATE_THREAD,
+    APC_BREAK_PROCESS
 };
 
 typedef union
@@ -495,12 +496,12 @@ typedef union
     } async_io;
     struct
     {
-        enum apc_type    type;      /* APC_VIRTUAL_ALLOC */
-        unsigned int     op_type;   /* type of operation */
-        client_ptr_t     addr;      /* requested address */
-        mem_size_t       size;      /* allocation size */
-        unsigned int     zero_bits; /* allocation alignment */
-        unsigned int     prot;      /* memory protection flags */
+        enum apc_type    type;         /* APC_VIRTUAL_ALLOC */
+        unsigned int     op_type;      /* type of operation */
+        client_ptr_t     addr;         /* requested address */
+        mem_size_t       size;         /* allocation size */
+        unsigned int     zero_bits_64; /* number of zero high bits */
+        unsigned int     prot;         /* memory protection flags */
     } virtual_alloc;
     struct
     {
@@ -545,14 +546,14 @@ typedef union
     } virtual_unlock;
     struct
     {
-        enum apc_type    type;      /* APC_MAP_VIEW */
-        obj_handle_t     handle;    /* mapping handle */
-        client_ptr_t     addr;      /* requested address */
-        mem_size_t       size;      /* allocation size */
-        file_pos_t       offset;    /* file offset */
-        unsigned int     alloc_type;/* allocation type */
-        unsigned short   zero_bits; /* allocation alignment */
-        unsigned short   prot;      /* memory protection flags */
+        enum apc_type    type;         /* APC_MAP_VIEW */
+        obj_handle_t     handle;       /* mapping handle */
+        client_ptr_t     addr;         /* requested address */
+        mem_size_t       size;         /* allocation size */
+        file_pos_t       offset;       /* file offset */
+        unsigned int     alloc_type;   /* allocation type */
+        unsigned short   zero_bits_64; /* number of zero high bits */
+        unsigned short   prot;         /* memory protection flags */
     } map_view;
     struct
     {
@@ -654,6 +655,11 @@ typedef union
         thread_id_t      tid;       /* thread id */
         obj_handle_t     handle;    /* handle to new thread */
     } create_thread;
+    struct
+    {
+        enum apc_type    type;      /* APC_BREAK_PROCESS */
+        unsigned int     status;    /* status returned by call */
+    } break_process;
 } apc_result_t;
 
 enum irp_type
@@ -753,7 +759,7 @@ typedef struct
     unsigned int   header_size;
     unsigned int   file_size;
     unsigned int   checksum;
-    cpu_type_t     cpu;
+    client_cpu_t   cpu;
     int            __pad;
 } pe_image_info_t;
 #define IMAGE_FLAGS_ComPlusNativeReady        0x01
@@ -777,12 +783,13 @@ struct rawinput_device
 
 /* Create a new process from the context of the parent */
 @REQ(new_process)
+    obj_handle_t parent_process; /* parent process */
     int          inherit_all;    /* inherit all handles from parent */
     unsigned int create_flags;   /* creation flags */
     int          socket_fd;      /* file descriptor for process socket */
     obj_handle_t exe_file;       /* file handle for main exe */
     unsigned int access;         /* access rights for process object */
-    cpu_type_t   cpu;            /* CPU that the new process will use */
+    client_cpu_t cpu;            /* CPU that the new process will use */
     data_size_t  info_size;      /* size of startup info */
     VARARG(objattr,object_attributes);   /* object attributes */
     VARARG(info,startup_info,info_size); /* startup information */
@@ -797,8 +804,7 @@ struct rawinput_device
 /* Execute a process, replacing the current one */
 @REQ(exec_process)
     int          socket_fd;      /* file descriptor for process socket */
-    obj_handle_t exe_file;       /* file handle for main exe */
-    cpu_type_t   cpu;            /* CPU that the new process will use */
+    client_cpu_t cpu;            /* CPU that the new process will use */
 @END
 
 
@@ -853,7 +859,7 @@ struct rawinput_device
     client_ptr_t entry;        /* entry point or PEB if initial thread (in thread address space) */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
-    cpu_type_t   cpu;          /* CPU that this thread is running on */
+    client_cpu_t cpu;          /* CPU that this thread is running on */
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */
@@ -896,7 +902,7 @@ struct rawinput_device
     timeout_t    end_time;         /* process end time */
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
-    cpu_type_t   cpu;              /* CPU that this process is running on */
+    client_cpu_t cpu;              /* CPU that this process is running on */
     short int    debugger_present; /* process is being debugged */
     short int    debug_children;   /* inherit debugger to child processes */
 @END
@@ -939,6 +945,9 @@ struct rawinput_device
     int          exit_code;     /* thread exit code */
     int          priority;      /* thread priority level */
     int          last;          /* last thread in process */
+    int          suspend_count; /* thread suspend count */
+    data_size_t  desc_len;      /* description length in bytes */
+    VARARG(desc,unicode_str);   /* description string */
 @END
 
 
@@ -959,11 +968,13 @@ struct rawinput_device
     affinity_t   affinity;     /* affinity mask */
     client_ptr_t entry_point;  /* thread entry point */
     obj_handle_t token;        /* impersonation token */
+    VARARG(desc,unicode_str);  /* description string */
 @END
-#define SET_THREAD_INFO_PRIORITY   0x01
-#define SET_THREAD_INFO_AFFINITY   0x02
-#define SET_THREAD_INFO_TOKEN      0x04
-#define SET_THREAD_INFO_ENTRYPOINT 0x08
+#define SET_THREAD_INFO_PRIORITY    0x01
+#define SET_THREAD_INFO_AFFINITY    0x02
+#define SET_THREAD_INFO_TOKEN       0x04
+#define SET_THREAD_INFO_ENTRYPOINT  0x08
+#define SET_THREAD_INFO_DESCRIPTION 0x10
 
 
 /* Retrieve information about a module */
@@ -1522,8 +1533,9 @@ struct console_renderer_event
 
 /* Get the input queue wait event */
 @REQ(get_console_wait_event)
+    obj_handle_t handle;        /* handle to the console */
 @REPLY
-    obj_handle_t handle;
+    obj_handle_t event;
 @END
 
 /* Get a console mode (input or output) */
@@ -1628,7 +1640,10 @@ struct console_renderer_event
     short int    max_height;
     short int    font_width;    /* font size (width x height) */
     short int    font_height;
-    VARARG(colors,uints);       /* color table */
+    short int    font_weight;   /* font weight */
+    short int    font_pitch_family; /* font pitch & family */
+    VARARG(colors,uints,64);    /* color table */
+    VARARG(face_name,unicode_str);  /* font face name */
 @END
 #define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x0001
 #define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x0002
@@ -1661,7 +1676,10 @@ struct console_renderer_event
     short int    max_height;
     short int    font_width;    /* font size (width x height) */
     short int    font_height;
-    VARARG(colors,uints);       /* color table */
+    short int    font_weight;   /* font weight */
+    short int    font_pitch_family; /* font pitch & family */
+    VARARG(colors,uints,64);    /* color table */
+    VARARG(face_name,unicode_str);  /* font face name */
 @END
 
 /* Add input records to a console input queue */
@@ -1931,14 +1949,6 @@ enum char_info_mode
 @REQ(debug_process)
     process_id_t pid;          /* id of the process to debug */
     int          attach;       /* 1=attaching / 0=detaching from the process */
-@END
-
-
-/* Simulate a breakpoint in a process */
-@REQ(debug_break)
-    obj_handle_t handle;       /* process handle */
-@REPLY
-    int          self;         /* was it the caller itself? */
 @END
 
 

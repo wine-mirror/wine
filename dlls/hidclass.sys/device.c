@@ -33,6 +33,7 @@
 
 #include "initguid.h"
 #include "devguid.h"
+#include "ntddmou.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
@@ -122,6 +123,14 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
         return status;
     }
 
+    /* FIXME: This should probably be done in mouhid.sys. */
+    if (ext->preparseData->caps.UsagePage == HID_USAGE_PAGE_GENERIC
+            && ext->preparseData->caps.Usage == HID_USAGE_GENERIC_MOUSE)
+    {
+        if (!IoRegisterDeviceInterface(device, &GUID_DEVINTERFACE_MOUSE, NULL, &ext->mouse_link_name))
+            ext->is_mouse = TRUE;
+    }
+
     return STATUS_SUCCESS;
 
 error:
@@ -202,6 +211,7 @@ void HID_DeleteDevice(DEVICE_OBJECT *device)
     HeapFree(GetProcessHeap(), 0, ext->device_name);
     RtlFreeUnicodeString(&ext->link_name);
 
+    IoDetachDevice(ext->deviceExtension.NextDeviceObject);
     IoDeleteDevice(device);
 }
 

@@ -38,6 +38,93 @@
 #include "wine/list.h"
 #include "build.h"
 
+/* standard C functions that are also exported from ntdll */
+static const char *stdc_names[] =
+{
+    "abs",
+    "atan",
+    "atoi",
+    "atol",
+    "bsearch",
+    "ceil",
+    "cos",
+    "fabs",
+    "floor",
+    "isalnum",
+    "isalpha",
+    "iscntrl",
+    "isdigit",
+    "isgraph",
+    "islower",
+    "isprint",
+    "ispunct",
+    "isspace",
+    "isupper",
+    "iswalpha",
+    "iswctype",
+    "iswdigit",
+    "iswlower",
+    "iswspace",
+    "iswxdigit",
+    "isxdigit",
+    "labs",
+    "log",
+    "mbstowcs",
+    "memchr",
+    "memcmp",
+    "memcpy",
+    "memmove",
+    "memset",
+    "pow",
+    "qsort",
+    "sin",
+    "sprintf",
+    "sqrt",
+    "sscanf",
+    "strcat",
+    "strchr",
+    "strcmp",
+    "strcpy",
+    "strcspn",
+    "strlen",
+    "strncat",
+    "strncmp",
+    "strncpy",
+    "strnlen",
+    "strpbrk",
+    "strrchr",
+    "strspn",
+    "strstr",
+    "strtol",
+    "strtoul",
+    "swprintf",
+    "tan",
+    "tolower",
+    "toupper",
+    "towlower",
+    "towupper",
+    "vsprintf",
+    "wcscat",
+    "wcschr",
+    "wcscmp",
+    "wcscpy",
+    "wcscspn",
+    "wcslen",
+    "wcsncat",
+    "wcsncmp",
+    "wcsncpy",
+    "wcspbrk",
+    "wcsrchr",
+    "wcsspn",
+    "wcsstr",
+    "wcstok",
+    "wcstol",
+    "wcstombs",
+    "wcstoul"
+};
+
+static struct strarray stdc_functions = { stdc_names, ARRAY_SIZE(stdc_names), ARRAY_SIZE(stdc_names) };
+
 struct import_func
 {
     const char *name;
@@ -284,7 +371,7 @@ void add_import_dll( const char *name, const char *filename )
     imp->dll_name = spec->file_name ? spec->file_name : dll_name;
     imp->c_name = make_c_identifier( imp->dll_name );
 
-    if (is_delayed_import( dll_name ))
+    if (is_delayed_import( imp->dll_name ))
         list_add_tail( &dll_delayed, &imp->entry );
     else
         list_add_tail( &dll_imports, &imp->entry );
@@ -369,15 +456,6 @@ static void add_undef_import( const char *name, int is_ordinal )
         add_import_func( import, xstrdup( p ), NULL, ordinal, 0 );
 }
 
-/* get the default entry point for a given spec file */
-static const char *get_default_entry_point( const DLLSPEC *spec )
-{
-    if (spec->characteristics & IMAGE_FILE_DLL) return "__wine_spec_dll_entry";
-    if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) return "__wine_spec_drv_entry";
-    if (spec->type == SPEC_WIN16) return "__wine_spec_exe16_entry";
-    return "__wine_spec_exe_entry";
-}
-
 /* check if the spec file exports any stubs */
 static int has_stubs( const DLLSPEC *spec )
 {
@@ -393,7 +471,6 @@ static int has_stubs( const DLLSPEC *spec )
 /* add the extra undefined symbols that will be contained in the generated spec file itself */
 static void add_extra_undef_symbols( DLLSPEC *spec )
 {
-    if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point(spec) );
     add_extra_ld_symbol( spec->init_func );
     if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
     if (delayed_imports.count) add_extra_ld_symbol( "__wine_spec_delay_load" );
@@ -566,7 +643,8 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
             add_undef_import( p + strlen( import_func_prefix ), 0 );
         else if (!strncmp( p, import_ord_prefix, strlen(import_ord_prefix) ))
             add_undef_import( p + strlen( import_ord_prefix ), 1 );
-        else strarray_add( &undef_symbols, xstrdup( p ), NULL );
+        else if (!unix_lib || !find_name( p, &stdc_functions ))
+            strarray_add( &undef_symbols, xstrdup( p ), NULL );
     }
     if ((err = pclose( f ))) warning( "%s failed with status %d\n", cmd, err );
     free( cmd );
@@ -750,6 +828,11 @@ static void output_immediate_imports(void)
             for (j = 0; j < import->nb_imports; j++)
             {
                 struct import_func *func = &import->imports[j];
+                if (i)
+                {
+                    if (func->name) output( "__imp_%s:\n", asm_name( func->name ));
+                    else if (func->export_name) output( "__imp_%s:\n", asm_name( func->export_name ));
+                }
                 if (func->name)
                     output( "\t%s .L__wine_spec_import_data_%s_%s-.L__wine_spec_rva_base\n",
                             get_asm_ptr_keyword(), import->c_name, func->name );
@@ -1369,7 +1452,7 @@ static void build_windows_import_lib( DLLSPEC *spec )
     const char *as_flags, *m_flag;
 
     def_file = open_temp_output_file( ".def" );
-    output_def_file( spec, 0 );
+    output_def_file( spec, 1 );
     fclose( output_file );
 
     args = find_tool( "dlltool", NULL );

@@ -20,8 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 #include "d3d9_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
@@ -108,7 +106,7 @@ static HRESULT WINAPI d3d9_stateblock_Capture(IDirect3DStateBlock9 *iface)
         WARN("Trying to capture stateblock while recording, returning D3DERR_INVALIDCALL.\n");
         return D3DERR_INVALIDCALL;
     }
-    wined3d_stateblock_capture(stateblock->wined3d_stateblock);
+    wined3d_stateblock_capture(stateblock->wined3d_stateblock, device->state);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -118,9 +116,9 @@ static HRESULT WINAPI d3d9_stateblock_Apply(IDirect3DStateBlock9 *iface)
 {
     struct d3d9_stateblock *stateblock = impl_from_IDirect3DStateBlock9(iface);
     struct wined3d_texture *wined3d_texture;
-    unsigned int i, offset, stride, stage;
     struct wined3d_buffer *wined3d_buffer;
     struct d3d9_vertexbuffer *buffer;
+    unsigned int i, offset, stride;
     enum wined3d_format_id format;
     struct d3d9_texture *texture;
     struct d3d9_device *device;
@@ -136,7 +134,7 @@ static HRESULT WINAPI d3d9_stateblock_Apply(IDirect3DStateBlock9 *iface)
         WARN("Trying to apply stateblock while recording, returning D3DERR_INVALIDCALL.\n");
         return D3DERR_INVALIDCALL;
     }
-    wined3d_stateblock_apply(stateblock->wined3d_stateblock);
+    wined3d_stateblock_apply(stateblock->wined3d_stateblock, device->state);
     device->sysmem_vb = 0;
     for (i = 0; i < D3D9_MAX_STREAMS; ++i)
     {
@@ -153,9 +151,7 @@ static HRESULT WINAPI d3d9_stateblock_Apply(IDirect3DStateBlock9 *iface)
     device->auto_mipmaps = 0;
     for (i = 0; i < D3D9_MAX_TEXTURE_UNITS; ++i)
     {
-        stage = i >= 16 ? i - 16 + D3DVERTEXTEXTURESAMPLER0 : i;
-
-        if ((wined3d_texture = wined3d_device_get_texture(device->wined3d_device, stage))
+        if ((wined3d_texture = wined3d_stateblock_get_state(device->state)->textures[i])
                 && (texture = wined3d_texture_get_parent(wined3d_texture))
                 && texture->usage & D3DUSAGE_AUTOGENMIPMAP)
             device->auto_mipmaps |= 1u << i;
@@ -195,7 +191,7 @@ HRESULT stateblock_init(struct d3d9_stateblock *stateblock, struct d3d9_device *
     else
     {
         wined3d_mutex_lock();
-        hr = wined3d_stateblock_create(device->wined3d_device,
+        hr = wined3d_stateblock_create(device->wined3d_device, device->state,
                 (enum wined3d_stateblock_type)type, &stateblock->wined3d_stateblock);
         wined3d_mutex_unlock();
         if (FAILED(hr))

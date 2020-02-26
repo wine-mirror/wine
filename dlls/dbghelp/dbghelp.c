@@ -20,7 +20,9 @@
 
 #include "config.h"
 
+#include <unistd.h>
 #include "dbghelp_private.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "psapi.h"
 #include "wine/debug.h"
@@ -719,4 +721,16 @@ LPEXT_API_VERSION WINAPI ExtensionApiVersion(void)
 void WINAPI WinDbgExtensionDllInit(PWINDBG_EXTENSION_APIS lpExtensionApis,
                                    unsigned short major, unsigned short minor)
 {
+}
+
+DWORD calc_crc32(int fd)
+{
+    BYTE buffer[8192];
+    DWORD crc = 0;
+    int len;
+
+    lseek(fd, 0, SEEK_SET);
+    while ((len = read(fd, buffer, sizeof(buffer))) > 0)
+        crc = RtlComputeCrc32(crc, buffer, len);
+    return crc;
 }

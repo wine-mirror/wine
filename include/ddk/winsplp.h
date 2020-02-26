@@ -80,10 +80,11 @@ typedef struct _MONITOR {
 
 typedef struct _MONITOR2 {
  DWORD cbSize;
- BOOL  (WINAPI *pfnEnumPorts)(LPWSTR pName, DWORD Level, LPBYTE pPorts,
+ BOOL  (WINAPI *pfnEnumPorts)(HANDLE hMonitor, LPWSTR pName, DWORD Level, LPBYTE pPorts,
                 DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned);
- BOOL  (WINAPI *pfnOpenPort)(LPWSTR pName, PHANDLE pHandle);
- BOOL  (WINAPI *pfnOpenPortEx)(LPWSTR pPortName, LPWSTR pPrinterName,
+ BOOL  (WINAPI *pfnOpenPort)(HANDLE hMonitor, LPWSTR pName, PHANDLE pHandle);
+ BOOL  (WINAPI *pfnOpenPortEx)(HANDLE hMonitor, HANDLE hMonitorPort,
+                LPWSTR pPortName, LPWSTR pPrinterName,
                 PHANDLE pHandle, struct _MONITOR2 *pMonitor2);
  BOOL  (WINAPI *pfnStartDocPort)(HANDLE hPort, LPWSTR pPrinterName,
                 DWORD JobId, DWORD Level, LPBYTE pDocInfo);
@@ -93,11 +94,11 @@ typedef struct _MONITOR2 {
                 LPDWORD pcbRead);
  BOOL  (WINAPI *pfnEndDocPort)(HANDLE hPort);
  BOOL  (WINAPI *pfnClosePort)(HANDLE hPort);
- BOOL  (WINAPI *pfnAddPort)(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName);
- BOOL  (WINAPI *pfnAddPortEx)(LPWSTR pName, DWORD Level, LPBYTE lpBuffer,
+ BOOL  (WINAPI *pfnAddPort)(HANDLE hMonitor, LPWSTR pName, HWND hWnd, LPWSTR pMonitorName);
+ BOOL  (WINAPI *pfnAddPortEx)(HANDLE hMonitor, LPWSTR pName, DWORD Level, LPBYTE lpBuffer,
                 LPWSTR lpMonitorName);
- BOOL  (WINAPI *pfnConfigurePort)(LPWSTR pName, HWND hWnd, LPWSTR pPortName);
- BOOL  (WINAPI *pfnDeletePort)(LPWSTR pName, HWND hWnd, LPWSTR pPortName);
+ BOOL  (WINAPI *pfnConfigurePort)(HANDLE hMonitor, LPWSTR pName, HWND hWnd, LPWSTR pPortName);
+ BOOL  (WINAPI *pfnDeletePort)(HANDLE hMonitor, LPWSTR pName, HWND hWnd, LPWSTR pPortName);
  BOOL  (WINAPI *pfnGetPrinterDataFromPort)(HANDLE hPort, DWORD ControlID,
                 LPWSTR pValueName, LPWSTR lpInBuffer, DWORD cbInBuffer,
                 LPWSTR lpOutBuffer, DWORD cbOutBuffer, LPDWORD lpcbReturned);
@@ -114,6 +115,8 @@ typedef struct _MONITOR2 {
  DWORD (WINAPI *pfnSendRecvBidiDataFromPort)(HANDLE hPort, DWORD dwAccessBit,
                 LPCWSTR pAction, PBIDI_REQUEST_CONTAINER pReqData,
                 PBIDI_RESPONSE_CONTAINER *ppResData);
+ DWORD (WINAPI *pfnNotifyUsedPorts)(HANDLE, DWORD, PCWSTR *);
+ DWORD (WINAPI *pfnNotifyUnusedPorts)(HANDLE, DWORD, PCWSTR *);
 } MONITOR2, *LPMONITOR2, *PMONITOR2;
 
 typedef struct _MONITOREX {
@@ -152,6 +155,7 @@ typedef struct _MONITORINIT {
  HANDLE      hckRegistryRoot;
  PMONITORREG pMonitorReg;
  BOOL        bLocal;
+ LPCWSTR     pszServerName;
 } MONITORINIT, *PMONITORINIT;
 
 typedef struct _MONITORUI {

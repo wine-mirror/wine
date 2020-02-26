@@ -75,6 +75,9 @@ static UINT	CBitHeight, CBitWidth;
 #define COMBO_EDITBUTTONSPACE()  0
 #define EDIT_CONTROL_PADDING()   1
 
+static void CBCalcPlacement(HEADCOMBO *combo);
+static void CBResetPos(HEADCOMBO *combo, BOOL redraw);
+
 /*********************************************************************
  * combo class descriptor
  */
@@ -181,6 +184,25 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
    return 0;
 }
 
+static INT combo_get_text_height(const HEADCOMBO *combo)
+{
+    HDC hdc = GetDC(combo->self);
+    HFONT prev_font = 0;
+    TEXTMETRICW tm;
+
+    if (combo->hFont)
+        prev_font = SelectObject(hdc, combo->hFont);
+
+    GetTextMetricsW(hdc, &tm);
+
+    if (prev_font)
+        SelectObject(hdc, prev_font);
+
+    ReleaseDC(combo->self, hdc);
+
+    return tm.tmHeight + 4;
+}
+
 /***********************************************************************
  *           CBGetTextAreaHeight
  *
@@ -193,37 +215,18 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
  * This height was determined through experimentation.
  * CBCalcPlacement will add 2*COMBO_YBORDERSIZE pixels for the border
  */
-static INT CBGetTextAreaHeight(
-  HWND        hwnd,
-  LPHEADCOMBO lphc)
+static INT CBGetTextAreaHeight(HEADCOMBO *lphc, BOOL clip_item_height)
 {
-  INT iTextItemHeight;
+  INT item_height, text_height;
 
-  if( lphc->editHeight ) /* explicitly set height */
+  if (clip_item_height && !CB_OWNERDRAWN(lphc))
   {
-    iTextItemHeight = lphc->editHeight;
+      text_height = combo_get_text_height(lphc);
+      if (lphc->item_height < text_height)
+          lphc->item_height = text_height;
   }
-  else
-  {
-    TEXTMETRICW tm;
-    HDC         hDC       = GetDC(hwnd);
-    HFONT       hPrevFont = 0;
-    INT         baseUnitY;
 
-    if (lphc->hFont)
-      hPrevFont = SelectObject( hDC, lphc->hFont );
-
-    GetTextMetricsW(hDC, &tm);
-
-    baseUnitY = tm.tmHeight;
-
-    if( hPrevFont )
-      SelectObject( hDC, hPrevFont );
-
-    ReleaseDC(hwnd, hDC);
-
-    iTextItemHeight = baseUnitY + 4;
-  }
+  item_height = lphc->item_height;
 
   /*
    * Check the ownerdraw case if we haven't asked the parent the size
@@ -234,13 +237,13 @@ static INT CBGetTextAreaHeight(
   {
     MEASUREITEMSTRUCT measureItem;
     RECT              clientRect;
-    INT               originalItemHeight = iTextItemHeight;
+    INT               originalItemHeight = item_height;
     UINT id = (UINT)GetWindowLongPtrW( lphc->self, GWLP_ID );
 
     /*
      * We use the client rect for the width of the item.
      */
-    GetClientRect(hwnd, &clientRect);
+    GetClientRect(lphc->self, &clientRect);
 
     lphc->wState &= ~CBF_MEASUREITEM;
 
@@ -251,10 +254,10 @@ static INT CBGetTextAreaHeight(
     measureItem.CtlID      = id;
     measureItem.itemID     = -1;
     measureItem.itemWidth  = clientRect.right;
-    measureItem.itemHeight = iTextItemHeight - 6; /* ownerdrawn cb is taller */
+    measureItem.itemHeight = item_height - 6; /* ownerdrawn cb is taller */
     measureItem.itemData   = 0;
     SendMessageW(lphc->owner, WM_MEASUREITEM, id, (LPARAM)&measureItem);
-    iTextItemHeight = 6 + measureItem.itemHeight;
+    item_height = 6 + measureItem.itemHeight;
 
     /*
      * Send a second one in the case of a fixed ownerdraw list to calculate the
@@ -275,10 +278,10 @@ static INT CBGetTextAreaHeight(
     /*
      * Keep the size for the next time
      */
-    lphc->editHeight = iTextItemHeight;
+    lphc->item_height = item_height;
   }
 
-  return iTextItemHeight;
+  return item_height;
 }
 
 /***********************************************************************
@@ -288,13 +291,12 @@ static INT CBGetTextAreaHeight(
  * a re-arranging of the contents of the combobox and the recalculation
  * of the size of the "real" control window.
  */
-static void CBForceDummyResize(
-  LPHEADCOMBO lphc)
+static void CBForceDummyResize(LPHEADCOMBO lphc)
 {
   RECT windowRect;
   int newComboHeight;
 
-  newComboHeight = CBGetTextAreaHeight(lphc->self,lphc) + 2*COMBO_YBORDERSIZE();
+  newComboHeight = CBGetTextAreaHeight(lphc, FALSE) + 2*COMBO_YBORDERSIZE();
 
   GetWindowRect(lphc->self, &windowRect);
 
@@ -306,12 +308,17 @@ static void CBForceDummyResize(
    * this will cancel-out in the processing of the WM_WINDOWPOSCHANGING
    * message.
    */
+  lphc->wState |= CBF_NORESIZE;
   SetWindowPos( lphc->self,
 		NULL,
 		0, 0,
 		windowRect.right  - windowRect.left,
 		newComboHeight,
 		SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
+  lphc->wState &= ~CBF_NORESIZE;
+
+  CBCalcPlacement(lphc);
+  CBResetPos(lphc, FALSE);
 }
 
 /***********************************************************************
@@ -319,111 +326,70 @@ static void CBForceDummyResize(
  *
  * Set up component coordinates given valid lphc->RectCombo.
  */
-static void CBCalcPlacement(
-  HWND        hwnd,
-  LPHEADCOMBO lphc,
-  LPRECT      lprEdit,
-  LPRECT      lprButton,
-  LPRECT      lprLB)
+static void CBCalcPlacement(HEADCOMBO *combo)
 {
-  /*
-   * Again, start with the client rectangle.
-   */
-  GetClientRect(hwnd, lprEdit);
+    /* Start with the client rectangle. */
+    GetClientRect(combo->self, &combo->textRect);
 
-  /*
-   * Remove the borders
-   */
-  InflateRect(lprEdit, -COMBO_XBORDERSIZE(), -COMBO_YBORDERSIZE());
+    /* Remove the borders */
+    InflateRect(&combo->textRect, -COMBO_XBORDERSIZE(), -COMBO_YBORDERSIZE());
 
-  /*
-   * Chop off the bottom part to fit with the height of the text area.
-   */
-  lprEdit->bottom = lprEdit->top + CBGetTextAreaHeight(hwnd, lphc);
+    /* Chop off the bottom part to fit with the height of the text area. */
+    combo->textRect.bottom = combo->textRect.top + CBGetTextAreaHeight(combo, FALSE);
 
-  /*
-   * The button starts the same vertical position as the text area.
-   */
-  CopyRect(lprButton, lprEdit);
+    /* The button starts the same vertical position as the text area. */
+    combo->buttonRect = combo->textRect;
 
-  /*
-   * If the combobox is "simple" there is no button.
-   */
-  if( CB_GETTYPE(lphc) == CBS_SIMPLE )
-    lprButton->left = lprButton->right = lprButton->bottom = 0;
-  else
-  {
-    /*
-     * Let's assume the combobox button is the same width as the
-     * scrollbar button.
-     * size the button horizontally and cut-off the text area.
-     */
-    lprButton->left = lprButton->right - GetSystemMetrics(SM_CXVSCROLL);
-    lprEdit->right  = lprButton->left;
-  }
-
-  /*
-   * In the case of a dropdown, there is an additional spacing between the
-   * text area and the button.
-   */
-  if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
-  {
-    lprEdit->right -= COMBO_EDITBUTTONSPACE();
-  }
-
-  /*
-   * If we have an edit control, we space it away from the borders slightly.
-   */
-  if (CB_GETTYPE(lphc) != CBS_DROPDOWNLIST)
-  {
-    InflateRect(lprEdit, -EDIT_CONTROL_PADDING(), -EDIT_CONTROL_PADDING());
-  }
-
-  /*
-   * Adjust the size of the listbox popup.
-   */
-  if( CB_GETTYPE(lphc) == CBS_SIMPLE )
-  {
-    /*
-     * Use the client rectangle to initialize the listbox rectangle
-     */
-    GetClientRect(hwnd, lprLB);
-
-    /*
-     * Then, chop-off the top part.
-     */
-    lprLB->top = lprEdit->bottom + COMBO_YBORDERSIZE();
-  }
-  else
-  {
-    /*
-     * Make sure the dropped width is as large as the combobox itself.
-     */
-    if (lphc->droppedWidth < (lprButton->right + COMBO_XBORDERSIZE()))
+    /* If the combobox is "simple" there is no button. */
+    if (CB_GETTYPE(combo) == CBS_SIMPLE)
+        combo->buttonRect.left = combo->buttonRect.right = combo->buttonRect.bottom = 0;
+    else
     {
-      lprLB->right  = lprLB->left + (lprButton->right + COMBO_XBORDERSIZE());
+        /*
+         * Let's assume the combobox button is the same width as the
+         * scrollbar button.
+         * size the button horizontally and cut-off the text area.
+         */
+        combo->buttonRect.left = combo->buttonRect.right - GetSystemMetrics(SM_CXVSCROLL);
+        combo->textRect.right = combo->buttonRect.left;
+    }
 
-      /*
-       * In the case of a dropdown, the popup listbox is offset to the right.
-       * so, we want to make sure it's flush with the right side of the
-       * combobox
-       */
-      if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
-	lprLB->right -= COMBO_EDITBUTTONSPACE();
+    /* In the case of a dropdown, there is an additional spacing between the text area and the button. */
+    if (CB_GETTYPE(combo) == CBS_DROPDOWN)
+        combo->textRect.right -= COMBO_EDITBUTTONSPACE();
+
+    /* If we have an edit control, we space it away from the borders slightly. */
+    if (CB_GETTYPE(combo) != CBS_DROPDOWNLIST)
+        InflateRect(&combo->textRect, -EDIT_CONTROL_PADDING(), -EDIT_CONTROL_PADDING());
+
+    /* Adjust the size of the listbox popup. */
+    if (CB_GETTYPE(combo) == CBS_SIMPLE)
+    {
+        GetClientRect(combo->self, &combo->droppedRect);
+        combo->droppedRect.top = combo->textRect.bottom + COMBO_YBORDERSIZE();
     }
     else
-       lprLB->right = lprLB->left + lphc->droppedWidth;
-  }
+    {
+        /* Make sure the dropped width is as large as the combobox itself. */
+        if (combo->droppedWidth < (combo->buttonRect.right + COMBO_XBORDERSIZE()))
+        {
+            combo->droppedRect.right = combo->droppedRect.left + (combo->buttonRect.right + COMBO_XBORDERSIZE());
 
-  /* don't allow negative window width */
-  if (lprEdit->right < lprEdit->left)
-    lprEdit->right = lprEdit->left;
+            /* In the case of a dropdown, the popup listbox is offset to the right. We want to make sure it's flush
+               with the right side of the combobox. */
+            if (CB_GETTYPE(combo) == CBS_DROPDOWN)
+                combo->droppedRect.right -= COMBO_EDITBUTTONSPACE();
+        }
+        else
+            combo->droppedRect.right = combo->droppedRect.left + combo->droppedWidth;
+    }
 
-  TRACE("\ttext\t= (%s)\n", wine_dbgstr_rect(lprEdit));
+    /* Disallow negative window width */
+    if (combo->textRect.right < combo->textRect.left)
+        combo->textRect.right = combo->textRect.left;
 
-  TRACE("\tbutton\t= (%s)\n", wine_dbgstr_rect(lprButton));
-
-  TRACE("\tlbox\t= (%s)\n", wine_dbgstr_rect(lprLB));
+    TRACE("text %s, button %s, lbox %s.\n", wine_dbgstr_rect(&combo->textRect), wine_dbgstr_rect(&combo->buttonRect),
+            wine_dbgstr_rect(&combo->droppedRect));
 }
 
 /***********************************************************************
@@ -455,11 +421,9 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
 
   lphc->owner = hwndParent;
 
-  /*
-   * The item height and dropped width are not set when the control
-   * is created.
-   */
-  lphc->droppedWidth = lphc->editHeight = 0;
+  lphc->droppedWidth = 0;
+
+  lphc->item_height = combo_get_text_height(lphc);
 
   /*
    * The first time we go through, we want to measure the ownerdraw item
@@ -479,7 +443,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
        * recalculated.
        */
       GetClientRect( hwnd, &lphc->droppedRect );
-      CBCalcPlacement(hwnd, lphc, &lphc->textRect, &lphc->buttonRect, &lphc->droppedRect );
+      CBCalcPlacement(lphc);
 
       /*
        * Adjust the position of the popup listbox if it's necessary
@@ -617,9 +581,12 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
  *
  * Paint combo button (normal, pressed, and disabled states).
  */
-static void CBPaintButton( LPHEADCOMBO lphc, HDC hdc, RECT rectButton)
+static void CBPaintButton(HEADCOMBO *lphc, HDC hdc)
 {
     UINT buttonState = DFCS_SCROLLCOMBOBOX;
+
+    if (IsRectEmpty(&lphc->buttonRect))
+        return;
 
     if( lphc->wState & CBF_NOREDRAW )
       return;
@@ -631,7 +598,7 @@ static void CBPaintButton( LPHEADCOMBO lphc, HDC hdc, RECT rectButton)
     if (CB_DISABLED(lphc))
 	buttonState |= DFCS_INACTIVE;
 
-    DrawFrameControl(hdc, &rectButton, DFC_SCROLL, buttonState);
+    DrawFrameControl(hdc, &lphc->buttonRect, DFC_SCROLL, buttonState);
 }
 
 /***********************************************************************
@@ -806,16 +773,13 @@ static void CBPaintText(
 /***********************************************************************
  *           CBPaintBorder
  */
-static void CBPaintBorder(
-  HWND            hwnd,
-  const HEADCOMBO *lphc,
-  HDC             hdc)
+static void CBPaintBorder(const HEADCOMBO *lphc, HDC hdc)
 {
   RECT clientRect;
 
   if (CB_GETTYPE(lphc) != CBS_SIMPLE)
   {
-    GetClientRect(hwnd, &clientRect);
+    GetClientRect(lphc->self, &clientRect);
   }
   else
   {
@@ -858,12 +822,8 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
       /*
        * In non 3.1 look, there is a sunken border on the combobox
        */
-      CBPaintBorder(lphc->self, lphc, hDC);
-
-      if( !IsRectEmpty(&lphc->buttonRect) )
-      {
-	CBPaintButton(lphc, hDC, lphc->buttonRect);
-      }
+      CBPaintBorder(lphc, hDC);
+      CBPaintButton(lphc, hDC);
 
       /* paint the edit control padding area */
       if (CB_GETTYPE(lphc) != CBS_DROPDOWNLIST)
@@ -1449,50 +1409,44 @@ static LRESULT COMBO_GetTextA( LPHEADCOMBO lphc, INT count, LPSTR buf )
  * This function sets window positions according to the updated
  * component placement struct.
  */
-static void CBResetPos(
-  LPHEADCOMBO lphc,
-  const RECT  *rectEdit,
-  const RECT  *rectLB,
-  BOOL        bRedraw)
+static void CBResetPos(HEADCOMBO *combo, BOOL redraw)
 {
-   BOOL	bDrop = (CB_GETTYPE(lphc) != CBS_SIMPLE);
+    BOOL drop = CB_GETTYPE(combo) != CBS_SIMPLE;
 
-   /* NOTE: logs sometimes have WM_LBUTTONUP before a cascade of
-    * sizing messages */
+    /* NOTE: logs sometimes have WM_LBUTTONUP before a cascade of
+     * sizing messages */
+    if (combo->wState & CBF_EDIT)
+        SetWindowPos(combo->hWndEdit, 0, combo->textRect.left, combo->textRect.top,
+                combo->textRect.right - combo->textRect.left,
+                combo->textRect.bottom - combo->textRect.top,
+                SWP_NOZORDER | SWP_NOACTIVATE | (drop ? SWP_NOREDRAW : 0));
 
-   if( lphc->wState & CBF_EDIT )
-     SetWindowPos( lphc->hWndEdit, 0,
-		   rectEdit->left, rectEdit->top,
-		   rectEdit->right - rectEdit->left,
-		   rectEdit->bottom - rectEdit->top,
-                       SWP_NOZORDER | SWP_NOACTIVATE | ((bDrop) ? SWP_NOREDRAW : 0) );
+    SetWindowPos(combo->hWndLBox, 0, combo->droppedRect.left, combo->droppedRect.top,
+            combo->droppedRect.right - combo->droppedRect.left,
+            combo->droppedRect.bottom - combo->droppedRect.top,
+            SWP_NOACTIVATE | SWP_NOZORDER | (drop ? SWP_NOREDRAW : 0));
 
-   SetWindowPos( lphc->hWndLBox, 0,
-		 rectLB->left, rectLB->top,
-                 rectLB->right - rectLB->left,
-		 rectLB->bottom - rectLB->top,
-		   SWP_NOACTIVATE | SWP_NOZORDER | ((bDrop) ? SWP_NOREDRAW : 0) );
+    if (drop)
+    {
+        if (combo->wState & CBF_DROPPED)
+        {
+           combo->wState &= ~CBF_DROPPED;
+           ShowWindow(combo->hWndLBox, SW_HIDE);
+        }
 
-   if( bDrop )
-   {
-       if( lphc->wState & CBF_DROPPED )
-       {
-           lphc->wState &= ~CBF_DROPPED;
-           ShowWindow( lphc->hWndLBox, SW_HIDE );
-       }
-
-       if( bRedraw && !(lphc->wState & CBF_NOREDRAW) )
-           RedrawWindow( lphc->self, NULL, 0,
-                           RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW );
-   }
+        if (redraw && !(combo->wState & CBF_NOREDRAW))
+            RedrawWindow(combo->self, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
+    }
 }
-
 
 /***********************************************************************
  *           COMBO_Size
  */
-static void COMBO_Size( LPHEADCOMBO lphc )
+static void COMBO_Size( HEADCOMBO *lphc )
 {
+    if (!lphc->hWndLBox || (lphc->wState & CBF_NORESIZE))
+        return;
+
   /*
    * Those controls are always the same height. So we have to make sure
    * they are not resized to another value.
@@ -1505,7 +1459,7 @@ static void COMBO_Size( LPHEADCOMBO lphc )
     GetWindowRect(lphc->self, &rc);
     curComboHeight = rc.bottom - rc.top;
     curComboWidth = rc.right - rc.left;
-    newComboHeight = CBGetTextAreaHeight(lphc->self, lphc) + 2*COMBO_YBORDERSIZE();
+    newComboHeight = CBGetTextAreaHeight(lphc, TRUE) + 2*COMBO_YBORDERSIZE();
 
     /*
      * Resizing a combobox has another side effect, it resizes the dropped
@@ -1525,18 +1479,18 @@ static void COMBO_Size( LPHEADCOMBO lphc )
     /*
      * Restore original height
      */
-    if( curComboHeight != newComboHeight )
-      SetWindowPos(lphc->self, 0, 0, 0, curComboWidth, newComboHeight,
-            SWP_NOZORDER|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOREDRAW);
+    if (curComboHeight != newComboHeight)
+    {
+        lphc->wState |= CBF_NORESIZE;
+        SetWindowPos(lphc->self, 0, 0, 0, curComboWidth, newComboHeight,
+                SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOREDRAW);
+        lphc->wState &= ~CBF_NORESIZE;
+    }
   }
 
-  CBCalcPlacement(lphc->self,
-		  lphc,
-		  &lphc->textRect,
-		  &lphc->buttonRect,
-		  &lphc->droppedRect);
+  CBCalcPlacement(lphc);
 
-  CBResetPos( lphc, &lphc->textRect, &lphc->droppedRect, FALSE );
+  CBResetPos(lphc, FALSE);
 }
 
 
@@ -1545,10 +1499,8 @@ static void COMBO_Size( LPHEADCOMBO lphc )
  */
 static void COMBO_Font( LPHEADCOMBO lphc, HFONT hFont, BOOL bRedraw )
 {
-  /*
-   * Set the font
-   */
   lphc->hFont = hFont;
+  lphc->item_height = combo_get_text_height(lphc);
 
   /*
    * Propagate to owned windows.
@@ -1562,13 +1514,9 @@ static void COMBO_Font( LPHEADCOMBO lphc, HFONT hFont, BOOL bRedraw )
    */
   if ( CB_GETTYPE(lphc) == CBS_SIMPLE)
   {
-    CBCalcPlacement(lphc->self,
-		    lphc,
-		    &lphc->textRect,
-		    &lphc->buttonRect,
-		    &lphc->droppedRect);
+    CBCalcPlacement(lphc);
 
-    CBResetPos( lphc, &lphc->textRect, &lphc->droppedRect, TRUE );
+    CBResetPos(lphc, TRUE);
   }
   else
   {
@@ -1588,20 +1536,16 @@ static LRESULT COMBO_SetItemHeight( LPHEADCOMBO lphc, INT index, INT height )
    {
        if( height < 32768 )
        {
-           lphc->editHeight = height + 2;  /* Is the 2 for 2*EDIT_CONTROL_PADDING? */
+           lphc->item_height = height + 2;  /* Is the 2 for 2*EDIT_CONTROL_PADDING? */
 
 	 /*
 	  * Redo the layout of the control.
 	  */
 	 if ( CB_GETTYPE(lphc) == CBS_SIMPLE)
 	 {
-	   CBCalcPlacement(lphc->self,
-			   lphc,
-			   &lphc->textRect,
-			   &lphc->buttonRect,
-			   &lphc->droppedRect);
+	   CBCalcPlacement(lphc);
 
-	   CBResetPos( lphc, &lphc->textRect, &lphc->droppedRect, TRUE );
+	   CBResetPos(lphc, TRUE);
 	 }
 	 else
 	 {
@@ -1849,8 +1793,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 		return  result;
 	}
 	case WM_SIZE:
-	        if( lphc->hWndLBox &&
-		  !(lphc->wState & CBF_NORESIZE) ) COMBO_Size( lphc );
+	        COMBO_Size( lphc );
 		return  TRUE;
 	case WM_SETFONT:
 		COMBO_Font( lphc, (HFONT)wParam, (BOOL)lParam );
@@ -1988,6 +1931,18 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 if (GET_WHEEL_DELTA_WPARAM(wParam) < 0) return SendMessageW(hwnd, WM_KEYDOWN, VK_DOWN, 0);
                 return TRUE;
 
+        case WM_CTLCOLOR:
+        case WM_CTLCOLORMSGBOX:
+        case WM_CTLCOLOREDIT:
+        case WM_CTLCOLORLISTBOX:
+        case WM_CTLCOLORBTN:
+        case WM_CTLCOLORDLG:
+        case WM_CTLCOLORSCROLLBAR:
+        case WM_CTLCOLORSTATIC:
+            if (lphc->owner)
+                return SendMessageW(lphc->owner, message, wParam, lParam);
+            break;
+
 	/* Combo messages */
 
 	case CB_ADDSTRING:
@@ -2054,7 +2009,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 	case CB_GETITEMHEIGHT:
 		if( (INT)wParam >= 0 )	/* listbox item */
                     return SendMessageW(lphc->hWndLBox, LB_GETITEMHEIGHT, wParam, 0);
-                return  CBGetTextAreaHeight(hwnd, lphc);
+                return CBGetTextAreaHeight(lphc, FALSE);
 	case CB_RESETCONTENT:
 		SendMessageW(lphc->hWndLBox, LB_RESETCONTENT, 0, 0);
                 if( (lphc->wState & CBF_EDIT) && CB_HASSTRINGS(lphc) )
@@ -2088,7 +2043,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 		    lphc->droppedWidth = 0;
 
 		/* recalculate the combobox area */
-		CBCalcPlacement(hwnd, lphc, &lphc->textRect, &lphc->buttonRect, &lphc->droppedRect );
+		CBCalcPlacement(lphc);
 
 		/* fall through */
 	case CB_GETDROPPEDWIDTH:

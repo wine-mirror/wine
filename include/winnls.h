@@ -338,8 +338,6 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 
 #define LOCALE_NAME_USER_DEFAULT    NULL
 
-#define LOCALE_IDEFAULTUNIXCODEPAGE   0x1030 /* Wine extension */
-
 #define NORM_IGNORECASE            0x00000001
 #define NORM_IGNORENONSPACE        0x00000002
 #define NORM_IGNORESYMBOLS         0x00000004
@@ -413,6 +411,8 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define DATE_YEARMONTH          0x08  /* Year/month format */
 #define DATE_LTRREADING         0x10  /* Add LTR reading marks */
 #define DATE_RTLREADING         0x20  /* Add RTL reading marks */
+#define DATE_AUTOLAYOUT         0x40  /* Add LTR or RTL reading marks automatically */
+#define DATE_MONTHDAY           0x80  /* Month/day format */
 
 #define TIME_FORCE24HOURFORMAT  0x08  /* Always use 24 hour clock */
 #define TIME_NOTIMEMARKER       0x04  /* show no AM/PM */
@@ -833,6 +833,7 @@ enum SYSGEOTYPE
 
 enum SYSGEOCLASS
 {
+    GEOCLASS_ALL = 0,
     GEOCLASS_REGION = 14,
     GEOCLASS_NATION = 16
 };

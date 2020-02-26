@@ -112,8 +112,8 @@ char *pp_xstrdup(const char *str)
 	return memcpy(s, str, len);
 }
 
-static char *wpp_default_lookup(const char *name, int type, const char *parent_name,
-                                char **include_path, int include_path_count)
+char *wpp_lookup(const char *name, int type, const char *parent_name,
+                 char **include_path, int include_path_count)
 {
     char *cpy;
     char *cptr;
@@ -188,22 +188,6 @@ static char *wpp_default_lookup(const char *name, int type, const char *parent_n
     }
     free( cpy );
     return NULL;
-}
-
-static void *wpp_default_open(const char *filename, int type) {
-    return fopen(filename,"rt");
-}
-
-static void wpp_default_close(void *file) {
-    fclose(file);
-}
-
-static int wpp_default_read(void *file, char *buffer, unsigned int len){
-    return fread(buffer, 1, len, file);
-}
-
-static void wpp_default_write( const char *buffer, unsigned int len ) {
-    fwrite(buffer, 1, len, ppy_out);
 }
 
 /* Don't comment on the hash, it's primitive but functional... */
@@ -505,7 +489,7 @@ int wpp_add_include_path(const char *path)
 
 char *wpp_find_include(const char *name, const char *parent_name)
 {
-    return wpp_default_lookup(name, !!parent_name, parent_name, includepath, nincludepath);
+    return wpp_lookup(name, !!parent_name, parent_name, includepath, nincludepath);
 }
 
 void *pp_open_include(const char *name, int type, const char *parent_name, char **newpath)
@@ -513,9 +497,8 @@ void *pp_open_include(const char *name, int type, const char *parent_name, char 
     char *path;
     void *fp;
 
-    if (!(path = wpp_callbacks->lookup(name, type, parent_name, includepath,
-                                       nincludepath))) return NULL;
-    fp = wpp_callbacks->open(path, type);
+    if (!(path = wpp_lookup(name, type, parent_name, includepath, nincludepath))) return NULL;
+    fp = fopen(path, "rt");
 
     if (fp)
     {
@@ -705,45 +688,20 @@ end:
 	fprintf(stderr, "\n");
 }
 
-static void wpp_default_error(const char *file, int line, int col, const char *near, const char *msg, va_list ap)
-{
-	generic_msg(msg, "Error", near, ap);
-	exit(1);
-}
-
-static void wpp_default_warning(const char *file, int line, int col, const char *near, const char *msg, va_list ap)
-{
-	generic_msg(msg, "Warning", near, ap);
-}
-
-static const struct wpp_callbacks default_callbacks =
-{
-	wpp_default_lookup,
-	wpp_default_open,
-	wpp_default_close,
-	wpp_default_read,
-	wpp_default_write,
-	wpp_default_error,
-	wpp_default_warning,
-};
-
-const struct wpp_callbacks *wpp_callbacks = &default_callbacks;
-
 int ppy_error(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	wpp_callbacks->error(pp_status.input, pp_status.line_number, pp_status.char_number, ppy_text, s, ap);
+	generic_msg(s, "Error", ppy_text, ap);
 	va_end(ap);
-	pp_status.state = 1;
-	return 1;
+	exit(1);
 }
 
 int ppy_warning(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	wpp_callbacks->warning(pp_status.input, pp_status.line_number, pp_status.char_number, ppy_text, s, ap);
+	generic_msg(s, "Warning", ppy_text, ap);
 	va_end(ap);
 	return 0;
 }

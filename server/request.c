@@ -61,7 +61,6 @@
 #include "winbase.h"
 #include "wincon.h"
 #include "winternl.h"
-#include "wine/library.h"
 
 #include "file.h"
 #include "process.h"
@@ -127,6 +126,7 @@ static const struct fd_ops master_socket_fd_ops =
 struct thread *current = NULL;  /* thread handling the current request */
 unsigned int global_error = 0;  /* global error code for when no thread is current */
 timeout_t server_start_time = 0;  /* server startup time */
+char *server_dir = NULL;   /* server directory */
 int server_dir_fd = -1;    /* file descriptor for the server dir */
 int config_dir_fd = -1;    /* file descriptor for the config dir */
 
@@ -529,6 +529,10 @@ unsigned int get_tick_count(void)
     static mach_timebase_info_data_t timebase;
 
     if (!timebase.denom) mach_timebase_info( &timebase );
+#ifdef HAVE_MACH_CONTINUOUS_TIME
+    if (&mach_continuous_time != NULL)
+        return mach_continuous_time() * timebase.numer / timebase.denom / 1000000;
+#endif
     return mach_absolute_time() * timebase.numer / timebase.denom / 1000000;
 #elif defined(HAVE_CLOCK_GETTIME)
     struct timespec ts;
@@ -599,7 +603,7 @@ static void create_dir( const char *name, struct stat *st )
     if (lstat( name, st ) == -1)
     {
         if (errno != ENOENT)
-            fatal_error( "lstat %s: %s", name, strerror( errno ));
+            fatal_error( "lstat %s: %s\n", name, strerror( errno ));
         if (mkdir( name, 0700 ) == -1 && errno != EEXIST)
             fatal_error( "mkdir %s: %s\n", name, strerror( errno ));
         if (lstat( name, st ) == -1)
@@ -611,22 +615,82 @@ static void create_dir( const char *name, struct stat *st )
 }
 
 /* create the server directory and chdir to it */
-static void create_server_dir( const char *dir )
+static char *create_server_dir( int force )
 {
-    char *p, *server_dir;
+    const char *prefix = getenv( "WINEPREFIX" );
+    char *p, *config_dir;
     struct stat st, st2;
+    size_t len = sizeof("/server-") + 2 * sizeof(st.st_dev) + 2 * sizeof(st.st_ino) + 2;
 
-    if (!(server_dir = strdup( dir ))) fatal_error( "out of memory\n" );
+    /* open the configuration directory */
 
-    /* first create the base directory if needed */
+    if (prefix)
+    {
+        if (!(config_dir = strdup( prefix ))) fatal_error( "out of memory\n" );
+        for (p = config_dir + strlen(config_dir); p > config_dir; p--) if (p[-1] != '/') break;
+        if (p > config_dir) *p = 0;
+        if (config_dir[0] != '/')
+            fatal_error( "invalid directory %s in WINEPREFIX: not an absolute path\n", prefix );
+    }
+    else
+    {
+        const char *home = getenv( "HOME" );
+        if (!home)
+        {
+            struct passwd *pwd = getpwuid( getuid() );
+            if (pwd) home = pwd->pw_dir;
+        }
+        if (!home) fatal_error( "could not determine your home directory\n" );
+        if (home[0] != '/') fatal_error( "your home directory %s is not an absolute path\n", home );
+        if (!(config_dir = malloc( strlen(home) + sizeof("/.wine") ))) fatal_error( "out of memory\n" );
+        strcpy( config_dir, home );
+        for (p = config_dir + strlen(config_dir); p > config_dir; p--) if (p[-1] != '/') break;
+        strcpy( p, "/.wine" );
+    }
 
-    p = strrchr( server_dir, '/' );
-    *p = 0;
-    create_dir( server_dir, &st );
+    if (chdir( config_dir ) == -1)
+    {
+        if (errno != ENOENT || force) fatal_error( "chdir to %s: %s\n", config_dir, strerror( errno ));
+        return NULL;
+    }
+    if ((config_dir_fd = open( ".", O_RDONLY )) == -1)
+        fatal_error( "open %s: %s\n", config_dir, strerror( errno ));
+    if (fstat( config_dir_fd, &st ) == -1)
+        fatal_error( "stat %s: %s\n", config_dir, strerror( errno ));
+    if (st.st_uid != getuid())
+        fatal_error( "%s is not owned by you\n", config_dir );
+
+    /* create the base directory if needed */
+
+#ifdef __ANDROID__  /* there's no /tmp dir on Android */
+    len += strlen( config_dir ) + sizeof("/.wineserver");
+    if (!(server_dir = malloc( len ))) fatal_error( "out of memory\n" );
+    strcpy( server_dir, config_dir );
+    strcat( server_dir, "/.wineserver" );
+#else
+    len += sizeof("/tmp/.wine-") + 12;
+    if (!(server_dir = malloc( len ))) fatal_error( "out of memory\n" );
+    sprintf( server_dir, "/tmp/.wine-%u", getuid() );
+#endif
+    create_dir( server_dir, &st2 );
 
     /* now create the server directory */
 
-    *p = '/';
+    strcat( server_dir, "/server-" );
+    p = server_dir + strlen(server_dir);
+
+    if (st.st_dev != (unsigned long)st.st_dev)
+        p += sprintf( p, "%lx%08lx-", (unsigned long)((unsigned long long)st.st_dev >> 32),
+                      (unsigned long)st.st_dev );
+    else
+        p += sprintf( p, "%lx-", (unsigned long)st.st_dev );
+
+    if (st.st_ino != (unsigned long)st.st_ino)
+        sprintf( p, "%lx%08lx", (unsigned long)((unsigned long long)st.st_ino >> 32),
+                 (unsigned long)st.st_ino );
+    else
+        sprintf( p, "%lx", (unsigned long)st.st_ino );
+
     create_dir( server_dir, &st );
 
     if (chdir( server_dir ) == -1)
@@ -638,7 +702,8 @@ static void create_server_dir( const char *dir )
     if (st.st_dev != st2.st_dev || st.st_ino != st2.st_ino)
         fatal_error( "chdir did not end up in %s\n", server_dir );
 
-    free( server_dir );
+    free( config_dir );
+    return server_dir;
 }
 
 /* create the lock file and return its file descriptor */
@@ -650,29 +715,28 @@ static int create_server_lock(void)
     if (lstat( server_lock_name, &st ) == -1)
     {
         if (errno != ENOENT)
-            fatal_error( "lstat %s/%s: %s", wine_get_server_dir(), server_lock_name, strerror( errno ));
+            fatal_error( "lstat %s/%s: %s\n", server_dir, server_lock_name, strerror( errno ));
     }
     else
     {
         if (!S_ISREG(st.st_mode))
-            fatal_error( "%s/%s is not a regular file\n", wine_get_server_dir(), server_lock_name );
+            fatal_error( "%s/%s is not a regular file\n", server_dir, server_lock_name );
     }
 
     if ((fd = open( server_lock_name, O_CREAT|O_TRUNC|O_WRONLY, 0600 )) == -1)
-        fatal_error( "error creating %s/%s: %s", wine_get_server_dir(), server_lock_name, strerror( errno ));
+        fatal_error( "error creating %s/%s: %s\n", server_dir, server_lock_name, strerror( errno ));
     return fd;
 }
 
 /* wait for the server lock */
 int wait_for_lock(void)
 {
-    const char *server_dir = wine_get_server_dir();
     int fd, r;
     struct flock fl;
 
+    server_dir = create_server_dir( 0 );
     if (!server_dir) return 0;  /* no server dir, so no lock to wait on */
 
-    create_server_dir( server_dir );
     fd = create_server_lock();
 
     fl.l_type   = F_WRLCK;
@@ -688,14 +752,13 @@ int wait_for_lock(void)
 /* kill the wine server holding the lock */
 int kill_lock_owner( int sig )
 {
-    const char *server_dir = wine_get_server_dir();
     int fd, i, ret = 0;
     pid_t pid = 0;
     struct flock fl;
 
+    server_dir = create_server_dir( 0 );
     if (!server_dir) return 0;  /* no server dir, nothing to do */
 
-    create_server_dir( server_dir );
     fd = create_server_lock();
 
     for (i = 1; i <= 20; i++)
@@ -756,7 +819,7 @@ static void acquire_lock(void)
                      "Warning: a previous instance of the wine server seems to have crashed.\n"
                      "Please run 'gdb %s %s/core',\n"
                      "type 'backtrace' at the gdb prompt and report the results. Thanks.\n\n",
-                     server_argv0, wine_get_server_dir() );
+                     server_argv0, server_dir );
         }
         unlink( server_socket_name ); /* we got the lock, we can safely remove the socket */
         got_lock = 1;
@@ -776,7 +839,7 @@ static void acquire_lock(void)
         case EAGAIN:
             exit(2); /* we didn't get the lock, exit with special status */
         default:
-            fatal_error( "fcntl %s/%s: %s", wine_get_server_dir(), server_lock_name, strerror( errno ));
+            fatal_error( "fcntl %s/%s: %s\n", server_dir, server_lock_name, strerror( errno ));
         }
         /* it seems we can't use locks on this fs, so we will use the socket existence as lock */
         close( fd );
@@ -813,8 +876,6 @@ static void acquire_lock(void)
 /* open the master server socket and start waiting for new clients */
 void open_master_socket(void)
 {
-    const char *server_dir = wine_get_server_dir();
-    const char *config_dir = wine_get_config_dir();
     int fd, pid, status, sync_pipe[2];
     char dummy;
 
@@ -826,14 +887,7 @@ void open_master_socket(void)
     fd = open( "/dev/null", O_RDWR );
     while (fd >= 0 && fd <= 2) fd = dup( fd );
 
-    if (!server_dir)
-        fatal_error( "directory %s cannot be accessed\n", config_dir );
-    if (chdir( config_dir ) == -1)
-        fatal_error( "chdir to %s: %s\n", config_dir, strerror( errno ));
-    if ((config_dir_fd = open( ".", O_RDONLY )) == -1)
-        fatal_error( "open %s: %s\n", config_dir, strerror( errno ));
-
-    create_server_dir( server_dir );
+    server_dir = create_server_dir( 1 );
 
     if (!foreground)
     {

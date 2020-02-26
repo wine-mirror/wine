@@ -64,7 +64,6 @@ static const struct oatype {
   {"VARIANT",       VT_VARIANT},
   {"VARIANT_BOOL",  VT_BOOL}
 };
-#define NTYPES (sizeof(oatypes)/sizeof(oatypes[0]))
 #define KWP(p) ((const struct oatype *)(p))
 
 static int kw_cmp_func(const void *s1, const void *s2)
@@ -79,11 +78,11 @@ static unsigned short builtin_vt(const type_t *t)
   const struct oatype *kwp;
   key.kw = kw;
 #ifdef KW_BSEARCH
-  kwp = bsearch(&key, oatypes, NTYPES, sizeof(oatypes[0]), kw_cmp_func);
+  kwp = bsearch(&key, oatypes, ARRAY_SIZE(oatypes), sizeof(oatypes[0]), kw_cmp_func);
 #else
   {
     unsigned int i;
-    for (kwp=NULL, i=0; i < NTYPES; i++)
+    for (kwp = NULL, i = 0; i < ARRAY_SIZE(oatypes); i++)
       if (!kw_cmp_func(&key, &oatypes[i])) {
         kwp = &oatypes[i];
         break;
@@ -97,9 +96,9 @@ static unsigned short builtin_vt(const type_t *t)
   {
     const type_t *elem_type;
     if (is_array(t))
-      elem_type = type_array_get_element(t);
+      elem_type = type_array_get_element_type(t);
     else
-      elem_type = type_pointer_get_ref(t);
+      elem_type = type_pointer_get_ref_type(t);
     if (type_get_type(elem_type) == TYPE_BASIC)
     {
       switch (type_basic_get_type(elem_type))
@@ -129,7 +128,8 @@ unsigned short get_type_vt(type_t *t)
     if (vt) return vt;
   }
 
-  if (type_is_alias(t) && is_attr(t->attrs, ATTR_PUBLIC))
+  if (type_is_alias(t) &&
+        (is_attr(t->attrs, ATTR_PUBLIC) || is_attr(t->attrs, ATTR_WIREMARSHAL)))
     return VT_USERDEFINED;
 
   switch (type_get_type(t)) {
@@ -198,7 +198,7 @@ unsigned short get_type_vt(type_t *t)
   case TYPE_ARRAY:
     if (type_array_is_decl_as_ptr(t))
     {
-      if (match(type_array_get_element(t)->name, "SAFEARRAY"))
+      if (match(type_array_get_element_type(t)->name, "SAFEARRAY"))
         return VT_SAFEARRAY;
       return VT_PTR;
     }

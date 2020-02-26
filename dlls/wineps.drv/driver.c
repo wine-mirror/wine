@@ -25,8 +25,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include "config.h"
-
 #include <string.h>
 
 #include "wine/debug.h"
@@ -112,8 +110,7 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERI
 	    dm1->dmPublic.u1.s1.dmPaperSize = dm2->dmPublic.u1.s1.dmPaperSize;
 	    dm1->dmPublic.u1.s1.dmPaperWidth  = paper_size_from_points( page->PaperDimension->x );
 	    dm1->dmPublic.u1.s1.dmPaperLength = paper_size_from_points( page->PaperDimension->y );
-	    dm1->dmPublic.dmFields &= ~(DM_PAPERLENGTH | DM_PAPERWIDTH);
-	    dm1->dmPublic.dmFields |= DM_PAPERSIZE;
+	    dm1->dmPublic.dmFields |= DM_PAPERSIZE | DM_PAPERWIDTH | DM_PAPERLENGTH;
 	    TRACE("Changing page to %s %d x %d\n", page->FullName,
 		  dm1->dmPublic.u1.s1.dmPaperWidth,
 		  dm1->dmPublic.u1.s1.dmPaperLength );
@@ -283,7 +280,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         WCHAR buf[256];
 
         res = di->pi->ppd->DefaultResolution;
-        len = sprintfW(buf, resW, res);
+        len = swprintf(buf, ARRAY_SIZE(buf), resW, res);
         buf[len++] = ' ';
         LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, ARRAY_SIZE(buf) - len);
         SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_ADDSTRING, 0, (LPARAM)buf);
@@ -313,9 +310,9 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
             DWORD idx;
 
             if (res->resx == res->resy)
-                len = sprintfW(buf, resW, res->resx);
+                len = swprintf(buf, ARRAY_SIZE(buf), resW, res->resx);
             else
-                len = sprintfW(buf, resxyW, res->resx, res->resy);
+                len = swprintf(buf, ARRAY_SIZE(buf), resxyW, res->resx, res->resy);
             buf[len++] = ' ';
             LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, ARRAY_SIZE(buf) - len);
             idx = SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_ADDSTRING, 0, (LPARAM)buf);
@@ -523,9 +520,9 @@ static DEVMODEA *DEVMODEdupWtoA( const DEVMODEW *dmW )
  *
  * Just returns default devmode at the moment.  No use of initialization file.
  */
-INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
-                        LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
-                        LPSTR lpszProfile, DWORD dwMode)
+INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
+                              LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
+                              LPSTR lpszProfile, DWORD dwMode)
 {
   PRINTERINFO *pi = PSDRV_FindPrinterInfoA(lpszDevice);
   if(!pi) return -1;
@@ -618,8 +615,8 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
  * Returns
  *      Result depends on the setting of fwCapability.  -1 indicates failure.
  */
-DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszPort,
-                               WORD fwCapability, LPSTR lpszOutput, LPDEVMODEA lpDevMode)
+DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszPort,
+                                     WORD fwCapability, LPSTR lpszOutput, LPDEVMODEA lpDevMode)
 {
   PRINTERINFO *pi;
   DEVMODEW *lpdm;

@@ -1383,7 +1383,7 @@ static void test_delegated_methods(void)
     ready_event = CreateEventA(NULL, TRUE, FALSE, "wine_cstub_test_server_ready");
 
     process = create_process("server");
-    ok(!WaitForSingleObject(ready_event, 1000), "wait failed\n");
+    ok(!WaitForSingleObject(ready_event, 5000), "wait failed\n");
 
     hr = NdrDllGetClassObject(&CLSID_test_ps, &IID_IPSFactoryBuffer, (void **)&ps,
         &aProxyFileList, &CLSID_test_ps, &gPFactory);

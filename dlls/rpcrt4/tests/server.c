@@ -2049,7 +2049,7 @@ server(void)
     ok(status == RPC_S_OK, "RpcServerRegisterIf failed with status %d\n", status);
   }
   test_is_server_listening(NULL, RPC_S_NOT_LISTENING);
-  status = RpcServerListen(1, 20, TRUE);
+  status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
   ok(status == RPC_S_OK, "RpcServerListen failed with status %d\n", status);
   test_is_server_listening(NULL, RPC_S_OK);
   stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -2146,7 +2146,7 @@ static void test_stop_wait_for_call(unsigned char *binding)
     RPC_STATUS status;
     DWORD ret;
 
-    status = RpcServerListen(1, 20, TRUE);
+    status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
     ok(status == RPC_S_OK, "RpcServerListen failed with status %d\n", status);
     test_is_server_listening(NULL, RPC_S_OK);
 
@@ -2202,11 +2202,11 @@ static void test_server_listening(void)
     ok(status == RPC_S_OK, "RpcServerRegisterIf failed with status %d\n", status);
 
     test_is_server_listening(NULL, RPC_S_NOT_LISTENING);
-    status = RpcServerListen(1, 20, TRUE);
+    status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
     ok(status == RPC_S_OK, "RpcServerListen failed with status %d\n", status);
     test_is_server_listening(NULL, RPC_S_OK);
 
-    status = RpcServerListen(1, 20, TRUE);
+    status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
     ok(status == RPC_S_ALREADY_LISTENING, "RpcServerListen failed with status %d\n", status);
 
     status = RpcMgmtStopServerListening(NULL);
@@ -2281,7 +2281,7 @@ static void run_server(HANDLE ready_event)
     ok(status == RPC_S_OK, "RpcServerRegisterIf failed with status %d\n", status);
 
     test_is_server_listening(NULL, RPC_S_NOT_LISTENING);
-    status = RpcServerListen(1, 20, TRUE);
+    status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
     ok(status == RPC_S_OK, "RpcServerListen failed with status %d\n", status);
 
     stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -2290,7 +2290,7 @@ static void run_server(HANDLE ready_event)
     ret = SetEvent(ready_event);
     ok(ret, "SetEvent failed: %u\n", GetLastError());
 
-    ret = WaitForSingleObject(stop_event, 1000);
+    ret = WaitForSingleObject(stop_event, 5000);
     ok(WAIT_OBJECT_0 == ret, "WaitForSingleObject\n");
 
     status = RpcMgmtWaitServerListen();

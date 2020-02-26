@@ -22,7 +22,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atlthunk);
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
 
 struct AtlThunkData_t {
     struct thunk_pool *pool;
@@ -45,6 +45,11 @@ struct thunk_code
     DWORD mov_eax_esp;        /* movl %eax, 4(%esp) */
     WORD  jmp;
     DWORD jmp_addr;           /* jmp *jmp_addr */
+#elif defined(__aarch64__)
+    DWORD ldr_x0;             /* ldr x0,data_addr */
+    DWORD ldr_x16;            /* ldr x16,proc_addr */
+    DWORD br_x16;             /* br x16 */
+    DWORD pad;
 #endif
 };
 #include "poppack.h"
@@ -86,6 +91,10 @@ static struct thunk_pool *alloc_thunk_pool(void)
         thunk->mov_eax_esp       = 0x04244489; /* movl %eax, 4(%esp) */
         thunk->jmp               = 0x25ff;     /* jmp *jmp_addr */
         thunk->jmp_addr          = (DWORD)&thunks->data[i].proc;
+#elif defined(__aarch64__)
+        thunk->ldr_x0            = 0x58000000 | (((DWORD *)&thunks->data[i].arg - &thunk->ldr_x0) << 5);
+        thunk->ldr_x16           = 0x58000010 | (((DWORD *)&thunks->data[i].proc - &thunk->ldr_x16) << 5);
+        thunk->br_x16            = 0xd61f0200;
 #endif
     }
     VirtualProtect(thunks->thunks, FIELD_OFFSET(struct thunk_pool, first_free), PAGE_EXECUTE_READ, &old_protect);
@@ -161,7 +170,7 @@ void WINAPI AtlThunk_InitData(AtlThunkData_t *thunk, void *proc, SIZE_T arg)
     thunk->arg = arg;
 }
 
-#else  /* __i386__ || __x86_64__ */
+#else  /* __i386__ || __x86_64__ || __aarch64__ */
 
 AtlThunkData_t* WINAPI AtlThunk_AllocateData(void)
 {
@@ -182,4 +191,4 @@ void WINAPI AtlThunk_InitData(AtlThunkData_t *thunk, void *proc, SIZE_T arg)
 {
 }
 
-#endif  /* __i386__ || __x86_64__ */
+#endif  /* __i386__ || __x86_64__ || __aarch64__ */

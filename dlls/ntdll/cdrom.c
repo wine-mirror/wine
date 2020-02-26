@@ -1658,7 +1658,7 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
     io = ioctl(fd, SG_IO, &cmd);
 
     pPacket->ScsiStatus         = cmd.status;
-    pPacket->DataTransferLength = cmd.resid;
+    pPacket->DataTransferLength -= cmd.resid;
     pPacket->SenseInfoLength    = cmd.sb_len_wr;
 
     ret = CDROM_GetStatusCode(io);
@@ -1842,7 +1842,7 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     io = ioctl(fd, SG_IO, &cmd);
 
     pPacket->ScsiStatus         = cmd.status;
-    pPacket->DataTransferLength = cmd.resid;
+    pPacket->DataTransferLength -= cmd.resid;
     pPacket->SenseInfoLength    = cmd.sb_len_wr;
 
     ret = CDROM_GetStatusCode(io);

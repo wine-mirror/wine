@@ -326,19 +326,19 @@ static void test_StreamOnMemory(void)
 
     /* Commit */
     hr = IWICStream_Commit(pStream, STGC_DEFAULT);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pStream, STGC_OVERWRITE);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pStream, STGC_ONLYIFCURRENT);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pStream, STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pStream, STGC_CONSOLIDATE);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
 
     /* Revert */
@@ -643,19 +643,19 @@ static void test_StreamOnStreamRange(void)
 
     /* Commit */
     hr = IWICStream_Commit(pSubStream, STGC_DEFAULT);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pSubStream, STGC_OVERWRITE);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pSubStream, STGC_ONLYIFCURRENT);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pSubStream, STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pSubStream, STGC_CONSOLIDATE);
-    ok(hr == E_NOTIMPL, "Commit returned %#x, expected %#x\n", hr, E_NOTIMPL);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
 
     /* Revert */
@@ -953,19 +953,19 @@ static void test_StreamOnIStream(void)
 
     /* Commit */
     hr = IWICStream_Commit(substream, STGC_DEFAULT);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(substream, STGC_OVERWRITE);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(substream, STGC_ONLYIFCURRENT);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(substream, STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(substream, STGC_CONSOLIDATE);
-    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     /* Revert */
     IWICStream_Write(substream, buff + 5, 6, NULL);

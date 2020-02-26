@@ -48,14 +48,14 @@
 #include "wmc.h"
 #include "lang.h"
 
-static const char err_syntax[]	= "Syntax error";
-static const char err_number[]	= "Number expected";
-static const char err_ident[]	= "Identifier expected";
-static const char err_assign[]	= "'=' expected";
-static const char err_popen[]	= "'(' expected";
-static const char err_pclose[]	= "')' expected";
-static const char err_colon[]	= "':' expected";
-static const char err_msg[]	= "Message expected";
+static const char err_syntax[]	= "Syntax error\n";
+static const char err_number[]	= "Number expected\n";
+static const char err_ident[]	= "Identifier expected\n";
+static const char err_assign[]	= "'=' expected\n";
+static const char err_popen[]	= "'(' expected\n";
+static const char err_pclose[]	= "')' expected\n";
+static const char err_colon[]	= "':' expected\n";
+static const char err_msg[]	= "Message expected\n";
 
 /* Scanner switches */
 int want_nl = 0;		/* Request next newlinw */
@@ -590,7 +590,7 @@ static lan_blk_t *block_messages(node_t *head)
 	int nmsg = 0;
 	int i;
 	int nl;
-	int factor = unicodeout ? 2 : 1;
+	int factor = 2;
 
 	for(ndp = head; ndp; ndp = ndp->next)
 	{

@@ -87,10 +87,6 @@ extern HRESULT attributes_GetItemByIndex(struct attributes *object, UINT32 index
         PROPVARIANT *value) DECLSPEC_HIDDEN;
 extern HRESULT attributes_CopyAllItems(struct attributes *object, IMFAttributes *dest) DECLSPEC_HIDDEN;
 
-extern void init_system_queues(void) DECLSPEC_HIDDEN;
-extern void shutdown_system_queues(void) DECLSPEC_HIDDEN;
-extern BOOL is_platform_locked(void) DECLSPEC_HIDDEN;
-
 static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
     size_t new_capacity, max_capacity;
@@ -136,7 +132,7 @@ static inline const char *debugstr_propvar(const PROPVARIANT *v)
         case VT_R8:
             return wine_dbg_sprintf("%p {VT_R8: %lf}", v, v->u.dblVal);
         case VT_CLSID:
-            return wine_dbg_sprintf("%p {VT_CLSID: %s}", v, debugstr_guid(v->u.puuid));
+            return wine_dbg_sprintf("%p {VT_CLSID: %s}", v, debugstr_mf_guid(v->u.puuid));
         case VT_LPWSTR:
             return wine_dbg_sprintf("%p {VT_LPWSTR: %s}", v, wine_dbgstr_w(v->u.pwszVal));
         case VT_VECTOR | VT_UI1:

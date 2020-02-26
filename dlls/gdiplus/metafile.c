@@ -740,7 +740,7 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     RECT rc, *lprc;
     GpStatus stat;
 
-    TRACE("(%p %d %p %d %p %p)\n", hdc, type, frameRect, frameUnit, desc, metafile);
+    TRACE("(%p %d %s %d %p %p)\n", hdc, type, debugstr_rectf(frameRect), frameUnit, desc, metafile);
 
     if (!hdc || type < EmfTypeEmfOnly || type > EmfTypeEmfPlusDual || !metafile)
         return InvalidParameter;
@@ -859,12 +859,33 @@ GpStatus WINGDIPAPI GdipRecordMetafileI(HDC hdc, EmfType type, GDIPCONST GpRect 
     return GdipRecordMetafile(hdc, type, pFrameRectF, frameUnit, desc, metafile);
 }
 
+GpStatus WINGDIPAPI GdipRecordMetafileStreamI(IStream *stream, HDC hdc, EmfType type, GDIPCONST GpRect *frameRect,
+                                        MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
+{
+    GpRectF frameRectF, *pFrameRectF;
+
+    TRACE("(%p %p %d %p %d %p %p)\n", stream, hdc, type, frameRect, frameUnit, desc, metafile);
+
+    if (frameRect)
+    {
+        frameRectF.X = frameRect->X;
+        frameRectF.Y = frameRect->Y;
+        frameRectF.Width = frameRect->Width;
+        frameRectF.Height = frameRect->Height;
+        pFrameRectF = &frameRectF;
+    }
+    else
+        pFrameRectF = NULL;
+
+    return GdipRecordMetafileStream(stream, hdc, type, pFrameRectF, frameUnit, desc, metafile);
+}
+
 GpStatus WINGDIPAPI GdipRecordMetafileStream(IStream *stream, HDC hdc, EmfType type, GDIPCONST GpRectF *frameRect,
                                         MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
 {
     GpStatus stat;
 
-    TRACE("(%p %p %d %p %d %p %p)\n", stream, hdc, type, frameRect, frameUnit, desc, metafile);
+    TRACE("(%p %p %d %s %d %p %p)\n", stream, hdc, type, debugstr_rectf(frameRect), frameUnit, desc, metafile);
 
     if (!stream)
         return InvalidParameter;
@@ -2386,7 +2407,7 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
         if (pendata->PenDataFlags & PenDataCompoundLine)
         {
             EmfPlusCompoundLineData *compoundline = (EmfPlusCompoundLineData *)((BYTE *)pendata + offset);
-            FIXME("PenDataCompundLine is not supported.\n");
+            FIXME("PenDataCompoundLine is not supported.\n");
             offset += FIELD_OFFSET(EmfPlusCompoundLineData, data) + compoundline->CompoundLineDataSize * sizeof(float);
         }
 
@@ -4027,7 +4048,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileFileName(GDIPCONST WCHAR* fileName,
                             MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc,
                             GpMetafile **metafile)
 {
-    FIXME("%s %p %d %p %d %s %p stub!\n", debugstr_w(fileName), hdc, type, pFrameRect,
+    FIXME("%s %p %d %s %d %s %p stub!\n", debugstr_w(fileName), hdc, type, debugstr_rectf(pFrameRect),
                                  frameUnit, debugstr_w(desc), metafile);
 
     return NotImplemented;

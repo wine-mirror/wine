@@ -30,6 +30,7 @@ interface IUIAnimationTransitionLibrary;
 
 typedef DOUBLE UI_ANIMATION_SECONDS;
 typedef struct { int _; } *UI_ANIMATION_KEYFRAME;
+const UI_ANIMATION_KEYFRAME UI_ANIMATION_KEYFRAME_STORYBOARD_START = (UI_ANIMATION_KEYFRAME)(-1);
 
 const UI_ANIMATION_SECONDS UI_ANIMATION_SECONDS_EVENTUALLY = -1.0;
 
@@ -584,7 +585,8 @@ interface IUIAnimationTransitionLibrary : IUnknown
 library UIAnimation
 {
     [
-        uuid(bfcd4a0c-06b6-4384-b768-0daa792c380e)
+        uuid(bfcd4a0c-06b6-4384-b768-0daa792c380e),
+        threading(both)
     ]
     coclass UIAnimationTimer
     {
@@ -592,7 +594,8 @@ library UIAnimation
     }
 
     [
-        uuid(4c1fc63a-695c-47e8-a339-1a194be3d0b8)
+        uuid(4c1fc63a-695c-47e8-a339-1a194be3d0b8),
+        threading(both)
     ]
     coclass UIAnimationManager
     {
@@ -600,7 +603,8 @@ library UIAnimation
     }
 
     [
-        uuid(8a9b1cdd-fcd7-419c-8b44-42fd17db1887)
+        uuid(8a9b1cdd-fcd7-419c-8b44-42fd17db1887),
+        threading(both)
     ]
     coclass UIAnimationTransitionFactory
     {
@@ -608,7 +612,8 @@ library UIAnimation
     }
 
     [
-        uuid(1d6322ad-aa85-4ef5-a828-86d71067d145)
+        uuid(1d6322ad-aa85-4ef5-a828-86d71067d145),
+        threading(both)
     ]
     coclass UIAnimationTransitionLibrary
     {

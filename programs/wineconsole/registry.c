@@ -38,6 +38,7 @@ static const WCHAR wszCursorVisible[]     = {'C','u','r','s','o','r','V','i','s'
 static const WCHAR wszEditionMode[]       = {'E','d','i','t','i','o','n','M','o','d','e',0};
 static const WCHAR wszExitOnDie[]         = {'E','x','i','t','O','n','D','i','e',0};
 static const WCHAR wszFaceName[]          = {'F','a','c','e','N','a','m','e',0};
+static const WCHAR wszFontPitchFamily[]   = {'F','o','n','t','P','i','t','c','h','F','a','m','i','l','y',0};
 static const WCHAR wszFontSize[]          = {'F','o','n','t','S','i','z','e',0};
 static const WCHAR wszFontWeight[]        = {'F','o','n','t','W','e','i','g','h','t',0};
 static const WCHAR wszHistoryBufferSize[] = {'H','i','s','t','o','r','y','B','u','f','f','e','r','S','i','z','e',0};
@@ -56,10 +57,10 @@ static const WCHAR color_name_fmt[] = {'%','s','%','0','2','d',0};
 
 void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg)
 {
-    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02x pop-up=%02x font=%s/%u hist=%u/%d flags=%c%c%c "
+    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02x pop-up=%02x font=%s/%u/%u hist=%u/%d flags=%c%c%c "
                "msk=%08x sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u registry=%s\n",
                pfx, cfg->cell_width, cfg->cell_height, cfg->cursor_size, cfg->cursor_visible, cfg->def_attr,
-               cfg->popup_attr, wine_dbgstr_w(cfg->face_name), cfg->font_weight, cfg->history_size,
+               cfg->popup_attr, wine_dbgstr_w(cfg->face_name), cfg->font_pitch_family, cfg->font_weight, cfg->history_size,
                cfg->history_nodup ? 1 : 2, cfg->insert_mode ? 'I' : 'i', cfg->quick_edit ? 'Q' : 'q',
                cfg->exit_on_die ? 'X' : 'x', cfg->menu_mask, cfg->sb_width, cfg->sb_height,
                cfg->win_pos.X, cfg->win_pos.Y, cfg->win_width, cfg->win_height, cfg->edition_mode,
@@ -122,6 +123,10 @@ static void WINECON_RegLoadHelper(HKEY hConKey, struct config_data* cfg)
 
     count = sizeof(cfg->face_name);
     RegQueryValueExW(hConKey, wszFaceName, 0, &type, (LPBYTE)&cfg->face_name, &count);
+
+    count = sizeof(val);
+    if (!RegQueryValueExW(hConKey, wszFontPitchFamily, 0, &type, (LPBYTE)&val, &count))
+        cfg->font_pitch_family = val;
 
     count = sizeof(val);
     if (!RegQueryValueExW(hConKey, wszFontSize, 0, &type, (LPBYTE)&val, &count))
@@ -211,6 +216,7 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     cfg->cursor_visible = 1;
     cfg->exit_on_die = 1;
     memset(cfg->face_name, 0, sizeof(cfg->face_name));
+    cfg->font_pitch_family = FIXED_PITCH | FF_DONTCARE;
     cfg->cell_height = MulDiv( 16, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
     cfg->cell_width  = MulDiv( 8, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
     cfg->font_weight = FW_NORMAL;
@@ -284,6 +290,9 @@ static void WINECON_RegSaveHelper(HKEY hConKey, const struct config_data* cfg)
     RegSetValueExW(hConKey, wszExitOnDie, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
 
     RegSetValueExW(hConKey, wszFaceName, 0, REG_SZ, (LPBYTE)&cfg->face_name, sizeof(cfg->face_name));
+
+    val = cfg->font_pitch_family;
+    RegSetValueExW(hConKey, wszFontPitchFamily, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
 
     width  = MulDiv( cfg->cell_width, USER_DEFAULT_SCREEN_DPI, GetDpiForSystem() );
     height = MulDiv( cfg->cell_height, USER_DEFAULT_SCREEN_DPI, GetDpiForSystem() );

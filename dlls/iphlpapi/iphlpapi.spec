@@ -243,7 +243,7 @@
 @ stdcall NotifyUnicastIpAddressChange(long ptr ptr long ptr)
 #@ stub NTPTimeToNTFileTime
 #@ stub NTTimeToNTPTime
-#@ stub ParseNetworkString
+@ stdcall ParseNetworkString(wstr long ptr ptr ptr)
 @ stub _PfAddFiltersToInterface@24
 @ stub _PfAddGlobalFilterToInterface@8
 @ stdcall _PfBindInterfaceToIPAddress@12(long long ptr) PfBindInterfaceToIPAddress

@@ -25,7 +25,7 @@
 #ifndef _STDINT_H
 #define _STDINT_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #define __need_wint_t
 #define __need_wchar_t
@@ -177,7 +177,7 @@ typedef unsigned long long   uintmax_t;
 
 /* 7.18.4.1  Macros for minimum-width integer constants
 
-    Accoding to Douglas Gwyn <gwyn@arl.mil>:
+    According to Douglas Gwyn <gwyn@arl.mil>:
 	"This spec was changed in ISO/IEC 9899:1999 TC1; in ISO/IEC
 	9899:1999 as initially published, the expansion was required
 	to be an integer constant of precisely matching type, which

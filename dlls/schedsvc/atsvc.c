@@ -1096,9 +1096,9 @@ DWORD __cdecl NetrJobAdd(ATSVC_HANDLE server_name, AT_INFO *info, DWORD *jobid)
         static const WCHAR fmtW[] = { '\\','T','a','s','k','s','\\','A','t','%','u','.','j','o','b',0 };
         WCHAR task_name[MAX_PATH], name[32];
 
-        strcpyW(task_name, windir);
-        sprintfW(name, fmtW, current_jobid);
-        strcatW(task_name, name);
+        lstrcpyW(task_name, windir);
+        swprintf(name, ARRAY_SIZE(name), fmtW, current_jobid);
+        lstrcatW(task_name, name);
         if (create_job(task_name, info))
         {
             struct job_t *job;

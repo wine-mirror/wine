@@ -31,8 +31,6 @@
 #include "winnls.h"
 #include "setupapi_private.h"
 
-#include "wine/unicode.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
 struct promptdisk_params {
@@ -98,7 +96,7 @@ static void promptdisk_ok(HWND hwnd, struct promptdisk_params *params)
     int requiredSize;
     WCHAR aux[MAX_PATH];
     GetWindowTextW(GetDlgItem(hwnd, IDC_PATH), aux, MAX_PATH);
-    requiredSize = strlenW(aux)+1;
+    requiredSize = lstrlenW(aux)+1;
 
     if(params->PathRequiredSize)
     {
@@ -115,7 +113,7 @@ static void promptdisk_ok(HWND hwnd, struct promptdisk_params *params)
         EndDialog(hwnd, DPROMPT_BUFFERTOOSMALL);
         return;
     }
-    strcpyW(params->PathBuffer, aux);
+    lstrcpyW(params->PathBuffer, aux);
     TRACE("returning PathBuffer=%s\n", debugstr_w(params->PathBuffer));
     EndDialog(hwnd, DPROMPT_SUCCESS);
 }
@@ -133,11 +131,11 @@ static void promptdisk_browse(HWND hwnd, struct promptdisk_params *params)
     ofn.hwndOwner = hwnd;
     ofn.nMaxFile = MAX_PATH;
     ofn.lpstrFile = HeapAlloc(GetProcessHeap(), 0, MAX_PATH*sizeof(WCHAR));
-    strcpyW(ofn.lpstrFile, params->FileSought);
+    lstrcpyW(ofn.lpstrFile, params->FileSought);
 
     if(GetOpenFileNameW(&ofn))
     {
-        WCHAR* last_slash = strrchrW(ofn.lpstrFile, '\\');
+        WCHAR* last_slash = wcsrchr(ofn.lpstrFile, '\\');
         if (last_slash) *last_slash = 0;
         SetDlgItemTextW(hwnd, IDC_PATH, ofn.lpstrFile);
     }
@@ -243,6 +241,33 @@ UINT WINAPI SetupPromptForDiskW(HWND hwndParent, PCWSTR DialogTitle, PCWSTR Disk
         SetLastError(ERROR_INVALID_PARAMETER);
         return DPROMPT_CANCEL;
     }
+
+    if (PathToSource && (DiskPromptStyle & IDF_CHECKFIRST))
+    {
+        WCHAR filepath[MAX_PATH];
+
+        if (lstrlenW(PathToSource) + 1 + lstrlenW(FileSought) < ARRAY_SIZE(filepath))
+        {
+            swprintf(filepath, ARRAY_SIZE(filepath), L"%s\\%s", PathToSource, FileSought);
+            if (GetFileAttributesW(filepath) != INVALID_FILE_ATTRIBUTES)
+            {
+                if (PathRequiredSize)
+                    *PathRequiredSize = lstrlenW(PathToSource) + 1;
+
+                if (!PathBuffer)
+                    return DPROMPT_SUCCESS;
+
+                if (PathBufferSize >= lstrlenW(PathToSource) + 1)
+                {
+                    lstrcpyW(PathBuffer, PathToSource);
+                    return DPROMPT_SUCCESS;
+                }
+                else
+                    return DPROMPT_BUFFERTOOSMALL;
+            }
+        }
+    }
+
     params.DialogTitle = DialogTitle;
     params.DiskName = DiskName;
     params.PathToSource = PathToSource;

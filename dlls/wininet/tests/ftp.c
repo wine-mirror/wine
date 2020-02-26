@@ -63,7 +63,7 @@ static void test_connect(HINTERNET hInternet)
     HINTERNET hFtp;
 
     /* Try a few username/password combinations:
-     * anonymous : NULL
+     * anonymous : IEUser@
      * NULL      : IEUser@
      * NULL      : NULL
      * ""        : IEUser@
@@ -71,15 +71,15 @@ static void test_connect(HINTERNET hInternet)
      */
 
     SetLastError(0xdeadbeef);
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", NULL, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-    if (hFtp)  /* some servers accept an empty password */
+    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+    if (!hFtp)
     {
-        ok ( GetLastError() == ERROR_SUCCESS, "ERROR_SUCCESS, got %d\n", GetLastError());
-        InternetCloseHandle(hFtp);
+        skip("No ftp connection could be made to ftp.winehq.org %u\n", GetLastError());
+        return;
     }
-    else
-        ok ( GetLastError() == ERROR_INTERNET_LOGIN_FAILURE,
-             "Expected ERROR_INTERNET_LOGIN_FAILURE, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS,
+       "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    InternetCloseHandle(hFtp);
 
     SetLastError(0xdeadbeef);
     hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, NULL, "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
@@ -701,7 +701,7 @@ static void test_renamefile(HINTERNET hFtp, HINTERNET hConnect)
         "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE, got %d\n", GetLastError());
 }
 
-static void test_command(HINTERNET hFtp, HINTERNET hConnect)
+static void test_command(HINTERNET hFtp)
 {
     BOOL ret;
     DWORD error;
@@ -716,17 +716,18 @@ static void test_command(HINTERNET hFtp, HINTERNET hConnect)
     {
         { FALSE, ERROR_INVALID_PARAMETER,       NULL },
         { FALSE, ERROR_INVALID_PARAMETER,       "" },
-        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "HELO" },
-        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE " },
-        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, " SIZE" },
-        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE " },
-        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE /welcome.msg /welcome.msg" },
-        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE  /welcome.msg" },
-        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "SIZE /welcome.msg " },
-        { TRUE,  ERROR_SUCCESS,                 "SIZE\t/welcome.msg" },
-        { TRUE,  ERROR_SUCCESS,                 "SIZE /welcome.msg" },
-        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "PWD /welcome.msg" },
-        { TRUE,  ERROR_SUCCESS,                 "PWD" }
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "invalid" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "size" },
+        { TRUE,  ERROR_SUCCESS,                 "type i" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "size " },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, " size" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "size " },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "size welcome.msg welcome.msg" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "size  welcome.msg" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "size welcome.msg " },
+        { TRUE,  ERROR_SUCCESS,                 "size welcome.msg" },
+        { FALSE, ERROR_INTERNET_EXTENDED_ERROR, "pwd welcome.msg" },
+        { TRUE,  ERROR_SUCCESS,                 "pwd" }
     };
 
     if (!pFtpCommandA)
@@ -964,7 +965,7 @@ static void test_status_callbacks(HINTERNET hInternet)
     cb = pInternetSetStatusCallbackA(hInternet, status_callback);
     ok(cb == NULL, "expected NULL got %p\n", cb);
 
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", NULL,
+    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@",
                            INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 1);
     if (!hFtp)
     {
@@ -998,7 +999,7 @@ START_TEST(ftp)
     hInternet = InternetOpenA("winetest", 0, NULL, NULL, 0);
     ok(hInternet != NULL, "InternetOpen failed: %u\n", GetLastError());
 
-    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", NULL, INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+    hFtp = InternetConnectA(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
     if (!hFtp)
     {
         InternetCloseHandle(hInternet);
@@ -1031,7 +1032,7 @@ START_TEST(ftp)
     test_putfile(hFtp, hHttp);
     test_removedir(hFtp, hHttp);
     test_renamefile(hFtp, hHttp);
-    test_command(hFtp, hHttp);
+    test_command(hFtp);
     test_find_first_file(hFtp, hHttp);
     test_get_current_dir(hFtp, hHttp);
     test_status_callbacks(hInternet);

@@ -50,6 +50,7 @@ static const char usage[] =
 	"   -h, --help                 Print this message\n"
 	"   -H FILE                    Write header file to FILE (default is inputfile.h)\n"
 	"   -i                         Inline messagetable(s)\n"
+	"   --nls-dir=DIR              Directory containing the NLS codepage mappings\n"
 	"   -o, --output=FILE          Output to FILE (default is infile.rc)\n"
 	"   -O, --output-format=FORMAT The output format (`rc', `res', or `pot')\n"
 	"   -P, --po-dir=DIR           Directory containing po files for translations\n"
@@ -94,11 +95,6 @@ int pedantic = 0;
 int unicodein = 0;
 
 /*
- * Unicode output (-U option)
- */
-int unicodeout = 0;
-
-/*
  * Inline the messagetables (don't write *.bin files; -i option)
  */
 int rcinline = 0;
@@ -114,6 +110,8 @@ char *output_name = NULL;	/* The name given by the -o option */
 char *input_name = NULL;	/* The name given on the command-line */
 char *header_name = NULL;	/* The name given by the -H option */
 
+const char *nlsdirs[3] = { NULL, NLSDIR, NULL };
+
 int line_number = 1;		/* The current line */
 int char_number = 1;		/* The current char pos within the line */
 
@@ -126,15 +124,22 @@ FILE *yyin;
 
 static enum
 {
+    FORMAT_UNKNOWN,
     FORMAT_RC,
     FORMAT_RES,
     FORMAT_POT
 } output_format;
 
+enum long_options_values
+{
+    LONG_OPT_NLS_DIR = 1,
+};
+
 static const char short_options[] = "B:cdDhH:io:O:P:uUvVW";
 static const struct option long_options[] =
 {
 	{ "help", 0, NULL, 'h' },
+	{ "nls-dir", 1, NULL, LONG_OPT_NLS_DIR },
 	{ "output", 1, NULL, 'o' },
 	{ "output-format", 1, NULL, 'O' },
 	{ "pedantic", 0, NULL, 'W' },
@@ -155,6 +160,28 @@ static void exit_on_signal( int sig )
     exit(1);  /* this will call the atexit functions */
 }
 
+static void init_argv0_dir( const char *argv0 )
+{
+#ifndef _WIN32
+    char *p, *dir;
+
+#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+    dir = realpath( "/proc/self/exe", NULL );
+#elif defined (__FreeBSD__) || defined(__DragonFly__)
+    dir = realpath( "/proc/curproc/file", NULL );
+#else
+    dir = realpath( argv0, NULL );
+#endif
+    if (!dir) return;
+    if (!(p = strrchr( dir, '/' ))) return;
+    if (p == dir) p++;
+    *p = 0;
+    if (strendswith( dir, "/tools/wmc" )) nlsdirs[0] = strmake( "%s/../../nls", dir );
+    else nlsdirs[0] = strmake( "%s/%s", dir, BIN_TO_NLSDIR );
+    free( dir );
+#endif
+}
+
 int main(int argc,char *argv[])
 {
 	int optc;
@@ -171,6 +198,7 @@ int main(int argc,char *argv[])
 #ifdef SIGHUP
 	signal( SIGHUP, exit_on_signal );
 #endif
+        init_argv0_dir( argv[0] );
 
 	/* First rebuild the commandline to put in destination */
 	/* Could be done through env[], but not all OS-es support it */
@@ -248,12 +276,10 @@ int main(int argc,char *argv[])
 		case 'u':
 			unicodein = 1;
 			break;
-		case 'U':
-			unicodeout = 1;
+		case 'U':  /* ignored for backwards compatibility */
 			break;
 		case 'v':
 			show_languages();
-			show_codepages();
 			exit(0);
 			/* No return */
 		case 'V':
@@ -262,6 +288,9 @@ int main(int argc,char *argv[])
 			/* No return */
 		case 'W':
 			pedantic = 1;
+			break;
+		case LONG_OPT_NLS_DIR:
+			nlsdirs[0] = xstrdup( optarg );
 			break;
 		default:
 			lose++;
@@ -287,6 +316,14 @@ int main(int argc,char *argv[])
 	{
 		input_name = argv[optind];
 	}
+
+        /* Guess output format */
+        if (output_format == FORMAT_UNKNOWN)
+        {
+            if (output_name && strendswith( output_name, ".res" )) output_format = FORMAT_RES;
+            else if (output_name && strendswith( output_name, ".pot" )) output_format = FORMAT_POT;
+            else output_format = FORMAT_RC;
+        }
 
 	/* Generate appropriate outfile names */
 	if(!output_name)
@@ -340,6 +377,8 @@ int main(int argc,char *argv[])
             break;
         case FORMAT_POT:
             write_pot_file( output_name );
+            break;
+        default:
             break;
         }
 	output_name = NULL;

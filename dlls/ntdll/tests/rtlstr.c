@@ -1970,7 +1970,7 @@ static void test_RtlHashUnicodeString(void)
     status = pRtlHashUnicodeString(NULL, FALSE, HASH_STRING_ALGORITHM_X65599, &hash);
     ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08x\n", status);
 
-    RtlInitUnicodeString(&str, strW);
+    pRtlInitUnicodeString(&str, strW);
     status = pRtlHashUnicodeString(&str, FALSE, HASH_STRING_ALGORITHM_X65599, NULL);
     ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08x\n", status);
 
@@ -1988,7 +1988,7 @@ static void test_RtlHashUnicodeString(void)
     ptr = hash_test;
     while (*ptr->str)
     {
-        RtlInitUnicodeString(&str, ptr->str);
+        pRtlInitUnicodeString(&str, ptr->str);
         hash = 0;
         status = pRtlHashUnicodeString(&str, ptr->case_insensitive, HASH_STRING_ALGORITHM_X65599, &hash);
         ok(status == STATUS_SUCCESS, "got status 0x%08x for %s\n", status, wine_dbgstr_w(ptr->str));
@@ -2028,8 +2028,8 @@ static const struct unicode_to_utf8_test unicode_to_utf8[] = {
     { { '-',0xfeff,'-',0xfffe,'-',0 }, "-\xEF\xBB\xBF-\xEF\xBF\xBE-", STATUS_SUCCESS },
     { { 0xfeff,'-',0 }, "\xEF\xBB\xBF-", STATUS_SUCCESS },
     { { 0xfffe,'-',0 }, "\xEF\xBF\xBE-", STATUS_SUCCESS },
-    /* invalid code point */
-    { { 0xffff,'-',0 }, "\xEF\xBF\xBF-", STATUS_SUCCESS },
+    /* invalid code points */
+    { { 0xfffd, '-', 0xfffe, '-', 0xffff,'-',0 }, "\xEF\xBF\xBD-\xEF\xBF\xBE-\xEF\xBF\xBF-", STATUS_SUCCESS },
     /* canonically equivalent representations -- no normalization should happen */
     { { '-',0x1e09,'-',0 }, "-\xE1\xB8\x89-", STATUS_SUCCESS },
     { { '-',0x0107,0x0327,'-',0 }, "-\xC4\x87\xCC\xA7-", STATUS_SUCCESS },
@@ -2055,8 +2055,8 @@ static void utf8_expect_(const unsigned char *out_string, ULONG buflen, ULONG ou
     status = pRtlUnicodeToUTF8N(
         out_string ? buffer : NULL, buflen, &bytes_out,
         in_string, in_bytes);
-    ok_(__FILE__, line)(status == expect_status, "status = 0x%x\n", status);
-    ok_(__FILE__, line)(bytes_out == out_bytes, "bytes_out = %u\n", bytes_out);
+    ok_(__FILE__, line)(status == expect_status, "status 0x%x, expected 0x%x\n", status, expect_status);
+    ok_(__FILE__, line)(bytes_out == out_bytes, "bytes_out = %u, expected %u\n", bytes_out, out_bytes);
     if (out_string)
     {
         for (i = 0; i < bytes_out; i++)
@@ -2082,10 +2082,11 @@ static void test_RtlUnicodeToUTF8N(void)
     const WCHAR empty_string[] = { 0 };
     const WCHAR test_string[] = { 'A',0,'a','b','c','d','e','f','g',0 };
     const WCHAR special_string[] = { 'X',0x80,0xd800,0 };
+    const ULONG special_string_len[] = { 0, 1, 1, 3, 3, 3, 6, 7 };
     const unsigned char special_expected[] = { 'X',0xc2,0x80,0xef,0xbf,0xbd,0 };
     unsigned int input_len;
     const unsigned int test_count = ARRAY_SIZE(unicode_to_utf8);
-    unsigned int i;
+    unsigned int i, ret;
 
     if (!pRtlUnicodeToUTF8N)
     {
@@ -2155,21 +2156,20 @@ static void test_RtlUnicodeToUTF8N(void)
     length_expect(4, 7, STATUS_SOME_NOT_MAPPED);
 #undef length_expect
 
-    /* output truncation */
-#define truncate_expect(buflen, out_bytes, expect_status) \
-        utf8_expect_(special_expected, buflen, out_bytes, \
-                     special_string, sizeof(special_string), \
-                     expect_status, __LINE__)
+    for (i = 0; i <= 6; i++)
+    {
+        memset(buffer, 0x55, sizeof(buffer));
+        bytes_out = 0xdeadbeef;
+        status = pRtlUnicodeToUTF8N(buffer, i, &bytes_out, special_string, sizeof(special_string));
+        ok(status == STATUS_BUFFER_TOO_SMALL, "%d: status = 0x%x\n", i, status);
+        ok(bytes_out == special_string_len[i], "%d: expected %u, got %u\n", i, special_string_len[i], bytes_out);
+        ok(memcmp(buffer, special_expected, special_string_len[i]) == 0, "%d: bad conversion\n", i);
+    }
 
-    truncate_expect(0, 0, STATUS_BUFFER_TOO_SMALL);
-    truncate_expect(1, 1, STATUS_BUFFER_TOO_SMALL);
-    truncate_expect(2, 1, STATUS_BUFFER_TOO_SMALL);
-    truncate_expect(3, 3, STATUS_BUFFER_TOO_SMALL);
-    truncate_expect(4, 3, STATUS_BUFFER_TOO_SMALL);
-    truncate_expect(5, 3, STATUS_BUFFER_TOO_SMALL);
-    truncate_expect(6, 6, STATUS_BUFFER_TOO_SMALL);
-    truncate_expect(7, 7, STATUS_SOME_NOT_MAPPED);
-#undef truncate_expect
+    status = pRtlUnicodeToUTF8N(buffer, 7, &bytes_out, special_string, sizeof(special_string));
+    ok(status == STATUS_SOME_NOT_MAPPED, "status = 0x%x\n", status);
+    ok(bytes_out == special_string_len[7], "expected %u, got %u\n", special_string_len[7], bytes_out);
+    ok(memcmp(buffer, special_expected, 7) == 0, "bad conversion\n");
 
     /* conversion behavior with varying input length */
     for (input_len = 0; input_len <= sizeof(test_string); input_len++) {
@@ -2227,6 +2227,14 @@ static void test_RtlUnicodeToUTF8N(void)
            i, bytes_out, buffer, unicode_to_utf8[i].expected);
         ok(buffer[bytes_out] == 0x55,
            "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = WideCharToMultiByte( CP_UTF8, 0, unicode_to_utf8[i].unicode, lstrlenW(unicode_to_utf8[i].unicode),
+                                   buffer, sizeof(buffer), NULL, NULL );
+        ok( ret == strlen(unicode_to_utf8[i].expected), "(test %d): wrong len %u\n", i, ret );
+        ok(!memcmp(buffer, unicode_to_utf8[i].expected, ret),
+           "(test %d): got \"%.*s\", expected \"%s\"\n",
+           i, ret, buffer, unicode_to_utf8[i].expected);
+        ok(buffer[ret] == 0x55, "(test %d): behind string: 0x%x\n", i, buffer[ret]);
 
         /* same test but include the null terminator */
         bytes_out = 0x55555555;
@@ -2245,6 +2253,30 @@ static void test_RtlUnicodeToUTF8N(void)
            i, bytes_out, buffer, unicode_to_utf8[i].expected);
         ok(buffer[bytes_out] == 0x55,
            "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = WideCharToMultiByte( CP_UTF8, 0, unicode_to_utf8[i].unicode, -1, buffer, sizeof(buffer), NULL, NULL );
+        ok( ret == strlen(unicode_to_utf8[i].expected) + 1, "(test %d): wrong len %u\n", i, ret );
+        ok(!memcmp(buffer, unicode_to_utf8[i].expected, ret),
+           "(test %d): got \"%.*s\", expected \"%s\"\n",
+           i, ret, buffer, unicode_to_utf8[i].expected);
+        ok(buffer[ret] == 0x55, "(test %d): behind string: 0x%x\n", i, buffer[ret]);
+        SetLastError( 0xdeadbeef );
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = WideCharToMultiByte( CP_UTF8, WC_ERR_INVALID_CHARS, unicode_to_utf8[i].unicode, -1,
+                                   buffer, sizeof(buffer), NULL, NULL );
+        if (unicode_to_utf8[i].status == STATUS_SOME_NOT_MAPPED)
+        {
+            ok( ret == 0, "(test %d): wrong len %u\n", i, ret );
+            ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "(test %d): wrong error %u\n", i, GetLastError() );
+            ret = strlen(unicode_to_utf8[i].expected) + 1;
+        }
+        else
+            ok( ret == strlen(unicode_to_utf8[i].expected) + 1, "(test %d): wrong len %u\n", i, ret );
+
+        ok(!memcmp(buffer, unicode_to_utf8[i].expected, ret),
+           "(test %d): got \"%.*s\", expected \"%s\"\n",
+           i, ret, buffer, unicode_to_utf8[i].expected);
+        ok(buffer[ret] == 0x55, "(test %d): behind string: 0x%x\n", i, buffer[ret]);
     }
 }
 
@@ -2329,9 +2361,8 @@ static const struct utf8_to_unicode_test utf8_to_unicode[] = {
     { "-\xEF\xBB\xBF-\xEF\xBF\xBE-", { '-',0xfeff,'-',0xfffe,'-',0 }, STATUS_SUCCESS },
     { "\xEF\xBB\xBF-", { 0xfeff,'-',0 }, STATUS_SUCCESS },
     { "\xEF\xBF\xBE-", { 0xfffe,'-',0 }, STATUS_SUCCESS },
-    /* invalid code point */
-       /* 0xffff */
-    { "\xEF\xBF\xBF-", { 0xffff,'-',0 }, STATUS_SUCCESS },
+    /* invalid code points */
+    { "\xEF\xBF\xBD-\xEF\xBF\xBE-\xEF\xBF\xBF-", { 0xfffd,'-',0xfffe,'-',0xffff,'-',0 }, STATUS_SUCCESS },
     /* canonically equivalent representations -- no normalization should happen */
     { "-\xE1\xB8\x89-", { '-',0x1e09,'-',0 }, STATUS_SUCCESS },
     { "-\xC4\x87\xCC\xA7-", { '-',0x0107,0x0327,'-',0 }, STATUS_SUCCESS },
@@ -2388,7 +2419,7 @@ static void test_RtlUTF8ToUnicodeN(void)
     const WCHAR special_expected[] = { 'X',0x80,0xd800,0xdc00,0 };
     unsigned int input_len;
     const unsigned int test_count = ARRAY_SIZE(utf8_to_unicode);
-    unsigned int i;
+    unsigned int i, ret;
 
     if (!pRtlUTF8ToUnicodeN)
     {
@@ -2497,8 +2528,17 @@ static void test_RtlUTF8ToUnicodeN(void)
         ok(!memcmp(buffer, utf8_to_unicode[i].expected, bytes_out),
            "(test %d): got %s, expected %s\n",
            i, wine_dbgstr_wn(buffer, bytes_out / sizeof(WCHAR)), wine_dbgstr_w(utf8_to_unicode[i].expected));
-        ok(buffer[bytes_out] == 0x5555,
-           "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
+        ok(buffer[bytes_out / sizeof(WCHAR)] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[bytes_out / sizeof(WCHAR)]);
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = MultiByteToWideChar( CP_UTF8, 0, utf8_to_unicode[i].utf8, strlen(utf8_to_unicode[i].utf8),
+                                   buffer, ARRAY_SIZE(buffer) );
+        ok( ret == lstrlenW(utf8_to_unicode[i].expected), "(test %d): wrong len %u\n", i, ret );
+        ok(!memcmp(buffer, utf8_to_unicode[i].expected, lstrlenW(utf8_to_unicode[i].expected) * sizeof(WCHAR)),
+           "(test %d): got %s, expected %s\n",
+           i, wine_dbgstr_wn(buffer, ret), wine_dbgstr_w(utf8_to_unicode[i].expected));
+        ok(buffer[ret] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[ret]);
 
         /* same test but include the null terminator */
         bytes_out = 0x55555555;
@@ -2515,8 +2555,36 @@ static void test_RtlUTF8ToUnicodeN(void)
         ok(!memcmp(buffer, utf8_to_unicode[i].expected, bytes_out),
            "(test %d): got %s, expected %s\n",
            i, wine_dbgstr_wn(buffer, bytes_out / sizeof(WCHAR)), wine_dbgstr_w(utf8_to_unicode[i].expected));
-        ok(buffer[bytes_out] == 0x5555,
-           "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
+        ok(buffer[bytes_out / sizeof(WCHAR)] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[bytes_out / sizeof(WCHAR)]);
+
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = MultiByteToWideChar( CP_UTF8, 0, utf8_to_unicode[i].utf8, -1, buffer, ARRAY_SIZE(buffer) );
+        ok( ret == lstrlenW(utf8_to_unicode[i].expected) + 1, "(test %d): wrong len %u\n", i, ret );
+        ok(!memcmp(buffer, utf8_to_unicode[i].expected, ret * sizeof(WCHAR)),
+           "(test %d): got %s, expected %s\n",
+           i, wine_dbgstr_wn(buffer, ret), wine_dbgstr_w(utf8_to_unicode[i].expected));
+        ok(buffer[ret] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[ret]);
+
+        SetLastError( 0xdeadbeef );
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = MultiByteToWideChar( CP_UTF8, MB_ERR_INVALID_CHARS,
+                                   utf8_to_unicode[i].utf8, -1, buffer, ARRAY_SIZE(buffer) );
+        if (utf8_to_unicode[i].status == STATUS_SOME_NOT_MAPPED)
+        {
+            ok( ret == 0, "(test %d): wrong len %u\n", i, ret );
+            ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "(test %d): wrong error %u\n", i, GetLastError() );
+            ret = lstrlenW(utf8_to_unicode[i].expected) + 1;
+        }
+        else
+            ok( ret == lstrlenW(utf8_to_unicode[i].expected) + 1, "(test %d): wrong len %u\n", i, ret );
+
+        ok(!memcmp(buffer, utf8_to_unicode[i].expected, ret * sizeof(WCHAR)),
+           "(test %d): got %s, expected %s\n",
+           i, wine_dbgstr_wn(buffer, ret), wine_dbgstr_w(utf8_to_unicode[i].expected));
+        ok(buffer[ret] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[ret]);
     }
 }
 
@@ -2547,10 +2615,10 @@ START_TEST(rtlstr)
     test_RtlStringFromGUID();
     test_RtlIsTextUnicode();
     test_RtlCompareUnicodeString();
+    test_RtlUpcaseUnicodeChar();
+    test_RtlUpcaseUnicodeString();
     if(0)
     {
-	test_RtlUpcaseUnicodeChar();
-	test_RtlUpcaseUnicodeString();
 	test_RtlDowncaseUnicodeString();
     }
     test_RtlHashUnicodeString();

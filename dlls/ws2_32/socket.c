@@ -692,14 +692,20 @@ static const int ws_ip_map[][2] =
     MAP_OPTION( IP_MULTICAST_LOOP ),
     MAP_OPTION( IP_ADD_MEMBERSHIP ),
     MAP_OPTION( IP_DROP_MEMBERSHIP ),
+    MAP_OPTION( IP_ADD_SOURCE_MEMBERSHIP ),
+    MAP_OPTION( IP_DROP_SOURCE_MEMBERSHIP ),
+    MAP_OPTION( IP_BLOCK_SOURCE ),
+    MAP_OPTION( IP_UNBLOCK_SOURCE ),
     MAP_OPTION( IP_OPTIONS ),
 #ifdef IP_HDRINCL
     MAP_OPTION( IP_HDRINCL ),
 #endif
     MAP_OPTION( IP_TOS ),
     MAP_OPTION( IP_TTL ),
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO)
     MAP_OPTION( IP_PKTINFO ),
+#elif defined(IP_RECVDSTADDR)
+    { WS_IP_PKTINFO, IP_RECVDSTADDR },
 #endif
 #ifdef IP_UNICAST_IF
     MAP_OPTION( IP_UNICAST_IF ),
@@ -819,7 +825,7 @@ static const int ws_poll_map[][2] =
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
 static inline WSACMSGHDR *fill_control_message(int level, int type, WSACMSGHDR *current, ULONG *maxsize, void *data, int len)
 {
     ULONG msgsize = sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(len);
@@ -837,11 +843,11 @@ static inline WSACMSGHDR *fill_control_message(int level, int type, WSACMSGHDR *
     /* Return the pointer to where next entry should go */
     return (WSACMSGHDR *) (ptr + WSA_CMSG_ALIGN(len));
 }
-#endif /* IP_PKTINFO */
+#endif /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
 
 static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
 {
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
     WSACMSGHDR *cmsg_win = (WSACMSGHDR *) control->buf, *ptr;
     ULONG ctlsize = control->len;
     struct cmsghdr *cmsg_unix;
@@ -855,6 +861,7 @@ static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
             case IPPROTO_IP:
                 switch(cmsg_unix->cmsg_type)
                 {
+#if defined(IP_PKTINFO)
                     case IP_PKTINFO:
                     {
                         /* Convert the Unix IP_PKTINFO structure to the Windows version */
@@ -867,6 +874,19 @@ static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
                                                    (void*)&data_win, sizeof(data_win));
                         if (!ptr) goto error;
                     }   break;
+#elif defined(IP_RECVDSTADDR)
+                    case IP_RECVDSTADDR:
+                    {
+                        struct in_addr *addr_unix = (struct in_addr *) CMSG_DATA(cmsg_unix);
+                        struct WS_in_pktinfo data_win;
+
+                        memcpy(&data_win.ipi_addr, &addr_unix->s_addr, 4); /* 4 bytes = 32 address bits */
+                        data_win.ipi_ifindex = 0; /* FIXME */
+                        ptr = fill_control_message(WS_IPPROTO_IP, WS_IP_PKTINFO, ptr, &ctlsize,
+                                                   (void*)&data_win, sizeof(data_win));
+                        if (!ptr) goto error;
+                    }   break;
+#endif /* IP_PKTINFO */
                     default:
                         FIXME("Unhandled IPPROTO_IP message header type %d\n", cmsg_unix->cmsg_type);
                         break;
@@ -878,14 +898,16 @@ static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
         }
     }
 
-error:
     /* Set the length of the returned control headers */
-    control->len = (ptr == NULL ? 0 : (char*)ptr - (char*)cmsg_win);
-    return (ptr != NULL);
-#else /* IP_PKTINFO */
+    control->len = (char*)ptr - (char*)cmsg_win;
+    return 1;
+error:
+    control->len = 0;
+    return 0;
+#else /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
     control->len = 0;
     return 1;
-#endif /* IP_PKTINFO */
+#endif /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
 }
 #endif /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
@@ -2310,6 +2332,9 @@ static INT WS_EnumProtocols( BOOL unicode, const INT *protocols, LPWSAPROTOCOL_I
 static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size)
 {
     NTSTATUS status;
+    int address_family;
+    int socket_type;
+    int protocol;
 
     *size = unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA);
     memset(buffer, 0, *size);
@@ -2320,9 +2345,9 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
         status = wine_server_call( req );
         if (!status)
         {
-            buffer->iAddressFamily = convert_af_u2w(reply->family);
-            buffer->iSocketType = convert_socktype_u2w(reply->type);
-            buffer->iProtocol = convert_proto_u2w(reply->protocol);
+            address_family = convert_af_u2w(reply->family);
+            socket_type = convert_socktype_u2w(reply->type);
+            protocol = convert_proto_u2w(reply->protocol);
         }
     }
     SERVER_END_REQ;
@@ -2335,9 +2360,12 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
     }
 
     if (unicode)
-        WS_EnterSingleProtocolW( buffer->iProtocol, buffer);
+        WS_EnterSingleProtocolW( protocol, buffer);
     else
-        WS_EnterSingleProtocolA( buffer->iProtocol, (WSAPROTOCOL_INFOA *)buffer);
+        WS_EnterSingleProtocolA( protocol, (WSAPROTOCOL_INFOA *)buffer);
+    buffer->iAddressFamily = address_family;
+    buffer->iSocketType = socket_type;
+    buffer->iProtocol = protocol;
 
     return TRUE;
 }
@@ -4308,7 +4336,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_IP_MULTICAST_LOOP:
         case WS_IP_MULTICAST_TTL:
         case WS_IP_OPTIONS:
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
         case WS_IP_PKTINFO:
 #endif
         case WS_IP_TOS:
@@ -5777,6 +5805,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     int woptval;
     struct linger linger;
     struct timeval tval;
+    struct ip_mreq_source mreq_source;
 
     TRACE("(socket %04lx, %s, optval %s, optlen %d)\n", s,
           debugstr_sockopt(level, optname), debugstr_optval(optval, optlen),
@@ -5987,6 +6016,22 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     case WS_IPPROTO_IP:
         switch(optname)
         {
+        case WS_IP_ADD_SOURCE_MEMBERSHIP:
+        case WS_IP_DROP_SOURCE_MEMBERSHIP:
+        case WS_IP_BLOCK_SOURCE:
+        case WS_IP_UNBLOCK_SOURCE:
+        {
+            WS_IP_MREQ_SOURCE* val = (void*)optval;
+            mreq_source.imr_interface.s_addr = val->imr_interface.S_un.S_addr;
+            mreq_source.imr_multiaddr.s_addr = val->imr_multiaddr.S_un.S_addr;
+            mreq_source.imr_sourceaddr.s_addr = val->imr_sourceaddr.S_un.S_addr;
+
+            optval = (char*)&mreq_source;
+            optlen = sizeof(mreq_source);
+
+            convert_sockopt(&level, &optname);
+            break;
+        }
         case WS_IP_ADD_MEMBERSHIP:
         case WS_IP_DROP_MEMBERSHIP:
 #ifdef IP_HDRINCL
@@ -5996,7 +6041,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IP_MULTICAST_LOOP:
         case WS_IP_MULTICAST_TTL:
         case WS_IP_OPTIONS:
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
         case WS_IP_PKTINFO:
 #endif
         case WS_IP_TOS:
@@ -6973,6 +7018,7 @@ static struct WS_addrinfo *addrinfo_WtoA(const struct WS_addrinfoW *ai)
 struct getaddrinfo_args
 {
     OVERLAPPED *overlapped;
+    LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine;
     ADDRINFOEXW **result;
     char *nodename;
     char *servname;
@@ -6983,6 +7029,7 @@ static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *co
     struct getaddrinfo_args *args = context;
     OVERLAPPED *overlapped = args->overlapped;
     HANDLE event = overlapped->hEvent;
+    LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine = args->completion_routine;
     struct WS_addrinfo *res;
     int ret;
 
@@ -6999,10 +7046,12 @@ static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *co
     HeapFree(GetProcessHeap(), 0, args);
 
     overlapped->Internal = ret;
+    if (completion_routine) completion_routine(ret, 0, overlapped);
     if (event) SetEvent(event);
 }
 
-static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const struct WS_addrinfo *hints, ADDRINFOEXW **res, OVERLAPPED *overlapped)
+static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const struct WS_addrinfo *hints, ADDRINFOEXW **res,
+                           OVERLAPPED *overlapped, LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine)
 {
     int ret = EAI_MEMORY, len, i;
     char *nodenameA = NULL, *servnameA = NULL;
@@ -7058,8 +7107,15 @@ static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const s
     {
         struct getaddrinfo_args *args;
 
+        if (overlapped->hEvent && completion_routine)
+        {
+            ret = WSAEINVAL;
+            goto end;
+        }
+
         if (!(args = HeapAlloc(GetProcessHeap(), 0, sizeof(*args)))) goto end;
         args->overlapped = overlapped;
+        args->completion_routine = completion_routine;
         args->result = res;
         args->nodename = nodenameA;
         args->servname = servnameA;
@@ -7071,7 +7127,6 @@ static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const s
             ret = GetLastError();
             goto end;
         }
-
 
         if (local_nodenameW != nodename)
             HeapFree(GetProcessHeap(), 0, local_nodenameW);
@@ -7098,7 +7153,7 @@ end:
  *		GetAddrInfoExW		(WS2_32.@)
  */
 int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namespace, GUID *namespace_id,
-        const ADDRINFOEXW *hints, ADDRINFOEXW **result, struct timeval *timeout, OVERLAPPED *overlapped,
+        const ADDRINFOEXW *hints, ADDRINFOEXW **result, struct WS_timeval *timeout, OVERLAPPED *overlapped,
         LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine, HANDLE *handle)
 {
     int ret;
@@ -7114,12 +7169,10 @@ int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namesp
         FIXME("Unsupported hints\n");
     if (timeout)
         FIXME("Unsupported timeout\n");
-    if (completion_routine)
-        FIXME("Unsupported completion_routine\n");
     if (handle)
         FIXME("Unsupported cancel handle\n");
 
-    ret = WS_getaddrinfoW(name, servname, NULL, result, overlapped);
+    ret = WS_getaddrinfoW(name, servname, NULL, result, overlapped, completion_routine);
     if (ret) return ret;
     if (handle) *handle = (HANDLE)0xdeadbeef;
     return 0;
@@ -7157,7 +7210,7 @@ int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hin
 
     *res = NULL;
     if (hints) hintsA = addrinfo_WtoA(hints);
-    ret = WS_getaddrinfoW(nodename, servname, hintsA, &resex, NULL);
+    ret = WS_getaddrinfoW(nodename, servname, hintsA, &resex, NULL, NULL);
     WS_freeaddrinfo(hintsA);
     if (ret) return ret;
 
@@ -8987,6 +9040,17 @@ INT WINAPI WSCUnInstallNameSpace( LPGUID lpProviderId )
 INT WINAPI WSCWriteProviderOrder( LPDWORD entry, DWORD number )
 {
     FIXME("(%p 0x%08x) Stub!\n", entry, number);
+    return 0;
+}
+
+/***********************************************************************
+ *              WSCSetApplicationCategory                    (WS2_32.@)
+ */
+INT WINAPI WSCSetApplicationCategory( LPCWSTR path, DWORD len, LPCWSTR extra, DWORD extralen,
+                                      DWORD lspcat, DWORD *prev_lspcat, LPINT err )
+{
+    FIXME("(%s %d %s %d %d %p) Stub!\n", debugstr_w(path), len, debugstr_w(extra),
+           extralen, lspcat, prev_lspcat);
     return 0;
 }
 

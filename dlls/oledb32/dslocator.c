@@ -20,6 +20,7 @@
 #include <string.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -29,8 +30,11 @@
 #include "oledb.h"
 #include "oledberr.h"
 #include "msdasc.h"
+#include "prsht.h"
+#include "commctrl.h"
 
 #include "oledb_private.h"
+#include "resource.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -188,13 +192,370 @@ static HRESULT WINAPI dslocator_put_hWnd(IDataSourceLocator *iface, COMPATIBLE_L
     return S_OK;
 }
 
-static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch **ppADOConnection)
+static void create_connections_columns(HWND lv)
+{
+    RECT rc;
+    WCHAR buf[256];
+    LVCOLUMNW column;
+
+    SendMessageW(lv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+    GetWindowRect(lv, &rc);
+    LoadStringW(instance, IDS_COL_PROVIDER, buf, ARRAY_SIZE(buf));
+    column.mask = LVCF_WIDTH | LVCF_TEXT;
+    column.cx = (rc.right - rc.left) - 5;
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+}
+
+static void add_connections_providers(HWND lv)
+{
+    static const WCHAR oledbprov[] = {'\\','O','L','E',' ','D','B',' ','P','r','o','v','i','d','e','r',0};
+    LONG res;
+    HKEY key = NULL, subkey;
+    DWORD index = 0;
+    LONG next_key;
+    WCHAR provider[MAX_PATH];
+    WCHAR guidkey[MAX_PATH];
+    LONG size;
+
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, L"CLSID", 0, KEY_READ, &key);
+    if (res == ERROR_FILE_NOT_FOUND)
+        return;
+
+    next_key = RegEnumKeyW(key, index, provider, MAX_PATH);
+    while (next_key == ERROR_SUCCESS)
+    {
+        WCHAR description[MAX_PATH];
+
+        lstrcpyW(guidkey, provider);
+        lstrcatW(guidkey, oledbprov);
+
+        res = RegOpenKeyW(key, guidkey, &subkey);
+        if (res == ERROR_SUCCESS)
+        {
+            TRACE("Found %s\n", debugstr_w(guidkey));
+
+            size = MAX_PATH;
+            res = RegQueryValueW(subkey, NULL, description, &size);
+            if (res == ERROR_SUCCESS)
+            {
+                LVITEMW item;
+                item.mask = LVIF_TEXT;
+                item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+                item.iSubItem = 0;
+                item.pszText = description;
+                SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+                /* TODO - Add ProgID to item data */
+            }
+            RegCloseKey(subkey);
+        }
+
+        index++;
+        next_key = RegEnumKeyW(key, index, provider, MAX_PATH);
+    }
+
+    RegCloseKey(key);
+}
+
+static LRESULT CALLBACK data_link_properties_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            HWND btn, lv = GetDlgItem(hwnd, IDC_LST_CONNECTIONS);
+            create_connections_columns(lv);
+            add_connections_providers(lv);
+
+            btn = GetDlgItem(GetParent(hwnd), IDOK);
+            EnableWindow(btn, FALSE);
+
+            break;
+        }
+        case WM_NOTIFY:
+        {
+            NMHDR *hdr = ((LPNMHDR)lp);
+            switch(hdr->code)
+            {
+                case PSN_KILLACTIVE:
+                {
+                    /*
+                     * FIXME: This needs to replace the connection page based off the selection.
+                     *   We only care about the ODBC for now which is the default.
+                     */
+
+                    HWND lv = GetDlgItem(hwnd, IDC_LST_CONNECTIONS);
+                    if (!SendMessageW(lv, LVM_GETSELECTEDCOUNT, 0, 0))
+                    {
+                        WCHAR title[256], msg[256];
+
+                        LoadStringW(instance, IDS_PROVIDER_TITLE, title, ARRAY_SIZE(title));
+                        LoadStringW(instance, IDS_PROVIDER_ERROR, msg, ARRAY_SIZE(msg));
+                        MessageBoxW(hwnd, msg, title, MB_OK | MB_ICONEXCLAMATION);
+                        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, TRUE);
+                        return TRUE;
+                    }
+
+                    return FALSE;
+                }
+            }
+
+            break;
+        }
+        case WM_COMMAND:
+        {
+            if (LOWORD(wp) == IDC_BTN_NEXT)
+                SendMessageW(GetParent(hwnd), PSM_SETCURSEL, 1, 0);
+            break;
+        }
+        default:
+            break;
+    }
+    return 0;
+}
+
+static void connection_fill_odbc_list(HWND parent)
+{
+    LONG res;
+    HKEY key;
+    DWORD index = 0;
+    WCHAR name[MAX_PATH];
+    DWORD nameLen;
+
+    HWND combo = GetDlgItem(parent, IDC_CBO_NAMES);
+    if (!combo)
+        return;
+
+    res = RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\ODBC\\ODBC.INI\\ODBC Data Sources", 0, KEY_READ, &key);
+    if (res == ERROR_FILE_NOT_FOUND)
+        return;
+
+    SendMessageW (combo, CB_RESETCONTENT, 0, 0);
+
+    for(;; index++)
+    {
+        nameLen = MAX_PATH;
+        if (RegEnumValueW(key, index, name, &nameLen, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
+            break;
+
+        SendMessageW(combo, CB_ADDSTRING, 0, (LPARAM)name);
+    }
+
+    RegCloseKey(key);
+}
+
+static void connection_initialize_controls(HWND parent)
+{
+    HWND hwnd = GetDlgItem(parent, IDC_RDO_SRC_NAME);
+    if (hwnd)
+        SendMessageA(hwnd, BM_SETCHECK, BST_CHECKED, 0);
+}
+
+static void connection_toggle_controls(HWND parent)
+{
+    BOOL checked = TRUE;
+    HWND hwnd = GetDlgItem(parent, IDC_RDO_SRC_NAME);
+    if (hwnd)
+        checked = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
+
+    EnableWindow(GetDlgItem(parent, IDC_CBO_NAMES), checked);
+    EnableWindow(GetDlgItem(parent, IDC_BTN_REFRESH), checked);
+
+    EnableWindow(GetDlgItem(parent, IDC_LBL_CONNECTION), !checked);
+    EnableWindow(GetDlgItem(parent, IDC_EDT_CONNECTION), !checked);
+    EnableWindow(GetDlgItem(parent, IDC_BTN_BUILD), !checked);
+}
+
+static LRESULT CALLBACK data_link_connection_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            connection_initialize_controls(hwnd);
+            connection_fill_odbc_list(hwnd);
+            connection_toggle_controls(hwnd);
+            break;
+        }
+        case WM_COMMAND:
+        {
+            switch LOWORD(wp)
+            {
+                case IDC_RDO_SRC_NAME:
+                case IDC_BTN_CONNECTION:
+                    connection_toggle_controls(hwnd);
+                    break;
+                case IDC_BTN_REFRESH:
+                    connection_fill_odbc_list(hwnd);
+                    break;
+                case IDC_BTN_BUILD:
+                case IDC_BTN_TEST:
+                    /* TODO: Implement dialogs */
+                    MessageBoxA(hwnd, "Not implemented yet.", "Error", MB_OK | MB_ICONEXCLAMATION);
+                    break;
+            }
+
+            break;
+        }
+        default:
+            break;
+    }
+    return 0;
+}
+
+static void advanced_fill_permission_list(HWND parent)
+{
+    LVITEMW item;
+    LVCOLUMNW column;
+    RECT rc;
+    int resources[] = {IDS_PERM_READ, IDS_PERM_READWRITE, IDS_PERM_SHAREDENYNONE,
+                        IDS_PERM_SHAREDENYREAD, IDS_PERM_SHAREDENYWRITE, IDS_PERM_SHAREEXCLUSIVE,
+                        IDS_PERM_WRITE};
+    int i;
+    WCHAR buf[256];
+    HWND lv = GetDlgItem(parent, IDC_LST_PERMISSIONS);
+    if (!lv)
+        return;
+
+    SendMessageW(lv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_CHECKBOXES);
+    GetWindowRect(lv, &rc);
+    column.mask = LVCF_WIDTH | LVCF_FMT;
+    column.fmt = LVCFMT_FIXED_WIDTH;
+    column.cx = (rc.right - rc.left) - 25;
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+
+    for(i =0; i < ARRAY_SIZE(resources); i++)
+    {
+        item.mask = LVIF_TEXT;
+        item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
+        item.iSubItem = 0;
+        LoadStringW(instance, resources[i], buf, ARRAY_SIZE(buf));
+        item.pszText = buf;
+        SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
+    }
+}
+
+static LRESULT CALLBACK data_link_advanced_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            EnableWindow(GetDlgItem(hwnd, IDC_LBL_LEVEL), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_CBO_LEVEL), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_LBL_PROTECTION), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_CBO_PROTECTION), FALSE);
+
+            advanced_fill_permission_list(hwnd);
+
+            break;
+        }
+        default:
+            break;
+    }
+    return 0;
+}
+
+static void create_page_all_columns(HWND lv)
+{
+    RECT rc;
+    WCHAR buf[256];
+    LVCOLUMNW column;
+
+    SendMessageW(lv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+    GetWindowRect(lv, &rc);
+    LoadStringW(instance, IDS_COL_NAME, buf, ARRAY_SIZE(buf));
+    column.mask = LVCF_WIDTH | LVCF_TEXT;
+    column.cx = (rc.right / 2);
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+
+    LoadStringW(instance, IDS_COL_VALUE, buf, ARRAY_SIZE(buf));
+    column.mask = LVCF_WIDTH | LVCF_TEXT;
+    column.cx = (rc.right / 2);
+    column.pszText = buf;
+    SendMessageW(lv, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+}
+
+static LRESULT CALLBACK data_link_all_dlg_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    TRACE("(%p, %08x, %08lx, %08lx)\n", hwnd, msg, wp, lp);
+
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            HWND lv = GetDlgItem(hwnd, IDC_LST_PROPERTIES);
+            create_page_all_columns(lv);
+            break;
+        }
+        case WM_COMMAND:
+        {
+            if (LOWORD(wp) == IDC_BTN_EDIT)
+            {
+                 /* TODO: Implement Connection dialog */
+                 MessageBoxA(hwnd, "Not implemented yet.", "Error", MB_OK | MB_ICONEXCLAMATION);
+            }
+         }
+     }
+
+     return 0;
+ }
+
+static HRESULT WINAPI dslocator_PromptNew(IDataSourceLocator *iface, IDispatch **connection)
 {
     DSLocatorImpl *This = impl_from_IDataSourceLocator(iface);
+    PROPSHEETHEADERW hdr;
+    PROPSHEETPAGEW pages[4];
+    INT_PTR ret;
 
-    FIXME("(%p)->(%p)\n",This, ppADOConnection);
+    FIXME("(%p, %p) Semi-stub\n", iface, connection);
 
-    return E_NOTIMPL;
+    if(!connection)
+        return E_INVALIDARG;
+
+    *connection = NULL;
+
+    memset(&pages, 0, sizeof(pages));
+
+    pages[0].dwSize = sizeof(PROPSHEETPAGEW);
+    pages[0].hInstance = instance;
+    pages[0].u.pszTemplate = MAKEINTRESOURCEW(IDD_PROVIDER);
+    pages[0].pfnDlgProc = data_link_properties_dlg_proc;
+
+    pages[1].dwSize = sizeof(PROPSHEETPAGEW);
+    pages[1].hInstance = instance;
+    pages[1].u.pszTemplate = MAKEINTRESOURCEW(IDD_CONNECTION);
+    pages[1].pfnDlgProc = data_link_connection_dlg_proc;
+
+    pages[2].dwSize = sizeof(PROPSHEETPAGEW);
+    pages[2].hInstance = instance;
+    pages[2].u.pszTemplate = MAKEINTRESOURCEW(IDD_ADVANCED);
+    pages[2].pfnDlgProc = data_link_advanced_dlg_proc;
+
+    pages[3].dwSize = sizeof(pages[0]);
+    pages[3].hInstance = instance;
+    pages[3].u.pszTemplate = MAKEINTRESOURCEW(IDD_ALL);
+    pages[3].pfnDlgProc = data_link_all_dlg_proc;
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.dwSize = sizeof(hdr);
+    hdr.hwndParent = This->hwnd;
+    hdr.dwFlags = PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE;
+    hdr.hInstance = instance;
+    hdr.pszCaption = MAKEINTRESOURCEW(IDS_PROPSHEET_TITLE);
+    hdr.u3.ppsp = pages;
+    hdr.nPages = ARRAY_SIZE(pages);
+    ret = PropertySheetW(&hdr);
+
+    return ret ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI dslocator_PromptEdit(IDataSourceLocator *iface, IDispatch **ppADOConnection, VARIANT_BOOL *success)

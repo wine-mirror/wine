@@ -17,7 +17,6 @@
  */
 
 #define COBJMACROS
-#include "initguid.h"
 #include "d3d10.h"
 #include "wine/test.h"
 
@@ -90,33 +89,33 @@ static void test_stateblock_mask(void)
     ok(result.VS == 0x66, "Got unexpected result.VS %#x.\n", result.VS);
     ok(result.Predication == 0x33, "Got unexpected result.Predication %#x.\n", result.Predication);
     hr = D3D10StateBlockMaskDifference(NULL, &mask_y, &result);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskDifference(&mask_x, NULL, &result);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskDifference(&mask_x, &mask_y, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     hr = D3D10StateBlockMaskIntersect(&mask_x, &mask_y, &result);
     ok(SUCCEEDED(hr), "D3D10StateBlockMaskIntersect failed, hr %#x.\n", hr);
     ok(result.VS == 0x11, "Got unexpected result.VS %#x.\n", result.VS);
     ok(result.Predication == 0x88, "Got unexpected result.Predication %#x.\n", result.Predication);
     hr = D3D10StateBlockMaskIntersect(NULL, &mask_y, &result);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskIntersect(&mask_x, NULL, &result);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskIntersect(&mask_x, &mask_y, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     hr = D3D10StateBlockMaskUnion(&mask_x, &mask_y, &result);
     ok(SUCCEEDED(hr), "D3D10StateBlockMaskUnion failed, hr %#x.\n", hr);
     ok(result.VS == 0x77, "Got unexpected result.VS %#x.\n", result.VS);
     ok(result.Predication == 0xbb, "Got unexpected result.Predication %#x.\n", result.Predication);
     hr = D3D10StateBlockMaskUnion(NULL, &mask_y, &result);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskUnion(&mask_x, NULL, &result);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskUnion(&mask_x, &mask_y, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     memset(&result, 0xff, sizeof(result));
     hr = D3D10StateBlockMaskDisableAll(&result);
@@ -124,7 +123,7 @@ static void test_stateblock_mask(void)
     ok(!result.VS, "Got unexpected result.VS %#x.\n", result.VS);
     ok(!result.Predication, "Got unexpected result.Predication %#x.\n", result.Predication);
     hr = D3D10StateBlockMaskDisableAll(NULL);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     memset(&result, 0, sizeof(result));
     hr = D3D10StateBlockMaskEnableAll(&result);
@@ -132,28 +131,28 @@ static void test_stateblock_mask(void)
     ok(result.VS == 0xff, "Got unexpected result.VS %#x.\n", result.VS);
     ok(result.Predication == 0xff, "Got unexpected result.Predication %#x.\n", result.Predication);
     hr = D3D10StateBlockMaskEnableAll(NULL);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     result.VS = 0xff;
     hr = D3D10StateBlockMaskDisableCapture(&result, D3D10_DST_VS, 0, 1);
     ok(SUCCEEDED(hr), "D3D10StateBlockMaskDisableCapture failed, hr %#x.\n", hr);
     ok(result.VS == 0xfe, "Got unexpected result.VS %#x.\n", result.VS);
     hr = D3D10StateBlockMaskDisableCapture(&result, D3D10_DST_VS, 0, 4);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskDisableCapture(&result, D3D10_DST_VS, 1, 1);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskDisableCapture(NULL, D3D10_DST_VS, 0, 1);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     result.VS = 0;
     hr = D3D10StateBlockMaskEnableCapture(&result, D3D10_DST_VS, 0, 1);
     ok(SUCCEEDED(hr), "D3D10StateBlockMaskEnableCapture failed, hr %#x.\n", hr);
     ok(result.VS == 0x01, "Got unexpected result.VS %#x.\n", result.VS);
     hr = D3D10StateBlockMaskEnableCapture(&result, D3D10_DST_VS, 0, 4);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskEnableCapture(&result, D3D10_DST_VS, 1, 1);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = D3D10StateBlockMaskEnableCapture(NULL, D3D10_DST_VS, 0, 1);
-    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     for (i = 0; i < ARRAY_SIZE(capture_test); ++i)
     {
         memset(&result, 0xff, sizeof(result));
@@ -162,7 +161,7 @@ static void test_stateblock_mask(void)
         ok(SUCCEEDED(hr), "D3D10StateBlockMaskDisableCapture failed, hr %#x.\n", hr);
 
         ok(!memcmp(result.VSShaderResources, capture_test[i].expected_disable, 5),
-                "Got unexpect result.VSShaderResources[0..4] {%#x, %#x, %#x, %#x, %#x} for test %u.\n",
+                "Got unexpected result.VSShaderResources[0..4] {%#x, %#x, %#x, %#x, %#x} for test %u.\n",
                 result.VSShaderResources[0], result.VSShaderResources[1],
                 result.VSShaderResources[2], result.VSShaderResources[3],
                 result.VSShaderResources[4], i);
@@ -173,7 +172,7 @@ static void test_stateblock_mask(void)
         ok(SUCCEEDED(hr), "D3D10StateBlockMaskEnableCapture failed, hr %#x.\n", hr);
 
         ok(!memcmp(result.VSShaderResources, capture_test[i].expected_enable, 5),
-                "Got unexpect result.VSShaderResources[0..4] {%#x, %#x, %#x, %#x, %#x} for test %u.\n",
+                "Got unexpected result.VSShaderResources[0..4] {%#x, %#x, %#x, %#x, %#x} for test %u.\n",
                 result.VSShaderResources[0], result.VSShaderResources[1],
                 result.VSShaderResources[2], result.VSShaderResources[3],
                 result.VSShaderResources[4], i);

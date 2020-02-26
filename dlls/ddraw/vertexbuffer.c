@@ -17,9 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include "ddraw_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
@@ -280,6 +277,7 @@ static HRESULT WINAPI d3d_vertex_buffer7_ProcessVertices(IDirect3DVertexBuffer7 
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
+    wined3d_device_apply_stateblock(device_impl->wined3d_device, device_impl->state);
 
     /* WineD3D doesn't know d3d7 vertex operation, it uses
      * render states instead. Set the render states according to

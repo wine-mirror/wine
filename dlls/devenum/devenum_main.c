@@ -158,10 +158,6 @@ HRESULT WINAPI DllRegisterServer(void)
     if (FAILED(res))
         return res;
 
-/*** ActiveMovieFilter Categories ***/
-
-    CoInitialize(NULL);
-    
     res = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC,
                            &IID_IFilterMapper2,  &mapvptr);
     if (SUCCEEDED(res))
@@ -190,8 +186,6 @@ HRESULT WINAPI DllRegisterServer(void)
 
         IFilterMapper2_Release(pMapper);
     }
-
-    CoUninitialize();
 
     return res;
 }

@@ -163,6 +163,95 @@ static ULONG WINAPI IDirectMusicLoaderImpl_Release(IDirectMusicLoader8 *iface)
     return ref;
 }
 
+static struct cache_entry *find_cache_object(IDirectMusicLoaderImpl *This, DMUS_OBJECTDESC *desc)
+{
+    struct cache_entry *existing;
+
+    /*
+     * The Object is looked up in the following order.
+     * 1. DMUS_OBJ_OBJECT
+     * 2. DMUS_OBJ_STREAM
+     * 3. DMUS_OBJ_MEMORY
+     * 4. DMUS_OBJ_FILENAME and DMUS_OBJ_FULLPATH
+     * 5. DMUS_OBJ_NAME and DMUS_OBJ_CATEGORY
+     * 6. DMUS_OBJ_NAME
+     * 7. DMUS_OBJ_FILENAME
+     */
+
+    if (desc->dwValidData & DMUS_OBJ_OBJECT) {
+        LIST_FOR_EACH_ENTRY(existing, &This->cache, struct cache_entry, entry) {
+            if (existing->Desc.dwValidData & DMUS_OBJ_OBJECT &&
+                    IsEqualGUID(&desc->guidObject, &existing->Desc.guidObject) ) {
+                TRACE("Found by DMUS_OBJ_OBJECT\n");
+                return existing;
+            }
+        }
+    }
+
+    if (desc->dwValidData & DMUS_OBJ_STREAM)
+        FIXME("Finding DMUS_OBJ_STREAM cached objects currently not supported.\n");
+
+    if (desc->dwValidData & DMUS_OBJ_MEMORY) {
+        LIST_FOR_EACH_ENTRY(existing, &This->cache, struct cache_entry, entry) {
+            if (existing->Desc.dwValidData & DMUS_OBJ_MEMORY &&
+                    desc->llMemLength == existing->Desc.llMemLength &&
+                    (desc->pbMemData == existing->Desc.pbMemData ||
+                    !memcmp(desc->pbMemData, existing->Desc.pbMemData, desc->llMemLength)) ) {
+                TRACE("Found by DMUS_OBJ_MEMORY (%d)\n",
+                    desc->pbMemData == existing->Desc.pbMemData);
+                return existing;
+            }
+        }
+    }
+
+    if ((desc->dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) ==
+            (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) {
+        LIST_FOR_EACH_ENTRY(existing, &This->cache, struct cache_entry, entry) {
+            if ((existing->Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) ==
+                    (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH) &&
+                    !wcsncmp(desc->wszFileName, existing->Desc.wszFileName, DMUS_MAX_FILENAME)) {
+                TRACE("Found by DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH\n");
+                return existing;
+            }
+        }
+    }
+
+    if ((desc->dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) ==
+            (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) {
+        LIST_FOR_EACH_ENTRY(existing, &This->cache, struct cache_entry, entry) {
+            if ((existing->Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) ==
+                    (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY) &&
+                    !wcsncmp(desc->wszName, existing->Desc.wszName, DMUS_MAX_NAME) &&
+                    !wcsncmp(desc->wszCategory, existing->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
+                TRACE("Found by DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY\n");
+                return existing;
+            }
+        }
+    }
+
+    if ((desc->dwValidData & DMUS_OBJ_NAME) == DMUS_OBJ_NAME) {
+        LIST_FOR_EACH_ENTRY(existing, &This->cache, struct cache_entry, entry) {
+            if ((existing->Desc.dwValidData & DMUS_OBJ_NAME) == DMUS_OBJ_NAME &&
+                    !wcsncmp(desc->wszName, existing->Desc.wszName, DMUS_MAX_NAME)) {
+                TRACE("Found by DMUS_OBJ_NAME\n");
+                return existing;
+            }
+        }
+    }
+
+    if ((desc->dwValidData & DMUS_OBJ_FILENAME) == DMUS_OBJ_FILENAME) {
+        LIST_FOR_EACH_ENTRY(existing, &This->cache, struct cache_entry, entry) {
+            if (((existing->Desc.dwValidData & DMUS_OBJ_FILENAME) == DMUS_OBJ_FILENAME) &&
+                    !wcsncmp(desc->wszFileName, existing->Desc.wszFileName, DMUS_MAX_FILENAME)) {
+                TRACE("Found by DMUS_OBJ_FILENAME\n");
+                return existing;
+            }
+        }
+    }
+
+    return NULL;
+}
+
 static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDESC *pDesc, REFIID riid, void **ppv)
 {
 	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
@@ -187,79 +276,27 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 	  *ppv = NULL;
 	  return DMUS_E_LOADER_NOCLASSID;
 	}
-	
-	/* OK, first we iterate through the list of objects we know about; these are either loaded (GetObject, LoadObjectFromFile)
-	   or set via SetObject; */
-	TRACE(": looking if we have object in the cache or if it can be found via alias\n");
-        LIST_FOR_EACH_ENTRY(pExistingEntry, &This->cache, struct cache_entry, entry) {
-		if ((pDesc->dwValidData & DMUS_OBJ_OBJECT) &&
-			(pExistingEntry->Desc.dwValidData & DMUS_OBJ_OBJECT) &&
-			IsEqualGUID (&pDesc->guidObject, &pExistingEntry->Desc.guidObject)) {
-			TRACE(": found it by object GUID\n");
-			/* I suppose such stuff can happen only when GUID for object is given (GUID_DefaultGMCollection) */
-			if (pExistingEntry->bInvalidDefaultDLS) {
-				TRACE(": found faulty default DLS collection... enabling M$ compliant behaviour\n");
-				return DMUS_E_LOADER_NOFILENAME;	
-			}
-			if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
-				TRACE(": already loaded\n");
-				return IDirectMusicObject_QueryInterface (pExistingEntry->pObject, riid, ppv);
-			} else {
-				TRACE(": not loaded yet\n");
-				pObjectEntry = pExistingEntry;
-			}
-		}
-		else if ((pDesc->dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
-				(pExistingEntry->Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
-				!wcsncmp (pDesc->wszFileName, pExistingEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
-			TRACE(": found it by fullpath filename\n");
-			if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
-				TRACE(": already loaded\n");
-				return IDirectMusicObject_QueryInterface (pExistingEntry->pObject, riid, ppv);
-			} else {
-				TRACE(": not loaded yet\n");
-				pObjectEntry = pExistingEntry;
-			}
-		}
-		else if ((pDesc->dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
-				(pExistingEntry->Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
-				!wcsncmp (pDesc->wszName, pExistingEntry->Desc.wszName, DMUS_MAX_NAME) &&
-				!wcsncmp (pDesc->wszCategory, pExistingEntry->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
-			TRACE(": found it by name and category\n");
-			if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
-				TRACE(": already loaded\n");
-				return IDirectMusicObject_QueryInterface (pExistingEntry->pObject, riid, ppv);
-			} else {
-				TRACE(": not loaded yet\n");
-				pObjectEntry = pExistingEntry;
-			}
-		}
-		else if ((pDesc->dwValidData & DMUS_OBJ_NAME) &&
-				(pExistingEntry->Desc.dwValidData & DMUS_OBJ_NAME) &&
-				!wcsncmp (pDesc->wszName, pExistingEntry->Desc.wszName, DMUS_MAX_NAME)) {
-			TRACE(": found it by name\n");
-			if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
-				TRACE(": already loaded\n");
-				return IDirectMusicObject_QueryInterface (pExistingEntry->pObject, riid, ppv);
-			} else {
-				TRACE(": not loaded yet\n");
-				pObjectEntry = pExistingEntry;
-			}
-		}
-		else if ((pDesc->dwValidData & DMUS_OBJ_FILENAME) &&
-				(pExistingEntry->Desc.dwValidData & DMUS_OBJ_FILENAME) &&
-				!wcsncmp (pDesc->wszFileName, pExistingEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
-			TRACE(": found it by filename\n");				
-			if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
-				TRACE(": already loaded\n");
-				return IDirectMusicObject_QueryInterface (pExistingEntry->pObject, riid, ppv);
-			} else {
-				TRACE(": not loaded yet\n");
-				pObjectEntry = pExistingEntry;
-			}
-		}
-	}
-	
+
+    /* Iterate through the list of objects we know about; these are either loaded
+     * (GetObject, LoadObjectFromFile) or set via SetObject; */
+    TRACE(": looking if we have object in the cache or if it can be found via alias\n");
+    pExistingEntry = find_cache_object(This, pDesc);
+    if (pExistingEntry) {
+
+        if (pExistingEntry->bInvalidDefaultDLS) {
+            TRACE(": found faulty default DLS collection... enabling M$ compliant behaviour\n");
+            return DMUS_E_LOADER_NOFILENAME;
+        }
+
+        if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
+            TRACE(": already loaded\n");
+            return IDirectMusicObject_QueryInterface(pExistingEntry->pObject, riid, ppv);
+        }
+
+        TRACE(": not loaded yet\n");
+        pObjectEntry = pExistingEntry;
+    }
+
 	/* basically, if we found alias, we use its descriptor to load...
 	   else we use info we were given */
 	if (pObjectEntry) {
@@ -347,19 +384,25 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 	/* create object */
 	result = CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
 	if (FAILED(result)) {
+		IStream_Release(pStream);
 		ERR(": could not create object\n");
 		return result;
 	}
 	/* acquire PersistStream interface */
 	result = IDirectMusicObject_QueryInterface (pObject, &IID_IPersistStream, (LPVOID*)&pPersistStream);
 	if (FAILED(result)) {
+		IStream_Release(pStream);
+		IDirectMusicObject_Release(pObject);
 		ERR("failed to Query\n");
 		return result;
 	}
 	/* load */
 	result = IPersistStream_Load (pPersistStream, pStream);
 	if (result != S_OK) {
-		WARN(": failed to (completely) load object (%s)\n", debugstr_dmreturn(result));
+		IStream_Release(pStream);
+		IPersistStream_Release(pPersistStream);
+		IDirectMusicObject_Release(pObject);
+		WARN(": failed to (completely) load object (%08x)\n", result);
 		return result;
 	}
 	/* get descriptor */
@@ -371,6 +414,9 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 		lstrcpyW (GotDesc.wszFileName, pDesc->wszFileName);
 	}
 	if (FAILED(result)) {
+		IStream_Release(pStream);
+		IPersistStream_Release(pPersistStream);
+		IDirectMusicObject_Release(pObject);
 		ERR(": failed to get descriptor\n");
 		return result;
 	}
@@ -487,6 +533,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	/* create object */
 	hr = CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
         if (FAILED(hr)) {
+		IStream_Release(pStream);
 		ERR("Object creation of %s failed 0x%08x\n", debugstr_guid(&pDesc->guidClass),hr);
 		return DMUS_E_LOADER_FAILEDOPEN;
         }
@@ -500,6 +547,8 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	/* hmph... due to some trouble I had with certain tests, we store current position and then set it back */
 	DM_STRUCT_INIT(&Desc);
 	if (FAILED(IDirectMusicObject_ParseDescriptor (pObject, pStream, &Desc))) {
+		IStream_Release(pStream);
+		IDirectMusicObject_Release(pObject);
 		ERR(": couldn't parse descriptor\n");
 		return DMUS_E_LOADER_FORMATNOTSUPPORTED;
 	}
@@ -572,7 +621,6 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoad
 static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *iface, REFGUID rguidClass, WCHAR *pwzFileExtension, WCHAR *pwzScanFileName)
 {
 	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-	static const WCHAR wszAny[] = {'*',0};
 	WIN32_FIND_DATAW FileData;
 	HANDLE hSearch;
 	WCHAR wszSearchString[MAX_PATH];
@@ -594,11 +642,12 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
 	p = wszSearchString + lstrlenW(wszSearchString);
 	if (p > wszSearchString && p[-1] != '\\') *p++ = '\\';
 	*p++ = '*'; /* any file */
-	if (lstrcmpW (pwzFileExtension, wszAny)) *p++ = '.'; /* if we have actual extension, put a dot */
+        if (lstrcmpW (pwzFileExtension, L"*"))
+                *p++ = '.'; /* if we have actual extension, put a dot */
 	lstrcpyW (p, pwzFileExtension);
-	
+
 	TRACE(": search string: %s\n", debugstr_w(wszSearchString));
-	
+
 	hSearch = FindFirstFileW (wszSearchString, &FileData);
 	if (hSearch == INVALID_HANDLE_VALUE) {
 		TRACE(": no files found\n");
@@ -608,7 +657,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
 	do {
 		DMUS_OBJECTDESC Desc;
 		DM_STRUCT_INIT(&Desc);
-		Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_DATE;
+		Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_DATE;
 		Desc.guidClass = *rguidClass;
 		lstrcpyW (Desc.wszFileName, FileData.cFileName);
 		FileTimeToLocalFileTime (&FileData.ftCreationTime, &Desc.ftDate);
@@ -628,149 +677,65 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
 	} while (1);
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_CacheObject(IDirectMusicLoader8 *iface, IDirectMusicObject *pObject)
+static HRESULT WINAPI IDirectMusicLoaderImpl_CacheObject(IDirectMusicLoader8 *iface,
+                IDirectMusicObject *object)
 {
-	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-	DMUS_OBJECTDESC Desc;
-	HRESULT result = DMUS_E_LOADER_OBJECTNOTFOUND;
-        struct cache_entry *pObjectEntry;
+    IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
+    DMUS_OBJECTDESC desc;
+    struct cache_entry *entry;
 
-	TRACE("(%p, %p)\n", This, pObject);
-	
-	/* get descriptor */
-	DM_STRUCT_INIT(&Desc);
-	IDirectMusicObject_GetDescriptor (pObject, &Desc);
-	
-	/* now iterate through the list and check if we have an alias (without object), corresponding
-	   to the descriptor of the input object */
-        LIST_FOR_EACH_ENTRY(pObjectEntry, &This->cache, struct cache_entry, entry) {
-		if ((Desc.dwValidData & DMUS_OBJ_OBJECT) &&
-			(pObjectEntry->Desc.dwValidData & DMUS_OBJ_OBJECT) &&
-			IsEqualGUID (&Desc.guidObject, &pObjectEntry->Desc.guidObject)) {
-			TRACE(": found it by object GUID\n");
-			if ((pObjectEntry->Desc.dwValidData & DMUS_OBJ_LOADED) && pObjectEntry->pObject)
-				result = S_FALSE;
-			else
-				result = S_OK;
-			break;
-		}
-		else if ((Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
-				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
-				!wcsncmp (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
-			TRACE(": found it by fullpath filename\n");
-			if ((pObjectEntry->Desc.dwValidData & DMUS_OBJ_LOADED) && pObjectEntry->pObject)
-				result = S_FALSE;
-			else
-				result = S_OK;
-			break;
-		}
-		else if ((Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
-				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
-				!wcsncmp (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME) &&
-				!wcsncmp (Desc.wszCategory, pObjectEntry->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
-			TRACE(": found it by name and category\n");
-			if ((pObjectEntry->Desc.dwValidData & DMUS_OBJ_LOADED) && pObjectEntry->pObject)
-				result = S_FALSE;
-			else
-				result = S_OK;
-			break;
-		}
-		else if ((Desc.dwValidData & DMUS_OBJ_NAME) &&
-				(pObjectEntry->Desc.dwValidData & DMUS_OBJ_NAME) &&
-				!wcsncmp (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME)) {
-			TRACE(": found it by name\n");
-			if ((pObjectEntry->Desc.dwValidData & DMUS_OBJ_LOADED) && pObjectEntry->pObject)
-				result = S_FALSE;
-			else
-				result = S_OK;
-			break;
-		}
-		else if ((Desc.dwValidData & DMUS_OBJ_FILENAME) &&
-				(pObjectEntry->Desc.dwValidData & DMUS_OBJ_FILENAME) &&
-				!wcsncmp (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
-			TRACE(": found it by filename\n");				
-			if ((pObjectEntry->Desc.dwValidData & DMUS_OBJ_LOADED) && pObjectEntry->pObject)
-				result = S_FALSE;
-			else
-				result = S_OK;
-			break;
-		}
-	}
-	
-	/* if we found such alias, then set everything */
-	if (result == S_OK) {
-		pObjectEntry->Desc.dwValidData &= DMUS_OBJ_LOADED;
-		pObjectEntry->pObject = pObject;
-		IDirectMusicObject_AddRef (pObjectEntry->pObject);
-	}
-	
-	return result;
+    TRACE("(%p, %p)\n", This, object);
+
+    DM_STRUCT_INIT(&desc);
+    IDirectMusicObject_GetDescriptor(object, &desc);
+
+    /* Iterate through the list and check if we have an alias (without object), corresponding
+        to the descriptor of the input object */
+    entry = find_cache_object(This, &desc);
+    if (entry) {
+        if ((entry->Desc.dwValidData & DMUS_OBJ_LOADED) && entry->pObject) {
+            TRACE("Object already loaded.\n");
+            return S_FALSE;
+        }
+
+        entry->Desc.dwValidData |= DMUS_OBJ_LOADED;
+        entry->pObject = object;
+        IDirectMusicObject_AddRef(entry->pObject);
+        return S_OK;
+    }
+
+    return DMUS_E_LOADER_OBJECTNOTFOUND;
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_ReleaseObject(IDirectMusicLoader8 *iface, IDirectMusicObject *pObject)
+static HRESULT WINAPI IDirectMusicLoaderImpl_ReleaseObject(IDirectMusicLoader8 *iface,
+                IDirectMusicObject *object)
 {
-	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-	DMUS_OBJECTDESC Desc;
-        struct cache_entry *pObjectEntry;
-	HRESULT result = S_FALSE;
+    IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
+    DMUS_OBJECTDESC desc;
+    struct cache_entry *entry;
 
-	TRACE("(%p, %p)\n", This, pObject);
-	
-	if(!pObject) return E_POINTER;
+    TRACE("(%p, %p)\n", This, object);
 
-	/* get descriptor */
-	DM_STRUCT_INIT(&Desc);
-	IDirectMusicObject_GetDescriptor (pObject, &Desc);
-	
-	/* iterate through the list of objects we know about; check only those with DMUS_OBJ_LOADED */
-	TRACE(": looking for the object in cache\n");
-        LIST_FOR_EACH_ENTRY(pObjectEntry, &This->cache, struct cache_entry, entry) {
-		if ((Desc.dwValidData & DMUS_OBJ_OBJECT) &&
-			(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_OBJECT | DMUS_OBJ_LOADED)) &&
-			IsEqualGUID (&Desc.guidObject, &pObjectEntry->Desc.guidObject)) {
-			TRACE(": found it by object GUID\n");
-			if (TRACE_ON(dmloader))
-				dump_DMUS_OBJECTDESC(&pObjectEntry->Desc);
-			result = S_OK;
-			break;
-		}
-		else if ((Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) &&
-				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_LOADED)) &&
-				!wcsncmp (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
-			TRACE(": found it by fullpath filename\n");
-			result = S_OK;			
-			break;
-		}
-		else if ((Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY)) &&
-				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY | DMUS_OBJ_LOADED)) &&
-				!wcsncmp (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME) &&
-				!wcsncmp (Desc.wszCategory, pObjectEntry->Desc.wszCategory, DMUS_MAX_CATEGORY)) {
-			TRACE(": found it by name and category\n");
-			result = S_OK;			
-			break;
-		}
-		else if ((Desc.dwValidData & DMUS_OBJ_NAME) &&
-				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_NAME | DMUS_OBJ_LOADED)) &&
-				!wcsncmp (Desc.wszName, pObjectEntry->Desc.wszName, DMUS_MAX_NAME)) {
-			TRACE(": found it by name\n");
-			result = S_OK;
-			break;
-		}
-		else if ((Desc.dwValidData & DMUS_OBJ_FILENAME) &&
-				(pObjectEntry->Desc.dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_LOADED)) &&
-				!wcsncmp (Desc.wszFileName, pObjectEntry->Desc.wszFileName, DMUS_MAX_FILENAME)) {
-			TRACE(": found it by filename\n");
-			result = S_OK;			
-			break;
-		}
-	}
-	if (result == S_OK) {
-		/*TRACE(": releasing:\n%s  - bInvalidDefaultDLS = %i\n  - pObject = %p\n", debugstr_DMUS_OBJECTDESC(&pObjectEntry->Desc), pObjectEntry->bInvalidDefaultDLS, pObjectEntry->pObject); */
-		IDirectMusicObject_Release (pObjectEntry->pObject);
-		pObjectEntry->pObject = NULL;
-		pObjectEntry->Desc.dwValidData &= ~DMUS_OBJ_LOADED;
-	} 
-	return result;
+    if (!object)
+        return E_POINTER;
+
+    DM_STRUCT_INIT(&desc);
+    IDirectMusicObject_GetDescriptor(object, &desc);
+
+    TRACE("Looking for the object in cache\n");
+    entry = find_cache_object(This, &desc);
+    if (entry) {
+        dump_DMUS_OBJECTDESC(&entry->Desc);
+
+        if (entry->pObject && entry->Desc.dwValidData & DMUS_OBJ_LOADED) {
+            IDirectMusicObject_Release(entry->pObject);
+            entry->pObject = NULL;
+            entry->Desc.dwValidData &= ~DMUS_OBJ_LOADED;
+            return S_OK;
+        }
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI IDirectMusicLoaderImpl_ClearCache(IDirectMusicLoader8 *iface, REFGUID class)

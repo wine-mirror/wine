@@ -95,7 +95,7 @@ static int comp_value(const WCHAR *ptr, int dpc)
     while(dpc--) {
         if(!*ptr)
             ret *= 16;
-        else if(iswdigit(ch = *ptr++))
+        else if(is_digit(ch = *ptr++))
             ret = ret*16 + (ch-'0');
         else if('a' <= ch && ch <= 'f')
             ret = ret*16 + (ch-'a') + 10;

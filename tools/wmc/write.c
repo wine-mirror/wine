@@ -94,17 +94,13 @@ static const char str_header[] =
 	"\n"
         ;
 
-static char *dup_u2c(int cp, const WCHAR *uc)
+static char *dup_u2c(const WCHAR *uc)
 {
-	int len;
-	char *cptr;
+	int i;
+	char *cptr = xmalloc( unistrlen(uc)+1 );
 
-        if (!cp) cp = CP_UTF8;
-        len = wmc_wcstombs(cp, 0, uc, unistrlen(uc)+1, NULL, 0);
-	cptr = xmalloc(len);
-        len = wmc_wcstombs(cp, 0, uc, unistrlen(uc)+1, cptr, len);
-	if (len < 0)
-		internal_error(__FILE__, __LINE__, "Buffer overflow? code %d\n", len);
+        for (i = 0; *uc; i++, uc++) cptr[i] = (*uc <= 0xff) ? *uc : '_';
+        cptr[i] = 0;
 	return cptr;
 }
 
@@ -183,7 +179,7 @@ void write_h_file(const char *fname)
 	{
 		if(ttab[i].type == tok_severity && ttab[i].alias)
 		{
-			cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ttab[i].alias);
+			cptr = dup_u2c(ttab[i].alias);
 			fprintf(fp, "#define %s\t0x%x\n", cptr, ttab[i].token);
 			free(cptr);
 		}
@@ -195,7 +191,7 @@ void write_h_file(const char *fname)
 	{
 		if(ttab[i].type == tok_facility && ttab[i].alias)
 		{
-			cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ttab[i].alias);
+			cptr = dup_u2c(ttab[i].alias);
 			fprintf(fp, "#define %s\t0x%x\n", cptr, ttab[i].token);
 			free(cptr);
 		}
@@ -209,7 +205,7 @@ void write_h_file(const char *fname)
 		switch(ndp->type)
 		{
 		case nd_comment:
-			cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ndp->u.comment+1);
+			cptr = dup_u2c(ndp->u.comment+1);
 			killnl(cptr, 0);
 			killcomment(cptr);
 			if(*cptr)
@@ -237,14 +233,14 @@ void write_h_file(const char *fname)
 				fprintf(fp, "\n");
 			}
 			fprintf(fp, "/* MessageId  : 0x%08x */\n", ndp->u.msg->realid);
-			cptr = dup_u2c(ndp->u.msg->msgs[idx_en]->cp, ndp->u.msg->msgs[idx_en]->msg);
+			cptr = dup_u2c(ndp->u.msg->msgs[idx_en]->msg);
 			killnl(cptr, 0);
 			killcomment(cptr);
 			fprintf(fp, "/* Approximate msg: %s */\n", cptr);
 			free(cptr);
-			cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ndp->u.msg->sym);
+			cptr = dup_u2c(ndp->u.msg->sym);
 			if(ndp->u.msg->cast)
-				cast = dup_u2c(WMC_DEFAULT_CODEPAGE, ndp->u.msg->cast);
+				cast = dup_u2c(ndp->u.msg->cast);
 			else
 				cast = NULL;
 			switch(ndp->u.msg->base)
@@ -299,7 +295,7 @@ static void write_rcbin(FILE *fp)
 			if(ttab[i].type == tok_language && ttab[i].token == lbp->lan)
 			{
 				if(ttab[i].alias)
-					cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ttab[i].alias);
+					cptr = dup_u2c(ttab[i].alias);
 				break;
 			}
 		}
@@ -310,129 +306,67 @@ static void write_rcbin(FILE *fp)
 	}
 }
 
-static char *make_string(WCHAR *uc, int len, int codepage)
+static char *make_string(WCHAR *uc, int len)
 {
-	char *str = xmalloc(7*len + 1);
-	char *cptr = str;
-	int i;
-	int b;
+    char *str = xmalloc(7*len + 12);
+    char *cptr = str;
+    int i;
+    int b;
 
-	if(!codepage)
-	{
-		*cptr++ = ' ';
-		*cptr++ = 'L';
-		*cptr++ = '"';
-		for(i = b = 0; i < len; i++, uc++)
-		{
-                        switch(*uc)
-                        {
-                        case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
-                        case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
-                        case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
-                        case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
-                        case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
-                        case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
-                        case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
-                        case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
-                        case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
-                        default:
-                            if (*uc < 0x100 && isprint(*uc))
-                            {
-                                *cptr++ = *uc;
-                                b++;
-                            }
-                            else
-                            {
-                                int n = sprintf(cptr, "\\x%04x", *uc & 0xffff);
-                                cptr += n;
-                                b += n;
-                            }
-                            break;
-                        }
-			if(i < len-1 && b >= 72)
-			{
-				*cptr++ = '"';
-				*cptr++ = ',';
-				*cptr++ = '\n';
-				*cptr++ = ' ';
-				*cptr++ = 'L';
-				*cptr++ = '"';
-				b = 0;
-			}
-		}
-		if (unicodeout)
-		    len = (len + 1) & ~1;
-		else
-		    len = (len + 3) & ~3;
-		for(; i < len; i++)
-		{
-			*cptr++ = '\\';
-			*cptr++ = 'x';
-			*cptr++ = '0';
-			*cptr++ = '0';
-			*cptr++ = '0';
-			*cptr++ = '0';
-		}
-		*cptr++ = '"';
-		*cptr = '\0';
-	}
-	else
-	{
-		char *tmp, *cc;
-
-		cc = tmp = dup_u2c(codepage, uc);
-		*cptr++ = ' ';
-		*cptr++ = '"';
-		for(i = b = 0; i < len; i++, cc++)
-		{
-                        switch(*cc)
-                        {
-                        case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
-                        case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
-                        case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
-                        case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
-                        case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
-                        case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
-                        case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
-                        case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
-                        case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
-                        default:
-                            if(isprint(*cc))
-                            {
-                                *cptr++ = *cc;
-                                b++;
-                            }
-                            else
-                            {
-                                int n = sprintf(cptr, "\\x%02x", *cc & 0xff);
-                                cptr += n;
-                                b += n;
-                            }
-                            break;
-			}
-			if(i < len-1 && b >= 72)
-			{
-				*cptr++ = '"';
-				*cptr++ = ',';
-				*cptr++ = '\n';
-				*cptr++ = ' ';
-				*cptr++ = '"';
-				b = 0;
-			}
-		}
-		len = (len + 3) & ~3;
-		for(; i < len; i++)
-		{
-			*cptr++ = '\\';
-			*cptr++ = 'x';
-			*cptr++ = '0';
-			*cptr++ = '0';
-		}
-		*cptr++ = '"';
-		*cptr = '\0';
-		free(tmp);
-	}
-	return str;
+    *cptr++ = ' ';
+    *cptr++ = 'L';
+    *cptr++ = '"';
+    for(i = b = 0; i < len; i++, uc++)
+    {
+        switch(*uc)
+        {
+        case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
+        case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
+        case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
+        case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
+        case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
+        case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
+        case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
+        case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
+        case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
+        default:
+            if (*uc < 0x100 && isprint(*uc))
+            {
+                *cptr++ = *uc;
+                b++;
+            }
+            else
+            {
+                int n = sprintf(cptr, "\\x%04x", *uc);
+                cptr += n;
+                b += n;
+            }
+            break;
+        }
+        if(i < len-1 && b >= 72)
+        {
+            *cptr++ = '"';
+            *cptr++ = ',';
+            *cptr++ = '\n';
+            *cptr++ = ' ';
+            *cptr++ = 'L';
+            *cptr++ = '"';
+            b = 0;
+        }
+    }
+    len = (len + 1) & ~1;
+    for(; i < len; i++)
+    {
+        *cptr++ = '\\';
+        *cptr++ = 'x';
+        *cptr++ = '0';
+        *cptr++ = '0';
+        *cptr++ = '0';
+        *cptr++ = '0';
+    }
+    *cptr++ = '"';
+    *cptr = '\0';
+    return str;
 }
 
 static void write_rcinline(FILE *fp)
@@ -464,11 +398,9 @@ static void write_rcinline(FILE *fp)
 				char *cptr;
 				int l = blk->msgs[j]->len;
 				const char *comma = j == blk->nmsg-1  && i == lbp->nblk-1 ? "" : ",";
-				cptr = make_string(blk->msgs[j]->msg, l, unicodeout ? 0 : blk->msgs[j]->cp);
-				fprintf(fp, "\n /* Msg 0x%08x */ 0x%04x, 0x000%c,\n",
-					blk->idlo + j,
-					(unicodeout ? (l*2+3)&~3 : (l+3)&~3) + 4,
-					unicodeout ? '1' : '0');
+				cptr = make_string(blk->msgs[j]->msg, l);
+				fprintf(fp, "\n /* Msg 0x%08x */ 0x%04x, 0x0001,\n",
+					blk->idlo + j, ((l * 2 + 3) & ~3) + 4 );
 				fprintf(fp, "%s%s\n", cptr, comma);
 				free(cptr);
 			}
@@ -539,7 +471,7 @@ void write_bin_files(void)
         {
             if (ttab[i].type == tok_language && ttab[i].token == lbp->lan)
             {
-                if (ttab[i].alias) cptr = dup_u2c(WMC_DEFAULT_CODEPAGE, ttab[i].alias);
+                if (ttab[i].alias) cptr = dup_u2c(ttab[i].alias);
                 break;
             }
         }

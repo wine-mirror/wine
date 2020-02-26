@@ -461,7 +461,7 @@ GpStatus WINGDIPAPI GdipCreateRegionRect(GDIPCONST GpRectF *rect,
 {
     GpStatus stat;
 
-    TRACE("%p, %p\n", rect, region);
+    TRACE("%s, %p\n", debugstr_rectf(rect), region);
 
     if (!(rect && region))
         return InvalidParameter;

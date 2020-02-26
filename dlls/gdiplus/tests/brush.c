@@ -1299,6 +1299,7 @@ static void test_pathgradientcenterpoint(void)
 {
     static const GpPointF path_points[] = {{0,0}, {3,0}, {0,4}};
     GpStatus status;
+    GpPath* path;
     GpPathGradient *grad;
     GpPointF point;
 
@@ -1341,8 +1342,28 @@ static void test_pathgradientcenterpoint(void)
 
     status = GdipGetPathGradientCenterPoint(grad, &point);
     expect(Ok, status);
-    todo_wine expectf(1.0, point.X);
-    todo_wine expectf(4.0/3.0, point.Y);
+    expectf(1.0, point.X);
+    expectf(4.0/3.0, point.Y);
+
+    status = GdipDeleteBrush((GpBrush*)grad);
+    expect(Ok, status);
+
+    status = GdipCreatePath(FillModeWinding, &path);
+    expect(Ok, status);
+
+    status = GdipAddPathEllipse(path, 0, 0, 100, 50);
+    expect(Ok, status);
+
+    status = GdipCreatePathGradientFromPath(path, &grad);
+    expect(Ok, status);
+
+    status = GdipGetPathGradientCenterPoint(grad, &point);
+    expect(Ok, status);
+    expectf(700.0/13.0, point.X);
+    expectf(25.0, point.Y);
+
+    status = GdipDeletePath(path);
+    expect(Ok, status);
 
     status = GdipDeleteBrush((GpBrush*)grad);
     expect(Ok, status);

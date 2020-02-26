@@ -568,10 +568,12 @@ static HRESULT WINAPI d3drm1_CreateViewport(IDirect3DRM *iface, IDirect3DRMDevic
     TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p.\n",
             iface, device, camera, x, y, width, height, viewport);
 
-    if (!device || !camera)
-        return D3DRMERR_BADOBJECT;
     if (!viewport)
         return D3DRMERR_BADVALUE;
+    *viewport = NULL;
+
+    if (!device || !camera)
+        return D3DRMERR_BADOBJECT;
 
     if (FAILED(hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMDevice3, (void **)&device3)))
         return hr;
@@ -1090,10 +1092,12 @@ static HRESULT WINAPI d3drm2_CreateViewport(IDirect3DRM2 *iface, IDirect3DRMDevi
     TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p.\n",
           iface, device, camera, x, y, width, height, viewport);
 
-    if (!device || !camera)
-        return D3DRMERR_BADOBJECT;
     if (!viewport)
         return D3DRMERR_BADVALUE;
+    *viewport = NULL;
+
+    if (!device || !camera)
+        return D3DRMERR_BADOBJECT;
 
     if (FAILED(hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMDevice3, (void **)&device3)))
         return hr;
@@ -1761,10 +1765,12 @@ static HRESULT WINAPI d3drm3_CreateViewport(IDirect3DRM3 *iface, IDirect3DRMDevi
     TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p.\n",
             iface, device, camera, x, y, width, height, viewport);
 
-    if (!device || !camera)
-        return D3DRMERR_BADOBJECT;
     if (!viewport)
         return D3DRMERR_BADVALUE;
+    *viewport = NULL;
+
+    if (!device || !camera)
+        return D3DRMERR_BADOBJECT;
 
     if (FAILED(hr = d3drm_viewport_create(&object, &d3drm->IDirect3DRM_iface)))
         return hr;

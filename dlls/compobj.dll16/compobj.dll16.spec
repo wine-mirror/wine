@@ -1,5 +1,5 @@
 1 pascal CoBuildVersion() CoBuildVersion16
-2 pascal CoInitialize(long) CoInitialize16
+2 pascal CoInitialize(segptr) CoInitialize16
 3 pascal CoUninitialize() CoUninitialize16
 4 pascal CoGetMalloc(long ptr) CoGetMalloc16
 5 pascal CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject16
@@ -209,7 +209,7 @@
 # WINE internal relays (for Win16 interfaces)
 500 cdecl IMalloc16_QueryInterface(ptr ptr ptr) IMalloc16_fnQueryInterface
 501 cdecl IMalloc16_AddRef(ptr) IMalloc16_fnAddRef
-502 cdecl IMalloc16_Release(ptr) IMalloc16_fnRelease
+502 cdecl IMalloc16_Release(segptr) IMalloc16_fnRelease
 503 cdecl IMalloc16_Alloc(ptr long) IMalloc16_fnAlloc
 504 cdecl IMalloc16_Realloc(ptr segptr long) IMalloc16_fnRealloc
 505 cdecl IMalloc16_Free(ptr segptr) IMalloc16_fnFree

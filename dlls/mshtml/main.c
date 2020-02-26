@@ -51,6 +51,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 HINSTANCE hInst;
 DWORD mshtml_tls = TLS_OUT_OF_INDEXES;
 
+void (__cdecl *ccp_init)(ExternalCycleCollectionParticipant*,const CCObjCallback*);
+nsrefcnt (__cdecl *ccref_decr)(nsCycleCollectingAutoRefCnt*,nsISupports*,ExternalCycleCollectionParticipant*);
+nsrefcnt (__cdecl *ccref_incr)(nsCycleCollectingAutoRefCnt*,nsISupports*);
+void (__cdecl *ccref_init)(nsCycleCollectingAutoRefCnt*,nsrefcnt);
+void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,const char*,nsCycleCollectionTraversalCallback*);
+void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTraversalCallback*);
+
 static HINSTANCE shdoclc = NULL;
 static WCHAR *status_strings[IDS_STATUS_LAST-IDS_STATUS_FIRST+1];
 static IMultiLanguage2 *mlang;
@@ -705,6 +712,7 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IDispatch);
     X(IID_IDispatchEx);
     X(IID_IDispatchJS);
+    X(IID_IDisplayServices);
     X(IID_UndocumentedScriptIface);
     X(IID_IEnumConnections);
     X(IID_IEnumVARIANT);
@@ -719,6 +727,8 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IInternetProtocol);
     X(IID_IInternetProtocolRoot);
     X(IID_IManagedObject);
+    X(IID_IMarkupContainer);
+    X(IID_IMarkupServices);
     X(IID_IMarshal);
     X(IID_IMonikerProp);
     X(IID_IObjectIdentity);

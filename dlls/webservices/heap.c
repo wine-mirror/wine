@@ -185,9 +185,7 @@ static struct heap *alloc_heap(void)
 
     ret->magic      = HEAP_MAGIC;
     InitializeCriticalSection( &ret->cs );
-#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": heap.cs");
-#endif
 
     prop_init( heap_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
@@ -247,9 +245,7 @@ void WINAPI WsFreeHeap( WS_HEAP *handle )
 
     LeaveCriticalSection( &heap->cs );
 
-#ifndef __MINGW32__
     heap->cs.DebugInfo->Spare[0] = 0;
-#endif
     DeleteCriticalSection( &heap->cs );
     heap_free( heap );
 }

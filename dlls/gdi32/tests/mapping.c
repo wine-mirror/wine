@@ -28,7 +28,6 @@
 #include "winuser.h"
 #include "winerror.h"
 
-static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 static DWORD (WINAPI *pGetLayout)(HDC hdc);
 static INT (WINAPI *pGetRandomRgn)(HDC hDC, HRGN hRgn, INT iCode);
 static BOOL (WINAPI *pGetTransform)(HDC, DWORD, XFORM *);
@@ -247,9 +246,9 @@ static void test_dc_layout(void)
     HDC hdc;
     HRGN hrgn;
 
-    if (!pGetLayout || !pSetLayout)
+    if (!pGetLayout)
     {
-        win_skip( "Don't have SetLayout\n" );
+        win_skip( "Don't have GetLayout\n" );
         return;
     }
 
@@ -271,7 +270,7 @@ static void test_dc_layout(void)
     expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, 1000, 1000);
 
-    pSetLayout( hdc, LAYOUT_RTL );
+    SetLayout( hdc, LAYOUT_RTL );
     if (!pGetLayout( hdc ))
     {
         win_skip( "SetLayout not supported\n" );
@@ -310,7 +309,7 @@ static void test_dc_layout(void)
     GetClipRgn( hdc, hrgn );
     GetRgnBox( hrgn, &ret_rc );
     ok( EqualRect( &rc, &ret_rc ), "wrong clip box %s\n", wine_dbgstr_rect( &ret_rc ));
-    pSetLayout( hdc, LAYOUT_LTR );
+    SetLayout( hdc, LAYOUT_LTR );
     SetRect( &rc, 80, 10, 90, 20 );
     GetClipRgn( hdc, hrgn );
     GetRgnBox( hrgn, &ret_rc );
@@ -318,7 +317,7 @@ static void test_dc_layout(void)
     GetClipBox( hdc, &ret_rc );
     ok( EqualRect( &rc, &ret_rc ), "wrong clip box %s\n", wine_dbgstr_rect( &ret_rc ));
     IntersectClipRect( hdc, 80, 10, 85, 20 );
-    pSetLayout( hdc, LAYOUT_RTL );
+    SetLayout( hdc, LAYOUT_RTL );
     SetRect( &rc, 15, 10, 20, 20 );
     GetClipRgn( hdc, hrgn );
     GetRgnBox( hrgn, &ret_rc );
@@ -326,9 +325,9 @@ static void test_dc_layout(void)
     GetClipBox( hdc, &ret_rc );
     ok( EqualRect( &rc, &ret_rc ), "wrong clip box %s\n", wine_dbgstr_rect( &ret_rc ));
     SetRectRgn( hrgn, 60, 10, 80, 20 );
-    pSetLayout( hdc, LAYOUT_LTR );
+    SetLayout( hdc, LAYOUT_LTR );
     ExtSelectClipRgn( hdc, hrgn, RGN_OR );
-    pSetLayout( hdc, LAYOUT_RTL );
+    SetLayout( hdc, LAYOUT_RTL );
     SetRect( &rc, 15, 10, 40, 20 );
     GetClipRgn( hdc, hrgn );
     GetRgnBox( hrgn, &ret_rc );
@@ -370,7 +369,7 @@ static void test_dc_layout(void)
     SetMapMode(hdc, MM_TEXT);
     ret = GetMapMode( hdc );
     ok(ret == MM_ANISOTROPIC, "expected MM_ANISOTROPIC, got %d\n", ret);
-    pSetLayout( hdc, LAYOUT_LTR );
+    SetLayout( hdc, LAYOUT_LTR );
     ret = GetMapMode( hdc );
     ok(ret == MM_ANISOTROPIC, "expected MM_ANISOTROPIC, got %d\n", ret);
     SetMapMode(hdc, MM_TEXT);
@@ -715,7 +714,6 @@ START_TEST(mapping)
 {
     HMODULE mod = GetModuleHandleA("gdi32.dll");
     pGetLayout = (void *)GetProcAddress( mod, "GetLayout" );
-    pSetLayout = (void *)GetProcAddress( mod, "SetLayout" );
     pGetRandomRgn = (void *)GetProcAddress( mod, "GetRandomRgn" );
     pGetTransform = (void *)GetProcAddress( mod, "GetTransform" );
     pSetVirtualResolution = (void *)GetProcAddress( mod, "SetVirtualResolution" );

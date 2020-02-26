@@ -29,6 +29,12 @@
 #include "metahost.h"
 #include "wine/test.h"
 
+#if !defined(__i386__) && !defined(__x86_64__)
+static int has_mono = 0;
+#else
+static int has_mono = 1;
+#endif
+
 static HMODULE hmscoree;
 
 static HRESULT (WINAPI *pCLRCreateInstance)(REFCLSID clsid, REFIID riid, LPVOID *ppInterface);
@@ -68,13 +74,6 @@ static void cleanup(void)
     FreeLibrary(hmscoree);
 }
 
-static WCHAR *strrchrW( WCHAR *str, WCHAR ch )
-{
-    WCHAR *ret = NULL;
-    do { if (*str == ch) ret = str; } while (*str++);
-    return ret;
-}
-
 static void test_getruntime(WCHAR *version)
 {
     static const WCHAR dotzero[] = {'.','0',0};
@@ -100,7 +99,7 @@ static void test_getruntime(WCHAR *version)
     ICLRRuntimeInfo_Release(info);
 
     /* Versions must match exactly. */
-    dot = strrchrW(version, '.');
+    dot = wcsrchr(version, '.');
     lstrcpyW(dot, dotzero);
     hr = ICLRMetaHost_GetRuntime(metahost, version, &IID_ICLRRuntimeInfo, (void**)&info);
     ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%x\n", hr);
@@ -210,10 +209,12 @@ static void test_notification_cb(void)
 
     expect_runtime_tid = GetCurrentThreadId();
     hr = ICLRRuntimeInfo_GetInterface(info, &CLSID_CLRRuntimeHost, &IID_ICLRRuntimeHost, (void**)&host);
-    ok(hr == S_OK, "GetInterface returned %x\n", hr);
-    ok(expect_runtime_tid == 0, "notification_callback was not called\n");
 
-    ICLRRuntimeHost_Release(host);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetInterface returned %x\n", hr);
+    todo_wine if(!has_mono) ok(expect_runtime_tid == 0, "notification_callback was not called\n");
+
+    if(has_mono)
+        ICLRRuntimeHost_Release(host);
 
     ICLRRuntimeInfo_Release(info);
 }

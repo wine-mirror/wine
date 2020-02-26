@@ -96,6 +96,8 @@ typedef struct tagACLMulti {
     struct list     PreservedKeyNotifySink;
     struct list     ThreadFocusSink;
     struct list     ThreadMgrEventSink;
+    struct list     UIElementSink;
+    struct list     InputProcessorProfileActivationSink;
 } ThreadMgr;
 
 typedef struct tagEnumTfDocumentMgr {
@@ -172,6 +174,8 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
     free_sinks(&This->PreservedKeyNotifySink);
     free_sinks(&This->ThreadFocusSink);
     free_sinks(&This->ThreadMgrEventSink);
+    free_sinks(&This->UIElementSink);
+    free_sinks(&This->InputProcessorProfileActivationSink);
 
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->CurrentPreservedKeys)
     {
@@ -624,6 +628,20 @@ static HRESULT WINAPI ThreadMgrSource_AdviseSink(ITfSource *iface,
                            COOKIE_MAGIC_KEYTRACESINK, punk, pdwCookie);
     }
 
+    if (IsEqualIID(riid, &IID_ITfUIElementSink))
+    {
+        WARN("semi-stub for ITfUIElementSink: sink won't be used.\n");
+        return advise_sink(&This->UIElementSink, &IID_ITfUIElementSink,
+                           COOKIE_MAGIC_UIELEMENTSINK, punk, pdwCookie);
+    }
+
+    if (IsEqualIID(riid, &IID_ITfInputProcessorProfileActivationSink))
+    {
+        WARN("semi-stub for ITfInputProcessorProfileActivationSink: sink won't be used.\n");
+        return advise_sink(&This->InputProcessorProfileActivationSink, &IID_ITfInputProcessorProfileActivationSink,
+                           COOKIE_MAGIC_INPUTPROCESSORPROFILEACTIVATIONSINK, punk, pdwCookie);
+    }
+
     FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
     return E_NOTIMPL;
 }
@@ -637,7 +655,8 @@ static HRESULT WINAPI ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCo
 
     magic = get_Cookie_magic(pdwCookie);
     if (magic != COOKIE_MAGIC_TMSINK && magic != COOKIE_MAGIC_THREADFOCUSSINK
-        && magic != COOKIE_MAGIC_KEYTRACESINK)
+        && magic != COOKIE_MAGIC_KEYTRACESINK && magic != COOKIE_MAGIC_UIELEMENTSINK
+        && magic != COOKIE_MAGIC_INPUTPROCESSORPROFILEACTIVATIONSINK)
         return E_INVALIDARG;
 
     return unadvise_sink(pdwCookie);
@@ -1354,6 +1373,8 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     list_init(&This->PreservedKeyNotifySink);
     list_init(&This->ThreadFocusSink);
     list_init(&This->ThreadMgrEventSink);
+    list_init(&This->UIElementSink);
+    list_init(&This->InputProcessorProfileActivationSink);
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)&This->ITfThreadMgrEx_iface;
@@ -1509,6 +1530,8 @@ void ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *iface, ITfDocumentMgr *mgr
 {
     ThreadMgr *This = impl_from_ITfThreadMgrEx((ITfThreadMgrEx *)iface);
     struct list *cursor;
+    BOOL found = FALSE;
+
     LIST_FOR_EACH(cursor, &This->CreatedDocumentMgrs)
     {
         DocumentMgrEntry *mgrentry = LIST_ENTRY(cursor,DocumentMgrEntry,entry);
@@ -1516,8 +1539,16 @@ void ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *iface, ITfDocumentMgr *mgr
         {
             list_remove(cursor);
             HeapFree(GetProcessHeap(),0,mgrentry);
-            return;
+            found = TRUE;
+            break;
         }
     }
-    FIXME("ITfDocumentMgr %p not found in this thread\n",mgr);
+    if (!found) FIXME("ITfDocumentMgr %p not found in this thread\n",mgr);
+
+    LIST_FOR_EACH(cursor, &This->AssociatedFocusWindows)
+    {
+        AssociatedWindow *wnd = LIST_ENTRY(cursor,AssociatedWindow,entry);
+        if (wnd->docmgr == mgr)
+            wnd->docmgr = NULL;
+    }
 }

@@ -1,5 +1,5 @@
 TESTDLL   = netapi32.dll
-IMPORTS   = advapi32
+IMPORTS   = advapi32 netapi32
 
 C_SRCS = \
 	access.c \

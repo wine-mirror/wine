@@ -124,7 +124,7 @@ static ULONG WINAPI OleContainer_Release(IOleContainer *iface)
 }
 
 static HRESULT WINAPI OleContainer_ParseDisplayName(IOleContainer *iface, IBindCtx *pbc,
-        LPOLESTR pszDiaplayName, ULONG *pchEaten, IMoniker **ppmkOut)
+        LPOLESTR pszDisplayName, ULONG *pchEaten, IMoniker **ppmkOut)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
@@ -894,6 +894,7 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     IWMPSettings *settings, *settings_qi;
     IWMPPlayer4 *player4;
     IWMPPlayer *player;
+    IWMPPlaylist *playlist;
     IWMPMedia *media;
     IWMPControls *controls;
     VARIANT_BOOL vbool;
@@ -936,6 +937,18 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     ok(player == NULL, "player != NULL\n");
 
     IWMPNetwork_Release(network);
+
+    playlist = NULL;
+    hres = IWMPPlayer4_QueryInterface(player4, &IID_IWMPPlaylist, (void**)&playlist);
+    ok(hres == E_NOINTERFACE, "Getting IWMPPlaylist from IWMPPlayer4 succeeded: %08x\n", hres);
+    ok(playlist == NULL, "playlist != NULL\n");
+
+    playlist = NULL;
+    hres = IWMPPlayer4_get_currentPlaylist(player4, &playlist);
+    ok(hres == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08x\n", hres);
+    ok(playlist != NULL, "playlist != NULL\n");
+
+    IWMPPlaylist_Release(playlist);
 
     media = NULL;
     hres = IWMPPlayer4_QueryInterface(player4, &IID_IWMPMedia, (void**)&media);

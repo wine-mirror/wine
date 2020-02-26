@@ -104,6 +104,9 @@
 #undef UnionRect
 #endif
 
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
+
 #include "wine/library.h"
 #include "windef.h"
 #include "winbase.h"
@@ -2449,7 +2452,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
  * Validate a DEVMODE structure and fix errors if possible.
  *
  */
-BOOL WINAPI IsValidDevmodeA(PDEVMODEA *pDevMode, SIZE_T size)
+BOOL WINAPI IsValidDevmodeA(PDEVMODEA pDevMode, SIZE_T size)
 {
     FIXME("(%p,%ld): stub\n", pDevMode, size);
 
@@ -2465,12 +2468,55 @@ BOOL WINAPI IsValidDevmodeA(PDEVMODEA *pDevMode, SIZE_T size)
  * Validate a DEVMODE structure and fix errors if possible.
  *
  */
-BOOL WINAPI IsValidDevmodeW(PDEVMODEW *pDevMode, SIZE_T size)
+BOOL WINAPI IsValidDevmodeW(PDEVMODEW dm, SIZE_T size)
 {
-    FIXME("(%p,%ld): stub\n", pDevMode, size);
+    static const struct
+    {
+        DWORD flag;
+        SIZE_T size;
+    } map[] =
+    {
+#define F_SIZE(field) FIELD_OFFSET(DEVMODEW, field) + sizeof(dm->field)
+        { DM_ORIENTATION, F_SIZE(u1.s1.dmOrientation) },
+        { DM_PAPERSIZE, F_SIZE(u1.s1.dmPaperSize) },
+        { DM_PAPERLENGTH, F_SIZE(u1.s1.dmPaperLength) },
+        { DM_PAPERWIDTH, F_SIZE(u1.s1.dmPaperWidth) },
+        { DM_SCALE, F_SIZE(u1.s1.dmScale) },
+        { DM_COPIES, F_SIZE(u1.s1.dmCopies) },
+        { DM_DEFAULTSOURCE, F_SIZE(u1.s1.dmDefaultSource) },
+        { DM_PRINTQUALITY, F_SIZE(u1.s1.dmPrintQuality) },
+        { DM_POSITION, F_SIZE(u1.s2.dmPosition) },
+        { DM_DISPLAYORIENTATION, F_SIZE(u1.s2.dmDisplayOrientation) },
+        { DM_DISPLAYFIXEDOUTPUT, F_SIZE(u1.s2.dmDisplayFixedOutput) },
+        { DM_COLOR, F_SIZE(dmColor) },
+        { DM_DUPLEX, F_SIZE(dmDuplex) },
+        { DM_YRESOLUTION, F_SIZE(dmYResolution) },
+        { DM_TTOPTION, F_SIZE(dmTTOption) },
+        { DM_COLLATE, F_SIZE(dmCollate) },
+        { DM_FORMNAME, F_SIZE(dmFormName) },
+        { DM_LOGPIXELS, F_SIZE(dmLogPixels) },
+        { DM_BITSPERPEL, F_SIZE(dmBitsPerPel) },
+        { DM_PELSWIDTH, F_SIZE(dmPelsWidth) },
+        { DM_PELSHEIGHT, F_SIZE(dmPelsHeight) },
+        { DM_DISPLAYFLAGS, F_SIZE(u2.dmDisplayFlags) },
+        { DM_NUP, F_SIZE(u2.dmNup) },
+        { DM_DISPLAYFREQUENCY, F_SIZE(dmDisplayFrequency) },
+        { DM_ICMMETHOD, F_SIZE(dmICMMethod) },
+        { DM_ICMINTENT, F_SIZE(dmICMIntent) },
+        { DM_MEDIATYPE, F_SIZE(dmMediaType) },
+        { DM_DITHERTYPE, F_SIZE(dmDitherType) },
+        { DM_PANNINGWIDTH, F_SIZE(dmPanningWidth) },
+        { DM_PANNINGHEIGHT, F_SIZE(dmPanningHeight) }
+#undef F_SIZE
+    };
+    int i;
 
-    if(!pDevMode)
-        return FALSE;
+    if (!dm) return FALSE;
+    if (size < FIELD_OFFSET(DEVMODEW, dmFields) + sizeof(dm->dmFields)) return FALSE;
+
+    for (i = 0; i < ARRAY_SIZE(map); i++)
+        if ((dm->dmFields & map[i].flag) && size < map[i].size)
+            return FALSE;
 
     return TRUE;
 }
@@ -4435,6 +4481,24 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
     }
 
     switch(Level) {
+    case 1:
+      {
+        PRINTER_INFO_1W *pi1 = (PRINTER_INFO_1W *)pPrinter;
+
+        size = sizeof(PRINTER_INFO_1W);
+        if (size <= cbBuf) {
+            ptr = pPrinter + size;
+            cbBuf -= size;
+            memset(pPrinter, 0, size);
+        } else {
+            pi1 = NULL;
+            cbBuf = 0;
+        }
+        ret = WINSPOOL_GetPrinter_1(hkeyPrinter, pi1, ptr, cbBuf, &needed);
+        needed += size;
+        break;
+      }
+
     case 2:
       {
         PRINTER_INFO_2W *pi2 = (PRINTER_INFO_2W *)pPrinter;

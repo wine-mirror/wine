@@ -1,5 +1,7 @@
 MODULE    = tdh.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	tdh_main.c
 

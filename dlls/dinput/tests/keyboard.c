@@ -93,6 +93,7 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
         };
     DIDATAFORMAT df;
     HKL hkl, hkl_orig;
+    UINT prev_raw_devices_count, raw_devices_count;
 
     hkl = activate_keyboard_layout(MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), &hkl_orig);
     if (!hkl) return;
@@ -165,7 +166,23 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
     }
     keybd_event('Q', 0, KEYEVENTF_KEYUP, 0);
 
-    if (pKeyboard) IUnknown_Release(pKeyboard);
+    prev_raw_devices_count = 0;
+    GetRegisteredRawInputDevices(NULL, &prev_raw_devices_count, sizeof(RAWINPUTDEVICE));
+    ok(prev_raw_devices_count == 0 || broken(prev_raw_devices_count == 1) /* wxppro, w2003std */,
+       "Unexpected raw devices registered: %d\n", prev_raw_devices_count);
+
+    hr = IDirectInputDevice_Acquire(pKeyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+
+    raw_devices_count = 0;
+    GetRegisteredRawInputDevices(NULL, &raw_devices_count, sizeof(RAWINPUTDEVICE));
+    ok(raw_devices_count == prev_raw_devices_count,
+       "Unexpected raw devices registered: %d\n", raw_devices_count);
+
+    hr = IDirectInputDevice_Unacquire(pKeyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+
+    IUnknown_Release(pKeyboard);
 
     ActivateKeyboardLayout(hkl_orig, 0);
     UnloadKeyboardLayout(hkl);
@@ -241,6 +258,7 @@ static void test_get_prop(IDirectInputA *pDI, HWND hwnd)
     HRESULT hr;
     IDirectInputDeviceA *pKeyboard = NULL;
     DIPROPRANGE diprg;
+    DIPROPDWORD vidpid;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
@@ -255,7 +273,16 @@ static void test_get_prop(IDirectInputA *pDI, HWND hwnd)
     hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_RANGE, &diprg.diph);
     ok(hr == DIERR_UNSUPPORTED, "IDirectInputDevice_GetProperty() did not return DIPROP_RANGE but: %08x\n", hr);
 
-    if (pKeyboard) IUnknown_Release(pKeyboard);
+    memset(&vidpid, 0, sizeof(vidpid));
+    vidpid.diph.dwSize       = sizeof(DIPROPDWORD);
+    vidpid.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    vidpid.diph.dwHow        = DIPH_DEVICE;
+    vidpid.diph.dwObj        = 0;
+
+    hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_VIDPID, &vidpid.diph);
+    ok(hr == DIERR_UNSUPPORTED, "got %08x\n", hr);
+
+    IUnknown_Release(pKeyboard);
 }
 
 static void test_capabilities(IDirectInputA *pDI, HWND hwnd)

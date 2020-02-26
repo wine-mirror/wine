@@ -31,7 +31,6 @@
 #include "winuser.h"
 #include "wine/debug.h"
 #include "ole2.h"
-#include "wine/unicode.h"
 #include "moniker.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -61,24 +60,22 @@ static inline ClassMoniker *impl_from_IROTData(IROTData *iface)
 /*******************************************************************************
  *        ClassMoniker_QueryInterface
  *******************************************************************************/
-static HRESULT WINAPI ClassMoniker_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
+static HRESULT WINAPI ClassMoniker_QueryInterface(IMoniker *iface, REFIID riid, void **ppvObject)
 {
     ClassMoniker *This = impl_from_IMoniker(iface);
 
-    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), ppvObject);
 
-    /* Perform a sanity check on the parameters.*/
     if (!ppvObject)
         return E_POINTER;
 
-    /* Initialize the return parameter */
     *ppvObject = 0;
 
-    /* Compare the riid with the interface IDs implemented by this object.*/
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IPersist, riid) ||
         IsEqualIID(&IID_IPersistStream, riid) ||
-        IsEqualIID(&IID_IMoniker, riid))
+        IsEqualIID(&IID_IMoniker, riid) ||
+        IsEqualGUID(&CLSID_ClassMoniker, riid))
     {
         *ppvObject = iface;
     }
@@ -94,11 +91,9 @@ static HRESULT WINAPI ClassMoniker_QueryInterface(IMoniker* iface,REFIID riid,vo
         return IUnknown_QueryInterface(This->pMarshal, riid, ppvObject);
     }
 
-    /* Check that we obtained an interface.*/
     if (!*ppvObject)
         return E_NOINTERFACE;
 
-    /* Query Interface always increases the reference count by one when it is successful */
     IMoniker_AddRef(iface);
 
     return S_OK;
@@ -143,7 +138,7 @@ static ULONG WINAPI ClassMoniker_Release(IMoniker* iface)
  ******************************************************************************/
 static HRESULT WINAPI ClassMoniker_GetClassID(IMoniker* iface,CLSID *pClassID)
 {
-    TRACE("(%p,%p),stub!\n",iface,pClassID);
+    TRACE("(%p, %p)\n", iface, pClassID);
 
     if (pClassID==NULL)
         return E_POINTER;
@@ -402,7 +397,7 @@ static HRESULT WINAPI ClassMoniker_IsEqual(IMoniker* iface,IMoniker* pmkOtherMon
     if(SUCCEEDED ((res = CreateBindCtx(0,&bind)))) {
         if(SUCCEEDED (IMoniker_GetDisplayName(iface,bind,NULL,&dispName1))) {
 	    if(SUCCEEDED (IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&dispName2))) {
-                if(lstrcmpW(dispName1,dispName2)==0) res = S_OK;
+                if(wcscmp(dispName1,dispName2)==0) res = S_OK;
                 CoTaskMemFree(dispName2);
             }
             CoTaskMemFree(dispName1);
@@ -727,7 +722,7 @@ HRESULT ClassMoniker_CreateFromDisplayName(LPBC pbc, LPCOLESTR szDisplayName, LP
                                            IMoniker **ppmk)
 {
     HRESULT hr;
-    LPCWSTR s = strchrW(szDisplayName, ':');
+    LPCWSTR s = wcschr(szDisplayName, ':');
     LPCWSTR end;
     CLSID clsid;
     BYTE table[256];

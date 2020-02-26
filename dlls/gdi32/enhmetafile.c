@@ -480,7 +480,9 @@ HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
 {
     ENHMETAHEADER *emh = HeapAlloc( GetProcessHeap(), 0, bufsize );
     HENHMETAFILE hmf;
-    memmove(emh, buf, bufsize);
+
+    if (!emh) return 0;
+    memcpy(emh, buf, bufsize);
     hmf = EMF_Create_HENHMETAFILE( emh, bufsize, FALSE );
     if (!hmf)
         HeapFree( GetProcessHeap(), 0, emh );

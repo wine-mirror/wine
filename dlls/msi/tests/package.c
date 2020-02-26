@@ -269,7 +269,7 @@ static void set_component_path(LPCSTR filename, MSIINSTALLCONTEXT context,
     WCHAR guidW[MAX_PATH];
     WCHAR squashedW[MAX_PATH];
     CHAR squashed[MAX_PATH];
-    CHAR comppath[MAX_PATH];
+    CHAR comppath[MAX_PATH + 81];
     CHAR prodpath[MAX_PATH];
     CHAR path[MAX_PATH];
     LPCSTR prod = NULL;
@@ -335,7 +335,7 @@ static void delete_component_path(LPCSTR guid, MSIINSTALLCONTEXT context, LPSTR 
     WCHAR squashedW[MAX_PATH];
     WCHAR substrW[MAX_PATH];
     CHAR squashed[MAX_PATH];
-    CHAR comppath[MAX_PATH];
+    CHAR comppath[MAX_PATH + 81];
     CHAR prodpath[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
 
@@ -1223,7 +1223,7 @@ static void query_file_path(MSIHANDLE hpkg, LPCSTR file, LPSTR buff)
 
 static void test_settargetpath(void)
 {
-    char tempdir[MAX_PATH+8], buffer[MAX_PATH], file[MAX_PATH];
+    char tempdir[MAX_PATH+8], buffer[MAX_PATH], file[MAX_PATH + 20];
     DWORD sz;
     MSIHANDLE hpkg;
     UINT r;
@@ -2081,9 +2081,9 @@ static void test_condition(void)
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
     r = MsiEvaluateConditionA(hpkg, "!nofeature=\"\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
-    MsiEvaluateConditionA(hpkg, "$nocomponent=\"\"");
+    r = MsiEvaluateConditionA(hpkg, "$nocomponent=\"\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
-    MsiEvaluateConditionA(hpkg, "?nocomponent=\"\"");
+    r = MsiEvaluateConditionA(hpkg, "?nocomponent=\"\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     MsiSetPropertyA(hpkg, "A", "2");
@@ -2146,14 +2146,17 @@ static void test_condition(void)
     DeleteFileA(msifile);
 }
 
-static void check_prop(MSIHANDLE hpkg, const char *prop, const char *expect)
+static void check_prop(MSIHANDLE hpkg, const char *prop, const char *expect, int match_case)
 {
     char buffer[MAX_PATH] = "x";
     DWORD sz = sizeof(buffer);
     UINT r = MsiGetPropertyA(hpkg, prop, buffer, &sz);
     ok(!r, "'%s': got %u\n", prop, r);
     ok(sz == lstrlenA(buffer), "'%s': expected %u, got %u\n", prop, lstrlenA(buffer), sz);
-    ok(!strcmp(buffer, expect), "'%s': expected '%s', got '%s'\n", prop, expect, buffer);
+    if (match_case)
+        ok(!strcmp(buffer, expect), "'%s': expected '%s', got '%s'\n", prop, expect, buffer);
+    else
+        ok(!_stricmp(buffer, expect), "'%s': expected '%s', got '%s'\n", prop, expect, buffer);
 }
 
 static void test_props(void)
@@ -2229,29 +2232,29 @@ static void test_props(void)
 
     r = MsiSetPropertyA( hpkg, "=", "asdf" );
     ok(!r, "got %u\n", r);
-    check_prop(hpkg, "=", "asdf");
+    check_prop(hpkg, "=", "asdf", 1);
 
     r = MsiSetPropertyA( hpkg, " ", "asdf" );
     ok(!r, "got %u\n", r);
-    check_prop(hpkg, " ", "asdf");
+    check_prop(hpkg, " ", "asdf", 1);
 
     r = MsiSetPropertyA( hpkg, "'", "asdf" );
     ok(!r, "got %u\n", r);
-    check_prop(hpkg, "'", "asdf");
+    check_prop(hpkg, "'", "asdf", 1);
 
     /* set empty values */
     r = MsiSetPropertyA( hpkg, "boo", NULL );
     ok(!r, "got %u\n", r);
-    check_prop(hpkg, "boo", "");
+    check_prop(hpkg, "boo", "", 1);
 
     r = MsiSetPropertyA( hpkg, "boo", "" );
     ok(!r, "got %u\n", r);
-    check_prop(hpkg, "boo", "");
+    check_prop(hpkg, "boo", "", 1);
 
     /* set a non-empty value */
     r = MsiSetPropertyA( hpkg, "boo", "xyz" );
     ok(!r, "got %u\n", r);
-    check_prop(hpkg, "boo", "xyz");
+    check_prop(hpkg, "boo", "xyz", 1);
 
     r = MsiGetPropertyA(hpkg, "boo", NULL, NULL);
     ok(!r, "got %u\n", r);
@@ -2326,10 +2329,10 @@ static void test_props(void)
     ok(sz == 3, "got size %u\n", sz);
 
     /* properties are case-sensitive */
-    check_prop(hpkg, "BOO", "");
+    check_prop(hpkg, "BOO", "", 1);
 
     /* properties set in Property table should work */
-    check_prop(hpkg, "MetadataCompName", "Photoshop.dll");
+    check_prop(hpkg, "MetadataCompName", "Photoshop.dll", 1);
 
     MsiCloseHandle( hpkg );
     DeleteFileA(msifile);
@@ -2756,9 +2759,9 @@ static void test_formatrecord2(void)
 static void test_formatrecord_tables(void)
 {
     MSIHANDLE hdb, hrec, hpkg = 0;
-    CHAR buf[MAX_PATH];
+    CHAR buf[MAX_PATH + 41];
     CHAR curr_dir[MAX_PATH];
-    CHAR expected[MAX_PATH];
+    CHAR expected[MAX_PATH + 45];
     CHAR root[MAX_PATH];
     DWORD size;
     UINT r;
@@ -4051,7 +4054,16 @@ static void test_appsearch(void)
 
     r = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Winetest_msi", 0, NULL, 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY,
                         NULL, &hkey, NULL);
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip("insufficient rights\n");
+        RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Winetest_msi");
+        MsiCloseHandle(hdb);
+        DeleteFileA(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "Could not create key: %d.\n", r );
+
     r = RegSetValueExA(hkey, NULL, 0, REG_SZ, (const BYTE *)"c:\\windows\\system32\\notepad.exe",
                        sizeof("c:\\windows\\system32\\notepad.exe"));
     ok( r == ERROR_SUCCESS, "Could not set key value: %d.\n", r);
@@ -4130,7 +4142,7 @@ done:
 static void test_appsearch_complocator(void)
 {
     MSIHANDLE hpkg, hdb;
-    char path[MAX_PATH], expected[MAX_PATH], prop[MAX_PATH];
+    char path[MAX_PATH + 15], expected[MAX_PATH], prop[MAX_PATH];
     LPSTR usersid;
     DWORD size;
     UINT r;
@@ -4379,7 +4391,7 @@ error:
 static void test_appsearch_reglocator(void)
 {
     MSIHANDLE hpkg, hdb;
-    char path[MAX_PATH], expected[MAX_PATH], prop[MAX_PATH];
+    char path[MAX_PATH + 20], expected[MAX_PATH], prop[MAX_PATH];
     DWORD binary[2], size, val;
     BOOL space, version, is_64bit = sizeof(void *) > sizeof(int);
     HKEY hklm, classes, hkcu, users;
@@ -4961,7 +4973,7 @@ static void delete_win_ini(LPCSTR file)
 static void test_appsearch_inilocator(void)
 {
     MSIHANDLE hpkg, hdb;
-    char path[MAX_PATH], expected[MAX_PATH], prop[MAX_PATH];
+    char path[MAX_PATH + 14], expected[MAX_PATH], prop[MAX_PATH];
     BOOL version;
     LPSTR ptr;
     DWORD size;
@@ -5198,7 +5210,7 @@ static void search_absolute_directory(LPSTR absolute, LPCSTR relative)
 static void test_appsearch_drlocator(void)
 {
     MSIHANDLE hpkg, hdb;
-    char path[MAX_PATH], expected[MAX_PATH], prop[MAX_PATH];
+    char path[MAX_PATH + 27], expected[MAX_PATH], prop[MAX_PATH];
     BOOL version;
     DWORD size;
     UINT r;
@@ -5739,65 +5751,65 @@ static void test_installprops(void)
     if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
     {
         sprintf(buf, "%d", si.wProcessorLevel);
-        check_prop(hpkg, "Intel", buf);
-        check_prop(hpkg, "MsiAMD64", buf);
-        check_prop(hpkg, "Msix64", buf);
+        check_prop(hpkg, "Intel", buf, 1);
+        check_prop(hpkg, "MsiAMD64", buf, 1);
+        check_prop(hpkg, "Msix64", buf, 1);
         sprintf(buf, "%d", LOBYTE(LOWORD(GetVersion())) * 100 + HIBYTE(LOWORD(GetVersion())));
-        check_prop(hpkg, "VersionNT64", buf);
+        check_prop(hpkg, "VersionNT64", buf, 1);
 
         GetSystemDirectoryA(path, MAX_PATH);
         strcat(path, "\\");
-        check_prop(hpkg, "System64Folder", path);
+        check_prop(hpkg, "System64Folder", path, 0);
 
         GetSystemWow64DirectoryA(path, MAX_PATH);
         strcat(path, "\\");
-        check_prop(hpkg, "SystemFolder", path);
+        check_prop(hpkg, "SystemFolder", path, 0);
 
         size = MAX_PATH;
         r = RegQueryValueExA(pathkey, "ProgramFilesDir (x86)", 0, &type, (BYTE *)path, &size);
         strcat(path, "\\");
-        check_prop(hpkg, "ProgramFilesFolder", path);
+        check_prop(hpkg, "ProgramFilesFolder", path, 0);
 
         size = MAX_PATH;
         RegQueryValueExA(pathkey, "ProgramFilesDir", 0, &type, (BYTE *)path, &size);
         strcat(path, "\\");
-        check_prop(hpkg, "ProgramFiles64Folder", path);
+        check_prop(hpkg, "ProgramFiles64Folder", path, 0);
 
         size = MAX_PATH;
         RegQueryValueExA(pathkey, "CommonFilesDir (x86)", 0, &type, (BYTE *)path, &size);
         strcat(path, "\\");
-        check_prop(hpkg, "CommonFilesFolder", path);
+        check_prop(hpkg, "CommonFilesFolder", path, 0);
 
         size = MAX_PATH;
         RegQueryValueExA(pathkey, "CommonFilesDir", 0, &type, (BYTE *)path, &size);
         strcat(path, "\\");
-        check_prop(hpkg, "CommonFiles64Folder", path);
+        check_prop(hpkg, "CommonFiles64Folder", path, 0);
     }
     else if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
         sprintf(buf, "%d", si.wProcessorLevel);
-        check_prop(hpkg, "Intel", buf);
+        check_prop(hpkg, "Intel", buf, 1);
 
         GetSystemDirectoryA(path, MAX_PATH);
         strcat(path, "\\");
-        check_prop(hpkg, "SystemFolder", path);
+        check_prop(hpkg, "SystemFolder", path, 0);
 
         size = MAX_PATH;
         RegQueryValueExA(pathkey, "ProgramFilesDir", 0, &type, (BYTE *)path, &size);
         strcat(path, "\\");
-        check_prop(hpkg, "ProgramFilesFolder", path);
+        check_prop(hpkg, "ProgramFilesFolder", path, 0);
 
         size = MAX_PATH;
         RegQueryValueExA(pathkey, "CommonFilesDir", 0, &type, (BYTE *)path, &size);
         strcat(path, "\\");
-        check_prop(hpkg, "CommonFilesFolder", path);
+        check_prop(hpkg, "CommonFilesFolder", path, 0);
 
-        check_prop(hpkg, "MsiAMD64", "");
-        check_prop(hpkg, "Msix64", "");
-        check_prop(hpkg, "VersionNT64", "");
-        check_prop(hpkg, "System64Folder", "");
-        check_prop(hpkg, "ProgramFiles64Dir", "");
-        check_prop(hpkg, "CommonFiles64Dir", "");
+        check_prop(hpkg, "MsiAMD64", "", 1);
+        check_prop(hpkg, "Msix64", "", 1);
+        check_prop(hpkg, "VersionNT64", "", 1);
+        check_prop(hpkg, "System64Folder", "", 0);
+        check_prop(hpkg, "ProgramFiles64Dir", "", 0);
+        check_prop(hpkg, "CommonFiles64Dir", "", 0);
     }
 
     CloseHandle(hkey1);
@@ -7956,7 +7968,7 @@ static void test_MsiGetProductProperty(void)
     MSIHANDLE hprod, hdb;
     CHAR val[MAX_PATH];
     CHAR path[MAX_PATH];
-    CHAR query[MAX_PATH];
+    CHAR query[MAX_PATH + 17];
     CHAR keypath[MAX_PATH*2];
     CHAR prodcode[MAX_PATH];
     WCHAR prodcodeW[MAX_PATH];
@@ -9628,15 +9640,25 @@ static void test_top_level_action(void)
 
 START_TEST(package)
 {
+    char temp_path[MAX_PATH], prev_path[MAX_PATH];
     STATEMGRSTATUS status;
     BOOL ret = FALSE;
+    DWORD len;
 
     init_functionpointers();
 
     if (pIsWow64Process)
         pIsWow64Process(GetCurrentProcess(), &is_wow64);
 
-    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+    GetCurrentDirectoryA(MAX_PATH, prev_path);
+    GetTempPathA(MAX_PATH, temp_path);
+    SetCurrentDirectoryA(temp_path);
+
+    lstrcpyA(CURR_DIR, temp_path);
+    len = lstrlenA(CURR_DIR);
+
+    if (len && (CURR_DIR[len - 1] == '\\'))
+        CURR_DIR[len - 1] = 0;
 
     /* Create a restore point ourselves so we circumvent the multitude of restore points
      * that would have been created by all the installation and removal tests.
@@ -9694,4 +9716,6 @@ START_TEST(package)
         if (ret)
             remove_restore_point(status.llSequenceNumber);
     }
+
+    SetCurrentDirectoryA(prev_path);
 }

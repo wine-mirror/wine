@@ -1426,8 +1426,14 @@ interface IAdviseSink : IUnknown
     default:         wireHGLOBAL hGeneric;
   } GDI_OBJECT;
 
+  /* When NONAMELESSUNION is not defined, the presence of _STGMEDIUM_UNION
+   * violates the C spec, but is necessary for C++.  Avoid C spec violation. */
+  cpp_quote("#if !defined(NONAMELESSUNION) && !defined(__cplusplus)")
+  cpp_quote("#define _STGMEDIUM_UNION")
+  cpp_quote("#endif")
+
   typedef struct _userSTGMEDIUM {
-    union switch(DWORD tymed) u {
+    union _STGMEDIUM_UNION switch(DWORD tymed) u {
     case TYMED_NULL:     ;
     case TYMED_MFPICT:   wireHMETAFILEPICT hMetaFilePict;
     case TYMED_ENHMF:    wireHENHMETAFILE hHEnhMetaFile;
@@ -1439,6 +1445,10 @@ interface IAdviseSink : IUnknown
     } DUMMYUNIONNAME;
     IUnknown *pUnkForRelease;
   } userSTGMEDIUM;
+
+  cpp_quote("#if !defined(NONAMELESSUNION) && !defined(__cplusplus)")
+  cpp_quote("#undef _STGMEDIUM_UNION")
+  cpp_quote("#endif")
 
   typedef [unique] userSTGMEDIUM *wireSTGMEDIUM;
   typedef [wire_marshal(wireSTGMEDIUM)] uSTGMEDIUM STGMEDIUM;

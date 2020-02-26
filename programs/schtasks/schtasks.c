@@ -345,7 +345,7 @@ static int delete_command(int argc, WCHAR *argv[])
     return 0;
 }
 
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int i, ret = 0;
 

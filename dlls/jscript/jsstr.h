@@ -182,7 +182,7 @@ jsstr_t *jsstr_empty(void) DECLSPEC_HIDDEN;
 jsstr_t *jsstr_undefined(void) DECLSPEC_HIDDEN;
 
 jsstr_t *jsstr_null_bstr(void) DECLSPEC_HIDDEN;
-BOOL is_null_bstr(jsstr_t*) DECLSPEC_HIDDEN;
+HRESULT jsstr_to_bstr(jsstr_t *str, BSTR *r) DECLSPEC_HIDDEN;
 
 BOOL init_strings(void) DECLSPEC_HIDDEN;
 void free_strings(void) DECLSPEC_HIDDEN;

@@ -41,12 +41,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 /* Wine specific monitor properties */
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCMONITOR, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 3);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCWORK, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 4);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 5);
 
+static const WCHAR driver_date_dataW[] = {'D','r','i','v','e','r','D','a','t','e','D','a','t','a',0};
 static const WCHAR driver_descW[] = {'D','r','i','v','e','r','D','e','s','c',0};
+static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
+static const WCHAR pciW[] = {'P','C','I',0};
 static const WCHAR video_idW[] = {'V','i','d','e','o','I','D',0};
 static const WCHAR symbolic_link_valueW[]= {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
 static const WCHAR gpu_idW[] = {'G','P','U','I','D',0};
 static const WCHAR mointor_id_fmtW[] = {'M','o','n','i','t','o','r','I','D','%','d',0};
+static const WCHAR adapter_name_fmtW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','%','d',0};
 static const WCHAR state_flagsW[] = {'S','t','a','t','e','F','l','a','g','s',0};
 static const WCHAR guid_fmtW[] = {
     '{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%','0','2','x','%','0','2','x','-',
@@ -96,15 +103,172 @@ static const WCHAR monitor_hardware_idW[] = {
     'M','O','N','I','T','O','R','\\',
     'D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
 
-static struct x11drv_display_device_handler handler;
+static struct x11drv_display_device_handler host_handler;
+struct x11drv_display_device_handler desktop_handler;
+
+/* Cached screen information, protected by screen_section */
+static HKEY video_key;
+static RECT virtual_screen_rect;
+static RECT primary_monitor_rect;
+static FILETIME last_query_screen_time;
+static CRITICAL_SECTION screen_section;
+static CRITICAL_SECTION_DEBUG screen_critsect_debug =
+{
+    0, 0, &screen_section,
+    {&screen_critsect_debug.ProcessLocksList, &screen_critsect_debug.ProcessLocksList},
+     0, 0, {(DWORD_PTR)(__FILE__ ": screen_section")}
+};
+static CRITICAL_SECTION screen_section = {&screen_critsect_debug, -1, 0, 0, 0, 0};
+
+static HANDLE get_display_device_init_mutex(void)
+{
+    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
+    HANDLE mutex = CreateMutexW(NULL, FALSE, init_mutexW);
+
+    WaitForSingleObject(mutex, INFINITE);
+    return mutex;
+}
+
+static void release_display_device_init_mutex(HANDLE mutex)
+{
+    ReleaseMutex(mutex);
+    CloseHandle(mutex);
+}
+
+/* Update screen rectangle cache from SetupAPI if it's outdated, return FALSE on failure and TRUE on success */
+static BOOL update_screen_cache(void)
+{
+    RECT virtual_rect = {0}, primary_rect = {0}, monitor_rect;
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    HDEVINFO devinfo = INVALID_HANDLE_VALUE;
+    FILETIME filetime = {0};
+    HANDLE mutex = NULL;
+    DWORD i = 0;
+    INT result;
+    DWORD type;
+    BOOL ret = FALSE;
+
+    EnterCriticalSection(&screen_section);
+    if ((!video_key && RegOpenKeyW(HKEY_LOCAL_MACHINE, video_keyW, &video_key))
+        || RegQueryInfoKeyW(video_key, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &filetime))
+    {
+        LeaveCriticalSection(&screen_section);
+        return FALSE;
+    }
+    result = CompareFileTime(&filetime, &last_query_screen_time);
+    LeaveCriticalSection(&screen_section);
+    if (result < 1)
+        return TRUE;
+
+    mutex = get_display_device_init_mutex();
+
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, displayW, NULL, DIGCF_PRESENT);
+    if (devinfo == INVALID_HANDLE_VALUE)
+        goto fail;
+
+    while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
+    {
+        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
+                                       (BYTE *)&monitor_rect, sizeof(monitor_rect), NULL, 0))
+            goto fail;
+
+        UnionRect(&virtual_rect, &virtual_rect, &monitor_rect);
+        if (i == 1)
+            primary_rect = monitor_rect;
+    }
+
+    EnterCriticalSection(&screen_section);
+    virtual_screen_rect = virtual_rect;
+    primary_monitor_rect = primary_rect;
+    last_query_screen_time = filetime;
+    LeaveCriticalSection(&screen_section);
+    ret = TRUE;
+fail:
+    SetupDiDestroyDeviceInfoList(devinfo);
+    release_display_device_init_mutex(mutex);
+    if (!ret)
+        WARN("Update screen cache failed!\n");
+    return ret;
+}
+
+POINT virtual_screen_to_root(INT x, INT y)
+{
+    RECT virtual = get_virtual_screen_rect();
+    POINT pt;
+
+    pt.x = x - virtual.left;
+    pt.y = y - virtual.top;
+    return pt;
+}
+
+POINT root_to_virtual_screen(INT x, INT y)
+{
+    RECT virtual = get_virtual_screen_rect();
+    POINT pt;
+
+    pt.x = x + virtual.left;
+    pt.y = y + virtual.top;
+    return pt;
+}
+
+RECT get_virtual_screen_rect(void)
+{
+    RECT virtual;
+
+    update_screen_cache();
+    EnterCriticalSection(&screen_section);
+    virtual = virtual_screen_rect;
+    LeaveCriticalSection(&screen_section);
+    return virtual;
+}
+
+RECT get_primary_monitor_rect(void)
+{
+    RECT primary;
+
+    update_screen_cache();
+    EnterCriticalSection(&screen_section);
+    primary = primary_monitor_rect;
+    LeaveCriticalSection(&screen_section);
+    return primary;
+}
+
+/* Get the primary monitor rect from the host system */
+RECT get_host_primary_monitor_rect(void)
+{
+    INT gpu_count, adapter_count, monitor_count;
+    struct x11drv_gpu *gpus = NULL;
+    struct x11drv_adapter *adapters = NULL;
+    struct x11drv_monitor *monitors = NULL;
+    RECT rect = {0};
+
+    /* The first monitor is always primary */
+    if (host_handler.get_gpus(&gpus, &gpu_count) && gpu_count &&
+        host_handler.get_adapters(gpus[0].id, &adapters, &adapter_count) && adapter_count &&
+        host_handler.get_monitors(adapters[0].id, &monitors, &monitor_count) && monitor_count)
+        rect = monitors[0].rc_monitor;
+
+    if (gpus) host_handler.free_gpus(gpus);
+    if (adapters) host_handler.free_adapters(adapters);
+    if (monitors) host_handler.free_monitors(monitors);
+    return rect;
+}
 
 void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *new_handler)
 {
-    if (new_handler->priority > handler.priority)
+    if (new_handler->priority > host_handler.priority)
     {
-        handler = *new_handler;
-        TRACE("Display device functions are now handled by: %s\n", handler.name);
+        host_handler = *new_handler;
+        TRACE("Display device functions are now handled by: %s\n", host_handler.name);
     }
+}
+
+void X11DRV_DisplayDevices_RegisterEventHandlers(void)
+{
+    struct x11drv_display_device_handler *handler = is_virtual_desktop() ? &desktop_handler : &host_handler;
+
+    if (handler->register_event_handlers)
+        handler->register_event_handlers();
 }
 
 /* Initialize a GPU instance and return its GUID string in guid_string and driver value in driver parameter */
@@ -120,6 +284,7 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
     INT written;
     DWORD size;
     BOOL ret = FALSE;
+    FILETIME filetime;
 
     sprintfW(instanceW, gpu_instance_fmtW, gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, gpu_index);
     if (!SetupDiOpenDeviceInfoW(devinfo, instanceW, NULL, 0, &device_data))
@@ -149,6 +314,11 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
     if (RegSetValueExW(hkey, driver_descW, 0, REG_SZ, (const BYTE *)gpu->name,
                        (strlenW(gpu->name) + 1) * sizeof(WCHAR)))
         goto done;
+    /* Write DriverDateData value, using current time as driver date, needed by Evoland */
+    GetSystemTimeAsFileTime(&filetime);
+    if (RegSetValueExW(hkey, driver_date_dataW, 0, REG_BINARY, (BYTE *)&filetime, sizeof(filetime)))
+        goto done;
+
     RegCloseKey(hkey);
 
     /* Retrieve driver value for adapters */
@@ -220,7 +390,7 @@ static BOOL X11DRV_InitAdapter(HKEY video_hkey, INT video_index, INT gpu_index, 
     RegCreateKeyExW(HKEY_CURRENT_CONFIG, adapter_keyW, 0, NULL, REG_OPTION_VOLATILE, KEY_WRITE, NULL, &hkey, NULL);
 
     /* Write GPU instance path so that we can find the GPU instance via adapters quickly. Another way is trying to match
-     * them via the GUID in Device Paramters/VideoID, but it would required enumrating all GPU instances */
+     * them via the GUID in Device Parameters/VideoID, but it would require enumerating all GPU instances */
     sprintfW(bufferW, gpu_instance_fmtW, gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, gpu_index);
     if (RegSetValueExW(hkey, gpu_idW, 0, REG_SZ, (const BYTE *)bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR)))
         goto done;
@@ -276,6 +446,19 @@ static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *mo
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, DEVPROP_TYPE_UINT32,
                                    (const BYTE *)&monitor->state_flags, sizeof(monitor->state_flags), 0))
         goto done;
+    /* RcMonitor */
+    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, DEVPROP_TYPE_BINARY,
+                                   (const BYTE *)&monitor->rc_monitor, sizeof(monitor->rc_monitor), 0))
+        goto done;
+    /* RcWork */
+    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, DEVPROP_TYPE_BINARY,
+                                   (const BYTE *)&monitor->rc_work, sizeof(monitor->rc_work), 0))
+        goto done;
+    /* Adapter name */
+    sprintfW(bufferW, adapter_name_fmtW, video_index + 1);
+    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, DEVPROP_TYPE_STRING,
+                                   (const BYTE *)bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR), 0))
+        goto done;
 
     ret = TRUE;
 done:
@@ -292,7 +475,7 @@ static void prepare_devices(HKEY video_hkey)
     DWORD i = 0;
 
     /* Remove all monitors */
-    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, NULL, NULL, 0);
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, displayW, NULL, 0);
     while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
     {
         if (!SetupDiRemoveDevice(devinfo, &device_data))
@@ -309,7 +492,7 @@ static void prepare_devices(HKEY video_hkey)
      * of prefix copying or having devices unplugged. But then we couldn't simply delete GPUs because we need to retain
      * the same GUID for the same GPU. */
     i = 0;
-    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_DISPLAY, NULL, NULL, 0);
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_DISPLAY, pciW, NULL, 0);
     while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
     {
         if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &DEVPKEY_Device_IsPresent, DEVPROP_TYPE_BOOLEAN,
@@ -327,7 +510,7 @@ static void cleanup_devices(void)
     DWORD i = 0;
     BOOL present;
 
-    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_DISPLAY, NULL, NULL, 0);
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_DISPLAY, pciW, NULL, 0);
     while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
     {
         present = FALSE;
@@ -341,8 +524,8 @@ static void cleanup_devices(void)
 
 void X11DRV_DisplayDevices_Init(BOOL force)
 {
-    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
     HANDLE mutex;
+    struct x11drv_display_device_handler *handler = is_virtual_desktop() ? &desktop_handler : &host_handler;
     struct x11drv_gpu *gpus = NULL;
     struct x11drv_adapter *adapters = NULL;
     struct x11drv_monitor *monitors = NULL;
@@ -355,8 +538,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
     WCHAR guidW[40];
     WCHAR driverW[1024];
 
-    mutex = CreateMutexW(NULL, FALSE, init_mutexW);
-    WaitForSingleObject(mutex, INFINITE);
+    mutex = get_display_device_init_mutex();
 
     if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, video_keyW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &video_hkey,
                         &disposition))
@@ -369,7 +551,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
     if (!force && disposition != REG_CREATED_NEW_KEY)
         goto done;
 
-    TRACE("via %s\n", wine_dbgstr_a(handler.name));
+    TRACE("via %s\n", wine_dbgstr_a(handler->name));
 
     prepare_devices(video_hkey);
 
@@ -377,8 +559,9 @@ void X11DRV_DisplayDevices_Init(BOOL force)
     monitor_devinfo = SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_MONITOR, NULL);
 
     /* Initialize GPUs */
-    if (!handler.pGetGpus(&gpus, &gpu_count))
+    if (!handler->get_gpus(&gpus, &gpu_count))
         goto done;
+    TRACE("GPU count: %d\n", gpu_count);
 
     for (gpu = 0; gpu < gpu_count; gpu++)
     {
@@ -386,13 +569,15 @@ void X11DRV_DisplayDevices_Init(BOOL force)
             goto done;
 
         /* Initialize adapters */
-        if (!handler.pGetAdapters(gpus[gpu].id, &adapters, &adapter_count))
+        if (!handler->get_adapters(gpus[gpu].id, &adapters, &adapter_count))
             goto done;
+        TRACE("GPU: %#lx %s, adapter count: %d\n", gpus[gpu].id, wine_dbgstr_w(gpus[gpu].name), adapter_count);
 
         for (adapter = 0; adapter < adapter_count; adapter++)
         {
-            if (!handler.pGetMonitors(adapters[adapter].id, &monitors, &monitor_count))
+            if (!handler->get_monitors(adapters[adapter].id, &monitors, &monitor_count))
                 goto done;
+            TRACE("adapter: %#lx, monitor count: %d\n", adapters[adapter].id, monitor_count);
 
             if (!X11DRV_InitAdapter(video_hkey, video_index, gpu, adapter, monitor_count,
                                     &gpus[gpu], guidW, driverW, &adapters[adapter]))
@@ -401,16 +586,17 @@ void X11DRV_DisplayDevices_Init(BOOL force)
             /* Initialize monitors */
             for (monitor = 0; monitor < monitor_count; monitor++)
             {
+                TRACE("monitor: %#x %s\n", monitor, wine_dbgstr_w(monitors[monitor].name));
                 if (!X11DRV_InitMonitor(monitor_devinfo, &monitors[monitor], monitor, video_index))
                     goto done;
             }
 
-            handler.pFreeMonitors(monitors);
+            handler->free_monitors(monitors);
             monitors = NULL;
             video_index++;
         }
 
-        handler.pFreeAdapters(adapters);
+        handler->free_adapters(adapters);
         adapters = NULL;
     }
 
@@ -419,12 +605,11 @@ done:
     SetupDiDestroyDeviceInfoList(monitor_devinfo);
     SetupDiDestroyDeviceInfoList(gpu_devinfo);
     RegCloseKey(video_hkey);
-    ReleaseMutex(mutex);
-    CloseHandle(mutex);
+    release_display_device_init_mutex(mutex);
     if (gpus)
-        handler.pFreeGpus(gpus);
+        handler->free_gpus(gpus);
     if (adapters)
-        handler.pFreeAdapters(adapters);
+        handler->free_adapters(adapters);
     if (monitors)
-        handler.pFreeMonitors(monitors);
+        handler->free_monitors(monitors);
 }

@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _WIN32
+#if 0
+#pragma makedep unix
+#endif
 
 #include <stdarg.h>
 #include "windef.h"
@@ -34,10 +36,8 @@ DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_wentry( PEB *peb )
     BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
     DWORD ret;
 
-    if (needs_init) _init( __wine_main_argc, __wine_main_argv, NULL );
+    if (needs_init) _init( 0, NULL, NULL );
     ret = wmain( __wine_main_argc, __wine_main_wargv );
     if (needs_init) _fini();
     ExitProcess( ret );
 }
-
-#endif  /* _WIN32 */

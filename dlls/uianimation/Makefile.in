@@ -1,4 +1,11 @@
 MODULE    = uianimation.dll
+IMPORTS   = uuid
+
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	main.c
+
+IDL_SRCS = \
+	uianimation_reg.idl \
+	uianimation_typelib.idl

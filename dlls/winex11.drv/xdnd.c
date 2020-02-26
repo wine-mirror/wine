@@ -636,12 +636,15 @@ static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
         HGLOBAL dropHandle = GlobalAlloc(GMEM_FIXED, GlobalSize(current->contents));
         if (dropHandle)
         {
+            RECT rect;
             DROPFILES *lpDrop = GlobalLock(dropHandle);
             memcpy(lpDrop, GlobalLock(current->contents), GlobalSize(current->contents));
             GlobalUnlock(current->contents);
             lpDrop->pt.x = XDNDxy.x;
             lpDrop->pt.y = XDNDxy.y;
-            lpDrop->fNC  = !ScreenToClient(hwnd, &lpDrop->pt);
+            lpDrop->fNC  = !(ScreenToClient(hwnd, &lpDrop->pt) &&
+                             GetClientRect(hwnd, &rect) &&
+                             PtInRect(&rect, lpDrop->pt));
             TRACE("Sending WM_DROPFILES: hWnd=0x%p, fNC=%d, x=%d, y=%d, files=%p(%s)\n", hwnd,
                     lpDrop->fNC, lpDrop->pt.x, lpDrop->pt.y, ((char*)lpDrop) + lpDrop->pFiles,
                     debugstr_w((WCHAR*)(((char*)lpDrop) + lpDrop->pFiles)));
@@ -824,11 +827,9 @@ static HRESULT WINAPI XDNDDATAOBJECT_QueryGetData(IDataObject *dataObject,
         FIXME("only HGLOBAL medium types supported right now\n");
         return DV_E_TYMED;
     }
-    if (formatEtc->dwAspect != DVASPECT_CONTENT)
-    {
-        FIXME("only the content aspect is supported right now\n");
-        return E_NOTIMPL;
-    }
+    /* Windows Explorer ignores .dwAspect and .lindex for CF_HDROP,
+     * and we have no way to implement them on XDnD anyway, so ignore them too.
+     */
 
     LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
     {

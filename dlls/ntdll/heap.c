@@ -882,7 +882,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
     if (!address)
     {
         if (!commitSize) commitSize = COMMIT_MASK + 1;
-        totalSize = min( totalSize, 0xffff0000 );  /* don't allow a heap larger than 4Gb */
+        totalSize = min( totalSize, 0xffff0000 );  /* don't allow a heap larger than 4GB */
         if (totalSize < commitSize) totalSize = commitSize;
         if (flags & HEAP_SHARED) commitSize = totalSize;  /* always commit everything in a shared heap */
         commitSize = min( totalSize, (commitSize + COMMIT_MASK) & ~COMMIT_MASK );
@@ -1293,7 +1293,7 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
             if (*ptr != ARENA_FREE_FILLER)
             {
                 ERR("Heap %p: free block %p overwritten at %p by %08x\n",
-                    subheap->heap, (const ARENA_INUSE *)pArena + 1, ptr, *ptr );
+                    subheap->heap, pArena + 1, ptr, *ptr );
                 if (!*ptr) { HEAP_Dump( subheap->heap ); DbgBreakPoint(); }
                 return FALSE;
             }

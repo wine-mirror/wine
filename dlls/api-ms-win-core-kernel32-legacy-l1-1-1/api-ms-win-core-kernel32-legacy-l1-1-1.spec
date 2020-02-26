@@ -29,9 +29,9 @@
 @ stub GetMaximumProcessorGroupCount
 @ stdcall GetNamedPipeClientProcessId(long ptr) kernel32.GetNamedPipeClientProcessId
 @ stdcall GetNamedPipeServerProcessId(long ptr) kernel32.GetNamedPipeServerProcessId
-@ stdcall GetNumaAvailableMemoryNodeEx(long ptr)
+@ stdcall GetNumaAvailableMemoryNodeEx(long ptr) kernel32.GetNumaAvailableMemoryNodeEx
 @ stdcall GetNumaNodeProcessorMask(long ptr) kernel32.GetNumaNodeProcessorMask
-@ stdcall GetNumaProcessorNodeEx(ptr ptr)
+@ stdcall GetNumaProcessorNodeEx(ptr ptr) kernel32.GetNumaProcessorNodeEx
 @ stdcall GetShortPathNameA(str ptr long) kernel32.GetShortPathNameA
 @ stdcall GetStartupInfoA(ptr) kernel32.GetStartupInfoA
 @ stdcall GetStringTypeExA(long long str long ptr) kernel32.GetStringTypeExA
@@ -64,6 +64,6 @@
 @ stdcall SetVolumeLabelW(wstr wstr) kernel32.SetVolumeLabelW
 @ stdcall SetVolumeMountPointW(wstr wstr) kernel32.SetVolumeMountPointW
 @ stdcall UnregisterWait(long) kernel32.UnregisterWait
-@ stdcall VerifyVersionInfoW(long long int64) kernel32.VerifyVersionInfoW
+@ stdcall VerifyVersionInfoW(ptr long int64) kernel32.VerifyVersionInfoW
 @ stdcall WaitForMultipleObjects(long ptr long long) kernel32.WaitForMultipleObjects
 @ stdcall WTSGetActiveConsoleSessionId() kernel32.WTSGetActiveConsoleSessionId

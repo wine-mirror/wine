@@ -1392,6 +1392,11 @@ UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
                     break;
                 }
             }
+
+            /* set scan code prefix */
+            if (wMapType == MAPVK_VK_TO_VSC_EX &&
+                (wCode == VK_RCONTROL || wCode == VK_RMENU))
+                ret |= 0xe000;
             break;
 
         case MAPVK_VSC_TO_VK: /* scan-code to vkey-code */

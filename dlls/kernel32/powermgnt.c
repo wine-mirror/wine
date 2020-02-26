@@ -19,9 +19,15 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(powermgnt);
 
@@ -39,19 +45,47 @@ BOOL WINAPI GetDevicePowerState(HANDLE hDevice, BOOL* pfOn)
  */
 BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS ps)
 {
-    WARN("(%p): stub, harmless.\n", ps);
+    SYSTEM_BATTERY_STATE bs;
+    NTSTATUS status;
 
-    if (ps)
+    TRACE("(%p)\n", ps);
+
+    ps->ACLineStatus        = AC_LINE_UNKNOWN;
+    ps->BatteryFlag         = BATTERY_FLAG_UNKNOWN;
+    ps->BatteryLifePercent  = BATTERY_PERCENTAGE_UNKNOWN;
+    ps->SystemStatusFlag    = 0;
+    ps->BatteryLifeTime     = BATTERY_LIFE_UNKNOWN;
+    ps->BatteryFullLifeTime = BATTERY_LIFE_UNKNOWN;
+
+    status = NtPowerInformation(SystemBatteryState, NULL, 0, &bs, sizeof(bs));
+    if (status == STATUS_NOT_IMPLEMENTED) return TRUE;
+    if (FAILED(status)) return FALSE;
+
+    ps->ACLineStatus = bs.AcOnLine;
+
+    if (bs.BatteryPresent)
     {
-        ps->ACLineStatus        = 255;
-        ps->BatteryFlag         = 255;
-        ps->BatteryLifePercent  = 255;
-        ps->Reserved1           = 0;
-        ps->BatteryLifeTime     = ~0u;
-        ps->BatteryFullLifeTime = ~0u;
-        return TRUE;
+        ps->BatteryLifePercent = bs.MaxCapacity ? bs.RemainingCapacity / bs.MaxCapacity : 100;
+        ps->BatteryLifeTime = bs.EstimatedTime;
+        if (!bs.Charging && (LONG)bs.Rate < 0)
+            ps->BatteryFullLifeTime = 3600 * bs.MaxCapacity / -(LONG)bs.Rate;
+
+        ps->BatteryFlag = 0;
+        if (bs.Charging)
+            ps->BatteryFlag |= BATTERY_FLAG_CHARGING;
+        if (ps->BatteryLifePercent > 66)
+            ps->BatteryFlag |= BATTERY_FLAG_HIGH;
+        if (ps->BatteryLifePercent < 33)
+            ps->BatteryFlag |= BATTERY_FLAG_LOW;
+        if (ps->BatteryLifePercent < 5)
+            ps->BatteryFlag |= BATTERY_FLAG_CRITICAL;
     }
-    return FALSE;
+    else
+    {
+        ps->BatteryFlag = BATTERY_FLAG_NO_BATTERY;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -100,14 +134,10 @@ BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
  */
 EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
 {
-    static EXECUTION_STATE current =
-        ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_USER_PRESENT;
-    EXECUTION_STATE old = current;
+    EXECUTION_STATE old;
 
-    WARN("(0x%x): stub, harmless.\n", flags);
+    NtSetThreadExecutionState(flags, &old);
 
-    if (!(current & ES_CONTINUOUS) || (flags & ES_CONTINUOUS))
-        current = flags;
     return old;
 }
 
@@ -116,10 +146,36 @@ EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
  */
 HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
 {
-    FIXME("(%p): stub\n", context);
+    COUNTED_REASON_CONTEXT nt_context;
+    HANDLE handle;
+    NTSTATUS status;
+    WCHAR module_name[MAX_PATH];
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return INVALID_HANDLE_VALUE;
+    TRACE( "(%p)\n", context );
+
+    nt_context.Version = context->Version;
+    nt_context.Flags = context->Flags;
+    if (context->Flags & POWER_REQUEST_CONTEXT_SIMPLE_STRING)
+        RtlInitUnicodeString( &nt_context.u.SimpleString, context->Reason.SimpleReasonString );
+    else if (context->Flags & POWER_REQUEST_CONTEXT_DETAILED_STRING)
+    {
+        int i;
+
+        GetModuleFileNameW( context->Reason.Detailed.LocalizedReasonModule, module_name, ARRAY_SIZE(module_name) );
+        RtlInitUnicodeString( &nt_context.u.s.ResourceFileName, module_name );
+        nt_context.u.s.ResourceReasonId = context->Reason.Detailed.LocalizedReasonId;
+        nt_context.u.s.StringCount = context->Reason.Detailed.ReasonStringCount;
+        nt_context.u.s.ReasonStrings = heap_alloc( nt_context.u.s.StringCount * sizeof(UNICODE_STRING) );
+        for (i = 0; i < nt_context.u.s.StringCount; i++)
+            RtlInitUnicodeString( &nt_context.u.s.ReasonStrings[i], context->Reason.Detailed.ReasonStrings[i] );
+    }
+
+    status = NtCreatePowerRequest( &handle, &nt_context );
+    if (nt_context.Flags & POWER_REQUEST_CONTEXT_DETAILED_STRING)
+        heap_free( nt_context.u.s.ReasonStrings );
+    if (status)
+        SetLastError( RtlNtStatusToDosError(status) );
+    return status == STATUS_SUCCESS ? handle : INVALID_HANDLE_VALUE;
 }
 
 /***********************************************************************
@@ -127,10 +183,10 @@ HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
  */
 BOOL WINAPI PowerSetRequest(HANDLE request, POWER_REQUEST_TYPE type)
 {
-    FIXME("(%p, %u): stub\n", request, type);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    NTSTATUS status = NtSetPowerRequest( request, type );
+    if (status)
+        SetLastError( RtlNtStatusToDosError(status) );
+    return status == STATUS_SUCCESS;
 }
 
 /***********************************************************************
@@ -138,8 +194,8 @@ BOOL WINAPI PowerSetRequest(HANDLE request, POWER_REQUEST_TYPE type)
  */
 BOOL WINAPI PowerClearRequest(HANDLE request, POWER_REQUEST_TYPE type)
 {
-    FIXME("(%p, %u): stub\n", request, type);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    NTSTATUS status = NtClearPowerRequest( request, type );
+    if (status)
+        SetLastError( RtlNtStatusToDosError(status) );
+    return status == STATUS_SUCCESS;
 }

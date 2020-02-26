@@ -537,8 +537,8 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
     gSysContext.lcSensZ = 65536;
     gSysContext.lcSysSensX= 65536;
     gSysContext.lcSysSensY= 65536;
-    gSysContext.lcOutExtX= GetSystemMetrics(SM_CXSCREEN);
-    gSysContext.lcOutExtY= GetSystemMetrics(SM_CYSCREEN);
+    gSysContext.lcSysExtX = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    gSysContext.lcSysExtY = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
     /* initialize cursors */
     disable_system_cursors();
@@ -671,9 +671,9 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
                                 gSysDevice.X.axUnits = TU_INCHES;
                                 gSysDevice.X.axResolution = Axis->resolution;
                                 gSysContext.lcInOrgX = Axis->min_value;
-                                gSysContext.lcSysOrgX = Axis->min_value;
+                                gSysContext.lcOutOrgX = Axis->min_value;
                                 gSysContext.lcInExtX = Axis->max_value;
-                                gSysContext.lcSysExtX = Axis->max_value;
+                                gSysContext.lcOutExtX = Axis->max_value;
                                 Axis++;
                             }
                             if (Val->num_axes>=2)
@@ -684,9 +684,9 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
                                 gSysDevice.Y.axUnits = TU_INCHES;
                                 gSysDevice.Y.axResolution = Axis->resolution;
                                 gSysContext.lcInOrgY = Axis->min_value;
-                                gSysContext.lcSysOrgY = Axis->min_value;
+                                gSysContext.lcOutOrgY = Axis->min_value;
                                 gSysContext.lcInExtY = Axis->max_value;
-                                gSysContext.lcSysExtY = Axis->max_value;
+                                gSysContext.lcOutExtY = Axis->max_value;
                                 Axis++;
                             }
                             if (Val->num_axes>=3)
@@ -929,13 +929,20 @@ static BOOL button_event( HWND hwnd, XEvent *event )
     gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(button->time);
     gMsgPacket.pkSerialNumber = gSerial++;
     gMsgPacket.pkCursor = curnum;
-    gMsgPacket.pkX = button->axis_data[0];
-    gMsgPacket.pkY = button->axis_data[1];
-    gMsgPacket.pkOrientation.orAzimuth = figure_deg(button->axis_data[3],button->axis_data[4]);
-    gMsgPacket.pkOrientation.orAltitude = ((1000 - 15 * max(abs(button->axis_data[3]),
-                                                            abs(button->axis_data[4])))
-                                           * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
-    gMsgPacket.pkNormalPressure = button->axis_data[2];
+    if (button->axes_count > 0) {
+        gMsgPacket.pkX = button->axis_data[0];
+        gMsgPacket.pkY = button->axis_data[1];
+        gMsgPacket.pkOrientation.orAzimuth = figure_deg(button->axis_data[3],button->axis_data[4]);
+        gMsgPacket.pkOrientation.orAltitude = ((1000 - 15 * max(abs(button->axis_data[3]),
+                                                                abs(button->axis_data[4])))
+                                               * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
+        gMsgPacket.pkNormalPressure = button->axis_data[2];
+    } else {
+        gMsgPacket.pkX = last_packet.pkX;
+        gMsgPacket.pkY = last_packet.pkY;
+        gMsgPacket.pkOrientation = last_packet.pkOrientation;
+        gMsgPacket.pkNormalPressure = last_packet.pkNormalPressure;
+    }
     gMsgPacket.pkButtons = get_button_state(curnum);
     gMsgPacket.pkChanged = get_changed_state(&gMsgPacket);
     SendMessageW(hwndTabletDefault,WT_PACKET,gMsgPacket.pkSerialNumber,(LPARAM)hwnd);

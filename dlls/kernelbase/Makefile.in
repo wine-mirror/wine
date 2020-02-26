@@ -1,8 +1,24 @@
-MODULE = kernelbase.dll
-IMPORTS = uuid advapi32
+MODULE    = kernelbase.dll
+IMPORTLIB = kernelbase
+IMPORTS   = uuid ntdll winecrt0
+EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -mno-cygwin -Wl,--image-base,0x7b000000
 
 C_SRCS = \
+	collation.c \
+	console.c \
+	debug.c \
+	digitmap.c \
+	file.c \
+	loader.c \
+	locale.c \
 	main.c \
+	memory.c \
 	path.c \
+	process.c \
 	registry.c \
-	string.c
+	security.c \
+	string.c \
+	sync.c \
+	thread.c \
+	version.c \
+	wctype.c

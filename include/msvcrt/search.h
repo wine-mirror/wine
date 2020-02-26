@@ -20,7 +20,7 @@
 #ifndef __WINE_SEARCH_H
 #define __WINE_SEARCH_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #ifdef __cplusplus
 extern "C" {

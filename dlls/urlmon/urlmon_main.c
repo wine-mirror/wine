@@ -608,7 +608,7 @@ HRESULT WINAPI CopyStgMedium(const STGMEDIUM *src, STGMEDIUM *dst)
         break;
     case TYMED_FILE:
         if(src->u.lpszFileName && !src->pUnkForRelease) {
-            DWORD size = (strlenW(src->u.lpszFileName)+1)*sizeof(WCHAR);
+            DWORD size = (lstrlenW(src->u.lpszFileName)+1)*sizeof(WCHAR);
             dst->u.lpszFileName = CoTaskMemAlloc(size);
             if(!dst->u.lpszFileName)
                 return E_OUTOFMEMORY;
@@ -674,7 +674,7 @@ HRESULT WINAPI CopyBindInfo(const BINDINFO *pcbiSrc, BINDINFO *pcbiDest)
 
     size = FIELD_OFFSET(BINDINFO, szExtraInfo)+sizeof(void*);
     if(pcbiSrc->cbSize>=size && pcbiDest->cbSize>=size && pcbiSrc->szExtraInfo) {
-        size = (strlenW(pcbiSrc->szExtraInfo)+1)*sizeof(WCHAR);
+        size = (lstrlenW(pcbiSrc->szExtraInfo)+1)*sizeof(WCHAR);
         pcbiDest->szExtraInfo = CoTaskMemAlloc(size);
         if(!pcbiDest->szExtraInfo)
             return E_OUTOFMEMORY;
@@ -692,7 +692,7 @@ HRESULT WINAPI CopyBindInfo(const BINDINFO *pcbiSrc, BINDINFO *pcbiDest)
 
     size = FIELD_OFFSET(BINDINFO, szCustomVerb)+sizeof(void*);
     if(pcbiSrc->cbSize>=size && pcbiDest->cbSize>=size && pcbiSrc->szCustomVerb) {
-        size = (strlenW(pcbiSrc->szCustomVerb)+1)*sizeof(WCHAR);
+        size = (lstrlenW(pcbiSrc->szCustomVerb)+1)*sizeof(WCHAR);
         pcbiDest->szCustomVerb = CoTaskMemAlloc(size);
         if(!pcbiDest->szCustomVerb) {
             CoTaskMemFree(pcbiDest->szExtraInfo);

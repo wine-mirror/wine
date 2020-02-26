@@ -216,7 +216,7 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
             declaration->position_transformed = TRUE;
 
         /* Find the streams used in the declaration. The vertex buffers have
-         * to be loaded when drawing, but filter tesselation pseudo streams. */
+         * to be loaded when drawing, but filter tessellation pseudo streams. */
         if (e->input_slot >= WINED3D_MAX_STREAMS)
             continue;
 
@@ -250,11 +250,6 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
             WARN("Declaration element %u is not 4 byte aligned(%u), returning E_FAIL.\n", i, e->offset);
             heap_free(declaration->elements);
             return E_FAIL;
-        }
-
-        if (elements[i].format == WINED3DFMT_R16G16_FLOAT || elements[i].format == WINED3DFMT_R16G16B16A16_FLOAT)
-        {
-            declaration->have_half_floats = TRUE;
         }
     }
 

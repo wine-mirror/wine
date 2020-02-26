@@ -2,6 +2,8 @@ MODULE    = usp10.dll
 IMPORTLIB = usp10
 IMPORTS   = advapi32 user32 gdi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	bidi.c \
 	bracket.c \

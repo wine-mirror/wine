@@ -261,7 +261,7 @@ BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count)
 /***********************************************************************
  *           PSDRV_GetTextMetrics
  */
-BOOL PSDRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
+BOOL CDECL PSDRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -282,7 +282,7 @@ BOOL PSDRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
  *  Find the AFMMETRICS for a given UV.  Returns first glyph in the font
  *  (space?) if the font does not have a glyph for the given UV.
  */
-static int MetricsByUV(const void *a, const void *b)
+static int __cdecl MetricsByUV(const void *a, const void *b)
 {
     return (int)(((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV);
 }
@@ -318,7 +318,7 @@ const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
 /***********************************************************************
  *           PSDRV_GetTextExtentExPoint
  */
-BOOL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count, LPINT alpDx)
+BOOL CDECL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count, LPINT alpDx)
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     int     	    i;
@@ -343,7 +343,7 @@ BOOL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count, LPINT alpDx
 /***********************************************************************
  *           PSDRV_GetCharWidth
  */
-BOOL PSDRV_GetCharWidth(PHYSDEV dev, UINT firstChar, UINT lastChar, LPINT buffer)
+BOOL CDECL PSDRV_GetCharWidth(PHYSDEV dev, UINT firstChar, UINT lastChar, LPINT buffer)
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     UINT    	    i;
@@ -408,7 +408,7 @@ static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *afm,
 /***********************************************************************
  *           PSDRV_EnumFonts
  */
-BOOL PSDRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp )
+BOOL CDECL PSDRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pEnumFonts );

@@ -92,8 +92,8 @@
 @ stdcall WcsEnumColorProfilesSize(long ptr ptr)
 @ stub WcsGetCalibrationManagementState
 @ stub WcsGetDefaultColorProfile
-@ stub WcsGetDefaultColorProfileSize
-@ stub WcsGetDefaultRenderingIntent
+@ stdcall WcsGetDefaultColorProfileSize(long wstr long long long ptr)
+@ stdcall WcsGetDefaultRenderingIntent(long ptr)
 @ stdcall WcsGetUsePerUserProfiles(wstr long ptr)
 @ stub WcsGpCanInstallOrUninstallProfiles
 @ stdcall WcsOpenColorProfileA(ptr ptr ptr long long long long)

@@ -165,7 +165,7 @@ static void test_pattern_brush(void)
     info->bmiHeader.biBitCount = 1;
     info->bmiHeader.biPlanes = 1;
     info->bmiHeader.biCompression = BI_RGB;
-    bitmap = CreateDIBSection( 0, info, DIB_RGB_COLORS, (void**)&bits, NULL, 0 );
+    bitmap = CreateDIBSection( 0, info, DIB_RGB_COLORS, &bits, NULL, 0 );
     ok( bitmap != NULL, "CreateDIBSection failed\n" );
 
     /* MSDN says a DIB section is not allowed, but it works fine */

@@ -264,7 +264,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarI1FromDate(*(DATE*)src, d);             break;
         case DBTYPE_BSTR:        hr = VarI1FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarI1FromBool(*(VARIANT_BOOL*)src, d);     break;
-        case DBTYPE_DECIMAL:     hr = VarI1FromDec((DECIMAL*)src, d);            break;
+        case DBTYPE_DECIMAL:     hr = VarI1FromDec(src, d);                      break;
         case DBTYPE_UI1:         hr = VarI1FromUI1(*(BYTE*)src, d);              break;
         case DBTYPE_UI2:         hr = VarI1FromUI2(*(WORD*)src, d);              break;
         case DBTYPE_UI4:         hr = VarI1FromUI4(*(DWORD*)src, d);             break;
@@ -272,7 +272,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI8:         hr = VarI1FromUI8(*(ULONGLONG*)src, d);         break;
         case DBTYPE_VARIANT:
             VariantInit(&tmp);
-            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_I1)) == S_OK)
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_I1)) == S_OK)
                 *d = V_I1(&tmp);
             break;
         default: FIXME("Unimplemented conversion %04x -> I1\n", src_type); return E_NOTIMPL;
@@ -294,7 +294,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarI2FromDate(*(DATE*)src, d);             break;
         case DBTYPE_BSTR:        hr = VarI2FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarI2FromBool(*(VARIANT_BOOL*)src, d);     break;
-        case DBTYPE_DECIMAL:     hr = VarI2FromDec((DECIMAL*)src, d);            break;
+        case DBTYPE_DECIMAL:     hr = VarI2FromDec(src, d);                      break;
         case DBTYPE_I1:          hr = VarI2FromI1(*(signed char*)src, d);        break;
         case DBTYPE_UI1:         hr = VarI2FromUI1(*(BYTE*)src, d);              break;
         case DBTYPE_UI2:         hr = VarI2FromUI2(*(WORD*)src, d);              break;
@@ -303,7 +303,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI8:         hr = VarI2FromUI8(*(ULONGLONG*)src, d);         break;
         case DBTYPE_VARIANT:
             VariantInit(&tmp);
-            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_I2)) == S_OK)
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_I2)) == S_OK)
                 *d = V_I2(&tmp);
             break;
         default: FIXME("Unimplemented conversion %04x -> I2\n", src_type); return E_NOTIMPL;
@@ -325,7 +325,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarI4FromDate(*(DATE*)src, d);             break;
         case DBTYPE_BSTR:        hr = VarI4FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarI4FromBool(*(VARIANT_BOOL*)src, d);     break;
-        case DBTYPE_DECIMAL:     hr = VarI4FromDec((DECIMAL*)src, d);            break;
+        case DBTYPE_DECIMAL:     hr = VarI4FromDec(src, d);                      break;
         case DBTYPE_I1:          hr = VarI4FromI1(*(signed char*)src, d);        break;
         case DBTYPE_UI1:         hr = VarI4FromUI1(*(BYTE*)src, d);              break;
         case DBTYPE_UI2:         hr = VarI4FromUI2(*(WORD*)src, d);              break;
@@ -334,7 +334,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI8:         hr = VarI4FromUI8(*(ULONGLONG*)src, d);         break;
         case DBTYPE_VARIANT:
             VariantInit(&tmp);
-            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_I4)) == S_OK)
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_I4)) == S_OK)
                 *d = V_I4(&tmp);
             break;
         default: FIXME("Unimplemented conversion %04x -> I4\n", src_type); return E_NOTIMPL;
@@ -368,7 +368,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarR4FromDate(*(DATE*)src, d);             break;
         case DBTYPE_BSTR:        hr = VarR4FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarR4FromBool(*(VARIANT_BOOL*)src, d);     break;
-        case DBTYPE_DECIMAL:     hr = VarR4FromDec((DECIMAL*)src, d);            break;
+        case DBTYPE_DECIMAL:     hr = VarR4FromDec(src, d);                      break;
         case DBTYPE_I1:          hr = VarR4FromI1(*(signed char*)src, d);        break;
         case DBTYPE_UI1:         hr = VarR4FromUI1(*(BYTE*)src, d);              break;
         case DBTYPE_UI2:         hr = VarR4FromUI2(*(WORD*)src, d);              break;
@@ -377,7 +377,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI8:         hr = VarR4FromUI8(*(ULONGLONG*)src, d);         break;
         case DBTYPE_VARIANT:
             VariantInit(&tmp);
-            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_R4)) == S_OK)
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_R4)) == S_OK)
                 *d = V_R4(&tmp);
             break;
         default: FIXME("Unimplemented conversion %04x -> R4\n", src_type); return E_NOTIMPL;
@@ -404,10 +404,10 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarR8FromDate(*(DATE*)src, d);             break;
         case DBTYPE_BSTR:        hr = VarR8FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarR8FromBool(*(VARIANT_BOOL*)src, d);     break;
-        case DBTYPE_DECIMAL:     hr = VarR8FromDec((DECIMAL*)src, d);            break;
+        case DBTYPE_DECIMAL:     hr = VarR8FromDec(src, d);                      break;
         case DBTYPE_VARIANT:
             VariantInit(&tmp);
-            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_R8)) == S_OK)
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_R8)) == S_OK)
                 *d = V_R8(&tmp);
             break;
         default: FIXME("Unimplemented conversion %04x -> R8\n", src_type); return E_NOTIMPL;
@@ -434,7 +434,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarBoolFromDate(*(DATE*)src, d);           break;
         case DBTYPE_BSTR:        hr = VarBoolFromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        *d = *(VARIANT_BOOL*)src; hr = S_OK;            break;
-        case DBTYPE_DECIMAL:     hr = VarBoolFromDec((DECIMAL*)src, d);          break;
+        case DBTYPE_DECIMAL:     hr = VarBoolFromDec(src, d);                    break;
         default: FIXME("Unimplemented conversion %04x -> BOOL\n", src_type); return E_NOTIMPL;
         }
         break;
@@ -459,11 +459,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:       *d = *(DATE*)src;      hr = S_OK;                break;
         case DBTYPE_BSTR:        hr = VarDateFromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarDateFromBool(*(VARIANT_BOOL*)src, d);   break;
-        case DBTYPE_DECIMAL:     hr = VarDateFromDec((DECIMAL*)src, d);          break;
+        case DBTYPE_DECIMAL:     hr = VarDateFromDec(src, d);                    break;
         case DBTYPE_DBTIMESTAMP:
         {
             SYSTEMTIME st;
-            DBTIMESTAMP *ts=(DBTIMESTAMP*)src;
+            DBTIMESTAMP *ts = src;
 
             st.wYear = ts->year;
             st.wMonth = ts->month;
@@ -473,6 +473,14 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             st.wSecond = ts->second;
             st.wMilliseconds = ts->fraction/1000000;
             hr = (SystemTimeToVariantTime(&st, d) ? S_OK : E_FAIL);
+            break;
+        }
+        case DBTYPE_VARIANT:
+        {
+            VARIANT tmp;
+            VariantInit(&tmp);
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_DATE)) == S_OK)
+                *d = V_DATE(&tmp);
             break;
         }
         default: FIXME("Unimplemented conversion %04x -> DATE\n", src_type); return E_NOTIMPL;
@@ -510,7 +518,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         {
             VariantInit(&tmp);
 
-            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_DATE)) == S_OK)
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_DATE)) == S_OK)
             {
                 SYSTEMTIME st;
                 hr = (VariantTimeToSystemTime( V_DATE(&tmp), &st) ? S_OK : E_FAIL);
@@ -557,6 +565,18 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                 d->minute = st.wMinute;
                 d->second = st.wSecond;
                 d->fraction = st.wMilliseconds * 1000000;
+            }
+            else
+            {
+                if(swscanf( s, L"%d-%d-%d %d:%d:%d.%d", &d->year, &d->month, &d->day, &d->hour, &d->minute,
+                             &d->second, &d->fraction) != 7)
+                {
+                    hr = DISP_E_TYPEMISMATCH;
+                    *dst_status = DBSTATUS_E_CANTCONVERTVALUE;
+                    *dst_len = get_length(dst_type);
+                }
+                else
+                    hr = S_OK;
             }
 
             VariantClear(&var);
@@ -613,7 +633,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarCyFromDate(*(DATE*)src, d);             break;
         case DBTYPE_BSTR:        hr = VarCyFromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarCyFromBool(*(VARIANT_BOOL*)src, d);     break;
-        case DBTYPE_DECIMAL:     hr = VarCyFromDec((DECIMAL*)src, d);            break;
+        case DBTYPE_DECIMAL:     hr = VarCyFromDec(src, d);                      break;
         case DBTYPE_I1:          hr = VarCyFromI1(*(signed char*)src, d);        break;
         case DBTYPE_UI1:         hr = VarCyFromUI1(*(BYTE*)src, d);              break;
         case DBTYPE_UI2:         hr = VarCyFromUI2(*(WORD*)src, d);              break;
@@ -639,7 +659,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarBstrFromDate(*(DATE*)src, LOCALE_USER_DEFAULT, 0, d);         break;
         case DBTYPE_BSTR:        *d = SysAllocStringLen(*(BSTR*)src, SysStringLen(*(BSTR*)src)); hr = *d ? S_OK : E_OUTOFMEMORY;     break;
         case DBTYPE_BOOL:        hr = VarBstrFromBool(*(VARIANT_BOOL*)src, LOCALE_USER_DEFAULT, 0, d); break;
-        case DBTYPE_DECIMAL:     hr = VarBstrFromDec((DECIMAL*)src, LOCALE_USER_DEFAULT, 0, d);        break;
+        case DBTYPE_DECIMAL:     hr = VarBstrFromDec(src, LOCALE_USER_DEFAULT, 0, d);                  break;
         case DBTYPE_I1:          hr = VarBstrFromI1(*(signed char*)src, LOCALE_USER_DEFAULT, 0, d);    break;
         case DBTYPE_UI1:         hr = VarBstrFromUI1(*(BYTE*)src, LOCALE_USER_DEFAULT, 0, d);          break;
         case DBTYPE_UI2:         hr = VarBstrFromUI2(*(WORD*)src, LOCALE_USER_DEFAULT, 0, d);          break;
@@ -649,7 +669,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_GUID:
         {
             WCHAR szBuff[39];
-            const GUID *id = (const GUID *)src;
+            const GUID *id = src;
             static const WCHAR format[] = {
                 '{','%','0','8','X','-','%','0','4','X','-','%','0','4','X','-',
                 '%','0','2','X','%','0','2','X','-',
@@ -691,7 +711,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             static const WCHAR format2[] = {
                   '%','0','4','d','-','%','0','2','d','-','%','0','2','d',' ','%','0','2','d',':','%','0','2','d',
                   ':','%','0','2','d','.','%','0','9','d', 0};
-            DBTIMESTAMP *ts = (DBTIMESTAMP *)src;
+            DBTIMESTAMP *ts = src;
 
             if(ts->fraction == 0)
                 wsprintfW(szBuff, format1, ts->year, ts->month, ts->day, ts->hour, ts->minute, ts->second);
@@ -703,7 +723,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         case DBTYPE_VARIANT:
             VariantInit(&tmp);
-            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_BSTR)) == S_OK)
                 *d = V_BSTR(&tmp);
             break;
         default: FIXME("Unimplemented conversion %04x -> BSTR\n", src_type); return E_NOTIMPL;
@@ -725,7 +745,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarUI1FromDate(*(DATE*)src, d);            break;
         case DBTYPE_BSTR:        hr = VarUI1FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarUI1FromBool(*(VARIANT_BOOL*)src, d);    break;
-        case DBTYPE_DECIMAL:     hr = VarUI1FromDec((DECIMAL*)src, d);           break;
+        case DBTYPE_DECIMAL:     hr = VarUI1FromDec(src, d);                     break;
         case DBTYPE_I1:          hr = VarUI1FromI1(*(signed char*)src, d);       break;
         case DBTYPE_UI1:         *d = *(BYTE*)src; hr = S_OK;                    break;
         case DBTYPE_UI2:         hr = VarUI1FromUI2(*(WORD*)src, d);             break;
@@ -750,7 +770,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarUI2FromDate(*(DATE*)src, d);            break;
         case DBTYPE_BSTR:        hr = VarUI2FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarUI2FromBool(*(VARIANT_BOOL*)src, d);    break;
-        case DBTYPE_DECIMAL:     hr = VarUI2FromDec((DECIMAL*)src, d);           break;
+        case DBTYPE_DECIMAL:     hr = VarUI2FromDec(src, d);                     break;
         case DBTYPE_I1:          hr = VarUI2FromI1(*(signed char*)src, d);       break;
         case DBTYPE_UI1:         hr = VarUI2FromUI1(*(BYTE*)src, d);             break;
         case DBTYPE_UI2:         *d = *(WORD*)src; hr = S_OK;                     break;
@@ -776,7 +796,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarUI4FromDate(*(DATE*)src, d);            break;
         case DBTYPE_BSTR:        hr = VarUI4FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarUI4FromBool(*(VARIANT_BOOL*)src, d);    break;
-        case DBTYPE_DECIMAL:     hr = VarUI4FromDec((DECIMAL*)src, d);           break;
+        case DBTYPE_DECIMAL:     hr = VarUI4FromDec(src, d);                     break;
         case DBTYPE_I1:          hr = VarUI4FromI1(*(signed char*)src, d);       break;
         case DBTYPE_UI1:         hr = VarUI4FromUI1(*(BYTE*)src, d);             break;
         case DBTYPE_UI2:         hr = VarUI4FromUI2(*(WORD*)src, d);             break;
@@ -785,7 +805,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI8:         hr = VarUI4FromUI8(*(ULONGLONG*)src, d);        break;
         case DBTYPE_VARIANT:
             VariantInit(&tmp);
-            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_UI4)) == S_OK)
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_UI4)) == S_OK)
                 *d = V_UI4(&tmp);
             break;
         default: FIXME("Unimplemented conversion %04x -> UI4\n", src_type); return E_NOTIMPL;
@@ -807,7 +827,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DATE:        hr = VarUI8FromDate(*(DATE*)src, d);            break;
         case DBTYPE_BSTR:        hr = VarUI8FromStr(*(WCHAR**)src, LOCALE_USER_DEFAULT, 0, d); break;
         case DBTYPE_BOOL:        hr = VarUI8FromBool(*(VARIANT_BOOL*)src, d);    break;
-        case DBTYPE_DECIMAL:     hr = VarUI8FromDec((DECIMAL*)src, d);           break;
+        case DBTYPE_DECIMAL:     hr = VarUI8FromDec(src, d);                     break;
         case DBTYPE_I1:          hr = VarUI8FromI1(*(signed char*)src, d);       break;
         case DBTYPE_UI1:         hr = VarUI8FromUI1(*(BYTE*)src, d);             break;
         case DBTYPE_UI2:         hr = VarUI8FromUI2(*(WORD*)src, d);             break;
@@ -1004,7 +1024,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DBDATE:
         {
             SYSTEMTIME st;
-            DBDATE *ts=(DBDATE*)src;
+            DBDATE *ts = src;
 
             V_VT(v) = VT_DATE;
 
@@ -1021,7 +1041,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DBTIMESTAMP:
         {
             SYSTEMTIME st;
-            DBTIMESTAMP *ts = (DBTIMESTAMP *)src;
+            DBTIMESTAMP *ts = src;
 
             V_VT(v) = VT_DATE;
 
@@ -1449,7 +1469,7 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
             VARIANT v;
 
             VariantInit(&v);
-            if ((hr = VariantChangeType(&v, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
+            if ((hr = VariantChangeType(&v, src, 0, VT_BSTR)) == S_OK)
             {
                 *dst_len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(&v), -1, NULL, 0, NULL, NULL);
                 VariantClear(&v);
@@ -1486,7 +1506,7 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
             VARIANT v;
 
             VariantInit(&v);
-            if ((hr = VariantChangeType(&v, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
+            if ((hr = VariantChangeType(&v, src, 0, VT_BSTR)) == S_OK)
             {
                 *dst_len = (SysStringLen(V_BSTR(&v))+1) * sizeof(WCHAR);
                 VariantClear(&v);

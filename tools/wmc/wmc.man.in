@@ -45,6 +45,10 @@ Inline messagetable(s). This option skips the generation of all \fI.bin\fR files
 and writes all output into the \fI.rc\fR file. This encoding is parsable with
 wrc(1).
 .TP
+.BI \-\-nls-dir= directory
+Specify the directory to search for the NLS files containing the
+codepage mapping tables.
+.TP
 .BR \-o ,\  \-\-output =\fIfile
 Output to \fIfile\fR. Default is \fIinputfile.rc\fR.
 .TP
@@ -59,10 +63,8 @@ gettext convention, in particular in must contain one \fI.po\fR file for
 each language, and a LINGUAS file listing the available languages.
 .TP
 .B \-u
-Assume that the inputfile is in unicode.
-.TP
-.B \-U
-Write resource output in unicode formatted messagetable(s).
+Assume that the input file is in Unicode or UTF-8 format and skip
+codepage conversions.
 .TP
 .B \-v
 Show all supported codepages and languages.
@@ -95,9 +97,6 @@ was written by Bertho A. Stultiens.
 The message compiler should be able to have multiple input files and combine
 them into one output file. This would enable the splitting of languages into
 separate files.
-.PP
-Unicode detection of the input is suboptimal, to say the least. It should
-recognize byte order marks (BOM) and decide what to do.
 .PP
 Decimal output is completely lacking. Don't know whether it should be
 implemented because it is a, well, non-informative format change. It is

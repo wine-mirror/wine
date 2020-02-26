@@ -22,10 +22,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vcruntime);
 
-#define UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR      (0x0002)
-int __cdecl __stdio_common_vsprintf(unsigned __int64 options, char *str, size_t len, const char *format,
-                                    _locale_t locale, __ms_va_list valist);
-
 int* CDECL __processing_throw(void);
 
 /*********************************************************************
@@ -57,10 +53,4 @@ BOOL CDECL __vcrt_InitializeCriticalSectionEx(
 int __cdecl __uncaught_exceptions(void)
 {
     return *__processing_throw();
-}
-
-int __cdecl _vsnprintf( char *buf, size_t size, const char *fmt, __ms_va_list args )
-{
-    return __stdio_common_vsprintf( UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR,
-                                    buf, size, fmt, NULL, args );
 }

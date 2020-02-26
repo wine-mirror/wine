@@ -24,10 +24,12 @@
  * macro which only exists in the user's code.
  */
 #ifndef WINE_NO_UNICODE_MACROS
-# ifdef UNICODE
+# ifndef UNICODE
+#  define __TEXT(string) string
+# elif defined(WINE_UNICODE_NATIVE)
 #  define __TEXT(string) L##string
 # else
-#  define __TEXT(string) string
+#  define __TEXT(string) u##string
 # endif
 # define TEXT(string) __TEXT(string)
 #endif

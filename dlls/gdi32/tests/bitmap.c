@@ -40,7 +40,6 @@ static NTSTATUS (WINAPI *pD3DKMTCreateDCFromMemory)( D3DKMT_CREATEDCFROMMEMORY *
 static NTSTATUS (WINAPI *pD3DKMTDestroyDCFromMemory)( const D3DKMT_DESTROYDCFROMMEMORY *desc );
 static BOOL (WINAPI *pGdiAlphaBlend)(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCTION);
 static BOOL (WINAPI *pGdiGradientFill)(HDC,TRIVERTEX*,ULONG,void*,ULONG,ULONG);
-static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 
 static inline int get_bitmap_stride( int width, int bpp )
 {
@@ -913,7 +912,7 @@ static void test_dibsections(void)
 static void test_dib_formats(void)
 {
     BITMAPINFO *bi;
-    char data[256];
+    char data[2048];  /* 2 x 2 pixels, max 64 bits-per-pixel, max 64 planes */
     void *bits;
     int planes, bpp, compr, format;
     HBITMAP hdib, hbmp;
@@ -4216,15 +4215,9 @@ static void test_GetSetDIBits_rtl(void)
     int ret;
     DWORD bits_1[8 * 8], bits_2[8 * 8];
 
-    if(!pSetLayout)
-    {
-        win_skip("Don't have SetLayout\n");
-        return;
-    }
-
     hdc = GetDC( NULL );
     hdc_mem = CreateCompatibleDC( hdc );
-    pSetLayout( hdc_mem, LAYOUT_LTR );
+    SetLayout( hdc_mem, LAYOUT_LTR );
 
     bitmap = CreateCompatibleBitmap( hdc, 8, 8 );
     orig_bitmap = SelectObject( hdc_mem, bitmap );
@@ -4244,7 +4237,7 @@ static void test_GetSetDIBits_rtl(void)
     ok(ret == 8, "got %d\n", ret);
     ok(bits_1[56] == 0xff0000, "got %08x\n", bits_1[56]); /* check we have a red pixel */
 
-    pSetLayout( hdc_mem, LAYOUT_RTL );
+    SetLayout( hdc_mem, LAYOUT_RTL );
 
     ret = GetDIBits( hdc_mem, bitmap, 0, 8, bits_2, &info, DIB_RGB_COLORS );
     ok(ret == 8, "got %d\n", ret);
@@ -4254,7 +4247,7 @@ static void test_GetSetDIBits_rtl(void)
     /* Now to show that SetDIBits also ignores the mode, we perform a SetDIBits
        followed by a GetDIBits and show that the bits remain unchanged. */
 
-    pSetLayout( hdc_mem, LAYOUT_LTR );
+    SetLayout( hdc_mem, LAYOUT_LTR );
 
     ret = SetDIBits( hdc_mem, bitmap, 0, 8, bits_1, &info, DIB_RGB_COLORS );
     ok(ret == 8, "got %d\n", ret);
@@ -4262,7 +4255,7 @@ static void test_GetSetDIBits_rtl(void)
     ok(ret == 8, "got %d\n", ret);
     ok(!memcmp( bits_1, bits_2, sizeof(bits_1) ), "bits differ\n");
 
-    pSetLayout( hdc_mem, LAYOUT_RTL );
+    SetLayout( hdc_mem, LAYOUT_RTL );
 
     ret = SetDIBits( hdc_mem, bitmap, 0, 8, bits_1, &info, DIB_RGB_COLORS );
     ok(ret == 8, "got %d\n", ret);
@@ -5165,19 +5158,16 @@ static void test_SetDIBitsToDevice(void)
     memset( dib_bits, 0xaa, 64 * 4 );
     SetMapMode( hdc, MM_TEXT );
 
-    if (pSetLayout)
-    {
-        pSetLayout( hdc, LAYOUT_RTL );
-        ret = SetDIBitsToDevice( hdc, 1, 2, 3, 2, 1, 2, 1, 5, data, info, DIB_RGB_COLORS );
-        ok( ret == 3, "got %d\n", ret );
-        for (i = 0; i < 64; i++)
-            if (i == 36 || i == 37 || i == 38 || i == 44 || i == 45 || i == 46)
-                ok( dib_bits[i] == data[i - 27], "%d: got %08x\n", i, dib_bits[i] );
-            else
-                ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
-        memset( dib_bits, 0xaa, 64 * 4 );
-        pSetLayout( hdc, LAYOUT_LTR );
-    }
+    SetLayout( hdc, LAYOUT_RTL );
+    ret = SetDIBitsToDevice( hdc, 1, 2, 3, 2, 1, 2, 1, 5, data, info, DIB_RGB_COLORS );
+    ok( ret == 3, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+        if (i == 36 || i == 37 || i == 38 || i == 44 || i == 45 || i == 46)
+            ok( dib_bits[i] == data[i - 27], "%d: got %08x\n", i, dib_bits[i] );
+        else
+            ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
+    memset( dib_bits, 0xaa, 64 * 4 );
+    SetLayout( hdc, LAYOUT_LTR );
 
     /* t-d -> b-u */
     info->bmiHeader.biHeight = -8;
@@ -5532,14 +5522,23 @@ static void test_SetDIBitsToDevice_RLE8(void)
     info->bmiHeader.biWidth = 2;
     ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
     ok( ret == 8, "got %d\n", ret );
-    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    if (dib_bits[0] == 0xaaaaaaaa)
+    {
+        win_skip("SetDIBitsToDevice is broken on Windows 2008.\n");
+        goto cleanup;
+    }
+    for (i = 0; i < 64; i += 8)
+    {
+        ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+        ok( dib_bits[i+1] == bottom_up[i+1], "%d: got %08x\n", i+1, dib_bits[i+1] );
+    }
     memset( dib_bits, 0xaa, 64 * 4 );
 
     info->bmiHeader.biWidth  = 8;
     info->bmiHeader.biHeight = 2;
     ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
     ok( ret == 2, "got %d\n", ret );
-    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 0; i < 16; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
     info->bmiHeader.biHeight = 9;
@@ -5671,6 +5670,7 @@ static void test_SetDIBitsToDevice_RLE8(void)
     for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
+cleanup:
     DeleteDC( hdc );
     DeleteObject( dib );
     HeapFree( GetProcessHeap(), 0, info );
@@ -5770,20 +5770,6 @@ static void test_D3DKMTCreateDCFromMemory( void )
            test_data[i].name, create_desc.hBitmap);
 
         create_desc.Height = 7;
-        create_desc.Width = 0;
-        status = pD3DKMTCreateDCFromMemory( &create_desc );
-        ok(status == test_data[i].status, "%s: Got unexpected status %#x, expected %#x.\n",
-           test_data[i].name, status, test_data[i].status);
-        if (status == STATUS_SUCCESS)
-        {
-            destroy_desc.hDc = create_desc.hDc;
-            destroy_desc.hBitmap = create_desc.hBitmap;
-            status = pD3DKMTDestroyDCFromMemory( &destroy_desc );
-            ok(status == STATUS_SUCCESS, "%s: Got unexpected status %#x.\n", test_data[i].name, status);
-            create_desc.hDc = (void *)0x010baade;
-            create_desc.hBitmap = (void *)0x020baade;
-        }
-
         create_desc.Pitch = 0;
         status = pD3DKMTCreateDCFromMemory( &create_desc );
         ok(status == STATUS_INVALID_PARAMETER, "%s: Got unexpected status %#x.\n",
@@ -5958,7 +5944,6 @@ START_TEST(bitmap)
     pD3DKMTDestroyDCFromMemory = (void *)GetProcAddress( hdll, "D3DKMTDestroyDCFromMemory" );
     pGdiAlphaBlend             = (void *)GetProcAddress( hdll, "GdiAlphaBlend" );
     pGdiGradientFill           = (void *)GetProcAddress( hdll, "GdiGradientFill" );
-    pSetLayout                 = (void *)GetProcAddress( hdll, "SetLayout" );
 
     test_createdibitmap();
     test_dibsections();

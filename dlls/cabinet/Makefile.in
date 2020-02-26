@@ -1,10 +1,11 @@
 MODULE    = cabinet.dll
 IMPORTLIB = cabinet
-EXTRAINCL = $(Z_CFLAGS)
-EXTRALIBS = $(Z_LIBS)
+
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	cabinet_main.c \
+	deflate.c \
 	fci.c \
 	fdi.c
 

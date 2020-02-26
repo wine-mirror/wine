@@ -24,8 +24,6 @@
 
 #define COBJMACROS
 
-#include "wine/unicode.h"
-#include "wine/library.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -171,12 +169,12 @@ static HRESULT load_mono(LPCWSTR mono_path)
 
     if (!mono_handle)
     {
-        strcpyW(mono_lib_path, mono_path);
-        strcatW(mono_lib_path, lib);
+        lstrcpyW(mono_lib_path, mono_path);
+        lstrcatW(mono_lib_path, lib);
         WideCharToMultiByte(CP_UTF8, 0, mono_lib_path, -1, mono_lib_path_a, MAX_PATH, NULL, NULL);
 
-        strcpyW(mono_etc_path, mono_path);
-        strcatW(mono_etc_path, etc);
+        lstrcpyW(mono_etc_path, mono_path);
+        lstrcatW(mono_etc_path, etc);
         WideCharToMultiByte(CP_UTF8, 0, mono_etc_path, -1, mono_etc_path_a, MAX_PATH, NULL, NULL);
 
         if (!find_mono_dll(mono_path, mono_dll_path)) goto fail;
@@ -298,6 +296,28 @@ fail:
     FreeLibrary(mono_handle);
     mono_handle = NULL;
     return E_FAIL;
+}
+
+MonoDomain* get_root_domain(void)
+{
+    static MonoDomain* root_domain;
+
+    if (root_domain != NULL)
+        return root_domain;
+
+    EnterCriticalSection(&runtime_list_cs);
+
+    if (root_domain == NULL)
+    {
+        /* FIXME: Use exe filename to name the domain? */
+        root_domain = mono_jit_init_version("mscorlib.dll", "v4.0.30319");
+
+        is_mono_started = TRUE;
+    }
+
+    LeaveCriticalSection(&runtime_list_cs);
+
+    return root_domain;
 }
 
 static void CDECL mono_shutdown_callback_fn(MonoProfiler *prof)
@@ -499,7 +519,7 @@ static HRESULT WINAPI CLRRuntimeInfo_GetRuntimeDirectory(ICLRRuntimeInfo* iface,
     if (pwzBuffer)
     {
         if (buffer_size >= size)
-            strcpyW(pwzBuffer, system_dir);
+            lstrcpyW(pwzBuffer, system_dir);
         else
             hr = E_NOT_SUFFICIENT_BUFFER;
     }
@@ -644,21 +664,21 @@ static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path)
     static const WCHAR libmono2_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','.','d','l','l',0};
     DWORD attributes=INVALID_FILE_ATTRIBUTES;
 
-    strcpyW(dll_path, path);
-    strcatW(dll_path, libmono2_arch_dll);
+    lstrcpyW(dll_path, path);
+    lstrcatW(dll_path, libmono2_arch_dll);
     attributes = GetFileAttributesW(dll_path);
 
     if (attributes == INVALID_FILE_ATTRIBUTES)
     {
-        strcpyW(dll_path, path);
-        strcatW(dll_path, mono2_dll);
+        lstrcpyW(dll_path, path);
+        lstrcatW(dll_path, mono2_dll);
         attributes = GetFileAttributesW(dll_path);
     }
 
     if (attributes == INVALID_FILE_ATTRIBUTES)
     {
-        strcpyW(dll_path, path);
-        strcatW(dll_path, libmono2_dll);
+        lstrcpyW(dll_path, path);
+        lstrcatW(dll_path, libmono2_dll);
         attributes = GetFileAttributesW(dll_path);
     }
 
@@ -672,11 +692,11 @@ static BOOL get_mono_path_local(LPWSTR path)
 
     /* c:\windows\mono\mono-2.0 */
     GetWindowsDirectoryW(base_path, MAX_PATH);
-    strcatW(base_path, subdir_mono);
+    lstrcatW(base_path, subdir_mono);
 
     if (find_mono_dll(base_path, mono_dll_path))
     {
-        strcpyW(path, base_path);
+        lstrcpyW(path, base_path);
         return TRUE;
     }
 
@@ -701,7 +721,7 @@ static BOOL get_mono_path_registry(LPWSTR path)
     res = RegGetValueW(hkey, NULL, valuename, RRF_RT_REG_SZ, NULL, base_path, &valuesize);
     if (res == ERROR_SUCCESS && find_mono_dll(base_path, mono_dll_path))
     {
-        strcpyW(path, base_path);
+        lstrcpyW(path, base_path);
         ret = TRUE;
     }
 
@@ -710,12 +730,36 @@ static BOOL get_mono_path_registry(LPWSTR path)
     return ret;
 }
 
-static BOOL get_mono_path_unix(const char *unix_dir, LPWSTR path)
+static BOOL get_mono_path_dos(const WCHAR *dir, LPWSTR path)
 {
     static const WCHAR unix_prefix[] = {'\\','\\','?','\\','u','n','i','x','\\'};
-    static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
+    static const WCHAR basedir[] = L"\\wine-mono-" WINE_MONO_VERSION;
     LPWSTR dos_dir;
     WCHAR mono_dll_path[MAX_PATH];
+    DWORD len;
+    BOOL ret;
+
+    if (memcmp(dir, unix_prefix, sizeof(unix_prefix)) == 0)
+        return FALSE;  /* No drive letter for this directory */
+
+    len = lstrlenW( dir ) + lstrlenW( basedir ) + 1;
+    if (!(dos_dir = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
+    lstrcpyW( dos_dir, dir );
+    lstrcatW( dos_dir, basedir );
+
+    ret = find_mono_dll(dos_dir, mono_dll_path);
+    if (ret)
+        lstrcpyW(path, dos_dir);
+
+    heap_free(dos_dir);
+
+    return ret;
+}
+
+static BOOL get_mono_path_unix(const char *unix_dir, LPWSTR path)
+{
+    static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
+    LPWSTR dos_dir;
     BOOL ret;
 
     if (!p_wine_get_dos_file_name)
@@ -729,49 +773,37 @@ static BOOL get_mono_path_unix(const char *unix_dir, LPWSTR path)
     if (!dos_dir)
         return FALSE;
 
-    if (memcmp(dos_dir, unix_prefix, sizeof(unix_prefix)) == 0)
-    {
-        /* No drive letter for this directory */
-        heap_free(dos_dir);
-        return FALSE;
-    }
-
-    ret = find_mono_dll(dos_dir, mono_dll_path);
-    if (ret)
-        strcpyW(path, dos_dir);
+    ret = get_mono_path_dos( dos_dir, path);
 
     heap_free(dos_dir);
-
     return ret;
 }
 
 static BOOL get_mono_path_datadir(LPWSTR path)
 {
-    const char *data_dir;
-    char *package_dir;
-    int len;
+    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
+    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
+    static const WCHAR unix_prefix[] = {'\\','?','?','\\','u','n','i','x','\\'};
+    static const WCHAR monoW[] = {'\\','m','o','n','o',0};
+    static const WCHAR dotdotW[] = {'\\','.','.',0};
+    const WCHAR *data_dir, *suffix;
+    WCHAR *package_dir;
     BOOL ret;
 
-    if((data_dir = wine_get_data_dir()))
-    {
-        len = strlen(data_dir);
-        package_dir = heap_alloc(len + sizeof("/mono/wine-mono-" WINE_MONO_VERSION));
-        memcpy(package_dir, data_dir, len);
-        strcpy(package_dir+len, "/mono/wine-mono-" WINE_MONO_VERSION);
-    }
-    else if((data_dir = wine_get_build_dir()))
-    {
-        len = strlen(data_dir);
-        package_dir = heap_alloc(len + sizeof("/../wine-mono-" WINE_MONO_VERSION));
-        memcpy(package_dir, data_dir, len);
-        strcpy(package_dir+len, "/../wine-mono-" WINE_MONO_VERSION);
-    }
+    if ((data_dir = _wgetenv( winedatadirW )))
+        suffix = monoW;
+    else if ((data_dir = _wgetenv( winebuilddirW )))
+        suffix = dotdotW;
     else
-    {
         return FALSE;
-    }
 
-    ret = get_mono_path_unix(package_dir, path);
+    if (!wcsncmp( data_dir, unix_prefix, wcslen(unix_prefix) )) return FALSE;
+    data_dir += 4;  /* skip \??\ prefix */
+    package_dir = heap_alloc( (lstrlenW(data_dir) + lstrlenW(suffix) + 1) * sizeof(WCHAR));
+    lstrcpyW( package_dir, data_dir );
+    lstrcatW( package_dir, suffix );
+
+    ret = get_mono_path_dos(package_dir, path);
 
     heap_free(package_dir);
 
@@ -783,10 +815,10 @@ BOOL get_mono_path(LPWSTR path, BOOL skip_local)
     return (!skip_local && get_mono_path_local(path)) ||
         get_mono_path_registry(path) ||
         get_mono_path_datadir(path) ||
-        get_mono_path_unix(INSTALL_DATADIR "/wine/mono/wine-mono-" WINE_MONO_VERSION, path) ||
+        get_mono_path_unix(INSTALL_DATADIR "/wine/mono", path) ||
         (strcmp(INSTALL_DATADIR, "/usr/share") &&
-         get_mono_path_unix("/usr/share/wine/mono/wine-mono-" WINE_MONO_VERSION, path)) ||
-        get_mono_path_unix("/opt/wine/mono/wine-mono-" WINE_MONO_VERSION, path);
+         get_mono_path_unix("/usr/share/wine/mono", path)) ||
+        get_mono_path_unix("/opt/wine/mono", path);
 }
 
 struct InstalledRuntimeEnum
@@ -1485,9 +1517,9 @@ static HKEY get_app_overrides_key(void)
     {
         HKEY tmpkey;
         WCHAR *p, *appname = bufferW;
-        if ((p = strrchrW( appname, '/' ))) appname = p + 1;
-        if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
-        strcatW( appname, subkeyW );
+        if ((p = wcsrchr( appname, '/' ))) appname = p + 1;
+        if ((p = wcsrchr( appname, '\\' ))) appname = p + 1;
+        lstrcatW( appname, subkeyW );
         /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Mono\AsmOverrides */
         if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey ))
         {
@@ -1600,20 +1632,56 @@ static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname
     HRESULT hr;
     MonoAssembly *result=NULL;
     char *stringname=NULL;
+    const char *assemblyname;
     LPWSTR stringnameW;
     int stringnameW_size;
     WCHAR path[MAX_PATH];
     char *pathA;
     MonoImageOpenStatus stat;
     DWORD search_flags;
+    int i;
+    static const WCHAR dotdllW[] = {'.','d','l','l',0};
+    static const WCHAR slashW[] = {'\\',0};
 
     stringname = mono_stringify_assembly_name(aname);
+    assemblyname = mono_assembly_name_get_name(aname);
 
     TRACE("%s\n", debugstr_a(stringname));
 
-    if (!stringname) return NULL;
+    if (!stringname || !assemblyname) return NULL;
 
     search_flags = get_assembly_search_flags(aname);
+    if (private_path)
+    {
+        stringnameW_size = MultiByteToWideChar(CP_UTF8, 0, assemblyname, -1, NULL, 0);
+        stringnameW = HeapAlloc(GetProcessHeap(), 0, stringnameW_size * sizeof(WCHAR));
+        if (stringnameW)
+        {
+            MultiByteToWideChar(CP_UTF8, 0, assemblyname, -1, stringnameW, stringnameW_size);
+            for (i = 0; private_path[i] != NULL; i++)
+            {
+                wcscpy(path, private_path[i]);
+                wcscat(path, slashW);
+                wcscat(path, stringnameW);
+                wcscat(path, dotdllW);
+                pathA = WtoA(path);
+                if (pathA)
+                {
+                    result = mono_assembly_open(pathA, &stat);
+                    if (result)
+                    {
+                        TRACE("found: %s\n", debugstr_w(path));
+                        HeapFree(GetProcessHeap(), 0, pathA);
+                        HeapFree(GetProcessHeap(), 0, stringnameW);
+                        mono_free(stringname);
+                        return result;
+                    }
+                    HeapFree(GetProcessHeap(), 0, pathA);
+                }
+            }
+            HeapFree(GetProcessHeap(), 0, stringnameW);
+        }
+    }
 
     /* FIXME: We should search the given paths before the GAC. */
 
@@ -1683,8 +1751,8 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
 
     if (exefile && !config_file && !config_stream)
     {
-        strcpyW(local_config_file, exefile);
-        strcatW(local_config_file, dotconfig);
+        lstrcpyW(local_config_file, exefile);
+        lstrcatW(local_config_file, dotconfig);
 
         config_file = local_config_file;
     }

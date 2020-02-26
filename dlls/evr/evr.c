@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
 #include "wine/debug.h"
 
 #include <stdio.h>
@@ -34,51 +33,39 @@ WINE_DEFAULT_DEBUG_CHANNEL(evr);
 
 typedef struct
 {
-    BaseFilter filter;
+    struct strmbase_renderer renderer;
 } evr_filter;
 
-static const IBaseFilterVtbl basefilter_vtbl =
+static inline evr_filter *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
 {
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseRendererImpl_Stop,
-    BaseRendererImpl_Pause,
-    BaseRendererImpl_Run,
-    BaseRendererImpl_GetState,
-    BaseRendererImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
-static inline evr_filter *impl_from_BaseFilter(BaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, evr_filter, filter);
+    return CONTAINING_RECORD(iface, evr_filter, renderer);
 }
 
-static IPin *evr_get_pin(BaseFilter *iface, unsigned int index)
+static void evr_destroy(struct strmbase_renderer *iface)
 {
-    FIXME("iface %p, index %u, stub!\n", iface, index);
-    return NULL;
-}
+    evr_filter *filter = impl_from_strmbase_renderer(iface);
 
-static void evr_destroy(BaseFilter *iface)
-{
-    evr_filter *filter = impl_from_BaseFilter(iface);
-
-    strmbase_filter_cleanup(&filter->filter);
+    strmbase_renderer_cleanup(&filter->renderer);
     CoTaskMemFree(filter);
 }
 
-static const BaseFilterFuncTable basefilter_functable =
+static HRESULT WINAPI evr_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
 {
-    .filter_get_pin = evr_get_pin,
-    .filter_destroy = evr_destroy,
+    FIXME("Not implemented.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI evr_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
+{
+    FIXME("Not implemented.\n");
+    return E_NOTIMPL;
+}
+
+static const struct strmbase_renderer_ops renderer_ops =
+{
+    .pfnCheckMediaType = evr_CheckMediaType,
+    .pfnDoRenderSample = evr_DoRenderSample,
+    .renderer_destroy = evr_destroy,
 };
 
 HRESULT evr_filter_create(IUnknown *outer, void **out)
@@ -91,10 +78,10 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
     if (!object)
         return E_OUTOFMEMORY;
 
-    strmbase_filter_init(&object->filter, &basefilter_vtbl, outer, &CLSID_EnhancedVideoRenderer,
-                    (DWORD_PTR)(__FILE__ ": EVR.csFilter"), &basefilter_functable);
+    strmbase_renderer_init(&object->renderer, outer,
+            &CLSID_EnhancedVideoRenderer, L"EVR Input0", &renderer_ops);
 
-    *out = &object->filter.IUnknown_inner;
+    *out = &object->renderer.filter.IUnknown_inner;
 
     return S_OK;
 }

@@ -54,7 +54,7 @@ static DWORD get_user_dashes( char *res, const DWORD *style, DWORD len )
 /***********************************************************************
  *           SelectPen   (X11DRV.@)
  */
-HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
+HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
 {
     static const char PEN_dash[]          = { 16,8 };
     static const char PEN_dot[]           = { 4,4 };
@@ -154,7 +154,7 @@ HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
 /***********************************************************************
  *           SetDCPenColor (X11DRV.@)
  */
-COLORREF X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor )
+COLORREF CDECL X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 

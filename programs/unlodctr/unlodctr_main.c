@@ -19,7 +19,7 @@
 #include <windows.h>
 #include <loadperf.h>
 
-int main( int argc, char *argv[] )
+int __cdecl main( int argc, char *argv[] )
 {
     return UnloadPerfCounterTextStringsW(GetCommandLineW(), FALSE);
 }

@@ -30,11 +30,14 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "winternl.h"
 
 static const WCHAR upper_case[] = {'\t','J','U','S','T','!',' ','A',',',' ','T','E','S','T',';',' ','S','T','R','I','N','G',' ','1','/','*','+','-','.','\r','\n',0};
 static const WCHAR lower_case[] = {'\t','j','u','s','t','!',' ','a',',',' ','t','e','s','t',';',' ','s','t','r','i','n','g',' ','1','/','*','+','-','.','\r','\n',0};
@@ -44,33 +47,6 @@ static const WCHAR localeW[] = {'e','n','-','U','S',0};
 static const WCHAR fooW[] = {'f','o','o',0};
 static const WCHAR emptyW[] = {0};
 static const WCHAR invalidW[] = {'i','n','v','a','l','i','d',0};
-
-static inline unsigned int strlenW( const WCHAR *str )
-{
-    const WCHAR *s = str;
-    while (*s) s++;
-    return s - str;
-}
-
-static inline int strncmpW( const WCHAR *str1, const WCHAR *str2, int n )
-{
-    if (n <= 0) return 0;
-    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
-static inline WCHAR *strchrW( const WCHAR *str, WCHAR ch )
-{
-    do { if (*str == ch) return (WCHAR *)str; } while (*str++);
-    return NULL;
-}
-
-static inline BOOL isdigitW( WCHAR wc )
-{
-    WORD type;
-    GetStringTypeW( CT_CTYPE1, &wc, 1, &type );
-    return type & C1_DIGIT;
-}
 
 /* Some functions are only in later versions of kernel32.dll */
 static WORD enumCount;
@@ -83,9 +59,8 @@ static BOOL (WINAPI *pEnumUILanguagesA)(UILANGUAGE_ENUMPROCA, DWORD, LONG_PTR);
 static BOOL (WINAPI *pEnumSystemLocalesEx)(LOCALE_ENUMPROCEX, DWORD, LPARAM, LPVOID);
 static INT (WINAPI *pLCMapStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPWSTR, INT, LPNLSVERSIONINFO, LPVOID, LPARAM);
 static LCID (WINAPI *pLocaleNameToLCID)(LPCWSTR, DWORD);
+static NTSTATUS (WINAPI *pRtlLocaleNameToLcid)(LPCWSTR, LCID *, DWORD);
 static INT  (WINAPI *pLCIDToLocaleName)(LCID, LPWSTR, INT, DWORD);
-static INT (WINAPI *pFoldStringA)(DWORD, LPCSTR, INT, LPSTR, INT);
-static INT (WINAPI *pFoldStringW)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static BOOL (WINAPI *pIsValidLanguageGroup)(LGRPID, DWORD);
 static INT (WINAPI *pIdnToNameprepUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pIdnToAscii)(DWORD, LPCWSTR, INT, LPWSTR, INT);
@@ -108,6 +83,11 @@ static LANGID (WINAPI *pSetThreadUILanguage)(LANGID);
 static LANGID (WINAPI *pGetThreadUILanguage)(VOID);
 static INT (WINAPI *pNormalizeString)(NORM_FORM, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pFindStringOrdinal)(DWORD, LPCWSTR lpStringSource, INT, LPCWSTR, INT, BOOL);
+static NTSTATUS (WINAPI *pRtlNormalizeString)(ULONG, LPCWSTR, INT, LPWSTR, INT*);
+static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
+static NTSTATUS (WINAPI *pNtGetNlsSectionPtr)(ULONG,ULONG,void*,void**,SIZE_T*);
+static void (WINAPI *pRtlInitCodePageTable)(USHORT*,CPTABLEINFO*);
+static NTSTATUS (WINAPI *pRtlCustomCPToUnicodeN)(CPTABLEINFO*,WCHAR*,DWORD,DWORD*,const char*,DWORD);
 
 static void InitFunctionPointers(void)
 {
@@ -121,8 +101,6 @@ static void InitFunctionPointers(void)
   X(LocaleNameToLCID);
   X(LCIDToLocaleName);
   X(LCMapStringEx);
-  X(FoldStringA);
-  X(FoldStringW);
   X(IsValidLanguageGroup);
   X(EnumUILanguagesA);
   X(EnumSystemLocalesEx);
@@ -148,6 +126,12 @@ static void InitFunctionPointers(void)
 
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
+  X(RtlLocaleNameToLcid);
+  X(RtlNormalizeString);
+  X(RtlIsNormalizedString);
+  X(NtGetNlsSectionPtr);
+  X(RtlInitCodePageTable);
+  X(RtlCustomCPToUnicodeN);
 #undef X
 }
 
@@ -166,7 +150,7 @@ static void InitFunctionPointers(void)
    MultiByteToWideChar(CP_ACP,0,y,-1,Expected,ARRAY_SIZE(Expected)); \
    SetLastError(0xdeadbeef); buffer[0] = '\0'
 #define EXPECT_LENW ok(ret == lstrlenW(Expected)+1, "Expected Len %d, got %d\n", lstrlenW(Expected)+1, ret)
-#define EXPECT_EQW  ok(strncmpW(buffer, Expected, strlenW(Expected)) == 0, "Bad conversion\n")
+#define EXPECT_EQW  ok(wcsncmp(buffer, Expected, lstrlenW(Expected)) == 0, "Bad conversion\n")
 
 #define NUO LOCALE_NOUSEROVERRIDE
 
@@ -249,7 +233,6 @@ struct neutralsublang_name2_t {
     LCID lcid;
     LCID lcid_broken;
     WCHAR sname_broken[15];
-    int todo;
 };
 
 static const struct neutralsublang_name2_t neutralsublang_names2[] = {
@@ -266,7 +249,7 @@ static const struct neutralsublang_name2_t neutralsublang_names2[] = {
       MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH), SORT_DEFAULT) /* vista */,
       {'e','s','-','E','S','_','t','r','a','d','n','l',0} },
     { {'g','a',0}, {'g','a','-','I','E',0},
-      MAKELCID(MAKELANGID(LANG_IRISH, SUBLANG_IRISH_IRELAND), SORT_DEFAULT), 0, {0}, 0x3 },
+      MAKELCID(MAKELANGID(LANG_IRISH, SUBLANG_IRISH_IRELAND), SORT_DEFAULT), 0, {0} },
     { {'i','t',0}, {'i','t','-','I','T',0},
       MAKELCID(MAKELANGID(LANG_ITALIAN, SUBLANG_ITALIAN), SORT_DEFAULT) },
     { {'m','s',0}, {'m','s','-','M','Y',0},
@@ -349,16 +332,14 @@ static void test_GetLocaleInfoW(void)
 
           val = 0;
           GetLocaleInfoW(lcid, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
-          todo_wine_if (ptr->todo & 0x1)
-              ok(val == ptr->lcid || (val && broken(val == ptr->lcid_broken)), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
-                  wine_dbgstr_w(ptr->name), val, ptr->lcid);
+          ok(val == ptr->lcid || (val && broken(val == ptr->lcid_broken)), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+             wine_dbgstr_w(ptr->name), val, ptr->lcid);
 
           /* now check LOCALE_SNAME */
           GetLocaleInfoW(lcid, LOCALE_SNAME, bufferW, ARRAY_SIZE(bufferW));
-          todo_wine_if (ptr->todo & 0x2)
-              ok(!lstrcmpW(bufferW, ptr->sname) ||
-                 (*ptr->sname_broken && broken(!lstrcmpW(bufferW, ptr->sname_broken))),
-                  "%s: got %s\n", wine_dbgstr_w(ptr->name), wine_dbgstr_w(bufferW));
+          ok(!lstrcmpW(bufferW, ptr->sname) ||
+             (*ptr->sname_broken && broken(!lstrcmpW(bufferW, ptr->sname_broken))),
+             "%s: got %s\n", wine_dbgstr_w(ptr->name), wine_dbgstr_w(bufferW));
           ptr++;
       }
   }
@@ -679,7 +660,7 @@ static void test_GetTimeFormatEx(void)
 
   STRINGSW("m1s2m3s4", ""); /* TIME_NOMINUTESORSECONDS/complex format */
   ret = pGetTimeFormatEx(localeW, TIME_NOMINUTESORSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret == strlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  ok(ret == lstrlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   EXPECT_LENW; EXPECT_EQW;
 
   STRINGSW("", "8:56 AM"); /* TIME_NOSECONDS/Default format */
@@ -699,7 +680,7 @@ static void test_GetTimeFormatEx(void)
 
   STRINGSW("s1s2s3", ""); /* Duplicate tokens */
   ret = pGetTimeFormatEx(localeW, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret == strlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  ok(ret == lstrlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   EXPECT_LENW; EXPECT_EQW;
 
   STRINGSW("t/tt", "A/AM"); /* AM time marker */
@@ -1593,7 +1574,7 @@ static void test_GetNumberFormatA(void)
   if (IsValidLocale(lcid, 0))
   {
     STRINGSA("-12345","-12 345,00"); /* Try French formatting */
-    Expected[3] = 160; /* Non breaking space */
+    Expected[3] = (char)160; /* Non breaking space */
     ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
     ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
     EXPECT_LENA; EXPECT_EQA;
@@ -2383,6 +2364,7 @@ static void test_LCMapStringA(void)
     ok(!ret, "src == dst without LCMAP_UPPERCASE or LCMAP_LOWERCASE must fail\n");
 
     /* test whether '\0' is always appended */
+    memset(buf, 0xff, sizeof(buf));
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
                        upper_case, -1, buf, sizeof(buf));
     ok(ret, "LCMapStringA must succeed\n");
@@ -2795,9 +2777,12 @@ static const struct neutralsublang_name_t neutralsublang_names[] = {
 
 static void test_LocaleNameToLCID(void)
 {
-    LCID lcid;
+    LCID lcid, expect;
+    NTSTATUS status;
     INT ret;
     WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+    const struct neutralsublang_name_t *ptr;
+
     static const WCHAR enW[] = {'e','n',0};
     static const WCHAR esesW[] = {'e','s','-','e','s',0};
     static const WCHAR zhHansW[] = {'z','h','-','H','a','n','s',0};
@@ -2851,14 +2836,15 @@ static void test_LocaleNameToLCID(void)
     ok(lcid == MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MODERN), SORT_DEFAULT), "Got wrong lcid for es-es: 0x%x\n", lcid);
 
     /* english neutral name */
+    lcid = pLocaleNameToLCID(enW, LOCALE_ALLOW_NEUTRAL_NAMES);
+    ok(lcid == MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), SORT_DEFAULT) ||
+       broken(lcid == 0) /* Vista */, "got 0x%04x\n", lcid);
     lcid = pLocaleNameToLCID(enW, 0);
     ok(lcid == MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT) ||
        broken(lcid == 0) /* Vista */, "got 0x%04x\n", lcid);
     if (lcid)
     {
-        const struct neutralsublang_name_t *ptr = neutralsublang_names;
-
-        while (*ptr->name)
+        for (ptr = neutralsublang_names; *ptr->name; ptr++)
         {
             lcid = pLocaleNameToLCID(ptr->name, 0);
             todo_wine_if (ptr->todo)
@@ -2868,10 +2854,10 @@ static void test_LocaleNameToLCID(void)
             *buffer = 0;
             ret = pLCIDToLocaleName(lcid, buffer, ARRAY_SIZE(buffer), 0);
             ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(ptr->name), ret);
+            todo_wine_if (ptr->todo)
             ok(!lstrcmpW(ptr->sname, buffer), "%s: got wrong locale name %s\n",
                 wine_dbgstr_w(ptr->name), wine_dbgstr_w(buffer));
 
-            ptr++;
         }
 
         /* zh-Hant has LCID 0x7c04, but LocaleNameToLCID actually returns 0x0c04, which is the LCID of zh-HK */
@@ -2885,7 +2871,7 @@ static void test_LocaleNameToLCID(void)
         /* check that 0x7c04 also works and is mapped to zh-HK */
         ret = pLCIDToLocaleName(MAKELANGID(LANG_CHINESE_TRADITIONAL, SUBLANG_CHINESE_TRADITIONAL),
                 buffer, ARRAY_SIZE(buffer), 0);
-        todo_wine ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHantW), ret);
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHantW), ret);
         ok(!lstrcmpW(zhhkW, buffer), "%s: got wrong locale name %s\n",
            wine_dbgstr_w(zhHantW), wine_dbgstr_w(buffer));
 
@@ -2922,6 +2908,70 @@ static void test_LocaleNameToLCID(void)
         ok(!lstrcmpW(zhcnW, buffer), "%s: got wrong locale name %s\n",
            wine_dbgstr_w(zhhansW), wine_dbgstr_w(buffer));
     }
+
+    if (pRtlLocaleNameToLcid)
+    {
+        status = pRtlLocaleNameToLcid( LOCALE_NAME_USER_DEFAULT, &lcid, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( LOCALE_NAME_SYSTEM_DEFAULT, &lcid, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( invalidW, &lcid, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( LOCALE_NAME_INVARIANT, &lcid, 0 );
+        ok( !status, "failed error %x\n", status );
+        ok( lcid == LANG_INVARIANT, "got %08x\n", lcid );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( localeW, &lcid, 0 );
+        ok( !status, "failed error %x\n", status );
+        ok( lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), "got %08x\n", lcid );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( esesW, &lcid, 0 );
+        ok( !status, "failed error %x\n", status );
+        ok( lcid == MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MODERN), "got %08x\n", lcid );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( enW, &lcid, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( enW, &lcid, 1 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( enW, &lcid, 2 );
+        ok( !status, "failed error %x\n", status );
+        ok( lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), "got %08x\n", lcid );
+        status = pRtlLocaleNameToLcid( L"en-RR", &lcid, 2 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( L"en-Latn-RR", &lcid, 2 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+
+        for (ptr = neutralsublang_names; *ptr->name; ptr++)
+        {
+            switch (LANGIDFROMLCID(ptr->lcid))
+            {
+            case MAKELANGID( LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_LATIN): expect = LANG_SERBIAN_NEUTRAL; break;
+            case MAKELANGID( LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_CYRILLIC): expect = 0x6c1a; break;
+            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED ): expect = 0x7804; break;
+            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG ): expect = LANG_CHINESE_TRADITIONAL; break;
+            default: expect = MAKELANGID( PRIMARYLANGID(ptr->lcid), SUBLANG_NEUTRAL ); break;
+            }
+
+            status = pRtlLocaleNameToLcid( ptr->name, &lcid, 2 );
+            ok( !status || broken(ptr->lcid == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)), /* vista */
+                "%s failed error %x\n", wine_dbgstr_w(ptr->name), status );
+            todo_wine_if(ptr->todo)
+            if (!status) ok( lcid == expect, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+                             wine_dbgstr_w(ptr->name), lcid, expect );
+            status = pRtlLocaleNameToLcid( ptr->sname, &lcid, 0 );
+            ok( !status || broken(ptr->lcid == MAKELANGID(LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_LATIN)), /* vista */
+                "%s failed error %x\n", wine_dbgstr_w(ptr->name), status );
+            todo_wine_if(ptr->todo)
+            if (!status) ok( lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+                             wine_dbgstr_w(ptr->name), lcid, ptr->lcid );
+        }
+    }
+    else win_skip( "RtlLocaleNameToLcid not available\n" );
 }
 
 /* this requires collation table patch to make it MS compatible */
@@ -3138,9 +3188,6 @@ static void test_FoldStringA(void)
     { 0x00 }
   };
 
-  if (!pFoldStringA)
-    return; /* FoldString is present in NT v3.1+, but not 95/98/Me */
-
   /* these tests are locale specific */
   if (GetACP() != 1252)
   {
@@ -3149,13 +3196,8 @@ static void test_FoldStringA(void)
   }
 
   /* MAP_FOLDDIGITS */
-  SetLastError(0);
-  ret = pFoldStringA(MAP_FOLDDIGITS, digits_src, -1, dst, 256);
-  if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-  {
-    win_skip("FoldStringA is not implemented\n");
-    return;
-  }
+  SetLastError(0xdeadbeef);
+  ret = FoldStringA(MAP_FOLDDIGITS, digits_src, -1, dst, 256);
   ok(ret == 4, "Expected ret == 4, got %d, error %d\n", ret, GetLastError());
   ok(strcmp(dst, digits_dst) == 0,
      "MAP_FOLDDIGITS: Expected '%s', got '%s'\n", digits_dst, dst);
@@ -3165,19 +3207,16 @@ static void test_FoldStringA(void)
     {
       src[0] = i;
       src[1] = '\0';
-      SetLastError(0);
-      ret = pFoldStringA(MAP_FOLDDIGITS, src, -1, dst, 256);
+      ret = FoldStringA(MAP_FOLDDIGITS, src, -1, dst, 256);
       ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
       ok(dst[0] == src[0],
          "MAP_FOLDDIGITS: Expected '%s', got '%s'\n", src, dst);
     }
   }
 
-  /* MAP_EXPAND_LIGATURES */
-  SetLastError(0);
-  ret = pFoldStringA(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
-  /* NT 4.0 doesn't support MAP_EXPAND_LIGATURES */
-  if (!(ret == 0 && GetLastError() == ERROR_INVALID_FLAGS)) {
+    /* MAP_EXPAND_LIGATURES */
+    SetLastError(0xdeadbeef);
+    ret = FoldStringA(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
     ok(ret == sizeof(ligatures_dst), "Got %d, error %d\n", ret, GetLastError());
     ok(strcmp(dst, ligatures_dst) == 0,
        "MAP_EXPAND_LIGATURES: Expected '%s', got '%s'\n", ligatures_dst, dst);
@@ -3187,8 +3226,7 @@ static void test_FoldStringA(void)
       {
         src[0] = i;
         src[1] = '\0';
-        SetLastError(0);
-        ret = pFoldStringA(MAP_EXPAND_LIGATURES, src, -1, dst, 256);
+        ret = FoldStringA(MAP_EXPAND_LIGATURES, src, -1, dst, 256);
         if (ret == 3)
         {
           /* Vista */
@@ -3204,12 +3242,13 @@ static void test_FoldStringA(void)
         }
       }
     }
-  }
 
   /* MAP_COMPOSITE */
-  SetLastError(0);
-  ret = pFoldStringA(MAP_COMPOSITE, composite_src, -1, dst, 256);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringA(MAP_COMPOSITE, composite_src, -1, dst, 256);
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  ok( GetLastError() == 0xdeadbeef || broken(!GetLastError()), /* vista */
+      "wrong error %u\n", GetLastError());
   ok(ret == 121 || ret == 119, "Expected 121 or 119, got %d\n", ret);
   ok(strcmp(dst, composite_dst) == 0 || strcmp(dst, composite_dst_alt) == 0,
      "MAP_COMPOSITE: Mismatch, got '%s'\n", dst);
@@ -3220,8 +3259,7 @@ static void test_FoldStringA(void)
     {
       src[0] = i;
       src[1] = '\0';
-      SetLastError(0);
-      ret = pFoldStringA(MAP_COMPOSITE, src, -1, dst, 256);
+      ret = FoldStringA(MAP_COMPOSITE, src, -1, dst, 256);
       ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
       ok(dst[0] == src[0],
          "0x%02x, 0x%02x,0x%02x,0x%02x,\n", (unsigned char)src[0],
@@ -3234,8 +3272,8 @@ static void test_FoldStringA(void)
   {
     src[0] = i;
     src[1] = '\0';
-    SetLastError(0);
-    ret = pFoldStringA(MAP_FOLDCZONE, src, -1, dst, 256);
+    SetLastError(0xdeadbeef);
+    ret = FoldStringA(MAP_FOLDCZONE, src, -1, dst, 256);
     is_special = FALSE;
     for (j = 0; foldczone_special[j].src != 0 && ! is_special; j++)
     {
@@ -3264,8 +3302,7 @@ static void test_FoldStringA(void)
   {
     src[0] = i;
     src[1] = '\0';
-    SetLastError(0);
-    ret = pFoldStringA(MAP_PRECOMPOSED, src, -1, dst, 256);
+    ret = FoldStringA(MAP_PRECOMPOSED, src, -1, dst, 256);
     ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
     ok(src[0] == dst[0],
        "MAP_PRECOMPOSED: Expected 0x%02x, got 0x%02x\n",
@@ -3276,6 +3313,7 @@ static void test_FoldStringA(void)
 static void test_FoldStringW(void)
 {
   int ret;
+  WORD type;
   unsigned int i, j;
   WCHAR src[256], dst[256], ch, prev_ch = 1;
   static const DWORD badFlags[] =
@@ -3377,23 +3415,15 @@ static void test_FoldStringW(void)
   static const WCHAR foldczone_src[] =
   {
     'W',    'i',    'n',    'e',    0x0348, 0x0551, 0x1323, 0x280d,
-    0xff37, 0xff49, 0xff4e, 0xff45, '\0'
+    0xff37, 0xff49, 0xff4e, 0xff45, 0x3c5, 0x308, 0x6a, 0x30c, 0xa0, 0xaa, 0
   };
   static const WCHAR foldczone_dst[] =
   {
-    'W','i','n','e',0x0348,0x0551,0x1323,0x280d,'W','i','n','e','\0'
+    'W','i','n','e',0x0348,0x0551,0x1323,0x280d,'W','i','n','e',0x3cb,0x1f0,' ','a',0
   };
-  static const WCHAR foldczone_todo_src[] =
+  static const WCHAR foldczone_broken_dst[] =
   {
-      0x3c5,0x308,0x6a,0x30c,0xa0,0xaa,0
-  };
-  static const WCHAR foldczone_todo_dst[] =
-  {
-      0x3cb,0x1f0,' ','a',0
-  };
-  static const WCHAR foldczone_todo_broken_dst[] =
-  {
-      0x3cb,0x1f0,0xa0,0xaa,0
+    'W','i','n','e',0x0348,0x0551,0x1323,0x280d,'W','i','n','e',0x03c5,0x0308,'j',0x030c,0x00a0,0x00aa,0
   };
   static const WCHAR ligatures_src[] =
   {
@@ -3414,69 +3444,58 @@ static void test_FoldStringW(void)
     'f','l','f','f','i','f','f','l',0x017f,'t','s','t','\0'
   };
 
-  if (!pFoldStringW)
-  {
-    win_skip("FoldStringW is not available\n");
-    return; /* FoldString is present in NT v3.1+, but not 95/98/Me */
-  }
-
   /* Invalid flag combinations */
   for (i = 0; i < ARRAY_SIZE(badFlags); i++)
   {
     src[0] = dst[0] = '\0';
-    SetLastError(0);
-    ret = pFoldStringW(badFlags[i], src, 256, dst, 256);
-    if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
-    {
-      win_skip("FoldStringW is not implemented\n");
-      return;
-    }
+    SetLastError(0xdeadbeef);
+    ret = FoldStringW(badFlags[i], src, 256, dst, 256);
     ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
        "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
   }
 
   /* src & dst cannot be the same */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, src, -1, src, 256);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, src, -1, src, 256);
   ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
   /* src can't be NULL */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, NULL, -1, dst, 256);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, NULL, -1, dst, 256);
   ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
   /* srclen can't be 0 */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, src, 0, dst, 256);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, src, 0, dst, 256);
   ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
   /* dstlen can't be < 0 */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, src, -1, dst, -1);
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, src, -1, dst, -1);
   ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
   /* Ret includes terminating NUL which is appended if srclen = -1 */
-  SetLastError(0);
+  SetLastError(0xdeadbeef);
   src[0] = 'A';
   src[1] = '\0';
   dst[0] = '\0';
-  ret = pFoldStringW(MAP_FOLDCZONE, src, -1, dst, 256);
+  ret = FoldStringW(MAP_FOLDCZONE, src, -1, dst, 256);
   ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
   ok(dst[0] == 'A' && dst[1] == '\0',
      "srclen=-1: Expected ret=2 [%d,%d], got ret=%d [%d,%d], err=%d\n",
      'A', '\0', ret, dst[0], dst[1], GetLastError());
 
   /* If size is given, result is not NUL terminated */
-  SetLastError(0);
+  SetLastError(0xdeadbeef);
   src[0] = 'A';
   src[1] = 'A';
   dst[0] = 'X';
   dst[1] = 'X';
-  ret = pFoldStringW(MAP_FOLDCZONE, src, 1, dst, 256);
+  ret = FoldStringW(MAP_FOLDCZONE, src, 1, dst, 256);
   ok(ret == 1, "Expected ret == 1, got %d, error %d\n", ret, GetLastError());
   ok(dst[0] == 'A' && dst[1] == 'X',
      "srclen=1: Expected ret=1, [%d,%d], got ret=%d,[%d,%d], err=%d\n",
@@ -3488,16 +3507,17 @@ static void test_FoldStringW(void)
     /* Check everything before this range */
     for (ch = prev_ch; ch < digitRanges[j]; ch++)
     {
-      SetLastError(0);
+      SetLastError(0xdeadbeef);
       src[0] = ch;
       src[1] = dst[0] = '\0';
-      ret = pFoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
+      ret = FoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
       ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
 
-      ok(dst[0] == ch || strchrW(outOfSequenceDigits, ch) ||
+      ok(dst[0] == ch || wcschr(outOfSequenceDigits, ch) ||
          (ch >= 0xa8e0 && ch <= 0xa8e9),  /* combining Devanagari on Win8 */
          "MAP_FOLDDIGITS: ch 0x%04x Expected unchanged got %04x\n", ch, dst[0]);
-      ok(!isdigitW(ch) || strchrW(outOfSequenceDigits, ch) ||
+      GetStringTypeW( CT_CTYPE1, &ch, 1, &type );
+      ok(!(type & C1_DIGIT) || wcschr(outOfSequenceDigits, ch) ||
          broken( ch >= 0xbf0 && ch <= 0xbf2 ), /* win2k */
          "char %04x should not be a digit\n", ch );
     }
@@ -3515,17 +3535,17 @@ static void test_FoldStringW(void)
       else if (ch == 0x2073) c = 0x00B3; /* Superscript 3 */
       else if (ch == 0x245F) c = 0x24EA; /* Circled 0     */
       else                   c = ch;
-      SetLastError(0);
+      SetLastError(0xdeadbeef);
       src[0] = c;
       src[1] = dst[0] = '\0';
-      ret = pFoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
+      ret = FoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
       ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
 
       ok((dst[0] == '0' + ch - digitRanges[j] && dst[1] == '\0') ||
          broken( dst[0] == ch ) ||  /* old Windows versions don't have all mappings */
          (digitRanges[j] == 0x3020 && dst[0] == ch) || /* Hangzhou not present in all Windows versions */
          (digitRanges[j] == 0x0F29 && dst[0] == ch) || /* Tibetan not present in all Windows versions */
-         strchrW(noDigitAvailable, c),
+         wcschr(noDigitAvailable, c),
          "MAP_FOLDDIGITS: ch %04x Expected %04x got %04x\n",
          ch, '0' + digitRanges[j] - ch, dst[0]);
     }
@@ -3533,27 +3553,21 @@ static void test_FoldStringW(void)
   }
 
   /* MAP_FOLDCZONE */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_FOLDCZONE, foldczone_src, -1, dst, 256);
-  ok(ret == ARRAY_SIZE(foldczone_dst), "Got %d, error %d\n", ret, GetLastError());
-  ok(!memcmp(dst, foldczone_dst, sizeof(foldczone_dst)),
-     "MAP_FOLDCZONE: Expanded incorrectly\n");
+  SetLastError(0xdeadbeef);
+  ret = FoldStringW(MAP_FOLDCZONE, foldczone_src, -1, dst, 256);
+  ok(ret == ARRAY_SIZE(foldczone_dst)
+     || broken(ret == ARRAY_SIZE(foldczone_broken_dst)), /* winxp, win2003 */
+     "Got %d, error %d.\n", ret, GetLastError());
+  ok(!memcmp(dst, foldczone_dst, sizeof(foldczone_dst))
+     || broken(!memcmp(dst, foldczone_broken_dst, sizeof(foldczone_broken_dst))), /* winxp, win2003 */
+     "Got unexpected string %s.\n", wine_dbgstr_w(dst));
 
-  ret = pFoldStringW(MAP_FOLDCZONE|MAP_PRECOMPOSED, foldczone_todo_src, -1, dst, 256);
-  todo_wine ok(ret == ARRAY_SIZE(foldczone_todo_dst), "Got %d, error %d\n", ret, GetLastError());
-  todo_wine ok(!memcmp(dst, foldczone_todo_dst, sizeof(foldczone_todo_dst))
-          || broken(!memcmp(dst, foldczone_todo_broken_dst, sizeof(foldczone_todo_broken_dst))),
-          "MAP_FOLDCZONE: Expanded incorrectly (%s)\n", wine_dbgstr_w(dst));
-
-  /* MAP_EXPAND_LIGATURES */
-  SetLastError(0);
-  ret = pFoldStringW(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
-  /* NT 4.0 doesn't support MAP_EXPAND_LIGATURES */
-  if (!(ret == 0 && GetLastError() == ERROR_INVALID_FLAGS)) {
+    /* MAP_EXPAND_LIGATURES */
+    SetLastError(0xdeadbeef);
+    ret = FoldStringW(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
     ok(ret == ARRAY_SIZE(ligatures_dst), "Got %d, error %d\n", ret, GetLastError());
     ok(!memcmp(dst, ligatures_dst, sizeof(ligatures_dst)),
-       "MAP_EXPAND_LIGATURES: Expanded incorrectly\n");
-  }
+       "Got unexpected string %s.\n", wine_dbgstr_w(dst));
 
   /* FIXME: MAP_PRECOMPOSED : MAP_COMPOSITE */
 }
@@ -3563,25 +3577,67 @@ static void test_FoldStringW(void)
 #define LCID_OK(l) \
   ok(lcid == l, "Expected lcid = %08x, got %08x\n", l, lcid)
 #define MKLCID(x,y,z) MAKELCID(MAKELANGID(x, y), z)
-#define LCID_RES(src, res) lcid = ConvertDefaultLocale(src); LCID_OK(res)
+#define LCID_RES(src, res) do { lcid = ConvertDefaultLocale(src); LCID_OK(res); } while (0)
 #define TEST_LCIDLANG(a,b) LCID_RES(MAKELCID(a,b), MAKELCID(a,b))
 #define TEST_LCID(a,b,c) LCID_RES(MKLCID(a,b,c), MKLCID(a,b,c))
 
 static void test_ConvertDefaultLocale(void)
 {
-  LCID lcid;
+    /* some languages use a different default than SUBLANG_DEFAULT */
+    static const struct { WORD lang, sublang; } nondefault_langs[] =
+    {
+        { LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED },
+        { LANG_SPANISH, SUBLANG_SPANISH_MODERN },
+        { LANG_IRISH, SUBLANG_IRISH_IRELAND },
+        { LANG_BENGALI, SUBLANG_BENGALI_BANGLADESH },
+        { LANG_SINDHI, SUBLANG_SINDHI_AFGHANISTAN },
+        { LANG_INUKTITUT, SUBLANG_INUKTITUT_CANADA_LATIN },
+        { LANG_TAMAZIGHT, SUBLANG_TAMAZIGHT_ALGERIA_LATIN },
+        { LANG_FULAH, SUBLANG_FULAH_SENEGAL },
+        { LANG_TIGRINYA, SUBLANG_TIGRINYA_ERITREA }
+    };
+    LCID lcid;
+    unsigned int i;
 
   /* Doesn't change lcid, even if non default sublang/sort used */
   TEST_LCID(LANG_ENGLISH,  SUBLANG_ENGLISH_US, SORT_DEFAULT);
   TEST_LCID(LANG_ENGLISH,  SUBLANG_ENGLISH_UK, SORT_DEFAULT);
   TEST_LCID(LANG_JAPANESE, SUBLANG_DEFAULT,    SORT_DEFAULT);
   TEST_LCID(LANG_JAPANESE, SUBLANG_DEFAULT,    SORT_JAPANESE_UNICODE);
+  lcid = ConvertDefaultLocale( MKLCID( LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ));
+  ok( lcid == MKLCID( LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ) ||
+      broken( lcid == MKLCID( LANG_JAPANESE, SUBLANG_DEFAULT, SORT_JAPANESE_UNICODE )), /* <= vista */
+          "Expected lcid = %08x got %08x\n",
+      MKLCID( LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ), lcid );
+  lcid = ConvertDefaultLocale( MKLCID( LANG_IRISH, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ));
+  ok( lcid == MKLCID( LANG_IRISH, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ) ||
+      broken( lcid == MKLCID( LANG_IRISH, SUBLANG_DEFAULT, SORT_JAPANESE_UNICODE )), /* <= vista */
+          "Expected lcid = %08x got %08x\n",
+      MKLCID( LANG_IRISH, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ), lcid );
 
   /* SUBLANG_NEUTRAL -> SUBLANG_DEFAULT */
   LCID_RES(MKLCID(LANG_ENGLISH,  SUBLANG_NEUTRAL, SORT_DEFAULT),
            MKLCID(LANG_ENGLISH,  SUBLANG_DEFAULT, SORT_DEFAULT));
   LCID_RES(MKLCID(LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_DEFAULT),
            MKLCID(LANG_JAPANESE, SUBLANG_DEFAULT, SORT_DEFAULT));
+  for (i = 0; i < ARRAY_SIZE(nondefault_langs); i++)
+  {
+      lcid = ConvertDefaultLocale( MAKELANGID( nondefault_langs[i].lang, SUBLANG_NEUTRAL ));
+      ok( lcid == MAKELANGID( nondefault_langs[i].lang, nondefault_langs[i].sublang ) ||
+          broken( lcid == MAKELANGID( nondefault_langs[i].lang, SUBLANG_DEFAULT )) ||  /* <= vista */
+          broken( lcid == MAKELANGID( nondefault_langs[i].lang, SUBLANG_NEUTRAL )),  /* w7 */
+          "Expected lcid = %08x got %08x\n",
+          MAKELANGID( nondefault_langs[i].lang, nondefault_langs[i].sublang ), lcid );
+  }
+  lcid = ConvertDefaultLocale( 0x7804 );
+  ok( lcid == MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED ) ||
+      broken( lcid == 0x7804 ),  /* <= vista */
+      "Expected lcid = %08x got %08x\n", MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED ), lcid );
+  lcid = ConvertDefaultLocale( 0x7c04 );
+  ok( lcid == MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG ) ||
+      broken( lcid == 0x7c04 ) ||  /* winxp */
+      broken( lcid == 0x0404 ),  /* vista */
+      "Expected lcid = %08x got %08x\n", MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG ), lcid );
 
   /* Invariant language is not treated specially */
   TEST_LCID(LANG_INVARIANT, SUBLANG_DEFAULT, SORT_DEFAULT);
@@ -4001,6 +4057,7 @@ static void test_EnumTimeFormatsW(void)
             GetLastError());
     }
 }
+
 static void test_GetCPInfo(void)
 {
     BOOL ret;
@@ -4044,6 +4101,138 @@ static void test_GetCPInfo(void)
         ok(cpinfo.MaxCharSize == 4 || broken(cpinfo.MaxCharSize == 3) /* win9x */,
            "expected 4, got %u\n", cpinfo.MaxCharSize);
     }
+
+    if (pNtGetNlsSectionPtr)
+    {
+        CPTABLEINFO table;
+        NTSTATUS status;
+        void *ptr, *ptr2;
+        SIZE_T size;
+        int i;
+
+        for (i = 0; i < 100; i++)
+        {
+            ptr = NULL;
+            size = 0;
+            status = pNtGetNlsSectionPtr( i, 9999, NULL, &ptr, &size );
+            switch (i)
+            {
+            case 9:  /* unknown */
+            case 13: /* unknown */
+                ok( status == STATUS_INVALID_PARAMETER_1 || status == STATUS_INVALID_PARAMETER_3, /* vista */
+                    "%u: failed %x\n", i, status );
+                break;
+            case 10:  /* casemap */
+                ok( status == STATUS_INVALID_PARAMETER_1 || status == STATUS_UNSUCCESSFUL,
+                    "%u: failed %x\n", i, status );
+                break;
+            case 11:  /* codepage */
+            case 12:  /* normalization */
+                ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%u: failed %x\n", i, status );
+                break;
+            default:
+                ok( status == STATUS_INVALID_PARAMETER_1, "%u: failed %x\n", i, status );
+                break;
+            }
+        }
+
+        /* casemap table */
+
+        status = pNtGetNlsSectionPtr( 10, 0, NULL, &ptr, &size );
+        if (status != STATUS_INVALID_PARAMETER_1)
+        {
+            ok( !status, "failed %x\n", status );
+            ok( size > 0x1000 && size <= 0x8000 , "wrong size %lx\n", size );
+            status = pNtGetNlsSectionPtr( 10, 0, NULL, &ptr2, &size );
+            ok( ptr != ptr2, "got same pointer\n" );
+            ret = UnmapViewOfFile( ptr );
+            todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+            ret = UnmapViewOfFile( ptr2 );
+            todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+        }
+
+        /* codepage tables */
+
+        ptr = (void *)0xdeadbeef;
+        size = 0xdeadbeef;
+        status = pNtGetNlsSectionPtr( 11, 437, NULL, &ptr, &size );
+        ok( !status, "failed %x\n", status );
+        ok( size > 0x10000 && size <= 0x20000, "wrong size %lx\n", size );
+        memset( &table, 0xcc, sizeof(table) );
+        if (pRtlInitCodePageTable)
+        {
+            pRtlInitCodePageTable( ptr, &table );
+            ok( table.CodePage == 437, "wrong codepage %u\n", table.CodePage );
+            ok( table.MaximumCharacterSize == 1, "wrong char size %u\n", table.MaximumCharacterSize );
+            ok( table.DefaultChar == '?', "wrong default char %x\n", table.DefaultChar );
+            ok( !table.DBCSCodePage, "wrong dbcs %u\n", table.DBCSCodePage );
+        }
+        ret = UnmapViewOfFile( ptr );
+        todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+
+        status = pNtGetNlsSectionPtr( 11, 936, NULL, &ptr, &size );
+        ok( !status, "failed %x\n", status );
+        ok( size > 0x30000 && size <= 0x40000, "wrong size %lx\n", size );
+        memset( &table, 0xcc, sizeof(table) );
+        if (pRtlInitCodePageTable)
+        {
+            pRtlInitCodePageTable( ptr, &table );
+            ok( table.CodePage == 936, "wrong codepage %u\n", table.CodePage );
+            ok( table.MaximumCharacterSize == 2, "wrong char size %u\n", table.MaximumCharacterSize );
+            ok( table.DefaultChar == '?', "wrong default char %x\n", table.DefaultChar );
+            ok( table.DBCSCodePage == TRUE, "wrong dbcs %u\n", table.DBCSCodePage );
+
+            if (pRtlCustomCPToUnicodeN)
+            {
+                static const unsigned char buf[] = { 0xbf, 0xb4, 0xc7, 0, 0x78 };
+                static const WCHAR expect[][4] = { { 0xcccc, 0xcccc, 0xcccc, 0xcccc },
+                                                   { 0x0000, 0xcccc, 0xcccc, 0xcccc },
+                                                   { 0x770b, 0xcccc, 0xcccc, 0xcccc },
+                                                   { 0x770b, 0x0000, 0xcccc, 0xcccc },
+                                                   { 0x770b, 0x003f, 0xcccc, 0xcccc },
+                                                   { 0x770b, 0x003f, 0x0078, 0xcccc } };
+                WCHAR wbuf[5];
+                DWORD i, j, reslen;
+
+                for (i = 0; i <= sizeof(buf); i++)
+                {
+                    memset( wbuf, 0xcc, sizeof(wbuf) );
+                    RtlCustomCPToUnicodeN( &table, wbuf, sizeof(wbuf), &reslen, (char *)buf, i );
+                    for (j = 0; j < 4; j++) if (expect[i][j] == 0xcccc) break;
+                    ok( reslen == j * sizeof(WCHAR), "%u: wrong len %u\n", i, reslen );
+                    for (j = 0; j < 4; j++)
+                        ok( wbuf[j] == expect[i][j], "%u: char %u got %04x\n", i, j, wbuf[j] );
+                }
+            }
+        }
+        ret = UnmapViewOfFile( ptr );
+        todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+
+        /* normalization tables */
+
+        for (i = 0; i < 100; i++)
+        {
+            status = pNtGetNlsSectionPtr( 12, i, NULL, &ptr, &size );
+            switch (i)
+            {
+            case NormalizationC:
+            case NormalizationD:
+            case NormalizationKC:
+            case NormalizationKD:
+            case 13:  /* IDN */
+                ok( !status, "%u: failed %x\n", i, status );
+                if (status) break;
+                ok( size > 0x8000 && size <= 0x30000 , "wrong size %lx\n", size );
+                ret = UnmapViewOfFile( ptr );
+                todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+                break;
+            default:
+                ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%u: failed %x\n", i, status );
+                break;
+            }
+        }
+    }
+    else win_skip( "NtGetNlsSectionPtr not supported\n" );
 }
 
 /*
@@ -4234,7 +4423,6 @@ static void test_IdnToNameprepUnicode(void)
         const WCHAR out[64];
         DWORD flags;
         DWORD err;
-        DWORD todo;
     } test_data[] = {
         {
             5, {'t','e','s','t',0},
@@ -4276,20 +4464,20 @@ static void test_IdnToNameprepUnicode(void)
             0, 0, {0},
             IDN_USE_STD3_ASCII_RULES, ERROR_INVALID_NAME
         },
-        { /* FoldString is not working as expected when MAP_FOLDCZONE is specified (composition+compatibility) */
+        {
             10, {'T',0xdf,0x130,0x143,0x37a,0x6a,0x30c,' ',0xaa,0},
             12, 12, {'t','s','s','i',0x307,0x144,' ',0x3b9,0x1f0,' ','a',0},
-            0, 0xdeadbeef, TRUE
+            0, 0xdeadbeef
         },
         {
             11, {'t',0xad,0x34f,0x1806,0x180b,0x180c,0x180d,0x200b,0x200c,0x200d,0},
             2, 0, {'t',0},
             0, 0xdeadbeef
         },
-        { /* Another example of incorrectly working FoldString (composition) */
+        {
             2, {0x3b0, 0},
             2, 2, {0x3b0, 0},
-            0, 0xdeadbeef, TRUE
+            0, 0xdeadbeef,
         },
         {
             2, {0x221, 0},
@@ -4375,9 +4563,7 @@ static void test_IdnToNameprepUnicode(void)
                 buf, ARRAY_SIZE(buf));
         err = GetLastError();
 
-        todo_wine_if (test_data[i].todo)
-            ok(ret == test_data[i].ret ||
-                    broken(ret == test_data[i].broken_ret), "%d) ret = %d\n", i, ret);
+        ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
 
         if(ret != test_data[i].ret)
             continue;
@@ -4632,6 +4818,7 @@ static void test_GetLocaleInfoEx(void)
 static void test_IsValidLocaleName(void)
 {
     static const WCHAR enusW[] = {'e','n','-','U','S',0};
+    static const WCHAR enW[] = {'e','n',0};
     static const WCHAR zzW[] = {'z','z',0};
     static const WCHAR zz_zzW[] = {'z','z','-','Z','Z',0};
     static const WCHAR zzzzW[] = {'z','z','z','z',0};
@@ -4645,6 +4832,8 @@ static void test_IsValidLocaleName(void)
 
     ret = pIsValidLocaleName(enusW);
     ok(ret, "IsValidLocaleName failed\n");
+    ret = pIsValidLocaleName(enW);
+    ok(ret || broken(!ret), "IsValidLocaleName failed\n");
     ret = pIsValidLocaleName(zzW);
     ok(!ret || broken(ret), "IsValidLocaleName should have failed\n");
     ret = pIsValidLocaleName(zz_zzW);
@@ -4792,11 +4981,43 @@ static void test_GetGeoInfo(void)
     ok(!strcmp(buffA, "RU"), "got %s\n", buffA);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d\n", GetLastError());
 
-    /* GEO_NATION returns GEOID in a string form */
+    /* GEO_NATION returns GEOID in a string form, but only for GEOCLASS_NATION-type IDs */
+    ret = pGetGeoInfoA(203, GEO_NATION, buffA, 20, 0); /* GEOCLASS_NATION */
+    ok(ret == 4, "GEO_NATION of nation: expected 4, got %d\n", ret);
+    ok(!strcmp(buffA, "203"), "GEO_NATION of nation: expected 203, got %s\n", buffA);
+
     buffA[0] = 0;
-    ret = pGetGeoInfoA(203, GEO_NATION, buffA, 20, 0);
-    ok(ret == 4, "got %d\n", ret);
-    ok(!strcmp(buffA, "203"), "got %s\n", buffA);
+    ret = pGetGeoInfoA(39070, GEO_NATION, buffA, 20, 0); /* GEOCLASS_REGION */
+    ok(ret == 0, "GEO_NATION of region: expected 0, got %d\n", ret);
+    ok(*buffA == 0, "GEO_NATION of region: expected empty string, got %s\n", buffA);
+
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(333, GEO_NATION, buffA, 20, 0); /* LOCATION_BOTH internal Wine type */
+    ok(ret == 0 ||
+       broken(ret == 4) /* Win7 and older */,
+       "GEO_NATION of LOCATION_BOTH: expected 0, got %d\n", ret);
+    ok(*buffA == 0 ||
+       broken(!strcmp(buffA, "333")) /* Win7 and older */,
+       "GEO_NATION of LOCATION_BOTH: expected empty string, got %s\n", buffA);
+
+    /* GEO_ID is like GEO_NATION but works for any ID */
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_ID, buffA, 20, 0); /* GEOCLASS_NATION */
+    if (ret == 0)
+        win_skip("GEO_ID not supported.\n");
+    else
+    {
+        ok(ret == 4, "GEO_ID: expected 4, got %d\n", ret);
+        ok(!strcmp(buffA, "203"), "GEO_ID: expected 203, got %s\n", buffA);
+
+        ret = pGetGeoInfoA(47610, GEO_ID, buffA, 20, 0); /* GEOCLASS_REGION */
+        ok(ret == 6, "got %d\n", ret);
+        ok(!strcmp(buffA, "47610"), "got %s\n", buffA);
+
+        ret = pGetGeoInfoA(333, GEO_ID, buffA, 20, 0); /* LOCATION_BOTH internal Wine type */
+        ok(ret == 4, "got %d\n", ret);
+        ok(!strcmp(buffA, "333"), "got %s\n", buffA);
+    }
 
     /* GEO_PARENT */
     buffA[0] = 0;
@@ -4889,6 +5110,19 @@ static void test_EnumSystemGeoID(void)
 
         geoidenum_count = 0;
         ret = pEnumSystemGeoID(GEOCLASS_REGION, 0, test_geoid_enumproc2);
+        ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
+    }
+
+    geoidenum_count = 0;
+    ret = pEnumSystemGeoID(GEOCLASS_ALL, 39070, test_geoid_enumproc2);
+    if (ret == 0)
+        win_skip("GEOCLASS_ALL is not supported in EnumSystemGeoID.\n");
+    else
+    {
+        ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
+
+        geoidenum_count = 0;
+        ret = pEnumSystemGeoID(GEOCLASS_ALL, 0, test_geoid_enumproc2);
         ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
     }
 }
@@ -5056,6 +5290,7 @@ static void test_invariant(void)
     static const char lang[]  = "Invariant Language (Invariant Country)";
     static const char cntry[] = "Invariant Country";
     static const char sortm[] = "Math Alphanumerics";
+    static const char sortms[] = "Maths Alphanumerics";
     static const char sortd[] = "Default"; /* win2k3 */
 
     ret = GetLocaleInfoA(LOCALE_INVARIANT, NUO|LOCALE_SLANGUAGE, buffer, sizeof(buffer));
@@ -5069,13 +5304,8 @@ static void test_invariant(void)
     ok(!strcmp(buffer, cntry), "Expected %s, got '%s'\n", cntry, buffer);
 
     ret = GetLocaleInfoA(LOCALE_INVARIANT, NUO|LOCALE_SSORTNAME, buffer, sizeof(buffer));
-    if (ret == lstrlenA(sortm)+1)
-        ok(!strcmp(buffer, sortm), "Expected %s, got '%s'\n", sortm, buffer);
-    else if (ret == lstrlenA(sortd)+1) /* win2k3 */
-        ok(!strcmp(buffer, sortd), "Expected %s, got '%s'\n", sortd, buffer);
-    else
-        ok(0, "Expected ret == %d or %d, got %d, error %d\n",
-            lstrlenA(sortm)+1, lstrlenA(sortd)+1, ret, GetLastError());
+    ok(ret, "Failed err %d\n", GetLastError());
+    ok(!strcmp(buffer, sortm) || !strcmp(buffer, sortd) || !strcmp(buffer, sortms), "Got '%s'\n", buffer);
   }
 }
 
@@ -5633,6 +5863,36 @@ static void test_SetThreadUILanguage(void)
     "expected %d got %d\n", MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN), res);
 }
 
+static int put_utf16( WCHAR *str, unsigned int c )
+{
+    if (c < 0x10000)
+    {
+        *str = c;
+        return 1;
+    }
+    c -= 0x10000;
+    str[0] = 0xd800 | (c >> 10);
+    str[1] = 0xdc00 | (c & 0x3ff);
+    return 2;
+}
+
+/* read a Unicode string from NormalizationTest.txt format; helper for test_NormalizeString */
+static int read_str( char *str, WCHAR res[32] )
+{
+    int pos = 0;
+    char *end;
+
+    while (*str && pos < 31)
+    {
+        unsigned int c = strtoul( str, &end, 16 );
+        pos += put_utf16( res + pos, c );
+        while (*end == ' ') end++;
+        str = end;
+    }
+    res[pos] = 0;
+    return pos;
+}
+
 static void test_NormalizeString(void)
 {
     /* part 0: specific cases */
@@ -5736,10 +5996,21 @@ static void test_NormalizeString(void)
     static const WCHAR part1_nfc11[] = {0xC5,0};
     static const WCHAR part1_nfd11[] = {'A',0x030A,0};
 
+    static const WCHAR composite_src[] =
+    {
+        0x008a, 0x008e, 0x009a, 0x009e, 0x009f, 0x00c0, 0x00c1, 0x00c2,
+        0x00c3, 0x00c4, 0x00c5, 0x00c7, 0x00c8, 0x00c9, 0x00ca, 0x00cb,
+        0x00cc, 0x00cd, 0x00ce, 0x00cf, 0x00d1, 0x00d2, 0x00d3, 0x00d4,
+        0x00d5, 0x00d6, 0x00d8, 0x00d9, 0x00da, 0x00db, 0x00dc, 0x00dd,
+        0x00e0, 0x00e1, 0x00e2, 0x00e3, 0x00e4, 0x00e5, 0x00e7, 0x00e8,
+        0x00e9, 0x00ea, 0x00eb, 0x00ec, 0x00ed, 0x00ee, 0x00ef, 0x00f1,
+        0x00f2, 0x00f3, 0x00f4, 0x00f5, 0x00f6, 0x00f8, 0x00f9, 0x00fa,
+        0x00fb, 0x00fc, 0x00fd, 0x00ff, 0x212b
+    };
+
     struct test_data_normal {
         const WCHAR *str;
         const WCHAR *expected[4];
-        BOOL todo[4];
     };
     static const struct test_data_normal test_arr[] =
     {
@@ -5769,17 +6040,18 @@ static void test_NormalizeString(void)
     };
     const struct test_data_normal *ptest = test_arr;
     const int norm_forms[] = { NormalizationC, NormalizationD, NormalizationKC, NormalizationKD };
-    WCHAR dst[80];
-    int dstlen;
+    WCHAR dst[256];
+    BOOLEAN ret;
+    NTSTATUS status;
+    int dstlen, str_cmp, i, j;
+    FILE *f;
 
     if (!pNormalizeString)
     {
         win_skip("NormalizeString is not available.\n");
         return;
     }
-
-    dstlen = pNormalizeString( NormalizationD, ptest->str, -1, dst, 1 );
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Should have failed with ERROR_INSUFFICIENT_BUFFER\n");
+    if (!pRtlNormalizeString) win_skip("RtlNormalizeString is not available.\n");
 
     /*
      * For each string, first test passing -1 as srclen to NormalizeString,
@@ -5789,36 +6061,342 @@ static void test_NormalizeString(void)
      */
     while (ptest->str)
     {
-        int str_cmp, i;
-
         for (i = 0; i < 4; i++)
         {
+            SetLastError(0xdeadbeef);
             dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, NULL, 0 );
-            if (dstlen)
-            {
-                dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, dst, dstlen );
-                ok(dstlen == strlenW( dst )+1, "%s:%d: Copied length differed: was %d, should be %d\n",
-                   wine_dbgstr_w(ptest->str), i, dstlen, strlenW( dst )+1);
-                str_cmp = strncmpW( ptest->expected[i], dst, dstlen+1 );
-todo_wine_if(ptest->todo[i])
-                ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
-                    wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
-            }
+            ok( dstlen > lstrlenW(ptest->str), "%s:%d: wrong len %d / %d\n",
+                wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW(ptest->str) );
+            ok(GetLastError() == ERROR_SUCCESS, "%s:%d: got error %u\n",
+               wine_dbgstr_w(ptest->str), i, GetLastError());
+            SetLastError(0xdeadbeef);
+            dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, dst, dstlen );
+            ok(GetLastError() == ERROR_SUCCESS, "%s:%d: got error %u\n",
+               wine_dbgstr_w(ptest->str), i, GetLastError());
+            ok(dstlen == lstrlenW( dst )+1, "%s:%d: Copied length differed: was %d, should be %d\n",
+               wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst )+1);
+            str_cmp = wcsncmp( ptest->expected[i], dst, dstlen+1 );
+            ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
+                wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
 
-            dstlen = pNormalizeString( norm_forms[i], ptest->str, strlenW(ptest->str), NULL, 0 );
-            if (dstlen)
+            dstlen = pNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), NULL, 0 );
+            memset(dst, 0xcc, sizeof(dst));
+            dstlen = pNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), dst, dstlen );
+            ok(dstlen == lstrlenW( ptest->expected[i] ), "%s:%d: Copied length differed: was %d, should be %d\n",
+               wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst ));
+            str_cmp = wcsncmp( ptest->expected[i], dst, dstlen );
+            ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
+                wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
+
+            if (pRtlNormalizeString)
             {
+                dstlen = 0;
+                status = pRtlNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), NULL, &dstlen );
+                ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                ok( dstlen > lstrlenW(ptest->str), "%s:%d: wrong len %d / %d\n",
+                    wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW(ptest->str) );
                 memset(dst, 0, sizeof(dst));
-                dstlen = pNormalizeString( norm_forms[i], ptest->str, strlenW(ptest->str), dst, dstlen );
-                ok(dstlen == strlenW( dst ), "%s:%d: Copied length differed: was %d, should be %d\n",
-                   wine_dbgstr_w(ptest->str), i, dstlen, strlenW( dst ));
-                str_cmp = strncmpW( ptest->expected[i], dst, dstlen );
-todo_wine_if(ptest->todo[i])
+                status = pRtlNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), dst, &dstlen );
+                ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                ok(dstlen == lstrlenW( dst ), "%s:%d: Copied length differed: was %d, should be %d\n",
+                   wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst ));
+                str_cmp = wcsncmp( ptest->expected[i], dst, dstlen );
                 ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
                     wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
+                ret = FALSE;
+                status = pRtlIsNormalizedString( norm_forms[i], ptest->str, -1, &ret );
+                ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                if (!wcscmp( ptest->str, dst ))
+                    ok( ret, "%s:%d: not normalized\n", wine_dbgstr_w(ptest->str), i );
+                else
+                    ok( !ret, "%s:%d: normalized (dst %s)\n", wine_dbgstr_w(ptest->str), i, wine_dbgstr_w(dst) );
+                ret = FALSE;
+                status = pRtlIsNormalizedString( norm_forms[i], dst, dstlen, &ret );
+                ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                ok( ret, "%s:%d: not normalized\n", wine_dbgstr_w(ptest->str), i );
             }
         }
         ptest++;
+    }
+
+    /* buffer overflows */
+
+    SetLastError(0xdeadbeef);
+    dstlen = pNormalizeString( NormalizationD, part0_str1, -1, dst, 1 );
+    ok( dstlen <= 0, "wrong len %d\n", dstlen );
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    dstlen = pNormalizeString( NormalizationC, part0_str2, -1, dst, 1 );
+    ok( dstlen <= 0, "wrong len %d\n", dstlen );
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    dstlen = pNormalizeString( NormalizationC, part0_str2, -1, NULL, 0 );
+    ok( dstlen == 12, "wrong len %d\n", dstlen );
+    ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    dstlen = pNormalizeString( NormalizationC, part0_str2, -1, dst, 3 );
+    ok( dstlen == 3, "wrong len %d\n", dstlen );
+    ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    dstlen = pNormalizeString( NormalizationC, part0_str2, 0, NULL, 0 );
+    ok( dstlen == 0, "wrong len %d\n", dstlen );
+    ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    dstlen = pNormalizeString( NormalizationC, part0_str2, 0, dst, 3 );
+    ok( dstlen == 0, "wrong len %d\n", dstlen );
+    ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+
+    /* size estimations */
+
+    memset( dst, 'A', sizeof(dst) );
+    for (j = 1; j < ARRAY_SIZE(dst); j++)
+    {
+        for (i = 0; i < 4; i++)
+        {
+            int expect = (i < 2) ? j * 3 : j * 18;
+            if (expect > 64) expect = max( 64, j + j / 8 );
+            dstlen = pNormalizeString( norm_forms[i], dst, j, NULL, 0 );
+            ok( dstlen == expect, "%d: %d -> wrong len %d\n", i, j, dstlen );
+            if (pRtlNormalizeString)
+            {
+                dstlen = 0;
+                status = pRtlNormalizeString( norm_forms[i], dst, j, NULL, &dstlen );
+                ok( !status, "%d: failed %x\n", i, status );
+                ok( dstlen == expect, "%d: %d -> wrong len %d\n", i, j, dstlen );
+            }
+        }
+    }
+    for (i = 0; i < 4; i++)
+    {
+        int srclen = ARRAY_SIZE( composite_src );
+        int expect = max( 64, srclen + srclen / 8 );
+        dstlen = pNormalizeString( norm_forms[i], composite_src, srclen, NULL, 0 );
+        ok( dstlen == expect, "%d: wrong len %d\n", i, dstlen );
+        dstlen = pNormalizeString( norm_forms[i], composite_src, srclen, dst, dstlen );
+        if (i == 0 || i == 2)
+        {
+            ok( dstlen == srclen, "%d: wrong len %d\n", i, dstlen );
+            ok(GetLastError() == ERROR_SUCCESS, "got error %u\n", GetLastError());
+        }
+        else
+        {
+            ok( dstlen < -expect, "%d: wrong len %d\n", i, dstlen );
+            ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+        }
+        if (pRtlNormalizeString)
+        {
+            dstlen = 0;
+            status = pRtlNormalizeString( norm_forms[i], composite_src, srclen, NULL, &dstlen );
+            ok( !status, "%d: failed %x\n", i, status );
+            ok( dstlen == expect, "%d: wrong len %d\n", i, dstlen );
+            status = pRtlNormalizeString( norm_forms[i], composite_src, srclen, dst, &dstlen );
+            if (i == 0 || i == 2)
+            {
+                ok( !status, "%d: failed %x\n", i, status );
+                ok( dstlen == srclen, "%d: wrong len %d\n", i, dstlen );
+            }
+            else
+            {
+                ok( status == STATUS_BUFFER_TOO_SMALL, "%d: failed %x\n", i, status );
+                ok( dstlen > expect, "%d: wrong len %d\n", i, dstlen );
+            }
+        }
+    }
+
+    /* invalid parameters */
+
+    for (i = 0; i < 32; i++)
+    {
+        SetLastError(0xdeadbeef);
+        dstlen = pNormalizeString( i, L"ABC", -1, NULL, 0 );
+        switch (i)
+        {
+        case NormalizationC:
+        case NormalizationD:
+        case NormalizationKC:
+        case NormalizationKD:
+        case 13:  /* Idn */
+            ok( dstlen > 0, "%d: wrong len %d\n", i, dstlen );
+            ok( GetLastError() == ERROR_SUCCESS, "%d: got error %u\n", i, GetLastError());
+            break;
+        default:
+            ok( dstlen <= 0, "%d: wrong len %d\n", i, dstlen );
+            ok( GetLastError() == ERROR_INVALID_PARAMETER, "%d: got error %u\n", i, GetLastError());
+            break;
+        }
+        if (pRtlNormalizeString)
+        {
+            dstlen = 0;
+            status = pRtlNormalizeString( i, L"ABC", -1, NULL, &dstlen );
+            switch (i)
+            {
+            case 0:
+                ok( status == STATUS_INVALID_PARAMETER, "%d: failed %x\n", i, status );
+                break;
+            case NormalizationC:
+            case NormalizationD:
+            case NormalizationKC:
+            case NormalizationKD:
+            case 13:  /* Idn */
+                ok( status == STATUS_SUCCESS, "%d: failed %x\n", i, status );
+                break;
+            default:
+                ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%d: failed %x\n", i, status );
+                break;
+            }
+        }
+    }
+
+    /* invalid sequences */
+
+    for (i = 0; i < 4; i++)
+    {
+        dstlen = pNormalizeString( norm_forms[i], L"AB\xd800Z", -1, NULL, 0 );
+        ok( dstlen == (i < 2 ? 15 : 64), "%d: wrong len %d\n", i, dstlen );
+        SetLastError( 0xdeadbeef );
+        dstlen = pNormalizeString( norm_forms[i], L"AB\xd800Z", -1, dst, ARRAY_SIZE(dst) );
+        ok( dstlen == -3, "%d: wrong len %d\n", i, dstlen );
+        ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "%d: wrong error %d\n", i, GetLastError() );
+        dstlen = pNormalizeString( norm_forms[i], L"ABCD\xdc12Z", -1, NULL, 0 );
+        ok( dstlen == (i < 2 ? 21 : 64), "%d: wrong len %d\n", i, dstlen );
+        SetLastError( 0xdeadbeef );
+        dstlen = pNormalizeString( norm_forms[i], L"ABCD\xdc12Z", -1, dst, ARRAY_SIZE(dst) );
+        ok( dstlen == -4, "%d: wrong len %d\n", i, dstlen );
+        ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "%d: wrong error %d\n", i, GetLastError() );
+        SetLastError( 0xdeadbeef );
+        dstlen = pNormalizeString( norm_forms[i], L"ABCD\xdc12Z", -1, dst, 2 );
+        todo_wine
+        ok( dstlen == (i < 2 ? -18 : -74), "%d: wrong len %d\n", i, dstlen );
+        todo_wine_if (i == 0 || i == 2)
+        ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "%d: wrong error %d\n", i, GetLastError() );
+        if (pRtlNormalizeString)
+        {
+            dstlen = 0;
+            status = pRtlNormalizeString( norm_forms[i], L"AB\xd800Z", -1, NULL, &dstlen );
+            ok( !status, "%d: failed %x\n", i, status );
+            ok( dstlen == (i < 2 ? 15 : 64), "%d: wrong len %d\n", i, dstlen );
+            dstlen = ARRAY_SIZE(dst);
+            status = pRtlNormalizeString( norm_forms[i], L"AB\xd800Z", -1, dst, &dstlen );
+            ok( status == STATUS_NO_UNICODE_TRANSLATION, "%d: failed %x\n", i, status );
+            ok( dstlen == 3, "%d: wrong len %d\n", i, dstlen );
+            dstlen = 1;
+            status = pRtlNormalizeString( norm_forms[i], L"AB\xd800Z", -1, dst, &dstlen );
+            todo_wine_if( i == 0 || i == 2)
+            ok( status == STATUS_BUFFER_TOO_SMALL, "%d: failed %x\n", i, status );
+            todo_wine_if( i != 3)
+            ok( dstlen == (i < 2 ? 14 : 73), "%d: wrong len %d\n", i, dstlen );
+            dstlen = 2;
+            status = pRtlNormalizeString( norm_forms[i], L"AB\xd800Z", -1, dst, &dstlen );
+            ok( status == STATUS_NO_UNICODE_TRANSLATION, "%d: failed %x\n", i, status );
+            ok( dstlen == 3, "%d: wrong len %d\n", i, dstlen );
+        }
+    }
+
+    /* optionally run the full test file from Unicode.org
+     * available at http://www.unicode.org/Public/UCD/latest/ucd/NormalizationTest.txt
+     */
+    if ((f = fopen( "NormalizationTest.txt", "r" )))
+    {
+        char *p, buffer[1024];
+        WCHAR str[3], srcW[32], dstW[32], resW[4][32];
+        int line = 0, part = 0, ch;
+        char tested[0x110000 / 8];
+
+        while (fgets( buffer, sizeof(buffer), f ))
+        {
+            line++;
+            if ((p = strchr( buffer, '#' ))) *p = 0;
+            if (!strncmp( buffer, "@Part", 5 ))
+            {
+                part = atoi( buffer + 5 );
+                continue;
+            }
+            if (!(p = strtok( buffer, ";" ))) continue;
+            read_str( p, srcW );
+            for (i = 0; i < 4; i++)
+            {
+                p = strtok( NULL, ";" );
+                read_str( p, &resW[i][0] );
+            }
+            if (part == 1)
+            {
+                ch = srcW[0];
+                if (ch >= 0xd800 && ch <= 0xdbff)
+                    ch = 0x10000 + ((srcW[0] & 0x3ff) << 10) + (srcW[1] & 0x3ff);
+                tested[ch / 8] |= 1 << (ch % 8);
+            }
+            for (i = 0; i < 4; i++)
+            {
+                memset( dstW, 0xcc, sizeof(dstW) );
+                dstlen = pNormalizeString( norm_forms[i], srcW, -1, dstW, ARRAY_SIZE(dstW) );
+                ok( !wcscmp( dstW, resW[i] ),
+                    "line %u form %u: wrong result %s for %s expected %s\n", line, i,
+                    wine_dbgstr_w( dstW ), wine_dbgstr_w( srcW ), wine_dbgstr_w( resW[i] ));
+
+                ret = FALSE;
+                status = pRtlIsNormalizedString( norm_forms[i], srcW, -1, &ret );
+                ok( !status, "line %u form %u: RtlIsNormalizedString failed %x\n", line, i, status );
+                if (!wcscmp( srcW, dstW ))
+                    ok( ret, "line %u form %u: source not normalized %s\n", line, i, wine_dbgstr_w(srcW) );
+                else
+                    ok( !ret, "line %u form %u: source normalized %s\n", line, i, wine_dbgstr_w(srcW) );
+                ret = FALSE;
+                status = pRtlIsNormalizedString( norm_forms[i], dstW, -1, &ret );
+                ok( !status, "line %u form %u: RtlIsNormalizedString failed %x\n", line, i, status );
+                ok( ret, "line %u form %u: dest not normalized %s\n", line, i, wine_dbgstr_w(dstW) );
+
+                for (j = 0; j < 4; j++)
+                {
+                    int expect = i | (j & 2);
+                    memset( dstW, 0xcc, sizeof(dstW) );
+                    dstlen = pNormalizeString( norm_forms[i], resW[j], -1, dstW, ARRAY_SIZE(dstW) );
+                    ok( !wcscmp( dstW, resW[expect] ),
+                        "line %u form %u res %u: wrong result %s for %s expected %s\n", line, i, j,
+                        wine_dbgstr_w( dstW ), wine_dbgstr_w( resW[j] ), wine_dbgstr_w( resW[expect] ));
+                }
+            }
+        }
+        fclose( f );
+
+        /* test chars that are not in the @Part1 list */
+        for (ch = 0; ch < 0x110000; ch++)
+        {
+            if (tested[ch / 8] & (1 << (ch % 8))) continue;
+            str[put_utf16( str, ch )] = 0;
+            for (i = 0; i < 4; i++)
+            {
+                memset( dstW, 0xcc, sizeof(dstW) );
+                SetLastError( 0xdeadbeef );
+                dstlen = pNormalizeString( norm_forms[i], str, -1, dstW, ARRAY_SIZE(dstW) );
+                if ((ch >= 0xd800 && ch <= 0xdfff) ||
+                    (ch >= 0xfdd0 && ch <= 0xfdef) ||
+                    ((ch & 0xffff) >= 0xfffe))
+                {
+                    ok( dstlen <= 0, "char %04x form %u: wrong result %d %s expected error\n",
+                        ch, i, dstlen, wine_dbgstr_w( dstW ));
+                    ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION,
+                        "char %04x form %u: error %u\n", str[0], i, GetLastError() );
+                    status = pRtlIsNormalizedString( norm_forms[i], str, -1, &ret );
+                    ok( status == STATUS_NO_UNICODE_TRANSLATION,
+                        "char %04x form %u: failed %x\n", ch, i, status );
+                }
+                else
+                {
+                    ok( !wcscmp( dstW, str ),
+                        "char %04x form %u: wrong result %s expected unchanged\n",
+                        ch, i, wine_dbgstr_w( dstW ));
+                    ret = FALSE;
+                    status = pRtlIsNormalizedString( norm_forms[i], str, -1, &ret );
+                    ok( !status, "char %04x form %u: failed %x\n", ch, i, status );
+                    ok( ret, "char %04x form %u: not normalized\n", ch, i );
+                }
+            }
+        }
     }
 }
 
@@ -5842,7 +6420,6 @@ static void test_SpecialCasing(void)
         WCHAR exp;      /* 0 if self */
         WCHAR exp_ling; /* 0 if exp */
         BOOL todo;
-        BOOL todo_ling;
     } tests[] = {
         {deDEW, LCMAP_UPPERCASE, 0x00DF},   /* LATIN SMALL LETTER SHARP S */
 
@@ -5951,17 +6528,17 @@ static void test_SpecialCasing(void)
 
         {enUSW, LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
         {ltLTW, LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
-        {trTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, FALSE, TRUE}, /* LATIN SMALL LETTER I */
-        {TRTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, FALSE, TRUE}, /* LATIN SMALL LETTER I */
-        {azCyrlazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, FALSE, TRUE}, /* LATIN SMALL LETTER I */
-        {azLatnazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, FALSE, TRUE}, /* LATIN SMALL LETTER I */
+        {trTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
+        {TRTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
+        {azCyrlazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
+        {azLatnazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
 
         {enUSW, LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
         {ltLTW, LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
-        {trTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, FALSE, TRUE}, /* LATIN CAPITAL LETTER I */
-        {TRTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, FALSE, TRUE}, /* LATIN CAPITAL LETTER I */
-        {azCyrlazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, FALSE, TRUE}, /* LATIN CAPITAL LETTER I */
-        {azLatnazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, FALSE, TRUE}, /* LATIN CAPITAL LETTER I */
+        {trTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
+        {TRTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
+        {azCyrlazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
+        {azLatnazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
 
         {enUSW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
         {trTRW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
@@ -5989,7 +6566,6 @@ static void test_SpecialCasing(void)
         ok(ret == 1, "expected 1, got %d for %04x for %s\n", ret, tests[i].ch,
             wine_dbgstr_w(tests[i].lang));
         exp = tests[i].exp ? tests[i].exp : tests[i].ch;
-        todo_wine_if(tests[i].todo)
         ok(buffer[0] == exp || broken(buffer[0] != exp),
             "expected %04x, got %04x for %04x for %s\n",
             exp, buffer[0], tests[i].ch, wine_dbgstr_w(tests[i].lang));
@@ -6000,7 +6576,7 @@ static void test_SpecialCasing(void)
         ok(ret == 1, "expected 1, got %d for %04x for %s\n", ret, tests[i].ch,
             wine_dbgstr_w(tests[i].lang));
         exp = tests[i].exp_ling ? tests[i].exp_ling : exp;
-        todo_wine_if(tests[i].todo_ling)
+        todo_wine_if(tests[i].todo)
         ok(buffer[0] == exp || broken(buffer[0] != exp),
             "expected %04x, got %04x for %04x for %s\n",
             exp, buffer[0], tests[i].ch, wine_dbgstr_w(tests[i].lang));

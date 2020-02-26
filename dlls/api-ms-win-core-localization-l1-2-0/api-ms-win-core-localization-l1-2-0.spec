@@ -2,7 +2,7 @@
 @ stdcall EnumSystemGeoID(long long ptr) kernel32.EnumSystemGeoID
 @ stdcall EnumSystemLocalesA(ptr long) kernel32.EnumSystemLocalesA
 @ stdcall EnumSystemLocalesW(ptr long) kernel32.EnumSystemLocalesW
-@ stub FindNLSString
+@ stdcall FindNLSString(long long wstr long wstr long ptr) kernel32.FindNLSString
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernel32.FindNLSStringEx
 @ stdcall FormatMessageA(long ptr long long ptr long ptr) kernel32.FormatMessageA
 @ stdcall FormatMessageW(long ptr long long ptr long ptr) kernel32.FormatMessageW

@@ -20,18 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
-
 #include "d3d8_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
@@ -105,15 +93,15 @@ static HRESULT WINAPI d3d8_RegisterSoftwareDevice(IDirect3D8 *iface, void *init_
 static UINT WINAPI d3d8_GetAdapterCount(IDirect3D8 *iface)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
-    HRESULT hr;
+    UINT count;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_count(d3d8->wined3d);
+    count = wined3d_get_adapter_count(d3d8->wined3d);
     wined3d_mutex_unlock();
 
-    return hr;
+    return count;
 }
 
 static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
@@ -150,16 +138,16 @@ static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
 static UINT WINAPI d3d8_GetAdapterModeCount(IDirect3D8 *iface, UINT adapter)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
-    HRESULT hr;
+    UINT count;
 
     TRACE("iface %p, adapter %u.\n", iface, adapter);
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_mode_count(d3d8->wined3d, adapter,
+    count = wined3d_get_adapter_mode_count(d3d8->wined3d, adapter,
             WINED3DFMT_UNKNOWN, WINED3D_SCANLINE_ORDERING_UNKNOWN);
     wined3d_mutex_unlock();
 
-    return hr;
+    return count;
 }
 
 static HRESULT WINAPI d3d8_EnumAdapterModes(IDirect3D8 *iface, UINT adapter, UINT mode_idx, D3DDISPLAYMODE *mode)
@@ -278,8 +266,17 @@ static HRESULT WINAPI d3d8_CheckDeviceFormat(IDirect3D8 *iface, UINT adapter, D3
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_check_device_format(d3d8->wined3d, adapter, device_type, wined3dformat_from_d3dformat(adapter_format),
-            usage, bind_flags, wined3d_rtype, wined3dformat_from_d3dformat(format));
+    if (format == D3DFMT_RESZ && resource_type == D3DRTYPE_SURFACE && usage == D3DUSAGE_RENDERTARGET)
+    {
+        DWORD levels;
+        hr = wined3d_check_device_multisample_type(d3d8->wined3d, adapter, device_type,
+                WINED3DFMT_D24_UNORM_S8_UINT, FALSE, WINED3D_MULTISAMPLE_NON_MASKABLE, &levels);
+        if (SUCCEEDED(hr) && !levels)
+            hr = D3DERR_NOTAVAILABLE;
+    }
+    else
+        hr = wined3d_check_device_format(d3d8->wined3d, adapter, device_type, wined3dformat_from_d3dformat(adapter_format),
+                usage, bind_flags, wined3d_rtype, wined3dformat_from_d3dformat(format));
     wined3d_mutex_unlock();
 
     return hr;

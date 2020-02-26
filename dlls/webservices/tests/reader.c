@@ -2215,6 +2215,7 @@ static void test_WsMoveReader(void)
     hr = WsWriteStartElement( writer, NULL, &localname2, &ns, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    memset(&utf8, 0, sizeof(utf8));
     utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
     utf8.value.bytes  = (BYTE *)"test";
     utf8.value.length = sizeof("test") - 1;
@@ -3649,7 +3650,10 @@ static void test_double(void)
         {"<t>-0.0</t>", S_OK, 0x8000000000000000},
         {"<t>+0.0</t>", S_OK, 0},
         {"<t>-</t>", S_OK, 0},
+        {"<t>-.</t>", S_OK, 0},
         {"<t>+</t>", S_OK, 0},
+        {"<t>+.</t>", S_OK, 0},
+        {"<t>.</t>", S_OK, 0},
         {"<t>.0</t>", S_OK, 0},
         {"<t>0.</t>", S_OK, 0},
         {"<t>0</t>", S_OK, 0},

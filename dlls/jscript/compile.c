@@ -67,6 +67,8 @@ typedef struct _compiler_ctx_t {
     statement_ctx_t *stat_ctx;
     function_code_t *func;
 
+    unsigned loc;
+
     function_expression_t *func_head;
     function_expression_t *func_tail;
 
@@ -208,6 +210,11 @@ static BSTR compiler_alloc_bstr_len(compiler_ctx_t *ctx, const WCHAR *str, size_
     return ctx->code->bstr_pool[ctx->code->bstr_cnt++];
 }
 
+void set_compiler_loc(compiler_ctx_t *ctx, unsigned loc)
+{
+    ctx->loc = loc;
+}
+
 static unsigned push_instr(compiler_ctx_t *ctx, jsop_t op)
 {
     assert(ctx->code_size >= ctx->code_off);
@@ -224,6 +231,7 @@ static unsigned push_instr(compiler_ctx_t *ctx, jsop_t op)
     }
 
     ctx->code->instrs[ctx->code_off].op = op;
+    ctx->code->instrs[ctx->code_off].loc = ctx->loc;
     return ctx->code_off++;
 }
 
@@ -736,11 +744,6 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
         call_expression_t *call_expr = (call_expression_t*)expr->expression1;
         argument_t *arg;
 
-        if(op != OP_LAST) {
-            FIXME("op %d not supported on parametrized assign expressions\n", op);
-            return E_NOTIMPL;
-        }
-
         if(is_memberid_expr(call_expr->expression->type) && call_expr->argument_list) {
             hres = compile_memberid_expression(ctx, call_expr->expression, fdexNameEnsure);
             if(FAILED(hres))
@@ -752,6 +755,23 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
                     return hres;
                 arg_cnt++;
             }
+
+            if(op != OP_LAST) {
+                unsigned instr;
+
+                /* We need to call the functions twice: to get the value and to set it.
+                 * JavaScript interpreted functions may to modify value on the stack,
+                 * but assignment calls are allowed only on external functions, so we
+                 * may reuse the stack here. */
+                instr = push_instr(ctx, OP_call_member);
+                if(!instr)
+                    return E_OUTOFMEMORY;
+                instr_ptr(ctx, instr)->u.arg[0].uint = arg_cnt;
+                instr_ptr(ctx, instr)->u.arg[1].lng = 1;
+
+                if(!push_instr(ctx, OP_push_acc))
+                    return E_OUTOFMEMORY;
+            }
         }else {
             use_throw_path = TRUE;
         }
@@ -759,6 +779,8 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
         hres = compile_memberid_expression(ctx, expr->expression1, fdexNameEnsure);
         if(FAILED(hres))
             return hres;
+        if(op != OP_LAST && !push_instr(ctx, OP_refval))
+            return E_OUTOFMEMORY;
     }else {
         use_throw_path = TRUE;
     }
@@ -778,9 +800,6 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
 
         return push_instr_uint(ctx, OP_throw_ref, JS_E_ILLEGAL_ASSIGN);
     }
-
-    if(op != OP_LAST && !push_instr(ctx, OP_refval))
-        return E_OUTOFMEMORY;
 
     hres = compile_expression(ctx, expr->expression2, TRUE);
     if(FAILED(hres))
@@ -1234,6 +1253,7 @@ static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *s
     if(FAILED(hres))
         return hres;
 
+    set_compiler_loc(ctx, stat->stat.loc);
     if(stat->do_while) {
         label_set_addr(ctx, stat_ctx.continue_label);
         hres = compile_expression(ctx, stat->expr, TRUE);
@@ -1281,6 +1301,7 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
     expr_off = ctx->code_off;
 
     if(stat->expr) {
+        set_compiler_loc(ctx, stat->expr_loc);
         hres = compile_expression(ctx, stat->expr, TRUE);
         if(FAILED(hres))
             return hres;
@@ -1297,6 +1318,7 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
     label_set_addr(ctx, stat_ctx.continue_label);
 
     if(stat->end_expr) {
+        set_compiler_loc(ctx, stat->end_loc);
         hres = compile_expression(ctx, stat->end_expr, FALSE);
         if(FAILED(hres))
             return hres;
@@ -1602,6 +1624,7 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
             continue;
         }
 
+        set_compiler_loc(ctx, iter->loc);
         hres = compile_expression(ctx, iter->expr, TRUE);
         if(FAILED(hres))
             break;
@@ -1740,6 +1763,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
         if(FAILED(hres))
             return hres;
 
+        set_compiler_loc(ctx, stat->finally_loc);
         if(!push_instr(ctx, OP_end_finally))
             return E_OUTOFMEMORY;
     }
@@ -1760,6 +1784,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
         stat_ctx->next = ctx->stat_ctx;
         ctx->stat_ctx = stat_ctx;
     }
+
+    set_compiler_loc(ctx, stat->loc);
 
     switch(stat->type) {
     case STAT_BLOCK:
@@ -2232,20 +2258,30 @@ void release_bytecode(bytecode_t *code)
     heap_free(code);
 }
 
-static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source)
+static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source, UINT64 source_context, unsigned start_line)
 {
+    size_t len = source ? lstrlenW(source) : 0;
+
+    if(len > INT32_MAX)
+        return E_OUTOFMEMORY;
+
     compiler->code = heap_alloc_zero(sizeof(bytecode_t));
     if(!compiler->code)
         return E_OUTOFMEMORY;
 
     compiler->code->ref = 1;
+    compiler->code->source_context = source_context;
+    compiler->code->start_line = start_line;
     heap_pool_init(&compiler->code->heap);
 
-    compiler->code->source = heap_strdupW(source);
+    compiler->code->source = heap_alloc((len + 1) * sizeof(WCHAR));
     if(!compiler->code->source) {
         release_bytecode(compiler->code);
         return E_OUTOFMEMORY;
     }
+    if(len)
+        memcpy(compiler->code->source, source, len * sizeof(WCHAR));
+    compiler->code->source[len] = 0;
 
     compiler->code->instrs = heap_alloc(64 * sizeof(instr_t));
     if(!compiler->code->instrs) {
@@ -2268,6 +2304,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 
     TRACE("\n");
 
+    func->bytecode = ctx->code;
     ctx->func_head = ctx->func_tail = NULL;
     ctx->from_eval = from_eval;
     ctx->func = func;
@@ -2447,13 +2484,13 @@ static HRESULT compile_arguments(compiler_ctx_t *ctx, const WCHAR *args)
     return parse_arguments(ctx, args, ctx->code->global_code.params, NULL);
 }
 
-HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *args, const WCHAR *delimiter,
-        BOOL from_eval, BOOL use_decode, bytecode_t **ret)
+HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, UINT64 source_context, unsigned start_line,
+                       const WCHAR *args, const WCHAR *delimiter, BOOL from_eval, BOOL use_decode, bytecode_t **ret)
 {
     compiler_ctx_t compiler = {0};
     HRESULT hres;
 
-    hres = init_code(&compiler, code);
+    hres = init_code(&compiler, code, source_context, start_line);
     if(FAILED(hres))
         return hres;
 
@@ -2471,7 +2508,7 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *args, 
         }
     }
 
-    hres = script_parse(ctx, &compiler, compiler.code->source, delimiter, from_eval, &compiler.parser);
+    hres = script_parse(ctx, &compiler, compiler.code, delimiter, from_eval, &compiler.parser);
     if(FAILED(hres)) {
         release_bytecode(compiler.code);
         return hres;
@@ -2482,8 +2519,11 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *args, 
     heap_pool_free(&compiler.heap);
     parser_release(compiler.parser);
     if(FAILED(hres)) {
+        if(hres != DISP_E_EXCEPTION)
+            throw_error(ctx, hres, NULL);
+        set_error_location(ctx->ei, compiler.code, compiler.loc, IDS_COMPILATION_ERROR, NULL);
         release_bytecode(compiler.code);
-        return hres;
+        return DISP_E_EXCEPTION;
     }
 
     *ret = compiler.code;

@@ -28,16 +28,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-#include "wine/unicode.h"
-
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -353,7 +350,7 @@ static INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM w
             return FALSE;
         SetWindowLongPtrW(hWnd, DWLP_USER, lParam);
         GetWindowTextW(hWnd, format, ARRAY_SIZE(format));
-        snprintfW(szTitle, ARRAY_SIZE(szTitle), format, info->lpszDevice);
+        swprintf(szTitle, ARRAY_SIZE(szTitle), format, info->lpszDevice);
         SetWindowTextW(hWnd, szTitle);
         SERIALUI_DCBToDialogInfo(hWnd, info);
         return TRUE;
@@ -501,7 +498,7 @@ BOOL WINAPI drvSetDefaultCommConfigW(
     if(r != ERROR_SUCCESS)
         return FALSE;
 
-    snprintfW(szKeyName, ARRAY_SIZE(szKeyName), fmt, lpszCommKey, lpszDevice);
+    swprintf(szKeyName, ARRAY_SIZE(szKeyName), fmt, lpszCommKey, lpszDevice);
     r = RegCreateKeyW(hKeyReg, szKeyName, &hKeyPort);
     if(r == ERROR_SUCCESS)
     {
@@ -574,7 +571,7 @@ DWORD WINAPI drvGetDefaultCommConfigW(
     r = RegConnectRegistryW(NULL, HKEY_LOCAL_MACHINE, &hKeyReg);
     if(r != ERROR_SUCCESS) return r;
 
-    snprintfW(szKeyName, ARRAY_SIZE(szKeyName), fmt, lpszCommKey, lpszDevice);
+    swprintf(szKeyName, ARRAY_SIZE(szKeyName), fmt, lpszCommKey, lpszDevice);
     r = RegOpenKeyW(hKeyReg, szKeyName, &hKeyPort);
     if(r == ERROR_SUCCESS)
     {

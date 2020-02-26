@@ -153,21 +153,18 @@ static int codepage;
 void set_codepage(int cp)
 {
 	codepage = cp;
-	if (!is_valid_codepage( cp ))
-		xyyerror("Codepage %d not found; cannot process\n", codepage);
 }
 
 /*
  * Input functions
  */
+#define INPUTBUFFER_SIZE	2048	/* Must be larger than 4 and approx. large enough to hold a line */
+
 static int nungetstack = 0;
 static int allocungetstack = 0;
 static char *ungetstack = NULL;
 static int ninputbuffer = 0;
-static WCHAR *inputbuffer = NULL;
-static char *xlatebuffer = NULL;
-
-#define INPUTBUFFER_SIZE	2048	/* Must be larger than 4 and approx. large enough to hold a line */
+static WCHAR inputbuffer[INPUTBUFFER_SIZE];
 
 /*
  * Fill the input buffer with *one* line of input.
@@ -179,132 +176,75 @@ static char *xlatebuffer = NULL;
  */
 static int fill_inputbuffer(void)
 {
-	int n;
-	static const char err_fatalread[] = "Fatal: reading input failed";
-	static int endian = -1;
+    static enum input_mode { INPUT_UNKNOWN, INPUT_ASCII, INPUT_UTF8, INPUT_UNICODE } mode;
+    static int swapped;
+    static unsigned char utf8_bom[3] = { 0xef, 0xbb, 0xbf };
+    WCHAR *wbuf;
+    int i, pos = 0, len = 0;
+    char buffer[INPUTBUFFER_SIZE];
 
-	if(!inputbuffer)
-	{
-		inputbuffer = xmalloc(INPUTBUFFER_SIZE*sizeof(WCHAR));
-		xlatebuffer = xmalloc(INPUTBUFFER_SIZE);
-	}
+    if (mode == INPUT_UNKNOWN)
+    {
+        len = fread( buffer, 1, 8, yyin );
+        wbuf = (WCHAR *)buffer;
+        if (len >= 3 && !memcmp( buffer, utf8_bom, 3 ))
+        {
+            mode = INPUT_UTF8;
+            memmove( buffer, buffer + 3, len - 3 );
+            len -= 3;
+        }
+        else if (len == 8)
+        {
+            if (wbuf[0] == 0xfeff || wbuf[0] == 0xfffe)
+            {
+                mode = INPUT_UNICODE;
+                pos = 1;
+                swapped = (wbuf[0] == 0xfffe);
+            }
+            else if (!((wbuf[0] | wbuf[1] | wbuf[2] | wbuf[3]) & 0xff00))
+            {
+                mode = INPUT_UNICODE;
+            }
+            else if (!((wbuf[0] | wbuf[1] | wbuf[2] | wbuf[3]) & 0x00ff))
+            {
+                mode = INPUT_UNICODE;
+                swapped = 1;
+            }
+        }
 
-try_again:
-	if(!unicodein)
-	{
-		char *cptr;
-		cptr = fgets(xlatebuffer, INPUTBUFFER_SIZE, yyin);
-		if(!cptr && ferror(yyin))
-			xyyerror(err_fatalread);
-		else if(!cptr)
-			return 0;
-                n = wmc_mbstowcs(codepage, 0, xlatebuffer, strlen(xlatebuffer)+1, inputbuffer, INPUTBUFFER_SIZE);
-		if(n < 0)
-			internal_error(__FILE__, __LINE__, "Could not translate to unicode (%d)\n", n);
-		if(n <= 1)
-			goto try_again;	/* Should not happen */
-		n--;	/* Strip added conversion '\0' from input length */
-		/*
-		 * FIXME:
-		 * Detect UTF-8 in the first time we read some bytes by
-		 * checking the special sequence "FE..." or something like
-		 * that. I need to check www.unicode.org for details.
-		 */
-	}
-	else
-	{
-		if(endian == -1)
-		{
-			n = fread(inputbuffer, 1, 8, yyin);
-			if(n != 8)
-			{
-				if(!n && ferror(yyin))
-					xyyerror(err_fatalread);
-				else
-					xyyerror("Fatal: file too short to determine byteorder (should never happen)\n");
-			}
-			if(isisochar(inputbuffer[0]) &&
-				isisochar(inputbuffer[1]) &&
-				isisochar(inputbuffer[2]) &&
-				isisochar(inputbuffer[3]))
-			{
-#ifdef WORDS_BIGENDIAN
-				endian = WMC_BO_BIG;
-#else
-				endian = WMC_BO_LITTLE;
-#endif
-			}
-			else if(isisochar(BYTESWAP_WORD(inputbuffer[0])) &&
-				isisochar(BYTESWAP_WORD(inputbuffer[1])) &&
-				isisochar(BYTESWAP_WORD(inputbuffer[2])) &&
-				isisochar(BYTESWAP_WORD(inputbuffer[3])))
-			{
-#ifdef WORDS_BIGENDIAN
-				endian = WMC_BO_LITTLE;
-#else
-				endian = WMC_BO_BIG;
-#endif
-			}
-			else
-				xyyerror("Fatal: cannot determine file's byteorder\n");
-			/* FIXME:
-			 * Determine the file-endian with the leader-bytes
-			 * "FF FE..."; can't remember the exact sequence.
-			 */
-			n /= 2;
-#ifdef WORDS_BIGENDIAN
-			if(endian == WMC_BO_LITTLE)
-#else
-			if(endian == WMC_BO_BIG)
-#endif
-			{
-				inputbuffer[0] = BYTESWAP_WORD(inputbuffer[0]);
-				inputbuffer[1] = BYTESWAP_WORD(inputbuffer[1]);
-				inputbuffer[2] = BYTESWAP_WORD(inputbuffer[2]);
-				inputbuffer[3] = BYTESWAP_WORD(inputbuffer[3]);
-			}
+        if (mode == INPUT_UNICODE)
+        {
+            len = 4 - pos;
+            memcpy( inputbuffer, wbuf + pos, len * sizeof(WCHAR) );
+        }
+        else if (mode == INPUT_UNKNOWN) mode = unicodein ? INPUT_UTF8 : INPUT_ASCII;
+    }
 
-		}
-		else
-		{
-			int i;
-			n = 0;
-			for(i = 0; i < INPUTBUFFER_SIZE; i++)
-			{
-				int t;
-				t = fread(&inputbuffer[i], 2, 1, yyin);
-				if(!t && ferror(yyin))
-					xyyerror(err_fatalread);
-				else if(!t && n)
-					break;
-				n++;
-#ifdef WORDS_BIGENDIAN
-				if(endian == WMC_BO_LITTLE)
-#else
-				if(endian == WMC_BO_BIG)
-#endif
-				{
-					if((inputbuffer[i] = BYTESWAP_WORD(inputbuffer[i])) == '\n')
-						break;
-				}
-				else
-				{
-					if(inputbuffer[i] == '\n')
-						break;
-				}
-			}
-		}
-
-	}
-
-	if(!n)
-	{
-		mcy_warning("Re-read line (input was or converted to zilch)\n");
-		goto try_again;	/* Should not happen, but could be due to stdin reading and a signal */
-	}
-
-	ninputbuffer += n;
-	return 1;
+    switch (mode)
+    {
+    case INPUT_ASCII:
+        if (!fgets( buffer + len, sizeof(buffer) - len, yyin )) break;
+        wbuf = codepage_to_unicode( codepage, buffer, strlen(buffer), &ninputbuffer );
+        memcpy( inputbuffer, wbuf, ninputbuffer * sizeof(WCHAR) );
+        free( wbuf );
+        return 1;
+    case INPUT_UTF8:
+        if (!fgets( buffer + len, sizeof(buffer) - len, yyin )) break;
+        wbuf = utf8_to_unicode( buffer, strlen(buffer), &ninputbuffer );
+        memcpy( inputbuffer, wbuf, ninputbuffer * sizeof(WCHAR) );
+        free( wbuf );
+        return 1;
+    case INPUT_UNICODE:
+        len += fread( inputbuffer + len, sizeof(WCHAR), INPUTBUFFER_SIZE - len, yyin );
+        if (!len) break;
+        if (swapped) for (i = 0; i < len; i++) inputbuffer[i] = BYTESWAP_WORD( inputbuffer[i] );
+        ninputbuffer = len;
+        return 1;
+    case INPUT_UNKNOWN:
+        break;
+    }
+    if (ferror(yyin)) xyyerror( "Fatal: reading input failed\n" );
+    return 0;
 }
 
 static int get_unichar(void)
@@ -323,7 +263,7 @@ static int get_unichar(void)
 	}
 
 	ninputbuffer--;
-	return (int)(*b++ & 0xffff);
+	return *b++;
 }
 
 static void unget_unichar(int ch)

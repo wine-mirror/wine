@@ -1943,12 +1943,34 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
         /* If command starts with 'if ' or 'else ', handle ('s mid line. We should ensure this
            is only true in the command portion of the IF statement, but this
-           should suffice for now
-            FIXME: Silly syntax like "if 1(==1( (
-                                        echo they equal
-                                      )" will be parsed wrong */
+           should suffice for now.
+           To be able to handle ('s in the condition part take as much as evaluate_if_condition
+           would take and skip parsing it here. */
         } else if (WCMD_keyword_ws_found(ifCmd, ARRAY_SIZE(ifCmd), curPos)) {
+          static const WCHAR parmI[]   = {'/','I','\0'};
+          static const WCHAR notW[]    = {'n','o','t','\0'};
+          int negate; /* Negate condition */
+          int test;   /* Condition evaluation result */
+          WCHAR *p, *command;
+
           inIf = TRUE;
+
+          p = curPos+(ARRAY_SIZE(ifCmd));
+          while (*p == ' ' || *p == '\t') {
+            p++;
+            if (lstrcmpiW(WCMD_parameter(p, 0, NULL, TRUE, FALSE), notW) == 0)
+              p += lstrlenW(notW);
+            if (lstrcmpiW(WCMD_parameter(p, 0, NULL, TRUE, FALSE), parmI) == 0)
+              p += lstrlenW(parmI);
+          }
+
+          if (evaluate_if_condition(p, &command, &test, &negate) != -1)
+          {
+              int if_condition_len = command - curPos;
+              memcpy(&curCopyTo[*curLen], curPos, if_condition_len*sizeof(WCHAR));
+              (*curLen)+=if_condition_len;
+              curPos+=if_condition_len;
+          }
 
         } else if (WCMD_keyword_ws_found(ifElse, ARRAY_SIZE(ifElse), curPos)) {
           const int keyw_len = ARRAY_SIZE(ifElse) + 1;
@@ -2397,7 +2419,7 @@ void WCMD_free_commands(CMD_LIST *cmds) {
  * winmain().
  */
 
-int wmain (int argc, WCHAR *argvW[])
+int __cdecl wmain (int argc, WCHAR *argvW[])
 {
   int     args;
   WCHAR  *cmdLine = NULL;
@@ -2417,6 +2439,7 @@ int wmain (int argc, WCHAR *argvW[])
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
   OSVERSIONINFOW osv;
   char osver[50];
+  STARTUPINFOW startupInfo;
 
   if (!GetEnvironmentVariableW(comspecW, comspec, ARRAY_SIZE(comspec)))
   {
@@ -2676,7 +2699,11 @@ int wmain (int argc, WCHAR *argvW[])
       return errorlevel;
   }
 
-  SetConsoleTitleW(WCMD_LoadMessage(WCMD_CONSTITLE));
+  GetStartupInfoW(&startupInfo);
+  if (startupInfo.lpTitle != NULL)
+      SetConsoleTitleW(startupInfo.lpTitle);
+  else
+      SetConsoleTitleW(WCMD_LoadMessage(WCMD_CONSTITLE));
 
   /* Note: cmd.exe /c dir does not get a new color, /k dir does */
   if (opt_t) {

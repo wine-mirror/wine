@@ -3845,9 +3845,13 @@ UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR module, UINT size )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetWindowInfo( HWND hwnd, PWINDOWINFO pwi)
 {
-    if (!pwi) return FALSE;
-    if (!WIN_GetRectangles( hwnd, COORDS_SCREEN, &pwi->rcWindow, &pwi->rcClient )) return FALSE;
+    RECT rcWindow, rcClient;
 
+    if (!WIN_GetRectangles( hwnd, COORDS_SCREEN, &rcWindow, &rcClient )) return FALSE;
+    if (!pwi) return FALSE;
+
+    pwi->rcWindow = rcWindow;
+    pwi->rcClient = rcClient;
     pwi->dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
     pwi->dwExStyle = GetWindowLongW(hwnd, GWL_EXSTYLE);
     pwi->dwWindowStatus = ((GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0);

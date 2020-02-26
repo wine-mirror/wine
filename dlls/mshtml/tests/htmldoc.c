@@ -238,7 +238,7 @@ static enum load_state_t {
 } load_state;
 
 static LPCOLESTR expect_status_text = NULL;
-static const char *nav_url, *nav_serv_url, *prev_url;
+static const WCHAR *nav_url, *nav_serv_url, *prev_url;
 
 static const char html_page[] =
 "<html>"
@@ -282,44 +282,6 @@ static const WCHAR wszTimesNewRoman[] =
     {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
 static const WCHAR wszArial[] =
     {'A','r','i','a','l',0};
-
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
-}
-
-static BOOL wstr_contains(const WCHAR *strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return strstr(buf, stra) != NULL;
-}
-
-static const WCHAR *strstrW( const WCHAR *str, const WCHAR *sub )
-{
-    while (*str)
-    {
-        const WCHAR *p1 = str, *p2 = sub;
-        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
-        if (!*p2) return str;
-        str++;
-    }
-    return NULL;
-}
-
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
 
 /* Returns true if the user interface is in English. Note that this does not
  * presume of the formatting of dates, numbers, etc.
@@ -391,7 +353,7 @@ static void test_timer(DWORD flags)
 static IMoniker Moniker;
 
 #define test_GetCurMoniker(u,m,v,t) _test_GetCurMoniker(__LINE__,u,m,v,t)
-static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, const char *exurl, BOOL is_todo)
+static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, const WCHAR *exurl, BOOL is_todo)
 {
     IHTMLDocument2 *doc;
     IPersistMoniker *permon;
@@ -438,7 +400,8 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
         if(!*ptr)
             ok(!lstrcmpW(url, doc_url), "url %s != doc_url %s\n", wine_dbgstr_w(url), wine_dbgstr_w(doc_url));
         else
-            ok(!strcmp_wa(url, nav_serv_url), "url = %s, expected %s\n", wine_dbgstr_w(url), nav_serv_url);
+            ok(!lstrcmpW(url, nav_serv_url), "url = %s, expected %s\n", wine_dbgstr_w(url),
+               wine_dbgstr_w(nav_serv_url));
         CoTaskMemFree(url);
     }else if(exurl) {
         LPOLESTR url;
@@ -449,7 +412,7 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
         ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
 
         todo_wine_if(is_todo)
-            ok_(__FILE__,line)(!strcmp_wa(url, exurl), "unexpected url %s\n", wine_dbgstr_w(url));
+            ok_(__FILE__,line)(!lstrcmpW(url, exurl), "unexpected url %s\n", wine_dbgstr_w(url));
         if(!*ptr)
             ok_(__FILE__,line)(!lstrcmpW(url, doc_url), "url %s != doc_url %s\n", wine_dbgstr_w(url), wine_dbgstr_w(doc_url));
 
@@ -458,7 +421,7 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
         ok_(__FILE__,line)(hres == E_UNEXPECTED,
            "GetCurrentMoniker failed: %08x, expected E_UNEXPECTED\n", hres);
         ok_(__FILE__,line)(mon == (IMoniker*)0xdeadbeef, "mon=%p\n", mon);
-        ok_(__FILE__,line)(!strcmp_wa(doc_url, "about:blank"), "doc_url is not about:blank\n");
+        ok_(__FILE__,line)(!lstrcmpW(doc_url, L"about:blank"), "doc_url is not about:blank\n");
     }
 
     SysFreeString(doc_url);
@@ -468,7 +431,7 @@ static void _test_GetCurMoniker(unsigned line, IUnknown *unk, IMoniker *exmon, c
 }
 
 #define test_current_url(a,b) _test_current_url(__LINE__,a,b)
-static void _test_current_url(unsigned line, IUnknown *unk, const char *exurl)
+static void _test_current_url(unsigned line, IUnknown *unk, const WCHAR *exurl)
 {
     IHTMLDocument2 *doc;
     BSTR url;
@@ -479,7 +442,8 @@ static void _test_current_url(unsigned line, IUnknown *unk, const char *exurl)
 
     hres = IHTMLDocument2_get_URL(doc, &url);
     ok_(__FILE__,line)(hres == S_OK, "get_URL failed: %08x\n", hres);
-    ok_(__FILE__,line)(!strcmp_wa(url, exurl), "Unexpected URL %s, expected %s\n", wine_dbgstr_w(url), exurl);
+    ok_(__FILE__,line)(!lstrcmpW(url, exurl), "Unexpected URL %s, expected %s\n", wine_dbgstr_w(url),
+                       wine_dbgstr_w(exurl));
     SysFreeString(url);
 
     IHTMLDocument2_Release(doc);
@@ -597,7 +561,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(!grfPI, "grfPI = %x\n", grfPI);
     ok(!dwReserved, "dwReserved = %lx\n", dwReserved);
     if(is_mhtml)
-        ok(!strcmp_wa(szUrl, "winetest:doc"), "unexpected URL %s\n", wine_dbgstr_w(szUrl));
+        ok(!lstrcmpW(szUrl, L"winetest:doc"), "unexpected URL %s\n", wine_dbgstr_w(szUrl));
 
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(bindinfo);
@@ -859,7 +823,8 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
 
         hres = IMoniker_GetDisplayName(mon, NULL, NULL, &location);
         ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
-        ok(!strcmp_wa(location, nav_url), "unexpected display name %s, expected %s\n", wine_dbgstr_w(location), nav_url);
+        ok(!lstrcmpW(location, nav_url), "unexpected display name %s, expected %s\n", wine_dbgstr_w(location),
+           wine_dbgstr_w(nav_url));
         CoTaskMemFree(location);
         IMoniker_Release(mon);
 
@@ -927,9 +892,9 @@ static HRESULT WINAPI NewWindowManager_EvaluateNewWindow(INewWindowManager *ifac
 {
     CHECK_EXPECT(EvaluateNewWindow);
 
-    ok(!strcmp_wa(pszUrl, "about:blank"), "pszUrl = %s\n", wine_dbgstr_w(pszUrl));
-    ok(!strcmp_wa(pszName, "test"), "pszName = %s\n", wine_dbgstr_w(pszName));
-    ok(!strcmp_wa(pszUrlContext, prev_url), "pszUrlContext = %s\n", wine_dbgstr_w(pszUrlContext));
+    ok(!lstrcmpW(pszUrl, L"about:blank"), "pszUrl = %s\n", wine_dbgstr_w(pszUrl));
+    ok(!lstrcmpW(pszName, L"test"), "pszName = %s\n", wine_dbgstr_w(pszName));
+    ok(!lstrcmpW(pszUrlContext, prev_url), "pszUrlContext = %s\n", wine_dbgstr_w(pszUrlContext));
     ok(!pszFeatures, "pszFeatures = %s\n", wine_dbgstr_w(pszFeatures));
     ok(!fReplace, "fReplace = %x\n", fReplace);
     ok(dwFlags == (allow_new_window ? 0 : NWMF_FIRST), "dwFlags = %x\n", dwFlags);
@@ -1672,7 +1637,7 @@ static ULONG WINAPI OleContainer_Release(IOleContainer *iface)
 }
 
 static HRESULT WINAPI OleContainer_ParseDisplayName(IOleContainer *iface, IBindCtx *pbc,
-        LPOLESTR pszDiaplayName, ULONG *pchEaten, IMoniker **ppmkOut)
+        LPOLESTR pszDisplayName, ULONG *pchEaten, IMoniker **ppmkOut)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
@@ -2655,7 +2620,8 @@ static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, D
     ok(iface == expect_uihandler_iface, "called on unexpected iface\n");
     ok(!dwTranslate, "dwTranslate = %x\n", dwTranslate);
     todo_wine_if(loading_hash)
-        ok(!strcmp_wa(pchURLIn, nav_serv_url), "pchURLIn = %s, expected %s\n", wine_dbgstr_w(pchURLIn), nav_serv_url);
+        ok(!lstrcmpW(pchURLIn, nav_serv_url), "pchURLIn = %s, expected %s\n", wine_dbgstr_w(pchURLIn),
+           wine_dbgstr_w(nav_serv_url));
     ok(ppchURLOut != NULL, "ppchURLOut == NULL\n");
     ok(!*ppchURLOut, "*ppchURLOut = %p\n", *ppchURLOut);
 
@@ -2879,7 +2845,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
                 readystate_set_interactive = (load_state != LD_INTERACTIVE);
                 break;
             default:
-                ok(0, "unexpevted V_I4(pvaIn)=%d\n", V_I4(pvaIn));
+                ok(0, "unexpected V_I4(pvaIn)=%d\n", V_I4(pvaIn));
             }
 
             return S_OK;
@@ -2935,7 +2901,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
                 if(nav_url)
                     test_GetCurMoniker(doc_unk, NULL, nav_serv_url, FALSE);
                 else if(load_from_stream)
-                    test_GetCurMoniker(doc_unk, NULL, "about:blank", FALSE);
+                    test_GetCurMoniker(doc_unk, NULL, L"about:blank", FALSE);
                 else if(!editmode)
                     test_GetCurMoniker(doc_unk, doc_mon, NULL, FALSE);
             }
@@ -2978,8 +2944,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             CHECK_EXPECT(Exec_ShellDocView_67);
             ok(pvaIn != NULL, "pvaIn == NULL\n");
             ok(V_VT(pvaIn) == VT_BSTR, "V_VT(pvaIn) = %d\n", V_VT(pvaIn));
-            ok(!strcmp_wa(V_BSTR(pvaIn), nav_serv_url), "V_BSTR(pvaIn) = %s, expected \"%s\"\n",
-               wine_dbgstr_w(V_BSTR(pvaIn)), nav_serv_url);
+            ok(!lstrcmpW(V_BSTR(pvaIn), nav_serv_url), "V_BSTR(pvaIn) = %s, expected \"%s\"\n",
+               wine_dbgstr_w(V_BSTR(pvaIn)), wine_dbgstr_w(nav_serv_url));
             ok(pvaOut != NULL, "pvaOut == NULL\n");
             ok(V_VT(pvaOut) == VT_BOOL, "V_VT(pvaOut) = %d\n", V_VT(pvaOut));
             ok(V_BOOL(pvaOut) == VARIANT_TRUE, "V_BOOL(pvaOut) = %x\n", V_BOOL(pvaOut));
@@ -3120,7 +3086,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ind = 1;
             SafeArrayGetElement(sa, &ind, &var);
             ok(V_VT(&var) == VT_BSTR, "Incorrect data type: %d\n", V_VT(&var));
-            ok(!strcmp_wa(V_BSTR(&var), "winetest:doc"), "Page address: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+            ok(!lstrcmpW(V_BSTR(&var), L"winetest:doc"), "Page address: %s\n", wine_dbgstr_w(V_BSTR(&var)));
             VariantClear(&var);
             ind = 2;
             SafeArrayGetElement(sa, &ind, &var);
@@ -3311,11 +3277,11 @@ static HRESULT WINAPI EventDispatch_Invoke(IDispatch *iface, DISPID dispIdMember
         hres = IHTMLDocument2_get_readyState(doc, &state);
         ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
 
-        if(!strcmp_wa(state, "interactive"))
+        if(!lstrcmpW(state, L"interactive"))
             CHECK_EXPECT(Invoke_OnReadyStateChange_Interactive);
-        else if(!strcmp_wa(state, "loading"))
+        else if(!lstrcmpW(state, L"loading"))
             CHECK_EXPECT(Invoke_OnReadyStateChange_Loading);
-        else if(!strcmp_wa(state, "complete")) {
+        else if(!lstrcmpW(state, L"complete")) {
             CHECK_EXPECT(Invoke_OnReadyStateChange_Complete);
             complete = TRUE;
         } else
@@ -3500,18 +3466,18 @@ static HRESULT  WINAPI DocObjectService_FireBeforeNavigate2(IDocObjectService *i
     CHECK_EXPECT(FireBeforeNavigate2);
 
     ok(!pDispatch, "pDispatch = %p\n", pDispatch);
-    ok(!strcmp_wa(lpszUrl, nav_url), "lpszUrl = %s, expected %s\n", wine_dbgstr_w(lpszUrl), nav_url);
+    ok(!lstrcmpW(lpszUrl, nav_url), "lpszUrl = %s, expected %s\n", wine_dbgstr_w(lpszUrl), wine_dbgstr_w(nav_url));
     ok(dwFlags == 0x140 /* IE11*/ || dwFlags == 0x40 || !dwFlags || dwFlags == 0x50, "dwFlags = %x\n", dwFlags);
     ok(!lpszFrameName, "lpszFrameName = %s\n", wine_dbgstr_w(lpszFrameName));
     if(!testing_submit) {
         ok(!pPostData, "pPostData = %p\n", pPostData);
         ok(!cbPostData, "cbPostData = %d\n", cbPostData);
-        ok(!lpszHeaders || !strcmp_wa(lpszHeaders, "Referer: http://test.winehq.org/tests/winehq_snapshot/\r\n"),
+        ok(!lpszHeaders || !lstrcmpW(lpszHeaders, L"Referer: http://test.winehq.org/tests/winehq_snapshot/\r\n"),
            "lpszHeaders = %s\n", wine_dbgstr_w(lpszHeaders));
     }else {
         ok(cbPostData == 9, "cbPostData = %d\n", cbPostData);
         ok(!memcmp(pPostData, "cmd=TEST", cbPostData), "pPostData = %p\n", pPostData);
-        ok(wstr_contains(lpszHeaders, "Content-Type: application/x-www-form-urlencoded\r\n"),
+        ok(wcsstr(lpszHeaders, L"Content-Type: application/x-www-form-urlencoded\r\n") != NULL,
            "lpszHeaders = %s\n", wine_dbgstr_w(lpszHeaders));
 
     }
@@ -4342,7 +4308,7 @@ static IConnectionPointContainer ConnectionPointContainer = { &ConnectionPointCo
 static void test_NavigateWithBindCtx(BSTR uri, VARIANT *flags, VARIANT *target_frame, VARIANT *post_data,
         VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment)
 {
-    ok(!strcmp_wa(uri, nav_url), "uri = %s\n", wine_dbgstr_w(uri));
+    ok(!lstrcmpW(uri, nav_url), "uri = %s\n", wine_dbgstr_w(uri));
     ok(V_VT(flags) == VT_I4, "V_VT(flags) = %d\n", V_VT(flags));
     ok(V_I4(flags) == navHyperlink, "V_I4(flags) = %x\n", V_I4(flags));
     ok(!target_frame, "target_frame != NULL\n");
@@ -5133,7 +5099,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
      * STopLevelBrowser
      * IHTMLWindow2
      * IInternetProtocol
-     * UrlHostory
+     * UrlHistory
      * IHTMLEditHost
      * IHlinkFrame
      */
@@ -5381,7 +5347,7 @@ static void test_doscroll(IUnknown *unk)
     ok(hres == S_OK, "Could not get IHTMLElement2 iface: %08x\n", hres);
 
     V_VT(&v) = VT_BSTR;
-    V_BSTR(&v) = a2bstr("left");
+    V_BSTR(&v) = SysAllocString(L"left");
     hres = IHTMLElement2_doScroll(elem2, v);
     SysFreeString(V_BSTR(&v));
     IHTMLElement2_Release(elem2);
@@ -5403,13 +5369,13 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     VARIANT out;
     HRESULT hres;
 
-    static const LPCSTR expected_state[] = {
-        "uninitialized",
-        "loading",
+    static const LPCWSTR expected_state[] = {
+        L"uninitialized",
+        L"loading",
         NULL,
-        "interactive",
-        "complete",
-        "uninitialized"
+        L"interactive",
+        L"complete",
+        L"uninitialized"
     };
 
     if(open_call || resetting_document)
@@ -5429,11 +5395,11 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     hres = IHTMLDocument2_get_readyState(htmldoc, &state);
     ok(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
 
-    if(!strcmp_wa(state, "interactive") && load_state == LD_LOADING)
+    if(!lstrcmpW(state, L"interactive") && load_state == LD_LOADING)
         load_state = LD_INTERACTIVE;
 
     ok_(__FILE__, line)
-        (!strcmp_wa(state, expected_state[load_state]), "unexpected state %s, expected %d\n",
+        (!lstrcmpW(state, expected_state[load_state]), "unexpected state %s, expected %d\n",
          wine_dbgstr_w(state), load_state);
     SysFreeString(state);
 
@@ -5451,7 +5417,7 @@ static void _test_readyState(unsigned line, IUnknown *unk)
         IHTMLElement2_Release(elem2);
         ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
         ok(V_VT(&var) == VT_BSTR, "V_VT(state) = %d\n", V_VT(&var));
-        ok(!strcmp_wa(V_BSTR(&var), "complete"), "unexpected body state %s\n", wine_dbgstr_w(V_BSTR(&var)));
+        ok(!lstrcmpW(V_BSTR(&var), L"complete"), "unexpected body state %s\n", wine_dbgstr_w(V_BSTR(&var)));
         VariantClear(&var);
     }else {
         ok_(__FILE__,line)(load_state != LD_COMPLETE, "body is NULL in complete state\n");
@@ -5712,7 +5678,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
     if(!is_mhtml)
         test_GetCurMoniker((IUnknown*)persist, mon, NULL, FALSE);
     else
-        test_GetCurMoniker((IUnknown*)persist, NULL, "mhtml:winetest:doc", FALSE);
+        test_GetCurMoniker((IUnknown*)persist, NULL, L"mhtml:winetest:doc", FALSE);
 
     IBindCtx_Release(bind);
 
@@ -5997,17 +5963,17 @@ static void test_Persist(IHTMLDocument2 *doc, IMoniker *mon)
     }
 }
 
-static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *href, const char *new_nav_url, BOOL is_js,
+static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const WCHAR *href, const WCHAR *new_nav_url, BOOL is_js,
         BOOL is_hash, DWORD dwl_flags)
 {
-    const char *prev_nav_url = NULL;
+    const WCHAR *prev_nav_url = NULL;
     IHTMLPrivateWindow *priv_window;
     IHTMLLocation *location;
     IHTMLWindow2 *window;
     BSTR str, str2;
     HRESULT hres;
 
-    trace("put_href %s...\n", new_nav_url);
+    trace("put_href %s...\n", wine_dbgstr_w(new_nav_url));
 
     loading_js = is_js;
     loading_hash = is_hash;
@@ -6024,7 +5990,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
     if(!href)
         href = new_nav_url;
 
-    str = a2bstr(href);
+    str = SysAllocString(href);
     SET_EXPECT(TranslateUrl);
     if(support_wbapp) {
         SET_EXPECT(FireBeforeNavigate2);
@@ -6113,8 +6079,8 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
         SET_EXPECT(Exec_ShellDocView_63);
         SET_EXPECT(Exec_ShellDocView_84);
 
-        str = a2bstr(nav_url);
-        str2 = a2bstr("");
+        str = SysAllocString(nav_url);
+        str2 = SysAllocString(L"");
         V_VT(&vempty) = VT_EMPTY;
         hres = IHTMLPrivateWindow_SuperNavigate(priv_window, str, str2, NULL, NULL, &vempty, &vempty, 0);
         SysFreeString(str);
@@ -6137,7 +6103,8 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
     if(!is_hash) {
         hres = IHTMLPrivateWindow_GetAddressBarUrl(priv_window, &str2);
         ok(hres == S_OK, "GetAddressBarUrl failed: %08x\n", hres);
-        ok(!strcmp_wa(str2, prev_nav_url), "unexpected address bar url:  %s, expected %s\n", wine_dbgstr_w(str2), prev_nav_url);
+        ok(!lstrcmpW(str2, prev_nav_url), "unexpected address bar url:  %s, expected %s\n", wine_dbgstr_w(str2),
+           wine_dbgstr_w(prev_nav_url));
         SysFreeString(str2);
 
         if(is_js) {
@@ -6157,11 +6124,11 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
     hres = IHTMLPrivateWindow_GetAddressBarUrl(priv_window, &str2);
     ok(hres == S_OK, "GetAddressBarUrl failed: %08x\n", hres);
     if(is_js)
-        ok(!strcmp_wa(str2, prev_nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
+        ok(!lstrcmpW(str2, prev_nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
     else if (dwl_flags & DWL_EXTERNAL)
-        todo_wine ok(!strcmp_wa(str2, prev_nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
+        todo_wine ok(!lstrcmpW(str2, prev_nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
     else
-        ok(!strcmp_wa(str2, nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
+        ok(!lstrcmpW(str2, nav_url), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
     SysFreeString(str2);
     IHTMLPrivateWindow_Release(priv_window);
 
@@ -6181,8 +6148,8 @@ static void test_load_history(IHTMLDocument2 *doc)
     ok(hres == S_OK, "Could not get IPersistHistory iface: %08x\n", hres);
 
     prev_url = nav_url;
-    nav_url = "http://test.winehq.org/tests/winehq_snapshot/#test";
-    nav_serv_url = "http://test.winehq.org/tests/winehq_snapshot/";
+    nav_url = L"http://test.winehq.org/tests/winehq_snapshot/#test";
+    nav_serv_url = L"http://test.winehq.org/tests/winehq_snapshot/";
 
     SET_EXPECT(Exec_ShellDocView_138);
     SET_EXPECT(Exec_ShellDocView_67);
@@ -6267,8 +6234,8 @@ static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
 
-    url = a2bstr(nav_serv_url = nav_url = "about:blank");
-    name = a2bstr("test");
+    url = SysAllocString(nav_serv_url = nav_url = L"about:blank");
+    name = SysAllocString(L"test");
     new_window = (void*)0xdeadbeef;
 
     trace("open...\n");
@@ -6357,7 +6324,7 @@ static void test_elem_from_point(IHTMLDocument2 *doc)
     hres = IHTMLElement_get_tagName(elem, &tag);
     IHTMLElement_Release(elem);
     ok(hres == S_OK, "get_tagName failed: %08x\n", hres);
-    ok(!strcmp_wa(tag, "DIV"), "tag = %s\n", wine_dbgstr_w(tag));
+    ok(!lstrcmpW(tag, L"DIV"), "tag = %s\n", wine_dbgstr_w(tag));
 }
 
 static void test_clear(IHTMLDocument2 *doc)
@@ -7504,7 +7471,7 @@ static void test_StreamLoad(IHTMLDocument2 *doc)
     todo_wine CHECK_CALLED(GetPendingUrl);
 
     test_timer(EXPECT_SETTITLE);
-    test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank", FALSE);
+    test_GetCurMoniker((IUnknown*)doc, NULL, L"about:blank", FALSE);
 
     IPersistStreamInit_Release(init);
 }
@@ -7538,7 +7505,7 @@ static void test_StreamInitNew(IHTMLDocument2 *doc)
     todo_wine CHECK_CALLED(GetPendingUrl);
 
     test_timer(EXPECT_SETTITLE);
-    test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank", FALSE);
+    test_GetCurMoniker((IUnknown*)doc, NULL, L"about:blank", FALSE);
 
     IPersistStreamInit_Release(init);
 }
@@ -7741,7 +7708,7 @@ static void test_MHTMLDocument(void)
 
     init_test(LD_DOLOAD);
     is_mhtml = TRUE;
-    nav_url = nav_serv_url = "mhtml:winetest:doc";
+    nav_url = nav_serv_url = L"mhtml:winetest:doc";
 
     hres = CoCreateInstance(&CLSID_MHTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IHTMLDocument2, (void**)&doc);
@@ -7763,7 +7730,7 @@ static void test_MHTMLDocument(void)
     test_GetCurMoniker((IUnknown*)doc, NULL, NULL, FALSE);
     test_Persist(doc, &Moniker);
     set_custom_uihandler(doc, &CustomDocHostUIHandler);
-    test_GetCurMoniker((IUnknown*)doc, NULL, "mhtml:winetest:doc", FALSE);
+    test_GetCurMoniker((IUnknown*)doc, NULL, L"mhtml:winetest:doc", FALSE);
     test_download(0);
 
     test_exec_onunload(doc);
@@ -7840,7 +7807,7 @@ static void test_cookies(IHTMLDocument2 *doc)
         SysFreeString(str);
     }
 
-    str = a2bstr("test=testval");
+    str = SysAllocString(L"test=testval");
     hres = IHTMLDocument2_put_cookie(doc, str);
     ok(hres == S_OK, "put_cookie failed: %08x\n", hres);
 
@@ -7853,11 +7820,11 @@ static void test_cookies(IHTMLDocument2 *doc)
     ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
     if(str2)
-        ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
+        ok(wcsstr(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
     SysFreeString(str);
     SysFreeString(str2);
 
-    str = a2bstr("test=testval2");
+    str = SysAllocString(L"test=testval2");
     hres = IHTMLDocument2_put_cookie(doc, str);
     ok(hres == S_OK, "put_cookie failed: %08x\n", hres);
 
@@ -7870,7 +7837,7 @@ static void test_cookies(IHTMLDocument2 *doc)
     ok(b, "InternetGetCookieW failed: %08x\n", GetLastError());
     ok(!lstrcmpW(buf, str2), "cookie = %s, expected %s\n", wine_dbgstr_w(str2), wine_dbgstr_w(buf));
     if(str2)
-        ok(strstrW(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
+        ok(wcsstr(str2, str) != NULL, "could not find %s in %s\n", wine_dbgstr_w(str), wine_dbgstr_w(str2));
     SysFreeString(str);
     SysFreeString(str2);
 }
@@ -7882,27 +7849,27 @@ static void test_doc_domain(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_domain(doc, &str);
     ok(hres == S_OK, "get_domain failed: %08x\n", hres);
-    ok(!strcmp_wa(str, "test.winehq.org"), "domain = %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"test.winehq.org"), "domain = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
-    str = a2bstr("winehq.org");
+    str = SysAllocString(L"winehq.org");
     hres = IHTMLDocument2_put_domain(doc, str);
     ok(hres == S_OK, "put_domain failed: %08x\n", hres);
     SysFreeString(str);
 
     hres = IHTMLDocument2_get_domain(doc, &str);
     ok(hres == S_OK, "get_domain failed: %08x\n", hres);
-    ok(!strcmp_wa(str, "winehq.org"), "domain = %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"winehq.org"), "domain = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
-    str = a2bstr("winehq.com");
+    str = SysAllocString(L"winehq.com");
     hres = IHTMLDocument2_put_domain(doc, str);
     ok(hres == E_INVALIDARG, "put_domain failed: %08x, expected E_INVALIDARG\n", hres);
     SysFreeString(str);
 
     hres = IHTMLDocument2_get_domain(doc, &str);
     ok(hres == S_OK, "get_domain failed: %08x\n", hres);
-    ok(!strcmp_wa(str, "winehq.org"), "domain = %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"winehq.org"), "domain = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 }
 
@@ -7945,19 +7912,19 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_binding_ui((IUnknown*)doc);
     test_doc_domain(doc);
 
-    nav_url = nav_serv_url = "http://test.winehq.org/tests/winehq_snapshot/"; /* for valid prev nav_url */
+    nav_url = nav_serv_url = L"http://test.winehq.org/tests/winehq_snapshot/"; /* for valid prev nav_url */
     if(support_wbapp) {
-        test_put_href(doc, FALSE, "#test", "http://test.winehq.org/tests/winehq_snapshot/#test", FALSE, TRUE, 0);
+        test_put_href(doc, FALSE, L"#test", L"http://test.winehq.org/tests/winehq_snapshot/#test", FALSE, TRUE, 0);
         test_travellog(doc);
         test_refresh(doc);
     }
-    test_put_href(doc, FALSE, NULL, "javascript:external%20&&undefined", TRUE, FALSE, 0);
-    test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);
-    test_put_href(doc, TRUE, NULL, "about:replace", FALSE, FALSE, 0);
+    test_put_href(doc, FALSE, NULL, L"javascript:external%20&&undefined", TRUE, FALSE, 0);
+    test_put_href(doc, FALSE, NULL, L"about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);
+    test_put_href(doc, TRUE, NULL, L"about:replace", FALSE, FALSE, 0);
     if(support_wbapp) {
         test_load_history(doc);
         test_OmHistory(doc);
-        test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);
+        test_put_href(doc, FALSE, NULL, L"about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);
     }
 
     prev_url = nav_serv_url;
@@ -7965,7 +7932,7 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     if(!support_wbapp) /* FIXME */
         test_open_window(doc, FALSE);
     if(support_wbapp) {
-        test_put_href(doc, FALSE, NULL, "http://test.winehq.org/tests/file.winetest", FALSE, FALSE, DWL_EXTERNAL);
+        test_put_href(doc, FALSE, NULL, L"http://test.winehq.org/tests/file.winetest", FALSE, FALSE, DWL_EXTERNAL);
         test_window_close(doc);
     }
 
@@ -7984,9 +7951,9 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     ok(!ref, "ref=%d, expected 0\n", ref);
 }
 
-static void put_inner_html(IHTMLElement *elem, const char *html)
+static void put_inner_html(IHTMLElement *elem, const WCHAR *html)
 {
-    BSTR str = a2bstr(html);
+    BSTR str = SysAllocString(html);
     HRESULT hres;
 
     hres = IHTMLElement_put_innerHTML(elem, str);
@@ -7995,10 +7962,10 @@ static void put_inner_html(IHTMLElement *elem, const char *html)
     SysFreeString(str);
 }
 
-static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, const char *id)
+static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, const WCHAR *id)
 {
     IHTMLDocument3 *doc3;
-    BSTR str = a2bstr(id);
+    BSTR str = SysAllocString(id);
     IHTMLElement *ret;
     HRESULT hres;
 
@@ -8029,7 +7996,7 @@ static void reset_document(IHTMLDocument2 *doc)
 
     resetting_document = FALSE;
 
-    test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank", FALSE);
+    test_GetCurMoniker((IUnknown*)doc, NULL, L"about:blank", FALSE);
 
     IPersistStreamInit_Release(init);
 }
@@ -8069,17 +8036,17 @@ static void test_submit(void)
     ok(hres == S_OK, "get_body failed: %08x\n", hres);
     ok(body != NULL, "body = NULL\n");
 
-    put_inner_html(body, "<form action='test_submit' method='post' id='fid'><input type='hidden' name='cmd' value='TEST'></form>");
+    put_inner_html(body, L"<form action='test_submit' method='post' id='fid'><input type='hidden' name='cmd' value='TEST'></form>");
     IHTMLElement_Release(body);
 
-    form_elem = get_elem_by_id(doc, "fid");
+    form_elem = get_elem_by_id(doc, L"fid");
     ok(form_elem != NULL, "form = NULL\n");
 
     hres = IHTMLElement_QueryInterface(form_elem, &IID_IHTMLFormElement, (void**)&form);
     ok(hres == S_OK, "Could not get IHTMLFormElement: %08x\n", hres);
     IHTMLElement_Release(form_elem);
 
-    nav_url = nav_serv_url = "winetest:test_submit";
+    nav_url = nav_serv_url = L"winetest:test_submit";
     testing_submit = TRUE;
 
     SET_EXPECT(TranslateUrl);
@@ -8394,7 +8361,7 @@ static void test_editing_mode(BOOL do_load, BOOL use_design_mode)
         SET_EXPECT(InPlaceFrame_SetBorderSpace);
         SET_EXPECT(OnChanged_1014);
 
-        on = a2bstr("On");
+        on = SysAllocString(L"On");
         hres = IHTMLDocument2_put_designMode(doc, on);
         SysFreeString(on);
         ok(hres == S_OK, "put_designMode failed: %08x\n", hres);

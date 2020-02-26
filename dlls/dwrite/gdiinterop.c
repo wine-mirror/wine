@@ -38,12 +38,13 @@ struct dib_data {
     int width;
 };
 
-struct rendertarget {
+struct rendertarget
+{
     IDWriteBitmapRenderTarget1 IDWriteBitmapRenderTarget1_iface;
     ID2D1SimplifiedGeometrySink ID2D1SimplifiedGeometrySink_iface;
-    LONG ref;
+    LONG refcount;
 
-    IDWriteFactory5 *factory;
+    IDWriteFactory7 *factory;
     DWRITE_TEXT_ANTIALIAS_MODE antialiasmode;
     FLOAT ppdip;
     DWRITE_MATRIX m;
@@ -52,11 +53,12 @@ struct rendertarget {
     struct dib_data dib;
 };
 
-struct gdiinterop {
+struct gdiinterop
+{
     IDWriteGdiInterop1 IDWriteGdiInterop1_iface;
     IDWriteFontFileLoader IDWriteFontFileLoader_iface;
-    LONG ref;
-    IDWriteFactory5 *factory;
+    LONG refcount;
+    IDWriteFactory7 *factory;
 };
 
 struct memresource_stream {
@@ -249,27 +251,29 @@ static HRESULT WINAPI rendertarget_QueryInterface(IDWriteBitmapRenderTarget1 *if
 
 static ULONG WINAPI rendertarget_AddRef(IDWriteBitmapRenderTarget1 *iface)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
-    return ref;
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
+    ULONG refcount = InterlockedIncrement(&target->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI rendertarget_Release(IDWriteBitmapRenderTarget1 *iface)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
+    ULONG refcount = InterlockedDecrement(&target->refcount);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
-        IDWriteFactory5_Release(This->factory);
-        DeleteDC(This->hdc);
-        heap_free(This);
+        IDWriteFactory7_Release(target->factory);
+        DeleteDC(target->hdc);
+        heap_free(target);
     }
 
-    return ref;
+    return refcount;
 }
 
 static inline DWORD *get_pixel_ptr_32(struct dib_data *dib, int x, int y)
@@ -341,22 +345,22 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     DWRITE_GLYPH_RUN const *run, IDWriteRenderingParams *params, COLORREF color,
     RECT *bbox_ret)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
     IDWriteGlyphRunAnalysis *analysis;
     DWRITE_RENDERING_MODE1 rendermode;
     DWRITE_GRID_FIT_MODE gridfitmode;
     DWRITE_TEXTURE_TYPE texturetype;
     DWRITE_GLYPH_RUN scaled_run;
     IDWriteFontFace3 *fontface;
-    RECT target, bounds;
+    RECT target_rect, bounds;
     HRESULT hr;
 
-    TRACE("(%p)->(%.2f %.2f %d %p %p 0x%08x %p)\n", This, originX, originY,
+    TRACE("%p, %.8e, %.8e, %d, %p, %p, 0x%08x, %p.\n", iface, originX, originY,
         measuring_mode, run, params, color, bbox_ret);
 
     SetRectEmpty(bbox_ret);
 
-    if (!This->dib.ptr)
+    if (!target->dib.ptr)
         return S_OK;
 
     if (!params)
@@ -367,18 +371,19 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
         return hr;
     }
 
-    hr = IDWriteFontFace3_GetRecommendedRenderingMode(fontface, run->fontEmSize, This->ppdip * 96.0f,
-            This->ppdip * 96.0f, NULL /* FIXME */, run->isSideways, DWRITE_OUTLINE_THRESHOLD_ALIASED, measuring_mode,
+    hr = IDWriteFontFace3_GetRecommendedRenderingMode(fontface, run->fontEmSize, target->ppdip * 96.0f,
+            target->ppdip * 96.0f, NULL /* FIXME */, run->isSideways, DWRITE_OUTLINE_THRESHOLD_ALIASED, measuring_mode,
             params, &rendermode, &gridfitmode);
     IDWriteFontFace3_Release(fontface);
     if (FAILED(hr))
         return hr;
 
-    SetRect(&target, 0, 0, This->size.cx, This->size.cy);
+    SetRect(&target_rect, 0, 0, target->size.cx, target->size.cy);
 
-    if (rendermode == DWRITE_RENDERING_MODE1_OUTLINE) {
+    if (rendermode == DWRITE_RENDERING_MODE1_OUTLINE)
+    {
         static const XFORM identity = { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-        const DWRITE_MATRIX *m = &This->m;
+        const DWRITE_MATRIX *m = &target->m;
         XFORM xform;
 
         /* target allows any transform to be set, filter it here */
@@ -397,40 +402,42 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
             xform.eDx  = m->m11 * originX + m->m21 * originY + m->dx;
             xform.eDy  = m->m12 * originX + m->m22 * originY + m->dy;
         }
-        SetWorldTransform(This->hdc, &xform);
+        SetWorldTransform(target->hdc, &xform);
 
-        BeginPath(This->hdc);
+        BeginPath(target->hdc);
 
-        hr = IDWriteFontFace_GetGlyphRunOutline(run->fontFace, run->fontEmSize * This->ppdip,
+        hr = IDWriteFontFace_GetGlyphRunOutline(run->fontFace, run->fontEmSize * target->ppdip,
             run->glyphIndices, run->glyphAdvances, run->glyphOffsets, run->glyphCount,
-            run->isSideways, run->bidiLevel & 1, &This->ID2D1SimplifiedGeometrySink_iface);
+            run->isSideways, run->bidiLevel & 1, &target->ID2D1SimplifiedGeometrySink_iface);
 
-        EndPath(This->hdc);
+        EndPath(target->hdc);
 
-        if (hr == S_OK) {
+        if (hr == S_OK)
+        {
             HBRUSH brush = CreateSolidBrush(color);
 
-            SelectObject(This->hdc, brush);
+            SelectObject(target->hdc, brush);
 
-            FillPath(This->hdc);
+            FillPath(target->hdc);
 
             /* FIXME: one way to get affected rectangle bounds is to use region fill */
             if (bbox_ret)
-                *bbox_ret = target;
+                *bbox_ret = target_rect;
 
             DeleteObject(brush);
         }
 
-        SetWorldTransform(This->hdc, &identity);
+        SetWorldTransform(target->hdc, &identity);
 
         return hr;
     }
 
     scaled_run = *run;
-    scaled_run.fontEmSize *= This->ppdip;
-    hr = IDWriteFactory5_CreateGlyphRunAnalysis(This->factory, &scaled_run, &This->m, rendermode, measuring_mode,
-            gridfitmode, This->antialiasmode, originX, originY, &analysis);
-    if (FAILED(hr)) {
+    scaled_run.fontEmSize *= target->ppdip;
+    hr = IDWriteFactory7_CreateGlyphRunAnalysis(target->factory, &scaled_run, &target->m, rendermode, measuring_mode,
+            gridfitmode, target->antialiasmode, originX, originY, &analysis);
+    if (FAILED(hr))
+    {
         WARN("failed to create analysis instance, 0x%08x\n", hr);
         return hr;
     }
@@ -448,8 +455,9 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
         texturetype = DWRITE_TEXTURE_CLEARTYPE_3x1;
     }
 
-    if (IntersectRect(&target, &target, &bounds)) {
-        UINT32 size = (target.right - target.left) * (target.bottom - target.top);
+    if (IntersectRect(&target_rect, &target_rect, &bounds))
+    {
+        UINT32 size = (target_rect.right - target_rect.left) * (target_rect.bottom - target_rect.top);
         BYTE *bitmap;
 
         color = colorref_to_pixel_888(color);
@@ -461,15 +469,15 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
             return E_OUTOFMEMORY;
         }
 
-        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, texturetype, &target, bitmap, size);
+        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, texturetype, &target_rect, bitmap, size);
         if (hr == S_OK) {
             /* blit to target dib */
             if (texturetype == DWRITE_TEXTURE_ALIASED_1x1)
-                blit_8(&This->dib, bitmap, &target, color);
+                blit_8(&target->dib, bitmap, &target_rect, color);
             else
-                blit_subpixel_888(&This->dib, This->size.cx, bitmap, &target, color);
+                blit_subpixel_888(&target->dib, target->size.cx, bitmap, &target_rect, color);
 
-            if (bbox_ret) *bbox_ret = target;
+            if (bbox_ret) *bbox_ret = target_rect;
         }
 
         heap_free(bitmap);
@@ -584,7 +592,7 @@ static const IDWriteBitmapRenderTarget1Vtbl rendertargetvtbl = {
     rendertarget_SetTextAntialiasMode
 };
 
-static HRESULT create_rendertarget(IDWriteFactory5 *factory, HDC hdc, UINT32 width, UINT32 height, IDWriteBitmapRenderTarget **ret)
+static HRESULT create_rendertarget(IDWriteFactory7 *factory, HDC hdc, UINT32 width, UINT32 height, IDWriteBitmapRenderTarget **ret)
 {
     struct rendertarget *target;
     HRESULT hr;
@@ -596,7 +604,7 @@ static HRESULT create_rendertarget(IDWriteFactory5 *factory, HDC hdc, UINT32 wid
 
     target->IDWriteBitmapRenderTarget1_iface.lpVtbl = &rendertargetvtbl;
     target->ID2D1SimplifiedGeometrySink_iface.lpVtbl = &rendertargetsinkvtbl;
-    target->ref = 1;
+    target->refcount = 1;
 
     target->hdc = CreateCompatibleDC(hdc);
     SetGraphicsMode(target->hdc, GM_ADVANCED);
@@ -610,7 +618,7 @@ static HRESULT create_rendertarget(IDWriteFactory5 *factory, HDC hdc, UINT32 wid
     target->ppdip = GetDeviceCaps(target->hdc, LOGPIXELSX) / 96.0f;
     target->antialiasmode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
     target->factory = factory;
-    IDWriteFactory5_AddRef(factory);
+    IDWriteFactory7_AddRef(factory);
 
     *ret = (IDWriteBitmapRenderTarget*)&target->IDWriteBitmapRenderTarget1_iface;
 
@@ -640,26 +648,29 @@ static HRESULT WINAPI gdiinterop_QueryInterface(IDWriteGdiInterop1 *iface, REFII
 
 static ULONG WINAPI gdiinterop_AddRef(IDWriteGdiInterop1 *iface)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
-    return ref;
+    struct gdiinterop *interop = impl_from_IDWriteGdiInterop1(iface);
+    LONG refcount = InterlockedIncrement(&interop->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop1 *iface)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    struct gdiinterop *interop = impl_from_IDWriteGdiInterop1(iface);
+    LONG refcount = InterlockedDecrement(&interop->refcount);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    if (!ref) {
-        IDWriteFactory5_UnregisterFontFileLoader(This->factory, &This->IDWriteFontFileLoader_iface);
-        factory_detach_gdiinterop(This->factory, iface);
-        heap_free(This);
+    if (!refcount)
+    {
+        IDWriteFactory7_UnregisterFontFileLoader(interop->factory, &interop->IDWriteFontFileLoader_iface);
+        factory_detach_gdiinterop(interop->factory, iface);
+        heap_free(interop);
     }
 
-    return ref;
+    return refcount;
 }
 
 static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop1 *iface,
@@ -751,7 +762,7 @@ extern BOOL WINAPI GetFontFileData(DWORD instance_id, DWORD unknown, UINT64 offs
 static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface,
     HDC hdc, IDWriteFontFace **fontface)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
+    struct gdiinterop *interop = impl_from_IDWriteGdiInterop1(iface);
     struct font_realization_info info;
     struct font_fileinfo *fileinfo;
     DWRITE_FONT_FILE_TYPE filetype;
@@ -762,7 +773,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
     SIZE_T needed;
     HRESULT hr;
 
-    TRACE("(%p)->(%p %p)\n", This, hdc, fontface);
+    TRACE("%p, %p, %p.\n", iface, hdc, fontface);
 
     *fontface = NULL;
 
@@ -793,10 +804,10 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
     }
 
     if (*fileinfo->path)
-        hr = IDWriteFactory5_CreateFontFileReference(This->factory, fileinfo->path, &fileinfo->writetime, &file);
+        hr = IDWriteFactory7_CreateFontFileReference(interop->factory, fileinfo->path, &fileinfo->writetime, &file);
     else
-        hr = IDWriteFactory5_CreateCustomFontFileReference(This->factory, &info.instance_id, sizeof(info.instance_id),
-            &This->IDWriteFontFileLoader_iface, &file);
+        hr = IDWriteFactory7_CreateCustomFontFileReference(interop->factory, &info.instance_id,
+                sizeof(info.instance_id), &interop->IDWriteFontFileLoader_iface, &file);
 
     heap_free(fileinfo);
     if (FAILED(hr))
@@ -807,7 +818,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
     if (SUCCEEDED(hr)) {
         if (is_supported)
             /* Simulations flags values match DWRITE_FONT_SIMULATIONS */
-            hr = IDWriteFactory5_CreateFontFace(This->factory, facetype, 1, &file, info.face_index,
+            hr = IDWriteFactory7_CreateFontFace(interop->factory, facetype, 1, &file, info.face_index,
                     info.simulations, fontface);
         else
             hr = DWRITE_E_FILEFORMAT;
@@ -828,14 +839,14 @@ static HRESULT WINAPI gdiinterop_CreateBitmapRenderTarget(IDWriteGdiInterop1 *if
 static HRESULT WINAPI gdiinterop1_CreateFontFromLOGFONT(IDWriteGdiInterop1 *iface,
     LOGFONTW const *logfont, IDWriteFontCollection *collection, IDWriteFont **font)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
+    struct gdiinterop *interop = impl_from_IDWriteGdiInterop1(iface);
     IDWriteFontFamily *family;
     DWRITE_FONT_STYLE style;
     BOOL exists = FALSE;
     UINT32 index;
     HRESULT hr;
 
-    TRACE("(%p)->(%p %p %p)\n", This, logfont, collection, font);
+    TRACE("%p, %p, %p, %p.\n", iface, logfont, collection, font);
 
     *font = NULL;
 
@@ -844,7 +855,7 @@ static HRESULT WINAPI gdiinterop1_CreateFontFromLOGFONT(IDWriteGdiInterop1 *ifac
     if (collection)
         IDWriteFontCollection_AddRef(collection);
     else {
-        hr = IDWriteFactory5_GetSystemFontCollection(This->factory, FALSE, (IDWriteFontCollection1**)&collection, FALSE);
+        hr = IDWriteFactory5_GetSystemFontCollection((IDWriteFactory5 *)interop->factory, FALSE, (IDWriteFontCollection1 **)&collection, FALSE);
         if (FAILED(hr)) {
             ERR("failed to get system font collection: 0x%08x.\n", hr);
             return hr;
@@ -1089,7 +1100,7 @@ static const struct IDWriteFontFileLoaderVtbl memresourceloadervtbl = {
     memresourceloader_CreateStreamFromKey,
 };
 
-HRESULT create_gdiinterop(IDWriteFactory5 *factory, IDWriteGdiInterop1 **ret)
+HRESULT create_gdiinterop(IDWriteFactory7 *factory, IDWriteGdiInterop1 **ret)
 {
     struct gdiinterop *interop;
 
@@ -1100,9 +1111,10 @@ HRESULT create_gdiinterop(IDWriteFactory5 *factory, IDWriteGdiInterop1 **ret)
 
     interop->IDWriteGdiInterop1_iface.lpVtbl = &gdiinteropvtbl;
     interop->IDWriteFontFileLoader_iface.lpVtbl = &memresourceloadervtbl;
-    interop->ref = 1;
-    IDWriteFactory5_AddRef(interop->factory = factory);
-    IDWriteFactory5_RegisterFontFileLoader(factory, &interop->IDWriteFontFileLoader_iface);
+    interop->refcount = 1;
+    interop->factory = factory;
+    IDWriteFactory7_AddRef(interop->factory);
+    IDWriteFactory7_RegisterFontFileLoader(factory, &interop->IDWriteFontFileLoader_iface);
 
     *ret = &interop->IDWriteGdiInterop1_iface;
     return S_OK;

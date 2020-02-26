@@ -95,7 +95,7 @@
 152 stub OpenTnefStreamEx
 153 stub GetTnefStreamCodepage@12
 154 stub GetTnefStreamCodepage
-155 stdcall UlFromSzHex@4(ptr) UlFromSzHex
+155 stdcall UlFromSzHex@4(wstr) UlFromSzHex
 156 stub UNKOBJ_ScAllocate@12
 157 stub UNKOBJ_ScAllocateMore@16
 158 stub UNKOBJ_Free@8
@@ -144,7 +144,7 @@
 204 stub EncodeID@12
 205 stub FDecodeID@12
 206 stub CchOfEncoding@4
-207 stdcall CbOfEncoded@4(ptr) CbOfEncoded
+207 stdcall CbOfEncoded@4(str) CbOfEncoded
 208 stdcall MAPISendDocuments(long str str str long)
 209 stdcall MAPILogon(long str str long long ptr)
 210 stdcall MAPILogoff(ptr long long long)

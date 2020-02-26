@@ -30,7 +30,6 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "sqlext.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -68,6 +67,9 @@ static const WCHAR odbc_error_invalid_dsn[] = {'I','n','v','a','l','i','d',' ','
 static const WCHAR odbc_error_load_lib_failed[] = {'L','o','a','d',' ','L','i','b','r','a','r','y',' ','F','a','i','l','e','d',0};
 static const WCHAR odbc_error_request_failed[] = {'R','e','q','u','e','s','t',' ','F','a','i','l','e','d',0};
 static const WCHAR odbc_error_invalid_keyword[] = {'I','n','v','a','l','i','d',' ','k','e','y','w','o','r','d',' ','v','a','l','u','e',0};
+
+static BOOL (WINAPI *pConfigDSN)(HWND hwnd, WORD request, const char *driver, const char *attr);
+static BOOL (WINAPI *pConfigDSNW)(HWND hwnd, WORD request, const WCHAR *driver, const WCHAR *attr);
 
 /* Push an error onto the error stack, taking care of ranges etc. */
 static void push_error(int code, LPCWSTR msg)
@@ -220,30 +222,6 @@ static BOOL SQLInstall_narrow(int mode, LPSTR buffer, LPCWSTR str, WORD str_leng
     return success;
 }
 
-BOOL WINAPI SQLConfigDataSourceW(HWND hwndParent, WORD fRequest,
-               LPCWSTR lpszDriver, LPCWSTR lpszAttributes)
-{
-    LPCWSTR p;
-
-    clear_errors();
-    FIXME("%p %d %s %s\n", hwndParent, fRequest, debugstr_w(lpszDriver),
-          debugstr_w(lpszAttributes));
-
-    for (p = lpszAttributes; *p; p += lstrlenW(p) + 1)
-        FIXME("%s\n", debugstr_w(p));
-
-    return TRUE;
-}
-
-BOOL WINAPI SQLConfigDataSource(HWND hwndParent, WORD fRequest,
-               LPCSTR lpszDriver, LPCSTR lpszAttributes)
-{
-    FIXME("%p %d %s %s\n", hwndParent, fRequest, debugstr_a(lpszDriver),
-          debugstr_a(lpszAttributes));
-    clear_errors();
-    return TRUE;
-}
-
 static HMODULE load_config_driver(const WCHAR *driver)
 {
     static WCHAR reg_driver[] = {'d','r','i','v','e','r',0};
@@ -289,7 +267,7 @@ static HMODULE load_config_driver(const WCHAR *driver)
     if(ret != ERROR_SUCCESS)
     {
         HeapFree(GetProcessHeap(), 0, filename);
-        push_error(ODBC_ERROR_INVALID_DSN, odbc_error_invalid_dsn);
+        push_error(ODBC_ERROR_COMPONENT_NOT_FOUND, odbc_error_component_not_found);
         return NULL;
     }
 
@@ -317,7 +295,7 @@ static BOOL write_config_value(const WCHAR *driver, const WCHAR *args)
         {
             WCHAR *divider, *value;
 
-            name = heap_alloc( (strlenW(args) + 1) * sizeof(WCHAR));
+            name = heap_alloc( (lstrlenW(args) + 1) * sizeof(WCHAR));
             if(!name)
             {
                 push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
@@ -325,7 +303,7 @@ static BOOL write_config_value(const WCHAR *driver, const WCHAR *args)
             }
             lstrcpyW(name, args);
 
-            divider = strchrW(name,'=');
+            divider = wcschr(name,'=');
             if(!divider)
             {
                 push_error(ODBC_ERROR_INVALID_KEYWORD_VALUE, odbc_error_invalid_keyword);
@@ -337,7 +315,7 @@ static BOOL write_config_value(const WCHAR *driver, const WCHAR *args)
 
             TRACE("Write pair: %s = %s\n", debugstr_w(name), debugstr_w(value));
             if(RegSetValueExW(hkeydriver, name, 0, REG_SZ, (BYTE*)value,
-                               (strlenW(value)+1) * sizeof(WCHAR)) != ERROR_SUCCESS)
+                               (lstrlenW(value)+1) * sizeof(WCHAR)) != ERROR_SUCCESS)
                 ERR("Failed to write registry installed key\n");
             heap_free(name);
 
@@ -358,6 +336,100 @@ fail:
     heap_free(name);
 
     return FALSE;
+}
+
+BOOL WINAPI SQLConfigDataSourceW(HWND hwnd, WORD request, LPCWSTR driver, LPCWSTR attributes)
+{
+    HMODULE mod;
+    BOOL ret = FALSE;
+
+    TRACE("%p, %d, %s, %s\n", hwnd, request, debugstr_w(driver), debugstr_w(attributes));
+    if (TRACE_ON(odbc))
+    {
+        const WCHAR *p;
+        for (p = attributes; *p; p += lstrlenW(p) + 1)
+            TRACE("%s\n", debugstr_w(p));
+    }
+
+    clear_errors();
+
+    mod = load_config_driver(driver);
+    if (!mod)
+        return FALSE;
+
+    pConfigDSNW = (void*)GetProcAddress(mod, "ConfigDSNW");
+    if(pConfigDSNW)
+        ret = pConfigDSNW(hwnd, request, driver, attributes);
+    else
+        ERR("Failed to find ConfigDSNW\n");
+
+    if (!ret)
+        push_error(ODBC_ERROR_REQUEST_FAILED, odbc_error_request_failed);
+
+    FreeLibrary(mod);
+
+    return ret;
+}
+
+BOOL WINAPI SQLConfigDataSource(HWND hwnd, WORD request, LPCSTR driver, LPCSTR attributes)
+{
+    HMODULE mod;
+    BOOL ret = FALSE;
+    WCHAR *driverW;
+
+    TRACE("%p, %d, %s, %s\n", hwnd, request, debugstr_a(driver), debugstr_a(attributes));
+
+    if (TRACE_ON(odbc))
+    {
+        const char *p;
+        for (p = attributes; *p; p += lstrlenA(p) + 1)
+            TRACE("%s\n", debugstr_a(p));
+    }
+
+    clear_errors();
+
+    driverW = heap_strdupAtoW(driver);
+    if (!driverW)
+    {
+        push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
+        return FALSE;
+    }
+
+    mod = load_config_driver(driverW);
+    if (!mod)
+    {
+        heap_free(driverW);
+        return FALSE;
+    }
+
+    pConfigDSN = (void*)GetProcAddress(mod, "ConfigDSN");
+    if (pConfigDSN)
+    {
+        TRACE("Calling ConfigDSN\n");
+        ret = pConfigDSN(hwnd, request, driver, attributes);
+    }
+    else
+    {
+        pConfigDSNW = (void*)GetProcAddress(mod, "ConfigDSNW");
+        if (pConfigDSNW)
+        {
+            WCHAR *attr = NULL;
+            TRACE("Calling ConfigDSNW\n");
+
+            attr = SQLInstall_strdup_multi(attributes);
+            if(attr)
+                ret = pConfigDSNW(hwnd, request, driverW, attr);
+            heap_free(attr);
+        }
+    }
+
+    if (!ret)
+        push_error(ODBC_ERROR_REQUEST_FAILED, odbc_error_request_failed);
+
+    heap_free(driverW);
+    FreeLibrary(mod);
+
+    return ret;
 }
 
 BOOL WINAPI SQLConfigDriverW(HWND hwnd, WORD request, LPCWSTR driver,
@@ -584,7 +656,8 @@ BOOL WINAPI SQLGetInstalledDrivers(char *buf, WORD size, WORD *sizeout)
         return FALSE;
     }
 
-    *sizeout = WideCharToMultiByte(CP_ACP, 0, wbuf, written, NULL, 0, NULL, NULL);
+    if (sizeout)
+        *sizeout = WideCharToMultiByte(CP_ACP, 0, wbuf, written, NULL, 0, NULL, NULL);
     WideCharToMultiByte(CP_ACP, 0, wbuf, written, buf, size, NULL, NULL);
 
     heap_free(wbuf);
@@ -860,7 +933,7 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
 
             for (; *p; p += lstrlenW(p) + 1)
             {
-                WCHAR *divider = strchrW(p,'=');
+                WCHAR *divider = wcschr(p,'=');
 
                 if (divider)
                 {
@@ -1519,7 +1592,7 @@ BOOL WINAPI SQLValidDSNW(LPCWSTR lpszDSN)
     clear_errors();
     TRACE("%s\n", debugstr_w(lpszDSN));
 
-    if(strlenW(lpszDSN) > SQL_MAX_DSN_LENGTH || strpbrkW(lpszDSN, invalid) != NULL)
+    if(lstrlenW(lpszDSN) > SQL_MAX_DSN_LENGTH || wcspbrk(lpszDSN, invalid) != NULL)
     {
         return FALSE;
     }

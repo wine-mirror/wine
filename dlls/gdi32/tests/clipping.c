@@ -182,13 +182,10 @@ static void test_ExtCreateRegion(void)
     HRGN hrgn;
     XFORM xform;
 
-    if (0) /* crashes under Win9x */
-    {
-        SetLastError(0xdeadbeef);
-        hrgn = ExtCreateRegion(NULL, 0, NULL);
-        ok(!hrgn, "ExtCreateRegion should fail\n");
-        ok(GetLastError() == ERROR_INVALID_PARAMETER, "ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
-    }
+    SetLastError(0xdeadbeef);
+    hrgn = ExtCreateRegion(NULL, 0, NULL);
+    ok(!hrgn, "ExtCreateRegion should fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     rgn.data.rdh.dwSize = 0;
     rgn.data.rdh.iType = 0;
@@ -225,7 +222,9 @@ static void test_ExtCreateRegion(void)
     hrgn = ExtCreateRegion(NULL, sizeof(RGNDATAHEADER) - 1, &rgn.data);
     todo_wine
     ok(!hrgn, "ExtCreateRegion should fail\n");
-    ok(GetLastError() == 0xdeadbeef, "0xdeadbeef, got %u\n", GetLastError());
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+       broken(GetLastError() == 0xdeadbeef), "0xdeadbeef, got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, sizeof(rgn), &rgn.data);
@@ -237,31 +236,11 @@ static void test_ExtCreateRegion(void)
     SetRectEmpty(&rgn.data.rdh.rcBound);
     memcpy(rgn.data.Buffer, &rc, sizeof(rc));
 
-    /* With a single rect this seems to work... */
-    SetLastError(0xdeadbeef);
-    hrgn = ExtCreateRegion(NULL, sizeof(RGNDATAHEADER) + sizeof(RECT) - 1, &rgn.data);
-    ok(hrgn != 0, "ExtCreateRegion error %u\n", GetLastError());
-    verify_region(hrgn, &rc);
-    DeleteObject(hrgn);
-
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, sizeof(rgn), &rgn.data);
     ok(hrgn != 0, "ExtCreateRegion error %u\n", GetLastError());
     verify_region(hrgn, &rc);
     DeleteObject(hrgn);
-
-    rgn.data.rdh.dwSize = sizeof(rgn.data.rdh) + 1;
-
-    SetLastError(0xdeadbeef);
-    hrgn = ExtCreateRegion(NULL, 1, &rgn.data);
-    ok(hrgn != 0 ||
-       broken(GetLastError() == 0xdeadbeef), /* NT4 */
-       "ExtCreateRegion error %u\n", GetLastError());
-    if(hrgn)
-    {
-        verify_region(hrgn, &rc);
-        DeleteObject(hrgn);
-    }
 
     xform.eM11 = 0.5; /* 50% width */
     xform.eM12 = 0.0;
@@ -269,8 +248,6 @@ static void test_ExtCreateRegion(void)
     xform.eM22 = 0.5; /* 50% height */
     xform.eDx = 20.0;
     xform.eDy = 40.0;
-
-    rgn.data.rdh.dwSize = sizeof(rgn.data.rdh);
 
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(&xform, sizeof(rgn), &rgn.data);
@@ -306,9 +283,7 @@ static void test_GetClipRgn(void)
 
     /* Test calling GetClipRgn with a valid device context and NULL region. */
     ret = GetClipRgn(hdc, NULL);
-    ok(ret == 0 ||
-       ret == -1 /* Win9x */,
-       "Expected GetClipRgn to return 0, got %d\n", ret);
+    ok(ret == 0, "Expected GetClipRgn to return 0, got %d\n", ret);
 
     /* Initialize the test regions. */
     hrgn = CreateRectRgn(100, 100, 100, 100);
@@ -360,9 +335,7 @@ static void test_GetClipRgn(void)
        "Expected SelectClipRgn to return SIMPLEREGION, got %d\n", ret);
 
     ret = GetClipRgn(hdc, NULL);
-    ok(ret == 0 ||
-       ret == -1 /* Win9x */,
-       "Expected GetClipRgn to return 0, got %d\n", ret);
+    ok(ret == 0, "Expected GetClipRgn to return 0, got %d\n", ret);
 
     ret = GetClipRgn(hdc, hrgn3);
     ok(ret == 0, "Expected GetClipRgn to return 0, got %d\n", ret);

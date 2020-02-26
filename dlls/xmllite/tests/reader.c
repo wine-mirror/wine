@@ -34,27 +34,6 @@
 
 DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
 
-static WCHAR *a2w(const char *str)
-{
-    int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    WCHAR *ret = heap_alloc(len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    return ret;
-}
-
-static void free_str(WCHAR *str)
-{
-    heap_free(str);
-}
-
-static int strcmp_wa(const WCHAR *str1, const char *stra)
-{
-    WCHAR *str2 = a2w(stra);
-    int r = lstrcmpW(str1, str2);
-    free_str(str2);
-    return r;
-}
-
 static const char xmldecl_full[] = "\xef\xbb\xbf<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
 static const char xmldecl_short[] = "<?xml version=\"1.0\"?><RegistrationInfo/>";
 
@@ -287,7 +266,7 @@ static void test_read_state(IXmlReader *reader, XmlReadState expected,
 #define TEST_READER_STATE2(reader, state, brk) test_read_state(reader, state, brk, __LINE__)
 
 #define reader_value(a,b) _reader_value(__LINE__,a,b)
-static const WCHAR *_reader_value(unsigned line, IXmlReader *reader, const char *expect)
+static const WCHAR *_reader_value(unsigned line, IXmlReader *reader, const WCHAR *expect)
 {
     const WCHAR *str = (void*)0xdeadbeef;
     ULONG len = 0xdeadbeef;
@@ -296,12 +275,12 @@ static const WCHAR *_reader_value(unsigned line, IXmlReader *reader, const char 
     hr = IXmlReader_GetValue(reader, &str, &len);
     ok_(__FILE__,line)(hr == S_OK, "GetValue returned %08x\n", hr);
     ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
-    ok_(__FILE__,line)(!strcmp_wa(str, expect), "value = %s\n", wine_dbgstr_w(str));
+    ok_(__FILE__,line)(!lstrcmpW(str, expect), "value = %s\n", wine_dbgstr_w(str));
     return str;
 }
 
 #define reader_name(a,b) _reader_name(__LINE__,a,b)
-static const WCHAR *_reader_name(unsigned line, IXmlReader *reader, const char *expect)
+static const WCHAR *_reader_name(unsigned line, IXmlReader *reader, const WCHAR *expect)
 {
     const WCHAR *str = (void*)0xdeadbeef;
     ULONG len = 0xdeadbeef;
@@ -310,12 +289,12 @@ static const WCHAR *_reader_name(unsigned line, IXmlReader *reader, const char *
     hr = IXmlReader_GetLocalName(reader, &str, &len);
     ok_(__FILE__,line)(hr == S_OK, "GetLocalName returned %08x\n", hr);
     ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
-    ok_(__FILE__,line)(!strcmp_wa(str, expect), "name = %s\n", wine_dbgstr_w(str));
+    ok_(__FILE__,line)(!lstrcmpW(str, expect), "name = %s\n", wine_dbgstr_w(str));
     return str;
 }
 
 #define reader_prefix(a,b) _reader_prefix(__LINE__,a,b)
-static const WCHAR *_reader_prefix(unsigned line, IXmlReader *reader, const char *expect)
+static const WCHAR *_reader_prefix(unsigned line, IXmlReader *reader, const WCHAR *expect)
 {
     const WCHAR *str = (void*)0xdeadbeef;
     ULONG len = 0xdeadbeef;
@@ -324,12 +303,12 @@ static const WCHAR *_reader_prefix(unsigned line, IXmlReader *reader, const char
     hr = IXmlReader_GetPrefix(reader, &str, &len);
     ok_(__FILE__,line)(hr == S_OK, "GetPrefix returned %08x\n", hr);
     ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
-    ok_(__FILE__,line)(!strcmp_wa(str, expect), "prefix = %s\n", wine_dbgstr_w(str));
+    ok_(__FILE__,line)(!lstrcmpW(str, expect), "prefix = %s\n", wine_dbgstr_w(str));
     return str;
 }
 
 #define reader_namespace(a,b) _reader_namespace(__LINE__,a,b)
-static const WCHAR *_reader_namespace(unsigned line, IXmlReader *reader, const char *expect)
+static const WCHAR *_reader_namespace(unsigned line, IXmlReader *reader, const WCHAR *expect)
 {
     const WCHAR *str = (void*)0xdeadbeef;
     ULONG len = 0xdeadbeef;
@@ -338,12 +317,12 @@ static const WCHAR *_reader_namespace(unsigned line, IXmlReader *reader, const c
     hr = IXmlReader_GetNamespaceUri(reader, &str, &len);
     ok_(__FILE__,line)(hr == S_OK, "GetNamespaceUri returned %08x\n", hr);
     ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
-    ok_(__FILE__,line)(!strcmp_wa(str, expect), "namespace = %s\n", wine_dbgstr_w(str));
+    ok_(__FILE__,line)(!lstrcmpW(str, expect), "namespace = %s\n", wine_dbgstr_w(str));
     return str;
 }
 
 #define reader_qname(a,b) _reader_qname(a,b,__LINE__)
-static const WCHAR *_reader_qname(IXmlReader *reader, const char *expect, unsigned line)
+static const WCHAR *_reader_qname(IXmlReader *reader, const WCHAR *expect, unsigned line)
 {
     const WCHAR *str = (void*)0xdeadbeef;
     ULONG len = 0xdeadbeef;
@@ -352,7 +331,7 @@ static const WCHAR *_reader_qname(IXmlReader *reader, const char *expect, unsign
     hr = IXmlReader_GetQualifiedName(reader, &str, &len);
     ok_(__FILE__,line)(hr == S_OK, "GetQualifiedName returned %08x\n", hr);
     ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
-    ok_(__FILE__,line)(!strcmp_wa(str, expect), "name = %s\n", wine_dbgstr_w(str));
+    ok_(__FILE__,line)(!lstrcmpW(str, expect), "name = %s\n", wine_dbgstr_w(str));
     return str;
 }
 
@@ -902,7 +881,7 @@ static void test_read_xmldeclaration(void)
     TEST_DEPTH(reader, 0);
     TEST_READER_STATE(reader, XmlReadState_Interactive);
 
-    reader_value(reader, "");
+    reader_value(reader, L"");
 
     /* check attributes */
     next_attribute(reader);
@@ -993,10 +972,10 @@ todo_wine {
     ret = IXmlReader_IsEmptyElement(reader);
     ok(!ret, "element should not be empty\n");
 
-    reader_value(reader, "");
-    reader_name(reader, "xml");
+    reader_value(reader, L"");
+    reader_name(reader, L"xml");
 
-    reader_qname(reader, "xml");
+    reader_qname(reader, L"xml");
 
     /* check attributes */
     next_attribute(reader);
@@ -1022,8 +1001,8 @@ todo_wine {
     ret = IXmlReader_IsEmptyElement(reader);
     ok(ret, "element should be empty\n");
 
-    reader_value(reader, "");
-    reader_name(reader, "RegistrationInfo");
+    reader_value(reader, L"");
+    reader_name(reader, L"RegistrationInfo");
 
     type = -1;
     hr = IXmlReader_Read(reader, &type);
@@ -1038,18 +1017,20 @@ todo_wine
     IXmlReader_Release(reader);
 }
 
-struct test_entry {
+struct test_entry
+{
     const char *xml;
-    const char *name;
-    const char *value;
+    const WCHAR *name;
+    const WCHAR *value;
     HRESULT hr;
     HRESULT hr_broken; /* this is set to older version results */
     BOOL todo;
 };
 
-static struct test_entry comment_tests[] = {
-    { "<!-- comment -->", "", " comment ", S_OK },
-    { "<!-- - comment-->", "", " - comment", S_OK },
+static struct test_entry comment_tests[] =
+{
+    { "<!-- comment -->", L"", L" comment ", S_OK },
+    { "<!-- - comment-->", L"", L" - comment", S_OK },
     { "<!-- -- comment-->", NULL, NULL, WC_E_COMMENT, WC_E_GREATERTHAN },
     { "<!-- -- comment--->", NULL, NULL, WC_E_COMMENT, WC_E_GREATERTHAN },
     { NULL }
@@ -1107,14 +1088,14 @@ static void test_read_comment(void)
 
             ok(type == XmlNodeType_Comment, "got %d for %s\n", type, test->xml);
 
-            reader_name(reader, "");
+            reader_name(reader, L"");
 
             str = NULL;
             hr = IXmlReader_GetLocalName(reader, &str, NULL);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
-            reader_qname(reader, "");
+            reader_qname(reader, L"");
 
             str = NULL;
             hr = IXmlReader_GetQualifiedName(reader, &str, NULL);
@@ -1131,17 +1112,18 @@ static void test_read_comment(void)
     IXmlReader_Release(reader);
 }
 
-static struct test_entry pi_tests[] = {
-    { "<?pi?>", "pi", "", S_OK },
-    { "<?pi ?>", "pi", "", S_OK },
-    { "<?pi  ?>", "pi", "", S_OK },
-    { "<?pi pi data?>", "pi", "pi data", S_OK },
-    { "<?pi pi data  ?>", "pi", "pi data  ", S_OK },
-    { "<?pi    data  ?>", "pi", "data  ", S_OK },
+static struct test_entry pi_tests[] =
+{
+    { "<?pi?>", L"pi", L"", S_OK },
+    { "<?pi ?>", L"pi", L"", S_OK },
+    { "<?pi  ?>", L"pi", L"", S_OK },
+    { "<?pi pi data?>", L"pi", L"pi data", S_OK },
+    { "<?pi pi data  ?>", L"pi", L"pi data  ", S_OK },
+    { "<?pi    data  ?>", L"pi", L"data  ", S_OK },
     { "<?pi:pi?>", NULL, NULL, NC_E_NAMECOLON, WC_E_NAMECHARACTER },
     { "<?:pi ?>", NULL, NULL, WC_E_PI, WC_E_NAMECHARACTER },
     { "<?-pi ?>", NULL, NULL, WC_E_PI, WC_E_NAMECHARACTER },
-    { "<?xml-stylesheet ?>", "xml-stylesheet", "", S_OK },
+    { "<?xml-stylesheet ?>", L"xml-stylesheet", L"", S_OK },
     { NULL }
 };
 
@@ -1169,7 +1151,6 @@ static void test_read_pi(void)
         if (hr == S_OK)
         {
             const WCHAR *str;
-            WCHAR *str_exp;
             UINT len;
 
             ok(type == XmlNodeType_ProcessingInstruction, "got %d for %s\n", type, test->xml);
@@ -1180,10 +1161,8 @@ static void test_read_pi(void)
             str = NULL;
             hr = IXmlReader_GetQualifiedName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->name), "got %u\n", len);
-            str_exp = a2w(test->name);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            ok(len == lstrlenW(test->name), "got %u\n", len);
+            ok(!lstrcmpW(str, test->name), "got %s\n", wine_dbgstr_w(str));
 
             /* value */
             reader_value(reader, test->value);
@@ -1199,7 +1178,7 @@ struct nodes_test {
     const char *xml;
     struct {
         XmlNodeType type;
-        const char *value;
+        const WCHAR *value;
     } nodes[20];
 };
 
@@ -1224,22 +1203,22 @@ static const char misc_test_xml[] =
 static struct nodes_test misc_test = {
     misc_test_xml,
     {
-        {XmlNodeType_Comment, " comment1 "},
-        {XmlNodeType_Comment, " comment2 "},
-        {XmlNodeType_ProcessingInstruction, "pi1body "},
-        {XmlNodeType_Comment, " comment3 "},
-        {XmlNodeType_Whitespace, " \t \n \n"},
-        {XmlNodeType_Comment, " comment4 "},
-        {XmlNodeType_Element, ""},
-        {XmlNodeType_Whitespace, "\n\t"},
-        {XmlNodeType_Element, ""},
-        {XmlNodeType_Text, "text"},
-        {XmlNodeType_Comment, " comment "},
-        {XmlNodeType_Text, "text2"},
-        {XmlNodeType_ProcessingInstruction, "pibody "},
-        {XmlNodeType_Whitespace, "\n"},
-        {XmlNodeType_EndElement, ""},
-        {XmlNodeType_None, ""}
+        { XmlNodeType_Comment, L" comment1 " },
+        { XmlNodeType_Comment, L" comment2 " },
+        { XmlNodeType_ProcessingInstruction, L"pi1body " },
+        { XmlNodeType_Comment, L" comment3 " },
+        { XmlNodeType_Whitespace, L" \t \n \n" },
+        { XmlNodeType_Comment, L" comment4 " },
+        { XmlNodeType_Element, L"" },
+        { XmlNodeType_Whitespace, L"\n\t" },
+        { XmlNodeType_Element, L"" },
+        { XmlNodeType_Text, L"text" },
+        { XmlNodeType_Comment, L" comment " },
+        { XmlNodeType_Text, L"text2" },
+        { XmlNodeType_ProcessingInstruction, L"pibody " },
+        { XmlNodeType_Whitespace, L"\n" },
+        { XmlNodeType_EndElement, L"" },
+        { XmlNodeType_None, L"" }
     }
 };
 
@@ -1300,8 +1279,8 @@ static void test_read_public_dtd(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Attribute, "got %d\n", type);
 
-    reader_name(reader, "PUBLIC");
-    reader_value(reader, "pubid");
+    reader_name(reader, L"PUBLIC");
+    reader_value(reader, L"pubid");
 
     next_attribute(reader);
 
@@ -1310,11 +1289,11 @@ static void test_read_public_dtd(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Attribute, "got %d\n", type);
 
-    reader_name(reader, "SYSTEM");
-    reader_value(reader, "externalid uri");
+    reader_name(reader, L"SYSTEM");
+    reader_value(reader, L"externalid uri");
 
     move_to_element(reader);
-    reader_name(reader, "testdtd");
+    reader_name(reader, L"testdtd");
 
     len = 0;
     str = NULL;
@@ -1363,11 +1342,11 @@ static void test_read_system_dtd(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Attribute, "got %d\n", type);
 
-    reader_name(reader, "SYSTEM");
-    reader_value(reader, "externalid uri");
+    reader_name(reader, L"SYSTEM");
+    reader_value(reader, L"externalid uri");
 
     move_to_element(reader);
-    reader_name(reader, "testdtd");
+    reader_name(reader, L"testdtd");
 
     len = 0;
     str = NULL;
@@ -1383,15 +1362,16 @@ todo_wine {
     IXmlReader_Release(reader);
 }
 
-static struct test_entry element_tests[] = {
-    { "<a/>", "a", "", S_OK },
-    { "<a />", "a", "", S_OK },
-    { "<a:b/>", "a:b", "", NC_E_UNDECLAREDPREFIX },
+static struct test_entry element_tests[] =
+{
+    { "<a/>", L"a", L"", S_OK },
+    { "<a />", L"a", L"", S_OK },
+    { "<a:b/>", L"a:b", L"", NC_E_UNDECLAREDPREFIX },
     { "<:a/>", NULL, NULL, NC_E_QNAMECHARACTER },
     { "< a/>", NULL, NULL, NC_E_QNAMECHARACTER },
-    { "<a>", "a", "", S_OK },
-    { "<a >", "a", "", S_OK },
-    { "<a \r \t\n>", "a", "", S_OK },
+    { "<a>", L"a", L"", S_OK },
+    { "<a >", L"a", L"", S_OK },
+    { "<a \r \t\n>", L"a", L"", S_OK },
     { "</a>", NULL, NULL, NC_E_QNAMECHARACTER },
     { "<a:b:c />", NULL, NULL, NC_E_QNAMECOLON },
     { "<:b:c />", NULL, NULL, NC_E_QNAMECHARACTER },
@@ -1433,7 +1413,6 @@ static void test_read_element(void)
         if (hr == S_OK)
         {
             const WCHAR *str;
-            WCHAR *str_exp;
             UINT len;
 
             ok(type == XmlNodeType_Element, "got %d for %s\n", type, test->xml);
@@ -1442,13 +1421,11 @@ static void test_read_element(void)
             str = NULL;
             hr = IXmlReader_GetQualifiedName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->name), "got %u\n", len);
-            str_exp = a2w(test->name);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            ok(len == lstrlenW(test->name), "got %u\n", len);
+            ok(!lstrcmpW(str, test->name), "got %s\n", wine_dbgstr_w(str));
 
             /* value */
-            reader_value(reader, "");
+            reader_value(reader, L"");
         }
 
         test++;
@@ -1516,7 +1493,7 @@ static void test_read_element(void)
             {
                 const WCHAR *value;
 
-                reader_value(reader, "");
+                reader_value(reader, L"");
 
                 hr = IXmlReader_MoveToFirstAttribute(reader);
                 ok(hr == S_OK, "got %08x\n", hr);
@@ -1530,7 +1507,7 @@ static void test_read_element(void)
                 ok(depth == depths[i] + 1, "%u: got depth %u, expected %u\n", i, depth, depths[i] + 1);
 
                 move_to_element(reader);
-                reader_value(reader, "");
+                reader_value(reader, L"");
 
                 depth = 123;
                 hr = IXmlReader_GetDepth(reader, &depth);
@@ -1616,7 +1593,7 @@ static void test_readvaluechunk(void)
     read_value_char(reader, 'c');
 
     /* portion read as chunk is skipped from resulting node value */
-    reader_value(reader, "omment1 ");
+    reader_value(reader, L"omment1 ");
 
     /* once value is returned/allocated it's not possible to read by chunk */
     c = 0;
@@ -1631,7 +1608,7 @@ static void test_readvaluechunk(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(!c, "c = %u\n", c);
 
-    reader_value(reader, "omment1 ");
+    reader_value(reader, L"omment1 ");
 
     /* read comment2 */
     read_node(reader, XmlNodeType_Comment);
@@ -1648,7 +1625,7 @@ static void test_readvaluechunk(void)
     ok(c == 10, "got %u\n", c);
     ok(buf[c] == 0xcccc, "buffer overflow\n");
     buf[c] = 0;
-    ok(!strcmp_wa(buf, " comment2 "), "buf = %s\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, L" comment2 "), "buf = %s\n", wine_dbgstr_w(buf));
 
     c = 0xdeadbeef;
     memset(buf, 0xcc, sizeof(buf));
@@ -1657,7 +1634,7 @@ static void test_readvaluechunk(void)
     ok(!c, "got %u\n", c);
 
     /* portion read as chunk is skipped from resulting node value */
-    reader_value(reader, "");
+    reader_value(reader, L"");
 
     /* once value is returned/allocated it's not possible to read by chunk */
     c = 0xdeadbeef;
@@ -1667,17 +1644,18 @@ static void test_readvaluechunk(void)
     ok(c == 0, "got %u\n", c);
     ok(b == 0xffff, "got %x\n", b);
 
-    reader_value(reader, "");
+    reader_value(reader, L"");
 
     IXmlReader_Release(reader);
 }
 
-static struct test_entry cdata_tests[] = {
-    { "<a><![CDATA[ ]]data ]]></a>", "", " ]]data ", S_OK },
-    { "<a><![CDATA[<![CDATA[ data ]]]]></a>", "", "<![CDATA[ data ]]", S_OK },
-    { "<a><![CDATA[\n \r\n \n\n ]]></a>", "", "\n \n \n\n ", S_OK, S_OK },
-    { "<a><![CDATA[\r \r\r\n \n\n ]]></a>", "", "\n \n\n \n\n ", S_OK, S_OK },
-    { "<a><![CDATA[\r\r \n\r \r \n\n ]]></a>", "", "\n\n \n\n \n \n\n ", S_OK },
+static struct test_entry cdata_tests[] =
+{
+    { "<a><![CDATA[ ]]data ]]></a>", L"", L" ]]data ", S_OK },
+    { "<a><![CDATA[<![CDATA[ data ]]]]></a>", L"", L"<![CDATA[ data ]]", S_OK },
+    { "<a><![CDATA[\n \r\n \n\n ]]></a>", L"", L"\n \n \n\n ", S_OK, S_OK },
+    { "<a><![CDATA[\r \r\r\n \n\n ]]></a>", L"", L"\n \n\n \n\n ", S_OK, S_OK },
+    { "<a><![CDATA[\r\r \n\r \r \n\n ]]></a>", L"", L"\n\n \n\n \n \n\n ", S_OK },
     { NULL }
 };
 
@@ -1717,7 +1695,7 @@ static void test_read_cdata(void)
 
             ok(type == XmlNodeType_CDATA, "got %d for %s\n", type, test->xml);
 
-            reader_name(reader, "");
+            reader_name(reader, L"");
 
             str = NULL;
             hr = IXmlReader_GetLocalName(reader, &str, NULL);
@@ -1746,11 +1724,12 @@ static void test_read_cdata(void)
     IXmlReader_Release(reader);
 }
 
-static struct test_entry text_tests[] = {
-    { "<a>simple text</a>", "", "simple text", S_OK },
-    { "<a>text ]]> text</a>", "", "", WC_E_CDSECTEND },
-    { "<a>\n \r\n \n\n text</a>", "", "\n \n \n\n text", S_OK, S_OK },
-    { "<a>\r \r\r\n \n\n text</a>", "", "\n \n\n \n\n text", S_OK, S_OK },
+static struct test_entry text_tests[] =
+{
+    { "<a>simple text</a>", L"", L"simple text", S_OK },
+    { "<a>text ]]> text</a>", L"", L"", WC_E_CDSECTEND },
+    { "<a>\n \r\n \n\n text</a>", L"", L"\n \n \n\n text", S_OK, S_OK },
+    { "<a>\r \r\r\n \n\n text</a>", L"", L"\n \n\n \n\n text", S_OK, S_OK },
     { NULL }
 };
 
@@ -1786,7 +1765,7 @@ static void test_read_text(void)
 
             ok(type == XmlNodeType_Text, "got %d for %s\n", type, test->xml);
 
-            reader_name(reader, "");
+            reader_name(reader, L"");
 
             str = NULL;
             hr = IXmlReader_GetLocalName(reader, &str, NULL);
@@ -1856,18 +1835,19 @@ static void test_isemptyelement(void)
     IXmlReader_Release(reader);
 }
 
-static struct test_entry attributes_tests[] = {
-    { "<a attr1=\"attrvalue\"/>", "attr1", "attrvalue", S_OK },
-    { "<a attr1=\"a\'\'ttrvalue\"/>", "attr1", "a\'\'ttrvalue", S_OK },
-    { "<a attr1=\'a\"ttrvalue\'/>", "attr1", "a\"ttrvalue", S_OK },
-    { "<a attr1=\' \'/>", "attr1", " ", S_OK },
-    { "<a attr1=\" \"/>", "attr1", " ", S_OK },
-    { "<a attr1=\"\r\n \r \n \t\n\r\"/>", "attr1", "         ", S_OK },
-    { "<a attr1=\" val \"/>", "attr1", " val ", S_OK },
-    { "<a attr1=\"\r\n\tval\n\"/>", "attr1", "  val ", S_OK },
-    { "<a attr1=\"val&#32;\"/>", "attr1", "val ", S_OK },
-    { "<a attr1=\"val&#x20;\"/>", "attr1", "val ", S_OK },
-    { "<a attr1=\"&lt;&gt;&amp;&apos;&quot;\"/>", "attr1", "<>&\'\"", S_OK },
+static struct test_entry attributes_tests[] =
+{
+    { "<a attr1=\"attrvalue\"/>", L"attr1", L"attrvalue", S_OK },
+    { "<a attr1=\"a\'\'ttrvalue\"/>", L"attr1", L"a\'\'ttrvalue", S_OK },
+    { "<a attr1=\'a\"ttrvalue\'/>", L"attr1", L"a\"ttrvalue", S_OK },
+    { "<a attr1=\' \'/>", L"attr1", L" ", S_OK },
+    { "<a attr1=\" \"/>", L"attr1", L" ", S_OK },
+    { "<a attr1=\"\r\n \r \n \t\n\r\"/>", L"attr1", L"         ", S_OK },
+    { "<a attr1=\" val \"/>", L"attr1", L" val ", S_OK },
+    { "<a attr1=\"\r\n\tval\n\"/>", L"attr1", L"  val ", S_OK },
+    { "<a attr1=\"val&#32;\"/>", L"attr1", L"val ", S_OK },
+    { "<a attr1=\"val&#x20;\"/>", L"attr1", L"val ", S_OK },
+    { "<a attr1=\"&lt;&gt;&amp;&apos;&quot;\"/>", L"attr1", L"<>&\'\"", S_OK },
     { "<a attr1=\"&entname;\"/>", NULL, NULL, WC_E_UNDECLAREDENTITY },
     { "<a attr1=\"val&#xfffe;\"/>", NULL, NULL, WC_E_XMLCHARACTER },
     { "<a attr1=\"val &#a;\"/>", NULL, NULL, WC_E_DIGIT, WC_E_SEMICOLON },
@@ -1904,7 +1884,6 @@ static void test_read_attribute(void)
         if (hr == S_OK)
         {
             const WCHAR *str;
-            WCHAR *str_exp;
             UINT len;
 
             type = XmlNodeType_None;
@@ -1922,10 +1901,8 @@ static void test_read_attribute(void)
             str = NULL;
             hr = IXmlReader_GetQualifiedName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->name), "got %u\n", len);
-            str_exp = a2w(test->name);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            ok(len == lstrlenW(test->name), "got %u\n", len);
+            ok(!lstrcmpW(str, test->name), "got %s\n", wine_dbgstr_w(str));
 
             /* value */
             reader_value(reader, test->value);
@@ -1970,13 +1947,13 @@ static void test_prefix(void)
     static const struct
     {
         const char *xml;
-        const char *prefix1;
-        const char *prefix2;
-        const char *prefix3;
+        const WCHAR *prefix1;
+        const WCHAR *prefix2;
+        const WCHAR *prefix3;
     } prefix_tests[] =
     {
-        { "<b xmlns=\"defns\" xml:a=\"a ns\"/>", "", "", "xml" },
-        { "<c:b xmlns:c=\"c ns\" xml:a=\"a ns\"/>", "c", "xmlns", "xml" },
+        { "<b xmlns=\"defns\" xml:a=\"a ns\"/>", L"", L"", L"xml" },
+        { "<c:b xmlns:c=\"c ns\" xml:a=\"a ns\"/>", L"c", L"xmlns", L"xml" },
     };
     IXmlReader *reader;
     unsigned int i;
@@ -2026,31 +2003,31 @@ static void test_namespaceuri(void)
     struct uri_test
     {
         const char *xml;
-        const char *uri[5];
+        const WCHAR *uri[5];
     } uri_tests[] =
     {
         { "<a xmlns=\"defns a\"><b xmlns=\"defns b\"><c xmlns=\"defns c\"/></b></a>",
-                { "defns a", "defns b", "defns c", "defns b", "defns a" }},
+                { L"defns a", L"defns b", L"defns c", L"defns b", L"defns a" }},
         { "<r:a xmlns=\"defns a\" xmlns:r=\"ns r\"/>",
-                { "ns r" }},
+                { L"ns r" }},
         { "<r:a xmlns=\"defns a\" xmlns:r=\"ns r\"><b/></r:a>",
-                { "ns r", "defns a", "ns r" }},
+                { L"ns r", L"defns a", L"ns r" }},
         { "<a xmlns=\"defns a\" xmlns:r=\"ns r\"><r:b/></a>",
-                { "defns a", "ns r", "defns a" }},
+                { L"defns a", L"ns r", L"defns a" }},
         { "<a><b><c/></b></a>",
-                { "", "", "", "", "" }},
+                { L"", L"", L"", L"", L"" }},
         { "<a>text</a>",
-                { "", "", "" }},
+                { L"", L"", L"" }},
         { "<a>\r\n</a>",
-                { "", "", "" }},
+                { L"", L"", L"" }},
         { "<a><![CDATA[data]]></a>",
-                { "", "", "" }},
+                { L"", L"", L"" }},
         { "<?xml version=\"1.0\" ?><a/>",
-                { "", "" }},
+                { L"", L"" }},
         { "<a><?pi ?></a>",
-                { "", "", "" }},
+                { L"", L"", L"" }},
         { "<a><!-- comment --></a>",
-                { "", "", "" }},
+                { L"", L"", L"" }},
     };
     IXmlReader *reader;
     XmlNodeType type;
@@ -2462,14 +2439,14 @@ static void test_string_pointers(void)
     set_input_string(reader, "<elem xmlns=\"myns\">myns<elem2 /></elem>");
 
     read_node(reader, XmlNodeType_Element);
-    empty = reader_value(reader, "");
-    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
-    name = reader_name(reader, "elem");
-    ok(name == reader_qname(reader, "elem"), "name != qname\n");
-    ns = reader_namespace(reader, "myns");
+    empty = reader_value(reader, L"");
+    ok(empty == reader_prefix(reader, L""), "empty != prefix\n");
+    name = reader_name(reader, L"elem");
+    ok(name == reader_qname(reader, L"elem"), "name != qname\n");
+    ns = reader_namespace(reader, L"myns");
 
     next_attribute(reader);
-    ptr = reader_value(reader, "myns");
+    ptr = reader_value(reader, L"myns");
     if (ns != ptr)
     {
         win_skip("attr value is different than namespace pointer, assuming old xmllite\n");
@@ -2477,95 +2454,95 @@ static void test_string_pointers(void)
         return;
     }
     ok(ns == ptr, "ns != value\n");
-    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
-    xmlns_ns = reader_namespace(reader, "http://www.w3.org/2000/xmlns/");
-    xmlns_name = reader_name(reader, "xmlns");
-    ok(xmlns_name == reader_qname(reader, "xmlns"), "xmlns_name != qname\n");
+    ok(empty == reader_prefix(reader, L""), "empty != prefix\n");
+    xmlns_ns = reader_namespace(reader, L"http://www.w3.org/2000/xmlns/");
+    xmlns_name = reader_name(reader, L"xmlns");
+    ok(xmlns_name == reader_qname(reader, L"xmlns"), "xmlns_name != qname\n");
 
     read_node(reader, XmlNodeType_Text);
-    ok(ns != reader_value(reader, "myns"), "ns == value\n");
-    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
-    ok(empty == reader_namespace(reader, ""), "empty != namespace\n");
-    ok(empty == reader_name(reader, ""), "empty != name\n");
-    ok(empty == reader_qname(reader, ""), "empty != qname\n");
+    ok(ns != reader_value(reader, L"myns"), "ns == value\n");
+    ok(empty == reader_prefix(reader, L""), "empty != prefix\n");
+    ok(empty == reader_namespace(reader, L""), "empty != namespace\n");
+    ok(empty == reader_name(reader, L""), "empty != name\n");
+    ok(empty == reader_qname(reader, L""), "empty != qname\n");
 
     read_node(reader, XmlNodeType_Element);
-    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
-    ok(ns == reader_namespace(reader, "myns"), "empty != namespace\n");
+    ok(empty == reader_prefix(reader, L""), "empty != prefix\n");
+    ok(ns == reader_namespace(reader, L"myns"), "empty != namespace\n");
 
     read_node(reader, XmlNodeType_EndElement);
-    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
-    ok(name == reader_name(reader, "elem"), "empty != name\n");
-    ok(name == reader_qname(reader, "elem"), "empty != qname\n");
-    ok(ns == reader_namespace(reader, "myns"), "empty != namespace\n");
+    ok(empty == reader_prefix(reader, L""), "empty != prefix\n");
+    ok(name == reader_name(reader, L"elem"), "empty != name\n");
+    ok(name == reader_qname(reader, L"elem"), "empty != qname\n");
+    ok(ns == reader_namespace(reader, L"myns"), "empty != namespace\n");
 
     set_input_string(reader, "<elem xmlns:p=\"myns\" xmlns:q=\"mynsq\"><p:elem2 q:attr=\"\"></p:elem2></elem>");
 
     read_node(reader, XmlNodeType_Element);
-    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
-    name = reader_name(reader, "elem");
-    ok(empty == reader_namespace(reader, ""), "empty != namespace\n");
+    ok(empty == reader_prefix(reader, L""), "empty != prefix\n");
+    name = reader_name(reader, L"elem");
+    ok(empty == reader_namespace(reader, L""), "empty != namespace\n");
 
     next_attribute(reader);
-    ns = reader_value(reader, "myns");
-    ok(xmlns_name == reader_prefix(reader, "xmlns"), "xmlns_name != prefix\n");
-    p = reader_name(reader, "p");
-    ok(xmlns_ns == reader_namespace(reader, "http://www.w3.org/2000/xmlns/"), "xmlns_ns != namespace\n");
+    ns = reader_value(reader, L"myns");
+    ok(xmlns_name == reader_prefix(reader, L"xmlns"), "xmlns_name != prefix\n");
+    p = reader_name(reader, L"p");
+    ok(xmlns_ns == reader_namespace(reader, L"http://www.w3.org/2000/xmlns/"), "xmlns_ns != namespace\n");
 
     next_attribute(reader);
-    nsq = reader_value(reader, "mynsq");
-    ok(xmlns_name == reader_prefix(reader, "xmlns"), "xmlns_name != prefix\n");
-    q = reader_name(reader, "q");
-    ok(xmlns_ns == reader_namespace(reader, "http://www.w3.org/2000/xmlns/"), "xmlns_ns != namespace\n");
+    nsq = reader_value(reader, L"mynsq");
+    ok(xmlns_name == reader_prefix(reader, L"xmlns"), "xmlns_name != prefix\n");
+    q = reader_name(reader, L"q");
+    ok(xmlns_ns == reader_namespace(reader, L"http://www.w3.org/2000/xmlns/"), "xmlns_ns != namespace\n");
 
     read_node(reader, XmlNodeType_Element);
-    ok(p == reader_prefix(reader, "p"), "p != prefix\n");
-    ok(ns == reader_namespace(reader, "myns"), "empty != namespace\n");
-    name = reader_qname(reader, "p:elem2");
+    ok(p == reader_prefix(reader, L"p"), "p != prefix\n");
+    ok(ns == reader_namespace(reader, L"myns"), "empty != namespace\n");
+    name = reader_qname(reader, L"p:elem2");
 
     next_attribute(reader);
-    ok(empty != reader_value(reader, ""), "empty == value\n");
-    ok(q == reader_prefix(reader, "q"), "q != prefix\n");
-    ok(nsq == reader_namespace(reader, "mynsq"), "nsq != namespace\n");
+    ok(empty != reader_value(reader, L""), "empty == value\n");
+    ok(q == reader_prefix(reader, L"q"), "q != prefix\n");
+    ok(nsq == reader_namespace(reader, L"mynsq"), "nsq != namespace\n");
 
     read_node(reader, XmlNodeType_EndElement);
-    ptr = reader_qname(reader, "p:elem2"); todo_wine ok(name != ptr, "q == qname\n");
+    ptr = reader_qname(reader, L"p:elem2"); todo_wine ok(name != ptr, "q == qname\n");
 
     set_input_string(reader, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
 
     read_node(reader, XmlNodeType_XmlDeclaration);
-    ok(empty == reader_value(reader, ""), "empty != value\n");
-    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
-    xml = reader_name(reader, "xml");
-    ptr = reader_qname(reader, "xml"); todo_wine ok(xml == ptr, "xml != qname\n");
-    ok(empty == reader_namespace(reader, ""), "empty != namespace\n");
+    ok(empty == reader_value(reader, L""), "empty != value\n");
+    ok(empty == reader_prefix(reader, L""), "empty != prefix\n");
+    xml = reader_name(reader, L"xml");
+    ptr = reader_qname(reader, L"xml"); todo_wine ok(xml == ptr, "xml != qname\n");
+    ok(empty == reader_namespace(reader, L""), "empty != namespace\n");
 
     next_attribute(reader);
-    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
-    ok(empty == reader_namespace(reader, ""), "empty != namespace\n");
+    ok(empty == reader_prefix(reader, L""), "empty != prefix\n");
+    ok(empty == reader_namespace(reader, L""), "empty != namespace\n");
 
     set_input_string(reader, "<elem xmlns:p=\"myns\"><p:elem2 attr=\"\" /></elem>");
 
     read_node(reader, XmlNodeType_Element);
     next_attribute(reader);
     read_value_char(reader, 'm');
-    p = reader_value(reader, "yns");
+    p = reader_value(reader, L"yns");
 
     read_node(reader, XmlNodeType_Element);
-    ns = reader_namespace(reader, "myns");
+    ns = reader_namespace(reader, L"myns");
     ok(ns+1 == p, "ns+1 != p\n");
 
     set_input_string(reader, "<elem attr=\"value\"></elem>");
 
     read_node(reader, XmlNodeType_Element);
     next_attribute(reader);
-    name = reader_name(reader, "attr");
-    value = reader_value(reader, "value");
+    name = reader_name(reader, L"attr");
+    value = reader_value(reader, L"value");
 
     move_to_element(reader);
     next_attribute(reader);
-    ok(name == reader_name(reader, "attr"), "attr pointer changed\n");
-    ok(value == reader_value(reader, "value"), "value pointer changed\n");
+    ok(name == reader_name(reader, L"attr"), "attr pointer changed\n");
+    ok(value == reader_value(reader, L"value"), "value pointer changed\n");
 
     IXmlReader_Release(reader);
 }
@@ -2619,15 +2596,15 @@ static void test_attribute_by_name(void)
 
     hr = IXmlReader_MoveToAttributeByName(reader, xmlnsW, xmlns_uriW);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    reader_value(reader, "myns");
+    reader_value(reader, L"myns");
 
     hr = IXmlReader_MoveToAttributeByName(reader, aW, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    reader_value(reader, "value a");
+    reader_value(reader, L"value a");
 
     hr = IXmlReader_MoveToAttributeByName(reader, bW, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    reader_value(reader, "value b");
+    reader_value(reader, L"value b");
 
     hr = IXmlReader_MoveToAttributeByName(reader, aW, mynsW);
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
@@ -2637,19 +2614,19 @@ static void test_attribute_by_name(void)
 
     hr = IXmlReader_MoveToAttributeByName(reader, nsW, xmlns_uriW);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    reader_value(reader, "ns uri");
+    reader_value(reader, L"ns uri");
 
     hr = IXmlReader_MoveToAttributeByName(reader, bW, emptyW);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    reader_value(reader, "value b");
+    reader_value(reader, L"value b");
 
     hr = IXmlReader_MoveToAttributeByName(reader, cW, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    reader_value(reader, "value c2");
+    reader_value(reader, L"value c2");
 
     hr = IXmlReader_MoveToAttributeByName(reader, cW, nsuriW);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    reader_value(reader, "value c");
+    reader_value(reader, L"value c");
 
     IXmlReader_Release(reader);
 }

@@ -445,7 +445,8 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
     data->curcfg.menu_mask = cfg->menu_mask;
     data->curcfg.quick_edit = cfg->quick_edit;
     if (strcmpiW(data->curcfg.face_name, cfg->face_name) || data->curcfg.cell_width != cfg->cell_width ||
-        data->curcfg.cell_height != cfg->cell_height || data->curcfg.font_weight != cfg->font_weight)
+        data->curcfg.cell_height != cfg->cell_height || data->curcfg.font_pitch_family != cfg->font_pitch_family ||
+        data->curcfg.font_weight != cfg->font_weight)
     {
         RECT r;
         data->fnSetFont(data, cfg->face_name, cfg->cell_height, cfg->font_weight);
@@ -458,6 +459,9 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
             req->max_height = (r.bottom - r.top - GetSystemMetrics(SM_CYCAPTION)) / cfg->cell_height;
             req->font_width = cfg->cell_width;
             req->font_height = cfg->cell_height;
+            req->font_weight = cfg->font_weight;
+            req->font_pitch_family = cfg->font_pitch_family;
+            wine_server_add_data( req, cfg->face_name, lstrlenW(cfg->face_name) * sizeof(WCHAR) );
             wine_server_call( req );
         }
         SERVER_END_REQ;

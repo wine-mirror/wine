@@ -177,26 +177,6 @@ static int strcmp_w(const WCHAR *str1, const WCHAR *str2)
     return memcmp(str1, str2, len1*sizeof(WCHAR));
 }
 
-static inline LPWSTR a2w(LPCSTR str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    }
-
-    return ret;
-}
-
-static inline DWORD strcmp_aw(LPCSTR strA, LPCWSTR strB) {
-    LPWSTR strAW = a2w(strA);
-    DWORD ret = lstrcmpW(strAW, strB);
-    heap_free(strAW);
-    return ret;
-}
-
 
 /* Based on RegDeleteTreeW from dlls/advapi32/registry.c */
 static LONG myRegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
@@ -874,7 +854,7 @@ static void run_child_process(void)
 }
 
 typedef struct {
-    const char  *url;
+    const WCHAR  *url;
     DWORD       zone;
     BOOL        todo;
     DWORD       broken_zone;
@@ -882,33 +862,33 @@ typedef struct {
 
 static const zone_mapping_test zone_mapping_tests[] = {
     /* Tests for "yabadaba.do" zone mappings. */
-    {"http://yabadaba.do/",URLZONE_CUSTOM},
-    {"http://google.yabadaba.do/",URLZONE_CUSTOM},
-    {"zip://yabadaba.do/",URLZONE_INTERNET},
+    {L"http://yabadaba.do/", URLZONE_CUSTOM},
+    {L"http://google.yabadaba.do/", URLZONE_CUSTOM},
+    {L"zip://yabadaba.do/", URLZONE_INTERNET},
     /* Tests for "super.cool" zone mappings. */
-    {"ftp://testing.google.super.cool/",URLZONE_INTERNET},
-    {"ftp://testing.*.super.cool/",URLZONE_CUSTOM2},
-    {"ftp://google.testing.super.cool/",URLZONE_CUSTOM2},
+    {L"ftp://testing.google.super.cool/", URLZONE_INTERNET},
+    {L"ftp://testing.*.super.cool/", URLZONE_CUSTOM2},
+    {L"ftp://google.testing.super.cool/", URLZONE_CUSTOM2},
     /* Tests for "tests.test" zone mappings. */
-    {"http://tests.test/",URLZONE_CUSTOM},
-    {"http://www.tests.test/",URLZONE_CUSTOM},
-    {"ftp://tests.test/",URLZONE_CUSTOM},
-    {"ftp://www.tests.test/",URLZONE_CUSTOM},
-    {"test://www.tests.test/",URLZONE_INTERNET},
-    {"test://tests.test/",URLZONE_INTERNET},
-    {"zip://www.tests.test/",URLZONE_INTERNET},
-    {"zip://tests.test/",URLZONE_INTERNET},
+    {L"http://tests.test/", URLZONE_CUSTOM},
+    {L"http://www.tests.test/", URLZONE_CUSTOM},
+    {L"ftp://tests.test/", URLZONE_CUSTOM},
+    {L"ftp://www.tests.test/", URLZONE_CUSTOM},
+    {L"test://www.tests.test/", URLZONE_INTERNET},
+    {L"test://tests.test/", URLZONE_INTERNET},
+    {L"zip://www.tests.test/", URLZONE_INTERNET},
+    {L"zip://tests.test/", URLZONE_INTERNET},
     /* Tests for "www.testing.com" zone mappings. */
-    {"http://google.www.testing.com/",URLZONE_INTERNET},
-    {"http://www.testing.com/",URLZONE_CUSTOM,FALSE,URLZONE_INTERNET},
-    {"http://testing.www.testing.com/",URLZONE_CUSTOM2,FALSE,URLZONE_INTERNET},
+    {L"http://google.www.testing.com/", URLZONE_INTERNET},
+    {L"http://www.testing.com/", URLZONE_CUSTOM, FALSE, URLZONE_INTERNET},
+    {L"http://testing.www.testing.com/", URLZONE_CUSTOM2, FALSE, URLZONE_INTERNET},
     /* Tests for "org" zone mappings. */
-    {"http://google.org/",URLZONE_INTERNET,FALSE,URLZONE_CUSTOM},
-    {"http://org/",URLZONE_CUSTOM},
-    {"http://testing.org/",URLZONE_CUSTOM2},
+    {L"http://google.org/", URLZONE_INTERNET, FALSE, URLZONE_CUSTOM},
+    {L"http://org/", URLZONE_CUSTOM},
+    {L"http://testing.org/", URLZONE_CUSTOM2},
     /* Tests for "wine.testing" mapping */
-    {"*:wine.testing/test",URLZONE_CUSTOM2},
-    {"http://wine.testing/testing",URLZONE_CUSTOM2}
+    {L"*:wine.testing/test", URLZONE_CUSTOM2},
+    {L"http://wine.testing/testing", URLZONE_CUSTOM2}
 };
 
 static void test_zone_domain_mappings(void)
@@ -938,16 +918,13 @@ static void test_zone_domain_mappings(void)
 
     for(i = 0; i < ARRAY_SIZE(zone_mapping_tests); ++i) {
         const zone_mapping_test *test = zone_mapping_tests+i;
-        LPWSTR urlW = a2w(test->url);
         zone = URLZONE_INVALID;
 
-        hres = IInternetSecurityManager_MapUrlToZone(secmgr, urlW, &zone, 0);
+        hres = IInternetSecurityManager_MapUrlToZone(secmgr, test->url, &zone, 0);
         ok(hres == S_OK, "MapUrlToZone failed: %08x\n", hres);
         todo_wine_if (test->todo)
             ok(zone == test->zone || broken(test->broken_zone == zone),
                 "Expected %d, but got %d on test %d\n", test->zone, zone, i);
-
-        heap_free(urlW);
     }
 
     IInternetSecurityManager_Release(secmgr);
@@ -1588,25 +1565,25 @@ static void unregister_protocols(void) {
 }
 
 static const struct {
-    const char  *uri;
+    const WCHAR *uri;
     DWORD       create_flags;
     const char  *security_uri;
     HRESULT     security_hres;
-    const char  *default_uri;
+    const WCHAR *default_uri;
     HRESULT     default_hres;
     BOOL        todo;
 } sec_url_ex_tests[] = {
-    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,"*:index.html",S_OK,"*:index.htm",S_OK},
-    {"file://c:\\Index.htm",Uri_CREATE_FILE_USE_DOS_PATH,"file:///c:/Index.htm",S_OK,"file:///c:/Index.htm",S_OK},
-    {"file:some%20file%2ejpg",0,NULL,E_INVALIDARG,NULL,E_INVALIDARG},
-    {"file:some file.jpg",0,NULL,E_INVALIDARG,NULL,E_INVALIDARG},
-    {"http://www.zone3.winetest/",0,"http://www.zone3.winetest/",S_OK,"http://www.zone3.winetest/",S_OK},
-    {"about:blank",0,"about:blank",S_OK,"about:blank",S_OK},
-    {"ftp://zone3.winetest/file.test",0,"ftp://zone3.winetest/file.test",S_OK,"ftp://zone3.winetest/file.test",S_OK},
-    {"test:123abc",0,"test:123abc",S_OK,"test:123abc",S_OK},
-    {"http:google.com/test.file",0,"http:google.com/test.file",S_OK,"http:google.com/test.file",S_OK},
-    {"ftp://test@ftp.winehq.org/",0,"ftp://ftp.winehq.org/",S_OK,"ftp://ftp.winehq.org/",S_OK},
-    {"test://google@ftp.winehq.org/",0,"test://google@ftp.winehq.org/",S_OK,"test://google@ftp.winehq.org/",S_OK}
+    {L"index.htm", Uri_CREATE_ALLOW_RELATIVE, "*:index.html", S_OK, L"*:index.htm", S_OK},
+    {L"file://c:\\Index.htm", Uri_CREATE_FILE_USE_DOS_PATH, "file:///c:/Index.htm", S_OK, L"file:///c:/Index.htm", S_OK},
+    {L"file:some%20file%2ejpg", 0, NULL, E_INVALIDARG, NULL, E_INVALIDARG},
+    {L"file:some file.jpg", 0, NULL, E_INVALIDARG, NULL, E_INVALIDARG},
+    {L"http://www.zone3.winetest/", 0, "http://www.zone3.winetest/", S_OK, L"http://www.zone3.winetest/", S_OK},
+    {L"about:blank", 0, "about:blank", S_OK, L"about:blank", S_OK},
+    {L"ftp://zone3.winetest/file.test", 0, "ftp://zone3.winetest/file.test", S_OK, L"ftp://zone3.winetest/file.test", S_OK},
+    {L"test:123abc", 0, "test:123abc", S_OK, L"test:123abc", S_OK},
+    {L"http:google.com/test.file", 0, "http:google.com/test.file", S_OK, L"http:google.com/test.file", S_OK},
+    {L"ftp://test@ftp.winehq.org/", 0, "ftp://ftp.winehq.org/", S_OK, L"ftp://ftp.winehq.org/", S_OK},
+    {L"test://google@ftp.winehq.org/", 0, "test://google@ftp.winehq.org/", S_OK, L"test://google@ftp.winehq.org/", S_OK}
 };
 
 static void test_InternetGetSecurityUrlEx(void)
@@ -1626,10 +1603,9 @@ static void test_InternetGetSecurityUrlEx(void)
     ok(result == (void*) 0xdeadbeef, "'result' was %p\n", result);
 
     for(i = 0; i < ARRAY_SIZE(sec_url_ex_tests); ++i) {
-        LPWSTR uriW = a2w(sec_url_ex_tests[i].uri);
         uri = NULL;
 
-        hr = pCreateUri(uriW, sec_url_ex_tests[i].create_flags, 0, &uri);
+        hr = pCreateUri(sec_url_ex_tests[i].uri, sec_url_ex_tests[i].create_flags, 0, &uri);
         ok(hr == S_OK, "CreateUri returned 0x%08x on test %d\n", hr, i);
         if(hr == S_OK) {
             result = NULL;
@@ -1647,9 +1623,9 @@ static void test_InternetGetSecurityUrlEx(void)
                 ok(hr == S_OK, "GetDisplayUri returned 0x%08x on test %d\n", hr, i);
                 if(hr == S_OK) {
                     todo_wine_if (sec_url_ex_tests[i].todo) {
-                        ok(!strcmp_aw(sec_url_ex_tests[i].default_uri, received),
-                            "Expected %s but got %s on test %d\n", sec_url_ex_tests[i].default_uri,
-                            wine_dbgstr_w(received), i);
+                        ok(!lstrcmpW(sec_url_ex_tests[i].default_uri, received),
+                            "Expected %s but got %s on test %d\n",
+                            wine_dbgstr_w(sec_url_ex_tests[i].default_uri), wine_dbgstr_w(received), i);
                     }
                 }
                 SysFreeString(received);
@@ -1670,9 +1646,9 @@ static void test_InternetGetSecurityUrlEx(void)
                 ok(hr == S_OK, "GetDisplayUri returned 0x%08x on test %d\n", hr, i);
                 if(hr == S_OK) {
                     todo_wine_if (sec_url_ex_tests[i].todo) {
-                        ok(!strcmp_aw(sec_url_ex_tests[i].default_uri, received),
-                            "Expected %s but got %s on test %d\n", sec_url_ex_tests[i].default_uri,
-                            wine_dbgstr_w(received), i);
+                        ok(!lstrcmpW(sec_url_ex_tests[i].default_uri, received),
+                            "Expected %s but got %s on test %d\n",
+                            wine_dbgstr_w(sec_url_ex_tests[i].default_uri), wine_dbgstr_w(received), i);
                     }
                 }
                 SysFreeString(received);
@@ -1681,7 +1657,6 @@ static void test_InternetGetSecurityUrlEx(void)
         }
 
         if(uri) IUri_Release(uri);
-        heap_free(uriW);
     }
 }
 
@@ -1751,7 +1726,7 @@ static const BYTE secidex2_2[] = {'z','i','p',':','t','e','s','t','i','n','g','.
 static const BYTE secidex2_3[] = {'*',':','t','e','s','t','i','n','g','.','c','o','m',3,0,0,0};
 
 static const struct {
-    const char  *uri;
+    const WCHAR  *uri;
     DWORD       create_flags;
     HRESULT     map_hres;
     DWORD       zone;
@@ -1761,19 +1736,19 @@ static const struct {
     HRESULT     secid_hres;
     BOOL        secid_todo;
 } sec_mgr_ex2_tests[] = {
-    {"res://mshtml.dll/blank.htm",0,S_OK,URLZONE_LOCAL_MACHINE,FALSE,secid1,sizeof(secid1),S_OK},
-    {"index.htm",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET,FALSE,secid2,sizeof(secid2),S_OK},
-    {"file://c:\\Index.html",0,0,URLZONE_LOCAL_MACHINE,FALSE,secid1,sizeof(secid1),S_OK},
-    {"http://www.zone3.winetest/",0,0,URLZONE_INTERNET,FALSE,secid5,sizeof(secid5),S_OK},
-    {"about:blank",0,0,URLZONE_INTERNET,FALSE,secid6,sizeof(secid6),S_OK},
-    {"ftp://zone3.winetest/file.test",0,0,URLZONE_INTERNET,FALSE,secid7,sizeof(secid7),S_OK},
-    {"/file/testing/test.test",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET,FALSE,NULL,0,E_INVALIDARG},
-    {"zip://testing.com/",0,0,URLZONE_INTERNET,FALSE,secidex2_1,sizeof(secidex2_1),S_OK},
-    {"zip:testing.com",0,0,URLZONE_INTERNET,FALSE,secidex2_2,sizeof(secidex2_2),S_OK},
-    {"http:google.com",0,S_OK,URLZONE_INVALID,FALSE,NULL,0,E_INVALIDARG},
-    {"http:/google.com",0,S_OK,URLZONE_INVALID,FALSE,NULL,0,E_INVALIDARG},
-    {"*:/testing",0,S_OK,URLZONE_INTERNET,FALSE,NULL,0,E_INVALIDARG},
-    {"*://testing.com",0,S_OK,URLZONE_INTERNET,FALSE,secidex2_3,sizeof(secidex2_3),S_OK}
+    {L"res://mshtml.dll/blank.htm", 0, S_OK, URLZONE_LOCAL_MACHINE, FALSE, secid1, sizeof(secid1), S_OK},
+    {L"index.htm", Uri_CREATE_ALLOW_RELATIVE, 0, URLZONE_INTERNET, FALSE, secid2, sizeof(secid2), S_OK},
+    {L"file://c:\\Index.html", 0, 0, URLZONE_LOCAL_MACHINE, FALSE, secid1, sizeof(secid1), S_OK},
+    {L"http://www.zone3.winetest/", 0, 0, URLZONE_INTERNET, FALSE, secid5, sizeof(secid5), S_OK},
+    {L"about:blank", 0, 0, URLZONE_INTERNET, FALSE, secid6, sizeof(secid6), S_OK},
+    {L"ftp://zone3.winetest/file.test", 0, 0, URLZONE_INTERNET, FALSE, secid7, sizeof(secid7), S_OK},
+    {L"/file/testing/test.test", Uri_CREATE_ALLOW_RELATIVE, 0, URLZONE_INTERNET, FALSE, NULL, 0, E_INVALIDARG},
+    {L"zip://testing.com/", 0, 0, URLZONE_INTERNET, FALSE, secidex2_1, sizeof(secidex2_1), S_OK},
+    {L"zip:testing.com", 0, 0, URLZONE_INTERNET, FALSE, secidex2_2, sizeof(secidex2_2), S_OK},
+    {L"http:google.com", 0, S_OK, URLZONE_INVALID, FALSE, NULL, 0, E_INVALIDARG},
+    {L"http:/google.com", 0, S_OK, URLZONE_INVALID, FALSE, NULL, 0, E_INVALIDARG},
+    {L"*:/testing", 0, S_OK, URLZONE_INTERNET, FALSE, NULL, 0, E_INVALIDARG},
+    {L"*://testing.com", 0, S_OK, URLZONE_INTERNET, FALSE, secidex2_3, sizeof(secidex2_3), S_OK}
 };
 
 static void test_SecurityManagerEx2(void)
@@ -1828,20 +1803,18 @@ static void test_SecurityManagerEx2(void)
     IUri_Release(uri);
 
     for(i = 0; i < ARRAY_SIZE(sec_mgr_ex2_tests); ++i) {
-        LPWSTR uriW = a2w(sec_mgr_ex2_tests[i].uri);
-
         uri = NULL;
         zone = URLZONE_INVALID;
 
-        hres = pCreateUri(uriW, sec_mgr_ex2_tests[i].create_flags, 0, &uri);
-        ok(hres == S_OK, "CreateUri returned %08x for '%s'\n", hres, sec_mgr_ex2_tests[i].uri);
+        hres = pCreateUri(sec_mgr_ex2_tests[i].uri, sec_mgr_ex2_tests[i].create_flags, 0, &uri);
+        ok(hres == S_OK, "CreateUri returned %08x for '%s'\n", hres, wine_dbgstr_w(sec_mgr_ex2_tests[i].uri));
 
         hres = IInternetSecurityManagerEx2_MapUrlToZoneEx2(sec_mgr2, uri, &zone, 0, NULL, NULL);
         todo_wine_if (sec_mgr_ex2_tests[i].map_todo) {
             ok(hres == sec_mgr_ex2_tests[i].map_hres, "MapUrlToZoneEx2 returned %08x, expected %08x for '%s'\n",
-                hres, sec_mgr_ex2_tests[i].map_hres, sec_mgr_ex2_tests[i].uri);
+                hres, sec_mgr_ex2_tests[i].map_hres, wine_dbgstr_w(sec_mgr_ex2_tests[i].uri));
             ok(zone == sec_mgr_ex2_tests[i].zone, "Expected zone %d, but got %d for '%s'\n", sec_mgr_ex2_tests[i].zone,
-                zone, sec_mgr_ex2_tests[i].uri);
+                zone, wine_dbgstr_w(sec_mgr_ex2_tests[i].uri));
         }
 
         buf_size = sizeof(buf);
@@ -1850,16 +1823,15 @@ static void test_SecurityManagerEx2(void)
         hres = IInternetSecurityManagerEx2_GetSecurityIdEx2(sec_mgr2, uri, buf, &buf_size, 0);
         todo_wine_if (sec_mgr_ex2_tests[i].secid_todo) {
             ok(hres == sec_mgr_ex2_tests[i].secid_hres, "GetSecurityIdEx2 returned %08x, expected %08x on test '%s'\n",
-                hres, sec_mgr_ex2_tests[i].secid_hres, sec_mgr_ex2_tests[i].uri);
+                hres, sec_mgr_ex2_tests[i].secid_hres, wine_dbgstr_w(sec_mgr_ex2_tests[i].uri));
             if(sec_mgr_ex2_tests[i].secid) {
                 ok(buf_size == sec_mgr_ex2_tests[i].secid_size, "Got wrong security id size=%d, expected %d on test '%s'\n",
-                    buf_size, sec_mgr_ex2_tests[i].secid_size, sec_mgr_ex2_tests[i].uri);
+                    buf_size, sec_mgr_ex2_tests[i].secid_size, wine_dbgstr_w(sec_mgr_ex2_tests[i].uri));
                 ok(!memcmp(buf, sec_mgr_ex2_tests[i].secid, sec_mgr_ex2_tests[i].secid_size), "Got wrong security id on test '%s'\n",
-                    sec_mgr_ex2_tests[i].uri);
+                    wine_dbgstr_w(sec_mgr_ex2_tests[i].uri));
             }
         }
 
-        heap_free(uriW);
         IUri_Release(uri);
     }
 
@@ -1891,25 +1863,24 @@ static void test_SecurityManagerEx2(void)
 static void test_CoInternetIsFeatureZoneElevationEnabled(void)
 {
     struct {
-        const char *url_from;
-        const char *url_to;
+        const WCHAR *url_from;
+        const WCHAR *url_to;
         DWORD flags;
         HRESULT hres;
         DWORD policy_flags;
     } testcases[] = {
-        /*  0 */ { "http://www.winehq.org", "http://www.winehq.org", 0, S_FALSE, URLPOLICY_ALLOW },
-        /*  1 */ { "http://www.winehq.org", "http://www.winehq.org", 0, S_OK, URLPOLICY_DISALLOW },
-        /*  2 */ { "http://www.winehq.org", "http://www.codeweavers.com", 0, S_FALSE, URLPOLICY_ALLOW },
-        /*  3 */ { "http://www.winehq.org", "http://www.codeweavers.com", 0, S_OK, URLPOLICY_DISALLOW },
-        /*  4 */ { "http://www.winehq.org", "http://www.winehq.org", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
-        /*  5 */ { "http://www.winehq.org", "http://www.winehq.org/dir", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
-        /*  6 */ { "http://www.winehq.org", "http://www.codeweavers.com", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
-        /*  7 */ { "http://www.winehq.org", "ftp://winehq.org", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
-        /*  8 */ { "http://www.winehq.org", "ftp://winehq.org", GET_FEATURE_FROM_PROCESS|0x100, S_FALSE, URLPOLICY_ALLOW },
-        /*  9 */ { "http://www.winehq.org", "ftp://winehq.org", GET_FEATURE_FROM_REGISTRY, S_FALSE, URLPOLICY_ALLOW },
+        /*  0 */ { L"http://www.winehq.org", L"http://www.winehq.org", 0, S_FALSE, URLPOLICY_ALLOW },
+        /*  1 */ { L"http://www.winehq.org", L"http://www.winehq.org", 0, S_OK, URLPOLICY_DISALLOW },
+        /*  2 */ { L"http://www.winehq.org", L"http://www.codeweavers.com", 0, S_FALSE, URLPOLICY_ALLOW },
+        /*  3 */ { L"http://www.winehq.org", L"http://www.codeweavers.com", 0, S_OK, URLPOLICY_DISALLOW },
+        /*  4 */ { L"http://www.winehq.org", L"http://www.winehq.org", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
+        /*  5 */ { L"http://www.winehq.org", L"http://www.winehq.org/dir", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
+        /*  6 */ { L"http://www.winehq.org", L"http://www.codeweavers.com", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
+        /*  7 */ { L"http://www.winehq.org", L"ftp://winehq.org", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
+        /*  8 */ { L"http://www.winehq.org", L"ftp://winehq.org", GET_FEATURE_FROM_PROCESS|0x100, S_FALSE, URLPOLICY_ALLOW },
+        /*  9 */ { L"http://www.winehq.org", L"ftp://winehq.org", GET_FEATURE_FROM_REGISTRY, S_FALSE, URLPOLICY_ALLOW },
     };
 
-    WCHAR *url_from, *url_to;
     int i;
     HRESULT hres;
 
@@ -1941,14 +1912,11 @@ static void test_CoInternetIsFeatureZoneElevationEnabled(void)
     }
 
     for(i = 0; i < ARRAY_SIZE(testcases); i++) {
-        url_from = a2w(testcases[i].url_from);
-        url_to = a2w(testcases[i].url_to);
-
         if(testcases[i].policy_flags != -1) {
             ProcessUrlAction_policy = testcases[i].policy_flags;
             SET_EXPECT(ProcessUrlAction);
         }
-        hres = pCoInternetIsFeatureZoneElevationEnabled(url_from, url_to,
+        hres = pCoInternetIsFeatureZoneElevationEnabled(testcases[i].url_from, testcases[i].url_to,
                 &security_manager, testcases[i].flags);
         ok(hres == testcases[i].hres, "%d) CoInternetIsFeatureZoneElevationEnabled returned %x\n", i, hres);
         if(testcases[i].policy_flags != -1)
@@ -1957,13 +1925,10 @@ static void test_CoInternetIsFeatureZoneElevationEnabled(void)
         if(testcases[i].policy_flags != -1)
             SET_EXPECT(ProcessUrlAction);
         hres = pCoInternetIsFeatureEnabledForUrl(FEATURE_ZONE_ELEVATION,
-                testcases[i].flags, url_to, &security_manager);
+                testcases[i].flags, testcases[i].url_to, &security_manager);
         ok(hres == testcases[i].hres, "%d) CoInternetIsFeatureEnabledForUrl returned %x\n", i, hres);
         if(testcases[i].policy_flags != -1)
             CHECK_CALLED(ProcessUrlAction);
-
-        heap_free(url_from);
-        heap_free(url_to);
     }
 }
 

@@ -1473,19 +1473,23 @@ static void LISTBOX_MakeItemVisible( LB_DESCR *descr, INT index, BOOL fully )
  */
 static LRESULT LISTBOX_SetCaretIndex( LB_DESCR *descr, INT index, BOOL fully_visible )
 {
-    INT oldfocus = descr->focus_item;
+    BOOL focus_changed = descr->focus_item != index;
 
-    TRACE("old focus %d, index %d\n", oldfocus, index);
+    TRACE("old focus %d, index %d\n", descr->focus_item, index);
 
     if (descr->style & LBS_NOSEL) return LB_ERR;
     if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
-    if (index == oldfocus) return LB_OKAY;
 
-    LISTBOX_DrawFocusRect( descr, FALSE );
-    descr->focus_item = index;
+    if (focus_changed)
+    {
+        LISTBOX_DrawFocusRect( descr, FALSE );
+        descr->focus_item = index;
+    }
 
     LISTBOX_MakeItemVisible( descr, index, fully_visible );
-    LISTBOX_DrawFocusRect( descr, TRUE );
+
+    if (focus_changed)
+        LISTBOX_DrawFocusRect( descr, TRUE );
 
     return LB_OKAY;
 }
@@ -2959,7 +2963,11 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case LB_SETSEL:
         ret = LISTBOX_SetSelection( descr, lParam, wParam, FALSE );
         if (ret != LB_ERR && wParam)
+        {
             descr->anchor_item = lParam;
+            if (lParam != -1)
+                LISTBOX_SetCaretIndex( descr, lParam, TRUE );
+        }
         return ret;
 
     case LB_SETCURSEL:

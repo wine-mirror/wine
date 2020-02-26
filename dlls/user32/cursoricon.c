@@ -31,7 +31,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef HAVE_PNG_H
+#ifdef SONAME_LIBPNG
 #include <png.h>
 #endif
 
@@ -1451,6 +1451,8 @@ static void riff_find_chunk( DWORD chunk_id, DWORD chunk_type, const riff_chunk_
         }
 
         ptr += sizeof(DWORD);
+        if (ptr >= end)
+            break;
         ptr += (*(const DWORD *)ptr + 1) & ~1;
         ptr += sizeof(DWORD);
     }

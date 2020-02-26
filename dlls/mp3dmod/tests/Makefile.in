@@ -1,5 +1,5 @@
 TESTDLL = mp3dmod.dll
-IMPORTS = dmoguids ole32 strmiids uuid wmcodecdspuuid
+IMPORTS = dmoguids msdmo ole32 strmiids uuid wmcodecdspuuid
 
 C_SRCS = \
 	mp3dmod.c

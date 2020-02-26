@@ -1,7 +1,7 @@
 @ stdcall AllocateUserPhysicalPages(long ptr ptr) kernel32.AllocateUserPhysicalPages
-@ stub AllocateUserPhysicalPagesNuma
+@ stdcall AllocateUserPhysicalPagesNuma(long ptr ptr long) kernel32.AllocateUserPhysicalPagesNuma
 @ stub CreateFileMappingFromApp
-@ stub CreateFileMappingNumaW
+@ stdcall CreateFileMappingNumaW(long ptr long long long wstr long) kernel32.CreateFileMappingNumaW
 @ stdcall CreateFileMappingW(long ptr long long long wstr) kernel32.CreateFileMappingW
 @ stdcall CreateMemoryResourceNotification(long) kernel32.CreateMemoryResourceNotification
 @ stdcall FlushViewOfFile(ptr long) kernel32.FlushViewOfFile

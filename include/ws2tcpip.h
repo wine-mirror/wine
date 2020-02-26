@@ -54,6 +54,10 @@ typedef struct WS(addrinfoW)
     struct WS(addrinfoW)*   ai_next;
 } ADDRINFOW, *PADDRINFOW;
 
+#ifndef WINE_NO_UNICODE_MACROS
+typedef WINELIB_NAME_AW(ADDRINFO) ADDRINFOT, *PADDRINFOT;
+#endif
+
 #ifdef USE_WS_PREFIX
 typedef int WS_socklen_t;
 #else
@@ -178,9 +182,9 @@ int WINAPI  WS(getaddrinfo)(const char*,const char*,const struct WS(addrinfo)*,s
 #define     GetAddrInfoA WS(getaddrinfo)
 int WINAPI  GetAddrInfoW(PCWSTR,PCWSTR,const ADDRINFOW*,PADDRINFOW*);
 #define     GetAddrInfo WINELIB_NAME_AW(GetAddrInfo)
-int WINAPI  GetAddrInfoExA(const char*,const char*,DWORD,GUID*,const ADDRINFOEXA*,ADDRINFOEXA**,struct timeval*,
+int WINAPI  GetAddrInfoExA(const char*,const char*,DWORD,GUID*,const ADDRINFOEXA*,ADDRINFOEXA**,struct WS(timeval)*,
                            OVERLAPPED*,LPLOOKUPSERVICE_COMPLETION_ROUTINE,HANDLE*);
-int WINAPI  GetAddrInfoExW(const WCHAR*,const WCHAR*,DWORD,GUID*, const ADDRINFOEXW*,ADDRINFOEXW**,struct timeval*,
+int WINAPI  GetAddrInfoExW(const WCHAR*,const WCHAR*,DWORD,GUID*, const ADDRINFOEXW*,ADDRINFOEXW**,struct WS(timeval)*,
                            OVERLAPPED*,LPLOOKUPSERVICE_COMPLETION_ROUTINE,HANDLE*);
 #define     GetAddrInfoEx WINELIB_NAME_AW(GetAddrInfoExW)
 int WINAPI  GetAddrInfoExOverlappedResult(OVERLAPPED*);

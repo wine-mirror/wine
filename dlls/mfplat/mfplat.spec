@@ -10,14 +10,15 @@
 @ stub ValidateWaveFormat
 @ stub CopyPropVariant
 @ stub CreatePropVariant
-@ stub CreatePropertyStore
+@ stdcall CreatePropertyStore(ptr)
 @ stub DestroyPropVariant
 @ stub GetAMSubtypeFromD3DFormat
 @ stub GetD3DFormatFromMFSubtype
 @ stub LFGetGlobalPool
-@ stdcall MFAddPeriodicCallback(ptr ptr ptr)
+@ stdcall MFAddPeriodicCallback(ptr ptr ptr) rtworkq.RtwqAddPeriodicCallback
+@ stdcall MFAllocateSerialWorkQueue(long ptr) rtworkq.RtwqAllocateSerialWorkQueue
 @ stdcall MFAllocateWorkQueue(ptr)
-@ stdcall MFAllocateWorkQueueEx(long ptr)
+@ stdcall MFAllocateWorkQueueEx(long ptr) rtworkq.RtwqAllocateWorkQueue
 @ stub MFAppendCollection
 @ stub MFAverageTimePerFrameToFrameRate
 @ stdcall MFBeginCreateFile(long long long wstr ptr ptr ptr)
@@ -28,7 +29,7 @@
 @ stub MFCalculateBitmapImageSize
 @ stdcall MFCalculateImageSize(ptr long long ptr)
 @ stdcall MFCancelCreateFile(ptr)
-@ stdcall MFCancelWorkItem(int64)
+@ stdcall MFCancelWorkItem(int64) rtworkq.RtwqCancelWorkItem
 @ stdcall MFCompareFullToPartialMediaType(ptr ptr)
 @ stub MFCompareSockaddrAddresses
 @ stub MFConvertColorInfoFromDXVA
@@ -42,6 +43,7 @@
 @ stdcall MFCreateAttributes(ptr long)
 @ stub MFCreateAudioMediaType
 @ stdcall MFCreateCollection(ptr)
+@ stdcall MFCreateDXGIDeviceManager(ptr ptr)
 @ stdcall MFCreateEventQueue(ptr)
 @ stdcall MFCreateFile(long long long wstr ptr)
 @ stub MFCreateLegacyMediaBufferOnMFMediaBuffer
@@ -65,7 +67,7 @@
 @ stdcall MFCreateSystemTimeSource(ptr)
 @ stub MFCreateSystemUnderlyingClock
 @ stub MFCreateTempFile
-@ stub MFCreateTransformActivate
+@ stdcall MFCreateTransformActivate(ptr)
 @ stub MFCreateURLFromPath
 @ stub MFCreateUdpSockets
 @ stub MFCreateVideoMediaType
@@ -120,9 +122,9 @@
 @ stub MFInitVideoFormat_RGB
 @ stdcall MFInvokeCallback(ptr)
 @ stub MFJoinIoPort
-@ stdcall MFLockPlatform()
-@ stdcall MFLockWorkQueue(long)
-@ stdcall MFPutWaitingWorkItem(long long ptr ptr)
+@ stdcall MFLockPlatform() rtworkq.RtwqLockPlatform
+@ stdcall MFLockWorkQueue(long) rtworkq.RtwqLockWorkQueue
+@ stdcall MFPutWaitingWorkItem(long long ptr ptr) rtworkq.RtwqPutWaitingWorkItem
 @ stdcall MFPutWorkItem(long ptr ptr)
 @ stdcall MFPutWorkItem2(long long ptr ptr)
 @ stdcall MFPutWorkItemEx(long ptr)
@@ -130,7 +132,7 @@
 @ stub MFRecordError
 @ stdcall MFRegisterLocalByteStreamHandler(wstr wstr ptr)
 @ stdcall MFRegisterLocalSchemeHandler(wstr ptr)
-@ stdcall MFRemovePeriodicCallback(long)
+@ stdcall MFRemovePeriodicCallback(long) rtworkq.RtwqRemovePeriodicCallback
 @ stdcall MFScheduleWorkItem(ptr ptr int64 ptr)
 @ stdcall MFScheduleWorkItemEx(ptr int64 ptr)
 @ stub MFSerializeAttributesToStream
@@ -146,15 +148,15 @@
 @ stub MFTGetInfo
 @ stdcall MFTRegister(int128 int128 wstr long long ptr long ptr ptr)
 @ stdcall MFTRegisterLocal(ptr ptr wstr long long  ptr long ptr)
-@ stub MFTRegisterLocalByCLSID
+@ stdcall MFTRegisterLocalByCLSID(ptr ptr wstr long long ptr long ptr)
 @ stdcall MFTUnregister(int128)
 @ stdcall MFTUnregisterLocal(ptr)
-@ stub MFTUnregisterLocalByCLSID
+@ stdcall MFTUnregisterLocalByCLSID(int128)
 @ stub MFTraceError
 @ stub MFTraceFuncEnter
 @ stub MFUnblockThread
-@ stdcall MFUnlockPlatform()
-@ stdcall MFUnlockWorkQueue(long)
+@ stdcall MFUnlockPlatform() rtworkq.RtwqUnlockPlatform
+@ stdcall MFUnlockWorkQueue(long) rtworkq.RtwqUnlockWorkQueue
 @ stdcall MFUnwrapMediaType(ptr ptr)
 @ stub MFValidateMediaTypeSize
 @ stdcall MFWrapMediaType(ptr ptr ptr ptr)

@@ -60,11 +60,32 @@ SECURITY_STATUS WINAPI NCryptDecrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD i
     return NTE_NOT_SUPPORTED;
 }
 
+SECURITY_STATUS WINAPI NCryptDeleteKey(NCRYPT_KEY_HANDLE key, DWORD flags)
+{
+    FIXME("(0x%lx, 0x%08x): stub\n", key, flags);
+    return NTE_NOT_SUPPORTED;
+}
+
 SECURITY_STATUS WINAPI NCryptEncrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD insize, void *padding,
                                      BYTE *output, DWORD outsize, DWORD *result, DWORD flags)
 {
     FIXME("(0x%lx, %p, %u, %p, %p, %u, %p, 0x%08x): stub\n", key, input, insize, padding,
                                                              output, outsize, result, flags);
+    return NTE_NOT_SUPPORTED;
+}
+
+SECURITY_STATUS WINAPI NCryptEnumAlgorithms(NCRYPT_PROV_HANDLE provider, DWORD alg_ops,
+                                            DWORD *alg_count, NCryptAlgorithmName **alg_list,
+                                            DWORD flags)
+{
+    FIXME("(0x%lx, 0x%08x, %p, %p, 0x%08x): stub\n", provider, alg_ops, alg_count, alg_list, flags);
+    return NTE_NOT_SUPPORTED;
+}
+
+SECURITY_STATUS WINAPI NCryptEnumKeys(NCRYPT_PROV_HANDLE provider, const WCHAR *scope,
+                                      NCryptKeyName **key_name, PVOID *enum_state, DWORD flags)
+{
+    FIXME("(0x%lx, %p, %p, %p, 0x%08x): stub\n", provider, scope, key_name, enum_state, flags);
     return NTE_NOT_SUPPORTED;
 }
 
@@ -74,9 +95,40 @@ SECURITY_STATUS WINAPI NCryptFinalizeKey(NCRYPT_KEY_HANDLE key, DWORD flags)
     return NTE_NOT_SUPPORTED;
 }
 
+SECURITY_STATUS WINAPI NCryptFreeBuffer(PVOID buf)
+{
+    FIXME("(%p): stub\n", buf);
+    return NTE_NOT_SUPPORTED;
+}
+
 SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE object)
 {
     FIXME("(0x%lx): stub\n", object);
+    return NTE_NOT_SUPPORTED;
+}
+
+SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE object, const WCHAR *property, PBYTE output,
+                                         DWORD outsize, DWORD *result, DWORD flags)
+{
+    FIXME("(0x%lx, %s, %p, %u, %p, 0x%08x): stub\n", object, wine_dbgstr_w(property), output, outsize,
+                                                         result, flags);
+    return NTE_NOT_SUPPORTED;
+}
+
+SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE decrypt_key,
+                                       const WCHAR *type, NCryptBufferDesc *params, NCRYPT_KEY_HANDLE *key,
+                                       PBYTE data, DWORD datasize, DWORD flags)
+{
+    FIXME("(0x%lx, 0x%lx, %s, %p, %p, %p, %u, 0x%08x): stub\n", provider, decrypt_key,
+                                                                wine_dbgstr_w(type), params,
+                                                                key, data, datasize, flags);
+    return NTE_NOT_SUPPORTED;
+}
+
+SECURITY_STATUS WINAPI NCryptIsAlgSupported(NCRYPT_PROV_HANDLE provider, const WCHAR *algid,
+                                            DWORD flags)
+{
+    FIXME("(0x%lx, %s, 0x%08x): stub\n", provider, wine_dbgstr_w(algid), flags);
     return NTE_NOT_SUPPORTED;
 }
 
@@ -90,5 +142,13 @@ SECURITY_STATUS WINAPI NCryptOpenKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HAN
 SECURITY_STATUS WINAPI NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE *provider, const WCHAR *name, DWORD flags)
 {
     FIXME("(%p, %s, %u): stub\n", provider, wine_dbgstr_w(name), flags);
+    return NTE_NOT_SUPPORTED;
+}
+
+SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE object, const WCHAR *property,
+                                         PBYTE input, DWORD insize, DWORD flags)
+{
+    FIXME("(%lx, %s, %p, %u, 0x%08x): stub\n", object, wine_dbgstr_w(property), input, insize,
+                                               flags);
     return NTE_NOT_SUPPORTED;
 }

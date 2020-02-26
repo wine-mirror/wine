@@ -25,7 +25,6 @@
 #include "winuser.h"
 #include "wfext.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scarddlg);

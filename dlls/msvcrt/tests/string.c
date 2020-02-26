@@ -28,6 +28,7 @@
 #include <locale.h>
 #include <errno.h>
 #include <limits.h>
+#include <float.h>
 #include <math.h>
 
 /* make it use a definition from string.h */
@@ -56,6 +57,8 @@ static void* (__cdecl *pmemcpy)(void *, const void *, size_t n);
 static int (__cdecl *p_memcpy_s)(void *, size_t, const void *, size_t);
 static int (__cdecl *p_memmove_s)(void *, size_t, const void *, size_t);
 static int* (__cdecl *pmemcmp)(void *, const void *, size_t n);
+static int (__cdecl *p_strcmp)(const char *, const char *);
+static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
 static int (__cdecl *p_strcpy)(char *dst, const char *src);
 static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
@@ -73,6 +76,7 @@ static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static __int64 (__cdecl *p_wcstoi64)(const wchar_t *, wchar_t **, int);
 static unsigned __int64 (__cdecl *p_wcstoui64)(const wchar_t *, wchar_t **, int);
 static int (__cdecl *pwcstombs_s)(size_t*,char*,size_t,const wchar_t*,size_t);
+static int (__cdecl *p_wcstombs_s_l)(size_t*,char*,size_t,const wchar_t*,size_t,_locale_t);
 static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
 static size_t (__cdecl *p_mbsrtowcs)(wchar_t*, const char**, size_t, mbstate_t*);
 static int (__cdecl *p_mbsrtowcs_s)(size_t*,wchar_t*,size_t,const char**,size_t,mbstate_t*);
@@ -87,7 +91,9 @@ static int (__cdecl *p_wcslwr_s)(wchar_t*,size_t);
 static errno_t (__cdecl *p_mbsupr_s)(unsigned char *str, size_t numberOfElements);
 static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements);
 static int (__cdecl *p_wctob)(wint_t);
+static wint_t (__cdecl *p_btowc)(int);
 static size_t (__cdecl *p_wcrtomb)(char*, wchar_t, mbstate_t*);
+static int (__cdecl *p_wcrtomb_s)(size_t*, char*, size_t, wchar_t, mbstate_t*);
 static int (__cdecl *p_tolower)(int);
 static int (__cdecl *p_towlower)(wint_t);
 static int (__cdecl *p__towlower_l)(wint_t, _locale_t);
@@ -156,6 +162,29 @@ static void test_swab( void ) {
     memcpy(from, original, testsize);
     _swab( from, to, testsize );
     ok(memcmp(to,expected3,testsize) == 0, "Testing small size %d returned '%*.*s'\n", testsize, testsize, testsize, to);
+}
+
+static void test_strcspn(void)
+{
+    static const struct {
+        const char *str;
+        const char *rej;
+        int ret;
+    } tests[] = {
+        { "test", "a", 4 },
+        { "test", "e", 1 },
+        { "test", "", 4 },
+        { "", "a", 0 },
+        { "a\xf1", "\xf1", 1 }
+    };
+    int r, i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        r = strcspn(tests[i].str, tests[i].rej);
+        ok(r == tests[i].ret, "strcspn(\"%s\", \"%s\") = %d, expected %d\n",
+                tests[i].str, tests[i].rej, r, tests[i].ret);
+    }
 }
 
 #if 0      /* use this to generate more tests */
@@ -516,13 +545,50 @@ static void test_mbsspn( void)
     unsigned char str2[]="shiraz";
     unsigned char set[]="abc";
     unsigned char empty[]="";
-    int ret;
+    unsigned char mbstr[]=" 2019\x94\x4e" "6\x8c\x8e" "29\x93\xfa";
+    unsigned char mbset1[]="0123456789 \x94\x4e";
+    unsigned char mbset2[]=" \x94\x4e\x8c\x8e";
+    unsigned char mbset3[]="\x8e";
+    int ret, cp = _getmbcp();
+
     ret=_mbsspn( str1, set);
     ok( ret==3, "_mbsspn returns %d should be 3\n", ret);
     ret=_mbsspn( str2, set);
     ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
     ret=_mbsspn( str1, empty);
     ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
+
+    ret=_mbscspn( str1, set);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
+    ret=_mbscspn( str2, set);
+    ok( ret==4, "_mbscspn returns %d should be 4\n", ret);
+    ret=_mbscspn( str1, empty);
+    ok( ret==8, "_mbscspn returns %d should be 8\n", ret);
+
+    _setmbcp( 932);
+    ret=_mbsspn( mbstr, mbset1);
+    ok( ret==8, "_mbsspn returns %d should be 8\n", ret);
+    ret=_mbsspn( mbstr, mbset2);
+    ok( ret==1, "_mbsspn returns %d should be 1\n", ret);
+    ret=_mbsspn( mbstr+8, mbset1);
+    ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
+    ret=_mbsspn( mbstr+8, mbset2);
+    ok( ret==2, "_mbsspn returns %d should be 2\n", ret);
+    ret=_mbsspn( mbstr, mbset3);
+    ok( ret==14, "_mbsspn returns %d should be 14\n", ret);
+
+    ret=_mbscspn( mbstr, mbset1);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
+    ret=_mbscspn( mbstr, mbset2);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
+    ret=_mbscspn( mbstr+8, mbset1);
+    ok( ret==2, "_mbscspn returns %d should be 2\n", ret);
+    ret=_mbscspn( mbstr+8, mbset2);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
+    ret=_mbscspn( mbstr, mbset3);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
+
+    _setmbcp( cp);
 }
 
 static void test_mbsspnp( void)
@@ -532,7 +598,12 @@ static void test_mbsspnp( void)
     unsigned char set[]="abc";
     unsigned char empty[]="";
     unsigned char full[]="abcenrt";
+    unsigned char mbstr[]=" 2019\x94\x4e" "6\x8c\x8e" "29\x93\xfa";
+    unsigned char mbset1[]="0123456789 \x94\x4e";
+    unsigned char mbset2[]=" \x94\x4e\x8c\x8e";
     unsigned char* ret;
+    int cp = _getmbcp();
+
     ret=_mbsspnp( str1, set);
     ok( ret[0]=='e', "_mbsspnp returns %c should be e\n", ret[0]);
     ret=_mbsspnp( str2, set);
@@ -541,6 +612,18 @@ static void test_mbsspnp( void)
     ok( ret[0]=='c', "_mbsspnp returns %c should be c\n", ret[0]);
     ret=_mbsspnp( str1, full);
     ok( ret==NULL, "_mbsspnp returns %p should be NULL\n", ret);
+
+    _setmbcp( 932);
+    ret=_mbsspnp( mbstr, mbset1);
+    ok( ret==mbstr+8, "_mbsspnp returns %p should be %p\n", ret, mbstr+8);
+    ret=_mbsspnp( mbstr, mbset2);
+    ok( ret==mbstr+1, "_mbsspnp returns %p should be %p\n", ret, mbstr+1);
+    ret=_mbsspnp( mbstr+8, mbset1);
+    ok( ret==mbstr+8, "_mbsspnp returns %p should be %p\n", ret, mbstr+8);
+    ret=_mbsspnp( mbstr+8, mbset2);
+    ok( ret==mbstr+10, "_mbsspnp returns %p should be %p\n", ret, mbstr+10);
+
+    _setmbcp( cp);
 }
 
 static void test_strdup(void)
@@ -549,6 +632,37 @@ static void test_strdup(void)
    str = _strdup( 0 );
    ok( str == 0, "strdup returns %s should be 0\n", str);
    free( str );
+}
+
+static void test_strcmp(void)
+{
+    int ret = p_strcmp( "abc", "abcd" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "", "abc" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "abc", "ab\xa0" );
+    ok( ret == -1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "ab\xb0", "ab\xa0" );
+    ok( ret == 1, "wrong ret %d\n", ret );
+    ret = p_strcmp( "ab\xc2", "ab\xc2" );
+    ok( ret == 0, "wrong ret %d\n", ret );
+
+    ret = p_strncmp( "abc", "abcd", 3 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "", "abc", 3 );
+    ok( ret == 0 - 'a' || ret == -1, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ok( ret == 'c' - 0xa0 || ret == -1, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ok( ret == 0xb0 - 0xa0 || ret == 1, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xb0", "ab\xa0", 2 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "ab\xc2", "ab\xc2", 3 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "abd", 0 );
+    ok( ret == 0, "wrong ret %d\n", ret );
+    ret = p_strncmp( "abc", "abc", 12 );
+    ok( ret == 0, "wrong ret %d\n", ret );
 }
 
 static void test_strcpy_s(void)
@@ -1017,6 +1131,11 @@ static void test_wcscpy_s(void)
 
     /* Copy same buffer size */
     ret = p_wcscpy_s(szDest, 18, szLongText);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    ok(lstrcmpW(szDest, szLongText) == 0, "szDest != szLongText\n");
+
+    /* dest == source */
+    ret = p_wcscpy_s(szDest, 18, szDest);
     ok(ret == 0, "expected 0 got %d\n", ret);
     ok(lstrcmpW(szDest, szLongText) == 0, "szDest != szLongText\n");
 
@@ -1796,10 +1915,21 @@ static void test__strtoi64(void)
     ok(errno == ERANGE, "errno = %x\n", errno);
 }
 
-static inline BOOL almost_equal(double d1, double d2) {
-    if(d1-d2>-1e-30 && d1-d2<1e-30)
-        return TRUE;
-    return FALSE;
+static inline BOOL compare_double(double f, double g, unsigned int ulps)
+{
+    ULONGLONG x = *(ULONGLONG *)&f;
+    ULONGLONG y = *(ULONGLONG *)&g;
+
+    if (f < 0)
+        x = ~x + 1;
+    else
+        x |= ((ULONGLONG)1)<<63;
+    if (g < 0)
+        y = ~y + 1;
+    else
+        y |= ((ULONGLONG)1)<<63;
+
+    return (x>y ? x-y : y-x) <= ulps;
 }
 
 static void test__strtod(void)
@@ -1817,34 +1947,34 @@ static void test__strtod(void)
     double d;
 
     d = strtod(double1, &end);
-    ok(almost_equal(d, 12.1), "d = %lf\n", d);
+    ok(d == 12.1, "d = %.16e\n", d);
     ok(end == double1+4, "incorrect end (%d)\n", (int)(end-double1));
 
     d = strtod(double2, &end);
-    ok(almost_equal(d, -13.721), "d = %lf\n", d);
+    ok(d == -13.721, "d = %.16e\n", d);
     ok(end == double2+7, "incorrect end (%d)\n", (int)(end-double2));
 
     d = strtod(double3, &end);
-    ok(almost_equal(d, 0), "d = %lf\n", d);
+    ok(d == 0, "d = %.16e\n", d);
     ok(end == double3, "incorrect end (%d)\n", (int)(end-double3));
 
     d = strtod(double4, &end);
-    ok(almost_equal(d, 210000000000.0), "d = %lf\n", d);
+    ok(d == 210000000000.0, "d = %.16e\n", d);
     ok(end == double4+6, "incorrect end (%d)\n", (int)(end-double4));
 
     d = strtod(double5, &end);
-    ok(almost_equal(d, 214.353), "d = %lf\n", d);
+    ok(d == 214.353, "d = %.16e\n", d);
     ok(end == double5+9, "incorrect end (%d)\n", (int)(end-double5));
 
     d = strtod(double6, &end);
-    ok(almost_equal(d, 0), "d = %lf\n", d);
+    ok(d == 0, "d = %.16e\n", d);
     ok(end == double6, "incorrect end (%d)\n", (int)(end-double6));
 
     d = strtod("12.1d2", NULL);
-    ok(almost_equal(d, 12.1e2), "d = %lf\n", d);
+    ok(d == 12.1e2, "d = %.16e\n", d);
 
     d = strtod(white_chars, &end);
-    ok(almost_equal(d, 0), "d = %lf\n", d);
+    ok(d == 0, "d = %.16e\n", d);
     ok(end == white_chars, "incorrect end (%d)\n", (int)(end-white_chars));
 
     if (!p__strtod_l)
@@ -1853,19 +1983,19 @@ static void test__strtod(void)
     {
         errno = EBADF;
         d = strtod(NULL, NULL);
-        ok(almost_equal(d, 0.0), "d = %lf\n", d);
+        ok(d == 0.0, "d = %.16e\n", d);
         ok(errno == EINVAL, "errno = %x\n", errno);
 
         errno = EBADF;
         end = (char *)0xdeadbeef;
         d = strtod(NULL, &end);
-        ok(almost_equal(d, 0.0), "d = %lf\n", d);
+        ok(d == 0.0, "d = %.16e\n", d);
         ok(errno == EINVAL, "errno = %x\n", errno);
         ok(!end, "incorrect end ptr %p\n", end);
 
         errno = EBADF;
         d = p__strtod_l(NULL, NULL, NULL);
-        ok(almost_equal(d, 0.0), "d = %lf\n", d);
+        ok(d == 0.0, "d = %.16e\n", d);
         ok(errno == EINVAL, "errno = %x\n", errno);
     }
 
@@ -1876,28 +2006,28 @@ static void test__strtod(void)
     }
 
     d = strtod("12.1", NULL);
-    ok(almost_equal(d, 12.0), "d = %lf\n", d);
+    ok(d == 12.0, "d = %.16e\n", d);
 
     d = strtod("12,1", NULL);
-    ok(almost_equal(d, 12.1), "d = %lf\n", d);
+    ok(d == 12.1, "d = %.16e\n", d);
 
     setlocale(LC_ALL, "C");
 
     /* Precision tests */
     d = strtod("0.1", NULL);
-    ok(almost_equal(d, 0.1), "d = %lf\n", d);
+    ok(d == 0.1, "d = %.16e\n", d);
     d = strtod("-0.1", NULL);
-    ok(almost_equal(d, -0.1), "d = %lf\n", d);
+    ok(d == -0.1, "d = %.16e\n", d);
     d = strtod("0.1281832188491894198128921", NULL);
-    ok(almost_equal(d, 0.1281832188491894198128921), "d = %lf\n", d);
+    ok(d == 0.1281832188491894198128921, "d = %.16e\n", d);
     d = strtod("0.82181281288121", NULL);
-    ok(almost_equal(d, 0.82181281288121), "d = %lf\n", d);
+    ok(d == 0.82181281288121, "d = %.16e\n", d);
     d = strtod("21921922352523587651128218821", NULL);
-    ok(almost_equal(d, 21921922352523587651128218821.0), "d = %lf\n", d);
+    ok(d == 21921922352523587651128218821.0, "d = %.16e\n", d);
     d = strtod("0.1d238", NULL);
-    ok(almost_equal(d, 0.1e238L), "d = %lf\n", d);
+    ok(d == 0.1e238, "d = %.16e\n", d);
     d = strtod("0.1D-4736", NULL);
-    ok(almost_equal(d, 0.1e-4736L), "d = %lf\n", d);
+    ok(d == 0.0, "d = %.16e\n", d);
 
     errno = 0xdeadbeef;
     strtod(overflow, &end);
@@ -1907,6 +2037,12 @@ static void test__strtod(void)
     errno = 0xdeadbeef;
     strtod("-1d309", NULL);
     ok(errno == ERANGE, "errno = %x\n", errno);
+
+    d = strtod("3.4028234663852887e38", NULL);
+    ok(d <= FLT_MAX, "d = %e\n", d);
+
+    d = strtod("1.7976931348623158e+308", NULL);
+    ok(d == DBL_MAX, "d = %le\n", d);
 }
 
 static void test_mbstowcs(void)
@@ -1996,6 +2132,11 @@ static void test_mbstowcs(void)
         win_skip("mbstowcs_s or wcstombs_s not available\n");
         return;
     }
+
+    err = pmbstowcs_s(&ret, wOut, 1, mSimple, _TRUNCATE);
+    ok(err == STRUNCATE, "err = %d\n", err);
+    ok(ret == 1, "mbstowcs_s did not return 0\n");
+    ok(!wOut[0], "wOut[0] = %d\n", wOut[0]);
 
     err = pmbstowcs_s(&ret, wOut, 6, mSimple, _TRUNCATE);
     ok(err == 0, "err = %d\n", err);
@@ -2135,6 +2276,72 @@ static void test_mbstowcs(void)
     ok(errno == 0, "errno = %d\n", errno);
 
     setlocale(LC_ALL, "C");
+}
+
+static void test__wcstombs_s_l(void)
+{
+    struct test {
+        const wchar_t *wstr;
+        size_t wlen;
+        const char *str;
+        size_t len;
+        size_t ret;
+        int err;
+        const char *locale;
+    } tests[] = {
+        /* wstr                 str        ret err        locale */
+        { L"",       0,         NULL,   0, 1,  0,         NULL },
+        { L"\xfffd", 1,         NULL,   0, 2,  0,         NULL },
+        { L"\xfffd", 1,         "",     1, 0,  EILSEQ,    NULL },
+        { L"\xfffd", 1,         "",     6, 0,  EILSEQ,    NULL },
+        { L"text",   _TRUNCATE, "text", 5, 5,  0,         NULL },
+        { L"text",   _TRUNCATE, "",     1, 1,  STRUNCATE, NULL },
+        { L"text",   5,         "",     3, 0,  ERANGE,    NULL },
+
+        { L"",       0,         NULL,   0, 1,  0,         "English_United States.1252" },
+        { L"\xfffd", 1,         NULL,   0, 0,  EILSEQ,    "English_United States.1252" },
+        { L"\xfffd", 1,         "",     1, 0,  EILSEQ,    "English_United States.1252" },
+        { L"\xfffd", 1,         "",     6, 0,  EILSEQ,    "English_United States.1252" },
+        { L"text",   _TRUNCATE, "text", 5, 5,  0,         "English_United States.1252" },
+        { L"text",   _TRUNCATE, "",     1, 1,  STRUNCATE, "English_United States.1252" },
+        { L"text",   5,         "",     3, 0,  ERANGE,    "English_United States.1252" },
+    };
+    _locale_t locale;
+    char out[6];
+    size_t ret;
+    int err;
+    int i;
+
+    if(!p__create_locale) {
+        win_skip("_create_locale not available\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        if(tests[i].locale)
+        {
+            locale = p__create_locale(LC_ALL, tests[i].locale);
+            ok(locale != NULL, "_create_locale failed for %s\n", tests[i].locale);
+        }
+        else
+            locale = NULL;
+
+        ret = ~0;
+        memset(out, 0xcc, sizeof(out));
+        err = p_wcstombs_s_l(&ret, tests[i].str ? out : NULL, tests[i].len,
+                             tests[i].wstr, tests[i].wlen, locale);
+        ok(ret == tests[i].ret, "%d: expected ret %d, got %d for '%s' in locale %s\n", i, tests[i].ret, ret,
+            wine_dbgstr_w(tests[i].wstr), tests[i].locale);
+        ok(err == tests[i].err, "%d: expected err %d, got %d for '%s' in locale %s\n", i, tests[i].err, err,
+            wine_dbgstr_w(tests[i].wstr), tests[i].locale);
+        if(tests[i].str)
+            ok(!memcmp(out, tests[i].str, strlen(tests[i].str)+1),
+                "%d: expected out %s, got %s for '%s' in locale %s\n", i, tests[i].str, out,
+                wine_dbgstr_w(tests[i].wstr), tests[i].locale);
+
+        p__free_locale(locale);
+    }
 }
 
 static void test_gcvt(void)
@@ -2323,6 +2530,9 @@ static void test__strlwr_s(void)
     ok(!memcmp(buffer, "gorrister\0ELLEN", sizeof("gorrister\0ELLEN")),
        "Expected the output buffer to be \"gorrister\\0ELLEN\", got \"%s\"\n",
        buffer);
+
+    ret = p_strlwr_s((char *)"already_lowercase", sizeof("already_lowercase"));
+    ok(ret == 0, "Expected _strlwr_s to return 0, got %d\n", ret);
 }
 
 static void test_wcsncat_s(void)
@@ -2702,7 +2912,7 @@ static void test__ultoa_s(void)
 
 static void test_wctob(void)
 {
-    int ret;
+    int ret, cp = _getmbcp();
 
     if(!p_wctob || !setlocale(LC_ALL, "chinese-traditional")) {
         win_skip("Skipping wctob tests\n");
@@ -2727,19 +2937,99 @@ static void test_wctob(void)
     ok(ret == EOF, "ret = %x\n", ret);
 
     ret = p_wctob(0x81);
-    ok(ret == (int)(char)0x81, "ret = %x\n", ret);
+    ok(ret == (signed char)0x81, "ret = %x\n", ret);
 
     ret = p_wctob(0x9f);
-    ok(ret == (int)(char)0x9f, "ret = %x\n", ret);
+    ok(ret == (signed char)0x9f, "ret = %x\n", ret);
 
     ret = p_wctob(0xe0);
-    ok(ret == (int)(char)0xe0, "ret = %x\n", ret);
+    ok(ret == (signed char)0xe0, "ret = %x\n", ret);
+
+    _setmbcp(cp);
 }
+
+static void test_btowc(void)
+{
+    wint_t ret;
+    int cp = _getmbcp();
+
+    if(!p_btowc || !setlocale(LC_ALL, "chinese-traditional")) {
+        win_skip("Skipping btowc tests\n");
+        return;
+    }
+
+    ret = p_btowc(EOF);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    ret = p_btowc(0x61);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    ret = p_btowc(0x81);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    ret = p_btowc(0xe0);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    _setmbcp(1250);
+    ret = p_btowc(0x61);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    ret = p_btowc(0x81);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    ret = p_btowc(0xe0);
+    ok(ret == WEOF, "ret = %x\n", ret);
+
+    if(!setlocale(LC_CTYPE, ".1250")) {
+        win_skip("No codepage 1250 support\n");
+        setlocale(LC_ALL, "C");
+        _setmbcp(cp);
+        return;
+    }
+
+    ret = p_btowc(0x61);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    ret = p_btowc(0x81);
+    ok(ret == 0x81, "ret = %x\n", ret);
+
+    ret = p_btowc(0xe0);
+    ok(ret == 0x155, "ret = %x\n", ret);
+
+    ret = p_btowc(0x100);
+    ok(ret == 0x00, "ret = %x\n", ret);
+
+    ret = p_btowc(0x1e0);
+    ok(ret == 0x155, "ret = %x\n", ret);
+
+    setlocale(LC_ALL, "C");
+    ret = p_btowc(0x61);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    ret = p_btowc(0x81);
+    ok(ret == 0x81, "ret = %x\n", ret);
+
+    ret = p_btowc(0x9f);
+    ok(ret == 0x9f, "ret = %x\n", ret);
+
+    ret = p_btowc(0xe0);
+    ok(ret == 0xe0, "ret = %x\n", ret);
+
+    ret = p_btowc(0x100);
+    ok(ret == 0x00, "ret = %x\n", ret);
+
+    ret = p_btowc(0x1e0);
+    ok(ret == 0xe0, "ret = %x\n", ret);
+
+    _setmbcp(cp);
+}
+
 static void test_wctomb(void)
 {
     mbstate_t state;
     unsigned char dst[10];
     size_t ret;
+    int err;
 
     if(!p_wcrtomb || !setlocale(LC_ALL, "Japanese_Japan.932")) {
         win_skip("wcrtomb tests\n");
@@ -2768,6 +3058,43 @@ static void test_wctomb(void)
     ok(dst[0] == 0x20, "dst[0] = %x, expected 0x20\n", dst[0]);
 
     ret = p_wcrtomb((char*)dst, 0xffff, NULL);
+    ok(ret == -1, "wcrtomb did not return -1\n");
+    ok(dst[0] == 0x3f, "dst[0] = %x, expected 0x3f\n", dst[0]);
+
+    if(!p_wcrtomb_s) {
+        win_skip("wcrtomb_s tests\n");
+        setlocale(LC_ALL, "C");
+        return;
+    }
+
+    state = 1;
+    dst[2] = 'a';
+    err = p_wcrtomb_s(&ret, (char*)dst, sizeof(dst), 0x3042, &state);
+    ok(!err, "err = %d\n", err);
+    ok(ret == 2, "ret != 2\n");
+    ok(!state, "state != 0\n");
+    ok(dst[0] == 0x82, "dst[0] = %x, expected 0x82\n", dst[0]);
+    ok(dst[1] == 0xa0, "dst[1] = %x, expected 0xa0\n", dst[1]);
+    ok(dst[2] == 'a', "dst[2] != 'a'\n");
+
+    err = p_wcrtomb_s(&ret, (char*)dst, sizeof(dst), 0x3042, NULL);
+    ok(!err, "err = %d\n", err);
+    ok(ret == 2, "ret != 2\n");
+    ok(!state, "state != 0\n");
+    ok(dst[0] == 0x82, "dst[0] = %x, expected 0x82\n", dst[0]);
+    ok(dst[1] == 0xa0, "dst[1] = %x, expected 0xa0\n", dst[1]);
+
+    err = p_wcrtomb_s(&ret, (char*)dst, sizeof(dst), 0x20, NULL);
+    ok(!err, "err = %d\n", err);
+    ok(ret == 1, "ret != 1\n");
+    ok(dst[0] == 0x20, "dst[0] = %x, expected 0x20\n", dst[0]);
+
+    err = p_wcrtomb_s(&ret, NULL, 0, 0x20, NULL);
+    ok(!err, "err = %d\n", err);
+    ok(ret == 1, "ret != 1\n");
+
+    err = p_wcrtomb_s(&ret, (char*)dst, sizeof(dst), 0xffff, NULL);
+    ok(err == EILSEQ, "err = %d\n", err);
     ok(ret == -1, "wcrtomb did not return -1\n");
     ok(dst[0] == 0x3f, "dst[0] = %x, expected 0x3f\n", dst[0]);
 
@@ -2812,7 +3139,7 @@ static void test_tolower(void)
 
     ch = 0xF4;
     errno = 0xdeadbeef;
-    ret = p_tolower(ch);
+    ret = p_tolower((signed char)ch);
     if(!MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, &ch, 1, &chw, 1) ||
             LCMapStringW(CP_ACP, LCMAP_LOWERCASE, &chw, 1, &lower, 1) != 1 ||
             (len = WideCharToMultiByte(CP_ACP, 0, &lower, 1, &lch, 1, NULL, NULL)) != 1)
@@ -2826,7 +3153,7 @@ static void test_tolower(void)
 
     ch = 0xD0;
     errno = 0xdeadbeef;
-    ret = p_tolower(ch);
+    ret = p_tolower((signed char)ch);
     if(!MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, &ch, 1, &chw, 1) ||
             LCMapStringW(CP_ACP, LCMAP_LOWERCASE, &chw, 1, &lower, 1) != 1 ||
             (len = WideCharToMultiByte(CP_ACP, 0, &lower, 1, &lch, 1, NULL, NULL)) != 1)
@@ -2838,25 +3165,42 @@ static void test_tolower(void)
     if(!len || ret==(unsigned char)lch)
         ok(errno == EILSEQ, "errno = %d\n", errno);
 
-    ret = p_tolower(0xD0);
+    ret = p_tolower((unsigned char)0xD0);
     ok(ret == 0xD0, "ret = %x\n", ret);
 
     ok(setlocale(LC_ALL, "us") != NULL, "setlocale failed\n");
 
-    ret = p_tolower((char)0xD0);
+    ret = p_tolower((signed char)0xD0);
     ok(ret == 0xF0, "ret = %x\n", ret);
 
-    ret = p_tolower(0xD0);
+    ret = p_tolower((unsigned char)0xD0);
     ok(ret == 0xF0, "ret = %x\n", ret);
 
     setlocale(LC_ALL, "C");
+}
+
+static double mul_pow10(double x, double exp)
+{
+    int fpexcept = _EM_DENORMAL|_EM_INVALID|_EM_ZERODIVIDE|_EM_OVERFLOW|_EM_UNDERFLOW|_EM_INEXACT;
+    BOOL negexp = (exp < 0);
+    int fpcontrol;
+    double ret;
+
+    if(negexp)
+        exp = -exp;
+    fpcontrol = _control87(0, 0);
+    _control87(fpexcept, 0xffffffff);
+    ret = pow(10.0, exp);
+    ret = (negexp ? x/ret : x*ret);
+    _control87(fpcontrol, 0xffffffff);
+    return ret;
 }
 
 static void test__atodbl(void)
 {
     _CRT_DOUBLE d;
     char num[32];
-    int ret;
+    int i, j, ret;
 
     if(!p__atodbl_l) {
         /* Old versions of msvcrt use different values for _OVERFLOW and _UNDERFLOW
@@ -2897,13 +3241,25 @@ static void test__atodbl(void)
     ok(ret == 0, "_atodbl(&d, \"123\") returned %d, expected 0\n", ret);
     ok(d.x == 123, "d.x = %lf, expected 123\n", d.x);
 
+    /* check over the whole range of (simple) normal doubles */
+    for (j = DBL_MIN_10_EXP; j <= DBL_MAX_10_EXP; j++) {
+        for (i = 1; i <= 9; i++) {
+            double expected = mul_pow10(i, j);
+            if (expected < DBL_MIN || expected > DBL_MAX) continue;
+            snprintf(num, sizeof(num), "%de%d", i, j);
+            ret = _atodbl(&d, num);
+            ok(compare_double(d.x, expected, 2), "d.x = %.16e, expected %.16e\n", d.x, expected);
+        }
+    }
+
+    /* check with denormal doubles */
     strcpy(num, "1e-309");
     ret = p__atodbl_l(&d, num, NULL);
     ok(ret == _UNDERFLOW, "_atodbl_l(&d, \"1e-309\", NULL) returned %d, expected _UNDERFLOW\n", ret);
-    ok(d.x!=0 && almost_equal(d.x, 0), "d.x = %le, expected 0\n", d.x);
+    ok(compare_double(d.x, 1e-309, 1), "d.x = %.16e, expected 0\n", d.x);
     ret = _atodbl(&d, num);
     ok(ret == _UNDERFLOW, "_atodbl(&d, \"1e-309\") returned %d, expected _UNDERFLOW\n", ret);
-    ok(d.x!=0 && almost_equal(d.x, 0), "d.x = %le, expected 0\n", d.x);
+    ok(compare_double(d.x, 1e-309, 1), "d.x = %.16e, expected 0\n", d.x);
 
     strcpy(num, "1e309");
     ret = p__atodbl_l(&d, num, NULL);
@@ -2946,17 +3302,33 @@ static void test__stricmp(void)
 
 static void test__wcstoi64(void)
 {
-    static const WCHAR digit[] = { '9', 0 };
-    static const WCHAR space[] = { ' ', 0 };
-    static const WCHAR stock[] = { 0x3231, 0 }; /* PARENTHESIZED IDEOGRAPH STOCK */
-    static const WCHAR cjk_1[] = { 0x4e00, 0 }; /* CJK Ideograph, First */
-    static const WCHAR tamil[] = { 0x0bef, 0 }; /* TAMIL DIGIT NINE */
-    static const WCHAR thai[]  = { 0x0e59, 0 }; /* THAI DIGIT NINE */
-    static const WCHAR fullwidth[] = { 0xff19, 0 }; /* FULLWIDTH DIGIT NINE */
-    static const WCHAR superscript1[] = { 0xb9, 0 }; /* SUPERSCRIPT ONE */
-    static const WCHAR minus_0x91[]  = { '-', 0x0e50, 'x', 0xff19, '1', 0 };
-    static const WCHAR plus_071[]  = { '+', 0x0e50, 0xff17, '1', 0 };
-    static const WCHAR hex[] = { 0xff19, 'f', 0x0e59, 0xff46, 0 };
+    static const struct { WCHAR str[24]; __int64 res; unsigned __int64 ures; int base; } tests[] =
+    {
+        { L"9", 9, 9, 10 },
+        { L" ", 0, 0 },
+        { L"-1234", -1234, -1234 },
+        { { 0x3231 }, 0, 0 }, /* PARENTHESIZED IDEOGRAPH STOCK */
+        { { 0x4e00 }, 0, 0 }, /* CJK Ideograph, First */
+        { { 0x0bef }, 0, 0 }, /* TAMIL DIGIT NINE */
+        { { 0x0e59 }, 9, 9 }, /* THAI DIGIT NINE */
+        { { 0xff19 }, 9, 9 }, /* FULLWIDTH DIGIT NINE */
+        { { 0x00b9 }, 0, 0 }, /* SUPERSCRIPT ONE */
+        { { '-',0x0e50,'x',0xff19,'1' }, -0x91, -0x91 },
+        { { '+',0x0e50,0xff17,'1' }, 071, 071 },
+        { { 0xff19,'f',0x0e59,0xff46 }, 0x9f9, 0x9f9, 16 },
+        { L"4294967295", 4294967295, 4294967295 },
+        { L"4294967296", 4294967296, 4294967296 },
+        { L"9223372036854775807", 9223372036854775807, 9223372036854775807 },
+        { L"9223372036854775808", _I64_MAX, 9223372036854775808u },
+        { L"18446744073709551615", _I64_MAX, _UI64_MAX },
+        { L"18446744073709551616", _I64_MAX, _UI64_MAX },
+        { L"-4294967295", -4294967295, -4294967295 },
+        { L"-4294967296", -4294967296, -4294967296 },
+        { L"-9223372036854775807", -9223372036854775807, -9223372036854775807 },
+        { L"-9223372036854775808", _I64_MIN, 9223372036854775808u },
+        { L"-18446744073709551615", _I64_MIN, 1 },
+        { L"-18446744073709551616", _I64_MIN, 1 },
+    };
     static const WCHAR zeros[] = {
         0x660, 0x6f0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66, 0xc66, 0xce6,
         0xd66, 0xe50, 0xed0, 0xf20, 0x1040, 0x17e0, 0x1810, 0xff10
@@ -2972,51 +3344,16 @@ static void test__wcstoi64(void)
         return;
     }
 
-    res = p_wcstoi64(digit, NULL, 10);
-    ok(res == 9, "res != 9\n");
-    res = p_wcstoi64(space, &endpos, 0);
-    ok(endpos == space, "endpos != space\n");
-    res = p_wcstoi64(stock, &endpos, 10);
-    ok(res == 0, "res != 0\n");
-    ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
-    res = p_wcstoi64(cjk_1, NULL, 0);
-    ok(res == 0, "res != 0\n");
-    res = p_wcstoi64(tamil, &endpos, 10);
-    ok(res == 0, "res != 0\n");
-    ok(endpos == tamil, "Incorrect endpos (%p-%p)\n", tamil, endpos);
-    res = p_wcstoi64(thai, NULL, 10);
-    ok(res == 9, "res != 9\n");
-    res = p_wcstoi64(fullwidth, NULL, 10);
-    ok(res == 9, "res != 9\n");
-    res = p_wcstoi64(superscript1, NULL, 10);
-    ok(res == 0, "res != 0\n");
-    res = p_wcstoi64(hex, NULL, 16);
-    ok(res == 0x9f9, "res != 0x9f9\n");
-    res = p_wcstoi64(minus_0x91, NULL, 0);
-    ok(res == -0x91, "res != -0x91\n");
-    res = p_wcstoi64(plus_071, NULL, 0);
-    ok(res == 071, "res != 071\n");
-
-    ures = p_wcstoui64(digit, NULL, 10);
-    ok(ures == 9, "ures != 9\n");
-    ures = p_wcstoui64(space, &endpos, 0);
-    ok(endpos == space, "endpos != space\n");
-    ures = p_wcstoui64(stock, &endpos, 10);
-    ok(ures == 0, "ures != 0\n");
-    ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
-    ures = p_wcstoui64(tamil, &endpos, 10);
-    ok(ures == 0, "ures != 0\n");
-    ok(endpos == tamil, "Incorrect endpos (%p-%p)\n", tamil, endpos);
-    ures = p_wcstoui64(thai, NULL, 10);
-    ok(ures == 9, "ures != 9\n");
-    ures = p_wcstoui64(fullwidth, NULL, 10);
-    ok(ures == 9, "ures != 9\n");
-    ures = p_wcstoui64(superscript1, NULL, 10);
-    ok(ures == 0, "ures != 0\n");
-    ures = p_wcstoui64(hex, NULL, 16);
-    ok(ures == 0x9f9, "ures != 0x9f9\n");
-    ures = p_wcstoui64(plus_071, NULL, 0);
-    ok(ures == 071, "ures != 071\n");
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        res = p_wcstoi64( tests[i].str, &endpos, tests[i].base );
+        ok( res == tests[i].res, "%u: %s res %s\n",
+            i, wine_dbgstr_w(tests[i].str), wine_dbgstr_longlong(res) );
+        if (!res) ok( endpos == tests[i].str, "%u: wrong endpos %p/%p\n", i, endpos, tests[i].str );
+        ures = p_wcstoui64( tests[i].str, &endpos, tests[i].base );
+        ok( ures == tests[i].ures, "%u: %s res %s\n",
+            i, wine_dbgstr_w(tests[i].str), wine_dbgstr_longlong(ures) );
+    }
 
     /* Test various unicode digits */
     for (i = 0; i < ARRAY_SIZE(zeros); ++i) {
@@ -3027,8 +3364,65 @@ static void test__wcstoi64(void)
         res = p_wcstoi64(tmp, NULL, 16);
         ok(res == 4, "with zero = U+%04X: got %d, expected 4\n", zeros[i], (int)res);
     }
+}
 
-    return;
+static void test__wcstol(void)
+{
+    static const struct { WCHAR str[24]; long res; unsigned long ures; int base; } tests[] =
+    {
+        { L"9", 9, 9, 10 },
+        { L" ", 0, 0 },
+        { L"-1234", -1234, -1234 },
+        { { 0x3231 }, 0, 0 }, /* PARENTHESIZED IDEOGRAPH STOCK */
+        { { 0x4e00 }, 0, 0 }, /* CJK Ideograph, First */
+        { { 0x0bef }, 0, 0 }, /* TAMIL DIGIT NINE */
+        { { 0x0e59 }, 9, 9 }, /* THAI DIGIT NINE */
+        { { 0xff19 }, 9, 9 }, /* FULLWIDTH DIGIT NINE */
+        { { 0x00b9 }, 0, 0 }, /* SUPERSCRIPT ONE */
+        { { '-',0x0e50,'x',0xff19,'1' }, -0x91, -0x91 },
+        { { '+',0x0e50,0xff17,'1' }, 071, 071 },
+        { { 0xff19,'f',0x0e59,0xff46 }, 0x9f9, 0x9f9, 16 },
+        { L"2147483647", 2147483647, 2147483647 },
+        { L"2147483648", LONG_MAX, 2147483648 },
+        { L"4294967295", LONG_MAX, 4294967295 },
+        { L"4294967296", LONG_MAX, ULONG_MAX },
+        { L"9223372036854775807", LONG_MAX, ULONG_MAX },
+        { L"-2147483647", -2147483647, -2147483647 },
+        { L"-2147483648", LONG_MIN, LONG_MIN },
+        { L"-4294967295", LONG_MIN, 1 },
+        { L"-4294967296", LONG_MIN, 1 },
+        { L"-9223372036854775807", LONG_MIN, 1 },
+    };
+    static const WCHAR zeros[] = {
+        0x660, 0x6f0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66, 0xc66, 0xce6,
+        0xd66, 0xe50, 0xed0, 0xf20, 0x1040, 0x17e0, 0x1810, 0xff10
+    };
+    int i;
+
+    long res;
+    unsigned long ures;
+    WCHAR *endpos;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        res = wcstol( tests[i].str, &endpos, tests[i].base );
+        ok( res == tests[i].res, "%u: %s res %08lx\n",
+            i, wine_dbgstr_w(tests[i].str), res );
+        if (!res) ok( endpos == tests[i].str, "%u: wrong endpos %p/%p\n", i, endpos, tests[i].str );
+        ures = wcstoul( tests[i].str, &endpos, tests[i].base );
+        ok( ures == tests[i].ures, "%u: %s res %08lx\n",
+            i, wine_dbgstr_w(tests[i].str), ures );
+    }
+
+    /* Test various unicode digits */
+    for (i = 0; i < ARRAY_SIZE(zeros); ++i) {
+        WCHAR tmp[] = {zeros[i] + 4, zeros[i], zeros[i] + 5, 0};
+        res = wcstol(tmp, NULL, 0);
+        ok(res == 405, "with zero = U+%04X: got %d, expected 405\n", zeros[i], (int)res);
+        tmp[1] = zeros[i] + 10;
+        res = wcstol(tmp, NULL, 16);
+        ok(res == 4, "with zero = U+%04X: got %d, expected 4\n", zeros[i], (int)res);
+    }
 }
 
 static void test_atoi(void)
@@ -3070,13 +3464,13 @@ static void test_atof(void)
     double d;
 
     d = atof("0.0");
-    ok(almost_equal(d, 0.0), "d = %lf\n", d);
+    ok(d == 0.0, "d = %lf\n", d);
 
     d = atof("1.0");
-    ok(almost_equal(d, 1.0), "d = %lf\n", d);
+    ok(d == 1.0, "d = %lf\n", d);
 
     d = atof("-1.0");
-    ok(almost_equal(d, -1.0), "d = %lf\n", d);
+    ok(d == -1.0, "d = %lf\n", d);
 
     if (!p__atof_l)
     {
@@ -3086,12 +3480,12 @@ static void test_atof(void)
 
     errno = EBADF;
     d = atof(NULL);
-    ok(almost_equal(d, 0.0), "d = %lf\n", d);
+    ok(d == 0.0, "d = %lf\n", d);
     ok(errno == EINVAL, "errno = %x\n", errno);
 
     errno = EBADF;
     d = p__atof_l(NULL, NULL);
-    ok(almost_equal(d, 0.0), "d = %lf\n", d);
+    ok(d == 0.0, "d = %lf\n", d);
     ok(errno == EINVAL, "errno = %x\n", errno);
 }
 
@@ -3332,7 +3726,7 @@ static void test__mbscmp(void)
 
 static void test__ismbclx(void)
 {
-    int cp, ret;
+    int ret, cp = _getmbcp();
 
     ret = _ismbcl0(0);
     ok(!ret, "got %d\n", ret);
@@ -3343,7 +3737,7 @@ static void test__ismbclx(void)
     ret = _ismbcl2(0);
     ok(!ret, "got %d\n", ret);
 
-    cp = _setmbcp(1252);
+    _setmbcp(1252);
 
     ret = _ismbcl0(0x8140);
     ok(!ret, "got %d\n", ret);
@@ -3467,6 +3861,7 @@ static void test__memicmp_l(void)
 static void test__strupr(void)
 {
     const char str[] = "123";
+    const char *const_p;
     char str2[4];
     char *mem, *p;
     DWORD prot;
@@ -3484,6 +3879,10 @@ static void test__strupr(void)
     p = _strupr(mem);
     ok(p == mem, "_strupr returned %p\n", p);
     ok(!strcmp(mem, "123"), "mem = %s\n", mem);
+
+    const_p = "ALREADY_UPPERCASE";
+    p = _strupr((char *)const_p);
+    ok(p == const_p, "_strupr returned %p\n", p);
 
     if(!setlocale(LC_ALL, "english")) {
         VirtualFree(mem, sizeof(str), MEM_RELEASE);
@@ -3773,6 +4172,61 @@ static void test_C_locale(void)
     }
 }
 
+static void test_strstr(void)
+{
+    static char long_str[1024];
+    const struct {
+        const char *haystack;
+        const char *needle;
+        int off;
+    } tests[] = {
+        { "", "", 0 },
+        { "", "a", -1 },
+        { "a", "", 0 },
+        { "aabc", "abc", 1 },
+        { "aaaa", "aaaa", 0 },
+        { "simple", "simple", 0 },
+        { "aaaaxaaaaxaaaa", "aaaaa", -1 },
+        { "aaaaxaaaaxaaaaa", "aaaaa", 10 },
+        { "abcabcdababcdabcdabde", "abcdabd", 13 },
+        { "abababababcabababcababbba", "abababcaba", 4 },
+        { long_str, long_str+1, 0 }
+    };
+    const char *r, *exp;
+    int i;
+
+    memset(long_str, 'a', sizeof(long_str)-1);
+
+    for (i=0; i<ARRAY_SIZE(tests); i++)
+    {
+        r = strstr(tests[i].haystack, tests[i].needle);
+        exp = tests[i].off == -1 ? NULL : tests[i].haystack + tests[i].off;
+        ok(r == exp, "%d) strstr returned %p, expected %p\n", i, r, exp);
+    }
+}
+
+static void test_iswdigit(void)
+{
+    static const struct {
+        WCHAR c;
+        int r;
+    } tests[] = {
+        { '0', C1_DIGIT },
+        { '9', C1_DIGIT },
+        { 'a', 0 },
+        { 0xff16, C1_DIGIT },
+        { 0x0660, C1_DIGIT },
+        { 0x0ce6, C1_DIGIT }
+    };
+    int i, r;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        r = iswdigit(tests[i].c);
+        ok(r == tests[i].r, "iswdigit returned %x for %x\n", r, tests[i].c);
+    }
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -3790,6 +4244,8 @@ START_TEST(string)
     SET(p_mbctype,"_mbctype");
     SET(p__mb_cur_max,"__mb_cur_max");
     SET(p_strcpy, "strcpy");
+    SET(p_strcmp, "strcmp");
+    SET(p_strncmp, "strncmp");
     pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
     p_mbscat_s = (void*)GetProcAddress( hMsvcrt, "_mbscat_s" );
@@ -3807,6 +4263,7 @@ START_TEST(string)
     p_wcstoui64 = (void *)GetProcAddress(hMsvcrt, "_wcstoui64");
     pmbstowcs_s = (void *)GetProcAddress(hMsvcrt, "mbstowcs_s");
     pwcstombs_s = (void *)GetProcAddress(hMsvcrt, "wcstombs_s");
+    p_wcstombs_s_l = (void *)GetProcAddress(hMsvcrt, "_wcstombs_s_l");
     pwcsrtombs = (void *)GetProcAddress(hMsvcrt, "wcsrtombs");
     p_gcvt_s = (void *)GetProcAddress(hMsvcrt, "_gcvt_s");
     p_itoa_s = (void *)GetProcAddress(hMsvcrt, "_itoa_s");
@@ -3815,8 +4272,10 @@ START_TEST(string)
     p_wcslwr_s = (void*)GetProcAddress(hMsvcrt, "_wcslwr_s");
     p_mbsupr_s = (void*)GetProcAddress(hMsvcrt, "_mbsupr_s");
     p_mbslwr_s = (void*)GetProcAddress(hMsvcrt, "_mbslwr_s");
+    p_btowc = (void*)GetProcAddress(hMsvcrt, "btowc");
     p_wctob = (void*)GetProcAddress(hMsvcrt, "wctob");
     p_wcrtomb = (void*)GetProcAddress(hMsvcrt, "wcrtomb");
+    p_wcrtomb_s = (void*)GetProcAddress(hMsvcrt, "wcrtomb_s");
     p_tolower = (void*)GetProcAddress(hMsvcrt, "tolower");
     p_towlower = (void*)GetProcAddress(hMsvcrt, "towlower");
     p__towlower_l = (void*)GetProcAddress(hMsvcrt, "_towlower_l");
@@ -3851,10 +4310,12 @@ START_TEST(string)
     /* run tolower tests first */
     test_tolower();
     test_swab();
+    test_strcspn();
     test_mbcp();
     test_mbsspn();
     test_mbsspnp();
     test_strdup();
+    test_strcmp();
     test_strcpy_s();
     test_memcpy_s();
     test_memmove_s();
@@ -3879,6 +4340,7 @@ START_TEST(string)
     test__strtoi64();
     test__strtod();
     test_mbstowcs();
+    test__wcstombs_s_l();
     test_gcvt();
     test__itoa_s();
     test__strlwr_s();
@@ -3889,10 +4351,12 @@ START_TEST(string)
     test__mbsupr_s();
     test__mbslwr_s();
     test_wctob();
+    test_btowc();
     test_wctomb();
     test__atodbl();
     test__stricmp();
     test__wcstoi64();
+    test__wcstol();
     test_atoi();
     test_atol();
     test_atof();
@@ -3910,4 +4374,6 @@ START_TEST(string)
     test__tcsnicoll();
     test___strncnt();
     test_C_locale();
+    test_strstr();
+    test_iswdigit();
 }

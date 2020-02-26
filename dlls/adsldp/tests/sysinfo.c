@@ -33,12 +33,6 @@
 
 #include "wine/test.h"
 
-static WCHAR *strchrW(const WCHAR *str, WCHAR ch)
-{
-    do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
-    return NULL;
-}
-
 static void test_ComputerName(void)
 {
     static const WCHAR cnW[] = { 'C','N','=' };
@@ -70,7 +64,7 @@ static void test_ComputerName(void)
         ok(size == lstrlenW(buf) + 1, "got %u, expected %u\n", size, lstrlenW(buf) + 1);
         ok(!memcmp(buf, cnW, sizeof(cnW)), "got %s\n", wine_dbgstr_w(buf));
         ok(!memcmp(buf + 3, name, name_size), "got %s (name_size = %u)\n", wine_dbgstr_w(buf), name_size);
-        p = strchrW(buf, ',');
+        p = wcschr(buf, ',');
         ok(p != NULL, "delimiter was not found\n");
         ok(p && !memcmp(p + 1, ComputersW, sizeof(ComputersW)), "got %s\n", p ? wine_dbgstr_w(p + 1) : wine_dbgstr_w(buf));
     }
@@ -120,7 +114,7 @@ static void test_UserName(void)
         ok(size == lstrlenW(buf), "got %u, expected %u\n", size, lstrlenW(buf));
         ok(!memcmp(buf, cnW, sizeof(cnW)), "got %s\n", wine_dbgstr_w(buf));
         ok(!memcmp(buf + 3, name, name_size), "got %s (name_size = %u)\n", wine_dbgstr_w(buf), name_size);
-        p = strchrW(buf, ',');
+        p = wcschr(buf, ',');
         ok(p != NULL, "delimiter was not found\n");
         ok(p && !memcmp(p + 1, UsersW, sizeof(UsersW)), "got %s\n", p ? wine_dbgstr_w(p + 1) : wine_dbgstr_w(buf));
     }
@@ -216,4 +210,6 @@ START_TEST(sysinfo)
     test_ComputerName();
     test_UserName();
     test_sysinfo();
+
+    CoUninitialize();
 }

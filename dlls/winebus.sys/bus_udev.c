@@ -92,13 +92,11 @@ WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 static struct udev *udev_context = NULL;
 static DWORD disable_hidraw = 0;
 static DWORD disable_input = 0;
+static HANDLE deviceloop_handle;
+static int deviceloop_control[2];
 
 static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
 static const WCHAR lnxev_busidW[] = {'L','N','X','E','V',0};
-
-#include "initguid.h"
-DEFINE_GUID(GUID_DEVCLASS_HIDRAW, 0x3def44ad,0x242e,0x46e5,0x82,0x6d,0x70,0x72,0x13,0xf3,0xaa,0x81);
-DEFINE_GUID(GUID_DEVCLASS_LINUXEVENT, 0x1b932c0d,0xfea7,0x42cd,0x8e,0xaa,0x0e,0x48,0x79,0xb6,0x9e,0xaa);
 
 struct platform_private
 {
@@ -880,7 +878,7 @@ static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
     int rc;
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
     BYTE *feature_buffer;
-    BYTE buffer[1024];
+    BYTE buffer[8192];
 
     if (id == 0)
     {
@@ -1124,10 +1122,23 @@ next_line:
     return (found_id && found_serial);
 }
 
+static DWORD a_to_bcd(const char *s)
+{
+    DWORD r = 0;
+    const char *c;
+    int shift = strlen(s) - 1;
+    for (c = s; *c; ++c)
+    {
+        r |= (*c - '0') << (shift * 4);
+        --shift;
+    }
+    return r;
+}
+
 static void try_add_device(struct udev_device *dev)
 {
     DWORD vid = 0, pid = 0, version = 0;
-    struct udev_device *hiddev = NULL;
+    struct udev_device *hiddev = NULL, *walk_device;
     DEVICE_OBJECT *device = NULL;
     const char *subsystem;
     const char *devnode;
@@ -1150,6 +1161,7 @@ static void try_add_device(struct udev_device *dev)
     hiddev = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL);
     if (hiddev)
     {
+        const char *bcdDevice = NULL;
 #ifdef HAS_PROPER_INPUT_HEADER
         const platform_vtbl *other_vtbl = NULL;
         DEVICE_OBJECT *dup = NULL;
@@ -1171,6 +1183,17 @@ static void try_add_device(struct udev_device *dev)
                           &vid, &pid, &input, &serial);
         if (serial == NULL)
             serial = strdupAtoW(base_serial);
+
+        walk_device = dev;
+        while (walk_device && !bcdDevice)
+        {
+            bcdDevice = udev_device_get_sysattr_value(walk_device, "bcdDevice");
+            walk_device = udev_device_get_parent(walk_device);
+        }
+        if (bcdDevice)
+        {
+            version = a_to_bcd(bcdDevice);
+        }
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else
@@ -1214,13 +1237,13 @@ static void try_add_device(struct udev_device *dev)
     if (strcmp(subsystem, "hidraw") == 0)
     {
         device = bus_create_hid_device(hidraw_busidW, vid, pid, input, version, 0, serial, is_gamepad,
-                                       &GUID_DEVCLASS_HIDRAW, &hidraw_vtbl, sizeof(struct platform_private));
+                                       &hidraw_vtbl, sizeof(struct platform_private));
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (strcmp(subsystem, "input") == 0)
     {
         device = bus_create_hid_device(lnxev_busidW, vid, pid, input, version, 0, serial, is_gamepad,
-                                       &GUID_DEVCLASS_LINUXEVENT, &lnxev_vtbl, sizeof(struct wine_input_private));
+                                       &lnxev_vtbl, sizeof(struct wine_input_private));
     }
 #endif
 
@@ -1236,12 +1259,13 @@ static void try_add_device(struct udev_device *dev)
                 ERR("Building report descriptor failed, removing device\n");
                 close(fd);
                 udev_device_unref(dev);
+                bus_unlink_hid_device(device);
                 bus_remove_hid_device(device);
                 HeapFree(GetProcessHeap(), 0, serial);
                 return;
             }
 #endif
-        IoInvalidateDeviceRelations(device, BusRelations);
+        IoInvalidateDeviceRelations(bus_pdo, BusRelations);
     }
     else
     {
@@ -1270,7 +1294,8 @@ static void try_remove_device(struct udev_device *dev)
 #endif
     if (!device) return;
 
-    IoInvalidateDeviceRelations(device, RemovalRelations);
+    bus_unlink_hid_device(device);
+    IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 
     private = impl_from_DEVICE_OBJECT(device);
 
@@ -1428,15 +1453,20 @@ static DWORD CALLBACK deviceloop_thread(void *args)
 {
     struct udev_monitor *monitor;
     HANDLE init_done = args;
-    struct pollfd pfd;
+    struct pollfd pfd[2];
 
-    monitor = create_monitor(&pfd);
+    pfd[1].fd = deviceloop_control[0];
+    pfd[1].events = POLLIN;
+    pfd[1].revents = 0;
+
+    monitor = create_monitor(&pfd[0]);
     build_initial_deviceset();
     SetEvent(init_done);
 
     while (monitor)
     {
-        if (poll(&pfd, 1, -1) <= 0) continue;
+        if (poll(pfd, 2, -1) <= 0) continue;
+        if (pfd[1].revents) break;
         process_monitor_event(monitor);
     }
 
@@ -1446,9 +1476,29 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     return 0;
 }
 
+static int device_unload(DEVICE_OBJECT *device, void *context)
+{
+    try_remove_device(impl_from_DEVICE_OBJECT(device)->udev_device);
+    return 1;
+}
+
 void udev_driver_unload( void )
 {
     TRACE("Unload Driver\n");
+
+    if (!deviceloop_handle)
+        return;
+
+    write(deviceloop_control[1], "q", 1);
+    WaitForSingleObject(deviceloop_handle, INFINITE);
+    close(deviceloop_control[0]);
+    close(deviceloop_control[1]);
+    CloseHandle(deviceloop_handle);
+
+    bus_enumerate_hid_devices(&hidraw_vtbl, device_unload, NULL);
+#ifdef HAS_PROPER_INPUT_HEADER
+    bus_enumerate_hid_devices(&lnxev_vtbl, device_unload, NULL);
+#endif
 }
 
 NTSTATUS udev_driver_init(void)
@@ -1460,10 +1510,16 @@ NTSTATUS udev_driver_init(void)
     static const WCHAR input_disabledW[] = {'D','i','s','a','b','l','e','I','n','p','u','t',0};
     static const UNICODE_STRING input_disabled = {sizeof(input_disabledW) - sizeof(WCHAR), sizeof(input_disabledW), (WCHAR*)input_disabledW};
 
+    if (pipe(deviceloop_control) != 0)
+    {
+        ERR("Control pipe creation failed\n");
+        return STATUS_UNSUCCESSFUL;
+    }
+
     if (!(udev_context = udev_new()))
     {
         ERR("Can't create udev object\n");
-        return STATUS_UNSUCCESSFUL;
+        goto error;
     }
 
     disable_hidraw = check_bus_option(&hidraw_disabled, 0);
@@ -1486,17 +1542,23 @@ NTSTATUS udev_driver_init(void)
 
     result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
     CloseHandle(events[0]);
-    CloseHandle(events[1]);
     if (result == WAIT_OBJECT_0)
     {
+        deviceloop_handle = events[1];
         TRACE("Initialization successful\n");
         return STATUS_SUCCESS;
     }
+    CloseHandle(events[1]);
 
 error:
     ERR("Failed to initialize udev device thread\n");
-    udev_unref(udev_context);
-    udev_context = NULL;
+    close(deviceloop_control[0]);
+    close(deviceloop_control[1]);
+    if (udev_context)
+    {
+        udev_unref(udev_context);
+        udev_context = NULL;
+    }
     return STATUS_UNSUCCESSFUL;
 }
 
@@ -1504,7 +1566,6 @@ error:
 
 NTSTATUS udev_driver_init(void)
 {
-    WARN("Wine was compiled without UDEV support\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 

@@ -130,6 +130,65 @@ static void test_set_text(void)
     DestroyWindow(hStatic);
 }
 
+static void test_image(HBITMAP image)
+{
+    BITMAP bm;
+    HDC hdc;
+    BITMAPINFO info;
+    BYTE bits[4];
+
+    GetObjectW(image, sizeof(bm), &bm);
+    ok(bm.bmWidth == 1, "got %d\n", bm.bmWidth);
+    ok(bm.bmHeight == 1, "got %d\n", bm.bmHeight);
+    ok(bm.bmBitsPixel == 32, "got %d\n", bm.bmBitsPixel);
+    ok(bm.bmBits == NULL, "bmBits is not NULL\n");
+
+    info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info.bmiHeader.biWidth = bm.bmWidth;
+    info.bmiHeader.biHeight = bm.bmHeight;
+    info.bmiHeader.biPlanes = 1;
+    info.bmiHeader.biBitCount = 32;
+    info.bmiHeader.biCompression = BI_RGB;
+    info.bmiHeader.biSizeImage = 4;
+    info.bmiHeader.biXPelsPerMeter = 0;
+    info.bmiHeader.biYPelsPerMeter = 0;
+    info.bmiHeader.biClrUsed = 0;
+    info.bmiHeader.biClrImportant = 0;
+
+    hdc = CreateCompatibleDC(0);
+    GetDIBits(hdc, image, 0, bm.bmHeight, bits, &info, DIB_RGB_COLORS);
+    DeleteDC(hdc);
+
+    ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0x44,
+       "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
+}
+
+static void test_set_image(void)
+{
+    HWND hwnd = build_static(SS_BITMAP);
+    HBITMAP bmp, image;
+
+    image = LoadImageW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(101), IMAGE_BITMAP, 0, 0, 0);
+    ok(image != NULL, "LoadImage failed\n");
+
+    test_image(image);
+
+    bmp = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
+    ok(bmp == NULL, "got not NULL\n");
+
+    bmp = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
+    ok(bmp != NULL, "got NULL\n");
+    ok(bmp == image, "bmp != image\n");
+
+    bmp = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
+    ok(bmp != NULL, "got NULL\n");
+    ok(bmp == image, "bmp != image\n");
+    test_image(image);
+
+    DestroyWindow(hwnd);
+    DeleteObject(image);
+}
+
 START_TEST(static)
 {
     static const char szClassName[] = "testclass";
@@ -162,6 +221,7 @@ START_TEST(static)
     test_updates(SS_ETCHEDHORZ, TODO_COUNT);
     test_updates(SS_ETCHEDVERT, TODO_COUNT);
     test_set_text();
+    test_set_image();
 
     DestroyWindow(hMainWnd);
 }

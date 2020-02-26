@@ -20,7 +20,7 @@
 #ifndef __WINE_LOCALE_H
 #define __WINE_LOCALE_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #define LC_ALL                 0
 #define LC_COLLATE             1

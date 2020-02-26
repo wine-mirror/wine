@@ -462,9 +462,9 @@ fail:
 
 
 
-INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                           INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                           BITMAPINFO *src_info, UINT coloruse, DWORD rop )
+INT CDECL nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                                 INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
+                                 BITMAPINFO *src_info, UINT coloruse, DWORD rop )
 {
     DC *dc = get_nulldrv_dc( dev );
     char dst_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -766,9 +766,9 @@ done:
 }
 
 
-INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWORD cy,
-                               INT x_src, INT y_src, UINT startscan, UINT lines,
-                               const void *bits, BITMAPINFO *src_info, UINT coloruse )
+INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWORD cy,
+                                     INT x_src, INT y_src, UINT startscan, UINT lines,
+                                     const void *bits, BITMAPINFO *src_info, UINT coloruse )
 {
     DC *dc = get_nulldrv_dc( dev );
     char dst_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];

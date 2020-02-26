@@ -31,6 +31,7 @@
 #include "initguid.h"
 #include "ole2.h"
 #include "propsys.h"
+#include "dxgi.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -39,10 +40,30 @@
 #include "mfreadwrite.h"
 #include "propvarutil.h"
 #include "strsafe.h"
+#include "rtworkq.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
-static LONG platform_lock;
+static HRESULT heap_strdupW(const WCHAR *str, WCHAR **dest)
+{
+    HRESULT hr = S_OK;
+
+    if (str)
+    {
+        unsigned int size;
+
+        size = (lstrlenW(str) + 1) * sizeof(WCHAR);
+        *dest = heap_alloc(size);
+        if (*dest)
+            memcpy(*dest, str, size);
+        else
+            hr = E_OUTOFMEMORY;
+    }
+    else
+        *dest = NULL;
+
+    return hr;
+}
 
 struct local_handler
 {
@@ -63,6 +84,30 @@ static CRITICAL_SECTION local_handlers_section = { NULL, -1, 0, 0, 0, 0 };
 
 static struct list local_scheme_handlers = LIST_INIT(local_scheme_handlers);
 static struct list local_bytestream_handlers = LIST_INIT(local_bytestream_handlers);
+
+struct local_mft
+{
+    struct list entry;
+    IClassFactory *factory;
+    CLSID clsid;
+    GUID category;
+    WCHAR *name;
+    DWORD flags;
+    MFT_REGISTER_TYPE_INFO *input_types;
+    UINT32 input_types_count;
+    MFT_REGISTER_TYPE_INFO *output_types;
+    UINT32 output_types_count;
+};
+
+static CRITICAL_SECTION local_mfts_section = { NULL, -1, 0, 0, 0, 0 };
+
+static struct list local_mfts = LIST_INIT(local_mfts);
+
+struct transform_activate
+{
+    struct attributes attributes;
+    IMFActivate IMFActivate_iface;
+};
 
 struct system_clock
 {
@@ -104,6 +149,416 @@ static struct system_time_source *impl_from_IMFClockStateSink(IMFClockStateSink 
 static struct system_clock *impl_from_IMFClock(IMFClock *iface)
 {
     return CONTAINING_RECORD(iface, struct system_clock, IMFClock_iface);
+}
+
+static struct transform_activate *impl_from_IMFActivate(IMFActivate *iface)
+{
+    return CONTAINING_RECORD(iface, struct transform_activate, IMFActivate_iface);
+}
+
+static HRESULT WINAPI transform_activate_QueryInterface(IMFActivate *iface, REFIID riid, void **out)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFActivate) ||
+            IsEqualIID(riid, &IID_IMFAttributes) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFActivate_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI transform_activate_AddRef(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+    ULONG refcount = InterlockedIncrement(&activate->attributes.ref);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI transform_activate_Release(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+    ULONG refcount = InterlockedDecrement(&activate->attributes.ref);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        clear_attributes_object(&activate->attributes);
+        heap_free(activate);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI transform_activate_GetItem(IMFActivate *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetItem(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetItemType(IMFActivate *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
+
+    return attributes_GetItemType(&activate->attributes, key, type);
+}
+
+static HRESULT WINAPI transform_activate_CompareItem(IMFActivate *iface, REFGUID key, REFPROPVARIANT value,
+        BOOL *result)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_propvar(value), result);
+
+    return attributes_CompareItem(&activate->attributes, key, value, result);
+}
+
+static HRESULT WINAPI transform_activate_Compare(IMFActivate *iface, IMFAttributes *theirs,
+        MF_ATTRIBUTES_MATCH_TYPE match_type, BOOL *ret)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %p, %d, %p.\n", iface, theirs, match_type, ret);
+
+    return attributes_Compare(&activate->attributes, theirs, match_type, ret);
+}
+
+static HRESULT WINAPI transform_activate_GetUINT32(IMFActivate *iface, REFGUID key, UINT32 *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT32(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetUINT64(IMFActivate *iface, REFGUID key, UINT64 *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT64(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetDouble(IMFActivate *iface, REFGUID key, double *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetDouble(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetGUID(IMFActivate *iface, REFGUID key, GUID *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetGUID(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_GetStringLength(IMFActivate *iface, REFGUID key, UINT32 *length)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
+
+    return attributes_GetStringLength(&activate->attributes, key, length);
+}
+
+static HRESULT WINAPI transform_activate_GetString(IMFActivate *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), value, size, length);
+
+    return attributes_GetString(&activate->attributes, key, value, size, length);
+}
+
+static HRESULT WINAPI transform_activate_GetAllocatedString(IMFActivate *iface, REFGUID key, WCHAR **value,
+        UINT32 *length)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
+
+    return attributes_GetAllocatedString(&activate->attributes, key, value, length);
+}
+
+static HRESULT WINAPI transform_activate_GetBlobSize(IMFActivate *iface, REFGUID key, UINT32 *size)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
+
+    return attributes_GetBlobSize(&activate->attributes, key, size);
+}
+
+static HRESULT WINAPI transform_activate_GetBlob(IMFActivate *iface, REFGUID key, UINT8 *buf, UINT32 bufsize,
+        UINT32 *blobsize)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
+
+    return attributes_GetBlob(&activate->attributes, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI transform_activate_GetAllocatedBlob(IMFActivate *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_GetAllocatedBlob(&activate->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI transform_activate_GetUnknown(IMFActivate *iface, REFGUID key, REFIID riid, void **out)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), out);
+
+    return attributes_GetUnknown(&activate->attributes, key, riid, out);
+}
+
+static HRESULT WINAPI transform_activate_SetItem(IMFActivate *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_propvar(value));
+
+    return attributes_SetItem(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_DeleteItem(IMFActivate *iface, REFGUID key)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_attr(key));
+
+    return attributes_DeleteItem(&activate->attributes, key);
+}
+
+static HRESULT WINAPI transform_activate_DeleteAllItems(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_DeleteAllItems(&activate->attributes);
+}
+
+static HRESULT WINAPI transform_activate_SetUINT32(IMFActivate *iface, REFGUID key, UINT32 value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetUINT32(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetUINT64(IMFActivate *iface, REFGUID key, UINT64 value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
+
+    return attributes_SetUINT64(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetDouble(IMFActivate *iface, REFGUID key, double value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetDouble(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetGUID(IMFActivate *iface, REFGUID key, REFGUID value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
+
+    return attributes_SetGUID(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetString(IMFActivate *iface, REFGUID key, const WCHAR *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
+
+    return attributes_SetString(&activate->attributes, key, value);
+}
+
+static HRESULT WINAPI transform_activate_SetBlob(IMFActivate *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_SetBlob(&activate->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI transform_activate_SetUnknown(IMFActivate *iface, REFGUID key, IUnknown *unknown)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
+
+    return attributes_SetUnknown(&activate->attributes, key, unknown);
+}
+
+static HRESULT WINAPI transform_activate_LockStore(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_LockStore(&activate->attributes);
+}
+
+static HRESULT WINAPI transform_activate_UnlockStore(IMFActivate *iface)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_UnlockStore(&activate->attributes);
+}
+
+static HRESULT WINAPI transform_activate_GetCount(IMFActivate *iface, UINT32 *count)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return attributes_GetCount(&activate->attributes, count);
+}
+
+static HRESULT WINAPI transform_activate_GetItemByIndex(IMFActivate *iface, UINT32 index, GUID *key,
+        PROPVARIANT *value)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return attributes_GetItemByIndex(&activate->attributes, index, key, value);
+}
+
+static HRESULT WINAPI transform_activate_CopyAllItems(IMFActivate *iface, IMFAttributes *dest)
+{
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return attributes_CopyAllItems(&activate->attributes, dest);
+}
+
+static HRESULT WINAPI transform_activate_ActivateObject(IMFActivate *iface, REFIID riid, void **obj)
+{
+    FIXME("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI transform_activate_ShutdownObject(IMFActivate *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI transform_activate_DetachObject(IMFActivate *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const IMFActivateVtbl transform_activate_vtbl =
+{
+    transform_activate_QueryInterface,
+    transform_activate_AddRef,
+    transform_activate_Release,
+    transform_activate_GetItem,
+    transform_activate_GetItemType,
+    transform_activate_CompareItem,
+    transform_activate_Compare,
+    transform_activate_GetUINT32,
+    transform_activate_GetUINT64,
+    transform_activate_GetDouble,
+    transform_activate_GetGUID,
+    transform_activate_GetStringLength,
+    transform_activate_GetString,
+    transform_activate_GetAllocatedString,
+    transform_activate_GetBlobSize,
+    transform_activate_GetBlob,
+    transform_activate_GetAllocatedBlob,
+    transform_activate_GetUnknown,
+    transform_activate_SetItem,
+    transform_activate_DeleteItem,
+    transform_activate_DeleteAllItems,
+    transform_activate_SetUINT32,
+    transform_activate_SetUINT64,
+    transform_activate_SetDouble,
+    transform_activate_SetGUID,
+    transform_activate_SetString,
+    transform_activate_SetBlob,
+    transform_activate_SetUnknown,
+    transform_activate_LockStore,
+    transform_activate_UnlockStore,
+    transform_activate_GetCount,
+    transform_activate_GetItemByIndex,
+    transform_activate_CopyAllItems,
+    transform_activate_ActivateObject,
+    transform_activate_ShutdownObject,
+    transform_activate_DetachObject,
+};
+
+HRESULT WINAPI MFCreateTransformActivate(IMFActivate **activate)
+{
+    struct transform_activate *object;
+    HRESULT hr;
+
+    TRACE("%p.\n", activate);
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
+
+    object->IMFActivate_iface.lpVtbl = &transform_activate_vtbl;
+
+    *activate = &object->IMFActivate_iface;
+
+    return S_OK;
 }
 
 static const WCHAR transform_keyW[] = {'M','e','d','i','a','F','o','u','n','d','a','t','i','o','n','\\',
@@ -319,21 +774,164 @@ HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags
     return hr;
 }
 
-HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWSTR name,
-                           UINT32 flags, UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types,
-                           UINT32 coutput, const MFT_REGISTER_TYPE_INFO* output_types)
+static void release_local_mft(struct local_mft *mft)
 {
-    FIXME("(%p, %s, %s, %x, %u, %p, %u, %p)\n", factory, debugstr_guid(category), debugstr_w(name),
-                                                flags, cinput, input_types, coutput, output_types);
+    if (mft->factory)
+        IClassFactory_Release(mft->factory);
+    heap_free(mft->name);
+    heap_free(mft->input_types);
+    heap_free(mft->output_types);
+    heap_free(mft);
+}
+
+static HRESULT mft_register_local(IClassFactory *factory, REFCLSID clsid, REFGUID category, LPCWSTR name, UINT32 flags,
+        UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
+        const MFT_REGISTER_TYPE_INFO *output_types)
+{
+    struct local_mft *mft, *cur, *unreg_mft = NULL;
+    HRESULT hr;
+
+    if (!factory && !clsid)
+    {
+        WARN("Can't register without factory or CLSID.\n");
+        return E_FAIL;
+    }
+
+    mft = heap_alloc_zero(sizeof(*mft));
+    if (!mft)
+        return E_OUTOFMEMORY;
+
+    mft->factory = factory;
+    if (mft->factory)
+        IClassFactory_AddRef(mft->factory);
+    if (clsid)
+        mft->clsid = *clsid;
+    mft->category = *category;
+    mft->flags = flags;
+    if (FAILED(hr = heap_strdupW(name, &mft->name)))
+        goto failed;
+
+    if (input_count && input_types)
+    {
+        mft->input_types_count = input_count;
+        if (!(mft->input_types = heap_calloc(mft->input_types_count, sizeof(*input_types))))
+        {
+            hr = E_OUTOFMEMORY;
+            goto failed;
+        }
+        memcpy(mft->input_types, input_types, mft->input_types_count * sizeof(*input_types));
+    }
+
+    if (output_count && output_types)
+    {
+        mft->output_types_count = output_count;
+        if (!(mft->output_types = heap_calloc(mft->output_types_count, sizeof(*output_types))))
+        {
+            hr = E_OUTOFMEMORY;
+            goto failed;
+        }
+        memcpy(mft->output_types, output_types, mft->output_types_count * sizeof(*output_types));
+    }
+
+    EnterCriticalSection(&local_mfts_section);
+
+    LIST_FOR_EACH_ENTRY(cur, &local_mfts, struct local_mft, entry)
+    {
+        if (cur->factory == factory)
+        {
+            unreg_mft = cur;
+            list_remove(&cur->entry);
+            break;
+        }
+    }
+    list_add_tail(&local_mfts, &mft->entry);
+
+    LeaveCriticalSection(&local_mfts_section);
+
+    if (unreg_mft)
+        release_local_mft(unreg_mft);
+
+failed:
+    if (FAILED(hr))
+        release_local_mft(mft);
+
+    return hr;
+}
+
+HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWSTR name, UINT32 flags,
+        UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
+        const MFT_REGISTER_TYPE_INFO *output_types)
+{
+    TRACE("%p, %s, %s, %#x, %u, %p, %u, %p.\n", factory, debugstr_guid(category), debugstr_w(name), flags, input_count,
+            input_types, output_count, output_types);
+
+    return mft_register_local(factory, NULL, category, name, flags, input_count, input_types, output_count, output_types);
+}
+
+HRESULT WINAPI MFTRegisterLocalByCLSID(REFCLSID clsid, REFGUID category, LPCWSTR name, UINT32 flags,
+        UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
+        const MFT_REGISTER_TYPE_INFO *output_types)
+{
+    TRACE("%s, %s, %s, %#x, %u, %p, %u, %p.\n", debugstr_guid(clsid), debugstr_guid(category), debugstr_w(name), flags,
+            input_count, input_types, output_count, output_types);
+
+    return mft_register_local(NULL, clsid, category, name, flags, input_count, input_types, output_count, output_types);
+}
+
+static HRESULT mft_unregister_local(IClassFactory *factory, REFCLSID clsid)
+{
+    struct local_mft *cur, *cur2;
+    BOOL unregister_all = !factory && !clsid;
+    struct list unreg;
+
+    list_init(&unreg);
+
+    EnterCriticalSection(&local_mfts_section);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &local_mfts, struct local_mft, entry)
+    {
+        if (!unregister_all)
+        {
+            if ((factory && cur->factory == factory) || IsEqualCLSID(&cur->clsid, clsid))
+            {
+                list_remove(&cur->entry);
+                list_add_tail(&unreg, &cur->entry);
+                break;
+            }
+        }
+        else
+        {
+            list_remove(&cur->entry);
+            list_add_tail(&unreg, &cur->entry);
+        }
+    }
+
+    LeaveCriticalSection(&local_mfts_section);
+
+    if (!unregister_all && list_empty(&unreg))
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &unreg, struct local_mft, entry)
+    {
+        list_remove(&cur->entry);
+        release_local_mft(cur);
+    }
 
     return S_OK;
 }
 
+HRESULT WINAPI MFTUnregisterLocalByCLSID(CLSID clsid)
+{
+    TRACE("%s.\n", debugstr_guid(&clsid));
+
+    return mft_unregister_local(NULL, &clsid);
+}
+
 HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory)
 {
-    FIXME("(%p)\n", factory);
+    TRACE("%p.\n", factory);
 
-    return S_OK;
+    return mft_unregister_local(factory, NULL);
 }
 
 MFTIME WINAPI MFGetSystemTime(void)
@@ -529,10 +1127,7 @@ HRESULT WINAPI MFStartup(ULONG version, DWORD flags)
     if (version != MF_VERSION_XP && version != MF_VERSION_WIN7)
         return MF_E_BAD_STARTUP_VERSION;
 
-    if (InterlockedIncrement(&platform_lock) == 1)
-    {
-        init_system_queues();
-    }
+    RtwqStartup();
 
     return S_OK;
 }
@@ -544,43 +1139,9 @@ HRESULT WINAPI MFShutdown(void)
 {
     TRACE("\n");
 
-    if (platform_lock <= 0)
-        return S_OK;
-
-    if (InterlockedExchangeAdd(&platform_lock, -1) == 1)
-    {
-        shutdown_system_queues();
-    }
+    RtwqShutdown();
 
     return S_OK;
-}
-
-/***********************************************************************
- *      MFLockPlatform (mfplat.@)
- */
-HRESULT WINAPI MFLockPlatform(void)
-{
-    InterlockedIncrement(&platform_lock);
-
-    return S_OK;
-}
-
-/***********************************************************************
- *      MFUnlockPlatform (mfplat.@)
- */
-HRESULT WINAPI MFUnlockPlatform(void)
-{
-    if (InterlockedDecrement(&platform_lock) == 0)
-    {
-        shutdown_system_queues();
-    }
-
-    return S_OK;
-}
-
-BOOL is_platform_locked(void)
-{
-    return platform_lock > 0;
 }
 
 /***********************************************************************
@@ -606,7 +1167,7 @@ struct guid_def
     const char *name;
 };
 
-static int debug_compare_guid(const void *a, const void *b)
+static int __cdecl debug_compare_guid(const void *a, const void *b)
 {
     const GUID *guid = a;
     const struct guid_def *guid_def = b;
@@ -629,17 +1190,21 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_SOURCE_READER_ENABLE_TRANSCODE_ONLY_TRANSFORMS),
         X(MF_TOPOLOGY_DYNAMIC_CHANGE_NOT_ALLOWED),
         X(MF_MT_ALPHA_MODE),
+        X(MF_PMP_SERVER_CONTEXT),
         X(MF_TOPOLOGY_PLAYBACK_MAX_DIMS),
+        X(MF_LOW_LATENCY),
         X(MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS),
         X(MF_MT_PIXEL_ASPECT_RATIO),
         X(MF_TOPOLOGY_ENABLE_XVP_FOR_PLAYBACK),
         X(MF_MT_WRAPPED_TYPE),
         X(MF_MT_AVG_BITRATE),
         X(MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING),
+        X(MF_SESSION_APPROX_EVENT_OCCURRENCE_TIME),
         X(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_MAX_BUFFERS),
         X(MF_MT_AUDIO_BLOCK_ALIGNMENT),
         X(MF_PD_PMPHOST_CONTEXT),
         X(MF_PD_APP_CONTEXT),
+        X(MF_PD_DURATION),
         X(MF_PD_TOTAL_FILE_SIZE),
         X(MF_PD_AUDIO_ENCODING_BITRATE),
         X(MF_PD_VIDEO_ENCODING_BITRATE),
@@ -678,7 +1243,7 @@ const char *debugstr_attr(const GUID *guid)
         X(MFSampleExtension_3DVideo_SampleFormat),
         X(MF_SAMPLEGRABBERSINK_SAMPLE_TIME_OFFSET),
         X(MF_MT_SAMPLE_SIZE),
-        X(MF_MT_AAC_PAYLOAD_TIME),
+        X(MF_MT_AAC_PAYLOAD_TYPE),
         X(MF_TOPOLOGY_PLAYBACK_FRAMERATE),
         X(MF_SOURCE_READER_D3D11_BIND_FLAGS),
         X(MF_MT_AUDIO_FOLDDOWN_MATRIX),
@@ -690,6 +1255,10 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_SD_LANGUAGE),
         X(MF_MT_AUDIO_WMADRC_AVGTARGET),
         X(MF_SD_PROTECTED),
+        X(MF_SESSION_TOPOLOADER),
+        X(MF_SESSION_GLOBAL_TIME),
+        X(MF_SESSION_QUALITY_MANAGER),
+        X(MF_SESSION_CONTENT_PROTECTION_MANAGER),
         X(MF_READWRITE_MMCSS_PRIORITY_AUDIO),
         X(MF_BYTESTREAM_ORIGIN_NAME),
         X(MF_BYTESTREAM_CONTENT_TYPE),
@@ -707,6 +1276,7 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_MT_MAJOR_TYPE),
         X(MF_EVENT_SOURCE_CHARACTERISTICS),
         X(MF_EVENT_SOURCE_CHARACTERISTICS_OLD),
+        X(MF_SESSION_SERVER_CONTEXT),
         X(MF_MT_VIDEO_3D_FIRST_IS_LEFT),
         X(MF_PD_ADAPTIVE_STREAMING),
         X(MFSampleExtension_Timestamp),
@@ -721,8 +1291,8 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_TOPONODE_DISABLE_PREROLL),
         X(MF_MT_VIDEO_3D_FORMAT),
         X(MF_EVENT_STREAM_METADATA_KEYDATA),
-        X(MF_SINK_WRITER_D3D_MANAGER),
         X(MF_SOURCE_READER_D3D_MANAGER),
+        X(MF_SINK_WRITER_D3D_MANAGER),
         X(MFSampleExtension_3DVideo),
         X(MF_EVENT_SOURCE_FAKE_START),
         X(MF_EVENT_SOURCE_PROJECTSTART),
@@ -778,6 +1348,7 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_EVENT_MFT_CONTEXT),
         X(MF_MT_FORWARD_CUSTOM_SEI),
         X(MF_TOPONODE_CONNECT_METHOD),
+        X(MF_SESSION_REMOTE_SOURCE_MODE),
         X(MF_MT_DEPTH_VALUE_UNIT),
         X(MF_MT_AUDIO_NUM_CHANNELS),
         X(MF_TOPOLOGY_DXVA_MODE),
@@ -944,7 +1515,7 @@ struct event_id
     const char *name;
 };
 
-static int debug_event_id(const void *a, const void *b)
+static int __cdecl debug_event_id(const void *a, const void *b)
 {
     const DWORD *id = a;
     const struct event_id *event_id = b;
@@ -1327,14 +1898,23 @@ HRESULT attributes_GetDouble(struct attributes *attributes, REFGUID key, double 
 
 HRESULT attributes_GetGUID(struct attributes *attributes, REFGUID key, GUID *value)
 {
-    PROPVARIANT attrval;
-    HRESULT hr;
+    struct attribute *attribute;
+    HRESULT hr = S_OK;
 
-    PropVariantInit(&attrval);
-    attrval.vt = VT_CLSID;
-    hr = attributes_get_item(attributes, key, &attrval);
-    if (SUCCEEDED(hr))
-        *value = *attrval.u.puuid;
+    EnterCriticalSection(&attributes->cs);
+
+    attribute = attributes_find_item(attributes, key, NULL);
+    if (attribute)
+    {
+        if (attribute->value.vt == MF_ATTRIBUTE_GUID)
+            *value = *attribute->value.u.puuid;
+        else
+            hr = MF_E_INVALIDTYPE;
+    }
+    else
+        hr = MF_E_ATTRIBUTENOTFOUND;
+
+    LeaveCriticalSection(&attributes->cs);
 
     return hr;
 }
@@ -1620,7 +2200,8 @@ HRESULT attributes_SetGUID(struct attributes *attributes, REFGUID key, REFGUID v
 {
     PROPVARIANT attrval;
 
-    InitPropVariantFromCLSID(value, &attrval);
+    attrval.vt = VT_CLSID;
+    attrval.u.puuid = (CLSID *)value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
@@ -2668,6 +3249,24 @@ static ULONG WINAPI bytestream_Release(IMFByteStream *iface)
     return refcount;
 }
 
+static HRESULT WINAPI bytestream_stream_GetCapabilities(IMFByteStream *iface, DWORD *capabilities)
+{
+    struct bytestream *stream = impl_from_IMFByteStream(iface);
+    STATSTG stat;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, capabilities);
+
+    if (FAILED(hr = IStream_Stat(stream->stream, &stat, STATFLAG_NONAME)))
+        return hr;
+
+    *capabilities = MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE;
+    if (stat.grfMode & (STGM_WRITE | STGM_READWRITE))
+        *capabilities |= MFBYTESTREAM_IS_WRITABLE;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI bytestream_GetCapabilities(IMFByteStream *iface, DWORD *capabilities)
 {
     struct bytestream *stream = impl_from_IMFByteStream(iface);
@@ -2679,13 +3278,6 @@ static HRESULT WINAPI bytestream_GetCapabilities(IMFByteStream *iface, DWORD *ca
     return S_OK;
 }
 
-static HRESULT WINAPI mfbytestream_GetLength(IMFByteStream *iface, QWORD *length)
-{
-    FIXME("%p, %p.\n", iface, length);
-
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI mfbytestream_SetLength(IMFByteStream *iface, QWORD length)
 {
     mfbytestream *This = impl_from_IMFByteStream(iface);
@@ -2695,22 +3287,36 @@ static HRESULT WINAPI mfbytestream_SetLength(IMFByteStream *iface, QWORD length)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mfbytestream_GetCurrentPosition(IMFByteStream *iface, QWORD *position)
+static HRESULT WINAPI bytestream_file_GetCurrentPosition(IMFByteStream *iface, QWORD *position)
 {
-    mfbytestream *This = impl_from_IMFByteStream(iface);
+    struct bytestream *stream = impl_from_IMFByteStream(iface);
 
-    FIXME("%p, %p\n", This, position);
+    TRACE("%p, %p.\n", iface, position);
 
-    return E_NOTIMPL;
+    if (!position)
+        return E_INVALIDARG;
+
+    *position = stream->position;
+
+    return S_OK;
 }
 
-static HRESULT WINAPI mfbytestream_SetCurrentPosition(IMFByteStream *iface, QWORD position)
+static HRESULT WINAPI bytestream_file_GetLength(IMFByteStream *iface, QWORD *length)
 {
-    mfbytestream *This = impl_from_IMFByteStream(iface);
+    struct bytestream *stream = impl_from_IMFByteStream(iface);
+    LARGE_INTEGER li;
 
-    FIXME("%p, %s\n", This, wine_dbgstr_longlong(position));
+    TRACE("%p, %p.\n", iface, length);
 
-    return E_NOTIMPL;
+    if (!length)
+        return E_INVALIDARG;
+
+    if (GetFileSizeEx(stream->hfile, &li))
+        *length = li.QuadPart;
+    else
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    return S_OK;
 }
 
 static HRESULT WINAPI bytestream_file_IsEndOfStream(IMFByteStream *iface, BOOL *ret)
@@ -2835,16 +3441,29 @@ static HRESULT WINAPI mfbytestream_Close(IMFByteStream *iface)
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI bytestream_SetCurrentPosition(IMFByteStream *iface, QWORD position)
+{
+    struct bytestream *stream = impl_from_IMFByteStream(iface);
+
+    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(position));
+
+    EnterCriticalSection(&stream->cs);
+    stream->position = position;
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
+}
+
 static const IMFByteStreamVtbl bytestream_file_vtbl =
 {
     bytestream_QueryInterface,
     bytestream_AddRef,
     bytestream_Release,
     bytestream_GetCapabilities,
-    mfbytestream_GetLength,
+    bytestream_file_GetLength,
     mfbytestream_SetLength,
-    mfbytestream_GetCurrentPosition,
-    mfbytestream_SetCurrentPosition,
+    bytestream_file_GetCurrentPosition,
+    bytestream_SetCurrentPosition,
     bytestream_file_IsEndOfStream,
     bytestream_file_Read,
     bytestream_BeginRead,
@@ -2898,19 +3517,6 @@ static HRESULT WINAPI bytestream_stream_GetCurrentPosition(IMFByteStream *iface,
     TRACE("%p, %p.\n", iface, position);
 
     *position = stream->position;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI bytestream_stream_SetCurrentPosition(IMFByteStream *iface, QWORD position)
-{
-    struct bytestream *stream = impl_from_IMFByteStream(iface);
-
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(position));
-
-    EnterCriticalSection(&stream->cs);
-    stream->position = position;
-    LeaveCriticalSection(&stream->cs);
 
     return S_OK;
 }
@@ -3028,11 +3634,11 @@ static const IMFByteStreamVtbl bytestream_stream_vtbl =
     bytestream_QueryInterface,
     bytestream_AddRef,
     bytestream_Release,
-    bytestream_GetCapabilities,
+    bytestream_stream_GetCapabilities,
     bytestream_stream_GetLength,
     bytestream_stream_SetLength,
     bytestream_stream_GetCurrentPosition,
-    bytestream_stream_SetCurrentPosition,
+    bytestream_SetCurrentPosition,
     bytestream_stream_IsEndOfStream,
     bytestream_stream_Read,
     bytestream_BeginRead,
@@ -3195,6 +3801,7 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
 {
     struct bytestream *object;
     LARGE_INTEGER position;
+    STATSTG stat;
     HRESULT hr;
 
     TRACE("%p, %p.\n", stream, bytestream);
@@ -3220,7 +3827,16 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
     IStream_AddRef(object->stream);
     position.QuadPart = 0;
     IStream_Seek(object->stream, position, STREAM_SEEK_SET, NULL);
-    object->capabilities = MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE;
+
+    if (SUCCEEDED(IStream_Stat(object->stream, &stat, 0)))
+    {
+        if (stat.pwcsName)
+        {
+            IMFAttributes_SetString(&object->attributes.IMFAttributes_iface, &MF_BYTESTREAM_ORIGIN_NAME,
+                    stat.pwcsName);
+            CoTaskMemFree(stat.pwcsName);
+        }
+    }
 
     *bytestream = &object->IMFByteStream_iface;
 
@@ -4752,7 +5368,7 @@ struct resolver_cancel_object
     enum resolved_object_origin origin;
 };
 
-typedef struct source_resolver
+struct source_resolver
 {
     IMFSourceResolver IMFSourceResolver_iface;
     LONG refcount;
@@ -4760,7 +5376,7 @@ typedef struct source_resolver
     IMFAsyncCallback url_callback;
     CRITICAL_SECTION cs;
     struct list pending;
-} mfsourceresolver;
+};
 
 static struct source_resolver *impl_from_IMFSourceResolver(IMFSourceResolver *iface)
 {
@@ -5261,14 +5877,14 @@ static HRESULT resolver_end_create_object(struct source_resolver *resolver, enum
 
 static HRESULT WINAPI source_resolver_QueryInterface(IMFSourceResolver *iface, REFIID riid, void **obj)
 {
-    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
 
-    TRACE("(%p->(%s, %p)\n", This, debugstr_guid(riid), obj);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IMFSourceResolver) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
-        *obj = &This->IMFSourceResolver_iface;
+        *obj = &resolver->IMFSourceResolver_iface;
     }
     else
     {
@@ -5324,7 +5940,7 @@ static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *ifa
     MFASYNCRESULT *data;
     HRESULT hr;
 
-    TRACE("%p, %s, %#x, %p, %p, %p\n", iface, debugstr_w(url), flags, props, obj_type, object);
+    TRACE("%p, %s, %#x, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, obj_type, object);
 
     if (!url || !obj_type || !object)
         return E_POINTER;
@@ -5574,7 +6190,7 @@ HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver)
     return S_OK;
 }
 
-typedef struct media_event
+struct media_event
 {
     struct attributes attributes;
     IMFMediaEvent IMFMediaEvent_iface;
@@ -5583,28 +6199,28 @@ typedef struct media_event
     GUID extended_type;
     HRESULT status;
     PROPVARIANT value;
-} mfmediaevent;
+};
 
-static inline mfmediaevent *impl_from_IMFMediaEvent(IMFMediaEvent *iface)
+static inline struct media_event *impl_from_IMFMediaEvent(IMFMediaEvent *iface)
 {
-    return CONTAINING_RECORD(iface, mfmediaevent, IMFMediaEvent_iface);
+    return CONTAINING_RECORD(iface, struct media_event, IMFMediaEvent_iface);
 }
 
 static HRESULT WINAPI mfmediaevent_QueryInterface(IMFMediaEvent *iface, REFIID riid, void **out)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), out);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
 
     if(IsEqualGUID(riid, &IID_IUnknown) ||
        IsEqualGUID(riid, &IID_IMFAttributes) ||
        IsEqualGUID(riid, &IID_IMFMediaEvent))
     {
-        *out = &This->IMFMediaEvent_iface;
+        *out = &event->IMFMediaEvent_iface;
     }
     else
     {
-        FIXME("(%s, %p)\n", debugstr_guid(riid), out);
+        FIXME("%s, %p.\n", debugstr_guid(riid), out);
         *out = NULL;
         return E_NOINTERFACE;
     }
@@ -5615,29 +6231,29 @@ static HRESULT WINAPI mfmediaevent_QueryInterface(IMFMediaEvent *iface, REFIID r
 
 static ULONG WINAPI mfmediaevent_AddRef(IMFMediaEvent *iface)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
-    ULONG ref = InterlockedIncrement(&This->attributes.ref);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
+    ULONG refcount = InterlockedIncrement(&event->attributes.ref);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    return ref;
+    return refcount;
 }
 
 static ULONG WINAPI mfmediaevent_Release(IMFMediaEvent *iface)
 {
     struct media_event *event = impl_from_IMFMediaEvent(iface);
-    ULONG ref = InterlockedDecrement(&event->attributes.ref);
+    ULONG refcount = InterlockedDecrement(&event->attributes.ref);
 
-    TRACE("(%p) ref=%u\n", iface, ref);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
         clear_attributes_object(&event->attributes);
         PropVariantClear(&event->value);
         heap_free(event);
     }
 
-    return ref;
+    return refcount;
 }
 
 static HRESULT WINAPI mfmediaevent_GetItem(IMFMediaEvent *iface, REFGUID key, PROPVARIANT *value)
@@ -5916,42 +6532,44 @@ static HRESULT WINAPI mfmediaevent_CopyAllItems(IMFMediaEvent *iface, IMFAttribu
 
 static HRESULT WINAPI mfmediaevent_GetType(IMFMediaEvent *iface, MediaEventType *type)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
 
-    TRACE("%p, %p\n", This, type);
+    TRACE("%p, %p.\n", iface, type);
 
-    *type = This->type;
+    *type = event->type;
 
     return S_OK;
 }
 
 static HRESULT WINAPI mfmediaevent_GetExtendedType(IMFMediaEvent *iface, GUID *extended_type)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
 
-    TRACE("%p, %p\n", This, extended_type);
+    TRACE("%p, %p.\n", iface, extended_type);
 
-    *extended_type = This->extended_type;
+    *extended_type = event->extended_type;
 
     return S_OK;
 }
 
 static HRESULT WINAPI mfmediaevent_GetStatus(IMFMediaEvent *iface, HRESULT *status)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
 
-    TRACE("%p, %p\n", This, status);
+    TRACE("%p, %p.\n", iface, status);
 
-    *status = This->status;
+    *status = event->status;
 
     return S_OK;
 }
 
 static HRESULT WINAPI mfmediaevent_GetValue(IMFMediaEvent *iface, PROPVARIANT *value)
 {
-    mfmediaevent *This = impl_from_IMFMediaEvent(iface);
+    struct media_event *event = impl_from_IMFMediaEvent(iface);
 
-    PropVariantCopy(value, &This->value);
+    TRACE("%p, %p.\n", iface, value);
+
+    PropVariantCopy(value, &event->value);
 
     return S_OK;
 }
@@ -6003,14 +6621,14 @@ static const IMFMediaEventVtbl mfmediaevent_vtbl =
 HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HRESULT status, const PROPVARIANT *value,
         IMFMediaEvent **event)
 {
-    mfmediaevent *object;
+    struct media_event *object;
     HRESULT hr;
 
-    TRACE("%s, %s, %08x, %s, %p\n", debugstr_eventid(type), debugstr_guid(extended_type), status,
+    TRACE("%s, %s, %#x, %s, %p.\n", debugstr_eventid(type), debugstr_guid(extended_type), status,
             debugstr_propvar(value), event);
 
-    object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );
-    if(!object)
+    object = heap_alloc(sizeof(*object));
+    if (!object)
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
@@ -7205,27 +7823,6 @@ static const IMFAsyncCallbackVtbl async_create_file_callback_vtbl =
     async_create_file_callback_Invoke,
 };
 
-static HRESULT heap_strdupW(const WCHAR *str, WCHAR **dest)
-{
-    HRESULT hr = S_OK;
-
-    if (str)
-    {
-        unsigned int size;
-
-        size = (lstrlenW(str) + 1) * sizeof(WCHAR);
-        *dest = heap_alloc(size);
-        if (*dest)
-            memcpy(*dest, str, size);
-        else
-            hr = E_OUTOFMEMORY;
-    }
-    else
-        *dest = NULL;
-
-    return hr;
-}
-
 /***********************************************************************
  *      MFBeginCreateFile (mfplat.@)
  */
@@ -7412,4 +8009,371 @@ failed:
     heap_free(handler);
 
     return hr;
+}
+
+struct property_store
+{
+    IPropertyStore IPropertyStore_iface;
+    LONG refcount;
+    CRITICAL_SECTION cs;
+    size_t count, capacity;
+    struct
+    {
+        PROPERTYKEY key;
+        PROPVARIANT value;
+    } *values;
+};
+
+static struct property_store *impl_from_IPropertyStore(IPropertyStore *iface)
+{
+    return CONTAINING_RECORD(iface, struct property_store, IPropertyStore_iface);
+}
+
+static HRESULT WINAPI property_store_QueryInterface(IPropertyStore *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IPropertyStore) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IPropertyStore_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI property_store_AddRef(IPropertyStore *iface)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+    ULONG refcount = InterlockedIncrement(&store->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI property_store_Release(IPropertyStore *iface)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+    ULONG refcount = InterlockedDecrement(&store->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        DeleteCriticalSection(&store->cs);
+        heap_free(store->values);
+        heap_free(store);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI property_store_GetCount(IPropertyStore *iface, DWORD *count)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    if (!count)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&store->cs);
+    *count = store->count;
+    LeaveCriticalSection(&store->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI property_store_GetAt(IPropertyStore *iface, DWORD index, PROPERTYKEY *key)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+
+    TRACE("%p, %u, %p.\n", iface, index, key);
+
+    EnterCriticalSection(&store->cs);
+
+    if (index >= store->count)
+    {
+        LeaveCriticalSection(&store->cs);
+        return E_INVALIDARG;
+    }
+
+    *key = store->values[index].key;
+
+    LeaveCriticalSection(&store->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI property_store_GetValue(IPropertyStore *iface, REFPROPERTYKEY key, PROPVARIANT *value)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+    unsigned int i;
+
+    TRACE("%p, %p, %p.\n", iface, key, value);
+
+    if (!value)
+        return E_INVALIDARG;
+
+    if (!key)
+        return S_FALSE;
+
+    EnterCriticalSection(&store->cs);
+
+    for (i = 0; i < store->count; ++i)
+    {
+        if (!memcmp(key, &store->values[i].key, sizeof(PROPERTYKEY)))
+        {
+            PropVariantCopy(value, &store->values[i].value);
+            LeaveCriticalSection(&store->cs);
+            return S_OK;
+        }
+    }
+
+    LeaveCriticalSection(&store->cs);
+    return S_FALSE;
+}
+
+static HRESULT WINAPI property_store_SetValue(IPropertyStore *iface, REFPROPERTYKEY key, REFPROPVARIANT value)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+    unsigned int i;
+
+    TRACE("%p, %p, %p.\n", iface, key, value);
+
+    EnterCriticalSection(&store->cs);
+
+    for (i = 0; i < store->count; ++i)
+    {
+        if (!memcmp(key, &store->values[i].key, sizeof(PROPERTYKEY)))
+        {
+            PropVariantCopy(&store->values[i].value, value);
+            LeaveCriticalSection(&store->cs);
+            return S_OK;
+        }
+    }
+
+    if (!mf_array_reserve((void **)&store->values, &store->capacity, store->count + 1, sizeof(*store->values)))
+    {
+        LeaveCriticalSection(&store->cs);
+        return E_OUTOFMEMORY;
+    }
+
+    store->values[store->count].key = *key;
+    PropVariantCopy(&store->values[store->count].value, value);
+    ++store->count;
+
+    LeaveCriticalSection(&store->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI property_store_Commit(IPropertyStore *iface)
+{
+    TRACE("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const IPropertyStoreVtbl property_store_vtbl =
+{
+    property_store_QueryInterface,
+    property_store_AddRef,
+    property_store_Release,
+    property_store_GetCount,
+    property_store_GetAt,
+    property_store_GetValue,
+    property_store_SetValue,
+    property_store_Commit,
+};
+
+/***********************************************************************
+ *      CreatePropertyStore (mfplat.@)
+ */
+HRESULT WINAPI CreatePropertyStore(IPropertyStore **store)
+{
+    struct property_store *object;
+
+    TRACE("%p.\n", store);
+
+    if (!store)
+        return E_INVALIDARG;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IPropertyStore_iface.lpVtbl = &property_store_vtbl;
+    object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
+
+    TRACE("Created store %p.\n", object);
+    *store = &object->IPropertyStore_iface;
+
+    return S_OK;
+}
+
+struct dxgi_device_manager
+{
+    IMFDXGIDeviceManager IMFDXGIDeviceManager_iface;
+    LONG refcount;
+    UINT token;
+    IDXGIDevice *device;
+};
+
+static struct dxgi_device_manager *impl_from_IMFDXGIDeviceManager(IMFDXGIDeviceManager *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxgi_device_manager, IMFDXGIDeviceManager_iface);
+}
+
+static HRESULT WINAPI dxgi_device_manager_QueryInterface(IMFDXGIDeviceManager *iface, REFIID riid, void **obj)
+{
+    TRACE("(%p, %s, %p).\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFDXGIDeviceManager) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFDXGIDeviceManager_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dxgi_device_manager_AddRef(IMFDXGIDeviceManager *iface)
+{
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    ULONG refcount = InterlockedIncrement(&manager->refcount);
+
+    TRACE("(%p) ref=%u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI dxgi_device_manager_Release(IMFDXGIDeviceManager *iface)
+{
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    ULONG refcount = InterlockedDecrement(&manager->refcount);
+
+    TRACE("(%p) ref=%u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        if (manager->device)
+            IDXGIDevice_Release(manager->device);
+        heap_free(manager);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI dxgi_device_manager_CloseDeviceHandle(IMFDXGIDeviceManager *iface, HANDLE device)
+{
+    FIXME("(%p, %p): stub.\n", iface, device);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_device_manager_GetVideoService(IMFDXGIDeviceManager *iface, HANDLE device,
+                                                          REFIID riid, void **service)
+{
+    FIXME("(%p, %p, %s, %p): stub.\n", iface, device, debugstr_guid(riid), service);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_device_manager_LockDevice(IMFDXGIDeviceManager *iface, HANDLE device,
+                                                     REFIID riid, void **ppv, BOOL block)
+{
+    FIXME("(%p, %p, %s, %p, %d): stub.\n", iface, device, wine_dbgstr_guid(riid), ppv, block);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_device_manager_OpenDeviceHandle(IMFDXGIDeviceManager *iface, HANDLE *device)
+{
+    FIXME("(%p, %p): stub.\n", iface, device);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_device_manager_ResetDevice(IMFDXGIDeviceManager *iface, IUnknown *device, UINT token)
+{
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    IDXGIDevice *dxgi_device;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %u).\n", iface, device, token);
+
+    if (!device || token != manager->token)
+        return E_INVALIDARG;
+
+    hr = IUnknown_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    if (SUCCEEDED(hr))
+    {
+        if (manager->device)
+            IDXGIDevice_Release(manager->device);
+        manager->device = dxgi_device;
+    }
+    else
+        hr = E_INVALIDARG;
+
+    return hr;
+}
+
+static HRESULT WINAPI dxgi_device_manager_TestDevice(IMFDXGIDeviceManager *iface, HANDLE device)
+{
+    FIXME("(%p, %p): stub.\n", iface, device);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_device_manager_UnlockDevice(IMFDXGIDeviceManager *iface, HANDLE device, BOOL state)
+{
+    FIXME("(%p, %p, %d): stub.\n", iface, device, state);
+
+    return E_NOTIMPL;
+}
+
+static const IMFDXGIDeviceManagerVtbl dxgi_device_manager_vtbl =
+{
+    dxgi_device_manager_QueryInterface,
+    dxgi_device_manager_AddRef,
+    dxgi_device_manager_Release,
+    dxgi_device_manager_CloseDeviceHandle,
+    dxgi_device_manager_GetVideoService,
+    dxgi_device_manager_LockDevice,
+    dxgi_device_manager_OpenDeviceHandle,
+    dxgi_device_manager_ResetDevice,
+    dxgi_device_manager_TestDevice,
+    dxgi_device_manager_UnlockDevice,
+};
+
+HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **manager)
+{
+    struct dxgi_device_manager *object;
+
+    TRACE("(%p, %p).\n", token, manager);
+
+    if (!token || !manager)
+        return E_POINTER;
+
+    object = heap_alloc(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFDXGIDeviceManager_iface.lpVtbl = &dxgi_device_manager_vtbl;
+    object->refcount = 1;
+    object->token = GetTickCount();
+    object->device = NULL;
+
+    TRACE("Created device manager: %p, token: %u.\n", object, object->token);
+
+    *token = object->token;
+    *manager = &object->IMFDXGIDeviceManager_iface;
+
+    return S_OK;
 }

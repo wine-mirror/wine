@@ -43,6 +43,7 @@ static NTSTATUS (WINAPI *pNtQueryVirtualMemory)(HANDLE, LPCVOID, ULONG, PVOID, S
 static BOOL  (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
 static BOOL  (WINAPI *pWow64DisableWow64FsRedirection)(void **);
 static BOOL  (WINAPI *pWow64RevertWow64FsRedirection)(void *);
+static BOOL  (WINAPI *pQueryWorkingSetEx)(HANDLE, PVOID, DWORD);
 
 static BOOL wow64;
 
@@ -53,6 +54,7 @@ static BOOL init_func_ptrs(void)
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
     pWow64DisableWow64FsRedirection = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "Wow64DisableWow64FsRedirection");
     pWow64RevertWow64FsRedirection = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "Wow64RevertWow64FsRedirection");
+    pQueryWorkingSetEx = (void *)GetProcAddress(GetModuleHandleA("psapi.dll"), "QueryWorkingSetEx");
     return TRUE;
 }
 
@@ -125,7 +127,7 @@ static void test_EnumProcessModules(void)
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess failed: %u\n", GetLastError());
 
-    ret = WaitForInputIdle(pi.hProcess, 1000);
+    ret = WaitForInputIdle(pi.hProcess, 5000);
     ok(!ret, "wait timed out\n");
 
     SetLastError(0xdeadbeef);
@@ -146,7 +148,7 @@ static void test_EnumProcessModules(void)
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess failed: %u\n", GetLastError());
 
-        ret = WaitForInputIdle(pi.hProcess, 1000);
+        ret = WaitForInputIdle(pi.hProcess, 5000);
         ok(!ret, "wait timed out\n");
 
         SetLastError(0xdeadbeef);
@@ -180,7 +182,7 @@ todo_wine
         pWow64RevertWow64FsRedirection(cookie);
         ok(ret, "CreateProcess failed: %u\n", GetLastError());
 
-        ret = WaitForInputIdle(pi.hProcess, 1000);
+        ret = WaitForInputIdle(pi.hProcess, 5000);
         ok(!ret, "wait timed out\n");
 
         SetLastError(0xdeadbeef);
@@ -259,7 +261,7 @@ static void test_GetPerformanceInfo(void)
         ok(ret, "GetPerformanceInfo failed with %d\n", GetLastError());
         ok(info.cb == sizeof(PERFORMANCE_INFORMATION), "got %d\n", info.cb);
 
-        ok(check_with_margin(info.CommitTotal,          sys_performance_info->TotalCommittedPages,  288),
+        ok(check_with_margin(info.CommitTotal,          sys_performance_info->TotalCommittedPages,  2048),
            "expected approximately %ld but got %d\n", info.CommitTotal, sys_performance_info->TotalCommittedPages);
 
         ok(check_with_margin(info.CommitLimit,          sys_performance_info->TotalCommitLimit,     32),
@@ -268,7 +270,7 @@ static void test_GetPerformanceInfo(void)
         ok(check_with_margin(info.CommitPeak,           sys_performance_info->PeakCommitment,       32),
            "expected approximately %ld but got %d\n", info.CommitPeak, sys_performance_info->PeakCommitment);
 
-        ok(check_with_margin(info.PhysicalAvailable,    sys_performance_info->AvailablePages,       512),
+        ok(check_with_margin(info.PhysicalAvailable,    sys_performance_info->AvailablePages,       2048),
            "expected approximately %ld but got %d\n", info.PhysicalAvailable, sys_performance_info->AvailablePages);
 
         /* TODO: info.SystemCache not checked yet - to which field(s) does this value correspond to? */
@@ -322,7 +324,7 @@ static void test_GetPerformanceInfo(void)
         }
         HeapFree(GetProcessHeap(), 0, sys_process_info);
 
-        ok(check_with_margin(info.HandleCount,  handle_count,  256),
+        ok(check_with_margin(info.HandleCount,  handle_count,  512),
            "expected approximately %d but got %d\n", info.HandleCount, handle_count);
 
         ok(check_with_margin(info.ProcessCount, process_count, 4),
@@ -724,7 +726,6 @@ static void test_GetModuleBaseName(void)
 static void test_ws_functions(void)
 {
     PSAPI_WS_WATCH_INFORMATION wswi[4096];
-    ULONG_PTR pages[4096];
     HANDLE ws_handle;
     char *addr;
     unsigned int i;
@@ -774,22 +775,6 @@ static void test_ws_functions(void)
     }
 
     SetLastError(0xdeadbeef);
-    ret = QueryWorkingSet(hpQI, pages, 4096 * sizeof(ULONG_PTR));
-    todo_wine ok(ret == 1, "failed with %d\n", GetLastError());
-    if(ret == 1)
-    {
-       for(i = 0; i < pages[0]; i++)
-           if((pages[i+1] & ~0xfffL) == (ULONG_PTR)addr)
-	   {
-	       todo_wine ok(ret == 1, "QueryWorkingSet found our page\n");
-	       goto test_gwsc;
-	   }
-       
-       todo_wine ok(0, "QueryWorkingSet didn't find our page\n");
-    }
-
-test_gwsc:
-    SetLastError(0xdeadbeef);
     ret = GetWsChanges(hpQI, wswi, sizeof(wswi));
     todo_wine ok(ret == 1, "failed with %d\n", GetLastError());
     if(ret == 1)
@@ -806,6 +791,94 @@ test_gwsc:
     
 free_page:
     VirtualFree(addr, 0, MEM_RELEASE);
+}
+
+static void check_QueryWorkingSetEx(PVOID addr, const char *desc, DWORD expected_valid,
+    DWORD expected_protection, DWORD expected_shared, BOOL todo, BOOL todo_shared)
+{
+    PSAPI_WORKING_SET_EX_INFORMATION info;
+    BOOL ret;
+
+    memset(&info, 0x41, sizeof(info));
+    info.VirtualAddress = addr;
+    ret = pQueryWorkingSetEx(GetCurrentProcess(), &info, sizeof(info));
+    ok(ret, "QueryWorkingSetEx failed with %d\n", GetLastError());
+
+    todo_wine_if(todo)
+    ok(info.VirtualAttributes.Valid == expected_valid, "%s expected Valid=%u but got %u\n",
+        desc, expected_valid, info.VirtualAttributes.Valid);
+
+    todo_wine_if(todo)
+    ok(info.VirtualAttributes.Win32Protection == expected_protection, "%s expected Win32Protection=%u but got %u\n",
+        desc, expected_protection, info.VirtualAttributes.Win32Protection);
+
+    ok(info.VirtualAttributes.Node == 0, "%s expected Node=0 but got %u\n",
+        desc, info.VirtualAttributes.Node);
+    ok(info.VirtualAttributes.LargePage == 0, "%s expected LargePage=0 but got %u\n",
+        desc, info.VirtualAttributes.LargePage);
+
+    todo_wine_if(todo_shared)
+    ok(info.VirtualAttributes.Shared == expected_shared || broken(!info.VirtualAttributes.Valid) /* w2003 */,
+        "%s expected Shared=%u but got %u\n", desc, expected_shared, info.VirtualAttributes.Shared);
+    if (info.VirtualAttributes.Valid && info.VirtualAttributes.Shared)
+        ok(info.VirtualAttributes.ShareCount > 0, "%s expected ShareCount > 0 but got %u\n",
+            desc, info.VirtualAttributes.ShareCount);
+    else
+        ok(info.VirtualAttributes.ShareCount == 0, "%s expected ShareCount == 0 but got %u\n",
+            desc, info.VirtualAttributes.ShareCount);
+}
+
+static void test_QueryWorkingSetEx(void)
+{
+    PVOID addr;
+    DWORD prot;
+    BOOL ret;
+
+    if (pQueryWorkingSetEx == NULL)
+    {
+        win_skip("QueryWorkingSetEx not found, skipping tests\n");
+        return;
+    }
+
+    addr = GetModuleHandleA(NULL);
+    check_QueryWorkingSetEx(addr, "exe", 1, PAGE_READONLY, 1, FALSE, TRUE);
+
+    ret = VirtualProtect(addr, 0x1000, PAGE_NOACCESS, &prot);
+    ok(ret, "VirtualProtect failed with %d\n", GetLastError());
+    check_QueryWorkingSetEx(addr, "exe,noaccess", 0, 0, 1, FALSE, TRUE);
+
+    ret = VirtualProtect(addr, 0x1000, prot, &prot);
+    ok(ret, "VirtualProtect failed with %d\n", GetLastError());
+    check_QueryWorkingSetEx(addr, "exe,readonly1", 0, 0, 1, TRUE, TRUE);
+
+    *(volatile char *)addr;
+    ok(ret, "VirtualProtect failed with %d\n", GetLastError());
+    check_QueryWorkingSetEx(addr, "exe,readonly2", 1, PAGE_READONLY, 1, FALSE, TRUE);
+
+    addr = VirtualAlloc(NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    ok(addr != NULL, "VirtualAlloc failed with %d\n", GetLastError());
+    check_QueryWorkingSetEx(addr, "valloc", 0, 0, 0, FALSE, FALSE);
+
+    *(volatile char *)addr;
+    check_QueryWorkingSetEx(addr, "valloc,read", 1, PAGE_READWRITE, 0, FALSE, FALSE);
+
+    *(volatile char *)addr = 0x42;
+    check_QueryWorkingSetEx(addr, "valloc,write", 1, PAGE_READWRITE, 0, FALSE, FALSE);
+
+    ret = VirtualProtect(addr, 0x1000, PAGE_NOACCESS, &prot);
+    ok(ret, "VirtualProtect failed with %d\n", GetLastError());
+    check_QueryWorkingSetEx(addr, "valloc,noaccess", 0, 0, 0, FALSE, FALSE);
+
+    ret = VirtualProtect(addr, 0x1000, prot, &prot);
+    ok(ret, "VirtualProtect failed with %d\n", GetLastError());
+    check_QueryWorkingSetEx(addr, "valloc,readwrite1", 0, 0, 0, TRUE, FALSE);
+
+    *(volatile char *)addr;
+    check_QueryWorkingSetEx(addr, "valloc,readwrite2", 1, PAGE_READWRITE, 0, FALSE, FALSE);
+
+    ret = VirtualFree(addr, 0, MEM_RELEASE);
+    ok(ret, "VirtualFree failed with %d\n", GetLastError());
+    check_QueryWorkingSetEx(addr, "valloc,free", FALSE, 0, 0, FALSE, FALSE);
 }
 
 START_TEST(psapi_main)
@@ -835,6 +908,7 @@ START_TEST(psapi_main)
     test_GetProcessImageFileName();
     test_GetModuleFileNameEx();
     test_GetModuleBaseName();
+    test_QueryWorkingSetEx();
     test_ws_functions();
 
     CloseHandle(hpSR);

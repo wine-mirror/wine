@@ -146,7 +146,7 @@
 @ cdecl __fpecode()
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
 @ extern __initenv MSVCRT___initenv
-@ cdecl __iob_func() __p__iob
+@ cdecl __iob_func()
 @ cdecl __isascii(long) MSVCRT___isascii
 @ cdecl __iscsym(long) MSVCRT___iscsym
 @ cdecl __iscsymf(long) MSVCRT___iscsymf
@@ -170,7 +170,7 @@
 @ cdecl __p__environ() MSVCRT___p__environ
 @ stub __p__fileinfo()
 @ cdecl __p__fmode() MSVCRT___p__fmode
-@ cdecl __p__iob()
+@ cdecl __p__iob() __iob_func
 @ stub __p__mbcasemap()
 @ cdecl __p__mbctype()
 @ cdecl __p__osver()
@@ -582,7 +582,7 @@
 @ cdecl _utime64(str ptr)
 @ cdecl _vscprintf(str ptr) MSVCRT__vscprintf
 @ cdecl _vscwprintf(wstr ptr) MSVCRT__vscwprintf
-@ cdecl _vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
+@ cdecl -norelay _vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
 @ cdecl _vsnwprintf(ptr long wstr ptr) MSVCRT_vsnwprintf
 @ cdecl _waccess(wstr long) MSVCRT__waccess
 @ cdecl _wasctime(ptr) MSVCRT__wasctime

@@ -2,5 +2,6 @@ TESTDLL   = dnsapi.dll
 IMPORTS   = dnsapi
 
 C_SRCS = \
+	cache.c \
 	name.c \
 	record.c

@@ -425,8 +425,11 @@ interface IMFRemoteAsyncCallback : IUnknown
     HRESULT Invoke([in] HRESULT hr, [in] IUnknown *pRemoteResult);
 }
 
-cpp_quote("#define MFASYNC_FAST_IO_PROCESSING_CALLBACK  0x0001")
-cpp_quote("#define MFASYNC_SIGNAL_CALLBACK              0x0002" )
+cpp_quote("#define MFASYNC_FAST_IO_PROCESSING_CALLBACK   0x00000001")
+cpp_quote("#define MFASYNC_SIGNAL_CALLBACK               0x00000002")
+cpp_quote("#define MFASYNC_BLOCKING_CALLBACK             0x00000004")
+cpp_quote("#define MFASYNC_REPLY_CALLBACK                0x00000008")
+cpp_quote("#define MFASYNC_LOCALIZE_REMOTE_CALLBACK      0x00000010")
 
 cpp_quote("#define MFASYNC_CALLBACK_QUEUE_UNDEFINED      0x00000000")
 cpp_quote("#define MFASYNC_CALLBACK_QUEUE_STANDARD       0x00000001")
@@ -726,4 +729,21 @@ interface IMFMediaEventQueue : IUnknown
     HRESULT QueueEventParamUnk([in] MediaEventType met, [in] REFGUID type,
         [in] HRESULT status, [in, unique] IUnknown *unk);
     HRESULT Shutdown();
+}
+
+[
+    object,
+    uuid(eb533d5d-2db6-40f8-97a9-494692014f07),
+    local,
+    pointer_default(unique)
+]
+interface IMFDXGIDeviceManager : IUnknown
+{
+    HRESULT CloseDeviceHandle([in] HANDLE device);
+    HRESULT GetVideoService([in] HANDLE device, [in] REFIID riid, [out] void **service);
+    HRESULT LockDevice([in] HANDLE device, [in] REFIID riid, [out] void **ppv, [in] BOOL block);
+    HRESULT OpenDeviceHandle([out] HANDLE *device);
+    HRESULT ResetDevice([in] IUnknown *device, [in] UINT token);
+    HRESULT TestDevice([in] HANDLE device);
+    HRESULT UnlockDevice([in] HANDLE device, [in] BOOL state);
 }

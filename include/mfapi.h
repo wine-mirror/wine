@@ -261,7 +261,7 @@ DEFINE_GUID(MF_MT_AUDIO_WMADRC_AVGREF,                 0x9d62927f, 0x36be, 0x4cf
 DEFINE_GUID(MF_MT_AUDIO_WMADRC_AVGTARGET,              0x9d629280, 0x36be, 0x4cf2, 0xb5, 0xc4, 0xa3, 0x92, 0x6e, 0x3e, 0x87, 0x11);
 DEFINE_GUID(MF_MT_AUDIO_PREFER_WAVEFORMATEX,           0xa901aaba, 0xe037, 0x458a, 0xbd, 0xf6, 0x54, 0x5b, 0xe2, 0x07, 0x40, 0x42);
 DEFINE_GUID(MF_MT_AUDIO_FLAC_MAX_BLOCK_SIZE,           0x8b81adae, 0x4b5a, 0x4d40, 0x80, 0x22, 0xf3, 0x8d, 0x09, 0xca, 0x3c, 0x5c);
-DEFINE_GUID(MF_MT_AAC_PAYLOAD_TIME,                    0xbfbabe79, 0x7434, 0x4d1c, 0x94, 0xf0, 0x72, 0xa3, 0xb9, 0xe1, 0x71, 0x88);
+DEFINE_GUID(MF_MT_AAC_PAYLOAD_TYPE,                    0xbfbabe79, 0x7434, 0x4d1c, 0x94, 0xf0, 0x72, 0xa3, 0xb9, 0xe1, 0x71, 0x88);
 DEFINE_GUID(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION,  0x7632f0e6, 0x9538, 0x4d61, 0xac, 0xda, 0xea, 0x29, 0xc8, 0xc1, 0x44, 0x56);
 
 DEFINE_GUID(MFT_CATEGORY_VIDEO_DECODER,   0xd6c02d4b, 0x6833, 0x45b4, 0x97, 0x1a, 0x05, 0xa4, 0xb0, 0x4b, 0xab, 0x91);
@@ -320,6 +320,8 @@ DEFINE_GUID(MF_EVENT_STREAM_METADATA_SYSTEMID,          0x1ea2ef64, 0xba16, 0x4a
 DEFINE_GUID(MF_EVENT_TOPOLOGY_STATUS,                   0x30c5018d, 0x9a53, 0x454b, 0xad, 0x9e, 0x6d, 0x5f, 0x8f, 0xa7, 0xc4, 0x3b);
 DEFINE_GUID(MF_EVENT_OUTPUT_NODE,                       0x830f1a8b, 0xc060, 0x46dd, 0xa8, 0x01, 0x1c, 0x95, 0xde, 0xc9, 0xb1, 0x07);
 
+DEFINE_GUID(MF_LOW_LATENCY,                             0x9c27891a, 0xed7a, 0x40e1, 0x88, 0xe8, 0xb2, 0x27, 0x27, 0xa0, 0x24, 0xee);
+
 typedef unsigned __int64 MFWORKITEM_KEY;
 
 typedef enum
@@ -368,7 +370,26 @@ enum _MFT_ENUM_FLAG
     MFT_ENUM_FLAG_UNTRUSTED_STOREMFT              = 0x00000400,
 };
 
+typedef enum
+{
+    MF_TOPOSTATUS_INVALID = 0,
+    MF_TOPOSTATUS_READY = 100,
+    MF_TOPOSTATUS_STARTED_SOURCE = 200,
+    MF_TOPOSTATUS_DYNAMIC_CHANGED = 210,
+    MF_TOPOSTATUS_SINK_SWITCHED = 300,
+    MF_TOPOSTATUS_ENDED = 400,
+} MF_TOPOSTATUS;
+
+/* Media Session capabilities. */
+#define MFSESSIONCAP_START                 0x00000001
+#define MFSESSIONCAP_SEEK                  0x00000002
+#define MFSESSIONCAP_PAUSE                 0x00000004
+#define MFSESSIONCAP_RATE_FORWARD          0x00000010
+#define MFSESSIONCAP_RATE_REVERSE          0x00000020
+#define MFSESSIONCAP_DOES_NOT_USE_NETWORK  0x00000040
+
 HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
+HRESULT WINAPI MFAllocateSerialWorkQueue(DWORD target_queue, DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
 HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMODE open_mode, MF_FILE_FLAGS flags,
@@ -382,6 +403,7 @@ HRESULT WINAPI MFCreateAlignedMemoryBuffer(DWORD max_length, DWORD alignment, IM
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size);
 HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback, IUnknown *state, IMFAsyncResult **result);
 HRESULT WINAPI MFCreateCollection(IMFCollection **collection);
+HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **manager);
 HRESULT WINAPI MFCreateEventQueue(IMFMediaEventQueue **queue);
 HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
                             LPCWSTR url, IMFByteStream **bytestream);
@@ -420,6 +442,9 @@ HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags
 HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWSTR name,
                            UINT32 flags, UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types,
                            UINT32 coutput, const MFT_REGISTER_TYPE_INFO* output_types);
+HRESULT WINAPI MFTRegisterLocalByCLSID(REFCLSID clsid, REFGUID category, LPCWSTR name, UINT32 flags,
+        UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
+        const MFT_REGISTER_TYPE_INFO *output_types);
 HRESULT WINAPI MFRemovePeriodicCallback(DWORD key);
 HRESULT WINAPI MFShutdown(void);
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags);
@@ -427,6 +452,7 @@ HRESULT WINAPI MFUnlockPlatform(void);
 HRESULT WINAPI MFUnlockWorkQueue(DWORD queue);
 HRESULT WINAPI MFTUnregister(CLSID clsid);
 HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory);
+HRESULT WINAPI MFTUnregisterLocalByCLSID(CLSID clsid);
 HRESULT WINAPI MFGetPluginControl(IMFPluginControl**);
 HRESULT WINAPI MFWrapMediaType(IMFMediaType *original, REFGUID major, REFGUID subtype, IMFMediaType **wrapped);
 HRESULT WINAPI MFUnwrapMediaType(IMFMediaType *wrapped, IMFMediaType **original);

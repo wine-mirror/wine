@@ -30,23 +30,19 @@ There is still some work to be done:
 
 */
 
-
-
-#include "config.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_ZLIB
-# include <zlib.h>
-#endif
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winternl.h"
 #include "fci.h"
+#include "zlib.h"
 #include "cabinet.h"
 #include "wine/list.h"
 #include "wine/debug.h"
@@ -174,7 +170,7 @@ typedef struct FCI_Int
   cab_UWORD          cFolders;
   cab_UWORD          cFiles;
   cab_ULONG          cDataBlocks;
-  cab_ULONG          cbFileRemainer; /* uncompressed, yet to be written data */
+  cab_ULONG          cbFileRemainder; /* uncompressed, yet to be written data */
                /* of spanned file of a spanning folder of a spanning cabinet */
   struct temp_file   data;
   BOOL               fNewPrevious;
@@ -839,7 +835,7 @@ static BOOL add_data_to_folder( FCI_Int *fci, struct folder *folder, cab_ULONG *
 static BOOL add_files_to_folder( FCI_Int *fci, struct folder *folder, cab_ULONG payload )
 {
     cab_ULONG sizeOfFiles = 0, sizeOfFilesPrev;
-    cab_ULONG cbFileRemainer = 0;
+    cab_ULONG cbFileRemainder = 0;
     struct file *file, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE( file, next, &fci->files_list, struct file, entry )
@@ -852,10 +848,10 @@ static BOOL add_files_to_folder( FCI_Int *fci, struct folder *folder, cab_ULONG 
 
         sizeOfFilesPrev = sizeOfFiles;
         /* set complete size of all processed files */
-        if (file->folder == cffileCONTINUED_FROM_PREV && fci->cbFileRemainer != 0)
+        if (file->folder == cffileCONTINUED_FROM_PREV && fci->cbFileRemainder != 0)
         {
-            sizeOfFiles += fci->cbFileRemainer;
-            fci->cbFileRemainer = 0;
+            sizeOfFiles += fci->cbFileRemainder;
+            fci->cbFileRemainder = 0;
         }
         else sizeOfFiles += file->size;
 
@@ -888,7 +884,7 @@ static BOOL add_files_to_folder( FCI_Int *fci, struct folder *folder, cab_ULONG 
                 {
                     /* The size of the uncompressed, data of a spanning file in a */
                     /* spanning data */
-                    cbFileRemainer = sizeOfFiles - payload;
+                    cbFileRemainder = sizeOfFiles - payload;
                 }
                 file->folder = cffileCONTINUED_FROM_PREV;
             }
@@ -899,7 +895,7 @@ static BOOL add_files_to_folder( FCI_Int *fci, struct folder *folder, cab_ULONG 
             fci->files_size -= size;
         }
     }
-    fci->cbFileRemainer = cbFileRemainer;
+    fci->cbFileRemainder = cbFileRemainder;
     return TRUE;
 }
 
@@ -908,8 +904,6 @@ static cab_UWORD compress_NONE( FCI_Int *fci )
     memcpy( fci->data_out, fci->data_in, fci->cdata_in );
     return fci->cdata_in;
 }
-
-#ifdef HAVE_ZLIB
 
 static void *zalloc( void *opaque, unsigned int items, unsigned int size )
 {
@@ -946,8 +940,6 @@ static cab_UWORD compress_MSZIP( FCI_Int *fci )
     deflateEnd( &stream );
     return stream.total_out + 2;
 }
-
-#endif  /* HAVE_ZLIB */
 
 
 /***********************************************************************
@@ -1421,11 +1413,9 @@ BOOL __cdecl FCIAddFile(
       switch (typeCompress)
       {
       case tcompTYPE_MSZIP:
-#ifdef HAVE_ZLIB
           p_fci_internal->compression = tcompTYPE_MSZIP;
           p_fci_internal->compress    = compress_MSZIP;
           break;
-#endif
       default:
           FIXME( "compression %x not supported, defaulting to none\n", typeCompress );
           /* fall through */

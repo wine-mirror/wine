@@ -34,7 +34,9 @@
 #include "wldap32.h"
 #include "wine/debug.h"
 
+#ifdef HAVE_LDAP
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
+#endif
 
 /***********************************************************************
  *      ldap_parse_extended_resultA     (WLDAP32.@)
@@ -258,7 +260,7 @@ ULONG CDECL ldap_parse_resultW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *result,
 
     ldap_memfree( matchedU );
     ldap_memfree( errorU );
-    strarrayfreeU( referralsU );
+    ldap_memvfree( (void **)referralsU );
     ldap_controls_free( serverctrlsU );
 
 #endif

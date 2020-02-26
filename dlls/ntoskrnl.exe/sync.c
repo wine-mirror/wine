@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <limits.h>
 #include <stdarg.h>
 
@@ -1195,4 +1194,67 @@ ULONG WINAPI ExIsResourceAcquiredSharedLite( ERESOURCE *resource )
     KeReleaseSpinLock( &resource->SpinLock, irql );
 
     return ret;
+}
+
+/***********************************************************************
+ *           IoInitializeRemoveLockEx   (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoInitializeRemoveLockEx( IO_REMOVE_LOCK *lock, ULONG tag,
+        ULONG max_minutes, ULONG max_count, ULONG size )
+{
+    TRACE("lock %p, tag %#x, max_minutes %u, max_count %u, size %u.\n",
+            lock, tag, max_minutes, max_count, size);
+
+    KeInitializeEvent( &lock->Common.RemoveEvent, NotificationEvent, FALSE );
+    lock->Common.Removed = FALSE;
+    lock->Common.IoCount = 0;
+}
+
+/***********************************************************************
+ *           IoAcquireRemoveLockEx   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoAcquireRemoveLockEx( IO_REMOVE_LOCK *lock, void *tag,
+        const char *file, ULONG line, ULONG size )
+{
+    TRACE("lock %p, tag %p, file %s, line %u, size %u.\n", lock, tag, debugstr_a(file), line, size);
+
+    if (lock->Common.Removed)
+        return STATUS_DELETE_PENDING;
+
+    InterlockedIncrement( &lock->Common.IoCount );
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           IoReleaseRemoveLockEx   (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoReleaseRemoveLockEx( IO_REMOVE_LOCK *lock, void *tag, ULONG size )
+{
+    LONG count;
+
+    TRACE("lock %p, tag %p, size %u.\n", lock, tag, size);
+
+    if (!(count = InterlockedDecrement( &lock->Common.IoCount )) && lock->Common.Removed)
+        KeSetEvent( &lock->Common.RemoveEvent, IO_NO_INCREMENT, FALSE );
+    else if (count < 0)
+        ERR("Lock %p is not acquired!\n", lock);
+}
+
+/***********************************************************************
+ *           IoReleaseRemoveLockAndWaitEx   (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoReleaseRemoveLockAndWaitEx( IO_REMOVE_LOCK *lock, void *tag, ULONG size )
+{
+    LONG count;
+
+    TRACE("lock %p, tag %p, size %u.\n", lock, tag, size);
+
+    lock->Common.Removed = TRUE;
+
+    if (!(count = InterlockedDecrement( &lock->Common.IoCount )))
+        KeSetEvent( &lock->Common.RemoveEvent, IO_NO_INCREMENT, FALSE );
+    else if (count < 0)
+        ERR("Lock %p is not acquired!\n", lock);
+    else if (count > 0)
+        KeWaitForSingleObject( &lock->Common.RemoveEvent, Executive, KernelMode, FALSE, NULL );
 }

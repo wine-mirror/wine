@@ -2,6 +2,8 @@ MODULE    = sti.dll
 IMPORTLIB = sti
 IMPORTS   = uuid ole32 oleaut32 rpcrt4 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	sti.c \
 	sti_main.c

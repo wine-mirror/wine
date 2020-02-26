@@ -129,7 +129,7 @@ HRESULT WINAPI MAPIInitialize(LPVOID init)
 ULONG WINAPI MAPILogon(ULONG_PTR uiparam, LPSTR profile, LPSTR password,
     FLAGS flags, ULONG reserved, LPLHANDLE session)
 {
-    TRACE("(0x%08lx %s %p 0x%08x 0x%08x %p)\n", uiparam,
+    TRACE("(0x%08Ix %s %p 0x%08x 0x%08x %p)\n", uiparam,
           debugstr_a(profile), password, flags, reserved, session);
 
     if (mapiFunctions.MAPILogon)
@@ -149,7 +149,7 @@ ULONG WINAPI MAPILogon(ULONG_PTR uiparam, LPSTR profile, LPSTR password,
 ULONG WINAPI MAPILogoff(LHANDLE session, ULONG_PTR uiparam, FLAGS flags,
     ULONG reserved )
 {
-    TRACE("(0x%08lx 0x%08lx 0x%08x 0x%08x)\n", session,
+    TRACE("(0x%08Ix 0x%08Ix 0x%08x 0x%08x)\n", session,
           uiparam, flags, reserved);
 
     if (mapiFunctions.MAPILogoff)
@@ -167,7 +167,7 @@ ULONG WINAPI MAPILogoff(LHANDLE session, ULONG_PTR uiparam, FLAGS flags,
 HRESULT WINAPI MAPILogonEx(ULONG_PTR uiparam, LPWSTR profile,
     LPWSTR password, ULONG flags, LPMAPISESSION *session)
 {
-    TRACE("(0x%08lx %s %p 0x%08x %p)\n", uiparam,
+    TRACE("(0x%08Ix %s %p 0x%08x %p)\n", uiparam,
           debugstr_w(profile), password, flags, session);
 
     if (mapiFunctions.MAPILogonEx)

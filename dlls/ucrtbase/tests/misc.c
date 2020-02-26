@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <direct.h>
+#include <locale.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -104,9 +105,33 @@ typedef struct MSVCRT__exception {
     double  retval;
 } MSVCRT__exception;
 
+typedef struct {
+    const char *short_wday[7];
+    const char *wday[7];
+    const char *short_mon[12];
+    const char *mon[12];
+    const char *am;
+    const char *pm;
+    const char *short_date;
+    const char *date;
+    const char *time;
+    int  unk[2];
+    const wchar_t *short_wdayW[7];
+    const wchar_t *wdayW[7];
+    const wchar_t *short_monW[12];
+    const wchar_t *monW[12];
+    const wchar_t *amW;
+    const wchar_t *pmW;
+    const wchar_t *short_dateW;
+    const wchar_t *dateW;
+    const wchar_t *timeW;
+    const wchar_t *locnameW;
+} __lc_time_data;
+
 typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static HMODULE module;
+static LONGLONG crt_init_start, crt_init_end;
 
 static int (CDECL *p_initialize_onexit_table)(MSVCRT__onexit_table_t *table);
 static int (CDECL *p_register_onexit_function)(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
@@ -136,6 +161,10 @@ static int (CDECL *p_fesetround)(int);
 static void (CDECL *p___setusermatherr)(MSVCRT_matherr_func);
 static int* (CDECL *p_errno)(void);
 static char* (CDECL *p_asctime)(const struct tm *);
+static size_t (__cdecl *p_strftime)(char *, size_t, const char *, const struct tm *);
+static size_t (__cdecl *p__Strftime)(char*, size_t, const char*, const struct tm*, void*);
+static char* (__cdecl *p_setlocale)(int, const char*);
+static struct tm*  (__cdecl *p__gmtime32)(const __time32_t*);
 static void (CDECL *p_exit)(int);
 static int (CDECL *p__crt_atexit)(void (CDECL*)(void));
 static int (__cdecl *p_crt_at_quick_exit)(void (__cdecl *func)(void));
@@ -145,6 +174,7 @@ static int (__cdecl *p__close)(int);
 static void* (__cdecl *p__o_malloc)(size_t);
 static size_t (__cdecl *p__msize)(void*);
 static void (__cdecl *p_free)(void*);
+static clock_t (__cdecl *p_clock)(void);
 
 static void test__initialize_onexit_table(void)
 {
@@ -360,11 +390,11 @@ static void test___fpe_flt_rounds(void)
 
     ok((p__controlfp(_RC_UP, _RC_CHOP) & _RC_CHOP) == _RC_UP, "_controlfp(_RC_UP, _RC_CHOP) failed\n");
     ret = p___fpe_flt_rounds();
-    ok(ret == 2 + (sizeof(void*)>sizeof(int)), "__fpe_flt_rounds returned %d\n", ret);
+    ok(ret == 2 || broken(ret == 3) /* w1064v1507 */, "__fpe_flt_rounds returned %d\n", ret);
 
     ok((p__controlfp(_RC_DOWN, _RC_CHOP) & _RC_CHOP) == _RC_DOWN, "_controlfp(_RC_DOWN, _RC_CHOP) failed\n");
     ret = p___fpe_flt_rounds();
-    ok(ret == 3 - (sizeof(void*)>sizeof(int)), "__fpe_flt_rounds returned %d\n", ret);
+    ok(ret == 3 || broken(ret == 2) /* w1064v1507 */, "__fpe_flt_rounds returned %d\n", ret);
 
     ok((p__controlfp(_RC_CHOP, _RC_CHOP) & _RC_CHOP) == _RC_CHOP, "_controlfp(_RC_CHOP, _RC_CHOP) failed\n");
     ret = p___fpe_flt_rounds();
@@ -375,7 +405,7 @@ static void __cdecl global_invalid_parameter_handler(
         const wchar_t *expression, const wchar_t *function,
         const wchar_t *file, unsigned line, uintptr_t arg)
 {
-    CHECK_EXPECT(global_invalid_parameter_handler);
+    CHECK_EXPECT2(global_invalid_parameter_handler);
 }
 
 static void __cdecl thread_invalid_parameter_handler(
@@ -426,6 +456,9 @@ static void test_invalid_parameter_handler(void)
 
     ret = p__set_invalid_parameter_handler(NULL);
     ok(ret == global_invalid_parameter_handler, "ret = %p\n", ret);
+
+    ret = p__set_invalid_parameter_handler(global_invalid_parameter_handler);
+    ok(!ret, "ret != NULL\n");
 }
 
 static void test__get_narrow_winmain_command_line(char *path)
@@ -464,7 +497,13 @@ static void test__get_narrow_winmain_command_line(char *path)
 
 static BOOL init(void)
 {
+    FILETIME cur;
+
+    GetSystemTimeAsFileTime(&cur);
+    crt_init_start = ((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime;
     module = LoadLibraryA("ucrtbase.dll");
+    GetSystemTimeAsFileTime(&cur);
+    crt_init_end = ((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime;
 
     if(!module) {
         win_skip("ucrtbase.dll not available\n");
@@ -499,6 +538,10 @@ static BOOL init(void)
     p___setusermatherr = (void*)GetProcAddress(module, "__setusermatherr");
     p_errno = (void*)GetProcAddress(module, "_errno");
     p_asctime = (void*)GetProcAddress(module, "asctime");
+    p_strftime = (void*)GetProcAddress(module, "strftime");
+    p__Strftime = (void*)GetProcAddress(module, "_Strftime");
+    p_setlocale = (void*)GetProcAddress(module, "setlocale");
+    p__gmtime32 = (void*)GetProcAddress(module, "_gmtime32");
     p__crt_atexit = (void*)GetProcAddress(module, "_crt_atexit");
     p_exit = (void*)GetProcAddress(module, "exit");
     p_crt_at_quick_exit = (void*)GetProcAddress(module, "_crt_at_quick_exit");
@@ -508,6 +551,7 @@ static BOOL init(void)
     p__o_malloc = (void*)GetProcAddress(module, "_o_malloc");
     p__msize = (void*)GetProcAddress(module, "_msize");
     p_free = (void*)GetProcAddress(module, "free");
+    p_clock = (void*)GetProcAddress(module, "clock");
 
     return TRUE;
 }
@@ -526,8 +570,6 @@ static void test__sopen_dispatch(void)
     p__close(fd);
     unlink(tempf);
 
-    p__set_invalid_parameter_handler(global_invalid_parameter_handler);
-
     SET_EXPECT(global_invalid_parameter_handler);
     fd = 0;
     ret = p_sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 1);
@@ -539,8 +581,6 @@ static void test__sopen_dispatch(void)
         p__close(fd);
         unlink(tempf);
     }
-
-    p__set_invalid_parameter_handler(NULL);
 
     free(tempf);
 }
@@ -565,8 +605,6 @@ static void test__sopen_s(void)
     p__close(fd);
     unlink(tempf);
 
-    p__set_invalid_parameter_handler(global_invalid_parameter_handler);
-
     /* _sopen_s() invokes invalid parameter handler on invalid pmode */
     SET_EXPECT(global_invalid_parameter_handler);
     fd = 0;
@@ -574,7 +612,6 @@ static void test__sopen_s(void)
     ok(ret == EINVAL, "got %d\n", ret);
     ok(fd == -1, "got fd %d\n", fd);
     CHECK_CALLED(global_invalid_parameter_handler);
-    p__set_invalid_parameter_handler(NULL);
 
     free(tempf);
 }
@@ -887,6 +924,284 @@ static void test_asctime(void)
     ok(!strcmp(ret, "Thu Jan  1 00:00:00 1970\n"), "asctime returned %s\n", ret);
 }
 
+static void test_strftime(void)
+{
+    const struct {
+       const char *format;
+       const char *ret;
+       struct tm tm;
+       BOOL todo_value;
+       BOOL todo_handler;
+    } tests[] = {
+        {"%C", "", { 0, 0, 0, 1, 0, -2000, 4, 0, 0 }},
+        {"%C", "", { 0, 0, 0, 1, 0, -1901, 4, 0, 0 }},
+        {"%C", "00", { 0, 0, 0, 1, 0, -1900, 4, 0, 0 }},
+        {"%C", "18", { 0, 0, 0, 1, 0, -1, 4, 0, 0 }},
+        {"%C", "19", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%C", "99", { 0, 0, 0, 1, 0, 8099, 4, 0, 0 }},
+        {"%C", "", { 0, 0, 0, 1, 0, 8100, 4, 0, 0 }},
+        {"%d", "", { 0, 0, 0, 0, 0, 70, 4, 0, 0 }},
+        {"%d", "01", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%d", "31", { 0, 0, 0, 31, 0, 70, 4, 0, 0 }},
+        {"%d", "", { 0, 0, 0, 32, 0, 70, 4, 0, 0 }},
+        {"%D", "", { 0, 0, 0, 1, 0, -1901, 4, 0, 0 }},
+        {"%D", "01/01/00", { 0, 0, 0, 1, 0, -1900, 4, 0, 0 }},
+        {"%D", "01/01/99", { 0, 0, 0, 1, 0, -1, 4, 0, 0 }},
+        {"%D", "01/01/70", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%D", "01/01/99", { 0, 0, 0, 1, 0, 8099, 4, 0, 0 }},
+        {"%D", "", { 0, 0, 0, 1, 0, 8100, 4, 0, 0 }},
+        {"%#D", "1/1/70", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%e", "", { 0, 0, 0, 0, 0, 70, 4, 0, 0 }},
+        {"%e", " 1", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%e", "31", { 0, 0, 0, 31, 0, 70, 4, 0, 0 }},
+        {"%e", "", { 0, 0, 0, 32, 0, 70, 4, 0, 0 }},
+        {"%#e", "1", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%F", "1970-01-01", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#F", "1970-1-1", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%R", "00:00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#R", "0:0", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%T", "00:00:00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#T", "0:0:0", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%u", "", { 0, 0, 0, 1, 0, 117, -1, 0, 0 }},
+        {"%u", "7", { 0, 0, 0, 1, 0, 117, 0, 0, 0 }},
+        {"%u", "1", { 0, 0, 0, 1, 0, 117, 1, 0, 0 }},
+        {"%u", "6", { 0, 0, 0, 1, 0, 117, 6, 0, 0 }},
+        {"%u", "", { 0, 0, 0, 1, 0, 117, 7, 0, 0 }},
+        {"%h", "Jan", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%I", "", { 0, 0, -1, 1, 0, 70, 4, 0, 0 }},
+        {"%I", "12", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%I", "01", { 0, 0, 1, 1, 0, 70, 4, 0, 0 }},
+        {"%I", "11", { 0, 0, 11, 1, 0, 70, 4, 0, 0 }},
+        {"%I", "12", { 0, 0, 12, 1, 0, 70, 4, 0, 0 }},
+        {"%I", "01", { 0, 0, 13, 1, 0, 70, 4, 0, 0 }},
+        {"%I", "11", { 0, 0, 23, 1, 0, 70, 4, 0, 0 }},
+        {"%I", "", { 0, 0, 24, 1, 0, 70, 4, 0, 0 }},
+        {"%n", "\n", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%r", "12:00:00 AM", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%r", "02:00:00 PM", { 0, 0, 14, 1, 0, 121, 6, 0, 0 }},
+        {"%#r", "12:0:0 AM", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#r", "2:0:0 PM", { 0, 0, 14, 1, 0, 121, 6, 0, 0 }},
+        {"%t", "\t", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%g", "", { 0, 0, 0, 1, 0, -1901, 4, 0, 0 }},
+        {"%g", "", { 0, 0, 0, 1, 0, -1901, 3, 364, 0 }},
+        {"%g", "00", { 0, 0, 0, 1, 0, -1900, 4, 0, 0 }},
+        {"%g", "70", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%g", "71", { 0, 0, 0, 2, 0, 72, 0, 1, 0 }},
+        {"%g", "72", { 0, 0, 0, 3, 0, 72, 1, 2, 0 }},
+        {"%g", "16", { 0, 0, 0, 1, 0, 117, 0, 0, 0 }},
+        {"%g", "99", { 0, 0, 0, 1, 0, 8099, 4, 0, 0 }},
+        {"%g", "00", { 0, 0, 0, 1, 0, 8099, 3, 364, 0 }},
+        {"%g", "", { 0, 0, 0, 1, 0, 8100, 0, 0, 0 }},
+        {"%g", "", { 0, 0, 0, 1, 0, 8100, 4, 0, 0 }},
+        {"%G", "1970", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%G", "1971", { 0, 0, 0, 2, 0, 72, 0, 1, 0 }},
+        {"%G", "1972", { 0, 0, 0, 3, 0, 72, 1, 2, 0 }},
+        {"%G", "2016", { 0, 0, 0, 1, 0, 117, 0, 0, 0 }},
+        {"%V", "01", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%V", "52", { 0, 0, 0, 1, 0, 117, 0, 0, 0 }},
+        {"%V", "53", { 0, 0, 14, 1, 0, 121, 6, 0, 0 }},
+        {"%y", "", { 0, 0, 0, 0, 0, -1901, 0, 0, 0 }},
+        {"%y", "00", { 0, 0, 0, 0, 0, -1900, 0, 0, 0 }},
+        {"%y", "99", { 0, 0, 0, 0, 0, 8099, 0, 0, 0 }},
+        {"%y", "", { 0, 0, 0, 0, 0, 8100, 0, 0, 0 }},
+        {"%c", "Thu Jan  1 00:00:00 1970", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%c", "Thu Feb 30 00:00:00 1970", { 0, 0, 0, 30, 1, 70, 4, 0, 0 }},
+        {"%#c", "Thursday, January 01, 1970 00:00:00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#c", "Thursday, February 30, 1970 00:00:00", { 0, 0, 0, 30, 1, 70, 4, 0, 0 }},
+        {"%x", "01/01/70", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%x", "02/30/70", { 0, 0, 0, 30, 1, 70, 4, 0, 0 }},
+        {"%#x", "Thursday, January 01, 1970", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#x", "Thursday, February 30, 1970", { 0, 0, 0, 30, 1, 70, 4, 0, 0 }},
+        {"%#x", "", { 0, 0, 0, 30, 1, 70, 7, 0, 0 }},
+        {"%#x", "", { 0, 0, 0, 30, 12, 70, 4, 0, 0 }},
+        {"%X", "00:00:00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%X", "14:00:00", { 0, 0, 14, 1, 0, 70, 4, 0, 0 }},
+        {"%X", "23:59:60", { 60, 59, 23, 1, 0, 70, 4, 0, 0 }},
+    };
+
+    const struct {
+        const char *format;
+        const char *ret;
+        const wchar_t *short_date;
+        const wchar_t *date;
+        const wchar_t *time;
+        struct tm tm;
+        BOOL todo;
+    } tests_td[] = {
+        { "%c", "x z", L"x", L"y", L"z", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#c", "y z", L"x", L"y", L"z", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "M1", 0, 0, L"MMM", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "1", 0, 0, L"h", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "01", 0, 0, L"hh", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "h01", 0, 0, L"hhh", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "hh01", 0, 0, L"hhhh", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "1", 0, 0, L"H", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "01", 0, 0, L"HH", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "H13", 0, 0, L"HHH", { 0, 0, 13, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "0", 0, 0, L"m", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "00", 0, 0, L"mm", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "m00", 0, 0, L"mmm", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "0", 0, 0, L"s", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "00", 0, 0, L"ss", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "s00", 0, 0, L"sss", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "T", 0, 0, L"t", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "TAM", 0, 0, L"tt", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "TAM", 0, 0, L"ttttttttt", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "TAM", 0, 0, L"a", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "TAM", 0, 0, L"aaaaa", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "TAM", 0, 0, L"A", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "TAM", 0, 0, L"AAAAA", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "1", L"d", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "01", L"dd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "D1", L"ddd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "Day1", L"dddd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "dDay1", L"ddddd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "1", L"M", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "01", L"MM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "M1", L"MMM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "Mon1", L"MMMM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "MMon1", L"MMMMM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "y", L"y", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "70", L"yy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "y70", L"yyy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "1970", L"yyyy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "y1970", L"yyyyy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "ggggggggggg", L"ggggggggggg", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "1", 0, L"d", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "01", 0, L"dd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "D1", 0, L"ddd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "Day1", 0, L"dddd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "dDay1", 0, L"ddddd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "1", 0, L"M", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "01", 0, L"MM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "M1", 0, L"MMM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "Mon1", 0, L"MMMM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "MMon1", 0, L"MMMMM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "y", 0, L"y", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "70", 0, L"yy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "y70", 0, L"yyy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "1970", 0, L"yyyy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "y1970", 0, L"yyyyy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%r", "z", L"x", L"y", L"z", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+    };
+
+    const struct {
+        int year;
+        int yday;
+        const char *ret[7];
+    } tests_yweek[] = {
+        { 100, 0, { "99 52", "00 01", "00 01", "00 01", "00 01", "99 53", "99 52" }},
+        { 100, 1, { "99 52", "00 01", "00 01", "00 01", "00 01", "00 01", "99 53" }},
+        { 100, 2, { "99 53", "00 01", "00 01", "00 01", "00 01", "00 01", "00 01" }},
+        { 100, 3, { "00 01", "00 01", "00 01", "00 01", "00 01", "00 01", "00 01" }},
+        { 100, 4, { "00 01", "00 02", "00 01", "00 01", "00 01", "00 01", "00 01" }},
+        { 100, 5, { "00 01", "00 02", "00 02", "00 01", "00 01", "00 01", "00 01" }},
+        { 100, 6, { "00 01", "00 02", "00 02", "00 02", "00 01", "00 01", "00 01" }},
+        { 100, 358, { "00 51", "00 52", "00 52", "00 52", "00 52", "00 52", "00 51" }},
+        { 100, 359, { "00 51", "00 52", "00 52", "00 52", "00 52", "00 52", "00 52" }},
+        { 100, 360, { "00 52", "00 52", "00 52", "00 52", "00 52", "00 52", "00 52" }},
+        { 100, 361, { "00 52", "00 53", "00 52", "00 52", "00 52", "00 52", "00 52" }},
+        { 100, 362, { "00 52", "00 53", "00 53", "00 52", "00 52", "00 52", "00 52" }},
+        { 100, 363, { "00 52", "01 01", "00 53", "00 53", "00 52", "00 52", "00 52" }},
+        { 100, 364, { "00 52", "01 01", "01 01", "00 53", "00 53", "00 52", "00 52" }},
+        { 100, 365, { "00 52", "01 01", "01 01", "01 01", "00 53", "00 53", "00 52" }},
+        { 101, 0, { "00 52", "01 01", "01 01", "01 01", "01 01", "00 53", "00 53" }},
+        { 101, 1, { "00 53", "01 01", "01 01", "01 01", "01 01", "01 01", "00 53" }},
+        { 101, 2, { "00 53", "01 01", "01 01", "01 01", "01 01", "01 01", "01 01" }},
+        { 101, 3, { "01 01", "01 01", "01 01", "01 01", "01 01", "01 01", "01 01" }},
+        { 101, 4, { "01 01", "01 02", "01 01", "01 01", "01 01", "01 01", "01 01" }},
+        { 101, 5, { "01 01", "01 02", "01 02", "01 01", "01 01", "01 01", "01 01" }},
+        { 101, 6, { "01 01", "01 02", "01 02", "01 02", "01 01", "01 01", "01 01" }},
+        { 101, 358, { "01 51", "01 52", "01 52", "01 52", "01 52", "01 52", "01 51" }},
+        { 101, 359, { "01 51", "01 52", "01 52", "01 52", "01 52", "01 52", "01 52" }},
+        { 101, 360, { "01 52", "01 52", "01 52", "01 52", "01 52", "01 52", "01 52" }},
+        { 101, 361, { "01 52", "01 53", "01 52", "01 52", "01 52", "01 52", "01 52" }},
+        { 101, 362, { "01 52", "02 01", "01 53", "01 52", "01 52", "01 52", "01 52" }},
+        { 101, 363, { "01 52", "02 01", "02 01", "01 53", "01 52", "01 52", "01 52" }},
+        { 101, 364, { "01 52", "02 01", "02 01", "02 01", "01 53", "01 52", "01 52" }},
+    };
+
+    __lc_time_data time_data = {
+        { "d1", "d2", "d3", "d4", "d5", "d6", "d7" },
+        { "day1", "day2", "day3", "day4", "day5", "day6", "day7" },
+        { "m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9", "m10", "m11", "m12" },
+        { "mon1", "mon2", "mon3", "mon4", "mon5", "mon6", "mon7", "mon8", "mon9", "mon10", "mon11", "mon12" },
+        "tam", "tpm", 0, 0, 0, { 1, 0 },
+        { L"D1", L"D2", L"D3", L"D4", L"D5", L"D6", L"D7" },
+        { L"Day1", L"Day2", L"Day3", L"Day4", L"Day5", L"Day6", L"Day7" },
+        { L"M1", L"M2", L"M3", L"M4", L"M5", L"M6", L"M7", L"M8", L"M9", L"M10", L"M11", L"M12" },
+        { L"Mon1", L"Mon2", L"Mon3", L"Mon4", L"Mon5", L"Mon6", L"Mon7", L"Mon8", L"Mon9", L"Mon10", L"Mon11", L"Mon12" },
+        L"TAM", L"TPM"
+    };
+
+    const struct tm epoch = { 0, 0, 0, 1, 0, 70, 4, 0, 0 };
+    struct tm tm_yweek = { 0, 0, 0, 1, 0, 70, 0, 0, 0 };
+    char buf[256];
+    int i, ret=0;
+
+    for (i=0; i<ARRAY_SIZE(tests); i++)
+    {
+        todo_wine_if(tests[i].todo_handler) {
+            if (!tests[i].ret[0])
+                SET_EXPECT(global_invalid_parameter_handler);
+            ret = p_strftime(buf, sizeof(buf), tests[i].format, &tests[i].tm);
+            if (!tests[i].ret[0])
+                CHECK_CALLED(global_invalid_parameter_handler);
+        }
+
+        todo_wine_if(tests[i].todo_value) {
+            ok(ret == strlen(tests[i].ret), "%d) ret = %d\n", i, ret);
+            ok(!strcmp(buf, tests[i].ret), "%d) buf = \"%s\", expected \"%s\"\n",
+                    i, buf, tests[i].ret);
+        }
+    }
+
+    ret = p_strftime(buf, sizeof(buf), "%z", &epoch);
+    ok(ret == 5, "expected 5, got %d\n", ret);
+    ok((buf[0] == '+' || buf[0] == '-') &&
+        isdigit(buf[1]) && isdigit(buf[2]) &&
+        isdigit(buf[3]) && isdigit(buf[4]), "got %s\n", buf);
+
+    for (i=0; i<ARRAY_SIZE(tests_td); i++)
+    {
+        time_data.short_dateW = tests_td[i].short_date;
+        time_data.dateW = tests_td[i].date;
+        time_data.timeW = tests_td[i].time;
+        ret = p__Strftime(buf, sizeof(buf), tests_td[i].format, &tests_td[i].tm, &time_data);
+        ok(ret == strlen(buf), "%d) ret = %d\n", i, ret);
+        todo_wine_if(tests_td[i].todo) {
+            ok(!strcmp(buf, tests_td[i].ret), "%d) buf = \"%s\", expected \"%s\"\n",
+                    i, buf, tests_td[i].ret);
+        }
+    }
+
+    for (i=0; i<ARRAY_SIZE(tests_yweek); i++)
+    {
+        int j;
+        tm_yweek.tm_year = tests_yweek[i].year;
+        tm_yweek.tm_yday = tests_yweek[i].yday;
+        for (j=0; j<7; j++)
+        {
+            tm_yweek.tm_wday = j;
+            p_strftime(buf, sizeof(buf), "%g %V", &tm_yweek);
+            ok(!strcmp(buf, tests_yweek[i].ret[j]), "%d,%d) buf = \"%s\", expected \"%s\"\n",
+                    i, j, buf, tests_yweek[i].ret[j]);
+        }
+    }
+
+    if(!p_setlocale(LC_ALL, "fr-FR")) {
+        win_skip("fr-FR locale not available\n");
+        return;
+    }
+    ret = p_strftime(buf, sizeof(buf), "%c", &epoch);
+    ok(ret == 19, "ret = %d\n", ret);
+    ok(!strcmp(buf, "01/01/1970 00:00:00"), "buf = \"%s\", expected \"%s\"\n", buf, "01/01/1970 00:00:00");
+    ret = p_strftime(buf, sizeof(buf), "%r", &epoch);
+    ok(ret == 8, "ret = %d\n", ret);
+    ok(!strcmp(buf, "00:00:00"), "buf = \"%s\", expected \"%s\"\n", buf, "00:00:00");
+    p_setlocale(LC_ALL, "C");
+}
+
 static LONG* get_failures_counter(HANDLE *map)
 {
     *map = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
@@ -1101,6 +1416,21 @@ static void test__o_malloc(void)
     p_free(m);
 }
 
+static void test_clock(void)
+{
+    static const int thresh = 100;
+    int c, expect_min, expect_max;
+    FILETIME cur;
+
+    GetSystemTimeAsFileTime(&cur);
+    c = p_clock();
+
+    expect_min = (((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime - crt_init_end) / 10000;
+    expect_max = (((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime - crt_init_start) / 10000;
+    ok(c > expect_min-thresh && c < expect_max+thresh, "clock() = %d, expected range [%d, %d]\n",
+            c, expect_min, expect_max);
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1132,8 +1462,10 @@ START_TEST(misc)
     test_isblank();
     test_math_errors();
     test_asctime();
+    test_strftime();
     test_exit(arg_v[0]);
     test_quick_exit(arg_v[0]);
     test__stat32();
     test__o_malloc();
+    test_clock();
 }

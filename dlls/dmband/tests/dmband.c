@@ -180,7 +180,46 @@ static void test_bandtrack(void)
     IPersistStream *ps;
     CLSID class;
     ULARGE_INTEGER size;
+    char buf[64] = { 0 };
     HRESULT hr;
+#define X(guid)        &guid, #guid
+    const struct {
+        REFGUID type;
+        const char *name;
+        BOOL supported;
+    } param_types[] = {
+        { X(GUID_BandParam), TRUE },
+        { X(GUID_ChordParam), FALSE },
+        { X(GUID_Clear_All_Bands), TRUE },
+        { X(GUID_CommandParam), FALSE },
+        { X(GUID_CommandParam2), FALSE },
+        { X(GUID_CommandParamNext), FALSE },
+        { X(GUID_ConnectToDLSCollection), TRUE },
+        { X(GUID_Disable_Auto_Download), TRUE },
+        { X(GUID_DisableTempo), FALSE },
+        { X(GUID_DisableTimeSig), FALSE },
+        { X(GUID_Download), TRUE },
+        { X(GUID_DownloadToAudioPath), TRUE },
+        { X(GUID_Enable_Auto_Download), TRUE },
+        { X(GUID_EnableTempo), FALSE },
+        { X(GUID_EnableTimeSig), FALSE },
+        { X(GUID_IDirectMusicBand), TRUE },
+        { X(GUID_IDirectMusicChordMap), FALSE },
+        { X(GUID_IDirectMusicStyle), FALSE },
+        { X(GUID_MuteParam), FALSE },
+        { X(GUID_Play_Marker), FALSE },
+        { X(GUID_RhythmParam), FALSE },
+        { X(GUID_SeedVariations), FALSE },
+        { X(GUID_StandardMIDIFile), TRUE },
+        { X(GUID_TempoParam), FALSE },
+        { X(GUID_TimeSignature), FALSE },
+        { X(GUID_Unload), TRUE },
+        { X(GUID_UnloadFromAudioPath), TRUE },
+        { X(GUID_Valid_Start_Time), FALSE },
+        { X(GUID_Variations), FALSE },
+    };
+#undef X
+    unsigned int i;
 
     hr = CoCreateInstance(&CLSID_DirectMusicBandTrack, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicTrack8, (void**)&dmt8);
@@ -195,16 +234,41 @@ static void test_bandtrack(void)
     }
     hr = IDirectMusicTrack8_EndPlay(dmt8, NULL);
     ok(hr == S_OK, "IDirectMusicTrack8_EndPlay failed: %08x\n", hr);
-    todo_wine {
     hr = IDirectMusicTrack8_Play(dmt8, NULL, 0, 0, 0, 0, NULL, NULL, 0);
+    todo_wine
     ok(hr == DMUS_S_END, "IDirectMusicTrack8_Play failed: %08x\n", hr);
     hr = IDirectMusicTrack8_GetParam(dmt8, NULL, 0, NULL, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_GetParam failed: %08x\n", hr);
     hr = IDirectMusicTrack8_SetParam(dmt8, NULL, 0, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_SetParam failed: %08x\n", hr);
-    }
+
     hr = IDirectMusicTrack8_IsParamSupported(dmt8, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
+    for (i = 0; i < ARRAY_SIZE(param_types); i++) {
+        hr = IDirectMusicTrack8_IsParamSupported(dmt8, param_types[i].type);
+        if (param_types[i].supported) {
+            ok(hr == S_OK, "IsParamSupported(%s) failed: %08x, expected S_OK\n",
+                    param_types[i].name, hr);
+            hr = IDirectMusicTrack8_GetParam(dmt8, param_types[i].type, 0, NULL, buf);
+            if (param_types[i].type != &GUID_BandParam)
+                ok(hr == DMUS_E_GET_UNSUPPORTED,
+                        "GetParam(%s) failed: %08x, expected DMUS_E_GET_UNSUPPORTED\n",
+                        param_types[i].name, hr);
+        } else {
+            ok(hr == DMUS_E_TYPE_UNSUPPORTED,
+                    "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
+                    param_types[i].name, hr);
+            hr = IDirectMusicTrack8_GetParam(dmt8, param_types[i].type, 0, NULL, buf);
+            ok(hr == DMUS_E_GET_UNSUPPORTED,
+                    "GetParam(%s) failed: %08x, expected DMUS_E_GET_UNSUPPORTED\n",
+                    param_types[i].name, hr);
+            hr = IDirectMusicTrack8_SetParam(dmt8, param_types[i].type, 0, buf);
+            ok(hr == DMUS_E_TYPE_UNSUPPORTED,
+                    "SetParam(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
+                    param_types[i].name, hr);
+        }
+    }
+
     hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);
     ok(hr == E_NOTIMPL, "IDirectMusicTrack8_AddNotificationType failed: %08x\n", hr);
     hr = IDirectMusicTrack8_RemoveNotificationType(dmt8, NULL);
@@ -328,8 +392,6 @@ static void test_parsedescriptor(void)
     DMUS_OBJECTDESC desc = {0};
     HRESULT hr;
     DWORD valid;
-    const WCHAR s_inam[] = {'I','N','A','M','\0'};
-    const WCHAR s_unam[] = {'U','N','A','M','\0'};
     const FOURCC alldesc[] =
     {
         FOURCC_RIFF, DMUS_FOURCC_BAND_FORM, DMUS_FOURCC_CATEGORY_CHUNK, FOURCC_LIST,
@@ -413,7 +475,7 @@ static void test_parsedescriptor(void)
             wine_dbgstr_guid(&desc.guidClass));
     ok(IsEqualGUID(&desc.guidObject, &GUID_NULL), "Got object guid %s, expected GUID_NULL\n",
             wine_dbgstr_guid(&desc.guidClass));
-    ok(!memcmp(desc.wszName, s_unam, sizeof(s_unam)), "Got name '%s', expected 'UNAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"UNAM"), "Got name '%s', expected 'UNAM'\n",
             wine_dbgstr_w(desc.wszName));
     ok(!desc.ftDate.dwHighDateTime && !desc.ftDate.dwLowDateTime,
             "Got file time %08x %08x, expected 0\n", desc.ftDate.dwHighDateTime,
@@ -428,7 +490,7 @@ static void test_parsedescriptor(void)
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
     ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_NAME),
             "Got valid data %#x, expected DMUS_OBJ_CLASS | DMUS_OBJ_NAME\n", desc.dwValidData);
-    ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"INAM"), "Got name '%s', expected 'INAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 
@@ -449,7 +511,7 @@ static void test_parsedescriptor(void)
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
     valid = DMUS_OBJ_OBJECT|DMUS_OBJ_CLASS|DMUS_OBJ_NAME|DMUS_OBJ_CATEGORY|DMUS_OBJ_VERSION|DMUS_OBJ_DATE;
     ok(desc.dwValidData == valid, "Got valid data %#x, expected %#x\n", desc.dwValidData, valid);
-    ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"INAM"), "Got name '%s', expected 'INAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 

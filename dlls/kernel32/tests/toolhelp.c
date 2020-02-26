@@ -284,7 +284,7 @@ START_TEST(toolhelp)
     DWORD               pid = GetCurrentProcessId();
     int                 r;
     char                *p, module[MAX_PATH];
-    char                buffer[MAX_PATH];
+    char                buffer[MAX_PATH + 21];
     SECURITY_ATTRIBUTES sa;
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
@@ -325,7 +325,7 @@ START_TEST(toolhelp)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
 
-    sprintf(buffer, "%s tests/toolhelp.c %lu %lu", selfname, (DWORD_PTR)ev1, (DWORD_PTR)ev2);
+    sprintf(buffer, "%s toolhelp %lu %lu", selfname, (DWORD_PTR)ev1, (DWORD_PTR)ev2);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to be initialized */
     w = WaitForSingleObject(ev1, WAIT_TIME);

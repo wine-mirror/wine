@@ -27,8 +27,10 @@
 #include <winsvc.h>
 #include <rpc.h>
 #include <userenv.h>
+#include <setupapi.h>
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "svcctl.h"
 
 #include "services.h"
@@ -42,6 +44,7 @@ struct scmdatabase *active_database;
 DWORD service_pipe_timeout = 10000;
 DWORD service_kill_timeout = 60000;
 static DWORD default_preshutdown_timeout = 180000;
+static DWORD autostart_delay = 120000;
 static void *environment = NULL;
 static HKEY service_current_key = NULL;
 
@@ -68,6 +71,7 @@ static const WCHAR SZ_TAG[]               = {'T','a','g',0};
 static const WCHAR SZ_DESCRIPTION[]       = {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR SZ_PRESHUTDOWN[]       = {'P','r','e','s','h','u','t','d','o','w','n','T','i','m','e','o','u','t',0};
 static const WCHAR SZ_WOW64[]             = {'W','O','W','6','4',0};
+static const WCHAR SZ_DELAYED_AUTOSTART[] = {'D','e','l','a','y','e','d','A','u','t','o','S','t','a','r','t',0};
 
 static DWORD process_create(const WCHAR *name, struct process_entry **entry)
 {
@@ -186,6 +190,8 @@ static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
 
     if (load_reg_dword(hKey, SZ_WOW64, &value) == 0 && value == 1)
         entry->is_wow64 = TRUE;
+    if (load_reg_dword(hKey, SZ_DELAYED_AUTOSTART, &value) == 0 && value == 1)
+        entry->delayed_autostart = TRUE;
 
     WINE_TRACE("Image path           = %s\n", wine_dbgstr_w(entry->config.lpBinaryPathName) );
     WINE_TRACE("Group                = %s\n", wine_dbgstr_w(entry->config.lpLoadOrderGroup) );
@@ -329,16 +335,127 @@ static int __cdecl compare_tags(const void *a, const void *b)
     return service_a->config.dwTagId - service_b->config.dwTagId;
 }
 
+static PTP_CLEANUP_GROUP delayed_autostart_cleanup;
+
+struct delayed_autostart_params
+{
+    unsigned int count;
+    struct service_entry **services;
+};
+
+static void CALLBACK delayed_autostart_cancel_callback(void *object, void *userdata)
+{
+    struct delayed_autostart_params *params = object;
+    while(params->count--)
+        release_service(params->services[params->count]);
+    heap_free(params->services);
+    heap_free(params);
+}
+
+static void CALLBACK delayed_autostart_callback(TP_CALLBACK_INSTANCE *instance, void *context,
+                                                TP_TIMER *timer)
+{
+    struct delayed_autostart_params *params = context;
+    struct service_entry *service;
+    unsigned int i;
+    DWORD err;
+
+    scmdatabase_lock_startup(active_database, INFINITE);
+
+    for (i = 0; i < params->count; i++)
+    {
+        service = params->services[i];
+        if (service->status.dwCurrentState == SERVICE_STOPPED)
+        {
+            TRACE("Starting delayed auto-start service %s\n", debugstr_w(service->name));
+            err = service_start(service, 0, NULL);
+            if (err != ERROR_SUCCESS)
+                FIXME("Delayed auto-start service %s failed to start: %d\n",
+                      wine_dbgstr_w(service->name), err);
+        }
+        release_service(service);
+    }
+
+    scmdatabase_unlock_startup(active_database);
+
+    heap_free(params->services);
+    heap_free(params);
+    CloseThreadpoolTimer(timer);
+}
+
+static BOOL schedule_delayed_autostart(struct service_entry **services, unsigned int count)
+{
+    struct delayed_autostart_params *params;
+    TP_CALLBACK_ENVIRON environment;
+    LARGE_INTEGER timestamp;
+    TP_TIMER *timer;
+    FILETIME ft;
+
+    if (!(delayed_autostart_cleanup = CreateThreadpoolCleanupGroup()))
+    {
+        ERR("CreateThreadpoolCleanupGroup failed with error %u\n", GetLastError());
+        return FALSE;
+    }
+
+    if (!(params = heap_alloc(sizeof(*params)))) return FALSE;
+    params->count = count;
+    params->services = services;
+
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.CleanupGroup = delayed_autostart_cleanup;
+    environment.CleanupGroupCancelCallback = delayed_autostart_cancel_callback;
+
+    timestamp.QuadPart = (ULONGLONG)autostart_delay * -10000;
+    ft.dwLowDateTime   = timestamp.u.LowPart;
+    ft.dwHighDateTime  = timestamp.u.HighPart;
+
+    if (!(timer = CreateThreadpoolTimer(delayed_autostart_callback, params, &environment)))
+    {
+        ERR("CreateThreadpoolWait failed: %u\n", GetLastError());
+        heap_free(params);
+        return FALSE;
+    }
+
+    SetThreadpoolTimer(timer, &ft, 0, 0);
+    return TRUE;
+}
+
+static BOOL is_root_pnp_service(HDEVINFO set, const struct service_entry *service)
+{
+    SP_DEVINFO_DATA device = {sizeof(device)};
+    WCHAR name[MAX_SERVICE_NAME];
+    unsigned int i;
+
+    for (i = 0; SetupDiEnumDeviceInfo(set, i, &device); ++i)
+    {
+        if (SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_SERVICE, NULL,
+                                              (BYTE *)name, sizeof(name), NULL)
+                && !wcsicmp(name, service->name))
+        {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static void scmdatabase_autostart_services(struct scmdatabase *db)
 {
+    static const WCHAR rootW[] = {'R','O','O','T',0};
     struct service_entry **services_list;
     unsigned int i = 0;
     unsigned int size = 32;
+    unsigned int delayed_cnt = 0;
     struct service_entry *service;
+    HDEVINFO set;
 
     services_list = HeapAlloc(GetProcessHeap(), 0, size * sizeof(services_list[0]));
     if (!services_list)
         return;
+
+    if ((set = SetupDiGetClassDevsW( NULL, rootW, NULL, DIGCF_ALLCLASSES )) == INVALID_HANDLE_VALUE)
+        WINE_ERR("Failed to enumerate devices, error %#x.\n", GetLastError());
 
     scmdatabase_lock(db);
 
@@ -346,7 +463,8 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     {
         if (service->config.dwStartType == SERVICE_BOOT_START ||
             service->config.dwStartType == SERVICE_SYSTEM_START ||
-            service->config.dwStartType == SERVICE_AUTO_START)
+            service->config.dwStartType == SERVICE_AUTO_START ||
+            (set != INVALID_HANDLE_VALUE && is_root_pnp_service(set, service)))
         {
             if (i+1 >= size)
             {
@@ -370,6 +488,12 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     {
         DWORD err;
         service = services_list[i];
+        if (service->delayed_autostart)
+        {
+            TRACE("delayed starting %s\n", wine_dbgstr_w(service->name));
+            services_list[delayed_cnt++] = service;
+            continue;
+        }
         err = service_start(service, 0, NULL);
         if (err != ERROR_SUCCESS)
             WINE_FIXME("Auto-start service %s failed to start: %d\n",
@@ -378,7 +502,10 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     }
 
     scmdatabase_unlock_startup(db);
-    HeapFree(GetProcessHeap(), 0, services_list);
+
+    if (!delayed_cnt || !schedule_delayed_autostart(services_list, delayed_cnt))
+        heap_free(services_list);
+    SetupDiDestroyDeviceInfoList(set);
 }
 
 static void scmdatabase_wait_terminate(struct scmdatabase *db)
@@ -696,7 +823,7 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
     ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName, *path, size);
 
     /* if service image is configured to systemdir, redirect it to wow64 systemdir */
-    if (service_entry->is_wow64)
+    if (service_entry->is_wow64 && !(service_entry->config.dwServiceType & (SERVICE_FILE_SYSTEM_DRIVER | SERVICE_KERNEL_DRIVER)))
     {
         WCHAR system_dir[MAX_PATH], *redirected;
         DWORD len;
@@ -1115,6 +1242,8 @@ static void load_registry_parameters(void)
         {'S','e','r','v','i','c','e','s','P','i','p','e','T','i','m','e','o','u','t',0};
     static const WCHAR killtimeoutW[] =
         {'W','a','i','t','T','o','K','i','l','l','S','e','r','v','i','c','e','T','i','m','e','o','u','t',0};
+    static const WCHAR autostartdelayW[] =
+        {'A','u','t','o','S','t','a','r','t','D','e','l','a','y',0};
     HKEY key;
     WCHAR buffer[64];
     DWORD type, count, val;
@@ -1131,10 +1260,14 @@ static void load_registry_parameters(void)
         type == REG_SZ && (val = wcstol( buffer, NULL, 10 )))
         service_kill_timeout = val;
 
+    count = sizeof(val);
+    if (!RegQueryValueExW( key, autostartdelayW, NULL, &type, (BYTE *)&val, &count ) && type == REG_DWORD)
+        autostart_delay = val;
+
     RegCloseKey( key );
 }
 
-int main(int argc, char *argv[])
+int __cdecl main(int argc, char *argv[])
 {
     static const WCHAR service_current_key_str[] = { 'S','Y','S','T','E','M','\\',
         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -1164,6 +1297,11 @@ int main(int argc, char *argv[])
         SetEvent(started_event);
         WaitForSingleObject(exit_event, INFINITE);
         scmdatabase_wait_terminate(active_database);
+        if (delayed_autostart_cleanup)
+        {
+            CloseThreadpoolCleanupGroupMembers(delayed_autostart_cleanup, TRUE, NULL);
+            CloseThreadpoolCleanupGroup(delayed_autostart_cleanup);
+        }
         RPC_Stop();
     }
     scmdatabase_destroy(active_database);

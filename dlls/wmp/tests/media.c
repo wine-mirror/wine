@@ -413,15 +413,13 @@ static BOOL test_wmp(void)
     duration = 0.0;
     hres = IWMPControls_get_currentPosition(controls, &duration);
     ok(hres == S_OK, "IWMPControls_get_currentPosition failed: %08x\n", hres);
-    /* builtin quartz does not handle this currently and resets to 0.0, works
-     * with native quartz */
-    todo_wine ok(duration >= 1.05 /* save some fp errors */, "unexpected value %f\n", duration);
+    ok(duration >= 1.05 /* save some fp errors */, "unexpected value %f\n", duration);
 
     hres = IWMPPlayer4_get_currentMedia(player4, &media);
     ok(hres == S_OK, "IWMPPlayer4_get_currentMedia failed: %08x\n", hres);
     hres = IWMPMedia_get_duration(media, &duration);
     ok(hres == S_OK, "IWMPMedia_get_duration failed: %08x\n", hres);
-    ok(round(duration) == 3, "unexpected value: %f\n", duration);
+    ok(floor(duration + 0.5) == 3, "unexpected value: %f\n", duration);
     IWMPMedia_Release(media);
 
     network = NULL;
@@ -489,11 +487,40 @@ playback_skip:
 
 static void test_media_item(void)
 {
+    static const WCHAR slashW[] = {'\\',0};
     static const WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR fooW[] = {'f','o','o',':','/','/',0};
+    static const WCHAR fileW[] = {'f','i','l','e',':','/','/','/',0};
+    static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
+    static const WCHAR httpsW[] = {'h','t','t','p','s',':','/','/',0};
+    static const WCHAR invalidurlW[] = {'i','n','v','a','l','i','d','_','u','r','l',0};
+    static const WCHAR invalidurlmp3W[] = {'i','n','v','a','l','i','d','_','u','r','l','.','m','p','3',0};
+    static const WCHAR winehqurlW[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',
+                                                    '/','t','e','s','t','s','/','t','e','s','t','.','m','p','3',0};
+    static WCHAR pathW[MAX_PATH];
+    static WCHAR currentdirW[MAX_PATH];
+    struct {
+        const WCHAR *prefix;
+        const WCHAR *filename;
+        const WCHAR *expected;
+    } tests[] = {
+        { NULL, invalidurlmp3W, invalidurlW },
+        { currentdirW, mp3file, testW },
+        { currentdirW, invalidurlmp3W, invalidurlW },
+        { httpW, winehqurlW, testW },
+        { httpW, invalidurlmp3W, invalidurlmp3W },
+        { httpsW, winehqurlW, testW },
+        { httpsW, invalidurlmp3W, invalidurlmp3W },
+        { fileW, mp3file, testW },
+        { fileW, invalidurlmp3W, invalidurlW },
+        { fooW, mp3file, mp3file },
+        { fooW, invalidurlmp3W, invalidurlmp3W }
+    };
     IWMPMedia *media, *media2;
     IWMPPlayer4 *player;
     HRESULT hr;
     BSTR str;
+    int i;
 
     hr = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IWMPPlayer4, (void **)&player);
     if (hr == REGDB_E_CLASSNOTREG)
@@ -505,6 +532,8 @@ static void test_media_item(void)
 
     hr = IWMPPlayer4_newMedia(player, NULL, &media);
     ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+    hr = IWMPMedia_get_name(media, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
     hr = IWMPMedia_get_name(media, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
     ok(*str == 0, "Unexpected name %s.\n", wine_dbgstr_w(str));
@@ -541,8 +570,13 @@ static void test_media_item(void)
     SysFreeString(str);
     hr = IWMPMedia_get_name(media, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
-todo_wine
-    ok(!lstrcmpW(str, testW), "Unexpected name %s.\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
+    SysFreeString(str);
+    hr = IWMPMedia_put_name(media, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    hr = IWMPMedia_get_name(media, &str);
+    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+    ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IWMPPlayer4_put_currentMedia(player, media);
@@ -554,10 +588,30 @@ todo_wine
     ok(media2 != NULL, "Unexpected media instance.\n");
     hr = IWMPMedia_get_name(media2, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
-todo_wine
-    ok(!lstrcmpW(str, testW), "Unexpected name %s.\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
     SysFreeString(str);
     IWMPMedia_Release(media2);
+
+    GetCurrentDirectoryW(ARRAY_SIZE(currentdirW), currentdirW);
+    lstrcatW(currentdirW, slashW);
+
+    for (i=0; i<ARRAY_SIZE(tests); i++)
+    {
+
+        pathW[0] = '\0';
+        if(tests[i].prefix) lstrcatW(pathW, tests[i].prefix);
+        lstrcatW(pathW, tests[i].filename);
+
+        str = SysAllocString(pathW);
+        hr = IWMPPlayer4_newMedia(player, str, &media);
+        ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+        SysFreeString(str);
+        hr = IWMPMedia_get_name(media, &str);
+        ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+        ok(!lstrcmpW(str, tests[i].expected), "Expected %s, got %s\n", wine_dbgstr_w(tests[i].expected), wine_dbgstr_w(str));
+        SysFreeString(str);
+        IWMPMedia_Release(media);
+    }
 
     IWMPPlayer4_Release(player);
 }
@@ -610,6 +664,78 @@ static void test_player_url(void)
     IWMPPlayer4_Release(player);
 }
 
+static void test_playlist(void)
+{
+    IWMPPlayer4 *player;
+    IWMPPlaylist *playlist, *playlist2;
+    HRESULT hr;
+    BSTR str, str2;
+    LONG count;
+    static const WCHAR nameW[] = {'P','l','a','y','l','i','s','t','1',0};
+
+    hr = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IWMPPlayer4, (void **)&player);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("CLSID_WindowsMediaPlayer is not registered.\n");
+        return;
+    }
+    ok(hr == S_OK, "Failed to create media player instance, hr %#x.\n", hr);
+
+    playlist = NULL;
+    hr = IWMPPlayer4_get_currentPlaylist(player, &playlist);
+    ok(hr == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08x\n", hr);
+    ok(playlist != NULL, "playlist == NULL\n");
+
+    if (0) /* fails on non-English locales */
+    {
+        hr = IWMPPlaylist_get_name(playlist, &str);
+        ok(hr == S_OK, "Failed to get playlist name, hr %#x.\n", hr);
+        ok(!lstrcmpW(str, nameW), "Expected %s, got %s\n", wine_dbgstr_w(nameW), wine_dbgstr_w(str));
+        SysFreeString(str);
+    }
+
+    hr = IWMPPlaylist_get_count(playlist, NULL);
+    ok(hr == E_POINTER, "Failed to get count, hr %#x.\n", hr);
+
+    count = -1;
+    hr = IWMPPlaylist_get_count(playlist, &count);
+    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
+    ok(count == 0, "Expected 0, got %d\n", count);
+
+    IWMPPlaylist_Release(playlist);
+
+    /* newPlaylist doesn't change current playlist */
+    hr = IWMPPlayer4_newPlaylist(player, NULL, NULL, &playlist);
+    ok(hr == S_OK, "Failed to create a playlist, hr %#x.\n", hr);
+
+    playlist2 = NULL;
+    hr = IWMPPlayer4_get_currentPlaylist(player, &playlist2);
+    ok(hr == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08x\n", hr);
+    ok(playlist2 != NULL && playlist2 != playlist, "Unexpected playlist instance\n");
+
+    IWMPPlaylist_Release(playlist2);
+
+    /* different playlists can have the same name */
+    str = SysAllocString(nameW);
+    hr = IWMPPlaylist_put_name(playlist, str);
+    ok(hr == S_OK, "Failed to get playlist name, hr %#x.\n", hr);
+
+    playlist2 = NULL;
+    hr = IWMPPlayer4_newPlaylist(player, str, NULL, &playlist2);
+    ok(hr == S_OK, "Failed to create a playlist, hr %#x.\n", hr);
+    hr = IWMPPlaylist_get_name(playlist2, &str2);
+    ok(hr == S_OK, "Failed to get playlist name, hr %#x.\n", hr);
+    ok(playlist != playlist2, "Expected playlists to be different");
+    ok(!lstrcmpW(str, str2), "Expected names to be the same\n");
+    SysFreeString(str);
+    SysFreeString(str2);
+
+    IWMPPlaylist_Release(playlist2);
+
+    IWMPPlaylist_Release(playlist);
+    IWMPPlayer4_Release(player);
+}
+
 START_TEST(media)
 {
     CoInitialize(NULL);
@@ -618,6 +744,7 @@ START_TEST(media)
     playing_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     completed_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
+    test_playlist();
     test_media_item();
     test_player_url();
     if (test_wmp()) {

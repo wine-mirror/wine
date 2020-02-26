@@ -2075,7 +2075,7 @@ int CDECL MSVCRT_type_info_compare(const type_info140 *l, const type_info140 *r)
     int ret;
 
     if (l == r) ret = 0;
-    else ret = strcmp(l->mangled + 1, r->mangled + 1);
+    else ret = MSVCRT_strcmp(l->mangled + 1, r->mangled + 1);
     TRACE("(%p %p) returning %d\n", l, r, ret);
     return ret;
 }

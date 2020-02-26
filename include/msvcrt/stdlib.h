@@ -8,17 +8,9 @@
 #ifndef __WINE_STDLIB_H
 #define __WINE_STDLIB_H
 
-#include <crtdefs.h>
+#include <corecrt_wstdlib.h>
 
 #include <pshpack8.h>
-
-#ifndef NULL
-#ifdef __cplusplus
-#define NULL  0
-#else
-#define NULL  ((void*)0)
-#endif
-#endif
 
 typedef struct
 {
@@ -159,10 +151,13 @@ char*         __cdecl _ecvt(double,int,int*,int*);
 char*         __cdecl _fcvt(double,int,int*,int*);
 char*         __cdecl _fullpath(char*,const char*,size_t);
 char*         __cdecl _gcvt(double,int,char*);
+errno_t       __cdecl _gcvt_s(char*, size_t, double, int);
 char*         __cdecl _i64toa(__int64,char*,int);
+errno_t       __cdecl _i64toa_s(__int64, char*, size_t, int);
 char*         __cdecl _itoa(int,char*,int);
 errno_t       __cdecl _itoa_s(int,char*,size_t,int);
 char*         __cdecl _ltoa(__msvcrt_long,char*,int);
+errno_t       __cdecl _ltoa_s(__msvcrt_long, char*, size_t, int);
 __msvcrt_ulong __cdecl _lrotl(__msvcrt_ulong,int);
 __msvcrt_ulong __cdecl _lrotr(__msvcrt_ulong,int);
 void          __cdecl _makepath(char*,const char*,const char*,const char*,const char*);
@@ -217,9 +212,7 @@ double        __cdecl strtod(const char*,char**);
 double        __cdecl strtold(const char*,char**);
 __msvcrt_long __cdecl strtol(const char*,char**,int);
 __msvcrt_ulong __cdecl strtoul(const char*,char**,int);
-__int64       __cdecl strtoll(const char*,char**,int);
 __int64       __cdecl strtoll_l(const char*,char**,int,_locale_t);
-unsigned __int64 __cdecl strtoull(const char*,char**,int);
 unsigned __int64 __cdecl strtoull_l(const char*,char**,int,_locale_t);
 __int64       __cdecl _strtoi64(const char*,char**,int);
 __int64       __cdecl _strtoi64_l(const char*,char**,int,_locale_t);
@@ -228,45 +221,6 @@ unsigned __int64 __cdecl _strtoui64_l(const char*,char**,int,_locale_t);
 int           __cdecl system(const char*);
 void*         __cdecl bsearch(const void*,const void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
 void          __cdecl qsort(void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
-
-#ifndef _WSTDLIB_DEFINED
-#define _WSTDLIB_DEFINED
-wchar_t*      __cdecl _itow(int,wchar_t*,int);
-wchar_t*      __cdecl _i64tow(__int64,wchar_t*,int);
-wchar_t*      __cdecl _ltow(__msvcrt_long,wchar_t*,int);
-wchar_t*      __cdecl _ui64tow(unsigned __int64,wchar_t*,int);
-wchar_t*      __cdecl _ultow(__msvcrt_ulong,wchar_t*,int);
-wchar_t*      __cdecl _wfullpath(wchar_t*,const wchar_t*,size_t);
-wchar_t*      __cdecl _wgetenv(const wchar_t*);
-void          __cdecl _wmakepath(wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
-int           __cdecl _wmakepath_s(wchar_t*,size_t,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
-void          __cdecl _wperror(const wchar_t*);
-int           __cdecl _wputenv(const wchar_t*);
-void          __cdecl _wsearchenv(const wchar_t*,const wchar_t*,wchar_t*);
-void          __cdecl _wsplitpath(const wchar_t*,wchar_t*,wchar_t*,wchar_t*,wchar_t*);
-errno_t       __cdecl _wsplitpath_s(const wchar_t*,wchar_t*,size_t,wchar_t*,size_t,
-                                       wchar_t*,size_t,wchar_t*,size_t);
-int           __cdecl _wsystem(const wchar_t*);
-double        __cdecl _wtof(const wchar_t*);
-int           __cdecl _wtoi(const wchar_t*);
-__int64       __cdecl _wtoi64(const wchar_t*);
-__msvcrt_long __cdecl _wtol(const wchar_t*);
-
-size_t        __cdecl mbstowcs(wchar_t*,const char*,size_t);
-errno_t       __cdecl mbstowcs_s(size_t*,wchar_t*,size_t,const char*,size_t);
-int           __cdecl mbtowc(wchar_t*,const char*,size_t);
-float         __cdecl wcstof(const wchar_t*,wchar_t**);
-double        __cdecl wcstod(const wchar_t*,wchar_t**);
-__msvcrt_long __cdecl wcstol(const wchar_t*,wchar_t**,int);
-size_t        __cdecl wcstombs(char*,const wchar_t*,size_t);
-errno_t       __cdecl wcstombs_s(size_t*,char*,size_t,const wchar_t*,size_t);
-__msvcrt_ulong __cdecl wcstoul(const wchar_t*,wchar_t**,int);
-int           __cdecl wctomb(char*,wchar_t);
-__int64       __cdecl _wcstoi64(const wchar_t*,wchar_t**,int);
-__int64       __cdecl _wcstoi64_l(const wchar_t*,wchar_t**,int,_locale_t);
-unsigned __int64 __cdecl _wcstoui64(const wchar_t*,wchar_t**,int);
-unsigned __int64 __cdecl _wcstoui64_l(const wchar_t*,wchar_t**,int,_locale_t);
-#endif /* _WSTDLIB_DEFINED */
 
 typedef void (__cdecl *_invalid_parameter_handler)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned, uintptr_t);
 _invalid_parameter_handler __cdecl _set_invalid_parameter_handler(_invalid_parameter_handler);
@@ -289,6 +243,8 @@ static inline char* itoa(int value, char* str, int radix) { return _itoa(value, 
 static inline char* ltoa(__msvcrt_long value, char* str, int radix) { return _ltoa(value, str, radix); }
 static inline _onexit_t onexit(_onexit_t func) { return _onexit(func); }
 static inline int putenv(const char* str) { return _putenv(str); }
+static inline __int64 strtoll(const char *ptr, char **endptr, int base) { return _strtoi64(ptr, endptr, base); }
+static inline unsigned __int64 __cdecl strtoull(const char *ptr, char **endptr, int base) { return _strtoui64(ptr, endptr, base); }
 static inline void swab(char* src, char* dst, int len) { _swab(src, dst, len); }
 static inline char* ultoa(__msvcrt_ulong value, char* str, int radix) { return _ultoa(value, str, radix); }
 

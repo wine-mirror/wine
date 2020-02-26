@@ -363,7 +363,7 @@ static struct pipe_message *queue_message( struct pipe_end *pipe_end, struct ios
     return message;
 }
 
-static void wake_message( struct pipe_message *message )
+static void wake_message( struct pipe_message *message, data_size_t result )
 {
     struct async *async = message->async;
 
@@ -371,7 +371,7 @@ static void wake_message( struct pipe_message *message )
     if (!async) return;
 
     message->iosb->status = STATUS_SUCCESS;
-    message->iosb->result = message->iosb->in_size;
+    message->iosb->result = result;
     async_terminate( async, message->iosb->result ? STATUS_ALERTED : STATUS_SUCCESS );
     release_object( async );
 }
@@ -749,7 +749,7 @@ static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
     {
         iosb->out_data = message->iosb->in_data;
         message->iosb->in_data = NULL;
-        wake_message( message );
+        wake_message( message, message->iosb->in_size );
         free_message( message );
     }
     else
@@ -773,7 +773,7 @@ static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
             message->read_pos += writing;
             if (message->read_pos == message->iosb->in_size)
             {
-                wake_message(message);
+                wake_message(message, message->iosb->in_size);
                 free_message(message);
             }
         } while (write_pos < iosb->out_size);
@@ -787,11 +787,10 @@ static int ignore_reselect;
 
 static void reselect_write_queue( struct pipe_end *pipe_end );
 
-static void reselect_read_queue( struct pipe_end *pipe_end )
+static void reselect_read_queue( struct pipe_end *pipe_end, int reselect_write )
 {
     struct async *async;
     struct iosb *iosb;
-    int read_done = 0;
 
     ignore_reselect = 1;
     while (!list_empty( &pipe_end->message_queue ) && (async = find_pending_async( &pipe_end->read_q )))
@@ -801,7 +800,7 @@ static void reselect_read_queue( struct pipe_end *pipe_end )
         async_terminate( async, iosb->result ? STATUS_ALERTED : iosb->status );
         release_object( async );
         release_object( iosb );
-        read_done = 1;
+        reselect_write = 1;
     }
     ignore_reselect = 0;
 
@@ -809,7 +808,7 @@ static void reselect_read_queue( struct pipe_end *pipe_end )
     {
         if (list_empty( &pipe_end->message_queue ))
             fd_async_wake_up( pipe_end->connection->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
-        else if (read_done)
+        else if (reselect_write)
             reselect_write_queue( pipe_end->connection );
     }
 }
@@ -836,12 +835,19 @@ static void reselect_write_queue( struct pipe_end *pipe_end )
         {
             avail += message->iosb->in_size - message->read_pos;
             if (message->async && (avail <= reader->buffer_size || !message->iosb->in_size))
-                wake_message( message );
+            {
+                wake_message( message, message->iosb->in_size );
+            }
+            else if (message->async && (pipe_end->flags & NAMED_PIPE_NONBLOCKING_MODE))
+            {
+                wake_message( message, message->read_pos );
+                free_message( message );
+            }
         }
     }
 
     ignore_reselect = 0;
-    reselect_read_queue( reader );
+    reselect_read_queue( reader, 0 );
 }
 
 static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
@@ -851,6 +857,11 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
     switch (pipe_end->state)
     {
     case FILE_PIPE_CONNECTED_STATE:
+        if ((pipe_end->flags & NAMED_PIPE_NONBLOCKING_MODE) && list_empty( &pipe_end->message_queue ))
+        {
+            set_error( STATUS_PIPE_EMPTY );
+            return 0;
+        }
         break;
     case FILE_PIPE_DISCONNECTED_STATE:
         set_error( STATUS_PIPE_DISCONNECTED );
@@ -865,7 +876,7 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
     }
 
     queue_async( &pipe_end->read_q, async );
-    reselect_read_queue( pipe_end );
+    reselect_read_queue( pipe_end, 0 );
     set_error( STATUS_PENDING );
     return 1;
 }
@@ -900,7 +911,7 @@ static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
 
     message->async = (struct async *)grab_object( async );
     queue_async( &pipe_end->write_q, async );
-    reselect_write_queue( pipe_end );
+    reselect_read_queue( pipe_end->connection, 1 );
     set_error( STATUS_PENDING );
     return 1;
 }
@@ -914,7 +925,7 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue )
     if (&pipe_end->write_q == queue)
         reselect_write_queue( pipe_end );
     else if (&pipe_end->read_q == queue)
-        reselect_read_queue( pipe_end );
+        reselect_read_queue( pipe_end, 0 );
 }
 
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd )
@@ -1014,10 +1025,10 @@ static int pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
     message = queue_message( pipe_end->connection, iosb );
     release_object( iosb );
     if (!message) return 0;
-    reselect_read_queue( pipe_end->connection );
+    reselect_read_queue( pipe_end->connection, 0 );
 
     queue_async( &pipe_end->read_q, async );
-    reselect_read_queue( pipe_end );
+    reselect_read_queue( pipe_end, 0 );
     set_error( STATUS_PENDING );
     return 1;
 }
@@ -1095,6 +1106,11 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
             return 0;
         }
 
+        if (server->pipe_end.flags & NAMED_PIPE_NONBLOCKING_MODE)
+        {
+            set_error( STATUS_PIPE_LISTENING );
+            return 0;
+        }
         queue_async( &server->listen_q, async );
         async_wake_up( &server->pipe_end.pipe->waiters, STATUS_SUCCESS );
         set_error( STATUS_PENDING );

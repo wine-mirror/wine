@@ -81,7 +81,7 @@
 @ stub CoCreateObjectInContext
 @ stub CoDeactivateObject
 @ stub CoDecodeProxy
-@ stub CoDecrementMTAUsage
+@ stdcall CoDecrementMTAUsage(ptr) ole32.CoDecrementMTAUsage
 @ stdcall CoDisableCallCancellation(ptr) ole32.CoDisableCallCancellation
 @ stub CoDisconnectContext
 @ stdcall CoDisconnectObject(ptr long) ole32.CoDisconnectObject
@@ -116,7 +116,7 @@
 @ stub CoGetSystemSecurityPermissions
 @ stdcall CoGetTreatAsClass(ptr ptr) ole32.CoGetTreatAsClass
 @ stdcall CoImpersonateClient() ole32.CoImpersonateClient
-@ stub CoIncrementMTAUsage
+@ stdcall CoIncrementMTAUsage(ptr) ole32.CoIncrementMTAUsage
 @ stdcall CoInitializeEx(ptr long) ole32.CoInitializeEx
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) ole32.CoInitializeSecurity
 @ stdcall CoInitializeWOW(long long) ole32.CoInitializeWOW
@@ -180,7 +180,7 @@
 @ stub GetFuncDescs
 @ stdcall GetHGlobalFromStream(ptr ptr) ole32.GetHGlobalFromStream
 @ stub GetHookInterface
-@ stub GetRestrictedErrorInfo
+@ stdcall GetRestrictedErrorInfo(ptr)
 @ stub HSTRING_UserFree
 @ stub HSTRING_UserFree64
 @ stub HSTRING_UserMarshal
@@ -260,7 +260,7 @@
 @ stub RoInspectThreadErrorInfo
 @ stub RoOriginateError
 @ stub RoOriginateErrorW
-@ stub RoOriginateLanguageException
+@ stdcall RoOriginateLanguageException(long ptr ptr)
 @ stub RoParameterizedTypeExtraGetTypeSignature
 @ stdcall RoRegisterActivationFactories(ptr ptr long ptr)
 @ stdcall RoRegisterForApartmentShutdown(ptr ptr ptr)
@@ -283,7 +283,7 @@
 @ stub UpdateDCOMSettings
 @ stdcall WdtpInterfacePointer_UserMarshal(ptr long ptr ptr ptr) ole32.WdtpInterfacePointer_UserMarshal
 @ stub WdtpInterfacePointer_UserMarshal64
-@ stdcall WdtpInterfacePointer_UserSize(ptr long ptr long ptr) ole32.WdtpInterfacePointer_UserSize
+@ stdcall WdtpInterfacePointer_UserSize(ptr long long ptr ptr) ole32.WdtpInterfacePointer_UserSize
 @ stub WdtpInterfacePointer_UserSize64
 @ stdcall WdtpInterfacePointer_UserUnmarshal(ptr ptr ptr ptr) ole32.WdtpInterfacePointer_UserUnmarshal
 @ stub WdtpInterfacePointer_UserUnmarshal64

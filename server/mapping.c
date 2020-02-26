@@ -404,7 +404,7 @@ static void add_committed_range( struct memory_view *view, file_pos_t start, fil
         struct range *new_ptr = realloc( committed->ranges, new_size * sizeof(*new_ptr) );
         if (!new_ptr) return;
         committed->max = new_size;
-        committed->ranges = new_ptr;
+        ranges = committed->ranges = new_ptr;
     }
     memmove( &ranges[i + 1], &ranges[i], (committed->count - i) * sizeof(*ranges) );
     ranges[i].start = start;

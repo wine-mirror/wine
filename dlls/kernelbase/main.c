@@ -24,12 +24,42 @@
 #include "windows.h"
 #include "appmodel.h"
 #include "shlwapi.h"
-
-#include "wine/debug.h"
-#include "wine/heap.h"
+#include "perflib.h"
 #include "winternl.h"
 
+#include "wine/debug.h"
+#include "kernelbase.h"
+#include "wine/heap.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(kernelbase);
+
+
+BOOL is_wow64 = FALSE;
+
+/***********************************************************************
+ *           DllMain
+ */
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+{
+    if (reason == DLL_PROCESS_ATTACH)
+    {
+        DisableThreadLibraryCalls( hinst );
+        IsWow64Process( GetCurrentProcess(), &is_wow64 );
+        init_locale();
+        init_startup_info( NtCurrentTeb()->Peb->ProcessParameters );
+    }
+    return TRUE;
+}
+
+
+/*************************************************************
+ *            DllMainCRTStartup
+ */
+BOOL WINAPI DllMainCRTStartup( HANDLE inst, DWORD reason, LPVOID reserved )
+{
+    return DllMain( inst, reason, reserved );
+}
+
 
 /***********************************************************************
  *          AppPolicyGetProcessTerminationMethod (KERNELBASE.@)
@@ -84,6 +114,71 @@ LONG WINAPI AppPolicyGetWindowingModel(HANDLE token, AppPolicyWindowingModel *po
 }
 
 /***********************************************************************
+ *           PerfCreateInstance   (KERNELBASE.@)
+ */
+PPERF_COUNTERSET_INSTANCE WINAPI PerfCreateInstance(HANDLE handle, LPCGUID guid,
+                                                    const WCHAR *name, ULONG id)
+{
+    FIXME("%p %s %s %u: stub\n", handle, debugstr_guid(guid), debugstr_w(name), id);
+    return NULL;
+}
+
+/***********************************************************************
+ *           PerfDeleteInstance   (KERNELBASE.@)
+ */
+ULONG WINAPI PerfDeleteInstance(HANDLE provider, PPERF_COUNTERSET_INSTANCE block)
+{
+    FIXME("%p %p: stub\n", provider, block);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *           PerfSetCounterSetInfo   (KERNELBASE.@)
+ */
+ULONG WINAPI PerfSetCounterSetInfo(HANDLE handle, PPERF_COUNTERSET_INFO template, ULONG size)
+{
+    FIXME("%p %p %u: stub\n", handle, template, size);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *           PerfSetCounterRefValue   (KERNELBASE.@)
+ */
+ULONG WINAPI PerfSetCounterRefValue(HANDLE provider, PPERF_COUNTERSET_INSTANCE instance,
+                                    ULONG counterid, void *address)
+{
+    FIXME("%p %p %u %p: stub\n", provider, instance, counterid, address);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *           PerfStartProvider   (KERNELBASE.@)
+ */
+ULONG WINAPI PerfStartProvider(GUID *guid, PERFLIBREQUEST callback, HANDLE *provider)
+{
+    FIXME("%s %p %p: stub\n", debugstr_guid(guid), callback, provider);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *           PerfStartProviderEx   (KERNELBASE.@)
+ */
+ULONG WINAPI PerfStartProviderEx(GUID *guid, PPERF_PROVIDER_CONTEXT context, HANDLE *provider)
+{
+    FIXME("%s %p %p: stub\n", debugstr_guid(guid), context, provider);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *           PerfStopProvider   (KERNELBASE.@)
+ */
+ULONG WINAPI PerfStopProvider(HANDLE handle)
+{
+    FIXME("%p: stub\n", handle);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *           QuirkIsEnabled   (KERNELBASE.@)
  */
 BOOL WINAPI QuirkIsEnabled(void *arg)
@@ -111,23 +206,13 @@ BOOL WINAPI QuirkIsEnabled3(void *unk1, void *unk2)
 BOOL WINAPI WaitOnAddress(volatile void *addr, void *cmp, SIZE_T size, DWORD timeout)
 {
     LARGE_INTEGER to;
-    NTSTATUS status;
 
     if (timeout != INFINITE)
     {
         to.QuadPart = -(LONGLONG)timeout * 10000;
-        status = RtlWaitOnAddress((const void *)addr, cmp, size, &to);
+        return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, &to ));
     }
-    else
-        status = RtlWaitOnAddress((const void *)addr, cmp, size, NULL);
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-
-    return TRUE;
+    return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, NULL ));
 }
 
 HRESULT WINAPI QISearch(void *base, const QITAB *table, REFIID riid, void **obj)
@@ -257,7 +342,7 @@ HRESULT WINAPI GetAcceptLanguagesW(WCHAR *langbuf, DWORD *buflen)
     len = mystrlen * sizeof(WCHAR);
     mystr = heap_alloc(len);
     mystr[0] = 0;
-    RegOpenKeyW(HKEY_CURRENT_USER, keyW, &mykey);
+    RegOpenKeyExW(HKEY_CURRENT_USER, keyW, 0, KEY_QUERY_VALUE, &mykey);
     lres = RegQueryValueExW(mykey, valueW, 0, &mytype, (PBYTE)mystr, &len);
     RegCloseKey(mykey);
     len = lstrlenW(mystr);

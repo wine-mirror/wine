@@ -268,7 +268,7 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
         case DRIVE_RAMDISK:   type = DEVICE_RAMDISK; break;
         case DRIVE_FIXED:     type = DEVICE_HARDDISK_VOL; break;
         }
-        return add_dos_device( letter - 'a', NULL, device, mount_point, type, NULL );
+        return add_dos_device( letter - 'a', NULL, device, mount_point, type, NULL, NULL );
     }
     else
     {
@@ -359,6 +359,35 @@ done:
     return status;
 }
 
+/* implementation of IOCTL_MOUNTMGR_QUERY_DHCP_REQUEST_PARAMS */
+static NTSTATUS query_dhcp_request_params( void *buff, SIZE_T insize,
+                                           SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+{
+    struct mountmgr_dhcp_request_params *query = buff;
+    ULONG i, offset;
+
+    /* sanity checks */
+    if (FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]) > insize ||
+        !memchrW( query->adapter, 0, ARRAY_SIZE(query->adapter) )) return STATUS_INVALID_PARAMETER;
+    for (i = 0; i < query->count; i++)
+        if (query->params[i].offset + query->params[i].size > insize) return STATUS_INVALID_PARAMETER;
+
+    offset = FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]);
+    for (i = 0; i < query->count; i++)
+    {
+        offset += get_dhcp_request_param( query->adapter, &query->params[i], buff, offset, outsize - offset );
+        if (offset > outsize)
+        {
+            if (offset >= sizeof(query->size)) query->size = offset;
+            iosb->Information = sizeof(query->size);
+            return STATUS_MORE_ENTRIES;
+        }
+    }
+
+    iosb->Information = offset;
+    return STATUS_SUCCESS;
+}
+
 /* handler for ioctls on the mount manager device */
 static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
@@ -403,6 +432,17 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
                                                    irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                                    &irp->IoStatus );
         break;
+    case IOCTL_MOUNTMGR_QUERY_DHCP_REQUEST_PARAMS:
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_dhcp_request_params))
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        irp->IoStatus.u.Status = query_dhcp_request_params( irp->AssociatedIrp.SystemBuffer,
+                                                            irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                                            irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                                            &irp->IoStatus );
+        break;
     default:
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
@@ -421,6 +461,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     static const WCHAR harddiskW[] = {'\\','D','r','i','v','e','r','\\','H','a','r','d','d','i','s','k',0};
     static const WCHAR driver_serialW[] = {'\\','D','r','i','v','e','r','\\','S','e','r','i','a','l',0};
     static const WCHAR driver_parallelW[] = {'\\','D','r','i','v','e','r','\\','P','a','r','a','l','l','e','l',0};
+    static const WCHAR devicemapW[] = {'H','A','R','D','W','A','R','E','\\','D','E','V','I','C','E','M','A','P','\\','S','c','s','i',0};
 
 #ifdef _WIN64
     static const WCHAR qualified_ports_keyW[] = {'\\','R','E','G','I','S','T','R','Y','\\',
@@ -435,6 +476,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
+    HKEY devicemap_key;
     NTSTATUS status;
 
     TRACE( "%s\n", debugstr_w(path->Buffer) );
@@ -453,6 +495,10 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, mounted_devicesW, 0, NULL,
                      REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &mount_key, NULL );
+
+    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, devicemapW, 0, NULL, REG_OPTION_VOLATILE,
+                          KEY_ALL_ACCESS, NULL, &devicemap_key, NULL ))
+        RegCloseKey( devicemap_key );
 
     RtlInitUnicodeString( &nameW, harddiskW );
     status = IoCreateDriver( &nameW, harddisk_driver_entry );

@@ -943,7 +943,7 @@ static enum operations get_operation(const WCHAR *str, int *op_help)
     return REG_INVALID;
 }
 
-int wmain(int argc, WCHAR *argvW[])
+int __cdecl wmain(int argc, WCHAR *argvW[])
 {
     int i, op, op_help, ret;
     BOOL show_op_help = FALSE;

@@ -1,6 +1,8 @@
 MODULE    = riched32.dll
 IMPORTS   = riched20 user32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	richedit.c
 

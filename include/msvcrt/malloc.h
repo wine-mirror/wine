@@ -20,7 +20,7 @@
 #ifndef __WINE_MALLOC_H
 #define __WINE_MALLOC_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 /* heap function constants */
 #define _HEAPEMPTY    -1

@@ -248,7 +248,7 @@ static void dpiaware_init(void)
         static const WCHAR permonv2W[] = {'p','e','r','m','o','n','i','t','o','r','v','2',0};
         static const WCHAR spacesW[] = {' ','\t','\r','\n',0};
         static const WCHAR * const types[] = { unawareW, systemW, permonW, permonv2W };
-        WCHAR *p, *start = buffer, *end;
+        WCHAR *p, *start, *end;
         ULONG_PTR i;
 
         TRACE( "got dpiAwareness=%s\n", debugstr_w(buffer) );

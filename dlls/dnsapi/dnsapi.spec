@@ -40,7 +40,7 @@
 @ stub DnsFreeNetworkInformation
 @ stub DnsFreeSearchInformation
 @ stub DnsGetBufferLengthForStringCopy
-@ stub DnsGetCacheDataTable
+@ stdcall DnsGetCacheDataTable(ptr)
 @ stub DnsGetDnsServerList
 @ stub DnsGetDomainName
 @ stub DnsGetHostName_A

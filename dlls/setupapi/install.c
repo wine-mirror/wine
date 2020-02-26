@@ -36,7 +36,6 @@
 #include "objbase.h"
 #include "setupapi.h"
 #include "setupapi_private.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
@@ -70,40 +69,6 @@ struct register_dll_info
 
 typedef BOOL (*iterate_fields_func)( HINF hinf, PCWSTR field, void *arg );
 
-/* Unicode constants */
-static const WCHAR CopyFiles[]  = {'C','o','p','y','F','i','l','e','s',0};
-static const WCHAR DelFiles[]   = {'D','e','l','F','i','l','e','s',0};
-static const WCHAR RenFiles[]   = {'R','e','n','F','i','l','e','s',0};
-static const WCHAR Ini2Reg[]    = {'I','n','i','2','R','e','g',0};
-static const WCHAR LogConf[]    = {'L','o','g','C','o','n','f',0};
-static const WCHAR AddReg[]     = {'A','d','d','R','e','g',0};
-static const WCHAR DelReg[]     = {'D','e','l','R','e','g',0};
-static const WCHAR BitReg[]     = {'B','i','t','R','e','g',0};
-static const WCHAR UpdateInis[] = {'U','p','d','a','t','e','I','n','i','s',0};
-static const WCHAR CopyINF[]    = {'C','o','p','y','I','N','F',0};
-static const WCHAR AddService[] = {'A','d','d','S','e','r','v','i','c','e',0};
-static const WCHAR DelService[] = {'D','e','l','S','e','r','v','i','c','e',0};
-static const WCHAR UpdateIniFields[] = {'U','p','d','a','t','e','I','n','i','F','i','e','l','d','s',0};
-static const WCHAR RegisterDlls[]    = {'R','e','g','i','s','t','e','r','D','l','l','s',0};
-static const WCHAR UnregisterDlls[]  = {'U','n','r','e','g','i','s','t','e','r','D','l','l','s',0};
-static const WCHAR ProfileItems[]    = {'P','r','o','f','i','l','e','I','t','e','m','s',0};
-static const WCHAR Name[]            = {'N','a','m','e',0};
-static const WCHAR CmdLine[]         = {'C','m','d','L','i','n','e',0};
-static const WCHAR SubDir[]          = {'S','u','b','D','i','r',0};
-static const WCHAR WineFakeDlls[]    = {'W','i','n','e','F','a','k','e','D','l','l','s',0};
-static const WCHAR WinePreInstall[]  = {'W','i','n','e','P','r','e','I','n','s','t','a','l','l',0};
-static const WCHAR DisplayName[]     = {'D','i','s','p','l','a','y','N','a','m','e',0};
-static const WCHAR Description[]     = {'D','e','s','c','r','i','p','t','i','o','n',0};
-static const WCHAR ServiceBinary[]   = {'S','e','r','v','i','c','e','B','i','n','a','r','y',0};
-static const WCHAR StartName[]       = {'S','t','a','r','t','N','a','m','e',0};
-static const WCHAR LoadOrderGroup[]  = {'L','o','a','d','O','r','d','e','r','G','r','o','u','p',0};
-static const WCHAR ServiceType[]     = {'S','e','r','v','i','c','e','T','y','p','e',0};
-static const WCHAR StartType[]       = {'S','t','a','r','t','T','y','p','e',0};
-static const WCHAR ErrorControl[]    = {'E','r','r','o','r','C','o','n','t','r','o','l',0};
-
-static const WCHAR ServicesKey[] = {'S','y','s','t','e','m','\\',
-                        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                        'S','e','r','v','i','c','e','s',0};
 
 /***********************************************************************
  *            get_field_string
@@ -154,13 +119,31 @@ static WCHAR *dup_section_line_field( HINF hinf, const WCHAR *section, const WCH
  */
 static BOOL copy_files_callback( HINF hinf, PCWSTR field, void *arg )
 {
+    INFCONTEXT context;
     struct files_callback_info *info = arg;
     WCHAR src_root[MAX_PATH], *p;
 
     if (!info->src_root)
     {
-        strcpyW( src_root, PARSER_get_inf_filename( hinf ) );
-        if ((p = strrchrW( src_root, '\\' ))) *p = 0;
+        const WCHAR *build_dir = _wgetenv( L"WINEBUILDDIR" );
+        const WCHAR *data_dir = _wgetenv( L"WINEDATADIR" );
+
+        if ((build_dir || data_dir) && SetupFindFirstLineW( hinf, L"WineSourceDirs", field, &context ))
+        {
+            lstrcpyW( src_root, build_dir ? build_dir : data_dir );
+            src_root[1] = '\\';  /* change \??\ to \\?\ */
+            p = src_root + lstrlenW(src_root);
+            *p++ = '\\';
+            if (!build_dir || !SetupGetStringFieldW( &context, 2, p, MAX_PATH - (p - src_root), NULL ))
+            {
+                if (!SetupGetStringFieldW( &context, 1, p, MAX_PATH - (p - src_root), NULL )) p[-1] = 0;
+            }
+        }
+        else
+        {
+            lstrcpyW( src_root, PARSER_get_inf_filename( hinf ) );
+            if ((p = wcsrchr( src_root, '\\' ))) *p = 0;
+        }
     }
 
     if (field[0] == '@')  /* special case: copy single file */
@@ -206,17 +189,11 @@ static BOOL rename_files_callback( HINF hinf, PCWSTR field, void *arg )
  */
 static HKEY get_root_key( const WCHAR *name, HKEY def_root )
 {
-    static const WCHAR HKCR[] = {'H','K','C','R',0};
-    static const WCHAR HKCU[] = {'H','K','C','U',0};
-    static const WCHAR HKLM[] = {'H','K','L','M',0};
-    static const WCHAR HKU[]  = {'H','K','U',0};
-    static const WCHAR HKR[]  = {'H','K','R',0};
-
-    if (!strcmpiW( name, HKCR )) return HKEY_CLASSES_ROOT;
-    if (!strcmpiW( name, HKCU )) return HKEY_CURRENT_USER;
-    if (!strcmpiW( name, HKLM )) return HKEY_LOCAL_MACHINE;
-    if (!strcmpiW( name, HKU )) return HKEY_USERS;
-    if (!strcmpiW( name, HKR )) return def_root;
+    if (!wcsicmp( name, L"HKCR" )) return HKEY_CLASSES_ROOT;
+    if (!wcsicmp( name, L"HKCU" )) return HKEY_CURRENT_USER;
+    if (!wcsicmp( name, L"HKLM" )) return HKEY_LOCAL_MACHINE;
+    if (!wcsicmp( name, L"HKU" )) return HKEY_USERS;
+    if (!wcsicmp( name, L"HKR" )) return def_root;
     return 0;
 }
 
@@ -242,10 +219,10 @@ static void append_multi_sz_value( HKEY hkey, const WCHAR *value, const WCHAR *s
     total = size;
     while (*strings)
     {
-        int len = strlenW(strings) + 1;
+        int len = lstrlenW(strings) + 1;
 
-        for (p = buffer; *p; p += strlenW(p) + 1)
-            if (!strcmpiW( p, strings )) break;
+        for (p = buffer; *p; p += lstrlenW(p) + 1)
+            if (!wcsicmp( p, strings )) break;
 
         if (!*p)  /* not found, need to append it */
         {
@@ -284,8 +261,8 @@ static void delete_multi_sz_value( HKEY hkey, const WCHAR *value, const WCHAR *s
     dst = buffer + size;
     while (*src)
     {
-        int len = strlenW(src) + 1;
-        if (strcmpiW( src, string ))
+        int len = lstrlenW(src) + 1;
+        if (wcsicmp( src, string ))
         {
             memcpy( dst, src, len * sizeof(WCHAR) );
             dst += len;
@@ -360,7 +337,6 @@ static BOOL do_reg_operation( HKEY hkey, const WCHAR *value, INFCONTEXT *context
     if (!(flags & FLG_ADDREG_BINVALUETYPE) ||
         (type == REG_DWORD && SetupGetFieldCount(context) == 5))
     {
-        static const WCHAR empty;
         WCHAR *str = NULL;
 
         if (type == REG_MULTI_SZ)
@@ -393,7 +369,7 @@ static BOOL do_reg_operation( HKEY hkey, const WCHAR *value, INFCONTEXT *context
 
         if (type == REG_DWORD)
         {
-            DWORD dw = str ? strtoulW( str, NULL, 0 ) : 0;
+            DWORD dw = str ? wcstoul( str, NULL, 0 ) : 0;
             TRACE( "setting dword %s to %x\n", debugstr_w(value), dw );
             RegSetValueExW( hkey, value, 0, type, (BYTE *)&dw, sizeof(dw) );
         }
@@ -401,7 +377,7 @@ static BOOL do_reg_operation( HKEY hkey, const WCHAR *value, INFCONTEXT *context
         {
             TRACE( "setting value %s to %s\n", debugstr_w(value), debugstr_w(str) );
             if (str) RegSetValueExW( hkey, value, 0, type, (BYTE *)str, size * sizeof(WCHAR) );
-            else RegSetValueExW( hkey, value, 0, type, (const BYTE *)&empty, sizeof(WCHAR) );
+            else RegSetValueExW( hkey, value, 0, type, (const BYTE *)L"", sizeof(WCHAR) );
         }
         HeapFree( GetProcessHeap(), 0, str );
         return TRUE;
@@ -552,14 +528,14 @@ static BOOL do_register_dll( struct register_dll_info *info, const WCHAR *path,
         PROCESS_INFORMATION process_info;
         WCHAR *cmd_line;
         BOOL res;
-        static const WCHAR format[] = {'"','%','s','"',' ','%','s',0};
-        static const WCHAR default_args[] = {'/','R','e','g','S','e','r','v','e','r',0};
+        DWORD len;
 
         FreeLibrary( module );
         module = NULL;
-        if (!args) args = default_args;
-        cmd_line = HeapAlloc( GetProcessHeap(), 0, (strlenW(path) + strlenW(args) + 4) * sizeof(WCHAR) );
-        sprintfW( cmd_line, format, path, args );
+        if (!args) args = L"/RegServer";
+        len = lstrlenW(path) + lstrlenW(args) + 4;
+        cmd_line = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        swprintf( cmd_line, len, L"\"%s\" %s", path, args );
         memset( &startup, 0, sizeof(startup) );
         startup.cb = sizeof(startup);
         TRACE( "executing %s\n", debugstr_w(cmd_line) );
@@ -681,11 +657,11 @@ static BOOL register_dlls_callback( HINF hinf, PCWSTR field, void *arg )
         if (!SetupGetStringFieldW( &context, 3, buffer, ARRAY_SIZE( buffer ), NULL ))
             goto done;
         if (!(p = HeapReAlloc( GetProcessHeap(), 0, path,
-                               (strlenW(path) + strlenW(buffer) + 2) * sizeof(WCHAR) ))) goto done;
+                               (lstrlenW(path) + lstrlenW(buffer) + 2) * sizeof(WCHAR) ))) goto done;
         path = p;
-        p += strlenW(p);
+        p += lstrlenW(p);
         if (p == path || p[-1] != '\\') *p++ = '\\';
-        strcpyW( p, buffer );
+        lstrcpyW( p, buffer );
 
         /* get flags */
         if (!SetupGetIntField( &context, 4, &flags )) flags = 0;
@@ -729,11 +705,11 @@ static BOOL fake_dlls_callback( HINF hinf, PCWSTR field, void *arg )
         if (!SetupGetStringFieldW( &context, 3, buffer, ARRAY_SIZE( buffer ), NULL ))
             goto done;
         if (!(p = HeapReAlloc( GetProcessHeap(), 0, path,
-                               (strlenW(path) + strlenW(buffer) + 2) * sizeof(WCHAR) ))) goto done;
+                               (lstrlenW(path) + lstrlenW(buffer) + 2) * sizeof(WCHAR) ))) goto done;
         path = p;
-        p += strlenW(p);
+        p += lstrlenW(p);
         if (p == path || p[-1] != '\\') *p++ = '\\';
-        strcpyW( p, buffer );
+        lstrcpyW( p, buffer );
 
         /* get source dll */
         if (SetupGetStringFieldW( &context, 4, buffer, ARRAY_SIZE( buffer ), NULL ))
@@ -776,17 +752,17 @@ static BOOL update_ini_callback( HINF hinf, PCWSTR field, void *arg )
         if (!SetupGetStringFieldW( &context, 4, buffer, ARRAY_SIZE( buffer ), NULL ))
             continue;
 
-        divider = strchrW(buffer,'=');
+        divider = wcschr(buffer,'=');
         if (divider)
         {
             *divider = 0;
-            strcpyW(entry,buffer);
+            lstrcpyW(entry,buffer);
             divider++;
-            strcpyW(string,divider);
+            lstrcpyW(string,divider);
         }
         else
         {
-            strcpyW(entry,buffer);
+            lstrcpyW(entry,buffer);
             string[0]=0;
         }
 
@@ -830,11 +806,9 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
     INFCONTEXT name_context, context;
     int attrs=0;
 
-    static const WCHAR dotlnk[] = {'.','l','n','k',0};
-
     TRACE( "(%s)\n", debugstr_w(field) );
 
-    if (SetupFindFirstLineW( hinf, field, Name, &name_context ))
+    if (SetupFindFirstLineW( hinf, field, L"Name", &name_context ))
     {
         SetupGetIntField( &name_context, 2, &attrs );
         if (attrs & ~FLG_PROFITEM_GROUP) FIXME( "unhandled attributes: %x\n", attrs );
@@ -843,10 +817,10 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
 
     /* calculate filename */
     SHGetFolderPathW( NULL, CSIDL_COMMON_PROGRAMS, NULL, SHGFP_TYPE_CURRENT, lnkpath );
-    lnkpath_end = lnkpath + strlenW(lnkpath);
+    lnkpath_end = lnkpath + lstrlenW(lnkpath);
     if (lnkpath_end[-1] != '\\') *lnkpath_end++ = '\\';
 
-    if (!(attrs & FLG_PROFITEM_GROUP) && SetupFindFirstLineW( hinf, field, SubDir, &context ))
+    if (!(attrs & FLG_PROFITEM_GROUP) && SetupFindFirstLineW( hinf, field, L"SubDir", &context ))
     {
         unsigned int subdir_size;
 
@@ -873,12 +847,12 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
         HRESULT initresult=E_FAIL;
 
         if (lnkpath+MAX_PATH < lnkpath_end + 5) return TRUE;
-        strcpyW( lnkpath_end, dotlnk );
+        lstrcpyW( lnkpath_end, L".lnk" );
 
         TRACE( "link path: %s\n", debugstr_w(lnkpath) );
 
         /* calculate command line */
-        if (SetupFindFirstLineW( hinf, field, CmdLine, &context ))
+        if (SetupFindFirstLineW( hinf, field, L"CmdLine", &context ))
         {
             unsigned int dir_len=0, subdir_size=0, filename_size=0;
             int dirid=0;
@@ -888,7 +862,7 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
             SetupGetIntField( &context, 1, &dirid );
             dir = DIRID_get_string( dirid );
 
-            if (dir) dir_len = strlenW(dir);
+            if (dir) dir_len = lstrlenW(dir);
 
             SetupGetStringFieldW( &context, 2, NULL, 0, &subdir_size );
             SetupGetStringFieldW( &context, 3, NULL, 0, &filename_size );
@@ -897,7 +871,7 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
             {
                 cmdline = cmdline_end = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * (dir_len+subdir_size+filename_size+1) );
 
-                strcpyW( cmdline_end, dir );
+                lstrcpyW( cmdline_end, dir );
                 cmdline_end += dir_len;
                 if (cmdline_end[-1] != '\\') *cmdline_end++ = '\\';
 
@@ -1028,7 +1002,7 @@ BOOL WINAPI SetupInstallFilesFromInfSectionW( HINF hinf, HINF hlayout, HSPFILEQ 
     info.src_root   = src_root;
     info.copy_flags = flags;
     info.layout     = hlayout;
-    return iterate_section_fields( hinf, section, CopyFiles, copy_files_callback, &info );
+    return iterate_section_fields( hinf, section, L"CopyFiles", copy_files_callback, &info );
 }
 
 
@@ -1084,7 +1058,7 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
 
         info.default_root = key_root;
         info.delete = FALSE;
-        if (!iterate_section_fields( hinf, section, WinePreInstall, registry_callback, &info ))
+        if (!iterate_section_fields( hinf, section, L"WinePreInstall", registry_callback, &info ))
             return FALSE;
     }
     if (flags & SPINST_FILES)
@@ -1097,33 +1071,34 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         info.src_root   = src_root;
         info.copy_flags = copy_flags;
         info.layout     = hinf;
-        ret = (iterate_section_fields( hinf, section, CopyFiles, copy_files_callback, &info ) &&
-               iterate_section_fields( hinf, section, DelFiles, delete_files_callback, &info ) &&
-               iterate_section_fields( hinf, section, RenFiles, rename_files_callback, &info ) &&
+        ret = (iterate_section_fields( hinf, section, L"CopyFiles", copy_files_callback, &info ) &&
+               iterate_section_fields( hinf, section, L"DelFiles", delete_files_callback, &info ) &&
+               iterate_section_fields( hinf, section, L"RenFiles", rename_files_callback, &info ) &&
                SetupCommitFileQueueW( owner, queue, callback, context ));
         SetupCloseFileQueue( queue );
         if (!ret) return FALSE;
     }
     if (flags & SPINST_INIFILES)
     {
-        if (!iterate_section_fields( hinf, section, UpdateInis, update_ini_callback, NULL ) ||
-            !iterate_section_fields( hinf, section, UpdateIniFields,
+        if (!iterate_section_fields( hinf, section, L"UpdateInis", update_ini_callback, NULL ) ||
+            !iterate_section_fields( hinf, section, L"UpdateIniFields",
                                      update_ini_fields_callback, NULL ))
             return FALSE;
     }
     if (flags & SPINST_INI2REG)
     {
-        if (!iterate_section_fields( hinf, section, Ini2Reg, ini2reg_callback, NULL ))
+        if (!iterate_section_fields( hinf, section, L"Ini2Reg", ini2reg_callback, NULL ))
             return FALSE;
     }
     if (flags & SPINST_LOGCONFIG)
     {
-        if (!iterate_section_fields( hinf, section, LogConf, logconf_callback, NULL ))
+        if (!iterate_section_fields( hinf, section, L"LogConf", logconf_callback, NULL ))
             return FALSE;
     }
     if (flags & SPINST_REGSVR)
     {
         struct register_dll_info info;
+        HRESULT hr;
 
         info.unregister    = FALSE;
         info.modules_size  = 0;
@@ -1136,19 +1111,26 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         }
         else info.callback = NULL;
 
-        if (iterate_section_fields( hinf, section, WineFakeDlls, fake_dlls_callback, NULL ))
+        if (iterate_section_fields( hinf, section, L"WineFakeDlls", fake_dlls_callback, NULL ))
             cleanup_fake_dlls();
         else
             return FALSE;
 
-        ret = iterate_section_fields( hinf, section, RegisterDlls, register_dlls_callback, &info );
+        hr = CoInitialize(NULL);
+
+        ret = iterate_section_fields( hinf, section, L"RegisterDlls", register_dlls_callback, &info );
         for (i = 0; i < info.modules_count; i++) FreeLibrary( info.modules[i] );
+
+        if (SUCCEEDED(hr))
+            CoUninitialize();
+
         HeapFree( GetProcessHeap(), 0, info.modules );
         if (!ret) return FALSE;
     }
     if (flags & SPINST_UNREGSVR)
     {
         struct register_dll_info info;
+        HRESULT hr;
 
         info.unregister    = TRUE;
         info.modules_size  = 0;
@@ -1161,8 +1143,14 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         }
         else info.callback = NULL;
 
-        ret = iterate_section_fields( hinf, section, UnregisterDlls, register_dlls_callback, &info );
+        hr = CoInitialize(NULL);
+
+        ret = iterate_section_fields( hinf, section, L"UnregisterDlls", register_dlls_callback, &info );
         for (i = 0; i < info.modules_count; i++) FreeLibrary( info.modules[i] );
+
+        if (SUCCEEDED(hr))
+            CoUninitialize();
+
         HeapFree( GetProcessHeap(), 0, info.modules );
         if (!ret) return FALSE;
     }
@@ -1172,25 +1160,25 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
 
         info.default_root = key_root;
         info.delete = TRUE;
-        if (!iterate_section_fields( hinf, section, DelReg, registry_callback, &info ))
+        if (!iterate_section_fields( hinf, section, L"DelReg", registry_callback, &info ))
             return FALSE;
         info.delete = FALSE;
-        if (!iterate_section_fields( hinf, section, AddReg, registry_callback, &info ))
+        if (!iterate_section_fields( hinf, section, L"AddReg", registry_callback, &info ))
             return FALSE;
     }
     if (flags & SPINST_BITREG)
     {
-        if (!iterate_section_fields( hinf, section, BitReg, bitreg_callback, NULL ))
+        if (!iterate_section_fields( hinf, section, L"BitReg", bitreg_callback, NULL ))
             return FALSE;
     }
     if (flags & SPINST_PROFILEITEMS)
     {
-        if (!iterate_section_fields( hinf, section, ProfileItems, profile_items_callback, NULL ))
+        if (!iterate_section_fields( hinf, section, L"ProfileItems", profile_items_callback, NULL ))
             return FALSE;
     }
     if (flags & SPINST_COPYINF)
     {
-        if (!iterate_section_fields( hinf, section, CopyINF, copy_inf_callback, NULL ))
+        if (!iterate_section_fields( hinf, section, L"CopyINF", copy_inf_callback, NULL ))
             return FALSE;
     }
 
@@ -1208,16 +1196,18 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
 void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, INT show )
 {
 #ifdef __i386__
-    static const WCHAR nt_platformW[] = {'.','n','t','x','8','6',0};
+    static const WCHAR nt_platformW[] = L".ntx86";
 #elif defined(__x86_64__)
-    static const WCHAR nt_platformW[] = {'.','n','t','a','m','d','6','4',0};
+    static const WCHAR nt_platformW[] = L".ntamd64";
+#elif defined(__arm__)
+    static const WCHAR nt_platformW[] = L".ntarm";
+#elif defined(__aarch64__)
+    static const WCHAR nt_platformW[] = L".ntarm64";
 #else  /* FIXME: other platforms */
-    static const WCHAR nt_platformW[] = {'.','n','t',0};
+    static const WCHAR nt_platformW[] = L".nt";
 #endif
-    static const WCHAR nt_genericW[] = {'.','n','t',0};
-    static const WCHAR servicesW[] = {'.','S','e','r','v','i','c','e','s',0};
 
-    WCHAR *s, *path, section[MAX_PATH + ARRAY_SIZE( nt_platformW ) + ARRAY_SIZE( servicesW )];
+    WCHAR *s, *path, section[MAX_PATH + ARRAY_SIZE( nt_platformW ) + ARRAY_SIZE( L".Services" )];
     void *callback_context;
     UINT mode;
     HINF hinf;
@@ -1226,13 +1216,13 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
 
     lstrcpynW( section, cmdline, MAX_PATH );
 
-    if (!(s = strchrW( section, ' ' ))) return;
+    if (!(s = wcschr( section, ' ' ))) return;
     *s++ = 0;
     while (*s == ' ') s++;
-    mode = atoiW( s );
+    mode = wcstol( s, NULL, 10 );
 
     /* quoted paths are not allowed on native, the rest of the command line is taken as the path */
-    if (!(s = strchrW( s, ' ' ))) return;
+    if (!(s = wcschr( s, ' ' ))) return;
     while (*s == ' ') s++;
     path = s;
 
@@ -1245,11 +1235,11 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
 
         /* check for <section>.ntx86 (or corresponding name for the current platform)
          * and then <section>.nt */
-        s = section + strlenW(section);
-        memcpy( s, nt_platformW, sizeof(nt_platformW) );
+        s = section + lstrlenW(section);
+        lstrcpyW( s, nt_platformW );
         if (!(SetupFindFirstLineW( hinf, section, NULL, &context )))
         {
-            memcpy( s, nt_genericW, sizeof(nt_genericW) );
+            lstrcpyW( s, L".nt" );
             if (!(SetupFindFirstLineW( hinf, section, NULL, &context ))) *s = 0;
         }
         if (*s) TRACE( "using section %s instead\n", debugstr_w(section) );
@@ -1260,7 +1250,7 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
                                  SetupDefaultQueueCallbackW, callback_context,
                                  NULL, NULL );
     SetupTermDefaultQueueCallback( callback_context );
-    strcatW( section, servicesW );
+    lstrcatW( section, L".Services" );
     SetupInstallServicesFromInfSectionW( hinf, section, 0 );
     SetupCloseInfFile( hinf );
 
@@ -1304,25 +1294,25 @@ static BOOL add_service( SC_HANDLE scm, HINF hinf, const WCHAR *name, const WCHA
 
     /* first the mandatory fields */
 
-    if (!SetupFindFirstLineW( hinf, section, ServiceType, &context ) ||
+    if (!SetupFindFirstLineW( hinf, section, L"ServiceType", &context ) ||
         !SetupGetIntField( &context, 1, &service_type ))
     {
         SetLastError( ERROR_BAD_SERVICE_INSTALLSECT );
         return FALSE;
     }
-    if (!SetupFindFirstLineW( hinf, section, StartType, &context ) ||
+    if (!SetupFindFirstLineW( hinf, section, L"StartType", &context ) ||
         !SetupGetIntField( &context, 1, &start_type ))
     {
         SetLastError( ERROR_BAD_SERVICE_INSTALLSECT );
         return FALSE;
     }
-    if (!SetupFindFirstLineW( hinf, section, ErrorControl, &context ) ||
+    if (!SetupFindFirstLineW( hinf, section, L"ErrorControl", &context ) ||
         !SetupGetIntField( &context, 1, &error_control ))
     {
         SetLastError( ERROR_BAD_SERVICE_INSTALLSECT );
         return FALSE;
     }
-    if (!(binary_path = dup_section_line_field( hinf, section, ServiceBinary, 1 )))
+    if (!(binary_path = dup_section_line_field( hinf, section, L"ServiceBinary", 1 )))
     {
         SetLastError( ERROR_BAD_SERVICE_INSTALLSECT );
         return FALSE;
@@ -1330,10 +1320,10 @@ static BOOL add_service( SC_HANDLE scm, HINF hinf, const WCHAR *name, const WCHA
 
     /* now the optional fields */
 
-    display_name = dup_section_line_field( hinf, section, DisplayName, 1 );
-    start_name = dup_section_line_field( hinf, section, StartName, 1 );
-    load_order = dup_section_line_field( hinf, section, LoadOrderGroup, 1 );
-    descr.lpDescription = dup_section_line_field( hinf, section, Description, 1 );
+    display_name = dup_section_line_field( hinf, section, L"DisplayName", 1 );
+    start_name = dup_section_line_field( hinf, section, L"StartName", 1 );
+    load_order = dup_section_line_field( hinf, section, L"LoadOrderGroup", 1 );
+    descr.lpDescription = dup_section_line_field( hinf, section, L"Description", 1 );
 
     /* FIXME: Dependencies field */
     /* FIXME: Security field */
@@ -1394,7 +1384,7 @@ static BOOL add_service( SC_HANDLE scm, HINF hinf, const WCHAR *name, const WCHA
     /* execute the AddReg, DelReg and BitReg entries */
 
     info.default_root = 0;
-    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, ServicesKey, &hkey ))
+    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services", &hkey ))
     {
         RegOpenKeyW( hkey, name, &info.default_root );
         RegCloseKey( hkey );
@@ -1402,12 +1392,12 @@ static BOOL add_service( SC_HANDLE scm, HINF hinf, const WCHAR *name, const WCHA
     if (info.default_root)
     {
         info.delete = TRUE;
-        iterate_section_fields( hinf, section, DelReg, registry_callback, &info );
+        iterate_section_fields( hinf, section, L"DelReg", registry_callback, &info );
         info.delete = FALSE;
-        iterate_section_fields( hinf, section, AddReg, registry_callback, &info );
+        iterate_section_fields( hinf, section, L"AddReg", registry_callback, &info );
         RegCloseKey( info.default_root );
     }
-    iterate_section_fields( hinf, section, BitReg, bitreg_callback, NULL );
+    iterate_section_fields( hinf, section, L"BitReg", bitreg_callback, NULL );
 
     if (flags & SPSVCINST_STARTSERVICE) StartServiceW( service, 0, NULL );
     CloseServiceHandle( service );
@@ -1467,7 +1457,7 @@ BOOL WINAPI SetupInstallServicesFromInfSectionW( HINF hinf, PCWSTR section, DWOR
     }
     if (!(scm = OpenSCManagerW( NULL, NULL, SC_MANAGER_ALL_ACCESS ))) return FALSE;
 
-    if (SetupFindFirstLineW( hinf, section, AddService, &context ))
+    if (SetupFindFirstLineW( hinf, section, L"AddService", &context ))
     {
         do
         {
@@ -1478,10 +1468,10 @@ BOOL WINAPI SetupInstallServicesFromInfSectionW( HINF hinf, PCWSTR section, DWOR
                 continue;
             if (!(ret = add_service( scm, hinf, service_name, service_section, section_flags | flags )))
                 goto done;
-        } while (SetupFindNextMatchLineW( &context, AddService, &context ));
+        } while (SetupFindNextMatchLineW( &context, L"AddService", &context ));
     }
 
-    if (SetupFindFirstLineW( hinf, section, DelService, &context ))
+    if (SetupFindFirstLineW( hinf, section, L"DelService", &context ))
     {
         do
         {
@@ -1489,7 +1479,7 @@ BOOL WINAPI SetupInstallServicesFromInfSectionW( HINF hinf, PCWSTR section, DWOR
                 continue;
             if (!SetupGetIntField( &context, 2, &section_flags )) section_flags = 0;
             if (!(ret = del_service( scm, hinf, service_name, section_flags | flags ))) goto done;
-        } while (SetupFindNextMatchLineW( &context, AddService, &context ));
+        } while (SetupFindNextMatchLineW( &context, L"AddService", &context ));
     }
     if (ret) SetLastError( ERROR_SUCCESS );
  done:
@@ -1558,7 +1548,6 @@ BOOL WINAPI SetupGetInfFileListA(PCSTR dir, DWORD style, PSTR buffer,
 BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
                                  DWORD insize, PDWORD outsize)
 {
-    static const WCHAR inf[] = {'\\','*','.','i','n','f',0 };
     WCHAR *filter, *fullname = NULL, *ptr = buffer;
     DWORD dir_len, name_len = 20, size ;
     WIN32_FIND_DATAW finddata;
@@ -1586,7 +1575,7 @@ BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
     {
         DWORD att;
         DWORD msize;
-        dir_len = strlenW( dir );
+        dir_len = lstrlenW( dir );
         if ( !dir_len ) return FALSE;
         msize = ( 7 + dir_len )  * sizeof( WCHAR ); /* \\*.inf\0 */
         filter = HeapAlloc( GetProcessHeap(), 0, msize );
@@ -1595,7 +1584,7 @@ BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
             return FALSE;
         }
-        strcpyW( filter, dir );
+        lstrcpyW( filter, dir );
         if ( '\\' == filter[dir_len - 1] )
             filter[--dir_len] = 0;
 
@@ -1609,7 +1598,6 @@ BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
     }
     else
     {
-        static const WCHAR infdir[] = {'\\','i','n','f',0};
         DWORD msize;
         dir_len = GetWindowsDirectoryW( NULL, 0 );
         msize = ( 7 + 4 + dir_len ) * sizeof( WCHAR );
@@ -1620,9 +1608,9 @@ BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
             return FALSE;
         }
         GetWindowsDirectoryW( filter, msize );
-        strcatW( filter, infdir );
+        lstrcatW( filter, L"\\inf" );
     }
-    strcatW( filter, inf );
+    lstrcatW( filter, L"\\*.inf" );
 
     hdl = FindFirstFileW( filter , &finddata );
     if ( hdl == INVALID_HANDLE_VALUE )
@@ -1634,17 +1622,9 @@ BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
     size = 1;
     do
     {
-        static const WCHAR key[] =
-               {'S','i','g','n','a','t','u','r','e',0 };
-        static const WCHAR section[] =
-               {'V','e','r','s','i','o','n',0 };
-        static const WCHAR sig_win4_1[] =
-               {'$','C','h','i','c','a','g','o','$',0 };
-        static const WCHAR sig_win4_2[] =
-               {'$','W','I','N','D','O','W','S',' ','N','T','$',0 };
         WCHAR signature[ MAX_PATH ];
         BOOL valid = FALSE;
-        DWORD len = strlenW( finddata.cFileName );
+        DWORD len = lstrlenW( finddata.cFileName );
         if (!fullname || ( name_len < len ))
         {
             name_len = ( name_len < len ) ? len : name_len;
@@ -1658,25 +1638,24 @@ BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
                 SetLastError( ERROR_NOT_ENOUGH_MEMORY );
                 return FALSE;
             }
-            strcpyW( fullname, filter );
+            lstrcpyW( fullname, filter );
         }
         fullname[ dir_len + 1] = 0; /* keep '\\' */
-        strcatW( fullname, finddata.cFileName );
-        if (!GetPrivateProfileStringW( section, key, NULL, signature, MAX_PATH, fullname ))
+        lstrcatW( fullname, finddata.cFileName );
+        if (!GetPrivateProfileStringW( L"Version", L"Signature", NULL, signature, MAX_PATH, fullname ))
             signature[0] = 0;
         if( INF_STYLE_OLDNT & style )
-            valid = strcmpiW( sig_win4_1, signature ) &&
-                    strcmpiW( sig_win4_2, signature );
+            valid = wcsicmp( L"$Chicago$", signature ) && wcsicmp( L"$WINDOWS NT$", signature );
         if( INF_STYLE_WIN4 & style )
-            valid = valid || !strcmpiW( sig_win4_1, signature ) ||
-                    !strcmpiW( sig_win4_2, signature );
+            valid = valid || !wcsicmp( L"$Chicago$", signature ) ||
+                    !wcsicmp( L"$WINDOWS NT$", signature );
         if( valid )
         {
-            size += 1 + strlenW( finddata.cFileName );
+            size += 1 + lstrlenW( finddata.cFileName );
             if( ptr && insize >= size )
             {
-                strcpyW( ptr, finddata.cFileName );
-                ptr += 1 + strlenW( finddata.cFileName );
+                lstrcpyW( ptr, finddata.cFileName );
+                ptr += 1 + lstrlenW( finddata.cFileName );
                 *ptr = 0;
             }
         }

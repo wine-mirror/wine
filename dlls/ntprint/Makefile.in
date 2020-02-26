@@ -1,6 +1,8 @@
 MODULE    = ntprint.dll
 IMPORTS   = winspool
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	ntprint.c
 

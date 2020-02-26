@@ -18,6 +18,8 @@
 
 #include "winhttp.h"
 
+extern _locale_t c_locale DECLSPEC_HIDDEN;
+
 #define STREAM_BUFSIZE 4096
 
 struct xmlbuf
@@ -48,8 +50,8 @@ struct dictionary
     ULONG              current_sequence;
     ULONG             *sequence;
 };
-struct dictionary dict_builtin DECLSPEC_HIDDEN;
-const struct dictionary dict_builtin_static DECLSPEC_HIDDEN;
+extern struct dictionary dict_builtin DECLSPEC_HIDDEN;
+extern const struct dictionary dict_builtin_static DECLSPEC_HIDDEN;
 
 int find_string( const struct dictionary *, const unsigned char *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
 HRESULT insert_string( struct dictionary *, unsigned char *, ULONG, int, ULONG * ) DECLSPEC_HIDDEN;
@@ -65,8 +67,6 @@ void free_xml_string( WS_XML_STRING * ) DECLSPEC_HIDDEN;
 HRESULT append_attribute( WS_XML_ELEMENT_NODE *, WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 void free_attribute( WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
-BOOL set_fpword( unsigned short, unsigned short * ) DECLSPEC_HIDDEN;
-void restore_fpword( unsigned short ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const void * ) DECLSPEC_HIDDEN;
 HRESULT read_header( WS_XML_READER *, const WS_XML_STRING *, const WS_XML_STRING *, WS_TYPE,
                      const void *, WS_READ_OPTION, WS_HEAP *, void *, ULONG ) DECLSPEC_HIDDEN;
@@ -161,9 +161,10 @@ void message_set_receive_context( WS_MESSAGE *, const WS_PROXY_MESSAGE_CALLBACK_
 void message_do_send_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
 void message_do_receive_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
 HRESULT message_insert_http_headers( WS_MESSAGE *, HINTERNET ) DECLSPEC_HIDDEN;
+HRESULT message_map_http_response_headers( WS_MESSAGE *, HINTERNET, const WS_HTTP_MESSAGE_MAPPING * ) DECLSPEC_HIDDEN;
 
 HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
-HRESULT channel_receive_message( WS_CHANNEL * ) DECLSPEC_HIDDEN;
+HRESULT channel_receive_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
 HRESULT channel_get_reader( WS_CHANNEL *, WS_XML_READER ** ) DECLSPEC_HIDDEN;
 
 HRESULT parse_url( const WS_STRING *, WS_URL_SCHEME_TYPE *, WCHAR **, USHORT * ) DECLSPEC_HIDDEN;

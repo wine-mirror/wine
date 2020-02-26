@@ -18,8 +18,11 @@
 
 
 #include <math.h>
+#include <assert.h>
+#include <wchar.h>
 
 #include "jscript.h"
+#include "engine.h"
 
 #include "wine/debug.h"
 
@@ -126,7 +129,7 @@ static HRESULT Error_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
     switch(flags) {
     case INVOKE_FUNC:
-        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        return JS_E_FUNCTION_EXPECTED;
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
@@ -372,73 +375,148 @@ HRESULT init_error_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
     return S_OK;
 }
 
-static HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str, jsdisp_t *constr)
+static jsstr_t *format_error_message(HRESULT error, const WCHAR *arg)
 {
-    WCHAR buf[1024], *pos = NULL;
-    jsdisp_t *err;
-    jsstr_t *msg;
-    HRESULT hres;
+    size_t len, arg_len = 0;
+    const WCHAR *res, *pos;
+    WCHAR *buf, *p;
+    jsstr_t *r;
 
     if(!is_jscript_error(error))
-        return error;
+        return jsstr_empty();
 
-    buf[0] = '\0';
-    LoadStringW(jscript_hinstance, HRESULT_CODE(error), buf, ARRAY_SIZE(buf));
+    len = LoadStringW(jscript_hinstance, HRESULT_CODE(error), (WCHAR*)&res, 0);
 
-    if(str) pos = wcschr(buf, '|');
-    if(pos) {
-        int len = lstrlenW(str);
-        memmove(pos+len, pos+1, (lstrlenW(pos+1)+1)*sizeof(WCHAR));
-        memcpy(pos, str, len*sizeof(WCHAR));
+    pos = wmemchr(res, '|', len);
+    if(pos && arg)
+        arg_len = lstrlenW(arg);
+    r = jsstr_alloc_buf(len + arg_len - (pos ? 1 : 0), &buf);
+    if(!r)
+        return jsstr_empty();
+
+    p = buf;
+    if(pos > res) {
+        memcpy(p, res, (pos - res) * sizeof(WCHAR));
+        p += pos - res;
+    }
+    pos = pos ? pos + 1 : res;
+    if(arg_len) {
+        memcpy(p, arg, arg_len * sizeof(WCHAR));
+        p += arg_len;
+    }
+    if(pos != res + len)
+        memcpy(p, pos, (res + len - pos) * sizeof(WCHAR));
+    return r;
+}
+
+HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
+{
+    jsexcept_t *ei = ctx->ei;
+    TRACE("%08x\n", error);
+    reset_ei(ei);
+    ei->error = error;
+    if(str)
+        ei->message = format_error_message(error, str);
+    return DISP_E_EXCEPTION;
+}
+
+void set_error_location(jsexcept_t *ei, bytecode_t *code, unsigned loc, unsigned source_id, jsstr_t *line)
+{
+    if(is_jscript_error(ei->error)) {
+        if(!ei->source) {
+            const WCHAR *res;
+            size_t len;
+
+            len = LoadStringW(jscript_hinstance, source_id, (WCHAR*)&res, 0);
+            ei->source = jsstr_alloc_len(res, len);
+        }
+        if(!ei->message)
+            ei->message = format_error_message(ei->error, NULL);
     }
 
-    WARN("%s\n", debugstr_w(buf));
+    TRACE("source %s in %s\n", debugstr_w(code->source + loc), debugstr_w(code->source));
 
-    msg = jsstr_alloc(buf);
-    if(!msg)
-        return E_OUTOFMEMORY;
-
-    hres = create_error(ctx, constr, error, msg, &err);
-    jsstr_release(msg);
-    if(FAILED(hres))
-        return hres;
-
-    jsval_release(ctx->ei.val);
-    ctx->ei.val = jsval_obj(err);
-    return error;
+    ei->code = bytecode_addref(code);
+    ei->loc = loc;
+    if(line)
+        ei->line = jsstr_addref(line);
 }
 
-HRESULT throw_generic_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
+jsdisp_t *create_builtin_error(script_ctx_t *ctx)
 {
-    return throw_error(ctx, error, str, ctx->error_constr);
-}
+    jsdisp_t *constr = ctx->error_constr, *r;
+    jsexcept_t *ei = ctx->ei;
+    HRESULT hres;
 
-HRESULT throw_range_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->range_error_constr);
-}
+    assert(FAILED(ei->error) && ei->error != DISP_E_EXCEPTION);
 
-HRESULT throw_reference_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->reference_error_constr);
-}
+    if(is_jscript_error(ei->error)) {
+        switch(ei->error) {
+        case JS_E_SYNTAX:
+        case JS_E_MISSING_SEMICOLON:
+        case JS_E_MISSING_LBRACKET:
+        case JS_E_MISSING_RBRACKET:
+        case JS_E_EXPECTED_IDENTIFIER:
+        case JS_E_EXPECTED_ASSIGN:
+        case JS_E_INVALID_CHAR:
+        case JS_E_UNTERMINATED_STRING:
+        case JS_E_MISPLACED_RETURN:
+        case JS_E_INVALID_BREAK:
+        case JS_E_INVALID_CONTINUE:
+        case JS_E_LABEL_REDEFINED:
+        case JS_E_LABEL_NOT_FOUND:
+        case JS_E_EXPECTED_CCEND:
+        case JS_E_DISABLED_CC:
+        case JS_E_EXPECTED_AT:
+            constr = ctx->syntax_error_constr;
+            break;
 
-HRESULT throw_regexp_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->regexp_error_constr);
-}
+        case JS_E_TO_PRIMITIVE:
+        case JS_E_INVALIDARG:
+        case JS_E_OBJECT_REQUIRED:
+        case JS_E_INVALID_PROPERTY:
+        case JS_E_INVALID_ACTION:
+        case JS_E_MISSING_ARG:
+        case JS_E_FUNCTION_EXPECTED:
+        case JS_E_DATE_EXPECTED:
+        case JS_E_NUMBER_EXPECTED:
+        case JS_E_OBJECT_EXPECTED:
+        case JS_E_UNDEFINED_VARIABLE:
+        case JS_E_BOOLEAN_EXPECTED:
+        case JS_E_VBARRAY_EXPECTED:
+        case JS_E_INVALID_DELETE:
+        case JS_E_JSCRIPT_EXPECTED:
+        case JS_E_ENUMERATOR_EXPECTED:
+        case JS_E_ARRAY_EXPECTED:
+        case JS_E_NONCONFIGURABLE_REDEFINED:
+        case JS_E_NONWRITABLE_MODIFIED:
+        case JS_E_PROP_DESC_MISMATCH:
+        case JS_E_INVALID_WRITABLE_PROP_DESC:
+            constr = ctx->type_error_constr;
+            break;
 
-HRESULT throw_syntax_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->syntax_error_constr);
-}
+        case JS_E_SUBSCRIPT_OUT_OF_RANGE:
+        case JS_E_FRACTION_DIGITS_OUT_OF_RANGE:
+        case JS_E_PRECISION_OUT_OF_RANGE:
+        case JS_E_INVALID_LENGTH:
+            constr = ctx->range_error_constr;
+            break;
 
-HRESULT throw_type_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->type_error_constr);
-}
+        case JS_E_ILLEGAL_ASSIGN:
+            constr = ctx->reference_error_constr;
+            break;
 
-HRESULT throw_uri_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
-{
-    return throw_error(ctx, error, str, ctx->uri_error_constr);
+        case JS_E_REGEXP_SYNTAX:
+            constr = ctx->regexp_error_constr;
+            break;
+
+        case JS_E_INVALID_URI_CODING:
+        case JS_E_INVALID_URI_CHAR:
+            constr = ctx->uri_error_constr;
+            break;
+        }
+    }
+
+    hres = create_error(ctx, constr, ei->error, ei->message ? ei->message : jsstr_empty(), &r);
+    return SUCCEEDED(hres) ? r : NULL;
 }

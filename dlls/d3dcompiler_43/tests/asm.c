@@ -1725,7 +1725,11 @@ static BOOL load_d3dcompiler(void)
 {
     HMODULE module;
 
+#if D3D_COMPILER_VERSION == 47
+    if (!(module = LoadLibraryA("d3dcompiler_47.dll"))) return FALSE;
+#else
     if (!(module = LoadLibraryA("d3dcompiler_43.dll"))) return FALSE;
+#endif
 
     pD3DAssemble = (void*)GetProcAddress(module, "D3DAssemble");
     ppD3DPreprocess = (void*)GetProcAddress(module, "D3DPreprocess");
@@ -1736,7 +1740,7 @@ START_TEST(asm)
 {
     if (!load_d3dcompiler())
     {
-        win_skip("Could not load d3dcompiler_43.dll\n");
+        win_skip("Could not load DLL.\n");
         return;
     }
 

@@ -769,9 +769,9 @@ static NSString* WineLocalizedString(unsigned int stringID)
         if (CGDisplayModeGetHeight(mode1) != CGDisplayModeGetHeight(mode2)) return FALSE;
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-        if (CGDisplayModeGetPixelWidth != NULL &&
+        if (&CGDisplayModeGetPixelWidth != NULL &&
             CGDisplayModeGetPixelWidth(mode1) != CGDisplayModeGetPixelWidth(mode2)) return FALSE;
-        if (CGDisplayModeGetPixelHeight != NULL &&
+        if (&CGDisplayModeGetPixelHeight != NULL &&
             CGDisplayModeGetPixelHeight(mode1) != CGDisplayModeGetPixelHeight(mode2)) return FALSE;
 #endif
 
@@ -801,9 +801,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
         NSDictionary* options = nil;
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-        if (&kCGDisplayShowDuplicateLowResolutionModes != NULL)
-            options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:TRUE]
-                                                  forKey:(NSString*)kCGDisplayShowDuplicateLowResolutionModes];
+        options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:TRUE]
+                                              forKey:(NSString*)kCGDisplayShowDuplicateLowResolutionModes];
 #endif
 
         NSArray *modes = [(NSArray*)CGDisplayCopyAllDisplayModes(displayID, (CFDictionaryRef)options) autorelease];
@@ -1577,6 +1576,34 @@ static NSString* WineLocalizedString(unsigned int stringID)
         }
     }
 
+    - (void) handleWindowDrag:(NSEvent*)anEvent begin:(BOOL)begin
+    {
+        WineWindow* window = (WineWindow*)[anEvent window];
+        if ([window isKindOfClass:[WineWindow class]])
+        {
+            macdrv_event* event;
+            int eventType;
+
+            if (begin)
+            {
+                [windowsBeingDragged addObject:window];
+                eventType = WINDOW_DRAG_BEGIN;
+            }
+            else
+            {
+                [windowsBeingDragged removeObject:window];
+                eventType = WINDOW_DRAG_END;
+            }
+            [self updateCursorClippingState];
+
+            event = macdrv_create_event(eventType, window);
+            if (eventType == WINDOW_DRAG_BEGIN)
+                event->window_drag_begin.no_activate = [NSEvent wine_commandKeyDown];
+            [window.queue postEvent:event];
+            macdrv_release_event(event);
+        }
+    }
+
     - (void) handleMouseMove:(NSEvent*)anEvent
     {
         WineWindow* targetWindow;
@@ -1730,6 +1757,9 @@ static NSString* WineLocalizedString(unsigned int stringID)
         NSEventType type = [theEvent type];
         WineWindow* windowBroughtForward = nil;
         BOOL process = FALSE;
+
+        if (type == NSLeftMouseUp && [windowsBeingDragged count])
+            [self handleWindowDrag:theEvent begin:NO];
 
         if ([window isKindOfClass:[WineWindow class]] &&
             type == NSLeftMouseDown &&
@@ -2083,32 +2113,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             // "a window is being dragged" and "a window is no longer being
             // dragged", respectively.
             if (subtype == 20 || subtype == 21)
-            {
-                WineWindow* window = (WineWindow*)[anEvent window];
-                if ([window isKindOfClass:[WineWindow class]])
-                {
-                    macdrv_event* event;
-                    int eventType;
-
-                    if (subtype == 20)
-                    {
-                        [windowsBeingDragged addObject:window];
-                        eventType = WINDOW_DRAG_BEGIN;
-                    }
-                    else
-                    {
-                        [windowsBeingDragged removeObject:window];
-                        eventType = WINDOW_DRAG_END;
-                    }
-                    [self updateCursorClippingState];
-
-                    event = macdrv_create_event(eventType, window);
-                    if (eventType == WINDOW_DRAG_BEGIN)
-                        event->window_drag_begin.no_activate = [NSEvent wine_commandKeyDown];
-                    [window.queue postEvent:event];
-                    macdrv_release_event(event);
-                }
-            }
+                [self handleWindowDrag:anEvent begin:(subtype == 20)];
         }
 
         return ret;

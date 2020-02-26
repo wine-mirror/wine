@@ -972,7 +972,7 @@ static void test_xmlelem(void)
 
     hr = IXMLElement_get_text(element, &str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(lstrlenW(str) == 0, "Expected empty text\n");
+    ok(str && !*str, "Expected empty text\n");
     SysFreeString(str);
 
     /* put_text with an ELEMENT */

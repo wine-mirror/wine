@@ -1835,7 +1835,7 @@ static void test_texture1d_interfaces(void)
         desc.MipLevels = 1;
         desc.ArraySize = 1;
         desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.Usage = D3D10_USAGE_DEFAULT;
         desc.BindFlags = current->bind_flags;
         desc.CPUAccessFlags = 0;
         desc.MiscFlags = current->misc_flags;
@@ -3576,6 +3576,14 @@ static void test_create_shader_resource_view(void)
     check_interface(srview, &IID_ID3D11ShaderResourceView, TRUE, TRUE);
 
     ID3D10ShaderResourceView_Release(srview);
+    ID3D10Buffer_Release(buffer);
+
+    /* Without D3D10_BIND_SHADER_RESOURCE. */
+    buffer = create_buffer(device, 0, 1024, NULL);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)buffer, &srv_desc, &srview);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
     ID3D10Buffer_Release(buffer);
 
     texture2d_desc.Width = 512;
@@ -17524,8 +17532,8 @@ static void test_multiple_viewports(void)
 
     /* Two viewports, only first scissor rectangle set. */
     memset(&rasterizer_desc, 0, sizeof(rasterizer_desc));
-    rasterizer_desc.FillMode = D3D11_FILL_SOLID;
-    rasterizer_desc.CullMode = D3D11_CULL_BACK;
+    rasterizer_desc.FillMode = D3D10_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D10_CULL_BACK;
     rasterizer_desc.DepthClipEnable = TRUE;
     rasterizer_desc.ScissorEnable = TRUE;
     hr = ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &rasterizer_state);
@@ -17981,6 +17989,81 @@ static void test_render_a8(void)
     release_test_context(&test_context);
 }
 
+static void test_desktop_window(void)
+{
+    ID3D10RenderTargetView *backbuffer_rtv;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    ID3D10Texture2D *backbuffer;
+    IDXGISwapChain *swapchain;
+    IDXGIDevice *dxgi_device;
+    IDXGIAdapter *adapter;
+    IDXGIFactory *factory;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const float red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    ok(SUCCEEDED(hr), "Failed to get DXGI device, hr %#x.\n", hr);
+    hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
+    ok(SUCCEEDED(hr), "Failed to get adapter, hr %#x.\n", hr);
+    IDXGIDevice_Release(dxgi_device);
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to get factory, hr %#x.\n", hr);
+    IDXGIAdapter_Release(adapter);
+
+    swapchain_desc.BufferDesc.Width = 640;
+    swapchain_desc.BufferDesc.Height = 480;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 1;
+    swapchain_desc.OutputWindow = GetDesktopWindow();
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+
+    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK || broken(hr == DXGI_ERROR_INVALID_CALL) /* Not available on all Windows versions. */,
+            "Failed to create swapchain, hr %#x.\n", hr);
+    IDXGIFactory_Release(factory);
+    if (FAILED(hr))
+    {
+        ID3D10Device_Release(device);
+        return;
+    }
+
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D10Texture2D, (void **)&backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)backbuffer, NULL, &backbuffer_rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+
+    ID3D10Device_ClearRenderTargetView(device, backbuffer_rtv, red);
+    check_texture_color(backbuffer, 0xff0000ff, 1);
+
+    hr = IDXGISwapChain_Present(swapchain, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10RenderTargetView_Release(backbuffer_rtv);
+    ID3D10Texture2D_Release(backbuffer);
+    IDXGISwapChain_Release(swapchain);
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -18098,6 +18181,7 @@ START_TEST(d3d10core)
     queue_test(test_depth_clip);
     queue_test(test_staging_buffers);
     queue_test(test_render_a8);
+    queue_test(test_desktop_window);
 
     run_queued_tests();
 

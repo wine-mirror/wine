@@ -19,7 +19,6 @@
  */
 
 #define COBJMACROS
-#include "config.h"
 
 #include <stdarg.h>
 
@@ -29,7 +28,6 @@
 #include "rpcproxy.h"
 #include "propsys.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 
 #include "initguid.h"
@@ -474,4 +472,20 @@ HRESULT PropertyStore_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv
     IPropertyStoreCache_Release(&This->IPropertyStoreCache_iface);
 
     return ret;
+}
+
+HRESULT WINAPI PSCreatePropertyStoreFromObject(IUnknown *obj, DWORD access, REFIID riid, void **ret)
+{
+    HRESULT hr;
+
+    TRACE("(%p, %d, %s, %p)\n", obj, access, debugstr_guid(riid), ret);
+
+    if (!obj || !ret)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IPropertyStore) && SUCCEEDED(hr = IUnknown_QueryInterface(obj, riid, ret)))
+        return hr;
+
+    FIXME("Unimplemented for %s.\n", debugstr_guid(riid));
+    return E_NOTIMPL;
 }

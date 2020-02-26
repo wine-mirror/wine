@@ -2,7 +2,8 @@ EXTRADEFS = -D_NTSYSTEM_
 MODULE    = ntdll.dll
 IMPORTLIB = ntdll
 IMPORTS   = winecrt0
-EXTRALIBS = $(IOKIT_LIBS) $(RT_LIBS) $(PTHREAD_LIBS)
+EXTRAINCL = $(UNWIND_CFLAGS)
+EXTRALIBS = $(IOKIT_LIBS) $(RT_LIBS) $(PTHREAD_LIBS) $(UNWIND_LIBS)
 EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
 
 C_SRCS = \
@@ -10,6 +11,7 @@ C_SRCS = \
 	atom.c \
 	cdrom.c \
 	critsection.c \
+	crypt.c \
 	debugbuffer.c \
 	debugtools.c \
 	directory.c \
@@ -22,6 +24,7 @@ C_SRCS = \
 	large_int.c \
 	loader.c \
 	loadorder.c \
+	locale.c \
 	misc.c \
 	nt.c \
 	om.c \

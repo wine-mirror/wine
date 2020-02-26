@@ -81,7 +81,13 @@ static int (*pgnutls_pubkey_import_rsa_raw)(gnutls_pubkey_t key, const gnutls_da
 /* Not present in gnutls version < 3.3.0 */
 static int (*pgnutls_privkey_export_ecc_raw)(gnutls_privkey_t, gnutls_ecc_curve_t *,
                                              gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *);
+static int (*pgnutls_privkey_export_rsa_raw)(gnutls_privkey_t, gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *,
+                                             gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *,
+                                             gnutls_datum_t *);
 static int (*pgnutls_privkey_generate)(gnutls_privkey_t, gnutls_pk_algorithm_t, unsigned int, unsigned int);
+
+/* Not present in gnutls version < 3.6.0 */
+static int (*pgnutls_decode_rs_value)(const gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -96,6 +102,7 @@ MAKE_FUNCPTR(gnutls_global_set_log_level);
 MAKE_FUNCPTR(gnutls_perror);
 MAKE_FUNCPTR(gnutls_privkey_deinit);
 MAKE_FUNCPTR(gnutls_privkey_init);
+MAKE_FUNCPTR(gnutls_privkey_sign_hash);
 MAKE_FUNCPTR(gnutls_pubkey_deinit);
 MAKE_FUNCPTR(gnutls_pubkey_init);
 #undef MAKE_FUNCPTR
@@ -112,6 +119,13 @@ static int compat_gnutls_cipher_add_auth(gnutls_cipher_hd_t handle, const void *
 
 static int compat_gnutls_pubkey_import_ecc_raw(gnutls_pubkey_t key, gnutls_ecc_curve_t curve,
                                                const gnutls_datum_t *x, const gnutls_datum_t *y)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
+static int compat_gnutls_privkey_export_rsa_raw(gnutls_privkey_t key, gnutls_datum_t *m, gnutls_datum_t *e,
+                                                gnutls_datum_t *d, gnutls_datum_t *p, gnutls_datum_t *q,
+                                                gnutls_datum_t *u, gnutls_datum_t *e1, gnutls_datum_t *e2)
 {
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
@@ -152,6 +166,11 @@ static int compat_gnutls_privkey_generate(gnutls_privkey_t key, gnutls_pk_algori
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
+static int compat_gnutls_decode_rs_value(const gnutls_datum_t * sig_value, gnutls_datum_t * r, gnutls_datum_t * s)
+{
+    return GNUTLS_E_INTERNAL_ERROR;
+}
+
 static void gnutls_log( int level, const char *msg )
 {
     TRACE( "<%d> %s", level, msg );
@@ -185,6 +204,7 @@ BOOL gnutls_initialize(void)
     LOAD_FUNCPTR(gnutls_perror)
     LOAD_FUNCPTR(gnutls_privkey_deinit);
     LOAD_FUNCPTR(gnutls_privkey_init);
+    LOAD_FUNCPTR(gnutls_privkey_sign_hash);
     LOAD_FUNCPTR(gnutls_pubkey_deinit);
     LOAD_FUNCPTR(gnutls_pubkey_init);
 #undef LOAD_FUNCPTR
@@ -209,6 +229,11 @@ BOOL gnutls_initialize(void)
     {
         WARN("gnutls_pubkey_import_ecc_raw not found\n");
         pgnutls_pubkey_import_ecc_raw = compat_gnutls_pubkey_import_ecc_raw;
+    }
+    if (!(pgnutls_privkey_export_rsa_raw = wine_dlsym( libgnutls_handle, "gnutls_privkey_export_rsa_raw", NULL, 0 )))
+    {
+        WARN("gnutls_privkey_export_rsa_raw not found\n");
+        pgnutls_privkey_export_rsa_raw = compat_gnutls_privkey_export_rsa_raw;
     }
     if (!(pgnutls_privkey_export_ecc_raw = wine_dlsym( libgnutls_handle, "gnutls_privkey_export_ecc_raw", NULL, 0 )))
     {
@@ -239,6 +264,11 @@ BOOL gnutls_initialize(void)
     {
         WARN("gnutls_privkey_generate not found\n");
         pgnutls_privkey_generate = compat_gnutls_privkey_generate;
+    }
+    if (!(pgnutls_decode_rs_value = wine_dlsym( libgnutls_handle, "gnutls_decode_rs_value", NULL, 0 )))
+    {
+        WARN("gnutls_decode_rs_value not found\n");
+        pgnutls_decode_rs_value = compat_gnutls_decode_rs_value;
     }
 
     if (TRACE_ON( bcrypt ))
@@ -369,24 +399,24 @@ NTSTATUS key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULO
 {
     if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
     {
-        if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB, size ))
+        if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB ))
         {
             key->u.s.mode = MODE_ID_ECB;
             return STATUS_SUCCESS;
         }
-        else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
+        else if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
         {
             key->u.s.mode = MODE_ID_CBC;
             return STATUS_SUCCESS;
         }
-        else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM, size ))
+        else if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM ))
         {
             key->u.s.mode = MODE_ID_GCM;
             return STATUS_SUCCESS;
         }
         else
         {
-            FIXME( "unsupported mode %s\n", debugstr_wn( (WCHAR *)value, size ) );
+            FIXME( "unsupported mode %s\n", debugstr_w((WCHAR *)value) );
             return STATUS_NOT_IMPLEMENTED;
         }
     }
@@ -424,6 +454,8 @@ NTSTATUS key_symmetric_init( struct key *key, struct algorithm *alg, const UCHAR
     key->alg_id         = alg->id;
     key->u.s.mode       = alg->mode;
     key->u.s.handle     = 0;        /* initialized on first use */
+    key->u.s.vector     = NULL;
+    key->u.s.vector_len = 0;
 
     return STATUS_SUCCESS;
 }
@@ -458,30 +490,45 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
     }
 }
 
-NTSTATUS key_symmetric_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
+NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len )
+{
+    if (key->u.s.handle && (!is_zero_vector( vector, vector_len ) ||
+        !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len )))
+    {
+        TRACE( "invalidating cipher handle\n" );
+        pgnutls_cipher_deinit( key->u.s.handle );
+        key->u.s.handle = NULL;
+    }
+
+    heap_free( key->u.s.vector );
+    key->u.s.vector = NULL;
+    key->u.s.vector_len = 0;
+    if (vector)
+    {
+        if (!(key->u.s.vector = heap_alloc( vector_len ))) return STATUS_NO_MEMORY;
+        memcpy( key->u.s.vector, vector, vector_len );
+        key->u.s.vector_len = vector_len;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS init_cipher_handle( struct key *key )
 {
     gnutls_cipher_algorithm_t cipher;
     gnutls_datum_t secret, vector;
     int ret;
 
-    if (key->u.s.handle)
-    {
-        pgnutls_cipher_deinit( key->u.s.handle );
-        key->u.s.handle = NULL;
-    }
-
-    if ((cipher = get_gnutls_cipher( key )) == GNUTLS_CIPHER_UNKNOWN)
-        return STATUS_NOT_SUPPORTED;
+    if (key->u.s.handle) return STATUS_SUCCESS;
+    if ((cipher = get_gnutls_cipher( key )) == GNUTLS_CIPHER_UNKNOWN) return STATUS_NOT_SUPPORTED;
 
     secret.data = key->u.s.secret;
     secret.size = key->u.s.secret_len;
-    if (iv)
-    {
-        vector.data = iv;
-        vector.size = iv_len;
-    }
 
-    if ((ret = pgnutls_cipher_init( &key->u.s.handle, cipher, &secret, iv ? &vector : NULL )))
+    vector.data = key->u.s.vector;
+    vector.size = key->u.s.vector_len;
+
+    if ((ret = pgnutls_cipher_init( &key->u.s.handle, cipher, &secret, key->u.s.vector ? &vector : NULL )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -492,8 +539,12 @@ NTSTATUS key_symmetric_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
 
 NTSTATUS key_symmetric_set_auth_data( struct key *key, UCHAR *auth_data, ULONG len )
 {
+    NTSTATUS status;
     int ret;
+
     if (!auth_data) return STATUS_SUCCESS;
+    if ((status = init_cipher_handle( key ))) return status;
+
     if ((ret = pgnutls_cipher_add_auth( key->u.s.handle, auth_data, len )))
     {
         pgnutls_perror( ret );
@@ -504,7 +555,11 @@ NTSTATUS key_symmetric_set_auth_data( struct key *key, UCHAR *auth_data, ULONG l
 
 NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len )
 {
+    NTSTATUS status;
     int ret;
+
+    if ((status = init_cipher_handle( key ))) return status;
+
     if ((ret = pgnutls_cipher_encrypt2( key->u.s.handle, input, input_len, output, output_len )))
     {
         pgnutls_perror( ret );
@@ -515,7 +570,11 @@ NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input
 
 NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len  )
 {
+    NTSTATUS status;
     int ret;
+
+    if ((status = init_cipher_handle( key ))) return status;
+
     if ((ret = pgnutls_cipher_decrypt2( key->u.s.handle, input, input_len, output, output_len )))
     {
         pgnutls_perror( ret );
@@ -526,12 +585,68 @@ NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input
 
 NTSTATUS key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
 {
+    NTSTATUS status;
     int ret;
+
+    if ((status = init_cipher_handle( key ))) return status;
+
     if ((ret = pgnutls_cipher_tag( key->u.s.handle, tag, len )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
     }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, UCHAR **pubkey, ULONG *pubkey_len )
+{
+    BCRYPT_RSAKEY_BLOB *rsa_blob;
+    gnutls_datum_t m, e;
+    UCHAR *dst, *src;
+    int ret;
+
+    if ((ret = pgnutls_privkey_export_rsa_raw( gnutls_key, &m, &e, NULL, NULL, NULL, NULL, NULL, NULL )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (!(rsa_blob = heap_alloc( sizeof(*rsa_blob) + e.size + m.size )))
+    {
+        pgnutls_perror( ret );
+        free( e.data ); free( m.data );
+        return STATUS_NO_MEMORY;
+    }
+
+    dst = (UCHAR *)(rsa_blob + 1);
+    if (e.size == bitlen / 8 + 1 && !e.data[0])
+    {
+        src = e.data + 1;
+        e.size--;
+    }
+    else src = e.data;
+    memcpy( dst, src, e.size );
+
+    dst += e.size;
+    if (m.size == bitlen / 8 + 1 && !m.data[0])
+    {
+        src = m.data + 1;
+        m.size--;
+    }
+    else src = m.data;
+    memcpy( dst, src, m.size );
+
+    rsa_blob->Magic       = BCRYPT_RSAPUBLIC_MAGIC;
+    rsa_blob->BitLength   = bitlen;
+    rsa_blob->cbPublicExp = e.size;
+    rsa_blob->cbModulus   = m.size;
+    rsa_blob->cbPrime1    = 0;
+    rsa_blob->cbPrime2    = 0;
+
+    *pubkey = (UCHAR *)rsa_blob;
+    *pubkey_len = sizeof(*rsa_blob) + e.size + m.size;
+
+    free( e.data ); free( m.data );
     return STATUS_SUCCESS;
 }
 
@@ -593,8 +708,8 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, UCHAR **p
 NTSTATUS key_asymmetric_generate( struct key *key )
 {
     gnutls_pk_algorithm_t pk_alg;
-    gnutls_ecc_curve_t curve;
     gnutls_privkey_t handle;
+    unsigned int bitlen;
     NTSTATUS status;
     int ret;
 
@@ -602,9 +717,16 @@ NTSTATUS key_asymmetric_generate( struct key *key )
 
     switch (key->alg_id)
     {
+    case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
+        pk_alg = GNUTLS_PK_RSA;
+        bitlen = key->u.a.bitlen;
+        break;
+
     case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDSA_P256:
         pk_alg = GNUTLS_PK_ECC; /* compatible with ECDSA and ECDH */
-        curve = GNUTLS_ECC_CURVE_SECP256R1;
+        bitlen = GNUTLS_CURVE_TO_BITS( GNUTLS_ECC_CURVE_SECP256R1 );
         break;
 
     default:
@@ -618,14 +740,29 @@ NTSTATUS key_asymmetric_generate( struct key *key )
         return STATUS_INTERNAL_ERROR;
     }
 
-    if ((ret = pgnutls_privkey_generate( handle, pk_alg, GNUTLS_CURVE_TO_BITS(curve), 0 )))
+    if ((ret = pgnutls_privkey_generate( handle, pk_alg, bitlen, 0 )))
     {
         pgnutls_perror( ret );
         pgnutls_privkey_deinit( handle );
         return STATUS_INTERNAL_ERROR;
     }
 
-    if ((status = export_gnutls_pubkey_ecc( handle, &key->u.a.pubkey, &key->u.a.pubkey_len )))
+    switch (pk_alg)
+    {
+    case GNUTLS_PK_RSA:
+        status = export_gnutls_pubkey_rsa( handle, key->u.a.bitlen, &key->u.a.pubkey, &key->u.a.pubkey_len );
+        break;
+
+    case GNUTLS_PK_ECC:
+        status = export_gnutls_pubkey_ecc( handle, &key->u.a.pubkey, &key->u.a.pubkey_len );
+        break;
+
+    default:
+        ERR( "unhandled algorithm %u\n", pk_alg );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (status)
     {
         pgnutls_privkey_deinit( handle );
         return status;
@@ -741,7 +878,8 @@ NTSTATUS key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, const UCHAR *pubkey, ULONG pubkey_len )
+NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, ULONG bitlen, const UCHAR *pubkey,
+                              ULONG pubkey_len )
 {
     if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
 
@@ -751,6 +889,7 @@ NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, const UCHA
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
         break;
 
     default:
@@ -764,7 +903,8 @@ NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, const UCHA
         memcpy( key->u.a.pubkey, pubkey, pubkey_len );
         key->u.a.pubkey_len = pubkey_len;
     }
-    key->alg_id = alg->id;
+    key->alg_id     = alg->id;
+    key->u.a.bitlen = bitlen;
 
     return STATUS_SUCCESS;
 }
@@ -845,6 +985,7 @@ static NTSTATUS import_gnutls_pubkey( struct key *key, gnutls_pubkey_t *gnutls_k
         return import_gnutls_pubkey_ecc( key, gnutls_key );
 
     case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
         return import_gnutls_pubkey_rsa( key, gnutls_key );
 
     default:
@@ -893,12 +1034,24 @@ static NTSTATUS prepare_gnutls_signature( struct key *key, UCHAR *signature, ULO
         return prepare_gnutls_signature_ecc( key, signature, signature_len, gnutls_signature );
 
     case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
         return prepare_gnutls_signature_rsa( key, signature, signature_len, gnutls_signature );
 
     default:
         FIXME( "algorithm %u not yet supported\n", key->alg_id );
         return STATUS_NOT_IMPLEMENTED;
     }
+}
+
+static gnutls_digest_algorithm_t get_digest_from_id( const WCHAR *alg_id )
+{
+    if (!strcmpW( alg_id, BCRYPT_SHA1_ALGORITHM ))   return GNUTLS_DIG_SHA1;
+    if (!strcmpW( alg_id, BCRYPT_SHA256_ALGORITHM )) return GNUTLS_DIG_SHA256;
+    if (!strcmpW( alg_id, BCRYPT_SHA384_ALGORITHM )) return GNUTLS_DIG_SHA384;
+    if (!strcmpW( alg_id, BCRYPT_SHA512_ALGORITHM )) return GNUTLS_DIG_SHA512;
+    if (!strcmpW( alg_id, BCRYPT_MD2_ALGORITHM ))    return GNUTLS_DIG_MD2;
+    if (!strcmpW( alg_id, BCRYPT_MD5_ALGORITHM ))    return GNUTLS_DIG_MD5;
+    return -1;
 }
 
 NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULONG hash_len, UCHAR *signature,
@@ -922,6 +1075,7 @@ NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULO
         /* only the hash size must match, not the actual hash function */
         switch (hash_len)
         {
+        case 20: hash_alg = GNUTLS_DIG_SHA1; break;
         case 32: hash_alg = GNUTLS_DIG_SHA256; break;
         case 48: hash_alg = GNUTLS_DIG_SHA384; break;
 
@@ -933,17 +1087,14 @@ NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULO
         break;
     }
     case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
     {
         BCRYPT_PKCS1_PADDING_INFO *info = (BCRYPT_PKCS1_PADDING_INFO *)padding;
 
         if (!(flags & BCRYPT_PAD_PKCS1) || !info) return STATUS_INVALID_PARAMETER;
         if (!info->pszAlgId) return STATUS_INVALID_SIGNATURE;
 
-        if (!strcmpW( info->pszAlgId, BCRYPT_SHA1_ALGORITHM )) hash_alg = GNUTLS_DIG_SHA1;
-        else if (!strcmpW( info->pszAlgId, BCRYPT_SHA256_ALGORITHM )) hash_alg = GNUTLS_DIG_SHA256;
-        else if (!strcmpW( info->pszAlgId, BCRYPT_SHA384_ALGORITHM )) hash_alg = GNUTLS_DIG_SHA384;
-        else if (!strcmpW( info->pszAlgId, BCRYPT_SHA512_ALGORITHM )) hash_alg = GNUTLS_DIG_SHA512;
-        else
+        if ((hash_alg = get_digest_from_id(info->pszAlgId)) == -1)
         {
             FIXME( "hash algorithm %s not supported\n", debugstr_w(info->pszAlgId) );
             return STATUS_NOT_SUPPORTED;
@@ -978,11 +1129,164 @@ NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULO
     return (ret < 0) ? STATUS_INVALID_SIGNATURE : STATUS_SUCCESS;
 }
 
+static unsigned int get_signature_length( enum alg_id id )
+{
+    switch (id)
+    {
+    case ALG_ID_ECDSA_P256: return 64;
+    case ALG_ID_ECDSA_P384: return 96;
+    default:
+        FIXME( "unhandled algorithm %u\n", id );
+        return 0;
+    }
+}
+
+static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signature,
+                                         UCHAR *output, ULONG output_len, ULONG *ret_len )
+{
+    switch (type)
+    {
+    case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
+    {
+        if (output_len < signature.size) return STATUS_BUFFER_TOO_SMALL;
+        memcpy( output, signature.data, signature.size );
+        *ret_len = signature.size;
+        return STATUS_SUCCESS;
+    }
+    case ALG_ID_ECDSA_P256:
+    case ALG_ID_ECDSA_P384:
+    {
+        int err;
+        unsigned int pad_size, sig_len = get_signature_length( type );
+        gnutls_datum_t r, s; /* format as r||s */
+
+        if ((err = pgnutls_decode_rs_value( &signature, &r, &s )))
+        {
+            pgnutls_perror( err );
+            return STATUS_INTERNAL_ERROR;
+        }
+
+        if (output_len < sig_len) return STATUS_BUFFER_TOO_SMALL;
+
+        /* remove prepended zero byte */
+        if (r.size % 2)
+        {
+            r.size--;
+            r.data += 1;
+        }
+        if (s.size % 2)
+        {
+            s.size--;
+            s.data += 1;
+        }
+
+        if (r.size != s.size || r.size + s.size > sig_len)
+        {
+            ERR( "we didn't get a correct signature\n" );
+            return STATUS_INTERNAL_ERROR;
+        }
+
+        pad_size = (sig_len / 2) - s.size;
+        memset( output, 0, sig_len );
+
+        memcpy( output + pad_size, r.data, r.size );
+        memcpy( output + (sig_len / 2) + pad_size, s.data, s.size );
+
+        *ret_len = sig_len;
+        return STATUS_SUCCESS;
+    }
+    default:
+        return STATUS_INTERNAL_ERROR;
+    }
+}
+
+NTSTATUS key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULONG input_len, UCHAR *output,
+                              ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    BCRYPT_PKCS1_PADDING_INFO *pad = padding;
+    gnutls_datum_t hash, signature;
+    gnutls_digest_algorithm_t hash_alg;
+    NTSTATUS status;
+    int ret;
+
+    if (key->alg_id == ALG_ID_ECDSA_P256 || key->alg_id == ALG_ID_ECDSA_P384)
+    {
+        /* With ECDSA, we find the digest algorithm from the hash length, and verify it */
+        switch (input_len)
+        {
+        case 20: hash_alg = GNUTLS_DIG_SHA1; break;
+        case 32: hash_alg = GNUTLS_DIG_SHA256; break;
+        case 48: hash_alg = GNUTLS_DIG_SHA384; break;
+        case 64: hash_alg = GNUTLS_DIG_SHA512; break;
+
+        default:
+            FIXME( "hash size %u not yet supported\n", input_len );
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        if (flags == BCRYPT_PAD_PKCS1 && pad && pad->pszAlgId && get_digest_from_id( pad->pszAlgId ) != hash_alg)
+        {
+            WARN( "incorrect hashing algorithm %s, expected %u\n", debugstr_w(pad->pszAlgId), hash_alg );
+            return STATUS_INVALID_PARAMETER;
+        }
+    }
+    else if (flags == BCRYPT_PAD_PKCS1)
+    {
+        if (!pad || !pad->pszAlgId)
+        {
+            WARN( "padding info not found\n" );
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        if ((hash_alg = get_digest_from_id( pad->pszAlgId )) == -1)
+        {
+            FIXME( "hash algorithm %s not recognized\n", debugstr_w(pad->pszAlgId) );
+            return STATUS_NOT_SUPPORTED;
+        }
+    }
+    else if (!flags)
+    {
+         WARN( "invalid flags %08x\n", flags );
+         return STATUS_INVALID_PARAMETER;
+    }
+    else
+    {
+        FIXME( "flags %08x not implemented\n", flags );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (!input)
+    {
+        *ret_len = key->u.a.bitlen / 8;
+        return STATUS_SUCCESS;
+    }
+    if (!key->u.a.handle) return STATUS_INVALID_PARAMETER;
+
+    hash.data = input;
+    hash.size = input_len;
+
+    signature.data = NULL;
+    signature.size = 0;
+
+    if ((ret = pgnutls_privkey_sign_hash( key->u.a.handle, hash_alg, 0, &hash, &signature )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    status = format_gnutls_signature( key->alg_id, signature, output, output_len, ret_len );
+
+    free( signature.data );
+    return status;
+}
+
 NTSTATUS key_destroy( struct key *key )
 {
     if (key_is_symmetric( key ))
     {
         if (key->u.s.handle) pgnutls_cipher_deinit( key->u.s.handle );
+        heap_free( key->u.s.vector );
         heap_free( key->u.s.secret );
     }
     else

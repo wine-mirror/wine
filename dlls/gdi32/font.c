@@ -36,6 +36,7 @@
 #include "winreg.h"
 #include "gdi_private.h"
 #include "wine/exception.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -861,7 +862,7 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
 /***********************************************************************
  *           nulldrv_SelectFont
  */
-HFONT nulldrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
+HFONT CDECL nulldrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
 {
     static const WCHAR desktopW[] = { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
                                       'D','e','s','k','t','o','p',0 };
@@ -1992,8 +1993,8 @@ static void draw_glyph( DC *dc, INT origin_x, INT origin_y, const GLYPHMETRICS *
 /***********************************************************************
  *           nulldrv_ExtTextOut
  */
-BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
-                         LPCWSTR str, UINT count, const INT *dx )
+BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
+                               LPCWSTR str, UINT count, const INT *dx )
 {
     DC *dc = get_nulldrv_dc( dev );
     UINT i;
@@ -3312,6 +3313,9 @@ GetCharacterPlacementW(
     TRACE("%s, %d, %d, 0x%08x\n",
           debugstr_wn(lpString, uCount), uCount, nMaxExtent, dwFlags);
 
+    if (!uCount)
+        return 0;
+
     if (!lpResults)
         return GetTextExtentPoint32W(hdc, lpString, uCount, &size) ? MAKELONG(size.cx, size.cy) : 0;
 
@@ -3471,23 +3475,61 @@ done:
 /*************************************************************************
  *      GetCharWidthFloatA [GDI32.@]
  */
-BOOL WINAPI GetCharWidthFloatA(HDC hdc, UINT iFirstChar,
-		                    UINT iLastChar, PFLOAT pxBuffer)
+BOOL WINAPI GetCharWidthFloatA( HDC hdc, UINT first, UINT last, float *buffer )
 {
-    FIXME("%p, %u, %u, %p: stub!\n", hdc, iFirstChar, iLastChar, pxBuffer);
-    return FALSE;
+    WCHAR *wstr;
+    int i, wlen;
+    char *str;
+
+    if (!(str = FONT_GetCharsByRangeA( hdc, first, last, &i )))
+        return FALSE;
+    wstr = FONT_mbtowc( hdc, str, i, &wlen, NULL );
+    heap_free(str);
+
+    for (i = 0; i < wlen; ++i)
+    {
+        if (!GetCharWidthFloatW( hdc, wstr[i], wstr[i], &buffer[i] ))
+        {
+            heap_free(wstr);
+            return FALSE;
+        }
+    }
+    heap_free(wstr);
+    return TRUE;
 }
 
 /*************************************************************************
  *      GetCharWidthFloatW [GDI32.@]
  */
-BOOL WINAPI GetCharWidthFloatW(HDC hdc, UINT iFirstChar,
-		                    UINT iLastChar, PFLOAT pxBuffer)
+BOOL WINAPI GetCharWidthFloatW( HDC hdc, UINT first, UINT last, float *buffer )
 {
-    FIXME("%p, %u, %u, %p: stub!\n", hdc, iFirstChar, iLastChar, pxBuffer);
-    return FALSE;
-}
+    DC *dc = get_dc_ptr( hdc );
+    int *ibuffer;
+    PHYSDEV dev;
+    BOOL ret;
+    UINT i;
 
+    TRACE("dc %p, first %#x, last %#x, buffer %p\n", dc, first, last, buffer);
+
+    if (!dc) return FALSE;
+
+    if (!(ibuffer = heap_alloc( (last - first + 1) * sizeof(int) )))
+    {
+        release_dc_ptr( dc );
+        return FALSE;
+    }
+
+    dev = GET_DC_PHYSDEV( dc, pGetCharWidth );
+    if ((ret = dev->funcs->pGetCharWidth( dev, first, last, ibuffer )))
+    {
+        float scale = fabs( dc->xformVport2World.eM11 ) / 16.0f;
+        for (i = first; i <= last; ++i)
+            buffer[i - first] = ibuffer[i - first] * scale;
+    }
+
+    heap_free(ibuffer);
+    return ret;
+}
 
 /***********************************************************************
  *								       *

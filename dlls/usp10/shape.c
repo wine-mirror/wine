@@ -805,7 +805,7 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
                 }
             }
 
-            /* renumber trailing indexes */
+            /* renumber trailing indices */
             for (i = target_index; i < chars && i >= 0; i += cluster_dir)
             {
                 if (pwLogClust[i] != target_glyph)
@@ -998,7 +998,7 @@ static inline BOOL left_join_causing(CHAR joining_type)
 
 static inline BOOL word_break_causing(WCHAR chr)
 {
-    /* we are working within a string of characters already guareented to
+    /* we are working within a string of characters already guaranteed to
        be within one script, Syriac, so we do not worry about any character
        other than the space character outside of that range */
     return (chr == 0 || chr == 0x20 );
@@ -1971,7 +1971,7 @@ static void SecondReorder_Like_Tamil(const WCHAR *chars, const IndicSyllable *s,
 }
 
 
-static inline void shift_syllable_glyph_indexs(IndicSyllable *glyph_index, INT index, INT shift)
+static inline void shift_syllable_glyph_indices(IndicSyllable *glyph_index, INT index, INT shift)
 {
     if (shift == 0)
         return;
@@ -2005,7 +2005,7 @@ static void Apply_Indic_BasicForm(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
             if (nextIndex > GSUB_E_NOGLYPH)
             {
                 UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
-                shift_syllable_glyph_indexs(glyph_index,index,*pcGlyphs - prevCount);
+                shift_syllable_glyph_indices(glyph_index,index,*pcGlyphs - prevCount);
                 index = nextIndex;
             }
             else
@@ -2040,7 +2040,7 @@ static void Apply_Indic_PreBase(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
         if (nextIndex > GSUB_E_NOGLYPH)
         {
             UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
-            shift_syllable_glyph_indexs(glyph_index, index + glyph_index->start + g_offset, (*pcGlyphs - prevCount));
+            shift_syllable_glyph_indices(glyph_index, index + glyph_index->start + g_offset, (*pcGlyphs - prevCount));
             g_offset += (*pcGlyphs - prevCount);
         }
 
@@ -2060,7 +2060,7 @@ static void Apply_Indic_Rphf(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
         if (nextIndex > GSUB_E_NOGLYPH)
         {
             UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
-            shift_syllable_glyph_indexs(glyph_index,glyph_index->ralf,*pcGlyphs - prevCount);
+            shift_syllable_glyph_indices(glyph_index,glyph_index->ralf,*pcGlyphs - prevCount);
         }
     }
 }
@@ -2108,7 +2108,7 @@ static void Apply_Indic_PostBase(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa
         if (nextIndex > GSUB_E_NOGLYPH)
         {
             UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
-            shift_syllable_glyph_indexs(glyph_index,index+glyph_index->start+g_offset, (*pcGlyphs - prevCount));
+            shift_syllable_glyph_indices(glyph_index,index+glyph_index->start+g_offset, (*pcGlyphs - prevCount));
             g_offset += (*pcGlyphs - prevCount);
         }
         else if (!modern)
@@ -2138,70 +2138,70 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
     BOOL pref = (load_OT_feature(hdc, psa, psc, FEATURE_GSUB_TABLE, "pref") != NULL);
     BOOL blwf = (load_OT_feature(hdc, psa, psc, FEATURE_GSUB_TABLE, "blwf") != NULL);
     BOOL half = (load_OT_feature(hdc, psa, psc, FEATURE_GSUB_TABLE, "half") != NULL);
-    IndicSyllable glyph_indexs;
+    IndicSyllable glyph_indices;
 
     for (c = 0; c < syllable_count; c++)
     {
         int old_end;
-        memcpy(&glyph_indexs, &syllables[c], sizeof(IndicSyllable));
-        shift_syllable_glyph_indexs(&glyph_indexs, -1, overall_shift);
-        old_end = glyph_indexs.end;
+        memcpy(&glyph_indices, &syllables[c], sizeof(IndicSyllable));
+        shift_syllable_glyph_indices(&glyph_indices, -1, overall_shift);
+        old_end = glyph_indices.end;
 
         if (locl)
         {
             TRACE("applying feature locl\n");
-            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, locl);
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, locl);
         }
         if (nukt)
         {
             TRACE("applying feature nukt\n");
-            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, nukt);
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, nukt);
         }
         if (akhn)
         {
             TRACE("applying feature akhn\n");
-            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, akhn);
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, akhn);
         }
 
         if (rphf)
-            Apply_Indic_Rphf(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs);
+            Apply_Indic_Rphf(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices);
         if (rkrf)
         {
             TRACE("applying feature rkrf\n");
-            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, rkrf);
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, rkrf);
         }
         if (pref)
-            Apply_Indic_PostBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, modern, "pref");
+            Apply_Indic_PostBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, modern, "pref");
         if (blwf)
         {
             if (!modern)
-                Apply_Indic_PreBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, "blwf");
+                Apply_Indic_PreBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, "blwf");
 
-            Apply_Indic_PostBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, modern, "blwf");
+            Apply_Indic_PostBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, modern, "blwf");
 
         }
         if (half)
-            Apply_Indic_PreBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, "half");
+            Apply_Indic_PreBase(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, "half");
         if (pstf)
         {
             TRACE("applying feature pstf\n");
-            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, pstf);
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, pstf);
         }
         if (vatu)
         {
             TRACE("applying feature vatu\n");
-            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, vatu);
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, vatu);
         }
         if (cjct)
         {
             TRACE("applying feature cjct\n");
-            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indexs, cjct);
+            Apply_Indic_BasicForm(hdc, psc, psa, pwChars, cChars, &syllables[c], pwOutGlyphs, pcGlyphs, pwLogClust, lexical, &glyph_indices, cjct);
         }
 
         if (second_reorder)
-            second_reorder(pwChars, &syllables[c], pwOutGlyphs, &glyph_indexs, lexical);
+            second_reorder(pwChars, &syllables[c], pwOutGlyphs, &glyph_indices, lexical);
 
-        overall_shift += glyph_indexs.end - old_end;
+        overall_shift += glyph_indices.end - old_end;
     }
 }
 

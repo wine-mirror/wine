@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.1.104"
+VK_XML_VERSION = "1.1.130"
 WINE_VK_VERSION = (1, 1)
 
 # Filenames to create.
@@ -235,7 +235,7 @@ class VkBaseType(object):
 
         Args:
             name (:obj:'str'): Name of the base type.
-            _type (:obj:'str'): Underlaying type
+            _type (:obj:'str'): Underlying type
             alias (bool): type is an alias or not.
             requires (:obj:'str', optional): Other types required.
                 Often bitmask values pull in a *FlagBits type.
@@ -296,7 +296,7 @@ class VkDefine(object):
         # Perform minimal parsing for Vulkan constants, which we don't need, but are referenced
         # elsewhere in vk.xml.
         # - VK_API_VERSION is a messy, deprecated constant and we don't want generate code for it.
-        # - AHardwareBuffer/ANativeWindow are forard declarations for Android types, which leaked
+        # - AHardwareBuffer/ANativeWindow are forward declarations for Android types, which leaked
         #   into the define region.
         if name in ["VK_API_VERSION", "AHardwareBuffer", "ANativeWindow", "CAMetalLayer"]:
             return VkDefine(name, None)
@@ -1312,7 +1312,7 @@ class VkParam(object):
             elif self.type == "size_t":
                 self.format_str = "0x%s"
                 self.format_conv = "wine_dbgstr_longlong({0})"
-            elif self.type in ["uint32_t", "VkBool32"]:
+            elif self.type in ["uint16_t", "uint32_t", "VkBool32"]:
                 self.format_str = "%u"
             elif self.type in ["uint64_t", "VkDeviceSize"]:
                 self.format_str = "0x%s"
@@ -1491,17 +1491,17 @@ class VkParam(object):
     def spec(self):
         """ Generate spec file entry for this parameter. """
 
-        if self.type_info["category"] in ["bitmask", "enum"]:
-            return "long"
         if self.is_pointer() and self.type == "char":
             return "str"
         if self.is_dispatchable() or self.is_pointer() or self.is_static_array():
             return "ptr"
+        if self.type_info["category"] in ["bitmask", "enum"]:
+            return "long"
         if self.is_handle() and not self.is_dispatchable():
             return "int64"
         if self.type == "float":
             return "float"
-        if self.type in ["int", "int32_t", "size_t", "uint32_t", "VkBool32"]:
+        if self.type in ["int", "int32_t", "size_t", "uint16_t", "uint32_t", "VkBool32"]:
             return "long"
         if self.type in ["uint64_t", "VkDeviceSize"]:
             return "int64"
@@ -2608,6 +2608,8 @@ class VkRegistry(object):
             if type_info["category"] == "struct":
                 struct = type_info["data"]
                 mark_struct_dependencies(struct, self.types)
+            elif type_info["category"] == "bitmask":
+                mark_bitmask_dependencies(type_info["data"], self.types)
 
         if func.is_alias():
             func.alias.required = True
@@ -2716,8 +2718,18 @@ class VkRegistry(object):
         elif "value" in enum_elem.keys():
             self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
 
+    @staticmethod
+    def _require_type(type_info):
+        if type_info.is_alias():
+            type_info = type_info.alias
+        type_info.required = True
+        if type(type_info) == VkStruct:
+            for member in type_info.members:
+                if "data" in member.type_info:
+                  VkRegistry._require_type(member.type_info["data"])
+
     def _parse_extensions(self, root):
-        """ Parse extensions section and pull in any types and commands for this extensioin. """
+        """ Parse extensions section and pull in any types and commands for this extension. """
         extensions = []
         exts = root.findall("./extensions/extension")
         for ext in exts:
@@ -2769,10 +2781,7 @@ class VkRegistry(object):
 
                 for t in require.findall("type"):
                     type_info = self.types[t.attrib["name"]]["data"]
-                    if type_info.is_alias():
-                        type_info = type_info.alias
-                    type_info.required = True
-
+                    self._require_type(type_info)
                 feature = require.attrib.get("feature")
                 if feature and not self._is_feature_supported(feature):
                     continue
@@ -2836,6 +2845,7 @@ class VkRegistry(object):
         for t in types:
             type_info = {}
             type_info["category"] = t.attrib.get("category", None)
+            type_info["requires"] = t.attrib.get("requires", None)
 
             # We parse aliases in a second pass when we know more.
             alias = t.attrib.get("alias")
@@ -2854,13 +2864,19 @@ class VkRegistry(object):
                 base_types.append(basetype)
                 type_info["data"] = basetype
 
+            # Basic C types don't need us to define them, but we do need data for them
+            if type_info["requires"] == "vk_platform":
+                requires = type_info["requires"]
+                basic_c = VkBaseType(name, _type, requires=requires)
+                type_info["data"] = basic_c
+
             if type_info["category"] == "bitmask":
                 name = t.find("name").text
                 _type = t.find("type").text
 
                 # Most bitmasks have a requires attribute used to pull in
                 # required '*FlagBits" enum.
-                requires = t.attrib.get("requires")
+                requires = type_info["requires"]
                 bitmask = VkBaseType(name, _type, requires=requires)
                 bitmasks.append(bitmask)
                 type_info["data"] = bitmask
@@ -2952,6 +2968,13 @@ class VkRegistry(object):
         # the data now.
         for struct in structs:
             struct.set_type_info(self.types)
+
+            # Alias structures have enum values equivalent to those of the
+            # structure which they are aliased against. we need to ignore alias
+            # structs when populating the struct extensions list, otherwise we
+            # will create duplicate case entries.
+            if struct.alias:
+                continue
 
             for structextend in struct.structextends:
                 s = self.types[structextend]["data"]

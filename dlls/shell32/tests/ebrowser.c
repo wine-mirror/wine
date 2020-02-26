@@ -32,55 +32,9 @@
 #include "initguid.h"
 #include "mshtml.h"
 
-/**********************************************************************
- * Some IIDs for test_SetSite.
- */
-DEFINE_GUID(IID_IBrowserSettings,     0xDD1E21CC, 0xE2C7, 0x402C, 0xBF,0x05, 0x10,0x32,0x8D,0x3F,0x6B,0xAD);
-DEFINE_GUID(IID_IShellBrowserService, 0xDFBC7E30, 0xF9E5, 0x455F, 0x88,0xF8, 0xFA,0x98,0xC1,0xE4,0x94,0xCA);
-DEFINE_GUID(IID_IShellTaskScheduler,  0x6CCB7BE0, 0x6807, 0x11D0, 0xB8,0x10, 0x00,0xC0,0x4F,0xD7,0x06,0xEC);
-DEFINE_GUID(IID_IBrowserWithActivationNotification,
-                                      0x6DB89131, 0x7B4C, 0x4E1C, 0x8B,0x01, 0x5D,0x31,0x2C,0x9C,0x73,0x88);
-DEFINE_GUID(IID_ILayoutModifier,      0x90B4135A, 0x95BA, 0x46EA, 0x8C,0xAA, 0xE0,0x5B,0x45,0xCD,0x80,0x1E);
-DEFINE_GUID(CLSID_Desktop,            0x00021400, 0x0000, 0x0000, 0xC0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
-DEFINE_GUID(IID_IFileDialogPrivate,   0xAC92FFC5, 0xF0E9, 0x455A, 0x90,0x6B, 0x4A,0x83,0xE7,0x4A,0x80,0x3B);
-DEFINE_GUID(IID_IWebbrowserApp,       0x0002df05, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
-DEFINE_GUID(IID_IBrowserSettings_Vista, 0xF81B80BC, 0x29D1, 0x4734, 0xB5,0x15, 0x77,0x24,0xBF,0xF1,0x60,0x01);
-DEFINE_GUID(IID_IFolderTypeModifier,    0x04BA120E, 0xAD52, 0x4A2D, 0x98,0x07, 0x2D,0xA1,0x78,0xD0,0xC3,0xE1);
-DEFINE_GUID(IID_IShellBrowserService_Vista, 0xF5A24314, 0x5B8B, 0x44FA, 0xBC,0x2E, 0x31,0x28,0x55,0x44,0xB5,0x20);
-DEFINE_GUID(IID_IFileDialogPrivate_Vista, 0x2539E31C, 0x857F, 0x43C4, 0x88,0x72, 0x45,0xBD,0x6A,0x02,0x48,0x92);
-DEFINE_GUID(SID_SMenuBandParent,      0x8C278EEC, 0x3EAB, 0x11D1, 0x8C,0xB0 ,0x00,0xC0,0x4F,0xD9,0x18,0xD0);
-DEFINE_GUID(SID_SMenuPopup,           0xD1E7AFEB, 0x6A2E, 0x11D0, 0x8C,0x78, 0x00,0xC0,0x4F,0xD9,0x18,0xB4);
-DEFINE_GUID(IID_IShellMenu,           0xEE1F7637, 0xE138, 0x11D1, 0x83,0x79, 0x00,0xC0,0x4F,0xD9,0x18,0xD0);
-
-DEFINE_GUID(IID_UnknownInterface1,    0x3934E4C2, 0x8143, 0x4E4C, 0xA1,0xDC, 0x71,0x8F,0x85,0x63,0xF3,0x37);
-DEFINE_GUID(IID_UnknownInterface2,    0x3E24A11C, 0x15B2, 0x4F71, 0xB8,0x1E, 0x00,0x8F,0x77,0x99,0x8E,0x9F);
-DEFINE_GUID(IID_UnknownInterface3,    0xE38FE0F3, 0x3DB0, 0x47EE, 0xA3,0x14, 0x25,0xCF,0x7F,0x4B,0xF5,0x21);
-DEFINE_GUID(IID_UnknownInterface4,    0xFAD451C2, 0xAF58, 0x4161, 0xB9,0xFF, 0x57,0xAF,0xBB,0xED,0x0A,0xD2);
-DEFINE_GUID(IID_UnknownInterface5,    0xF80C2137, 0x5829, 0x4CE9, 0x9F,0x81, 0xA9,0x5E,0x15,0x9D,0xD8,0xD5);
-DEFINE_GUID(IID_UnknownInterface6,    0xD7F81F62, 0x491F, 0x49BC, 0x89,0x1D, 0x56,0x65,0x08,0x5D,0xF9,0x69);
-DEFINE_GUID(IID_UnknownInterface7,    0x68A4FDBA, 0xA48A, 0x4A86, 0xA3,0x29, 0x1B,0x69,0xB9,0xB1,0x9E,0x89);
-DEFINE_GUID(IID_UnknownInterface8,    0xD3B1CAF5, 0xEC4F, 0x4B2E, 0xBC,0xB0, 0x60,0xD7,0x15,0xC9,0x3C,0xB2);
-DEFINE_GUID(IID_UnknownInterface9,    0x9536CA39, 0x1ACB, 0x4AE6, 0xAD,0x27, 0x24,0x03,0xD0,0x4C,0xA2,0x8F);
-DEFINE_GUID(IID_UnknownInterface10,   0xB722BE00, 0x4E68, 0x101B, 0xA2,0xBC, 0x00,0xAA,0x00,0x40,0x47,0x70);
-DEFINE_GUID(IID_UnknownInterface11,   0x691ecf9f, 0x6b9c, 0x4311, 0xa1,0x7b, 0xad,0x15,0x4c,0x30,0xe9,0x1f);
-DEFINE_GUID(IID_UnknownInterface12,   0x7e3159f5, 0x21ca, 0x4ec2, 0x8f,0xbe, 0x66,0x2d,0x08,0x2c,0xa3,0xeb);
-DEFINE_GUID(IID_UnknownInterface13,   0xa36a3ace, 0x8332, 0x45ce, 0xaa,0x29, 0x50,0x3c,0xb7,0x6b,0x25,0x87);
-DEFINE_GUID(IID_UnknownInterface14,   0x16770868, 0x239c, 0x445b, 0xa0,0x1d, 0xf2,0x6c,0x7f,0xbb,0xf2,0x6c);
-DEFINE_GUID(IID_UnknownInterface15,   0x05a89298, 0x6246, 0x4c63, 0xbb,0x0d, 0x9b,0xda,0xf1,0x40,0xbf,0x3b);
-DEFINE_GUID(IID_UnknownInterface16,   0x35094a87, 0x8bb1, 0x4237, 0x96,0xc6, 0xc4,0x17,0xee,0xbd,0xb0,0x78);
-DEFINE_GUID(IID_UnknownInterface17,   0x3d5d8c60, 0x21e4, 0x4b03, 0x83,0xb8, 0xc7,0x3f,0x8c,0x94,0x00,0x78);
-DEFINE_GUID(IID_UnknownInterface18,   0x1fc45c07, 0x9e35, 0x4276, 0xad,0x7f, 0x08,0x60,0x3a,0xa0,0xf6,0x0f);
-DEFINE_GUID(IID_UnknownInterface19,   0xacd9b67a, 0xceab, 0x4c6c, 0x90,0xa1, 0xe8,0x57,0xc6,0x59,0xe3,0x9d);
-DEFINE_GUID(IID_UnknownInterface20,   0xd0fe6f62, 0xdea4, 0x46c9, 0x9d,0xae, 0x36,0xcb,0x13,0x99,0x78,0xfa);
-DEFINE_GUID(IID_UnknownInterface21,   0x732c1ccd, 0xbc5c, 0x4065, 0x88,0xcb, 0xfb,0x5b,0xce,0xa7,0x1f,0x66);
-DEFINE_GUID(IID_UnknownInterface22,   0xc13b3d3a, 0x10d6, 0x43f5, 0x98,0xdb, 0xb7,0xdd,0xd9,0x87,0xb3,0x3d);
-DEFINE_GUID(IID_UnknownInterface23,   0x2e228ba3, 0xea25, 0x4378, 0x97,0xb6, 0xd5,0x74,0xfa,0xeb,0xa3,0x56);
-DEFINE_GUID(IID_UnknownInterface24,   0xd56a2092, 0x7dbf, 0x4144, 0xa1,0x10, 0xc2,0x96,0x3a,0x70,0x98,0x32);
-
 static HWND hwnd;
 
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
-static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
 
 static void init_function_pointers(void)
 {
@@ -88,7 +42,6 @@ static void init_function_pointers(void)
 
     hmod = GetModuleHandleA("shell32.dll");
     pSHCreateShellItem = (void*)GetProcAddress(hmod, "SHCreateShellItem");
-    pSHParseDisplayName = (void*)GetProcAddress(hmod, "SHParseDisplayName");
 }
 
 /*********************************************************************
@@ -456,7 +409,6 @@ typedef struct {
     struct services {
         REFGUID service;
         REFIID id;
-        int count;
         void *punk;
     } *interfaces;
 } IServiceProviderImpl;
@@ -509,33 +461,23 @@ static HRESULT WINAPI IServiceProvider_fnQueryService(IServiceProvider *iface,
                                                       void **ppv)
 {
     IServiceProviderImpl *This = impl_from_IServiceProvider(iface);
-    BOOL was_in_list = FALSE;
-    IUnknown *punk = NULL;
     UINT i;
 
-    *ppv = NULL;
+    if (winetest_debug > 1)
+            trace("QueryService(service %s, iid %s)\n", debugstr_guid(guidService), debugstr_guid(riid));
+
     for(i = 0; This->interfaces[i].service != NULL; i++)
     {
         if(IsEqualGUID(This->interfaces[i].service, guidService) &&
            IsEqualIID(This->interfaces[i].id, riid))
         {
-            was_in_list = TRUE;
-            This->interfaces[i].count++;
-            punk = This->interfaces[i].punk;
-            break;
+            *ppv = This->interfaces[i].punk;
+            IUnknown_AddRef((IUnknown *)*ppv);
+            return S_OK;
         }
     }
 
-    ok(was_in_list, "unknown service, serviceID: %s, riid: %s\n", wine_dbgstr_guid(guidService), wine_dbgstr_guid(riid));
-
-    /* Give back an interface, if any. */
-    if(punk)
-    {
-        *ppv = punk;
-        IUnknown_AddRef(punk);
-        return S_OK;
-    }
-
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -927,66 +869,14 @@ static void test_SetSite(void)
     HRESULT hr;
     LONG ref;
     UINT i;
-    struct services expected[] = {
-        /* Win 7 */
-        { &SID_STopLevelBrowser,        &IID_ICommDlgBrowser2, 0, cdbimpl },
-        { &SID_STopLevelBrowser,        &IID_IShellBrowserService, 0, NULL },
-        { &SID_STopLevelBrowser,        &IID_IShellBrowser, 0, NULL },
-        { &SID_STopLevelBrowser,        &IID_UnknownInterface8, 0, NULL },
-        { &SID_STopLevelBrowser,        &IID_IConnectionPointContainer, 0, NULL },
-        { &SID_STopLevelBrowser,        &IID_IProfferService, 0, NULL },
-        { &SID_STopLevelBrowser,        &IID_UnknownInterface9, 0, NULL },
-        { &SID_ExplorerPaneVisibility,  &IID_IExplorerPaneVisibility, 0, epvimpl },
-        { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser2, 0, cdbimpl },
-        { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser3, 0, cdbimpl },
-        { &IID_IFileDialogPrivate,      &IID_IFileDialogPrivate, 0, NULL },
-        { &IID_IFileDialogPrivate,      &IID_IFileDialog, 0, NULL },
-        { &IID_IShellTaskScheduler,     &IID_IShellTaskScheduler, 0, NULL },
-        { &IID_IShellTaskScheduler,     &IID_UnknownInterface2, 0, NULL },
-        { &IID_IWebbrowserApp,          &IID_IConnectionPointContainer, 0, NULL },
-        { &IID_IFolderView,             &IID_IFolderView, 0, NULL },
-        { &IID_ILayoutModifier,         &IID_ILayoutModifier, 0, NULL },
-        { &IID_IBrowserSettings,        &IID_IBrowserSettings, 0, NULL },
-        { &CLSID_Desktop,               &IID_IUnknown, 0, NULL },
-        { &IID_UnknownInterface1,       &IID_UnknownInterface1, 0, NULL },
-        { &IID_UnknownInterface3,       &IID_UnknownInterface3, 0, NULL },
-        { &IID_UnknownInterface4,       &IID_IUnknown, 0, NULL },
-        { &IID_UnknownInterface6,       &IID_UnknownInterface7, 0, NULL },
-        { &IID_IBrowserWithActivationNotification, &IID_IBrowserWithActivationNotification, 0, NULL },
-        /* Win 8 */
-        { &IID_ICommDlgBrowser,         &IID_UnknownInterface11, 0, NULL },
-        { &IID_ICommDlgBrowser,         &IID_UnknownInterface12, 0, NULL },
-        { &IID_ICommDlgBrowser,         &IID_UnknownInterface20, 0, NULL },
-        { &IID_UnknownInterface13,      &IID_IUnknown, 0, NULL },
-        { &IID_UnknownInterface13,      &IID_UnknownInterface13, 0, NULL },
-        { &IID_UnknownInterface13,      &IID_UnknownInterface18, 0, NULL },
-        { &IID_UnknownInterface14,      &IID_UnknownInterface14, 0, NULL },
-        { &IID_UnknownInterface15,      &IID_UnknownInterface15, 0, NULL },
-        { &IID_UnknownInterface16,      &IID_UnknownInterface16, 0, NULL },
-        { &IID_UnknownInterface17,      &IID_UnknownInterface17, 0, NULL },
-        { &IID_UnknownInterface17,      &IID_UnknownInterface19, 0, NULL },
-        /* Win 10 */
-        { &IID_UnknownInterface21,      &IID_UnknownInterface21, 0, NULL },
-        { &IID_UnknownInterface21,      &IID_IFileDialog, 0, NULL },
-        { &IID_UnknownInterface22,      &IID_UnknownInterface22, 0, NULL },
-        { &IID_UnknownInterface23,      &IID_UnknownInterface23, 0, NULL },
-        { &IID_UnknownInterface24,      &IID_UnknownInterface24, 0, NULL },
-        { &IID_UnknownInterface24,      &IID_IFileDialog, 0, NULL },
-
-        /* Other services requested in Vista, Windows 2008 but not in Windows 7 */
-        { &IID_IBrowserSettings_Vista,  &IID_IBrowserSettings_Vista, 0, NULL },
-        { &IID_IFolderTypeModifier,     &IID_IFolderTypeModifier, 0, NULL },
-        { &SID_STopLevelBrowser,        &IID_IShellBrowserService_Vista, 0, NULL },
-        { &IID_UnknownInterface5,       &IID_UnknownInterface5, 0, NULL },
-        { &IID_ICommDlgBrowser,         &IID_ICommDlgBrowser, 0, cdbimpl },
-        { &IID_IFileDialogPrivate_Vista,&IID_IFileDialogPrivate_Vista, 0, NULL},
-        { &IID_IFileDialogPrivate_Vista,&IID_IFileDialog, 0, NULL},
-        { &IID_UnknownInterface10,      &IID_IHTMLDocument2, 0, NULL},
-        { &SID_SMenuBandParent,         &IID_IOleCommandTarget, 0, NULL},
-        { &SID_SMenuBandParent,         &IID_IShellMenu, 0, NULL},
-        { &SID_STopLevelBrowser,        &IID_IOleWindow, 0, NULL},
-        { &SID_SMenuPopup,              &IID_IOleCommandTarget, 0, NULL},
-        { NULL }
+    struct services expected[] =
+    {
+        {&SID_STopLevelBrowser,        &IID_ICommDlgBrowser2,          cdbimpl},
+        {&SID_ExplorerPaneVisibility,  &IID_IExplorerPaneVisibility,   epvimpl},
+        {&SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser2,          cdbimpl},
+        {&SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser3,          cdbimpl},
+        {&IID_ICommDlgBrowser,         &IID_ICommDlgBrowser,           cdbimpl},
+        {NULL}
     };
 
     ebrowser_instantiate(&peb);
@@ -1051,12 +941,6 @@ static void test_SetSite(void)
     ok(!epvimpl->qp, "Got %d\n", epvimpl->qp);
     ok(!epvimpl->aqp, "Got %d\n", epvimpl->aqp);
     ok(!epvimpl->unk, "Got %d\n", epvimpl->unk);
-
-    if(0)
-    {
-        for(i = 0; expected[i].service != NULL; i++)
-            if(!expected[i].count) trace("count %d was 0.\n", i);
-    }
 
     /* Test when IServiceProvider is released. */
     IServiceProvider_AddRef(&spimpl->IServiceProvider_iface);
@@ -1409,7 +1293,6 @@ static void test_navigation(void)
     static const WCHAR testfolderW[] =
         {'w','i','n','e','t','e','s','t','f','o','l','d','e','r','\0'};
 
-    ok(pSHParseDisplayName != NULL, "pSHParseDisplayName unexpectedly missing.\n");
     ok(pSHCreateShellItem != NULL, "pSHCreateShellItem unexpectedly missing.\n");
 
     GetCurrentDirectoryW(MAX_PATH, current_path);
@@ -1425,8 +1308,10 @@ static void test_navigation(void)
 
     CreateDirectoryW(child_path, NULL);
 
-    pSHParseDisplayName(current_path, NULL, &pidl_current, 0, NULL);
-    pSHParseDisplayName(child_path, NULL, &pidl_child, 0, NULL);
+    hr = SHParseDisplayName(current_path, NULL, &pidl_current, 0, NULL);
+    ok(hr == S_OK, "Failed to parse a path, hr %#x.\n", hr);
+    hr = SHParseDisplayName(child_path, NULL, &pidl_child, 0, NULL);
+    ok(hr == S_OK, "Failed to parse a path, hr %#x.\n", hr);
 
     ebrowser_instantiate(&peb);
     ebrowser_initialize(peb);

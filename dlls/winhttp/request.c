@@ -19,14 +19,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-#include "config.h"
-#include "ws2tcpip.h"
-#include <stdarg.h>
 #include <assert.h>
+#include <stdarg.h>
+#include <wchar.h>
 
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
+#include "ws2tcpip.h"
 #include "ole2.h"
 #include "initguid.h"
 #include "httprequest.h"
@@ -41,136 +41,79 @@ WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
 #define DEFAULT_KEEP_ALIVE_TIMEOUT 30000
 
-static const WCHAR attr_accept[] = {'A','c','c','e','p','t',0};
-static const WCHAR attr_accept_charset[] = {'A','c','c','e','p','t','-','C','h','a','r','s','e','t', 0};
-static const WCHAR attr_accept_encoding[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',0};
-static const WCHAR attr_accept_language[] = {'A','c','c','e','p','t','-','L','a','n','g','u','a','g','e',0};
-static const WCHAR attr_accept_ranges[] = {'A','c','c','e','p','t','-','R','a','n','g','e','s',0};
-static const WCHAR attr_age[] = {'A','g','e',0};
-static const WCHAR attr_allow[] = {'A','l','l','o','w',0};
-static const WCHAR attr_authorization[] = {'A','u','t','h','o','r','i','z','a','t','i','o','n',0};
-static const WCHAR attr_cache_control[] = {'C','a','c','h','e','-','C','o','n','t','r','o','l',0};
-static const WCHAR attr_connection[] = {'C','o','n','n','e','c','t','i','o','n',0};
-static const WCHAR attr_content_base[] = {'C','o','n','t','e','n','t','-','B','a','s','e',0};
-static const WCHAR attr_content_encoding[] = {'C','o','n','t','e','n','t','-','E','n','c','o','d','i','n','g',0};
-static const WCHAR attr_content_id[] = {'C','o','n','t','e','n','t','-','I','D',0};
-static const WCHAR attr_content_language[] = {'C','o','n','t','e','n','t','-','L','a','n','g','u','a','g','e',0};
-static const WCHAR attr_content_length[] = {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0};
-static const WCHAR attr_content_location[] = {'C','o','n','t','e','n','t','-','L','o','c','a','t','i','o','n',0};
-static const WCHAR attr_content_md5[] = {'C','o','n','t','e','n','t','-','M','D','5',0};
-static const WCHAR attr_content_range[] = {'C','o','n','t','e','n','t','-','R','a','n','g','e',0};
-static const WCHAR attr_content_transfer_encoding[] = {'C','o','n','t','e','n','t','-','T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0};
-static const WCHAR attr_content_type[] = {'C','o','n','t','e','n','t','-','T','y','p','e',0};
-static const WCHAR attr_cookie[] = {'C','o','o','k','i','e',0};
-static const WCHAR attr_date[] = {'D','a','t','e',0};
-static const WCHAR attr_from[] = {'F','r','o','m',0};
-static const WCHAR attr_etag[] = {'E','T','a','g',0};
-static const WCHAR attr_expect[] = {'E','x','p','e','c','t',0};
-static const WCHAR attr_expires[] = {'E','x','p','i','r','e','s',0};
-static const WCHAR attr_host[] = {'H','o','s','t',0};
-static const WCHAR attr_if_match[] = {'I','f','-','M','a','t','c','h',0};
-static const WCHAR attr_if_modified_since[] = {'I','f','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0};
-static const WCHAR attr_if_none_match[] = {'I','f','-','N','o','n','e','-','M','a','t','c','h',0};
-static const WCHAR attr_if_range[] = {'I','f','-','R','a','n','g','e',0};
-static const WCHAR attr_if_unmodified_since[] = {'I','f','-','U','n','m','o','d','i','f','i','e','d','-','S','i','n','c','e',0};
-static const WCHAR attr_last_modified[] = {'L','a','s','t','-','M','o','d','i','f','i','e','d',0};
-static const WCHAR attr_location[] = {'L','o','c','a','t','i','o','n',0};
-static const WCHAR attr_max_forwards[] = {'M','a','x','-','F','o','r','w','a','r','d','s',0};
-static const WCHAR attr_mime_version[] = {'M','i','m','e','-','V','e','r','s','i','o','n',0};
-static const WCHAR attr_pragma[] = {'P','r','a','g','m','a',0};
-static const WCHAR attr_proxy_authenticate[] = {'P','r','o','x','y','-','A','u','t','h','e','n','t','i','c','a','t','e',0};
-static const WCHAR attr_proxy_authorization[] = {'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0};
-static const WCHAR attr_proxy_connection[] = {'P','r','o','x','y','-','C','o','n','n','e','c','t','i','o','n',0};
-static const WCHAR attr_public[] = {'P','u','b','l','i','c',0};
-static const WCHAR attr_range[] = {'R','a','n','g','e',0};
-static const WCHAR attr_referer[] = {'R','e','f','e','r','e','r',0};
-static const WCHAR attr_retry_after[] = {'R','e','t','r','y','-','A','f','t','e','r',0};
-static const WCHAR attr_server[] = {'S','e','r','v','e','r',0};
-static const WCHAR attr_set_cookie[] = {'S','e','t','-','C','o','o','k','i','e',0};
-static const WCHAR attr_status[] = {'S','t','a','t','u','s',0};
-static const WCHAR attr_transfer_encoding[] = {'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0};
-static const WCHAR attr_unless_modified_since[] = {'U','n','l','e','s','s','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0};
-static const WCHAR attr_upgrade[] = {'U','p','g','r','a','d','e',0};
-static const WCHAR attr_uri[] = {'U','R','I',0};
-static const WCHAR attr_user_agent[] = {'U','s','e','r','-','A','g','e','n','t',0};
-static const WCHAR attr_vary[] = {'V','a','r','y',0};
-static const WCHAR attr_via[] = {'V','i','a',0};
-static const WCHAR attr_warning[] = {'W','a','r','n','i','n','g',0};
-static const WCHAR attr_www_authenticate[] = {'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0};
-
 static const WCHAR *attribute_table[] =
 {
-    attr_mime_version,              /* WINHTTP_QUERY_MIME_VERSION               = 0  */
-    attr_content_type,              /* WINHTTP_QUERY_CONTENT_TYPE               = 1  */
-    attr_content_transfer_encoding, /* WINHTTP_QUERY_CONTENT_TRANSFER_ENCODING  = 2  */
-    attr_content_id,                /* WINHTTP_QUERY_CONTENT_ID                 = 3  */
+    L"Mime-Version",                /* WINHTTP_QUERY_MIME_VERSION               = 0  */
+    L"Content-Type"  ,              /* WINHTTP_QUERY_CONTENT_TYPE               = 1  */
+    L"Content-Transfer-Encoding",   /* WINHTTP_QUERY_CONTENT_TRANSFER_ENCODING  = 2  */
+    L"Content-ID",                  /* WINHTTP_QUERY_CONTENT_ID                 = 3  */
     NULL,                           /* WINHTTP_QUERY_CONTENT_DESCRIPTION        = 4  */
-    attr_content_length,            /* WINHTTP_QUERY_CONTENT_LENGTH             = 5  */
-    attr_content_language,          /* WINHTTP_QUERY_CONTENT_LANGUAGE           = 6  */
-    attr_allow,                     /* WINHTTP_QUERY_ALLOW                      = 7  */
-    attr_public,                    /* WINHTTP_QUERY_PUBLIC                     = 8  */
-    attr_date,                      /* WINHTTP_QUERY_DATE                       = 9  */
-    attr_expires,                   /* WINHTTP_QUERY_EXPIRES                    = 10 */
-    attr_last_modified,             /* WINHTTP_QUERY_LAST_MODIFIEDcw            = 11 */
+    L"Content-Length",              /* WINHTTP_QUERY_CONTENT_LENGTH             = 5  */
+    L"Content-Language",            /* WINHTTP_QUERY_CONTENT_LANGUAGE           = 6  */
+    L"Allow",                       /* WINHTTP_QUERY_ALLOW                      = 7  */
+    L"Public",                      /* WINHTTP_QUERY_PUBLIC                     = 8  */
+    L"Date",                        /* WINHTTP_QUERY_DATE                       = 9  */
+    L"Expires",                     /* WINHTTP_QUERY_EXPIRES                    = 10 */
+    L"Last-Modified",               /* WINHTTP_QUERY_LAST_MODIFIEDcw            = 11 */
     NULL,                           /* WINHTTP_QUERY_MESSAGE_ID                 = 12 */
-    attr_uri,                       /* WINHTTP_QUERY_URI                        = 13 */
-    attr_from,                      /* WINHTTP_QUERY_DERIVED_FROM               = 14 */
+    L"URI",                         /* WINHTTP_QUERY_URI                        = 13 */
+    L"From",                        /* WINHTTP_QUERY_DERIVED_FROM               = 14 */
     NULL,                           /* WINHTTP_QUERY_COST                       = 15 */
     NULL,                           /* WINHTTP_QUERY_LINK                       = 16 */
-    attr_pragma,                    /* WINHTTP_QUERY_PRAGMA                     = 17 */
+    L"Pragma",                      /* WINHTTP_QUERY_PRAGMA                     = 17 */
     NULL,                           /* WINHTTP_QUERY_VERSION                    = 18 */
-    attr_status,                    /* WINHTTP_QUERY_STATUS_CODE                = 19 */
+    L"Status",                      /* WINHTTP_QUERY_STATUS_CODE                = 19 */
     NULL,                           /* WINHTTP_QUERY_STATUS_TEXT                = 20 */
     NULL,                           /* WINHTTP_QUERY_RAW_HEADERS                = 21 */
     NULL,                           /* WINHTTP_QUERY_RAW_HEADERS_CRLF           = 22 */
-    attr_connection,                /* WINHTTP_QUERY_CONNECTION                 = 23 */
-    attr_accept,                    /* WINHTTP_QUERY_ACCEPT                     = 24 */
-    attr_accept_charset,            /* WINHTTP_QUERY_ACCEPT_CHARSET             = 25 */
-    attr_accept_encoding,           /* WINHTTP_QUERY_ACCEPT_ENCODING            = 26 */
-    attr_accept_language,           /* WINHTTP_QUERY_ACCEPT_LANGUAGE            = 27 */
-    attr_authorization,             /* WINHTTP_QUERY_AUTHORIZATION              = 28 */
-    attr_content_encoding,          /* WINHTTP_QUERY_CONTENT_ENCODING           = 29 */
+    L"Connection",                  /* WINHTTP_QUERY_CONNECTION                 = 23 */
+    L"Accept",                      /* WINHTTP_QUERY_ACCEPT                     = 24 */
+    L"Accept-Charset",              /* WINHTTP_QUERY_ACCEPT_CHARSET             = 25 */
+    L"Accept-Encoding",             /* WINHTTP_QUERY_ACCEPT_ENCODING            = 26 */
+    L"Accept-Language",             /* WINHTTP_QUERY_ACCEPT_LANGUAGE            = 27 */
+    L"Authorization",               /* WINHTTP_QUERY_AUTHORIZATION              = 28 */
+    L"Content-Encoding",            /* WINHTTP_QUERY_CONTENT_ENCODING           = 29 */
     NULL,                           /* WINHTTP_QUERY_FORWARDED                  = 30 */
     NULL,                           /* WINHTTP_QUERY_FROM                       = 31 */
-    attr_if_modified_since,         /* WINHTTP_QUERY_IF_MODIFIED_SINCE          = 32 */
-    attr_location,                  /* WINHTTP_QUERY_LOCATION                   = 33 */
+    L"If-Modified-Since",           /* WINHTTP_QUERY_IF_MODIFIED_SINCE          = 32 */
+    L"Location",                    /* WINHTTP_QUERY_LOCATION                   = 33 */
     NULL,                           /* WINHTTP_QUERY_ORIG_URI                   = 34 */
-    attr_referer,                   /* WINHTTP_QUERY_REFERER                    = 35 */
-    attr_retry_after,               /* WINHTTP_QUERY_RETRY_AFTER                = 36 */
-    attr_server,                    /* WINHTTP_QUERY_SERVER                     = 37 */
+    L"Referer",                     /* WINHTTP_QUERY_REFERER                    = 35 */
+    L"Retry-After",                 /* WINHTTP_QUERY_RETRY_AFTER                = 36 */
+    L"Server",                      /* WINHTTP_QUERY_SERVER                     = 37 */
     NULL,                           /* WINHTTP_TITLE                            = 38 */
-    attr_user_agent,                /* WINHTTP_QUERY_USER_AGENT                 = 39 */
-    attr_www_authenticate,          /* WINHTTP_QUERY_WWW_AUTHENTICATE           = 40 */
-    attr_proxy_authenticate,        /* WINHTTP_QUERY_PROXY_AUTHENTICATE         = 41 */
-    attr_accept_ranges,             /* WINHTTP_QUERY_ACCEPT_RANGES              = 42 */
-    attr_set_cookie,                /* WINHTTP_QUERY_SET_COOKIE                 = 43 */
-    attr_cookie,                    /* WINHTTP_QUERY_COOKIE                     = 44 */
+    L"User-Agent",                  /* WINHTTP_QUERY_USER_AGENT                 = 39 */
+    L"WWW-Authenticate",            /* WINHTTP_QUERY_WWW_AUTHENTICATE           = 40 */
+    L"Proxy-Authenticate",          /* WINHTTP_QUERY_PROXY_AUTHENTICATE         = 41 */
+    L"Accept-Ranges",               /* WINHTTP_QUERY_ACCEPT_RANGES              = 42 */
+    L"Set-Cookie",                  /* WINHTTP_QUERY_SET_COOKIE                 = 43 */
+    L"Cookie",                      /* WINHTTP_QUERY_COOKIE                     = 44 */
     NULL,                           /* WINHTTP_QUERY_REQUEST_METHOD             = 45 */
     NULL,                           /* WINHTTP_QUERY_REFRESH                    = 46 */
     NULL,                           /* WINHTTP_QUERY_CONTENT_DISPOSITION        = 47 */
-    attr_age,                       /* WINHTTP_QUERY_AGE                        = 48 */
-    attr_cache_control,             /* WINHTTP_QUERY_CACHE_CONTROL              = 49 */
-    attr_content_base,              /* WINHTTP_QUERY_CONTENT_BASE               = 50 */
-    attr_content_location,          /* WINHTTP_QUERY_CONTENT_LOCATION           = 51 */
-    attr_content_md5,               /* WINHTTP_QUERY_CONTENT_MD5                = 52 */
-    attr_content_range,             /* WINHTTP_QUERY_CONTENT_RANGE              = 53 */
-    attr_etag,                      /* WINHTTP_QUERY_ETAG                       = 54 */
-    attr_host,                      /* WINHTTP_QUERY_HOST                       = 55 */
-    attr_if_match,                  /* WINHTTP_QUERY_IF_MATCH                   = 56 */
-    attr_if_none_match,             /* WINHTTP_QUERY_IF_NONE_MATCH              = 57 */
-    attr_if_range,                  /* WINHTTP_QUERY_IF_RANGE                   = 58 */
-    attr_if_unmodified_since,       /* WINHTTP_QUERY_IF_UNMODIFIED_SINCE        = 59 */
-    attr_max_forwards,              /* WINHTTP_QUERY_MAX_FORWARDS               = 60 */
-    attr_proxy_authorization,       /* WINHTTP_QUERY_PROXY_AUTHORIZATION        = 61 */
-    attr_range,                     /* WINHTTP_QUERY_RANGE                      = 62 */
-    attr_transfer_encoding,         /* WINHTTP_QUERY_TRANSFER_ENCODING          = 63 */
-    attr_upgrade,                   /* WINHTTP_QUERY_UPGRADE                    = 64 */
-    attr_vary,                      /* WINHTTP_QUERY_VARY                       = 65 */
-    attr_via,                       /* WINHTTP_QUERY_VIA                        = 66 */
-    attr_warning,                   /* WINHTTP_QUERY_WARNING                    = 67 */
-    attr_expect,                    /* WINHTTP_QUERY_EXPECT                     = 68 */
-    attr_proxy_connection,          /* WINHTTP_QUERY_PROXY_CONNECTION           = 69 */
-    attr_unless_modified_since,     /* WINHTTP_QUERY_UNLESS_MODIFIED_SINCE      = 70 */
+    L"Age",                         /* WINHTTP_QUERY_AGE                        = 48 */
+    L"Cache-Control",               /* WINHTTP_QUERY_CACHE_CONTROL              = 49 */
+    L"Content-Base",                /* WINHTTP_QUERY_CONTENT_BASE               = 50 */
+    L"Content-Location",            /* WINHTTP_QUERY_CONTENT_LOCATION           = 51 */
+    L"Content-MD5",                 /* WINHTTP_QUERY_CONTENT_MD5                = 52 */
+    L"Content-Range",               /* WINHTTP_QUERY_CONTENT_RANGE              = 53 */
+    L"ETag",                        /* WINHTTP_QUERY_ETAG                       = 54 */
+    L"Host",                        /* WINHTTP_QUERY_HOST                       = 55 */
+    L"If-Match",                    /* WINHTTP_QUERY_IF_MATCH                   = 56 */
+    L"If-None-Match",               /* WINHTTP_QUERY_IF_NONE_MATCH              = 57 */
+    L"If-Range",                    /* WINHTTP_QUERY_IF_RANGE                   = 58 */
+    L"If-Unmodified-Since",         /* WINHTTP_QUERY_IF_UNMODIFIED_SINCE        = 59 */
+    L"Max-Forwards",                /* WINHTTP_QUERY_MAX_FORWARDS               = 60 */
+    L"Proxy-Authorization",         /* WINHTTP_QUERY_PROXY_AUTHORIZATION        = 61 */
+    L"Range",                       /* WINHTTP_QUERY_RANGE                      = 62 */
+    L"Transfer-Encoding",           /* WINHTTP_QUERY_TRANSFER_ENCODING          = 63 */
+    L"Upgrade",                     /* WINHTTP_QUERY_UPGRADE                    = 64 */
+    L"Vary",                        /* WINHTTP_QUERY_VARY                       = 65 */
+    L"Via",                         /* WINHTTP_QUERY_VIA                        = 66 */
+    L"Warning",                     /* WINHTTP_QUERY_WARNING                    = 67 */
+    L"Expect",                      /* WINHTTP_QUERY_EXPECT                     = 68 */
+    L"Proxy-Connection",            /* WINHTTP_QUERY_PROXY_CONNECTION           = 69 */
+    L"Unless-Modified-Since",       /* WINHTTP_QUERY_UNLESS_MODIFIED_SINCE      = 70 */
     NULL,                           /* WINHTTP_QUERY_PROXY_SUPPORT              = 75 */
     NULL,                           /* WINHTTP_QUERY_AUTHENTICATION_INFO        = 76 */
     NULL,                           /* WINHTTP_QUERY_PASSPORT_URLS              = 77 */
@@ -300,7 +243,7 @@ static struct header *parse_header( const WCHAR *string )
     int len;
 
     p = string;
-    if (!(q = strchrW( p, ':' )))
+    if (!(q = wcschr( p, ':' )))
     {
         WARN("no ':' in line %s\n", debugstr_w(string));
         return NULL;
@@ -331,7 +274,7 @@ static struct header *parse_header( const WCHAR *string )
 
     q++; /* skip past colon */
     while (*q == ' ') q++;
-    len = strlenW( q );
+    len = lstrlenW( q );
 
     if (!(header->value = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
@@ -352,7 +295,7 @@ static int get_header_index( struct request *request, const WCHAR *field, int re
 
     for (index = 0; index < request->num_headers; index++)
     {
-        if (strcmpiW( request->headers[index].field, field )) continue;
+        if (wcsicmp( request->headers[index].field, field )) continue;
         if (request_only && !request->headers[index].is_request) continue;
         if (!request_only && request->headers[index].is_request) continue;
 
@@ -438,8 +381,8 @@ BOOL process_header( struct request *request, const WCHAR *field, const WCHAR *v
             int len, len_orig, len_value;
             struct header *header = &request->headers[index];
 
-            len_orig = strlenW( header->value );
-            len_value = strlenW( value );
+            len_orig = lstrlenW( header->value );
+            len_value = lstrlenW( value );
 
             len = len_orig + len_value + 2;
             if (!(tmp = heap_realloc( header->value, (len + 1) * sizeof(WCHAR) ))) return FALSE;
@@ -469,7 +412,7 @@ BOOL add_request_headers( struct request *request, const WCHAR *headers, DWORD l
     WCHAR *buffer, *p, *q;
     struct header *header;
 
-    if (len == ~0u) len = strlenW( headers );
+    if (len == ~0u) len = lstrlenW( headers );
     if (!len) return TRUE;
     if (!(buffer = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return FALSE;
     memcpy( buffer, headers, len * sizeof(WCHAR) );
@@ -543,29 +486,25 @@ BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD
 
 static WCHAR *build_absolute_request_path( struct request *request, const WCHAR **path )
 {
-    static const WCHAR http[] = {'h','t','t','p',0};
-    static const WCHAR https[] = {'h','t','t','p','s',0};
-    static const WCHAR fmt[] = {'%','s',':','/','/','%','s',0};
     const WCHAR *scheme;
     WCHAR *ret;
-    int len;
+    int len, offset;
 
-    scheme = (request->netconn ? request->netconn->secure : (request->hdr.flags & WINHTTP_FLAG_SECURE)) ? https : http;
+    scheme = (request->netconn ? request->netconn->secure : (request->hdr.flags & WINHTTP_FLAG_SECURE)) ? L"https" : L"http";
 
-    len = strlenW( scheme ) + strlenW( request->connect->hostname ) + 4; /* '://' + nul */
+    len = lstrlenW( scheme ) + lstrlenW( request->connect->hostname ) + 4; /* '://' + nul */
     if (request->connect->hostport) len += 6; /* ':' between host and port, up to 5 for port */
 
-    len += strlenW( request->path );
+    len += lstrlenW( request->path );
     if ((ret = heap_alloc( len * sizeof(WCHAR) )))
     {
-        len = sprintfW( ret, fmt, scheme, request->connect->hostname );
+        offset = swprintf( ret, len, L"%s://%s", scheme, request->connect->hostname );
         if (request->connect->hostport)
         {
-            static const WCHAR port_fmt[] = {':','%','u',0};
-            len += sprintfW( ret + len, port_fmt, request->connect->hostport );
+            offset += swprintf( ret + offset, len - offset, L":%u", request->connect->hostport );
         }
-        strcpyW( ret + len, request->path );
-        if (path) *path = ret + len;
+        lstrcpyW( ret + offset, request->path );
+        if (path) *path = ret + offset;
     }
 
     return ret;
@@ -573,44 +512,42 @@ static WCHAR *build_absolute_request_path( struct request *request, const WCHAR 
 
 static WCHAR *build_request_string( struct request *request )
 {
-    static const WCHAR spaceW[] = {' ',0}, crlfW[] = {'\r','\n',0}, colonW[] = {':',' ',0};
-    static const WCHAR twocrlfW[] = {'\r','\n','\r','\n',0};
     WCHAR *path, *ret;
     unsigned int i, len;
 
-    if (!strcmpiW( request->connect->hostname, request->connect->servername )) path = request->path;
+    if (!wcsicmp( request->connect->hostname, request->connect->servername )) path = request->path;
     else if (!(path = build_absolute_request_path( request, NULL ))) return NULL;
 
-    len = strlenW( request->verb ) + 1 /* ' ' */;
-    len += strlenW( path ) + 1 /* ' ' */;
-    len += strlenW( request->version );
+    len = lstrlenW( request->verb ) + 1 /* ' ' */;
+    len += lstrlenW( path ) + 1 /* ' ' */;
+    len += lstrlenW( request->version );
 
     for (i = 0; i < request->num_headers; i++)
     {
         if (request->headers[i].is_request)
-            len += strlenW( request->headers[i].field ) + strlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
+            len += lstrlenW( request->headers[i].field ) + lstrlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
     }
     len += 4; /* '\r\n\r\n' */
 
     if ((ret = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
-        strcpyW( ret, request->verb );
-        strcatW( ret, spaceW );
-        strcatW( ret, path );
-        strcatW( ret, spaceW );
-        strcatW( ret, request->version );
+        lstrcpyW( ret, request->verb );
+        lstrcatW( ret, L" " );
+        lstrcatW( ret, path );
+        lstrcatW( ret, L" " );
+        lstrcatW( ret, request->version );
 
         for (i = 0; i < request->num_headers; i++)
         {
             if (request->headers[i].is_request)
             {
-                strcatW( ret, crlfW );
-                strcatW( ret, request->headers[i].field );
-                strcatW( ret, colonW );
-                strcatW( ret, request->headers[i].value );
+                lstrcatW( ret, L"\r\n" );
+                lstrcatW( ret, request->headers[i].field );
+                lstrcatW( ret, L": " );
+                lstrcatW( ret, request->headers[i].value );
             }
         }
-        strcatW( ret, twocrlfW );
+        lstrcatW( ret, L"\r\n\r\n" );
     }
 
     if (path != request->path) heap_free( path );
@@ -681,7 +618,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
             headers = request->raw_headers;
 
         if (!headers) return FALSE;
-        len = strlenW( headers ) * sizeof(WCHAR);
+        len = lstrlenW( headers ) * sizeof(WCHAR);
         if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
@@ -698,7 +635,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         return ret;
     }
     case WINHTTP_QUERY_VERSION:
-        len = strlenW( request->version ) * sizeof(WCHAR);
+        len = lstrlenW( request->version ) * sizeof(WCHAR);
         if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
@@ -706,7 +643,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         }
         else
         {
-            strcpyW( buffer, request->version );
+            lstrcpyW( buffer, request->version );
             TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
@@ -714,7 +651,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         return ret;
 
     case WINHTTP_QUERY_STATUS_TEXT:
-        len = strlenW( request->status_text ) * sizeof(WCHAR);
+        len = lstrlenW( request->status_text ) * sizeof(WCHAR);
         if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
@@ -722,7 +659,23 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         }
         else
         {
-            strcpyW( buffer, request->status_text );
+            lstrcpyW( buffer, request->status_text );
+            TRACE("returning string: %s\n", debugstr_w(buffer));
+            ret = TRUE;
+        }
+        *buflen = len;
+        return ret;
+
+    case WINHTTP_QUERY_REQUEST_METHOD:
+        len = lstrlenW( request->verb ) * sizeof(WCHAR);
+        if (!buffer || len + sizeof(WCHAR) > *buflen)
+        {
+            len += sizeof(WCHAR);
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        }
+        else
+        {
+            lstrcpyW( buffer, request->verb );
             TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
@@ -730,9 +683,15 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         return ret;
 
     default:
-        if (attr >= ARRAY_SIZE(attribute_table) || !attribute_table[attr])
+        if (attr >= ARRAY_SIZE(attribute_table))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        if (!attribute_table[attr])
         {
             FIXME("attribute %u not implemented\n", attr);
+            SetLastError( ERROR_WINHTTP_HEADER_NOT_FOUND );
             return FALSE;
         }
         TRACE("attribute %s\n", debugstr_w(attribute_table[attr]));
@@ -758,7 +717,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         else
         {
             int *number = buffer;
-            *number = atoiW( header->value );
+            *number = wcstol( header->value, NULL, 10 );
             TRACE("returning number: %d\n", *number);
             ret = TRUE;
         }
@@ -781,7 +740,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
     }
     else if (header->value)
     {
-        len = strlenW( header->value ) * sizeof(WCHAR);
+        len = lstrlenW( header->value ) * sizeof(WCHAR);
         if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
@@ -789,7 +748,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         }
         else
         {
-            strcpyW( buffer, header->value );
+            lstrcpyW( buffer, header->value );
             TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
@@ -828,12 +787,6 @@ BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, 
     return ret;
 }
 
-static const WCHAR basicW[]     = {'B','a','s','i','c',0};
-static const WCHAR ntlmW[]      = {'N','T','L','M',0};
-static const WCHAR passportW[]  = {'P','a','s','s','p','o','r','t',0};
-static const WCHAR digestW[]    = {'D','i','g','e','s','t',0};
-static const WCHAR negotiateW[] = {'N','e','g','o','t','i','a','t','e',0};
-
 static const struct
 {
     const WCHAR *str;
@@ -842,11 +795,11 @@ static const struct
 }
 auth_schemes[] =
 {
-    { basicW,     ARRAY_SIZE(basicW) - 1,     WINHTTP_AUTH_SCHEME_BASIC },
-    { ntlmW,      ARRAY_SIZE(ntlmW) - 1,      WINHTTP_AUTH_SCHEME_NTLM },
-    { passportW,  ARRAY_SIZE(passportW) - 1,  WINHTTP_AUTH_SCHEME_PASSPORT },
-    { digestW,    ARRAY_SIZE(digestW) - 1,    WINHTTP_AUTH_SCHEME_DIGEST },
-    { negotiateW, ARRAY_SIZE(negotiateW) - 1, WINHTTP_AUTH_SCHEME_NEGOTIATE }
+    { L"Basic",     ARRAY_SIZE(L"Basic") - 1,     WINHTTP_AUTH_SCHEME_BASIC },
+    { L"NTLM",      ARRAY_SIZE(L"NTLM") - 1,      WINHTTP_AUTH_SCHEME_NTLM },
+    { L"Passport",  ARRAY_SIZE(L"Passport") - 1,  WINHTTP_AUTH_SCHEME_PASSPORT },
+    { L"Digest",    ARRAY_SIZE(L"Digest") - 1,    WINHTTP_AUTH_SCHEME_DIGEST },
+    { L"Negotiate", ARRAY_SIZE(L"Negotiate") - 1, WINHTTP_AUTH_SCHEME_NEGOTIATE }
 };
 
 static enum auth_scheme scheme_from_flag( DWORD flag )
@@ -857,13 +810,13 @@ static enum auth_scheme scheme_from_flag( DWORD flag )
     return SCHEME_INVALID;
 }
 
-static DWORD auth_scheme_from_header( WCHAR *header )
+static DWORD auth_scheme_from_header( const WCHAR *header )
 {
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE( auth_schemes ); i++)
     {
-        if (!strncmpiW( header, auth_schemes[i].str, auth_schemes[i].len ) &&
+        if (!wcsnicmp( header, auth_schemes[i].str, auth_schemes[i].len ) &&
             (header[auth_schemes[i].len] == ' ' || !header[auth_schemes[i].len])) return auth_schemes[i].scheme;
     }
     return 0;
@@ -1125,7 +1078,7 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
     case WINHTTP_AUTH_TARGET_SERVER:
         has_auth_value = get_authvalue( request, WINHTTP_QUERY_WWW_AUTHENTICATE, scheme_flag, auth_value, len );
         auth_ptr = &request->authinfo;
-        auth_target = attr_authorization;
+        auth_target = L"Authorization";
         if (request->creds[TARGET_SERVER][scheme].username)
         {
             if (scheme != SCHEME_BASIC && !has_auth_value) return FALSE;
@@ -1144,7 +1097,7 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
         if (!get_authvalue( request, WINHTTP_QUERY_PROXY_AUTHENTICATE, scheme_flag, auth_value, len ))
             return FALSE;
         auth_ptr = &request->proxy_authinfo;
-        auth_target = attr_proxy_authorization;
+        auth_target = L"Proxy-Authorization";
         if (request->creds[TARGET_PROXY][scheme].username)
         {
             username = request->creds[TARGET_PROXY][scheme].username;
@@ -1172,8 +1125,8 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
         if (!username || !password) return FALSE;
         if ((!authinfo && !(authinfo = alloc_authinfo())) || authinfo->finished) return FALSE;
 
-        userlen = WideCharToMultiByte( CP_UTF8, 0, username, strlenW( username ), NULL, 0, NULL, NULL );
-        passlen = WideCharToMultiByte( CP_UTF8, 0, password, strlenW( password ), NULL, 0, NULL, NULL );
+        userlen = WideCharToMultiByte( CP_UTF8, 0, username, lstrlenW( username ), NULL, 0, NULL, NULL );
+        passlen = WideCharToMultiByte( CP_UTF8, 0, password, lstrlenW( password ), NULL, 0, NULL, NULL );
 
         authinfo->data_len = userlen + 1 + passlen;
         if (!(authinfo->data = heap_alloc( authinfo->data_len ))) return FALSE;
@@ -1206,7 +1159,7 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
 
             first = TRUE;
             domain = (WCHAR *)username;
-            user = strchrW( username, '\\' );
+            user = wcschr( username, '\\' );
 
             if (user) user++;
             else
@@ -1216,11 +1169,11 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
             }
             id.Flags          = SEC_WINNT_AUTH_IDENTITY_UNICODE;
             id.User           = user;
-            id.UserLength     = strlenW( user );
+            id.UserLength     = lstrlenW( user );
             id.Domain         = domain;
             id.DomainLength   = domain ? user - domain - 1 : 0;
             id.Password       = (WCHAR *)password;
-            id.PasswordLength = strlenW( password );
+            id.PasswordLength = lstrlenW( password );
 
             status = AcquireCredentialsHandleW( NULL, (SEC_WCHAR *)auth_schemes[scheme].str,
                                                 SECPKG_CRED_OUTBOUND, NULL, &id, NULL, NULL,
@@ -1246,8 +1199,8 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
         }
         else if (authinfo->finished) return FALSE;
 
-        if ((strlenW( auth_value ) < auth_schemes[authinfo->scheme].len ||
-            strncmpiW( auth_value, auth_schemes[authinfo->scheme].str, auth_schemes[authinfo->scheme].len )))
+        if ((lstrlenW( auth_value ) < auth_schemes[authinfo->scheme].len ||
+            wcsnicmp( auth_value, auth_schemes[authinfo->scheme].str, auth_schemes[authinfo->scheme].len )))
         {
             ERR("authentication scheme changed from %s to %s\n",
                 debugstr_w(auth_schemes[authinfo->scheme].str), debugstr_w(auth_value));
@@ -1266,7 +1219,7 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
         p = auth_value + auth_schemes[scheme].len;
         if (*p == ' ')
         {
-            int len = strlenW( ++p );
+            int len = lstrlenW( ++p );
             in.cbBuffer = decode_base64( p, len, NULL );
             if (!(in.pvBuffer = heap_alloc( in.cbBuffer ))) {
                 destroy_authinfo( authinfo );
@@ -1340,46 +1293,42 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
 
 static WCHAR *build_proxy_connect_string( struct request *request )
 {
-    static const WCHAR fmtW[] = {'%','s',':','%','u',0};
-    static const WCHAR connectW[] = {'C','O','N','N','E','C','T', 0};
-    static const WCHAR spaceW[] = {' ',0}, crlfW[] = {'\r','\n',0}, colonW[] = {':',' ',0};
-    static const WCHAR twocrlfW[] = {'\r','\n','\r','\n',0};
     WCHAR *ret, *host;
     unsigned int i;
-    int len;
+    int len = lstrlenW( request->connect->hostname ) + 7;
 
-    if (!(host = heap_alloc( (strlenW( request->connect->hostname ) + 7) * sizeof(WCHAR) ))) return NULL;
-    len = sprintfW( host, fmtW, request->connect->hostname, request->connect->hostport );
+    if (!(host = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    len = swprintf( host, len, L"%s:%u", request->connect->hostname, request->connect->hostport );
 
-    len += ARRAY_SIZE(connectW);
-    len += ARRAY_SIZE(http1_1);
+    len += ARRAY_SIZE(L"CONNECT");
+    len += ARRAY_SIZE(L"HTTP/1.1");
 
     for (i = 0; i < request->num_headers; i++)
     {
         if (request->headers[i].is_request)
-            len += strlenW( request->headers[i].field ) + strlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
+            len += lstrlenW( request->headers[i].field ) + lstrlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
     }
     len += 4; /* '\r\n\r\n' */
 
     if ((ret = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
-        strcpyW( ret, connectW );
-        strcatW( ret, spaceW );
-        strcatW( ret, host );
-        strcatW( ret, spaceW );
-        strcatW( ret, http1_1 );
+        lstrcpyW( ret, L"CONNECT" );
+        lstrcatW( ret, L" " );
+        lstrcatW( ret, host );
+        lstrcatW( ret, L" " );
+        lstrcatW( ret, L"HTTP/1.1" );
 
         for (i = 0; i < request->num_headers; i++)
         {
             if (request->headers[i].is_request)
             {
-                strcatW( ret, crlfW );
-                strcatW( ret, request->headers[i].field );
-                strcatW( ret, colonW );
-                strcatW( ret, request->headers[i].value );
+                lstrcatW( ret, L"\r\n" );
+                lstrcatW( ret, request->headers[i].field );
+                lstrcatW( ret, L": " );
+                lstrcatW( ret, request->headers[i].value );
             }
         }
-        strcatW( ret, twocrlfW );
+        lstrcatW( ret, L"\r\n\r\n" );
     }
 
     heap_free( host );
@@ -1577,7 +1526,7 @@ static BOOL open_connection( struct request *request )
 
     LIST_FOR_EACH_ENTRY( iter, &connection_pool, struct hostdata, entry )
     {
-        if (iter->port == port && !strcmpW( connect->servername, iter->hostname ) && !is_secure == !iter->secure)
+        if (iter->port == port && !wcscmp( connect->servername, iter->hostname ) && !is_secure == !iter->secure)
         {
             host = iter;
             host->ref++;
@@ -1634,7 +1583,7 @@ static BOOL open_connection( struct request *request )
 
     if (!connect->resolved)
     {
-        len = strlenW( host->hostname ) + 1;
+        len = lstrlenW( host->hostname ) + 1;
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, host->hostname, len );
 
         if (!netconn_resolve( host->hostname, port, &connect->sockaddr, request->resolve_timeout ))
@@ -1649,7 +1598,7 @@ static BOOL open_connection( struct request *request )
             release_host( host );
             return FALSE;
         }
-        len = strlenW( addressW ) + 1;
+        len = lstrlenW( addressW ) + 1;
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, addressW, len );
     }
 
@@ -1679,7 +1628,7 @@ static BOOL open_connection( struct request *request )
         if (is_secure)
         {
             if (connect->session->proxy_server &&
-                strcmpiW( connect->hostname, connect->servername ))
+                wcsicmp( connect->hostname, connect->servername ))
             {
                 if (!secure_proxy_connect( request ))
                 {
@@ -1704,7 +1653,7 @@ static BOOL open_connection( struct request *request )
             }
         }
 
-        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, strlenW(addressW) + 1 );
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, lstrlenW(addressW) + 1 );
     }
     else
     {
@@ -1746,7 +1695,6 @@ static BOOL add_host_header( struct request *request, DWORD modifier )
     BOOL ret;
     DWORD len;
     WCHAR *host;
-    static const WCHAR fmt[] = {'%','s',':','%','u',0};
     struct connect *connect = request->connect;
     INTERNET_PORT port;
 
@@ -1754,12 +1702,12 @@ static BOOL add_host_header( struct request *request, DWORD modifier )
 
     if (port == INTERNET_DEFAULT_HTTP_PORT || port == INTERNET_DEFAULT_HTTPS_PORT)
     {
-        return process_header( request, attr_host, connect->hostname, modifier, TRUE );
+        return process_header( request, L"Host", connect->hostname, modifier, TRUE );
     }
-    len = strlenW( connect->hostname ) + 7; /* sizeof(":65335") */
+    len = lstrlenW( connect->hostname ) + 7; /* sizeof(":65335") */
     if (!(host = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
-    sprintfW( host, fmt, connect->hostname, port );
-    ret = process_header( request, attr_host, host, modifier, TRUE );
+    swprintf( host, len, L"%s:%u", connect->hostname, port );
+    ret = process_header( request, L"Host", host, modifier, TRUE );
     heap_free( host );
     return ret;
 }
@@ -1899,8 +1847,6 @@ static BOOL refill_buffer( struct request *request, BOOL notify )
 
 static void finished_reading( struct request *request )
 {
-    static const WCHAR closeW[] = {'c','l','o','s','e',0};
-
     BOOL close = FALSE;
     WCHAR connection[20];
     DWORD size = sizeof(connection);
@@ -1911,9 +1857,9 @@ static void finished_reading( struct request *request )
     else if (query_headers( request, WINHTTP_QUERY_CONNECTION, NULL, connection, &size, NULL ) ||
              query_headers( request, WINHTTP_QUERY_PROXY_CONNECTION, NULL, connection, &size, NULL ))
     {
-        if (!strcmpiW( connection, closeW )) close = TRUE;
+        if (!wcsicmp( connection, L"close" )) close = TRUE;
     }
-    else if (!strcmpW( request->version, http1_0 )) close = TRUE;
+    else if (!wcscmp( request->version, L"HTTP/1.0" )) close = TRUE;
     if (close)
     {
         close_connection( request );
@@ -2070,7 +2016,7 @@ static DWORD str_to_wire( const WCHAR *src, int src_len, char *dst, enum escape_
     DWORD len;
     char *utf8;
 
-    if (src_len < 0) src_len = strlenW( src );
+    if (src_len < 0) src_len = lstrlenW( src );
     len = WideCharToMultiByte( CP_UTF8, 0, src, src_len, NULL, 0, NULL, NULL );
     if (!(utf8 = heap_alloc( len ))) return 0;
 
@@ -2089,16 +2035,16 @@ static char *build_wire_path( struct request *request, DWORD *ret_len )
     enum escape_flags path_flags, query_flags;
     char *ret;
 
-    if (!strcmpiW( request->connect->hostname, request->connect->servername )) start = full_path = request->path;
+    if (!wcsicmp( request->connect->hostname, request->connect->servername )) start = full_path = request->path;
     else if (!(full_path = build_absolute_request_path( request, &start ))) return NULL;
 
-    len = strlenW( full_path );
-    if ((path = strchrW( start, '/' )))
+    len = lstrlenW( full_path );
+    if ((path = wcschr( start, '/' )))
     {
-        len_path = strlenW( path );
-        if ((query = strchrW( path, '?' )))
+        len_path = lstrlenW( path );
+        if ((query = wcschr( path, '?' )))
         {
-            len_query = strlenW( query );
+            len_query = lstrlenW( query );
             len_path -= len_query;
         }
     }
@@ -2177,10 +2123,6 @@ static char *build_wire_request( struct request *request, DWORD *len )
 static BOOL send_request( struct request *request, const WCHAR *headers, DWORD headers_len, void *optional,
                           DWORD optional_len, DWORD total_len, DWORD_PTR context, BOOL async )
 {
-    static const WCHAR keep_alive[] = {'K','e','e','p','-','A','l','i','v','e',0};
-    static const WCHAR no_cache[]   = {'n','o','-','c','a','c','h','e',0};
-    static const WCHAR length_fmt[] = {'%','l','d',0};
-
     BOOL ret = FALSE;
     struct connect *connect = request->connect;
     struct session *session = connect->session;
@@ -2192,7 +2134,7 @@ static BOOL send_request( struct request *request, const WCHAR *headers, DWORD h
     drain_content( request );
 
     if (session->agent)
-        process_header( request, attr_user_agent, session->agent, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+        process_header( request, L"User-Agent", session->agent, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
 
     if (connect->hostname)
         add_host_header( request, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
@@ -2200,20 +2142,20 @@ static BOOL send_request( struct request *request, const WCHAR *headers, DWORD h
     if (request->creds[TARGET_SERVER][SCHEME_BASIC].username)
         do_authorization( request, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC );
 
-    if (total_len || (request->verb && !strcmpW( request->verb, postW )))
+    if (total_len || (request->verb && !wcscmp( request->verb, L"POST" )))
     {
         WCHAR length[21]; /* decimal long int + null */
-        sprintfW( length, length_fmt, total_len );
-        process_header( request, attr_content_length, length, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+        swprintf( length, ARRAY_SIZE(length), L"%ld", total_len );
+        process_header( request, L"Content-Length", length, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
     }
     if (!(request->hdr.disable_flags & WINHTTP_DISABLE_KEEP_ALIVE))
     {
-        process_header( request, attr_connection, keep_alive, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+        process_header( request, L"Connection", L"Keep-Alive", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
     }
     if (request->hdr.flags & WINHTTP_FLAG_REFRESH)
     {
-        process_header( request, attr_pragma, no_cache, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
-        process_header( request, attr_cache_control, no_cache, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+        process_header( request, L"Pragma", L"no-cache", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+        process_header( request, L"Cache-Control", L"no-cache", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
     }
     if (headers && !add_request_headers( request, headers, headers_len, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE ))
     {
@@ -2278,8 +2220,8 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
     BOOL ret;
     struct request *request;
 
-    TRACE("%p, %s, %u, %u, %u, %lx\n", hrequest, debugstr_wn(headers, headers_len), headers_len, optional_len,
-          total_len, context);
+    TRACE("%p, %s, %u, %p, %u, %u, %lx\n", hrequest, debugstr_wn(headers, headers_len), headers_len, optional,
+          optional_len, total_len, context);
 
     if (!(request = (struct request *)grab_object( hrequest )))
     {
@@ -2293,7 +2235,7 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
         return FALSE;
     }
 
-    if (headers && !headers_len) headers_len = strlenW( headers );
+    if (headers && !headers_len) headers_len = lstrlenW( headers );
 
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
@@ -2430,7 +2372,7 @@ static DWORD set_content_length( struct request *request, DWORD status )
     WCHAR encoding[20];
     DWORD buflen = sizeof(request->content_length);
 
-    if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED || !strcmpW( request->verb, headW ))
+    if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED || !wcscmp( request->verb, L"HEAD" ))
         request->content_length = 0;
     else
     {
@@ -2440,7 +2382,7 @@ static DWORD set_content_length( struct request *request, DWORD status )
 
         buflen = sizeof(encoding);
         if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
-            !strcmpiW( encoding, chunkedW ))
+            !wcsicmp( encoding, L"chunked" ))
         {
             request->content_length = ~0u;
             request->read_chunked = TRUE;
@@ -2495,10 +2437,8 @@ static BOOL read_line( struct request *request, char *buffer, DWORD *len )
 
 static BOOL read_reply( struct request *request )
 {
-    static const WCHAR crlf[] = {'\r','\n',0};
-
     char buffer[MAX_REPLY_LEN];
-    DWORD buflen, len, offset, crlf_len = 2; /* strlenW(crlf) */
+    DWORD buflen, len, offset, crlf_len = 2; /* lstrlenW(crlf) */
     char *status_code, *status_text;
     WCHAR *versionW, *status_textW, *raw_headers;
     WCHAR status_codeW[4]; /* sizeof("nnn") */
@@ -2527,7 +2467,7 @@ static BOOL read_reply( struct request *request )
     /*  we rely on the fact that the protocol is ascii */
     MultiByteToWideChar( CP_ACP, 0, status_code, len, status_codeW, len );
     status_codeW[len] = 0;
-    if (!(process_header( request, attr_status, status_codeW,
+    if (!(process_header( request, L"Status", status_codeW,
                           WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE, FALSE )))
         return FALSE;
 
@@ -2549,7 +2489,7 @@ static BOOL read_reply( struct request *request )
     len = max( buflen + crlf_len, INITIAL_HEADER_BUFFER_LEN );
     if (!(raw_headers = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
     MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers, buflen );
-    memcpy( raw_headers + buflen - 1, crlf, sizeof(crlf) );
+    memcpy( raw_headers + buflen - 1, L"\r\n", sizeof(L"\r\n") );
 
     heap_free( request->raw_headers );
     request->raw_headers = raw_headers;
@@ -2572,7 +2512,7 @@ static BOOL read_reply( struct request *request )
         }
         if (!*buffer)
         {
-            memcpy( raw_headers + offset, crlf, sizeof(crlf) );
+            memcpy( raw_headers + offset, L"\r\n", sizeof(L"\r\n") );
             break;
         }
         MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers + offset, buflen );
@@ -2584,7 +2524,7 @@ static BOOL read_reply( struct request *request )
             break;
         }
         free_header( header );
-        memcpy( raw_headers + offset + buflen - 1, crlf, sizeof(crlf) );
+        memcpy( raw_headers + offset + buflen - 1, L"\r\n", sizeof(L"\r\n") );
         offset += buflen + crlf_len - 1;
     }
 
@@ -2599,7 +2539,7 @@ static void record_cookies( struct request *request )
     for (i = 0; i < request->num_headers; i++)
     {
         struct header *set_cookie = &request->headers[i];
-        if (!strcmpiW( set_cookie->field, attr_set_cookie ) && !set_cookie->is_request)
+        if (!wcsicmp( set_cookie->field, L"Set-Cookie" ) && !set_cookie->is_request)
         {
             set_cookies( request, set_cookie->value );
         }
@@ -2612,7 +2552,7 @@ static WCHAR *get_redirect_url( struct request *request, DWORD *len )
     WCHAR *ret;
 
     query_headers( request, WINHTTP_QUERY_LOCATION, NULL, NULL, &size, NULL );
-    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
     if (!(ret = heap_alloc( size ))) return NULL;
     *len = size / sizeof(WCHAR) - 1;
     if (query_headers( request, WINHTTP_QUERY_LOCATION, NULL, ret, &size, NULL )) return ret;
@@ -2648,12 +2588,12 @@ static BOOL handle_redirect( struct request *request, DWORD status )
         }
         else
         {
-            if ((p = strrchrW( request->path, '/' ))) *p = 0;
-            len = strlenW( request->path ) + 1 + len_loc;
+            if ((p = wcsrchr( request->path, '/' ))) *p = 0;
+            len = lstrlenW( request->path ) + 1 + len_loc;
             if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-            strcpyW( path, request->path );
-            strcatW( path, slashW );
-            memcpy( path + strlenW(path), location, len_loc * sizeof(WCHAR) );
+            lstrcpyW( path, request->path );
+            lstrcatW( path, L"/" );
+            memcpy( path + lstrlenW(path), location, len_loc * sizeof(WCHAR) );
             path[len_loc] = 0;
         }
         heap_free( request->path );
@@ -2683,7 +2623,7 @@ static BOOL handle_redirect( struct request *request, DWORD status )
         hostname[len] = 0;
 
         port = uc.nPort ? uc.nPort : (uc.nScheme == INTERNET_SCHEME_HTTPS ? 443 : 80);
-        if (strcmpiW( connect->hostname, hostname ) || connect->serverport != port)
+        if (wcsicmp( connect->hostname, hostname ) || connect->serverport != port)
         {
             heap_free( connect->hostname );
             connect->hostname = hostname;
@@ -2710,17 +2650,17 @@ static BOOL handle_redirect( struct request *request, DWORD status )
             memcpy( request->path, uc.lpszUrlPath, (len + 1) * sizeof(WCHAR) );
             request->path[len] = 0;
         }
-        else request->path = strdupW( slashW );
+        else request->path = strdupW( L"/" );
     }
 
     /* remove content-type/length headers */
-    if ((index = get_header_index( request, attr_content_type, 0, TRUE )) >= 0) delete_header( request, index );
-    if ((index = get_header_index( request, attr_content_length, 0, TRUE )) >= 0 ) delete_header( request, index );
+    if ((index = get_header_index( request, L"Content-Type", 0, TRUE )) >= 0) delete_header( request, index );
+    if ((index = get_header_index( request, L"Content-Length", 0, TRUE )) >= 0 ) delete_header( request, index );
 
-    if (status != HTTP_STATUS_REDIRECT_KEEP_VERB && !strcmpW( request->verb, postW ))
+    if (status != HTTP_STATUS_REDIRECT_KEEP_VERB && !wcscmp( request->verb, L"POST" ))
     {
         heap_free( request->verb );
-        request->verb = strdupW( getW );
+        request->verb = strdupW( L"GET" );
         request->optional = NULL;
         request->optional_len = 0;
     }
@@ -2729,6 +2669,41 @@ static BOOL handle_redirect( struct request *request, DWORD status )
 end:
     heap_free( location );
     return ret;
+}
+
+static BOOL is_passport_request( struct request *request )
+{
+    static const WCHAR passportW[] = {'P','a','s','s','p','o','r','t','1','.','4'};
+    WCHAR buf[1024];
+    DWORD len = ARRAY_SIZE(buf);
+
+    if (!(request->connect->session->passport_flags & WINHTTP_ENABLE_PASSPORT_AUTH) ||
+        !query_headers( request, WINHTTP_QUERY_WWW_AUTHENTICATE, NULL, buf, &len, NULL )) return FALSE;
+
+    if (!wcsnicmp( buf, passportW, ARRAY_SIZE(passportW) ) &&
+        (buf[ARRAY_SIZE(passportW)] == ' ' || !buf[ARRAY_SIZE(passportW)])) return TRUE;
+
+    return FALSE;
+}
+
+static BOOL handle_passport_redirect( struct request *request )
+{
+    DWORD flags = WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE;
+    int i, len = lstrlenW( request->raw_headers );
+    WCHAR *p = request->raw_headers;
+
+    if (!process_header( request, L"Status", L"401", flags, FALSE )) return FALSE;
+
+    for (i = 0; i < len; i++)
+    {
+        if (i <= len - 3 && p[i] == '3' && p[i + 1] == '0' && p[i + 2] == '2')
+        {
+            p[i] = '4';
+            p[i + 2] = '1';
+            break;
+        }
+    }
+    return TRUE;
 }
 
 static BOOL receive_response( struct request *request, BOOL async )
@@ -2758,7 +2733,11 @@ static BOOL receive_response( struct request *request, BOOL async )
 
         if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) record_cookies( request );
 
-        if (status == HTTP_STATUS_MOVED || status == HTTP_STATUS_REDIRECT || status == HTTP_STATUS_REDIRECT_KEEP_VERB)
+        if (status == HTTP_STATUS_REDIRECT && is_passport_request( request ))
+        {
+            ret = handle_passport_redirect( request );
+        }
+        else if (status == HTTP_STATUS_MOVED || status == HTTP_STATUS_REDIRECT || status == HTTP_STATUS_REDIRECT_KEEP_VERB)
         {
             if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS ||
                 request->hdr.redirect_policy == WINHTTP_OPTION_REDIRECT_POLICY_NEVER) break;
@@ -3498,13 +3477,9 @@ static HRESULT WINAPI winhttp_request_Open(
     BSTR url,
     VARIANT async )
 {
-    static const WCHAR typeW[] = {'*','/','*',0};
-    static const WCHAR *acceptW[] = {typeW, NULL};
     static const WCHAR httpsW[] = {'h','t','t','p','s'};
-    static const WCHAR user_agentW[] = {
-        'M','o','z','i','l','l','a','/','4','.','0',' ','(','c','o','m','p','a','t','i','b','l','e',';',' ',
-        'W','i','n','3','2',';',' ','W','i','n','H','t','t','p','.','W','i','n','H','t','t','p',
-        'R','e','q','u','e','s','t','.','5',')',0};
+    static const WCHAR *acceptW[] = {L"*/*", NULL};
+    static const WCHAR user_agentW[] = L"Mozilla/4.0 (compatible; Win32; WinHttp.WinHttpRequest.5)";
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     URL_COMPONENTS uc;
     WCHAR *hostname, *path = NULL, *verb = NULL;
@@ -3594,8 +3569,6 @@ static HRESULT WINAPI winhttp_request_SetRequestHeader(
     BSTR header,
     BSTR value )
 {
-    static const WCHAR fmtW[] = {'%','s',':',' ','%','s','\r','\n',0};
-    static const WCHAR emptyW[] = {0};
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
     DWORD len, err = ERROR_SUCCESS;
     WCHAR *str;
@@ -3615,14 +3588,14 @@ static HRESULT WINAPI winhttp_request_SetRequestHeader(
         err = ERROR_WINHTTP_CANNOT_CALL_AFTER_SEND;
         goto done;
     }
-    len = strlenW( header ) + 4;
-    if (value) len += strlenW( value );
+    len = lstrlenW( header ) + 4;
+    if (value) len += lstrlenW( value );
     if (!(str = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
-    sprintfW( str, fmtW, header, value ? value : emptyW );
+    swprintf( str, len + 1, L"%s: %s\r\n", header, value ? value : L"" );
     if (!WinHttpAddRequestHeaders( request->hrequest, str, len,
                                    WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE ))
     {
@@ -3737,7 +3710,9 @@ static void CALLBACK wait_status_callback( HINTERNET handle, DWORD_PTR context, 
         request->error = result->dwError;
         break;
     }
-    default: break;
+    default:
+        request->error = ERROR_SUCCESS;
+        break;
     }
     SetEvent( request->wait );
 }
@@ -3779,7 +3754,7 @@ static HRESULT request_receive( struct winhttp_request *request )
         return HRESULT_FROM_WIN32( GetLastError() );
     }
     if ((err = wait_for_completion( request ))) return HRESULT_FROM_WIN32( err );
-    if (!strcmpW( request->verb, headW ))
+    if (!wcscmp( request->verb, L"HEAD" ))
     {
         request->state = REQUEST_STATE_RESPONSE_RECEIVED;
         return S_OK;
@@ -3850,15 +3825,13 @@ static DWORD request_set_parameters( struct winhttp_request *request )
 
 static void request_set_utf8_content_type( struct winhttp_request *request )
 {
-    static const WCHAR fmtW[] = {'%','s',':',' ','%','s',0};
-    static const WCHAR text_plainW[] = {'t','e','x','t','/','p','l','a','i','n',0};
-    static const WCHAR charset_utf8W[] = {'c','h','a','r','s','e','t','=','u','t','f','-','8',0};
     WCHAR headerW[64];
     int len;
 
-    len = sprintfW( headerW, fmtW, attr_content_type, text_plainW );
+    len = swprintf( headerW, ARRAY_SIZE(headerW), L"%s: %s", L"Content-Type", L"text/plain" );
     WinHttpAddRequestHeaders( request->hrequest, headerW, len, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
-    len = sprintfW( headerW, fmtW, attr_content_type, charset_utf8W );
+
+    len = swprintf( headerW, ARRAY_SIZE(headerW), L"%s: %s", L"Content-Type", L"charset=utf-8" );
     WinHttpAddRequestHeaders( request->hrequest, headerW, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
 }
 
@@ -3872,14 +3845,14 @@ static HRESULT request_send( struct winhttp_request *request )
     DWORD err;
 
     if ((err = request_set_parameters( request ))) return HRESULT_FROM_WIN32( err );
-    if (strcmpW( request->verb, getW ))
+    if (wcscmp( request->verb, L"GET" ))
     {
         VariantInit( &data );
         if (V_VT( &request->data ) == VT_BSTR)
         {
             UINT cp = CP_ACP;
             const WCHAR *str = V_BSTR( &request->data );
-            int i, len = strlenW( str );
+            int i, len = lstrlenW( str );
 
             for (i = 0; i < len; i++)
             {
@@ -3950,18 +3923,17 @@ static DWORD request_wait( struct winhttp_request *request, DWORD timeout )
     switch (err)
     {
     case WAIT_OBJECT_0:
-        ret = ERROR_SUCCESS;
+        ret = request->error;
         break;
     case WAIT_TIMEOUT:
         ret = ERROR_TIMEOUT;
         break;
-    case WAIT_FAILED:
     default:
         ret = GetLastError();
         break;
     }
     EnterCriticalSection( &request->cs );
-    if (!ret) request->proc_running = FALSE;
+    if (err == WAIT_OBJECT_0) request->proc_running = FALSE;
     return ret;
 }
 
@@ -4076,8 +4048,6 @@ done:
 
 static DWORD request_get_codepage( struct winhttp_request *request, UINT *codepage )
 {
-    static const WCHAR utf8W[] = {'u','t','f','-','8',0};
-    static const WCHAR charsetW[] = {'c','h','a','r','s','e','t',0};
     WCHAR *buffer, *p;
     DWORD size;
 
@@ -4090,14 +4060,14 @@ static DWORD request_get_codepage( struct winhttp_request *request, UINT *codepa
         {
             return GetLastError();
         }
-        if ((p = strstrW( buffer, charsetW )))
+        if ((p = wcsstr( buffer, L"charset" )))
         {
-            p += strlenW( charsetW );
+            p += lstrlenW( L"charset" );
             while (*p == ' ') p++;
             if (*p++ == '=')
             {
                 while (*p == ' ') p++;
-                if (!strcmpiW( p, utf8W )) *codepage = CP_UTF8;
+                if (!wcsicmp( p, L"utf-8" )) *codepage = CP_UTF8;
             }
         }
         heap_free( buffer );
@@ -4433,9 +4403,7 @@ static HRESULT WINAPI winhttp_request_put_Option(
     }
     case WinHttpRequestOption_URLCodePage:
     {
-        static const WCHAR utf8W[] = {'u','t','f','-','8',0};
         VARIANT cp;
-
         VariantInit( &cp );
         hr = VariantChangeType( &cp, &value, 0, VT_UI4 );
         if (SUCCEEDED( hr ))
@@ -4443,7 +4411,7 @@ static HRESULT WINAPI winhttp_request_put_Option(
             request->url_codepage = V_UI4( &cp );
             TRACE("URL codepage: %u\n", request->url_codepage);
         }
-        else if (V_VT( &value ) == VT_BSTR && !strcmpiW( V_BSTR( &value ), utf8W ))
+        else if (V_VT( &value ) == VT_BSTR && !wcsicmp( V_BSTR( &value ), L"utf-8" ))
         {
             TRACE("URL codepage: UTF-8\n");
             request->url_codepage = CP_UTF8;
@@ -4485,11 +4453,9 @@ static HRESULT WINAPI winhttp_request_WaitForResponse(
         err = ERROR_SUCCESS;
         break;
 
-    case ERROR_SUCCESS:
+    default:
         if (succeeded) *succeeded = VARIANT_TRUE;
         break;
-
-    default: break;
     }
     LeaveCriticalSection( &request->cs );
     return HRESULT_FROM_WIN32( err );

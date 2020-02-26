@@ -1245,6 +1245,184 @@ static void test_widen(void)
     GdipDeletePath(path);
 }
 
+static path_test_t widenline_capflat_path[] = {
+    {5.0, 5.0,   PathPointTypeStart, 0, 0}, /*0*/
+    {50.0, 5.0,  PathPointTypeLine,  0, 0}, /*1*/
+    {50.0, 15.0, PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 15.0,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0} /*3*/
+    };
+
+static path_test_t widenline_capsquare_path[] = {
+    {0.0, 5.0,   PathPointTypeStart, 0, 0}, /*0*/
+    {55.0, 5.0,  PathPointTypeLine,  0, 0}, /*1*/
+    {55.0, 15.0, PathPointTypeLine,  0, 0}, /*2*/
+    {0.0, 15.0,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0} /*3*/
+    };
+
+static path_test_t widenline_capround_path[] = {
+    {5.0, 5.0,        PathPointTypeStart,  0, 0}, /*0*/
+    {50.0, 5.0,       PathPointTypeLine,   0, 0}, /*1*/
+    {52.761421, 5.0,  PathPointTypeBezier, 0, 0}, /*2*/
+    {55.0, 7.238576,  PathPointTypeBezier, 0, 0}, /*3*/
+    {55.0, 10.0,      PathPointTypeBezier, 0, 0}, /*4*/
+    {55.0, 12.761423, PathPointTypeBezier, 0, 0}, /*5*/
+    {52.761421, 15.0, PathPointTypeBezier, 0, 0}, /*6*/
+    {50.0, 15.0,      PathPointTypeBezier, 0, 0}, /*7*/
+    {5.0, 15.0,       PathPointTypeLine,   0, 0}, /*8*/
+    {2.238576, 15.0,  PathPointTypeBezier, 0, 0}, /*9*/
+    {0.0, 12.761423,  PathPointTypeBezier, 0, 0}, /*10*/
+    {0.0, 10.0,       PathPointTypeBezier, 0, 0}, /*11*/
+    {0.0, 7.238576,   PathPointTypeBezier, 0, 0}, /*12*/
+    {2.238576, 5.0,   PathPointTypeBezier, 0, 0}, /*13*/
+    {5.0, 5.0,        PathPointTypeBezier|PathPointTypeCloseSubpath, 0, 0}, /*14*/
+    };
+
+static path_test_t widenline_captriangle_path[] = {
+    {5.0, 5.0,   PathPointTypeStart, 0, 0}, /*0*/
+    {50.0, 5.0,  PathPointTypeLine,  0, 0}, /*1*/
+    {55.0, 10.0, PathPointTypeLine,  0, 0}, /*2*/
+    {50.0, 15.0, PathPointTypeLine,  0, 0}, /*3*/
+    {5.0, 15.0,  PathPointTypeLine,  0, 0}, /*4*/
+    {0.0, 10.0,  PathPointTypeLine,  0, 0}, /*5*/
+    {5.0, 5.0,   PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0} /*6*/
+    };
+
+static path_test_t widenline_capsquareanchor_path[] = {
+    {5.0, 5.0,             PathPointTypeStart, 0, 0}, /*0*/
+    {50.0, 5.0,            PathPointTypeLine,  0, 0}, /*1*/
+    {50.0, 15.0,           PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 15.0,            PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
+    {12.071068, 2.928932,  PathPointTypeStart, 0, 0}, /*4*/
+    {12.071068, 17.071066, PathPointTypeLine,  0, 0}, /*5*/
+    {-2.071068, 17.071066, PathPointTypeLine,  0, 0}, /*6*/
+    {-2.071068, 2.928932,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*7*/
+    {42.928928, 17.071068, PathPointTypeStart, 0, 0}, /*8*/
+    {42.928928, 2.928932,  PathPointTypeLine,  0, 0}, /*9*/
+    {57.071068, 2.928932,  PathPointTypeLine,  0, 0}, /*10*/
+    {57.071068, 17.071068, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*11*/
+    };
+
+static path_test_t widenline_caproundanchor_path[] = {
+    {5.0, 5.0,        PathPointTypeStart,  0, 0}, /*0*/
+    {50.0, 5.0,       PathPointTypeLine,   0, 0}, /*1*/
+    {50.0, 15.0,      PathPointTypeLine,   0, 0}, /*2*/
+    {5.0, 15.0,       PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
+    {5.0, 20.0,       PathPointTypeStart,  0, 0}, /*4*/
+    {-0.522847, 20.0, PathPointTypeBezier, 0, 0}, /*5*/
+    {-5.0, 15.522846, PathPointTypeBezier, 0, 0}, /*6*/
+    {-5.0, 10.0,      PathPointTypeBezier, 0, 0}, /*7*/
+    {-5.0, 4.477152,  PathPointTypeBezier, 0, 0}, /*8*/
+    {-0.522847, 0.0,  PathPointTypeBezier, 0, 0}, /*9*/
+    {5.0, 0.0,        PathPointTypeBezier, 0, 0}, /*10*/
+    {10.522847, 0.0,  PathPointTypeBezier, 0, 0}, /*11*/
+    {15.0, 4.477152,  PathPointTypeBezier, 0, 0}, /*12*/
+    {15.0, 10.0,      PathPointTypeBezier, 0, 0}, /*13*/
+    {15.0, 15.522846, PathPointTypeBezier, 0, 0}, /*14*/
+    {10.522847, 20.0, PathPointTypeBezier, 0, 0}, /*15*/
+    {5.0, 20.0,       PathPointTypeBezier|PathPointTypeCloseSubpath, 0, 0}, /*16*/
+    {50.0, 0.0,       PathPointTypeStart,  0, 0}, /*17*/
+    {55.522846, 0.0,  PathPointTypeBezier, 0, 0}, /*18*/
+    {60.0, 4.477153,  PathPointTypeBezier, 0, 0}, /*19*/
+    {60.0, 10.0,      PathPointTypeBezier, 0, 0}, /*20*/
+    {60.0, 15.522847, PathPointTypeBezier, 0, 0}, /*21*/
+    {55.522846, 20.0, PathPointTypeBezier, 0, 0}, /*22*/
+    {50.0, 20.0,      PathPointTypeBezier, 0, 0}, /*23*/
+    {44.477150, 20.0, PathPointTypeBezier, 0, 0}, /*24*/
+    {40.0, 15.522847, PathPointTypeBezier, 0, 0}, /*25*/
+    {40.0, 10.0,      PathPointTypeBezier, 0, 0}, /*26*/
+    {40.0, 4.477153,  PathPointTypeBezier, 0, 0}, /*27*/
+    {44.477150, 0.0,  PathPointTypeBezier, 0, 0}, /*28*/
+    {50.0, 0.0,       PathPointTypeBezier|PathPointTypeCloseSubpath, 0, 0}, /*29*/
+    };
+
+static path_test_t widenline_capdiamondanchor_path[] = {
+    {5.0, 5.0,   PathPointTypeStart, 0, 0}, /*0*/
+    {50.0, 5.0,  PathPointTypeLine,  0, 0}, /*1*/
+    {50.0, 15.0, PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 15.0,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
+    {-5.0, 10.0, PathPointTypeStart, 0, 0}, /*4*/
+    {5.0, 0.0,   PathPointTypeLine,  0, 0}, /*5*/
+    {15.0, 10.0, PathPointTypeLine,  0, 0}, /*6*/
+    {5.0, 20.0,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*7*/
+    {60.0, 10.0, PathPointTypeStart, 0, 0}, /*8*/
+    {50.0, 20.0, PathPointTypeLine,  0, 0}, /*9*/
+    {40.0, 10.0, PathPointTypeLine,  0, 0}, /*10*/
+    {50.0, 0.0,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*11*/
+    };
+
+static path_test_t widenline_caparrowanchor_path[] = {
+    {15.0, 5.0,       PathPointTypeStart, 0, 1}, /*0*/
+    {40.0, 5.0,       PathPointTypeLine,  0, 1}, /*1*/
+    {40.0, 15.0,      PathPointTypeLine,  0, 1}, /*2*/
+    {15.0, 15.0,      PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*3*/
+    {5.0, 10.0,       PathPointTypeStart, 0, 0}, /*4*/
+    {22.320507, 0.0,  PathPointTypeLine,  0, 0}, /*5*/
+    {22.320507, 20.0, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*6*/
+    {50.0, 10.0,      PathPointTypeStart, 0, 0}, /*7*/
+    {32.679489, 20.0, PathPointTypeLine,  0, 0}, /*8*/
+    {32.679489, 0.0,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*9*/
+    };
+
+static void test_widen_cap(void)
+{
+    struct
+    {
+        LineCap type;
+        const path_test_t *expected;
+        INT expected_size;
+        BOOL todo_size;
+    }
+    caps[] =
+    {
+        { LineCapFlat, widenline_capflat_path,
+                ARRAY_SIZE(widenline_capflat_path) },
+        { LineCapSquare, widenline_capsquare_path,
+                ARRAY_SIZE(widenline_capsquare_path) },
+        { LineCapRound, widenline_capround_path,
+                ARRAY_SIZE(widenline_capround_path) },
+        { LineCapTriangle, widenline_captriangle_path,
+                ARRAY_SIZE(widenline_captriangle_path) },
+        { LineCapNoAnchor, widenline_capflat_path,
+                ARRAY_SIZE(widenline_capflat_path) },
+        { LineCapSquareAnchor, widenline_capsquareanchor_path,
+                ARRAY_SIZE(widenline_capsquareanchor_path) },
+        { LineCapRoundAnchor, widenline_caproundanchor_path,
+                ARRAY_SIZE(widenline_caproundanchor_path) },
+        { LineCapDiamondAnchor, widenline_capdiamondanchor_path,
+                ARRAY_SIZE(widenline_capdiamondanchor_path) },
+        { LineCapArrowAnchor, widenline_caparrowanchor_path,
+                ARRAY_SIZE(widenline_caparrowanchor_path), TRUE },
+    };
+    GpStatus status;
+    GpPath *path;
+    GpPen *pen;
+    int i;
+
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipCreatePen1(0xffffffff, 10.0, UnitPixel, &pen);
+    expect(Ok, status);
+
+    for (i = 0; i < ARRAY_SIZE(caps); i++)
+    {
+        status = GdipResetPath(path);
+        expect(Ok, status);
+        status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 10.0);
+        expect(Ok, status);
+        status = GdipSetPenStartCap(pen, caps[i].type);
+        expect(Ok, status);
+        status = GdipSetPenEndCap(pen, caps[i].type);
+        expect(Ok, status);
+
+        status = GdipWidenPath(path, pen, NULL, FlatnessDefault);
+        expect(Ok, status);
+        ok_path(path, caps[i].expected, caps[i].expected_size, caps[i].todo_size);
+    }
+
+    GdipDeletePen(pen);
+    GdipDeletePath(path);
+}
+
 static void test_isvisible(void)
 {
     GpPath *path;
@@ -1385,6 +1563,7 @@ START_TEST(graphicspath)
     test_addpie();
     test_flatten();
     test_widen();
+    test_widen_cap();
     test_isvisible();
     test_empty_rect();
 

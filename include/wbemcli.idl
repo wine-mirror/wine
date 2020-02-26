@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-cpp_quote("DEFINE_GUID(CLSID_WbemLocator, 0x4590f811,0x1d3A,0x11d0,0x89,0x1f,0x00,0xaa,0x00,0x4b,0x2e,0x24);")
+cpp_quote("DEFINE_GUID(CLSID_WbemLocator, 0x4590f811,0x1d3a,0x11d0,0x89,0x1f,0x00,0xaa,0x00,0x4b,0x2e,0x24);")
 cpp_quote("DEFINE_GUID(CLSID_WbemStatusCode, 0xeb87e1bd,0x3233,0x11d2,0xae,0xc9,0x00,0xc0,0x4f,0xb6,0x88,0x20);")
 
 import "oaidl.idl";
@@ -336,6 +336,48 @@ typedef [v1_enum] enum tag_WBEM_GENERIC_FLAG_TYPE
 [
     object,
     restricted,
+    local,
+    uuid(44aca674-e8fc-11d0-a07c-00c04fb68820)
+]
+interface IWbemContext : IUnknown
+{
+    HRESULT Clone(
+        [out] IWbemContext **ppNewCopy);
+
+    HRESULT GetNames(
+        [in] long lFlags,
+        [out] SAFEARRAY(BSTR) *pNames);
+
+    HRESULT BeginEnumeration(
+        [in] long lFlags);
+
+    HRESULT Next(
+        [in] long lFlags,
+        [out] BSTR *pstrName,
+        [out] VARIANT *pValue);
+
+    HRESULT EndEnumeration();
+
+    HRESULT SetValue(
+        [in, string] LPCWSTR wszName,
+        [in] long lFlags,
+        [in] VARIANT *pValue);
+
+    HRESULT GetValue(
+        [in, string] LPCWSTR wszName,
+        [in] long lFlags,
+        [out] VARIANT *pValue);
+
+    HRESULT DeleteValue(
+        [in, string] LPCWSTR wszName,
+        [in] long lFlags);
+
+    HRESULT DeleteAll();
+}
+
+[
+    object,
+    restricted,
     uuid(9556dc99-828c-11cf-a37e-00aa003240c7),
     pointer_default(unique)
 ]
@@ -484,6 +526,30 @@ interface IWbemServices : IUnknown
         [in] IWbemContext *pCtx,
         [in] IWbemClassObject *pInParams,
         [in] IWbemObjectSink *pResponseHandler);
+}
+
+[
+    object,
+    restricted,
+    uuid(44aca675-e8fc-11d0-a07c-00c04fb68820)
+]
+interface IWbemCallResult : IUnknown
+{
+    HRESULT GetResultObject(
+        [in] long lTimeout,
+        [out] IWbemClassObject **ppResultObject);
+
+    HRESULT GetResultString(
+        [in] long lTimeout,
+        [out] BSTR *pstrResultString);
+
+    HRESULT GetResultServices(
+        [in] long lTimeout,
+        [out] IWbemServices **ppServices);
+
+    HRESULT GetCallStatus(
+        [in] long lTimeout,
+        [out] long *plStatus);
 }
 
 [
@@ -702,4 +768,20 @@ coclass UnsecuredApartment
 {
     interface IUnsecuredApartment;
     interface IWbemUnsecuredApartment;
+};
+
+[
+    uuid(9a653086-174f-11d2-b5f9-00104b703efd)
+]
+coclass WbemClassObject
+{
+    interface IWbemClassObject;
+};
+
+[
+    uuid(eb87e1bd-3233-11d2-aec9-00c04fb68820)
+]
+coclass WbemStatusCodeText
+{
+    interface IWbemStatusCodeText;
 };

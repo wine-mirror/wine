@@ -2,4 +2,6 @@ MODULE    = powrprof.dll
 IMPORTLIB = powrprof
 IMPORTS   = advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = powrprof.c

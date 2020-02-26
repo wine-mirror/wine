@@ -269,7 +269,7 @@ DWORD WINAPI CheckEscapesW(
 	DWORD size = lstrlenW(string);
 	LPWSTR s, d;
 
-	TRACE("(%s %d) stub\n", debugstr_w(string), len);
+	TRACE("%s, %u.\n", debugstr_w(string), len);
 
 	if (StrPBrkW(string, strEscapedChars) && size + 2 <= len)
 	{

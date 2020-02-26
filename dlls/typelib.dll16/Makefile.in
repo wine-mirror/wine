@@ -1,5 +1,5 @@
 MODULE    = typelib.dll16
 IMPORTS   = oleaut32 advapi32
-EXTRADLLFLAGS = -m16 -Wb,--main-module,oleaut32.dll
+EXTRADLLFLAGS = -m16 -mno-cygwin -Wb,--main-module,oleaut32.dll
 
 C_SRCS = typelib.c

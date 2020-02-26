@@ -58,10 +58,10 @@
  *   -gmt
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "windef.h"
 #include "winbase.h"

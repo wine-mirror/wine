@@ -25,7 +25,7 @@
 
 #pragma makedep header
 
-cpp_quote("#define GECKO_VERSION \"2.47\"")
+cpp_quote("#define GECKO_VERSION \"2.47.1\"")
 cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION")
 
 import "wtypes.idl";
@@ -2989,7 +2989,7 @@ interface nsIDOMEvent : nsISupports
     nsresult DuplicatePrivateData();
     nsresult SetTarget(nsIDOMEventTarget *aTarget);
     bool IsDispatchStopped();
-    /*WidgedEvent*/ void *WidgetEventPtr();
+    /*WidgetEvent*/ void *WidgetEventPtr();
     void SetTrusted(bool aTrusted);
     void Serialize(/*IPC::Message*/ void *aMsg, bool aSerializeInterfaceType);
     bool Deserialize(const /*IPC::Message*/ void *aMsg, void **aIter);

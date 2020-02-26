@@ -24,18 +24,15 @@
 #include "shlwapi.h"
 #include "winternl.h"
 
+#include "kernelbase.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(string);
 
-static WORD get_char_type(WCHAR ch)
-{
-    WORD type = 0;
-    GetStringTypeW(CT_CTYPE1, &ch, 1, &type);
-    return type;
-}
+#define isxdigit(ch) (((ch) >= '0' && (ch) <= '9') || \
+                      ((ch) >= 'A' && (ch) <= 'F') || \
+                      ((ch) >= 'a' && (ch) <= 'f'))
 
 static BOOL char_compare(WORD ch1, WORD ch2, DWORD flags)
 {
@@ -60,6 +57,130 @@ static BOOL char_compare(WORD ch1, WORD ch2, DWORD flags)
         str2[1] = '\0';
 
     return CompareStringA(GetThreadLocale(), flags, str1, -1, str2, -1) - CSTR_EQUAL;
+}
+
+int WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
+{
+    if (!str1 && !str2) return 0;
+    if (!str1) return -1;
+    if (!str2) return 1;
+    return CompareStringA( GetThreadLocale(), LOCALE_USE_CP_ACP, str1, -1, str2, -1 ) - 2;
+}
+
+int WINAPI lstrcmpW(LPCWSTR str1, LPCWSTR str2)
+{
+    if (!str1 && !str2) return 0;
+    if (!str1) return -1;
+    if (!str2) return 1;
+    return CompareStringW( GetThreadLocale(), 0, str1, -1, str2, -1 ) - 2;
+}
+
+int WINAPI lstrcmpiA(LPCSTR str1, LPCSTR str2)
+{
+    if (!str1 && !str2) return 0;
+    if (!str1) return -1;
+    if (!str2) return 1;
+    return CompareStringA( GetThreadLocale(), NORM_IGNORECASE|LOCALE_USE_CP_ACP, str1, -1, str2, -1 ) - 2;
+}
+
+int WINAPI lstrcmpiW(LPCWSTR str1, LPCWSTR str2)
+{
+    if (!str1 && !str2) return 0;
+    if (!str1) return -1;
+    if (!str2) return 1;
+    return CompareStringW( GetThreadLocale(), NORM_IGNORECASE, str1, -1, str2, -1 ) - 2;
+}
+
+LPSTR WINAPI KERNELBASE_lstrcpynA( LPSTR dst, LPCSTR src, INT n )
+{
+    /* Note: this function differs from the UNIX strncpy, it _always_ writes
+     * a terminating \0.
+     *
+     * Note: n is an INT but Windows treats it as unsigned, and will happily
+     * copy a gazillion chars if n is negative.
+     */
+    __TRY
+    {
+        LPSTR d = dst;
+        LPCSTR s = src;
+        UINT count = n;
+
+        while ((count > 1) && *s)
+        {
+            count--;
+            *d++ = *s++;
+        }
+        if (count) *d = 0;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return dst;
+}
+
+LPWSTR WINAPI KERNELBASE_lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
+{
+    /* Note: this function differs from the UNIX strncpy, it _always_ writes
+     * a terminating \0
+     *
+     * Note: n is an INT but Windows treats it as unsigned, and will happily
+     * copy a gazillion chars if n is negative.
+     */
+    __TRY
+    {
+        LPWSTR d = dst;
+        LPCWSTR s = src;
+        UINT count = n;
+
+        while ((count > 1) && *s)
+        {
+            count--;
+            *d++ = *s++;
+        }
+        if (count) *d = 0;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return dst;
+}
+
+INT WINAPI KERNELBASE_lstrlenA( LPCSTR str )
+{
+    INT ret;
+    __TRY
+    {
+        ret = strlen(str);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return ret;
+}
+
+INT WINAPI KERNELBASE_lstrlenW( LPCWSTR str )
+{
+    INT ret;
+    __TRY
+    {
+        ret = wcslen(str);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return ret;
 }
 
 DWORD WINAPI StrCmpCA(const char *str, const char *cmp)
@@ -92,90 +213,6 @@ DWORD WINAPI StrCmpNICW(const WCHAR *str, const WCHAR *cmp, DWORD len)
     return StrCmpNIW(str, cmp, len);
 }
 
-BOOL WINAPI IsCharBlankW(WCHAR wc)
-{
-    return !!(get_char_type(wc) & C1_BLANK);
-}
-
-BOOL WINAPI IsCharCntrlW(WCHAR wc)
-{
-    return !!(get_char_type(wc) & C1_CNTRL);
-}
-
-BOOL WINAPI IsCharDigitW(WCHAR wc)
-{
-    return !!(get_char_type(wc) & C1_DIGIT);
-}
-
-BOOL WINAPI IsCharPunctW(WCHAR wc)
-{
-    return !!(get_char_type(wc) & C1_PUNCT);
-}
-
-BOOL WINAPI IsCharSpaceA(CHAR c)
-{
-    WORD type;
-    return GetStringTypeA(GetSystemDefaultLCID(), CT_CTYPE1, &c, 1, &type) && (type & C1_SPACE);
-}
-
-BOOL WINAPI IsCharSpaceW(WCHAR wc)
-{
-    return !!(get_char_type(wc) & C1_SPACE);
-}
-
-BOOL WINAPI IsCharXDigitW(WCHAR wc)
-{
-    return !!(get_char_type(wc) & C1_XDIGIT);
-}
-
-BOOL WINAPI IsCharAlphaA(CHAR x)
-{
-    WCHAR wch;
-    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
-    return IsCharAlphaW(wch);
-}
-
-BOOL WINAPI IsCharAlphaW(WCHAR ch)
-{
-    return !!(get_char_type(ch) & C1_ALPHA);
-}
-
-BOOL WINAPI IsCharLowerA(CHAR x)
-{
-    WCHAR wch;
-    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
-    return IsCharLowerW(wch);
-}
-
-BOOL WINAPI IsCharLowerW(WCHAR ch)
-{
-    return !!(get_char_type(ch) & C1_LOWER);
-}
-
-BOOL WINAPI IsCharAlphaNumericA(CHAR x)
-{
-    WCHAR wch;
-    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
-    return IsCharAlphaNumericW(wch);
-}
-
-BOOL WINAPI IsCharAlphaNumericW(WCHAR ch)
-{
-    return !!(get_char_type(ch) & (C1_ALPHA | C1_DIGIT));
-}
-
-BOOL WINAPI IsCharUpperA(CHAR x)
-{
-    WCHAR wch;
-    MultiByteToWideChar(CP_ACP, 0, &x, 1, &wch, 1);
-    return IsCharUpperW(wch);
-}
-
-BOOL WINAPI IsCharUpperW(WCHAR ch)
-{
-    return !!(get_char_type(ch) & C1_UPPER);
-}
-
 char * WINAPI StrChrA(const char *str, WORD ch)
 {
     TRACE("%s, %#x\n", wine_dbgstr_a(str), ch);
@@ -200,7 +237,7 @@ WCHAR * WINAPI StrChrW(const WCHAR *str, WCHAR ch)
     if (!str)
         return NULL;
 
-    return strchrW(str, ch);
+    return wcschr(str, ch);
 }
 
 char * WINAPI StrChrIA(const char *str, WORD ch)
@@ -227,10 +264,10 @@ WCHAR * WINAPI StrChrIW(const WCHAR *str, WCHAR ch)
     if (!str)
         return NULL;
 
-    ch = toupperW(ch);
+    ch = towupper(ch);
     while (*str)
     {
-        if (toupperW(*str) == ch)
+        if (towupper(*str) == ch)
             return (WCHAR *)str;
         str++;
     }
@@ -284,7 +321,7 @@ WCHAR * WINAPI StrDupW(const WCHAR *str)
 
     TRACE("%s\n", wine_dbgstr_w(str));
 
-    len = (str ? strlenW(str) + 1 : 1) * sizeof(WCHAR);
+    len = (str ? lstrlenW(str) + 1 : 1) * sizeof(WCHAR);
     ret = LocalAlloc(LMEM_FIXED, len);
 
     if (ret)
@@ -305,43 +342,29 @@ BOOL WINAPI ChrCmpIA(WORD ch1, WORD ch2)
     return char_compare(ch1, ch2, NORM_IGNORECASE);
 }
 
-static BOOL WINAPI ChrCmpA(WORD ch1, WORD ch2)
-{
-    return char_compare(ch1, ch2, 0);
-}
-
 BOOL WINAPI ChrCmpIW(WCHAR ch1, WCHAR ch2)
 {
     return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, &ch1, 1, &ch2, 1) - CSTR_EQUAL;
 }
 
-static char * strstr_helper(const char *str, const char *search,
-        INT (WINAPI *cmp_func)(const char *, const char *, int))
+char * WINAPI StrStrA(const char *str, const char *search)
 {
     const char *end;
     size_t len;
 
-    if (!str || !search || !*search)
-        return NULL;
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(search));
+
+    if (!str || !search || !*search) return NULL;
 
     len = strlen(search);
     end = str + strlen(str);
 
     while (str + len <= end)
     {
-        if (!cmp_func(str, search, len))
-            return (char *)str;
+        if (!StrCmpNA(str, search, len)) return (char *)str;
         str = CharNextA(str);
     }
-
     return NULL;
-}
-
-char * WINAPI StrStrA(const char *str, const char *search)
-{
-    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(search));
-
-    return strstr_helper(str, search, StrCmpNA);
 }
 
 WCHAR * WINAPI StrStrW(const WCHAR *str, const WCHAR *search)
@@ -351,7 +374,7 @@ WCHAR * WINAPI StrStrW(const WCHAR *str, const WCHAR *search)
     if (!str || !search || !*search)
         return NULL;
 
-    return strstrW(str, search);
+    return wcsstr(str, search);
 }
 
 WCHAR * WINAPI StrStrNW(const WCHAR *str, const WCHAR *search, UINT max_len)
@@ -363,11 +386,11 @@ WCHAR * WINAPI StrStrNW(const WCHAR *str, const WCHAR *search, UINT max_len)
     if (!str || !search || !*search || !max_len)
         return NULL;
 
-    len = strlenW(search);
+    len = lstrlenW(search);
 
     for (i = max_len; *str && (i > 0); i--, str++)
     {
-        if (!strncmpW(str, search, len))
+        if (!wcsncmp(str, search, len))
             return (WCHAR *)str;
     }
 
@@ -389,11 +412,11 @@ WCHAR * WINAPI StrStrNIW(const WCHAR *str, const WCHAR *search, UINT max_len)
     if (!str || !search || !*search || !max_len)
         return NULL;
 
-    len = strlenW(search);
+    len = lstrlenW(search);
 
     for (i = max_len; *str && (i > 0); i--, str++)
     {
-        if (!strncmpiW(str, search, len))
+        if (!wcsnicmp(str, search, len))
             return (WCHAR *)str;
     }
 
@@ -462,9 +485,22 @@ WCHAR * WINAPI StrCpyNW(WCHAR *dst, const WCHAR *src, int count)
 
 char * WINAPI StrStrIA(const char *str, const char *search)
 {
+    const char *end;
+    size_t len;
+
     TRACE("%s, %s\n", wine_dbgstr_a(str), debugstr_a(search));
 
-    return strstr_helper(str, search, StrCmpNIA);
+    if (!str || !search || !*search) return NULL;
+
+    len = strlen(search);
+    end = str + strlen(str);
+
+    while (str + len <= end)
+    {
+        if (!StrCmpNIA(str, search, len)) return (char *)str;
+        str = CharNextA(str);
+    }
+    return NULL;
 }
 
 WCHAR * WINAPI StrStrIW(const WCHAR *str, const WCHAR *search)
@@ -477,8 +513,8 @@ WCHAR * WINAPI StrStrIW(const WCHAR *str, const WCHAR *search)
     if (!str || !search || !*search)
         return NULL;
 
-    len = strlenW(search);
-    end = str + strlenW(str);
+    len = lstrlenW(search);
+    end = str + lstrlenW(str);
 
     while (str + len <= end)
     {
@@ -490,46 +526,42 @@ WCHAR * WINAPI StrStrIW(const WCHAR *str, const WCHAR *search)
     return NULL;
 }
 
-static int strspn_helper(const char *str, const char *match, char * (WINAPI *func)(const char *, WORD), BOOL invert)
+int WINAPI StrSpnA(const char *str, const char *match)
 {
     const char *ptr = str;
 
-    if (!str || !*str || !match)
-        return 0;
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
+
+    if (!str || !match) return 0;
 
     while (*ptr)
     {
-        const char *test = func(match, *ptr);
-
-        if (!invert && !test)
-            break;
-        if (invert && test)
-            break;
-
+        if (!StrChrA(match, *ptr)) break;
         ptr = CharNextA(ptr);
-    };
-
+    }
     return ptr - str;
-}
-
-int WINAPI StrSpnA(const char *str, const char *match)
-{
-    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
-
-    return strspn_helper(str, match, StrChrA, FALSE);
 }
 
 int WINAPI StrSpnW(const WCHAR *str, const WCHAR *match)
 {
     if (!str || !match) return 0;
-    return strspnW(str, match);
+    return wcsspn(str, match);
 }
 
 int WINAPI StrCSpnA(const char *str, const char *match)
 {
+    const char *ptr = str;
+
     TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
 
-    return strspn_helper(str, match, StrChrA, TRUE);
+    if (!str || !match) return 0;
+
+    while (*ptr)
+    {
+        if (StrChrA(match, *ptr)) break;
+        ptr = CharNextA(ptr);
+    }
+    return ptr - str;
 }
 
 int WINAPI StrCSpnW(const WCHAR *str, const WCHAR *match)
@@ -537,14 +569,23 @@ int WINAPI StrCSpnW(const WCHAR *str, const WCHAR *match)
     if (!str || !match)
         return 0;
 
-    return strcspnW(str, match);
+    return wcscspn(str, match);
 }
 
 int WINAPI StrCSpnIA(const char *str, const char *match)
 {
+    const char *ptr = str;
+
     TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
 
-    return strspn_helper(str, match, StrChrIA, TRUE);
+    if (!str || !match) return 0;
+
+    while (*ptr)
+    {
+        if (StrChrIA(match, *ptr)) break;
+        ptr = CharNextA(ptr);
+    }
+    return ptr - str;
 }
 
 int WINAPI StrCSpnIW(const WCHAR *str, const WCHAR *match)
@@ -565,34 +606,21 @@ int WINAPI StrCSpnIW(const WCHAR *str, const WCHAR *match)
     return ptr - str;
 }
 
-static LPSTR strrchra_helper(const char *str, const char *end, WORD ch, BOOL (WINAPI *cmp_func)(WORD, WORD))
-{
-    const char *ret = NULL;
-    WORD ch2;
-
-    if (!str)
-        return NULL;
-
-    if (!end)
-        end = str + lstrlenA(str);
-
-    while (*str && str <= end)
-    {
-        ch2 = IsDBCSLeadByte(*str) ? *str << 8 | str[1] : *str;
-
-        if (!cmp_func(ch, ch2))
-            ret = str;
-        str = CharNextA(str);
-    }
-
-    return (char *)ret;
-}
-
 char * WINAPI StrRChrA(const char *str, const char *end, WORD ch)
 {
+    const char *ret = NULL;
+
     TRACE("%s, %s, %#x\n", wine_dbgstr_a(str), wine_dbgstr_a(end), ch);
 
-    return strrchra_helper(str, end, ch, ChrCmpA);
+    if (!str) return NULL;
+    if (!end) end = str + lstrlenA(str);
+    while (*str && str <= end)
+    {
+        WORD ch2 = IsDBCSLeadByte(*str) ? *str << 8 | str[1] : *str;
+        if (!char_compare(ch, ch2, 0)) ret = str;
+        str = CharNextA(str);
+    }
+    return (char *)ret;
 }
 
 WCHAR * WINAPI StrRChrW(const WCHAR *str, const WCHAR *end, WORD ch)
@@ -600,7 +628,7 @@ WCHAR * WINAPI StrRChrW(const WCHAR *str, const WCHAR *end, WORD ch)
     WCHAR *ret = NULL;
 
     if (!str) return NULL;
-    if (!end) end = str + strlenW(str);
+    if (!end) end = str + lstrlenW(str);
     while (str < end)
     {
         if (*str == ch) ret = (WCHAR *)str;
@@ -611,9 +639,20 @@ WCHAR * WINAPI StrRChrW(const WCHAR *str, const WCHAR *end, WORD ch)
 
 char * WINAPI StrRChrIA(const char *str, const char *end, WORD ch)
 {
+    const char *ret = NULL;
+
     TRACE("%s, %s, %#x\n", wine_dbgstr_a(str), wine_dbgstr_a(end), ch);
 
-    return strrchra_helper(str, end, ch, ChrCmpIA);
+    if (!str) return NULL;
+    if (!end) end = str + lstrlenA(str);
+
+    while (*str && str <= end)
+    {
+        WORD ch2 = IsDBCSLeadByte(*str) ? *str << 8 | str[1] : *str;
+        if (!ChrCmpIA(ch, ch2)) ret = str;
+        str = CharNextA(str);
+    }
+    return (char *)ret;
 }
 
 WCHAR * WINAPI StrRChrIW(const WCHAR *str, const WCHAR *end, WORD ch)
@@ -621,7 +660,7 @@ WCHAR * WINAPI StrRChrIW(const WCHAR *str, const WCHAR *end, WORD ch)
     WCHAR *ret = NULL;
 
     if (!str) return NULL;
-    if (!end) end = str + strlenW(str);
+    if (!end) end = str + lstrlenW(str);
     while (str < end)
     {
         if (!ChrCmpIW(*str, ch)) ret = (WCHAR *)str;
@@ -677,10 +716,10 @@ WCHAR * WINAPI StrRStrIW(const WCHAR *str, const WCHAR *end, const WCHAR *search
     if (!str || !search || !*search)
         return NULL;
 
-    len = strlenW(search);
+    len = lstrlenW(search);
 
     if (!end)
-        end = str + strlenW(str);
+        end = str + lstrlenW(str);
     else
         end += min(len - 1, lstrlenW(end));
 
@@ -717,7 +756,7 @@ char * WINAPI StrPBrkA(const char *str, const char *match)
 WCHAR * WINAPI StrPBrkW(const WCHAR *str, const WCHAR *match)
 {
     if (!str || !match) return NULL;
-    return strpbrkW(str, match);
+    return wcspbrk(str, match);
 }
 
 BOOL WINAPI StrTrimA(char *str, const char *trim)
@@ -772,7 +811,7 @@ BOOL WINAPI StrTrimW(WCHAR *str, const WCHAR *trim)
     while (*ptr && StrChrW(trim, *ptr))
         ptr++;
 
-    len = strlenW(ptr);
+    len = lstrlenW(ptr);
 
     if (ptr != str)
     {
@@ -810,7 +849,7 @@ BOOL WINAPI StrToInt64ExA(const char *str, DWORD flags, LONGLONG *ret)
         WARN("Unknown flags %#x\n", flags);
 
     /* Skip leading space, '+', '-' */
-    while (isspace(*str))
+    while (*str == ' ' || (*str >= '\t' && *str <= '\r'))
         str = CharNextA(str);
 
     if (*str == '-')
@@ -821,7 +860,7 @@ BOOL WINAPI StrToInt64ExA(const char *str, DWORD flags, LONGLONG *ret)
     else if (*str == '+')
         str++;
 
-    if (flags & STIF_SUPPORT_HEX && *str == '0' && tolower(str[1]) == 'x')
+    if (flags & STIF_SUPPORT_HEX && *str == '0' && (str[1] == 'x' || str[1] == 'X'))
     {
         /* Read hex number */
         str += 2;
@@ -832,10 +871,12 @@ BOOL WINAPI StrToInt64ExA(const char *str, DWORD flags, LONGLONG *ret)
         while (isxdigit(*str))
         {
             value *= 16;
-            if (isdigit(*str))
+            if (*str >= '0' && *str <= '9')
                 value += (*str - '0');
+            else if (*str >= 'A' && *str <= 'F')
+                value += 10 + *str - 'A';
             else
-                value += 10 + (tolower(*str) - 'a');
+                value += 10 + *str - 'a';
             str++;
         }
 
@@ -844,10 +885,10 @@ BOOL WINAPI StrToInt64ExA(const char *str, DWORD flags, LONGLONG *ret)
     }
 
     /* Read decimal number */
-    if (!isdigit(*str))
+    if (*str < '0' || *str > '9')
         return FALSE;
 
-    while (isdigit(*str))
+    while (*str >= '0' && *str <= '9')
     {
         value *= 10;
         value += (*str - '0');
@@ -872,7 +913,7 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
         WARN("Unknown flags %#x.\n", flags);
 
     /* Skip leading space, '+', '-' */
-    while (isspaceW(*str))
+    while (iswspace(*str))
         str++;
 
     if (*str == '-')
@@ -883,21 +924,21 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
     else if (*str == '+')
         str++;
 
-    if (flags & STIF_SUPPORT_HEX && *str == '0' && tolowerW(str[1]) == 'x')
+    if (flags & STIF_SUPPORT_HEX && *str == '0' && towlower(str[1]) == 'x')
     {
         /* Read hex number */
         str += 2;
 
-        if (!isxdigitW(*str))
+        if (!iswxdigit(*str))
             return FALSE;
 
-        while (isxdigitW(*str))
+        while (iswxdigit(*str))
         {
             value *= 16;
-            if (isdigitW(*str))
+            if (iswdigit(*str))
                 value += (*str - '0');
             else
-                value += 10 + (tolowerW(*str) - 'a');
+                value += 10 + (towlower(*str) - 'a');
             str++;
         }
 
@@ -906,10 +947,10 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
     }
 
     /* Read decimal number */
-    if (!isdigitW(*str))
+    if (!iswdigit(*str))
         return FALSE;
 
-    while (isdigitW(*str))
+    while (iswdigit(*str))
     {
         value *= 10;
         value += (*str - '0');
@@ -968,7 +1009,7 @@ int WINAPI StrToIntW(const WCHAR *str)
     if (!str)
         return 0;
 
-    if (*str == '-' || isdigitW(*str))
+    if (*str == '-' || iswdigit(*str))
         StrToIntExW(str, 0, &value);
     return value;
 }
@@ -1251,8 +1292,7 @@ INT WINAPI DECLSPEC_HOTPATCH LoadStringA(HINSTANCE instance, UINT resource_id, L
 
         while (id--) p += *p + 1;
 
-        if (buflen != 1)
-            RtlUnicodeToMultiByteN(buffer, buflen - 1, &retval, p + 1, *p * sizeof(WCHAR));
+        RtlUnicodeToMultiByteN(buffer, buflen - 1, &retval, p + 1, *p * sizeof(WCHAR));
     }
     buffer[retval] = 0;
     TRACE("returning %s\n", debugstr_a(buffer));
@@ -1270,11 +1310,11 @@ int WINAPI StrCmpLogicalW(const WCHAR *str, const WCHAR *comp)
     {
         if (!*comp)
             return 1;
-        else if (isdigitW(*str))
+        else if (iswdigit(*str))
         {
             int str_value, comp_value;
 
-            if (!isdigitW(*comp))
+            if (!iswdigit(*comp))
                 return -1;
 
             /* Compare the numbers */
@@ -1287,12 +1327,12 @@ int WINAPI StrCmpLogicalW(const WCHAR *str, const WCHAR *comp)
                 return 1;
 
             /* Skip */
-            while (isdigitW(*str))
+            while (iswdigit(*str))
                 str++;
-            while (isdigitW(*comp))
+            while (iswdigit(*comp))
                 comp++;
         }
-        else if (isdigitW(*comp))
+        else if (iswdigit(*comp))
             return 1;
         else
         {
@@ -1371,7 +1411,7 @@ WCHAR * WINAPI StrCatBuffW(WCHAR *str, const WCHAR *cat, INT max_len)
     if (!str)
         return NULL;
 
-    len = strlenW(str);
+    len = lstrlenW(str);
     max_len -= len;
     if (max_len > 0)
         StrCpyNW(str + len, cat, max_len);
@@ -1384,7 +1424,7 @@ DWORD WINAPI StrCatChainW(WCHAR *str, DWORD max_len, DWORD at, const WCHAR *cat)
     TRACE("%s, %u, %d, %s\n", wine_dbgstr_w(str), max_len, at, wine_dbgstr_w(cat));
 
     if (at == -1)
-        at = strlenW(str);
+        at = lstrlenW(str);
 
     if (!max_len)
         return at;
@@ -1442,13 +1482,13 @@ HRESULT WINAPI SHLoadIndirectString(const WCHAR *src, WCHAR *dst, UINT dst_len, 
 
         dst[0] = 0;
         dllname = StrDupW(src + 1);
-        index_str = strchrW(dllname, ',');
+        index_str = wcschr(dllname, ',');
 
         if(!index_str) goto end;
 
         *index_str = 0;
         index_str++;
-        index = atoiW(index_str);
+        index = wcstol(index_str, NULL, 10);
 
         hmod = LoadLibraryW(dllname);
         if (!hmod) goto end;

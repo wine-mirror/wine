@@ -44,8 +44,6 @@
 DEFINE_GUID(IID_IParentAndItem, 0xB3A4B685, 0xB685, 0x4805, 0x99,0xD9, 0x5D,0xEA,0xD2,0x87,0x32,0x36);
 DEFINE_GUID(CLSID_ShellDocObjView, 0xe7e4bc40, 0xe76a, 0x11ce, 0xa9,0xbb, 0x00,0xaa,0x00,0x4a,0xe8,0x37);
 
-static IMalloc *ppM;
-
 static HRESULT (WINAPI *pSHCreateItemFromIDList)(PCIDLIST_ABSOLUTE pidl, REFIID riid, void **ppv);
 static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
 static HRESULT (WINAPI *pSHCreateItemFromRelativeName)(IShellItem*,PCWSTR,IBindCtx*,REFIID,void**);
@@ -85,17 +83,9 @@ static WCHAR *make_wstr(const char *str)
     return ret;
 }
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
-}
-
 static void init_function_pointers(void)
 {
     HMODULE hmod;
-    HRESULT hr;
     void *ptr;
 
     hmod = GetModuleHandleA("shell32.dll");
@@ -149,9 +139,6 @@ static void init_function_pointers(void)
 
     hmod = GetModuleHandleA("kernel32.dll");
     pIsWow64Process = (void*)GetProcAddress(hmod, "IsWow64Process");
-
-    hr = SHGetMalloc(&ppM);
-    ok(hr == S_OK, "SHGetMalloc failed %08x\n", hr);
 }
 
 /* Based on PathAddBackslashW from dlls/shlwapi/path.c */
@@ -336,11 +323,11 @@ static void test_EnumObjects(IShellFolder *iFolder)
     /* Don't test for SFGAO_HASSUBFOLDER since we return real state and native cached */
     static const ULONG attrs[5] =
     {
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM,
     };
     static const ULONG full_attrs[5] =
     {
@@ -380,34 +367,32 @@ static void test_EnumObjects(IShellFolder *iFolder)
         ok(hr == iResults[i][j], "Got %x expected [%d]-[%d]=%x\n", hr, i, j, iResults[i][j]);
     }
 
-
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < ARRAY_SIZE(attrs); ++i)
     {
         SFGAOF flags;
-#define SFGAO_VISTA SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY
-        /* Native returns all flags no matter what we ask for */
+
         flags = SFGAO_CANCOPY;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
         flags &= SFGAO_testfor;
-        ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
-        ok(flags == (attrs[i]) ||
-           flags == ((attrs[i] & ~SFGAO_CAPABILITYMASK) | SFGAO_VISTA), /* Vista and higher */
-           "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
+        ok(hr == S_OK, "Failed to get item attributes, hr %#x.\n", hr);
+        ok((flags & attrs[i]) == attrs[i], "%i: unexpected attributes got %#x, expected %#x.\n", i, flags, attrs[i]);
 
         flags = SFGAO_testfor;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
         flags &= SFGAO_testfor;
-        ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
-        ok(flags == attrs[i], "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
+        ok(hr == S_OK, "Failed to get item attributes, hr %#x.\n", hr);
+        ok(flags == (attrs[i] | SFGAO_CAPABILITYMASK), "%i: unexpected attributes got %#x, expected %#x.\n",
+                i, flags, attrs[i]);
 
         flags = ~0u;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
-        ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
-        ok((flags & ~(SFGAO_HASSUBFOLDER|SFGAO_COMPRESSED)) == full_attrs[i], "%d: got %08x expected %08x\n", i, flags, full_attrs[i]);
+        ok(hr == S_OK, "Failed to get item attributes, hr %#x.\n", hr);
+        ok((flags & ~(SFGAO_HASSUBFOLDER|SFGAO_COMPRESSED)) == full_attrs[i], "%d: unexpected attributes %#x, expected %#x\n",
+                i, flags, full_attrs[i]);
     }
 
     for (i=0;i<5;i++)
-        IMalloc_Free(ppM, idlArr[i]);
+        ILFree(idlArr[i]);
 }
 
 static void test_BindToObject(void)
@@ -453,7 +438,7 @@ static void test_BindToObject(void)
     hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
     ok (hr == S_OK, "Desktop failed to bind to MyComputer object! hr = %08x\n", hr);
     IShellFolder_Release(psfDesktop);
-    IMalloc_Free(ppM, pidlMyComputer);
+    ILFree(pidlMyComputer);
     if (hr != S_OK) return;
 
     hr = IShellFolder_BindToObject(psfMyComputer, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
@@ -480,7 +465,7 @@ static void test_BindToObject(void)
     hr = IShellFolder_BindToObject(psfMyComputer, pidlSystemDir, NULL, &IID_IShellFolder, (LPVOID*)&psfSystemDir);
     ok (hr == S_OK, "MyComputer failed to bind to a FileSystem ShellFolder! hr = %08x\n", hr);
     IShellFolder_Release(psfMyComputer);
-    IMalloc_Free(ppM, pidlSystemDir);
+    ILFree(pidlSystemDir);
     if (hr != S_OK) return;
 
     hr = IShellFolder_BindToObject(psfSystemDir, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
@@ -862,7 +847,7 @@ static void test_CallForAttributes(void)
     if (lResult != ERROR_SUCCESS) {
         if (lResult == ERROR_ACCESS_DENIED)
             skip("Not enough rights to open the registry key\n");
-        IMalloc_Free(ppM, pidlMyDocuments);
+        ILFree(pidlMyDocuments);
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -873,7 +858,7 @@ static void test_CallForAttributes(void)
     ok (lResult == ERROR_SUCCESS, "RegQueryValueEx failed! result: %08x\n", lResult);
     if (lResult != ERROR_SUCCESS) {
         RegCloseKey(hKey);
-        IMalloc_Free(ppM, pidlMyDocuments);
+        ILFree(pidlMyDocuments);
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -885,7 +870,7 @@ static void test_CallForAttributes(void)
     ok (lResult == ERROR_SUCCESS, "RegQueryValueEx failed! result: %08x\n", lResult);
     if (lResult != ERROR_SUCCESS) {
         RegCloseKey(hKey);
-        IMalloc_Free(ppM, pidlMyDocuments);
+        ILFree(pidlMyDocuments);
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -918,7 +903,7 @@ static void test_CallForAttributes(void)
     RegSetValueExW(hKey, wszCallForAttributes, 0, REG_DWORD, 
                    (LPBYTE)&dwOrigCallForAttributes, sizeof(DWORD));
     RegCloseKey(hKey);
-    IMalloc_Free(ppM, pidlMyDocuments);
+    ILFree(pidlMyDocuments);
     IShellFolder_Release(psfDesktop);
 }
 
@@ -980,7 +965,7 @@ static void test_GetAttributesOf(void)
     hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
     ok (hr == S_OK, "Desktop failed to bind to MyComputer object! hr = %08x\n", hr);
     IShellFolder_Release(psfDesktop);
-    IMalloc_Free(ppM, pidlMyComputer);
+    ILFree(pidlMyComputer);
     if (hr != S_OK) return;
 
     hr = IShellFolder_GetAttributesOf(psfMyComputer, 1, &pidlEmpty, &dwFlags);
@@ -1019,7 +1004,7 @@ static void test_GetAttributesOf(void)
     hr = IShellFolder_BindToObject(IDesktopFolder, newPIDL, NULL, (REFIID)&IID_IShellFolder, (LPVOID *)&testIShellFolder);
     ok(hr == S_OK, "BindToObject failed %08x\n", hr);
 
-    IMalloc_Free(ppM, newPIDL);
+    ILFree(newPIDL);
 
     /* get relative PIDL */
     hr = IShellFolder_ParseDisplayName(testIShellFolder, NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
@@ -1032,7 +1017,7 @@ static void test_GetAttributesOf(void)
     ok ((dwFlags&SFGAO_FOLDER), "Wrong directory attribute for relative PIDL: %08x\n", dwFlags);
 
     /* free memory */
-    IMalloc_Free(ppM, newPIDL);
+    ILFree(newPIDL);
 
     /* append testdirectory name to path */
     if (cCurrDirA[len-1] == '\\')
@@ -1050,7 +1035,7 @@ static void test_GetAttributesOf(void)
     ok ((dwFlags&SFGAO_FOLDER), "Wrong directory attribute for absolute PIDL: %08x\n", dwFlags);
 
     /* free memory */
-    IMalloc_Free(ppM, newPIDL);
+    ILFree(newPIDL);
 
     IShellFolder_Release(testIShellFolder);
 
@@ -1122,7 +1107,7 @@ static void test_SHGetPathFromIDList(void)
         return;
     }
 
-    IMalloc_Free(ppM, pidlMyComputer);
+    ILFree(pidlMyComputer);
 
     result = SHGetSpecialFolderPathW(NULL, wszFileName, CSIDL_DESKTOPDIRECTORY, FALSE);
     ok(result, "SHGetSpecialFolderPathW failed! Last error: %u\n", GetLastError());
@@ -1145,7 +1130,7 @@ static void test_SHGetPathFromIDList(void)
     if (hr != S_OK) {
         IShellFolder_Release(psfDesktop);
         DeleteFileW(wszFileName);
-        IMalloc_Free(ppM, pidlTestFile);
+        ILFree(pidlTestFile);
         return;
     }
 
@@ -1156,7 +1141,7 @@ static void test_SHGetPathFromIDList(void)
     IShellFolder_Release(psfDesktop);
     DeleteFileW(wszFileName);
     if (hr != S_OK) {
-        IMalloc_Free(ppM, pidlTestFile);
+        ILFree(pidlTestFile);
         return;
     }
     StrRetToBufW(&strret, pidlTestFile, wszPath, MAX_PATH);
@@ -1193,7 +1178,7 @@ static void test_SHGetPathFromIDList(void)
     else
         win_skip("SHGetPathFromIDListEx not available\n");
 
-    IMalloc_Free(ppM, pidlTestFile);
+    ILFree(pidlTestFile);
 
     /* Test if we can get the path from the start menu "program files" PIDL. */
     hr = SHGetSpecialFolderLocation(NULL, CSIDL_PROGRAM_FILES, &pidlPrograms);
@@ -1201,7 +1186,7 @@ static void test_SHGetPathFromIDList(void)
 
     SetLastError(0xdeadbeef);
     result = SHGetPathFromIDListW(pidlPrograms, wszPath);
-    IMalloc_Free(ppM, pidlPrograms);
+    ILFree(pidlPrograms);
     ok(result, "SHGetPathFromIDListW failed\n");
 }
 
@@ -1245,7 +1230,7 @@ static void test_EnumObjects_and_CompareIDs(void)
 
     Cleanup();
 
-    IMalloc_Free(ppM, newPIDL);
+    ILFree(newPIDL);
 
     IShellFolder_Release(IDesktopFolder);
 }
@@ -1797,7 +1782,7 @@ static void test_SHGetFolderPathAndSubDirA(void)
     static const char wine[] = "wine";
     static const char winetemp[] = "wine\\temp";
     static char appdata[MAX_PATH];
-    static char testpath[MAX_PATH];
+    static char testpath[2 * MAX_PATH];
     static char toolongpath[MAX_PATH+1];
 
     if(FAILED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, appdata)))
@@ -1950,7 +1935,7 @@ static void test_LocalizedNames(void)
     hr = IShellFolder_BindToObject(IDesktopFolder, newPIDL, NULL, (REFIID)&IID_IShellFolder, (LPVOID *)&testIShellFolder);
     ok(hr == S_OK, "BindToObject failed %08x\n", hr);
 
-    IMalloc_Free(ppM, newPIDL);
+    ILFree(newPIDL);
 
     /* windows reads the display name from the resource */
     hr = IShellFolder_ParseDisplayName(testIShellFolder, NULL, NULL, foldernameW, NULL, &newPIDL, 0);
@@ -1984,7 +1969,7 @@ static void test_LocalizedNames(void)
     IShellFolder_Release(IDesktopFolder);
     IShellFolder_Release(testIShellFolder);
 
-    IMalloc_Free(ppM, newPIDL);
+    ILFree(newPIDL);
 
 cleanup:
     DeleteFileA(".\\testfolder\\desktop.ini");
@@ -4364,23 +4349,19 @@ if (hr == S_OK)
 static void test_contextmenu(IContextMenu *menu, BOOL background)
 {
     HMENU hmenu = CreatePopupMenu();
-    const int id_upper_limit = 32767;
-    const int baseItem = 0x40;
-    INT max_id, max_id_check;
-    UINT count, i;
+    UINT count, i, max_id;
     HRESULT hr;
 
     test_contextmenu_qi(menu, FALSE);
 
-    hr = IContextMenu_QueryContextMenu(menu, hmenu, 0, baseItem, id_upper_limit, CMF_NORMAL);
+    hr = IContextMenu_QueryContextMenu(menu, hmenu, 0, 64, 32767, CMF_NORMAL);
     ok(SUCCEEDED(hr), "Failed to query the menu, hr %#x.\n", hr);
 
     max_id = HRESULT_CODE(hr) - 1; /* returns max_id + 1 */
-    ok(max_id <= id_upper_limit, "Got %d\n", max_id);
+    ok(max_id <= 32767, "Got %d\n", max_id);
     count = GetMenuItemCount(hmenu);
     ok(count, "Got %d\n", count);
 
-    max_id_check = 0;
     for (i = 0; i < count; i++)
     {
         MENUITEMINFOA mii;
@@ -4395,26 +4376,20 @@ static void test_contextmenu(IContextMenu *menu, BOOL background)
         res = GetMenuItemInfoA(hmenu, i, TRUE, &mii);
         ok(res, "Failed to get menu item info, error %d.\n", GetLastError());
 
-        ok((mii.wID <= id_upper_limit) || (mii.fType & MFT_SEPARATOR),
-            "Got non-separator ID out of range: %d (type: %x)\n", mii.wID, mii.fType);
         if (!(mii.fType & MFT_SEPARATOR))
         {
-            max_id_check = (mii.wID > max_id_check) ? mii.wID : max_id_check;
-            hr = IContextMenu_GetCommandString(menu, mii.wID - baseItem, GCS_VERBA, 0, buf, sizeof(buf));
+            ok(mii.wID >= 64 && mii.wID <= 64 + max_id,
+                    "Expected between 64 and %d, got %d.\n", 64 + max_id, mii.wID);
+            hr = IContextMenu_GetCommandString(menu, mii.wID - 64, GCS_VERBA, 0, buf, sizeof(buf));
         todo_wine_if(background)
-            ok(SUCCEEDED(hr) || hr == E_NOTIMPL, "for id 0x%x got 0x%08x (menustr: %s)\n", mii.wID - baseItem, hr, mii.dwTypeData);
-            if (SUCCEEDED(hr))
-                trace("for id 0x%x got string %s (menu string: %s)\n", mii.wID - baseItem, buf, mii.dwTypeData);
-            else if (hr == E_NOTIMPL)
-                trace("for id 0x%x got E_NOTIMPL (menu string: %s)\n", mii.wID - baseItem, mii.dwTypeData);
+            ok(hr == S_OK || hr == E_NOTIMPL || hr == E_INVALIDARG,
+                    "Got unexpected hr %#x for ID %d, string %s.\n", hr, mii.wID, debugstr_a(mii.dwTypeData));
+            if (hr == S_OK)
+                trace("Got ID %d, verb %s, string %s.\n", mii.wID, debugstr_a(buf), debugstr_a(mii.dwTypeData));
+            else
+                trace("Got ID %d, hr %#x, string %s.\n", mii.wID, hr, debugstr_a(mii.dwTypeData));
         }
     }
-    max_id_check -= baseItem;
-    ok((max_id_check == max_id) ||
-       (max_id_check == max_id-1) || /* Win 7 */
-       (max_id_check == max_id-2) || /* Win 8 */
-       (max_id_check == max_id-3),
-       "Not equal (or near equal), got %d and %d\n", max_id_check, max_id);
 
     if (count)
     {
@@ -4521,10 +4496,13 @@ static void r_verify_pidl(unsigned l, LPCITEMIDLIST pidl, const WCHAR *path)
                     "didn't get expected path (%s), instead: %s\n",
                      wine_dbgstr_w(path), wine_dbgstr_w(U(filename).pOleStr));
             SHFree(U(filename).pOleStr);
-        }else if(filename.uType == STRRET_CSTR){
-            ok_(__FILE__,l)(strcmp_wa(path, U(filename).cStr) == 0,
-                    "didn't get expected path (%s), instead: %s\n",
+        }
+        else if(filename.uType == STRRET_CSTR)
+        {
+            WCHAR *strW = make_wstr(U(filename).cStr);
+            ok_(__FILE__,l)(!lstrcmpW(path, strW), "didn't get expected path (%s), instead: %s\n",
                      wine_dbgstr_w(path), U(filename).cStr);
+            heap_free(strW);
         }
 
         IShellFolder_Release(parent);
@@ -5263,7 +5241,7 @@ static void test_SHGetSetFolderCustomSettings(void)
 
     if (!pSHGetSetFolderCustomSettings)
     {
-        win_skip("SHGetSetFolderCustomSetting not exported by name (only by ordinal) for version XP/win2003\n");
+        win_skip("SHGetSetFolderCustomSetting is not available.\n");
         return;
     }
 
@@ -5294,7 +5272,7 @@ static void test_SHGetSetFolderCustomSettings(void)
     todo_wine ok(!lstrcmpiW(iconpathW, fcs.pszIconFile), "Expected %s, got %s\n", wine_dbgstr_w(iconpathW), wine_dbgstr_w(fcs.pszIconFile));
 
     hr = pSHGetSetFolderCustomSettings(&fcs, NULL, FCS_READ);
-    ok(hr == E_FAIL, "Expected E_FAIL, got %#x\n", hr);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
 
     lstrcpyW(bufferW, pathW);
     lstrcatW(bufferW, desktop_iniW);

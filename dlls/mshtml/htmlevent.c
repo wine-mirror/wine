@@ -88,6 +88,7 @@ static const WCHAR mouseoutW[] = {'m','o','u','s','e','o','u','t',0};
 static const WCHAR mouseoverW[] = {'m','o','u','s','e','o','v','e','r',0};
 static const WCHAR mouseupW[] = {'m','o','u','s','e','u','p',0};
 static const WCHAR mousewheelW[] = {'m','o','u','s','e','w','h','e','e','l',0};
+static const WCHAR msthumbnailclickW[] = {'m','s','t','h','u','m','b','n','a','i','l','c','l','i','c','k',0};
 static const WCHAR pasteW[] = {'p','a','s','t','e',0};
 static const WCHAR readystatechangeW[] = {'r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
 static const WCHAR resizeW[] = {'r','e','s','i','z','e',0};
@@ -207,6 +208,8 @@ static const event_info_t event_info[] = {
     {mouseupW,           EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEUP,
         EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
     {mousewheelW,        EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEWHEEL,
+        EVENT_FIXME},
+    {msthumbnailclickW,  EVENT_TYPE_MOUSE,     DISPID_EVPROP_ONMSTHUMBNAILCLICK,
         EVENT_FIXME},
     {pasteW,             EVENT_TYPE_CLIPBOARD, DISPID_EVMETH_ONPASTE,
         EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
@@ -2408,6 +2411,8 @@ static HRESULT call_cp_func(IDispatch *disp, DISPID dispid, IHTMLEventObj *event
     VARIANT event_arg;
     ULONG argerr;
     EXCEPINFO ei;
+
+    TRACE("%p,%d,%p,%p\n", disp, dispid, event_obj, retv);
 
     if(event_obj) {
         V_VT(&event_arg) = VT_DISPATCH;

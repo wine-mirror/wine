@@ -126,19 +126,6 @@ static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903
   {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
 };
 
-/*
- * Construct the GUID in the same way of Windows doing this.
- * Data1 is concatenation of productid and vendorid.
- * Data2 and Data3 are NULL.
- * Data4 seems to be a constant.
- */
-static const GUID DInput_Wine_Joystick_Constant_Part_GUID = {
-  0x000000000,
-  0x0000,
-  0x0000,
-  {0x00, 0x00, 0x50, 0x49, 0x44, 0x56, 0x49, 0x44}
-};
-
 #define MAX_JOYSTICKS 64
 static INT joystick_devices_count = -1;
 static struct JoyDev *joystick_devices;
@@ -181,6 +168,7 @@ static INT find_joystick_devices(void)
         struct JoyDev joydev, *new_joydevs;
         BYTE axes_map[ABS_MAX + 1];
         SHORT btn_map[KEY_MAX - BTN_MISC + 1];
+        BOOL non_js = FALSE;
 
         snprintf(joydev.device, sizeof(joydev.device), "%s%d", JOYDEV_NEW, i);
         if ((fd = open(joydev.device, O_RDONLY)) == -1)
@@ -254,10 +242,21 @@ static INT find_joystick_devices(void)
                 case BTN_DEAD:
                     joydev.is_joystick = TRUE;
                     break;
+                case BTN_MOUSE:
+                case BTN_STYLUS:
+                    non_js = TRUE;
+                    break;
                 default:
                     break;
                 }
             }
+        }
+
+        if(non_js)
+        {
+            TRACE("Non-joystick detected. Skipping\n");
+            close(fd);
+            continue;
         }
 
         if (ioctl(fd, JSIOCGAXMAP, axes_map) < 0)
@@ -327,7 +326,7 @@ static INT find_joystick_devices(void)
         else
         {
             /* Concatenate product_id with vendor_id to mimic Windows behaviour */
-            joydev.guid_product       = DInput_Wine_Joystick_Constant_Part_GUID;
+            joydev.guid_product       = DInput_PIDVID_Product_GUID;
             joydev.guid_product.Data1 = MAKELONG(joydev.vendor_id, joydev.product_id);
         }
 

@@ -346,9 +346,10 @@ struct d2d_bitmap
     LONG refcount;
 
     ID2D1Factory *factory;
-    ID3D10ShaderResourceView *view;
+    ID3D10ShaderResourceView *srv;
     ID3D10RenderTargetView *rtv;
     IDXGISurface *surface;
+    ID3D10Resource *resource;
     D2D1_SIZE_U pixel_size;
     D2D1_PIXEL_FORMAT format;
     float dpi_x;
@@ -439,6 +440,7 @@ struct d2d_geometry
         size_t face_count;
 
         struct d2d_bezier_vertex *bezier_vertices;
+        size_t bezier_vertices_size;
         size_t bezier_vertex_count;
     } fill;
 
@@ -465,6 +467,10 @@ struct d2d_geometry
     {
         struct
         {
+            D2D1_ELLIPSE ellipse;
+        } ellipse;
+        struct
+        {
             ID2D1GeometrySink ID2D1GeometrySink_iface;
 
             struct d2d_figure *figures;
@@ -483,6 +489,10 @@ struct d2d_geometry
         } rectangle;
         struct
         {
+            D2D1_ROUNDED_RECT rounded_rect;
+        } rounded_rectangle;
+        struct
+        {
             ID2D1Geometry *src_geometry;
             D2D_MATRIX_3X2_F transform;
         } transformed;
@@ -495,9 +505,13 @@ struct d2d_geometry
     } u;
 };
 
+HRESULT d2d_ellipse_geometry_init(struct d2d_geometry *geometry,
+        ID2D1Factory *factory, const D2D1_ELLIPSE *ellipse) DECLSPEC_HIDDEN;
 void d2d_path_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory) DECLSPEC_HIDDEN;
 HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry,
         ID2D1Factory *factory, const D2D1_RECT_F *rect) DECLSPEC_HIDDEN;
+HRESULT d2d_rounded_rectangle_geometry_init(struct d2d_geometry *geometry,
+        ID2D1Factory *factory, const D2D1_ROUNDED_RECT *rounded_rect) DECLSPEC_HIDDEN;
 void d2d_transformed_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory,
         ID2D1Geometry *src_geometry, const D2D_MATRIX_3X2_F *transform) DECLSPEC_HIDDEN;
 HRESULT d2d_geometry_group_init(struct d2d_geometry *geometry, ID2D1Factory *factory,
@@ -615,8 +629,25 @@ static inline const char *debug_d2d_point_2f(const D2D1_POINT_2F *point)
 
 static inline const char *debug_d2d_rect_f(const D2D1_RECT_F *rect)
 {
-    if (!rect) return "(null)";
-    return wine_dbg_sprintf("(%.8e,%.8e)-(%.8e,%.8e)", rect->left, rect->top, rect->right, rect->bottom );
+    if (!rect)
+        return "(null)";
+    return wine_dbg_sprintf("(%.8e, %.8e)-(%.8e, %.8e)", rect->left, rect->top, rect->right, rect->bottom);
+}
+
+static inline const char *debug_d2d_rounded_rect(const D2D1_ROUNDED_RECT *rounded_rect)
+{
+    if (!rounded_rect)
+        return "(null)";
+    return wine_dbg_sprintf("(%.8e, %.8e)-(%.8e, %.8e)[%.8e, %.8e]", rounded_rect->rect.left, rounded_rect->rect.top,
+            rounded_rect->rect.right, rounded_rect->rect.bottom, rounded_rect->radiusX, rounded_rect->radiusY);
+}
+
+static inline const char *debug_d2d_ellipse(const D2D1_ELLIPSE *ellipse)
+{
+    if (!ellipse)
+        return "(null)";
+    return wine_dbg_sprintf("(%.8e, %.8e)[%.8e, %.8e]",
+            ellipse->point.x, ellipse->point.y, ellipse->radiusX, ellipse->radiusY);
 }
 
 #endif /* __WINE_D2D1_PRIVATE_H */

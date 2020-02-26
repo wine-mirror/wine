@@ -24,6 +24,9 @@
 
 static pD3DCompile ppD3DCompile;
 
+static HRESULT (WINAPI *pD3DXGetShaderConstantTable)(const DWORD *byte_code, ID3DXConstantTable **constant_table);
+static D3DMATRIX *(WINAPI *pD3DXMatrixOrthoLH)(D3DXMATRIX *pout, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf);
+
 struct vertex
 {
     float x, y, z;
@@ -182,7 +185,7 @@ static IDirect3DPixelShader9 *compile_pixel_shader9(IDirect3DDevice9 *device, co
             errors ? (char *)ID3D10Blob_GetBufferPointer(errors) : "");
     if (FAILED(hr)) return NULL;
 
-    hr = D3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(compiled), constants);
+    hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(compiled), constants);
     ok(hr == D3D_OK, "Could not get constant table from compiled pixel shader\n");
 
     hr = IDirect3DDevice9_CreatePixelShader(device, ID3D10Blob_GetBufferPointer(compiled), &pshader);
@@ -197,7 +200,7 @@ static void draw_quad_with_shader9(IDirect3DDevice9 *device, IDirect3DVertexBuff
     HRESULT hr;
     D3DXMATRIX projection_matrix;
 
-    D3DXMatrixOrthoLH(&projection_matrix, 2.0f, 2.0f, 0.0f, 1.0f);
+    pD3DXMatrixOrthoLH(&projection_matrix, 2.0f, 2.0f, 0.0f, 1.0f);
     IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &projection_matrix);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
@@ -300,7 +303,7 @@ static void test_swizzle(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_
 {
     static const struct hlsl_probe_info probes[] =
     {
-       {0, 0, {0.0101f, 0.0303f, 0.0202f, 0.0404f}, 0.0001f, "swizzle_test failed"}
+       {0, 0, {0.0101f, 0.0303f, 0.0202f, 0.0404f}, 0.0001f, "swizzle_test"}
     };
 
     static const char *swizzle_test_shader =
@@ -338,7 +341,7 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
     static const struct hlsl_probe_info probes[] =
     {
         {0, 0, {-12.4300f, 9.8333f, 1.6000f, 34.9999f}, 0.0001f,
-                "order of operations test failed"}
+                "order of operations test"}
     };
 
     static const char *order_of_operations_shader =
@@ -377,12 +380,12 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
 {
     static const struct hlsl_probe_info if_greater_probes[] =
     {
-        { 0, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
-        { 5, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
-        {10, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
-        {15, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
-        {25, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test failed"},
-        {30, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test failed"}
+        { 0, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test"},
+        { 5, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test"},
+        {10, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test"},
+        {15, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test"},
+        {25, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test"},
+        {30, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test"}
     };
 
     static const char *if_greater_shader =
@@ -396,14 +399,14 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
 
     static const struct hlsl_probe_info ternary_operator_probes[] =
     {
-        {0, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
-        {1, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
-        {2, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
-        {3, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
-        {4, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"},
-        {5, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"},
-        {6, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"},
-        {7, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"}
+        {0, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test"},
+        {1, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test"},
+        {2, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test"},
+        {3, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test"},
+        {4, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test"},
+        {5, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test"},
+        {6, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test"},
+        {7, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test"}
     };
 
     static const char *ternary_operator_shader =
@@ -441,7 +444,7 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
 {
     static const struct hlsl_probe_info vec4_indexing_test1_probes[] =
     {
-        {0, 0, {0.020f, 0.245f, 0.351f, 1.000f}, 0.0001f, "vec4 indexing test 1 failed"}
+        {0, 0, {0.020f, 0.245f, 0.351f, 1.000f}, 0.0001f, "vec4 indexing test 1"}
     };
 
     static const char *vec4_indexing_test1_shader =
@@ -457,7 +460,7 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
 
     static const struct hlsl_probe_info vec4_indexing_test2_probes[] =
     {
-        {0, 0, {0.5f, 0.3f, 0.8f, 0.2f}, 0.0001f, "vec4 indexing test 2 failed"}
+        {0, 0, {0.5f, 0.3f, 0.8f, 0.2f}, 0.0001f, "vec4 indexing test 2"}
     };
 
     /* We have this uniform i here so the compiler can't optimize */
@@ -502,38 +505,38 @@ static void test_trig(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
 {
     static const struct hlsl_probe_info sincos_probes[] =
     {
-        {0, 0, {0.5000f, 1.0000f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {1, 0, {0.5975f, 0.9904f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {2, 0, {0.6913f, 0.9620f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {3, 0, {0.7778f, 0.9160f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {4, 0, {0.8536f, 0.8536f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {5, 0, {0.9157f, 0.7778f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {6, 0, {0.9620f, 0.6913f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {7, 0, {0.9904f, 0.5975f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {8, 0, {1.0000f, 0.5000f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {9, 0, {0.9904f, 0.4025f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {10, 0, {0.9619f, 0.3087f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {11, 0, {0.9157f, 0.2222f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {12, 0, {0.8536f, 0.1464f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {13, 0, {0.7778f, 0.0843f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {14, 0, {0.6913f, 0.0381f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {15, 0, {0.5975f, 0.0096f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {16, 0, {0.5000f, 0.0000f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {17, 0, {0.4025f, 0.0096f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {18, 0, {0.3087f, 0.0381f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {19, 0, {0.2222f, 0.0843f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {20, 0, {0.1464f, 0.1464f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {21, 0, {0.0843f, 0.2222f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {22, 0, {0.0381f, 0.3087f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {23, 0, {0.0096f, 0.4025f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {24, 0, {0.0000f, 0.5000f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {25, 0, {0.0096f, 0.5975f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {26, 0, {0.0381f, 0.6913f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {27, 0, {0.0843f, 0.7778f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {28, 0, {0.1464f, 0.8536f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {29, 0, {0.2222f, 0.9157f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {30, 0, {0.3087f, 0.9619f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {31, 0, {0.4025f, 0.9904f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
+        {0, 0, {0.5000f, 1.0000f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {1, 0, {0.5975f, 0.9904f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {2, 0, {0.6913f, 0.9620f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {3, 0, {0.7778f, 0.9160f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {4, 0, {0.8536f, 0.8536f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {5, 0, {0.9157f, 0.7778f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {6, 0, {0.9620f, 0.6913f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {7, 0, {0.9904f, 0.5975f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {8, 0, {1.0000f, 0.5000f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {9, 0, {0.9904f, 0.4025f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {10, 0, {0.9619f, 0.3087f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {11, 0, {0.9157f, 0.2222f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {12, 0, {0.8536f, 0.1464f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {13, 0, {0.7778f, 0.0843f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {14, 0, {0.6913f, 0.0381f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {15, 0, {0.5975f, 0.0096f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {16, 0, {0.5000f, 0.0000f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {17, 0, {0.4025f, 0.0096f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {18, 0, {0.3087f, 0.0381f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {19, 0, {0.2222f, 0.0843f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {20, 0, {0.1464f, 0.1464f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {21, 0, {0.0843f, 0.2222f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {22, 0, {0.0381f, 0.3087f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {23, 0, {0.0096f, 0.4025f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {24, 0, {0.0000f, 0.5000f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {25, 0, {0.0096f, 0.5975f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {26, 0, {0.0381f, 0.6913f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {27, 0, {0.0843f, 0.7778f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {28, 0, {0.1464f, 0.8536f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {29, 0, {0.2222f, 0.9157f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {30, 0, {0.3087f, 0.9619f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {31, 0, {0.4025f, 0.9904f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
     };
 
     static const char *sincos_shader =
@@ -562,100 +565,76 @@ static void test_trig(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
 static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_geometry,
         IDirect3DVertexShader9 *vshader_passthru)
 {
-    static const char *undefined_variable_shader =
+    static const char *tests[] =
+    {
         "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
         "{\n"
         "   return y;\n"
-        "}";
+        "}",
 
-    static const char *invalid_swizzle_shader =
         "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
         "{\n"
         "  float4 x = float4(0, 0, 0, 0);\n"
         "  x.xzzx = float4(1, 2, 3, 4);\n"
         "  return x;\n"
-        "}";
+        "}",
 
-    static const char *invalid_conversion_shader =
         "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
         "{\n"
         "  float4 x = pos;\n"
         "  return x;\n"
-        "}";
+        "}",
 
-    static const char *invalid_syntax_shader =
         "float4 test(float2 pos, TEXCOORD0) ; COLOR\n"
         "{\n"
         "  pos = float4 x;\n"
         "  mul(float4(5, 4, 3, 2), mvp) = x;\n"
         "  return float4;\n"
-        "}";
+        "}",
 
-    static const char *invalid_identifiers_shader =
         "float4 563r(float2 45s: TEXCOORD0) : COLOR\n"
         "{\n"
         "  float2 x = 45s;\n"
         "  return float4(x.x, x.y, 0, 0);\n"
-        "}";
+        "}",
 
-    ID3D10Blob *compiled = NULL, *errors = NULL;
+        "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
+        "{\n"
+        "   struct { int b,c; } x = {0};\n"
+        "   return y;\n"
+        "}",
+
+        "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
+        "{\n"
+        "   struct {} x = {};\n"
+        "   return y;\n"
+        "}",
+    };
+
+    ID3D10Blob *compiled, *errors;
+    unsigned int i;
     HRESULT hr;
 
-    hr = ppD3DCompile(undefined_variable_shader, strlen(undefined_variable_shader), NULL, NULL, NULL,
-            "test", "ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with undefined variable\n");
-    ok(errors != NULL, "No errors returned for a shader with undefined variables\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with undefined variables\n");
-
-    ID3D10Blob_Release(errors);
-    errors = NULL;
-
-    hr = ppD3DCompile(invalid_swizzle_shader, strlen(invalid_swizzle_shader), NULL, NULL, NULL,
-            "test","ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with an invalid swizzle mask\n");
-    ok(errors != NULL, "No errors returned for a shader with an invalid swizzle mask\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with an invalid swizzle mask\n");
-
-    ID3D10Blob_Release(errors);
-    errors = NULL;
-
-    hr = ppD3DCompile(invalid_conversion_shader, strlen(invalid_conversion_shader), NULL, NULL, NULL,
-             "test", "ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with an invalid type "
-            "conversion\n");
-    ok(errors != NULL, "No errors returned for a shader with invalid type conversions\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with invalid type conversions\n");
-
-    ID3D10Blob_Release(errors);
-    errors = NULL;
-
-    hr = ppD3DCompile(invalid_syntax_shader, strlen(invalid_syntax_shader), NULL, NULL, NULL, "test",
-            "ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with blatantly invalid "
-            "syntax\n");
-    ok(errors != NULL, "No errors returned for a shader with invalid syntax\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with invalid syntax\n");
-
-    ID3D10Blob_Release(errors);
-    errors = NULL;
-
-    hr = ppD3DCompile(invalid_identifiers_shader, strlen(invalid_identifiers_shader), NULL, NULL,
-            NULL, "test", "ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation successful on a shader with invalid variable and "
-            "function names\n");
-    ok(errors != NULL, "No errors returned for a shader with invalid variable and function "
-            "names\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with invalid variable and "
-            "function names\n");
-
-    ID3D10Blob_Release(errors);
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        compiled = errors = NULL;
+        hr = ppD3DCompile(tests[i], strlen(tests[i]), NULL, NULL, NULL, "test", "ps_2_0", 0, 0, &compiled, &errors);
+        ok(hr == E_FAIL, "Test %u, got unexpected hr %#x.\n", i, hr);
+        ok(!!errors, "Test %u, expected non-NULL error blob.\n", i);
+        ok(!compiled, "Test %u, expected no compiled shader blob.\n", i);
+        ID3D10Blob_Release(errors);
+    }
 }
 
 static BOOL load_d3dcompiler(void)
 {
     HMODULE module;
 
+#if D3D_COMPILER_VERSION == 47
+    if (!(module = LoadLibraryA("d3dcompiler_47.dll"))) return FALSE;
+#else
     if (!(module = LoadLibraryA("d3dcompiler_43.dll"))) return FALSE;
+#endif
 
     ppD3DCompile = (void*)GetProcAddress(module, "D3DCompile");
     return TRUE;
@@ -669,12 +648,21 @@ START_TEST(hlsl)
     IDirect3DVertexDeclaration9 *vdeclaration;
     IDirect3DVertexBuffer9 *quad_geometry;
     IDirect3DVertexShader9 *vshader_passthru;
+    HMODULE mod;
 
     if (!load_d3dcompiler())
     {
-        win_skip("Could not load d3dcompiler_43.dll\n");
+        win_skip("Could not load DLL.\n");
         return;
     }
+
+    if (!(mod = LoadLibraryA("d3dx9_36.dll")))
+    {
+        win_skip("Failed to load d3dx9_36.dll.\n");
+        return;
+    }
+    pD3DXGetShaderConstantTable = (void *)GetProcAddress(mod, "D3DXGetShaderConstantTable");
+    pD3DXMatrixOrthoLH = (void *)GetProcAddress(mod, "D3DXMatrixOrthoLH");
 
     device = init_d3d9(&vdeclaration, &quad_geometry, &vshader_passthru);
     if (!device) return;

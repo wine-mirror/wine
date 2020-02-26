@@ -185,7 +185,7 @@ static void trackingCallback(
     }
 
     EnterCriticalSection(&This->tf.csReceive);
-    hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
+    hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->tf.source, &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
         ERR("Unable to get delivery buffer (%x)\n", hr);
         goto error;
@@ -235,9 +235,7 @@ static void trackingCallback(
         IMediaSample_SetTime(pOutSample, &tStart, &tStop);
     }
 
-    LeaveCriticalSection(&This->tf.csReceive);
-    hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
-    EnterCriticalSection(&This->tf.csReceive);
+    hr = IMemInputPin_Receive(This->tf.source.pMemInputPin, pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
 
@@ -338,18 +336,13 @@ static HRESULT WINAPI QTVDecoder_StopStreaming(TransformFilter* pTransformFilter
     return S_OK;
 }
 
-static HRESULT WINAPI QTVDecoder_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir, const AM_MEDIA_TYPE * pmt)
+static HRESULT video_decoder_connect_sink(TransformFilter *tf, const AM_MEDIA_TYPE *pmt)
 {
     QTVDecoderImpl* This = impl_from_TransformFilter(tf);
     HRESULT hr = VFW_E_TYPE_NOT_ACCEPTED;
     OSErr err = noErr;
     AM_MEDIA_TYPE *outpmt = &This->tf.pmt;
     CFNumberRef n = NULL;
-
-    TRACE("(%p)->(%p)\n", This, pmt);
-
-    if (dir != PINDIR_INPUT)
-        return S_OK;
 
     FreeMediaType(outpmt);
     CopyMediaType(outpmt, pmt);
@@ -504,18 +497,12 @@ static HRESULT WINAPI QTVDecoder_DecideBufferSize(TransformFilter *tf, IMemAlloc
 }
 
 static const TransformFilterFuncTable QTVDecoder_FuncsTable = {
-    QTVDecoder_DecideBufferSize,
-    QTVDecoder_StartStreaming,
-    QTVDecoder_Receive,
-    QTVDecoder_StopStreaming,
-    NULL,
-    QTVDecoder_SetMediaType,
-    NULL,
-    QTVDecoder_BreakConnect,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    .pfnDecideBufferSize = QTVDecoder_DecideBufferSize,
+    .pfnStartStreaming = QTVDecoder_StartStreaming,
+    .pfnReceive = QTVDecoder_Receive,
+    .pfnStopStreaming = QTVDecoder_StopStreaming,
+    .transform_connect_sink = video_decoder_connect_sink,
+    .pfnBreakConnect = QTVDecoder_BreakConnect,
 };
 
 IUnknown * CALLBACK QTVDecoder_create(IUnknown *outer, HRESULT* phr)

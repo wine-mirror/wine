@@ -311,8 +311,9 @@ function test_defineProperty() {
         ok(false, "expected exception");
     }
 
-    var obj = new Object();
-    Object.defineProperty(obj, "test", {});
+    var obj = new Object(), defined;
+    defined = Object.defineProperty(obj, "test", {});
+    ok(defined === obj, "defined != obj");
     ok("test" in obj, "test is not in obj");
     test_own_data_prop_desc(obj, "test", false, false, false);
     ok(obj.test === undefined, "obj.test = " + obj.test);
@@ -503,6 +504,48 @@ function test_defineProperty() {
     test_accessor_prop_desc(obj, "no_setter", desc);
     obj.no_setter = false;
     ok(obj.no_setter === true, "no_setter = " + obj.no_setter);
+
+    next_test();
+}
+
+function test_defineProperties() {
+    var o, defined, descs;
+
+    descs = {
+        acc_prop: { get: function() { return 1; } },
+        prop: { value: 2 },
+        e: { enumerable: true }
+    };
+
+    o = new Object();
+    defined = Object.defineProperties(o, descs);
+    ok(defined === o, "defined != o");
+    ok(o.acc_prop === 1, "o.acc_prop = " + o.acc_prop);
+    ok(o.prop === 2, "o.prop = " + o.prop);
+    ok(o.e === undefined, "o.e = " + o.e);
+    ok("e" in o, "e is not in o");
+    test_own_data_prop_desc(o, "prop", false, false, false);
+    test_own_data_prop_desc(o, "e", false, true, false);
+    for(var p in o) ok(p === "e", "p = " + p);
+
+    o = new Object();
+    Object.defineProperties(o, 1);
+    for(var p in o) ok(false, "o has property " + p);
+
+    o = Object.create(null, descs);
+    ok(o.acc_prop === 1, "o.acc_prop = " + o.acc_prop);
+    ok(o.prop === 2, "o.prop = " + o.prop);
+    ok(o.e === undefined, "o.e = " + o.e);
+    ok("e" in o, "e is not in o");
+    test_own_data_prop_desc(o, "prop", false, false, false);
+    test_own_data_prop_desc(o, "e", false, true, false);
+    for(var p in o) ok(p === "e", "p = " + p);
+
+    var desc_proto = new Object();
+    desc_proto.proto_prop = { value: true, enumerable: true };
+    descs = Object.create(desc_proto);
+    o = Object.create(null, descs);
+    ok(!("proto_prop" in o), "proto_prop is in o");
 
     next_test();
 }
@@ -724,6 +767,83 @@ function test_getPrototypeOf() {
     next_test();
 }
 
+function test_bind() {
+    var f, r;
+    var o = new Object(), o2 = new Object();
+
+    f = (function() {
+        ok(this === o, "this != o");
+        ok(arguments.length === 0, "arguments.length = " + arguments.length);
+        return 1;
+    }).bind(o);
+    ok(f.length === 0, "f.length = " + f.length);
+    r = f.call(o2);
+    ok(r === 1, "r = " + r);
+
+    f = (function() {
+        ok(this === o, "this != o");
+        ok(arguments.length === 1, "arguments.length = " + arguments.length);
+        ok(arguments[0] === 1, "arguments[0] = " + arguments[0]);
+        return 1;
+    }).bind(o, 1);
+    ok(f.length === 0, "f.length = " + f.length);
+    r = f.call(o2);
+    ok(r === 1, "r = " + r);
+
+    f = (function() {
+        ok(this === o, "this != o");
+        ok(arguments.length === 2, "arguments.length = " + arguments.length);
+        ok(arguments[0] === 1, "arguments[0] = " + arguments[0]);
+        ok(arguments[1] === 2, "arguments[1] = " + arguments[0]);
+        return 1;
+    }).bind(o, 1);
+    r = f.call(o2, 2);
+    ok(r === 1, "r = " + r);
+
+    o2.f = f;
+    r = o2.f(2);
+    ok(r === 1, "r = " + r);
+
+    f = (function test(x, y, z) {
+        ok(this === o, "this != o");
+        ok(arguments.length === 2, "arguments.length = " + arguments.length);
+        ok(x === 1, "x = " + x);
+        ok(y === 2, "y = " + y);
+        ok(z === undefined, "z = " + z);
+        return 1;
+    }).bind(o, 1);
+    ok(f.length === 2, "f.length = " + f.length);
+    r = f.call(o2, 2);
+    ok(r === 1, "r = " + r);
+    ok(f.toString() === "\nfunction() {\n    [native code]\n}\n", "f.toString() = " + f.toString());
+    ok(!("prototype" in f), "bound function has prototype");
+
+    var a = [];
+    f = Array.prototype.push.bind(a, 1);
+    f();
+    ok(a.length === 1, "a.length = " + a.length);
+    f(2);
+    ok(a.length === 3, "a.length = " + a.length);
+    ok(f.length === 0, "f.length = " + f.length);
+    ok(f.toString() === "\nfunction() {\n    [native code]\n}\n", "f.toString() = " + f.toString());
+    ok(a.toString() === "1,1,2", "a = " + a);
+    f.call([], 3);
+    ok(a.toString() === "1,1,2,1,3", "a = " + a);
+
+    f = (function() { return this; }).bind(a);
+    ok(f() === a, "f() != a");
+
+    var t;
+    f = (function() { return t = this; }).bind(a);
+    ok(new f() === t, "new f() != a");
+    ok(typeof(t) === "object", "typeof(t) = " + typeof(t));
+    ok(t != a, "t == a");
+
+    ok(Function.prototype.bind.length === 1, "Function.prototype.bind.length = " + Function.prototype.bind.length);
+
+    next_test();
+}
+
 var tests = [
     test_date_now,
     test_toISOString,
@@ -734,9 +854,11 @@ var tests = [
     test_identifier_keywords,
     test_getOwnPropertyDescriptor,
     test_defineProperty,
+    test_defineProperties,
     test_property_definitions,
     test_string_trim,
     test_global_properties,
     test_string_split,
-    test_getPrototypeOf
+    test_getPrototypeOf,
+    test_bind
 ];

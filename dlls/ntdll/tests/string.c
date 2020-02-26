@@ -61,10 +61,13 @@ static LPWSTR   (WINAPIV *p_wcsrchr)(LPCWSTR, WCHAR);
 static void     (__cdecl *p_qsort)(void *,size_t,size_t, int(__cdecl *compar)(const void *, const void *) );
 static void*    (__cdecl *p_bsearch)(void *,void*,size_t,size_t, int(__cdecl *compar)(const void *, const void *) );
 static int      (WINAPIV *p__snprintf)(char *, size_t, const char *, ...);
+static int      (WINAPIV *p__snprintf_s)(char *, size_t, size_t, const char *, ...);
 
 static int      (__cdecl *p_tolower)(int);
 static int      (__cdecl *p_toupper)(int);
 static int      (__cdecl *p__strnicmp)(LPCSTR,LPCSTR,size_t);
+
+static int      (WINAPIV *p_sscanf)(const char *, const char *, ...);
 
 static void InitFunctionPtrs(void)
 {
@@ -103,10 +106,13 @@ static void InitFunctionPtrs(void)
 	p_bsearch= (void *)GetProcAddress(hntdll, "bsearch");
 
         p__snprintf = (void *)GetProcAddress(hntdll, "_snprintf");
+        p__snprintf_s = (void *)GetProcAddress(hntdll, "_snprintf_s");
 
         p_tolower = (void *)GetProcAddress(hntdll, "tolower");
         p_toupper = (void *)GetProcAddress(hntdll, "toupper");
         p__strnicmp = (void *)GetProcAddress(hntdll, "_strnicmp");
+
+        p_sscanf = (void *)GetProcAddress(hntdll, "sscanf");
     } /* if */
 }
 
@@ -1333,6 +1339,74 @@ static void test__snprintf(void)
     res = p__snprintf(buffer, strlen(teststring) + 1, teststring);
     ok(res == lstrlenA(teststring), "_snprintf returned %d, expected %d.\n", res, lstrlenA(teststring));
     ok(!strcmp(buffer, teststring), "_snprintf returned buffer '%s', expected '%s'.\n", buffer, teststring);
+
+    memset(buffer, 0x7c, sizeof(buffer));
+    res = p__snprintf(buffer, 4, "test");
+    ok(res == 4, "res = %d\n", res);
+    ok(!memcmp(buffer, "test", 4), "buf = %s\n", buffer);
+    ok(buffer[4] == 0x7c, "buffer[4] = %x\n", buffer[4]);
+
+    memset(buffer, 0x7c, sizeof(buffer));
+    res = p__snprintf(buffer, 3, "test");
+    ok(res == -1, "res = %d\n", res);
+
+    res = p__snprintf(buffer, sizeof(buffer), "%I64x %d", (ULONGLONG)0x1234567890, 1);
+    ok(res == strlen(buffer), "wrong size %d\n", res);
+    ok(!strcmp(buffer, "1234567890 1"), "got %s\n", debugstr_a(buffer));
+
+    res = p__snprintf(buffer, sizeof(buffer), "%I32x %d", 0x123456, 1);
+    ok(res == strlen(buffer), "wrong size %d\n", res);
+    ok(!strcmp(buffer, "123456 1"), "got %s\n", debugstr_a(buffer));
+
+    if (sizeof(void *) == 8)
+    {
+        res = p__snprintf(buffer, sizeof(buffer), "%Ix %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "1234567890 1"), "got %s\n", debugstr_a(buffer));
+    }
+    else
+    {
+        res = p__snprintf(buffer, sizeof(buffer), "%Ix %d", (ULONG_PTR)0x123456, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "123456 1"), "got %s\n", debugstr_a(buffer));
+    }
+}
+
+static void test__snprintf_s(void)
+{
+    char buf[32];
+    int res;
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p__snprintf_s(buf, sizeof(buf), sizeof(buf), "test");
+    ok(res == 4, "res = %d\n", res);
+    ok(!strcmp(buf, "test"), "buf = %s\n", buf);
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p__snprintf_s(buf, 4, 4, "test");
+    ok(res == -1, "res = %d\n", res);
+    ok(!buf[0], "buf = %s\n", buf);
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p__snprintf_s(buf, 5, 4, "test");
+    ok(res == 4, "res = %d\n", res);
+    ok(!strcmp(buf, "test"), "buf = %s\n", buf);
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p__snprintf_s(buf, 5, 3, "test");
+    ok(res == -1, "res = %d\n", res);
+    ok(!strcmp(buf, "tes"), "buf = %s\n", buf);
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p__snprintf_s(buf, 4, 10, "test");
+    ok(res == -1, "res = %d\n", res);
+    ok(!buf[0], "buf = %s\n", buf);
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p__snprintf_s(buf, 6, 5, "test%c", 0);
+    ok(res == 5, "res = %d\n", res);
+    ok(!memcmp(buf, "test\0", 6), "buf = %s\n", buf);
+
 }
 
 static void test_tolower(void)
@@ -1406,6 +1480,48 @@ static void test__strnicmp(void)
     ok(!ret, "_strnicmp returned %d\n", ret);
 }
 
+static void test_sscanf(void)
+{
+    double d = 0.0;
+    float f = 0.0f;
+    int i = 0;
+    int ret;
+
+    if (!p_sscanf)
+    {
+        win_skip("sscanf tests\n");
+        return;
+    }
+
+    ret = p_sscanf("10", "%d", &i);
+    ok(ret == 1, "ret = %d\n", ret);
+    ok(i == 10, "i = %d\n", i);
+
+    ret = p_sscanf("10", "%f", &f);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(f == 0.0f, "f = %f\n", f);
+
+    ret = p_sscanf("10", "%g", &f);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(f == 0.0f, "f = %f\n", f);
+
+    ret = p_sscanf("10", "%e", &f);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(f == 0.0f, "f = %f\n", f);
+
+    ret = p_sscanf("10", "%lf", &d);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(d == 0.0, "d = %lf\n", f);
+
+    ret = p_sscanf("10", "%lg", &d);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(d == 0.0, "d = %lf\n", f);
+
+    ret = p_sscanf("10", "%le", &d);
+    ok(ret == 0 || broken(ret == 1) /* xp/2003 */, "ret = %d\n", ret);
+    ok(d == 0.0, "d = %lf\n", f);
+}
+
 START_TEST(string)
 {
     InitFunctionPtrs();
@@ -1442,7 +1558,12 @@ START_TEST(string)
         test_bsearch();
     if (p__snprintf)
         test__snprintf();
+    if (p__snprintf_s)
+        test__snprintf_s();
+    else
+        win_skip("_snprintf_s not available\n");
     test_tolower();
     test_toupper();
     test__strnicmp();
+    test_sscanf();
 }

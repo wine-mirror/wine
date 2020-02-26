@@ -922,7 +922,7 @@ typedef struct _CSignedMsgData
 } CSignedMsgData;
 
 /* Constructs the signer handles for the signerIndex'th signer of msg_data.
- * Assumes signerIndex is a valid idnex, and that msg_data's info has already
+ * Assumes signerIndex is a valid index, and that msg_data's info has already
  * been constructed.
  */
 static BOOL CSignedMsgData_ConstructSignerHandles(CSignedMsgData *msg_data,

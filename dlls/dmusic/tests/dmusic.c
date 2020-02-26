@@ -38,19 +38,9 @@ static void test_dmusic(void)
     DMUS_PORTCAPS port_caps;
     DMUS_PORTPARAMS port_params;
     IDirectMusicPort *port = NULL;
-    DMUS_CLOCKINFO clock_info;
-    GUID guid_clock;
-    IReferenceClock *clock = NULL;
 
     hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (LPVOID*)&dmusic);
     ok(hr == S_OK, "Cannot create DirectMusic object (%x)\n", hr);
-
-    hr = IDirectMusic_GetMasterClock(dmusic, &guid_clock, &clock);
-    ok(hr == S_OK, "IDirectMusic_GetMasterClock returned: %x\n", hr);
-    ok(clock != NULL, "No clock returned\n");
-    trace("  guidPort = %s\n", wine_dbgstr_guid(&guid_clock));
-    if (clock)
-        IReferenceClock_Release(clock);
 
     port_params.dwSize = sizeof(port_params);
     port_params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_AUDIOCHANNELS;
@@ -93,18 +83,6 @@ static void test_dmusic(void)
         trace("  dwMaxAudioChannels = %u\n", port_caps.dwMaxAudioChannels);
         trace("  dwEffectFlags      = %x\n", port_caps.dwEffectFlags);
         trace("  wszDescription     = %s\n", wine_dbgstr_w(port_caps.wszDescription));
-        index++;
-    }
-
-    index = 0;
-    clock_info.dwSize = sizeof(clock_info);
-    while (IDirectMusic_EnumMasterClock(dmusic, index, &clock_info) == S_OK)
-    {
-        ok(clock_info.dwSize == sizeof(clock_info), "DMUS_CLOCKINFO dwSize member is wrong (%u)\n", clock_info.dwSize);
-        trace("Clock %u:\n", index);
-        trace("  ctType         = %u\n", clock_info.ctType);
-        trace("  guidClock      = %s\n", wine_dbgstr_guid(&clock_info.guidClock));
-        trace("  wszDescription = %s\n", wine_dbgstr_w(clock_info.wszDescription));
         index++;
     }
 
@@ -661,7 +639,6 @@ static void test_parsedescriptor(void)
     IStream *stream;
     DMUS_OBJECTDESC desc = {0};
     HRESULT hr;
-    const WCHAR s_inam[] = {'I','N','A','M','\0'};
     const FOURCC alldesc[] =
     {
         FOURCC_RIFF, FOURCC_DLS, DMUS_FOURCC_CATEGORY_CHUNK, FOURCC_LIST,
@@ -757,7 +734,7 @@ static void test_parsedescriptor(void)
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
     ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_NAME),
             "Got valid data %#x, expected DMUS_OBJ_CLASS | DMUS_OBJ_NAME\n", desc.dwValidData);
-    ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"INAM"), "Got name '%s', expected 'INAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 
@@ -769,11 +746,111 @@ static void test_parsedescriptor(void)
     ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_NAME | DMUS_OBJ_VERSION),
             "Got valid data %#x, expected DMUS_OBJ_CLASS | DMUS_OBJ_NAME | DMUS_OBJ_VERSION\n",
             desc.dwValidData);
-    ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"INAM"), "Got name '%s', expected 'INAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 
     IDirectMusicObject_Release(dmo);
+}
+
+static void test_master_clock(void)
+{
+    static const GUID guid_system_clock = {0x58d58419, 0x71b4, 0x11d1, {0xa7, 0x4c, 0x00, 0x00, 0xf8, 0x75, 0xac, 0x12}};
+    static const GUID guid_dsound_clock = {0x58d58420, 0x71b4, 0x11d1, {0xa7, 0x4c, 0x00, 0x00, 0xf8, 0x75, 0xac, 0x12}};
+    IReferenceClock *clock, *clock2;
+    REFERENCE_TIME time1, time2;
+    LARGE_INTEGER counter, freq;
+    DMUS_CLOCKINFO clock_info;
+    IDirectMusic *dmusic;
+    DWORD cookie;
+    HRESULT hr;
+    ULONG ref;
+    GUID guid;
+
+    hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (void **)&dmusic);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectMusic_GetMasterClock(dmusic, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&guid, 0xcc, sizeof(guid));
+    hr = IDirectMusic_GetMasterClock(dmusic, &guid, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(IsEqualGUID(&guid, &guid_system_clock), "Got guid %s.\n", wine_dbgstr_guid(&guid));
+
+    clock = (IReferenceClock *)0xdeadbeef;
+    hr = IDirectMusic_GetMasterClock(dmusic, NULL, &clock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(clock && clock != (IReferenceClock *)0xdeadbeef, "Got clock %p.\n", clock);
+
+    hr = IDirectMusic_GetMasterClock(dmusic, NULL, &clock2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(clock2 == clock, "Clocks didn't match.\n");
+    IReferenceClock_Release(clock2);
+
+    memset(&guid, 0xcc, sizeof(guid));
+    hr = IDirectMusic_GetMasterClock(dmusic, &guid, &clock2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(IsEqualGUID(&guid, &guid_system_clock), "Got guid %s.\n", wine_dbgstr_guid(&guid));
+    ok(clock2 == clock, "Clocks didn't match.\n");
+    IReferenceClock_Release(clock2);
+
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&counter);
+    hr = IReferenceClock_GetTime(clock, &time1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    time2 = counter.QuadPart * 10000000.0 / freq.QuadPart;
+    ok(abs(time1 - time2) < 20 * 10000, "Expected about %s, got %s.\n",
+            wine_dbgstr_longlong(time2), wine_dbgstr_longlong(time1));
+
+    hr = IReferenceClock_GetTime(clock, &time2);
+    ok(hr == (time2 == time1 ? S_FALSE : S_OK), "Got hr %#x.\n", hr);
+
+    Sleep(100);
+    hr = IReferenceClock_GetTime(clock, &time2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time2 - time1 > 80 * 10000, "Expected about %s, but got %s.\n",
+            wine_dbgstr_longlong(time1 + 100 * 10000), wine_dbgstr_longlong(time2));
+
+    hr = IReferenceClock_AdviseTime(clock, 0, 0, NULL, &cookie);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_AdvisePeriodic(clock, 0, 0, NULL, &cookie);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_Unadvise(clock, 0);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IReferenceClock_Release(clock);
+
+    hr = IDirectMusic_EnumMasterClock(dmusic, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    memset(&clock_info, 0xcc, sizeof(DMUS_CLOCKINFO));
+    clock_info.dwSize = sizeof(DMUS_CLOCKINFO7);
+    hr = IDirectMusic_EnumMasterClock(dmusic, 0, &clock_info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(clock_info.ctType == DMUS_CLOCK_SYSTEM, "Got type %#x.\n", clock_info.ctType);
+    ok(IsEqualGUID(&clock_info.guidClock, &guid_system_clock), "Got guid %s.\n",
+            wine_dbgstr_guid(&clock_info.guidClock));
+    ok(clock_info.dwFlags == 0xcccccccc, "Got flags %#x.\n", clock_info.dwFlags);
+
+    memset(&clock_info, 0xcc, sizeof(DMUS_CLOCKINFO));
+    clock_info.dwSize = sizeof(DMUS_CLOCKINFO7);
+    hr = IDirectMusic_EnumMasterClock(dmusic, 1, &clock_info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(clock_info.ctType == DMUS_CLOCK_SYSTEM, "Got type %#x.\n", clock_info.ctType);
+    ok(IsEqualGUID(&clock_info.guidClock, &guid_dsound_clock), "Got guid %s.\n",
+            wine_dbgstr_guid(&clock_info.guidClock));
+    ok(clock_info.dwFlags == 0xcccccccc, "Got flags %#x.\n", clock_info.dwFlags);
+
+    memset(&clock_info, 0xcc, sizeof(DMUS_CLOCKINFO));
+    clock_info.dwSize = sizeof(DMUS_CLOCKINFO7);
+    hr = IDirectMusic_EnumMasterClock(dmusic, 2, &clock_info);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    ref = IDirectMusic_Release(dmusic);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 START_TEST(dmusic)
@@ -794,6 +871,7 @@ START_TEST(dmusic)
     test_dmbuffer();
     test_dmcoll();
     test_parsedescriptor();
+    test_master_clock();
 
     CoUninitialize();
 }

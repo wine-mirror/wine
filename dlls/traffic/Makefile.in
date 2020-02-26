@@ -1,4 +1,6 @@
 MODULE    = traffic.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	traffic_main.c

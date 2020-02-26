@@ -1272,7 +1272,7 @@ static BOOL d2d_cdt_triangulate(struct d2d_cdt *cdt, size_t start_vertex, size_t
     return TRUE;
 }
 
-static int d2d_cdt_compare_vertices(const void *a, const void *b)
+static int __cdecl d2d_cdt_compare_vertices(const void *a, const void *b)
 {
     const D2D1_POINT_2F *p0 = a;
     const D2D1_POINT_2F *p1 = b;
@@ -1548,6 +1548,9 @@ static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *ge
     {
         figure = &geometry->u.path.figures[i];
 
+        if (figure->flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
+
         /* Degenerate figure. */
         if (figure->vertex_count < 2)
             continue;
@@ -1623,7 +1626,7 @@ static BOOL d2d_geometry_intersections_add(struct d2d_geometry_intersections *i,
     return TRUE;
 }
 
-static int d2d_geometry_intersections_compare(const void *a, const void *b)
+static int __cdecl d2d_geometry_intersections_compare(const void *a, const void *b)
 {
     const struct d2d_geometry_intersection *i0 = a;
     const struct d2d_geometry_intersection *i1 = b;
@@ -2011,6 +2014,8 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
 
     for (i = 0, vertex_count = 0; i < geometry->u.path.figure_count; ++i)
     {
+        if (geometry->u.path.figures[i].flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
         vertex_count += geometry->u.path.figures[i].vertex_count;
     }
 
@@ -2025,6 +2030,8 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
 
     for (i = 0, j = 0; i < geometry->u.path.figure_count; ++i)
     {
+        if (geometry->u.path.figures[i].flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
         memcpy(&vertices[j], geometry->u.path.figures[i].vertices,
                 geometry->u.path.figures[i].vertex_count * sizeof(*vertices));
         j += geometry->u.path.figures[i].vertex_count;
@@ -2090,7 +2097,7 @@ static BOOL d2d_path_geometry_add_figure(struct d2d_geometry *geometry)
 static BOOL d2d_geometry_outline_add_join(struct d2d_geometry *geometry,
         const D2D1_POINT_2F *prev, const D2D1_POINT_2F *p0, const D2D1_POINT_2F *next)
 {
-    D2D1_POINT_2F q_prev, q_next;
+    static const D2D1_POINT_2F origin = {0.0f, 0.0f};
     struct d2d_outline_vertex *v;
     struct d2d_face *f;
     size_t base_idx;
@@ -2113,35 +2120,29 @@ static BOOL d2d_geometry_outline_add_join(struct d2d_geometry *geometry,
     }
     f = &geometry->outline.faces[geometry->outline.face_count];
 
-    d2d_point_subtract(&q_prev, p0, prev);
-    d2d_point_subtract(&q_next, next, p0);
-
-    d2d_point_normalise(&q_prev);
-    d2d_point_normalise(&q_next);
-
-    ccw = d2d_point_ccw(p0, prev, next);
+    ccw = d2d_point_ccw(&origin, prev, next);
     if (ccw == 0.0f)
     {
-        d2d_outline_vertex_set(&v[0], p0->x, p0->y,  q_prev.x,  q_prev.y,  q_prev.x,  q_prev.y);
-        d2d_outline_vertex_set(&v[1], p0->x, p0->y, -q_prev.x, -q_prev.y, -q_prev.x, -q_prev.y);
-        d2d_outline_vertex_set(&v[2], p0->x + 25.0f * q_prev.x, p0->y + 25.0f * q_prev.y,
-                -q_prev.x, -q_prev.y, -q_prev.x, -q_prev.y);
-        d2d_outline_vertex_set(&v[3], p0->x + 25.0f * q_prev.x, p0->y + 25.0f * q_prev.y,
-                 q_prev.x,  q_prev.y,  q_prev.x,  q_prev.y);
+        d2d_outline_vertex_set(&v[0], p0->x, p0->y, -prev->x, -prev->y, -prev->x, -prev->y);
+        d2d_outline_vertex_set(&v[1], p0->x, p0->y,  prev->x,  prev->y,  prev->x,  prev->y);
+        d2d_outline_vertex_set(&v[2], p0->x + 25.0f * -prev->x, p0->y + 25.0f * -prev->y,
+                 prev->x,  prev->y,  prev->x,  prev->y);
+        d2d_outline_vertex_set(&v[3], p0->x + 25.0f * -prev->x, p0->y + 25.0f * -prev->y,
+                -prev->x, -prev->y, -prev->x, -prev->y);
     }
     else if (ccw < 0.0f)
     {
-        d2d_outline_vertex_set(&v[0], p0->x, p0->y, q_next.x, q_next.y, q_prev.x, q_prev.y);
-        d2d_outline_vertex_set(&v[1], p0->x, p0->y, -q_next.x, -q_next.y, -q_next.x, -q_next.y);
-        d2d_outline_vertex_set(&v[2], p0->x, p0->y, -q_next.x, -q_next.y, -q_prev.x, -q_prev.y);
-        d2d_outline_vertex_set(&v[3], p0->x, p0->y, -q_prev.x, -q_prev.y, -q_prev.x, -q_prev.y);
+        d2d_outline_vertex_set(&v[0], p0->x, p0->y,  next->x,  next->y, -prev->x, -prev->y);
+        d2d_outline_vertex_set(&v[1], p0->x, p0->y, -next->x, -next->y, -next->x, -next->y);
+        d2d_outline_vertex_set(&v[2], p0->x, p0->y, -next->x, -next->y,  prev->x,  prev->y);
+        d2d_outline_vertex_set(&v[3], p0->x, p0->y,  prev->x,  prev->y,  prev->x,  prev->y);
     }
     else
     {
-        d2d_outline_vertex_set(&v[0], p0->x, p0->y, -q_prev.x, -q_prev.y, -q_next.x, -q_next.y);
-        d2d_outline_vertex_set(&v[1], p0->x, p0->y, q_prev.x, q_prev.y, q_prev.x, q_prev.y);
-        d2d_outline_vertex_set(&v[2], p0->x, p0->y, q_prev.x, q_prev.y, q_next.x, q_next.y);
-        d2d_outline_vertex_set(&v[3], p0->x, p0->y, q_next.x, q_next.y, q_next.x, q_next.y);
+        d2d_outline_vertex_set(&v[0], p0->x, p0->y,  prev->x,  prev->y, -next->x, -next->y);
+        d2d_outline_vertex_set(&v[1], p0->x, p0->y, -prev->x, -prev->y, -prev->x, -prev->y);
+        d2d_outline_vertex_set(&v[2], p0->x, p0->y, -prev->x, -prev->y,  next->x,  next->y);
+        d2d_outline_vertex_set(&v[3], p0->x, p0->y,  next->x,  next->y,  next->x,  next->y);
     }
     geometry->outline.vertex_count += 4;
 
@@ -2257,6 +2258,14 @@ static BOOL d2d_geometry_outline_add_bezier_segment(struct d2d_geometry *geometr
     return TRUE;
 }
 
+static BOOL d2d_geometry_outline_add_arc_quadrant(struct d2d_geometry *geometry,
+        const D2D1_POINT_2F *p0, const D2D1_POINT_2F *p1, const D2D1_POINT_2F *p2)
+{
+    FIXME("Approximating arc quadrant with Bezier curve.\n");
+
+    return d2d_geometry_outline_add_bezier_segment(geometry, p0, p1, p2);
+}
+
 static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
         struct d2d_figure *figure, D2D1_FIGURE_END figure_end)
 {
@@ -2296,11 +2305,21 @@ static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
         else
             next = &figure->vertices[i + 1];
 
-        if ((figure_end == D2D1_FIGURE_END_CLOSED || (i && i < figure->vertex_count - 1))
-                && !d2d_geometry_outline_add_join(geometry, prev, p0, next))
+        if (figure_end == D2D1_FIGURE_END_CLOSED || (i && i < figure->vertex_count - 1))
         {
-            ERR("Failed to add join.\n");
-            return FALSE;
+            D2D1_POINT_2F q_next, q_prev;
+
+            d2d_point_subtract(&q_prev, prev, p0);
+            d2d_point_subtract(&q_next, next, p0);
+
+            d2d_point_normalise(&q_prev);
+            d2d_point_normalise(&q_next);
+
+            if (!d2d_geometry_outline_add_join(geometry, &q_prev, p0, &q_next))
+            {
+                ERR("Failed to add join.\n");
+                return FALSE;
+            }
         }
 
         if (type == D2D_VERTEX_TYPE_LINE && (figure_end == D2D1_FIGURE_END_CLOSED || i < figure->vertex_count - 1)
@@ -2325,6 +2344,26 @@ static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
             }
         }
     }
+
+    return TRUE;
+}
+
+static BOOL d2d_geometry_fill_add_arc_triangle(struct d2d_geometry *geometry,
+        const D2D1_POINT_2F *p0, const D2D1_POINT_2F *p1, const D2D1_POINT_2F *p2)
+{
+    struct d2d_bezier_vertex *b;
+
+    FIXME("Approximating arc triangle with Bezier triangle.\n");
+
+    if (!d2d_array_reserve((void **)&geometry->fill.bezier_vertices, &geometry->fill.bezier_vertices_size,
+            geometry->fill.bezier_vertex_count + 3, sizeof(*geometry->fill.bezier_vertices)))
+        return FALSE;
+
+    b = &geometry->fill.bezier_vertices[geometry->fill.bezier_vertex_count];
+    d2d_bezier_vertex_set(&b[0], p0, 0.0f, 0.0f, -1.0f);
+    d2d_bezier_vertex_set(&b[1], p1, 0.5f, 0.0f, -1.0f);
+    d2d_bezier_vertex_set(&b[2], p2, 1.0f, 1.0f, -1.0f);
+    geometry->fill.bezier_vertex_count += 3;
 
     return TRUE;
 }
@@ -2422,9 +2461,6 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
         return;
     }
-
-    if (figure_begin != D2D1_FIGURE_BEGIN_FILLED)
-        FIXME("Ignoring figure_begin %#x.\n", figure_begin);
 
     if (!d2d_path_geometry_add_figure(geometry))
     {
@@ -2588,7 +2624,7 @@ static BOOL d2d_geometry_get_bezier_segment_idx(struct d2d_geometry *geometry, s
     {
         struct d2d_figure *figure = &geometry->u.path.figures[idx->figure_idx];
 
-        if (!figure->bezier_control_count)
+        if (!figure->bezier_control_count || figure->flags & D2D_FIGURE_FLAG_HOLLOW)
             continue;
 
         for (; idx->vertex_idx < figure->vertex_count; ++idx->vertex_idx)
@@ -2784,6 +2820,8 @@ static HRESULT d2d_geometry_resolve_beziers(struct d2d_geometry *geometry)
 
     for (i = 0; i < geometry->u.path.figure_count; ++i)
     {
+        if (geometry->u.path.figures[i].flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
         geometry->fill.bezier_vertex_count += 3 * geometry->u.path.figures[i].bezier_control_count;
     }
 
@@ -3059,10 +3097,22 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
 
     if (!transform)
     {
-        if (geometry->u.path.bounds.left > geometry->u.path.bounds.right)
+        if (geometry->u.path.bounds.left > geometry->u.path.bounds.right
+                && !isinf(geometry->u.path.bounds.left))
         {
             for (i = 0; i < geometry->u.path.figure_count; ++i)
+            {
+                if (geometry->u.path.figures[i].flags & D2D_FIGURE_FLAG_HOLLOW)
+                    continue;
                 d2d_rect_union(&geometry->u.path.bounds, &geometry->u.path.figures[i].bounds);
+            }
+            if (geometry->u.path.bounds.left > geometry->u.path.bounds.right)
+            {
+                geometry->u.path.bounds.left = INFINITY;
+                geometry->u.path.bounds.right = FLT_MAX;
+                geometry->u.path.bounds.top = INFINITY;
+                geometry->u.path.bounds.bottom = FLT_MAX;
+            }
         }
 
         *bounds = geometry->u.path.bounds;
@@ -3076,6 +3126,9 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
         D2D1_RECT_F bezier_bounds;
         D2D1_POINT_2F p, p1, p2;
         size_t j, bezier_idx;
+
+        if (figure->flags & D2D_FIGURE_FLAG_HOLLOW)
+            continue;
 
         /* Single vertex figures are reduced by CloseFigure(). */
         if (figure->vertex_count == 0)
@@ -3141,6 +3194,14 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
             d2d_rect_get_bezier_bounds(&bezier_bounds, &p, &p1, &p2);
             d2d_rect_union(bounds, &bezier_bounds);
         }
+    }
+
+    if (bounds->left > bounds->right)
+    {
+        bounds->left = INFINITY;
+        bounds->right = FLT_MAX;
+        bounds->top = INFINITY;
+        bounds->bottom = FLT_MAX;
     }
 
     return S_OK;
@@ -3496,6 +3557,278 @@ void d2d_path_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory
     geometry->u.path.bounds.bottom = -FLT_MAX;
 }
 
+static inline struct d2d_geometry *impl_from_ID2D1EllipseGeometry(ID2D1EllipseGeometry *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1Geometry_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_QueryInterface(ID2D1EllipseGeometry *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1EllipseGeometry)
+            || IsEqualGUID(iid, &IID_ID2D1Geometry)
+            || IsEqualGUID(iid, &IID_ID2D1Resource)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1EllipseGeometry_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_ellipse_geometry_AddRef(ID2D1EllipseGeometry *iface)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1EllipseGeometry(iface);
+    ULONG refcount = InterlockedIncrement(&geometry->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_ellipse_geometry_Release(ID2D1EllipseGeometry *iface)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1EllipseGeometry(iface);
+    ULONG refcount = InterlockedDecrement(&geometry->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        d2d_geometry_cleanup(geometry);
+        heap_free(geometry);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d2d_ellipse_geometry_GetFactory(ID2D1EllipseGeometry *iface, ID2D1Factory **factory)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1EllipseGeometry(iface);
+
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = geometry->factory);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_GetBounds(ID2D1EllipseGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, D2D1_RECT_F *bounds)
+{
+    FIXME("iface %p, transform %p, bounds %p stub!\n", iface, transform, bounds);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_GetWidenedBounds(ID2D1EllipseGeometry *iface,
+        float stroke_width, ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, D2D1_RECT_F *bounds)
+{
+    FIXME("iface %p, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, bounds %p stub!\n",
+            iface, stroke_width, stroke_style, transform, tolerance, bounds);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_StrokeContainsPoint(ID2D1EllipseGeometry *iface,
+        D2D1_POINT_2F point, float stroke_width, ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, BOOL *contains)
+{
+    FIXME("iface %p, point %s, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, contains %p stub!\n",
+            iface, debug_d2d_point_2f(&point), stroke_width, stroke_style, transform, tolerance, contains);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_FillContainsPoint(ID2D1EllipseGeometry *iface,
+        D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F *transform, float tolerance, BOOL *contains)
+{
+    FIXME("iface %p, point %s, transform %p, tolerance %.8e, contains %p stub!\n",
+            iface, debug_d2d_point_2f(&point), transform, tolerance, contains);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_CompareWithGeometry(ID2D1EllipseGeometry *iface,
+        ID2D1Geometry *geometry, const D2D1_MATRIX_3X2_F *transform, float tolerance, D2D1_GEOMETRY_RELATION *relation)
+{
+    FIXME("iface %p, geometry %p, transform %p, tolerance %.8e, relation %p stub!\n",
+            iface, geometry, transform, tolerance, relation);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_Simplify(ID2D1EllipseGeometry *iface,
+        D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
+        ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, option %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+            iface, option, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_Tessellate(ID2D1EllipseGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1TessellationSink *sink)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_CombineWithGeometry(ID2D1EllipseGeometry *iface,
+        ID2D1Geometry *geometry, D2D1_COMBINE_MODE combine_mode, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, geometry %p, combine_mode %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+            iface, geometry, combine_mode, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_Outline(ID2D1EllipseGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_ComputeArea(ID2D1EllipseGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, float *area)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, area %p stub!\n", iface, transform, tolerance, area);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_ComputeLength(ID2D1EllipseGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, float *length)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, length %p stub!\n", iface, transform, tolerance, length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_ComputePointAtLength(ID2D1EllipseGeometry *iface,
+        float length, const D2D1_MATRIX_3X2_F *transform, float tolerance, D2D1_POINT_2F *point,
+        D2D1_POINT_2F *tangent)
+{
+    FIXME("iface %p, length %.8e, transform %p, tolerance %.8e, point %p, tangent %p stub!\n",
+            iface, length, transform, tolerance, point, tangent);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_Widen(ID2D1EllipseGeometry *iface, float stroke_width,
+        ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform, float tolerance,
+        ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, sink %p stub!\n",
+            iface, stroke_width, stroke_style, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_ellipse_geometry_GetEllipse(ID2D1EllipseGeometry *iface, D2D1_ELLIPSE *ellipse)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1EllipseGeometry(iface);
+
+    TRACE("iface %p, ellipse %p.\n", iface, ellipse);
+
+    *ellipse = geometry->u.ellipse.ellipse;
+}
+
+static const struct ID2D1EllipseGeometryVtbl d2d_ellipse_geometry_vtbl =
+{
+    d2d_ellipse_geometry_QueryInterface,
+    d2d_ellipse_geometry_AddRef,
+    d2d_ellipse_geometry_Release,
+    d2d_ellipse_geometry_GetFactory,
+    d2d_ellipse_geometry_GetBounds,
+    d2d_ellipse_geometry_GetWidenedBounds,
+    d2d_ellipse_geometry_StrokeContainsPoint,
+    d2d_ellipse_geometry_FillContainsPoint,
+    d2d_ellipse_geometry_CompareWithGeometry,
+    d2d_ellipse_geometry_Simplify,
+    d2d_ellipse_geometry_Tessellate,
+    d2d_ellipse_geometry_CombineWithGeometry,
+    d2d_ellipse_geometry_Outline,
+    d2d_ellipse_geometry_ComputeArea,
+    d2d_ellipse_geometry_ComputeLength,
+    d2d_ellipse_geometry_ComputePointAtLength,
+    d2d_ellipse_geometry_Widen,
+    d2d_ellipse_geometry_GetEllipse,
+};
+
+HRESULT d2d_ellipse_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory, const D2D1_ELLIPSE *ellipse)
+{
+    D2D1_POINT_2F *v, v1, v2, v3, v4;
+    struct d2d_face *f;
+    float l, r, t, b;
+
+    d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_ellipse_geometry_vtbl);
+    geometry->u.ellipse.ellipse = *ellipse;
+
+    if (!(geometry->fill.vertices = heap_alloc(4 * sizeof(*geometry->fill.vertices))))
+        goto fail;
+    if (!d2d_array_reserve((void **)&geometry->fill.faces,
+            &geometry->fill.faces_size, 2, sizeof(*geometry->fill.faces)))
+        goto fail;
+
+    l = ellipse->point.x - ellipse->radiusX;
+    r = ellipse->point.x + ellipse->radiusX;
+    t = ellipse->point.y - ellipse->radiusY;
+    b = ellipse->point.y + ellipse->radiusY;
+
+    d2d_point_set(&v1, r, t);
+    d2d_point_set(&v2, r, b);
+    d2d_point_set(&v3, l, b);
+    d2d_point_set(&v4, l, t);
+
+    v = geometry->fill.vertices;
+    d2d_point_set(&v[0], ellipse->point.x, t);
+    d2d_point_set(&v[1], r, ellipse->point.y);
+    d2d_point_set(&v[2], ellipse->point.x, b);
+    d2d_point_set(&v[3], l, ellipse->point.y);
+    geometry->fill.vertex_count = 4;
+
+    f = geometry->fill.faces;
+    d2d_face_set(&f[0], 0, 3, 2);
+    d2d_face_set(&f[1], 0, 2, 1);
+    geometry->fill.face_count = 2;
+
+    if (!d2d_geometry_fill_add_arc_triangle(geometry, &v[0], &v1, &v[1]))
+        goto fail;
+    if (!d2d_geometry_fill_add_arc_triangle(geometry, &v[1], &v2, &v[2]))
+        goto fail;
+    if (!d2d_geometry_fill_add_arc_triangle(geometry, &v[2], &v3, &v[3]))
+        goto fail;
+    if (!d2d_geometry_fill_add_arc_triangle(geometry, &v[3], &v4, &v[0]))
+        goto fail;
+
+    if (!d2d_geometry_outline_add_arc_quadrant(geometry, &v[0], &v1, &v[1]))
+        goto fail;
+    if (!d2d_geometry_outline_add_arc_quadrant(geometry, &v[1], &v2, &v[2]))
+        goto fail;
+    if (!d2d_geometry_outline_add_arc_quadrant(geometry, &v[2], &v3, &v[3]))
+        goto fail;
+    if (!d2d_geometry_outline_add_arc_quadrant(geometry, &v[3], &v4, &v[0]))
+        goto fail;
+
+    return S_OK;
+
+fail:
+    d2d_geometry_cleanup(geometry);
+    return E_OUTOFMEMORY;
+}
+
 static inline struct d2d_geometry *impl_from_ID2D1RectangleGeometry(ID2D1RectangleGeometry *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1Geometry_iface);
@@ -3780,6 +4113,21 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory 
     D2D1_POINT_2F *v;
     float l, r, t, b;
 
+    static const D2D1_POINT_2F prev[] =
+    {
+        { 1.0f,  0.0f},
+        { 0.0f, -1.0f},
+        {-1.0f,  0.0f},
+        { 0.0f,  1.0f},
+    };
+    static const D2D1_POINT_2F next[] =
+    {
+        { 0.0f,  1.0f},
+        { 1.0f,  0.0f},
+        { 0.0f, -1.0f},
+        {-1.0f,  0.0f},
+    };
+
     d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
     geometry->u.rectangle.rect = *rect;
 
@@ -3815,13 +4163,309 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory 
     if (!d2d_geometry_outline_add_line_segment(geometry, &v[3], &v[0]))
         goto fail;
 
-    if (!d2d_geometry_outline_add_join(geometry, &v[3], &v[0], &v[1]))
+    if (!d2d_geometry_outline_add_join(geometry, &prev[0], &v[0], &next[0]))
         goto fail;
-    if (!d2d_geometry_outline_add_join(geometry, &v[0], &v[1], &v[2]))
+    if (!d2d_geometry_outline_add_join(geometry, &prev[1], &v[1], &next[1]))
         goto fail;
-    if (!d2d_geometry_outline_add_join(geometry, &v[1], &v[2], &v[3]))
+    if (!d2d_geometry_outline_add_join(geometry, &prev[2], &v[2], &next[2]))
         goto fail;
-    if (!d2d_geometry_outline_add_join(geometry, &v[2], &v[3], &v[0]))
+    if (!d2d_geometry_outline_add_join(geometry, &prev[3], &v[3], &next[3]))
+        goto fail;
+
+    return S_OK;
+
+fail:
+    d2d_geometry_cleanup(geometry);
+    return E_OUTOFMEMORY;
+}
+
+static inline struct d2d_geometry *impl_from_ID2D1RoundedRectangleGeometry(ID2D1RoundedRectangleGeometry *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1Geometry_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_QueryInterface(ID2D1RoundedRectangleGeometry *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1RoundedRectangleGeometry)
+            || IsEqualGUID(iid, &IID_ID2D1Geometry)
+            || IsEqualGUID(iid, &IID_ID2D1Resource)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1RoundedRectangleGeometry_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_AddRef(ID2D1RoundedRectangleGeometry *iface)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1RoundedRectangleGeometry(iface);
+    ULONG refcount = InterlockedIncrement(&geometry->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Release(ID2D1RoundedRectangleGeometry *iface)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1RoundedRectangleGeometry(iface);
+    ULONG refcount = InterlockedDecrement(&geometry->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        d2d_geometry_cleanup(geometry);
+        heap_free(geometry);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_GetFactory(ID2D1RoundedRectangleGeometry *iface,
+        ID2D1Factory **factory)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1RoundedRectangleGeometry(iface);
+
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = geometry->factory);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_GetBounds(ID2D1RoundedRectangleGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, D2D1_RECT_F *bounds)
+{
+    FIXME("iface %p, transform %p, bounds %p stub!\n", iface, transform, bounds);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_GetWidenedBounds(ID2D1RoundedRectangleGeometry *iface,
+        float stroke_width, ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, D2D1_RECT_F *bounds)
+{
+    FIXME("iface %p, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, bounds %p stub!\n",
+            iface, stroke_width, stroke_style, transform, tolerance, bounds);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_StrokeContainsPoint(
+        ID2D1RoundedRectangleGeometry *iface, D2D1_POINT_2F point, float stroke_width,
+        ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform, float tolerance, BOOL *contains)
+{
+    FIXME("iface %p, point %s, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, contains %p stub!\n",
+            iface, debug_d2d_point_2f(&point), stroke_width, stroke_style, transform, tolerance, contains);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_FillContainsPoint(ID2D1RoundedRectangleGeometry *iface,
+        D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F *transform, float tolerance, BOOL *contains)
+{
+    FIXME("iface %p, point %s, transform %p, tolerance %.8e, contains %p stub!\n",
+            iface, debug_d2d_point_2f(&point), transform, tolerance, contains);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_CompareWithGeometry(
+        ID2D1RoundedRectangleGeometry *iface, ID2D1Geometry *geometry,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, D2D1_GEOMETRY_RELATION *relation)
+{
+    FIXME("iface %p, geometry %p, transform %p, tolerance %.8e, relation %p stub!\n",
+            iface, geometry, transform, tolerance, relation);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Simplify(ID2D1RoundedRectangleGeometry *iface,
+        D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
+        ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, option %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+            iface, option, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Tessellate(ID2D1RoundedRectangleGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1TessellationSink *sink)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_CombineWithGeometry(
+        ID2D1RoundedRectangleGeometry *iface, ID2D1Geometry *geometry, D2D1_COMBINE_MODE combine_mode,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, geometry %p, combine_mode %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+            iface, geometry, combine_mode, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Outline(ID2D1RoundedRectangleGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_ComputeArea(ID2D1RoundedRectangleGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, float *area)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, area %p stub!\n", iface, transform, tolerance, area);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_ComputeLength(ID2D1RoundedRectangleGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, float *length)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, length %p stub!\n", iface, transform, tolerance, length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_ComputePointAtLength(
+        ID2D1RoundedRectangleGeometry *iface, float length, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, D2D1_POINT_2F *point, D2D1_POINT_2F *tangent)
+{
+    FIXME("iface %p, length %.8e, transform %p, tolerance %.8e, point %p, tangent %p stub!\n",
+            iface, length, transform, tolerance, point, tangent);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_Widen(ID2D1RoundedRectangleGeometry *iface,
+        float stroke_width, ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, sink %p stub!\n",
+            iface, stroke_width, stroke_style, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_rounded_rectangle_geometry_GetRoundedRect(ID2D1RoundedRectangleGeometry *iface,
+        D2D1_ROUNDED_RECT *rounded_rect)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1RoundedRectangleGeometry(iface);
+
+    TRACE("iface %p, rounded_rect %p.\n", iface, rounded_rect);
+
+    *rounded_rect = geometry->u.rounded_rectangle.rounded_rect;
+}
+
+static const struct ID2D1RoundedRectangleGeometryVtbl d2d_rounded_rectangle_geometry_vtbl =
+{
+    d2d_rounded_rectangle_geometry_QueryInterface,
+    d2d_rounded_rectangle_geometry_AddRef,
+    d2d_rounded_rectangle_geometry_Release,
+    d2d_rounded_rectangle_geometry_GetFactory,
+    d2d_rounded_rectangle_geometry_GetBounds,
+    d2d_rounded_rectangle_geometry_GetWidenedBounds,
+    d2d_rounded_rectangle_geometry_StrokeContainsPoint,
+    d2d_rounded_rectangle_geometry_FillContainsPoint,
+    d2d_rounded_rectangle_geometry_CompareWithGeometry,
+    d2d_rounded_rectangle_geometry_Simplify,
+    d2d_rounded_rectangle_geometry_Tessellate,
+    d2d_rounded_rectangle_geometry_CombineWithGeometry,
+    d2d_rounded_rectangle_geometry_Outline,
+    d2d_rounded_rectangle_geometry_ComputeArea,
+    d2d_rounded_rectangle_geometry_ComputeLength,
+    d2d_rounded_rectangle_geometry_ComputePointAtLength,
+    d2d_rounded_rectangle_geometry_Widen,
+    d2d_rounded_rectangle_geometry_GetRoundedRect,
+};
+
+HRESULT d2d_rounded_rectangle_geometry_init(struct d2d_geometry *geometry,
+        ID2D1Factory *factory, const D2D1_ROUNDED_RECT *rounded_rect)
+{
+    D2D1_POINT_2F *v, v1, v2, v3, v4;
+    struct d2d_face *f;
+    float l, r, t, b;
+    float rx, ry;
+
+    d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_rounded_rectangle_geometry_vtbl);
+    geometry->u.rounded_rectangle.rounded_rect = *rounded_rect;
+
+    if (!(geometry->fill.vertices = heap_alloc(8 * sizeof(*geometry->fill.vertices))))
+        goto fail;
+    if (!d2d_array_reserve((void **)&geometry->fill.faces,
+            &geometry->fill.faces_size, 6, sizeof(*geometry->fill.faces)))
+        goto fail;
+
+    l = min(rounded_rect->rect.left, rounded_rect->rect.right);
+    r = max(rounded_rect->rect.left, rounded_rect->rect.right);
+    t = min(rounded_rect->rect.top, rounded_rect->rect.bottom);
+    b = max(rounded_rect->rect.top, rounded_rect->rect.bottom);
+
+    rx = min(rounded_rect->radiusX, 0.5f * (r - l));
+    ry = min(rounded_rect->radiusY, 0.5f * (b - t));
+
+    d2d_point_set(&v1, r, t);
+    d2d_point_set(&v2, r, b);
+    d2d_point_set(&v3, l, b);
+    d2d_point_set(&v4, l, t);
+
+    v = geometry->fill.vertices;
+    d2d_point_set(&v[0], l + rx, t);
+    d2d_point_set(&v[1], r - rx, t);
+    d2d_point_set(&v[2], r, t + ry);
+    d2d_point_set(&v[3], r, b - ry);
+    d2d_point_set(&v[4], r - rx, b);
+    d2d_point_set(&v[5], l + rx, b);
+    d2d_point_set(&v[6], l, b - ry);
+    d2d_point_set(&v[7], l, t + ry);
+    geometry->fill.vertex_count = 8;
+
+    f = geometry->fill.faces;
+    d2d_face_set(&f[0], 0, 7, 6);
+    d2d_face_set(&f[1], 0, 6, 5);
+    d2d_face_set(&f[2], 0, 5, 4);
+    d2d_face_set(&f[3], 0, 4, 1);
+    d2d_face_set(&f[4], 1, 4, 3);
+    d2d_face_set(&f[5], 1, 3, 2);
+    geometry->fill.face_count = 6;
+
+    if (!d2d_geometry_fill_add_arc_triangle(geometry, &v[1], &v1, &v[2]))
+        goto fail;
+    if (!d2d_geometry_fill_add_arc_triangle(geometry, &v[3], &v2, &v[4]))
+        goto fail;
+    if (!d2d_geometry_fill_add_arc_triangle(geometry, &v[5], &v3, &v[6]))
+        goto fail;
+    if (!d2d_geometry_fill_add_arc_triangle(geometry, &v[7], &v4, &v[0]))
+        goto fail;
+
+    if (!d2d_geometry_outline_add_line_segment(geometry, &v[0], &v[1]))
+        goto fail;
+    if (!d2d_geometry_outline_add_arc_quadrant(geometry, &v[1], &v1, &v[2]))
+        goto fail;
+    if (!d2d_geometry_outline_add_line_segment(geometry, &v[2], &v[3]))
+        goto fail;
+    if (!d2d_geometry_outline_add_arc_quadrant(geometry, &v[3], &v2, &v[4]))
+        goto fail;
+    if (!d2d_geometry_outline_add_line_segment(geometry, &v[4], &v[5]))
+        goto fail;
+    if (!d2d_geometry_outline_add_arc_quadrant(geometry, &v[5], &v3, &v[6]))
+        goto fail;
+    if (!d2d_geometry_outline_add_line_segment(geometry, &v[6], &v[7]))
+        goto fail;
+    if (!d2d_geometry_outline_add_arc_quadrant(geometry, &v[7], &v4, &v[0]))
         goto fail;
 
     return S_OK;
@@ -4374,8 +5018,10 @@ struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface)
 {
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_path_geometry_vtbl
+    assert(iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_ellipse_geometry_vtbl
+            || iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_path_geometry_vtbl
             || iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl
+            || iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_rounded_rectangle_geometry_vtbl
             || iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_transformed_geometry_vtbl
             || iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_geometry_group_vtbl);
     return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1Geometry_iface);

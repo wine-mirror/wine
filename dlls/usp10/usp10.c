@@ -40,7 +40,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
@@ -876,7 +875,7 @@ static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
         return E_INVALIDARG;
     }
     /* Ensure canonical result by zeroing extra space in lfFaceName */
-    size = strlenW(lf.lfFaceName);
+    size = lstrlenW(lf.lfFaceName);
     memset(lf.lfFaceName + size, 0, sizeof(lf.lfFaceName) - size * sizeof(WCHAR));
 
     EnterCriticalSection(&cs_script_cache);
@@ -938,7 +937,8 @@ static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
 static WCHAR mirror_char( WCHAR ch )
 {
     extern const WCHAR wine_mirror_map[] DECLSPEC_HIDDEN;
-    return ch + wine_mirror_map[wine_mirror_map[ch >> 8] + (ch & 0xff)];
+    WCHAR mirror = get_table_entry( wine_mirror_map, ch );
+    return mirror ? mirror : ch;
 }
 
 static DWORD decode_surrogate_pair(const WCHAR *str, unsigned int index, unsigned int end)
@@ -952,7 +952,7 @@ static DWORD decode_surrogate_pair(const WCHAR *str, unsigned int index, unsigne
     return 0;
 }
 
-static int usp10_compare_script_range(const void *key, const void *value)
+static int __cdecl usp10_compare_script_range(const void *key, const void *value)
 {
     const struct usp10_script_range *range = value;
     const DWORD *ch = key;
@@ -978,7 +978,7 @@ static enum usp10_script get_char_script(const WCHAR *str, unsigned int index,
         return Script_CR;
 
     /* These punctuation characters are separated out as Latin punctuation */
-    if (strchrW(latin_punc,str[index]))
+    if (wcschr(latin_punc,str[index]))
         return Script_Punctuation2;
 
     /* These chars are itemized as Punctuation by Windows */
@@ -1023,7 +1023,7 @@ static enum usp10_script get_char_script(const WCHAR *str, unsigned int index,
     return range->script;
 }
 
-static int compare_FindGlyph(const void *a, const void* b)
+static int __cdecl compare_FindGlyph(const void *a, const void* b)
 {
     const FindGlyph_struct *find = (FindGlyph_struct*)a;
     const WORD *idx= (WORD*)b;
@@ -1534,7 +1534,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
             {
                 if (i > 0 && i < cInChars-1 &&
                     script_is_numeric(scripts[i-1]) &&
-                    strchrW(math_punc, pwcInChars[i]))
+                    wcschr(math_punc, pwcInChars[i]))
                 {
                     if (script_is_numeric(scripts[i+1]))
                     {
@@ -1543,7 +1543,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
                         strength[i] = strength[i-1];
                         i++;
                     }
-                    else if (strchrW(repeatable_math_punc, pwcInChars[i]))
+                    else if (wcschr(repeatable_math_punc, pwcInChars[i]))
                     {
                         int j;
                         for (j = i+1; j < cInChars; j++)
@@ -1967,7 +1967,7 @@ static void find_fallback_font(enum usp10_script scriptid, WCHAR *FaceName)
         DWORD count = LF_FACESIZE * sizeof(WCHAR);
         DWORD type;
 
-        sprintfW(value, szFmt, scriptInformation[scriptid].scriptTag);
+        swprintf(value, ARRAY_SIZE(value), szFmt, scriptInformation[scriptid].scriptTag);
         if (RegQueryValueExW(hkey, value, 0, &type, (BYTE *)FaceName, &count))
             lstrcpyW(FaceName,scriptInformation[scriptid].fallbackFont);
         RegCloseKey(hkey);
@@ -3010,7 +3010,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
         else /* (glyph_index >= cGlyphs) */
             i = cChars;
 
-        /* If not snaping in the reverse direction (such as Hebrew) Then 0
+        /* If not snapping in the reverse direction (such as Hebrew) Then 0
            point flow to the next character */
         if (direction < 0)
         {
@@ -3434,9 +3434,27 @@ HRESULT WINAPI ScriptPlaceOpenType( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS 
             if (FAILED(hr = ScriptGetCMap(hdc, psc, &pwGlyphs[i], 1, 0, &glyph))) return hr;
         }
         else
+        {
+            hr = S_OK;
             glyph = pwGlyphs[i];
+        }
 
-        if (!get_cache_glyph_widths(psc, glyph, &abc))
+        if (hr == S_FALSE)
+        {
+            if (!hdc) return E_PENDING;
+            if (get_cache_pitch_family(psc) & TMPF_TRUETYPE)
+            {
+                if (!GetCharABCWidthsW(hdc, pwGlyphs[i], pwGlyphs[i], &abc)) return S_FALSE;
+            }
+            else
+            {
+                INT width;
+                if (!GetCharWidthW(hdc, pwGlyphs[i], pwGlyphs[i], &width)) return S_FALSE;
+                abc.abcB = width;
+                abc.abcA = abc.abcC = 0;
+            }
+        }
+        else if (!get_cache_glyph_widths(psc, glyph, &abc))
         {
             if (!hdc) return E_PENDING;
             if (get_cache_pitch_family(psc) & TMPF_TRUETYPE)
@@ -3731,7 +3749,7 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
  */
 HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *logtovis)
 {
-    int* indexs;
+    int* indices;
     int ich;
 
     TRACE("(%d, %p, %p, %p)\n", runs, level, vistolog, logtovis);
@@ -3739,31 +3757,31 @@ HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *log
     if (!level || (!vistolog && !logtovis))
         return E_INVALIDARG;
 
-    if (!(indexs = heap_calloc(runs, sizeof(*indexs))))
+    if (!(indices = heap_calloc(runs, sizeof(*indices))))
         return E_OUTOFMEMORY;
 
     if (vistolog)
     {
         for( ich = 0; ich < runs; ich++)
-            indexs[ich] = ich;
+            indices[ich] = ich;
 
         ich = 0;
         while (ich < runs)
-            ich += BIDI_ReorderV2lLevel(0, indexs+ich, level+ich, runs - ich, FALSE);
-        memcpy(vistolog, indexs, runs * sizeof(*vistolog));
+            ich += BIDI_ReorderV2lLevel(0, indices+ich, level+ich, runs - ich, FALSE);
+        memcpy(vistolog, indices, runs * sizeof(*vistolog));
     }
 
     if (logtovis)
     {
         for( ich = 0; ich < runs; ich++)
-            indexs[ich] = ich;
+            indices[ich] = ich;
 
         ich = 0;
         while (ich < runs)
-            ich += BIDI_ReorderL2vLevel(0, indexs+ich, level+ich, runs - ich, FALSE);
-        memcpy(logtovis, indexs, runs * sizeof(*logtovis));
+            ich += BIDI_ReorderL2vLevel(0, indices+ich, level+ich, runs - ich, FALSE);
+        memcpy(logtovis, indices, runs * sizeof(*logtovis));
     }
-    heap_free(indexs);
+    heap_free(indices);
 
     return S_OK;
 }
@@ -3875,6 +3893,7 @@ const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
             for (j = 0; j < analysis->glyphs[i].numGlyphs; j++)
                 analysis->sz.cx += analysis->glyphs[i].piAdvance[j];
         }
+        analysis->flags |= SCRIPT_STRING_ANALYSIS_FLAGS_SIZE;
     }
     return &analysis->sz;
 }

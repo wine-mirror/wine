@@ -131,6 +131,7 @@ struct threadpool
     int                     min_workers;
     int                     num_workers;
     int                     num_busy_workers;
+    TP_POOL_STACK_INFORMATION stack_info;
 };
 
 enum threadpool_objtype
@@ -1648,6 +1649,7 @@ static void tp_waitqueue_unlock( struct threadpool_object *wait )
  */
 static NTSTATUS tp_threadpool_alloc( struct threadpool **out )
 {
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
     struct threadpool *pool;
     unsigned int i;
 
@@ -1666,10 +1668,12 @@ static NTSTATUS tp_threadpool_alloc( struct threadpool **out )
         list_init( &pool->pools[i] );
     RtlInitializeConditionVariable( &pool->update_event );
 
-    pool->max_workers           = 500;
-    pool->min_workers           = 0;
-    pool->num_workers           = 0;
-    pool->num_busy_workers      = 0;
+    pool->max_workers             = 500;
+    pool->min_workers             = 0;
+    pool->num_workers             = 0;
+    pool->num_busy_workers        = 0;
+    pool->stack_info.StackReserve = nt->OptionalHeader.SizeOfStackReserve;
+    pool->stack_info.StackCommit  = nt->OptionalHeader.SizeOfStackCommit;
 
     TRACE( "allocated threadpool %p\n", pool );
 
@@ -2988,4 +2992,50 @@ VOID WINAPI TpWaitForWork( TP_WORK *work, BOOL cancel_pending )
     if (cancel_pending)
         tp_object_cancel( this );
     tp_object_wait( this, FALSE );
+}
+
+/***********************************************************************
+ *           TpSetPoolStackInformation    (NTDLL.@)
+ */
+NTSTATUS WINAPI TpSetPoolStackInformation( TP_POOL *pool, TP_POOL_STACK_INFORMATION *stack_info )
+{
+    struct threadpool *this = impl_from_TP_POOL( pool );
+
+    TRACE( "%p %p\n", pool, stack_info );
+
+    if (!stack_info)
+        return STATUS_INVALID_PARAMETER;
+
+    RtlEnterCriticalSection( &this->cs );
+    this->stack_info = *stack_info;
+    RtlLeaveCriticalSection( &this->cs );
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           TpQueryPoolStackInformation    (NTDLL.@)
+ */
+NTSTATUS WINAPI TpQueryPoolStackInformation( TP_POOL *pool, TP_POOL_STACK_INFORMATION *stack_info )
+{
+    struct threadpool *this = impl_from_TP_POOL( pool );
+
+    TRACE( "%p %p\n", pool, stack_info );
+
+    if (!stack_info)
+        return STATUS_INVALID_PARAMETER;
+
+    RtlEnterCriticalSection( &this->cs );
+    *stack_info = this->stack_info;
+    RtlLeaveCriticalSection( &this->cs );
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           TpStartAsyncIoOperation    (NTDLL.@)
+ */
+void WINAPI TpStartAsyncIoOperation( TP_IO *io )
+{
+    FIXME( "%p\n", io );
 }

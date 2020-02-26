@@ -59,18 +59,6 @@ DEFINE_EXPECT(Invoke_NAVIGATECOMPLETE2);
 
 static BOOL navigate_complete;
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
@@ -177,7 +165,7 @@ static void test_visible(IWebBrowser2 *wb)
     b = 0x100;
     hres = IWebBrowser2_get_Visible(wb, &b);
     ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
-    ok(b == VARIANT_FALSE, "Visible = %x\n", hres);
+    ok(b == VARIANT_FALSE, "Visible = %x\n", b);
 
     hres = IWebBrowser2_put_Visible(wb, VARIANT_TRUE);
     ok(hres == S_OK, "put_Visible failed: %08x\n", hres);
@@ -185,7 +173,7 @@ static void test_visible(IWebBrowser2 *wb)
     b = 0x100;
     hres = IWebBrowser2_get_Visible(wb, &b);
     ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
-    ok(b == VARIANT_TRUE, "Visible = %x\n", hres);
+    ok(b == VARIANT_TRUE, "Visible = %x\n", b);
 
     hres = IWebBrowser2_put_Visible(wb, VARIANT_FALSE);
     ok(hres == S_OK, "put_Visible failed: %08x\n", hres);
@@ -215,7 +203,7 @@ static void test_window(IWebBrowser2 *wb)
     HRESULT hres;
 
     hres = IWebBrowser2_get_HWND(wb, &handle);
-    ok(hres == S_OK, "get_HWND faile: %08x\n", hres);
+    ok(hres == S_OK, "get_HWND failed: %08x\n", hres);
     ok(handle, "handle == 0\n");
 
     hwnd = (HWND)handle;
@@ -223,7 +211,7 @@ static void test_window(IWebBrowser2 *wb)
     ok(!strcmp(buf, "IEFrame"), "Unexpected class name %s\n", buf);
 }
 
-static void test_navigate(IWebBrowser2 *wb, const char *url)
+static void test_navigate(IWebBrowser2 *wb, const WCHAR *url)
 {
     VARIANT urlv, emptyv;
     MSG msg;
@@ -232,7 +220,7 @@ static void test_navigate(IWebBrowser2 *wb, const char *url)
     SET_EXPECT(Invoke_NAVIGATECOMPLETE2);
 
     V_VT(&urlv) = VT_BSTR;
-    V_BSTR(&urlv) = a2bstr(url);
+    V_BSTR(&urlv) = SysAllocString(url);
     V_VT(&emptyv) = VT_EMPTY;
     hres = IWebBrowser2_Navigate2(wb, &urlv, &emptyv, &emptyv, &emptyv, &emptyv);
     ok(hres == S_OK, "Navigate2 failed: %08x\n", hres);
@@ -244,6 +232,17 @@ static void test_navigate(IWebBrowser2 *wb, const char *url)
     }
 
     CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
+}
+
+static void test_busy(IWebBrowser2 *wb)
+{
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    b = 0xdead;
+    hres = IWebBrowser2_get_Busy(wb, &b);
+    ok(hres == S_OK, "get_Busy failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "Busy = %x\n", b);
 }
 
 static void test_InternetExplorer(void)
@@ -269,10 +268,11 @@ static void test_InternetExplorer(void)
 
     advise_cp(unk, TRUE);
 
+    test_busy(wb);
     test_visible(wb);
     test_html_window(wb);
     test_window(wb);
-    test_navigate(wb, "http://test.winehq.org/tests/hello.html");
+    test_navigate(wb, L"http://test.winehq.org/tests/hello.html");
 
     advise_cp(unk, FALSE);
 

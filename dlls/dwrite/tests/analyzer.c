@@ -1,7 +1,7 @@
 /*
  *    Text analyzing tests
  *
- * Copyright 2012-2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2012-2020 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,7 +34,6 @@
 #include "wine/test.h"
 
 static IDWriteFactory *factory;
-static const WCHAR test_fontfile[] = {'w','i','n','e','_','t','e','s','t','_','f','o','n','t','.','t','t','f',0};
 
 #define LRE 0x202a
 #define RLE 0x202b
@@ -485,7 +484,6 @@ static struct testanalysissource analysissource = { { &analysissourcevtbl } };
 
 static IDWriteFontFace *create_fontface(void)
 {
-    static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
     IDWriteGdiInterop *interop;
     IDWriteFontFace *fontface;
     IDWriteFont *font;
@@ -500,7 +498,7 @@ static IDWriteFontFace *create_fontface(void)
     logfont.lfWidth  = 12;
     logfont.lfWeight = FW_NORMAL;
     logfont.lfItalic = 1;
-    lstrcpyW(logfont.lfFaceName, tahomaW);
+    lstrcpyW(logfont.lfFaceName, L"Tahoma");
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1160,7 +1158,6 @@ static void compare_breakpoints(const struct linebreaks_test *test, DWRITE_LINE_
 
 static void test_AnalyzeLineBreakpoints(void)
 {
-    static const WCHAR emptyW[] = {0};
     const struct linebreaks_test *ptr = linebreaks_tests;
     IDWriteTextAnalyzer *analyzer;
     UINT32 i = 0;
@@ -1169,7 +1166,7 @@ static void test_AnalyzeLineBreakpoints(void)
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    init_textsource(&analysissource, emptyW, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
+    init_textsource(&analysissource, L"", DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
     hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0, 0,
         &analysissink);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1265,7 +1262,6 @@ static const struct textcomplexity_test textcomplexity_tests[] = {
 
 static void test_GetTextComplexity(void)
 {
-    static const WCHAR textW[] = {'A','B','C',0};
     IDWriteTextAnalyzer1 *analyzer1;
     IDWriteTextAnalyzer *analyzer;
     IDWriteFontFace *fontface;
@@ -1288,9 +1284,9 @@ static void test_GetTextComplexity(void)
 if (0) { /* crashes on native */
     hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, NULL, 0, NULL, NULL, NULL, NULL);
     hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, NULL, 0, NULL, NULL, &len, NULL);
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, textW, 3, NULL, NULL, NULL, NULL);
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, textW, 3, NULL, NULL, &len, NULL);
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, textW, 3, NULL, &simple, NULL, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, L"ABC", 3, NULL, NULL, NULL, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, L"ABC", 3, NULL, NULL, &len, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, L"ABC", 3, NULL, &simple, NULL, NULL);
 }
 
     len = 1;
@@ -1303,7 +1299,7 @@ if (0) { /* crashes on native */
     len = 1;
     simple = TRUE;
     indices[0] = 1;
-    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, textW, 3, NULL, &simple, &len, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, L"ABC", 3, NULL, &simple, &len, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(len == 0, "got %d\n", len);
     ok(simple == FALSE, "got %d\n", simple);
@@ -1332,7 +1328,6 @@ if (0) { /* crashes on native */
 
 static void test_numbersubstitution(void)
 {
-    static const WCHAR dummyW[] = {'d','u','m','m','y',0};
     IDWriteNumberSubstitution *substitution;
     HRESULT hr;
 
@@ -1342,8 +1337,9 @@ static void test_numbersubstitution(void)
     IDWriteNumberSubstitution_Release(substitution);
 
     /* invalid locale name, method does not require it */
-    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, dummyW, FALSE, &substitution);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, L"dummy",
+            FALSE, &substitution);
+    ok(hr == S_OK, "Failed to create number substitution, hr %#x.\n", hr);
     IDWriteNumberSubstitution_Release(substitution);
 
     /* invalid method */
@@ -1358,18 +1354,22 @@ static void test_numbersubstitution(void)
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL, NULL, FALSE, &substitution);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL, dummyW, FALSE, &substitution);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL, L"dummy",
+            FALSE, &substitution);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL, dummyW, FALSE, &substitution);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL, L"dummy",
+            FALSE, &substitution);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NATIONAL, dummyW, FALSE, &substitution);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NATIONAL, L"dummy",
+            FALSE, &substitution);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     /* invalid locale, but it's not needed for this method */
-    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, dummyW, FALSE, &substitution);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, L"dummy", FALSE,
+            &substitution);
+    ok(hr == S_OK, "Failed to create number substitution, hr %#x.\n", hr);
     IDWriteNumberSubstitution_Release(substitution);
 }
 
@@ -1494,12 +1494,11 @@ static unsigned int get_glyph_class(const struct dwrite_fonttable *table, UINT16
 
 static void get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, unsigned int size)
 {
-    static const WCHAR enusW[] = {'e','n','-','u','s',0};
     BOOL exists = FALSE;
     unsigned int index;
     HRESULT hr;
 
-    hr = IDWriteLocalizedStrings_FindLocaleName(strings, enusW, &index, &exists);
+    hr = IDWriteLocalizedStrings_FindLocaleName(strings, L"en-us", &index, &exists);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(exists, "Failed to find locale name %d.\n", exists);
 
@@ -1811,9 +1810,7 @@ static BOOL has_feature(const DWRITE_FONT_FEATURE_TAG *tags, UINT32 count, DWRIT
 
 static void test_GetTypographicFeatures(void)
 {
-    static const WCHAR localeW[] = {'c','a','d','a','b','r','a',0};
     static const WCHAR arabicW[] = {0x064a,0x064f,0x0633,0};
-    static const WCHAR abcW[] = {'a','b','c',0};
     DWRITE_FONT_FEATURE_TAG tags[20];
     IDWriteTextAnalyzer2 *analyzer2;
     IDWriteTextAnalyzer *analyzer;
@@ -1835,7 +1832,7 @@ static void test_GetTypographicFeatures(void)
 
     fontface = create_fontface();
 
-    get_script_analysis(abcW, &sa);
+    get_script_analysis(L"abc", &sa);
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, 0, &count, NULL);
 todo_wine {
@@ -1843,9 +1840,9 @@ todo_wine {
     ok(count > 0, "got %u\n", count);
 }
     /* invalid locale name is ignored */
-    get_script_analysis(abcW, &sa);
+    get_script_analysis(L"abc", &sa);
     count = 0;
-    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, localeW, 0, &count, NULL);
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, L"cadabra", 0, &count, NULL);
 todo_wine {
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
     ok(count > 0, "got %u\n", count);
@@ -1863,7 +1860,7 @@ todo_wine {
     ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_MARK_TO_MARK_POSITIONING);
     ok(ret, "expected 'mkmk' feature\n");
 }
-    get_script_analysis(abcW, &sa);
+    get_script_analysis(L"abc", &sa);
     memset(tags, 0, sizeof(tags));
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
@@ -1900,7 +1897,7 @@ static void test_GetGlyphPlacements(void)
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    path = create_testfontfile(test_fontfile);
+    path = create_testfontfile(L"wine_test_font.ttf");
     fontface = create_testfontface(path);
 
     get_script_analysis(aW, &sa);
@@ -2543,7 +2540,6 @@ static inline BOOL float_eq(FLOAT left, FLOAT right)
 
 static void test_GetGdiCompatibleGlyphPlacements(void)
 {
-    static const WCHAR strW[] = {'A',0};
     DWRITE_SHAPING_GLYPH_PROPERTIES glyphprops[1];
     DWRITE_SHAPING_TEXT_PROPERTIES textprops[1];
     DWRITE_SCRIPT_ANALYSIS sa = { 0 };
@@ -2556,7 +2552,7 @@ static void test_GetGdiCompatibleGlyphPlacements(void)
     FLOAT advance;
     DWRITE_GLYPH_OFFSET offsets[1];
     DWRITE_FONT_METRICS fontmetrics;
-    FLOAT emsize;
+    float emsize;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -2566,21 +2562,20 @@ static void test_GetGdiCompatibleGlyphPlacements(void)
     IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
 
     count = 0;
-    hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, strW, 1, fontface,
-        FALSE, FALSE, &sa, NULL, NULL, NULL, NULL, 0, 1, clustermap,
-        textprops, glyphs, glyphprops, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, L"A", 1, fontface, FALSE, FALSE, &sa, NULL, NULL, NULL, NULL, 0, 1,
+            clustermap, textprops, glyphs, glyphprops, &count);
+    ok(hr == S_OK, "Failed to get glyphs, hr %#x.\n", hr);
     ok(count == 1, "got %u\n", count);
 
-    for (emsize = 12.0; emsize <= 20.0; emsize += 1.0) {
+    for (emsize = 12.0f; emsize <= 20.0f; emsize += 1.0f)
+    {
         FLOAT compatadvance, expected, ppdip;
         DWRITE_GLYPH_METRICS metrics;
 
-        hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, strW, clustermap,
-            textprops, 1, glyphs, glyphprops, count, fontface, emsize, FALSE, FALSE,
-            &sa, NULL, NULL, NULL, 0, &advance, offsets);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(advance > 0.0, "got %f\n", advance);
+        hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, L"A", clustermap, textprops, 1, glyphs, glyphprops,
+                count, fontface, emsize, FALSE, FALSE, &sa, NULL, NULL, NULL, 0, &advance, offsets);
+        ok(hr == S_OK, "Failed to get glyph placements, hr %#x.\n", hr);
+        ok(advance > 0.0f, "Unexpected advance %f.\n", advance);
 
         /* 1 ppdip, no transform */
         ppdip = 1.0;
@@ -2589,24 +2584,24 @@ static void test_GetGdiCompatibleGlyphPlacements(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         expected = floorf(metrics.advanceWidth * emsize * ppdip / fontmetrics.designUnitsPerEm + 0.5f) / ppdip;
-        hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, strW,
-            clustermap, textprops, 1, glyphs, glyphprops, count, fontface, emsize,
-            ppdip, NULL, FALSE, FALSE, FALSE, &sa, NULL, NULL, NULL, 0, &compatadvance, offsets);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, L"A", clustermap, textprops, 1, glyphs,
+                glyphprops, count, fontface, emsize, ppdip, NULL, FALSE, FALSE, FALSE, &sa, NULL, NULL, NULL, 0,
+                &compatadvance, offsets);
+        ok(hr == S_OK, "Failed to get glyph placements, hr %#x.\n", hr);
         ok(compatadvance == expected, "%.0f: got advance %f, expected %f, natural %f\n", emsize,
             compatadvance, expected, advance);
 
         /* 1.2 ppdip, no transform */
-        ppdip = 1.2;
+        ppdip = 1.2f;
         hr = IDWriteFontFace_GetGdiCompatibleGlyphMetrics(fontface, emsize, ppdip, NULL, FALSE,
             glyphs, 1, &metrics, FALSE);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         expected = floorf(metrics.advanceWidth * emsize * ppdip / fontmetrics.designUnitsPerEm + 0.5f) / ppdip;
-        hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, strW,
-            clustermap, textprops, 1, glyphs, glyphprops, count, fontface, emsize,
-            ppdip, NULL, FALSE, FALSE, FALSE, &sa, NULL, NULL, NULL, 0, &compatadvance, offsets);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, L"A", clustermap, textprops, 1, glyphs,
+                glyphprops, count, fontface, emsize, ppdip, NULL, FALSE, FALSE, FALSE, &sa, NULL, NULL, NULL, 0,
+                &compatadvance, offsets);
+        ok(hr == S_OK, "Failed to get glyph placements, hr %#x.\n", hr);
         ok(float_eq(compatadvance, expected), "%.0f: got advance %f, expected %f, natural %f\n", emsize,
             compatadvance, expected, advance);
     }

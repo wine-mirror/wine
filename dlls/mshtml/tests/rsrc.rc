@@ -49,8 +49,8 @@ navigation.js HTML "navigation.js"
 /* @makedep: xhr.js */
 xhr.js HTML "xhr.js"
 
-/* @makedep: elements.js */
-elements.js HTML "elements.js"
+/* @makedep: dom.js */
+dom.js HTML "dom.js"
 
 /* @makedep: es5.js */
 es5.js HTML "es5.js"

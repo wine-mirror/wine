@@ -542,7 +542,7 @@ static void CallCombine( GLUtesselator *tess, GLUvertex *isect,
 static void SpliceMergeVertices( GLUtesselator *tess, GLUhalfEdge *e1,
 				 GLUhalfEdge *e2 )
 /*
- * Two vertices with idential coordinates are combined into one.
+ * Two vertices with identical coordinates are combined into one.
  * e1->Org is kept, while e2->Org is discarded.
  */
 {
@@ -1045,7 +1045,7 @@ static void ConnectRightVertex( GLUtesselator *tess, ActiveRegion *regUp,
 static void ConnectLeftDegenerate( GLUtesselator *tess,
 				   ActiveRegion *regUp, GLUvertex *vEvent )
 /*
- * The event vertex lies exacty on an already-processed edge or vertex.
+ * The event vertex lies exactly on an already-processed edge or vertex.
  * Adding the new vertex involves splicing it into the already-processed
  * part of the mesh.
  */

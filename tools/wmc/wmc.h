@@ -42,13 +42,14 @@ extern int byteorder;
 extern int decimal;
 extern int custombit;
 extern int unicodein;
-extern int unicodeout;
 extern int rcinline;
 
 extern char *output_name;
 extern char *input_name;
 extern char *header_name;
 extern char *cmdline;
+
+extern const char *nlsdirs[];
 
 extern int line_number;
 extern int char_number;

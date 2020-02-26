@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
-static BOOL EMFDRV_DeleteDC( PHYSDEV dev );
+static BOOL CDECL EMFDRV_DeleteDC( PHYSDEV dev );
 
 static const struct gdi_dc_funcs emfdrv_driver =
 {
@@ -163,6 +163,8 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_StrokePath,               /* pStrokePath */
     NULL,                            /* pUnrealizePalette */
     EMFDRV_WidenPath,                /* pWidenPath */
+    NULL,                            /* pD3DKMTCheckVidPnExclusiveOwnership */
+    NULL,                            /* pD3DKMTSetVidPnSourceOwner */
     NULL,                            /* wine_get_wgl_driver */
     NULL,                            /* wine_get_vulkan_driver */
     GDI_PRIORITY_GRAPHICS_DRV        /* priority */
@@ -172,7 +174,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
 /**********************************************************************
  *	     EMFDRV_DeleteDC
  */
-static BOOL EMFDRV_DeleteDC( PHYSDEV dev )
+static BOOL CDECL EMFDRV_DeleteDC( PHYSDEV dev )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     UINT index;

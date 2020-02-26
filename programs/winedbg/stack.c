@@ -412,7 +412,7 @@ static void backtrace_all(void)
             }
             else if (entry.th32OwnerProcessID != dbg_curr_pid)
             {
-                if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE))
+                if (!dbg_attach_debuggee(entry.th32OwnerProcessID))
                 {
                     dbg_printf("\nwarning: could not attach to %04x\n",
                                entry.th32OwnerProcessID);

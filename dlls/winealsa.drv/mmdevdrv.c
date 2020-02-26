@@ -631,7 +631,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
 static snd_config_t *make_handle_underrun_config(const char *name)
 {
     snd_config_t *lconf, *dev_node, *hu_node, *type_node;
-    char dev_node_name[64];
+    char dev_node_name[260];
     const char *type_str;
     int err;
 
@@ -1255,7 +1255,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return E_POINTER;
 
     if(mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return AUDCLNT_E_NOT_INITIALIZED;
+        return E_INVALIDARG;
 
     if(flags & ~(AUDCLNT_STREAMFLAGS_CROSSPROCESS |
                 AUDCLNT_STREAMFLAGS_LOOPBACK |
@@ -1830,6 +1830,22 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         fmt->Format.nChannels = 2;
     else
         fmt->Format.nChannels = max_channels;
+
+    if(fmt->Format.nChannels > 1 && (fmt->Format.nChannels & 0x1)){
+        /* For most hardware on Windows, users must choose a configuration with an even
+         * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
+         * channels, but those channels are still reported to applications from
+         * GetMixFormat! Some applications behave badly if given an odd number of
+         * channels (e.g. 2.1). */
+
+        if(fmt->Format.nChannels < max_channels)
+            fmt->Format.nChannels += 1;
+        else
+            /* We could "fake" more channels and downmix the emulated channels,
+             * but at that point you really ought to tweak your ALSA setup or
+             * just use PulseAudio. */
+            WARN("Some Windows applications behave badly with an odd number of channels (%u)!\n", fmt->Format.nChannels);
+    }
 
     fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
 
@@ -2867,7 +2883,12 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags,
             devpos, qpcpos);
 
-    if(!data || !frames || !flags)
+    if(!data)
+        return E_POINTER;
+
+    *data = NULL;
+
+    if(!frames || !flags)
         return E_POINTER;
 
     EnterCriticalSection(&This->lock);

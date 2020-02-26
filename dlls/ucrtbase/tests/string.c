@@ -73,13 +73,23 @@ static double (__cdecl *p_strtod)(const char*, char** end);
 static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
 static size_t (__cdecl *p___strncnt)(const char*, size_t);
+static int (__cdecl *p_tolower)(int);
+static int (__cdecl *p__tolower)(int);
+static int (__cdecl *p__o_tolower)(int);
 static int (__cdecl *p_towlower)(wint_t);
 static int (__cdecl *p__towlower_l)(wint_t, _locale_t);
+static int (__cdecl *p_toupper)(int);
+static int (__cdecl *p__toupper)(int);
+static int (__cdecl *p__o_toupper)(int);
 static int (__cdecl *p_towupper)(wint_t);
 static int (__cdecl *p__towupper_l)(wint_t, _locale_t);
 static char* (__cdecl *p_setlocale)(int, const char*);
 static _locale_t (__cdecl *p__create_locale)(int, const char*);
 static void (__cdecl *p__free_locale)(_locale_t);
+static int (__cdecl *p__getmbcp)(void);
+static int (__cdecl *p__setmbcp)(int);
+static size_t (__cdecl *p__mbsspn)(const unsigned char*, const unsigned char*);
+static wchar_t* (__cdecl *p_wcstok)(wchar_t*, const wchar_t*, wchar_t**);
 
 static BOOL init(void)
 {
@@ -97,13 +107,23 @@ static BOOL init(void)
     p__memicmp = (void*)GetProcAddress(module, "_memicmp");
     p__memicmp_l = (void*)GetProcAddress(module, "_memicmp_l");
     p___strncnt = (void*)GetProcAddress(module, "__strncnt");
+    p_tolower = (void*)GetProcAddress(module, "tolower");
+    p__tolower = (void*)GetProcAddress(module, "_tolower");
+    p__o_tolower = (void*)GetProcAddress(module, "_o_tolower");
     p_towlower = (void*)GetProcAddress(module, "towlower");
     p__towlower_l = (void*)GetProcAddress(module, "_towlower_l");
+    p_toupper = (void*)GetProcAddress(module, "toupper");
+    p__toupper = (void*)GetProcAddress(module, "_toupper");
+    p__o_toupper = (void*)GetProcAddress(module, "_o_toupper");
     p_towupper = (void*)GetProcAddress(module, "towupper");
     p__towupper_l = (void*)GetProcAddress(module, "_towupper_l");
     p_setlocale = (void*)GetProcAddress(module, "setlocale");
     p__create_locale = (void*)GetProcAddress(module, "_create_locale");
     p__free_locale = (void*)GetProcAddress(module, "_free_locale");
+    p__getmbcp = (void*)GetProcAddress(module, "_getmbcp");
+    p__setmbcp = (void*)GetProcAddress(module, "_setmbcp");
+    p__mbsspn = (void*)GetProcAddress(module, "_mbsspn");
+    p_wcstok = (void*)GetProcAddress(module, "wcstok");
     return TRUE;
 }
 
@@ -112,16 +132,19 @@ static BOOL local_isnan(double d)
     return d != d;
 }
 
-#define test_strtod_str(string, value, length) _test_strtod_str(__LINE__, string, value, length)
-static void _test_strtod_str(int line, const char* string, double value, int length)
+#define test_strtod_str(string, value, length) _test_strtod_str(__LINE__, string, value, length, FALSE)
+#define test_strtod_str_todo(string, value, length) _test_strtod_str(__LINE__, string, value, length, TRUE)
+static void _test_strtod_str(int line, const char* string, double value, int length, BOOL todo)
 {
     char *end;
     double d;
     d = p_strtod(string, &end);
-    if (local_isnan(value))
-        ok_(__FILE__, line)(local_isnan(d), "d = %lf (\"%s\")\n", d, string);
-    else
-        ok_(__FILE__, line)(d == value, "d = %lf (\"%s\")\n", d, string);
+    todo_wine_if(todo) {
+        if (local_isnan(value))
+            ok_(__FILE__, line)(local_isnan(d), "d = %.16le (\"%s\")\n", d, string);
+        else
+            ok_(__FILE__, line)(d == value, "d = %.16le (\"%s\")\n", d, string);
+    }
     ok_(__FILE__, line)(end == string + length, "incorrect end (%d, \"%s\")\n", (int)(end - string), string);
 }
 
@@ -135,6 +158,8 @@ static void test_strtod(void)
     test_strtod_str("inf42", INFINITY, 3);
     test_strtod_str("inffoo", INFINITY, 3);
     test_strtod_str("infini", INFINITY, 3);
+    test_strtod_str("input", 0, 0);
+    test_strtod_str("-input", 0, 0);
 
     test_strtod_str("NAN", NAN, 3);
     test_strtod_str("nan", NAN, 3);
@@ -156,6 +181,22 @@ static void test_strtod(void)
     test_strtod_str("0x1.1p1", 2.125, 7);
     test_strtod_str("0x1.A", 1.625, 5);
     test_strtod_str("0x1p1a", 2, 5);
+    test_strtod_str("0xp3", 0, 1);
+    test_strtod_str("0x.", 0, 1);
+    test_strtod_str("0x.8", 0.5, 4);
+    test_strtod_str("0x.8p", 0.5, 4);
+    test_strtod_str("0x0p10000000000000000000000000", 0, 30);
+    test_strtod_str("0x1p-1026", 1.3906711615670009e-309, 9);
+
+    test_strtod_str("0x1ffffffffffffe.80000000000000000000", 9007199254740990.0, 37);
+    test_strtod_str("0x1ffffffffffffe.80000000000000000001", 9007199254740991.0, 37);
+    test_strtod_str("0x1fffffffffffff.80000000000000000000", 9007199254740992.0, 37);
+    test_strtod_str("0x1fffffffffffff.80000000000000000001", 9007199254740992.0, 37);
+
+    test_strtod_str("4.0621786324484881721115322e-53", 4.0621786324484881721115322e-53, 31);
+    test_strtod_str_todo("1.8905590910042396899370942", 1.8905590910042396899370942, 27);
+    test_strtod_str("2.2250738585072014e-308", 2.2250738585072014e-308, 23);
+    test_strtod_str("4.9406564584124654e-324", 4.9406564584124654e-324, 23);
 }
 
 static void test__memicmp(void)
@@ -293,10 +334,54 @@ static void test_C_locale(void)
     p_setlocale(LC_ALL, "C");
     for (i = 0; i <= 0xffff; i++)
     {
+        ret = p_tolower(i);
+        if (i >= 'A' && i <= 'Z')
+        {
+            exp = i + 'a' - 'A';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
+        ret = p__tolower(i);
+        exp = i + 'a' - 'A';
+        ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+
+        ret = p__o_tolower(i);
+        if (i >= 'A' && i <= 'Z')
+        {
+            exp = i + 'a' - 'A';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
         ret = p_towlower(i);
         if (i >= 'A' && i <= 'Z')
         {
             exp = i + 'a' - 'A';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
+        ret = p_toupper(i);
+        if (i >= 'a' && i <= 'z')
+        {
+            exp = i + 'A' - 'a';
+            ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+        }
+        else
+            ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
+
+        ret = p__toupper(i);
+        exp = i + 'A' - 'a';
+        ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
+
+        ret = p__o_toupper(i);
+        if (i >= 'a' && i <= 'z')
+        {
+            exp = i + 'A' - 'a';
             ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
         }
         else
@@ -339,6 +424,67 @@ static void test_C_locale(void)
     }
 }
 
+static void test_mbsspn( void)
+{
+    unsigned char str1[] = "cabernet";
+    unsigned char str2[] = "shiraz";
+    unsigned char set[] = "abc";
+    unsigned char empty[] = "";
+    unsigned char mbstr[] = " 2019\x94\x4e" "6\x8c\x8e" "29\x93\xfa";
+    unsigned char mbset1[] = "0123456789 \x94\x4e";
+    unsigned char mbset2[] = " \x94\x4e\x8c\x8e";
+    unsigned char mbset3[] = "\x8e";
+    int ret, cp = p__getmbcp();
+
+    ret = p__mbsspn(str1, set);
+    ok(ret == 3, "_mbsspn returns %d should be 3\n", ret);
+    ret = p__mbsspn(str2, set);
+    ok(ret == 0, "_mbsspn returns %d should be 0\n", ret);
+    ret = p__mbsspn(str1, empty);
+    ok(ret == 0, "_mbsspn returns %d should be 0\n", ret);
+
+    p__setmbcp(932);
+    ret = p__mbsspn(mbstr, mbset1);
+    ok(ret == 8, "_mbsspn returns %d should be 8\n", ret);
+    ret = p__mbsspn(mbstr, mbset2);
+    ok(ret == 1, "_mbsspn returns %d should be 1\n", ret);
+    ret = p__mbsspn(mbstr+8, mbset1);
+    ok(ret == 0, "_mbsspn returns %d should be 0\n", ret);
+    ret = p__mbsspn(mbstr+8, mbset2);
+    ok(ret == 2, "_mbsspn returns %d should be 2\n", ret);
+    ret = p__mbsspn(mbstr, mbset3);
+    ok(ret == 14, "_mbsspn returns %d should be 14\n", ret);
+
+    p__setmbcp(cp);
+}
+
+static void test_wcstok(void)
+{
+    static const wchar_t *input = L"two words";
+    wchar_t buffer[16];
+    wchar_t *token;
+    wchar_t *next;
+
+    next = NULL;
+    wcscpy(buffer, input);
+    token = p_wcstok(buffer, L" ", &next);
+    ok(!wcscmp(L"two", token), "expected \"two\", got \"%ls\"\n", token);
+    ok(next == token + 4, "expected %p, got %p\n", token + 4, next);
+    token = p_wcstok(NULL, L" ", &next);
+    ok(!wcscmp(L"words", token), "expected \"words\", got \"%ls\"\n", token);
+    ok(next == token + 5, "expected %p, got %p\n", token + 5, next);
+    token = p_wcstok(NULL, L" ", &next);
+    ok(!token, "expected NULL, got %p\n", token);
+
+    wcscpy(buffer, input);
+    token = p_wcstok(buffer, L" ", NULL);
+    ok(!wcscmp(L"two", token), "expected \"two\", got \"%ls\"\n", token);
+    token = p_wcstok(NULL, L" ", NULL);
+    ok(!wcscmp(L"words", token), "expected \"words\", got \"%ls\"\n", token);
+    token = p_wcstok(NULL, L" ", NULL);
+    ok(!token, "expected NULL, got %p\n", token);
+}
+
 START_TEST(string)
 {
     if (!init()) return;
@@ -347,4 +493,6 @@ START_TEST(string)
     test__memicmp_l();
     test___strncnt();
     test_C_locale();
+    test_mbsspn();
+    test_wcstok();
 }

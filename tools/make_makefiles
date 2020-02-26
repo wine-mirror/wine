@@ -74,6 +74,7 @@ my @source_vars = (
 );
 
 my (@makefiles, %makefiles);
+my @nls_files;
 
 sub dirname($)
 {
@@ -389,6 +390,10 @@ sub assign_sources_to_makefiles(@)
         {
             next unless defined ${$make}{"TESTDLL"};
         }
+        elsif ($name =~ /\.nls$/)
+        {
+            push @nls_files, $name if $dir eq "nls";
+        }
         elsif ($dir ne "loader")  # loader dir contains misc files
         {
             next;
@@ -480,6 +485,20 @@ sub update_makefiles(@)
     replace_in_file( "configure.ac", '^WINE_CONFIG_MAKEFILE', '^dnl End of auto-generated output commands\n$', @lines);
 }
 
+sub update_wine_inf()
+{
+    my @lines = ("[NlsFiles]", @nls_files, "\n" );
+    replace_in_file "loader/wine.inf.in", '^\[NlsFiles\]', '^$', join( "\n", @lines );
+
+    my @codepages = grep /c_\d+\.nls/, @nls_files;
+    @lines = ( "[Nls]" );
+    foreach my $cp (sort { $a <=> $b; } map { /c_(\d+)\.nls/ && $1; } @codepages)
+    {
+        push @lines, sprintf "HKLM,System\\CurrentControlSet\\Control\\Nls\\Codepage,\"%u\",,\"c_%03u.nls\"", $cp, $cp;
+    }
+    push @lines, "\n";
+    replace_in_file "loader/wine.inf.in", '^\[Nls\]', '^$', join( "\n", @lines );
+}
 
 my $git_dir = $ENV{GIT_DIR} || ".git";
 die "needs to be run from a git checkout" unless -d $git_dir;
@@ -496,3 +515,4 @@ foreach my $file (sort @makefiles)
 
 assign_sources_to_makefiles( @all_files );
 update_makefiles( @makefiles );
+update_wine_inf();

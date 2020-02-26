@@ -1,7 +1,7 @@
 #ifndef __WINE_LIMITS_H
 #define __WINE_LIMITS_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #define CHAR_BIT 8
 #define MB_LEN_MAX 5
@@ -30,13 +30,13 @@
 #define LONG_MAX    0x7fffffffL
 #define ULONG_MAX   0xffffffffUL
 
-#define LLONG_MAX   (((__int64)0x7fffffff << 32) | 0xffffffff)
+#define LLONG_MAX   0x7fffffffffffffffLL
 #define LLONG_MIN   (-LLONG_MAX-1)
-#define ULLONG_MAX  (((unsigned __int64)0xffffffff << 32) | 0xffffffff)
+#define ULLONG_MAX  0xffffffffffffffffULL
 
-#define _I64_MAX    (((__int64)0x7fffffff << 32) | 0xffffffff)
+#define _I64_MAX    0x7fffffffffffffffLL
 #define _I64_MIN    (-_I64_MAX-1)
-#define _UI64_MAX   (((unsigned __int64)0xffffffff << 32) | 0xffffffff)
+#define _UI64_MAX   0xffffffffffffffffULL
 
 #define I64_MIN  _I64_MIN
 #define I64_MAX  _I64_MAX

@@ -212,6 +212,7 @@ file_type get_file_type(const char* filename)
 {
     /* see tools/winebuild/res32.c: check_header for details */
     static const char res_sig[] = { 0,0,0,0, 32,0,0,0, 0xff,0xff, 0,0, 0xff,0xff, 0,0, 0,0,0,0, 0,0, 0,0, 0,0,0,0, 0,0,0,0 };
+    static const char elf_sig[4] = "\177ELF";
     char buf[sizeof(res_sig)];
     int fd, cnt;
 
@@ -230,6 +231,11 @@ file_type get_file_type(const char* filename)
     if (strendswith(filename, ".def")) return file_def;
     if (strendswith(filename, ".spec")) return file_spec;
     if (strendswith(filename, ".rc")) return file_rc;
+    if (cnt >= sizeof(elf_sig) && !memcmp(buf, elf_sig, sizeof(elf_sig))) return file_so;  /* ELF lib */
+    if (cnt >= sizeof(unsigned int) &&
+        (*(unsigned int *)buf == 0xfeedface || *(unsigned int *)buf == 0xcefaedfe ||
+         *(unsigned int *)buf == 0xfeedfacf || *(unsigned int *)buf == 0xcffaedfe))
+        return file_so; /* Mach-O lib */
 
     return file_other;
 }
@@ -297,6 +303,22 @@ file_type get_lib_type(enum target_platform platform, strarray* path, const char
     return file_na;
 }
 
+const char *find_binary( const strarray* prefix, const char *name )
+{
+    unsigned int i;
+
+    if (!prefix) return name;
+    if (strchr( name, '/' )) return name;
+
+    for (i = 0; i < prefix->size; i++)
+    {
+        struct stat st;
+        char *prog = strmake( "%s/%s%s", prefix->base[i], name, EXEEXT );
+        if (stat( prog, &st ) == 0 && S_ISREG( st.st_mode ) && (st.st_mode & 0111)) return prog;
+    }
+    return name;
+}
+
 int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 {
     unsigned int i;
@@ -307,26 +329,7 @@ int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 
     strarray_add(arr, NULL);
     argv = arr->base;
-
-    if (prefix)
-    {
-        const char *p = strrchr(argv[0], '/');
-        if (!p) p = argv[0];
-        else p++;
-
-        for (i = 0; i < prefix->size; i++)
-        {
-            struct stat st;
-
-            free( prog );
-            prog = strmake("%s/%s%s", prefix->base[i], p, EXEEXT);
-            if (stat(prog, &st) == 0 && S_ISREG(st.st_mode) && (st.st_mode & 0111))
-            {
-                argv[0] = prog;
-                break;
-            }
-        }
-    }
+    argv[0] = find_binary( prefix, argv[0] );
 
     if (verbose)
     {

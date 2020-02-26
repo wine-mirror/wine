@@ -824,7 +824,7 @@ static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
     UINT cp = CP_UTF8;
     WCHAR *text;
 
-    if(!bsc->bsc.readed) {
+    if(!bsc->bsc.read) {
         text = heap_alloc(sizeof(WCHAR));
         if(!text)
             return E_OUTOFMEMORY;
@@ -835,17 +835,17 @@ static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
 
     switch(bsc->bsc.bom) {
     case BOM_UTF16:
-        if(bsc->bsc.readed % sizeof(WCHAR)) {
+        if(bsc->bsc.read % sizeof(WCHAR)) {
             FIXME("The buffer is not a valid utf16 string\n");
             return E_FAIL;
         }
 
-        text = heap_alloc(bsc->bsc.readed+sizeof(WCHAR));
+        text = heap_alloc(bsc->bsc.read+sizeof(WCHAR));
         if(!text)
             return E_OUTOFMEMORY;
 
-        memcpy(text, bsc->buf, bsc->bsc.readed);
-        text[bsc->bsc.readed/sizeof(WCHAR)] = 0;
+        memcpy(text, bsc->buf, bsc->bsc.read);
+        text[bsc->bsc.read/sizeof(WCHAR)] = 0;
         break;
 
     default:
@@ -855,12 +855,12 @@ static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
     case BOM_UTF8: {
         DWORD len;
 
-        len = MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
+        len = MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.read, NULL, 0);
         text = heap_alloc((len+1)*sizeof(WCHAR));
         if(!text)
             return E_OUTOFMEMORY;
 
-        MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.readed, text, len);
+        MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.read, text, len);
         text[len] = 0;
     }
     }
@@ -988,7 +988,7 @@ static HRESULT ScriptBSC_stop_binding(BSCallback *bsc, HRESULT result)
 static HRESULT ScriptBSC_read_data(BSCallback *bsc, IStream *stream)
 {
     ScriptBSC *This = impl_from_BSCallback(bsc);
-    DWORD readed;
+    DWORD read;
     HRESULT hres;
 
     if(!This->buf) {
@@ -999,7 +999,7 @@ static HRESULT ScriptBSC_read_data(BSCallback *bsc, IStream *stream)
     }
 
     do {
-        if(This->bsc.readed >= This->size) {
+        if(This->bsc.read >= This->size) {
             void *new_buf;
             new_buf = heap_realloc(This->buf, This->size << 1);
             if(!new_buf)
@@ -1008,7 +1008,7 @@ static HRESULT ScriptBSC_read_data(BSCallback *bsc, IStream *stream)
             This->buf = new_buf;
         }
 
-        hres = read_stream(&This->bsc, stream, This->buf+This->bsc.readed, This->size-This->bsc.readed, &readed);
+        hres = read_stream(&This->bsc, stream, This->buf+This->bsc.read, This->size-This->bsc.read, &read);
     }while(hres == S_OK);
 
     return S_OK;

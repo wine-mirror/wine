@@ -393,119 +393,92 @@ static void test_CryptInstallOssGlobal(void)
     }
 }
 
-static const BYTE encodedInt[] = { 0x02,0x01,0x01 };
-static const WCHAR encodedIntStr[] = { '0','2',' ','0','1',' ','0','1',0 };
-static const BYTE encodedBigInt[] = { 0x02,0x1f,0x01,0x02,0x03,0x04,0x05,0x06,
- 0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,
- 0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f };
-static const WCHAR encodedBigIntStr[] = { '0','2',' ','1','f',' ','0','1',' ',
- '0','2',' ','0','3',' ','0','4',' ','0','5',' ','0','6',' ','0','7',' ','0',
- '8',' ','0','9',' ','0','a',' ','0','b',' ','0','c',' ','0','d',' ','0','e',
- ' ','0','f',' ','1','0',' ','1','1',' ','1','2',' ','1','3',' ','1','4',' ',
- '1','5',' ','1','6',' ','1','7',' ','1','8',' ','1','9',' ','1','a',' ','1',
- 'b',' ','1','c',' ','1','d',' ','1','e',' ','1','f',0 };
-
 static void test_format_object(void)
 {
-    BOOL (WINAPI *pCryptFormatObject)(DWORD dwEncoding, DWORD dwFormatType,
-        DWORD dwFormatStrType, void *pFormatStruct, LPCSTR lpszStructType,
-        const BYTE *pbEncoded, DWORD dwEncoded, void *pbFormat,
-        DWORD *pcbFormat);
+    static const BYTE encodedInt[] = {0x02,0x01,0x01};
+    static const BYTE encodedBigInt[] = {0x02,0x1f,0x01,0x02,0x03,0x04,0x05,
+            0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,
+            0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f};
+    static const WCHAR encodedBigIntStr[] = L"02 1f 01 02 03 04 05 06 07 08 09 "
+            "0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f";
+
     BOOL ret;
     DWORD size;
-    LPWSTR str;
+    WCHAR str[100];
 
-    pCryptFormatObject = (void *)GetProcAddress(hCrypt, "CryptFormatObject");
-    if (!pCryptFormatObject)
-    {
-        skip("No CryptFormatObject\n");
-        return;
-    }
     /* Crash */
     if (0)
     {
-        pCryptFormatObject(0, 0, 0, NULL, NULL, NULL, 0, NULL, NULL);
+        CryptFormatObject(0, 0, 0, NULL, NULL, NULL, 0, NULL, NULL);
     }
     /* When called with any but the default encoding, it fails to find a
      * formatting function.
      */
     SetLastError(0xdeadbeef);
-    ret = pCryptFormatObject(0, 0, 0, NULL, NULL, NULL, 0, NULL, &size);
-    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ret = CryptFormatObject(0, 0, 0, NULL, NULL, NULL, 0, NULL, &size);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
     /* When called with the default encoding type for any undefined struct type
      * (including none), it succeeds:  the default encoding is a hex string
      * encoding.
      */
     SetLastError(0xdeadbeef);
-    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0,
-     NULL, &size);
+    ret = CryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0, NULL, &size);
     ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
-    if (ret)
-    {
-        if (size == 0 && GetLastError() == ERROR_FILE_NOT_FOUND)
-        {
-            win_skip("CryptFormatObject has no default implementation\n");
-            return;
-        }
-        ok(size == sizeof(WCHAR), "unexpected size %d\n", size);
-        str = HeapAlloc(GetProcessHeap(), 0, size);
-        SetLastError(0xdeadbeef);
-        size = 0;
-        ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0,
-         str, &size);
-        ok(!ret && GetLastError() == ERROR_MORE_DATA,
-         "expected ERROR_MORE_DATA, got %d\n", GetLastError());
-        size = sizeof(WCHAR);
-        ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0,
-         str, &size);
-        ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
-        ok(!str[0], "expected empty string\n");
-        HeapFree(GetProcessHeap(), 0, str);
-    }
-    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, encodedInt,
-     sizeof(encodedInt), NULL, &size);
+    ok(size == sizeof(WCHAR) || broken(!size) /* Win10 1709+ */, "wrong size %d\n", size);
+
+    SetLastError(0xdeadbeef);
+    size = 0;
+    ret = CryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0, str, &size);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_MORE_DATA, "wrong error %u\n", GetLastError());
+
+    size = sizeof(WCHAR);
+    ret = CryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0, str, &size);
+    ok(ret, "CryptFormatObject failed, error %u\n", GetLastError());
+    ok(!str[0], "expected empty string\n");
+
+    ret = CryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, encodedInt,
+            sizeof(encodedInt), NULL, &size);
+    ok(ret, "CryptFormatObject failed, error %u\n", GetLastError());
+    ok(size >= sizeof(L"02 01 01"), "wrong size %u\n", size);
+
+    ret = CryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, encodedInt,
+            sizeof(encodedInt), str, &size);
+    ok(ret, "CryptFormatObject failed, error %u\n", GetLastError());
+    ok(!wcscmp(str, L"02 01 01"), "wrong string %s\n", wine_dbgstr_w(str));
+
+    ret = CryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, encodedBigInt,
+            sizeof(encodedBigInt), NULL, &size);
+    ok(ret, "CryptFormatObject failed, error %u\n", GetLastError());
+    ok(size >= sizeof(encodedBigIntStr), "wrong size %u\n", size);
+
+    ret = CryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL,
+     encodedBigInt, sizeof(encodedBigInt), str, &size);
     ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
-    if (ret)
-    {
-        str = HeapAlloc(GetProcessHeap(), 0, size);
-        ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL,
-         encodedInt, sizeof(encodedInt), str, &size);
-        ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
-        ok(!lstrcmpW(str, encodedIntStr), "unexpected format string\n");
-        HeapFree(GetProcessHeap(), 0, str);
-    }
-    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL,
-     encodedBigInt, sizeof(encodedBigInt), NULL, &size);
-    ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
-    if (ret)
-    {
-        str = HeapAlloc(GetProcessHeap(), 0, size);
-        ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL,
-         encodedBigInt, sizeof(encodedBigInt), str, &size);
-        ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
-        ok(!lstrcmpiW(str, encodedBigIntStr), "unexpected format string\n");
-        HeapFree(GetProcessHeap(), 0, str);
-    }
+    ok(!wcsicmp(str, encodedBigIntStr), "wrong string %s\n", wine_dbgstr_w(str));
+
     /* When called with the default encoding type for any undefined struct
      * type but CRYPT_FORMAT_STR_NO_HEX specified, it fails to find a
      * formatting function.
      */
     SetLastError(0xdeadbeef);
-    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, CRYPT_FORMAT_STR_NO_HEX,
-     NULL, NULL, NULL, 0, NULL, &size);
+    ret = CryptFormatObject(X509_ASN_ENCODING, 0, CRYPT_FORMAT_STR_NO_HEX,
+            NULL, NULL, NULL, 0, NULL, &size);
     ok(!ret, "CryptFormatObject succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
-     GetLastError() == 0xdeadbeef, /* Vista, W2K8 */
-     "expected ERROR_FILE_NOT_FOUND or no change, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND
+            || GetLastError() == 0xdeadbeef, /* Vista, W2K8 */
+            "wrong error %u\n", GetLastError());
+
     /* When called to format an AUTHORITY_KEY_ID2_INFO, it fails when no
      * data are given.
      */
     SetLastError(0xdeadbeef);
-    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL,
-     szOID_AUTHORITY_KEY_IDENTIFIER2, NULL, 0, NULL, &size);
-    ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %d\n", GetLastError());
+    ret = CryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL,
+            szOID_AUTHORITY_KEY_IDENTIFIER2, NULL, 0, NULL, &size);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == E_INVALIDARG, "wrong error %u\n", GetLastError());
 }
 
 START_TEST(main)

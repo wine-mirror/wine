@@ -195,25 +195,6 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
     }
 }
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
-}
-
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 static IOleClientSite *client_site;
 static IDispatch *sink_disp;
 static READYSTATE plugin_readystate = READYSTATE_UNINITIALIZED;
@@ -235,7 +216,7 @@ static void set_plugin_readystate(READYSTATE state)
     IPropertyNotifySink_Release(prop_notif);
 }
 
-static void test_mon_displayname(IMoniker *mon, const char *exname, const char *broken_name)
+static void test_mon_displayname(IMoniker *mon, const WCHAR *exname, const WCHAR *broken_name)
 {
     LPOLESTR display_name;
     DWORD mksys;
@@ -243,7 +224,7 @@ static void test_mon_displayname(IMoniker *mon, const char *exname, const char *
 
     hres = IMoniker_GetDisplayName(mon, NULL, NULL, &display_name);
     ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
-    ok(!strcmp_wa(display_name, exname) || broken(broken_name && !strcmp_wa(display_name, broken_name)),
+    ok(!lstrcmpW(display_name, exname) || broken(broken_name && !lstrcmpW(display_name, broken_name)),
         "display_name = %s\n", wine_dbgstr_w(display_name));
     CoTaskMemFree(display_name);
 
@@ -591,7 +572,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     hres = IPropertyBag_Read(pPropBag, param_nameW, &v, NULL);
     ok(hres == S_OK, "Read failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "param_value"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"param_value"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
 
     V_VT(&v) = VT_I4;
     V_I4(&v) = 0xdeadbeef;
@@ -604,7 +585,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     hres = IPropertyBag_Read(pPropBag, num_paramW, &v, NULL);
     ok(hres == S_OK, "Read failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "3"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"3"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     SysFreeString(V_BSTR(&v));
 
     V_VT(&v) = VT_I4;
@@ -640,7 +621,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     hres = IBindHost_CreateMoniker(bind_host, test_swfW, NULL, &mon, 0);
     ok(hres == S_OK, "CreateMoniker failed: %08x\n", hres);
     ok(mon != NULL, "mon == NULL\n");
-    test_mon_displayname(mon, "about:test.swf", "about:blanktest.swf");
+    test_mon_displayname(mon, L"about:test.swf", L"about:blanktest.swf");
     IMoniker_Release(mon);
 
     IBindHost_Release(bind_host);
@@ -649,7 +630,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     hres = IOleClientSite_GetMoniker(client_site, OLEGETMONIKER_ONLYIFTHERE, OLEWHICHMK_CONTAINER, &mon);
     ok(hres == S_OK, "GetMoniker failed: %08x\n", hres);
     ok(mon != NULL, "mon == NULL\n");
-    test_mon_displayname(mon, "about:blank", NULL);
+    test_mon_displayname(mon, L"about:blank", NULL);
     IMoniker_Release(mon);
 
     set_plugin_readystate(READYSTATE_COMPLETE);
@@ -715,10 +696,10 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOL
     ok(rgszNames != NULL, "rgszNames == NULL\n");
     ok(rgDispId != NULL, "rgDispId == NULL\n");
 
-    if(!strcmp_wa(rgszNames[0], "scriptprop")) {
+    if(!lstrcmpW(rgszNames[0], L"scriptprop")) {
         CHECK_EXPECT(GetIDsOfNames_scriptprop);
         *rgDispId = DISPID_SCRIPTPROP;
-    }else if(!strcmp_wa(rgszNames[0], "scriptCall")) {
+    }else if(!lstrcmpW(rgszNames[0], L"scriptCall")) {
         *rgDispId = DISPID_SCRIPTCALL;
     }else {
         ok(0, "rgszNames[0] = %s\n", wine_dbgstr_w(rgszNames[0]));
@@ -1534,7 +1515,7 @@ static void test_elem_dispex(IDispatchEx *dispex)
     BSTR str;
     HRESULT hres;
 
-    str = a2bstr("scriptprop");
+    str = SysAllocString(L"scriptprop");
     SET_EXPECT(GetIDsOfNames_scriptprop);
     hres = IDispatchEx_GetDispID(dispex, str, 0, &id);
     CHECK_CALLED(GetIDsOfNames_scriptprop);
@@ -1632,7 +1613,7 @@ static void test_object_elem(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
     ok(hres == S_OK, "Could not get IHTMLDocument3 iface: %08x\n", hres);
 
-    str = a2bstr("objid");
+    str = SysAllocString(L"objid");
     elem = (void*)0xdeadbeef;
     hres = IHTMLDocument3_getElementById(doc3, str, &elem);
     IHTMLDocument3_Release(doc3);
@@ -1660,13 +1641,13 @@ static void test_object_elem(IHTMLDocument2 *doc)
     hres = IHTMLObjectElement_get_width(objelem, &v);
     ok(hres == S_OK, "get_width failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(width) = %d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "300"), "V_BSTR(width) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"300"), "V_BSTR(width) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     hres = IHTMLObjectElement_get_height(objelem, &v);
     ok(hres == S_OK, "get_height failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(height) = %d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "200"), "V_BSTR(height) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"200"), "V_BSTR(height) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_VT(&v) = VT_I4;
@@ -1681,7 +1662,7 @@ static void test_object_elem(IHTMLDocument2 *doc)
     hres = IHTMLObjectElement_get_width(objelem, &v);
     ok(hres == S_OK, "get_width failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(width) = %d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "400"), "V_BSTR(width) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"400"), "V_BSTR(width) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_VT(&v) = VT_I4;
@@ -1696,7 +1677,7 @@ static void test_object_elem(IHTMLDocument2 *doc)
     hres = IHTMLObjectElement_get_height(objelem, &v);
     ok(hres == S_OK, "get_height failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(height) = %d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "250"), "V_BSTR(height) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!lstrcmpW(V_BSTR(&v), L"250"), "V_BSTR(height) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     IHTMLObjectElement_Release(objelem);
@@ -2603,7 +2584,7 @@ static void test_nooleobj_ax(void)
     release_doc(doc);
 }
 
-static void test_exec_script(IHTMLDocument2 *doc, const char *codea, const char *langa)
+static void test_exec_script(IHTMLDocument2 *doc, const WCHAR *codew, const WCHAR *langw)
 {
     IHTMLWindow2 *window;
     BSTR code, lang;
@@ -2613,8 +2594,8 @@ static void test_exec_script(IHTMLDocument2 *doc, const char *codea, const char 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
 
-    code = a2bstr(codea);
-    lang = a2bstr(langa);
+    code = SysAllocString(codew);
+    lang = SysAllocString(langw);
 
     hres = IHTMLWindow2_execScript(window, code, lang, &v);
     ok(hres == S_OK, "execScript failed: %08x\n", hres);
@@ -2642,9 +2623,9 @@ static void test_create_element(void)
     SET_EXPECT(FreezeEvents_FALSE);
 
     test_exec_script(doc,
-                     "var test_elem = document.createElement('object');"
+                     L"var test_elem = document.createElement('object');"
                      "test_elem.classid = 'CLSID:178fc163-f585-4e24-9c13-4bb7f6680746';",
-                     "javascript");
+                     L"javascript");
 
     CHECK_CALLED(CreateInstance);
     todo_wine CHECK_CALLED(FreezeEvents_TRUE);
@@ -2657,8 +2638,8 @@ static void test_create_element(void)
 
     SET_EXPECT(DoVerb);
     test_exec_script(doc,
-                     "document.body.appendChild(test_elem);",
-                     "javascript");
+                     L"document.body.appendChild(test_elem);",
+                     L"javascript");
     todo_wine CHECK_CALLED(DoVerb);
 
     SET_EXPECT(InPlaceDeactivate);

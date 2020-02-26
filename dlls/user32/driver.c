@@ -41,7 +41,7 @@ static char driver_load_error[80];
 
 static BOOL CDECL nodrv_CreateWindow( HWND hwnd );
 
-static HMODULE load_desktop_driver( HWND hwnd )
+static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
 {
     static const WCHAR display_device_guid_propW[] = {
         '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
@@ -53,7 +53,8 @@ static HMODULE load_desktop_driver( HWND hwnd )
         'V','i','d','e','o','\\','{',0};
     static const WCHAR displayW[] = {'}','\\','0','0','0','0',0};
     static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
-    HMODULE ret = 0;
+    static const WCHAR nullW[] = {'n','u','l','l',0};
+    BOOL ret = FALSE;
     HKEY hkey;
     DWORD size;
     WCHAR path[MAX_PATH];
@@ -76,8 +77,10 @@ static HMODULE load_desktop_driver( HWND hwnd )
     size = sizeof(path);
     if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size ))
     {
-        if (!(ret = LoadLibraryW( path ))) ERR( "failed to load %s\n", debugstr_w(path) );
-        TRACE( "%s %p\n", debugstr_w(path), ret );
+        if ((ret = !strcmpW( path, nullW ))) *module = NULL;
+        else ret = (*module = LoadLibraryW( path )) != NULL;
+        if (!ret) ERR( "failed to load %s\n", debugstr_w(path) );
+        TRACE( "%s %p\n", debugstr_w(path), *module );
     }
     else
     {
@@ -98,15 +101,23 @@ static const USER_DRIVER *load_driver(void)
     driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
     *driver = null_driver;
 
-    graphics_driver = load_desktop_driver( GetDesktopWindow() );
-    if (graphics_driver)
+    if (!load_desktop_driver( GetDesktopWindow(), &graphics_driver ))
+    {
+        USEROBJECTFLAGS flags;
+        HWINSTA winstation;
+
+        winstation = GetProcessWindowStation();
+        if (!GetUserObjectInformationA(winstation, UOI_FLAGS, &flags, sizeof(flags), NULL)
+            || (flags.dwFlags & WSF_VISIBLE))
+            driver->pCreateWindow = nodrv_CreateWindow;
+    }
+    else if (graphics_driver)
     {
 #define GET_USER_FUNC(name) \
     do { if ((ptr = GetProcAddress( graphics_driver, #name ))) driver->p##name = ptr; } while(0)
 
         GET_USER_FUNC(ActivateKeyboardLayout);
         GET_USER_FUNC(Beep);
-        GET_USER_FUNC(GetAsyncKeyState);
         GET_USER_FUNC(GetKeyNameText);
         GET_USER_FUNC(GetKeyboardLayout);
         GET_USER_FUNC(GetKeyboardLayoutList);
@@ -154,16 +165,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(ThreadDetach);
 #undef GET_USER_FUNC
     }
-    else
-    {
-        USEROBJECTFLAGS flags;
-        HWINSTA winstation;
-
-        winstation = GetProcessWindowStation();
-        if (!GetUserObjectInformationA(winstation, UOI_FLAGS, &flags, sizeof(flags), NULL)
-            || (flags.dwFlags & WSF_VISIBLE))
-            driver->pCreateWindow = nodrv_CreateWindow;
-    }
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );
     if (prev != &lazy_load_driver)
@@ -197,8 +198,6 @@ void USER_unload_driver(void)
  * These are fallbacks for entry points that are not implemented in the real driver.
  */
 
-#define NULLDRV_DEFAULT_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
-
 static HKL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 {
     return 0;
@@ -206,11 +205,6 @@ static HKL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 
 static void CDECL nulldrv_Beep(void)
 {
-}
-
-static SHORT CDECL nulldrv_GetAsyncKeyState( INT key )
-{
-    return -1;
 }
 
 static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
@@ -354,40 +348,9 @@ static LONG CDECL nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode
     return DISP_CHANGE_FAILED;
 }
 
-static BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    RECT r = {0, 0, 640, 480};
-
-    TRACE("(%p, %p, %p, 0x%lx)\n", hdc, rect, proc, lp);
-
-    proc(NULLDRV_DEFAULT_HMONITOR, hdc, &r, lp);
-    return TRUE;
-}
-
 static BOOL CDECL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
 {
     return FALSE;
-}
-
-static BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
-{
-    RECT r = {0, 0, 640, 480};
-    static const WCHAR device[] = {'W','i','n','D','i','s','c',0};
-
-    TRACE("(%p, %p)\n", handle, info);
-
-    if (handle != NULLDRV_DEFAULT_HMONITOR)
-    {
-        SetLastError(ERROR_INVALID_MONITOR_HANDLE);
-        return FALSE;
-    }
-
-    info->rcMonitor = r;
-    info->rcWork = r;
-    info->dwFlags = MONITORINFOF_PRIMARY;
-    if (info->cbSize >= sizeof(MONITORINFOEXW))
-        lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, device );
-    return TRUE;
 }
 
 static BOOL CDECL nulldrv_CreateDesktopWindow( HWND hwnd )
@@ -527,7 +490,6 @@ static USER_DRIVER null_driver =
     /* keyboard functions */
     nulldrv_ActivateKeyboardLayout,
     nulldrv_Beep,
-    nulldrv_GetAsyncKeyState,
     nulldrv_GetKeyNameText,
     nulldrv_GetKeyboardLayout,
     nulldrv_GetKeyboardLayoutList,
@@ -597,11 +559,6 @@ static HKL CDECL loaderdrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 static void CDECL loaderdrv_Beep(void)
 {
     load_driver()->pBeep();
-}
-
-static SHORT CDECL loaderdrv_GetAsyncKeyState( INT key )
-{
-    return load_driver()->pGetAsyncKeyState( key );
 }
 
 static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
@@ -748,7 +705,6 @@ static USER_DRIVER lazy_load_driver =
     /* keyboard functions */
     loaderdrv_ActivateKeyboardLayout,
     loaderdrv_Beep,
-    loaderdrv_GetAsyncKeyState,
     loaderdrv_GetKeyNameText,
     loaderdrv_GetKeyboardLayout,
     loaderdrv_GetKeyboardLayoutList,

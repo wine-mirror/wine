@@ -44,7 +44,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "mmsystem.h"
-#include "winternl.h"
 #include "mmddk.h"
 #include "wine/debug.h"
 #include "dsound.h"

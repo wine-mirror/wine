@@ -1641,73 +1641,6 @@ range:
 }
 
 /*********************************************************************
- *		_searchenv (MSVCRT.@)
- *
- * Search for a file in a list of paths from an environment variable.
- *
- * PARAMS
- *  file   [I] Name of the file to search for.
- *  env    [I] Name of the environment variable containing a list of paths.
- *  buf    [O] Destination for the found file path.
- *
- * RETURNS
- *  Nothing. If the file is not found, buf will contain an empty string
- *  and errno is set.
- */
-void CDECL MSVCRT__searchenv(const char* file, const char* env, char *buf)
-{
-  char*envVal, *penv, *end;
-  char path[MAX_PATH];
-  MSVCRT_size_t path_len, fname_len = strlen(file);
-
-  *buf = '\0';
-
-  /* Try CWD first */
-  if (GetFileAttributesA( file ) != INVALID_FILE_ATTRIBUTES)
-  {
-    GetFullPathNameA( file, MAX_PATH, buf, NULL );
-    return;
-  }
-
-  /* Search given environment variable */
-  envVal = MSVCRT_getenv(env);
-  if (!envVal)
-  {
-    msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
-    return;
-  }
-
-  penv = envVal;
-  TRACE(":searching for %s in paths %s\n", file, envVal);
-
-  for(; *penv; penv = (*end ? end + 1 : end))
-  {
-    end = penv;
-    while(*end && *end != ';') end++; /* Find end of next path */
-    path_len = end - penv;
-    if (!path_len || path_len >= MAX_PATH)
-      continue;
-
-    memcpy(path, penv, path_len);
-    if (path[path_len - 1] != '/' && path[path_len - 1] != '\\')
-      path[path_len++] = '\\';
-    if (path_len + fname_len >= MAX_PATH)
-      continue;
-
-    memcpy(path + path_len, file, fname_len + 1);
-    TRACE("Checking for file %s\n", path);
-    if (GetFileAttributesA( path ) != INVALID_FILE_ATTRIBUTES)
-    {
-      memcpy(buf, path, path_len + fname_len + 1);
-      return;
-    }
-  }
-
-  msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
-  return;
-}
-
-/*********************************************************************
  *		_searchenv_s (MSVCRT.@)
  */
 int CDECL MSVCRT__searchenv_s(const char* file, const char* env, char *buf, MSVCRT_size_t count)
@@ -1748,12 +1681,27 @@ int CDECL MSVCRT__searchenv_s(const char* file, const char* env, char *buf, MSVC
   for(; *penv; penv = (*end ? end + 1 : end))
   {
     end = penv;
-    while(*end && *end != ';') end++; /* Find end of next path */
-    path_len = end - penv;
+    path_len = 0;
+    while(*end && *end != ';' && path_len < MAX_PATH)
+    {
+        if (*end == '"')
+        {
+            end++;
+            while(*end && *end != '"' && path_len < MAX_PATH)
+            {
+                path[path_len++] = *end;
+                end++;
+            }
+            if (*end == '"') end++;
+            continue;
+        }
+
+        path[path_len++] = *end;
+        end++;
+    }
     if (!path_len || path_len >= MAX_PATH)
       continue;
 
-    memcpy(path, penv, path_len);
     if (path[path_len - 1] != '/' && path[path_len - 1] != '\\')
       path[path_len++] = '\\';
     if (path_len + fname_len >= MAX_PATH)
@@ -1778,61 +1726,11 @@ int CDECL MSVCRT__searchenv_s(const char* file, const char* env, char *buf, MSVC
 }
 
 /*********************************************************************
- *      _wsearchenv (MSVCRT.@)
- *
- * Unicode version of _searchenv
+ *		_searchenv (MSVCRT.@)
  */
-void CDECL MSVCRT__wsearchenv(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* env, MSVCRT_wchar_t *buf)
+void CDECL MSVCRT__searchenv(const char* file, const char* env, char *buf)
 {
-  MSVCRT_wchar_t *envVal, *penv, *end;
-  MSVCRT_wchar_t path[MAX_PATH];
-  MSVCRT_size_t path_len, fname_len = strlenW(file);
-
-  *buf = '\0';
-
-  /* Try CWD first */
-  if (GetFileAttributesW( file ) != INVALID_FILE_ATTRIBUTES)
-  {
-    GetFullPathNameW( file, MAX_PATH, buf, NULL );
-    return;
-  }
-
-  /* Search given environment variable */
-  envVal = MSVCRT__wgetenv(env);
-  if (!envVal)
-  {
-    msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
-    return;
-  }
-
-  penv = envVal;
-  TRACE(":searching for %s in paths %s\n", debugstr_w(file), debugstr_w(envVal));
-
-  for(; *penv; penv = (*end ? end + 1 : end))
-  {
-    end = penv;
-    while(*end && *end != ';') end++; /* Find end of next path */
-    path_len = end - penv;
-    if (!path_len || path_len >= MAX_PATH)
-      continue;
-
-    memcpy(path, penv, path_len * sizeof(MSVCRT_wchar_t));
-    if (path[path_len - 1] != '/' && path[path_len - 1] != '\\')
-      path[path_len++] = '\\';
-    if (path_len + fname_len >= MAX_PATH)
-      continue;
-
-    memcpy(path + path_len, file, (fname_len + 1) * sizeof(MSVCRT_wchar_t));
-    TRACE("Checking for file %s\n", debugstr_w(path));
-    if (GetFileAttributesW( path ) != INVALID_FILE_ATTRIBUTES)
-    {
-      memcpy(buf, path, (path_len + fname_len + 1) * sizeof(MSVCRT_wchar_t));
-      return;
-    }
-  }
-
-  msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
-  return;
+    MSVCRT__searchenv_s(file, env, buf, MAX_PATH);
 }
 
 /*********************************************************************
@@ -1877,12 +1775,27 @@ int CDECL MSVCRT__wsearchenv_s(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t*
   for(; *penv; penv = (*end ? end + 1 : end))
   {
     end = penv;
-    while(*end && *end != ';') end++; /* Find end of next path */
-    path_len = end - penv;
+    path_len = 0;
+    while(*end && *end != ';' && path_len < MAX_PATH)
+    {
+        if (*end == '"')
+        {
+            end++;
+            while(*end && *end != '"' && path_len < MAX_PATH)
+            {
+                path[path_len++] = *end;
+                end++;
+            }
+            if (*end == '"') end++;
+            continue;
+        }
+
+        path[path_len++] = *end;
+        end++;
+    }
     if (!path_len || path_len >= MAX_PATH)
       continue;
 
-    memcpy(path, penv, path_len * sizeof(MSVCRT_wchar_t));
     if (path[path_len - 1] != '/' && path[path_len - 1] != '\\')
       path[path_len++] = '\\';
     if (path_len + fname_len >= MAX_PATH)
@@ -1904,4 +1817,12 @@ int CDECL MSVCRT__wsearchenv_s(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t*
 
   *MSVCRT__errno() = MSVCRT_ENOENT;
   return MSVCRT_ENOENT;
+}
+
+/*********************************************************************
+ *      _wsearchenv (MSVCRT.@)
+ */
+void CDECL MSVCRT__wsearchenv(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* env, MSVCRT_wchar_t *buf)
+{
+    MSVCRT__wsearchenv_s(file, env, buf, MAX_PATH);
 }

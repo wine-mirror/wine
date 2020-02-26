@@ -1,4 +1,4 @@
-@ stdcall QISearch(long long long long) shlwapi.QISearch
+@ stdcall QISearch(ptr ptr ptr ptr) shlwapi.QISearch
 @ stdcall StrCatBuffA(str str long) shlwapi.StrCatBuffA
 @ stdcall StrCatBuffW(wstr wstr long) shlwapi.StrCatBuffW
 @ stdcall StrCatChainW(ptr long long wstr) shlwapi.StrCatChainW

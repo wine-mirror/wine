@@ -42,6 +42,9 @@
 #define D3D8_MAX_VERTEX_SHADER_CONSTANTF 256
 #define D3D8_MAX_STREAMS 16
 
+#define D3DFMT_RESZ MAKEFOURCC('R','E','S','Z')
+#define D3D8_RESZ_CODE 0x7fa05000
+
 /* CreateVertexShader can return > 0xFFFF */
 #define VS_HIGHESTFIXEDFXF 0xF0000000
 
@@ -126,12 +129,15 @@ struct d3d8_device
     DWORD sysmem_vb : 16; /* D3D8_MAX_STREAMS */
     DWORD sysmem_ib : 1;
     DWORD in_destruction : 1;
-    DWORD recording : 1;
-    DWORD padding : 13;
+    DWORD padding : 14;
+
+    unsigned int max_user_clip_planes, vs_uniform_count;
 
     /* The d3d8 API supports only one implicit swapchain (no D3DCREATE_ADAPTERGROUP_DEVICE,
      * no GetSwapchain, GetBackBuffer doesn't accept a swapchain number). */
     struct wined3d_swapchain *implicit_swapchain;
+
+    struct wined3d_stateblock *recording, *state, *update_state;
 };
 
 HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wined3d *wined3d, UINT adapter,

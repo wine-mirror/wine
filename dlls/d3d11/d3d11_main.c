@@ -20,9 +20,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define D3D11_INIT_GUID
 #include "d3d11_private.h"
 

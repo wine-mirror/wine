@@ -249,6 +249,9 @@ FONT 8, "MS Shell Dlg"
 /* @makedep: test_mono.bmp */
 100 BITMAP test_mono.bmp
 
+/* @makedep: bmp1x1_32bpp.bmp */
+101 BITMAP bmp1x1_32bpp.bmp
+
 1 MENU
 {
     POPUP "&File"

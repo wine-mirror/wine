@@ -26,11 +26,6 @@ typedef struct {
     const char* name;
 } flag_info;
 
-typedef struct {
-    const GUID *guid;
-    const char* name;
-} guid_info;
-
 /* used for initialising structs */
 #define DM_STRUCT_INIT(x) 				\
 	do {								\
@@ -39,25 +34,12 @@ typedef struct {
 	} while (0)
 
 #define FE(x) { x, #x }	
-#define GE(x) { &x, #x }
 
 /* check whether chunkID is valid dmobject form chunk */
 extern BOOL IS_VALID_DMFORM (FOURCC chunkID) DECLSPEC_HIDDEN;
 /* translate STREAM_SEEK flag to string */
 extern const char *resolve_STREAM_SEEK (DWORD flag) DECLSPEC_HIDDEN;
-/* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
-/* DMUS_VERSION struct to string conversion for debug messages */
-extern const char *debugstr_dmversion (const DMUS_VERSION *version) DECLSPEC_HIDDEN;
-/* FILETIME struct to string conversion for debug messages */
-extern const char *debugstr_filetime (const FILETIME *time) DECLSPEC_HIDDEN;
-/* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
-/* returns name of given error code */
-extern const char *debugstr_dmreturn (DWORD code) DECLSPEC_HIDDEN;
 
-/* dump whole DMUS_OBJECTDESC struct */
-extern void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *desc) DECLSPEC_HIDDEN;
 extern const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader) DECLSPEC_HIDDEN;
 extern const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader) DECLSPEC_HIDDEN;
 

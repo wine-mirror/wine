@@ -1,0 +1,185 @@
+/*
+ * Copyright 2019 Alistair Leslie-Hughes
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+import "shtypes.idl";
+import "shobjidl.idl";
+
+typedef [v1_enum] enum WTS_FLAGS
+{
+    WTS_NONE                 = 0x00000000,
+    WTS_EXTRACT              = 0x00000000,
+    WTS_INCACHEONLY          = 0x00000001,
+    WTS_FASTEXTRACT          = 0x00000002,
+    WTS_FORCEEXTRACTION      = 0x00000004,
+    WTS_SLOWRECLAIM          = 0x00000008,
+    WTS_EXTRACTDONOTCACHE    = 0x00000020,
+    WTS_SCALETOREQUESTEDSIZE = 0x00000040,
+    WTS_SKIPFASTEXTRACT      = 0x00000080,
+    WTS_EXTRACTINPROC        = 0x00000100,
+    WTS_CROPTOSQUARE         = 0x00000200,
+    WTS_INSTANCESURROGATE    = 0x00000400,
+    WTS_REQUIRESURROGATE     = 0x00000800,
+    WTS_APPSTYLE             = 0x00002000,
+    WTS_WIDETHUMBNAILS       = 0x00004000,
+    WTS_IDEALCACHESIZEONLY   = 0x00008000,
+    WTS_SCALEUP              = 0x00010000,
+} WTS_FLAGS;
+
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(WTS_FLAGS)")
+
+typedef [v1_enum] enum WTS_CACHEFLAGS
+{
+    WTS_DEFAULT     = 0x00000000,
+    WTS_LOWQUALITY  = 0x00000001,
+    WTS_CACHED      = 0x00000002,
+} WTS_CACHEFLAGS;
+
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(WTS_CACHEFLAGS)")
+
+typedef [v1_enum] enum WTS_CONTEXTFLAGS
+{
+    WTSCF_DEFAULT       = 0x00000000,
+    WTSCF_APPSTYLE      = 0x00000001,
+    WTSCF_SQUARE        = 0x00000002,
+    WTSCF_WIDE          = 0x00000004,
+    WTSCF_FAST          = 0x00000008,
+} WTS_CONTEXTFLAGS;
+
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(WTS_CONTEXTFLAGS)")
+
+typedef [v1_enum] enum WTS_ALPHATYPE
+{
+    WTSAT_UNKNOWN = 0,
+    WTSAT_RGB     = 1,
+    WTSAT_ARGB    = 2
+} WTS_ALPHATYPE;
+
+typedef struct WTS_THUMBNAILID
+{
+    BYTE rgbKey[16];
+} WTS_THUMBNAILID;
+
+
+cpp_quote("#define WTS_E_FAILEDEXTRACTION MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0xb200)")
+cpp_quote("#define WTS_E_EXTRACTIONTIMEDOUT MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0xb201)")
+cpp_quote("#define WTS_E_SURROGATEUNAVAILABLE MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0xb202)")
+cpp_quote("#define WTS_E_FASTEXTRACTIONNOTSUPPORTED MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0xb203)")
+cpp_quote("#define WTS_E_DATAFILEUNAVAILABLE MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0xb204)")
+cpp_quote("#define WTS_E_EXTRACTIONPENDING MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0xb205)")
+cpp_quote("#define WTS_E_EXTRACTIONBLOCKED MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0xb206)")
+
+[
+    uuid(091162a4-bc96-411f-aae8-c5122cd03363),
+    pointer_default(unique),
+]
+interface ISharedBitmap : IUnknown
+{
+    HRESULT GetSharedBitmap([out] HBITMAP *phbm);
+    HRESULT GetSize([out] SIZE *pSize);
+    HRESULT GetFormat([out] WTS_ALPHATYPE *pat);
+    HRESULT InitializeBitmap([in] HBITMAP hbm, [in] WTS_ALPHATYPE wtsAT);
+    HRESULT Detach([out] HBITMAP *phbm);
+}
+
+[
+    object,
+    uuid(f676c15d-596a-4ce2-8234-33996f445db1),
+]
+interface IThumbnailCache : IUnknown
+{
+    [local]
+    HRESULT GetThumbnail([in] IShellItem *pShellItem,
+                         [in] UINT cxyRequestedThumbSize,
+                         [in] WTS_FLAGS flags,
+                         [out, unique] ISharedBitmap **ppvThumb,
+                         [out, unique] WTS_CACHEFLAGS *pOutFlags,
+                         [out, unique] WTS_THUMBNAILID *pThumbnailID);
+
+    [call_as(GetThumbnail)]
+    HRESULT RemoteGetThumbnail([in] IShellItem *pShellItem,
+                               [in] UINT cxyRequestedThumbSize,
+                               [in] WTS_FLAGS flags,
+                               [out] ISharedBitmap **ppvThumb,
+                               [out] WTS_CACHEFLAGS *pOutFlags,
+                               [out] WTS_THUMBNAILID *pThumbnailID);
+
+    [local]
+    HRESULT GetThumbnailByID([in] WTS_THUMBNAILID thumbnailID,
+                             [in] UINT cxyRequestedThumbSize,
+                             [out, unique] ISharedBitmap **ppvThumb,
+                             [out, unique] WTS_CACHEFLAGS *pOutFlags);
+
+    [call_as(GetThumbnailByID)]
+    HRESULT RemoteGetThumbnailByID([in] WTS_THUMBNAILID thumbnailID,
+                                   [in] UINT cxyRequestedThumbSize,
+                                   [out] ISharedBitmap **ppvThumb,
+                                   [out] WTS_CACHEFLAGS *pOutFlags);
+}
+
+[
+    uuid(e357fccd-a995-4576-b01f-234630154e96),
+]
+interface IThumbnailProvider : IUnknown
+{
+    HRESULT GetThumbnail([in] UINT cx,
+                         [out] HBITMAP *phbmp,
+                         [out] WTS_ALPHATYPE *pdwAlpha);
+}
+
+[
+    uuid(f4376f00-bef5-4d45-80f3-1e023bbf1209),
+]
+interface IThumbnailSettings : IUnknown
+{
+    HRESULT SetContext([in] WTS_CONTEXTFLAGS dwContext);
+}
+
+[
+    uuid(0f03f8fe-2b26-46f0-965a-212aa8d66b76),
+    object,
+    pointer_default(unique)
+]
+interface IThumbnailCachePrimer : IUnknown
+{
+    HRESULT PageInThumbnail([in] IShellItem *psi,
+                            [in] WTS_FLAGS wtsFlags,
+                            [in] UINT cxyRequestedThumbSize);
+}
+
+[
+    uuid(4c857096-0514-4d4d-abd5-dfaaa3c326d2)
+]
+library ThumbCacheLib
+{
+    [
+        uuid(50ef4544-ac9f-4a8e-b21b-8a26180db13f)
+    ]
+    coclass LocalThumbnailCache
+    {
+        interface IThumbnailCache;
+    }
+
+    [
+        uuid(4db26476-6787-4046-b836-e8412a9e8a27)
+    ]
+    coclass SharedBitmap
+    {
+        interface ISharedBitmap;
+    }
+}

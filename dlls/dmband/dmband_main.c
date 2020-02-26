@@ -19,6 +19,7 @@
 
 #include "dmband_private.h"
 #include "rpcproxy.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 
@@ -145,16 +146,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("(%s, %s, %p)\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
 
-	if (IsEqualCLSID (rclsid, &CLSID_DirectMusicBand) && IsEqualIID (riid, &IID_IClassFactory)) {
-                *ppv = &Band_CF;
-		IClassFactory_AddRef((IClassFactory*)*ppv);
-		return S_OK;
-	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicBandTrack) && IsEqualIID (riid, &IID_IClassFactory)) {
-                *ppv = &BandTrack_CF;
-		IClassFactory_AddRef((IClassFactory*)*ppv);
-		return S_OK;	
-	}
-	
+    if (IsEqualCLSID(rclsid, &CLSID_DirectMusicBand))
+        return IClassFactory_QueryInterface(&Band_CF.IClassFactory_iface, riid, ppv);
+    else if (IsEqualCLSID(rclsid, &CLSID_DirectMusicBandTrack))
+        return IClassFactory_QueryInterface(&BandTrack_CF.IClassFactory_iface, riid, ppv);
+
     WARN("(%s, %s, %p): no interface found.\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }

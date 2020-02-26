@@ -2,5 +2,4 @@ TESTDLL   = propsys.dll
 IMPORTS   = propsys ole32 oleaut32
 
 C_SRCS = \
-	propstore.c \
 	propsys.c

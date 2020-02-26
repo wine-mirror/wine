@@ -2,5 +2,7 @@ MODULE    = windowscodecsext.dll
 IMPORTLIB = windowscodecsext
 IMPORTS   = ole32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c

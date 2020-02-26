@@ -47,9 +47,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -68,7 +65,6 @@
 #include "winternl.h"
 #include "lzexpand.h"
 
-#include "wine/unicode.h"
 #include "objbase.h"
 #include "typelib.h"
 #include "wine/debug.h"
@@ -183,7 +179,7 @@ static BOOL find_typelib_key( REFGUID guid, WORD *wMaj, WORD *wMin )
     HKEY hkey;
 
     memcpy( buffer, typelibW, sizeof(typelibW) );
-    StringFromGUID2( guid, buffer + strlenW(buffer), 40 );
+    StringFromGUID2( guid, buffer + lstrlenW(buffer), 40 );
 
     if (RegOpenKeyExW( HKEY_CLASSES_ROOT, buffer, 0, KEY_READ, &hkey ) != ERROR_SUCCESS)
         return FALSE;
@@ -247,8 +243,8 @@ static WCHAR *get_typelib_key( REFGUID guid, WORD wMaj, WORD wMin, WCHAR *buffer
     static const WCHAR VersionFormatW[] = {'\\','%','x','.','%','x',0};
 
     memcpy( buffer, TypelibW, sizeof(TypelibW) );
-    StringFromGUID2( guid, buffer + strlenW(buffer), 40 );
-    sprintfW( buffer + strlenW(buffer), VersionFormatW, wMaj, wMin );
+    StringFromGUID2( guid, buffer + lstrlenW(buffer), 40 );
+    swprintf( buffer + lstrlenW(buffer), 20, VersionFormatW, wMaj, wMin );
     return buffer;
 }
 
@@ -259,7 +255,7 @@ static WCHAR *get_interface_key( REFGUID guid, WCHAR *buffer )
     static const WCHAR InterfaceW[] = {'I','n','t','e','r','f','a','c','e','\\',0};
 
     memcpy( buffer, InterfaceW, sizeof(InterfaceW) );
-    StringFromGUID2( guid, buffer + strlenW(buffer), 40 );
+    StringFromGUID2( guid, buffer + lstrlenW(buffer), 40 );
     return buffer;
 }
 
@@ -272,12 +268,12 @@ static WCHAR *get_lcid_subkey( LCID lcid, SYSKIND syskind, WCHAR *buffer )
     static const WCHAR win32W[] = {'w','i','n','3','2',0};
     static const WCHAR win64W[] = {'w','i','n','6','4',0};
 
-    sprintfW( buffer, LcidFormatW, lcid );
+    swprintf( buffer, 16, LcidFormatW, lcid );
     switch(syskind)
     {
-    case SYS_WIN16: strcatW( buffer, win16W ); break;
-    case SYS_WIN32: strcatW( buffer, win32W ); break;
-    case SYS_WIN64: strcatW( buffer, win64W ); break;
+    case SYS_WIN16: lstrcatW( buffer, win16W ); break;
+    case SYS_WIN32: lstrcatW( buffer, win32W ); break;
+    case SYS_WIN64: lstrcatW( buffer, win64W ); break;
     default:
         TRACE("Typelib is for unsupported syskind %i\n", syskind);
         return NULL;
@@ -599,7 +595,7 @@ static void TLB_register_interface(TLIBATTR *libattr, LPOLESTR name, TYPEATTR *t
 
         if (name)
             RegSetValueExW(key, NULL, 0, REG_SZ,
-                           (BYTE *)name, (strlenW(name)+1) * sizeof(OLECHAR));
+                           (BYTE *)name, (lstrlenW(name)+1) * sizeof(OLECHAR));
 
         if (RegCreateKeyExW(key, ProxyStubClsidW, 0, NULL, 0,
             KEY_WRITE | flag, NULL, &subKey, NULL) == ERROR_SUCCESS) {
@@ -624,10 +620,10 @@ static void TLB_register_interface(TLIBATTR *libattr, LPOLESTR name, TYPEATTR *t
 
             StringFromGUID2(&libattr->guid, buffer, 40);
             RegSetValueExW(subKey, NULL, 0, REG_SZ,
-                           (BYTE *)buffer, (strlenW(buffer)+1) * sizeof(WCHAR));
-            sprintfW(buffer, fmtver, libattr->wMajorVerNum, libattr->wMinorVerNum);
+                           (BYTE *)buffer, (lstrlenW(buffer)+1) * sizeof(WCHAR));
+            swprintf(buffer, ARRAY_SIZE(buffer), fmtver, libattr->wMajorVerNum, libattr->wMinorVerNum);
             RegSetValueExW(subKey, VersionW, 0, REG_SZ,
-                           (BYTE*)buffer, (strlenW(buffer)+1) * sizeof(WCHAR));
+                           (BYTE*)buffer, (lstrlenW(buffer)+1) * sizeof(WCHAR));
             RegCloseKey(subKey);
         }
 
@@ -647,11 +643,7 @@ static void TLB_register_interface(TLIBATTR *libattr, LPOLESTR name, TYPEATTR *t
  *    Success: S_OK
  *    Failure: Status
  */
-HRESULT WINAPI RegisterTypeLib(
-     ITypeLib * ptlib,     /* [in] Pointer to the library*/
-     OLECHAR * szFullPath, /* [in] full Path of the library*/
-     OLECHAR * szHelpDir)  /* [in] dir to the helpfile for the library,
-							 may be NULL*/
+HRESULT WINAPI RegisterTypeLib(ITypeLib *ptlib, const WCHAR *szFullPath, const WCHAR *szHelpDir)
 {
     HRESULT res;
     TLIBATTR *attr;
@@ -715,9 +707,9 @@ HRESULT WINAPI RegisterTypeLib(
             /* FIXME: is %u correct? */
             static const WCHAR formatW[] = {'%','u',0};
             WCHAR buf[20];
-            sprintfW(buf, formatW, attr->wLibFlags);
+            swprintf(buf, ARRAY_SIZE(buf), formatW, attr->wLibFlags);
             if (RegSetValueExW(subKey, NULL, 0, REG_SZ,
-                               (BYTE *)buf, (strlenW(buf) + 1)*sizeof(WCHAR) ) != ERROR_SUCCESS)
+                               (BYTE *)buf, (lstrlenW(buf) + 1)*sizeof(WCHAR) ) != ERROR_SUCCESS)
                 res = E_FAIL;
 
             RegCloseKey(subKey);
@@ -729,19 +721,27 @@ HRESULT WINAPI RegisterTypeLib(
         if (res == S_OK && RegCreateKeyExW(key, HELPDIRW, 0, NULL, 0,
             KEY_WRITE, NULL, &subKey, &disposition) == ERROR_SUCCESS)
         {
-            BOOL freeHelpDir = FALSE;
-            OLECHAR* pIndexStr;
+            BSTR freeHelpDir = NULL;
+            WCHAR *file_name;
 
             /* if we created a new key, and helpDir was null, set the helpdir
                to the directory which contains the typelib. However,
                if we just opened an existing key, we leave the helpdir alone */
             if ((disposition == REG_CREATED_NEW_KEY) && (szHelpDir == NULL)) {
-                szHelpDir = SysAllocString(szFullPath);
-                pIndexStr = strrchrW(szHelpDir, '\\');
-                if (pIndexStr) {
-                    *pIndexStr = 0;
+                szHelpDir = freeHelpDir = SysAllocString(szFullPath);
+                file_name = wcsrchr(szHelpDir, '\\');
+                if (file_name && file_name[0]) {
+                    /* possible remove a numeric \index (resource-id) */
+                    WCHAR *end_ptr = file_name + 1;
+                    while ('0' <= *end_ptr && *end_ptr <= '9') end_ptr++;
+                    if (!*end_ptr)
+                    {
+                        *file_name = 0;
+                        file_name = wcsrchr(szHelpDir, '\\');
+                    }
                 }
-                freeHelpDir = TRUE;
+                if (file_name)
+                    *file_name = 0;
             }
 
             /* if we have an szHelpDir, set it! */
@@ -752,10 +752,8 @@ HRESULT WINAPI RegisterTypeLib(
                 }
             }
 
-            /* tidy up */
-            if (freeHelpDir) SysFreeString(szHelpDir);
+            SysFreeString(freeHelpDir);
             RegCloseKey(subKey);
-
         } else {
             res = E_FAIL;
         }
@@ -975,7 +973,7 @@ enddeleteloop:
     /* Now, delete the type library path subkey */
     get_lcid_subkey( lcid, syskind, subKeyName );
     RegDeleteKeyW(key, subKeyName);
-    *strrchrW( subKeyName, '\\' ) = 0;  /* remove last path component */
+    *wcsrchr( subKeyName, '\\' ) = 0;  /* remove last path component */
     RegDeleteKeyW(key, subKeyName);
 
     /* check if there is anything besides the FLAGS/HELPDIR keys.
@@ -987,8 +985,8 @@ enddeleteloop:
         tmpLength = ARRAY_SIZE(subKeyName);
 
         /* if its not FLAGS or HELPDIR, then we must keep the rest of the key */
-        if (!strcmpW(subKeyName, FLAGSW)) continue;
-        if (!strcmpW(subKeyName, HELPDIRW)) continue;
+        if (!wcscmp(subKeyName, FLAGSW)) continue;
+        if (!wcscmp(subKeyName, HELPDIRW)) continue;
         deleteOtherStuff = FALSE;
         break;
     }
@@ -1001,7 +999,7 @@ enddeleteloop:
         key = NULL;
 
         RegDeleteKeyW(HKEY_CLASSES_ROOT, keyName);
-        *strrchrW( keyName, '\\' ) = 0;  /* remove last path component */
+        *wcsrchr( keyName, '\\' ) = 0;  /* remove last path component */
         RegDeleteKeyW(HKEY_CLASSES_ROOT, keyName);
     }
 
@@ -1690,43 +1688,46 @@ static BSTR TLB_MultiByteToBSTR(const char *ptr)
     return ret;
 }
 
-static inline TLBFuncDesc *TLB_get_funcdesc_by_memberid(TLBFuncDesc *funcdescs,
-        UINT n, MEMBERID memid)
+static inline TLBFuncDesc *TLB_get_funcdesc_by_memberid(ITypeInfoImpl *typeinfo, MEMBERID memid)
 {
-    while(n){
-        if(funcdescs->funcdesc.memid == memid)
-            return funcdescs;
-        ++funcdescs;
-        --n;
+    int i;
+
+    for (i = 0; i < typeinfo->typeattr.cFuncs; ++i)
+    {
+        if (typeinfo->funcdescs[i].funcdesc.memid == memid)
+            return &typeinfo->funcdescs[i];
     }
+
     return NULL;
 }
 
-static inline TLBVarDesc *TLB_get_vardesc_by_memberid(TLBVarDesc *vardescs,
-        UINT n, MEMBERID memid)
+static inline TLBVarDesc *TLB_get_vardesc_by_memberid(ITypeInfoImpl *typeinfo, MEMBERID memid)
 {
-    while(n){
-        if(vardescs->vardesc.memid == memid)
-            return vardescs;
-        ++vardescs;
-        --n;
+    int i;
+
+    for (i = 0; i < typeinfo->typeattr.cVars; ++i)
+    {
+        if (typeinfo->vardescs[i].vardesc.memid == memid)
+            return &typeinfo->vardescs[i];
     }
+
     return NULL;
 }
 
-static inline TLBVarDesc *TLB_get_vardesc_by_name(TLBVarDesc *vardescs,
-        UINT n, const OLECHAR *name)
+static inline TLBVarDesc *TLB_get_vardesc_by_name(ITypeInfoImpl *typeinfo, const OLECHAR *name)
 {
-    while(n){
-        if(!lstrcmpiW(TLB_get_bstr(vardescs->Name), name))
-            return vardescs;
-        ++vardescs;
-        --n;
+    int i;
+
+    for (i = 0; i < typeinfo->typeattr.cVars; ++i)
+    {
+        if (!lstrcmpiW(TLB_get_bstr(typeinfo->vardescs[i].Name), name))
+            return &typeinfo->vardescs[i];
     }
+
     return NULL;
 }
 
-static inline TLBCustData *TLB_get_custdata_by_guid(struct list *custdata_list, REFGUID guid)
+static inline TLBCustData *TLB_get_custdata_by_guid(const struct list *custdata_list, REFGUID guid)
 {
     TLBCustData *cust_data;
     LIST_FOR_EACH_ENTRY(cust_data, custdata_list, TLBCustData, entry)
@@ -1735,15 +1736,16 @@ static inline TLBCustData *TLB_get_custdata_by_guid(struct list *custdata_list, 
     return NULL;
 }
 
-static inline ITypeInfoImpl *TLB_get_typeinfo_by_name(ITypeInfoImpl **typeinfos,
-        UINT n, const OLECHAR *name)
+static inline ITypeInfoImpl *TLB_get_typeinfo_by_name(ITypeLibImpl *typelib, const OLECHAR *name)
 {
-    while(n){
-        if(!lstrcmpiW(TLB_get_bstr((*typeinfos)->Name), name))
-            return *typeinfos;
-        ++typeinfos;
-        --n;
+    int i;
+
+    for (i = 0; i < typelib->TypeInfoCount; ++i)
+    {
+        if (!lstrcmpiW(TLB_get_bstr(typelib->typeinfos[i]->Name), name))
+            return typelib->typeinfos[i];
     }
+
     return NULL;
 }
 
@@ -1882,6 +1884,18 @@ static HRESULT TLB_set_custdata(struct list *custdata_list, TLBGuid *tlbguid, VA
     return VariantCopy(&cust_data->data, var);
 }
 
+/* Used to update list pointers after list itself was moved. */
+static void TLB_relink_custdata(struct list *custdata_list)
+{
+    if (custdata_list->prev == custdata_list->next)
+        list_init(custdata_list);
+    else
+    {
+        custdata_list->prev->next = custdata_list;
+        custdata_list->next->prev = custdata_list;
+    }
+}
+
 static TLBString *TLB_append_str(struct list *string_list, BSTR new_str)
 {
     TLBString *str;
@@ -1890,7 +1904,7 @@ static TLBString *TLB_append_str(struct list *string_list, BSTR new_str)
         return NULL;
 
     LIST_FOR_EACH_ENTRY(str, string_list, TLBString, entry) {
-        if (strcmpW(str->str, new_str) == 0)
+        if (wcscmp(str->str, new_str) == 0)
             return str;
     }
 
@@ -3297,11 +3311,11 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 
     *ppTypeLib = NULL;
 
-    index_str = strrchrW(pszFileName, '\\');
+    index_str = wcsrchr(pszFileName, '\\');
     if(index_str && *++index_str != '\0')
     {
         LPWSTR end_ptr;
-        LONG idx = strtolW(index_str, &end_ptr, 10);
+        LONG idx = wcstol(index_str, &end_ptr, 10);
         if(*end_ptr == '\0')
         {
             int str_len = index_str - pszFileName - 1;
@@ -3314,7 +3328,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 
     if(!SearchPathW(NULL, file, NULL, cchPath, pszPath, NULL))
     {
-        if(strchrW(file, '\\'))
+        if(wcschr(file, '\\'))
         {
             lstrcpyW(pszPath, file);
         }
@@ -3322,35 +3336,15 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
         {
             int len = GetSystemDirectoryW(pszPath, cchPath);
             pszPath[len] = '\\';
-            memcpy(pszPath + len + 1, file, (strlenW(file) + 1) * sizeof(WCHAR));
+            memcpy(pszPath + len + 1, file, (lstrlenW(file) + 1) * sizeof(WCHAR));
         }
     }
 
     if(file != pszFileName) heap_free(file);
 
-    h = CreateFileW(pszPath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    h = CreateFileW(pszPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if(h != INVALID_HANDLE_VALUE){
-        FILE_NAME_INFORMATION size_info;
-        BOOL br;
-
-        /* GetFileInformationByHandleEx returns the path of the file without
-         * WOW64 redirection */
-        br = GetFileInformationByHandleEx(h, FileNameInfo, &size_info, sizeof(size_info));
-        if(br || GetLastError() == ERROR_MORE_DATA){
-            FILE_NAME_INFORMATION *info;
-            DWORD size = sizeof(*info) + size_info.FileNameLength + sizeof(WCHAR);
-
-            info = HeapAlloc(GetProcessHeap(), 0, size);
-
-            br = GetFileInformationByHandleEx(h, FileNameInfo, info, size);
-            if(br){
-                info->FileName[info->FileNameLength / sizeof(WCHAR)] = 0;
-                lstrcpynW(pszPath + 2, info->FileName, cchPath - 2);
-            }
-
-            HeapFree(GetProcessHeap(), 0, info);
-        }
-
+        GetFinalPathNameByHandleW(h, pszPath, cchPath, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
         CloseHandle(h);
     }
 
@@ -3360,7 +3354,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
     EnterCriticalSection(&cache_section);
     LIST_FOR_EACH_ENTRY(entry, &tlb_cache, ITypeLibImpl, entry)
     {
-        if (!strcmpiW(entry->path, pszPath) && entry->index == index)
+        if (!wcsicmp(entry->path, pszPath) && entry->index == index)
         {
             TRACE("cache hit\n");
             *ppTypeLib = &entry->ITypeLib2_iface;
@@ -3402,7 +3396,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 	ITypeLibImpl *impl = impl_from_ITypeLib2(*ppTypeLib);
 
 	TRACE("adding to cache\n");
-	impl->path = heap_alloc((strlenW(pszPath)+1) * sizeof(WCHAR));
+	impl->path = heap_alloc((lstrlenW(pszPath)+1) * sizeof(WCHAR));
 	lstrcpyW(impl->path, pszPath);
 	/* We should really canonicalise the path here. */
         impl->index = index;
@@ -3756,7 +3750,7 @@ static DWORD SLTG_ReadLibBlk(LPVOID pLibBlk, ITypeLibImpl *pTypeLibImpl)
 
     ptr += 6;
     if((w = *(WORD*)ptr) != 0xffff) {
-        FIXME("LibBlk.res06 = %04x. Assumung string and skipping\n", w);
+        FIXME("LibBlk.res06 = %04x. Assuming string and skipping\n", w);
         ptr += w;
     }
     ptr += 2;
@@ -4197,7 +4191,7 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI,
 	       letter of the name, else the next WORD is an offset to
 	       the arg type and paramName points to the first letter.
 	       So let's take one char off paramName and see if we're
-	       pointing at an alpha-numeric char.  However if *pArg is
+	       pointing at an alphanumeric char.  However if *pArg is
 	       0xffff or 0xfffe then the param has no name, the former
 	       meaning that the next WORD is the type, the latter
 	       meaning that the next WORD is an offset to the type. */
@@ -5126,7 +5120,7 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
             }
         }
 
-        var = TLB_get_vardesc_by_name(pTInfo->vardescs, pTInfo->typeattr.cVars, name);
+        var = TLB_get_vardesc_by_name(pTInfo, name);
         if (var) {
             memid[count] = var->vardesc.memid;
             goto ITypeLib2_fnFindName_exit;
@@ -5270,7 +5264,7 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation2(
     return result;
 }
 
-static HRESULT TLB_copy_all_custdata(struct list *custdata_list, CUSTDATA *pCustData)
+static HRESULT TLB_copy_all_custdata(const struct list *custdata_list, CUSTDATA *pCustData)
 {
     TLBCustData *pCData;
     unsigned int ct;
@@ -5381,7 +5375,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
         if ((pTypeInfo->typeattr.typekind == TKIND_ENUM) ||
             (pTypeInfo->typeattr.typekind == TKIND_MODULE))
         {
-            if (pTypeInfo->Name && !strcmpW(pTypeInfo->Name->str, szName))
+            if (pTypeInfo->Name && !wcscmp(pTypeInfo->Name->str, szName))
             {
                 *pDescKind = DESCKIND_TYPECOMP;
                 pBindPtr->lptcomp = &pTypeInfo->ITypeComp_iface;
@@ -5506,7 +5500,7 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
     if(!szName || !ppTInfo || !ppTComp)
         return E_INVALIDARG;
 
-    info = TLB_get_typeinfo_by_name(This->typeinfos, This->TypeInfoCount, szName);
+    info = TLB_get_typeinfo_by_name(This, szName);
     if(!info){
         *ppTInfo = NULL;
         *ppTComp = NULL;
@@ -5886,21 +5880,10 @@ static void TLB_FreeVarDesc(VARDESC *var_desc)
     SysFreeString((BSTR)var_desc);
 }
 
-HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const FUNCDESC **ppFuncDesc )
-{
-    ITypeInfoImpl *This = impl_from_ITypeInfo(iface);
-
-    if (index >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
-
-    *ppFuncDesc = &This->funcdescs[index].funcdesc;
-    return S_OK;
-}
-
 /* internal function to make the inherited interfaces' methods appear
  * part of the interface */
 static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
-    UINT index, const FUNCDESC **ppFuncDesc, UINT *funcs, UINT *hrefoffset)
+    UINT index, const TLBFuncDesc **ppFuncDesc, UINT *funcs, UINT *hrefoffset)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo(iface);
     HRESULT hr;
@@ -5938,8 +5921,27 @@ static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
     
     if (index < implemented_funcs)
         return E_INVALIDARG;
-    return ITypeInfoImpl_GetInternalFuncDesc(iface, index - implemented_funcs,
-                                             ppFuncDesc);
+    index -= implemented_funcs;
+
+    if (index >= This->typeattr.cFuncs)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    *ppFuncDesc = &This->funcdescs[index];
+    return S_OK;
+}
+
+static HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const TLBFuncDesc **func_desc, UINT *hrefoffset )
+{
+    ITypeInfoImpl *This = impl_from_ITypeInfo(iface);
+
+    if (This->typeattr.typekind == TKIND_DISPATCH)
+        return ITypeInfoImpl_GetInternalDispatchFuncDesc(iface, index, func_desc, NULL, hrefoffset);
+
+    if (index >= This->typeattr.cFuncs)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    *func_desc = &This->funcdescs[index];
+    return S_OK;
 }
 
 static inline void ITypeInfoImpl_ElemDescAddHrefOffset( LPELEMDESC pElemDesc, UINT hrefoffset)
@@ -5983,7 +5985,7 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
         LPFUNCDESC  *ppFuncDesc)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    const FUNCDESC *internal_funcdesc;
+    const TLBFuncDesc *internal_funcdesc;
     HRESULT hr;
     UINT hrefoffset = 0;
 
@@ -5995,13 +5997,8 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
     if (This->needs_layout)
         ICreateTypeInfo2_LayOut(&This->ICreateTypeInfo2_iface);
 
-    if (This->typeattr.typekind == TKIND_DISPATCH)
-        hr = ITypeInfoImpl_GetInternalDispatchFuncDesc((ITypeInfo *)iface, index,
-                                                       &internal_funcdesc, NULL,
-                                                       &hrefoffset);
-    else
-        hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index,
-                                               &internal_funcdesc);
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index,
+                                           &internal_funcdesc, &hrefoffset);
     if (FAILED(hr))
     {
         WARN("description for function %d not found\n", index);
@@ -6009,7 +6006,7 @@ static HRESULT WINAPI ITypeInfo_fnGetFuncDesc( ITypeInfo2 *iface, UINT index,
     }
 
     hr = TLB_AllocAndInitFuncDesc(
-        internal_funcdesc,
+        &internal_funcdesc->funcdesc,
         ppFuncDesc,
         This->typeattr.typekind == TKIND_DISPATCH);
 
@@ -6027,7 +6024,7 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
     SIZE_T size = sizeof(*src);
     HRESULT hr;
 
-    if (src->lpstrSchema) size += (strlenW(src->lpstrSchema) + 1) * sizeof(WCHAR);
+    if (src->lpstrSchema) size += (lstrlenW(src->lpstrSchema) + 1) * sizeof(WCHAR);
     if (src->varkind == VAR_CONST)
         size += sizeof(VARIANT);
     size += TLB_SizeElemDesc(&src->elemdescVar);
@@ -6041,7 +6038,7 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
     {
         int len;
         dest->lpstrSchema = (LPOLESTR)buffer;
-        len = strlenW(src->lpstrSchema);
+        len = lstrlenW(src->lpstrSchema);
         memcpy(dest->lpstrSchema, src->lpstrSchema, (len + 1) * sizeof(WCHAR));
         buffer += (len + 1) * sizeof(WCHAR);
     }
@@ -6115,7 +6112,7 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
 
     *pcNames = 0;
 
-    pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->typeattr.cFuncs, memid);
+    pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
     if(pFDesc)
     {
         if(!cMaxNames || !pFDesc->Name)
@@ -6133,7 +6130,7 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
         return S_OK;
     }
 
-    pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->typeattr.cVars, memid);
+    pVDesc = TLB_get_vardesc_by_memberid(This, memid);
     if(pVDesc)
     {
       *rgBstrNames=SysAllocString(TLB_get_bstr(pVDesc->Name));
@@ -6292,7 +6289,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
             return ret;
         }
     }
-    pVDesc = TLB_get_vardesc_by_name(This->vardescs, This->typeattr.cVars, *rgszNames);
+    pVDesc = TLB_get_vardesc_by_name(This, *rgszNames);
     if(pVDesc){
         if(cNames)
             *pMemId = pVDesc->vardesc.memid;
@@ -6356,20 +6353,133 @@ __ASM_GLOBAL_FUNC( call_method,
 __ASM_GLOBAL_FUNC( call_double_method,
                    "jmp " __ASM_NAME("call_method") )
 
+HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VARTYPE vtReturn,
+                             UINT cActuals, VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult )
+{
+    int argspos = 0, stack_offset;
+    void *func;
+    UINT i;
+    DWORD *args;
+
+    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+        pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
+        pvargResult, V_VT(pvargResult));
+
+    if (cc != CC_STDCALL && cc != CC_CDECL)
+    {
+        FIXME("unsupported calling convention %d\n",cc);
+        return E_INVALIDARG;
+    }
+
+    /* maximum size for an argument is sizeof(VARIANT) */
+    args = heap_alloc(sizeof(VARIANT) * cActuals + sizeof(DWORD) * 2 );
+
+    if (pvInstance)
+    {
+        const FARPROC *vtable = *(FARPROC **)pvInstance;
+        func = vtable[oVft/sizeof(void *)];
+        args[argspos++] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
+    }
+    else func = (void *)oVft;
+
+    switch (vtReturn)
+    {
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        args[argspos++] = (DWORD)pvargResult;  /* arg 0 is a pointer to the result */
+        break;
+    case VT_HRESULT:
+        WARN("invalid return type %u\n", vtReturn);
+        heap_free( args );
+        return E_INVALIDARG;
+    default:
+        break;
+    }
+
+    for (i = 0; i < cActuals; i++)
+    {
+        VARIANT *arg = prgpvarg[i];
+
+        switch (prgvt[i])
+        {
+        case VT_EMPTY:
+            break;
+        case VT_I8:
+        case VT_UI8:
+        case VT_R8:
+        case VT_DATE:
+        case VT_CY:
+            memcpy( &args[argspos], &V_I8(arg), sizeof(V_I8(arg)) );
+            argspos += sizeof(V_I8(arg)) / sizeof(DWORD);
+            break;
+        case VT_DECIMAL:
+        case VT_VARIANT:
+            memcpy( &args[argspos], arg, sizeof(*arg) );
+            argspos += sizeof(*arg) / sizeof(DWORD);
+            break;
+        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
+            args[argspos++] = V_BOOL(arg);
+            break;
+        default:
+            args[argspos++] = V_UI4(arg);
+            break;
+        }
+        TRACE("arg %u: type %s %s\n", i, debugstr_vt(prgvt[i]), debugstr_variant(arg));
+    }
+
+    switch (vtReturn)
+    {
+    case VT_EMPTY:
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        call_method( func, argspos, args, &stack_offset );
+        break;
+    case VT_R4:
+        V_R4(pvargResult) = call_double_method( func, argspos, args, &stack_offset );
+        break;
+    case VT_R8:
+    case VT_DATE:
+        V_R8(pvargResult) = call_double_method( func, argspos, args, &stack_offset );
+        break;
+    case VT_I8:
+    case VT_UI8:
+    case VT_CY:
+        V_UI8(pvargResult) = call_method( func, argspos, args, &stack_offset );
+        break;
+    default:
+        V_UI4(pvargResult) = call_method( func, argspos, args, &stack_offset );
+        break;
+    }
+    heap_free( args );
+    if (stack_offset && cc == CC_STDCALL)
+    {
+        WARN( "stack pointer off by %d\n", stack_offset );
+        return DISP_E_BADCALLEE;
+    }
+    if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
+    TRACE("retval: %s\n", debugstr_variant(pvargResult));
+    return S_OK;
+}
+
 #elif defined(__x86_64__)
 
 extern DWORD_PTR CDECL call_method( void *func, int nb_args, const DWORD_PTR *args );
 extern double CDECL call_double_method( void *func, int nb_args, const DWORD_PTR *args );
 __ASM_GLOBAL_FUNC( call_method,
                    "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "pushq %rsi\n\t"
+                   __ASM_SEH(".seh_pushreg %rsi\n\t")
                    __ASM_CFI(".cfi_rel_offset %rsi,-8\n\t")
                    "pushq %rdi\n\t"
+                   __ASM_SEH(".seh_pushreg %rdi\n\t")
                    __ASM_CFI(".cfi_rel_offset %rdi,-16\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    "movq %rcx,%rax\n\t"
                    "movq $4,%rcx\n\t"
                    "cmp %rcx,%rdx\n\t"
@@ -6401,6 +6511,92 @@ __ASM_GLOBAL_FUNC( call_method,
                    "ret")
 __ASM_GLOBAL_FUNC( call_double_method,
                    "jmp " __ASM_NAME("call_method") )
+
+HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VARTYPE vtReturn,
+                             UINT cActuals, VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult )
+{
+    int argspos = 0;
+    UINT i;
+    DWORD_PTR *args;
+    void *func;
+
+    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+          pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
+          pvargResult, V_VT(pvargResult));
+
+    if (cc != CC_STDCALL && cc != CC_CDECL)
+    {
+	FIXME("unsupported calling convention %d\n",cc);
+        return E_INVALIDARG;
+    }
+
+    /* maximum size for an argument is sizeof(DWORD_PTR) */
+    args = heap_alloc( sizeof(DWORD_PTR) * (cActuals + 2) );
+
+    if (pvInstance)
+    {
+        const FARPROC *vtable = *(FARPROC **)pvInstance;
+        func = vtable[oVft/sizeof(void *)];
+        args[argspos++] = (DWORD_PTR)pvInstance; /* the This pointer is always the first parameter */
+    }
+    else func = (void *)oVft;
+
+    switch (vtReturn)
+    {
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        args[argspos++] = (DWORD_PTR)pvargResult;  /* arg 0 is a pointer to the result */
+        break;
+    case VT_HRESULT:
+        WARN("invalid return type %u\n", vtReturn);
+        heap_free( args );
+        return E_INVALIDARG;
+    default:
+        break;
+    }
+
+    for (i = 0; i < cActuals; i++)
+    {
+        VARIANT *arg = prgpvarg[i];
+
+        switch (prgvt[i])
+        {
+        case VT_DECIMAL:
+        case VT_VARIANT:
+            args[argspos++] = (ULONG_PTR)arg;
+            break;
+        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
+            args[argspos++] = V_BOOL(arg);
+            break;
+        default:
+            args[argspos++] = V_UI8(arg);
+            break;
+        }
+        TRACE("arg %u: type %s %s\n", i, debugstr_vt(prgvt[i]), debugstr_variant(arg));
+    }
+
+    switch (vtReturn)
+    {
+    case VT_R4:
+        V_R4(pvargResult) = call_double_method( func, argspos, args );
+        break;
+    case VT_R8:
+    case VT_DATE:
+        V_R8(pvargResult) = call_double_method( func, argspos, args );
+        break;
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        call_method( func, argspos, args );
+        break;
+    default:
+        V_UI8(pvargResult) = call_method( func, argspos, args );
+        break;
+    }
+    heap_free( args );
+    if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
+    TRACE("retval: %s\n", debugstr_variant(pvargResult));
+    return S_OK;
+}
 
 #elif defined(__arm__)
 
@@ -6442,7 +6638,344 @@ __ASM_GLOBAL_FUNC( call_float_method,
 __ASM_GLOBAL_FUNC( call_double_method,
                    "b " __ASM_NAME("call_method") )
 
-#endif  /* __arm__ */
+HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VARTYPE vtReturn,
+                             UINT cActuals, VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult )
+{
+    int argspos;
+    void *func;
+    UINT i;
+    DWORD *args;
+    struct {
+#ifndef __SOFTFP__
+        union {
+            float s[16];
+            double d[8];
+        } sd;
+#endif
+        DWORD r[4];
+    } regs;
+    int rcount;     /* 32-bit register index count */
+#ifndef __SOFTFP__
+    int scount = 0; /* single-precision float register index count */
+    int dcount = 0; /* double-precision float register index count */
+#endif
+
+    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+        pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult));
+
+    if (cc != CC_STDCALL && cc != CC_CDECL)
+    {
+        FIXME("unsupported calling convention %d\n",cc);
+        return E_INVALIDARG;
+    }
+
+    argspos = 0;
+    rcount = 0;
+
+    if (pvInstance)
+    {
+        const FARPROC *vtable = *(FARPROC **)pvInstance;
+        func = vtable[oVft/sizeof(void *)];
+        regs.r[rcount++] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
+    }
+    else func = (void *)oVft;
+
+    /* Determine if we need to pass a pointer for the return value as arg 0.  If so, do that */
+    /*  first as it will need to be in the 'r' registers:                                    */
+    switch (vtReturn)
+    {
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        regs.r[rcount++] = (DWORD)pvargResult;  /* arg 0 is a pointer to the result */
+        break;
+    case VT_HRESULT:
+        WARN("invalid return type %u\n", vtReturn);
+        return E_INVALIDARG;
+    default:                    /* And all others are in 'r', 's', or 'd' registers or have no return value */
+        break;
+    }
+
+    /* maximum size for an argument is sizeof(VARIANT).  Also allow for return pointer and stack alignment. */
+    args = heap_alloc( sizeof(VARIANT) * cActuals + sizeof(DWORD) * 4 );
+
+    for (i = 0; i < cActuals; i++)
+    {
+        VARIANT *arg = prgpvarg[i];
+        DWORD *pdwarg = (DWORD *)(arg);     /* a reinterpret_cast of the variant, used for copying structures when they are split between registers and stack */
+        int ntemp;              /* Used for counting words split between registers and stack */
+
+        switch (prgvt[i])
+        {
+        case VT_EMPTY:
+            break;
+        case VT_R8:             /* these must be 8-byte aligned, and put in 'd' regs or stack, as they are double-floats */
+        case VT_DATE:
+#ifndef __SOFTFP__
+            dcount = max( (scount + 1) / 2, dcount );
+            if (dcount < 8)
+            {
+                regs.sd.d[dcount++] = V_R8(arg);
+            }
+            else
+            {
+                argspos += (argspos % 2);   /* align argspos to 8-bytes */
+                memcpy( &args[argspos], &V_R8(arg), sizeof(V_R8(arg)) );
+                argspos += sizeof(V_R8(arg)) / sizeof(DWORD);
+            }
+            break;
+#endif
+        case VT_I8:             /* these must be 8-byte aligned, and put in 'r' regs or stack, as they are long-longs */
+        case VT_UI8:
+        case VT_CY:
+            if (rcount < 3)
+            {
+                rcount += (rcount % 2);     /* align rcount to 8-byte register pair */
+                memcpy( &regs.r[rcount], &V_UI8(arg), sizeof(V_UI8(arg)) );
+                rcount += sizeof(V_UI8(arg)) / sizeof(DWORD);
+            }
+            else
+            {
+                rcount = 4;                 /* Make sure we flag that all 'r' regs are full */
+                argspos += (argspos % 2);   /* align argspos to 8-bytes */
+                memcpy( &args[argspos], &V_UI8(arg), sizeof(V_UI8(arg)) );
+                argspos += sizeof(V_UI8(arg)) / sizeof(DWORD);
+            }
+            break;
+        case VT_DECIMAL:        /* these structures are 8-byte aligned, and put in 'r' regs or stack, can be split between the two */
+        case VT_VARIANT:
+            /* 8-byte align 'r' and/or stack: */
+            if (rcount < 3)
+                rcount += (rcount % 2);
+            else
+            {
+                rcount = 4;
+                argspos += (argspos % 2);
+            }
+            ntemp = sizeof(*arg) / sizeof(DWORD);
+            while (ntemp > 0)
+            {
+                if (rcount < 4)
+                    regs.r[rcount++] = *pdwarg++;
+                else
+                    args[argspos++] = *pdwarg++;
+                --ntemp;
+            }
+            break;
+        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
+            if (rcount < 4)
+                regs.r[rcount++] = V_BOOL(arg);
+            else
+                args[argspos++] = V_BOOL(arg);
+            break;
+        case VT_R4:             /* these must be 4-byte aligned, and put in 's' regs or stack, as they are single-floats */
+#ifndef __SOFTFP__
+            if (!(scount % 2)) scount = max( scount, dcount * 2 );
+            if (scount < 16)
+                regs.sd.s[scount++] = V_R4(arg);
+            else
+                args[argspos++] = V_UI4(arg);
+            break;
+#endif
+        default:
+            if (rcount < 4)
+                regs.r[rcount++] = V_UI4(arg);
+            else
+                args[argspos++] = V_UI4(arg);
+            break;
+        }
+        TRACE("arg %u: type %s %s\n", i, debugstr_vt(prgvt[i]), debugstr_variant(arg));
+    }
+
+    argspos += (argspos % 2);   /* Make sure stack function alignment is 8-byte */
+
+    switch (vtReturn)
+    {
+    case VT_EMPTY:      /* EMPTY = no return value */
+    case VT_DECIMAL:    /* DECIMAL and VARIANT already have a pointer argument passed (see above) */
+    case VT_VARIANT:
+        call_method( func, argspos, args, (DWORD*)&regs );
+        break;
+    case VT_R4:
+        V_R4(pvargResult) = call_float_method( func, argspos, args, (DWORD*)&regs );
+        break;
+    case VT_R8:
+    case VT_DATE:
+        V_R8(pvargResult) = call_double_method( func, argspos, args, (DWORD*)&regs );
+        break;
+    case VT_I8:
+    case VT_UI8:
+    case VT_CY:
+        V_UI8(pvargResult) = call_method( func, argspos, args, (DWORD*)&regs );
+        break;
+    default:
+        V_UI4(pvargResult) = call_method( func, argspos, args, (DWORD*)&regs );
+        break;
+    }
+    heap_free( args );
+    if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
+    TRACE("retval: %s\n", debugstr_variant(pvargResult));
+    return S_OK;
+}
+
+#elif defined(__aarch64__)
+
+extern DWORD_PTR CDECL call_method( void *func, int nb_stk_args, const DWORD_PTR *stk_args, const DWORD_PTR *reg_args );
+extern float CDECL call_float_method( void *func, int nb_stk_args, const DWORD_PTR *stk_args, const DWORD_PTR *reg_args );
+extern double CDECL call_double_method( void *func, int nb_stk_args, const DWORD_PTR *stk_args, const DWORD_PTR *reg_args );
+__ASM_GLOBAL_FUNC( call_method,
+                   "stp x29, x30, [sp, #-16]!\n\t"
+                   "mov x29, sp\n\t"
+                   "sub sp, sp, x1, lsl #3\n\t"
+                   "cbz x1, 2f\n"
+                   "1:\tsub x1, x1, #1\n\t"
+                   "ldr x4, [x2, x1, lsl #3]\n\t"
+                   "str x4, [sp, x1, lsl #3]\n\t"
+                   "cbnz x1, 1b\n"
+                   "2:\tmov x16, x0\n\t"
+                   "mov x9, x3\n\t"
+                   "ldp d0, d1, [x9]\n\t"
+                   "ldp d2, d3, [x9, #0x10]\n\t"
+                   "ldp d4, d5, [x9, #0x20]\n\t"
+                   "ldp d6, d7, [x9, #0x30]\n\t"
+                   "ldp x0, x1, [x9, #0x40]\n\t"
+                   "ldp x2, x3, [x9, #0x50]\n\t"
+                   "ldp x4, x5, [x9, #0x60]\n\t"
+                   "ldp x6, x7, [x9, #0x70]\n\t"
+                   "ldr x8, [x9, #0x80]\n\t"
+                   "blr x16\n\t"
+                   "mov sp, x29\n\t"
+                   "ldp x29, x30, [sp], #16\n\t"
+                   "ret" )
+__ASM_GLOBAL_FUNC( call_float_method,
+                   "b " __ASM_NAME("call_method") )
+__ASM_GLOBAL_FUNC( call_double_method,
+                   "b " __ASM_NAME("call_method") )
+
+HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VARTYPE ret_type, UINT count,
+                             VARTYPE *types, VARIANTARG **vargs, VARIANT *result )
+{
+    int argspos;
+    void *func;
+    UINT i;
+    DWORD_PTR *args;
+    struct
+    {
+        union
+        {
+            float f;
+            double d;
+        } fp[8];
+        DWORD_PTR x[9];
+    } regs;
+    int rcount;      /* 64-bit register index count */
+    int fpcount = 0; /* float register index count */
+
+    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+          instance, offset, cc, ret_type, count, types, vargs, result, V_VT(result));
+
+    if (cc != CC_STDCALL && cc != CC_CDECL)
+    {
+        FIXME("unsupported calling convention %d\n",cc);
+        return E_INVALIDARG;
+    }
+
+    argspos = 0;
+    rcount = 0;
+
+    if (instance)
+    {
+        const FARPROC *vtable = *(FARPROC **)instance;
+        func = vtable[offset/sizeof(void *)];
+        regs.x[rcount++] = (DWORD_PTR)instance; /* the This pointer is always the first parameter */
+    }
+    else func = (void *)offset;
+
+    /* maximum size for an argument is 16 */
+    args = heap_alloc( 16 * count );
+
+    for (i = 0; i < count; i++)
+    {
+        VARIANT *arg = vargs[i];
+
+        switch (types[i])
+        {
+        case VT_R4:
+            if (fpcount < 8) regs.fp[fpcount++].f = V_R4(arg);
+            else *(float *)&args[argspos++] = V_R4(arg);
+            break;
+        case VT_R8:
+        case VT_DATE:
+            if (fpcount < 8) regs.fp[fpcount++].d = V_R8(arg);
+            else *(double *)&args[argspos++] = V_R8(arg);
+            break;
+        case VT_DECIMAL:
+            if (rcount < 7)
+            {
+                memcpy( &regs.x[rcount], arg, sizeof(*arg) );
+                rcount += 2;
+            }
+            else
+            {
+                memcpy( &args[argspos], arg, sizeof(*arg) );
+                argspos += 2;
+            }
+            break;
+        case VT_VARIANT:
+            if (rcount < 8) regs.x[rcount++] = (DWORD_PTR)arg;
+            else args[argspos++] = (DWORD_PTR)arg;
+            break;
+        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
+            if (rcount < 8) regs.x[rcount++] = V_BOOL(arg);
+            else args[argspos++] = V_BOOL(arg);
+            break;
+        default:
+            if (rcount < 8) regs.x[rcount++] = V_UI8(arg);
+            else args[argspos++] = V_UI8(arg);
+            break;
+        }
+        TRACE("arg %u: type %s %s\n", i, debugstr_vt(types[i]), debugstr_variant(arg));
+    }
+
+    argspos += (argspos % 2);   /* Make sure stack function alignment is 16-byte */
+
+    switch (ret_type)
+    {
+    case VT_HRESULT:
+        heap_free( args );
+        return E_INVALIDARG;
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        regs.x[8] = (DWORD_PTR)result;  /* x8 is a pointer to the result */
+        call_method( func, argspos, args, (DWORD_PTR *)&regs );
+        break;
+    case VT_R4:
+        V_R4(result) = call_float_method( func, argspos, args, (DWORD_PTR *)&regs );
+        break;
+    case VT_R8:
+    case VT_DATE:
+        V_R8(result) = call_double_method( func, argspos, args, (DWORD_PTR *)&regs );
+        break;
+    default:
+        V_UI8(result) = call_method( func, argspos, args, (DWORD_PTR *)&regs );
+        break;
+    }
+    heap_free( args );
+    if (ret_type != VT_VARIANT) V_VT(result) = ret_type;
+    TRACE("retval: %s\n", debugstr_variant(result));
+    return S_OK;
+}
+
+#else  /* __aarch64__ */
+
+HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VARTYPE vtReturn,
+                             UINT cActuals, VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult )
+{
+    FIXME( "(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d)): not implemented for this CPU\n",
+           pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult));
+    return E_NOTIMPL;
+}
+
+#endif
 
 static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, VARTYPE *vt)
 {
@@ -6631,420 +7164,6 @@ static HRESULT get_iface_guid(ITypeInfo *tinfo, HREFTYPE href, GUID *guid)
     return hres;
 }
 
-/***********************************************************************
- *		DispCallFunc (OLEAUT32.@)
- *
- * Invokes a function of the specified calling convention, passing the
- * specified arguments and returns the result.
- *
- * PARAMS
- *  pvInstance  [I] Optional pointer to the instance whose function to invoke.
- *  oVft        [I] The offset in the vtable. See notes.
- *  cc          [I] Calling convention of the function to call.
- *  vtReturn    [I] The return type of the function.
- *  cActuals    [I] Number of parameters.
- *  prgvt       [I] The types of the parameters to pass. This is used for sizing only.
- *  prgpvarg    [I] The arguments to pass.
- *  pvargResult [O] The return value of the function. Can be NULL.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT code.
- *
- * NOTES
- *  The HRESULT return value of this function is not affected by the return
- *  value of the user supplied function, which is returned in pvargResult.
- *
- *  If pvInstance is NULL then a non-object function is to be called and oVft
- *  is the address of the function to call.
- *
- * The cc parameter can be one of the following values:
- *|CC_FASTCALL
- *|CC_CDECL
- *|CC_PASCAL
- *|CC_STDCALL
- *|CC_FPFASTCALL
- *|CC_SYSCALL
- *|CC_MPWCDECL
- *|CC_MPWPASCAL
- *
- */
-HRESULT WINAPI
-DispCallFunc(
-    void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VARTYPE vtReturn, UINT cActuals,
-    VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult)
-{
-#ifdef __i386__
-    int argspos = 0, stack_offset;
-    void *func;
-    UINT i;
-    DWORD *args;
-
-    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
-        pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
-        pvargResult, V_VT(pvargResult));
-
-    if (cc != CC_STDCALL && cc != CC_CDECL)
-    {
-        FIXME("unsupported calling convention %d\n",cc);
-        return E_INVALIDARG;
-    }
-
-    /* maximum size for an argument is sizeof(VARIANT) */
-    args = heap_alloc(sizeof(VARIANT) * cActuals + sizeof(DWORD) * 2 );
-
-    if (pvInstance)
-    {
-        const FARPROC *vtable = *(FARPROC **)pvInstance;
-        func = vtable[oVft/sizeof(void *)];
-        args[argspos++] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
-    }
-    else func = (void *)oVft;
-
-    switch (vtReturn)
-    {
-    case VT_DECIMAL:
-    case VT_VARIANT:
-        args[argspos++] = (DWORD)pvargResult;  /* arg 0 is a pointer to the result */
-        break;
-    case VT_HRESULT:
-        WARN("invalid return type %u\n", vtReturn);
-        heap_free( args );
-        return E_INVALIDARG;
-    default:
-        break;
-    }
-
-    for (i = 0; i < cActuals; i++)
-    {
-        VARIANT *arg = prgpvarg[i];
-
-        switch (prgvt[i])
-        {
-        case VT_EMPTY:
-            break;
-        case VT_I8:
-        case VT_UI8:
-        case VT_R8:
-        case VT_DATE:
-        case VT_CY:
-            memcpy( &args[argspos], &V_I8(arg), sizeof(V_I8(arg)) );
-            argspos += sizeof(V_I8(arg)) / sizeof(DWORD);
-            break;
-        case VT_DECIMAL:
-        case VT_VARIANT:
-            memcpy( &args[argspos], arg, sizeof(*arg) );
-            argspos += sizeof(*arg) / sizeof(DWORD);
-            break;
-        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
-            args[argspos++] = V_BOOL(arg);
-            break;
-        default:
-            args[argspos++] = V_UI4(arg);
-            break;
-        }
-        TRACE("arg %u: type %s %s\n", i, debugstr_vt(prgvt[i]), debugstr_variant(arg));
-    }
-
-    switch (vtReturn)
-    {
-    case VT_EMPTY:
-    case VT_DECIMAL:
-    case VT_VARIANT:
-        call_method( func, argspos, args, &stack_offset );
-        break;
-    case VT_R4:
-        V_R4(pvargResult) = call_double_method( func, argspos, args, &stack_offset );
-        break;
-    case VT_R8:
-    case VT_DATE:
-        V_R8(pvargResult) = call_double_method( func, argspos, args, &stack_offset );
-        break;
-    case VT_I8:
-    case VT_UI8:
-    case VT_CY:
-        V_UI8(pvargResult) = call_method( func, argspos, args, &stack_offset );
-        break;
-    default:
-        V_UI4(pvargResult) = call_method( func, argspos, args, &stack_offset );
-        break;
-    }
-    heap_free( args );
-    if (stack_offset && cc == CC_STDCALL)
-    {
-        WARN( "stack pointer off by %d\n", stack_offset );
-        return DISP_E_BADCALLEE;
-    }
-    if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
-    TRACE("retval: %s\n", debugstr_variant(pvargResult));
-    return S_OK;
-
-#elif defined(__x86_64__)
-    int argspos = 0;
-    UINT i;
-    DWORD_PTR *args;
-    void *func;
-
-    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
-          pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
-          pvargResult, V_VT(pvargResult));
-
-    if (cc != CC_STDCALL && cc != CC_CDECL)
-    {
-	FIXME("unsupported calling convention %d\n",cc);
-        return E_INVALIDARG;
-    }
-
-    /* maximum size for an argument is sizeof(DWORD_PTR) */
-    args = heap_alloc( sizeof(DWORD_PTR) * (cActuals + 2) );
-
-    if (pvInstance)
-    {
-        const FARPROC *vtable = *(FARPROC **)pvInstance;
-        func = vtable[oVft/sizeof(void *)];
-        args[argspos++] = (DWORD_PTR)pvInstance; /* the This pointer is always the first parameter */
-    }
-    else func = (void *)oVft;
-
-    switch (vtReturn)
-    {
-    case VT_DECIMAL:
-    case VT_VARIANT:
-        args[argspos++] = (DWORD_PTR)pvargResult;  /* arg 0 is a pointer to the result */
-        break;
-    case VT_HRESULT:
-        WARN("invalid return type %u\n", vtReturn);
-        heap_free( args );
-        return E_INVALIDARG;
-    default:
-        break;
-    }
-
-    for (i = 0; i < cActuals; i++)
-    {
-        VARIANT *arg = prgpvarg[i];
-
-        switch (prgvt[i])
-        {
-        case VT_DECIMAL:
-        case VT_VARIANT:
-            args[argspos++] = (ULONG_PTR)arg;
-            break;
-        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
-            args[argspos++] = V_BOOL(arg);
-            break;
-        default:
-            args[argspos++] = V_UI8(arg);
-            break;
-        }
-        TRACE("arg %u: type %s %s\n", i, debugstr_vt(prgvt[i]), debugstr_variant(arg));
-    }
-
-    switch (vtReturn)
-    {
-    case VT_R4:
-        V_R4(pvargResult) = call_double_method( func, argspos, args );
-        break;
-    case VT_R8:
-    case VT_DATE:
-        V_R8(pvargResult) = call_double_method( func, argspos, args );
-        break;
-    case VT_DECIMAL:
-    case VT_VARIANT:
-        call_method( func, argspos, args );
-        break;
-    default:
-        V_UI8(pvargResult) = call_method( func, argspos, args );
-        break;
-    }
-    heap_free( args );
-    if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
-    TRACE("retval: %s\n", debugstr_variant(pvargResult));
-    return S_OK;
-
-#elif defined(__arm__)
-    int argspos;
-    void *func;
-    UINT i;
-    DWORD *args;
-    struct {
-#ifndef __SOFTFP__
-        union {
-            float s[16];
-            double d[8];
-        } sd;
-#endif
-        DWORD r[4];
-    } regs;
-    int rcount;     /* 32-bit register index count */
-#ifndef __SOFTFP__
-    int scount = 0; /* single-precision float register index count */
-    int dcount = 0; /* double-precision float register index count */
-#endif
-
-    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
-        pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult));
-
-    if (cc != CC_STDCALL && cc != CC_CDECL)
-    {
-        FIXME("unsupported calling convention %d\n",cc);
-        return E_INVALIDARG;
-    }
-
-    argspos = 0;
-    rcount = 0;
-
-    if (pvInstance)
-    {
-        const FARPROC *vtable = *(FARPROC **)pvInstance;
-        func = vtable[oVft/sizeof(void *)];
-        regs.r[rcount++] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
-    }
-    else func = (void *)oVft;
-
-    /* Determine if we need to pass a pointer for the return value as arg 0.  If so, do that */
-    /*  first as it will need to be in the 'r' registers:                                    */
-    switch (vtReturn)
-    {
-    case VT_DECIMAL:
-    case VT_VARIANT:
-        regs.r[rcount++] = (DWORD)pvargResult;  /* arg 0 is a pointer to the result */
-        break;
-    case VT_HRESULT:
-        WARN("invalid return type %u\n", vtReturn);
-        return E_INVALIDARG;
-    default:                    /* And all others are in 'r', 's', or 'd' registers or have no return value */
-        break;
-    }
-
-    /* maximum size for an argument is sizeof(VARIANT).  Also allow for return pointer and stack alignment. */
-    args = heap_alloc( sizeof(VARIANT) * cActuals + sizeof(DWORD) * 4 );
-
-    for (i = 0; i < cActuals; i++)
-    {
-        VARIANT *arg = prgpvarg[i];
-        DWORD *pdwarg = (DWORD *)(arg);     /* a reinterpret_cast of the variant, used for copying structures when they are split between registers and stack */
-        int ntemp;              /* Used for counting words split between registers and stack */
-
-        switch (prgvt[i])
-        {
-        case VT_EMPTY:
-            break;
-        case VT_R8:             /* these must be 8-byte aligned, and put in 'd' regs or stack, as they are double-floats */
-        case VT_DATE:
-#ifndef __SOFTFP__
-            dcount = max( (scount + 1) / 2, dcount );
-            if (dcount < 8)
-            {
-                regs.sd.d[dcount++] = V_R8(arg);
-            }
-            else
-            {
-                argspos += (argspos % 2);   /* align argspos to 8-bytes */
-                memcpy( &args[argspos], &V_R8(arg), sizeof(V_R8(arg)) );
-                argspos += sizeof(V_R8(arg)) / sizeof(DWORD);
-            }
-            break;
-#endif
-        case VT_I8:             /* these must be 8-byte aligned, and put in 'r' regs or stack, as they are long-longs */
-        case VT_UI8:
-        case VT_CY:
-            if (rcount < 3)
-            {
-                rcount += (rcount % 2);     /* align rcount to 8-byte register pair */
-                memcpy( &regs.r[rcount], &V_UI8(arg), sizeof(V_UI8(arg)) );
-                rcount += sizeof(V_UI8(arg)) / sizeof(DWORD);
-            }
-            else
-            {
-                rcount = 4;                 /* Make sure we flag that all 'r' regs are full */
-                argspos += (argspos % 2);   /* align argspos to 8-bytes */
-                memcpy( &args[argspos], &V_UI8(arg), sizeof(V_UI8(arg)) );
-                argspos += sizeof(V_UI8(arg)) / sizeof(DWORD);
-            }
-            break;
-        case VT_DECIMAL:        /* these structures are 8-byte aligned, and put in 'r' regs or stack, can be split between the two */
-        case VT_VARIANT:
-            /* 8-byte align 'r' and/or stack: */
-            if (rcount < 3)
-                rcount += (rcount % 2);
-            else
-            {
-                rcount = 4;
-                argspos += (argspos % 2);
-            }
-            ntemp = sizeof(*arg) / sizeof(DWORD);
-            while (ntemp > 0)
-            {
-                if (rcount < 4)
-                    regs.r[rcount++] = *pdwarg++;
-                else
-                    args[argspos++] = *pdwarg++;
-                --ntemp;
-            }
-            break;
-        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
-            if (rcount < 4)
-                regs.r[rcount++] = V_BOOL(arg);
-            else
-                args[argspos++] = V_BOOL(arg);
-            break;
-        case VT_R4:             /* these must be 4-byte aligned, and put in 's' regs or stack, as they are single-floats */
-#ifndef __SOFTFP__
-            if (!(scount % 2)) scount = max( scount, dcount * 2 );
-            if (scount < 16)
-                regs.sd.s[scount++] = V_R4(arg);
-            else
-                args[argspos++] = V_UI4(arg);
-            break;
-#endif
-        default:
-            if (rcount < 4)
-                regs.r[rcount++] = V_UI4(arg);
-            else
-                args[argspos++] = V_UI4(arg);
-            break;
-        }
-        TRACE("arg %u: type %s %s\n", i, debugstr_vt(prgvt[i]), debugstr_variant(arg));
-    }
-
-    argspos += (argspos % 2);   /* Make sure stack function alignment is 8-byte */
-
-    switch (vtReturn)
-    {
-    case VT_EMPTY:      /* EMPTY = no return value */
-    case VT_DECIMAL:    /* DECIMAL and VARIANT already have a pointer argument passed (see above) */
-    case VT_VARIANT:
-        call_method( func, argspos, args, (DWORD*)&regs );
-        break;
-    case VT_R4:
-        V_R4(pvargResult) = call_float_method( func, argspos, args, (DWORD*)&regs );
-        break;
-    case VT_R8:
-    case VT_DATE:
-        V_R8(pvargResult) = call_double_method( func, argspos, args, (DWORD*)&regs );
-        break;
-    case VT_I8:
-    case VT_UI8:
-    case VT_CY:
-        V_UI8(pvargResult) = call_method( func, argspos, args, (DWORD*)&regs );
-        break;
-    default:
-        V_UI4(pvargResult) = call_method( func, argspos, args, (DWORD*)&regs );
-        break;
-    }
-    heap_free( args );
-    if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
-    TRACE("retval: %s\n", debugstr_variant(pvargResult));
-    return S_OK;
-
-#else
-    FIXME( "(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d)): not implemented for this CPU\n",
-           pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult));
-    return E_NOTIMPL;
-#endif
-}
-
 static inline BOOL func_restricted( const FUNCDESC *desc )
 {
     return (desc->wFuncFlags & FUNCFLAG_FRESTRICTED) && (desc->memid >= 0);
@@ -7131,6 +7250,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             UINT cNamedArgs = pDispParams->cNamedArgs;
             DISPID *rgdispidNamedArgs = pDispParams->rgdispidNamedArgs;
             UINT vargs_converted=0;
+            SAFEARRAY *a;
 
             hres = S_OK;
 
@@ -7252,7 +7372,6 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         }
                         else if ((rgvt[i] == (VT_VARIANT | VT_ARRAY) || rgvt[i] == (VT_VARIANT | VT_ARRAY | VT_BYREF)) && func_desc->cParamsOpt < 0)
                         {
-                            SAFEARRAY *a;
                             SAFEARRAYBOUND bound;
                             VARIANT *v;
                             LONG j;
@@ -7619,7 +7738,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
             *pBstrHelpFile=SysAllocString(TLB_get_bstr(This->pTypeLib->HelpFile));
         return S_OK;
     }else {/* for a member */
-        pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->typeattr.cFuncs, memid);
+        pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
         if(pFDesc){
             if(pBstrName)
               *pBstrName = SysAllocString(TLB_get_bstr(pFDesc->Name));
@@ -7631,7 +7750,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
               *pBstrHelpFile = SysAllocString(TLB_get_bstr(This->pTypeLib->HelpFile));
             return S_OK;
         }
-        pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->typeattr.cVars, memid);
+        pVDesc = TLB_get_vardesc_by_memberid(This, memid);
         if(pVDesc){
             if(pBstrName)
               *pBstrName = SysAllocString(TLB_get_bstr(pVDesc->Name));
@@ -7685,7 +7804,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
     if (This->typeattr.typekind != TKIND_MODULE)
         return TYPE_E_BADMODULEKIND;
 
-    pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->typeattr.cFuncs, memid);
+    pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
     if(pFDesc){
 	    dump_TypeInfo(This);
 	    if (TRACE_ON(ole))
@@ -7763,7 +7882,7 @@ static BOOL CALLBACK search_res_tlb(HMODULE hModule, LPCWSTR lpszType, LPWSTR lp
     if (!(len = GetModuleFileNameW(hModule, szPath, MAX_PATH)))
         return TRUE;
 
-    if (snprintfW(szPath + len, ARRAY_SIZE(szPath) - len, formatW, LOWORD(lpszName)) < 0)
+    if (swprintf(szPath + len, ARRAY_SIZE(szPath) - len, formatW, LOWORD(lpszName)) < 0)
         return TRUE;
 
     ret = LoadTypeLibEx(szPath, REGKIND_NONE, &pTLib);
@@ -7874,21 +7993,49 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
                 ITypeLib_AddRef(pTLib);
                 result = S_OK;
             } else {
-                static const WCHAR TYPELIBW[] = {'T','Y','P','E','L','I','B',0};
-                struct search_res_tlb_params params;
-                BSTR libnam;
+                /* Search in cached typelibs */
+                ITypeLibImpl *entry;
 
-                TRACE("typeinfo in imported typelib that isn't already loaded\n");
-
-                /* Search in resource table */
-                params.guid  = TLB_get_guid_null(ref_type->pImpTLInfo->guid);
-                params.pTLib = NULL;
-                EnumResourceNamesW(NULL, TYPELIBW, search_res_tlb, (LONG_PTR)&params);
-                pTLib  = params.pTLib;
-                result = S_OK;
+                EnterCriticalSection(&cache_section);
+                LIST_FOR_EACH_ENTRY(entry, &tlb_cache, ITypeLibImpl, entry)
+                {
+                    if (entry->guid
+                        && IsEqualIID(&entry->guid->guid, TLB_get_guid_null(ref_type->pImpTLInfo->guid))
+                        && entry->ver_major == ref_type->pImpTLInfo->wVersionMajor
+                        && entry->ver_minor == ref_type->pImpTLInfo->wVersionMinor
+                        && entry->set_lcid == ref_type->pImpTLInfo->lcid)
+                    {
+                        TRACE("got cached %p\n", entry);
+                        pTLib = (ITypeLib*)&entry->ITypeLib2_iface;
+                        ITypeLib_AddRef(pTLib);
+                        result = S_OK;
+                        break;
+                    }
+                }
+                LeaveCriticalSection(&cache_section);
 
                 if (!pTLib)
                 {
+                    static const WCHAR TYPELIBW[] = {'T','Y','P','E','L','I','B',0};
+                    struct search_res_tlb_params params;
+
+                    TRACE("typeinfo in imported typelib that isn't already loaded\n");
+
+                    /* Search in resource table */
+                    params.guid  = TLB_get_guid_null(ref_type->pImpTLInfo->guid);
+                    params.pTLib = NULL;
+                    EnumResourceNamesW(NULL, TYPELIBW, search_res_tlb, (LONG_PTR)&params);
+                    if(params.pTLib)
+                    {
+                        pTLib  = params.pTLib;
+                        result = S_OK;
+                    }
+                }
+
+                if (!pTLib)
+                {
+                    BSTR libnam;
+
                     /* Search on disk */
                     result = query_typelib_path(TLB_get_guid_null(ref_type->pImpTLInfo->guid),
                             ref_type->pImpTLInfo->wVersionMajor,
@@ -8193,7 +8340,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetVarIndexOfMemId( ITypeInfo2 * iface,
 
     TRACE("%p %d %p\n", iface, memid, pVarIndex);
 
-    pVarInfo = TLB_get_vardesc_by_memberid(This->vardescs, This->typeattr.cVars, memid);
+    pVarInfo = TLB_get_vardesc_by_memberid(This, memid);
     if(!pVarInfo)
         return TYPE_E_ELEMENTNOTFOUND;
 
@@ -8240,22 +8387,23 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncCustData(
 	VARIANT *pVarVal)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    TLBCustData *pCData;
-    TLBFuncDesc *pFDesc = &This->funcdescs[index];
+    const TLBFuncDesc *desc;
+    TLBCustData *data;
+    UINT hrefoffset;
+    HRESULT hr;
 
     TRACE("%p %u %s %p\n", This, index, debugstr_guid(guid), pVarVal);
 
-    if(index >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
-
-    pCData = TLB_get_custdata_by_guid(&pFDesc->custdata_list, guid);
-    if(!pCData)
-        return TYPE_E_ELEMENTNOTFOUND;
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index, &desc, &hrefoffset);
+    if (FAILED(hr))
+    {
+        WARN("description for function %d not found\n", index);
+        return hr;
+    }
 
     VariantInit(pVarVal);
-    VariantCopy(pVarVal, &pCData->data);
-
-    return S_OK;
+    data = TLB_get_custdata_by_guid(&desc->custdata_list, guid);
+    return data ? VariantCopy(pVarVal, &data->data) : S_OK;
 }
 
 /* ITypeInfo2::GetParamCustData
@@ -8270,14 +8418,17 @@ static HRESULT WINAPI ITypeInfo2_fnGetParamCustData(
 	VARIANT *pVarVal)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
+    const TLBFuncDesc *pFDesc;
     TLBCustData *pCData;
-    TLBFuncDesc *pFDesc = &This->funcdescs[indexFunc];
+    UINT hrefoffset;
+    HRESULT hr;
 
     TRACE("%p %u %u %s %p\n", This, indexFunc, indexParam,
             debugstr_guid(guid), pVarVal);
 
-    if(indexFunc >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, indexFunc, &pFDesc, &hrefoffset);
+    if (FAILED(hr))
+        return hr;
 
     if(indexParam >= pFDesc->funcdesc.cParams)
         return TYPE_E_ELEMENTNOTFOUND;
@@ -8386,7 +8537,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation2(
                 SysAllocString(TLB_get_bstr(This->pTypeLib->HelpStringDll));/* FIXME */
         return S_OK;
     }else {/* for a member */
-        pFDesc = TLB_get_funcdesc_by_memberid(This->funcdescs, This->typeattr.cFuncs, memid);
+        pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
         if(pFDesc){
             if(pbstrHelpString)
                 *pbstrHelpString=SysAllocString(TLB_get_bstr(pFDesc->HelpString));
@@ -8397,7 +8548,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation2(
                     SysAllocString(TLB_get_bstr(This->pTypeLib->HelpStringDll));/* FIXME */
             return S_OK;
         }
-        pVDesc = TLB_get_vardesc_by_memberid(This->vardescs, This->typeattr.cVars, memid);
+        pVDesc = TLB_get_vardesc_by_memberid(This, memid);
         if(pVDesc){
             if(pbstrHelpString)
                 *pbstrHelpString=SysAllocString(TLB_get_bstr(pVDesc->HelpString));
@@ -8439,12 +8590,15 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllFuncCustData(
 	CUSTDATA *pCustData)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    TLBFuncDesc *pFDesc = &This->funcdescs[index];
+    const TLBFuncDesc *pFDesc;
+    UINT hrefoffset;
+    HRESULT hr;
 
     TRACE("%p %u %p\n", This, index, pCustData);
 
-    if(index >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, index, &pFDesc, &hrefoffset);
+    if (FAILED(hr))
+        return hr;
 
     return TLB_copy_all_custdata(&pFDesc->custdata_list, pCustData);
 }
@@ -8458,12 +8612,15 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllParamCustData( ITypeInfo2 * iface,
     UINT indexFunc, UINT indexParam, CUSTDATA *pCustData)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    TLBFuncDesc *pFDesc = &This->funcdescs[indexFunc];
+    const TLBFuncDesc *pFDesc;
+    UINT hrefoffset;
+    HRESULT hr;
 
     TRACE("%p %u %u %p\n", This, indexFunc, indexParam, pCustData);
 
-    if(indexFunc >= This->typeattr.cFuncs)
-        return TYPE_E_ELEMENTNOTFOUND;
+    hr = ITypeInfoImpl_GetInternalFuncDesc((ITypeInfo *)iface, indexFunc, &pFDesc, &hrefoffset);
+    if (FAILED(hr))
+        return hr;
 
     if(indexParam >= pFDesc->funcdesc.cParams)
         return TYPE_E_ELEMENTNOTFOUND;
@@ -8744,7 +8901,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         ITypeInfo_AddRef(*ppTInfo);
         return S_OK;
     } else {
-        pVDesc = TLB_get_vardesc_by_name(This->vardescs, This->typeattr.cVars, szName);
+        pVDesc = TLB_get_vardesc_by_name(This, szName);
         if(pVDesc){
             HRESULT hr = TLB_AllocAndInitVarDesc(&pVDesc->vardesc, &pBindPtr->lpvardesc);
             if (FAILED(hr))
@@ -8884,7 +9041,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(ICreateTypeLib2 *iface,
     if (!ctinfo || !name)
         return E_INVALIDARG;
 
-    info = TLB_get_typeinfo_by_name(This->typeinfos, This->TypeInfoCount, name);
+    info = TLB_get_typeinfo_by_name(This, name);
     if (info)
         return TYPE_E_NAMECONFLICT;
 
@@ -9080,7 +9237,7 @@ static HRESULT WMSFT_compile_strings(ITypeLibImpl *This,
     LIST_FOR_EACH_ENTRY(str, &This->string_list, TLBString, entry) {
         int size;
 
-        size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str), NULL, 0, NULL, NULL);
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, lstrlenW(str->str), NULL, 0, NULL, NULL);
         if (size == 0)
             return E_UNEXPECTED;
 
@@ -9103,7 +9260,7 @@ static HRESULT WMSFT_compile_strings(ITypeLibImpl *This,
     LIST_FOR_EACH_ENTRY(str, &This->string_list, TLBString, entry) {
         int size;
 
-        size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str),
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, lstrlenW(str->str),
                 data + sizeof(INT16), file->string_seg.len - last_offs - sizeof(INT16), NULL, NULL);
         if (size == 0) {
             heap_free(file->string_seg.data);
@@ -9138,7 +9295,7 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
     LIST_FOR_EACH_ENTRY(str, &This->name_list, TLBString, entry) {
         int size;
 
-        size = strlenW(str->str);
+        size = lstrlenW(str->str);
         file->header.nametablechars += size;
         file->header.nametablecount++;
 
@@ -9167,7 +9324,7 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
         int size, hash;
         MSFT_NameIntro *intro = (MSFT_NameIntro*)data;
 
-        size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str),
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, lstrlenW(str->str),
                 data + sizeof(MSFT_NameIntro),
                 file->name_seg.len - last_offs - sizeof(MSFT_NameIntro), NULL, NULL);
         if (size == 0) {
@@ -9932,12 +10089,12 @@ static void WMSFT_compile_impfile(ITypeLibImpl *This, WMSFT_TLBFile *file)
         int size = 0;
 
         if(implib->name){
-            WCHAR *path = strrchrW(implib->name, '\\');
+            WCHAR *path = wcsrchr(implib->name, '\\');
             if(path)
                 ++path;
             else
                 path = implib->name;
-            size = WideCharToMultiByte(CP_ACP, 0, path, strlenW(path), NULL, 0, NULL, NULL);
+            size = WideCharToMultiByte(CP_ACP, 0, path, lstrlenW(path), NULL, 0, NULL, NULL);
             if (size == 0)
                 ERR("failed to convert wide string: %s\n", debugstr_w(path));
         }
@@ -9964,12 +10121,12 @@ static void WMSFT_compile_impfile(ITypeLibImpl *This, WMSFT_TLBFile *file)
         data += sizeof(WMSFT_ImpFile);
 
         if(implib->name){
-            WCHAR *path= strrchrW(implib->name, '\\');
+            WCHAR *path= wcsrchr(implib->name, '\\');
             if(path)
                 ++path;
             else
                 path = implib->name;
-            strlen = WideCharToMultiByte(CP_ACP, 0, path, strlenW(path),
+            strlen = WideCharToMultiByte(CP_ACP, 0, path, lstrlenW(path),
                     data + sizeof(INT16), file->impfile_seg.len - last_offs - sizeof(INT16), NULL, NULL);
             if (strlen == 0)
                 ERR("failed to convert wide string: %s\n", debugstr_w(path));
@@ -10695,15 +10852,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
 
         /* move custdata lists to the new memory location */
         for(i = 0; i < This->typeattr.cFuncs + 1; ++i){
-            if(index != i){
-                TLBFuncDesc *fd = &This->funcdescs[i];
-                if(fd->custdata_list.prev == fd->custdata_list.next)
-                    list_init(&fd->custdata_list);
-                else{
-                    fd->custdata_list.prev->next = &fd->custdata_list;
-                    fd->custdata_list.next->prev = &fd->custdata_list;
-                }
-            }
+            if(index != i)
+                TLB_relink_custdata(&This->funcdescs[i].custdata_list);
         }
     } else
         func_desc = This->funcdescs = heap_alloc(sizeof(TLBFuncDesc));
@@ -10764,15 +10914,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
 
         /* move custdata lists to the new memory location */
         for(i = 0; i < This->typeattr.cImplTypes + 1; ++i){
-            if(index != i){
-                TLBImplType *it = &This->impltypes[i];
-                if(it->custdata_list.prev == it->custdata_list.next)
-                    list_init(&it->custdata_list);
-                else{
-                    it->custdata_list.prev->next = &it->custdata_list;
-                    it->custdata_list.next->prev = &it->custdata_list;
-                }
-            }
+            if(index != i)
+                TLB_relink_custdata(&This->impltypes[i].custdata_list);
         }
     } else
         impl_type = This->impltypes = heap_alloc(sizeof(TLBImplType));
@@ -10864,15 +11007,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(ICreateTypeInfo2 *iface,
 
         /* move custdata lists to the new memory location */
         for(i = 0; i < This->typeattr.cVars + 1; ++i){
-            if(index != i){
-                TLBVarDesc *var = &This->vardescs[i];
-                if(var->custdata_list.prev == var->custdata_list.next)
-                    list_init(&var->custdata_list);
-                else{
-                    var->custdata_list.prev->next = &var->custdata_list;
-                    var->custdata_list.next->prev = &var->custdata_list;
-                }
-            }
+            if(index != i)
+                TLB_relink_custdata(&This->vardescs[i].custdata_list);
         }
     } else
         var_desc = This->vardescs = heap_alloc_zero(sizeof(TLBVarDesc));
@@ -10912,7 +11048,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(ICreateTypeInfo2 *
 
     for(i = 0; i < This->typeattr.cFuncs; ++i) {
         TLBFuncDesc *iter = &This->funcdescs[i];
-        if (iter->Name && !strcmpW(TLB_get_bstr(iter->Name), *names)) {
+        if (iter->Name && !wcscmp(TLB_get_bstr(iter->Name), *names)) {
             if (iter->funcdesc.invkind & (INVOKE_PROPERTYPUT | INVOKE_PROPERTYPUTREF | INVOKE_PROPERTYGET) &&
                     func_desc->funcdesc.invkind & (INVOKE_PROPERTYPUT | INVOKE_PROPERTYPUTREF | INVOKE_PROPERTYGET) &&
                     func_desc->funcdesc.invkind != iter->funcdesc.invkind)
@@ -11078,7 +11214,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeIdldesc(ICreateTypeInfo2 *iface,
 static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    ITypeInfo *tinfo;
+    ITypeInfo2 *tinfo = &This->ITypeInfo2_iface;
     TLBFuncDesc *func_desc;
     UINT user_vft = 0, i, depth = 0;
     HRESULT hres = S_OK;
@@ -11087,25 +11223,20 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
 
     This->needs_layout = FALSE;
 
-    hres = ICreateTypeInfo2_QueryInterface(iface, &IID_ITypeInfo, (LPVOID*)&tinfo);
-    if (FAILED(hres))
-        return hres;
-
     if (This->typeattr.typekind == TKIND_INTERFACE) {
         ITypeInfo *inh;
         TYPEATTR *attr;
         HREFTYPE inh_href;
 
-        hres = ITypeInfo_GetRefTypeOfImplType(tinfo, 0, &inh_href);
+        hres = ITypeInfo2_GetRefTypeOfImplType(tinfo, 0, &inh_href);
 
         if (SUCCEEDED(hres)) {
-            hres = ITypeInfo_GetRefTypeInfo(tinfo, inh_href, &inh);
+            hres = ITypeInfo2_GetRefTypeInfo(tinfo, inh_href, &inh);
 
             if (SUCCEEDED(hres)) {
                 hres = ITypeInfo_GetTypeAttr(inh, &attr);
                 if (FAILED(hres)) {
                     ITypeInfo_Release(inh);
-                    ITypeInfo_Release(tinfo);
                     return hres;
                 }
                 This->typeattr.cbSizeVft = attr->cbSizeVft;
@@ -11129,17 +11260,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
             } else if (hres == TYPE_E_ELEMENTNOTFOUND) {
                 This->typeattr.cbSizeVft = 0;
                 hres = S_OK;
-            } else {
-                ITypeInfo_Release(tinfo);
+            } else
                 return hres;
-            }
         } else if (hres == TYPE_E_ELEMENTNOTFOUND) {
             This->typeattr.cbSizeVft = 0;
             hres = S_OK;
-        } else {
-            ITypeInfo_Release(tinfo);
+        } else
             return hres;
-        }
     } else if (This->typeattr.typekind == TKIND_DISPATCH)
         This->typeattr.cbSizeVft = 7 * This->pTypeLib->ptr_size;
     else
@@ -11214,7 +11341,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(ICreateTypeInfo2 *iface)
         }
     }
 
-    ITypeInfo_Release(tinfo);
     return hres;
 }
 
@@ -11254,8 +11380,25 @@ static HRESULT WINAPI ICreateTypeInfo2_fnDeleteImplType(ICreateTypeInfo2 *iface,
         UINT index)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u - stub\n", This, index);
-    return E_NOTIMPL;
+    int i;
+
+    TRACE("%p %u\n", This, index);
+
+    if (index >= This->typeattr.cImplTypes)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    TLB_FreeCustData(&This->impltypes[index].custdata_list);
+    --This->typeattr.cImplTypes;
+
+    if (index < This->typeattr.cImplTypes)
+    {
+        memmove(This->impltypes + index, This->impltypes + index + 1, (This->typeattr.cImplTypes - index) *
+                sizeof(*This->impltypes));
+        for (i = index; i < This->typeattr.cImplTypes; ++i)
+            TLB_relink_custdata(&This->impltypes[i].custdata_list);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetCustData(ICreateTypeInfo2 *iface,

@@ -35,7 +35,6 @@
 #include "olectl.h"
 #include "unknwn.h"
 #include "objsel.h"
-#include "wine/unicode.h"
 #include "uuids.h"
 
 /**********************************************************************

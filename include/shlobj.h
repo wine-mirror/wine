@@ -1375,30 +1375,39 @@ typedef struct _SHChangeNotifyEntry
 
 void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2);
 
-typedef enum {
-    SLDF_HAS_ID_LIST = 0x00000001,
-    SLDF_HAS_LINK_INFO = 0x00000002,
-    SLDF_HAS_NAME = 0x00000004,
-    SLDF_HAS_RELPATH = 0x00000008,
-    SLDF_HAS_WORKINGDIR = 0x00000010,
-    SLDF_HAS_ARGS = 0x00000020,
-    SLDF_HAS_ICONLOCATION = 0x00000040,
-    SLDF_UNICODE = 0x00000080,
-    SLDF_FORCE_NO_LINKINFO = 0x00000100,
-    SLDF_HAS_EXP_SZ = 0x00000200,
-    SLDF_RUN_IN_SEPARATE = 0x00000400,
-    SLDF_HAS_LOGO3ID = 0x00000800,
-    SLDF_HAS_DARWINID = 0x00001000,
-    SLDF_RUNAS_USER = 0x00002000,
-    SLDF_HAS_EXP_ICON_SZ = 0x00004000,
-    SLDF_NO_PIDL_ALIAS = 0x00008000,
-    SLDF_FORCE_UNCNAME = 0x00010000,
-    SLDF_RUN_WITH_SHIMLAYER = 0x00020000,
-    SLDF_FORCE_NO_LINKTRACK = 0x00040000,
-    SLDF_ENABLE_TARGET_METADATA = 0x00080000,
+typedef enum
+{
+    SLDF_DEFAULT                               = 0x00000000,
+    SLDF_HAS_ID_LIST                           = 0x00000001,
+    SLDF_HAS_LINK_INFO                         = 0x00000002,
+    SLDF_HAS_NAME                              = 0x00000004,
+    SLDF_HAS_RELPATH                           = 0x00000008,
+    SLDF_HAS_WORKINGDIR                        = 0x00000010,
+    SLDF_HAS_ARGS                              = 0x00000020,
+    SLDF_HAS_ICONLOCATION                      = 0x00000040,
+    SLDF_UNICODE                               = 0x00000080,
+    SLDF_FORCE_NO_LINKINFO                     = 0x00000100,
+    SLDF_HAS_EXP_SZ                            = 0x00000200,
+    SLDF_RUN_IN_SEPARATE                       = 0x00000400,
+    SLDF_HAS_LOGO3ID                           = 0x00000800,
+    SLDF_HAS_DARWINID                          = 0x00001000,
+    SLDF_RUNAS_USER                            = 0x00002000,
+    SLDF_HAS_EXP_ICON_SZ                       = 0x00004000,
+    SLDF_NO_PIDL_ALIAS                         = 0x00008000,
+    SLDF_FORCE_UNCNAME                         = 0x00010000,
+    SLDF_RUN_WITH_SHIMLAYER                    = 0x00020000,
+    SLDF_FORCE_NO_LINKTRACK                    = 0x00040000,
+    SLDF_ENABLE_TARGET_METADATA                = 0x00080000,
+    SLDF_DISABLE_LINK_PATH_TRACKING            = 0x00100000,
     SLDF_DISABLE_KNOWNFOLDER_RELATIVE_TRACKING = 0x00200000,
-    SLDF_VALID = 0x003ff7ff,
-    SLDF_RESERVED = 0x80000000,
+    SDLF_NO_KF_ALIAS                           = 0x00400000,
+    SDLF_ALLOW_LINK_TO_LINK                    = 0x00800000,
+    SDLF_UNALIAS_ON_SAVE                       = 0x01000000,
+    SDLF_PREFER_ENVIRONMENT_PATH               = 0x02000000,
+    SDLF_KEEP_LOCAL_IDLIST_FOR_UNC_TARGET      = 0x04000000,
+    SDLF_PERSIST_VOLUME_ID_ACTIVE              = 0x08000000,
+    SLDF_VALID                                 = 0x0ffff7ff,
+    SLDF_RESERVED                              = 0x80000000,
 } SHELL_LINK_DATA_FLAGS;
 
 typedef struct tagDATABLOCKHEADER
@@ -1406,6 +1415,35 @@ typedef struct tagDATABLOCKHEADER
     DWORD cbSize;
     DWORD dwSignature;
 } DATABLOCK_HEADER, *LPDATABLOCK_HEADER, *LPDBLIST;
+
+typedef struct {
+    DATABLOCK_HEADER dbh;
+    WORD wFillAttribute;
+    WORD wPopupFillAttribute;
+    COORD dwScreenBufferSize;
+    COORD dwWindowSize;
+    COORD dwWindowOrigin;
+    DWORD nFont;
+    DWORD nInputBufferSize;
+    COORD dwFontSize;
+    UINT uFontFamily;
+    UINT uFontWeight;
+    WCHAR FaceName[LF_FACESIZE];
+    UINT uCursorSize;
+    BOOL bFullScreen;
+    BOOL bQuickEdit;
+    BOOL bInsertMode;
+    BOOL bAutoPosition;
+    UINT uHistoryBufferSize;
+    UINT uNumberOfHistoryBuffers;
+    BOOL bHistoryNoDup;
+    COLORREF ColorTable[16];
+} NT_CONSOLE_PROPS, *LPNT_CONSOLE_PROPS;
+
+typedef struct {
+    DATABLOCK_HEADER dbh;
+    UINT uCodePage;
+} NT_FE_CONSOLE_PROPS, *LPNT_FE_CONSOLE_PROPS;
 
 typedef struct {
     DATABLOCK_HEADER dbh;
@@ -1717,10 +1755,9 @@ BOOL WINAPI WriteCabinetState(CABINETSTATE *);
 
 /* PathResolve flags */
 #define PRF_VERIFYEXISTS         0x01
-#define PRF_EXECUTABLE           0x02
 #define PRF_TRYPROGRAMEXTENSIONS 0x03
 #define PRF_FIRSTDIRDEF          0x04
-#define PRF_DONTFINDLINK         0x08
+#define PRF_DONTFINDLNK          0x08
 #define PRF_REQUIREABSOLUTE      0x10
 
 VOID WINAPI PathGetShortPath(LPWSTR pszPath);

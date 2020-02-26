@@ -24,7 +24,7 @@
 @ stdcall CorBindToRuntimeHost(wstr wstr wstr ptr long ptr ptr ptr)
 @ stub CorDllMainWorker
 @ stdcall CorExitProcess(long)
-@ stub CorGetSvc
+@ stdcall CorGetSvc(ptr)
 @ stdcall CorIsLatestSvc(ptr ptr)
 @ stub CorMarkThreadInThreadPool
 @ stub CorTickleSvc

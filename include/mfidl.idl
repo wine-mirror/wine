@@ -152,6 +152,11 @@ interface IMFRateControl : IUnknown
             [in, out, unique] float *rate);
 }
 
+typedef enum MFTIMER_FLAGS
+{
+    MFTIMER_RELATIVE = 0x00000001,
+} MFTIMER_FLAGS;
+
 [
     object,
     uuid(e56e4cbd-8f70-49d8-a0f8-edb3d6ab9bf2),
@@ -566,22 +571,28 @@ interface IMFSampleGrabberSinkCallback2 : IMFSampleGrabberSinkCallback
         [in] IMFAttributes *attributes);
 }
 
+cpp_quote("HRESULT WINAPI CreatePropertyStore(IPropertyStore **store);")
+cpp_quote("HRESULT WINAPI MFCreateAudioRenderer(IMFAttributes *config, IMFMediaSink **sink);")
+cpp_quote("HRESULT WINAPI MFCreateAudioRendererActivate(IMFActivate **activate);")
 cpp_quote("HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **session);")
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **bytestream);" )
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStreamEx(IUnknown *stream, IMFByteStream **bytestream);")
 cpp_quote("HRESULT WINAPI MFCreatePresentationClock(IMFPresentationClock **clock);")
 cpp_quote("HRESULT WINAPI MFCreatePresentationDescriptor(DWORD count, IMFStreamDescriptor **descriptors,")
 cpp_quote("     IMFPresentationDescriptor **presentation_desc);")
+cpp_quote("HRESULT WINAPI MFCreateSimpleTypeHandler(IMFMediaTypeHandler **handler);")
 cpp_quote("HRESULT WINAPI MFCreateSampleGrabberSinkActivate(IMFMediaType *media_type,")
 cpp_quote("        IMFSampleGrabberSinkCallback *callback, IMFActivate **activate);")
 cpp_quote("HRESULT WINAPI MFCreateSequencerSource(IUnknown *reserved, IMFSequencerSource **seq_source);" )
 cpp_quote("HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver);")
+cpp_quote("HRESULT WINAPI MFCreateStandardQualityManager(IMFQualityManager **manager);")
 cpp_quote("HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD cMediaTypes,")
 cpp_quote("     IMFMediaType **types, IMFStreamDescriptor **descriptor);")
 cpp_quote("HRESULT WINAPI MFCreateSystemTimeSource(IMFPresentationTimeSource **time_source);")
 cpp_quote("HRESULT WINAPI MFCreateTopology(IMFTopology **topology);")
 cpp_quote("HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode **node);")
 cpp_quote("HRESULT WINAPI MFCreateTopoLoader(IMFTopoLoader **loader);")
+cpp_quote("HRESULT WINAPI MFCreateVideoRendererActivate(HWND hwnd, IMFActivate **activate);")
 cpp_quote("HRESULT WINAPI MFEnumDeviceSources(IMFAttributes *attributes, IMFActivate ***sources, UINT32 *count);")
 cpp_quote("HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *array);")
 cpp_quote("HRESULT WINAPI MFGetService(IUnknown *object, REFGUID service, REFIID iid, void **obj);")
@@ -737,6 +748,59 @@ interface IMFShutdown : IUnknown
     HRESULT GetShutdownStatus([out] MFSHUTDOWN_STATUS *status);
 }
 
+[
+    object,
+    uuid(8d009d86-5b9f-4115-b1fc-9f80d52ab8ab),
+    local
+]
+interface IMFQualityManager : IUnknown
+{
+    HRESULT NotifyTopology([in] IMFTopology *topology);
+    HRESULT NotifyPresentationClock([in] IMFPresentationClock *clock);
+    HRESULT NotifyProcessInput(
+        [in] IMFTopologyNode *node,
+        [in] LONG input_index,
+        [in] IMFSample *sample);
+    HRESULT NotifyProcessOutput(
+        [in] IMFTopologyNode *node,
+        [in] LONG output_index,
+        [in] IMFSample *sample);
+    HRESULT NotifyQualityEvent(
+        [in] IUnknown *object,
+        [in] IMFMediaEvent *event);
+    HRESULT Shutdown();
+}
+
+typedef struct _MFT_REGISTRATION_INFO
+{
+    CLSID clsid;
+    GUID guidCategory;
+    UINT32 uiFlags;
+    LPCWSTR pszName;
+    DWORD cInTypes;
+    [size_is(cInTypes)] MFT_REGISTER_TYPE_INFO *pInTypes;
+    DWORD cOutTypes;
+    [size_is(cOutTypes)] MFT_REGISTER_TYPE_INFO *pOutTypes;
+} MFT_REGISTRATION_INFO;
+
+[
+    object,
+    uuid(149c4d73-b4be-4f8d-8b87-079e926b6add)
+]
+interface IMFLocalMFTRegistration : IUnknown
+{
+    HRESULT RegisterMFTs([in, size_is(count)] MFT_REGISTRATION_INFO *info, [in] DWORD count);
+}
+
+[
+    object,
+    uuid(0e1d6009-c9f3-442d-8c51-a42d2d49452f),
+]
+interface IMFMediaSourceTopologyProvider : IUnknown
+{
+    HRESULT GetMediaSourceTopology([in] IMFPresentationDescriptor *pd, [out] IMFTopology **topology);
+}
+
 cpp_quote("#define MF_RESOLUTION_MEDIASOURCE                                           0x00000001")
 cpp_quote("#define MF_RESOLUTION_BYTESTREAM                                            0x00000002")
 cpp_quote("#define MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE 0x00000010")
@@ -761,9 +825,9 @@ cpp_quote("EXTERN_GUID(MF_SD_MUTUALLY_EXCLUSIVE,      0x023ef79c, 0x388d, 0x487f
 cpp_quote("EXTERN_GUID(MF_SD_PROTECTED,               0x00af2181, 0xbdc2, 0x423c, 0xab, 0xca, 0xf5, 0x03, 0x59, 0x3b, 0xc1, 0x21);")
 cpp_quote("EXTERN_GUID(MF_SD_STREAM_NAME,             0x4f1b099d, 0xd314, 0x41e5, 0xa7, 0x81, 0x7f, 0xef, 0xaa, 0x4c, 0x50, 0x1f);")
 cpp_quote("EXTERN_GUID(MF_SD_SAMI_LANGUAGE,           0x36fcb98a, 0x6cd0, 0x44cb, 0xac, 0xb9, 0xa8, 0xf5, 0x60, 0x0d, 0xd0, 0xbb);")
-
 cpp_quote("EXTERN_GUID(MF_PD_PMPHOST_CONTEXT,         0x6c990d31, 0xbb8e, 0x477a, 0x85, 0x98, 0x0d, 0x5d, 0x96, 0xfc, 0xd8, 0x8a);")
 cpp_quote("EXTERN_GUID(MF_PD_APP_CONTEXT,             0x6c990d32, 0xbb8e, 0x477a, 0x85, 0x98, 0x0d, 0x5d, 0x96, 0xfc, 0xd8, 0x8a);")
+cpp_quote("EXTERN_GUID(MF_PD_DURATION,                0x6c990d33, 0xbb8e, 0x477a, 0x85, 0x98, 0x0d, 0x5d, 0x96, 0xfc, 0xd8, 0x8a);")
 cpp_quote("EXTERN_GUID(MF_PD_TOTAL_FILE_SIZE,         0x6c990d34, 0xbb8e, 0x477a, 0x85, 0x98, 0x0d, 0x5d, 0x96, 0xfc, 0xd8, 0x8a);")
 cpp_quote("EXTERN_GUID(MF_PD_AUDIO_ENCODING_BITRATE,  0x6c990d35, 0xbb8e, 0x477a, 0x85, 0x98, 0x0d, 0x5d, 0x96, 0xfc, 0xd8, 0x8a);")
 cpp_quote("EXTERN_GUID(MF_PD_VIDEO_ENCODING_BITRATE,  0x6c990d36, 0xbb8e, 0x477a, 0x85, 0x98, 0x0d, 0x5d, 0x96, 0xfc, 0xd8, 0x8a);")
@@ -837,8 +901,18 @@ cpp_quote("EXTERN_GUID(MF_TOPOLOGY_START_TIME_ON_PRESENTATION_SWITCH, 0xc8cc113f
 cpp_quote("EXTERN_GUID(MF_TOPOLOGY_STATIC_PLAYBACK_OPTIMIZATIONS, 0xb86cac42, 0x41a6, 0x4b79, 0x89, 0x7a, 0x1a, 0xb0, 0xe5, 0x2b, 0x4a, 0x1b);")
 
 cpp_quote("EXTERN_GUID(MF_RATE_CONTROL_SERVICE, 0x866fa297, 0xb802, 0x4bf8, 0x9d, 0xc9, 0x5e, 0x3b, 0x6a, 0x9f, 0x53, 0xc9);")
+cpp_quote("EXTERN_GUID(MF_LOCAL_MFT_REGISTRATION_SERVICE, 0xddf5cf9c, 0x4506, 0x45aa, 0xab, 0xf0, 0x6d, 0x5d, 0x94, 0xdd, 0x1b, 0x4a);")
 
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_SAMPLE_TIME_OFFSET, 0x62e3d776, 0x8100, 0x4e03, 0xa6, 0xe8, 0xbd, 0x38, 0x57, 0xac, 0x9c, 0x47);")
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_IGNORE_CLOCK, 0x0efda2c0, 0x2b69, 0x4e2e, 0xab, 0x8d, 0x46, 0xdc, 0xbf, 0xf7, 0xd2, 0x5d);")
+
+cpp_quote("EXTERN_GUID(MF_SESSION_TOPOLOADER, 0x1e83d482, 0x1f1c, 0x4571, 0x84, 0x05, 0x88, 0xf4, 0xb2, 0x18, 0x1f, 0x71);")
+cpp_quote("EXTERN_GUID(MF_SESSION_GLOBAL_TIME, 0x1e83d482, 0x1f1c, 0x4571, 0x84, 0x05, 0x88, 0xf4, 0xb2, 0x18, 0x1f, 0x72);")
+cpp_quote("EXTERN_GUID(MF_SESSION_QUALITY_MANAGER, 0x1e83d482, 0x1f1c, 0x4571, 0x84, 0x05, 0x88, 0xf4, 0xb2, 0x18, 0x1f, 0x73);")
+cpp_quote("EXTERN_GUID(MF_SESSION_CONTENT_PROTECTION_MANAGER, 0x1e83d482, 0x1f1c, 0x4571, 0x84, 0x05, 0x88, 0xf4, 0xb2, 0x18, 0x1f, 0x74);")
+cpp_quote("EXTERN_GUID(MF_SESSION_SERVER_CONTEXT, 0xafe5b291, 0x50fa, 0x46e8, 0xb9, 0xbe, 0x0c, 0x0c, 0x3c, 0xe4, 0xb3, 0xa5);")
+cpp_quote("EXTERN_GUID(MF_SESSION_REMOTE_SOURCE_MODE, 0xf4033ef4, 0x9bb3, 0x4378, 0x94, 0x1f, 0x85, 0xa0, 0x85, 0x6b, 0xc2, 0x44);")
+cpp_quote("EXTERN_GUID(MF_SESSION_APPROX_EVENT_OCCURRENCE_TIME, 0x190e852f, 0x6238, 0x42d1, 0xb5, 0xaf, 0x69, 0xea, 0x33, 0x8e, 0xf8, 0x50);")
+cpp_quote("EXTERN_GUID(MF_PMP_SERVER_CONTEXT, 0x2f00c910, 0xd2cf, 0x4278, 0x8b, 0x6a, 0xd0, 0x77, 0xfa, 0xc3, 0xa2, 0x5f);")
 
 cpp_quote("EXTERN_GUID(CLSID_VideoProcessorMFT, 0x88753b26, 0x5b24, 0x49bd, 0xb2, 0xe7, 0xc, 0x44, 0x5c, 0x78, 0xc9, 0x82);")

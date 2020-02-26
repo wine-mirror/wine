@@ -23,7 +23,6 @@
 #ifndef _WINE_INTERNET_H_
 #define _WINE_INTERNET_H_
 
-#include "wine/unicode.h"
 #include "wine/heap.h"
 #include "wine/list.h"
 
@@ -102,7 +101,7 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     if(str) {
         DWORD size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str)+1)*sizeof(WCHAR);
         ret = heap_alloc(size);
         if(ret)
             memcpy(ret, str, size);
@@ -209,7 +208,7 @@ static inline substr_t substr(const WCHAR *str, size_t len)
 
 static inline substr_t substrz(const WCHAR *str)
 {
-    return substr(str, strlenW(str));
+    return substr(str, lstrlenW(str));
 }
 
 static inline void WININET_find_data_WtoA(LPWIN32_FIND_DATAW dataW, LPWIN32_FIND_DATAA dataA)
@@ -281,6 +280,7 @@ struct _object_header_t
     ULONG  ErrorMask;
     DWORD  dwInternalFlags;
     LONG   refs;
+    BOOL   decoding;
     INTERNET_STATUS_CALLBACK lpfnStatusCB;
     struct list entry;
     struct list children;
@@ -334,8 +334,8 @@ typedef struct {
 
 typedef struct {
     data_stream_t data_stream;
-    DWORD content_length;
-    DWORD content_read;
+    ULONGLONG content_length;
+    ULONGLONG content_read;
 } netconn_stream_t;
 
 #define READ_BUFFER_SIZE 8192
@@ -371,13 +371,12 @@ typedef struct
     struct HttpAuthInfo *proxyAuthInfo;
 
     CRITICAL_SECTION read_section;  /* section to protect the following fields */
-    DWORD contentLength;  /* total number of bytes to be read */
+    ULONGLONG contentLength;  /* total number of bytes to be read */
     BOOL  read_gzip;      /* are we reading in gzip mode? */
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */
     BYTE  read_buf[READ_BUFFER_SIZE]; /* buffer for already read but not returned data */
 
-    BOOL decoding;
     data_stream_t *data_stream;
     netconn_stream_t netconn_stream;
 } http_request_t;
@@ -456,6 +455,7 @@ static inline req_file_t *req_file_addref(req_file_t *req_file)
 BOOL init_urlcache(void) DECLSPEC_HIDDEN;
 void free_urlcache(void) DECLSPEC_HIDDEN;
 void free_cookie(void) DECLSPEC_HIDDEN;
+void free_authorization_cache(void) DECLSPEC_HIDDEN;
 
 void init_winsock(void) DECLSPEC_HIDDEN;
 

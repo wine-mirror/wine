@@ -3638,7 +3638,7 @@
 @ cdecl _Current_set(wstr) tr2_sys__Current_set_wchar
 @ extern _Denorm _Denorm
 @ cdecl _Dtest(ptr) _Dtest
-@ cdecl _Equivalent(wstr wstr) tr2_sys__Equivalent_wchar
+@ cdecl _Equivalent(wstr wstr) _Equivalent
 @ cdecl _Exp(ptr double long) _Exp
 @ stub _FCosh
 @ extern _FDenorm _FDenorm

@@ -247,7 +247,8 @@ static void test_audioclient(void)
     test_uninitialized(ac);
 
     hr = IAudioClient_Initialize(ac, 3, 0, 5000000, 0, pwfx, NULL);
-    ok(hr == AUDCLNT_E_NOT_INITIALIZED, "Initialize with invalid sharemode returns %08x\n", hr);
+    ok(broken(hr == AUDCLNT_E_NOT_INITIALIZED) || /* <= win8 */
+            hr == E_INVALIDARG, "Initialize with invalid sharemode returns %08x\n", hr);
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0xffffffff, 5000000, 0, pwfx, NULL);
     ok(hr == E_INVALIDARG ||
@@ -744,7 +745,7 @@ static void test_padding(void)
         /* win10 appears not to clear the buffer */
         for(i = 0; i < psize * pwfx->nBlockAlign; ++i){
             if(buf[i] != silence){
-                ok(0, "buffer has data in it already, i: %u, valu: %f\n", i, *((float*)buf));
+                ok(0, "buffer has data in it already, i: %u, value: %f\n", i, *((float*)buf));
                 break;
             }
         }

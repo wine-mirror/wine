@@ -90,8 +90,6 @@ DEFINE_EXPECT(Caller_QS_SecMgr);
 DEFINE_EXPECT(QI_IObjectWithSite);
 DEFINE_EXPECT(SetSite);
 
-static const WCHAR testW[] = {'t','e','s','t',0};
-
 static HRESULT QS_SecMgr_hres;
 static HRESULT ProcessUrlAction_hres;
 static DWORD ProcessUrlAction_policy;
@@ -115,25 +113,6 @@ const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
 #define DISPID_TEST_REPORTSUCCESS    0x1000
 
 #define DISPID_GLOBAL_OK             0x2000
-
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len-1);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
-    return lstrcmpA(buf, stra);
-}
 
 static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppv)
 {
@@ -221,10 +200,8 @@ static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pcti
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
-                                              LCID lcid, ITypeInfo **ppTInfo)
+static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
@@ -282,7 +259,7 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 
 static HRESULT WINAPI Test_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    if(!strcmp_wa(bstrName, "reportSuccess")) {
+    if(!lstrcmpW(bstrName, L"reportSuccess")) {
         ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
         *pid = DISPID_TEST_REPORTSUCCESS;
         return S_OK;
@@ -338,7 +315,7 @@ static IDispatchEx testObj = { &testObjVtbl };
 
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    if(!strcmp_wa(bstrName, "ok")) {
+    if(!lstrcmpW(bstrName, L"ok")) {
         ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
         *pid = DISPID_GLOBAL_OK;
         return S_OK;
@@ -617,7 +594,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
 {
     ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %x\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
-    ok(!strcmp_wa(pstrName, "test"), "pstrName = %s\n", wine_dbgstr_w(pstrName));
+    ok(!lstrcmpW(pstrName, L"test"), "pstrName = %s\n", wine_dbgstr_w(pstrName));
 
     *ppiunkItem = (IUnknown*)&globalObj;
     return S_OK;
@@ -701,15 +678,12 @@ static void set_safety_options(IUnknown *unk, BOOL use_sec_mgr)
     IObjectSafety_Release(safety);
 }
 
-#define parse_script_a(p,s) _parse_script_a(__LINE__,p,s)
-static void _parse_script_a(unsigned line, IActiveScriptParse *parser, const char *script)
+#define parse_script(p,s) _parse_script(__LINE__,p,s)
+static void _parse_script(unsigned line, IActiveScriptParse *parser, const WCHAR *script)
 {
-    BSTR str;
     HRESULT hres;
 
-    str = a2bstr(script);
-    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-    SysFreeString(str);
+    hres = IActiveScriptParse_ParseScriptText(parser, script, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 }
 
@@ -749,7 +723,7 @@ static IActiveScriptParse *create_script(BOOL skip_tests, BOOL use_sec_mgr)
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
 
-    hres = IActiveScript_AddNamedItem(script, testW,
+    hres = IActiveScript_AddNamedItem(script, L"test",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
@@ -759,36 +733,33 @@ static IActiveScriptParse *create_script(BOOL skip_tests, BOOL use_sec_mgr)
     IActiveScript_Release(script);
 
     if(!skip_tests) {
-        parse_script_a(parser,
-                "function testException(func, type, number) {\n"
-                "    try {\n"
-                "        func();\n"
-                "    }catch(e) {\n"
-                "        ok(e.name === type, 'e.name = ' + e.name + ', expected ' + type)\n"
-                "        ok(e.number === number, 'e.number = ' + e.number + ', expected ' + number);\n"
-                "        return;\n"
-                "    }\n"
-                "    ok(false, 'exception expected');\n"
-                "}");
+        parse_script(parser,
+                L"function testException(func, type, number) {\n"
+                L"    try {\n"
+                L"        func();\n"
+                L"    }catch(e) {\n"
+                L"        ok(e.name === type, 'e.name = ' + e.name + ', expected ' + type)\n"
+                L"        ok(e.number === number, 'e.number = ' + e.number + ', expected ' + number);\n"
+                L"        return;\n"
+                L"    }\n"
+                L"    ok(false, 'exception expected');\n"
+                L"}");
     }
 
     return parser;
 }
 
-static IDispatchEx *parse_procedure_a(IActiveScriptParse *parser, const char *src)
+static IDispatchEx *parse_procedure(IActiveScriptParse *parser, const WCHAR *src)
 {
     IActiveScriptParseProcedure2 *parse_proc;
     IDispatchEx *dispex;
     IDispatch *disp;
-    BSTR str;
     HRESULT hres;
 
     hres = IActiveScriptParse_QueryInterface(parser, &IID_IActiveScriptParseProcedure2, (void**)&parse_proc);
     ok(hres == S_OK, "Could not get IActiveScriptParseProcedure2: %08x\n", hres);
 
-    str = a2bstr(src);
-    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, str, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, &disp);
-    SysFreeString(str);
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, src, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, &disp);
     IActiveScriptParseProcedure2_Release(parse_proc);
     ok(hres == S_OK, "ParseProcedureText failed: %08x\n", hres);
     ok(disp != NULL, "disp == NULL\n");
@@ -825,7 +796,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(QueryCustomPolicy);
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
-    parse_script_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
+    parse_script(parser, L"(new ActiveXObject('Wine.Test')).reportSuccess();");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -833,7 +804,7 @@ static void test_ActiveXObject(void)
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
-    proc = parse_procedure_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
+    proc = parse_procedure(parser, L"(new ActiveXObject('Wine.Test')).reportSuccess();");
 
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
@@ -863,7 +834,7 @@ static void test_ActiveXObject(void)
     IActiveScriptParse_Release(parser);
 
     parser = create_script(FALSE, TRUE);
-    proc = parse_procedure_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
+    proc = parse_procedure(parser, L"(new ActiveXObject('Wine.Test')).reportSuccess();");
 
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
@@ -879,7 +850,7 @@ static void test_ActiveXObject(void)
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
 
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.TestABC'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.TestABC'); }, 'Error', -2146827859);");
 
     IDispatchEx_Release(proc);
     IActiveScriptParse_Release(parser);
@@ -888,7 +859,7 @@ static void test_ActiveXObject(void)
     QS_SecMgr_hres = E_NOINTERFACE;
 
     SET_EXPECT(Host_QS_SecMgr);
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
     CHECK_CALLED(Host_QS_SecMgr);
 
     IActiveScriptParse_Release(parser);
@@ -898,7 +869,7 @@ static void test_ActiveXObject(void)
 
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
 
@@ -909,7 +880,7 @@ static void test_ActiveXObject(void)
 
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
 
@@ -921,7 +892,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -935,7 +906,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -952,7 +923,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(QueryCustomPolicy);
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
-    parse_script_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
+    parse_script(parser, L"(new ActiveXObject('Wine.Test')).reportSuccess();");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -969,7 +940,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -980,7 +951,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
@@ -991,7 +962,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(ProcessUrlAction);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QueryCustomPolicy);
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
@@ -1003,7 +974,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(CreateInstance);
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
-    parse_script_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
+    parse_script(parser, L"(new ActiveXObject('Wine.Test')).reportSuccess();");
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
@@ -1020,7 +991,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(SetSite);
     SET_EXPECT(reportSuccess);
-    parse_script_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
+    parse_script(parser, L"(new ActiveXObject('Wine.Test')).reportSuccess();");
     CHECK_CALLED(Host_QS_SecMgr);
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
@@ -1035,7 +1006,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(QueryCustomPolicy);
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(SetSite);
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
     CHECK_CALLED(ProcessUrlAction);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QueryCustomPolicy);
@@ -1053,7 +1024,7 @@ static void test_ActiveXObject(void)
     SET_EXPECT(QI_IObjectWithSite);
     SET_EXPECT(reportSuccess);
     SET_EXPECT(SetSite);
-    parse_script_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
+    parse_script(parser, L"(new ActiveXObject('Wine.Test')).reportSuccess();");
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(reportSuccess);
@@ -1065,7 +1036,7 @@ static void test_ActiveXObject(void)
     object_with_site = &ObjectWithSite;
     AllowIServiceProvider = FALSE;
 
-    parse_script_a(parser, "testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
+    parse_script(parser, L"testException(function() { new ActiveXObject('Wine.Test'); }, 'Error', -2146827859);");
 
     IActiveScriptParse_Release(parser);
 }
@@ -1118,17 +1089,14 @@ static BOOL check_jscript(void)
 {
     IActiveScriptProperty *script_prop;
     IActiveScriptParse *parser;
-    BSTR str;
     HRESULT hres;
 
     parser = create_script(TRUE, TRUE);
     if(!parser)
         return FALSE;
 
-    str = a2bstr("if(!('localeCompare' in String.prototype)) throw 1;");
-    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-    SysFreeString(str);
-
+    hres = IActiveScriptParse_ParseScriptText(parser, L"if(!('localeCompare' in String.prototype)) throw 1;",
+                                              NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     if(hres == S_OK)
         hres = IActiveScriptParse_QueryInterface(parser, &IID_IActiveScriptProperty, (void**)&script_prop);
     IActiveScriptParse_Release(parser);

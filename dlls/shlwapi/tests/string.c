@@ -69,12 +69,6 @@ static LPWSTR  (WINAPI *pStrChrNW)(LPCWSTR,WCHAR,UINT);
 static BOOL    (WINAPI *pStrToInt64ExA)(LPCSTR,DWORD,LONGLONG*);
 static BOOL    (WINAPI *pStrToInt64ExW)(LPCWSTR,DWORD,LONGLONG*);
 
-static int strcmpW(const WCHAR *str1, const WCHAR *str2)
-{
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
 /* StrToInt/StrToIntEx results */
 typedef struct tagStrToIntResult
 {
@@ -830,14 +824,14 @@ static void test_StrRetToBSTR(void)
     U(strret).pOleStr = CoDupStrW("Test");
     bstr = 0;
     ret = pStrRetToBSTR(&strret, NULL, &bstr);
-    ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
+    ok(ret == S_OK && bstr && !wcscmp(bstr, szTestW),
        "STRRET_WSTR: dup failed, ret=0x%08x, bstr %p\n", ret, bstr);
     SysFreeString(bstr);
 
     strret.uType = STRRET_CSTR;
     lstrcpyA(U(strret).cStr, "Test");
     ret = pStrRetToBSTR(&strret, NULL, &bstr);
-    ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
+    ok(ret == S_OK && bstr && !wcscmp(bstr, szTestW),
        "STRRET_CSTR: dup failed, ret=0x%08x, bstr %p\n", ret, bstr);
     SysFreeString(bstr);
 
@@ -845,7 +839,7 @@ static void test_StrRetToBSTR(void)
     U(strret).uOffset = 1;
     strcpy((char*)&iidl, " Test");
     ret = pStrRetToBSTR(&strret, iidl, &bstr);
-    ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
+    ok(ret == S_OK && bstr && !wcscmp(bstr, szTestW),
        "STRRET_OFFSET: dup failed, ret=0x%08x, bstr %p\n", ret, bstr);
     SysFreeString(bstr);
 

@@ -1803,7 +1803,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     msg->lparam    = (input->kbd.scan << 16) | 1u; /* repeat count */
     if (origin == IMO_INJECTED) msg_data->flags = LLKHF_INJECTED;
 
-    if (input->kbd.flags & KEYEVENTF_UNICODE)
+    if (input->kbd.flags & KEYEVENTF_UNICODE && !vkey)
     {
         msg->wparam = VK_PACKET;
     }
@@ -2393,6 +2393,12 @@ DECL_HANDLER(get_message)
     unsigned int filter = req->flags >> 16;
 
     reply->active_hooks = get_active_hooks();
+
+    if (get_win && get_win != 1 && get_win != -1 && !get_user_object( get_win, USER_WINDOW ))
+    {
+        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+        return;
+    }
 
     if (!queue) return;
     queue->last_get_msg = current_time;

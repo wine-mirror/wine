@@ -495,6 +495,7 @@ NTSTATUS FILE_GetNtStatus(void)
     case ECONNRESET:return STATUS_PIPE_DISCONNECTED;
     case EFAULT:    return STATUS_ACCESS_VIOLATION;
     case ESPIPE:    return STATUS_ILLEGAL_FUNCTION;
+    case ELOOP:     return STATUS_REPARSE_POINT_NOT_RESOLVED;
 #ifdef ETIME /* Missing on FreeBSD */
     case ETIME:     return STATUS_IO_TIMEOUT;
 #endif
@@ -1772,7 +1773,7 @@ static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS st
                     if (event->name[i] == '/') event->name[i] = '\\';
 
                 pfni->Action = event->action;
-                pfni->FileNameLength = ntdll_umbstowcs( 0, event->name, event->len, pfni->FileName,
+                pfni->FileNameLength = ntdll_umbstowcs( event->name, event->len, pfni->FileName,
                              (left - offsetof(FILE_NOTIFY_INFORMATION, FileName)) / sizeof(WCHAR));
                 last_entry_offset = &pfni->NextEntryOffset;
 
@@ -1907,10 +1908,9 @@ static int futimens( int fd, const struct timespec spec[2] )
 #define UTIME_OMIT ((1 << 30) - 2)
 #endif
 
-static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_INTEGER *atime )
+static BOOL set_file_times_precise( int fd, const LARGE_INTEGER *mtime,
+        const LARGE_INTEGER *atime, NTSTATUS *status )
 {
-    NTSTATUS status = STATUS_SUCCESS;
-
 #ifdef HAVE_FUTIMENS
     struct timespec tv[2];
 
@@ -1926,12 +1926,29 @@ static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_
         tv[1].tv_sec = mtime->QuadPart / 10000000 - SECS_1601_TO_1970;
         tv[1].tv_nsec = (mtime->QuadPart % 10000000) * 100;
     }
-    if (futimens( fd, tv ) == -1) status = FILE_GetNtStatus();
+#ifdef __APPLE__
+    if (!&futimens) return FALSE;
+#endif
+    if (futimens( fd, tv ) == -1) *status = FILE_GetNtStatus();
+    else *status = STATUS_SUCCESS;
+    return TRUE;
+#else
+    return FALSE;
+#endif
+}
 
-#elif defined(HAVE_FUTIMES) || defined(HAVE_FUTIMESAT)
+static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_INTEGER *atime )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+#if defined(HAVE_FUTIMES) || defined(HAVE_FUTIMESAT)
     struct timeval tv[2];
     struct stat st;
+#endif
 
+    if (set_file_times_precise( fd, mtime, atime, &status ))
+        return status;
+
+#if defined(HAVE_FUTIMES) || defined(HAVE_FUTIMESAT)
     if (!atime->QuadPart || !mtime->QuadPart)
     {
 
@@ -2253,7 +2270,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         0,                                             /* FileQuotaInformation */
         0,                                             /* FileReparsePointInformation */
         sizeof(FILE_NETWORK_OPEN_INFORMATION),         /* FileNetworkOpenInformation */
-        0,                                             /* FileAttributeTagInformation */
+        sizeof(FILE_ATTRIBUTE_TAG_INFORMATION),        /* FileAttributeTagInformation */
         0,                                             /* FileTrackingInformation */
         0,                                             /* FileIdBothDirectoryInformation */
         0,                                             /* FileIdFullDirectoryInformation */
@@ -2471,6 +2488,15 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
             *(ULONGLONG *)&info->FileId = st.st_ino;
         }
         break;
+    case FileAttributeTagInformation:
+        if (fd_get_file_info( fd, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
+        else
+        {
+            FILE_ATTRIBUTE_TAG_INFORMATION *info = ptr;
+            info->FileAttributes = attr;
+            info->ReparseTag = 0; /* FIXME */
+        }
+        break;
     default:
         FIXME("Unsupported class (%d)\n", class);
         io->u.Status = STATUS_NOT_IMPLEMENTED;
@@ -2513,12 +2539,16 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         {
             struct stat st;
             const FILE_BASIC_INFORMATION *info = ptr;
+            LARGE_INTEGER mtime, atime;
 
             if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
                 return io->u.Status;
 
-            if (info->LastAccessTime.QuadPart || info->LastWriteTime.QuadPart)
-                io->u.Status = set_file_times( fd, &info->LastWriteTime, &info->LastAccessTime );
+            mtime.QuadPart = info->LastWriteTime.QuadPart == -1 ? 0 : info->LastWriteTime.QuadPart;
+            atime.QuadPart = info->LastAccessTime.QuadPart == -1 ? 0 : info->LastAccessTime.QuadPart;
+
+            if (atime.QuadPart || mtime.QuadPart)
+                io->u.Status = set_file_times( fd, &mtime, &atime );
 
             if (io->u.Status == STATUS_SUCCESS && info->FileAttributes)
             {
@@ -3251,7 +3281,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
  *  restart       [I] restart EA scan
  *
  * RETURNS
- *  Success: 0. Atrributes read into buffer
+ *  Success: 0. Attributes read into buffer
  *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtQueryEaFile( HANDLE hFile, PIO_STATUS_BLOCK iosb, PVOID buffer, ULONG length,

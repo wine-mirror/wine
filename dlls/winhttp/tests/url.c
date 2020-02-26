@@ -33,80 +33,45 @@ static WCHAR username[] = {'u','s','e','r','n','a','m','e',0};
 static WCHAR password[] = {'p','a','s','s','w','o','r','d',0};
 static WCHAR about[]    = {'/','s','i','t','e','/','a','b','o','u','t',0};
 static WCHAR query[]    = {'?','q','u','e','r','y',0};
-static WCHAR escape[]   = {' ','!','"','#','$','%','&','\'','(',')','*','+',',','-','.','/',':',';','<','=','>','?','@','[','\\',']','^','_','`','{','|','}','~',0};
+static WCHAR escape[]   = {' ','!','"','#','$','%','&','\'','(',')','*','+',',','-','.','/',':',';','<','=','>',
+                           '?','@','[','\\',']','^','_','`','{','|','}','~',0};
 static WCHAR escape2[]  = {'\r',0x1f,' ','\n',0x7f,'\r','\n',0};
 static WCHAR escape3[]  = {'?','t','e','x','t','=',0xfb00,0};
 static WCHAR escape4[]  = {'/','t','e','x','t','=',0xfb00,0};
 
-static const WCHAR url1[]  =
-    {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
-     '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','s','i','t','e','/','a','b','o','u','t','?','q','u','e','r','y',0};
-static const WCHAR url2[] = {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':',0};
-static const WCHAR url3[] =
-    {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','s','i','t','e','/','a','b','o','u','t','?','q','u','e','r','y',0};
-static const WCHAR url4[] = {'h','t','t','p',':','/','/',0};
-static const WCHAR url5[] =
-    {'f','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
-     '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g',':','8','0','/','s','i','t','e','/','a','b','o','u','t','?','q','u','e','r','y',0};
-static const WCHAR url6[] =
-    {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
-     '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g',':','4','2','/','s','i','t','e','/','a','b','o','u','t','?','q','u','e','r','y',0};
-static const WCHAR url7[] =
-    {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
-     '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','s','i','t','e','/','a','b','o','u','t',
-     '%','2','0','!','%','2','2','%','2','3','$','%','2','5','&','\'','(',')','*','+',',','-','.','/',':',';','%','3','C','=','%','3','E','?','@','%',
-     '5','B','%','5','C','%','5','D','%','5','E','_','%','6','0','%','7','B','%','7','C','%','7','D','%','7','E',0};
-static const WCHAR url8[] =
-    {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
-     '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g',':','0','/','s','i','t','e','/','a','b','o','u','t','?','q','u','e','r','y',0};
-static const WCHAR url9[] =
-    {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
-     '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g',':','8','0','/','s','i','t','e','/','a','b','o','u','t','?','q','u','e','r','y',0};
-static const WCHAR url10[] =
-    {'h','t','t','p','s',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
-     '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g',':','4','4','3','/','s','i','t','e','/','a','b','o','u','t','?','q','u','e','r','y',0};
-static const WCHAR url11[] =
-    {'h','t','t','p',':','/','/','e','x','a','m','p','l','e','.','n','e','t','/','p','a','t','h','?','v','a','r','1','=','e','x','a','m','p','l','e','@','e','x','a','m','p','l','e','.','c','o','m','&','v','a','r','2','=','x','&','v','a','r','3','=','y', 0};
-static const WCHAR url12[] =
-    {'h','t','t','p','s',':','/','/','t','o','o','l','s','.','g','o','o','g','l','e','.','c','o','m','/','s','e','r','v','i','c','e','/','u','p','d','a','t','e','2','?','w','=','3',':','B','x','D','H','o','W','y','8','e','z','M',0};
-static const WCHAR url13[] =
-    {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o',' ','g','/','p','a','t','h',' ','w','i','t','h',' ','s','p','a','c','e','s',0};
-static const WCHAR url14[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','t','e','s','t',0};
-static const WCHAR url15[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',':','6','5','5','3','6',0};
-static const WCHAR url16[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',':','0',0};
-static const WCHAR url17[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',':',0};
-static const WCHAR url18[] =
-    {'h','t','t','p',':','/','/','%','0','D','%','1','F','%','2','0','%','0','A','%','7','F','%','0','D','%','0','A',0};
-static const WCHAR url19[] =
-    {'h','t','t','p',':','/','/','?','t','e','x','t','=',0xfb00,0};
-static const WCHAR url20[] =
-    {'h','t','t','p',':','/','/','/','t','e','x','t','=',0xfb00,0};
-static const WCHAR url21[] =
-    {'h','t','t','p','s',':','/','/','n','b','a','2','k','1','9','-','w','s','.','2','k','s','p','o','r','t','s','.','c','o','m',':','1','9','1','3','3',
-     '/','n','b','a','/','v','4','/','A','c','c','o','u','n','t','s','/','g','e','t','_','a','c','c','o','u','n','t','?','x','=','3','7','8','9','5','2',
-     '6','7','7','5','2','6','5','6','6','3','8','7','6',0};
+static const WCHAR url1[] = L"http://username:password@www.winehq.org/site/about?query";
+static const WCHAR url2[] = L"http://username:";
+static const WCHAR url3[] = L"http://www.winehq.org/site/about?query";
+static const WCHAR url4[] = L"http://";
+static const WCHAR url5[] = L"ftp://username:password@www.winehq.org:80/site/about?query";
+static const WCHAR url6[] = L"http://username:password@www.winehq.org:42/site/about?query";
+static const WCHAR url7[] = L"http://username:password@www.winehq.org/site/about%20!%22%23$%25&'()"
+                             "*+,-./:;%3C=%3E?@%5B%5C%5D%5E_%60%7B%7C%7D%7E";
+static const WCHAR url8[] = L"http://username:password@www.winehq.org:0/site/about?query";
+static const WCHAR url9[] = L"http://username:password@www.winehq.org:80/site/about?query";
+static const WCHAR url10[] = L"https://username:password@www.winehq.org:443/site/about?query";
+static const WCHAR url11[] = L"http://example.net/path?var1=example@example.com&var2=x&var3=y";
+static const WCHAR url12[] = L"https://tools.google.com/service/update2?w=3:BxDHoWy8ezM";
+static const WCHAR url13[] = L"http://winehq.o g/path with spaces";
+static const WCHAR url14[] = L"http://www.winehq.org/test";
+static const WCHAR url15[] = L"http://winehq.org:65536";
+static const WCHAR url16[] = L"http://winehq.org:0";
+static const WCHAR url17[] = L"http://winehq.org:";
+static const WCHAR url18[] = L"http://%0D%1F%20%0A%7F%0D%0A";
+static const WCHAR url19[] = L"http://?text=\xfb00";
+static const WCHAR url20[] = L"http:///text=\xfb00";
+static const WCHAR url21[] = L"https://nba2k19-ws.2ksports.com:19133/nba/v4/Accounts/get_account?x=3789526775265663876";
 
-static const WCHAR url_k1[]  =
-    {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
-     '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','s','i','t','e','/','a','b','o','u','t',0};
-static const WCHAR url_k2[]  =
-    {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
-static const WCHAR url_k3[]  =
-    {'h','t','t','p','s',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','p','o','s','t','?',0};
-static const WCHAR url_k4[]  =
-    {'H','T','T','P',':','w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
-static const WCHAR url_k5[]  =
-    {'h','t','t','p',':','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
-static const WCHAR url_k6[]  =
-    {'w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
-static const WCHAR url_k7[]  =
-    {'w','w','w',0};
-static const WCHAR url_k8[]  =
-    {'h','t','t','p',0};
-static const WCHAR url_k9[]  =
-    {'h','t','t','p',':','/','/','w','i','n','e','h','q','?',0};
-static const WCHAR url_k10[]  =
-    {'h','t','t','p',':','/','/','w','i','n','e','h','q','/','p','o','s','t',';','a',0};
+static const WCHAR url_k1[] = L"http://username:password@www.winehq.org/site/about";
+static const WCHAR url_k2[] = L"http://www.winehq.org";
+static const WCHAR url_k3[] = L"https://www.winehq.org/post?";
+static const WCHAR url_k4[] = L"HTTP:www.winehq.org";
+static const WCHAR url_k5[] = L"http:/www.winehq.org";
+static const WCHAR url_k6[] = L"www.winehq.org";
+static const WCHAR url_k7[] = L"www";
+static const WCHAR url_k8[] = L"http";
+static const WCHAR url_k9[] = L"http://winehq?";
+static const WCHAR url_k10[] = L"http://winehq/post;a";
 
 static void fill_url_components( URL_COMPONENTS *uc )
 {
@@ -427,10 +392,6 @@ static void reset_url_components( URL_COMPONENTS *uc )
 
 static void WinHttpCrackUrl_test( void )
 {
-    static const WCHAR hostnameW[] =
-        {'w','i','n','e','h','q','.','o',' ','g',0};
-    static const WCHAR pathW[] =
-        {'/','p','a','t','h','%','2','0','w','i','t','h','%','2','0','s','p','a','c','e','s',0};
     URL_COMPONENTSW uc;
     WCHAR scheme[20], user[20], pass[20], host[40], path[80], extra[40];
     DWORD error;
@@ -758,9 +719,9 @@ static void WinHttpCrackUrl_test( void )
     uc.nPort = 0;
     ret = WinHttpCrackUrl( url13, 0, ICU_ESCAPE|ICU_DECODE, &uc );
     ok( ret, "WinHttpCrackUrl failed le=%u\n", GetLastError() );
-    ok( !lstrcmpW( uc.lpszHostName, hostnameW ), "unexpected host name\n" );
-    ok( !lstrcmpW( uc.lpszUrlPath, pathW ), "unexpected path\n" );
-    ok( uc.dwUrlPathLength == lstrlenW(pathW), "got %u\n", uc.dwUrlPathLength );
+    ok( !lstrcmpW( uc.lpszHostName, L"winehq.o g" ), "unexpected host name\n" );
+    ok( !lstrcmpW( uc.lpszUrlPath, L"/path%20with%20spaces" ), "unexpected path\n" );
+    ok( uc.dwUrlPathLength == lstrlenW(L"/path%20with%20spaces"), "got %u\n", uc.dwUrlPathLength );
 
     uc.dwStructSize = sizeof(uc);
     uc.lpszScheme = NULL;

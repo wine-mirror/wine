@@ -111,6 +111,10 @@ static inline ULONGLONG monotonic_counter(void)
     static mach_timebase_info_data_t timebase;
 
     if (!timebase.denom) mach_timebase_info( &timebase );
+#ifdef HAVE_MACH_CONTINUOUS_TIME
+    if (&mach_continuous_time != NULL)
+        return mach_continuous_time() * timebase.numer / timebase.denom / 100;
+#endif
     return mach_absolute_time() * timebase.numer / timebase.denom / 100;
 #elif defined(HAVE_CLOCK_GETTIME)
     struct timespec ts;
@@ -552,6 +556,23 @@ NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER
     return STATUS_SUCCESS;
 }
 
+/******************************************************************************
+ *  RtlQueryPerformanceCounter   [NTDLL.@]
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH RtlQueryPerformanceCounter( LARGE_INTEGER *counter )
+{
+    counter->QuadPart = monotonic_counter();
+    return TRUE;
+}
+
+/******************************************************************************
+ *  RtlQueryPerformanceFrequency   [NTDLL.@]
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH RtlQueryPerformanceFrequency( LARGE_INTEGER *frequency )
+{
+    frequency->QuadPart = TICKSPERSEC;
+    return TRUE;
+}
 
 /******************************************************************************
  * NtGetTickCount   (NTDLL.@)
@@ -833,6 +854,8 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
 
     NtClose(hkey);
 
+    if (idx == 1) return;  /* registry info not initialized yet */
+
     FIXME("Can't find matching timezone information in the registry for "
           "%s, bias %d, std (d/m/y): %u/%02u/%04u, dlt (d/m/y): %u/%02u/%04u\n",
           tz_name, tzi->Bias,
@@ -1100,8 +1123,13 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
 /***********************************************************************
  *        RtlQueryUnbiasedInterruptTime [NTDLL.@]
  */
-NTSTATUS WINAPI RtlQueryUnbiasedInterruptTime(ULONGLONG *time)
+BOOL WINAPI RtlQueryUnbiasedInterruptTime(ULONGLONG *time)
 {
+    if (!time)
+    {
+        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
+        return FALSE;
+    }
     *time = monotonic_counter();
-    return STATUS_SUCCESS;
+    return TRUE;
 }

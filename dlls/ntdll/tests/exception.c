@@ -50,6 +50,7 @@ static ULONG     (WINAPI *pRtlRemoveVectoredContinueHandler)(PVOID handler);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+static NTSTATUS  (WINAPI *pNtQueryInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG, PULONG);
 static NTSTATUS  (WINAPI *pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG);
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS  (WINAPI *pNtClose)(HANDLE);
@@ -83,20 +84,6 @@ typedef struct
         ULONG JumpTarget;
     } ScopeRecord[1];
 } SCOPE_TABLE;
-
-typedef struct
-{
-    ULONG64               ControlPc;
-    ULONG64               ImageBase;
-    PRUNTIME_FUNCTION     FunctionEntry;
-    ULONG64               EstablisherFrame;
-    ULONG64               TargetIp;
-    PCONTEXT              ContextRecord;
-    void* /*PEXCEPTION_ROUTINE*/ LanguageHandler;
-    PVOID                 HandlerData;
-    PUNWIND_HISTORY_TABLE HistoryTable;
-    ULONG                 ScopeIndex;
-} DISPATCHER_CONTEXT;
 
 typedef struct _SETJMP_FLOAT128
 {
@@ -163,15 +150,15 @@ static BOOLEAN   (CDECL *pRtlAddFunctionTable)(RUNTIME_FUNCTION*, DWORD, DWORD64
 static BOOLEAN   (CDECL *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
 static BOOLEAN   (CDECL *pRtlInstallFunctionTableCallback)(DWORD64, DWORD64, DWORD, PGET_RUNTIME_FUNCTION_CALLBACK, PVOID, PCWSTR);
 static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionEntry)(ULONG64, ULONG64*, UNWIND_HISTORY_TABLE*);
-static DWORD     (CDECL *pRtlAddGrowableFunctionTable)(void**, RUNTIME_FUNCTION*, DWORD, DWORD, ULONG_PTR, ULONG_PTR);
-static void      (CDECL *pRtlGrowFunctionTable)(void*, DWORD);
-static void      (CDECL *pRtlDeleteGrowableFunctionTable)(void*);
+static DWORD     (WINAPI *pRtlAddGrowableFunctionTable)(void**, RUNTIME_FUNCTION*, DWORD, DWORD, ULONG_PTR, ULONG_PTR);
+static void      (WINAPI *pRtlGrowFunctionTable)(void*, DWORD);
+static void      (WINAPI *pRtlDeleteGrowableFunctionTable)(void*);
 static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, ULONG64, CONTEXT*, DISPATCHER_CONTEXT*);
 static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
 static VOID      (CDECL *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
 static NTSTATUS  (WINAPI *pRtlWow64GetThreadContext)(HANDLE, WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64SetThreadContext)(HANDLE, const WOW64_CONTEXT *);
-static VOID      (CDECL *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, CONTEXT*, UNWIND_HISTORY_TABLE*);
+static VOID      (WINAPI *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, CONTEXT*, UNWIND_HISTORY_TABLE*);
 static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 #endif
 
@@ -184,6 +171,7 @@ static char**   my_argv;
 #define ProcessExecuteFlags 0x22
 #define MEM_EXECUTE_OPTION_DISABLE   0x01
 #define MEM_EXECUTE_OPTION_ENABLE    0x02
+#define MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION 0x04
 #define MEM_EXECUTE_OPTION_PERMANENT 0x08
 #endif
 
@@ -379,8 +367,9 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
     trace("vect. handler %08x addr:%p context.Eip:%x\n", rec->ExceptionCode,
           rec->ExceptionAddress, context->Eip);
 
-    ok(rec->ExceptionAddress == (char *)code_mem + 0xb, "ExceptionAddress at %p instead of %p\n",
-       rec->ExceptionAddress, (char *)code_mem + 0xb);
+    ok(rec->ExceptionAddress == (char *)code_mem + 0xb
+            || broken(rec->ExceptionAddress == code_mem || !rec->ExceptionAddress) /* 2008 */,
+            "ExceptionAddress at %p instead of %p\n", rec->ExceptionAddress, (char *)code_mem + 0xb);
 
     if (NtCurrentTeb()->Peb->BeingDebugged)
         ok((void *)context->Eax == pRtlRaiseException ||
@@ -415,8 +404,9 @@ static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     trace( "exception: %08x flags:%x addr:%p context: Eip:%x\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Eip );
 
-    ok(rec->ExceptionAddress == (char *)code_mem + 0xb, "ExceptionAddress at %p instead of %p\n",
-       rec->ExceptionAddress, (char *)code_mem + 0xb);
+    ok(rec->ExceptionAddress == (char *)code_mem + 0xb
+            || broken(rec->ExceptionAddress == code_mem || !rec->ExceptionAddress) /* 2008 */,
+            "ExceptionAddress at %p instead of %p\n", rec->ExceptionAddress, (char *)code_mem + 0xb);
 
     ok( context->ContextFlags == CONTEXT_ALL || context->ContextFlags == (CONTEXT_ALL | CONTEXT_XSTATE) ||
         broken(context->ContextFlags == CONTEXT_FULL),  /* win2003 */
@@ -527,8 +517,10 @@ static DWORD unwind_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECOR
 
     ok(rec->ExceptionCode == STATUS_UNWIND, "ExceptionCode is %08x instead of %08x\n",
        rec->ExceptionCode, STATUS_UNWIND);
-    ok(rec->ExceptionAddress == (char *)code_mem + 0x22, "ExceptionAddress at %p instead of %p\n",
-       rec->ExceptionAddress, (char *)code_mem + 0x22);
+    ok(rec->ExceptionAddress == (char *)code_mem + 0x22 || broken(TRUE) /* Win10 1709 */,
+       "ExceptionAddress at %p instead of %p\n", rec->ExceptionAddress, (char *)code_mem + 0x22);
+    ok(context->Eip == (DWORD)code_mem + 0x22, "context->Eip is %08x instead of %08x\n",
+       context->Eip, (DWORD)code_mem + 0x22);
     ok(context->Eax == unwind_expected_eax, "context->Eax is %08x instead of %08x\n",
        context->Eax, unwind_expected_eax);
 
@@ -1007,6 +999,10 @@ static void test_debugger(void)
     {
         continuestatus = DBG_CONTINUE;
         ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
+
+        ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
+        ok(!ret, "ContinueDebugEvent unexpectedly succeeded\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected last error: %u\n", GetLastError());
 
         if (de.dwThreadId != pi.dwThreadId)
         {
@@ -2589,8 +2585,24 @@ static void test_dpe_exceptions(void)
 {
     static const BYTE ret[] = {0xc3};
     DWORD (CDECL *func)(void) = code_mem;
-    DWORD old_prot;
+    DWORD old_prot, val = 0, len = 0xdeadbeef;
+    NTSTATUS status;
     void *handler;
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val, &len );
+    ok( status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER, "got status %08x\n", status );
+    if (!status)
+    {
+        ok( len == sizeof(val), "wrong len %u\n", len );
+        ok( val == (MEM_EXECUTE_OPTION_DISABLE | MEM_EXECUTE_OPTION_PERMANENT |
+                    MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION),
+            "wrong val %08x\n", val );
+    }
+    else ok( len == 0xdeadbeef, "wrong len %u\n", len );
+
+    val = MEM_EXECUTE_OPTION_DISABLE;
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val );
+    ok( status == STATUS_INVALID_PARAMETER, "got status %08x\n", status );
 
     memcpy(code_mem, ret, sizeof(ret));
 
@@ -3160,11 +3172,34 @@ static DWORD WINAPI suspend_thread_test( void *arg )
     return 0;
 }
 
-static void test_suspend_thread(void)
+static void test_suspend_count(HANDLE hthread, ULONG expected_count, int line)
 {
-    HANDLE thread, event;
+    static BOOL supported = TRUE;
     NTSTATUS status;
     ULONG count;
+
+    if (!supported)
+        return;
+
+    count = ~0u;
+    status = pNtQueryInformationThread(hthread, ThreadSuspendCount, &count, sizeof(count), NULL);
+    if (status)
+    {
+        win_skip("ThreadSuspendCount is not supported.\n");
+        supported = FALSE;
+        return;
+    }
+
+    ok_(__FILE__, line)(!status, "Failed to get suspend count, status %#x.\n", status);
+    ok_(__FILE__, line)(count == expected_count, "Unexpected suspend count %u.\n", count);
+}
+
+static void test_suspend_thread(void)
+{
+#define TEST_SUSPEND_COUNT(thread, count) test_suspend_count((thread), (count), __LINE__)
+    HANDLE thread, event;
+    ULONG count, len;
+    NTSTATUS status;
     DWORD ret;
 
     status = NtSuspendThread(0, NULL);
@@ -3181,6 +3216,31 @@ static void test_suspend_thread(void)
     ret = WaitForSingleObject(thread, 0);
     ok(ret == WAIT_TIMEOUT, "Unexpected status %d.\n", ret);
 
+    status = pNtQueryInformationThread(thread, ThreadSuspendCount, &count, sizeof(count), NULL);
+    if (!status)
+    {
+        status = pNtQueryInformationThread(thread, ThreadSuspendCount, NULL, sizeof(count), NULL);
+        ok(status == STATUS_ACCESS_VIOLATION, "Unexpected status %#x.\n", status);
+
+        status = pNtQueryInformationThread(thread, ThreadSuspendCount, &count, sizeof(count) / 2, NULL);
+        ok(status == STATUS_INFO_LENGTH_MISMATCH, "Unexpected status %#x.\n", status);
+
+        len = 123;
+        status = pNtQueryInformationThread(thread, ThreadSuspendCount, &count, sizeof(count) / 2, &len);
+        ok(status == STATUS_INFO_LENGTH_MISMATCH, "Unexpected status %#x.\n", status);
+        ok(len == 123, "Unexpected info length %u.\n", len);
+
+        len = 123;
+        status = pNtQueryInformationThread(thread, ThreadSuspendCount, NULL, 0, &len);
+        ok(status == STATUS_INFO_LENGTH_MISMATCH, "Unexpected status %#x.\n", status);
+        ok(len == 123, "Unexpected info length %u.\n", len);
+
+        count = 10;
+        status = pNtQueryInformationThread(0, ThreadSuspendCount, &count, sizeof(count), NULL);
+        ok(status, "Unexpected status %#x.\n", status);
+        ok(count == 10, "Unexpected suspend count %u.\n", count);
+    }
+
     status = NtResumeThread(thread, NULL);
     ok(!status, "Unexpected status %#x.\n", status);
 
@@ -3188,24 +3248,35 @@ static void test_suspend_thread(void)
     ok(!status, "Unexpected status %#x.\n", status);
     ok(count == 0, "Unexpected suspended count %u.\n", count);
 
+    TEST_SUSPEND_COUNT(thread, 0);
+
     status = NtSuspendThread(thread, NULL);
     ok(!status, "Failed to suspend a thread, status %#x.\n", status);
+
+    TEST_SUSPEND_COUNT(thread, 1);
 
     status = NtSuspendThread(thread, &count);
     ok(!status, "Failed to suspend a thread, status %#x.\n", status);
     ok(count == 1, "Unexpected suspended count %u.\n", count);
 
+    TEST_SUSPEND_COUNT(thread, 2);
+
     status = NtResumeThread(thread, &count);
     ok(!status, "Failed to resume a thread, status %#x.\n", status);
     ok(count == 2, "Unexpected suspended count %u.\n", count);
 
+    TEST_SUSPEND_COUNT(thread, 1);
+
     status = NtResumeThread(thread, NULL);
     ok(!status, "Failed to resume a thread, status %#x.\n", status);
+
+    TEST_SUSPEND_COUNT(thread, 0);
 
     SetEvent(event);
     WaitForSingleObject(thread, INFINITE);
 
     CloseHandle(thread);
+#undef TEST_SUSPEND_COUNT
 }
 
 static const char *suspend_process_event_name = "suspend_process_event";
@@ -3415,6 +3486,7 @@ START_TEST(exception)
     X(RtlAddVectoredContinueHandler);
     X(RtlRemoveVectoredContinueHandler);
     X(NtQueryInformationProcess);
+    X(NtQueryInformationThread);
     X(NtSetInformationProcess);
     X(NtSuspendProcess);
     X(NtResumeProcess);

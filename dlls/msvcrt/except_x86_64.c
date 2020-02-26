@@ -39,28 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
-struct _DISPATCHER_CONTEXT;
-
-typedef LONG (WINAPI *PC_LANGUAGE_EXCEPTION_HANDLER)( EXCEPTION_POINTERS *ptrs, ULONG64 frame );
-typedef EXCEPTION_DISPOSITION (WINAPI *PEXCEPTION_ROUTINE)( EXCEPTION_RECORD *rec,
-                                                            ULONG64 frame,
-                                                            CONTEXT *context,
-                                                            struct _DISPATCHER_CONTEXT *dispatch );
-
-typedef struct _DISPATCHER_CONTEXT
-{
-    ULONG64               ControlPc;
-    ULONG64               ImageBase;
-    PRUNTIME_FUNCTION     FunctionEntry;
-    ULONG64               EstablisherFrame;
-    ULONG64               TargetIp;
-    PCONTEXT              ContextRecord;
-    PEXCEPTION_ROUTINE    LanguageHandler;
-    PVOID                 HandlerData;
-    PUNWIND_HISTORY_TABLE HistoryTable;
-    ULONG                 ScopeIndex;
-} DISPATCHER_CONTEXT;
-
 typedef struct
 {
     int  prev;
@@ -700,63 +678,7 @@ unsigned int CDECL __CxxQueryExceptionSize(void)
  *		_setjmp (MSVCRT.@)
  */
 __ASM_GLOBAL_FUNC( MSVCRT__setjmp,
-                   "jmp " __ASM_NAME("MSVCRT__setjmpex") );
-
-/*******************************************************************
- *		_setjmpex (MSVCRT.@)
- */
-__ASM_GLOBAL_FUNC( MSVCRT__setjmpex,
-                   "movq %rdx,(%rcx)\n\t"          /* jmp_buf->Frame */
-                   "movq %rbx,0x8(%rcx)\n\t"       /* jmp_buf->Rbx */
-                   "leaq 0x8(%rsp),%rax\n\t"
-                   "movq %rax,0x10(%rcx)\n\t"      /* jmp_buf->Rsp */
-                   "movq %rbp,0x18(%rcx)\n\t"      /* jmp_buf->Rbp */
-                   "movq %rsi,0x20(%rcx)\n\t"      /* jmp_buf->Rsi */
-                   "movq %rdi,0x28(%rcx)\n\t"      /* jmp_buf->Rdi */
-                   "movq %r12,0x30(%rcx)\n\t"      /* jmp_buf->R12 */
-                   "movq %r13,0x38(%rcx)\n\t"      /* jmp_buf->R13 */
-                   "movq %r14,0x40(%rcx)\n\t"      /* jmp_buf->R14 */
-                   "movq %r15,0x48(%rcx)\n\t"      /* jmp_buf->R15 */
-                   "movq (%rsp),%rax\n\t"
-                   "movq %rax,0x50(%rcx)\n\t"      /* jmp_buf->Rip */
-                   "movdqa %xmm6,0x60(%rcx)\n\t"   /* jmp_buf->Xmm6 */
-                   "movdqa %xmm7,0x70(%rcx)\n\t"   /* jmp_buf->Xmm7 */
-                   "movdqa %xmm8,0x80(%rcx)\n\t"   /* jmp_buf->Xmm8 */
-                   "movdqa %xmm9,0x90(%rcx)\n\t"   /* jmp_buf->Xmm9 */
-                   "movdqa %xmm10,0xa0(%rcx)\n\t"  /* jmp_buf->Xmm10 */
-                   "movdqa %xmm11,0xb0(%rcx)\n\t"  /* jmp_buf->Xmm11 */
-                   "movdqa %xmm12,0xc0(%rcx)\n\t"  /* jmp_buf->Xmm12 */
-                   "movdqa %xmm13,0xd0(%rcx)\n\t"  /* jmp_buf->Xmm13 */
-                   "movdqa %xmm14,0xe0(%rcx)\n\t"  /* jmp_buf->Xmm14 */
-                   "movdqa %xmm15,0xf0(%rcx)\n\t"  /* jmp_buf->Xmm15 */
-                   "xorq %rax,%rax\n\t"
-                   "retq" );
-
-
-extern void DECLSPEC_NORETURN CDECL longjmp_set_regs( struct MSVCRT___JUMP_BUFFER *jmp, int retval );
-__ASM_GLOBAL_FUNC( longjmp_set_regs,
-                   "movq %rdx,%rax\n\t"            /* retval */
-                   "movq 0x8(%rcx),%rbx\n\t"       /* jmp_buf->Rbx */
-                   "movq 0x18(%rcx),%rbp\n\t"      /* jmp_buf->Rbp */
-                   "movq 0x20(%rcx),%rsi\n\t"      /* jmp_buf->Rsi */
-                   "movq 0x28(%rcx),%rdi\n\t"      /* jmp_buf->Rdi */
-                   "movq 0x30(%rcx),%r12\n\t"      /* jmp_buf->R12 */
-                   "movq 0x38(%rcx),%r13\n\t"      /* jmp_buf->R13 */
-                   "movq 0x40(%rcx),%r14\n\t"      /* jmp_buf->R14 */
-                   "movq 0x48(%rcx),%r15\n\t"      /* jmp_buf->R15 */
-                   "movdqa 0x60(%rcx),%xmm6\n\t"   /* jmp_buf->Xmm6 */
-                   "movdqa 0x70(%rcx),%xmm7\n\t"   /* jmp_buf->Xmm7 */
-                   "movdqa 0x80(%rcx),%xmm8\n\t"   /* jmp_buf->Xmm8 */
-                   "movdqa 0x90(%rcx),%xmm9\n\t"   /* jmp_buf->Xmm9 */
-                   "movdqa 0xa0(%rcx),%xmm10\n\t"  /* jmp_buf->Xmm10 */
-                   "movdqa 0xb0(%rcx),%xmm11\n\t"  /* jmp_buf->Xmm11 */
-                   "movdqa 0xc0(%rcx),%xmm12\n\t"  /* jmp_buf->Xmm12 */
-                   "movdqa 0xd0(%rcx),%xmm13\n\t"  /* jmp_buf->Xmm13 */
-                   "movdqa 0xe0(%rcx),%xmm14\n\t"  /* jmp_buf->Xmm14 */
-                   "movdqa 0xf0(%rcx),%xmm15\n\t"  /* jmp_buf->Xmm15 */
-                   "movq 0x50(%rcx),%rdx\n\t"      /* jmp_buf->Rip */
-                   "movq 0x10(%rcx),%rsp\n\t"      /* jmp_buf->Rsp */
-                   "jmp *%rdx" );
+                   "jmp " __ASM_NAME("__wine_setjmpex") );
 
 /*******************************************************************
  *		longjmp (MSVCRT.@)
@@ -776,7 +698,7 @@ void __cdecl MSVCRT_longjmp( struct MSVCRT___JUMP_BUFFER *jmp, int retval )
         rec.ExceptionInformation[0] = (DWORD_PTR)jmp;
         RtlUnwind( (void *)jmp->Frame, (void *)jmp->Rip, &rec, IntToPtr(retval) );
     }
-    longjmp_set_regs( jmp, retval );
+    __wine_longjmp( (__wine_jmp_buf *)jmp, retval );
 }
 
 /*******************************************************************
@@ -810,9 +732,6 @@ void __cdecl get_prev_context(CONTEXT *ctx, DWORD64 rip)
 
     TRACE("(%p)\n", ctx);
 
-    ctx->Rip = rip;
-    ctx->Rsp += 3*8; /* Rip, Rcx, return address */
-
     rf = RtlLookupFunctionEntry(ctx->Rip, &image_base, NULL);
     if(!rf) {
         FIXME("RtlLookupFunctionEntry failed\n");
@@ -824,16 +743,14 @@ void __cdecl get_prev_context(CONTEXT *ctx, DWORD64 rip)
 }
 
 __ASM_GLOBAL_FUNC( __crtCapturePreviousContext,
-        "pushq (%rsp)\n\t" /* save Rip */
-        __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
-        "pushq %rcx\n\t"
-        __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
-        "call " __ASM_NAME("RtlCaptureContext") "\n\t"
-        "popq %rcx\n\t"
-        __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
-        "popq %rdx\n\t"
-        __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
-        "jmp " __ASM_NAME("get_prev_context") );
+                   "movq %rcx,8(%rsp)\n\t"
+                   "call " __ASM_NAME("RtlCaptureContext") "\n\t"
+                   "movq 8(%rsp),%rcx\n\t"     /* context */
+                   "leaq 8(%rsp),%rax\n\t"
+                   "movq %rax,0x98(%rcx)\n\t"  /* context->Rsp */
+                   "movq (%rsp),%rax\n\t"
+                   "movq %rax,0xf8(%rcx)\n\t"  /* context->Rip */
+                   "jmp " __ASM_NAME("get_prev_context") )
 #endif
 
 #endif  /* __x86_64__ */

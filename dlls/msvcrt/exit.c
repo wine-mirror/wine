@@ -187,8 +187,8 @@ void CDECL MSVCRT__exit(int exitcode)
 /* Print out an error message with an option to debug */
 static void DoMessageBoxW(const MSVCRT_wchar_t *lead, const MSVCRT_wchar_t *message)
 {
-  static const MSVCRT_wchar_t message_format[] = {'%','s','\n','\n','P','r','o','g','r','a','m',':',' ','%','s','\n',
-    '%','s','\n','\n','P','r','e','s','s',' ','O','K',' ','t','o',' ','e','x','i','t',' ','t','h','e',' ',
+  static const MSVCRT_wchar_t message_format[] = {'%','l','s','\n','\n','P','r','o','g','r','a','m',':',' ','%','l','s','\n',
+    '%','l','s','\n','\n','P','r','e','s','s',' ','O','K',' ','t','o',' ','e','x','i','t',' ','t','h','e',' ',
     'p','r','o','g','r','a','m',',',' ','o','r',' ','C','a','n','c','e','l',' ','t','o',' ','s','t','a','r','t',' ',
     't','h','e',' ','W','i','n','e',' ','d','e','b','u','g','g','e','r','.','\n',0};
   static const WCHAR title[] =
@@ -290,10 +290,10 @@ unsigned int CDECL MSVCRT__set_abort_behavior(unsigned int flags, unsigned int m
 void CDECL MSVCRT__wassert(const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* file, unsigned int line)
 {
   static const MSVCRT_wchar_t assertion_failed[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d','!',0};
-  static const MSVCRT_wchar_t format_msgbox[] = {'F','i','l','e',':',' ','%','s','\n','L','i','n','e',':',' ','%','d',
-      '\n','\n','E','x','p','r','e','s','s','i','o','n',':',' ','\"','%','s','\"',0};
+  static const MSVCRT_wchar_t format_msgbox[] = {'F','i','l','e',':',' ','%','l','s','\n','L','i','n','e',':',' ','%','d',
+      '\n','\n','E','x','p','r','e','s','s','i','o','n',':',' ','\"','%','l','s','\"',0};
   static const MSVCRT_wchar_t format_console[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d',':',' ',
-      '%','s',',',' ','f','i','l','e',' ','%','s',',',' ','l','i','n','e',' ','%','d','\n','\n',0};
+      '%','l','s',',',' ','f','i','l','e',' ','%','l','s',',',' ','l','i','n','e',' ','%','d','\n','\n',0};
 
   TRACE("(%s,%s,%d)\n", debugstr_w(str), debugstr_w(file), line);
 

@@ -204,10 +204,10 @@ HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned a
         return E_OUTOFMEMORY;
 
     TRACE("parsing %s\n", debugstr_jsval(argv[0]));
-    hres = compile_script(ctx, src, NULL, NULL, TRUE, FALSE, &code);
+    hres = compile_script(ctx, src, 0, 0, NULL, NULL, TRUE, FALSE, &code);
     if(FAILED(hres)) {
         WARN("parse (%s) failed: %08x\n", debugstr_jsval(argv[0]), hres);
-        return throw_syntax_error(ctx, hres, NULL);
+        return hres;
     }
 
     if(!frame || (frame->flags & EXEC_GLOBAL))
@@ -336,6 +336,8 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         }else {
             radix = 10;
         }
+    }else if(radix == 16 && *ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X')) {
+        ptr += 2;
     }
 
     i = char_to_int(*ptr++);
@@ -374,6 +376,8 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return S_OK;
     }
 
+    TRACE("%s\n", debugstr_jsval(argv[0]));
+
     hres = to_flat_string(ctx, argv[0], &val_str, &str);
     if(FAILED(hres))
         return hres;
@@ -387,10 +391,10 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         str++;
     }
 
-    if(iswdigit(*str))
+    if(is_digit(*str))
         ret_nan = FALSE;
 
-    while(iswdigit(*str)) {
+    while(is_digit(*str)) {
         hlp = d*10 + *(str++) - '0';
         if(d>MAXLONGLONG/10 || hlp<0) {
             exp++;
@@ -399,17 +403,17 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         else
             d = hlp;
     }
-    while(iswdigit(*str)) {
+    while(is_digit(*str)) {
         exp++;
         str++;
     }
 
     if(*str == '.') str++;
 
-    if(iswdigit(*str))
+    if(is_digit(*str))
         ret_nan = FALSE;
 
-    while(iswdigit(*str)) {
+    while(is_digit(*str)) {
         hlp = d*10 + *(str++) - '0';
         if(d>MAXLONGLONG/10 || hlp<0)
             break;
@@ -417,7 +421,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         d = hlp;
         exp--;
     }
-    while(iswdigit(*str))
+    while(is_digit(*str))
         str++;
 
     if(*str && !ret_nan && (*str=='e' || *str=='E')) {
@@ -431,7 +435,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
             str++;
         }
 
-        while(iswdigit(*str)) {
+        while(is_digit(*str)) {
             if(e>INT_MAX/10 || (e = e*10 + *str++ - '0')<0)
                 e = INT_MAX;
         }
@@ -459,7 +463,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 
 static inline int hex_to_int(const WCHAR wch) {
     if(towupper(wch)>='A' && towupper(wch)<='F') return towupper(wch)-'A'+10;
-    if(iswdigit(wch)) return wch-'0';
+    if(is_digit(wch)) return wch-'0';
     return -1;
 }
 
@@ -625,10 +629,10 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(is_uri_unescaped(*ptr) || is_uri_reserved(*ptr) || *ptr == '#') {
             len++;
         }else {
-            i = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL)*3;
+            i = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, NULL, 0, NULL, NULL)*3;
             if(!i) {
                 jsstr_release(str);
-                return throw_uri_error(ctx, JS_E_INVALID_URI_CHAR, NULL);
+                return JS_E_INVALID_URI_CHAR;
             }
 
             len += i;
@@ -645,7 +649,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(is_uri_unescaped(*ptr) || is_uri_reserved(*ptr) || *ptr == '#') {
             *rptr++ = *ptr;
         }else {
-            len = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, buf, sizeof(buf), NULL, NULL);
+            len = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, buf, sizeof(buf), NULL, NULL);
             for(i=0; i<len; i++) {
                 *rptr++ = '%';
                 *rptr++ = int_to_char((BYTE)buf[i] >> 4);
@@ -699,14 +703,14 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                 val += hex_to_int(ptr[i*3+1])<<4;
                 buf[i] = val;
 
-                res = MultiByteToWideChar(CP_UTF8, 0, buf, i+1, &out, 1);
+                res = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, buf, i+1, &out, 1);
                 if(res)
                     break;
             }
 
             if(!res) {
                 jsstr_release(str);
-                return throw_uri_error(ctx, JS_E_INVALID_URI_CODING, NULL);
+                return JS_E_INVALID_URI_CODING;
             }
 
             ptr += i*3+2;
@@ -730,7 +734,7 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                 val += hex_to_int(ptr[i*3+1])<<4;
                 buf[i] = val;
 
-                res = MultiByteToWideChar(CP_UTF8, 0, buf, i+1, ret, 1);
+                res = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, buf, i+1, ret, 1);
                 if(res)
                     break;
             }
@@ -776,10 +780,10 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         if(is_uri_unescaped(*ptr))
             len++;
         else {
-            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL);
+            size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, NULL, 0, NULL, NULL);
             if(!size) {
                 jsstr_release(str);
-                return throw_uri_error(ctx, JS_E_INVALID_URI_CHAR, NULL);
+                return JS_E_INVALID_URI_CHAR;
             }
             len += size*3;
         }
@@ -795,7 +799,7 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         if(is_uri_unescaped(*ptr)) {
             *ret++ = *ptr;
         }else {
-            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, buf, sizeof(buf), NULL, NULL);
+            size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, buf, sizeof(buf), NULL, NULL);
             for(i=0; i<size; i++) {
                 *ret++ = '%';
                 *ret++ = int_to_char((BYTE)buf[i] >> 4);

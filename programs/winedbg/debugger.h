@@ -235,8 +235,8 @@ struct dbg_process
     const WCHAR*		imageName;
     struct list           	threads;
     struct backend_cpu*         be_cpu;
-    BOOL                        continue_on_first_exception : 1,
-                                active_debuggee : 1;
+    HANDLE                      event_on_first_exception;
+    BOOL                        active_debuggee;
     struct dbg_breakpoint       bp[MAX_BREAKPOINTS];
     unsigned                    next_bp;
     struct dbg_delayed_bp*      delayed_bp;
@@ -427,11 +427,12 @@ extern enum sym_get_lval symbol_picker_scoped(const char* name, const struct sgv
 extern void             dbg_run_debuggee(const char* args);
 extern void             dbg_wait_next_exception(DWORD cont, int count, int mode);
 extern enum dbg_start   dbg_active_attach(int argc, char* argv[]);
+extern BOOL             dbg_set_curr_thread(DWORD tid);
 extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_auto(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_minidump(int argc, char* argv[]);
 extern void             dbg_active_wait_for_first_exception(void);
-extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe);
+extern BOOL             dbg_attach_debuggee(DWORD pid);
 
   /* tgt_minidump.c */
 extern void             minidump_write(const char*, const EXCEPTION_RECORD*);

@@ -21,6 +21,8 @@
 
 #include <windows.h>
 #include "shellapi.h"
+#define COBJMACROS
+#include "propsys.h"
 
 #include "wine/test.h"
 
@@ -30,6 +32,7 @@ static const CHAR testwindow_class[] = "testwindow";
 
 static HMONITOR (WINAPI *pMonitorFromWindow)(HWND, DWORD);
 static HRESULT (WINAPI *pGetCurrentProcessExplicitAppUserModelID)(PWSTR*);
+static HRESULT (WINAPI *pSHGetPropertyStoreForWindow)(HWND, REFIID, void **);
 
 typedef BOOL (*boolean_function)(void);
 
@@ -433,6 +436,33 @@ todo_wine
     ok(appid == NULL, "got %p\n", appid);
 }
 
+static void test_SHGetPropertyStoreForWindow(void)
+{
+    HRESULT hr;
+    IUnknown *unk;
+    IPropertyStore *store = NULL;
+
+    if (!pSHGetPropertyStoreForWindow)
+    {
+        win_skip("SHGetPropertyStoreForWindow() is not supported.\n");
+        return;
+    }
+
+    unk = (IUnknown *)0xdeadbeef;
+    hr = pSHGetPropertyStoreForWindow(GetDesktopWindow(), &IID_IDispatch, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    ok(unk == NULL, "got %p\n", unk);
+
+    hr = pSHGetPropertyStoreForWindow(GetDesktopWindow(), &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IPropertyStore, (void **)&store);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (store) IPropertyStore_Release(store);
+    if (unk) IUnknown_Release(unk);
+}
+
 START_TEST(appbar)
 {
     HMODULE huser32, hshell32;
@@ -441,10 +471,12 @@ START_TEST(appbar)
     hshell32 = GetModuleHandleA("shell32.dll");
     pMonitorFromWindow = (void*)GetProcAddress(huser32, "MonitorFromWindow");
     pGetCurrentProcessExplicitAppUserModelID = (void*)GetProcAddress(hshell32, "GetCurrentProcessExplicitAppUserModelID");
+    pSHGetPropertyStoreForWindow = (void*)GetProcAddress(hshell32, "SHGetPropertyStoreForWindow");
 
     register_testwindow_class();
 
     test_setpos();
     test_appbarget();
     test_GetCurrentProcessExplicitAppUserModelID();
+    test_SHGetPropertyStoreForWindow();
 }

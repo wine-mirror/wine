@@ -175,6 +175,19 @@ typedef struct _HIDP_DATA {
     } DUMMYUNIONNAME;
 } HIDP_DATA, *PHIDP_DATA;
 
+typedef struct _HIDP_LINK_COLLECTION_NODE {
+    USAGE  LinkUsage;
+    USAGE  LinkUsagePage;
+    USHORT Parent;
+    USHORT NumberOfChildren;
+    USHORT NextSibling;
+    USHORT FirstChild;
+    ULONG  CollectionType : 8;
+    ULONG  IsAlias : 1;
+    ULONG  Reserved : 23;
+    PVOID  UserContext;
+} HIDP_LINK_COLLECTION_NODE, *PHIDP_LINK_COLLECTION_NODE;
+
 typedef BOOLEAN (NTAPI *PHIDP_INSERT_SCANCODES) (VOID *Context, CHAR *NewScanCodes, ULONG Length);
 
 
@@ -196,6 +209,7 @@ NTSTATUS WINAPI HidP_GetSpecificValueCaps(HIDP_REPORT_TYPE ReportType, USAGE Usa
 NTSTATUS WINAPI HidP_GetUsagesEx(HIDP_REPORT_TYPE ReportType, USHORT LinkCollection, USAGE_AND_PAGE *ButtonList, ULONG *UsageLength, PHIDP_PREPARSED_DATA PreparsedData, CHAR *Report, ULONG ReportLength);
 ULONG WINAPI HidP_MaxDataListLength(HIDP_REPORT_TYPE ReportType, PHIDP_PREPARSED_DATA PreparsedData);
 NTSTATUS WINAPI HidP_GetData(HIDP_REPORT_TYPE ReportType, HIDP_DATA *DataList, ULONG *DataLength, PHIDP_PREPARSED_DATA PreparsedData, CHAR *Report, ULONG ReportLength);
+NTSTATUS WINAPI HidP_GetLinkCollectionNodes(HIDP_LINK_COLLECTION_NODE *LinkCollectionNode, ULONG *LinkCollectionNodeLength, PHIDP_PREPARSED_DATA PreparsedData);
 
 #ifndef FACILITY_HID_ERROR_CODE
 #define FACILITY_HID_ERROR_CODE 0x11

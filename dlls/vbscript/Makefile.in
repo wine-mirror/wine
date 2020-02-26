@@ -1,5 +1,7 @@
 MODULE    = vbscript.dll
-IMPORTS   = oleaut32 ole32 user32
+IMPORTS   = oleaut32 ole32 user32 ucrtbase
+
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	compile.c \

@@ -20,7 +20,7 @@
 #ifndef __WINE_MBSTRING_H
 #define __WINE_MBSTRING_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #include <pshpack8.h>
 
@@ -75,6 +75,7 @@ int            __cdecl _mbsicoll(const unsigned char*,const unsigned char*);
 unsigned char* __cdecl _mbsinc(const unsigned char*);
 size_t         __cdecl _mbslen(const unsigned char*);
 unsigned char* __cdecl _mbslwr(unsigned char*);
+errno_t        __cdecl _mbslwr_s(unsigned char*, size_t);
 unsigned char* __cdecl _mbsnbcat(unsigned char*,const unsigned char*,size_t);
 errno_t        __cdecl _mbsnbcat_s(unsigned char*,size_t,const unsigned char*,size_t);
 int            __cdecl _mbsnbcmp(const unsigned char*,const unsigned char*,size_t);
@@ -104,6 +105,7 @@ unsigned char* __cdecl _mbsstr(const unsigned char*,const unsigned char*);
 unsigned char* __cdecl _mbstok(unsigned char*,const unsigned char*);
 unsigned char* __cdecl _mbstok_l(unsigned char*,const unsigned char*,_locale_t);
 unsigned char* __cdecl _mbsupr(unsigned char*);
+errno_t        __cdecl _mbsupr_s(unsigned char*, size_t);
 
 #ifndef _MBLEADTRAIL_DEFINED
 #define _MBLEADTRAIL_DEFINED

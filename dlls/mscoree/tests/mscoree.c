@@ -28,6 +28,12 @@
 #include "initguid.h"
 #include "wine/test.h"
 
+#if !defined(__i386__) && !defined(__x86_64__)
+static int has_mono = 0;
+#else
+static int has_mono = 1;
+#endif
+
 DEFINE_GUID(IID__AppDomain, 0x05f696dc,0x2b29,0x3663,0xad,0x8b,0xc4,0x38,0x9c,0xf2,0xa7,0x13);
 
 static const WCHAR v4_0[] = {'v','4','.','0','.','3','0','3','1','9',0};
@@ -106,7 +112,7 @@ static int check_runtime(void)
 
     hr = ICLRRuntimeInfo_GetInterface(runtimeinfo, &CLSID_CorRuntimeHost, &IID_ICorRuntimeHost,
         (void **)&runtimehost);
-    ok(SUCCEEDED(hr), "ICLRRuntimeInfo::GetInterface failed, hr=%#.8x\n", hr);
+    todo_wine_if(!has_mono) ok(SUCCEEDED(hr), "ICLRRuntimeInfo::GetInterface failed, hr=%#.8x\n", hr);
     if (FAILED(hr))
         return 1;
 
@@ -157,7 +163,7 @@ static BOOL runtime_is_usable(void)
 
     if (!ret || exitcode != 0)
     {
-        win_skip(".NET 4.0 runtime is not usable\n");
+	todo_wine_if(!has_mono) win_skip(".NET 4.0 runtime is not usable\n");
         return FALSE;
     }
 
@@ -200,14 +206,14 @@ static void test_versioninfo(void)
     trace("latest installed .net runtime: %s\n", wine_dbgstr_w(version));
 
     hr = pGetCORSystemDirectory(path, MAX_PATH , &size);
-    ok(hr == S_OK, "GetCORSystemDirectory returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetCORSystemDirectory returned %08x\n", hr);
     /* size includes terminating null-character */
-    ok(size == (lstrlenW(path) + 1),"size is %d instead of %d\n", size, (lstrlenW(path) + 1));
+    todo_wine_if(!has_mono) ok(size == (lstrlenW(path) + 1),"size is %d instead of %d\n", size, (lstrlenW(path) + 1));
 
     path_len = size;
 
     hr = pGetCORSystemDirectory(path, path_len-1 , &size);
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORSystemDirectory returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORSystemDirectory returned %08x\n", hr);
 
     if (0)  /* crashes on <= w2k3 */
     {
@@ -225,11 +231,11 @@ static void test_versioninfo(void)
 
     if(hr == CLR_E_SHIM_RUNTIME) return; /* skipping rest of tests on win2k as .net 2.0 not installed */
 
-    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
     trace(" installed in directory %s is .net version %s\n", wine_dbgstr_w(path), wine_dbgstr_w(version));
 
     hr = pGetRequestedRuntimeInfo( NULL, v1_1, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
-    ok(hr == S_OK || hr == CLR_E_SHIM_RUNTIME /*v1_1 not installed*/, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK || hr == CLR_E_SHIM_RUNTIME /*v1_1 not installed*/, "GetRequestedRuntimeInfo returned %08x\n", hr);
     if(hr == S_OK)
         trace(" installed in directory %s is .net version %s\n", wine_dbgstr_w(path), wine_dbgstr_w(version));
     /* version number NULL not allowed without RUNTIME_INFO_UPGRADE_VERSION flag */
@@ -237,35 +243,35 @@ static void test_versioninfo(void)
     ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08x\n", hr);
     /* with RUNTIME_INFO_UPGRADE_VERSION flag and version number NULL, latest installed version is returned */
     hr = pGetRequestedRuntimeInfo( NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
-    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
 
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, 1, &path_len, version, MAX_PATH, &size);
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetRequestedRuntimeInfo returned %08x\n", hr);
 
     /* if one of the buffers is NULL, the other one is still happily filled */
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, NULL, MAX_PATH, &path_len, version, MAX_PATH, &size);
-    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
-    ok(!winetest_strcmpW(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(!wcscmp(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
     /* With NULL-pointer for bufferlength, the buffer itself still gets filled with correct string */
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
-    ok(!winetest_strcmpW(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(!wcscmp(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0cap, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
-    ok(!winetest_strcmpW(version, v2_0cap), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0cap));
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(!wcscmp(version, v2_0cap), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0cap));
 
     /* Invalid Version and RUNTIME_INFO_UPGRADE_VERSION flag*/
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v1_1, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    ok(hr == S_OK  || hr == CLR_E_SHIM_RUNTIME , "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine_if(!has_mono) ok(hr == S_OK  || hr == CLR_E_SHIM_RUNTIME , "GetRequestedRuntimeInfo returned %08x\n", hr);
     if(hr == S_OK)
     {
         /* .NET 1.1 may not be installed. */
-        ok(!winetest_strcmpW(version, v1_1) || !winetest_strcmpW(version, v2_0),
+        ok(!wcscmp(version, v1_1) || !wcscmp(version, v2_0),
            "version is %s , expected %s or %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v1_1), wine_dbgstr_w(v2_0));
 
     }
@@ -280,8 +286,8 @@ static void test_versioninfo(void)
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v1_1_0, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
-    ok(!winetest_strcmpW(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(!wcscmp(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0_0, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
@@ -289,8 +295,8 @@ static void test_versioninfo(void)
 
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0_0, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
-    ok(!winetest_strcmpW(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(!wcscmp(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
 
     hr =  pCorIsLatestSvc(NULL, NULL);
     ok(hr == E_POINTER, "CorIsLatestSvc returned %08x\n", hr);
@@ -325,7 +331,7 @@ static void test_loadlibraryshim(void)
 
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
-        ok(StrStrIA(dllpath, "v1.1.4322") != 0, "incorrect fusion.dll path %s\n", dllpath);
+        todo_wine_if(!has_mono) ok(StrStrIA(dllpath, "v1.1.4322") != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
@@ -339,7 +345,7 @@ static void test_loadlibraryshim(void)
 
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
-        ok(StrStrIA(dllpath, "v2.0.50727") != 0, "incorrect fusion.dll path %s\n", dllpath);
+        todo_wine_if(!has_mono) ok(StrStrIA(dllpath, "v2.0.50727") != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
@@ -355,7 +361,7 @@ static void test_loadlibraryshim(void)
 
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
-        ok(StrStrIA(dllpath, "v4.0.30319") != 0, "incorrect fusion.dll path %s\n", dllpath);
+        todo_wine_if(!has_mono) ok(StrStrIA(dllpath, "v4.0.30319") != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
@@ -375,7 +381,7 @@ static void test_loadlibraryshim(void)
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
         if (latest)
-            ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
+            todo_wine_if(!has_mono) ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
@@ -388,7 +394,7 @@ static void test_loadlibraryshim(void)
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
         if (latest)
-            ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
+            todo_wine_if(!has_mono) ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);

@@ -1,4 +1,4 @@
-	This is the core of the Wine debugger.  The reverse assember
+	This is the core of the Wine debugger.  The reverse assembler
 was stolen from Mach more or less intact.  It turns out that there are
 two variables that are set differently if you are reverse assembling
 16 bit code, and on the whole it seems to work.

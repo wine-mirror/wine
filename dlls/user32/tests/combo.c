@@ -43,7 +43,7 @@ static HWND build_combo(DWORD style)
     return CreateWindowA("ComboBox", "Combo", WS_VISIBLE|WS_CHILD|style, 5, 5, 100, 100, hMainWnd, (HMENU)COMBO_ID, NULL, 0);
 }
 
-static int font_height(HFONT hFont)
+static int get_font_height(HFONT hFont)
 {
     TEXTMETRICA tm;
     HFONT hFontOld;
@@ -74,12 +74,13 @@ static BOOL is_font_installed(const char *name)
 static void test_setitemheight(DWORD style)
 {
     HWND hCombo = build_combo(style);
+    int i, font_height, height;
+    HFONT hFont;
     RECT r;
-    int i;
 
     trace("Style %x\n", style);
     GetClientRect(hCombo, &r);
-    expect_rect(r, 0, 0, 100, font_height(GetStockObject(SYSTEM_FONT)) + 8);
+    expect_rect(r, 0, 0, 100, get_font_height(GetStockObject(SYSTEM_FONT)) + 8);
     SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
     MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
     todo_wine expect_rect(r, 5, 5, 105, 105);
@@ -90,6 +91,22 @@ static void test_setitemheight(DWORD style)
         GetClientRect(hCombo, &r);
         expect_eq(r.bottom - r.top, i + 6, int, "%d");
     }
+
+    DestroyWindow(hCombo);
+
+    /* Set item height below text height, force resize. */
+    hCombo = build_combo(style);
+
+    hFont = (HFONT)SendMessageA(hCombo, WM_GETFONT, 0, 0);
+    font_height = get_font_height(hFont);
+    SendMessageA(hCombo, CB_SETITEMHEIGHT, -1, font_height / 2);
+    height = SendMessageA(hCombo, CB_GETITEMHEIGHT, -1, 0);
+todo_wine
+    ok(height == font_height / 2, "Unexpected item height %d, expected %d.\n", height, font_height / 2);
+
+    SetWindowPos(hCombo, NULL, 10, 10, 150, 5 * font_height, SWP_SHOWWINDOW);
+    height = SendMessageA(hCombo, CB_GETITEMHEIGHT, -1, 0);
+    ok(height > font_height, "Unexpected item height %d, font height %d.\n", height, font_height);
 
     DestroyWindow(hCombo);
 }
@@ -114,7 +131,7 @@ static void test_setfont(DWORD style)
     hFont2 = CreateFontA(8, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH|FF_DONTCARE, "Marlett");
 
     GetClientRect(hCombo, &r);
-    expect_rect(r, 0, 0, 100, font_height(GetStockObject(SYSTEM_FONT)) + 8);
+    expect_rect(r, 0, 0, 100, get_font_height(GetStockObject(SYSTEM_FONT)) + 8);
     SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
     MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
     todo_wine expect_rect(r, 5, 5, 105, 105);
@@ -123,39 +140,39 @@ static void test_setfont(DWORD style)
        of the window when it was created.  The size of the calculated
        dropped area changes only by how much the selection area
        changes, not by how much the list area changes.  */
-    if (font_height(hFont1) == 10 && font_height(hFont2) == 8)
+    if (get_font_height(hFont1) == 10 && get_font_height(hFont2) == 8)
     {
         SendMessageA(hCombo, WM_SETFONT, (WPARAM)hFont1, FALSE);
         GetClientRect(hCombo, &r);
         expect_rect(r, 0, 0, 100, 18);
         SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
         MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
-        todo_wine expect_rect(r, 5, 5, 105, 105 - (font_height(GetStockObject(SYSTEM_FONT)) - font_height(hFont1)));
+        todo_wine expect_rect(r, 5, 5, 105, 105 - (get_font_height(GetStockObject(SYSTEM_FONT)) - get_font_height(hFont1)));
 
         SendMessageA(hCombo, WM_SETFONT, (WPARAM)hFont2, FALSE);
         GetClientRect(hCombo, &r);
         expect_rect(r, 0, 0, 100, 16);
         SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
         MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
-        todo_wine expect_rect(r, 5, 5, 105, 105 - (font_height(GetStockObject(SYSTEM_FONT)) - font_height(hFont2)));
+        todo_wine expect_rect(r, 5, 5, 105, 105 - (get_font_height(GetStockObject(SYSTEM_FONT)) - get_font_height(hFont2)));
 
         SendMessageA(hCombo, WM_SETFONT, (WPARAM)hFont1, FALSE);
         GetClientRect(hCombo, &r);
         expect_rect(r, 0, 0, 100, 18);
         SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&r);
         MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
-        todo_wine expect_rect(r, 5, 5, 105, 105 - (font_height(GetStockObject(SYSTEM_FONT)) - font_height(hFont1)));
+        todo_wine expect_rect(r, 5, 5, 105, 105 - (get_font_height(GetStockObject(SYSTEM_FONT)) - get_font_height(hFont1)));
     }
     else
     {
         ok(0, "Expected Marlett font heights 10/8, got %d/%d\n",
-           font_height(hFont1), font_height(hFont2));
+           get_font_height(hFont1), get_font_height(hFont2));
     }
 
     for (i = 1; i < 30; i++)
     {
         HFONT hFont = CreateFontA(i, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH|FF_DONTCARE, "Marlett");
-        int height = font_height(hFont);
+        int height = get_font_height(hFont);
 
         SendMessageA(hCombo, WM_SETFONT, (WPARAM)hFont, FALSE);
         GetClientRect(hCombo, &r);
@@ -173,6 +190,8 @@ static LRESULT (CALLBACK *old_parent_proc)(HWND hwnd, UINT msg, WPARAM wparam, L
 static LPCSTR expected_edit_text;
 static LPCSTR expected_list_text;
 static BOOL selchange_fired;
+static HWND lparam_for_WM_CTLCOLOR;
+static HBRUSH brush_red;
 
 static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -202,6 +221,20 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                 selchange_fired = TRUE;
             }
             break;
+        }
+        break;
+    case WM_CTLCOLOR:
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSCROLLBAR:
+    case WM_CTLCOLORSTATIC:
+        if (lparam_for_WM_CTLCOLOR)
+        {
+            ok(lparam_for_WM_CTLCOLOR == (HWND)lparam, "Expected %p, got %p\n", lparam_for_WM_CTLCOLOR, (HWND)lparam);
+            return (LRESULT) brush_red;
         }
         break;
     }
@@ -804,8 +837,87 @@ static void test_WS_VSCROLL(void)
     DestroyWindow(hCombo);
 }
 
+static void test_combo_ctlcolor(void)
+{
+    static const int messages[] =
+    {
+        WM_CTLCOLOR,
+        WM_CTLCOLORMSGBOX,
+        WM_CTLCOLOREDIT,
+        WM_CTLCOLORLISTBOX,
+        WM_CTLCOLORBTN,
+        WM_CTLCOLORDLG,
+        WM_CTLCOLORSCROLLBAR,
+        WM_CTLCOLORSTATIC,
+    };
+
+    HBRUSH brush, global_brush;
+    unsigned int i, ret;
+    COMBOBOXINFO info;
+    HWND combo;
+
+    combo = build_combo(CBS_DROPDOWN);
+    ok(!!combo, "Failed to create combo window.\n");
+
+    old_parent_proc = (void *)SetWindowLongPtrA(hMainWnd, GWLP_WNDPROC, (ULONG_PTR)parent_wnd_proc);
+
+    info.cbSize = sizeof(COMBOBOXINFO);
+    ret = GetComboBoxInfo(combo, &info);
+    ok(ret, "Failed to get combobox info structure.\n");
+
+    lparam_for_WM_CTLCOLOR = info.hwndItem;
+
+    /* Parent returns valid brush handle. */
+    for (i = 0; i < ARRAY_SIZE(messages); ++i)
+    {
+        brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
+        ok(brush == brush_red, "%u: unexpected brush %p, expected got %p.\n", i, brush, brush_red);
+    }
+
+    /* Parent returns NULL brush. */
+    global_brush = brush_red;
+    brush_red = NULL;
+
+    for (i = 0; i < ARRAY_SIZE(messages); ++i)
+    {
+        brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
+        ok(!brush, "%u: unexpected brush %p.\n", i, brush);
+    }
+
+    brush_red = global_brush;
+
+    lparam_for_WM_CTLCOLOR = 0;
+
+    /* Parent does default processing. */
+    for (i = 0; i < ARRAY_SIZE(messages); ++i)
+    {
+        brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
+        ok(!!brush && brush != brush_red, "%u: unexpected brush %p.\n", i, brush);
+    }
+
+    SetWindowLongPtrA(hMainWnd, GWLP_WNDPROC, (ULONG_PTR)old_parent_proc);
+    DestroyWindow(combo);
+
+    /* Combo without a parent. */
+    combo = CreateWindowA("ComboBox", "Combo", CBS_DROPDOWN, 5, 5, 100, 100, NULL, NULL, NULL, 0);
+    ok(!!combo, "Failed to create combo window.\n");
+
+    info.cbSize = sizeof(COMBOBOXINFO);
+    ret = GetComboBoxInfo(combo, &info);
+    ok(ret, "Failed to get combobox info structure.\n");
+
+    for (i = 0; i < ARRAY_SIZE(messages); ++i)
+    {
+        brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
+        ok(!!brush && brush != brush_red, "%u: unexpected brush %p.\n", i, brush);
+    }
+
+    DestroyWindow(combo);
+}
+
 START_TEST(combo)
 {
+    brush_red = CreateSolidBrush(RGB(255, 0, 0));
     hMainWnd = CreateWindowA("static", "Test", WS_OVERLAPPEDWINDOW, 10, 10, 300, 300, NULL, NULL, NULL, 0);
     ShowWindow(hMainWnd, SW_SHOW);
 
@@ -825,6 +937,8 @@ START_TEST(combo)
     test_listbox_styles(CBS_DROPDOWN);
     test_listbox_styles(CBS_DROPDOWNLIST);
     test_listbox_size(CBS_DROPDOWN);
+    test_combo_ctlcolor();
 
     DestroyWindow(hMainWnd);
+    DeleteObject(brush_red);
 }

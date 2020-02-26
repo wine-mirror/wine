@@ -19,25 +19,12 @@
 #ifndef _WINE_WINHTTP_PRIVATE_H_
 #define _WINE_WINHTTP_PRIVATE_H_
 
-#ifndef __WINE_CONFIG_H
-# error You must include config.h to use this header
-#endif
-
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 #include "ole2.h"
 #include "sspi.h"
 #include "wincrypt.h"
-
-static const WCHAR getW[]    = {'G','E','T',0};
-static const WCHAR postW[]   = {'P','O','S','T',0};
-static const WCHAR headW[]   = {'H','E','A','D',0};
-static const WCHAR slashW[]  = {'/',0};
-static const WCHAR http1_0[] = {'H','T','T','P','/','1','.','0',0};
-static const WCHAR http1_1[] = {'H','T','T','P','/','1','.','1',0};
-static const WCHAR chunkedW[] = {'c','h','u','n','k','e','d',0};
 
 struct object_header;
 struct object_vtbl
@@ -93,6 +80,7 @@ struct session
     struct list cookie_cache;
     HANDLE unload_event;
     DWORD secure_protocols;
+    DWORD passport_flags;
 };
 
 struct connect
@@ -303,8 +291,8 @@ static inline WCHAR *strdupW( const WCHAR *src )
     WCHAR *dst;
 
     if (!src) return NULL;
-    dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) );
-    if (dst) strcpyW( dst, src );
+    dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
+    if (dst) lstrcpyW( dst, src );
     return dst;
 }
 
@@ -313,7 +301,7 @@ static inline WCHAR *strdupAW( const char *src )
     WCHAR *dst = NULL;
     if (src)
     {
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
+        int len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
         if ((dst = heap_alloc( len * sizeof(WCHAR) )))
             MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
     }
@@ -340,7 +328,7 @@ static inline char *strdupWA_sized( const WCHAR *src, DWORD size )
         int len = WideCharToMultiByte( CP_ACP, 0, src, size, NULL, 0, NULL, NULL ) + 1;
         if ((dst = heap_alloc( len )))
         {
-            WideCharToMultiByte( CP_ACP, 0, src, len, dst, size, NULL, NULL );
+            WideCharToMultiByte( CP_ACP, 0, src, size, dst, len, NULL, NULL );
             dst[len - 1] = 0;
         }
     }

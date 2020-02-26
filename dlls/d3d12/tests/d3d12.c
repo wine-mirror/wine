@@ -308,6 +308,7 @@ static ID3D12CommandQueue *create_command_queue_(unsigned int line,
 
 struct test_context_desc
 {
+    BOOL no_render_target;
     BOOL no_pipeline;
     const D3D12_SHADER_BYTECODE *ps;
 };
@@ -435,6 +436,9 @@ static BOOL init_test_context_(unsigned int line, struct test_context *context,
                 context->allocator[i], NULL, &IID_ID3D12GraphicsCommandList, (void **)&context->list[i]);
         ok_(__FILE__, line)(hr == S_OK, "Failed to create command list %u, hr %#x.\n", i, hr);
     }
+
+    if (desc && desc->no_render_target)
+        return TRUE;
 
     rtv_heap_desc.NumDescriptors = MAX_FRAME_COUNT;
     rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -1011,6 +1015,7 @@ static void test_swapchain_draw(void)
         {DXGI_FORMAT_R10G10B10A2_UNORM, {0.0f, 1.0f, 0.0f, 1.0f}, 0xc00ffc00},
     };
 
+    memset(&desc, 0, sizeof(desc));
     desc.no_pipeline = TRUE;
     if (!init_test_context(&context, &desc))
         return;
@@ -1088,6 +1093,7 @@ static void test_swapchain_refcount(void)
     RECT rect;
     BOOL ret;
 
+    memset(&desc, 0, sizeof(desc));
     desc.no_pipeline = TRUE;
     if (!init_test_context(&context, &desc))
         return;
@@ -1165,6 +1171,7 @@ static void test_swapchain_size_mismatch(void)
     RECT rect;
     BOOL ret;
 
+    memset(&desc, 0, sizeof(desc));
     desc.no_pipeline = TRUE;
     if (!init_test_context(&context, &desc))
         return;
@@ -1287,6 +1294,7 @@ static void test_swapchain_backbuffer_index(void)
     RECT rect;
     BOOL ret;
 
+    memset(&desc, 0, sizeof(desc));
     desc.no_pipeline = TRUE;
     if (!init_test_context(&context, &desc))
         return;
@@ -1357,6 +1365,56 @@ static void test_swapchain_backbuffer_index(void)
     destroy_test_context(&context);
 }
 
+static void test_desktop_window(void)
+{
+    DXGI_SWAP_CHAIN_DESC1 swapchain_desc;
+    struct test_context_desc desc;
+    struct test_context context;
+    IDXGISwapChain1 *swapchain;
+    IDXGIFactory4 *factory;
+    IUnknown *queue;
+    HWND window;
+    HRESULT hr;
+    RECT rect;
+    BOOL ret;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.no_render_target = TRUE;
+    if (!init_test_context(&context, NULL))
+        return;
+    queue = (IUnknown *)context.queue;
+
+    window = GetDesktopWindow();
+    ret = GetClientRect(window, &rect);
+    ok(ret, "Failed to get client rect.\n");
+
+    hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
+    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+
+    swapchain_desc.Width = 640;
+    swapchain_desc.Height = 480;
+    swapchain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.Stereo = FALSE;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 2;
+    swapchain_desc.Scaling = DXGI_SCALING_STRETCH;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapchain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+    swapchain_desc.Flags = 0;
+    hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, queue, window, &swapchain_desc, NULL, NULL, &swapchain);
+    ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
+
+    swapchain_desc.Width = rect.right;
+    swapchain_desc.Height = rect.bottom;
+    hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, queue, window, &swapchain_desc, NULL, NULL, &swapchain);
+    ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
+
+    IDXGIFactory4_Release(factory);
+    destroy_test_context(&context);
+}
+
 START_TEST(d3d12)
 {
     BOOL enable_debug_layer = FALSE;
@@ -1391,4 +1449,5 @@ START_TEST(d3d12)
     test_swapchain_refcount();
     test_swapchain_size_mismatch();
     test_swapchain_backbuffer_index();
+    test_desktop_window();
 }

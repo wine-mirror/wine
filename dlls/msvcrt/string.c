@@ -56,6 +56,7 @@ char* CDECL MSVCRT__strdup(const char* str)
  */
 int CDECL MSVCRT__strlwr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
     char *ptr = str;
 
     if (!str || !len)
@@ -77,10 +78,27 @@ int CDECL MSVCRT__strlwr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t loca
         return MSVCRT_EINVAL;
     }
 
-    while (*str)
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE])
     {
-        *str = MSVCRT__tolower_l((unsigned char)*str, locale);
-        str++;
+        while (*str)
+        {
+            if (*str >= 'A' && *str <= 'Z')
+                *str -= 'A' - 'a';
+            str++;
+        }
+    }
+    else
+    {
+        while (*str)
+        {
+            *str = MSVCRT__tolower_l((unsigned char)*str, locale);
+            str++;
+        }
     }
 
     return 0;
@@ -325,181 +343,508 @@ void CDECL MSVCRT__swab(char* src, char* dst, int len)
   }
 }
 
-static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *err)
+enum round {
+    ROUND_ZERO, /* only used when dropped part contains only zeros */
+    ROUND_DOWN,
+    ROUND_EVEN,
+    ROUND_UP
+};
+
+static double make_double(int sign, int exp, ULONGLONG m, enum round round, int *err)
 {
-    MSVCRT_pthreadlocinfo locinfo;
-    unsigned __int64 d=0, hlp;
-    unsigned fpcontrol;
-    int exp=0, sign=1;
-    const char *p;
-    double ret;
-    long double lret=1, expcnt = 10;
-    BOOL found_digit = FALSE, negexp;
-    int base = 10;
+#define EXP_BITS 11
+#define MANT_BITS 53
+    ULONGLONG bits = 0;
 
-    if(err)
-        *err = 0;
-    else if(!MSVCRT_CHECK_PMT(str != NULL)) {
-        if (end)
-            *end = NULL;
-        return 0;
+    TRACE("%c %s *2^%d (round %d)\n", sign == -1 ? '-' : '+', wine_dbgstr_longlong(m), exp, round);
+    if (!m) return sign * 0.0;
+
+    /* make sure that we don't overflow modifying exponent */
+    if (exp > 1<<EXP_BITS)
+    {
+        if (err) *err = MSVCRT_ERANGE;
+        return sign * INFINITY;
     }
-
-    if(!locale)
-        locinfo = get_locinfo();
-    else
-        locinfo = locale->locinfo;
-
-    /* FIXME: use *_l functions */
-    p = str;
-    while(isspace(*p))
-        p++;
-
-    if(*p == '-') {
-        sign = -1;
-        p++;
-    } else  if(*p == '+')
-        p++;
-
-#if _MSVCR_VER >= 140
-    if(MSVCRT__tolower_l(p[0], locale) == 'i' && MSVCRT__tolower_l(p[1], locale) == 'n'
-            && MSVCRT__tolower_l(p[2], locale) == 'f') {
-        if(end)
-            *end = (char*) &p[3];
-        if(MSVCRT__tolower_l(p[3], locale) == 'i' && MSVCRT__tolower_l(p[4], locale) == 'n'
-            && MSVCRT__tolower_l(p[5], locale) == 'i' && MSVCRT__tolower_l(p[6], locale) == 't'
-            && MSVCRT__tolower_l(p[7], locale) == 'y' && end)
-            *end = (char*) &p[8];
-        return sign*INFINITY;
+    if (exp < -(1<<EXP_BITS))
+    {
+        if (err) *err = MSVCRT_ERANGE;
+        return sign * 0.0;
     }
-    if(MSVCRT__tolower_l(p[0], locale) == 'n' &&
-       MSVCRT__tolower_l(p[1], locale) == 'a' &&
-       MSVCRT__tolower_l(p[2], locale) == 'n') {
-        if(end)
-            *end = (char*) &p[3];
-        return NAN;
-    }
+    exp += MANT_BITS - 1;
 
-    if(p[0] == '0' && MSVCRT__tolower_l(p[1], locale) == 'x') {
-        base = 16;
-        expcnt = 2;
-        p += 2;
-    }
-#endif
-
-    while((*p>='0' && *p<='9') ||
-          (base == 16 && ((*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')))) {
-        char c = *p++;
-        int val;
-        found_digit = TRUE;
-        if (c>='0' && c<='9')
-            val = c - '0';
-        else if (c >= 'a' && c <= 'f')
-            val = 10 + c - 'a';
-        else
-            val = 10 + c - 'A';
-        hlp = d*base+val;
-        if(d>MSVCRT_UI64_MAX/base || hlp<d) {
-            exp++;
-            break;
-        } else
-            d = hlp;
-    }
-    while((*p>='0' && *p<='9') ||
-          (base == 16 && ((*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')))) {
-        exp++;
-        p++;
-    }
-
-    if(*p == *locinfo->lconv->decimal_point)
-        p++;
-
-    while((*p>='0' && *p<='9') ||
-          (base == 16 && ((*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')))) {
-        char c = *p++;
-        int val;
-        found_digit = TRUE;
-        if (c>='0' && c<='9')
-            val = c - '0';
-        else if (c >= 'a' && c <= 'f')
-            val = 10 + c - 'a';
-        else
-            val = 10 + c - 'A';
-        hlp = d*base+val;
-        if(d>MSVCRT_UI64_MAX/base || hlp<d)
-            break;
-        d = hlp;
+    /* normalize mantissa */
+    while(m < (ULONGLONG)1 << (MANT_BITS-1))
+    {
+        m <<= 1;
         exp--;
     }
-    while((*p>='0' && *p<='9') ||
-          (base == 16 && ((*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F'))))
-        p++;
+    while(m >= (ULONGLONG)1 << MANT_BITS)
+    {
+        if (m & 1 || round != ROUND_ZERO)
+        {
+            if (!(m & 1)) round = ROUND_DOWN;
+            else if(round == ROUND_ZERO) round = ROUND_EVEN;
+            else round = ROUND_UP;
+        }
+        m >>= 1;
+        exp++;
+    }
 
-    if(!found_digit) {
-        if(end)
-            *end = (char*)str;
+    /* handle subnormal that falls into regular range due to rounding */
+    exp += (1 << (EXP_BITS-1)) - 1;
+    if (!exp && (round == ROUND_UP || (round == ROUND_EVEN && m & 1)))
+    {
+        if (m + 1 >= (ULONGLONG)1 << MANT_BITS)
+        {
+            m++;
+            m >>= 1;
+            exp++;
+            round = ROUND_DOWN;
+        }
+    }
+
+    /* handle subnormals */
+    if (exp <= 0)
+        m >>= 1;
+    while(m && exp<0)
+    {
+        m >>= 1;
+        exp++;
+    }
+
+    /* round mantissa */
+    if (round == ROUND_UP || (round == ROUND_EVEN && m & 1))
+    {
+        m++;
+        if (m >= (ULONGLONG)1 << MANT_BITS)
+        {
+            exp++;
+            m >>= 1;
+        }
+    }
+
+    if (exp >= 1<<EXP_BITS)
+    {
+        if (err) *err = MSVCRT_ERANGE;
+        return sign * INFINITY;
+    }
+    if (!m || exp < 0)
+    {
+        if (err) *err = MSVCRT_ERANGE;
+        return sign * 0.0;
+    }
+
+    if (sign == -1) bits |= (ULONGLONG)1 << (MANT_BITS + EXP_BITS - 1);
+    bits |= (ULONGLONG)exp << (MANT_BITS - 1);
+    bits |= m & (((ULONGLONG)1 << (MANT_BITS - 1)) - 1);
+
+    TRACE("returning %s\n", wine_dbgstr_longlong(bits));
+    return *((double*)&bits);
+}
+
+#if _MSVCR_VER >= 140
+
+static inline int hex2int(char c)
+{
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    else if (c >= 'a' && c <= 'f')
+        return c - 'a' + 10;
+    else if (c >= 'A' && c <= 'F')
+        return c - 'A' + 10;
+    return -1;
+}
+
+static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
+        void *ctx, int sign, MSVCRT_pthreadlocinfo locinfo, int *err)
+{
+    BOOL found_digit = FALSE, found_dp = FALSE;
+    enum round round = ROUND_ZERO;
+    MSVCRT_wchar_t nch;
+    ULONGLONG m = 0;
+    int val, exp = 0;
+
+    nch = get(ctx);
+    while(m < MSVCRT_UI64_MAX/16)
+    {
+        val = hex2int(nch);
+        if (val == -1) break;
+        found_digit = TRUE;
+        nch = get(ctx);
+
+        m = m*16 + val;
+    }
+    while(1)
+    {
+        val = hex2int(nch);
+        if (val == -1) break;
+        nch = get(ctx);
+        exp += 4;
+
+        if (val || round != ROUND_ZERO)
+        {
+            if (val < 8) round = ROUND_DOWN;
+            else if (val == 8 && round == ROUND_ZERO) round = ROUND_EVEN;
+            else round = ROUND_UP;
+        }
+    }
+
+    if(nch == *locinfo->lconv->decimal_point)
+    {
+        found_dp = TRUE;
+        nch = get(ctx);
+    }
+    else if (!found_digit)
+    {
+        if(nch!=MSVCRT_WEOF) unget(ctx);
+        unget(ctx);
         return 0.0;
     }
 
-    if(base == 16)
-        exp *= 4;
+    while(m <= MSVCRT_UI64_MAX/16)
+    {
+        val = hex2int(nch);
+        if (val == -1) break;
+        found_digit = TRUE;
+        nch = get(ctx);
 
-    if((base == 10 && (*p=='e' || *p=='E' || *p=='d' || *p=='D')) ||
-       (base == 16 && (*p=='p' || *p=='P'))) {
+        m = m*16 + val;
+        exp -= 4;
+    }
+    while(1)
+    {
+        val = hex2int(nch);
+        if (val == -1) break;
+        nch = get(ctx);
+
+        if (val || round != ROUND_ZERO)
+        {
+            if (val < 8) round = ROUND_DOWN;
+            else if (val == 8 && round == ROUND_ZERO) round = ROUND_EVEN;
+            else round = ROUND_UP;
+        }
+    }
+
+    if (!found_digit)
+    {
+        if (nch != MSVCRT_WEOF) unget(ctx);
+        if (found_dp) unget(ctx);
+        unget(ctx);
+        return 0.0;
+    }
+
+    if(nch=='p' || nch=='P') {
+        BOOL found_sign = FALSE;
         int e=0, s=1;
 
-        p++;
-        if(*p == '-') {
+        nch = get(ctx);
+        if(nch == '-') {
+            found_sign = TRUE;
             s = -1;
-            p++;
-        } else if(*p == '+')
-            p++;
-
-        if(*p>='0' && *p<='9') {
-            while(*p>='0' && *p<='9') {
-                if(e>INT_MAX/10 || (e=e*10+*p-'0')<0)
+            nch = get(ctx);
+        } else if(nch == '+') {
+            found_sign = TRUE;
+            nch = get(ctx);
+        }
+        if(nch>='0' && nch<='9') {
+            while(nch>='0' && nch<='9') {
+                if(e>INT_MAX/10 || (e=e*10+nch-'0')<0)
                     e = INT_MAX;
-                p++;
+                nch = get(ctx);
             }
+            if((nch!=MSVCRT_WEOF) && (nch < '0' || nch > '9')) unget(ctx);
             e *= s;
 
             if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
             else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
             else exp += e;
         } else {
-            if(*p=='-' || *p=='+')
-                p--;
-            p--;
+            if(nch != MSVCRT_WEOF) unget(ctx);
+            if(found_sign) unget(ctx);
+            unget(ctx);
         }
     }
 
-    fpcontrol = _control87(0, 0);
-    _control87(MSVCRT__EM_DENORMAL|MSVCRT__EM_INVALID|MSVCRT__EM_ZERODIVIDE
-            |MSVCRT__EM_OVERFLOW|MSVCRT__EM_UNDERFLOW|MSVCRT__EM_INEXACT, 0xffffffff);
+    return make_double(sign, exp, m, round, err);
+}
+#endif
 
-    negexp = (exp < 0);
-    if(negexp)
-        exp = -exp;
-    while(exp) {
-        if(exp & 1)
-            lret *= expcnt;
-        exp /= 2;
-        expcnt = expcnt*expcnt;
+struct u128 {
+   ULONGLONG u[2];
+};
+
+static inline struct u128 u128_lshift(struct u128 *u)
+{
+    struct u128 r;
+
+    r.u[0] = u->u[0] << 1;
+    r.u[1] = (u->u[1] << 1) + (u->u[0] >> (sizeof(u->u[0])*8-1));
+    return r;
+}
+
+static inline struct u128 u128_rshift(struct u128 *u)
+{
+    struct u128 r;
+
+    r.u[0] = (u->u[0] >> 1) + ((u->u[1] & 1) << (sizeof(u->u[1])*8-1));
+    r.u[1] = u->u[1] >> 1;
+    return r;
+}
+
+static inline void u128_mul10(struct u128 *u)
+{
+    struct u128 tmp;
+
+    tmp = u128_lshift(u);
+    *u = u128_lshift(&tmp);
+    *u = u128_lshift(u);
+
+    u->u[0] += tmp.u[0];
+    u->u[1] += tmp.u[1];
+    if (u->u[0] < tmp.u[0]) u->u[1]++;
+}
+
+static inline void u128_div10(struct u128 *u)
+{
+    ULONGLONG h, l, r;
+
+    r = u->u[1] % 10;
+    u->u[1] /= 10;
+
+    h = (r << 32) + (u->u[0] >> 32);
+    r = h % 10;
+    h /= 10;
+
+    l = (r << 32) + (u->u[0] & 0xffffffff);
+    l /= 10;
+    u->u[0] = (h << 32) + l;
+}
+
+static double convert_e10_to_e2(int sign, int e10, ULONGLONG m, int *err)
+{
+    int e2 = 0;
+    struct u128 u128;
+
+    u128.u[0] = m;
+    u128.u[1] = 0;
+
+    while(e10 > 0)
+    {
+        u128_mul10(&u128);
+        e10--;
+
+        while(u128.u[1] > MSVCRT_UI64_MAX/16)
+        {
+            u128 = u128_rshift(&u128);
+            e2++;
+        }
     }
-    ret = (long double)sign * (negexp ? d/lret : d*lret);
 
-    _control87(fpcontrol, 0xffffffff);
+    while(e10 < 0)
+    {
+        while(!(u128.u[1] & (1 << (sizeof(u128.u[1])-1))))
+        {
+            u128 = u128_lshift(&u128);
+            e2--;
+        }
 
-    if((d && ret==0.0) || isinf(ret)) {
-        if(err)
-            *err = MSVCRT_ERANGE;
-        else
-            *MSVCRT__errno() = MSVCRT_ERANGE;
+        u128_div10(&u128);
+        e10++;
     }
 
-    if(end)
-        *end = (char*)p;
+    while(u128.u[1])
+    {
+        u128 = u128_rshift(&u128);
+        e2++;
+    }
 
+    return make_double(sign, e2, u128.u[0], ROUND_DOWN, err);
+}
+
+double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
+        void *ctx, MSVCRT_pthreadlocinfo locinfo, int *err)
+{
+#if _MSVCR_VER >= 140
+    MSVCRT_wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
+    MSVCRT_wchar_t _nan[] = { 'n', 'a', 'n', 0 };
+    MSVCRT_wchar_t *str_match = NULL;
+    int matched=0;
+#endif
+    BOOL found_digit = FALSE, found_dp = FALSE, found_sign = FALSE;
+    unsigned __int64 d=0, hlp;
+    MSVCRT_wchar_t nch;
+    int exp=0, sign=1;
+
+    nch = get(ctx);
+    if(nch == '-') {
+        found_sign = TRUE;
+        sign = -1;
+        nch = get(ctx);
+    } else if(nch == '+') {
+        found_sign = TRUE;
+        nch = get(ctx);
+    }
+
+#if _MSVCR_VER >= 140
+    if(nch == _infinity[0] || nch == MSVCRT__toupper(_infinity[0]))
+        str_match = _infinity;
+    if(nch == _nan[0] || nch == MSVCRT__toupper(_nan[0]))
+        str_match = _nan;
+    while(str_match && nch != MSVCRT_WEOF &&
+            (nch == str_match[matched] || nch == MSVCRT__toupper(str_match[matched]))) {
+        nch = get(ctx);
+        matched++;
+    }
+    if(str_match) {
+        int keep = 0;
+        if(matched >= 8) keep = 8;
+        else if(matched >= 3) keep = 3;
+        if(nch != MSVCRT_WEOF) unget(ctx);
+        for (; matched > keep; matched--) {
+            unget(ctx);
+        }
+        if(keep) {
+            if (str_match == _infinity) return sign*INFINITY;
+            if (str_match == _nan) return sign*NAN;
+        } else if(found_sign) {
+            unget(ctx);
+        }
+
+        return make_double(sign, exp, d, ROUND_ZERO, err);
+    }
+
+    if(nch == '0') {
+        found_digit = TRUE;
+        nch = get(ctx);
+        if(nch == 'x' || nch == 'X')
+            return strtod16(get, unget, ctx, sign, locinfo, err);
+    }
+#endif
+
+    while(nch>='0' && nch<='9') {
+        found_digit = TRUE;
+        hlp = d * 10 + nch - '0';
+        nch = get(ctx);
+        if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
+            exp++;
+            break;
+        } else
+            d = hlp;
+    }
+    while(nch>='0' && nch<='9') {
+        exp++;
+        nch = get(ctx);
+    }
+
+    if(nch == *locinfo->lconv->decimal_point) {
+        found_dp = TRUE;
+        nch = get(ctx);
+    }
+
+    while(nch>='0' && nch<='9') {
+        found_digit = TRUE;
+        hlp = d * 10 + nch - '0';
+        nch = get(ctx);
+        if(d>MSVCRT_UI64_MAX/10 || hlp<d)
+            break;
+        d = hlp;
+        exp--;
+    }
+    while(nch>='0' && nch<='9')
+        nch = get(ctx);
+
+    if(!found_digit) {
+        if(nch != MSVCRT_WEOF) unget(ctx);
+        if(found_dp) unget(ctx);
+        if(found_sign) unget(ctx);
+        return 0.0;
+    }
+
+    if(nch=='e' || nch=='E' || nch=='d' || nch=='D') {
+        int e=0, s=1;
+
+        nch = get(ctx);
+        if(nch == '-') {
+            found_sign = TRUE;
+            s = -1;
+            nch = get(ctx);
+        } else if(nch == '+') {
+            found_sign = TRUE;
+            nch = get(ctx);
+        } else {
+            found_sign = FALSE;
+        }
+
+        if(nch>='0' && nch<='9') {
+            while(nch>='0' && nch<='9') {
+                if(e>INT_MAX/10 || (e=e*10+nch-'0')<0)
+                    e = INT_MAX;
+                nch = get(ctx);
+            }
+            if(nch != MSVCRT_WEOF) unget(ctx);
+            e *= s;
+
+            if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
+            else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
+            else exp += e;
+        } else {
+            if(nch != MSVCRT_WEOF) unget(ctx);
+            if(found_sign) unget(ctx);
+            unget(ctx);
+        }
+    } else if(nch != MSVCRT_WEOF) {
+        unget(ctx);
+    }
+
+    if(!err) err = MSVCRT__errno();
+    if(!d) return make_double(sign, exp, d, ROUND_ZERO, err);
+    if(exp > MSVCRT_DBL_MAX_10_EXP)
+        return make_double(sign, INT_MAX, d, ROUND_ZERO, err);
+    /* Count part of exponent stored in denormalized mantissa. */
+    /* Increase exponent range to handle subnormals. */
+    if(exp < MSVCRT_DBL_MIN_10_EXP-MSVCRT_DBL_DIG-18)
+        return make_double(sign, INT_MIN, d, ROUND_ZERO, err);
+
+    return convert_e10_to_e2(sign, exp, d, err);
+}
+
+static MSVCRT_wchar_t strtod_str_get(void *ctx)
+{
+    const char **p = ctx;
+    if (!**p) return MSVCRT_WEOF;
+    return *(*p)++;
+}
+
+static void strtod_str_unget(void *ctx)
+{
+    const char **p = ctx;
+    (*p)--;
+}
+
+static inline double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *err)
+{
+    MSVCRT_pthreadlocinfo locinfo;
+    const char *beg, *p;
+    double ret;
+
+    if (err) *err = 0;
+    if (!MSVCRT_CHECK_PMT(str != NULL)) {
+        if (end) *end = NULL;
+        return 0;
+    }
+
+    if (!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    p = str;
+    while(MSVCRT__isspace_l((unsigned char)*p, locale))
+        p++;
+    beg = p;
+
+    ret = parse_double(strtod_str_get, strtod_str_unget, &p, locinfo, err);
+    if (end) *end = (p == beg ? (char*)str : (char*)p);
     return ret;
 }
 
@@ -616,7 +961,7 @@ int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, MSVCRT__locale_t
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strcmp(str1, str2);
+        return MSVCRT_strcmp(str1, str2);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0, str1, -1, str2, -1)-CSTR_EQUAL;
 }
 
@@ -667,7 +1012,7 @@ int CDECL MSVCRT__strncoll_l( const char* str1, const char* str2, MSVCRT_size_t 
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strncmp(str1, str2, count);
+        return MSVCRT_strncmp(str1, str2, count);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0,
               str1, MSVCRT_strnlen(str1, count),
               str2, MSVCRT_strnlen(str2, count))-CSTR_EQUAL;
@@ -957,7 +1302,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
     if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
     if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
 
-    while(isspace(*nptr)) nptr++;
+    while(MSVCRT__isspace_l((unsigned char)*nptr, locale)) nptr++;
 
     if(*nptr == '-') {
         negative = TRUE;
@@ -1050,7 +1395,7 @@ int __cdecl MSVCRT_atoi(const char *str)
     if(!str)
         return 0;
 
-    while(isspace(*str)) str++;
+    while(MSVCRT__isspace_l((unsigned char)*str, NULL)) str++;
 
     if(*str == '+') {
         str++;
@@ -1209,7 +1554,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
     if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
 
-    while(isspace(*nptr)) nptr++;
+    while(MSVCRT__isspace_l((unsigned char)*nptr, locale)) nptr++;
 
     if(*nptr == '-') {
         negative = TRUE;
@@ -1943,7 +2288,10 @@ void* __cdecl MSVCRT_memchr(const void *ptr, int c, MSVCRT_size_t n)
  */
 int __cdecl MSVCRT_strcmp(const char *str1, const char *str2)
 {
-    return strcmp(str1, str2);
+    while (*str1 && *str1 == *str2) { str1++; str2++; }
+    if ((unsigned char)*str1 > (unsigned char)*str2) return 1;
+    if ((unsigned char)*str1 < (unsigned char)*str2) return -1;
+    return 0;
 }
 
 /*********************************************************************
@@ -1951,7 +2299,9 @@ int __cdecl MSVCRT_strcmp(const char *str1, const char *str2)
  */
 int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len)
 {
-    return strncmp(str1, str2, len);
+    if (!len) return 0;
+    while (--len && *str1 && *str1 == *str2) { str1++; str2++; }
+    return (unsigned char)*str1 - (unsigned char)*str2;
 }
 
 /*********************************************************************
@@ -2005,7 +2355,42 @@ int __cdecl MSVCRT__stricmp(const char *s1, const char *s2)
  */
 char* __cdecl MSVCRT_strstr(const char *haystack, const char *needle)
 {
-    return strstr(haystack, needle);
+    MSVCRT_size_t i, j, len, needle_len, lps_len;
+    BYTE lps[256];
+
+    needle_len = MSVCRT_strlen(needle);
+    if (!needle_len) return (char*)haystack;
+    lps_len = needle_len > ARRAY_SIZE(lps) ? ARRAY_SIZE(lps) : needle_len;
+
+    lps[0] = 0;
+    len = 0;
+    i = 1;
+    while (i < lps_len)
+    {
+        if (needle[i] == needle[len]) lps[i++] = ++len;
+        else if (len) len = lps[len-1];
+        else lps[i++] = 0;
+    }
+
+    i = j = 0;
+    while (haystack[i])
+    {
+        while (j < lps_len && haystack[i] && haystack[i] == needle[j])
+        {
+            i++;
+            j++;
+        }
+
+        if (j == needle_len) return (char*)haystack + i - j;
+        else if (j)
+        {
+            if (j == ARRAY_SIZE(lps) && !MSVCRT_strncmp(haystack + i, needle + j, needle_len - j))
+                return (char*)haystack + i - j;
+            j = lps[j-1];
+        }
+        else if (haystack[i]) i++;
+    }
+    return NULL;
 }
 
 /*********************************************************************
@@ -2047,7 +2432,21 @@ int __cdecl MSVCRT__memicmp(const char *s1, const char *s2, MSVCRT_size_t len)
  */
 MSVCRT_size_t __cdecl MSVCRT_strcspn(const char *str, const char *reject)
 {
-    return strcspn( str, reject );
+    BOOL rejects[256];
+    const char *p;
+
+    memset(rejects, 0, sizeof(rejects));
+
+    p = reject;
+    while(*p)
+    {
+        rejects[(unsigned char)*p] = TRUE;
+        p++;
+    }
+
+    p = str;
+    while(*p && !rejects[(unsigned char)*p]) p++;
+    return p - str;
 }
 
 /*********************************************************************

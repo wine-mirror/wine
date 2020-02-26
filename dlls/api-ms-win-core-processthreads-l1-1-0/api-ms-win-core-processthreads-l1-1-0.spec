@@ -24,9 +24,9 @@
 @ stdcall GetThreadPriority(long) kernel32.GetThreadPriority
 @ stdcall GetThreadPriorityBoost(long ptr) kernel32.GetThreadPriorityBoost
 @ stdcall InitializeProcThreadAttributeList(ptr long long ptr) kernel32.InitializeProcThreadAttributeList
-@ stdcall OpenProcessToken(long long ptr) advapi32.OpenProcessToken
+@ stdcall OpenProcessToken(long long ptr) kernel32.OpenProcessToken
 @ stdcall OpenThread(long long long) kernel32.OpenThread
-@ stdcall OpenThreadToken(long long long ptr) advapi32.OpenThreadToken
+@ stdcall OpenThreadToken(long long long ptr) kernel32.OpenThreadToken
 @ stdcall ProcessIdToSessionId(long ptr) kernel32.ProcessIdToSessionId
 @ stub QueryProcessAffinityUpdateMode
 @ stdcall QueueUserAPC(ptr long long) kernel32.QueueUserAPC

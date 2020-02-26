@@ -2,6 +2,8 @@ MODULE    = oleacc.dll
 IMPORTLIB = oleacc
 IMPORTS   = uuid oleaut32 ole32 user32 rpcrt4
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	client.c \
 	main.c \

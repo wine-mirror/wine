@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 #include "windows.h"
 #include "rpc.h"
 #include "webservices.h"
@@ -553,6 +554,11 @@ static void test_WsWriteType(void)
     WS_XML_WRITER *writer;
     WS_XML_STRING prefix = {1, (BYTE*)"p"}, localname = {3, (BYTE *)"str"}, ns = {2, (BYTE *)"ns"};
     const WCHAR *val_str;
+    enum {ONE = 1, TWO = 2};
+    WS_XML_STRING one = {3, (BYTE *)"ONE" }, two = {3, (BYTE *)"TWO"};
+    WS_ENUM_VALUE enum_values[] = {{ONE, &one}, {TWO, &two}};
+    WS_ENUM_DESCRIPTION enum_desc;
+    int val_enum;
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -636,6 +642,36 @@ static void test_WsWriteType(void)
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<p:str xmlns:p=\"ns\">test</p:str>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, &prefix, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    enum_desc.values       = enum_values;
+    enum_desc.valueCount   = ARRAY_SIZE(enum_values);
+    enum_desc.maxByteCount = 3;
+    enum_desc.nameIndices  = NULL;
+
+    val_enum = 0;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_ENUM_TYPE, &enum_desc,
+                      WS_WRITE_REQUIRED_VALUE, &val_enum, sizeof(val_enum), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    val_enum = 3;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_ENUM_TYPE, &enum_desc,
+                      WS_WRITE_REQUIRED_VALUE, &val_enum, sizeof(val_enum), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    val_enum = ONE;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_ENUM_TYPE, &enum_desc,
+                      WS_WRITE_REQUIRED_VALUE, &val_enum, sizeof(val_enum), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<p:str xmlns:p=\"ns\">ONE</p:str>", __LINE__ );
 
     WsFreeWriter( writer );
 }
@@ -2185,28 +2221,10 @@ static void test_text_types(void)
     WsFreeWriter( writer );
 }
 
-static BOOL get_fpword( unsigned short *ret )
-{
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-    unsigned short fpword;
-    __asm__ __volatile__( "fstcw %0" : "=m" (fpword) );
-    *ret = fpword;
-    return TRUE;
-#endif
-    return FALSE;
-}
-
-static void set_fpword( unsigned short fpword )
-{
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-    __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
-#endif
-}
-
 static void test_double(void)
 {
     WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
-    unsigned short fpword;
+    unsigned int fpword, fpword_orig;
     static const struct
     {
         double      val;
@@ -2294,16 +2312,9 @@ static void test_double(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t>-INF</t>", __LINE__ );
 
-    if (!get_fpword( &fpword ))
-    {
-        skip( "can't get floating point control word\n" );
-        WsFreeWriter( writer );
-        return;
-    }
-    ok( fpword == 0x27f, "got %04x\n", fpword );
-    set_fpword( 0x1f7f );
-    get_fpword( &fpword );
-    ok( fpword == 0x1f7f, "got %04x\n", fpword );
+    fpword_orig = _control87( 0, 0 );
+    fpword = _control87( _MCW_EM | _RC_CHOP | _PC_64, _MCW_EM | _MCW_RC | _MCW_PC );
+    ok( fpword == (_MCW_EM | _RC_CHOP | _PC_64), "got %08x\n", fpword );
 
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2318,9 +2329,9 @@ static void test_double(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t>100000000000000</t>", __LINE__ );
 
-    get_fpword( &fpword );
-    ok( fpword == 0x1f7f, "got %04x\n", fpword );
-    set_fpword( 0x27f );
+    fpword = _control87( 0, 0 );
+    ok( fpword == (_MCW_EM | _RC_CHOP | _PC_64), "got %08x\n", fpword );
+    _control87( fpword_orig, _MCW_EM | _MCW_RC | _MCW_PC );
 
     WsFreeWriter( writer );
 }

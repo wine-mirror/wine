@@ -1,14 +1,13 @@
 EXTRADEFS = -D_KERNEL32_ -D_NORMALIZE_
 MODULE    = kernel32.dll
 IMPORTLIB = kernel32
-IMPORTS   = winecrt0 ntdll
-EXTRALIBS = $(COREFOUNDATION_LIBS) $(POLL_LIBS)
+IMPORTS   = winecrt0 kernelbase ntdll
+EXTRALIBS = $(COREFOUNDATION_LIBS) $(POLL_LIBS) $(RT_LIBS)
 EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b400000
 
 C_SRCS = \
 	actctx.c \
 	atom.c \
-	change.c \
 	comm.c \
 	computername.c \
 	console.c \
@@ -16,8 +15,6 @@ C_SRCS = \
 	debugger.c \
 	editline.c \
 	environ.c \
-	except.c \
-	fiber.c \
 	file.c \
 	format_msg.c \
 	heap.c \
@@ -27,7 +24,6 @@ C_SRCS = \
 	lzexpand.c \
 	module.c \
 	nameprep.c \
-	oldconfig.c \
 	path.c \
 	powermgnt.c \
 	process.c \
@@ -43,7 +39,6 @@ C_SRCS = \
 	version.c \
 	virtual.c \
 	volume.c \
-	wctype.c \
 	wer.c
 
 RC_SRCS = \

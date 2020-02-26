@@ -269,6 +269,9 @@ static struct dbg_internal_var be_x86_64_ctx[] =
 #define	f_mod(b)	((b)>>6)
 #define	f_reg(b)	(((b)>>3)&0x7)
 #define	f_rm(b)		((b)&0x7)
+#define	f_sib_b(b)	((b)&0x7)
+#define	f_sib_i(b)	(((b)>>3)&0x7)
+#define	f_sib_s(b)	((b)>>6)
 
 static BOOL be_x86_64_is_step_over_insn(const void* insn)
 {
@@ -356,19 +359,94 @@ static BOOL fetch_value(const char* addr, unsigned sz, int* value)
 
     switch (sz)
     {
-    case 8:
+    case 1:
         if (!dbg_read_memory(addr, &value8, sizeof(value8))) return FALSE;
         *value = value8;
         break;
-    case 16:
+    case 2:
         if (!dbg_read_memory(addr, &value16, sizeof(value16))) return FALSE;
         *value = value16;
-    case 32:
+    case 4:
         if (!dbg_read_memory(addr, value, sizeof(*value))) return FALSE;
         break;
     default: return FALSE;
     }
     return TRUE;
+}
+
+static BOOL add_fixed_displacement(const void* insn, BYTE mod, DWORD64* addr)
+{
+    LONG delta = 0;
+
+    if (mod == 1)
+    {
+        if (!fetch_value(insn, 1, &delta))
+            return FALSE;
+    }
+    else if (mod == 2)
+    {
+        if (!fetch_value(insn, sizeof(delta), &delta))
+            return FALSE;
+    }
+    *addr += delta;
+    return TRUE;
+}
+
+static BOOL evaluate_sib_address(const void* insn, BYTE mod, DWORD64* addr)
+{
+    BYTE    ch;
+    BYTE    scale;
+    DWORD64 loc;
+
+    if (!dbg_read_memory(insn, &ch, sizeof(ch))) return FALSE;
+
+    switch (f_sib_b(ch))
+    {
+    case 0x00: loc = dbg_context.ctx.Rax; break;
+    case 0x01: loc = dbg_context.ctx.Rcx; break;
+    case 0x02: loc = dbg_context.ctx.Rdx; break;
+    case 0x03: loc = dbg_context.ctx.Rbx; break;
+    case 0x04: loc = dbg_context.ctx.Rsp; break;
+    case 0x05:
+        loc = dbg_context.ctx.Rbp;
+        if (mod == 0)
+        {
+            loc = 0;
+            mod = 2;
+        }
+        break;
+    case 0x06: loc = dbg_context.ctx.Rsi; break;
+    case 0x07: loc = dbg_context.ctx.Rdi; break;
+    }
+
+    scale = f_sib_s(ch);
+    switch (f_sib_i(ch))
+    {
+    case 0x00: loc += dbg_context.ctx.Rax << scale; break;
+    case 0x01: loc += dbg_context.ctx.Rcx << scale; break;
+    case 0x02: loc += dbg_context.ctx.Rdx << scale; break;
+    case 0x03: loc += dbg_context.ctx.Rbx << scale; break;
+    case 0x04: break;
+    case 0x05: loc += dbg_context.ctx.Rbp << scale; break;
+    case 0x06: loc += dbg_context.ctx.Rsi << scale; break;
+    case 0x07: loc += dbg_context.ctx.Rdi << scale; break;
+    }
+
+    if (!add_fixed_displacement((const char*)insn + 1, mod, &loc))
+        return FALSE;
+
+    *addr = loc;
+    return TRUE;
+}
+
+static BOOL load_indirect_target(DWORD64* dst)
+{
+    ADDRESS64 addr;
+
+    addr.Mode = AddrModeFlat;
+    addr.Segment = dbg_context.ctx.SegDs;
+    addr.Offset = *dst;
+    return dbg_read_memory(memory_to_linear_addr(&addr), &dst, sizeof(dst));
 }
 
 static BOOL be_x86_64_is_func_call(const void* insn, ADDRESS64* callee)
@@ -418,8 +496,12 @@ static BOOL be_x86_64_is_func_call(const void* insn, ADDRESS64* callee)
         case 0x04:
         case 0x44:
         case 0x84:
-            WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) (SIB bytes) at %p\n", ch, insn);
-            return FALSE;
+        {
+            evaluate_sib_address((const char*)insn + 2, f_mod(ch), &dst);
+            if (!load_indirect_target(&dst)) return FALSE;
+            callee->Offset = dst;
+            return TRUE;
+        }
         case 0x05: /* addr32 */
             if (f_reg(ch) == 0x2)
             {
@@ -446,12 +528,13 @@ static BOOL be_x86_64_is_func_call(const void* insn, ADDRESS64* callee)
             case 0x07: dst = dbg_context.ctx.Rdi; break;
             }
             if (f_mod(ch) != 0x03)
-                WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) at %p\n", ch, insn);
-            else
             {
-                callee->Offset = dst;
+                if (!add_fixed_displacement((const char*)insn + 2, f_mod(ch), &dst))
+                    return FALSE;
+                if (!load_indirect_target(&dst)) return FALSE;
             }
-            break;
+            callee->Offset = dst;
+            return TRUE;
         }
         else
             WINE_FIXME("Unsupported yet call insn (rex=0x%02x 0xFF 0x%02x) at %p\n", rex, ch, insn);
@@ -640,7 +723,7 @@ static BOOL be_x86_64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned si
     if (!memory_read_value(lvalue, size, ret)) return FALSE;
 
     /* propagate sign information */
-    if (is_signed && size < 16 && (*ret >> (size * 8 - 1)) != 0)
+    if (is_signed && size < sizeof(*ret) && (*ret >> (size * 8 - 1)) != 0)
     {
         ULONGLONG neg = -1;
         *ret |= neg << (size * 8);

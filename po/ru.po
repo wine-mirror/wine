@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-03-28 11:30+0300\n"
+"PO-Revision-Date: 2019-12-20 15:34+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.2.4\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -57,9 +57,9 @@ msgstr "&Удалить"
 msgid "Support Information"
 msgstr "Сведения о поддержке"
 
-#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
-#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:422
-#: comdlg32.rc:453 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
+#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:233
+#: comdlg32.rc:263 comdlg32.rc:307 comdlg32.rc:390 comdlg32.rc:424
+#: comdlg32.rc:455 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
 #: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
@@ -140,10 +140,10 @@ msgid "&Install"
 msgstr "&Установить"
 
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
-#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
-#: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
-#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:423
-#: comdlg32.rc:454 comdlg32.rc:479 comdlg32.rc:505 comdlg32.rc:528 credui.rc:53
+#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:172 comdlg32.rc:194
+#: comdlg32.rc:212 comdlg32.rc:234 comdlg32.rc:264 comdlg32.rc:308
+#: comdlg32.rc:330 comdlg32.rc:350 comdlg32.rc:391 comdlg32.rc:425
+#: comdlg32.rc:456 comdlg32.rc:481 comdlg32.rc:507 comdlg32.rc:530 credui.rc:53
 #: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
 #: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
@@ -209,7 +209,8 @@ msgstr ""
 msgid "Not specified"
 msgstr "Отсутствует"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr "Имя"
 
@@ -334,11 +335,11 @@ msgstr "ч."
 msgid "Properties for %s"
 msgstr "Свойства %s"
 
-#: comctl32.rc:73 comdlg32.rc:264
+#: comctl32.rc:73 comdlg32.rc:265
 msgid "&Apply"
 msgstr "При&менить"
 
-#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
+#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:309 user32.rc:88
 msgid "Help"
 msgstr "&Справка"
 
@@ -350,7 +351,7 @@ msgstr "Мастер"
 msgid "< &Back"
 msgstr "< &Назад"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:60
 msgid "&Next >"
 msgstr "&Далее >"
 
@@ -371,9 +372,9 @@ msgstr "&Закрыть"
 msgid "R&eset"
 msgstr "С&бросить"
 
-#: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
-#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
-#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:529 ieframe.rc:58 msacm32.rc:52
+#: comctl32.rc:102 comdlg32.rc:173 comdlg32.rc:195 comdlg32.rc:266
+#: comdlg32.rc:331 comdlg32.rc:351 comdlg32.rc:392 comdlg32.rc:426
+#: comdlg32.rc:482 comdlg32.rc:508 comdlg32.rc:531 ieframe.rc:58 msacm32.rc:52
 #: oledlg.rc:96 shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119
 #: oleview.rc:72 progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144
 #: progman.rc:160 progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77
@@ -447,413 +448,420 @@ msgstr "Сегодня:"
 msgid "Go to today"
 msgstr "Текущая дата"
 
-#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
-#: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
+#: comdlg32.rc:158 comdlg32.rc:171 comdlg32.rc:462 comdlg32.rc:487
+#: comdlg32.rc:514 shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "Открыть"
 
-#: comdlg32.rc:160 comdlg32.rc:182
+#: comdlg32.rc:161 comdlg32.rc:183
 msgid "File &Name:"
 msgstr "&Имя файла:"
 
-#: comdlg32.rc:163 comdlg32.rc:185
+#: comdlg32.rc:164 comdlg32.rc:186
 msgid "&Directories:"
 msgstr "&Каталоги:"
 
-#: comdlg32.rc:166 comdlg32.rc:188
+#: comdlg32.rc:167 comdlg32.rc:189
 msgid "List Files of &Type:"
 msgstr "Показывать файлы &типа:"
 
-#: comdlg32.rc:168 comdlg32.rc:190
+#: comdlg32.rc:169 comdlg32.rc:191
 msgid "Dri&ves:"
 msgstr "&Диски:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: comdlg32.rc:174 comdlg32.rc:196 shell32.rc:370 shell32.rc:407
 #: winefile.rc:172
 msgid "&Read Only"
 msgstr "&Только для чтения"
 
-#: comdlg32.rc:179
+#: comdlg32.rc:180
 msgid "Save As..."
 msgstr "Сохранить как..."
 
-#: comdlg32.rc:192 comdlg32.rc:145
+#: comdlg32.rc:193 comdlg32.rc:146
 msgid "Save As"
 msgstr "Сохранить как"
 
-#: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
+#: comdlg32.rc:202 comdlg32.rc:211 comdlg32.rc:358 comdlg32.rc:55 hhctrl.rc:49
 #: wordpad.rc:173
 msgid "Print"
 msgstr "Печать"
 
-#: comdlg32.rc:204
+#: comdlg32.rc:205
 msgid "Printer:"
 msgstr "Принтер:"
 
-#: comdlg32.rc:206 comdlg32.rc:373
+#: comdlg32.rc:207 comdlg32.rc:375
 msgid "Print range"
 msgstr "Печатать"
 
-#: comdlg32.rc:207 comdlg32.rc:374 regedit.rc:268
+#: comdlg32.rc:208 comdlg32.rc:376 regedit.rc:268
 msgid "&All"
 msgstr "&Все"
 
-#: comdlg32.rc:208
+#: comdlg32.rc:209
 msgid "S&election"
 msgstr "В&ыделенный фрагмент"
 
-#: comdlg32.rc:209
+#: comdlg32.rc:210
 msgid "&Pages"
 msgstr "&Страницы"
 
-#: comdlg32.rc:212 comdlg32.rc:234
+#: comdlg32.rc:213 comdlg32.rc:235
 msgid "&Setup"
 msgstr "Сво&йства"
 
-#: comdlg32.rc:213
+#: comdlg32.rc:214
 msgid "&From:"
 msgstr "&с:"
 
-#: comdlg32.rc:214
+#: comdlg32.rc:215
 msgid "&To:"
 msgstr "&по:"
 
-#: comdlg32.rc:215 wineps.rc:42
+#: comdlg32.rc:216 wineps.rc:42
 msgid "Print &Quality:"
 msgstr "&Качество печати:"
 
-#: comdlg32.rc:217
+#: comdlg32.rc:218
 msgid "Print to Fi&le"
 msgstr "П&ечать в файл"
 
-#: comdlg32.rc:218
+#: comdlg32.rc:219
 msgid "Condensed"
 msgstr "Сжато"
 
-#: comdlg32.rc:224 comdlg32.rc:395
+#: comdlg32.rc:225 comdlg32.rc:397
 msgid "Print Setup"
 msgstr "Настройка принтера"
 
-#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:398
+#: comdlg32.rc:228 comdlg32.rc:361 comdlg32.rc:400
 msgid "Printer"
 msgstr "Принтер"
 
-#: comdlg32.rc:228
+#: comdlg32.rc:229
 msgid "&Default Printer"
 msgstr "Принтер по &умолчанию"
 
-#: comdlg32.rc:229
+#: comdlg32.rc:230
 msgid "[none]"
 msgstr "[нет]"
 
-#: comdlg32.rc:230
+#: comdlg32.rc:231
 msgid "Specific &Printer"
 msgstr "&Другой принтер"
 
-#: comdlg32.rc:235 comdlg32.rc:417 comdlg32.rc:441 wineps.rc:34
+#: comdlg32.rc:236 comdlg32.rc:419 comdlg32.rc:443 wineps.rc:34
 msgid "Orientation"
 msgstr "Ориентация"
 
-#: comdlg32.rc:236
+#: comdlg32.rc:237
 msgid "Po&rtrait"
 msgstr "&Книжная"
 
-#: comdlg32.rc:237 comdlg32.rc:443 wineps.rc:37
+#: comdlg32.rc:238 comdlg32.rc:445 wineps.rc:37
 msgid "&Landscape"
 msgstr "&Альбомная"
 
-#: comdlg32.rc:240 comdlg32.rc:411 comdlg32.rc:436 wineps.rc:28
+#: comdlg32.rc:241 comdlg32.rc:413 comdlg32.rc:438 wineps.rc:28
 msgid "Paper"
 msgstr "Бумага"
 
-#: comdlg32.rc:241
+#: comdlg32.rc:242
 msgid "Si&ze"
 msgstr "Ра&змер"
 
-#: comdlg32.rc:242
+#: comdlg32.rc:243
 msgid "&Source"
 msgstr "&Источник"
 
-#: comdlg32.rc:250 wineconsole.rc:85
+#: comdlg32.rc:251 wineconsole.rc:85
 msgid "Font"
 msgstr "Шрифт"
 
-#: comdlg32.rc:253
+#: comdlg32.rc:254
 msgid "&Font:"
 msgstr "&Шрифт:"
 
-#: comdlg32.rc:256
+#: comdlg32.rc:257
 msgid "Font St&yle:"
 msgstr "&Начертание:"
 
-#: comdlg32.rc:259 comdlg32.rc:437 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
 msgid "&Size:"
 msgstr "&Размер:"
 
-#: comdlg32.rc:266
+#: comdlg32.rc:267
 msgid "Effects"
 msgstr "Атрибуты"
 
-#: comdlg32.rc:267
+#: comdlg32.rc:268
 msgid "Stri&keout"
 msgstr "&Зачёркнутый"
 
-#: comdlg32.rc:268
+#: comdlg32.rc:269
 msgid "&Underline"
 msgstr "Под&чёркнутый"
 
-#: comdlg32.rc:269 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:292
 msgid "&Color:"
 msgstr "Цвет:"
 
-#: comdlg32.rc:272
+#: comdlg32.rc:273
 msgid "Sample"
 msgstr "Образец"
 
-#: comdlg32.rc:274
+#: comdlg32.rc:275
 msgid "Scr&ipt:"
 msgstr "На&бор символов:"
 
-#: comdlg32.rc:282
+#: comdlg32.rc:283 comdlg32.rc:288
 msgid "Color"
 msgstr "Выбор цвета"
 
-#: comdlg32.rc:285
+#: comdlg32.rc:286
 msgid "&Basic Colors:"
 msgstr "&Базовая палитра:"
 
-#: comdlg32.rc:286
+#: comdlg32.rc:287
 msgid "&Custom Colors:"
 msgstr "До&полнительные цвета:"
 
-#: comdlg32.rc:287 comdlg32.rc:310
-msgid "Color |  Sol&id"
-msgstr "Цвет|За&ливка"
+#: comdlg32.rc:289
+msgid "|S&olid"
+msgstr ""
 
-#: comdlg32.rc:288
+#: comdlg32.rc:290
 msgid "&Red:"
 msgstr "Крас&н:"
 
-#: comdlg32.rc:290
+#: comdlg32.rc:292
 msgid "&Green:"
 msgstr "&Зелёный:"
 
-#: comdlg32.rc:292
+#: comdlg32.rc:294
 msgid "&Blue:"
 msgstr "С&иний:"
 
-#: comdlg32.rc:294
+#: comdlg32.rc:296
 msgid "&Hue:"
 msgstr "О&ттенок:"
 
-#: comdlg32.rc:296
+#: comdlg32.rc:298
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Насыщенность:"
 
-#: comdlg32.rc:298
+#: comdlg32.rc:300
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Яркость:"
 
-#: comdlg32.rc:308
+#: comdlg32.rc:310
 msgid "&Add to Custom Colors"
 msgstr "&Добавить в набор"
 
-#: comdlg32.rc:309
+#: comdlg32.rc:311
 msgid "&Define Custom Colors >>"
 msgstr "&Определить цвет >>"
 
-#: comdlg32.rc:316 regedit.rc:275 regedit.rc:285
+#: comdlg32.rc:312
+#, fuzzy
+#| msgid "&No"
+msgctxt "Solid"
+msgid "&o"
+msgstr "&Нет"
+
+#: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
 msgstr "Поиск"
 
-#: comdlg32.rc:319 comdlg32.rc:338
+#: comdlg32.rc:321 comdlg32.rc:340
 msgid "Fi&nd What:"
 msgstr "&Образец:"
 
-#: comdlg32.rc:321 comdlg32.rc:342
+#: comdlg32.rc:323 comdlg32.rc:344
 msgid "Match &Whole Word Only"
 msgstr "&Только слово целиком"
 
-#: comdlg32.rc:322 comdlg32.rc:343
+#: comdlg32.rc:324 comdlg32.rc:345
 msgid "Match &Case"
 msgstr "C &учетом регистра"
 
-#: comdlg32.rc:323 joy.rc:71
+#: comdlg32.rc:325 joy.rc:71
 msgid "Direction"
 msgstr "Направление"
 
-#: comdlg32.rc:324 view.rc:42
+#: comdlg32.rc:326 view.rc:42
 msgid "&Up"
 msgstr "В&верх"
 
-#: comdlg32.rc:325 view.rc:43
+#: comdlg32.rc:327 view.rc:43
 msgid "&Down"
 msgstr "В&низ"
 
-#: comdlg32.rc:327 comdlg32.rc:345
+#: comdlg32.rc:329 comdlg32.rc:347
 msgid "&Find Next"
 msgstr "&Найти далее"
 
-#: comdlg32.rc:335
+#: comdlg32.rc:337
 msgid "Replace"
 msgstr "Замена"
 
-#: comdlg32.rc:340
+#: comdlg32.rc:342
 msgid "Re&place With:"
 msgstr "З&аменить на:"
 
-#: comdlg32.rc:346
+#: comdlg32.rc:348
 msgid "&Replace"
 msgstr "&Заменить"
 
-#: comdlg32.rc:347
+#: comdlg32.rc:349
 msgid "Replace &All"
 msgstr "Заменить &всё"
 
-#: comdlg32.rc:361 comdlg32.rc:401 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:363 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Свойства"
 
-#: comdlg32.rc:362
+#: comdlg32.rc:364
 msgid "Print to fi&le"
 msgstr "Печать в фай&л"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
+#: comdlg32.rc:365 comdlg32.rc:401 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Имя:"
 
-#: comdlg32.rc:364 comdlg32.rc:402
+#: comdlg32.rc:366 comdlg32.rc:404
 msgid "Status:"
 msgstr "Статус:"
 
-#: comdlg32.rc:366 comdlg32.rc:404
+#: comdlg32.rc:368 comdlg32.rc:406
 msgid "Type:"
 msgstr "Тип:"
 
-#: comdlg32.rc:368 comdlg32.rc:406
+#: comdlg32.rc:370 comdlg32.rc:408
 msgid "Where:"
 msgstr "Место:"
 
-#: comdlg32.rc:370 comdlg32.rc:408
+#: comdlg32.rc:372 comdlg32.rc:410
 msgid "Comment:"
 msgstr "Примечание:"
 
-#: comdlg32.rc:375
+#: comdlg32.rc:377
 msgid "Pa&ges"
 msgstr "&Страницы"
 
-#: comdlg32.rc:376
+#: comdlg32.rc:378
 msgid "&Selection"
 msgstr "&Выделение"
 
-#: comdlg32.rc:379
+#: comdlg32.rc:381
 msgid "&from:"
 msgstr "&от:"
 
-#: comdlg32.rc:380
+#: comdlg32.rc:382
 msgid "&to:"
 msgstr "&до:"
 
-#: comdlg32.rc:382
+#: comdlg32.rc:384
 msgid "Copies"
 msgstr "Копии"
 
-#: comdlg32.rc:383
+#: comdlg32.rc:385
 msgid "Number of &copies:"
 msgstr "Число &копий:"
 
-#: comdlg32.rc:385
+#: comdlg32.rc:387
 msgid "C&ollate"
 msgstr "&Разбить"
 
-#: comdlg32.rc:412 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:300
 msgid "Si&ze:"
 msgstr "Размер:"
 
-#: comdlg32.rc:414
+#: comdlg32.rc:416
 msgid "&Source:"
 msgstr "&Источник:"
 
-#: comdlg32.rc:419
+#: comdlg32.rc:421
 msgid "P&ortrait"
 msgstr "&Книжная"
 
-#: comdlg32.rc:420
+#: comdlg32.rc:422
 msgid "L&andscape"
 msgstr "&Альбомная"
 
-#: comdlg32.rc:430
+#: comdlg32.rc:432
 msgid "Setup Page"
 msgstr "Параметры страницы"
 
-#: comdlg32.rc:439
+#: comdlg32.rc:441
 msgid "&Tray:"
 msgstr "Пода&ча:"
 
-#: comdlg32.rc:442 wineps.rc:35
+#: comdlg32.rc:444 wineps.rc:35
 msgid "&Portrait"
 msgstr "&Книжная"
 
-#: comdlg32.rc:445
+#: comdlg32.rc:447
 msgid "L&eft:"
 msgstr "&Слева:"
 
-#: comdlg32.rc:447 notepad.rc:112
+#: comdlg32.rc:449 notepad.rc:112
 msgid "&Right:"
-msgstr "&Правое:"
+msgstr "Сп&рава:"
 
-#: comdlg32.rc:449
+#: comdlg32.rc:451
 msgid "T&op:"
-msgstr "Спр&ава:"
+msgstr "Св&ерху:"
 
-#: comdlg32.rc:451 notepad.rc:114
+#: comdlg32.rc:453 notepad.rc:114
 msgid "&Bottom:"
-msgstr "&Нижнее:"
+msgstr "С&низу:"
 
-#: comdlg32.rc:455
+#: comdlg32.rc:457
 msgid "P&rinter..."
 msgstr "&Принтер..."
 
-#: comdlg32.rc:463 comdlg32.rc:488
+#: comdlg32.rc:465 comdlg32.rc:490
 msgid "Look &in:"
 msgstr "Искать &в:"
 
-#: comdlg32.rc:469 comdlg32.rc:495
+#: comdlg32.rc:471 comdlg32.rc:497
 msgid "File &name:"
 msgstr "Имя &файла:"
 
-#: comdlg32.rc:473 comdlg32.rc:499
+#: comdlg32.rc:475 comdlg32.rc:501
 msgid "Files of &type:"
 msgstr "&Тип файлов:"
 
-#: comdlg32.rc:476 comdlg32.rc:502
+#: comdlg32.rc:478 comdlg32.rc:504
 msgid "Open as &read-only"
 msgstr "Только для &чтения"
 
-#: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:524 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "&Открыть"
 
-#: comdlg32.rc:515
+#: comdlg32.rc:517
 msgid "File name:"
 msgstr "Имя файла:"
 
-#: comdlg32.rc:518
+#: comdlg32.rc:520
 msgid "Files of type:"
 msgstr "Файлы типа:"
 
-#: comdlg32.rc:32
+#: comdlg32.rc:33
 msgid "File not found"
 msgstr "Файл не найден"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
 msgstr "Проверьте, правильно ли указано имя файла"
 
-#: comdlg32.rc:34
+#: comdlg32.rc:35
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
@@ -861,7 +869,7 @@ msgstr ""
 "Файла не существует.\n"
 "Хотите ли вы его создать?"
 
-#: comdlg32.rc:35
+#: comdlg32.rc:36
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
@@ -869,11 +877,11 @@ msgstr ""
 "Файл уже существует.\n"
 "Заменить его?"
 
-#: comdlg32.rc:36
+#: comdlg32.rc:37
 msgid "Invalid character(s) in path"
 msgstr "Некорректный символ в записи пути"
 
-#: comdlg32.rc:37
+#: comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
@@ -881,123 +889,123 @@ msgstr ""
 "Имя файла не может содержать следующие символы:\n"
 "                          / : < > |"
 
-#: comdlg32.rc:38
+#: comdlg32.rc:39
 msgid "Path does not exist"
 msgstr "Путь не существует"
 
-#: comdlg32.rc:39
+#: comdlg32.rc:40
 msgid "File does not exist"
 msgstr "Файл не существует"
 
-#: comdlg32.rc:40
+#: comdlg32.rc:41
 msgid "The selection contains a non-folder object"
 msgstr "Среди выбранных объектов не только папки"
 
-#: comdlg32.rc:45
+#: comdlg32.rc:46
 msgid "Up One Level"
 msgstr "Вверх на один уровень"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:47
 msgid "Create New Folder"
 msgstr "Создать новую папку"
 
-#: comdlg32.rc:47
+#: comdlg32.rc:48
 msgid "List"
 msgstr "Список"
 
-#: comdlg32.rc:48 cryptui.rc:201
+#: comdlg32.rc:49 cryptui.rc:201
 msgid "Details"
 msgstr "Подробности"
 
-#: comdlg32.rc:49
+#: comdlg32.rc:50
 msgid "Browse to Desktop"
 msgstr "Переход на рабочий стол"
 
-#: comdlg32.rc:113
+#: comdlg32.rc:114
 msgid "Regular"
 msgstr "Нормальный"
 
-#: comdlg32.rc:114
+#: comdlg32.rc:115
 msgid "Bold"
 msgstr "Жирный"
 
-#: comdlg32.rc:115
+#: comdlg32.rc:116
 msgid "Italic"
 msgstr "Курсив"
 
-#: comdlg32.rc:116
+#: comdlg32.rc:117
 msgid "Bold Italic"
 msgstr "Жирный курсив"
 
-#: comdlg32.rc:121 wordpad.rc:125
+#: comdlg32.rc:122 wordpad.rc:125
 msgid "Black"
 msgstr "Чёрный"
 
-#: comdlg32.rc:122 wordpad.rc:126
+#: comdlg32.rc:123 wordpad.rc:126
 msgid "Maroon"
 msgstr "Тёмно-бордовый"
 
-#: comdlg32.rc:123 wordpad.rc:127
+#: comdlg32.rc:124 wordpad.rc:127
 msgid "Green"
 msgstr "Зелёный"
 
-#: comdlg32.rc:124 wordpad.rc:128
+#: comdlg32.rc:125 wordpad.rc:128
 msgid "Olive"
 msgstr "Оливковый"
 
-#: comdlg32.rc:125 wordpad.rc:129
+#: comdlg32.rc:126 wordpad.rc:129
 msgid "Navy"
 msgstr "Тёмно-синий"
 
-#: comdlg32.rc:126 wordpad.rc:130
+#: comdlg32.rc:127 wordpad.rc:130
 msgid "Purple"
 msgstr "Пурпурный"
 
-#: comdlg32.rc:127 wordpad.rc:131
+#: comdlg32.rc:128 wordpad.rc:131
 msgid "Teal"
 msgstr "Морской волны"
 
-#: comdlg32.rc:128 wordpad.rc:132
+#: comdlg32.rc:129 wordpad.rc:132
 msgid "Gray"
 msgstr "Серый"
 
-#: comdlg32.rc:129 wordpad.rc:133
+#: comdlg32.rc:130 wordpad.rc:133
 msgid "Silver"
 msgstr "Серебряный"
 
-#: comdlg32.rc:130 wordpad.rc:134
+#: comdlg32.rc:131 wordpad.rc:134
 msgid "Red"
 msgstr "Красный"
 
-#: comdlg32.rc:131 wordpad.rc:135
+#: comdlg32.rc:132 wordpad.rc:135
 msgid "Lime"
 msgstr "Лимонный"
 
-#: comdlg32.rc:132 wordpad.rc:136
+#: comdlg32.rc:133 wordpad.rc:136
 msgid "Yellow"
 msgstr "Жёлтый"
 
-#: comdlg32.rc:133 wordpad.rc:137
+#: comdlg32.rc:134 wordpad.rc:137
 msgid "Blue"
 msgstr "Синий"
 
-#: comdlg32.rc:134 wordpad.rc:138
+#: comdlg32.rc:135 wordpad.rc:138
 msgid "Fuchsia"
 msgstr "Ярко-розовый"
 
-#: comdlg32.rc:135 wordpad.rc:139
+#: comdlg32.rc:136 wordpad.rc:139
 msgid "Aqua"
 msgstr "Голубой"
 
-#: comdlg32.rc:136 wordpad.rc:140
+#: comdlg32.rc:137 wordpad.rc:140
 msgid "White"
 msgstr "Белый"
 
-#: comdlg32.rc:56
+#: comdlg32.rc:57
 msgid "Unreadable Entry"
 msgstr "Нечитаемый элемент"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:59
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
@@ -1005,11 +1013,11 @@ msgstr ""
 "Это значение не лежит внутри диапазона страниц.\n"
 "Введите значение между %1!d! и %2!d!."
 
-#: comdlg32.rc:60
+#: comdlg32.rc:61
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "Значение «от» не должно превышать значения «до»."
 
-#: comdlg32.rc:62
+#: comdlg32.rc:63
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -1017,11 +1025,11 @@ msgstr ""
 "Границы перекрывают или превышают размеры бумаги.\n"
 "Введите их заново."
 
-#: comdlg32.rc:64
+#: comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "Число копий не может быть пустым."
 
-#: comdlg32.rc:66
+#: comdlg32.rc:67
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -1029,31 +1037,31 @@ msgstr ""
 "Такое большое количество копий не может быть напечатано этим принтером.\n"
 "Введите значение от 1 до %d."
 
-#: comdlg32.rc:67
+#: comdlg32.rc:68
 msgid "A printer error occurred."
 msgstr "Произошла ошибка принтера."
 
-#: comdlg32.rc:68
+#: comdlg32.rc:69
 msgid "No default printer defined."
 msgstr "Не задан принтер по умолчанию."
 
-#: comdlg32.rc:69
+#: comdlg32.rc:70
 msgid "Cannot find the printer."
 msgstr "Не удалось найти принтер."
 
-#: comdlg32.rc:70 progman.rc:76
+#: comdlg32.rc:71 progman.rc:76
 msgid "Out of memory."
 msgstr "Мало памяти."
 
-#: comdlg32.rc:71
+#: comdlg32.rc:72
 msgid "An error occurred."
 msgstr "Произошла ошибка."
 
-#: comdlg32.rc:72
+#: comdlg32.rc:73
 msgid "Unknown printer driver."
 msgstr "Неизвестный драйвер принтера."
 
-#: comdlg32.rc:75
+#: comdlg32.rc:76
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
@@ -1061,155 +1069,155 @@ msgstr ""
 "Чтобы настраивать страницу печати или печатать документ, нужно иметь хотя бы "
 "один установленный принтер. Установите принтер и попробуйте ещё раз."
 
-#: comdlg32.rc:141
+#: comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "Выберите шрифт размером от %1!d! до %2!d! пунктов."
 
-#: comdlg32.rc:142 ieframe.rc:35
+#: comdlg32.rc:143 ieframe.rc:35
 msgid "&Save"
 msgstr "&Сохранить"
 
-#: comdlg32.rc:143
+#: comdlg32.rc:144
 msgid "Save &in:"
 msgstr "Сохранить &в:"
 
-#: comdlg32.rc:144
+#: comdlg32.rc:145
 msgid "Save"
 msgstr "Сохранить"
 
-#: comdlg32.rc:146
+#: comdlg32.rc:147
 msgid "Open File"
 msgstr "Открыть файл"
 
-#: comdlg32.rc:147
+#: comdlg32.rc:148
 msgid "Select Folder"
 msgstr "Выберите папку"
 
-#: comdlg32.rc:148
+#: comdlg32.rc:149
 msgid "Font size has to be a number."
 msgstr "Размер шрифта должен быть числом."
 
-#: comdlg32.rc:83 oleview.rc:98
+#: comdlg32.rc:84 oleview.rc:98
 msgid "Ready"
 msgstr "Готово"
 
-#: comdlg32.rc:84
+#: comdlg32.rc:85
 msgid "Paused; "
 msgstr "Приостановлено; "
 
-#: comdlg32.rc:85
+#: comdlg32.rc:86
 msgid "Error; "
 msgstr "Ошибка; "
 
-#: comdlg32.rc:86
+#: comdlg32.rc:87
 msgid "Pending deletion; "
 msgstr "Ожидание удаления; "
 
-#: comdlg32.rc:87
+#: comdlg32.rc:88
 msgid "Paper jam; "
 msgstr "Бумага застряла; "
 
-#: comdlg32.rc:88
+#: comdlg32.rc:89
 msgid "Out of paper; "
 msgstr "Не хватило бумаги; "
 
-#: comdlg32.rc:89
+#: comdlg32.rc:90
 msgid "Feed paper manual; "
 msgstr "Вставьте бумагу вручную; "
 
-#: comdlg32.rc:90
+#: comdlg32.rc:91
 msgid "Paper problem; "
 msgstr "Проблема с бумагой; "
 
-#: comdlg32.rc:91
+#: comdlg32.rc:92
 msgid "Printer offline; "
 msgstr "Принтер в автономном режиме; "
 
-#: comdlg32.rc:92
+#: comdlg32.rc:93
 msgid "I/O Active; "
 msgstr "Ввод/Вывод активен; "
 
-#: comdlg32.rc:93
+#: comdlg32.rc:94
 msgid "Busy; "
 msgstr "Занят; "
 
-#: comdlg32.rc:94
+#: comdlg32.rc:95
 msgid "Printing; "
 msgstr "Идет печать; "
 
-#: comdlg32.rc:95
+#: comdlg32.rc:96
 msgid "Output tray is full; "
 msgstr "Лоток переполнен бумагой; "
 
-#: comdlg32.rc:96
+#: comdlg32.rc:97
 msgid "Not available; "
 msgstr "Не доступен; "
 
-#: comdlg32.rc:97
+#: comdlg32.rc:98
 msgid "Waiting; "
 msgstr "Ожидание; "
 
-#: comdlg32.rc:98
+#: comdlg32.rc:99
 msgid "Processing; "
 msgstr "Обработка; "
 
-#: comdlg32.rc:99
+#: comdlg32.rc:100
 msgid "Initializing; "
 msgstr "Подготовка; "
 
-#: comdlg32.rc:100
+#: comdlg32.rc:101
 msgid "Warming up; "
 msgstr "Прогрев; "
 
-#: comdlg32.rc:101
+#: comdlg32.rc:102
 msgid "Toner low; "
 msgstr "Тонер на исходе; "
 
-#: comdlg32.rc:102
+#: comdlg32.rc:103
 msgid "No toner; "
 msgstr "Нет тонера; "
 
-#: comdlg32.rc:103
+#: comdlg32.rc:104
 msgid "Page punt; "
 msgstr "Страница не напечатана; "
 
-#: comdlg32.rc:104
+#: comdlg32.rc:105
 msgid "Interrupted by user; "
 msgstr "Прервано пользователем; "
 
-#: comdlg32.rc:105
+#: comdlg32.rc:106
 msgid "Out of memory; "
 msgstr "Мало памяти; "
 
-#: comdlg32.rc:106
+#: comdlg32.rc:107
 msgid "The printer door is open; "
 msgstr "Крышка принтера открыта; "
 
-#: comdlg32.rc:107
+#: comdlg32.rc:108
 msgid "Print server unknown; "
 msgstr "Неизвестный принт-сервер; "
 
-#: comdlg32.rc:108
+#: comdlg32.rc:109
 msgid "Power save mode; "
 msgstr "Режим экономии энергии; "
 
-#: comdlg32.rc:77
+#: comdlg32.rc:78
 msgid "Default Printer; "
 msgstr "Принтер по умолчанию; "
 
-#: comdlg32.rc:78
+#: comdlg32.rc:79
 msgid "There are %d documents in the queue"
 msgstr "Документов в очереди: %d"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:80
 msgid "Margins [inches]"
 msgstr "Границы [дюймы]"
 
-#: comdlg32.rc:80
+#: comdlg32.rc:81
 msgid "Margins [mm]"
 msgstr "Границы [мм]"
 
-#: comdlg32.rc:81 sane.rc:33
+#: comdlg32.rc:82 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "мм"
@@ -1218,7 +1226,7 @@ msgstr "мм"
 msgid "&User name:"
 msgstr "По&льзователь:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:80
 msgid "&Password:"
 msgstr "&Пароль:"
 
@@ -2537,7 +2545,7 @@ msgstr "Сертификат годен."
 msgid "Field"
 msgstr "Поле"
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr "Значение"
 
@@ -3113,7 +3121,7 @@ msgstr "Символьный"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:99 wldap32.rc:112
 msgid "Other"
 msgstr "Другой"
 
@@ -3178,7 +3186,7 @@ msgstr "&Начало"
 msgid "&Stop"
 msgstr "Останов&ить"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "О&бновить"
 
@@ -3710,6 +3718,20 @@ msgstr "Условная компиляция отключена"
 msgid "Expected '@'"
 msgstr "Ожидается «@»"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "Неизвестная ошибка"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "Ожидается число"
@@ -3754,45 +3776,49 @@ msgstr "Ожидается объект типа «JScript»"
 msgid "Syntax error in regular expression"
 msgstr "Синтаксическая ошибка в регулярном выражении"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "В кодируемом URI обнаружен неверный символ"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "Декодируемый URI неверен"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "Количество знаков после запятой вне диапазона"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "Точность представления вне диапазона"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "Длиной массива должно быть конечное положительное число"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "Ожидается объект типа «Array»"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr "Невозможно установить атрибут «writable» в «true» для этого объекта"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Невозможно переопределить ненастраиваемое свойство «|»"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr "Невозможно изменить свойство «|»"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr "Свойство не может одновременно иметь методы для доступа и значение"
 
@@ -6822,10 +6848,14 @@ msgid "Begin request has already been made.\n"
 msgstr "Запрос уже был инициирован.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object is not initialized.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "Объект не инициализирован.\n"
+msgstr "Приёмник данных не был завершён.\n"
+
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "Приёмник данных уже был остановлен.\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7048,132 +7078,96 @@ msgid "No events available.\n"
 msgstr "Нет доступных событий.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported state transition.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "Данный смена состояний не поддерживается.\n"
+msgstr "Некорректная смена состояний источника данных.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "Реестр был восстановлен.\n"
+msgstr "Достигнут конец потока данных.\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
 msgstr "Был вызван метод Shutdown().\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "Реестр был восстановлен.\n"
+msgstr "Длительность медиапотока не задана.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
 msgstr ""
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "Набор свойств не найден.\n"
+msgstr "Свойство не найдено.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Property is empty.\n"
 msgid "Property is read-only.\n"
-msgstr "Пустое свойство\n"
+msgstr "Свойство доступно только для чтения.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Property type is not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "Некорректный тип свойства.\n"
+msgstr "Недопустимое свойство.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "Ресурс занят.\n"
+msgstr "Источник данных остановлен.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported time format.\n"
 msgid "Unsupported media format.\n"
-msgstr "Данный формат времени не поддерживается.\n"
+msgstr "Данный формат не поддерживается.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "Ресурс занят.\n"
+msgstr "Некорректное состояние источника данных.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "Данные не обнаружены.\n"
+msgstr "Не выбрано ни одного потока.\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported time format.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "Данный формат времени не поддерживается.\n"
+msgstr "Характеристики данного источника данных не поддерживаются.\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "Приёмник данных был удалён.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
 msgstr ""
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "Реестр был восстановлен.\n"
+msgstr "Набор потоков данного приёмника данных фиксирован.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "Домен уже существует.\n"
+msgstr "Поток приёмника данных уже существует.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation was cancelled.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "Операция была отменена.\n"
+msgstr "Создание сэмпла было отменено.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "Каталог не пуст.\n"
+msgstr "Аллокатор сэмплов пуст.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Clock state was already set.\n"
 msgid "Sink was already stopped.\n"
-msgstr "Состояние часов уже установлено.\n"
+msgstr "Приёмник данных уже был остановлен.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
 msgstr ""
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "Данные не обнаружены.\n"
+msgstr "Потоки приёмника не выбраны.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "Слишком длинное имя файла.\n"
+msgstr "Превышена длина метаданных.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
@@ -7238,6 +7232,12 @@ msgstr "Не задан источник времени для часов.\n"
 #: mferror.mc:718
 msgid "Clock state was already set.\n"
 msgstr "Состояние часов уже установлено.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "Часы недоступны.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8329,6 +8329,196 @@ msgstr "Включено"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Выключено"
+
+#: version.rc:55
+msgid "Provider"
+msgstr "Провайдер"
+
+#: version.rc:58
+msgid "Select the data you want to connect to:"
+msgstr "Выберите формат для подключения:"
+
+#: version.rc:65
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "Подключения"
+
+#: version.rc:68
+#, fuzzy
+#| msgid "Select the data you want to connect to:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Выберите формат для подключения:"
+
+#: version.rc:69
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Введите ваше имя"
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "Сброшено подключений"
+
+#: version.rc:74
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "Подключения"
+
+#: version.rc:76
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "&Добавить..."
+
+#: version.rc:77
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:78
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "По&льзователь:"
+
+#: version.rc:82
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Пу&стая страница"
+
+#: version.rc:83
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "Неверный пароль.\n"
+
+#: version.rc:84
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:86
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "Сброшено подключений"
+
+#: version.rc:91 winemine.rc:65
+msgid "Advanced"
+msgstr "Мастер"
+
+#: version.rc:94
+#, fuzzy
+#| msgid "Network share"
+msgid "Network settings"
+msgstr "Сетевой диск"
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Bad impersonation level.\n"
+msgid "&Impersonation level:"
+msgstr "Ошибочный уровень олицетворения.\n"
+
+#: version.rc:97
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:100
+#, fuzzy
+#| msgid "Connected"
+msgid "Connect:"
+msgstr "Подключено"
+
+#: version.rc:102
+#, fuzzy
+#| msgid "seconds"
+msgid "seconds."
+msgstr "сек."
+
+#: version.rc:103
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "Успех"
+
+#: version.rc:109
+#, fuzzy
+#| msgid "&All"
+msgid "All"
+msgstr "&Все"
+
+#: version.rc:113
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:114
+#, fuzzy
+#| msgid "&Edit..."
+msgid "&Edit Value..."
+msgstr "&Изменить..."
+
+#: version.rc:49
+#, fuzzy
+#| msgid "Data Link Properties"
+msgid "Data Link Error"
+msgstr "Свойства подключения"
+
+#: version.rc:50
+#, fuzzy
+#| msgid "Please select a file."
+msgid "Please select a provider."
+msgstr "Выберите файл."
+
+#: version.rc:36
+msgid "Data Link Properties"
+msgstr "Свойства подключения"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
+
+#: version.rc:41
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "Готово"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "Файл «Readme»:"
+
+#: version.rc:43
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:45
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:46
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:47
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "Число записей"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9481,447 +9671,455 @@ msgstr " сек"
 msgid "Select Source"
 msgstr "Выберите источник"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "China Standard Time"
 msgstr ""
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "China Daylight Time"
 msgstr ""
 
-#: tzres.rc:160
+#: tzres.rc:164
 msgid "North Asia Standard Time"
 msgstr ""
 
-#: tzres.rc:161
+#: tzres.rc:165
 msgid "North Asia Daylight Time"
 msgstr ""
 
-#: tzres.rc:104
+#: tzres.rc:106
 msgid "Georgian Standard Time"
 msgstr ""
 
-#: tzres.rc:105
+#: tzres.rc:107
 msgid "Georgian Daylight Time"
 msgstr ""
 
-#: tzres.rc:152
+#: tzres.rc:156
 msgid "Nepal Standard Time"
 msgstr ""
 
-#: tzres.rc:153
+#: tzres.rc:157
 msgid "Nepal Daylight Time"
 msgstr ""
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Cape Verde Standard Time"
 msgstr ""
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Cape Verde Daylight Time"
 msgstr ""
 
-#: tzres.rc:74
-msgid "Central European Standard Time"
-msgstr ""
-
-#: tzres.rc:75
-msgid "Central European Daylight Time"
-msgstr ""
-
-#: tzres.rc:140
-msgid "Morocco Standard Time"
-msgstr ""
-
-#: tzres.rc:141
-msgid "Morocco Daylight Time"
-msgstr ""
-
-#: tzres.rc:72
-msgid "Central Europe Standard Time"
-msgstr ""
-
-#: tzres.rc:73
-msgid "Central Europe Daylight Time"
-msgstr ""
-
-#: tzres.rc:118
-msgid "Iran Standard Time"
-msgstr ""
-
-#: tzres.rc:119
-msgid "Iran Daylight Time"
-msgstr ""
-
-#: tzres.rc:150
-msgid "Namibia Standard Time"
-msgstr ""
-
-#: tzres.rc:151
-msgid "Namibia Daylight Time"
-msgstr ""
-
-#: tzres.rc:200
-msgid "Tonga Standard Time"
-msgstr ""
-
-#: tzres.rc:201
-msgid "Tonga Daylight Time"
-msgstr ""
-
-#: tzres.rc:144
-msgid "Mountain Standard Time (Mexico)"
-msgstr ""
-
-#: tzres.rc:145
-msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
-
-#: tzres.rc:106
-msgid "GMT Standard Time"
-msgstr ""
-
-#: tzres.rc:107
-msgid "GMT Daylight Time"
-msgstr ""
-
-#: tzres.rc:68
-msgid "Central Asia Standard Time"
-msgstr ""
-
-#: tzres.rc:69
-msgid "Central Asia Daylight Time"
-msgstr ""
-
-#: tzres.rc:38
-msgid "Arabic Standard Time"
-msgstr ""
-
-#: tzres.rc:39
-msgid "Arabic Daylight Time"
-msgstr ""
-
-#: tzres.rc:132
-msgid "Magadan Standard Time"
-msgstr ""
-
-#: tzres.rc:133
-msgid "Magadan Daylight Time"
-msgstr ""
-
-#: tzres.rc:156
-msgid "Newfoundland Standard Time"
-msgstr ""
-
-#: tzres.rc:157
-msgid "Newfoundland Daylight Time"
-msgstr ""
-
-#: tzres.rc:224
-msgid "West Pacific Standard Time"
-msgstr ""
-
-#: tzres.rc:225
-msgid "West Pacific Daylight Time"
-msgstr ""
-
-#: tzres.rc:164
-msgid "Pacific Standard Time"
-msgstr ""
-
-#: tzres.rc:165
-msgid "Pacific Daylight Time"
-msgstr ""
-
-#: tzres.rc:48
-msgid "Azerbaijan Standard Time"
-msgstr ""
-
-#: tzres.rc:49
-msgid "Azerbaijan Daylight Time"
-msgstr ""
-
-#: tzres.rc:182
-msgid "Samoa Standard Time"
-msgstr ""
-
-#: tzres.rc:183
-msgid "Samoa Daylight Time"
-msgstr ""
-
-#: tzres.rc:124
-msgid "Kaliningrad Standard Time"
-msgstr ""
-
-#: tzres.rc:125
-msgid "Kaliningrad Daylight Time"
-msgstr ""
-
-#: tzres.rc:166
-msgid "Pacific Standard Time (Mexico)"
-msgstr ""
-
-#: tzres.rc:167
-msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
-
-#: tzres.rc:136
-msgid "Middle East Standard Time"
-msgstr ""
-
-#: tzres.rc:137
-msgid "Middle East Daylight Time"
-msgstr ""
-
-#: tzres.rc:198
-msgid "Tokyo Standard Time"
-msgstr ""
-
-#: tzres.rc:199
-msgid "Tokyo Daylight Time"
-msgstr ""
-
-#: tzres.rc:130
-msgid "Line Islands Standard Time"
-msgstr ""
-
-#: tzres.rc:131
-msgid "Line Islands Daylight Time"
-msgstr ""
-
-#: tzres.rc:122
-msgid "Jordan Standard Time"
-msgstr ""
-
-#: tzres.rc:123
-msgid "Jordan Daylight Time"
-msgstr ""
-
-#: tzres.rc:78
-msgid "Central Standard Time"
-msgstr ""
-
-#: tzres.rc:79
-msgid "Central Daylight Time"
-msgstr ""
-
-#: tzres.rc:50
-msgid "Azores Standard Time"
-msgstr ""
-
-#: tzres.rc:51
-msgid "Azores Daylight Time"
-msgstr ""
-
-#: tzres.rc:158
-msgid "North Asia East Standard Time"
-msgstr ""
-
-#: tzres.rc:159
-msgid "North Asia East Daylight Time"
-msgstr ""
-
-#: tzres.rc:40
-msgid "Argentina Standard Time"
-msgstr ""
-
-#: tzres.rc:41
-msgid "Argentina Daylight Time"
-msgstr ""
-
-#: tzres.rc:146
-msgid "Myanmar Standard Time"
-msgstr ""
-
-#: tzres.rc:147
-msgid "Myanmar Daylight Time"
-msgstr ""
-
-#: tzres.rc:210 tzres.rc:211
-msgid "Coordinated Universal Time"
-msgstr ""
-
 #: tzres.rc:116
-msgid "India Standard Time"
+msgid "Haiti Standard Time"
 msgstr ""
 
 #: tzres.rc:117
-msgid "India Daylight Time"
+msgid "Haiti Daylight Time"
 msgstr ""
 
-#: tzres.rc:112
-msgid "GTB Standard Time"
+#: tzres.rc:76
+msgid "Central European Standard Time"
 msgstr ""
 
-#: tzres.rc:113
-msgid "GTB Daylight Time"
+#: tzres.rc:77
+msgid "Central European Daylight Time"
 msgstr ""
 
-#: tzres.rc:202
-msgid "Turkey Standard Time"
+#: tzres.rc:144
+msgid "Morocco Standard Time"
 msgstr ""
 
-#: tzres.rc:203
-msgid "Turkey Daylight Time"
+#: tzres.rc:145
+msgid "Morocco Daylight Time"
 msgstr ""
 
-#: tzres.rc:100
-msgid "Fiji Standard Time"
+#: tzres.rc:74
+msgid "Central Europe Standard Time"
 msgstr ""
 
-#: tzres.rc:101
-msgid "Fiji Daylight Time"
+#: tzres.rc:75
+msgid "Central Europe Daylight Time"
 msgstr ""
 
-#: tzres.rc:58
-msgid "Canada Central Standard Time"
+#: tzres.rc:122
+msgid "Iran Standard Time"
 msgstr ""
 
-#: tzres.rc:59
-msgid "Canada Central Daylight Time"
+#: tzres.rc:123
+msgid "Iran Daylight Time"
 msgstr ""
 
-#: tzres.rc:194
-msgid "Taipei Standard Time"
+#: tzres.rc:154
+msgid "Namibia Standard Time"
 msgstr ""
 
-#: tzres.rc:195
-msgid "Taipei Daylight Time"
+#: tzres.rc:155
+msgid "Namibia Daylight Time"
 msgstr ""
 
-#: tzres.rc:220
-msgid "W. Europe Standard Time"
+#: tzres.rc:204
+msgid "Tonga Standard Time"
 msgstr ""
 
-#: tzres.rc:221
-msgid "W. Europe Daylight Time"
-msgstr ""
-
-#: tzres.rc:138
-msgid "Montevideo Standard Time"
-msgstr ""
-
-#: tzres.rc:139
-msgid "Montevideo Daylight Time"
-msgstr ""
-
-#: tzres.rc:168
-msgid "Pakistan Standard Time"
-msgstr ""
-
-#: tzres.rc:169
-msgid "Pakistan Daylight Time"
-msgstr ""
-
-#: tzres.rc:62
-msgid "Caucasus Standard Time"
-msgstr ""
-
-#: tzres.rc:63
-msgid "Caucasus Daylight Time"
-msgstr ""
-
-#: tzres.rc:46
-msgid "AUS Eastern Standard Time"
-msgstr ""
-
-#: tzres.rc:47
-msgid "AUS Eastern Daylight Time"
+#: tzres.rc:205
+msgid "Tonga Daylight Time"
 msgstr ""
 
 #: tzres.rc:148
-msgid "N. Central Asia Standard Time"
+msgid "Mountain Standard Time (Mexico)"
 msgstr ""
 
 #: tzres.rc:149
-msgid "N. Central Asia Daylight Time"
+msgid "Mountain Daylight Time (Mexico)"
 msgstr ""
 
-#: tzres.rc:94
-msgid "Eastern Standard Time"
+#: tzres.rc:108
+msgid "GMT Standard Time"
 msgstr ""
 
-#: tzres.rc:95
-msgid "Eastern Daylight Time"
+#: tzres.rc:109
+msgid "GMT Daylight Time"
+msgstr ""
+
+#: tzres.rc:70
+msgid "Central Asia Standard Time"
+msgstr ""
+
+#: tzres.rc:71
+msgid "Central Asia Daylight Time"
+msgstr ""
+
+#: tzres.rc:40
+msgid "Arabic Standard Time"
+msgstr ""
+
+#: tzres.rc:41
+msgid "Arabic Daylight Time"
+msgstr ""
+
+#: tzres.rc:136
+msgid "Magadan Standard Time"
+msgstr ""
+
+#: tzres.rc:137
+msgid "Magadan Daylight Time"
+msgstr ""
+
+#: tzres.rc:160
+msgid "Newfoundland Standard Time"
+msgstr ""
+
+#: tzres.rc:161
+msgid "Newfoundland Daylight Time"
+msgstr ""
+
+#: tzres.rc:228
+msgid "West Pacific Standard Time"
+msgstr ""
+
+#: tzres.rc:229
+msgid "West Pacific Daylight Time"
+msgstr ""
+
+#: tzres.rc:168
+msgid "Pacific Standard Time"
+msgstr ""
+
+#: tzres.rc:169
+msgid "Pacific Daylight Time"
+msgstr ""
+
+#: tzres.rc:50
+msgid "Azerbaijan Standard Time"
+msgstr ""
+
+#: tzres.rc:51
+msgid "Azerbaijan Daylight Time"
+msgstr ""
+
+#: tzres.rc:186
+msgid "Samoa Standard Time"
+msgstr ""
+
+#: tzres.rc:187
+msgid "Samoa Daylight Time"
+msgstr ""
+
+#: tzres.rc:128
+msgid "Kaliningrad Standard Time"
+msgstr ""
+
+#: tzres.rc:129
+msgid "Kaliningrad Daylight Time"
+msgstr ""
+
+#: tzres.rc:170
+msgid "Pacific Standard Time (Mexico)"
+msgstr ""
+
+#: tzres.rc:171
+msgid "Pacific Daylight Time (Mexico)"
+msgstr ""
+
+#: tzres.rc:140
+msgid "Middle East Standard Time"
+msgstr ""
+
+#: tzres.rc:141
+msgid "Middle East Daylight Time"
+msgstr ""
+
+#: tzres.rc:202
+msgid "Tokyo Standard Time"
+msgstr ""
+
+#: tzres.rc:203
+msgid "Tokyo Daylight Time"
+msgstr ""
+
+#: tzres.rc:134
+msgid "Line Islands Standard Time"
+msgstr ""
+
+#: tzres.rc:135
+msgid "Line Islands Daylight Time"
+msgstr ""
+
+#: tzres.rc:126
+msgid "Jordan Standard Time"
+msgstr ""
+
+#: tzres.rc:127
+msgid "Jordan Daylight Time"
 msgstr ""
 
 #: tzres.rc:80
-msgid "Central Standard Time (Mexico)"
+msgid "Central Standard Time"
 msgstr ""
 
 #: tzres.rc:81
-msgid "Central Daylight Time (Mexico)"
+msgid "Central Daylight Time"
+msgstr ""
+
+#: tzres.rc:52
+msgid "Azores Standard Time"
+msgstr ""
+
+#: tzres.rc:53
+msgid "Azores Daylight Time"
+msgstr ""
+
+#: tzres.rc:162
+msgid "North Asia East Standard Time"
+msgstr ""
+
+#: tzres.rc:163
+msgid "North Asia East Daylight Time"
 msgstr ""
 
 #: tzres.rc:42
-msgid "Atlantic Standard Time"
+msgid "Argentina Standard Time"
 msgstr ""
 
 #: tzres.rc:43
-msgid "Atlantic Daylight Time"
+msgid "Argentina Daylight Time"
 msgstr ""
 
-#: tzres.rc:142
-msgid "Mountain Standard Time"
+#: tzres.rc:150
+msgid "Myanmar Standard Time"
 msgstr ""
 
-#: tzres.rc:143
-msgid "Mountain Daylight Time"
+#: tzres.rc:151
+msgid "Myanmar Daylight Time"
+msgstr ""
+
+#: tzres.rc:214 tzres.rc:215
+msgid "Coordinated Universal Time"
+msgstr ""
+
+#: tzres.rc:120
+msgid "India Standard Time"
+msgstr ""
+
+#: tzres.rc:121
+msgid "India Daylight Time"
+msgstr ""
+
+#: tzres.rc:114
+msgid "GTB Standard Time"
+msgstr ""
+
+#: tzres.rc:115
+msgid "GTB Daylight Time"
 msgstr ""
 
 #: tzres.rc:206
-msgid "US Eastern Standard Time"
+msgid "Turkey Standard Time"
 msgstr ""
 
 #: tzres.rc:207
-msgid "US Eastern Daylight Time"
+msgid "Turkey Daylight Time"
 msgstr ""
 
-#: tzres.rc:196
-msgid "Tasmania Standard Time"
+#: tzres.rc:102
+msgid "Fiji Standard Time"
 msgstr ""
 
-#: tzres.rc:197
-msgid "Tasmania Daylight Time"
+#: tzres.rc:103
+msgid "Fiji Daylight Time"
 msgstr ""
 
-#: tzres.rc:66
-msgid "Central America Standard Time"
+#: tzres.rc:60
+msgid "Canada Central Standard Time"
 msgstr ""
 
-#: tzres.rc:67
-msgid "Central America Daylight Time"
+#: tzres.rc:61
+msgid "Canada Central Daylight Time"
 msgstr ""
 
-#: tzres.rc:208
-msgid "US Mountain Standard Time"
+#: tzres.rc:198
+msgid "Taipei Standard Time"
 msgstr ""
 
-#: tzres.rc:209
-msgid "US Mountain Daylight Time"
+#: tzres.rc:199
+msgid "Taipei Daylight Time"
 msgstr ""
 
-#: tzres.rc:188
-msgid "South Africa Standard Time"
+#: tzres.rc:224
+msgid "W. Europe Standard Time"
 msgstr ""
 
-#: tzres.rc:189
-msgid "South Africa Daylight Time"
+#: tzres.rc:225
+msgid "W. Europe Daylight Time"
+msgstr ""
+
+#: tzres.rc:142
+msgid "Montevideo Standard Time"
+msgstr ""
+
+#: tzres.rc:143
+msgid "Montevideo Daylight Time"
+msgstr ""
+
+#: tzres.rc:172
+msgid "Pakistan Standard Time"
+msgstr ""
+
+#: tzres.rc:173
+msgid "Pakistan Daylight Time"
 msgstr ""
 
 #: tzres.rc:64
-msgid "Cen. Australia Standard Time"
+msgid "Caucasus Standard Time"
 msgstr ""
 
 #: tzres.rc:65
+msgid "Caucasus Daylight Time"
+msgstr ""
+
+#: tzres.rc:48
+msgid "AUS Eastern Standard Time"
+msgstr ""
+
+#: tzres.rc:49
+msgid "AUS Eastern Daylight Time"
+msgstr ""
+
+#: tzres.rc:152
+msgid "N. Central Asia Standard Time"
+msgstr ""
+
+#: tzres.rc:153
+msgid "N. Central Asia Daylight Time"
+msgstr ""
+
+#: tzres.rc:96
+msgid "Eastern Standard Time"
+msgstr ""
+
+#: tzres.rc:97
+msgid "Eastern Daylight Time"
+msgstr ""
+
+#: tzres.rc:82
+msgid "Central Standard Time (Mexico)"
+msgstr ""
+
+#: tzres.rc:83
+msgid "Central Daylight Time (Mexico)"
+msgstr ""
+
+#: tzres.rc:44
+msgid "Atlantic Standard Time"
+msgstr ""
+
+#: tzres.rc:45
+msgid "Atlantic Daylight Time"
+msgstr ""
+
+#: tzres.rc:146
+msgid "Mountain Standard Time"
+msgstr ""
+
+#: tzres.rc:147
+msgid "Mountain Daylight Time"
+msgstr ""
+
+#: tzres.rc:210
+msgid "US Eastern Standard Time"
+msgstr ""
+
+#: tzres.rc:211
+msgid "US Eastern Daylight Time"
+msgstr ""
+
+#: tzres.rc:200
+msgid "Tasmania Standard Time"
+msgstr ""
+
+#: tzres.rc:201
+msgid "Tasmania Daylight Time"
+msgstr ""
+
+#: tzres.rc:68
+msgid "Central America Standard Time"
+msgstr ""
+
+#: tzres.rc:69
+msgid "Central America Daylight Time"
+msgstr ""
+
+#: tzres.rc:212
+msgid "US Mountain Standard Time"
+msgstr ""
+
+#: tzres.rc:213
+msgid "US Mountain Daylight Time"
+msgstr ""
+
+#: tzres.rc:192
+msgid "South Africa Standard Time"
+msgstr ""
+
+#: tzres.rc:193
+msgid "South Africa Daylight Time"
+msgstr ""
+
+#: tzres.rc:66
+msgid "Cen. Australia Standard Time"
+msgstr ""
+
+#: tzres.rc:67
 msgid "Cen. Australia Daylight Time"
 msgstr ""
 
-#: tzres.rc:190
+#: tzres.rc:194
 msgid "Sri Lanka Standard Time"
 msgstr ""
 
-#: tzres.rc:191
+#: tzres.rc:195
 msgid "Sri Lanka Daylight Time"
 msgstr ""
 
@@ -9933,123 +10131,123 @@ msgstr ""
 msgid "Afghanistan Daylight Time"
 msgstr ""
 
-#: tzres.rc:226
+#: tzres.rc:230
 msgid "Yakutsk Standard Time"
 msgstr ""
 
-#: tzres.rc:227
+#: tzres.rc:231
 msgid "Yakutsk Daylight Time"
 msgstr ""
 
-#: tzres.rc:176
+#: tzres.rc:180
 msgid "SA Eastern Standard Time"
 msgstr ""
 
-#: tzres.rc:177
+#: tzres.rc:181
 msgid "SA Eastern Daylight Time"
 msgstr ""
 
-#: tzres.rc:34
+#: tzres.rc:36
 msgid "Arab Standard Time"
 msgstr ""
 
-#: tzres.rc:35
+#: tzres.rc:37
 msgid "Arab Daylight Time"
 msgstr ""
 
-#: tzres.rc:36
+#: tzres.rc:38
 msgid "Arabian Standard Time"
 msgstr ""
 
-#: tzres.rc:37
+#: tzres.rc:39
 msgid "Arabian Daylight Time"
 msgstr ""
 
-#: tzres.rc:174
+#: tzres.rc:178
 msgid "Russian Standard Time"
 msgstr ""
 
-#: tzres.rc:175
+#: tzres.rc:179
 msgid "Russian Daylight Time"
 msgstr ""
 
-#: tzres.rc:172
+#: tzres.rc:176
 msgid "Romance Standard Time"
 msgstr ""
 
-#: tzres.rc:173
+#: tzres.rc:177
 msgid "Romance Daylight Time"
 msgstr ""
 
-#: tzres.rc:98
+#: tzres.rc:100
 msgid "Ekaterinburg Standard Time"
 msgstr ""
 
-#: tzres.rc:99
+#: tzres.rc:101
 msgid "Ekaterinburg Daylight Time"
 msgstr ""
 
-#: tzres.rc:192
+#: tzres.rc:196
 msgid "Syria Standard Time"
 msgstr ""
 
-#: tzres.rc:193
+#: tzres.rc:197
 msgid "Syria Daylight Time"
 msgstr ""
 
-#: tzres.rc:44
+#: tzres.rc:46
 msgid "AUS Central Standard Time"
 msgstr ""
 
-#: tzres.rc:45
+#: tzres.rc:47
 msgid "AUS Central Daylight Time"
 msgstr ""
 
-#: tzres.rc:110
+#: tzres.rc:112
 msgid "Greenwich Standard Time"
 msgstr ""
 
-#: tzres.rc:111
+#: tzres.rc:113
 msgid "Greenwich Daylight Time"
 msgstr ""
 
-#: tzres.rc:204
+#: tzres.rc:208
 msgid "Ulaanbaatar Standard Time"
 msgstr ""
 
-#: tzres.rc:205
+#: tzres.rc:209
 msgid "Ulaanbaatar Daylight Time"
 msgstr ""
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "Israel Standard Time"
 msgstr ""
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "Israel Daylight Time"
 msgstr ""
 
-#: tzres.rc:54
+#: tzres.rc:56
 msgid "Bangladesh Standard Time"
 msgstr ""
 
-#: tzres.rc:55
+#: tzres.rc:57
 msgid "Bangladesh Daylight Time"
 msgstr ""
 
-#: tzres.rc:178
+#: tzres.rc:182
 msgid "SA Pacific Standard Time"
 msgstr ""
 
-#: tzres.rc:179
+#: tzres.rc:183
 msgid "SA Pacific Daylight Time"
 msgstr ""
 
-#: tzres.rc:222
+#: tzres.rc:226
 msgid "West Asia Standard Time"
 msgstr ""
 
-#: tzres.rc:223
+#: tzres.rc:227
 msgid "West Asia Daylight Time"
 msgstr ""
 
@@ -10061,211 +10259,219 @@ msgstr ""
 msgid "Alaskan Daylight Time"
 msgstr ""
 
-#: tzres.rc:170
+#: tzres.rc:174
 msgid "Paraguay Standard Time"
 msgstr ""
 
-#: tzres.rc:171
+#: tzres.rc:175
 msgid "Paraguay Daylight Time"
 msgstr ""
 
-#: tzres.rc:84
+#: tzres.rc:86
 msgid "Dateline Standard Time"
 msgstr ""
 
-#: tzres.rc:85
+#: tzres.rc:87
 msgid "Dateline Daylight Time"
 msgstr ""
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Libya Standard Time"
 msgstr ""
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Libya Daylight Time"
 msgstr ""
 
-#: tzres.rc:52
+#: tzres.rc:54
 msgid "Bahia Standard Time"
 msgstr ""
 
-#: tzres.rc:53
+#: tzres.rc:55
 msgid "Bahia Daylight Time"
 msgstr ""
 
-#: tzres.rc:212
+#: tzres.rc:216
 msgid "Venezuela Standard Time"
 msgstr ""
 
-#: tzres.rc:213
+#: tzres.rc:217
 msgid "Venezuela Daylight Time"
 msgstr ""
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "Hawaiian Standard Time"
 msgstr ""
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "Hawaiian Daylight Time"
 msgstr ""
 
-#: tzres.rc:184
+#: tzres.rc:188
 msgid "SE Asia Standard Time"
 msgstr ""
 
-#: tzres.rc:185
+#: tzres.rc:189
 msgid "SE Asia Daylight Time"
 msgstr ""
 
-#: tzres.rc:154
+#: tzres.rc:158
 msgid "New Zealand Standard Time"
 msgstr ""
 
-#: tzres.rc:155
+#: tzres.rc:159
 msgid "New Zealand Daylight Time"
 msgstr ""
 
-#: tzres.rc:70
+#: tzres.rc:34
+msgid "Aleutian Standard Time"
+msgstr ""
+
+#: tzres.rc:35
+msgid "Aleutian Daylight Time"
+msgstr ""
+
+#: tzres.rc:72
 msgid "Central Brazilian Standard Time"
 msgstr ""
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Brazilian Daylight Time"
 msgstr ""
 
-#: tzres.rc:56
+#: tzres.rc:58
 msgid "Belarus Standard Time"
 msgstr ""
 
-#: tzres.rc:57
+#: tzres.rc:59
 msgid "Belarus Daylight Time"
 msgstr ""
 
-#: tzres.rc:180
+#: tzres.rc:184
 msgid "SA Western Standard Time"
 msgstr ""
 
-#: tzres.rc:181
+#: tzres.rc:185
 msgid "SA Western Daylight Time"
 msgstr ""
 
-#: tzres.rc:108
+#: tzres.rc:110
 msgid "Greenland Standard Time"
 msgstr ""
 
-#: tzres.rc:109
+#: tzres.rc:111
 msgid "Greenland Daylight Time"
 msgstr ""
 
-#: tzres.rc:92
+#: tzres.rc:94
 msgid "Easter Island Standard Time"
 msgstr ""
 
-#: tzres.rc:93
+#: tzres.rc:95
 msgid "Easter Island Daylight Time"
 msgstr ""
 
-#: tzres.rc:96
+#: tzres.rc:98
 msgid "Egypt Standard Time"
 msgstr ""
 
-#: tzres.rc:97
+#: tzres.rc:99
 msgid "Egypt Daylight Time"
 msgstr ""
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Mauritius Standard Time"
 msgstr ""
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Mauritius Daylight Time"
 msgstr ""
 
-#: tzres.rc:214
+#: tzres.rc:218
 msgid "Vladivostok Standard Time"
 msgstr ""
 
-#: tzres.rc:215
+#: tzres.rc:219
 msgid "Vladivostok Daylight Time"
 msgstr ""
 
-#: tzres.rc:186
+#: tzres.rc:190
 msgid "Singapore Standard Time"
 msgstr ""
 
-#: tzres.rc:187
+#: tzres.rc:191
 msgid "Singapore Daylight Time"
 msgstr ""
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Korea Standard Time"
 msgstr ""
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Korea Daylight Time"
 msgstr ""
 
-#: tzres.rc:86
+#: tzres.rc:88
 msgid "E. Africa Standard Time"
 msgstr ""
 
-#: tzres.rc:87
+#: tzres.rc:89
 msgid "E. Africa Daylight Time"
 msgstr ""
 
-#: tzres.rc:102
+#: tzres.rc:104
 msgid "FLE Standard Time"
 msgstr ""
 
-#: tzres.rc:103
+#: tzres.rc:105
 msgid "FLE Daylight Time"
 msgstr ""
 
-#: tzres.rc:90
+#: tzres.rc:92
 msgid "E. South America Standard Time"
 msgstr ""
 
-#: tzres.rc:91
+#: tzres.rc:93
 msgid "E. South America Daylight Time"
 msgstr ""
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central Pacific Standard Time"
 msgstr ""
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central Pacific Daylight Time"
 msgstr ""
 
-#: tzres.rc:218
+#: tzres.rc:222
 msgid "W. Central Africa Standard Time"
 msgstr ""
 
-#: tzres.rc:219
+#: tzres.rc:223
 msgid "W. Central Africa Daylight Time"
 msgstr ""
 
-#: tzres.rc:162
+#: tzres.rc:166
 msgid "Pacific SA Standard Time"
 msgstr ""
 
-#: tzres.rc:163
+#: tzres.rc:167
 msgid "Pacific SA Daylight Time"
 msgstr ""
 
-#: tzres.rc:88
+#: tzres.rc:90
 msgid "E. Australia Standard Time"
 msgstr ""
 
-#: tzres.rc:89
+#: tzres.rc:91
 msgid "E. Australia Daylight Time"
 msgstr ""
 
-#: tzres.rc:216
+#: tzres.rc:220
 msgid "W. Australia Standard Time"
 msgstr ""
 
-#: tzres.rc:217
+#: tzres.rc:221
 msgid "W. Australia Daylight Time"
 msgstr ""
 
@@ -16328,10 +16534,6 @@ msgstr "Лучшее время"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Новичок"
-
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "Мастер"
 
 #: winemine.rc:66
 msgid "Expert"

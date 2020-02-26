@@ -1413,11 +1413,21 @@ static NTSTATUS NTAPI kerberos_SpVerifySignature( LSA_SEC_HANDLE context, SecBuf
 }
 
 #ifdef SONAME_LIBGSSAPI_KRB5
-static NTSTATUS seal_message_iov( gss_ctx_id_t ctxt_handle, SecBufferDesc *message )
+static NTSTATUS seal_message_iov( gss_ctx_id_t ctxt_handle, SecBufferDesc *message, ULONG quality_of_protection )
 {
     gss_iov_buffer_desc iov[4];
     OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_state;
+    int token_idx, data_idx, conf_flag, conf_state;
+
+    if (!quality_of_protection)
+        conf_flag = 1; /* confidentiality + integrity */
+    else if (quality_of_protection == SECQOP_WRAP_NO_ENCRYPT)
+        conf_flag = 0; /* only integrity */
+    else
+    {
+        FIXME( "QOP %08x not supported\n", quality_of_protection );
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
 
     /* FIXME: multiple data buffers, read-only buffers */
     if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
@@ -1439,7 +1449,7 @@ static NTSTATUS seal_message_iov( gss_ctx_id_t ctxt_handle, SecBufferDesc *messa
     iov[3].buffer.length = 0;
     iov[3].buffer.value  = NULL;
 
-    ret = pgss_wrap_iov( &minor_status, ctxt_handle, 1, GSS_C_QOP_DEFAULT, &conf_state, iov, 4 );
+    ret = pgss_wrap_iov( &minor_status, ctxt_handle, conf_flag, GSS_C_QOP_DEFAULT, &conf_state, iov, 4 );
     TRACE( "gss_wrap_iov returned %08x minor status %08x\n", ret, minor_status );
     if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
@@ -1452,11 +1462,21 @@ static NTSTATUS seal_message_iov( gss_ctx_id_t ctxt_handle, SecBufferDesc *messa
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS seal_message( gss_ctx_id_t ctxt_handle, SecBufferDesc *message )
+static NTSTATUS seal_message( gss_ctx_id_t ctxt_handle, SecBufferDesc *message, ULONG quality_of_protection )
 {
     gss_buffer_desc input, output;
     OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_state;
+    int token_idx, data_idx, conf_flag, conf_state;
+
+    if (!quality_of_protection)
+        conf_flag = 1; /* confidentiality + integrity */
+    else if (quality_of_protection == SECQOP_WRAP_NO_ENCRYPT)
+        conf_flag = 0; /* only integrity */
+    else
+    {
+        FIXME( "QOP %08x not supported\n", quality_of_protection );
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
 
     /* FIXME: multiple data buffers, read-only buffers */
     if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
@@ -1465,7 +1485,7 @@ static NTSTATUS seal_message( gss_ctx_id_t ctxt_handle, SecBufferDesc *message )
     input.length = message->pBuffers[data_idx].cbBuffer;
     input.value  = message->pBuffers[data_idx].pvBuffer;
 
-    ret = pgss_wrap( &minor_status, ctxt_handle, 1, GSS_C_QOP_DEFAULT, &input, &conf_state, &output );
+    ret = pgss_wrap( &minor_status, ctxt_handle, conf_flag, GSS_C_QOP_DEFAULT, &input, &conf_state, &output );
     TRACE( "gss_wrap returned %08x minor status %08x\n", ret, minor_status );
     if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
@@ -1494,18 +1514,13 @@ static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG qual
     gss_ctx_id_t ctxt_handle;
 
     TRACE( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
-    if (quality_of_protection)
-    {
-        FIXME( "flags %08x not supported\n", quality_of_protection );
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
     if (!context) return SEC_E_INVALID_HANDLE;
     ctxt_handle = ctxthandle_sspi_to_gss( context );
 
-    if (is_dce_style_context( ctxt_handle )) return seal_message_iov( ctxt_handle, message );
-    return seal_message( ctxt_handle, message );
+    if (is_dce_style_context( ctxt_handle )) return seal_message_iov( ctxt_handle, message, quality_of_protection );
+    return seal_message( ctxt_handle, message, quality_of_protection );
 #else
     FIXME( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
     return SEC_E_UNSUPPORTED_FUNCTION;

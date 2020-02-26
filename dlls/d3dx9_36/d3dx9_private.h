@@ -22,6 +22,7 @@
 #ifndef __WINE_D3DX9_PRIVATE_H
 #define __WINE_D3DX9_PRIVATE_H
 
+#include <stdint.h>
 #define NONAMELESSUNION
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -78,7 +79,7 @@ extern const struct ID3DXIncludeVtbl d3dx_include_from_file_vtbl DECLSPEC_HIDDEN
 static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *format)
 {
     if (format->type == FORMAT_ARGB || format->type == FORMAT_ARGBF16
-            || format->type == FORMAT_ARGBF)
+            || format->type == FORMAT_ARGBF || format->type == FORMAT_DXT)
         return TRUE;
     return !!format->to_rgba;
 }
@@ -86,7 +87,7 @@ static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *
 static inline BOOL is_conversion_to_supported(const struct pixel_format_desc *format)
 {
     if (format->type == FORMAT_ARGB || format->type == FORMAT_ARGBF16
-            || format->type == FORMAT_ARGBF)
+            || format->type == FORMAT_ARGBF || format->type == FORMAT_DXT)
         return TRUE;
     return !!format->from_rgba;
 }
@@ -121,9 +122,9 @@ HRESULT load_volume_from_dds(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *d
     const D3DXIMAGE_INFO *src_info) DECLSPEC_HIDDEN;
 HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, const void *src_data,
     const PALETTEENTRY *palette, DWORD filter, DWORD color_key, const D3DXIMAGE_INFO *src_info) DECLSPEC_HIDDEN;
-HRESULT lock_surface(IDirect3DSurface9 *surface, D3DLOCKED_RECT *lock,
+HRESULT lock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect, D3DLOCKED_RECT *lock,
         IDirect3DSurface9 **temp_surface, BOOL write) DECLSPEC_HIDDEN;
-HRESULT unlock_surface(IDirect3DSurface9 *surface, D3DLOCKED_RECT *lock,
+HRESULT unlock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect,
         IDirect3DSurface9 *temp_surface, BOOL update) DECLSPEC_HIDDEN;
 
 unsigned short float_32_to_16(const float in) DECLSPEC_HIDDEN;
@@ -223,6 +224,24 @@ static inline BOOL is_param_type_sampler(D3DXPARAMETER_TYPE type)
     return type == D3DXPT_SAMPLER
             || type == D3DXPT_SAMPLER1D || type == D3DXPT_SAMPLER2D
             || type == D3DXPT_SAMPLER3D || type == D3DXPT_SAMPLERCUBE;
+}
+
+/* Returns the smallest power of 2 which is greater than or equal to num */
+static inline uint32_t make_pow2(uint32_t num)
+{
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+    return num == 1 ? 1 : 1u << ((__builtin_clz(num - 1) ^ 0x1f) + 1);
+#else
+    num--;
+    num |= num >> 1;
+    num |= num >> 2;
+    num |= num >> 4;
+    num |= num >> 8;
+    num |= num >> 16;
+    num++;
+
+    return num;
+#endif
 }
 
 struct d3dx_parameter;

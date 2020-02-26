@@ -40,6 +40,7 @@
 #include "dmusici.h"
 #include "dmusicf.h"
 #include "dmusics.h"
+#include "dmobject.h"
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 

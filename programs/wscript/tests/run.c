@@ -74,24 +74,6 @@ static const GUID CLSID_TestObj =
 static const char *script_name;
 static HANDLE wscript_process;
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
-    return lstrcmpW(strw, buf);
-}
-
-static const WCHAR* mystrrchr(const WCHAR *str, WCHAR ch)
-{
-    const WCHAR *pos = NULL, *current = str;
-    while(*current != 0) {
-        if(*current == ch)
-            pos = current;
-        ++current;
-    }
-    return pos;
-}
-
 static BSTR a2bstr(const char *str)
 {
     BSTR ret;
@@ -134,7 +116,6 @@ static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo,
 	LCID lcid, ITypeInfo **ppTInfo)
 {
-    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
@@ -144,19 +125,19 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid,
     unsigned i;
 
     for(i=0; i<cNames; i++) {
-        if(!strcmp_wa(rgszNames[i], "ok")) {
+        if(!lstrcmpW(rgszNames[i], L"ok")) {
             rgDispId[i] = DISPID_TESTOBJ_OK;
-        }else if(!strcmp_wa(rgszNames[i], "trace")) {
+        }else if(!lstrcmpW(rgszNames[i], L"trace")) {
             rgDispId[i] = DISPID_TESTOBJ_TRACE;
-        }else if(!strcmp_wa(rgszNames[i], "reportSuccess")) {
+        }else if(!lstrcmpW(rgszNames[i], L"reportSuccess")) {
             rgDispId[i] = DISPID_TESTOBJ_REPORTSUCCESS;
-        }else if(!strcmp_wa(rgszNames[i], "wscriptFullName")) {
+        }else if(!lstrcmpW(rgszNames[i], L"wscriptFullName")) {
             rgDispId[i] = DISPID_TESTOBJ_WSCRIPTFULLNAME;
-        }else if(!strcmp_wa(rgszNames[i], "wscriptPath")) {
+        }else if(!lstrcmpW(rgszNames[i], L"wscriptPath")) {
             rgDispId[i] = DISPID_TESTOBJ_WSCRIPTPATH;
-        }else if(!strcmp_wa(rgszNames[i], "wscriptScriptName")) {
+        }else if(!lstrcmpW(rgszNames[i], L"wscriptScriptName")) {
             rgDispId[i] = DISPID_TESTOBJ_WSCRIPTSCRIPTNAME;
-        }else if(!strcmp_wa(rgszNames[i], "wscriptScriptFullName")) {
+        }else if(!lstrcmpW(rgszNames[i], L"wscriptScriptFullName")) {
             rgDispId[i] = DISPID_TESTOBJ_WSCRIPTSCRIPTFULLNAME;
         }else {
             ok(0, "unexpected name %s\n", wine_dbgstr_w(rgszNames[i]));
@@ -240,7 +221,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         res = GetModuleFileNameExW(wscript_process, NULL, fullPath, ARRAY_SIZE(fullPath));
         if(res == 0)
             return E_FAIL;
-        pos = mystrrchr(fullPath, '\\');
+        pos = wcsrchr(fullPath, '\\');
         if(!(V_BSTR(pVarResult) = SysAllocStringLen(fullPath, pos-fullPath)))
             return E_OUTOFMEMORY;
         break;

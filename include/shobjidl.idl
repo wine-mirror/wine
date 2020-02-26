@@ -3742,6 +3742,23 @@ interface IApplicationActivationManager : IUnknown
                                 [out] DWORD *processid);
 }
 
+[
+    object,
+    uuid(fec87aaf-35f9-447a-adb7-20234491401a),
+    pointer_default(unique)
+]
+interface IPreviewHandlerFrame : IUnknown
+{
+    typedef struct PREVIEWHANDLERFRAMEINFO
+    {
+        HACCEL haccel;
+        UINT   cAccelEntries;
+    } PREVIEWHANDLERFRAMEINFO;
+
+    HRESULT GetWindowContext([out] PREVIEWHANDLERFRAMEINFO *info);
+    HRESULT TranslateAccelerator([in] MSG *msg);
+}
+
 /*****************************************************************************
  * ShellObjects typelibrary
  */

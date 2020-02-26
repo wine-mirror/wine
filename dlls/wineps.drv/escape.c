@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,9 +25,6 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -58,8 +52,8 @@ DWORD write_spool( PHYSDEV dev, const void *data, DWORD num )
 /**********************************************************************
  *           ExtEscape  (WINEPS.@)
  */
-INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
-                     INT cbOutput, LPVOID out_data )
+INT CDECL PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
+                           INT cbOutput, LPVOID out_data )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -393,7 +387,7 @@ INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
 /************************************************************************
  *           PSDRV_StartPage
  */
-INT PSDRV_StartPage( PHYSDEV dev )
+INT CDECL PSDRV_StartPage( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -416,7 +410,7 @@ INT PSDRV_StartPage( PHYSDEV dev )
 /************************************************************************
  *           PSDRV_EndPage
  */
-INT PSDRV_EndPage( PHYSDEV dev )
+INT CDECL PSDRV_EndPage( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
@@ -439,7 +433,7 @@ INT PSDRV_EndPage( PHYSDEV dev )
 /************************************************************************
  *           PSDRV_StartDoc
  */
-INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
+INT CDECL PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     DOC_INFO_1W di;
@@ -504,7 +498,7 @@ INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc )
 /************************************************************************
  *           PSDRV_EndDoc
  */
-INT PSDRV_EndDoc( PHYSDEV dev )
+INT CDECL PSDRV_EndDoc( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     INT ret = 1;

@@ -1,6 +1,8 @@
 MODULE    = winscard.dll
 IMPORTLIB = winscard
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	winscard.c
 

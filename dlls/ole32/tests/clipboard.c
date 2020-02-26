@@ -1000,7 +1000,8 @@ static void test_set_clipboard(void)
 
     test_cf_dataobject(NULL);
 
-    ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard, hr = 0x%08x\n", hr);
+    hr = OleSetClipboard(NULL);
+    ok(hr == S_OK, "Failed to clear clipboard, hr = 0x%08x\n", hr);
 
     OpenClipboard(NULL);
     h = GetClipboardData(cf_onemore);
@@ -1014,7 +1015,8 @@ static void test_set_clipboard(void)
     test_cf_dataobject(data_cmpl);
     test_enum_fmtetc(data_cmpl);
 
-    ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard, hr = 0x%08x\n", hr);
+    hr = OleSetClipboard(NULL);
+    ok(hr == S_OK, "failed to clear clipboard, hr = 0x%08x.\n", hr);
 
     test_no_cf_dataobject();
     test_enum_fmtetc(NULL);
@@ -1179,7 +1181,8 @@ static void test_consumer_refs(void)
 
     ok(get1 != get2, "data objects match\n");
 
-    OleSetClipboard(NULL);
+    hr = OleSetClipboard(NULL);
+    ok(hr == S_OK, "Failed to clear clipboard, hr %#x.\n", hr);
 
     hr = OleGetClipboard(&get3);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -1259,7 +1262,8 @@ static void test_consumer_refs(void)
     refs = count_refs(src2);
     ok(refs == old_refs + 1, "%d %d\n", refs, old_refs);
 
-    OleSetClipboard(NULL);
+    hr = OleSetClipboard(NULL);
+    ok(hr == S_OK, "Failed to clear clipboard, hr %#x.\n", hr);
 
     refs = count_refs(src2);
     ok(refs == 2, "%d\n", refs);
@@ -1273,7 +1277,8 @@ static void test_consumer_refs(void)
     old_refs = count_refs(src);
     ok(old_refs == 1, "%d\n", old_refs);
 
-    OleSetClipboard(src);
+    hr = OleSetClipboard(src);
+    ok(hr == S_OK, "Failed to clear clipboard, hr %#x.\n", hr);
     refs = count_refs(src);
     ok(refs > old_refs, "%d %d\n", refs, old_refs);
 

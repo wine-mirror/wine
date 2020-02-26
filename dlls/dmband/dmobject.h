@@ -60,8 +60,6 @@ static inline HRESULT stream_reset_chunk_start(IStream *stream, const struct chu
     return IStream_Seek(stream, offset, STREAM_SEEK_SET, NULL);
 }
 
-const char *debugstr_chunk(const struct chunk_entry *chunk) DECLSPEC_HIDDEN;
-
 
 /* IDirectMusicObject base object */
 struct dmobject {
@@ -106,3 +104,15 @@ HRESULT WINAPI unimpl_IPersistStream_Save(IPersistStream *iface, IStream *stream
         BOOL clear_dirty) DECLSPEC_HIDDEN;
 HRESULT WINAPI unimpl_IPersistStream_GetSizeMax(IPersistStream *iface,
         ULARGE_INTEGER *size) DECLSPEC_HIDDEN;
+
+/* Debugging helpers */
+const char *debugstr_chunk(const struct chunk_entry *chunk) DECLSPEC_HIDDEN;
+const char *debugstr_dmguid(const GUID *id) DECLSPEC_HIDDEN;
+void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *desc) DECLSPEC_HIDDEN;
+
+static inline const char *debugstr_fourcc(DWORD fourcc)
+{
+    if (!fourcc) return "''";
+    return wine_dbg_sprintf("'%c%c%c%c'", (char)(fourcc), (char)(fourcc >> 8),
+            (char)(fourcc >> 16), (char)(fourcc >> 24));
+}

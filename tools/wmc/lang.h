@@ -26,16 +26,11 @@
 typedef struct language {
 	unsigned	id;
 	unsigned	doscp;
-	unsigned	wincp;
 	const char	*name;
 	const char	*country;
 } language_t;
 
 void show_languages(void);
 const language_t *find_language(unsigned id);
-void show_codepages(void);
-int is_valid_codepage(int id);
-int wmc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen );
-int wmc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen );
 
 #endif

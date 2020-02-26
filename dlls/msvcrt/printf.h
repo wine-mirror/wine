@@ -52,13 +52,13 @@ static int FUNC_NAME(puts_clbk_str)(void *ctx, int len, const APICHAR *str)
         return len;
 
     if(out->len < len) {
-        memcpy(out->buf, str, out->len*sizeof(APICHAR));
+        memmove(out->buf, str, out->len*sizeof(APICHAR));
         out->buf += out->len;
         out->len = 0;
         return -1;
     }
 
-    memcpy(out->buf, str, len*sizeof(APICHAR));
+    memmove(out->buf, str, len*sizeof(APICHAR));
     out->buf += len;
     out->len -= len;
     return len;
@@ -509,15 +509,21 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                     p += 3;
                 } else if(*(p+1)=='3' && *(p+2)=='2')
                     p += 3;
-                else if(isdigit(*(p+1)) || !*(p+1))
-                    break;
-                else
+                else if(p[1] && strchr("diouxX", p[1]))
                     flags.IntegerNative = *p++;
+                else
+                    break;
             } else if(*p == 'w')
                 flags.WideString = *p++;
-#if _MSVCR_VER >= 140
-            else if(*p == 'z')
+#if _MSVCR_VER == 0 || _MSVCR_VER >= 140
+            else if((*p == 'z' || *p == 't') && p[1] && strchr("diouxX", p[1]))
                 flags.IntegerNative = *p++;
+            else if(*p == 'j') {
+                flags.IntegerDouble++;
+                p++;
+            }
+#endif
+#if _MSVCR_VER >= 140
             else if(*p == 'T')
                 flags.NaturalString = *p++;
 #endif

@@ -1,6 +1,8 @@
 MODULE    = wiaservc.dll
 IMPORTS   = uuid ole32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	factory.c \
 	service.c \

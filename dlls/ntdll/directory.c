@@ -115,6 +115,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 /* just in case... */
 #undef VFAT_IOCTL_READDIR_BOTH
+#undef EXT2_IOC_GETFLAGS
+#undef EXT4_CASEFOLD_FL
 
 #ifdef linux
 
@@ -130,8 +132,18 @@ typedef struct
 /* Define the VFAT ioctl to get both short and long file names */
 #define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, KERNEL_DIRENT [2] )
 
+/* Define the ext2 ioctl for handling extra attributes */
+#define EXT2_IOC_GETFLAGS _IOR('f', 1, long)
+
+/* Case-insensitivity attribute */
+#define EXT4_CASEFOLD_FL 0x40000000
+
 #ifndef O_DIRECTORY
 # define O_DIRECTORY 0200000 /* must be directory */
+#endif
+
+#ifndef AT_NO_AUTOMOUNT
+#define AT_NO_AUTOMOUNT 0x800
 #endif
 
 #endif  /* linux */
@@ -1113,7 +1125,7 @@ static int get_dir_case_sensitivity_attr( const char *dir )
  *           get_dir_case_sensitivity_stat
  *
  * Checks if the volume containing the specified directory is case
- * sensitive or not. Uses statfs(2) or statvfs(2).
+ * sensitive or not. Uses (f)statfs(2), statvfs(2), fstatat(2), or ioctl(2).
  */
 static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
 {
@@ -1165,32 +1177,27 @@ static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
     return FALSE;
 
 #elif defined(__linux__)
+    BOOLEAN sens = TRUE;
     struct statfs stfs;
     struct stat st;
-    char *cifile;
+    int fd, flags;
 
-    /* Only assume CIOPFS is case insensitive. */
-    if (statfs( dir, &stfs ) == -1) return FALSE;
-    if (stfs.f_type != 0x65735546 /* FUSE_SUPER_MAGIC */)
+    if ((fd = open( dir, O_RDONLY | O_NONBLOCK | O_LARGEFILE )) == -1)
         return TRUE;
-    /* Normally, we'd have to parse the mtab to find out exactly what
-     * kind of FUSE FS this is. But, someone on wine-devel suggested
-     * a shortcut. We'll stat a special file in the directory. If it's
-     * there, we'll assume it's a CIOPFS, else not.
-     * This will break if somebody puts a file named ".ciopfs" in a non-
-     * CIOPFS directory.
-     */
-    cifile = RtlAllocateHeap( GetProcessHeap(), 0, strlen( dir )+sizeof("/.ciopfs") );
-    if (!cifile) return TRUE;
-    strcpy( cifile, dir );
-    strcat( cifile, "/.ciopfs" );
-    if (stat( cifile, &st ) == 0)
+
+    if (ioctl( fd, EXT2_IOC_GETFLAGS, &flags ) != -1 && (flags & EXT4_CASEFOLD_FL))
     {
-        RtlFreeHeap( GetProcessHeap(), 0, cifile );
-        return FALSE;
+        sens = FALSE;
     }
-    RtlFreeHeap( GetProcessHeap(), 0, cifile );
-    return TRUE;
+    else if (fstatfs( fd, &stfs ) == 0 &&                          /* CIOPFS is case insensitive.  Instead of */
+             stfs.f_type == 0x65735546 /* FUSE_SUPER_MAGIC */ &&   /* parsing mtab to discover if the FUSE FS */
+             fstatat( fd, ".ciopfs", &st, AT_NO_AUTOMOUNT ) == 0)  /* is CIOPFS, look for .ciopfs in the dir. */
+    {
+        sens = FALSE;
+    }
+
+    close( fd );
+    return sens;
 #else
     return TRUE;
 #endif
@@ -1201,7 +1208,7 @@ static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
  *           get_dir_case_sensitivity
  *
  * Checks if the volume containing the specified directory is case
- * sensitive or not. Uses statfs(2) or statvfs(2).
+ * sensitive or not. Uses multiple methods, depending on platform.
  */
 static BOOLEAN get_dir_case_sensitivity( const char *dir )
 {
@@ -1444,8 +1451,8 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
     WCHAR short_nameW[13];
     UNICODE_STRING str;
 
-    long_len = ntdll_umbstowcs( 0, long_name, strlen(long_name), long_nameW, MAX_DIR_ENTRY_LEN );
-    if (long_len == -1) return TRUE;
+    long_len = ntdll_umbstowcs( long_name, strlen(long_name), long_nameW, ARRAY_SIZE(long_nameW) );
+    if (long_len == ARRAY_SIZE(long_nameW)) return TRUE;
     long_nameW[long_len] = 0;
 
     str.Buffer = long_nameW;
@@ -1454,9 +1461,8 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
 
     if (short_name)
     {
-        short_len = ntdll_umbstowcs( 0, short_name, strlen(short_name),
+        short_len = ntdll_umbstowcs( short_name, strlen(short_name),
                                      short_nameW, ARRAY_SIZE( short_nameW ) - 1 );
-        if (short_len == -1) short_len = ARRAY_SIZE( short_nameW ) - 1;
         for (i = 0; i < short_len; i++) short_nameW[i] = toupperW( short_nameW[i] );
     }
     else  /* generate a short name if necessary */
@@ -1788,12 +1794,10 @@ static NTSTATUS read_directory_data( struct dir_data *data, int fd, const UNICOD
     if (!has_wildcard( mask ))
     {
         /* convert the mask to a Unix name and check for it */
-        int ret, used_default;
         char unix_name[MAX_DIR_ENTRY_LEN * 3 + 1];
-
-        ret = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR),
-                               unix_name, sizeof(unix_name) - 1, NULL, &used_default );
-        if (ret > 0 && !used_default)
+        int ret = ntdll_wcstoumbs( mask->Buffer, mask->Length / sizeof(WCHAR),
+                                   unix_name, sizeof(unix_name) - 1, TRUE );
+        if (ret > 0)
         {
             unix_name[ret] = 0;
 #ifdef HAVE_GETATTRLIST
@@ -2040,16 +2044,13 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     DIR *dir;
     struct dirent *de;
     struct stat st;
-    int ret, used_default;
+    int ret;
 
     /* try a shortcut for this directory */
 
     unix_name[pos++] = '/';
-    ret = ntdll_wcstoumbs( 0, name, length, unix_name + pos, MAX_DIR_ENTRY_LEN,
-                           NULL, &used_default );
-    /* if we used the default char, the Unix name won't round trip properly back to Unicode */
-    /* so it cannot match the file we are looking for */
-    if (ret >= 0 && !used_default)
+    ret = ntdll_wcstoumbs( name, length, unix_name + pos, MAX_DIR_ENTRY_LEN + 1, TRUE );
+    if (ret >= 0 && ret <= MAX_DIR_ENTRY_LEN)
     {
         unix_name[pos + ret] = 0;
         if (!stat( unix_name, &st ))
@@ -2099,7 +2100,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
 
                     if (kde[1].d_name[0])
                     {
-                        ret = ntdll_umbstowcs( 0, kde[1].d_name, strlen(kde[1].d_name),
+                        ret = ntdll_umbstowcs( kde[1].d_name, strlen(kde[1].d_name),
                                                buffer, MAX_DIR_ENTRY_LEN );
                         if (ret == length && !strncmpiW( buffer, name, length))
                         {
@@ -2109,7 +2110,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                             goto success;
                         }
                     }
-                    ret = ntdll_umbstowcs( 0, kde[0].d_name, strlen(kde[0].d_name),
+                    ret = ntdll_umbstowcs( kde[0].d_name, strlen(kde[0].d_name),
                                            buffer, MAX_DIR_ENTRY_LEN );
                     if (ret == length && !strncmpiW( buffer, name, length))
                     {
@@ -2144,7 +2145,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     str.MaximumLength = sizeof(buffer);
     while ((de = readdir( dir )))
     {
-        ret = ntdll_umbstowcs( 0, de->d_name, strlen(de->d_name), buffer, MAX_DIR_ENTRY_LEN );
+        ret = ntdll_umbstowcs( de->d_name, strlen(de->d_name), buffer, MAX_DIR_ENTRY_LEN );
         if (ret == length && !strncmpiW( buffer, name, length ))
         {
             strcpy( unix_name + pos, de->d_name );
@@ -2188,80 +2189,27 @@ static const WCHAR driversetcW[] = {'s','y','s','t','e','m','3','2','\\','d','r'
 static const WCHAR logfilesW[] = {'s','y','s','t','e','m','3','2','\\','l','o','g','f','i','l','e','s',0};
 static const WCHAR spoolW[] = {'s','y','s','t','e','m','3','2','\\','s','p','o','o','l',0};
 static const WCHAR system32W[] = {'s','y','s','t','e','m','3','2',0};
-static const WCHAR syswow64W[] = {'s','y','s','w','o','w','6','4',0};
 static const WCHAR sysnativeW[] = {'s','y','s','n','a','t','i','v','e',0};
 static const WCHAR regeditW[] = {'r','e','g','e','d','i','t','.','e','x','e',0};
-static const WCHAR wow_regeditW[] = {'s','y','s','w','o','w','6','4','\\','r','e','g','e','d','i','t','.','e','x','e',0};
 
 static struct
 {
     const WCHAR *source;
-    const WCHAR *dos_target;
     const char *unix_target;
 } redirects[] =
 {
-    { catrootW, NULL, NULL },
-    { catroot2W, NULL, NULL },
-    { driversstoreW, NULL, NULL },
-    { driversetcW, NULL, NULL },
-    { logfilesW, NULL, NULL },
-    { spoolW, NULL, NULL },
-    { system32W, syswow64W, NULL },
-    { sysnativeW, system32W, NULL },
-    { regeditW, wow_regeditW, NULL }
+    { catrootW, NULL },
+    { catroot2W, NULL },
+    { driversstoreW, NULL },
+    { driversetcW, NULL },
+    { logfilesW, NULL },
+    { spoolW, NULL },
+    { system32W, "syswow64" },
+    { sysnativeW, "system32" },
+    { regeditW, "syswow64/regedit.exe" }
 };
 
 static unsigned int nb_redirects;
-
-
-/***********************************************************************
- *           get_redirect_target
- *
- * Find the target unix name for a redirected dir.
- */
-static const char *get_redirect_target( const char *windows_dir, const WCHAR *name )
-{
-    int used_default, len, pos, win_len = strlen( windows_dir );
-    char *unix_name, *unix_target = NULL;
-    NTSTATUS status;
-
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, win_len + MAX_DIR_ENTRY_LEN + 2 )))
-        return NULL;
-    memcpy( unix_name, windows_dir, win_len );
-    pos = win_len;
-
-    while (*name)
-    {
-        const WCHAR *end, *next;
-
-        for (end = name; *end; end++) if (IS_SEPARATOR(*end)) break;
-        for (next = end; *next; next++) if (!IS_SEPARATOR(*next)) break;
-
-        status = find_file_in_dir( unix_name, pos, name, end - name, FALSE, NULL );
-        if (status == STATUS_OBJECT_PATH_NOT_FOUND && !*next)  /* not finding last element is ok */
-        {
-            len = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
-                                   MAX_DIR_ENTRY_LEN - (pos - win_len), NULL, &used_default );
-            if (len > 0 && !used_default)
-            {
-                unix_name[pos] = '/';
-                pos += len + 1;
-                unix_name[pos] = 0;
-                break;
-            }
-        }
-        if (status) goto done;
-        pos += strlen( unix_name + pos );
-        name = next;
-    }
-
-    if ((unix_target = RtlAllocateHeap( GetProcessHeap(), 0, pos - win_len )))
-        memcpy( unix_target, unix_name + win_len + 1, pos - win_len );
-
-done:
-    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-    return unix_target;
-}
 
 
 /***********************************************************************
@@ -2273,7 +2221,6 @@ static void init_redirects(void)
     const char *config_dir = wine_get_config_dir();
     char *dir;
     struct stat st;
-    unsigned int i;
 
     if (!(dir = RtlAllocateHeap( GetProcessHeap(), 0, strlen(config_dir) + sizeof(windows_dir) ))) return;
     strcpy( dir, config_dir );
@@ -2283,12 +2230,6 @@ static void init_redirects(void)
         windir.dev = st.st_dev;
         windir.ino = st.st_ino;
         nb_redirects = ARRAY_SIZE( redirects );
-        for (i = 0; i < nb_redirects; i++)
-        {
-            if (!redirects[i].dos_target) continue;
-            redirects[i].unix_target = get_redirect_target( dir, redirects[i].dos_target );
-            TRACE( "%s -> %s\n", debugstr_w(redirects[i].source), redirects[i].unix_target );
-        }
     }
     else ERR( "%s: %s\n", dir, strerror(errno) );
     RtlFreeHeap( GetProcessHeap(), 0, dir );
@@ -2617,15 +2558,12 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
                                   UINT disposition, BOOLEAN check_case )
 {
     NTSTATUS status;
-    int ret, used_default, len;
+    int ret, len;
     struct stat st;
     char *unix_name = *buffer;
     const BOOL redirect = nb_redirects && ntdll_get_thread_data()->wow64_redir;
 
     /* try a shortcut first */
-
-    ret = ntdll_wcstoumbs( 0, name, name_len, unix_name + pos, unix_len - pos - 1,
-                           NULL, &used_default );
 
     while (name_len && IS_SEPARATOR(*name))
     {
@@ -2633,10 +2571,12 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         name_len--;
     }
 
-    if (ret >= 0 && !used_default)  /* if we used the default char the name didn't convert properly */
+    unix_name[pos] = '/';
+    ret = ntdll_wcstoumbs( name, name_len, unix_name + pos + 1, unix_len - pos - 1, TRUE );
+    if (ret >= 0 && ret < unix_len - pos - 1)
     {
         char *p;
-        unix_name[pos + ret] = 0;
+        unix_name[pos + 1 + ret] = 0;
         for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
         if (!name_len || !redirect || (!strstr( unix_name, "/windows/") && strncmp( unix_name, "windows/", 8 )))
         {
@@ -2689,9 +2629,8 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
                 status = STATUS_OBJECT_NAME_NOT_FOUND;
                 if (disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
                 {
-                    ret = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
-                                           MAX_DIR_ENTRY_LEN, NULL, &used_default );
-                    if (ret > 0 && !used_default)
+                    ret = ntdll_wcstoumbs( name, end - name, unix_name + pos + 1, MAX_DIR_ENTRY_LEN + 1, TRUE );
+                    if (ret > 0 && ret <= MAX_DIR_ENTRY_LEN)
                     {
                         unix_name[pos] = '/';
                         unix_name[pos + 1 + ret] = 0;
@@ -2751,8 +2690,7 @@ NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *
     for (p = name; p < name + name_len; p++)
         if (*p < 32 || strchrW( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
 
-    unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
-    unix_len += MAX_DIR_ENTRY_LEN + 3;
+    unix_len = name_len * 3 + MAX_DIR_ENTRY_LEN + 3;
     if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
         return STATUS_NO_MEMORY;
     unix_name[0] = '.';
@@ -2817,7 +2755,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     const WCHAR *name, *p;
     struct stat st;
     char *unix_name;
-    int pos, ret, name_len, unix_len, prefix_len, used_default;
+    int pos, ret, name_len, unix_len, prefix_len;
     WCHAR prefix[MAX_DIR_ENTRY_LEN];
     BOOLEAN is_unix = FALSE;
 
@@ -2867,9 +2805,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
             if (*p < 32 || strchrW( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
     }
 
-    unix_len = ntdll_wcstoumbs( 0, prefix, prefix_len, NULL, 0, NULL, NULL );
-    unix_len += ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
-    unix_len += MAX_DIR_ENTRY_LEN + 3;
+    unix_len = (prefix_len + name_len) * 3 + MAX_DIR_ENTRY_LEN + 3;
     unix_len += strlen(config_dir) + sizeof("/dosdevices/");
     if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
         return STATUS_NO_MEMORY;
@@ -2877,9 +2813,8 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     strcat( unix_name, "/dosdevices/" );
     pos = strlen(unix_name);
 
-    ret = ntdll_wcstoumbs( 0, prefix, prefix_len, unix_name + pos, unix_len - pos - 1,
-                           NULL, &used_default );
-    if (!ret || used_default)
+    ret = ntdll_wcstoumbs( prefix, prefix_len, unix_name + pos, unix_len - pos - 1, TRUE );
+    if (ret <= 0)
     {
         RtlFreeHeap( GetProcessHeap(), 0, unix_name );
         return STATUS_OBJECT_NAME_INVALID;

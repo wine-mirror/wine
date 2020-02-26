@@ -57,14 +57,14 @@ static BOOL is_wow64;
 static NTSTATUS (WINAPI *pNtCreateSection)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *,
                                            const LARGE_INTEGER *, ULONG, ULONG, HANDLE );
 static NTSTATUS (WINAPI *pNtQuerySection)(HANDLE, SECTION_INFORMATION_CLASS, void *, SIZE_T, SIZE_T *);
-static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
+static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG_PTR, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static NTSTATUS (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI *pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI *pNtTerminateProcess)(HANDLE, DWORD);
 static void (WINAPI *pLdrShutdownProcess)(void);
 static BOOLEAN (WINAPI *pRtlDllShutdownInProgress)(void);
-static NTSTATUS (WINAPI *pNtAllocateVirtualMemory)(HANDLE, PVOID *, ULONG, SIZE_T *, ULONG, ULONG);
+static NTSTATUS (WINAPI *pNtAllocateVirtualMemory)(HANDLE, PVOID *, ULONG_PTR, SIZE_T *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pNtFreeVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG);
 static NTSTATUS (WINAPI *pLdrLockLoaderLock)(ULONG, ULONG *, ULONG_PTR *);
 static NTSTATUS (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG_PTR);
@@ -84,6 +84,9 @@ static BOOL (WINAPI *pFlsSetValue)(DWORD, PVOID);
 static PVOID (WINAPI *pFlsGetValue)(DWORD);
 static BOOL (WINAPI *pFlsFree)(DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
+static BOOL (WINAPI *pWow64DisableWow64FsRedirection)(void **);
+static BOOL (WINAPI *pWow64RevertWow64FsRedirection)(void *);
+static HMODULE (WINAPI *pLoadPackagedLibrary)(LPCWSTR lpwLibFileName, DWORD Reserved);
 
 static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
 {
@@ -681,7 +684,9 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
         else ok( 0, "%u: got unexpected path %s instead of %s\n", line, wine_dbgstr_w(path), wine_dbgstr_w(load_test_name));
         pLdrUnloadDll( ldr_mod );
     }
-    else if (ldr_status == STATUS_DLL_INIT_FAILED || ldr_status == STATUS_ACCESS_VIOLATION)
+    else if (ldr_status == STATUS_DLL_INIT_FAILED ||
+             ldr_status == STATUS_ACCESS_VIOLATION ||
+             ldr_status == STATUS_ILLEGAL_INSTRUCTION)
     {
         /* some dlls with invalid entry point will crash, but this means we loaded the test dll */
         ok( !expect_fallback, "%u: got test dll but expected fallback\n", line );
@@ -2951,6 +2956,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
 
 static void test_ExitProcess(void)
 {
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
 #include "pshpack1.h"
 #ifdef __x86_64__
     static struct section_data
@@ -2959,13 +2965,20 @@ static void test_ExitProcess(void)
         void *target;
         BYTE jmp_rax[2];
     } section_data = { { 0x48,0xb8 }, dll_entry_point, { 0xff,0xe0 } };
-#else
+#elif defined(__i386__)
     static struct section_data
     {
         BYTE mov_eax;
         void *target;
         BYTE jmp_eax[2];
     } section_data = { 0xb8, dll_entry_point, { 0xff,0xe0 } };
+#elif defined(__aarch64__)
+    static struct section_data
+    {
+        DWORD ldr;  /* ldr x0,target */
+        DWORD br;   /* br x0 */
+        void *target;
+    } section_data = { 0x58000040, 0xd61f0000, dll_entry_point };
 #endif
 #include "poppack.h"
     DWORD dummy, file_align;
@@ -2983,11 +2996,6 @@ static void test_ExitProcess(void)
     LARGE_INTEGER offset;
     SIZE_T size;
     IMAGE_NT_HEADERS nt_header;
-
-#if !defined(__i386__) && !defined(__x86_64__)
-    skip("x86 specific ExitProcess test\n");
-    return;
-#endif
 
     if (!pRtlDllShutdownInProgress)
     {
@@ -3438,6 +3446,9 @@ if (0)
 
     ret = DeleteFileA(dll_name);
     ok(ret, "DeleteFile error %d\n", GetLastError());
+#else
+    skip("x86 specific ExitProcess test\n");
+#endif
 }
 
 static PVOID WINAPI failuredllhook(ULONG ul, DELAYLOAD_INFO* pd)
@@ -3812,6 +3823,50 @@ static void test_InMemoryOrderModuleList(void)
     ok(entry2 == mark2, "expected entry2 == mark2, got %p and %p\n", entry2, mark2);
 }
 
+static void test_wow64_redirection_for_dll(const char *libname)
+{
+    HMODULE lib;
+    char buf[256];
+
+    if (!GetModuleHandleA(libname))
+    {
+        lib = LoadLibraryExA(libname, NULL, 0);
+        ok (broken(lib == NULL) /* Vista/2008 */ ||
+            lib != NULL, "Loading %s should succeed with WOW64 redirection disabled\n", libname);
+        if (lib)
+        {
+            /* Win 7/2008R2 return the un-redirected path (i.e. c:\windows\system32\dwrite.dll), test loading it. */
+            GetModuleFileNameA(lib, buf, sizeof(buf));
+            FreeLibrary(lib);
+            lib = LoadLibraryExA(buf, NULL, 0);
+            ok(lib != NULL, "Loading %s from full path should succeed with WOW64 redirection disabled\n", libname);
+            if (lib)
+                FreeLibrary(lib);
+        }
+    }
+    else
+    {
+        skip("%s was already loaded in the process\n", libname);
+    }
+}
+
+static void test_wow64_redirection(void)
+{
+    void *OldValue;
+
+    if (!is_wow64)
+        return;
+
+    /* Disable FS redirection, then test loading system libraries (pick ones that shouldn't
+     * already be loaded in this process).
+     */
+    ok(pWow64DisableWow64FsRedirection(&OldValue), "Disabling FS redirection failed\n");
+    test_wow64_redirection_for_dll("wlanapi.dll");
+    test_wow64_redirection_for_dll("dxgi.dll");
+    test_wow64_redirection_for_dll("dwrite.dll");
+    ok(pWow64RevertWow64FsRedirection(OldValue), "Re-enabling FS redirection failed\n");
+}
+
 static void test_dll_file( const char *name )
 {
     HMODULE module = GetModuleHandleA( name );
@@ -3863,6 +3918,22 @@ static void test_dll_file( const char *name )
 #undef OK_FIELD
 }
 
+static void test_LoadPackagedLibrary(void)
+{
+    HMODULE h;
+
+    if (!pLoadPackagedLibrary)
+    {
+        win_skip("LoadPackagedLibrary is not available.\n");
+        return;
+    }
+
+    SetLastError( 0xdeadbeef );
+    h = pLoadPackagedLibrary(L"kernel32.dll", 0);
+    ok(!h && GetLastError() == APPMODEL_ERROR_NO_PACKAGE, "Got unexpected handle %p, GetLastError() %u.\n",
+            h, GetLastError());
+}
+
 START_TEST(loader)
 {
     int argc;
@@ -3897,7 +3968,10 @@ START_TEST(loader)
     pFlsGetValue = (void *)GetProcAddress(kernel32, "FlsGetValue");
     pFlsFree = (void *)GetProcAddress(kernel32, "FlsFree");
     pIsWow64Process = (void *)GetProcAddress(kernel32, "IsWow64Process");
+    pWow64DisableWow64FsRedirection = (void *)GetProcAddress(kernel32, "Wow64DisableWow64FsRedirection");
+    pWow64RevertWow64FsRedirection = (void *)GetProcAddress(kernel32, "Wow64RevertWow64FsRedirection");
     pResolveDelayLoadedAPI = (void *)GetProcAddress(kernel32, "ResolveDelayLoadedAPI");
+    pLoadPackagedLibrary = (void *)GetProcAddress(kernel32, "LoadPackagedLibrary");
 
     if (pIsWow64Process) pIsWow64Process( GetCurrentProcess(), &is_wow64 );
     GetSystemInfo( &si );
@@ -3930,6 +4004,8 @@ START_TEST(loader)
     test_import_resolution();
     test_ExitProcess();
     test_InMemoryOrderModuleList();
+    test_LoadPackagedLibrary();
+    test_wow64_redirection();
     test_dll_file( "ntdll.dll" );
     test_dll_file( "kernel32.dll" );
     test_dll_file( "advapi32.dll" );

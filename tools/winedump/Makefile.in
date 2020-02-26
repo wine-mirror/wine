@@ -17,6 +17,7 @@ C_SRCS = \
 	msc.c \
 	msmangle.c \
 	ne.c \
+	nls.c \
 	output.c \
 	pdb.c \
 	pe.c \

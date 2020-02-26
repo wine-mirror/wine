@@ -34,6 +34,8 @@ int strendswith(const char* str, const char* end);
 #define __attribute__(X)
 #endif
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 void parser_error(const char *s) __attribute__((noreturn));
 int parser_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void error_loc(const char *s, ...) __attribute__((format (printf, 1, 2))) __attribute__((noreturn));
@@ -42,6 +44,7 @@ void error_loc_info(const loc_info_t *, const char *s, ...) __attribute__((forma
 void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning_loc_info(const loc_info_t *, const char *s, ...) __attribute__((format (printf, 2, 3)));
 void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
+char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
 
 char *dup_basename(const char *name, const char *ext);
 size_t widl_getline(char **linep, size_t *lenp, FILE *fp);

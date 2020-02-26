@@ -18,7 +18,7 @@
 
 OPTION EXPLICIT  : : DIM W
 
-dim x, y, z
+dim x, y, z, e
 Dim obj
 
 call ok(true, "true is not true?")
@@ -41,6 +41,7 @@ Call ok(10. = 10, "10. <> 10")
 Call ok(&hffFFffFF& = -1, "&hffFFffFF& <> -1")
 Call ok(&hffFFffFF& = -1, "&hffFFffFF& <> -1")
 Call ok(34e5 = 3400000, "34e5 <> 3400000")
+Call ok(34e+5 = 3400000, "34e+5 <> 3400000")
 Call ok(56.789e5 = 5678900, "56.789e5 = 5678900")
 Call ok(56.789e-2 = 0.56789, "56.789e-2 <> 0.56789")
 Call ok(1e-94938484 = 0, "1e-... <> 0")
@@ -52,6 +53,11 @@ Call ok(true = -1, "! true = -1")
 Call ok(false = 0, "false <> 0")
 Call ok(&hff = 255, "&hff <> 255")
 Call ok(&Hff = 255, "&Hff <> 255")
+Call ok(&hffff = -1, "&hffff <> -1")
+Call ok(&hfffe = -2, "&hfffe <> -2")
+Call ok(&hffff& = 65535, "&hffff& <> -1")
+Call ok(&hfffe& = 65534, "&hfffe& <> -2")
+Call ok(&hffffffff& = -1, "&hffffffff& <> -1")
 
 W = 5
 Call ok(W = 5, "W = " & W & " expected " & 5)
@@ -87,6 +93,9 @@ Call ok(getVT(&h10&) = "VT_I2", "getVT(&h10&) is not VT_I2")
 Call ok(getVT(&h10000&) = "VT_I4", "getVT(&h10000&) is not VT_I4")
 Call ok(getVT(&H10000&) = "VT_I4", "getVT(&H10000&) is not VT_I4")
 Call ok(getVT(&hffFFffFF&) = "VT_I2", "getVT(&hffFFffFF&) is not VT_I2")
+Call ok(getVT(&hffFFffFE&) = "VT_I2", "getVT(&hffFFffFE &) is not VT_I2")
+Call ok(getVT(&hffF&) = "VT_I2", "getVT(&hffFF&) is not VT_I2")
+Call ok(getVT(&hffFF&) = "VT_I4", "getVT(&hffFF&) is not VT_I4")
 Call ok(getVT(1e2) = "VT_R8", "getVT(1e2) is not VT_R8")
 Call ok(getVT(1e0) = "VT_R8", "getVT(1e0) is not VT_R8")
 Call ok(getVT(0.1e2) = "VT_R8", "getVT(0.1e2) is not VT_R8")
@@ -326,6 +335,14 @@ else
 end if
 
 while false
+wend
+
+if empty then
+   ok false, "if empty executed"
+end if
+
+while empty
+   ok false, "while empty executed"
 wend
 
 x = 0
@@ -877,6 +894,21 @@ Public Function TestSepFunc(ByVal a) : :
 End Function
 Call ok(TestSepFunc(1) = 1, "Function did not return 1")
 
+ok duplicatedfunc() = 2, "duplicatedfunc = " & duplicatedfunc()
+
+function duplicatedfunc
+    ok false, "duplicatedfunc called"
+end function
+
+sub duplicatedfunc
+    ok false, "duplicatedfunc called"
+end sub
+
+function duplicatedfunc
+    duplicatedfunc = 2
+end function
+
+ok duplicatedfunc() = 2, "duplicatedfunc = " & duplicatedfunc()
 
 ' Stop has an effect only in debugging mode
 Stop
@@ -1093,6 +1125,14 @@ Call ok(getVT(cs) = "VT_BSTR", "getVT(cs) = " & getVT(cs))
 Call ok(isNull(cnull), "cnull = " & cnull)
 Call ok(getVT(cnull) = "VT_NULL", "getVT(cnull) = " & getVT(cnull))
 
+Call ok(+1 = 1, "+1 != 1")
+Call ok(+true = true, "+1 != 1")
+Call ok(getVT(+true) = "VT_BOOL", "getVT(+true) = " & getVT(+true))
+Call ok(+"true" = "true", """+true"" != true")
+Call ok(getVT(+"true") = "VT_BSTR", "getVT(+""true"") = " & getVT(+"true"))
+Call ok(+obj is obj, "+obj != obj")
+Call ok(+--+-+1 = -1, "+--+-+1 != -1")
+
 if false then Const conststr = "str"
 Call ok(conststr = "str", "conststr = " & conststr)
 Call ok(getVT(conststr) = "VT_BSTR", "getVT(conststr) = " & getVT(conststr))
@@ -1161,6 +1201,13 @@ obj.Test1 = 6
 Call ok(obj.Test1 = 6, "obj.Test1 is not 6")
 obj.AddToTest1(5)
 Call ok(obj.Test1 = 11, "obj.Test1 is not 11")
+
+set obj = unkObj
+set x = obj
+call ok(getVT(obj) = "VT_UNKNOWN*", "getVT(obj) = " & getVT(obj))
+call ok(getVT(x) = "VT_UNKNOWN*", "getVT(x) = " & getVT(x))
+call ok(getVT(unkObj) = "VT_UNKNOWN", "getVT(unkObj) = " & getVT(unkObj))
+call ok(obj is unkObj, "obj is not unkObj")
 
 ' Array tests
 
@@ -1237,6 +1284,100 @@ next
 x=1
 Call ok(forarr(x) = 2, "forarr(x) = " & forarr(x))
 
+sub accessArr()
+    ok arr(1) = 1, "arr(1) = " & arr(1)
+    arr(1) = 2
+end sub
+arr(1) = 1
+call accessArr
+ok arr(1) = 2, "arr(1) = " & arr(1)
+
+sub accessArr2(x,y)
+    ok arr2(x,y) = 1, "arr2(x,y) = " & arr2(x,y)
+    x = arr2(x,y)
+    arr2(x,y) = 2
+end sub
+arr2(1,2) = 1
+call accessArr2(1, 2)
+ok arr2(1,2) = 2, "arr2(1,2) = " & arr2(1,2)
+
+x = Array(Array(3))
+call ok(x(0)(0) = 3, "x(0)(0) = " & x(0)(0))
+
+function seta0(arr)
+    arr(0) = 2
+    seta0 = 1
+end function
+
+x = Array(1)
+seta0 x
+ok x(0) = 2, "x(0) = " & x(0)
+
+x = Array(1)
+seta0 (x)
+ok x(0) = 1, "x(0) = " & x(0)
+
+x = Array(1)
+call (((seta0))) ((x))
+ok x(0) = 1, "x(0) = " & x(0)
+
+x = Array(1)
+call (((seta0))) (x)
+ok x(0) = 2, "x(0) = " & x(0)
+
+x = Array(Array(3))
+seta0 x(0)
+call ok(x(0)(0) = 2, "x(0)(0) = " & x(0)(0))
+
+x = Array(Array(3))
+seta0 (x(0))
+call ok(x(0)(0) = 3, "x(0)(0) = " & x(0)(0))
+
+y = (seta0)(x)
+ok y = 1, "y = " & y
+
+y = ((x))(0)
+ok y = 2, "y = " & y
+
+sub changearg(x)
+    x = 2
+end sub
+
+x = Array(1)
+changearg x(0)
+ok x(0) = 2, "x(0) = " & x(0)
+ok getVT(x) = "VT_ARRAY|VT_VARIANT*", "getVT(x) after redim = " & getVT(x)
+
+x = Array(1)
+changearg (x(0))
+ok x(0) = 1, "x(0) = " & x(0)
+
+x = Array(1)
+redim x(4)
+ok ubound(x) = 4, "ubound(x) = " & ubound(x)
+ok x(0) = empty, "x(0) = " & x(0)
+
+x = 1
+redim x(3)
+ok ubound(x) = 3, "ubound(x) = " & ubound(x)
+
+x = Array(1, 2)
+redim x(-1)
+ok lbound(x) = 0, "lbound(x) = " & lbound(x)
+ok ubound(x) = -1, "ubound(x) = " & ubound(x)
+
+redim x(3, 2)
+ok ubound(x) = 3, "ubound(x) = " & ubound(x)
+ok ubound(x, 1) = 3, "ubound(x, 1) = " & ubound(x, 1)
+ok ubound(x, 2) = 2, "ubound(x, 2) = " & ubound(x, 2) & " expected 2"
+
+dim staticarray(4)
+on error resume next
+redim staticarray(3)
+e = err.number
+on error goto 0
+todo_wine_ok e = 10, "e = " & e
+
 Class ArrClass
     Dim classarr(3)
     Dim classnoarr()
@@ -1291,8 +1432,7 @@ Call testarrarg(false, "VT_BOOL*")
 Call testarrarg(Empty, "VT_EMPTY*")
 
 Sub modifyarr(arr)
-    'Following test crashes on wine
-    'Call ok(arr(0) = "not modified", "arr(0) = " & arr(0))
+    Call ok(arr(0) = "not modified", "arr(0) = " & arr(0))
     arr(0) = "modified"
 End Sub
 
@@ -1302,7 +1442,7 @@ Call ok(arr(0) = "modified", "arr(0) = " & arr(0))
 
 arr(0) = "not modified"
 modifyarr(arr)
-Call todo_wine_ok(arr(0) = "not modified", "arr(0) = " & arr(0))
+Call ok(arr(0) = "not modified", "arr(0) = " & arr(0))
 
 for x = 0 to UBound(arr)
     arr(x) = x
@@ -1345,6 +1485,28 @@ end class
 set x = new RegExp
 Call ok(x.Global = false, "x.Global = " & x.Global)
 
+sub test_nothing_errors
+    dim x
+    on error resume next
+
+    x = 1
+    err.clear
+    x = nothing
+    call ok(err.number = 91, "err.number = " & err.number)
+    call ok(x = 1, "x = " & x)
+
+    err.clear
+    x = not nothing
+    call ok(err.number = 91, "err.number = " & err.number)
+    call ok(x = 1, "x = " & x)
+
+    err.clear
+    x = "" & nothing
+    call ok(err.number = 91, "err.number = " & err.number)
+    call ok(x = 1, "x = " & x)
+end sub
+call test_nothing_errors()
+
 sub test_identifiers
     ' test keywords that can also be a declared identifier
     Dim default
@@ -1367,7 +1529,7 @@ call test_identifiers()
 
 sub test_dotIdentifiers
     ' test keywords that can also be an identifier after a dot
-    ' Call ok(testObj.rem = 10, "testObj.rem = " & testObj.rem & " expected 10")
+    Call ok(testObj.rem = 10, "testObj.rem = " & testObj.rem & " expected 10")
     Call ok(testObj.true = 10, "testObj.true = " & testObj.true & " expected 10")
     Call ok(testObj.false = 10, "testObj.false = " & testObj.false & " expected 10")
     Call ok(testObj.not = 10, "testObj.not = " & testObj.not & " expected 10")
@@ -1417,7 +1579,111 @@ sub test_dotIdentifiers
     Call ok(testObj.on = 10, "testObj.on = " & testObj.on & " expected 10")
     Call ok(testObj.resume = 10, "testObj.resume = " & testObj.resume & " expected 10")
     Call ok(testObj.goto = 10, "testObj.goto = " & testObj.goto & " expected 10")
+    Call ok(testObj.with = 10, "testObj.with = " & testObj.with & " expected 10")
+    Call ok(testObj.redim = 10, "testObj.redim = " & testObj.redim & " expected 10")
+    Call ok(testObj.preserve = 10, "testObj.preserve = " & testObj.preserve & " expected 10")
+    Call ok(testObj.property = 10, "testObj.property = " & testObj.property & " expected 10")
+    Call ok(testObj.me = 10, "testObj.me = " & testObj.me & " expected 10")
+    Call ok(testObj.stop = 10, "testObj.stop = " & testObj.stop & " expected 10")
 end sub
 call test_dotIdentifiers
+
+' Test End statements not required to be preceded by a newline or separator
+Sub EndTestSub
+    x = 1 End Sub
+
+Sub EndTestSubWithCall
+    x = 1
+    Call ok(x = 1, "x = " & x)End Sub
+Call EndTestSubWithCall()
+
+Function EndTestFunc(x)
+    Call ok(x > 0, "x = " & x)End Function
+EndTestFunc(1)
+
+Class EndTestClassWithStorageId
+    Public x End Class
+
+Class EndTestClassWithDim
+    Dim x End Class
+
+Class EndTestClassWithFunc
+    Function test(ByVal x)
+        x = 0 End Function End Class
+
+Class EndTestClassWithProperty
+    Public x
+    Public default Property Get defprop
+        defprop = x End Property End Class
+
+class TestPropSyntax
+    public prop
+
+    function getProp()
+        set getProp = prop
+    end function
+
+    public default property get def()
+        def = ""
+    end property
+end class
+
+set x = new TestPropSyntax
+set x.prop = new TestPropSyntax
+set x.prop.prop = new TestPropSyntax
+x.prop.prop.prop = 2
+call ok(x.getProp().getProp.prop = 2, "x.getProp().getProp.prop = " & x.getProp().getProp.prop)
+x.getprop.getprop().prop = 3
+call ok(x.getProp.prop.prop = 3, "x.getProp.prop.prop = " & x.getProp.prop.prop)
+set x.getprop.getprop().prop = new emptyclass
+set obj = new emptyclass
+set x.getprop.getprop().prop = obj
+call ok(x.getprop.getprop().prop is obj, "x.getprop.getprop().prop is not obj (emptyclass)")
+
+ok getVT(x) = "VT_DISPATCH*", "getVT(x) = " & getVT(x)
+todo_wine_ok getVT(x()) = "VT_BSTR", "getVT(x()) = " & getVT(x())
+
+with nothing
+end with
+
+set x = new TestPropSyntax
+with x
+     .prop = 1
+     ok .prop = 1, ".prop = "&.prop
+end with
+ok x.prop = 1, "x.prop = " & x.prop
+
+with new TestPropSyntax
+     .prop = 1
+     ok .prop = 1, ".prop = "&.prop
+end with
+
+function testsetresult(x, y)
+    set testsetresult = new TestPropSyntax
+    testsetresult.prop = x
+    y = testsetresult.prop + 1
+end function
+
+set x = testsetresult(1, 2)
+ok x.prop = 1, "x.prop = " & x.prop
+
+set arr(0) = new TestPropSyntax
+arr(0).prop = 1
+ok arr(0).prop = 1, "arr(0) = " & arr(0).prop
+
+function f2(x,y)
+end function
+
+f2 1 = 1, 2
+
+function f1(x)
+    ok x = true, "x = " & x
+end function
+
+f1 1 = 1
+f1 1 = (1)
+f1 not 1 = 0
+
+arr (0) = 2 xor -2
 
 reportSuccess()

@@ -19,6 +19,7 @@
 typedef struct _source_elements_t source_elements_t;
 typedef struct _expression_t expression_t;
 typedef struct _statement_t statement_t;
+struct _bytecode_t;
 
 typedef struct {
     BOOL is_num;
@@ -41,6 +42,7 @@ typedef struct _parser_ctx_t {
     BOOL is_html;
     BOOL lexer_error;
     HRESULT hres;
+    unsigned error_loc;
 
     ccval_t ccval;
     unsigned cc_if_depth;
@@ -48,10 +50,10 @@ typedef struct _parser_ctx_t {
     heap_pool_t heap;
 } parser_ctx_t;
 
-HRESULT script_parse(script_ctx_t*,struct _compiler_ctx_t*,const WCHAR*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;
+HRESULT script_parse(script_ctx_t*,struct _compiler_ctx_t*,struct _bytecode_t*,const WCHAR*,BOOL,parser_ctx_t**) DECLSPEC_HIDDEN;
 void parser_release(parser_ctx_t*) DECLSPEC_HIDDEN;
 
-int parser_lex(void*,parser_ctx_t*) DECLSPEC_HIDDEN;
+int parser_lex(void*,unsigned*,parser_ctx_t*) DECLSPEC_HIDDEN;
 
 static inline void *parser_alloc(parser_ctx_t *ctx, DWORD size)
 {
@@ -121,6 +123,7 @@ typedef enum {
 struct _statement_t {
     statement_type_t type;
     statement_t *next;
+    unsigned loc;
 };
 
 typedef struct {
@@ -157,7 +160,9 @@ typedef struct {
     variable_declaration_t *variable_list;
     expression_t *begin_expr;
     expression_t *expr;
+    unsigned expr_loc;
     expression_t *end_expr;
+    unsigned end_loc;
     statement_t *statement;
 } for_statement_t;
 
@@ -188,6 +193,7 @@ typedef struct {
 
 typedef struct _case_clausule_t {
     expression_t *expr;
+    unsigned loc;
     statement_t *stat;
 
     struct _case_clausule_t *next;
@@ -209,6 +215,7 @@ typedef struct {
     statement_t *try_statement;
     catch_block_t *catch_block;
     statement_t *finally_statement;
+    unsigned finally_loc;
 } try_statement_t;
 
 typedef enum {

@@ -190,6 +190,8 @@ void pp_next_if_state(int);
 pp_if_state_t pp_pop_if(void);
 pp_if_state_t pp_if_state(void);
 int pp_get_if_depth(void);
+char *wpp_lookup(const char *name, int type, const char *parent_name,
+                 char **include_path, int include_path_count);
 
 #ifndef __GNUC__
 #define __attribute__(x)  /*nothing*/

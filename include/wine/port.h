@@ -47,7 +47,7 @@
  * Hard-coded values for the Windows platform
  */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
 
 #include <direct.h>
 #include <io.h>
@@ -58,12 +58,24 @@
 #ifdef _MSC_VER
 
 #define ftruncate chsize
-#define isfinite(x) _finite(x)
-#define isinf(x) (!(_finite(x) || _isnan(x)))
-#define isnan(x) _isnan(x)
+#ifndef isfinite
+# define isfinite(x) _finite(x)
+#endif
+#ifndef isinf
+# define isinf(x) (!(_finite(x) || _isnan(x)))
+#endif
+#ifndef isnan
+# define isnan(x) _isnan(x)
+#endif
 #define popen _popen
 #define pclose _pclose
-#define snprintf _snprintf
+/* The UCRT headers in the Windows SDK #error out if we #define snprintf.
+ * The C headers that came with previous Visual Studio versions do not have
+ * snprintf. Check for VS 2015, which appears to be the first version to
+ * use the UCRT headers by default. */
+#if _MSC_VER < 1900
+# define snprintf _snprintf
+#endif
 #define strtoll _strtoi64
 #define strtoull _strtoui64
 #define strncasecmp _strnicmp

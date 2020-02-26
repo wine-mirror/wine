@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <inttypes.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -637,24 +638,36 @@ static void test_printf_legacy_three_digit_exp(void)
 
 static void test_printf_c99(void)
 {
-    char buf[20];
+    char buf[30];
+    int i;
 
     /* The msvcrt compatibility flag doesn't affect whether 'z' is interpreted
      * as size_t size for integers. */
-    if (sizeof(void*) == 8) {
-        vsprintf_wrapper(0, buf, sizeof(buf), "%zx %d",
-                         (size_t) 0x12345678123456, 1);
-        ok(!strcmp(buf, "12345678123456 1"), "buf = %s\n", buf);
-        vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY,
-                         buf, sizeof(buf), "%zx %d", (size_t) 0x12345678123456, 1);
-        ok(!strcmp(buf, "12345678123456 1"), "buf = %s\n", buf);
-    } else {
-        vsprintf_wrapper(0, buf, sizeof(buf), "%zx %d",
-                         (size_t) 0x123456, 1);
-        ok(!strcmp(buf, "123456 1"), "buf = %s\n", buf);
-        vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY,
-                         buf, sizeof(buf), "%zx %d", (size_t) 0x123456, 1);
-        ok(!strcmp(buf, "123456 1"), "buf = %s\n", buf);
+     for (i = 0; i < 2; i++) {
+        unsigned __int64 options = (i == 0) ? 0 :
+            UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
+
+        /* z modifier accepts size_t argument */
+        vsprintf_wrapper(options, buf, sizeof(buf), "%zx %d", SIZE_MAX, 1);
+        if (sizeof(size_t) == 8)
+            ok(!strcmp(buf, "ffffffffffffffff 1"), "buf = %s\n", buf);
+        else
+            ok(!strcmp(buf, "ffffffff 1"), "buf = %s\n", buf);
+
+        /* j modifier with signed format accepts intmax_t argument */
+        vsprintf_wrapper(options, buf, sizeof(buf), "%jd %d", INTMAX_MIN, 1);
+        ok(!strcmp(buf, "-9223372036854775808 1"), "buf = %s\n", buf);
+
+        /* j modifier with unsigned format accepts uintmax_t argument */
+        vsprintf_wrapper(options, buf, sizeof(buf), "%ju %d", UINTMAX_MAX, 1);
+        ok(!strcmp(buf, "18446744073709551615 1"), "buf = %s\n", buf);
+
+        /* t modifier accepts ptrdiff_t argument */
+        vsprintf_wrapper(options, buf, sizeof(buf), "%td %d", PTRDIFF_MIN, 1);
+        if (sizeof(ptrdiff_t) == 8)
+            ok(!strcmp(buf, "-9223372036854775808 1"), "buf = %s\n", buf);
+        else
+            ok(!strcmp(buf, "-2147483648 1"), "buf = %s\n", buf);
     }
 }
 

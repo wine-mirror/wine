@@ -30,7 +30,6 @@
 #include "schrpc.h"
 #include "taskschd_private.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
@@ -2919,7 +2918,7 @@ static HRESULT read_int_value(IXmlReader *reader, int *int_val)
     hr = read_text_value(reader, &value);
     if (hr != S_OK) return hr;
 
-    *int_val = strtolW(value, NULL, 10);
+    *int_val = wcstol(value, NULL, 10);
 
     return S_OK;
 }
@@ -3871,7 +3870,7 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
         if (server_name[0] == '\\' && server_name[1] == '\\')
             server_name += 2;
 
-        if (strcmpiW(server_name, comp_name))
+        if (wcsicmp(server_name, comp_name))
         {
             FIXME("connection to remote server %s is not supported\n", debugstr_w(V_BSTR(&server)));
             return HRESULT_FROM_WIN32(ERROR_BAD_NETPATH);
@@ -3893,7 +3892,7 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
 
     TRACE("server version %#x\n", task_svc->version);
 
-    strcpyW(task_svc->comp_name, comp_name);
+    lstrcpyW(task_svc->comp_name, comp_name);
     task_svc->connected = TRUE;
 
     return S_OK;

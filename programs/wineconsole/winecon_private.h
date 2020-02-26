@@ -35,6 +35,7 @@ struct config_data {
     DWORD       def_attr;       /* default fill attributes (screen colors) */
     DWORD       popup_attr;     /* pop-up color attributes */
     WCHAR       face_name[32];  /* name of font (size is LF_FACESIZE) */
+    DWORD       font_pitch_family;
     DWORD       font_weight;
     DWORD       history_size;   /* number of commands in history buffer */
     DWORD       history_nodup;  /* TRUE if commands are not stored twice in buffer */

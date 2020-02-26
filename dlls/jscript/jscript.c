@@ -57,12 +57,19 @@ typedef struct {
     DWORD version;
     BOOL html_mode;
     BOOL is_encode;
+    BOOL is_initialized;
 
     IActiveScriptSite *site;
 
-    bytecode_t *queue_head;
-    bytecode_t *queue_tail;
+    struct list persistent_code;
+    struct list queued_code;
 } JScript;
+
+typedef struct {
+    IActiveScriptError IActiveScriptError_iface;
+    LONG ref;
+    jsexcept_t ei;
+} JScriptError;
 
 void script_release(script_ctx_t *ctx)
 {
@@ -70,7 +77,6 @@ void script_release(script_ctx_t *ctx)
         return;
 
     jsval_release(ctx->acc);
-    clear_ei(ctx);
     if(ctx->cc)
         release_cc(ctx->cc);
     heap_pool_free(&ctx->tmp_heap);
@@ -102,62 +108,276 @@ static inline BOOL is_started(script_ctx_t *ctx)
         || ctx->state == SCRIPTSTATE_DISCONNECTED;
 }
 
-static HRESULT exec_global_code(JScript *This, bytecode_t *code)
+named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *item_name, unsigned flags)
 {
-    HRESULT hres;
+    named_item_t *item;
+    HRESULT hr;
 
-    IActiveScriptSite_OnEnterScript(This->site);
+    for(item = ctx->named_items; item; item = item->next) {
+        if((item->flags & flags) == flags && !wcscmp(item->name, item_name)) {
+            if(!item->disp && (flags || !(item->flags & SCRIPTITEM_CODEONLY))) {
+                IUnknown *unk;
 
-    clear_ei(This->ctx);
-    hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, NULL);
+                if(!ctx->site)
+                    return NULL;
 
-    IActiveScriptSite_OnLeaveScript(This->site);
-    return hres;
+                hr = IActiveScriptSite_GetItemInfo(ctx->site, item_name,
+                                                   SCRIPTINFO_IUNKNOWN, &unk, NULL);
+                if(FAILED(hr)) {
+                    WARN("GetItemInfo failed: %08x\n", hr);
+                    continue;
+                }
+
+                hr = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&item->disp);
+                IUnknown_Release(unk);
+                if(FAILED(hr)) {
+                    WARN("object does not implement IDispatch\n");
+                    continue;
+                }
+            }
+
+            return item;
+        }
+    }
+
+    return NULL;
+}
+
+static inline JScriptError *impl_from_IActiveScriptError(IActiveScriptError *iface)
+{
+    return CONTAINING_RECORD(iface, JScriptError, IActiveScriptError_iface);
+}
+
+static HRESULT WINAPI JScriptError_QueryInterface(IActiveScriptError *iface, REFIID riid, void **ppv)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptError_iface;
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptError)) {
+        TRACE("(%p)->(IID_IActiveScriptError %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptError_iface;
+    }else {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI JScriptError_AddRef(IActiveScriptError *iface)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI JScriptError_Release(IActiveScriptError *iface)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        reset_ei(&This->ei);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI JScriptError_GetExceptionInfo(IActiveScriptError *iface, EXCEPINFO *excepinfo)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+
+    TRACE("(%p)->(%p)\n", This, excepinfo);
+
+    if(!excepinfo)
+        return E_POINTER;
+
+    memset(excepinfo, 0, sizeof(*excepinfo));
+    excepinfo->scode = This->ei.error;
+    if(This->ei.source)
+        jsstr_to_bstr(This->ei.source, &excepinfo->bstrSource);
+    if(This->ei.message)
+        jsstr_to_bstr(This->ei.message, &excepinfo->bstrDescription);
+    return S_OK;
+}
+
+static HRESULT WINAPI JScriptError_GetSourcePosition(IActiveScriptError *iface, DWORD *source_context, ULONG *line, LONG *character)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+    bytecode_t *code = This->ei.code;
+    const WCHAR *nl, *p;
+    unsigned l;
+
+    TRACE("(%p)->(%p %p %p)\n", This, source_context, line, character);
+
+    if(!This->ei.code) {
+        FIXME("unknown position\n");
+        return E_FAIL;
+    }
+
+    if(source_context)
+        *source_context = This->ei.code->source_context;
+    if(!line && !character)
+        return S_OK;
+
+    l = code->start_line;
+    for(nl = p = code->source; p < code->source + This->ei.loc; p++) {
+        if(*p != '\n') continue;
+        l++;
+        nl = p + 1;
+    }
+    if(line)
+        *line = l;
+    if(character)
+        *character = code->source + This->ei.loc - nl;
+    return S_OK;
+}
+
+static HRESULT WINAPI JScriptError_GetSourceLineText(IActiveScriptError *iface, BSTR *source)
+{
+    JScriptError *This = impl_from_IActiveScriptError(iface);
+
+    TRACE("(%p)->(%p)\n", This, source);
+
+    if(!source)
+        return E_POINTER;
+
+    if(!This->ei.line) {
+        *source = NULL;
+        return E_FAIL;
+    }
+
+    return jsstr_to_bstr(This->ei.line, source);
+}
+
+static const IActiveScriptErrorVtbl JScriptErrorVtbl = {
+    JScriptError_QueryInterface,
+    JScriptError_AddRef,
+    JScriptError_Release,
+    JScriptError_GetExceptionInfo,
+    JScriptError_GetSourcePosition,
+    JScriptError_GetSourceLineText
+};
+
+void reset_ei(jsexcept_t *ei)
+{
+    ei->error = S_OK;
+    if(ei->valid_value) {
+        jsval_release(ei->value);
+        ei->valid_value = FALSE;
+    }
+    if(ei->code) {
+        release_bytecode(ei->code);
+        ei->code = NULL;
+        ei->loc = 0;
+    }
+    if(ei->source) {
+        jsstr_release(ei->source);
+        ei->source = NULL;
+    }
+    if(ei->message) {
+        jsstr_release(ei->message);
+        ei->message = NULL;
+    }
+    if(ei->line) {
+        jsstr_release(ei->line);
+        ei->line = NULL;
+    }
+}
+
+void enter_script(script_ctx_t *ctx, jsexcept_t *ei)
+{
+    memset(ei, 0, sizeof(*ei));
+    ei->prev = ctx->ei;
+    ctx->ei = ei;
+    TRACE("ctx %p ei %p prev %p\n", ctx, ei, ei->prev);
+}
+
+HRESULT leave_script(script_ctx_t *ctx, HRESULT result)
+{
+    jsexcept_t *ei = ctx->ei;
+    BOOL enter_notified = ei->enter_notified;
+    JScriptError *error;
+
+    TRACE("ctx %p ei %p prev %p\n", ctx, ei, ei->prev);
+
+    ctx->ei = ei->prev;
+    if(result == DISP_E_EXCEPTION) {
+        result = ei->error;
+    }else {
+        reset_ei(ei);
+        ei->error = result;
+    }
+    if(FAILED(result)) {
+        WARN("%08x\n", result);
+        if(ctx->site && (error = heap_alloc(sizeof(*error)))) {
+            HRESULT hres;
+
+            error->IActiveScriptError_iface.lpVtbl = &JScriptErrorVtbl;
+            error->ref = 1;
+            error->ei = *ei;
+            memset(ei, 0, sizeof(*ei));
+
+            hres = IActiveScriptSite_OnScriptError(ctx->site, &error->IActiveScriptError_iface);
+            IActiveScriptError_Release(&error->IActiveScriptError_iface);
+            if(hres == S_OK)
+                result = SCRIPT_E_REPORTED;
+        }
+    }
+    if(enter_notified && ctx->site)
+        IActiveScriptSite_OnLeaveScript(ctx->site);
+    reset_ei(ei);
+    return result;
 }
 
 static void clear_script_queue(JScript *This)
 {
-    bytecode_t *iter, *iter2;
-
-    if(!This->queue_head)
-        return;
-
-    iter = This->queue_head;
-    while(iter) {
-        iter2 = iter->next;
-        iter->next = NULL;
-        release_bytecode(iter);
-        iter = iter2;
+    while(!list_empty(&This->queued_code))
+    {
+        bytecode_t *iter = LIST_ENTRY(list_head(&This->queued_code), bytecode_t, entry);
+        list_remove(&iter->entry);
+        if (iter->is_persistent)
+            list_add_tail(&This->persistent_code, &iter->entry);
+        else
+            release_bytecode(iter);
     }
+}
 
-    This->queue_head = This->queue_tail = NULL;
+static void clear_persistent_code_list(JScript *This)
+{
+    while(!list_empty(&This->persistent_code))
+    {
+        bytecode_t *iter = LIST_ENTRY(list_head(&This->persistent_code), bytecode_t, entry);
+        list_remove(&iter->entry);
+        release_bytecode(iter);
+    }
 }
 
 static void exec_queued_code(JScript *This)
 {
     bytecode_t *iter;
+    jsexcept_t ei;
+    HRESULT hres = S_OK;
 
-    for(iter = This->queue_head; iter; iter = iter->next)
-        exec_global_code(This, iter);
+    LIST_FOR_EACH_ENTRY(iter, &This->queued_code, bytecode_t, entry) {
+        enter_script(This->ctx, &ei);
+        hres = exec_source(This->ctx, EXEC_GLOBAL, iter, &iter->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, NULL);
+        leave_script(This->ctx, hres);
+        if(FAILED(hres))
+            break;
+    }
 
     clear_script_queue(This);
-}
-
-static HRESULT set_ctx_site(JScript *This)
-{
-    HRESULT hres;
-
-    This->ctx->lcid = This->lcid;
-
-    hres = init_global(This->ctx);
-    if(FAILED(hres))
-        return hres;
-
-    IActiveScriptSite_AddRef(This->site);
-    This->ctx->site = This->site;
-
-    change_state(This, SCRIPTSTATE_INITIALIZED);
-    return S_OK;
 }
 
 static void decrease_state(JScript *This, SCRIPTSTATE state)
@@ -179,6 +399,8 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
                 return;
             /* FALLTHROUGH */
         case SCRIPTSTATE_INITIALIZED:
+            clear_script_queue(This);
+
             if(This->ctx->host_global) {
                 IDispatch_Release(This->ctx->host_global);
                 This->ctx->host_global = NULL;
@@ -231,7 +453,7 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
         FIXME("NULL ctx\n");
     }
 
-    if(state == SCRIPTSTATE_UNINITIALIZED)
+    if(state == SCRIPTSTATE_UNINITIALIZED || state == SCRIPTSTATE_CLOSED)
         This->thread_id = 0;
 
     if(This->site) {
@@ -440,6 +662,35 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
     if(InterlockedCompareExchange(&This->thread_id, GetCurrentThreadId(), 0))
         return E_UNEXPECTED;
 
+    if(!This->ctx) {
+        script_ctx_t *ctx = heap_alloc_zero(sizeof(script_ctx_t));
+        if(!ctx)
+            return E_OUTOFMEMORY;
+
+        ctx->ref = 1;
+        ctx->state = SCRIPTSTATE_UNINITIALIZED;
+        ctx->active_script = &This->IActiveScript_iface;
+        ctx->safeopt = This->safeopt;
+        ctx->version = This->version;
+        ctx->html_mode = This->html_mode;
+        ctx->acc = jsval_undefined();
+        heap_pool_init(&ctx->tmp_heap);
+
+        hres = create_jscaller(ctx);
+        if(FAILED(hres)) {
+            heap_free(ctx);
+            return hres;
+        }
+
+        ctx->last_match = jsstr_empty();
+
+        ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
+        if(ctx) {
+            script_release(ctx);
+            return E_UNEXPECTED;
+        }
+    }
+
     This->site = pass;
     IActiveScriptSite_AddRef(This->site);
 
@@ -447,7 +698,18 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
     if(hres == S_OK)
         This->lcid = lcid;
 
-    return This->ctx ? set_ctx_site(This) : S_OK;
+    This->ctx->lcid = This->lcid;
+
+    hres = init_global(This->ctx);
+    if(FAILED(hres))
+        return hres;
+
+    IActiveScriptSite_AddRef(This->site);
+    This->ctx->site = This->site;
+
+    if(This->is_initialized)
+        change_state(This, SCRIPTSTATE_INITIALIZED);
+    return S_OK;
 }
 
 static HRESULT WINAPI JScript_GetScriptSite(IActiveScript *iface, REFIID riid,
@@ -472,10 +734,11 @@ static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE s
             return E_UNEXPECTED;
 
         decrease_state(This, SCRIPTSTATE_UNINITIALIZED);
+        list_move_tail(&This->queued_code, &This->persistent_code);
         return S_OK;
     }
 
-    if(!This->ctx)
+    if(!This->is_initialized || !This->ctx)
         return E_UNEXPECTED;
 
     switch(ss) {
@@ -524,6 +787,7 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
         return E_UNEXPECTED;
 
     decrease_state(This, SCRIPTSTATE_CLOSED);
+    clear_persistent_code_list(This);
     return S_OK;
 }
 
@@ -598,7 +862,7 @@ static HRESULT WINAPI JScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR 
 {
     JScript *This = impl_from_IActiveScript(iface);
 
-    TRACE("(%p)->(%p)\n", This, ppdisp);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(pstrItemName), ppdisp);
 
     if(!ppdisp)
         return E_POINTER;
@@ -697,43 +961,16 @@ static ULONG WINAPI JScriptParse_Release(IActiveScriptParse *iface)
 static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
 {
     JScript *This = impl_from_IActiveScriptParse(iface);
-    script_ctx_t *ctx;
-    HRESULT hres;
 
     TRACE("(%p)\n", This);
 
-    if(This->ctx)
+    if(This->is_initialized)
         return E_UNEXPECTED;
+    This->is_initialized = TRUE;
 
-    ctx = heap_alloc_zero(sizeof(script_ctx_t));
-    if(!ctx)
-        return E_OUTOFMEMORY;
-
-    ctx->ref = 1;
-    ctx->state = SCRIPTSTATE_UNINITIALIZED;
-    ctx->active_script = &This->IActiveScript_iface;
-    ctx->safeopt = This->safeopt;
-    ctx->version = This->version;
-    ctx->html_mode = This->html_mode;
-    ctx->ei.val = jsval_undefined();
-    ctx->acc = jsval_undefined();
-    heap_pool_init(&ctx->tmp_heap);
-
-    hres = create_jscaller(ctx);
-    if(FAILED(hres)) {
-        heap_free(ctx);
-        return hres;
-    }
-
-    ctx->last_match = jsstr_empty();
-
-    ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
-    if(ctx) {
-        script_release(ctx);
-        return E_UNEXPECTED;
-    }
-
-    return This->site ? set_ctx_site(This) : S_OK;
+    if(This->site)
+        change_state(This, SCRIPTSTATE_INITIALIZED);
+    return S_OK;
 }
 
 static HRESULT WINAPI JScriptParse_AddScriptlet(IActiveScriptParse *iface,
@@ -757,6 +994,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
 {
     JScript *This = impl_from_IActiveScriptParse(iface);
     bytecode_t *code;
+    jsexcept_t ei;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %p %s %s %u %x %p %p)\n", This, debugstr_w(pstrCode),
@@ -766,17 +1004,15 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, NULL, pstrDelimiter, (dwFlags & SCRIPTTEXT_ISEXPRESSION) != 0,
-            This->is_encode, &code);
+    enter_script(This->ctx, &ei);
+    hres = compile_script(This->ctx, pstrCode, dwSourceContextCookie, ulStartingLine, NULL, pstrDelimiter,
+            (dwFlags & SCRIPTTEXT_ISEXPRESSION) != 0, This->is_encode, &code);
     if(FAILED(hres))
-        return hres;
+        return leave_script(This->ctx, hres);
 
     if(dwFlags & SCRIPTTEXT_ISEXPRESSION) {
         jsval_t r;
 
-        IActiveScriptSite_OnEnterScript(This->site);
-
-        clear_ei(This->ctx);
         hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, &r);
         if(SUCCEEDED(hres)) {
             if(pvarResult)
@@ -784,25 +1020,26 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
             jsval_release(r);
         }
 
-        IActiveScriptSite_OnLeaveScript(This->site);
-        return hres;
+        return leave_script(This->ctx, hres);
     }
+
+    code->is_persistent = (dwFlags & SCRIPTTEXT_ISPERSISTENT) != 0;
 
     /*
      * Although pvarResult is not really used without SCRIPTTEXT_ISEXPRESSION flag, if it's not NULL,
      * script is executed immediately, even if it's not in started state yet.
      */
     if(!pvarResult && !is_started(This->ctx)) {
-        if(This->queue_tail)
-            This->queue_tail = This->queue_tail->next = code;
+        list_add_tail(&This->queued_code, &code->entry);
+    }else {
+        hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, NULL);
+        if(code->is_persistent)
+            list_add_tail(&This->persistent_code, &code->entry);
         else
-            This->queue_head = This->queue_tail = code;
-        return S_OK;
+            release_bytecode(code);
     }
 
-    hres = exec_global_code(This, code);
-    release_bytecode(code);
-    if(FAILED(hres))
+    if(FAILED(hres = leave_script(This->ctx, hres)))
         return hres;
 
     if(pvarResult)
@@ -850,6 +1087,7 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
     JScript *This = impl_from_IActiveScriptParseProcedure2(iface);
     bytecode_t *code;
     jsdisp_t *dispex;
+    jsexcept_t ei;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %s %s %p %s %s %u %x %p)\n", This, debugstr_w(pstrCode), debugstr_w(pstrFormalParams),
@@ -859,14 +1097,13 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
     if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, pstrFormalParams, pstrDelimiter, FALSE, This->is_encode, &code);
-    if(FAILED(hres)) {
-        WARN("Parse failed %08x\n", hres);
-        return hres;
-    }
-
-    hres = create_source_function(This->ctx, code, &code->global_code, NULL,  &dispex);
+    enter_script(This->ctx, &ei);
+    hres = compile_script(This->ctx, pstrCode, dwSourceContextCookie, ulStartingLineNumber, pstrFormalParams,
+                          pstrDelimiter, FALSE, This->is_encode, &code);
+    if(SUCCEEDED(hres))
+        hres = create_source_function(This->ctx, code, &code->global_code, NULL,  &dispex);
     release_bytecode(code);
+    hres = leave_script(This->ctx, hres);
     if(FAILED(hres))
         return hres;
 
@@ -1038,17 +1275,20 @@ static ULONG WINAPI VariantChangeType_Release(IVariantChangeType *iface)
 static HRESULT WINAPI VariantChangeType_ChangeType(IVariantChangeType *iface, VARIANT *dst, VARIANT *src, LCID lcid, VARTYPE vt)
 {
     JScript *This = impl_from_IVariantChangeType(iface);
+    jsexcept_t ei;
     VARIANT res;
     HRESULT hres;
 
-    TRACE("(%p)->(%p %p%s %x %d)\n", This, dst, src, debugstr_variant(src), lcid, vt);
+    TRACE("(%p)->(%p %s %x %s)\n", This, dst, debugstr_variant(src), lcid, debugstr_vt(vt));
 
     if(!This->ctx) {
         FIXME("Object uninitialized\n");
         return E_UNEXPECTED;
     }
 
+    enter_script(This->ctx, &ei);
     hres = variant_change_type(This->ctx, &res, src, vt);
+    hres = leave_script(This->ctx, hres);
     if(FAILED(hres))
         return hres;
 
@@ -1089,6 +1329,8 @@ HRESULT create_jscript_object(BOOL is_encode, REFIID riid, void **ppv)
     ret->ref = 1;
     ret->safeopt = INTERFACE_USES_DISPEX;
     ret->is_encode = is_encode;
+    list_init(&ret->persistent_code);
+    list_init(&ret->queued_code);
 
     hres = IActiveScript_QueryInterface(&ret->IActiveScript_iface, riid, ppv);
     IActiveScript_Release(&ret->IActiveScript_iface);

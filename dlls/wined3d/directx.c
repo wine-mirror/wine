@@ -62,6 +62,87 @@ const GLenum magLookup[] =
     GL_NEAREST, GL_NEAREST, GL_LINEAR,
 };
 
+void CDECL wined3d_output_release_ownership(const struct wined3d_output *output)
+{
+    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc = {0};
+
+    TRACE("output %p.\n", output);
+
+    set_owner_desc.hDevice = output->kmt_device;
+    D3DKMTSetVidPnSourceOwner(&set_owner_desc);
+}
+
+HRESULT CDECL wined3d_output_take_ownership(const struct wined3d_output *output, BOOL exclusive)
+{
+    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc;
+    D3DKMT_VIDPNSOURCEOWNER_TYPE owner_type;
+    NTSTATUS status;
+
+    TRACE("output %p, exclusive %#x.\n", output, exclusive);
+
+    owner_type = exclusive ? D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE : D3DKMT_VIDPNSOURCEOWNER_SHARED;
+    set_owner_desc.pType = &owner_type;
+    set_owner_desc.pVidPnSourceId = &output->vidpn_source_id;
+    set_owner_desc.VidPnSourceCount = 1;
+    set_owner_desc.hDevice = output->kmt_device;
+    status = D3DKMTSetVidPnSourceOwner(&set_owner_desc);
+
+    switch (status)
+    {
+        case STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE:
+            return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+        case STATUS_INVALID_PARAMETER:
+            return E_INVALIDARG;
+        case STATUS_PROCEDURE_NOT_FOUND:
+            return E_NOINTERFACE;
+        case STATUS_SUCCESS:
+            return S_OK;
+        default:
+            FIXME("Unhandled error %#x.\n", status);
+            return E_FAIL;
+    }
+}
+
+static void wined3d_output_cleanup(const struct wined3d_output *output)
+{
+    D3DKMT_DESTROYDEVICE destroy_device_desc;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+
+    TRACE("output %p.\n", output);
+
+    destroy_device_desc.hDevice = output->kmt_device;
+    D3DKMTDestroyDevice(&destroy_device_desc);
+    close_adapter_desc.hAdapter = output->kmt_adapter;
+    D3DKMTCloseAdapter(&close_adapter_desc);
+}
+
+static HRESULT wined3d_output_init(struct wined3d_output *output, const WCHAR *device_name)
+{
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_desc;
+    D3DKMT_CREATEDEVICE create_device_desc = {{0}};
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+
+    TRACE("output %p, device_name %s.\n", output, wine_dbgstr_w(device_name));
+
+    lstrcpyW(open_adapter_desc.DeviceName, device_name);
+    if (D3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_desc))
+        return E_INVALIDARG;
+
+    create_device_desc.u.hAdapter = open_adapter_desc.hAdapter;
+    if (D3DKMTCreateDevice(&create_device_desc))
+    {
+        close_adapter_desc.hAdapter = open_adapter_desc.hAdapter;
+        D3DKMTCloseAdapter(&close_adapter_desc);
+        return E_FAIL;
+    }
+
+    output->kmt_adapter = open_adapter_desc.hAdapter;
+    output->kmt_device = create_device_desc.hDevice;
+    output->vidpn_source_id = open_adapter_desc.VidPnSourceId;
+
+    return WINED3D_OK;
+}
+
 /* Adjust the amount of used texture memory */
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount)
 {
@@ -74,6 +155,7 @@ UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount)
 
 void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
 {
+    wined3d_output_cleanup(&adapter->output);
     heap_free(adapter->formats);
 }
 
@@ -115,11 +197,13 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
  * The driver version has the form "x.y.z.w".
  *
  * "x" is the Windows version the driver is meant for:
- * 4 -> 95/98/NT4
- * 5 -> 2000
- * 6 -> 2000/XP
- * 7 -> Vista
- * 8 -> Win 7
+ *  4 -> 95/98/NT4
+ *  5 -> 2000
+ *  6 -> 2000/XP
+ *  7 -> Vista
+ *  8 -> Windows 7
+ *  9 -> Windows 8
+ * 10 -> Windows 10
  *
  * "y" is the maximum Direct3D version the driver supports.
  * y  -> d3d version mapping:
@@ -276,6 +360,7 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT610,      "NVIDIA GeForce GT 610",            DRIVER_NVIDIA_GEFORCE8,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT630,      "NVIDIA GeForce GT 630",            DRIVER_NVIDIA_GEFORCE8,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT630M,     "NVIDIA GeForce GT 630M",           DRIVER_NVIDIA_GEFORCE8,  1024},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT640,      "NVIDIA GeForce GT 640",            DRIVER_NVIDIA_GEFORCE8,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT640M,     "NVIDIA GeForce GT 640M",           DRIVER_NVIDIA_GEFORCE8,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT650M,     "NVIDIA GeForce GT 650M",           DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX650,     "NVIDIA GeForce GTX 650",           DRIVER_NVIDIA_GEFORCE8,  1024},
@@ -285,7 +370,8 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX660TI,   "NVIDIA GeForce GTX 660 Ti",        DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX670,     "NVIDIA GeForce GTX 670",           DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX670MX,   "NVIDIA GeForce GTX 670MX",         DRIVER_NVIDIA_GEFORCE8,  3072},
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX675MX,   "NVIDIA GeForce GTX 675MX",         DRIVER_NVIDIA_GEFORCE8,  4096},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX675MX_1, "NVIDIA GeForce GTX 675MX",         DRIVER_NVIDIA_GEFORCE8,  4096},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX675MX_2, "NVIDIA GeForce GTX 675MX",         DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX680,     "NVIDIA GeForce GTX 680",           DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX690,     "NVIDIA GeForce GTX 690",           DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT720,      "NVIDIA GeForce GT 720",            DRIVER_NVIDIA_GEFORCE8,  2048},
@@ -293,6 +379,7 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT730M,     "NVIDIA GeForce GT 730M",           DRIVER_NVIDIA_GEFORCE8,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT740M,     "NVIDIA GeForce GT 740M",           DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT750M,     "NVIDIA GeForce GT 750M",           DRIVER_NVIDIA_GEFORCE8,  1024},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT755M,     "NVIDIA GeForce GT 755M",           DRIVER_NVIDIA_GEFORCE8,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX750,     "NVIDIA GeForce GTX 750",           DRIVER_NVIDIA_GEFORCE8,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX750TI,   "NVIDIA GeForce GTX 750 Ti",        DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX760,     "NVIDIA GeForce GTX 760",           DRIVER_NVIDIA_GEFORCE8,  2048},
@@ -300,7 +387,9 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX765M,    "NVIDIA GeForce GTX 765M",          DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX770M,    "NVIDIA GeForce GTX 770M",          DRIVER_NVIDIA_GEFORCE8,  3072},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX770,     "NVIDIA GeForce GTX 770",           DRIVER_NVIDIA_GEFORCE8,  2048},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX775M,    "NVIDIA GeForce GTX 775M",          DRIVER_NVIDIA_GEFORCE8,  3072},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX780,     "NVIDIA GeForce GTX 780",           DRIVER_NVIDIA_GEFORCE8,  3072},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX780M,    "NVIDIA GeForce GTX 780M",          DRIVER_NVIDIA_GEFORCE8,  4096},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX780TI,   "NVIDIA GeForce GTX 780 Ti",        DRIVER_NVIDIA_GEFORCE8,  3072},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTXTITAN,   "NVIDIA GeForce GTX TITAN",         DRIVER_NVIDIA_GEFORCE8,  6144},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTXTITANB,  "NVIDIA GeForce GTX TITAN Black",   DRIVER_NVIDIA_GEFORCE8,  6144},
@@ -325,12 +414,15 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX980TI,   "NVIDIA GeForce GTX 980 Ti",        DRIVER_NVIDIA_GEFORCE8,  6144},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1050,    "NVIDIA GeForce GTX 1050",          DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1050TI,  "NVIDIA GeForce GTX 1050 Ti",       DRIVER_NVIDIA_GEFORCE8,  4096},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1060_3GB,"NVIDIA GeForce GTX 1060 3GB",      DRIVER_NVIDIA_GEFORCE8,  3072},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1060,    "NVIDIA GeForce GTX 1060",          DRIVER_NVIDIA_GEFORCE8,  6144},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1070,    "NVIDIA GeForce GTX 1070",          DRIVER_NVIDIA_GEFORCE8,  8192},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1080,    "NVIDIA GeForce GTX 1080",          DRIVER_NVIDIA_GEFORCE8,  8192},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1080TI,  "NVIDIA GeForce GTX 1080 Ti",       DRIVER_NVIDIA_GEFORCE8,  11264},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_TITANX_PASCAL,      "NVIDIA TITAN X (Pascal)",          DRIVER_NVIDIA_GEFORCE8,  12288},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_TITANV,             "NVIDIA TITAN V",                   DRIVER_NVIDIA_GEFORCE8,  12288},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1650SUPER,"NVIDIA GeForce GTX 1650 SUPER",   DRIVER_NVIDIA_GEFORCE8,  4096},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1660TI,  "NVIDIA GeForce GTX 1660 Ti",       DRIVER_NVIDIA_GEFORCE8,  6144},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX2060,    "NVIDIA GeForce RTX 2060",          DRIVER_NVIDIA_GEFORCE8,  6144},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX2070,    "NVIDIA GeForce RTX 2070",          DRIVER_NVIDIA_GEFORCE8,  8192},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX2080,    "NVIDIA GeForce RTX 2080",          DRIVER_NVIDIA_GEFORCE8,  8192},
@@ -363,6 +455,7 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6400,         "AMD Radeon HD 6400 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6410D,        "AMD Radeon HD 6410D",              DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6480G,        "AMD Radeon HD 6480G",              DRIVER_AMD_R600,         512 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6490M,        "AMD Radeon HD 6490M",              DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6550D,        "AMD Radeon HD 6550D",              DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6600,         "AMD Radeon HD 6600 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6600M,        "AMD Radeon HD 6600M Series",       DRIVER_AMD_R600,         512 },
@@ -372,6 +465,7 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7660D,        "AMD Radeon HD 7660D",              DRIVER_AMD_R600,         2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7700,         "AMD Radeon HD 7700 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7800,         "AMD Radeon HD 7800 Series",        DRIVER_AMD_R600,         2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7870,         "AMD Radeon HD 7870 Series",        DRIVER_AMD_R600,         2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7900,         "AMD Radeon HD 7900 Series",        DRIVER_AMD_R600,         2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD8600M,        "AMD Radeon HD 8600M Series",       DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD8670,         "AMD Radeon HD 8670",               DRIVER_AMD_R600,         2048},
@@ -380,10 +474,17 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_R7,             "AMD Radeon(TM) R7 Graphics",       DRIVER_AMD_R600,         2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9_285,         "AMD Radeon R9 285",                DRIVER_AMD_RX,           2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9_290,         "AMD Radeon R9 290",                DRIVER_AMD_RX,           4096},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9_290X,        "AMD Radeon R9 290X",               DRIVER_AMD_RX,           4096},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9_FURY,        "AMD Radeon (TM) R9 Fury Series",   DRIVER_AMD_RX,           4096},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9_M370X,       "AMD Radeon R9 M370X",              DRIVER_AMD_RX,           2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9_M380,        "AMD Radeon R9 M380",               DRIVER_AMD_RX,           2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9_M395X,       "AMD Radeon R9 M395X",              DRIVER_AMD_RX,           4096},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_RX_460,         "Radeon(TM) RX 460 Graphics",       DRIVER_AMD_RX,           4096},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_RX_480,         "Radeon (TM) RX 480 Graphics",      DRIVER_AMD_RX,           4096},
-    {HW_VENDOR_AMD,        CARD_AMD_RADEON_RX_VEGA,        "Radeon RX Vega",                   DRIVER_AMD_RX,           8192},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_RX_VEGA_10,     "Radeon RX Vega",                   DRIVER_AMD_RX,           8192},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_RX_VEGA_12,     "Radeon Pro Vega 20",               DRIVER_AMD_RX,           4096},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_RX_VEGA_20,     "Radeon RX Vega 20",                DRIVER_AMD_RX,           4096},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_RX_NAVI_10,     "Radeon RX 5700 / 5700 XT",         DRIVER_AMD_RX,           8192},
 
     /* Red Hat */
     {HW_VENDOR_REDHAT,     CARD_REDHAT_VIRGL,              "Red Hat VirtIO GPU",                                        DRIVER_REDHAT_VIRGL,  1024},
@@ -428,7 +529,8 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_IVBS,                "Intel(R) HD Graphics Family",                               DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_HWD,                 "Intel(R) HD Graphics 4600",                                 DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_HWM,                 "Intel(R) HD Graphics 4600",                                 DRIVER_INTEL_HD4000,  1536},
-    {HW_VENDOR_INTEL,      CARD_INTEL_HD5000,              "Intel(R) HD Graphics 5000",                                 DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_HD5000_1,            "Intel(R) HD Graphics 5000",                                 DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_HD5000_2,            "Intel(R) HD Graphics 5000",                                 DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_I5100_1,             "Intel(R) Iris(TM) Graphics 5100",                           DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_I5100_2,             "Intel(R) Iris(TM) Graphics 5100",                           DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_I5100_3,             "Intel(R) Iris(TM) Graphics 5100",                           DRIVER_INTEL_HD4000,  1536},
@@ -438,6 +540,7 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_IP5200_3,            "Intel(R) Iris(TM) Pro Graphics 5200",                       DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_IP5200_4,            "Intel(R) Iris(TM) Pro Graphics 5200",                       DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_IP5200_5,            "Intel(R) Iris(TM) Pro Graphics 5200",                       DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IP5200_6,            "Intel(R) Iris(TM) Pro Graphics 5200",                       DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD5300,              "Intel(R) HD Graphics 5300",                                 DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD5500,              "Intel(R) HD Graphics 5500",                                 DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD5600,              "Intel(R) HD Graphics 5600",                                 DRIVER_INTEL_HD4000,  2048},
@@ -462,8 +565,12 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_IP580_2,             "Intel(R) Iris(TM) Pro Graphics 580",                        DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_IPP580_1,            "Intel(R) Iris(TM) Pro Graphics P580",                       DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_IPP580_2,            "Intel(R) Iris(TM) Pro Graphics P580",                       DRIVER_INTEL_HD4000,  2048},
+    {HW_VENDOR_INTEL,      CARD_INTEL_UHD617,              "Intel(R) UHD Graphics 617",                                 DRIVER_INTEL_HD4000,  2048},
+    {HW_VENDOR_INTEL,      CARD_INTEL_UHD620,              "Intel(R) UHD Graphics 620",                                 DRIVER_INTEL_HD4000,  3072},
+    {HW_VENDOR_INTEL,      CARD_INTEL_HD615,               "Intel(R) HD Graphics 615",                                  DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD620,               "Intel(R) HD Graphics 620",                                  DRIVER_INTEL_HD4000,  3072},
-    {HW_VENDOR_INTEL,      CARD_INTEL_HD630,               "Intel(R) HD Graphics 630",                                  DRIVER_INTEL_HD4000,  3072},
+    {HW_VENDOR_INTEL,      CARD_INTEL_HD630_1,             "Intel(R) HD Graphics 630",                                  DRIVER_INTEL_HD4000,  3072},
+    {HW_VENDOR_INTEL,      CARD_INTEL_HD630_2,             "Intel(R) HD Graphics 630",                                  DRIVER_INTEL_HD4000,  3072},
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,
@@ -563,6 +670,8 @@ void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         TRACE("OS version %u.%u.\n", os_version.dwMajorVersion, os_version.dwMinorVersion);
         switch (os_version.dwMajorVersion)
         {
+            case 2:
+            case 3:
             case 4:
                 /* If needed we could distinguish between 9x and NT4, but this code won't make
                  * sense for NT4 since it had no way to obtain this info through DirectDraw 3.0.
@@ -589,7 +698,7 @@ void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
                 }
                 else
                 {
-                    if (os_version.dwMinorVersion > 2)
+                    if (os_version.dwMinorVersion > 3)
                     {
                         FIXME("Unhandled OS version %u.%u, reporting Win 8.\n",
                                 os_version.dwMajorVersion, os_version.dwMinorVersion);
@@ -605,10 +714,10 @@ void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
                 break;
 
             default:
-                FIXME("Unhandled OS version %u.%u, reporting 2000/XP.\n",
+                FIXME("Unhandled OS version %u.%u, reporting Windows 7.\n",
                         os_version.dwMajorVersion, os_version.dwMinorVersion);
-                driver_os_version = 6;
-                driver_model = DRIVER_MODEL_NT5X;
+                driver_os_version = 8;
+                driver_model = DRIVER_MODEL_NT6X;
                 break;
         }
     }
@@ -802,6 +911,16 @@ HRESULT CDECL wined3d_get_output_desc(const struct wined3d *wined3d, unsigned in
     desc->monitor = monitor;
 
     return WINED3D_OK;
+}
+
+struct wined3d_output * CDECL wined3d_get_adapter_output(const struct wined3d *wined3d, unsigned int adapter_idx)
+{
+    TRACE("wined3d %p, adapter_idx %u.\n", wined3d, adapter_idx);
+
+    if (adapter_idx >= wined3d->adapter_count)
+        return NULL;
+
+    return &wined3d->adapters[adapter_idx]->output;
 }
 
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
@@ -2171,15 +2290,13 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, unsigned in
     caps->ddraw_caps.ssb_color_key_caps = ckey_caps;
     caps->ddraw_caps.ssb_fx_caps = fx_caps;
 
-    caps->ddraw_caps.dds_caps = WINEDDSCAPS_ALPHA
-            | WINEDDSCAPS_BACKBUFFER
-            | WINEDDSCAPS_FLIP
-            | WINEDDSCAPS_FRONTBUFFER
+    caps->ddraw_caps.dds_caps = WINEDDSCAPS_FLIP
             | WINEDDSCAPS_OFFSCREENPLAIN
             | WINEDDSCAPS_PALETTE
             | WINEDDSCAPS_PRIMARYSURFACE
-            | WINEDDSCAPS_SYSTEMMEMORY
-            | WINEDDSCAPS_VISIBLE;
+            | WINEDDSCAPS_TEXTURE
+            | WINEDDSCAPS_ZBUFFER
+            | WINEDDSCAPS_MIPMAP;
 
     caps->shader_double_precision = d3d_info->shader_double_precision;
     caps->viewport_array_index_any_shader = d3d_info->viewport_array_index_any_shader;
@@ -2333,6 +2450,279 @@ static void adapter_no3d_uninit_3d(struct wined3d_device *device)
     wined3d_context_cleanup(context_no3d);
 }
 
+static void *adapter_no3d_map_bo_address(struct wined3d_context *context,
+        const struct wined3d_bo_address *data, size_t size, uint32_t bind_flags, uint32_t map_flags)
+{
+    if (data->buffer_object)
+    {
+        ERR("Unsupported buffer object %#lx.\n", data->buffer_object);
+        return NULL;
+    }
+
+    return data->addr;
+}
+
+static void adapter_no3d_unmap_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *data,
+        uint32_t bind_flags, unsigned int range_count, const struct wined3d_map_range *ranges)
+{
+    if (data->buffer_object)
+        ERR("Unsupported buffer object %#lx.\n", data->buffer_object);
+}
+
+static void adapter_no3d_copy_bo_address(struct wined3d_context *context,
+        const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
+        const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size)
+{
+    if (dst->buffer_object)
+        ERR("Unsupported dst buffer object %#lx.\n", dst->buffer_object);
+    if (src->buffer_object)
+        ERR("Unsupported src buffer object %#lx.\n", src->buffer_object);
+    if (dst->buffer_object || src->buffer_object)
+        return;
+    memcpy(dst->addr, src->addr, size);
+}
+
+static HRESULT adapter_no3d_create_swapchain(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain)
+{
+    struct wined3d_swapchain *swapchain_no3d;
+    HRESULT hr;
+
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, swapchain %p.\n",
+            device, desc, parent, parent_ops, swapchain);
+
+    if (!(swapchain_no3d = heap_alloc_zero(sizeof(*swapchain_no3d))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = wined3d_swapchain_no3d_init(swapchain_no3d, device, desc, parent, parent_ops)))
+    {
+        WARN("Failed to initialise swapchain, hr %#x.\n", hr);
+        heap_free(swapchain_no3d);
+        return hr;
+    }
+
+    TRACE("Created swapchain %p.\n", swapchain_no3d);
+    *swapchain = swapchain_no3d;
+
+    return hr;
+}
+
+static void adapter_no3d_destroy_swapchain(struct wined3d_swapchain *swapchain)
+{
+    wined3d_swapchain_cleanup(swapchain);
+    heap_free(swapchain);
+}
+
+static HRESULT adapter_no3d_create_buffer(struct wined3d_device *device,
+        const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
+{
+    struct wined3d_buffer *buffer_no3d;
+    HRESULT hr;
+
+    TRACE("device %p, desc %p, data %p, parent %p, parent_ops %p, buffer %p.\n",
+            device, desc, data, parent, parent_ops, buffer);
+
+    if (!(buffer_no3d = heap_alloc_zero(sizeof(*buffer_no3d))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = wined3d_buffer_no3d_init(buffer_no3d, device, desc, data, parent, parent_ops)))
+    {
+        WARN("Failed to initialise buffer, hr %#x.\n", hr);
+        heap_free(buffer_no3d);
+        return hr;
+    }
+
+    TRACE("Created buffer %p.\n", buffer_no3d);
+    *buffer = buffer_no3d;
+
+    return hr;
+}
+
+static void adapter_no3d_destroy_buffer(struct wined3d_buffer *buffer)
+{
+    struct wined3d_device *device = buffer->resource.device;
+    unsigned int swapchain_count = device->swapchain_count;
+
+    TRACE("buffer %p.\n", buffer);
+
+    /* Take a reference to the device, in case releasing the buffer would
+     * cause the device to be destroyed. However, swapchain resources don't
+     * take a reference to the device, and we wouldn't want to increment the
+     * refcount on a device that's in the process of being destroyed. */
+    if (swapchain_count)
+        wined3d_device_incref(device);
+    wined3d_buffer_cleanup(buffer);
+    wined3d_cs_destroy_object(device->cs, heap_free, buffer);
+    if (swapchain_count)
+        wined3d_device_decref(device);
+}
+
+static HRESULT adapter_no3d_create_texture(struct wined3d_device *device,
+        const struct wined3d_resource_desc *desc, unsigned int layer_count, unsigned int level_count,
+        uint32_t flags, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
+{
+    struct wined3d_texture *texture_no3d;
+    HRESULT hr;
+
+    TRACE("device %p, desc %p, layer_count %u, level_count %u, flags %#x, parent %p, parent_ops %p, texture %p.\n",
+            device, desc, layer_count, level_count, flags, parent, parent_ops, texture);
+
+    if (!(texture_no3d = wined3d_texture_allocate_object_memory(sizeof(*texture_no3d), level_count, layer_count)))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = wined3d_texture_no3d_init(texture_no3d, device, desc,
+            layer_count, level_count, flags, parent, parent_ops)))
+    {
+        WARN("Failed to initialise texture, hr %#x.\n", hr);
+        heap_free(texture_no3d);
+        return hr;
+    }
+
+    TRACE("Created texture %p.\n", texture_no3d);
+    *texture = texture_no3d;
+
+    return hr;
+}
+
+static void adapter_no3d_destroy_texture(struct wined3d_texture *texture)
+{
+    struct wined3d_device *device = texture->resource.device;
+    unsigned int swapchain_count = device->swapchain_count;
+
+    TRACE("texture %p.\n", texture);
+
+    /* Take a reference to the device, in case releasing the texture would
+     * cause the device to be destroyed. However, swapchain resources don't
+     * take a reference to the device, and we wouldn't want to increment the
+     * refcount on a device that's in the process of being destroyed. */
+    if (swapchain_count)
+        wined3d_device_incref(device);
+
+    wined3d_texture_sub_resources_destroyed(texture);
+    texture->resource.parent_ops->wined3d_object_destroyed(texture->resource.parent);
+
+    wined3d_texture_cleanup(texture);
+    wined3d_cs_destroy_object(device->cs, heap_free, texture);
+
+    if (swapchain_count)
+        wined3d_device_decref(device);
+}
+
+static HRESULT adapter_no3d_create_rendertarget_view(const struct wined3d_view_desc *desc,
+        struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_rendertarget_view **view)
+{
+    struct wined3d_rendertarget_view *view_no3d;
+    HRESULT hr;
+
+    TRACE("desc %s, resource %p, parent %p, parent_ops %p, view %p.\n",
+            wined3d_debug_view_desc(desc, resource), resource, parent, parent_ops, view);
+
+    if (!(view_no3d = heap_alloc_zero(sizeof(*view_no3d))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = wined3d_rendertarget_view_no3d_init(view_no3d, desc, resource, parent, parent_ops)))
+    {
+        WARN("Failed to initialise view, hr %#x.\n", hr);
+        heap_free(view_no3d);
+        return hr;
+    }
+
+    TRACE("Created render target view %p.\n", view_no3d);
+    *view = view_no3d;
+
+    return hr;
+}
+
+static void adapter_no3d_destroy_rendertarget_view(struct wined3d_rendertarget_view *view)
+{
+    struct wined3d_device *device = view->resource->device;
+    unsigned int swapchain_count = device->swapchain_count;
+
+    TRACE("view %p.\n", view);
+
+    /* Take a reference to the device, in case releasing the view's resource
+     * would cause the device to be destroyed. However, swapchain resources
+     * don't take a reference to the device, and we wouldn't want to increment
+     * the refcount on a device that's in the process of being destroyed. */
+    if (swapchain_count)
+        wined3d_device_incref(device);
+    wined3d_rendertarget_view_cleanup(view);
+    wined3d_cs_destroy_object(device->cs, heap_free, view);
+    if (swapchain_count)
+        wined3d_device_decref(device);
+}
+
+static HRESULT adapter_no3d_create_shader_resource_view(const struct wined3d_view_desc *desc,
+        struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_shader_resource_view **view)
+{
+    TRACE("desc %s, resource %p, parent %p, parent_ops %p, view %p.\n",
+            wined3d_debug_view_desc(desc, resource), resource, parent, parent_ops, view);
+
+    return E_NOTIMPL;
+}
+
+static void adapter_no3d_destroy_shader_resource_view(struct wined3d_shader_resource_view *view)
+{
+    TRACE("view %p.\n", view);
+}
+
+static HRESULT adapter_no3d_create_unordered_access_view(const struct wined3d_view_desc *desc,
+        struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_unordered_access_view **view)
+{
+    TRACE("desc %s, resource %p, parent %p, parent_ops %p, view %p.\n",
+            wined3d_debug_view_desc(desc, resource), resource, parent, parent_ops, view);
+
+    return E_NOTIMPL;
+}
+
+static void adapter_no3d_destroy_unordered_access_view(struct wined3d_unordered_access_view *view)
+{
+    TRACE("view %p.\n", view);
+}
+
+static HRESULT adapter_no3d_create_sampler(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_sampler **sampler)
+{
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, sampler %p.\n",
+            device, desc, parent, parent_ops, sampler);
+
+    return E_NOTIMPL;
+}
+
+static void adapter_no3d_destroy_sampler(struct wined3d_sampler *sampler)
+{
+    TRACE("sampler %p.\n", sampler);
+}
+
+static HRESULT adapter_no3d_create_query(struct wined3d_device *device, enum wined3d_query_type type,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query)
+{
+    TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
+            device, type, parent, parent_ops, query);
+
+    return WINED3DERR_NOTAVAILABLE;
+}
+
+static void adapter_no3d_destroy_query(struct wined3d_query *query)
+{
+    TRACE("query %p.\n", query);
+}
+
+static void adapter_no3d_flush_context(struct wined3d_context *context)
+{
+    TRACE("context %p.\n", context);
+}
+
+void adapter_no3d_clear_uav(struct wined3d_context *context,
+        struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
+{
+    ERR("context %p, view %p, clear_value %s.\n", context, view, debug_uvec4(clear_value));
+}
+
 static const struct wined3d_adapter_ops wined3d_adapter_no3d_ops =
 {
     adapter_no3d_destroy,
@@ -2344,6 +2734,27 @@ static const struct wined3d_adapter_ops wined3d_adapter_no3d_ops =
     adapter_no3d_check_format,
     adapter_no3d_init_3d,
     adapter_no3d_uninit_3d,
+    adapter_no3d_map_bo_address,
+    adapter_no3d_unmap_bo_address,
+    adapter_no3d_copy_bo_address,
+    adapter_no3d_create_swapchain,
+    adapter_no3d_destroy_swapchain,
+    adapter_no3d_create_buffer,
+    adapter_no3d_destroy_buffer,
+    adapter_no3d_create_texture,
+    adapter_no3d_destroy_texture,
+    adapter_no3d_create_rendertarget_view,
+    adapter_no3d_destroy_rendertarget_view,
+    adapter_no3d_create_shader_resource_view,
+    adapter_no3d_destroy_shader_resource_view,
+    adapter_no3d_create_unordered_access_view,
+    adapter_no3d_destroy_unordered_access_view,
+    adapter_no3d_create_sampler,
+    adapter_no3d_destroy_sampler,
+    adapter_no3d_create_query,
+    adapter_no3d_destroy_query,
+    adapter_no3d_flush_context,
+    adapter_no3d_clear_uav,
 };
 
 static void wined3d_adapter_no3d_init_d3d_info(struct wined3d_adapter *adapter, unsigned int wined3d_creation_flags)
@@ -2400,6 +2811,7 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         const struct wined3d_adapter_ops *adapter_ops)
 {
     DISPLAY_DEVICEW display_device;
+    HRESULT hr;
 
     adapter->ordinal = ordinal;
 
@@ -2407,10 +2819,16 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
     TRACE("Display device: %s.\n", debugstr_w(display_device.DeviceName));
     strcpyW(adapter->device_name, display_device.DeviceName);
+    if (FAILED(hr = wined3d_output_init(&adapter->output, adapter->device_name)))
+    {
+        ERR("Failed to initialise output, hr %#x.\n", hr);
+        return FALSE;
+    }
 
     if (!AllocateLocallyUniqueId(&adapter->luid))
     {
         ERR("Failed to set adapter LUID (%#x).\n", GetLastError());
+        wined3d_output_cleanup(&adapter->output);
         return FALSE;
     }
     TRACE("Allocated LUID %08x:%08x for adapter %p.\n",

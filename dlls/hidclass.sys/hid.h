@@ -29,7 +29,7 @@
 #include "ddk/hidpi.h"
 #include "cfgmgr32.h"
 #include "wine/list.h"
-#include "parse.h"
+#include "wine/hid.h"
 
 #define DEFAULT_POLL_INTERVAL 200
 #define MAX_POLL_INTERVAL_MSEC 10000
@@ -54,6 +54,9 @@ typedef struct _BASE_DEVICE_EXTENSION {
 
     KSPIN_LOCK irp_queue_lock;
     LIST_ENTRY irp_queue;
+
+    BOOL is_mouse;
+    UNICODE_STRING mouse_link_name;
 
     /* Minidriver Specific stuff will end up here */
 } BASE_DEVICE_EXTENSION;

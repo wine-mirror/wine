@@ -129,7 +129,9 @@ static HRESULT WINAPI chord_IDirectMusicObject_ParseDescriptor(IDirectMusicObjec
     desc->guidClass = CLSID_DirectMusicChordMap;
     desc->dwValidData |= DMUS_OBJ_CLASS;
 
-    TRACE("returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (desc));
+    TRACE("returning descriptor:\n");
+    dump_DMUS_OBJECTDESC(desc);
+
     return S_OK;
 }
 

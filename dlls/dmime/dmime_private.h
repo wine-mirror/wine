@@ -102,16 +102,6 @@ typedef struct _DMUS_PRIVATE_TEMPO_PLAY_STATE {
   DWORD dummy;
 } DMUS_PRIVATE_TEMPO_PLAY_STATE, *LPDMUS_PRIVATE_TEMPO_PLAY_STATE;
 
-/* some sort of aux. performance channel: as far as i can understand, these are 
-   used to represent a particular midi channel in particular group at particular
-   group; so all we need to do is to fill it with parent port, group and midi 
-   channel ? */
-typedef struct DMUSIC_PRIVATE_PCHANNEL_ {
-	DWORD channel; /* map to this channel... */
-	DWORD group; /* ... in this group ... */
-	IDirectMusicPort *port; /* ... at this port */
-} DMUSIC_PRIVATE_PCHANNEL, *LPDMUSIC_PRIVATE_PCHANNEL;
-
 /**********************************************************************
  * Dll lifetime tracking declaration for dmime.dll
  */

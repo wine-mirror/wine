@@ -655,6 +655,8 @@ static HRESULT ShellView_FillList(IShellViewImpl *This)
     {
         if (IncludeObject(This, pidl) == S_OK)
             shellview_add_item(This, pidl);
+        else
+            ILFree(pidl);
     }
 
     SendMessageW(This->hWndList, LVM_SORTITEMS, (WPARAM)This->pSFParent, (LPARAM)ShellView_CompareItems);
@@ -776,13 +778,9 @@ static HMENU ShellView_BuildFileMenu(IShellViewImpl * This)
 	TRACE("-- return (menu=%p)\n",hSubMenu);
 	return hSubMenu;
 }
-/**********************************************************
-* ShellView_MergeFileMenu()
-*/
+
 static void ShellView_MergeFileMenu(IShellViewImpl *This, HMENU hSubMenu)
 {
-     TRACE("(%p)->(submenu=%p) stub\n",This,hSubMenu);
-
      if (hSubMenu)
      {
          static const WCHAR dummyW[] = {'d','u','m','m','y','4','5',0};
@@ -804,8 +802,6 @@ static void ShellView_MergeFileMenu(IShellViewImpl *This, HMENU hSubMenu)
          mii.fType = MFT_STRING;
          InsertMenuItemW(hSubMenu, 0, TRUE, &mii);
     }
-
-    TRACE("--\n");
 }
 
 /**********************************************************
@@ -987,7 +983,7 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 	LPCONTEXTMENU	pContextMenu = NULL;
 	CMINVOKECOMMANDINFO	cmi;
 
-	TRACE("(%p)->(0x%08x 0x%08x 0x%08x) stub\n",This, x, y, bDefault);
+	TRACE("%p, %d, %d, %d.\n", This, x, y, bDefault);
 
 	/* look, what's selected and create a context menu object of it*/
 	if( ShellView_GetSelections(This) )
@@ -1228,7 +1224,7 @@ static LRESULT ShellView_OnSetFocus(IShellViewImpl * This)
 */
 static LRESULT ShellView_OnKillFocus(IShellViewImpl * This)
 {
-	TRACE("(%p) stub\n",This);
+	TRACE("%p.\n", This);
 
 	ShellView_OnActivate(This, SVUIA_ACTIVATE_NOFOCUS);
 	/* Notify the ICommDlgBrowser */
@@ -1868,7 +1864,7 @@ static HRESULT WINAPI IShellView_fnUIActivate(IShellView3 *iface, UINT uState)
 	LRESULT	lResult;
 	int	nPartArray[1] = {-1};
 
-	TRACE("(%p)->(state=%x) stub\n",This, uState);
+	TRACE("%p, %d.\n", This, uState);
 
 	/*don't do anything if the state isn't really changing*/
 	if(This->uState == uState)
@@ -2675,7 +2671,7 @@ static ULONG WINAPI FolderView_Release(IFolderView2 *iface)
 static HRESULT WINAPI FolderView_GetCurrentViewMode(IFolderView2 *iface, UINT *mode)
 {
     IShellViewImpl *This = impl_from_IFolderView2(iface);
-    TRACE("(%p)->(%p), stub\n", This, mode);
+    TRACE("%p, %p.\n", This, mode);
 
     if(!mode)
         return E_INVALIDARG;
@@ -2688,7 +2684,8 @@ static HRESULT WINAPI FolderView_SetCurrentViewMode(IFolderView2 *iface, UINT mo
 {
     IShellViewImpl *This = impl_from_IFolderView2(iface);
     DWORD dwStyle;
-    TRACE("(%p)->(%u), stub\n", This, mode);
+
+    TRACE("%p, %u.\n", This, mode);
 
     if((mode < FVM_FIRST || mode > FVM_LAST) &&
        (mode != FVM_AUTO))

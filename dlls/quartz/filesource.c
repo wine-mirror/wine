@@ -24,8 +24,6 @@
 #include "quartz_private.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
-#include "pin.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
 #include "winbase.h"
@@ -34,8 +32,6 @@
 #include <assert.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
-
-static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
 
 static const AM_MEDIA_TYPE default_mt =
 {
@@ -50,24 +46,37 @@ static const AM_MEDIA_TYPE default_mt =
     NULL
 };
 
+struct request
+{
+    IMediaSample *sample;
+    DWORD_PTR cookie;
+    OVERLAPPED ovl;
+};
+
 typedef struct AsyncReader
 {
-    BaseFilter filter;
+    struct strmbase_filter filter;
     IFileSourceFilter IFileSourceFilter_iface;
 
-    IPin * pOutputPin;
+    struct strmbase_source source;
+    IAsyncReader IAsyncReader_iface;
+
     LPOLESTR pszFileName;
-    AM_MEDIA_TYPE * pmt;
+    AM_MEDIA_TYPE mt;
+    ALLOCATOR_PROPERTIES allocProps;
+    HANDLE file, port, io_thread;
+    CRITICAL_SECTION sample_cs;
+    BOOL flushing;
+    struct request *requests;
+    unsigned int max_requests;
+    CONDITION_VARIABLE sample_cv;
 } AsyncReader;
 
-static inline AsyncReader *impl_from_BaseFilter(BaseFilter *iface)
+static const struct strmbase_source_ops source_ops;
+
+static inline AsyncReader *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, AsyncReader, filter);
-}
-
-static inline AsyncReader *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, AsyncReader, filter.IBaseFilter_iface);
 }
 
 static inline AsyncReader *impl_from_IFileSourceFilter(IFileSourceFilter *iface)
@@ -75,357 +84,280 @@ static inline AsyncReader *impl_from_IFileSourceFilter(IFileSourceFilter *iface)
     return CONTAINING_RECORD(iface, AsyncReader, IFileSourceFilter_iface);
 }
 
-static const IBaseFilterVtbl AsyncReader_Vtbl;
 static const IFileSourceFilterVtbl FileSource_Vtbl;
 static const IAsyncReaderVtbl FileAsyncReader_Vtbl;
 
-static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
-
-static const WCHAR mediatype_name[] = {
-    'M', 'e', 'd', 'i', 'a', ' ', 'T', 'y', 'p', 'e', 0 };
-static const WCHAR subtype_name[] = {
-    'S', 'u', 'b', 't', 'y', 'p', 'e', 0 };
-static const WCHAR source_filter_name[] = {
-    'S','o','u','r','c','e',' ','F','i','l','t','e','r',0};
-
-static HRESULT process_extensions(HKEY hkeyExtensions, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType, GUID * sourceFilter)
+static int byte_from_hex_char(WCHAR c)
 {
-    WCHAR *extension;
-    LONG l;
-    HKEY hsub;
-    WCHAR keying[39];
-    DWORD size;
-
-    if (!pszFileName)
-        return E_POINTER;
-
-    /* Get the part of the name that matters */
-    if (!(extension = strrchrW(pszFileName, '.')))
-        return E_FAIL;
-
-    l = RegOpenKeyExW(hkeyExtensions, extension, 0, KEY_READ, &hsub);
-    if (l)
-        return E_FAIL;
-
-    if (majorType)
-    {
-        size = sizeof(keying);
-        l = RegQueryValueExW(hsub, mediatype_name, NULL, NULL, (LPBYTE)keying, &size);
-        if (!l)
-            CLSIDFromString(keying, majorType);
-    }
-
-    if (minorType)
-    {
-        size = sizeof(keying);
-        if (!l)
-            l = RegQueryValueExW(hsub, subtype_name, NULL, NULL, (LPBYTE)keying, &size);
-        if (!l)
-            CLSIDFromString(keying, minorType);
-    }
-
-    if (sourceFilter)
-    {
-        size = sizeof(keying);
-        if (!l)
-            l = RegQueryValueExW(hsub, source_filter_name, NULL, NULL, (LPBYTE)keying, &size);
-        if (!l)
-            CLSIDFromString(keying, sourceFilter);
-    }
-
-    RegCloseKey(hsub);
-
-    if (!l)
-        return S_OK;
-    return E_FAIL;
+    if ('0' <= c && c <= '9') return c - '0';
+    if ('a' <= c && c <= 'f') return c - 'a' + 10;
+    if ('A' <= c && c <= 'F') return c - 'A' + 10;
+    return -1;
 }
 
-static unsigned char byte_from_hex_char(WCHAR wHex)
+static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
 {
-    switch (tolowerW(wHex))
+    ULONG size, offset, i, ret_size;
+    BYTE *mask, *expect, *actual;
+    int d;
+    BOOL ret = TRUE;
+
+    /* format: "offset, size, mask, value" */
+
+    offset = wcstol(pattern, NULL, 10);
+
+    if (!(pattern = wcschr(pattern, ',')))
+        return FALSE;
+    pattern++;
+
+    size = wcstol(pattern, NULL, 10);
+    mask = heap_alloc(size);
+    expect = heap_alloc(size);
+    memset(mask, 0xff, size);
+
+    if (!(pattern = wcschr(pattern, ',')))
     {
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-        return (wHex - '0') & 0xf;
-    case 'a':
-    case 'b':
-    case 'c':
-    case 'd':
-    case 'e':
-    case 'f':
-        return (wHex - 'a' + 10) & 0xf;
-    default:
-        return 0;
+        heap_free(mask);
+        heap_free(expect);
+        return FALSE;
     }
-}
+    pattern++;
+    while (byte_from_hex_char(*pattern) == -1 && (*pattern != ','))
+        pattern++;
 
-static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * pReader)
-{
-    ULONG ulOffset;
-    ULONG ulBytes;
-    BYTE * pbMask;
-    BYTE * pbValue;
-    BYTE * pbFile;
-    HRESULT hr = S_OK;
-    ULONG strpos;
-
-    TRACE("\t\tPattern string: %s\n", debugstr_w(wszPatternString));
-    
-    /* format: "offset, bytestocompare, mask, value" */
-
-    ulOffset = strtolW(wszPatternString, NULL, 10);
-
-    if (!(wszPatternString = strchrW(wszPatternString, ',')))
-        return E_INVALIDARG;
-
-    wszPatternString++; /* skip ',' */
-
-    ulBytes = strtolW(wszPatternString, NULL, 10);
-
-    pbMask = HeapAlloc(GetProcessHeap(), 0, ulBytes);
-    pbValue = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ulBytes);
-    pbFile = HeapAlloc(GetProcessHeap(), 0, ulBytes);
-
-    /* default mask is match everything */
-    memset(pbMask, 0xFF, ulBytes);
-
-    if (!(wszPatternString = strchrW(wszPatternString, ',')))
-        hr = E_INVALIDARG;
-
-    if (hr == S_OK)
+    for (i = 0; (d = byte_from_hex_char(*pattern)) != -1 && (i/2 < size); pattern++, i++)
     {
-        wszPatternString++; /* skip ',' */
-        while (!isxdigitW(*wszPatternString) && (*wszPatternString != ',')) wszPatternString++;
-
-        for (strpos = 0; isxdigitW(*wszPatternString) && (strpos/2 < ulBytes); wszPatternString++, strpos++)
-        {
-            if ((strpos % 2) == 1) /* odd numbered position */
-                pbMask[strpos / 2] |= byte_from_hex_char(*wszPatternString);
-            else
-                pbMask[strpos / 2] = byte_from_hex_char(*wszPatternString) << 4;
-        }
-
-        if (!(wszPatternString = strchrW(wszPatternString, ',')))
-            hr = E_INVALIDARG;
+        if (i % 2)
+            mask[i / 2] |= d;
         else
-            wszPatternString++; /* skip ',' */
+            mask[i / 2] = d << 4;
     }
 
-    if (hr == S_OK)
+    if (!(pattern = wcschr(pattern, ',')))
     {
-        for ( ; !isxdigitW(*wszPatternString) && (*wszPatternString != ','); wszPatternString++)
-            ;
+        heap_free(mask);
+        heap_free(expect);
+        return FALSE;
+    }
+    pattern++;
+    while (byte_from_hex_char(*pattern) == -1 && (*pattern != ','))
+        pattern++;
 
-        for (strpos = 0; isxdigitW(*wszPatternString) && (strpos/2 < ulBytes); wszPatternString++, strpos++)
+    for (i = 0; (d = byte_from_hex_char(*pattern)) != -1 && (i/2 < size); pattern++, i++)
+    {
+        if (i % 2)
+            expect[i / 2] |= d;
+        else
+            expect[i / 2] = d << 4;
+    }
+
+    actual = heap_alloc(size);
+    SetFilePointer(file, offset, NULL, FILE_BEGIN);
+    if (!ReadFile(file, actual, size, &ret_size, NULL) || ret_size != size)
+    {
+        heap_free(actual);
+        heap_free(expect);
+        heap_free(mask);
+        return FALSE;
+    }
+
+    for (i = 0; i < size; ++i)
+    {
+        if ((actual[i] & mask[i]) != expect[i])
         {
-            if ((strpos % 2) == 1) /* odd numbered position */
-                pbValue[strpos / 2] |= byte_from_hex_char(*wszPatternString);
-            else
-                pbValue[strpos / 2] = byte_from_hex_char(*wszPatternString) << 4;
+            ret = FALSE;
+            break;
         }
     }
 
-    if (hr == S_OK)
-        hr = IAsyncReader_SyncRead(pReader, ulOffset, ulBytes, pbFile);
+    heap_free(actual);
+    heap_free(expect);
+    heap_free(mask);
 
-    if (hr == S_OK)
-    {
-        ULONG i;
-        for (i = 0; i < ulBytes; i++)
-            if ((pbFile[i] & pbMask[i]) != pbValue[i])
-            {
-                hr = S_FALSE;
-                break;
-            }
-    }
+    /* If there is a following tuple, then we must match that as well. */
+    if (ret && (pattern = wcschr(pattern, ',')))
+        return process_pattern_string(pattern + 1, file);
 
-    HeapFree(GetProcessHeap(), 0, pbMask);
-    HeapFree(GetProcessHeap(), 0, pbValue);
-    HeapFree(GetProcessHeap(), 0, pbFile);
-
-    /* if we encountered no errors with this string, and there is a following tuple, then we
-     * have to match that as well to succeed */
-    if ((hr == S_OK) && (wszPatternString = strchrW(wszPatternString, ',')))
-        return process_pattern_string(wszPatternString + 1, pReader);
-    else
-        return hr;
+    return ret;
 }
 
-HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType, GUID * sourceFilter)
+BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID *source_clsid)
 {
-    HKEY hkeyMediaType = NULL;
-    LONG lRet;
-    HRESULT hr = S_OK;
-    BOOL bFound = FALSE;
+    WCHAR extensions_path[278] = {'M','e','d','i','a',' ','T','y','p','e','\\','E','x','t','e','n','s','i','o','n','s','\\',0};
+    static const WCHAR wszExtensions[] = {'E','x','t','e','n','s','i','o','n','s',0};
     static const WCHAR wszMediaType[] = {'M','e','d','i','a',' ','T','y','p','e',0};
+    DWORD majortype_idx, size;
+    const WCHAR *ext;
+    HKEY parent_key;
+    HANDLE file;
 
-    TRACE("(%p, %s, %p, %p)\n", pReader, debugstr_w(pszFileName), majorType, minorType);
-
-    if(majorType)
-        *majorType = GUID_NULL;
-    if(minorType)
-        *minorType = GUID_NULL;
-    if(sourceFilter)
-        *sourceFilter = GUID_NULL;
-
-    lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMediaType, 0, KEY_READ, &hkeyMediaType);
-    hr = HRESULT_FROM_WIN32(lRet);
-
-    if (SUCCEEDED(hr))
+    if ((ext = wcsrchr(filename, '.')))
     {
-        DWORD indexMajor;
+        WCHAR guidstr[39];
+        HKEY key;
 
-        for (indexMajor = 0; !bFound; indexMajor++)
+        wcscat(extensions_path, ext);
+        if (!RegOpenKeyExW(HKEY_CLASSES_ROOT, extensions_path, 0, KEY_READ, &key))
         {
-            HKEY hkeyMajor;
-            WCHAR wszMajorKeyName[CHARS_IN_GUID];
-            DWORD dwKeyNameLength = ARRAY_SIZE(wszMajorKeyName);
-            static const WCHAR wszExtensions[] = {'E','x','t','e','n','s','i','o','n','s',0};
+            size = sizeof(guidstr);
+            if (majortype && !RegQueryValueExW(key, L"Media Type", NULL, NULL, (BYTE *)guidstr, &size))
+                CLSIDFromString(guidstr, majortype);
 
-            if (RegEnumKeyExW(hkeyMediaType, indexMajor, wszMajorKeyName, &dwKeyNameLength, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
-                break;
-            if (RegOpenKeyExW(hkeyMediaType, wszMajorKeyName, 0, KEY_READ, &hkeyMajor) != ERROR_SUCCESS)
-                break;
-            TRACE("%s\n", debugstr_w(wszMajorKeyName));
-            if (!strcmpW(wszExtensions, wszMajorKeyName))
-            {
-                if (process_extensions(hkeyMajor, pszFileName, majorType, minorType, sourceFilter) == S_OK)
-                    bFound = TRUE;
-            }
-            /* We need a reader interface to check bytes */
-            else if (pReader)
-            {
-                DWORD indexMinor;
+            size = sizeof(guidstr);
+            if (subtype && !RegQueryValueExW(key, L"Subtype", NULL, NULL, (BYTE *)guidstr, &size))
+                CLSIDFromString(guidstr, subtype);
 
-                for (indexMinor = 0; !bFound; indexMinor++)
-                {
-                    HKEY hkeyMinor;
-                    WCHAR wszMinorKeyName[CHARS_IN_GUID];
-                    DWORD dwMinorKeyNameLen = ARRAY_SIZE(wszMinorKeyName);
-                    WCHAR wszSourceFilterKeyName[CHARS_IN_GUID];
-                    DWORD dwSourceFilterKeyNameLen = sizeof(wszSourceFilterKeyName);
-                    DWORD maxValueLen;
-                    DWORD indexValue;
+            size = sizeof(guidstr);
+            if (source_clsid && !RegQueryValueExW(key, L"Source Filter", NULL, NULL, (BYTE *)guidstr, &size))
+                CLSIDFromString(guidstr, source_clsid);
 
-                    if (RegEnumKeyExW(hkeyMajor, indexMinor, wszMinorKeyName, &dwMinorKeyNameLen, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
-                        break;
-
-                    if (RegOpenKeyExW(hkeyMajor, wszMinorKeyName, 0, KEY_READ, &hkeyMinor) != ERROR_SUCCESS)
-                        break;
-
-                    TRACE("\t%s\n", debugstr_w(wszMinorKeyName));
-        
-                    if (RegQueryInfoKeyW(hkeyMinor, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &maxValueLen, NULL, NULL) != ERROR_SUCCESS)
-                        break;
-
-                    for (indexValue = 0; !bFound; indexValue++)
-                    {
-                        DWORD dwType;
-                        WCHAR wszValueName[14]; /* longest name we should encounter will be "Source Filter" */
-                        LPWSTR wszPatternString = HeapAlloc(GetProcessHeap(), 0, maxValueLen);
-                        DWORD dwValueNameLen = ARRAY_SIZE(wszValueName);
-                        DWORD dwDataLen = maxValueLen; /* remember this is in bytes */
-
-                        if (RegEnumValueW(hkeyMinor, indexValue, wszValueName, &dwValueNameLen, NULL, &dwType, (LPBYTE)wszPatternString, &dwDataLen) != ERROR_SUCCESS)
-                        {
-                            HeapFree(GetProcessHeap(), 0, wszPatternString);
-                            break;
-                        }
-
-                        if (strcmpW(wszValueName, source_filter_name)==0) {
-                            HeapFree(GetProcessHeap(), 0, wszPatternString);
-                            continue;
-                        }
-
-                        /* if it is not the source filter value */
-                        if (process_pattern_string(wszPatternString, pReader) == S_OK)
-                        {
-                            HeapFree(GetProcessHeap(), 0, wszPatternString);
-                            if (majorType && FAILED(CLSIDFromString(wszMajorKeyName, majorType)))
-                                break;
-                            if (minorType && FAILED(CLSIDFromString(wszMinorKeyName, minorType)))
-                                break;
-                            if (sourceFilter)
-                            {
-                                /* Look up the source filter key */
-                                if (RegQueryValueExW(hkeyMinor, source_filter_name, NULL, NULL, (LPBYTE)wszSourceFilterKeyName, &dwSourceFilterKeyNameLen))
-                                    break;
-                                if (FAILED(CLSIDFromString(wszSourceFilterKeyName, sourceFilter)))
-                                    break;
-                            }
-                            bFound = TRUE;
-                        } else
-                            HeapFree(GetProcessHeap(), 0, wszPatternString);
-                    }
-                    CloseHandle(hkeyMinor);
-                }
-            }
-            CloseHandle(hkeyMajor);
+            RegCloseKey(key);
+            return FALSE;
         }
     }
-    CloseHandle(hkeyMediaType);
 
-    if (SUCCEEDED(hr) && !bFound)
+    if ((file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+            OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
     {
-        ERR("Media class not found\n");
-        hr = E_FAIL;
-    }
-    else if (bFound)
-    {
-        TRACE("Found file's class:\n");
-	if(majorType)
-		TRACE("\tmajor = %s\n", qzdebugstr_guid(majorType));
-	if(minorType)
-		TRACE("\tsubtype = %s\n", qzdebugstr_guid(minorType));
-	if(sourceFilter)
-		TRACE("\tsource filter = %s\n", qzdebugstr_guid(sourceFilter));
+        WARN("Failed to open file %s, error %u.\n", debugstr_w(filename), GetLastError());
+        return FALSE;
     }
 
-    return hr;
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMediaType, 0, KEY_READ, &parent_key))
+    {
+        CloseHandle(file);
+        return FALSE;
+    }
+
+    for (majortype_idx = 0; ; ++majortype_idx)
+    {
+        WCHAR majortype_str[39];
+        HKEY majortype_key;
+        DWORD subtype_idx;
+
+        size = ARRAY_SIZE(majortype_str);
+        if (RegEnumKeyExW(parent_key, majortype_idx, majortype_str, &size, NULL, NULL, NULL, NULL))
+            break;
+
+        if (!wcscmp(majortype_str, wszExtensions))
+            continue;
+
+        if (RegOpenKeyExW(parent_key, majortype_str, 0, KEY_READ, &majortype_key))
+            continue;
+
+        for (subtype_idx = 0; ; ++subtype_idx)
+        {
+            WCHAR subtype_str[39], *pattern;
+            DWORD value_idx, max_size;
+            HKEY subtype_key;
+
+            size = ARRAY_SIZE(subtype_str);
+            if (RegEnumKeyExW(majortype_key, subtype_idx, subtype_str, &size, NULL, NULL, NULL, NULL))
+                break;
+
+            if (RegOpenKeyExW(majortype_key, subtype_str, 0, KEY_READ, &subtype_key))
+                continue;
+
+            if (RegQueryInfoKeyW(subtype_key, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &max_size, NULL, NULL))
+                continue;
+
+            pattern = heap_alloc(max_size);
+
+            for (value_idx = 0; ; ++value_idx)
+            {
+                /* The longest name we should encounter is "Source Filter". */
+                WCHAR value_name[14], source_clsid_str[39];
+                DWORD value_len = ARRAY_SIZE(value_name);
+
+                size = max_size;
+                if (RegEnumValueW(subtype_key, value_idx, value_name, &value_len,
+                        NULL, NULL, (BYTE *)pattern, &max_size))
+                    break;
+
+                if (!wcscmp(value_name, L"Source Filter"))
+                    continue;
+
+                if (!process_pattern_string(pattern, file))
+                    continue;
+
+                if (majortype)
+                    CLSIDFromString(majortype_str, majortype);
+                if (subtype)
+                    CLSIDFromString(subtype_str, subtype);
+                size = sizeof(source_clsid_str);
+                if (source_clsid && !RegQueryValueExW(subtype_key, L"Source Filter",
+                        NULL, NULL, (BYTE *)source_clsid_str, &size))
+                    CLSIDFromString(source_clsid_str, source_clsid);
+
+                heap_free(pattern);
+                RegCloseKey(subtype_key);
+                RegCloseKey(majortype_key);
+                RegCloseKey(parent_key);
+                CloseHandle(file);
+                return TRUE;
+            }
+
+            heap_free(pattern);
+            RegCloseKey(subtype_key);
+        }
+
+        RegCloseKey(majortype_key);
+    }
+
+    RegCloseKey(parent_key);
+    CloseHandle(file);
+    return FALSE;
 }
 
-static IPin *async_reader_get_pin(BaseFilter *iface, unsigned int index)
+static struct strmbase_pin *async_reader_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    AsyncReader *filter = impl_from_BaseFilter(iface);
+    AsyncReader *filter = impl_from_strmbase_filter(iface);
 
-    if (!index && filter->pOutputPin)
-        return filter->pOutputPin;
+    if (!index && filter->pszFileName)
+        return &filter->source.pin;
     return NULL;
 }
 
-static void async_reader_destroy(BaseFilter *iface)
+static void async_reader_destroy(struct strmbase_filter *iface)
 {
-    AsyncReader *filter = impl_from_BaseFilter(iface);
+    AsyncReader *filter = impl_from_strmbase_filter(iface);
 
-    if (filter->pOutputPin)
+    if (filter->pszFileName)
     {
-        IPin *peer;
-        if (SUCCEEDED(IPin_ConnectedTo(filter->pOutputPin, &peer)))
+        unsigned int i;
+
+        if (filter->source.pin.peer)
+            IPin_Disconnect(filter->source.pin.peer);
+
+        IPin_Disconnect(&filter->source.pin.IPin_iface);
+
+        if (filter->requests)
         {
-            IPin_Disconnect(peer);
-            IPin_Release(peer);
+            for (i = 0; i < filter->max_requests; ++i)
+                CloseHandle(filter->requests[i].ovl.hEvent);
+            free(filter->requests);
         }
-        IPin_Disconnect(filter->pOutputPin);
-        IPin_Release(filter->pOutputPin);
+        CloseHandle(filter->file);
+        filter->sample_cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&filter->sample_cs);
+        strmbase_source_cleanup(&filter->source);
+
+        CoTaskMemFree(filter->pszFileName);
+        FreeMediaType(&filter->mt);
     }
-    CoTaskMemFree(filter->pszFileName);
-    if (filter->pmt)
-        DeleteMediaType(filter->pmt);
+
+    PostQueuedCompletionStatus(filter->port, 0, 1, NULL);
+    WaitForSingleObject(filter->io_thread, INFINITE);
+    CloseHandle(filter->io_thread);
+    CloseHandle(filter->port);
+
     strmbase_filter_cleanup(&filter->filter);
-    CoTaskMemFree(filter);
+    free(filter);
 }
 
-static HRESULT async_reader_query_interface(BaseFilter *iface, REFIID iid, void **out)
+static HRESULT async_reader_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
-    AsyncReader *filter = impl_from_BaseFilter(iface);
+    AsyncReader *filter = impl_from_strmbase_filter(iface);
 
     if (IsEqualGUID(iid, &IID_IFileSourceFilter))
     {
@@ -437,91 +369,71 @@ static HRESULT async_reader_query_interface(BaseFilter *iface, REFIID iid, void 
     return E_NOINTERFACE;
 }
 
-static const BaseFilterFuncTable BaseFuncTable =
+static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = async_reader_get_pin,
     .filter_destroy = async_reader_destroy,
     .filter_query_interface = async_reader_query_interface,
 };
 
+static DWORD CALLBACK io_thread(void *arg)
+{
+    AsyncReader *filter = arg;
+    struct request *req;
+    OVERLAPPED *ovl;
+    ULONG_PTR key;
+    DWORD size;
+    BOOL ret;
+
+    for (;;)
+    {
+        ret = GetQueuedCompletionStatus(filter->port, &size, &key, &ovl, INFINITE);
+
+        if (ret && key)
+            break;
+
+        EnterCriticalSection(&filter->sample_cs);
+
+        req = CONTAINING_RECORD(ovl, struct request, ovl);
+        TRACE("Got sample %u.\n", req - filter->requests);
+        assert(req >= filter->requests && req < filter->requests + filter->max_requests);
+
+        if (ret)
+            WakeConditionVariable(&filter->sample_cv);
+        else
+        {
+            ERR("GetQueuedCompletionStatus() returned failure, error %u.\n", GetLastError());
+            req->sample = NULL;
+        }
+
+        LeaveCriticalSection(&filter->sample_cs);
+    }
+
+    return 0;
+}
+
 HRESULT AsyncReader_create(IUnknown *outer, void **out)
 {
-    AsyncReader *pAsyncRead;
-    
-    pAsyncRead = CoTaskMemAlloc(sizeof(AsyncReader));
+    AsyncReader *object;
 
-    if (!pAsyncRead)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    strmbase_filter_init(&pAsyncRead->filter, &AsyncReader_Vtbl, outer, &CLSID_AsyncReader,
-            (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&object->filter, outer, &CLSID_AsyncReader, &filter_ops);
 
-    pAsyncRead->IFileSourceFilter_iface.lpVtbl = &FileSource_Vtbl;
-    pAsyncRead->pOutputPin = NULL;
+    object->IFileSourceFilter_iface.lpVtbl = &FileSource_Vtbl;
+    object->IAsyncReader_iface.lpVtbl = &FileAsyncReader_Vtbl;
 
-    pAsyncRead->pszFileName = NULL;
-    pAsyncRead->pmt = NULL;
+    InitializeCriticalSection(&object->sample_cs);
+    object->sample_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FileAsyncReader.sample_cs");
+    InitializeConditionVariable(&object->sample_cv);
+    object->port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+    object->io_thread = CreateThread(NULL, 0, io_thread, object, 0, NULL);
 
-    *out = &pAsyncRead->filter.IUnknown_inner;
-
-    TRACE("-- created at %p\n", pAsyncRead);
-
+    TRACE("Created file source %p.\n", object);
+    *out = &object->filter.IUnknown_inner;
     return S_OK;
 }
-
-/** IMediaFilter methods **/
-
-static HRESULT WINAPI AsyncReader_Stop(IBaseFilter * iface)
-{
-    AsyncReader *This = impl_from_IBaseFilter(iface);
-
-    TRACE("%p->()\n", This);
-
-    This->filter.state = State_Stopped;
-    
-    return S_OK;
-}
-
-static HRESULT WINAPI AsyncReader_Pause(IBaseFilter * iface)
-{
-    AsyncReader *This = impl_from_IBaseFilter(iface);
-
-    TRACE("%p->()\n", This);
-
-    This->filter.state = State_Paused;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AsyncReader_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
-{
-    AsyncReader *This = impl_from_IBaseFilter(iface);
-
-    TRACE("%p->(%s)\n", This, wine_dbgstr_longlong(tStart));
-
-    This->filter.state = State_Running;
-
-    return S_OK;
-}
-
-static const IBaseFilterVtbl AsyncReader_Vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    AsyncReader_Stop,
-    AsyncReader_Pause,
-    AsyncReader_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
 
 static HRESULT WINAPI FileSource_QueryInterface(IFileSourceFilter * iface, REFIID riid, LPVOID * ppv)
 {
@@ -546,12 +458,11 @@ static ULONG WINAPI FileSource_Release(IFileSourceFilter * iface)
 
 static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFileName, const AM_MEDIA_TYPE * pmt)
 {
-    HRESULT hr;
     HANDLE hFile;
-    IAsyncReader * pReader = NULL;
     AsyncReader *This = impl_from_IFileSourceFilter(iface);
 
     TRACE("%p->(%s, %p)\n", This, debugstr_w(pszFileName), pmt);
+    strmbase_dump_media_type(pmt);
 
     if (!pszFileName)
         return E_POINTER;
@@ -565,66 +476,45 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    /* create pin */
-    hr = FileAsyncReader_Construct(hFile, &This->filter.IBaseFilter_iface, &This->filter.csFilter, &This->pOutputPin);
+    if (This->pszFileName)
+    {
+        free(This->pszFileName);
+        FreeMediaType(&This->mt);
+    }
+
+    if (!(This->pszFileName = wcsdup(pszFileName)))
+    {
+        CloseHandle(hFile);
+        return E_OUTOFMEMORY;
+    }
+
+    strmbase_source_init(&This->source, &This->filter, L"Output", &source_ops);
     BaseFilterImpl_IncrementPinVersion(&This->filter);
 
-    if (SUCCEEDED(hr))
-        hr = IPin_QueryInterface(This->pOutputPin, &IID_IAsyncReader, (LPVOID *)&pReader);
+    This->file = hFile;
+    This->flushing = FALSE;
+    This->requests = NULL;
 
-    /* store file name & media type */
-    if (SUCCEEDED(hr))
+    if (!pmt)
     {
-        CoTaskMemFree(This->pszFileName);
-        if (This->pmt)
-            DeleteMediaType(This->pmt);
-
-        This->pszFileName = CoTaskMemAlloc((strlenW(pszFileName) + 1) * sizeof(WCHAR));
-        strcpyW(This->pszFileName, pszFileName);
-
-        This->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-        if (!pmt)
+        CopyMediaType(&This->mt, &default_mt);
+        if (get_media_type(pszFileName, &This->mt.majortype, &This->mt.subtype, NULL))
         {
-            CopyMediaType(This->pmt, &default_mt);
-            if (FAILED(GetClassMediaFile(pReader, pszFileName, &This->pmt->majortype, &This->pmt->subtype, NULL)))
-            {
-                This->pmt->majortype = MEDIATYPE_Stream;
-                This->pmt->subtype = MEDIASUBTYPE_NULL;
-            }
+            TRACE("Found major type %s, subtype %s.\n",
+                    debugstr_guid(&This->mt.majortype), debugstr_guid(&This->mt.subtype));
         }
-        else
-            CopyMediaType(This->pmt, pmt);
     }
+    else
+        CopyMediaType(&This->mt, pmt);
 
-    if (pReader)
-        IAsyncReader_Release(pReader);
-
-    if (FAILED(hr))
-    {
-        if (This->pOutputPin)
-        {
-            IPin_Release(This->pOutputPin);
-            This->pOutputPin = NULL;
-        }
-
-        CoTaskMemFree(This->pszFileName);
-        if (This->pmt)
-            DeleteMediaType(This->pmt);
-        This->pszFileName = NULL;
-        This->pmt = NULL;
-
-        CloseHandle(hFile);
-    }
-
-    /* FIXME: check return codes */
-    return hr;
+    return S_OK;
 }
 
-static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR * ppszFileName, AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter *iface, LPOLESTR *ppszFileName, AM_MEDIA_TYPE *mt)
 {
     AsyncReader *This = impl_from_IFileSourceFilter(iface);
-    
-    TRACE("%p->(%p, %p)\n", This, ppszFileName, pmt);
+
+    TRACE("filter %p, filename %p, mt %p.\n", This, ppszFileName, mt);
 
     if (!ppszFileName)
         return E_POINTER;
@@ -632,18 +522,16 @@ static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR 
     /* copy file name & media type if available, otherwise clear the outputs */
     if (This->pszFileName)
     {
-        *ppszFileName = CoTaskMemAlloc((strlenW(This->pszFileName) + 1) * sizeof(WCHAR));
-        strcpyW(*ppszFileName, This->pszFileName);
+        *ppszFileName = CoTaskMemAlloc((wcslen(This->pszFileName) + 1) * sizeof(WCHAR));
+        wcscpy(*ppszFileName, This->pszFileName);
+        if (mt)
+            CopyMediaType(mt, &This->mt);
     }
     else
-        *ppszFileName = NULL;
-
-    if (pmt)
     {
-        if (This->pmt)
-            CopyMediaType(pmt, This->pmt);
-        else
-            ZeroMemory(pmt, sizeof(*pmt));
+        *ppszFileName = NULL;
+        if (mt)
+            memset(mt, 0, sizeof(AM_MEDIA_TYPE));
     }
 
     return S_OK;
@@ -658,195 +546,94 @@ static const IFileSourceFilterVtbl FileSource_Vtbl =
     FileSource_GetCurFile
 };
 
-
-/* the dwUserData passed back to user */
-typedef struct DATAREQUEST
+static inline AsyncReader *impl_from_strmbase_pin(struct strmbase_pin *iface)
 {
-    IMediaSample * pSample; /* sample passed to us by user */
-    DWORD_PTR dwUserData; /* user data passed to us */
-    OVERLAPPED ovl; /* our overlapped structure */
-} DATAREQUEST;
-
-typedef struct FileAsyncReader
-{
-    BaseOutputPin pin;
-    IAsyncReader IAsyncReader_iface;
-
-    ALLOCATOR_PROPERTIES allocProps;
-    HANDLE hFile;
-    BOOL bFlushing;
-    /* Why would you need more? Every sample has its own handle */
-    LONG queued_number;
-    LONG samples;
-    LONG oldest_sample;
-    CRITICAL_SECTION csList; /* critical section to prevent concurrency issues */
-    DATAREQUEST *sample_list;
-
-    /* Have a handle for every sample, and then one more as flushing handle */
-    HANDLE *handle_list;
-} FileAsyncReader;
-
-static inline FileAsyncReader *impl_from_IPin(IPin *iface)
-{
-    return CONTAINING_RECORD(iface, FileAsyncReader, pin.pin.IPin_iface);
+    return CONTAINING_RECORD(iface, AsyncReader, source.pin);
 }
 
-static inline FileAsyncReader *impl_from_BasePin(BasePin *iface)
+static inline AsyncReader *impl_from_strmbase_source(struct strmbase_source *iface)
 {
-    return CONTAINING_RECORD(iface, FileAsyncReader, pin.pin);
+    return CONTAINING_RECORD(iface, AsyncReader, source);
 }
 
-static inline FileAsyncReader *impl_from_BaseOutputPin(BaseOutputPin *iface)
+static inline AsyncReader *impl_from_IAsyncReader(IAsyncReader *iface)
 {
-    return CONTAINING_RECORD(iface, FileAsyncReader, pin);
+    return CONTAINING_RECORD(iface, AsyncReader, IAsyncReader_iface);
 }
 
-static inline BaseOutputPin *impl_BaseOutputPin_from_BasePin(BasePin *iface)
+static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
-    return CONTAINING_RECORD(iface, BaseOutputPin, pin);
-}
+    AsyncReader *filter = impl_from_strmbase_pin(iface);
 
-static inline FileAsyncReader *impl_from_IAsyncReader(IAsyncReader *iface)
-{
-    return CONTAINING_RECORD(iface, FileAsyncReader, IAsyncReader_iface);
-}
-
-static HRESULT WINAPI FileAsyncReaderPin_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE *pmt)
-{
-    AM_MEDIA_TYPE *pmt_filter = impl_from_IBaseFilter(pin->pinInfo.pFilter)->pmt;
-
-    if (IsEqualGUID(&pmt->majortype, &pmt_filter->majortype) &&
-        IsEqualGUID(&pmt->subtype, &pmt_filter->subtype))
+    if (IsEqualGUID(&mt->majortype, &filter->mt.majortype)
+            && (!IsEqualGUID(&mt->subtype, &GUID_NULL)
+            || IsEqualGUID(&filter->mt.subtype, &GUID_NULL)))
         return S_OK;
 
     return S_FALSE;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_GetMediaType(BasePin *iface, int index, AM_MEDIA_TYPE *mt)
+static HRESULT source_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    FileAsyncReader *This = impl_from_BasePin(iface);
-    AsyncReader *filter = impl_from_IBaseFilter(This->pin.pin.pinInfo.pFilter);
+    AsyncReader *filter = impl_from_strmbase_pin(iface);
 
-    if (index < 0)
-        return E_INVALIDARG;
-    else if (index > 1)
+    if (index > 1)
         return VFW_S_NO_MORE_ITEMS;
 
     if (index == 0)
-        CopyMediaType(mt, filter->pmt);
+        CopyMediaType(mt, &filter->mt);
     else if (index == 1)
         CopyMediaType(mt, &default_mt);
     return S_OK;
 }
 
-/* overridden pin functions */
-
-static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
+static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    FileAsyncReader *This = impl_from_IPin(iface);
-    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
+    AsyncReader *filter = impl_from_strmbase_pin(iface);
 
-    *ppv = NULL;
+    if (IsEqualGUID(iid, &IID_IAsyncReader))
+        *out = &filter->IAsyncReader_iface;
+    else
+        return E_NOINTERFACE;
 
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPin))
-        *ppv = &This->pin.pin.IPin_iface;
-    else if (IsEqualIID(riid, &IID_IAsyncReader))
-        *ppv = &This->IAsyncReader_iface;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)*ppv);
-        return S_OK;
-    }
-
-    if (!IsEqualIID(riid, &IID_IMediaSeeking))
-        FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
-
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
-
-static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
-{
-    FileAsyncReader *This = impl_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
-    int x;
-
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
-
-    if (!refCount)
-    {
-        CoTaskMemFree(This->sample_list);
-        if (This->handle_list)
-        {
-            for (x = 0; x <= This->samples; ++x)
-                CloseHandle(This->handle_list[x]);
-            CoTaskMemFree(This->handle_list);
-        }
-        CloseHandle(This->hFile);
-        This->csList.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&This->csList);
-        BaseOutputPin_Destroy(&This->pin);
-        return 0;
-    }
-    return refCount;
-}
-
-static const IPinVtbl FileAsyncReaderPin_Vtbl = 
-{
-    FileAsyncReaderPin_QueryInterface,
-    BasePinImpl_AddRef,
-    FileAsyncReaderPin_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BasePinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
 
 /* Function called as a helper to IPin_Connect */
 /* specific AM_MEDIA_TYPE - it cannot be NULL */
 /* this differs from standard OutputPin_AttemptConnection only in that it
  * doesn't need the IMemInputPin interface on the receiving pin */
-static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(BaseOutputPin *This,
+static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(struct strmbase_source *This,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
     HRESULT hr;
 
     TRACE("%p->(%p, %p)\n", This, pReceivePin, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
 
     /* FIXME: call queryacceptproc */
 
-    This->pin.pConnectedTo = pReceivePin;
+    This->pin.peer = pReceivePin;
     IPin_AddRef(pReceivePin);
-    CopyMediaType(&This->pin.mtCurrent, pmt);
+    CopyMediaType(&This->pin.mt, pmt);
 
     hr = IPin_ReceiveConnection(pReceivePin, &This->pin.IPin_iface, pmt);
 
     if (FAILED(hr))
     {
-        IPin_Release(This->pin.pConnectedTo);
-        This->pin.pConnectedTo = NULL;
-        FreeMediaType(&This->pin.mtCurrent);
+        IPin_Release(This->pin.peer);
+        This->pin.peer = NULL;
+        FreeMediaType(&This->pin.mt);
     }
 
     TRACE(" -- %x\n", hr);
     return hr;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
-    FileAsyncReader *This = impl_from_BaseOutputPin(iface);
+    AsyncReader *This = impl_from_strmbase_source(iface);
     ALLOCATOR_PROPERTIES actual;
 
     if (ppropInputRequest->cbAlign && ppropInputRequest->cbAlign != This->allocProps.cbAlign)
@@ -861,368 +648,185 @@ static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(BaseOutputPin *iface, 
     return IMemAllocator_SetProperties(pAlloc, &This->allocProps, &actual);
 }
 
-static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
-    {
-        FileAsyncReaderPin_CheckMediaType,
-        FileAsyncReaderPin_GetMediaType
-    },
-    FileAsyncReaderPin_AttemptConnection,
-    FileAsyncReaderPin_DecideBufferSize,
-    BaseOutputPinImpl_DecideAllocator,
+static const struct strmbase_source_ops source_ops =
+{
+    .base.pin_query_accept = source_query_accept,
+    .base.pin_get_media_type = source_get_media_type,
+    .base.pin_query_interface = source_query_interface,
+    .pfnAttemptConnection = FileAsyncReaderPin_AttemptConnection,
+    .pfnDecideBufferSize = FileAsyncReaderPin_DecideBufferSize,
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
-static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+static HRESULT WINAPI FileAsyncReader_QueryInterface(IAsyncReader *iface, REFIID iid, void **out)
 {
-    PIN_INFO piOutput;
-    HRESULT hr;
-
-    *ppPin = NULL;
-    piOutput.dir = PINDIR_OUTPUT;
-    piOutput.pFilter = pBaseFilter;
-    strcpyW(piOutput.achName, wszOutputPinName);
-    hr = BaseOutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, &output_BaseOutputFuncTable, pCritSec, ppPin);
-
-    if (SUCCEEDED(hr))
-    {
-        FileAsyncReader *pPinImpl =  (FileAsyncReader *)*ppPin;
-        pPinImpl->IAsyncReader_iface.lpVtbl = &FileAsyncReader_Vtbl;
-        pPinImpl->hFile = hFile;
-        pPinImpl->bFlushing = FALSE;
-        pPinImpl->sample_list = NULL;
-        pPinImpl->handle_list = NULL;
-        pPinImpl->queued_number = 0;
-        InitializeCriticalSection(&pPinImpl->csList);
-        pPinImpl->csList.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FileAsyncReader.csList");
-    }
-    return hr;
-}
-
-/* IAsyncReader */
-
-static HRESULT WINAPI FileAsyncReader_QueryInterface(IAsyncReader * iface, REFIID riid, LPVOID * ppv)
-{
-    FileAsyncReader *This = impl_from_IAsyncReader(iface);
-
-    return IPin_QueryInterface(&This->pin.pin.IPin_iface, riid, ppv);
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
+    return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
 }
 
 static ULONG WINAPI FileAsyncReader_AddRef(IAsyncReader * iface)
 {
-    FileAsyncReader *This = impl_from_IAsyncReader(iface);
-
-    return IPin_AddRef(&This->pin.pin.IPin_iface);
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
+    return IPin_AddRef(&filter->source.pin.IPin_iface);
 }
 
 static ULONG WINAPI FileAsyncReader_Release(IAsyncReader * iface)
 {
-    FileAsyncReader *This = impl_from_IAsyncReader(iface);
-
-    return IPin_Release(&This->pin.pin.IPin_iface);
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
+    return IPin_Release(&filter->source.pin.IPin_iface);
 }
 
-#define DEF_ALIGNMENT 1
-
-static HRESULT WINAPI FileAsyncReader_RequestAllocator(IAsyncReader * iface, IMemAllocator * pPreferred, ALLOCATOR_PROPERTIES * pProps, IMemAllocator ** ppActual)
+static HRESULT WINAPI FileAsyncReader_RequestAllocator(IAsyncReader *iface,
+        IMemAllocator *preferred, ALLOCATOR_PROPERTIES *props, IMemAllocator **ret_allocator)
 {
-    FileAsyncReader *This = impl_from_IAsyncReader(iface);
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
+    IMemAllocator *allocator;
+    unsigned int i;
+    HRESULT hr;
 
-    HRESULT hr = S_OK;
+    TRACE("filter %p, preferred %p, props %p, ret_allocator %p.\n", filter, preferred, props, ret_allocator);
 
-    TRACE("%p->(%p, %p, %p)\n", This, pPreferred, pProps, ppActual);
+    if (!props->cbAlign)
+        props->cbAlign = 1;
 
-    if (!pProps->cbAlign || (pProps->cbAlign % DEF_ALIGNMENT) != 0)
-        pProps->cbAlign = DEF_ALIGNMENT;
+    *ret_allocator = NULL;
 
-    if (pPreferred)
+    if (preferred)
+        IMemAllocator_AddRef(allocator = preferred);
+    else if (FAILED(hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL,
+            CLSCTX_INPROC, &IID_IMemAllocator, (void **)&allocator)))
+        return hr;
+
+    if (FAILED(hr = IMemAllocator_SetProperties(allocator, props, props)))
     {
-        hr = IMemAllocator_SetProperties(pPreferred, pProps, pProps);
-        /* FIXME: check we are still aligned */
-        if (SUCCEEDED(hr))
-        {
-            IMemAllocator_AddRef(pPreferred);
-            *ppActual = pPreferred;
-            TRACE("FileAsyncReader_RequestAllocator -- %x\n", hr);
-            goto done;
-        }
+        IMemAllocator_Release(allocator);
+        return hr;
     }
 
-    pPreferred = NULL;
-
-    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC, &IID_IMemAllocator, (LPVOID *)&pPreferred);
-
-    if (SUCCEEDED(hr))
+    if (filter->requests)
     {
-        hr = IMemAllocator_SetProperties(pPreferred, pProps, pProps);
-        /* FIXME: check we are still aligned */
-        if (SUCCEEDED(hr))
-        {
-            *ppActual = pPreferred;
-            TRACE("FileAsyncReader_RequestAllocator -- %x\n", hr);
-        }
+        for (i = 0; i < filter->max_requests; ++i)
+            CloseHandle(filter->requests[i].ovl.hEvent);
+        free(filter->requests);
     }
 
-done:
-    if (SUCCEEDED(hr))
+    filter->max_requests = props->cBuffers;
+    TRACE("Maximum request count: %u.\n", filter->max_requests);
+    if (!(filter->requests = calloc(filter->max_requests, sizeof(filter->requests[0]))))
     {
-        CoTaskMemFree(This->sample_list);
-        if (This->handle_list)
-        {
-            int x;
-            for (x = 0; x <= This->samples; ++x)
-                CloseHandle(This->handle_list[x]);
-            CoTaskMemFree(This->handle_list);
-        }
-
-        This->samples = pProps->cBuffers;
-        This->oldest_sample = 0;
-        TRACE("Samples: %u\n", This->samples);
-        This->sample_list = CoTaskMemAlloc(sizeof(This->sample_list[0]) * pProps->cBuffers);
-        This->handle_list = CoTaskMemAlloc(sizeof(HANDLE) * pProps->cBuffers * 2);
-
-        if (This->sample_list && This->handle_list)
-        {
-            int x;
-            ZeroMemory(This->sample_list, sizeof(This->sample_list[0]) * pProps->cBuffers);
-            for (x = 0; x < This->samples; ++x)
-            {
-                This->sample_list[x].ovl.hEvent = This->handle_list[x] = CreateEventW(NULL, 0, 0, NULL);
-                if (x + 1 < This->samples)
-                    This->handle_list[This->samples + 1 + x] = This->handle_list[x];
-            }
-            This->handle_list[This->samples] = CreateEventW(NULL, 1, 0, NULL);
-            This->allocProps = *pProps;
-        }
-        else
-        {
-            hr = E_OUTOFMEMORY;
-            CoTaskMemFree(This->sample_list);
-            CoTaskMemFree(This->handle_list);
-            This->samples = 0;
-            This->sample_list = NULL;
-            This->handle_list = NULL;
-        }
+        IMemAllocator_Release(allocator);
+        return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr))
-    {
-        *ppActual = NULL;
-        if (pPreferred)
-            IMemAllocator_Release(pPreferred);
-    }
+    for (i = 0; i < filter->max_requests; ++i)
+        filter->requests[i].ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    filter->allocProps = *props;
 
-    TRACE("-- %x\n", hr);
-    return hr;
+    *ret_allocator = allocator;
+    return S_OK;
 }
 
-/* we could improve the Request/WaitForNext mechanism by allowing out of order samples.
- * however, this would be quite complicated to do and may be a bit error prone */
-static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader * iface, IMediaSample * pSample, DWORD_PTR dwUser)
+static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader *iface, IMediaSample *sample, DWORD_PTR cookie)
 {
-    HRESULT hr = S_OK;
-    REFERENCE_TIME Start;
-    REFERENCE_TIME Stop;
-    FileAsyncReader *This = impl_from_IAsyncReader(iface);
-    LPBYTE pBuffer = NULL;
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
+    REFERENCE_TIME start, end;
+    struct request *req;
+    unsigned int i;
+    HRESULT hr;
+    BYTE *data;
 
-    TRACE("%p->(%p, %lx)\n", This, pSample, dwUser);
+    TRACE("filter %p, sample %p, cookie %#lx.\n", filter, sample, cookie);
 
-    if (!pSample)
+    if (!sample)
         return E_POINTER;
 
-    /* get start and stop positions in bytes */
-    if (SUCCEEDED(hr))
-        hr = IMediaSample_GetTime(pSample, &Start, &Stop);
+    if (FAILED(hr = IMediaSample_GetTime(sample, &start, &end)))
+        return hr;
 
-    if (SUCCEEDED(hr))
-        hr = IMediaSample_GetPointer(pSample, &pBuffer);
+    if (FAILED(hr = IMediaSample_GetPointer(sample, &data)))
+        return hr;
 
-    EnterCriticalSection(&This->csList);
-    if (This->bFlushing)
+    EnterCriticalSection(&filter->sample_cs);
+    if (filter->flushing)
     {
-        LeaveCriticalSection(&This->csList);
+        LeaveCriticalSection(&filter->sample_cs);
         return VFW_E_WRONG_STATE;
     }
 
-    if (SUCCEEDED(hr))
+    for (i = 0; i < filter->max_requests; ++i)
     {
-        DWORD dwLength = (DWORD) BYTES_FROM_MEDIATIME(Stop - Start);
-        DATAREQUEST *pDataRq;
-        int x;
-
-        /* Try to insert above the waiting sample if possible */
-        for (x = This->oldest_sample; x < This->samples; ++x)
-        {
-            if (!This->sample_list[x].pSample)
-                break;
-        }
-
-        if (x >= This->samples)
-            for (x = 0; x < This->oldest_sample; ++x)
-            {
-                if (!This->sample_list[x].pSample)
-                    break;
-            }
-
-        /* There must be a sample we have found */
-        assert(x < This->samples);
-        ++This->queued_number;
-
-        pDataRq = This->sample_list + x;
-
-        pDataRq->ovl.u.s.Offset = (DWORD) BYTES_FROM_MEDIATIME(Start);
-        pDataRq->ovl.u.s.OffsetHigh = (DWORD)(BYTES_FROM_MEDIATIME(Start) >> (sizeof(DWORD) * 8));
-        pDataRq->dwUserData = dwUser;
-
-        /* we violate traditional COM rules here by maintaining
-         * a reference to the sample, but not calling AddRef, but
-         * that's what MSDN says to do */
-        pDataRq->pSample = pSample;
-
-        /* this is definitely not how it is implemented on Win9x
-         * as they do not support async reads on files, but it is
-         * sooo much easier to use this than messing around with threads!
-         */
-        if (!ReadFile(This->hFile, pBuffer, dwLength, NULL, &pDataRq->ovl))
-            hr = HRESULT_FROM_WIN32(GetLastError());
-
-        /* ERROR_IO_PENDING is not actually an error since this is what we want! */
-        if (hr == HRESULT_FROM_WIN32(ERROR_IO_PENDING))
-            hr = S_OK;
+        if (!filter->requests[i].sample)
+            break;
     }
+    assert(i < filter->max_requests);
+    req = &filter->requests[i];
 
-    LeaveCriticalSection(&This->csList);
+    req->ovl.u.s.Offset = BYTES_FROM_MEDIATIME(start);
+    req->ovl.u.s.OffsetHigh = BYTES_FROM_MEDIATIME(start) >> 32;
+    /* No reference is taken. */
 
-    TRACE("-- %x\n", hr);
+    if (ReadFile(filter->file, data, BYTES_FROM_MEDIATIME(end - start), NULL, &req->ovl)
+            || GetLastError() == ERROR_IO_PENDING)
+    {
+        hr = S_OK;
+        req->sample = sample;
+        req->cookie = cookie;
+    }
+    else
+        hr = HRESULT_FROM_WIN32(GetLastError());
+
+    LeaveCriticalSection(&filter->sample_cs);
     return hr;
 }
 
-static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dwTimeout, IMediaSample ** ppSample, DWORD_PTR * pdwUser)
+static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader *iface,
+        DWORD timeout, IMediaSample **sample, DWORD_PTR *cookie)
 {
-    HRESULT hr = S_OK;
-    FileAsyncReader *This = impl_from_IAsyncReader(iface);
-    DWORD buffer = ~0;
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
+    unsigned int i;
 
-    TRACE("%p->(%u, %p, %p)\n", This, dwTimeout, ppSample, pdwUser);
+    TRACE("filter %p, timeout %u, sample %p, cookie %p.\n", filter, timeout, sample, cookie);
 
-    *ppSample = NULL;
-    *pdwUser = 0;
+    *sample = NULL;
+    *cookie = 0;
 
-    EnterCriticalSection(&This->csList);
-    if (!This->bFlushing)
+    EnterCriticalSection(&filter->sample_cs);
+
+    do
     {
-        LONG oldest = This->oldest_sample;
-
-        if (!This->queued_number)
+        if (filter->flushing)
         {
-            /* It could be that nothing is queued right now, but that can be fixed */
-            WARN("Called without samples in queue and not flushing!!\n");
-        }
-        LeaveCriticalSection(&This->csList);
-
-        /* wait for an object to read, or time out */
-        buffer = WaitForMultipleObjectsEx(This->samples+1, This->handle_list + oldest, FALSE, dwTimeout, TRUE);
-
-        EnterCriticalSection(&This->csList);
-        if (buffer <= This->samples)
-        {
-            /* Re-scale the buffer back to normal */
-            buffer += oldest;
-
-            /* Uh oh, we overshot the flusher handle, renormalize it back to 0..Samples-1 */
-            if (buffer > This->samples)
-                buffer -= This->samples + 1;
-            assert(buffer <= This->samples);
+            LeaveCriticalSection(&filter->sample_cs);
+            return VFW_E_WRONG_STATE;
         }
 
-        if (buffer >= This->samples)
+        for (i = 0; i < filter->max_requests; ++i)
         {
-            if (buffer != This->samples)
+            struct request *req = &filter->requests[i];
+            DWORD size;
+
+            if (req->sample && GetOverlappedResult(filter->file, &req->ovl, &size, FALSE))
             {
-                FIXME("Returned: %u (%08x)\n", buffer, GetLastError());
-                hr = VFW_E_TIMEOUT;
-            }
-            else
-                hr = VFW_E_WRONG_STATE;
-            buffer = ~0;
-        }
-        else
-            --This->queued_number;
-    }
+                REFERENCE_TIME start, end;
 
-    if (This->bFlushing && buffer == ~0)
-    {
-        for (buffer = 0; buffer < This->samples; ++buffer)
-        {
-            if (This->sample_list[buffer].pSample)
-            {
-                ResetEvent(This->handle_list[buffer]);
-                break;
+                IMediaSample_SetActualDataLength(req->sample, size);
+                start = MEDIATIME_FROM_BYTES(((ULONGLONG)req->ovl.u.s.OffsetHigh << 32) + req->ovl.u.s.Offset);
+                end = start + MEDIATIME_FROM_BYTES(size);
+                IMediaSample_SetTime(req->sample, &start, &end);
+
+                *sample = req->sample;
+                *cookie = req->cookie;
+                req->sample = NULL;
+
+                LeaveCriticalSection(&filter->sample_cs);
+                TRACE("Returning sample %u.\n", i);
+                return S_OK;
             }
         }
-        if (buffer == This->samples)
-        {
-            assert(!This->queued_number);
-            hr = VFW_E_TIMEOUT;
-        }
-        else
-        {
-            --This->queued_number;
-            hr = S_OK;
-        }
-    }
+    } while (SleepConditionVariableCS(&filter->sample_cv, &filter->sample_cs, timeout));
 
-    if (SUCCEEDED(hr))
-    {
-        REFERENCE_TIME rtStart, rtStop;
-        DATAREQUEST *pDataRq = This->sample_list + buffer;
-        DWORD dwBytes = 0;
-
-        /* get any errors */
-        if (!This->bFlushing && !GetOverlappedResult(This->hFile, &pDataRq->ovl, &dwBytes, FALSE))
-            hr = HRESULT_FROM_WIN32(GetLastError());
-
-        /* Return the sample no matter what so it can be destroyed */
-        *ppSample = pDataRq->pSample;
-        *pdwUser = pDataRq->dwUserData;
-
-        if (This->bFlushing)
-            hr = VFW_E_WRONG_STATE;
-
-        if (FAILED(hr))
-            dwBytes = 0;
-
-        /* Set the time on the sample */
-        IMediaSample_SetActualDataLength(pDataRq->pSample, dwBytes);
-
-        rtStart = (DWORD64)pDataRq->ovl.u.s.Offset + ((DWORD64)pDataRq->ovl.u.s.OffsetHigh << 32);
-        rtStart = MEDIATIME_FROM_BYTES(rtStart);
-        rtStop = rtStart + MEDIATIME_FROM_BYTES(dwBytes);
-
-        IMediaSample_SetTime(pDataRq->pSample, &rtStart, &rtStop);
-
-        This->sample_list[buffer].pSample = NULL;
-        assert(This->oldest_sample < This->samples);
-
-        if (buffer == This->oldest_sample)
-        {
-            LONG x;
-            for (x = This->oldest_sample + 1; x < This->samples; ++x)
-                if (This->sample_list[x].pSample)
-                    break;
-            if (x >= This->samples)
-                for (x = 0; x < This->oldest_sample; ++x)
-                    if (This->sample_list[x].pSample)
-                        break;
-            if (This->oldest_sample == x)
-                /* No samples found, reset to 0 */
-                x = 0;
-            This->oldest_sample = x;
-        }
-    }
-    LeaveCriticalSection(&This->csList);
-
-    TRACE("-- %x\n", hr);
-    return hr;
+    LeaveCriticalSection(&filter->sample_cs);
+    return VFW_E_TIMEOUT;
 }
 
 static BOOL sync_read(HANDLE file, LONGLONG offset, LONG length, BYTE *buffer, DWORD *read_len)
@@ -1230,7 +834,7 @@ static BOOL sync_read(HANDLE file, LONGLONG offset, LONG length, BYTE *buffer, D
     OVERLAPPED ovl = {0};
     BOOL ret;
 
-    ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    ovl.hEvent = (HANDLE)((ULONG_PTR)CreateEventW(NULL, TRUE, FALSE, NULL) | 1);
     ovl.u.s.Offset = (DWORD)offset;
     ovl.u.s.OffsetHigh = offset >> 32;
 
@@ -1248,7 +852,7 @@ static BOOL sync_read(HANDLE file, LONGLONG offset, LONG length, BYTE *buffer, D
 
 static HRESULT WINAPI FileAsyncReader_SyncReadAligned(IAsyncReader *iface, IMediaSample *sample)
 {
-    FileAsyncReader *filter = impl_from_IAsyncReader(iface);
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
     REFERENCE_TIME start_time, end_time;
     DWORD read_len;
     BYTE *buffer;
@@ -1266,7 +870,7 @@ static HRESULT WINAPI FileAsyncReader_SyncReadAligned(IAsyncReader *iface, IMedi
     if (SUCCEEDED(hr))
     {
         length = BYTES_FROM_MEDIATIME(end_time - start_time);
-        ret = sync_read(filter->hFile, BYTES_FROM_MEDIATIME(start_time), length, buffer, &read_len);
+        ret = sync_read(filter->file, BYTES_FROM_MEDIATIME(start_time), length, buffer, &read_len);
         if (ret)
             hr = (read_len == length) ? S_OK : S_FALSE;
         else if (GetLastError() == ERROR_HANDLE_EOF)
@@ -1284,7 +888,7 @@ static HRESULT WINAPI FileAsyncReader_SyncReadAligned(IAsyncReader *iface, IMedi
 static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader *iface,
         LONGLONG offset, LONG length, BYTE *buffer)
 {
-    FileAsyncReader *filter = impl_from_IAsyncReader(iface);
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
     DWORD read_len;
     HRESULT hr;
     BOOL ret;
@@ -1292,7 +896,7 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader *iface,
     TRACE("filter %p, offset %s, length %d, buffer %p.\n",
             filter, wine_dbgstr_longlong(offset), length, buffer);
 
-    ret = sync_read(filter->hFile, offset, length, buffer, &read_len);
+    ret = sync_read(filter->file, offset, length, buffer, &read_len);
     if (ret)
         hr = (read_len == length) ? S_OK : S_FALSE;
     else if (GetLastError() == ERROR_HANDLE_EOF)
@@ -1303,54 +907,52 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader *iface,
     return hr;
 }
 
-static HRESULT WINAPI FileAsyncReader_Length(IAsyncReader * iface, LONGLONG * pTotal, LONGLONG * pAvailable)
+static HRESULT WINAPI FileAsyncReader_Length(IAsyncReader *iface, LONGLONG *total, LONGLONG *available)
 {
-    DWORD dwSizeLow;
-    DWORD dwSizeHigh;
-    FileAsyncReader *This = impl_from_IAsyncReader(iface);
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
+    DWORD low, high;
 
-    TRACE("%p->(%p, %p)\n", This, pTotal, pAvailable);
+    TRACE("iface %p, total %p, available %p.\n", iface, total, available);
 
-    if (((dwSizeLow = GetFileSize(This->hFile, &dwSizeHigh)) == -1) &&
-        (GetLastError() != NO_ERROR))
+    if ((low = GetFileSize(filter->file, &high)) == -1 && GetLastError() != NO_ERROR)
         return HRESULT_FROM_WIN32(GetLastError());
 
-    *pTotal = (LONGLONG)dwSizeLow | (LONGLONG)dwSizeHigh << (sizeof(DWORD) * 8);
-
-    *pAvailable = *pTotal;
+    *available = *total = (LONGLONG)low | (LONGLONG)high << (sizeof(DWORD) * 8);
 
     return S_OK;
 }
 
 static HRESULT WINAPI FileAsyncReader_BeginFlush(IAsyncReader * iface)
 {
-    FileAsyncReader *This = impl_from_IAsyncReader(iface);
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
+    unsigned int i;
 
-    TRACE("%p->()\n", This);
+    TRACE("iface %p.\n", iface);
 
-    EnterCriticalSection(&This->csList);
-    This->bFlushing = TRUE;
-    CancelIo(This->hFile);
-    SetEvent(This->handle_list[This->samples]);
-    LeaveCriticalSection(&This->csList);
+    EnterCriticalSection(&filter->sample_cs);
+
+    filter->flushing = TRUE;
+    for (i = 0; i < filter->max_requests; ++i)
+        filter->requests[i].sample = NULL;
+    CancelIoEx(filter->file, NULL);
+    WakeAllConditionVariable(&filter->sample_cv);
+
+    LeaveCriticalSection(&filter->sample_cs);
 
     return S_OK;
 }
 
 static HRESULT WINAPI FileAsyncReader_EndFlush(IAsyncReader * iface)
 {
-    FileAsyncReader *This = impl_from_IAsyncReader(iface);
-    int x;
+    AsyncReader *filter = impl_from_IAsyncReader(iface);
 
-    TRACE("%p->()\n", This);
+    TRACE("iface %p.\n", iface);
 
-    EnterCriticalSection(&This->csList);
-    ResetEvent(This->handle_list[This->samples]);
-    This->bFlushing = FALSE;
-    for (x = 0; x < This->samples; ++x)
-        assert(!This->sample_list[x].pSample);
+    EnterCriticalSection(&filter->sample_cs);
 
-    LeaveCriticalSection(&This->csList);
+    filter->flushing = FALSE;
+
+    LeaveCriticalSection(&filter->sample_cs);
 
     return S_OK;
 }

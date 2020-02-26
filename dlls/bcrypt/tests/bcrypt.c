@@ -23,6 +23,7 @@
 #define WIN32_NO_STATUS
 #include <windows.h>
 #include <bcrypt.h>
+#include <ncrypt.h>
 
 #include "wine/test.h"
 
@@ -39,9 +40,12 @@ static NTSTATUS (WINAPI *pBCryptDuplicateHash)(BCRYPT_HASH_HANDLE, BCRYPT_HASH_H
 static NTSTATUS (WINAPI *pBCryptDuplicateKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE *, UCHAR *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptEncrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID *, PUCHAR, ULONG, PUCHAR, ULONG,
                                          ULONG *, ULONG);
+static NTSTATUS (WINAPI *pBCryptEnumAlgorithms)(ULONG, ULONG *, BCRYPT_ALGORITHM_IDENTIFIER **, ULONG);
+static NTSTATUS (WINAPI *pBCryptEnumContextFunctions)(ULONG, const WCHAR *, ULONG, ULONG *, CRYPT_CONTEXT_FUNCTIONS **);
 static NTSTATUS (WINAPI *pBCryptExportKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG *, ULONG);
 static NTSTATUS (WINAPI *pBCryptFinalizeKeyPair)(BCRYPT_KEY_HANDLE, ULONG);
 static NTSTATUS (WINAPI *pBCryptFinishHash)(BCRYPT_HASH_HANDLE, PUCHAR, ULONG, ULONG);
+static void     (WINAPI *pBCryptFreeBuffer)(void *);
 static NTSTATUS (WINAPI *pBCryptGenerateKeyPair)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptGenerateSymmetricKey)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE *, PUCHAR, ULONG,
                                                       PUCHAR, ULONG, ULONG);
@@ -56,7 +60,11 @@ static NTSTATUS (WINAPI *pBCryptImportKeyPair)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HAN
                                                UCHAR *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptOpenAlgorithmProvider)(BCRYPT_ALG_HANDLE *, LPCWSTR, LPCWSTR, ULONG);
 static NTSTATUS (WINAPI *pBCryptSetProperty)(BCRYPT_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptSignHash)(BCRYPT_KEY_HANDLE, void *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG *, ULONG);
 static NTSTATUS (WINAPI *pBCryptVerifySignature)(BCRYPT_KEY_HANDLE, VOID *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG);
+static NTSTATUS (WINAPI *pBCryptSecretAgreement)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE, BCRYPT_SECRET_HANDLE *, ULONG);
+static NTSTATUS (WINAPI *pBCryptDestroySecret)(BCRYPT_SECRET_HANDLE);
+static NTSTATUS (WINAPI *pBCryptDeriveKey)(BCRYPT_SECRET_HANDLE, LPCWSTR, BCryptBufferDesc *, PUCHAR, ULONG, ULONG *, ULONG);
 
 static void test_BCryptGenRandom(void)
 {
@@ -147,13 +155,6 @@ static void format_hash(const UCHAR *bytes, ULONG size, char *buf)
     return;
 }
 
-static int strcmp_wa(const WCHAR *strw, const char *stra)
-{
-    WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, ARRAY_SIZE(buf));
-    return lstrcmpW(strw, buf);
-}
-
 #define test_object_length(a) _test_object_length(__LINE__,a)
 static void _test_object_length(unsigned line, void *handle)
 {
@@ -203,7 +204,7 @@ static void _test_hash_length(unsigned line, void *handle, ULONG exlen)
 }
 
 #define test_alg_name(a,b) _test_alg_name(__LINE__,a,b)
-static void _test_alg_name(unsigned line, void *handle, const char *exname)
+static void _test_alg_name(unsigned line, void *handle, const WCHAR *exname)
 {
     ULONG size = 0xdeadbeef;
     UCHAR buf[256];
@@ -212,13 +213,14 @@ static void _test_alg_name(unsigned line, void *handle, const char *exname)
 
     status = pBCryptGetProperty(handle, BCRYPT_ALGORITHM_NAME, buf, sizeof(buf), &size, 0);
     ok_(__FILE__,line)(status == STATUS_SUCCESS, "BCryptGetProperty failed: %08x\n", status);
-    ok_(__FILE__,line)(size == (strlen(exname)+1)*sizeof(WCHAR), "got %u\n", size);
-    ok_(__FILE__,line)(!strcmp_wa(name, exname), "alg name = %s, expected %s\n", wine_dbgstr_w(name), exname);
+    ok_(__FILE__,line)(size == (lstrlenW(exname)+1)*sizeof(WCHAR), "got %u\n", size);
+    ok_(__FILE__,line)(!lstrcmpW(name, exname), "alg name = %s, expected %s\n", wine_dbgstr_w(name),
+                       wine_dbgstr_w(exname));
 }
 
 struct hash_test
 {
-    const char *alg;
+    const WCHAR *alg;
     unsigned hash_size;
     const char *hash;
     const char *hash2;
@@ -231,15 +233,12 @@ static void test_hash(const struct hash_test *test)
     BCRYPT_ALG_HANDLE alg;
     BCRYPT_HASH_HANDLE hash;
     UCHAR buf[512], buf_hmac[1024], hash_buf[128], hmac_hash[128];
-    WCHAR alg_name[64];
     char str[512];
     NTSTATUS ret;
     ULONG len;
 
-    MultiByteToWideChar(CP_ACP, 0, test->alg, -1, alg_name, ARRAY_SIZE(alg_name));
-
     alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, alg_name, MS_PRIMITIVE_PROVIDER, 0);
+    ret = pBCryptOpenAlgorithmProvider(&alg, test->alg, MS_PRIMITIVE_PROVIDER, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(alg != NULL, "alg not set\n");
 
@@ -304,7 +303,7 @@ static void test_hash(const struct hash_test *test)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, alg_name, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
+    ret = pBCryptOpenAlgorithmProvider(&alg, test->alg, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(alg != NULL, "alg not set\n");
 
@@ -372,19 +371,19 @@ static void test_hashes(void)
 {
     static const struct hash_test tests[] =
     {
-        { "SHA1", 20,
+        { L"SHA1", 20,
         "961fa64958818f767707072755d7018dcd278e94",
         "9314f62ff64197143c91fc86de37e9ae776a3fb8",
         "2472cf65d0e090618d769d3e46f0d9446cf212da",
         "b2d2ba8cfd714d474cf0d9622cc5d15e1f53d53f",
         },
-        { "SHA256", 32,
+        { L"SHA256", 32,
         "ceb73749c899693706ede1e30c9929b3fd5dd926163831c2fb8bd41e6efb1126",
         "ea0938c118a7b15954f41b85195f2b42aec3a9429c63f593cfa65c137ffaa986",
         "34c1aa473a4468a91d06e7cdbc75bc4f93b830ccfc2a47ffd74e8e6ed29e4c72",
         "55feb7052060bd99e33f36eb0982c7f4856eb6a84fbefe19a1afd9faafc3af6f",
         },
-        { "SHA384", 48,
+        { L"SHA384", 48,
         "62b21e90c9022b101671ba1f808f8631a8149f0f12904055839a35c1ca78ae53"
         "63eed1e743a692d70e0504b0cfd12ef9",
         "724db7c0bbc51ef1ac3fc793083fc54c0e5c423faec9b11378c01c236b19aaaf"
@@ -394,7 +393,7 @@ static void test_hashes(void)
         "03e1818e5c165a0e54619e513acb06c393e1a6cb0ddbb4036b5f29617b334642"
         "e6e0be8b214d8508595b17a8c4b4e7db",
         },
-        { "SHA512", 64,
+        { L"SHA512", 64,
         "d55ced17163bf5386f2cd9ff21d6fd7fe576a915065c24744d09cfae4ec84ee1"
         "ef6ef11bfbc5acce3639bab725b50a1fe2c204f8c820d6d7db0df0ecbc49c5ca",
         "7752d707b54d2b00e7d1c09120d189475b0fd2e31ebb988cf0a01fc8492ddc0b"
@@ -404,19 +403,19 @@ static void test_hashes(void)
         "1487bcecba46ae677622fa499e4cb2f0fdf92f6f3427cba76382d537a06e49c3"
         "3e70a2fc1fc730092bf21128c3704cc6387f6dfbf7e2f9f315bbb894505a1205",
         },
-        { "MD2", 16,
+        { L"MD2", 16,
         "1bb33606ba908912a84221109d29cd7e",
         "b9a6ad9323b17e2d0cd389dddd6ef78a",
         "7f05b0638d77f4a27f3a9c4d353cd648",
         "05980873e6bfdd05dd7b30078de7e42a",
         },
-        { "MD4", 16,
+        { L"MD4", 16,
         "74b5db93c0b41e36ca7074338fc0b637",
         "a14a9ff2059a8c28f47b01e6bc48a1bf",
         "bc2e8ac4d8248ed21b8d26227a30ea3a",
         "b609db0eb4b8669db74f2c20099701e4",
         },
-        { "MD5", 16,
+        { L"MD5", 16,
         "e2a3e68d23ce348b8f68b3079de3d4c9",
         "bcdd7ca574342aa9db0e212348eacb16",
         "7bda029b93fa8d817fcc9e13d6bdf092",
@@ -452,7 +451,7 @@ static void test_BcryptHash(void)
     ok(alg != NULL, "alg not set\n");
 
     test_hash_length(alg, 16);
-    test_alg_name(alg, "MD5");
+    test_alg_name(alg, L"MD5");
 
     memset(md5, 0, sizeof(md5));
     ret = pBCryptHash(alg, NULL, 0, (UCHAR *)"test", sizeof("test"), md5, sizeof(md5));
@@ -533,7 +532,7 @@ static void test_BcryptDeriveKeyPBKDF2(void)
     ok(alg != NULL, "alg not set\n");
 
     test_hash_length(alg, 20);
-    test_alg_name(alg, "SHA1");
+    test_alg_name(alg, L"SHA1");
 
     ret = pBCryptDeriveKeyPBKDF2(alg, rfc6070[0].pwd, rfc6070[0].pwd_len, rfc6070[0].salt, rfc6070[0].salt_len,
                                  0, buf, rfc6070[0].dk_len, 0);
@@ -573,7 +572,7 @@ static void test_rng(void)
     ret = pBCryptGetProperty(alg, BCRYPT_HASH_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
     ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
 
-    test_alg_name(alg, "RNG");
+    test_alg_name(alg, L"RNG");
 
     memset(buf, 0, 16);
     ret = pBCryptGenRandom(alg, buf, 8, 0);
@@ -636,7 +635,7 @@ static void test_aes(void)
     ok(key_lengths.dwIncrement == 64, "Expected 64, got %d\n", key_lengths.dwIncrement);
 
     memcpy(mode, BCRYPT_CHAIN_MODE_GCM, sizeof(BCRYPT_CHAIN_MODE_GCM));
-    ret = pBCryptSetProperty(alg, BCRYPT_CHAINING_MODE, mode, sizeof(mode), 0);
+    ret = pBCryptSetProperty(alg, BCRYPT_CHAINING_MODE, mode, 0, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     size = 0;
@@ -646,7 +645,7 @@ static void test_aes(void)
     ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_GCM), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
     ok(size == 64, "got %u\n", size);
 
-    test_alg_name(alg, "AES");
+    test_alg_name(alg, L"AES");
 
     ret = pBCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
@@ -690,6 +689,25 @@ static void test_BCryptGenerateSymmetricKey(void)
     ret = pBCryptSetProperty(aes, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_CBC,
                             sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    size = 0;
+    memset(mode, 0, sizeof(mode));
+    ret = pBCryptGetProperty(key, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_CBC), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
+    ok(size == 64, "got %u\n", size);
+
+    ret = pBCryptSetProperty(key, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_ECB, 0, 0);
+    ok(ret == STATUS_SUCCESS || broken(ret == STATUS_NOT_SUPPORTED) /* < Win 8 */, "got %08x\n", ret);
+    if (ret == STATUS_SUCCESS)
+    {
+        size = 0;
+        memset(mode, 0, sizeof(mode));
+        ret = pBCryptGetProperty(key, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+        ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_ECB), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
+        ok(size == 64, "got %u\n", size);
+    }
 
     ret = pBCryptSetProperty(key, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_CBC,
                              sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
@@ -1761,15 +1779,113 @@ static UCHAR rsaSignature[] =
 
 static void test_RSA(void)
 {
+    static UCHAR hash[] =
+        {0x7e,0xe3,0x74,0xe7,0xc5,0x0b,0x6b,0x70,0xdb,0xab,0x32,0x6d,0x1d,0x51,0xd6,0x74,0x79,0x8e,0x5b,0x4b};
     BCRYPT_PKCS1_PADDING_INFO pad;
-    BCRYPT_ALG_HANDLE alg = NULL;
-    BCRYPT_KEY_HANDLE key = NULL;
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
+    BCRYPT_RSAKEY_BLOB *rsablob;
+    UCHAR sig[64];
+    ULONG len, size, schemes;
     NTSTATUS ret;
+    BYTE *buf;
 
     ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
     if (ret)
     {
         win_skip("Failed to open RSA provider: %08x, skipping test\n", ret);
+        return;
+    }
+
+    schemes = size = 0;
+    ret = pBCryptGetProperty(alg, L"PaddingSchemes", (UCHAR *)&schemes, sizeof(schemes), &size, 0);
+    ok(!ret, "got %08x\n", ret);
+    ok(schemes, "schemes not set\n");
+    ok(size == sizeof(schemes), "got %u\n", size);
+
+    ret = pBCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, rsaPublicBlob, sizeof(rsaPublicBlob), 0);
+    ok(!ret, "pBCryptImportKeyPair failed: %08x\n", ret);
+
+    pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
+    ret = pBCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), BCRYPT_PAD_PKCS1);
+    ok(!ret, "pBCryptVerifySignature failed: %08x\n", ret);
+
+    ret = pBCryptVerifySignature(key, NULL, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), BCRYPT_PAD_PKCS1);
+    ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", ret);
+
+    pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
+    ret = pBCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", ret);
+
+    ret = pBCryptVerifySignature(key, NULL, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", ret);
+
+    pad.pszAlgId = BCRYPT_AES_ALGORITHM;
+    ret = pBCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), BCRYPT_PAD_PKCS1);
+    ok(ret == STATUS_NOT_SUPPORTED, "Expected STATUS_NOT_SUPPORTED, got %08x\n", ret);
+
+    pad.pszAlgId = NULL;
+    ret = pBCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), BCRYPT_PAD_PKCS1);
+    ok(ret == STATUS_INVALID_SIGNATURE, "Expected STATUS_INVALID_SIGNATURE, got %08x\n", ret);
+
+    ret = pBCryptDestroyKey(key);
+    ok(!ret, "pBCryptDestroyKey failed: %08x\n", ret);
+
+    /* sign/verify with export/import round-trip */
+    ret = pBCryptGenerateKeyPair(alg, &key, 512, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    ret = pBCryptFinalizeKeyPair(key, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
+    memset(sig, 0, sizeof(sig));
+    ret = pBCryptSignHash(key, &pad, hash, sizeof(hash), sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "got %08x\n", ret);
+
+    size = 0;
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAPUBLIC_BLOB, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size, "size not set\n");
+
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = pBCryptExportKey(key, NULL, BCRYPT_RSAPUBLIC_BLOB, buf, size, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    rsablob = (BCRYPT_RSAKEY_BLOB *)buf;
+    ok(rsablob->Magic == BCRYPT_RSAPUBLIC_MAGIC, "got %08x\n", rsablob->Magic);
+    ok(rsablob->BitLength == 512, "got %u\n", rsablob->BitLength);
+    ok(rsablob->cbPublicExp == 3, "got %u\n", rsablob->cbPublicExp);
+    ok(rsablob->cbModulus == 64, "got %u\n", rsablob->cbModulus);
+    ok(!rsablob->cbPrime1, "got %u\n", rsablob->cbPrime1);
+    ok(!rsablob->cbPrime2, "got %u\n", rsablob->cbPrime2);
+    ok(size == sizeof(*rsablob) + rsablob->cbPublicExp + rsablob->cbModulus, "got %u\n", size);
+    ret = pBCryptDestroyKey(key);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, buf, size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    ret = pBCryptVerifySignature(key, &pad, hash, sizeof(hash), sig, len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "got %08x\n", ret);
+    ret = pBCryptDestroyKey(key);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptCloseAlgorithmProvider(alg, 0);
+    ok(!ret, "got %08x\n", ret);
+}
+
+static void test_RSA_SIGN(void)
+{
+    BCRYPT_PKCS1_PADDING_INFO pad;
+    BCRYPT_ALG_HANDLE alg = NULL;
+    BCRYPT_KEY_HANDLE key = NULL;
+    NTSTATUS ret;
+
+    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_RSA_SIGN_ALGORITHM, NULL, 0);
+    if (ret)
+    {
+        win_skip("Failed to open RSA_SIGN provider: %08x, skipping test\n", ret);
         return;
     }
 
@@ -1807,13 +1923,51 @@ static void test_RSA(void)
 
 static BYTE eccprivkey[] =
 {
-    0x45, 0x43, 0x4b, 0x32, 0x20, 0x00, 0x00, 0x00, 0xfb, 0xbd, 0x3d, 0x20, 0x1b, 0x6d, 0x66, 0xb3,
-    0x7c, 0x9f, 0x89, 0xf3, 0xe4, 0x41, 0x16, 0xa5, 0x68, 0x52, 0x77, 0xac, 0xab, 0x55, 0xb2, 0x6c,
-    0xb0, 0x23, 0x55, 0xcb, 0x96, 0x14, 0xfd, 0x0b, 0x1c, 0xef, 0xdf, 0x07, 0x6d, 0x31, 0xaf, 0x39,
-    0xce, 0x8c, 0x8f, 0x9d, 0x75, 0xd0, 0x7b, 0xea, 0x81, 0xdc, 0x40, 0x21, 0x1f, 0x58, 0x22, 0x5f,
-    0x72, 0x55, 0xfc, 0x58, 0x8a, 0xeb, 0x88, 0x5d, 0x02, 0x09, 0x90, 0xd2, 0xe3, 0x36, 0xac, 0xfe,
-    0x83, 0x13, 0x6c, 0x88, 0x1a, 0xab, 0x9b, 0xdd, 0xaa, 0x8a, 0xee, 0x69, 0x9a, 0x6a, 0x62, 0x86,
-    0x6a, 0x13, 0x69, 0x88, 0xb7, 0xd5, 0xa3, 0xcd
+    0x45, 0x43, 0x4b, 0x32, 0x20, 0x00, 0x00, 0x00,
+    0xfb, 0xbd, 0x3d, 0x20, 0x1b, 0x6d, 0x66, 0xb3, 0x7c, 0x9f, 0x89, 0xf3, 0xe4, 0x41, 0x16, 0xa5,
+    0x68, 0x52, 0x77, 0xac, 0xab, 0x55, 0xb2, 0x6c, 0xb0, 0x23, 0x55, 0xcb, 0x96, 0x14, 0xfd, 0x0b,
+    0x1c, 0xef, 0xdf, 0x07, 0x6d, 0x31, 0xaf, 0x39, 0xce, 0x8c, 0x8f, 0x9d, 0x75, 0xd0, 0x7b, 0xea,
+    0x81, 0xdc, 0x40, 0x21, 0x1f, 0x58, 0x22, 0x5f, 0x72, 0x55, 0xfc, 0x58, 0x8a, 0xeb, 0x88, 0x5d,
+    0x02, 0x09, 0x90, 0xd2, 0xe3, 0x36, 0xac, 0xfe, 0x83, 0x13, 0x6c, 0x88, 0x1a, 0xab, 0x9b, 0xdd,
+    0xaa, 0x8a, 0xee, 0x69, 0x9a, 0x6a, 0x62, 0x86, 0x6a, 0x13, 0x69, 0x88, 0xb7, 0xd5, 0xa3, 0xcd
+};
+
+static BYTE ecdh_pubkey[] =
+{
+    0x45, 0x43, 0x4b, 0x31, 0x20, 0x00, 0x00, 0x00,
+    0x07, 0x61, 0x9d, 0x49, 0x63, 0x6b, 0x96, 0x94, 0xd1, 0x8f, 0xd1, 0x48, 0xcc, 0xcf, 0x72, 0x4d,
+    0xff, 0x43, 0xf4, 0x97, 0x0f, 0xa3, 0x8a, 0x72, 0xe9, 0xe0, 0xba, 0x87, 0x6d, 0xc3, 0x62, 0x15,
+    0xae, 0x65, 0xdd, 0x31, 0x51, 0xfc, 0x3b, 0xc9, 0x59, 0xa1, 0x0a, 0x92, 0x17, 0x2b, 0x64, 0x55,
+    0x03, 0x3e, 0x62, 0x1d, 0xac, 0x3e, 0x37, 0x40, 0x6a, 0x4c, 0xb6, 0x21, 0x3f, 0x73, 0x5c, 0xf5
+};
+
+/* little endian */
+static BYTE ecdh_secret[] =
+{
+    0x48, 0xb0, 0x11, 0xdb, 0x69, 0x4e, 0xb4, 0xf4, 0xf5, 0x3e, 0xe1, 0x9b, 0xca, 0x00, 0x04, 0xc8,
+    0x9b, 0x69, 0xaf, 0xd1, 0xaf, 0x1f, 0xc2, 0xd7, 0x83, 0x0a, 0xb7, 0xf8, 0x4f, 0x24, 0x32, 0x8e,
+};
+
+BCryptBuffer hash_param_buffers[] =
+{
+{
+    sizeof(BCRYPT_SHA1_ALGORITHM),
+    KDF_HASH_ALGORITHM,
+    (void *)BCRYPT_SHA1_ALGORITHM,
+}
+};
+
+BCryptBufferDesc hash_params =
+{
+    BCRYPTBUFFER_VERSION,
+    ARRAY_SIZE(hash_param_buffers),
+    hash_param_buffers,
+};
+
+static BYTE hashed_secret[] =
+{
+    0x1b, 0xe7, 0xbf, 0x0f, 0x65, 0x1e, 0xd0, 0x07, 0xf9, 0xf4, 0x77, 0x48, 0x48, 0x39, 0xd0, 0xf8,
+    0xf3, 0xce, 0xfc, 0x89
 };
 
 static void test_ECDH(void)
@@ -1822,6 +1976,7 @@ static void test_ECDH(void)
     BCRYPT_ECCKEY_BLOB *ecckey;
     BCRYPT_ALG_HANDLE alg;
     BCRYPT_KEY_HANDLE key, privkey, pubkey;
+    BCRYPT_SECRET_HANDLE secret;
     NTSTATUS status;
     ULONG size;
 
@@ -1892,8 +2047,313 @@ static void test_ECDH(void)
     ok(!memcmp(buf, eccprivkey, size), "wrong data\n");
     HeapFree(GetProcessHeap(), 0, buf);
 
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &pubkey, ecdh_pubkey, sizeof(ecdh_pubkey), 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    status = pBCryptSecretAgreement(privkey, pubkey, &secret, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    if (status != STATUS_SUCCESS)
+    {
+        goto derive_end;
+    }
+
+    /* verify result on windows 10 */
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_RAW_SECRET, NULL, NULL, 0, &size, 0);
+
+    if (status == STATUS_NOT_SUPPORTED)
+    {
+        win_skip("BCRYPT_KDF_RAW_SECRET not supported\n");
+        goto raw_secret_end;
+    }
+
+    todo_wine ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    if (status != STATUS_SUCCESS)
+    {
+        goto raw_secret_end;
+    }
+
+    ok(size == 32, "size of secret key incorrect, got %u, expected 32\n", size);
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_RAW_SECRET, NULL, buf, size, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ok(!(memcmp(ecdh_secret, buf, size)), "wrong data\n");
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    raw_secret_end:
+
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
+    todo_wine ok (status == STATUS_SUCCESS, "got %08x\n", status);
+
+    if (status != STATUS_SUCCESS)
+    {
+        goto derive_end;
+    }
+
+    ok (size == 20, "got %u\n", size);
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, buf, size, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ok(!(memcmp(hashed_secret, buf, size)), "wrong data\n");
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    /* ulVersion is not verified */
+    hash_params.ulVersion = 0xdeadbeef;
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
+    ok (status == STATUS_SUCCESS, "got %08x\n", status);
+
+    hash_params.ulVersion = BCRYPTBUFFER_VERSION;
+    hash_param_buffers[0].pvBuffer = (void*) L"INVALID";
+    hash_param_buffers[0].cbBuffer = sizeof(L"INVALID");
+
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
+    ok (status == STATUS_NOT_SUPPORTED || broken (status == STATUS_NOT_FOUND) /* < win8 */, "got %08x\n", status);
+
+    hash_param_buffers[0].pvBuffer = (void*) BCRYPT_RNG_ALGORITHM;
+    hash_param_buffers[0].cbBuffer = sizeof(BCRYPT_RNG_ALGORITHM);
+    status = pBCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, NULL, 0, &size, 0);
+    ok (status == STATUS_NOT_SUPPORTED, "got %08x\n", status);
+
+    derive_end:
+
+    pBCryptDestroySecret(secret);
+    pBCryptDestroyKey(pubkey);
     pBCryptDestroyKey(privkey);
     pBCryptCloseAlgorithmProvider(alg, 0);
+}
+
+static void test_BCryptEnumContextFunctions(void)
+{
+    static const WCHAR sslW[] = {'S','S','L',0};
+    CRYPT_CONTEXT_FUNCTIONS *buffer;
+    NTSTATUS status;
+    ULONG buflen;
+
+    buffer = NULL;
+    status = pBCryptEnumContextFunctions( CRYPT_LOCAL, sslW, NCRYPT_SCHANNEL_INTERFACE, &buflen, &buffer );
+    todo_wine ok( status == STATUS_SUCCESS, "got %08x\n", status);
+    if (status == STATUS_SUCCESS) pBCryptFreeBuffer( buffer );
+}
+
+static BYTE rsapublic[] =
+{
+    0x52, 0x53, 0x41, 0x31, 0x00, 0x08, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0xd5, 0xfe, 0xf6, 0x7a, 0x9a, 0xa1, 0x2d, 0xcf, 0x98,
+    0x60, 0xca, 0x38, 0x60, 0x0b, 0x74, 0x4c, 0x7e, 0xa1, 0x42, 0x64, 0xad, 0x05, 0xa5, 0x29, 0x25, 0xcb, 0xd5,
+    0x9c, 0xaf, 0x6f, 0x63, 0x85, 0x6d, 0x5b, 0x59, 0xe5, 0x17, 0x8f, 0xf9, 0x18, 0x90, 0xa7, 0x63, 0xae, 0xe0,
+    0x3a, 0x62, 0xf7, 0x98, 0x57, 0xe9, 0x91, 0xda, 0xfb, 0xd9, 0x36, 0x45, 0xe4, 0x9e, 0x75, 0xf6, 0x73, 0xc4,
+    0x99, 0x23, 0x21, 0x1b, 0x3d, 0xe1, 0xe0, 0xa6, 0xa0, 0x4a, 0x50, 0x2a, 0xcb, 0x2a, 0x50, 0xf0, 0x8b, 0x70,
+    0x9c, 0xe4, 0x1a, 0x14, 0x3b, 0xbe, 0x35, 0xa5, 0x5a, 0x91, 0xa3, 0xa1, 0x82, 0xea, 0x84, 0x4d, 0xe8, 0x62,
+    0x3b, 0x11, 0xec, 0x61, 0x09, 0x6c, 0xfe, 0xb2, 0xcc, 0x4b, 0xa8, 0xff, 0xaf, 0x73, 0x72, 0x05, 0x4e, 0x7e,
+    0xe5, 0x73, 0xdf, 0x24, 0xcf, 0x7f, 0x5d, 0xaf, 0x8a, 0xf0, 0xd8, 0xcb, 0x08, 0x1e, 0xf2, 0x36, 0x70, 0x8d,
+    0x1b, 0x9e, 0xc8, 0x98, 0x60, 0x54, 0xeb, 0x45, 0x34, 0x21, 0x43, 0x4d, 0x42, 0x0a, 0x3a, 0x2d, 0x0f, 0x0e,
+    0xd6, 0x0d, 0xe4, 0x2e, 0x8c, 0x31, 0x87, 0xa8, 0x09, 0x89, 0x61, 0x16, 0xca, 0x5b, 0xbe, 0x76, 0x69, 0xbb,
+    0xfd, 0x91, 0x63, 0xd2, 0x66, 0x57, 0x08, 0xef, 0xe2, 0x40, 0x67, 0xd7, 0x7f, 0x50, 0x15, 0x42, 0x33, 0x97,
+    0x54, 0x73, 0x47, 0xe7, 0x9c, 0x14, 0xa8, 0xb0, 0x3d, 0xc9, 0x23, 0xb0, 0x27, 0x3b, 0xe7, 0xdd, 0x5f, 0xd1,
+    0x4f, 0x31, 0x10, 0x7d, 0xdd, 0x69, 0x8e, 0xde, 0xa3, 0xe8, 0x92, 0x00, 0xfa, 0xa5, 0xa4, 0x40, 0x51, 0x23,
+    0x82, 0x84, 0xc7, 0xce, 0x19, 0x61, 0x26, 0xf1, 0xae, 0xf3, 0x90, 0x93, 0x98, 0x56, 0x23, 0x9a, 0xd1, 0xbd,
+    0xf2, 0xdf, 0xfd, 0x13, 0x9c, 0x30, 0x07, 0xf9, 0x5a, 0x2e, 0x00, 0xc6, 0x1f
+};
+
+static void test_BCryptSignHash(void)
+{
+    static UCHAR hash[] =
+        {0x7e,0xe3,0x74,0xe7,0xc5,0x0b,0x6b,0x70,0xdb,0xab,0x32,0x6d,0x1d,0x51,0xd6,0x74,0x79,0x8e,0x5b,0x4b};
+    static UCHAR hash_sha256[] =
+        {0x25,0x2f,0x10,0xc8,0x36,0x10,0xeb,0xca,0x1a,0x05,0x9c,0x0b,0xae,0x82,0x55,0xeb,0xa2,0xf9,0x5b,0xe4,
+         0xd1,0xd7,0xbC,0xfA,0x89,0xd7,0x24,0x8a,0x82,0xd9,0xf1,0x11};
+    BCRYPT_PKCS1_PADDING_INFO pad;
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
+    UCHAR sig[256];
+    NTSTATUS ret;
+    ULONG len;
+
+    /* RSA */
+
+    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_RSA_ALGORITHM, NULL, 0);
+    if (ret)
+    {
+        win_skip("failed to open RSA provider: %08x\n", ret);
+        return;
+    }
+
+    /* public key */
+    ret = pBCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, rsapublic, sizeof(rsapublic), 0);
+    ok(!ret, "got %08x\n", ret);
+
+    len = 0;
+    pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
+    ret = pBCryptSignHash(key, &pad, NULL, 0, NULL, 0, &len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "got %08x\n", ret);
+    ok(len == 256, "got %u\n", len);
+
+    len = 0;
+    ret = pBCryptSignHash(key, &pad, hash, sizeof(hash), sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
+    ok(ret == STATUS_INVALID_PARAMETER || broken(ret == STATUS_INTERNAL_ERROR) /* < win7 */, "got %08x\n", ret);
+    ret = pBCryptDestroyKey(key);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptGenerateKeyPair(alg, &key, 512, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    ret = pBCryptFinalizeKeyPair(key, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    len = 0;
+    memset(sig, 0, sizeof(sig));
+
+    /* inference of padding info on RSA not supported */
+    ret = pBCryptSignHash(key, NULL, hash, sizeof(hash), sig, sizeof(sig), &len, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptSignHash(key, &pad, hash, sizeof(hash), sig, 0, &len, BCRYPT_PAD_PKCS1);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+
+    ret = pBCryptSignHash(key, &pad, hash, sizeof(hash), sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "got %08x\n", ret);
+    ok(len == 64, "got %u\n", len);
+
+    ret = pBCryptVerifySignature(key, &pad, hash, sizeof(hash), sig, len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptDestroyKey(key);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptCloseAlgorithmProvider(alg, 0);
+    ok(!ret, "got %08x\n", ret);
+
+    /* ECDSA */
+
+    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_P256_ALGORITHM, NULL, 0);
+    if (ret)
+    {
+        win_skip("failed to open ECDSA provider: %08x\n", ret);
+        return;
+    }
+
+    ret = pBCryptGenerateKeyPair(alg, &key, 256, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    ret = pBCryptFinalizeKeyPair(key, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    memset(sig, 0, sizeof(sig));
+    len = 0;
+
+    /* automatically detects padding info */
+    ret = pBCryptSignHash(key, NULL, hash, sizeof(hash), sig, sizeof(sig), &len, 0);
+    ok (!ret, "got %08x\n", ret);
+    ok (len == 64, "got %u\n", len);
+
+    ret = pBCryptVerifySignature(key, NULL, hash, sizeof(hash), sig, len, 0);
+    ok(!ret, "got %08x\n", ret);
+
+    /* mismatch info (SHA-1 != SHA-256) */
+    ret  = pBCryptSignHash(key, &pad, hash_sha256, sizeof(hash_sha256), sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
+    ok (ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptDestroyKey(key);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptCloseAlgorithmProvider(alg, 0);
+    ok(!ret, "got %08x\n", ret);
+}
+
+static void test_BCryptEnumAlgorithms(void)
+{
+    BCRYPT_ALGORITHM_IDENTIFIER *list;
+    NTSTATUS ret;
+    ULONG count;
+
+    ret = pBCryptEnumAlgorithms(0, NULL, NULL, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptEnumAlgorithms(0, &count, NULL, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptEnumAlgorithms(0, NULL, &list, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptEnumAlgorithms(~0u, &count, &list, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    count = 0;
+    list = NULL;
+    ret = pBCryptEnumAlgorithms(0, &count, &list, 0);
+    ok(!ret, "got %08x\n", ret);
+    ok(list != NULL, "NULL list\n");
+    ok(count, "got %u\n", count);
+    pBCryptFreeBuffer( list );
+}
+
+static void test_aes_vector(void)
+{
+    static const UCHAR secret[] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10};
+    static const UCHAR expect[] = {0xb0,0xcb,0xf5,0x80,0xd4,0xe3,0x55,0x23,0x6e,0x19,0x5b,0xdb,0xfe,0xe0,0x6c,0xd3};
+    static const UCHAR expect2[] = {0x06,0x0c,0x81,0xab,0xd4,0x28,0x80,0x42,0xce,0x30,0x56,0x17,0x15,0x00,0x9e,0xc1};
+    static const UCHAR expect3[] = {0x3e,0x99,0xbf,0x02,0xf5,0xd3,0xb8,0x81,0x91,0x4d,0x93,0xea,0xd4,0x92,0x93,0x46};
+    static UCHAR iv[16], input[] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p'};
+    UCHAR output[16];
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
+    UCHAR data[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + sizeof(secret)];
+    BCRYPT_KEY_DATA_BLOB_HEADER *blob = (BCRYPT_KEY_DATA_BLOB_HEADER *)data;
+    ULONG size;
+    NTSTATUS ret;
+
+    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_AES_ALGORITHM, NULL, 0);
+    ok(!ret, "got %08x\n", ret);
+
+    size = sizeof(BCRYPT_CHAIN_MODE_CBC);
+    ret = pBCryptSetProperty(alg, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_CBC, size, 0);
+    ok(!ret, "got %08x\n", ret);
+
+    blob->dwMagic   = BCRYPT_KEY_DATA_BLOB_MAGIC;
+    blob->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
+    blob->cbKeyData = sizeof(secret);
+    memcpy(data + sizeof(*blob), secret, sizeof(secret));
+    size = sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + sizeof(secret);
+    ret = pBCryptImportKey(alg, NULL, BCRYPT_KEY_DATA_BLOB, &key, NULL, 0, data, size, 0);
+    ok(!ret || broken(ret == STATUS_INVALID_PARAMETER) /* vista */, "got %08x\n", ret);
+    if (ret == STATUS_INVALID_PARAMETER)
+    {
+        win_skip("broken BCryptImportKey\n");
+        pBCryptCloseAlgorithmProvider(alg, 0);
+        return;
+    }
+
+    /* zero initialization vector */
+    size = 0;
+    memset(output, 0, sizeof(output));
+    ret = pBCryptEncrypt(key, input, sizeof(input), NULL, iv, sizeof(iv), output, sizeof(output), &size, 0);
+    ok(!ret, "got %08x\n", ret);
+    ok(size == 16, "got %u\n", size);
+    ok(!memcmp(output, expect, sizeof(expect)), "wrong cipher text\n");
+
+    /* same initialization vector */
+    size = 0;
+    memset(output, 0, sizeof(output));
+    ret = pBCryptEncrypt(key, input, sizeof(input), NULL, iv, sizeof(iv), output, sizeof(output), &size, 0);
+    ok(!ret, "got %08x\n", ret);
+    ok(size == 16, "got %u\n", size);
+    ok(!memcmp(output, expect2, sizeof(expect2)), "wrong cipher text\n");
+
+    /* different initialization vector */
+    iv[0] = 0x1;
+    size = 0;
+    memset(output, 0, sizeof(output));
+    ret = pBCryptEncrypt(key, input, sizeof(input), NULL, iv, sizeof(iv), output, sizeof(output), &size, 0);
+    ok(!ret, "got %08x\n", ret);
+    ok(size == 16, "got %u\n", size);
+    todo_wine ok(!memcmp(output, expect3, sizeof(expect3)), "wrong cipher text\n");
+
+    ret = pBCryptDestroyKey(key);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptCloseAlgorithmProvider(alg, 0);
+    ok(!ret, "got %08x\n", ret);
 }
 
 START_TEST(bcrypt)
@@ -1916,9 +2376,12 @@ START_TEST(bcrypt)
     pBCryptDuplicateHash = (void *)GetProcAddress(module, "BCryptDuplicateHash");
     pBCryptDuplicateKey = (void *)GetProcAddress(module, "BCryptDuplicateKey");
     pBCryptEncrypt = (void *)GetProcAddress(module, "BCryptEncrypt");
+    pBCryptEnumAlgorithms = (void *)GetProcAddress(module, "BCryptEnumAlgorithms");
+    pBCryptEnumContextFunctions = (void *)GetProcAddress(module, "BCryptEnumContextFunctions");
     pBCryptExportKey = (void *)GetProcAddress(module, "BCryptExportKey");
     pBCryptFinalizeKeyPair = (void *)GetProcAddress(module, "BCryptFinalizeKeyPair");
     pBCryptFinishHash = (void *)GetProcAddress(module, "BCryptFinishHash");
+    pBCryptFreeBuffer = (void *)GetProcAddress(module, "BCryptFreeBuffer");
     pBCryptGenerateKeyPair = (void *)GetProcAddress(module, "BCryptGenerateKeyPair");
     pBCryptGenerateSymmetricKey = (void *)GetProcAddress(module, "BCryptGenerateSymmetricKey");
     pBCryptGenRandom = (void *)GetProcAddress(module, "BCryptGenRandom");
@@ -1930,7 +2393,11 @@ START_TEST(bcrypt)
     pBCryptImportKeyPair = (void *)GetProcAddress(module, "BCryptImportKeyPair");
     pBCryptOpenAlgorithmProvider = (void *)GetProcAddress(module, "BCryptOpenAlgorithmProvider");
     pBCryptSetProperty = (void *)GetProcAddress(module, "BCryptSetProperty");
+    pBCryptSignHash = (void *)GetProcAddress(module, "BCryptSignHash");
     pBCryptVerifySignature = (void *)GetProcAddress(module, "BCryptVerifySignature");
+    pBCryptSecretAgreement = (void *)GetProcAddress(module, "BCryptSecretAgreement");
+    pBCryptDestroySecret = (void *)GetProcAddress(module, "BCryptDestroySecret");
+    pBCryptDeriveKey = (void *)GetProcAddress(module, "BCryptDeriveKey");
 
     test_BCryptGenRandom();
     test_BCryptGetFipsAlgorithmMode();
@@ -1945,7 +2412,12 @@ START_TEST(bcrypt)
     test_key_import_export();
     test_ECDSA();
     test_RSA();
+    test_RSA_SIGN();
     test_ECDH();
+    test_BCryptEnumContextFunctions();
+    test_BCryptSignHash();
+    test_BCryptEnumAlgorithms();
+    test_aes_vector();
 
     FreeLibrary(module);
 }

@@ -24,6 +24,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "commctrl.h"
+#include "resources.h"
 
 #include "wine/test.h"
 
@@ -133,6 +134,135 @@ static void test_set_text(void)
     DestroyWindow(hStatic);
 }
 
+static void remove_alpha(HBITMAP hbitmap)
+{
+    BITMAP bm;
+    BYTE *ptr;
+    int i;
+
+    GetObjectW(hbitmap, sizeof(bm), &bm);
+    ok(bm.bmBits != NULL, "bmBits is NULL\n");
+
+    for (i = 0, ptr = bm.bmBits; i < bm.bmWidth * bm.bmHeight; i++, ptr += 4)
+        ptr[3] = 0;
+}
+
+static void test_image(HBITMAP image, BOOL is_dib, BOOL is_premult, BOOL is_alpha)
+{
+    BITMAP bm;
+    HDC hdc;
+    BITMAPINFO info;
+    BYTE bits[4];
+
+    GetObjectW(image, sizeof(bm), &bm);
+    ok(bm.bmWidth == 1, "got %d\n", bm.bmWidth);
+    ok(bm.bmHeight == 1, "got %d\n", bm.bmHeight);
+    ok(bm.bmBitsPixel == 32, "got %d\n", bm.bmBitsPixel);
+    if (is_dib)
+    {
+        ok(bm.bmBits != NULL, "bmBits is NULL\n");
+        memcpy(bits, bm.bmBits, 4);
+        if (is_premult)
+todo_wine
+            ok(bits[0] == 0x05 &&  bits[1] == 0x09 &&  bits[2] == 0x0e && bits[3] == 0x44,
+               "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
+        else if (is_alpha)
+            ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0x44,
+               "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
+        else
+            ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0,
+               "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
+    }
+    else
+        ok(bm.bmBits == NULL, "bmBits is not NULL\n");
+
+    info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info.bmiHeader.biWidth = bm.bmWidth;
+    info.bmiHeader.biHeight = bm.bmHeight;
+    info.bmiHeader.biPlanes = 1;
+    info.bmiHeader.biBitCount = 32;
+    info.bmiHeader.biCompression = BI_RGB;
+    info.bmiHeader.biSizeImage = 4;
+    info.bmiHeader.biXPelsPerMeter = 0;
+    info.bmiHeader.biYPelsPerMeter = 0;
+    info.bmiHeader.biClrUsed = 0;
+    info.bmiHeader.biClrImportant = 0;
+
+    hdc = CreateCompatibleDC(0);
+    GetDIBits(hdc, image, 0, bm.bmHeight, bits, &info, DIB_RGB_COLORS);
+    DeleteDC(hdc);
+
+    if (is_premult)
+todo_wine
+        ok(bits[0] == 0x05 &&  bits[1] == 0x09 &&  bits[2] == 0x0e && bits[3] == 0x44,
+           "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
+    else if (is_alpha)
+        ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0x44,
+           "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
+    else
+        ok(bits[0] == 0x11 &&  bits[1] == 0x22 &&  bits[2] == 0x33 && bits[3] == 0,
+           "bits: %02x %02x %02x %02x\n", bits[0], bits[1], bits[2], bits[3]);
+}
+
+static void test_set_image(void)
+{
+    HWND hwnd = create_static(SS_BITMAP);
+    HBITMAP bmp1, bmp2, image;
+
+    image = LoadImageW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDB_BITMAP_1x1_32BPP), IMAGE_BITMAP, 0, 0, 0);
+    ok(image != NULL, "LoadImage failed\n");
+
+    test_image(image, FALSE, FALSE, TRUE);
+
+    bmp1 = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
+    ok(bmp1 == NULL, "got not NULL\n");
+
+    bmp1 = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
+    ok(bmp1 == NULL, "got not NULL\n");
+
+    bmp1 = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
+    ok(bmp1 != NULL, "got NULL\n");
+    ok(bmp1 != image, "bmp == image\n");
+    test_image(bmp1, TRUE, TRUE, TRUE);
+
+    bmp2 = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
+    ok(bmp2 != NULL, "got NULL\n");
+    ok(bmp2 != image, "bmp == image\n");
+    ok(bmp1 == bmp2, "bmp1 != bmp2\n");
+    test_image(bmp2, TRUE, TRUE, TRUE);
+
+    DeleteObject(image);
+
+    image = LoadImageW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDB_BITMAP_1x1_32BPP), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+    ok(image != NULL, "LoadImage failed\n");
+
+    test_image(image, TRUE, FALSE, TRUE);
+    remove_alpha(image);
+    test_image(image, TRUE, FALSE, FALSE);
+
+    bmp1 = (HBITMAP)SendMessageW(hwnd, STM_GETIMAGE, IMAGE_BITMAP, 0);
+    ok(bmp1 != NULL, "got NULL\n");
+    ok(bmp1 != image, "bmp == image\n");
+    test_image(bmp1, TRUE, TRUE, TRUE);
+
+    bmp2 = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
+    ok(bmp2 != NULL, "got NULL\n");
+    ok(bmp2 != image, "bmp == image\n");
+    ok(bmp1 == bmp2, "bmp1 != bmp2\n");
+    test_image(bmp1, TRUE, TRUE, FALSE);
+
+    bmp2 = (HBITMAP)SendMessageW(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)image);
+    ok(bmp2 != NULL, "got NULL\n");
+    ok(bmp2 == image, "bmp1 != image\n");
+    test_image(bmp2, TRUE, FALSE, FALSE);
+
+    DestroyWindow(hwnd);
+
+    test_image(image, TRUE, FALSE, FALSE);
+
+    DeleteObject(image);
+}
+
 START_TEST(static)
 {
     static const char classname[] = "testclass";
@@ -171,6 +301,7 @@ START_TEST(static)
     test_updates(SS_ETCHEDHORZ, TODO_COUNT);
     test_updates(SS_ETCHEDVERT, TODO_COUNT);
     test_set_text();
+    test_set_image();
 
     DestroyWindow(hMainWnd);
 

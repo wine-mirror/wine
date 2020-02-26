@@ -1,12 +1,15 @@
 MODULE    = amstream.dll
 IMPORTS   = strmiids strmbase uuid ole32 advapi32 ddraw
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
-	amstream.c \
 	audiodata.c \
+	audiostream.c \
+	ddrawstream.c \
+	filter.c \
 	main.c \
-	mediastream.c \
-	mediastreamfilter.c
+	multimedia.c
 
 IDL_SRCS = amstream_classes.idl
 

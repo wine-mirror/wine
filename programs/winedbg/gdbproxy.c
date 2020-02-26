@@ -569,7 +569,7 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 			{
 				if (check_for_interrupt(gdbctx)) {
 					if (!DebugBreakProcess(gdbctx->process->handle)) {
-						ERR("Failed to break into debugee\n");
+						ERR("Failed to break into debuggee\n");
 						break;
 					}
 					WaitForDebugEvent(&de, INFINITE);	
@@ -624,7 +624,7 @@ static void get_process_info(struct gdb_context* gdbctx, char* buffer, size_t le
     case ABOVE_NORMAL_PRIORITY_CLASS:   strcat(buffer, ", above normal priority");      break;
 #endif
 #ifdef BELOW_NORMAL_PRIORITY_CLASS
-    case BELOW_NORMAL_PRIORITY_CLASS:   strcat(buffer, ", below normal priotity");      break;
+    case BELOW_NORMAL_PRIORITY_CLASS:   strcat(buffer, ", below normal priority");      break;
 #endif
     case HIGH_PRIORITY_CLASS:           strcat(buffer, ", high priority");              break;
     case IDLE_PRIORITY_CLASS:           strcat(buffer, ", idle priority");              break;
@@ -1615,7 +1615,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             return packet_ok;
         if (strncmp(gdbctx->in_packet, "Supported", 9) == 0)
         {
-            if (strlen(target_xml))
+            if (*target_xml)
                 return packet_reply(gdbctx, "PacketSize=400;qXfer:features:read+");
             else
             {
@@ -1652,7 +1652,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         }
         break;
     case 'X':
-        if (strlen(target_xml) && strncmp(gdbctx->in_packet, "Xfer:features:read:target.xml", 29) == 0)
+        if (*target_xml && strncmp(gdbctx->in_packet, "Xfer:features:read:target.xml", 29) == 0)
             return packet_reply(gdbctx, target_xml);
         break;
     }

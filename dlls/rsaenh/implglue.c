@@ -21,17 +21,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#include "config.h"
 
-#include "wine/port.h"
-#include "wine/library.h"
-
+#include <stdarg.h>
+#include <stdio.h>
 #include "windef.h"
+#include "winbase.h"
 #include "wincrypt.h"
 
 #include "implglue.h"
-
-#include <stdio.h>
 
 /* Function prototype copied from dlls/advapi32/crypt.c */
 BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen);

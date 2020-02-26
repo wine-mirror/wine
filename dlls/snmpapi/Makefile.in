@@ -1,5 +1,7 @@
 MODULE    = snmpapi.dll
 IMPORTLIB = snmpapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c

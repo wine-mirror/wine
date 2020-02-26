@@ -404,14 +404,6 @@ static char *get_message_context( char **msgid )
 
 #ifdef HAVE_LIBGETTEXTPO
 
-static char *convert_string_utf8( const lanmsg_t *msg )
-{
-    char *buffer = xmalloc( msg->len * 4 + 1 );
-    int len = wmc_wcstombs( CP_UTF8, 0, msg->msg, msg->len, buffer, msg->len * 4 );
-    buffer[len] = 0;
-    return buffer;
-}
-
 static po_message_t find_message( po_file_t po, const char *msgid, const char *msgctxt,
                                   po_message_iterator_t *iterator )
 {
@@ -467,7 +459,8 @@ static void add_po_string( po_file_t po, const lanmsg_t *msgid, const lanmsg_t *
 
     if (msgstr)
     {
-        str_buffer = str = convert_string_utf8( msgstr );
+        int len;
+        str_buffer = str = unicode_to_utf8( msgstr->msg, msgstr->len, &len );
         if (is_english( msgstr->lan )) get_message_context( &str );
     }
     if (!(msg = find_message( po, id, context, &iterator )))
@@ -644,7 +637,6 @@ static lanmsg_t *translate_string( lanmsg_t *str, int lang, int *found )
 {
     lanmsg_t *new;
     const char *transl;
-    int res;
     char *buffer, *msgid, *context;
 
     if (str->len <= 1 || !(buffer = convert_msgid_ascii( str, 0 ))) return str;
@@ -658,11 +650,7 @@ static lanmsg_t *translate_string( lanmsg_t *str, int lang, int *found )
     new->cp   = 0;  /* FIXME */
     new->file = str->file;
     new->line = str->line;
-    new->len  = wmc_mbstowcs( CP_UTF8, 0, transl, strlen(transl) + 1, NULL, 0 );
-    new->msg  = xmalloc( new->len * sizeof(WCHAR) );
-    res = wmc_mbstowcs( CP_UTF8, MB_ERR_INVALID_CHARS, transl, strlen(transl) + 1, new->msg, new->len );
-    if (res == -2)
-        error( "Invalid utf-8 character in string '%s'\n", transl );
+    new->msg  = utf8_to_unicode( transl, strlen(transl) + 1, &new->len );
     free( buffer );
     return new;
 }

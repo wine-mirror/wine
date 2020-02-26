@@ -587,7 +587,7 @@ static BOOL init_systray(void)
     WNDCLASSEXW class;
     Display *display;
 
-    if (root_window != DefaultRootWindow( gdi_display )) return FALSE;
+    if (is_virtual_desktop()) return FALSE;
     if (init_done) return TRUE;
 
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2 * ICON_BORDER;

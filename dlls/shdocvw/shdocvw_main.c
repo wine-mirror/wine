@@ -20,12 +20,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "shdocvw.h"
@@ -284,17 +281,6 @@ static void* fetch_shlwapi_ordinal(UINT_PTR ord)
 
     if (!h && !(h = GetModuleHandleW(shlwapiW))) return NULL;
     return (void*)GetProcAddress(h, (const char*)ord);
-}
-
-/******************************************************************
- *		WhichPlatformFORWARD            (SHDOCVW.@)
- */
-DWORD WINAPI WhichPlatformFORWARD(void)
-{
-    static DWORD (WINAPI *p)(void);
-
-    if (p || (p = fetch_shlwapi_ordinal(276))) return p();
-    return 1; /* not integrated, see shlwapi.WhichPlatform */
 }
 
 /******************************************************************

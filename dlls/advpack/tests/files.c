@@ -101,7 +101,7 @@ static void test_AddDelBackupEntry(void)
 {
     BOOL ret;
     HRESULT res;
-    CHAR path[MAX_PATH];
+    CHAR path[MAX_PATH + 13];
     CHAR windir[MAX_PATH];
 
     lstrcpyA(path, CURR_DIR);

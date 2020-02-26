@@ -22,8 +22,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#include "wine/unicode.h"
-#include "wine/library.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -32,6 +30,7 @@
 #include "ole2.h"
 #include "ocidl.h"
 #include "shellapi.h"
+#include "strongname.h"
 
 #include "initguid.h"
 #include "msxml2.h"
@@ -320,6 +319,13 @@ HRESULT WINAPI CorIsLatestSvc(int *unk1, int *unk2)
     return S_OK;
 }
 
+HRESULT WINAPI CorGetSvc(void *unk)
+{
+    ERR_(winediag)("If this function is called, it is likely the result of a broken .NET installation\n");
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWSTR pConfigurationFile,
     DWORD startupFlags, DWORD runtimeInfoFlags, LPWSTR pDirectory, DWORD dwDirectory, DWORD *dwDirectoryLength,
     LPWSTR pVersion, DWORD cchBuffer, DWORD *dwlength)
@@ -414,11 +420,11 @@ HRESULT WINAPI LoadLibraryShim( LPCWSTR szDllName, LPCWSTR szVersion, LPVOID pvR
             else
                 szVersion = default_version;
         }
-        strcatW(dll_filename, szVersion);
-        strcatW(dll_filename, slash);
+        lstrcatW(dll_filename, szVersion);
+        lstrcatW(dll_filename, slash);
     }
 
-    strcatW(dll_filename, szDllName);
+    lstrcatW(dll_filename, szDllName);
 
     *phModDll = LoadLibraryW(dll_filename);
 
@@ -550,16 +556,17 @@ STDAPI ClrCreateManagedInstance(LPCWSTR pTypeName, REFIID riid, void **ppObject)
     return ret;
 }
 
-BOOL WINAPI StrongNameSignatureVerification(LPCWSTR filename, DWORD inFlags, DWORD* pOutFlags)
+BOOLEAN WINAPI StrongNameSignatureVerification(LPCWSTR filename, DWORD inFlags, DWORD *pOutFlags)
 {
     FIXME("(%s, 0x%X, %p): stub\n", debugstr_w(filename), inFlags, pOutFlags);
     return FALSE;
 }
 
-BOOL WINAPI StrongNameSignatureVerificationEx(LPCWSTR filename, BOOL forceVerification, BOOL* pVerified)
+BOOLEAN WINAPI StrongNameSignatureVerificationEx(LPCWSTR filename, BOOLEAN forceVerification, BOOLEAN *pVerified)
 {
     FIXME("(%s, %u, %p): stub\n", debugstr_w(filename), forceVerification, pVerified);
-    return FALSE;
+    *pVerified = TRUE;
+    return TRUE;
 }
 
 HRESULT WINAPI CreateDebuggingInterfaceFromVersion(int nDebugVersion, LPCWSTR version, IUnknown **ppv)
@@ -578,7 +585,7 @@ HRESULT WINAPI CreateDebuggingInterfaceFromVersion(int nDebugVersion, LPCWSTR ve
 
     *ppv = NULL;
 
-    if(strcmpW(version, v2_0) != 0)
+    if(wcscmp(version, v2_0) != 0)
     {
         FIXME("Currently .NET Version '%s' not support.\n", debugstr_w(version));
         return E_INVALIDARG;
@@ -732,8 +739,8 @@ static BOOL get_support_msi(LPCWSTR mono_path, LPWSTR msi_path)
 
     hmsi = GetModuleHandleA("msi");
 
-    strcpyW(msi_path, mono_path);
-    strcatW(msi_path, support_msi_relative);
+    lstrcpyW(msi_path, mono_path);
+    lstrcatW(msi_path, support_msi_relative);
 
     pMsiOpenPackageW = (void*)GetProcAddress(hmsi, "MsiOpenPackageW");
 

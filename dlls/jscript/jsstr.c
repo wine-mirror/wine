@@ -299,9 +299,18 @@ jsstr_t *jsstr_null_bstr(void)
     return jsstr_addref(null_bstr_str);
 }
 
-BOOL is_null_bstr(jsstr_t *str)
+HRESULT jsstr_to_bstr(jsstr_t *str, BSTR *r)
 {
-    return str == null_bstr_str;
+    if(str == null_bstr_str) {
+        *r = NULL;
+        return S_OK;
+    }
+
+    if(!(*r = SysAllocStringLen(NULL, jsstr_length(str))))
+        return E_OUTOFMEMORY;
+
+    jsstr_flush(str, *r);
+    return S_OK;
 }
 
 BOOL init_strings(void)

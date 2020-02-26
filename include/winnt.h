@@ -76,6 +76,16 @@ extern "C" {
 # endif
 #endif
 
+#ifndef DECLSPEC_NOTHROW
+# if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
+#  define DECLSPEC_NOTHROW __declspec(nothrow)
+# elif defined(__GNUC__)
+#  define DECLSPEC_NOTHROW __attribute__((nothrow))
+# else
+#  define DECLSPEC_NOTHROW
+# endif
+#endif
+
 #ifndef DECLSPEC_CACHEALIGN
 # define DECLSPEC_CACHEALIGN DECLSPEC_ALIGN(128)
 #endif
@@ -163,7 +173,11 @@ extern "C" {
 # define DECLSPEC_HIDDEN
 #endif
 
-#if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6))) && (defined(__i386__) || defined(__x86_64__))
+#ifndef __has_attribute
+# define __has_attribute(x) 0
+#endif
+
+#if ((defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6)))) || __has_attribute(ms_hook_prologue)) && (defined(__i386__) || defined(__x86_64__))
 #define DECLSPEC_HOTPATCH __attribute__((__ms_hook_prologue__))
 #else
 #define DECLSPEC_HOTPATCH
@@ -449,11 +463,14 @@ typedef int             LONG,       *PLONG;
 #endif
 
 /* Some systems might have wchar_t, but we really need 16 bit characters */
-#ifdef WINE_UNICODE_NATIVE
-typedef wchar_t         WCHAR,      *PWCHAR;
+#if defined(WINE_UNICODE_NATIVE)
+typedef wchar_t         WCHAR;
+#elif defined(WINE_UNICODE_CHAR16)
+typedef char16_t        WCHAR;
 #else
-typedef unsigned short  WCHAR,      *PWCHAR;
+typedef unsigned short  WCHAR;
 #endif
+typedef WCHAR          *PWCHAR;
 
 typedef ULONG           UCSCHAR;
 #define MIN_UCSCHAR                 (0)
@@ -593,10 +610,13 @@ typedef DWORD FLONG;
 #define STATUS_TIMEOUT                   ((DWORD) 0x00000102)
 #define STATUS_PENDING                   ((DWORD) 0x00000103)
 #define STATUS_SEGMENT_NOTIFICATION      ((DWORD) 0x40000005)
+#define STATUS_FATAL_APP_EXIT            ((DWORD) 0x40000015)
 #define STATUS_GUARD_PAGE_VIOLATION      ((DWORD) 0x80000001)
 #define STATUS_DATATYPE_MISALIGNMENT     ((DWORD) 0x80000002)
 #define STATUS_BREAKPOINT                ((DWORD) 0x80000003)
 #define STATUS_SINGLE_STEP               ((DWORD) 0x80000004)
+#define STATUS_LONGJUMP                  ((DWORD) 0x80000026)
+#define STATUS_UNWIND_CONSOLIDATE        ((DWORD) 0x80000029)
 #define STATUS_ACCESS_VIOLATION          ((DWORD) 0xC0000005)
 #define STATUS_IN_PAGE_ERROR             ((DWORD) 0xC0000006)
 #define STATUS_INVALID_HANDLE            ((DWORD) 0xC0000008)
@@ -616,16 +636,25 @@ typedef DWORD FLONG;
 #define STATUS_INTEGER_OVERFLOW          ((DWORD) 0xC0000095)
 #define STATUS_PRIVILEGED_INSTRUCTION    ((DWORD) 0xC0000096)
 #define STATUS_STACK_OVERFLOW            ((DWORD) 0xC00000FD)
+#define STATUS_DLL_NOT_FOUND             ((DWORD) 0xC0000135)
+#define STATUS_ORDINAL_NOT_FOUND         ((DWORD) 0xC0000138)
+#define STATUS_ENTRYPOINT_NOT_FOUND      ((DWORD) 0xC0000139)
 #define STATUS_CONTROL_C_EXIT            ((DWORD) 0xC000013A)
+#define STATUS_DLL_INIT_FAILED           ((DWORD) 0xC0000142)
 #define STATUS_FLOAT_MULTIPLE_FAULTS     ((DWORD) 0xC00002B4)
 #define STATUS_FLOAT_MULTIPLE_TRAPS      ((DWORD) 0xC00002B5)
 #define STATUS_REG_NAT_CONSUMPTION       ((DWORD) 0xC00002C9)
+#define STATUS_HEAP_CORRUPTION           ((DWORD) 0xC0000374)
+#define STATUS_STACK_BUFFER_OVERRUN      ((DWORD) 0xC0000409)
+#define STATUS_INVALID_CRUNTIME_PARAMETER ((DWORD) 0xC0000417)
+#define STATUS_ASSERTION_FAILURE         ((DWORD) 0xC0000420)
 #define STATUS_SXS_EARLY_DEACTIVATION    ((DWORD) 0xC015000F)
 #define STATUS_SXS_INVALID_DEACTIVATION  ((DWORD) 0xC0150010)
 
 /* status values for ContinueDebugEvent */
 #define DBG_EXCEPTION_HANDLED       ((DWORD) 0x00010001)
 #define DBG_CONTINUE                ((DWORD) 0x00010002)
+#define DBG_REPLY_LATER             ((DWORD) 0x40010001)
 #define DBG_TERMINATE_THREAD        ((DWORD) 0x40010003)
 #define DBG_TERMINATE_PROCESS       ((DWORD) 0x40010004)
 #define DBG_CONTROL_C               ((DWORD) 0x40010005)
@@ -633,6 +662,7 @@ typedef DWORD FLONG;
 #define DBG_RIPEXCEPTION            ((DWORD) 0x40010007)
 #define DBG_CONTROL_BREAK           ((DWORD) 0x40010008)
 #define DBG_COMMAND_EXCEPTION       ((DWORD) 0x40010009)
+#define DBG_PRINTEXCEPTION_WIDE_C   ((DWORD) 0x4001000A)
 #define DBG_EXCEPTION_NOT_HANDLED   ((DWORD) 0x80010001)
 
 #endif /* WIN32_NO_STATUS */
@@ -904,6 +934,16 @@ typedef enum _HEAP_INFORMATION_CLASS {
 #define ES_USER_PRESENT       0x00000004
 #define ES_CONTINUOUS         0x80000000
 
+#include <excpt.h>
+
+struct _CONTEXT;
+struct _EXCEPTION_POINTERS;
+struct _EXCEPTION_RECORD;
+
+typedef EXCEPTION_DISPOSITION WINAPI EXCEPTION_ROUTINE(struct _EXCEPTION_RECORD*,PVOID,
+                                                       struct _CONTEXT*,PVOID);
+typedef EXCEPTION_ROUTINE *PEXCEPTION_ROUTINE;
+
 /* The Win32 register context */
 
 /* i386 context definitions */
@@ -964,7 +1004,7 @@ typedef struct _CONTEXT
     DWORD   SegSs;         /* 0c8 */
 
     BYTE    ExtendedRegisters[MAXIMUM_SUPPORTED_EXTENSION];  /* 0xcc */
-} CONTEXT;
+} CONTEXT, *PCONTEXT;
 
 #define CONTEXT_X86       0x00010000
 #define CONTEXT_i386      CONTEXT_X86
@@ -1139,7 +1179,7 @@ typedef struct DECLSPEC_ALIGN(16) _CONTEXT {
     DWORD64 LastBranchFromRip;    /* 4b8 */
     DWORD64 LastExceptionToRip;   /* 4c0 */
     DWORD64 LastExceptionFromRip; /* 4c8 */
-} CONTEXT;
+} CONTEXT, *PCONTEXT;
 
 typedef struct _RUNTIME_FUNCTION
 {
@@ -1220,13 +1260,25 @@ typedef struct _KNONVOLATILE_CONTEXT_POINTERS
     } DUMMYUNIONNAME2;
 } KNONVOLATILE_CONTEXT_POINTERS, *PKNONVOLATILE_CONTEXT_POINTERS;
 
-typedef PRUNTIME_FUNCTION (CALLBACK *PGET_RUNTIME_FUNCTION_CALLBACK)(DWORD64,PVOID);
+typedef struct _DISPATCHER_CONTEXT
+{
+    ULONG64               ControlPc;
+    ULONG64               ImageBase;
+    PRUNTIME_FUNCTION     FunctionEntry;
+    ULONG64               EstablisherFrame;
+    ULONG64               TargetIp;
+    PCONTEXT              ContextRecord;
+    PEXCEPTION_ROUTINE    LanguageHandler;
+    PVOID                 HandlerData;
+    PUNWIND_HISTORY_TABLE HistoryTable;
+    DWORD                 ScopeIndex;
+    DWORD                 Fill0;
+} DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
 
-BOOLEAN CDECL            RtlAddFunctionTable(RUNTIME_FUNCTION*,DWORD,DWORD64);
-BOOLEAN CDECL            RtlDeleteFunctionTable(RUNTIME_FUNCTION*);
-BOOLEAN CDECL            RtlInstallFunctionTableCallback(DWORD64,DWORD64,DWORD,PGET_RUNTIME_FUNCTION_CALLBACK,PVOID,PCWSTR);
-PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry(DWORD64,DWORD64*,UNWIND_HISTORY_TABLE*);
-PVOID WINAPI             RtlVirtualUnwind(ULONG,ULONG64,ULONG64,RUNTIME_FUNCTION*,CONTEXT*,PVOID*,ULONG64*,KNONVOLATILE_CONTEXT_POINTERS*);
+typedef LONG (CALLBACK *PEXCEPTION_FILTER)(struct _EXCEPTION_POINTERS*,PVOID);
+typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,PVOID);
+
+NTSYSAPI PVOID WINAPI RtlVirtualUnwind(ULONG,ULONG64,ULONG64,RUNTIME_FUNCTION*,CONTEXT*,PVOID*,ULONG64*,KNONVOLATILE_CONTEXT_POINTERS*);
 
 #define UNW_FLAG_NHANDLER  0
 #define UNW_FLAG_EHANDLER  1
@@ -1544,7 +1596,7 @@ typedef struct _KNONVOLATILE_CONTEXT_POINTERS
     PULONGLONG Cflag;
 } KNONVOLATILE_CONTEXT_POINTERS, *PKNONVOLATILE_CONTEXT_POINTERS;
 
-ULONGLONG WINAPI RtlVirtualUnwind(ULONGLONG,ULONGLONG,RUNTIME_FUNCTION*,CONTEXT*,BOOLEAN*,FRAME_POINTERS*,KNONVOLATILE_CONTEXT_POINTERS*);
+NTSYSAPI ULONGLONG WINAPI RtlVirtualUnwind(ULONGLONG,ULONGLONG,RUNTIME_FUNCTION*,CONTEXT*,BOOLEAN*,FRAME_POINTERS*,KNONVOLATILE_CONTEXT_POINTERS*);
 
 #endif /* __ia64__ */
 
@@ -1641,7 +1693,7 @@ typedef struct _CONTEXT
     DWORD Psr;
     DWORD ContextFlags;
     DWORD Fill[4];
-} CONTEXT;
+} CONTEXT, *PCONTEXT;
 
 #define _QUAD_PSR_OFFSET   HighSoftFpcr
 #define _QUAD_FLAGS_OFFSET HighFir
@@ -1750,14 +1802,54 @@ typedef struct _CONTEXT
     ULONG Wvr[ARM_MAX_WATCHPOINTS]; /* 190 */
     ULONG Wcr[ARM_MAX_WATCHPOINTS]; /* 194 */
     ULONG Padding2[2];              /* 198 */
-} CONTEXT;
+} CONTEXT, *PCONTEXT;
 
-typedef PRUNTIME_FUNCTION (CALLBACK *PGET_RUNTIME_FUNCTION_CALLBACK)(DWORD,PVOID);
+typedef struct _KNONVOLATILE_CONTEXT_POINTERS
+{
+    PDWORD     R4;
+    PDWORD     R5;
+    PDWORD     R6;
+    PDWORD     R7;
+    PDWORD     R8;
+    PDWORD     R9;
+    PDWORD     R10;
+    PDWORD     R11;
+    PDWORD     Lr;
+    PULONGLONG D8;
+    PULONGLONG D9;
+    PULONGLONG D10;
+    PULONGLONG D11;
+    PULONGLONG D12;
+    PULONGLONG D13;
+    PULONGLONG D14;
+    PULONGLONG D15;
+} KNONVOLATILE_CONTEXT_POINTERS, *PKNONVOLATILE_CONTEXT_POINTERS;
 
-BOOLEAN CDECL            RtlAddFunctionTable(RUNTIME_FUNCTION*,DWORD,DWORD);
-BOOLEAN CDECL            RtlDeleteFunctionTable(RUNTIME_FUNCTION*);
-BOOLEAN CDECL            RtlInstallFunctionTableCallback(DWORD,DWORD,DWORD,PGET_RUNTIME_FUNCTION_CALLBACK,PVOID,PCWSTR);
-PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry(ULONG_PTR,DWORD*,UNWIND_HISTORY_TABLE*);
+typedef struct _DISPATCHER_CONTEXT
+{
+    DWORD                 ControlPc;
+    DWORD                 ImageBase;
+    PRUNTIME_FUNCTION     FunctionEntry;
+    DWORD                 EstablisherFrame;
+    DWORD                 TargetPc;
+    PCONTEXT              ContextRecord;
+    PEXCEPTION_ROUTINE    LanguageHandler;
+    PVOID                 HandlerData;
+    PUNWIND_HISTORY_TABLE HistoryTable;
+    DWORD                 ScopeIndex;
+    BOOLEAN               ControlPcIsUnwound;
+    PBYTE                 NonVolatileRegisters;
+    DWORD                 Reserved;
+} DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
+
+typedef LONG (CALLBACK *PEXCEPTION_FILTER)(struct _EXCEPTION_POINTERS*,DWORD);
+typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,DWORD);
+
+NTSYSAPI PVOID WINAPI RtlVirtualUnwind(DWORD,DWORD,DWORD,RUNTIME_FUNCTION*,CONTEXT*,PVOID*,DWORD*,KNONVOLATILE_CONTEXT_POINTERS*);
+
+#define UNW_FLAG_NHANDLER  0
+#define UNW_FLAG_EHANDLER  1
+#define UNW_FLAG_UHANDLER  2
 
 #endif /* __arm__ */
 
@@ -1886,13 +1978,56 @@ typedef struct _CONTEXT
     DWORD64 Bvr[ARM64_MAX_BREAKPOINTS]; /* 338 */
     DWORD Wcr[ARM64_MAX_WATCHPOINTS];   /* 378 */
     DWORD64 Wvr[ARM64_MAX_WATCHPOINTS]; /* 380 */
-} CONTEXT;
+} CONTEXT, *PCONTEXT;
 
-typedef PRUNTIME_FUNCTION (CALLBACK *PGET_RUNTIME_FUNCTION_CALLBACK)(DWORD64,PVOID);
+typedef struct _KNONVOLATILE_CONTEXT_POINTERS
+{
+    PDWORD64 X19;
+    PDWORD64 X20;
+    PDWORD64 X21;
+    PDWORD64 X22;
+    PDWORD64 X23;
+    PDWORD64 X24;
+    PDWORD64 X25;
+    PDWORD64 X26;
+    PDWORD64 X27;
+    PDWORD64 X28;
+    PDWORD64 Fp;
+    PDWORD64 Lr;
+    PDWORD64 D8;
+    PDWORD64 D9;
+    PDWORD64 D10;
+    PDWORD64 D11;
+    PDWORD64 D12;
+    PDWORD64 D13;
+    PDWORD64 D14;
+    PDWORD64 D15;
+} KNONVOLATILE_CONTEXT_POINTERS, *PKNONVOLATILE_CONTEXT_POINTERS;
 
-BOOLEAN CDECL            RtlAddFunctionTable(RUNTIME_FUNCTION*,DWORD,ULONG_PTR);
-BOOLEAN CDECL            RtlDeleteFunctionTable(RUNTIME_FUNCTION*);
-BOOLEAN CDECL            RtlInstallFunctionTableCallback(ULONG_PTR,ULONG_PTR,DWORD,PGET_RUNTIME_FUNCTION_CALLBACK,PVOID,PCWSTR);
+typedef struct _DISPATCHER_CONTEXT
+{
+    ULONG_PTR             ControlPc;
+    ULONG_PTR             ImageBase;
+    PRUNTIME_FUNCTION     FunctionEntry;
+    ULONG_PTR             EstablisherFrame;
+    ULONG_PTR             TargetPc;
+    PCONTEXT              ContextRecord;
+    PEXCEPTION_ROUTINE    LanguageHandler;
+    PVOID                 HandlerData;
+    PUNWIND_HISTORY_TABLE HistoryTable;
+    DWORD                 ScopeIndex;
+    BOOLEAN               ControlPcIsUnwound;
+    PBYTE                 NonVolatileRegisters;
+} DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
+
+typedef LONG (CALLBACK *PEXCEPTION_FILTER)(struct _EXCEPTION_POINTERS*,DWORD64);
+typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,DWORD64);
+
+NTSYSAPI PVOID WINAPI RtlVirtualUnwind(DWORD,ULONG_PTR,ULONG_PTR,RUNTIME_FUNCTION*,CONTEXT*,PVOID*,ULONG_PTR*,KNONVOLATILE_CONTEXT_POINTERS*);
+
+#define UNW_FLAG_NHANDLER  0
+#define UNW_FLAG_EHANDLER  1
+#define UNW_FLAG_UHANDLER  2
 
 #endif /* __aarch64__ */
 
@@ -2133,8 +2268,6 @@ typedef struct _STACK_FRAME_HEADER
 #error You need to define a CONTEXT for your CPU
 #endif
 
-typedef CONTEXT *PCONTEXT;
-
 NTSYSAPI void WINAPI RtlCaptureContext(CONTEXT*);
 
 #define WOW64_CONTEXT_i386 0x00010000
@@ -2205,6 +2338,19 @@ typedef struct _WOW64_CONTEXT
 } WOW64_CONTEXT, *PWOW64_CONTEXT;
 #include "poppack.h"
 
+#if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
+
+typedef PRUNTIME_FUNCTION (CALLBACK *PGET_RUNTIME_FUNCTION_CALLBACK)(DWORD_PTR,PVOID);
+
+NTSYSAPI BOOLEAN CDECL  RtlAddFunctionTable(RUNTIME_FUNCTION*,DWORD,DWORD_PTR);
+NTSYSAPI DWORD   WINAPI RtlAddGrowableFunctionTable(void**,PRUNTIME_FUNCTION,DWORD,DWORD,ULONG_PTR,ULONG_PTR);
+NTSYSAPI BOOLEAN CDECL  RtlDeleteFunctionTable(RUNTIME_FUNCTION*);
+NTSYSAPI void    WINAPI RtlDeleteGrowableFunctionTable(void*);
+NTSYSAPI void    WINAPI RtlGrowFunctionTable(void*,DWORD);
+NTSYSAPI BOOLEAN CDECL  RtlInstallFunctionTableCallback(DWORD_PTR,DWORD_PTR,DWORD,PGET_RUNTIME_FUNCTION_CALLBACK,PVOID,PCWSTR);
+NTSYSAPI PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry(DWORD_PTR,DWORD_PTR*,UNWIND_HISTORY_TABLE*);
+NTSYSAPI void    WINAPI RtlUnwindEx(PVOID,PVOID,struct _EXCEPTION_RECORD*,PVOID,CONTEXT*,UNWIND_HISTORY_TABLE*);
+#endif
 
 /*
  * Product types
@@ -2744,6 +2890,7 @@ typedef struct _IMAGE_VXD_HEADER {
 
 /* These are the settings of the Machine field. */
 #define	IMAGE_FILE_MACHINE_UNKNOWN	0
+#define	IMAGE_FILE_MACHINE_TARGET_HOST  0x0001
 #define	IMAGE_FILE_MACHINE_I860		0x014d
 #define	IMAGE_FILE_MACHINE_I386		0x014c
 #define	IMAGE_FILE_MACHINE_R3000	0x0162
@@ -4045,6 +4192,11 @@ typedef enum _TOKEN_INFORMATION_CLASS {
   TokenProcessTrustLevel,
   MaxTokenInfoClass
 } TOKEN_INFORMATION_CLASS;
+
+#define DISABLE_MAX_PRIVILEGE        0x1
+#define SANDBOX_INERT                0x2
+#define LUA_TOKEN                    0x4
+#define WRITE_RESTRICTED             0x8
 
 #define TOKEN_TOKEN_ADJUST_DEFAULT   0x0080
 #define TOKEN_ADJUST_GROUPS          0x0040
@@ -5487,7 +5639,8 @@ typedef struct {
 	BOOLEAN BatteryPresent;
 	BOOLEAN Charging;
 	BOOLEAN Discharging;
-	BOOLEAN Spare1[4];
+	BOOLEAN Spare1[3];
+	BYTE Tag;
 	ULONG MaxCapacity;
 	ULONG RemainingCapacity;
 	ULONG Rate;
@@ -5577,6 +5730,18 @@ typedef struct _SYSTEM_POWER_POLICY {
 	POWER_ACTION_POLICY OverThrottled;
 } SYSTEM_POWER_POLICY,
 *PSYSTEM_POWER_POLICY;
+
+typedef enum _POWER_REQUEST_TYPE
+{
+    PowerRequestDisplayRequired,
+    PowerRequestSystemRequired,
+    PowerRequestAwayModeRequired
+} POWER_REQUEST_TYPE, *PPOWER_REQUEST_TYPE;
+
+#define POWER_REQUEST_CONTEXT_VERSION           0
+
+#define POWER_REQUEST_CONTEXT_SIMPLE_STRING     0x00000001
+#define POWER_REQUEST_CONTEXT_DETAILED_STRING   0x00000002
 
 typedef union _FILE_SEGMENT_ELEMENT {
 	PVOID64 Buffer;
@@ -6474,7 +6639,6 @@ typedef TP_CALLBACK_ENVIRON_V1 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
 typedef VOID (CALLBACK *PTP_WORK_CALLBACK)(PTP_CALLBACK_INSTANCE,PVOID,PTP_WORK);
 typedef VOID (CALLBACK *PTP_TIMER_CALLBACK)(PTP_CALLBACK_INSTANCE,PVOID,PTP_TIMER);
 typedef VOID (CALLBACK *PTP_WAIT_CALLBACK)(PTP_CALLBACK_INSTANCE,PVOID,PTP_WAIT,TP_WAIT_RESULT);
-typedef VOID (CALLBACK *PTP_WIN32_IO_CALLBACK)(PTP_CALLBACK_INSTANCE,PVOID,PVOID,ULONG,ULONG_PTR,PTP_IO);
 
 
 NTSYSAPI BOOLEAN NTAPI RtlGetProductInfo(DWORD,DWORD,DWORD,DWORD,PDWORD);

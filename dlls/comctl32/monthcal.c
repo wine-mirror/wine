@@ -2258,7 +2258,8 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     MONTHCAL_SetSelRange(infoPtr, st);
 
     infoPtr->status = MC_SEL_LBUTDOWN;
-    MONTHCAL_SetDayFocus(infoPtr, &ht.st);
+    if (MONTHCAL_SetDayFocus(infoPtr, &ht.st) && (infoPtr->dwStyle & MCS_MULTISELECT))
+        MONTHCAL_NotifySelectionChange(infoPtr);
     return 0;
   }
   }

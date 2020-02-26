@@ -1027,6 +1027,38 @@ static void test_GetTickCount(void)
     ok(t2 <= t3, "out of order %d %d\n", t2, t3);
 }
 
+BOOL (WINAPI *pQueryUnbiasedInterruptTime)(ULONGLONG *time);
+BOOL (WINAPI *pRtlQueryUnbiasedInterruptTime)(ULONGLONG *time);
+
+static void test_QueryUnbiasedInterruptTime(void)
+{
+    ULONGLONG time;
+    BOOL ret;
+
+    if (pQueryUnbiasedInterruptTime)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = pQueryUnbiasedInterruptTime( &time );
+        ok( ret, "QueryUnbiasedInterruptTime failed err %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pQueryUnbiasedInterruptTime( NULL );
+        ok( !ret, "QueryUnbiasedInterruptTime succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    }
+    else win_skip( "QueryUnbiasedInterruptTime not supported\n" );
+    if (pRtlQueryUnbiasedInterruptTime)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = pRtlQueryUnbiasedInterruptTime( &time );
+        ok( ret, "RtlQueryUnbiasedInterruptTime failed err %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pRtlQueryUnbiasedInterruptTime( NULL );
+        ok( !ret, "RtlQueryUnbiasedInterruptTime succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    }
+    else win_skip( "RtlQueryUnbiasedInterruptTime not supported\n" );
+}
+
 START_TEST(time)
 {
     HMODULE hKernel = GetModuleHandleA("kernel32");
@@ -1039,7 +1071,9 @@ START_TEST(time)
     pGetDynamicTimeZoneInformation = (void *)GetProcAddress(hKernel, "GetDynamicTimeZoneInformation");
     pGetSystemTimePreciseAsFileTime = (void *)GetProcAddress(hKernel, "GetSystemTimePreciseAsFileTime");
     pGetTimeZoneInformationForYear = (void *)GetProcAddress(hKernel, "GetTimeZoneInformationForYear");
+    pQueryUnbiasedInterruptTime = (void *)GetProcAddress(hKernel, "QueryUnbiasedInterruptTime");
     pNtGetTickCount = (void *)GetProcAddress(hntdll, "NtGetTickCount");
+    pRtlQueryUnbiasedInterruptTime = (void *)GetProcAddress(hntdll, "RtlQueryUnbiasedInterruptTime");
 
     test_conversions();
     test_invalid_arg();
@@ -1055,4 +1089,5 @@ START_TEST(time)
     test_GetSystemTimePreciseAsFileTime();
     test_GetTimeZoneInformationForYear();
     test_GetTickCount();
+    test_QueryUnbiasedInterruptTime();
 }

@@ -309,7 +309,12 @@ BOOL HCR_GetDefaultIconA(LPCSTR szClass, LPSTR szDest, DWORD len, int* picon_idx
 	  ret = HCR_RegGetDefaultIconA(hkey, szDest, len, picon_idx);
 	  RegCloseKey(hkey);
 	}
-	TRACE("-- %s %i\n", szDest, *picon_idx);
+
+    if (ret)
+        TRACE("-- %s %i\n", szDest, *picon_idx);
+    else
+        TRACE("-- not found\n");
+
 	return ret;
 }
 

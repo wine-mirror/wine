@@ -267,9 +267,46 @@ static void test_chordmaptrack(void)
 {
     IDirectMusicTrack8 *dmt8;
     IPersistStream *ps;
+    IDirectMusicChordMap *chordmap;
     CLSID class;
     ULARGE_INTEGER size;
     HRESULT hr;
+#define X(guid)        &guid, #guid
+    const struct {
+        REFGUID type;
+        const char *name;
+    } unsupported[] = {
+        { X(GUID_BandParam) },
+        { X(GUID_ChordParam) },
+        { X(GUID_Clear_All_Bands) },
+        { X(GUID_CommandParam) },
+        { X(GUID_CommandParam2) },
+        { X(GUID_CommandParamNext) },
+        { X(GUID_ConnectToDLSCollection) },
+        { X(GUID_Disable_Auto_Download) },
+        { X(GUID_DisableTempo) },
+        { X(GUID_DisableTimeSig) },
+        { X(GUID_Download) },
+        { X(GUID_DownloadToAudioPath) },
+        { X(GUID_Enable_Auto_Download) },
+        { X(GUID_EnableTempo) },
+        { X(GUID_EnableTimeSig) },
+        { X(GUID_IDirectMusicBand) },
+        { X(GUID_IDirectMusicStyle) },
+        { X(GUID_MuteParam) },
+        { X(GUID_Play_Marker) },
+        { X(GUID_RhythmParam) },
+        { X(GUID_SeedVariations) },
+        { X(GUID_StandardMIDIFile) },
+        { X(GUID_TempoParam) },
+        { X(GUID_TimeSignature) },
+        { X(GUID_Unload) },
+        { X(GUID_UnloadFromAudioPath) },
+        { X(GUID_Valid_Start_Time) },
+        { X(GUID_Variations) },
+    };
+#undef X
+    unsigned int i;
 
     hr = CoCreateInstance(&CLSID_DirectMusicChordMapTrack, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicTrack8, (void**)&dmt8);
@@ -284,14 +321,40 @@ static void test_chordmaptrack(void)
     ok(hr == S_OK, "IDirectMusicTrack8_EndPlay failed: %08x\n", hr);
     hr = IDirectMusicTrack8_Play(dmt8, NULL, 0, 0, 0, 0, NULL, NULL, 0);
     ok(hr == S_OK, "IDirectMusicTrack8_Play failed: %08x\n", hr);
-    todo_wine {
     hr = IDirectMusicTrack8_GetParam(dmt8, NULL, 0, NULL, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_GetParam failed: %08x\n", hr);
     hr = IDirectMusicTrack8_SetParam(dmt8, NULL, 0, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_SetParam failed: %08x\n", hr);
-    }
+
     hr = IDirectMusicTrack8_IsParamSupported(dmt8, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_IsParamSupported(dmt8, &GUID_IDirectMusicChordMap);
+    ok(hr == S_OK, "IsParamSupported(GUID_IDirectMusicChordMap) failed: %08x, expected S_OK\n", hr);
+    hr = IDirectMusicTrack8_GetParam(dmt8, &GUID_IDirectMusicChordMap, 0, NULL, &chordmap);
+    todo_wine ok(hr == DMUS_E_NOT_FOUND,
+            "GetParam(GUID_IDirectMusicChordMap) failed: %08x, expected DMUS_E_NOT_FOUND\n", hr);
+    hr = CoCreateInstance(&CLSID_DirectMusicChordMap, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicChordMap, (void **)&chordmap);
+    ok(hr == S_OK, "DirectMusicChordMap create failed: %08x, expected S_OK\n", hr);
+    hr = IDirectMusicTrack8_SetParam(dmt8, &GUID_IDirectMusicChordMap, 0, chordmap);
+    ok(hr == S_OK, "SetParam(GUID_IDirectMusicChordMap) failed: %08x, expected S_OK\n", hr);
+    IDirectMusicChordMap_Release(chordmap);
+
+    for (i = 0; i < ARRAY_SIZE(unsupported); i++) {
+        hr = IDirectMusicTrack8_IsParamSupported(dmt8, unsupported[i].type);
+        ok(hr == DMUS_E_TYPE_UNSUPPORTED,
+                "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
+                    unsupported[i].name, hr);
+        hr = IDirectMusicTrack8_GetParam(dmt8, unsupported[i].type, 0, NULL, &chordmap);
+        ok(hr == DMUS_E_GET_UNSUPPORTED,
+                "GetParam(%s) failed: %08x, expected DMUS_E_GET_UNSUPPORTED\n",
+                unsupported[i].name, hr);
+        hr = IDirectMusicTrack8_SetParam(dmt8, unsupported[i].type, 0, chordmap);
+        ok(hr == DMUS_E_SET_UNSUPPORTED,
+                "SetParam(%s) failed: %08x, expected DMUS_E_SET_UNSUPPORTED\n",
+                unsupported[i].name, hr);
+    }
+
     hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);
     ok(hr == E_NOTIMPL, "IDirectMusicTrack8_AddNotificationType failed: %08x\n", hr);
     hr = IDirectMusicTrack8_RemoveNotificationType(dmt8, NULL);

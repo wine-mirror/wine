@@ -18,10 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include "quartz_private.h"
-#include "pin.h"
 
 #include "uuids.h"
 #include "mmreg.h"
@@ -34,7 +31,6 @@
 
 #include <assert.h>
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
@@ -44,7 +40,6 @@ typedef struct ACMWrapperImpl
     TransformFilter tf;
 
     HACMSTREAM has;
-    LPWAVEFORMATEX pWfIn;
     LPWAVEFORMATEX pWfOut;
 
     LONGLONG lasttime_real;
@@ -59,7 +54,6 @@ static inline ACMWrapperImpl *impl_from_TransformFilter( TransformFilter *iface 
 static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSample)
 {
     ACMWrapperImpl* This = impl_from_TransformFilter(tf);
-    AM_MEDIA_TYPE amt;
     IMediaSample* pOutSample = NULL;
     DWORD cbDstStream, cbSrcStream;
     LPBYTE pbDstStream;
@@ -71,12 +65,10 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
     LONGLONG tStart = -1, tStop = -1, tMed;
     LONGLONG mtStart = -1, mtStop = -1, mtMed;
 
-    EnterCriticalSection(&This->tf.csReceive);
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-        LeaveCriticalSection(&This->tf.csReceive);
         return hr;
     }
 
@@ -103,24 +95,15 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
 
     TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
 
-    hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
-    if (FAILED(hr))
-    {
-        ERR("Unable to retrieve media type\n");
-        LeaveCriticalSection(&This->tf.csReceive);
-        return hr;
-    }
-
     ash.pbSrc = pbSrcStream;
     ash.cbSrcLength = cbSrcStream;
 
     while(hr == S_OK && ash.cbSrcLength)
     {
-        hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
+        hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->tf.source, &pOutSample, NULL, NULL, 0);
         if (FAILED(hr))
         {
             ERR("Unable to get delivery buffer (%x)\n", hr);
-            LeaveCriticalSection(&This->tf.csReceive);
             return hr;
         }
         IMediaSample_SetPreroll(pOutSample, preroll);
@@ -180,7 +163,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
             goto error;
         }
 
-        TRACE("Sample start time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
+        TRACE("Sample start time: %s.\n", debugstr_time(tStart));
         if (ash.cbSrcLengthUsed == cbSrcStream)
         {
             IMediaSample_SetTime(pOutSample, &tStart, &tStop);
@@ -213,12 +196,9 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
             IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
         }
 
-        TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
+        TRACE("Sample stop time: %s\n", debugstr_time(tStart));
 
-        LeaveCriticalSection(&This->tf.csReceive);
-        hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
-        EnterCriticalSection(&This->tf.csReceive);
-
+        hr = IMemInputPin_Receive(This->tf.source.pMemInputPin, pOutSample);
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
             if (FAILED(hr))
                 ERR("Error sending sample (%x)\n", hr);
@@ -240,89 +220,46 @@ error:
     This->lasttime_real = tStop;
     This->lasttime_sent = tMed;
 
-    LeaveCriticalSection(&This->tf.csReceive);
     return hr;
 }
 
-static HRESULT WINAPI ACMWrapper_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir, const AM_MEDIA_TYPE * pmt)
+static BOOL is_audio_subtype(const GUID *guid)
 {
-    ACMWrapperImpl* This = impl_from_TransformFilter(tf);
-    MMRESULT res;
-
-    TRACE("(%p)->(%i %p)\n", This, dir, pmt);
-
-    if (dir != PINDIR_INPUT)
-        return S_OK;
-
-    /* Check root (GUID w/o FOURCC) */
-    if ((IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio)) &&
-        (!memcmp(((const char *)&pmt->subtype)+4, ((const char *)&MEDIATYPE_Audio)+4, sizeof(GUID)-4)) &&
-        (IsEqualIID(&pmt->formattype, &FORMAT_WaveFormatEx)))
-    {
-        HACMSTREAM drv;
-        WAVEFORMATEX *wfx = (WAVEFORMATEX*)pmt->pbFormat;
-        AM_MEDIA_TYPE* outpmt = &This->tf.pmt;
-
-        if (!wfx || wfx->wFormatTag == WAVE_FORMAT_PCM || wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-            return VFW_E_TYPE_NOT_ACCEPTED;
-        FreeMediaType(outpmt);
-
-        This->pWfIn = (LPWAVEFORMATEX)pmt->pbFormat;
-
-	/* HACK */
-	/* TRACE("ALIGN = %d\n", pACMWrapper->pWfIn->nBlockAlign); */
-	/* pACMWrapper->pWfIn->nBlockAlign = 1; */
-
-	/* Set output audio data to PCM */
-        CopyMediaType(outpmt, pmt);
-        outpmt->subtype.Data1 = WAVE_FORMAT_PCM;
-	This->pWfOut = (WAVEFORMATEX*)outpmt->pbFormat;
-	This->pWfOut->wFormatTag = WAVE_FORMAT_PCM;
-	This->pWfOut->wBitsPerSample = 16;
-	This->pWfOut->nBlockAlign = This->pWfOut->wBitsPerSample * This->pWfOut->nChannels / 8;
-	This->pWfOut->cbSize = 0;
-	This->pWfOut->nAvgBytesPerSec = This->pWfOut->nChannels * This->pWfOut->nSamplesPerSec
-						* (This->pWfOut->wBitsPerSample/8);
-
-        if (!(res = acmStreamOpen(&drv, NULL, This->pWfIn, This->pWfOut, NULL, 0, 0, 0)))
-        {
-            This->has = drv;
-
-            TRACE("Connection accepted\n");
-            return S_OK;
-        }
-	else
-	    FIXME("acmStreamOpen returned %d\n", res);
-        FreeMediaType(outpmt);
-        TRACE("Unable to find a suitable ACM decompressor\n");
-    }
-
-    TRACE("Connection refused\n");
-    return VFW_E_TYPE_NOT_ACCEPTED;
+    return !memcmp(&guid->Data2, &MEDIATYPE_Audio.Data2, sizeof(GUID) - sizeof(int));
 }
 
-static HRESULT WINAPI ACMWrapper_CompleteConnect(TransformFilter *tf, PIN_DIRECTION dir, IPin *pin)
+static HRESULT acm_wrapper_connect_sink(TransformFilter *iface, const AM_MEDIA_TYPE *mt)
 {
-    ACMWrapperImpl* This = impl_from_TransformFilter(tf);
-    MMRESULT res;
+    ACMWrapperImpl *filter = impl_from_TransformFilter(iface);
+    const WAVEFORMATEX *wfx = (WAVEFORMATEX *)mt->pbFormat;
     HACMSTREAM drv;
+    MMRESULT res;
 
-    TRACE("(%p)\n", This);
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio) || !is_audio_subtype(&mt->subtype)
+            || !IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx) || !wfx
+            || wfx->wFormatTag == WAVE_FORMAT_PCM || wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        return VFW_E_TYPE_NOT_ACCEPTED;
 
-    if (dir != PINDIR_INPUT)
-        return S_OK;
+    CopyMediaType(&filter->tf.pmt, mt);
+    filter->tf.pmt.subtype.Data1 = WAVE_FORMAT_PCM;
+    filter->pWfOut = (WAVEFORMATEX *)filter->tf.pmt.pbFormat;
+    filter->pWfOut->wFormatTag = WAVE_FORMAT_PCM;
+    filter->pWfOut->wBitsPerSample = 16;
+    filter->pWfOut->nBlockAlign = filter->pWfOut->wBitsPerSample * filter->pWfOut->nChannels / 8;
+    filter->pWfOut->cbSize = 0;
+    filter->pWfOut->nAvgBytesPerSec = filter->pWfOut->nChannels * filter->pWfOut->nSamplesPerSec
+            * (filter->pWfOut->wBitsPerSample / 8);
 
-    if (!(res = acmStreamOpen(&drv, NULL, This->pWfIn, This->pWfOut, NULL, 0, 0, 0)))
+    if ((res = acmStreamOpen(&drv, NULL, (WAVEFORMATEX *)wfx, filter->pWfOut, NULL, 0, 0, 0)))
     {
-        This->has = drv;
-
-        TRACE("Connection accepted\n");
-        return S_OK;
+        ERR("Failed to open stream, error %u.\n", res);
+        FreeMediaType(&filter->tf.pmt);
+        return VFW_E_TYPE_NOT_ACCEPTED;
     }
 
-    FIXME("acmStreamOpen returned %d\n", res);
-    TRACE("Unable to find a suitable ACM decompressor\n");
-    return VFW_E_TYPE_NOT_ACCEPTED;
+    filter->has = drv;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ACMWrapper_BreakConnect(TransformFilter *tf, PIN_DIRECTION dir)
@@ -361,18 +298,10 @@ static HRESULT WINAPI ACMWrapper_DecideBufferSize(TransformFilter *tf, IMemAlloc
 }
 
 static const TransformFilterFuncTable ACMWrapper_FuncsTable = {
-    ACMWrapper_DecideBufferSize,
-    NULL,
-    ACMWrapper_Receive,
-    NULL,
-    NULL,
-    ACMWrapper_SetMediaType,
-    ACMWrapper_CompleteConnect,
-    ACMWrapper_BreakConnect,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    .pfnDecideBufferSize = ACMWrapper_DecideBufferSize,
+    .pfnReceive = ACMWrapper_Receive,
+    .transform_connect_sink = acm_wrapper_connect_sink,
+    .pfnBreakConnect = ACMWrapper_BreakConnect,
 };
 
 HRESULT ACMWrapper_create(IUnknown *outer, void **out)

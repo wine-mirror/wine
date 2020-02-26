@@ -196,7 +196,7 @@ my @dll_groups =
  ],
  [
   "kernel32",
-  "kernelbase",
+#  "kernelbase",
   "api-ms-win-appmodel-identity-l1-1-0",
   "api-ms-win-appmodel-runtime-l1-1-1",
   "api-ms-win-downlevel-normaliz-l1-1-0",
@@ -313,7 +313,6 @@ my @dll_groups =
   "user32",
   "shlwapi",
   "version",
-  "kernelbase",
   "api-ms-win-core-bem-l1-1-0",
  ],
  [
@@ -484,6 +483,10 @@ my @dll_groups =
   "ntoskrnl.exe",
   "hal",
  ],
+ [
+  "mscoree",
+  "mscorwks",
+ ],
 );
 
 my $update_flags = 0;
@@ -572,7 +575,7 @@ sub update_spec_file($)
         my $func = $descr{name};
         if (!defined $funcs{$func})
         {
-            $funcs{$func} = \%descr unless $commented_out;
+            $funcs{$func} = \%descr unless $commented_out || $name =~ /-/;
             goto done;
         }
 
@@ -591,6 +594,7 @@ sub update_spec_file($)
             $flags = $parent{flags};
             $flags =~ s/-ordinal\s*// if $descr{ordinal} eq "@";
             $flags =~ s/-noname\s*// if $descr{ordinal} eq "@";
+            $flags =~ s/-import\s*//;
             if ($descr{flags} =~ /-private/)  # preserve -private flag
             {
                 $flags = "-private " . $flags unless $flags =~ /-private/;

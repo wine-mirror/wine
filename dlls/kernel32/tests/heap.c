@@ -1206,7 +1206,7 @@ static void test_GetPhysicallyInstalledSystemMemory(void)
 
     total_memory = 0;
     ret = pGetPhysicallyInstalledSystemMemory(&total_memory);
-    ok(ret, "GetPhysicallyInstalledSystemMemory unexpectedly failed\n");
+    ok(ret, "GetPhysicallyInstalledSystemMemory unexpectedly failed (%u)\n", GetLastError());
     ok(total_memory != 0, "expected total_memory != 0\n");
 
     memstatus.dwLength = sizeof(memstatus);

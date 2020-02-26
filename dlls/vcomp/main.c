@@ -21,9 +21,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -160,13 +157,18 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
 extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_list args);
 __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "pushq %rsi\n\t"
+                   __ASM_SEH(".seh_pushreg %rsi\n\t")
                    __ASM_CFI(".cfi_rel_offset %rsi,-8\n\t")
                    "pushq %rdi\n\t"
+                   __ASM_SEH(".seh_pushreg %rdi\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_rel_offset %rdi,-16\n\t")
                    "movq %rcx,%rax\n\t"
                    "movq $4,%rcx\n\t"
@@ -237,40 +239,24 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    "stp x29, x30, [SP,#-16]!\n\t"
                    "mov x29, SP\n\t"
                    "mov x9, x0\n\t"
-                   "cbz w1, 2f\n\t"
-                   "mov w10, w1\n\t"
-                   "mov x11, x2\n\t"
-                   "ldr w12, [x11, #24]\n\t"
-                   "ldr x13, [x11, #8]\n\t"
-                   "ldr x0, [x13, w12, sxtw]\n\t"
-                   "add w12, w12, #8\n\t"
-                   "ldr x1, [x13, w12, sxtw]\n\t"
-                   "add w12, w12, #8\n\t"
-                   "ldr x2, [x13, w12, sxtw]\n\t"
-                   "add w12, w12, #8\n\t"
-                   "ldr x3, [x13, w12, sxtw]\n\t"
-                   "add w12, w12, #8\n\t"
-                   "ldr x4, [x13, w12, sxtw]\n\t"
-                   "add w12, w12, #8\n\t"
-                   "ldr x5, [x13, w12, sxtw]\n\t"
-                   "add w12, w12, #8\n\t"
-                   "ldr x6, [x13, w12, sxtw]\n\t"
-                   "add w12, w12, #8\n\t"
-                   "ldr x7, [x13, w12, sxtw]\n\t"
-                   "add w12, w12, #8\n\t"
-                   "add x13, x13, w12, sxtw\n\t"
-                   "subs w12, w10, #8\n\t"
-                   "b.le 2f\n\t"
-                   "ldr x11, [x11]\n\t"
-                   "lsl w12, w12, #3\n\t"
-                   "sub SP, SP, w12, sxtw\n\t"
-                   "tbz w12, #3, 1f\n\t"
-                   "sub SP, SP, #8\n\t"
-                   "1: sub w12, w12, #8\n\t"
-                   "ldr x14, [x13, w12, sxtw]\n\t"
-                   "str x14, [SP,  w12, sxtw]\n\t"
-                   "cbnz w12, 1b\n\t"
-                   "2: blr x9\n\t"
+                   "cbz w1, 4f\n\t"
+                   "lsl w8, w1, #3\n\t"
+                   "cmp w8, #64\n\t"
+                   "b.ge 1f\n\t"
+                   "mov w8, #64\n"
+                   "1:\ttbz w8, #3, 2f\n\t"
+                   "add w8, w8, #8\n"
+                   "2:\tsub x10, x29, x8\n\t"
+                   "mov sp, x10\n"
+                   "3:\tldr x0, [x2], #8\n\t"
+                   "str x0, [x10], #8\n\t"
+                   "subs w1, w1, #1\n\t"
+                   "b.ne 3b\n\t"
+                   "ldp x0, x1, [sp], #16\n\t"
+                   "ldp x2, x3, [sp], #16\n\t"
+                   "ldp x4, x5, [sp], #16\n\t"
+                   "ldp x6, x7, [sp], #16\n"
+                   "4:\tblr x9\n\t"
                    "mov SP, x29\n\t"
                    "ldp x29, x30, [SP], #16\n\t"
                    "ret\n" )
@@ -445,10 +431,10 @@ void CDECL _vcomp_atomic_and_i1(char *dest, char val)
     do old = *dest; while (interlocked_cmpxchg8(dest, old & val, old) != old);
 }
 
-void CDECL _vcomp_atomic_div_i1(char *dest, char val)
+void CDECL _vcomp_atomic_div_i1(signed char *dest, signed char val)
 {
-    char old;
-    do old = *dest; while (interlocked_cmpxchg8(dest, old / val, old) != old);
+    signed char old;
+    do old = *dest; while ((signed char)interlocked_cmpxchg8((char *)dest, old / val, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_ui1(unsigned char *dest, unsigned char val)
@@ -475,10 +461,10 @@ void CDECL _vcomp_atomic_shl_i1(char *dest, unsigned int val)
     do old = *dest; while (interlocked_cmpxchg8(dest, old << val, old) != old);
 }
 
-void CDECL _vcomp_atomic_shr_i1(char *dest, unsigned int val)
+void CDECL _vcomp_atomic_shr_i1(signed char *dest, unsigned int val)
 {
-    char old;
-    do old = *dest; while (interlocked_cmpxchg8(dest, old >> val, old) != old);
+    signed char old;
+    do old = *dest; while ((signed char)interlocked_cmpxchg8((char *)dest, old >> val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shr_ui1(unsigned char *dest, unsigned int val)
@@ -624,78 +610,78 @@ void CDECL _vcomp_reduction_i2(unsigned int flags, short *dest, short val)
 
 void CDECL _vcomp_atomic_add_i4(int *dest, int val)
 {
-    interlocked_xchg_add(dest, val);
+    InterlockedExchangeAdd(dest, val);
 }
 
 void CDECL _vcomp_atomic_and_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (interlocked_cmpxchg(dest, old & val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange(dest, old & val, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (interlocked_cmpxchg(dest, old / val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange(dest, old / val, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_ui4(unsigned int *dest, unsigned int val)
 {
     unsigned int old;
-    do old = *dest; while (interlocked_cmpxchg((int *)dest, old / val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((int *)dest, old / val, old) != old);
 }
 
 void CDECL _vcomp_atomic_mul_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (interlocked_cmpxchg(dest, old * val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange(dest, old * val, old) != old);
 }
 
 void CDECL _vcomp_atomic_or_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (interlocked_cmpxchg(dest, old | val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange(dest, old | val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shl_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (interlocked_cmpxchg(dest, old << val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange(dest, old << val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shr_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (interlocked_cmpxchg(dest, old >> val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange(dest, old >> val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shr_ui4(unsigned int *dest, unsigned int val)
 {
     unsigned int old;
-    do old = *dest; while (interlocked_cmpxchg((int *)dest, old >> val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange((int *)dest, old >> val, old) != old);
 }
 
 void CDECL _vcomp_atomic_sub_i4(int *dest, int val)
 {
-    interlocked_xchg_add(dest, -val);
+    InterlockedExchangeAdd(dest, -val);
 }
 
 void CDECL _vcomp_atomic_xor_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (interlocked_cmpxchg(dest, old ^ val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange(dest, old ^ val, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_and_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (interlocked_cmpxchg(dest, old && val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange(dest, old && val, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_or_i4(int *dest, int val)
 {
     int old;
-    do old = *dest; while (interlocked_cmpxchg(dest, old ? old : (val != 0), old) != old);
+    do old = *dest; while (InterlockedCompareExchange(dest, old ? old : (val != 0), old) != old);
 }
 
 void CDECL _vcomp_reduction_i4(unsigned int flags, int *dest, int val)
@@ -719,79 +705,79 @@ void CDECL _vcomp_reduction_i4(unsigned int flags, int *dest, int val)
 void CDECL _vcomp_atomic_add_i8(LONG64 *dest, LONG64 val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old + val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old + val, old) != old);
 }
 
 void CDECL _vcomp_atomic_and_i8(LONG64 *dest, LONG64 val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old & val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old & val, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_i8(LONG64 *dest, LONG64 val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old / val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old / val, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_ui8(ULONG64 *dest, ULONG64 val)
 {
     ULONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64((LONG64 *)dest, old / val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64((LONG64 *)dest, old / val, old) != old);
 }
 
 void CDECL _vcomp_atomic_mul_i8(LONG64 *dest, LONG64 val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old * val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old * val, old) != old);
 }
 
 void CDECL _vcomp_atomic_or_i8(LONG64 *dest, LONG64 val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old | val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old | val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shl_i8(LONG64 *dest, unsigned int val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old << val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old << val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shr_i8(LONG64 *dest, unsigned int val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old >> val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old >> val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shr_ui8(ULONG64 *dest, unsigned int val)
 {
     ULONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64((LONG64 *)dest, old >> val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64((LONG64 *)dest, old >> val, old) != old);
 }
 
 void CDECL _vcomp_atomic_sub_i8(LONG64 *dest, LONG64 val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old - val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old - val, old) != old);
 }
 
 void CDECL _vcomp_atomic_xor_i8(LONG64 *dest, LONG64 val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old ^ val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old ^ val, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_and_i8(LONG64 *dest, LONG64 val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old && val, old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old && val, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_or_i8(LONG64 *dest, LONG64 val)
 {
     LONG64 old;
-    do old = *dest; while (interlocked_cmpxchg64(dest, old ? old : (val != 0), old) != old);
+    do old = *dest; while (InterlockedCompareExchange64(dest, old ? old : (val != 0), old) != old);
 }
 
 void CDECL _vcomp_reduction_i8(unsigned int flags, LONG64 *dest, LONG64 val)
@@ -820,7 +806,7 @@ void CDECL _vcomp_atomic_add_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = *(float *)&old + val;
     }
-    while (interlocked_cmpxchg((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((int *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_r4(float *dest, float val)
@@ -831,7 +817,7 @@ void CDECL _vcomp_atomic_div_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = *(float *)&old / val;
     }
-    while (interlocked_cmpxchg((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((int *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_atomic_mul_r4(float *dest, float val)
@@ -842,7 +828,7 @@ void CDECL _vcomp_atomic_mul_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = *(float *)&old * val;
     }
-    while (interlocked_cmpxchg((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((int *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_atomic_sub_r4(float *dest, float val)
@@ -853,7 +839,7 @@ void CDECL _vcomp_atomic_sub_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = *(float *)&old - val;
     }
-    while (interlocked_cmpxchg((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((int *)dest, new, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_and_r4(float *dest, float val)
@@ -864,7 +850,7 @@ static void CDECL _vcomp_atomic_bool_and_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = (*(float *)&old != 0.0) ? (val != 0.0) : 0.0;
     }
-    while (interlocked_cmpxchg((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((int *)dest, new, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_or_r4(float *dest, float val)
@@ -875,7 +861,7 @@ static void CDECL _vcomp_atomic_bool_or_r4(float *dest, float val)
         old = *(int *)dest;
         *(float *)&new = (*(float *)&old != 0.0) ? *(float *)&old : (val != 0.0);
     }
-    while (interlocked_cmpxchg((int *)dest, new, old) != old);
+    while (InterlockedCompareExchange((int *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_reduction_r4(unsigned int flags, float *dest, float val)
@@ -904,7 +890,7 @@ void CDECL _vcomp_atomic_add_r8(double *dest, double val)
         old = *(LONG64 *)dest;
         *(double *)&new = *(double *)&old + val;
     }
-    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+    while (InterlockedCompareExchange64((LONG64 *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_r8(double *dest, double val)
@@ -915,7 +901,7 @@ void CDECL _vcomp_atomic_div_r8(double *dest, double val)
         old = *(LONG64 *)dest;
         *(double *)&new = *(double *)&old / val;
     }
-    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+    while (InterlockedCompareExchange64((LONG64 *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_atomic_mul_r8(double *dest, double val)
@@ -926,7 +912,7 @@ void CDECL _vcomp_atomic_mul_r8(double *dest, double val)
         old = *(LONG64 *)dest;
         *(double *)&new = *(double *)&old * val;
     }
-    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+    while (InterlockedCompareExchange64((LONG64 *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_atomic_sub_r8(double *dest, double val)
@@ -937,7 +923,7 @@ void CDECL _vcomp_atomic_sub_r8(double *dest, double val)
         old = *(LONG64 *)dest;
         *(double *)&new = *(double *)&old - val;
     }
-    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+    while (InterlockedCompareExchange64((LONG64 *)dest, new, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_and_r8(double *dest, double val)
@@ -948,7 +934,7 @@ static void CDECL _vcomp_atomic_bool_and_r8(double *dest, double val)
         old = *(LONG64 *)dest;
         *(double *)&new = (*(double *)&old != 0.0) ? (val != 0.0) : 0.0;
     }
-    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+    while (InterlockedCompareExchange64((LONG64 *)dest, new, old) != old);
 }
 
 static void CDECL _vcomp_atomic_bool_or_r8(double *dest, double val)
@@ -959,7 +945,7 @@ static void CDECL _vcomp_atomic_bool_or_r8(double *dest, double val)
         old = *(LONG64 *)dest;
         *(double *)&new = (*(double *)&old != 0.0) ? *(double *)&old : (val != 0.0);
     }
-    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+    while (InterlockedCompareExchange64((LONG64 *)dest, new, old) != old);
 }
 
 void CDECL _vcomp_reduction_r8(unsigned int flags, double *dest, double val)
@@ -1661,7 +1647,7 @@ void CDECL _vcomp_enter_critsect(CRITICAL_SECTION **critsect)
     if (!*critsect)
     {
         CRITICAL_SECTION *new_critsect = alloc_critsect();
-        if (interlocked_cmpxchg_ptr((void **)critsect, new_critsect, NULL) != NULL)
+        if (InterlockedCompareExchangePointer((void **)critsect, new_critsect, NULL) != NULL)
             destroy_critsect(new_critsect);  /* someone beat us to it */
     }
 

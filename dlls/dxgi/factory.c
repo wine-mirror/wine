@@ -174,16 +174,36 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *ifa
 static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IWineDXGIFactory *iface,
         HWND window, UINT flags)
 {
-    FIXME("iface %p, window %p, flags %#x stub!\n", iface, window, flags);
+    struct dxgi_factory *factory = impl_from_IWineDXGIFactory(iface);
+
+    TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
+
+    if (flags > DXGI_MWA_VALID)
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (!window)
+    {
+        wined3d_unregister_windows(factory->wined3d);
+        return S_OK;
+    }
+
+    if (!wined3d_register_window(factory->wined3d, window, NULL, flags))
+        return E_FAIL;
 
     return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IWineDXGIFactory *iface, HWND *window)
 {
-    FIXME("iface %p, window %p stub!\n", iface, window);
+    TRACE("iface %p, window %p.\n", iface, window);
 
-    return E_NOTIMPL;
+    if (!window)
+        return DXGI_ERROR_INVALID_CALL;
+
+    /* The tests show that this always returns NULL for some unknown reason. */
+    *window = NULL;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *iface,
@@ -382,6 +402,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapterByLuid(IWineDXGIFactory
 
     TRACE("iface %p, luid %08x:%08x, iid %s, adapter %p.\n",
             iface, luid.HighPart, luid.LowPart, debugstr_guid(iid), adapter);
+
+    if (!adapter)
+        return DXGI_ERROR_INVALID_CALL;
 
     adapter_index = 0;
     while ((hr = dxgi_factory_EnumAdapters1(iface, adapter_index, &adapter1)) == S_OK)

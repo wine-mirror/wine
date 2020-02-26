@@ -434,6 +434,59 @@ interface INetFwRule : IDispatch
 [
    local,
    object,
+   uuid(9C27C8DA-189B-4DDE-89F7-8B39A316782C),
+   dual
+]
+interface INetFwRule2 : INetFwRule
+{
+   [id(19), propget]
+   HRESULT EdgeTraversalOptions( [out, retval] long* lOptions );
+   [id(19), propput]
+   HRESULT EdgeTraversalOptions( [in] long lOptions );
+}
+
+[
+   local,
+   object,
+   uuid(B21563FF-D696-4222-AB46-4E89B73AB34A),
+   dual
+]
+interface INetFwRule3 : INetFwRule2
+{
+   [id(20), propget]
+   HRESULT LocalAppPackageId( [out, retval] BSTR* wszPackageId );
+   [id(20), propput]
+   HRESULT LocalAppPackageId( [in] BSTR wszPackageId );
+
+   [id(21), propget]
+   HRESULT LocalUserOwner( [out, retval] BSTR* wszUserOwner );
+   [id(21), propput]
+   HRESULT LocalUserOwner( [in] BSTR wszUserOwner );
+
+   [id(22), propget]
+   HRESULT LocalUserAuthorizedList( [out, retval] BSTR* wszUserAuthList );
+   [id(22), propput]
+   HRESULT LocalUserAuthorizedList( [in] BSTR wszUserAuthList );
+
+   [id(23), propget]
+   HRESULT RemoteUserAuthorizedList( [out, retval] BSTR* wszUserAuthList );
+   [id(23), propput]
+   HRESULT RemoteUserAuthorizedList( [in] BSTR wszUserAuthList );
+
+   [id(24), propget]
+   HRESULT RemoteMachineAuthorizedList( [out, retval] BSTR* wszUserAuthList );
+   [id(24), propput]
+   HRESULT RemoteMachineAuthorizedList( [in] BSTR wszUserAuthList );
+
+   [id(25), propget]
+   HRESULT SecureFlags( [out, retval] long* lOptions );
+   [id(25), propput]
+   HRESULT SecureFlags( [in] long lOptions );
+}
+
+[
+   local,
+   object,
    uuid(9c4c6277-5027-441e-afae-ca1f542da009),
    dual
 ]
@@ -703,10 +756,15 @@ library NetFwPublicTypeLib
     interface INetFwServices;
     interface INetFwAuthorizedApplication;
     interface INetFwAuthorizedApplications;
+    interface INetFwServiceRestriction;
+    interface INetFwRule;
+    interface INetFwRules;
     interface INetFwProfile;
     interface INetFwPolicy;
     interface INetFwPolicy2;
     interface INetFwMgr;
+    interface INetFwProduct;
+    interface INetFwProducts;
 
     [
         uuid(0CA545C6-37AD-4A6C-BF92-9F7610067EF5)

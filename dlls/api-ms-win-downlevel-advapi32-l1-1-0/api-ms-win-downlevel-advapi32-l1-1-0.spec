@@ -23,7 +23,7 @@
 @ stdcall AreAllAccessesGranted(long long) advapi32.AreAllAccessesGranted
 @ stdcall AreAnyAccessesGranted(long long) advapi32.AreAnyAccessesGranted
 @ stdcall CheckTokenMembership(long ptr ptr) advapi32.CheckTokenMembership
-@ stub ConvertToAutoInheritPrivateObjecSecurity
+@ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr) advapi32.ConvertToAutoInheritPrivateObjectSecurity
 @ stdcall CopySid(long ptr ptr) advapi32.CopySid
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr) advapi32.CreatePrivateObjectSecurity
 @ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr) advapi32.CreatePrivateObjectSecurityEx
@@ -35,7 +35,7 @@
 @ stdcall DestroyPrivateObjectSecurity(ptr) advapi32.DestroyPrivateObjectSecurity
 @ stdcall DuplicateToken(long long ptr) advapi32.DuplicateToken
 @ stdcall DuplicateTokenEx(long long ptr long long ptr) advapi32.DuplicateTokenEx
-@ stub EqualDomainSid
+@ stdcall EqualDomainSid(ptr ptr ptr) advapi32.EqualDomainSid
 @ stdcall EqualPrefixSid(ptr ptr) advapi32.EqualPrefixSid
 @ stdcall EqualSid(ptr ptr) advapi32.EqualSid
 @ stdcall EventActivityIdControl(long ptr) advapi32.EventActivityIdControl
@@ -44,7 +44,7 @@
 @ stdcall EventRegister(ptr ptr ptr ptr) advapi32.EventRegister
 @ stdcall EventUnregister(int64) advapi32.EventUnregister
 @ stdcall EventWrite(int64 ptr long ptr) advapi32.EventWrite
-@ stub EventWriteString
+@ stdcall EventWriteString(int64 long int64 ptr) advapi32.EventWriteString
 @ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) advapi32.EventWriteTransfer
 @ stdcall FindFirstFreeAce(ptr ptr) advapi32.FindFirstFreeAce
 @ stdcall FreeSid(ptr) advapi32.FreeSid

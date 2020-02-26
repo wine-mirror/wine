@@ -86,7 +86,7 @@ static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsdisp_t **jsthis, 
     }
 
     if(!is_jsdisp(vdisp))
-        return throw_type_error(ctx, JS_E_JSCRIPT_EXPECTED, NULL);
+        return JS_E_JSCRIPT_EXPECTED;
 
     hres = jsdisp_propget_name(vdisp->u.jsdisp, lengthW, &val);
     if(FAILED(hres))
@@ -149,7 +149,7 @@ static HRESULT Array_set_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t val
 
     len = floor(len);
     if(len!=(DWORD)len)
-        return throw_range_error(ctx, JS_E_INVALID_LENGTH, NULL);
+        return JS_E_INVALID_LENGTH;
 
     for(i=len; i < This->length; i++) {
         hres = jsdisp_delete_idx(&This->dispex, i);
@@ -934,7 +934,7 @@ static HRESULT Array_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
     array = array_this(jsthis);
     if(!array)
-        return throw_type_error(ctx, JS_E_ARRAY_EXPECTED, NULL);
+        return JS_E_ARRAY_EXPECTED;
 
     return array_join(ctx, &array->dispex, array->length, default_separatorW,
                       lstrlenW(default_separatorW), r);
@@ -1191,10 +1191,10 @@ static void Array_on_put(jsdisp_t *dispex, const WCHAR *name)
     const WCHAR *ptr = name;
     DWORD id = 0;
 
-    if(!iswdigit(*ptr))
+    if(!is_digit(*ptr))
         return;
 
-    while(*ptr && iswdigit(*ptr)) {
+    while(*ptr && is_digit(*ptr)) {
         id = id*10 + (*ptr-'0');
         ptr++;
     }
@@ -1281,7 +1281,7 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
             double n = get_number(argv[0]);
 
             if(n < 0 || !is_int32(n))
-                return throw_range_error(ctx, JS_E_INVALID_LENGTH, NULL);
+                return JS_E_INVALID_LENGTH;
 
             hres = create_array(ctx, n, &obj);
             if(FAILED(hres))

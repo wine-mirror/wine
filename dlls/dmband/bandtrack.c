@@ -40,7 +40,7 @@ static inline IDirectMusicBandTrack *impl_from_IDirectMusicTrack8(IDirectMusicTr
     return CONTAINING_RECORD(iface, IDirectMusicBandTrack, IDirectMusicTrack8_iface);
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_QueryInterface(IDirectMusicTrack8 *iface, REFIID riid,
+static HRESULT WINAPI band_track_QueryInterface(IDirectMusicTrack8 *iface, REFIID riid,
         void **ret_iface)
 {
     IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -63,7 +63,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_QueryInterface(IDirectMusicTrack8 *
     return S_OK;
 }
 
-static ULONG WINAPI IDirectMusicTrack8Impl_AddRef(IDirectMusicTrack8 *iface)
+static ULONG WINAPI band_track_AddRef(IDirectMusicTrack8 *iface)
 {
     IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedIncrement(&This->ref);
@@ -73,7 +73,7 @@ static ULONG WINAPI IDirectMusicTrack8Impl_AddRef(IDirectMusicTrack8 *iface)
     return ref;
 }
 
-static ULONG WINAPI IDirectMusicTrack8Impl_Release(IDirectMusicTrack8 *iface)
+static ULONG WINAPI band_track_Release(IDirectMusicTrack8 *iface)
 {
     IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedDecrement(&This->ref);
@@ -88,15 +88,14 @@ static ULONG WINAPI IDirectMusicTrack8Impl_Release(IDirectMusicTrack8 *iface)
     return ref;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_Init(IDirectMusicTrack8 *iface,
-        IDirectMusicSegment *pSegment)
+static HRESULT WINAPI band_track_Init(IDirectMusicTrack8 *iface, IDirectMusicSegment *pSegment)
 {
   IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
   FIXME("(%p, %p): stub\n", This, pSegment);
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_InitPlay(IDirectMusicTrack8 *iface,
+static HRESULT WINAPI band_track_InitPlay(IDirectMusicTrack8 *iface,
         IDirectMusicSegmentState *segment_state, IDirectMusicPerformance *performance,
         void **state_data, DWORD virtual_track8id, DWORD flags)
 {
@@ -107,14 +106,14 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_InitPlay(IDirectMusicTrack8 *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_EndPlay(IDirectMusicTrack8 *iface, void *pStateData)
+static HRESULT WINAPI band_track_EndPlay(IDirectMusicTrack8 *iface, void *pStateData)
 {
   IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
   FIXME("(%p, %p): stub\n", This, pStateData);
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_Play(IDirectMusicTrack8 *iface, void *state_data,
+static HRESULT WINAPI band_track_Play(IDirectMusicTrack8 *iface, void *state_data,
         MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD flags,
         IDirectMusicPerformance *performance, IDirectMusicSegmentState *segment_state,
         DWORD virtual_id)
@@ -133,24 +132,60 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Play(IDirectMusicTrack8 *iface, voi
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
+static HRESULT WINAPI band_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
+        MUSIC_TIME *next, void *param)
 {
-  IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
-  return S_OK;
+    IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
+
+    if (!type)
+        return E_POINTER;
+    if (!IsEqualGUID(type, &GUID_BandParam))
+        return DMUS_E_GET_UNSUPPORTED;
+
+    FIXME("GUID_BandParam not handled yet\n");
+
+    return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_SetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, void *pParam)
+static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
+        void *param)
 {
-  IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
-  FIXME("(%p, %s, %d, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
-  return S_OK;
+    IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(type), time, param);
+
+    if (!type)
+        return E_POINTER;
+    if (FAILED(IDirectMusicTrack8_IsParamSupported(iface, type)))
+        return DMUS_E_TYPE_UNSUPPORTED;
+
+    if (IsEqualGUID(type, &GUID_BandParam))
+        FIXME("GUID_BandParam not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_Clear_All_Bands))
+        FIXME("GUID_Clear_All_Bands not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_ConnectToDLSCollection))
+        FIXME("GUID_ConnectToDLSCollection not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_Disable_Auto_Download))
+        FIXME("GUID_Disable_Auto_Download not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_Download))
+        FIXME("GUID_Download not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_DownloadToAudioPath))
+        FIXME("GUID_DownloadToAudioPath not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_Enable_Auto_Download))
+        FIXME("GUID_Enable_Auto_Download not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_IDirectMusicBand))
+        FIXME("GUID_IDirectMusicBand not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_StandardMIDIFile))
+        FIXME("GUID_StandardMIDIFile not handled yet\n");
+    else if (IsEqualGUID(type, &GUID_UnloadFromAudioPath))
+        FIXME("GUID_UnloadFromAudioPath not handled yet\n");
+
+    return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_IsParamSupported(IDirectMusicTrack8 *iface,
-        REFGUID rguidType)
+static HRESULT WINAPI band_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID rguidType)
 {
   IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
 
@@ -178,7 +213,15 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_IsParamSupported(IDirectMusicTrack8
   return DMUS_E_TYPE_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_AddNotificationType(IDirectMusicTrack8 *iface,
+static HRESULT WINAPI band_track_AddNotificationType(IDirectMusicTrack8 *iface, REFGUID notiftype)
+{
+    IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI band_track_RemoveNotificationType(IDirectMusicTrack8 *iface,
         REFGUID notiftype)
 {
     IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -187,16 +230,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_AddNotificationType(IDirectMusicTra
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_RemoveNotificationType(IDirectMusicTrack8 *iface,
-        REFGUID notiftype)
-{
-    IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
-
-    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicTrack8Impl_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME mtStart,
+static HRESULT WINAPI band_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME mtStart,
         MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack)
 {
   IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -204,7 +238,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Clone(IDirectMusicTrack8 *iface, MU
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_PlayEx(IDirectMusicTrack8 *iface, void *state_data,
+static HRESULT WINAPI band_track_PlayEx(IDirectMusicTrack8 *iface, void *state_data,
         REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD flags,
         IDirectMusicPerformance *performance, IDirectMusicSegmentState *segment_state,
         DWORD virtual_id)
@@ -217,7 +251,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_PlayEx(IDirectMusicTrack8 *iface, v
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_GetParamEx(IDirectMusicTrack8 *iface,
+static HRESULT WINAPI band_track_GetParamEx(IDirectMusicTrack8 *iface,
         REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME *rtNext, void *param,
         void *state_data, DWORD flags)
 {
@@ -229,8 +263,8 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_GetParamEx(IDirectMusicTrack8 *ifac
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_SetParamEx(IDirectMusicTrack8 *iface,
-        REFGUID rguidType, REFERENCE_TIME rtTime, void *param, void *state_data, DWORD flags)
+static HRESULT WINAPI band_track_SetParamEx(IDirectMusicTrack8 *iface, REFGUID rguidType,
+        REFERENCE_TIME rtTime, void *param, void *state_data, DWORD flags)
 {
     IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
 
@@ -240,7 +274,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_SetParamEx(IDirectMusicTrack8 *ifac
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+static HRESULT WINAPI band_track_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
         DWORD trackgroup, IDirectMusicTrack **track)
 {
     IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -249,8 +283,8 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_Join(IDirectMusicTrack8 *iface,
-        IDirectMusicTrack *pNewTrack, MUSIC_TIME mtJoin, IUnknown *pContext, DWORD dwTrackGroup,
+static HRESULT WINAPI band_track_Join(IDirectMusicTrack8 *iface, IDirectMusicTrack *pNewTrack,
+        MUSIC_TIME mtJoin, IUnknown *pContext, DWORD dwTrackGroup,
         IDirectMusicTrack **ppResultTrack)
 {
   IDirectMusicBandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -259,24 +293,24 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Join(IDirectMusicTrack8 *iface,
 }
 
 static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
-    IDirectMusicTrack8Impl_QueryInterface,
-    IDirectMusicTrack8Impl_AddRef,
-    IDirectMusicTrack8Impl_Release,
-    IDirectMusicTrack8Impl_Init,
-    IDirectMusicTrack8Impl_InitPlay,
-    IDirectMusicTrack8Impl_EndPlay,
-    IDirectMusicTrack8Impl_Play,
-    IDirectMusicTrack8Impl_GetParam,
-    IDirectMusicTrack8Impl_SetParam,
-    IDirectMusicTrack8Impl_IsParamSupported,
-    IDirectMusicTrack8Impl_AddNotificationType,
-    IDirectMusicTrack8Impl_RemoveNotificationType,
-    IDirectMusicTrack8Impl_Clone,
-    IDirectMusicTrack8Impl_PlayEx,
-    IDirectMusicTrack8Impl_GetParamEx,
-    IDirectMusicTrack8Impl_SetParamEx,
-    IDirectMusicTrack8Impl_Compose,
-    IDirectMusicTrack8Impl_Join
+    band_track_QueryInterface,
+    band_track_AddRef,
+    band_track_Release,
+    band_track_Init,
+    band_track_InitPlay,
+    band_track_EndPlay,
+    band_track_Play,
+    band_track_GetParam,
+    band_track_SetParam,
+    band_track_IsParamSupported,
+    band_track_AddNotificationType,
+    band_track_RemoveNotificationType,
+    band_track_Clone,
+    band_track_PlayEx,
+    band_track_GetParamEx,
+    band_track_SetParamEx,
+    band_track_Compose,
+    band_track_Join
 };
 
 /* IDirectMusicBandTrack IPersistStream part: */

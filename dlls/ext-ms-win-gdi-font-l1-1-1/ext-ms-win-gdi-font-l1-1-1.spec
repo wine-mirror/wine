@@ -6,9 +6,9 @@
 @ stdcall ExtTextOutA(long long long long ptr str long ptr) gdi32.ExtTextOutA
 @ stdcall ExtTextOutW(long long long long ptr wstr long ptr) gdi32.ExtTextOutW
 @ stdcall GetCharABCWidthsW(long long long ptr) gdi32.GetCharABCWidthsW
-@ stdcall GetCharWidth32A(long long long long) gdi32.GetCharWidth32A
-@ stdcall GetCharWidthA(long long long long) gdi32.GetCharWidthA
-@ stdcall GetCharWidthW(long long long long) gdi32.GetCharWidthW
+@ stdcall GetCharWidth32A(long long long ptr) gdi32.GetCharWidth32A
+@ stdcall GetCharWidthA(long long long ptr) gdi32.GetCharWidthA
+@ stdcall GetCharWidthW(long long long ptr) gdi32.GetCharWidthW
 @ stdcall GetFontData(long long long ptr long) gdi32.GetFontData
 @ stdcall GetFontFileData(long long int64 ptr long) gdi32.GetFontFileData
 @ stdcall GetFontFileInfo(long long ptr long ptr) gdi32.GetFontFileInfo

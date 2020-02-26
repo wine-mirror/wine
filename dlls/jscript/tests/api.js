@@ -156,6 +156,12 @@ i = parseInt("1", 37);
 ok(isNaN(i), "parseInt('1', 37) = " + i);
 i = parseInt("1", 36);
 ok(i === 1, "parseInt('1', 36) = " + i);
+i = parseInt("0x1f", 16);
+ok(i === 31, "parseInt('0xf', 16) = " + i);
+i = parseInt("0x", 16);
+ok(isNaN(i), "parseInt('0x', 16) = " + i);
+i = parseInt("0x1f", 17);
+ok(i === 0, "parseInt('0xf', 16) = " + i);
 
 tmp = encodeURI("abc");
 ok(tmp === "abc", "encodeURI('abc') = " + tmp);
@@ -1436,6 +1442,7 @@ ok(isNaN(parseFloat('not a number')), "parseFloat('not a number') is not NaN");
 ok(parseFloat('+13.2e-3') === 13.2e-3, "parseFloat('+13.2e-3') = " + parseFloat('+13.2e-3'));
 ok(parseFloat('.12') === 0.12, "parseFloat('.12') = " + parseFloat('.12'));
 ok(parseFloat('1e') === 1, "parseFloat('1e') = " + parseFloat('1e'));
+ok(isNaN(parseFloat('\uff16')), "parseFloat('\\uD835') is not NaN");
 
 tmp = Math.min(1);
 ok(tmp === 1, "Math.min(1) = " + tmp);
@@ -1911,11 +1918,11 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
 
     s = JSON.stringify(testObj);
     ok(s === undefined || s === "undefined" /* broken on some old versions */,
-       "stringify(testObj) returned " + s + " expected undfined");
+       "stringify(testObj) returned " + s + " expected undefined");
 
     s = JSON.stringify(undefined);
     ok(s === undefined || s === "undefined" /* broken on some old versions */,
-       "stringify(undefined) returned " + s + " expected undfined");
+       "stringify(undefined) returned " + s + " expected undefined");
 
     var parse_tests = [
         ["true", true],

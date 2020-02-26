@@ -1280,17 +1280,27 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
     }
     if (pWnd == WND_OTHER_PROCESS)
     {
-        if (!IsWindow( hwnd )) return FALSE;
-        FIXME( "not supported on other process window %p\n", hwnd );
-        /* provide some dummy information */
+        RECT normal_position;
+        DWORD style;
+
+        if (!GetWindowRect(hwnd, &normal_position))
+            return FALSE;
+
+        FIXME("not fully supported on other process window %p.\n", hwnd);
+
         wndpl->length  = sizeof(*wndpl);
-        wndpl->showCmd = SW_SHOWNORMAL;
+        style = GetWindowLongW(hwnd, GWL_STYLE);
+        if (style & WS_MINIMIZE)
+            wndpl->showCmd = SW_SHOWMINIMIZED;
+        else
+            wndpl->showCmd = (style & WS_MAXIMIZE) ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
+        /* provide some dummy information */
         wndpl->flags = 0;
         wndpl->ptMinPosition.x = -1;
         wndpl->ptMinPosition.y = -1;
         wndpl->ptMaxPosition.x = -1;
         wndpl->ptMaxPosition.y = -1;
-        GetWindowRect( hwnd, &wndpl->rcNormalPosition );
+        wndpl->rcNormalPosition = normal_position;
         return TRUE;
     }
 
@@ -1387,7 +1397,7 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
     if (flags & PLACE_MAX) make_point_onscreen( &wp.ptMaxPosition );
     if (flags & PLACE_RECT) make_rect_onscreen( &wp.rcNormalPosition );
 
-    TRACE( "%p: setting min %d,%d max %d,%d normal %s flags %x ajusted to min %d,%d max %d,%d normal %s\n",
+    TRACE( "%p: setting min %d,%d max %d,%d normal %s flags %x adjusted to min %d,%d max %d,%d normal %s\n",
            hwnd, wndpl->ptMinPosition.x, wndpl->ptMinPosition.y,
            wndpl->ptMaxPosition.x, wndpl->ptMaxPosition.y,
            wine_dbgstr_rect(&wndpl->rcNormalPosition), flags,
@@ -1862,6 +1872,18 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS *pWinpos, const RECT *old_window_rect, c
         params.rgrc[2] = *old_client_rect;
         params.lppos = &winposCopy;
         winposCopy = *pWinpos;
+
+        if (pWinpos->flags & SWP_NOMOVE)
+        {
+            winposCopy.x = old_window_rect->left;
+            winposCopy.y = old_window_rect->top;
+        }
+
+        if (pWinpos->flags & SWP_NOSIZE)
+        {
+            winposCopy.cx = old_window_rect->right - old_window_rect->left;
+            winposCopy.cy = old_window_rect->bottom - old_window_rect->top;
+        }
 
         wvrFlags = SendMessageW( pWinpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
 
@@ -2365,7 +2387,10 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
     if (WIN_IsCurrentThread( hwnd ))
         return USER_SetWindowPos( &winpos, 0, 0 );
 
-    return SendMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
+    if (flags & SWP_ASYNCWINDOWPOS)
+        return SendNotifyMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
+    else
+        return SendMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
 }
 
 

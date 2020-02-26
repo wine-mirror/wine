@@ -410,7 +410,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF* rect,
 {
     float angle;
 
-    TRACE("(%p, %x, %x, %d, %d, %p)\n", rect, startcolor, endcolor, mode,
+    TRACE("(%s, %x, %x, %d, %d, %p)\n", debugstr_rectf(rect), startcolor, endcolor, mode,
           wrap, line);
 
     if(!line || !rect)
@@ -466,7 +466,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngle(GDIPCONST GpRectF* rect
     REAL sin_angle, cos_angle, sin_cos_angle;
     GpPointF start, end;
 
-    TRACE("(%p, %x, %x, %.2f, %d, %d, %p)\n", rect, startcolor, endcolor, angle, isAngleScalable,
+    TRACE("(%s, %x, %x, %.2f, %d, %d, %p)\n", debugstr_rectf(rect), startcolor, endcolor, angle, isAngleScalable,
           wrap, line);
 
     if (!rect || !line || wrap == WrapModeClamp)
@@ -574,15 +574,14 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect* rect
 
 static GpStatus create_path_gradient(GpPath *path, ARGB centercolor, GpPathGradient **grad)
 {
-    GpRectF bounds;
+    INT i;
+    REAL sum_x = 0, sum_y = 0;
 
     if(!path || !grad)
         return InvalidParameter;
 
     if (path->pathdata.Count < 2)
         return OutOfMemory;
-
-    GdipGetPathWorldBounds(path, &bounds, NULL, NULL);
 
     *grad = heap_alloc_zero(sizeof(GpPathGradient));
     if (!*grad)
@@ -613,9 +612,14 @@ static GpStatus create_path_gradient(GpPath *path, ARGB centercolor, GpPathGradi
     (*grad)->centercolor = centercolor;
     (*grad)->wrap = WrapModeClamp;
     (*grad)->gamma = FALSE;
-    /* FIXME: this should be set to the "centroid" of the path by default */
-    (*grad)->center.X = bounds.X + bounds.Width / 2;
-    (*grad)->center.Y = bounds.Y + bounds.Height / 2;
+    for (i=0; i<path->pathdata.Count; i++)
+    {
+        sum_x += path->pathdata.Points[i].X;
+        sum_y += path->pathdata.Points[i].Y;
+    }
+    (*grad)->center.X = sum_x / path->pathdata.Count;
+    (*grad)->center.Y = sum_y / path->pathdata.Count;
+
     (*grad)->focus.X = 0.0;
     (*grad)->focus.Y = 0.0;
     (*grad)->surroundcolors[0] = 0xffffffff;

@@ -237,6 +237,25 @@ static void test_dmstyle(void)
     while (IDirectMusicStyle_Release(dms));
 }
 
+static void expect_getparam(IDirectMusicTrack8 *track, REFGUID type, const char *name,
+        HRESULT expect)
+{
+    HRESULT hr;
+    char buf[64] = { 0 };
+
+    hr = IDirectMusicTrack8_GetParam(track, type, 0, NULL, buf);
+    ok(hr == expect, "GetParam(%s) failed: %08x, expected %08x\n", name, hr, expect);
+}
+
+static void expect_setparam(IDirectMusicTrack8 *track, REFGUID type, const char *name,
+        HRESULT expect)
+{
+    HRESULT hr;
+
+    hr = IDirectMusicTrack8_SetParam(track, type, 0, track);
+    ok(hr == expect, "SetParam(%s) failed: %08x, expected %08x\n", name, hr, expect);
+}
+
 static void test_track(void)
 {
     IDirectMusicTrack8 *dmt8;
@@ -244,22 +263,60 @@ static void test_track(void)
     CLSID classid;
     ULARGE_INTEGER size;
     HRESULT hr;
+#define X(guid)        &guid, #guid
+    const struct {
+        REFGUID type;
+        const char *name;
+    } param_types[] = {
+        { X(GUID_BandParam) },
+        { X(GUID_ChordParam) },
+        { X(GUID_Clear_All_Bands) },
+        { X(GUID_CommandParam) },
+        { X(GUID_CommandParam2) },
+        { X(GUID_CommandParamNext) },
+        { X(GUID_ConnectToDLSCollection) },
+        { X(GUID_Disable_Auto_Download) },
+        { X(GUID_DisableTempo) },
+        { X(GUID_DisableTimeSig) },
+        { X(GUID_Download) },
+        { X(GUID_DownloadToAudioPath) },
+        { X(GUID_Enable_Auto_Download) },
+        { X(GUID_EnableTempo) },
+        { X(GUID_EnableTimeSig) },
+        { X(GUID_IDirectMusicBand) },
+        { X(GUID_IDirectMusicChordMap) },
+        { X(GUID_IDirectMusicStyle) },
+        { X(GUID_MuteParam) },
+        { X(GUID_Play_Marker) },
+        { X(GUID_RhythmParam) },
+        { X(GUID_SeedVariations) },
+        { X(GUID_StandardMIDIFile) },
+        { X(GUID_TempoParam) },
+        { X(GUID_TimeSignature) },
+        { X(GUID_Unload) },
+        { X(GUID_UnloadFromAudioPath) },
+        { X(GUID_Valid_Start_Time) },
+        { X(GUID_Variations) }
+    };
+#undef X
 #define X(class)        &CLSID_ ## class, #class
     const struct {
         REFCLSID clsid;
         const char *name;
         BOOL has_save;
         BOOL has_join;
+        /* bitfield with supported param types */
+        unsigned int has_params;
     } class[] = {
-        { X(DirectMusicAuditionTrack), TRUE, FALSE },
-        { X(DirectMusicChordTrack), TRUE, TRUE },
-        { X(DirectMusicCommandTrack), TRUE, TRUE },
-        { X(DirectMusicMotifTrack), FALSE, FALSE },
-        { X(DirectMusicMuteTrack), TRUE, FALSE },
-        { X(DirectMusicStyleTrack), FALSE, TRUE },
+        { X(DirectMusicAuditionTrack), TRUE, FALSE, 0x18204200 },
+        { X(DirectMusicChordTrack), TRUE, TRUE, 0x100002 },
+        { X(DirectMusicCommandTrack), TRUE, TRUE, 0x38 },
+        { X(DirectMusicMotifTrack), FALSE, FALSE, 0x8204200 },
+        { X(DirectMusicMuteTrack), TRUE, FALSE, 0x40000 },
+        { X(DirectMusicStyleTrack), FALSE, TRUE, 0x1224200 },
     };
 #undef X
-    unsigned int i;
+    unsigned int i, j;
 
     for (i = 0; i < ARRAY_SIZE(class); i++) {
         trace("Testing %s\n", class[i].name);
@@ -279,14 +336,78 @@ static void test_track(void)
             else
                 todo_wine ok(hr == E_POINTER, "IDirectMusicTrack8_InitPlay failed: %08x\n", hr);
         }
-        todo_wine {
+
         hr = IDirectMusicTrack8_GetParam(dmt8, NULL, 0, NULL, NULL);
         ok(hr == E_POINTER, "IDirectMusicTrack8_GetParam failed: %08x\n", hr);
         hr = IDirectMusicTrack8_SetParam(dmt8, NULL, 0, NULL);
         ok(hr == E_POINTER, "IDirectMusicTrack8_SetParam failed: %08x\n", hr);
-        }
+
         hr = IDirectMusicTrack8_IsParamSupported(dmt8, NULL);
         ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
+        for (j = 0; j < ARRAY_SIZE(param_types); j++) {
+            hr = IDirectMusicTrack8_IsParamSupported(dmt8, param_types[j].type);
+            if (class[i].has_params & (1 << j))
+                ok(hr == S_OK, "IsParamSupported(%s) failed: %08x, expected S_OK\n",
+                        param_types[j].name, hr);
+            else {
+                ok(hr == DMUS_E_TYPE_UNSUPPORTED,
+                        "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
+                        param_types[j].name, hr);
+                if (class[i].clsid == &CLSID_DirectMusicChordTrack) {
+                    expect_setparam(dmt8, param_types[j].type, param_types[j].name,
+                            DMUS_E_SET_UNSUPPORTED);
+                } else if (class[i].clsid == &CLSID_DirectMusicMuteTrack) {
+                    expect_getparam(dmt8, param_types[j].type, param_types[j].name,
+                            DMUS_E_TYPE_UNSUPPORTED);
+                    expect_setparam(dmt8, param_types[j].type, param_types[j].name,
+                            DMUS_E_TYPE_UNSUPPORTED);
+                } else {
+                    expect_getparam(dmt8, param_types[j].type, param_types[j].name,
+                            DMUS_E_GET_UNSUPPORTED);
+                    expect_setparam(dmt8, param_types[j].type, param_types[j].name,
+                            DMUS_E_SET_UNSUPPORTED);
+                }
+            }
+        }
+
+        /* GetParam / SetParam for IsParamSupported supported types */
+        if (class[i].clsid == &CLSID_DirectMusicAuditionTrack) {
+            expect_getparam(dmt8, &GUID_DisableTimeSig, "GUID_DisableTimeSig",
+                    DMUS_E_GET_UNSUPPORTED);
+            expect_getparam(dmt8, &GUID_EnableTimeSig, "GUID_EnableTimeSig",
+                    DMUS_E_GET_UNSUPPORTED);
+            expect_getparam(dmt8, &GUID_SeedVariations, "GUID_SeedVariations",
+                    DMUS_E_GET_UNSUPPORTED);
+            expect_setparam(dmt8, &GUID_Valid_Start_Time, "GUID_Valid_Start_Time",
+                    DMUS_E_SET_UNSUPPORTED);
+            expect_setparam(dmt8, &GUID_Variations, "GUID_Variations",
+                    DMUS_E_SET_UNSUPPORTED);
+        } else if (class[i].clsid == &CLSID_DirectMusicChordTrack) {
+            expect_setparam(dmt8, &GUID_RhythmParam, "GUID_RhythmParam",
+                    DMUS_E_SET_UNSUPPORTED);
+        } else if (class[i].clsid == &CLSID_DirectMusicCommandTrack) {
+            expect_setparam(dmt8, &GUID_CommandParam2, "GUID_CommandParam2",
+                    DMUS_E_SET_UNSUPPORTED);
+        } else if (class[i].clsid == &CLSID_DirectMusicMotifTrack) {
+            expect_getparam(dmt8, &GUID_DisableTimeSig, "GUID_DisableTimeSig",
+                    DMUS_E_GET_UNSUPPORTED);
+            expect_getparam(dmt8, &GUID_EnableTimeSig, "GUID_EnableTimeSig",
+                    DMUS_E_GET_UNSUPPORTED);
+            expect_getparam(dmt8, &GUID_SeedVariations, "GUID_SeedVariations",
+                    DMUS_E_GET_UNSUPPORTED);
+            expect_setparam(dmt8, &GUID_Valid_Start_Time, "GUID_Valid_Start_Time",
+                    DMUS_E_SET_UNSUPPORTED);
+        } else if (class[i].clsid == &CLSID_DirectMusicStyleTrack) {
+            expect_getparam(dmt8, &GUID_DisableTimeSig, "GUID_DisableTimeSig",
+                    DMUS_E_GET_UNSUPPORTED);
+            expect_getparam(dmt8, &GUID_EnableTimeSig, "GUID_EnableTimeSig",
+                    DMUS_E_GET_UNSUPPORTED);
+            expect_getparam(dmt8, &GUID_SeedVariations, "GUID_SeedVariations",
+                    DMUS_E_GET_UNSUPPORTED);
+            expect_setparam(dmt8, &GUID_TimeSignature, "GUID_TimeSignature",
+                    DMUS_E_SET_UNSUPPORTED);
+        }
+
         if (class[i].clsid == &CLSID_DirectMusicMuteTrack) {
             hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);
             ok(hr == E_NOTIMPL, "IDirectMusicTrack8_AddNotificationType failed: %08x\n", hr);
@@ -426,8 +547,6 @@ static void test_parsedescriptor(void)
     DMUS_OBJECTDESC desc = {0};
     HRESULT hr;
     DWORD valid;
-    const WCHAR s_inam[] = {'I','N','A','M','\0'};
-    const WCHAR s_unam[] = {'U','N','A','M','\0'};
     const FOURCC alldesc[] =
     {
         FOURCC_RIFF, DMUS_FOURCC_STYLE_FORM, DMUS_FOURCC_CATEGORY_CHUNK, FOURCC_LIST,
@@ -501,7 +620,7 @@ static void test_parsedescriptor(void)
             wine_dbgstr_guid(&desc.guidClass));
     ok(IsEqualGUID(&desc.guidObject, &GUID_NULL), "Got object guid %s, expected GUID_NULL\n",
             wine_dbgstr_guid(&desc.guidClass));
-    ok(!memcmp(desc.wszName, s_unam, sizeof(s_unam)), "Got name '%s', expected 'UNAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"UNAM"), "Got name '%s', expected 'UNAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 
@@ -513,7 +632,7 @@ static void test_parsedescriptor(void)
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
     ok(desc.dwValidData == (DMUS_OBJ_CLASS | DMUS_OBJ_NAME),
             "Got valid data %#x, expected DMUS_OBJ_CLASS | DMUS_OBJ_NAME\n", desc.dwValidData);
-    ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"INAM"), "Got name '%s', expected 'INAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 
@@ -534,7 +653,7 @@ static void test_parsedescriptor(void)
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
     valid = DMUS_OBJ_OBJECT|DMUS_OBJ_CLASS|DMUS_OBJ_NAME|DMUS_OBJ_VERSION;
     ok(desc.dwValidData == valid, "Got valid data %#x, expected %#x\n", desc.dwValidData, valid);
-    ok(!memcmp(desc.wszName, s_inam, sizeof(s_inam)), "Got name '%s', expected 'INAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"INAM"), "Got name '%s', expected 'INAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 

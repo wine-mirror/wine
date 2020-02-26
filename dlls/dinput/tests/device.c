@@ -25,6 +25,8 @@
 #include "windef.h"
 #include "dinput.h"
 
+#include <limits.h>
+
 static const DIOBJECTDATAFORMAT obj_data_format[] = {
   { &GUID_YAxis, 16, DIDFT_OPTIONAL|DIDFT_AXIS  |DIDFT_MAKEINSTANCE(1), 0},
   { &GUID_Button,15, DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_MAKEINSTANCE(3), 0},
@@ -106,8 +108,22 @@ static void test_object_info(IDirectInputDeviceA *device, HWND hwnd)
     dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
     dp.diph.dwHow = DIPH_DEVICE;
     dp.diph.dwObj = 0;
-    dp.dwData = 0;
+    dp.dwData = UINT_MAX;
 
+    hr = IDirectInputDevice_GetProperty(device, DIPROP_BUFFERSIZE, &dp.diph);
+    ok(hr == DI_OK, "Failed: %08x\n", hr);
+    ok(dp.dwData == 0, "got %d\n", dp.dwData);
+
+    dp.dwData = UINT_MAX;
+    hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
+    ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
+
+    dp.dwData = 0;
+    hr = IDirectInputDevice_GetProperty(device, DIPROP_BUFFERSIZE, &dp.diph);
+    ok(hr == DI_OK, "Failed: %08x\n", hr);
+    ok(dp.dwData == UINT_MAX, "got %d\n", dp.dwData);
+
+    dp.dwData = 0;
     hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
     ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
     cnt = 5;
@@ -166,6 +182,15 @@ static void test_object_info(IDirectInputDeviceA *device, HWND hwnd)
         hr = IDirectInputDevice_Unacquire(device);
         ok(hr == DI_OK, "Unacquire() failed: %08x\n", hr);
     }
+
+    /* Reset buffer size */
+    dp.diph.dwSize = sizeof(DIPROPDWORD);
+    dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dp.diph.dwHow = DIPH_DEVICE;
+    dp.diph.dwObj = 0;
+    dp.dwData = 0;
+    hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
+    ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
 }
 
 struct enum_data
@@ -190,15 +215,15 @@ static BOOL CALLBACK enum_devices(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
         trace("Testing device %p \"%s\"\n", device, lpddi->tszInstanceName);
 
         hr = IUnknown_QueryInterface(device, &IID_IDirectInputDevice2A, (LPVOID*)&obj);
-        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7A) failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2A) failed: %08x\n", hr);
         test_object_info(obj, data->hwnd);
-        if (obj) IUnknown_Release(obj);
+        IUnknown_Release(obj);
         obj = NULL;
 
         hr = IUnknown_QueryInterface(device, &IID_IDirectInputDevice2W, (LPVOID*)&obj);
-        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7W) failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2W) failed: %08x\n", hr);
         test_object_info(obj, data->hwnd);
-        if (obj) IUnknown_Release(obj);
+        IUnknown_Release(obj);
 
         IUnknown_Release(device);
     }

@@ -5441,6 +5441,15 @@ static void add_dirty_rect_test(void)
     HRESULT hr;
 
     static const RECT part_rect = {96, 96, 160, 160};
+    static const RECT oob_rect[] =
+    {
+        {  0,   0, 200, 300},
+        {  0,   0, 300, 200},
+        {100, 100,  10,  10},
+        {200, 300,  10,  10},
+        {300, 200, 310, 210},
+        {  0,   0,   0,   0},
+    };
 
     window = create_window();
     d3d = Direct3DCreate8(D3D_SDK_VERSION);
@@ -5520,7 +5529,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x00ff0000, 1),
+    ok(color_match(color, 0x00ff0000, 1),
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -5533,7 +5542,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x00ff0000, 1),
+    ok(color_match(color, 0x00ff0000, 1),
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -5545,7 +5554,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x00ff0000, 1),
+    ok(color_match(color, 0x00ff0000, 1),
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -5562,7 +5571,7 @@ static void add_dirty_rect_test(void)
     ok(color_match(color, 0x0000ff00, 1),
             "Expected color 0x0000ff00, got 0x%08x.\n", color);
     color = getPixelColor(device, 1, 1);
-    todo_wine ok(color_match(color, 0x00ff0000, 1),
+    ok(color_match(color, 0x00ff0000, 1),
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -5584,7 +5593,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x0000ff00, 1),
+    ok(color_match(color, 0x0000ff00, 1),
             "Expected color 0x0000ff00, got 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -5596,7 +5605,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x0000ff00, 1),
+    ok(color_match(color, 0x0000ff00, 1),
             "Expected color 0x0000ff00, got 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
@@ -5783,6 +5792,17 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
     hr = IDirect3DTexture8_AddDirtyRect(tex_managed, NULL);
     ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+
+    /* Test out-of-bounds regions. */
+    for (i = 0; i < ARRAY_SIZE(oob_rect); ++i)
+    {
+        hr = IDirect3DTexture8_AddDirtyRect(tex_src_red, &oob_rect[i]);
+        ok(hr == D3DERR_INVALIDCALL, "[%u] Got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DTexture8_LockRect(tex_src_red, 0, &locked_rect, &oob_rect[i], 0);
+        ok(SUCCEEDED(hr), "[%u] Got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DTexture8_UnlockRect(tex_src_red, 0);
+        ok(SUCCEEDED(hr), "[%u] Got unexpected hr %#x.\n", i, hr);
+    }
 
     IDirect3DSurface8_Release(surface_dst2);
     IDirect3DSurface8_Release(surface_managed1);
@@ -7813,13 +7833,19 @@ static void test_vshader_input(void)
         {{ 0.0f,  0.0f, 0.1f}, 0x00ff8040},
         {{ 1.0f, -1.0f, 0.1f}, 0x00ff8040},
         {{ 1.0f,  0.0f, 0.1f}, 0x00ff8040},
-    },
+    };
+    static const struct
+    {
+        struct vec3 position;
+        struct vec3 dummy; /* testing D3DVSD_SKIP */
+        DWORD diffuse;
+    }
     quad3_color[] =
     {
-        {{-1.0f,  0.0f, 0.1f}, 0x00ff8040},
-        {{-1.0f,  1.0f, 0.1f}, 0x00ff8040},
-        {{ 0.0f,  0.0f, 0.1f}, 0x00ff8040},
-        {{ 0.0f,  1.0f, 0.1f}, 0x00ff8040},
+        {{-1.0f,  0.0f, 0.1f}, {0.0f}, 0x00ff8040},
+        {{-1.0f,  1.0f, 0.1f}, {0.0f}, 0x00ff8040},
+        {{ 0.0f,  0.0f, 0.1f}, {0.0f}, 0x00ff8040},
+        {{ 0.0f,  1.0f, 0.1f}, {0.0f}, 0x00ff8040},
     };
     static const float quad4_color[] =
     {
@@ -7870,6 +7896,7 @@ static void test_vshader_input(void)
     {
         D3DVSD_STREAM(0),
         D3DVSD_REG(0, D3DVSDT_FLOAT3), /* position */
+        D3DVSD_SKIP(3),                /* not used */
         D3DVSD_REG(5, D3DVSDT_D3DCOLOR), /* diffuse */
         D3DVSD_END()
     };
@@ -11001,6 +11028,45 @@ done:
     DestroyWindow(window);
 }
 
+static void test_desktop_window(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+    IDirect3DDevice8_Release(device);
+    DestroyWindow(window);
+
+    device = create_device(d3d, GetDesktopWindow(), GetDesktopWindow(), TRUE);
+    ok(!!device, "Failed to create a D3D device.\n");
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    color = getPixelColor(device, 1, 1);
+    ok(color == 0x00ff0000, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    IDirect3D8_Release(d3d);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -11077,4 +11143,5 @@ START_TEST(visual)
     test_color_vertex();
     test_sysmem_draw();
     test_alphatest();
+    test_desktop_window();
 }

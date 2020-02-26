@@ -139,7 +139,7 @@ static INT read_header(HFILE fd,struct lzfileheader *head)
 	/* We can't directly read the lzfileheader struct due to
 	 * structure element alignment
 	 */
-	if (_lread(fd,buf,LZ_HEADER_LEN)<LZ_HEADER_LEN)
+	if (_lread(fd,buf,LZ_HEADER_LEN) != LZ_HEADER_LEN)
 		return 0;
 	memcpy(head->magic,buf,LZ_MAGIC_LEN);
 	memcpy(&(head->compressiontype),buf+LZ_MAGIC_LEN,1);

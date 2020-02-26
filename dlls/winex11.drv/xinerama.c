@@ -35,8 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-static RECT virtual_screen_rect;
-
 static MONITORINFOEXW default_monitor =
 {
     sizeof(default_monitor),    /* cbSize */
@@ -57,19 +55,7 @@ static inline MONITORINFOEXW *get_primary(void)
     return &monitors[idx];
 }
 
-static inline HMONITOR index_to_monitor( int index )
-{
-    return (HMONITOR)(UINT_PTR)(index + 1);
-}
-
-static inline int monitor_to_index( HMONITOR handle )
-{
-    UINT_PTR index = (UINT_PTR)handle;
-    if (index < 1 || index > nb_monitors) return -1;
-    return index - 1;
-}
-
-static void query_work_area( RECT *rc_work )
+void query_work_area( RECT *rc_work )
 {
     Atom type;
     int format;
@@ -87,20 +73,6 @@ static void query_work_area( RECT *rc_work )
         }
         XFree( work_area );
     }
-}
-
-static void query_desktop_work_area( RECT *rc_work )
-{
-    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
-    RECT rect;
-    HWND hwnd = FindWindowW( trayW, NULL );
-
-    if (!hwnd || !IsWindowVisible( hwnd )) return;
-    if (!GetWindowRect( hwnd, &rect )) return;
-    if (rect.top) rc_work->bottom = rect.top;
-    else rc_work->top = rect.bottom;
-    TRACE( "found tray %p %s work area %s\n", hwnd,
-           wine_dbgstr_rect( &rect ), wine_dbgstr_rect( rc_work ));
 }
 
 #ifdef SONAME_LIBXINERAMA
@@ -154,8 +126,6 @@ static int query_screens(void)
             monitors[i].dwFlags          = 0;
             if (!IntersectRect( &monitors[i].rcWork, &rc_work, &monitors[i].rcMonitor ))
                 monitors[i].rcWork = monitors[i].rcMonitor;
-            /* FIXME: using the same device name for all monitors for now */
-            lstrcpyW( monitors[i].szDevice, default_monitor.szDevice );
         }
 
         get_primary()->dwFlags |= MONITORINFOF_PRIMARY;
@@ -174,32 +144,6 @@ static inline int query_screens(void)
 }
 
 #endif  /* SONAME_LIBXINERAMA */
-
-POINT virtual_screen_to_root( INT x, INT y )
-{
-    POINT pt;
-    pt.x = x - virtual_screen_rect.left;
-    pt.y = y - virtual_screen_rect.top;
-    return pt;
-}
-
-POINT root_to_virtual_screen( INT x, INT y )
-{
-    POINT pt;
-    pt.x = x + virtual_screen_rect.left;
-    pt.y = y + virtual_screen_rect.top;
-    return pt;
-}
-
-RECT get_virtual_screen_rect(void)
-{
-    return virtual_screen_rect;
-}
-
-RECT get_primary_monitor_rect(void)
-{
-    return get_primary()->rcMonitor;
-}
 
 static BOOL xinerama_get_gpus( struct x11drv_gpu **new_gpus, int *count )
 {
@@ -321,6 +265,8 @@ static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor *
                 && !IsRectEmpty( &monitors[first].rcMonitor )))
         {
             lstrcpyW( monitor[index].name, generic_nonpnp_monitorW );
+            monitor[index].rc_monitor = monitors[i].rcMonitor;
+            monitor[index].rc_work = monitors[i].rcWork;
             /* Xinerama only reports monitors already attached */
             monitor[index].state_flags = DISPLAY_DEVICE_ATTACHED;
             if (!IsRectEmpty( &monitors[i].rcMonitor ))
@@ -347,21 +293,19 @@ void xinerama_init( unsigned int width, unsigned int height )
     int i;
     RECT rect;
 
-    SetRect( &rect, 0, 0, width, height );
+    if (is_virtual_desktop())
+        return;
 
-    if (root_window != DefaultRootWindow( gdi_display ) || !query_screens())
+    SetRect( &rect, 0, 0, width, height );
+    if (!query_screens())
     {
         default_monitor.rcWork = default_monitor.rcMonitor = rect;
-        if (root_window == DefaultRootWindow( gdi_display ))
-            query_work_area( &default_monitor.rcWork );
-        else
-            query_desktop_work_area( &default_monitor.rcWork );
+        query_work_area( &default_monitor.rcWork );
         nb_monitors = 1;
         monitors = &default_monitor;
     }
 
     primary = get_primary();
-    SetRectEmpty( &virtual_screen_rect );
 
     /* coordinates (0,0) have to point to the primary monitor origin */
     OffsetRect( &rect, -primary->rcMonitor.left, -primary->rcMonitor.top );
@@ -369,58 +313,20 @@ void xinerama_init( unsigned int width, unsigned int height )
     {
         OffsetRect( &monitors[i].rcMonitor, rect.left, rect.top );
         OffsetRect( &monitors[i].rcWork, rect.left, rect.top );
-        UnionRect( &virtual_screen_rect, &virtual_screen_rect, &monitors[i].rcMonitor );
-        TRACE( "monitor %p: %s work %s%s\n",
-               index_to_monitor(i), wine_dbgstr_rect(&monitors[i].rcMonitor),
+        TRACE( "monitor 0x%x: %s work %s%s\n",
+               i, wine_dbgstr_rect(&monitors[i].rcMonitor),
                wine_dbgstr_rect(&monitors[i].rcWork),
                (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
 
     handler.name = "Xinerama";
     handler.priority = 100;
-    handler.pGetGpus = xinerama_get_gpus;
-    handler.pGetAdapters = xinerama_get_adapters;
-    handler.pGetMonitors = xinerama_get_monitors;
-    handler.pFreeGpus = xinerama_free_gpus;
-    handler.pFreeAdapters = xinerama_free_adapters;
-    handler.pFreeMonitors = xinerama_free_monitors;
+    handler.get_gpus = xinerama_get_gpus;
+    handler.get_adapters = xinerama_get_adapters;
+    handler.get_monitors = xinerama_get_monitors;
+    handler.free_gpus = xinerama_free_gpus;
+    handler.free_adapters = xinerama_free_adapters;
+    handler.free_monitors = xinerama_free_monitors;
+    handler.register_event_handlers = NULL;
     X11DRV_DisplayDevices_SetHandler( &handler );
-
-    TRACE( "virtual size: %s primary: %s\n",
-           wine_dbgstr_rect(&virtual_screen_rect), wine_dbgstr_rect(&primary->rcMonitor) );
-}
-
-
-/***********************************************************************
- *		X11DRV_GetMonitorInfo  (X11DRV.@)
- */
-BOOL CDECL X11DRV_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
-{
-    int i = monitor_to_index( handle );
-
-    if (i == -1)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
-    info->rcMonitor = monitors[i].rcMonitor;
-    info->rcWork = monitors[i].rcWork;
-    info->dwFlags = monitors[i].dwFlags;
-    if (info->cbSize >= sizeof(MONITORINFOEXW))
-        lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, monitors[i].szDevice );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		X11DRV_EnumDisplayMonitors  (X11DRV.@)
- */
-BOOL CDECL X11DRV_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    int i;
-
-    for (i = 0; i < nb_monitors; i++)
-        if (!proc( index_to_monitor(i), 0, &monitors[i].rcMonitor, lp )) return FALSE;
-
-    return TRUE;
 }

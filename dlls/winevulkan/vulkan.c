@@ -1050,7 +1050,7 @@ VkResult WINAPI wine_vkQueueSubmit(VkQueue queue, uint32_t count,
         command_buffers = heap_calloc(num_command_buffers, sizeof(*submits_host));
         if (!command_buffers)
         {
-            ERR("Unable to allocate memory for comman buffers!\n");
+            ERR("Unable to allocate memory for command buffers!\n");
             res = VK_ERROR_OUT_OF_HOST_MEMORY;
             goto done;
         }

@@ -678,15 +678,67 @@ static HRESULT WINAPI HTMLDocument_get_alinkColor(IHTMLDocument2 *iface, VARIANT
 static HRESULT WINAPI HTMLDocument_put_bgColor(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    IHTMLElement *element = NULL;
+    IHTMLBodyElement *body;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    hr = IHTMLDocument2_get_body(iface, &element);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get body (0x%08x)\n", hr);
+        return hr;
+    }
+
+    if(!element)
+    {
+        FIXME("Empty body element.\n");
+        return hr;
+    }
+
+    hr = IHTMLElement_QueryInterface(element, &IID_IHTMLBodyElement, (void**)&body);
+    if (SUCCEEDED(hr))
+    {
+        hr = IHTMLBodyElement_put_bgColor(body, v);
+        IHTMLBodyElement_Release(body);
+    }
+    IHTMLElement_Release(element);
+
+    return hr;
 }
 
 static HRESULT WINAPI HTMLDocument_get_bgColor(IHTMLDocument2 *iface, VARIANT *p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IHTMLElement *element = NULL;
+    IHTMLBodyElement *body;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hr = IHTMLDocument2_get_body(iface, &element);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get body (0x%08x)\n", hr);
+        return hr;
+    }
+
+    if(!element)
+    {
+        FIXME("Empty body element.\n");
+        return hr;
+    }
+
+    hr = IHTMLElement_QueryInterface(element, &IID_IHTMLBodyElement, (void**)&body);
+    if (SUCCEEDED(hr))
+    {
+        hr = IHTMLBodyElement_get_bgColor(body, p);
+        IHTMLBodyElement_Release(body);
+    }
+    IHTMLElement_Release(element);
+
+    return hr;
 }
 
 static HRESULT WINAPI HTMLDocument_put_fgColor(IHTMLDocument2 *iface, VARIANT v)
@@ -3339,8 +3391,10 @@ static HRESULT WINAPI HTMLDocument7_put_onmsthumbnailclick(IHTMLDocument7 *iface
 static HRESULT WINAPI HTMLDocument7_get_onmsthumbnailclick(IHTMLDocument7 *iface, VARIANT *p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_doc_event(This, EVENTID_MSTHUMBNAILCLICK, p);
 }
 
 static HRESULT WINAPI HTMLDocument7_get_characterSet(IHTMLDocument7 *iface, BSTR *p)
@@ -5105,6 +5159,99 @@ static const IDisplayServicesVtbl DisplayServicesVtbl = {
     DisplayServices_HasFlowLayout
 };
 
+/**********************************************************
+ * IDocumentRange implementation
+ */
+static inline HTMLDocument *impl_from_IDocumentRange(IDocumentRange *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IDocumentRange_iface);
+}
+
+static HRESULT WINAPI DocumentRange_QueryInterface(IDocumentRange *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return htmldoc_query_interface(This, riid, ppv);
+}
+
+static ULONG WINAPI DocumentRange_AddRef(IDocumentRange *iface)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI DocumentRange_Release(IDocumentRange *iface)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI DocumentRange_GetTypeInfoCount(IDocumentRange *iface, UINT *pctinfo)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return IDispatchEx_GetTypeInfoCount(&This->IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI DocumentRange_GetTypeInfo(IDocumentRange *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DocumentRange_GetIDsOfNames(IDocumentRange *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames,
+    LCID lcid, DISPID *rgDispId)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->IDispatchEx_iface, riid, rgszNames, cNames, lcid,
+            rgDispId);
+}
+
+static HRESULT WINAPI DocumentRange_Invoke(IDocumentRange *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+    WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return IDispatchEx_Invoke(&This->IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DocumentRange_createRange(IDocumentRange *iface, IHTMLDOMRange **p)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+    nsIDOMRange *nsrange;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->doc_node->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    if(NS_FAILED(nsIDOMHTMLDocument_CreateRange(This->doc_node->nsdoc, &nsrange)))
+        return E_FAIL;
+
+    hres = HTMLDOMRange_Create(nsrange, p);
+    nsIDOMRange_Release(nsrange);
+    return hres;
+}
+
+static const IDocumentRangeVtbl DocumentRangeVtbl = {
+    DocumentRange_QueryInterface,
+    DocumentRange_AddRef,
+    DocumentRange_Release,
+    DocumentRange_GetTypeInfoCount,
+    DocumentRange_GetTypeInfo,
+    DocumentRange_GetIDsOfNames,
+    DocumentRange_Invoke,
+    DocumentRange_createRange,
+};
+
 static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -5189,6 +5336,8 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IMarkupContainer_iface;
     else if(IsEqualGUID(&IID_IDisplayServices, riid))
         *ppv = &This->IDisplayServices_iface;
+    else if(IsEqualGUID(&IID_IDocumentRange, riid))
+        *ppv = &This->IDocumentRange_iface;
     else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppv);
         *ppv = NULL;
@@ -5214,12 +5363,13 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
 }
 
 static cp_static_data_t HTMLDocumentEvents_data = { HTMLDocumentEvents_tid, HTMLDocument_on_advise };
+static cp_static_data_t HTMLDocumentEvents2_data = { HTMLDocumentEvents2_tid, HTMLDocument_on_advise, TRUE };
 
 static const cpc_entry_t HTMLDocument_cpc[] = {
     {&IID_IDispatch, &HTMLDocumentEvents_data},
     {&IID_IPropertyNotifySink},
     {&DIID_HTMLDocumentEvents, &HTMLDocumentEvents_data},
-    {&DIID_HTMLDocumentEvents2},
+    {&DIID_HTMLDocumentEvents2, &HTMLDocumentEvents2_data},
     {NULL}
 };
 
@@ -5239,6 +5389,7 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     doc->IMarkupServices_iface.lpVtbl = &MarkupServicesVtbl;
     doc->IMarkupContainer_iface.lpVtbl = &MarkupContainerVtbl;
     doc->IDisplayServices_iface.lpVtbl = &DisplayServicesVtbl;
+    doc->IDocumentRange_iface.lpVtbl = &DocumentRangeVtbl;
 
     doc->outer_unk = outer;
     doc->dispex = dispex;

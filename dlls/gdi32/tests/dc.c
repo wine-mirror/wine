@@ -38,29 +38,6 @@
 #define LAYOUT_LTR 0
 #endif
 
-static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
-
-static void dump_region(HRGN hrgn)
-{
-    DWORD i, size;
-    RGNDATA *data = NULL;
-    RECT *rect;
-
-    if (!hrgn)
-    {
-        printf( "(null) region\n" );
-        return;
-    }
-    if (!(size = GetRegionData( hrgn, 0, NULL ))) return;
-    if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
-    GetRegionData( hrgn, size, data );
-    printf( "%d rects:", data->rdh.nCount );
-    for (i = 0, rect = (RECT *)data->Buffer; i < data->rdh.nCount; i++, rect++)
-        printf( " (%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
-    printf( "\n" );
-    HeapFree( GetProcessHeap(), 0, data );
-}
-
 static void test_dc_values(void)
 {
     HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
@@ -111,6 +88,8 @@ static void test_dc_values(void)
 
 static void test_savedc_2(void)
 {
+    char buffer[100];
+    RGNDATA *rgndata = (RGNDATA *)buffer;
     HWND hwnd;
     HDC hdc;
     HRGN hrgn;
@@ -130,13 +109,16 @@ static void test_savedc_2(void)
     ok(hdc != NULL, "GetDC failed\n");
 
     ret = GetClipBox(hdc, &rc_clip);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
+    /* all versions of Windows return SIMPLEREGION despite returning an empty region */
+    todo_wine ok(ret == NULLREGION || broken(ret == SIMPLEREGION), "wrong region type %d\n", ret);
     ret = GetClipRgn(hdc, hrgn);
     ok(ret == 0, "GetClipRgn returned %d instead of 0\n", ret);
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == NULLREGION, "GetRgnBox returned %d %s instead of NULLREGION\n",
        ret, wine_dbgstr_rect(&rc));
-    /*dump_region(hrgn);*/
+    ret = GetRegionData(hrgn, sizeof(buffer), rgndata);
+    ok(ret == sizeof(RGNDATAHEADER), "got %u\n", ret);
+    ok(!rgndata->rdh.nCount, "got %u rectangles\n", rgndata->rdh.nCount);
     SetRect(&rc, 0, 0, 100, 100);
     ok(EqualRect(&rc, &rc_clip), "rects are not equal: %s - %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&rc_clip));
@@ -145,20 +127,18 @@ static void test_savedc_2(void)
     ok(ret == 1, "ret = %d\n", ret);
 
     ret = IntersectClipRect(hdc, 0, 0, 50, 50);
-    if (ret == COMPLEXREGION)
-    {
-        /* XP returns COMPLEXREGION although dump_region reports only 1 rect */
-        trace("Windows BUG: IntersectClipRect returned %d instead of SIMPLEREGION\n", ret);
-        /* let's make sure that it's a simple region */
-        ret = GetClipRgn(hdc, hrgn);
-        ok(ret == 1, "GetClipRgn returned %d instead of 1\n", ret);
-        dump_region(hrgn);
-    }
-    else
-        ok(ret == SIMPLEREGION, "IntersectClipRect returned %d instead of SIMPLEREGION\n", ret);
+    /* all versions of Windows return COMPLEXREGION despite the region comprising one rectangle */
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "wrong region type %d\n", ret);
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 1, "GetClipRgn returned %d instead of 1\n", ret);
+    ret = GetRegionData(hrgn, sizeof(buffer), rgndata);
+    ok(ret == sizeof(RGNDATAHEADER) + sizeof(RECT), "got %u\n", ret);
+    ok(rgndata->rdh.nCount == 1, "got %u rectangles\n", rgndata->rdh.nCount);
+    SetRect(&rc, 0, 0, 50, 50);
+    ok(EqualRect((RECT *)rgndata->Buffer, &rc), "got rect %s\n", wine_dbgstr_rect((RECT *)rgndata->Buffer));
 
     ret = GetClipBox(hdc, &rc_clip);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
+    ok(ret == SIMPLEREGION, "wrong region type %d\n", ret);
     SetRect(&rc, 0, 0, 50, 50);
     ok(EqualRect(&rc, &rc_clip), "rects are not equal: %s - %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&rc_clip));
@@ -167,7 +147,7 @@ static void test_savedc_2(void)
     ok(ret, "ret = %d\n", ret);
 
     ret = GetClipBox(hdc, &rc_clip);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
+    ok(ret == SIMPLEREGION, "wrong region type %d\n", ret);
     SetRect(&rc, 0, 0, 100, 100);
     ok(EqualRect(&rc, &rc_clip), "rects are not equal: %s - %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&rc_clip));
@@ -423,9 +403,6 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
         }
         else
             ok( ret || broken(!ret) /* NT4 */, "GetDeviceGammaRamp failed on %s (type %d), error %u\n", descr, GetObjectType( hdc ), GetLastError() );
-        type = GetClipBox( hdc, &rect );
-        todo_wine_if (GetObjectType( hdc ) == OBJ_ENHMETADC)
-            ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
 
         type = GetBoundsRect( hdc, &rect, 0 );
         ok( type == DCB_RESET || broken(type == DCB_SET) /* XP */,
@@ -543,6 +520,67 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
     /* restore hdc state */
     SetBoundsRect( hdc, NULL, DCB_RESET | DCB_DISABLE );
     SetBoundsRect( ref_dc, NULL, DCB_RESET | DCB_DISABLE );
+}
+
+static void test_CreateDC(void)
+{
+    DISPLAY_DEVICEW display_device = {sizeof(display_device)};
+    WCHAR adapter_name[CCHDEVICENAME];
+    DWORD i, j;
+    HDC hdc;
+
+    hdc = CreateDCW( NULL, NULL, NULL, NULL );
+    ok( !hdc, "CreateDC succeeded\n" );
+
+    hdc = CreateDCW( NULL, L"display", NULL, NULL );
+    todo_wine ok( !hdc, "CreateDC succeeded\n" );
+
+    hdc = CreateDCW( L"display", NULL, NULL, NULL );
+    ok( hdc != NULL, "CreateDC failed\n" );
+    DeleteDC( hdc );
+
+    hdc = CreateDCW( L"display", L"deadbeef", NULL, NULL );
+    ok( hdc != NULL, "CreateDC failed\n" );
+    DeleteDC( hdc );
+
+    for (i = 0; EnumDisplayDevicesW( NULL, i, &display_device, 0 ); ++i)
+    {
+        if (!(display_device.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
+        {
+            hdc = CreateDCW( display_device.DeviceName, NULL, NULL, NULL );
+            todo_wine ok( !hdc, "CreateDC succeeded\n" );
+
+            hdc = CreateDCW( NULL, display_device.DeviceName, NULL, NULL );
+            todo_wine ok( !hdc, "CreateDC succeeded\n" );
+            continue;
+        }
+
+        hdc = CreateDCW( display_device.DeviceName, NULL, NULL, NULL );
+        ok( hdc != NULL, "CreateDC failed %s\n", wine_dbgstr_w( display_device.DeviceName ) );
+        DeleteDC( hdc );
+
+        hdc = CreateDCW( NULL, display_device.DeviceName, NULL, NULL );
+        ok( hdc != NULL, "CreateDC failed\n" );
+        DeleteDC( hdc );
+
+        hdc = CreateDCW( display_device.DeviceName, display_device.DeviceName, NULL, NULL );
+        ok( hdc != NULL, "CreateDC failed\n" );
+        DeleteDC( hdc );
+
+        hdc = CreateDCW( display_device.DeviceName, L"deadbeef", NULL, NULL );
+        ok( hdc != NULL, "CreateDC failed\n" );
+        DeleteDC( hdc );
+
+        lstrcpyW( adapter_name, display_device.DeviceName );
+        for (j = 0; EnumDisplayDevicesW( adapter_name, j, &display_device, 0 ); ++j)
+        {
+            hdc = CreateDCW( display_device.DeviceName, NULL, NULL, NULL );
+            ok( !hdc, "CreateDC succeeded\n" );
+
+            hdc = CreateDCW( NULL, display_device.DeviceName, NULL, NULL );
+            ok( !hdc, "CreateDC succeeded\n" );
+        }
+    }
 }
 
 static void test_CreateCompatibleDC(void)
@@ -731,19 +769,23 @@ static void test_DeleteDC(void)
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     hdc = GetWindowDC(hwnd);
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     DestroyWindow(hwnd);
 
@@ -755,19 +797,23 @@ static void test_DeleteDC(void)
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     hdc = GetWindowDC(hwnd);
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     /* CS_CLASSDC */
     memset(&cls, 0, sizeof(cls));
@@ -802,21 +848,25 @@ static void test_DeleteDC(void)
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     DestroyWindow(hwnd);
 
     ret = GetObjectType(hdc_test);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc_test, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
 
     ret = UnregisterClassA("Wine class DC", GetModuleHandleA(NULL));
     ok(ret, "UnregisterClassA failed\n");
 
-    ret = GetObjectType(hdc_test);
-    ok(!ret, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc_test, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     /* CS_OWNDC */
     memset(&cls, 0, sizeof(cls));
@@ -849,10 +899,12 @@ static void test_DeleteDC(void)
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     DestroyWindow(hwnd);
 
@@ -948,27 +1000,24 @@ static void test_boundsrect(void)
     SetRect(&expect, 40, 70, 100, 130);
     ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
 
-    if (pSetLayout)
-    {
-        pSetLayout( hdc, LAYOUT_RTL );
-        ret = GetBoundsRect(hdc, &rect, 0);
-        ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
-        SetRect(&expect, 159, 70, 99, 130);
-        ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
-        SetRect(&set_rect, 50, 25, 30, 35);
-        ret = SetBoundsRect(hdc, &set_rect, DCB_SET);
-        ok(ret == (DCB_SET | DCB_DISABLE), "SetBoundsRect returned %x\n", ret);
-        ret = GetBoundsRect(hdc, &rect, 0);
-        ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
-        SetRect(&expect, 50, 25, 30, 35);
-        ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
+    SetLayout( hdc, LAYOUT_RTL );
+    ret = GetBoundsRect(hdc, &rect, 0);
+    ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
+    SetRect(&expect, 159, 70, 99, 130);
+    ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
+    SetRect(&set_rect, 50, 25, 30, 35);
+    ret = SetBoundsRect(hdc, &set_rect, DCB_SET);
+    ok(ret == (DCB_SET | DCB_DISABLE), "SetBoundsRect returned %x\n", ret);
+    ret = GetBoundsRect(hdc, &rect, 0);
+    ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
+    SetRect(&expect, 50, 25, 30, 35);
+    ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
 
-        pSetLayout( hdc, LAYOUT_LTR );
-        ret = GetBoundsRect(hdc, &rect, 0);
-        ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
-        SetRect(&expect, 149, 25, 169, 35);
-        ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
-    }
+    SetLayout( hdc, LAYOUT_LTR );
+    ret = GetBoundsRect(hdc, &rect, 0);
+    ok(ret == DCB_SET, "GetBoundsRect returned %x\n", ret);
+    SetRect(&expect, 149, 25, 169, 35);
+    ok(EqualRect(&rect, &expect), "Got %s\n", wine_dbgstr_rect(&rect));
 
     /* empty rect resets, except on nt4 */
     SetRect(&expect, 20, 20, 10, 10);
@@ -1488,13 +1537,111 @@ static void test_pscript_printer_dc(void)
     DeleteDC(hdc);
 }
 
+static void test_clip_box(void)
+{
+    DEVMODEA scale_mode = {.dmSize = sizeof(DEVMODEA)};
+    HBITMAP bitmap = CreateBitmap(10, 10, 1, 1, NULL);
+    HDC dc, desktop_dc, printer_dc;
+    RECT rect, expect, screen_rect;
+    int type, screen_type;
+
+    EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &scale_mode);
+    scale_mode.dmFields |= DM_SCALE;
+    scale_mode.u1.s1.dmScale = 200;
+
+    SetRect(&screen_rect, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
+            GetSystemMetrics(SM_XVIRTUALSCREEN) + GetSystemMetrics(SM_CXVIRTUALSCREEN),
+            GetSystemMetrics(SM_YVIRTUALSCREEN) + GetSystemMetrics(SM_CYVIRTUALSCREEN));
+    screen_type = GetSystemMetrics(SM_CMONITORS) > 1 ? COMPLEXREGION : SIMPLEREGION;
+
+    dc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    type = GetClipBox(dc, &rect);
+    todo_wine_if(screen_type == COMPLEXREGION)
+        ok(type == screen_type, "wrong region type %d\n", type);
+    ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+            wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+    DeleteDC(dc);
+
+    dc = CreateDCA("DISPLAY", NULL, NULL, &scale_mode);
+    type = GetClipBox(dc, &rect);
+    todo_wine_if(screen_type == COMPLEXREGION)
+        ok(type == screen_type, "wrong region type %d\n", type);
+    ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+            wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+    ResetDCA(dc, &scale_mode);
+    type = GetClipBox(dc, &rect);
+    todo_wine_if(screen_type == COMPLEXREGION)
+        ok(type == screen_type, "wrong region type %d\n", type);
+    ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+            wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+    DeleteDC(dc);
+
+    dc = CreateCompatibleDC(NULL);
+    type = GetClipBox(dc, &rect);
+    ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+    SetRect(&expect, 0, 0, 1, 1);
+    ok(EqualRect(&rect, &expect), "got %s\n", wine_dbgstr_rect(&rect));
+    SelectObject(dc, bitmap);
+    type = GetClipBox(dc, &rect);
+    ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+    SetRect(&expect, 0, 0, 10, 10);
+    ok(EqualRect(&rect, &expect), "got %s\n", wine_dbgstr_rect(&rect));
+    DeleteDC(dc);
+
+    desktop_dc = GetDC(0);
+    type = GetClipBox(desktop_dc, &rect);
+    todo_wine_if(screen_type == COMPLEXREGION)
+        ok(type == screen_type, "wrong region type %d\n", type);
+    ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+            wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+
+    dc = CreateEnhMetaFileA(desktop_dc, NULL, NULL, NULL);
+    ok(!!dc, "CreateEnhMetaFile() failed\n");
+    type = GetClipBox(dc, &rect);
+    todo_wine ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+    if (type != ERROR)
+        ok(EqualRect(&rect, &screen_rect), "expected %s, got %s\n",
+                wine_dbgstr_rect(&screen_rect), wine_dbgstr_rect(&rect));
+    DeleteEnhMetaFile(CloseEnhMetaFile(dc));
+
+    ReleaseDC(0, desktop_dc);
+
+    dc = CreateMetaFileA(NULL);
+    ok(!!dc, "CreateEnhMetaFile() failed\n");
+    type = GetClipBox(dc, &rect);
+    ok(type == ERROR, "wrong region type %d\n", type);
+    DeleteMetaFile(CloseMetaFile(dc));
+
+    if ((printer_dc = create_printer_dc(100, FALSE)))
+    {
+        type = GetClipBox(printer_dc, &rect);
+        ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+
+        dc = CreateCompatibleDC(printer_dc);
+        type = GetClipBox(dc, &rect);
+        ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+        SetRect(&expect, 0, 0, 1, 1);
+        ok(EqualRect(&rect, &expect), "got %s\n", wine_dbgstr_rect(&rect));
+        DeleteDC(dc);
+
+        dc = CreateEnhMetaFileA(printer_dc, NULL, NULL, NULL);
+        type = GetClipBox(dc, &rect);
+        todo_wine ok(type == SIMPLEREGION, "wrong region type %d\n", type);
+        DeleteEnhMetaFile(CloseEnhMetaFile(dc));
+
+        DeleteDC(printer_dc);
+    }
+
+    DeleteObject(bitmap);
+}
+
 START_TEST(dc)
 {
-    pSetLayout = (void *)GetProcAddress( GetModuleHandleA("gdi32.dll"), "SetLayout");
     test_dc_values();
     test_savedc();
     test_savedc_2();
     test_GdiConvertToDevmodeW();
+    test_CreateDC();
     test_CreateCompatibleDC();
     test_DC_bitmap();
     test_DeleteDC();
@@ -1503,4 +1650,5 @@ START_TEST(dc)
     test_gamma();
     test_printer_dc();
     test_pscript_printer_dc();
+    test_clip_box();
 }

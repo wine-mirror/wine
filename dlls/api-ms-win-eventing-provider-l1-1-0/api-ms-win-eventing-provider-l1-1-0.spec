@@ -6,5 +6,5 @@
 @ stdcall EventUnregister(int64) advapi32.EventUnregister
 @ stdcall EventWrite(int64 ptr long ptr) advapi32.EventWrite
 @ stub EventWriteEx
-@ stub EventWriteString
+@ stdcall EventWriteString(int64 long int64 ptr) advapi32.EventWriteString
 @ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) advapi32.EventWriteTransfer

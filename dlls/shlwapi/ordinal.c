@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -47,7 +44,6 @@
 #include "commdlg.h"
 #include "mlang.h"
 #include "mshtmhst.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 
@@ -446,119 +442,6 @@ exit:
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.15]
- *
- * Get Explorers "AcceptLanguage" setting.
- *
- * PARAMS
- *  langbuf [O] Destination for language string
- *  buflen  [I] Length of langbuf in characters
- *          [0] Success: used length of langbuf
- *
- * RETURNS
- *  Success: S_OK.   langbuf is set to the language string found.
- *  Failure: E_FAIL, If any arguments are invalid, error occurred, or Explorer
- *           does not contain the setting.
- *           E_NOT_SUFFICIENT_BUFFER, If the buffer is not big enough
- */
-HRESULT WINAPI GetAcceptLanguagesW( LPWSTR langbuf, LPDWORD buflen)
-{
-    static const WCHAR szkeyW[] = {
-	'S','o','f','t','w','a','r','e','\\',
-	'M','i','c','r','o','s','o','f','t','\\',
-	'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','\\',
-	'I','n','t','e','r','n','a','t','i','o','n','a','l',0};
-    static const WCHAR valueW[] = {
-	'A','c','c','e','p','t','L','a','n','g','u','a','g','e',0};
-    DWORD mystrlen, mytype;
-    DWORD len;
-    HKEY mykey;
-    LCID mylcid;
-    WCHAR *mystr;
-    LONG lres;
-
-    TRACE("(%p, %p) *%p: %d\n", langbuf, buflen, buflen, buflen ? *buflen : -1);
-
-    if(!langbuf || !buflen || !*buflen)
-	return E_FAIL;
-
-    mystrlen = (*buflen > 20) ? *buflen : 20 ;
-    len = mystrlen * sizeof(WCHAR);
-    mystr = HeapAlloc(GetProcessHeap(), 0, len);
-    mystr[0] = 0;
-    RegOpenKeyW(HKEY_CURRENT_USER, szkeyW, &mykey);
-    lres = RegQueryValueExW(mykey, valueW, 0, &mytype, (PBYTE)mystr, &len);
-    RegCloseKey(mykey);
-    len = lstrlenW(mystr);
-
-    if (!lres && (*buflen > len)) {
-        lstrcpyW(langbuf, mystr);
-        *buflen = len;
-        HeapFree(GetProcessHeap(), 0, mystr);
-        return S_OK;
-    }
-
-    /* Did not find a value in the registry or the user buffer is too small */
-    mylcid = GetUserDefaultLCID();
-    LcidToRfc1766W(mylcid, mystr, mystrlen);
-    len = lstrlenW(mystr);
-
-    memcpy( langbuf, mystr, min(*buflen, len+1)*sizeof(WCHAR) );
-    HeapFree(GetProcessHeap(), 0, mystr);
-
-    if (*buflen > len) {
-        *buflen = len;
-        return S_OK;
-    }
-
-    *buflen = 0;
-    return E_NOT_SUFFICIENT_BUFFER;
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.14]
- *
- * Ascii version of GetAcceptLanguagesW.
- */
-HRESULT WINAPI GetAcceptLanguagesA( LPSTR langbuf, LPDWORD buflen)
-{
-    WCHAR *langbufW;
-    DWORD buflenW, convlen;
-    HRESULT retval;
-
-    TRACE("(%p, %p) *%p: %d\n", langbuf, buflen, buflen, buflen ? *buflen : -1);
-
-    if(!langbuf || !buflen || !*buflen) return E_FAIL;
-
-    buflenW = *buflen;
-    langbufW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * buflenW);
-    retval = GetAcceptLanguagesW(langbufW, &buflenW);
-
-    if (retval == S_OK)
-    {
-        convlen = WideCharToMultiByte(CP_ACP, 0, langbufW, -1, langbuf, *buflen, NULL, NULL);
-        convlen--;  /* do not count the terminating 0 */
-    }
-    else  /* copy partial string anyway */
-    {
-        convlen = WideCharToMultiByte(CP_ACP, 0, langbufW, *buflen, langbuf, *buflen, NULL, NULL);
-        if (convlen < *buflen)
-        {
-            langbuf[convlen] = 0;
-            convlen--;  /* do not count the terminating 0 */
-        }
-        else
-        {
-            convlen = *buflen;
-        }
-    }
-    *buflen = buflenW ? convlen : 0;
-
-    HeapFree(GetProcessHeap(), 0, langbufW);
-    return retval;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.23]
  *
  * Convert a GUID to a string.
@@ -614,112 +497,16 @@ INT WINAPI SHStringFromGUIDW(REFGUID guid, LPWSTR lpszDest, INT cchMax)
 
   TRACE("(%s,%p,%d)\n", debugstr_guid(guid), lpszDest, cchMax);
 
-  sprintfW(xguid, wszFormat, guid->Data1, guid->Data2, guid->Data3,
+  swprintf(xguid, ARRAY_SIZE(xguid), wszFormat, guid->Data1, guid->Data2, guid->Data3,
           guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
           guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 
-  iLen = strlenW(xguid) + 1;
+  iLen = lstrlenW(xguid) + 1;
 
   if (iLen > cchMax)
     return 0;
   memcpy(lpszDest, xguid, iLen*sizeof(WCHAR));
   return iLen;
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.30]
- *
- * Determine if a Unicode character is a blank.
- *
- * PARAMS
- *  wc [I] Character to check.
- *
- * RETURNS
- *  TRUE, if wc is a blank,
- *  FALSE otherwise.
- *
- */
-BOOL WINAPI IsCharBlankW(WCHAR wc)
-{
-    WORD CharType;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &CharType) && (CharType & C1_BLANK);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.31]
- *
- * Determine if a Unicode character is punctuation.
- *
- * PARAMS
- *  wc [I] Character to check.
- *
- * RETURNS
- *  TRUE, if wc is punctuation,
- *  FALSE otherwise.
- */
-BOOL WINAPI IsCharPunctW(WCHAR wc)
-{
-    WORD CharType;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &CharType) && (CharType & C1_PUNCT);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.32]
- *
- * Determine if a Unicode character is a control character.
- *
- * PARAMS
- *  wc [I] Character to check.
- *
- * RETURNS
- *  TRUE, if wc is a control character,
- *  FALSE otherwise.
- */
-BOOL WINAPI IsCharCntrlW(WCHAR wc)
-{
-    WORD CharType;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &CharType) && (CharType & C1_CNTRL);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.33]
- *
- * Determine if a Unicode character is a digit.
- *
- * PARAMS
- *  wc [I] Character to check.
- *
- * RETURNS
- *  TRUE, if wc is a digit,
- *  FALSE otherwise.
- */
-BOOL WINAPI IsCharDigitW(WCHAR wc)
-{
-    WORD CharType;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &CharType) && (CharType & C1_DIGIT);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.34]
- *
- * Determine if a Unicode character is a hex digit.
- *
- * PARAMS
- *  wc [I] Character to check.
- *
- * RETURNS
- *  TRUE, if wc is a hex digit,
- *  FALSE otherwise.
- */
-BOOL WINAPI IsCharXDigitW(WCHAR wc)
-{
-    WORD CharType;
-
-    return GetStringTypeW(CT_CTYPE1, &wc, 1, &CharType) && (CharType & C1_XDIGIT);
 }
 
 /*************************************************************************
@@ -729,120 +516,6 @@ BOOL WINAPI IsCharXDigitW(WCHAR wc)
 BOOL WINAPI GetStringType3ExW(LPWSTR src, INT count, LPWORD type)
 {
     return GetStringTypeW(CT_CTYPE3, src, count, type);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.151]
- *
- * Compare two Ascii strings up to a given length.
- *
- * PARAMS
- *  lpszSrc [I] Source string
- *  lpszCmp [I] String to compare to lpszSrc
- *  len     [I] Maximum length
- *
- * RETURNS
- *  A number greater than, less than or equal to 0 depending on whether
- *  lpszSrc is greater than, less than or equal to lpszCmp.
- */
-DWORD WINAPI StrCmpNCA(LPCSTR lpszSrc, LPCSTR lpszCmp, INT len)
-{
-    return StrCmpNA(lpszSrc, lpszCmp, len);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.152]
- *
- * Unicode version of StrCmpNCA.
- */
-DWORD WINAPI StrCmpNCW(LPCWSTR lpszSrc, LPCWSTR lpszCmp, INT len)
-{
-    return StrCmpNW(lpszSrc, lpszCmp, len);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.153]
- *
- * Compare two Ascii strings up to a given length, ignoring case.
- *
- * PARAMS
- *  lpszSrc [I] Source string
- *  lpszCmp [I] String to compare to lpszSrc
- *  len     [I] Maximum length
- *
- * RETURNS
- *  A number greater than, less than or equal to 0 depending on whether
- *  lpszSrc is greater than, less than or equal to lpszCmp.
- */
-DWORD WINAPI StrCmpNICA(LPCSTR lpszSrc, LPCSTR lpszCmp, DWORD len)
-{
-    return StrCmpNIA(lpszSrc, lpszCmp, len);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.154]
- *
- * Unicode version of StrCmpNICA.
- */
-DWORD WINAPI StrCmpNICW(LPCWSTR lpszSrc, LPCWSTR lpszCmp, DWORD len)
-{
-    return StrCmpNIW(lpszSrc, lpszCmp, len);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.155]
- *
- * Compare two Ascii strings.
- *
- * PARAMS
- *  lpszSrc [I] Source string
- *  lpszCmp [I] String to compare to lpszSrc
- *
- * RETURNS
- *  A number greater than, less than or equal to 0 depending on whether
- *  lpszSrc is greater than, less than or equal to lpszCmp.
- */
-DWORD WINAPI StrCmpCA(LPCSTR lpszSrc, LPCSTR lpszCmp)
-{
-    return lstrcmpA(lpszSrc, lpszCmp);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.156]
- *
- * Unicode version of StrCmpCA.
- */
-DWORD WINAPI StrCmpCW(LPCWSTR lpszSrc, LPCWSTR lpszCmp)
-{
-    return lstrcmpW(lpszSrc, lpszCmp);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.157]
- *
- * Compare two Ascii strings, ignoring case.
- *
- * PARAMS
- *  lpszSrc [I] Source string
- *  lpszCmp [I] String to compare to lpszSrc
- *
- * RETURNS
- *  A number greater than, less than or equal to 0 depending on whether
- *  lpszSrc is greater than, less than or equal to lpszCmp.
- */
-DWORD WINAPI StrCmpICA(LPCSTR lpszSrc, LPCSTR lpszCmp)
-{
-    return lstrcmpiA(lpszSrc, lpszCmp);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.158]
- *
- * Unicode version of StrCmpICA.
- */
-DWORD WINAPI StrCmpICW(LPCWSTR lpszSrc, LPCWSTR lpszCmp)
-{
-    return lstrcmpiW(lpszSrc, lpszCmp);
 }
 
 /*************************************************************************
@@ -925,7 +598,7 @@ BOOL WINAPI SHAboutInfoW(LPWSTR lpszDest, DWORD dwDestLen)
   dwLen = 30;
   if (!SHGetValueW(HKEY_LOCAL_MACHINE, szIEKey, szVersion, &dwType, buff, &dwLen))
   {
-    DWORD dwStrLen = strlenW(buff);
+    DWORD dwStrLen = lstrlenW(buff);
     dwLen = 30 - dwStrLen;
     SHGetValueW(HKEY_LOCAL_MACHINE, szIEKey,
                 szCustomized, &dwType, buff+dwStrLen, &dwLen);
@@ -2223,57 +1896,6 @@ BOOL WINAPI FDSA_DeleteItem(FDSA_info *info, DWORD where)
     info->num_items--;
     return TRUE;
 }
-
-/*************************************************************************
- *      @	[SHLWAPI.219]
- *
- * Call IUnknown_QueryInterface() on a table of objects.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: E_POINTER or E_NOINTERFACE.
- */
-HRESULT WINAPI QISearch(
-	void *base,         /* [in]   Table of interfaces */
-	const QITAB *table, /* [in]   Array of REFIIDs and indexes into the table */
-	REFIID riid,        /* [in]   REFIID to get interface for */
-	void **ppv)         /* [out]  Destination for interface pointer */
-{
-	HRESULT ret;
-	IUnknown *a_vtbl;
-	const QITAB *xmove;
-
-	TRACE("(%p %p %s %p)\n", base, table, debugstr_guid(riid), ppv);
-	if (ppv) {
-	    xmove = table;
-	    while (xmove->piid) {
-		TRACE("trying (offset %d) %s\n", xmove->dwOffset, debugstr_guid(xmove->piid));
-		if (IsEqualIID(riid, xmove->piid)) {
-		    a_vtbl = (IUnknown*)(xmove->dwOffset + (LPBYTE)base);
-		    TRACE("matched, returning (%p)\n", a_vtbl);
-                    *ppv = a_vtbl;
-		    IUnknown_AddRef(a_vtbl);
-		    return S_OK;
-		}
-		xmove++;
-	    }
-
-	    if (IsEqualIID(riid, &IID_IUnknown)) {
-		a_vtbl = (IUnknown*)(table->dwOffset + (LPBYTE)base);
-		TRACE("returning first for IUnknown (%p)\n", a_vtbl);
-                *ppv = a_vtbl;
-		IUnknown_AddRef(a_vtbl);
-		return S_OK;
-	    }
-	    *ppv = 0;
-	    ret = E_NOINTERFACE;
-	} else
-	    ret = E_POINTER;
-
-	TRACE("-- 0x%08x\n", ret);
-	return ret;
-}
-
 /*************************************************************************
  * @ [SHLWAPI.220]
  *
@@ -2667,72 +2289,6 @@ BOOL WINAPI GUIDFromStringA(LPCSTR idstr, CLSID *id)
 BOOL WINAPI GUIDFromStringW(LPCWSTR idstr, CLSID *id)
 {
     return SUCCEEDED(CLSIDFromString((LPCOLESTR)idstr, id));
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.276]
- *
- * Determine if the browser is integrated into the shell, and set a registry
- * key accordingly.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  1, If the browser is not integrated.
- *  2, If the browser is integrated.
- *
- * NOTES
- *  The key "HKLM\Software\Microsoft\Internet Explorer\IntegratedBrowser" is
- *  either set to TRUE, or removed depending on whether the browser is deemed
- *  to be integrated.
- */
-DWORD WINAPI WhichPlatform(void)
-{
-  static const char szIntegratedBrowser[] = "IntegratedBrowser";
-  static DWORD dwState = 0;
-  HKEY hKey;
-  DWORD dwRet, dwData, dwSize;
-  HMODULE hshell32;
-
-  if (dwState)
-    return dwState;
-
-  /* If shell32 exports DllGetVersion(), the browser is integrated */
-  dwState = 1;
-  hshell32 = LoadLibraryA("shell32.dll");
-  if (hshell32)
-  {
-    FARPROC pDllGetVersion;
-    pDllGetVersion = GetProcAddress(hshell32, "DllGetVersion");
-    dwState = pDllGetVersion ? 2 : 1;
-    FreeLibrary(hshell32);
-  }
-
-  /* Set or delete the key accordingly */
-  dwRet = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                        "Software\\Microsoft\\Internet Explorer", 0,
-                         KEY_ALL_ACCESS, &hKey);
-  if (!dwRet)
-  {
-    dwRet = RegQueryValueExA(hKey, szIntegratedBrowser, 0, 0,
-                             (LPBYTE)&dwData, &dwSize);
-
-    if (!dwRet && dwState == 1)
-    {
-      /* Value exists but browser is not integrated */
-      RegDeleteValueA(hKey, szIntegratedBrowser);
-    }
-    else if (dwRet && dwState == 2)
-    {
-      /* Browser is integrated but value does not exist */
-      dwData = TRUE;
-      RegSetValueExA(hKey, szIntegratedBrowser, 0, REG_DWORD,
-                     (LPBYTE)&dwData, sizeof(dwData));
-    }
-    RegCloseKey(hKey);
-  }
-  return dwState;
 }
 
 /*************************************************************************
@@ -3130,13 +2686,13 @@ DWORD WINAPI SHGetIniStringW(LPCWSTR appName, LPCWSTR keyName, LPWSTR out,
 
     ret = GetPrivateProfileStringW(appName, keyName, NULL, buf, outLen, filename);
     if(ret)
-        strcpyW(out, buf);
+        lstrcpyW(out, buf);
     else
         *out = 0;
 
     HeapFree(GetProcessHeap(), 0, buf);
 
-    return strlenW(out);
+    return lstrlenW(out);
 }
 
 /*************************************************************************
@@ -3480,9 +3036,9 @@ HMODULE WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, DWORD dwCrossC
     len = GetModuleFileNameW(inst_hwnd, mod_path, ARRAY_SIZE(mod_path));
     if (!len || len >= ARRAY_SIZE(mod_path)) return NULL;
 
-    ptr = strrchrW(mod_path, '\\');
+    ptr = wcsrchr(mod_path, '\\');
     if (ptr) {
-	strcpyW(ptr+1, new_mod);
+	lstrcpyW(ptr+1, new_mod);
 	TRACE("loading %s\n", debugstr_w(mod_path));
 	return LoadLibraryW(mod_path);
     }
@@ -4006,24 +3562,6 @@ HRESULT WINAPI SHGetInverseCMAP(LPDWORD dest, DWORD dwSize)
     }
     FIXME("(%p, %#x) stub\n", dest, dwSize);
     return 0;
-}
-
-/*************************************************************************
- *      SHIsLowMemoryMachine	[SHLWAPI.@]
- *
- * Determine if the current computer has low memory.
- *
- * PARAMS
- *  x [I] FIXME
- *
- * RETURNS
- *  TRUE if the users machine has 16 Megabytes of memory or less,
- *  FALSE otherwise.
- */
-BOOL WINAPI SHIsLowMemoryMachine (DWORD x)
-{
-  FIXME("(0x%08x) stub\n", x);
-  return FALSE;
 }
 
 /*************************************************************************
@@ -4729,33 +4267,6 @@ HRESULT WINAPI SHCreatePropertyBagOnRegKey (HKEY hKey, LPCWSTR subkey,
 }
 
 /***********************************************************************
- *             SHGetViewStatePropertyBag [SHLWAPI.515]
- *
- * Retrieves a property bag in which the view state information of a folder
- * can be stored.
- *
- * PARAMS
- *  pidl        [I] PIDL of the folder requested
- *  bag_name    [I] Name of the property bag requested
- *  flags       [I] Optional flags
- *  riid        [I] IID of requested property bag interface
- *  ppv         [O] Address to receive pointer to the new interface
- *
- * RETURNS
- *  success: S_OK
- *  failure: error code
- *
- */
-HRESULT WINAPI SHGetViewStatePropertyBag(LPCITEMIDLIST pidl, LPWSTR bag_name,
-    DWORD flags, REFIID riid, void **ppv)
-{
-    FIXME("%p %s %d %s %p STUB\n", pidl, debugstr_w(bag_name), flags,
-          debugstr_guid(riid), ppv);
-
-    return E_NOTIMPL;
-}
-
-/***********************************************************************
  *             SHFormatDateTimeW [SHLWAPI.354]
  *
  * Produces a string representation of a time.
@@ -5013,7 +4524,7 @@ static const struct objcompat_entry objcompat_table[] = {
  * in registry for CLSID under ShellCompatibility subkey.
  *
  * PARAMS
- *  pUnk:  pointer to object IUnknown interface, idetifies CLSID
+ *  pUnk:  pointer to object IUnknown interface, identifies CLSID
  *  clsid: pointer to CLSID to retrieve data for
  *
  * RETURNS
@@ -5043,7 +4554,7 @@ DWORD WINAPI SHGetObjectCompatFlags(IUnknown *pUnk, const CLSID *clsid)
     }
 
     StringFromCLSID(clsid, &clsid_str);
-    sprintfW(strW, compatpathW, clsid_str);
+    swprintf(strW, ARRAY_SIZE(strW), compatpathW, clsid_str);
     CoTaskMemFree(clsid_str);
 
     ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, strW, &key);
@@ -5061,7 +4572,7 @@ DWORD WINAPI SHGetObjectCompatFlags(IUnknown *pUnk, const CLSID *clsid)
 
         while (right >= left) {
             x = (left + right) / 2;
-            res = strcmpW(strW, objcompat_table[x].name);
+            res = wcscmp(strW, objcompat_table[x].name);
             if (res == 0)
             {
                 ret |= objcompat_table[x].value;

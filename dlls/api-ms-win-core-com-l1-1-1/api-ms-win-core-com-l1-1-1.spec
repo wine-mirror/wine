@@ -10,7 +10,7 @@
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) ole32.CoCreateInstanceEx
 @ stub CoCreateInstanceFromApp
 @ stub CoDecodeProxy
-@ stub CoDecrementMTAUsage
+@ stdcall CoDecrementMTAUsage(ptr) ole32.CoDecrementMTAUsage
 @ stdcall CoDisableCallCancellation(ptr) ole32.CoDisableCallCancellation
 @ stub CoDisconnectContext
 @ stdcall CoDisconnectObject(ptr long) ole32.CoDisconnectObject
@@ -35,7 +35,7 @@
 @ stub CoGetStdMarshalEx
 @ stdcall CoGetTreatAsClass(ptr ptr) ole32.CoGetTreatAsClass
 @ stdcall CoImpersonateClient() ole32.CoImpersonateClient
-@ stub CoIncrementMTAUsage
+@ stdcall CoIncrementMTAUsage(ptr) ole32.CoIncrementMTAUsage
 @ stdcall CoInitializeEx(ptr long) ole32.CoInitializeEx
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) ole32.CoInitializeSecurity
 @ stub CoInvalidateRemoteMachineBindings

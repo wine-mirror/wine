@@ -20,9 +20,32 @@
 
 #include "dmstyle_private.h"
 #include "dmobject.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
+
+struct style_band {
+    struct list entry;
+    IDirectMusicBand *pBand;
+};
+
+struct style_partref_item {
+    struct list entry;
+    DMUS_OBJECTDESC desc;
+    DMUS_IO_PARTREF part_ref;
+};
+
+struct style_motif {
+    struct list entry;
+    DWORD dwRhythm;
+    DMUS_IO_PATTERN pattern;
+    DMUS_OBJECTDESC desc;
+    /** optional for motifs */
+    DMUS_IO_MOTIFSETTINGS settings;
+    IDirectMusicBand *pBand;
+    struct list Items;
+};
 
 /*****************************************************************************
  * IDirectMusicStyleImpl implementation
@@ -32,8 +55,8 @@ typedef struct IDirectMusicStyle8Impl {
     struct dmobject dmobj;
     LONG ref;
     DMUS_IO_STYLE style;
-    struct list Motifs;
-    struct list Bands;
+    struct list motifs;
+    struct list bands;
 } IDirectMusicStyle8Impl;
 
 static inline IDirectMusicStyle8Impl *impl_from_IDirectMusicStyle8(IDirectMusicStyle8 *iface)
@@ -85,7 +108,25 @@ static ULONG WINAPI IDirectMusicStyle8Impl_Release(IDirectMusicStyle8 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This);
+        struct style_band *band, *band2;
+        struct style_motif *motif, *motif2;
+        struct style_partref_item *item, *item2;
+
+        LIST_FOR_EACH_ENTRY_SAFE(band, band2, &This->bands, struct style_band, entry) {
+            list_remove(&band->entry);
+            if (band->pBand)
+                IDirectMusicBand_Release(band->pBand);
+            heap_free(band);
+        }
+        LIST_FOR_EACH_ENTRY_SAFE(motif, motif2, &This->motifs, struct style_motif, entry) {
+            list_remove(&motif->entry);
+            LIST_FOR_EACH_ENTRY_SAFE(item, item2, &motif->Items, struct style_partref_item, entry) {
+                list_remove(&item->entry);
+                heap_free(item);
+            }
+            heap_free(motif);
+        }
+        heap_free(This);
         DMSTYLE_UnlockModule();
     }
 
@@ -117,12 +158,37 @@ static HRESULT WINAPI IDirectMusicStyle8Impl_GetDefaultBand(IDirectMusicStyle8 *
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_EnumMotif(IDirectMusicStyle8 *iface, DWORD dwIndex,
-        WCHAR *pwszName)
+static HRESULT WINAPI IDirectMusicStyle8Impl_EnumMotif(IDirectMusicStyle8 *iface, DWORD index,
+        WCHAR *name)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %d, %p): stub\n", This, dwIndex, pwszName);
-	return S_OK;
+    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    const struct style_motif *motif = NULL;
+    const struct list *cursor;
+    unsigned int i = 0;
+
+    TRACE("(%p, %u, %p)\n", This, index, name);
+
+    if (!name)
+        return E_POINTER;
+
+    /* index is zero based */
+    LIST_FOR_EACH(cursor, &This->motifs) {
+        if (i == index) {
+            motif = LIST_ENTRY(cursor, struct style_motif, entry);
+            break;
+        }
+        i++;
+    }
+    if (!motif)
+        return S_FALSE;
+
+    if (motif->desc.dwValidData & DMUS_OBJ_NAME)
+        lstrcpynW(name, motif->desc.wszName, DMUS_MAX_NAME);
+    else
+        name[0] = 0;
+
+    TRACE("returning name: %s\n", debugstr_w(name));
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicStyle8Impl_GetMotif(IDirectMusicStyle8 *iface, WCHAR *pwszName,
@@ -234,7 +300,7 @@ static HRESULT WINAPI style_IDirectMusicObject_ParseDescriptor(IDirectMusicObjec
     desc->guidClass = CLSID_DirectMusicStyle;
     desc->dwValidData |= DMUS_OBJ_CLASS;
 
-    TRACE("returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (desc));
+    dump_DMUS_OBJECTDESC(desc);
     return S_OK;
 }
 
@@ -283,14 +349,13 @@ static HRESULT load_band(IStream *pClonedStream, IDirectMusicBand **ppBand)
 }
 
 static HRESULT parse_part_ref_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm,
-        DMUS_PRIVATE_STYLE_MOTIF *pNewMotif)
+        struct style_motif *pNewMotif)
 {
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
-
-  LPDMUS_PRIVATE_STYLE_PARTREF_ITEM pNewItem = NULL;
+  struct style_partref_item *pNewItem = NULL;
 
 
   if (pChunk->fccID != DMUS_FOURCC_PARTREF_LIST) {
@@ -308,7 +373,7 @@ static HRESULT parse_part_ref_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm,
     switch (Chunk.fccID) {
     case DMUS_FOURCC_PARTREF_CHUNK: {
       TRACE_(dmfile)(": PartRef chunk\n");
-      pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_PARTREF_ITEM));
+      pNewItem = heap_alloc_zero(sizeof(*pNewItem));
       if (!pNewItem) {
 	ERR(": no more memory\n");
 	return E_OUTOFMEMORY;
@@ -514,9 +579,8 @@ static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHU
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
-
   IDirectMusicBand* pBand = NULL;
-  LPDMUS_PRIVATE_STYLE_MOTIF pNewMotif = NULL;
+  struct style_motif *pNewMotif = NULL;
 
   if (pChunk->fccID != DMUS_FOURCC_PATTERN_LIST) {
     ERR_(dmfile)(": %s chunk should be a PATTERN list\n", debugstr_fourcc (pChunk->fccID));
@@ -534,12 +598,12 @@ static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHU
     case DMUS_FOURCC_PATTERN_CHUNK: {
       TRACE_(dmfile)(": Pattern chunk\n");
       /** alloc new motif entry */
-      pNewMotif = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_MOTIF));
+      pNewMotif = heap_alloc_zero(sizeof(*pNewMotif));
       if (NULL == pNewMotif) {
 	ERR(": no more memory\n");
 	return  E_OUTOFMEMORY;
       }
-      list_add_tail (&This->Motifs, &pNewMotif->entry);
+      list_add_tail(&This->motifs, &pNewMotif->entry);
 
       IStream_Read (pStm, &pNewMotif->pattern, Chunk.dwSize, NULL);
       /** TODO trace pattern */
@@ -714,39 +778,37 @@ static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK
 	ListCount[0] = 0;
 	switch (Chunk.fccID) {
 	case DMUS_FOURCC_BAND_FORM: { 
-	  LPSTREAM pClonedStream = NULL;
-	  LPDMUS_PRIVATE_STYLE_BAND pNewBand;
+          ULARGE_INTEGER save;
+          struct style_band *pNewBand;
 
 	  TRACE_(dmfile)(": BAND RIFF\n");
-	  
-	  IStream_Clone (pStm, &pClonedStream);
-	    
+
+          /* Can be application provided IStream without Clone method */
 	  liMove.QuadPart = 0;
 	  liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
-	  IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
+          IStream_Seek(pStm, liMove, STREAM_SEEK_CUR, &save);
 
-          hr = load_band(pClonedStream, &pBand);
+          hr = load_band(pStm, &pBand);
 	  if (FAILED(hr)) {
 	    ERR(": could not load track\n");
 	    return hr;
 	  }
-	  IStream_Release (pClonedStream);
-	  
-	  pNewBand = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_BAND));
+
+          pNewBand = heap_alloc_zero(sizeof(*pNewBand));
 	  if (NULL == pNewBand) {
 	    ERR(": no more memory\n");
 	    return  E_OUTOFMEMORY;
 	  }
 	  pNewBand->pBand = pBand;
 	  IDirectMusicBand_AddRef(pBand);
-	  list_add_tail (&This->Bands, &pNewBand->entry);
+	  list_add_tail(&This->bands, &pNewBand->entry);
 
 	  IDirectMusicTrack_Release(pBand); pBand = NULL;  /* now we can release it as it's inserted */
 	
 	  /** now safely move the cursor */
-	  liMove.QuadPart = ListSize[0];
-	  IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	  
+          liMove.QuadPart = save.QuadPart - liMove.QuadPart + ListSize[0];
+          IStream_Seek(pStm, liMove, STREAM_SEEK_SET, NULL);
+
 	  break;
 	}
 	default: {
@@ -893,8 +955,8 @@ HRESULT WINAPI create_dmstyle(REFIID lpcGUID, void **ppobj)
   dmobject_init(&obj->dmobj, &CLSID_DirectMusicStyle, (IUnknown *)&obj->IDirectMusicStyle8_iface);
   obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
   obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
-  list_init (&obj->Bands);
-  list_init (&obj->Motifs);
+  list_init(&obj->bands);
+  list_init(&obj->motifs);
 
   DMSTYLE_LockModule();
   hr = IDirectMusicStyle8_QueryInterface(&obj->IDirectMusicStyle8_iface, lpcGUID, ppobj);

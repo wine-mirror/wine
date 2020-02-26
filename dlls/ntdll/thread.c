@@ -28,6 +28,9 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_PRCTL_H
+# include <sys/prctl.h>
+#endif
 #ifdef HAVE_SYS_TIMES_H
 #include <sys/times.h>
 #endif
@@ -147,6 +150,69 @@ static ULONG_PTR get_image_addr(void)
 }
 #endif
 
+
+/***********************************************************************
+ *           set_process_name
+ *
+ * Change the process name in the ps output.
+ */
+static void set_process_name( int argc, char *argv[] )
+{
+    BOOL shift_strings;
+    char *p, *name;
+    int i;
+
+#ifdef HAVE_SETPROCTITLE
+    setproctitle("-%s", argv[1]);
+    shift_strings = FALSE;
+#else
+    p = argv[0];
+
+    shift_strings = (argc >= 2);
+    for (i = 1; i < argc; i++)
+    {
+        p += strlen(p) + 1;
+        if (p != argv[i])
+        {
+            shift_strings = FALSE;
+            break;
+        }
+    }
+#endif
+
+    if (shift_strings)
+    {
+        int offset = argv[1] - argv[0];
+        char *end = argv[argc-1] + strlen(argv[argc-1]) + 1;
+        memmove( argv[0], argv[1], end - argv[1] );
+        memset( end - offset, 0, offset );
+        for (i = 1; i < argc; i++)
+            argv[i-1] = argv[i] - offset;
+        argv[i-1] = NULL;
+    }
+    else
+    {
+        /* remove argv[0] */
+        memmove( argv, argv + 1, argc * sizeof(argv[0]) );
+    }
+
+    name = argv[0];
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+
+#if defined(HAVE_SETPROGNAME)
+    setprogname( name );
+#endif
+
+#ifdef HAVE_PRCTL
+#ifndef PR_SET_NAME
+# define PR_SET_NAME 15
+#endif
+    prctl( PR_SET_NAME, name );
+#endif  /* HAVE_PRCTL */
+}
+
+
 /***********************************************************************
  *           thread_init
  *
@@ -154,12 +220,12 @@ static ULONG_PTR get_image_addr(void)
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-void thread_init(void)
+TEB *thread_init(void)
 {
+    SYSTEM_BASIC_INFORMATION sbi;
     TEB *teb;
     void *addr;
-    BOOL suspend;
-    SIZE_T size, info_size;
+    SIZE_T size;
     LARGE_INTEGER now;
     NTSTATUS status;
     struct ntdll_thread_data *thread_data;
@@ -233,19 +299,7 @@ void thread_init(void)
     signal_init_thread( teb );
     virtual_init_threading();
     debug_init();
-
-    /* setup the server connection */
-    server_init_process();
-    info_size = server_init_thread( peb, &suspend );
-
-    /* create the process heap */
-    if (!(peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
-    {
-        MESSAGE( "wine: failed to create the process heap\n" );
-        exit(1);
-    }
-
-    init_user_process_params( info_size );
+    set_process_name( __wine_main_argc, __wine_main_argv );
 
     /* initialize time values in user_shared_data */
     NtQuerySystemTime( &now );
@@ -255,10 +309,12 @@ void thread_init(void)
     user_shared_data->u.TickCount.High2Time = user_shared_data->u.TickCount.High1Time;
     user_shared_data->TickCountLowDeprecated = user_shared_data->u.TickCount.LowPart;
     user_shared_data->TickCountMultiplier = 1 << 24;
-
     fill_cpu_info();
 
-    NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
+    virtual_get_system_info( &sbi );
+    user_shared_data->NumberOfPhysicalPages = sbi.MmNumberOfPhysicalPages;
+
+    return teb;
 }
 
 
@@ -415,6 +471,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     SIZE_T extra_stack = PTHREAD_STACK_MIN;
     data_size_t len = 0;
     struct object_attributes *objattr = NULL;
+    INITIAL_TEB stack;
 
     if (process != NtCurrentProcess())
     {
@@ -506,8 +563,12 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     info->entry_point = start;
     info->entry_arg   = param;
 
-    if ((status = virtual_alloc_thread_stack( teb, stack_reserve, stack_commit, &extra_stack )))
+    if ((status = virtual_alloc_thread_stack( &stack, stack_reserve, stack_commit, &extra_stack )))
         goto error;
+
+    teb->Tib.StackBase = stack.StackBase;
+    teb->Tib.StackLimit = stack.StackLimit;
+    teb->DeallocationStack = stack.DeallocationStack;
 
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd  = request_pipe[1];
@@ -519,6 +580,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     pthread_attr_init( &attr );
     pthread_attr_setstack( &attr, teb->DeallocationStack,
                          (char *)teb->Tib.StackBase + extra_stack - (char *)teb->DeallocationStack );
+    pthread_attr_setguardsize( &attr, 0 );
     pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
     interlocked_xchg_add( &nb_threads, 1 );
     if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, info ))
@@ -1057,6 +1119,57 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         *(BOOL*)data = FALSE;
         if (ret_len) *ret_len = sizeof(BOOL);
         return STATUS_SUCCESS;
+    case ThreadSuspendCount:
+        {
+            ULONG count = 0;
+
+            if (length != sizeof(ULONG)) return STATUS_INFO_LENGTH_MISMATCH;
+            if (!data) return STATUS_ACCESS_VIOLATION;
+
+            SERVER_START_REQ( get_thread_info )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                req->tid_in = 0;
+                if (!(status = wine_server_call( req )))
+                    count = reply->suspend_count;
+            }
+            SERVER_END_REQ;
+
+            if (!status)
+                *(ULONG *)data = count;
+
+            return status;
+        }
+    case ThreadDescription:
+        {
+            THREAD_DESCRIPTION_INFORMATION *info = data;
+            data_size_t len, desc_len = 0;
+            WCHAR *ptr;
+
+            len = length >= sizeof(*info) ? length - sizeof(*info) : 0;
+            ptr = info ? (WCHAR *)(info + 1) : NULL;
+
+            SERVER_START_REQ( get_thread_info )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                if (ptr) wine_server_set_reply( req, ptr, len );
+                status = wine_server_call( req );
+                desc_len = reply->desc_len;
+            }
+            SERVER_END_REQ;
+
+            if (!info)
+                status = STATUS_BUFFER_TOO_SMALL;
+            else if (status == STATUS_SUCCESS)
+            {
+                info->Description.Length = info->Description.MaximumLength = desc_len;
+                info->Description.Buffer = ptr;
+            }
+
+            if (ret_len && (status == STATUS_SUCCESS || status == STATUS_BUFFER_TOO_SMALL))
+                *ret_len = sizeof(*info) + desc_len;
+        }
+        return status;
     case ThreadPriority:
     case ThreadBasePriority:
     case ThreadImpersonationToken:
@@ -1207,6 +1320,26 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
                 req->handle   = wine_server_obj_handle( handle );
                 req->affinity = req_aff->Mask;
                 req->mask     = SET_THREAD_INFO_AFFINITY;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
+        return status;
+    case ThreadDescription:
+        {
+            const THREAD_DESCRIPTION_INFORMATION *info = data;
+
+            if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+            if (!info) return STATUS_ACCESS_VIOLATION;
+
+            if (info->Description.Length != info->Description.MaximumLength) return STATUS_INVALID_PARAMETER;
+            if (info->Description.Length && !info->Description.Buffer) return STATUS_ACCESS_VIOLATION;
+
+            SERVER_START_REQ( set_thread_info )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                req->mask   = SET_THREAD_INFO_DESCRIPTION;
+                wine_server_add_data( req, info->Description.Buffer, info->Description.Length );
                 status = wine_server_call( req );
             }
             SERVER_END_REQ;

@@ -72,6 +72,7 @@ extern GpStatus gdip_transform_points(GpGraphics *graphics, GpCoordinateSpace ds
 
 extern GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics) DECLSPEC_HIDDEN;
 extern GpStatus encode_image_png(GpImage *image, IStream* stream, GDIPCONST EncoderParameters* params) DECLSPEC_HIDDEN;
+extern GpStatus terminate_encoder_wic(GpImage *image) DECLSPEC_HIDDEN;
 
 extern GpStatus METAFILE_GetGraphicsContext(GpMetafile* metafile, GpGraphics **result) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_GetDC(GpMetafile* metafile, HDC *hdc) DECLSPEC_HIDDEN;
@@ -346,6 +347,7 @@ struct GpAdjustableArrowCap{
 
 struct GpImage{
     IWICBitmapDecoder *decoder;
+    IWICBitmapEncoder *encoder;
     ImageType type;
     GUID format;
     UINT flags;

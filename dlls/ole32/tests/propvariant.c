@@ -367,6 +367,19 @@ static void test_copy(void)
     hr = PropVariantClear(&propvarDst);
     ok(hr == S_OK, "PropVariantClear(...VT_BSTR...) failed\n");
 
+    /* BSTR with embedded null */
+    propvarSrc.vt = VT_BSTR;
+    U(propvarSrc).bstrVal = SysAllocStringLen(L"Test Str\0ing", 12);
+    hr = PropVariantCopy(&propvarDst, &propvarSrc);
+    ok(hr == S_OK, "Failed to copy propvar, hr %#x.\n", hr);
+    ok(SysStringLen(U(propvarDst).bstrVal) == 8, "Unexpected copy length.\n");
+    ok(SysStringLen(U(propvarSrc).bstrVal) == 12, "Unexpected source length.\n");
+    ok(!lstrcmpW(U(propvarSrc).bstrVal, U(propvarDst).bstrVal), "BSTR not copied properly\n");
+    hr = PropVariantClear(&propvarSrc);
+    ok(hr == S_OK, "Failed to clear propvar, hr %#x.\n", hr);
+    hr = PropVariantClear(&propvarDst);
+    ok(hr == S_OK, "Failed to clear propvar, hr %#x.\n", hr);
+
     propvarSrc.vt = VT_LPWSTR;
     U(propvarSrc).pwszVal = wszTestString;
     hr = PropVariantCopy(&propvarDst, &propvarSrc);

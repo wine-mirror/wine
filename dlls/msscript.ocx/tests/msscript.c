@@ -29,6 +29,7 @@
 
 #include "msscript.h"
 #include "wine/test.h"
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 #define TESTSCRIPT_CLSID "{178fc164-f585-4e24-9c13-4bb7faf80746}"
 static const GUID CLSID_TestScript =
@@ -92,10 +93,17 @@ DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(SetInterfaceSafetyOptions);
 DEFINE_EXPECT(InitNew);
 DEFINE_EXPECT(Close);
+DEFINE_EXPECT(QI_IDispatchEx);
+DEFINE_EXPECT(GetIDsOfNames);
+DEFINE_EXPECT(Invoke);
+DEFINE_EXPECT(InvokeEx);
 DEFINE_EXPECT(SetScriptSite);
 DEFINE_EXPECT(QI_IActiveScriptParse);
 DEFINE_EXPECT(SetScriptState_INITIALIZED);
+DEFINE_EXPECT(SetScriptState_STARTED);
+DEFINE_EXPECT(ParseScriptText);
 DEFINE_EXPECT(AddNamedItem);
+DEFINE_EXPECT(GetScriptDispatch);
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
@@ -142,13 +150,28 @@ static HRESULT WINAPI ActiveScriptParse_AddScriptlet(IActiveScriptParse *iface,
     return E_NOTIMPL;
 }
 
+static DWORD parse_flags = 0;
+
 static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *iface,
         LPCOLESTR pstrCode, LPCOLESTR pstrItemName, IUnknown *punkContext,
         LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    ok(!!pstrCode, "got wrong pointer: %p.\n", pstrCode);
+    ok(!pstrItemName, "got wrong pointer: %p.\n", pstrItemName);
+    ok(!punkContext, "got wrong pointer: %p.\n", punkContext);
+    ok(!pstrDelimiter, "got wrong pointer: %p.\n", pstrDelimiter);
+    ok(!dwSourceContextCookie, "got wrong value: %s.\n", wine_dbgstr_longlong(dwSourceContextCookie));
+    ok(ulStartingLine == 1, "got wrong value: %d.\n", ulStartingLine);
+    ok(!!pexcepinfo, "got wrong pointer: %p.\n", pexcepinfo);
+    ok(dwFlags == parse_flags, "got wrong flags: %x.\n", dwFlags);
+    if (parse_flags == SCRIPTTEXT_ISEXPRESSION)
+        ok(!!pvarResult, "got wrong pointer: %p.\n", pvarResult);
+    else
+        ok(!pvarResult, "got wrong pointer: %p.\n", pvarResult);
+
+    CHECK_EXPECT(ParseScriptText);
+    return S_OK;
 }
 
 static const IActiveScriptParseVtbl ActiveScriptParseVtbl = {
@@ -209,6 +232,179 @@ static const IObjectSafetyVtbl ObjectSafetyVtbl = {
 
 static IObjectSafety ObjectSafety = { &ObjectSafetyVtbl };
 
+static BOOL DispatchEx_available = FALSE;
+static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if (IsEqualGUID(&IID_IDispatchEx, riid))
+    {
+        CHECK_EXPECT(QI_IDispatchEx);
+        if (DispatchEx_available)
+        {
+            *ppv = iface;
+            return S_OK;
+        }
+        return E_NOINTERFACE;
+    }
+
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static BSTR Dispatch_expected_name;
+static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    CHECK_EXPECT(GetIDsOfNames);
+    ok(IsEqualGUID(&IID_NULL, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
+    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %u\n", lcid);
+    ok(cNames == 1, "unexpected cNames %u\n", cNames);
+    ok(Dispatch_expected_name && !lstrcmpW(rgszNames[0], Dispatch_expected_name),
+        "unexpected name %s (expected %s).\n", wine_dbgstr_w(rgszNames[0]), wine_dbgstr_w(Dispatch_expected_name));
+
+    *rgDispId = 0xdeadbeef;
+    return S_OK;
+}
+
+static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    CHECK_EXPECT(Invoke);
+    ok(IsEqualGUID(&IID_NULL, riid), "unexpected riid %s.\n", wine_dbgstr_guid(riid));
+    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %u.\n", lcid);
+    ok(wFlags == DISPATCH_METHOD, "unexpected wFlags %u.\n", wFlags);
+    ok(dispIdMember == 0xdeadbeef, "unexpected dispIdMember %d.\n", dispIdMember);
+    ok(pDispParams->cNamedArgs == 0, "unexpected number of named args %u.\n", pDispParams->cNamedArgs);
+    ok(!pDispParams->rgdispidNamedArgs, "unexpected named args array %p\n", pDispParams->rgdispidNamedArgs);
+    ok(pDispParams->cArgs == 2, "unexpected number of args %u.\n", pDispParams->cArgs);
+    ok(!!pDispParams->rgvarg, "unexpected NULL rgvarg.\n");
+    if (pDispParams->rgvarg && pDispParams->cArgs >= 2)
+    {
+        ok(V_VT(pDispParams->rgvarg + 1) == VT_I4 && V_I4(pDispParams->rgvarg + 1) == 10,
+            "unexpected first parameter V_VT = %d, V_I4 = %d.\n",
+            V_VT(pDispParams->rgvarg + 1), V_I4(pDispParams->rgvarg + 1));
+        ok(V_VT(pDispParams->rgvarg) == VT_I4 && V_I4(pDispParams->rgvarg) == 3,
+            "unexpected second parameter V_VT = %d, V_I4 = %d.\n",
+            V_VT(pDispParams->rgvarg), V_I4(pDispParams->rgvarg));
+    }
+
+    V_VT(pVarResult) = VT_R8;
+    V_R8(pVarResult) = 4.2;
+    return S_OK;
+}
+
+static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags,
+        DISPPARAMS *pdp, VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(InvokeEx);
+    ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %u.\n", lcid);
+    ok(wFlags == DISPATCH_METHOD, "unexpected wFlags %u.\n", wFlags);
+    ok(id == 0xdeadbeef, "unexpected id %d.\n", id);
+    ok(pdp->cNamedArgs == 0, "unexpected number of named args %u.\n", pdp->cNamedArgs);
+    ok(!pdp->rgdispidNamedArgs, "unexpected named args array %p.\n", pdp->rgdispidNamedArgs);
+    ok(pdp->cArgs == 2, "unexpected number of args %u.\n", pdp->cArgs);
+    ok(!!pdp->rgvarg, "unexpected NULL rgvarg.\n");
+    if (pdp->rgvarg && pdp->cArgs >= 2)
+    {
+        ok(V_VT(pdp->rgvarg + 1) == VT_I4 && V_I4(pdp->rgvarg + 1) == 10,
+            "unexpected first parameter V_VT = %d, V_I4 = %d.\n",
+            V_VT(pdp->rgvarg + 1), V_I4(pdp->rgvarg + 1));
+        ok(V_VT(pdp->rgvarg) == VT_I4 && V_I4(pdp->rgvarg) == 3,
+            "unexpected second parameter V_VT = %d, V_I4 = %d.\n",
+            V_VT(pdp->rgvarg), V_I4(pdp->rgvarg));
+    }
+
+    V_VT(pvarRes) = VT_I2;
+    V_I2(pvarRes) = 42;
+    return S_OK;
+}
+
+static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch,
+        DWORD *pgrfdex)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IDispatchExVtbl DispatchExVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    DispatchEx_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx DispatchEx = { &DispatchExVtbl };
+
 static HRESULT WINAPI ActiveScript_QueryInterface(IActiveScript *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -252,7 +448,7 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     IActiveScriptSiteWindow *window;
     IActiveScriptSiteDebug *debug;
     IServiceProvider *service;
-    ICanHandleException *canexpection;
+    ICanHandleException *canexception;
     LCID lcid;
     HRESULT hres;
 
@@ -272,7 +468,7 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteDebug, (void**)&debug);
     ok(hres == E_NOINTERFACE, "Got IActiveScriptSiteDebug interface: %08x\n", hres);
 
-    hres = IActiveScriptSite_QueryInterface(pass, &IID_ICanHandleException, (void**)&canexpection);
+    hres = IActiveScriptSite_QueryInterface(pass, &IID_ICanHandleException, (void**)&canexception);
     ok(hres == E_NOINTERFACE, "Got IID_ICanHandleException interface: %08x\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IServiceProvider, (void**)&service);
@@ -302,6 +498,10 @@ static HRESULT WINAPI ActiveScript_SetScriptState(IActiveScript *iface, SCRIPTST
 {
     if (ss == SCRIPTSTATE_INITIALIZED) {
         CHECK_EXPECT(SetScriptState_INITIALIZED);
+        return S_OK;
+    }
+    else if (ss == SCRIPTSTATE_STARTED) {
+        CHECK_EXPECT(SetScriptState_STARTED);
         return S_OK;
     }
     else
@@ -341,8 +541,12 @@ static HRESULT WINAPI ActiveScript_AddTypeLib(IActiveScript *iface, REFGUID rgui
 static HRESULT WINAPI ActiveScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR pstrItemName,
                                                 IDispatch **ppdisp)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetScriptDispatch);
+    ok(!pstrItemName, "pstrItemName not NULL, got %s.\n", wine_dbgstr_w(pstrItemName));
+
+    *ppdisp = (IDispatch*)&DispatchEx;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScript_GetCurrentScriptThreadID(IActiveScript *iface,
@@ -500,6 +704,8 @@ static BOOL register_script_engine(void)
 
     return TRUE;
 }
+
+static BOOL have_custom_engine;
 
 static HRESULT WINAPI OleClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **obj)
 {
@@ -754,7 +960,7 @@ static void test_Language(void)
     IScriptControl_Release(sc);
 
     /* custom script engine */
-    if (register_script_engine()) {
+    if (have_custom_engine) {
         static const WCHAR testscriptW[] = {'t','e','s','t','s','c','r','i','p','t',0};
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -786,16 +992,12 @@ static void test_Language(void)
 
         IActiveScriptSite_Release(site);
 
-        init_registry(FALSE);
-
         SET_EXPECT(Close);
 
         IScriptControl_Release(sc);
 
         CHECK_CALLED(Close);
     }
-    else
-        skip("Could not register TestScript engine\n");
 }
 
 static void test_connectionpoints(void)
@@ -1055,7 +1257,7 @@ static void test_Reset(void)
     IScriptControl_Release(sc);
 
     /* custom script engine */
-    if (register_script_engine()) {
+    if (have_custom_engine) {
         static const WCHAR testscriptW[] = {'t','e','s','t','s','c','r','i','p','t',0};
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -1086,16 +1288,12 @@ static void test_Reset(void)
         CHECK_CALLED(SetScriptSite);
         IActiveScriptSite_Release(site);
 
-        init_registry(FALSE);
-
         SET_EXPECT(Close);
 
         IScriptControl_Release(sc);
 
         CHECK_CALLED(Close);
     }
-    else
-        skip("Could not register TestScript engine\n");
 }
 
 static HRESULT WINAPI disp_QI(IDispatch *iface, REFIID riid, void **obj)
@@ -1193,7 +1391,7 @@ static void test_AddObject(void)
     IScriptControl_Release(sc);
 
     /* custom script engine */
-    if (register_script_engine()) {
+    if (have_custom_engine) {
         static const WCHAR testscriptW[] = {'t','e','s','t','s','c','r','i','p','t',0};
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -1225,16 +1423,12 @@ static void test_AddObject(void)
         CHECK_CALLED(SetScriptSite);
         IActiveScriptSite_Release(site);
 
-        init_registry(FALSE);
-
         SET_EXPECT(Close);
 
         IScriptControl_Release(sc);
 
         CHECK_CALLED(Close);
     }
-    else
-        skip("Could not register TestScript engine\n");
 
     SysFreeString(objname);
 }
@@ -1356,18 +1550,6 @@ static void test_State(void)
     IScriptControl_Release(sc);
 }
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len - 1);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 #define CHECK_ERROR(sc,exp_num) _check_error(sc, exp_num, __LINE__)
 static void _check_error(IScriptControl *sc, LONG exp_num, int line)
 {
@@ -1381,7 +1563,7 @@ static void _check_error(IScriptControl *sc, LONG exp_num, int line)
     {
         error_num = 0xdeadbeef;
         hr = IScriptError_get_Number(script_err, &error_num);
-        ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.", hr);
+        ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
         ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %d, expected %d.\n",
                            error_num, exp_num);
         IScriptError_Release(script_err);
@@ -1403,7 +1585,7 @@ static void test_IScriptControl_Eval(void)
     hr = IScriptControl_Eval(sc, NULL, NULL);
     ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08x.\n", hr);
 
-    script_str = a2bstr("1 + 1");
+    script_str = SysAllocString(L"1 + 1");
     hr = IScriptControl_Eval(sc, script_str, NULL);
     ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08x.\n", hr);
     SysFreeString(script_str);
@@ -1416,7 +1598,7 @@ static void test_IScriptControl_Eval(void)
        V_VT(&var), V_I4(&var));
     todo_wine CHECK_ERROR(sc, 0);
 
-    script_str = a2bstr("1 + 1");
+    script_str = SysAllocString(L"1 + 1");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1425,14 +1607,14 @@ static void test_IScriptControl_Eval(void)
        V_VT(&var), V_I4(&var));
     SysFreeString(script_str);
 
-    language = a2bstr("jscript");
+    language = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, language);
     ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
     hr = IScriptControl_get_State(sc, &state);
     ok(hr == S_OK, "IScriptControl_get_State failed: 0x%08x.\n", hr);
     ok(state == Initialized, "got wrong state: %d\n", state);
     SysFreeString(language);
-    script_str = a2bstr("var1 = 1 + 1");
+    script_str = SysAllocString(L"var1 = 1 + 1");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1444,7 +1626,7 @@ static void test_IScriptControl_Eval(void)
     ok(state == Initialized, "got wrong state: %d\n", state);
     SysFreeString(script_str);
 
-    script_str = a2bstr("var2 = 10 + var1");
+    script_str = SysAllocString(L"var2 = 10 + var1");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1453,7 +1635,7 @@ static void test_IScriptControl_Eval(void)
        V_VT(&var), V_I4(&var));
     SysFreeString(script_str);
 
-    script_str = a2bstr("invalid syntax");
+    script_str = SysAllocString(L"invalid syntax");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1464,7 +1646,7 @@ static void test_IScriptControl_Eval(void)
     SysFreeString(script_str);
     todo_wine CHECK_ERROR(sc, 1004);
 
-    script_str = a2bstr("var2 = var1 + var2");
+    script_str = SysAllocString(L"var2 = var1 + var2");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
@@ -1473,18 +1655,474 @@ static void test_IScriptControl_Eval(void)
        V_VT(&var), V_I4(&var));
     SysFreeString(script_str);
 
-    script_str = a2bstr("\"Hello\"");
+    script_str = SysAllocString(L"\"Hello\"");
     V_VT(&var) = VT_NULL;
     V_I4(&var) = 0xdeadbeef;
     hr = IScriptControl_Eval(sc, script_str, &var);
     ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-    expected_string = a2bstr("Hello");
+    expected_string = SysAllocString(L"Hello");
     ok((V_VT(&var) == VT_BSTR) && (!lstrcmpW(V_BSTR(&var), expected_string)),
        "V_VT(var) = %d, V_BSTR(var) = %s.\n", V_VT(&var), wine_dbgstr_w(V_BSTR(&var)));
     SysFreeString(expected_string);
     SysFreeString(script_str);
 
     IScriptControl_Release(sc);
+
+    if (have_custom_engine)
+    {
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void **)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        language= SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, language);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(language);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        parse_flags = SCRIPTTEXT_ISEXPRESSION;
+        script_str = SysAllocString(L"var1 = 1 + 1");
+        V_VT(&var) = VT_NULL;
+        hr = IScriptControl_Eval(sc, script_str, &var);
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+        ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
+        SysFreeString(script_str);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
+
+        SET_EXPECT(ParseScriptText);
+        script_str = SysAllocString(L"var2 = 10 + var1");
+        V_VT(&var) = VT_NULL;
+        V_I4(&var) = 0xdeadbeef;
+        hr = IScriptControl_Eval(sc, script_str, &var);
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+           V_VT(&var), V_I4(&var));
+        SysFreeString(script_str);
+        CHECK_CALLED(ParseScriptText);
+
+        SET_EXPECT(SetScriptState_INITIALIZED);
+        hr = IScriptControl_Reset(sc);
+        ok(hr == S_OK, "IScriptControl_Reset failed: 0x%08x.\n", hr);
+        CHECK_CALLED(SetScriptState_INITIALIZED);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        script_str = SysAllocString(L"var2 = 10 + var1");
+        V_VT(&var) = VT_NULL;
+        V_I4(&var) = 0xdeadbeef;
+        hr = IScriptControl_Eval(sc, script_str, &var);
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+           V_VT(&var), V_I4(&var));
+        SysFreeString(script_str);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+
+        IScriptControl_Release(sc);
+
+        CHECK_CALLED(Close);
+    }
+}
+
+static void test_IScriptControl_AddCode(void)
+{
+    BSTR code_str, language;
+    IScriptControl *sc;
+    VARIANT var;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                          &IID_IScriptControl, (void **)&sc);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+    code_str = SysAllocString(L"1 + 1");
+    hr = IScriptControl_AddCode(sc, code_str);
+    ok(hr == E_FAIL, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
+    SysFreeString(code_str);
+
+    hr = IScriptControl_AddCode(sc, NULL);
+    ok(hr == E_FAIL, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
+
+    language = SysAllocString(L"jscript");
+    hr = IScriptControl_put_Language(sc, language);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    SysFreeString(language);
+
+    code_str = SysAllocString(L"1 + 1");
+    hr = IScriptControl_AddCode(sc, code_str);
+    ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+    SysFreeString(code_str);
+    todo_wine CHECK_ERROR(sc, 0);
+
+    code_str = SysAllocString(L"invalid syntax");
+    hr = IScriptControl_AddCode(sc, code_str);
+    todo_wine ok(hr == 0x800a03ec, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
+    SysFreeString(code_str);
+    todo_wine CHECK_ERROR(sc, 1004);
+
+    IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (have_custom_engine)
+    {
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void **)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        language = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, language);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(language);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        parse_flags = SCRIPTTEXT_ISVISIBLE;
+        code_str = SysAllocString(L"1 + 1");
+        hr = IScriptControl_AddCode(sc, code_str);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        SysFreeString(code_str);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
+
+        SET_EXPECT(ParseScriptText);
+        code_str = SysAllocString(L"0x100");
+        hr = IScriptControl_AddCode(sc, code_str);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        SysFreeString(code_str);
+        CHECK_CALLED(ParseScriptText);
+
+        /* Call Eval() after AddCode() for checking if it will call SetScriptState() again. */
+        SET_EXPECT(ParseScriptText);
+        parse_flags = SCRIPTTEXT_ISEXPRESSION;
+        code_str = SysAllocString(L"var2 = 10 + var1");
+        V_VT(&var) = VT_NULL;
+        hr = IScriptControl_Eval(sc, code_str, &var);
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+        ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
+        SysFreeString(code_str);
+        CHECK_CALLED(ParseScriptText);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+
+        IScriptControl_Release(sc);
+
+        CHECK_CALLED(Close);
+    }
+}
+
+static void test_IScriptControl_ExecuteStatement(void)
+{
+    IScriptControl *sc;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                          &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+    str = SysAllocString(L"1 + 1");
+    hr = IScriptControl_ExecuteStatement(sc, str);
+    ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    hr = IScriptControl_ExecuteStatement(sc, NULL);
+    ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
+
+    str = SysAllocString(L"jscript");
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    str = SysAllocString(L"1 + 1");
+    hr = IScriptControl_ExecuteStatement(sc, str);
+    ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+    todo_wine CHECK_ERROR(sc, 0);
+
+    str = SysAllocString(L"invalid syntax");
+    hr = IScriptControl_ExecuteStatement(sc, str);
+    todo_wine ok(hr == 0x800a03ec, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
+    SysFreeString(str);
+    todo_wine CHECK_ERROR(sc, 1004);
+
+    IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (have_custom_engine)
+    {
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void**)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        str = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        parse_flags = 0;
+        str = SysAllocString(L"1 + 1");
+        hr = IScriptControl_ExecuteStatement(sc, str);
+        ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
+
+        SET_EXPECT(ParseScriptText);
+        str = SysAllocString(L"0x100");
+        hr = IScriptControl_ExecuteStatement(sc, str);
+        ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+        CHECK_CALLED(ParseScriptText);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+    }
+}
+
+static void test_IScriptControl_Run(void)
+{
+    SAFEARRAYBOUND bnd[] = { { 2, 0 }, { 2, 0 } };
+    LONG idx0_0[] = { 0, 0 };
+    LONG idx0_1[] = { 1, 0 };
+    LONG idx1_0[] = { 0, 1 };
+    LONG idx1_1[] = { 1, 1 };
+    IScriptControl *sc;
+    SAFEARRAY *params;
+    VARIANT var;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                          &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+    params = NULL;
+    str = SysAllocString(L"identifier");
+    hr = IScriptControl_Run(sc, str, &params, &var);
+    ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08x.\n", hr);
+
+    params = SafeArrayCreate(VT_VARIANT, 1, bnd);
+    ok(params != NULL, "Failed to create SafeArray.\n");
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 10;
+    SafeArrayPutElement(params, idx0_0, &var);
+    V_I4(&var) = 3;
+    SafeArrayPutElement(params, idx0_1, &var);
+
+    hr = IScriptControl_Run(sc, str, &params, &var);
+    ok(hr == E_FAIL, "IScriptControl_Run returned: 0x%08x.\n", hr);
+
+    hr = IScriptControl_Run(sc, str, NULL, &var);
+    ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08x.\n", hr);
+
+    hr = IScriptControl_Run(sc, str, &params, NULL);
+    ok(hr == E_POINTER, "IScriptControl_Run returned: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    hr = IScriptControl_Run(sc, NULL, &params, &var);
+    ok(hr == E_FAIL, "IScriptControl_Run returned: 0x%08x.\n", hr);
+
+    str = SysAllocString(L"jscript");
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    str = SysAllocString(L"foobar");
+    hr = IScriptControl_Run(sc, str, &params, &var);
+    ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    todo_wine CHECK_ERROR(sc, 0);
+    SysFreeString(str);
+
+    str = SysAllocString(L"function subtract(a, b) { return a - b; }\n");
+    hr = IScriptControl_AddCode(sc, str);
+    ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+    todo_wine CHECK_ERROR(sc, 0);
+    SysFreeString(str);
+
+    str = SysAllocString(L"Subtract");
+    hr = IScriptControl_Run(sc, str, &params, &var);
+    ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    str = SysAllocString(L"subtract");
+    hr = IScriptControl_Run(sc, str, &params, NULL);
+    ok(hr == E_POINTER, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    todo_wine CHECK_ERROR(sc, 0);
+
+    hr = IScriptControl_Run(sc, str, &params, &var);
+    ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    todo_wine CHECK_ERROR(sc, 0);
+    SafeArrayDestroy(params);
+
+    /* The array's other dimensions are ignored */
+    params = SafeArrayCreate(VT_VARIANT, 2, bnd);
+    ok(params != NULL, "Failed to create SafeArray.\n");
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 10;
+    SafeArrayPutElement(params, idx0_0, &var);
+    V_I4(&var) = 3;
+    SafeArrayPutElement(params, idx0_1, &var);
+    V_I4(&var) = 90;
+    SafeArrayPutElement(params, idx1_0, &var);
+    V_I4(&var) = 80;
+    SafeArrayPutElement(params, idx1_1, &var);
+
+    hr = IScriptControl_Run(sc, str, &params, &var);
+    ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+
+    /* Hack the array's dimensions to 0 */
+    params->cDims = 0;
+    hr = IScriptControl_Run(sc, str, &params, &var);
+    ok(hr == DISP_E_BADINDEX, "IScriptControl_Run returned: 0x%08x.\n", hr);
+    ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
+    params->cDims = 2;
+    SysFreeString(str);
+    IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (have_custom_engine)
+    {
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void**)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+        str = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(GetScriptDispatch);
+        SET_EXPECT(QI_IDispatchEx);
+        SET_EXPECT(GetIDsOfNames);
+        SET_EXPECT(Invoke);
+        Dispatch_expected_name = SysAllocString(L"function");
+        hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
+        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+        ok((V_VT(&var) == VT_R8) && (V_R8(&var) == 4.2), "V_VT(var) = %d, V_R8(var) = %lf.\n", V_VT(&var), V_R8(&var));
+        SysFreeString(Dispatch_expected_name);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(GetScriptDispatch);
+        CHECK_CALLED(QI_IDispatchEx);
+        CHECK_CALLED(GetIDsOfNames);
+        CHECK_CALLED(Invoke);
+
+        /* GetScriptDispatch is cached and not called again */
+        CLEAR_CALLED(GetScriptDispatch);
+        SET_EXPECT(QI_IDispatchEx);
+        SET_EXPECT(GetIDsOfNames);
+        SET_EXPECT(Invoke);
+        Dispatch_expected_name = SysAllocString(L"BarFoo");
+        hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
+        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+        SysFreeString(Dispatch_expected_name);
+        CHECK_NOT_CALLED(GetScriptDispatch);
+        CHECK_CALLED(QI_IDispatchEx);
+        CHECK_CALLED(GetIDsOfNames);
+        CHECK_CALLED(Invoke);
+
+        /* Make DispatchEx available */
+        DispatchEx_available = TRUE;
+        CLEAR_CALLED(GetScriptDispatch);
+        SET_EXPECT(QI_IDispatchEx);
+        SET_EXPECT(GetIDsOfNames);
+        SET_EXPECT(InvokeEx);
+        Dispatch_expected_name = SysAllocString(L"FooBar");
+        hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
+        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+        ok((V_VT(&var) == VT_I2) && (V_I2(&var) == 42), "V_VT(var) = %d, V_I2(var) = %d.\n", V_VT(&var), V_I2(&var));
+        SysFreeString(Dispatch_expected_name);
+        CHECK_NOT_CALLED(GetScriptDispatch);
+        CHECK_CALLED(QI_IDispatchEx);
+        CHECK_CALLED(GetIDsOfNames);
+        CHECK_CALLED(InvokeEx);
+
+        /* QueryInterface for IDispatchEx is always called and not cached */
+        CLEAR_CALLED(GetScriptDispatch);
+        SET_EXPECT(QI_IDispatchEx);
+        SET_EXPECT(GetIDsOfNames);
+        SET_EXPECT(InvokeEx);
+        Dispatch_expected_name = SysAllocString(L"1");
+        hr = IScriptControl_Run(sc, Dispatch_expected_name, &params, &var);
+        ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+        SysFreeString(Dispatch_expected_name);
+        CHECK_NOT_CALLED(GetScriptDispatch);
+        CHECK_CALLED(QI_IDispatchEx);
+        CHECK_CALLED(GetIDsOfNames);
+        CHECK_CALLED(InvokeEx);
+        DispatchEx_available = FALSE;
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+    }
+
+    SafeArrayDestroy(params);
 }
 
 START_TEST(msscript)
@@ -1502,6 +2140,10 @@ START_TEST(msscript)
     }
     IUnknown_Release(unk);
 
+    have_custom_engine = register_script_engine();
+    if (!have_custom_engine)
+        skip("Could not register TestScript engine.\n");
+
     test_oleobject();
     test_persiststreaminit();
     test_olecontrol();
@@ -1517,6 +2159,11 @@ START_TEST(msscript)
     test_UseSafeSubset();
     test_State();
     test_IScriptControl_Eval();
+    test_IScriptControl_AddCode();
+    test_IScriptControl_ExecuteStatement();
+    test_IScriptControl_Run();
+
+    init_registry(FALSE);
 
     CoUninitialize();
 }

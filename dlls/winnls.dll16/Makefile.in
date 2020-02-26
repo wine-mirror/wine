@@ -1,5 +1,5 @@
 MODULE    = winnls.dll16
 IMPORTS   = winnls32
-EXTRADLLFLAGS = -m16 -Wb,--main-module,winnls32.dll
+EXTRADLLFLAGS = -m16 -mno-cygwin -Wb,--main-module,winnls32.dll
 
 C_SRCS = winnls.c

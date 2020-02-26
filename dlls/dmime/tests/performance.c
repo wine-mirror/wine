@@ -82,6 +82,7 @@ static HRESULT test_InitAudio(void)
     IDirectSound *dsound;
     IDirectMusicPort *port;
     IDirectMusicAudioPath *path;
+    DWORD channel, group;
     HRESULT hr;
     ULONG ref;
 
@@ -96,15 +97,25 @@ static HRESULT test_InitAudio(void)
     dsound = NULL;
     hr = IDirectMusicPerformance8_InitAudio(performance, NULL, &dsound, NULL,
             DMUS_APATH_SHARED_STEREOPLUSREVERB, 128, DMUS_AUDIOF_ALL, NULL);
-    if(hr != S_OK)
+    if (hr != S_OK) {
+        IDirectMusicPerformance8_Release(performance);
         return hr;
+    }
 
+    hr = IDirectMusicPerformance8_PChannelInfo(performance, 128, &port, NULL, NULL);
+    ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
+    hr = IDirectMusicPerformance8_PChannelInfo(performance, 127, &port, NULL, NULL);
+    ok(hr == S_OK, "PChannelInfo failed, got %08x\n", hr);
+    IDirectMusicPort_Release(port);
     port = NULL;
     hr = IDirectMusicPerformance8_PChannelInfo(performance, 0, &port, NULL, NULL);
-    ok(hr == S_OK, "Failed to call PChannelInfo (%x)\n", hr);
+    ok(hr == S_OK, "PChannelInfo failed, got %08x\n", hr);
     ok(port != NULL, "IDirectMusicPort not set\n");
-    if (hr == S_OK && port != NULL)
-        IDirectMusicPort_Release(port);
+    hr = IDirectMusicPerformance8_AssignPChannel(performance, 0, port, 0, 0);
+    todo_wine ok(hr == DMUS_E_AUDIOPATHS_IN_USE, "AssignPChannel failed (%08x)\n", hr);
+    hr = IDirectMusicPerformance8_AssignPChannelBlock(performance, 0, port, 0);
+    todo_wine ok(hr == DMUS_E_AUDIOPATHS_IN_USE, "AssignPChannelBlock failed (%08x)\n", hr);
+    IDirectMusicPort_Release(port);
 
     hr = IDirectMusicPerformance8_GetDefaultAudioPath(performance, &path);
     ok(hr == S_OK, "Failed to call GetDefaultAudioPath (%x)\n", hr);
@@ -120,6 +131,8 @@ static HRESULT test_InitAudio(void)
     create_performance(&performance, NULL, NULL, FALSE);
     hr = IDirectMusicPerformance8_InitAudio(performance, NULL, NULL, NULL, 0, 64, 0, NULL);
     ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
+    hr = IDirectMusicPerformance8_PChannelInfo(performance, 0, &port, NULL, NULL);
+    ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
     destroy_performance(performance, NULL, NULL);
 
     /* Refcounts for auto generated dmusic and dsound */
@@ -204,6 +217,18 @@ static HRESULT test_InitAudio(void)
     ok(ref == 2, "dmusic ref count got %d expected 2\n", ref);
     destroy_performance(performance, dmusic, dsound);
 
+    /* InitAudio with perf channel count not a multiple of 16 rounds up */
+    create_performance(&performance, NULL, NULL, TRUE);
+    hr = IDirectMusicPerformance8_InitAudio(performance, NULL, NULL, NULL,
+            DMUS_APATH_SHARED_STEREOPLUSREVERB, 29, DMUS_AUDIOF_ALL, NULL);
+    ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
+    hr = IDirectMusicPerformance8_PChannelInfo(performance, 31, &port, &group, &channel);
+    ok(hr == S_OK && group == 2 && channel == 15,
+            "PChannelInfo failed, got %08x, %u, %u\n", hr, group, channel);
+    hr = IDirectMusicPerformance8_PChannelInfo(performance, 32, &port, NULL, NULL);
+    ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x\n", hr);
+    destroy_performance(performance, NULL, NULL);
+
     return S_OK;
 }
 
@@ -258,35 +283,27 @@ static void test_createport(void)
 
     /* dwValidParams == 0 -> S_OK, filled struct */
     portparams.dwValidParams = 0;
-    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth,
-            &portparams, &port, NULL);
+    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth, &portparams, &port, NULL);
     ok(hr == S_OK, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-
+    todo_wine ok(portparams.dwValidParams, "portparams struct was not filled in\n");
     IDirectMusicPort_Release(port);
     port = NULL;
-
-    todo_wine ok(portparams.dwValidParams != 0, "portparams struct was not filled in\n");
 
     /* dwValidParams != 0, invalid param -> S_FALSE, filled struct */
     portparams.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS;
     portparams.dwChannelGroups = 0;
-    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth,
-            &portparams, &port, NULL);
+    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth, &portparams, &port, NULL);
     todo_wine ok(hr == S_FALSE, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-
+    ok(portparams.dwValidParams, "portparams struct was not filled in\n");
     IDirectMusicPort_Release(port);
     port = NULL;
 
-    ok(portparams.dwValidParams != 0, "portparams struct was not filled in\n");
-
     /* dwValidParams != 0, valid params -> S_OK */
-    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth,
-            &portparams, &port, NULL);
+    hr = IDirectMusic_CreatePort(music, &CLSID_DirectMusicSynth, &portparams, &port, NULL);
     ok(hr == S_OK, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-
     IDirectMusicPort_Release(port);
     port = NULL;
 
@@ -295,11 +312,9 @@ static void test_createport(void)
     hr = IDirectMusic_CreatePort(music, &GUID_NULL, &portparams, &port, NULL);
     ok(hr == S_OK, "CreatePort failed: %08x\n", hr);
     ok(port != NULL, "Didn't get IDirectMusicPort pointer\n");
-
+    todo_wine ok(portparams.dwValidParams, "portparams struct was not filled in\n");
     IDirectMusicPort_Release(port);
     port = NULL;
-
-    todo_wine ok(portparams.dwValidParams != 0, "portparams struct was not filled in\n");
 
     /* null GUID fails */
     portparams.dwValidParams = 0;
@@ -320,6 +335,115 @@ static void test_createport(void)
 
     IDirectMusic_Release(music);
     IDirectMusicPerformance_Release(perf);
+}
+
+static void test_pchannel(void)
+{
+    IDirectMusicPerformance8 *perf;
+    IDirectMusicPort *port = NULL, *port2;
+    DWORD channel, group;
+    unsigned int i;
+    HRESULT hr;
+
+    create_performance(&perf, NULL, NULL, FALSE);
+    hr = IDirectMusicPerformance8_Init(perf, NULL, NULL, NULL);
+    ok(hr == S_OK, "Init failed: %08x\n", hr);
+    hr = IDirectMusicPerformance8_PChannelInfo(perf, 0, &port, NULL, NULL);
+    ok(hr == E_INVALIDARG && !port, "PChannelInfo failed, got %08x, %p\n", hr, port);
+
+    /* Add default port. Sets PChannels 0-15 to the corresponding channels in group 1 */
+    hr = IDirectMusicPerformance8_AddPort(perf, NULL);
+    ok(hr == S_OK, "AddPort of default port failed: %08x\n", hr);
+    hr = IDirectMusicPerformance8_PChannelInfo(perf, 0, NULL, NULL, NULL);
+    ok(hr == S_OK, "PChannelInfo failed, got %08x\n", hr);
+    hr = IDirectMusicPerformance8_PChannelInfo(perf, 0, &port, NULL, NULL);
+    ok(hr == S_OK && port, "PChannelInfo failed, got %08x, %p\n", hr, port);
+    for (i = 1; i < 16; i++) {
+        hr = IDirectMusicPerformance8_PChannelInfo(perf, i, &port2, &group, &channel);
+        ok(hr == S_OK && port == port2 && group == 1 && channel == i,
+                "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
+        IDirectMusicPort_Release(port2);
+    }
+
+    /* Unset PChannels fail to retrieve */
+    hr = IDirectMusicPerformance8_PChannelInfo(perf, 16, &port2, NULL, NULL);
+    ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x, %p\n", hr, port);
+    hr = IDirectMusicPerformance8_PChannelInfo(perf, MAXDWORD - 16, &port2, NULL, NULL);
+    ok(hr == E_INVALIDARG, "PChannelInfo failed, got %08x, %p\n", hr, port);
+
+    /* Channel group 0 can be set just fine */
+    hr = IDirectMusicPerformance8_AssignPChannel(perf, 0, port, 0, 0);
+    ok(hr == S_OK, "AssignPChannel failed, got %08x\n", hr);
+    hr = IDirectMusicPerformance8_AssignPChannelBlock(perf, 0, port, 0);
+    ok(hr == S_OK, "AssignPChannelBlock failed, got %08x\n", hr);
+    for (i = 1; i < 16; i++) {
+        hr = IDirectMusicPerformance8_PChannelInfo(perf, i, &port2, &group, &channel);
+        ok(hr == S_OK && port == port2 && group == 0 && channel == i,
+                "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
+        IDirectMusicPort_Release(port2);
+    }
+
+    /* Last PChannel Block can be set only individually but not read */
+    hr = IDirectMusicPerformance8_AssignPChannel(perf, MAXDWORD, port, 0, 3);
+    ok(hr == S_OK, "AssignPChannel failed, got %08x\n", hr);
+    port2 = (IDirectMusicPort *)0xdeadbeef;
+    hr = IDirectMusicPerformance8_PChannelInfo(perf, MAXDWORD, &port2, NULL, NULL);
+    todo_wine ok(hr == E_INVALIDARG && port2 == (IDirectMusicPort *)0xdeadbeef,
+            "PChannelInfo failed, got %08x, %p\n", hr, port2);
+    hr = IDirectMusicPerformance8_AssignPChannelBlock(perf, MAXDWORD, port, 0);
+    ok(hr == E_INVALIDARG, "AssignPChannelBlock failed, got %08x\n", hr);
+    hr = IDirectMusicPerformance8_AssignPChannelBlock(perf, MAXDWORD / 16, port, 1);
+    todo_wine ok(hr == E_INVALIDARG, "AssignPChannelBlock failed, got %08x\n", hr);
+    for (i = MAXDWORD - 15; i < MAXDWORD; i++) {
+        hr = IDirectMusicPerformance8_AssignPChannel(perf, i, port, 0, 0);
+        ok(hr == S_OK, "AssignPChannel failed, got %08x\n", hr);
+        hr = IDirectMusicPerformance8_PChannelInfo(perf, i, &port2, NULL, NULL);
+        todo_wine ok(hr == E_INVALIDARG && port2 == (IDirectMusicPort *)0xdeadbeef,
+                "PChannelInfo failed, got %08x, %p\n", hr, port2);
+    }
+
+    /* Second to last PChannel Block can be set only individually and read */
+    hr = IDirectMusicPerformance8_AssignPChannelBlock(perf, MAXDWORD / 16 - 1, port, 1);
+    todo_wine ok(hr == E_INVALIDARG, "AssignPChannelBlock failed, got %08x\n", hr);
+    for (i = MAXDWORD - 31; i < MAXDWORD - 15; i++) {
+        hr = IDirectMusicPerformance8_AssignPChannel(perf, i, port, 1, 7);
+        ok(hr == S_OK, "AssignPChannel failed, got %08x\n", hr);
+        hr = IDirectMusicPerformance8_PChannelInfo(perf, i, &port2, &group, &channel);
+        ok(hr == S_OK && port2 == port && group == 1 && channel == 7,
+                "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
+        IDirectMusicPort_Release(port2);
+    }
+
+    /* Third to last PChannel Block behaves normal */
+    hr = IDirectMusicPerformance8_AssignPChannelBlock(perf, MAXDWORD / 16 - 2, port, 0);
+    ok(hr == S_OK, "AssignPChannelBlock failed, got %08x\n", hr);
+    for (i = MAXDWORD - 47; i < MAXDWORD - 31; i++) {
+        hr = IDirectMusicPerformance8_PChannelInfo(perf, i, &port2, &group, &channel);
+        ok(hr == S_OK && port2 == port && group == 0 && channel == i % 16,
+                "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
+        IDirectMusicPort_Release(port2);
+    }
+
+    /* One PChannel set in a Block, rest is initialized too */
+    hr = IDirectMusicPerformance8_AssignPChannel(perf, 4711, port, 1, 13);
+    ok(hr == S_OK, "AssignPChannel failed, got %08x\n", hr);
+    hr = IDirectMusicPerformance8_PChannelInfo(perf, 4711, &port2, &group, &channel);
+    ok(hr == S_OK && port2 == port && group == 1 && channel == 13,
+            "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
+    IDirectMusicPort_Release(port2);
+    group = channel = 0xdeadbeef;
+    hr = IDirectMusicPerformance8_PChannelInfo(perf, 4712, &port2, &group, &channel);
+    ok(hr == S_OK && port2 == port && group == 0 && channel == 8,
+            "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
+    IDirectMusicPort_Release(port2);
+    group = channel = 0xdeadbeef;
+    hr = IDirectMusicPerformance8_PChannelInfo(perf, 4719, &port2, &group, &channel);
+    ok(hr == S_OK && port2 == port && group == 0 && channel == 15,
+            "PChannelInfo failed, got %08x, %p, %u, %u\n", hr, port2, group, channel);
+    IDirectMusicPort_Release(port2);
+
+    IDirectMusicPort_Release(port);
+    destroy_performance(perf, NULL, NULL);
 }
 
 static void test_COM(void)
@@ -366,6 +490,126 @@ static void test_COM(void)
     ok (refcount == 0, "refcount == %u, expected 0\n", refcount);
 }
 
+static void test_notification_type(void)
+{
+    static unsigned char rifffile[8+4+8+16+8+256] = "RIFF\x24\x01\x00\x00WAVE" /* header: 4 ("WAVE") + (8 + 16) (format segment) + (8 + 256) (data segment) = 0x124 */
+        "fmt \x10\x00\x00\x00\x01\x00\x20\x00\xAC\x44\x00\x00\x10\xB1\x02\x00\x04\x00\x10\x00" /* format segment: PCM, 2 chan, 44100 Hz, 16 bits */
+        "data\x00\x01\x00\x00"; /* 256 byte data segment (silence) */
+
+    IDirectMusicPerformance8 *perf;
+    IDirectMusic *music = NULL;
+    IDirectMusicSegment8 *prime_segment8;
+    IDirectMusicSegment8 *segment8 = NULL;
+    IDirectMusicLoader8 *loader;
+    IDirectMusicAudioPath8 *path;
+    IDirectMusicSegmentState *state;
+    IDirectSound *dsound = NULL;
+    HRESULT hr;
+    DWORD result;
+    HANDLE messages;
+    DMUS_NOTIFICATION_PMSG *msg;
+    BOOL found_end = FALSE;
+    DMUS_OBJECTDESC desc = {0};
+
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IDirectMusicPerformance8, (void**)&perf);
+    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+
+    hr = IDirectMusicPerformance8_InitAudio(perf, &music, &dsound, NULL, DMUS_APATH_DYNAMIC_STEREO, 64, DMUS_AUDIOF_ALL, NULL);
+    ok(music != NULL, "Didn't get IDirectMusic pointer\n");
+    ok(dsound != NULL, "Didn't get IDirectSound pointer\n");
+
+    hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC_SERVER,  &IID_IDirectMusicLoader8, (void**)&loader);
+    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+
+    messages = CreateEventA( NULL, FALSE, FALSE, NULL );
+
+    hr = IDirectMusicPerformance8_AddNotificationType(perf, &GUID_NOTIFICATION_SEGMENT);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
+
+    hr = IDirectMusicPerformance8_SetNotificationHandle(perf, messages, 0);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
+
+    hr = IDirectMusicPerformance8_GetDefaultAudioPath(perf, &path);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
+    ok(path != NULL, "Didn't get IDirectMusicAudioPath pointer\n");
+
+    desc.dwSize = sizeof(DMUS_OBJECTDESC);
+    desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_MEMORY;
+    desc.guidClass = CLSID_DirectMusicSegment;
+    desc.pbMemData = rifffile;
+    desc.llMemLength = sizeof(rifffile);
+    hr = IDirectMusicLoader8_GetObject(loader, &desc, &IID_IDirectMusicSegment8, (void**)&prime_segment8);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
+    ok(prime_segment8 != NULL, "Didn't get IDirectMusicSegment pointer\n");
+
+    hr = IDirectMusicSegment8_Download(prime_segment8, (IUnknown*)path);
+    ok(hr == S_OK, "Download failed: %08x\n", hr);
+
+    hr = IDirectMusicPerformance8_PlaySegmentEx(perf, (IUnknown*)prime_segment8,
+            NULL, NULL, DMUS_SEGF_SECONDARY, 0, &state, NULL, (IUnknown*)path);
+    ok(hr == S_OK, "PlaySegmentEx failed: %08x\n", hr);
+    ok(state != NULL, "Didn't get IDirectMusicSegmentState pointer\n");
+
+    while (!found_end) {
+        result = WaitForSingleObject(messages, 500);
+        todo_wine ok(result == WAIT_OBJECT_0, "Failed: %d\n", result);
+        if (result != WAIT_OBJECT_0)
+            break;
+
+        msg = NULL;
+        hr = IDirectMusicPerformance8_GetNotificationPMsg(perf, &msg);
+        ok(hr == S_OK, "Failed: %08x\n", hr);
+        ok(msg != NULL, "Unexpected NULL pointer\n");
+        if (FAILED(hr) || !msg)
+            break;
+
+        trace("Notification: %d\n", msg->dwNotificationOption);
+
+        if (msg->dwNotificationOption == DMUS_NOTIFICATION_SEGEND ||
+            msg->dwNotificationOption == DMUS_NOTIFICATION_SEGALMOSTEND) {
+            ok(msg->punkUser != NULL, "Unexpected NULL pointer\n");
+            if (msg->punkUser) {
+                IDirectMusicSegmentState8 *segmentstate;
+                IDirectMusicSegment       *segment;
+
+                hr = IUnknown_QueryInterface(msg->punkUser, &IID_IDirectMusicSegmentState8, (void**)&segmentstate);
+                ok(hr == S_OK, "Failed: %08x\n", hr);
+
+                hr = IDirectMusicSegmentState8_GetSegment(segmentstate, &segment);
+                ok(hr == S_OK, "Failed: %08x\n", hr);
+                if (FAILED(hr)) {
+                    IDirectMusicSegmentState8_Release(segmentstate);
+                    break;
+                }
+
+                hr = IDirectMusicSegment_QueryInterface(segment, &IID_IDirectMusicSegment8, (void**)&segment8);
+                ok(hr == S_OK, "Failed: %08x\n", hr);
+
+                found_end = TRUE;
+
+                IDirectMusicSegment_Release(segment);
+                IDirectMusicSegmentState8_Release(segmentstate);
+            }
+        }
+
+        IDirectMusicPerformance8_FreePMsg(perf, (DMUS_PMSG*)msg);
+    }
+    todo_wine ok(prime_segment8 == segment8, "Wrong end segment\n");
+    todo_wine ok(found_end, "Didn't receive DMUS_NOTIFICATION_SEGEND message\n");
+
+    CloseHandle(messages);
+
+    if(segment8)
+        IDirectMusicSegment8_Release(segment8);
+    IDirectSound_Release(dsound);
+    IDirectMusicSegmentState_Release(state);
+    IDirectMusicAudioPath_Release(path);
+    IDirectMusicLoader8_Release(loader);
+    IDirectMusic_Release(music);
+    IDirectMusicPerformance8_Release(perf);
+}
+
 START_TEST( performance )
 {
     HRESULT hr;
@@ -384,6 +628,8 @@ START_TEST( performance )
 
     test_COM();
     test_createport();
+    test_pchannel();
+    test_notification_type();
 
     CoUninitialize();
 }

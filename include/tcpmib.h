@@ -115,6 +115,24 @@ typedef struct _MIB_TCPTABLE_OWNER_PID
     MIB_TCPROW_OWNER_PID table[1];
 } MIB_TCPTABLE_OWNER_PID, *PMIB_TCPTABLE_OWNER_PID;
 
+typedef struct _MIB_TCP6ROW_OWNER_PID
+{
+    UCHAR ucLocalAddr[16];
+    DWORD dwLocalScopeId;
+    DWORD dwLocalPort;
+    UCHAR ucRemoteAddr[16];
+    DWORD dwRemoteScopeId;
+    DWORD dwRemotePort;
+    DWORD dwState;
+    DWORD dwOwningPid;
+} MIB_TCP6ROW_OWNER_PID, *PMIB_TCP6ROW_OWNER_PID;
+
+typedef struct _MIB_TCP6TABLE_OWNER_PID
+{
+    DWORD                 dwNumEntries;
+    MIB_TCP6ROW_OWNER_PID table[1];
+} MIB_TCP6TABLE_OWNER_PID, *PMIB_TCP6TABLE_OWNER_PID;
+
 typedef struct _MIB_TCPROW_OWNER_MODULE
 {
     DWORD         dwState;
@@ -132,6 +150,26 @@ typedef struct _MIB_TCPTABLE_OWNER_MODULE
     DWORD                   dwNumEntries;
     MIB_TCPROW_OWNER_MODULE table[1];
 } MIB_TCPTABLE_OWNER_MODULE, *PMIB_TCPTABLE_OWNER_MODULE;
+
+typedef struct _MIB_TCP6ROW_OWNER_MODULE
+{
+    UCHAR         ucLocalAddr[16];
+    DWORD         dwLocalScopeId;
+    DWORD         dwLocalPort;
+    UCHAR         ucRemoteAddr[16];
+    DWORD         dwRemoteScopeId;
+    DWORD         dwRemotePort;
+    DWORD         dwState;
+    DWORD         dwOwningPid;
+    LARGE_INTEGER liCreateTimestamp;
+    ULONGLONG     OwningModuleInfo[TCPIP_OWNING_MODULE_SIZE];
+} MIB_TCP6ROW_OWNER_MODULE, *PMIB_TCP6ROW_OWNER_MODULE;
+
+typedef struct _MIB_TCP6TABLE_OWNER_MODULE
+{
+    DWORD                    dwNumEntries;
+    MIB_TCP6ROW_OWNER_MODULE table[1];
+} MIB_TCP6TABLE_OWNER_MODULE, *PMIB_TCP6TABLE_OWNER_MODULE;
 
 typedef struct _MIB_TCPROW2
 {

@@ -1,7 +1,7 @@
 EXTRADEFS = -DD3DX_SDK_VERSION=36
 MODULE    = d3dx9_36.dll
 IMPORTLIB = d3dx9
-IMPORTS   = d3d9 d3dcompiler dxguid d3dxof ole32 gdi32 user32
+IMPORTS   = d3d9 d3dcompiler dxguid d3dxof ole32 gdi32 user32 ucrtbase
 DELAYIMPORTS = windowscodecs
 
 EXTRADLLFLAGS = -mno-cygwin
@@ -22,6 +22,8 @@ C_SRCS = \
 	sprite.c \
 	surface.c \
 	texture.c \
+	txc_compress_dxtn.c \
+	txc_fetch_dxtn.c \
 	util.c \
 	volume.c \
 	xfile.c

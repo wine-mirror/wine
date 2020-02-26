@@ -29,7 +29,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "ole2.h"
 #include "moniker.h"
 
@@ -316,7 +315,7 @@ CompositeMonikerImpl_GetSizeMax(IMoniker* iface,ULARGE_INTEGER* pcbSize)
 
         IMoniker_Release(pmk);
 
-        pcbSize->QuadPart = ptmpSize.QuadPart + sizeof(CLSID);
+        pcbSize->QuadPart += ptmpSize.QuadPart + sizeof(CLSID);
     }
 
     IEnumMoniker_Release(enumMk);
@@ -1141,7 +1140,7 @@ CompositeMonikerImpl_GetDisplayName(IMoniker* iface, IBindCtx* pbc,
         if (*ppszDisplayName==NULL)
             return E_OUTOFMEMORY;
 
-        strcatW(*ppszDisplayName,tempStr);
+        lstrcatW(*ppszDisplayName,tempStr);
 
         CoTaskMemFree(tempStr);
         IMoniker_Release(tempMk);

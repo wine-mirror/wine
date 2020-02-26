@@ -31,7 +31,7 @@
 @ stdcall GetThreadContext(long ptr) kernel32.GetThreadContext
 @ stdcall GetThreadIOPendingFlag(long ptr) kernel32.GetThreadIOPendingFlag
 @ stdcall GetThreadId(ptr) kernel32.GetThreadId
-@ stub GetThreadIdealProcessorEx
+@ stdcall GetThreadIdealProcessorEx(long ptr) kernel32.GetThreadIdealProcessorEx
 @ stub GetThreadInformation
 @ stdcall GetThreadPriority(long) kernel32.GetThreadPriority
 @ stdcall GetThreadPriorityBoost(long ptr) kernel32.GetThreadPriorityBoost
@@ -40,9 +40,9 @@
 @ stub IsProcessCritical
 @ stdcall IsProcessorFeaturePresent(long) kernel32.IsProcessorFeaturePresent
 @ stdcall OpenProcess(long long long) kernel32.OpenProcess
-@ stdcall OpenProcessToken(long long ptr) advapi32.OpenProcessToken
+@ stdcall OpenProcessToken(long long ptr) kernel32.OpenProcessToken
 @ stdcall OpenThread(long long long) kernel32.OpenThread
-@ stdcall OpenThreadToken(long long long ptr) advapi32.OpenThreadToken
+@ stdcall OpenThreadToken(long long long ptr) kernel32.OpenThreadToken
 @ stdcall ProcessIdToSessionId(long ptr) kernel32.ProcessIdToSessionId
 @ stub QueryProcessAffinityUpdateMode
 @ stdcall QueueUserAPC(ptr long long) kernel32.QueueUserAPC

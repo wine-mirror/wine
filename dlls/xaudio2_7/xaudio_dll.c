@@ -1811,7 +1811,7 @@ static void WINAPI IXAudio2Impl_GetPerformanceData(IXAudio2 *iface,
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
 
-    TRACE("(%p)->(%p): stub!\n", This, pPerfData);
+    TRACE("(%p)->(%p)\n", This, pPerfData);
 
     FAudio_GetPerformanceData(This->faudio, (FAudioPerformanceData *)pPerfData);
 }
@@ -1822,7 +1822,7 @@ static void WINAPI IXAudio2Impl_SetDebugConfiguration(IXAudio2 *iface,
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
 
-    TRACE("(%p)->(%p, %p): stub!\n", This, pDebugConfiguration, pReserved);
+    TRACE("(%p)->(%p, %p)\n", This, pDebugConfiguration, pReserved);
 
     FAudio_SetDebugConfiguration(This->faudio, (FAudioDebugConfiguration *)pDebugConfiguration, pReserved);
 }
@@ -2075,6 +2075,8 @@ HRESULT WINAPI CreateAudioVolumeMeter(IUnknown **out)
     IClassFactory *cf;
     HRESULT hr;
 
+    TRACE("%p\n", out);
+
     hr = make_xapo_factory(&CLSID_AudioVolumeMeter27, &IID_IClassFactory, (void**)&cf);
     if(FAILED(hr))
         return hr;
@@ -2090,6 +2092,8 @@ HRESULT WINAPI CreateAudioReverb(IUnknown **out)
 {
     IClassFactory *cf;
     HRESULT hr;
+
+    TRACE("%p\n", out);
 
     hr = make_xapo_factory(&CLSID_AudioReverb27, &IID_IClassFactory, (void**)&cf);
     if(FAILED(hr))

@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 
 #include "wine/debug.h"
 
@@ -245,7 +246,7 @@ static INT WPRINTF_ParseFormatW( LPCWSTR format, WPRINTF_FORMAT *res )
  *           WPRINTF_GetLen
  */
 static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
-                              LPSTR number, UINT maxlen )
+                            LPSTR number, UINT maxlen, BOOL dst_is_wide )
 {
     UINT len;
 
@@ -254,18 +255,45 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
     switch(format->type)
     {
     case WPR_CHAR:
-    case WPR_WCHAR:
         return (format->precision = 1);
+    case WPR_WCHAR:
+        if (dst_is_wide) len = 1;
+        else len = WideCharToMultiByte( CP_ACP, 0, &arg->wchar_view, 1, NULL, 0, NULL, NULL );
+        return (format->precision = len);
     case WPR_STRING:
         if (!arg->lpcstr_view) arg->lpcstr_view = null_stringA;
-        for (len = 0; !format->precision || (len < format->precision); len++)
-            if (!*(arg->lpcstr_view + len)) break;
+        if (dst_is_wide)
+        {
+            LPCSTR p = arg->lpcstr_view;
+            for (len = 0; (!format->precision || len < format->precision) && *p; p++)
+            {
+                /* This isn't applicable for UTF-8 and UTF-7 */
+                if (IsDBCSLeadByte( *p )) p++;
+                len++;
+                if (!*p) break;
+            }
+        }
+        else
+        {
+            for (len = 0; !format->precision || (len < format->precision); len++)
+                if (!*(arg->lpcstr_view + len)) break;
+        }
         if (len > maxlen) len = maxlen;
         return (format->precision = len);
     case WPR_WSTRING:
         if (!arg->lpcwstr_view) arg->lpcwstr_view = null_stringW;
-        for (len = 0; !format->precision || (len < format->precision); len++)
-            if (!*(arg->lpcwstr_view + len)) break;
+        if (dst_is_wide)
+        {
+            for (len = 0; !format->precision || (len < format->precision); len++)
+                if (!*(arg->lpcwstr_view + len)) break;
+        }
+        else
+        {
+            LPCWSTR p = arg->lpcwstr_view;
+            for (len = 0; (!format->precision || len < format->precision) && *p; p++)
+                len += WideCharToMultiByte( CP_ACP, 0, p, 1, NULL, 0, NULL, NULL );
+            if (format->precision && len > format->precision) len = format->precision;
+        }
         if (len > maxlen) len = maxlen;
         return (format->precision = len);
     case WPR_SIGNED:
@@ -354,7 +382,7 @@ static INT wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, __ms_va_list arg
             break;
         }
 
-        len = WPRINTF_GetLen( &format, &argData, number, maxlen - 1 );
+        len = WPRINTF_GetLen( &format, &argData, number, maxlen - 1, FALSE );
         sign = 0;
         if (!(format.flags & WPRINTF_LEFTALIGN))
             for (i = format.precision; i < format.width; i++, maxlen--)
@@ -362,7 +390,14 @@ static INT wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, __ms_va_list arg
         switch(format.type)
         {
         case WPR_WCHAR:
-            *p++ = argData.wchar_view;
+            {
+                CHAR mb[5];
+                if (WideCharToMultiByte( CP_ACP, 0, &argData.wchar_view, 1, mb, sizeof(mb), NULL, NULL ))
+                {
+                    memcpy( p, mb, len );
+                    p += len;
+                }
+            }
             break;
         case WPR_CHAR:
             *p++ = argData.char_view;
@@ -374,7 +409,15 @@ static INT wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, __ms_va_list arg
         case WPR_WSTRING:
             {
                 LPCWSTR ptr = argData.lpcwstr_view;
-                for (i = 0; i < len; i++) *p++ = (CHAR)*ptr++;
+                for (i = 0; i < len; ptr++)
+                {
+                    CHAR mb[5]; /* 5 is MB_LEN_MAX */
+                    int ret = WideCharToMultiByte( CP_ACP, 0, ptr, 1, mb, sizeof(mb), NULL, NULL );
+                    i += ret;
+                    if (i > len) ret = len - (p - buffer);
+                    memcpy( p, mb, ret );
+                    p += ret;
+                }
             }
             break;
         case WPR_HEXA:
@@ -459,7 +502,7 @@ static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, __ms_va_list a
             break;
         }
 
-        len = WPRINTF_GetLen( &format, &argData, number, maxlen - 1 );
+        len = WPRINTF_GetLen( &format, &argData, number, maxlen - 1, TRUE );
         sign = 0;
         if (!(format.flags & WPRINTF_LEFTALIGN))
             for (i = format.precision; i < format.width; i++, maxlen--)
@@ -470,12 +513,26 @@ static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, __ms_va_list a
             *p++ = argData.wchar_view;
             break;
         case WPR_CHAR:
-            *p++ = argData.char_view;
-            break;
+            {
+                WCHAR wc;
+                if (!IsDBCSLeadByte( (BYTE)argData.char_view )
+                    && MultiByteToWideChar( CP_ACP, 0, &argData.char_view, 1, &wc, 1 ) > 0)
+                    *p++ = wc;
+                else
+                    *p++ = 0;
+                break;
+            }
         case WPR_STRING:
             {
                 LPCSTR ptr = argData.lpcstr_view;
-                for (i = 0; i < len; i++) *p++ = (BYTE)*ptr++;
+                for (i = 0; i < len; i++)
+                {
+                    WCHAR buf[2]; /* for LeadByte + NUL case, we need 2 WCHARs. */
+                    int ret, mb_len = IsDBCSLeadByte( *ptr ) ? 2 : 1;
+                    ret = MultiByteToWideChar( CP_ACP, 0, ptr, mb_len, buf, ARRAY_SIZE( buf ));
+                    *p++ = buf[ret - 1];
+                    ptr += mb_len;
+                }
             }
             break;
         case WPR_WSTRING:

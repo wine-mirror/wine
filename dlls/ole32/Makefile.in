@@ -4,6 +4,8 @@ IMPORTS   = uuid advapi32 user32 gdi32 rpcrt4
 DELAYIMPORTS = oleaut32
 EXTRADEFS = -D_OLE32_
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	antimoniker.c \
 	bindctx.c \
@@ -15,7 +17,6 @@ C_SRCS = \
 	datacache.c \
 	defaulthandler.c \
 	dictionary.c \
-	enumx.c \
 	errorinfo.c \
 	filelockbytes.c \
 	filemoniker.c \
@@ -46,6 +47,7 @@ RC_SRCS = ole32res.rc
 IDL_SRCS = \
 	dcom.idl \
 	irot.idl \
+	irpcss.idl \
 	ole32_objidl.idl \
 	ole32_oleidl.idl \
 	ole32_unknwn.idl

@@ -36,8 +36,6 @@
  *
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -65,7 +63,6 @@
 #include "compobj_private.h"
 #include "moniker.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -148,19 +145,25 @@ struct progidredirect_data
     ULONG clsid_offset;
 };
 
+enum class_reg_data_origin
+{
+    CLASS_REG_ACTCTX,
+    CLASS_REG_REGISTRY,
+};
+
 struct class_reg_data
 {
+    enum class_reg_data_origin origin;
     union
     {
         struct
         {
-            struct comclassredirect_data *data;
-            void *section;
+            const WCHAR *module_name;
+            DWORD threading_model;
             HANDLE hactctx;
         } actctx;
         HKEY hkey;
     } u;
-    BOOL hkey;
 };
 
 struct registered_psclsid
@@ -490,7 +493,7 @@ static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name)
     EnterCriticalSection(&csOpenDllList);
     LIST_FOR_EACH_ENTRY(ptr, &openDllList, OpenDll, entry)
     {
-        if (!strcmpiW(library_name, ptr->library_name) &&
+        if (!wcsicmp(library_name, ptr->library_name) &&
             (InterlockedIncrement(&ptr->refs) != 1) /* entry is being destroy if == 1 */)
         {
             ret = ptr;
@@ -548,7 +551,7 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
     }
     else
     {
-        len = strlenW(library_name);
+        len = lstrlenW(library_name);
         entry = HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
         if (entry)
             entry->library_name = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
@@ -634,6 +637,7 @@ static APARTMENT *apartment_construct(DWORD model)
     list_init(&apt->proxies);
     list_init(&apt->stubmgrs);
     list_init(&apt->loaded_dlls);
+    list_init(&apt->usage_cookies);
     apt->ipidc = 0;
     apt->refs = 1;
     apt->remunk_exported = FALSE;
@@ -1343,7 +1347,7 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
     BOOL found = FALSE;
     struct apartment_loaded_dll *apartment_loaded_dll;
 
-    if (!strcmpiW(dllpath, wszOle32))
+    if (!wcsicmp(dllpath, wszOle32))
     {
         /* we don't need to control the lifetime of this dll, so use the local
          * implementation of DllGetClassObject directly */
@@ -1359,7 +1363,7 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
     EnterCriticalSection(&apt->cs);
 
     LIST_FOR_EACH_ENTRY(apartment_loaded_dll, &apt->loaded_dlls, struct apartment_loaded_dll, entry)
-        if (!strcmpiW(dllpath, apartment_loaded_dll->dll->library_name))
+        if (!wcsicmp(dllpath, apartment_loaded_dll->dll->library_name))
         {
             TRACE("found %s already loaded\n", debugstr_w(dllpath));
             found = TRUE;
@@ -1411,7 +1415,7 @@ static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst
 {
     DWORD ret;
 
-    if (regdata->hkey)
+    if (regdata->origin == CLASS_REG_REGISTRY)
     {
 	DWORD keytype;
 	WCHAR src[MAX_PATH];
@@ -1422,9 +1426,9 @@ static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst
               if (dstlen <= ExpandEnvironmentStringsW(src, dst, dstlen)) ret = ERROR_MORE_DATA;
             } else {
               const WCHAR *quote_start;
-              quote_start = strchrW(src, '\"');
+              quote_start = wcschr(src, '\"');
               if (quote_start) {
-                const WCHAR *quote_end = strchrW(quote_start + 1, '\"');
+                const WCHAR *quote_end = wcschr(quote_start + 1, '\"');
                 if (quote_end) {
                   memmove(src, quote_start + 1,
                           (quote_end - quote_start - 1) * sizeof(WCHAR));
@@ -1440,12 +1444,10 @@ static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst
     {
         static const WCHAR dllW[] = {'.','d','l','l',0};
         ULONG_PTR cookie;
-        WCHAR *nameW;
 
         *dst = 0;
-        nameW = (WCHAR*)((BYTE*)regdata->u.actctx.section + regdata->u.actctx.data->name_offset);
         ActivateActCtx(regdata->u.actctx.hactctx, &cookie);
-        ret = SearchPathW(NULL, nameW, dllW, dstlen, dst, NULL);
+        ret = SearchPathW(NULL, regdata->u.actctx.module_name, dllW, dstlen, dst, NULL);
         DeactivateActCtx(0, cookie);
         return *dst != 0;
     }
@@ -1747,7 +1749,7 @@ static void COM_TlsDestroy(void)
         LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &info->spies, struct init_spy, entry)
         {
             list_remove(&cursor->entry);
-            IInitializeSpy_Release(cursor->spy);
+            if (cursor->spy) IInitializeSpy_Release(cursor->spy);
             heap_free(cursor);
         }
 
@@ -1780,11 +1782,34 @@ static struct init_spy *get_spy_entry(struct oletls *info, unsigned int id)
 
     LIST_FOR_EACH_ENTRY(spy, &info->spies, struct init_spy, entry)
     {
-        if (id == spy->id)
+        if (id == spy->id && spy->spy)
             return spy;
     }
 
     return NULL;
+}
+
+/*
+ * When locked, don't modify list (unless we add a new head), so that it's
+ * safe to iterate it. Freeing of list entries is delayed and done on unlock.
+ */
+static inline void lock_init_spies(struct oletls *info)
+{
+    info->spies_lock++;
+}
+
+static void unlock_init_spies(struct oletls *info)
+{
+    struct init_spy *spy, *next;
+
+    if (--info->spies_lock) return;
+
+    LIST_FOR_EACH_ENTRY_SAFE(spy, next, &info->spies, struct init_spy, entry)
+    {
+        if (spy->spy) continue;
+        list_remove(&spy->entry);
+        heap_free(spy);
+    }
 }
 
 /******************************************************************************
@@ -1872,16 +1897,16 @@ HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
     if (!info || cookie.HighPart != GetCurrentThreadId())
         return E_INVALIDARG;
 
-    if ((spy = get_spy_entry(info, cookie.LowPart)))
+    if (!(spy = get_spy_entry(info, cookie.LowPart))) return E_INVALIDARG;
+
+    IInitializeSpy_Release(spy->spy);
+    spy->spy = NULL;
+    if (!info->spies_lock)
     {
-        IInitializeSpy_Release(spy->spy);
         list_remove(&spy->entry);
         heap_free(spy);
-
-        return S_OK;
     }
-
-    return E_INVALIDARG;
+    return S_OK;
 }
 
 HRESULT enter_apartment( struct oletls *info, DWORD model )
@@ -2003,17 +2028,21 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoIni
     RunningObjectTableImpl_Initialize();
   }
 
+  lock_init_spies(info);
   LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
   {
-      IInitializeSpy_PreInitialize(cursor->spy, dwCoInit, info->inits);
+      if (cursor->spy) IInitializeSpy_PreInitialize(cursor->spy, dwCoInit, info->inits);
   }
+  unlock_init_spies(info);
 
   hr = enter_apartment( info, dwCoInit );
 
+  lock_init_spies(info);
   LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
   {
-      hr = IInitializeSpy_PostInitialize(cursor->spy, hr, dwCoInit, info->inits);
+      if (cursor->spy) hr = IInitializeSpy_PostInitialize(cursor->spy, hr, dwCoInit, info->inits);
   }
+  unlock_init_spies(info);
 
   return hr;
 }
@@ -2037,7 +2066,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoIni
 void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
 {
   struct oletls * info = COM_CurrentInfo();
-  struct init_spy *cursor;
+  struct init_spy *cursor, *next;
   LONG lCOMRefCnt;
 
   TRACE("()\n");
@@ -2045,20 +2074,24 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
   /* will only happen on OOM */
   if (!info) return;
 
-  LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
+  lock_init_spies(info);
+  LIST_FOR_EACH_ENTRY_SAFE(cursor, next, &info->spies, struct init_spy, entry)
   {
-      IInitializeSpy_PreUninitialize(cursor->spy, info->inits);
+      if (cursor->spy) IInitializeSpy_PreUninitialize(cursor->spy, info->inits);
   }
+  unlock_init_spies(info);
 
   /* sanity check */
   if (!info->inits)
   {
       ERR("Mismatched CoUninitialize\n");
 
-      LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
+      lock_init_spies(info);
+      LIST_FOR_EACH_ENTRY_SAFE(cursor, next, &info->spies, struct init_spy, entry)
       {
-          IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
+          if (cursor->spy) IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
       }
+      unlock_init_spies(info);
 
       return;
   }
@@ -2083,10 +2116,12 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
     InterlockedExchangeAdd(&s_COMLockCount,1); /* restore the lock count. */
   }
 
+  lock_init_spies(info);
   LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
   {
-      IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
+      if (cursor->spy) IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
   }
+  unlock_init_spies(info);
 }
 
 /******************************************************************************
@@ -2260,10 +2295,10 @@ static HRESULT clsid_from_string_reg(LPCOLESTR progid, CLSID *clsid)
     WCHAR *buf;
 
     memset(clsid, 0, sizeof(*clsid));
-    buf = HeapAlloc( GetProcessHeap(),0,(strlenW(progid)+8) * sizeof(WCHAR) );
+    buf = HeapAlloc( GetProcessHeap(),0,(lstrlenW(progid)+8) * sizeof(WCHAR) );
     if (!buf) return E_OUTOFMEMORY;
-    strcpyW( buf, progid );
-    strcatW( buf, clsidW );
+    lstrcpyW( buf, progid );
+    lstrcatW( buf, clsidW );
     if (open_classes_key(HKEY_CLASSES_ROOT, buf, MAXIMUM_ALLOWED, &xhkey))
     {
         HeapFree(GetProcessHeap(),0,buf);
@@ -2346,7 +2381,7 @@ HRESULT WINAPI IIDFromString(LPCOLESTR s, IID *iid)
   }
 
   /* length mismatch is a special case */
-  if (strlenW(s) + 1 != CHARS_IN_GUID)
+  if (lstrlenW(s) + 1 != CHARS_IN_GUID)
       return E_INVALIDARG;
 
   if (s[0] != '{')
@@ -2402,7 +2437,7 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax)
                                      '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
                                      '%','0','2','X','%','0','2','X','}',0 };
     if (!id || cmax < CHARS_IN_GUID) return 0;
-    sprintfW( str, formatW, id->Data1, id->Data2, id->Data3,
+    swprintf( str, CHARS_IN_GUID, formatW, id->Data1, id->Data2, id->Data3,
               id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
               id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
     return CHARS_IN_GUID;
@@ -2416,8 +2451,8 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
     LONG res;
     HKEY key;
 
-    strcpyW(path, wszCLSIDSlash);
-    StringFromGUID2(clsid, path + strlenW(wszCLSIDSlash), CHARS_IN_GUID);
+    lstrcpyW(path, wszCLSIDSlash);
+    StringFromGUID2(clsid, path + lstrlenW(wszCLSIDSlash), CHARS_IN_GUID);
     res = open_classes_key(HKEY_CLASSES_ROOT, path, keyname ? KEY_READ : access, &key);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_CLASSNOTREG;
@@ -2466,8 +2501,8 @@ HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey
     else if (res != ERROR_SUCCESS || type!=REG_SZ)
         return REGDB_E_READREGDB;
 
-    strcpyW(keyname, szAppIdKey);
-    strcatW(keyname, buf);
+    lstrcpyW(keyname, szAppIdKey);
+    lstrcatW(keyname, buf);
     res = open_classes_key(HKEY_CLASSES_ROOT, keyname, access, subkey);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_KEYMISSING;
@@ -2697,9 +2732,9 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     }
 
     /* Interface\\{string form of riid}\\ProxyStubClsid32 */
-    strcpyW(path, wszInterface);
+    lstrcpyW(path, wszInterface);
     StringFromGUID2(riid, path + ARRAY_SIZE(wszInterface) - 1, CHARS_IN_GUID);
-    strcpyW(path + ARRAY_SIZE(wszInterface) - 1 + CHARS_IN_GUID - 1, wszPSC);
+    lstrcpyW(path + ARRAY_SIZE(wszInterface) - 1 + CHARS_IN_GUID - 1, wszPSC);
 
     hr = get_ps_clsid_from_registry(path, 0, pclsid);
     if (FAILED(hr) && (opposite == KEY_WOW64_32KEY ||
@@ -2960,13 +2995,13 @@ HRESULT WINAPI CoRegisterClassObject(
 
 static enum comclass_threadingmodel get_threading_model(const struct class_reg_data *data)
 {
-    if (data->hkey)
+    if (data->origin == CLASS_REG_REGISTRY)
     {
         static const WCHAR wszThreadingModel[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
         static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
         static const WCHAR wszFree[] = {'F','r','e','e',0};
         static const WCHAR wszBoth[] = {'B','o','t','h',0};
-        WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
+        WCHAR threading_model[10 /* lstrlenW(L"apartment")+1 */];
         DWORD dwLength = sizeof(threading_model);
         DWORD keytype;
         DWORD ret;
@@ -2975,16 +3010,16 @@ static enum comclass_threadingmodel get_threading_model(const struct class_reg_d
         if ((ret != ERROR_SUCCESS) || (keytype != REG_SZ))
             threading_model[0] = '\0';
 
-        if (!strcmpiW(threading_model, wszApartment)) return ThreadingModel_Apartment;
-        if (!strcmpiW(threading_model, wszFree)) return ThreadingModel_Free;
-        if (!strcmpiW(threading_model, wszBoth)) return ThreadingModel_Both;
+        if (!wcsicmp(threading_model, wszApartment)) return ThreadingModel_Apartment;
+        if (!wcsicmp(threading_model, wszFree)) return ThreadingModel_Free;
+        if (!wcsicmp(threading_model, wszBoth)) return ThreadingModel_Both;
 
         /* there's not specific handling for this case */
         if (threading_model[0]) return ThreadingModel_Neutral;
         return ThreadingModel_No;
     }
     else
-        return data->u.actctx.data->model;
+        return data->u.actctx.threading_model;
 }
 
 static HRESULT get_inproc_class_object(APARTMENT *apt, const struct class_reg_data *regdata,
@@ -3068,7 +3103,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
     REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
     REFIID iid, LPVOID *ppv)
 {
-    struct class_reg_data clsreg;
+    struct class_reg_data clsreg = { 0 };
     IUnknown *regClassObject;
     HRESULT	hres = E_UNEXPECTED;
     APARTMENT  *apt;
@@ -3104,7 +3139,9 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
 
     if (CLSCTX_INPROC & dwClsContext)
     {
+        ASSEMBLY_FILE_DETAILED_INFORMATION *file_info = NULL;
         ACTCTX_SECTION_KEYED_DATA data;
+        const CLSID *clsid = NULL;
 
         data.cbSize = sizeof(data);
         /* search activation context first */
@@ -3114,14 +3151,49 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
         {
             struct comclassredirect_data *comclass = (struct comclassredirect_data*)data.lpData;
 
+            clsreg.u.actctx.module_name = (WCHAR *)((BYTE *)data.lpSectionBase + comclass->name_offset);
             clsreg.u.actctx.hactctx = data.hActCtx;
-            clsreg.u.actctx.data = data.lpData;
-            clsreg.u.actctx.section = data.lpSectionBase;
-            clsreg.hkey = FALSE;
+            clsreg.u.actctx.threading_model = comclass->model;
+            clsid = &comclass->clsid;
+        }
+        else if (FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+                ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION, rclsid, &data))
+        {
+            ACTIVATION_CONTEXT_QUERY_INDEX query_index;
+            SIZE_T required_len = 0;
 
-            hres = get_inproc_class_object(apt, &clsreg, &comclass->clsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
-            ReleaseActCtx(data.hActCtx);
+            query_index.ulAssemblyIndex = data.ulAssemblyRosterIndex - 1;
+            query_index.ulFileIndexInAssembly = 0;
+
+            QueryActCtxW(0, data.hActCtx, &query_index, FileInformationInAssemblyOfAssemblyInActivationContext,
+                    NULL, 0, &required_len);
+            if (required_len)
+            {
+                file_info = heap_alloc(required_len);
+                if (file_info)
+                {
+                    if (QueryActCtxW(0, data.hActCtx, &query_index, FileInformationInAssemblyOfAssemblyInActivationContext,
+                            file_info, required_len, &required_len))
+                    {
+                        clsreg.u.actctx.module_name = file_info->lpFileName;
+                        clsreg.u.actctx.hactctx = data.hActCtx;
+                        clsreg.u.actctx.threading_model = ThreadingModel_Both;
+                        clsid = rclsid;
+                    }
+                    else
+                        heap_free(file_info);
+                }
+            }
+        }
+
+        if (clsreg.u.actctx.hactctx)
+        {
+            clsreg.origin = CLASS_REG_ACTCTX;
+
+            hres = get_inproc_class_object(apt, &clsreg, clsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
+            ReleaseActCtx(clsreg.u.actctx.hactctx);
             apartment_release(apt);
+            heap_free(file_info);
             return hres;
         }
     }
@@ -3167,7 +3239,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
         if (SUCCEEDED(hres))
         {
             clsreg.u.hkey = hkey;
-            clsreg.hkey = TRUE;
+            clsreg.origin = CLASS_REG_REGISTRY;
 
             hres = get_inproc_class_object(apt, &clsreg, rclsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             RegCloseKey(hkey);
@@ -3203,7 +3275,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
         if (SUCCEEDED(hres))
         {
             clsreg.u.hkey = hkey;
-            clsreg.hkey = TRUE;
+            clsreg.origin = CLASS_REG_REGISTRY;
 
             hres = get_inproc_class_object(apt, &clsreg, rclsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             RegCloseKey(hkey);
@@ -3956,18 +4028,18 @@ done:
 
 /******************************************************************************
  *		CoGetCurrentProcess	[OLE32.@]
- *
- * Gets the current process ID.
- *
- * RETURNS
- *  The current process ID.
- *
- * NOTES
- *   Is DWORD really the correct return type for this function?
  */
 DWORD WINAPI CoGetCurrentProcess(void)
 {
-	return GetCurrentProcessId();
+    struct oletls *info = COM_CurrentInfo();
+
+    if (!info)
+        return 0;
+
+    if (!info->thread_seqid)
+        info->thread_seqid = rpcss_get_next_seqid();
+
+    return info->thread_seqid;
 }
 
 /***********************************************************************
@@ -4692,7 +4764,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
  * PARAMS
  *  pszName      [I] String representing the object.
  *  pBindOptions [I] Parameters affecting the binding to the named object.
- *  riid         [I] Interface to bind to on the objecct.
+ *  riid         [I] Interface to bind to on the object.
  *  ppv          [O] On output, the interface riid of the object represented
  *                   by pszName.
  *
@@ -5141,12 +5213,12 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         WCHAR dllpath[MAX_PATH+1];
 
         regdata.u.hkey = hkey;
-        regdata.hkey = TRUE;
+        regdata.origin = CLASS_REG_REGISTRY;
 
         if (get_object_dll_path(&regdata, dllpath, ARRAY_SIZE(dllpath)))
         {
             static const WCHAR wszOle32[] = {'o','l','e','3','2','.','d','l','l',0};
-            if (!strcmpiW(dllpath, wszOle32))
+            if (!wcsicmp(dllpath, wszOle32))
             {
                 RegCloseKey(hkey);
                 return HandlerCF_Create(rclsid, riid, ppv);
@@ -5192,9 +5264,76 @@ HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
         apartment_release(apt);
         *type = APTTYPE_MTA;
         *qualifier = APTTYPEQUALIFIER_IMPLICIT_MTA;
+        return S_OK;
     }
 
     return info->apt ? S_OK : CO_E_NOTINITIALIZED;
+}
+
+struct mta_cookie
+{
+    struct list entry;
+};
+
+/***********************************************************************
+ *           CoIncrementMTAUsage [OLE32.@]
+ */
+HRESULT WINAPI CoIncrementMTAUsage(CO_MTA_USAGE_COOKIE *cookie)
+{
+    struct mta_cookie *mta_cookie;
+
+    TRACE("%p\n", cookie);
+
+    *cookie = NULL;
+
+    if (!(mta_cookie = heap_alloc(sizeof(*mta_cookie))))
+        return E_OUTOFMEMORY;
+
+    EnterCriticalSection(&csApartment);
+
+    if (MTA)
+        apartment_addref(MTA);
+    else
+        MTA = apartment_construct(COINIT_MULTITHREADED);
+    list_add_head(&MTA->usage_cookies, &mta_cookie->entry);
+
+    LeaveCriticalSection(&csApartment);
+
+    *cookie = (CO_MTA_USAGE_COOKIE)mta_cookie;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *           CoDecrementMTAUsage [OLE32.@]
+ */
+HRESULT WINAPI CoDecrementMTAUsage(CO_MTA_USAGE_COOKIE cookie)
+{
+    struct mta_cookie *mta_cookie = (struct mta_cookie *)cookie;
+
+    TRACE("%p\n", cookie);
+
+    EnterCriticalSection(&csApartment);
+
+    if (MTA)
+    {
+        struct mta_cookie *cur;
+
+        LIST_FOR_EACH_ENTRY(cur, &MTA->usage_cookies, struct mta_cookie, entry)
+        {
+            if (mta_cookie == cur)
+            {
+                list_remove(&cur->entry);
+                heap_free(cur);
+                apartment_release(MTA);
+                break;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&csApartment);
+
+    return S_OK;
 }
 
 /***********************************************************************

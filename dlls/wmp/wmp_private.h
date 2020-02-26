@@ -20,7 +20,6 @@
 
 #include "windows.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #include "ole2.h"
 #include "dshow.h"
 #include "wmp.h"
@@ -57,9 +56,20 @@ typedef struct {
     LONG ref;
 
     WCHAR *url;
+    WCHAR *name;
 
     DOUBLE duration;
 } WMPMedia;
+
+typedef struct {
+    IWMPPlaylist IWMPPlaylist_iface;
+
+    LONG ref;
+    LONG count;
+
+    WCHAR *url;
+    WCHAR *name;
+} WMPPlaylist;
 
 struct WindowsMediaPlayer {
     IOleObject IOleObject_iface;
@@ -89,6 +99,7 @@ struct WindowsMediaPlayer {
     ConnectionPoint *wmpocx;
 
     WMPMedia *media;
+    WMPPlaylist *playlist;
 
     /* DirectShow stuff */
     IGraphBuilder* filter_graph;
@@ -104,7 +115,9 @@ struct WindowsMediaPlayer {
 BOOL init_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
 void destroy_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
 WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface) DECLSPEC_HIDDEN;
+WMPPlaylist *unsafe_impl_from_IWMPPlaylist(IWMPPlaylist *iface) DECLSPEC_HIDDEN;
 HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia) DECLSPEC_HIDDEN;
+HRESULT create_playlist(BSTR name, BSTR url, LONG count, IWMPPlaylist **ppPlaylist) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Init(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Destroy(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams) DECLSPEC_HIDDEN;
@@ -121,7 +134,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
     WCHAR *ret;
 
     if(str) {
-        size_t size = strlenW(str)+1;
+        size_t size = lstrlenW(str)+1;
         ret = heap_alloc(size*sizeof(WCHAR));
         if(ret)
             memcpy(ret, str, size*sizeof(WCHAR));
@@ -135,7 +148,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
 static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
 {
     if(!p)
-        return E_INVALIDARG;
+        return E_POINTER;
 
     if(value) {
         *p = SysAllocString(value);

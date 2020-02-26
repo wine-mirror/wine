@@ -76,10 +76,20 @@ extern POBJECT_TYPE SeTokenObjectType;
 
 void ObReferenceObject( void *obj ) DECLSPEC_HIDDEN;
 
+void pnp_manager_enumerate_root_devices( const WCHAR *driver_name ) DECLSPEC_HIDDEN;
+void pnp_manager_start(void) DECLSPEC_HIDDEN;
+void pnp_manager_stop(void) DECLSPEC_HIDDEN;
+
 static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
                                   '\\','M','a','c','h','i','n','e',
                                   '\\','S','y','s','t','e','m',
                                   '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
                                   '\\','S','e','r','v','i','c','e','s',
                                   '\\',0};
+
+struct wine_device
+{
+    DEVICE_OBJECT device_obj;
+    DEVICE_RELATIONS *children;
+};
 #endif

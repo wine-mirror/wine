@@ -8,7 +8,7 @@
 #ifndef __WINE_PROCESS_H
 #define __WINE_PROCESS_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 /* Process creation flags */
 #define _P_WAIT    0

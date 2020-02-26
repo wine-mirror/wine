@@ -895,8 +895,8 @@ BOOL render_aa_text_bitmapinfo( DC *dc, BITMAPINFO *info, struct gdi_image_bits 
 /***********************************************************************
  *           dibdrv_ExtTextOut
  */
-BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
-                        const RECT *rect, LPCWSTR str, UINT count, const INT *dx )
+BOOL CDECL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+                              const RECT *rect, LPCWSTR str, UINT count, const INT *dx )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
@@ -944,7 +944,7 @@ done:
 /***********************************************************************
  *           dibdrv_SelectFont
  */
-HFONT dibdrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
+HFONT CDECL dibdrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
@@ -966,8 +966,8 @@ HFONT dibdrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
 /***********************************************************************
  *           dibdrv_Arc
  */
-BOOL dibdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                 INT start_x, INT start_y, INT end_x, INT end_y )
+BOOL CDECL dibdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                       INT start_x, INT start_y, INT end_x, INT end_y )
 {
     return draw_arc( dev, left, top, right, bottom, start_x, start_y, end_x, end_y, 0 );
 }
@@ -975,8 +975,8 @@ BOOL dibdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           dibdrv_ArcTo
  */
-BOOL dibdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                   INT start_x, INT start_y, INT end_x, INT end_y )
+BOOL CDECL dibdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                         INT start_x, INT start_y, INT end_x, INT end_y )
 {
     return draw_arc( dev, left, top, right, bottom, start_x, start_y, end_x, end_y, -1 );
 }
@@ -984,8 +984,8 @@ BOOL dibdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           dibdrv_Chord
  */
-BOOL dibdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                   INT start_x, INT start_y, INT end_x, INT end_y )
+BOOL CDECL dibdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                         INT start_x, INT start_y, INT end_x, INT end_y )
 {
     return draw_arc( dev, left, top, right, bottom, start_x, start_y, end_x, end_y, 1 );
 }
@@ -993,7 +993,7 @@ BOOL dibdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           dibdrv_Ellipse
  */
-BOOL dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL CDECL dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return dibdrv_RoundRect( dev, left, top, right, bottom, right - left, bottom - top );
 }
@@ -1049,7 +1049,7 @@ static void fill_row( dib_info *dib, HRGN clip, RECT *row, DWORD pixel, UINT typ
 /***********************************************************************
  *           dibdrv_ExtFloodFill
  */
-BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
+BOOL CDECL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1082,7 +1082,7 @@ BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 /***********************************************************************
  *           dibdrv_FillPath
  */
-BOOL dibdrv_FillPath( PHYSDEV dev )
+BOOL CDECL dibdrv_FillPath( PHYSDEV dev )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
 
@@ -1092,7 +1092,7 @@ BOOL dibdrv_FillPath( PHYSDEV dev )
 /***********************************************************************
  *           dibdrv_GetNearestColor
  */
-COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color )
+COLORREF CDECL dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1107,7 +1107,7 @@ COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color )
 /***********************************************************************
  *           dibdrv_GetPixel
  */
-COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
+COLORREF CDECL dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1133,7 +1133,7 @@ COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
 /***********************************************************************
  *           dibdrv_LineTo
  */
-BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
+BOOL CDECL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
@@ -1176,7 +1176,7 @@ static inline INT get_rop2_from_rop(INT rop)
 /***********************************************************************
  *           dibdrv_PatBlt
  */
-BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+BOOL CDECL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     dib_brush *brush = &pdev->brush;
@@ -1214,7 +1214,7 @@ BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 /***********************************************************************
  *           dibdrv_PaintRgn
  */
-BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
+BOOL CDECL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     const WINEREGION *region;
@@ -1245,7 +1245,7 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 /***********************************************************************
  *           dibdrv_PolyPolygon
  */
-BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD polygons )
+BOOL CDECL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD polygons )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
@@ -1316,7 +1316,7 @@ done:
 /***********************************************************************
  *           dibdrv_PolyPolyline
  */
-BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines )
+BOOL CDECL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
@@ -1368,7 +1368,7 @@ done:
 /***********************************************************************
  *           dibdrv_Polygon
  */
-BOOL dibdrv_Polygon( PHYSDEV dev, const POINT *pt, INT count )
+BOOL CDECL dibdrv_Polygon( PHYSDEV dev, const POINT *pt, INT count )
 {
     INT counts[1] = { count };
 
@@ -1378,7 +1378,7 @@ BOOL dibdrv_Polygon( PHYSDEV dev, const POINT *pt, INT count )
 /***********************************************************************
  *           dibdrv_Polyline
  */
-BOOL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
+BOOL CDECL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 {
     DWORD counts[1] = { count };
 
@@ -1389,7 +1389,7 @@ BOOL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 /***********************************************************************
  *           dibdrv_Rectangle
  */
-BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
@@ -1464,8 +1464,8 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 /***********************************************************************
  *           dibdrv_RoundRect
  */
-BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                       INT ellipse_width, INT ellipse_height )
+BOOL CDECL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                             INT ellipse_width, INT ellipse_height )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1577,8 +1577,8 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           dibdrv_Pie
  */
-BOOL dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                 INT start_x, INT start_y, INT end_x, INT end_y )
+BOOL CDECL dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                       INT start_x, INT start_y, INT end_x, INT end_y )
 {
     return draw_arc( dev, left, top, right, bottom, start_x, start_y, end_x, end_y, 2 );
 }
@@ -1586,7 +1586,7 @@ BOOL dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           dibdrv_SetPixel
  */
-COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+COLORREF CDECL dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
@@ -1619,7 +1619,7 @@ COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 /***********************************************************************
  *           dibdrv_StrokeAndFillPath
  */
-BOOL dibdrv_StrokeAndFillPath( PHYSDEV dev )
+BOOL CDECL dibdrv_StrokeAndFillPath( PHYSDEV dev )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
 
@@ -1629,7 +1629,7 @@ BOOL dibdrv_StrokeAndFillPath( PHYSDEV dev )
 /***********************************************************************
  *           dibdrv_StrokePath
  */
-BOOL dibdrv_StrokePath( PHYSDEV dev )
+BOOL CDECL dibdrv_StrokePath( PHYSDEV dev )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
 

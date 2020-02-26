@@ -72,6 +72,7 @@ static const struct alloccanonicalize_test alloccanonicalize_tests[] =
     {"\\\\?C:a", "\\\\?C:a", 0, S_OK},
 
     /* No . */
+    {"*", "*", 0, S_OK},
     {"", "\\", 0, S_OK},
     {"C:", "C:", 0, S_OK},
     {"C:\\", "C:\\", 0, S_OK},
@@ -83,19 +84,41 @@ static const struct alloccanonicalize_test alloccanonicalize_tests[] =
     {"..", "\\", 0, S_OK},
     {"...", "\\", 0, S_OK},
     {"*.", "*.", 0, S_OK},
+    {"*.\\", "*.\\", 0, S_OK},
+    {"*.\\", "*.\\", 0, S_OK},
     {"*..", "*.", 0, S_OK},
+    {"*..\\", "*..\\", 0, S_OK},
     {"*...", "*.", 0, S_OK},
+    {"*...\\", "*...\\", 0, S_OK},
+    {"*....", "*.", 0, S_OK},
+    {"*....\\", "*....\\", 0, S_OK},
+    {".a", ".a", 0, S_OK},
+    {".a\\", ".a\\", 0, S_OK},
     {"a.", "a", 0, S_OK},
+    {"a.\\", "a.\\", 0, S_OK},
+    {".a.", ".a", 0, S_OK},
     {"a.b", "a.b", 0, S_OK},
+    {".a.b.", ".a.b", 0, S_OK},
     {"a\\.", "a", 0, S_OK},
     {"a\\.\\b", "a\\b", 0, S_OK},
+    {"a\\.b", "a\\.b", 0, S_OK},
+    {"a\\.b\\", "a\\.b\\", 0, S_OK},
+    {":.", ":", 0, S_OK},
+    {"::.", "::\\", 0, S_OK},
+    {":::.", ":::", 0, S_OK},
     {"C:.", "C:\\", 0, S_OK},
+    {"C:.\\", "C:.\\", 0, S_OK},
+    {"C:.\\.", "C:\\", 0, S_OK},
     {"C:\\.", "C:\\", 0, S_OK},
     {"C:\\.\\", "C:\\", 0, S_OK},
     {"C:\\a.", "C:\\a", 0, S_OK},
+    {"C:\\a.\\", "C:\\a.\\", 0, S_OK},
+    {"C:\\.a", "C:\\.a", 0, S_OK},
+    {"C:\\.a\\", "C:\\.a\\", 0, S_OK},
     {"C:\\a\\.", "C:\\a", 0, S_OK},
     {"C:\\a\\\\.", "C:\\a\\", 0, S_OK},
     {"C:\\a\\\\\\.", "C:\\a\\\\", 0, S_OK},
+    {".\\", "\\", 0, S_OK},
     {"\\.", "\\", 0, S_OK},
     {"\\\\.", "\\\\", 0, S_OK},
     {"\\\\.\\", "\\\\", 0, S_OK},
@@ -115,21 +138,53 @@ static const struct alloccanonicalize_test alloccanonicalize_tests[] =
       "\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", 0, S_OK},
 
     /* .. */
+    {"..a", "..a", 0, S_OK},
+    {"..a\\", "..a\\", 0, S_OK},
+    {"...a", "...a", 0, S_OK},
+    {"...a\\", "...a\\", 0, S_OK},
+    {"....a", "....a", 0, S_OK},
     {"a..", "a", 0, S_OK},
+    {"a..\\", "a..\\", 0, S_OK},
+    {"a...", "a", 0, S_OK},
+    {"a...\\", "a...\\", 0, S_OK},
+    {"a....", "a", 0, S_OK},
+    {"a....\\", "a....\\", 0, S_OK},
+    {"..a..", "..a", 0, S_OK},
     {"a..b", "a..b", 0, S_OK},
+    {"..a..b..", "..a..b", 0, S_OK},
     {"a\\..", "\\", 0, S_OK},
     {"a\\..\\", "\\", 0, S_OK},
     {"a\\..\\b", "\\b", 0, S_OK},
+    {":..", ":", 0, S_OK},
+    {"::..", "::\\", 0, S_OK},
+    {":::..", ":::", 0, S_OK},
     {"C:..", "C:\\", 0, S_OK},
+    {"C:...", "C:\\", 0, S_OK},
+    {"C:..\\", "C:..\\", 0, S_OK},
+    {"C:..\\\\", "C:..\\\\", 0, S_OK},
+    {"C:...\\", "C:...\\", 0, S_OK},
     {"C:\\..", "C:\\", 0, S_OK},
+    {"C:\\..a", "C:\\..a", 0, S_OK},
+    {"C:\\..a\\", "C:\\..a\\", 0, S_OK},
+    {"C:\\...a", "C:\\...a", 0, S_OK},
+    {"C:\\...a\\", "C:\\...a\\", 0, S_OK},
+    {"C:\\....a", "C:\\....a", 0, S_OK},
+    {"C:\\....a\\", "C:\\....a\\", 0, S_OK},
+    {"C:\\a..", "C:\\a", 0, S_OK},
+    {"C:\\a..\\", "C:\\a..\\", 0, S_OK},
     {"C:\\\\..", "C:\\", 0, S_OK},
     {"C:\\..\\", "C:\\", 0, S_OK},
+    {"C:\\...\\", "C:\\...\\", 0, S_OK},
     {"C:\\a\\..", "C:\\", 0, S_OK},
+    {"C:\\a\\b..", "C:\\a\\b", 0, S_OK},
     {"C:\\a\\\\..", "C:\\a", 0, S_OK},
     {"C:\\a\\\\\\..", "C:\\a\\", 0, S_OK},
     {"C:\\a\\..\\b", "C:\\b", 0, S_OK},
     {"C:\\a\\..\\\\b", "C:\\\\b", 0, S_OK},
+    {"..\\", "\\", 0, S_OK},
+    {"...\\", "...\\", 0, S_OK},
     {"\\..", "\\", 0, S_OK},
+    {"\\...", "\\", 0, S_OK},
     {"\\\\..", "\\\\", 0, S_OK},
     {"\\\\\\..", "\\", 0, S_OK},
     {"\\\\..\\", "\\\\", 0, S_OK},
@@ -249,6 +304,8 @@ static const struct alloccanonicalize_test alloccanonicalize_tests[] =
 
     /* PATHCCH_DO_NOT_NORMALIZE_SEGMENTS */
     /* No effect for spaces */
+    {"a ", "a ", 0, S_OK},
+    {"C:\\a ", "C:\\a ", 0, S_OK},
     {"C:\\a \\", "C:\\a \\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
     {"C:\\a\\ ", "C:\\a\\ ", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
     {"C:\\a ", "C:\\a ", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
@@ -263,8 +320,15 @@ static const struct alloccanonicalize_test alloccanonicalize_tests[] =
     {"*..", "*..", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
     {".", "\\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
     {"..", "\\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {":.", ":.", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"::.", "::.", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {":::.", ":::.", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {":..", ":..", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"::..", "::..", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {":::..", ":::..", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
     {"C:.", "C:.", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
     {"C:..", "C:..", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
+    {"C:...", "C:...", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
     {"C:\\a\\.", "C:\\a", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
     {"C:\\a\\..", "C:\\", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
     {"C:\\a.", "C:\\a.", PATHCCH_DO_NOT_NORMALIZE_SEGMENTS, S_OK},
@@ -733,7 +797,7 @@ static void test_PathCchAddBackslashEx(void)
         }
         else
         {
-            ok(ptrW == NULL, "%u: unexpecred end pointer.\n", i);
+            ok(ptrW == NULL, "%u: unexpected end pointer.\n", i);
             ok(remaining == 0, "%u: unexpected remaining buffer length.\n", i);
         }
     }
@@ -1046,7 +1110,7 @@ static void test_PathCchCanonicalize(void)
     hr = pPathCchCanonicalize(path_outW, ARRAY_SIZE(path_outW), path_inW);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), "expect hr %#x, got %#x %s\n",
        HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), hr, wine_dbgstr_w(path_outW));
-    ok(lstrlenW(path_outW) == 0, "got %d\n", lstrlenW(path_outW));
+    ok(!*path_outW, "got %d\n", lstrlenW(path_outW));
 
     path_inW[0] = 'C';
     path_inW[1] = ':';

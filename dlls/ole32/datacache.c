@@ -57,7 +57,6 @@
 #include "winerror.h"
 #include "ole2.h"
 #include "compobj_private.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 

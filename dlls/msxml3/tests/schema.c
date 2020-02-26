@@ -30,6 +30,7 @@
 #undef CLSID_DOMDocument
 #include "msxml2did.h"
 #include "dispex.h"
+#include "cguid.h"
 
 #include "wine/test.h"
 
@@ -983,7 +984,7 @@ static void test_collection_content(void)
         content[i] = bstr;
 
         for (j = 0; j < i; ++j)
-            ok(winetest_strcmpW(content[j], bstr), "got duplicate entry\n");
+            ok(wcscmp(content[j], bstr), "got duplicate entry\n");
     }
 
     for (i = 0; i < 3; ++i)
@@ -1001,7 +1002,7 @@ static void test_collection_content(void)
             ok(bstr != NULL && *bstr, "expected non-empty string\n");
 
             for (j = 0; j < i; ++j)
-                ok(winetest_strcmpW(content[j], bstr), "got duplicate entry\n");
+                ok(wcscmp(content[j], bstr), "got duplicate entry\n");
             content[i] = bstr;
         }
 

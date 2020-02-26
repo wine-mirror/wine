@@ -85,12 +85,6 @@ typedef struct FormatConverter {
 } FormatConverter;
 
 /* https://www.w3.org/Graphics/Color/srgb */
-static inline float from_sRGB_component(float f)
-{
-    if (f <= 0.04045f) return f / 12.92f;
-    return powf((f + 0.055f) / 1.055f, 2.4f);
-}
-
 static inline float to_sRGB_component(float f)
 {
     if (f <= 0.0031308f) return 12.92f * f;
@@ -98,6 +92,12 @@ static inline float to_sRGB_component(float f)
 }
 
 #if 0 /* FIXME: enable once needed */
+static inline float from_sRGB_component(float f)
+{
+    if (f <= 0.04045f) return f / 12.92f;
+    return powf((f + 0.055f) / 1.055f, 2.4f);
+}
+
 static void from_sRGB(BYTE *bgr)
 {
     float r, g, b;
@@ -1038,6 +1038,7 @@ static HRESULT copypixels_to_24bppBGR(struct FormatConverter *This, const WICRec
     case format_32bppBGR:
     case format_32bppBGRA:
     case format_32bppPBGRA:
+    case format_32bppRGBA:
         if (prc)
         {
             HRESULT res;
@@ -1061,17 +1062,38 @@ static HRESULT copypixels_to_24bppBGR(struct FormatConverter *This, const WICRec
             {
                 srcrow = srcdata;
                 dstrow = pbBuffer;
-                for (y=0; y<prc->Height; y++) {
-                    srcpixel=srcrow;
-                    dstpixel=dstrow;
-                    for (x=0; x<prc->Width; x++) {
-                        *dstpixel++=*srcpixel++; /* blue */
-                        *dstpixel++=*srcpixel++; /* green */
-                        *dstpixel++=*srcpixel++; /* red */
-                        srcpixel++; /* alpha */
+
+                if (source_format == format_32bppRGBA)
+                {
+                    for (y = 0; y < prc->Height; y++)
+                    {
+                        srcpixel = srcrow;
+                        dstpixel = dstrow;
+                        for (x = 0; x < prc->Width; x++) {
+                            *dstpixel++ = srcpixel[2]; /* blue */
+                            *dstpixel++ = srcpixel[1]; /* green */
+                            *dstpixel++ = srcpixel[0]; /* red */
+                            srcpixel += 4;
+                        }
+                        srcrow += srcstride;
+                        dstrow += cbStride;
                     }
-                    srcrow += srcstride;
-                    dstrow += cbStride;
+                }
+                else
+                {
+                    for (y = 0; y < prc->Height; y++)
+                    {
+                        srcpixel = srcrow;
+                        dstpixel = dstrow;
+                        for (x = 0; x < prc->Width; x++) {
+                            *dstpixel++ = *srcpixel++; /* blue */
+                            *dstpixel++ = *srcpixel++; /* green */
+                            *dstpixel++ = *srcpixel++; /* red */
+                            srcpixel++; /* alpha */
+                        }
+                        srcrow += srcstride;
+                        dstrow += cbStride;
+                    }
                 }
             }
 

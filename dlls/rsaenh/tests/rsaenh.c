@@ -2388,8 +2388,11 @@ static void test_rsa_encrypt(void)
 
     /* It is not allowed to use the signature key for encryption/decryption */
     result = CryptGetUserKey(hProv, AT_SIGNATURE, &hRSAKey);
-    ok (result, "%08x\n", GetLastError());
-    if (!result) return;
+    if (!result)
+    {
+        skip("No signature key in provider %s found, error %#x.\n", szProviders[iProv], GetLastError());
+        return;
+    }
 
     dwVal = 0xdeadbeef;
     dwLen = sizeof(DWORD);

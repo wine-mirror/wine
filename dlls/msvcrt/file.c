@@ -29,6 +29,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define __iob_func mingw___iob_func
 #include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
@@ -780,9 +781,10 @@ static int msvcrt_int_to_base32_w(int num, MSVCRT_wchar_t *str)
 }
 
 /*********************************************************************
- *		__p__iob  (MSVCRT.@)
+ *		__iob_func  (MSVCRT.@)
  */
-MSVCRT_FILE * CDECL __p__iob(void)
+#undef __iob_func
+MSVCRT_FILE * CDECL __iob_func(void)
 {
  return &MSVCRT__iob[0];
 }
@@ -1263,6 +1265,7 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
 
   if (info->handle == INVALID_HANDLE_VALUE)
   {
+    *MSVCRT__errno() = MSVCRT_EBADF;
     release_ioinfo(info);
     return -1;
   }
@@ -4838,19 +4841,14 @@ int CDECL MSVCRT_puts(const char *s)
  */
 int CDECL MSVCRT__putws(const MSVCRT_wchar_t *s)
 {
-    static const MSVCRT_wchar_t nl = '\n';
-    MSVCRT_size_t len = strlenW(s);
     int ret;
 
     MSVCRT__lock_file(MSVCRT_stdout);
-    if(MSVCRT__fwrite_nolock(s, sizeof(*s), len, MSVCRT_stdout) != len) {
-        MSVCRT__unlock_file(MSVCRT_stdout);
-        return MSVCRT_EOF;
-    }
-
-    ret = MSVCRT__fwrite_nolock(&nl,sizeof(nl),1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
+    ret = MSVCRT_fputws(s, MSVCRT_stdout);
+    if(ret >= 0)
+        ret = MSVCRT__fputwc_nolock('\n', MSVCRT_stdout);
     MSVCRT__unlock_file(MSVCRT_stdout);
-    return ret;
+    return ret >= 0 ? 0 : MSVCRT_WEOF;
 }
 
 /*********************************************************************

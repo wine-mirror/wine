@@ -61,6 +61,27 @@ struct mountmgr_unix_drive
     USHORT device_offset;
 };
 
+#define IOCTL_MOUNTMGR_QUERY_DHCP_REQUEST_PARAMS CTL_CODE(MOUNTMGRCONTROLTYPE, 64, METHOD_BUFFERED, FILE_READ_ACCESS | FILE_WRITE_ACCESS)
+
+struct mountmgr_dhcp_request_param
+{
+    ULONG id;
+    ULONG offset;
+    ULONG size;
+};
+
+#ifndef IF_MAX_STRING_SIZE
+#define IF_MAX_STRING_SIZE 256
+#endif
+
+struct mountmgr_dhcp_request_params
+{
+    ULONG size;
+    ULONG count;
+    WCHAR adapter[IF_MAX_STRING_SIZE + 1];
+    struct mountmgr_dhcp_request_param params[1];
+};
+
 #endif
 
 typedef struct _MOUNTMGR_CREATE_POINT_INPUT

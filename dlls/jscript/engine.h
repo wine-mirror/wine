@@ -103,6 +103,8 @@ OP_LIST
     OP_LAST
 } jsop_t;
 
+typedef struct _bytecode_t bytecode_t;
+
 typedef union {
     BSTR bstr;
     LONG lng;
@@ -123,6 +125,7 @@ typedef enum {
 
 typedef struct {
     jsop_t op;
+    unsigned loc;
     union {
         instr_arg_t arg[2];
         double dbl;
@@ -163,12 +166,15 @@ typedef struct _function_code_t {
 
     unsigned locals_cnt;
     local_ref_t *locals;
+
+    bytecode_t *bytecode;
 } function_code_t;
 
 local_ref_t *lookup_local(const function_code_t*,const WCHAR*) DECLSPEC_HIDDEN;
 
-typedef struct _bytecode_t {
+struct _bytecode_t {
     LONG ref;
+    BOOL is_persistent;
 
     instr_t *instrs;
     heap_pool_t heap;
@@ -176,6 +182,8 @@ typedef struct _bytecode_t {
     function_code_t global_code;
 
     WCHAR *source;
+    UINT64 source_context;
+    unsigned start_line;
 
     BSTR *bstr_pool;
     unsigned bstr_pool_size;
@@ -185,10 +193,10 @@ typedef struct _bytecode_t {
     unsigned str_pool_size;
     unsigned str_cnt;
 
-    struct _bytecode_t *next;
-} bytecode_t;
+    struct list entry;
+};
 
-HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
+HRESULT compile_script(script_ctx_t*,const WCHAR*,UINT64,unsigned,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
 void release_bytecode(bytecode_t*) DECLSPEC_HIDDEN;
 
 static inline bytecode_t *bytecode_addref(bytecode_t *code)
@@ -212,6 +220,28 @@ static inline scope_chain_t *scope_addref(scope_chain_t *scope)
     scope->ref++;
     return scope;
 }
+
+struct _jsexcept_t {
+    HRESULT error;
+
+    BOOL valid_value;
+    jsval_t value;
+
+    jsstr_t *source;
+    jsstr_t *message;
+    jsstr_t *line;
+
+    bytecode_t *code;
+    unsigned loc;
+
+    BOOL enter_notified;
+    jsexcept_t *prev;
+};
+
+void enter_script(script_ctx_t*,jsexcept_t*) DECLSPEC_HIDDEN;
+HRESULT leave_script(script_ctx_t*,HRESULT) DECLSPEC_HIDDEN;
+void reset_ei(jsexcept_t*) DECLSPEC_HIDDEN;
+void set_error_location(jsexcept_t*,bytecode_t*,unsigned,unsigned,jsstr_t*) DECLSPEC_HIDDEN;
 
 typedef struct _except_frame_t except_frame_t;
 struct _parser_ctx_t;

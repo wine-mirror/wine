@@ -168,7 +168,7 @@ BOOL types_store_value(struct dbg_lvalue* lvalue_to, const struct dbg_lvalue* lv
     if (!types_get_info(&lvalue_to->type, TI_GET_LENGTH, &size)) return FALSE;
     if (sizeof(val) < size)
     {
-        dbg_printf("Unsufficient size\n");
+        dbg_printf("Insufficient size\n");
         return FALSE;
     }
     /* FIXME: should support floats as well */

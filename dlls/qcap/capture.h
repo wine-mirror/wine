@@ -23,7 +23,7 @@
 struct _Capture;
 typedef struct _Capture Capture;
 
-Capture *qcap_driver_init(IPin*,USHORT) DECLSPEC_HIDDEN;
+Capture *qcap_driver_init(struct strmbase_source *,USHORT) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_destroy(Capture*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_check_format(Capture*,const AM_MEDIA_TYPE*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_set_format(Capture*,AM_MEDIA_TYPE*) DECLSPEC_HIDDEN;
@@ -31,8 +31,9 @@ HRESULT qcap_driver_get_format(const Capture*,AM_MEDIA_TYPE**) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_get_prop_range(Capture*,VideoProcAmpProperty,LONG*,LONG*,LONG*,LONG*,LONG*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_get_prop(Capture*,VideoProcAmpProperty,LONG*,LONG*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_set_prop(Capture*,VideoProcAmpProperty,LONG,LONG) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_run(Capture*,FILTER_STATE*) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_pause(Capture*,FILTER_STATE*) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_stop(Capture*,FILTER_STATE*) DECLSPEC_HIDDEN;
+void qcap_driver_init_stream(Capture *device) DECLSPEC_HIDDEN;
+void qcap_driver_start_stream(Capture *device) DECLSPEC_HIDDEN;
+void qcap_driver_stop_stream(Capture *device) DECLSPEC_HIDDEN;
+void qcap_driver_cleanup_stream(Capture *device) DECLSPEC_HIDDEN;
 
 #endif /* __QCAP_CAPTURE_H__ */

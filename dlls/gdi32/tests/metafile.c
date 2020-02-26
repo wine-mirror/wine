@@ -60,20 +60,6 @@ static void init_function_pointers(void)
     GDI_GET_PROC(SetDCPenColor);
 }
 
-static DWORD rgn_rect_count(HRGN hrgn)
-{
-    DWORD size;
-    RGNDATA *data;
-
-    if (!hrgn) return 0;
-    if (!(size = GetRegionData(hrgn, 0, NULL))) return 0;
-    if (!(data = HeapAlloc(GetProcessHeap(), 0, size))) return 0;
-    GetRegionData(hrgn, size, data);
-    size = data->rdh.nCount;
-    HeapFree(GetProcessHeap(), 0, data);
-    return size;
-}
-
 static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     const ENHMETARECORD *emr, int n_objs, LPARAM param)
 {
@@ -193,8 +179,6 @@ static void test_ExtTextOut(void)
     hdcDisplay = GetDC(hwnd);
     ok(hdcDisplay != 0, "GetDC error %d\n", GetLastError());
 
-    trace("hdcDisplay %p\n", hdcDisplay);
-
     SetMapMode(hdcDisplay, MM_TEXT);
 
     memset(&orig_lf, 0, sizeof(orig_lf));
@@ -220,8 +204,6 @@ static void test_ExtTextOut(void)
 
     hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
     ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
-
-    trace("hdcMetafile %p\n", hdcMetafile);
 
     ok(GetDeviceCaps(hdcMetafile, TECHNOLOGY) == DT_RASDISPLAY,
        "GetDeviceCaps(TECHNOLOGY) has to return DT_RASDISPLAY for a display based EMF\n");
@@ -994,7 +976,7 @@ static void test_mf_SaveDC(void)
     ok(ret, "ret = %d\n", ret);
 
     hMetafile = CloseMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
+    ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
 
     ret = DeleteMetaFile(hMetafile);
     ok( ret, "DeleteMetaFile error %d\n", GetLastError());
@@ -2071,7 +2053,6 @@ static void test_mf_Blank(void)
 
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
-    trace("hdcMetafile %p\n", hdcMetafile);
 
 /* Tests on metafile initialization */
     caps = GetDeviceCaps (hdcMetafile, TECHNOLOGY);
@@ -2082,7 +2063,9 @@ static void test_mf_Blank(void)
     ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
     type = GetObjectType(hMetafile);
     ok(type == OBJ_METAFILE, "CloseMetaFile created object with type %d\n", type);
-    ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
+    type = GetObjectType(hdcMetafile);
+    ok(type == 0 || broken(type == OBJ_METADC) /* win10 >=1607 */,
+       "CloseMetaFile has to destroy metafile hdc (%d)\n", type);
 
     if (compare_mf_bits (hMetafile, MF_BLANK_BITS, sizeof(MF_BLANK_BITS),
         "mf_blank") != 0)
@@ -2106,7 +2089,6 @@ static void test_CopyMetaFile(void)
 
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
-    trace("hdcMetafile %p\n", hdcMetafile);
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
@@ -2153,7 +2135,6 @@ static void test_SetMetaFileBits(void)
     METAHEADER *mh;
 
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), MF_GRAPHICS_BITS);
-    trace("hmf %p\n", hmf);
     ok(hmf != 0, "SetMetaFileBitsEx error %d\n", GetLastError());
     type = GetObjectType(hmf);
     ok(type == OBJ_METAFILE, "SetMetaFileBitsEx created object with type %d\n", type);
@@ -2173,7 +2154,6 @@ static void test_SetMetaFileBits(void)
     /* Now with zero size */
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(0, MF_GRAPHICS_BITS);
-    trace("hmf %p\n", hmf);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
     ok(GetLastError() == ERROR_INVALID_DATA ||
        broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
@@ -2182,7 +2162,6 @@ static void test_SetMetaFileBits(void)
     /* Now with odd size */
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS) - 1, MF_GRAPHICS_BITS);
-    trace("hmf %p\n", hmf);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
     ok(GetLastError() == 0xdeadbeef /* XP SP1 */, "wrong error %d\n", GetLastError());
 
@@ -2196,7 +2175,6 @@ static void test_SetMetaFileBits(void)
     mh->mtHeaderSize = 0;
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
-    trace("hmf %p\n", hmf);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
     ok(GetLastError() == ERROR_INVALID_DATA ||
        broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
@@ -2208,7 +2186,6 @@ static void test_SetMetaFileBits(void)
     /* corruption of mtSize doesn't lead to a failure */
     mh->mtSize *= 2;
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
-    trace("hmf %p\n", hmf);
     ok(hmf != 0, "SetMetaFileBitsEx error %d\n", GetLastError());
 
     if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
@@ -2227,7 +2204,6 @@ static void test_SetMetaFileBits(void)
     /* zeroing mtSize doesn't lead to a failure */
     mh->mtSize = 0;
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
-    trace("hmf %p\n", hmf);
     ok(hmf != 0, "SetMetaFileBitsEx error %d\n", GetLastError());
 
     if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
@@ -2249,11 +2225,11 @@ static void test_mf_Graphics(void)
     HDC hdcMetafile;
     HMETAFILE hMetafile;
     POINT oldpoint;
+    INT type;
     BOOL ret;
 
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
-    trace("hdcMetafile %p\n", hdcMetafile);
 
     ret = MoveToEx(hdcMetafile, 1, 1, NULL);
     ok( ret, "MoveToEx error %d.\n", GetLastError());
@@ -2275,7 +2251,9 @@ static void test_mf_Graphics(void)
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
-    ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
+    type = GetObjectType(hdcMetafile);
+    ok(type == 0 || broken(type == OBJ_METADC) /* win10 >=1607 */,
+       "CloseMetaFile has to destroy metafile hdc (%d)\n", type);
 
     if (compare_mf_bits (hMetafile, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS),
         "mf_Graphics") != 0)
@@ -2296,6 +2274,7 @@ static void test_mf_PatternBrush(void)
     LOGBRUSH *orig_lb;
     HBRUSH hBrush;
     BOOL ret;
+    INT type;
 
     orig_lb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LOGBRUSH));
 
@@ -2309,14 +2288,15 @@ static void test_mf_PatternBrush(void)
 
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA error %d\n", GetLastError());
-    trace("hdcMetafile %p\n", hdcMetafile);
 
     hBrush = SelectObject(hdcMetafile, hBrush);
     ok(hBrush != 0, "SelectObject error %d.\n", GetLastError());
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
-    ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
+    type = GetObjectType(hdcMetafile);
+    ok(type == 0 || broken(type == OBJ_METADC) /* win10 >=1607 */,
+       "CloseMetaFile has to destroy metafile hdc (%d)\n", type);
 
     if (compare_mf_bits (hMetafile, MF_PATTERN_BRUSH_BITS, sizeof(MF_PATTERN_BRUSH_BITS),
         "mf_Pattern_Brush") != 0)
@@ -2391,7 +2371,6 @@ static void test_mf_ExtTextOut_on_path(void)
 
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
-    trace("hdcMetafile %p\n", hdcMetafile);
 
     ret = BeginPath(hdcMetafile);
     ok(!ret, "BeginPath on metafile DC should fail\n");
@@ -2708,6 +2687,8 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
 static void test_emf_clipping(void)
 {
+    char buffer[100];
+    RGNDATA *rgndata = (RGNDATA *)buffer;
     static const RECT rc = { 0, 0, 100, 100 };
     RECT rc_clip = { 100, 100, 1024, 1024 };
     HWND hwnd;
@@ -2782,15 +2763,14 @@ static void test_emf_clipping(void)
        wine_dbgstr_rect(&rc_res));
 
     ret = IntersectClipRect(hdc, 0, 0, 100, 100);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION) /* XP */, "got %d\n", ret);
-    if (ret == COMPLEXREGION)
-    {
-        /* XP returns COMPLEXREGION although region contains only 1 rect */
-        ret = GetClipRgn(hdc, hrgn);
-        ok(ret == 1, "expected 1, got %d\n", ret);
-        ret = rgn_rect_count(hrgn);
-        ok(ret == 1, "expected 1, got %d\n", ret);
-    }
+    /* all versions of Windows return COMPLEXREGION despite the region comprising one rectangle */
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "wrong region type %d\n", ret);
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ret = GetRegionData(hrgn, sizeof(buffer), rgndata);
+    ok(ret == sizeof(RGNDATAHEADER) + sizeof(RECT), "got %u\n", ret);
+    ok(rgndata->rdh.nCount == 1, "got %u rectangles\n", rgndata->rdh.nCount);
+    ok(EqualRect((RECT *)rgndata->Buffer, &rc), "got rect %s\n", wine_dbgstr_rect((RECT *)rgndata->Buffer));
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
@@ -2799,15 +2779,14 @@ static void test_emf_clipping(void)
 
     SetRect(&rc_sclip, 0, 0, 100, 50);
     ret = ExcludeClipRect(hdc, 0, 50, 100, 100);
-    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION) /* XP */, "got %d\n", ret);
-    if (ret == COMPLEXREGION)
-    {
-        /* XP returns COMPLEXREGION although region contains only 1 rect */
-        ret = GetClipRgn(hdc, hrgn);
-        ok(ret == 1, "expected 1, got %d\n", ret);
-        ret = rgn_rect_count(hrgn);
-        ok(ret == 1, "expected 1, got %d\n", ret);
-    }
+    /* all versions of Windows return COMPLEXREGION despite the region comprising one rectangle */
+    ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION), "wrong region type %d\n", ret);
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ret = GetRegionData(hrgn, sizeof(buffer), rgndata);
+    ok(ret == sizeof(RGNDATAHEADER) + sizeof(RECT), "got %u\n", ret);
+    ok(rgndata->rdh.nCount == 1, "got %u rectangles\n", rgndata->rdh.nCount);
+    ok(EqualRect((RECT *)rgndata->Buffer, &rc_sclip), "got rect %s\n", wine_dbgstr_rect((RECT *)rgndata->Buffer));
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);

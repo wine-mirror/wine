@@ -32,76 +32,42 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-static const WCHAR breakW[] = {'b','r','e','a','k',0};
-static const WCHAR caseW[] = {'c','a','s','e',0};
-static const WCHAR catchW[] = {'c','a','t','c','h',0};
-static const WCHAR continueW[] = {'c','o','n','t','i','n','u','e',0};
-static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
-static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
-static const WCHAR doW[] = {'d','o',0};
-static const WCHAR elseW[] = {'e','l','s','e',0};
-static const WCHAR falseW[] = {'f','a','l','s','e',0};
-static const WCHAR finallyW[] = {'f','i','n','a','l','l','y',0};
-static const WCHAR forW[] = {'f','o','r',0};
-static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
-static const WCHAR getW[] = {'g','e','t',0};
-static const WCHAR ifW[] = {'i','f',0};
-static const WCHAR inW[] = {'i','n',0};
-static const WCHAR instanceofW[] = {'i','n','s','t','a','n','c','e','o','f',0};
-static const WCHAR newW[] = {'n','e','w',0};
-static const WCHAR nullW[] = {'n','u','l','l',0};
-static const WCHAR returnW[] = {'r','e','t','u','r','n',0};
-static const WCHAR setW[] = {'s','e','t',0};
-static const WCHAR switchW[] = {'s','w','i','t','c','h',0};
-static const WCHAR thisW[] = {'t','h','i','s',0};
-static const WCHAR throwW[] = {'t','h','r','o','w',0};
-static const WCHAR trueW[] = {'t','r','u','e',0};
-static const WCHAR tryW[] = {'t','r','y',0};
-static const WCHAR typeofW[] = {'t','y','p','e','o','f',0};
-static const WCHAR varW[] = {'v','a','r',0};
-static const WCHAR voidW[] = {'v','o','i','d',0};
-static const WCHAR whileW[] = {'w','h','i','l','e',0};
-static const WCHAR withW[] = {'w','i','t','h',0};
-
-static const WCHAR elifW[] = {'e','l','i','f',0};
-static const WCHAR endW[] = {'e','n','d',0};
-
 static const struct {
     const WCHAR *word;
     int token;
     BOOL no_nl;
     unsigned min_version;
 } keywords[] = {
-    {breakW,       kBREAK,       TRUE},
-    {caseW,        kCASE},
-    {catchW,       kCATCH},
-    {continueW,    kCONTINUE,    TRUE},
-    {defaultW,     kDEFAULT},
-    {deleteW,      kDELETE},
-    {doW,          kDO},
-    {elseW,        kELSE},
-    {falseW,       kFALSE},
-    {finallyW,     kFINALLY},
-    {forW,         kFOR},
-    {functionW,    kFUNCTION},
-    {getW,         kGET,         FALSE, SCRIPTLANGUAGEVERSION_ES5},
-    {ifW,          kIF},
-    {inW,          kIN},
-    {instanceofW,  kINSTANCEOF},
-    {newW,         kNEW},
-    {nullW,        kNULL},
-    {returnW,      kRETURN,      TRUE},
-    {setW,         kSET,         FALSE, SCRIPTLANGUAGEVERSION_ES5},
-    {switchW,      kSWITCH},
-    {thisW,        kTHIS},
-    {throwW,       kTHROW},
-    {trueW,        kTRUE},
-    {tryW,         kTRY},
-    {typeofW,      kTYPEOF},
-    {varW,         kVAR},
-    {voidW,        kVOID},
-    {whileW,       kWHILE},
-    {withW,        kWITH}
+    {L"break",       kBREAK,       TRUE},
+    {L"case",        kCASE},
+    {L"catch",       kCATCH},
+    {L"continue",    kCONTINUE,    TRUE},
+    {L"default",     kDEFAULT},
+    {L"delete",      kDELETE},
+    {L"do",          kDO},
+    {L"else",        kELSE},
+    {L"false",       kFALSE},
+    {L"finally",     kFINALLY},
+    {L"for",         kFOR},
+    {L"function",    kFUNCTION},
+    {L"get",         kGET,         FALSE, SCRIPTLANGUAGEVERSION_ES5},
+    {L"if",          kIF},
+    {L"in",          kIN},
+    {L"instanceof",  kINSTANCEOF},
+    {L"new",         kNEW},
+    {L"null",        kNULL},
+    {L"return",      kRETURN,      TRUE},
+    {L"set",         kSET,         FALSE, SCRIPTLANGUAGEVERSION_ES5},
+    {L"switch",      kSWITCH},
+    {L"this",        kTHIS},
+    {L"throw",       kTHROW},
+    {L"true",        kTRUE},
+    {L"try",         kTRY},
+    {L"typeof",      kTYPEOF},
+    {L"var",         kVAR},
+    {L"void",        kVOID},
+    {L"while",       kWHILE},
+    {L"with",        kWITH}
 };
 
 static int lex_error(parser_ctx_t *ctx, HRESULT hres)
@@ -331,11 +297,11 @@ BOOL unescape(WCHAR *str, size_t *len)
             c += i;
             break;
         default:
-            if(iswdigit(*p)) {
+            if(is_digit(*p)) {
                 c = *p++ - '0';
-                if(p < end && iswdigit(*p)) {
+                if(p < end && is_digit(*p)) {
                     c = c*8 + (*p++ - '0');
-                    if(p < end && iswdigit(*p))
+                    if(p < end && is_digit(*p))
                         c = c*8 + (*p++ - '0');
                 }
                 p--;
@@ -434,7 +400,7 @@ HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
     LONGLONG d = 0, hlp;
     int exp = 0;
 
-    while(ptr < end && iswdigit(*ptr)) {
+    while(ptr < end && is_digit(*ptr)) {
         hlp = d*10 + *(ptr++) - '0';
         if(d>MAXLONGLONG/10 || hlp<0) {
             exp++;
@@ -443,7 +409,7 @@ HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
         else
             d = hlp;
     }
-    while(ptr < end && iswdigit(*ptr)) {
+    while(ptr < end && is_digit(*ptr)) {
         exp++;
         ptr++;
     }
@@ -451,7 +417,7 @@ HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
     if(*ptr == '.') {
         ptr++;
 
-        while(ptr < end && iswdigit(*ptr)) {
+        while(ptr < end && is_digit(*ptr)) {
             hlp = d*10 + *(ptr++) - '0';
             if(d>MAXLONGLONG/10 || hlp<0)
                 break;
@@ -459,7 +425,7 @@ HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
             d = hlp;
             exp--;
         }
-        while(ptr < end && iswdigit(*ptr))
+        while(ptr < end && is_digit(*ptr))
             ptr++;
     }
 
@@ -472,7 +438,7 @@ HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
             }else if(*ptr == '-') {
                 sign = -1;
                 ptr++;
-            }else if(!iswdigit(*ptr)) {
+            }else if(!is_digit(*ptr)) {
                 WARN("Expected exponent part\n");
                 return E_FAIL;
             }
@@ -483,7 +449,7 @@ HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
             return E_FAIL;
         }
 
-        while(ptr < end && iswdigit(*ptr)) {
+        while(ptr < end && is_digit(*ptr)) {
             if(e > INT_MAX/10 || (e = e*10 + *ptr++ - '0')<0)
                 e = INT_MAX;
         }
@@ -534,12 +500,12 @@ static BOOL parse_numeric_literal(parser_ctx_t *ctx, double *ret)
             return TRUE;
         }
 
-        if(iswdigit(*ctx->ptr)) {
+        if(is_digit(*ctx->ptr)) {
             unsigned base = 8;
             const WCHAR *ptr;
             double val = 0;
 
-            for(ptr = ctx->ptr; ptr < ctx->end && iswdigit(*ptr); ptr++) {
+            for(ptr = ctx->ptr; ptr < ctx->end && is_digit(*ptr); ptr++) {
                 if(*ptr > '7') {
                     base = 10;
                     break;
@@ -548,7 +514,7 @@ static BOOL parse_numeric_literal(parser_ctx_t *ctx, double *ret)
 
             do {
                 val = val*base + *ctx->ptr-'0';
-            }while(++ctx->ptr < ctx->end && iswdigit(*ctx->ptr));
+            }while(++ctx->ptr < ctx->end && is_digit(*ctx->ptr));
 
             /* FIXME: Do we need it here? */
             if(ctx->ptr < ctx->end && (is_identifier_char(*ctx->ptr) || *ctx->ptr == '.')) {
@@ -577,12 +543,15 @@ static BOOL parse_numeric_literal(parser_ctx_t *ctx, double *ret)
     return TRUE;
 }
 
-static int next_token(parser_ctx_t *ctx, void *lval)
+static int next_token(parser_ctx_t *ctx, unsigned *loc, void *lval)
 {
     do {
-        if(!skip_spaces(ctx))
-            return tEOF;
+        if(!skip_spaces(ctx)) {
+            *loc  = ctx->ptr - ctx->begin;
+            return 0;
+        }
     }while(skip_comment(ctx) || skip_html_comment(ctx));
+    *loc  = ctx->ptr - ctx->begin;
 
     if(ctx->implicit_nl_semicolon) {
         if(ctx->nl)
@@ -598,7 +567,7 @@ static int next_token(parser_ctx_t *ctx, void *lval)
         return parse_identifier(ctx, lval);
     }
 
-    if(iswdigit(*ctx->ptr)) {
+    if(is_digit(*ctx->ptr)) {
         double n;
 
         if(!parse_numeric_literal(ctx, &n))
@@ -610,6 +579,7 @@ static int next_token(parser_ctx_t *ctx, void *lval)
 
     switch(*ctx->ptr) {
     case '{':
+    case '}':
     case '(':
     case ')':
     case '[':
@@ -620,12 +590,8 @@ static int next_token(parser_ctx_t *ctx, void *lval)
     case '?':
         return *ctx->ptr++;
 
-    case '}':
-        *(const WCHAR**)lval = ctx->ptr++;
-        return '}';
-
     case '.':
-        if(ctx->ptr+1 < ctx->end && iswdigit(ctx->ptr[1])) {
+        if(ctx->ptr+1 < ctx->end && is_digit(ctx->ptr[1])) {
             double n;
             HRESULT hres;
             hres = parse_decimal(&ctx->ptr, ctx->end, &n);
@@ -895,14 +861,6 @@ static BOOL init_cc(parser_ctx_t *ctx)
 {
     cc_ctx_t *cc;
 
-    static const WCHAR _win32W[] = {'_','w','i','n','3','2',0};
-    static const WCHAR _win64W[] = {'_','w','i','n','6','4',0};
-    static const WCHAR _x86W[] = {'_','x','8','6',0};
-    static const WCHAR _amd64W[] = {'_','a','m','d','6','4',0};
-    static const WCHAR _jscriptW[] = {'_','j','s','c','r','i','p','t',0};
-    static const WCHAR _jscript_buildW[] = {'_','j','s','c','r','i','p','t','_','b','u','i','l','d',0};
-    static const WCHAR _jscript_versionW[] = {'_','j','s','c','r','i','p','t','_','v','e','r','s','i','o','n',0};
-
     if(ctx->script->cc)
         return TRUE;
 
@@ -914,11 +872,11 @@ static BOOL init_cc(parser_ctx_t *ctx)
 
     cc->vars = NULL;
 
-    if(!new_cc_var(cc, _jscriptW, -1, ccval_bool(TRUE))
-       || !new_cc_var(cc, sizeof(void*) == 8 ? _win64W : _win32W, -1, ccval_bool(TRUE))
-       || !new_cc_var(cc, sizeof(void*) == 8 ? _amd64W : _x86W, -1, ccval_bool(TRUE))
-       || !new_cc_var(cc, _jscript_versionW, -1, ccval_num(JSCRIPT_MAJOR_VERSION + (DOUBLE)JSCRIPT_MINOR_VERSION/10.0))
-       || !new_cc_var(cc, _jscript_buildW, -1, ccval_num(JSCRIPT_BUILD_VERSION))) {
+    if(!new_cc_var(cc, L"_jscript", -1, ccval_bool(TRUE))
+       || !new_cc_var(cc, sizeof(void*) == 8 ? L"_win64" : L"_win32", -1, ccval_bool(TRUE))
+       || !new_cc_var(cc, sizeof(void*) == 8 ? L"_amd64" : L"_x86", -1, ccval_bool(TRUE))
+       || !new_cc_var(cc, L"_jscript_version", -1, ccval_num(JSCRIPT_MAJOR_VERSION + (DOUBLE)JSCRIPT_MINOR_VERSION/10.0))
+       || !new_cc_var(cc, L"_jscript_build", -1, ccval_num(JSCRIPT_BUILD_VERSION))) {
         release_cc(cc);
         lex_error(ctx, E_OUTOFMEMORY);
         return FALSE;
@@ -951,7 +909,7 @@ int try_parse_ccval(parser_ctx_t *ctx, ccval_t *r)
     if(!skip_spaces(ctx))
         return -1;
 
-    if(iswdigit(*ctx->ptr)) {
+    if(is_digit(*ctx->ptr)) {
         double n;
 
         if(!parse_numeric_literal(ctx, &n))
@@ -974,12 +932,12 @@ int try_parse_ccval(parser_ctx_t *ctx, ccval_t *r)
         return 1;
     }
 
-    if(!check_keyword(ctx, trueW, NULL)) {
+    if(!check_keyword(ctx, L"true", NULL)) {
         *r = ccval_bool(TRUE);
         return 1;
     }
 
-    if(!check_keyword(ctx, falseW, NULL)) {
+    if(!check_keyword(ctx, L"false", NULL)) {
         *r = ccval_bool(FALSE);
         return 1;
     }
@@ -1000,13 +958,13 @@ static int skip_code(parser_ctx_t *ctx, BOOL exec_else)
         }
         ctx->ptr = ptr+1;
 
-        if(!check_keyword(ctx, endW, NULL)) {
+        if(!check_keyword(ctx, L"end", NULL)) {
             if(--if_depth)
                 continue;
             return 0;
         }
 
-        if(exec_else && !check_keyword(ctx, elifW, NULL)) {
+        if(exec_else && !check_keyword(ctx, L"elif", NULL)) {
             if(if_depth > 1)
                 continue;
 
@@ -1024,7 +982,7 @@ static int skip_code(parser_ctx_t *ctx, BOOL exec_else)
             return 0;
         }
 
-        if(exec_else && !check_keyword(ctx, elseW, NULL)) {
+        if(exec_else && !check_keyword(ctx, L"else", NULL)) {
             if(if_depth > 1)
                 continue;
 
@@ -1033,7 +991,7 @@ static int skip_code(parser_ctx_t *ctx, BOOL exec_else)
             return 0;
         }
 
-        if(!check_keyword(ctx, ifW, NULL)) {
+        if(!check_keyword(ctx, L"if", NULL)) {
             if_depth++;
             continue;
         }
@@ -1047,15 +1005,12 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
     unsigned id_len = 0;
     cc_var_t *var;
 
-    static const WCHAR cc_onW[] = {'c','c','_','o','n',0};
-    static const WCHAR setW[] = {'s','e','t',0};
-
     ctx->ptr++;
 
-    if(!check_keyword(ctx, cc_onW, NULL))
+    if(!check_keyword(ctx, L"cc_on", NULL))
         return init_cc(ctx) ? 0 : -1;
 
-    if(!check_keyword(ctx, setW, NULL)) {
+    if(!check_keyword(ctx, L"set", NULL)) {
         const WCHAR *ident;
         unsigned ident_len;
         cc_var_t *var;
@@ -1089,7 +1044,7 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
         return 0;
     }
 
-    if(!check_keyword(ctx, ifW, NULL)) {
+    if(!check_keyword(ctx, L"if", NULL)) {
         if(!init_cc(ctx))
             return -1;
 
@@ -1108,14 +1063,14 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
         return skip_code(ctx, TRUE);
     }
 
-    if(!check_keyword(ctx, elifW, NULL) || !check_keyword(ctx, elseW, NULL)) {
+    if(!check_keyword(ctx, L"elif", NULL) || !check_keyword(ctx, L"else", NULL)) {
         if(!ctx->cc_if_depth)
             return lex_error(ctx, JS_E_SYNTAX);
 
         return skip_code(ctx, FALSE);
     }
 
-    if(!check_keyword(ctx, endW, NULL)) {
+    if(!check_keyword(ctx, L"end", NULL)) {
         if(!ctx->cc_if_depth)
             return lex_error(ctx, JS_E_SYNTAX);
 
@@ -1144,14 +1099,14 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
     return tBooleanLiteral;
 }
 
-int parser_lex(void *lval, parser_ctx_t *ctx)
+int parser_lex(void *lval, unsigned *loc, parser_ctx_t *ctx)
 {
     int ret;
 
     ctx->nl = ctx->ptr == ctx->begin;
 
     do {
-        ret = next_token(ctx, lval);
+        ret = next_token(ctx, loc, lval);
     } while(ret == '@' && !(ret = cc_token(ctx, lval)));
 
     return ret;
@@ -1163,7 +1118,6 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
     BOOL in_class = FALSE;
     DWORD re_len, flags;
     literal_t *ret;
-    HRESULT hres;
 
     TRACE("\n");
 
@@ -1192,6 +1146,7 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
 
     if(ctx->ptr == ctx->end || *ctx->ptr != '/') {
         WARN("pre-parsing failed\n");
+        ctx->hres = JS_E_SYNTAX;
         return NULL;
     }
 
@@ -1201,8 +1156,8 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
     while(ctx->ptr < ctx->end && iswalnum(*ctx->ptr))
         ctx->ptr++;
 
-    hres = parse_regexp_flags(flags_ptr, ctx->ptr-flags_ptr, &flags);
-    if(FAILED(hres))
+    ctx->hres = parse_regexp_flags(flags_ptr, ctx->ptr-flags_ptr, &flags);
+    if(FAILED(ctx->hres))
         return NULL;
 
     ret = parser_alloc(ctx, sizeof(literal_t));

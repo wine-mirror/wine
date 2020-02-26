@@ -598,12 +598,9 @@ GpStatus WINGDIPAPI GdipSetPenDashArray(GpPen *pen, GDIPCONST REAL *dash,
 
     for(i = 0; i < count; i++){
         sum += dash[i];
-        if(dash[i] < 0.0)
+        if(dash[i] <= 0.0)
             return InvalidParameter;
     }
-
-    if(sum == 0.0 && count)
-        return InvalidParameter;
 
     heap_free(pen->dashes);
     pen->dashes = NULL;

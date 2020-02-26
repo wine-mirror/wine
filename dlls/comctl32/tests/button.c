@@ -1166,7 +1166,7 @@ static void test_note(void)
             size = ARRAY_SIZE(buffer_w);
             ret = SendMessageA(hwnd, BCM_GETNOTE, (WPARAM)&size, (LPARAM)buffer_w);
             ok(ret, "Expect BCM_GETNOTE return true\n");
-            ok(lstrlenW(buffer_w) == 0, "Expect note length 0\n");
+            ok(!*buffer_w, "Expect note length 0\n");
             ok(size == ARRAY_SIZE(buffer_w), "Got: %d\n", size);
             error = GetLastError();
             ok(error == NO_ERROR, "Expect last error: 0x%08x, got: 0x%08x\n", NO_ERROR, error);

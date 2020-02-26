@@ -20,7 +20,7 @@
 #ifndef __WINE_CRTDBG_H_
 #define __WINE_CRTDBG_H_
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 /* The debug API is not implemented in Winelib.
  * Redirect everything to the regular APIs.

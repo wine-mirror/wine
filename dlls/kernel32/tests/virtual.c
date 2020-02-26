@@ -44,7 +44,7 @@ static UINT   (WINAPI *pResetWriteWatch)(LPVOID,SIZE_T);
 static NTSTATUS (WINAPI *pNtAreMappedFilesTheSame)(PVOID,PVOID);
 static NTSTATUS (WINAPI *pNtCreateSection)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *,
                                            const LARGE_INTEGER *, ULONG, ULONG, HANDLE );
-static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
+static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG_PTR, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static DWORD (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
 static NTSTATUS (WINAPI *pNtQuerySection)(HANDLE, SECTION_INFORMATION_CLASS, void *, SIZE_T, SIZE_T *);
 static PVOID  (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG, PVECTORED_EXCEPTION_HANDLER);
@@ -122,8 +122,11 @@ static void test_VirtualAllocEx(void)
     ok( bytes_written == 0, "%lu bytes written\n", bytes_written );
     b = ReadProcessMemory(hProcess, addr1, src, alloc_size, &bytes_read);
     ok( !b, "ReadProcessMemory succeeded\n" );
-    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
-    ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_PARTIAL_COPY, /* win10 v1607+ */
+        "wrong error %u\n", GetLastError() );
+    if (GetLastError() == ERROR_NOACCESS)
+        ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
 
     b = VirtualProtect( src, 0x2000, PAGE_NOACCESS, &old_prot );
     ok( b, "VirtualProtect failed error %u\n", GetLastError() );
@@ -135,8 +138,11 @@ static void test_VirtualAllocEx(void)
     ok( bytes_written == 0, "%lu bytes written\n", bytes_written );
     b = ReadProcessMemory(hProcess, addr1, src, alloc_size, &bytes_read);
     ok( !b, "ReadProcessMemory succeeded\n" );
-    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
-    ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
+    ok( GetLastError() == ERROR_NOACCESS ||
+        GetLastError() == ERROR_PARTIAL_COPY, /* win10 v1607+ */
+        "wrong error %u\n", GetLastError() );
+    if (GetLastError() == ERROR_NOACCESS)
+        ok( bytes_read == 0, "%lu bytes written\n", bytes_read );
 
     b = pVirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE);
     ok(b != 0, "VirtualFreeEx, error %u\n", GetLastError());
@@ -1214,214 +1220,6 @@ static void test_MapViewOfFile(void)
     DeleteFileA(testfile);
 }
 
-static void test_NtMapViewOfSection(void)
-{
-    HANDLE hProcess;
-
-    static const char testfile[] = "testfile.xxx";
-    static const char data[] = "test data for NtMapViewOfSection";
-    char buffer[sizeof(data)];
-    HANDLE file, mapping;
-    void *ptr, *ptr2;
-    BOOL is_wow64, ret;
-    DWORD status, written;
-    SIZE_T size, result;
-    LARGE_INTEGER offset;
-
-    if (!pNtMapViewOfSection || !pNtUnmapViewOfSection)
-    {
-        win_skip( "NtMapViewOfSection not available\n" );
-        return;
-    }
-
-    file = CreateFileA( testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
-    ok( file != INVALID_HANDLE_VALUE, "Failed to create test file\n" );
-    WriteFile( file, data, sizeof(data), &written, NULL );
-    SetFilePointer( file, 4096, NULL, FILE_BEGIN );
-    SetEndOfFile( file );
-
-    /* read/write mapping */
-
-    mapping = CreateFileMappingA( file, NULL, PAGE_READWRITE, 0, 4096, NULL );
-    ok( mapping != 0, "CreateFileMapping failed\n" );
-
-    hProcess = create_target_process("sleep");
-    ok(hProcess != NULL, "Can't start process\n");
-
-    ptr = NULL;
-    size = 0;
-    offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( !status, "NtMapViewOfSection failed status %x\n", status );
-    ok( !((ULONG_PTR)ptr & 0xffff), "returned memory %p is not aligned to 64k\n", ptr );
-
-    ret = ReadProcessMemory( hProcess, ptr, buffer, sizeof(buffer), &result );
-    ok( ret, "ReadProcessMemory failed\n" );
-    ok( result == sizeof(buffer), "ReadProcessMemory didn't read all data (%lx)\n", result );
-    ok( !memcmp( buffer, data, sizeof(buffer) ), "Wrong data read\n" );
-
-    /* for some unknown reason NtMapViewOfSection fails with STATUS_NO_MEMORY when zero_bits != 0 ? */
-    ptr2 = NULL;
-    size = 0;
-    offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 12, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
-    ok( status == STATUS_NO_MEMORY, "NtMapViewOfSection returned %x\n", status );
-    if (status == STATUS_SUCCESS)
-    {
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-    }
-
-    ptr2 = NULL;
-    size = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
-    ok( status == STATUS_NO_MEMORY, "NtMapViewOfSection returned %x\n", status );
-    if (status == STATUS_SUCCESS)
-    {
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-    }
-
-    /* 22 zero bits isn't acceptable */
-    ptr2 = NULL;
-    size = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 22, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-    if (status == STATUS_SUCCESS)
-    {
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-    }
-
-    /* mapping at the same page conflicts */
-    ptr2 = ptr;
-    size = 0;
-    offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_CONFLICTING_ADDRESSES, "NtMapViewOfSection returned %x\n", status );
-
-    /* offset has to be aligned */
-    ptr2 = ptr;
-    size = 0;
-    offset.QuadPart = 1;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %x\n", status );
-
-    /* ptr has to be aligned */
-    ptr2 = (char *)ptr + 42;
-    size = 0;
-    offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %x\n", status );
-
-    /* still not 64k aligned */
-    ptr2 = (char *)ptr + 0x1000;
-    size = 0;
-    offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %x\n", status );
-
-    /* zero_bits != 0 is not allowed when an address is set */
-    ptr2 = (char *)ptr + 0x1000;
-    size = 0;
-    offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 12, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-
-    ptr2 = (char *)ptr + 0x1000;
-    size = 0;
-    offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-
-    ptr2 = (char *)ptr + 0x1001;
-    size = 0;
-    offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-
-    ptr2 = (char *)ptr + 0x1000;
-    size = 0;
-    offset.QuadPart = 1;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-
-    if (sizeof(void *) == sizeof(int) && (!pIsWow64Process ||
-        !pIsWow64Process( GetCurrentProcess(), &is_wow64 ) || !is_wow64))
-    {
-        /* new memory region conflicts with previous mapping */
-        ptr2 = ptr;
-        size = 0;
-        offset.QuadPart = 0;
-        status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset,
-                                      &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE );
-        ok( status == STATUS_CONFLICTING_ADDRESSES, "NtMapViewOfSection returned %x\n", status );
-
-        ptr2 = (char *)ptr + 42;
-        size = 0;
-        offset.QuadPart = 0;
-        status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset,
-                                      &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE );
-        ok( status == STATUS_CONFLICTING_ADDRESSES, "NtMapViewOfSection returned %x\n", status );
-
-        /* in contrary to regular NtMapViewOfSection, only 4kb align is enforced */
-        ptr2 = (char *)ptr + 0x1000;
-        size = 0;
-        offset.QuadPart = 0;
-        status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset,
-                                      &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE );
-        ok( status == STATUS_SUCCESS, "NtMapViewOfSection returned %x\n", status );
-        ok( (char *)ptr2 == (char *)ptr + 0x1000,
-            "expected address %p, got %p\n", (char *)ptr + 0x1000, ptr2 );
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-
-        /* the address is rounded down if not on a page boundary */
-        ptr2 = (char *)ptr + 0x1001;
-        size = 0;
-        offset.QuadPart = 0;
-        status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset,
-                                      &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE );
-        ok( status == STATUS_SUCCESS, "NtMapViewOfSection returned %x\n", status );
-        ok( (char *)ptr2 == (char *)ptr + 0x1000,
-            "expected address %p, got %p\n", (char *)ptr + 0x1000, ptr2 );
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-
-        ptr2 = (char *)ptr + 0x2000;
-        size = 0;
-        offset.QuadPart = 0;
-        status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset,
-                                      &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE );
-        ok( status == STATUS_SUCCESS, "NtMapViewOfSection returned %x\n", status );
-        ok( (char *)ptr2 == (char *)ptr + 0x2000,
-            "expected address %p, got %p\n", (char *)ptr + 0x2000, ptr2 );
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-    }
-    else
-    {
-        ptr2 = (char *)ptr + 0x1000;
-        size = 0;
-        offset.QuadPart = 0;
-        status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset,
-                                      &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE );
-        todo_wine
-        ok( status == STATUS_INVALID_PARAMETER_9, "NtMapViewOfSection returned %x\n", status );
-    }
-
-    status = pNtUnmapViewOfSection( hProcess, ptr );
-    ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-
-    CloseHandle( mapping );
-    CloseHandle( file );
-    DeleteFileA( testfile );
-
-    TerminateProcess(hProcess, 0);
-    CloseHandle(hProcess);
-}
 
 static void test_NtAreMappedFilesTheSame(void)
 {
@@ -1735,6 +1533,12 @@ static void test_IsBadReadPtr(void)
 
     ret = IsBadReadPtr(&stackvar, sizeof(char));
     ok(ret == FALSE, "Expected IsBadReadPtr to return FALSE, got %d\n", ret);
+
+    ret = IsBadReadPtr((char *)NtCurrentTeb()->DeallocationStack + 4096, sizeof(DWORD));
+    ok(ret == TRUE, "Expected IsBadReadPtr to return TRUE, got %d\n", ret);
+
+    ret = IsBadReadPtr((char *)NtCurrentTeb()->DeallocationStack + 4096, sizeof(DWORD));
+    ok(ret == TRUE, "Expected IsBadReadPtr to return TRUE, got %d\n", ret);
 }
 
 static void test_IsBadWritePtr(void)
@@ -1760,6 +1564,12 @@ static void test_IsBadWritePtr(void)
 
     ret = IsBadWritePtr(&stackval, sizeof(char));
     ok(ret == FALSE, "Expected IsBadWritePtr to return FALSE, got %d\n", ret);
+
+    ret = IsBadWritePtr((char *)NtCurrentTeb()->DeallocationStack + 4096, sizeof(DWORD));
+    ok(ret == TRUE, "Expected IsBadWritePtr to return TRUE, got %d\n", ret);
+
+    ret = IsBadWritePtr((char *)NtCurrentTeb()->DeallocationStack + 4096, sizeof(DWORD));
+    ok(ret == TRUE, "Expected IsBadWritePtr to return TRUE, got %d\n", ret);
 }
 
 static void test_IsBadCodePtr(void)
@@ -1810,7 +1620,7 @@ static void test_write_watch(void)
     DWORD ret, size, old_prot, num_bytes;
     MEMORY_BASIC_INFORMATION info;
     HANDLE readpipe, writepipe, file;
-    OVERLAPPED overlapped;
+    OVERLAPPED overlapped, *overlapped2;
     void *results[64];
     ULONG_PTR count;
     ULONG i, pagesize;
@@ -2113,6 +1923,67 @@ static void test_write_watch(void)
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
     ok( count == 0, "wrong count %lu\n", count );
+
+    /* OVERLAPPED structure write watch */
+    memset( &overlapped, 0, sizeof(overlapped) );
+    overlapped.hEvent = CreateEventA( NULL, TRUE, FALSE, NULL );
+
+    readpipe = CreateNamedPipeA( pipename, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_INBOUND,
+                                 PIPE_TYPE_MESSAGE | PIPE_WAIT, 1, 1024, 1024,
+                                 NMPWAIT_USE_DEFAULT_WAIT, NULL );
+    ok( readpipe != INVALID_HANDLE_VALUE, "CreateNamedPipeA failed %u\n", GetLastError() );
+
+    success = ConnectNamedPipe( readpipe, &overlapped );
+    ok( !success, "ConnectNamedPipe unexpectedly succeeded\n" );
+    ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
+
+    writepipe = CreateFileA( pipename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
+    ok( writepipe != INVALID_HANDLE_VALUE, "CreateFileA failed %u\n", GetLastError() );
+
+    ret = WaitForSingleObject( overlapped.hEvent, 1000 );
+    ok( ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", ret );
+
+    memset( base, 0, size );
+    overlapped2 = (OVERLAPPED*)(base + size - sizeof(*overlapped2));
+    overlapped2->hEvent = CreateEventA( NULL, TRUE, FALSE, NULL );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 16, "wrong count %lu\n", count );
+
+    success = ReadFile( readpipe, base, sizeof(testdata), NULL, overlapped2 );
+    ok( !success, "ReadFile unexpectedly succeeded\n" );
+    ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
+    overlapped2->Internal = 0xdeadbeef;
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 2, "wrong count %lu\n", count );
+
+    num_bytes = 0;
+    success = WriteFile( writepipe, testdata, sizeof(testdata), &num_bytes, NULL );
+    ok( success, "WriteFile failed %u\n", GetLastError() );
+    ok( num_bytes == sizeof(testdata), "wrong number of bytes written %u\n", num_bytes );
+
+    num_bytes = 0;
+    success = GetOverlappedResult( readpipe, overlapped2, &num_bytes, TRUE );
+    ok( success, "GetOverlappedResult failed %u\n", GetLastError() );
+    ok( num_bytes == sizeof(testdata), "wrong number of bytes read %u\n", num_bytes );
+    ok( !memcmp( base, testdata, sizeof(testdata)), "didn't receive expected data\n" );
+
+    count = 64;
+    memset( results, 0, sizeof(results) );
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 2, "wrong count %lu\n", count );
+    ok( results[0] == base, "wrong result %p\n", results[0] );
+
+    CloseHandle( readpipe );
+    CloseHandle( writepipe );
+    CloseHandle( overlapped.hEvent );
+    CloseHandle( overlapped2->hEvent );
 
     /* some invalid parameter tests */
 
@@ -2748,7 +2619,8 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     if (old_flags != dep_flags)
     {
         ret = NtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &dep_flags, sizeof(dep_flags) );
-        if (ret == STATUS_INVALID_INFO_CLASS) /* Windows 2000 */
+        if (ret == STATUS_INVALID_INFO_CLASS /* Windows 2000 */ ||
+            ret == STATUS_ACCESS_DENIED)
         {
             win_skip( "Skipping DEP tests with ProcessExecuteFlags = %d\n", dep_flags );
             return;
@@ -4406,7 +4278,6 @@ START_TEST(virtual)
     test_VirtualAllocEx();
     test_VirtualAlloc();
     test_MapViewOfFile();
-    test_NtMapViewOfSection();
     test_NtAreMappedFilesTheSame();
     test_CreateFileMapping();
     test_IsBadReadPtr();

@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _WIN32
+#if 0
+#pragma makedep unix
+#endif
 
 #include <stdarg.h>
 #include "windef.h"
@@ -36,7 +38,7 @@ BOOL WINAPI DECLSPEC_HIDDEN __wine_spec_dll_entry( HINSTANCE inst, DWORD reason,
     if (reason == DLL_PROCESS_ATTACH && __wine_spec_init_state != CONSTRUCTORS_DONE)
     {
         call_fini = TRUE;
-        _init( __wine_main_argc, __wine_main_argv, NULL );
+        _init( 0, NULL, NULL );
     }
 
     ret = DllMain( inst, reason, reserved );
@@ -45,5 +47,3 @@ BOOL WINAPI DECLSPEC_HIDDEN __wine_spec_dll_entry( HINSTANCE inst, DWORD reason,
 
     return ret;
 }
-
-#endif  /* _WIN32 */

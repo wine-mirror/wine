@@ -16,6 +16,7 @@
 @ stdcall PowerGetActiveScheme (ptr ptr)
 @ stdcall PowerSetActiveScheme (ptr ptr)
 @ stdcall PowerReadDCValue (ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall PowerReadFriendlyName (ptr ptr ptr ptr ptr ptr)
 @ stdcall ReadGlobalPwrPolicy (ptr)
 @ stdcall ReadProcessorPwrScheme (long ptr)
 @ stdcall ReadPwrScheme (long ptr)

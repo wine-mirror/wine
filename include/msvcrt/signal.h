@@ -20,7 +20,7 @@
 #ifndef _WINE_SIGNAL_H
 #define _WINE_SIGNAL_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #define SIGINT   2
 #define SIGILL   4

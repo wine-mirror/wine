@@ -737,6 +737,9 @@ static void test_GetSystemFirmwareTable(void)
     pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, expected_len, &expected_len);
 
     expected_len -= min_sfti_len;
+    len = pGetSystemFirmwareTable(RSMB, 0, NULL, 0);
+    ok(len == expected_len, "Expected length %u, got %u\n", expected_len, len);
+
     smbios_table = HeapAlloc(GetProcessHeap(), 0, expected_len);
     len = pGetSystemFirmwareTable(RSMB, 0, smbios_table, expected_len);
     ok(len == expected_len, "Expected length %u, got %u\n", expected_len, len);

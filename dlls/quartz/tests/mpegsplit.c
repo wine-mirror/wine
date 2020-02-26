@@ -21,12 +21,8 @@
 #define COBJMACROS
 #include "dshow.h"
 #include "mmreg.h"
+#include "wine/strmbase.h"
 #include "wine/test.h"
-
-static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
-
-static const WCHAR inputW[] = {'I','n','p','u','t',0};
-static const WCHAR audioW[] = {'A','u','d','i','o',0};
 
 static const GUID MEDIASUBTYPE_mp3 = {0x00000055,0x0000,0x0010,{0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71}};
 
@@ -39,6 +35,12 @@ static IBaseFilter *create_mpeg_splitter(void)
     return filter;
 }
 
+static inline BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
+{
+    return !memcmp(a, b, offsetof(AM_MEDIA_TYPE, pbFormat))
+            && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
+}
+
 static WCHAR *load_resource(const WCHAR *name)
 {
     static WCHAR pathW[MAX_PATH];
@@ -48,7 +50,7 @@ static WCHAR *load_resource(const WCHAR *name)
     void *ptr;
 
     GetTempPathW(ARRAY_SIZE(pathW), pathW);
-    lstrcatW(pathW, name);
+    wcscat(pathW, name);
 
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %u.\n",
@@ -73,7 +75,6 @@ static ULONG get_refcount(void *iface)
 
 static IFilterGraph2 *connect_input(IBaseFilter *splitter, const WCHAR *filename)
 {
-    static const WCHAR outputW[] = {'O','u','t','p','u','t',0};
     IFileSourceFilter *filesource;
     IFilterGraph2 *graph;
     IBaseFilter *reader;
@@ -90,8 +91,8 @@ static IFilterGraph2 *connect_input(IBaseFilter *splitter, const WCHAR *filename
     IFilterGraph2_AddFilter(graph, reader, NULL);
     IFilterGraph2_AddFilter(graph, splitter, NULL);
 
-    IBaseFilter_FindPin(splitter, inputW, &sink);
-    IBaseFilter_FindPin(reader, outputW, &source);
+    IBaseFilter_FindPin(splitter, L"Input", &sink);
+    IBaseFilter_FindPin(reader, L"Output", &source);
 
     hr = IFilterGraph2_ConnectDirect(graph, source, sink, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -120,7 +121,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 static void test_interfaces(void)
 {
-    const WCHAR *filename = load_resource(mp3file);
+    const WCHAR *filename = load_resource(L"test.mp3");
     IBaseFilter *filter = create_mpeg_splitter();
     IFilterGraph2 *graph = connect_input(filter, filename);
     IPin *pin;
@@ -144,7 +145,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
-    IBaseFilter_FindPin(filter, inputW, &pin);
+    IBaseFilter_FindPin(filter, L"Input", &pin);
 
     todo_wine check_interface(pin, &IID_IMemInputPin, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
@@ -153,15 +154,15 @@ static void test_interfaces(void)
 
     check_interface(pin, &IID_IKsPropertySet, FALSE);
     check_interface(pin, &IID_IMediaPosition, FALSE);
-    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
 
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, audioW, &pin);
+    IBaseFilter_FindPin(filter, L"Audio", &pin);
 
     check_interface(pin, &IID_IMediaSeeking, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
-    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IQualityControl, TRUE);
     check_interface(pin, &IID_IUnknown, TRUE);
 
     check_interface(pin, &IID_IAsyncReader, FALSE);
@@ -271,7 +272,7 @@ static void test_aggregation(void)
 
 static void test_enum_pins(void)
 {
-    const WCHAR *filename = load_resource(mp3file);
+    const WCHAR *filename = load_resource(L"test.mp3");
     IBaseFilter *filter = create_mpeg_splitter();
     IEnumPins *enum1, *enum2;
     IFilterGraph2 *graph;
@@ -293,10 +294,8 @@ static void test_enum_pins(void)
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-todo_wine
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pins[0]);
-todo_wine
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %d.\n", ref);
@@ -355,7 +354,6 @@ todo_wine
     graph = connect_input(filter, filename);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-todo_wine
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Reset(enum1);
@@ -400,8 +398,7 @@ todo_wine
 
 static void test_find_pin(void)
 {
-    static const WCHAR input_pinW[] = {'i','n','p','u','t',' ','p','i','n',0};
-    const WCHAR *filename = load_resource(mp3file);
+    const WCHAR *filename = load_resource(L"test.mp3");
     IBaseFilter *filter = create_mpeg_splitter();
     IFilterGraph2 *graph;
     IEnumPins *enum_pins;
@@ -410,14 +407,14 @@ static void test_find_pin(void)
     ULONG ref;
     BOOL ret;
 
-    hr = IBaseFilter_FindPin(filter, input_pinW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"input pin", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, inputW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Input", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, audioW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Audio", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
     graph = connect_input(filter, filename);
@@ -428,7 +425,7 @@ static void test_find_pin(void)
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, inputW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Input", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
     IPin_Release(pin);
@@ -437,7 +434,7 @@ static void test_find_pin(void)
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, audioW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Audio", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
     IPin_Release(pin);
@@ -453,7 +450,7 @@ static void test_find_pin(void)
 
 static void test_pin_info(void)
 {
-    const WCHAR *filename = load_resource(mp3file);
+    const WCHAR *filename = load_resource(L"test.mp3");
     IBaseFilter *filter = create_mpeg_splitter();
     ULONG ref, expect_ref;
     IFilterGraph2 *graph;
@@ -466,7 +463,7 @@ static void test_pin_info(void)
 
     graph = connect_input(filter, filename);
 
-    hr = IBaseFilter_FindPin(filter, inputW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Input", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     expect_ref = get_refcount(filter);
     ref = get_refcount(pin);
@@ -476,11 +473,11 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, inputW), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!wcscmp(info.achName, L"Input"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
     ok(ref == expect_ref + 1, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
-    todo_wine ok(ref == expect_ref + 1, "Got unexpected refcount %d.\n", ref);
+    ok(ref == expect_ref + 1, "Got unexpected refcount %d.\n", ref);
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
@@ -489,19 +486,19 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, inputW), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!wcscmp(id, L"Input"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, audioW, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Audio", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_QueryPinInfo(pin, &info);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, audioW), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!wcscmp(info.achName, L"Audio"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
@@ -510,7 +507,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, audioW), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!wcscmp(id, L"Audio"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     IPin_Release(pin);
@@ -535,17 +532,19 @@ static void test_media_types(void)
         MPEGLAYER3_ID_MPEG, 0, 192, 1, 0
     };
 
-    const WCHAR *filename = load_resource(mp3file);
+    const WCHAR *filename = load_resource(L"test.mp3");
     AM_MEDIA_TYPE mt = {{0}}, *pmt, expect_mt = {{0}};
     IBaseFilter *filter = create_mpeg_splitter();
+    MPEGLAYER3WAVEFORMAT *mp3wfx;
     IEnumMediaTypes *enummt;
+    MPEG1WAVEFORMAT *wfx;
     IFilterGraph2 *graph;
     HRESULT hr;
     ULONG ref;
     IPin *pin;
     BOOL ret;
 
-    IBaseFilter_FindPin(filter, inputW, &pin);
+    IBaseFilter_FindPin(filter, L"Input", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -604,41 +603,47 @@ static void test_media_types(void)
     mt.subtype = MEDIASUBTYPE_MPEG1Video;
     hr = IPin_QueryAccept(pin, &mt);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1VideoCD;
     hr = IPin_QueryAccept(pin, &mt);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1System;
     hr = IPin_QueryAccept(pin, &mt);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1AudioPayload;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1Payload;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-
     mt.subtype = MEDIASUBTYPE_MPEG1Packet;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-
     mt.subtype = GUID_NULL;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.subtype = MEDIASUBTYPE_MPEG1Audio;
 
     mt.majortype = MEDIATYPE_Audio;
-    mt.subtype = MEDIASUBTYPE_MPEG1Audio;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-
+    mt.majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     mt.majortype = MEDIATYPE_Stream;
+
+    mt.formattype = FORMAT_None;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_VideoInfo;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_WaveFormatEx;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     mt.bFixedSizeSamples = TRUE;
     mt.bTemporalCompression = TRUE;
     mt.lSampleSize = 123;
-    mt.formattype = FORMAT_WaveFormatEx;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -660,7 +665,7 @@ static void test_media_types(void)
     IEnumMediaTypes_Release(enummt);
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, audioW, &pin);
+    IBaseFilter_FindPin(filter, L"Audio", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -696,27 +701,42 @@ static void test_media_types(void)
 
     pmt->majortype = MEDIATYPE_Video;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->majortype = MEDIATYPE_Audio;
 
     pmt->subtype = MEDIASUBTYPE_MPEG1Audio;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->subtype = MEDIASUBTYPE_MPEG1Packet;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->subtype = MEDIASUBTYPE_MPEG1Video;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->subtype = MEDIASUBTYPE_MPEG1AudioPayload;
 
     pmt->formattype = FORMAT_None;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->formattype = GUID_NULL;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->formattype = FORMAT_WaveFormatEx;
+
+    wfx = (MPEG1WAVEFORMAT *)pmt->pbFormat;
+
+    wfx->fwHeadLayer = ACM_MPEG_LAYER2;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    wfx->fwHeadLayer = ACM_MPEG_LAYER3;
+
+    wfx->wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    wfx->wfx.wFormatTag = WAVE_FORMAT_MPEG;
 
     CoTaskMemFree(pmt->pbFormat);
     CoTaskMemFree(pmt);
@@ -795,6 +815,18 @@ static void test_media_types(void)
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     pmt->formattype = FORMAT_WaveFormatEx;
 
+    mp3wfx = (MPEGLAYER3WAVEFORMAT *)pmt->pbFormat;
+
+    mp3wfx->fdwFlags = MPEGLAYER3_FLAG_PADDING_OFF;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mp3wfx->fdwFlags = MPEGLAYER3_FLAG_PADDING_ISO;
+
+    mp3wfx->wfx.wFormatTag = WAVE_FORMAT_MPEG;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mp3wfx->wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
+
     CoTaskMemFree(pmt->pbFormat);
     CoTaskMemFree(pmt);
 
@@ -812,9 +844,708 @@ done:
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+static void test_enum_media_types(void)
+{
+    const WCHAR *filename = load_resource(L"test.mp3");
+    IBaseFilter *filter = create_mpeg_splitter();
+    IFilterGraph2 *graph = connect_input(filter, filename);
+    IEnumMediaTypes *enum1, *enum2;
+    AM_MEDIA_TYPE *mts[5];
+    ULONG ref, count;
+    unsigned int i;
+    HRESULT hr;
+    IPin *pin;
+    BOOL ret;
+
+    IBaseFilter_FindPin(filter, L"Input", &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    for (i = 0; i < 4; ++i)
+    {
+        hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (hr == S_OK) CoTaskMemFree(mts[0]);
+    }
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    for (i = 0; i < 4; ++i)
+    {
+        hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine ok(count == 1, "Got count %u.\n", count);
+        if (hr == S_OK) CoTaskMemFree(mts[0]);
+    }
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 2, mts, &count);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 2, "Got count %u.\n", count);
+    if (count > 0) CoTaskMemFree(mts[0]);
+    if (count > 1) CoTaskMemFree(mts[1]);
+
+    hr = IEnumMediaTypes_Next(enum1, 3, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 2, "Got count %u.\n", count);
+    if (count > 0) CoTaskMemFree(mts[0]);
+    if (count > 1) CoTaskMemFree(mts[1]);
+
+    hr = IEnumMediaTypes_Next(enum1, 2, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 5);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 4);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK) CoTaskMemFree(mts[0]);
+
+    IEnumMediaTypes_Release(enum1);
+    IEnumMediaTypes_Release(enum2);
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, L"Audio", &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    for (i = 0; i < 3; ++i)
+    {
+        hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+        todo_wine_if(i) ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (hr == S_OK) CoTaskMemFree(mts[0]->pbFormat);
+        if (hr == S_OK) CoTaskMemFree(mts[0]);
+    }
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    for (i = 0; i < 3; ++i)
+    {
+        hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+        todo_wine_if(i) ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine_if(i) ok(count == 1, "Got count %u.\n", count);
+        if (hr == S_OK) CoTaskMemFree(mts[0]->pbFormat);
+        if (hr == S_OK) CoTaskMemFree(mts[0]);
+    }
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 2, mts, &count);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 2, "Got count %u.\n", count);
+    CoTaskMemFree(mts[0]->pbFormat);
+    CoTaskMemFree(mts[0]);
+    if (count > 1) CoTaskMemFree(mts[1]->pbFormat);
+    if (count > 1) CoTaskMemFree(mts[1]);
+
+    hr = IEnumMediaTypes_Next(enum1, 2, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 1, "Got count %u.\n", count);
+    if (count) CoTaskMemFree(mts[0]->pbFormat);
+    if (count) CoTaskMemFree(mts[0]);
+
+    hr = IEnumMediaTypes_Next(enum1, 2, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 4);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 3);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    CoTaskMemFree(mts[0]->pbFormat);
+    CoTaskMemFree(mts[0]);
+
+    IEnumMediaTypes_Release(enum1);
+    IEnumMediaTypes_Release(enum2);
+    IPin_Release(pin);
+
+    IFilterGraph2_Release(graph);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
+static void test_unconnected_filter_state(void)
+{
+    IBaseFilter *filter = create_mpeg_splitter();
+    FILTER_STATE state;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Pause(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(state == State_Paused, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Run(filter, 0);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(state == State_Running, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Pause(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(state == State_Paused, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Run(filter, 0);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(state == State_Running, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+struct testfilter
+{
+    struct strmbase_filter filter;
+    struct strmbase_source source;
+    struct strmbase_sink sink;
+    IAsyncReader IAsyncReader_iface, *reader;
+    const AM_MEDIA_TYPE *mt;
+};
+
+static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, filter);
+}
+
+static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, unsigned int index)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+    if (!index)
+        return &filter->source.pin;
+    else if (index == 1)
+        return &filter->sink.pin;
+    return NULL;
+}
+
+static void testfilter_destroy(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+    strmbase_source_cleanup(&filter->source);
+    strmbase_sink_cleanup(&filter->sink);
+    strmbase_filter_cleanup(&filter->filter);
+}
+
+static const struct strmbase_filter_ops testfilter_ops =
+{
+    .filter_get_pin = testfilter_get_pin,
+    .filter_destroy = testfilter_destroy,
+};
+
+static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
+static HRESULT testsource_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IAsyncReader))
+        *out = &filter->IAsyncReader_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT WINAPI testsource_AttemptConnection(struct strmbase_source *iface,
+        IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    HRESULT hr;
+
+    iface->pin.peer = peer;
+    IPin_AddRef(peer);
+    CopyMediaType(&iface->pin.mt, mt);
+
+    if (FAILED(hr = IPin_ReceiveConnection(peer, &iface->pin.IPin_iface, mt)))
+    {
+        ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+        IPin_Release(peer);
+        iface->pin.peer = NULL;
+        FreeMediaType(&iface->pin.mt);
+    }
+
+    return hr;
+}
+
+static const struct strmbase_source_ops testsource_ops =
+{
+    .base.pin_query_interface = testsource_query_interface,
+    .base.pin_query_accept = testsource_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .pfnAttemptConnection = testsource_AttemptConnection,
+};
+
+static HRESULT testsink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT testsink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+    if (filter->mt && !compare_media_types(mt, filter->mt))
+        return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+    if (!index && filter->mt)
+    {
+        CopyMediaType(mt, filter->mt);
+        return S_OK;
+    }
+    return VFW_S_NO_MORE_ITEMS;
+}
+
+static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
+{
+    return S_OK;
+}
+
+static const struct strmbase_sink_ops testsink_ops =
+{
+    .base.pin_query_interface = testsink_query_interface,
+    .base.pin_query_accept = testsink_query_accept,
+    .base.pin_get_media_type = testsink_get_media_type,
+    .pfnReceive = testsink_Receive,
+};
+
+static struct testfilter *impl_from_IAsyncReader(IAsyncReader *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IAsyncReader_iface);
+}
+
+static HRESULT WINAPI async_reader_QueryInterface(IAsyncReader *iface, REFIID iid, void **out)
+{
+    return IPin_QueryInterface(&impl_from_IAsyncReader(iface)->source.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI async_reader_AddRef(IAsyncReader *iface)
+{
+    return IPin_AddRef(&impl_from_IAsyncReader(iface)->source.pin.IPin_iface);
+}
+
+static ULONG WINAPI async_reader_Release(IAsyncReader *iface)
+{
+    return IPin_Release(&impl_from_IAsyncReader(iface)->source.pin.IPin_iface);
+}
+
+static HRESULT WINAPI async_reader_RequestAllocator(IAsyncReader *iface,
+        IMemAllocator *preferred, ALLOCATOR_PROPERTIES *props, IMemAllocator **allocator)
+{
+    return IAsyncReader_RequestAllocator(impl_from_IAsyncReader(iface)->reader, preferred, props, allocator);
+}
+
+static HRESULT WINAPI async_reader_Request(IAsyncReader *iface, IMediaSample *sample, DWORD_PTR cookie)
+{
+    return IAsyncReader_Request(impl_from_IAsyncReader(iface)->reader, sample, cookie);
+}
+
+static HRESULT WINAPI async_reader_WaitForNext(IAsyncReader *iface,
+        DWORD timeout, IMediaSample **sample, DWORD_PTR *cookie)
+{
+    return IAsyncReader_WaitForNext(impl_from_IAsyncReader(iface)->reader, timeout, sample, cookie);
+}
+
+static HRESULT WINAPI async_reader_SyncReadAligned(IAsyncReader *iface, IMediaSample *sample)
+{
+    return IAsyncReader_SyncReadAligned(impl_from_IAsyncReader(iface)->reader, sample);
+}
+
+static HRESULT WINAPI async_reader_SyncRead(IAsyncReader *iface, LONGLONG position, LONG length, BYTE *buffer)
+{
+    return IAsyncReader_SyncRead(impl_from_IAsyncReader(iface)->reader, position, length, buffer);
+}
+
+static HRESULT WINAPI async_reader_Length(IAsyncReader *iface, LONGLONG *total, LONGLONG *available)
+{
+    return IAsyncReader_Length(impl_from_IAsyncReader(iface)->reader, total, available);
+}
+
+static HRESULT WINAPI async_reader_BeginFlush(IAsyncReader *iface)
+{
+    return IAsyncReader_BeginFlush(impl_from_IAsyncReader(iface)->reader);
+}
+
+static HRESULT WINAPI async_reader_EndFlush(IAsyncReader *iface)
+{
+    return IAsyncReader_EndFlush(impl_from_IAsyncReader(iface)->reader);
+}
+
+static const struct IAsyncReaderVtbl async_reader_vtbl =
+{
+    async_reader_QueryInterface,
+    async_reader_AddRef,
+    async_reader_Release,
+    async_reader_RequestAllocator,
+    async_reader_Request,
+    async_reader_WaitForNext,
+    async_reader_SyncReadAligned,
+    async_reader_SyncRead,
+    async_reader_Length,
+    async_reader_BeginFlush,
+    async_reader_EndFlush,
+};
+
+static void testfilter_init(struct testfilter *filter)
+{
+    static const GUID clsid = {0xabacab};
+    memset(filter, 0, sizeof(*filter));
+    strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
+    strmbase_source_init(&filter->source, &filter->filter, L"source", &testsource_ops);
+    strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
+    filter->IAsyncReader_iface.lpVtbl = &async_reader_vtbl;
+}
+
+static void test_connect_pin(void)
+{
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = MEDIATYPE_Stream,
+        .subtype = MEDIASUBTYPE_MPEG1Audio,
+        .formattype = FORMAT_WaveFormatEx,
+        .lSampleSize = 888,
+    };
+    IBaseFilter *filter = create_mpeg_splitter(), *reader;
+    const WCHAR *filename = load_resource(L"test.mp3");
+    struct testfilter testsource, testsink;
+    IFileSourceFilter *filesource;
+    AM_MEDIA_TYPE mt, *source_mt;
+    IPin *sink, *source, *peer;
+    IEnumMediaTypes *enummt;
+    IMediaControl *control;
+    IFilterGraph2 *graph;
+    HRESULT hr;
+    ULONG ref;
+    BOOL ret;
+
+    CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    testfilter_init(&testsource);
+    testfilter_init(&testsink);
+    IFilterGraph2_AddFilter(graph, &testsink.filter.IBaseFilter_iface, L"sink");
+    IFilterGraph2_AddFilter(graph, &testsource.filter.IBaseFilter_iface, L"source");
+    IFilterGraph2_AddFilter(graph, filter, L"splitter");
+    IBaseFilter_FindPin(filter, L"Input", &sink);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&reader);
+    IBaseFilter_QueryInterface(reader, &IID_IFileSourceFilter, (void **)&filesource);
+    IFileSourceFilter_Load(filesource, filename, NULL);
+    IFileSourceFilter_Release(filesource);
+    IBaseFilter_FindPin(reader, L"Output", &source);
+    IPin_QueryInterface(source, &IID_IAsyncReader, (void **)&testsource.reader);
+    IPin_Release(source);
+
+    /* Test sink connection. */
+
+    peer = (IPin *)0xdeadbeef;
+    hr = IPin_ConnectedTo(sink, &peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+    ok(!peer, "Got peer %p.\n", peer);
+
+    hr = IPin_ConnectionMediaType(sink, &mt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    req_mt.majortype = MEDIATYPE_Video;
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    req_mt.majortype = MEDIATYPE_Stream;
+
+    req_mt.subtype = MEDIASUBTYPE_RGB8;
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    req_mt.subtype = MEDIASUBTYPE_MPEG1Audio;
+
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ConnectedTo(sink, &peer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(peer == &testsource.source.pin.IPin_iface, "Got peer %p.\n", peer);
+    IPin_Release(peer);
+
+    hr = IPin_ConnectionMediaType(sink, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
+    ok(compare_media_types(&testsource.source.pin.mt, &req_mt), "Media types didn't match.\n");
+
+    /* Test source connection. */
+
+    IBaseFilter_FindPin(filter, L"Audio", &source);
+
+    peer = (IPin *)0xdeadbeef;
+    hr = IPin_ConnectedTo(source, &peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+    ok(!peer, "Got peer %p.\n", peer);
+
+    hr = IPin_ConnectionMediaType(source, &mt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    /* Exact connection. */
+
+    IPin_EnumMediaTypes(source, &enummt);
+    IEnumMediaTypes_Next(enummt, 1, &source_mt, NULL);
+    IEnumMediaTypes_Release(enummt);
+    CopyMediaType(&req_mt, source_mt);
+
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ConnectedTo(source, &peer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(peer == &testsink.sink.pin.IPin_iface, "Got peer %p.\n", peer);
+    IPin_Release(peer);
+
+    hr = IPin_ConnectionMediaType(source, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
+    ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
+
+    hr = IFilterGraph2_Disconnect(graph, source);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, source);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(testsink.sink.pin.peer == source, "Got peer %p.\n", testsink.sink.pin.peer);
+    IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+
+    req_mt.lSampleSize = 999;
+    req_mt.bTemporalCompression = req_mt.bFixedSizeSamples = TRUE;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+
+    req_mt.majortype = MEDIATYPE_Stream;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    req_mt.majortype = MEDIATYPE_Audio;
+
+    req_mt.subtype = MEDIASUBTYPE_PCM;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    req_mt.subtype = GUID_NULL;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    req_mt.subtype = MEDIASUBTYPE_MPEG1AudioPayload;
+
+    /* Connection with wildcards. */
+
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, source_mt), "Media types didn't match.\n");
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+
+    req_mt.majortype = GUID_NULL;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(compare_media_types(&testsink.sink.pin.mt, source_mt), "Media types didn't match.\n");
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+
+    req_mt.subtype = MEDIASUBTYPE_PCM;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+
+    req_mt.subtype = GUID_NULL;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, source_mt), "Media types didn't match.\n");
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+
+    req_mt.formattype = FORMAT_None;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+
+    req_mt.majortype = MEDIATYPE_Audio;
+    req_mt.subtype = MEDIASUBTYPE_MPEG1AudioPayload;
+    req_mt.formattype = GUID_NULL;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(compare_media_types(&testsink.sink.pin.mt, source_mt), "Media types didn't match.\n");
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+
+    req_mt.subtype = MEDIASUBTYPE_PCM;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+
+    req_mt.subtype = GUID_NULL;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, source_mt), "Media types didn't match.\n");
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+
+    req_mt.majortype = MEDIATYPE_Stream;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+
+    testsink.mt = &req_mt;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
+
+    req_mt.majortype = MEDIATYPE_Audio;
+    req_mt.subtype = MEDIASUBTYPE_MPEG1AudioPayload;
+    req_mt.formattype = FORMAT_WaveFormatEx;
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IPin_Release(source);
+    hr = IFilterGraph2_Disconnect(graph, sink);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, sink);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(testsource.source.pin.peer == sink, "Got peer %p.\n", testsource.source.pin.peer);
+    IFilterGraph2_Disconnect(graph, &testsource.source.pin.IPin_iface);
+
+    CoTaskMemFree(req_mt.pbFormat);
+    CoTaskMemFree(source_mt->pbFormat);
+    CoTaskMemFree(source_mt);
+
+    IAsyncReader_Release(testsource.reader);
+    IPin_Release(sink);
+    IMediaControl_Release(control);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(reader);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&testsource.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&testsink.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(mpegsplit)
 {
+    IBaseFilter *filter;
+
     CoInitialize(NULL);
+
+    if (FAILED(CoCreateInstance(&CLSID_MPEG1Splitter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter)))
+    {
+        skip("Failed to create MPEG-1 splitter.\n");
+        return;
+    }
+    IBaseFilter_Release(filter);
 
     test_interfaces();
     test_aggregation();
@@ -822,6 +1553,9 @@ START_TEST(mpegsplit)
     test_find_pin();
     test_pin_info();
     test_media_types();
+    test_enum_media_types();
+    test_unconnected_filter_state();
+    test_connect_pin();
 
     CoUninitialize();
 }

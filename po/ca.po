@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-17 21:33-0700\n"
+"PO-Revision-Date: 2019-12-31 11:39-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.2\n"
+"X-Generator: Poedit 2.2.4\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -58,9 +58,9 @@ msgstr "&Elimina"
 msgid "Support Information"
 msgstr "Informació de suport"
 
-#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
-#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:422
-#: comdlg32.rc:453 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
+#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:233
+#: comdlg32.rc:263 comdlg32.rc:307 comdlg32.rc:390 comdlg32.rc:424
+#: comdlg32.rc:455 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
 #: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
@@ -140,10 +140,10 @@ msgid "&Install"
 msgstr "&Instal·la"
 
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
-#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
-#: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
-#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:423
-#: comdlg32.rc:454 comdlg32.rc:479 comdlg32.rc:505 comdlg32.rc:528 credui.rc:53
+#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:172 comdlg32.rc:194
+#: comdlg32.rc:212 comdlg32.rc:234 comdlg32.rc:264 comdlg32.rc:308
+#: comdlg32.rc:330 comdlg32.rc:350 comdlg32.rc:391 comdlg32.rc:425
+#: comdlg32.rc:456 comdlg32.rc:481 comdlg32.rc:507 comdlg32.rc:530 credui.rc:53
 #: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
 #: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
@@ -210,7 +210,8 @@ msgstr ""
 msgid "Not specified"
 msgstr "No especificat"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr "Nom"
 
@@ -335,11 +336,11 @@ msgstr "hores"
 msgid "Properties for %s"
 msgstr "Propietats de %s"
 
-#: comctl32.rc:73 comdlg32.rc:264
+#: comctl32.rc:73 comdlg32.rc:265
 msgid "&Apply"
 msgstr "&Aplica"
 
-#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
+#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:309 user32.rc:88
 msgid "Help"
 msgstr "Ajuda"
 
@@ -351,7 +352,7 @@ msgstr "Assistent"
 msgid "< &Back"
 msgstr "< &Enrere"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:60
 msgid "&Next >"
 msgstr "&Següent >"
 
@@ -372,9 +373,9 @@ msgstr "&Tanca"
 msgid "R&eset"
 msgstr "&Reinicia"
 
-#: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
-#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
-#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:529 ieframe.rc:58 msacm32.rc:52
+#: comctl32.rc:102 comdlg32.rc:173 comdlg32.rc:195 comdlg32.rc:266
+#: comdlg32.rc:331 comdlg32.rc:351 comdlg32.rc:392 comdlg32.rc:426
+#: comdlg32.rc:482 comdlg32.rc:508 comdlg32.rc:531 ieframe.rc:58 msacm32.rc:52
 #: oledlg.rc:96 shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119
 #: oleview.rc:72 progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144
 #: progman.rc:160 progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77
@@ -448,413 +449,418 @@ msgstr "Avui:"
 msgid "Go to today"
 msgstr "Anar a avui"
 
-#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
-#: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
+#: comdlg32.rc:158 comdlg32.rc:171 comdlg32.rc:462 comdlg32.rc:487
+#: comdlg32.rc:514 shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "Obre"
 
-#: comdlg32.rc:160 comdlg32.rc:182
+#: comdlg32.rc:161 comdlg32.rc:183
 msgid "File &Name:"
 msgstr "&Nom de Fitxer:"
 
-#: comdlg32.rc:163 comdlg32.rc:185
+#: comdlg32.rc:164 comdlg32.rc:186
 msgid "&Directories:"
 msgstr "&Directoris:"
 
-#: comdlg32.rc:166 comdlg32.rc:188
+#: comdlg32.rc:167 comdlg32.rc:189
 msgid "List Files of &Type:"
 msgstr "Llista els fitxers del &tipus:"
 
-#: comdlg32.rc:168 comdlg32.rc:190
+#: comdlg32.rc:169 comdlg32.rc:191
 msgid "Dri&ves:"
 msgstr "&Unitats:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: comdlg32.rc:174 comdlg32.rc:196 shell32.rc:370 shell32.rc:407
 #: winefile.rc:172
 msgid "&Read Only"
 msgstr "&Només lectura"
 
-#: comdlg32.rc:179
+#: comdlg32.rc:180
 msgid "Save As..."
 msgstr "Anomena i desa..."
 
-#: comdlg32.rc:192 comdlg32.rc:145
+#: comdlg32.rc:193 comdlg32.rc:146
 msgid "Save As"
 msgstr "Anomena i desa"
 
-#: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
+#: comdlg32.rc:202 comdlg32.rc:211 comdlg32.rc:358 comdlg32.rc:55 hhctrl.rc:49
 #: wordpad.rc:173
 msgid "Print"
 msgstr "Imprimeix"
 
-#: comdlg32.rc:204
+#: comdlg32.rc:205
 msgid "Printer:"
 msgstr "Impressora:"
 
-#: comdlg32.rc:206 comdlg32.rc:373
+#: comdlg32.rc:207 comdlg32.rc:375
 msgid "Print range"
 msgstr "Interval d'impressió"
 
-#: comdlg32.rc:207 comdlg32.rc:374 regedit.rc:268
+#: comdlg32.rc:208 comdlg32.rc:376 regedit.rc:268
 msgid "&All"
 msgstr "&Tot"
 
-#: comdlg32.rc:208
+#: comdlg32.rc:209
 msgid "S&election"
 msgstr "S&elecció"
 
-#: comdlg32.rc:209
+#: comdlg32.rc:210
 msgid "&Pages"
 msgstr "Pàgine&s"
 
-#: comdlg32.rc:212 comdlg32.rc:234
+#: comdlg32.rc:213 comdlg32.rc:235
 msgid "&Setup"
 msgstr "&Configuració"
 
-#: comdlg32.rc:213
+#: comdlg32.rc:214
 msgid "&From:"
 msgstr "&De:"
 
-#: comdlg32.rc:214
+#: comdlg32.rc:215
 msgid "&To:"
 msgstr "&A:"
 
-#: comdlg32.rc:215 wineps.rc:42
+#: comdlg32.rc:216 wineps.rc:42
 msgid "Print &Quality:"
 msgstr "&Qualitat d'impressió:"
 
-#: comdlg32.rc:217
+#: comdlg32.rc:218
 msgid "Print to Fi&le"
 msgstr "Impressió en un &fitxer"
 
-#: comdlg32.rc:218
+#: comdlg32.rc:219
 msgid "Condensed"
 msgstr "Condensat"
 
-#: comdlg32.rc:224 comdlg32.rc:395
+#: comdlg32.rc:225 comdlg32.rc:397
 msgid "Print Setup"
 msgstr "Configuració d'impressió"
 
-#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:398
+#: comdlg32.rc:228 comdlg32.rc:361 comdlg32.rc:400
 msgid "Printer"
 msgstr "Impressora"
 
-#: comdlg32.rc:228
+#: comdlg32.rc:229
 msgid "&Default Printer"
 msgstr "Impressora &per defecte"
 
-#: comdlg32.rc:229
+#: comdlg32.rc:230
 msgid "[none]"
 msgstr "[cap]"
 
-#: comdlg32.rc:230
+#: comdlg32.rc:231
 msgid "Specific &Printer"
 msgstr "Impressora &específica"
 
-#: comdlg32.rc:235 comdlg32.rc:417 comdlg32.rc:441 wineps.rc:34
+#: comdlg32.rc:236 comdlg32.rc:419 comdlg32.rc:443 wineps.rc:34
 msgid "Orientation"
 msgstr "Orientació"
 
-#: comdlg32.rc:236
+#: comdlg32.rc:237
 msgid "Po&rtrait"
 msgstr "&Vertical"
 
-#: comdlg32.rc:237 comdlg32.rc:443 wineps.rc:37
+#: comdlg32.rc:238 comdlg32.rc:445 wineps.rc:37
 msgid "&Landscape"
 msgstr "&Horitzontal"
 
-#: comdlg32.rc:240 comdlg32.rc:411 comdlg32.rc:436 wineps.rc:28
+#: comdlg32.rc:241 comdlg32.rc:413 comdlg32.rc:438 wineps.rc:28
 msgid "Paper"
 msgstr "Paper"
 
-#: comdlg32.rc:241
+#: comdlg32.rc:242
 msgid "Si&ze"
 msgstr "&Mida"
 
-#: comdlg32.rc:242
+#: comdlg32.rc:243
 msgid "&Source"
 msgstr "&Font"
 
-#: comdlg32.rc:250 wineconsole.rc:85
+#: comdlg32.rc:251 wineconsole.rc:85
 msgid "Font"
 msgstr "Tipus de lletra"
 
-#: comdlg32.rc:253
+#: comdlg32.rc:254
 msgid "&Font:"
 msgstr "&Tipus de lletra:"
 
-#: comdlg32.rc:256
+#: comdlg32.rc:257
 msgid "Font St&yle:"
 msgstr "&Estil de lletra:"
 
-#: comdlg32.rc:259 comdlg32.rc:437 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
 msgid "&Size:"
 msgstr "&Cos:"
 
-#: comdlg32.rc:266
+#: comdlg32.rc:267
 msgid "Effects"
 msgstr "Efectes"
 
-#: comdlg32.rc:267
+#: comdlg32.rc:268
 msgid "Stri&keout"
 msgstr "&Ratllat"
 
-#: comdlg32.rc:268
+#: comdlg32.rc:269
 msgid "&Underline"
 msgstr "&Subratllat"
 
-#: comdlg32.rc:269 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:292
 msgid "&Color:"
 msgstr "C&olor:"
 
-#: comdlg32.rc:272
+#: comdlg32.rc:273
 msgid "Sample"
 msgstr "Exemple"
 
-#: comdlg32.rc:274
+#: comdlg32.rc:275
 msgid "Scr&ipt:"
 msgstr "&Alfabet:"
 
-#: comdlg32.rc:282
+#: comdlg32.rc:283 comdlg32.rc:288
 msgid "Color"
 msgstr "Color"
 
-#: comdlg32.rc:285
+#: comdlg32.rc:286
 msgid "&Basic Colors:"
 msgstr "&Colors bàsics:"
 
-#: comdlg32.rc:286
+#: comdlg32.rc:287
 msgid "&Custom Colors:"
 msgstr "Colors personalit&zats:"
 
-#: comdlg32.rc:287 comdlg32.rc:310
-msgid "Color |  Sol&id"
-msgstr "Color |  &Sòlid"
+#: comdlg32.rc:289
+msgid "|S&olid"
+msgstr "|Sò&lid"
 
-#: comdlg32.rc:288
+#: comdlg32.rc:290
 msgid "&Red:"
 msgstr "Ver&mell:"
 
-#: comdlg32.rc:290
+#: comdlg32.rc:292
 msgid "&Green:"
 msgstr "&Verd:"
 
-#: comdlg32.rc:292
+#: comdlg32.rc:294
 msgid "&Blue:"
 msgstr "&Blau:"
 
-#: comdlg32.rc:294
+#: comdlg32.rc:296
 msgid "&Hue:"
 msgstr "&To:"
 
-#: comdlg32.rc:296
+#: comdlg32.rc:298
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Sat.:"
 
-#: comdlg32.rc:298
+#: comdlg32.rc:300
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Llum.:"
 
-#: comdlg32.rc:308
+#: comdlg32.rc:310
 msgid "&Add to Custom Colors"
 msgstr "A&fegeix als colors personalitzats"
 
-#: comdlg32.rc:309
+#: comdlg32.rc:311
 msgid "&Define Custom Colors >>"
 msgstr "D&efinició de colors personalitzats >>"
 
-#: comdlg32.rc:316 regedit.rc:275 regedit.rc:285
+#: comdlg32.rc:312
+msgctxt "Solid"
+msgid "&o"
+msgstr "&l"
+
+#: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
 msgstr "Cerca"
 
-#: comdlg32.rc:319 comdlg32.rc:338
+#: comdlg32.rc:321 comdlg32.rc:340
 msgid "Fi&nd What:"
 msgstr "&Cerca:"
 
-#: comdlg32.rc:321 comdlg32.rc:342
+#: comdlg32.rc:323 comdlg32.rc:344
 msgid "Match &Whole Word Only"
 msgstr "Troba només &paraules completes"
 
-#: comdlg32.rc:322 comdlg32.rc:343
+#: comdlg32.rc:324 comdlg32.rc:345
 msgid "Match &Case"
 msgstr "&Distingeix entre majúscules i minúscules"
 
-#: comdlg32.rc:323 joy.rc:71
+#: comdlg32.rc:325 joy.rc:71
 msgid "Direction"
 msgstr "Direcció"
 
-#: comdlg32.rc:324 view.rc:42
+#: comdlg32.rc:326 view.rc:42
 msgid "&Up"
 msgstr "A&munt"
 
-#: comdlg32.rc:325 view.rc:43
+#: comdlg32.rc:327 view.rc:43
 msgid "&Down"
 msgstr "A&vall"
 
-#: comdlg32.rc:327 comdlg32.rc:345
+#: comdlg32.rc:329 comdlg32.rc:347
 msgid "&Find Next"
 msgstr "Cerca el &següent"
 
-#: comdlg32.rc:335
+#: comdlg32.rc:337
 msgid "Replace"
 msgstr "Substitució"
 
-#: comdlg32.rc:340
+#: comdlg32.rc:342
 msgid "Re&place With:"
 msgstr "Substitueix-ho p&er:"
 
-#: comdlg32.rc:346
+#: comdlg32.rc:348
 msgid "&Replace"
 msgstr "Su&bstitueix"
 
-#: comdlg32.rc:347
+#: comdlg32.rc:349
 msgid "Replace &All"
 msgstr "Substitueix-&ho tot"
 
-#: comdlg32.rc:361 comdlg32.rc:401 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:363 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Propietats"
 
-#: comdlg32.rc:362
+#: comdlg32.rc:364
 msgid "Print to fi&le"
 msgstr "Impressió en un &fitxer"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
+#: comdlg32.rc:365 comdlg32.rc:401 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Nom:"
 
-#: comdlg32.rc:364 comdlg32.rc:402
+#: comdlg32.rc:366 comdlg32.rc:404
 msgid "Status:"
 msgstr "Estat:"
 
-#: comdlg32.rc:366 comdlg32.rc:404
+#: comdlg32.rc:368 comdlg32.rc:406
 msgid "Type:"
 msgstr "Tipus:"
 
-#: comdlg32.rc:368 comdlg32.rc:406
+#: comdlg32.rc:370 comdlg32.rc:408
 msgid "Where:"
 msgstr "On:"
 
-#: comdlg32.rc:370 comdlg32.rc:408
+#: comdlg32.rc:372 comdlg32.rc:410
 msgid "Comment:"
 msgstr "Comentari:"
 
-#: comdlg32.rc:375
+#: comdlg32.rc:377
 msgid "Pa&ges"
 msgstr "Pà&gines"
 
-#: comdlg32.rc:376
+#: comdlg32.rc:378
 msgid "&Selection"
 msgstr "&Selecció"
 
-#: comdlg32.rc:379
+#: comdlg32.rc:381
 msgid "&from:"
 msgstr "&de:"
 
-#: comdlg32.rc:380
+#: comdlg32.rc:382
 msgid "&to:"
 msgstr "&a:"
 
-#: comdlg32.rc:382
+#: comdlg32.rc:384
 msgid "Copies"
 msgstr "Còpies"
 
-#: comdlg32.rc:383
+#: comdlg32.rc:385
 msgid "Number of &copies:"
 msgstr "Nombre de &còpies:"
 
-#: comdlg32.rc:385
+#: comdlg32.rc:387
 msgid "C&ollate"
 msgstr "C&ompagina"
 
-#: comdlg32.rc:412 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:300
 msgid "Si&ze:"
 msgstr "&Mida:"
 
-#: comdlg32.rc:414
+#: comdlg32.rc:416
 msgid "&Source:"
 msgstr "&Font:"
 
-#: comdlg32.rc:419
+#: comdlg32.rc:421
 msgid "P&ortrait"
 msgstr "&Vertical"
 
-#: comdlg32.rc:420
+#: comdlg32.rc:422
 msgid "L&andscape"
 msgstr "&Horitzontal"
 
-#: comdlg32.rc:430
+#: comdlg32.rc:432
 msgid "Setup Page"
 msgstr "Configuració de pàgina"
 
-#: comdlg32.rc:439
+#: comdlg32.rc:441
 msgid "&Tray:"
 msgstr "&Safata:"
 
-#: comdlg32.rc:442 wineps.rc:35
+#: comdlg32.rc:444 wineps.rc:35
 msgid "&Portrait"
 msgstr "&Vertical"
 
-#: comdlg32.rc:445
+#: comdlg32.rc:447
 msgid "L&eft:"
 msgstr "&Esquerra:"
 
-#: comdlg32.rc:447 notepad.rc:112
+#: comdlg32.rc:449 notepad.rc:112
 msgid "&Right:"
 msgstr "&Dret:"
 
-#: comdlg32.rc:449
+#: comdlg32.rc:451
 msgid "T&op:"
 msgstr "&Superior:"
 
-#: comdlg32.rc:451 notepad.rc:114
+#: comdlg32.rc:453 notepad.rc:114
 msgid "&Bottom:"
 msgstr "&Inferior:"
 
-#: comdlg32.rc:455
+#: comdlg32.rc:457
 msgid "P&rinter..."
 msgstr "&Impressora..."
 
-#: comdlg32.rc:463 comdlg32.rc:488
+#: comdlg32.rc:465 comdlg32.rc:490
 msgid "Look &in:"
 msgstr "Cerca &en:"
 
-#: comdlg32.rc:469 comdlg32.rc:495
+#: comdlg32.rc:471 comdlg32.rc:497
 msgid "File &name:"
 msgstr "&Nom de fitxer:"
 
-#: comdlg32.rc:473 comdlg32.rc:499
+#: comdlg32.rc:475 comdlg32.rc:501
 msgid "Files of &type:"
 msgstr "Fitxers del &tipus:"
 
-#: comdlg32.rc:476 comdlg32.rc:502
+#: comdlg32.rc:478 comdlg32.rc:504
 msgid "Open as &read-only"
 msgstr "Obre per només &lectura"
 
-#: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:524 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "&Obre"
 
-#: comdlg32.rc:515
+#: comdlg32.rc:517
 msgid "File name:"
 msgstr "Nom de fitxer:"
 
-#: comdlg32.rc:518
+#: comdlg32.rc:520
 msgid "Files of type:"
 msgstr "Fitxers del tipus:"
 
-#: comdlg32.rc:32
+#: comdlg32.rc:33
 msgid "File not found"
 msgstr "Fitxer no trobat"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
 msgstr "Si us plau, verifiqueu que s'hagués donat el nom correcte del fitxer"
 
-#: comdlg32.rc:34
+#: comdlg32.rc:35
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
@@ -862,7 +868,7 @@ msgstr ""
 "El fitxer no existeix.\n"
 "El voleu crear?"
 
-#: comdlg32.rc:35
+#: comdlg32.rc:36
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
@@ -870,11 +876,11 @@ msgstr ""
 "El fitxer ja existeix.\n"
 "El voleu substituir?"
 
-#: comdlg32.rc:36
+#: comdlg32.rc:37
 msgid "Invalid character(s) in path"
 msgstr "Hi ha caràcters no vàlids en el camí"
 
-#: comdlg32.rc:37
+#: comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
@@ -882,123 +888,123 @@ msgstr ""
 "Un nom de fitxer no pot contenir cap dels caràcters següents:\n"
 "                          / : < > |"
 
-#: comdlg32.rc:38
+#: comdlg32.rc:39
 msgid "Path does not exist"
 msgstr "El camí no existeix"
 
-#: comdlg32.rc:39
+#: comdlg32.rc:40
 msgid "File does not exist"
 msgstr "El fitxer no existeix"
 
-#: comdlg32.rc:40
+#: comdlg32.rc:41
 msgid "The selection contains a non-folder object"
 msgstr "Aquesta selecció conté un objecte no fitxer"
 
-#: comdlg32.rc:45
+#: comdlg32.rc:46
 msgid "Up One Level"
 msgstr "Amunt un nivell"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:47
 msgid "Create New Folder"
 msgstr "Crea una carpeta nova"
 
-#: comdlg32.rc:47
+#: comdlg32.rc:48
 msgid "List"
 msgstr "Llista"
 
-#: comdlg32.rc:48 cryptui.rc:201
+#: comdlg32.rc:49 cryptui.rc:201
 msgid "Details"
 msgstr "Detalls"
 
-#: comdlg32.rc:49
+#: comdlg32.rc:50
 msgid "Browse to Desktop"
 msgstr "Navega a l'escriptori"
 
-#: comdlg32.rc:113
+#: comdlg32.rc:114
 msgid "Regular"
 msgstr "Regular"
 
-#: comdlg32.rc:114
+#: comdlg32.rc:115
 msgid "Bold"
 msgstr "Negreta"
 
-#: comdlg32.rc:115
+#: comdlg32.rc:116
 msgid "Italic"
 msgstr "Cursiva"
 
-#: comdlg32.rc:116
+#: comdlg32.rc:117
 msgid "Bold Italic"
 msgstr "Negreta cursiva"
 
-#: comdlg32.rc:121 wordpad.rc:125
+#: comdlg32.rc:122 wordpad.rc:125
 msgid "Black"
 msgstr "Negra"
 
-#: comdlg32.rc:122 wordpad.rc:126
+#: comdlg32.rc:123 wordpad.rc:126
 msgid "Maroon"
 msgstr "Granada"
 
-#: comdlg32.rc:123 wordpad.rc:127
+#: comdlg32.rc:124 wordpad.rc:127
 msgid "Green"
 msgstr "Verd"
 
-#: comdlg32.rc:124 wordpad.rc:128
+#: comdlg32.rc:125 wordpad.rc:128
 msgid "Olive"
 msgstr "Oliva"
 
-#: comdlg32.rc:125 wordpad.rc:129
+#: comdlg32.rc:126 wordpad.rc:129
 msgid "Navy"
 msgstr "Marina"
 
-#: comdlg32.rc:126 wordpad.rc:130
+#: comdlg32.rc:127 wordpad.rc:130
 msgid "Purple"
 msgstr "Porpra"
 
-#: comdlg32.rc:127 wordpad.rc:131
+#: comdlg32.rc:128 wordpad.rc:131
 msgid "Teal"
 msgstr "Xarxet"
 
-#: comdlg32.rc:128 wordpad.rc:132
+#: comdlg32.rc:129 wordpad.rc:132
 msgid "Gray"
 msgstr "Gris"
 
-#: comdlg32.rc:129 wordpad.rc:133
+#: comdlg32.rc:130 wordpad.rc:133
 msgid "Silver"
 msgstr "Plata"
 
-#: comdlg32.rc:130 wordpad.rc:134
+#: comdlg32.rc:131 wordpad.rc:134
 msgid "Red"
 msgstr "Vermella"
 
-#: comdlg32.rc:131 wordpad.rc:135
+#: comdlg32.rc:132 wordpad.rc:135
 msgid "Lime"
 msgstr "Llima"
 
-#: comdlg32.rc:132 wordpad.rc:136
+#: comdlg32.rc:133 wordpad.rc:136
 msgid "Yellow"
 msgstr "Groga"
 
-#: comdlg32.rc:133 wordpad.rc:137
+#: comdlg32.rc:134 wordpad.rc:137
 msgid "Blue"
 msgstr "Blau"
 
-#: comdlg32.rc:134 wordpad.rc:138
+#: comdlg32.rc:135 wordpad.rc:138
 msgid "Fuchsia"
 msgstr "Fúcsia"
 
-#: comdlg32.rc:135 wordpad.rc:139
+#: comdlg32.rc:136 wordpad.rc:139
 msgid "Aqua"
 msgstr "Aigua"
 
-#: comdlg32.rc:136 wordpad.rc:140
+#: comdlg32.rc:137 wordpad.rc:140
 msgid "White"
 msgstr "Blanca"
 
-#: comdlg32.rc:56
+#: comdlg32.rc:57
 msgid "Unreadable Entry"
 msgstr "Entrada illegible"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:59
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
@@ -1006,11 +1012,11 @@ msgstr ""
 "Aquest valor no cau dins l'interval de pàgines.\n"
 "Si us plau, introdueix un valor entre %1!d! i %2!d!."
 
-#: comdlg32.rc:60
+#: comdlg32.rc:61
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "L'entrada 'de' no pot superar l'entrada 'a'."
 
-#: comdlg32.rc:62
+#: comdlg32.rc:63
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -1018,11 +1024,11 @@ msgstr ""
 "Els marges se superposen o cauen fora dels límits de la pàgina.\n"
 "Si us plau, reintrodueix els marges."
 
-#: comdlg32.rc:64
+#: comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "El camp 'Nombre de còpies' no pot estar buit."
 
-#: comdlg32.rc:66
+#: comdlg32.rc:67
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -1030,31 +1036,31 @@ msgstr ""
 "Aquest gran nombre de còpies no és compatible amb la vostra impressora.\n"
 "Si us plau, introduïu un valor entre 1 i %d."
 
-#: comdlg32.rc:67
+#: comdlg32.rc:68
 msgid "A printer error occurred."
 msgstr "Ha ocorregut un error d'impressora."
 
-#: comdlg32.rc:68
+#: comdlg32.rc:69
 msgid "No default printer defined."
 msgstr "No s'ha seleccionat cap impressora per defecte."
 
-#: comdlg32.rc:69
+#: comdlg32.rc:70
 msgid "Cannot find the printer."
 msgstr "No es pot trobar la impressora."
 
-#: comdlg32.rc:70 progman.rc:76
+#: comdlg32.rc:71 progman.rc:76
 msgid "Out of memory."
 msgstr "No queda memòria."
 
-#: comdlg32.rc:71
+#: comdlg32.rc:72
 msgid "An error occurred."
 msgstr "Ha ocorregut un error."
 
-#: comdlg32.rc:72
+#: comdlg32.rc:73
 msgid "Unknown printer driver."
 msgstr "El controlador d'impressora és desconegut."
 
-#: comdlg32.rc:75
+#: comdlg32.rc:76
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
@@ -1063,155 +1069,155 @@ msgstr ""
 "configurar la pàgina o imprimir un document, cal instal·lar una impressora. "
 "Si us plau, instal·leu una i torneu a intentar."
 
-#: comdlg32.rc:141
+#: comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "Seleccioneu un cos de lletra entre %1!d! i %2!d! punts."
 
-#: comdlg32.rc:142 ieframe.rc:35
+#: comdlg32.rc:143 ieframe.rc:35
 msgid "&Save"
 msgstr "&Desa"
 
-#: comdlg32.rc:143
+#: comdlg32.rc:144
 msgid "Save &in:"
 msgstr "Desa &en:"
 
-#: comdlg32.rc:144
+#: comdlg32.rc:145
 msgid "Save"
 msgstr "Desa"
 
-#: comdlg32.rc:146
+#: comdlg32.rc:147
 msgid "Open File"
 msgstr "Obre fitxer"
 
-#: comdlg32.rc:147
+#: comdlg32.rc:148
 msgid "Select Folder"
 msgstr "Selecciona una carpeta"
 
-#: comdlg32.rc:148
+#: comdlg32.rc:149
 msgid "Font size has to be a number."
 msgstr "El cos de lletra ha de ser un nombre."
 
-#: comdlg32.rc:83 oleview.rc:98
+#: comdlg32.rc:84 oleview.rc:98
 msgid "Ready"
 msgstr "Llest"
 
-#: comdlg32.rc:84
+#: comdlg32.rc:85
 msgid "Paused; "
 msgstr "En pausa; "
 
-#: comdlg32.rc:85
+#: comdlg32.rc:86
 msgid "Error; "
 msgstr "Error; "
 
-#: comdlg32.rc:86
+#: comdlg32.rc:87
 msgid "Pending deletion; "
 msgstr "Pendent d'eliminació; "
 
-#: comdlg32.rc:87
+#: comdlg32.rc:88
 msgid "Paper jam; "
 msgstr "Embús de paper; "
 
-#: comdlg32.rc:88
+#: comdlg32.rc:89
 msgid "Out of paper; "
 msgstr "No queda paper; "
 
-#: comdlg32.rc:89
+#: comdlg32.rc:90
 msgid "Feed paper manual; "
 msgstr "Introducció de paper manual; "
 
-#: comdlg32.rc:90
+#: comdlg32.rc:91
 msgid "Paper problem; "
 msgstr "Problema de paper; "
 
-#: comdlg32.rc:91
+#: comdlg32.rc:92
 msgid "Printer offline; "
 msgstr "Impressora fora de línia; "
 
-#: comdlg32.rc:92
+#: comdlg32.rc:93
 msgid "I/O Active; "
 msgstr "Activa d'E/S; "
 
-#: comdlg32.rc:93
+#: comdlg32.rc:94
 msgid "Busy; "
 msgstr "Ocupada; "
 
-#: comdlg32.rc:94
+#: comdlg32.rc:95
 msgid "Printing; "
 msgstr "S'està imprimint; "
 
-#: comdlg32.rc:95
+#: comdlg32.rc:96
 msgid "Output tray is full; "
 msgstr "La safata de sortida està plena; "
 
-#: comdlg32.rc:96
+#: comdlg32.rc:97
 msgid "Not available; "
 msgstr "No disponible; "
 
-#: comdlg32.rc:97
+#: comdlg32.rc:98
 msgid "Waiting; "
 msgstr "S'està esperant; "
 
-#: comdlg32.rc:98
+#: comdlg32.rc:99
 msgid "Processing; "
 msgstr "S'està processant; "
 
-#: comdlg32.rc:99
+#: comdlg32.rc:100
 msgid "Initializing; "
 msgstr "S'està inicialitzant; "
 
-#: comdlg32.rc:100
+#: comdlg32.rc:101
 msgid "Warming up; "
 msgstr "S'està escalfant; "
 
-#: comdlg32.rc:101
+#: comdlg32.rc:102
 msgid "Toner low; "
 msgstr "Tòner baix; "
 
-#: comdlg32.rc:102
+#: comdlg32.rc:103
 msgid "No toner; "
 msgstr "Manca tòner; "
 
-#: comdlg32.rc:103
+#: comdlg32.rc:104
 msgid "Page punt; "
 msgstr "Expulsió de pàgina; "
 
-#: comdlg32.rc:104
+#: comdlg32.rc:105
 msgid "Interrupted by user; "
 msgstr "Interromput per usuari; "
 
-#: comdlg32.rc:105
+#: comdlg32.rc:106
 msgid "Out of memory; "
 msgstr "No queda memòria; "
 
-#: comdlg32.rc:106
+#: comdlg32.rc:107
 msgid "The printer door is open; "
 msgstr "La porta de la impressora està oberta; "
 
-#: comdlg32.rc:107
+#: comdlg32.rc:108
 msgid "Print server unknown; "
 msgstr "Servidor d'impressió desconegut; "
 
-#: comdlg32.rc:108
+#: comdlg32.rc:109
 msgid "Power save mode; "
 msgstr "Mode d'estalvi d'energia; "
 
-#: comdlg32.rc:77
+#: comdlg32.rc:78
 msgid "Default Printer; "
 msgstr "Impressora per defecte; "
 
-#: comdlg32.rc:78
+#: comdlg32.rc:79
 msgid "There are %d documents in the queue"
 msgstr "Hi ha %d documents en la cua"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:80
 msgid "Margins [inches]"
 msgstr "Marges [polzades]"
 
-#: comdlg32.rc:80
+#: comdlg32.rc:81
 msgid "Margins [mm]"
 msgstr "Marges [mm]"
 
-#: comdlg32.rc:81 sane.rc:33
+#: comdlg32.rc:82 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
@@ -1220,7 +1226,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Nom d'usuari:"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:80
 msgid "&Password:"
 msgstr "&Contrasenya:"
 
@@ -1716,7 +1722,7 @@ msgstr "Correu electrònic segur"
 
 #: crypt32.rc:142
 msgid "Time Stamping"
-msgstr "Segellament de temps"
+msgstr "Marcació horària"
 
 #: crypt32.rc:143
 msgid "Microsoft Trust List Signing"
@@ -1724,7 +1730,7 @@ msgstr "Segellament de llista de confiança del Microsoft"
 
 #: crypt32.rc:144
 msgid "Microsoft Time Stamping"
-msgstr "Segellament de temps del Microsoft"
+msgstr "Marcació horària del Microsoft"
 
 #: crypt32.rc:145
 msgid "IP security end system"
@@ -2545,7 +2551,7 @@ msgstr "Aquest certificat està bé."
 msgid "Field"
 msgstr "Camp"
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr "Valor"
 
@@ -3124,7 +3130,7 @@ msgstr "Símbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:99 wldap32.rc:112
 msgid "Other"
 msgstr "Altra"
 
@@ -3189,7 +3195,7 @@ msgstr "&Inici"
 msgid "&Stop"
 msgstr "&Atura"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Actualitza"
 
@@ -3719,6 +3725,20 @@ msgstr "La compilació condicional està desactivada"
 msgid "Expected '@'"
 msgstr "S'esperava '@'"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "Error desconegut"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "S'esperava un nombre"
@@ -3763,31 +3783,35 @@ msgstr "S'esperava un objecte JScript"
 msgid "Syntax error in regular expression"
 msgstr "Error de sintaxi en l'expressió regular"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI a codificar conté caràcters no vàlids"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "L'URI a descodificar és incorrecte"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "El nombre de xifres de fracció és fora d'interval"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "La precisió és fora d'interval"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "La longitud del vector ha de ser un nombre enter positiu finit"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "S'esperava un objecte Array"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3795,15 +3819,15 @@ msgstr ""
 "no es pot establir l'atribut 'writable' en el descriptor de propietat com a "
 "'true' en aquest objecte"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "No es pot redefinir la propietat no configurable '|'"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr "No es pot modificar la propietat no escrivible '|'"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr "La propietat no pot tenir ambdós mètodes d'accés i un valor"
 
@@ -3917,7 +3941,7 @@ msgstr "La longitud és dolenta.\n"
 
 #: winerror.mc:153 winerror.mc:528
 msgid "Seek error.\n"
-msgstr "Hi ha hagut un error en cercar.\n"
+msgstr "Hi ha hagut un error en saltar.\n"
 
 #: winerror.mc:158
 msgid "Not DOS disk.\n"
@@ -4209,7 +4233,7 @@ msgstr "L'ús d'identificador d'accés directe no és vàlid.\n"
 
 #: winerror.mc:523
 msgid "Negative seek.\n"
-msgstr "La cerca és negativa.\n"
+msgstr "El salt és negatiu.\n"
 
 #: winerror.mc:533
 msgid "Drive is a JOIN target.\n"
@@ -4365,7 +4389,7 @@ msgstr "El fitxer ja existeix.\n"
 
 #: winerror.mc:723
 msgid "Invalid flag number.\n"
-msgstr "El número de bandera no és vàlid.\n"
+msgstr "El número d'opció no és vàlid.\n"
 
 #: winerror.mc:728
 msgid "Semaphore name not found.\n"
@@ -4617,7 +4641,7 @@ msgstr "No es pot acabar.\n"
 
 #: winerror.mc:1038
 msgid "Invalid flags.\n"
-msgstr "Les banderes no són vàlides.\n"
+msgstr "Les opcions no són vàlides.\n"
 
 #: winerror.mc:1043
 msgid "Unrecognized volume.\n"
@@ -5693,7 +5717,7 @@ msgstr "L'autenticació mútua ha fallat.\n"
 
 #: winerror.mc:2393
 msgid "Time skew between client and server.\n"
-msgstr "Hi ha una asimetria de temps entre el client i el servidor.\n"
+msgstr "Hi ha una asimetria horària entre el client i el servidor.\n"
 
 #: winerror.mc:2398
 msgid "Invalid window handle.\n"
@@ -6833,541 +6857,399 @@ msgstr "Envia correu"
 
 #: mferror.mc:249 mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "Ja s'ha fet la sol·licitud per començar.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "No s'ha trobat l'UUID de l'objecte.\n"
+msgstr "No s'ha finalitzat el receptor.\n"
+
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "El receptor ja s'ha aturat.\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "La plataforma d'instal·lació no és compatible.\n"
+msgstr "No s'ha inicialitzat la plataforma de Fundació de Mitjans.\n"
 
 #: mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "El nombre de bytes és massa petit.\n"
+msgstr "La memòria intermèdia és massa petita.\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "La sintaxi de consulta no és vàlida.\n"
+msgstr "La sol·licitud no és vàlida.\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "El número de segment no és vàlid.\n"
+msgstr "El número de flux no és vàlid.\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "El tipus de dades no és vàlid.\n"
+msgstr "El tipus de mitjans no és vàlid.\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "No hi ha més entrades.\n"
+msgstr "No s'accepten més entrades.\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "No s'ha trobat l'UUID de l'objecte.\n"
+msgstr "No s'ha inicialitzat l'objecte.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "No s'admet l'operació.\n"
+msgstr "No s'admet la representació.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "No hi ha més tipus en la llista de tipus de mitjans suggerits.\n"
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El servei és incompatible.\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "Hi ha hagut un error de xarxa inesperat.\n"
+msgstr "Hi ha hagut un error inesperat.\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "L'hora no és vàlida.\n"
+msgstr "El tipus no és vàlid.\n"
 
 #: mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "El format de píxels no és vàlid.\n"
+msgstr "El format de fitxer no és vàlid.\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "L'hora no és vàlida.\n"
+msgstr "La marca horària no és vàlida.\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "L'esquema és incompatible.\n"
 
 #: mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El flux de bytes és incompatible.\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El format horari és incompatible.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "La marca horària de la mostra no està establerta.\n"
 
 #: mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "La mostra no té cap duració establerta.\n"
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "Les dades no són vàlides.\n"
+msgstr "Les dades de flux no són vàlides.\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "No hi ha cap ajuda disponible."
+msgstr "Suport per a temps real no està disponible.\n"
 
 #: mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "La velocitat és incompatible.\n"
 
 #: mferror.mc:200
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported thinning.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "L'aprimament és incompatible.\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "No s'admet la sol·licitud.\n"
+msgstr "No s'admet marxa enrere.\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "No s'admet el nivell d'autorització.\n"
+msgstr "La transició de velocitat no és compatible.\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "El canvi de velocitat ha estat cancel·lat per un altre.\n"
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "No s'ha trobat l'UUID de l'objecte.\n"
+msgstr "No s'ha trobat l'objecte o el valor.\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "No hi ha cap ajuda disponible."
+msgstr "El valor no està disponible.\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "No hi ha cap ajuda disponible."
+msgstr "El rellotge no està disponible.\n"
 
 #: mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "No s'accepten atributs extensos.\n"
+msgstr "No s'accepten múltiples subscriptors.\n"
 
 #: mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "El controlador no estava habilitat."
+msgstr "El temporitzador s'ha fet orfe.\n"
 
 #: mferror.mc:277
-#, fuzzy
-#| msgid "Character translation table open failed.\n"
 msgid "State transition is pending.\n"
-msgstr "Ha fallat l'obertura de la taula de traducció de caràcters.\n"
+msgstr "Una transició d'estat està penjada.\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported state transition.\n"
-msgstr "No s'admet el nivell d'autorització.\n"
+msgstr "La transició de velocitat no és compatible.\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "Ha ocorregut un error intern.\n"
+msgstr "Ha ocorregut un error no recuperable.\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "La mostra té massa memòria intermèdia.\n"
 
 #: mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "No es pot escriure al directori temporal.\n"
+msgstr "No es pot escriure a la mostra.\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "El camí no és vàlid.\n"
+msgstr "La clau no és vàlida.\n"
 
 #: mferror.mc:319
-#, fuzzy
-#| msgid "Wrong stub version.\n"
 msgid "Bad startup version.\n"
-msgstr "La versió d'esbós (stub) és incorrecta.\n"
+msgstr "La versió d'inici és dolenta.\n"
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El subtítol és incompatible.\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "L'estació de treball no és vàlida.\n"
+msgstr "La posició no és vàlida.\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "No s'ha trobat el fitxer.\n"
+msgstr "No s'ha trobat l'atribut.\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "El tipus de ganxo no es permet.\n"
+msgstr "El tipus de propietat no es permet.\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "No s'admet l'operació.\n"
+msgstr "El tipus de propietat no s'admet.\n"
 
 #: mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "El directori no està buit.\n"
+msgstr "La propietat està buida.\n"
 
 #: mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "El directori no està buit.\n"
+msgstr "La propietat no està buida.\n"
 
 #: mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "El tipus de ganxo no es permet.\n"
+msgstr "No es permet una propietat vectora.\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "Cal una propietat vectora.\n"
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "L'usuari ha cancel·lat l'operació.\n"
+msgstr "S'ha cancel·lat l'operació.\n"
 
 #: mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "El servidor no està inhabilitat.\n"
+msgstr "No es pot saltar en el flux de bytes.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "La plataforma està inhabilitat en el mode segur.\n"
 
 #: mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "No es pot crear el fil de servei.\n"
+msgstr "No es pot analitzar el flux de bytes.\n"
 
 #: mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "S'han passat opcions mutualment exclusives al resolutor de fons.\n"
 
 #: mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "La interfície és desconeguda.\n"
+msgstr "La llargada del flux de dades és desconeguda.\n"
 
 #: mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "L'índex no és vàlid.\n"
+msgstr "L'índex de cua de treball no és vàlida.\n"
 
 #: mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "Cap servidor d'autenticació està disponible.\n"
+msgstr "Cap esdeveniment està disponible.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "No s'admet el nivell d'autorització.\n"
+msgstr "La transició d'estat de fons de mitjans no és vàlida.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "S'ha recuperat el registre.\n"
+msgstr "S'ha arribat al final del flux de mitjans.\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "S'ha invocat Shutdown().\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "S'ha recuperat el registre.\n"
+msgstr "El flux de mitjans no té cap duració establerta.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "El format de mitjans s'ha reconegut però no és vàlid.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "No s'ha trobat el conjunt de propietats.\n"
+msgstr "No s'ha trobat la propietat.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "El directori no està buit.\n"
+msgstr "Només es pot llegir la propietat.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "El tipus de ganxo no es permet.\n"
+msgstr "No es permet la propietat.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "El recurs està en ús.\n"
+msgstr "No s'ha començat la font de mitjans.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "El format de mitjans és incompatible.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "El recurs està en ús.\n"
+msgstr "La font de mitjans està en un estat incorrecte.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "No s'ha detectat dades.\n"
+msgstr "No s'ha seleccionat cap flux de mitjans.\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "El tipus és incompatible.\n"
+msgstr "Les característiques de font de mitjans són incompatibles.\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "S'ha eliminat el receptor de flux.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "Els receptors de flux no estan sincronitzats.\n"
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "S'ha recuperat el registre.\n"
+msgstr "El conjunt de receptors del flux de mitjans és fix.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "El domini ja existeix.\n"
+msgstr "El receptor de flux ja existeix.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "L'usuari ha cancel·lat l'operació.\n"
+msgstr "S'ha cancel·lat l'assignació de mostra.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "El directori no està buit.\n"
+msgstr "L'assignador de mostra està buit.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "La classe ja existeix.\n"
+msgstr "El receptor ja s'ha aturat.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "No s'ha reconegut la velocitat de bits del receptor ASF.\n"
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "No s'ha detectat dades.\n"
+msgstr "No s'ha seleccionat cap flux per al receptor.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "El nom de fitxer és massa llarg.\n"
+msgstr "Les metadades han estat massa llargues.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "El receptor no ha processat cap mostra.\n"
 
 #: mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "No s'han proporcionat les capçaleres requerides al receptor.\n"
 
 #: mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "La connexió no és vàlida.\n"
+msgstr "El node opcional no és vàlid.\n"
 
 #: mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "No es pot trobar la impressora."
+msgstr "No es pot trobar el desxifrador.\n"
 
 #: mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "No s'ha trobat el mòdul.\n"
+msgstr "No s'ha trobat el còdec.\n"
 
 #: mferror.mc:648
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "No es pot obtenir l'identificador de trucada.\n"
+msgstr "No es poden connectar els nodes de la topologia.\n"
 
 #: mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "No s'admet la sol·licitud.\n"
+msgstr "No s'admet la sol·licitud de topologia.\n"
 
 #: mferror.mc:662
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "Els atributs de grup no són vàlids.\n"
+msgstr "Els atributs de topologia horària no són vàlids.\n"
 
 #: mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "S'han trobat bucles en la topologia.\n"
 
 #: mferror.mc:676
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "Manca la font d'instal·lació.\n"
+msgstr "Manca el descriptor de presentació.\n"
 
 #: mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "Manca l'índex.\n"
+msgstr "Manca el descriptor de flux.\n"
 
 #: mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "El dispositiu no està connectat.\n"
+msgstr "El descriptor de flux no està seleccionat.\n"
 
 #: mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "Manca l'índex.\n"
+msgstr "Manca la font.\n"
 
 #: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "El carregador de topologia no admet activacions de receptor.\n"
 
 #: mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "El rellotge no té cap font d'hora establerta.\n"
 
 #: mferror.mc:718
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "La classe ja existeix.\n"
+msgstr "Ja s'ha establert l'estat de rellotge.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "El rellotge no està disponible.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8462,6 +8344,196 @@ msgstr "Actiu"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "Inactiu"
+
+#: version.rc:55
+msgid "Provider"
+msgstr "Proveïdor"
+
+#: version.rc:58
+msgid "Select the data you want to connect to:"
+msgstr "Seleccioneu les dades a les qualles voleu connectar:"
+
+#: version.rc:65
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "Connexions"
+
+#: version.rc:68
+#, fuzzy
+#| msgid "Select the data you want to connect to:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "Seleccioneu les dades a les qualles voleu connectar:"
+
+#: version.rc:69
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "Si us plau, introduïu el vostre nom"
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "Connexions restablertes"
+
+#: version.rc:74
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "Connexions"
+
+#: version.rc:76
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "A&fegeix..."
+
+#: version.rc:77
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:78
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "&Nom d'usuari:"
+
+#: version.rc:82
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "Pàgina en &blanc"
+
+#: version.rc:83
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "La contrasenya està equivocada.\n"
+
+#: version.rc:84
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:86
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "Connexions restablertes"
+
+#: version.rc:91 winemine.rc:65
+msgid "Advanced"
+msgstr "Avançat"
+
+#: version.rc:94
+#, fuzzy
+#| msgid "Network share"
+msgid "Network settings"
+msgstr "Recurs compartit de xarxa"
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Bad impersonation level.\n"
+msgid "&Impersonation level:"
+msgstr "El nivell de suplantació és dolent.\n"
+
+#: version.rc:97
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:100
+#, fuzzy
+#| msgid "Connected"
+msgid "Connect:"
+msgstr "Connectat"
+
+#: version.rc:102
+#, fuzzy
+#| msgid "seconds"
+msgid "seconds."
+msgstr "segons"
+
+#: version.rc:103
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "Èxit"
+
+#: version.rc:109
+#, fuzzy
+#| msgid "&All"
+msgid "All"
+msgstr "&Tot"
+
+#: version.rc:113
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:114
+#, fuzzy
+#| msgid "&Edit..."
+msgid "&Edit Value..."
+msgstr "E&dita..."
+
+#: version.rc:49
+#, fuzzy
+#| msgid "Data Link Properties"
+msgid "Data Link Error"
+msgstr "Propietats d'enllaç de dades"
+
+#: version.rc:50
+#, fuzzy
+#| msgid "Please select a file."
+msgid "Please select a provider."
+msgstr "Si us plau, seleccioneu un fitxer."
+
+#: version.rc:36
+msgid "Data Link Properties"
+msgstr "Propietats d'enllaç de dades"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr "Proveïdors de base de dades OLE"
+
+#: version.rc:41
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "Llest"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "Llegiu-me:"
+
+#: version.rc:43
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:45
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:46
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:47
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "Escriptures d'E/S"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9629,447 +9701,459 @@ msgstr " seg"
 msgid "Select Source"
 msgstr "Seleccionar font"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "China Standard Time"
 msgstr "Hora estàndard de la Xina"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "China Daylight Time"
 msgstr "Hora d'estiu de la Xina"
 
-#: tzres.rc:160
+#: tzres.rc:164
 msgid "North Asia Standard Time"
 msgstr "Hora estàndard de l'Àsia del Nord"
 
-#: tzres.rc:161
+#: tzres.rc:165
 msgid "North Asia Daylight Time"
 msgstr "Hora d'estiu de l'Àsia del Nord"
 
-#: tzres.rc:104
+#: tzres.rc:106
 msgid "Georgian Standard Time"
 msgstr "Hora estàndard de Geòrgia"
 
-#: tzres.rc:105
+#: tzres.rc:107
 msgid "Georgian Daylight Time"
 msgstr "Hora d'estiu de Geòrgia"
 
-#: tzres.rc:152
+#: tzres.rc:156
 msgid "Nepal Standard Time"
 msgstr "Hora estàndard del Nepal"
 
-#: tzres.rc:153
+#: tzres.rc:157
 msgid "Nepal Daylight Time"
 msgstr "Hora d'estiu del Nepal"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Cape Verde Standard Time"
 msgstr "Hora estàndard de Cap Verd"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Cape Verde Daylight Time"
 msgstr "Hora d'estiu de Cap Verd"
 
-#: tzres.rc:74
+#: tzres.rc:116
+#, fuzzy
+#| msgid "Hawaiian Standard Time"
+msgid "Haiti Standard Time"
+msgstr "Hora estàndard de Hawaii"
+
+#: tzres.rc:117
+#, fuzzy
+#| msgid "Hawaiian Daylight Time"
+msgid "Haiti Daylight Time"
+msgstr "Hora d'estiu de Hawaii"
+
+#: tzres.rc:76
 msgid "Central European Standard Time"
 msgstr "Hora estàndard de l'Europa Central"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central European Daylight Time"
 msgstr "Hora d'estiu de l'Europa Central"
 
-#: tzres.rc:140
+#: tzres.rc:144
 msgid "Morocco Standard Time"
 msgstr "Hora estàndard del Marroc"
 
-#: tzres.rc:141
+#: tzres.rc:145
 msgid "Morocco Daylight Time"
 msgstr "Hora d'estiu del Marroc"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Europe Standard Time"
 msgstr "Hora estàndard de l'Europa Central"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Europe Daylight Time"
 msgstr "Hora d'estiu de l'Europa Central"
 
-#: tzres.rc:118
+#: tzres.rc:122
 msgid "Iran Standard Time"
 msgstr "Hora estàndard d'Iran"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Iran Daylight Time"
 msgstr "Hora d'estiu d'Iran"
 
-#: tzres.rc:150
+#: tzres.rc:154
 msgid "Namibia Standard Time"
 msgstr "Hora estàndard de Namíbia"
 
-#: tzres.rc:151
+#: tzres.rc:155
 msgid "Namibia Daylight Time"
 msgstr "Hora d'estiu de Namíbia"
 
-#: tzres.rc:200
+#: tzres.rc:204
 msgid "Tonga Standard Time"
 msgstr "Hora estàndard de Tonga"
 
-#: tzres.rc:201
+#: tzres.rc:205
 msgid "Tonga Daylight Time"
 msgstr "Hora d'estiu de Tonga"
 
-#: tzres.rc:144
+#: tzres.rc:148
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Hora estàndard de les muntanyes (Mèxic)"
 
-#: tzres.rc:145
+#: tzres.rc:149
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Hora d'estiu de les muntanyes (Mèxic)"
 
-#: tzres.rc:106
+#: tzres.rc:108
 msgid "GMT Standard Time"
 msgstr "Hora estàndard GMT"
 
-#: tzres.rc:107
+#: tzres.rc:109
 msgid "GMT Daylight Time"
 msgstr "Hora d'estiu GMT"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central Asia Standard Time"
 msgstr "Hora estàndard de l'Àsia Central"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central Asia Daylight Time"
 msgstr "Hora d'estiu de l'Àsia Central"
 
-#: tzres.rc:38
+#: tzres.rc:40
 msgid "Arabic Standard Time"
 msgstr "Hora estàndard àrab"
 
-#: tzres.rc:39
+#: tzres.rc:41
 msgid "Arabic Daylight Time"
 msgstr "Hora d'estiu àrab"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Magadan Standard Time"
 msgstr "Hora estàndard de Magadan"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Magadan Daylight Time"
 msgstr "Hora d'estiu de Magadan"
 
-#: tzres.rc:156
+#: tzres.rc:160
 msgid "Newfoundland Standard Time"
 msgstr "Hora estàndard de Terranova"
 
-#: tzres.rc:157
+#: tzres.rc:161
 msgid "Newfoundland Daylight Time"
 msgstr "Hora d'estiu de Terranova"
 
-#: tzres.rc:224
+#: tzres.rc:228
 msgid "West Pacific Standard Time"
 msgstr "Hora estàndard del Pacífic Occidental"
 
-#: tzres.rc:225
+#: tzres.rc:229
 msgid "West Pacific Daylight Time"
 msgstr "Hora d'estiu del Pacífic Occidental"
 
-#: tzres.rc:164
+#: tzres.rc:168
 msgid "Pacific Standard Time"
 msgstr "Hora estàndard del Pacífic"
 
-#: tzres.rc:165
+#: tzres.rc:169
 msgid "Pacific Daylight Time"
 msgstr "Hora d'estiu del Pacífic"
 
-#: tzres.rc:48
+#: tzres.rc:50
 msgid "Azerbaijan Standard Time"
 msgstr "Hora estàndard de l'Azerbaidjan"
 
-#: tzres.rc:49
+#: tzres.rc:51
 msgid "Azerbaijan Daylight Time"
 msgstr "Hora d'estiu de l'Azerbaidjan"
 
-#: tzres.rc:182
+#: tzres.rc:186
 msgid "Samoa Standard Time"
 msgstr "Hora estàndard de Samoa"
 
-#: tzres.rc:183
+#: tzres.rc:187
 msgid "Samoa Daylight Time"
 msgstr "Hora d'estiu de Samoa"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Kaliningrad Standard Time"
 msgstr "Hora estàndard de Kaliningrad"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Kaliningrad Daylight Time"
 msgstr "Hora d'estiu de Kaliningrad"
 
-#: tzres.rc:166
+#: tzres.rc:170
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Hora estàndard del Pacífic (Mèxic)"
 
-#: tzres.rc:167
+#: tzres.rc:171
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Hora d'estiu del Pacífic (Mèxic)"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Middle East Standard Time"
 msgstr "Hora estàndard de l'Orient Mitjà"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Middle East Daylight Time"
 msgstr "Hora d'estiu de l'Orient Mitjà"
 
-#: tzres.rc:198
+#: tzres.rc:202
 msgid "Tokyo Standard Time"
 msgstr "Hora estàndard de Tokyo"
 
-#: tzres.rc:199
+#: tzres.rc:203
 msgid "Tokyo Daylight Time"
 msgstr "Hora d'estiu de Tokyo"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Line Islands Standard Time"
 msgstr "Hora estàndard de les Illes de la Línia"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Line Islands Daylight Time"
 msgstr "Hora d'estiu de les Illes de la Línia"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Jordan Standard Time"
 msgstr "Hora estàndard de Jordània"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Jordan Daylight Time"
 msgstr "Hora d'estiu de Jordània"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Standard Time"
 msgstr "Hora estàndard central"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Daylight Time"
 msgstr "Hora d'estiu central"
 
-#: tzres.rc:50
+#: tzres.rc:52
 msgid "Azores Standard Time"
-msgstr "Hora estàndard dels Açores"
+msgstr "Hora estàndard de les Açores"
 
-#: tzres.rc:51
+#: tzres.rc:53
 msgid "Azores Daylight Time"
-msgstr "Hora d'estiu dels Açores"
+msgstr "Hora d'estiu de les Açores"
 
-#: tzres.rc:158
+#: tzres.rc:162
 msgid "North Asia East Standard Time"
 msgstr "Hora estàndard de l'Àsia del Norest"
 
-#: tzres.rc:159
+#: tzres.rc:163
 msgid "North Asia East Daylight Time"
 msgstr "Hora d'estiu de l'Àsia del Norest"
 
-#: tzres.rc:40
+#: tzres.rc:42
 msgid "Argentina Standard Time"
 msgstr "Hora estàndard de l'Argentina"
 
-#: tzres.rc:41
+#: tzres.rc:43
 msgid "Argentina Daylight Time"
 msgstr "Hora d'estiu de l'Argentina"
 
-#: tzres.rc:146
+#: tzres.rc:150
 msgid "Myanmar Standard Time"
 msgstr "Hora estàndard de Birmània"
 
-#: tzres.rc:147
+#: tzres.rc:151
 msgid "Myanmar Daylight Time"
 msgstr "Hora d'estiu de Birmània"
 
-#: tzres.rc:210 tzres.rc:211
+#: tzres.rc:214 tzres.rc:215
 msgid "Coordinated Universal Time"
 msgstr "Temps universal coordinat"
 
-#: tzres.rc:116
+#: tzres.rc:120
 msgid "India Standard Time"
 msgstr "Hora estàndard de l'Índia"
 
-#: tzres.rc:117
+#: tzres.rc:121
 msgid "India Daylight Time"
 msgstr "Hora d'estiu de l'Índia"
 
-#: tzres.rc:112
+#: tzres.rc:114
 msgid "GTB Standard Time"
 msgstr "Hora estàndard GTB"
 
-#: tzres.rc:113
+#: tzres.rc:115
 msgid "GTB Daylight Time"
 msgstr "Hora d'estiu GTB"
 
-#: tzres.rc:202
+#: tzres.rc:206
 msgid "Turkey Standard Time"
 msgstr "Hora estàndard de Turquia"
 
-#: tzres.rc:203
+#: tzres.rc:207
 msgid "Turkey Daylight Time"
 msgstr "Hora d'estiu de Turquia"
 
-#: tzres.rc:100
+#: tzres.rc:102
 msgid "Fiji Standard Time"
 msgstr "Hora estàndard de Fiji"
 
-#: tzres.rc:101
+#: tzres.rc:103
 msgid "Fiji Daylight Time"
 msgstr "Hora d'estiu de Fiji"
 
-#: tzres.rc:58
+#: tzres.rc:60
 msgid "Canada Central Standard Time"
 msgstr "Hora estàndard del Canadà Central"
 
-#: tzres.rc:59
+#: tzres.rc:61
 msgid "Canada Central Daylight Time"
 msgstr "Hora d'estiu del Canadà Central"
 
-#: tzres.rc:194
+#: tzres.rc:198
 msgid "Taipei Standard Time"
 msgstr "Hora estàndard de Taipei"
 
-#: tzres.rc:195
+#: tzres.rc:199
 msgid "Taipei Daylight Time"
 msgstr "Hora d'estiu de Taipei"
 
-#: tzres.rc:220
+#: tzres.rc:224
 msgid "W. Europe Standard Time"
 msgstr "Hora estàndard de l'Europa Occidental"
 
-#: tzres.rc:221
+#: tzres.rc:225
 msgid "W. Europe Daylight Time"
 msgstr "Hora d'estiu de l'Europa Occidental"
 
-#: tzres.rc:138
+#: tzres.rc:142
 msgid "Montevideo Standard Time"
 msgstr "Hora estàndard de Montevideo"
 
-#: tzres.rc:139
+#: tzres.rc:143
 msgid "Montevideo Daylight Time"
 msgstr "Hora d'estiu de Montevideo"
 
-#: tzres.rc:168
+#: tzres.rc:172
 msgid "Pakistan Standard Time"
 msgstr "Hora estàndard del Pakistan"
 
-#: tzres.rc:169
+#: tzres.rc:173
 msgid "Pakistan Daylight Time"
 msgstr "Hora d'estiu del Pakistan"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Caucasus Standard Time"
 msgstr "Hora estàndard del Caucas"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Caucasus Daylight Time"
 msgstr "Hora d'estiu del Caucas"
 
-#: tzres.rc:46
+#: tzres.rc:48
 msgid "AUS Eastern Standard Time"
 msgstr "Hora estàndard oriental AUS"
 
-#: tzres.rc:47
+#: tzres.rc:49
 msgid "AUS Eastern Daylight Time"
 msgstr "Hora d'estiu oriental AUS"
 
-#: tzres.rc:148
+#: tzres.rc:152
 msgid "N. Central Asia Standard Time"
 msgstr "Hora estàndard de l'Àsia del Centre-Nord"
 
-#: tzres.rc:149
+#: tzres.rc:153
 msgid "N. Central Asia Daylight Time"
 msgstr "Hora d'estiu de l'Àsia del Centre-Nord"
 
-#: tzres.rc:94
+#: tzres.rc:96
 msgid "Eastern Standard Time"
 msgstr "Hora estàndard oriental"
 
-#: tzres.rc:95
+#: tzres.rc:97
 msgid "Eastern Daylight Time"
 msgstr "Hora d'estiu oriental"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time (Mexico)"
 msgstr "Hora estàndard central (Mèxic)"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time (Mexico)"
 msgstr "Hora d'estiu central (Mèxic)"
 
-#: tzres.rc:42
+#: tzres.rc:44
 msgid "Atlantic Standard Time"
 msgstr "Hora estàndard de l'Atlàntic"
 
-#: tzres.rc:43
+#: tzres.rc:45
 msgid "Atlantic Daylight Time"
 msgstr "Hora d'estiu de l'Atlàntic"
 
-#: tzres.rc:142
+#: tzres.rc:146
 msgid "Mountain Standard Time"
 msgstr "Hora estàndard de les muntanyes"
 
-#: tzres.rc:143
+#: tzres.rc:147
 msgid "Mountain Daylight Time"
 msgstr "Hora d'estiu de les muntanyes"
 
-#: tzres.rc:206
+#: tzres.rc:210
 msgid "US Eastern Standard Time"
-msgstr "Hora estàndard oriental EEUU"
+msgstr "Hora estàndard oriental EUA"
 
-#: tzres.rc:207
+#: tzres.rc:211
 msgid "US Eastern Daylight Time"
-msgstr "Hora d'estiu oriental EEUU"
+msgstr "Hora d'estiu oriental EUA"
 
-#: tzres.rc:196
+#: tzres.rc:200
 msgid "Tasmania Standard Time"
 msgstr "Hora estàndard de Tasmània"
 
-#: tzres.rc:197
+#: tzres.rc:201
 msgid "Tasmania Daylight Time"
 msgstr "Hora d'estiu de Tasmània"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Central America Standard Time"
 msgstr "Hora estàndard de l'Àmerica Central"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Central America Daylight Time"
 msgstr "Hora d'estiu de l'Àmerica Central"
 
-#: tzres.rc:208
+#: tzres.rc:212
 msgid "US Mountain Standard Time"
-msgstr "Hora estàndard de les muntanyes EEUU"
+msgstr "Hora estàndard de les muntanyes EUA"
 
-#: tzres.rc:209
+#: tzres.rc:213
 msgid "US Mountain Daylight Time"
-msgstr "Hora d'estiu de les muntanyes EEUU"
+msgstr "Hora d'estiu de les muntanyes EUA"
 
-#: tzres.rc:188
+#: tzres.rc:192
 msgid "South Africa Standard Time"
 msgstr "Hora estàndard de l'Àfrica del Sud"
 
-#: tzres.rc:189
+#: tzres.rc:193
 msgid "South Africa Daylight Time"
 msgstr "Hora d'estiu de l'Àfrica del Sud"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Cen. Australia Standard Time"
 msgstr "Hora estàndard d'Austràlia Central"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Cen. Australia Daylight Time"
 msgstr "Hora d'estiu d'Austràlia Central"
 
-#: tzres.rc:190
+#: tzres.rc:194
 msgid "Sri Lanka Standard Time"
 msgstr "Hora estàndard de Sri Lanka"
 
-#: tzres.rc:191
+#: tzres.rc:195
 msgid "Sri Lanka Daylight Time"
 msgstr "Hora d'estiu de Sri Lanka"
 
@@ -10081,123 +10165,123 @@ msgstr "Hora estàndard de l'Afganistan"
 msgid "Afghanistan Daylight Time"
 msgstr "Hora d'estiu de l'Afganistan"
 
-#: tzres.rc:226
+#: tzres.rc:230
 msgid "Yakutsk Standard Time"
 msgstr "Hora estàndard de Iakutsk"
 
-#: tzres.rc:227
+#: tzres.rc:231
 msgid "Yakutsk Daylight Time"
 msgstr "Hora d'estiu de Iakutsk"
 
-#: tzres.rc:176
+#: tzres.rc:180
 msgid "SA Eastern Standard Time"
-msgstr "Hora estàndard de l'Àmerica del Sud-Est"
+msgstr "Hora estàndard de l'Àmerica del Sud-est"
 
-#: tzres.rc:177
+#: tzres.rc:181
 msgid "SA Eastern Daylight Time"
-msgstr "Hora d'estiu de l'Àmerica del Sud-Est"
+msgstr "Hora d'estiu de l'Àmerica del Sud-est"
 
-#: tzres.rc:34
+#: tzres.rc:36
 msgid "Arab Standard Time"
 msgstr "Hora estàndard àrab"
 
-#: tzres.rc:35
+#: tzres.rc:37
 msgid "Arab Daylight Time"
 msgstr "Hora d'estiu àrab"
 
-#: tzres.rc:36
+#: tzres.rc:38
 msgid "Arabian Standard Time"
 msgstr "Hora estàndard de l'Àrabia"
 
-#: tzres.rc:37
+#: tzres.rc:39
 msgid "Arabian Daylight Time"
 msgstr "Hora d'estiu de l'Àrabia"
 
-#: tzres.rc:174
+#: tzres.rc:178
 msgid "Russian Standard Time"
 msgstr "Hora estàndard de Rússia"
 
-#: tzres.rc:175
+#: tzres.rc:179
 msgid "Russian Daylight Time"
 msgstr "Hora d'estiu de Rússia"
 
-#: tzres.rc:172
+#: tzres.rc:176
 msgid "Romance Standard Time"
 msgstr "Hora estàndard romànic"
 
-#: tzres.rc:173
+#: tzres.rc:177
 msgid "Romance Daylight Time"
 msgstr "Hora d'estiu romànic"
 
-#: tzres.rc:98
+#: tzres.rc:100
 msgid "Ekaterinburg Standard Time"
-msgstr "Hora estàndard d'Iekaterinburg"
+msgstr "Hora estàndard de Iekaterinburg"
 
-#: tzres.rc:99
+#: tzres.rc:101
 msgid "Ekaterinburg Daylight Time"
-msgstr "Hora d'estiu d'Iekaterinburg"
+msgstr "Hora d'estiu de Iekaterinburg"
 
-#: tzres.rc:192
+#: tzres.rc:196
 msgid "Syria Standard Time"
 msgstr "Hora estàndard de Síria"
 
-#: tzres.rc:193
+#: tzres.rc:197
 msgid "Syria Daylight Time"
 msgstr "Hora d'estiu de Síria"
 
-#: tzres.rc:44
+#: tzres.rc:46
 msgid "AUS Central Standard Time"
 msgstr "Hora estàndard central AUS"
 
-#: tzres.rc:45
+#: tzres.rc:47
 msgid "AUS Central Daylight Time"
 msgstr "Hora d'estiu central AUS"
 
-#: tzres.rc:110
+#: tzres.rc:112
 msgid "Greenwich Standard Time"
 msgstr "Hora estàndard de Greenwich"
 
-#: tzres.rc:111
+#: tzres.rc:113
 msgid "Greenwich Daylight Time"
 msgstr "Hora d'estiu de Greenwich"
 
-#: tzres.rc:204
+#: tzres.rc:208
 msgid "Ulaanbaatar Standard Time"
 msgstr "Hora estàndard d'Ulan Bator"
 
-#: tzres.rc:205
+#: tzres.rc:209
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Hora d'estiu d'Ulan Bator"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "Israel Standard Time"
 msgstr "Hora estàndard d'Israel"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "Israel Daylight Time"
 msgstr "Hora d'estiu d'Israel"
 
-#: tzres.rc:54
+#: tzres.rc:56
 msgid "Bangladesh Standard Time"
 msgstr "Hora estàndard de Bangla Desh"
 
-#: tzres.rc:55
+#: tzres.rc:57
 msgid "Bangladesh Daylight Time"
 msgstr "Hora d'estiu de Bangla Desh"
 
-#: tzres.rc:178
+#: tzres.rc:182
 msgid "SA Pacific Standard Time"
 msgstr "Hora estàndard del Pacífic de l'Amèrica del Sud"
 
-#: tzres.rc:179
+#: tzres.rc:183
 msgid "SA Pacific Daylight Time"
 msgstr "Hora d'estiu del Pacífic de l'Amèrica del Sud"
 
-#: tzres.rc:222
+#: tzres.rc:226
 msgid "West Asia Standard Time"
 msgstr "Hora estàndard de l'Àsia Occidental"
 
-#: tzres.rc:223
+#: tzres.rc:227
 msgid "West Asia Daylight Time"
 msgstr "Hora d'estiu de l'Àsia Occidental"
 
@@ -10209,211 +10293,223 @@ msgstr "Hora estàndard d'Alaska"
 msgid "Alaskan Daylight Time"
 msgstr "Hora d'estiu d'Alaska"
 
-#: tzres.rc:170
+#: tzres.rc:174
 msgid "Paraguay Standard Time"
 msgstr "Hora estàndard del Paraguai"
 
-#: tzres.rc:171
+#: tzres.rc:175
 msgid "Paraguay Daylight Time"
 msgstr "Hora d'estiu del Paraguai"
 
-#: tzres.rc:84
+#: tzres.rc:86
 msgid "Dateline Standard Time"
 msgstr "Hora estàndard de la línia de canvi de data"
 
-#: tzres.rc:85
+#: tzres.rc:87
 msgid "Dateline Daylight Time"
 msgstr "Hora d'estiu de la línia de canvi de data"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Libya Standard Time"
 msgstr "Hora estàndard de Líbia"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Libya Daylight Time"
 msgstr "Hora d'estiu de Líbia"
 
-#: tzres.rc:52
+#: tzres.rc:54
 msgid "Bahia Standard Time"
 msgstr "Hora estàndard de Bahia"
 
-#: tzres.rc:53
+#: tzres.rc:55
 msgid "Bahia Daylight Time"
 msgstr "Hora d'estiu de Bahia"
 
-#: tzres.rc:212
+#: tzres.rc:216
 msgid "Venezuela Standard Time"
 msgstr "Hora estàndard de Veneçuela"
 
-#: tzres.rc:213
+#: tzres.rc:217
 msgid "Venezuela Daylight Time"
 msgstr "Hora d'estiu de Veneçuela"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "Hawaiian Standard Time"
 msgstr "Hora estàndard de Hawaii"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "Hawaiian Daylight Time"
 msgstr "Hora d'estiu de Hawaii"
 
-#: tzres.rc:184
+#: tzres.rc:188
 msgid "SE Asia Standard Time"
-msgstr "Hora estàndard de l'Àsia del Sud-Est"
+msgstr "Hora estàndard de l'Àsia del Sud-est"
 
-#: tzres.rc:185
+#: tzres.rc:189
 msgid "SE Asia Daylight Time"
-msgstr "Hora d'estiu de l'Àsia del Sud-Est"
+msgstr "Hora d'estiu de l'Àsia del Sud-est"
 
-#: tzres.rc:154
+#: tzres.rc:158
 msgid "New Zealand Standard Time"
 msgstr "Hora estàndard de Nova Zelanda"
 
-#: tzres.rc:155
+#: tzres.rc:159
 msgid "New Zealand Daylight Time"
 msgstr "Hora d'estiu de Nova Zelanda"
 
-#: tzres.rc:70
+#: tzres.rc:34
+#, fuzzy
+#| msgid "Argentina Standard Time"
+msgid "Aleutian Standard Time"
+msgstr "Hora estàndard de l'Argentina"
+
+#: tzres.rc:35
+#, fuzzy
+#| msgid "Argentina Daylight Time"
+msgid "Aleutian Daylight Time"
+msgstr "Hora d'estiu de l'Argentina"
+
+#: tzres.rc:72
 msgid "Central Brazilian Standard Time"
 msgstr "Hora estàndard del Brasil Central"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Brazilian Daylight Time"
 msgstr "Hora d'estiu del Brasil Central"
 
-#: tzres.rc:56
+#: tzres.rc:58
 msgid "Belarus Standard Time"
 msgstr "Hora estàndard de Bielorússia"
 
-#: tzres.rc:57
+#: tzres.rc:59
 msgid "Belarus Daylight Time"
 msgstr "Hora d'estiu de Bielorússia"
 
-#: tzres.rc:180
+#: tzres.rc:184
 msgid "SA Western Standard Time"
-msgstr "Hora estàndard de l'Àmerica del Sud-Oest"
+msgstr "Hora estàndard de l'Àmerica del Sud-oest"
 
-#: tzres.rc:181
+#: tzres.rc:185
 msgid "SA Western Daylight Time"
-msgstr "Hora d'estiu de l'Àmerica del Sud-Oest"
+msgstr "Hora d'estiu de l'Àmerica del Sud-oest"
 
-#: tzres.rc:108
+#: tzres.rc:110
 msgid "Greenland Standard Time"
 msgstr "Hora estàndard de Groenlàndia"
 
-#: tzres.rc:109
+#: tzres.rc:111
 msgid "Greenland Daylight Time"
 msgstr "Hora d'estiu de Groenlàndia"
 
-#: tzres.rc:92
+#: tzres.rc:94
 msgid "Easter Island Standard Time"
 msgstr "Hora estàndard de l'Illa de Pasqua"
 
-#: tzres.rc:93
+#: tzres.rc:95
 msgid "Easter Island Daylight Time"
 msgstr "Hora d'estiu de l'Illa de Pasqua"
 
-#: tzres.rc:96
+#: tzres.rc:98
 msgid "Egypt Standard Time"
 msgstr "Hora estàndard d'Egipte"
 
-#: tzres.rc:97
+#: tzres.rc:99
 msgid "Egypt Daylight Time"
 msgstr "Hora d'estiu d'Egipte"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Mauritius Standard Time"
 msgstr "Hora estàndard de Maurici"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Mauritius Daylight Time"
 msgstr "Hora d'estiu de Maurici"
 
-#: tzres.rc:214
+#: tzres.rc:218
 msgid "Vladivostok Standard Time"
 msgstr "Hora estàndard de Vladivostok"
 
-#: tzres.rc:215
+#: tzres.rc:219
 msgid "Vladivostok Daylight Time"
 msgstr "Hora d'estiu de Vladivostok"
 
-#: tzres.rc:186
+#: tzres.rc:190
 msgid "Singapore Standard Time"
 msgstr "Hora estàndard de Singapur"
 
-#: tzres.rc:187
+#: tzres.rc:191
 msgid "Singapore Daylight Time"
 msgstr "Hora d'estiu de Singapur"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Korea Standard Time"
 msgstr "Hora estàndard de Corea"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Korea Daylight Time"
 msgstr "Hora d'estiu de Corea"
 
-#: tzres.rc:86
+#: tzres.rc:88
 msgid "E. Africa Standard Time"
 msgstr "Hora estàndard de l'Àfrica Oriental"
 
-#: tzres.rc:87
+#: tzres.rc:89
 msgid "E. Africa Daylight Time"
 msgstr "Hora d'estiu de l'Àfrica Oriental"
 
-#: tzres.rc:102
+#: tzres.rc:104
 msgid "FLE Standard Time"
 msgstr "Hora estàndard FLE"
 
-#: tzres.rc:103
+#: tzres.rc:105
 msgid "FLE Daylight Time"
 msgstr "Hora d'estiu FLE"
 
-#: tzres.rc:90
+#: tzres.rc:92
 msgid "E. South America Standard Time"
 msgstr "Hora estàndard de l'Àmerica del Sudest"
 
-#: tzres.rc:91
+#: tzres.rc:93
 msgid "E. South America Daylight Time"
 msgstr "Hora d'estiu de l'Àmerica del Sudest"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central Pacific Standard Time"
 msgstr "Hora estàndard del Pacífic Central"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central Pacific Daylight Time"
 msgstr "Hora d'estiu del Pacífic Central"
 
-#: tzres.rc:218
+#: tzres.rc:222
 msgid "W. Central Africa Standard Time"
 msgstr "Hora estàndard de l'Àfrica del Centre-Oest"
 
-#: tzres.rc:219
+#: tzres.rc:223
 msgid "W. Central Africa Daylight Time"
 msgstr "Hora d'estiu de l'Àfrica del Centre-Oest"
 
-#: tzres.rc:162
+#: tzres.rc:166
 msgid "Pacific SA Standard Time"
 msgstr "Hora estàndard del Pacífic de l'Amèrica del Sud"
 
-#: tzres.rc:163
+#: tzres.rc:167
 msgid "Pacific SA Daylight Time"
 msgstr "Hora d'estiu del Pacífic de l'Amèrica del Sud"
 
-#: tzres.rc:88
+#: tzres.rc:90
 msgid "E. Australia Standard Time"
 msgstr "Hora estàndard de l'Austràlia Oriental"
 
-#: tzres.rc:89
+#: tzres.rc:91
 msgid "E. Australia Daylight Time"
 msgstr "Hora d'estiu de l'Austràlia Oriental"
 
-#: tzres.rc:216
+#: tzres.rc:220
 msgid "W. Australia Standard Time"
 msgstr "Hora estàndard de l'Austràlia Occidental"
 
-#: tzres.rc:217
+#: tzres.rc:221
 msgid "W. Australia Daylight Time"
 msgstr "Hora d'estiu de l'Austràlia Occidental"
 
@@ -10718,7 +10814,7 @@ msgstr "Un número d'error s'ha especificat que no està definit en el sistema."
 
 #: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
-msgstr "S'ha passat una bandera no vàlida a una funció de sistema."
+msgstr "S'ha passat una opció no vàlida a una funció de sistema."
 
 #: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
@@ -10754,7 +10850,7 @@ msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"No es pot obrir el dispositiu sense utilitzar la bandera WAVE_ALLOWSYNC. "
+"No es pot obrir el dispositiu sense utilitzar l'opció WAVE_ALLOWSYNC. "
 "Utilitzeu la bandera i després torneu a intentar."
 
 #: winmm.rc:52
@@ -10997,7 +11093,7 @@ msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"El valor especificat per al format d'hora no és vàlid. Consulteu la "
+"El valor especificat per al format horari no és vàlid. Consulteu la "
 "documentació MCI pels formats vàlids."
 
 #: winmm.rc:93
@@ -11037,7 +11133,7 @@ msgstr "Heu d'especificar un àlies quan s'utilitza el paràmetre 'new'."
 #: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr ""
-"No es pot utilitzar la bandera 'notify' amb els dispositius oberts "
+"No es pot utilitzar l'opció 'notify' amb els dispositius oberts "
 "automàticament."
 
 #: winmm.rc:100
@@ -11213,19 +11309,15 @@ msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-"Els formats d'hora de la \"punter de cançó\" i SMPTE són mútuament "
+"Els formats horaris de la \"punter de cançó\" i SMPTE són mútuament "
 "excloents. No es poden utilitzar junts."
 
 #: winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
 msgstr ""
-"El port MIDI especificat ja està en ús. Espereu fins que estigui lliure; "
+"El port MIDI especificat ja està en ús. Espereu fins que estigui lliure i "
 "llavors torneu a intentar."
 
 #: winmm.rc:131
@@ -11242,16 +11334,12 @@ msgid "An error occurred with the specified port."
 msgstr "Ha ocorregut un error amb el port especificat."
 
 #: winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
 msgstr ""
-"Les altres aplicacions estan utilitzant tots els temporitzadors de "
-"multimèdia. Tanqueu una d'aquestes aplicacions, llavors torneu a intentar."
+"Tots els temporitzadors de multimèdia estan en ús per altres aplicacions. "
+"Tanqueu una d'aquestes aplicacions i llavors torneu a intentar."
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -11663,7 +11751,7 @@ msgid ""
 msgstr ""
 "CALL <nom de fitxer BAT> s'utilitza dins un fitxer BAT per a executar\n"
 "ordres d'un altre fitxer BAT. Quan se surt del fitxer BAT, el control\n"
-"retorna al fitxer que l'ha trucat. L'ordre CALL pot proveir paràmetres al\n"
+"retorna al fitxer que l'ha invocat. L'ordre CALL pot proveir paràmetres al\n"
 "procediment trucat.\n"
 "\n"
 "El procediment trucant hereta els canvis al directori per defecte,\n"
@@ -11763,7 +11851,7 @@ msgstr ""
 "\n"
 "L'etiqueta que és la destinació d'un GOTO pot ser de fins a 255 caràcters\n"
 "de longitud però no pot incloure espais (això és diferent d'altres sistemes\n"
-"operatius). Si dos o més etiquetes idèntiques existeixen en un fitxer BAT,\n"
+"operatius). Si dues o més etiquetes idèntiques existeixen en un fitxer BAT,\n"
 "el primer sempre s'executarà. Intentar fer GOTO a una etiqueta no existent\n"
 "termina l'execució del fitxer BAT.\n"
 "\n"
@@ -12075,14 +12163,14 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"S'utilitza VERIFY per a definir, esborrar o provar la bandera de\n"
+"S'utilitza VERIFY per a establir, esborrar o provar l'opció de\n"
 "verificació. Les formes vàlides són:\n"
 "\n"
-"VERIFY ON\tEstableix la bandera.\n"
-"VERIFY OFF\tEsborra la bandera.\n"
+"VERIFY ON\tEstableix l'opció.\n"
+"VERIFY OFF\tEsborra l'opció.\n"
 "VERIFY\t\tMostra ON o OFF segons correspongui.\n"
 "\n"
-"La bandera de verificació no té cap funció en el Wine.\n"
+"L'opció de verificació no té cap funció en el Wine.\n"
 
 #: cmd.rc:256
 msgid "VER displays the version of cmd you are running.\n"
@@ -13103,7 +13191,7 @@ msgstr "&Executa l'Editor de Registre"
 
 #: oleview.rc:42
 msgid "&CoCreateInstance Flag"
-msgstr "Bandera &CoCreateInstance"
+msgstr "Opció &CoCreateInstance"
 
 #: oleview.rc:44
 msgid "&In-process server"
@@ -14670,7 +14758,7 @@ msgstr "De&finició de la prioritat"
 
 #: taskmgr.rc:156
 msgid "&Realtime"
-msgstr "&Temps real"
+msgstr "Temps &real"
 
 #: taskmgr.rc:160
 msgid "&Above Normal"
@@ -15441,7 +15529,7 @@ msgstr "Visualitzador de Metafitxers Regular"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Metafitxers (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15614,10 +15702,6 @@ msgid "Drive configuration"
 msgstr "Configuració d'unitats"
 
 #: winecfg.rc:233
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -15909,12 +15993,6 @@ msgid "System drive"
 msgstr "Unitat de sistema"
 
 #: winecfg.rc:76
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -16346,7 +16424,7 @@ msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
-"Un program en el vostre sistema ha tingut una pana, però el WineDbg no ha "
+"Un programa en el vostre sistema ha tingut una pana, però el WineDbg no ha "
 "pogut enganxar-se al procès per a obtenir una traça inversa."
 
 #: winedbg.rc:41
@@ -16593,10 +16671,6 @@ msgstr "Millors temps"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Principiant"
-
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "Avançat"
 
 #: winemine.rc:66
 msgid "Expert"
@@ -16998,10 +17072,8 @@ msgid "Text documents (*.txt)"
 msgstr "Documents de text (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
-msgstr "Documents de text d'Unicode (*.txt)"
+msgstr "Document de text d'Unicode (*.txt)"
 
 #: wordpad.rc:150
 msgid "Rich text format (*.rtf)"
@@ -17205,42 +17277,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -17304,6 +17340,8 @@ msgstr ""
 "[/A]  Només copiar els fitxers amb l'atribut d'arxiu establert.\n"
 "[/M]  Només copiar els fitxers amb l'atribut d'arxiu establert, elimina\n"
 "\tl'atribut d'arxiu.\n"
+"[/K]  Copiar els atributs de fitxer; sense això, no es preserven els\n"
+"    atributs.\n"
 "[/D | /D:m-d-y] Copiar els fitxers nous o els modificats després de la data\n"
 "\t\tproveïda.\n"
 "\t\tSi no es proveeix cap data, només es copia si la destinació és més\n"

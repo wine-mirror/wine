@@ -399,6 +399,21 @@ static void test_create_shader_resource_view(void)
     ID3D10ShaderResourceView1_Release(srview);
     ID3D10Buffer_Release(buffer);
 
+    /* Without D3D10_BIND_SHADER_RESOURCE. */
+    buffer_desc.ByteWidth = 1024;
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = 0;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    hr = ID3D10Device1_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x\n", hr);
+
+    hr = ID3D10Device1_CreateShaderResourceView1(device, (ID3D10Resource *)buffer, &srv_desc, &srview);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Buffer_Release(buffer);
+
     texture_desc.Width = 512;
     texture_desc.Height = 512;
     texture_desc.MipLevels = 0;

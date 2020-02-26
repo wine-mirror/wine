@@ -34,7 +34,7 @@
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192
 
-/* Data structure to hold commands delimitors/separators */
+/* Data structure to hold commands delimiters/separators */
 
 typedef enum _CMDdelimiters {
   CMD_NONE,        /* End of line or single & */
@@ -149,6 +149,8 @@ static inline BOOL ends_with_backslash( const WCHAR *path )
 {
     return path[0] && path[lstrlenW(path) - 1] == '\\';
 }
+
+int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate);
 
 /* Data structure to hold context when executing batch files */
 

@@ -1,0 +1,417 @@
+/*
+ * Copyright (C) 2019 Alistair Leslie-Hughes
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+import "unknwn.idl";
+import "objidl.idl";
+import "oaidl.idl";
+import "msado15_backcompat.idl";
+
+#if !defined(progid) && !defined(__WIDL__)
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
+[
+    uuid(cd000000-8b95-11d1-82db-00c04fb1625d),
+    version(1.0)
+]
+library CDO
+{
+    importlib("stdole2.tlb");
+
+    interface IBodyPart;
+
+    typedef enum
+    {
+        cdoDSNDefault            =  0,
+        cdoDSNNever              =  1,
+        cdoDSNFailure            =  2,
+        cdoDSNSuccess            =  4,
+        cdoDSNDelay              =  8,
+        cdoDSNSuccessFailOrDelay = 14
+    } CdoDSNOptions;
+
+    typedef enum
+    {
+        cdoRefTypeId             = 0,
+        cdoRefTypeLocation       = 1
+    } CdoReferenceType;
+
+    typedef enum
+    {
+        cdoSuppressNone          =  0,
+        cdoSuppressImages        =  1,
+        cdoSuppressBGSounds      =  2,
+        cdoSuppressFrames        =  4,
+        cdoSuppressObjects       =  8,
+        cdoSuppressStyleSheets   = 16,
+        cdoSuppressAll           = 31
+    } CdoMHTMLFlags;
+
+    typedef enum
+    {
+        cdoDefaults              = 0xffffffff,
+        cdoIIS                   = 1,
+        cdoOutlookExpress        = 2
+    } CdoConfigSource;
+
+    [
+        odl,
+        uuid(cd000029-8b95-11d1-82db-00c04fb1625d),
+        dual,
+        nonextensible,
+        oleautomation
+    ]
+    interface IDataSource : IDispatch
+    {
+        [id(0x000000cf), propget]
+        HRESULT SourceClass([out, retval] BSTR *source);
+
+        [id(0x000000d0)]
+        HRESULT Source([out, retval] IUnknown **source);
+
+        [id(0x000000d1), propget]
+        HRESULT IsDirty([out, retval] VARIANT_BOOL *dirty);
+        [id(0x000000d1), propput]
+        HRESULT IsDirty([in] VARIANT_BOOL dirty);
+
+        [id(0x000000d2), propget]
+        HRESULT SourceURL([out, retval] BSTR *url);
+
+        [id(0x000000d3), propget]
+        HRESULT ActiveConnection([out, retval] _Connection **connection);
+
+        [id(0x000000fb)]
+        HRESULT SaveToObject([in] IUnknown *source, [in] BSTR iname);
+
+        [id(0x000000fc)]
+        HRESULT OpenObject([in] IUnknown *source, [in] BSTR iname);
+
+        [id(0x000000fd)]
+        HRESULT SaveTo([in] BSTR url, [in, optional, defaultvalue(NULL)] IDispatch *connection,
+                        [in, optional] ConnectModeEnum mode, [in, optional] RecordCreateOptionsEnum create,
+                        [in, optional] RecordOpenOptionsEnum options,  [in, optional] BSTR username,
+                        [in, optional] BSTR password);
+
+        [id(0x000000fe)]
+        HRESULT Open([in] BSTR url, [in, optional, defaultvalue(NULL)] IDispatch *connection,
+                        [in, optional] ConnectModeEnum mode, [in, optional, defaultvalue(-1)] RecordCreateOptionsEnum create,
+                        [in, optional] RecordOpenOptionsEnum options, [in, optional] BSTR username,
+                        [in, optional] BSTR password);
+
+        [id(0x000000ff)]
+        HRESULT Save();
+
+        [id(0x00000100)]
+        HRESULT SaveToContainer([in] BSTR url, [in, optional, defaultvalue(NULL)] IDispatch *connection,
+                        [in, optional] ConnectModeEnum mode,  [in, optional] RecordCreateOptionsEnum create,
+                        [in, optional] RecordOpenOptionsEnum options, [in, optional] BSTR username,
+                        [in, optional] BSTR password);
+    };
+
+    [
+        odl,
+        uuid(cd000023-8b95-11d1-82db-00c04fb1625d),
+        dual,
+        nonextensible,
+        oleautomation
+    ]
+    interface IBodyParts : IDispatch
+    {
+        [id(0x00000001), propget]
+        HRESULT Count([out, retval] long *count);
+
+        [id(00000000), propget]
+        HRESULT Item([in] long index, [out, retval] IBodyPart **body);
+
+        [id(DISPID_NEWENUM), propget, restricted]
+        HRESULT _NewEnum([out, retval] IUnknown **retval);
+
+        [id(0x00000002)]
+        HRESULT Delete([in] VARIANT bodypart);
+
+        [id(0x00000003)]
+        HRESULT DeleteAll();
+
+        [id(0x00000004)]
+        HRESULT Add([in, optional, defaultvalue(-1)] long index, [out, retval] IBodyPart **bodypart);
+    };
+
+    [
+        odl,
+        uuid(cd000021-8b95-11d1-82db-00c04fb1625d),
+        dual,
+        nonextensible,
+        oleautomation
+    ]
+    interface IBodyPart : IDispatch
+    {
+        [id(0x000000c8), propget]
+        HRESULT BodyParts([out, retval] IBodyParts **bodypart);
+
+        [id(0x000000c9), propget]
+        HRESULT ContentTransferEncoding([out, retval] BSTR *encoding);
+        [id(0x000000c9), propput]
+        HRESULT ContentTransferEncoding([in] BSTR encoding);
+
+        [id(0x000000ca), propget]
+        HRESULT ContentMediaType([out, retval] BSTR *mediatype);
+        [id(0x000000ca), propput]
+        HRESULT ContentMediaType([in] BSTR mediatype);
+
+        [id(0x000000cb), propget]
+        HRESULT Fields([out, retval] Fields *fields);
+
+        [id(0x000000cc), propget]
+        HRESULT Charset([out, retval] BSTR *charset);
+        [id(0x000000cc), propput]
+        HRESULT Charset([in] BSTR charset);
+
+        [id(0x000000cd), propget]
+        HRESULT FileName([out, retval] BSTR *filename);
+
+        [id(0x000000cf), propget]
+        HRESULT DataSource([out, retval] IDataSource *datasource);
+
+        [id(0x000000d0), propget]
+        HRESULT ContentClass([out, retval] BSTR *content);
+        [id(0x000000d0), propput]
+        HRESULT ContentClass([in] BSTR content);
+
+        [id(0x000000d1), propget]
+        HRESULT ContentClassName([out, retval] BSTR *name);
+        [id(0x000000d1), propput]
+        HRESULT ContentClassName([in] BSTR name);
+
+        [id(0x000000d2), propget]
+        HRESULT Parent([out, retval] IBodyPart **parent);
+
+        [id(0x000000fa)]
+        HRESULT AddBodyPart([in, optional, defaultvalue(-1)] long index, [out, retval] IBodyPart **bodypart);
+
+        [id(0x000000fb)]
+        HRESULT SaveToFile([in] BSTR filename);
+
+        [id(0x000000fc)]
+        HRESULT GetEncodedContentStream([out, retval] _Stream **stream);
+
+        [id(0x000000fd)]
+        HRESULT GetDecodedContentStream([out, retval] _Stream **stream);
+
+        [id(0x000000fe)]
+        HRESULT GetStream([out, retval] _Stream **stream);
+
+        [id(0x000000ff)]
+        HRESULT GetFieldParameter([in] BSTR fieldname, [in] BSTR parameter,  [out, retval] BSTR *streamalue);
+
+        [id(0x000000a0)]
+        HRESULT GetInterface([in] BSTR iface, [out, retval] IDispatch **unk);
+    };
+
+    [
+        odl,
+        uuid(cd000022-8b95-11d1-82db-00c04fb1625d),
+        dual,
+        nonextensible,
+        oleautomation
+    ]
+    interface IConfiguration : IDispatch
+    {
+        [id(00000000), propget]
+        HRESULT Fields([out, retval] Fields **fields);
+
+        [id(0x00000032)]
+        HRESULT Load([in] CdoConfigSource source,  [in, optional] BSTR url);
+
+        [id(0x000000a0)]
+        HRESULT GetInterface([in] BSTR iname, [out, retval] IDispatch **unk);
+    };
+
+    [
+        odl,
+        uuid(cd000020-8b95-11d1-82db-00c04fb1625d),
+        dual,
+        nonextensible,
+        oleautomation
+    ]
+    interface IMessage : IDispatch
+    {
+        [id(0x00000065), propget]
+        HRESULT BCC([out, retval] BSTR *bcc);
+        [id(0x00000065), propput]
+        HRESULT BCC([in] BSTR bcc);
+
+        [id(0x00000067), propget]
+        HRESULT CC([out, retval] BSTR *cc);
+        [id(0x00000067), propput]
+        HRESULT CC([in] BSTR cc);
+
+        [id(0x00000069), propget]
+        HRESULT FollowUpTo([out, retval] BSTR *follow);
+        [id(0x00000069), propput]
+        HRESULT FollowUpTo([in] BSTR follow);
+
+        [id(0x0000006a), propget]
+        HRESULT From([out, retval] BSTR *from);
+        [id(0x0000006a), propput]
+        HRESULT From([in] BSTR from);
+
+        [id(0x0000006b), propget]
+        HRESULT Keywords([out, retval] BSTR* keywords);
+        [id(0x0000006b), propput]
+        HRESULT Keywords([in] BSTR keywords);
+
+        [id(0x0000006e), propget]
+        HRESULT MimeFormatted([out, retval] VARIANT_BOOL *formatted);
+        [id(0x0000006e), propput]
+        HRESULT MimeFormatted([in] VARIANT_BOOL formatted);
+
+        [id(0x0000006f), propget]
+        HRESULT Newsgroups([out, retval] BSTR *newsgroups);
+        [id(0x0000006f), propput]
+        HRESULT Newsgroups([in] BSTR newsgroups);
+        [id(0x00000070), propget]
+
+        HRESULT Organization([out, retval] BSTR *organization);
+        [id(0x00000070), propput]
+        HRESULT Organization([in] BSTR organization);
+
+        [id(0x00000072), propget]
+        HRESULT ReceivedTime([out, retval] DATE *received);
+
+        [id(0x00000073), propget]
+        HRESULT ReplyTo([out, retval] BSTR *reply);
+        [id(0x00000073), propput]
+        HRESULT ReplyTo([in] BSTR reply);
+
+        [id(0x00000074), propget]
+        HRESULT DSNOptions([out, retval] CdoDSNOptions *options);
+        [id(0x00000074), propput]
+        HRESULT DSNOptions([in] CdoDSNOptions options);
+
+        [id(0x00000077), propget]
+        HRESULT SentOn([out, retval] DATE *sent);
+
+        [id(0x00000078), propget]
+        HRESULT Subject([out, retval] BSTR *subject);
+        [id(0x00000078), propput]
+        HRESULT Subject([in] BSTR subject);
+
+        [id(0x00000079), propget]
+        HRESULT To([out, retval] BSTR *to);
+        [id(0x00000079), propput]
+        HRESULT To([in] BSTR to);
+
+        [id(0x0000007b), propget]
+        HRESULT TextBody([out, retval] BSTR *body);
+        [id(0x0000007b), propput]
+        HRESULT TextBody([in] BSTR body);
+
+        [id(0x0000007c)]
+        HRESULT HTMLBody([out, retval] BSTR* body);
+        [id(0x0000007c), propput]
+        HRESULT HTMLBody([in] BSTR body);
+
+        [id(0x0000007d), propget]
+        HRESULT Attachments([out, retval] IBodyParts **attachments);
+
+        [id(0x0000007e), propget]
+        HRESULT Sender([out, retval] BSTR *sender);
+        [id(0x0000007e), propput]
+        HRESULT Sender([in] BSTR sender);
+
+        [id(0x0000007f), propget]
+        HRESULT Configuration([out, retval] IConfiguration **config);
+        [id(0x0000007f), propput]
+        HRESULT Configuration([in] IConfiguration *config);
+        [id(0x0000007f), propputref]
+        HRESULT Configuration([in] IConfiguration *config);
+
+        [id(0x00000080), propget]
+        HRESULT AutoGenerateTextBody([out, retval] VARIANT_BOOL *body);
+        [id(0x00000080), propput]
+        HRESULT AutoGenerateTextBody([in] VARIANT_BOOL body);
+
+        [id(0x00000081), propget]
+        HRESULT EnvelopeFields([out, retval] Fields **fields);
+
+        [id(0x00000082), propget]
+        HRESULT TextBodyPart([out, retval] IBodyPart **body);
+        [id(0x00000083), propget]
+        HRESULT HTMLBodyPart([out, retval] IBodyPart **body);
+
+        [id(0x00000084), propget]
+        HRESULT BodyPart([out, retval] IBodyPart ** part);
+
+        [id(0x00000085), propget]
+        HRESULT DataSource([out, retval] IDataSource **datasource);
+
+        [id(0x00000086), propget]
+        HRESULT Fields([out, retval] Fields **fields);
+
+        [id(0x00000087), propget]
+        HRESULT MDNRequested([out, retval] VARIANT_BOOL* requested);
+        [id(0x00000087), propput]
+        HRESULT MDNRequested([in] VARIANT_BOOL requested);
+
+        [id(0x00000096)]
+        HRESULT AddRelatedBodyPart([in] BSTR url, [in] BSTR Reference,  [in] CdoReferenceType ReferenceType,
+                        [in, optional] BSTR username,  [in, optional] BSTR password, [out, retval] IBodyPart **body);
+        [id(0x00000097)]
+        HRESULT AddAttachment([in] BSTR url,  [in, optional] BSTR username,
+                        [in, optional] BSTR password, [out, retval] IBodyPart **body);
+
+        [id(0x00000098)]
+        HRESULT CreateMHTMLBody([in] BSTR url,  [in, optional, defaultvalue(0)] CdoMHTMLFlags flags,
+                        [in, optional] BSTR username, [in, optional] BSTR password);
+
+        [id(0x00000099)]
+        HRESULT Forward([out, retval] IMessage **msg);
+
+        [id(0x0000009a)]
+        HRESULT Post();
+
+        [id(0x0000009b)]
+        HRESULT PostReply([out, retval] IMessage **msg);
+
+        [id(0x0000009c)]
+        HRESULT Reply([out, retval] IMessage **msg);
+
+        [id(0x0000009d)]
+        HRESULT ReplyAll([out, retval] IMessage **msg);
+
+        [id(0x0000009e)]
+        HRESULT Send();
+
+        [id(0x0000009f)]
+        HRESULT GetStream([out, retval] _Stream **stream);
+
+        [id(0x000000a0)]
+        HRESULT GetInterface([in] BSTR name,  [out, retval] IDispatch **unknown);
+    };
+
+    [
+        uuid(cd000001-8b95-11d1-82db-00c04fb1625d)
+    ]
+    coclass Message
+    {
+        [default] interface IMessage;
+        interface IDataSource;
+        interface IBodyPart;
+    };
+}

@@ -41,6 +41,7 @@
 
 #include "test_reg.h"
 #include "test_tlb.h"
+#include "test_simple.h"
 
 #define expect_eq(expr, value, type, format) { type _ret = (expr); ok((value) == _ret, #expr " expected " format " got " format "\n", value, _ret); }
 #define expect_int(expr, value) expect_eq(expr, (int)(value), int, "%d")
@@ -76,13 +77,18 @@
 #define ARCH "none"
 #endif
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
 static HRESULT (WINAPI *pRegisterTypeLibForUser)(ITypeLib*,OLECHAR*,OLECHAR*);
 static HRESULT (WINAPI *pUnRegisterTypeLibForUser)(REFGUID,WORD,WORD,LCID,SYSKIND);
 
-static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
-static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
-static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
-static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE,LPBOOL);
 static LONG   (WINAPI *pRegDeleteKeyExW)(HKEY,LPCWSTR,REGSAM,DWORD);
 
@@ -286,10 +292,6 @@ static void init_function_pointers(void)
 
     pRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "RegisterTypeLibForUser");
     pUnRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "UnRegisterTypeLibForUser");
-    pActivateActCtx = (void *)GetProcAddress(hk32, "ActivateActCtx");
-    pCreateActCtxW = (void *)GetProcAddress(hk32, "CreateActCtxW");
-    pDeactivateActCtx = (void *)GetProcAddress(hk32, "DeactivateActCtx");
-    pReleaseActCtx = (void *)GetProcAddress(hk32, "ReleaseActCtx");
     pIsWow64Process = (void *)GetProcAddress(hk32, "IsWow64Process");
     pRegDeleteKeyExW = (void*)GetProcAddress(hadv, "RegDeleteKeyExW");
 }
@@ -766,18 +768,18 @@ static void test_CreateDispTypeInfo(void)
     SysFreeString(methdata[3].szName);
 }
 
-static void write_typelib(int res_no, const char *filename)
+static void write_typelib(int res_no, const WCHAR *filename, const WCHAR *type)
 {
     DWORD written;
     HANDLE file;
     HRSRC res;
     void *ptr;
 
-    file = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    file = CreateFileW( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
     if (file == INVALID_HANDLE_VALUE) return;
-    res = FindResourceA( GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(res_no), "TYPELIB" );
-    ok( res != 0, "couldn't find resource\n" );
+    res = FindResourceW( GetModuleHandleA(NULL), (const WCHAR *)MAKEINTRESOURCE(res_no), type );
+    ok( res != 0, "couldn't find resource %d %s\n", res_no, debugstr_w(type) );
     ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
     WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
     ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
@@ -811,12 +813,12 @@ static void test_invoke_func(ITypeInfo *typeinfo)
     ok(hres == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hres);
 }
 
-static const char *create_test_typelib(int res_no)
+static WCHAR *create_test_typelib(int res_no, const WCHAR *type)
 {
-    static char filename[MAX_PATH];
+    static WCHAR filename[MAX_PATH];
 
-    GetTempFileNameA( ".", "tlb", 0, filename );
-    write_typelib(res_no, filename);
+    GetTempFileNameW(L".", L"tlb", 0, filename);
+    write_typelib(res_no, filename, type);
     return filename;
 }
 
@@ -838,8 +840,7 @@ static void test_TypeInfo(void)
     VARIANT var, res, args[2];
     UINT count, i;
     TYPEKIND kind;
-    const char *filenameA;
-    WCHAR filename[MAX_PATH];
+    const WCHAR *filename;
     TYPEATTR *attr;
     LONG l;
 
@@ -1020,8 +1021,7 @@ static void test_TypeInfo(void)
     ITypeInfo_Release(pTypeInfo);
     ITypeLib_Release(pTypeLib);
 
-    filenameA = create_test_typelib(3);
-    MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filename, MAX_PATH);
+    filename = create_test_typelib(3, L"TYPELIB");
     hr = LoadTypeLib(filename, &pTypeLib);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -1123,7 +1123,7 @@ static void test_TypeInfo(void)
 
     ITypeInfo_Release(pTypeInfo);
     ITypeLib_Release(pTypeLib);
-    DeleteFileA(filenameA);
+    DeleteFileW(filename);
 }
 
 static int WINAPI int_func( int a0, int a1, int a2, int a3, int a4 )
@@ -1201,17 +1201,37 @@ static HRESULT WINAPI ret_false_func(void)
 
 static const WCHAR testW[] = { 'T','e','s','t',0 };
 
-static void WINAPI variant_func2(VARIANT *ret, VARIANT v1, VARIANT v2)
+static VARIANT WINAPI variant_func2(VARIANT v1, VARIANT v2)
 {
+    VARIANT ret;
+
     ok(V_VT(&v1) == VT_I4, "unexpected %d\n", V_VT(&v1));
     ok(V_I4(&v1) == 2, "unexpected %d\n", V_I4(&v1));
     ok(V_VT(&v2) == VT_BSTR, "unexpected %d\n", V_VT(&v2));
     ok(lstrcmpW(V_BSTR(&v2), testW) == 0, "unexpected %s\n", wine_dbgstr_w(V_BSTR(&v2)));
 
-    V_VT(ret) = VT_UI4;
-    V_I4(ret) = 4321;
+    V_VT(&ret) = VT_UI4;
+    V_I4(&ret) = 4321;
+    return ret;
 }
 
+#ifdef __aarch64__
+static VARIANT WINAPI inst_func2(void *inst, VARIANT v1, VARIANT v2)
+{
+    VARIANT ret;
+
+    ok( (*(void ***)inst)[3] == inst_func2, "wrong ptr %p\n", inst );
+
+    ok(V_VT(&v1) == VT_I4, "unexpected %d\n", V_VT(&v1));
+    ok(V_I4(&v1) == 2, "unexpected %d\n", V_I4(&v1));
+    ok(V_VT(&v2) == VT_BSTR, "unexpected %d\n", V_VT(&v2));
+    ok(lstrcmpW(V_BSTR(&v2), testW) == 0, "unexpected %s\n", wine_dbgstr_w(V_BSTR(&v2)));
+
+    V_VT(&ret) = VT_UI4;
+    V_I4(&ret) = 4321;
+    return ret;
+}
+#else
 static void WINAPI inst_func2(void *inst, VARIANT *ret, VARIANT v1, VARIANT v2)
 {
     ok( (*(void ***)inst)[3] == inst_func2, "wrong ptr %p\n", inst );
@@ -1227,6 +1247,7 @@ static void WINAPI inst_func2(void *inst, VARIANT *ret, VARIANT v1, VARIANT v2)
     V_VT(ret) = VT_UI4;
     V_I4(ret) = 4321;
 }
+#endif
 
 static void *vtable[] = { NULL, NULL, NULL, inst_func };
 static void *vtable2[] = { NULL, NULL, NULL, inst_func2 };
@@ -1825,6 +1846,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     static const GUID interfaceguid = {0x3b9ff02f,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
     static const GUID interface2guid = {0x3b9ff02f,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcd}};
 
+    ITypeInfo *interface1, *interface2, *dual, *unknown, *dispatch, *ti, *ti_2;
     char filename[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *createtl;
@@ -1832,7 +1854,6 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ICreateTypeInfo2 *createti2;
     ITypeLib *tl, *stdole;
     ITypeLib2 *tl2;
-    ITypeInfo *interface1, *interface2, *dual, *unknown, *dispatch, *ti;
     ITypeInfo *tinfos[2];
     ITypeInfo2 *ti2;
     ITypeComp *tcomp, *tcomp2;
@@ -2792,7 +2813,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     hres = ITypeInfo_GetTypeAttr(dual, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == ptr_size, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
-    ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
     ok(typeattr->cFuncs == 1, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
@@ -2808,13 +2829,16 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ok(hres == S_OK, "got %08x\n", hres);
     ok(hreftype == -2, "got %08x\n", hreftype);
 
+    EXPECT_REF(dual, 2);
     hres = ITypeInfo_GetRefTypeInfo(dual, -2, &ti);
     ok(hres == S_OK, "got %08x\n", hres);
+todo_wine
+    EXPECT_REF(dual, 3);
 
     hres = ITypeInfo_GetTypeAttr(ti, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == ptr_size, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
-    ok(typeattr->typekind == 4, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->typekind == TKIND_DISPATCH, "typekind = %d\n", typeattr->typekind);
     ok(typeattr->cFuncs == 8, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
@@ -2826,6 +2850,18 @@ static void test_CreateTypeLib(SYSKIND sys) {
 
     ITypeInfo_ReleaseTypeAttr(ti, typeattr);
 
+    hres = ITypeInfo_GetRefTypeInfo(dual, -2, &ti_2);
+    ok(hres == S_OK, "Failed to get reference typeinfo, hr %#x.\n", hres);
+todo_wine {
+    ok(ti == ti_2, "Unexpected typeinfo instance.\n");
+    EXPECT_REF(dual, 4);
+}
+    ITypeInfo_AddRef(ti_2);
+todo_wine
+    EXPECT_REF(dual, 5);
+    ITypeInfo_Release(ti_2);
+
+    ITypeInfo_Release(ti_2);
     ITypeInfo_Release(ti);
 
     hres = ICreateTypeInfo_SetTypeDescAlias(createti, &typedesc1);
@@ -2836,7 +2872,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     hres = ITypeInfo_GetTypeAttr(interface1, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == ptr_size, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
-    ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
     ok(typeattr->cFuncs == 13, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
@@ -2851,7 +2887,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     hres = ITypeInfo_GetTypeAttr(interface2, &typeattr);
     ok(hres == S_OK, "got %08x\n", hres);
     ok(typeattr->cbSizeInstance == ptr_size, "cbSizeInstance = %d\n", typeattr->cbSizeInstance);
-    ok(typeattr->typekind == 3, "typekind = %d\n", typeattr->typekind);
+    ok(typeattr->typekind == TKIND_INTERFACE, "typekind = %d\n", typeattr->typekind);
     ok(typeattr->cFuncs == 2, "cFuncs = %d\n", typeattr->cFuncs);
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
@@ -4135,16 +4171,14 @@ static int get_href_type(ITypeInfo *info, TYPEDESC *tdesc)
     return href_type;
 }
 
-static void test_dump_typelib(const char *name)
+static void test_dump_typelib(const WCHAR *name)
 {
-    WCHAR wszString[260];
     ITypeInfo *info;
     ITypeLib *lib;
     int count;
     int i;
 
-    MultiByteToWideChar(CP_ACP, 0, name, -1, wszString, 260);
-    OLE_CHECK(LoadTypeLib(wszString, &lib));
+    OLE_CHECK(LoadTypeLib(name, &lib));
 
     printf("/*** Autogenerated data. Do not edit, change the generator above instead. ***/\n");
 
@@ -4752,19 +4786,21 @@ static const type_info info[] = {
       expect_hex(U(*(elem)).paramdesc.wParamFlags, (info)->wParamFlags); \
   }
 
-static void test_dump_typelib(const char *name)
+static void test_dump_typelib(const WCHAR *name)
 {
-    WCHAR wszName[MAX_PATH];
     ITypeLib *typelib;
     int ticount = ARRAY_SIZE(info);
+    CUSTDATA cust_data;
     int iface, func;
+    VARIANT v;
+    HRESULT hr;
 
-    MultiByteToWideChar(CP_ACP, 0, name, -1, wszName, MAX_PATH);
-    ole_check(LoadTypeLibEx(wszName, REGKIND_NONE, &typelib));
+    ole_check(LoadTypeLibEx(name, REGKIND_NONE, &typelib));
     expect_eq(ITypeLib_GetTypeInfoCount(typelib), ticount, UINT, "%d");
     for (iface = 0; iface < ticount; iface++)
     {
         const type_info *ti = &info[iface];
+        ITypeInfo2 *typeinfo2;
         ITypeInfo *typeinfo;
         TYPEATTR *typeattr;
         BSTR bstrIfName;
@@ -4804,6 +4840,9 @@ static void test_dump_typelib(const char *name)
             ok(hr == S_OK || (IsEqualGUID(&guid, &IID_NULL) && hr == TYPE_E_ELEMENTNOTFOUND), "got 0x%08x\n", hr);
             if (hr == S_OK) ITypeInfo_Release(typeinfo2);
         }
+
+        hr = ITypeInfo_QueryInterface(typeinfo, &IID_ITypeInfo2, (void**)&typeinfo2);
+        ok(hr == S_OK, "Could not get ITypeInfo2: %08x\n", hr);
 
         for (func = 0; func < typeattr->cFuncs; func++)
         {
@@ -4853,10 +4892,27 @@ static void test_dump_typelib(const char *name)
             }
             expect_int(fn_info->params[desc->cParams].vt, (VARTYPE)-1);
 
+            V_VT(&v) = VT_ERROR;
+            hr = ITypeInfo2_GetFuncCustData(typeinfo2, func, &IID_NULL, &v);
+            ok(hr == S_OK, "GetFuncCustData failed: %08x\n", hr);
+            ok(V_VT(&v) == VT_EMPTY, "V_VT(&v) = %d\n", V_VT(&v));
+            VariantClear(&v);
+
+            V_VT(&v) = VT_ERROR;
+            hr = ITypeInfo2_GetFuncCustData(typeinfo2, func, &IID_IBaseIface, &v);
+            ok(hr == S_OK, "GetFuncCustData failed: %08x\n", hr);
+            ok(V_VT(&v) == VT_EMPTY, "V_VT(&v) = %d\n", V_VT(&v));
+            VariantClear(&v);
+
+            memset(&cust_data, 0, sizeof(cust_data));
+            hr = ITypeInfo2_GetAllCustData(typeinfo2, &cust_data);
             ITypeInfo_ReleaseFuncDesc(typeinfo, desc);
+            ClearCustData(&cust_data);
         }
 
         ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+
+        ITypeInfo2_Release(typeinfo2);
         ITypeInfo_Release(typeinfo);
     }
     ITypeLib_Release(typelib);
@@ -4953,8 +5009,7 @@ static void test_create_typelibs(void)
 static void test_register_typelib(BOOL system_registration)
 {
     HRESULT hr;
-    WCHAR filename[MAX_PATH];
-    const char *filenameA;
+    WCHAR *filename;
     ITypeLib *typelib;
     WCHAR uuidW[40];
     char key_name[MAX_PATH], uuid[40];
@@ -4998,8 +5053,7 @@ static void test_register_typelib(BOOL system_registration)
     if (pIsWow64Process)
         pIsWow64Process(GetCurrentProcess(), &is_wow64);
 
-    filenameA = create_test_typelib(3);
-    MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filename, MAX_PATH);
+    filename = create_test_typelib(3, L"TYPELIB");
 
     hr = LoadTypeLibEx(filename, REGKIND_NONE, &typelib);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -5012,7 +5066,7 @@ static void test_register_typelib(BOOL system_registration)
     {
         win_skip("Insufficient privileges to register typelib in the registry\n");
         ITypeLib_Release(typelib);
-        DeleteFileA(filenameA);
+        DeleteFileW(filename);
         return;
     }
     ok(hr == S_OK, "got %08x\n", hr);
@@ -5142,7 +5196,7 @@ static void test_register_typelib(BOOL system_registration)
     }
 
     ITypeLib_Release(typelib);
-    DeleteFileA( filenameA );
+    DeleteFileW(filename);
 }
 
 static void test_LoadTypeLib(void)
@@ -5682,7 +5736,7 @@ static HANDLE create_actctx(const char *file)
     actctx.cbSize = sizeof(ACTCTXW);
     actctx.lpSource = path;
 
-    handle = pCreateActCtxW(&actctx);
+    handle = CreateActCtxW(&actctx);
     ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
 
     ok(actctx.cbSize == sizeof(actctx), "actctx.cbSize=%d\n", actctx.cbSize);
@@ -5736,12 +5790,6 @@ static void test_LoadRegTypeLib(void)
     BSTR path;
     BOOL ret;
 
-    if (!pActivateActCtx)
-    {
-        win_skip("Activation contexts not supported, skipping LoadRegTypeLib tests\n");
-        return;
-    }
-
     create_manifest_file("testdep.manifest", manifest_dep);
     create_manifest_file("main.manifest", manifest_main);
 
@@ -5750,8 +5798,8 @@ static void test_LoadRegTypeLib(void)
     DeleteFileA("main.manifest");
 
     /* create typelib file */
-    write_typelib(1, "test_actctx_tlb.tlb");
-    write_typelib(3, "test_actctx_tlb2.tlb");
+    write_typelib(1, L"test_actctx_tlb.tlb", L"TYPELIB");
+    write_typelib(3, L"test_actctx_tlb2.tlb", L"TYPELIB");
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &tl);
     ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
@@ -5762,7 +5810,7 @@ static void test_LoadRegTypeLib(void)
     hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 2, 0, LOCALE_NEUTRAL, &path);
     ok(hr == TYPE_E_LIBNOTREGISTERED, "got 0x%08x\n", hr);
 
-    ret = pActivateActCtx(handle, &cookie);
+    ret = ActivateActCtx(handle, &cookie);
     ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
 
     path = NULL;
@@ -5864,10 +5912,10 @@ static void test_LoadRegTypeLib(void)
     DeleteFileA("test_actctx_tlb.tlb");
     DeleteFileA("test_actctx_tlb2.tlb");
 
-    ret = pDeactivateActCtx(0, cookie);
+    ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
 
-    pReleaseActCtx(handle);
+    ReleaseActCtx(handle);
 }
 
 #define AUX_HREF 1
@@ -6332,8 +6380,7 @@ static void test_stub(void)
 
 static void test_dep(void) {
     HRESULT          hr;
-    const char      *refFilename;
-    WCHAR            refFilenameW[MAX_PATH];
+    const WCHAR     *refFilename;
     ITypeLib        *preftLib;
     ITypeInfo       *preftInfo;
     char             filename[MAX_PATH];
@@ -6352,13 +6399,11 @@ static void test_dep(void) {
 
     trace("Starting typelib dependency tests\n");
 
-    refFilename = create_test_typelib(2);
-    MultiByteToWideChar(CP_ACP, 0, refFilename, -1, refFilenameW, MAX_PATH);
-
-    hr = LoadTypeLibEx(refFilenameW, REGKIND_NONE, &preftLib);
+    refFilename = create_test_typelib(4, L"TL");
+    hr = LoadTypeLibEx(refFilename, REGKIND_NONE, &preftLib);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    hr = ITypeLib_GetTypeInfoOfGuid(preftLib, &IID_ISimpleIface, &preftInfo);
+    hr = ITypeLib_GetTypeInfoOfGuid(preftLib, &IID_IBaseIface, &preftInfo);
     ok(hr == S_OK, "got %08x\n", hr);
 
     GetTempFileNameA(".", "tlb", 0, filename);
@@ -6402,8 +6447,7 @@ static void test_dep(void) {
 
     ITypeInfo_Release(preftInfo);
     ITypeLib_Release(preftLib);
-
-    DeleteFileW(refFilenameW);
+    DeleteFileW(refFilename);
 
     hr = LoadTypeLibEx(filenameW, REGKIND_NONE, &ptLib);
     ok(hr == S_OK, "got: %x\n", hr);
@@ -6415,19 +6459,142 @@ static void test_dep(void) {
     ok(hr == S_OK, "got: %x\n", hr);
 
     hr = ITypeInfo_GetRefTypeInfo(ptInfo, refType, &ptInfoExt);
-    ok(hr == S_OK || broken(hr == TYPE_E_CANTLOADLIBRARY) /* win 2000 */, "got: %x\n", hr);
+    ok(hr == TYPE_E_CANTLOADLIBRARY, "got: %x\n", hr);
 
     ITypeInfo_Release(ptInfo);
     if(ptInfoExt)
         ITypeInfo_Release(ptInfoExt);
     ITypeLib_Release(ptLib);
 
+    hr = LoadTypeLibEx(filenameW, REGKIND_NONE, &ptLib);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeLib_GetTypeInfo(ptLib, 0, &ptInfo);
+    ok(hr == S_OK, "GetTypeInfo failed: %08x\n", hr);
+
+    hr = ITypeInfo_GetRefTypeOfImplType(ptInfo, 0, &refType);
+    ok(hr == S_OK, "GetRefTypeOfImplType failed: %08x\n", hr);
+
+    hr = ITypeInfo_GetRefTypeInfo(ptInfo, refType, &ptInfoExt);
+    ok(hr == TYPE_E_CANTLOADLIBRARY, "got: %x\n", hr);
+
+    refFilename = create_test_typelib(4, L"TL");
+    hr = LoadTypeLibEx(refFilename, REGKIND_NONE, &preftLib);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeInfo_GetRefTypeInfo(ptInfo, refType, &ptInfoExt);
+    ok(hr == S_OK, "got: %x\n", hr);
+    ITypeInfo_Release(ptInfoExt);
+
+    ITypeLib_Release(preftLib);
+    DeleteFileW(refFilename);
+
+    ITypeInfo_Release(ptInfo);
+    ITypeLib_Release(ptLib);
+
+    DeleteFileW(filenameW);
+}
+
+static void test_DeleteImplType(void)
+{
+    static OLECHAR interface1W[] = L"interface1";
+    HREFTYPE hreftype, hreftype2;
+    ICreateTypeInfo2 *createti2;
+    ICreateTypeInfo *createti;
+    ICreateTypeLib2 *createtl;
+    WCHAR filenameW[MAX_PATH];
+    ITypeInfo *dispti, *ti;
+    ITypeLib *stdole, *tl;
+    TYPEATTR *typeattr;
+    HRESULT hr;
+    int flags;
+
+    hr = LoadTypeLib(L"stdole2.tlb", &stdole);
+    ok(hr == S_OK, "Failed to load stdole2, hr %#x.\n", hr);
+
+    hr = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IDispatch, &dispti);
+    ok(hr == S_OK, "Failed to get IDispatch typeinfo, hr %#x.\n", hr);
+
+    GetTempFileNameW(L".", L"tlb", 0, filenameW);
+
+    hr = CreateTypeLib2(SYS_WIN32, filenameW, &createtl);
+    ok(hr == S_OK, "Failed to create instance, hr %#x.\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
+    ok(hr == S_OK, "Failed to create instance, hr %#x.\n", hr);
+    hr = ICreateTypeInfo_QueryInterface(createti, &IID_ICreateTypeInfo2, (void **)&createti2);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    ICreateTypeInfo_Release(createti);
+
+    hr = ICreateTypeInfo2_AddRefTypeInfo(createti2, dispti, &hreftype);
+    ok(hr == S_OK, "Failed to add referenced typeinfo, hr %#x.\n", hr);
+
+    hr = ICreateTypeInfo2_QueryInterface(createti2, &IID_ITypeInfo, (void **)&ti);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(!(typeattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE), "Unexpected type flags %#x.\n", typeattr->wTypeFlags);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hr = ICreateTypeInfo2_AddImplType(createti2, 0, hreftype);
+    ok(hr == S_OK, "Failed to add impl type, hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(typeattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE, "Unexpected type flags %#x.\n", typeattr->wTypeFlags);
+    ok(typeattr->cImplTypes == 1, "Unexpected cImplTypes value.\n");
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    /* Delete impltype, check flags. */
+    hr = ICreateTypeInfo2_DeleteImplType(createti2, 0);
+    ok(hr == S_OK, "Failed to delete impl type, hr %#x.\n", hr);
+
+    hr = ICreateTypeInfo2_DeleteImplType(createti2, 0);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(typeattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE, "Unexpected type flags %#x.\n", typeattr->wTypeFlags);
+    ok(!typeattr->cImplTypes, "Unexpected cImplTypes value.\n");
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hr = ITypeInfo_GetImplTypeFlags(ti, 0, &flags);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetRefTypeOfImplType(ti, 0, &hreftype2);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = ICreateTypeLib2_SaveAllChanges(createtl);
+    ok(hr == S_OK, "Failed to save changes, hr %#x.\n", hr);
+    ICreateTypeLib2_Release(createtl);
+    ITypeInfo_Release(ti);
+    ICreateTypeInfo2_Release(createti2);
+
+    /* Load and check typeinfo. */
+    hr = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
+    ok(hr == S_OK, "Failed to load typelib, hr %#x.\n", hr);
+
+    hr = ITypeLib_GetTypeInfo(tl, 0, &ti);
+    ok(hr == S_OK, "Failed to get typeinfo, hr %#x.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(typeattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE, "Unexpected type flags %#x.\n", typeattr->wTypeFlags);
+    ok(!typeattr->cImplTypes, "Unexpected cImplTypes value.\n");
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+    ITypeInfo_Release(ti);
+
+    ITypeLib_Release(tl);
+
+    ITypeLib_Release(stdole);
+    ITypeInfo_Release(dispti);
+
     DeleteFileW(filenameW);
 }
 
 START_TEST(typelib)
 {
-    const char *filename;
+    const WCHAR *filename;
 
     init_function_pointers();
 
@@ -6450,10 +6617,10 @@ START_TEST(typelib)
     test_SetDocString();
     test_FindName();
 
-    if ((filename = create_test_typelib(2)))
+    if ((filename = create_test_typelib(2, L"TYPELIB")))
     {
         test_dump_typelib( filename );
-        DeleteFileA( filename );
+        DeleteFileW( filename );
     }
 
     test_register_typelib(TRUE);
@@ -6465,4 +6632,5 @@ START_TEST(typelib)
     test_GetLibAttr();
     test_stub();
     test_dep();
+    test_DeleteImplType();
 }

@@ -18,15 +18,7 @@
 #ifndef __WINE_STDDEF_H
 #define __WINE_STDDEF_H
 
-#include <crtdefs.h>
-
-#ifndef NULL
-#ifdef __cplusplus
-#define NULL  0
-#else
-#define NULL  ((void *)0)
-#endif
-#endif
+#include <corecrt.h>
 
 #ifdef __GNUC__
 #define offsetof(s,m)       __builtin_offsetof(s,m)

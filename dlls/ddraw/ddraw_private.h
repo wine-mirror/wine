@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <math.h>
 #define COBJMACROS
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
@@ -126,6 +127,8 @@ struct ddraw
     /* FVF management */
     struct FvfToDecl       *decls;
     UINT                    numConvertedDecls, declArraySize;
+
+    struct wined3d_stateblock *state;
 };
 
 #define DDRAW_WINDOW_CLASS_NAME "DirectDrawDeviceWnd"
@@ -327,6 +330,7 @@ struct d3d_device
 
     /* Required to keep track which of two available texture blending modes in d3ddevice3 is used */
     BOOL legacyTextureBlending;
+    D3DTEXTUREBLEND texture_map_blend;
 
     D3DMATRIX legacy_projection;
     D3DMATRIX legacy_clipspace;
@@ -349,7 +353,7 @@ struct d3d_device
 
     struct wined3d_vec4 user_clip_planes[D3DMAXUSERCLIPPLANES];
 
-    BOOL recording;
+    struct wined3d_stateblock *recording, *state, *update_state;
 };
 
 HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUnknown *rt_iface,

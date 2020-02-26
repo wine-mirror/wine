@@ -2,4 +2,4 @@ TESTDLL   = comsvcs.dll
 IMPORTS   = uuid oleaut32 ole32
 
 C_SRCS = \
-	dispenser.c
+	comsvcs.c

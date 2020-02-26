@@ -1397,7 +1397,6 @@ static void test_handles( HWND hwnd )
     h = SetClipboardData( CF_BITMAP, bitmap );
     ok( h == bitmap, "got %p\n", h );
     ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
-    ok( !GetObjectType( bitmap_temp ), "expected free object %p\n", bitmap_temp );
     h = SetClipboardData( CF_DSPBITMAP, bitmap2 );
     ok( h == bitmap2, "got %p\n", h );
     ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
@@ -1605,9 +1604,6 @@ static void test_handles( HWND hwnd )
     ok( is_freed( hmoveable ) || broken( !is_freed( hmoveable )), "expected freed mem %p\n", hmoveable );
     ok( is_fixed( empty_fixed ), "expected fixed mem %p\n", empty_fixed );
     ok( is_fixed( hfixed ), "expected fixed mem %p\n", hfixed );
-    ok( !GetObjectType( bitmap ), "expected freed handle %p\n", bitmap );
-    ok( !GetObjectType( bitmap2 ), "expected freed handle %p\n", bitmap2 );
-    ok( !GetObjectType( palette ), "expected freed handle %p\n", palette );
 
     r = CloseClipboard();
     ok( r, "gle %d\n", GetLastError() );
@@ -1896,7 +1892,6 @@ static void test_data_handles(void)
     ok( GetObjectType( bitmap ) == OBJ_BITMAP, "expected bitmap %p\n", bitmap );
     r = EmptyClipboard();
     ok( r, "gle %d\n", GetLastError() );
-    ok( !GetObjectType( bitmap ), "expected deleted %p\n", bitmap );
     r = CloseClipboard();
     ok( r, "gle %d\n", GetLastError() );
 

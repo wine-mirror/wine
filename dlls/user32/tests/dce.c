@@ -54,7 +54,7 @@ static void test_dc_attributes(void)
 
     ok( WindowFromDC( hdc ) == hwnd_cache, "wrong window\n" );
     ReleaseDC( hwnd_cache, hdc );
-    ok( WindowFromDC( hdc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( hdc ) != hwnd_cache, "wrong window\n" );
     hdc = GetDC( hwnd_cache );
     rop = GetROP2( hdc );
     ok( rop == def_rop, "wrong ROP2 %d after release\n", rop );
@@ -124,7 +124,7 @@ static void test_dc_attributes(void)
     ok( caps == 0, "got %d\n", caps );
     caps = GetDeviceCaps( old_hdc, NUMCOLORS );
     ok( caps == 0, "got %d\n", caps );
-    ok( WindowFromDC( old_hdc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( old_hdc ) != hwnd_cache, "wrong window\n" );
 
     hdc = GetDC(0);
     caps = GetDeviceCaps( hdc, HORZRES );
@@ -550,24 +550,13 @@ static void test_invisible_create(void)
 
 static void test_dc_layout(void)
 {
-    DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
-    DWORD (WINAPI *pGetLayout)(HDC hdc);
     HWND hwnd_cache_rtl, hwnd_owndc_rtl, hwnd_classdc_rtl, hwnd_classdc2_rtl;
     HDC hdc;
     DWORD layout;
-    HMODULE mod = GetModuleHandleA("gdi32.dll");
-
-    pGetLayout = (void *)GetProcAddress( mod, "GetLayout" );
-    pSetLayout = (void *)GetProcAddress( mod, "SetLayout" );
-    if (!pGetLayout || !pSetLayout)
-    {
-        win_skip( "Don't have SetLayout\n" );
-        return;
-    }
 
     hdc = GetDC( hwnd_cache );
-    pSetLayout( hdc, LAYOUT_RTL );
-    layout = pGetLayout( hdc );
+    SetLayout( hdc, LAYOUT_RTL );
+    layout = GetLayout( hdc );
     ReleaseDC( hwnd_cache, hdc );
     if (!layout)
     {
@@ -584,42 +573,42 @@ static void test_dc_layout(void)
     hwnd_classdc2_rtl = CreateWindowExA(WS_EX_LAYOUTRTL, "classdc_class", NULL, WS_OVERLAPPED | WS_VISIBLE,
                                         200, 200, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
     hdc = GetDC( hwnd_cache_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
 
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
-    pSetLayout( hdc, 0 );
+    SetLayout( hdc, 0 );
     ReleaseDC( hwnd_cache_rtl, hdc );
     hdc = GetDC( hwnd_owndc_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_cache_rtl, hdc );
 
     hdc = GetDC( hwnd_cache );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == 0, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_cache, hdc );
 
     hdc = GetDC( hwnd_owndc_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
-    pSetLayout( hdc, 0 );
+    SetLayout( hdc, 0 );
     ReleaseDC( hwnd_owndc_rtl, hdc );
     hdc = GetDC( hwnd_owndc_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_owndc_rtl, hdc );
 
     hdc = GetDC( hwnd_classdc_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
-    pSetLayout( hdc, 0 );
+    SetLayout( hdc, 0 );
     ReleaseDC( hwnd_classdc_rtl, hdc );
     hdc = GetDC( hwnd_classdc2_rtl );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_classdc2_rtl, hdc );
     hdc = GetDC( hwnd_classdc );
-    layout = pGetLayout( hdc );
+    layout = GetLayout( hdc );
     ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
     ReleaseDC( hwnd_classdc_rtl, hdc );
 
@@ -632,8 +621,7 @@ static void test_dc_layout(void)
 static void test_destroyed_window(void)
 {
     HDC dc, old_dc;
-    HDC hdcs[30];
-    int i, rop;
+    int rop;
 
     dc = GetDC( hwnd_cache );
     SetROP2( dc, R2_WHITE );
@@ -645,18 +633,10 @@ static void test_destroyed_window(void)
     DestroyWindow( hwnd_cache );
     rop = GetROP2( dc );
     ok( rop == 0, "wrong ROP2 %d\n", rop );
-    ok( WindowFromDC( dc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( dc ) != hwnd_cache, "wrong window\n" );
     ok( !ReleaseDC( hwnd_cache, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_cache );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
-
-    for (i = 0; i < 30; i++)
-    {
-        dc = hdcs[i] = GetDCEx( hwnd_parent, 0, DCX_CACHE | DCX_USESTYLE );
-        if (dc == old_dc) break;
-    }
-    ok( i < 30, "DC for destroyed window not reused\n" );
-    while (i > 0) ReleaseDC( hwnd_parent, hdcs[--i] );
 
     dc = GetDC( hwnd_classdc );
     SetROP2( dc, R2_WHITE );
@@ -674,7 +654,7 @@ static void test_destroyed_window(void)
 
     rop = GetROP2( dc );
     ok( rop == R2_WHITE, "wrong ROP2 %d\n", rop );
-    ok( WindowFromDC( dc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( dc ) != hwnd_classdc2, "wrong window\n" );
     ok( !ReleaseDC( hwnd_classdc2, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_classdc2 );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
@@ -688,7 +668,7 @@ static void test_destroyed_window(void)
 
     rop = GetROP2( dc );
     ok( rop == R2_WHITE, "wrong ROP2 %d\n", rop );
-    ok( WindowFromDC( dc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( dc ) != hwnd_classdc, "wrong window\n" );
     ok( !ReleaseDC( hwnd_classdc, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_classdc );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
@@ -702,7 +682,7 @@ static void test_destroyed_window(void)
 
     rop = GetROP2( dc );
     ok( rop == 0, "wrong ROP2 %d\n", rop );
-    ok( WindowFromDC( dc ) == 0, "wrong window\n" );
+    ok( WindowFromDC( dc ) != hwnd_owndc, "wrong window\n" );
     ok( !ReleaseDC( hwnd_owndc, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_owndc );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );

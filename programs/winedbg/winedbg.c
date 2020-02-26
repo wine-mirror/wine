@@ -312,7 +312,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->pio_data = NULL;
     p->imageName = NULL;
     list_init(&p->threads);
-    p->continue_on_first_exception = FALSE;
+    p->event_on_first_exception = NULL;
     p->active_debuggee = FALSE;
     p->next_bp = 1;  /* breakpoint 0 is reserved for step-over */
     memset(p->bp, 0, sizeof(p->bp));
@@ -372,6 +372,7 @@ void dbg_del_process(struct dbg_process* p)
     source_free_files(p);
     list_remove(&p->entry);
     if (p == dbg_curr_process) dbg_curr_process = NULL;
+    if (p->event_on_first_exception) CloseHandle(p->event_on_first_exception);
     HeapFree(GetProcessHeap(), 0, (char*)p->imageName);
     HeapFree(GetProcessHeap(), 0, p);
 }
@@ -559,7 +560,12 @@ BOOL dbg_interrupt_debuggee(void)
     p = LIST_ENTRY(list_head(&dbg_process_list), struct dbg_process, entry);
     if (list_next(&dbg_process_list, &p->entry)) dbg_printf("Ctrl-C: only stopping the first process\n");
     else dbg_printf("Ctrl-C: stopping debuggee\n");
-    p->continue_on_first_exception = FALSE;
+    if (p->event_on_first_exception)
+    {
+        SetEvent(p->event_on_first_exception);
+        CloseHandle(p->event_on_first_exception);
+        p->event_on_first_exception = NULL;
+    }
     return DebugBreakProcess(p->handle);
 }
 

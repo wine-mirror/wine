@@ -129,7 +129,7 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
     }
 }
 
-static void dump_cpu_type( const char *prefix, const cpu_type_t *code )
+static void dump_client_cpu( const char *prefix, const client_cpu_t *code )
 {
     switch (*code)
     {
@@ -171,8 +171,8 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
     case APC_VIRTUAL_ALLOC:
         dump_uint64( "APC_VIRTUAL_ALLOC,addr==", &call->virtual_alloc.addr );
         dump_uint64( ",size=", &call->virtual_alloc.size );
-        fprintf( stderr, ",zero_bits=%u,op_type=%x,prot=%x",
-                 call->virtual_alloc.zero_bits, call->virtual_alloc.op_type,
+        fprintf( stderr, ",zero_bits_64=%u,op_type=%x,prot=%x",
+                 call->virtual_alloc.zero_bits_64, call->virtual_alloc.op_type,
                  call->virtual_alloc.prot );
         break;
     case APC_VIRTUAL_FREE:
@@ -205,8 +205,8 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         dump_uint64( ",addr=", &call->map_view.addr );
         dump_uint64( ",size=", &call->map_view.size );
         dump_uint64( ",offset=", &call->map_view.offset );
-        fprintf( stderr, ",zero_bits=%u,alloc_type=%x,prot=%x",
-                 call->map_view.zero_bits, call->map_view.alloc_type, call->map_view.prot );
+        fprintf( stderr, ",zero_bits_64=%u,alloc_type=%x,prot=%x",
+                 call->map_view.zero_bits_64, call->map_view.alloc_type, call->map_view.prot );
         break;
     case APC_UNMAP_VIEW:
         dump_uint64( "APC_UNMAP_VIEW,addr=", &call->unmap_view.addr );
@@ -217,6 +217,9 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         dump_uint64( ",reserve=", &call->create_thread.reserve );
         dump_uint64( ",commit=", &call->create_thread.commit );
         fprintf( stderr, ",suspend=%u", call->create_thread.suspend );
+        break;
+    case APC_BREAK_PROCESS:
+        fprintf( stderr, "APC_BREAK_PROCESS" );
         break;
     default:
         fprintf( stderr, "type=%u", call->type );
@@ -297,6 +300,9 @@ static void dump_apc_result( const char *prefix, const apc_result_t *result )
         fprintf( stderr, "APC_CREATE_THREAD,status=%s,tid=%04x,handle=%04x",
                  get_status_name( result->create_thread.status ),
                  result->create_thread.tid, result->create_thread.handle );
+        break;
+    case APC_BREAK_PROCESS:
+        fprintf( stderr, "APC_BREAK_PROCESS,status=%s", get_status_name( result->break_process.status ) );
         break;
     default:
         fprintf( stderr, "type=%u", result->type );
@@ -559,7 +565,7 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
     memcpy( &ctx, context, size );
 
     fprintf( stderr,"%s{", prefix );
-    dump_cpu_type( "cpu=", &ctx.cpu );
+    dump_client_cpu( "cpu=", &ctx.cpu );
     switch (ctx.cpu)
     {
     case CPU_x86:
@@ -721,10 +727,11 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         }
         if (ctx.flags & SERVER_CTX_FLOATING_POINT)
         {
-            for (i = 0; i < 64; i++)
+            for (i = 0; i < 32; i++)
             {
-                fprintf( stderr, ",d%u=", i );
-                dump_uint64( "", &ctx.fp.arm64_regs.d[i] );
+                fprintf( stderr, ",q%u=", i );
+                dump_uint64( "", &ctx.fp.arm64_regs.q[i].high );
+                dump_uint64( "", &ctx.fp.arm64_regs.q[i].low );
             }
             fprintf( stderr, ",fpcr=%08x,fpsr=%08x", ctx.fp.arm64_regs.fpcr, ctx.fp.arm64_regs.fpsr );
         }
@@ -1190,7 +1197,7 @@ static void dump_varargs_pe_image_info( const char *prefix, data_size_t size )
              info.zerobits, info.subsystem, info.subsystem_low, info.subsystem_high, info.gp,
              info.image_charact, info.dll_charact, info.machine, info.contains_code, info.image_flags,
              info.loader_flags, info.header_size, info.file_size, info.checksum );
-    dump_cpu_type( ",cpu=", &info.cpu );
+    dump_client_cpu( ",cpu=", &info.cpu );
     fputc( '}', stderr );
     remove_data( size );
 }
@@ -1236,12 +1243,13 @@ typedef void (*dump_func)( const void *req );
 
 static void dump_new_process_request( const struct new_process_request *req )
 {
-    fprintf( stderr, " inherit_all=%d", req->inherit_all );
+    fprintf( stderr, " parent_process=%04x", req->parent_process );
+    fprintf( stderr, ", inherit_all=%d", req->inherit_all );
     fprintf( stderr, ", create_flags=%08x", req->create_flags );
     fprintf( stderr, ", socket_fd=%d", req->socket_fd );
     fprintf( stderr, ", exe_file=%04x", req->exe_file );
     fprintf( stderr, ", access=%08x", req->access );
-    dump_cpu_type( ", cpu=", &req->cpu );
+    dump_client_cpu( ", cpu=", &req->cpu );
     fprintf( stderr, ", info_size=%u", req->info_size );
     dump_varargs_object_attributes( ", objattr=", cur_size );
     dump_varargs_startup_info( ", info=", min(cur_size,req->info_size) );
@@ -1258,8 +1266,7 @@ static void dump_new_process_reply( const struct new_process_reply *req )
 static void dump_exec_process_request( const struct exec_process_request *req )
 {
     fprintf( stderr, " socket_fd=%d", req->socket_fd );
-    fprintf( stderr, ", exe_file=%04x", req->exe_file );
-    dump_cpu_type( ", cpu=", &req->cpu );
+    dump_client_cpu( ", cpu=", &req->cpu );
 }
 
 static void dump_get_new_process_info_request( const struct get_new_process_info_request *req )
@@ -1321,7 +1328,7 @@ static void dump_init_thread_request( const struct init_thread_request *req )
     dump_uint64( ", entry=", &req->entry );
     fprintf( stderr, ", reply_fd=%d", req->reply_fd );
     fprintf( stderr, ", wait_fd=%d", req->wait_fd );
-    dump_cpu_type( ", cpu=", &req->cpu );
+    dump_client_cpu( ", cpu=", &req->cpu );
 }
 
 static void dump_init_thread_reply( const struct init_thread_reply *req )
@@ -1373,7 +1380,7 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
     dump_timeout( ", end_time=", &req->end_time );
     fprintf( stderr, ", exit_code=%d", req->exit_code );
     fprintf( stderr, ", priority=%d", req->priority );
-    dump_cpu_type( ", cpu=", &req->cpu );
+    dump_client_cpu( ", cpu=", &req->cpu );
     fprintf( stderr, ", debugger_present=%d", req->debugger_present );
     fprintf( stderr, ", debug_children=%d", req->debug_children );
 }
@@ -1417,6 +1424,9 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, ", exit_code=%d", req->exit_code );
     fprintf( stderr, ", priority=%d", req->priority );
     fprintf( stderr, ", last=%d", req->last );
+    fprintf( stderr, ", suspend_count=%d", req->suspend_count );
+    fprintf( stderr, ", desc_len=%u", req->desc_len );
+    dump_varargs_unicode_str( ", desc=", cur_size );
 }
 
 static void dump_get_thread_times_request( const struct get_thread_times_request *req )
@@ -1438,6 +1448,7 @@ static void dump_set_thread_info_request( const struct set_thread_info_request *
     dump_uint64( ", affinity=", &req->affinity );
     dump_uint64( ", entry_point=", &req->entry_point );
     fprintf( stderr, ", token=%04x", req->token );
+    dump_varargs_unicode_str( ", desc=", cur_size );
 }
 
 static void dump_get_dll_info_request( const struct get_dll_info_request *req )
@@ -2021,11 +2032,12 @@ static void dump_attach_console_reply( const struct attach_console_reply *req )
 
 static void dump_get_console_wait_event_request( const struct get_console_wait_event_request *req )
 {
+    fprintf( stderr, " handle=%04x", req->handle );
 }
 
 static void dump_get_console_wait_event_reply( const struct get_console_wait_event_reply *req )
 {
-    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, " event=%04x", req->event );
 }
 
 static void dump_get_console_mode_request( const struct get_console_mode_request *req )
@@ -2127,7 +2139,10 @@ static void dump_set_console_output_info_request( const struct set_console_outpu
     fprintf( stderr, ", max_height=%d", req->max_height );
     fprintf( stderr, ", font_width=%d", req->font_width );
     fprintf( stderr, ", font_height=%d", req->font_height );
-    dump_varargs_uints( ", colors=", cur_size );
+    fprintf( stderr, ", font_weight=%d", req->font_weight );
+    fprintf( stderr, ", font_pitch_family=%d", req->font_pitch_family );
+    dump_varargs_uints( ", colors=", min(cur_size,64) );
+    dump_varargs_unicode_str( ", face_name=", cur_size );
 }
 
 static void dump_get_console_output_info_request( const struct get_console_output_info_request *req )
@@ -2153,7 +2168,10 @@ static void dump_get_console_output_info_reply( const struct get_console_output_
     fprintf( stderr, ", max_height=%d", req->max_height );
     fprintf( stderr, ", font_width=%d", req->font_width );
     fprintf( stderr, ", font_height=%d", req->font_height );
-    dump_varargs_uints( ", colors=", cur_size );
+    fprintf( stderr, ", font_weight=%d", req->font_weight );
+    fprintf( stderr, ", font_pitch_family=%d", req->font_pitch_family );
+    dump_varargs_uints( ", colors=", min(cur_size,64) );
+    dump_varargs_unicode_str( ", face_name=", cur_size );
 }
 
 static void dump_write_console_input_request( const struct write_console_input_request *req )
@@ -2439,16 +2457,6 @@ static void dump_debug_process_request( const struct debug_process_request *req 
 {
     fprintf( stderr, " pid=%04x", req->pid );
     fprintf( stderr, ", attach=%d", req->attach );
-}
-
-static void dump_debug_break_request( const struct debug_break_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-}
-
-static void dump_debug_break_reply( const struct debug_break_reply *req )
-{
-    fprintf( stderr, " self=%d", req->self );
 }
 
 static void dump_set_debugger_kill_on_exit_request( const struct set_debugger_kill_on_exit_request *req )
@@ -4702,7 +4710,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_exception_status_request,
     (dump_func)dump_continue_debug_event_request,
     (dump_func)dump_debug_process_request,
-    (dump_func)dump_debug_break_request,
     (dump_func)dump_set_debugger_kill_on_exit_request,
     (dump_func)dump_read_process_memory_request,
     (dump_func)dump_write_process_memory_request,
@@ -5003,7 +5010,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_exception_status_reply,
     NULL,
     NULL,
-    (dump_func)dump_debug_break_reply,
     NULL,
     (dump_func)dump_read_process_memory_reply,
     NULL,
@@ -5304,7 +5310,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_exception_status",
     "continue_debug_event",
     "debug_process",
-    "debug_break",
     "set_debugger_kill_on_exit",
     "read_process_memory",
     "write_process_memory",
@@ -5517,7 +5522,6 @@ static const struct
     { "ALIAS_EXISTS",                STATUS_ALIAS_EXISTS },
     { "BAD_DEVICE_TYPE",             STATUS_BAD_DEVICE_TYPE },
     { "BAD_IMPERSONATION_LEVEL",     STATUS_BAD_IMPERSONATION_LEVEL },
-    { "BREAKPOINT",                  STATUS_BREAKPOINT },
     { "BUFFER_OVERFLOW",             STATUS_BUFFER_OVERFLOW },
     { "BUFFER_TOO_SMALL",            STATUS_BUFFER_TOO_SMALL },
     { "CANCELLED",                   STATUS_CANCELLED },
@@ -5573,6 +5577,7 @@ static const struct
     { "INVALID_READ_MODE",           STATUS_INVALID_READ_MODE },
     { "INVALID_SECURITY_DESCR",      STATUS_INVALID_SECURITY_DESCR },
     { "IO_TIMEOUT",                  STATUS_IO_TIMEOUT },
+    { "KERNEL_APC",                  STATUS_KERNEL_APC },
     { "KEY_DELETED",                 STATUS_KEY_DELETED },
     { "MAPPED_FILE_SIZE_ZERO",       STATUS_MAPPED_FILE_SIZE_ZERO },
     { "MORE_PROCESSING_REQUIRED",    STATUS_MORE_PROCESSING_REQUIRED },
@@ -5610,12 +5615,14 @@ static const struct
     { "PIPE_CLOSING",                STATUS_PIPE_CLOSING },
     { "PIPE_CONNECTED",              STATUS_PIPE_CONNECTED },
     { "PIPE_DISCONNECTED",           STATUS_PIPE_DISCONNECTED },
+    { "PIPE_EMPTY",                  STATUS_PIPE_EMPTY },
     { "PIPE_LISTENING",              STATUS_PIPE_LISTENING },
     { "PIPE_NOT_AVAILABLE",          STATUS_PIPE_NOT_AVAILABLE },
     { "PRIVILEGE_NOT_HELD",          STATUS_PRIVILEGE_NOT_HELD },
     { "PROCESS_IN_JOB",              STATUS_PROCESS_IN_JOB },
     { "PROCESS_IS_TERMINATING",      STATUS_PROCESS_IS_TERMINATING },
     { "PROCESS_NOT_IN_JOB",          STATUS_PROCESS_NOT_IN_JOB },
+    { "REPARSE_POINT_NOT_RESOLVED",  STATUS_REPARSE_POINT_NOT_RESOLVED },
     { "SECTION_TOO_BIG",             STATUS_SECTION_TOO_BIG },
     { "SEMAPHORE_LIMIT_EXCEEDED",    STATUS_SEMAPHORE_LIMIT_EXCEEDED },
     { "SHARING_VIOLATION",           STATUS_SHARING_VIOLATION },

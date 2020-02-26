@@ -157,7 +157,7 @@ static void RemoveSpecificProgram(WCHAR *nameW)
 }
 
 
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     LPCWSTR token = NULL;
     static const WCHAR helpW[] = { '-','-','h','e','l','p',0 };

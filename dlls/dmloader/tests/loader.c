@@ -48,10 +48,10 @@ static void test_directory(void)
 {
     IDirectMusicLoader8 *loader = NULL;
     HRESULT hr;
-    WCHAR con[] = {'c', 'o', 'n', 0};
+    WCHAR con[] = L"con";
+    WCHAR empty[] = L"";
+    WCHAR invalid_path[] = L"/invalid path";
     WCHAR path[MAX_PATH];
-    WCHAR empty[] = {0};
-    WCHAR invalid_path[] = {'/', 'i', 'n', 'v', 'a', 'l', 'i', 'd', ' ', 'p', 'a', 't', 'h', 0};
 
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC, &IID_IDirectMusicLoader8,
             (void**)&loader);
@@ -477,7 +477,6 @@ static void test_parsedescriptor(void)
     DMUS_OBJECTDESC desc;
     HRESULT hr;
     DWORD valid;
-    const WCHAR s_unam[] = {'U','N','A','M','\0'};
     const FOURCC alldesc[] =
     {
         FOURCC_RIFF, DMUS_FOURCC_CONTAINER_FORM, DMUS_FOURCC_CATEGORY_CHUNK, FOURCC_LIST,
@@ -562,7 +561,7 @@ static void test_parsedescriptor(void)
             wine_dbgstr_guid(&desc.guidClass));
     ok(IsEqualGUID(&desc.guidObject, &GUID_NULL), "Got object guid %s, expected GUID_NULL\n",
             wine_dbgstr_guid(&desc.guidClass));
-    ok(!memcmp(desc.wszName, s_unam, sizeof(s_unam)), "Got name '%s', expected 'UNAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"UNAM"), "Got name '%s', expected 'UNAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 
@@ -596,7 +595,7 @@ static void test_parsedescriptor(void)
     ok(hr == S_OK, "ParseDescriptor failed: %08x, expected S_OK\n", hr);
     valid = DMUS_OBJ_OBJECT|DMUS_OBJ_CLASS|DMUS_OBJ_NAME|DMUS_OBJ_CATEGORY|DMUS_OBJ_VERSION;
     ok(desc.dwValidData == valid, "Got valid data %#x, expected %#x\n", desc.dwValidData, valid);
-    ok(!memcmp(desc.wszName, s_unam, sizeof(s_unam)), "Got name '%s', expected 'UNAM'\n",
+    ok(!lstrcmpW(desc.wszName, L"UNAM"), "Got name '%s', expected 'UNAM'\n",
             wine_dbgstr_w(desc.wszName));
     IStream_Release(stream);
 

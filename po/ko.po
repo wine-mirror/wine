@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-17 22:50+0900\n"
+"PO-Revision-Date: 2019-11-01 16:21+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -55,9 +55,9 @@ msgstr "제거(&R)"
 msgid "Support Information"
 msgstr "지원 정보"
 
-#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
-#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:422
-#: comdlg32.rc:453 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
+#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:233
+#: comdlg32.rc:263 comdlg32.rc:307 comdlg32.rc:390 comdlg32.rc:424
+#: comdlg32.rc:455 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
 #: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
@@ -136,10 +136,10 @@ msgid "&Install"
 msgstr "설치(&I)"
 
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
-#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
-#: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
-#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:423
-#: comdlg32.rc:454 comdlg32.rc:479 comdlg32.rc:505 comdlg32.rc:528 credui.rc:53
+#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:172 comdlg32.rc:194
+#: comdlg32.rc:212 comdlg32.rc:234 comdlg32.rc:264 comdlg32.rc:308
+#: comdlg32.rc:330 comdlg32.rc:350 comdlg32.rc:391 comdlg32.rc:425
+#: comdlg32.rc:456 comdlg32.rc:481 comdlg32.rc:507 comdlg32.rc:530 credui.rc:53
 #: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
 #: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
@@ -205,7 +205,8 @@ msgstr ""
 msgid "Not specified"
 msgstr "지정하지 않음"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
+#: appwiz.rc:38 version.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147
+#: winefile.rc:106
 msgid "Name"
 msgstr "이름"
 
@@ -330,11 +331,11 @@ msgstr "시"
 msgid "Properties for %s"
 msgstr "%s 속성"
 
-#: comctl32.rc:73 comdlg32.rc:264
+#: comctl32.rc:73 comdlg32.rc:265
 msgid "&Apply"
 msgstr "적용(&A)"
 
-#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
+#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:309 user32.rc:88
 msgid "Help"
 msgstr "도움말"
 
@@ -344,9 +345,9 @@ msgstr "마법사"
 
 #: comctl32.rc:84
 msgid "< &Back"
-msgstr "< 이전(&B)"
+msgstr "< 뒤로(&B)"
 
-#: comctl32.rc:85
+#: comctl32.rc:85 version.rc:60
 msgid "&Next >"
 msgstr "다음(&N) >"
 
@@ -367,9 +368,9 @@ msgstr "닫기(&C)"
 msgid "R&eset"
 msgstr "재설정(&E)"
 
-#: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
-#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
-#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:529 ieframe.rc:58 msacm32.rc:52
+#: comctl32.rc:102 comdlg32.rc:173 comdlg32.rc:195 comdlg32.rc:266
+#: comdlg32.rc:331 comdlg32.rc:351 comdlg32.rc:392 comdlg32.rc:426
+#: comdlg32.rc:482 comdlg32.rc:508 comdlg32.rc:531 ieframe.rc:58 msacm32.rc:52
 #: oledlg.rc:96 shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119
 #: oleview.rc:72 progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144
 #: progman.rc:160 progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77
@@ -443,413 +444,420 @@ msgstr "오늘:"
 msgid "Go to today"
 msgstr "오늘로 가기"
 
-#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
-#: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
+#: comdlg32.rc:158 comdlg32.rc:171 comdlg32.rc:462 comdlg32.rc:487
+#: comdlg32.rc:514 shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "열기"
 
-#: comdlg32.rc:160 comdlg32.rc:182
+#: comdlg32.rc:161 comdlg32.rc:183
 msgid "File &Name:"
 msgstr "파일 이름(&N):"
 
-#: comdlg32.rc:163 comdlg32.rc:185
+#: comdlg32.rc:164 comdlg32.rc:186
 msgid "&Directories:"
 msgstr "디렉터리(&D):"
 
-#: comdlg32.rc:166 comdlg32.rc:188
+#: comdlg32.rc:167 comdlg32.rc:189
 msgid "List Files of &Type:"
 msgstr "파일 형식 목록(&T):"
 
-#: comdlg32.rc:168 comdlg32.rc:190
+#: comdlg32.rc:169 comdlg32.rc:191
 msgid "Dri&ves:"
 msgstr "드라이브(&V):"
 
-#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: comdlg32.rc:174 comdlg32.rc:196 shell32.rc:370 shell32.rc:407
 #: winefile.rc:172
 msgid "&Read Only"
 msgstr "읽기 전용(&R)"
 
-#: comdlg32.rc:179
+#: comdlg32.rc:180
 msgid "Save As..."
 msgstr "다른 이름으로 저장..."
 
-#: comdlg32.rc:192 comdlg32.rc:145
+#: comdlg32.rc:193 comdlg32.rc:146
 msgid "Save As"
 msgstr "다른 이름으로 저장"
 
-#: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
+#: comdlg32.rc:202 comdlg32.rc:211 comdlg32.rc:358 comdlg32.rc:55 hhctrl.rc:49
 #: wordpad.rc:173
 msgid "Print"
 msgstr "인쇄"
 
-#: comdlg32.rc:204
+#: comdlg32.rc:205
 msgid "Printer:"
 msgstr "프린터:"
 
-#: comdlg32.rc:206 comdlg32.rc:373
+#: comdlg32.rc:207 comdlg32.rc:375
 msgid "Print range"
 msgstr "인쇄 범위"
 
-#: comdlg32.rc:207 comdlg32.rc:374 regedit.rc:268
+#: comdlg32.rc:208 comdlg32.rc:376 regedit.rc:268
 msgid "&All"
 msgstr "모두(&A)"
 
-#: comdlg32.rc:208
+#: comdlg32.rc:209
 msgid "S&election"
 msgstr "선택(&E)"
 
-#: comdlg32.rc:209
+#: comdlg32.rc:210
 msgid "&Pages"
 msgstr "쪽(&P)"
 
-#: comdlg32.rc:212 comdlg32.rc:234
+#: comdlg32.rc:213 comdlg32.rc:235
 msgid "&Setup"
 msgstr "설정(&S)"
 
-#: comdlg32.rc:213
+#: comdlg32.rc:214
 msgid "&From:"
 msgstr "시작(&F):"
 
-#: comdlg32.rc:214
+#: comdlg32.rc:215
 msgid "&To:"
 msgstr "끝(&T):"
 
-#: comdlg32.rc:215 wineps.rc:42
+#: comdlg32.rc:216 wineps.rc:42
 msgid "Print &Quality:"
 msgstr "인쇄 품질(&Q):"
 
-#: comdlg32.rc:217
+#: comdlg32.rc:218
 msgid "Print to Fi&le"
 msgstr "파일로 인쇄(&L)"
 
-#: comdlg32.rc:218
+#: comdlg32.rc:219
 msgid "Condensed"
 msgstr "좁게"
 
-#: comdlg32.rc:224 comdlg32.rc:395
+#: comdlg32.rc:225 comdlg32.rc:397
 msgid "Print Setup"
 msgstr "인쇄 설정"
 
-#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:398
+#: comdlg32.rc:228 comdlg32.rc:361 comdlg32.rc:400
 msgid "Printer"
 msgstr "프린터"
 
-#: comdlg32.rc:228
+#: comdlg32.rc:229
 msgid "&Default Printer"
 msgstr "기본 프린터(&D)"
 
-#: comdlg32.rc:229
+#: comdlg32.rc:230
 msgid "[none]"
 msgstr "[없음]"
 
-#: comdlg32.rc:230
+#: comdlg32.rc:231
 msgid "Specific &Printer"
 msgstr "선택한 프린터(&P)"
 
-#: comdlg32.rc:235 comdlg32.rc:417 comdlg32.rc:441 wineps.rc:34
+#: comdlg32.rc:236 comdlg32.rc:419 comdlg32.rc:443 wineps.rc:34
 msgid "Orientation"
 msgstr "방향"
 
-#: comdlg32.rc:236
+#: comdlg32.rc:237
 msgid "Po&rtrait"
 msgstr "세로(&R)"
 
-#: comdlg32.rc:237 comdlg32.rc:443 wineps.rc:37
+#: comdlg32.rc:238 comdlg32.rc:445 wineps.rc:37
 msgid "&Landscape"
 msgstr "가로(&L)"
 
-#: comdlg32.rc:240 comdlg32.rc:411 comdlg32.rc:436 wineps.rc:28
+#: comdlg32.rc:241 comdlg32.rc:413 comdlg32.rc:438 wineps.rc:28
 msgid "Paper"
 msgstr "용지"
 
-#: comdlg32.rc:241
+#: comdlg32.rc:242
 msgid "Si&ze"
 msgstr "크기(&Z)"
 
-#: comdlg32.rc:242
+#: comdlg32.rc:243
 msgid "&Source"
 msgstr "원본(&S)"
 
-#: comdlg32.rc:250 wineconsole.rc:85
+#: comdlg32.rc:251 wineconsole.rc:85
 msgid "Font"
 msgstr "글꼴"
 
-#: comdlg32.rc:253
+#: comdlg32.rc:254
 msgid "&Font:"
 msgstr "글꼴(&F):"
 
-#: comdlg32.rc:256
+#: comdlg32.rc:257
 msgid "Font St&yle:"
 msgstr "글꼴 스타일(&Y):"
 
-#: comdlg32.rc:259 comdlg32.rc:437 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
 msgid "&Size:"
 msgstr "크기(&S):"
 
-#: comdlg32.rc:266
+#: comdlg32.rc:267
 msgid "Effects"
 msgstr "효과"
 
-#: comdlg32.rc:267
+#: comdlg32.rc:268
 msgid "Stri&keout"
 msgstr "취소선(&K)"
 
-#: comdlg32.rc:268
+#: comdlg32.rc:269
 msgid "&Underline"
 msgstr "밑줄(&U)"
 
-#: comdlg32.rc:269 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:292
 msgid "&Color:"
 msgstr "색상(&C):"
 
-#: comdlg32.rc:272
+#: comdlg32.rc:273
 msgid "Sample"
 msgstr "샘플"
 
-#: comdlg32.rc:274
+#: comdlg32.rc:275
 msgid "Scr&ipt:"
 msgstr "스크립트(&I):"
 
-#: comdlg32.rc:282
+#: comdlg32.rc:283 comdlg32.rc:288
 msgid "Color"
 msgstr "색상"
 
-#: comdlg32.rc:285
+#: comdlg32.rc:286
 msgid "&Basic Colors:"
 msgstr "기본 색상(&B):"
 
-#: comdlg32.rc:286
+#: comdlg32.rc:287
 msgid "&Custom Colors:"
 msgstr "사용자 정의 색상(&C):"
 
-#: comdlg32.rc:287 comdlg32.rc:310
-msgid "Color |  Sol&id"
-msgstr "색상 | 단색(&I)"
+#: comdlg32.rc:289
+msgid "|S&olid"
+msgstr ""
 
-#: comdlg32.rc:288
+#: comdlg32.rc:290
 msgid "&Red:"
 msgstr "빨강(&R):"
 
-#: comdlg32.rc:290
+#: comdlg32.rc:292
 msgid "&Green:"
 msgstr "녹색(&G):"
 
-#: comdlg32.rc:292
+#: comdlg32.rc:294
 msgid "&Blue:"
 msgstr "파랑(&B):"
 
-#: comdlg32.rc:294
+#: comdlg32.rc:296
 msgid "&Hue:"
 msgstr "색상(&H):"
 
-#: comdlg32.rc:296
+#: comdlg32.rc:298
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "채도(&S):"
 
-#: comdlg32.rc:298
+#: comdlg32.rc:300
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "휘도(&L):"
 
-#: comdlg32.rc:308
+#: comdlg32.rc:310
 msgid "&Add to Custom Colors"
 msgstr "사용자 정의 색상에 더하기(&A)"
 
-#: comdlg32.rc:309
+#: comdlg32.rc:311
 msgid "&Define Custom Colors >>"
 msgstr "사용자 정의 색상 결정(&D) >>"
 
-#: comdlg32.rc:316 regedit.rc:275 regedit.rc:285
+#: comdlg32.rc:312
+#, fuzzy
+#| msgid "&No"
+msgctxt "Solid"
+msgid "&o"
+msgstr "아니요(&N)"
+
+#: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
 msgstr "찾기"
 
-#: comdlg32.rc:319 comdlg32.rc:338
+#: comdlg32.rc:321 comdlg32.rc:340
 msgid "Fi&nd What:"
 msgstr "찾을 내용(&N):"
 
-#: comdlg32.rc:321 comdlg32.rc:342
+#: comdlg32.rc:323 comdlg32.rc:344
 msgid "Match &Whole Word Only"
 msgstr "단어 단위로(&W)"
 
-#: comdlg32.rc:322 comdlg32.rc:343
+#: comdlg32.rc:324 comdlg32.rc:345
 msgid "Match &Case"
 msgstr "대/소문자 구분(&C)"
 
-#: comdlg32.rc:323 joy.rc:71
+#: comdlg32.rc:325 joy.rc:71
 msgid "Direction"
 msgstr "방향"
 
-#: comdlg32.rc:324 view.rc:42
+#: comdlg32.rc:326 view.rc:42
 msgid "&Up"
 msgstr "위(&U)"
 
-#: comdlg32.rc:325 view.rc:43
+#: comdlg32.rc:327 view.rc:43
 msgid "&Down"
 msgstr "아래(&D)"
 
-#: comdlg32.rc:327 comdlg32.rc:345
+#: comdlg32.rc:329 comdlg32.rc:347
 msgid "&Find Next"
 msgstr "다음 찾기(&F)"
 
-#: comdlg32.rc:335
+#: comdlg32.rc:337
 msgid "Replace"
 msgstr "바꾸기"
 
-#: comdlg32.rc:340
+#: comdlg32.rc:342
 msgid "Re&place With:"
 msgstr "바꿀 내용(&P):"
 
-#: comdlg32.rc:346
+#: comdlg32.rc:348
 msgid "&Replace"
 msgstr "바꾸기(&R)"
 
-#: comdlg32.rc:347
+#: comdlg32.rc:349
 msgid "Replace &All"
 msgstr "모두 바꾸기(&A)"
 
-#: comdlg32.rc:361 comdlg32.rc:401 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:363 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "속성(&P)"
 
-#: comdlg32.rc:362
+#: comdlg32.rc:364
 msgid "Print to fi&le"
 msgstr "파일로 인쇄(&L)"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
+#: comdlg32.rc:365 comdlg32.rc:401 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "이름(&N):"
 
-#: comdlg32.rc:364 comdlg32.rc:402
+#: comdlg32.rc:366 comdlg32.rc:404
 msgid "Status:"
 msgstr "상태:"
 
-#: comdlg32.rc:366 comdlg32.rc:404
+#: comdlg32.rc:368 comdlg32.rc:406
 msgid "Type:"
 msgstr "형식:"
 
-#: comdlg32.rc:368 comdlg32.rc:406
+#: comdlg32.rc:370 comdlg32.rc:408
 msgid "Where:"
 msgstr "위치:"
 
-#: comdlg32.rc:370 comdlg32.rc:408
+#: comdlg32.rc:372 comdlg32.rc:410
 msgid "Comment:"
 msgstr "설명:"
 
-#: comdlg32.rc:375
+#: comdlg32.rc:377
 msgid "Pa&ges"
 msgstr "페이지(&G)"
 
-#: comdlg32.rc:376
+#: comdlg32.rc:378
 msgid "&Selection"
 msgstr "선택 영역(&S)"
 
-#: comdlg32.rc:379
+#: comdlg32.rc:381
 msgid "&from:"
 msgstr "시작(&F):"
 
-#: comdlg32.rc:380
+#: comdlg32.rc:382
 msgid "&to:"
 msgstr "끝(&T):"
 
-#: comdlg32.rc:382
+#: comdlg32.rc:384
 msgid "Copies"
 msgstr "복사본"
 
-#: comdlg32.rc:383
+#: comdlg32.rc:385
 msgid "Number of &copies:"
 msgstr "복사본 개수(&C):"
 
-#: comdlg32.rc:385
+#: comdlg32.rc:387
 msgid "C&ollate"
 msgstr "정렬(&O)"
 
-#: comdlg32.rc:412 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:300
 msgid "Si&ze:"
 msgstr "크기(&Z):"
 
-#: comdlg32.rc:414
+#: comdlg32.rc:416
 msgid "&Source:"
 msgstr "원본(&S):"
 
-#: comdlg32.rc:419
+#: comdlg32.rc:421
 msgid "P&ortrait"
 msgstr "세로(&O)"
 
-#: comdlg32.rc:420
+#: comdlg32.rc:422
 msgid "L&andscape"
 msgstr "가로(&A)"
 
-#: comdlg32.rc:430
+#: comdlg32.rc:432
 msgid "Setup Page"
 msgstr "페이지 설정"
 
-#: comdlg32.rc:439
+#: comdlg32.rc:441
 msgid "&Tray:"
 msgstr "트레이(&T):"
 
-#: comdlg32.rc:442 wineps.rc:35
+#: comdlg32.rc:444 wineps.rc:35
 msgid "&Portrait"
 msgstr "세로(&P)"
 
-#: comdlg32.rc:445
+#: comdlg32.rc:447
 msgid "L&eft:"
 msgstr "왼쪽(&E):"
 
-#: comdlg32.rc:447 notepad.rc:112
+#: comdlg32.rc:449 notepad.rc:112
 msgid "&Right:"
 msgstr "오른쪽(&R):"
 
-#: comdlg32.rc:449
+#: comdlg32.rc:451
 msgid "T&op:"
 msgstr "위(&O):"
 
-#: comdlg32.rc:451 notepad.rc:114
+#: comdlg32.rc:453 notepad.rc:114
 msgid "&Bottom:"
 msgstr "아래(&B):"
 
-#: comdlg32.rc:455
+#: comdlg32.rc:457
 msgid "P&rinter..."
 msgstr "프린터(&R)..."
 
-#: comdlg32.rc:463 comdlg32.rc:488
+#: comdlg32.rc:465 comdlg32.rc:490
 msgid "Look &in:"
 msgstr "위치(&I):"
 
-#: comdlg32.rc:469 comdlg32.rc:495
+#: comdlg32.rc:471 comdlg32.rc:497
 msgid "File &name:"
 msgstr "파일 이름(&N):"
 
-#: comdlg32.rc:473 comdlg32.rc:499
+#: comdlg32.rc:475 comdlg32.rc:501
 msgid "Files of &type:"
 msgstr "파일 형식(&T):"
 
-#: comdlg32.rc:476 comdlg32.rc:502
+#: comdlg32.rc:478 comdlg32.rc:504
 msgid "Open as &read-only"
 msgstr "읽기 전용으로 열기(&R)"
 
-#: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:524 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "열기(&O)"
 
-#: comdlg32.rc:515
+#: comdlg32.rc:517
 msgid "File name:"
 msgstr "파일 이름:"
 
-#: comdlg32.rc:518
+#: comdlg32.rc:520
 msgid "Files of type:"
 msgstr "파일 형식:"
 
-#: comdlg32.rc:32
+#: comdlg32.rc:33
 msgid "File not found"
 msgstr "파일을 찾을 수 없음"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
 msgstr "파일 이름이 올바른지 확인하십시오"
 
-#: comdlg32.rc:34
+#: comdlg32.rc:35
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
@@ -857,7 +865,7 @@ msgstr ""
 "파일이 없습니다\n"
 "파일을 새로 만드시겠습니까?"
 
-#: comdlg32.rc:35
+#: comdlg32.rc:36
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
@@ -865,11 +873,11 @@ msgstr ""
 "파일은 이미 존재합니다.\n"
 "파일을 교체하시겠습니까?"
 
-#: comdlg32.rc:36
+#: comdlg32.rc:37
 msgid "Invalid character(s) in path"
 msgstr "경로에 올바르지 않은 문자가 들어 있습니다"
 
-#: comdlg32.rc:37
+#: comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
@@ -877,123 +885,123 @@ msgstr ""
 "파일 이름에 다음 문자가 들어 있으면 안됩니다.\n"
 "                / : < > |"
 
-#: comdlg32.rc:38
+#: comdlg32.rc:39
 msgid "Path does not exist"
 msgstr "경로가 없습니다"
 
-#: comdlg32.rc:39
+#: comdlg32.rc:40
 msgid "File does not exist"
 msgstr "파일이 없습니다"
 
-#: comdlg32.rc:40
+#: comdlg32.rc:41
 msgid "The selection contains a non-folder object"
 msgstr "선택 영역에 폴더가 아닌 객체가 들어 있습니다"
 
-#: comdlg32.rc:45
+#: comdlg32.rc:46
 msgid "Up One Level"
 msgstr "한 단계 위로"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:47
 msgid "Create New Folder"
 msgstr "새 폴더 만들기"
 
-#: comdlg32.rc:47
+#: comdlg32.rc:48
 msgid "List"
 msgstr "간단히"
 
-#: comdlg32.rc:48 cryptui.rc:201
+#: comdlg32.rc:49 cryptui.rc:201
 msgid "Details"
 msgstr "자세히"
 
-#: comdlg32.rc:49
+#: comdlg32.rc:50
 msgid "Browse to Desktop"
 msgstr "바탕 화면 표시"
 
-#: comdlg32.rc:113
+#: comdlg32.rc:114
 msgid "Regular"
 msgstr "보통"
 
-#: comdlg32.rc:114
+#: comdlg32.rc:115
 msgid "Bold"
 msgstr "굵게"
 
-#: comdlg32.rc:115
+#: comdlg32.rc:116
 msgid "Italic"
 msgstr "기울임꼴"
 
-#: comdlg32.rc:116
+#: comdlg32.rc:117
 msgid "Bold Italic"
 msgstr "굵은 기움임꼴"
 
-#: comdlg32.rc:121 wordpad.rc:125
+#: comdlg32.rc:122 wordpad.rc:125
 msgid "Black"
 msgstr "검정"
 
-#: comdlg32.rc:122 wordpad.rc:126
+#: comdlg32.rc:123 wordpad.rc:126
 msgid "Maroon"
 msgstr "적갈색"
 
-#: comdlg32.rc:123 wordpad.rc:127
+#: comdlg32.rc:124 wordpad.rc:127
 msgid "Green"
 msgstr "녹색"
 
-#: comdlg32.rc:124 wordpad.rc:128
+#: comdlg32.rc:125 wordpad.rc:128
 msgid "Olive"
 msgstr "올리브"
 
-#: comdlg32.rc:125 wordpad.rc:129
+#: comdlg32.rc:126 wordpad.rc:129
 msgid "Navy"
 msgstr "짙은 파랑"
 
-#: comdlg32.rc:126 wordpad.rc:130
+#: comdlg32.rc:127 wordpad.rc:130
 msgid "Purple"
 msgstr "자주"
 
-#: comdlg32.rc:127 wordpad.rc:131
+#: comdlg32.rc:128 wordpad.rc:131
 msgid "Teal"
 msgstr "청록"
 
-#: comdlg32.rc:128 wordpad.rc:132
+#: comdlg32.rc:129 wordpad.rc:132
 msgid "Gray"
 msgstr "회색"
 
-#: comdlg32.rc:129 wordpad.rc:133
+#: comdlg32.rc:130 wordpad.rc:133
 msgid "Silver"
 msgstr "은색"
 
-#: comdlg32.rc:130 wordpad.rc:134
+#: comdlg32.rc:131 wordpad.rc:134
 msgid "Red"
 msgstr "빨강"
 
-#: comdlg32.rc:131 wordpad.rc:135
+#: comdlg32.rc:132 wordpad.rc:135
 msgid "Lime"
 msgstr "라임"
 
-#: comdlg32.rc:132 wordpad.rc:136
+#: comdlg32.rc:133 wordpad.rc:136
 msgid "Yellow"
 msgstr "노랑"
 
-#: comdlg32.rc:133 wordpad.rc:137
+#: comdlg32.rc:134 wordpad.rc:137
 msgid "Blue"
 msgstr "파랑"
 
-#: comdlg32.rc:134 wordpad.rc:138
+#: comdlg32.rc:135 wordpad.rc:138
 msgid "Fuchsia"
 msgstr "밝은 자홍"
 
-#: comdlg32.rc:135 wordpad.rc:139
+#: comdlg32.rc:136 wordpad.rc:139
 msgid "Aqua"
 msgstr "바다색"
 
-#: comdlg32.rc:136 wordpad.rc:140
+#: comdlg32.rc:137 wordpad.rc:140
 msgid "White"
 msgstr "흰색"
 
-#: comdlg32.rc:56
+#: comdlg32.rc:57
 msgid "Unreadable Entry"
 msgstr "읽을 수 없는 항목입니다"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:59
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
@@ -1001,11 +1009,11 @@ msgstr ""
 "페이지 범위를 벗어나지 않아야 올바른 값입니다.\n"
 "%1!d! 과 %2!d! 사이의 값을 입력하시오."
 
-#: comdlg32.rc:60
+#: comdlg32.rc:61
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "'시작' 엔트리는 '끝' 엔트리를 초과할 수 없습니다."
 
-#: comdlg32.rc:62
+#: comdlg32.rc:63
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -1013,11 +1021,11 @@ msgstr ""
 "여백이 겹쳐졌거나 용지 크기를 넘었습니다.\n"
 "여백 크기를 다시 입력십시오."
 
-#: comdlg32.rc:64
+#: comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "'복사본 개수' 필드는 비어 있어서는 안됩니다."
 
-#: comdlg32.rc:66
+#: comdlg32.rc:67
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -1025,31 +1033,31 @@ msgstr ""
 "복사본 개수가 너무 많아서 프린터가 지원하지 않습니다.\n"
 "1과 %d 사이의 값을 입력하십시오."
 
-#: comdlg32.rc:67
+#: comdlg32.rc:68
 msgid "A printer error occurred."
 msgstr "프린터 오류 발생."
 
-#: comdlg32.rc:68
+#: comdlg32.rc:69
 msgid "No default printer defined."
 msgstr "기본 프린터가 정의되지 않았습니다."
 
-#: comdlg32.rc:69
+#: comdlg32.rc:70
 msgid "Cannot find the printer."
 msgstr "프린터를 찾을 수 없습니다."
 
-#: comdlg32.rc:70 progman.rc:76
+#: comdlg32.rc:71 progman.rc:76
 msgid "Out of memory."
 msgstr "메모리 부족."
 
-#: comdlg32.rc:71
+#: comdlg32.rc:72
 msgid "An error occurred."
 msgstr "오류 발생."
 
-#: comdlg32.rc:72
+#: comdlg32.rc:73
 msgid "Unknown printer driver."
 msgstr "알 수 없는 프린터 드라이버."
 
-#: comdlg32.rc:75
+#: comdlg32.rc:76
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
@@ -1057,155 +1065,155 @@ msgstr ""
 "페이지 설정이나 문서 인쇄와 같은 프린터 관련 작업을 수행하려면 먼저 프린터를 "
 "설치해야 합니다. 프린터를 설치하고 다시 시도하십시오."
 
-#: comdlg32.rc:141
+#: comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "%1!d!pt - %2!d!pt 사이에서 글꼴 크기를 선택하십시오."
 
-#: comdlg32.rc:142 ieframe.rc:35
+#: comdlg32.rc:143 ieframe.rc:35
 msgid "&Save"
 msgstr "저장(&S)"
 
-#: comdlg32.rc:143
+#: comdlg32.rc:144
 msgid "Save &in:"
 msgstr "위치(&I):"
 
-#: comdlg32.rc:144
+#: comdlg32.rc:145
 msgid "Save"
 msgstr "저장"
 
-#: comdlg32.rc:146
+#: comdlg32.rc:147
 msgid "Open File"
 msgstr "파일 열기"
 
-#: comdlg32.rc:147
+#: comdlg32.rc:148
 msgid "Select Folder"
 msgstr "선택한 폴더"
 
-#: comdlg32.rc:148
+#: comdlg32.rc:149
 msgid "Font size has to be a number."
 msgstr "숫자는 글꼴 크기입니다."
 
-#: comdlg32.rc:83 oleview.rc:98
+#: comdlg32.rc:84 oleview.rc:98
 msgid "Ready"
 msgstr "준비"
 
-#: comdlg32.rc:84
+#: comdlg32.rc:85
 msgid "Paused; "
 msgstr "정지; "
 
-#: comdlg32.rc:85
+#: comdlg32.rc:86
 msgid "Error; "
 msgstr "오류; "
 
-#: comdlg32.rc:86
+#: comdlg32.rc:87
 msgid "Pending deletion; "
 msgstr "제거 중; "
 
-#: comdlg32.rc:87
+#: comdlg32.rc:88
 msgid "Paper jam; "
 msgstr "종이 걸림; "
 
-#: comdlg32.rc:88
+#: comdlg32.rc:89
 msgid "Out of paper; "
 msgstr "종이 초과; "
 
-#: comdlg32.rc:89
+#: comdlg32.rc:90
 msgid "Feed paper manual; "
 msgstr "수동 종이 공금; "
 
-#: comdlg32.rc:90
+#: comdlg32.rc:91
 msgid "Paper problem; "
 msgstr "종이 문제; "
 
-#: comdlg32.rc:91
+#: comdlg32.rc:92
 msgid "Printer offline; "
 msgstr "프린터 오프라인; "
 
-#: comdlg32.rc:92
+#: comdlg32.rc:93
 msgid "I/O Active; "
 msgstr "I/O 활성; "
 
-#: comdlg32.rc:93
+#: comdlg32.rc:94
 msgid "Busy; "
 msgstr "바쁨; "
 
-#: comdlg32.rc:94
+#: comdlg32.rc:95
 msgid "Printing; "
 msgstr "인쇄중; "
 
-#: comdlg32.rc:95
+#: comdlg32.rc:96
 msgid "Output tray is full; "
 msgstr "출력 트레이가 꽉 찼습니다; "
 
-#: comdlg32.rc:96
+#: comdlg32.rc:97
 msgid "Not available; "
 msgstr "가능하지 않음; "
 
-#: comdlg32.rc:97
+#: comdlg32.rc:98
 msgid "Waiting; "
 msgstr "대기 중; "
 
-#: comdlg32.rc:98
+#: comdlg32.rc:99
 msgid "Processing; "
 msgstr "작업 중; "
 
-#: comdlg32.rc:99
+#: comdlg32.rc:100
 msgid "Initializing; "
 msgstr "초기화 중; "
 
-#: comdlg32.rc:100
+#: comdlg32.rc:101
 msgid "Warming up; "
 msgstr "준비 중; "
 
-#: comdlg32.rc:101
+#: comdlg32.rc:102
 msgid "Toner low; "
 msgstr "토너 부족; "
 
-#: comdlg32.rc:102
+#: comdlg32.rc:103
 msgid "No toner; "
 msgstr "토너 없음; "
 
-#: comdlg32.rc:103
+#: comdlg32.rc:104
 msgid "Page punt; "
 msgstr "페이지 펀트; "
 
-#: comdlg32.rc:104
+#: comdlg32.rc:105
 msgid "Interrupted by user; "
 msgstr "사용자에 의한 취소; "
 
-#: comdlg32.rc:105
+#: comdlg32.rc:106
 msgid "Out of memory; "
 msgstr "메모리 초과; "
 
-#: comdlg32.rc:106
+#: comdlg32.rc:107
 msgid "The printer door is open; "
 msgstr "프린터 문이 열려있습니다; "
 
-#: comdlg32.rc:107
+#: comdlg32.rc:108
 msgid "Print server unknown; "
 msgstr "프린트 서버 상태 알 수 없음; "
 
-#: comdlg32.rc:108
+#: comdlg32.rc:109
 msgid "Power save mode; "
 msgstr "전원 절약 모드; "
 
-#: comdlg32.rc:77
+#: comdlg32.rc:78
 msgid "Default Printer; "
 msgstr "기본 프린터; "
 
-#: comdlg32.rc:78
+#: comdlg32.rc:79
 msgid "There are %d documents in the queue"
 msgstr "대기열에는  %d의 문서가 존재합니다"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:80
 msgid "Margins [inches]"
 msgstr "여백 [인치]"
 
-#: comdlg32.rc:80
+#: comdlg32.rc:81
 msgid "Margins [mm]"
 msgstr "여백 [밀리미터]"
 
-#: comdlg32.rc:81 sane.rc:33
+#: comdlg32.rc:82 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
@@ -1214,7 +1222,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "사용자 이름(&U):"
 
-#: credui.rc:48 cryptui.rc:402
+#: credui.rc:48 cryptui.rc:402 version.rc:80
 msgid "&Password:"
 msgstr "암호(&P):"
 
@@ -1260,11 +1268,11 @@ msgstr "Caps Lock 켜짐"
 
 #: crypt32.rc:30
 msgid "Authority Key Identifier"
-msgstr "접근 키 식별자"
+msgstr "권한 키 식별자"
 
 #: crypt32.rc:31
 msgid "Key Attributes"
-msgstr "키 속성"
+msgstr "키 특성"
 
 #: crypt32.rc:32
 msgid "Key Usage Restriction"
@@ -1276,19 +1284,19 @@ msgstr "주제 대체 이름"
 
 #: crypt32.rc:34
 msgid "Issuer Alternative Name"
-msgstr "발행자 대체 이름"
+msgstr "발급자 대체 이름"
 
 #: crypt32.rc:35
 msgid "Basic Constraints"
-msgstr "기본 제약"
+msgstr "기본 제한"
 
 #: crypt32.rc:36
 msgid "Key Usage"
-msgstr "키 사용법"
+msgstr "키 사용"
 
 #: crypt32.rc:37
 msgid "Certificate Policies"
-msgstr "인증 방침"
+msgstr "인증서 정책"
 
 #: crypt32.rc:38
 msgid "Subject Key Identifier"
@@ -1296,15 +1304,15 @@ msgstr "주제 키 식별자"
 
 #: crypt32.rc:39
 msgid "CRL Reason Code"
-msgstr "CRL 분별 코드"
+msgstr "CRL 원인 코드"
 
 #: crypt32.rc:40
 msgid "CRL Distribution Points"
-msgstr "CRL 배포  지점"
+msgstr "CRL 배포 지점"
 
 #: crypt32.rc:41
 msgid "Enhanced Key Usage"
-msgstr "확장된 키 사용법"
+msgstr "확장된 키 사용"
 
 #: crypt32.rc:42
 msgid "Authority Information Access"
@@ -1320,7 +1328,7 @@ msgstr "다음 업데이트 위치"
 
 #: crypt32.rc:45
 msgid "Yes or No Trust"
-msgstr "신뢰(예(Y) 나 아니요(N))"
+msgstr "신뢰하거나 신뢰하지 않음"
 
 #: crypt32.rc:46
 msgid "Email Address"
@@ -1328,15 +1336,15 @@ msgstr "전자메일 주소"
 
 #: crypt32.rc:47
 msgid "Unstructured Name"
-msgstr "비구조화 이름"
+msgstr "구조화되지 않은 이름"
 
 #: crypt32.rc:48
 msgid "Content Type"
-msgstr "내용 형식"
+msgstr "콘텐츠 형식"
 
 #: crypt32.rc:49
 msgid "Message Digest"
-msgstr "내용 요약"
+msgstr "메시지 요약"
 
 #: crypt32.rc:50
 msgid "Signing Time"
@@ -1344,23 +1352,23 @@ msgstr "서명 시간"
 
 #: crypt32.rc:51
 msgid "Counter Sign"
-msgstr "다시 서명"
+msgstr "연대 서명"
 
 #: crypt32.rc:52
 msgid "Challenge Password"
-msgstr "암호 바꾸기"
+msgstr "챌린지 암호"
 
 #: crypt32.rc:53
 msgid "Unstructured Address"
-msgstr "비구조화 주소"
+msgstr "구조화되지 않은 주소"
 
 #: crypt32.rc:54
 msgid "S/MIME Capabilities"
-msgstr "S/MIME  능력"
+msgstr "S/MIME 기능"
 
 #: crypt32.rc:55
 msgid "Prefer Signed Data"
-msgstr "선호하는 사인된 데이터"
+msgstr "서명한 데이터 선호"
 
 #: crypt32.rc:56 cryptdlg.rc:34
 msgctxt "Certification Practice Statement"
@@ -1369,23 +1377,23 @@ msgstr "CPS"
 
 #: crypt32.rc:57 cryptdlg.rc:35
 msgid "User Notice"
-msgstr "사용자 통지"
+msgstr "사용자 알림"
 
 #: crypt32.rc:58
 msgid "On-line Certificate Status Protocol"
-msgstr "온라인 인증 상태 프로토콜"
+msgstr "온라인 인증서 상태 프로토콜"
 
 #: crypt32.rc:59
 msgid "Certification Authority Issuer"
-msgstr "인증서 접근 발행자"
+msgstr "인증 기관 발급자"
 
 #: crypt32.rc:60
 msgid "Certification Template Name"
-msgstr "인증 형판 이름"
+msgstr "인증 서식 이름"
 
 #: crypt32.rc:61
 msgid "Certificate Type"
-msgstr "인증서 형태"
+msgstr "인증서 종류"
 
 #: crypt32.rc:62
 msgid "Certificate Manifold"
@@ -1393,27 +1401,27 @@ msgstr "인증서 사본"
 
 #: crypt32.rc:63
 msgid "Netscape Cert Type"
-msgstr "넷스케이프 인증 형태"
+msgstr "넷스케이프 인증서 형식"
 
 #: crypt32.rc:64
 msgid "Netscape Base URL"
-msgstr "넷스케이프 기본 웹주소"
+msgstr "넷스케이프 기준 URL"
 
 #: crypt32.rc:65
 msgid "Netscape Revocation URL"
-msgstr "넷스케이프 취소 웹주소"
+msgstr "넷스케이프 해지 URL"
 
 #: crypt32.rc:66
 msgid "Netscape CA Revocation URL"
-msgstr "넷스케이프 CA 취소 웹주소"
+msgstr "넷스케이프 CA 해지 URL"
 
 #: crypt32.rc:67
 msgid "Netscape Cert Renewal URL"
-msgstr "넷스케이프 인증서 재개 웹주소"
+msgstr "넷스케이프 인증서 갱신 URL"
 
 #: crypt32.rc:68
 msgid "Netscape CA Policy URL"
-msgstr "넷스케이프 CA 방침 URL"
+msgstr "넷스케이프 CA 정책 URL"
 
 #: crypt32.rc:69
 msgid "Netscape SSL ServerName"
@@ -1421,31 +1429,31 @@ msgstr "넷스케이프 SSL 서버이름"
 
 #: crypt32.rc:70
 msgid "Netscape Comment"
-msgstr "넷스케이프 설명"
+msgstr "넷스케이프 주석"
 
 #: crypt32.rc:71
 msgid "Country/Region"
-msgstr "나라/지역"
+msgstr "국가/지역"
 
 #: crypt32.rc:72
 msgid "Organization"
-msgstr "단체"
+msgstr "조직"
 
 #: crypt32.rc:73
 msgid "Organizational Unit"
-msgstr "단체 단위"
+msgstr "조직 단위"
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr "완전한 이름"
+msgstr "일반 이름"
 
 #: crypt32.rc:75
 msgid "Locality"
-msgstr "소재지"
+msgstr "구/군/시"
 
 #: crypt32.rc:76
 msgid "State or Province"
-msgstr "주나 지방"
+msgstr "시/도"
 
 #: crypt32.rc:77
 msgid "Title"
@@ -1457,7 +1465,7 @@ msgstr "이름"
 
 #: crypt32.rc:79
 msgid "Initials"
-msgstr "머릿글자"
+msgstr "이니셜"
 
 #: crypt32.rc:80
 msgid "Surname"
@@ -1465,7 +1473,7 @@ msgstr "성"
 
 #: crypt32.rc:81
 msgid "Domain Component"
-msgstr "주소 구성요소"
+msgstr "주소 구성 요소"
 
 #: crypt32.rc:82
 msgid "Street Address"
@@ -1473,7 +1481,7 @@ msgstr "거리 주소"
 
 #: crypt32.rc:83
 msgid "Serial Number"
-msgstr "시리얼 번호"
+msgstr "일련 번호"
 
 #: crypt32.rc:84
 msgid "CA Version"
@@ -1481,15 +1489,15 @@ msgstr "CA 버전"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr "교차 CA 버전"
+msgstr "상호 CA 버전"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "직렬화된 서명 일련 번호"
+msgstr "순차적인 서명 일련 번호"
 
 #: crypt32.rc:87
 msgid "Principal Name"
-msgstr "주요한 이름"
+msgstr "주체 이름"
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
@@ -1505,7 +1513,7 @@ msgstr "OS 버전"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr "CSP 등록"
+msgstr "등록 CSP"
 
 #: crypt32.rc:92
 msgid "CRL Number"
@@ -1517,7 +1525,7 @@ msgstr "델타 CRL 표시기"
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr "발행자 배포 위치"
+msgstr "배포 지점 발급 중"
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
@@ -1525,31 +1533,31 @@ msgstr "최신 CRL"
 
 #: crypt32.rc:96
 msgid "Name Constraints"
-msgstr "이름 제약"
+msgstr "이름 제약 조건"
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr "정책 대응"
+msgstr "정책 매핑"
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
-msgstr "정책 제약"
+msgstr "정책 제약 조건"
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr "상호 인증 분배 위치"
+msgstr "상호 인증서 배포 지점"
 
 #: crypt32.rc:100
 msgid "Application Policies"
-msgstr "프로그램 방침"
+msgstr "프로그램 정책"
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "프로그램 정책 대응"
+msgstr "프로그램 정책 매핑"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr "프로그램 정책 제약"
+msgstr "프로그램 정책 제약 조건"
 
 #: crypt32.rc:103
 msgid "CMC Data"
@@ -1561,7 +1569,7 @@ msgstr "CMC 응답"
 
 #: crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr "서명되지 않은CMC 요청"
+msgstr "서명되지 않은 CMC 요청"
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
@@ -1573,7 +1581,7 @@ msgstr "CMC 확장"
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
-msgstr "CMC 속성"
+msgstr "CMC 특성"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Data"
@@ -1581,27 +1589,27 @@ msgstr "PKCS 7 데이터"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr "PKCS 7 서명"
+msgstr "서명된 PKCS 7"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7 싸개"
+msgstr "포장된 PKCS 7"
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7 서명된 싸개"
+msgstr "서명 포장된 PKCS 7"
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr "PKCS 7 요약"
+msgstr "요약된 PKCS 7"
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr "PKCS 7 암호화"
+msgstr "암호화 된 PKCS 7"
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "이전의 CA 인증 해쉬"
+msgstr "이전 CA 인증서 해시"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
@@ -1609,27 +1617,27 @@ msgstr "가상 기반 CRL 숫자"
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr "다음 CRL 발행"
+msgstr "다음 CRL 게시"
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr "CA 암호 인증"
+msgstr "CA 암호화 인증서"
 
 #: crypt32.rc:119 cryptui.rc:148
 msgid "Key Recovery Agent"
-msgstr "키 복구 관리자"
+msgstr "키 복구 에이전트"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr "인증 주형 정보"
+msgstr "인증서 서식 정보"
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr "기업 루트 OID"
+msgstr "엔터프라이즈 루트 OID"
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr "더미 사인자"
+msgstr "더미 서명자"
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
@@ -1637,23 +1645,23 @@ msgstr "암호화된 개인 키"
 
 #: crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr "발행된 CRL 위치"
+msgstr "게시된 CRL 위치"
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr "강제 인증 체인 정책"
+msgstr "인증서 체인 정책 시행"
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr "처리 아이디"
+msgstr "트랜잭션 ID"
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
-msgstr "임시 발송인"
+msgstr "임시 보낸 사람"
 
 #: crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr "임시 수령인"
+msgstr "임시 받는 사람"
 
 #: crypt32.rc:129
 msgid "Reg Info"
@@ -1661,19 +1669,19 @@ msgstr "등록 정보"
 
 #: crypt32.rc:130
 msgid "Get Certificate"
-msgstr "인증서 얻기"
+msgstr "인증서 가져오기"
 
 #: crypt32.rc:131
 msgid "Get CRL"
-msgstr "CRL 얻기"
+msgstr "CRL 가져오기"
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr "취소 요청"
+msgstr "요청 해지"
 
 #: crypt32.rc:133
 msgid "Query Pending"
-msgstr "질문하는 중"
+msgstr "대기 중인 쿼리"
 
 #: crypt32.rc:134 cryptui.rc:95
 msgid "Certificate Trust List"
@@ -1681,7 +1689,7 @@ msgstr "인증서 신뢰 목록"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr "압축된 키 인증 해쉬"
+msgstr "저장된 키 인증서 해시"
 
 #: crypt32.rc:136
 msgid "Private Key Usage Period"
@@ -1709,23 +1717,23 @@ msgstr "보안 전자메일"
 
 #: crypt32.rc:142
 msgid "Time Stamping"
-msgstr "시간 날인"
+msgstr "타임스탬프"
 
 #: crypt32.rc:143
 msgid "Microsoft Trust List Signing"
-msgstr "마이크로소프트 신뢰 목록 사인"
+msgstr "Microsoft 신뢰 목록 서명"
 
 #: crypt32.rc:144
 msgid "Microsoft Time Stamping"
-msgstr "마이크로소프트 시간 날인"
+msgstr "Microsoft 타임스탬프"
 
 #: crypt32.rc:145
 msgid "IP security end system"
-msgstr "IP 보안 종단 시스템"
+msgstr "IP 보안 최종 시스템"
 
 #: crypt32.rc:146
 msgid "IP security tunnel termination"
-msgstr "IP 보안  터널 종료"
+msgstr "IP 보안 터널 종료"
 
 #: crypt32.rc:147
 msgid "IP security user"
@@ -1733,7 +1741,7 @@ msgstr "IP 보안 사용자"
 
 #: crypt32.rc:148
 msgid "Encrypting File System"
-msgstr "암호화된 파일 시스템"
+msgstr "파일 시스템 암호화"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Windows Hardware Driver Verification"
@@ -1741,15 +1749,15 @@ msgstr "Windows 하드웨어 드라이버 검증"
 
 #: crypt32.rc:150 cryptui.rc:134
 msgid "Windows System Component Verification"
-msgstr "Windows 시스템 구성요소 검증"
+msgstr "Windows 시스템 구성 요소 검증"
 
 #: crypt32.rc:151 cryptui.rc:135
 msgid "OEM Windows System Component Verification"
-msgstr "OEM Windows 시스템 구성요소 검증"
+msgstr "OEM Windows 시스템 구성 요소 검증"
 
 #: crypt32.rc:152 cryptui.rc:136
 msgid "Embedded Windows System Component Verification"
-msgstr "내장 Windows 시스템 구성 요소 확인"
+msgstr "임베디드 Windows 시스템 구성 요소 검증"
 
 #: crypt32.rc:153 cryptui.rc:143
 msgid "Key Pack Licenses"
@@ -1757,19 +1765,19 @@ msgstr "키 팩 라이선스"
 
 #: crypt32.rc:154 cryptui.rc:144
 msgid "License Server Verification"
-msgstr "라이선스 서버 확인"
+msgstr "라이선스 서버 검증"
 
 #: crypt32.rc:155 cryptui.rc:146
 msgid "Smart Card Logon"
-msgstr "스마트 카드 로그인"
+msgstr "스마트 카드 로그온"
 
 #: crypt32.rc:156 cryptui.rc:142
 msgid "Digital Rights"
-msgstr "디지털 저작권"
+msgstr "디지털 권한"
 
 #: crypt32.rc:157 cryptui.rc:138
 msgid "Qualified Subordination"
-msgstr "자격있는 종속"
+msgstr "정규 종속"
 
 #: crypt32.rc:158 cryptui.rc:139
 msgid "Key Recovery"
@@ -1781,7 +1789,7 @@ msgstr "문서 서명"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr "IP 보안  IKE 수단"
+msgstr "IP 보안 IKE 중개"
 
 #: crypt32.rc:161 cryptui.rc:132
 msgid "File Recovery"
@@ -1793,23 +1801,23 @@ msgstr "루트 목록 서명자"
 
 #: crypt32.rc:163
 msgid "All application policies"
-msgstr "모든 프로그램의 방침"
+msgstr "전체 프로그램 정책"
 
 #: crypt32.rc:164 cryptui.rc:149
 msgid "Directory Service Email Replication"
-msgstr "디렉터리 서비스 전자메일 응답"
+msgstr "디렉터리 서비스 전자메일 복제"
 
 #: crypt32.rc:165 cryptui.rc:145
 msgid "Certificate Request Agent"
-msgstr "인증 요구 관리자"
+msgstr "인증서 요청 에이전트"
 
 #: crypt32.rc:166 cryptui.rc:141
 msgid "Lifetime Signing"
-msgstr "유효기간"
+msgstr "영구 서명"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
-msgstr "모든 배포 방침"
+msgstr "전체 발급 정책"
 
 #: crypt32.rc:172
 msgid "Trusted Root Certification Authorities"
@@ -1829,7 +1837,7 @@ msgstr "다른 사람"
 
 #: crypt32.rc:176
 msgid "Trusted Publishers"
-msgstr "신뢰할 수 있는 발행자"
+msgstr "신뢰할 수 있는 게시자"
 
 #: crypt32.rc:177
 msgid "Untrusted Certificates"
@@ -1837,15 +1845,15 @@ msgstr "신뢰할 수 없는 인증서"
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr "키 아이디="
+msgstr "키ID="
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
-msgstr "인증서 발행자"
+msgstr "인증서 발급자"
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
-msgstr "인증서 시리얼 번호="
+msgstr "인증서 일련 번호="
 
 #: crypt32.rc:185
 msgid "Other Name="
@@ -1861,7 +1869,7 @@ msgstr "DNS 이름="
 
 #: crypt32.rc:188
 msgid "Directory Address"
-msgstr "디렉터리  주소"
+msgstr "디렉터리 주소"
 
 #: crypt32.rc:189
 msgid "URL="
@@ -1885,29 +1893,29 @@ msgstr "알 수 없는 키 사용"
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr "제목 형식="
+msgstr "주제 종류="
 
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "CA"
+msgstr "CA(인증기관)"
 
 #: crypt32.rc:196
 msgid "End Entity"
-msgstr "엔티티 끝"
+msgstr "엔티티 종료"
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr "제한된 경로 길이 ="
+msgstr "경로 길이 제한="
 
 #: crypt32.rc:198
 msgctxt "path length"
 msgid "None"
-msgstr "None"
+msgstr "없음"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
-msgstr "정보가 없음"
+msgstr "사용 가능한 정보 없음"
 
 #: crypt32.rc:200
 msgid "Authority Info Access"
@@ -1920,11 +1928,11 @@ msgstr "접근 방법="
 #: crypt32.rc:202
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
-msgstr "OCSP"
+msgstr "OCSP(온라인 인증서 상태 프로토콜)"
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr "CA 발행자"
+msgstr "CA 발급자"
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
@@ -1936,11 +1944,11 @@ msgstr "대체 이름"
 
 #: crypt32.rc:206
 msgid "CRL Distribution Point"
-msgstr "CRL 분배 포인트"
+msgstr "CRL 배포 지점"
 
 #: crypt32.rc:207
 msgid "Distribution Point Name"
-msgstr "분배 포인트 이름"
+msgstr "배포 지점 이름"
 
 #: crypt32.rc:208
 msgid "Full Name"
@@ -1956,47 +1964,47 @@ msgstr "CRL 원인="
 
 #: crypt32.rc:211
 msgid "CRL Issuer"
-msgstr "CRL 발행자"
+msgstr "CRL 발급자"
 
 #: crypt32.rc:212
 msgid "Key Compromise"
-msgstr "키 협정"
+msgstr "키 손상"
 
 #: crypt32.rc:213
 msgid "CA Compromise"
-msgstr "CA 협정"
+msgstr "CA 손상"
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
-msgstr "소속 바꾸기"
+msgstr "소속이 바뀜"
 
 #: crypt32.rc:215
 msgid "Superseded"
-msgstr "대체"
+msgstr "교체됨"
 
 #: crypt32.rc:216
 msgid "Operation Ceased"
-msgstr "작업 중지"
+msgstr "작업 중지됨"
 
 #: crypt32.rc:217
 msgid "Certificate Hold"
-msgstr "인증서 유지"
+msgstr "인증서 대기"
 
 #: crypt32.rc:218
 msgid "Financial Information="
-msgstr "재무 정보="
+msgstr "재정 정보="
 
 #: crypt32.rc:219 taskmgr.rc:397
 msgid "Available"
-msgstr "가능함"
+msgstr "사용 가능함"
 
 #: crypt32.rc:220
 msgid "Not Available"
-msgstr "불가능함"
+msgstr "사용 가능하지 않음"
 
 #: crypt32.rc:221
 msgid "Meets Criteria="
-msgstr "맞는 기준 ="
+msgstr "기준에 부합="
 
 #: crypt32.rc:222 cryptui.rc:166 oleaut32.rc:32 wininet.rc:83 ipconfig.rc:47
 msgid "Yes"
@@ -2008,7 +2016,7 @@ msgstr "아니요"
 
 #: crypt32.rc:224
 msgid "Digital Signature"
-msgstr "전자 서명"
+msgstr "디지털 서명"
 
 #: crypt32.rc:225
 msgid "Non-Repudiation"
@@ -2024,15 +2032,15 @@ msgstr "데이터 암호화"
 
 #: crypt32.rc:228
 msgid "Key Agreement"
-msgstr "키 보증서"
+msgstr "키 계약"
 
 #: crypt32.rc:229
 msgid "Certificate Signing"
-msgstr "증명서 서명"
+msgstr "인증서 서명"
 
 #: crypt32.rc:230
 msgid "Off-line CRL Signing"
-msgstr "오프라인 CRL 사인"
+msgstr "오프라인 CRL 서명"
 
 #: crypt32.rc:231
 msgid "CRL Signing"
@@ -2040,11 +2048,11 @@ msgstr "CRL 서명"
 
 #: crypt32.rc:232
 msgid "Encipher Only"
-msgstr "오직 암호화만 함"
+msgstr "암호화만"
 
 #: crypt32.rc:233
 msgid "Decipher Only"
-msgstr "오직 복호화만"
+msgstr "암호 해독만"
 
 #: crypt32.rc:234
 msgid "SSL Client Authentication"
@@ -2056,7 +2064,7 @@ msgstr "SSL 서버 인증"
 
 #: crypt32.rc:236
 msgid "S/MIME"
-msgstr "S/MIME"
+msgstr "보안메일"
 
 #: crypt32.rc:237
 msgid "Signature"
@@ -2064,19 +2072,19 @@ msgstr "서명"
 
 #: crypt32.rc:238
 msgid "SSL CA"
-msgstr "SSL CA"
+msgstr "SSL 인증기관"
 
 #: crypt32.rc:239
 msgid "S/MIME CA"
-msgstr "S/MIME CA"
+msgstr "보안메일 인증기관"
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr "CA 서명"
+msgstr "서명 인증기관"
 
 #: cryptdlg.rc:30
 msgid "Certificate Policy"
-msgstr "인증 방침"
+msgstr "인증서 정책"
 
 #: cryptdlg.rc:31
 msgid "Policy Identifier: "
@@ -2525,7 +2533,7 @@ msgstr "이 인증서는 올바릅니다."
 msgid "Field"
 msgstr "필드"
 
-#: cryptui.rc:48
+#: cryptui.rc:48 version.rc:39
 msgid "Value"
 msgstr "값"
 
@@ -3091,7 +3099,7 @@ msgstr "기호"
 msgid "OEM/DOS"
 msgstr "OEM/도"
 
-#: gdi32.rc:45 wldap32.rc:112
+#: gdi32.rc:45 version.rc:99 wldap32.rc:112
 msgid "Other"
 msgstr "다른 문제"
 
@@ -3156,7 +3164,7 @@ msgstr "홈(&H)"
 msgid "&Stop"
 msgstr "멈추기(&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "다시 읽기(&R)"
 
@@ -3684,6 +3692,20 @@ msgstr "조건부 컴파일이 해제되어 있음"
 msgid "Expected '@'"
 msgstr "'@'가 필요합니다"
 
+#: jscript.rc:75
+msgid "Microsoft JScript compilation error"
+msgstr ""
+
+#: jscript.rc:76
+msgid "Microsoft JScript runtime error"
+msgstr ""
+
+#: jscript.rc:77
+#, fuzzy
+#| msgid "Unknown error"
+msgid "Unknown runtime error"
+msgstr "알 수 없는 오류"
+
 #: jscript.rc:54
 msgid "Number expected"
 msgstr "숫자가 필요합니다"
@@ -3728,46 +3750,50 @@ msgstr "JScript 객체가 필요함"
 msgid "Syntax error in regular expression"
 msgstr "정규 표현식에 문법오류가 있음"
 
-#: jscript.rc:64
+#: jscript.rc:63
+msgid "Exception thrown and not caught"
+msgstr ""
+
+#: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
 msgstr "인코딩할 URI에 올바르지 않은 문자가 들어 있습니다"
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "URI to be decoded is incorrect"
 msgstr "디코딩할 URI가 올바르지 않습니다"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Number of fraction digits is out of range"
 msgstr "분수 자리수 값이 범위를 벗어났습니다"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "Precision is out of range"
 msgstr "정밀도가 범위를 벗어났습니다"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "Array length must be a finite positive integer"
 msgstr "배열 길이는 유한한 양의 정수이어야 합니다"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Array object expected"
 msgstr "배열 객체가 필요합니다"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 "속성 설명자의 'writable' 특성은 이 개체에서 'true'로 설정할 수 없습니다"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "구성되지 않은 요소 '|'를 재처리할 수 없습니다"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Cannot modify non-writable property '|'"
 msgstr "쓰기 가능하지 않은 요소 '|'를 편집할 수 없습니다"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid "Property cannot have both accessors and a value"
 msgstr "속성은 접근자와 값을 모두 가질 수 없습니다"
 
@@ -4225,7 +4251,7 @@ msgstr "루트 디렉터리의 하위 디렉터리가 아닙니다.\n"
 
 #: winerror.mc:593
 msgid "Directory is not empty.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "디렉터리가 비어 있지 않습니다.\n"
 
 #: winerror.mc:598
 msgid "Path is in use as a SUBST.\n"
@@ -6793,541 +6819,399 @@ msgstr "메일 보내기"
 
 #: mferror.mc:249 mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "시작 요청이 이미 이루어졌습니다.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "UUID 객체를 찾을 수 없습니다.\n"
+msgstr "싱크가 완료되지 않았습니다.\n"
+
+#: mferror.mc:732
+#, fuzzy
+#| msgid "Sink was already stopped.\n"
+msgid "Clock was stopped\n"
+msgstr "싱크가 이미 중지되었습니다.\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "설치 플랫폼을 지원하지 않음.\n"
+msgstr "미디어 기초 플랫폼이 최기화되지 않았습니다.\n"
 
 #: mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "바이트 카운트가 너무 작습니다.\n"
+msgstr "버퍼가 너무 작습니다.\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "잘못된 쿼리 구문.\n"
+msgstr "잘못된 요청입니다.\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "올바르지 않은 세그멘트 번호.\n"
+msgstr "스트림 번호가 잘못되었습니다.\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "올바르지 않은 데이터 형식.\n"
+msgstr "미디어 형식이 잘못되었습니다.\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "더 이상 엔트리가 없습니다.\n"
+msgstr "더 이상 입력이 허용되지 않습니다.\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "UUID 객체를 찾을 수 없습니다.\n"
+msgstr "객체가 초기화되지 않았습니다.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "이 작업은 지원하지 않습니다.\n"
+msgstr "표현이 지원되지 않습니다.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "제안된 미디어 형식 목록에 더 이상 형식이 없습니다.\n"
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 서비스입니다.\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "예기치 않은 네트워크 오류.\n"
+msgstr "예상치 못한 오류입니다.\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "올바르지 않은 시간.\n"
+msgstr "올바르지 않은 형식입니다.\n"
 
 #: mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "올바르지 않은 픽셀 형식.\n"
+msgstr "올바르지 않은 파일 형식입니다.\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "올바르지 않은 시간.\n"
+msgstr "올바르지 않은 타임스탬프입니다.\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 스키마입니다.\n"
 
 #: mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 바이트스트림 형식입니다.\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 시간 형식입니다.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "이 샘플에 대한 타임스탬프가 설정되지 않았습니다.\n"
 
 #: mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "이 샘플에 대한 기간(duration) 설정이 없습니다.\n"
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "올바르지 않은 데이터.\n"
+msgstr "올바르지 않은 스트림 데이터입니다.\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "도움말은 가능하지않습니다."
+msgstr "실시간 지원은 가능하지 않습니다.\n"
 
 #: mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원하지 않는 비율(rate).\n"
 
 #: mferror.mc:200
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported thinning.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원하지 않는 세선화(thinning).\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "지원되지 않는 요청.\n"
+msgstr "리버싱(reversing)은 지원되지 않습니다.\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "지원하지 않는 인증 레벨.\n"
+msgstr "지원하지 않는 비율(rate) 변환.\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "비율(rate) 변경이 선점되었습니다.\n"
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "UUID 객체를 찾을 수 없습니다.\n"
+msgstr "객체 또는 값을 찾을 수 없습니다.\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "도움말은 가능하지않습니다."
+msgstr "값을 사용할 수 없습니다.\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "도움말은 가능하지않습니다."
+msgstr "시계를 사용할 수 없습니다.\n"
 
 #: mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "지원되지 않는 확장 속성.\n"
+msgstr "다중 가입자는 지원되지 않습니다.\n"
 
 #: mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "드라이버를 사용할 수 없습니다."
+msgstr "타이머가 고립되었습니다.\n"
 
 #: mferror.mc:277
-#, fuzzy
-#| msgid "Character translation table open failed.\n"
 msgid "State transition is pending.\n"
-msgstr "문자변환테이블 열기 실패.\n"
+msgstr "상태 전환이 보류 중입니다.\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported state transition.\n"
-msgstr "지원하지 않는 인증 레벨.\n"
+msgstr "지원되지 않는 상태 전환.\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "내부 오류 발생.\n"
+msgstr "복구할 수 없는 오류가 발생했습니다.\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "샘플에 버퍼가 너무 많습니다.\n"
 
 #: mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "임시 디렉터리에 기록할 수 없음.\n"
+msgstr "샘플에 쓰기가 가능하지 않습니다.\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "올바르지 않은 경로.\n"
+msgstr "올바르지 않은 키.\n"
 
 #: mferror.mc:319
-#, fuzzy
-#| msgid "Wrong stub version.\n"
 msgid "Bad startup version.\n"
-msgstr "잘못된 스텁 버전.\n"
+msgstr "잘못된 시작 버전.\n"
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원하지 않는 자막.\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "올바르지 않은 워크스테이션.\n"
+msgstr "올바르지 않은 위치.\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "파일을 찾을 수 없습니다.\n"
+msgstr "특성을 찾을 수 없습니다.\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "허용되지 않은 훅 형식.\n"
+msgstr "속성 형식이 허용되지 않습니다.\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "이 작업은 지원하지 않습니다.\n"
+msgstr "속성 형식이 지원되지 않습니다.\n"
 
 #: mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "속성이 비어 있습니다.\n"
 
 #: mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "속성이 비어 있지 않습니다.\n"
 
 #: mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "허용되지 않은 훅 형식.\n"
+msgstr "벡터 속성이 허용되지 않습니다.\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "벡터 속성이 필요합니다.\n"
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "작업이 사용자에 위해 취소됨.\n"
+msgstr "작업이 취소되었습니다.\n"
 
 #: mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "서버가 가능하지 않지가 않음.\n"
+msgstr "바이트 스트림은 검색할 수 없습니다.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "안전 모드에서 플랫폼을 사용할 수 없습니다.\n"
 
 #: mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "서비스 스레드 만들기 실패.\n"
+msgstr "바이트 스트림을 구문 분석할 수 없습니다.\n"
 
 #: mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "상호 배타적이 플래그가 소스 확인자로 전달되었습니다.\n"
 
 #: mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "알 수 없는 인터페이스.\n"
+msgstr "알 수 없는 바이트 스트림 길이입니다.\n"
 
 #: mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "올바르지 않은 인덱스.\n"
+msgstr "올바르지 않은 작업 큐 인덱스.\n"
 
 #: mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "로그온 서버를 이용할 수 없습니다.\n"
+msgstr "사용할 수 있는 이벤트가 없습니다.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "지원하지 않는 인증 레벨.\n"
+msgstr "올바르지 않은 미디어 소스 상태 전환.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "레지스트리는 복구되었습니다.\n"
+msgstr "미디어 스트림의 끝에 도달했습니다.\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "Shutdown()이 호출되었습니다.\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "레지스트리는 복구되었습니다.\n"
+msgstr "미디어 스트림에 기간 설정이 없습니다.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "미디어 형식이 인식되었지만 올바르지 않습니다.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "속성 집합을 찾을 수 없습니다.\n"
+msgstr "속성을 찾을 수 없습니다.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "속성이 읽기 전용입니다.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "허용되지 않은 훅 형식.\n"
+msgstr "속성이 허용되지 않습니다.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "리소스 사용 중.\n"
+msgstr "미디어 소스가 시작되지 않았습니다.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원하지 않는 미디어 형식.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "리소스 사용 중.\n"
+msgstr "미디어 소스가 잘못된 상태에 있습니다.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "감지된 데이터가 없습니다.\n"
+msgstr "미디어 스트림이 선택되지 않았습니다.\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 미디어 소스 특성입니다.\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "스트림 싱크가 제거되었습니다.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "스트림 싱크가 동기화되지 않습니다.\n"
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "레지스트리는 복구되었습니다.\n"
+msgstr "미디어 싱크 스트림 싱크 세트가 고정되어 있습니다.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "도메인은 이미 존재합니다.\n"
+msgstr "스트림 싱크가 이미 존재합니다.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "작업이 사용자에 위해 취소됨.\n"
+msgstr "샘플 할당이 취소되었습니다.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "샘플 할당자가 비어 있습니다.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "클래스는 이미 존재합니다.\n"
+msgstr "싱크가 이미 중지되었습니다.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "ASF 파일 싱크에 대한 비트레이트를 알 수 없습니다.\n"
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "감지된 데이터가 없습니다.\n"
+msgstr "싱크에 대한 스트림이 선택되지 않았습니다.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "너무 긴 파일 이름.\n"
+msgstr "메타데이터가 너무 깁니다.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "싱크가 샘플을 처리하지 않았습니다.\n"
 
 #: mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "싱크가 필요한 헤더를 제공하지 않았습니다.\n"
 
 #: mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "올바르지 않은 연결.\n"
+msgstr "선택적 노드가 올바르지 않습니다.\n"
 
 #: mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "프린터를 찾을 수 없습니다."
+msgstr "암호 해독기를 찾을 수 없습니다.\n"
 
 #: mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "모듈을 찾을 수 없습니다.\n"
+msgstr "코덱을 찾을 수 없습니다.\n"
 
 #: mferror.mc:648
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "호출 핸들을 얻을 수 없습니다.\n"
+msgstr "토폴로지 노드를 연결할 수 없습니다.\n"
 
 #: mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "지원되지 않는 요청.\n"
+msgstr "토폴로지 요청이 지원되지 않습니다.\n"
 
 #: mferror.mc:662
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "올바르지 않은 그룹 속성.\n"
+msgstr "올바르지 않은 토폴로지 시간 특성.\n"
 
 #: mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "토폴로지에 루프가 있습니다.\n"
 
 #: mferror.mc:676
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "설치 원본이 없음.\n"
+msgstr "프리젠테이션 설명자가 없습니다.\n"
 
 #: mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "인덱스가 빠짐.\n"
+msgstr "스트림 설명자가 없습니다.\n"
 
 #: mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "장치가 연결되지 않았습니다.\n"
+msgstr "스트림 설명자가 선택되지 않았습니다.\n"
 
 #: mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "인덱스가 빠짐.\n"
+msgstr "소스가 없습니다.\n"
 
 #: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "토폴로지 로더가 싱크 활성화를 지원하지 않습니다.\n"
 
 #: mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "시계가 시간 소스 설정을 가지고 있지 않습니다.\n"
 
 #: mferror.mc:718
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "클래스는 이미 존재합니다.\n"
+msgstr "시계 상태가 이미 설정되었습니다.\n"
+
+#: mferror.mc:725
+#, fuzzy
+#| msgid "Clock is not available.\n"
+msgid "Clock is not simple\n"
+msgstr "시계를 사용할 수 없습니다.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8419,6 +8303,202 @@ msgstr "작동"
 #: oleaut32.rc:35
 msgid "Off"
 msgstr "비작동"
+
+#: version.rc:55
+#, fuzzy
+#| msgid "video"
+msgid "Provider"
+msgstr "비디오"
+
+#: version.rc:58
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Select the data you want to connect to:"
+msgstr "사용할 파일 형식 선택:"
+
+#: version.rc:65
+#, fuzzy
+#| msgid "Connections"
+msgid "Connection"
+msgstr "연결"
+
+#: version.rc:68
+#, fuzzy
+#| msgid "Select the format you want to use:"
+msgid "Specify the following to connect to ODBC data:"
+msgstr "사용할 파일 형식 선택:"
+
+#: version.rc:69
+msgid "1. Specify the source of data:"
+msgstr ""
+
+#: version.rc:70
+#, fuzzy
+#| msgid "Please enter your name"
+msgid "Use &data source name"
+msgstr "이름을 입력해 주세요"
+
+#: version.rc:73
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "Use c&onnection string"
+msgstr "연결 재설정"
+
+#: version.rc:74
+#, fuzzy
+#| msgid "Connections"
+msgid "&Connection string:"
+msgstr "연결"
+
+#: version.rc:76
+#, fuzzy
+#| msgid "A&dd..."
+msgid "B&uild..."
+msgstr "추가(&D)..."
+
+#: version.rc:77
+msgid "2. Enter information to log on to the server"
+msgstr ""
+
+#: version.rc:78
+#, fuzzy
+#| msgid "&User name:"
+msgid "User &name:"
+msgstr "사용자 이름(&U):"
+
+#: version.rc:82
+#, fuzzy
+#| msgid "&Blank page"
+msgid "&Blank password"
+msgstr "빈 페이지(&B)"
+
+#: version.rc:83
+#, fuzzy
+#| msgid "Wrong password.\n"
+msgid "Allow &saving password"
+msgstr "잘못된 암호.\n"
+
+#: version.rc:84
+msgid "3. Enter the &initial catalog to use:"
+msgstr ""
+
+#: version.rc:86
+#, fuzzy
+#| msgid "Reset Connections"
+msgid "&Test Connection"
+msgstr "연결 재설정"
+
+#: version.rc:91 winemine.rc:65
+msgid "Advanced"
+msgstr "중급자"
+
+#: version.rc:94
+#, fuzzy
+#| msgid "Network share"
+msgid "Network settings"
+msgstr "네트워크 공유"
+
+#: version.rc:95
+#, fuzzy
+#| msgid "Bad impersonation level.\n"
+msgid "&Impersonation level:"
+msgstr "나쁜 가장 수준.\n"
+
+#: version.rc:97
+msgid "P&rotection level:"
+msgstr ""
+
+#: version.rc:100
+#, fuzzy
+#| msgid "Connected"
+msgid "Connect:"
+msgstr "연결됨"
+
+#: version.rc:102
+#, fuzzy
+#| msgid "seconds"
+msgid "seconds."
+msgstr "초"
+
+#: version.rc:103
+#, fuzzy
+#| msgid "Success"
+msgid "A&ccess:"
+msgstr "성공"
+
+#: version.rc:109
+#, fuzzy
+#| msgid "&All"
+msgid "All"
+msgstr "모두(&A)"
+
+#: version.rc:113
+msgid ""
+"These are the initialization properties for this type of data. To edit a "
+"value, select a property, then choose Edit Value below."
+msgstr ""
+
+#: version.rc:114
+#, fuzzy
+#| msgid "&Edit..."
+msgid "&Edit Value..."
+msgstr "편집(&E)..."
+
+#: version.rc:49
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Error"
+msgstr "속성"
+
+#: version.rc:50
+#, fuzzy
+#| msgid "Please select a file."
+msgid "Please select a provider."
+msgstr "파일을 선택하십시오."
+
+#: version.rc:36
+#, fuzzy
+#| msgid "Properties"
+msgid "Data Link Properties"
+msgstr "속성"
+
+#: version.rc:37
+msgid "OLE DB Provider(s)"
+msgstr ""
+
+#: version.rc:41
+#, fuzzy
+#| msgid "Ready"
+msgid "Read"
+msgstr "준비"
+
+#: version.rc:42
+#, fuzzy
+#| msgid "Readme:"
+msgid "ReadWrite"
+msgstr "주의사항:"
+
+#: version.rc:43
+msgid "Share Deny None"
+msgstr ""
+
+#: version.rc:44
+msgid "Share Deny Read"
+msgstr ""
+
+#: version.rc:45
+msgid "Share Deny Write"
+msgstr ""
+
+#: version.rc:46
+msgid "Share Exclusive"
+msgstr ""
+
+#: version.rc:47
+#, fuzzy
+#| msgid "I/O Writes"
+msgid "Write"
+msgstr "I/O 쓰기"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9568,447 +9648,459 @@ msgstr " 초"
 msgid "Select Source"
 msgstr "원본 선택"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "China Standard Time"
 msgstr "중국 표준 시간"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "China Daylight Time"
 msgstr "중국 일광 절약 시간"
 
-#: tzres.rc:160
+#: tzres.rc:164
 msgid "North Asia Standard Time"
 msgstr "북아시아 표준 시간"
 
-#: tzres.rc:161
+#: tzres.rc:165
 msgid "North Asia Daylight Time"
 msgstr "북아시아 일광 절약 시간"
 
-#: tzres.rc:104
+#: tzres.rc:106
 msgid "Georgian Standard Time"
 msgstr "그루지아 표준 시간"
 
-#: tzres.rc:105
+#: tzres.rc:107
 msgid "Georgian Daylight Time"
 msgstr "그루지아 일광 절약 시간"
 
-#: tzres.rc:152
+#: tzres.rc:156
 msgid "Nepal Standard Time"
 msgstr "네팔 표준 시간"
 
-#: tzres.rc:153
+#: tzres.rc:157
 msgid "Nepal Daylight Time"
 msgstr "네팔 일광 절약 시간"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Cape Verde Standard Time"
 msgstr "카보베르데 표준 시간"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Cape Verde Daylight Time"
 msgstr "카보베르데 일광 절약 시간"
 
-#: tzres.rc:74
+#: tzres.rc:116
+#, fuzzy
+#| msgid "Hawaiian Standard Time"
+msgid "Haiti Standard Time"
+msgstr "하와이 표준 시간"
+
+#: tzres.rc:117
+#, fuzzy
+#| msgid "Hawaiian Daylight Time"
+msgid "Haiti Daylight Time"
+msgstr "하와이 일광 절약 시간"
+
+#: tzres.rc:76
 msgid "Central European Standard Time"
 msgstr "중앙 유럽 표준 시간"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central European Daylight Time"
 msgstr "중앙 유럽 일관 절약 시간"
 
-#: tzres.rc:140
+#: tzres.rc:144
 msgid "Morocco Standard Time"
 msgstr "모로코 표준 시간"
 
-#: tzres.rc:141
+#: tzres.rc:145
 msgid "Morocco Daylight Time"
 msgstr "모로코 일광 절약 시간"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Europe Standard Time"
 msgstr "중앙 유럽 표준 시간"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Europe Daylight Time"
 msgstr "중앙 유럽 일광 절약 시간"
 
-#: tzres.rc:118
+#: tzres.rc:122
 msgid "Iran Standard Time"
 msgstr "이란 표준 시간"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Iran Daylight Time"
 msgstr "이란 일광 절약 시간"
 
-#: tzres.rc:150
+#: tzres.rc:154
 msgid "Namibia Standard Time"
 msgstr "나미비아 표준 시간"
 
-#: tzres.rc:151
+#: tzres.rc:155
 msgid "Namibia Daylight Time"
 msgstr "나미비아 일광 절약 시간"
 
-#: tzres.rc:200
+#: tzres.rc:204
 msgid "Tonga Standard Time"
 msgstr "통가 표준 시간"
 
-#: tzres.rc:201
+#: tzres.rc:205
 msgid "Tonga Daylight Time"
 msgstr "통가 일괄 절약 시간"
 
-#: tzres.rc:144
+#: tzres.rc:148
 msgid "Mountain Standard Time (Mexico)"
 msgstr "산지 표준 시간 (멕시코)"
 
-#: tzres.rc:145
+#: tzres.rc:149
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "산지 일광 절약 시간 (멕시코)"
 
-#: tzres.rc:106
+#: tzres.rc:108
 msgid "GMT Standard Time"
 msgstr "GMT 표준 시간"
 
-#: tzres.rc:107
+#: tzres.rc:109
 msgid "GMT Daylight Time"
 msgstr "GMT 일광 절약 시간"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central Asia Standard Time"
 msgstr "중앙 아시아 표준 시간"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central Asia Daylight Time"
 msgstr "중앙 아시아 일광 절약 시간"
 
-#: tzres.rc:38
+#: tzres.rc:40
 msgid "Arabic Standard Time"
 msgstr "아랍 표준 시간"
 
-#: tzres.rc:39
+#: tzres.rc:41
 msgid "Arabic Daylight Time"
 msgstr "아랍 일광 절약 시간"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Magadan Standard Time"
 msgstr "마가단 표준 시간"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Magadan Daylight Time"
 msgstr "마가단 일광 절약 시간"
 
-#: tzres.rc:156
+#: tzres.rc:160
 msgid "Newfoundland Standard Time"
 msgstr "뉴펀들랜드 표준 시간"
 
-#: tzres.rc:157
+#: tzres.rc:161
 msgid "Newfoundland Daylight Time"
 msgstr "뉴펀들랜드 일광 절약 시간"
 
-#: tzres.rc:224
+#: tzres.rc:228
 msgid "West Pacific Standard Time"
 msgstr "서태평양 표준 시간"
 
-#: tzres.rc:225
+#: tzres.rc:229
 msgid "West Pacific Daylight Time"
 msgstr "서태평양 일광 절약 시간"
 
-#: tzres.rc:164
+#: tzres.rc:168
 msgid "Pacific Standard Time"
 msgstr "태평양 표준 시간"
 
-#: tzres.rc:165
+#: tzres.rc:169
 msgid "Pacific Daylight Time"
 msgstr "태평양 일광 절약 시간"
 
-#: tzres.rc:48
+#: tzres.rc:50
 msgid "Azerbaijan Standard Time"
 msgstr "아제르바이잔 표준 시간"
 
-#: tzres.rc:49
+#: tzres.rc:51
 msgid "Azerbaijan Daylight Time"
 msgstr "아제르바이잔 일광 절약 시간"
 
-#: tzres.rc:182
+#: tzres.rc:186
 msgid "Samoa Standard Time"
 msgstr "사모아 표준 시간"
 
-#: tzres.rc:183
+#: tzres.rc:187
 msgid "Samoa Daylight Time"
 msgstr "사모아 일광 절약 시간"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Kaliningrad Standard Time"
 msgstr "칼리닌그라드 표준 시간"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Kaliningrad Daylight Time"
 msgstr "칼리닌그라드 일광 절약 시간"
 
-#: tzres.rc:166
+#: tzres.rc:170
 msgid "Pacific Standard Time (Mexico)"
 msgstr "태평양 표준 시간 (멕시코)"
 
-#: tzres.rc:167
+#: tzres.rc:171
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "태평양 일광 절약 시간 (멕시코)"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Middle East Standard Time"
 msgstr "중동 표준 시간"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Middle East Daylight Time"
 msgstr "중동 일광 절약 시간"
 
-#: tzres.rc:198
+#: tzres.rc:202
 msgid "Tokyo Standard Time"
 msgstr "도쿄 표준 시간"
 
-#: tzres.rc:199
+#: tzres.rc:203
 msgid "Tokyo Daylight Time"
 msgstr "도쿄 일광 절약 시간"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Line Islands Standard Time"
 msgstr "라인 제도 표준 시간"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Line Islands Daylight Time"
 msgstr "라인 제도 일광 절약 시간"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Jordan Standard Time"
 msgstr "요르단 표준 시간"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Jordan Daylight Time"
 msgstr "요르단 일광 절약 시간"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Standard Time"
 msgstr "중부 표준 시간"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Daylight Time"
 msgstr "중부 일광 절약 시간"
 
-#: tzres.rc:50
+#: tzres.rc:52
 msgid "Azores Standard Time"
 msgstr "아조레스 표준 시간"
 
-#: tzres.rc:51
+#: tzres.rc:53
 msgid "Azores Daylight Time"
 msgstr "아조레스 일광 절약 시간"
 
-#: tzres.rc:158
+#: tzres.rc:162
 msgid "North Asia East Standard Time"
 msgstr "북아시아 동부 표준 시간"
 
-#: tzres.rc:159
+#: tzres.rc:163
 msgid "North Asia East Daylight Time"
 msgstr "북아시아 동부 일광 절약 시간"
 
-#: tzres.rc:40
+#: tzres.rc:42
 msgid "Argentina Standard Time"
 msgstr "아르헨티나 표준 시간"
 
-#: tzres.rc:41
+#: tzres.rc:43
 msgid "Argentina Daylight Time"
 msgstr "아르헨티나 일광 절약 시간"
 
-#: tzres.rc:146
+#: tzres.rc:150
 msgid "Myanmar Standard Time"
 msgstr "미얀마 표준 시간"
 
-#: tzres.rc:147
+#: tzres.rc:151
 msgid "Myanmar Daylight Time"
 msgstr "미얀마 일광 절약 시간"
 
-#: tzres.rc:210 tzres.rc:211
+#: tzres.rc:214 tzres.rc:215
 msgid "Coordinated Universal Time"
 msgstr "협정 세계시"
 
-#: tzres.rc:116
+#: tzres.rc:120
 msgid "India Standard Time"
 msgstr "인도 표준 시간"
 
-#: tzres.rc:117
+#: tzres.rc:121
 msgid "India Daylight Time"
 msgstr "인도 일광 절약 시간"
 
-#: tzres.rc:112
+#: tzres.rc:114
 msgid "GTB Standard Time"
 msgstr "GTB 표준 시간"
 
-#: tzres.rc:113
+#: tzres.rc:115
 msgid "GTB Daylight Time"
 msgstr "GTB 일광 절약 시간"
 
-#: tzres.rc:202
+#: tzres.rc:206
 msgid "Turkey Standard Time"
 msgstr "터키 표준 시간"
 
-#: tzres.rc:203
+#: tzres.rc:207
 msgid "Turkey Daylight Time"
 msgstr "터키 일광 절약 시간"
 
-#: tzres.rc:100
+#: tzres.rc:102
 msgid "Fiji Standard Time"
 msgstr "피지 표준 시간"
 
-#: tzres.rc:101
+#: tzres.rc:103
 msgid "Fiji Daylight Time"
 msgstr "피지 일광 절약 시간"
 
-#: tzres.rc:58
+#: tzres.rc:60
 msgid "Canada Central Standard Time"
 msgstr "캐나다 중부 표준 시간"
 
-#: tzres.rc:59
+#: tzres.rc:61
 msgid "Canada Central Daylight Time"
 msgstr "캐나다 중부 일광 절약 시간"
 
-#: tzres.rc:194
+#: tzres.rc:198
 msgid "Taipei Standard Time"
 msgstr "타이베이 표준 시간"
 
-#: tzres.rc:195
+#: tzres.rc:199
 msgid "Taipei Daylight Time"
 msgstr "타이베이 일광 절약 시간"
 
-#: tzres.rc:220
+#: tzres.rc:224
 msgid "W. Europe Standard Time"
 msgstr "서유럽 표준 시간"
 
-#: tzres.rc:221
+#: tzres.rc:225
 msgid "W. Europe Daylight Time"
 msgstr "서유럽 일광 절약 시간"
 
-#: tzres.rc:138
+#: tzres.rc:142
 msgid "Montevideo Standard Time"
 msgstr "몬데비데오 표준 시간"
 
-#: tzres.rc:139
+#: tzres.rc:143
 msgid "Montevideo Daylight Time"
 msgstr "몬데비데오 일광 절약 시간"
 
-#: tzres.rc:168
+#: tzres.rc:172
 msgid "Pakistan Standard Time"
 msgstr "파키스탄 표준 시간"
 
-#: tzres.rc:169
+#: tzres.rc:173
 msgid "Pakistan Daylight Time"
 msgstr "파키스탄 일광 절약 시간"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Caucasus Standard Time"
 msgstr "코코서스 표준 시간"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Caucasus Daylight Time"
 msgstr "코코서스 일광 절약 시간"
 
-#: tzres.rc:46
+#: tzres.rc:48
 msgid "AUS Eastern Standard Time"
 msgstr "오스트레일리아 동부 표준 시간"
 
-#: tzres.rc:47
+#: tzres.rc:49
 msgid "AUS Eastern Daylight Time"
 msgstr "오스트레일리아 동부 일광 절약 시간"
 
-#: tzres.rc:148
+#: tzres.rc:152
 msgid "N. Central Asia Standard Time"
 msgstr "중앙 아시아 북부 표준 시간"
 
-#: tzres.rc:149
+#: tzres.rc:153
 msgid "N. Central Asia Daylight Time"
 msgstr "중앙 아시아 북부 일광 절약 시간"
 
-#: tzres.rc:94
+#: tzres.rc:96
 msgid "Eastern Standard Time"
 msgstr "동부 표준 시간"
 
-#: tzres.rc:95
+#: tzres.rc:97
 msgid "Eastern Daylight Time"
 msgstr "동부 일광 절약 시간"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time (Mexico)"
 msgstr "중부 표준 시간 (멕시코)"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time (Mexico)"
 msgstr "중부 일광 절약 시간 (멕시코)"
 
-#: tzres.rc:42
+#: tzres.rc:44
 msgid "Atlantic Standard Time"
 msgstr "대서양 표준 시간"
 
-#: tzres.rc:43
+#: tzres.rc:45
 msgid "Atlantic Daylight Time"
 msgstr "대서양 일광 절약 시간"
 
-#: tzres.rc:142
+#: tzres.rc:146
 msgid "Mountain Standard Time"
 msgstr "산지 표준 시간"
 
-#: tzres.rc:143
+#: tzres.rc:147
 msgid "Mountain Daylight Time"
 msgstr "산지 일광 절약 시간"
 
-#: tzres.rc:206
+#: tzres.rc:210
 msgid "US Eastern Standard Time"
 msgstr "미국 동부 표준 시간"
 
-#: tzres.rc:207
+#: tzres.rc:211
 msgid "US Eastern Daylight Time"
 msgstr "미국 동부 일광 절약 시간"
 
-#: tzres.rc:196
+#: tzres.rc:200
 msgid "Tasmania Standard Time"
 msgstr "태즈매이니아 표준 시간"
 
-#: tzres.rc:197
+#: tzres.rc:201
 msgid "Tasmania Daylight Time"
 msgstr "태즈매이니아 일광 절약 시간"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Central America Standard Time"
 msgstr "중앙 아메리카 표준 시간"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Central America Daylight Time"
 msgstr "중앙 아메리카 일광 절약 시간"
 
-#: tzres.rc:208
+#: tzres.rc:212
 msgid "US Mountain Standard Time"
 msgstr "미국 산지 표준 시간"
 
-#: tzres.rc:209
+#: tzres.rc:213
 msgid "US Mountain Daylight Time"
 msgstr "미국 산지 일광 절약 시간"
 
-#: tzres.rc:188
+#: tzres.rc:192
 msgid "South Africa Standard Time"
 msgstr "남아프리카 표준 시간"
 
-#: tzres.rc:189
+#: tzres.rc:193
 msgid "South Africa Daylight Time"
 msgstr "남아프리카 일광 절약 시간"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Cen. Australia Standard Time"
 msgstr "중부 오스트레일리아 표준 시간"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Cen. Australia Daylight Time"
 msgstr "중부 오스트레일리아 일광 절약 시간"
 
-#: tzres.rc:190
+#: tzres.rc:194
 msgid "Sri Lanka Standard Time"
 msgstr "스리랑카 표준 시간"
 
-#: tzres.rc:191
+#: tzres.rc:195
 msgid "Sri Lanka Daylight Time"
 msgstr "스리랑카 일광 절약 시간"
 
@@ -10020,123 +10112,123 @@ msgstr "아프가니스탄 표준 시간"
 msgid "Afghanistan Daylight Time"
 msgstr "아프가니스탄 일광 절약 시간"
 
-#: tzres.rc:226
+#: tzres.rc:230
 msgid "Yakutsk Standard Time"
 msgstr "야쿠츠크 표준 시간"
 
-#: tzres.rc:227
+#: tzres.rc:231
 msgid "Yakutsk Daylight Time"
 msgstr "야쿠츠크 일광 절약 시간"
 
-#: tzres.rc:176
+#: tzres.rc:180
 msgid "SA Eastern Standard Time"
 msgstr "SA 동부 표준 시간"
 
-#: tzres.rc:177
+#: tzres.rc:181
 msgid "SA Eastern Daylight Time"
 msgstr "SA 동부 일광 절약 시간"
 
-#: tzres.rc:34
+#: tzres.rc:36
 msgid "Arab Standard Time"
 msgstr "아랍 표준 시간"
 
-#: tzres.rc:35
+#: tzres.rc:37
 msgid "Arab Daylight Time"
 msgstr "아랍 일광 절약 시간"
 
-#: tzres.rc:36
+#: tzres.rc:38
 msgid "Arabian Standard Time"
 msgstr "아라비아 표준 시간"
 
-#: tzres.rc:37
+#: tzres.rc:39
 msgid "Arabian Daylight Time"
 msgstr "아라비아 일광 절약 시간"
 
-#: tzres.rc:174
+#: tzres.rc:178
 msgid "Russian Standard Time"
 msgstr "러시아 표준 시간"
 
-#: tzres.rc:175
+#: tzres.rc:179
 msgid "Russian Daylight Time"
 msgstr "러시아 일광 절약 시간"
 
-#: tzres.rc:172
+#: tzres.rc:176
 msgid "Romance Standard Time"
 msgstr "로망스 표준 시간"
 
-#: tzres.rc:173
+#: tzres.rc:177
 msgid "Romance Daylight Time"
 msgstr "로망스 일광 절약 시간"
 
-#: tzres.rc:98
+#: tzres.rc:100
 msgid "Ekaterinburg Standard Time"
 msgstr "예카테린부르크 표준 시간"
 
-#: tzres.rc:99
+#: tzres.rc:101
 msgid "Ekaterinburg Daylight Time"
 msgstr "예카테린부르크 일광 절약 시간"
 
-#: tzres.rc:192
+#: tzres.rc:196
 msgid "Syria Standard Time"
 msgstr "시리아 표준 시간"
 
-#: tzres.rc:193
+#: tzres.rc:197
 msgid "Syria Daylight Time"
 msgstr "시리아 일광 절약 시간"
 
-#: tzres.rc:44
+#: tzres.rc:46
 msgid "AUS Central Standard Time"
 msgstr "오스트레일리아 중부 표준 시간"
 
-#: tzres.rc:45
+#: tzres.rc:47
 msgid "AUS Central Daylight Time"
 msgstr "오스트레일리아 중부 일광 절약 시간"
 
-#: tzres.rc:110
+#: tzres.rc:112
 msgid "Greenwich Standard Time"
 msgstr "그리니치 표준 시간"
 
-#: tzres.rc:111
+#: tzres.rc:113
 msgid "Greenwich Daylight Time"
 msgstr "그리니치 일광 절약 시간"
 
-#: tzres.rc:204
+#: tzres.rc:208
 msgid "Ulaanbaatar Standard Time"
 msgstr "울란바토르 표준 시간"
 
-#: tzres.rc:205
+#: tzres.rc:209
 msgid "Ulaanbaatar Daylight Time"
 msgstr "울란바토르 일광 절약 시간"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "Israel Standard Time"
 msgstr "이스라엘 표준 시간"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "Israel Daylight Time"
 msgstr "이스라엘 일광 절약 시간"
 
-#: tzres.rc:54
+#: tzres.rc:56
 msgid "Bangladesh Standard Time"
 msgstr "발글라데시 표준 시간"
 
-#: tzres.rc:55
+#: tzres.rc:57
 msgid "Bangladesh Daylight Time"
 msgstr "방글라데시 일광 절약 시간"
 
-#: tzres.rc:178
+#: tzres.rc:182
 msgid "SA Pacific Standard Time"
 msgstr "SA 태평양 표준 시간"
 
-#: tzres.rc:179
+#: tzres.rc:183
 msgid "SA Pacific Daylight Time"
 msgstr "SA 태평양 일광 절약 시간"
 
-#: tzres.rc:222
+#: tzres.rc:226
 msgid "West Asia Standard Time"
 msgstr "서아시아 표준 시간"
 
-#: tzres.rc:223
+#: tzres.rc:227
 msgid "West Asia Daylight Time"
 msgstr "서아시아 일광 절약 시간"
 
@@ -10148,211 +10240,223 @@ msgstr "알래스카 표준 시간"
 msgid "Alaskan Daylight Time"
 msgstr "알래스카 일광 절약 시간"
 
-#: tzres.rc:170
+#: tzres.rc:174
 msgid "Paraguay Standard Time"
 msgstr "파라과이 표준 시간"
 
-#: tzres.rc:171
+#: tzres.rc:175
 msgid "Paraguay Daylight Time"
 msgstr "파라과이 일광 절약 시간"
 
-#: tzres.rc:84
+#: tzres.rc:86
 msgid "Dateline Standard Time"
 msgstr "날짜 변경선 표준 시간"
 
-#: tzres.rc:85
+#: tzres.rc:87
 msgid "Dateline Daylight Time"
 msgstr "날짜 변경선 일광 절약 시간"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Libya Standard Time"
 msgstr "리비아 표준 시간"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Libya Daylight Time"
 msgstr "리비아 일광 절약 시간"
 
-#: tzres.rc:52
+#: tzres.rc:54
 msgid "Bahia Standard Time"
 msgstr "바이아 표준 시간"
 
-#: tzres.rc:53
+#: tzres.rc:55
 msgid "Bahia Daylight Time"
 msgstr "바이아 일광 절약 시간"
 
-#: tzres.rc:212
+#: tzres.rc:216
 msgid "Venezuela Standard Time"
 msgstr "베네수엘라 표준 시간"
 
-#: tzres.rc:213
+#: tzres.rc:217
 msgid "Venezuela Daylight Time"
 msgstr "베네수엘라 일광 절약 시간"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "Hawaiian Standard Time"
 msgstr "하와이 표준 시간"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "Hawaiian Daylight Time"
 msgstr "하와이 일광 절약 시간"
 
-#: tzres.rc:184
+#: tzres.rc:188
 msgid "SE Asia Standard Time"
 msgstr "동남 아시아 표준 시간"
 
-#: tzres.rc:185
+#: tzres.rc:189
 msgid "SE Asia Daylight Time"
 msgstr "동남 아시아 일광 절약 시간"
 
-#: tzres.rc:154
+#: tzres.rc:158
 msgid "New Zealand Standard Time"
 msgstr "뉴질랜드 표준 시간"
 
-#: tzres.rc:155
+#: tzres.rc:159
 msgid "New Zealand Daylight Time"
 msgstr "뉴질랜드 일광 절약 시간"
 
-#: tzres.rc:70
+#: tzres.rc:34
+#, fuzzy
+#| msgid "Argentina Standard Time"
+msgid "Aleutian Standard Time"
+msgstr "아르헨티나 표준 시간"
+
+#: tzres.rc:35
+#, fuzzy
+#| msgid "Argentina Daylight Time"
+msgid "Aleutian Daylight Time"
+msgstr "아르헨티나 일광 절약 시간"
+
+#: tzres.rc:72
 msgid "Central Brazilian Standard Time"
 msgstr "브라질 중부 표준 시간"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Brazilian Daylight Time"
 msgstr "브라질 중부 일광 절약 시간"
 
-#: tzres.rc:56
+#: tzres.rc:58
 msgid "Belarus Standard Time"
 msgstr "벨로루시 표준 시간"
 
-#: tzres.rc:57
+#: tzres.rc:59
 msgid "Belarus Daylight Time"
 msgstr "벨로루시 표준 시간"
 
-#: tzres.rc:180
+#: tzres.rc:184
 msgid "SA Western Standard Time"
 msgstr "SA 서부 표준 시간"
 
-#: tzres.rc:181
+#: tzres.rc:185
 msgid "SA Western Daylight Time"
 msgstr "SA 서부 일광 절약 시간"
 
-#: tzres.rc:108
+#: tzres.rc:110
 msgid "Greenland Standard Time"
 msgstr "그린란드 표준 시간"
 
-#: tzres.rc:109
+#: tzres.rc:111
 msgid "Greenland Daylight Time"
 msgstr "그린란드 일광 절약 시간"
 
-#: tzres.rc:92
+#: tzres.rc:94
 msgid "Easter Island Standard Time"
 msgstr "이스터 섬 표준 시간"
 
-#: tzres.rc:93
+#: tzres.rc:95
 msgid "Easter Island Daylight Time"
 msgstr "이스터 섬 일광 절약 시간"
 
-#: tzres.rc:96
+#: tzres.rc:98
 msgid "Egypt Standard Time"
 msgstr "이집트 표준 시간"
 
-#: tzres.rc:97
+#: tzres.rc:99
 msgid "Egypt Daylight Time"
 msgstr "이집트 일광 절약 시간"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Mauritius Standard Time"
 msgstr "모리셔스 표준 시간"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Mauritius Daylight Time"
 msgstr "모리셔스 일광 절약 시간"
 
-#: tzres.rc:214
+#: tzres.rc:218
 msgid "Vladivostok Standard Time"
 msgstr "블라디보스토크 표준 시간"
 
-#: tzres.rc:215
+#: tzres.rc:219
 msgid "Vladivostok Daylight Time"
 msgstr "블라디보스토크 일광 절약 시간"
 
-#: tzres.rc:186
+#: tzres.rc:190
 msgid "Singapore Standard Time"
 msgstr "싱가포르 표준 시간"
 
-#: tzres.rc:187
+#: tzres.rc:191
 msgid "Singapore Daylight Time"
 msgstr "싱가포르 일광 절약 시간"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Korea Standard Time"
 msgstr "대한민국 표준 시간"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Korea Daylight Time"
 msgstr "대한민국 일광 절약 시간"
 
-#: tzres.rc:86
+#: tzres.rc:88
 msgid "E. Africa Standard Time"
 msgstr "동아프리카 표준 시간"
 
-#: tzres.rc:87
+#: tzres.rc:89
 msgid "E. Africa Daylight Time"
 msgstr "동아프리카 일광 절약 시간"
 
-#: tzres.rc:102
+#: tzres.rc:104
 msgid "FLE Standard Time"
 msgstr "FLE 표준 시간"
 
-#: tzres.rc:103
+#: tzres.rc:105
 msgid "FLE Daylight Time"
 msgstr "FLE 일광 절약 시간"
 
-#: tzres.rc:90
+#: tzres.rc:92
 msgid "E. South America Standard Time"
 msgstr "남아메리카 동부 표준 시간"
 
-#: tzres.rc:91
+#: tzres.rc:93
 msgid "E. South America Daylight Time"
 msgstr "남아메리카 동부 일광 절약 시간"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central Pacific Standard Time"
 msgstr "중앙 태평양 표준 시간"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central Pacific Daylight Time"
 msgstr "중앙 태평양 일광 절약 시간"
 
-#: tzres.rc:218
+#: tzres.rc:222
 msgid "W. Central Africa Standard Time"
 msgstr "중앙아프리카 서부 표준 시간"
 
-#: tzres.rc:219
+#: tzres.rc:223
 msgid "W. Central Africa Daylight Time"
 msgstr "중앙아프리카 서부 일광 절약 시간"
 
-#: tzres.rc:162
+#: tzres.rc:166
 msgid "Pacific SA Standard Time"
 msgstr "태평양 SA 표준 시간"
 
-#: tzres.rc:163
+#: tzres.rc:167
 msgid "Pacific SA Daylight Time"
 msgstr "태평양 SA 일광 절약 시간"
 
-#: tzres.rc:88
+#: tzres.rc:90
 msgid "E. Australia Standard Time"
 msgstr "오스트레일리아 동부 표준 시간"
 
-#: tzres.rc:89
+#: tzres.rc:91
 msgid "E. Australia Daylight Time"
 msgstr "오스트레일리아 동부 일광 절약 시간"
 
-#: tzres.rc:216
+#: tzres.rc:220
 msgid "W. Australia Standard Time"
 msgstr "오스트레일리아 서부 표준 시간"
 
-#: tzres.rc:217
+#: tzres.rc:221
 msgid "W. Australia Daylight Time"
 msgstr "오스트레일리아 서부 일광 절약 시간"
 
@@ -11104,16 +11208,12 @@ msgstr ""
 "다."
 
 #: winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
 msgstr ""
-"저정한 MIDI 포트는 이미 사용 중입니다. 사용할 수 있을 때까지 기다른 다음 다"
-"시 시도하십시오."
+"저정한 MIDI 포트는 이미 사용 중입니다. 사용할 수 있을 때까지 기다렸다가 다시 "
+"시도하십시오."
 
 #: winmm.rc:131
 msgid ""
@@ -11128,16 +11228,12 @@ msgid "An error occurred with the specified port."
 msgstr "지정한 포트에 오류가 발생했습니다."
 
 #: winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
 msgstr ""
-"모든 멀티미디어 타이머는 다른 프로그램에서 사용되고 있습니다. 이들 프로그램 "
-"중 하나를 종료한 다음 다시 시도하십시오."
+"모든 멀티미디어 타이머는 다른 프로그램에서 사용되고 있습니다. 이 중 하나를 종"
+"료한 다음 다시 시도하십시오."
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -13650,7 +13746,7 @@ msgstr "reg: 인식되지 않는 이스케이프 시퀀스 [\\%1!c!]\n"
 
 #: reg.rc:70
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG EXPORT 키_이름 파일.reg [/y]\n"
+msgstr "REG EXPORT key_name 파일.reg [/y]\n"
 
 #: reg.rc:71
 msgid "reg: Invalid system key [%1]\n"
@@ -15262,7 +15358,7 @@ msgstr "정규 메타파일 보기"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "메타파일 (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15286,7 +15382,7 @@ msgstr ""
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "%s 안의 Wine 설정을 업데이트하고 있습니다. 잠시만 기다려주십시오..."
+msgstr "Wine 설정(%s)을 업데이트하고 있습니다. 잠시만 기다려주십시오..."
 
 # 라이선스 문구는 번역하지 않습니다.
 #: winecfg.rc:141
@@ -15433,10 +15529,6 @@ msgid "Drive configuration"
 msgstr "드라이브 구성"
 
 #: winecfg.rc:233
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -15727,12 +15819,6 @@ msgid "System drive"
 msgstr "시스템 드라이브"
 
 #: winecfg.rc:76
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15742,8 +15828,8 @@ msgstr ""
 "드라이브 C 항목을 제거하시겠습니까?\n"
 "\n"
 "대부분의 Windows 프로그램은 C 드라이브가 있다고 예상합니다. C 드라이브가 없다"
-"면 비정상적인 방법으로 종료합니다. 계속 진행한다면 반드시 C 드라이브를 다시 "
-"만드십시오!"
+"면 비정상적인 방법으로 종료합니다. 계속 진행려면, C 드라이브를 다시 만드십시"
+"오!"
 
 #: winecfg.rc:77
 msgctxt "Drive letter"
@@ -16408,10 +16494,6 @@ msgstr "최단 시간"
 msgid "Beginner"
 msgstr "초보자"
 
-#: winemine.rc:65
-msgid "Advanced"
-msgstr "중급자"
-
 #: winemine.rc:66
 msgid "Expert"
 msgstr "전문가"
@@ -16812,8 +16894,6 @@ msgid "Text documents (*.txt)"
 msgstr "텍스트 파일 (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
 msgstr "유니코드 텍스트 문서 (*.txt)"
 
@@ -17019,42 +17099,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"

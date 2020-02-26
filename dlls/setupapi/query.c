@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -28,7 +29,6 @@
 #include "advpub.h"
 #include "winnls.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "setupapi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
@@ -43,6 +43,16 @@ static const WCHAR source_disks_names_platform[] =
     {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s','.','a','m','d','6','4',0};
 static const WCHAR source_disks_files_platform[] =
     {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s','.','a','m','d','6','4',0};
+#elif defined(__arm__)
+static const WCHAR source_disks_names_platform[] =
+    {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s','.','a','r','m',0};
+static const WCHAR source_disks_files_platform[] =
+    {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s','.','a','r','m',0};
+#elif defined(__aarch64__)
+static const WCHAR source_disks_names_platform[] =
+    {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s','.','a','r','m','6','4',0};
+static const WCHAR source_disks_files_platform[] =
+    {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s','.','a','r','m','6','4',0};
 #else  /* FIXME: other platforms */
 static const WCHAR source_disks_names_platform[] =
     {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s',0};
@@ -408,7 +418,7 @@ BOOL WINAPI SetupGetSourceFileLocationW( HINF hinf, PINFCONTEXT context, PCWSTR 
     if (!(source_id_str = get_source_id( hinf, context, filename )))
         return FALSE;
 
-    *source_id = strtolW( source_id_str, &end, 10 );
+    *source_id = wcstol( source_id_str, &end, 10 );
     if (end == source_id_str || *end)
     {
         HeapFree( GetProcessHeap(), 0, source_id_str );
@@ -491,7 +501,7 @@ BOOL WINAPI SetupGetSourceInfoW( HINF hinf, UINT source_id, UINT info,
     TRACE("%p, %d, %d, %p, %d, %p\n", hinf, source_id, info, buffer, buffer_size,
           required_size);
 
-    sprintfW( source_id_str, fmt, source_id );
+    swprintf( source_id_str, ARRAY_SIZE(source_id_str), fmt, source_id );
 
     if (!SetupFindFirstLineW( hinf, source_disks_names_platform, source_id_str, &ctx ) &&
         !SetupFindFirstLineW( hinf, source_disks_names, source_id_str, &ctx ))
@@ -602,7 +612,7 @@ BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section,
         GetSystemDirectoryW( systemdir, MAX_PATH );
         dir = systemdir;
     }
-    size = strlenW( dir ) + 1;
+    size = lstrlenW( dir ) + 1;
     if (required_size) *required_size = size;
 
     if (buffer)
@@ -699,11 +709,25 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
      * destination (copied) inf file, not the source (original) inf file.
      * to fix it properly would require building a .pnf file */
     /* file name is stored in VersionData field of InfInformation */
-    inf_name = strrchrW(inf_path, '\\');
+    inf_name = wcsrchr(inf_path, '\\');
     if (inf_name) inf_name++;
     else inf_name = inf_path;
 
-    strcpyW(OriginalFileInfo->OriginalInfName, inf_name);
+    lstrcpyW(OriginalFileInfo->OriginalInfName, inf_name);
 
     return TRUE;
+}
+
+/***********************************************************************
+ *      SetupGetInfDriverStoreLocationW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupGetInfDriverStoreLocationW(
+    PCWSTR FileName, PSP_ALTPLATFORM_INFO AlternativePlatformInfo,
+    PCWSTR LocaleName, PWSTR ReturnBuffer, DWORD ReturnBufferSize,
+    PDWORD RequiredSize)
+{
+    FIXME("stub: %s %p %s %p %u %p\n", debugstr_w(FileName), AlternativePlatformInfo, debugstr_w(LocaleName), ReturnBuffer, ReturnBufferSize, RequiredSize);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
 }

@@ -102,9 +102,6 @@ static HANDLE run_loop_handle;
 
 static const WCHAR busidW[] = {'I','O','H','I','D',0};
 
-#include "initguid.h"
-DEFINE_GUID(GUID_DEVCLASS_IOHID, 0x989D309D,0x0470,0x4E1A,0x89,0x38,0x50,0x1F,0x42,0xBD,0x9A,0xCD);
-
 struct platform_private
 {
     IOHIDDeviceRef device;
@@ -348,7 +345,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
         input = 0;
 
     device = bus_create_hid_device(busidW, vid, pid, input,
-            version, uid, str?serial_string:NULL, is_gamepad, &GUID_DEVCLASS_IOHID,
+            version, uid, str ? serial_string : NULL, is_gamepad,
             &iohid_vtbl, sizeof(struct platform_private));
     if (!device)
         ERR("Failed to create device\n");
@@ -357,7 +354,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
         struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->device = IOHIDDevice;
         private->buffer = NULL;
-        IoInvalidateDeviceRelations(device, BusRelations);
+        IoInvalidateDeviceRelations(bus_pdo, BusRelations);
     }
 }
 
@@ -371,7 +368,8 @@ static void handle_RemovalCallback(void *context, IOReturn result, void *sender,
     device = bus_find_hid_device(&iohid_vtbl, IOHIDDevice);
     if (device)
     {
-        IoInvalidateDeviceRelations(device, RemovalRelations);
+        bus_unlink_hid_device(device);
+        IoInvalidateDeviceRelations(bus_pdo, BusRelations);
         bus_remove_hid_device(device);
     }
 }
@@ -409,12 +407,17 @@ NTSTATUS iohid_driver_init(void)
         return STATUS_UNSUCCESSFUL;
     }
 
+    TRACE("Initialization successful\n");
     return STATUS_SUCCESS;
 }
 
 void iohid_driver_unload( void )
 {
     TRACE("Unloading Driver\n");
+
+    if (!run_loop_handle)
+        return;
+
     IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
     CFRunLoopStop(run_loop);
     WaitForSingleObject(run_loop_handle, INFINITE);
@@ -429,7 +432,6 @@ void iohid_driver_unload( void )
 
 NTSTATUS iohid_driver_init(void)
 {
-    WARN("IOHID Support not compiled into Wine.\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 

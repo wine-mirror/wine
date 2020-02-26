@@ -157,6 +157,7 @@ HRESULT enum_services_providers(const GUID * const service, DPN_SERVICE_PROVIDER
         next_key = RegEnumKeyW( key, index, provider, MAX_PATH);
         while(next_key == ERROR_SUCCESS)
         {
+            size = 0;
             res = RegGetValueW(key, provider, friendly, RRF_RT_REG_SZ, NULL, NULL, &size);
             if(res == ERROR_SUCCESS)
             {
@@ -198,6 +199,7 @@ HRESULT enum_services_providers(const GUID * const service, DPN_SERVICE_PROVIDER
         next_key = RegEnumKeyW( key, index, provider, MAX_PATH);
         while(next_key == ERROR_SUCCESS)
         {
+            size = 0;
             res = RegGetValueW(key, provider, friendly, RRF_RT_REG_SZ, NULL, NULL, &size);
             if(res == ERROR_SUCCESS)
             {

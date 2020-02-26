@@ -3,7 +3,7 @@
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
 @ stdcall MFCreateSinkWriterFromMediaSink(ptr ptr ptr)
-@ stub MFCreateSinkWriterFromURL
+@ stdcall MFCreateSinkWriterFromURL(wstr ptr ptr ptr)
 @ stdcall MFCreateSourceReaderFromByteStream(ptr ptr ptr)
 @ stdcall MFCreateSourceReaderFromMediaSource(ptr ptr ptr)
 @ stdcall MFCreateSourceReaderFromURL(wstr ptr ptr)

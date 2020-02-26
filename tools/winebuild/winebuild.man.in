@@ -51,6 +51,10 @@ Build a .a import library from a spec file. The .spec file is
 specified via the \fB-E\fR option. If the output library name ends
 in .delay.a, a delayed import library is built.
 .TP
+.BI \--builtin
+Mark a PE module as a Wine builtin module, by adding the "Wine builtin
+DLL" signature string after the DOS header.
+.TP
 .B \--resources
 Generate a .o file containing all the input resources. This is useful
 when building with a PE compiler, since the PE binutils cannot handle
@@ -67,6 +71,10 @@ Specify the command to use to compile assembly files; the default is
 Specify the target CPU and platform on which the generated code will
 be built. The target specification is in the standard autoconf format
 as returned by config.sub.
+.TP
+.BI \-B\  directory
+Add the directory to the search path for the various binutils tools
+like \fBas\fR, \fBnm\fR and \fBld\fR.
 .TP
 .BI \--cc-cmd= cc-command
 Specify the C compiler to use to compile assembly files; the default
@@ -159,6 +167,10 @@ Generate respectively 16-bit, 32-bit or 64-bit code.
 .TP
 .BI \-marm,\ \-mthumb,\ \-march= option ,\ \-mcpu= option ,\ \-mfpu= option ,\ \-mfloat-abi= option
 Set code generation options for the assembler.
+.TP
+.B \-munix
+Build a library that imports standard functions from the Unix C
+library instead of the Windows runtime.
 .TP
 .BI \-M,\ --main-module= module
 When building a 16-bit dll, set the name of its 32-bit counterpart to
@@ -311,13 +323,21 @@ The function uses the
 calling convention (first two parameters in %ecx/%edx registers on
 i386).
 .TP
-.RE
-.BI -arch= cpu\fR[\fB,\fIcpu\fR]
+.B -import
+The function is imported from another module. This can be used instead
+of a
+.I forward
+specification when an application expects to find the function's
+implementation inside the dll.
+.TP
+.B -arch=\fR[\fB!\fR]\fIcpu\fR[\fB,\fIcpu\fR]
 The entry point is only available on the specified CPU
 architecture(s). The names \fBwin32\fR and \fBwin64\fR match all
 32-bit or 64-bit CPU architectures respectively. In 16-bit dlls,
 specifying \fB-arch=win32\fR causes the entry point to be exported
-from the 32-bit wrapper module.
+from the 32-bit wrapper module. A CPU name can be prefixed with
+\fB!\fR to exclude only that specific architecture.
+.RE
 .SS "Function ordinals"
 Syntax:
 .br

@@ -32,7 +32,7 @@ static NTSTATUS (WINAPI * pNtSetInformationThread)(HANDLE, THREADINFOCLASS, PVOI
 static NTSTATUS (WINAPI * pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS (WINAPI * pNtQueryVirtualMemory)(HANDLE, LPCVOID, MEMORY_INFORMATION_CLASS , PVOID , SIZE_T , SIZE_T *);
 static NTSTATUS (WINAPI * pNtCreateSection)(HANDLE*,ACCESS_MASK,const OBJECT_ATTRIBUTES*,const LARGE_INTEGER*,ULONG,ULONG,HANDLE);
-static NTSTATUS (WINAPI * pNtMapViewOfSection)(HANDLE,HANDLE,PVOID*,ULONG,SIZE_T,const LARGE_INTEGER*,SIZE_T*,SECTION_INHERIT,ULONG,ULONG);
+static NTSTATUS (WINAPI * pNtMapViewOfSection)(HANDLE,HANDLE,PVOID*,ULONG_PTR,SIZE_T,const LARGE_INTEGER*,SIZE_T*,SECTION_INHERIT,ULONG,ULONG);
 static NTSTATUS (WINAPI * pNtUnmapViewOfSection)(HANDLE,PVOID);
 static NTSTATUS (WINAPI * pNtClose)(HANDLE);
 static ULONG    (WINAPI * pNtGetCurrentProcessorNumber)(void);
@@ -363,8 +363,6 @@ static void test_query_process(void)
 
         last_pid = (DWORD_PTR)spi->UniqueProcessId;
 
-        ok( spi->dwThreadCount > 0, "Expected some threads for this process, got 0\n");
-
         /* Loop through the threads, skip NT4 for now */
         
         if (!is_nt)
@@ -488,7 +486,7 @@ static void test_query_module(void)
     /* Loop through all the modules/drivers, Wine doesn't get here (yet) */
     for (i = 0; i < ModuleCount ; i++)
     {
-        ok( i == sm->Id, "Id (%d) should have matched %u\n", sm->Id, i);
+        ok( i == sm->LoadOrderIndex, "LoadOrderIndex (%d) should have matched %u\n", sm->LoadOrderIndex, i);
         sm++;
     }
 
@@ -738,8 +736,9 @@ static void test_query_logicalproc(void)
 
 static void test_query_logicalprocex(void)
 {
-    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *infoex, *infoex2;
-    DWORD relationship, len2, len;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *infoex, *infoex_public, *infoex_core, *infoex_numa,
+                                            *infoex_cache, *infoex_package, *infoex_group, *ex;
+    DWORD relationship, len, len_public, len_core, len_numa, len_cache, len_package, len_group, len_union;
     NTSTATUS status;
     BOOL ret;
 
@@ -747,40 +746,69 @@ static void test_query_logicalprocex(void)
         return;
 
     len = 0;
-    relationship = RelationProcessorCore;
-    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len);
-    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
-    ok(len > 0, "got %u\n", len);
-
-    len = 0;
     relationship = RelationAll;
     status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len);
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
     ok(len > 0, "got %u\n", len);
 
-    len2 = 0;
-    ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len2);
-    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
-    ok(len == len2, "got %u, expected %u\n", len2, len);
+    len_core = 0;
+    relationship = RelationProcessorCore;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len_core);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
+    ok(len_core > 0, "got %u\n", len_core);
 
-    if (len && len == len2) {
+    len_numa = 0;
+    relationship = RelationNumaNode;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len_numa);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
+    ok(len_numa > 0, "got %u\n", len_numa);
+
+    len_cache = 0;
+    relationship = RelationCache;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len_cache);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
+    ok(len_cache > 0, "got %u\n", len_cache);
+
+    len_package = 0;
+    relationship = RelationProcessorPackage;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len_package);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
+    ok(len_package > 0, "got %u\n", len_package);
+
+    len_group = 0;
+    relationship = RelationGroup;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len_group);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
+    ok(len_group > 0, "got %u\n", len_group);
+
+    len_public = 0;
+    ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len_public);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
+    ok(len == len_public, "got %u, expected %u\n", len_public, len);
+
+    if (len && len == len_public) {
         int j, i;
 
         infoex = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-        infoex2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+        infoex_public = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_public);
+        infoex_core = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_core);
+        infoex_numa = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_numa);
+        infoex_cache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_cache);
+        infoex_package = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_package);
+        infoex_group = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_group);
 
+        relationship = RelationAll;
         status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex, len, &len);
         ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
 
-        ret = pGetLogicalProcessorInformationEx(RelationAll, infoex2, &len2);
+        ret = pGetLogicalProcessorInformationEx(RelationAll, infoex_public, &len_public);
         ok(ret, "got %d, error %d\n", ret, GetLastError());
-        ok(!memcmp(infoex, infoex2, len), "returned info data mismatch\n");
+        ok(!memcmp(infoex, infoex_public, len), "returned info data mismatch\n");
 
+        /* Test for RelationAll. */
         for(i = 0; status == STATUS_SUCCESS && i < len; ){
-            SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *ex = (void*)(((char *)infoex) + i);
+            ex = (void*)(((char *)infoex) + i);
 
-            ok(ex->Relationship >= RelationProcessorCore && ex->Relationship <= RelationGroup,
-                    "Got invalid relationship value: 0x%x\n", ex->Relationship);
             if (!ex->Size)
             {
                 ok(0, "got infoex[%u].Size=0\n", i);
@@ -791,7 +819,7 @@ static void test_query_logicalprocex(void)
             switch(ex->Relationship){
             case RelationProcessorCore:
             case RelationProcessorPackage:
-                trace("infoex[%u].Relationship: 0x%x (Core == 0x0 or Package == 0x3)\n", i, ex->Relationship);
+                trace("infoex[%u].Relationship: 0x%x (%s)\n", i, ex->Relationship, ex->Relationship == RelationProcessorCore ? "Core" : "Package");
                 trace("infoex[%u].Processor.Flags: 0x%x\n", i, ex->Processor.Flags);
                 trace("infoex[%u].Processor.EfficiencyClass: 0x%x\n", i, ex->Processor.EfficiencyClass);
                 trace("infoex[%u].Processor.GroupCount: 0x%x\n", i, ex->Processor.GroupCount);
@@ -827,14 +855,110 @@ static void test_query_logicalprocex(void)
                 }
                 break;
             default:
+                ok(0, "Got invalid relationship value: 0x%x\n", ex->Relationship);
                 break;
             }
 
             i += ex->Size;
         }
 
+        /* Test Relationship filtering. */
+
+        relationship = RelationProcessorCore;
+        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_core, len_core, &len_core);
+        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+        for(i = 0; status == STATUS_SUCCESS && i < len_core;) {
+            ex = (void*)(((char*)infoex_core) + i);
+            if (ex->Size == 0) {
+                ok(0, "Got infoex_core[%u].Size=0\n", i);
+                break;
+            }
+            if (ex->Relationship != RelationProcessorCore) {
+                ok(0, "Expected 0x%x, got 0x%x\n", RelationProcessorCore, ex->Relationship);
+                break;
+            }
+            i += ex->Size;
+        }
+
+        relationship = RelationNumaNode;
+        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_numa, len_numa, &len_numa);
+        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+        for(i = 0; status == STATUS_SUCCESS && i < len_numa;) {
+            ex = (void*)(((char*)infoex_numa) + i);
+            if (ex->Size == 0) {
+                ok(0, "Got infoex_numa[%u].Size=0\n", i);
+                break;
+            }
+            if (ex->Relationship != RelationNumaNode) {
+                ok(0, "Expected 0x%x, got 0x%x\n", RelationNumaNode, ex->Relationship);
+                break;
+            }
+            i += ex->Size;
+        }
+
+        relationship = RelationCache;
+        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_cache, len_cache, &len_cache);
+        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+        for(i = 0; status == STATUS_SUCCESS && i < len_cache;) {
+            ex = (void*)(((char*)infoex_cache) + i);
+            if (ex->Size == 0) {
+                ok(0, "Got infoex_cache[%u].Size=0\n", i);
+                break;
+            }
+            if (ex->Relationship != RelationCache) {
+                ok(0, "Expected 0x%x, got 0x%x\n", RelationCache, ex->Relationship);
+                break;
+            }
+            i += ex->Size;
+        }
+
+        relationship = RelationProcessorPackage;
+        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_package, len_package, &len_package);
+        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+        for(i = 0; status == STATUS_SUCCESS && i < len_package;) {
+            ex = (void*)(((char*)infoex_package) + i);
+            if (ex->Size == 0) {
+                ok(0, "Got infoex_package[%u].Size=0\n", i);
+                break;
+            }
+            if (ex->Relationship != RelationProcessorPackage) {
+                ok(0, "Expected 0x%x, got 0x%x\n", RelationProcessorPackage, ex->Relationship);
+                break;
+            }
+            i += ex->Size;
+        }
+
+        relationship = RelationGroup;
+        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_group, len_group, &len_group);
+        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+        for(i = 0; status == STATUS_SUCCESS && i < len_group;) {
+            ex = (void*)(((char *)infoex_group) + i);
+            if (ex->Size == 0) {
+                ok(0, "Got infoex_group[%u].Size=0\n", i);
+                break;
+            }
+            if (ex->Relationship != RelationGroup) {
+                ok(0, "Expected 0x%x, got 0x%x\n", RelationGroup, ex->Relationship);
+                break;
+            }
+            i += ex->Size;
+        }
+
+        len_union = len_core + len_numa + len_cache + len_package + len_group;
+        ok(len == len_union, "Expected 0x%x, got 0x%0x\n", len, len_union);
+
         HeapFree(GetProcessHeap(), 0, infoex);
-        HeapFree(GetProcessHeap(), 0, infoex2);
+        HeapFree(GetProcessHeap(), 0, infoex_public);
+        HeapFree(GetProcessHeap(), 0, infoex_core);
+        HeapFree(GetProcessHeap(), 0, infoex_numa);
+        HeapFree(GetProcessHeap(), 0, infoex_cache);
+        HeapFree(GetProcessHeap(), 0, infoex_package);
+        HeapFree(GetProcessHeap(), 0, infoex_group);
     }
 }
 
@@ -886,6 +1010,48 @@ static void test_query_firmware(void)
        "Expected length %u, got %u\n", len1 - min_sfti_len, sfti->TableBufferLength);
 
     HeapFree(GetProcessHeap(), 0, sfti);
+}
+
+static void test_query_battery(void)
+{
+    SYSTEM_BATTERY_STATE bs;
+    NTSTATUS status;
+    DWORD time_left;
+
+    memset(&bs, 0x23, sizeof(bs));
+    status = NtPowerInformation(SystemBatteryState, NULL, 0, &bs, sizeof(bs));
+    if (status == STATUS_NOT_IMPLEMENTED)
+    {
+        skip("SystemBatteryState not implemented\n");
+        return;
+    }
+    ok(status == STATUS_SUCCESS, "expected success\n");
+
+    trace("Battery state:\n");
+    trace("AcOnLine          : %u\n", bs.AcOnLine);
+    trace("BatteryPresent    : %u\n", bs.BatteryPresent);
+    trace("Charging          : %u\n", bs.Charging);
+    trace("Discharging       : %u\n", bs.Discharging);
+    trace("Tag               : %u\n", bs.Tag);
+    trace("MaxCapacity       : %u\n", bs.MaxCapacity);
+    trace("RemainingCapacity : %u\n", bs.RemainingCapacity);
+    trace("Rate              : %d\n", (LONG)bs.Rate);
+    trace("EstimatedTime     : %u\n", bs.EstimatedTime);
+    trace("DefaultAlert1     : %u\n", bs.DefaultAlert1);
+    trace("DefaultAlert2     : %u\n", bs.DefaultAlert2);
+
+    ok(bs.MaxCapacity >= bs.RemainingCapacity,
+       "expected MaxCapacity %u to be greater than or equal to RemainingCapacity %u\n",
+       bs.MaxCapacity, bs.RemainingCapacity);
+
+    if (!bs.BatteryPresent)
+        time_left = 0;
+    else if (!bs.Charging && (LONG)bs.Rate < 0)
+        time_left = 3600 * bs.RemainingCapacity / -(LONG)bs.Rate;
+    else
+        time_left = ~0u;
+    ok(bs.EstimatedTime == time_left,
+       "expected %u minutes remaining got %u minutes\n", time_left, bs.EstimatedTime);
 }
 
 static void test_query_processor_power_info(void)
@@ -1822,8 +1988,10 @@ static void test_readvirtualmemory(void)
 
     /* illegal local address */
     status = pNtReadVirtualMemory(process, teststring, (void *)0x1234, 12, &readcount);
-    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
-    ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
+    ok( status == STATUS_ACCESS_VIOLATION || broken(status == STATUS_PARTIAL_COPY) /* Win10 */,
+        "Expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    if (status == STATUS_ACCESS_VIOLATION)
+        ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
 
     CloseHandle(process);
 }
@@ -2373,6 +2541,10 @@ START_TEST(info)
     test_query_logicalprocex();
 
     /* NtPowerInformation */
+
+    /* 0x5 SystemBatteryState */
+    trace("Starting test_query_battery()\n");
+    test_query_battery();
 
     /* 0xb ProcessorInformation */
     trace("Starting test_query_processor_power_info()\n");

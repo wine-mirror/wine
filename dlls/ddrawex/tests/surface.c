@@ -29,7 +29,7 @@
 static IDirectDrawFactory *factory;
 static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID rclsid, REFIID riid, void **out);
 
-static IDirectDraw *createDD(void)
+static IDirectDraw *createDDraw(void)
 {
     HRESULT hr;
     IDirectDraw *dd;
@@ -74,7 +74,7 @@ static void GetDCTest_main(DDSURFACEDESC *ddsd, DDSURFACEDESC2 *ddsd2, void (*te
     IDirectDrawSurface2 *surf3;
     IDirectDrawSurface4 *surf4;
     HRESULT hr;
-    IDirectDraw  *dd1 = createDD();
+    IDirectDraw  *dd1 = createDDraw();
     IDirectDraw2 *dd2;
     IDirectDraw3 *dd3;
     IDirectDraw4 *dd4;
@@ -156,7 +156,7 @@ static void GetDCTest(void)
 static void CapsTest(void)
 {
     DDSURFACEDESC ddsd;
-    IDirectDraw  *dd1 = createDD();
+    IDirectDraw  *dd1 = createDDraw();
     IDirectDrawSurface *surf;
     HRESULT hr;
 
@@ -247,7 +247,7 @@ static void test_surface_from_dc3(void)
     HRESULT hr;
     HDC dc;
 
-    dd1 = createDD();
+    dd1 = createDDraw();
     hr = IDirectDraw_QueryInterface(dd1, &IID_IDirectDraw3, (void **)&dd3);
     ok(SUCCEEDED(hr), "IDirectDraw_QueryInterface failed, hr %#x.\n", hr);
     IDirectDraw_Release(dd1);
@@ -314,7 +314,7 @@ static void test_surface_from_dc4(void)
     HRESULT hr;
     HDC dc;
 
-    dd1 = createDD();
+    dd1 = createDDraw();
     hr = IDirectDraw_QueryInterface(dd1, &IID_IDirectDraw4, (void **)&dd4);
     if (hr == E_NOINTERFACE) {
         win_skip("DirectDraw4 is not supported\n");

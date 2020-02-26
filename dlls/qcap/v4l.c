@@ -60,8 +60,8 @@
 #include "wine/debug.h"
 #include "wine/library.h"
 
-#include "capture.h"
 #include "qcap_main.h"
+#include "capture.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
@@ -99,13 +99,11 @@ struct _Capture
     UINT width, height, bitDepth, fps, outputwidth, outputheight;
     BOOL swresize;
 
-    CRITICAL_SECTION CritSect;
-
-    IPin *pOut;
+    struct strmbase_source *pin;
     int fd, mmap;
-    BOOL iscommitted, stopped;
+    FILTER_STATE state;
 
-    HANDLE thread;
+    HANDLE thread, run_event;
 };
 
 static int xioctl(int fd, int request, void * arg)
@@ -125,8 +123,6 @@ HRESULT qcap_driver_destroy(Capture *capBox)
 
     if( capBox->fd != -1 )
         video_close(capBox->fd);
-    capBox->CritSect.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&capBox->CritSect);
     CoTaskMemFree(capBox);
     return S_OK;
 }
@@ -135,7 +131,6 @@ HRESULT qcap_driver_check_format(Capture *device, const AM_MEDIA_TYPE *mt)
 {
     HRESULT hr;
     TRACE("device %p, mt %p.\n", device, mt);
-    dump_AM_MEDIA_TYPE(mt);
 
     if (!mt)
         return E_POINTER;
@@ -251,7 +246,6 @@ HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
     vi->bmiHeader.biXPelsPerMeter = 100;
     vi->bmiHeader.biYPelsPerMeter = 100;
     mT[0]->pbFormat = (void *)vi;
-    dump_AM_MEDIA_TYPE(mT[0]);
     return S_OK;
 }
 
@@ -399,17 +393,15 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
     if (!(image_data = heap_alloc(image_size)))
     {
         ERR("Failed to allocate memory.\n");
-        capBox->thread = 0;
-        capBox->stopped = TRUE;
         return 0;
     }
 
-    while (1)
+    while (capBox->state != State_Stopped)
     {
-        EnterCriticalSection(&capBox->CritSect);
-        if (capBox->stopped)
-            break;
-        hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin *)capBox->pOut, &pSample, NULL, NULL, 0);
+        if (capBox->state == State_Paused)
+            WaitForSingleObject(capBox->run_event, INFINITE);
+
+        hr = BaseOutputPinImpl_GetDeliveryBuffer(capBox->pin, &pSample, NULL, NULL, 0);
         if (SUCCEEDED(hr))
         {
             int len;
@@ -435,140 +427,76 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             }
 
             Resize(capBox, pTarget, image_data);
-            hr = BaseOutputPinImpl_Deliver((BaseOutputPin *)capBox->pOut, pSample);
+            hr = IMemInputPin_Receive(capBox->pin->pMemInputPin, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
         }
         if (FAILED(hr) && hr != VFW_E_NOT_CONNECTED)
         {
             TRACE("Return %x, stop IFilterGraph\n", hr);
-            capBox->thread = 0;
-            capBox->stopped = TRUE;
             break;
         }
-        LeaveCriticalSection(&capBox->CritSect);
     }
 
-    LeaveCriticalSection(&capBox->CritSect);
     heap_free(image_data);
     return 0;
 }
 
-HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
+void qcap_driver_init_stream(Capture *device)
 {
-    HANDLE thread;
+    ALLOCATOR_PROPERTIES req_props, ret_props;
     HRESULT hr;
 
-    TRACE("%p -> (%p)\n", capBox, state); 
+    req_props.cBuffers = 3;
+    if (!device->swresize)
+        req_props.cbBuffer = device->width * device->height;
+    else
+        req_props.cbBuffer = device->outputwidth * device->outputheight;
+    req_props.cbBuffer = (req_props.cbBuffer * device->bitDepth) / 8;
+    req_props.cbAlign = 1;
+    req_props.cbPrefix = 0;
 
-    if (*state == State_Running) return S_OK;
+    hr = IMemAllocator_SetProperties(device->pin->pAllocator, &req_props, &ret_props);
+    if (FAILED(hr))
+        ERR("Failed to set allocator properties (buffer size %u), hr %#x.\n", req_props.cbBuffer, hr);
 
-    EnterCriticalSection(&capBox->CritSect);
-
-    capBox->stopped = FALSE;
-
-    if (*state == State_Stopped)
+    if (SUCCEEDED(hr))
     {
-        *state = State_Running;
-        if (!capBox->iscommitted)
-        {
-            ALLOCATOR_PROPERTIES ap, actual;
-            BaseOutputPin *out;
-
-            capBox->iscommitted = TRUE;
-
-            ap.cBuffers = 3;
-            if (!capBox->swresize)
-                ap.cbBuffer = capBox->width * capBox->height;
-            else
-                ap.cbBuffer = capBox->outputwidth * capBox->outputheight;
-            ap.cbBuffer = (ap.cbBuffer * capBox->bitDepth) / 8;
-            ap.cbAlign = 1;
-            ap.cbPrefix = 0;
-
-            out = (BaseOutputPin *)capBox->pOut;
-
-            hr = IMemAllocator_SetProperties(out->pAllocator, &ap, &actual);
-
-            if (SUCCEEDED(hr))
-                hr = IMemAllocator_Commit(out->pAllocator);
-
-            TRACE("Committing allocator: %x\n", hr);
-        }
-
-        thread = CreateThread(NULL, 0, ReadThread, capBox, 0, NULL);
-        if (thread)
-        {
-            capBox->thread = thread;
-            SetThreadPriority(thread, THREAD_PRIORITY_LOWEST);
-            LeaveCriticalSection(&capBox->CritSect);
-            return S_OK;
-        }
-        ERR("Creating thread failed.. %u\n", GetLastError());
-        LeaveCriticalSection(&capBox->CritSect);
-        return E_FAIL;
+        if (FAILED(hr = IMemAllocator_Commit(device->pin->pAllocator)))
+            ERR("Failed to commit allocator, hr %#x.\n", hr);
     }
 
-    ResumeThread(capBox->thread);
-    *state = State_Running;
-    LeaveCriticalSection(&capBox->CritSect);
-    return S_OK;
+    device->state = State_Paused;
+    device->thread = CreateThread(NULL, 0, ReadThread, device, 0, NULL);
 }
 
-HRESULT qcap_driver_pause(Capture *capBox, FILTER_STATE *state)
+void qcap_driver_start_stream(Capture *device)
 {
-    TRACE("%p -> (%p)\n", capBox, state);     
-
-    if (*state == State_Paused)
-        return S_OK;
-    if (*state == State_Stopped)
-        qcap_driver_run(capBox, state);
-
-    EnterCriticalSection(&capBox->CritSect);
-    *state = State_Paused;
-    SuspendThread(capBox->thread);
-    LeaveCriticalSection(&capBox->CritSect);
-
-    return S_OK;
+    device->state = State_Running;
+    SetEvent(device->run_event);
 }
 
-HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
+void qcap_driver_stop_stream(Capture *device)
 {
-    TRACE("%p -> (%p)\n", capBox, state);
-
-    if (*state == State_Stopped)
-        return S_OK;
-
-    EnterCriticalSection(&capBox->CritSect);
-
-    if (capBox->thread)
-    {
-        if (*state == State_Paused)
-            ResumeThread(capBox->thread);
-        capBox->stopped = TRUE;
-        capBox->thread = 0;
-        if (capBox->iscommitted)
-        {
-            BaseOutputPin *out;
-            HRESULT hr;
-
-            capBox->iscommitted = FALSE;
-
-            out = (BaseOutputPin*)capBox->pOut;
-
-            hr = IMemAllocator_Decommit(out->pAllocator);
-
-            if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
-                WARN("Decommitting allocator: %x\n", hr);
-        }
-    }
-
-    *state = State_Stopped;
-    LeaveCriticalSection(&capBox->CritSect);
-    return S_OK;
+    device->state = State_Paused;
+    ResetEvent(device->run_event);
 }
 
-Capture * qcap_driver_init( IPin *pOut, USHORT card )
+void qcap_driver_cleanup_stream(Capture *device)
+{
+    HRESULT hr;
+
+    device->state = State_Stopped;
+    WaitForSingleObject(device->thread, INFINITE);
+    CloseHandle(device->thread);
+    device->thread = NULL;
+
+    hr = IMemAllocator_Decommit(device->pin->pAllocator);
+    if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
+        ERR("Failed to decommit allocator, hr %#x.\n", hr);
+}
+
+Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card)
 {
     struct v4l2_capability caps = {{0}};
     struct v4l2_format format = {0};
@@ -581,9 +509,6 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
 
     if (!(device = CoTaskMemAlloc(sizeof(*device))))
         return NULL;
-
-    InitializeCriticalSection(&device->CritSect);
-    device->CritSect.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": Capture.CritSect");
 
     sprintf(path, "/dev/video%i", card);
     TRACE("Opening device %s.\n", path);
@@ -649,10 +574,10 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
     device->outputheight = device->height = format.fmt.pix.height;
     device->swresize = FALSE;
     device->bitDepth = 24;
-    device->pOut = pOut;
+    device->pin = pin;
     device->fps = 3;
-    device->stopped = FALSE;
-    device->iscommitted = FALSE;
+    device->state = State_Stopped;
+    device->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     TRACE("Format: %d bpp - %dx%d.\n", device->bitDepth, device->width, device->height);
 
@@ -665,7 +590,7 @@ error:
 
 #else
 
-Capture * qcap_driver_init( IPin *pOut, USHORT card )
+Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card)
 {
     static const char msg[] =
         "The v4l headers were not available at compile time,\n"
@@ -717,19 +642,24 @@ HRESULT qcap_driver_set_prop(Capture *capBox, VideoProcAmpProperty Property,
     FAIL_WITH_ERR;
 }
 
-HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
+void qcap_driver_init_stream(Capture *device)
 {
-    FAIL_WITH_ERR;
+    ERR("v4l absent: shouldn't be called\n");
 }
 
-HRESULT qcap_driver_pause(Capture *capBox, FILTER_STATE *state)
+void qcap_driver_start_stream(Capture *device)
 {
-    FAIL_WITH_ERR;
+    ERR("v4l absent: shouldn't be called\n");
 }
 
-HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
+void qcap_driver_stop_stream(Capture *device)
 {
-    FAIL_WITH_ERR;
+    ERR("v4l absent: shouldn't be called\n");
+}
+
+void qcap_driver_cleanup_stream(Capture *device)
+{
+    ERR("v4l absent: shouldn't be called\n");
 }
 
 #endif /* defined(VIDIOCMCAPTURE) */

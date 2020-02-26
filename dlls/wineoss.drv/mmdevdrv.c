@@ -1046,7 +1046,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     dump_fmt(fmt);
 
     if(mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return AUDCLNT_E_NOT_INITIALIZED;
+        return E_INVALIDARG;
 
     if(flags & ~(AUDCLNT_STREAMFLAGS_CROSSPROCESS |
                 AUDCLNT_STREAMFLAGS_LOOPBACK |
@@ -1333,6 +1333,22 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     fmt->Format.nChannels = max(This->ai.max_channels, This->ai.min_channels);
     if(fmt->Format.nChannels == 0 || fmt->Format.nChannels > 8)
         fmt->Format.nChannels = 2;
+
+    /* For most hardware on Windows, users must choose a configuration with an even
+     * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
+     * channels, but those channels are still reported to applications from
+     * GetMixFormat! Some applications behave badly if given an odd number of
+     * channels (e.g. 2.1). */
+    if(fmt->Format.nChannels > 1 && (fmt->Format.nChannels & 0x1))
+    {
+        if(fmt->Format.nChannels < This->ai.max_channels)
+            fmt->Format.nChannels += 1;
+        else
+            /* We could "fake" more channels and downmix the emulated channels,
+             * but at that point you really ought to tweak your OSS setup or
+             * just use PulseAudio. */
+            WARN("Some Windows applications behave badly with an odd number of channels (%u)!\n", fmt->Format.nChannels);
+    }
 
     if(This->ai.max_rate == 0)
         fmt->Format.nSamplesPerSec = 44100;
@@ -1991,7 +2007,12 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags,
             devpos, qpcpos);
 
-    if(!data || !frames || !flags)
+    if(!data)
+        return E_POINTER;
+
+    *data = NULL;
+
+    if(!frames || !flags)
         return E_POINTER;
 
     EnterCriticalSection(&This->lock);

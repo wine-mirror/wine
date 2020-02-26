@@ -42,8 +42,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-#define SetResSize(res, tag)	set_dword((res), (tag), (res)->size - get_dword((res), (tag)))
-
 res_t *new_res(void)
 {
 	res_t *r;
@@ -247,6 +245,13 @@ static DWORD get_dword(res_t *res, int ofs)
 	}
 }
 
+static res_t *end_res(res_t *res, int ofs)
+{
+    set_dword( res, ofs, res->size - get_dword( res, ofs ));
+    if (win32) put_pad( res );
+    return res;
+}
+
 /*
  *****************************************************************************
  * Function	: string_to_upper
@@ -348,50 +353,31 @@ static int parse_accel_string( const string_t *key, int flags )
 /*
  *****************************************************************************
  * Function	: put_string
- * Syntax	: void put_string(res_t *res, string_t *str, enum str_e type,
- *				  int isterm, const language_t *lang)
  * Input	:
  *	res	- Binary resource to put the data in
  *	str	- String to put
- *	type	- Data has to be written in either str_char or str_unicode
  *	isterm	- The string is '\0' terminated (disregard the string's
  *		  size member)
- * Output	: nop
- * Description	:
- * Remarks	:
  *****************************************************************************
 */
-static void put_string(res_t *res, const string_t *str, enum str_e type, int isterm,
-                       const language_t *lang)
+static void put_string(res_t *res, const string_t *str, int isterm, const language_t *lang)
 {
     int cnt, codepage;
-    string_t *newstr;
 
-    assert(res != NULL);
-    assert(str != NULL);
-
-    if (lang) codepage = get_language_codepage( lang->id, lang->sub );
-    else codepage = get_language_codepage( 0, 0 );
-
-    assert( codepage != -1 );
-
-    newstr = convert_string(str, type, codepage);
-    if (type == str_unicode)
+    if (win32)
     {
-        if (str->type == str_char)
+        string_t *newstr;
+
+        if (lang) codepage = get_language_codepage( lang->id, lang->sub );
+        else codepage = get_language_codepage( 0, 0 );
+        assert( codepage != -1 );
+
+        newstr = convert_string_unicode( str, codepage );
+        if (str->type == str_char && check_valid_utf8( str, codepage ))
         {
-            if (!check_unicode_conversion( str, newstr, codepage ))
-            {
-                print_location( &str->loc );
-                error( "String %s does not convert identically to Unicode and back in codepage %d. "
-                       "Try using a Unicode string instead\n", str->str.cstr, codepage );
-            }
-            if (check_valid_utf8( str, codepage ))
-            {
-                print_location( &str->loc );
-                warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use.\n",
-                         str->str.cstr, codepage );
-            }
+            print_location( &str->loc );
+            warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use, maybe use --utf8?\n",
+                     str->str.cstr, codepage );
         }
         if (!isterm) put_word(res, newstr->size);
         for(cnt = 0; cnt < newstr->size; cnt++)
@@ -401,19 +387,22 @@ static void put_string(res_t *res, const string_t *str, enum str_e type, int ist
             put_word(res, c);
         }
         if (isterm) put_word(res, 0);
+        free_string(newstr);
     }
-    else  /* str_char */
+    else
     {
-        if (!isterm) put_byte(res, newstr->size);
-        for(cnt = 0; cnt < newstr->size; cnt++)
+        if (str->type == str_unicode)
+            internal_error(__FILE__, __LINE__, "Unicode string %s in 16-bit\n",
+                           convert_string_utf8( str, 0 ));
+        if (!isterm) put_byte(res, str->size);
+        for(cnt = 0; cnt < str->size; cnt++)
         {
-            char c = newstr->str.cstr[cnt];
+            char c = str->str.cstr[cnt];
             if (isterm && !c) break;
             put_byte(res, c);
         }
         if (isterm) put_byte(res, 0);
     }
-    free_string(newstr);
 }
 
 /*
@@ -440,7 +429,7 @@ static void put_name_id(res_t *res, name_id_t *nid, int upcase, const language_t
 	{
 		if(upcase)
 			string_to_upper(nid->name.s_name);
-		put_string(res, nid->name.s_name, win32 ? str_unicode : str_char, TRUE, lang);
+		put_string(res, nid->name.s_name, TRUE, lang);
 	}
 	else
 	{
@@ -606,9 +595,7 @@ static res_t *accelerator2res(name_id_t *name, accelerator_t *acc)
 			ev = ev->next;
 		}
 	}
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -673,7 +660,7 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 		else
 			put_word(res, 0);
 		if(dlg->title)
-			put_string(res, dlg->title, str_unicode, TRUE, dlg->lvc.language);
+			put_string(res, dlg->title, TRUE, dlg->lvc.language);
 		else
 			put_word(res, 0);
 		if(dlg->font)
@@ -688,7 +675,7 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 				 */
 				put_word(res, dlg->font->italic ? 0x0101 : 0);
 			}
-			put_string(res, dlg->font->name, str_unicode, TRUE, dlg->lvc.language);
+			put_string(res, dlg->font->name, TRUE, dlg->lvc.language);
 		}
                 else if (dlg->style->or_mask & DS_SETFONT) put_word( res, 0x7fff );
 
@@ -760,13 +747,13 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 		else
 			put_byte(res, 0);
 		if(dlg->title)
-			put_string(res, dlg->title, str_char, TRUE, NULL);
+			put_string(res, dlg->title, TRUE, NULL);
 		else
 			put_byte(res, 0);
 		if(dlg->font)
 		{
 			put_word(res, dlg->font->size);
-			put_string(res, dlg->font->name, str_char, TRUE, NULL);
+			put_string(res, dlg->font->name, TRUE, NULL);
 		}
 
 		while(ctrl)
@@ -804,9 +791,7 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 		/* Set number of controls */
 		((char *)res->data)[tag_nctrl] = (char)nctrl;
 	}
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -822,39 +807,23 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 static void menuitem2res(res_t *res, menu_item_t *menitem, const language_t *lang)
 {
 	menu_item_t *itm = menitem;
-	if(win32)
-	{
-		while(itm)
-		{
-			put_word(res, itm->state | (itm->popup ? MF_POPUP : 0) | (!itm->next ? MF_END : 0));
-			if(!itm->popup)
-				put_word(res, itm->id);
-			if(itm->name)
-				put_string(res, itm->name, str_unicode, TRUE, lang);
-			else
-				put_word(res, 0);
-			if(itm->popup)
-				menuitem2res(res, itm->popup, lang);
-			itm = itm->next;
-		}
-	}
-	else /* win16 */
-	{
-		while(itm)
-		{
-			put_word(res, itm->state | (itm->popup ? MF_POPUP : 0) | (!itm->next ? MF_END : 0));
-			if(!itm->popup)
-				put_word(res, itm->id);
-			if(itm->name)
-				put_string(res, itm->name, str_char, TRUE, lang);
-			else
-				put_byte(res, 0);
-			if(itm->popup)
-				menuitem2res(res, itm->popup, lang);
-			itm = itm->next;
-		}
-	}
 
+	while(itm)
+	{
+		put_word(res, itm->state | (itm->popup ? MF_POPUP : 0) | (!itm->next ? MF_END : 0));
+		if(!itm->popup)
+			put_word(res, itm->id);
+		if(itm->name)
+			put_string(res, itm->name, TRUE, lang);
+		else
+                {
+			if (win32) put_word(res, 0);
+			else put_byte(res, 0);
+		}
+		if(itm->popup)
+			menuitem2res(res, itm->popup, lang);
+		itm = itm->next;
+	}
 }
 
 /*
@@ -878,7 +847,7 @@ static void menuexitem2res(res_t *res, menu_item_t *menitem, const language_t *l
 		put_dword(res, itm->gotid ? itm->id : 0);
 		put_word(res, (itm->popup ? 0x01 : 0) | (!itm->next ? MF_END : 0));
 		if(itm->name)
-			put_string(res, itm->name, str_unicode, TRUE, lang);
+			put_string(res, itm->name, TRUE, lang);
 		else
 			put_word(res, 0);
 		put_pad(res);
@@ -912,10 +881,9 @@ static res_t *menu2res(name_id_t *name, menu_t *men)
 	assert(men != NULL);
 
 	res = new_res();
+	restag = put_res_header(res, WRC_RT_MENU, NULL, name, men->memopt, &men->lvc);
 	if(win32)
 	{
-		restag = put_res_header(res, WRC_RT_MENU, NULL, name, men->memopt, &(men->lvc));
-
 		if (men->is_ex)
 		{
 			put_word(res, 1);		/* Menuheader: Version */
@@ -929,20 +897,13 @@ static res_t *menu2res(name_id_t *name, menu_t *men)
 			put_dword(res, 0);		/* Menuheader: Version and HeaderSize */
 			menuitem2res(res, men->items, men->lvc.language);
 		}
-		/* Set ResourceSize */
-		SetResSize(res, restag);
-		put_pad(res);
 	}
 	else /* win16 */
 	{
-		restag = put_res_header(res, WRC_RT_MENU, NULL, name, men->memopt, NULL);
-
 		put_dword(res, 0);		/* Menuheader: Version and HeaderSize */
 		menuitem2res(res, men->items, NULL);
-		/* Set ResourceSize */
-		SetResSize(res, restag);
 	}
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1009,11 +970,7 @@ static res_t *cursorgroup2res(name_id_t *name, cursor_group_t *curg)
         put_word(res, cur->id);
     }
 
-	SetResSize(res, restag);	/* Set ResourceSize */
-	if(win32)
-		put_pad(res);
-
-	return res;
+    return end_res(res, restag);
 }
 
 /*
@@ -1043,11 +1000,7 @@ static res_t *cursor2res(cursor_t *cur)
 	put_word(res, cur->yhot);
 	put_raw_data(res, cur->data, 0);
 
-	SetResSize(res, restag);	/* Set ResourceSize */
-	if(win32)
-		put_pad(res);
-
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1094,11 +1047,7 @@ static res_t *icongroup2res(name_id_t *name, icon_group_t *icog)
         put_word(res, ico->id);
     }
 
-	SetResSize(res, restag);	/* Set ResourceSize */
-	if(win32)
-		put_pad(res);
-
-	return res;
+    return end_res(res, restag);
 }
 
 /*
@@ -1126,11 +1075,7 @@ static res_t *icon2res(icon_t *ico)
 	restag = put_res_header(res, WRC_RT_ICON, NULL, &name, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, &(ico->lvc));
 	put_raw_data(res, ico->data, 0);
 
-	SetResSize(res, restag);	/* Set ResourceSize */
-	if(win32)
-		put_pad(res);
-
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1160,11 +1105,7 @@ static res_t *anicurico2res(name_id_t *name, ani_curico_t *ani, enum res_e type)
 	restag = put_res_header(res, type == res_anicur ? WRC_RT_ANICURSOR : WRC_RT_ANIICON,
 				NULL, name, ani->memopt, NULL);
 	put_raw_data(res, ani->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1201,11 +1142,7 @@ static res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
 	{
 		put_raw_data(res, bmp->data, 0);
 	}
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1230,11 +1167,7 @@ static res_t *font2res(name_id_t *name, font_t *fnt)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_FONT, NULL, name, fnt->memopt, &(fnt->data->lvc));
 	put_raw_data(res, fnt->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1259,11 +1192,7 @@ static res_t *fontdir2res(name_id_t *name, fontdir_t *fnd)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_FONTDIR, NULL, name, fnd->memopt, &(fnd->data->lvc));
 	put_raw_data(res, fnd->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1288,11 +1217,7 @@ static res_t *html2res(name_id_t *name, html_t *html)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_HTML, NULL, name, html->memopt, &(html->data->lvc));
 	put_raw_data(res, html->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1317,11 +1242,7 @@ static res_t *rcdata2res(name_id_t *name, rcdata_t *rdt)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_RCDATA, NULL, name, rdt->memopt, &(rdt->data->lvc));
 	put_raw_data(res, rdt->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1347,11 +1268,7 @@ static res_t *messagetable2res(name_id_t *name, messagetable_t *msg)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_MESSAGETABLE, NULL, name, msg->memopt, &(msg->data->lvc));
 	put_raw_data(res, msg->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1390,8 +1307,7 @@ static res_t *stringtable2res(stringtable_t *stt)
 		{
 			if(stt->entries[i].str && stt->entries[i].str->size)
 			{
-				put_string(res, stt->entries[i].str, win32 ? str_unicode : str_char,
-                                           FALSE, win32 ? stt->lvc.language : NULL);
+				put_string(res, stt->entries[i].str, FALSE, stt->lvc.language);
 			}
 			else
 			{
@@ -1401,10 +1317,7 @@ static res_t *stringtable2res(stringtable_t *stt)
 					put_byte(res, 0);
 			}
 		}
-		/* Set ResourceSize */
-		SetResSize(res, restag - lastsize);
-		if(win32)
-			put_pad(res);
+		end_res(res, restag - lastsize);
 		lastsize = res->size;
 	}
 	return res;
@@ -1432,11 +1345,7 @@ static res_t *user2res(name_id_t *name, user_t *usr)
 	res = new_res();
 	restag = put_res_header(res, 0, usr->type, name, usr->memopt, &(usr->data->lvc));
 	put_raw_data(res, usr->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1465,7 +1374,7 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 	put_word(res, 0);
 	if(win32)
 		put_word(res, 0);	/* level ? */
-	put_string(res, blk->name, win32 ? str_unicode : str_char, TRUE, NULL);
+	put_string(res, blk->name, TRUE, NULL);
 	put_pad(res);
 	for(val = blk->values; val; val = val->next)
 	{
@@ -1479,10 +1388,10 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 			{
 				put_word(res, level);
 			}
-			put_string(res, val->key, win32 ? str_unicode : str_char, TRUE, NULL);
+			put_string(res, val->key, TRUE, NULL);
 			put_pad(res);
 			tag = res->size;
-			put_string(res, val->value.str, win32 ? str_unicode : str_char, TRUE, lang);
+			put_string(res, val->value.str, TRUE, lang);
 			if(win32)
 				set_word(res, valvalsizetag, (WORD)((res->size - tag) >> 1));
 			else
@@ -1500,7 +1409,7 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 			{
 				put_word(res, level);
 			}
-			put_string(res, val->key, win32 ? str_unicode : str_char, TRUE, NULL);
+			put_string(res, val->key, TRUE, NULL);
 			put_pad(res);
 			tag = res->size;
 			for(i = 0; i < val->value.words->nwords; i++)
@@ -1539,20 +1448,14 @@ static void versionblock2res(res_t *res, ver_block_t *blk, int level, const lang
 */
 static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 {
-	int restag;
-	int rootblocksizetag;
-	int valsizetag;
-	int tag;
+	static const char info[] = "VS_VERSION_INFO";
+	unsigned int i;
+	int restag, rootblocksizetag, valsizetag, tag;
 	res_t *res;
-	string_t vsvi;
 	ver_block_t *blk;
 
 	assert(name != NULL);
 	assert(ver != NULL);
-
-	vsvi.type = str_char;
-	vsvi.str.cstr = xstrdup("VS_VERSION_INFO");
-	vsvi.size = 15; /* Excl. termination */
 
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_VERSION, NULL, name, ver->memopt, &(ver->lvc));
@@ -1561,10 +1464,15 @@ static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 	valsizetag = res->size;
 	put_word(res, 0);	/* ValueSize filled in later*/
 	if(win32)
+	{
 		put_word(res, 0);	/* Tree-level ? */
-	put_string(res, &vsvi, win32 ? str_unicode : str_char, TRUE, NULL);
-	if(win32)
+		for (i = 0; i < sizeof(info); i++) put_word(res, info[i]);
 		put_pad(res);
+	}
+	else
+	{
+		for (i = 0; i < sizeof(info); i++) put_byte(res, info[i]);
+	}
 	tag = res->size;
 	put_dword(res, VS_FFI_SIGNATURE);
 	put_dword(res, VS_FFI_STRUCVERSION);
@@ -1586,13 +1494,7 @@ static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 		versionblock2res(res, blk, 0, win32 ? ver->lvc.language : NULL);
 	/* Set root block's size */
 	set_word(res, rootblocksizetag, (WORD)(res->size - rootblocksizetag));
-
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-
-	free(vsvi.str.cstr);
-	return res;
+	return end_res(res, restag);
 }
 
 /*
@@ -1636,29 +1538,18 @@ static res_t *toolbar2res(name_id_t *name, toolbar_t *toolbar)
 	assert(name != NULL);
 	assert(toolbar != NULL);
 
-	res = new_res();
-	if(win32)
-	{
-		restag = put_res_header(res, WRC_RT_TOOLBAR, NULL, name, toolbar->memopt, &(toolbar->lvc));
+	if (!win32) return NULL;
 
-		put_word(res, 1);		/* Menuheader: Version */
-		put_word(res, toolbar->button_width); /* (in pixels?) */
-		put_word(res, toolbar->button_height); /* (in pixels?) */
-		put_word(res, toolbar->nitems);
-		put_pad(res);
-		toolbaritem2res(res, toolbar->items);
-		/* Set ResourceSize */
-		SetResSize(res, restag);
-		put_pad(res);
-	}
-	else /* win16 */
-	{
-		/* Do not generate anything in 16-bit mode */
-		free(res->data);
-		free(res);
-		return NULL;
-	}
-	return res;
+	res = new_res();
+	restag = put_res_header(res, WRC_RT_TOOLBAR, NULL, name, toolbar->memopt, &(toolbar->lvc));
+
+	put_word(res, 1);		/* Menuheader: Version */
+	put_word(res, toolbar->button_width); /* (in pixels?) */
+	put_word(res, toolbar->button_height); /* (in pixels?) */
+	put_word(res, toolbar->nitems);
+	put_pad(res);
+	toolbaritem2res(res, toolbar->items);
+	return end_res(res, restag);
 }
 
 /*
@@ -1683,11 +1574,7 @@ static res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
 	res = new_res();
 	restag = put_res_header(res, WRC_RT_DLGINIT, NULL, name, dit->memopt, &(dit->data->lvc));
 	put_raw_data(res, dit->data, 0);
-	/* Set ResourceSize */
-	SetResSize(res, restag);
-	if(win32)
-		put_pad(res);
-	return res;
+	return end_res(res, restag);
 }
 
 /*

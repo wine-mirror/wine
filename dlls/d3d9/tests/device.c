@@ -25,7 +25,7 @@
 #define WINVER 0x0602 /* for CURSOR_SUPPRESSED */
 #define COBJMACROS
 #include <d3d9.h>
-#include "wine/test.h"
+#include "utils.h"
 
 struct vec3
 {
@@ -52,6 +52,8 @@ struct device_desc
 #define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
 
 static DEVMODEW registry_mode;
+
+static void *(WINAPI *Direct3DShaderValidatorCreate9)(void);
 
 static const DWORD simple_vs[] =
 {
@@ -3048,19 +3050,12 @@ static void test_draw_primitive(void)
 
     hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
     ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
-todo_wine
     ok(!current_vb, "Unexpected vb %p.\n", current_vb);
     ok(!offset, "Unexpected offset %u.\n", offset);
-todo_wine
     ok(!stride, "Unexpected stride %u.\n", stride);
-    if (current_vb)
-        IDirect3DVertexBuffer9_Release(current_vb);
     hr = IDirect3DDevice9_GetIndices(device, &current_ib);
     ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
-todo_wine
     ok(!current_ib, "Unexpected index buffer %p.\n", current_ib);
-    if (current_ib)
-        IDirect3DIndexBuffer9_Release(current_ib);
 
     hr = IDirect3DStateBlock9_Capture(stateblock);
     ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
@@ -4015,7 +4010,7 @@ static void test_wndproc(void)
         ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         ok(ret, "Failed to get display mode.\n");
         ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
-                && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
+                && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected screen size %ux%u.\n",
                 devmode.dmPelsWidth, devmode.dmPelsHeight);
 
         /* This is needed on native with D3DCREATE_NOWINDOWCHANGES, and it needs to be
@@ -4050,7 +4045,7 @@ static void test_wndproc(void)
         ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         ok(ret, "Failed to get display mode.\n");
         ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
-                && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
+                && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected screen size %ux%u.\n",
                 devmode.dmPelsWidth, devmode.dmPelsHeight);
 
         hr = reset_device(device, &device_desc);
@@ -4074,8 +4069,8 @@ static void test_wndproc(void)
 
         ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         ok(ret, "Failed to get display mode.\n");
-        ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpect width %u.\n", devmode.dmPelsWidth);
-        ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect height %u.\n", devmode.dmPelsHeight);
+        ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpected width %u.\n", devmode.dmPelsWidth);
+        ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected height %u.\n", devmode.dmPelsHeight);
 
         /* SW_SHOWMINNOACTIVE is needed to make FVWM happy. SW_SHOWNOACTIVATE is needed to make windows
          * send SIZE_RESTORED after ShowWindow(SW_SHOWMINNOACTIVE). */
@@ -5947,13 +5942,8 @@ static void test_occlusion_query(void)
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(query);
 
     memset(&data, 0xff, sizeof(data));
     hr = IDirect3DQuery9_GetData(query, &data, data_size, D3DGETDATA_FLUSH);
@@ -6012,6 +6002,26 @@ static void test_occlusion_query(void)
     if (broken_occlusion)
         goto done;
 
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Failed to begin scene, hr %#x.\n", hr);
+    for (i = 0; i < 50000; ++i)
+    {
+        hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Failed to end scene, hr %#x.\n", hr);
+
+    wait_query(query);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(data.dword[0] == 0 && data.dword[1] == 0,
+            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
 
@@ -6057,13 +6067,7 @@ static void test_occlusion_query(void)
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    wait_query(query);
 
     memset(&data, 0xff, sizeof(data));
     hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
@@ -6071,32 +6075,6 @@ static void test_occlusion_query(void)
     ok((data.dword[0] == expected.dword[0] && data.dword[1] == expected.dword[1])
             || (data.dword[0] == 0xffffffff && !data.dword[1])
             || broken(data.dword[0] < 0xffffffff && !data.dword[1]),
-            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-    for (i = 0; i < 50000; ++i)
-    {
-        hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-        hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    }
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
-
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) == S_OK)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    memset(&data, 0xff, sizeof(data));
-    hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(data.dword[0] == 0 && data.dword[1] == 0,
             "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     IDirect3DSurface9_Release(rt);
@@ -6119,8 +6097,8 @@ static void test_timestamp_query(void)
          1.0f, -1.0f, 0.0f,
     };
     IDirect3DQuery9 *query, *disjoint_query, *freq_query;
-    unsigned int data_size, i;
     IDirect3DDevice9 *device;
+    unsigned int data_size;
     IDirect3D9 *d3d9;
     ULONG refcount;
     HWND window;
@@ -6183,14 +6161,8 @@ static void test_timestamp_query(void)
     ok(data_size == sizeof(UINT64), "Query data size is %u, 8 expected.\n", data_size);
 
     hr = IDirect3DQuery9_Issue(freq_query, D3DISSUE_END);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(freq_query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(freq_query);
 
     memset(freq, 0xff, sizeof(freq));
     hr = IDirect3DQuery9_GetData(freq_query, freq, sizeof(DWORD), D3DGETDATA_FLUSH);
@@ -6235,13 +6207,8 @@ static void test_timestamp_query(void)
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(query);
 
     memset(timestamp, 0xff, sizeof(timestamp));
     hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(DWORD), D3DGETDATA_FLUSH);
@@ -6259,13 +6226,8 @@ static void test_timestamp_query(void)
 
     hr = IDirect3DQuery9_Issue(disjoint_query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(disjoint_query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(disjoint_query);
 
     memset(disjoint, 0xff, sizeof(disjoint));
     hr = IDirect3DQuery9_GetData(disjoint_query, disjoint, sizeof(WORD), D3DGETDATA_FLUSH);
@@ -6287,13 +6249,9 @@ static void test_timestamp_query(void)
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(query);
+
     hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
@@ -11833,6 +11791,16 @@ static void test_check_device_format(void)
         }
     }
 
+    hr = IDirect3D9_CheckDepthStencilMatch(d3d, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DFMT_A8R8G8B8, D3DFMT_D32);
+    ok(hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL /* Windows 10 */),
+            "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3D9_CheckDepthStencilMatch(d3d, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DFMT_R5G6B5, D3DFMT_D32);
+    ok(hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL /* Windows 10 */),
+            "Got unexpected hr %#x.\n", hr);
+
     IDirect3D9_Release(d3d);
 }
 
@@ -12634,13 +12602,14 @@ static void test_device_caps(void)
             | D3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING | D3DPMISCCAPS_FOGVERTEXCLAMPED
             | D3DPMISCCAPS_POSTBLENDSRGBCONVERT)),
             "PrimitiveMiscCaps field has unexpected flags %#x.\n", caps.PrimitiveMiscCaps);
-    ok(!(caps.RasterCaps & ~(D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_PAT | D3DPRASTERCAPS_ZTEST
-            | D3DPRASTERCAPS_FOGVERTEX | D3DPRASTERCAPS_FOGTABLE | D3DPRASTERCAPS_ANTIALIASEDGES
-            | D3DPRASTERCAPS_MIPMAPLODBIAS | D3DPRASTERCAPS_ZBIAS | D3DPRASTERCAPS_ZBUFFERLESSHSR
+    ok(!(caps.RasterCaps & ~(D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_ZTEST
+            | D3DPRASTERCAPS_FOGVERTEX | D3DPRASTERCAPS_FOGTABLE
+            | D3DPRASTERCAPS_MIPMAPLODBIAS | D3DPRASTERCAPS_ZBUFFERLESSHSR
             | D3DPRASTERCAPS_FOGRANGE | D3DPRASTERCAPS_ANISOTROPY | D3DPRASTERCAPS_WBUFFER
             | D3DPRASTERCAPS_WFOG | D3DPRASTERCAPS_ZFOG | D3DPRASTERCAPS_COLORPERSPECTIVE
             | D3DPRASTERCAPS_SCISSORTEST | D3DPRASTERCAPS_SLOPESCALEDEPTHBIAS
-            | D3DPRASTERCAPS_DEPTHBIAS | D3DPRASTERCAPS_MULTISAMPLE_TOGGLE)),
+            | D3DPRASTERCAPS_DEPTHBIAS | D3DPRASTERCAPS_MULTISAMPLE_TOGGLE))
+            || broken(!(caps.RasterCaps & ~0x0f736191)),
             "RasterCaps field has unexpected flags %#x.\n", caps.RasterCaps);
     /* D3DPBLENDCAPS_SRCCOLOR2 and D3DPBLENDCAPS_INVSRCCOLOR2 are only
      * advertised on the reference rasterizer and WARP. */
@@ -13438,8 +13407,111 @@ static void test_get_display_mode(void)
     DestroyWindow(window);
 }
 
+static void test_multi_adapter(void)
+{
+    unsigned int i, adapter_count, expected_adapter_count = 0;
+    DISPLAY_DEVICEA display_device;
+    MONITORINFO monitor_info;
+    HMONITOR monitor;
+    IDirect3D9 *d3d;
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    display_device.cb = sizeof(display_device);
+    for (i = 0; EnumDisplayDevicesA(NULL, i, &display_device, 0); ++i)
+    {
+        if (display_device.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
+            ++expected_adapter_count;
+    }
+
+    adapter_count = IDirect3D9_GetAdapterCount(d3d);
+    todo_wine_if(expected_adapter_count > 1)
+        ok(adapter_count == expected_adapter_count, "Got unexpected adapter count %u, expected %u.\n",
+                adapter_count, expected_adapter_count);
+
+    for (i = 0; i < adapter_count; ++i)
+    {
+        monitor = IDirect3D9_GetAdapterMonitor(d3d, i);
+        ok(!!monitor, "Failed to get monitor for adapter %u.\n", i);
+
+        monitor_info.cbSize = sizeof(monitor_info);
+        ok(GetMonitorInfoA(monitor, &monitor_info),
+                "Failed to get monitor info for adapter %u, error %#x.\n", i, GetLastError());
+
+        if (!i)
+            ok(monitor_info.dwFlags == MONITORINFOF_PRIMARY,
+                    "Got unexpected monitor flags %#x for adapter %u.\n", monitor_info.dwFlags, i);
+        else
+            ok(!monitor_info.dwFlags, "Got unexpected monitor flags %#x for adapter %u.\n", monitor_info.dwFlags, i);
+    }
+
+    IDirect3D9_Release(d3d);
+}
+
+typedef HRESULT (WINAPI *shader_validator_cb)(const char *file, int line,
+        DWORD_PTR arg3, DWORD_PTR message_id, const char *message, void *context);
+
+typedef struct IDirect3DShaderValidator9 IDirect3DShaderValidator9;
+
+struct IDirect3DShaderValidator9Vtbl
+{
+    HRESULT (WINAPI *QueryInterface)(IDirect3DShaderValidator9 *iface, REFIID iid, void **out);
+    ULONG (WINAPI *AddRef)(IDirect3DShaderValidator9 *iface);
+    ULONG (WINAPI *Release)(IDirect3DShaderValidator9 *iface);
+    HRESULT (WINAPI *Begin)(IDirect3DShaderValidator9 *iface,
+            shader_validator_cb callback, void *context, DWORD_PTR arg3);
+    HRESULT (WINAPI *Instruction)(IDirect3DShaderValidator9 *iface,
+            const char *file, int line, const DWORD *tokens, DWORD token_count);
+    HRESULT (WINAPI *End)(IDirect3DShaderValidator9 *iface);
+};
+
+struct IDirect3DShaderValidator9
+{
+    const struct IDirect3DShaderValidator9Vtbl *vtbl;
+};
+
+HRESULT WINAPI test_shader_validator_cb(const char *file, int line, DWORD_PTR arg3,
+        DWORD_PTR message_id, const char *message, void *context)
+{
+    ok(0, "Unexpected call.\n");
+    return S_OK;
+}
+
+static void test_shader_validator(void)
+{
+    IDirect3DShaderValidator9 *validator;
+    ULONG refcount;
+    HRESULT hr;
+
+    validator = Direct3DShaderValidatorCreate9();
+
+    hr = validator->vtbl->Begin(validator, test_shader_validator_cb, NULL, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[0], 1);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[1], 3);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[4], 4);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[8], 4);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[12], 4);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[16], 4);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->Instruction(validator, NULL, 0, &simple_vs[20], 1);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = validator->vtbl->End(validator);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount = validator->vtbl->Release(validator);
+    todo_wine ok(!refcount, "Validator has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
+    HMODULE d3d9_handle = GetModuleHandleA("d3d9.dll");
     WNDCLASSA wc = {0};
     IDirect3D9 *d3d9;
     DEVMODEW current_mode;
@@ -13466,6 +13538,8 @@ START_TEST(device)
     wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "d3d9_test_wc";
     RegisterClassA(&wc);
+
+    Direct3DShaderValidatorCreate9 = (void *)GetProcAddress(d3d9_handle, "Direct3DShaderValidatorCreate9");
 
     test_get_set_vertex_declaration();
     test_get_declaration();
@@ -13565,6 +13639,8 @@ START_TEST(device)
     test_multiply_transform();
     test_vertex_buffer_read_write();
     test_get_display_mode();
+    test_multi_adapter();
+    test_shader_validator();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }

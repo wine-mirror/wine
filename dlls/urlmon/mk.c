@@ -286,13 +286,13 @@ static HRESULT WINAPI MkProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUri,
     }
 
     progid = path+1; /* skip '@' symbol */
-    colon_ptr = strchrW(path, ':');
+    colon_ptr = wcschr(path, ':');
     if(!colon_ptr) {
         SysFreeString(path);
         return report_result(pOIProtSink, INET_E_RESOURCE_NOT_FOUND, ERROR_INVALID_PARAMETER);
     }
 
-    len = strlenW(path);
+    len = lstrlenW(path);
     display_name = heap_alloc((len+1)*sizeof(WCHAR));
     memcpy(display_name, path, (len+1)*sizeof(WCHAR));
 

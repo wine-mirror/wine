@@ -61,9 +61,9 @@
 
 static const GUID CLSID_WineTestPSFactoryBuffer = { 0x22222222, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const GUID CLSID_DfMarshal = { 0x0000030b, 0x0000, 0x0000, { 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 } };
+static const GUID CLSID_ft_unmarshaler_1809 = {0x00000359, 0x0000, 0x0000, {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
 
 /* functions that are not present on all versions of Windows */
-static HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID,REFIID,LPVOID);
 
 /* helper macros to make tests a bit leaner */
@@ -152,7 +152,7 @@ static void test_cocreateinstance_proxy(void)
     IMultiQI *pMQI;
     HRESULT hr;
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = CoCreateInstance(&CLSID_ShellDesktop, NULL, CLSCTX_INPROC, &IID_IUnknown, (void **)&pProxy);
     ok_ole_success(hr, CoCreateInstance);
@@ -201,7 +201,7 @@ static ULONG WINAPI ExternalConnection_Release(IExternalConnection *iface)
 
 static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface, DWORD extconn, DWORD reserved)
 {
-    trace("add connection\n");
+    if (winetest_debug > 1) trace("add connection\n");
     return ++external_connections;
 }
 
@@ -209,7 +209,7 @@ static DWORD WINAPI ExternalConnection_AddConnection(IExternalConnection *iface,
 static DWORD WINAPI ExternalConnection_ReleaseConnection(IExternalConnection *iface, DWORD extconn,
         DWORD reserved, BOOL fLastReleaseCloses)
 {
-    trace("release connection %d\n", fLastReleaseCloses);
+    if (winetest_debug > 1) trace("release connection %d\n", fLastReleaseCloses);
     last_release_closes = fLastReleaseCloses;
     return --external_connections;
 }
@@ -620,7 +620,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
     HRESULT hr;
     MSG msg;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     if(data->register_object) {
         hr = CoRegisterClassObject(data->register_clsid, data->register_object,
@@ -1119,13 +1119,7 @@ static void test_proxy_marshal_and_unmarshal_strong(void)
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     /* marshal the proxy */
     hr = CoMarshalInterface(pStream, &IID_IClassFactory, pProxy, MSHCTX_INPROC, NULL, MSHLFLAGS_TABLESTRONG);
-    ok(hr == S_OK /* WinNT */ || hr == E_INVALIDARG /* Win9x */,
-        "CoMarshalInterface should have return S_OK or E_INVALIDARG instead of 0x%08x\n", hr);
-    if (FAILED(hr))
-    {
-        IUnknown_Release(pProxy);
-        goto end;
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok_more_than_one_lock();
     ok_non_zero_external_conn();
@@ -1146,7 +1140,6 @@ static void test_proxy_marshal_and_unmarshal_strong(void)
     ok_more_than_one_lock();
     ok_non_zero_external_conn();
 
-end:
     IStream_Release(pStream);
 
     end_host_object(tid, thread);
@@ -1243,7 +1236,7 @@ static void test_marshal_proxy_apartment_shutdown(void)
 
     end_host_object(tid, thread);
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 }
 
 /* tests that proxies are released when the containing mta apartment is destroyed */
@@ -1256,7 +1249,7 @@ static void test_marshal_proxy_mta_apartment_shutdown(void)
     HANDLE thread;
 
     CoUninitialize();
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     cLocks = 0;
     external_connections = 0;
@@ -1288,7 +1281,7 @@ static void test_marshal_proxy_mta_apartment_shutdown(void)
 
     end_host_object(tid, thread);
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 }
 
 static void test_marshal_channel_buffer(void)
@@ -1392,7 +1385,7 @@ static ULONG WINAPI CustomMarshal_Release(IMarshal *iface)
 static HRESULT WINAPI CustomMarshal_GetUnmarshalClass(IMarshal *iface, REFIID riid,
         void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags, CLSID *clsid)
 {
-    CHECK_EXPECT(CustomMarshal_GetUnmarshalClass);
+    CHECK_EXPECT2(CustomMarshal_GetUnmarshalClass);
     *clsid = *unmarshal_class;
     return S_OK;
 }
@@ -1660,7 +1653,7 @@ static DWORD CALLBACK no_couninitialize_server_proc(LPVOID p)
     struct ncu_params *ncu_params = p;
     HRESULT hr;
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = CoMarshalInterface(ncu_params->stream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok_ole_success(hr, CoMarshalInterface);
@@ -1734,7 +1727,7 @@ static DWORD CALLBACK no_couninitialize_client_proc(LPVOID p)
     HRESULT hr;
     IUnknown *pProxy = NULL;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoUnmarshalInterface(ncu_params->stream, &IID_IClassFactory, (void **)&pProxy);
     ok_ole_success(hr, CoUnmarshalInterface);
@@ -1829,11 +1822,6 @@ static void test_crash_couninitialize(void)
 {
     HANDLE thread;
     DWORD tid;
-
-    if(!GetProcAddress(GetModuleHandleA("kernel32.dll"), "CreateActCtxW")) {
-        win_skip("Skipping crash tests on win2k.\n");
-        return;
-    }
 
     crash_thread_success = FALSE;
     thread = CreateThread(NULL, 0, crash_couninitialize_proc, NULL, 0, &tid);
@@ -2016,7 +2004,7 @@ static DWORD CALLBACK duo_marshal_thread_proc(void *p)
     HANDLE hQuitEvent = data->hQuitEvent;
     MSG msg;
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoMarshalInterface(data->pStream1, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, data->marshal_flags1);
     ok_ole_success(hr, "CoMarshalInterface");
@@ -2484,24 +2472,19 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     IUnknown * proxy = NULL;
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
-    todo_wine
-    ok(hr == CO_E_NOTINITIALIZED,
-       "COM should have failed with CO_E_NOTINITIALIZED on using proxy without apartment, but instead returned 0x%08x\n",
-       hr);
+    todo_wine ok(hr == CO_E_NOTINITIALIZED, "Got hr %#x.\n", hr);
 
     hr = IClassFactory_QueryInterface(cf, &IID_IMultiQI, (LPVOID *)&proxy);
-    /* Win9x returns S_OK, whilst NT returns RPC_E_WRONG_THREAD */
-    trace("call to proxy's QueryInterface for local interface without apartment returned 0x%08x\n", hr);
+    todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(proxy);
 
     hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
-    /* Win9x returns E_NOINTERFACE, whilst NT returns RPC_E_WRONG_THREAD */
-    trace("call to proxy's QueryInterface without apartment returned 0x%08x\n", hr);
+    todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(proxy);
 
-    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
     if (proxy) IUnknown_Release(proxy);
@@ -2510,8 +2493,7 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
         hr);
 
     hr = IClassFactory_QueryInterface(cf, &IID_IStream, (LPVOID *)&proxy);
-    /* Win9x returns E_NOINTERFACE, whilst NT returns RPC_E_WRONG_THREAD */
-    trace("call to proxy's QueryInterface from wrong apartment returned 0x%08x\n", hr);
+    todo_wine ok(hr == RPC_E_WRONG_THREAD, "Got hr %#x.\n", hr);
 
     /* now be really bad and release the proxy from the wrong apartment */
     IClassFactory_Release(cf);
@@ -2555,10 +2537,6 @@ static void test_proxy_used_in_wrong_thread(void)
     ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
     CloseHandle(thread);
 
-    /* do release statement on Win9x that we should have done above */
-    if (!GetProcAddress(GetModuleHandleA("ole32"), "CoRegisterSurrogateEx"))
-        IUnknown_Release(pProxy);
-
     ok_no_locks();
 
     end_host_object(tid, host_thread);
@@ -2598,7 +2576,7 @@ static DWORD WINAPI MessageFilter_HandleInComingCall(
 {
     static int callcount = 0;
     DWORD ret;
-    trace("HandleInComingCall\n");
+    if (winetest_debug > 1) trace("HandleInComingCall()\n");
     switch (callcount)
     {
     case 0:
@@ -2621,7 +2599,7 @@ static DWORD WINAPI MessageFilter_RetryRejectedCall(
   DWORD dwTickCount,
   DWORD dwRejectType)
 {
-    trace("RetryRejectedCall\n");
+    if (winetest_debug > 1) trace("RetryRejectedCall()\n");
     return 0;
 }
 
@@ -2631,7 +2609,7 @@ static DWORD WINAPI MessageFilter_MessagePending(
   DWORD dwTickCount,
   DWORD dwPendingType)
 {
-    trace("MessagePending\n");
+    if (winetest_debug > 1) trace("MessagePending()\n");
     return PENDINGMSG_WAITNOPROCESS;
 }
 
@@ -3175,9 +3153,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
     if (mshctx == MSHCTX_INPROC)
     {
         DWORD expected_size = round_global_size(3*sizeof(DWORD) + sizeof(GUID));
-        ok(size == expected_size ||
-           broken(size == (2*sizeof(DWORD))) /* Win9x & NT4 */,
-           "size should have been %d instead of %d\n", expected_size, size);
+        ok(size == expected_size, "expected size %u, got %u\n", expected_size, size);
 
         ok(*(DWORD *)marshal_data == mshlflags, "expected 0x%x, but got 0x%x for mshctx\n", mshlflags, *(DWORD *)marshal_data);
         marshal_data += sizeof(DWORD);
@@ -3188,7 +3164,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
             ok(*(DWORD *)marshal_data == 0, "expected 0x0, but got 0x%x\n", *(DWORD *)marshal_data);
             marshal_data += sizeof(DWORD);
         }
-        if (size >= 3*sizeof(DWORD) + sizeof(GUID))
+        if (size >= 3*sizeof(DWORD) + sizeof(GUID) && winetest_debug > 1)
         {
             trace("got guid data: %s\n", wine_dbgstr_guid((GUID *)marshal_data));
         }
@@ -3329,8 +3305,8 @@ static void test_freethreadedmarshaler(void)
     hr = IMarshal_GetUnmarshalClass(pFTMarshal, &IID_IClassFactory,
             &Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL, &clsid);
     ok_ole_success(hr, IMarshal_GetUnmarshalClass);
-    ok(IsEqualIID(&clsid, &CLSID_StdMarshal), "clsid = %s\n",
-            wine_dbgstr_guid(&clsid));
+    ok(IsEqualGUID(&clsid, &CLSID_StdMarshal) || IsEqualGUID(&clsid, &CLSID_ft_unmarshaler_1809) /* Win10 1809 */,
+            "clsid = %s\n", wine_dbgstr_guid(&clsid));
 
     IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
     hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory, &Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
@@ -3665,7 +3641,7 @@ static HRESULT WINAPI local_server_GetClassID(IPersist *iface, CLSID *clsid)
 
     /* Initialize and uninitialize the apartment to show that we
      * remain in the autojoined mta */
-    hr = pCoInitializeEx( NULL, COINIT_MULTITHREADED );
+    hr = CoInitializeEx( NULL, COINIT_MULTITHREADED );
     ok( hr == S_FALSE, "got %08x\n", hr );
     CoUninitialize();
 
@@ -3778,7 +3754,6 @@ again:
 
             if (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
             {
-                trace("Message 0x%x\n", msg.message);
                 TranslateMessage(&msg);
                 DispatchMessageA(&msg);
             }
@@ -3845,9 +3820,7 @@ static void test_local_server(void)
      * class in the registry */
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER,
         NULL, &IID_IClassFactory, (LPVOID*)&cf);
-    ok(hr == REGDB_E_CLASSNOTREG || /* NT */
-       hr == S_OK /* Win9x */,
-        "CoGetClassObject should have returned REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
+    todo_wine ok(hr == REGDB_E_CLASSNOTREG, "Got hr %#x.\n", hr);
 
     /* Resume the object suspended above ... */
     hr = CoResumeClassObjects();
@@ -3882,10 +3855,7 @@ static void test_local_server(void)
     /* try to connect again after SCM has suspended registered class objects */
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER, NULL,
         &IID_IClassFactory, (LPVOID*)&cf);
-    ok(hr == CO_E_SERVER_STOPPING || /* NT */
-       hr == REGDB_E_CLASSNOTREG || /* win2k */
-       hr == S_OK /* Win9x */,
-        "CoGetClassObject should have returned CO_E_SERVER_STOPPING or REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
+    todo_wine ok(hr == CO_E_SERVER_STOPPING || hr == REGDB_E_CLASSNOTREG /* Win10 1709+ */, "Got hr %#x.\n", hr);
 
     hr = CoRevokeClassObject(cookie);
     ok_ole_success(hr, CoRevokeClassObject);
@@ -3942,13 +3912,7 @@ static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
 	IClassFactory *cf;
 
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
-	ok(hr == CO_E_NOTINITIALIZED ||
-		broken(hr == E_UNEXPECTED) /* win2k */ ||
-		broken(hr == S_OK) /* NT 4 */,
-		"IGlobalInterfaceTable_GetInterfaceFromGlobal should have failed with error CO_E_NOTINITIALIZED or E_UNEXPECTED instead of 0x%08x\n",
-		hr);
-	if (hr == S_OK)
-		IClassFactory_Release(cf);
+	ok(hr == CO_E_NOTINITIALIZED, "Got hr %#x.\n", hr);
 
 	CoInitialize(NULL);
 
@@ -3975,7 +3939,6 @@ static void test_globalinterfacetable(void)
         IClassFactory *cf;
         ULONG ref;
 
-        trace("test_globalinterfacetable\n");
 	cLocks = 0;
 
 	hr = pDllGetClassObject(&CLSID_StdGlobalInterfaceTable, &IID_IClassFactory, (void**)&cf);
@@ -4277,30 +4240,6 @@ static void test_implicit_mta(void)
     CoUninitialize();
 }
 
-static const char *debugstr_iid(REFIID riid)
-{
-    static char name[256];
-    HKEY hkeyInterface;
-    WCHAR bufferW[39];
-    char buffer[39];
-    LONG name_size = sizeof(name);
-    StringFromGUID2(riid, bufferW, ARRAY_SIZE(bufferW));
-    WideCharToMultiByte(CP_ACP, 0, bufferW, ARRAY_SIZE(bufferW), buffer, sizeof(buffer), NULL, NULL);
-    if (RegOpenKeyExA(HKEY_CLASSES_ROOT, "Interface", 0, KEY_QUERY_VALUE, &hkeyInterface) != ERROR_SUCCESS)
-    {
-        memcpy(name, buffer, sizeof(buffer));
-        goto done;
-    }
-    if (RegQueryValueA(hkeyInterface, buffer, name, &name_size) != ERROR_SUCCESS)
-    {
-        memcpy(name, buffer, sizeof(buffer));
-        goto done;
-    }
-    RegCloseKey(hkeyInterface);
-done:
-    return name;
-}
-
 static HRESULT WINAPI TestChannelHook_QueryInterface(IChannelHook *iface, REFIID riid, void **ppv)
 {
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IChannelHook))
@@ -4324,18 +4263,8 @@ static ULONG WINAPI TestChannelHook_Release(IChannelHook *iface)
     return 1;
 }
 
-static BOOL new_hook_struct;
-static int method, server_tid;
+static int method;
 static GUID causality;
-
-struct new_hook_info
-{
-    IID iid;
-    GUID causality;
-    DWORD server_pid;
-    DWORD server_tid;
-    WORD method;
-};
 
 static void WINAPI TestChannelHook_ClientGetSize(
     IChannelHook *iface,
@@ -4344,14 +4273,11 @@ static void WINAPI TestChannelHook_ClientGetSize(
     ULONG  *pDataSize )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ClientGetSize\n");
-    trace("\t%s\n", debugstr_iid(riid));
-    if (info->cbSize != sizeof(*info))
-        new_hook_struct = TRUE;
 
-    if (!new_hook_struct)
+    if (winetest_debug > 1) trace("IChannelHook::ClientGetSize(iid %s)\n", debugstr_guid(riid));
+
+    if (info->cbSize == sizeof(*info))
     {
-        ok(info->cbSize == sizeof(*info), "cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
         ok(info->dwServerPid == GetCurrentProcessId(), "dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
         ok(info->iMethod == method, "iMethod was %d should be %d\n", info->iMethod, method);
         ok(!info->pObject, "pObject should be NULL\n");
@@ -4359,19 +4285,6 @@ static void WINAPI TestChannelHook_ClientGetSize(
             causality = info->uCausality;
         else
             ok(IsEqualGUID(&info->uCausality, &causality), "causality wasn't correct\n");
-    }
-    else
-    {
-        struct new_hook_info *new_info = (struct new_hook_info *)riid;
-        ok(new_info->server_pid == GetCurrentProcessId(), "server pid was 0x%x instead of 0x%x\n", new_info->server_pid,
-           GetCurrentProcessId());
-        ok(new_info->server_tid == server_tid, "server tid was 0x%x instead of 0x%x\n", new_info->server_tid,
-           server_tid);
-        ok(new_info->method == method, "method was %d instead of %d\n", new_info->method, method);
-        if (method == 3)
-            causality = new_info->causality;
-        else
-            ok(IsEqualGUID(&new_info->causality, &causality), "causality wasn't correct\n");
     }
 
     ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
@@ -4387,25 +4300,15 @@ static void WINAPI TestChannelHook_ClientFillBuffer(
     void   *pDataBuffer )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ClientFillBuffer\n");
 
-    if (!new_hook_struct)
+    if (winetest_debug > 1) trace("IChannelHook::ClientFillBuffer()\n");
+
+    if (info->cbSize == sizeof(*info))
     {
-        ok(info->cbSize == sizeof(*info), "cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
         ok(info->dwServerPid == GetCurrentProcessId(), "dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
         ok(info->iMethod == method, "iMethod was %d should be %d\n", info->iMethod, method);
         ok(!info->pObject, "pObject should be NULL\n");
         ok(IsEqualGUID(&info->uCausality, &causality), "causality wasn't correct\n");
-    }
-    else
-    {
-        struct new_hook_info *new_info = (struct new_hook_info *)riid;
-        ok(new_info->server_pid == GetCurrentProcessId(), "server pid was 0x%x instead of 0x%x\n", new_info->server_pid,
-           GetCurrentProcessId());
-        ok(new_info->server_tid == server_tid, "server tid was 0x%x instead of 0x%x\n", new_info->server_tid,
-           server_tid);
-        ok(new_info->method == method, "method was %d instead of %d\n", new_info->method, method);
-        ok(IsEqualGUID(&new_info->causality, &causality), "causality wasn't correct\n");
     }
 
     ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
@@ -4424,27 +4327,17 @@ static void WINAPI TestChannelHook_ClientNotify(
     HRESULT hrFault )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ClientNotify hrFault = 0x%08x\n", hrFault);
 
-    if (!new_hook_struct)
+    if (winetest_debug > 1) trace("IChannelHook::ClientNotify(hr %#x)\n", hrFault);
+
+    if (info->cbSize == sizeof(*info))
     {
-        ok(info->cbSize == sizeof(*info), "cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
         ok(info->dwServerPid == GetCurrentProcessId(), "dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
         ok(info->iMethod == method, "iMethod was %d should be %d\n", info->iMethod, method);
         todo_wine {
             ok(info->pObject != NULL, "pObject shouldn't be NULL\n");
         }
         ok(IsEqualGUID(&info->uCausality, &causality), "causality wasn't correct\n");
-    }
-    else
-    {
-        struct new_hook_info *new_info = (struct new_hook_info *)riid;
-        ok(new_info->server_pid == GetCurrentProcessId(), "server pid was 0x%x instead of 0x%x\n", new_info->server_pid,
-           GetCurrentProcessId());
-        ok(new_info->server_tid == server_tid, "server tid was 0x%x instead of 0x%x\n", new_info->server_tid,
-           server_tid);
-        ok(new_info->method == method, "method was %d instead of %d\n", new_info->method, method);
-        ok(IsEqualGUID(&new_info->causality, &causality), "causality wasn't correct\n");
     }
 
     ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
@@ -4459,25 +4352,15 @@ static void WINAPI TestChannelHook_ServerNotify(
     DWORD   lDataRep )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ServerNotify\n");
 
-    if (!new_hook_struct)
+    if (winetest_debug > 1) trace("IChannelHook::ServerNotify()\n");
+
+    if (info->cbSize == sizeof(*info))
     {
-        ok(info->cbSize == sizeof(*info), "cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
         ok(info->dwServerPid == GetCurrentProcessId(), "dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
         ok(info->iMethod == method, "iMethod was %d should be %d\n", info->iMethod, method);
         ok(info->pObject != NULL, "pObject shouldn't be NULL\n");
         ok(IsEqualGUID(&info->uCausality, &causality), "causality wasn't correct\n");
-    }
-    else
-    {
-        struct new_hook_info *new_info = (struct new_hook_info *)riid;
-        ok(new_info->server_pid == GetCurrentProcessId(), "server pid was 0x%x instead of 0x%x\n", new_info->server_pid,
-           GetCurrentProcessId());
-        ok(new_info->server_tid == server_tid, "server tid was 0x%x instead of 0x%x\n", new_info->server_tid,
-           server_tid);
-        ok(new_info->method == method, "method was %d instead of %d\n", new_info->method, method);
-        ok(IsEqualGUID(&new_info->causality, &causality), "causality wasn't correct\n");
     }
 
     ok(cbDataSize == 1, "cbDataSize should have been 1 instead of %d\n", cbDataSize);
@@ -4493,31 +4376,18 @@ static void WINAPI TestChannelHook_ServerGetSize(
     ULONG  *pDataSize )
 {
     SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
-    trace("TestChannelHook_ServerGetSize\n");
-    trace("\t%s\n", debugstr_iid(riid));
-    if (!new_hook_struct)
+
+    if (winetest_debug > 1) trace("IChannelHook::ServerGetSize(iid %s, hr %#x)\n", debugstr_guid(riid), hrFault);
+
+    if (info->cbSize == sizeof(*info))
     {
-        ok(info->cbSize == sizeof(*info), "cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
         ok(info->dwServerPid == GetCurrentProcessId(), "dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
         ok(info->iMethod == method, "iMethod was %d should be %d\n", info->iMethod, method);
         ok(info->pObject != NULL, "pObject shouldn't be NULL\n");
         ok(IsEqualGUID(&info->uCausality, &causality), "causality wasn't correct\n");
     }
-    else
-    {
-        struct new_hook_info *new_info = (struct new_hook_info *)riid;
-        ok(new_info->server_pid == GetCurrentProcessId(), "server pid was 0x%x instead of 0x%x\n", new_info->server_pid,
-           GetCurrentProcessId());
-        ok(new_info->server_tid == server_tid, "server tid was 0x%x instead of 0x%x\n", new_info->server_tid,
-           server_tid);
-        ok(new_info->method == method, "method was %d instead of %d\n", new_info->method, method);
-        ok(IsEqualGUID(&new_info->causality, &causality), "causality wasn't correct\n");
-    }
 
     ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
-    if (hrFault != S_OK)
-        trace("\thrFault = 0x%08x\n", hrFault);
-
     *pDataSize = 0;
 }
 
@@ -4529,7 +4399,6 @@ static void WINAPI TestChannelHook_ServerFillBuffer(
     void   *pDataBuffer,
     HRESULT hrFault )
 {
-    trace("TestChannelHook_ServerFillBuffer\n");
     ok(0, "TestChannelHook_ServerFillBuffer shouldn't be called\n");
 }
 
@@ -4570,7 +4439,6 @@ static void test_channel_hook(void)
     hr = CreateStreamOnHGlobal(NULL, TRUE, &object_data.stream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
     tid = start_host_object2(&object_data, &thread);
-    server_tid = tid;
 
     ok_more_than_one_lock();
 
@@ -4604,18 +4472,12 @@ START_TEST(marshal)
     int argc;
     char **argv;
 
-    if (!GetProcAddress(hOle32, "CoRegisterSurrogateEx")) {
-        win_skip("skipping test on win9x\n");
-        return;
-    }
-
-    pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx");
     pDllGetClassObject = (void*)GetProcAddress(hOle32, "DllGetClassObject");
 
     argc = winetest_get_mainargs( &argv );
     if (argc > 2 && (!strcmp(argv[2], "-Embedding")))
     {
-        pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+        CoInitializeEx(NULL, COINIT_MULTITHREADED);
         test_register_local_server();
         CoUninitialize();
 
@@ -4627,7 +4489,7 @@ START_TEST(marshal)
     test_cocreateinstance_proxy();
     test_implicit_mta();
 
-    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     /* FIXME: test CoCreateInstanceEx */
 

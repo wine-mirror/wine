@@ -55,8 +55,6 @@ static DEVMODEW registry_mode;
 static HRESULT (WINAPI *ValidateVertexShader)(const DWORD *, const DWORD *, const D3DCAPS8 *, BOOL, char **);
 static HRESULT (WINAPI *ValidatePixelShader)(const DWORD *, const D3DCAPS8 *, BOOL, char **);
 
-static BOOL (WINAPI *pGetCursorInfo)(PCURSORINFO);
-
 static const DWORD simple_vs[] = {0xFFFE0101,       /* vs_1_1               */
     0x00000009, 0xC0010000, 0x90E40000, 0xA0E40000, /* dp4 oPos.x, v0, c0   */
     0x00000009, 0xC0020000, 0x90E40000, 0xA0E40001, /* dp4 oPos.y, v0, c1   */
@@ -930,7 +928,6 @@ cleanup:
 
 static void test_cursor(void)
 {
-    HMODULE user32_handle = GetModuleHandleA("user32.dll");
     IDirect3DSurface8 *cursor = NULL;
     IDirect3DDevice8 *device;
     CURSORINFO info;
@@ -941,13 +938,6 @@ static void test_cursor(void)
     HRESULT hr;
     BOOL ret;
 
-    pGetCursorInfo = (void *)GetProcAddress(user32_handle, "GetCursorInfo");
-    if (!pGetCursorInfo)
-    {
-        win_skip("GetCursorInfo is not available\n");
-        return;
-    }
-
     window = create_window();
     ok(!!window, "Failed to create a window.\n");
 
@@ -957,7 +947,7 @@ static void test_cursor(void)
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
+    ok(GetCursorInfo(&info), "GetCursorInfo failed\n");
     cur = info.hCursor;
 
     d3d = Direct3DCreate8(D3D_SDK_VERSION);
@@ -990,7 +980,7 @@ static void test_cursor(void)
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
+    ok(GetCursorInfo(&info), "GetCursorInfo failed\n");
     ok(info.flags & (CURSOR_SHOWING|CURSOR_SUPPRESSED), "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
@@ -1004,7 +994,7 @@ static void test_cursor(void)
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
+    ok(GetCursorInfo(&info), "GetCursorInfo failed\n");
     ok(info.flags & (CURSOR_SHOWING|CURSOR_SUPPRESSED), "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor != cur, "The cursor handle is %p\n", info.hCursor);
 
@@ -2987,7 +2977,7 @@ static void test_wndproc(void)
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
     ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
-            && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
+            && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected screen size %ux%u.\n",
             devmode.dmPelsWidth, devmode.dmPelsHeight);
 
     /* I have to minimize and restore the focus window, otherwise native d3d8 fails
@@ -3011,7 +3001,7 @@ static void test_wndproc(void)
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
     ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
-            && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
+            && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected screen size %ux%u.\n",
             devmode.dmPelsWidth, devmode.dmPelsHeight);
 
     hr = reset_device(device, &device_desc);
@@ -3035,8 +3025,8 @@ static void test_wndproc(void)
 
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
-    ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpect width %u.\n", devmode.dmPelsWidth);
-    ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect height %u.\n", devmode.dmPelsHeight);
+    ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpected width %u.\n", devmode.dmPelsWidth);
+    ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected height %u.\n", devmode.dmPelsHeight);
 
     /* SW_SHOWMINNOACTIVE is needed to make FVWM happy. SW_SHOWNOACTIVATE is needed to make windows
      * send SIZE_RESTORED after ShowWindow(SW_SHOWMINNOACTIVE). */
@@ -3151,6 +3141,7 @@ static void test_wndproc(void)
     ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
             expect_messages->message, expect_messages->window);
     expect_messages = NULL;
+    flush_events();
     SetForegroundWindow(GetDesktopWindow());
     flush_events();
 
@@ -8261,6 +8252,16 @@ static void test_check_device_format(void)
             D3DUSAGE_SOFTWAREPROCESSING, D3DRTYPE_INDEXBUFFER, D3DFMT_INDEX16);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
+    hr = IDirect3D8_CheckDepthStencilMatch(d3d, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DFMT_A8R8G8B8, D3DFMT_D32);
+    ok(hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL /* Windows 10 */),
+            "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3D8_CheckDepthStencilMatch(d3d, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DFMT_R5G6B5, D3DFMT_D32);
+    ok(hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL /* Windows 10 */),
+            "Got unexpected hr %#x.\n", hr);
+
     IDirect3D8_Release(d3d);
 }
 
@@ -9654,20 +9655,12 @@ static void test_draw_primitive(void)
 
     hr = IDirect3DDevice8_GetStreamSource(device, 0, &current_vb, &stride);
     ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
-todo_wine {
     ok(!current_vb, "Unexpected vb %p.\n", current_vb);
     ok(!stride, "Unexpected stride %u.\n", stride);
-}
-    if (current_vb)
-        IDirect3DVertexBuffer8_Release(current_vb);
     hr = IDirect3DDevice8_GetIndices(device, &current_ib, &base_vertex_index);
     ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
-todo_wine {
     ok(!current_ib, "Unexpected index buffer %p.\n", current_ib);
     ok(!base_vertex_index, "Unexpected base vertex index %u.\n", base_vertex_index);
-}
-    if (current_ib)
-        IDirect3DIndexBuffer8_Release(current_ib);
 
     hr = IDirect3DDevice8_CaptureStateBlock(device, stateblock);
     ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
@@ -9765,6 +9758,48 @@ static void test_get_display_mode(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
+}
+
+static void test_multi_adapter(void)
+{
+    unsigned int i, adapter_count, expected_adapter_count = 0;
+    DISPLAY_DEVICEA display_device;
+    MONITORINFO monitor_info;
+    HMONITOR monitor;
+    IDirect3D8 *d3d;
+
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    display_device.cb = sizeof(display_device);
+    for (i = 0; EnumDisplayDevicesA(NULL, i, &display_device, 0); ++i)
+    {
+        if (display_device.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
+            ++expected_adapter_count;
+    }
+
+    adapter_count = IDirect3D8_GetAdapterCount(d3d);
+    todo_wine_if(expected_adapter_count > 1)
+        ok(adapter_count == expected_adapter_count, "Got unexpected adapter count %u, expected %u.\n",
+                adapter_count, expected_adapter_count);
+
+    for (i = 0; i < adapter_count; ++i)
+    {
+        monitor = IDirect3D8_GetAdapterMonitor(d3d, i);
+        ok(!!monitor, "Failed to get monitor for adapter %u.\n", i);
+
+        monitor_info.cbSize = sizeof(monitor_info);
+        ok(GetMonitorInfoA(monitor, &monitor_info),
+                "Failed to get monitor info for adapter %u, error %#x.\n", i, GetLastError());
+
+        if (!i)
+            ok(monitor_info.dwFlags == MONITORINFOF_PRIMARY,
+                    "Got unexpected monitor flags %#x for adapter %u.\n", monitor_info.dwFlags, i);
+        else
+            ok(!monitor_info.dwFlags, "Got unexpected monitor flags %#x for adapter %u.\n", monitor_info.dwFlags, i);
+    }
+
+    IDirect3D8_Release(d3d);
 }
 
 START_TEST(device)
@@ -9883,6 +9918,7 @@ START_TEST(device)
     test_multiply_transform();
     test_draw_primitive();
     test_get_display_mode();
+    test_multi_adapter();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }

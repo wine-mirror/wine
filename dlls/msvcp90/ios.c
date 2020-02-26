@@ -3374,7 +3374,7 @@ int __thiscall basic_filebuf_char_overflow(basic_filebuf_char *this, int c)
         return !c;
 
     if(!this->cvt)
-        return fwrite(&ch, sizeof(char), 1, this->file) ? c : EOF;
+        return fputc(ch, this->file);
 
     from_next = &ch;
     do {
@@ -4009,7 +4009,7 @@ unsigned short __thiscall basic_filebuf_wchar_overflow(basic_filebuf_wchar *this
         return !c;
 
     if(!this->cvt)
-        return fwrite(&ch, sizeof(wchar_t), 1, this->file) ? c : WEOF;
+        return fputwc(ch, this->file);
 
     from_next = &ch;
     do {
@@ -14680,40 +14680,42 @@ ULONGLONG __cdecl tr2_sys__File_size(char const* path)
     return ((ULONGLONG)(fad.nFileSizeHigh) << 32) + fad.nFileSizeLow;
 }
 
-/* ?_Equivalent@sys@tr2@std@@YAHPBD0@Z  */
-/* ?_Equivalent@sys@tr2@std@@YAHPEBD0@Z */
-int __cdecl tr2_sys__Equivalent(char const* path1, char const* path2)
+static int equivalent_handles(HANDLE h1, HANDLE h2)
 {
-    HANDLE h1, h2;
     int ret;
     BY_HANDLE_FILE_INFORMATION info1, info2;
-    TRACE("(%s %s)\n", debugstr_a(path1), debugstr_a(path2));
 
-    h1 = CreateFileA(path1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-            NULL, OPEN_EXISTING, 0, 0);
-    h2 = CreateFileA(path2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-            NULL, OPEN_EXISTING, 0, 0);
-    if(h1 == INVALID_HANDLE_VALUE) {
-        if(h2 == INVALID_HANDLE_VALUE) {
-            return -1;
-        }else {
-            CloseHandle(h2);
-            return 0;
-        }
-    }else if(h2 == INVALID_HANDLE_VALUE) {
-        CloseHandle(h1);
+    if(h1 == INVALID_HANDLE_VALUE)
+        return h2 == INVALID_HANDLE_VALUE ? -1 : 0;
+    else if(h2 == INVALID_HANDLE_VALUE)
         return 0;
-    }
 
     ret = GetFileInformationByHandle(h1, &info1) && GetFileInformationByHandle(h2, &info2);
-    CloseHandle(h1);
-    CloseHandle(h2);
     if(!ret)
         return -1;
     return (info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
             && info1.nFileIndexHigh == info2.nFileIndexHigh
             && info1.nFileIndexLow == info2.nFileIndexLow
             );
+}
+
+/* ?_Equivalent@sys@tr2@std@@YAHPBD0@Z  */
+/* ?_Equivalent@sys@tr2@std@@YAHPEBD0@Z */
+int __cdecl tr2_sys__Equivalent(char const* path1, char const* path2)
+{
+    HANDLE h1, h2;
+    int ret;
+
+    TRACE("(%s %s)\n", debugstr_a(path1), debugstr_a(path2));
+
+    h1 = CreateFileA(path1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, 0, 0);
+    h2 = CreateFileA(path2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, 0, 0);
+    ret = equivalent_handles(h1, h2);
+    CloseHandle(h1);
+    CloseHandle(h2);
+    return ret;
 }
 
 /* ?_Current_get@sys@tr2@std@@YAPADAAY0BAE@D@Z */
@@ -15617,34 +15619,35 @@ int __cdecl tr2_sys__Equivalent_wchar(WCHAR const* path1, WCHAR const* path2)
 {
     HANDLE h1, h2;
     int ret;
-    BY_HANDLE_FILE_INFORMATION info1, info2;
+
     TRACE("(%s %s)\n", debugstr_w(path1), debugstr_w(path2));
 
     h1 = CreateFileW(path1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, OPEN_EXISTING, 0, 0);
     h2 = CreateFileW(path2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, OPEN_EXISTING, 0, 0);
-    if(h1 == INVALID_HANDLE_VALUE) {
-        if(h2 == INVALID_HANDLE_VALUE) {
-            return -1;
-        }else {
-            CloseHandle(h2);
-            return 0;
-        }
-    }else if(h2 == INVALID_HANDLE_VALUE) {
-        CloseHandle(h1);
-        return 0;
-    }
-
-    ret = GetFileInformationByHandle(h1, &info1) && GetFileInformationByHandle(h2, &info2);
+    ret = equivalent_handles(h1, h2);
     CloseHandle(h1);
     CloseHandle(h2);
-    if(!ret)
-        return -1;
-    return (info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
-            && info1.nFileIndexHigh == info2.nFileIndexHigh
-            && info1.nFileIndexLow == info2.nFileIndexLow
-            );
+    return ret;
+}
+
+/* _Equivalent, msvcp140 version */
+int __cdecl _Equivalent(WCHAR const* path1, WCHAR const* path2)
+{
+    HANDLE h1, h2;
+    int ret;
+
+    TRACE("(%s %s)\n", debugstr_w(path1), debugstr_w(path2));
+
+    h1 = CreateFileW(path1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    h2 = CreateFileW(path2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ret = equivalent_handles(h1, h2);
+    CloseHandle(h1);
+    CloseHandle(h2);
+    return ret;
 }
 
 /* ?_Current_get@sys@tr2@std@@YAPA_WAAY0BAE@_W@Z */

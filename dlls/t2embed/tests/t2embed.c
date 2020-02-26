@@ -43,19 +43,22 @@ static int CALLBACK enum_font_proc(ENUMLOGFONTEXA *enumlf, NEWTEXTMETRICEXA *ntm
         UINT fsType = otm.otmfsType & 0xf;
 
         ret = TTGetEmbeddingType(hdc, &status);
-        ok(ret == E_NONE, "got %d\n", ret);
+        ok(ret == E_NONE || ret == E_NOTATRUETYPEFONT, "Unexpected return value %#x.\n", ret);
 
-        if (fsType == LICENSE_INSTALLABLE)
-            expected = EMBED_INSTALLABLE;
-        else if (fsType & LICENSE_EDITABLE)
-            expected = EMBED_EDITABLE;
-        else if (fsType & LICENSE_PREVIEWPRINT)
-            expected = EMBED_PREVIEWPRINT;
-        else if (fsType & LICENSE_NOEMBEDDING)
-            expected = EMBED_NOEMBEDDING;
+        if (ret == E_NONE)
+        {
+            if (fsType == LICENSE_INSTALLABLE)
+                expected = EMBED_INSTALLABLE;
+            else if (fsType & LICENSE_EDITABLE)
+                expected = EMBED_EDITABLE;
+            else if (fsType & LICENSE_PREVIEWPRINT)
+                expected = EMBED_PREVIEWPRINT;
+            else if (fsType & LICENSE_NOEMBEDDING)
+                expected = EMBED_NOEMBEDDING;
 
-        ok(expected == status, "%s: status %d, expected %d, fsType %#x\n", enumlf->elfLogFont.lfFaceName, status,
-            expected, otm.otmfsType);
+            ok(expected == status, "%s: status %d, expected %d, fsType %#x\n", enumlf->elfLogFont.lfFaceName, status,
+                    expected, otm.otmfsType);
+        }
     }
     else
     {
@@ -170,14 +173,6 @@ static void test_TTIsEmbeddingEnabled(void)
 
     hdc = CreateCompatibleDC(0);
 
-    ret = TTIsEmbeddingEnabled(hdc, NULL);
-    ok(ret == E_ERRORACCESSINGFACENAME, "got %#x\n", ret);
-
-    status = 123;
-    ret = TTIsEmbeddingEnabled(hdc, &status);
-    ok(ret == E_ERRORACCESSINGFACENAME, "got %#x\n", ret);
-    ok(status == 123, "got %u\n", status);
-
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
     logfont.lfWeight = FW_NORMAL;
@@ -186,6 +181,9 @@ static void test_TTIsEmbeddingEnabled(void)
     ok(hfont != NULL, "got %p\n", hfont);
 
     old_font = SelectObject(hdc, hfont);
+
+    ret = TTIsEmbeddingEnabled(hdc, NULL);
+    ok(ret == E_PBENABLEDINVALID, "Unexpected return value %#x.\n", ret);
 
     status = 123;
     ret = TTIsEmbeddingEnabled(hdc, &status);

@@ -64,7 +64,6 @@ typedef struct tagUSER_DRIVER {
     /* keyboard functions */
     HKL    (CDECL *pActivateKeyboardLayout)(HKL, UINT);
     void   (CDECL *pBeep)(void);
-    SHORT  (CDECL *pGetAsyncKeyState)(INT);
     INT    (CDECL *pGetKeyNameText)(LONG, LPWSTR, INT);
     HKL    (CDECL *pGetKeyboardLayout)(DWORD);
     UINT   (CDECL *pGetKeyboardLayoutList)(INT, HKL *);
@@ -121,6 +120,9 @@ typedef struct tagUSER_DRIVER {
 extern const USER_DRIVER *USER_Driver DECLSPEC_HIDDEN;
 
 extern void USER_unload_driver(void) DECLSPEC_HIDDEN;
+
+extern BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info ) DECLSPEC_HIDDEN;
 
 struct received_message_info;
 

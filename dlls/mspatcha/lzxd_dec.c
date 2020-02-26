@@ -54,8 +54,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mspatcha);
 #define E8_TRANSFORM_LIMIT_BITS 30
 #define E8_TRANSFORM_DEAD_ZONE 10
 
-#define my_min(a, b) ((a) < (b) ? (a) : (b))
-
 struct LZXD_dec {
     /* use byte pointers instead of uint16 for simplicity on uncompressed
      * chunks, and the stream is not 16-bit aligned anyway */
@@ -120,7 +118,7 @@ static int init_chunk(struct LZXD_dec *dec, size_t index, size_t buf_limit)
     dec->bit_pos = 0;
     dec->tail_bits = 0;
 
-    dec->uncomp_chunk_end = my_min(buf_limit, index + MAX_CHUNK_UNCOMPRESSED_SIZE);
+    dec->uncomp_chunk_end = min(buf_limit, index + MAX_CHUNK_UNCOMPRESSED_SIZE);
 
     return 0;
 }
@@ -407,8 +405,8 @@ static int copy_uncompressed(struct LZXD_dec *dec, BYTE *base, size_t *index_ptr
     while (dec->src < dec->stream_end)
     {
         /* now treat the input as an unaligned byte stream */
-        size_t to_copy = my_min(end - index, dec->uncomp_chunk_end - index);
-        to_copy = my_min(to_copy, (size_t)(dec->stream_end - dec->src));
+        size_t to_copy = min(end - index, dec->uncomp_chunk_end - index);
+        to_copy = min(to_copy, (size_t)(dec->stream_end - dec->src));
 
         memcpy(base + index, dec->src, to_copy);
         index += to_copy;
@@ -522,7 +520,7 @@ static int decode_lzxd_block(struct LZXD_dec *dec, BYTE *base, size_t predef_siz
     ret_if_failed(make_huffman_codes(codes, dec->len_lengths, LEN_CODE_COUNT));
     make_decode_table(dec->len_table, codes, dec->len_lengths, MAX_CODE_LEN, LEN_CODE_COUNT);
 
-    block_limit = my_min(buf_limit, index + block_size);
+    block_limit = min(buf_limit, index + block_size);
 
     while (index < block_limit)
     {
@@ -606,7 +604,7 @@ static int decode_lzxd_block(struct LZXD_dec *dec, BYTE *base, size_t predef_siz
                 --length;
             }
 
-            end = my_min(index + length, block_limit);
+            end = min(index + length, block_limit);
             while (index < end)
             {
                 base[index] = base[index - dist];
@@ -624,12 +622,12 @@ static int decode_lzxd_block(struct LZXD_dec *dec, BYTE *base, size_t predef_siz
 
 static void reverse_e8_transform(BYTE *decode_buf, ptrdiff_t len, ptrdiff_t e8_file_size)
 {
-    ptrdiff_t limit = my_min((ptrdiff_t)1 << E8_TRANSFORM_LIMIT_BITS, len);
+    ptrdiff_t limit = min((ptrdiff_t)1 << E8_TRANSFORM_LIMIT_BITS, len);
     ptrdiff_t i;
 
     for (i = 0; i < limit; )
     {
-        ptrdiff_t end = my_min(i + MAX_CHUNK_UNCOMPRESSED_SIZE - E8_TRANSFORM_DEAD_ZONE,
+        ptrdiff_t end = min(i + MAX_CHUNK_UNCOMPRESSED_SIZE - E8_TRANSFORM_DEAD_ZONE,
             limit - E8_TRANSFORM_DEAD_ZONE);
         ptrdiff_t next = i + MAX_CHUNK_UNCOMPRESSED_SIZE;
 

@@ -161,7 +161,6 @@ SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf,
         int max_len, int *out_len) DECLSPEC_HIDDEN;
 
 /* Functions from util.c */
-ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc) DECLSPEC_HIDDEN;
 SECURITY_STATUS SECUR32_CreateNTLM1SessionKey(PBYTE password, int len, PBYTE session_key) DECLSPEC_HIDDEN;
 SECURITY_STATUS SECUR32_CreateNTLM2SubKeys(PNegoHelper helper) DECLSPEC_HIDDEN;
 arc4_info *SECUR32_arc4Alloc(void) DECLSPEC_HIDDEN;
@@ -190,9 +189,6 @@ void SECUR32_arc4Cleanup(arc4_info *a4i) DECLSPEC_HIDDEN;
 #define NTLMSSP_NEGOTIATE_KEY_EXCHANGE              0x40000000
 #define NTLMSSP_NEGOTIATE_56                        0x80000000
 
-
-SecPkgInfoW *ntlm_package_infoW DECLSPEC_HIDDEN;
-SecPkgInfoA *ntlm_package_infoA DECLSPEC_HIDDEN;
 
 /* schannel internal interface */
 typedef struct schan_imp_session_opaque *schan_imp_session;

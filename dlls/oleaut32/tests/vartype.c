@@ -5934,7 +5934,7 @@ static void test_bstr_cache(void)
     str = SysAllocStringLen(NULL, 24);
     ok(str == strs[0], "str != strs[0]\n");
 
-    /* Smaller buffers may also use larget cached buffers */
+    /* Smaller buffers may also use larger cached buffers */
     str2 = SysAllocStringLen(NULL, 16);
     ok(str2 == strs[1], "str2 != strs[1]\n");
 

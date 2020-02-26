@@ -1502,21 +1502,27 @@ static void test_message_from_hmodule(void)
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, ARRAY_SIZE(out), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    ok(error == ERROR_MR_MID_NOT_FOUND || error == ERROR_MUI_FILE_NOT_FOUND, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND ||
+       error == ERROR_MUI_FILE_NOT_FOUND ||
+       error == ERROR_RESOURCE_TYPE_NOT_FOUND, "Unexpected last error %u.\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), out, ARRAY_SIZE(out), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    ok(error == ERROR_MR_MID_NOT_FOUND || error == ERROR_MUI_FILE_NOT_LOADED, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND ||
+       error == ERROR_MUI_FILE_NOT_LOADED ||
+       error == ERROR_RESOURCE_TYPE_NOT_FOUND, "Unexpected last error %u.\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT), out, ARRAY_SIZE(out), NULL);
     error = GetLastError();
     ok(ret == 0, "FormatMessageA returned %u instead of 0\n", ret);
-    ok(error == ERROR_MR_MID_NOT_FOUND || error == ERROR_MUI_FILE_NOT_LOADED, "last error %u\n", error);
+    ok(error == ERROR_MR_MID_NOT_FOUND ||
+       error == ERROR_MUI_FILE_NOT_LOADED ||
+       error == ERROR_RESOURCE_TYPE_NOT_FOUND, "Unexpected last error %u.\n", error);
 
     SetLastError(0xdeadbeef);
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 3044,

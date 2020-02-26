@@ -118,6 +118,7 @@
 #include "winuser.h"
 #include "dshow.h"
 
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/strmbase.h"
@@ -128,15 +129,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(qtsplitter);
 extern CLSID CLSID_QTSplitter;
 
 typedef struct QTOutPin {
-    BaseOutputPin pin;
+    struct strmbase_source pin;
     IQualityControl IQualityControl_iface;
+    SourceSeeking seeking;
 
     AM_MEDIA_TYPE * pmt;
     OutputQueue * queue;
 } QTOutPin;
 
 typedef struct QTInPin {
-    BasePin pin;
+    struct strmbase_sink pin;
     GUID subType;
 
     IAsyncReader *pReader;
@@ -144,7 +146,7 @@ typedef struct QTInPin {
 } QTInPin;
 
 typedef struct QTSplitter {
-    BaseFilter filter;
+    struct strmbase_filter filter;
 
     QTInPin pInputPin;
     QTOutPin *pVideo_Pin;
@@ -159,10 +161,8 @@ typedef struct QTSplitter {
     HANDLE runEvent;
 
     DWORD outputSize;
-    FILTER_STATE state;
     CRITICAL_SECTION csReceive;
 
-    SourceSeeking sourceSeeking;
     TimeValue movie_time;
     TimeValue movie_start;
     TimeScale movie_scale;
@@ -171,24 +171,22 @@ typedef struct QTSplitter {
     HANDLE splitterThread;
 } QTSplitter;
 
-static const IPinVtbl QT_OutputPin_Vtbl;
-static const IPinVtbl QT_InputPin_Vtbl;
 static const IBaseFilterVtbl QT_Vtbl;
 static const IMediaSeekingVtbl QT_Seeking_Vtbl;
 
-static HRESULT QT_AddPin(QTSplitter *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt, BOOL video);
+static HRESULT QT_AddPin(QTSplitter *filter, const WCHAR *name, const AM_MEDIA_TYPE *mt, BOOL video);
 static HRESULT QT_RemoveOutputPins(QTSplitter *This);
 
 static HRESULT WINAPI QTSplitter_ChangeStart(IMediaSeeking *iface);
 static HRESULT WINAPI QTSplitter_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI QTSplitter_ChangeRate(IMediaSeeking *iface);
 
-static inline QTSplitter *impl_from_IMediaSeeking( IMediaSeeking *iface )
+static inline QTOutPin *impl_from_IMediaSeeking(IMediaSeeking *iface)
 {
-    return CONTAINING_RECORD(iface, QTSplitter, sourceSeeking.IMediaSeeking_iface);
+    return CONTAINING_RECORD(iface, QTOutPin, seeking.IMediaSeeking_iface);
 }
 
-static inline QTSplitter *impl_from_BaseFilter( BaseFilter *iface )
+static inline QTSplitter *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, QTSplitter, filter);
 }
@@ -198,52 +196,49 @@ static inline QTSplitter *impl_from_IBaseFilter( IBaseFilter *iface )
     return CONTAINING_RECORD(iface, QTSplitter, filter.IBaseFilter_iface);
 }
 
+static inline QTInPin *impl_from_IPin(IPin *iface)
+{
+    return CONTAINING_RECORD(iface, QTInPin, pin.pin.IPin_iface);
+}
+
 /*
  * Base Filter
  */
 
-static IPin *qt_splitter_get_pin(BaseFilter *base, unsigned int index)
+static struct strmbase_pin *qt_splitter_get_pin(struct strmbase_filter *base, unsigned int index)
 {
-    QTSplitter *filter = impl_from_BaseFilter(base);
+    QTSplitter *filter = impl_from_strmbase_filter(base);
 
     if (index == 0)
-        return &filter->pInputPin.pin.IPin_iface;
+        return &filter->pInputPin.pin.pin;
     else if (index == 1)
     {
         if (filter->pVideo_Pin)
-            return &filter->pVideo_Pin->pin.pin.IPin_iface;
+            return &filter->pVideo_Pin->pin.pin;
         else if (filter->pAudio_Pin)
-            return &filter->pAudio_Pin->pin.pin.IPin_iface;
+            return &filter->pAudio_Pin->pin.pin;
     }
     else if (index == 2 && filter->pVideo_Pin && filter->pAudio_Pin)
-        return &filter->pAudio_Pin->pin.pin.IPin_iface;
+        return &filter->pAudio_Pin->pin.pin;
 
     return NULL;
 }
 
-static void qt_splitter_destroy(BaseFilter *iface)
+static void qt_splitter_destroy(struct strmbase_filter *iface)
 {
-    QTSplitter *filter = impl_from_BaseFilter(iface);
-    IPin *peer = NULL;
-    ULONG pinref;
+    QTSplitter *filter = impl_from_strmbase_filter(iface);
 
     EnterCriticalSection(&filter->csReceive);
     /* Don't need to clean up output pins, disconnecting input pin will do that */
-    IPin_ConnectedTo(&filter->pInputPin.pin.IPin_iface, &peer);
-    if (peer)
-    {
-        IPin_Disconnect(peer);
-        IPin_Release(peer);
-    }
-    pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
-    if (pinref)
-    {
-        ERR("pinref should be null, is %u, destroying anyway\n", pinref);
-        assert((LONG)pinref > 0);
+    if (filter->pInputPin.pin.pin.peer)
+        IPin_Disconnect(filter->pInputPin.pin.pin.peer);
 
-        while (pinref)
-            pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
-    }
+    if (filter->pInputPin.pAlloc)
+        IMemAllocator_Release(filter->pInputPin.pAlloc);
+    filter->pInputPin.pAlloc = NULL;
+    if (filter->pInputPin.pReader)
+        IAsyncReader_Release(filter->pInputPin.pReader);
+    filter->pInputPin.pReader = NULL;
 
     if (filter->pQTMovie)
     {
@@ -274,19 +269,141 @@ static void qt_splitter_destroy(BaseFilter *iface)
 
     filter->csReceive.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&filter->csReceive);
+    strmbase_sink_cleanup(&filter->pInputPin.pin);
     strmbase_filter_cleanup(&filter->filter);
 
     CoTaskMemFree(filter);
 }
 
-static const BaseFilterFuncTable BaseFuncTable = {
+static HRESULT qt_splitter_start_stream(struct strmbase_filter *iface, REFERENCE_TIME time)
+{
+    QTSplitter *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr = VFW_E_NOT_CONNECTED, pin_hr;
+
+    EnterCriticalSection(&filter->csReceive);
+
+    if (filter->pVideo_Pin)
+    {
+        if (SUCCEEDED(pin_hr = BaseOutputPinImpl_Active(&filter->pVideo_Pin->pin)))
+            hr = pin_hr;
+    }
+    if (filter->pAudio_Pin)
+    {
+        if (SUCCEEDED(pin_hr = BaseOutputPinImpl_Active(&filter->pAudio_Pin->pin)))
+            hr = pin_hr;
+    }
+    SetEvent(filter->runEvent);
+
+    LeaveCriticalSection(&filter->csReceive);
+
+    return hr;
+}
+
+static HRESULT qt_splitter_cleanup_stream(struct strmbase_filter *iface)
+{
+    QTSplitter *filter = impl_from_strmbase_filter(iface);
+
+    EnterCriticalSection(&filter->csReceive);
+    IAsyncReader_BeginFlush(filter->pInputPin.pReader);
+    IAsyncReader_EndFlush(filter->pInputPin.pReader);
+    LeaveCriticalSection(&filter->csReceive);
+
+    return S_OK;
+}
+
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = qt_splitter_get_pin,
     .filter_destroy = qt_splitter_destroy,
+    .filter_start_stream = qt_splitter_start_stream,
+    .filter_cleanup_stream = qt_splitter_cleanup_stream,
+};
+
+static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    QTInPin *pin = impl_from_IPin(&iface->IPin_iface);
+
+    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
+    {
+        pin->subType = mt->subtype;
+        return S_OK;
+    }
+    return S_FALSE;
+}
+
+static HRESULT QT_Process_Movie(QTSplitter *filter);
+
+static HRESULT qt_splitter_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    QTSplitter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    ALLOCATOR_PROPERTIES props;
+    IMemAllocator *allocator;
+    HRESULT hr = S_OK;
+
+    filter->pInputPin.pReader = NULL;
+
+    if (FAILED(hr = IPin_QueryInterface(peer, &IID_IAsyncReader, (void **)&filter->pInputPin.pReader)))
+        return hr;
+
+    if (FAILED(hr = QT_Process_Movie(filter)))
+    {
+        IAsyncReader_Release(filter->pInputPin.pReader);
+        filter->pInputPin.pReader = NULL;
+        return hr;
+    }
+
+    filter->pInputPin.pAlloc = NULL;
+    props.cBuffers = 8;
+    props.cbAlign = 1;
+    props.cbBuffer = filter->outputSize + props.cbAlign;
+    props.cbPrefix = 0;
+
+    /* Some applications depend on IAsyncReader::RequestAllocator() passing a
+     * non-NULL preferred allocator. */
+    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC,
+            &IID_IMemAllocator, (void **)&allocator);
+    if (FAILED(hr))
+        goto err;
+
+    hr = IAsyncReader_RequestAllocator(filter->pInputPin.pReader, allocator, &props, &filter->pInputPin.pAlloc);
+    IMemAllocator_Release(allocator);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get allocator, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = IMemAllocator_Commit(filter->pInputPin.pAlloc)))
+    {
+        WARN("Failed to commit allocator, hr %#x.\n", hr);
+        goto err;
+    }
+
+    return S_OK;
+err:
+    QT_RemoveOutputPins(filter);
+    IAsyncReader_Release(filter->pInputPin.pReader);
+    return hr;
+}
+
+static void qt_splitter_sink_disconnect(struct strmbase_sink *iface)
+{
+    QTSplitter *filter = impl_from_strmbase_filter(iface->pin.filter);
+
+    IMemAllocator_Decommit(filter->pInputPin.pAlloc);
+    QT_RemoveOutputPins(filter);
+}
+
+static const struct strmbase_sink_ops sink_ops =
+{
+    .base.pin_query_accept = sink_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .sink_connect = qt_splitter_sink_connect,
+    .sink_disconnect = qt_splitter_sink_disconnect,
 };
 
 IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
 {
-    PIN_INFO *piInput;
     QTSplitter *This;
     static const WCHAR wcsInputPinName[] = {'I','n','p','u','t',' ','P','i','n',0};
 
@@ -302,84 +419,19 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     }
     ZeroMemory(This,sizeof(*This));
 
-    strmbase_filter_init(&This->filter, &QT_Vtbl, outer, &CLSID_QTSplitter,
-            (DWORD_PTR)(__FILE__ ": QTSplitter.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&This->filter, outer, &CLSID_QTSplitter, &filter_ops);
+    strmbase_sink_init(&This->pInputPin.pin, &This->filter, wcsInputPinName, &sink_ops, NULL);
 
     InitializeCriticalSection(&This->csReceive);
     This->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": QTSplitter.csReceive");
 
     This->pVideo_Pin = NULL;
     This->pAudio_Pin = NULL;
-    This->state = State_Stopped;
     This->aSession = NULL;
     This->runEvent = CreateEventW(NULL, 0, 0, NULL);
 
-    piInput = &This->pInputPin.pin.pinInfo;
-    piInput->dir = PINDIR_INPUT;
-    piInput->pFilter = &This->filter.IBaseFilter_iface;
-    lstrcpynW(piInput->achName, wcsInputPinName, ARRAY_SIZE(piInput->achName));
-    This->pInputPin.pin.IPin_iface.lpVtbl = &QT_InputPin_Vtbl;
-    This->pInputPin.pin.refCount = 1;
-    This->pInputPin.pin.pConnectedTo = NULL;
-    This->pInputPin.pin.pCritSec = &This->filter.csFilter;
-
-    SourceSeeking_Init(&This->sourceSeeking, &QT_Seeking_Vtbl, QTSplitter_ChangeStop, QTSplitter_ChangeStart, QTSplitter_ChangeRate,  &This->filter.csFilter);
-
     *phr = S_OK;
     return &This->filter.IUnknown_inner;
-}
-
-static HRESULT WINAPI QT_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID *ppv)
-{
-    QTSplitter *This = impl_from_IBaseFilter(iface);
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &This->sourceSeeking;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow) &&
-        !IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
-static HRESULT WINAPI QT_Stop(IBaseFilter *iface)
-{
-    QTSplitter *This = impl_from_IBaseFilter(iface);
-
-    TRACE("()\n");
-
-    EnterCriticalSection(&This->csReceive);
-    IAsyncReader_BeginFlush(This->pInputPin.pReader);
-    IAsyncReader_EndFlush(This->pInputPin.pReader);
-    LeaveCriticalSection(&This->csReceive);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI QT_Pause(IBaseFilter *iface)
-{
-    HRESULT hr = S_OK;
-    TRACE("()\n");
-
-    return hr;
 }
 
 static OSErr QT_Create_Extract_Session(QTSplitter *filter)
@@ -516,7 +568,6 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
         return 0;
     }
 
-    This->state = State_Running;
     /* Prime the pump:  Needed for MPEG streams */
     GetMovieNextInterestingTime(This->pQTMovie, nextTimeEdgeOK | nextTimeStep, 0, NULL, This->movie_time, 1, &next_time, NULL);
 
@@ -566,7 +617,7 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
         tStop = time * 10000000;
 
         /* Deliver Audio */
-        if (This->pAudio_Pin && This->pAudio_Pin->pin.pin.pConnectedTo && This->aSession)
+        if (This->pAudio_Pin && This->pAudio_Pin->pin.pin.peer && This->aSession)
         {
             int data_size=0;
             BYTE* ptr;
@@ -715,7 +766,6 @@ audio_error:
         LeaveCriticalSection(&This->csReceive);
     } while (hr == S_OK);
 
-    This->state = State_Stopped;
     if (This->pAudio_Pin)
         OutputQueue_EOS(This->pAudio_Pin->queue);
     if (This->pVideo_Pin)
@@ -724,79 +774,19 @@ audio_error:
     return hr;
 }
 
-static HRESULT WINAPI QT_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
+static void free_source_pin(QTOutPin *pin)
 {
-    HRESULT hr = S_OK;
-    QTSplitter *This = impl_from_IBaseFilter(iface);
-    HRESULT hr_any = VFW_E_NOT_CONNECTED;
-
-    TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
-
-    EnterCriticalSection(&This->csReceive);
-    This->filter.rtStreamStart = tStart;
-
-    if (This->pVideo_Pin)
-        hr = BaseOutputPinImpl_Active(&This->pVideo_Pin->pin);
-    if (SUCCEEDED(hr))
-        hr_any = hr;
-    if (This->pAudio_Pin)
-        hr = BaseOutputPinImpl_Active(&This->pAudio_Pin->pin);
-    if (SUCCEEDED(hr))
-        hr_any = hr;
-
-    hr = hr_any;
-
-    SetEvent(This->runEvent);
-    LeaveCriticalSection(&This->csReceive);
-
-    return hr;
-}
-
-static HRESULT WINAPI QT_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
-{
-    QTSplitter *This = impl_from_IBaseFilter(iface);
-    TRACE("(%d, %p)\n", dwMilliSecsTimeout, pState);
-
-    *pState = This->state;
-
-    return S_OK;
-}
-
-static const IBaseFilterVtbl QT_Vtbl = {
-    QT_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    QT_Stop,
-    QT_Pause,
-    QT_Run,
-    QT_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
-static HRESULT break_source_connection(BaseOutputPin *pin)
-{
-    HRESULT hr;
-
-    EnterCriticalSection(pin->pin.pCritSec);
-    if (!pin->pin.pConnectedTo || !pin->pMemInputPin)
-        hr = VFW_E_NOT_CONNECTED;
-    else
+    if (pin->pin.pin.peer)
     {
-        hr = IMemAllocator_Decommit(pin->pAllocator);
-        if (SUCCEEDED(hr))
-            hr = IPin_Disconnect(pin->pin.pConnectedTo);
-        IPin_Disconnect(&pin->pin.IPin_iface);
+        if (SUCCEEDED(IMemAllocator_Decommit(pin->pin.pAllocator)))
+            IPin_Disconnect(pin->pin.pin.peer);
+        IPin_Disconnect(&pin->pin.pin.IPin_iface);
     }
-    LeaveCriticalSection(pin->pin.pCritSec);
 
-    return hr;
+    DeleteMediaType(pin->pmt);
+    strmbase_seeking_cleanup(&pin->seeking);
+    strmbase_source_cleanup(&pin->pin);
+    heap_free(pin);
 }
 
 /*
@@ -804,23 +794,16 @@ static HRESULT break_source_connection(BaseOutputPin *pin)
  */
 static HRESULT QT_RemoveOutputPins(QTSplitter *This)
 {
-    HRESULT hr;
-    TRACE("(%p)\n", This);
-
     if (This->pVideo_Pin)
     {
         OutputQueue_Destroy(This->pVideo_Pin->queue);
-        hr = break_source_connection(&This->pVideo_Pin->pin);
-        TRACE("Disconnect: %08x\n", hr);
-        IPin_Release(&This->pVideo_Pin->pin.pin.IPin_iface);
+        free_source_pin(This->pVideo_Pin);
         This->pVideo_Pin = NULL;
     }
     if (This->pAudio_Pin)
     {
         OutputQueue_Destroy(This->pAudio_Pin->queue);
-        hr = break_source_connection(&This->pAudio_Pin->pin);
-        TRACE("Disconnect: %08x\n", hr);
-        IPin_Release(&This->pAudio_Pin->pin.pin.IPin_iface);
+        free_source_pin(This->pAudio_Pin);
         This->pAudio_Pin = NULL;
     }
 
@@ -828,38 +811,10 @@ static HRESULT QT_RemoveOutputPins(QTSplitter *This)
     return S_OK;
 }
 
-static inline QTInPin *impl_from_IPin( IPin *iface )
-{
-    return CONTAINING_RECORD(iface, QTInPin, pin.IPin_iface);
-}
-
-static ULONG WINAPI QTInPin_Release(IPin *iface)
-{
-    QTInPin *This = impl_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.refCount);
-
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
-    if (!refCount)
-    {
-        FreeMediaType(&This->pin.mtCurrent);
-        if (This->pAlloc)
-            IMemAllocator_Release(This->pAlloc);
-        This->pAlloc = NULL;
-        if (This->pReader)
-            IAsyncReader_Release(This->pReader);
-        This->pReader = NULL;
-        This->pin.IPin_iface.lpVtbl = NULL;
-        return 0;
-    }
-    else
-        return refCount;
-}
-
 static HRESULT QT_Process_Video_Track(QTSplitter* filter, Track trk)
 {
     AM_MEDIA_TYPE amt;
     VIDEOINFOHEADER * pvi;
-    PIN_INFO piOutput;
     HRESULT hr = S_OK;
     OSErr err;
     static const WCHAR szwVideoOut[] = {'V','i','d','e','o',0};
@@ -947,11 +902,7 @@ static HRESULT QT_Process_Video_Track(QTSplitter* filter, Track trk)
     duration = GetMediaDisplayDuration(videoMedia);
     pvi->AvgTimePerFrame = (100000.0 * sampleCount * timeScale) / duration;
 
-    piOutput.dir = PINDIR_OUTPUT;
-    piOutput.pFilter = &filter->filter.IBaseFilter_iface;
-    lstrcpyW(piOutput.achName,szwVideoOut);
-
-    hr = QT_AddPin(filter, &piOutput, &amt, TRUE);
+    hr = QT_AddPin(filter, szwVideoOut, &amt, TRUE);
     if (FAILED(hr))
         ERR("Failed to add Video Track\n");
      else
@@ -964,7 +915,6 @@ static HRESULT QT_Process_Audio_Track(QTSplitter* filter, Track trk)
 {
     AM_MEDIA_TYPE amt;
     WAVEFORMATEX* pvi;
-    PIN_INFO piOutput;
     HRESULT hr = S_OK;
     static const WCHAR szwAudioOut[] = {'A','u','d','i','o',0};
     Media audioMedia;
@@ -1001,11 +951,7 @@ static HRESULT QT_Process_Audio_Track(QTSplitter* filter, Track trk)
 
     DisposeHandle((Handle)aDesc);
 
-    piOutput.dir = PINDIR_OUTPUT;
-    piOutput.pFilter = &filter->filter.IBaseFilter_iface;
-    lstrcpyW(piOutput.achName,szwAudioOut);
-
-    hr = QT_AddPin(filter, &piOutput, &amt, FALSE);
+    hr = QT_AddPin(filter, szwAudioOut, &amt, FALSE);
     if (FAILED(hr))
         ERR("Failed to add Audio Track\n");
     else
@@ -1022,7 +968,7 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     Track trk;
     short id = 0;
     DWORD tid;
-    LONGLONG time;
+    LONGLONG time, duration;
 
     TRACE("Trying movie connect\n");
 
@@ -1063,10 +1009,12 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
 
     time = GetMovieDuration(filter->pQTMovie);
     filter->movie_scale = GetMovieTimeScale(filter->pQTMovie);
-    filter->sourceSeeking.llDuration = ((double)time / filter->movie_scale) * 10000000;
-    filter->sourceSeeking.llStop = filter->sourceSeeking.llDuration;
-
-    TRACE("Movie duration is %s\n",wine_dbgstr_longlong(filter->sourceSeeking.llDuration));
+    duration = ((double)time / filter->movie_scale) * 10000000;
+    TRACE("Movie duration is %s.\n", wine_dbgstr_longlong(duration));
+    if (filter->pVideo_Pin)
+        filter->pVideo_Pin->seeking.llStop = filter->pVideo_Pin->seeking.llDuration = duration;
+    if (filter->pAudio_Pin)
+        filter->pAudio_Pin->seeking.llStop = filter->pAudio_Pin->seeking.llDuration = duration;
 
     filter->loaderThread = CreateThread(NULL, 0, QTSplitter_loading_thread, filter, 0, &tid);
     if (filter->loaderThread)
@@ -1080,324 +1028,60 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     return hr;
 }
 
-static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
-{
-    HRESULT hr = S_OK;
-    ALLOCATOR_PROPERTIES props;
-    QTInPin *This = impl_from_IPin(iface);
-    IMemAllocator *pAlloc;
-
-    TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
-
-    EnterCriticalSection(This->pin.pCritSec);
-    This->pReader = NULL;
-
-    if (This->pin.pConnectedTo)
-        hr = VFW_E_ALREADY_CONNECTED;
-    else if (IPin_QueryAccept(iface, pmt) != S_OK)
-        hr = VFW_E_TYPE_NOT_ACCEPTED;
-    else
-    {
-        PIN_DIRECTION pindirReceive;
-        IPin_QueryDirection(pReceivePin, &pindirReceive);
-        if (pindirReceive != PINDIR_OUTPUT)
-            hr = VFW_E_INVALID_DIRECTION;
-    }
-
-    if (FAILED(hr))
-    {
-        LeaveCriticalSection(This->pin.pCritSec);
-        return hr;
-    }
-
-    hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&This->pReader);
-    if (FAILED(hr))
-    {
-        LeaveCriticalSection(This->pin.pCritSec);
-        TRACE("Input source is not an AsyncReader\n");
-        return hr;
-    }
-
-    LeaveCriticalSection(This->pin.pCritSec);
-    EnterCriticalSection(&impl_from_IBaseFilter(This->pin.pinInfo.pFilter)->filter.csFilter);
-    hr = QT_Process_Movie(impl_from_IBaseFilter(This->pin.pinInfo.pFilter));
-    if (FAILED(hr))
-    {
-        IAsyncReader_Release(This->pReader);
-        This->pReader = NULL;
-        LeaveCriticalSection(&impl_from_IBaseFilter(This->pin.pinInfo.pFilter)->filter.csFilter);
-        TRACE("Unable to process movie\n");
-        return hr;
-    }
-
-    This->pAlloc = NULL;
-    props.cBuffers = 8;
-    props.cbAlign = 1;
-    props.cbBuffer = impl_from_IBaseFilter(This->pin.pinInfo.pFilter)->outputSize + props.cbAlign;
-    props.cbPrefix = 0;
-    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC,
-                          &IID_IMemAllocator, (LPVOID *)&pAlloc);
-    if (SUCCEEDED(hr))
-    {
-        /* A certain IAsyncReader::RequestAllocator expects to be passed
-           non-NULL preferred allocator */
-        hr = IAsyncReader_RequestAllocator(This->pReader, pAlloc, &props, &This->pAlloc);
-        if (FAILED(hr))
-            WARN("Can't get an allocator, got %08x\n", hr);
-        IMemAllocator_Release(pAlloc);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        CopyMediaType(&This->pin.mtCurrent, pmt);
-        This->pin.pConnectedTo = pReceivePin;
-        IPin_AddRef(pReceivePin);
-        hr = IMemAllocator_Commit(This->pAlloc);
-    }
-    else
-    {
-        QT_RemoveOutputPins(impl_from_IBaseFilter(This->pin.pinInfo.pFilter));
-        if (This->pReader)
-            IAsyncReader_Release(This->pReader);
-        This->pReader = NULL;
-        if (This->pAlloc)
-            IMemAllocator_Release(This->pAlloc);
-        This->pAlloc = NULL;
-    }
-    TRACE("Size: %i\n", props.cbBuffer);
-    LeaveCriticalSection(&impl_from_IBaseFilter(This->pin.pinInfo.pFilter)->filter.csFilter);
-
-    return hr;
-}
-
-static HRESULT WINAPI QTInPin_Disconnect(IPin *iface)
-{
-    HRESULT hr;
-    QTInPin *This = impl_from_IPin(iface);
-    FILTER_STATE state;
-    TRACE("()\n");
-
-    hr = IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
-    EnterCriticalSection(This->pin.pCritSec);
-    if (This->pin.pConnectedTo)
-    {
-        QTSplitter *Parser = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
-
-        if (SUCCEEDED(hr) && state == State_Stopped)
-        {
-            IMemAllocator_Decommit(This->pAlloc);
-            IPin_Disconnect(This->pin.pConnectedTo);
-            IPin_Release(This->pin.pConnectedTo);
-            This->pin.pConnectedTo = NULL;
-            hr = QT_RemoveOutputPins(Parser);
-        }
-        else
-            hr = VFW_E_NOT_STOPPED;
-    }
-    else
-        hr = S_FALSE;
-    LeaveCriticalSection(This->pin.pCritSec);
-    return hr;
-}
-
-static HRESULT WINAPI QTInPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt)
-{
-    QTInPin *This = impl_from_IPin(iface);
-
-    TRACE("(%p)->(%p)\n", This, pmt);
-
-    if (IsEqualIID(&pmt->majortype, &MEDIATYPE_Stream))
-    {
-        This->subType = pmt->subtype;
-        return S_OK;
-    }
-    return S_FALSE;
-}
-
-static HRESULT WINAPI QTInPin_EndOfStream(IPin *iface)
-{
-    QTInPin *pin = impl_from_IPin(iface);
-    QTSplitter *This = impl_from_IBaseFilter(pin->pin.pinInfo.pFilter);
-
-    FIXME("Propagate message on %p\n", This);
-    return S_OK;
-}
-
-static HRESULT WINAPI QTInPin_BeginFlush(IPin *iface)
-{
-    QTInPin *pin = impl_from_IPin(iface);
-    QTSplitter *This = impl_from_IBaseFilter(pin->pin.pinInfo.pFilter);
-
-    FIXME("Propagate message on %p\n", This);
-    return S_OK;
-}
-
-static HRESULT WINAPI QTInPin_EndFlush(IPin *iface)
-{
-    QTInPin *pin = impl_from_IPin(iface);
-    QTSplitter *This = impl_from_IBaseFilter(pin->pin.pinInfo.pFilter);
-
-    FIXME("Propagate message on %p\n", This);
-    return S_OK;
-}
-
-static HRESULT WINAPI QTInPin_NewSegment(IPin *iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
-{
-    QTInPin *pin = impl_from_IPin(iface);
-    QTSplitter *This = impl_from_IBaseFilter(pin->pin.pinInfo.pFilter);
-
-    BasePinImpl_NewSegment(iface, tStart, tStop, dRate);
-    FIXME("Propagate message on %p\n", This);
-    return S_OK;
-}
-
-static HRESULT WINAPI QTInPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
-{
-    QTInPin *This = impl_from_IPin(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IBaseFilter_QueryInterface(This->pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
-static HRESULT WINAPI QTInPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEnum)
-{
-    QTInPin *This = impl_from_IPin(iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-
-    return EnumMediaTypes_Construct(&This->pin, BasePinImpl_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
-}
-
-static const IPinVtbl QT_InputPin_Vtbl = {
-    QTInPin_QueryInterface,
-    BasePinImpl_AddRef,
-    QTInPin_Release,
-    BaseInputPinImpl_Connect,
-    QTInPin_ReceiveConnection,
-    QTInPin_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    QTInPin_QueryAccept,
-    QTInPin_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    QTInPin_EndOfStream,
-    QTInPin_BeginFlush,
-    QTInPin_EndFlush,
-    QTInPin_NewSegment
-};
-
-/*
- * Output Pin
- */
-static inline QTOutPin *impl_QTOutPin_from_IPin( IPin *iface )
-{
-    return CONTAINING_RECORD(iface, QTOutPin, pin.pin.IPin_iface);
-}
-
-static inline QTOutPin *impl_QTOutPin_from_BasePin( BasePin *iface )
+static inline QTOutPin *impl_source_from_strmbase_pin(struct strmbase_pin *iface)
 {
     return CONTAINING_RECORD(iface, QTOutPin, pin.pin);
 }
 
-static inline QTOutPin *impl_QTOutPin_from_BaseOutputPin( BaseOutputPin *iface )
+static inline QTOutPin *impl_QTOutPin_from_BaseOutputPin(struct strmbase_source *iface)
 {
     return CONTAINING_RECORD(iface, QTOutPin, pin);
 }
 
-static HRESULT WINAPI QTOutPin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
+static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    QTOutPin *This = impl_QTOutPin_from_IPin(iface);
+    QTOutPin *pin = impl_source_from_strmbase_pin(&iface->IPin_iface);
 
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+    if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &pin->seeking.IMediaSeeking_iface;
+    else if (IsEqualGUID(iid, &IID_IQualityControl))
+        *out = &pin->IQualityControl_iface;
+    else
+        return E_NOINTERFACE;
 
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IBaseFilter_QueryInterface(This->pin.pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
-    else if (IsEqualIID(riid, &IID_IQualityControl))
-        *ppv = &This->IQualityControl_iface;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
-static ULONG WINAPI QTOutPin_Release(IPin *iface)
-{
-    QTOutPin *This = impl_QTOutPin_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
-
-    if (!refCount)
-    {
-        DeleteMediaType(This->pmt);
-        FreeMediaType(&This->pin.pin.mtCurrent);
-        if (This->pin.pAllocator)
-            IMemAllocator_Release(This->pin.pAllocator);
-        CoTaskMemFree(This);
-        return 0;
-    }
-    return refCount;
-}
-
-static HRESULT WINAPI QTOutPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
+static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
 {
     FIXME("(%p) stub\n", base);
     return S_OK;
 }
 
-static HRESULT WINAPI QTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT source_get_media_type(struct strmbase_pin *iface, unsigned int iPosition, AM_MEDIA_TYPE *pmt)
 {
-    QTOutPin *This = impl_QTOutPin_from_BasePin(iface);
+    QTOutPin *This = impl_source_from_strmbase_pin(iface);
 
-    if (iPosition < 0)
-        return E_INVALIDARG;
     if (iPosition > 0)
         return VFW_S_NO_MORE_ITEMS;
     CopyMediaType(pmt, This->pmt);
     return S_OK;
 }
 
-static HRESULT WINAPI QTOutPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI QTOutPin_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     /* Unused */
     return S_OK;
 }
 
-static HRESULT WINAPI QTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputPin *pPin, IMemAllocator **pAlloc)
+static HRESULT WINAPI QTOutPin_DecideAllocator(struct strmbase_source *iface,
+        IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     HRESULT hr;
     QTOutPin *This = impl_QTOutPin_from_BaseOutputPin(iface);
-    QTSplitter *QTfilter = impl_from_IBaseFilter(This->pin.pin.pinInfo.pFilter);
+    QTSplitter *QTfilter = impl_from_strmbase_filter(This->pin.pin.filter);
 
     *pAlloc = NULL;
     if (QTfilter->pInputPin.pAlloc)
@@ -1414,27 +1098,6 @@ static HRESULT WINAPI QTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputPi
 
     return hr;
 }
-
-static const IPinVtbl QT_OutputPin_Vtbl = {
-    QTOutPin_QueryInterface,
-    BasePinImpl_AddRef,
-    QTOutPin_Release,
-    BaseOutputPinImpl_Connect,
-    BaseOutputPinImpl_ReceiveConnection,
-    BaseOutputPinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseOutputPinImpl_EndOfStream,
-    BaseOutputPinImpl_BeginFlush,
-    BaseOutputPinImpl_EndFlush,
-    BasePinImpl_NewSegment
-};
 
 static inline QTOutPin *impl_from_IQualityControl( IQualityControl *iface )
 {
@@ -1482,62 +1145,52 @@ static const IQualityControlVtbl QTOutPin_QualityControl_Vtbl = {
     QT_QualityControl_SetSink
 };
 
-static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
-    {
-        QTOutPin_CheckMediaType,
-        QTOutPin_GetMediaType
-    },
-    BaseOutputPinImpl_AttemptConnection,
-    QTOutPin_DecideBufferSize,
-    QTOutPin_DecideAllocator,
+static const struct strmbase_source_ops source_ops =
+{
+    .base.pin_query_accept = source_query_accept,
+    .base.pin_get_media_type = source_get_media_type,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideBufferSize = QTOutPin_DecideBufferSize,
+    .pfnDecideAllocator = QTOutPin_DecideAllocator,
 };
 
 static const OutputQueueFuncTable output_OutputQueueFuncTable = {
     OutputQueueImpl_ThreadProc
 };
 
-static HRESULT QT_AddPin(QTSplitter *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt, BOOL video)
+static HRESULT QT_AddPin(QTSplitter *filter, const WCHAR *name,
+        const AM_MEDIA_TYPE *mt, BOOL video)
 {
-    HRESULT hr;
-    IPin **target;
+    QTOutPin *pin;
+
+    if (!(pin = heap_alloc_zero(sizeof(*pin))))
+        return E_OUTOFMEMORY;
 
     if (video)
-        target = (IPin**)&This->pVideo_Pin;
+        filter->pVideo_Pin = pin;
     else
-        target = (IPin**)&This->pAudio_Pin;
+        filter->pAudio_Pin = pin;
 
-    if (*target != NULL)
-    {
-        FIXME("We already have a %s pin\n",(video)?"video":"audio");
-        return E_FAIL;
-    }
+    strmbase_source_init(&pin->pin, &filter->filter, name, &source_ops);
+    pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
+    CopyMediaType(pin->pmt, mt);
+    pin->IQualityControl_iface.lpVtbl = &QTOutPin_QualityControl_Vtbl;
+    strmbase_seeking_init(&pin->seeking, &QT_Seeking_Vtbl,
+            QTSplitter_ChangeStop, QTSplitter_ChangeStart, QTSplitter_ChangeRate);
+    BaseFilterImpl_IncrementPinVersion(&filter->filter);
 
-    hr = BaseOutputPin_Construct(&QT_OutputPin_Vtbl, sizeof(QTOutPin), piOutput, &output_BaseOutputFuncTable, &This->filter.csFilter, (IPin**)target);
-    if (SUCCEEDED(hr))
-    {
-        QTOutPin *pin = (QTOutPin*)*target;
-        pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-        CopyMediaType(pin->pmt, amt);
-        pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
-        pin->IQualityControl_iface.lpVtbl = &QTOutPin_QualityControl_Vtbl;
-
-        BaseFilterImpl_IncrementPinVersion(&This->filter);
-
-        hr = OutputQueue_Construct(&pin->pin, TRUE, TRUE, 5, FALSE, THREAD_PRIORITY_NORMAL, &output_OutputQueueFuncTable, &pin->queue);
-    }
-    else
-        ERR("Failed with error %x\n", hr);
-    return hr;
+    return OutputQueue_Construct(&pin->pin, TRUE, TRUE, 5, FALSE,
+            THREAD_PRIORITY_NORMAL, &output_OutputQueueFuncTable, &pin->queue);
 }
 
 static HRESULT WINAPI QTSplitter_ChangeStart(IMediaSeeking *iface)
 {
-    QTSplitter *This = impl_from_IMediaSeeking(iface);
+    QTOutPin *pin = impl_from_IMediaSeeking(iface);
+    QTSplitter *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
     TRACE("(%p)\n", iface);
-    EnterCriticalSection(&This->csReceive);
-    This->movie_time = (This->sourceSeeking.llCurrent * This->movie_scale)/10000000;
-    This->movie_start = This->movie_time;
-    LeaveCriticalSection(&This->csReceive);
+    EnterCriticalSection(&filter->csReceive);
+    filter->movie_start = filter->movie_time = (pin->seeking.llCurrent * filter->movie_scale)/10000000;
+    LeaveCriticalSection(&filter->csReceive);
     return S_OK;
 }
 
@@ -1553,25 +1206,22 @@ static HRESULT WINAPI QTSplitter_ChangeRate(IMediaSeeking *iface)
     return S_OK;
 }
 
-static HRESULT WINAPI QT_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI QT_Seeking_QueryInterface(IMediaSeeking *iface, REFIID iid, void **out)
 {
-    QTSplitter *This = impl_from_IMediaSeeking(iface);
-
-    return IBaseFilter_QueryInterface(&This->filter.IBaseFilter_iface, riid, ppv);
+    QTOutPin *pin = impl_from_IMediaSeeking(iface);
+    return IPin_QueryInterface(&pin->pin.pin.IPin_iface, iid, out);
 }
 
 static ULONG WINAPI QT_Seeking_AddRef(IMediaSeeking * iface)
 {
-    QTSplitter *This = impl_from_IMediaSeeking(iface);
-
-    return IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
+    QTOutPin *pin = impl_from_IMediaSeeking(iface);
+    return IPin_AddRef(&pin->pin.pin.IPin_iface);
 }
 
 static ULONG WINAPI QT_Seeking_Release(IMediaSeeking * iface)
 {
-    QTSplitter *This = impl_from_IMediaSeeking(iface);
-
-    return IBaseFilter_Release(&This->filter.IBaseFilter_iface);
+    QTOutPin *pin = impl_from_IMediaSeeking(iface);
+    return IPin_Release(&pin->pin.pin.IPin_iface);
 }
 
 static const IMediaSeekingVtbl QT_Seeking_Vtbl =

@@ -26,7 +26,6 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 #include "opc_private.h"
 
@@ -732,7 +731,7 @@ static WCHAR *opc_strdupW(const WCHAR *str)
     {
         size_t size;
 
-        size = (strlenW(str) + 1) * sizeof(WCHAR);
+        size = (lstrlenW(str) + 1) * sizeof(WCHAR);
         ret = CoTaskMemAlloc(size);
         if (ret)
             memcpy(ret, str, size);
@@ -1169,7 +1168,7 @@ static struct opc_relationship *opc_relationshipset_get_rel(struct opc_relations
 
     for (i = 0; i < relationship_set->count; i++)
     {
-        if (!strcmpW(id, relationship_set->relationships[i]->id))
+        if (!wcscmp(id, relationship_set->relationships[i]->id))
             return relationship_set->relationships[i];
     }
 
@@ -1207,7 +1206,7 @@ static HRESULT opc_relationship_create(struct opc_relationship_set *set, const W
 
             /* FIXME: test that generated id is unique */
             RtlGenRandom(&generated, sizeof(generated));
-            sprintfW(relationship->id, fmtW, generated);
+            swprintf(relationship->id, 10, fmtW, generated);
 
             if (opc_relationshipset_get_rel(set, relationship->id))
             {
@@ -1635,11 +1634,11 @@ static HRESULT opc_package_add_content_type(struct content_types *types, IOpcPar
         if (cur->element == CONTENT_TYPE_OVERRIDE)
             continue;
 
-        if (!strcmpiW(cur->u.def.ext, ext))
+        if (!wcsicmp(cur->u.def.ext, ext))
         {
             added = TRUE;
 
-            if (!strcmpW(cur->u.def.type, content_type))
+            if (!wcscmp(cur->u.def.type, content_type))
                 break;
 
             hr = opc_package_add_override_content_type(types, part);

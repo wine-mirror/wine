@@ -25,9 +25,6 @@
 
 #define NONAMELESSUNION
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -42,7 +39,6 @@
 #include <commdlg.h>
 #include <cpl.h>
 
-#include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "appwiz.h"
@@ -249,12 +245,12 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
                     &displen);
 
                 /* separate the index from the icon name, if supplied */
-                iconPtr = strchrW(info->icon, ',');
+                iconPtr = wcschr(info->icon, ',');
 
                 if (iconPtr)
                 {
                     *iconPtr++ = 0;
-                    info->iconIdx = atoiW(iconPtr);
+                    info->iconIdx = wcstol(iconPtr, NULL, 10);
                 }
             }
 
@@ -459,7 +455,7 @@ static void InstallProgram(HWND hWnd)
     LoadStringW(hInst, IDS_FILTER_PROGRAMS, filter_programs, ARRAY_SIZE(filter_programs));
     LoadStringW(hInst, IDS_FILTER_ALL, filter_all, ARRAY_SIZE(filter_all));
 
-    snprintfW( FilterBufferW, MAX_PATH, filters, filter_installs, 0, 0,
+    swprintf( FilterBufferW, MAX_PATH, filters, filter_installs, 0, 0,
                filter_programs, 0, 0, filter_all, 0, 0 );
     memset(&ofn, 0, sizeof(OPENFILENAMEW));
     ofn.lStructSize = sizeof(OPENFILENAMEW);
@@ -969,12 +965,12 @@ static LONG start_params(const WCHAR *params)
     if(!params)
         return FALSE;
 
-    if(!strcmpW(params, install_geckoW)) {
+    if(!wcscmp(params, install_geckoW)) {
         install_addon(ADDON_GECKO);
         return TRUE;
     }
 
-    if(!strcmpW(params, install_monoW)) {
+    if(!wcscmp(params, install_monoW)) {
         install_addon(ADDON_MONO);
         return TRUE;
     }

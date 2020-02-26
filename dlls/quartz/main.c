@@ -17,11 +17,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include "wine/debug.h"
 
 #include "quartz_private.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
@@ -65,24 +63,21 @@ struct object_creation_info
 static const struct object_creation_info object_creation[] =
 {
     { &CLSID_SeekingPassThru, SeekingPassThru_create },
-    { &CLSID_FilterGraph, FilterGraph_create },
-    { &CLSID_FilterGraphNoThread, FilterGraphNoThread_create },
+    { &CLSID_FilterGraph, filter_graph_create },
+    { &CLSID_FilterGraphNoThread, filter_graph_no_thread_create },
     { &CLSID_FilterMapper, FilterMapper_create },
     { &CLSID_FilterMapper2, FilterMapper2_create },
     { &CLSID_AsyncReader, AsyncReader_create },
     { &CLSID_MemoryAllocator, StdMemAllocator_create },
-    { &CLSID_AviSplitter, AVISplitter_create },
-    { &CLSID_MPEG1Splitter, MPEGSplitter_create },
     { &CLSID_VideoRenderer, VideoRenderer_create },
     { &CLSID_VideoMixingRenderer, VMR7Impl_create },
     { &CLSID_VideoMixingRenderer9, VMR9Impl_create },
     { &CLSID_VideoRendererDefault, VideoRendererDefault_create },
-    { &CLSID_DSoundRender, DSoundRender_create },
-    { &CLSID_AudioRender, DSoundRender_create },
+    { &CLSID_DSoundRender, dsound_render_create },
+    { &CLSID_AudioRender, dsound_render_create },
     { &CLSID_AVIDec, AVIDec_create },
     { &CLSID_SystemClock, QUARTZ_CreateSystemClock },
     { &CLSID_ACMWrapper, ACMWrapper_create },
-    { &CLSID_WAVEParser, WAVEParser_create }
 };
 
 static HRESULT WINAPI DSCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
@@ -328,14 +323,14 @@ DWORD WINAPI AMGetErrorTextA(HRESULT hr, LPSTR buffer, DWORD maxlen)
 DWORD WINAPI AMGetErrorTextW(HRESULT hr, LPWSTR buffer, DWORD maxlen)
 {
     unsigned int len;
-    static const WCHAR format[] = {'E','r','r','o','r',':',' ','0','x','%','l','x',0};
     WCHAR error[MAX_ERROR_TEXT_LEN];
 
     FIXME("(%x,%p,%d) stub\n", hr, buffer, maxlen);
 
     if (!buffer) return 0;
-    wsprintfW(error, format, hr);
-    if ((len = strlenW(error)) >= maxlen) return 0;
-    lstrcpyW(buffer, error);
+    swprintf(error, ARRAY_SIZE(error), L"Error: 0x%lx", hr);
+    if ((len = wcslen(error)) >= maxlen)
+        return 0;
+    wcscpy(buffer, error);
     return len;
 }

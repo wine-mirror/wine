@@ -142,7 +142,7 @@ void init_css_style(CSSStyle*,nsIDOMCSSStyleDeclaration*,style_qi_t,
                     dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 
 void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode) DECLSPEC_HIDDEN;
-const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl DECLSPEC_HIDDEN;
+extern const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl DECLSPEC_HIDDEN;
 
 HRESULT get_style_property(CSSStyle*,styleid_t,BSTR*) DECLSPEC_HIDDEN;
 HRESULT get_style_property_var(CSSStyle*,styleid_t,VARIANT*) DECLSPEC_HIDDEN;

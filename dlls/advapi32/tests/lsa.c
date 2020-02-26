@@ -319,74 +319,94 @@ static void test_LsaLookupNames2(void)
     ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08x\n", status);
 }
 
+static void check_unicode_string_(int line, const LSA_UNICODE_STRING *string, const WCHAR *expect)
+{
+    ok_(__FILE__, line)(string->Length == wcslen(string->Buffer) * sizeof(WCHAR),
+            "expected %u, got %u\n", wcslen(string->Buffer) * sizeof(WCHAR), string->Length);
+    ok_(__FILE__, line)(string->MaximumLength == string->Length + sizeof(WCHAR),
+            "expected %u, got %u\n", string->Length + sizeof(WCHAR), string->MaximumLength);
+    ok_(__FILE__, line)(!wcsicmp(string->Buffer, expect), "expected %s, got %s\n",
+            debugstr_w(expect), debugstr_w(string->Buffer));
+}
+#define check_unicode_string(a, b) check_unicode_string_(__LINE__, a, b)
+
 static void test_LsaLookupSids(void)
 {
+    char user_buffer[64];
+    LSA_OBJECT_ATTRIBUTES attrs = {.Length = sizeof(attrs)};
+    TOKEN_USER *user = (TOKEN_USER *)user_buffer;
+    WCHAR computer_name[64], user_name[64];
     LSA_REFERENCED_DOMAIN_LIST *list;
-    LSA_OBJECT_ATTRIBUTES attrs;
     LSA_TRANSLATED_NAME *names;
     LSA_HANDLE policy;
-    TOKEN_USER *user;
     NTSTATUS status;
     HANDLE token;
     DWORD size;
     BOOL ret;
     PSID sid;
 
-    memset(&attrs, 0, sizeof(attrs));
-    attrs.Length = sizeof(attrs);
-
     status = LsaOpenPolicy(NULL, &attrs, POLICY_LOOKUP_NAMES, &policy);
     ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
 
     ret = OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, &token);
-    ok(ret, "got %d\n", ret);
+    ok(ret, "OpenProcessToken() failed, error %u\n", GetLastError());
 
-    ret = GetTokenInformation(token, TokenUser, NULL, 0, &size);
-    ok(!ret, "got %d\n", ret);
+    ret = GetTokenInformation(token, TokenUser, user, sizeof(user_buffer), &size);
+    ok(ret, "GetTokenInformation() failed, error %u\n", GetLastError());
 
-    user = HeapAlloc(GetProcessHeap(), 0, size);
-    ret = GetTokenInformation(token, TokenUser, user, size, &size);
-    ok(ret, "got %d\n", ret);
+    size = ARRAY_SIZE(computer_name);
+    ret = GetComputerNameW(computer_name, &size);
+    ok(ret, "GetComputerName() failed, error %u\n", GetLastError());
+
+    size = ARRAY_SIZE(user_name);
+    ret = GetUserNameW(user_name, &size);
+    ok(ret, "GetUserName() failed, error %u\n", GetLastError());
 
     status = LsaLookupSids(policy, 1, &user->User.Sid, &list, &names);
     ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
 
-    ok(list->Entries > 0, "got %d\n", list->Entries);
-    if (list->Entries)
-    {
-       ok((char*)list->Domains - (char*)list > 0, "%p, %p\n", list, list->Domains);
-       ok((char*)list->Domains[0].Sid - (char*)list->Domains > 0, "%p, %p\n", list->Domains, list->Domains[0].Sid);
-       ok(list->Domains[0].Name.MaximumLength > list->Domains[0].Name.Length, "got %d, %d\n", list->Domains[0].Name.MaximumLength,
-           list->Domains[0].Name.Length);
-    }
+    ok(list->Entries == 1, "got %d\n", list->Entries);
+    check_unicode_string(&list->Domains[0].Name, computer_name);
+
+    ok(names[0].Use == SidTypeUser, "got type %u\n", names[0].Use);
+    ok(!names[0].DomainIndex, "got index %u\n", names[0].DomainIndex);
+    check_unicode_string(&names[0].Name, user_name);
 
     LsaFreeMemory(names);
     LsaFreeMemory(list);
-
-    HeapFree(GetProcessHeap(), 0, user);
-
     CloseHandle(token);
 
     ret = ConvertStringSidToSidA("S-1-1-0", &sid);
-    ok(ret == TRUE, "ConvertStringSidToSidA returned false\n");
+    ok(ret, "ConvertStringSidToSidA() failed, error %u\n", GetLastError());
 
     status = LsaLookupSids(policy, 1, &sid, &list, &names);
     ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
 
-    ok(list->Entries > 0, "got %d\n", list->Entries);
+    ok(list->Entries == 1, "got %d\n", list->Entries);
+    check_unicode_string(&list->Domains[0].Name, L"");
 
-    if (list->Entries)
-    {
-       ok((char*)list->Domains - (char*)list > 0, "%p, %p\n", list, list->Domains);
-       ok((char*)list->Domains[0].Sid - (char*)list->Domains > 0, "%p, %p\n", list->Domains, list->Domains[0].Sid);
-       ok(list->Domains[0].Name.MaximumLength > list->Domains[0].Name.Length, "got %d, %d\n", list->Domains[0].Name.MaximumLength,
-           list->Domains[0].Name.Length);
-       ok(list->Domains[0].Name.Buffer != NULL, "domain[0] name buffer is null\n");
-    }
+    ok(names[0].Use == SidTypeWellKnownGroup, "got type %u\n", names[0].Use);
+    ok(!names[0].DomainIndex, "got index %u\n", names[0].DomainIndex);
+    check_unicode_string(&names[0].Name, L"Everyone");
 
     LsaFreeMemory(names);
     LsaFreeMemory(list);
+    FreeSid(sid);
 
+    ret = ConvertStringSidToSidA("S-1-1234-5678-1234-5678", &sid);
+    ok(ret, "ConvertStringSidToSidA() failed, error %u\n", GetLastError());
+
+    status = LsaLookupSids(policy, 1, &sid, &list, &names);
+    ok(status == STATUS_NONE_MAPPED, "got 0x%08x\n", status);
+
+    ok(!list->Entries, "got %d\n", list->Entries);
+
+    ok(names[0].Use == SidTypeUnknown, "got type %u\n", names[0].Use);
+    ok(names[0].DomainIndex == -1, "got index %u\n", names[0].DomainIndex);
+    check_unicode_string(&names[0].Name, L"S-1-1234-5678-1234-5678");
+
+    LsaFreeMemory(names);
+    LsaFreeMemory(list);
     FreeSid(sid);
 
     status = LsaClose(policy);

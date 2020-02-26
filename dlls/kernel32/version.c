@@ -42,83 +42,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
 
 
-/***********************************************************************
- *         GetVersion   (KERNEL32.@)
- *
- * Win31   0x80000a03
- * Win95   0xc0000004
- * Win98   0xc0000a04
- * WinME   0xc0005a04
- * NT351   0x04213303
- * NT4     0x05650004
- * Win2000 0x08930005
- * WinXP   0x0a280105
- */
-DWORD WINAPI GetVersion(void)
-{
-    DWORD result = MAKELONG( MAKEWORD( NtCurrentTeb()->Peb->OSMajorVersion,
-                                       NtCurrentTeb()->Peb->OSMinorVersion ),
-                             (NtCurrentTeb()->Peb->OSPlatformId ^ 2) << 14 );
-    if (NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32_NT)
-        result |= LOWORD(NtCurrentTeb()->Peb->OSBuildNumber) << 16;
-    return result;
-}
-
-
-/***********************************************************************
- *         GetVersionExA   (KERNEL32.@)
- */
-BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
-{
-    RTL_OSVERSIONINFOEXW infoW;
-
-    if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA) &&
-        v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXA))
-    {
-        WARN("wrong OSVERSIONINFO size from app (got: %d)\n",
-                        v->dwOSVersionInfoSize );
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        return FALSE;
-    }
-
-    infoW.dwOSVersionInfoSize = sizeof(infoW);
-    if (RtlGetVersion( &infoW ) != STATUS_SUCCESS) return FALSE;
-
-    v->dwMajorVersion = infoW.dwMajorVersion;
-    v->dwMinorVersion = infoW.dwMinorVersion;
-    v->dwBuildNumber  = infoW.dwBuildNumber;
-    v->dwPlatformId   = infoW.dwPlatformId;
-    WideCharToMultiByte( CP_ACP, 0, infoW.szCSDVersion, -1,
-                         v->szCSDVersion, sizeof(v->szCSDVersion), NULL, NULL );
-
-    if(v->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA))
-    {
-        LPOSVERSIONINFOEXA vex = (LPOSVERSIONINFOEXA) v;
-        vex->wServicePackMajor = infoW.wServicePackMajor;
-        vex->wServicePackMinor = infoW.wServicePackMinor;
-        vex->wSuiteMask        = infoW.wSuiteMask;
-        vex->wProductType      = infoW.wProductType;
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
- *         GetVersionExW   (KERNEL32.@)
- */
-BOOL WINAPI GetVersionExW( OSVERSIONINFOW *info )
-{
-    if (info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOW) &&
-        info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXW))
-    {
-        WARN("wrong OSVERSIONINFO size from app (got: %d)\n",
-                        info->dwOSVersionInfoSize);
-        return FALSE;
-    }
-    return (RtlGetVersion( (RTL_OSVERSIONINFOEXW *)info ) == STATUS_SUCCESS);
-}
-
-
 /******************************************************************************
  *        VerifyVersionInfoA   (KERNEL32.@)
  */
@@ -185,21 +108,6 @@ DWORD WINAPI SetTermsrvAppInstallMode(BOOL bInstallMode)
 {
     FIXME("(%d): stub\n", bInstallMode);
     return 0;
-}
-
-/***********************************************************************
- *           GetProductInfo       (KERNEL32.@)
- *
- * Gives info about the current Windows product type, in a format compatible
- * with the given Windows version
- *
- * Returns TRUE if the input is valid, FALSE otherwise
- */
-BOOL WINAPI GetProductInfo(DWORD dwOSMajorVersion, DWORD dwOSMinorVersion, DWORD dwSpMajorVersion,
-                           DWORD dwSpMinorVersion, PDWORD pdwReturnedProductType)
-{
-    return RtlGetProductInfo(dwOSMajorVersion, dwOSMinorVersion,
-                             dwSpMajorVersion, dwSpMinorVersion, pdwReturnedProductType);
 }
 
 /***********************************************************************

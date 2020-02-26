@@ -18,18 +18,14 @@
 
 #define COBJMACROS
 
-#include "config.h"
-
 #include <stdarg.h>
-#ifdef HAVE_ZLIB
-# include <zlib.h>
-#endif
 
 #include "windef.h"
 #include "winternl.h"
 #include "msopc.h"
 
 #include "opc_private.h"
+#include "zlib.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -191,10 +187,8 @@ void compress_finalize_archive(struct zip_archive *archive)
 static void compress_write_content(struct zip_archive *archive, IStream *content,
         OPC_COMPRESSION_OPTIONS options, struct data_descriptor *data_desc)
 {
-#ifdef HAVE_ZLIB
     int level, flush;
     z_stream z_str;
-#endif
     LARGE_INTEGER move;
     ULONG num_read;
     HRESULT hr;
@@ -202,8 +196,6 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
     data_desc->crc32 = RtlComputeCrc32(0, NULL, 0);
     move.QuadPart = 0;
     IStream_Seek(content, move, STREAM_SEEK_SET, NULL);
-
-#ifdef HAVE_ZLIB
 
     switch (options)
     {
@@ -264,31 +256,6 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
 
     data_desc->compressed_size = z_str.total_out;
     data_desc->uncompressed_size = z_str.total_in;
-
-#else
-
-    if (options != OPC_COMPRESSION_NONE)
-        FIXME("Writing without compression.\n");
-
-    do
-    {
-        if (FAILED(hr = IStream_Read(content, archive->input_buffer, sizeof(archive->input_buffer), &num_read)))
-        {
-            archive->write_result = hr;
-            break;
-        }
-
-        if (num_read == 0)
-            break;
-
-        data_desc->uncompressed_size += num_read;
-        data_desc->crc32 = RtlComputeCrc32(data_desc->crc32, archive->input_buffer, num_read);
-        compress_write(archive, archive->input_buffer, num_read);
-    } while (num_read != 0 && archive->write_result == S_OK);
-
-    data_desc->compressed_size = data_desc->uncompressed_size;
-
-#endif /* HAVE_ZLIB */
 }
 
 HRESULT compress_add_file(struct zip_archive *archive, const WCHAR *path,

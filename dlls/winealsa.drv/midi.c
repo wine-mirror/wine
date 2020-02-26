@@ -243,33 +243,26 @@ static int midiOpenSeq(BOOL create_client)
 	    return -1;
 	}
 
-	if (create_client) {
-	    /* Setting the client name is the only init to do */
-	    snd_seq_set_client_name(midiSeq, "WINE midi driver");
+        if (create_client) {
+            /* Setting the client name is the only init to do */
+            snd_seq_set_client_name(midiSeq, "WINE midi driver");
 
-#if 0 /* FIXME: Is it possible to use a port for READ & WRITE ops */
-            port_in = port_out = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input/Output", SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_WRITE,
-	             	                                                 SND_SEQ_PORT_TYPE_APPLICATION);
+            port_out = snd_seq_create_simple_port(midiSeq, "WINE ALSA Output",
+                    SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
+                    SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
             if (port_out < 0)
-               TRACE("Unable to create output port\n");
+                TRACE("Unable to create output port\n");
             else
-	       TRACE("Outport port %d created successfully\n", port_out);
-#else
-            port_out = snd_seq_create_simple_port(midiSeq, "WINE ALSA Output", SND_SEQ_PORT_CAP_READ,
-	                 	                                                 SND_SEQ_PORT_TYPE_APPLICATION);
-	    if (port_out < 0)
-		TRACE("Unable to create output port\n");
-	    else
-		TRACE("Outport port %d created successfully\n", port_out);
+                TRACE("Outport port %d created successfully\n", port_out);
 
-	    port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input", SND_SEQ_PORT_CAP_WRITE,
-	             	                                               SND_SEQ_PORT_TYPE_APPLICATION);
+            port_in = snd_seq_create_simple_port(midiSeq, "WINE ALSA Input",
+                    SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE,
+                    SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION);
             if (port_in < 0)
                 TRACE("Unable to create input port\n");
             else
-	        TRACE("Input port %d created successfully\n", port_in);
-#endif
-       }
+                TRACE("Input port %d created successfully\n", port_in);
+        }
     }
     numOpenMidiSeq++;
     LeaveCriticalSection(&midiSeqLock);
@@ -878,7 +871,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
             snd_seq_ev_clear(&event);
             snd_seq_ev_set_direct(&event);
             snd_seq_ev_set_source(&event, port_out);
-            snd_seq_ev_set_dest(&event, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
+            snd_seq_ev_set_subs(&event);
 	    
 	    switch (evt & 0xF0) {
 	    case MIDI_CMD_NOTE_OFF:
@@ -1047,8 +1040,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	snd_seq_ev_clear(&event);
 	snd_seq_ev_set_direct(&event);
 	snd_seq_ev_set_source(&event, port_out);
-	snd_seq_ev_set_dest(&event, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
-	TRACE("destination %d:%d\n", MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
+	snd_seq_ev_set_subs(&event);
 	snd_seq_ev_set_sysex(&event, lpMidiHdr->dwBufferLength + len_add, lpNewData ? lpNewData : lpData);
         EnterCriticalSection(&midiSeqLock);
 	snd_seq_event_output_direct(midiSeq, &event);

@@ -35,7 +35,6 @@
 #include "winuser.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 #include "d3d9.h"
 #include "wine/wined3d.h"
@@ -47,6 +46,9 @@
 #define D3DPRESENTFLAGS_MASK 0x00000fffu
 
 #define D3D9_TEXTURE_MIPMAP_DIRTY 0x1
+
+#define D3DFMT_RESZ MAKEFOURCC('R','E','S','Z')
+#define D3D9_RESZ_CODE 0x7fa05000
 
 extern const struct wined3d_parent_ops d3d9_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
@@ -108,15 +110,16 @@ struct d3d9_device
     DWORD in_destruction : 1;
     DWORD in_scene : 1;
     DWORD has_vertex_declaration : 1;
-    DWORD recording : 1;
-    DWORD padding : 11;
+    DWORD padding : 12;
 
     DWORD auto_mipmaps; /* D3D9_MAX_TEXTURE_UNITS */
 
-    unsigned int max_user_clip_planes;
+    unsigned int max_user_clip_planes, vs_uniform_count;
 
     UINT implicit_swapchain_count;
     struct wined3d_swapchain **implicit_swapchains;
+
+    struct wined3d_stateblock *recording, *state, *update_state;
 };
 
 HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wined3d *wined3d,

@@ -1310,8 +1310,8 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	    break;
 	case IDS_SELECTALL:
             PRIVATE(data)->selectPt1.X = PRIVATE(data)->selectPt1.Y = 0;
-            PRIVATE(data)->selectPt2.X = (data->curcfg.sb_width - 1) * data->curcfg.cell_width;
-            PRIVATE(data)->selectPt2.Y = (data->curcfg.sb_height - 1) * data->curcfg.cell_height;
+            PRIVATE(data)->selectPt2.X = data->curcfg.sb_width - 1;
+            PRIVATE(data)->selectPt2.Y = data->curcfg.sb_height - 1;
             WCUSER_SetSelection(data, 0);
             PRIVATE(data)->has_selection = TRUE;
 	    break;

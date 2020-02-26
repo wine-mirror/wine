@@ -16,8 +16,8 @@
 @ cdecl _heapwalk(ptr) ucrtbase._heapwalk
 @ cdecl _malloc_base(long) ucrtbase._malloc_base
 @ cdecl _msize(ptr) ucrtbase._msize
-@ stub _query_new_handler
-@ stub _query_new_mode
+@ cdecl _query_new_handler() ucrtbase._query_new_handler
+@ cdecl _query_new_mode() ucrtbase._query_new_mode
 @ cdecl _realloc_base(ptr long) ucrtbase._realloc_base
 @ cdecl _recalloc(ptr long long) ucrtbase._recalloc
 @ cdecl _set_new_mode(long) ucrtbase._set_new_mode

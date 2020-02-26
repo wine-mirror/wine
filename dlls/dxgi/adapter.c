@@ -128,6 +128,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IWineDXGIAdapter *ifac
 
     TRACE("iface %p, output_idx %u, output %p.\n", iface, output_idx, output);
 
+    if (!output)
+        return E_INVALIDARG;
+
     if (output_idx > 0)
     {
         *output = NULL;

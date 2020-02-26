@@ -129,8 +129,8 @@ static Run* build_vertical_runs(PHYSDEV dev, UINT flags, LPCWSTR str, UINT count
 /***********************************************************************
  *           PSDRV_ExtTextOut
  */
-BOOL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect, LPCWSTR str, UINT count,
-                       const INT *lpDx )
+BOOL CDECL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect, LPCWSTR str, UINT count,
+                             const INT *lpDx )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     BOOL bResult = TRUE;

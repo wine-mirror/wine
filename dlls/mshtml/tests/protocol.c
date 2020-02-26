@@ -640,7 +640,7 @@ static void do_test_about_protocol(IClassFactory *factory, DWORD bf)
     hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
     ok(hres == S_OK, "Read failed: %08x\n", hres);
     ok(cb == sizeof(blank_html), "cb=%d\n", cb);
-    ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
+    ok(!memcmp(buf, blank_html, cb), "Read wrong data\n");
     hres = IInternetProtocol_UnlockRequest(protocol);
     ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
 
@@ -650,7 +650,7 @@ static void do_test_about_protocol(IClassFactory *factory, DWORD bf)
     hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
     ok(hres == S_OK, "Read failed: %08x\n", hres);
     ok(cb == sizeof(test_html), "cb=%d\n", cb);
-    ok(!memcmp(buf, test_html, cb), "Readed wrong data\n");
+    ok(!memcmp(buf, test_html, cb), "Read wrong data\n");
     hres = IInternetProtocol_UnlockRequest(protocol);
     ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
 
@@ -660,7 +660,7 @@ static void do_test_about_protocol(IClassFactory *factory, DWORD bf)
     hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
     ok(hres == S_OK, "Read failed: %08x\n", hres);
     ok(cb == sizeof(blank_html), "cb=%d\n", cb);
-    ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
+    ok(!memcmp(buf, blank_html, cb), "Read wrong data\n");
     hres = IInternetProtocol_UnlockRequest(protocol);
     ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
 

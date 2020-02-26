@@ -1294,19 +1294,6 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ok(processed == 0, "expected 0, got %d\n", processed);
 }
 
-/* copied from libs/wine/string.c */
-static WCHAR *strstrW(const WCHAR *str, const WCHAR *sub)
-{
-    while (*str)
-    {
-        const WCHAR *p1 = str, *p2 = sub;
-        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
-        if (!*p2) return (WCHAR *)str;
-        str++;
-    }
-    return NULL;
-}
-
 static void test_rfc1766(IMultiLanguage2 *iML2)
 {
     IEnumRfc1766 *pEnumRfc1766;
@@ -1336,7 +1323,7 @@ static void test_rfc1766(IMultiLanguage2 *iML2)
 
         /* not an exact 1:1 correspondence between lcid and rfc1766 in the
          * mlang database, e.g., nb-no -> 1044 -> no */
-        ok(strstrW(info.wszRfc1766, rfcstr) != NULL,
+        ok(wcsstr(info.wszRfc1766, rfcstr) != NULL,
            "Expected matching locale names\n");
 
         SysFreeString(rfcstr);

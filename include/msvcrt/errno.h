@@ -19,7 +19,7 @@
 #ifndef __WINE_ERRNO_H
 #define __WINE_ERRNO_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #  define EPERM   1
 #  define ENOENT  2

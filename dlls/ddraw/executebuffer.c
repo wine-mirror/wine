@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include "ddraw_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
@@ -77,6 +74,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
             case D3DOP_POINT:
             {
                 const D3DPOINT *p = (D3DPOINT *)instr;
+                wined3d_device_apply_stateblock(device->wined3d_device, device->state);
                 wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_POINTLIST, 0);
                 wined3d_device_set_stream_source(device->wined3d_device, 0,
                         buffer->dst_vertex_buffer, 0, sizeof(D3DTLVERTEX));
@@ -109,8 +107,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     primitive_size = 3;
                 }
 
-                index_count = count * primitive_size;
+                wined3d_device_apply_stateblock(device->wined3d_device, device->state);
 
+                index_count = count * primitive_size;
                 if (buffer->index_size < index_count)
                 {
                     unsigned int new_size = max(buffer->index_size * 2, index_count);
@@ -304,8 +303,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     {
                         case D3DPROCESSVERTICES_TRANSFORMLIGHT:
                         case D3DPROCESSVERTICES_TRANSFORM:
+                            wined3d_device_apply_stateblock(device->wined3d_device, device->state);
                             wined3d_device_set_stream_source(device->wined3d_device, 0,
-                                    buffer->src_vertex_buffer, buffer->src_vertex_pos, sizeof(D3DVERTEX));
+                                    buffer->src_vertex_buffer, buffer->src_vertex_pos * sizeof(D3DVERTEX), sizeof(D3DVERTEX));
                             wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_LIGHTING,
                                     op == D3DPROCESSVERTICES_TRANSFORMLIGHT && !!device->material);
                             wined3d_device_set_vertex_declaration(device->wined3d_device,

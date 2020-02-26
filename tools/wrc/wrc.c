@@ -66,6 +66,7 @@ static const char usage[] =
 	"   -J, --input-format=FORMAT  The input format (either `rc' or `rc16')\n"
 	"   -l, --language=LANG        Set default language to LANG (default is neutral {0, 0})\n"
 	"   -m16, -m32, -m64           Build for 16-bit, 32-bit resp. 64-bit platforms\n"
+	"   --nls-dir=DIR              Directory containing the NLS codepage mappings\n"
 	"   --no-use-temp-file         Ignored for compatibility with windres\n"
 	"   --nostdinc                 Disables searching the standard include path\n"
 	"   -o, --output=FILE          Output to file (default is infile.res)\n"
@@ -74,6 +75,7 @@ static const char usage[] =
 	"   --po-dir=DIR               Directory containing po files for translations\n"
 	"   --preprocessor             Specifies the preprocessor to use, including arguments\n"
 	"   -r                         Ignored for compatibility with rc\n"
+	"   --sysroot=DIR              Prefix include paths with DIR\n"
 	"   -U, --undefine id          Undefine preprocessor identifier id\n"
 	"   --use-temp-file            Ignored for compatibility with windres\n"
 	"   -v, --verbose              Enable verbose mode\n"
@@ -143,6 +145,8 @@ int preprocess_only = 0;
  */
 int no_preprocess = 0;
 
+int utf8_input = 0;
+
 int check_utf8 = 1;  /* whether to check for valid utf8 */
 
 static int pointer_size = sizeof(void *);
@@ -152,6 +156,9 @@ static int verify_translations_mode;
 static char *output_name;	/* The name given by the -o option */
 char *input_name = NULL;	/* The name given on the command-line */
 static char *temp_name = NULL;	/* Temporary file for preprocess pipe */
+
+static const char *includedir;
+const char *nlsdirs[3] = { NULL, NLSDIR, NULL };
 
 int line_number = 1;		/* The current line */
 int char_number = 1;		/* The current char pos within the line */
@@ -170,8 +177,10 @@ enum long_options_values
     LONG_OPT_NOSTDINC = 1,
     LONG_OPT_TMPFILE,
     LONG_OPT_NOTMPFILE,
+    LONG_OPT_NLS_DIR,
     LONG_OPT_PO_DIR,
     LONG_OPT_PREPROCESSOR,
+    LONG_OPT_SYSROOT,
     LONG_OPT_VERSION,
     LONG_OPT_DEBUG,
     LONG_OPT_ENDIANNESS,
@@ -180,7 +189,7 @@ enum long_options_values
 };
 
 static const char short_options[] =
-	"b:D:Ef:F:hi:I:J:l:m:o:O:rU:v";
+	"b:D:Ef:F:hi:I:J:l:m:o:O:ruU:v";
 static const struct option long_options[] = {
 	{ "debug", 1, NULL, LONG_OPT_DEBUG },
 	{ "define", 1, NULL, 'D' },
@@ -190,6 +199,7 @@ static const struct option long_options[] = {
 	{ "input", 1, NULL, 'i' },
 	{ "input-format", 1, NULL, 'J' },
 	{ "language", 1, NULL, 'l' },
+	{ "nls-dir", 1, NULL, LONG_OPT_NLS_DIR },
 	{ "no-use-temp-file", 0, NULL, LONG_OPT_NOTMPFILE },
 	{ "nostdinc", 0, NULL, LONG_OPT_NOSTDINC },
 	{ "output", 1, NULL, 'o' },
@@ -197,7 +207,9 @@ static const struct option long_options[] = {
 	{ "pedantic", 0, NULL, LONG_OPT_PEDANTIC },
 	{ "po-dir", 1, NULL, LONG_OPT_PO_DIR },
 	{ "preprocessor", 1, NULL, LONG_OPT_PREPROCESSOR },
+	{ "sysroot", 1, NULL, LONG_OPT_SYSROOT },
 	{ "target", 1, NULL, 'F' },
+	{ "utf8", 0, NULL, 'u' },
 	{ "undefine", 1, NULL, 'U' },
 	{ "use-temp-file", 0, NULL, LONG_OPT_TMPFILE },
 	{ "verbose", 0, NULL, 'v' },
@@ -324,6 +336,29 @@ static void set_target( const char *target )
     free( cpu );
 }
 
+static void init_argv0_dir( const char *argv0 )
+{
+#ifndef _WIN32
+    char *p, *dir;
+
+#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+    dir = realpath( "/proc/self/exe", NULL );
+#elif defined (__FreeBSD__) || defined(__DragonFly__)
+    dir = realpath( "/proc/curproc/file", NULL );
+#else
+    dir = realpath( argv0, NULL );
+#endif
+    if (!dir) return;
+    if (!(p = strrchr( dir, '/' ))) return;
+    if (p == dir) p++;
+    *p = 0;
+    includedir = strmake( "%s/%s", dir, BIN_TO_INCLUDEDIR );
+    if (strendswith( dir, "/tools/wrc" )) nlsdirs[0] = strmake( "%s/../../nls", dir );
+    else nlsdirs[0] = strmake( "%s/%s", dir, BIN_TO_NLSDIR );
+    free( dir );
+#endif
+}
+
 int main(int argc,char *argv[])
 {
 	int optc;
@@ -335,6 +370,7 @@ int main(int argc,char *argv[])
 	int cmdlen;
         int po_mode = 0;
         char *po_dir = NULL;
+        const char *sysroot = "";
         char **files = xmalloc( argc * sizeof(*files) );
 
 	signal(SIGSEGV, segvhandler);
@@ -343,6 +379,7 @@ int main(int argc,char *argv[])
 #ifdef SIGHUP
         signal( SIGHUP, exit_on_signal );
 #endif
+	init_argv0_dir( argv[0] );
 
 	/* Set the default defined stuff */
         set_version_defines();
@@ -377,12 +414,18 @@ int main(int argc,char *argv[])
 		case LONG_OPT_NOTMPFILE:
 			if (debuglevel) warning("--no-use-temp-file option not yet supported, ignored.\n");
 			break;
+		case LONG_OPT_NLS_DIR:
+			nlsdirs[0] = xstrdup( optarg );
+			break;
 		case LONG_OPT_PO_DIR:
 			po_dir = xstrdup( optarg );
 			break;
 		case LONG_OPT_PREPROCESSOR:
 			if (strcmp(optarg, "cat") == 0) no_preprocess = 1;
 			else fprintf(stderr, "-P option not yet supported, ignored.\n");
+			break;
+		case LONG_OPT_SYSROOT:
+			sysroot = xstrdup( optarg );
 			break;
 		case LONG_OPT_VERSION:
 			printf(version_string);
@@ -472,6 +515,9 @@ int main(int argc,char *argv[])
 		case 'r':
 			/* ignored for compatibility with rc */
 			break;
+		case 'u':
+			utf8_input = 1;
+			break;
 		case 'U':
 			wpp_del_define(optarg);
 			break;
@@ -499,8 +545,19 @@ int main(int argc,char *argv[])
 	/* If we do need to search standard includes, add them to the path */
 	if (stdinc)
 	{
-		wpp_add_include_path(INCLUDEDIR"/msvcrt");
-		wpp_add_include_path(INCLUDEDIR"/windows");
+            static const char *incl_dirs[] = { INCLUDEDIR, "/usr/include", "/usr/local/include" };
+
+            if (includedir)
+            {
+                wpp_add_include_path( strmake( "%s/wine/msvcrt", includedir ));
+                wpp_add_include_path( strmake( "%s/wine/windows", includedir ));
+            }
+            for (i = 0; i < ARRAY_SIZE(incl_dirs); i++)
+            {
+                if (i && !strcmp( incl_dirs[i], incl_dirs[0] )) continue;
+                wpp_add_include_path( strmake( "%s%s/wine/msvcrt", sysroot, incl_dirs[i] ));
+                wpp_add_include_path( strmake( "%s%s/wine/windows", sysroot, incl_dirs[i] ));
+            }
 	}
 
 	/* Kill io buffering when some kind of debuglevel is enabled */
@@ -541,8 +598,14 @@ int main(int argc,char *argv[])
 		verify_translations(resource_top);
 		exit(0);
 	}
+        if (!po_mode && output_name)
+        {
+            if (strendswith( output_name, ".po" )) po_mode = 1;
+            else if (strendswith( output_name, ".pot" )) po_mode = 2;
+        }
 	if (po_mode)
 	{
+            if (!win32) error( "PO files are not supported in 16-bit mode\n" );
             if (po_mode == 2)  /* pot file */
             {
                 if (!output_name)
@@ -556,7 +619,7 @@ int main(int argc,char *argv[])
             output_name = NULL;
             exit(0);
 	}
-        add_translations( po_dir );
+        if (win32) add_translations( po_dir );
 
 	/* Convert the internal lists to binary data */
 	resources2res(resource_top);

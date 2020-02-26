@@ -1,5 +1,8 @@
 MODULE    = find.exe
+IMPORTS   = user32
 
 EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = find.c
+
+RC_SRCS = find.rc

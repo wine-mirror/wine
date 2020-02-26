@@ -2,6 +2,8 @@ MODULE    = wintab32.dll
 IMPORTLIB = wintab32
 IMPORTS   = user32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	context.c \
 	manager.c \

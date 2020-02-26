@@ -1,6 +1,6 @@
 MODULE    = winehid.sys
 IMPORTS   = hidclass ntoskrnl
-EXTRADLLFLAGS = -Wl,--subsystem,native
+EXTRADLLFLAGS = -mno-cygwin -Wl,--subsystem,native
 
 C_SRCS = \
 	main.c

@@ -67,6 +67,8 @@
 @ stdcall CM_Get_Class_Registry_PropertyW(ptr long ptr ptr long long ptr)
 @ stub CM_Get_Depth
 @ stub CM_Get_Depth_Ex
+@ stdcall CM_Get_DevNode_PropertyW(long ptr ptr ptr ptr long)
+@ stdcall CM_Get_DevNode_Property_ExW(long ptr ptr ptr ptr long ptr)
 @ stdcall CM_Get_DevNode_Registry_PropertyA(long long ptr ptr ptr long)
 @ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr ptr long)
 @ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr)
@@ -378,7 +380,7 @@
 @ stdcall SetupDiOpenDeviceInfoA(ptr str ptr long ptr)
 @ stdcall SetupDiOpenDeviceInfoW(ptr wstr ptr long ptr)
 @ stdcall SetupDiOpenDeviceInterfaceA(ptr str long ptr)
-@ stub SetupDiOpenDeviceInterfaceRegKey
+@ stdcall SetupDiOpenDeviceInterfaceRegKey(ptr ptr long long)
 @ stdcall SetupDiOpenDeviceInterfaceW(ptr wstr long ptr)
 @ stdcall SetupDiRegisterCoDeviceInstallers(ptr ptr)
 @ stdcall SetupDiRegisterDeviceInfo(ptr ptr long ptr ptr ptr)
@@ -421,6 +423,7 @@
 @ stdcall SetupGetFileCompressionInfoW(wstr ptr ptr ptr ptr)
 @ stdcall SetupGetFileQueueCount(long long ptr)
 @ stdcall SetupGetFileQueueFlags(long ptr)
+@ stdcall SetupGetInfDriverStoreLocationW(wstr ptr wstr ptr long ptr)
 @ stdcall SetupGetInfFileListA(str long ptr long ptr)
 @ stdcall SetupGetInfFileListW(wstr long ptr long ptr)
 @ stdcall SetupGetInfInformationA(ptr long ptr long ptr)

@@ -441,7 +441,7 @@ static BOOL test_instantiation(void)
                           &IID_IFileSaveDialog, (void**)&pfsd);
     if(FAILED(hr))
     {
-        skip("Could not instantiate the FileSaveDialog.\n");
+        win_skip("Could not instantiate the FileSaveDialog.\n");
         return FALSE;
     }
     ok(hr == S_OK, "got 0x%08x.\n", hr);

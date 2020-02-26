@@ -40,51 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #define GUID_STRING_LENGTH    38
 
-UINT NlsAnsiCodePage = 0;
-BYTE NlsMbCodePageTag = 0;
-BYTE NlsMbOemCodePageTag = 0;
-
-extern const union cptable cptable_20127;  /* 7-bit ASCII */
-
-static const union cptable *ansi_table = &cptable_20127;
-static const union cptable *oem_table = &cptable_20127;
-static const union cptable* unix_table; /* NULL if UTF8 */
-
-
-/**************************************************************************
- *	__wine_init_codepages   (NTDLL.@)
- *
- * Set the code page once kernel32 is loaded. Should be done differently.
- */
-void CDECL __wine_init_codepages( const union cptable *ansi, const union cptable *oem,
-                                  const union cptable *ucp)
-{
-    ansi_table = ansi;
-    oem_table = oem;
-    unix_table = ucp;
-    NlsAnsiCodePage = ansi->info.codepage;
-    init_directories();
-}
-
-int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen)
-{
-#ifdef __APPLE__
-    /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
-    if (!unix_table) flags |= MB_COMPOSITE;
-#endif
-    return (unix_table) ?
-        wine_cp_mbstowcs( unix_table, flags, src, srclen, dst, dstlen ) :
-        wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
-}
-
-int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
-                    const char* defchar, int *used )
-{
-    if (unix_table)
-        return wine_cp_wcstombs( unix_table, flags, src, srclen, dst, dstlen, defchar, used );
-    if (used) *used = 0;  /* all chars are valid for UTF-8 */
-    return wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
-}
 
 /**************************************************************************
  *      RtlInitAnsiString   (NTDLL.@)
@@ -455,28 +410,6 @@ LONG WINAPI RtlCompareString( const STRING *s1, const STRING *s2, BOOLEAN CaseIn
 
 
 /******************************************************************************
- *	RtlCompareUnicodeStrings   (NTDLL.@)
- */
-LONG WINAPI RtlCompareUnicodeStrings( const WCHAR *s1, SIZE_T len1, const WCHAR *s2, SIZE_T len2,
-                                      BOOLEAN case_insensitive )
-{
-    LONG ret = 0;
-    SIZE_T len = min( len1, len2 );
-
-    if (case_insensitive)
-    {
-        while (!ret && len--) ret = toupperW(*s1++) - toupperW(*s2++);
-    }
-    else
-    {
-        while (!ret && len--) ret = *s1++ - *s2++;
-    }
-    if (!ret) ret = len1 - len2;
-    return ret;
-}
-
-
-/******************************************************************************
  *	RtlCompareUnicodeString   (NTDLL.@)
  */
 LONG WINAPI RtlCompareUnicodeString( const UNICODE_STRING *s1, const UNICODE_STRING *s2,
@@ -553,32 +486,6 @@ BOOLEAN WINAPI RtlPrefixString( const STRING *s1, const STRING *s2, BOOLEAN igno
 
 
 /**************************************************************************
- *	RtlPrefixUnicodeString   (NTDLL.@)
- *
- * Unicode version of RtlPrefixString.
- */
-BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1,
-                                       const UNICODE_STRING *s2,
-                                       BOOLEAN ignore_case )
-{
-    unsigned int i;
-
-    if (s1->Length > s2->Length) return FALSE;
-    if (ignore_case)
-    {
-        for (i = 0; i < s1->Length / sizeof(WCHAR); i++)
-            if (toupperW(s1->Buffer[i]) != toupperW(s2->Buffer[i])) return FALSE;
-    }
-    else
-    {
-        for (i = 0; i < s1->Length / sizeof(WCHAR); i++)
-            if (s1->Buffer[i] != s2->Buffer[i]) return FALSE;
-    }
-    return TRUE;
-}
-
-
-/**************************************************************************
  *	RtlEqualComputerName   (NTDLL.@)
  *
  * Determine if two computer names are the same.
@@ -633,35 +540,6 @@ NTSTATUS WINAPI RtlEqualDomainName(const UNICODE_STRING *left,
     return RtlEqualComputerName(left, right);
 }
 
-
-/**************************************************************************
- *      RtlAnsiCharToUnicodeChar   (NTDLL.@)
- *
- * Converts the first ansi character to a unicode character.
- *
- * PARAMS
- *  ansi [I/O] Pointer to the ansi string.
- *
- * RETURNS
- *  Unicode representation of the first character in the ansi string.
- *
- * NOTES
- *  Upon successful completion, the char pointer ansi points to is
- *  incremented by the size of the character.
- */
-WCHAR WINAPI RtlAnsiCharToUnicodeChar(LPSTR *ansi)
-{
-    WCHAR str;
-    DWORD charSize = sizeof(CHAR);
-
-    if (wine_is_dbcs_leadbyte(ansi_table, **ansi))
-        charSize++;
-
-    RtlMultiByteToUnicodeN(&str, sizeof(WCHAR), NULL, *ansi, charSize);
-    *ansi += charSize;
-
-    return str;
-}
 
 /*
         COPY BETWEEN ANSI_STRING or UNICODE_STRING
@@ -831,84 +709,6 @@ NTSTATUS WINAPI RtlUnicodeStringToOemString( STRING *oem,
 }
 
 
-/**************************************************************************
- *	RtlMultiByteToUnicodeN   (NTDLL.@)
- *
- * Converts a multi-byte string to a Unicode string.
- *
- * RETURNS
- *  NTSTATUS code
- *
- * NOTES
- *  Performs a partial copy if dst is too small.
- */
-NTSTATUS WINAPI RtlMultiByteToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
-                                        LPCSTR src, DWORD srclen )
-{
-
-    int ret = wine_cp_mbstowcs( ansi_table, 0, src, srclen, dst, dstlen/sizeof(WCHAR) );
-    if (reslen)
-        *reslen = (ret >= 0) ? ret*sizeof(WCHAR) : dstlen; /* overflow -> we filled up to dstlen */
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
- *	RtlOemToUnicodeN   (NTDLL.@)
- *
- * Converts a multi-byte string in the OEM code page to a Unicode string.
- *
- * RETURNS
- *  NTSTATUS code
- */
-NTSTATUS WINAPI RtlOemToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
-                                  LPCSTR src, DWORD srclen )
-{
-    int ret = wine_cp_mbstowcs( oem_table, 0, src, srclen, dst, dstlen/sizeof(WCHAR) );
-    if (reslen)
-        *reslen = (ret >= 0) ? ret*sizeof(WCHAR) : dstlen; /* overflow -> we filled up to dstlen */
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
- *	RtlUnicodeToMultiByteN   (NTDLL.@)
- *
- * Converts a Unicode string to a multi-byte string in the ANSI code page.
- *
- * RETURNS
- *  NTSTATUS code
- */
-NTSTATUS WINAPI RtlUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
-                                        LPCWSTR src, DWORD srclen )
-{
-    int ret = wine_cp_wcstombs( ansi_table, 0, src, srclen / sizeof(WCHAR),
-                                dst, dstlen, NULL, NULL );
-    if (reslen)
-        *reslen = (ret >= 0) ? ret : dstlen; /* overflow -> we filled up to dstlen */
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
- *	RtlUnicodeToOemN   (NTDLL.@)
- *
- * Converts a Unicode string to a multi-byte string in the OEM code page.
- *
- * RETURNS
- *  NTSTATUS code
- */
-NTSTATUS WINAPI RtlUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
-                                  LPCWSTR src, DWORD srclen )
-{
-    int ret = wine_cp_wcstombs( oem_table, 0, src, srclen / sizeof(WCHAR),
-                                dst, dstlen, NULL, NULL );
-    if (reslen)
-        *reslen = (ret >= 0) ? ret : dstlen; /* overflow -> we filled up to dstlen */
-    return STATUS_SUCCESS;
-}
-
-
 /*
      CASE CONVERSIONS
 */
@@ -969,123 +769,6 @@ void WINAPI RtlUpperString( STRING *dst, const STRING *src )
 
 
 /**************************************************************************
- *	RtlUpcaseUnicodeChar   (NTDLL.@)
- *
- * Converts a Unicode character to uppercase.
- *
- * PARAMS
- *  wch [I] Character to convert
- *
- * RETURNS
- *  The uppercase character value.
- */
-WCHAR WINAPI RtlUpcaseUnicodeChar( WCHAR wch )
-{
-    return toupperW(wch);
-}
-
-
-/**************************************************************************
- *	RtlDowncaseUnicodeChar   (NTDLL.@)
- *
- * Converts a Unicode character to lowercase.
- *
- * PARAMS
- *  wch [I] Character to convert
- *
- * RETURNS
- *  The lowercase character value.
- */
-WCHAR WINAPI RtlDowncaseUnicodeChar(WCHAR wch)
-{
-    return tolowerW(wch);
-}
-
-
-/**************************************************************************
- *	RtlUpcaseUnicodeString   (NTDLL.@)
- *
- * Converts a Unicode string to uppercase.
- *
- * PARAMS
- *  dest    [O] Destination for converted string
- *  src     [I] Source string to convert
- *  doalloc [I] TRUE=Allocate a buffer for dest if it doesn't have one
- *
- * RETURNS
- *  Success: STATUS_SUCCESS. dest contains the converted string.
- *  Failure: STATUS_NO_MEMORY, if doalloc is TRUE and memory allocation fails, or
- *           STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and dest is too small.
- *
- * NOTES
- *  dest is never '\0' terminated because it may be equal to src, and src
- *  might not be '\0' terminated. dest->Length is only set upon success.
- */
-NTSTATUS WINAPI RtlUpcaseUnicodeString( UNICODE_STRING *dest,
-                                        const UNICODE_STRING *src,
-                                        BOOLEAN doalloc)
-{
-    DWORD i, len = src->Length;
-
-    if (doalloc)
-    {
-        dest->MaximumLength = len;
-        if (!(dest->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len )))
-            return STATUS_NO_MEMORY;
-    }
-    else if (len > dest->MaximumLength) return STATUS_BUFFER_OVERFLOW;
-
-    for (i = 0; i < len/sizeof(WCHAR); i++) dest->Buffer[i] = toupperW(src->Buffer[i]);
-    dest->Length = len;
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
- *	RtlDowncaseUnicodeString   (NTDLL.@)
- *
- * Converts a Unicode string to lowercase.
- *
- * PARAMS
- *  dest    [O] Destination for converted string
- *  src     [I] Source string to convert
- *  doalloc [I] TRUE=Allocate a buffer for dest if it doesn't have one
- *
- * RETURNS
- *  Success: STATUS_SUCCESS. dest contains the converted string.
- *  Failure: STATUS_NO_MEMORY, if doalloc is TRUE and memory allocation fails, or
- *           STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and dest is too small.
- *
- * NOTES
- *  dest is never '\0' terminated because it may be equal to src, and src
- *  might not be '\0' terminated. dest->Length is only set upon success.
- */
-NTSTATUS WINAPI RtlDowncaseUnicodeString(
-    UNICODE_STRING *dest,
-    const UNICODE_STRING *src,
-    BOOLEAN doalloc)
-{
-    DWORD i;
-    DWORD len = src->Length;
-
-    if (doalloc) {
-        dest->MaximumLength = len;
-        if (!(dest->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len ))) {
-            return STATUS_NO_MEMORY;
-        } /* if */
-    } else if (len > dest->MaximumLength) {
-        return STATUS_BUFFER_OVERFLOW;
-    } /* if */
-
-    for (i = 0; i < len/sizeof(WCHAR); i++) {
-        dest->Buffer[i] = tolowerW(src->Buffer[i]);
-    } /* for */
-    dest->Length = len;
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
  *	RtlUpcaseUnicodeStringToAnsiString   (NTDLL.@)
  *
  * Converts a Unicode string to the equivalent ANSI upper-case representation.
@@ -1096,18 +779,29 @@ NTSTATUS WINAPI RtlDowncaseUnicodeString(
  * NOTES
  *  writes terminating 0
  */
-NTSTATUS WINAPI RtlUpcaseUnicodeStringToAnsiString( STRING *dst,
-                                                    const UNICODE_STRING *src,
+NTSTATUS WINAPI RtlUpcaseUnicodeStringToAnsiString( STRING *ansi,
+                                                    const UNICODE_STRING *uni,
                                                     BOOLEAN doalloc )
 {
-    NTSTATUS ret;
-    UNICODE_STRING upcase;
+    NTSTATUS ret = STATUS_SUCCESS;
+    DWORD len = RtlUnicodeStringToAnsiSize( uni );
 
-    if (!(ret = RtlUpcaseUnicodeString( &upcase, src, TRUE )))
+    ansi->Length = len - 1;
+    if (doalloc)
     {
-        ret = RtlUnicodeStringToAnsiString( dst, &upcase, doalloc );
-        RtlFreeUnicodeString( &upcase );
+        ansi->MaximumLength = len;
+        if (!(ansi->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len )))
+            return STATUS_NO_MEMORY;
     }
+    else if (ansi->MaximumLength < len)
+    {
+        if (!ansi->MaximumLength) return STATUS_BUFFER_OVERFLOW;
+        ansi->Length = ansi->MaximumLength - 1;
+        ret = STATUS_BUFFER_OVERFLOW;
+    }
+
+    RtlUpcaseUnicodeToMultiByteN( ansi->Buffer, ansi->Length, NULL, uni->Buffer, uni->Length );
+    ansi->Buffer[ansi->Length] = 0;
     return ret;
 }
 
@@ -1124,18 +818,29 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToAnsiString( STRING *dst,
  * NOTES
  *  writes terminating 0
  */
-NTSTATUS WINAPI RtlUpcaseUnicodeStringToOemString( STRING *dst,
-                                                   const UNICODE_STRING *src,
+NTSTATUS WINAPI RtlUpcaseUnicodeStringToOemString( STRING *oem,
+                                                   const UNICODE_STRING *uni,
                                                    BOOLEAN doalloc )
 {
-    NTSTATUS ret;
-    UNICODE_STRING upcase;
+    NTSTATUS ret = STATUS_SUCCESS;
+    DWORD len = RtlUnicodeStringToAnsiSize( uni );
 
-    if (!(ret = RtlUpcaseUnicodeString( &upcase, src, TRUE )))
+    oem->Length = len - 1;
+    if (doalloc)
     {
-        ret = RtlUnicodeStringToOemString( dst, &upcase, doalloc );
-        RtlFreeUnicodeString( &upcase );
+        oem->MaximumLength = len;
+        if (!(oem->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len )))
+            return STATUS_NO_MEMORY;
     }
+    else if (oem->MaximumLength < len)
+    {
+        if (!oem->MaximumLength) return STATUS_BUFFER_OVERFLOW;
+        oem->Length = oem->MaximumLength - 1;
+        ret = STATUS_BUFFER_OVERFLOW;
+    }
+
+    RtlUpcaseUnicodeToOemN( oem->Buffer, oem->Length, NULL, uni->Buffer, uni->Length );
+    oem->Buffer[oem->Length] = 0;
     return ret;
 }
 
@@ -1156,84 +861,22 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToCountedOemString( STRING *oem,
                                                           const UNICODE_STRING *uni,
                                                           BOOLEAN doalloc )
 {
-    NTSTATUS ret;
-    UNICODE_STRING upcase;
-    WCHAR tmp[32];
+    NTSTATUS ret = STATUS_SUCCESS;
+    DWORD len = RtlUnicodeStringToOemSize( uni ) - 1;
 
-    upcase.Buffer = tmp;
-    upcase.MaximumLength = sizeof(tmp);
-    ret = RtlUpcaseUnicodeString( &upcase, uni, FALSE );
-    if (ret == STATUS_BUFFER_OVERFLOW) ret = RtlUpcaseUnicodeString( &upcase, uni, TRUE );
-
-    if (!ret)
+    oem->Length = len;
+    if (doalloc)
     {
-        DWORD len = RtlUnicodeStringToOemSize( &upcase ) - 1;
-        oem->Length = len;
-        if (doalloc)
-        {
-            oem->MaximumLength = len;
-            if (!(oem->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len )))
-            {
-                ret = STATUS_NO_MEMORY;
-                goto done;
-            }
-        }
-        else if (oem->MaximumLength < len)
-        {
-            ret = STATUS_BUFFER_OVERFLOW;
-            oem->Length = oem->MaximumLength;
-            if (!oem->MaximumLength) goto done;
-        }
-        RtlUnicodeToOemN( oem->Buffer, oem->Length, NULL, upcase.Buffer, upcase.Length );
-    done:
-        if (upcase.Buffer != tmp) RtlFreeUnicodeString( &upcase );
+        oem->MaximumLength = len;
+        if (!(oem->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len ))) return STATUS_NO_MEMORY;
     }
-    return ret;
-}
-
-
-/**************************************************************************
- *	RtlUpcaseUnicodeToMultiByteN   (NTDLL.@)
- *
- * Converts a Unicode string to the equivalent ANSI upper-case representation.
- *
- * RETURNS
- *  NTSTATUS code
- */
-NTSTATUS WINAPI RtlUpcaseUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
-                                              LPCWSTR src, DWORD srclen )
-{
-    NTSTATUS ret;
-    LPWSTR upcase;
-    DWORD i;
-
-    if (!(upcase = RtlAllocateHeap( GetProcessHeap(), 0, srclen ))) return STATUS_NO_MEMORY;
-    for (i = 0; i < srclen/sizeof(WCHAR); i++) upcase[i] = toupperW(src[i]);
-    ret = RtlUnicodeToMultiByteN( dst, dstlen, reslen, upcase, srclen );
-    RtlFreeHeap( GetProcessHeap(), 0, upcase );
-    return ret;
-}
-
-
-/**************************************************************************
- *	RtlUpcaseUnicodeToOemN   (NTDLL.@)
- *
- * Converts a Unicode string to the equivalent OEM upper-case representation.
- *
- * RETURNS
- *  NTSTATUS code
- */
-NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
-                                        LPCWSTR src, DWORD srclen )
-{
-    NTSTATUS ret;
-    LPWSTR upcase;
-    DWORD i;
-
-    if (!(upcase = RtlAllocateHeap( GetProcessHeap(), 0, srclen ))) return STATUS_NO_MEMORY;
-    for (i = 0; i < srclen/sizeof(WCHAR); i++) upcase[i] = toupperW(src[i]);
-    ret = RtlUnicodeToOemN( dst, dstlen, reslen, upcase, srclen );
-    RtlFreeHeap( GetProcessHeap(), 0, upcase );
+    else if (oem->MaximumLength < len)
+    {
+        ret = STATUS_BUFFER_OVERFLOW;
+        oem->Length = oem->MaximumLength;
+        if (!oem->MaximumLength) return ret;
+    }
+    RtlUpcaseUnicodeToOemN( oem->Buffer, oem->Length, NULL, uni->Buffer, uni->Length );
     return ret;
 }
 
@@ -1241,26 +884,6 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 /*
         STRING SIZE
 */
-
-
-/**************************************************************************
- *      RtlOemStringToUnicodeSize   (NTDLL.@)
- *      RtlxOemStringToUnicodeSize  (NTDLL.@)
- *
- * Calculate the size in bytes necessary for the Unicode conversion of str,
- * including the terminating '\0'.
- *
- * PARAMS
- *  str [I] String to calculate the size of
- *
- * RETURNS
- *  The calculated size.
- */
-UINT WINAPI RtlOemStringToUnicodeSize( const STRING *str )
-{
-    int ret = wine_cp_mbstowcs( oem_table, 0, str->Buffer, str->Length, NULL, 0 );
-    return (ret + 1) * sizeof(WCHAR);
-}
 
 
 /**************************************************************************
@@ -1285,48 +908,6 @@ DWORD WINAPI RtlAnsiStringToUnicodeSize( const STRING *str )
 
 
 /**************************************************************************
- *      RtlMultiByteToUnicodeSize   (NTDLL.@)
- *
- * Compute the size in bytes necessary for the Unicode conversion of str,
- * without the terminating '\0'.
- *
- * PARAMS
- *  size [O] Destination for size
- *  str  [I] String to calculate the size of
- *  len  [I] Length of str
- *
- * RETURNS
- *  STATUS_SUCCESS.
- */
-NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, LPCSTR str, UINT len )
-{
-    *size = wine_cp_mbstowcs( ansi_table, 0, str, len, NULL, 0 ) * sizeof(WCHAR);
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
- *      RtlUnicodeToMultiByteSize   (NTDLL.@)
- *
- * Calculate the size in bytes necessary for the multibyte conversion of str,
- * without the terminating '\0'.
- *
- * PARAMS
- *  size [O] Destination for size
- *  str  [I] String to calculate the size of
- *  len  [I] Length of str
- *
- * RETURNS
- *  STATUS_SUCCESS.
- */
-NTSTATUS WINAPI RtlUnicodeToMultiByteSize( PULONG size, LPCWSTR str, ULONG len )
-{
-    *size = wine_cp_wcstombs( ansi_table, 0, str, len / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
  *      RtlUnicodeStringToAnsiSize   (NTDLL.@)
  *      RtlxUnicodeStringToAnsiSize  (NTDLL.@)
  *
@@ -1344,26 +925,6 @@ DWORD WINAPI RtlUnicodeStringToAnsiSize( const UNICODE_STRING *str )
     DWORD ret;
     RtlUnicodeToMultiByteSize( &ret, str->Buffer, str->Length );
     return ret + 1;
-}
-
-
-/**************************************************************************
- *      RtlUnicodeStringToOemSize   (NTDLL.@)
- *      RtlxUnicodeStringToOemSize  (NTDLL.@)
- *
- * Calculate the size in bytes necessary for the OEM conversion of str,
- * including the terminating '\0'.
- *
- * PARAMS
- *  str [I] String to calculate the size of
- *
- * RETURNS
- *  The calculated size.
- */
-DWORD WINAPI RtlUnicodeStringToOemSize( const UNICODE_STRING *str )
-{
-    return wine_cp_wcstombs( oem_table, 0, str->Buffer, str->Length / sizeof(WCHAR),
-                             NULL, 0, NULL, NULL ) + 1;
 }
 
 

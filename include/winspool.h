@@ -1761,6 +1761,9 @@ BOOL WINAPI XcvDataW(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
     DWORD cbInputData, PBYTE pOutputData, DWORD cbOutputData,
     PDWORD pcbOutputNeeded, PDWORD pdwStatus);
 
+BOOL WINAPI IsValidDevmodeA(PDEVMODEA pDevMode, SIZE_T size);
+BOOL WINAPI IsValidDevmodeW(PDEVMODEW pDevMode, SIZE_T size);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -507,7 +507,7 @@ static void test_Cancel(void)
 static void test_HttpOptions(void)
 {
     static const WCHAR urlW[] =
-        {'h','t','t','p','s',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',0};
+        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',0};
     static const WCHAR winetestW[] =
         {'W','i','n','e',':',' ','t','e','s','t','\r','\n',0};
     static const unsigned int timeout = 30;

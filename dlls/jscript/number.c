@@ -241,15 +241,15 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     TRACE("\n");
 
     if(!(number = number_this(jsthis)))
-        return throw_type_error(ctx, JS_E_NUMBER_EXPECTED, NULL);
+        return JS_E_NUMBER_EXPECTED;
 
     if(argc) {
         hres = to_int32(ctx, argv[0], &radix);
         if(FAILED(hres))
             return hres;
 
-        if(radix<2 || radix>36)
-            return throw_type_error(ctx, JS_E_INVALIDARG, NULL);
+        if(radix < 2 || radix > 36)
+            return JS_E_INVALIDARG;
     }
 
     val = number->value;
@@ -368,15 +368,15 @@ static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     TRACE("\n");
 
     if(!(number = number_this(jsthis)))
-        return throw_type_error(ctx, JS_E_NUMBER_EXPECTED, NULL);
+        return JS_E_NUMBER_EXPECTED;
 
     if(argc) {
         hres = to_int32(ctx, argv[0], &prec);
         if(FAILED(hres))
             return hres;
 
-        if(prec<0 || prec>20)
-            return throw_range_error(ctx, JS_E_FRACTION_DIGITS_OUT_OF_RANGE, NULL);
+        if(prec < 0 || prec > 20)
+            return JS_E_FRACTION_DIGITS_OUT_OF_RANGE;
     }
 
     val = number->value;
@@ -409,15 +409,15 @@ static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     TRACE("\n");
 
     if(!(number = number_this(jsthis)))
-        return throw_type_error(ctx, JS_E_NUMBER_EXPECTED, NULL);
+        return JS_E_NUMBER_EXPECTED;
 
     if(argc) {
         hres = to_int32(ctx, argv[0], &prec);
         if(FAILED(hres))
             return hres;
 
-        if(prec<0 || prec>20)
-            return throw_range_error(ctx, JS_E_FRACTION_DIGITS_OUT_OF_RANGE, NULL);
+        if(prec < 0 || prec > 20)
+            return JS_E_FRACTION_DIGITS_OUT_OF_RANGE;
     }
 
     val = number->value;
@@ -450,7 +450,7 @@ static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     HRESULT hres;
 
     if(!(number = number_this(jsthis)))
-        return throw_type_error(ctx, JS_E_NUMBER_EXPECTED, NULL);
+        return JS_E_NUMBER_EXPECTED;
 
     if(argc) {
         hres = to_int32(ctx, argv[0], &prec);
@@ -458,7 +458,7 @@ static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             return hres;
 
         if(prec<1 || prec>21)
-            return throw_range_error(ctx, JS_E_PRECISION_OUT_OF_RANGE, NULL);
+            return JS_E_PRECISION_OUT_OF_RANGE;
     }
 
     val = number->value;
@@ -495,7 +495,7 @@ static HRESULT Number_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     TRACE("\n");
 
     if(!(number = number_this(jsthis)))
-        return throw_type_error(ctx, JS_E_NUMBER_EXPECTED, NULL);
+        return JS_E_NUMBER_EXPECTED;
 
     if(r)
         *r = jsval_number(number->value);

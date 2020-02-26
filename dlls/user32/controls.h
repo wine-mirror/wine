@@ -219,8 +219,8 @@ typedef struct
    RECT           droppedRect;
    INT            droppedIndex;
    INT            fixedOwnerDrawHeight;
-   INT            droppedWidth;   /* last two are not used unless set */
-   INT            editHeight;     /* explicitly */
+   INT            droppedWidth;   /* not used unless set explicitly */
+   INT            item_height;
 } HEADCOMBO,*LPHEADCOMBO;
 
 extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL ) DECLSPEC_HIDDEN;

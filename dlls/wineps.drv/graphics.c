@@ -18,18 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#if defined(HAVE_FLOAT_H)
-# include <float.h>
-#endif
-#if !defined(PI)
-# define PI M_PI
-#endif
+#include <float.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -74,7 +67,7 @@ static void PSDRV_DrawLine( PHYSDEV dev )
 /***********************************************************************
  *           PSDRV_LineTo
  */
-BOOL PSDRV_LineTo(PHYSDEV dev, INT x, INT y)
+BOOL CDECL PSDRV_LineTo(PHYSDEV dev, INT x, INT y)
 {
     POINT pt[2];
 
@@ -100,7 +93,7 @@ BOOL PSDRV_LineTo(PHYSDEV dev, INT x, INT y)
 /***********************************************************************
  *           PSDRV_Rectangle
  */
-BOOL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL CDECL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     RECT rect;
@@ -138,8 +131,8 @@ BOOL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 /***********************************************************************
  *           PSDRV_RoundRect
  */
-BOOL PSDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
-                      INT bottom, INT ell_width, INT ell_height )
+BOOL CDECL PSDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
+                            INT bottom, INT ell_width, INT ell_height )
 {
     RECT rect[2];
 
@@ -221,8 +214,8 @@ static BOOL PSDRV_DrawArc( PHYSDEV dev, INT left, INT top,
     start_angle = atan2((double)(y - start.y) * ratio, (double)(start.x - x));
     end_angle = atan2((double)(y - end.y) * ratio, (double)(end.x - x));
 
-    start_angle *= 180.0 / PI;
-    end_angle *= 180.0 / PI;
+    start_angle *= 180.0 / M_PI;
+    end_angle *= 180.0 / M_PI;
 
     PSDRV_WriteSpool(dev,"%DrawArc\n", 9);
     PSDRV_SetPen(dev);
@@ -248,8 +241,8 @@ static BOOL PSDRV_DrawArc( PHYSDEV dev, INT left, INT top,
 /***********************************************************************
  *           PSDRV_Arc
  */
-BOOL PSDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                INT xstart, INT ystart, INT xend, INT yend )
+BOOL CDECL PSDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                      INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 0 );
 }
@@ -257,8 +250,8 @@ BOOL PSDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           PSDRV_Chord
  */
-BOOL PSDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                  INT xstart, INT ystart, INT xend, INT yend )
+BOOL CDECL PSDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                        INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 1 );
 }
@@ -267,8 +260,8 @@ BOOL PSDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           PSDRV_Pie
  */
-BOOL PSDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                INT xstart, INT ystart, INT xend, INT yend )
+BOOL CDECL PSDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                      INT xstart, INT ystart, INT xend, INT yend )
 {
     return PSDRV_DrawArc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 2 );
 }
@@ -277,7 +270,7 @@ BOOL PSDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           PSDRV_Ellipse
  */
-BOOL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
+BOOL CDECL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
     INT x, y, w, h;
     RECT rect;
@@ -309,7 +302,7 @@ BOOL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 /***********************************************************************
  *           PSDRV_PolyPolyline
  */
-BOOL PSDRV_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWORD polylines )
+BOOL CDECL PSDRV_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWORD polylines )
 {
     DWORD polyline, line, total;
     POINT *dev_pts, *pt;
@@ -344,7 +337,7 @@ BOOL PSDRV_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWO
 /***********************************************************************
  *           PSDRV_PolyPolygon
  */
-BOOL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons )
+BOOL CDECL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons )
 {
     DWORD polygon, total;
     INT line;
@@ -386,7 +379,7 @@ BOOL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT p
 /***********************************************************************
  *           PSDRV_PolyBezier
  */
-BOOL PSDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
+BOOL CDECL PSDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
 {
     DWORD i;
     POINT *dev_pts;
@@ -412,7 +405,7 @@ BOOL PSDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
 /***********************************************************************
  *           PSDRV_PolyBezierTo
  */
-BOOL PSDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
+BOOL CDECL PSDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
 {
     DWORD i;
     POINT *dev_pts;
@@ -440,7 +433,7 @@ BOOL PSDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
 /***********************************************************************
  *           PSDRV_SetPixel
  */
-COLORREF PSDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+COLORREF CDECL PSDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     PSCOLOR pscolor;
     POINT pt;
@@ -465,7 +458,7 @@ COLORREF PSDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 /***********************************************************************
  *           PSDRV_PaintRgn
  */
-BOOL PSDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
+BOOL CDECL PSDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
 {
     RGNDATA *rgndata = NULL;
     RECT *pRect;
@@ -555,7 +548,7 @@ done:
 /***********************************************************************
  *           PSDRV_FillPath
  */
-BOOL PSDRV_FillPath( PHYSDEV dev )
+BOOL CDECL PSDRV_FillPath( PHYSDEV dev )
 {
     return paint_path( dev, FALSE, TRUE );
 }
@@ -563,7 +556,7 @@ BOOL PSDRV_FillPath( PHYSDEV dev )
 /***********************************************************************
  *           PSDRV_StrokeAndFillPath
  */
-BOOL PSDRV_StrokeAndFillPath( PHYSDEV dev )
+BOOL CDECL PSDRV_StrokeAndFillPath( PHYSDEV dev )
 {
     return paint_path( dev, TRUE, TRUE );
 }
@@ -571,7 +564,7 @@ BOOL PSDRV_StrokeAndFillPath( PHYSDEV dev )
 /***********************************************************************
  *           PSDRV_StrokePath
  */
-BOOL PSDRV_StrokePath( PHYSDEV dev )
+BOOL CDECL PSDRV_StrokePath( PHYSDEV dev )
 {
     return paint_path( dev, TRUE, FALSE );
 }

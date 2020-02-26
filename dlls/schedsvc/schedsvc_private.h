@@ -20,7 +20,6 @@
 #define __WINE_SCHEDSVC_PRIVATE_H__
 
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 void schedsvc_auto_start(void) DECLSPEC_HIDDEN;
 void add_job(const WCHAR *name) DECLSPEC_HIDDEN;
@@ -38,7 +37,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *src)
     WCHAR *dst;
     unsigned len;
     if (!src) return NULL;
-    len = (strlenW(src) + 1) * sizeof(WCHAR);
+    len = (lstrlenW(src) + 1) * sizeof(WCHAR);
     if ((dst = heap_alloc(len))) memcpy(dst, src, len);
     return dst;
 }

@@ -59,23 +59,13 @@ extern void *wine_dlopen( const char *filename, int flag, char *error, size_t er
 extern void *wine_dlsym( void *handle, const char *symbol, char *error, size_t errorsize );
 extern int wine_dlclose( void *handle, char *error, size_t errorsize );
 extern void wine_dll_set_callback( load_dll_callback_t load );
-extern void *wine_dll_load( const char *filename, char *error, int errorsize, int *file_exists );
-extern void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
-                                     int test_only, int *file_exists );
-extern void wine_dll_unload( void *handle );
 extern const char *wine_dll_enum_load_path( unsigned int index );
-extern int wine_dll_get_owner( const char *name, char *buffer, int size, int *file_exists );
 
 extern int __wine_main_argc;
 extern char **__wine_main_argv;
 extern WCHAR **__wine_main_wargv;
 extern void __wine_dll_register( const IMAGE_NT_HEADERS *header, const char *filename );
 extern void wine_init( int argc, char *argv[], char *error, int error_size );
-
-/* portability */
-
-extern void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, void *stack );
-extern int wine_call_on_stack( int (*func)(void *), void *arg, void *stack );
 
 /* memory mappings */
 
