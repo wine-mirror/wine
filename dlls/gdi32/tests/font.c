@@ -407,9 +407,9 @@ static void test_bitmap_font(void)
     ret = EnumFontFamiliesA(hdc, "System", font_enum_proc, (LPARAM)&bitmap_lf);
     if (ret)
     {
-	ReleaseDC(0, hdc);
-	trace("no bitmap fonts were found, skipping the test\n");
-	return;
+        ReleaseDC(0, hdc);
+        skip("no bitmap fonts were found, skipping the test\n");
+        return;
     }
 
     trace("found bitmap font %s, height %d\n", bitmap_lf.lfFaceName, bitmap_lf.lfHeight);
@@ -570,7 +570,6 @@ static void test_outline_font(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
     ok(ret != GDI_ERROR, "GetGlyphOutlineA error %d\n", GetLastError());
-    trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     ok(gm.gmCellIncX == width_orig, "incX %d != %d\n", gm.gmCellIncX, width_orig);
     ok(gm.gmCellIncY == 0, "incY %d != 0\n", gm.gmCellIncY);
     /* with a custom matrix */
@@ -578,7 +577,6 @@ static void test_outline_font(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat2);
     ok(ret != GDI_ERROR, "GetGlyphOutlineA error %d\n", GetLastError());
-    trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     ok(gm.gmCellIncX == width_orig/2, "incX %d != %d\n", gm.gmCellIncX, width_orig/2);
     ok(gm.gmCellIncY == 0, "incY %d != 0\n", gm.gmCellIncY);
 
@@ -650,7 +648,6 @@ static void test_outline_font(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
     ok(ret != GDI_ERROR, "GetGlyphOutlineA error %d\n", GetLastError());
-    trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     pt.x = width_orig; pt.y = 0;
     LPtoDP(hdc, &pt, 1);
     ok(gm.gmCellIncX == pt.x, "incX %d != %d\n", gm.gmCellIncX, pt.x);
@@ -661,7 +658,6 @@ static void test_outline_font(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat2);
     ok(ret != GDI_ERROR, "GetGlyphOutlineA error %d\n", GetLastError());
-    trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     pt.x = width_orig; pt.y = 0;
     LPtoDP(hdc, &pt, 1);
     ok(gm.gmCellIncX == pt.x/2, "incX %d != %d\n", gm.gmCellIncX, pt.x/2);
@@ -679,7 +675,6 @@ static void test_outline_font(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
     ok(ret != GDI_ERROR, "GetGlyphOutlineA error %d\n", GetLastError());
-    trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     pt.x = width_orig; pt.y = 0;
     LPtoDP(hdc, &pt, 1);
     ok(near_match(gm.gmCellIncX, pt.x), "incX %d != %d\n", gm.gmCellIncX, pt.x);
@@ -689,7 +684,6 @@ static void test_outline_font(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat2);
     ok(ret != GDI_ERROR, "GetGlyphOutlineA error %d\n", GetLastError());
-    trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     pt.x = width_orig; pt.y = 0;
     LPtoDP(hdc, &pt, 1);
     ok(near_match(gm.gmCellIncX, (pt.x + 1)/2), "incX %d != %d\n", gm.gmCellIncX, (pt.x + 1)/2);
@@ -706,7 +700,6 @@ static void test_outline_font(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat);
     ok(ret != GDI_ERROR, "GetGlyphOutlineA error %d\n", GetLastError());
-    trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     pt.x = width_orig; pt.y = 0;
     LPtoDP(hdc, &pt, 1);
     ok(gm.gmCellIncX == pt.x, "incX %d != %d\n", gm.gmCellIncX, pt.x);
@@ -717,7 +710,6 @@ static void test_outline_font(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineA(hdc, 'A', GGO_METRICS, &gm, 0, NULL, &mat2);
     ok(ret != GDI_ERROR, "GetGlyphOutlineA error %d\n", GetLastError());
-    trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     pt.x = width_orig; pt.y = 0;
     LPtoDP(hdc, &pt, 1);
     ok(gm.gmCellIncX == pt.x/2, "incX %d != %d\n", gm.gmCellIncX, pt.x/2);
@@ -1011,13 +1003,9 @@ static void test_bitmap_font_metrics(void)
             else
                 ok(ret == expected_cs, "got charset %d, expected %d\n", ret, expected_cs);
 
-            trace("created %s, height %d charset %x dpi %d\n", face_name, tm.tmHeight, tm.tmCharSet, tm.tmDigitizedAspectX);
-            trace("expected %s, height %d scaled_height %d, dpi %d\n", fd[i].face_name, height, fd[i].scaled_height, fd[i].dpi);
-
             if(fd[i].dpi == tm.tmDigitizedAspectX)
             {
                 int skipme = 0;
-                trace("matched %s, height %d charset %x dpi %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
                 if (fd[i].skip_lang_id)
                 {
                     int si = 0;
@@ -1384,7 +1372,7 @@ static void test_GetCharABCWidths(void)
     }
     ReleaseDC(NULL, hdc);
 
-    trace("ABC sign test for a variety of transforms:\n");
+    /* ABC sign test for a variety of transforms */
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Tahoma");
     lf.lfHeight = 20;
@@ -1420,7 +1408,7 @@ static void test_GetCharABCWidths(void)
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
 
-    trace("RTL layout\n");
+    /* RTL layout */
     hwnd = CreateWindowExA(WS_EX_LAYOUTRTL, "static", "", WS_POPUP, 0,0,100,100,
                            0, 0, 0, NULL);
     hdc = GetDC(hwnd);
@@ -1773,11 +1761,9 @@ static void test_GetKerningPairs(void)
 
         if (!is_font_installed(kd[i].face_name))
         {
-            trace("%s is not installed so skipping this test\n", kd[i].face_name);
+            skip("%s is not installed so skipping this test\n", kd[i].face_name);
             continue;
         }
-
-        trace("testing font %s, height %d\n", kd[i].face_name, kd[i].height);
 
         memset(&lf, 0, sizeof(lf));
         strcpy(lf.lfFaceName, kd[i].face_name);
@@ -1824,7 +1810,6 @@ todo_wine
            kd[i].otmusMinimumPPEM, otm.otmusMinimumPPEM);
 
         total_kern_pairs = GetKerningPairsW(hdc, 0, NULL);
-        trace("total_kern_pairs %u\n", total_kern_pairs);
         kern_pair = HeapAlloc(GetProcessHeap(), 0, total_kern_pairs * sizeof(*kern_pair));
 
         /* Win98 (GetKerningPairsA) and XP behave differently here, the test
@@ -1850,10 +1835,7 @@ todo_wine
         for (n = 0; n < ret; n++)
         {
             DWORD j;
-            /* Disabled to limit console spam */
-            if (0 && kern_pair[n].wFirst < 127 && kern_pair[n].wSecond < 127)
-                trace("{'%c','%c',%d},\n",
-                      kern_pair[n].wFirst, kern_pair[n].wSecond, kern_pair[n].iKernAmount);
+
             for (j = 0; j < kd[i].total_kern_pairs; j++)
             {
                 if (kern_pair[n].wFirst == kd[i].kern_pair[j].wFirst &&
@@ -2231,7 +2213,6 @@ static void test_GetOutlineTextMetrics(void)
 
     hfont_old = SelectObject(hdc, hfont);
     otm_size = GetOutlineTextMetricsA(hdc, 0, NULL);
-    trace("otm buffer size %u (0x%x)\n", otm_size, otm_size);
 
     otm = HeapAlloc(GetProcessHeap(), 0, otm_size);
 
@@ -2667,7 +2648,7 @@ static void test_GdiGetCodePage(void)
     HDC         hdc;
     LOGFONTA    lf;
     HFONT       hfont;
-    UINT        charset, acp;
+    UINT        acp;
     DWORD       codepage;
     int         i;
 
@@ -2701,10 +2682,7 @@ static void test_GdiGetCodePage(void)
         ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
 
         hfont = SelectObject(hdc, hfont);
-        charset = GetTextCharset(hdc);
         codepage = pGdiGetCodePage(hdc);
-        trace("acp=%d, lfFaceName=%s, lfCharSet=%d, GetTextCharset=%d, GdiGetCodePage=%d, expected codepage=%d\n",
-              acp, lf.lfFaceName, lf.lfCharSet, charset, codepage, matching_data[i].expected_codepage);
         ok(codepage == matching_data[i].expected_codepage,
            "GdiGetCodePage should have returned %d, got %d\n", matching_data[i].expected_codepage, codepage);
 
@@ -2717,10 +2695,7 @@ static void test_GdiGetCodePage(void)
         ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
 
         hfont = SelectObject(hdc, hfont);
-        charset = GetTextCharset(hdc);
         codepage = pGdiGetCodePage(hdc);
-        trace("acp=%d, lfFaceName=%s, lfCharSet=%d, GetTextCharset=%d, GdiGetCodePage=%d\n",
-              acp, lf.lfFaceName, lf.lfCharSet, charset, codepage);
         ok(codepage == 1252, "GdiGetCodePage returned %d\n", codepage);
 
         hfont = SelectObject(hdc, hfont);
@@ -2737,7 +2712,6 @@ static void test_GetFontUnicodeRanges(void)
     HFONT hfont, hfont_old;
     DWORD size;
     GLYPHSET *gs;
-    DWORD i;
 
     if (!pGetFontUnicodeRanges)
     {
@@ -2758,17 +2732,13 @@ static void test_GetFontUnicodeRanges(void)
     size = pGetFontUnicodeRanges(hdc, NULL);
     ok(size, "GetFontUnicodeRanges failed unexpectedly\n");
 
-    gs = HeapAlloc(GetProcessHeap(), 0, size);
+    gs = heap_alloc_zero(size);
 
     size = pGetFontUnicodeRanges(hdc, gs);
     ok(size, "GetFontUnicodeRanges failed\n");
+    ok(gs->cRanges, "Unexpected ranges count.\n");
 
-    if (0) /* Disabled to limit console spam */
-        for (i = 0; i < gs->cRanges; i++)
-            trace("%03d wcLow %04x cGlyphs %u\n", i, gs->ranges[i].wcLow, gs->ranges[i].cGlyphs);
-    trace("found %u ranges\n", gs->cRanges);
-
-    HeapFree(GetProcessHeap(), 0, gs);
+    heap_free(gs);
 
     SelectObject(hdc, hfont_old);
     DeleteObject(hfont);
@@ -2805,9 +2775,6 @@ static INT CALLBACK arial_enum_proc(const LOGFONTA *lf, const TEXTMETRICA *tm, D
 
     ok(ntm->ntmCellHeight + ntm->ntmCellHeight/5 >= ntm->ntmSizeEM, "ntmCellHeight %d should be close to ntmSizeEM %d\n", ntm->ntmCellHeight, ntm->ntmSizeEM);
 
-    if (0) /* Disabled to limit console spam */
-        trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
-              lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
     if (efd->total >= efd->size)
     {
         efd->size = max( (efd->total + 1) * 2, 256 );
@@ -2831,9 +2798,6 @@ static INT CALLBACK arial_enum_procw(const LOGFONTW *lf, const TEXTMETRICW *tm, 
 
     ok(ntm->ntmCellHeight + ntm->ntmCellHeight/5 >= ntm->ntmSizeEM, "ntmCellHeight %d should be close to ntmSizeEM %d\n", ntm->ntmCellHeight, ntm->ntmSizeEM);
 
-    if (0) /* Disabled to limit console spam */
-        trace("enumed font %s, charset %d, height %d, weight %d, italic %d\n",
-              wine_dbgstr_w(lf->lfFaceName), lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
     if (efd->total >= efd->size)
     {
         efd->size = max( (efd->total + 1) * 2, 256 );
@@ -2907,8 +2871,6 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
     HDC hdc;
     int i, ret, ansi_charset, symbol_charset, russian_charset;
 
-    trace("Testing font %s, charset %d\n", *font_name ? font_name : "<empty>", font_charset);
-
     if (*font_name && !is_truetype_font_installed(font_name))
     {
         skip("%s is not installed\n", font_name);
@@ -2935,8 +2897,6 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
         if(ret)
         {
             get_charset_statsW(&efdw, &ansi_charset, &symbol_charset, &russian_charset);
-            trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
-                  ansi_charset, symbol_charset, russian_charset);
             ok(efdw.total > 0, "fonts enumerated: NULL\n");
             ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
             ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
@@ -2952,8 +2912,6 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
         if(ret)
         {
             get_charset_statsW(&efdw, &ansi_charset, &symbol_charset, &russian_charset);
-            trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
-                  ansi_charset, symbol_charset, russian_charset);
             ok(efdw.total > 0, "fonts enumerated: NULL\n");
             ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
             ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
@@ -2966,9 +2924,6 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
     ret = EnumFontFamiliesA(hdc, font_name, arial_enum_proc, (LPARAM)&efd);
     ok(ret, "EnumFontFamilies error %u\n", GetLastError());
     get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
-    trace("enumerated ansi %d, symbol %d, russian %d fonts for %s\n",
-          ansi_charset, symbol_charset, russian_charset,
-          *font_name ? font_name : "<empty>");
     if (*font_name)
         ok(efd.total > 0, "no fonts enumerated: %s\n", font_name);
     else
@@ -2990,9 +2945,6 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
     ret = EnumFontFamiliesExA(hdc, &lf, arial_enum_proc, (LPARAM)&efd, 0);
     ok(ret, "EnumFontFamiliesEx error %u\n", GetLastError());
     get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
-    trace("enumerated ansi %d, symbol %d, russian %d fonts for %s ANSI_CHARSET\n",
-          ansi_charset, symbol_charset, russian_charset,
-          *font_name ? font_name : "<empty>");
     if (font_charset == SYMBOL_CHARSET)
     {
         if (*font_name)
@@ -3021,9 +2973,6 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
     EnumFontFamiliesExA(hdc, &lf, arial_enum_proc, (LPARAM)&efd, 0);
     ok(ret, "EnumFontFamiliesEx error %u\n", GetLastError());
     get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
-    trace("enumerated ansi %d, symbol %d, russian %d fonts for %s DEFAULT_CHARSET\n",
-          ansi_charset, symbol_charset, russian_charset,
-          *font_name ? font_name : "<empty>");
     ok(efd.total > 0, "no fonts enumerated: %s DEFAULT_CHARSET\n", font_name);
     for (i = 0; i < efd.total; i++)
     {
@@ -3079,9 +3028,6 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
     EnumFontFamiliesExA(hdc, &lf, arial_enum_proc, (LPARAM)&efd, 0);
     ok(ret, "EnumFontFamiliesEx error %u\n", GetLastError());
     get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
-    trace("enumerated ansi %d, symbol %d, russian %d fonts for %s SYMBOL_CHARSET\n",
-          ansi_charset, symbol_charset, russian_charset,
-          *font_name ? font_name : "<empty>");
     if (*font_name && font_charset == ANSI_CHARSET)
         ok(efd.total == 0, "no fonts should be enumerated: %s SYMBOL_CHARSET\n", font_name);
     else
@@ -3200,7 +3146,6 @@ static void test_EnumFontFamiliesEx_default_charset(void)
     EnumFontFamiliesExA(hdc, &enum_font, enum_font_data_proc, (LPARAM)&efd, 0);
     ReleaseDC(0, hdc);
 
-    trace("'%s' has %d charsets.\n", target.lfFaceName, efd.total);
     if (efd.total < 2)
         ok(0, "EnumFontFamilies is broken. Expected >= 2, got %d.\n", efd.total);
     else
@@ -3504,7 +3449,7 @@ static BOOL get_first_last_from_cmap(HDC hdc, DWORD *first, DWORD *last, cmap_ty
         r = get_first_last_from_cmap4(cmap, first, last, size);
         break;
     default:
-        trace("unhandled cmap format %d\n", format);
+        skip("unhandled cmap format %d\n", format);
         break;
     }
 
@@ -3746,17 +3691,17 @@ static BOOL get_ttf_nametable_entry(HDC hdc, WORD name_id, WCHAR *out_buf, SIZE_
     header->storage_offset = GET_BE_WORD(header->storage_offset);
     if (header->format != 0)
     {
-        trace("got format %u\n", header->format);
+        skip("got format %u\n", header->format);
         goto out;
     }
     if (header->number_of_record == 0 || sizeof(*header) + header->number_of_record * sizeof(*entry) > size)
     {
-        trace("number records out of range: %d\n", header->number_of_record);
+        skip("number records out of range: %d\n", header->number_of_record);
         goto out;
     }
     if (header->storage_offset >= size)
     {
-        trace("storage_offset %u > size %u\n", header->storage_offset, size);
+        skip("storage_offset %u > size %u\n", header->storage_offset, size);
         goto out;
     }
 
@@ -3776,12 +3721,12 @@ static BOOL get_ttf_nametable_entry(HDC hdc, WORD name_id, WCHAR *out_buf, SIZE_
     length = GET_BE_WORD(entry[best_index].length);
     if (offset + length > size)
     {
-        trace("entry %d is out of range\n", best_index);
+        skip("entry %d is out of range\n", best_index);
         goto out;
     }
     if (length >= out_size)
     {
-        trace("buffer too small for entry %d\n", best_index);
+        skip("buffer too small for entry %d\n", best_index);
         goto out;
     }
 
@@ -4041,7 +3986,6 @@ static void test_GetTextMetrics(void)
     lf.lfCharSet = DEFAULT_CHARSET;
     enumed = 0;
     EnumFontFamiliesExA(hdc, &lf, enum_truetype_font_proc, (LPARAM)&enumed, 0);
-    trace("Tested metrics of %d truetype fonts\n", enumed);
 
     ReleaseDC(0, hdc);
 }
@@ -4821,8 +4765,6 @@ static void test_GetGlyphOutline(void)
         ok(ret, "GetTextMetrics error %u\n", GetLastError());
         ret = GetGlyphOutlineA(hdc, c[i].a, GGO_METRICS, &gm2, 0, NULL, &mat);
         ok(ret != GDI_ERROR, "GetGlyphOutlineA error %u\n", GetLastError());
-        trace("Tests with height=%d,avg=%d,full=%d,face=%s,charset=%d\n",
-              -lf.lfHeight, tm.tmAveCharWidth, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
         ok(gm2.gmCellIncX == tm.tmAveCharWidth * 2 || broken(gm2.gmCellIncX == -lf.lfHeight),
            "expected %d, got %d (%s:%d)\n",
            tm.tmAveCharWidth * 2, gm2.gmCellIncX, lf.lfFaceName, lf.lfCharSet);
@@ -4870,7 +4812,7 @@ static void test_GetTextMetrics2(const char *fontname, int font_height)
     HDC hdc;
     TEXTMETRICA tm;
     BOOL ret;
-    int ave_width, height, width, ratio, scale;
+    int ave_width, height, width, ratio;
 
     if (!is_truetype_font_installed( fontname)) {
         skip("%s is not installed\n", fontname);
@@ -4892,8 +4834,6 @@ static void test_GetTextMetrics2(const char *fontname, int font_height)
     SelectObject( hdc, of);
     DeleteObject( hf);
 
-    trace("height %d, ave width %d\n", height, ave_width);
-
     for (width = ave_width * 2; /* nothing*/; width += ave_width)
     {
         hf = CreateFontA(height, width, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
@@ -4913,10 +4853,6 @@ static void test_GetTextMetrics2(const char *fontname, int font_height)
     DeleteDC(hdc);
 
     ratio = width / height;
-    scale = width / ave_width;
-
-    trace("max width/height ratio (%d / %d) %d, max width scale (%d / %d) %d\n",
-          width, height, ratio, width, ave_width, scale);
 
     ok(ratio >= 90 && ratio <= 110, "expected width/height ratio 90-110, got %d\n", ratio);
 }
@@ -6245,7 +6181,6 @@ static void test_vertical_font(void)
             skip("%s is not installed\n", face);
             continue;
         }
-        trace("Testing %s...\n", face);
         check_vertical_metrics(&face[1]);
     }
 
