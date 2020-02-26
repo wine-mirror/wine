@@ -734,6 +734,14 @@ static HRESULT WINAPI audio_sink_ReceiveConnection(IPin *iface, IPin *peer, cons
 
     TRACE("stream %p, peer %p, mt %p.\n", stream, peer, mt);
 
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio)
+            || !IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx)
+            || mt->cbFormat < sizeof(WAVEFORMATEX))
+        return VFW_E_TYPE_NOT_ACCEPTED;
+
+    if (((const WAVEFORMATEX *)mt->pbFormat)->wFormatTag != WAVE_FORMAT_PCM)
+        return E_INVALIDARG;
+
     EnterCriticalSection(&stream->cs);
 
     if (stream->peer)
@@ -748,6 +756,12 @@ static HRESULT WINAPI audio_sink_ReceiveConnection(IPin *iface, IPin *peer, cons
         WARN("Rejecting connection from input pin.\n");
         LeaveCriticalSection(&stream->cs);
         return VFW_E_INVALID_DIRECTION;
+    }
+
+    if (stream->format.wFormatTag && memcmp(mt->pbFormat, &stream->format, sizeof(WAVEFORMATEX)))
+    {
+        LeaveCriticalSection(&stream->cs);
+        return E_INVALIDARG;
     }
 
     CopyMediaType(&stream->mt, mt);
