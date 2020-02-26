@@ -2462,7 +2462,7 @@ static HRESULT WINAPI d3d_device3_GetRenderState(IDirect3DDevice3 *iface,
             *value = 0;
 
             wined3d_mutex_lock();
-            if ((tex = wined3d_device_get_texture(device->wined3d_device, 0)))
+            if ((tex = wined3d_stateblock_get_state(device->state)->textures[0]))
             {
                 /* The parent of the texture is the IDirectDrawSurface7
                  * interface of the ddraw surface. */
@@ -2699,7 +2699,7 @@ static void fixup_texture_alpha_op(struct d3d_device *device)
     if (!(device->legacyTextureBlending && device->texture_map_blend == D3DTBLEND_MODULATE))
         return;
 
-    if ((tex = wined3d_device_get_texture(device->wined3d_device, 0)))
+    if ((tex = wined3d_stateblock_get_state(device->state)->textures[0]))
     {
         struct wined3d_resource_desc desc;
 
@@ -4759,8 +4759,15 @@ static HRESULT d3d_device7_GetTexture(IDirect3DDevice7 *iface,
     if (!texture)
         return DDERR_INVALIDPARAMS;
 
+    if (stage >= DDRAW_MAX_TEXTURES)
+    {
+        WARN("Invalid stage %u.\n", stage);
+        *texture = NULL;
+        return D3D_OK;
+    }
+
     wined3d_mutex_lock();
-    if (!(wined3d_texture = wined3d_device_get_texture(device->wined3d_device, stage)))
+    if (!(wined3d_texture = wined3d_stateblock_get_state(device->state)->textures[stage]))
     {
         *texture = NULL;
         wined3d_mutex_unlock();

@@ -68,6 +68,7 @@ struct FvfToDecl
         | WINED3D_LEGACY_CUBEMAP_FILTERING)
 
 #define DDRAW_MAX_ACTIVE_LIGHTS 32
+#define DDRAW_MAX_TEXTURES 8
 
 enum ddraw_device_state
 {
