@@ -2317,9 +2317,8 @@ static HRESULT d3d_device7_GetRenderState(IDirect3DDevice7 *iface,
     {
         case D3DRENDERSTATE_TEXTUREMAG:
         {
-            enum wined3d_texture_filter_type tex_mag;
+            enum wined3d_texture_filter_type tex_mag = device_state->sampler_states[0][WINED3D_SAMP_MAG_FILTER];
 
-            tex_mag = wined3d_device_get_sampler_state(device->wined3d_device, 0, WINED3D_SAMP_MAG_FILTER);
             switch (tex_mag)
             {
                 case WINED3D_TEXF_POINT:
@@ -2340,8 +2339,8 @@ static HRESULT d3d_device7_GetRenderState(IDirect3DDevice7 *iface,
             enum wined3d_texture_filter_type tex_min;
             enum wined3d_texture_filter_type tex_mip;
 
-            tex_min = wined3d_device_get_sampler_state(device->wined3d_device, 0, WINED3D_SAMP_MIN_FILTER);
-            tex_mip = wined3d_device_get_sampler_state(device->wined3d_device, 0, WINED3D_SAMP_MIP_FILTER);
+            tex_min = device_state->sampler_states[0][WINED3D_SAMP_MIN_FILTER];
+            tex_mip = device_state->sampler_states[0][WINED3D_SAMP_MIP_FILTER];
             switch (tex_min)
             {
                 case WINED3D_TEXF_POINT:
@@ -2390,10 +2389,10 @@ static HRESULT d3d_device7_GetRenderState(IDirect3DDevice7 *iface,
 
         case D3DRENDERSTATE_TEXTUREADDRESS:
         case D3DRENDERSTATE_TEXTUREADDRESSU:
-            *value = wined3d_device_get_sampler_state(device->wined3d_device, 0, WINED3D_SAMP_ADDRESS_U);
+            *value = device_state->sampler_states[0][WINED3D_SAMP_ADDRESS_U];
             break;
         case D3DRENDERSTATE_TEXTUREADDRESSV:
-            *value = wined3d_device_get_sampler_state(device->wined3d_device, 0, WINED3D_SAMP_ADDRESS_V);
+            *value = device_state->sampler_states[0][WINED3D_SAMP_ADDRESS_V];
             break;
 
         case D3DRENDERSTATE_BORDERCOLOR:
@@ -4951,6 +4950,7 @@ static HRESULT d3d_device7_GetTextureStageState(IDirect3DDevice7 *iface,
         DWORD stage, D3DTEXTURESTAGESTATETYPE state, DWORD *value)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
+    const struct wined3d_stateblock_state *device_state;
     const struct tss_lookup *l;
 
     TRACE("iface %p, stage %u, state %#x, value %p.\n",
@@ -4965,13 +4965,22 @@ static HRESULT d3d_device7_GetTextureStageState(IDirect3DDevice7 *iface,
         return DD_OK;
     }
 
+    if (stage >= DDRAW_MAX_TEXTURES)
+    {
+        WARN("Invalid stage %u.\n", stage);
+        *value = 0;
+        return D3D_OK;
+    }
+
     l = &tss_lookup[state];
 
     wined3d_mutex_lock();
 
+    device_state = wined3d_stateblock_get_state(device->state);
+
     if (l->sampler_state)
     {
-        *value = wined3d_device_get_sampler_state(device->wined3d_device, stage, l->u.sampler_state);
+        *value = device_state->sampler_states[stage][l->u.sampler_state];
 
         switch (state)
         {
@@ -5031,7 +5040,7 @@ static HRESULT d3d_device7_GetTextureStageState(IDirect3DDevice7 *iface,
     }
     else
     {
-        *value = wined3d_device_get_texture_stage_state(device->wined3d_device, stage, l->u.texture_state);
+        *value = device_state->texture_states[stage][l->u.texture_state];
     }
 
     wined3d_mutex_unlock();
