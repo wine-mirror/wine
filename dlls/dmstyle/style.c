@@ -151,11 +151,17 @@ static HRESULT WINAPI IDirectMusicStyle8Impl_EnumBand(IDirectMusicStyle8 *iface,
 }
 
 static HRESULT WINAPI IDirectMusicStyle8Impl_GetDefaultBand(IDirectMusicStyle8 *iface,
-        IDirectMusicBand **ppBand)
+        IDirectMusicBand **band)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %p): stub\n", This, ppBand);
-	return S_OK;
+    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %p): stub\n", This, band);
+
+    if (!band)
+        return E_POINTER;
+
+    *band = NULL;
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI IDirectMusicStyle8Impl_EnumMotif(IDirectMusicStyle8 *iface, DWORD index,
