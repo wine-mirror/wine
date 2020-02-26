@@ -40,8 +40,10 @@ static REFERENCE_TIME samplelen(DWORD samples, int rate)
     return (REFERENCE_TIME) 10000000 * samples / rate;
 }
 
-struct test_buffer {
+struct test_buffer
+{
     IMediaBuffer IMediaBuffer_iface;
+    LONG refcount;
     BYTE data[5000];
     DWORD len;
     DWORD maxlen;
@@ -65,12 +67,14 @@ static HRESULT WINAPI Buffer_QueryInterface(IMediaBuffer *iface, REFIID iid, voi
 
 static ULONG WINAPI Buffer_AddRef(IMediaBuffer *iface)
 {
-    return 2;
+    struct test_buffer *buffer = impl_from_IMediaBuffer(iface);
+    return InterlockedIncrement(&buffer->refcount);
 }
 
 static ULONG WINAPI Buffer_Release(IMediaBuffer *iface)
 {
-    return 1;
+    struct test_buffer *buffer = impl_from_IMediaBuffer(iface);
+    return InterlockedDecrement(&buffer->refcount);
 }
 
 static HRESULT WINAPI Buffer_SetLength(IMediaBuffer *iface, DWORD len)
@@ -107,8 +111,8 @@ static IMediaBufferVtbl Buffer_vtbl = {
 static void test_convert(void)
 {
     static const BYTE mp3hdr[] = {0xff,0xfb,0x14,0xc4};
-    struct test_buffer outbuf = {{&Buffer_vtbl}};
-    struct test_buffer inbuf = {{&Buffer_vtbl}};
+    struct test_buffer outbuf = {.IMediaBuffer_iface = {&Buffer_vtbl}, .refcount = 1};
+    struct test_buffer inbuf = {.IMediaBuffer_iface = {&Buffer_vtbl}, .refcount = 1};
     DMO_MEDIA_TYPE in = {{0}}, out = {{0}};
     MPEGLAYER3WAVEFORMAT mp3fmt = {{0}};
     DMO_OUTPUT_DATA_BUFFER output;
@@ -169,6 +173,7 @@ static void test_convert(void)
     inbuf.len = 96 * 5;
     hr = IMediaObject_ProcessInput(dmo, 0, &inbuf.IMediaBuffer_iface, 0, 0, 0);
     ok(hr == S_OK, "got %#x\n", hr);
+    ok(inbuf.refcount == 2, "Got refcount %d.\n", inbuf.refcount);
 
     hr = IMediaObject_ProcessInput(dmo, 0, &inbuf.IMediaBuffer_iface, 0, 0, 0);
     ok(hr == DMO_E_NOTACCEPTING, "got %#x\n", hr);
@@ -194,6 +199,8 @@ static void test_convert(void)
     ok(output.rtTimestamp == 0, "got %s\n", wine_dbgstr_longlong(output.rtTimestamp));
     ok(output.rtTimelength == samplelen(written, 48000),
         "got %s\n", wine_dbgstr_longlong(output.rtTimelength));
+    ok(inbuf.refcount == 2, "Got refcount %d.\n", inbuf.refcount);
+    ok(outbuf.refcount == 1, "Got refcount %d.\n", inbuf.refcount);
 
     hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
     ok(hr == S_FALSE, "got %#x\n", hr);
@@ -205,6 +212,8 @@ static void test_convert(void)
 
     hr = IMediaObject_ProcessInput(dmo, 0, &inbuf.IMediaBuffer_iface, 0, 0, 0);
     ok(hr == DMO_E_NOTACCEPTING, "got %#x\n", hr);
+    ok(inbuf.refcount == 2, "Got refcount %d.\n", inbuf.refcount);
+    ok(outbuf.refcount == 1, "Got refcount %d.\n", inbuf.refcount);
 
     /* write the rest */
     outbuf.len = 0;
@@ -219,6 +228,8 @@ static void test_convert(void)
         "got %s\n", wine_dbgstr_longlong(output.rtTimestamp));
     ok(output.rtTimelength == samplelen(outbuf.len, 48000),
         "got %s\n", wine_dbgstr_longlong(output.rtTimelength));
+    ok(inbuf.refcount == 1, "Got refcount %d.\n", inbuf.refcount);
+    ok(outbuf.refcount == 1, "Got refcount %d.\n", inbuf.refcount);
 
     hr = IMediaObject_ProcessOutput(dmo, 0, 1, &output, &status);
     ok(hr == S_FALSE, "got %#x\n", hr);
@@ -228,6 +239,8 @@ static void test_convert(void)
     ok(hr == S_OK, "got %#x\n", hr);
 
     IMediaObject_Release(dmo);
+    todo_wine ok(inbuf.refcount == 1, "Got outstanding refcount %d.\n", inbuf.refcount);
+    ok(outbuf.refcount == 1, "Got outstanding refcount %d.\n", outbuf.refcount);
 }
 
 static const GUID IID_test_outer = {0xdeadbeef,0,0,{0,0,0,0,0,0,0,0x66}};
