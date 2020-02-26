@@ -495,17 +495,28 @@ static HRESULT WINAPI audio_IAudioMediaStream_SendEndOfStream(IAudioMediaStream 
 }
 
 /*** IAudioMediaStream methods ***/
-static HRESULT WINAPI audio_IAudioMediaStream_GetFormat(IAudioMediaStream *iface, WAVEFORMATEX *wave_format_current)
+static HRESULT WINAPI audio_IAudioMediaStream_GetFormat(IAudioMediaStream *iface, WAVEFORMATEX *format)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", iface, This, wave_format_current);
+    TRACE("stream %p, format %p.\n", stream, format);
 
-    if (!wave_format_current)
+    if (!format)
         return E_POINTER;
 
-    return MS_E_NOSTREAM;
+    EnterCriticalSection(&stream->cs);
 
+    if (!stream->peer)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return MS_E_NOSTREAM;
+    }
+
+    *format = *(WAVEFORMATEX *)stream->mt.pbFormat;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_IAudioMediaStream_SetFormat(IAudioMediaStream *iface, const WAVEFORMATEX *wave_format)
