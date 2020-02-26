@@ -103,6 +103,8 @@ static ULONG WINAPI Unknown_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        if (This->buffer)
+            IMediaBuffer_Release(This->buffer);
         if (This->intype_set)
             MoFreeMediaType(&This->intype);
         MoFreeMediaType(&This->outtype);

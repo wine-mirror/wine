@@ -239,7 +239,7 @@ static void test_convert(void)
     ok(hr == S_OK, "got %#x\n", hr);
 
     IMediaObject_Release(dmo);
-    todo_wine ok(inbuf.refcount == 1, "Got outstanding refcount %d.\n", inbuf.refcount);
+    ok(inbuf.refcount == 1, "Got outstanding refcount %d.\n", inbuf.refcount);
     ok(outbuf.refcount == 1, "Got outstanding refcount %d.\n", outbuf.refcount);
 }
 
