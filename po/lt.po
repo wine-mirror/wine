@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-02-14 08:12+0200\n"
+"PO-Revision-Date: 2020-02-26 10:03+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10118,16 +10118,12 @@ msgid "New Zealand Daylight Time"
 msgstr "Naujosios Zelandijos vasaros laikas"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "Argentinos juostinis laikas"
+msgstr "Aleutų juostinis laikas"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "Argentinos vasaros laikas"
+msgstr "Aleutų vasaros laikas"
 
 #: tzres.rc:72
 msgid "Central Brazilian Standard Time"
