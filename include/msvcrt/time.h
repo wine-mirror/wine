@@ -54,7 +54,7 @@ extern __msvcrt_long _timezone;
 extern char *_tzname;
 #endif
 
-#ifdef _USE_32BIT_TIME_T
+#if !defined(_UCRT) && defined(_USE_32BIT_TIME_T)
 #define _ctime32     ctime
 #define _difftime32  difftime
 #define _gmtime32    gmtime
@@ -96,6 +96,13 @@ static inline struct tm* gmtime(const time_t *t) { return _gmtime64(t); }
 static inline struct tm* localtime(const time_t *t) { return _localtime64(t); }
 static inline time_t mktime(struct tm *tm) { return _mktime64(tm); }
 static inline time_t time(time_t *t) { return _time64(t); }
+#elif defined(_UCRT)
+static inline char* ctime(const time_t *t) { return _ctime32(t); }
+static inline double difftime(time_t t1, time_t t2) { return _difftime32(t1, t2); }
+static inline struct tm* gmtime(const time_t *t) { return _gmtime32(t); }
+static inline struct tm* localtime(const time_t *t) { return _localtime32(t); }
+static inline time_t mktime(struct tm *tm) { return _mktime32(tm); }
+static inline time_t time(time_t *t) { return _time32(t); }
 #endif
 
 #ifdef __cplusplus
