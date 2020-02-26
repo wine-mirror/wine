@@ -376,9 +376,9 @@ static HRESULT WINAPI MediaObject_Flush(IMediaObject *iface)
 
 static HRESULT WINAPI MediaObject_Discontinuity(IMediaObject *iface, DWORD index)
 {
-    FIXME("(%p)->(%d) stub!\n", iface, index);
+    TRACE("iface %p.\n", iface);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_AllocateStreamingResources(IMediaObject *iface)
