@@ -143,6 +143,14 @@ named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *item_name, unsig
     return NULL;
 }
 
+void release_named_item(named_item_t *item)
+{
+    if(--item->ref) return;
+
+    heap_free(item->name);
+    heap_free(item);
+}
+
 static inline JScriptError *impl_from_IActiveScriptError(IActiveScriptError *iface)
 {
     return CONTAINING_RECORD(iface, JScriptError, IActiveScriptError_iface);
@@ -415,8 +423,7 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
 
                     if(iter->disp)
                         IDispatch_Release(iter->disp);
-                    heap_free(iter->name);
-                    heap_free(iter);
+                    release_named_item(iter);
                     iter = iter2;
                 }
 
@@ -833,6 +840,7 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
         return E_OUTOFMEMORY;
     }
 
+    item->ref = 1;
     item->disp = disp;
     item->flags = dwFlags;
     item->name = heap_strdupW(pstrName);
