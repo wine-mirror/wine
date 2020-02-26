@@ -20,7 +20,7 @@ struct tm {
     int tm_isdst;
 };
 
-#ifdef _USE_32BIT_TIME_T
+#if defined(_USE_32BIT_TIME_T) && !defined(_UCRT)
 #define _wctime32 _wctime
 #endif
 
@@ -39,6 +39,8 @@ errno_t  __cdecl _wstrtime_s(wchar_t*,size_t);
 
 #ifndef _USE_32BIT_TIME_T
 static inline wchar_t* _wctime(const time_t *t) { return _wctime64(t); }
+#elif defined(_UCRT)
+static inline wchar_t* _wctime(const time_t *t) { return _wctime32(t); }
 #endif
 
 #ifdef __cplusplus
