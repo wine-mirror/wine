@@ -25,14 +25,10 @@
 #ifdef __MINGW32__
 
 #include <stdarg.h>
+#include <process.h>
 
 #include "windef.h"
 #include "winbase.h"
-
-/* FIXME: Use msvcrt headers once we move to PE file */
-void __cdecl exit(int);
-void __cdecl __getmainargs(int *, char ***, char ***, int, int *);
-void __cdecl __set_app_type(int);
 
 int __cdecl main(int argc, char **argv, char **env);
 
@@ -48,7 +44,7 @@ int __cdecl mainCRTStartup(void)
     char **argv, **env;
 
     __getmainargs(&argc, &argv, &env, 0, &new_mode);
-    __set_app_type(get_nt_header()->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI ? 2 : 1);
+    _set_app_type(get_nt_header()->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI ? _crt_gui_app : _crt_console_app);
 
     ret = main(argc, argv, env);
 
