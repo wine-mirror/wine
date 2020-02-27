@@ -3837,10 +3837,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 {
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
     const struct wined3d_saved_states *changed = &stateblock->changed;
+    const unsigned int word_bit_count = sizeof(DWORD) * CHAR_BIT;
     struct wined3d_blend_state *blend_state;
+    unsigned int i, j, start, idx;
     struct wined3d_color colour;
     struct wined3d_range range;
-    unsigned int i, j, start;
     BOOL set_blend_state;
     DWORD map;
 
@@ -3968,10 +3969,15 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
     }
 
-    for (i = 0; i < ARRAY_SIZE(state->transforms); ++i)
+    for (i = 0; i < ARRAY_SIZE(changed->transform); ++i)
     {
-        if (wined3d_bitmap_is_set(changed->transform, i))
-            wined3d_device_set_transform(device, i, &state->transforms[i]);
+        map = changed->transform[i];
+        while (map)
+        {
+            j = wined3d_bit_scan(&map);
+            idx = i * word_bit_count + j;
+            wined3d_device_set_transform(device, idx, &state->transforms[idx]);
+        }
     }
 
     if (changed->indices)
