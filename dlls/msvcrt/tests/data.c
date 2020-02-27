@@ -32,7 +32,6 @@
 #include <errno.h>
 #include <direct.h>
 
-void __cdecl __getmainargs(int *, char ***, char ***, int, int *);
 static int* (__cdecl *p___p___argc)(void);
 static char*** (__cdecl *p___p___argv)(void);
 

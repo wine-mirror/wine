@@ -424,6 +424,7 @@ SOURCES = \
 	msvcrt/assert.h \
 	msvcrt/conio.h \
 	msvcrt/corecrt.h \
+	msvcrt/corecrt_startup.h \
 	msvcrt/corecrt_stdio_config.h \
 	msvcrt/corecrt_wctype.h \
 	msvcrt/corecrt_wio.h \
