@@ -197,7 +197,7 @@ static void set_subsystem( const char *subsystem, DLLSPEC *spec )
 static void set_target( const char *target )
 {
     unsigned int i;
-    char *p, *platform, *spec = xstrdup( target );
+    char *p, *spec = xstrdup( target );
 
     /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
 
@@ -213,13 +213,11 @@ static void set_target( const char *target )
         cpu = get_cpu_from_name( spec );
         if (cpu == -1) fatal_error( "Unrecognized CPU '%s'\n", spec );
         target_cpu = cpu;
-        platform = p;
-        if ((p = strrchr( p, '-' ))) platform = p + 1;
     }
     else if (!strcmp( spec, "mingw32" ))
     {
         target_cpu = CPU_x86;
-        platform = spec;
+        p = spec;
     }
     else
         fatal_error( "Invalid target specification '%s'\n", target );
@@ -227,13 +225,18 @@ static void set_target( const char *target )
     /* get the OS part */
 
     target_platform = PLATFORM_UNSPECIFIED;  /* default value */
-    for (i = 0; i < ARRAY_SIZE(platform_names); i++)
+    for (;;)
     {
-        if (!strncmp( platform_names[i].name, platform, strlen(platform_names[i].name) ))
+        for (i = 0; i < ARRAY_SIZE(platform_names); i++)
         {
-            target_platform = platform_names[i].platform;
-            break;
+            if (!strncmp( platform_names[i].name, p, strlen(platform_names[i].name) ))
+            {
+                target_platform = platform_names[i].platform;
+                break;
+            }
         }
+        if (target_platform != PLATFORM_UNSPECIFIED || !(p = strchr( p, '-' ))) break;
+        p++;
     }
 
     free( spec );
