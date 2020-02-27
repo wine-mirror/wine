@@ -131,13 +131,6 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
-    return lstrcmpA(buf, stra);
-}
-
 static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **ppv)
 {
     ok(0, "unexpected call\n");
@@ -286,7 +279,7 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 
 static HRESULT WINAPI Test_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    if(!strcmp_wa(bstrName, "reportSuccess")) {
+    if(!lstrcmpW(bstrName, L"reportSuccess")) {
         ok(grfdex == fdexNameCaseInsensitive, "grfdex = %x\n", grfdex);
         *pid = DISPID_TEST_REPORTSUCCESS;
         return S_OK;
@@ -342,7 +335,7 @@ static IDispatchEx testObj = { &testObjVtbl };
 
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    if(!strcmp_wa(bstrName, "ok")) {
+    if(!lstrcmpW(bstrName, L"ok")) {
         ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
         *pid = DISPID_GLOBAL_OK;
         return S_OK;
@@ -620,7 +613,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
 {
     ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %x\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
-    ok(!strcmp_wa(pstrName, "test"), "pstrName = %s\n", wine_dbgstr_w(pstrName));
+    ok(!lstrcmpW(pstrName, L"test"), "pstrName = %s\n", wine_dbgstr_w(pstrName));
 
     *ppiunkItem = (IUnknown*)&globalObj;
     return S_OK;
