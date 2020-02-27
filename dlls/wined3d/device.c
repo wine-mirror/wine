@@ -3929,22 +3929,25 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         wined3d_device_set_blend_state(device, blend_state, &colour);
     }
 
-    for (i = 0; i < ARRAY_SIZE(state->rs); ++i)
+    for (i = 0; i < ARRAY_SIZE(changed->renderState); ++i)
     {
-        if (!wined3d_bitmap_is_set(changed->renderState, i))
-            continue;
-
-        if (i != WINED3D_RS_BLENDFACTOR)
+        map = changed->renderState[i];
+        while (map)
         {
-            wined3d_device_set_render_state(device, i, state->rs[i]);
-            continue;
-        }
+            j = wined3d_bit_scan(&map);
+            idx = i * word_bit_count + j;
+            if (idx != WINED3D_RS_BLENDFACTOR)
+            {
+                wined3d_device_set_render_state(device, idx, state->rs[idx]);
+                continue;
+            }
 
-        if (!set_blend_state)
-        {
-            blend_state = wined3d_device_get_blend_state(device, &colour);
-            wined3d_color_from_d3dcolor(&colour, state->rs[i]);
-            wined3d_device_set_blend_state(device, blend_state, &colour);
+            if (!set_blend_state)
+            {
+                blend_state = wined3d_device_get_blend_state(device, &colour);
+                wined3d_color_from_d3dcolor(&colour, state->rs[idx]);
+                wined3d_device_set_blend_state(device, blend_state, &colour);
+            }
         }
     }
 
