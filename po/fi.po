@@ -6835,10 +6835,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "Ulostuloa ei ole viimeistelty.\n"
 
 #: mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "Ulostulo oli jo pysäytetty.\n"
+msgstr "Kello oli pysäytetty\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7217,10 +7215,8 @@ msgid "Clock state was already set.\n"
 msgstr "Kellon tila oli jo asetettu.\n"
 
 #: mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "Kello ei saatavilla.\n"
+msgstr "Kello ei ole yksinkertainen\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8380,68 +8376,52 @@ msgid "Advanced"
 msgstr "Kehittynyt"
 
 #: version.rc:94
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Verkkojako"
+msgstr "Verkkoasetukset"
 
 #: version.rc:95
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "Tekeytymistaso ei kelpaa.\n"
+msgstr "&Tekeytymistaso:"
 
 #: version.rc:97
 msgid "P&rotection level:"
-msgstr ""
+msgstr "&Suojaustaso:"
 
 #: version.rc:100
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "Yhdistetty"
+msgstr "Yhdistä:"
 
 #: version.rc:102
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
-msgstr "sekuntia"
+msgstr "sekuntia."
 
 #: version.rc:103
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "Onnistui"
+msgstr "&Käyttöoikeus:"
 
 #: version.rc:109
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "&Kaikki"
+msgstr "Kaikki"
 
 #: version.rc:113
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Nämä ovat tietotyypin alustusominaisuudet. Muokataksesi arvoa valitse ensin "
+"ominaisuus ja paina sitten Muokkaa arvoa -painiketta."
 
 #: version.rc:114
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "&Muokkaa..."
+msgstr "&Muokkaa arvoa..."
 
 #: version.rc:49
-#, fuzzy
-#| msgid "Data Link Properties"
 msgid "Data Link Error"
-msgstr "Datayhteyden ominaisuudet"
+msgstr "Datayhteysvirhe"
 
 #: version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "Valitse tiedosto."
+msgstr "Valitse tarjoaja."
 
 #: version.rc:36
 msgid "Data Link Properties"
@@ -8452,38 +8432,32 @@ msgid "OLE DB Provider(s)"
 msgstr "OLE DB -tarjoaja(t)"
 
 #: version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Valmis"
+msgstr "Luku"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "Ohjeet:"
+msgstr "Luku ja kirjoitus"
 
 #: version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "Salli samaan aikaan käyttö"
 
 #: version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "Estä samaan aikaan lukeminen"
 
 #: version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "Estä samaan aikaan kirjoittaminen"
 
 #: version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "Estä kaikki samaan aikaan käyttö"
 
 #: version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "I/O – kirjoituksia"
+msgstr "Kirjoitus"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9679,16 +9653,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "Kap Verden kesäaika"
 
 #: tzres.rc:116
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "Havaijin normaaliaika"
+msgstr "Haitin normaaliaika"
 
 #: tzres.rc:117
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "Havaijin kesäaika"
+msgstr "Haitin kesäaika"
 
 #: tzres.rc:76
 msgid "Central European Standard Time"
@@ -10295,16 +10265,12 @@ msgid "New Zealand Daylight Time"
 msgstr "Uuden-Seelannin kesäaika"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "Argentiinan normaaliaika"
+msgstr "Aleuttien normaaliaika"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "Argentiinan kesäaika"
+msgstr "Aleuttien kesäaika"
 
 #: tzres.rc:72
 msgid "Central Brazilian Standard Time"
