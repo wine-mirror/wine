@@ -2319,7 +2319,7 @@ static void test_NotifyUnicastIpAddressChange(void)
     callback_called = FALSE;
     ret = pNotifyUnicastIpAddressChange(AF_INET, test_ipaddtess_change_callback,
             &callback_called, TRUE, &handle);
-    todo_wine ok(ret == NO_ERROR, "Unexpected ret %#x.\n", ret);
+    ok(ret == NO_ERROR, "Unexpected ret %#x.\n", ret);
     ok(callback_called, "Callback was not called.\n");
 
     ret = pCancelMibChangeNotify2(handle);

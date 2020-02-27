@@ -2808,7 +2808,7 @@ DWORD WINAPI NotifyUnicastIpAddressChange(ADDRESS_FAMILY family, PUNICAST_IPADDR
     if (init_notify)
         callback(context, NULL, MibInitialNotification);
 
-    return ERROR_NOT_SUPPORTED;
+    return NO_ERROR;
 }
 
 /******************************************************************
