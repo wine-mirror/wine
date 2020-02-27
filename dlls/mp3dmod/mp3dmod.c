@@ -103,6 +103,8 @@ static ULONG WINAPI Unknown_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        if (This->buffer)
+            IMediaBuffer_Release(This->buffer);
         if (This->intype_set)
             MoFreeMediaType(&This->intype);
         MoFreeMediaType(&This->outtype);
@@ -356,16 +358,27 @@ static HRESULT WINAPI MediaObject_SetInputMaxLatency(IMediaObject *iface, DWORD 
 
 static HRESULT WINAPI MediaObject_Flush(IMediaObject *iface)
 {
-    FIXME("(%p)->() stub!\n", iface);
+    struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    if (dmo->buffer)
+        IMediaBuffer_Release(dmo->buffer);
+    dmo->buffer = NULL;
+    dmo->timestamp = 0;
+
+    /* mpg123 doesn't give us a way to flush, so just close and reopen the feed. */
+    mpg123_close(dmo->mh);
+    mpg123_open_feed(dmo->mh);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_Discontinuity(IMediaObject *iface, DWORD index)
 {
-    FIXME("(%p)->(%d) stub!\n", iface, index);
+    TRACE("iface %p.\n", iface);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_AllocateStreamingResources(IMediaObject *iface)
@@ -453,6 +466,20 @@ static HRESULT WINAPI MediaObject_ProcessOutput(IMediaObject *iface, DWORD flags
         FIXME("Multiple buffers not handled.\n");
 
     buffers[0].dwStatus = 0;
+
+    if (!buffers[0].pBuffer)
+    {
+        while ((err = mpg123_read(This->mh, NULL, 0, &written)) == MPG123_NEW_FORMAT);
+        if (err == MPG123_NEED_MORE)
+            return S_OK;
+        else if (err == MPG123_ERR)
+            ERR("mpg123_read() failed: %s\n", mpg123_strerror(This->mh));
+        else if (err != MPG123_OK)
+            ERR("mpg123_read() returned %d\n", err);
+
+        buffers[0].dwStatus = DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE;
+        return S_OK;
+    }
 
     if (!This->buffer)
         return S_FALSE;

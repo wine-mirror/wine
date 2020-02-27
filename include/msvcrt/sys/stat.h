@@ -106,9 +106,9 @@ struct _stat32i64 {
   short st_gid;
   _dev_t st_rdev;
   __int64 DECLSPEC_ALIGN(8) st_size;
-  time_t st_atime;
-  time_t st_mtime;
-  time_t st_ctime;
+  __time32_t st_atime;
+  __time32_t st_mtime;
+  __time32_t st_ctime;
 };
 
 struct _stat64i32 {
@@ -158,19 +158,53 @@ struct _stat64 {
 extern "C" {
 #endif
 
-int __cdecl _fstat(int,struct _stat*);
-int __cdecl _stat(const char*,struct _stat*);
+#ifdef _UCRT
+# ifdef _USE_32BIT_TIME_T
+#  define _fstat      _fstat32
+#  define _fstati64   _fstat32i64
+#  define _stat       _stat32
+#  define _stati64    _stat32i64
+#  define _wstat      _wstat32
+#  define _wstati64   _wstat32i64
+# else
+#  define _fstat      _fstat64i32
+#  define _fstati64   _fstat64
+#  define _stat       _stat64i32
+#  define _stati64    _stat64
+#  define _wstat      _wstat64i32
+#  define _wstati64   _wstat64
+# endif
+#else /* _UCRT */
+# ifdef _USE_32BIT_TIME_T
+#  define _fstat32    _fstat
+#  define _fstat32i64 _fstati64
+#  define _stat32i64  _stati64
+#  define _stat32     _stat
+#  define _wstat32    _wstat
+#  define _wstat32i64 _wstati64
+# else
+#  define _fstat64i32 _fstat
+#  define _fstat64    _fstati64
+#  define _stat64     _stati64
+#  define _stat64i32  _stat
+#  define _wstat64i32 _wstat
+#  define _wstat64    _wstati64
+# endif
+#endif
+
 int __cdecl _fstat32(int, struct _stat32*);
-int __cdecl _stat32(const char*, struct _stat32*);
-int __cdecl _fstati64(int,struct _stati64*);
-int __cdecl _stati64(const char*,struct _stati64*);
+int __cdecl _fstat32i64(int, struct _stat32i64*);
 int __cdecl _fstat64(int,struct _stat64*);
+int __cdecl _fstat64i32(int,struct _stat64i32*);
+int __cdecl _stat32(const char*, struct _stat32*);
+int __cdecl _stat32i64(const char*, struct _stat32i64*);
 int __cdecl _stat64(const char*,struct _stat64*);
+int __cdecl _stat64i32(const char*,struct _stat64i32*);
 int __cdecl _umask(int);
-int __cdecl _wstat(const wchar_t*,struct _stat*);
-int __cdecl _wstat32(const wchar_t*, struct _stat32*);
-int __cdecl _wstati64(const wchar_t*,struct _stati64*);
+int __cdecl _wstat32(const wchar_t*,struct _stat32*);
+int __cdecl _wstat32i64(const wchar_t*, struct _stat32i64*);
 int __cdecl _wstat64(const wchar_t*,struct _stat64*);
+int __cdecl _wstat64i32(const wchar_t*,struct _stat64i32*);
 
 #ifdef __cplusplus
 }

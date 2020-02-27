@@ -1690,8 +1690,6 @@ static HRESULT WINAPI d3d8_device_SetViewport(IDirect3DDevice8 *iface, const D3D
     vp.max_z = viewport->MaxZ;
 
     wined3d_stateblock_set_viewport(device->update_state, &vp);
-    if (!device->recording)
-        wined3d_device_set_viewports(device->wined3d_device, 1, &vp);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -1705,7 +1703,7 @@ static HRESULT WINAPI d3d8_device_GetViewport(IDirect3DDevice8 *iface, D3DVIEWPO
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
     wined3d_mutex_lock();
-    wined3d_device_get_viewports(device->wined3d_device, NULL, &wined3d_viewport);
+    wined3d_viewport = wined3d_stateblock_get_state(device->state)->viewport;
     wined3d_mutex_unlock();
 
     viewport->X = wined3d_viewport.x;
@@ -1756,8 +1754,6 @@ static HRESULT WINAPI d3d8_device_SetLight(IDirect3DDevice8 *iface, DWORD index,
     /* Note: D3DLIGHT8 is compatible with struct wined3d_light. */
     wined3d_mutex_lock();
     hr = wined3d_stateblock_set_light(device->update_state, index, (const struct wined3d_light *)light);
-    if (SUCCEEDED(hr) && !device->recording)
-        hr = wined3d_device_set_light(device->wined3d_device, index, (const struct wined3d_light *)light);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1766,13 +1762,14 @@ static HRESULT WINAPI d3d8_device_SetLight(IDirect3DDevice8 *iface, DWORD index,
 static HRESULT WINAPI d3d8_device_GetLight(IDirect3DDevice8 *iface, DWORD index, D3DLIGHT8 *light)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
+    BOOL enabled;
     HRESULT hr;
 
     TRACE("iface %p, index %u, light %p.\n", iface, index, light);
 
     /* Note: D3DLIGHT8 is compatible with struct wined3d_light. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_light(device->wined3d_device, index, (struct wined3d_light *)light);
+    hr = wined3d_stateblock_get_light(device->state, index, (struct wined3d_light *)light, &enabled);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1787,22 +1784,21 @@ static HRESULT WINAPI d3d8_device_LightEnable(IDirect3DDevice8 *iface, DWORD ind
 
     wined3d_mutex_lock();
     hr = wined3d_stateblock_set_light_enable(device->update_state, index, enable);
-    if (SUCCEEDED(hr) && !device->recording)
-        hr = wined3d_device_set_light_enable(device->wined3d_device, index, enable);
     wined3d_mutex_unlock();
 
     return hr;
 }
 
-static HRESULT WINAPI d3d8_device_GetLightEnable(IDirect3DDevice8 *iface, DWORD index, BOOL *enable)
+static HRESULT WINAPI d3d8_device_GetLightEnable(IDirect3DDevice8 *iface, DWORD index, BOOL *enabled)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
+    struct wined3d_light light;
     HRESULT hr;
 
-    TRACE("iface %p, index %u, enable %p.\n", iface, index, enable);
+    TRACE("iface %p, index %u, enabled %p.\n", iface, index, enabled);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_light_enable(device->wined3d_device, index, enable);
+    hr = wined3d_stateblock_get_light(device->state, index, &light, enabled);
     wined3d_mutex_unlock();
 
     return hr;
