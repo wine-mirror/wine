@@ -3835,13 +3835,14 @@ struct wined3d_texture * CDECL wined3d_device_get_texture(const struct wined3d_d
 void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wined3d_stateblock *stateblock)
 {
-    const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
     const struct wined3d_saved_states *changed = &stateblock->changed;
     struct wined3d_blend_state *blend_state;
     struct wined3d_color colour;
-    unsigned int i, j, count;
+    struct wined3d_range range;
+    unsigned int i, j, start;
     BOOL set_blend_state;
+    DWORD map;
 
     TRACE("device %p, stateblock %p.\n", device, stateblock);
 
@@ -3850,89 +3851,57 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     if (changed->pixelShader)
         wined3d_device_set_pixel_shader(device, state->ps);
 
-    count = 0;
-    for (i = 0; i < d3d_info->limits.vs_uniform_count; ++i)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        if (wined3d_bitmap_is_set(changed->vs_consts_f, i))
-            ++count;
-        else if (count)
-        {
-            wined3d_device_set_vs_consts_f(device, i - count, count, state->vs_consts_f + i - count);
-            count = 0;
-        }
-    }
-    if (count)
-        wined3d_device_set_vs_consts_f(device, i - count, count, state->vs_consts_f + i - count);
+        if (!wined3d_bitmap_get_range(changed->vs_consts_f, WINED3D_MAX_VS_CONSTS_F, start, &range))
+            break;
 
-    count = 0;
-    for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
-    {
-        if (changed->vertexShaderConstantsB & (1u << i))
-            ++count;
-        else if (count)
-        {
-            wined3d_device_set_vs_consts_b(device, i - count, count, state->vs_consts_b + i - count);
-            count = 0;
-        }
+        wined3d_device_set_vs_consts_f(device, range.offset, range.size, &state->vs_consts_f[range.offset]);
     }
-    if (count)
-        wined3d_device_set_vs_consts_b(device, i - count, count, state->vs_consts_b + i - count);
 
-    count = 0;
-    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
+    map = changed->vertexShaderConstantsI;
+    for (start = 0; ; start = range.offset + range.size)
     {
-        if (changed->vertexShaderConstantsI & (1u << i))
-            ++count;
-        else if (count)
-        {
-            wined3d_device_set_vs_consts_i(device, i - count, count, state->vs_consts_i + i - count);
-            count = 0;
-        }
-    }
-    if (count)
-        wined3d_device_set_vs_consts_i(device, i - count, count, state->vs_consts_i + i - count);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_I, start, &range))
+            break;
 
-    count = 0;
-    for (i = 0; i < d3d_info->limits.ps_uniform_count; ++i)
-    {
-        if (wined3d_bitmap_is_set(changed->ps_consts_f, i))
-            ++count;
-        else if (count)
-        {
-            wined3d_device_set_ps_consts_f(device, i - count, count, state->ps_consts_f + i - count);
-            count = 0;
-        }
+        wined3d_device_set_vs_consts_i(device, range.offset, range.size, &state->vs_consts_i[range.offset]);
     }
-    if (count)
-        wined3d_device_set_ps_consts_f(device, i - count, count, state->ps_consts_f + i - count);
 
-    count = 0;
-    for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
+    map = changed->vertexShaderConstantsB;
+    for (start = 0; ; start = range.offset + range.size)
     {
-        if (changed->pixelShaderConstantsB & (1u << i))
-            ++count;
-        else if (count)
-        {
-            wined3d_device_set_ps_consts_b(device, i - count, count, state->ps_consts_b + i - count);
-            count = 0;
-        }
-    }
-    if (count)
-        wined3d_device_set_ps_consts_b(device, i - count, count, state->ps_consts_b + i - count);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_B, start, &range))
+            break;
 
-    count = 0;
-    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
-    {
-        if (changed->pixelShaderConstantsI & (1u << i))
-            ++count;
-        else if (count)
-        {
-            wined3d_device_set_ps_consts_i(device, i - count, count, state->ps_consts_i + i - count);
-            count = 0;
-        }
+        wined3d_device_set_vs_consts_b(device, range.offset, range.size, &state->vs_consts_b[range.offset]);
     }
-    if (count)
-        wined3d_device_set_ps_consts_i(device, i - count, count, state->ps_consts_i + i - count);
+
+    for (start = 0; ; start = range.offset + range.size)
+    {
+        if (!wined3d_bitmap_get_range(changed->ps_consts_f, WINED3D_MAX_PS_CONSTS_F, start, &range))
+            break;
+
+        wined3d_device_set_ps_consts_f(device, range.offset, range.size, &state->ps_consts_f[range.offset]);
+    }
+
+    map = changed->pixelShaderConstantsI;
+    for (start = 0; ; start = range.offset + range.size)
+    {
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_I, start, &range))
+            break;
+
+        wined3d_device_set_ps_consts_i(device, range.offset, range.size, &state->ps_consts_i[range.offset]);
+    }
+
+    map = changed->pixelShaderConstantsB;
+    for (start = 0; ; start = range.offset + range.size)
+    {
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_B, start, &range))
+            break;
+
+        wined3d_device_set_ps_consts_b(device, range.offset, range.size, &state->ps_consts_b[range.offset]);
+    }
 
     for (i = 0; i < ARRAY_SIZE(state->light_state->light_map); ++i)
     {

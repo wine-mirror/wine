@@ -3196,13 +3196,13 @@ struct wined3d_state
     struct wined3d_shader_resource_view *shader_resource_view[WINED3D_SHADER_TYPE_COUNT][MAX_SHADER_RESOURCE_VIEWS];
     struct wined3d_unordered_access_view *unordered_access_view[WINED3D_PIPELINE_COUNT][MAX_UNORDERED_ACCESS_VIEWS];
 
-    BOOL vs_consts_b[WINED3D_MAX_CONSTS_B];
-    struct wined3d_ivec4 vs_consts_i[WINED3D_MAX_CONSTS_I];
     struct wined3d_vec4 vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
+    struct wined3d_ivec4 vs_consts_i[WINED3D_MAX_CONSTS_I];
+    BOOL vs_consts_b[WINED3D_MAX_CONSTS_B];
 
-    BOOL ps_consts_b[WINED3D_MAX_CONSTS_B];
-    struct wined3d_ivec4 ps_consts_i[WINED3D_MAX_CONSTS_I];
     struct wined3d_vec4 ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
+    struct wined3d_ivec4 ps_consts_i[WINED3D_MAX_CONSTS_I];
+    BOOL ps_consts_b[WINED3D_MAX_CONSTS_B];
 
     struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
@@ -3914,6 +3914,12 @@ struct wined3d_vertex_declaration
 
 struct wined3d_saved_states
 {
+    DWORD vs_consts_f[WINED3D_MAX_VS_CONSTS_F >> 5];
+    WORD vertexShaderConstantsI;                /* WINED3D_MAX_CONSTS_I, 16 */
+    WORD vertexShaderConstantsB;                /* WINED3D_MAX_CONSTS_B, 16 */
+    DWORD ps_consts_f[WINED3D_MAX_PS_CONSTS_F >> 5];
+    WORD pixelShaderConstantsI;                 /* WINED3D_MAX_CONSTS_I, 16 */
+    WORD pixelShaderConstantsB;                 /* WINED3D_MAX_CONSTS_B, 16 */
     DWORD transform[(WINED3D_HIGHEST_TRANSFORM_STATE >> 5) + 1];
     WORD streamSource;                          /* WINED3D_MAX_STREAMS, 16 */
     WORD streamFreq;                            /* WINED3D_MAX_STREAMS, 16 */
@@ -3921,12 +3927,6 @@ struct wined3d_saved_states
     DWORD textureState[WINED3D_MAX_TEXTURES];   /* WINED3D_HIGHEST_TEXTURE_STATE + 1, 18 */
     WORD samplerState[WINED3D_MAX_COMBINED_SAMPLERS];   /* WINED3D_HIGHEST_SAMPLER_STATE + 1, 14 */
     DWORD clipplane;                            /* WINED3D_MAX_USER_CLIP_PLANES, 32 */
-    WORD pixelShaderConstantsB;                 /* WINED3D_MAX_CONSTS_B, 16 */
-    WORD pixelShaderConstantsI;                 /* WINED3D_MAX_CONSTS_I, 16 */
-    DWORD ps_consts_f[WINED3D_MAX_PS_CONSTS_F >> 5];
-    WORD vertexShaderConstantsB;                /* WINED3D_MAX_CONSTS_B, 16 */
-    WORD vertexShaderConstantsI;                /* WINED3D_MAX_CONSTS_I, 16 */
-    DWORD vs_consts_f[WINED3D_MAX_VS_CONSTS_F >> 5];
     DWORD textures : 20;                        /* WINED3D_MAX_COMBINED_SAMPLERS, 20 */
     DWORD indices : 1;
     DWORD material : 1;
@@ -5323,6 +5323,60 @@ static inline void wined3d_viewport_get_z_range(const struct wined3d_viewport *v
 static inline BOOL wined3d_bitmap_is_set(const uint32_t *map, unsigned int idx)
 {
     return map[idx >> 5] & (1u << (idx & 0x1f));
+}
+
+static inline unsigned int wined3d_bitmap_ffs_xor(const uint32_t *bitmap, unsigned int bit_count,
+        unsigned int start, uint32_t xor_mask)
+{
+    const unsigned int word_bit_count = sizeof(*bitmap) * CHAR_BIT;
+    const uint32_t *ptr, *end_ptr;
+    uint32_t map, mask;
+
+    assert(bit_count < word_bit_count || !(bit_count % word_bit_count));
+
+    ptr = bitmap + start / word_bit_count;
+    end_ptr = bitmap + (bit_count + word_bit_count - 1) / word_bit_count;
+
+    if (ptr >= end_ptr)
+        return ~0u;
+
+    mask = ~0u << start % word_bit_count;
+    map = (*ptr ^ xor_mask) & mask;
+    while (!map)
+    {
+        if (++ptr == end_ptr)
+            return ~0u;
+        map = *ptr ^ xor_mask;
+    }
+    return (ptr - bitmap) * word_bit_count + wined3d_bit_scan(&map);
+}
+
+static inline unsigned int wined3d_bitmap_ffs(const uint32_t *bitmap, unsigned int bit_count, unsigned int start)
+{
+    return wined3d_bitmap_ffs_xor(bitmap, bit_count, start, 0);
+}
+
+static inline unsigned int wined3d_bitmap_ffz(const uint32_t *bitmap, unsigned int bit_count, unsigned int start)
+{
+    return wined3d_bitmap_ffs_xor(bitmap, bit_count, start, ~0u);
+}
+
+static inline BOOL wined3d_bitmap_get_range(const DWORD *bitmap, unsigned int bit_count,
+        unsigned int start, struct wined3d_range *range)
+{
+    unsigned int range_start, range_end;
+
+    range_start = wined3d_bitmap_ffs(bitmap, bit_count, start);
+    if (range_start == ~0u)
+        return FALSE;
+
+    range_end = wined3d_bitmap_ffz(bitmap, bit_count, range_start + 1);
+    if (range_end == ~0u)
+        range_end = bit_count;
+
+    range->offset = range_start;
+    range->size = range_end - range_start;
+    return TRUE;
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
