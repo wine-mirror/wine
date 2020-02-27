@@ -2801,9 +2801,13 @@ DWORD WINAPI NotifyRouteChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 DWORD WINAPI NotifyUnicastIpAddressChange(ADDRESS_FAMILY family, PUNICAST_IPADDRESS_CHANGE_CALLBACK callback,
                                           PVOID context, BOOLEAN init_notify, PHANDLE handle)
 {
-    FIXME("(family %d, callback %p, context %p, init_notify %d, handle %p): stub\n",
+    FIXME("(family %d, callback %p, context %p, init_notify %d, handle %p): semi-stub\n",
           family, callback, context, init_notify, handle);
     if (handle) *handle = NULL;
+
+    if (init_notify)
+        callback(context, NULL, MibInitialNotification);
+
     return ERROR_NOT_SUPPORTED;
 }
 
