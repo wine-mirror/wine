@@ -1395,7 +1395,7 @@ static int is_linker_arg(const char* arg)
 
 static void parse_target_option( struct options *opts, const char *target )
 {
-    char *p, *platform, *spec = xstrdup( target );
+    char *p, *spec = xstrdup( target );
     unsigned int i;
 
     /* target specification is in the form CPU-MANUFACTURER-OS or CPU-MANUFACTURER-KERNEL-OS */
@@ -1415,13 +1415,11 @@ static void parse_target_option( struct options *opts, const char *target )
         }
         if (i == ARRAY_SIZE(cpu_names))
             error( "Unrecognized CPU '%s'\n", spec );
-        platform = p;
-        if ((p = strrchr( p, '-' ))) platform = p + 1;
     }
     else if (!strcmp( spec, "mingw32" ))
     {
         opts->target_cpu = CPU_x86;
-        platform = spec;
+        p = spec;
     }
     else
         error( "Invalid target specification '%s'\n", target );
@@ -1429,13 +1427,18 @@ static void parse_target_option( struct options *opts, const char *target )
     /* get the OS part */
 
     opts->target_platform = PLATFORM_UNSPECIFIED;  /* default value */
-    for (i = 0; i < ARRAY_SIZE(platform_names); i++)
+    for (;;)
     {
-        if (!strncmp( platform_names[i].name, platform, strlen(platform_names[i].name) ))
+        for (i = 0; i < ARRAY_SIZE(platform_names); i++)
         {
-            opts->target_platform = platform_names[i].platform;
-            break;
+            if (!strncmp( platform_names[i].name, p, strlen(platform_names[i].name) ))
+            {
+                opts->target_platform = platform_names[i].platform;
+                break;
+            }
         }
+        if (opts->target_platform != PLATFORM_UNSPECIFIED || !(p = strchr( p, '-' ))) break;
+        p++;
     }
 
     free( spec );
