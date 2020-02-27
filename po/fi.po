@@ -9496,16 +9496,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "Kap Verden kesäaika"
 
 #: tzres.rc:116
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "Havaijin normaaliaika"
+msgstr "Haitin normaaliaika"
 
 #: tzres.rc:117
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "Havaijin kesäaika"
+msgstr "Haitin kesäaika"
 
 #: tzres.rc:76
 msgid "Central European Standard Time"
@@ -10112,16 +10108,12 @@ msgid "New Zealand Daylight Time"
 msgstr "Uuden-Seelannin kesäaika"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "Argentiinan normaaliaika"
+msgstr "Aleuttien normaaliaika"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "Argentiinan kesäaika"
+msgstr "Aleuttien kesäaika"
 
 #: tzres.rc:72
 msgid "Central Brazilian Standard Time"
