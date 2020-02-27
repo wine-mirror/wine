@@ -81,7 +81,7 @@ typedef struct _lldiv_t {
 extern "C" {
 #endif
 
-#ifdef __i386__
+#if defined(__i386__) || defined(_UCRT)
 
 extern unsigned int* __cdecl __p__osver(void);
 #define _osver             (*__p__osver())
