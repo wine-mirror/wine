@@ -1899,7 +1899,7 @@ struct wined3d_gl_view
     GLuint name;
 };
 
-struct wined3d_map_range
+struct wined3d_range
 {
     unsigned int offset;
     unsigned int size;
@@ -2158,7 +2158,7 @@ void wined3d_context_gl_texture_update(struct wined3d_context_gl *context_gl,
         const struct wined3d_texture_gl *texture_gl) DECLSPEC_HIDDEN;
 void wined3d_context_gl_unload_tex_coords(const struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
 void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl, const struct wined3d_bo_address *data,
-        GLenum binding, unsigned int range_count, const struct wined3d_map_range *ranges) DECLSPEC_HIDDEN;
+        GLenum binding, unsigned int range_count, const struct wined3d_range *ranges) DECLSPEC_HIDDEN;
 void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state) DECLSPEC_HIDDEN;
 
@@ -2858,7 +2858,7 @@ struct wined3d_adapter_ops
     void *(*adapter_map_bo_address)(struct wined3d_context *context,
             const struct wined3d_bo_address *data, size_t size, uint32_t bind_flags, uint32_t map_flags);
     void (*adapter_unmap_bo_address)(struct wined3d_context *context, const struct wined3d_bo_address *data,
-            uint32_t bind_flags, unsigned int range_count, const struct wined3d_map_range *ranges);
+            uint32_t bind_flags, unsigned int range_count, const struct wined3d_range *ranges);
     void (*adapter_copy_bo_address)(struct wined3d_context *context,
             const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
             const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size);
@@ -4172,9 +4172,9 @@ struct wined3d_buffer_ops
     void (*buffer_unload_location)(struct wined3d_buffer *buffer,
             struct wined3d_context *context, unsigned int location);
     void (*buffer_upload_ranges)(struct wined3d_buffer *buffer, struct wined3d_context *context, const void *data,
-            unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges);
+            unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges);
     void (*buffer_download_ranges)(struct wined3d_buffer *buffer, struct wined3d_context *context, void *data,
-            unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges);
+            unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges);
 };
 
 struct wined3d_buffer
@@ -4188,7 +4188,7 @@ struct wined3d_buffer
     void *map_ptr;
     uintptr_t buffer_object;
 
-    struct wined3d_map_range *maps;
+    struct wined3d_range *maps;
     SIZE_T maps_size, modified_areas;
     struct wined3d_fence *fence;
 
@@ -5270,7 +5270,7 @@ static inline void *wined3d_context_map_bo_address(struct wined3d_context *conte
 
 static inline void wined3d_context_unmap_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *data, uint32_t bind_flags,
-        unsigned int range_count, const struct wined3d_map_range *ranges)
+        unsigned int range_count, const struct wined3d_range *ranges)
 {
     context->device->adapter->adapter_ops->adapter_unmap_bo_address(context, data, bind_flags, range_count, ranges);
 }

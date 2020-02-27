@@ -2931,7 +2931,7 @@ void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
 }
 
 void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl, const struct wined3d_bo_address *data,
-        GLenum binding, unsigned int range_count, const struct wined3d_map_range *ranges)
+        GLenum binding, unsigned int range_count, const struct wined3d_range *ranges)
 {
     const struct wined3d_gl_info *gl_info;
     unsigned int i;
@@ -2960,7 +2960,7 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
         const struct wined3d_bo_address *src, GLenum src_binding, size_t size)
 {
     const struct wined3d_gl_info *gl_info;
-    struct wined3d_map_range range;
+    struct wined3d_range range;
     BYTE *dst_ptr, *src_ptr;
 
     gl_info = context_gl->gl_info;

@@ -611,7 +611,7 @@ static void wined3d_buffer_unload_location(struct wined3d_buffer *buffer,
 BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, DWORD location)
 {
-    struct wined3d_map_range range;
+    struct wined3d_range range;
 
     TRACE("buffer %p, context %p, location %s.\n",
             buffer, context, wined3d_debug_location(location));
@@ -1215,7 +1215,7 @@ void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_off
 void wined3d_buffer_upload_data(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_box *box, const void *data)
 {
-    struct wined3d_map_range range;
+    struct wined3d_range range;
 
     if (box)
     {
@@ -1406,13 +1406,13 @@ static void wined3d_buffer_no3d_unload_location(struct wined3d_buffer *buffer,
 }
 
 static void wined3d_buffer_no3d_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges)
+        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
     FIXME("Not implemented.\n");
 }
 
 static void wined3d_buffer_no3d_download_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges)
+        void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
     FIXME("Not implemented.\n");
 }
@@ -1482,12 +1482,12 @@ static void wined3d_buffer_gl_unload_location(struct wined3d_buffer *buffer,
 
 /* Context activation is done by the caller. */
 static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges)
+        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(buffer);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    const struct wined3d_map_range *range;
+    const struct wined3d_range *range;
 
     wined3d_buffer_gl_bind(buffer_gl, context_gl);
 
@@ -1502,12 +1502,12 @@ static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struc
 
 /* Context activation is done by the caller. */
 static void wined3d_buffer_gl_download_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges)
+        void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(buffer);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    const struct wined3d_map_range *range;
+    const struct wined3d_range *range;
 
     wined3d_buffer_gl_bind(buffer_gl, context_gl);
 
@@ -1636,13 +1636,13 @@ static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
 }
 
 static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges)
+        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
     FIXME("Not implemented.\n");
 }
 
 static void wined3d_buffer_vk_download_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges)
+        void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
     FIXME("Not implemented.\n");
 }

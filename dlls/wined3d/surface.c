@@ -649,7 +649,7 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
     {
         unsigned int dst_row_pitch, dst_slice_pitch;
         struct wined3d_bo_address dst_data;
-        struct wined3d_map_range range;
+        struct wined3d_range range;
         const BYTE *src;
         BYTE *dst;
 
@@ -1638,8 +1638,8 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     unsigned int src_fmt_flags, dst_fmt_flags;
     struct wined3d_map_desc dst_map, src_map;
     unsigned int x, sx, xinc, y, sy, yinc;
-    struct wined3d_map_range dst_range;
     struct wined3d_context *context;
+    struct wined3d_range dst_range;
     unsigned int texture_level;
     HRESULT hr = WINED3D_OK;
     BOOL same_sub_resource;
@@ -2157,8 +2157,8 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
     struct wined3d_context *context;
     struct wined3d_texture *texture;
     struct wined3d_bo_address data;
-    struct wined3d_map_range range;
     struct wined3d_map_desc map;
+    struct wined3d_range range;
     DWORD map_binding;
     uint8_t *dst;
     DWORD c;

@@ -2463,7 +2463,7 @@ static void *adapter_no3d_map_bo_address(struct wined3d_context *context,
 }
 
 static void adapter_no3d_unmap_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *data,
-        uint32_t bind_flags, unsigned int range_count, const struct wined3d_map_range *ranges)
+        uint32_t bind_flags, unsigned int range_count, const struct wined3d_range *ranges)
 {
     if (data->buffer_object)
         ERR("Unsupported buffer object %#lx.\n", data->buffer_object);

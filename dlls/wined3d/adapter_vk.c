@@ -538,7 +538,7 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
 }
 
 static void adapter_vk_unmap_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *data,
-        uint32_t bind_flags, unsigned int range_count, const struct wined3d_map_range *ranges)
+        uint32_t bind_flags, unsigned int range_count, const struct wined3d_range *ranges)
 {
     const struct wined3d_vk_info *vk_info;
     struct wined3d_device_vk *device_vk;
@@ -556,7 +556,7 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
         const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size)
 {
-    struct wined3d_map_range range;
+    struct wined3d_range range;
     void *dst_ptr, *src_ptr;
 
     src_ptr = adapter_vk_map_bo_address(context, src, size, src_bind_flags, WINED3D_MAP_READ);

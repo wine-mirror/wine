@@ -761,9 +761,9 @@ static void wined3d_texture_destroy_dc(void *object)
     struct wined3d_texture *texture;
     struct wined3d_dc_info *dc_info;
     struct wined3d_bo_address data;
-    struct wined3d_map_range range;
     unsigned int sub_resource_idx;
     struct wined3d_device *device;
+    struct wined3d_range range;
     NTSTATUS status;
 
     texture = idx->texture;
@@ -3219,7 +3219,7 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
     struct wined3d_context *context;
     struct wined3d_texture *texture;
     struct wined3d_bo_address data;
-    struct wined3d_map_range range;
+    struct wined3d_range range;
 
     TRACE("resource %p, sub_resource_idx %u.\n", resource, sub_resource_idx);
 
