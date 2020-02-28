@@ -4260,11 +4260,6 @@ static void load_sources( struct makefile *make )
         make->use_msvcrt = 1;
     }
 
-    LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
-    LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry ) get_dependencies( file, file );
-
-    make->is_cross = crosstarget && make->use_msvcrt;
-
     if (make->use_msvcrt)
     {
         for (i = 0; i < make->imports.count; i++)
@@ -4273,9 +4268,22 @@ static void load_sources( struct makefile *make )
             if (crt_dll) fatal_error( "More than one crt DLL imported: %s %s\n", crt_dll, make->imports.str[i] );
             crt_dll = make->imports.str[i];
         }
-        if (!crt_dll) crt_dll = "msvcrt";
+        if (!crt_dll)
+        {
+            if (make->use_msvcrt && make->is_exe)
+            {
+                strarray_add( &make->imports, "ucrtbase" );
+                crt_dll = "ucrtbase";
+            }
+            else crt_dll = "msvcrt";
+        }
         if (!strncmp( crt_dll, "ucrt", 4 )) strarray_add( &make->define_args, "-D_UCRT" );
     }
+
+    LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
+    LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry ) get_dependencies( file, file );
+
+    make->is_cross = crosstarget && make->use_msvcrt;
 
     if (make->is_cross)
     {
