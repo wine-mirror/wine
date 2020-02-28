@@ -5356,8 +5356,6 @@ static HRESULT d3d_device7_SetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *vi
     vp.max_z = viewport->dvMaxZ;
 
     wined3d_stateblock_set_viewport(device->update_state, &vp);
-    if (!device->recording)
-        wined3d_device_set_viewports(device->wined3d_device, 1, &vp);
     wined3d_mutex_unlock();
 
     return D3D_OK;
