@@ -3961,15 +3961,17 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
     }
 
-    for (i = 0; i < ARRAY_SIZE(state->sampler_states); ++i)
+    for (i = 0; i < ARRAY_SIZE(changed->samplerState); ++i)
     {
         DWORD stage = i;
+
         if (stage >= WINED3D_MAX_FRAGMENT_SAMPLERS)
             stage += WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS;
-        for (j = 0; j < ARRAY_SIZE(state->sampler_states[j]); ++j)
+        map = changed->samplerState[i];
+        while (map)
         {
-            if (changed->samplerState[i] & (1 << j))
-                wined3d_device_set_sampler_state(device, stage, j, state->sampler_states[i][j]);
+            j = wined3d_bit_scan(&map);
+            wined3d_device_set_sampler_state(device, stage, j, state->sampler_states[i][j]);
         }
     }
 
