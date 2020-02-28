@@ -651,7 +651,7 @@ MSVCRT_wchar_t** CDECL _get_initial_wide_environment(void)
  */
 int CDECL _configure_wide_argv(int mode)
 {
-  FIXME("(%d) stub\n", mode);
+  WARN("(%d) stub\n", mode);
   return 0;
 }
 
@@ -660,7 +660,7 @@ int CDECL _configure_wide_argv(int mode)
  */
 int CDECL _initialize_wide_environment(void)
 {
-  FIXME("stub\n");
+  WARN("stub\n");
   return 0;
 }
 
