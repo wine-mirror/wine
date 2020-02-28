@@ -5448,8 +5448,6 @@ static HRESULT d3d_device7_SetMaterial(IDirect3DDevice7 *iface, D3DMATERIAL7 *ma
     wined3d_mutex_lock();
     /* Note: D3DMATERIAL7 is compatible with struct wined3d_material. */
     wined3d_stateblock_set_material(device->update_state, (const struct wined3d_material *)material);
-    if (!device->recording)
-        wined3d_device_set_material(device->wined3d_device, (const struct wined3d_material *)material);
     wined3d_mutex_unlock();
 
     return D3D_OK;
