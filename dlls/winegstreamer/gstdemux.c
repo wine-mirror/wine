@@ -1387,6 +1387,7 @@ static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
 {
     struct gstdemux *filter = impl_from_strmbase_filter(iface);
     HRESULT hr = VFW_E_NOT_CONNECTED, pin_hr;
+    const SourceSeeking *seeking;
     GstStateChangeReturn ret;
     unsigned int i;
 
@@ -1406,6 +1407,23 @@ static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
      * e.g. try to seek and fail. */
     if (filter->no_more_pads_event)
         WaitForSingleObject(filter->no_more_pads_event, INFINITE);
+
+    seeking = &filter->sources[0]->seek;
+
+    /* GStreamer can't seek while stopped, and it resets position to the
+     * beginning of the stream every time it is stopped. */
+    if (seeking->llCurrent)
+    {
+        GstSeekType stop_type = GST_SEEK_TYPE_NONE;
+
+        if (seeking->llStop && seeking->llStop != seeking->llDuration)
+            stop_type = GST_SEEK_TYPE_SET;
+
+        gst_pad_push_event(filter->sources[0]->my_sink, gst_event_new_seek(
+                seeking->dRate, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
+                GST_SEEK_TYPE_SET, seeking->llCurrent * 100,
+                stop_type, seeking->llStop * 100));
+    }
 
     for (i = 0; i < filter->source_count; ++i)
     {
