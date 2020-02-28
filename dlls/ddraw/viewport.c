@@ -39,7 +39,6 @@ static void update_clip_space(struct d3d_device *device,
 
     multiply_matrix(&projection, &clip_space, &device->legacy_projection);
     wined3d_stateblock_set_transform(device->state, WINED3D_TS_PROJECTION, &projection);
-    wined3d_device_set_transform(device->wined3d_device, WINED3D_TS_PROJECTION, &projection);
     device->legacy_clipspace = clip_space;
 }
 

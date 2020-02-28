@@ -1359,28 +1359,16 @@ static HRESULT WINAPI d3d_device1_SetMatrix(IDirect3DDevice *iface,
     *m = *matrix;
 
     if (matrix_handle == device->world)
-    {
         wined3d_stateblock_set_transform(device->state,
                 WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)matrix);
-        wined3d_device_set_transform(device->wined3d_device,
-                WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)matrix);
-    }
 
     if (matrix_handle == device->view)
-    {
         wined3d_stateblock_set_transform(device->state,
                 WINED3D_TS_VIEW, (struct wined3d_matrix *)matrix);
-        wined3d_device_set_transform(device->wined3d_device,
-                WINED3D_TS_VIEW, (struct wined3d_matrix *)matrix);
-    }
 
     if (matrix_handle == device->proj)
-    {
         wined3d_stateblock_set_transform(device->state,
                 WINED3D_TS_PROJECTION, (struct wined3d_matrix *)matrix);
-        wined3d_device_set_transform(device->wined3d_device,
-                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)matrix);
-    }
 
     wined3d_mutex_unlock();
 
@@ -3135,8 +3123,6 @@ static HRESULT d3d_device7_SetTransform(IDirect3DDevice7 *iface,
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
     wined3d_stateblock_set_transform(device->update_state, wined3d_state, (const struct wined3d_matrix *)matrix);
-    if (!device->recording)
-        wined3d_device_set_transform(device->wined3d_device, wined3d_state, (const struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -3178,8 +3164,6 @@ static HRESULT WINAPI d3d_device3_SetTransform(IDirect3DDevice3 *iface,
         wined3d_mutex_lock();
         multiply_matrix(&projection, &device->legacy_clipspace, (struct wined3d_matrix *)matrix);
         wined3d_stateblock_set_transform(device->state,
-                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
-        wined3d_device_set_transform(device->wined3d_device,
                 WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
         memcpy(&device->legacy_projection, matrix, sizeof(*matrix));
         wined3d_mutex_unlock();
@@ -3350,8 +3334,6 @@ static HRESULT d3d_device7_MultiplyTransform(IDirect3DDevice7 *iface,
     wined3d_mutex_lock();
     wined3d_stateblock_multiply_transform(device->state,
             wined3d_state, (struct wined3d_matrix *)matrix);
-    wined3d_device_multiply_transform(device->wined3d_device,
-            wined3d_state, (struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -3391,7 +3373,6 @@ static HRESULT WINAPI d3d_device3_MultiplyTransform(IDirect3DDevice3 *iface,
         multiply_matrix(&tmp, &device->legacy_projection, (struct wined3d_matrix *)matrix);
         multiply_matrix(&projection, &device->legacy_clipspace, &tmp);
         wined3d_stateblock_set_transform(device->state, WINED3D_TS_PROJECTION, &projection);
-        wined3d_device_set_transform(device->wined3d_device, WINED3D_TS_PROJECTION, &projection);
         device->legacy_projection = tmp;
         wined3d_mutex_unlock();
 
