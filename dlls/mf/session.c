@@ -614,6 +614,7 @@ static void session_start(struct media_session *session, const GUID *time_format
     switch (session->state)
     {
         case SESSION_STATE_STOPPED:
+        case SESSION_STATE_PAUSED:
 
             session->presentation.time_format = *time_format;
             session->presentation.start_position.vt = VT_EMPTY;
