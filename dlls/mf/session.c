@@ -109,6 +109,13 @@ struct media_sink
     IMFMediaSink *sink;
 };
 
+struct output_node
+{
+    struct list entry;
+    IMFStreamSink *stream;
+    enum object_state state;
+};
+
 struct media_session
 {
     IMFMediaSession IMFMediaSession_iface;
@@ -130,6 +137,7 @@ struct media_session
         struct list sources;
         struct list source_nodes;
         struct list sinks;
+        struct list output_nodes;
     } presentation;
     struct list topologies;
     enum session_state state;
@@ -788,6 +796,89 @@ static void session_raise_topology_set(struct media_session *session, IMFTopolog
     IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionTopologySet, &GUID_NULL, status, &param);
 }
 
+static HRESULT session_add_media_sink(struct media_session *session, IMFTopologyNode *node, IMFMediaSink *sink)
+{
+    struct media_sink *media_sink;
+
+    LIST_FOR_EACH_ENTRY(media_sink, &session->presentation.sinks, struct media_sink, entry)
+    {
+        if (sink == media_sink->sink)
+            return S_FALSE;
+    }
+
+    if (!(media_sink = heap_alloc_zero(sizeof(*media_sink))))
+        return E_OUTOFMEMORY;
+
+    media_sink->sink = sink;
+    IMFMediaSink_AddRef(media_sink->sink);
+
+    list_add_tail(&session->presentation.sinks, &media_sink->entry);
+
+    return S_OK;
+}
+
+static HRESULT session_collect_output_nodes(struct media_session *session)
+{
+    IMFTopology *topology = session->presentation.current_topology;
+    IMFTopologyNode *topo_node;
+    struct output_node *node;
+    IMFCollection *nodes;
+    DWORD count, i;
+    HRESULT hr;
+
+    if (!list_empty(&session->presentation.output_nodes))
+        return S_OK;
+
+    if (FAILED(hr = IMFTopology_GetOutputNodeCollection(topology, &nodes)))
+        return hr;
+
+    if (FAILED(hr = IMFCollection_GetElementCount(nodes, &count)))
+    {
+        IMFCollection_Release(nodes);
+        return hr;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        IMFMediaSink *media_sink = NULL;
+
+        if (FAILED(hr = IMFCollection_GetElement(nodes, i, (IUnknown **)&topo_node)))
+            break;
+
+        if (!(node = heap_alloc_zero(sizeof(*node))))
+            hr = E_OUTOFMEMORY;
+
+        if (SUCCEEDED(hr))
+            hr = IMFTopologyNode_GetObject(topo_node, (IUnknown **)&node->stream);
+
+        if (SUCCEEDED(hr))
+            hr = IMFStreamSink_GetMediaSink(node->stream, &media_sink);
+
+        if (SUCCEEDED(hr))
+            hr = session_add_media_sink(session, topo_node, media_sink);
+
+        if (media_sink)
+            IMFMediaSink_Release(media_sink);
+
+        if (SUCCEEDED(hr))
+        {
+            list_add_tail(&session->presentation.output_nodes, &node->entry);
+        }
+        else if (node)
+        {
+            if (node->stream)
+                IMFStreamSink_Release(node->stream);
+            heap_free(node);
+        }
+
+        IMFTopologyNode_Release(topo_node);
+    }
+
+    IMFCollection_Release(nodes);
+
+    return hr;
+}
+
 static void session_set_current_topology(struct media_session *session, IMFTopology *topology)
 {
     IMFMediaEvent *event;
@@ -800,6 +891,7 @@ static void session_set_current_topology(struct media_session *session, IMFTopol
     }
 
     session_collect_source_nodes(session);
+    session_collect_output_nodes(session);
 
     /* FIXME: attributes are all zero for now */
     if (SUCCEEDED(MFCreateMediaEvent(MESessionNotifyPresentationTime, &GUID_NULL, S_OK, NULL, &event)))
@@ -1752,6 +1844,7 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     list_init(&object->presentation.sources);
     list_init(&object->presentation.source_nodes);
     list_init(&object->presentation.sinks);
+    list_init(&object->presentation.output_nodes);
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = MFCreateTopology(&object->presentation.current_topology)))
