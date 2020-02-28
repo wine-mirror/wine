@@ -5495,7 +5495,7 @@ static HRESULT d3d_device7_GetMaterial(IDirect3DDevice7 *iface, D3DMATERIAL7 *ma
 
     wined3d_mutex_lock();
     /* Note: D3DMATERIAL7 is compatible with struct wined3d_material. */
-    wined3d_device_get_material(device->wined3d_device, (struct wined3d_material *)material);
+    memcpy(material, &wined3d_stateblock_get_state(device->state)->material, sizeof(*material));
     wined3d_mutex_unlock();
 
     return D3D_OK;
