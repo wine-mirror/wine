@@ -5539,8 +5539,6 @@ static HRESULT d3d_device7_SetLight(IDirect3DDevice7 *iface, DWORD light_idx, D3
     wined3d_mutex_lock();
     /* Note: D3DLIGHT7 is compatible with struct wined3d_light. */
     hr = wined3d_stateblock_set_light(device->update_state, light_idx, (const struct wined3d_light *)light);
-    if (SUCCEEDED(hr) && !device->recording)
-        hr = wined3d_device_set_light(device->wined3d_device, light_idx, (const struct wined3d_light *)light);
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);
@@ -6417,8 +6415,6 @@ static HRESULT d3d_device7_LightEnable(IDirect3DDevice7 *iface, DWORD light_idx,
 
     wined3d_mutex_lock();
     hr = wined3d_stateblock_set_light_enable(device->update_state, light_idx, enabled);
-    if (SUCCEEDED(hr) && !device->recording)
-        hr = wined3d_device_set_light_enable(device->wined3d_device, light_idx, enabled);
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);
