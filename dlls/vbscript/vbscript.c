@@ -283,11 +283,6 @@ static void release_script(script_ctx_t *ctx)
         release_named_item(iter);
     }
 
-    if(ctx->host_global) {
-        IDispatch_Release(ctx->host_global);
-        ctx->host_global = NULL;
-    }
-
     if(ctx->secmgr) {
         IInternetHostSecurityManager_Release(ctx->secmgr);
         ctx->secmgr = NULL;
@@ -675,11 +670,6 @@ static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstr
             WARN("object does not implement IDispatch\n");
             return hres;
         }
-
-        if(This->ctx->host_global)
-            IDispatch_Release(This->ctx->host_global);
-        IDispatch_AddRef(disp);
-        This->ctx->host_global = disp;
     }
 
     item = heap_alloc(sizeof(*item));

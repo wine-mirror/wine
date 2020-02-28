@@ -186,8 +186,6 @@ struct _script_ctx_t {
     IInternetHostSecurityManager *secmgr;
     DWORD safeopt;
 
-    IDispatch *host_global;
-
     ScriptDisp *script_obj;
 
     BuiltinDisp *global_obj;

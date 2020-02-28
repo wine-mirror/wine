@@ -1524,16 +1524,23 @@ static HRESULT interp_me(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    if(ctx->vbthis)
+    if(ctx->vbthis) {
         disp = (IDispatch*)&ctx->vbthis->IDispatchEx_iface;
-    else if(ctx->code->named_item)
+    }else if(ctx->code->named_item) {
         disp = (ctx->code->named_item->flags & SCRIPTITEM_CODEONLY)
                ? (IDispatch*)&ctx->code->named_item->script_obj->IDispatchEx_iface
                : ctx->code->named_item->disp;
-    else if(ctx->script->host_global)
-        disp = ctx->script->host_global;
-    else
-        disp = (IDispatch*)&ctx->script->script_obj->IDispatchEx_iface;
+    }else {
+        named_item_t *item;
+        disp = NULL;
+        LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
+            if(!(item->flags & SCRIPTITEM_GLOBALMEMBERS)) continue;
+            disp = item->disp;
+            break;
+        }
+        if(!disp)
+            disp = (IDispatch*)&ctx->script->script_obj->IDispatchEx_iface;
+    }
 
     IDispatch_AddRef(disp);
     V_VT(&v) = VT_DISPATCH;
