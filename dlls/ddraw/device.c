@@ -6526,8 +6526,6 @@ static HRESULT d3d_device7_SetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DV
 
     wined3d_mutex_lock();
     hr = wined3d_stateblock_set_clip_plane(device->update_state, idx, wined3d_plane);
-    if (SUCCEEDED(hr) && !device->recording)
-        hr = wined3d_device_set_clip_plane(device->wined3d_device, idx, wined3d_plane);
     if (idx < ARRAY_SIZE(device->user_clip_planes))
     {
         device->user_clip_planes[idx] = *wined3d_plane;
