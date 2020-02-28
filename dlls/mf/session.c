@@ -1582,6 +1582,19 @@ static BOOL session_is_source_nodes_state(struct media_session *session, enum ob
     return TRUE;
 }
 
+static BOOL session_is_output_nodes_state(struct media_session *session, enum object_state state)
+{
+    struct output_node *node;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.output_nodes, struct output_node, entry)
+    {
+        if (node->state != state)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static enum object_state session_get_object_state_for_event(MediaEventType event)
 {
     switch (event)
@@ -1737,6 +1750,68 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
     }
 }
 
+static void session_set_sink_stream_state(struct media_session *session, IMFStreamSink *stream,
+        MediaEventType event_type)
+{
+    struct media_source *source;
+    struct output_node *node;
+    enum object_state state;
+    BOOL changed = FALSE;
+    IMFMediaEvent *event;
+    DWORD caps, flags;
+
+    if ((state = session_get_object_state_for_event(event_type)) == OBJ_STATE_INVALID)
+        return;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.output_nodes, struct output_node, entry)
+    {
+        if (stream == node->stream)
+        {
+            changed = node->state != state;
+            node->state = state;
+            break;
+        }
+    }
+
+    if (!changed)
+        return;
+
+    switch (session->state)
+    {
+        case SESSION_STATE_STARTING_SINKS:
+            if (!session_is_output_nodes_state(session, OBJ_STATE_STARTED))
+                break;
+
+            session->state = SESSION_STATE_RUNNING;
+
+            caps = session->caps | MFSESSIONCAP_PAUSE;
+
+            LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+            {
+                if (SUCCEEDED(IMFMediaSource_GetCharacteristics(source->source, &flags)))
+                {
+                    if (!(flags & MFMEDIASOURCE_CAN_PAUSE))
+                    {
+                        caps &= ~MFSESSIONCAP_PAUSE;
+                        break;
+                    }
+                }
+            }
+
+            session_set_caps(session, caps);
+
+            if (SUCCEEDED(MFCreateMediaEvent(MESessionStarted, &GUID_NULL, S_OK, NULL, &event)))
+            {
+                IMFMediaEvent_SetUINT64(event, &MF_EVENT_PRESENTATION_TIME_OFFSET, 0);
+                IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+                IMFMediaEvent_Release(event);
+            }
+            break;
+        default:
+            ;
+    }
+}
+
 static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_session *session = impl_from_events_callback_IMFAsyncCallback(iface);
@@ -1802,6 +1877,15 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             LeaveCriticalSection(&session->cs);
 
             IMFMediaSource_Release(source);
+
+            break;
+        case MEStreamSinkStarted:
+        case MEStreamSinkPaused:
+        case MEStreamSinkStopped:
+
+            EnterCriticalSection(&session->cs);
+            session_set_sink_stream_state(session, (IMFStreamSink *)event_source, event_type);
+            LeaveCriticalSection(&session->cs);
 
             break;
         default:
