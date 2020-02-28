@@ -574,6 +574,36 @@ static void test_trig(void)
     release_test_context(&test_context);
 }
 
+static void test_comma(void)
+{
+    struct test_context test_context;
+    ID3D10Blob *ps_code = NULL;
+    struct vec4 v;
+
+    static const char ps_source[] =
+        "float4 main(float x: TEXCOORD0): COLOR\n"
+        "{\n"
+        "    float4 ret;\n"
+        "    return (ret = float4(0.1, 0.2, 0.3, 0.4)), ret + 0.5;\n"
+        "}";
+
+    if (!init_test_context(&test_context))
+        return;
+
+    todo_wine ps_code = compile_shader(ps_source, "ps_2_0");
+    if (ps_code)
+    {
+        draw_quad(test_context.device, ps_code);
+
+        v = get_color_vec4(test_context.device, 0, 0);
+        ok(compare_vec4(&v, 0.6f, 0.7f, 0.8f, 0.9f, 0),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+
+        ID3D10Blob_Release(ps_code);
+    }
+    release_test_context(&test_context);
+}
+
 static void test_fail(void)
 {
     static const char *tests[] =
@@ -679,5 +709,6 @@ START_TEST(hlsl_d3d9)
     test_conditionals();
     test_float_vectors();
     test_trig();
+    test_comma();
     test_fail();
 }
