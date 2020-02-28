@@ -79,11 +79,12 @@ enum session_state
     SESSION_STATE_SHUT_DOWN,
 };
 
-enum source_state
+enum object_state
 {
-    SOURCE_STATE_STOPPED = 0,
-    SOURCE_STATE_STARTED,
-    SOURCE_STATE_PAUSED,
+    OBJ_STATE_STOPPED = 0,
+    OBJ_STATE_STARTED,
+    OBJ_STATE_PAUSED,
+    OBJ_STATE_INVALID,
 };
 
 struct media_source
@@ -91,7 +92,7 @@ struct media_source
     struct list entry;
     IMFMediaSource *source;
     IMFPresentationDescriptor *pd;
-    enum source_state state;
+    enum object_state state;
 };
 
 struct source_node
@@ -1385,7 +1386,7 @@ static HRESULT session_add_media_stream(struct media_session *session, IMFMediaS
     return S_OK;
 }
 
-static BOOL session_set_source_state(struct media_session *session, IMFMediaSource *source, enum source_state state)
+static BOOL session_set_source_state(struct media_session *session, IMFMediaSource *source, enum object_state state)
 {
     struct media_source *cur;
     BOOL ret = TRUE;
@@ -1469,7 +1470,7 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
 {
     struct media_session *session = impl_from_events_callback_IMFAsyncCallback(iface);
     IMFMediaEventGenerator *event_source;
-    enum source_state source_state;
+    enum object_state source_state;
     IMFMediaEvent *event = NULL;
     MediaEventType event_type;
     IMFMediaSource *source;
@@ -1506,11 +1507,11 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
         case MESourcePaused:
         case MESourceStopped:
             if (event_type == MESourceStarted)
-                source_state = SOURCE_STATE_STARTED;
+                source_state = OBJ_STATE_STARTED;
             else if (event_type == MESourcePaused)
-                source_state = SOURCE_STATE_PAUSED;
+                source_state = OBJ_STATE_PAUSED;
             else
-                source_state = SOURCE_STATE_STOPPED;
+                source_state = OBJ_STATE_STOPPED;
 
             EnterCriticalSection(&session->cs);
 
