@@ -1416,6 +1416,10 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
 failed:
     if (event)
         IMFMediaEvent_Release(event);
+
+    if (FAILED(hr = IMFMediaEventGenerator_BeginGetEvent(event_source, iface, (IUnknown *)event_source)))
+        WARN("Failed to re-subscribe, hr %#x.\n", hr);
+
     IMFMediaEventGenerator_Release(event_source);
 
     return hr;
