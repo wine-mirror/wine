@@ -3951,12 +3951,13 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
     }
 
-    for (i = 0; i < ARRAY_SIZE(state->texture_states); ++i)
+    for (i = 0; i < ARRAY_SIZE(changed->textureState); ++i)
     {
-        for (j = 0; j < ARRAY_SIZE(state->texture_states[i]); ++j)
+        map = changed->textureState[i];
+        while (map)
         {
-            if (changed->textureState[i] & (1u << j))
-                wined3d_device_set_texture_stage_state(device, i, j, state->texture_states[i][j]);
+            j = wined3d_bit_scan(&map);
+            wined3d_device_set_texture_stage_state(device, i, j, state->texture_states[i][j]);
         }
     }
 
