@@ -3843,7 +3843,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     struct wined3d_color colour;
     struct wined3d_range range;
     BOOL set_blend_state;
-    DWORD map;
+    DWORD map, stage;
 
     TRACE("device %p, stateblock %p.\n", device, stateblock);
 
@@ -3963,8 +3963,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     for (i = 0; i < ARRAY_SIZE(changed->samplerState); ++i)
     {
-        DWORD stage = i;
-
+        stage = i;
         if (stage >= WINED3D_MAX_FRAGMENT_SAMPLERS)
             stage += WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS;
         map = changed->samplerState[i];
@@ -4013,13 +4012,14 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 state->streams[i].frequency | state->streams[i].flags);
     }
 
-    for (i = 0; i < ARRAY_SIZE(state->textures); ++i)
+    map = changed->textures;
+    while (map)
     {
-        DWORD stage = i;
+        i = wined3d_bit_scan(&map);
+        stage = i;
         if (stage >= WINED3D_MAX_FRAGMENT_SAMPLERS)
             stage += WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS;
-        if (changed->textures & (1u << i))
-            wined3d_device_set_texture(device, stage, state->textures[i]);
+        wined3d_device_set_texture(device, stage, state->textures[i]);
     }
 
     for (i = 0; i < ARRAY_SIZE(state->clip_planes); ++i)
