@@ -205,7 +205,7 @@ named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned f
 
     LIST_FOR_EACH_ENTRY(item, &ctx->named_items, named_item_t, entry) {
         if((item->flags & flags) == flags && !wcsicmp(item->name, name)) {
-            if(!item->script_obj) {
+            if(!item->script_obj && !(item->flags & SCRIPTITEM_GLOBALMEMBERS)) {
                 hres = create_script_disp(ctx, &item->script_obj);
                 if(FAILED(hres)) return NULL;
             }
@@ -718,13 +718,12 @@ static HRESULT WINAPI VBScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR
         return E_UNEXPECTED;
     }
 
+    script_obj = This->ctx->script_obj;
     if(pstrItemName) {
         named_item_t *item = lookup_named_item(This->ctx, pstrItemName, 0);
         if(!item) return E_INVALIDARG;
-        script_obj = item->script_obj;
+        if(item->script_obj) script_obj = item->script_obj;
     }
-    else
-        script_obj = This->ctx->script_obj;
 
     *ppdisp = (IDispatch*)&script_obj->IDispatchEx_iface;
     IDispatch_AddRef(*ppdisp);

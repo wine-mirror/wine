@@ -98,6 +98,7 @@ DEFINE_EXPECT(OnLeaveScript);
 DEFINE_EXPECT(OnScriptError);
 DEFINE_EXPECT(GetIDsOfNames);
 DEFINE_EXPECT(GetItemInfo_global);
+DEFINE_EXPECT(GetItemInfo_global_code);
 DEFINE_EXPECT(GetItemInfo_visible);
 DEFINE_EXPECT(GetItemInfo_visible_code);
 DEFINE_EXPECT(testCall);
@@ -138,6 +139,16 @@ static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, voi
 
     *ppv = NULL;
     return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Dispatch_AddRef(IDispatch *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Dispatch_Release(IDispatch *iface)
+{
+    return 1;
 }
 
 static ULONG global_named_item_ref, visible_named_item_ref, visible_code_named_item_ref;
@@ -206,6 +217,18 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID id, REFIID riid, 
     ok(!res, "res = %p\n", res);
     return S_OK;
 }
+
+static const IDispatchVtbl dispatch_vtbl = {
+    Dispatch_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    Dispatch_Invoke
+};
+
+static IDispatch dispatch_object = { &dispatch_vtbl };
 
 static const IDispatchVtbl global_named_item_vtbl = {
     Dispatch_QueryInterface,
@@ -282,6 +305,12 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
         CHECK_EXPECT(GetItemInfo_global);
         IDispatch_AddRef(&global_named_item);
         *item_unk = (IUnknown*)&global_named_item;
+        return S_OK;
+    }
+    if(!wcscmp(name, L"globalCodeItem")) {
+        CHECK_EXPECT(GetItemInfo_global_code);
+        IDispatch_AddRef(&dispatch_object);
+        *item_unk = (IUnknown*)&dispatch_object;
         return S_OK;
     }
     if(!wcscmp(name, L"visibleItem")) {
@@ -1739,6 +1768,8 @@ static void test_named_items(void)
 {
     static const WCHAR *global_idents[] =
     {
+        L"global_me",
+        L"globalCode_me",
         L"testSub_global",
         L"testExplicitVar_global",
         L"testVar_global"
@@ -1812,7 +1843,18 @@ static void test_named_items(void)
     hres = IActiveScript_GetScriptDispatch(script, L"noContext", &disp);
     ok(hres == E_INVALIDARG, "GetScriptDispatch returned: %08x\n", hres);
 
+    SET_EXPECT(GetItemInfo_global_code);
+    hres = IActiveScript_AddNamedItem(script, L"globalCodeItem", SCRIPTITEM_GLOBALMEMBERS | SCRIPTITEM_CODEONLY);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+    CHECK_CALLED(GetItemInfo_global_code);
+
     script_disp = get_script_dispatch(script, NULL);
+    script_disp2 = get_script_dispatch(script, L"globalItem");
+    ok(script_disp == script_disp2, "get_script_dispatch returned different dispatch objects.\n");
+    IDispatchEx_Release(script_disp2);
+    script_disp2 = get_script_dispatch(script, L"globalCodeItem");
+    ok(script_disp == script_disp2, "get_script_dispatch returned different dispatch objects.\n");
+    IDispatchEx_Release(script_disp2);
     script_disp2 = get_script_dispatch(script, L"codeONLYitem");
     ok(script_disp != script_disp2, "get_script_dispatch returned same dispatch objects.\n");
 
@@ -1889,6 +1931,8 @@ static void test_named_items(void)
     SET_EXPECT(GetIDsOfNames);
     SET_EXPECT(OnLeaveScript);
     hres = IActiveScriptParse_ParseScriptText(parse, L""
+        "dim global_me\nglobal_me = 0\n"
+        "dim globalCode_me\nglobalCode_me = 0\n"
         "sub testSub_global\nend sub\n"
         "dim testExplicitVar_global\ntestExplicitVar_global = 10\n"
         "testVar_global = 10\n"
@@ -1918,6 +1962,18 @@ static void test_named_items(void)
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(GetIDsOfNames);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"set global_me = me\n", L"globalItem", NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"set globalCode_me = me\n", L"globalCodeItem", NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
 
     for (i = 0; i < ARRAY_SIZE(global_idents); i++)
@@ -2018,6 +2074,15 @@ static void test_named_items(void)
     VariantClear(&var);
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"globalCode_me", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == &global_named_item,
+        "Unexpected 'me': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
+    VariantClear(&var);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
 
     IDispatchEx_Release(script_disp2);
     IDispatchEx_Release(script_disp);
@@ -2050,13 +2115,13 @@ static void test_named_items(void)
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
     SET_EXPECT(OnStateChange_CONNECTED);
-    SET_EXPECT_MULTI(OnEnterScript, 2);
-    SET_EXPECT_MULTI(OnLeaveScript, 2);
+    SET_EXPECT_MULTI(OnEnterScript, 4);
+    SET_EXPECT_MULTI(OnLeaveScript, 4);
     hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
     ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_CONNECTED);
-    CHECK_CALLED_MULTI(OnEnterScript, 2);
-    CHECK_CALLED_MULTI(OnLeaveScript, 2);
+    CHECK_CALLED_MULTI(OnEnterScript, 4);
+    CHECK_CALLED_MULTI(OnLeaveScript, 4);
     test_state(script, SCRIPTSTATE_CONNECTED);
 
     script_disp = get_script_dispatch(script, NULL);
@@ -2078,6 +2143,30 @@ static void test_named_items(void)
         ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(context_idents[i]), id);
         SysFreeString(bstr);
     }
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"global_me", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == (IDispatch*)script_disp,
+        "Unexpected 'me': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
+    VariantClear(&var);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"globalCode_me", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == (IDispatch*)script_disp,
+        "Unexpected 'me': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
+    VariantClear(&var);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"global_me = 0\nglobalCode_me = 0\n", NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
     IDispatchEx_Release(script_disp);
 
     script_disp = get_script_dispatch(script, L"codeOnlyItem");

@@ -1947,6 +1947,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
             WARN("Unknown context %s\n", debugstr_w(item_name));
             return E_INVALIDARG;
         }
+        if(!item->script_obj) item = NULL;
     }
 
     memset(&ctx, 0, sizeof(ctx));
