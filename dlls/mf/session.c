@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 
 #define COBJMACROS
 
@@ -1447,20 +1448,73 @@ static ULONG WINAPI session_rate_support_Release(IMFRateSupport *iface)
     return IMFMediaSession_Release(&session->IMFMediaSession_iface);
 }
 
+static void session_presentation_object_get_rate(IUnknown *object, MFRATE_DIRECTION direction,
+        BOOL thin, BOOL fastest, float *result)
+{
+    IMFRateSupport *rate_support;
+    float rate;
+
+    if (SUCCEEDED(MFGetService(object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support)))
+    {
+        rate = 0.0f;
+        if (fastest)
+        {
+            if (SUCCEEDED(IMFRateSupport_GetFastestRate(rate_support, direction, thin, &rate)))
+                *result = min(fabsf(rate), *result);
+        }
+        else
+        {
+            if (SUCCEEDED(IMFRateSupport_GetSlowestRate(rate_support, direction, thin, &rate)))
+                *result = max(fabsf(rate), *result);
+        }
+
+        IMFRateSupport_Release(rate_support);
+    }
+}
+
+static HRESULT session_get_presentation_rate(struct media_session *session, MFRATE_DIRECTION direction,
+        BOOL thin, BOOL fastest, float *result)
+{
+    struct media_source *source;
+    struct media_sink *sink;
+
+    *result = 0.0f;
+
+    EnterCriticalSection(&session->cs);
+
+    LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+    {
+        session_presentation_object_get_rate((IUnknown *)source->source, direction, thin, fastest, result);
+    }
+
+    LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+    {
+        session_presentation_object_get_rate((IUnknown *)sink->sink, direction, thin, fastest, result);
+    }
+
+    LeaveCriticalSection(&session->cs);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI session_rate_support_GetSlowestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
         BOOL thin, float *rate)
 {
-    FIXME("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+    struct media_session *session = impl_session_from_IMFRateSupport(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    return session_get_presentation_rate(session, direction, thin, FALSE, rate);
 }
 
 static HRESULT WINAPI session_rate_support_GetFastestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
         BOOL thin, float *rate)
 {
-    FIXME("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+    struct media_session *session = impl_session_from_IMFRateSupport(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    return session_get_presentation_rate(session, direction, thin, TRUE, rate);
 }
 
 static HRESULT WINAPI session_rate_support_IsRateSupported(IMFRateSupport *iface, BOOL thin, float rate,
