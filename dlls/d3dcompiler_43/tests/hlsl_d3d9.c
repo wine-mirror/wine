@@ -578,63 +578,68 @@ static void test_fail(void)
 {
     static const char *tests[] =
     {
-        "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
+        "float4 test() : SV_TARGET\n"
         "{\n"
         "   return y;\n"
         "}",
 
-        "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
+        "float4 test() : SV_TARGET\n"
         "{\n"
         "  float4 x = float4(0, 0, 0, 0);\n"
         "  x.xzzx = float4(1, 2, 3, 4);\n"
         "  return x;\n"
         "}",
 
-        "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
+        "float4 test(float2 pos: TEXCOORD0) : SV_TARGET\n"
         "{\n"
         "  float4 x = pos;\n"
         "  return x;\n"
         "}",
 
-        "float4 test(float2 pos, TEXCOORD0) ; COLOR\n"
+        "float4 test(float2 pos, TEXCOORD0) ; SV_TARGET\n"
         "{\n"
         "  pos = float4 x;\n"
         "  mul(float4(5, 4, 3, 2), mvp) = x;\n"
         "  return float4;\n"
         "}",
 
-        "float4 563r(float2 45s: TEXCOORD0) : COLOR\n"
+        "float4 563r(float2 45s: TEXCOORD0) : SV_TARGET\n"
         "{\n"
         "  float2 x = 45s;\n"
         "  return float4(x.x, x.y, 0, 0);\n"
         "}",
 
-        "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
+        "float4 test() : SV_TARGET\n"
         "{\n"
         "   struct { int b,c; } x = {0};\n"
         "   return y;\n"
         "}",
 
-        "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
+        "float4 test() : SV_TARGET\n"
         "{\n"
         "   struct {} x = {};\n"
         "   return y;\n"
         "}",
     };
 
+    static const char *targets[] = {"ps_2_0", "ps_3_0", "ps_4_0"};
+
     ID3D10Blob *compiled, *errors;
-    unsigned int i;
+    unsigned int i, j;
     HRESULT hr;
 
-    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    for (j = 0; j < ARRAY_SIZE(targets); ++j)
     {
-        compiled = errors = NULL;
-        hr = ppD3DCompile(tests[i], strlen(tests[i]), NULL, NULL, NULL, "test", "ps_2_0", 0, 0, &compiled, &errors);
-        todo_wine ok(hr == E_FAIL, "Test %u, got unexpected hr %#x.\n", i, hr);
-        todo_wine_if (i == 1) ok(!!errors, "Test %u, expected non-NULL error blob.\n", i);
-        ok(!compiled, "Test %u, expected no compiled shader blob.\n", i);
-        if (errors)
-            ID3D10Blob_Release(errors);
+        for (i = 0; i < ARRAY_SIZE(tests); ++i)
+        {
+            compiled = errors = NULL;
+            hr = ppD3DCompile(tests[i], strlen(tests[i]), NULL, NULL, NULL, "test", targets[j], 0, 0, &compiled, &errors);
+            todo_wine ok(hr == E_FAIL, "Test %u, target %s, got unexpected hr %#x.\n", i, targets[j], hr);
+            todo_wine_if (i == 1) ok(!!errors, "Test %u, target %s, expected non-NULL error blob.\n", i, targets[j]);
+            ok(!compiled, "Test %u, target %s, expected no compiled shader blob.\n", i, targets[j]);
+            if (errors)
+                ID3D10Blob_Release(errors);
+        }
     }
 }
 
