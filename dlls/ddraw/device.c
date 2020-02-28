@@ -5579,17 +5579,17 @@ static HRESULT WINAPI d3d_device7_SetLight_FPUPreserve(IDirect3DDevice7 *iface, 
 static HRESULT d3d_device7_GetLight(IDirect3DDevice7 *iface, DWORD light_idx, D3DLIGHT7 *light)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    HRESULT rc;
+    BOOL enabled;
+    HRESULT hr;
 
     TRACE("iface %p, light_idx %u, light %p.\n", iface, light_idx, light);
 
     wined3d_mutex_lock();
     /* Note: D3DLIGHT7 is compatible with struct wined3d_light. */
-    rc =  wined3d_device_get_light(device->wined3d_device, light_idx, (struct wined3d_light *)light);
+    hr = wined3d_stateblock_get_light(device->state, light_idx, (struct wined3d_light *)light, &enabled);
     wined3d_mutex_unlock();
 
-    /* Translate the result. WineD3D returns other values than D3D7 */
-    return hr_ddraw_from_wined3d(rc);
+    return hr_ddraw_from_wined3d(hr);
 }
 
 static HRESULT WINAPI d3d_device7_GetLight_FPUSetup(IDirect3DDevice7 *iface, DWORD light_idx, D3DLIGHT7 *light)
@@ -6460,6 +6460,7 @@ static HRESULT WINAPI d3d_device7_LightEnable_FPUPreserve(IDirect3DDevice7 *ifac
 static HRESULT d3d_device7_GetLightEnable(IDirect3DDevice7 *iface, DWORD light_idx, BOOL *enabled)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
+    struct wined3d_light light;
     HRESULT hr;
 
     TRACE("iface %p, light_idx %u, enabled %p.\n", iface, light_idx, enabled);
@@ -6468,7 +6469,7 @@ static HRESULT d3d_device7_GetLightEnable(IDirect3DDevice7 *iface, DWORD light_i
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_light_enable(device->wined3d_device, light_idx, enabled);
+    hr = wined3d_stateblock_get_light(device->state, light_idx, &light, enabled);
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);
