@@ -1269,6 +1269,11 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return E_INVALIDARG;
     }
 
+    const char *exclusive_env = getenv("STAGING_AUDIO_EXCLUSIVE_MODE");
+    if(exclusive_env) {
+        mode = AUDCLNT_SHAREMODE_EXCLUSIVE;
+    }
+
     if(mode == AUDCLNT_SHAREMODE_SHARED){
         period = DefaultPeriod;
         if( duration < 3 * period)
@@ -1295,6 +1300,20 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
             if( duration < 8 * period)
                 duration = 8 * period; /* may grow above 2s */
         }
+    }
+
+    const char *duration_env = getenv("STAGING_AUDIO_DURATION");
+    if(duration_env) {
+        int val = atoi(duration_env);
+        duration = val;
+        printf("Set audio duration to %d (STAGING_AUDIO_DURATION).\n", val);
+    }
+
+    const char *period_env = getenv("STAGING_AUDIO_PERIOD");
+    if(duration_env) {
+        int val = atoi(period_env);
+        period = val;
+        printf("Set audio period to %d (STAGING_AUDIO_PERIOD).\n", val);
     }
 
     EnterCriticalSection(&This->lock);
