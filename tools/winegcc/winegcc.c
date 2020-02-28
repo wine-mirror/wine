@@ -1260,7 +1260,7 @@ static void build(struct options* opts)
     if (is_pe)
     {
         for (j = 0; j < opts->delayimports->size; j++)
-            strarray_add(spec_args, strmake("-Wl,-delayload,%s", opts->delayimports->base[j]));
+            strarray_add(link_args, strmake("-Wl,-delayload,%s", opts->delayimports->base[j]));
     }
 
     for ( j = 0; j < files->size; j++ )
