@@ -122,7 +122,8 @@ struct media_session
     IMFQualityManager *quality_manager;
     struct
     {
-        struct queued_topology current_topology;
+        IMFTopology *current_topology;
+        MF_TOPOSTATUS topo_status;
         struct list sources;
         struct list sinks;
     } presentation;
@@ -446,7 +447,7 @@ static void session_clear_topologies(struct media_session *session)
     }
 }
 
-static void session_set_topo_status(struct media_session *session, struct queued_topology *topology, HRESULT status,
+static void session_set_topo_status(struct media_session *session, HRESULT status,
         MF_TOPOSTATUS topo_status)
 {
     IMFMediaEvent *event;
@@ -455,20 +456,20 @@ static void session_set_topo_status(struct media_session *session, struct queued
     if (topo_status == MF_TOPOSTATUS_INVALID)
         return;
 
-    if (topo_status > topology->status)
+    if (topo_status > session->presentation.topo_status)
     {
-        param.vt = topology ? VT_UNKNOWN : VT_EMPTY;
-        param.punkVal = topology ? (IUnknown *)topology->topology : NULL;
+        param.vt = VT_UNKNOWN;
+        param.punkVal = (IUnknown *)session->presentation.current_topology;
 
         if (FAILED(MFCreateMediaEvent(MESessionTopologyStatus, &GUID_NULL, status, &param, &event)))
             return;
 
-        IMFMediaEvent_SetUINT32(event, &MF_EVENT_TOPOLOGY_STATUS, topo_status);
-        topology->status = topo_status;
-        IMFMediaEventQueue_QueueEvent(session->event_queue, event);
-    }
+        session->presentation.topo_status = topo_status;
 
-    IMFMediaEvent_Release(event);
+        IMFMediaEvent_SetUINT32(event, &MF_EVENT_TOPOLOGY_STATUS, topo_status);
+        IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+        IMFMediaEvent_Release(event);
+    }
 }
 
 static HRESULT session_bind_output_nodes(IMFTopology *topology)
@@ -533,36 +534,14 @@ static HRESULT session_bind_output_nodes(IMFTopology *topology)
     return hr;
 }
 
-static IMFTopology *session_get_next_topology(struct media_session *session)
-{
-    struct queued_topology *queued;
-
-    if (!session->presentation.current_topology.topology)
-    {
-        struct list *head = list_head(&session->topologies);
-        if (!head)
-            return NULL;
-
-        queued = LIST_ENTRY(head, struct queued_topology, entry);
-        session->presentation.current_topology = *queued;
-        list_remove(&queued->entry);
-        heap_free(queued);
-    }
-
-    return session->presentation.current_topology.topology;
-}
-
 static void session_clear_presentation(struct media_session *session)
 {
     struct media_source *source, *source2;
     struct media_stream *stream, *stream2;
     struct media_sink *sink, *sink2;
 
-    if (session->presentation.current_topology.topology)
-    {
-        IMFTopology_Release(session->presentation.current_topology.topology);
-        session->presentation.current_topology.topology = NULL;
-    }
+    IMFTopology_Clear(session->presentation.current_topology);
+    session->presentation.topo_status = MF_TOPOSTATUS_INVALID;
 
     LIST_FOR_EACH_ENTRY_SAFE(source, source2, &session->presentation.sources, struct media_source, entry)
     {
@@ -594,7 +573,6 @@ static void session_clear_presentation(struct media_session *session)
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
 {
     IMFTopologyNode *node;
-    IMFTopology *topology;
     IMFCollection *nodes;
     DWORD count, i;
     HRESULT hr;
@@ -604,9 +582,8 @@ static void session_start(struct media_session *session, const GUID *time_format
     switch (session->state)
     {
         case SESSION_STATE_STOPPED:
-            topology = session_get_next_topology(session);
 
-            if (!topology || FAILED(IMFTopology_GetSourceNodeCollection(topology, &nodes)))
+            if (FAILED(IMFTopology_GetSourceNodeCollection(session->presentation.current_topology, &nodes)))
                 break;
 
             if (FAILED(IMFCollection_GetElementCount(nodes, &count)))
@@ -671,6 +648,111 @@ static void session_start(struct media_session *session, const GUID *time_format
     LeaveCriticalSection(&session->cs);
 }
 
+static void session_raise_topology_set(struct media_session *session, IMFTopology *topology, HRESULT status)
+{
+    PROPVARIANT param;
+
+    param.vt = topology ? VT_UNKNOWN : VT_EMPTY;
+    param.punkVal = (IUnknown *)topology;
+
+    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionTopologySet, &GUID_NULL, status, &param);
+}
+
+static void session_set_current_topology(struct media_session *session, IMFTopology *topology)
+{
+    IMFMediaEvent *event;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFTopology_CloneFrom(session->presentation.current_topology, topology)))
+    {
+        WARN("Failed to clone topology, hr %#x.\n", hr);
+        return;
+    }
+
+    /* FIXME: attributes are all zero for now */
+    if (SUCCEEDED(MFCreateMediaEvent(MESessionNotifyPresentationTime, &GUID_NULL, S_OK, NULL, &event)))
+    {
+        IMFMediaEvent_SetUINT64(event, &MF_EVENT_START_PRESENTATION_TIME, 0);
+        IMFMediaEvent_SetUINT64(event, &MF_EVENT_PRESENTATION_TIME_OFFSET, 0);
+        IMFMediaEvent_GetUINT64(event, &MF_EVENT_START_PRESENTATION_TIME_AT_OUTPUT, 0);
+
+        IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+        IMFMediaEvent_Release(event);
+    }
+}
+
+static void session_set_topology(struct media_session *session, DWORD flags, IMFTopology *topology)
+{
+    HRESULT status = S_OK;
+
+    /* Resolve unless claimed to be full. */
+    if (!(flags & MFSESSION_SETTOPOLOGY_CLEAR_CURRENT) && topology)
+    {
+        if (!(flags & MFSESSION_SETTOPOLOGY_NORESOLUTION))
+        {
+            IMFTopology *resolved_topology = NULL;
+
+            status = session_bind_output_nodes(topology);
+
+            if (SUCCEEDED(status))
+                status = IMFTopoLoader_Load(session->topo_loader, topology, &resolved_topology, NULL /* FIXME? */);
+
+            if (SUCCEEDED(status))
+            {
+                topology = resolved_topology;
+            }
+        }
+    }
+
+    EnterCriticalSection(&session->cs);
+
+    if (flags & MFSESSION_SETTOPOLOGY_CLEAR_CURRENT)
+    {
+        if ((topology && topology == session->presentation.current_topology) || !topology)
+        {
+            /* FIXME: stop current topology, queue next one. */
+            session_clear_presentation(session);
+        }
+        else
+            status = S_FALSE;
+
+        topology = NULL;
+    }
+    else if (topology && flags & MFSESSION_SETTOPOLOGY_IMMEDIATE)
+    {
+        session_clear_topologies(session);
+        session_clear_presentation(session);
+    }
+
+    session_raise_topology_set(session, topology, status);
+
+    /* With no current topology set it right away, otherwise queue. */
+    if (topology)
+    {
+        if (session->presentation.topo_status == MF_TOPOSTATUS_INVALID)
+        {
+            session_set_current_topology(session, topology);
+        }
+        else
+        {
+            struct queued_topology *queued_topology;
+
+            if ((queued_topology = heap_alloc_zero(sizeof(*queued_topology))))
+            {
+                queued_topology->topology = topology;
+                IMFTopology_AddRef(queued_topology->topology);
+
+                list_add_tail(&session->topologies, &queued_topology->entry);
+            }
+        }
+    }
+
+    if (status == S_OK)
+        session_set_topo_status(session, S_OK, MF_TOPOSTATUS_READY);
+
+    LeaveCriticalSection(&session->cs);
+}
+
 static HRESULT WINAPI mfsession_QueryInterface(IMFMediaSession *iface, REFIID riid, void **out)
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
@@ -718,6 +800,8 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
     {
         session_clear_topologies(session);
         session_clear_presentation(session);
+        if (session->presentation.current_topology)
+            IMFTopology_Release(session->presentation.current_topology);
         if (session->event_queue)
             IMFMediaEventQueue_Release(session->event_queue);
         if (session->clock)
@@ -1053,21 +1137,10 @@ static HRESULT WINAPI session_commands_callback_GetParameters(IMFAsyncCallback *
     return E_NOTIMPL;
 }
 
-static void session_raise_topology_set(struct media_session *session, IMFTopology *topology, HRESULT status)
-{
-    PROPVARIANT param;
-
-    param.vt = topology ? VT_UNKNOWN : VT_EMPTY;
-    param.punkVal = (IUnknown *)topology;
-
-    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionTopologySet, &GUID_NULL, status, &param);
-}
-
 static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct session_op *op = impl_op_from_IUnknown(IMFAsyncResult_GetStateNoAddRef(result));
     struct media_session *session = impl_from_commands_callback_IMFAsyncCallback(iface);
-    HRESULT status = S_OK;
 
     switch (op->command)
     {
@@ -1080,76 +1153,8 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
                     S_OK, NULL);
             break;
         case SESSION_CMD_SET_TOPOLOGY:
-        {
-            IMFTopology *topology = op->u.set_topology.topology;
-            MF_TOPOSTATUS topo_status = MF_TOPOSTATUS_INVALID;
-            struct queued_topology *queued_topology = NULL;
-            DWORD flags = op->u.set_topology.flags;
-
-            /* Resolve unless claimed to be full. */
-            if (!(flags & MFSESSION_SETTOPOLOGY_CLEAR_CURRENT) && topology)
-            {
-                if (!(flags & MFSESSION_SETTOPOLOGY_NORESOLUTION))
-                {
-                    IMFTopology *resolved_topology = NULL;
-
-                    status = session_bind_output_nodes(topology);
-
-                    if (SUCCEEDED(status))
-                        status = IMFTopoLoader_Load(session->topo_loader, topology, &resolved_topology, NULL /* FIXME? */);
-
-                    if (SUCCEEDED(status))
-                    {
-                        topology = resolved_topology;
-                        topo_status = MF_TOPOSTATUS_READY;
-                    }
-                }
-
-                if (SUCCEEDED(status))
-                {
-                    if (!(queued_topology = heap_alloc_zero(sizeof(*queued_topology))))
-                        status = E_OUTOFMEMORY;
-                }
-
-                if (SUCCEEDED(status))
-                {
-                    queued_topology->topology = topology;
-                    IMFTopology_AddRef(queued_topology->topology);
-                }
-            }
-
-            EnterCriticalSection(&session->cs);
-
-            if (flags & MFSESSION_SETTOPOLOGY_CLEAR_CURRENT)
-            {
-                if ((topology && topology == session->presentation.current_topology.topology) || !topology)
-                {
-                    /* FIXME: stop current topology, queue next one. */
-                    session_clear_presentation(session);
-                }
-                else
-                    status = S_FALSE;
-                topo_status = MF_TOPOSTATUS_READY;
-                queued_topology = &session->presentation.current_topology;
-            }
-            else if (queued_topology)
-            {
-                if (flags & MFSESSION_SETTOPOLOGY_IMMEDIATE)
-                {
-                    session_clear_topologies(session);
-                    session_clear_presentation(session);
-                }
-
-                list_add_tail(&session->topologies, &queued_topology->entry);
-            }
-
-            session_raise_topology_set(session, topology, status);
-            session_set_topo_status(session, queued_topology, status, topo_status);
-
-            LeaveCriticalSection(&session->cs);
-
+            session_set_topology(session, op->u.set_topology.flags, op->u.set_topology.topology);
             break;
-        }
         case SESSION_CMD_START:
         {
             session_start(session, &op->u.start.time_format, &op->u.start.start_position);
@@ -1247,7 +1252,7 @@ static BOOL session_set_source_state(struct media_session *session, IMFMediaSour
 
 static HRESULT session_set_sinks_clock(struct media_session *session)
 {
-    IMFTopology *topology = session->presentation.current_topology.topology;
+    IMFTopology *topology = session->presentation.current_topology;
     IMFTopologyNode *node;
     IMFCollection *nodes;
     DWORD count, i;
@@ -1363,8 +1368,7 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             ret = session_set_source_state(session, (IMFMediaSource *)event_source, source_state);
             if (ret && event_type == MESourceStarted)
             {
-                session_set_topo_status(session, &session->presentation.current_topology, S_OK,
-                        MF_TOPOSTATUS_STARTED_SOURCE);
+                session_set_topo_status(session, S_OK, MF_TOPOSTATUS_STARTED_SOURCE);
 
                 if (session->state == SESSION_STATE_STARTING)
                 {
@@ -1608,6 +1612,9 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     list_init(&object->presentation.sources);
     list_init(&object->presentation.sinks);
     InitializeCriticalSection(&object->cs);
+
+    if (FAILED(hr = MFCreateTopology(&object->presentation.current_topology)))
+        goto failed;
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
         goto failed;
