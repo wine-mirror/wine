@@ -4022,10 +4022,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         wined3d_device_set_texture(device, stage, state->textures[i]);
     }
 
-    for (i = 0; i < ARRAY_SIZE(state->clip_planes); ++i)
+    map = changed->clipplane;
+    while (map)
     {
-        if (changed->clipplane & (1u << i))
-            wined3d_device_set_clip_plane(device, i, &state->clip_planes[i]);
+        i = wined3d_bit_scan(&map);
+        wined3d_device_set_clip_plane(device, i, &state->clip_planes[i]);
     }
 
     memset(&stateblock->changed, 0, sizeof(stateblock->changed));

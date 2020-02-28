@@ -3926,7 +3926,7 @@ struct wined3d_saved_states
     DWORD renderState[(WINEHIGHEST_RENDER_STATE >> 5) + 1];
     DWORD textureState[WINED3D_MAX_TEXTURES];   /* WINED3D_HIGHEST_TEXTURE_STATE + 1, 18 */
     WORD samplerState[WINED3D_MAX_COMBINED_SAMPLERS];   /* WINED3D_HIGHEST_SAMPLER_STATE + 1, 14 */
-    DWORD clipplane;                            /* WINED3D_MAX_USER_CLIP_PLANES, 32 */
+    DWORD clipplane;                            /* WINED3D_MAX_CLIP_DISTANCES, 8 */
     DWORD textures : 20;                        /* WINED3D_MAX_COMBINED_SAMPLERS, 20 */
     DWORD indices : 1;
     DWORD material : 1;
