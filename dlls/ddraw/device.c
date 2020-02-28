@@ -3884,7 +3884,7 @@ static HRESULT WINAPI d3d_device7_GetClipStatus(IDirect3DDevice7 *iface, D3DCLIP
 
     FIXME("iface %p, clip_status %p stub.\n", iface, clip_status);
 
-    wined3d_device_get_viewports(device->wined3d_device, NULL, &vp);
+    vp = wined3d_stateblock_get_state(device->state)->viewport;
     clip_status->minx = vp.x;
     clip_status->maxx = vp.x + vp.width;
     clip_status->miny = vp.y;
@@ -5391,7 +5391,7 @@ static HRESULT d3d_device7_GetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *vi
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    wined3d_device_get_viewports(device->wined3d_device, NULL, &wined3d_viewport);
+    wined3d_viewport = wined3d_stateblock_get_state(device->state)->viewport;
     wined3d_mutex_unlock();
 
     viewport->dwX = wined3d_viewport.x;
