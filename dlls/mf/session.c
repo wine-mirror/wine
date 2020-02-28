@@ -142,6 +142,7 @@ struct media_session
     } presentation;
     struct list topologies;
     enum session_state state;
+    DWORD caps;
     CRITICAL_SECTION cs;
 };
 
@@ -798,6 +799,50 @@ static void session_raise_topology_set(struct media_session *session, IMFTopolog
     IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionTopologySet, &GUID_NULL, status, &param);
 }
 
+static DWORD session_get_object_rate_caps(IUnknown *object)
+{
+    IMFRateSupport *rate_support;
+    DWORD caps = 0;
+    float rate;
+
+    if (SUCCEEDED(MFGetService(object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support)))
+    {
+        rate = 0.0f;
+        if (SUCCEEDED(IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, TRUE, &rate)) && rate != 0.0f)
+            caps |= MFSESSIONCAP_RATE_FORWARD;
+
+        rate = 0.0f;
+        if (SUCCEEDED(IMFRateSupport_GetFastestRate(rate_support, MFRATE_REVERSE, TRUE, &rate)) && rate != 0.0f)
+            caps |= MFSESSIONCAP_RATE_REVERSE;
+
+        IMFRateSupport_Release(rate_support);
+    }
+
+    return caps;
+}
+
+static void session_set_caps(struct media_session *session, DWORD caps)
+{
+    DWORD delta = session->caps ^ caps;
+    IMFMediaEvent *event;
+
+    /* Delta is documented to reflect rate value changes as well, but it's not clear what to compare
+       them to, since session always queries for current object rates. */
+    if (!delta)
+        return;
+
+    session->caps = caps;
+
+    if (FAILED(MFCreateMediaEvent(MESessionCapabilitiesChanged, &GUID_NULL, S_OK, NULL, &event)))
+        return;
+
+    IMFMediaEvent_SetUINT32(event, &MF_EVENT_SESSIONCAPS, caps);
+    IMFMediaEvent_SetUINT32(event, &MF_EVENT_SESSIONCAPS_DELTA, delta);
+
+    IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+    IMFMediaEvent_Release(event);
+}
+
 static HRESULT session_add_media_sink(struct media_session *session, IMFTopologyNode *node, IMFMediaSink *sink)
 {
     struct media_sink *media_sink;
@@ -885,6 +930,9 @@ static HRESULT session_collect_output_nodes(struct media_session *session)
 
 static void session_set_current_topology(struct media_session *session, IMFTopology *topology)
 {
+    struct media_source *source;
+    DWORD caps, object_flags;
+    struct media_sink *sink;
     IMFMediaEvent *event;
     HRESULT hr;
 
@@ -907,6 +955,46 @@ static void session_set_current_topology(struct media_session *session, IMFTopol
         IMFMediaEventQueue_QueueEvent(session->event_queue, event);
         IMFMediaEvent_Release(event);
     }
+
+    /* Update session caps. */
+    caps = MFSESSIONCAP_START | MFSESSIONCAP_SEEK | MFSESSIONCAP_RATE_FORWARD | MFSESSIONCAP_RATE_REVERSE |
+            MFSESSIONCAP_DOES_NOT_USE_NETWORK;
+
+    LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+    {
+        if (!caps)
+            break;
+
+        object_flags = 0;
+        if (SUCCEEDED(IMFMediaSource_GetCharacteristics(source->source, &object_flags)))
+        {
+            if (!(object_flags & MFMEDIASOURCE_DOES_NOT_USE_NETWORK))
+                caps &= ~MFSESSIONCAP_DOES_NOT_USE_NETWORK;
+            if (!(object_flags & MFMEDIASOURCE_CAN_SEEK))
+                caps &= ~MFSESSIONCAP_SEEK;
+        }
+
+        /* Mask unsupported rate caps. */
+
+        caps &= session_get_object_rate_caps((IUnknown *)source->source)
+                | ~(MFSESSIONCAP_RATE_FORWARD | MFSESSIONCAP_RATE_REVERSE);
+    }
+
+    LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+    {
+        if (!caps)
+            break;
+
+        object_flags = 0;
+        if (SUCCEEDED(IMFMediaSink_GetCharacteristics(sink->sink, &object_flags)))
+        {
+            if (!(object_flags & MEDIASINK_RATELESS))
+                caps &= session_get_object_rate_caps((IUnknown *)sink->sink)
+                        | ~(MFSESSIONCAP_RATE_FORWARD | MFSESSIONCAP_RATE_REVERSE);
+        }
+    }
+
+    session_set_caps(session, caps);
 }
 
 static void session_set_topology(struct media_session *session, DWORD flags, IMFTopology *topology)
@@ -1242,9 +1330,22 @@ static HRESULT WINAPI mfsession_GetClock(IMFMediaSession *iface, IMFClock **cloc
 
 static HRESULT WINAPI mfsession_GetSessionCapabilities(IMFMediaSession *iface, DWORD *caps)
 {
-    FIXME("%p, %p.\n", iface, caps);
+    struct media_session *session = impl_from_IMFMediaSession(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, caps);
+
+    if (!caps)
+        return E_POINTER;
+
+    EnterCriticalSection(&session->cs);
+    if (session->state == SESSION_STATE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        *caps = session->caps;
+    LeaveCriticalSection(&session->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI mfsession_GetFullTopology(IMFMediaSession *iface, DWORD flags, TOPOID id, IMFTopology **topology)
