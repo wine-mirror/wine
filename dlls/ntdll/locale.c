@@ -437,6 +437,12 @@ static NTSTATUS decompose_string( const struct norm_table *info, const WCHAR *sr
         props = get_char_props( info, ch );
         if (!(decomp = get_decomposition( info, ch, props, buffer, &decomp_len )))
         {
+            /* allow final null */
+            if (!ch && src_pos == src_len - 1 && dst_pos < *dst_len)
+            {
+                dst[dst_pos++] = 0;
+                break;
+            }
             *dst_len = src_pos;
             return STATUS_NO_UNICODE_TRANSLATION;
         }
@@ -1934,6 +1940,8 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
                 /* ignore other chars in Hangul range */
                 if (ch >= HANGUL_LBASE && ch < HANGUL_LBASE + 0x100) continue;
                 if (ch >= HANGUL_SBASE && ch < HANGUL_SBASE + 0x2c00) continue;
+                /* allow final null */
+                if (!ch && i == len - 1) continue;
                 return STATUS_NO_UNICODE_TRANSLATION;
             }
         }

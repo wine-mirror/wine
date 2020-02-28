@@ -4521,7 +4521,6 @@ static void test_IdnToNameprepUnicode(void)
             int len = ARRAY_SIZE(buf);
             memset( buf, 0xcc, sizeof(buf) );
             status = pRtlNormalizeString( 13, test_data[i].in, test_data[i].in_len, buf, &len );
-            todo_wine_if (!test_data[i].status && (test_data[i].in_len == -1 || !test_data[i].in[test_data[i].in_len - 1]))
             ok( status == test_data[i].status || broken(status == test_data[i].broken_status),
                 "%d: failed %x\n", i, status );
             if (!status) ok( !wcsncmp(test_data[i].out, buf, len), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, len));
