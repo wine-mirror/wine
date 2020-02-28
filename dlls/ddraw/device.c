@@ -6576,27 +6576,24 @@ static HRESULT WINAPI d3d_device7_SetClipPlane_FPUPreserve(IDirect3DDevice7 *ifa
 static HRESULT d3d_device7_GetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DVALUE *plane)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    struct wined3d_vec4 *wined3d_plane;
-    HRESULT hr;
 
     TRACE("iface %p, idx %u, plane %p.\n", iface, idx, plane);
 
     if (!plane)
         return DDERR_INVALIDPARAMS;
 
-    wined3d_plane = (struct wined3d_vec4 *)plane;
-
     wined3d_mutex_lock();
-    hr = wined3d_device_get_clip_plane(device->wined3d_device, idx, wined3d_plane);
-    if (hr == WINED3DERR_INVALIDCALL && idx < ARRAY_SIZE(device->user_clip_planes))
+    if (idx < WINED3D_MAX_CLIP_DISTANCES)
+        memcpy(plane, &wined3d_stateblock_get_state(device->state)->clip_planes[idx], sizeof(struct wined3d_vec4));
+    else
     {
         WARN("Clip plane %u is not supported.\n", idx);
-        *wined3d_plane = device->user_clip_planes[idx];
-        hr = D3D_OK;
+        if (idx < ARRAY_SIZE(device->user_clip_planes))
+            memcpy(plane, &device->user_clip_planes[idx], sizeof(struct wined3d_vec4));
     }
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d_device7_GetClipPlane_FPUSetup(IDirect3DDevice7 *iface, DWORD idx, D3DVALUE *plane)
