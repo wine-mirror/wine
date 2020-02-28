@@ -107,6 +107,7 @@ struct media_sink
 {
     struct list entry;
     IMFMediaSink *sink;
+    IMFMediaEventGenerator *event_generator;
 };
 
 struct output_node
@@ -573,13 +574,14 @@ static void session_clear_presentation(struct media_session *session)
         heap_free(src_node);
     }
 
-
     LIST_FOR_EACH_ENTRY_SAFE(sink, sink2, &session->presentation.sinks, struct media_sink, entry)
     {
         list_remove(&sink->entry);
 
         if (sink->sink)
             IMFMediaSink_Release(sink->sink);
+        if (sink->event_generator)
+            IMFMediaEventGenerator_Release(sink->event_generator);
         heap_free(sink);
     }
 }
@@ -811,6 +813,8 @@ static HRESULT session_add_media_sink(struct media_session *session, IMFTopology
 
     media_sink->sink = sink;
     IMFMediaSink_AddRef(media_sink->sink);
+
+    IMFMediaSink_QueryInterface(media_sink->sink, &IID_IMFMediaEventGenerator, (void **)&media_sink->event_generator);
 
     list_add_tail(&session->presentation.sinks, &media_sink->entry);
 
