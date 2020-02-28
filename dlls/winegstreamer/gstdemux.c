@@ -1601,7 +1601,8 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
 
     WaitForSingleObject(filter->no_more_pads_event, INFINITE);
 
-    gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration);
+    if (!gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration))
+        ERR("Failed to query duration.\n");
     for (i = 0; i < filter->source_count; ++i)
     {
         struct gstdemux_source *pin = filter->sources[i];
@@ -1609,8 +1610,6 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
 
         pin->seek.llDuration = pin->seek.llStop = duration / 100;
         pin->seek.llCurrent = 0;
-        if (!pin->seek.llDuration)
-            pin->seek.dwCapabilities = 0;
         if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
             return FALSE;
     }
@@ -1845,10 +1844,7 @@ static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFER
     {
         *pos = This->seek.llCurrent;
         TRACE("Cached value\n");
-        if (This->seek.llDuration)
-            return S_OK;
-        else
-            return E_NOTIMPL;
+        return S_OK;
     }
 
     if (!gst_pad_query_position(This->their_src, GST_FORMAT_TIME, pos)) {
@@ -1888,9 +1884,6 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     TRACE("(%p)->(%p, 0x%x, %p, 0x%x)\n", This, pCur, curflags, pStop, stopflags);
 
     mark_wine_thread();
-
-    if (!This->seek.llDuration)
-        return E_NOTIMPL;
 
     hr = SourceSeekingImpl_SetPositions(iface, pCur, curflags, pStop, stopflags);
     if (This->pin.pin.filter->state == State_Stopped)
@@ -2377,11 +2370,10 @@ static BOOL wave_parser_init_gst(struct gstdemux *filter)
         return FALSE;
     }
 
-    gst_pad_query_duration(pin->their_src, GST_FORMAT_TIME, &duration);
+    if (!gst_pad_query_duration(pin->their_src, GST_FORMAT_TIME, &duration))
+        ERR("Failed to query duration.\n");
     pin->seek.llDuration = pin->seek.llStop = duration / 100;
     pin->seek.llCurrent = 0;
-    if (!pin->seek.llDuration)
-        pin->seek.dwCapabilities = 0;
 
     events[0] = pin->caps_event;
     events[1] = filter->error_event;
@@ -2496,7 +2488,8 @@ static BOOL avi_splitter_init_gst(struct gstdemux *filter)
 
     WaitForSingleObject(filter->no_more_pads_event, INFINITE);
 
-    gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration);
+    if (!gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration))
+        ERR("Failed to query duration.\n");
     for (i = 0; i < filter->source_count; ++i)
     {
         struct gstdemux_source *pin = filter->sources[i];
@@ -2504,8 +2497,6 @@ static BOOL avi_splitter_init_gst(struct gstdemux *filter)
 
         pin->seek.llDuration = pin->seek.llStop = duration / 100;
         pin->seek.llCurrent = 0;
-        if (!pin->seek.llDuration)
-            pin->seek.dwCapabilities = 0;
         if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
             return FALSE;
     }
@@ -2633,11 +2624,10 @@ static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
     if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
         return FALSE;
 
-    gst_pad_query_duration(pin->their_src, GST_FORMAT_TIME, &duration);
+    if (!gst_pad_query_duration(pin->their_src, GST_FORMAT_TIME, &duration))
+        ERR("Failed to query duration.\n");
     pin->seek.llDuration = pin->seek.llStop = duration / 100;
     pin->seek.llCurrent = 0;
-    if (!pin->seek.llDuration)
-        pin->seek.dwCapabilities = 0;
 
     events[0] = pin->caps_event;
     if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
