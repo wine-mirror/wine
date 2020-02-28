@@ -24,7 +24,12 @@
 
 #ifdef __MINGW32__
 
+#if _MSVCR_VER >= 140
+#define _UCRT
+#endif
+
 #include <stdarg.h>
+#include <stdlib.h>
 #include <process.h>
 
 #include "windef.h"
@@ -40,10 +45,19 @@ static const IMAGE_NT_HEADERS *get_nt_header( void )
 
 int __cdecl wmainCRTStartup(void)
 {
-    int argc, new_mode =  0, ret;
+    int argc, ret;
     WCHAR **argv, **env;
 
+#ifdef _UCRT
+    _configure_wide_argv(_crt_argv_unexpanded_arguments);
+    _initialize_wide_environment();
+    argc = *__p___argc();
+    argv = *__p___wargv();
+    env = _get_initial_wide_environment();
+#else
+    int new_mode =  0;
     __wgetmainargs(&argc, &argv, &env, 0, &new_mode);
+#endif
     _set_app_type(get_nt_header()->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI ? _crt_gui_app : _crt_console_app);
 
     ret = wmain(argc, argv, env);
