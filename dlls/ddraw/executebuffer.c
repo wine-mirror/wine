@@ -205,7 +205,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                 for (i = 0; i < count; ++i)
                 {
                     D3DMATRIXMULTIPLY *ci = (D3DMATRIXMULTIPLY *)instr;
-                    D3DMATRIX *a, *b, *c;
+                    struct wined3d_matrix *a, *b, *c;
 
                     a = ddraw_get_object(&device->handle_table, ci->hDestMatrix - 1, DDRAW_HANDLE_MATRIX);
                     b = ddraw_get_object(&device->handle_table, ci->hSrcMatrix1 - 1, DDRAW_HANDLE_MATRIX);

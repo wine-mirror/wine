@@ -333,8 +333,7 @@ struct d3d_device
     BOOL legacyTextureBlending;
     D3DTEXTUREBLEND texture_map_blend;
 
-    D3DMATRIX legacy_projection;
-    D3DMATRIX legacy_clipspace;
+    struct wined3d_matrix legacy_projection, legacy_clipspace;
 
     /* Light state */
     DWORD material;
@@ -615,7 +614,8 @@ void DDRAW_dump_cooperativelevel(DWORD cooplevel) DECLSPEC_HIDDEN;
 void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out) DECLSPEC_HIDDEN;
 void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out) DECLSPEC_HIDDEN;
 
-void multiply_matrix(D3DMATRIX *dst, const D3DMATRIX *src1, const D3DMATRIX *src2) DECLSPEC_HIDDEN;
+void multiply_matrix(struct wined3d_matrix *dst, const struct wined3d_matrix *src1,
+        const struct wined3d_matrix *src2) DECLSPEC_HIDDEN;
 
 static inline BOOL format_is_compressed(const DDPIXELFORMAT *format)
 {

@@ -3173,15 +3173,15 @@ static HRESULT WINAPI d3d_device3_SetTransform(IDirect3DDevice3 *iface,
 
     if (state == D3DTRANSFORMSTATE_PROJECTION)
     {
-        D3DMATRIX projection;
+        struct wined3d_matrix projection;
 
         wined3d_mutex_lock();
-        multiply_matrix(&projection, &device->legacy_clipspace, matrix);
+        multiply_matrix(&projection, &device->legacy_clipspace, (struct wined3d_matrix *)matrix);
         wined3d_stateblock_set_transform(device->state,
                 WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
         wined3d_device_set_transform(device->wined3d_device,
                 WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
-        device->legacy_projection = *matrix;
+        memcpy(&device->legacy_projection, matrix, sizeof(*matrix));
         wined3d_mutex_unlock();
 
         return D3D_OK;
@@ -3247,7 +3247,7 @@ static HRESULT d3d_device7_GetTransform(IDirect3DDevice7 *iface,
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    wined3d_device_get_transform(device->wined3d_device, wined3d_state, (struct wined3d_matrix *)matrix);
+    memcpy(matrix, &wined3d_stateblock_get_state(device->state)->transforms[wined3d_state], sizeof(*matrix));
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -3285,7 +3285,7 @@ static HRESULT WINAPI d3d_device3_GetTransform(IDirect3DDevice3 *iface,
     if (state == D3DTRANSFORMSTATE_PROJECTION)
     {
         wined3d_mutex_lock();
-        *matrix = device->legacy_projection;
+        memcpy(matrix, &device->legacy_projection, sizeof(*matrix));
         wined3d_mutex_unlock();
         return DD_OK;
     }
@@ -3385,15 +3385,13 @@ static HRESULT WINAPI d3d_device3_MultiplyTransform(IDirect3DDevice3 *iface,
 
     if (state == D3DTRANSFORMSTATE_PROJECTION)
     {
-        D3DMATRIX projection, tmp;
+        struct wined3d_matrix projection, tmp;
 
         wined3d_mutex_lock();
-        multiply_matrix(&tmp, &device->legacy_projection, matrix);
+        multiply_matrix(&tmp, &device->legacy_projection, (struct wined3d_matrix *)matrix);
         multiply_matrix(&projection, &device->legacy_clipspace, &tmp);
-        wined3d_stateblock_set_transform(device->state,
-                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
-        wined3d_device_set_transform(device->wined3d_device,
-                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
+        wined3d_stateblock_set_transform(device->state, WINED3D_TS_PROJECTION, &projection);
+        wined3d_device_set_transform(device->wined3d_device, WINED3D_TS_PROJECTION, &projection);
         device->legacy_projection = tmp;
         wined3d_mutex_unlock();
 
@@ -4579,21 +4577,15 @@ static DWORD in_plane(UINT idx, struct wined3d_vec4 p, D3DVECTOR center, D3DVALU
 
 static void prepare_clip_space_planes(struct d3d_device *device, struct wined3d_vec4 *plane)
 {
-    D3DMATRIX m, temp;
+    const struct wined3d_stateblock_state *state;
+    struct wined3d_matrix m;
 
     /* We want the wined3d matrices since those include the legacy viewport
      * transformation. */
     wined3d_mutex_lock();
-    wined3d_device_get_transform(device->wined3d_device,
-            WINED3D_TS_WORLD, (struct wined3d_matrix *)&m);
-
-    wined3d_device_get_transform(device->wined3d_device,
-            WINED3D_TS_VIEW, (struct wined3d_matrix *)&temp);
-    multiply_matrix(&m, &temp, &m);
-
-    wined3d_device_get_transform(device->wined3d_device,
-            WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&temp);
-    multiply_matrix(&m, &temp, &m);
+    state = wined3d_stateblock_get_state(device->state);
+    multiply_matrix(&m, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD]);
+    multiply_matrix(&m, &state->transforms[WINED3D_TS_PROJECTION], &m);
     wined3d_mutex_unlock();
 
     /* Left plane. */
@@ -6991,7 +6983,7 @@ static void ddraw_reset_viewport_state(struct ddraw *ddraw)
 static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
         struct ddraw_surface *target, IUnknown *rt_iface, UINT version, IUnknown *outer_unknown)
 {
-    static const D3DMATRIX ident =
+    static const struct wined3d_matrix ident =
     {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
