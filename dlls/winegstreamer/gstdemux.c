@@ -1841,7 +1841,8 @@ static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFER
 
     mark_wine_thread();
 
-    if (!This->their_src) {
+    if (This->pin.pin.filter->state == State_Stopped)
+    {
         *pos = This->seek.llCurrent;
         TRACE("Cached value\n");
         if (This->seek.llDuration)
@@ -1892,7 +1893,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
         return E_NOTIMPL;
 
     hr = SourceSeekingImpl_SetPositions(iface, pCur, curflags, pStop, stopflags);
-    if (!This->their_src)
+    if (This->pin.pin.filter->state == State_Stopped)
         return hr;
 
     curtype = type_from_flags(curflags);
