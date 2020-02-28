@@ -76,6 +76,9 @@ enum session_state
     SESSION_STATE_STARTING_SOURCES,
     SESSION_STATE_STARTING_SINKS,
     SESSION_STATE_RUNNING,
+    SESSION_STATE_PAUSING_SINKS,
+    SESSION_STATE_PAUSING_SOURCES,
+    SESSION_STATE_PAUSED,
     SESSION_STATE_CLOSED,
     SESSION_STATE_SHUT_DOWN,
 };
@@ -639,6 +642,34 @@ static void session_start(struct media_session *session, const GUID *time_format
             break;
         default:
             ;
+    }
+
+    LeaveCriticalSection(&session->cs);
+}
+
+static void session_pause(struct media_session *session)
+{
+    HRESULT hr;
+
+    EnterCriticalSection(&session->cs);
+
+    switch (session->state)
+    {
+        case SESSION_STATE_RUNNING:
+
+            /* Transition in two steps - pause clock, wait for sinks and pause sources. */
+            if (SUCCEEDED(hr = IMFPresentationClock_Pause(session->clock)))
+                session->state = SESSION_STATE_PAUSING_SINKS;
+
+            break;
+        default:
+            hr = MF_E_INVALIDREQUEST;
+    }
+
+    if (FAILED(hr))
+    {
+        session->state = SESSION_STATE_PAUSED;
+        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionPaused, &GUID_NULL, hr, NULL);
     }
 
     LeaveCriticalSection(&session->cs);
@@ -1469,6 +1500,7 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             session_start(session, &op->u.start.time_format, &op->u.start.start_position);
             break;
         case SESSION_CMD_PAUSE:
+            session_pause(session);
             break;
         case SESSION_CMD_CLOSE:
             EnterCriticalSection(&session->cs);
@@ -1745,6 +1777,17 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
                 session->state = SESSION_STATE_STARTING_SINKS;
 
             break;
+        case SESSION_STATE_PAUSING_SOURCES:
+            if (!session_is_source_nodes_state(session, OBJ_STATE_PAUSED))
+                break;
+
+            session->state = SESSION_STATE_PAUSED;
+
+            session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
+
+            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionPaused, &GUID_NULL, S_OK, NULL);
+
+            break;
         default:
             ;
     }
@@ -1759,6 +1802,7 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
     BOOL changed = FALSE;
     IMFMediaEvent *event;
     DWORD caps, flags;
+    HRESULT hr;
 
     if ((state = session_get_object_state_for_event(event_type)) == OBJ_STATE_INVALID)
         return;
@@ -1806,6 +1850,25 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
                 IMFMediaEventQueue_QueueEvent(session->event_queue, event);
                 IMFMediaEvent_Release(event);
             }
+            break;
+        case SESSION_STATE_PAUSING_SINKS:
+            if (!session_is_output_nodes_state(session, OBJ_STATE_PAUSED))
+                break;
+
+            session->state = SESSION_STATE_PAUSING_SOURCES;
+
+            LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+            {
+                if (FAILED(hr = IMFMediaSource_Pause(source->source)))
+                    break;
+            }
+
+            if (FAILED(hr))
+            {
+                session->state = SESSION_STATE_PAUSED;
+                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionPaused, &GUID_NULL, hr, NULL);
+            }
+
             break;
         default:
             ;
