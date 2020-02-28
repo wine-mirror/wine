@@ -3998,14 +3998,19 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     if (changed->scissorRect)
         wined3d_device_set_scissor_rects(device, 1, &state->scissor_rect);
 
-    for (i = 0; i < ARRAY_SIZE(state->streams); ++i)
+    map = changed->streamSource;
+    while (map)
     {
-        if (changed->streamSource & (1u << i))
-            wined3d_device_set_stream_source(device, i, state->streams[i].buffer,
-                    state->streams[i].offset, state->streams[i].stride);
-        if (changed->streamFreq & (1u << i))
-            wined3d_device_set_stream_source_freq(device, i,
-                    state->streams[i].frequency | state->streams[i].flags);
+        i = wined3d_bit_scan(&map);
+        wined3d_device_set_stream_source(device, i, state->streams[i].buffer,
+                state->streams[i].offset, state->streams[i].stride);
+    }
+    map = changed->streamFreq;
+    while (map)
+    {
+        i = wined3d_bit_scan(&map);
+        wined3d_device_set_stream_source_freq(device, i,
+                state->streams[i].frequency | state->streams[i].flags);
     }
 
     for (i = 0; i < ARRAY_SIZE(state->textures); ++i)
