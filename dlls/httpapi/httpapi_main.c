@@ -25,7 +25,7 @@
 #include "wine/heap.h"
 #include "wine/list.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(httpapi);
+WINE_DEFAULT_DEBUG_CHANNEL(http);
 
 static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','H','t','t','p','\\','R','e','q','Q','u','e','u','e',0};
 
