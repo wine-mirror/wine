@@ -27,7 +27,7 @@
 @ stdcall HttpSendHttpResponse(ptr int64 long ptr ptr ptr ptr long ptr ptr)
 @ stub HttpSendResponseEntityBody
 @ stdcall HttpSetRequestQueueProperty(ptr long ptr long long ptr)
-@ stub HttpSetServerSessionProperty
+@ stdcall HttpSetServerSessionProperty(int64 long ptr long)
 @ stdcall HttpSetServiceConfiguration(ptr long ptr long ptr)
 @ stdcall HttpSetUrlGroupProperty(int64 long ptr long)
 @ stub HttpShutdownRequestQueue

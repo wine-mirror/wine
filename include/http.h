@@ -429,6 +429,39 @@ typedef struct _HTTP_BINDING_INFO
     HANDLE RequestQueueHandle;
 } HTTP_BINDING_INFO, *PHTTP_BINDING_INFO;
 
+typedef enum _HTTP_QOS_SETTING_TYPE
+{
+    HttpQosSettingTypeBandwidth,
+    HttpQosSettingTypeConnectionLimit,
+    HttpQosSettingTypeFlowRate,
+} HTTP_QOS_SETTING_TYPE, *PHTTP_QOS_SETTING_TYPE;
+
+typedef struct _HTTP_BANDWIDTH_LIMIT_INFO
+{
+    HTTP_PROPERTY_FLAGS Flags;
+    ULONG MaxBandwidth;
+} HTTP_BANDWIDTH_LIMIT_INFO, *PHTTP_BANDWIDTH_LIMIT_INFO;
+
+typedef struct _HTTP_CONNECTION_LIMIT_INFO
+{
+    HTTP_PROPERTY_FLAGS Flags;
+    ULONG MaxConnections;
+} HTTP_CONNECTION_LIMIT_INFO, *PHTTP_CONNECTION_LIMIT_INFO;
+
+typedef struct _HTTP_FLOWRATE_INFO
+{
+    HTTP_PROPERTY_FLAGS Flags;
+    ULONG MaxBandwidth;
+    ULONG MaxPeakBandwidth;
+    ULONG BurstSize;
+} HTTP_FLOWRATE_INFO, *PHTTP_FLOWRATE_INFO;
+
+typedef struct _HTTP_QOS_SETTING_INFO
+{
+    HTTP_QOS_SETTING_TYPE QosType;
+    void *QosSetting;
+} HTTP_QOS_SETTING_INFO, *PHTTP_QOS_SETTING_INFO;
+
 ULONG WINAPI HttpAddUrl(HANDLE,PCWSTR,PVOID);
 ULONG WINAPI HttpAddUrlToUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url, HTTP_URL_CONTEXT context, ULONG reserved);
 ULONG WINAPI HttpCloseRequestQueue(HANDLE handle);
@@ -448,6 +481,7 @@ ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url);
 ULONG WINAPI HttpRemoveUrlFromUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url, ULONG flags);
 ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, HTTP_RESPONSE *response, HTTP_CACHE_POLICY *cache_policy, ULONG *ret_size, void *reserved1, ULONG reserved2, OVERLAPPED *ovl, HTTP_LOG_DATA *log_data);
 ULONG WINAPI HttpSetRequestQueueProperty(HANDLE queue, HTTP_SERVER_PROPERTY property, void *value, ULONG length, ULONG reserved1, void *reserved2);
+ULONG WINAPI HttpSetServerSessionProperty(HTTP_SERVER_SESSION_ID id, HTTP_SERVER_PROPERTY property, void *value, ULONG size);
 ULONG WINAPI HttpSetServiceConfiguration(HANDLE,HTTP_SERVICE_CONFIG_ID,PVOID,ULONG,LPOVERLAPPED);
 ULONG WINAPI HttpSetUrlGroupProperty(HTTP_URL_GROUP_ID id, HTTP_SERVER_PROPERTY property, void *value, ULONG length);
 

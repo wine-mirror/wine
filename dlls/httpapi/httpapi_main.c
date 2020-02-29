@@ -771,3 +771,26 @@ ULONG WINAPI HttpSetRequestQueueProperty(HANDLE queue, HTTP_SERVER_PROPERTY prop
             queue, property, value, length, reserved1, reserved2);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *        HttpSetServerSessionProperty     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpSetServerSessionProperty(HTTP_SERVER_SESSION_ID id,
+        HTTP_SERVER_PROPERTY property, void *value, ULONG length)
+{
+    TRACE("id %s, property %u, value %p, length %u.\n",
+            wine_dbgstr_longlong(id), property, value, length);
+
+    switch (property)
+    {
+        case HttpServerQosProperty:
+        {
+            const HTTP_QOS_SETTING_INFO *info = value;
+            FIXME("Ignoring QoS setting %u.\n", info->QosType);
+            return ERROR_SUCCESS;
+        }
+        default:
+            FIXME("Unhandled property %u.\n", property);
+            return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+}
