@@ -338,6 +338,23 @@ static void test_urlextension(void)
     todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
 }
 
+static void test_iscontentprotected(void)
+{
+    HRESULT hr;
+    const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
+    BOOL drm;
+
+    hr = WMIsContentProtected(NULL, NULL);
+    ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08x\n", hr);
+    hr = WMIsContentProtected(NULL, &drm);
+    ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08x\n", hr);
+    hr = WMIsContentProtected(mp3file, NULL);
+    ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08x\n", hr);
+    hr = WMIsContentProtected(mp3file, &drm);
+    ok(hr == S_FALSE, "WMIsContentProtected failed 0x%08x\n", hr);
+    ok(drm == FALSE, "got %0dx\n", drm);
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -353,6 +370,7 @@ START_TEST(wmvcore)
     test_profile_manager_interfaces();
     test_WMCreateWriterPriv();
     test_urlextension();
+    test_iscontentprotected();
 
     CoUninitialize();
 }
