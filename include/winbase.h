@@ -1409,7 +1409,7 @@ typedef struct tagCOMMCONFIG {
 	DWORD dwProviderSubType;
 	DWORD dwProviderOffset;
 	DWORD dwProviderSize;
-	DWORD wcProviderData[1];
+	WCHAR wcProviderData[1];
 } COMMCONFIG, *LPCOMMCONFIG;
 
 typedef struct tagCOMMPROP {
