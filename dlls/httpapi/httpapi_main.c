@@ -657,25 +657,29 @@ ULONG WINAPI HttpCloseUrlGroup(HTTP_URL_GROUP_ID id)
 ULONG WINAPI HttpSetUrlGroupProperty(HTTP_URL_GROUP_ID id, HTTP_SERVER_PROPERTY property, void *value, ULONG length)
 {
     struct url_group *group = get_url_group(id);
-    const HTTP_BINDING_INFO *info = value;
 
     TRACE("id %s, property %u, value %p, length %u.\n",
             wine_dbgstr_longlong(id), property, value, length);
 
-    if (property != HttpServerBindingProperty)
+    switch (property)
     {
-        FIXME("Unhandled property %u.\n", property);
-        return ERROR_CALL_NOT_IMPLEMENTED;
+        case HttpServerBindingProperty:
+        {
+            const HTTP_BINDING_INFO *info = value;
+
+            TRACE("Binding to queue %p.\n", info->RequestQueueHandle);
+            group->queue = info->RequestQueueHandle;
+            if (group->url)
+                add_url(group->queue, group->url, group->context);
+            return ERROR_SUCCESS;
+        }
+        case HttpServerLoggingProperty:
+            WARN("Ignoring logging property.\n");
+            return ERROR_SUCCESS;
+        default:
+            FIXME("Unhandled property %u.\n", property);
+            return ERROR_CALL_NOT_IMPLEMENTED;
     }
-
-    TRACE("Binding to queue %p.\n", info->RequestQueueHandle);
-
-    group->queue = info->RequestQueueHandle;
-
-    if (group->url)
-        add_url(group->queue, group->url, group->context);
-
-    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
