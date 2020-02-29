@@ -188,6 +188,9 @@ static void test_v1_server(void)
     ret = CloseHandle(queue2);
     ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
 
+    ret_size = 0xdeadbeef;
+    ret = HttpReceiveHttpRequest(NULL, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(ret == ERROR_INVALID_HANDLE, "Got error %u.\n", ret);
     ret = HttpReceiveHttpRequest(NULL, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
     ok(ret == ERROR_INVALID_HANDLE, "Got error %u.\n", ret);
     ret = HttpReceiveHttpRequest(queue, 0xdeadbeef, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
@@ -768,6 +771,12 @@ static void test_v1_entity_body(void)
     send_response_v1(queue, req->RequestId, s);
 
     /* Test HttpReceiveRequestEntityBody(). */
+
+    ret_size = 0xdeadbeef;
+    ret = HttpReceiveRequestEntityBody(NULL, HTTP_NULL_ID, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
+    ok(ret == ERROR_INVALID_HANDLE, "Got error %u.\n", ret);
+    ret = HttpReceiveRequestEntityBody(NULL, HTTP_NULL_ID, 0, recv_body, sizeof(recv_body), NULL, &ovl);
+    ok(ret == ERROR_INVALID_HANDLE, "Got error %u.\n", ret);
 
     sprintf(req_text, post_req, port);
     ret = send(s, req_text, strlen(req_text) + 1, 0);

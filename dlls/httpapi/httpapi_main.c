@@ -304,13 +304,17 @@ ULONG WINAPI HttpReceiveRequestEntityBody(HANDLE queue, HTTP_REQUEST_ID id, ULON
         ovl = &sync_ovl;
     }
 
-    if (!DeviceIoControl(queue, IOCTL_HTTP_RECEIVE_BODY, &params, sizeof(params), buffer, size, NULL, ovl))
+    if (!DeviceIoControl(queue, IOCTL_HTTP_RECEIVE_BODY, &params, sizeof(params), buffer, size, ret_size, ovl))
         ret = GetLastError();
 
     if (ovl == &sync_ovl)
     {
-        if (!GetOverlappedResult(queue, ovl, ret_size, TRUE))
-            ret = GetLastError();
+        if (ret == ERROR_IO_PENDING)
+        {
+            ret = ERROR_SUCCESS;
+            if (!GetOverlappedResult(queue, ovl, ret_size, TRUE))
+                ret = GetLastError();
+        }
         CloseHandle(sync_ovl.hEvent);
     }
 
@@ -348,14 +352,17 @@ ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flag
         ovl = &sync_ovl;
     }
 
-    if (!DeviceIoControl(queue, IOCTL_HTTP_RECEIVE_REQUEST, &params, sizeof(params), request, size, NULL, ovl))
+    if (!DeviceIoControl(queue, IOCTL_HTTP_RECEIVE_REQUEST, &params, sizeof(params), request, size, ret_size, ovl))
         ret = GetLastError();
 
     if (ovl == &sync_ovl)
     {
-        ret = ERROR_SUCCESS;
-        if (!GetOverlappedResult(queue, ovl, ret_size, TRUE))
-            ret = GetLastError();
+        if (ret == ERROR_IO_PENDING)
+        {
+            ret = ERROR_SUCCESS;
+            if (!GetOverlappedResult(queue, ovl, ret_size, TRUE))
+                ret = GetLastError();
+        }
         CloseHandle(sync_ovl.hEvent);
     }
 
