@@ -5342,6 +5342,15 @@ typedef struct _QUOTA_LIMITS {
 #define QUOTA_LIMITS_HARDWS_MIN_DISABLE 0x00000002
 #define QUOTA_LIMITS_HARDWS_MAX_ENABLE  0x00000004
 #define QUOTA_LIMITS_HARDWS_MAX_DISABLE 0x00000008
+#define QUOTA_LIMITS_USE_DEFAULT_LIMITS 0x00000010
+
+typedef union _RATE_QUOTA_LIMIT {
+    DWORD RateData;
+    struct {
+        DWORD RatePercent:7;
+        DWORD Reserved0:25;
+    } DUMMYSTRUCTNAME;
+} RATE_QUOTA_LIMIT, *PRATE_QUOTA_LIMIT;
 
 typedef struct _QUOTA_LIMITS_EX {
     SIZE_T PagedPoolLimit;
@@ -5350,12 +5359,12 @@ typedef struct _QUOTA_LIMITS_EX {
     SIZE_T MaximumWorkingSetSize;
     SIZE_T PagefileLimit;
     LARGE_INTEGER TimeLimit;
-    SIZE_T Reserved1;
+    SIZE_T WorkingSetLimit;
     SIZE_T Reserved2;
     SIZE_T Reserved3;
     SIZE_T Reserved4;
     DWORD Flags;
-    DWORD Reserved5;
+    RATE_QUOTA_LIMIT CpuRateLimit;
 } QUOTA_LIMITS_EX, *PQUOTA_LIMITS_EX;
 
 #define SECTION_QUERY              0x0001
