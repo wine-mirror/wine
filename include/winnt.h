@@ -4340,6 +4340,12 @@ typedef struct _ACL_SIZE_INFORMATION
 #define SE_MANAGE_VOLUME_NAME           L"SeManageVolumePrivilege"
 #define SE_IMPERSONATE_NAME             L"SeImpersonatePrivilege"
 #define SE_CREATE_GLOBAL_NAME           L"SeCreateGlobalPrivilege"
+#define SE_TRUSTED_CREDMAN_ACCESS_NAME  L"SeTrustedCredManAccessPrivilege"
+#define SE_RELABEL_NAME                 L"SeRelabelPrivilege"
+#define SE_INC_WORKING_SET_NAME         L"SeIncreaseWorkingSetPrivilege"
+#define SE_TIME_ZONE_NAME               L"SeTimeZonePrivilege"
+#define SE_CREATE_SYMBOLIC_LINK_NAME    L"SeCreateSymbolicLinkPrivilege"
+#define SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME L"SeDelegateSessionUserImpersonatePrivilege"
 #else /* _MSC_VER/__MINGW32__ */
 static const WCHAR SE_CREATE_TOKEN_NAME[] = { 'S','e','C','r','e','a','t','e','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 };
 static const WCHAR SE_ASSIGNPRIMARYTOKEN_NAME[] = { 'S','e','A','s','s','i','g','n','P','r','i','m','a','r','y','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 };
@@ -4370,6 +4376,12 @@ static const WCHAR SE_ENABLE_DELEGATION_NAME[] = { 'S','e','E','n','a','b','l','
 static const WCHAR SE_MANAGE_VOLUME_NAME[] = { 'S','e','M','a','n','a','g','e','V','o','l','u','m','e','P','r','i','v','i','l','e','g','e',0 };
 static const WCHAR SE_IMPERSONATE_NAME[] = { 'S','e','I','m','p','e','r','s','o','n','a','t','e','P','r','i','v','i','l','e','g','e',0 };
 static const WCHAR SE_CREATE_GLOBAL_NAME[] = { 'S','e','C','r','e','a','t','e','G','l','o','b','a','l','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_TRUSTED_CREDMAN_ACCESS_NAME[] = { 'S','e','T','r','u','s','t','e','d','C','r','e','d','M','a','n','A','c','c','e','s','s','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_RELABEL_NAME[] = { 'S','e','R','e','l','a','b','e','l','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_INC_WORKING_SET_NAME[] = { 'S','e','I','n','c','r','e','a','s','e','W','o','r','k','i','n','g','S','e','t','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_TIME_ZONE_NAME[] = { 'S','e','T','i','m','e','Z','o','n','e','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_CREATE_SYMBOLIC_LINK_NAME[] = { 'S','e','C','r','e','a','t','e','S','y','m','b','o','l','i','c','L','i','n','k','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME[] = { 'S','e','D','e','l','e','g','a','t','e','S','e','s','s','i','o','n','U','s','e','r','I','m','p','e','r','s','o','n','a','t','e','P','r','i','v','i','l','e','g','e',0 };
 #endif
 #else /* UNICODE */
 #define SE_CREATE_TOKEN_NAME            "SeCreateTokenPrivilege"
@@ -4401,6 +4413,12 @@ static const WCHAR SE_CREATE_GLOBAL_NAME[] = { 'S','e','C','r','e','a','t','e','
 #define SE_MANAGE_VOLUME_NAME           "SeManageVolumePrivilege"
 #define SE_IMPERSONATE_NAME             "SeImpersonatePrivilege"
 #define SE_CREATE_GLOBAL_NAME           "SeCreateGlobalPrivilege"
+#define SE_TRUSTED_CREDMAN_ACCESS_NAME  "SeTrustedCredManAccessPrivilege"
+#define SE_RELABEL_NAME                 "SeRelabelPrivilege"
+#define SE_INC_WORKING_SET_NAME         "SeIncreaseWorkingSetPrivilege"
+#define SE_TIME_ZONE_NAME               "SeTimeZonePrivilege"
+#define SE_CREATE_SYMBOLIC_LINK_NAME    "SeCreateSymbolicLinkPrivilege"
+#define SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME "SeDelegateSessionUserImpersonatePrivilege"
 #endif
 
 #define SE_GROUP_MANDATORY          0x00000001
@@ -5452,6 +5470,8 @@ typedef struct _QUOTA_LIMITS_EX {
 #define FILE_SUPPORTS_INTEGRITY_STREAMS      0x04000000
 #define FILE_SUPPORTS_BLOCK_REFCOUNTING      0x08000000
 #define FILE_SUPPORTS_SPARSE_VDL             0x10000000
+#define FILE_DAX_VOLUME                      0x20000000
+#define FILE_SUPPORTS_GHOSTING               0x40000000
 
 /* File alignments (NT) */
 #define	FILE_BYTE_ALIGNMENT		0x00000000
