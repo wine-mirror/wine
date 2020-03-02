@@ -27,15 +27,11 @@ my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
 my $UNIDATA = "http://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip";
 my $IDNADATA = "https://www.unicode.org/Public/idna/$UNIVERSION";
 my $REPORTS = "http://www.unicode.org/reports";
-my $RFCS = "http://www.rfc-editor.org/rfc";
 my $MSDATA = "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498";
 my $MSCODEPAGES = "$MSDATA/Windows Supported Code Page Data Files.zip";
 
 # Sort keys file
 my $SORTKEYS = "tr10/allkeys.txt";
-
-# RFC3454 (stringprep data)
-my $STRINGPREP = "rfc3454.txt";
 
 # Default char for undefined mappings
 my $DEF_CHAR = ord '?';
@@ -189,14 +185,6 @@ my %matra_types =
     "Overstruck"  => 0x0d,
     "Invisible"  => 0x0e,
     "Bottom_And_Left"  => 0x0f
-);
-
-my %nameprep_flags =
-(
-    "unassigned" => 0x01,
-    "prohibited" => 0x02,
-    "bidi_ral"   => 0x04,
-    "bidi_l"     => 0x08
 );
 
 my %break_types =
@@ -1827,185 +1815,6 @@ sub dump_intl_nls($)
 }
 
 
-sub load_nameprep_range_table($$$)
-{
-    my ($INPUT, $val, $table_ref) = @_;
-
-    while (<$INPUT>)
-    {
-        if (/^\s*([0-9a-fA-F]+)-([0-9a-fA-F]+)/)
-        {
-            my $last = hex $2;
-            $last = 65535 if($last >= 65536);
-            foreach my $i (hex $1 .. $last)
-            {
-                $table_ref->[$i] |= $val;
-            }
-            next;
-        }
-        elsif (/^\s*([0-9a-fA-F]+)/)
-        {
-            if (hex $1 < 65536)
-            {
-                $table_ref->[hex $1] |= $val;
-            }
-            next;
-        }
-
-        return if (/End\sTable/);
-    }
-}
-
-sub load_nameprep_map_table($$)
-{
-    my ($INPUT, $table_ref) = @_;
-
-    while (<$INPUT>)
-    {
-        if (/^\s*([0-9a-fA-F]+);\s;/)
-        {
-            # special value for map to nothing
-            $table_ref->[hex $1] = [0xffff, 0xffff, 0xffff];
-            next;
-        }
-        elsif (/^\s*([0-9a-fA-F]+);\s([0-9a-fA-F]+);/)
-        {
-            $table_ref->[hex $1] = [hex $2, 0, 0];
-            next;
-        }
-        elsif (/^\s*([0-9a-fA-F]+);\s([0-9a-fA-F]+)\s([0-9a-fA-F]+);/)
-        {
-            $table_ref->[hex $1] = [hex $2, hex $3, 0];
-            next;
-        }
-        elsif (/^\s*([0-9a-fA-F]+);\s([0-9a-fA-F]+)\s([0-9a-fA-F]+)\s([0-9a-fA-F]+);/)
-        {
-            $table_ref->[hex $1] = [hex $2, hex $3, hex $4];
-            next;
-        }
-
-        return if (/End\sTable/);
-    }
-}
-
-################################################################
-# dump mapping table, prohibited characters set, unassigned
-# characters, bidirectional rules used by nameprep algorithm
-sub dump_nameprep($)
-{
-    my $filename = shift;
-    my @mapping_table = ();
-    my @flags_table;
-
-    my $INPUT = open_data_file( $RFCS, $STRINGPREP );
-    while (<$INPUT>)
-    {
-        next unless /Start\sTable/;
-
-        load_nameprep_range_table($INPUT, $nameprep_flags{"unassigned"}, \@flags_table) if (/A.1/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.1.2/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.2.2/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.3/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.4/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.5/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.6/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.7/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.8/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.9/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"bidi_ral"}, \@flags_table) if (/D.1/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"bidi_l"}, \@flags_table) if (/D.2/);
-
-        load_nameprep_map_table($INPUT, \@mapping_table) if (/B.1/);
-        load_nameprep_map_table($INPUT, \@mapping_table) if (/B.2/);
-    }
-    close $INPUT;
-
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    print "Building $filename\n";
-    print OUTPUT "/* Nameprep algorithm related data */\n";
-    print OUTPUT "/* generated from $RFCS/$STRINGPREP */\n";
-    print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"windef.h\"\n\n";
-
-    dump_two_level_mapping( "nameprep_char_type", 0, 16, @flags_table );
-
-    ######### mapping table
-    # first determine all the 16-char subsets that contain something
-    my @filled = ();
-    my $pos = 16*3;  # for the null subset
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        next unless defined $mapping_table[$i];
-        $filled[$i >> 4] = $pos;
-        $pos += 16*3;
-        $i |= 15;
-    }
-    my $total = $pos;
-
-    # now count the 256-char subsets that contain something
-    my @filled_idx = (256) x 256;
-    $pos = 256 + 16;
-    for (my $i = 0; $i < 4096; $i++)
-    {
-        next unless $filled[$i];
-        $filled_idx[$i >> 4] = $pos;
-        $pos += 16;
-        $i |= 15;
-    }
-    my $null_offset = $pos;
-    $total += $pos;
-
-    # add the index offsets to the subsets positions
-    for (my $i = 0; $i < 4096; $i++)
-    {
-        next unless $filled[$i];
-        $filled[$i] += $null_offset;
-    }
-
-    # dump the main index
-    printf OUTPUT "const unsigned short DECLSPEC_HIDDEN nameprep_mapping[%d] =\n", $total;
-    printf OUTPUT "{\n    /* index */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, @filled_idx );
-    printf OUTPUT ",\n    /* null sub-index */\n%s", dump_array( 16, 0, ($null_offset) x 16 );
-
-    # dump the second-level indexes
-    for (my $i = 0; $i < 256; $i++)
-    {
-        next unless ($filled_idx[$i] > 256);
-        my @table = @filled[($i<<4)..($i<<4)+15];
-        for (my $j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
-        printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
-        printf OUTPUT "%s", dump_array( 16, 0, @table );
-    }
-
-    # dump the 16-char subsets
-    printf OUTPUT ",\n    /* null mapping */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, (0) x 48 );
-
-    for (my $i = 0; $i < 4096; $i++)
-    {
-        next unless $filled[$i];
-        my @table = (0) x 48;
-        for (my $j = 0; $j < 16; $j++)
-        {
-            if (defined $mapping_table[($i<<4) + $j])
-            {
-                $table[3 * $j] = ${$mapping_table[($i << 4) + $j]}[0];
-                $table[3 * $j + 1] = ${$mapping_table[($i << 4) + $j]}[1];
-                $table[3 * $j + 2] = ${$mapping_table[($i << 4) + $j]}[2];
-            }
-        }
-        printf OUTPUT ",\n    /* 0x%03x0 .. 0x%03xf */\n", $i, $i;
-        printf OUTPUT "%s", dump_array( 16, 0, @table );
-    }
-
-    printf OUTPUT "\n};\n";
-
-    close OUTPUT;
-    save_file($filename);
-}
-
-
 ################################################################
 # dump the GetStringTypeW table
 sub dump_string_type_table($)
@@ -2482,32 +2291,6 @@ sub save_file($)
 
 
 ################################################################
-# replace the contents of a file between ### cpmap ### marks
-
-sub REPLACE_IN_FILE($@)
-{
-    my $name = shift;
-    my @data = @_;
-    my @lines = ();
-    open(FILE,$name) or die "Can't open $name";
-    while (<FILE>)
-    {
-	push @lines, $_;
-	last if /\#\#\# cpmap begin \#\#\#/;
-    }
-    push @lines, @data;
-    while (<FILE>)
-    {
-	if (/\#\#\# cpmap end \#\#\#/) { push @lines, "\n", $_; last; }
-    }
-    push @lines, <FILE>;
-    open(FILE,">$name.new") or die "Can't modify $name";
-    print FILE @lines;
-    close(FILE);
-    save_file($name);
-}
-
-################################################################
 # main routine
 
 chdir ".." if -f "./make_unicode";
@@ -2531,7 +2314,6 @@ dump_scripts( "dlls/dwrite/scripts" );
 dump_indic( "dlls/usp10/indicsyllable.c" );
 dump_vertical( "dlls/gdi32/vertical.c" );
 dump_vertical( "dlls/wineps.drv/vertical.c" );
-dump_nameprep( "dlls/kernel32/nameprep.c" );
 dump_intl_nls("nls/l_intl.nls");
 dump_norm_table( "nls/normnfc.nls" );
 dump_norm_table( "nls/normnfd.nls" );

@@ -62,9 +62,6 @@ extern BOOL WINAPI Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, LCID lcid, 
 extern BOOL WINAPI Internal_EnumUILanguages( UILANGUAGE_ENUMPROCW proc, DWORD flags,
                                              LONG_PTR param, BOOL unicode );
 
-extern const unsigned short nameprep_char_type[] DECLSPEC_HIDDEN;
-extern const WCHAR nameprep_mapping[] DECLSPEC_HIDDEN;
-
 static inline unsigned short get_table_entry( const unsigned short *table, WCHAR ch )
 {
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
