@@ -454,14 +454,17 @@ static HRESULT create_session_op(enum session_command command, struct session_op
     return S_OK;
 }
 
+static HRESULT session_is_shut_down(struct media_session *session)
+{
+    return session->state == SESSION_STATE_SHUT_DOWN ? MF_E_SHUTDOWN : S_OK;
+}
+
 static HRESULT session_submit_command(struct media_session *session, struct session_op *op)
 {
     HRESULT hr;
 
     EnterCriticalSection(&session->cs);
-    if (session->state == SESSION_STATE_SHUT_DOWN)
-        hr = MF_E_SHUTDOWN;
-    else
+    if (SUCCEEDED(hr = session_is_shut_down(session)))
         hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &session->commands_callback, &op->IUnknown_iface);
     LeaveCriticalSection(&session->cs);
 
@@ -706,7 +709,6 @@ static void session_stop(struct media_session *session)
 
     LeaveCriticalSection(&session->cs);
 }
-
 
 static struct media_source *session_get_media_source(struct media_session *session, IMFMediaSource *source)
 {
@@ -1347,9 +1349,7 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
     FIXME("%p.\n", iface);
 
     EnterCriticalSection(&session->cs);
-    if (session->state == SESSION_STATE_SHUT_DOWN)
-        hr = MF_E_SHUTDOWN;
-    else
+    if (SUCCEEDED(hr = session_is_shut_down(session)))
     {
         session->state = SESSION_STATE_SHUT_DOWN;
         IMFMediaEventQueue_Shutdown(session->event_queue);
@@ -1384,9 +1384,7 @@ static HRESULT WINAPI mfsession_GetSessionCapabilities(IMFMediaSession *iface, D
         return E_POINTER;
 
     EnterCriticalSection(&session->cs);
-    if (session->state == SESSION_STATE_SHUT_DOWN)
-        hr = MF_E_SHUTDOWN;
-    else
+    if (SUCCEEDED(hr = session_is_shut_down(session)))
         *caps = session->caps;
     LeaveCriticalSection(&session->cs);
 
