@@ -5477,7 +5477,6 @@ todo_wine
     ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-todo_wine
     ok(size == size_id, "expected %u, got %u\n", size_id, size);
 
     size = size_id -1;
@@ -5487,7 +5486,6 @@ todo_wine
     ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-todo_wine
     ok(size == size_id, "expected %u, got %u\n", size_id, size);
 
     size = size_id -2;
@@ -5497,7 +5495,6 @@ todo_wine
     ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-todo_wine
     ok(size == size_id + 2 || size == size_id + 1 /* before win10 1809 */, "expected %u, got %u\n", size_id + 2, size);
 
     HeapFree(GetProcessHeap(), 0, buffer);
@@ -5550,7 +5547,6 @@ todo_wine
     ok(!ret, "Expected GetThreadPreferredUILanguages to fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-todo_wine
     ok(size == size_id, "expected %u, got %u\n", size_id, size);
 
     size = size_id - 1;
@@ -5559,7 +5555,6 @@ todo_wine
     ok(!ret, "Expected GetThreadPreferredUILanguages to fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-todo_wine
     ok(size == size_id, "expected %u, got %u\n", size_id, size);
 
     size = size_id - 2;

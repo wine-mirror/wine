@@ -112,6 +112,7 @@ static BOOL get_dummy_preferred_ui_language( DWORD flags, ULONG *count, WCHAR *b
 
     if (lsize > *size)
     {
+        *size = lsize;
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
