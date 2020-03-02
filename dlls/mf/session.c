@@ -1395,9 +1395,42 @@ static HRESULT WINAPI mfsession_GetSessionCapabilities(IMFMediaSession *iface, D
 
 static HRESULT WINAPI mfsession_GetFullTopology(IMFMediaSession *iface, DWORD flags, TOPOID id, IMFTopology **topology)
 {
-    FIXME("%p, %#x, %s, %p.\n", iface, flags, wine_dbgstr_longlong(id), topology);
+    struct media_session *session = impl_from_IMFMediaSession(iface);
+    struct queued_topology *queued;
+    HRESULT hr = S_OK;
+    TOPOID topo_id;
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x, %s, %p.\n", iface, flags, wine_dbgstr_longlong(id), topology);
+
+    *topology = NULL;
+
+    EnterCriticalSection(&session->cs);
+
+    if (flags & MFSESSION_GETFULLTOPOLOGY_CURRENT)
+    {
+        if (session->presentation.topo_status != MF_TOPOSTATUS_INVALID)
+            *topology = session->presentation.current_topology;
+        else
+            hr = MF_E_INVALIDREQUEST;
+    }
+    else
+    {
+        LIST_FOR_EACH_ENTRY(queued, &session->topologies, struct queued_topology, entry)
+        {
+            if (SUCCEEDED(IMFTopology_GetTopologyID(queued->topology, &topo_id)) && topo_id == id)
+            {
+                *topology = queued->topology;
+                break;
+            }
+        }
+    }
+
+    if (*topology)
+        IMFTopology_AddRef(*topology);
+
+    LeaveCriticalSection(&session->cs);
+
+    return hr;
 }
 
 static const IMFMediaSessionVtbl mfmediasessionvtbl =
