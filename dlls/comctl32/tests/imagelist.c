@@ -2316,8 +2316,6 @@ static void test_alpha(void)
         DeleteObject(hbm_test);
 
         get_image_alpha(himl, i / 2, 2, 1, alpha);
-
-        todo_wine_if(i == 0)
         ok(alpha[0] == GetAValue(test_bitmaps[i]) && alpha[1] == GetAValue(test_bitmaps[i + 1]),
            "Bitmap [%08X, %08X] returned alpha value [%02X, %02X], expected [%02X, %02X]\n",
            test_bitmaps[i], test_bitmaps[i + 1], alpha[0], alpha[1],
