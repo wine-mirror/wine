@@ -1157,6 +1157,7 @@ static void test_Toolhelp(void)
     STARTUPINFOA        startup;
     PROCESS_INFORMATION info;
     HANDLE              process, thread, snapshot;
+    DWORD               nested_pid;
     PROCESSENTRY32      pe;
     THREADENTRY32       te;
     DWORD               ret;
@@ -1209,17 +1210,24 @@ static void test_Toolhelp(void)
     /* The following test fails randomly on some Windows versions, but Gothic 2 depends on it */
     ok(i < 20 || broken(i == 20), "process object not released\n");
 
+    /* Look for the nested process by pid */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    nested_pid = GetPrivateProfileIntA("Nested", "Pid", 0, resfile);
+    DeleteFileA(resfile);
+
     snapshot = pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %u\n", GetLastError());
     memset(&pe, 0, sizeof(pe));
     pe.dwSize = sizeof(pe);
     if (pProcess32First(snapshot, &pe))
     {
-        while (pe.th32ParentProcessID != info.dwProcessId)
+        while (pe.th32ProcessID != nested_pid)
             if (!pProcess32Next(snapshot, &pe)) break;
     }
     CloseHandle(snapshot);
-    ok(pe.th32ParentProcessID == info.dwProcessId, "failed to find nested child process\n");
+    ok(pe.th32ProcessID == nested_pid, "failed to find nested child process\n");
+    ok(pe.th32ParentProcessID == info.dwProcessId, "nested child process has parent %u instead of %u\n", pe.th32ParentProcessID, info.dwProcessId);
+    ok(stricmp(pe.szExeFile, exename) == 0, "nested executable is %s instead of %s\n", pe.szExeFile, exename);
 
     process = OpenProcess(PROCESS_ALL_ACCESS_NT4, FALSE, pe.th32ProcessID);
     ok(process != NULL, "OpenProcess failed %u\n", GetLastError());
@@ -1242,7 +1250,8 @@ static void test_Toolhelp(void)
     ok(ret == 1, "expected 1, got %u\n", ret);
     CloseHandle(thread);
 
-    ok(WaitForSingleObject(process, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    ret = WaitForSingleObject(process, 30000);
+    ok(ret == WAIT_OBJECT_0, "Child process termination got %u le=%u\n", ret, GetLastError());
     CloseHandle(process);
 
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
@@ -4048,6 +4057,7 @@ START_TEST(process)
             char                buffer[MAX_PATH + 26];
             STARTUPINFOA        startup;
             PROCESS_INFORMATION info;
+            HANDLE hFile;
 
             memset(&startup, 0, sizeof(startup));
             startup.cb = sizeof(startup);
@@ -4058,6 +4068,14 @@ START_TEST(process)
             ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startup, &info), "CreateProcess failed\n");
             CloseHandle(info.hProcess);
             CloseHandle(info.hThread);
+
+            /* The nested process is suspended so we can use the same resource
+             * file and it's up to the parent to read it before resuming the
+             * nested process.
+             */
+            hFile = CreateFileA(myARGV[3], GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+            childPrintf(hFile, "[Nested]\nPid=%08u\n", info.dwProcessId);
+            CloseHandle(hFile);
             return;
         }
         else if (!strcmp(myARGV[2], "parent") && myARGC >= 5)
