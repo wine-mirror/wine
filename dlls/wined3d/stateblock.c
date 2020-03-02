@@ -1005,12 +1005,12 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
 void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         struct wined3d_stateblock *device_state)
 {
-    const unsigned int word_bit_count = sizeof(*stateblock->changed.vs_consts_f) * CHAR_BIT;
     struct wined3d_stateblock_state *state = &device_state->stateblock_state;
     struct wined3d_device *device = stateblock->device;
     struct wined3d_blend_state *blend_state;
     struct wined3d_color colour;
-    unsigned int i, j, idx;
+    struct wined3d_range range;
+    unsigned int i, start;
     BOOL set_blend_state;
     DWORD map;
 
@@ -1026,34 +1026,37 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         wined3d_device_set_vertex_shader(device, stateblock->stateblock_state.vs);
     }
 
-    for (i = 0; i < ARRAY_SIZE(stateblock->changed.vs_consts_f); ++i)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        map = stateblock->changed.vs_consts_f[i];
+        if (!wined3d_bitmap_get_range(stateblock->changed.vs_consts_f, WINED3D_MAX_VS_CONSTS_F, start, &range))
+            break;
 
-        while (map)
-        {
-            j = wined3d_bit_scan(&map);
-            idx = i * word_bit_count + j;
-
-            state->vs_consts_f[idx] = stateblock->stateblock_state.vs_consts_f[idx];
-            wined3d_device_set_vs_consts_f(device, idx, 1, &stateblock->stateblock_state.vs_consts_f[idx]);
-        }
+        memcpy(&state->vs_consts_f[range.offset], &stateblock->stateblock_state.vs_consts_f[range.offset],
+                sizeof(*state->vs_consts_f) * range.size);
+        wined3d_device_set_vs_consts_f(device, range.offset, range.size,
+                &stateblock->stateblock_state.vs_consts_f[range.offset]);
     }
     map = stateblock->changed.vertexShaderConstantsI;
-    while (map)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        idx = wined3d_bit_scan(&map);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_I, start, &range))
+            break;
 
-        state->vs_consts_i[idx] = stateblock->stateblock_state.vs_consts_i[idx];
-        wined3d_device_set_vs_consts_i(device, idx, 1, &stateblock->stateblock_state.vs_consts_i[idx]);
+        memcpy(&state->vs_consts_i[range.offset], &stateblock->stateblock_state.vs_consts_i[range.offset],
+                sizeof(*state->vs_consts_i) * range.size);
+        wined3d_device_set_vs_consts_i(device, range.offset, range.size,
+                &stateblock->stateblock_state.vs_consts_i[range.offset]);
     }
     map = stateblock->changed.vertexShaderConstantsB;
-    while (map)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        idx = wined3d_bit_scan(&map);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_B, start, &range))
+            break;
 
-        state->vs_consts_b[idx] = stateblock->stateblock_state.vs_consts_b[idx];
-        wined3d_device_set_vs_consts_b(device, idx, 1, &stateblock->stateblock_state.vs_consts_b[idx]);
+        memcpy(&state->vs_consts_b[range.offset], &stateblock->stateblock_state.vs_consts_b[range.offset],
+                sizeof(*state->vs_consts_b) * range.size);
+        wined3d_device_set_vs_consts_b(device, range.offset, range.size,
+                &stateblock->stateblock_state.vs_consts_b[range.offset]);
     }
 
     if (stateblock->changed.lights)
@@ -1086,34 +1089,37 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         wined3d_device_set_pixel_shader(device, stateblock->stateblock_state.ps);
     }
 
-    for (i = 0; i < ARRAY_SIZE(stateblock->changed.ps_consts_f); ++i)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        map = stateblock->changed.ps_consts_f[i];
+        if (!wined3d_bitmap_get_range(stateblock->changed.ps_consts_f, WINED3D_MAX_PS_CONSTS_F, start, &range))
+            break;
 
-        while (map)
-        {
-            j = wined3d_bit_scan(&map);
-            idx = i * word_bit_count + j;
-
-            state->ps_consts_f[idx] = stateblock->stateblock_state.ps_consts_f[idx];
-            wined3d_device_set_ps_consts_f(device, idx, 1, &stateblock->stateblock_state.ps_consts_f[idx]);
-        }
+        memcpy(&state->ps_consts_f[range.offset], &stateblock->stateblock_state.ps_consts_f[range.offset],
+                sizeof(*state->ps_consts_f) * range.size);
+        wined3d_device_set_ps_consts_f(device, range.offset, range.size,
+                &stateblock->stateblock_state.ps_consts_f[range.offset]);
     }
     map = stateblock->changed.pixelShaderConstantsI;
-    while (map)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        idx = wined3d_bit_scan(&map);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_I, start, &range))
+            break;
 
-        state->ps_consts_i[idx] = stateblock->stateblock_state.ps_consts_i[idx];
-        wined3d_device_set_ps_consts_i(device, idx, 1, &stateblock->stateblock_state.ps_consts_i[idx]);
+        memcpy(&state->ps_consts_i[range.offset], &stateblock->stateblock_state.ps_consts_i[range.offset],
+                sizeof(*state->ps_consts_i) * range.size);
+        wined3d_device_set_ps_consts_i(device, range.offset, range.size,
+                &stateblock->stateblock_state.ps_consts_i[range.offset]);
     }
     map = stateblock->changed.pixelShaderConstantsB;
-    while (map)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        idx = wined3d_bit_scan(&map);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_B, start, &range))
+            break;
 
-        state->ps_consts_b[idx] = stateblock->stateblock_state.ps_consts_b[idx];
-        wined3d_device_set_ps_consts_b(device, idx, 1, &stateblock->stateblock_state.ps_consts_b[idx]);
+        memcpy(&state->ps_consts_b[range.offset], &stateblock->stateblock_state.ps_consts_b[range.offset],
+                sizeof(*state->ps_consts_b) * range.size);
+        wined3d_device_set_ps_consts_b(device, range.offset, range.size,
+                &stateblock->stateblock_state.ps_consts_b[range.offset]);
     }
 
     if ((set_blend_state = stateblock->changed.blend_state
