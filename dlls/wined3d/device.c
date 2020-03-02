@@ -3904,14 +3904,17 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         wined3d_device_set_ps_consts_b(device, range.offset, range.size, &state->ps_consts_b[range.offset]);
     }
 
-    for (i = 0; i < ARRAY_SIZE(state->light_state->light_map); ++i)
+    if (changed->lights)
     {
-        const struct wined3d_light_info *light;
-
-        LIST_FOR_EACH_ENTRY(light, &state->light_state->light_map[i], struct wined3d_light_info, entry)
+        for (i = 0; i < ARRAY_SIZE(state->light_state->light_map); ++i)
         {
-            wined3d_device_set_light(device, light->OriginalIndex, &light->OriginalParms);
-            wined3d_device_set_light_enable(device, light->OriginalIndex, light->glIndex != -1);
+            const struct wined3d_light_info *light;
+
+            LIST_FOR_EACH_ENTRY(light, &state->light_state->light_map[i], struct wined3d_light_info, entry)
+            {
+                wined3d_device_set_light(device, light->OriginalIndex, &light->OriginalParms);
+                wined3d_device_set_light_enable(device, light->OriginalIndex, light->glIndex != -1);
+            }
         }
     }
 

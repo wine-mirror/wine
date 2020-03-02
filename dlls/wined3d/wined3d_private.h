@@ -3937,7 +3937,8 @@ struct wined3d_saved_states
     DWORD scissorRect : 1;
     DWORD store_stream_offset : 1;
     DWORD blend_state : 1;
-    DWORD padding : 3;
+    DWORD lights : 1;
+    DWORD padding : 2;
 };
 
 struct StageState {
