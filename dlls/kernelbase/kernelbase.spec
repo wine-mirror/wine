@@ -785,9 +785,9 @@
 @ stdcall HeapUnlock(long)
 @ stdcall HeapValidate(long long ptr)
 @ stdcall HeapWalk(long ptr)
-@ stdcall IdnToAscii(long wstr long ptr long) kernel32.IdnToAscii
-@ stdcall IdnToNameprepUnicode(long wstr long ptr long) kernel32.IdnToNameprepUnicode
-@ stdcall IdnToUnicode(long wstr long ptr long) kernel32.IdnToUnicode
+@ stdcall IdnToAscii(long wstr long ptr long)
+@ stdcall IdnToNameprepUnicode(long wstr long ptr long)
+@ stdcall IdnToUnicode(long wstr long ptr long)
 @ stdcall ImpersonateAnonymousToken(long)
 @ stdcall ImpersonateLoggedOnUser(long)
 @ stdcall ImpersonateNamedPipeClient(long)

@@ -938,9 +938,9 @@
 @ stub HeapUsage
 @ stdcall -import HeapValidate(long long ptr)
 @ stdcall -import HeapWalk(long ptr)
-@ stdcall IdnToAscii(long wstr long ptr long)
-@ stdcall IdnToNameprepUnicode(long wstr long ptr long)
-@ stdcall IdnToUnicode(long wstr long ptr long)
+@ stdcall -import IdnToAscii(long wstr long ptr long)
+@ stdcall -import IdnToNameprepUnicode(long wstr long ptr long)
+@ stdcall -import IdnToUnicode(long wstr long ptr long)
 @ stdcall InitAtomTable(long)
 @ stdcall InitOnceBeginInitialize(ptr long ptr ptr) kernelbase.InitOnceBeginInitialize
 @ stdcall InitOnceComplete(ptr long ptr) kernelbase.InitOnceComplete

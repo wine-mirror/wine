@@ -4460,6 +4460,42 @@ GEOID WINAPI DECLSPEC_HOTPATCH GetUserGeoID( GEOCLASS geoclass )
 
 
 /******************************************************************************
+ *	IdnToAscii   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH IdnToAscii( DWORD flags, const WCHAR *src, INT srclen,
+                                         WCHAR *dst, INT dstlen )
+{
+    NTSTATUS status = RtlIdnToAscii( flags, src, srclen, dst, &dstlen );
+    if (!set_ntstatus( status )) return 0;
+    return dstlen;
+}
+
+
+/******************************************************************************
+ *	IdnToNameprepUnicode   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH IdnToNameprepUnicode( DWORD flags, const WCHAR *src, INT srclen,
+                                                   WCHAR *dst, INT dstlen )
+{
+    NTSTATUS status = RtlIdnToNameprepUnicode( flags, src, srclen, dst, &dstlen );
+    if (!set_ntstatus( status )) return 0;
+    return dstlen;
+}
+
+
+/******************************************************************************
+ *	IdnToUnicode   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH IdnToUnicode( DWORD flags, const WCHAR *src, INT srclen,
+                                           WCHAR *dst, INT dstlen )
+{
+    NTSTATUS status = RtlIdnToUnicode( flags, src, srclen, dst, &dstlen );
+    if (!set_ntstatus( status )) return 0;
+    return dstlen;
+}
+
+
+/******************************************************************************
  *	IsCharAlphaA   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaA( CHAR c )

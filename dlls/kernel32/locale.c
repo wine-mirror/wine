@@ -542,37 +542,6 @@ INT WINAPI GetGeoInfoA(GEOID geoid, GEOTYPE geotype, LPSTR data, int data_len, L
 
 
 /******************************************************************************
- *           IdnToAscii (KERNEL32.@)
- */
-INT WINAPI IdnToAscii( DWORD flags, const WCHAR *src, INT srclen, WCHAR *dst, INT dstlen )
-{
-    NTSTATUS status = RtlIdnToAscii( flags, src, srclen, dst, &dstlen );
-    if (!set_ntstatus( status )) return 0;
-    return dstlen;
-}
-
-/******************************************************************************
- *           IdnToNameprepUnicode (KERNEL32.@)
- */
-INT WINAPI IdnToNameprepUnicode( DWORD flags, const WCHAR *src, INT srclen, WCHAR *dst, INT dstlen )
-{
-    NTSTATUS status = RtlIdnToNameprepUnicode( flags, src, srclen, dst, &dstlen );
-    if (!set_ntstatus( status )) return 0;
-    return dstlen;
-}
-
-/******************************************************************************
- *           IdnToUnicode (KERNEL32.@)
- */
-INT WINAPI IdnToUnicode( DWORD flags, const WCHAR *src, INT srclen, WCHAR *dst, INT dstlen )
-{
-    NTSTATUS status = RtlIdnToUnicode( flags, src, srclen, dst, &dstlen );
-    if (!set_ntstatus( status )) return 0;
-    return dstlen;
-}
-
-
-/******************************************************************************
  *           GetFileMUIPath (KERNEL32.@)
  */
 
