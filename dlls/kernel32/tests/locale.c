@@ -4600,10 +4600,13 @@ static void test_IdnToUnicode(void)
         /* 5 */
         { 64, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0, 0 },
         { 8, L"xn--7va", IDN_ALLOW_UNASSIGNED, 2, 2, L"\x380" },
+        { 8, L"xn--7va", 0, 0, 0, L"\x380" },
         { -1, L"xn----bm3an932a1l5d.xn--xvj", 0, 8, 0, L"\xd803\xde78\x46b5-\xa861.\x2e87" },
         { -1, L"xn--z123456789012345678901234567890123456789012345678901234-9te", 0,
           57, 57, L"\xe4z123456789012345678901234567890123456789012345678901234" },
+        /* 10 */
         { -1, L"foo.bar", 0, 8, 8, L"foo.bar" },
+        { -1, L"d.xn----dha", 0, 5, 5, L"d.\x00fc-" },
     };
 
     WCHAR buf[1024];
@@ -4612,13 +4615,11 @@ static void test_IdnToUnicode(void)
     for (i=0; i<ARRAY_SIZE(test_data); i++)
     {
         ret = pIdnToUnicode(test_data[i].flags, test_data[i].in, test_data[i].in_len, NULL, 0);
-        todo_wine_if (i > 6)
         ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
 
         SetLastError(0xdeadbeef);
         ret = pIdnToUnicode(test_data[i].flags, test_data[i].in, test_data[i].in_len, buf, ARRAY_SIZE(buf));
         err = GetLastError();
-        todo_wine_if (i > 6)
         ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
         ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%d: err = %d\n", i, err);
         ok(!wcsncmp(test_data[i].out, buf, ret), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
@@ -4632,8 +4633,8 @@ static BOOL is_idn_error( const WCHAR *str )
     for (p = wcstok( err, L" []" ); p; p = wcstok( NULL, L" []" ) )
     {
         if (*p == 'B' || !wcscmp( p, L"V8" )) continue;  /* BiDi */
-        if (!wcscmp( p, L"V2" ) || !wcscmp( p, L"V3" )) continue;  /* CheckHyphens */
-        if (!wcscmp( p, L"V7" )) continue;  /* CheckJoiners */
+        if (!wcscmp( p, L"V2" )) continue;  /* CheckHyphens */
+        if (!wcscmp( p, L"V5" )) continue;  /* Combining marks */
         return TRUE;
     }
     return FALSE;
@@ -4705,7 +4706,7 @@ static void test_Idn(void)
             error = columns[2];
             SetLastError( 0xdeadbeef );
             memset( dst, 0xcc, sizeof(dst) );
-            ret = pIdnToUnicode( 0, columns[0], -1, dst, ARRAY_SIZE(dst) );
+            ret = pIdnToUnicode( IDN_USE_STD3_ASCII_RULES, columns[0], -1, dst, ARRAY_SIZE(dst) );
             for (i = 0; columns[0][i]; i++) if (columns[0][i] > 0x7f) break;
             if (columns[0][i])
             {
@@ -4713,9 +4714,15 @@ static void test_Idn(void)
             }
             else if (!is_idn_error( error ))
             {
-                ok( ret, "line %u: toUnicode failed for %s\n", line, debugstr_w(columns[0]) );
+                ok( ret, "line %u: toUnicode failed for %s expected %s\n", line,
+                    debugstr_w(columns[0]), debugstr_w(expect) );
                 if (ret) ok( !wcscmp( dst, expect ), "line %u: got %s expected %s\n",
                              line, debugstr_w(dst), debugstr_w(expect) );
+            }
+            else
+            {
+                ok( !ret, "line %u: toUnicode didn't fail for %s got %s expected error %s\n",
+                    line, debugstr_w(columns[0]), debugstr_w(dst), debugstr_w(error) );
             }
         }
         fclose( f );
