@@ -720,9 +720,9 @@ static void wined3d_state_record_lights(struct wined3d_light_state *dst_state,
 void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
         const struct wined3d_stateblock *device_state)
 {
-    const unsigned int word_bit_count = sizeof(*stateblock->changed.vs_consts_f) * CHAR_BIT;
     const struct wined3d_stateblock_state *state = &device_state->stateblock_state;
-    unsigned int i, j, idx;
+    struct wined3d_range range;
+    unsigned int i, start;
     DWORD map;
 
     TRACE("stateblock %p, device_state %p.\n", stateblock, device_state);
@@ -738,74 +738,58 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
         stateblock->stateblock_state.vs = state->vs;
     }
 
-    for (i = 0; i < ARRAY_SIZE(stateblock->changed.vs_consts_f); ++i)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        map = stateblock->changed.vs_consts_f[i];
+        if (!wined3d_bitmap_get_range(stateblock->changed.vs_consts_f, WINED3D_MAX_VS_CONSTS_F, start, &range))
+            break;
 
-        while (map)
-        {
-            j = wined3d_bit_scan(&map);
-            idx = i * word_bit_count + j;
-
-            TRACE("Setting vs_consts_f[%u] to %s.\n", idx, debug_vec4(&state->vs_consts_f[idx]));
-            stateblock->stateblock_state.vs_consts_f[idx] = state->vs_consts_f[idx];
-        }
+        memcpy(&stateblock->stateblock_state.vs_consts_f[range.offset], &state->vs_consts_f[range.offset],
+                sizeof(*state->vs_consts_f) * range.size);
     }
-
     map = stateblock->changed.vertexShaderConstantsI;
-    while (map)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        idx = wined3d_bit_scan(&map);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_I, start, &range))
+            break;
 
-        TRACE("Setting vs_consts_i[%u] to %s.\n", idx, debug_ivec4(&state->vs_consts_i[idx]));
-
-        stateblock->stateblock_state.vs_consts_i[idx] = state->vs_consts_i[idx];
+        memcpy(&stateblock->stateblock_state.vs_consts_i[range.offset], &state->vs_consts_i[range.offset],
+                sizeof(*state->vs_consts_i) * range.size);
     }
-
     map = stateblock->changed.vertexShaderConstantsB;
-    while (map)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        idx = wined3d_bit_scan(&map);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_B, start, &range))
+            break;
 
-        TRACE("Setting vs_consts_b[%u] to %s.\n",
-                idx, state->vs_consts_b[idx] ? "TRUE" : "FALSE");
-
-        stateblock->stateblock_state.vs_consts_b[idx] = state->vs_consts_b[idx];
+        memcpy(&stateblock->stateblock_state.vs_consts_b[range.offset], &state->vs_consts_b[range.offset],
+                sizeof(*state->vs_consts_b) * range.size);
     }
 
-    for (i = 0; i < ARRAY_SIZE(stateblock->changed.ps_consts_f); ++i)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        map = stateblock->changed.ps_consts_f[i];
+        if (!wined3d_bitmap_get_range(stateblock->changed.ps_consts_f, WINED3D_MAX_PS_CONSTS_F, start, &range))
+            break;
 
-        while (map)
-        {
-            j = wined3d_bit_scan(&map);
-            idx = i * word_bit_count + j;
-
-            TRACE("Setting ps_consts_f[%u] to %s.\n", idx, debug_vec4(&state->ps_consts_f[idx]));
-            stateblock->stateblock_state.ps_consts_f[idx] = state->ps_consts_f[idx];
-        }
+        memcpy(&stateblock->stateblock_state.ps_consts_f[range.offset], &state->ps_consts_f[range.offset],
+                sizeof(*state->ps_consts_f) * range.size);
     }
-
     map = stateblock->changed.pixelShaderConstantsI;
-    while (map)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        idx = wined3d_bit_scan(&map);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_I, start, &range))
+            break;
 
-        TRACE("Setting ps_consts_i[%u] to %s.\n", idx, debug_ivec4(&state->ps_consts_i[idx]));
-
-        stateblock->stateblock_state.ps_consts_i[idx] = state->ps_consts_i[idx];
+        memcpy(&stateblock->stateblock_state.ps_consts_i[range.offset], &state->ps_consts_i[range.offset],
+                sizeof(*state->ps_consts_i) * range.size);
     }
-
     map = stateblock->changed.pixelShaderConstantsB;
-    while (map)
+    for (start = 0; ; start = range.offset + range.size)
     {
-        idx = wined3d_bit_scan(&map);
+        if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_B, start, &range))
+            break;
 
-        TRACE("Setting ps_consts_b[%u] to %s.\n",
-                idx, state->ps_consts_b[idx] ? "TRUE" : "FALSE");
-
-        stateblock->stateblock_state.ps_consts_b[idx] = state->ps_consts_b[idx];
+        memcpy(&stateblock->stateblock_state.ps_consts_b[range.offset], &state->ps_consts_b[range.offset],
+                sizeof(*state->ps_consts_b) * range.size);
     }
 
     if (stateblock->changed.transforms)
