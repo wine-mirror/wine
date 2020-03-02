@@ -483,6 +483,7 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
 
 static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *value, struct source_location loc)
 {
+    struct hlsl_type *return_type = hlsl_ctx.cur_function->return_type;
     struct hlsl_ir_jump *jump = d3dcompiler_alloc(sizeof(*jump));
     if (!jump)
     {
@@ -492,16 +493,15 @@ static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *value, struct source
     jump->node.type = HLSL_IR_JUMP;
     jump->node.loc = loc;
     jump->type = HLSL_IR_JUMP_RETURN;
-    jump->node.data_type = hlsl_ctx.cur_function->return_type;
     if (value)
     {
-        if (!(jump->return_value = implicit_conversion(value, jump->node.data_type, &loc)))
+        if (!(jump->return_value = implicit_conversion(value, return_type, &loc)))
         {
             d3dcompiler_free(jump);
             return NULL;
         }
     }
-    else if (jump->node.data_type->base_type != HLSL_TYPE_VOID)
+    else if (return_type->base_type != HLSL_TYPE_VOID)
     {
         hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                 "non-void function must return a value");
