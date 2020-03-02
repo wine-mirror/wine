@@ -3977,14 +3977,17 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
     }
 
-    for (i = 0; i < ARRAY_SIZE(changed->transform); ++i)
+    if (changed->transforms)
     {
-        map = changed->transform[i];
-        while (map)
+        for (i = 0; i < ARRAY_SIZE(changed->transform); ++i)
         {
-            j = wined3d_bit_scan(&map);
-            idx = i * word_bit_count + j;
-            wined3d_device_set_transform(device, idx, &state->transforms[idx]);
+            map = changed->transform[i];
+            while (map)
+            {
+                j = wined3d_bit_scan(&map);
+                idx = i * word_bit_count + j;
+                wined3d_device_set_transform(device, idx, &state->transforms[idx]);
+            }
         }
     }
 

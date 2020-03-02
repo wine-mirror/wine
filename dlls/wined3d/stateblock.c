@@ -210,6 +210,7 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     states->scissorRect = 1;
     states->blend_state = 1;
     states->lights = 1;
+    states->transforms = 1;
 
     states->streamSource = 0xffff;
     states->streamFreq = 0xffff;
@@ -807,14 +808,16 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
         stateblock->stateblock_state.ps_consts_b[idx] = state->ps_consts_b[idx];
     }
 
-    /* Others + Render & Texture */
-    for (i = 0; i < stateblock->num_contained_transform_states; ++i)
+    if (stateblock->changed.transforms)
     {
-        enum wined3d_transform_state transform = stateblock->contained_transform_states[i];
+        for (i = 0; i < stateblock->num_contained_transform_states; ++i)
+        {
+            enum wined3d_transform_state transform = stateblock->contained_transform_states[i];
 
-        TRACE("Updating transform %#x.\n", transform);
+            TRACE("Updating transform %#x.\n", transform);
 
-        stateblock->stateblock_state.transforms[transform] = state->transforms[transform];
+            stateblock->stateblock_state.transforms[transform] = state->transforms[transform];
+        }
     }
 
     if (stateblock->changed.indices
@@ -1177,13 +1180,15 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         wined3d_device_set_sampler_state(device, stage, sampler_state, value);
     }
 
-    /* Transform states. */
-    for (i = 0; i < stateblock->num_contained_transform_states; ++i)
+    if (stateblock->changed.transforms)
     {
-        enum wined3d_transform_state transform = stateblock->contained_transform_states[i];
+        for (i = 0; i < stateblock->num_contained_transform_states; ++i)
+        {
+            enum wined3d_transform_state transform = stateblock->contained_transform_states[i];
 
-        state->transforms[transform] = stateblock->stateblock_state.transforms[transform];
-        wined3d_device_set_transform(device, transform, &stateblock->stateblock_state.transforms[transform]);
+            state->transforms[transform] = stateblock->stateblock_state.transforms[transform];
+            wined3d_device_set_transform(device, transform, &stateblock->stateblock_state.transforms[transform]);
+        }
     }
 
     if (stateblock->changed.indices)
@@ -1579,6 +1584,7 @@ void CDECL wined3d_stateblock_set_transform(struct wined3d_stateblock *statebloc
 
     stateblock->stateblock_state.transforms[d3dts] = *matrix;
     stateblock->changed.transform[d3dts >> 5] |= 1u << (d3dts & 0x1f);
+    stateblock->changed.transforms = 1;
 }
 
 void CDECL wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stateblock,
