@@ -604,6 +604,56 @@ static void test_comma(void)
     release_test_context(&test_context);
 }
 
+static void test_return(void)
+{
+    struct test_context test_context;
+    ID3D10Blob *ps_code = NULL;
+    struct vec4 v;
+
+    static const char *void_source =
+        "void main(float x : TEXCOORD0, out float4 ret : COLOR)\n"
+        "{\n"
+        "    ret = float4(0.1, 0.2, 0.3, 0.4);\n"
+        "    return;\n"
+        "    ret = float4(0.5, 0.6, 0.7, 0.8);\n"
+        "}";
+
+    static const char *implicit_conversion_source =
+        "float4 main(float x : TEXCOORD0) : COLOR\n"
+        "{\n"
+        "    return float2x2(0.4, 0.3, 0.2, 0.1);\n"
+        "}";
+
+    if (!init_test_context(&test_context))
+        return;
+
+    todo_wine ps_code = compile_shader(void_source, "ps_2_0");
+    if (ps_code)
+    {
+        draw_quad(test_context.device, ps_code);
+
+        v = get_color_vec4(test_context.device, 0, 0);
+        ok(compare_vec4(&v, 0.1f, 0.2f, 0.3f, 0.4f, 0),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+
+        ID3D10Blob_Release(ps_code);
+    }
+
+    todo_wine ps_code = compile_shader(implicit_conversion_source, "ps_2_0");
+    if (ps_code)
+    {
+        draw_quad(test_context.device, ps_code);
+
+        v = get_color_vec4(test_context.device, 0, 0);
+        ok(compare_vec4(&v, 0.4f, 0.3f, 0.2f, 0.1f, 0),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+
+        ID3D10Blob_Release(ps_code);
+    }
+
+    release_test_context(&test_context);
+}
+
 static void test_fail(void)
 {
     static const char *tests[] =
@@ -650,6 +700,21 @@ static void test_fail(void)
         "   struct {} x = {};\n"
         "   return y;\n"
         "}",
+
+        "float4 test(float2 pos : TEXCOORD0) : SV_TARGET\n"
+        "{\n"
+        "    return;\n"
+        "}",
+
+        "void test(float2 pos : TEXCOORD0)\n"
+        "{\n"
+        "    return pos;\n"
+        "}",
+
+        "float4 test(float2 pos : TEXCOORD0) : SV_TARGET\n"
+        "{\n"
+        "    return pos;\n"
+        "}",
     };
 
     static const char *targets[] = {"ps_2_0", "ps_3_0", "ps_4_0"};
@@ -665,7 +730,7 @@ static void test_fail(void)
             compiled = errors = NULL;
             hr = ppD3DCompile(tests[i], strlen(tests[i]), NULL, NULL, NULL, "test", targets[j], 0, 0, &compiled, &errors);
             todo_wine ok(hr == E_FAIL, "Test %u, target %s, got unexpected hr %#x.\n", i, targets[j], hr);
-            todo_wine_if (i == 1) ok(!!errors, "Test %u, target %s, expected non-NULL error blob.\n", i, targets[j]);
+            todo_wine_if (i == 1 || i >= 8) ok(!!errors, "Test %u, target %s, expected non-NULL error blob.\n", i, targets[j]);
             ok(!compiled, "Test %u, target %s, expected no compiled shader blob.\n", i, targets[j]);
             if (errors)
                 ID3D10Blob_Release(errors);
@@ -710,5 +775,6 @@ START_TEST(hlsl_d3d9)
     test_float_vectors();
     test_trig();
     test_comma();
+    test_return();
     test_fail();
 }
