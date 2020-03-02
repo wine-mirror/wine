@@ -75,7 +75,8 @@ typedef struct
     int todo;
 } path_test_t;
 
-static void ok_path(GpPath* path, const path_test_t *expected, INT expected_size, BOOL todo_size)
+#define ok_path(a,b,c,d) ok_path_fudge(a,b,c,d,2.0)
+static void ok_path_fudge(GpPath* path, const path_test_t *expected, INT expected_size, BOOL todo_size, REAL fudge)
 {
     BYTE * types;
     INT size, idx = 0, eidx = 0, numskip;
@@ -104,8 +105,8 @@ static void ok_path(GpPath* path, const path_test_t *expected, INT expected_size
         /* We allow a few pixels fudge in matching X and Y coordinates to account for imprecision in
          * floating point to integer conversion */
         BOOL match = (types[idx] == expected[eidx].type) &&
-            fabs(points[idx].X - expected[eidx].X) <= 2.0 &&
-            fabs(points[idx].Y - expected[eidx].Y) <= 2.0;
+            fabs(points[idx].X - expected[eidx].X) <= fudge &&
+            fabs(points[idx].Y - expected[eidx].Y) <= fudge;
 
         stringify_point_type(expected[eidx].type, ename);
         stringify_point_type(types[idx], name);
@@ -1416,7 +1417,7 @@ static void test_widen_cap(void)
 
         status = GdipWidenPath(path, pen, NULL, FlatnessDefault);
         expect(Ok, status);
-        ok_path(path, caps[i].expected, caps[i].expected_size, caps[i].todo_size);
+        ok_path_fudge(path, caps[i].expected, caps[i].expected_size, caps[i].todo_size, 0.000005);
     }
 
     GdipDeletePen(pen);
