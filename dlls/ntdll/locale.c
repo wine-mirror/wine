@@ -2018,6 +2018,154 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
 }
 
 
+/* Punycode parameters */
+enum { BASE = 36, TMIN = 1, TMAX = 26, SKEW = 38, DAMP = 700 };
+
+static BOOL check_invalid_chars( const struct norm_table *info, DWORD flags,
+                                 const unsigned int *buffer, int len )
+{
+    int i;
+
+    for (i = 0; i < len; i++)
+    {
+        switch (buffer[i])
+        {
+        case 0x200c:  /* zero-width non-joiner */
+        case 0x200d:  /* zero-width joiner */
+            if (!i || get_combining_class( info, buffer[i - 1] ) != 9) return TRUE;
+            break;
+        case 0x2260:  /* not equal to */
+        case 0x226e:  /* not less than */
+        case 0x226f:  /* not greater than */
+            if (flags & IDN_USE_STD3_ASCII_RULES) return TRUE;
+            break;
+        }
+        switch (get_char_props( info, buffer[i] ))
+        {
+        case 0xbf:
+            return TRUE;
+        case 0xff:
+            if (buffer[i] >= HANGUL_SBASE && buffer[i] < HANGUL_SBASE + 0x2c00) break;
+            return TRUE;
+        case 0x7f:
+            if (!(flags & IDN_ALLOW_UNASSIGNED)) return TRUE;
+            break;
+        }
+    }
+
+    if ((flags & IDN_USE_STD3_ASCII_RULES) && len && (buffer[0] == '-' || buffer[len - 1] == '-'))
+        return TRUE;
+
+    return FALSE;
+}
+
+
+/******************************************************************************
+ *      RtlIdnToAscii   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlIdnToAscii( DWORD flags, const WCHAR *src, INT srclen, WCHAR *dst, INT *dstlen )
+{
+    static const WCHAR prefixW[] = {'x','n','-','-'};
+    const struct norm_table *info;
+    NTSTATUS status;
+    WCHAR normstr[256], res[256];
+    unsigned int ch, buffer[64];
+    int i, len, start, end, out_label, out = 0, normlen = ARRAY_SIZE(normstr);
+
+    TRACE( "%x %s %p %d\n", flags, debugstr_wn(src, srclen), dst, *dstlen );
+
+    if ((status = load_norm_table( 13, &info ))) return status;
+
+    if ((status = RtlIdnToNameprepUnicode( flags, src, srclen, normstr, &normlen ))) return status;
+
+    /* implementation of Punycode based on RFC 3492 */
+
+    for (start = 0; start < normlen; start = end + 1)
+    {
+        int n = 0x80, bias = 72, delta = 0, b = 0, h, buflen = 0;
+
+        out_label = out;
+        for (i = start; i < normlen; i += len)
+        {
+            if (!(len = get_utf16( normstr + i, normlen - i, &ch ))) break;
+            if (!ch || ch == '.') break;
+            if (ch < 0x80) b++;
+            buffer[buflen++] = ch;
+        }
+        end = i;
+
+        if (b == end - start)
+        {
+            if (end < normlen) b++;
+            if (out + b > ARRAY_SIZE(res)) return STATUS_INVALID_IDN_NORMALIZATION;
+            memcpy( res + out, normstr + start, b * sizeof(WCHAR) );
+            out += b;
+            continue;
+        }
+
+        if (buflen >= 4 && buffer[2] == '-' && buffer[3] == '-') return STATUS_INVALID_IDN_NORMALIZATION;
+        if (check_invalid_chars( info, flags, buffer, buflen )) return STATUS_INVALID_IDN_NORMALIZATION;
+
+        if (out + 5 + b > ARRAY_SIZE(res)) return STATUS_INVALID_IDN_NORMALIZATION;
+        memcpy( res + out, prefixW, sizeof(prefixW) );
+        out += ARRAY_SIZE(prefixW);
+        if (b)
+        {
+            for (i = start; i < end; i++) if (normstr[i] < 0x80) res[out++] = normstr[i];
+            res[out++] = '-';
+        }
+
+        for (h = b; h < buflen; delta++, n++)
+        {
+            int m = 0x10ffff, q, k;
+
+            for (i = 0; i < buflen; i++) if (buffer[i] >= n && m > buffer[i]) m = buffer[i];
+            delta += (m - n) * (h + 1);
+            n = m;
+
+            for (i = 0; i < buflen; i++)
+            {
+                if (buffer[i] == n)
+                {
+                    for (q = delta, k = BASE; ; k += BASE)
+                    {
+                        int t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias;
+                        int disp = q < t ? q : t + (q - t) % (BASE - t);
+                        if (out + 1 > ARRAY_SIZE(res)) return STATUS_INVALID_IDN_NORMALIZATION;
+                        res[out++] = disp <= 25 ? 'a' + disp : '0' + disp - 26;
+                        if (q < t) break;
+                        q = (q - t) / (BASE - t);
+                    }
+                    delta /= (h == b ? DAMP : 2);
+                    delta += delta / (h + 1);
+                    for (k = 0; delta > ((BASE - TMIN) * TMAX) / 2; k += BASE) delta /= BASE - TMIN;
+                    bias = k + ((BASE - TMIN + 1) * delta) / (delta + SKEW);
+                    delta = 0;
+                    h++;
+                }
+                else if (buffer[i] < n) delta++;
+            }
+        }
+
+        if (out - out_label > 63) return STATUS_INVALID_IDN_NORMALIZATION;
+
+        if (end < normlen)
+        {
+            if (out + 1 > ARRAY_SIZE(res)) return STATUS_INVALID_IDN_NORMALIZATION;
+            res[out++] = normstr[end];
+        }
+    }
+
+    if (*dstlen)
+    {
+        if (out <= *dstlen) memcpy( dst, res, out * sizeof(WCHAR) );
+        else status = STATUS_BUFFER_TOO_SMALL;
+    }
+    *dstlen = out;
+    return status;
+}
+
+
 /******************************************************************************
  *      RtlIdnToNameprepUnicode   (NTDLL.@)
  */

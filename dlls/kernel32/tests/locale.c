@@ -4572,10 +4572,8 @@ static void test_IdnToAscii(void)
         SetLastError(0xdeadbeef);
         ret = pIdnToAscii(test_data[i].flags, test_data[i].in, test_data[i].in_len, buf, ARRAY_SIZE(buf));
         err = GetLastError();
-        todo_wine_if (i == 10)
         ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
         ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%d: err = %d\n", i, err);
-        todo_wine_if (i == 10)
         ok(!wcsnicmp(test_data[i].out, buf, ret), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
     }
 }
@@ -4691,9 +4689,15 @@ static void test_Idn(void)
             ret = pIdnToAscii( 0, columns[0], -1, dst, ARRAY_SIZE(dst) );
             if (!is_idn_error( error ))
             {
-                ok( ret, "line %u: toAscii failed for %s\n", line, debugstr_w(columns[0]) );
+                ok( ret, "line %u: toAscii failed for %s expected %s\n", line,
+                    debugstr_w(columns[0]), debugstr_w(expect) );
                 if (ret) ok( !wcscmp( dst, expect ), "line %u: got %s expected %s\n",
                              line, debugstr_w(dst), debugstr_w(expect) );
+            }
+            else
+            {
+                ok( !ret, "line %u: toAscii didn't fail for %s got %s expected error %s\n",
+                    line, debugstr_w(columns[0]), debugstr_w(dst), debugstr_w(error) );
             }
 
             expect = columns[1];
