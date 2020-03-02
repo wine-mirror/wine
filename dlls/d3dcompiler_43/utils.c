@@ -1275,16 +1275,31 @@ static struct hlsl_type *expr_common_type(struct hlsl_type *t1, struct hlsl_type
     return new_hlsl_type(NULL, type, base, dimx, dimy);
 }
 
-static struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_type *type,
+static struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_type *dst_type,
         struct source_location *loc)
 {
+    struct hlsl_type *src_type = node->data_type;
     struct hlsl_ir_expr *cast;
 
-    if (compare_hlsl_types(node->data_type, type))
+    if (compare_hlsl_types(src_type, dst_type))
         return node;
-    TRACE("Implicit conversion of expression to %s\n", debug_hlsl_type(type));
-    if ((cast = new_cast(node, type, loc)))
-        list_add_after(&node->entry, &cast->node.entry);
+
+    if (!implicit_compatible_data_types(src_type, dst_type))
+    {
+        hlsl_report_message(loc->file, loc->line, loc->col, HLSL_LEVEL_ERROR,
+                "can't implicitly convert %s to %s", debug_hlsl_type(src_type), debug_hlsl_type(dst_type));
+        return NULL;
+    }
+
+    if (dst_type->dimx * dst_type->dimy < src_type->dimx * src_type->dimy)
+        hlsl_report_message(loc->file, loc->line, loc->col, HLSL_LEVEL_WARNING,
+                "implicit truncation of vector type");
+
+    TRACE("Implicit conversion from %s to %s.\n", debug_hlsl_type(src_type), debug_hlsl_type(dst_type));
+
+    if (!(cast = new_cast(node, dst_type, loc)))
+        return NULL;
+    list_add_after(&node->entry, &cast->node.entry);
     return &cast->node;
 }
 
@@ -1316,6 +1331,8 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
     }
     for (i = 0; i <= 2; ++i)
     {
+        struct hlsl_ir_expr *cast;
+
         if (!operands[i])
             break;
         if (compare_hlsl_types(operands[i]->data_type, type))
@@ -1328,13 +1345,14 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
                     operands[i]->loc.line, operands[i]->loc.col, HLSL_LEVEL_WARNING,
                     "implicit truncation of vector/matrix type");
         }
-        operands[i] = implicit_conversion(operands[i], type, &operands[i]->loc);
-        if (!operands[i])
+
+        if (!(cast = new_cast(operands[i], type, &operands[i]->loc)))
         {
-            ERR("Impossible to convert expression operand %u to %s\n", i + 1, debug_hlsl_type(type));
             d3dcompiler_free(expr);
             return NULL;
         }
+        list_add_after(&operands[i]->entry, &cast->node.entry);
+        operands[i] = &cast->node;
     }
     expr->node.data_type = type;
     expr->op = op;
@@ -1463,31 +1481,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
     lhs = left;
     /* FIXME: check for invalid writemasks on the lhs. */
 
-    if (!compare_hlsl_types(type, rhs->data_type))
-    {
-        struct hlsl_ir_node *converted_rhs;
-
-        if (!implicit_compatible_data_types(rhs->data_type, type))
-        {
-            hlsl_report_message(rhs->loc.file, rhs->loc.line, rhs->loc.col, HLSL_LEVEL_ERROR,
-                    "can't implicitly convert %s to %s",
-                    debug_hlsl_type(rhs->data_type), debug_hlsl_type(type));
-            d3dcompiler_free(assign);
-            return NULL;
-        }
-        if (lhs->data_type->dimx * lhs->data_type->dimy < rhs->data_type->dimx * rhs->data_type->dimy)
-            hlsl_report_message(rhs->loc.file, rhs->loc.line, rhs->loc.col, HLSL_LEVEL_WARNING,
-                    "implicit truncation of vector type");
-
-        converted_rhs = implicit_conversion(rhs, type, &rhs->loc);
-        if (!converted_rhs)
-        {
-            ERR("Couldn't implicitly convert expression to %s.\n", debug_hlsl_type(type));
-            d3dcompiler_free(assign);
-            return NULL;
-        }
-        rhs = converted_rhs;
-    }
+    rhs = implicit_conversion(rhs, type, &rhs->loc);
 
     assign->lhs = lhs;
     if (assign_op != ASSIGN_OP_ASSIGN)
