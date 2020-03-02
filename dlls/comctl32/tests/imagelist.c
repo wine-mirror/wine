@@ -63,6 +63,7 @@ typedef struct _ILHEAD
 static HIMAGELIST (WINAPI *pImageList_Create)(int, int, UINT, int, int);
 static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
 static int (WINAPI *pImageList_Add)(HIMAGELIST, HBITMAP, HBITMAP);
+static int (WINAPI *pImageList_AddMasked)(HIMAGELIST, HBITMAP, COLORREF);
 static BOOL (WINAPI *pImageList_DrawIndirect)(IMAGELISTDRAWPARAMS*);
 static BOOL (WINAPI *pImageList_SetImageCount)(HIMAGELIST,UINT);
 static HRESULT (WINAPI *pImageList_CoCreateInstance)(REFCLSID,const IUnknown *,
@@ -2260,6 +2261,73 @@ static void test_loadimage(void)
     pImageList_Destroy( list );
 }
 
+#define GetAValue(argb) ((BYTE) ((argb) >> 24))
+
+static void get_image_alpha(HIMAGELIST himl, int index, int width, int height, UINT32 *alpha)
+{
+    int i;
+    HBITMAP hbm_dst;
+    void *bitmap_bits;
+    BITMAPINFO bitmap_info = {{sizeof(BITMAPINFOHEADER), width, height, 1, 32, BI_RGB, 0, 0, 0, 0, 0}};
+
+    HDC hdc_dst = CreateCompatibleDC(0);
+    hbm_dst = CreateDIBSection(hdc_dst, &bitmap_info, DIB_RGB_COLORS, &bitmap_bits, NULL, 0);
+    SelectObject(hdc_dst, hbm_dst);
+
+    pImageList_Draw(himl, index, hdc_dst, 0, 0, ILD_TRANSPARENT);
+    memcpy(alpha, bitmap_bits, (size_t)(width * height * 32 / 8));
+    for (i = 0; i < width * height; i++)
+        alpha[i] = GetAValue(alpha[i]);
+
+    DeleteObject(hbm_dst);
+    DeleteDC(hdc_dst);
+}
+
+static void test_alpha(void)
+{
+    /* each line is a 2*1 bitmap */
+    const static UINT32 test_bitmaps[] =
+    {
+        0x00654321, 0x00ABCDEF,
+        0x00654321, 0xFFABCDEF,
+        0x00654321, 0x89ABCDEF,
+        0xFF654321, 0x00ABCDEF,
+        0xFF654321, 0xFFABCDEF,
+        0xFF654321, 0x89ABCDEF,
+        0x87654321, 0x00ABCDEF,
+        0x87654321, 0xFFABCDEF,
+        0x87654321, 0x89ABCDEF
+    };
+
+    int i, ret;
+    HDC hdc;
+    HBITMAP hbm_test;
+    HIMAGELIST himl;
+    UINT32 alpha[2];
+
+    hdc = CreateCompatibleDC(0);
+    himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 10);
+
+    for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
+    {
+        hbm_test = create_test_bitmap(hdc, 32, test_bitmaps[i], test_bitmaps[i + 1]);
+        ret = pImageList_AddMasked(himl, hbm_test, CLR_NONE);
+        ok(ret == i / 2, "ImageList_AddMasked returned %d, expected %d\n", ret, i / 2);
+        DeleteObject(hbm_test);
+
+        get_image_alpha(himl, i / 2, 2, 1, alpha);
+
+        todo_wine_if(i == 0)
+        ok(alpha[0] == GetAValue(test_bitmaps[i]) && alpha[1] == GetAValue(test_bitmaps[i + 1]),
+           "Bitmap [%08X, %08X] returned alpha value [%02X, %02X], expected [%02X, %02X]\n",
+           test_bitmaps[i], test_bitmaps[i + 1], alpha[0], alpha[1],
+           GetAValue(test_bitmaps[i]), GetAValue(test_bitmaps[i + 1]));
+    }
+
+    pImageList_Destroy(himl);
+    DeleteDC(hdc);
+}
+
 static void test_IImageList_Clone(void)
 {
     IImageList *imgl, *imgl2;
@@ -2391,6 +2459,7 @@ static void init_functions(void)
     X(ImageList_Create);
     X(ImageList_Destroy);
     X(ImageList_Add);
+    X(ImageList_AddMasked);
     X(ImageList_DrawIndirect);
     X(ImageList_SetImageCount);
     X(ImageList_SetImageCount);
@@ -2461,6 +2530,7 @@ START_TEST(imagelist)
     test_color_table(ILC_COLOR8);
     test_copy();
     test_loadimage();
+    test_alpha();
 
     test_ImageList_DrawIndirect();
     test_shell_imagelist();
