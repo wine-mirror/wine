@@ -717,6 +717,20 @@ interface IMFMediaSink : IUnknown
 
 [
     object,
+    uuid(eaecb74a-9a50-42ce-9541-6a7f57aa4ad7),
+    local
+]
+interface IMFFinalizableMediaSink : IMFMediaSink
+{
+    HRESULT BeginFinalize(
+        [in] IMFAsyncCallback *callback,
+        [in] IUnknown *state);
+
+    HRESULT EndFinalize([in] IMFAsyncResult *result);
+}
+
+[
+    object,
     uuid(0a97b3cf-8e7c-4a3d-8f8c-0c843dc247fb),
 ]
 interface IMFStreamSink : IMFMediaEventGenerator
