@@ -481,6 +481,28 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
     return NULL;
 }
 
+static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *value, struct source_location loc)
+{
+    struct hlsl_ir_jump *jump = d3dcompiler_alloc(sizeof(*jump));
+    if (!jump)
+    {
+        ERR("Out of memory\n");
+        return NULL;
+    }
+    jump->node.type = HLSL_IR_JUMP;
+    jump->node.loc = loc;
+    jump->type = HLSL_IR_JUMP_RETURN;
+    jump->node.data_type = value ? value->data_type
+            : new_hlsl_type(d3dcompiler_strdup("void"), HLSL_CLASS_OBJECT, HLSL_TYPE_VOID, 1, 1);
+    jump->return_value = value;
+
+    FIXME("Check for valued return on void function.\n");
+    FIXME("Implicit conversion to the return type if needed, "
+            "error out if conversion not possible.\n");
+
+    return jump;
+}
+
 static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
         struct parse_initializer *initializer)
 {
@@ -1769,26 +1791,29 @@ statement:                declaration_statement
                         | selection_statement
                         | loop_statement
 
-                          /* FIXME: add rule for return with no value */
 jump_statement:           KW_RETURN expr ';'
                             {
-                                struct hlsl_ir_jump *jump = d3dcompiler_alloc(sizeof(*jump));
-                                if (!jump)
-                                {
-                                    ERR("Out of memory\n");
-                                    YYABORT;
-                                }
-                                jump->node.type = HLSL_IR_JUMP;
-                                set_location(&jump->node.loc, &@1);
-                                jump->type = HLSL_IR_JUMP_RETURN;
-                                jump->node.data_type = node_from_list($2)->data_type;
-                                jump->return_value = node_from_list($2);
+                                struct source_location loc;
+                                struct hlsl_ir_jump *jump;
 
-                                FIXME("Check for valued return on void function.\n");
-                                FIXME("Implicit conversion to the return type if needed, "
-				        "error out if conversion not possible.\n");
+                                set_location(&loc, &@1);
+                                if (!(jump = new_return(node_from_list($2), loc)))
+                                    YYABORT;
 
                                 $$ = $2;
+                                list_add_tail($$, &jump->node.entry);
+                            }
+                        | KW_RETURN ';'
+                            {
+                                struct source_location loc;
+                                struct hlsl_ir_jump *jump;
+
+                                set_location(&loc, &@1);
+                                if (!(jump = new_return(NULL, loc)))
+                                    YYABORT;
+
+                                $$ = d3dcompiler_alloc(sizeof(*$$));
+                                list_init($$);
                                 list_add_tail($$, &jump->node.entry);
                             }
 
