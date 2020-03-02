@@ -1380,7 +1380,7 @@ HRESULT WINAPI RtwqInvokeCallback(IRtwqAsyncResult *result)
 
 HRESULT WINAPI RtwqPutWorkItem(DWORD queue, LONG priority, IRtwqAsyncResult *result)
 {
-    TRACE("%d, %d, %p.\n", queue, priority, result);
+    TRACE("%#x, %d, %p.\n", queue, priority, result);
 
     return queue_put_work_item(queue, priority, result);
 }
