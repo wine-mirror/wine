@@ -44,17 +44,17 @@ HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue)
  */
 HRESULT WINAPI MFPutWorkItem(DWORD queue, IMFAsyncCallback *callback, IUnknown *state)
 {
-    IMFAsyncResult *result;
+    IRtwqAsyncResult *result;
     HRESULT hr;
 
     TRACE("%#x, %p, %p.\n", queue, callback, state);
 
-    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
+    if (FAILED(hr = RtwqCreateAsyncResult(NULL, (IRtwqAsyncCallback *)callback, state, &result)))
         return hr;
 
-    hr = MFPutWorkItemEx2(queue, 0, result);
+    hr = RtwqPutWorkItem(queue, 0, result);
 
-    IMFAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result);
 
     return hr;
 }
@@ -64,17 +64,17 @@ HRESULT WINAPI MFPutWorkItem(DWORD queue, IMFAsyncCallback *callback, IUnknown *
  */
 HRESULT WINAPI MFPutWorkItem2(DWORD queue, LONG priority, IMFAsyncCallback *callback, IUnknown *state)
 {
-    IMFAsyncResult *result;
+    IRtwqAsyncResult *result;
     HRESULT hr;
 
     TRACE("%#x, %d, %p, %p.\n", queue, priority, callback, state);
 
-    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
+    if (FAILED(hr = RtwqCreateAsyncResult(NULL, (IRtwqAsyncCallback *)callback, state, &result)))
         return hr;
 
-    hr = MFPutWorkItemEx2(queue, priority, result);
+    hr = RtwqPutWorkItem(queue, priority, result);
 
-    IMFAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result);
 
     return hr;
 }
@@ -86,7 +86,7 @@ HRESULT WINAPI MFPutWorkItemEx(DWORD queue, IMFAsyncResult *result)
 {
     TRACE("%#x, %p\n", queue, result);
 
-    return MFPutWorkItemEx2(queue, 0, result);
+    return RtwqPutWorkItem(queue, 0, (IRtwqAsyncResult *)result);
 }
 
 /***********************************************************************
@@ -104,17 +104,17 @@ HRESULT WINAPI MFPutWorkItemEx2(DWORD queue, LONG priority, IMFAsyncResult *resu
  */
 HRESULT WINAPI MFScheduleWorkItem(IMFAsyncCallback *callback, IUnknown *state, INT64 timeout, MFWORKITEM_KEY *key)
 {
-    IMFAsyncResult *result;
+    IRtwqAsyncResult *result;
     HRESULT hr;
 
     TRACE("%p, %p, %s, %p.\n", callback, state, wine_dbgstr_longlong(timeout), key);
 
-    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
+    if (FAILED(hr = RtwqCreateAsyncResult(NULL, (IRtwqAsyncCallback *)callback, state, &result)))
         return hr;
 
-    hr = MFScheduleWorkItemEx(result, timeout, key);
+    hr = RtwqScheduleWorkItem(result, timeout, key);
 
-    IMFAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result);
 
     return hr;
 }
