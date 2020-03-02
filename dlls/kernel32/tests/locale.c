@@ -25,6 +25,8 @@
  *  the control panel i8n page), we will still get the expected results.
  */
 
+#define _CRT_NON_CONFORMING_WCSTOK
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -4197,7 +4199,7 @@ static void test_GetCPInfo(void)
                 for (i = 0; i <= sizeof(buf); i++)
                 {
                     memset( wbuf, 0xcc, sizeof(wbuf) );
-                    RtlCustomCPToUnicodeN( &table, wbuf, sizeof(wbuf), &reslen, (char *)buf, i );
+                    pRtlCustomCPToUnicodeN( &table, wbuf, sizeof(wbuf), &reslen, (char *)buf, i );
                     for (j = 0; j < 4; j++) if (expect[i][j] == 0xcccc) break;
                     ok( reslen == j * sizeof(WCHAR), "%u: wrong len %u\n", i, reslen );
                     for (j = 0; j < 4; j++)
