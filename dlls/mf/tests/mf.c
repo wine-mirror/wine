@@ -1100,6 +1100,7 @@ todo_wine
 
     hr = IMFClock_GetProperties(clock, &clock_props);
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+    IMFClock_Release(clock);
 
     IMFRateControl_Release(rate_control);
     IMFRateSupport_Release(rate_support);
@@ -1115,6 +1116,9 @@ todo_wine
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
     hr = IMFMediaSession_Close(session);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSession_GetClock(session, &clock);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     IMFMediaSession_Release(session);

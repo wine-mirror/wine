@@ -1364,13 +1364,19 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
 static HRESULT WINAPI mfsession_GetClock(IMFMediaSession *iface, IMFClock **clock)
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
+    HRESULT hr;
 
     TRACE("%p, %p.\n", iface, clock);
 
-    *clock = (IMFClock *)session->clock;
-    IMFClock_AddRef(*clock);
+    EnterCriticalSection(&session->cs);
+    if (SUCCEEDED(hr = session_is_shut_down(session)))
+    {
+        *clock = (IMFClock *)session->clock;
+        IMFClock_AddRef(*clock);
+    }
+    LeaveCriticalSection(&session->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI mfsession_GetSessionCapabilities(IMFMediaSession *iface, DWORD *caps)
