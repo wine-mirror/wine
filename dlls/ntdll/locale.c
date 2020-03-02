@@ -2016,3 +2016,77 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
     *dst_len = buf_len;
     return status;
 }
+
+
+/******************************************************************************
+ *      RtlIdnToNameprepUnicode   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlIdnToNameprepUnicode( DWORD flags, const WCHAR *src, INT srclen,
+                                         WCHAR *dst, INT *dstlen )
+{
+    const struct norm_table *info;
+    unsigned int ch;
+    NTSTATUS status;
+    WCHAR buf[256];
+    int i, start, len, buflen = ARRAY_SIZE(buf);
+
+    if (flags & ~(IDN_ALLOW_UNASSIGNED | IDN_USE_STD3_ASCII_RULES)) return STATUS_INVALID_PARAMETER;
+    if (!src || srclen < -1) return STATUS_INVALID_PARAMETER;
+
+    TRACE( "%x %s %p %d\n", flags, debugstr_wn(src, srclen), dst, *dstlen );
+
+    if ((status = load_norm_table( 13, &info ))) return status;
+
+    if (srclen == -1) srclen = strlenW(src) + 1;
+
+    for (i = 0; i < srclen; i++) if (src[i] < 0x20 || src[i] >= 0x7f) break;
+
+    if (i == srclen || (i == srclen - 1 && !src[i]))  /* ascii only */
+    {
+        if (srclen > buflen) return STATUS_INVALID_IDN_NORMALIZATION;
+        memcpy( buf, src, srclen * sizeof(WCHAR) );
+        buflen = srclen;
+    }
+    else if ((status = RtlNormalizeString( 13, src, srclen, buf, &buflen )))
+    {
+        if (status == STATUS_NO_UNICODE_TRANSLATION) status = STATUS_INVALID_IDN_NORMALIZATION;
+        return status;
+    }
+
+    for (i = start = 0; i < buflen; i += len)
+    {
+        if (!(len = get_utf16( buf + i, buflen - i, &ch ))) break;
+        if (!ch) break;
+        if (ch == '.')
+        {
+            if (start == i) return STATUS_INVALID_IDN_NORMALIZATION;
+            /* maximal label length is 63 characters */
+            if (i - start > 63) return STATUS_INVALID_IDN_NORMALIZATION;
+            if ((flags & IDN_USE_STD3_ASCII_RULES) && (buf[start] == '-' || buf[i-1] == '-'))
+                return STATUS_INVALID_IDN_NORMALIZATION;
+            start = i + 1;
+            continue;
+        }
+        if (flags & IDN_USE_STD3_ASCII_RULES)
+        {
+            if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                (ch >= '0' && ch <= '9') || ch == '-') continue;
+            return STATUS_INVALID_IDN_NORMALIZATION;
+        }
+        if (!(flags & IDN_ALLOW_UNASSIGNED))
+        {
+            if (get_char_props( info, ch ) == 0x7f) return STATUS_INVALID_IDN_NORMALIZATION;
+        }
+    }
+    if (!i || i - start > 63) return STATUS_INVALID_IDN_NORMALIZATION;
+    if ((flags & IDN_USE_STD3_ASCII_RULES) && (buf[start] == '-' || buf[i-1] == '-'))
+        return STATUS_INVALID_IDN_NORMALIZATION;
+
+    if (*dstlen)
+    {
+        if (buflen <= *dstlen) memcpy( dst, buf, buflen * sizeof(WCHAR) );
+        else status = STATUS_BUFFER_TOO_SMALL;
+    }
+    *dstlen = buflen;
+    return status;
+}

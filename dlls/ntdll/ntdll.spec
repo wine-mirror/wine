@@ -722,6 +722,7 @@
 @ stub RtlGuidToPropertySetName
 @ stdcall RtlHashUnicodeString(ptr long long ptr)
 @ stdcall RtlIdentifierAuthoritySid(ptr)
+@ stdcall RtlIdnToNameprepUnicode(long wstr long ptr ptr)
 @ stdcall RtlImageDirectoryEntryToData(long long long ptr)
 @ stdcall RtlImageNtHeader(long)
 @ stdcall RtlImageRvaToSection(ptr long long)

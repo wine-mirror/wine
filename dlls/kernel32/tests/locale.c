@@ -4431,14 +4431,14 @@ static void test_IdnToNameprepUnicode(void)
         { 5, L"test", 0, 5, 5, L"test" },
         { 3, L"a\xe111z", 0, 0, 0, L"a\xe111z", 0, STATUS_NO_UNICODE_TRANSLATION },
         { 4, L"t\0e", 0, 0, 0, {0}, STATUS_NO_UNICODE_TRANSLATION, STATUS_NO_UNICODE_TRANSLATION },
-        { 1, L"T", 0, 1, 1, L"t" },
+        { 1, L"T", 0, 1, 1, L"T" },
         { 1, {0}, 0, 0 },
         /* 5 */
         { 6, L" -/[]", 0, 6, 6, L" -/[]" },
         { 3, L"a-a", IDN_USE_STD3_ASCII_RULES, 3, 3, L"a-a" },
         { 3, L"aa-", IDN_USE_STD3_ASCII_RULES, 0, 0, L"aa-" },
         { -1, L"T\xdf\x130\x143\x37a\x6a\x30c \xaa", 0, 12, 12, L"tssi\x307\x144 \x3b9\x1f0 a" },
-        { 11, L"t\xad\x34f\x1806\x180b\x180c\x180d\x200b\x200c\x200d", 0, 2, 0, L"t",
+        { 11, L"t\xad\x34f\x1806\x180b\x180c\x180d\x200b\x200c\x200d", 0, 0, 2, L"t",
           STATUS_NO_UNICODE_TRANSLATION },
         /* 10 */
         { 2, {0x3b0}, 0, 2, 2, {0x3b0} },
@@ -4447,6 +4447,9 @@ static void test_IdnToNameprepUnicode(void)
         { 5, L"a..a", 0, 0, 0, L"a..a" },
         { 3, L"a.", 0, 3, 3, L"a." },
         /* 15 */
+        { 5, L"T.\x105.A", 0, 5, 5, L"t.\x105.a" },
+        { 5, L"T.*.A", 0, 5, 5, L"T.*.A" },
+        { 5, L"X\xff0e.Z", 0, 0, 0, L"x..z" },
         { 63, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0,
           63, 63, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
         { 64, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0,
@@ -4515,7 +4518,7 @@ static void test_IdnToNameprepUnicode(void)
         if (ret == test_data[i].ret)
         {
             ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%d: err = %d\n", i, err);
-            ok(!wcsnicmp(test_data[i].out, buf, ret), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+            ok(!wcsncmp(test_data[i].out, buf, ret), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
         }
         if (pRtlNormalizeString)
         {
@@ -4525,7 +4528,7 @@ static void test_IdnToNameprepUnicode(void)
             status = pRtlNormalizeString( 13, test_data[i].in, test_data[i].in_len, buf, &len );
             ok( status == test_data[i].status || broken(status == test_data[i].broken_status),
                 "%d: failed %x\n", i, status );
-            if (!status) ok( !wcsncmp(test_data[i].out, buf, len), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, len));
+            if (!status) ok( !wcsnicmp(test_data[i].out, buf, len), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, len));
         }
     }
 }
@@ -4569,10 +4572,11 @@ static void test_IdnToAscii(void)
         SetLastError(0xdeadbeef);
         ret = pIdnToAscii(test_data[i].flags, test_data[i].in, test_data[i].in_len, buf, ARRAY_SIZE(buf));
         err = GetLastError();
-        todo_wine_if (i > 9)
+        todo_wine_if (i == 10)
         ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
         ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%d: err = %d\n", i, err);
-        ok(!wcsncmp(test_data[i].out, buf, ret), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+        todo_wine_if (i == 10)
+        ok(!wcsnicmp(test_data[i].out, buf, ret), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
     }
 }
 
