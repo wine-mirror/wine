@@ -492,13 +492,22 @@ static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *value, struct source
     jump->node.type = HLSL_IR_JUMP;
     jump->node.loc = loc;
     jump->type = HLSL_IR_JUMP_RETURN;
-    jump->node.data_type = value ? value->data_type
-            : new_hlsl_type(d3dcompiler_strdup("void"), HLSL_CLASS_OBJECT, HLSL_TYPE_VOID, 1, 1);
-    jump->return_value = value;
-
-    FIXME("Check for valued return on void function.\n");
-    FIXME("Implicit conversion to the return type if needed, "
-            "error out if conversion not possible.\n");
+    jump->node.data_type = hlsl_ctx.cur_function->return_type;
+    if (value)
+    {
+        if (!(jump->return_value = implicit_conversion(value, jump->node.data_type, &loc)))
+        {
+            d3dcompiler_free(jump);
+            return NULL;
+        }
+    }
+    else if (jump->node.data_type->base_type != HLSL_TYPE_VOID)
+    {
+        hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
+                "non-void function must return a value");
+        d3dcompiler_free(jump);
+        return NULL;
+    }
 
     return jump;
 }
@@ -1336,6 +1345,7 @@ func_prototype:           var_modifiers type var_identifier '(' parameters ')' c
                                 $$.name = $3;
                                 $$.decl->semantic = $7.semantic;
                                 set_location(&$$.decl->loc, &@3);
+                                hlsl_ctx.cur_function = $$.decl;
                             }
 
 compound_statement:       '{' '}'

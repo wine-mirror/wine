@@ -1046,6 +1046,7 @@ struct hlsl_parse_ctx
 
     struct list types;
     struct wine_rb_tree functions;
+    const struct hlsl_ir_function_decl *cur_function;
 
     enum hlsl_matrix_majority matrix_majority;
 };
@@ -1138,6 +1139,8 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
         struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *new_cast(struct hlsl_ir_node *node, struct hlsl_type *type,
 	struct source_location *loc) DECLSPEC_HIDDEN;
+struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_type *type,
+        struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var) DECLSPEC_HIDDEN;
 struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record, struct hlsl_struct_field *field) DECLSPEC_HIDDEN;
 struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assign_op assign_op,

@@ -1275,7 +1275,7 @@ static struct hlsl_type *expr_common_type(struct hlsl_type *t1, struct hlsl_type
     return new_hlsl_type(NULL, type, base, dimx, dimy);
 }
 
-static struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_type *dst_type,
+struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_type *dst_type,
         struct source_location *loc)
 {
     struct hlsl_type *src_type = node->data_type;

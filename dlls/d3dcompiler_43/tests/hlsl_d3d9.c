@@ -730,7 +730,7 @@ static void test_fail(void)
             compiled = errors = NULL;
             hr = ppD3DCompile(tests[i], strlen(tests[i]), NULL, NULL, NULL, "test", targets[j], 0, 0, &compiled, &errors);
             todo_wine ok(hr == E_FAIL, "Test %u, target %s, got unexpected hr %#x.\n", i, targets[j], hr);
-            todo_wine_if (i == 1 || i >= 7) ok(!!errors, "Test %u, target %s, expected non-NULL error blob.\n", i, targets[j]);
+            todo_wine_if (i == 1) ok(!!errors, "Test %u, target %s, expected non-NULL error blob.\n", i, targets[j]);
             ok(!compiled, "Test %u, target %s, expected no compiled shader blob.\n", i, targets[j]);
             if (errors)
                 ID3D10Blob_Release(errors);
