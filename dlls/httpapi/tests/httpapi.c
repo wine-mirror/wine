@@ -1086,6 +1086,56 @@ static void test_v1_unknown_tokens(void)
     ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
 }
 
+static void test_v1_urls(void)
+{
+    char DECLSPEC_ALIGN(8) req_buffer[2048];
+    HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer;
+    unsigned short port;
+    char req_text[200];
+    DWORD ret_size;
+    WCHAR url[50];
+    HANDLE queue;
+    ULONG ret;
+    SOCKET s;
+
+    ret = HttpCreateHttpHandle(&queue, 0);
+    ok(!ret, "Got error %u.\n", ret);
+
+    for (port = 50000; port < 51000; ++port)
+    {
+        swprintf(url, ARRAY_SIZE(url), L"http://+:%u/", port);
+        if (!(ret = HttpAddUrl(queue, url, NULL)))
+            break;
+        if (ret == ERROR_ACCESS_DENIED)
+        {
+            skip("Not enough permissions to bind to all URLs.\n");
+            CloseHandle(queue);
+            return;
+        }
+        ok(ret == ERROR_SHARING_VIOLATION, "Failed to add %s, error %u.\n", debugstr_w(url), ret);
+    }
+
+    ok(!ret, "Got error %u.\n", ret);
+
+    s = create_client_socket(port);
+    sprintf(req_text, simple_req, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
+
+    memset(req_buffer, 0xcc, sizeof(req_buffer));
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+
+    send_response_v1(queue, req->RequestId, s);
+
+    ret = HttpRemoveUrl(queue, url);
+    ok(!ret, "Got error %u.\n", ret);
+    closesocket(s);
+    ret = CloseHandle(queue);
+    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+}
+
 static void test_HttpCreateServerSession(void)
 {
     HTTP_SERVER_SESSION_ID session;
@@ -1478,6 +1528,7 @@ START_TEST(httpapi)
     test_v1_bad_request();
     test_v1_cooked_url();
     test_v1_unknown_tokens();
+    test_v1_urls();
 
     ret = HttpTerminate(HTTP_INITIALIZE_SERVER, NULL);
     ok(!ret, "Failed to terminate, ret %u.\n", ret);

@@ -802,6 +802,12 @@ static BOOL host_matches(const struct connection *conn, const struct request_que
 {
     const char *conn_host = (conn->url[0] == '/') ? conn->host : conn->url + 7;
 
+    if (queue->url[7] == '+')
+    {
+        const char *queue_port = strchr(queue->url + 7, ':');
+        return !strncmp(queue_port, strchr(conn_host, ':'), strlen(queue_port) - 1 /* strip final slash */);
+    }
+
     return !memicmp(queue->url + 7, conn_host, strlen(queue->url) - 8 /* strip final slash */);
 }
 
