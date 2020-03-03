@@ -2250,13 +2250,6 @@ static HRESULT WINAPI d3d8_device_GetTextureStageState(IDirect3DDevice8 *iface,
 
     TRACE("iface %p, stage %u, state %#x, value %p.\n", iface, stage, state, value);
 
-    if (stage >= WINED3D_MAX_FRAGMENT_SAMPLERS)
-    {
-        WARN("Invalid stage %u.\n", stage);
-        *value = 0;
-        return D3D_OK;
-    }
-
     if (state >= ARRAY_SIZE(tss_lookup))
     {
         WARN("Invalid state %#x.\n", state);
