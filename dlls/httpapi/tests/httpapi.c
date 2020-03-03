@@ -348,6 +348,18 @@ static void test_v1_server(void)
     ret = remove_url_v1(queue, port);
     ok(ret == ERROR_FILE_NOT_FOUND, "Got error %u.\n", ret);
 
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
+    ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
+
+    ret = CancelIo(queue);
+    ok(ret, "Failed to close queue handle, error %u.\n", GetLastError());
+
+    ret_size = 0xdeadbeef;
+    ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Got error %u.\n", GetLastError());
+    ok(!ret_size, "Got size %u.\n", ret_size);
+
     closesocket(s);
     CloseHandle(ovl.hEvent);
     ret = CloseHandle(queue);

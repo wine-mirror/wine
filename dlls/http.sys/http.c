@@ -1178,6 +1178,20 @@ static struct connection *get_connection(HTTP_REQUEST_ID req_id)
     return NULL;
 }
 
+static void WINAPI http_receive_request_cancel(DEVICE_OBJECT *device, IRP *irp)
+{
+    TRACE("device %p, irp %p.\n", device, irp);
+
+    IoReleaseCancelSpinLock(irp->CancelIrql);
+
+    EnterCriticalSection(&http_cs);
+    RemoveEntryList(&irp->Tail.Overlay.ListEntry);
+    LeaveCriticalSection(&http_cs);
+
+    irp->IoStatus.Status = STATUS_CANCELLED;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
 static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
 {
     const struct http_receive_request_params *params = irp->AssociatedIrp.SystemBuffer;
@@ -1199,8 +1213,18 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
     if (params->id == HTTP_NULL_ID)
     {
         TRACE("Queuing IRP %p.\n", irp);
-        InsertTailList(&queue->irp_queue, &irp->Tail.Overlay.ListEntry);
-        ret = STATUS_PENDING;
+
+        IoSetCancelRoutine(irp, http_receive_request_cancel);
+        if (irp->Cancel && !IoSetCancelRoutine(irp, NULL))
+        {
+            /* The IRP was canceled before we set the cancel routine. */
+            ret = STATUS_CANCELLED;
+        }
+        else
+        {
+            InsertTailList(&queue->irp_queue, &irp->Tail.Overlay.ListEntry);
+            ret = STATUS_PENDING;
+        }
     }
     else
         ret = STATUS_CONNECTION_INVALID;
