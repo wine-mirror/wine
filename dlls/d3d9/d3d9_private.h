@@ -66,6 +66,8 @@ struct d3d9
     IDirect3D9Ex IDirect3D9Ex_iface;
     LONG refcount;
     struct wined3d *wined3d;
+    struct wined3d_output **wined3d_outputs;
+    unsigned int wined3d_output_count;
     BOOL extended;
 };
 
