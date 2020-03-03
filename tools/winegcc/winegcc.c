@@ -314,8 +314,30 @@ static char* get_temp_file(const char* prefix, const char* suffix)
     return tmp;
 }
 
-static strarray* build_tool_name(struct options *opts, const char* base, const char* deflt)
+enum tool
 {
+    TOOL_CC,
+    TOOL_CXX,
+    TOOL_CPP,
+    TOOL_LD,
+};
+
+static const struct
+{
+    const char *base;
+    const char *deflt;
+} tool_names[] =
+{
+    { "gcc", CC },
+    { "g++", CXX },
+    { "cpp", CPP },
+    { "ld",  LD },
+};
+
+static strarray* build_tool_name( struct options *opts, enum tool tool )
+{
+    const char *base = tool_names[tool].base;
+    const char *deflt = tool_names[tool].deflt;
     const char *path;
     char* str;
 
@@ -341,24 +363,24 @@ static strarray* build_tool_name(struct options *opts, const char* base, const c
 
 static strarray* get_translator(struct options *opts)
 {
-    strarray *tool;
+    enum tool tool;
 
     switch(opts->processor)
     {
     case proc_cpp:
-        tool = build_tool_name(opts, "cpp", CPP);
+        tool = TOOL_CPP;
         break;
     case proc_cc:
     case proc_as:
-        tool = build_tool_name(opts, "gcc", CC);
+        tool = TOOL_CC;
         break;
     case proc_cxx:
-        tool = build_tool_name(opts, "g++", CXX);
+        tool = TOOL_CXX;
         break;
     default:
         assert(0);
     }
-    return tool;
+    return build_tool_name( opts, tool );
 }
 
 static int try_link( const strarray *prefix, const strarray *link_tool, const char *cflags )
@@ -680,8 +702,8 @@ static void compile(struct options* opts, const char* lang)
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:
 	case proc_cxx:
-            gcc = build_tool_name(opts, "gcc", CC);
-            gpp = build_tool_name(opts, "g++", CXX);
+            gcc = build_tool_name(opts, TOOL_CC);
+            gpp = build_tool_name(opts, TOOL_CXX);
             for ( j = 0; !gcc_defs && j < comp_args->size; j++ )
             {
                 const char *cc = comp_args->base[j];
@@ -1161,8 +1183,8 @@ static void build(struct options* opts)
 
     /* run winebuild to generate the .spec.o file */
     spec_args = get_winebuild_args( opts );
-    if ((tool = build_tool_name( opts, "gcc", CC ))) strarray_add( spec_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
-    if (!is_pe && (tool = build_tool_name( opts, "ld", LD ))) strarray_add( spec_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
+    if ((tool = build_tool_name( opts, TOOL_CC ))) strarray_add( spec_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
+    if (!is_pe && (tool = build_tool_name( opts, TOOL_LD ))) strarray_add( spec_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
 
     spec_o_name = get_temp_file(output_name, ".spec.o");
     if (opts->force_pointer_size)
