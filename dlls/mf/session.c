@@ -1401,8 +1401,8 @@ static HRESULT WINAPI mfsession_GetFullTopology(IMFMediaSession *iface, DWORD fl
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
     struct queued_topology *queued;
-    HRESULT hr = S_OK;
     TOPOID topo_id;
+    HRESULT hr;
 
     TRACE("%p, %#x, %s, %p.\n", iface, flags, wine_dbgstr_longlong(id), topology);
 
@@ -1410,27 +1410,30 @@ static HRESULT WINAPI mfsession_GetFullTopology(IMFMediaSession *iface, DWORD fl
 
     EnterCriticalSection(&session->cs);
 
-    if (flags & MFSESSION_GETFULLTOPOLOGY_CURRENT)
+    if (SUCCEEDED(hr = session_is_shut_down(session)))
     {
-        if (session->presentation.topo_status != MF_TOPOSTATUS_INVALID)
-            *topology = session->presentation.current_topology;
-        else
-            hr = MF_E_INVALIDREQUEST;
-    }
-    else
-    {
-        LIST_FOR_EACH_ENTRY(queued, &session->topologies, struct queued_topology, entry)
+        if (flags & MFSESSION_GETFULLTOPOLOGY_CURRENT)
         {
-            if (SUCCEEDED(IMFTopology_GetTopologyID(queued->topology, &topo_id)) && topo_id == id)
+            if (session->presentation.topo_status != MF_TOPOSTATUS_INVALID)
+                *topology = session->presentation.current_topology;
+            else
+                hr = MF_E_INVALIDREQUEST;
+        }
+        else
+        {
+            LIST_FOR_EACH_ENTRY(queued, &session->topologies, struct queued_topology, entry)
             {
-                *topology = queued->topology;
-                break;
+                if (SUCCEEDED(IMFTopology_GetTopologyID(queued->topology, &topo_id)) && topo_id == id)
+                {
+                    *topology = queued->topology;
+                    break;
+                }
             }
         }
-    }
 
-    if (*topology)
-        IMFTopology_AddRef(*topology);
+        if (*topology)
+            IMFTopology_AddRef(*topology);
+    }
 
     LeaveCriticalSection(&session->cs);
 
