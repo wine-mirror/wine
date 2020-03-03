@@ -1364,35 +1364,49 @@ static path_test_t widenline_caparrowanchor_path[] = {
     {32.679489, 0.0,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*9*/
     };
 
+static path_test_t widenline_capsquareanchor_thin_path[] = {
+    {6.414213, 8.585786,   PathPointTypeStart, 4, 1}, /*0*/
+    {6.414213, 11.414213,  PathPointTypeLine,  0, 1}, /*1*/
+    {3.585786, 11.414213,  PathPointTypeLine,  0, 1}, /*2*/
+    {3.585786, 8.585786,   PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*3*/
+    {48.585785, 11.414213, PathPointTypeStart, 0, 1}, /*4*/
+    {48.585785, 8.585786,  PathPointTypeLine,  0, 1}, /*5*/
+    {51.414211, 8.585786,  PathPointTypeLine,  0, 1}, /*6*/
+    {51.414211, 11.414213, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*7*/
+    };
+
 static void test_widen_cap(void)
 {
     struct
     {
         LineCap type;
+        REAL line_width;
         const path_test_t *expected;
         INT expected_size;
         BOOL todo_size;
     }
     caps[] =
     {
-        { LineCapFlat, widenline_capflat_path,
+        { LineCapFlat, 10.0, widenline_capflat_path,
                 ARRAY_SIZE(widenline_capflat_path) },
-        { LineCapSquare, widenline_capsquare_path,
+        { LineCapSquare, 10.0, widenline_capsquare_path,
                 ARRAY_SIZE(widenline_capsquare_path) },
-        { LineCapRound, widenline_capround_path,
+        { LineCapRound, 10.0, widenline_capround_path,
                 ARRAY_SIZE(widenline_capround_path) },
-        { LineCapTriangle, widenline_captriangle_path,
+        { LineCapTriangle, 10.0, widenline_captriangle_path,
                 ARRAY_SIZE(widenline_captriangle_path) },
-        { LineCapNoAnchor, widenline_capflat_path,
+        { LineCapNoAnchor, 10.0, widenline_capflat_path,
                 ARRAY_SIZE(widenline_capflat_path) },
-        { LineCapSquareAnchor, widenline_capsquareanchor_path,
+        { LineCapSquareAnchor, 10.0, widenline_capsquareanchor_path,
                 ARRAY_SIZE(widenline_capsquareanchor_path) },
-        { LineCapRoundAnchor, widenline_caproundanchor_path,
+        { LineCapRoundAnchor, 10.0, widenline_caproundanchor_path,
                 ARRAY_SIZE(widenline_caproundanchor_path) },
-        { LineCapDiamondAnchor, widenline_capdiamondanchor_path,
+        { LineCapDiamondAnchor, 10.0, widenline_capdiamondanchor_path,
                 ARRAY_SIZE(widenline_capdiamondanchor_path) },
-        { LineCapArrowAnchor, widenline_caparrowanchor_path,
+        { LineCapArrowAnchor, 10.0, widenline_caparrowanchor_path,
                 ARRAY_SIZE(widenline_caparrowanchor_path), TRUE },
+        { LineCapSquareAnchor, 0.0, widenline_capsquareanchor_thin_path,
+                ARRAY_SIZE(widenline_capsquareanchor_thin_path), TRUE },
     };
     GpStatus status;
     GpPath *path;
@@ -1401,11 +1415,12 @@ static void test_widen_cap(void)
 
     status = GdipCreatePath(FillModeAlternate, &path);
     expect(Ok, status);
-    status = GdipCreatePen1(0xffffffff, 10.0, UnitPixel, &pen);
-    expect(Ok, status);
 
     for (i = 0; i < ARRAY_SIZE(caps); i++)
     {
+        status = GdipCreatePen1(0xffffffff, caps[i].line_width, UnitPixel, &pen);
+        expect(Ok, status);
+
         status = GdipResetPath(path);
         expect(Ok, status);
         status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 10.0);
@@ -1418,9 +1433,10 @@ static void test_widen_cap(void)
         status = GdipWidenPath(path, pen, NULL, FlatnessDefault);
         expect(Ok, status);
         ok_path_fudge(path, caps[i].expected, caps[i].expected_size, caps[i].todo_size, 0.000005);
+
+        GdipDeletePen(pen);
     }
 
-    GdipDeletePen(pen);
     GdipDeletePath(path);
 }
 
