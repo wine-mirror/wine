@@ -314,7 +314,7 @@ static char* get_temp_file(const char* prefix, const char* suffix)
     return tmp;
 }
 
-static const char* build_tool_name(struct options *opts, const char* base, const char* deflt)
+static strarray* build_tool_name(struct options *opts, const char* base, const char* deflt)
 {
     const char *path;
     char* str;
@@ -334,31 +334,31 @@ static const char* build_tool_name(struct options *opts, const char* base, const
     else
         str = xstrdup(deflt);
 
-    if ((path = find_binary( opts->prefix, str ))) return path;
+    if ((path = find_binary( opts->prefix, str ))) return strarray_fromstring( path, " " );
     error( "Could not find %s\n", base );
     return NULL;
 }
 
 static strarray* get_translator(struct options *opts)
 {
-    const char *str = NULL;
+    strarray *tool;
 
     switch(opts->processor)
     {
     case proc_cpp:
-        str = build_tool_name(opts, "cpp", CPP);
+        tool = build_tool_name(opts, "cpp", CPP);
         break;
     case proc_cc:
     case proc_as:
-        str = build_tool_name(opts, "gcc", CC);
+        tool = build_tool_name(opts, "gcc", CC);
         break;
     case proc_cxx:
-        str = build_tool_name(opts, "g++", CXX);
+        tool = build_tool_name(opts, "g++", CXX);
         break;
     default:
         assert(0);
     }
-    return strarray_fromstring( str, " " );
+    return tool;
 }
 
 static int try_link( const strarray *prefix, const strarray *link_tool, const char *cflags )
@@ -680,8 +680,8 @@ static void compile(struct options* opts, const char* lang)
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:
 	case proc_cxx:
-            gcc = strarray_fromstring(build_tool_name(opts, "gcc", CC), " ");
-            gpp = strarray_fromstring(build_tool_name(opts, "g++", CXX), " ");
+            gcc = build_tool_name(opts, "gcc", CC);
+            gpp = build_tool_name(opts, "g++", CXX);
             for ( j = 0; !gcc_defs && j < comp_args->size; j++ )
             {
                 const char *cc = comp_args->base[j];
@@ -993,7 +993,7 @@ static void add_library( struct options *opts, strarray *lib_dirs, strarray *fil
 static void build(struct options* opts)
 {
     strarray *lib_dirs, *files;
-    strarray *spec_args, *link_args;
+    strarray *spec_args, *link_args, *tool;
     char *output_file, *output_path;
     const char *spec_o_name, *libgcc = NULL;
     const char *output_name, *spec_file, *lang;
@@ -1161,8 +1161,8 @@ static void build(struct options* opts)
 
     /* run winebuild to generate the .spec.o file */
     spec_args = get_winebuild_args( opts );
-    strarray_add( spec_args, strmake( "--cc-cmd=%s", build_tool_name( opts, "gcc", CC )));
-    if (!is_pe) strarray_add( spec_args, strmake( "--ld-cmd=%s", build_tool_name( opts, "ld", LD )));
+    if ((tool = build_tool_name( opts, "gcc", CC ))) strarray_add( spec_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
+    if (!is_pe && (tool = build_tool_name( opts, "ld", LD ))) strarray_add( spec_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
 
     spec_o_name = get_temp_file(output_name, ".spec.o");
     if (opts->force_pointer_size)
