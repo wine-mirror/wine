@@ -81,6 +81,7 @@ enum session_state
     SESSION_STATE_PAUSED,
     SESSION_STATE_STOPPING_SINKS,
     SESSION_STATE_STOPPING_SOURCES,
+    SESSION_STATE_FINALIZING_SINKS,
     SESSION_STATE_CLOSED,
     SESSION_STATE_SHUT_DOWN,
 };
@@ -115,6 +116,7 @@ struct media_sink
     struct list entry;
     IMFMediaSink *sink;
     IMFMediaEventGenerator *event_generator;
+    BOOL finalized;
 };
 
 struct output_node
@@ -128,6 +130,7 @@ enum presentation_flags
 {
     SESSION_FLAG_SOURCES_SUBSCRIBED = 0x1,
     SESSION_FLAG_SINKS_SUBSCRIBED = 0x2,
+    SESSION_FLAG_FINALIZE_SINKS = 0x4,
 };
 
 struct media_session
@@ -138,6 +141,7 @@ struct media_session
     IMFRateControl IMFRateControl_iface;
     IMFAsyncCallback commands_callback;
     IMFAsyncCallback events_callback;
+    IMFAsyncCallback sink_finalizer_callback;
     LONG refcount;
     IMFMediaEventQueue *event_queue;
     IMFPresentationClock *clock;
@@ -256,6 +260,11 @@ static struct media_session *impl_from_commands_callback_IMFAsyncCallback(IMFAsy
 static struct media_session *impl_from_events_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct media_session, events_callback);
+}
+
+static struct media_session *impl_from_sink_finalizer_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_session, sink_finalizer_callback);
 }
 
 static struct media_session *impl_from_IMFGetService(IMFGetService *iface)
@@ -570,6 +579,28 @@ static HRESULT session_bind_output_nodes(IMFTopology *topology)
     return hr;
 }
 
+static void session_set_caps(struct media_session *session, DWORD caps)
+{
+    DWORD delta = session->caps ^ caps;
+    IMFMediaEvent *event;
+
+    /* Delta is documented to reflect rate value changes as well, but it's not clear what to compare
+       them to, since session always queries for current object rates. */
+    if (!delta)
+        return;
+
+    session->caps = caps;
+
+    if (FAILED(MFCreateMediaEvent(MESessionCapabilitiesChanged, &GUID_NULL, S_OK, NULL, &event)))
+        return;
+
+    IMFMediaEvent_SetUINT32(event, &MF_EVENT_SESSIONCAPS, caps);
+    IMFMediaEvent_SetUINT32(event, &MF_EVENT_SESSIONCAPS_DELTA, delta);
+
+    IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+    IMFMediaEvent_Release(event);
+}
+
 static void session_clear_presentation(struct media_session *session)
 {
     struct source_node *src_node, *src_node2;
@@ -709,6 +740,74 @@ static void session_stop(struct media_session *session)
     {
         session->state = SESSION_STATE_STOPPED;
         IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, hr, NULL);
+    }
+
+    LeaveCriticalSection(&session->cs);
+}
+
+static HRESULT session_finalize_sinks(struct media_session *session)
+{
+    IMFFinalizableMediaSink *fin_sink;
+    BOOL sinks_finalized = TRUE;
+    struct media_sink *sink;
+    HRESULT hr = S_OK;
+
+    session->presentation.flags &= ~SESSION_FLAG_FINALIZE_SINKS;
+    session->state = SESSION_STATE_FINALIZING_SINKS;
+
+    LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+    {
+        if (SUCCEEDED(IMFMediaSink_QueryInterface(sink->sink, &IID_IMFFinalizableMediaSink, (void **)&fin_sink)))
+        {
+            hr = IMFFinalizableMediaSink_BeginFinalize(fin_sink, &session->sink_finalizer_callback,
+                    (IUnknown *)fin_sink);
+            IMFFinalizableMediaSink_Release(fin_sink);
+            if (FAILED(hr))
+                break;
+            sinks_finalized = FALSE;
+        }
+        else
+            sink->finalized = TRUE;
+    }
+
+    if (sinks_finalized)
+    {
+        session->state = SESSION_STATE_CLOSED;
+        session_set_caps(session, session->caps & ~(MFSESSIONCAP_START | MFSESSIONCAP_SEEK));
+        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, hr, NULL);
+    }
+
+    return hr;
+}
+
+static void session_close(struct media_session *session)
+{
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&session->cs);
+
+    switch (session->state)
+    {
+        case SESSION_STATE_STOPPED:
+            hr = session_finalize_sinks(session);
+            break;
+        case SESSION_STATE_RUNNING:
+        case SESSION_STATE_PAUSED:
+            session->presentation.flags |= SESSION_FLAG_FINALIZE_SINKS;
+            if (SUCCEEDED(hr = IMFPresentationClock_Stop(session->clock)))
+                session->state = SESSION_STATE_STOPPING_SINKS;
+            break;
+        case SESSION_STATE_CLOSED:
+            hr = MF_E_INVALIDREQUEST;
+            break;
+        default:
+            ;
+    }
+
+    if (FAILED(hr))
+    {
+        session->state = SESSION_STATE_CLOSED;
+        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, hr, NULL);
     }
 
     LeaveCriticalSection(&session->cs);
@@ -868,28 +967,6 @@ static DWORD session_get_object_rate_caps(IUnknown *object)
     }
 
     return caps;
-}
-
-static void session_set_caps(struct media_session *session, DWORD caps)
-{
-    DWORD delta = session->caps ^ caps;
-    IMFMediaEvent *event;
-
-    /* Delta is documented to reflect rate value changes as well, but it's not clear what to compare
-       them to, since session always queries for current object rates. */
-    if (!delta)
-        return;
-
-    session->caps = caps;
-
-    if (FAILED(MFCreateMediaEvent(MESessionCapabilitiesChanged, &GUID_NULL, S_OK, NULL, &event)))
-        return;
-
-    IMFMediaEvent_SetUINT32(event, &MF_EVENT_SESSIONCAPS, caps);
-    IMFMediaEvent_SetUINT32(event, &MF_EVENT_SESSIONCAPS_DELTA, delta);
-
-    IMFMediaEventQueue_QueueEvent(session->event_queue, event);
-    IMFMediaEvent_Release(event);
 }
 
 static HRESULT session_add_media_sink(struct media_session *session, IMFTopologyNode *node, IMFMediaSink *sink)
@@ -1583,14 +1660,7 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             session_stop(session);
             break;
         case SESSION_CMD_CLOSE:
-            EnterCriticalSection(&session->cs);
-            if (session->state != SESSION_STATE_CLOSED)
-            {
-                /* FIXME: actually do something to presentation objects */
-                session->state = SESSION_STATE_CLOSED;
-                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, S_OK, NULL);
-            }
-            LeaveCriticalSection(&session->cs);
+            session_close(session);
             break;
         default:
             ;
@@ -1873,8 +1943,6 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
             if (!session_is_source_nodes_state(session, OBJ_STATE_STOPPED))
                 break;
 
-            session->state = SESSION_STATE_STOPPED;
-
             LIST_FOR_EACH_ENTRY(out_node, &session->presentation.output_nodes, struct output_node, entry)
             {
                 IMFStreamSink_Flush(out_node->stream);
@@ -1882,7 +1950,15 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
 
             session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
 
-            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, S_OK, NULL);
+            if (session->presentation.flags & SESSION_FLAG_FINALIZE_SINKS)
+            {
+                session_finalize_sinks(session);
+            }
+            else
+            {
+                session->state = SESSION_STATE_STOPPED;
+                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, S_OK, NULL);
+            }
 
             break;
         default:
@@ -2094,6 +2170,99 @@ static const IMFAsyncCallbackVtbl session_events_callback_vtbl =
     session_events_callback_Invoke,
 };
 
+static HRESULT WINAPI session_sink_finalizer_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI session_sink_finalizer_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct media_session *session = impl_from_sink_finalizer_callback_IMFAsyncCallback(iface);
+    return IMFMediaSession_AddRef(&session->IMFMediaSession_iface);
+}
+
+static ULONG WINAPI session_sink_finalizer_callback_Release(IMFAsyncCallback *iface)
+{
+    struct media_session *session = impl_from_sink_finalizer_callback_IMFAsyncCallback(iface);
+    return IMFMediaSession_Release(&session->IMFMediaSession_iface);
+}
+
+static HRESULT WINAPI session_sink_finalizer_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI session_sink_finalizer_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct media_session *session = impl_from_sink_finalizer_callback_IMFAsyncCallback(iface);
+    IMFFinalizableMediaSink *fin_sink = NULL;
+    BOOL sinks_finalized = TRUE;
+    struct media_sink *sink;
+    IUnknown *state;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFAsyncResult_GetState(result, &state)))
+        return hr;
+
+    EnterCriticalSection(&session->cs);
+
+    LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+    {
+        if (state == (IUnknown *)sink->sink)
+        {
+            if (FAILED(hr = IMFMediaSink_QueryInterface(sink->sink, &IID_IMFFinalizableMediaSink, (void **)&fin_sink)))
+                WARN("Unexpected, missing IMFFinalizableSink, hr %#x.\n", hr);
+        }
+        else
+        {
+            sinks_finalized &= sink->finalized;
+            if (!sinks_finalized)
+                break;
+        }
+    }
+
+    IUnknown_Release(state);
+
+    if (fin_sink)
+    {
+        /* Complete session transition, or close prematurely on error. */
+        if (SUCCEEDED(hr = IMFFinalizableMediaSink_EndFinalize(fin_sink, result)))
+        {
+            sink->finalized = TRUE;
+            if (sinks_finalized)
+            {
+                session->state = SESSION_STATE_CLOSED;
+                session_set_caps(session, session->caps & ~(MFSESSIONCAP_START | MFSESSIONCAP_SEEK));
+                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, hr, NULL);
+            }
+        }
+        IMFFinalizableMediaSink_Release(fin_sink);
+    }
+
+    LeaveCriticalSection(&session->cs);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl session_sink_finalizer_callback_vtbl =
+{
+    session_sink_finalizer_callback_QueryInterface,
+    session_sink_finalizer_callback_AddRef,
+    session_sink_finalizer_callback_Release,
+    session_sink_finalizer_callback_GetParameters,
+    session_sink_finalizer_callback_Invoke,
+};
+
 static HRESULT WINAPI session_rate_support_QueryInterface(IMFRateSupport *iface, REFIID riid, void **obj)
 {
     struct media_session *session = impl_session_from_IMFRateSupport(iface);
@@ -2263,6 +2432,7 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     object->IMFRateControl_iface.lpVtbl = &session_rate_control_vtbl;
     object->commands_callback.lpVtbl = &session_commands_callback_vtbl;
     object->events_callback.lpVtbl = &session_events_callback_vtbl;
+    object->sink_finalizer_callback.lpVtbl = &session_sink_finalizer_callback_vtbl;
     object->refcount = 1;
     list_init(&object->topologies);
     list_init(&object->presentation.sources);
