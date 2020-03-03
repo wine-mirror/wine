@@ -1265,7 +1265,27 @@ static HRESULT mft_enum(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INF
                 {
                     (*activate)[obj_count] = mft_activate;
 
-                    /* FIXME: set some attributes */
+                    if (mft->flags & MFT_ENUM_FLAG_LOCALMFT)
+                    {
+                        IMFActivate_SetUINT32(mft_activate, &MFT_PROCESS_LOCAL_Attribute, 1);
+                    }
+                    else
+                    {
+                        if (mft->name)
+                            IMFActivate_SetString(mft_activate, &MFT_FRIENDLY_NAME_Attribute, mft->name);
+                        if (mft->input_types)
+                            IMFActivate_SetBlob(mft_activate, &MFT_INPUT_TYPES_Attributes, (const UINT8 *)mft->input_types,
+                                    sizeof(*mft->input_types) * mft->input_types_count);
+                        if (mft->output_types)
+                            IMFActivate_SetBlob(mft_activate, &MFT_OUTPUT_TYPES_Attributes, (const UINT8 *)mft->output_types,
+                                    sizeof(*mft->output_types) * mft->output_types_count);
+                    }
+
+                    if (!mft->factory)
+                        IMFActivate_SetGUID(mft_activate, &MFT_TRANSFORM_CLSID_Attribute, &mft->clsid);
+
+                    IMFActivate_SetUINT32(mft_activate, &MF_TRANSFORM_FLAGS_Attribute, mft->flags);
+                    IMFActivate_SetGUID(mft_activate, &MF_TRANSFORM_CATEGORY_Attribute, &mft->category);
 
                     obj_count++;
                 }
