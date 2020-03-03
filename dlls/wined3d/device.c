@@ -1350,21 +1350,6 @@ HRESULT CDECL wined3d_device_set_stream_source_freq(struct wined3d_device *devic
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_stream_source_freq(const struct wined3d_device *device,
-        UINT stream_idx, UINT *divider)
-{
-    const struct wined3d_stream_state *stream;
-
-    TRACE("device %p, stream_idx %u, divider %p.\n", device, stream_idx, divider);
-
-    stream = &device->state.streams[stream_idx];
-    *divider = stream->flags | stream->frequency;
-
-    TRACE("Returning %#x.\n", *divider);
-
-    return WINED3D_OK;
-}
-
 void CDECL wined3d_device_set_transform(struct wined3d_device *device,
         enum wined3d_transform_state d3dts, const struct wined3d_matrix *matrix)
 {
@@ -1397,26 +1382,6 @@ void CDECL wined3d_device_get_transform(const struct wined3d_device *device,
     TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
 
     *matrix = device->state.transforms[state];
-}
-
-void CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
-        enum wined3d_transform_state state, const struct wined3d_matrix *matrix)
-{
-    struct wined3d_matrix *mat;
-
-    TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
-
-    if (state > WINED3D_HIGHEST_TRANSFORM_STATE)
-    {
-        WARN("Unhandled transform state %#x.\n", state);
-        return;
-    }
-
-    /* Tests show that stateblock recording is ignored; the change goes directly
-     * into the primary stateblock. */
-    mat = &device->state.transforms[state];
-    multiply_matrix(mat, mat, matrix);
-    wined3d_cs_emit_set_transform(device->cs, state, mat);
 }
 
 /* Note lights are real special cases. Although the device caps state only
@@ -1558,23 +1523,6 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_light(const struct wined3d_device *device,
-        UINT light_idx, struct wined3d_light *light)
-{
-    struct wined3d_light_info *light_info;
-
-    TRACE("device %p, light_idx %u, light %p.\n", device, light_idx, light);
-
-    if (!(light_info = wined3d_light_state_get_light(&device->state.light_state, light_idx)))
-    {
-        TRACE("Light information requested but light not defined\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    *light = light_info->OriginalParms;
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
 {
     struct wined3d_light_info *light_info;
@@ -1600,22 +1548,6 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable)
-{
-    struct wined3d_light_info *light_info;
-
-    TRACE("device %p, light_idx %u, enable %p.\n", device, light_idx, enable);
-
-    if (!(light_info = wined3d_light_state_get_light(&device->state.light_state, light_idx)))
-    {
-        TRACE("Light enabled state requested but light not defined.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    /* true is 128 according to SetLightEnable */
-    *enable = light_info->enabled ? 128 : 0;
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device,
         UINT plane_idx, const struct wined3d_vec4 *plane)
 {
@@ -1636,22 +1568,6 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device,
     device->state.clip_planes[plane_idx] = *plane;
 
     wined3d_cs_emit_set_clip_plane(device->cs, plane_idx, plane);
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_get_clip_plane(const struct wined3d_device *device,
-        UINT plane_idx, struct wined3d_vec4 *plane)
-{
-    TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
-
-    if (plane_idx >= device->adapter->d3d_info.limits.max_clip_distances)
-    {
-        TRACE("Application has requested clipplane this device doesn't support.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    *plane = device->state.clip_planes[plane_idx];
 
     return WINED3D_OK;
 }
@@ -1684,19 +1600,6 @@ void CDECL wined3d_device_set_material(struct wined3d_device *device, const stru
 
     device->state.material = *material;
     wined3d_cs_emit_set_material(device->cs, material);
-}
-
-void CDECL wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material)
-{
-    TRACE("device %p, material %p.\n", device, material);
-
-    *material = device->state.material;
-
-    TRACE("diffuse %s\n", debug_color(&material->diffuse));
-    TRACE("ambient %s\n", debug_color(&material->ambient));
-    TRACE("specular %s\n", debug_color(&material->specular));
-    TRACE("emissive %s\n", debug_color(&material->emissive));
-    TRACE("power %.8e.\n", material->power);
 }
 
 void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
@@ -1742,13 +1645,6 @@ void CDECL wined3d_device_set_base_vertex_index(struct wined3d_device *device, I
     TRACE("device %p, base_index %d.\n", device, base_index);
 
     device->state.base_vertex_index = base_index;
-}
-
-INT CDECL wined3d_device_get_base_vertex_index(const struct wined3d_device *device)
-{
-    TRACE("device %p.\n", device);
-
-    return device->state.base_vertex_index;
 }
 
 void CDECL wined3d_device_set_viewports(struct wined3d_device *device, unsigned int viewport_count,
@@ -1920,24 +1816,6 @@ void CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
 
     device->state.sampler_states[sampler_idx][state] = value;
     wined3d_cs_emit_set_sampler_state(device->cs, sampler_idx, state, value);
-}
-
-DWORD CDECL wined3d_device_get_sampler_state(const struct wined3d_device *device,
-        UINT sampler_idx, enum wined3d_sampler_state state)
-{
-    TRACE("device %p, sampler_idx %u, state %s.\n",
-            device, sampler_idx, debug_d3dsamplerstate(state));
-
-    if (sampler_idx >= WINED3DVERTEXTEXTURESAMPLER0 && sampler_idx <= WINED3DVERTEXTEXTURESAMPLER3)
-        sampler_idx -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
-
-    if (sampler_idx >= ARRAY_SIZE(device->state.sampler_states))
-    {
-        WARN("Invalid sampler %u.\n", sampler_idx);
-        return 0; /* Windows accepts overflowing this array ... we do not. */
-    }
-
-    return device->state.sampler_states[sampler_idx][state];
 }
 
 void CDECL wined3d_device_set_scissor_rects(struct wined3d_device *device, unsigned int rect_count,
@@ -2208,22 +2086,6 @@ HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_vs_consts_b(const struct wined3d_device *device,
-        unsigned int start_idx, unsigned int count, BOOL *constants)
-{
-    TRACE("device %p, start_idx %u, count %u, constants %p.\n",
-            device, start_idx, count, constants);
-
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
-        return WINED3DERR_INVALIDCALL;
-
-    if (count > WINED3D_MAX_CONSTS_B - start_idx)
-        count = WINED3D_MAX_CONSTS_B - start_idx;
-    memcpy(constants, &device->state.vs_consts_b[start_idx], count * sizeof(*constants));
-
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_device_set_vs_consts_i(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants)
 {
@@ -2250,21 +2112,6 @@ HRESULT CDECL wined3d_device_set_vs_consts_i(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_vs_consts_i(const struct wined3d_device *device,
-        unsigned int start_idx, unsigned int count, struct wined3d_ivec4 *constants)
-{
-    TRACE("device %p, start_idx %u, count %u, constants %p.\n",
-            device, start_idx, count, constants);
-
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
-        return WINED3DERR_INVALIDCALL;
-
-    if (count > WINED3D_MAX_CONSTS_I - start_idx)
-        count = WINED3D_MAX_CONSTS_I - start_idx;
-    memcpy(constants, &device->state.vs_consts_i[start_idx], count * sizeof(*constants));
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
 {
@@ -2286,23 +2133,6 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
     }
 
     wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_F, start_idx, count, constants);
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_get_vs_consts_f(const struct wined3d_device *device,
-        unsigned int start_idx, unsigned int count, struct wined3d_vec4 *constants)
-{
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
-
-    TRACE("device %p, start_idx %u, count %u, constants %p.\n",
-            device, start_idx, count, constants);
-
-    if (!constants || start_idx >= d3d_info->limits.vs_uniform_count
-            || count > d3d_info->limits.vs_uniform_count - start_idx)
-        return WINED3DERR_INVALIDCALL;
-
-    memcpy(constants, &device->state.vs_consts_f[start_idx], count * sizeof(*constants));
 
     return WINED3D_OK;
 }
@@ -2387,22 +2217,6 @@ HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_ps_consts_b(const struct wined3d_device *device,
-        unsigned int start_idx, unsigned int count, BOOL *constants)
-{
-    TRACE("device %p, start_idx %u, count %u,constants %p.\n",
-            device, start_idx, count, constants);
-
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
-        return WINED3DERR_INVALIDCALL;
-
-    if (count > WINED3D_MAX_CONSTS_B - start_idx)
-        count = WINED3D_MAX_CONSTS_B - start_idx;
-    memcpy(constants, &device->state.ps_consts_b[start_idx], count * sizeof(*constants));
-
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants)
 {
@@ -2429,22 +2243,6 @@ HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_ps_consts_i(const struct wined3d_device *device,
-        unsigned int start_idx, unsigned int count, struct wined3d_ivec4 *constants)
-{
-    TRACE("device %p, start_idx %u, count %u, constants %p.\n",
-            device, start_idx, count, constants);
-
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
-        return WINED3DERR_INVALIDCALL;
-
-    if (count > WINED3D_MAX_CONSTS_I - start_idx)
-        count = WINED3D_MAX_CONSTS_I - start_idx;
-    memcpy(constants, &device->state.ps_consts_i[start_idx], count * sizeof(*constants));
-
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_device_set_ps_consts_f(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
 {
@@ -2466,23 +2264,6 @@ HRESULT CDECL wined3d_device_set_ps_consts_f(struct wined3d_device *device,
     }
 
     wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_F, start_idx, count, constants);
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_get_ps_consts_f(const struct wined3d_device *device,
-        unsigned int start_idx, unsigned int count, struct wined3d_vec4 *constants)
-{
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
-
-    TRACE("device %p, start_idx %u, count %u, constants %p.\n",
-            device, start_idx, count, constants);
-
-    if (!constants || start_idx >= d3d_info->limits.ps_uniform_count
-            || count > d3d_info->limits.ps_uniform_count - start_idx)
-        return WINED3DERR_INVALIDCALL;
-
-    memcpy(constants, &device->state.ps_consts_f[start_idx], count * sizeof(*constants));
 
     return WINED3D_OK;
 }
@@ -3763,21 +3544,6 @@ void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
     wined3d_cs_emit_set_texture_state(device->cs, stage, state, value);
 }
 
-DWORD CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
-        UINT stage, enum wined3d_texture_stage_state state)
-{
-    TRACE("device %p, stage %u, state %s.\n",
-            device, stage, debug_d3dtexturestate(state));
-
-    if (state > WINED3D_HIGHEST_TEXTURE_STATE)
-    {
-        WARN("Invalid state %#x passed.\n", state);
-        return 0;
-    }
-
-    return device->state.texture_states[stage][state];
-}
-
 void CDECL wined3d_device_set_texture(struct wined3d_device *device,
         UINT stage, struct wined3d_texture *texture)
 {
@@ -3814,22 +3580,6 @@ void CDECL wined3d_device_set_texture(struct wined3d_device *device,
         wined3d_texture_decref(prev);
 
     return;
-}
-
-struct wined3d_texture * CDECL wined3d_device_get_texture(const struct wined3d_device *device, UINT stage)
-{
-    TRACE("device %p, stage %u.\n", device, stage);
-
-    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
-        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
-
-    if (stage >= ARRAY_SIZE(device->state.textures))
-    {
-        WARN("Ignoring invalid stage %u.\n", stage);
-        return NULL; /* Windows accepts overflowing this array ... we do not. */
-    }
-
-    return device->state.textures[stage];
 }
 
 void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
