@@ -325,20 +325,23 @@ enum tool
 static const struct
 {
     const char *base;
+    const char *llvm_base;
     const char *deflt;
 } tool_names[] =
 {
-    { "gcc", CC },
-    { "g++", CXX },
-    { "cpp", CPP },
-    { "ld",  LD },
+    { "gcc", "clang --driver-mode=gcc", CC },
+    { "g++", "clang --driver-mode=g++", CXX },
+    { "cpp", "clang --driver-mode=cpp", CPP },
+    { "ld",  "ld.lld",                  LD },
 };
 
 static strarray* build_tool_name( struct options *opts, enum tool tool )
 {
     const char *base = tool_names[tool].base;
+    const char *llvm_base = tool_names[tool].llvm_base;
     const char *deflt = tool_names[tool].deflt;
     const char *path;
+    strarray *ret;
     char* str;
 
     if (opts->target && opts->version)
@@ -357,8 +360,28 @@ static strarray* build_tool_name( struct options *opts, enum tool tool )
         str = xstrdup(deflt);
 
     if ((path = find_binary( opts->prefix, str ))) return strarray_fromstring( path, " " );
-    error( "Could not find %s\n", base );
-    return NULL;
+
+    if (!opts->version) str = xstrdup( llvm_base );
+    else str = strmake( "%s-%s", llvm_base, opts->version );
+    path = find_binary( opts->prefix, str );
+    if (!path)
+    {
+        error( "Could not find %s\n", base );
+        return NULL;
+    }
+
+    ret = strarray_fromstring( path, " " );
+    if (!strncmp( llvm_base, "clang", 5 ))
+    {
+        if (opts->target)
+        {
+            strarray_add( ret, "-target" );
+            strarray_add( ret, opts->target );
+        }
+        strarray_add( ret, "-Wno-unused-command-line-argument" );
+        strarray_add( ret, "-fuse-ld=lld" );
+    }
+    return ret;
 }
 
 static strarray* get_translator(struct options *opts)
