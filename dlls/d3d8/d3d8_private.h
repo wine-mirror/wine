@@ -57,6 +57,8 @@ struct d3d8
     IDirect3D8 IDirect3D8_iface;
     LONG refcount;
     struct wined3d *wined3d;
+    struct wined3d_output **wined3d_outputs;
+    unsigned int wined3d_output_count;
 };
 
 BOOL d3d8_init(struct d3d8 *d3d8) DECLSPEC_HIDDEN;

@@ -70,6 +70,7 @@ static ULONG WINAPI d3d8_Release(IDirect3D8 *iface)
         wined3d_decref(d3d8->wined3d);
         wined3d_mutex_unlock();
 
+        heap_free(d3d8->wined3d_outputs);
         heap_free(d3d8);
     }
 
@@ -93,22 +94,10 @@ static HRESULT WINAPI d3d8_RegisterSoftwareDevice(IDirect3D8 *iface, void *init_
 static UINT WINAPI d3d8_GetAdapterCount(IDirect3D8 *iface)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
-    struct wined3d_adapter *wined3d_adapter;
-    unsigned int adapter_idx, adapter_count;
-    unsigned int output_count = 0;
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    adapter_count = wined3d_get_adapter_count(d3d8->wined3d);
-    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
-    {
-        wined3d_adapter = wined3d_get_adapter(d3d8->wined3d, adapter_idx);
-        output_count += wined3d_adapter_get_output_count(wined3d_adapter);
-    }
-    wined3d_mutex_unlock();
-
-    return output_count;
+    return d3d8->wined3d_output_count;
 }
 
 static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
@@ -425,15 +414,48 @@ BOOL d3d8_init(struct d3d8 *d3d8)
             | WINED3D_HANDLE_RESTORE | WINED3D_PIXEL_CENTER_INTEGER
             | WINED3D_LEGACY_UNBOUND_RESOURCE_COLOR | WINED3D_NO_PRIMITIVE_RESTART
             | WINED3D_LEGACY_CUBEMAP_FILTERING;
+    unsigned int adapter_idx, output_idx, adapter_count, output_count = 0;
+    struct wined3d_adapter *wined3d_adapter;
 
     d3d8->IDirect3D8_iface.lpVtbl = &d3d8_vtbl;
     d3d8->refcount = 1;
 
     wined3d_mutex_lock();
     d3d8->wined3d = wined3d_create(flags);
-    wined3d_mutex_unlock();
     if (!d3d8->wined3d)
+    {
+        wined3d_mutex_unlock();
         return FALSE;
+    }
 
+    adapter_count = wined3d_get_adapter_count(d3d8->wined3d);
+    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
+    {
+        wined3d_adapter = wined3d_get_adapter(d3d8->wined3d, adapter_idx);
+        output_count += wined3d_adapter_get_output_count(wined3d_adapter);
+    }
+
+    d3d8->wined3d_outputs = heap_calloc(output_count, sizeof(*d3d8->wined3d_outputs));
+    if (!d3d8->wined3d_outputs)
+    {
+        wined3d_decref(d3d8->wined3d);
+        wined3d_mutex_unlock();
+        return FALSE;
+    }
+
+    d3d8->wined3d_output_count = 0;
+    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
+    {
+        wined3d_adapter = wined3d_get_adapter(d3d8->wined3d, adapter_idx);
+        output_count = wined3d_adapter_get_output_count(wined3d_adapter);
+        for (output_idx = 0; output_idx < output_count; ++output_idx)
+        {
+            d3d8->wined3d_outputs[d3d8->wined3d_output_count] =
+                    wined3d_adapter_get_output(wined3d_adapter, output_idx);
+            ++d3d8->wined3d_output_count;
+        }
+    }
+
+    wined3d_mutex_unlock();
     return TRUE;
 }
