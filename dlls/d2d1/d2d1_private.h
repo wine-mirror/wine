@@ -46,7 +46,7 @@ enum d2d_shape_type
     D2D_SHAPE_TYPE_OUTLINE,
     D2D_SHAPE_TYPE_BEZIER_OUTLINE,
     D2D_SHAPE_TYPE_TRIANGLE,
-    D2D_SHAPE_TYPE_BEZIER,
+    D2D_SHAPE_TYPE_CURVE,
     D2D_SHAPE_TYPE_COUNT,
 };
 
@@ -113,7 +113,8 @@ struct d2d_brush_cb
 struct d2d_ps_cb
 {
     BOOL outline;
-    BOOL pad[3];
+    BOOL is_arc;
+    BOOL pad[2];
     struct d2d_brush_cb colour_brush;
     struct d2d_brush_cb opacity_brush;
 };
@@ -301,7 +302,7 @@ HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap,
         const D2D1_BITMAP_BRUSH_PROPERTIES1 *bitmap_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         struct d2d_brush **brush) DECLSPEC_HIDDEN;
 void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx) DECLSPEC_HIDDEN;
-HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush, BOOL outline,
+HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush, BOOL outline, BOOL is_arc,
         struct d2d_device_context *render_target, ID3D10Buffer **ps_cb) DECLSPEC_HIDDEN;
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN;
 
@@ -388,7 +389,7 @@ enum d2d_geometry_state
     D2D_GEOMETRY_STATE_FIGURE,
 };
 
-struct d2d_bezier_vertex
+struct d2d_curve_vertex
 {
     D2D1_POINT_2F position;
     struct
@@ -439,9 +440,13 @@ struct d2d_geometry
         size_t faces_size;
         size_t face_count;
 
-        struct d2d_bezier_vertex *bezier_vertices;
+        struct d2d_curve_vertex *bezier_vertices;
         size_t bezier_vertices_size;
         size_t bezier_vertex_count;
+
+        struct d2d_curve_vertex *arc_vertices;
+        size_t arc_vertices_size;
+        size_t arc_vertex_count;
     } fill;
 
     struct

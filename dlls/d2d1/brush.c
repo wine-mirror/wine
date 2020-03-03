@@ -1262,7 +1262,7 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
 }
 
 HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
-        BOOL outline, struct d2d_device_context *render_target, ID3D10Buffer **ps_cb)
+        BOOL outline, BOOL is_arc, struct d2d_device_context *render_target, ID3D10Buffer **ps_cb)
 {
     D3D10_SUBRESOURCE_DATA buffer_data;
     struct d2d_ps_cb cb_data = {0};
@@ -1270,6 +1270,7 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
     HRESULT hr;
 
     cb_data.outline = outline;
+    cb_data.is_arc = is_arc;
     if (!d2d_brush_fill_cb(brush, render_target, &cb_data.colour_brush))
         return E_NOTIMPL;
     if (!d2d_brush_fill_cb(opacity_brush, render_target, &cb_data.opacity_brush))

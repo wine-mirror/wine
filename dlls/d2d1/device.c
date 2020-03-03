@@ -754,7 +754,7 @@ static void d2d_device_context_draw_geometry(struct d2d_device_context *render_t
         return;
     }
 
-    if (FAILED(hr = d2d_brush_get_ps_cb(brush, NULL, TRUE, render_target, &ps_cb)))
+    if (FAILED(hr = d2d_brush_get_ps_cb(brush, NULL, TRUE, FALSE, render_target, &ps_cb)))
     {
         WARN("Failed to get ps constant buffer, hr %#x.\n", hr);
         ID3D10Buffer_Release(vs_cb);
@@ -846,7 +846,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGeometry(ID2D1DeviceContext
 static void d2d_device_context_fill_geometry(struct d2d_device_context *render_target,
         const struct d2d_geometry *geometry, struct d2d_brush *brush, struct d2d_brush *opacity_brush)
 {
-    ID3D10Buffer *ib, *vb, *vs_cb, *ps_cb;
+    ID3D10Buffer *ib, *vb, *vs_cb, *ps_cb_bezier, *ps_cb_arc;
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
     D2D1_MATRIX_3X2_F *w;
@@ -902,10 +902,18 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
         return;
     }
 
-    if (FAILED(hr = d2d_brush_get_ps_cb(brush, opacity_brush, FALSE, render_target, &ps_cb)))
+    if (FAILED(hr = d2d_brush_get_ps_cb(brush, opacity_brush, FALSE, FALSE, render_target, &ps_cb_bezier)))
     {
         WARN("Failed to get ps constant buffer, hr %#x.\n", hr);
         ID3D10Buffer_Release(vs_cb);
+        return;
+    }
+
+    if (FAILED(hr = d2d_brush_get_ps_cb(brush, opacity_brush, FALSE, TRUE, render_target, &ps_cb_arc)))
+    {
+        WARN("Failed to get ps constant buffer, hr %#x.\n", hr);
+        ID3D10Buffer_Release(vs_cb);
+        ID3D10Buffer_Release(ps_cb_bezier);
         return;
     }
 
@@ -933,7 +941,7 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
         }
 
         d2d_device_context_draw(render_target, D2D_SHAPE_TYPE_TRIANGLE, ib, 3 * geometry->fill.face_count, vb,
-                sizeof(*geometry->fill.vertices), vs_cb, ps_cb, brush, opacity_brush);
+                sizeof(*geometry->fill.vertices), vs_cb, ps_cb_bezier, brush, opacity_brush);
 
         ID3D10Buffer_Release(vb);
         ID3D10Buffer_Release(ib);
@@ -951,14 +959,32 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
             goto done;
         }
 
-        d2d_device_context_draw(render_target, D2D_SHAPE_TYPE_BEZIER, NULL, geometry->fill.bezier_vertex_count, vb,
-                sizeof(*geometry->fill.bezier_vertices), vs_cb, ps_cb, brush, opacity_brush);
+        d2d_device_context_draw(render_target, D2D_SHAPE_TYPE_CURVE, NULL, geometry->fill.bezier_vertex_count, vb,
+                sizeof(*geometry->fill.bezier_vertices), vs_cb, ps_cb_bezier, brush, opacity_brush);
+
+        ID3D10Buffer_Release(vb);
+    }
+
+    if (geometry->fill.arc_vertex_count)
+    {
+        buffer_desc.ByteWidth = geometry->fill.arc_vertex_count * sizeof(*geometry->fill.arc_vertices);
+        buffer_data.pSysMem = geometry->fill.arc_vertices;
+
+        if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &vb)))
+        {
+            ERR("Failed to create arc vertex buffer, hr %#x.\n", hr);
+            goto done;
+        }
+
+        d2d_device_context_draw(render_target, D2D_SHAPE_TYPE_CURVE, NULL, geometry->fill.arc_vertex_count, vb,
+                sizeof(*geometry->fill.arc_vertices), vs_cb, ps_cb_arc, brush, opacity_brush);
 
         ID3D10Buffer_Release(vb);
     }
 
 done:
-    ID3D10Buffer_Release(ps_cb);
+    ID3D10Buffer_Release(ps_cb_arc);
+    ID3D10Buffer_Release(ps_cb_bezier);
     ID3D10Buffer_Release(vs_cb);
 }
 
@@ -2743,7 +2769,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
     };
-    static const D3D10_INPUT_ELEMENT_DESC il_desc_bezier[] =
+    static const D3D10_INPUT_ELEMENT_DESC il_desc_curve[] =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8, D3D10_INPUT_PER_VERTEX_DATA, 0},
@@ -3073,7 +3099,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         0x00000000, 0x00000000, 0x08000036, 0x001020c2, 0x00000004, 0x00004002, 0x00000000, 0x00000000,
         0x00000000, 0x3f800000, 0x0100003e,
     };
-    static const DWORD vs_code_bezier[] =
+    static const DWORD vs_code_curve[] =
     {
 #if 0
         float3x2 transform_geometry;
@@ -3137,6 +3163,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
 #define BRUSH_TYPE_COUNT    4
 
         bool outline;
+        bool is_arc;
         struct brush
         {
             uint type;
@@ -3299,21 +3326,28 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
             {
                 /* Evaluate the implicit form of the curve in texture space.
                  * "i.b.z" determines which side of the curve is shaded. */
-                clip((i.b.x * i.b.x - i.b.y) * i.b.z);
+                if (!is_arc)
+                {
+                    clip((i.b.x * i.b.x - i.b.y) * i.b.z);
+                }
+                else
+                {
+                    clip((i.b.x * i.b.x + i.b.y * i.b.y - 1.0) * i.b.z);
+                }
             }
 
             return colour;
         }
 #endif
-        0x43425844, 0xf3cbb8bd, 0x5f286454, 0x139976a7, 0x6817e876, 0x00000001, 0x00001d18, 0x00000003,
+        0x43425844, 0x9b22fd36, 0xa300dd1c, 0x99947c91, 0x774ecf4b, 0x00000001, 0x00001df4, 0x00000003,
         0x0000002c, 0x000000c4, 0x000000f8, 0x4e475349, 0x00000090, 0x00000004, 0x00000008, 0x00000068,
         0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000303, 0x00000077, 0x00000000, 0x00000000,
         0x00000003, 0x00000001, 0x00000f0f, 0x0000007e, 0x00000000, 0x00000000, 0x00000003, 0x00000002,
         0x00000303, 0x0000007e, 0x00000001, 0x00000000, 0x00000003, 0x00000003, 0x00000303, 0x4c524f57,
         0x4f505f44, 0x49544953, 0x42004e4f, 0x45495a45, 0x54530052, 0x454b4f52, 0x4152545f, 0x4f46534e,
         0xab004d52, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
-        0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00001c18,
-        0x00000040, 0x00000706, 0x04000059, 0x00208e46, 0x00000000, 0x00000009, 0x0300005a, 0x00106000,
+        0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00001cf4,
+        0x00000040, 0x0000073d, 0x04000059, 0x00208e46, 0x00000000, 0x00000009, 0x0300005a, 0x00106000,
         0x00000000, 0x0300005a, 0x00106000, 0x00000001, 0x04001858, 0x00107000, 0x00000000, 0x00005555,
         0x04001858, 0x00107000, 0x00000001, 0x00005555, 0x04000858, 0x00107000, 0x00000002, 0x00005555,
         0x04000858, 0x00107000, 0x00000003, 0x00005555, 0x03001062, 0x00101032, 0x00000000, 0x03001062,
@@ -3518,26 +3552,33 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         0x00000000, 0x00000005, 0x01000015, 0x0a000037, 0x00100012, 0x00000001, 0x0010001a, 0x00000001,
         0x0010000a, 0x00000001, 0x0020801a, 0x00000000, 0x00000005, 0x01000015, 0x01000015, 0x01000015,
         0x07000038, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00100006, 0x00000001, 0x01000012,
-        0x05000036, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x01000015, 0x08000027, 0x00100012,
-        0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x00004001, 0x00000000, 0x0500003b, 0x00100022,
-        0x00000000, 0x0010000a, 0x00000000, 0x0500000b, 0x00100032, 0x00000001, 0x00101046, 0x00000001,
-        0x0500000c, 0x001000c2, 0x00000001, 0x00101406, 0x00000001, 0x07000000, 0x00100042, 0x00000000,
-        0x0010100a, 0x00000001, 0x0010100a, 0x00000001, 0x0a000032, 0x001000c2, 0x00000000, 0x00100aa6,
-        0x00000000, 0x00100806, 0x00000001, 0x80100d56, 0x00000041, 0x00000001, 0x0700000f, 0x00100012,
-        0x00000001, 0x00100ae6, 0x00000000, 0x00101ae6, 0x00000001, 0x07000031, 0x00100012, 0x00000001,
-        0x0010000a, 0x00000001, 0x00004001, 0x00000000, 0x07000001, 0x00100012, 0x00000001, 0x0010000a,
-        0x00000000, 0x0010000a, 0x00000001, 0x0304000d, 0x0010000a, 0x00000001, 0x07000038, 0x00100032,
-        0x00000001, 0x00100ff6, 0x00000000, 0x00101046, 0x00000003, 0x09000032, 0x001000c2, 0x00000000,
-        0x00101406, 0x00000002, 0x00100aa6, 0x00000000, 0x00100406, 0x00000001, 0x0700000f, 0x00100042,
-        0x00000000, 0x00100ae6, 0x00000000, 0x00100ae6, 0x00000000, 0x0500004b, 0x00100042, 0x00000000,
-        0x0010002a, 0x00000000, 0x0a000032, 0x00100082, 0x00000000, 0x0010100a, 0x00000001, 0x0010100a,
-        0x00000001, 0x8010101a, 0x00000041, 0x00000001, 0x08000000, 0x00100042, 0x00000000, 0x8010003a,
-        0x000000c1, 0x00000000, 0x0010002a, 0x00000000, 0x07000031, 0x00100042, 0x00000000, 0x0010002a,
-        0x00000000, 0x00004001, 0x00000000, 0x07000001, 0x00100012, 0x00000000, 0x0010000a, 0x00000000,
-        0x0010002a, 0x00000000, 0x0304000d, 0x0010000a, 0x00000000, 0x07000038, 0x00100012, 0x00000000,
-        0x0010003a, 0x00000000, 0x0010102a, 0x00000001, 0x07000031, 0x00100012, 0x00000000, 0x0010000a,
-        0x00000000, 0x00004001, 0x00000000, 0x07000001, 0x00100012, 0x00000000, 0x0010001a, 0x00000000,
-        0x0010000a, 0x00000000, 0x0304000d, 0x0010000a, 0x00000000, 0x0100003e,
+        0x05000036, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x01000015, 0x0b000027, 0x00100032,
+        0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x0500000b, 0x00100032, 0x00000001, 0x00101046, 0x00000001, 0x0500000c, 0x001000c2,
+        0x00000001, 0x00101406, 0x00000001, 0x07000000, 0x00100042, 0x00000000, 0x0010100a, 0x00000001,
+        0x0010100a, 0x00000001, 0x0a000032, 0x001000c2, 0x00000000, 0x00100aa6, 0x00000000, 0x00100806,
+        0x00000001, 0x80100d56, 0x00000041, 0x00000001, 0x0700000f, 0x00100012, 0x00000001, 0x00100ae6,
+        0x00000000, 0x00101ae6, 0x00000001, 0x07000031, 0x00100012, 0x00000001, 0x0010000a, 0x00000001,
+        0x00004001, 0x00000000, 0x07000001, 0x00100012, 0x00000001, 0x0010000a, 0x00000000, 0x0010000a,
+        0x00000001, 0x0304000d, 0x0010000a, 0x00000001, 0x07000038, 0x00100032, 0x00000001, 0x00100ff6,
+        0x00000000, 0x00101046, 0x00000003, 0x09000032, 0x001000c2, 0x00000000, 0x00101406, 0x00000002,
+        0x00100aa6, 0x00000000, 0x00100406, 0x00000001, 0x0700000f, 0x00100042, 0x00000000, 0x00100ae6,
+        0x00000000, 0x00100ae6, 0x00000000, 0x0500004b, 0x00100042, 0x00000000, 0x0010002a, 0x00000000,
+        0x07000038, 0x00100032, 0x00000001, 0x00101046, 0x00000001, 0x00101046, 0x00000001, 0x0a000032,
+        0x00100082, 0x00000000, 0x0010100a, 0x00000001, 0x0010100a, 0x00000001, 0x8010101a, 0x00000041,
+        0x00000001, 0x08000000, 0x00100042, 0x00000000, 0x8010003a, 0x000000c1, 0x00000000, 0x0010002a,
+        0x00000000, 0x07000031, 0x00100042, 0x00000000, 0x0010002a, 0x00000000, 0x00004001, 0x00000000,
+        0x07000001, 0x00100042, 0x00000000, 0x0010000a, 0x00000000, 0x0010002a, 0x00000000, 0x0304000d,
+        0x0010002a, 0x00000000, 0x0500003b, 0x00100052, 0x00000000, 0x00100106, 0x00000000, 0x07000001,
+        0x00100042, 0x00000000, 0x0010002a, 0x00000000, 0x0010000a, 0x00000000, 0x07000038, 0x00100082,
+        0x00000000, 0x0010003a, 0x00000000, 0x0010102a, 0x00000001, 0x07000031, 0x00100082, 0x00000000,
+        0x0010003a, 0x00000000, 0x00004001, 0x00000000, 0x07000001, 0x00100052, 0x00000000, 0x00100656,
+        0x00000000, 0x00100306, 0x00000000, 0x0304000d, 0x0010002a, 0x00000000, 0x07000000, 0x00100022,
+        0x00000000, 0x0010001a, 0x00000001, 0x0010000a, 0x00000001, 0x07000000, 0x00100022, 0x00000000,
+        0x0010001a, 0x00000000, 0x00004001, 0xbf800000, 0x07000038, 0x00100022, 0x00000000, 0x0010001a,
+        0x00000000, 0x0010102a, 0x00000001, 0x07000031, 0x00100022, 0x00000000, 0x0010001a, 0x00000000,
+        0x00004001, 0x00000000, 0x07000001, 0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x0010001a,
+        0x00000000, 0x0304000d, 0x0010000a, 0x00000000, 0x0100003e,
     };
     static const struct shape_info
     {
@@ -3555,8 +3596,8 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
                                         vs_code_bezier_outline, sizeof(vs_code_bezier_outline)},
         {D2D_SHAPE_TYPE_TRIANGLE,       il_desc_triangle,       ARRAY_SIZE(il_desc_triangle),
                                         vs_code_triangle,       sizeof(vs_code_triangle)},
-        {D2D_SHAPE_TYPE_BEZIER,         il_desc_bezier,         ARRAY_SIZE(il_desc_bezier),
-                                        vs_code_bezier,         sizeof(vs_code_bezier)},
+        {D2D_SHAPE_TYPE_CURVE,          il_desc_curve,          ARRAY_SIZE(il_desc_curve),
+                                        vs_code_curve,          sizeof(vs_code_curve)},
     };
     static const struct
     {

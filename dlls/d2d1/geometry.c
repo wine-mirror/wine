@@ -129,7 +129,7 @@ struct d2d_fp_fin
     size_t length;
 };
 
-static void d2d_bezier_vertex_set(struct d2d_bezier_vertex *b,
+static void d2d_curve_vertex_set(struct d2d_curve_vertex *b,
         const D2D1_POINT_2F *p, float u, float v, float sign)
 {
     b->position = *p;
@@ -2351,19 +2351,17 @@ static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
 static BOOL d2d_geometry_fill_add_arc_triangle(struct d2d_geometry *geometry,
         const D2D1_POINT_2F *p0, const D2D1_POINT_2F *p1, const D2D1_POINT_2F *p2)
 {
-    struct d2d_bezier_vertex *b;
+    struct d2d_curve_vertex *a;
 
-    FIXME("Approximating arc triangle with Bezier triangle.\n");
-
-    if (!d2d_array_reserve((void **)&geometry->fill.bezier_vertices, &geometry->fill.bezier_vertices_size,
-            geometry->fill.bezier_vertex_count + 3, sizeof(*geometry->fill.bezier_vertices)))
+    if (!d2d_array_reserve((void **)&geometry->fill.arc_vertices, &geometry->fill.arc_vertices_size,
+            geometry->fill.arc_vertex_count + 3, sizeof(*geometry->fill.arc_vertices)))
         return FALSE;
 
-    b = &geometry->fill.bezier_vertices[geometry->fill.bezier_vertex_count];
-    d2d_bezier_vertex_set(&b[0], p0, 0.0f, 0.0f, -1.0f);
-    d2d_bezier_vertex_set(&b[1], p1, 0.5f, 0.0f, -1.0f);
-    d2d_bezier_vertex_set(&b[2], p2, 1.0f, 1.0f, -1.0f);
-    geometry->fill.bezier_vertex_count += 3;
+    a = &geometry->fill.arc_vertices[geometry->fill.arc_vertex_count];
+    d2d_curve_vertex_set(&a[0], p0, 0.0f, 1.0f, -1.0f);
+    d2d_curve_vertex_set(&a[1], p1, 1.0f, 1.0f, -1.0f);
+    d2d_curve_vertex_set(&a[2], p2, 1.0f, 0.0f, -1.0f);
+    geometry->fill.arc_vertex_count += 3;
 
     return TRUE;
 }
@@ -2374,6 +2372,7 @@ static void d2d_geometry_cleanup(struct d2d_geometry *geometry)
     heap_free(geometry->outline.beziers);
     heap_free(geometry->outline.faces);
     heap_free(geometry->outline.vertices);
+    heap_free(geometry->fill.arc_vertices);
     heap_free(geometry->fill.bezier_vertices);
     heap_free(geometry->fill.faces);
     heap_free(geometry->fill.vertices);
@@ -2782,7 +2781,7 @@ static BOOL d2d_geometry_split_bezier(struct d2d_geometry *geometry, const struc
 static HRESULT d2d_geometry_resolve_beziers(struct d2d_geometry *geometry)
 {
     struct d2d_segment_idx idx_p, idx_q;
-    struct d2d_bezier_vertex *b;
+    struct d2d_curve_vertex *b;
     const D2D1_POINT_2F *p[3];
     struct d2d_figure *figure;
     size_t bezier_idx, i;
@@ -2858,9 +2857,9 @@ static HRESULT d2d_geometry_resolve_beziers(struct d2d_geometry *geometry)
         p[2] = &figure->vertices[i];
 
         b = &geometry->fill.bezier_vertices[bezier_idx * 3];
-        d2d_bezier_vertex_set(&b[0], p[0], 0.0f, 0.0f, sign);
-        d2d_bezier_vertex_set(&b[1], p[1], 0.5f, 0.0f, sign);
-        d2d_bezier_vertex_set(&b[2], p[2], 1.0f, 1.0f, sign);
+        d2d_curve_vertex_set(&b[0], p[0], 0.0f, 0.0f, sign);
+        d2d_curve_vertex_set(&b[1], p[1], 0.5f, 0.0f, sign);
+        d2d_curve_vertex_set(&b[2], p[2], 1.0f, 1.0f, sign);
 
         if (!d2d_geometry_get_next_bezier_segment_idx(geometry, &idx_p))
             break;
@@ -4524,6 +4523,7 @@ static ULONG STDMETHODCALLTYPE d2d_transformed_geometry_Release(ID2D1Transformed
         geometry->outline.beziers = NULL;
         geometry->outline.faces = NULL;
         geometry->outline.vertices = NULL;
+        geometry->fill.arc_vertices = NULL;
         geometry->fill.bezier_vertices = NULL;
         geometry->fill.faces = NULL;
         geometry->fill.vertices = NULL;
