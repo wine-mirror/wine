@@ -125,13 +125,13 @@ static HRESULT WINAPI multimedia_stream_GetMediaStream(IAMMultiMediaStream *ifac
 }
 
 static HRESULT WINAPI multimedia_stream_EnumMediaStreams(IAMMultiMediaStream *iface,
-        LONG Index, IMediaStream **ppMediaStream)
+        LONG index, IMediaStream **stream)
 {
-    struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
+    struct multimedia_stream *mmstream = impl_from_IAMMultiMediaStream(iface);
 
-    FIXME("(%p/%p)->(%d,%p) stub!\n", This, iface, Index, ppMediaStream);
+    TRACE("mmstream %p, index %d, stream %p.\n", mmstream, index, stream);
 
-    return E_NOTIMPL;
+    return IMediaStreamFilter_EnumMediaStreams(mmstream->filter, index, stream);
 }
 
 static HRESULT WINAPI multimedia_stream_GetState(IAMMultiMediaStream *iface, STREAM_STATE *pCurrentState)
