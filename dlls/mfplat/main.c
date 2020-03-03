@@ -109,6 +109,7 @@ struct transform_activate
     struct attributes attributes;
     IMFActivate IMFActivate_iface;
     IClassFactory *factory;
+    IMFTransform *transform;
 };
 
 struct system_clock
@@ -198,6 +199,8 @@ static ULONG WINAPI transform_activate_Release(IMFActivate *iface)
         clear_attributes_object(&activate->attributes);
         if (activate->factory)
             IClassFactory_Release(activate->factory);
+        if (activate->transform)
+            IMFTransform_Release(activate->transform);
         heap_free(activate);
     }
 
@@ -482,21 +485,67 @@ static HRESULT WINAPI transform_activate_CopyAllItems(IMFActivate *iface, IMFAtt
 
 static HRESULT WINAPI transform_activate_ActivateObject(IMFActivate *iface, REFIID riid, void **obj)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
+    CLSID clsid;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    EnterCriticalSection(&activate->attributes.cs);
+
+    if (!activate->transform)
+    {
+        if (activate->factory)
+        {
+            if (FAILED(hr = IClassFactory_CreateInstance(activate->factory, NULL, &IID_IMFTransform,
+                    (void **)&activate->transform)))
+            {
+                hr = MF_E_INVALIDREQUEST;
+            }
+        }
+        else
+        {
+            if (SUCCEEDED(hr = attributes_GetGUID(&activate->attributes, &MFT_TRANSFORM_CLSID_Attribute, &clsid)))
+            {
+                if (FAILED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform,
+                        (void **)&activate->transform)))
+                {
+                    hr = MF_E_INVALIDREQUEST;
+                }
+            }
+        }
+    }
+
+    if (activate->transform)
+        hr = IMFTransform_QueryInterface(activate->transform, riid, obj);
+
+    LeaveCriticalSection(&activate->attributes.cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI transform_activate_ShutdownObject(IMFActivate *iface)
 {
-    FIXME("%p.\n", iface);
+    struct transform_activate *activate = impl_from_IMFActivate(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&activate->attributes.cs);
+
+    if (activate->transform)
+    {
+        IMFTransform_Release(activate->transform);
+        activate->transform = NULL;
+    }
+
+    LeaveCriticalSection(&activate->attributes.cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_activate_DetachObject(IMFActivate *iface)
 {
-    FIXME("%p.\n", iface);
+    TRACE("%p.\n", iface);
 
     return E_NOTIMPL;
 }
