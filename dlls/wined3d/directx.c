@@ -865,6 +865,16 @@ enum wined3d_pci_device wined3d_gpu_from_feature_level(enum wined3d_pci_vendor *
     return device_id;
 }
 
+struct wined3d_adapter * CDECL wined3d_get_adapter(const struct wined3d *wined3d, unsigned int idx)
+{
+    TRACE("wined3d %p, idx %u.\n", wined3d, idx);
+
+    if (idx >= wined3d->adapter_count)
+        return NULL;
+
+    return wined3d->adapters[idx];
+}
+
 UINT CDECL wined3d_get_adapter_count(const struct wined3d *wined3d)
 {
     TRACE("wined3d %p, reporting %u adapters.\n",

@@ -2178,6 +2178,7 @@ struct wined3d_parent_ops
 };
 
 struct wined3d;
+struct wined3d_adapter;
 struct wined3d_blend_state;
 struct wined3d_buffer;
 struct wined3d_device;
@@ -2262,6 +2263,8 @@ HRESULT __cdecl wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT a
         UINT mode_idx, struct wined3d_display_mode *mode);
 HRESULT __cdecl wined3d_find_closest_matching_adapter_mode(const struct wined3d *wined3d,
         unsigned int adapter_idx, struct wined3d_display_mode *mode);
+struct wined3d_adapter * __cdecl wined3d_get_adapter(const struct wined3d *wined3d,
+        unsigned int idx);
 UINT __cdecl wined3d_get_adapter_count(const struct wined3d *wined3d);
 HRESULT __cdecl wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation);

@@ -11,6 +11,7 @@
 @ cdecl wined3d_decref(ptr)
 @ cdecl wined3d_enum_adapter_modes(ptr long long long long ptr)
 @ cdecl wined3d_find_closest_matching_adapter_mode(ptr long ptr)
+@ cdecl wined3d_get_adapter(ptr long)
 @ cdecl wined3d_get_adapter_count(ptr)
 @ cdecl wined3d_get_adapter_display_mode(ptr long ptr ptr)
 @ cdecl wined3d_get_adapter_identifier(ptr long long ptr)
