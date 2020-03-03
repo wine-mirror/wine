@@ -41,6 +41,75 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
+struct datasource
+{
+    CLSID clsid;
+    IDBProperties *provider;
+    DBPROPINFOSET *propinfoset;
+    WCHAR *description;
+};
+
+static struct datasource *create_datasource(WCHAR *guid)
+{
+    struct datasource *data = heap_alloc_zero(sizeof(struct datasource));
+    if (data)
+    {
+        CLSIDFromString(guid, &data->clsid);
+    }
+
+    return data;
+}
+
+static void destroy_datasource(struct datasource *data)
+{
+    if (data->propinfoset)
+    {
+        ULONG i;
+
+        for (i = 0; i < data->propinfoset->cPropertyInfos; i++)
+            VariantClear(&data->propinfoset->rgPropertyInfos[i].vValues);
+
+        CoTaskMemFree(data->propinfoset->rgPropertyInfos);
+        CoTaskMemFree(data->propinfoset);
+    }
+    if (data->description)
+        CoTaskMemFree(data->description);
+
+    if (data->provider)
+        IDBProperties_Release(data->provider);
+
+    heap_free(data);
+}
+
+static BOOL initialize_datasource(struct datasource *data)
+{
+    HRESULT hr;
+    DBPROPIDSET propidset;
+    ULONG infocount;
+
+    hr = CoCreateInstance(&data->clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IDBProperties, (void**)&data->provider);
+    if (FAILED(hr))
+    {
+        WARN("Datasource cannot be created (0x%08x)\n", hr);
+        return FALSE;
+    }
+
+    propidset.rgPropertyIDs = NULL;
+    propidset.cPropertyIDs  = 0;
+    propidset.guidPropertySet = DBPROPSET_DBINITALL;
+
+    hr = IDBProperties_GetPropertyInfo(data->provider, 1, &propidset, &infocount, &data->propinfoset, &data->description);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get DB Properties (0x%08x)\n", hr);
+
+        IDBProperties_Release(data->provider);
+        data->provider = NULL;
+        return FALSE;
+    }
+
+    return TRUE;
+}
 
 typedef struct DSLocatorImpl
 {
@@ -240,12 +309,17 @@ static void add_connections_providers(HWND lv)
             if (res == ERROR_SUCCESS)
             {
                 LVITEMW item;
-                item.mask = LVIF_TEXT;
+                struct datasource *data;
+
+                data = create_datasource(guidkey);
+
+                item.mask = LVIF_TEXT | LVIF_PARAM;
                 item.iItem = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0);
                 item.iSubItem = 0;
                 item.pszText = description;
+                item.lParam = (LPARAM)data;
+
                 SendMessageW(lv, LVM_INSERTITEMW, 0, (LPARAM)&item);
-                /* TODO - Add ProgID to item data */
             }
             RegCloseKey(subkey);
         }
@@ -274,6 +348,22 @@ static LRESULT CALLBACK data_link_properties_dlg_proc(HWND hwnd, UINT msg, WPARA
 
             break;
         }
+        case WM_DESTROY:
+        {
+            HWND lv = GetDlgItem(hwnd, IDC_LST_CONNECTIONS);
+            LVITEMA item;
+
+            item.iItem = 0;
+            item.iSubItem = 0;
+            item.mask = LVIF_PARAM;
+
+            while(ListView_GetItemA(lv, &item))
+            {
+                destroy_datasource( (struct datasource *)item.lParam);
+                item.iItem++;
+            }
+            break;
+        }
         case WM_NOTIFY:
         {
             NMHDR *hdr = ((LPNMHDR)lp);
@@ -281,6 +371,7 @@ static LRESULT CALLBACK data_link_properties_dlg_proc(HWND hwnd, UINT msg, WPARA
             {
                 case PSN_KILLACTIVE:
                 {
+                    LVITEMA item;
                     /*
                      * FIXME: This needs to replace the connection page based off the selection.
                      *   We only care about the ODBC for now which is the default.
@@ -297,6 +388,26 @@ static LRESULT CALLBACK data_link_properties_dlg_proc(HWND hwnd, UINT msg, WPARA
                         SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, TRUE);
                         return TRUE;
                     }
+
+                    item.iItem = 0;
+                    item.iSubItem = 0;
+                    item.stateMask = LVIS_SELECTED;
+                    item.mask = LVIF_PARAM | LVIF_STATE;
+
+                    if(ListView_GetItemA(lv, &item))
+                    {
+                        if(!initialize_datasource( (struct datasource*)item.lParam))
+                        {
+                            WCHAR title[256], msg[256];
+                            LoadStringW(instance, IDS_PROVIDER_TITLE, title, ARRAY_SIZE(title));
+                            LoadStringW(instance, IDS_PROVIDER_NOT_AVAIL, msg, ARRAY_SIZE(msg));
+                            MessageBoxW(hwnd, msg, title, MB_OK | MB_ICONEXCLAMATION);
+                            SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, TRUE);
+                            return TRUE;
+                        }
+                    }
+                    else
+                        ERR("Failed to get selected item\n");
 
                     return FALSE;
                 }

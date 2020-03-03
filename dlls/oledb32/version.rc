@@ -48,6 +48,7 @@ STRINGTABLE
 
     IDS_PROVIDER_TITLE      "Data Link Error"
     IDS_PROVIDER_ERROR      "Please select a provider."
+    IDS_PROVIDER_NOT_AVAIL  "Provider is no longer available. Ensure that the provider is installed properly."
 }
 
 IDD_PROVIDER DIALOG 0, 0, 227, 225

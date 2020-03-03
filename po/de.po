@@ -350,7 +350,7 @@ msgstr "Assistent"
 msgid "< &Back"
 msgstr "< &Zurück"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "&Weiter >"
 
@@ -1224,7 +1224,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Benutzername:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "&Kennwort:"
 
@@ -3119,7 +3119,7 @@ msgstr "Symbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "Andere"
 
@@ -3184,7 +3184,7 @@ msgstr "St&art"
 msgid "&Stop"
 msgstr "&Stopp"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "A&ktualisieren"
 
@@ -8334,117 +8334,117 @@ msgstr "Ein"
 msgid "Off"
 msgstr "Aus"
 
-#: version.rc:55
+#: version.rc:56
 msgid "Provider"
 msgstr "Anbieter"
 
-#: version.rc:58
+#: version.rc:59
 msgid "Select the data you want to connect to:"
 msgstr "Wählen Sie die zu verbindenden Daten aus:"
 
-#: version.rc:65
+#: version.rc:66
 msgid "Connection"
 msgstr "Verbindung"
 
-#: version.rc:68
+#: version.rc:69
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Geben Sie folgendes an, um sich mit ODBC-Daten zu verbinden:"
 
-#: version.rc:69
+#: version.rc:70
 msgid "1. Specify the source of data:"
 msgstr "1. Geben Sie die Datenquelle an:"
 
-#: version.rc:70
+#: version.rc:71
 msgid "Use &data source name"
 msgstr "&Datenquellennamen verwenden"
 
-#: version.rc:73
+#: version.rc:74
 msgid "Use c&onnection string"
 msgstr "Verbindungs-Zeichenkette &verwenden"
 
-#: version.rc:74
+#: version.rc:75
 msgid "&Connection string:"
 msgstr "Verbindungs-&Zeichenkette:"
 
-#: version.rc:76
+#: version.rc:77
 msgid "B&uild..."
 msgstr "B&uild..."
 
-#: version.rc:77
+#: version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr "2. Zugangsdaten zum Login auf Server"
 
-#: version.rc:78
+#: version.rc:79
 msgid "User &name:"
 msgstr "&Benutzername:"
 
-#: version.rc:82
+#: version.rc:83
 msgid "&Blank password"
 msgstr "&Leeres Kennwort"
 
-#: version.rc:83
+#: version.rc:84
 msgid "Allow &saving password"
 msgstr "Kennwort &speichern"
 
-#: version.rc:84
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Folgenden Initialkatalog verwenden:"
 
-#: version.rc:86
+#: version.rc:87
 msgid "&Test Connection"
 msgstr "Verbindung &testen"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "Fortgeschrittene"
 
-#: version.rc:94
+#: version.rc:95
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "Netzwerkfreigabe"
 
-#: version.rc:95
+#: version.rc:96
 #, fuzzy
 #| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
 msgstr "Fehlerhafte Imitationsstufe.\n"
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:100
+#: version.rc:101
 #, fuzzy
 #| msgid "Connected"
 msgid "Connect:"
 msgstr "Verbunden"
 
-#: version.rc:102
+#: version.rc:103
 #, fuzzy
 #| msgid "seconds"
 msgid "seconds."
 msgstr "Sekunden"
 
-#: version.rc:103
+#: version.rc:104
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "Erfolgreich"
 
-#: version.rc:109
+#: version.rc:110
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "&Alles"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: version.rc:114
+#: version.rc:115
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
@@ -8461,6 +8461,12 @@ msgstr "Eigenschaften der Datenverbindung"
 #| msgid "Please select a file."
 msgid "Please select a provider."
 msgstr "Bitte wählen Sie eine Datei."
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr ""
 
 #: version.rc:36
 msgid "Data Link Properties"

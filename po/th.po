@@ -333,7 +333,7 @@ msgstr ""
 msgid "< &Back"
 msgstr "< ย้อนกลับ"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "ต่อไป >"
 
@@ -1213,7 +1213,7 @@ msgstr "มม."
 msgid "&User name:"
 msgstr "แฟ้ม"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr ""
 
@@ -3071,7 +3071,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr ""
 
@@ -3138,7 +3138,7 @@ msgstr ""
 msgid "&Stop"
 msgstr ""
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr ""
 
@@ -8415,116 +8415,116 @@ msgstr "เปิด"
 msgid "Off"
 msgstr "ปิด"
 
-#: version.rc:55
+#: version.rc:56
 msgid "Provider"
 msgstr ""
 
-#: version.rc:58
+#: version.rc:59
 msgid "Select the data you want to connect to:"
 msgstr ""
 
-#: version.rc:65
+#: version.rc:66
 #, fuzzy
 msgid "Connection"
 msgstr "รายละเอียด"
 
-#: version.rc:68
+#: version.rc:69
 msgid "Specify the following to connect to ODBC data:"
 msgstr ""
 
-#: version.rc:69
+#: version.rc:70
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:70
+#: version.rc:71
 msgid "Use &data source name"
 msgstr ""
 
-#: version.rc:73
+#: version.rc:74
 #, fuzzy
 msgid "Use c&onnection string"
 msgstr "รายละเอียด"
 
-#: version.rc:74
+#: version.rc:75
 #, fuzzy
 msgid "&Connection string:"
 msgstr "รายละเอียด"
 
-#: version.rc:76
+#: version.rc:77
 msgid "B&uild..."
 msgstr ""
 
-#: version.rc:77
+#: version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:78
+#: version.rc:79
 #, fuzzy
 msgid "User &name:"
 msgstr "แฟ้ม"
 
-#: version.rc:82
+#: version.rc:83
 msgid "&Blank password"
 msgstr ""
 
-#: version.rc:83
+#: version.rc:84
 msgid "Allow &saving password"
 msgstr ""
 
-#: version.rc:84
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:86
+#: version.rc:87
 #, fuzzy
 msgid "&Test Connection"
 msgstr "รายละเอียด"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr ""
 
-#: version.rc:94
+#: version.rc:95
 msgid "Network settings"
 msgstr ""
 
-#: version.rc:95
+#: version.rc:96
 msgid "&Impersonation level:"
 msgstr ""
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:100
+#: version.rc:101
 #, fuzzy
 msgid "Connect:"
 msgstr "ไม่พบแฟ้ม"
 
-#: version.rc:102
+#: version.rc:103
 #, fuzzy
 #| msgid "&Seconds"
 msgid "seconds."
 msgstr "วินาที"
 
-#: version.rc:103
+#: version.rc:104
 #, fuzzy
 msgid "A&ccess:"
 msgstr "วันที่"
 
-#: version.rc:109
+#: version.rc:110
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "ทั้งหมด"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: version.rc:114
+#: version.rc:115
 #, fuzzy
 msgid "&Edit Value..."
 msgstr "แก้ไข"
@@ -8536,6 +8536,12 @@ msgstr "ปรับแต่งนาฬิกา"
 
 #: version.rc:50
 msgid "Please select a provider."
+msgstr ""
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
 msgstr ""
 
 #: version.rc:36

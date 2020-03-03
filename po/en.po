@@ -349,7 +349,7 @@ msgstr "Wizard"
 msgid "< &Back"
 msgstr "< &Back"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "&Next >"
 
@@ -1222,7 +1222,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&User name:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "&Password:"
 
@@ -3113,7 +3113,7 @@ msgstr "Symbol"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "Other"
 
@@ -3178,7 +3178,7 @@ msgstr "&Home"
 msgid "&Stop"
 msgstr "&Stop"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Refresh"
 
@@ -8316,99 +8316,99 @@ msgstr "On"
 msgid "Off"
 msgstr "Off"
 
-#: version.rc:55
+#: version.rc:56
 msgid "Provider"
 msgstr "Provider"
 
-#: version.rc:58
+#: version.rc:59
 msgid "Select the data you want to connect to:"
 msgstr "Select the data you want to connect to:"
 
-#: version.rc:65
+#: version.rc:66
 msgid "Connection"
 msgstr "Connection"
 
-#: version.rc:68
+#: version.rc:69
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Specify the following to connect to ODBC data:"
 
-#: version.rc:69
+#: version.rc:70
 msgid "1. Specify the source of data:"
 msgstr "1. Specify the source of data:"
 
-#: version.rc:70
+#: version.rc:71
 msgid "Use &data source name"
 msgstr "Use &data source name"
 
-#: version.rc:73
+#: version.rc:74
 msgid "Use c&onnection string"
 msgstr "Use c&onnection string"
 
-#: version.rc:74
+#: version.rc:75
 msgid "&Connection string:"
 msgstr "&Connection string:"
 
-#: version.rc:76
+#: version.rc:77
 msgid "B&uild..."
 msgstr "B&uild..."
 
-#: version.rc:77
+#: version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr "2. Enter information to log on to the server"
 
-#: version.rc:78
+#: version.rc:79
 msgid "User &name:"
 msgstr "User &name:"
 
-#: version.rc:82
+#: version.rc:83
 msgid "&Blank password"
 msgstr "&Blank password"
 
-#: version.rc:83
+#: version.rc:84
 msgid "Allow &saving password"
 msgstr "Allow &saving password"
 
-#: version.rc:84
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Enter the &initial catalog to use:"
 
-#: version.rc:86
+#: version.rc:87
 msgid "&Test Connection"
 msgstr "&Test Connection"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "Advanced"
 
-#: version.rc:94
+#: version.rc:95
 msgid "Network settings"
 msgstr "Network settings"
 
-#: version.rc:95
+#: version.rc:96
 msgid "&Impersonation level:"
 msgstr "&Impersonation level:"
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
 msgstr "P&rotection level:"
 
-#: version.rc:100
+#: version.rc:101
 msgid "Connect:"
 msgstr "Connect:"
 
-#: version.rc:102
+#: version.rc:103
 msgid "seconds."
 msgstr "seconds."
 
-#: version.rc:103
+#: version.rc:104
 msgid "A&ccess:"
 msgstr "A&ccess:"
 
-#: version.rc:109
+#: version.rc:110
 msgid "All"
 msgstr "All"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
@@ -8416,7 +8416,7 @@ msgstr ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 
-#: version.rc:114
+#: version.rc:115
 msgid "&Edit Value..."
 msgstr "&Edit Value..."
 
@@ -8427,6 +8427,14 @@ msgstr "Data Link Error"
 #: version.rc:50
 msgid "Please select a provider."
 msgstr "Please select a provider."
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
 
 #: version.rc:36
 msgid "Data Link Properties"

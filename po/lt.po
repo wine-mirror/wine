@@ -349,7 +349,7 @@ msgstr "Vediklis"
 msgid "< &Back"
 msgstr "< &Atgal"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "&Toliau >"
 
@@ -1223,7 +1223,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Naudotojo vardas:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "&Slaptažodis:"
 
@@ -3116,7 +3116,7 @@ msgstr "Simboliai"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "Kita"
 
@@ -3181,7 +3181,7 @@ msgstr "Į p&radžią"
 msgid "&Stop"
 msgstr "&Stabdyti"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "Atsiųsti iš &naujo"
 
@@ -8321,99 +8321,99 @@ msgstr "Įjungta"
 msgid "Off"
 msgstr "Išjungta"
 
-#: version.rc:55
+#: version.rc:56
 msgid "Provider"
 msgstr "Tiekėjas"
 
-#: version.rc:58
+#: version.rc:59
 msgid "Select the data you want to connect to:"
 msgstr "Išrinkite duomenis, prie kurių norite jungtis:"
 
-#: version.rc:65
+#: version.rc:66
 msgid "Connection"
 msgstr "Ryšys"
 
-#: version.rc:68
+#: version.rc:69
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Prisijungimui prie ODBC duomenų nurodykite:"
 
-#: version.rc:69
+#: version.rc:70
 msgid "1. Specify the source of data:"
 msgstr "1. Nurodykite duomenų šaltinį:"
 
-#: version.rc:70
+#: version.rc:71
 msgid "Use &data source name"
 msgstr "Naudoti &duomenų šaltinio vardą"
 
-#: version.rc:73
+#: version.rc:74
 msgid "Use c&onnection string"
 msgstr "Naudoti r&yšio eilutę"
 
-#: version.rc:74
+#: version.rc:75
 msgid "&Connection string:"
 msgstr "&Ryšio eilutė:"
 
-#: version.rc:76
+#: version.rc:77
 msgid "B&uild..."
 msgstr "&Sukurti..."
 
-#: version.rc:77
+#: version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr "2. Įveskite informaciją prisijungimui prie serverio"
 
-#: version.rc:78
+#: version.rc:79
 msgid "User &name:"
 msgstr "&Naudotojo vardas:"
 
-#: version.rc:82
+#: version.rc:83
 msgid "&Blank password"
 msgstr "T&uščias slaptažodis"
 
-#: version.rc:83
+#: version.rc:84
 msgid "Allow &saving password"
 msgstr "Leisti &išsaugoti slaptažodį"
 
-#: version.rc:84
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Įveskite &pradinį katalogą naudojimui:"
 
-#: version.rc:86
+#: version.rc:87
 msgid "&Test Connection"
 msgstr "&Tikrinti ryšį"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "Pažengęs"
 
-#: version.rc:94
+#: version.rc:95
 msgid "Network settings"
 msgstr "Tinklo nuostatos"
 
-#: version.rc:95
+#: version.rc:96
 msgid "&Impersonation level:"
 msgstr "&Apsimetimo lygis:"
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
 msgstr "Ap&saugos lygis:"
 
-#: version.rc:100
+#: version.rc:101
 msgid "Connect:"
 msgstr "Prisijungti:"
 
-#: version.rc:102
+#: version.rc:103
 msgid "seconds."
 msgstr "sekundės."
 
-#: version.rc:103
+#: version.rc:104
 msgid "A&ccess:"
 msgstr "&Prieiga:"
 
-#: version.rc:109
+#: version.rc:110
 msgid "All"
 msgstr "Visos"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
@@ -8421,7 +8421,7 @@ msgstr ""
 "Tai yra šio duomenų tipo inicijavimo savybės. Reikšmei redaguoti pažymėkite "
 "savybę ir spauskite „Redaguoti reikšmę“."
 
-#: version.rc:114
+#: version.rc:115
 msgid "&Edit Value..."
 msgstr "&Redaguoti reikšmę..."
 
@@ -8432,6 +8432,12 @@ msgstr "Duomenų saito klaida"
 #: version.rc:50
 msgid "Please select a provider."
 msgstr "Išrinkite tiekėją."
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr ""
 
 #: version.rc:36
 msgid "Data Link Properties"
