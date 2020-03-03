@@ -573,19 +573,18 @@ static void check_enum_stream_(int line, IAMMultiMediaStream *mmstream,
     HRESULT hr;
 
     hr = IAMMultiMediaStream_EnumMediaStreams(mmstream, index, &stream);
-    todo_wine ok_(__FILE__, line)(hr == (expect ? S_OK : S_FALSE),
+    ok_(__FILE__, line)(hr == (expect ? S_OK : S_FALSE),
             "IAMMultiMediaStream::EnumMediaStreams() returned %#x.\n", hr);
     hr = IMediaStreamFilter_EnumMediaStreams(filter, index, &stream2);
-    todo_wine ok_(__FILE__, line)(hr == (expect ? S_OK : S_FALSE),
+    ok_(__FILE__, line)(hr == (expect ? S_OK : S_FALSE),
             "IMediaStreamFilter::EnumMediaStreams() returned %#x.\n", hr);
     if (hr == S_OK)
     {
         ok_(__FILE__, line)(stream == expect, "Expected stream %p, got %p.\n", expect, stream);
         ok_(__FILE__, line)(stream2 == expect, "Expected stream %p, got %p.\n", expect, stream2);
+        IMediaStream_Release(stream);
+        IMediaStream_Release(stream2);
     }
-
-    if (stream) IMediaStream_Release(stream);
-    if (stream2) IMediaStream_Release(stream2);
 }
 
 #define check_get_stream(a,b,c,d) check_get_stream_(__LINE__,a,b,c,d)
@@ -629,9 +628,9 @@ static void test_add_stream(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_EnumMediaStreams(mmstream, 0, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IMediaStreamFilter_EnumMediaStreams(stream_filter, 0, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_GetMediaStream(mmstream, &MSPID_PrimaryAudio, NULL);
     todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
@@ -655,13 +654,13 @@ static void test_add_stream(void)
     ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_EnumMediaStreams(mmstream, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     hr = IMediaStreamFilter_EnumMediaStreams(stream_filter, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_EnumMediaStreams(mmstream, 1, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IMediaStreamFilter_EnumMediaStreams(stream_filter, 1, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     check_enum_stream(mmstream, stream_filter, 0, video_stream);
     check_enum_stream(mmstream, stream_filter, 1, NULL);
@@ -694,7 +693,7 @@ static void test_add_stream(void)
 
     check_enum_stream(mmstream, stream_filter, 0, video_stream);
     check_enum_stream(mmstream, stream_filter, 1, audio_stream);
-    check_enum_stream(mmstream, stream_filter, 2, (IMediaStream *)&teststream);
+    todo_wine check_enum_stream(mmstream, stream_filter, 2, (IMediaStream *)&teststream);
     check_enum_stream(mmstream, stream_filter, 3, NULL);
 
     check_get_stream(mmstream, stream_filter, &MSPID_PrimaryVideo, video_stream);

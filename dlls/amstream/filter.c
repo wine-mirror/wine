@@ -474,11 +474,20 @@ static HRESULT WINAPI filter_GetMediaStream(IMediaStreamFilter *iface, REFMSPID 
     return MS_E_NOSTREAM;
 }
 
-static HRESULT WINAPI filter_EnumMediaStreams(IMediaStreamFilter *iface, LONG Index, IMediaStream **ppMediaStream)
+static HRESULT WINAPI filter_EnumMediaStreams(IMediaStreamFilter *iface, LONG index, IMediaStream **stream)
 {
-    FIXME("(%p)->(%d,%p): Stub!\n", iface, Index, ppMediaStream);
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
 
-    return E_NOTIMPL;
+    TRACE("filter %p, index %d, stream %p.\n", filter, index, stream);
+
+    if (index >= filter->nb_streams)
+        return S_FALSE;
+
+    if (!stream)
+        return E_POINTER;
+
+    IMediaStream_AddRef(*stream = (IMediaStream *)filter->streams[index]);
+    return S_OK;
 }
 
 static HRESULT WINAPI filter_SupportSeeking(IMediaStreamFilter *iface, BOOL bRenderer)
