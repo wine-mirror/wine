@@ -316,6 +316,7 @@ static char* get_temp_file(const char* prefix, const char* suffix)
 
 static const char* build_tool_name(struct options *opts, const char* base, const char* deflt)
 {
+    const char *path;
     char* str;
 
     if (opts->target && opts->version)
@@ -332,7 +333,10 @@ static const char* build_tool_name(struct options *opts, const char* base, const
     }
     else
         str = xstrdup(deflt);
-    return find_binary( opts->prefix, str );
+
+    if ((path = find_binary( opts->prefix, str ))) return path;
+    error( "Could not find %s\n", base );
+    return NULL;
 }
 
 static strarray* get_translator(struct options *opts)
@@ -877,6 +881,7 @@ static strarray *get_winebuild_args(struct options *opts)
         binary = strmake( "%s/winebuild%s", bindir, EXEEXT );
     else
         binary = find_binary( opts->prefix, "winebuild" );
+    if (!binary) error( "Could not find winebuild\n" );
     strarray_add( spec_args, binary );
     if (verbose) strarray_add( spec_args, "-v" );
     if (keep_generated) strarray_add( spec_args, "--save-temps" );
