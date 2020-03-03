@@ -2914,6 +2914,7 @@ struct wined3d_adapter
     struct wined3d_d3d_info d3d_info;
     struct wined3d_driver_info driver_info;
     struct wined3d_output output;
+    unsigned int output_count;
     UINT64 vram_bytes_used;
     GUID driver_uuid;
     GUID device_uuid;

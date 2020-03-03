@@ -156,6 +156,7 @@ struct dxgi_adapter
 {
     IWineDXGIAdapter IWineDXGIAdapter_iface;
     LONG refcount;
+    struct wined3d_adapter *wined3d_adapter;
     struct wined3d_private_store private_store;
     UINT ordinal;
     struct dxgi_factory *factory;

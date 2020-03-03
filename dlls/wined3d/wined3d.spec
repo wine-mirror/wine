@@ -26,6 +26,8 @@
 @ cdecl wined3d_set_adapter_display_mode(ptr long ptr)
 @ cdecl wined3d_unregister_windows(ptr)
 
+@ cdecl wined3d_adapter_get_output_count(ptr)
+
 @ cdecl wined3d_blend_state_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_blend_state_decref(ptr)
 @ cdecl wined3d_blend_state_get_parent(ptr)

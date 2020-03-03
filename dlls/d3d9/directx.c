@@ -108,15 +108,22 @@ static HRESULT WINAPI d3d9_RegisterSoftwareDevice(IDirect3D9Ex *iface, void *ini
 static UINT WINAPI d3d9_GetAdapterCount(IDirect3D9Ex *iface)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
-    UINT ret;
+    struct wined3d_adapter *wined3d_adapter;
+    unsigned int adapter_idx, adapter_count;
+    unsigned int output_count = 0;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    ret = wined3d_get_adapter_count(d3d9->wined3d);
+    adapter_count = wined3d_get_adapter_count(d3d9->wined3d);
+    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
+    {
+        wined3d_adapter = wined3d_get_adapter(d3d9->wined3d, adapter_idx);
+        output_count += wined3d_adapter_get_output_count(wined3d_adapter);
+    }
     wined3d_mutex_unlock();
 
-    return ret;
+    return output_count;
 }
 
 static HRESULT WINAPI d3d9_GetAdapterIdentifier(IDirect3D9Ex *iface, UINT adapter,

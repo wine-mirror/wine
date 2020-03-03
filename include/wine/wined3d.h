@@ -2287,6 +2287,8 @@ HRESULT __cdecl wined3d_set_adapter_display_mode(struct wined3d *wined3d,
         UINT adapter_idx, const struct wined3d_display_mode *mode);
 void __cdecl wined3d_unregister_windows(struct wined3d *wined3d);
 
+unsigned int __cdecl wined3d_adapter_get_output_count(const struct wined3d_adapter *adapter);
+
 HRESULT __cdecl wined3d_buffer_create(struct wined3d_device *device, const struct wined3d_buffer_desc *desc,
         const struct wined3d_sub_resource_data *data, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_buffer **buffer);

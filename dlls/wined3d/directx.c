@@ -883,6 +883,13 @@ UINT CDECL wined3d_get_adapter_count(const struct wined3d *wined3d)
     return wined3d->adapter_count;
 }
 
+unsigned int CDECL wined3d_adapter_get_output_count(const struct wined3d_adapter *adapter)
+{
+    TRACE("adapter %p, reporting %u outputs.\n", adapter, adapter->output_count);
+
+    return adapter->output_count;
+}
+
 HRESULT CDECL wined3d_register_software_device(struct wined3d *wined3d, void *init_function)
 {
     FIXME("wined3d %p, init_function %p stub!\n", wined3d, init_function);
@@ -2834,6 +2841,7 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         ERR("Failed to initialise output, hr %#x.\n", hr);
         return FALSE;
     }
+    adapter->output_count = 1;
 
     if (!AllocateLocallyUniqueId(&adapter->luid))
     {
