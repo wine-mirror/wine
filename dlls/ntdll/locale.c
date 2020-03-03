@@ -799,13 +799,7 @@ void init_unix_codepage(void)
 
 #else  /* __APPLE__ || __ANDROID__ */
 
-void init_unix_codepage(void)
-{
-#ifdef __APPLE__
-    const struct norm_table *info;
-    load_norm_table( NormalizationC, &info );
-#endif
-}
+void init_unix_codepage(void) { }
 
 #endif  /* __APPLE__ || __ANDROID__ */
 
@@ -909,6 +903,10 @@ void init_locale( HMODULE module )
     user_lcid = unix_locale_to_lcid( setlocale( LC_MESSAGES, NULL ));
 
 #ifdef __APPLE__
+    {
+        const struct norm_table *info;
+        load_norm_table( NormalizationC, &info );
+    }
     if (!system_lcid)
     {
         char buffer[LOCALE_NAME_MAX_LENGTH];
