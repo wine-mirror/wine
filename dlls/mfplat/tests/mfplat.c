@@ -89,6 +89,8 @@ static HRESULT (WINAPI *pMFTRegisterLocalByCLSID)(REFCLSID clsid, REFGUID catego
 static HRESULT (WINAPI *pMFTUnregisterLocal)(IClassFactory *factory);
 static HRESULT (WINAPI *pMFTUnregisterLocalByCLSID)(CLSID clsid);
 static HRESULT (WINAPI *pMFAllocateWorkQueueEx)(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
+static HRESULT (WINAPI *pMFTEnumEx)(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INFO *input_type,
+        const MFT_REGISTER_TYPE_INFO *output_type, IMFActivate ***activate, UINT32 *count);
 
 static const WCHAR fileschemeW[] = L"file://";
 
@@ -659,13 +661,14 @@ static void init_functions(void)
     X(MFCreateDXGIDeviceManager);
     X(MFCreateSourceResolver);
     X(MFCreateMFByteStreamOnStream);
+    X(MFCreateTransformActivate);
     X(MFHeapAlloc);
     X(MFHeapFree);
     X(MFPutWaitingWorkItem);
     X(MFRegisterLocalByteStreamHandler);
     X(MFRegisterLocalSchemeHandler);
     X(MFRemovePeriodicCallback);
-    X(MFCreateTransformActivate);
+    X(MFTEnumEx);
     X(MFTRegisterLocal);
     X(MFTRegisterLocalByCLSID);
     X(MFTUnregisterLocal);
@@ -4055,6 +4058,8 @@ static void test_MFTRegisterLocal(void)
 {
     IClassFactory test_factory = { &test_mft_factory_vtbl };
     MFT_REGISTER_TYPE_INFO input_types[1];
+    IMFActivate **activate;
+    UINT32 count, count2;
     HRESULT hr;
 
     if (!pMFTRegisterLocal)
@@ -4071,8 +4076,18 @@ static void test_MFTRegisterLocal(void)
     hr = pMFTRegisterLocal(&test_factory, &MFT_CATEGORY_OTHER, L"Local MFT name", 0, 1, input_types, 0, NULL);
     ok(hr == S_OK, "Failed to register MFT, hr %#x.\n", hr);
 
+    hr = pMFTEnumEx(MFT_CATEGORY_OTHER, MFT_ENUM_FLAG_LOCALMFT, NULL, NULL, &activate, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count > 0, "Unexpected count %u.\n", count);
+    CoTaskMemFree(activate);
+
     hr = pMFTUnregisterLocal(&test_factory);
     ok(hr == S_OK, "Failed to unregister MFT, hr %#x.\n", hr);
+
+    hr = pMFTEnumEx(MFT_CATEGORY_OTHER, MFT_ENUM_FLAG_LOCALMFT, NULL, NULL, &activate, &count2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count2 < count, "Unexpected count %u.\n", count2);
+    CoTaskMemFree(activate);
 
     hr = pMFTUnregisterLocal(&test_factory);
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Unexpected hr %#x.\n", hr);
