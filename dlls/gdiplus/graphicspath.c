@@ -1986,6 +1986,8 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
 static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
     GpPen *pen, GpLineCap cap, GpCustomLineCap *custom, path_list_node_t **last_point)
 {
+    REAL pen_width = max(pen->width, 2.0);
+
     switch (cap)
     {
     default:
@@ -1996,7 +1998,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
         REAL segment_dy = nextpoint->Y-endpoint->Y;
         REAL segment_dx = nextpoint->X-endpoint->X;
         REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
-        REAL distance = pen->width / sqrtf(2.0);
+        REAL distance = pen_width / sqrtf(2.0);
         REAL par_dx, par_dy;
         REAL perp_dx, perp_dy;
 
@@ -2024,8 +2026,8 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
         REAL dx, dy, dx2, dy2;
         const REAL control_point_distance = 0.55228475; /* 4/3 * (sqrt(2) - 1) */
 
-        dx = -pen->width * segment_dx / segment_length;
-        dy = -pen->width * segment_dy / segment_length;
+        dx = -pen_width * segment_dx / segment_length;
+        dy = -pen_width * segment_dy / segment_length;
 
         dx2 = dx * control_point_distance;
         dy2 = dy * control_point_distance;
@@ -2076,11 +2078,11 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
         REAL par_dx, par_dy;
         REAL perp_dx, perp_dy;
 
-        par_dx = -pen->width * segment_dx / segment_length;
-        par_dy = -pen->width * segment_dy / segment_length;
+        par_dx = -pen_width * segment_dx / segment_length;
+        par_dy = -pen_width * segment_dy / segment_length;
 
-        perp_dx = -pen->width * segment_dy / segment_length;
-        perp_dy = pen->width * segment_dx / segment_length;
+        perp_dx = -pen_width * segment_dy / segment_length;
+        perp_dy = pen_width * segment_dx / segment_length;
 
         *last_point = add_path_list_node(*last_point, endpoint->X + par_dx,
             endpoint->Y + par_dy, PathPointTypeStart);

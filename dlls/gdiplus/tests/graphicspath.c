@@ -1365,14 +1365,14 @@ static path_test_t widenline_caparrowanchor_path[] = {
     };
 
 static path_test_t widenline_capsquareanchor_thin_path[] = {
-    {6.414213, 8.585786,   PathPointTypeStart, 4, 1}, /*0*/
-    {6.414213, 11.414213,  PathPointTypeLine,  0, 1}, /*1*/
-    {3.585786, 11.414213,  PathPointTypeLine,  0, 1}, /*2*/
-    {3.585786, 8.585786,   PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*3*/
-    {48.585785, 11.414213, PathPointTypeStart, 0, 1}, /*4*/
-    {48.585785, 8.585786,  PathPointTypeLine,  0, 1}, /*5*/
-    {51.414211, 8.585786,  PathPointTypeLine,  0, 1}, /*6*/
-    {51.414211, 11.414213, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*7*/
+    {6.414213, 8.585786,   PathPointTypeStart, 4, 0}, /*0*/
+    {6.414213, 11.414213,  PathPointTypeLine,  0, 0}, /*1*/
+    {3.585786, 11.414213,  PathPointTypeLine,  0, 0}, /*2*/
+    {3.585786, 8.585786,   PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
+    {48.585785, 11.414213, PathPointTypeStart, 0, 0}, /*4*/
+    {48.585785, 8.585786,  PathPointTypeLine,  0, 0}, /*5*/
+    {51.414211, 8.585786,  PathPointTypeLine,  0, 0}, /*6*/
+    {51.414211, 11.414213, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*7*/
     };
 
 static void test_widen_cap(void)
