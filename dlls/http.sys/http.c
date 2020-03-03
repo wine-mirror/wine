@@ -1112,6 +1112,11 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
             WARN("Address %s is already in use.\n", debugstr_a(params->url));
             return STATUS_SHARING_VIOLATION;
         }
+        else if (WSAGetLastError() == WSAEACCES)
+        {
+            WARN("Not enough permissions to bind to address %s.\n", debugstr_a(params->url));
+            return STATUS_ACCESS_DENIED;
+        }
         ERR("Failed to bind socket, error %u.\n", WSAGetLastError());
         return STATUS_UNSUCCESSFUL;
     }
