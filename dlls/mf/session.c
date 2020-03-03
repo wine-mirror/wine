@@ -75,7 +75,7 @@ enum session_state
     SESSION_STATE_STOPPED = 0,
     SESSION_STATE_STARTING_SOURCES,
     SESSION_STATE_STARTING_SINKS,
-    SESSION_STATE_RUNNING,
+    SESSION_STATE_STARTED,
     SESSION_STATE_PAUSING_SINKS,
     SESSION_STATE_PAUSING_SOURCES,
     SESSION_STATE_PAUSED,
@@ -674,7 +674,7 @@ static void session_start(struct media_session *session, const GUID *time_format
             session->presentation.flags |= SESSION_FLAG_SOURCES_SUBSCRIBED;
             session->state = SESSION_STATE_STARTING_SOURCES;
             break;
-        case SESSION_STATE_RUNNING:
+        case SESSION_STATE_STARTED:
             FIXME("Seeking is not implemented.\n");
             break;
         case SESSION_STATE_CLOSED:
@@ -696,7 +696,7 @@ static void session_pause(struct media_session *session)
 
     switch (session->state)
     {
-        case SESSION_STATE_RUNNING:
+        case SESSION_STATE_STARTED:
 
             /* Transition in two steps - pause clock, wait for sinks and pause sources. */
             if (SUCCEEDED(hr = IMFPresentationClock_Pause(session->clock)))
@@ -724,7 +724,7 @@ static void session_stop(struct media_session *session)
 
     switch (session->state)
     {
-        case SESSION_STATE_RUNNING:
+        case SESSION_STATE_STARTED:
         case SESSION_STATE_PAUSED:
 
             /* Transition in two steps - pause clock, wait for sinks and pause sources. */
@@ -791,7 +791,7 @@ static void session_close(struct media_session *session)
         case SESSION_STATE_STOPPED:
             hr = session_finalize_sinks(session);
             break;
-        case SESSION_STATE_RUNNING:
+        case SESSION_STATE_STARTED:
         case SESSION_STATE_PAUSED:
             session->presentation.flags |= SESSION_FLAG_FINALIZE_SINKS;
             if (SUCCEEDED(hr = IMFPresentationClock_Stop(session->clock)))
@@ -1999,7 +1999,7 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
             if (!session_is_output_nodes_state(session, OBJ_STATE_STARTED))
                 break;
 
-            session->state = SESSION_STATE_RUNNING;
+            session->state = SESSION_STATE_STARTED;
 
             caps = session->caps | MFSESSIONCAP_PAUSE;
 
