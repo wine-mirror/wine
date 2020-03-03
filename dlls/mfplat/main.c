@@ -97,6 +97,7 @@ struct mft_registration
     UINT32 input_types_count;
     MFT_REGISTER_TYPE_INFO *output_types;
     UINT32 output_types_count;
+    BOOL local;
 };
 
 static CRITICAL_SECTION local_mfts_section = { NULL, -1, 0, 0, 0, 0 };
@@ -818,7 +819,10 @@ static HRESULT mft_register_local(IClassFactory *factory, REFCLSID clsid, REFGUI
     if (clsid)
         mft->clsid = *clsid;
     mft->category = *category;
-    mft->flags = flags | MFT_ENUM_FLAG_LOCALMFT;
+    if (!(flags & (MFT_ENUM_FLAG_SYNCMFT | MFT_ENUM_FLAG_ASYNCMFT | MFT_ENUM_FLAG_HARDWARE)))
+        flags |= MFT_ENUM_FLAG_SYNCMFT;
+    mft->flags = flags;
+    mft->local = TRUE;
     if (FAILED(hr = heap_strdupW(name, &mft->name)))
         goto failed;
 
@@ -1198,6 +1202,7 @@ static HRESULT mft_enum(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INF
                 if (mft->factory)
                     IClassFactory_AddRef(mft->factory);
                 mft->flags = local->flags;
+                mft->local = local->local;
 
                 list_add_tail(&mfts, &mft->entry);
             }
@@ -1213,7 +1218,7 @@ static HRESULT mft_enum(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INF
         /* Local registrations. */
         LIST_FOR_EACH_ENTRY_SAFE(mft, mft2, &mfts, struct mft_registration, entry)
         {
-            if (mft->flags & MFT_ENUM_FLAG_LOCALMFT)
+            if (mft->local)
             {
                 list_remove(&mft->entry);
                 list_add_tail(&mfts_sorted, &mft->entry);
@@ -1239,7 +1244,7 @@ static HRESULT mft_enum(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INF
             list_add_tail(&mfts_sorted, &mft->entry);
         }
 
-        result = &mfts;
+        result = &mfts_sorted;
     }
 
     IMFPluginControl_Release(plugin_control);
@@ -1265,7 +1270,7 @@ static HRESULT mft_enum(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INF
                 {
                     (*activate)[obj_count] = mft_activate;
 
-                    if (mft->flags & MFT_ENUM_FLAG_LOCALMFT)
+                    if (mft->local)
                     {
                         IMFActivate_SetUINT32(mft_activate, &MFT_PROCESS_LOCAL_Attribute, 1);
                     }
