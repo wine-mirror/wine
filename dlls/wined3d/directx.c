@@ -155,7 +155,11 @@ UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount)
 
 void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
 {
-    wined3d_output_cleanup(&adapter->output);
+    unsigned int output_idx;
+
+    for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
+        wined3d_output_cleanup(&adapter->outputs[output_idx]);
+    heap_free(adapter->outputs);
     heap_free(adapter->formats);
 }
 
@@ -883,6 +887,17 @@ UINT CDECL wined3d_get_adapter_count(const struct wined3d *wined3d)
     return wined3d->adapter_count;
 }
 
+struct wined3d_output * CDECL wined3d_adapter_get_output(const struct wined3d_adapter *adapter,
+        unsigned int idx)
+{
+    TRACE("adapter %p, idx %u.\n", adapter, idx);
+
+    if (idx >= adapter->output_count)
+        return NULL;
+
+    return &adapter->outputs[idx];
+}
+
 unsigned int CDECL wined3d_adapter_get_output_count(const struct wined3d_adapter *adapter)
 {
     TRACE("adapter %p, reporting %u outputs.\n", adapter, adapter->output_count);
@@ -928,16 +943,6 @@ HRESULT CDECL wined3d_get_output_desc(const struct wined3d *wined3d, unsigned in
     desc->monitor = monitor;
 
     return WINED3D_OK;
-}
-
-struct wined3d_output * CDECL wined3d_get_adapter_output(const struct wined3d *wined3d, unsigned int adapter_idx)
-{
-    TRACE("wined3d %p, adapter_idx %u.\n", wined3d, adapter_idx);
-
-    if (adapter_idx >= wined3d->adapter_count)
-        return NULL;
-
-    return &wined3d->adapters[adapter_idx]->output;
 }
 
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
@@ -2828,26 +2833,35 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         const struct wined3d_adapter_ops *adapter_ops)
 {
     DISPLAY_DEVICEW display_device;
+    unsigned int output_idx;
+    BOOL ret = FALSE;
     HRESULT hr;
 
     adapter->ordinal = ordinal;
+    adapter->output_count = 0;
 
     display_device.cb = sizeof(display_device);
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
     TRACE("Display device: %s.\n", debugstr_w(display_device.DeviceName));
     strcpyW(adapter->device_name, display_device.DeviceName);
-    if (FAILED(hr = wined3d_output_init(&adapter->output, adapter->device_name)))
+
+    if (!(adapter->outputs = heap_calloc(1, sizeof(*adapter->outputs))))
+    {
+        ERR("Failed to allocate outputs.\n");
+        return FALSE;
+    }
+
+    if (FAILED(hr = wined3d_output_init(&adapter->outputs[0], adapter->device_name)))
     {
         ERR("Failed to initialise output, hr %#x.\n", hr);
-        return FALSE;
+        goto done;
     }
     adapter->output_count = 1;
 
     if (!AllocateLocallyUniqueId(&adapter->luid))
     {
         ERR("Failed to set adapter LUID (%#x).\n", GetLastError());
-        wined3d_output_cleanup(&adapter->output);
-        return FALSE;
+        goto done;
     }
     TRACE("Allocated LUID %08x:%08x for adapter %p.\n",
             adapter->luid.HighPart, adapter->luid.LowPart, adapter);
@@ -2857,8 +2871,15 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
 
     adapter->formats = NULL;
     adapter->adapter_ops = adapter_ops;
-
-    return TRUE;
+    ret = TRUE;
+done:
+    if (!ret)
+    {
+        for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
+            wined3d_output_cleanup(&adapter->outputs[output_idx]);
+        heap_free(adapter->outputs);
+    }
+    return ret;
 }
 
 static struct wined3d_adapter *wined3d_adapter_create(unsigned int ordinal, DWORD wined3d_creation_flags)

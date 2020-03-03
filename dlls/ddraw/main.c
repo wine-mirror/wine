@@ -57,12 +57,15 @@ static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMC
                                               void *context)
 {
     struct wined3d_adapter_identifier adapter_id;
+    struct wined3d_adapter *wined3d_adapter;
     struct wined3d_output_desc output_desc;
+    unsigned int interface_count = 0;
+    unsigned int adapter_idx = 0;
+    unsigned int output_idx;
     BOOL cont_enum = TRUE;
-    HRESULT hr = S_OK;
-    UINT adapter = 0;
+    HRESULT hr;
 
-    for (adapter = 0; SUCCEEDED(hr) && cont_enum; adapter++)
+    while (cont_enum && (wined3d_adapter = wined3d_get_adapter(wined3d, adapter_idx)))
     {
         char DriverName[512] = "", DriverDescription[512] = "";
 
@@ -73,16 +76,38 @@ static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMC
         adapter_id.device_name_size = sizeof(DriverName);
         adapter_id.description = DriverDescription;
         adapter_id.description_size = sizeof(DriverDescription);
+
         wined3d_mutex_lock();
-        if (SUCCEEDED(hr = wined3d_get_adapter_identifier(wined3d, adapter, 0x0, &adapter_id)))
-            hr = wined3d_get_output_desc(wined3d, adapter, &output_desc);
-        wined3d_mutex_unlock();
-        if (SUCCEEDED(hr))
+        if (FAILED(hr = wined3d_get_adapter_identifier(wined3d, adapter_idx, 0x0, &adapter_id)))
         {
-            TRACE("Interface %d: %s\n", adapter, wine_dbgstr_guid(&adapter_id.device_identifier));
+            WARN("Failed to get adapter identifier, hr %#x.\n", hr);
+            wined3d_mutex_unlock();
+            break;
+        }
+        wined3d_mutex_unlock();
+
+        for (output_idx = 0; cont_enum && wined3d_adapter_get_output(wined3d_adapter, output_idx);
+                ++output_idx)
+        {
+            wined3d_mutex_lock();
+            if (FAILED(hr = wined3d_get_output_desc(wined3d, output_idx, &output_desc)))
+            {
+                WARN("Failed to get output description, hr %#x.\n", hr);
+                wined3d_mutex_unlock();
+                break;
+            }
+            wined3d_mutex_unlock();
+
+            TRACE("Interface %u: %s\n", interface_count++,
+                    wine_dbgstr_guid(&adapter_id.device_identifier));
             cont_enum = callback(&adapter_id.device_identifier, adapter_id.description,
                     adapter_id.device_name, context, output_desc.monitor);
         }
+
+        if (FAILED(hr))
+            break;
+
+        ++adapter_idx;
     }
 }
 

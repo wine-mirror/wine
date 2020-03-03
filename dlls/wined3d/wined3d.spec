@@ -16,7 +16,6 @@
 @ cdecl wined3d_get_adapter_display_mode(ptr long ptr ptr)
 @ cdecl wined3d_get_adapter_identifier(ptr long long ptr)
 @ cdecl wined3d_get_adapter_mode_count(ptr long long long)
-@ cdecl wined3d_get_adapter_output(ptr long ptr)
 @ cdecl wined3d_get_adapter_raster_status(ptr long ptr)
 @ cdecl wined3d_get_device_caps(ptr long long ptr)
 @ cdecl wined3d_get_output_desc(ptr long ptr)
@@ -26,6 +25,7 @@
 @ cdecl wined3d_set_adapter_display_mode(ptr long ptr)
 @ cdecl wined3d_unregister_windows(ptr)
 
+@ cdecl wined3d_adapter_get_output(ptr long)
 @ cdecl wined3d_adapter_get_output_count(ptr)
 
 @ cdecl wined3d_blend_state_create(ptr ptr ptr ptr ptr)

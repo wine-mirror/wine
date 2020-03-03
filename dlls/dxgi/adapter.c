@@ -139,7 +139,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IWineDXGIAdapter *ifac
         return DXGI_ERROR_NOT_FOUND;
     }
 
-    if (FAILED(hr = dxgi_output_create(adapter, &output_object)))
+    if (FAILED(hr = dxgi_output_create(adapter, output_idx, &output_object)))
     {
         *output = NULL;
         return hr;
