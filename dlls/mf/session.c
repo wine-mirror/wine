@@ -646,6 +646,10 @@ static void session_start(struct media_session *session, const GUID *time_format
         case SESSION_STATE_RUNNING:
             FIXME("Seeking is not implemented.\n");
             break;
+        case SESSION_STATE_CLOSED:
+            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStarted, &GUID_NULL,
+                    MF_E_INVALIDREQUEST, NULL);
+            break;
         default:
             ;
     }
