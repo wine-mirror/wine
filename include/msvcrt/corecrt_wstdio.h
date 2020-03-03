@@ -115,7 +115,7 @@ static inline int __cdecl _vsnwprintf_s(wchar_t *buffer, size_t size, size_t cou
     return ret < 0 ? -1 : ret;
 }
 
-static inline int __cdecl _snwprintf_s(wchar_t *buffer, size_t size, size_t count, const wchar_t *format, ...)
+static inline int WINAPIV _snwprintf_s(wchar_t *buffer, size_t size, size_t count, const wchar_t *format, ...)
 {
     int ret;
     __ms_va_list args;
