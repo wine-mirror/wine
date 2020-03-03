@@ -45,6 +45,7 @@ enum d2d_shape_type
 {
     D2D_SHAPE_TYPE_OUTLINE,
     D2D_SHAPE_TYPE_BEZIER_OUTLINE,
+    D2D_SHAPE_TYPE_ARC_OUTLINE,
     D2D_SHAPE_TYPE_TRIANGLE,
     D2D_SHAPE_TYPE_CURVE,
     D2D_SHAPE_TYPE_COUNT,
@@ -415,7 +416,7 @@ struct d2d_outline_vertex
     D2D1_POINT_2F next;
 };
 
-struct d2d_bezier_outline_vertex
+struct d2d_curve_outline_vertex
 {
     D2D1_POINT_2F position;
     D2D1_POINT_2F p0, p1, p2;
@@ -459,13 +460,21 @@ struct d2d_geometry
         size_t faces_size;
         size_t face_count;
 
-        struct d2d_bezier_outline_vertex *beziers;
+        struct d2d_curve_outline_vertex *beziers;
         size_t beziers_size;
         size_t bezier_count;
 
         struct d2d_face *bezier_faces;
         size_t bezier_faces_size;
         size_t bezier_face_count;
+
+        struct d2d_curve_outline_vertex *arcs;
+        size_t arcs_size;
+        size_t arc_count;
+
+        struct d2d_face *arc_faces;
+        size_t arc_faces_size;
+        size_t arc_face_count;
     } outline;
 
     union
