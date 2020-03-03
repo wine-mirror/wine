@@ -1396,8 +1396,20 @@ static NTSTATUS WINAPI dispatch_close(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     struct request_queue *queue = stack->FileObject->FsContext;
+    LIST_ENTRY *entry;
 
     TRACE("Closing queue %p.\n", queue);
+
+    EnterCriticalSection(&http_cs);
+
+    while ((entry = queue->irp_queue.Flink) != &queue->irp_queue)
+    {
+        IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        IoCancelIrp(queued_irp);
+    }
+
+    LeaveCriticalSection(&http_cs);
+
     close_queue(queue);
 
     irp->IoStatus.Status = STATUS_SUCCESS;
