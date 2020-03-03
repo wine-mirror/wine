@@ -289,12 +289,19 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
     HRESULT hr;
     IAMMediaStream* pStream;
+    IMediaStream *stream;
 
     TRACE("mmstream %p, stream_object %p, id %s, flags %#x, ret_stream %p.\n",
             This, stream_object, debugstr_guid(PurposeId), dwFlags, ret_stream);
 
     if (!IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && !IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         return MS_E_PURPOSEID;
+
+    if (IMediaStreamFilter_GetMediaStream(This->filter, PurposeId, &stream) == S_OK)
+    {
+        IMediaStream_Release(stream);
+        return MS_E_PURPOSEID;
+    }
 
     if (dwFlags & AMMSF_ADDDEFAULTRENDERER)
     {

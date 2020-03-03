@@ -652,7 +652,7 @@ static void test_add_stream(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
-    todo_wine ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
+    ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_EnumMediaStreams(mmstream, 0, NULL);
     todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
@@ -702,7 +702,7 @@ static void test_add_stream(void)
     todo_wine check_get_stream(mmstream, stream_filter, &test_mspid, (IMediaStream *)&teststream);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
-    todo_wine ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
+    ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
