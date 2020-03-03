@@ -307,6 +307,9 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
     {
         IBaseFilter *dsound_render;
 
+        if (ret_stream)
+            return E_INVALIDARG;
+
         if (!IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         {
             WARN("AMMSF_ADDDEFAULTRENDERER requested with id %s, returning MS_E_PURPOSEID.\n", debugstr_guid(PurposeId));

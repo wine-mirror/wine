@@ -798,7 +798,7 @@ static void test_add_stream(void)
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo,
             AMMSF_ADDDEFAULTRENDERER, &video_stream);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo,
             AMMSF_ADDDEFAULTRENDERER, NULL);
@@ -806,7 +806,7 @@ static void test_add_stream(void)
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio,
             AMMSF_ADDDEFAULTRENDERER, &audio_stream);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio,
             AMMSF_ADDDEFAULTRENDERER, NULL);
@@ -827,9 +827,9 @@ static void test_add_stream(void)
         hr = IGraphBuilder_EnumFilters(graph, &enum_filters);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         hr = IEnumFilters_Next(enum_filters, 3, filters, &count);
-        todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-        todo_wine ok(count == 2, "Got count %u.\n", count);
-        todo_wine ok(filters[1] == (IBaseFilter *)stream_filter,
+        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+        ok(count == 2, "Got count %u.\n", count);
+        ok(filters[1] == (IBaseFilter *)stream_filter,
                 "Expected filter %p, got %p.\n", stream_filter, filters[1]);
         hr = IBaseFilter_GetClassID(filters[0], &clsid);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
