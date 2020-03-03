@@ -3688,17 +3688,18 @@ static HRESULT WINAPI d3d9_device_SetStreamSource(IDirect3DDevice9Ex *iface,
         const struct wined3d_stream_state *stream;
         state = wined3d_stateblock_get_state(device->state);
         stream = &state->streams[stream_idx];
-        wined3d_buffer = stream->buffer;
         offset = stream->offset;
         stride = stream->stride;
-    }
-
-    if (!buffer_impl)
         wined3d_buffer = NULL;
+    }
     else if (buffer_impl->draw_buffer)
+    {
         wined3d_buffer = buffer_impl->draw_buffer;
+    }
     else
+    {
         wined3d_buffer = buffer_impl->wined3d_buffer;
+    }
 
     hr = wined3d_stateblock_set_stream_source(device->update_state, stream_idx, wined3d_buffer, offset, stride);
     if (SUCCEEDED(hr) && !device->recording)
