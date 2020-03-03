@@ -841,6 +841,9 @@ static void test_add_stream(void)
     }
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &test_mspid,
+            AMMSF_ADDDEFAULTRENDERER, NULL);
+    ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &test_mspid,
             AMMSF_ADDDEFAULTRENDERER, &audio_stream);
     todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 

@@ -305,26 +305,21 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
 
     if (dwFlags & AMMSF_ADDDEFAULTRENDERER)
     {
-        if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
+        IBaseFilter *dsound_render;
+
+        if (!IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         {
-            /* Default renderer not supported by video stream */
+            WARN("AMMSF_ADDDEFAULTRENDERER requested with id %s, returning MS_E_PURPOSEID.\n", debugstr_guid(PurposeId));
             return MS_E_PURPOSEID;
         }
-        else
+
+        if (SUCCEEDED(hr = CoCreateInstance(&CLSID_DSoundRender, NULL,
+                CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&dsound_render)))
         {
-            IBaseFilter* dsoundrender_filter;
-
-            /* Create the default renderer for audio */
-            hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&dsoundrender_filter);
-            if (SUCCEEDED(hr))
-            {
-                 hr = IGraphBuilder_AddFilter(This->pFilterGraph, dsoundrender_filter, NULL);
-                 IBaseFilter_Release(dsoundrender_filter);
-            }
-
-            /* No media stream created when the default renderer is used */
-            return hr;
+            hr = IGraphBuilder_AddFilter(This->pFilterGraph, dsound_render, NULL);
+            IBaseFilter_Release(dsound_render);
         }
+        return hr;
     }
 
     if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
