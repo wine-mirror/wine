@@ -178,16 +178,6 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
 
 static DWORD add_modifier(DWORD modifiers, DWORD mod, const struct YYLTYPE *loc);
 
-static BOOL check_type_modifiers(DWORD modifiers, struct source_location *loc)
-{
-    if (modifiers & ~HLSL_TYPE_MODIFIERS_MASK)
-    {
-        hlsl_report_message(*loc, HLSL_LEVEL_ERROR, "modifier not allowed on typedefs");
-        return FALSE;
-    }
-    return TRUE;
-}
-
 static BOOL add_type_to_scope(struct hlsl_scope *scope, struct hlsl_type *def)
 {
     if (get_type(scope, def->name, FALSE))
@@ -781,20 +771,11 @@ static struct hlsl_type *new_struct_type(const char *name, DWORD modifiers, stru
     return type;
 }
 
-static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct list *list,
-        struct source_location *loc)
+static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct list *list)
 {
     BOOL ret;
     struct hlsl_type *type;
     struct parse_variable_def *v, *v_next;
-
-    if (!check_type_modifiers(modifiers, loc))
-    {
-        LIST_FOR_EACH_ENTRY_SAFE(v, v_next, list, struct parse_variable_def, entry)
-            d3dcompiler_free(v);
-        d3dcompiler_free(list);
-        return FALSE;
-    }
 
     LIST_FOR_EACH_ENTRY_SAFE(v, v_next, list, struct parse_variable_def, entry)
     {
@@ -1208,17 +1189,18 @@ preproc_directive:        PRE_LINE STRING
 
 struct_declaration:       struct_spec variables_def_optional ';'
                             {
-                                struct source_location loc;
-
-                                loc = get_location(&@3);
                                 if (!$2)
                                 {
                                     if (!$1->name)
                                     {
-                                        hlsl_report_message(loc, HLSL_LEVEL_ERROR,
+                                        hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
                                                 "anonymous struct declaration with no variables");
                                     }
-                                    check_type_modifiers($1->modifiers, &loc);
+                                    if ($1->modifiers)
+                                    {
+                                        hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
+                                                "modifier not allowed on struct type declaration");
+                                    }
                                 }
                                 $$ = declare_vars($1, 0, $2);
                             }
@@ -1582,18 +1564,22 @@ declaration_statement:    declaration
 
 typedef:                  KW_TYPEDEF var_modifiers type type_specs ';'
                             {
-                                struct source_location loc;
-
-                                loc = get_location(&@1);
-                                if (!add_typedef($2, $3, $4, &loc))
+                                if ($2 & ~HLSL_TYPE_MODIFIERS_MASK)
+                                {
+                                    struct parse_variable_def *v, *v_next;
+                                    hlsl_report_message(get_location(&@1),
+                                            HLSL_LEVEL_ERROR, "modifier not allowed on typedefs");
+                                    LIST_FOR_EACH_ENTRY_SAFE(v, v_next, $4, struct parse_variable_def, entry)
+                                        d3dcompiler_free(v);
+                                    d3dcompiler_free($4);
+                                    YYABORT;
+                                }
+                                if (!add_typedef($2, $3, $4))
                                     YYABORT;
                             }
                         | KW_TYPEDEF struct_spec type_specs ';'
                             {
-                                struct source_location loc;
-
-                                loc = get_location(&@1);
-                                if (!add_typedef(0, $2, $3, &loc))
+                                if (!add_typedef(0, $2, $3))
                                     YYABORT;
                             }
 
