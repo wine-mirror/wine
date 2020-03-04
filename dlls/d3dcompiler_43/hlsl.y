@@ -115,11 +115,11 @@ static void debug_dump_decl(struct hlsl_type *type, DWORD modifiers, const char 
     TRACE("%s %s;\n", debug_hlsl_type(type), declname);
 }
 
-static void check_invalid_matrix_modifiers(DWORD modifiers, struct source_location *loc)
+static void check_invalid_matrix_modifiers(DWORD modifiers, struct source_location loc)
 {
     if (modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR))
     {
-        hlsl_report_message(*loc, HLSL_LEVEL_ERROR,
+        hlsl_report_message(loc, HLSL_LEVEL_ERROR,
                 "'row_major' or 'column_major' modifiers are only allowed for matrices");
     }
 }
@@ -138,7 +138,7 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
         }
     }
     else
-        check_invalid_matrix_modifiers(decl->modifiers, &decl->loc);
+        check_invalid_matrix_modifiers(decl->modifiers, decl->loc);
 
     if (local)
     {
@@ -793,7 +793,7 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
         type->modifiers |= modifiers;
 
         if (type->type != HLSL_CLASS_MATRIX)
-            check_invalid_matrix_modifiers(type->modifiers, &v->loc);
+            check_invalid_matrix_modifiers(type->modifiers, v->loc);
 
         ret = add_type_to_scope(hlsl_ctx.cur_scope, type);
         if (!ret)
@@ -1211,11 +1211,9 @@ struct_spec:              named_struct_spec
 named_struct_spec:        var_modifiers KW_STRUCT any_identifier '{' fields_list '}'
                             {
                                 BOOL ret;
-                                struct source_location loc;
 
                                 TRACE("Structure %s declaration.\n", debugstr_a($3));
-                                loc = get_location(&@1);
-                                check_invalid_matrix_modifiers($1, &loc);
+                                check_invalid_matrix_modifiers($1, get_location(&@1));
                                 $$ = new_struct_type($3, $1, $5);
 
                                 if (get_variable(hlsl_ctx.cur_scope, $3))
@@ -1236,11 +1234,8 @@ named_struct_spec:        var_modifiers KW_STRUCT any_identifier '{' fields_list
 
 unnamed_struct_spec:      var_modifiers KW_STRUCT '{' fields_list '}'
                             {
-                                struct source_location loc;
-
                                 TRACE("Anonymous structure declaration.\n");
-                                loc = get_location(&@1);
-                                check_invalid_matrix_modifiers($1, &loc);
+                                check_invalid_matrix_modifiers($1, get_location(&@1));
                                 $$ = new_struct_type(NULL, $1, $4);
                             }
 
