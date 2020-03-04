@@ -82,6 +82,16 @@ typedef enum MFSESSION_GETFULLTOPOLOGY_FLAGS
     MFSESSION_GETFULLTOPOLOGY_CURRENT = 0x00000001,
 } MFSESSION_GETFULLTOPOLOGY_FLAGS;
 
+typedef enum _MF_CONNECT_METHOD
+{
+    MF_CONNECT_DIRECT                          = 0x00000000,
+    MF_CONNECT_ALLOW_CONVERTER                 = 0x00000001,
+    MF_CONNECT_ALLOW_DECODER                   = 0x00000003,
+    MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES = 0x00000004,
+    MF_CONNECT_AS_OPTIONAL                     = 0x00010000,
+    MF_CONNECT_AS_OPTIONAL_BRANCH              = 0x00020000,
+} MF_CONNECT_METHOD;
+
 typedef enum _MF_TOPOLOGY_RESOLUTION_STATUS_FLAGS
 {
     MF_TOPOLOGY_RESOLUTION_SUCCEEDED            = 0x00000000,
@@ -642,6 +652,19 @@ interface IMFMediaSource : IMFMediaEventGenerator
 
 [
     object,
+    uuid(3c9b2eb9-86d5-4514-a394-f56664f9f0d8)
+]
+interface IMFMediaSourceEx : IMFMediaSource
+{
+    HRESULT GetSourceAttributes([out] IMFAttributes **attributes);
+    HRESULT GetStreamAttributes(
+        [in] DWORD streamid,
+        [out] IMFAttributes **attributes);
+    HRESULT SetD3DManager([in] IUnknown *manager);
+}
+
+[
+    object,
     uuid(d182108f-4ec6-443f-aa42-a71106ec825f),
 ]
 interface IMFMediaStream : IMFMediaEventGenerator
@@ -689,6 +712,16 @@ interface IMFPresentationClock : IMFClock
     HRESULT Pause();
 }
 
+[
+    object,
+    uuid(6ef2a662-47c0-4666-b13d-cbb717f2fa2c)
+]
+interface IMFClockConsumer : IUnknown
+{
+    HRESULT SetPresentationClock([in] IMFPresentationClock *clock);
+    HRESULT GetPresentationClock([out] IMFPresentationClock **clock);
+}
+
 cpp_quote("#define MEDIASINK_FIXED_STREAMS                0x00000001")
 cpp_quote("#define MEDIASINK_CANNOT_MATCH_CLOCK           0x00000002")
 cpp_quote("#define MEDIASINK_RATELESS                     0x00000004")
@@ -728,6 +761,26 @@ interface IMFFinalizableMediaSink : IMFMediaSink
         [in] IUnknown *state);
 
     HRESULT EndFinalize([in] IMFAsyncResult *result);
+}
+
+[
+    object,
+    uuid(5dfd4b2a-7674-4110-a4e6-8a68fd5f3688)
+]
+interface IMFMediaSinkPreroll : IUnknown
+{
+    HRESULT NotifyPreroll([in] MFTIME start_time);
+}
+
+[
+    object,
+    uuid(9db7aa41-3cc5-40d4-8509-555804ad34cc)
+]
+interface IMFStreamingSinkConfig : IUnknown
+{
+    HRESULT StartStreaming(
+        [in] BOOL is_byte_offset,
+        [in] QWORD seek_offset);
 }
 
 [
@@ -784,6 +837,62 @@ interface IMFQualityManager : IUnknown
         [in] IUnknown *object,
         [in] IMFMediaEvent *event);
     HRESULT Shutdown();
+}
+
+typedef enum _MF_QUALITY_DROP_MODE
+{
+    MF_DROP_MODE_NONE,
+    MF_DROP_MODE_1,
+    MF_DROP_MODE_2,
+    MF_DROP_MODE_3,
+    MF_DROP_MODE_4,
+    MF_DROP_MODE_5,
+    MF_NUM_DROP_MODES
+} MF_QUALITY_DROP_MODE;
+
+typedef enum _MF_QUALITY_LEVEL
+{
+    MF_QUALITY_NORMAL,
+    MF_QUALITY_NORMAL_MINUS_1,
+    MF_QUALITY_NORMAL_MINUS_2,
+    MF_QUALITY_NORMAL_MINUS_3,
+    MF_QUALITY_NORMAL_MINUS_4,
+    MF_QUALITY_NORMAL_MINUS_5,
+    MF_NUM_QUALITY_LEVELS
+} MF_QUALITY_LEVEL;
+
+[
+    object,
+    uuid(ec15e2e9-e36b-4f7c-8758-77d452ef4ce7)
+]
+interface IMFQualityAdvise : IUnknown
+{
+    HRESULT SetDropMode([in] MF_QUALITY_DROP_MODE mode);
+    HRESULT SetQualityLevel([in] MF_QUALITY_LEVEL level);
+    HRESULT GetDropMode([out] MF_QUALITY_DROP_MODE *mode);
+    HRESULT GetQualityLevel([out] MF_QUALITY_LEVEL *level);
+    HRESULT DropTime([in] LONGLONG interval);
+}
+
+[
+    object,
+    uuid(f3706f0d-8ea2-4886-8000-7155e9ec2eae)
+]
+interface IMFQualityAdvise2 : IMFQualityAdvise
+{
+    HRESULT NotifyQualityEvent(
+        [in] IMFMediaEvent *event,
+        [out] DWORD *flags);
+}
+
+[
+    object,
+    uuid(dfcd8e4d-30b5-4567-acaa-8eb5b7853dc9)
+]
+interface IMFQualityAdviseLimits : IUnknown
+{
+    HRESULT GetMaximumDropMode([out] MF_QUALITY_DROP_MODE *mode);
+    HRESULT GetMinimumQualityLevel([out] MF_QUALITY_LEVEL *level);
 }
 
 typedef struct _MFT_REGISTRATION_INFO
