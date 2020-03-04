@@ -1923,6 +1923,41 @@ static const struct message WmSHOWNATopInvisible[] = {
     { 0 }
 };
 
+static const struct message WmTrackPopupMenuMinimizeWindow[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_ENTERMENULOOP, sent|wparam|lparam, TRUE, 0 },
+    { WM_INITMENU, sent|lparam, 0, 0 },
+    { WM_INITMENUPOPUP, sent|lparam, 0, 0 },
+    { 0x0093, sent|optional },
+    { 0x0094, sent|optional },
+    { 0x0094, sent|optional },
+    { WM_ENTERIDLE, sent|wparam, 2 },
+    { HCBT_MINMAX, hook },
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent|wparam, 0 },
+    { WM_GETTEXT, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { WM_GETTEXT, sent|optional },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_CANCELMODE, sent },
+    { WM_CAPTURECHANGED, sent|defwinproc },
+    { HCBT_DESTROYWND, hook },
+    { WM_UNINITMENUPOPUP, sent|defwinproc|lparam, 0, 0 },
+    { WM_MENUSELECT, sent|defwinproc|wparam|lparam, 0xffff0000, 0 },
+    { WM_EXITMENULOOP, sent|defwinproc|wparam|lparam, 1, 0 },
+    { WM_NCACTIVATE, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent },
+    { WM_ACTIVATEAPP, sent|wparam, 0 },
+    { 0 }
+};
+
 static const struct message WmTrackPopupMenu[] = {
     { HCBT_CREATEWND, hook },
     { WM_ENTERMENULOOP, sent|wparam|lparam, TRUE, 0 },
@@ -17308,6 +17343,25 @@ static void test_layered_window(void)
 
 static HMENU hpopupmenu;
 
+static LRESULT WINAPI minimize_popup_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    LRESULT ret;
+
+    if (ignore_message( message )) return 0;
+    ret = MsgCheckProc( FALSE, hwnd, message, wParam, lParam );
+
+    switch (message) {
+    case WM_ENTERIDLE:
+        ShowWindow(hwnd, SW_MINIMIZE);
+        break;
+    case WM_TIMER:
+        EndMenu();
+        break;
+    }
+
+    return ret;
+}
+
 static LRESULT WINAPI cancel_popup_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if (ignore_message( message )) return 0;
@@ -17389,6 +17443,21 @@ static void test_TrackPopupMenu(void)
     ret = TrackPopupMenu(hpopupmenu, 0, 100,100, 0, hwnd, NULL);
     ok_sequence(WmTrackPopupMenuAbort, "WmTrackPopupMenuAbort", TRUE);
     ok(ret == TRUE, "TrackPopupMenu failed\n");
+
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)minimize_popup_proc);
+
+    /* set cursor over the window, otherwise the WM_CANCELMODE message may not always be sent */
+    SetCursorPos( 0, 0 );
+    ShowWindow( hwnd, SW_SHOW );
+
+    flush_events();
+    flush_sequence();
+    SetTimer( hwnd, TIMER_ID, 500, NULL );
+    ret = TrackPopupMenu( hpopupmenu, 0, 100,100, 0, hwnd, NULL );
+    ok_sequence( WmTrackPopupMenuMinimizeWindow, "TrackPopupMenuMinimizeWindow", TRUE );
+    ok( ret == 1, "TrackPopupMenu failed with error %i\n", GetLastError() );
+    KillTimer( hwnd, TIMER_ID );
+    ShowWindow( hwnd, SW_RESTORE );
 
     SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)cancel_popup_proc);
 
