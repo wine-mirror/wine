@@ -663,10 +663,13 @@ BOOL WINAPI MoveFileA( LPCSTR source, LPCSTR dest )
 BOOL WINAPI CreateHardLinkW(LPCWSTR lpFileName, LPCWSTR lpExistingFileName,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-    NTSTATUS status;
     UNICODE_STRING ntDest, ntSource;
-    ANSI_STRING unixDest, unixSource;
+    FILE_LINK_INFORMATION *info = NULL;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
     BOOL ret = FALSE;
+    HANDLE file;
+    ULONG size;
 
     TRACE("(%s, %s, %p)\n", debugstr_w(lpFileName),
         debugstr_w(lpExistingFileName), lpSecurityAttributes);
@@ -679,37 +682,30 @@ BOOL WINAPI CreateHardLinkW(LPCWSTR lpFileName, LPCWSTR lpExistingFileName,
         goto err;
     }
 
-    unixSource.Buffer = unixDest.Buffer = NULL;
-    status = wine_nt_to_unix_file_name( &ntSource, &unixSource, FILE_OPEN, FALSE );
-    if (!status)
+    size = offsetof( FILE_LINK_INFORMATION, FileName ) + ntDest.Length;
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, size )))
     {
-        status = wine_nt_to_unix_file_name( &ntDest, &unixDest, FILE_CREATE, FALSE );
-        if (!status) /* destination must not exist */
-        {
-            status = STATUS_OBJECT_NAME_EXISTS;
-        } else if (status == STATUS_NO_SUCH_FILE)
-        {
-            status = STATUS_SUCCESS;
-        }
+        SetLastError( ERROR_OUTOFMEMORY );
+        goto err;
     }
 
-    if (status)
-         SetLastError( RtlNtStatusToDosError(status) );
-    else if (!link( unixSource.Buffer, unixDest.Buffer ))
-    {
-        TRACE("Hardlinked '%s' to '%s'\n", debugstr_a( unixDest.Buffer ),
-                debugstr_a( unixSource.Buffer ));
-        ret = TRUE;
-    }
-    else
-        FILE_SetDosError();
+    InitializeObjectAttributes( &attr, &ntSource, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if (!(ret = set_ntstatus( NtOpenFile( &file, SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+            FILE_SYNCHRONOUS_IO_NONALERT ) )))
+        goto err;
 
-    RtlFreeAnsiString( &unixSource );
-    RtlFreeAnsiString( &unixDest );
+    info->ReplaceIfExists = FALSE;
+    info->RootDirectory = NULL;
+    info->FileNameLength = ntDest.Length;
+    memcpy( info->FileName, ntDest.Buffer, ntDest.Length );
+    ret = set_ntstatus( NtSetInformationFile( file, &io, info, size, FileLinkInformation ) );
+
+    NtClose( file );
 
 err:
     RtlFreeUnicodeString( &ntSource );
     RtlFreeUnicodeString( &ntDest );
+    HeapFree( GetProcessHeap(), 0, info );
     return ret;
 }
 
