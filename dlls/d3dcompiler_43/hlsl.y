@@ -301,7 +301,7 @@ enum loop_type
 };
 
 static struct list *create_loop(enum loop_type type, struct list *init, struct list *cond,
-        struct list *iter, struct list *body, struct source_location *loc)
+        struct list *iter, struct list *body, struct source_location loc)
 {
     struct list *list = NULL;
     struct hlsl_ir_loop *loop = NULL;
@@ -319,7 +319,7 @@ static struct list *create_loop(enum loop_type type, struct list *init, struct l
     if (!loop)
         goto oom;
     loop->node.type = HLSL_IR_LOOP;
-    loop->node.loc = *loc;
+    loop->node.loc = loc;
     list_add_tail(list, &loop->node.entry);
     loop->body = d3dcompiler_alloc(sizeof(*loop->body));
     if (!loop->body)
@@ -1826,33 +1826,23 @@ if_body:                  statement
 
 loop_statement:           KW_WHILE '(' expr ')' statement
                             {
-                                struct source_location loc;
-                                loc = get_location(&@1);
-                                $$ = create_loop(LOOP_WHILE, NULL, $3, NULL, $5, &loc);
+                                $$ = create_loop(LOOP_WHILE, NULL, $3, NULL, $5, get_location(&@1));
                             }
                         | KW_DO statement KW_WHILE '(' expr ')' ';'
                             {
-                                struct source_location loc;
-                                loc = get_location(&@1);
-                                $$ = create_loop(LOOP_DO_WHILE, NULL, $5, NULL, $2, &loc);
+                                $$ = create_loop(LOOP_DO_WHILE, NULL, $5, NULL, $2, get_location(&@1));
                             }
                         | KW_FOR '(' scope_start expr_statement expr_statement expr ')' statement
                             {
-                                struct source_location loc;
-
-                                loc = get_location(&@1);
-                                $$ = create_loop(LOOP_FOR, $4, $5, $6, $8, &loc);
+                                $$ = create_loop(LOOP_FOR, $4, $5, $6, $8, get_location(&@1));
                                 pop_scope(&hlsl_ctx);
                             }
                         | KW_FOR '(' scope_start declaration expr_statement expr ')' statement
                             {
-                                struct source_location loc;
-
-                                loc = get_location(&@1);
                                 if (!$4)
-                                    hlsl_report_message(loc, HLSL_LEVEL_WARNING,
+                                    hlsl_report_message(get_location(&@4), HLSL_LEVEL_WARNING,
                                             "no expressions in for loop initializer");
-                                $$ = create_loop(LOOP_FOR, $4, $5, $6, $8, &loc);
+                                $$ = create_loop(LOOP_FOR, $4, $5, $6, $8, get_location(&@1));
                                 pop_scope(&hlsl_ctx);
                             }
 
