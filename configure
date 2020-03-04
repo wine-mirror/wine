@@ -9812,6 +9812,50 @@ $as_echo "$wine_cv_crosscc" >&6; }
                 esac
                 shift
             done
+
+                        llvm_target=$CROSSTARGET
+            if test -z "$llvm_target"
+            then
+                case $host_cpu in
+                *i[3456789]86*) llvm_target=i686-windows-gnu ;;
+                *) llvm_target=$host_cpu-windows-gnu ;;
+                esac
+            fi
+            as_ac_var=`$as_echo "ac_cv_crosscflags_-target $llvm_target -fuse-ld=lld" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -target $llvm_target -fuse-ld=lld" >&5
+$as_echo_n "checking whether the cross-compiler supports -target $llvm_target -fuse-ld=lld... " >&6; }
+if eval \${$as_ac_var+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_cc=$CC
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -target $llvm_target -fuse-ld=lld"
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_var=yes"
+else
+  eval "$as_ac_var=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+CC=$ac_wine_try_cflags_saved_cc
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+eval ac_res=\$$as_ac_var
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  CROSSTARGET=$llvm_target
+                                  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -target $CROSSTARGET"
+                                  CFLAGS="$CFLAGS -fuse-ld=lld"
+fi
         fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-strict-aliasing" >&5
 $as_echo_n "checking whether the cross-compiler supports -fno-strict-aliasing... " >&6; }
