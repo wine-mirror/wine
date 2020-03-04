@@ -208,6 +208,9 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     TRACE("freeing %p bits %p\n", surface, surface->bits);
+    if (surface->region) DeleteObject(surface->region);
+    if (surface->drawn) DeleteObject(surface->drawn);
+    HeapFree(GetProcessHeap(), 0, surface->blit_data);
     HeapFree(GetProcessHeap(), 0, surface->bits);
     pthread_mutex_destroy(&surface->mutex);
     HeapFree(GetProcessHeap(), 0, surface);
