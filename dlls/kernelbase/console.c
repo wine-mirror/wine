@@ -1146,9 +1146,36 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleOutputCP( UINT cp )
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleScreenBufferInfoEx( HANDLE handle,
                                                             CONSOLE_SCREEN_BUFFER_INFOEX *info )
 {
-    FIXME( "(%p %p): stub!\n", handle, info );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    BOOL ret;
+
+    TRACE("(%p, %p)\n", handle, info);
+
+    if (info->cbSize != sizeof(CONSOLE_SCREEN_BUFFER_INFOEX))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    SERVER_START_REQ( set_console_output_info )
+    {
+        req->handle     = console_handle_unmap( handle );
+        req->width      = info->dwSize.X;
+        req->height     = info->dwSize.Y;
+        req->cursor_x   = info->dwCursorPosition.X;
+        req->cursor_y   = info->dwCursorPosition.Y;
+        req->attr       = info->wAttributes;
+        req->win_left   = info->srWindow.Left;
+        req->win_top    = info->srWindow.Top;
+        req->win_right  = info->srWindow.Right;
+        req->win_bottom = info->srWindow.Bottom;
+        req->popup_attr = info->wPopupAttributes;
+        req->max_width  = min( info->dwMaximumWindowSize.X, info->dwSize.X );
+        req->max_height = min( info->dwMaximumWindowSize.Y, info->dwSize.Y );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 
