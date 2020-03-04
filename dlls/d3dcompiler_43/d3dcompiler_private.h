@@ -1061,8 +1061,8 @@ enum hlsl_error_level
 };
 
 void WINAPIV hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
-void WINAPIV hlsl_report_message(const char *filename, DWORD line, DWORD column,
-        enum hlsl_error_level level, const char *fmt, ...) PRINTF_ATTR(5,6) DECLSPEC_HIDDEN;
+void WINAPIV hlsl_report_message(const struct source_location loc,
+        enum hlsl_error_level level, const char *fmt, ...) PRINTF_ATTR(3,4) DECLSPEC_HIDDEN;
 
 static inline struct hlsl_ir_expr *expr_from_node(const struct hlsl_ir_node *node)
 {

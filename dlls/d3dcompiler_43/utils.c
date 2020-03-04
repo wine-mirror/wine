@@ -1191,8 +1191,7 @@ static struct hlsl_type *expr_common_type(struct hlsl_type *t1, struct hlsl_type
 
     if (t1->type > HLSL_CLASS_LAST_NUMERIC || t2->type > HLSL_CLASS_LAST_NUMERIC)
     {
-        hlsl_report_message(loc->file, loc->line, loc->col, HLSL_LEVEL_ERROR,
-                "non scalar/vector/matrix data type in expression");
+        hlsl_report_message(*loc, HLSL_LEVEL_ERROR, "non scalar/vector/matrix data type in expression");
         return NULL;
     }
 
@@ -1201,8 +1200,7 @@ static struct hlsl_type *expr_common_type(struct hlsl_type *t1, struct hlsl_type
 
     if (!expr_compatible_data_types(t1, t2))
     {
-        hlsl_report_message(loc->file, loc->line, loc->col, HLSL_LEVEL_ERROR,
-                "expression data types are incompatible");
+        hlsl_report_message(*loc, HLSL_LEVEL_ERROR, "expression data types are incompatible");
         return NULL;
     }
 
@@ -1286,14 +1284,13 @@ struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_
 
     if (!implicit_compatible_data_types(src_type, dst_type))
     {
-        hlsl_report_message(loc->file, loc->line, loc->col, HLSL_LEVEL_ERROR,
-                "can't implicitly convert %s to %s", debug_hlsl_type(src_type), debug_hlsl_type(dst_type));
+        hlsl_report_message(*loc, HLSL_LEVEL_ERROR, "can't implicitly convert %s to %s",
+                debug_hlsl_type(src_type), debug_hlsl_type(dst_type));
         return NULL;
     }
 
     if (dst_type->dimx * dst_type->dimy < src_type->dimx * src_type->dimy)
-        hlsl_report_message(loc->file, loc->line, loc->col, HLSL_LEVEL_WARNING,
-                "implicit truncation of vector type");
+        hlsl_report_message(*loc, HLSL_LEVEL_WARNING, "implicit truncation of vector type");
 
     TRACE("Implicit conversion from %s to %s.\n", debug_hlsl_type(src_type), debug_hlsl_type(dst_type));
 
@@ -1341,9 +1338,7 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
         if (operands[i]->data_type->dimx * operands[i]->data_type->dimy != 1
                 && operands[i]->data_type->dimx * operands[i]->data_type->dimy != type->dimx * type->dimy)
         {
-            hlsl_report_message(operands[i]->loc.file,
-                    operands[i]->loc.line, operands[i]->loc.col, HLSL_LEVEL_WARNING,
-                    "implicit truncation of vector/matrix type");
+            hlsl_report_message(operands[i]->loc, HLSL_LEVEL_WARNING, "implicit truncation of vector/matrix type");
         }
 
         if (!(cast = new_cast(operands[i], type, &operands[i]->loc)))
@@ -1452,7 +1447,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
 
         if (left->data_type->type > HLSL_CLASS_LAST_NUMERIC)
         {
-            hlsl_report_message(left->loc.file, left->loc.line, left->loc.col, HLSL_LEVEL_ERROR,
+            hlsl_report_message(left->loc, HLSL_LEVEL_ERROR,
                     "writemask on a non scalar/vector/matrix type");
             d3dcompiler_free(assign);
             return NULL;
