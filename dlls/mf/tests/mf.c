@@ -1138,7 +1138,7 @@ todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaSession_GetClock(session, &clock);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(hr == MF_E_SHUTDOWN || broken(hr == E_UNEXPECTED) /* Win7 */, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaSession_GetSessionCapabilities(session, &caps);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
