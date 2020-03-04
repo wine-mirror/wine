@@ -375,7 +375,8 @@ struct strarray find_tool( const char *name, const char * const *names )
 
     while (*names)
     {
-        if ((file = find_binary( target_alias, *names )))
+        if ((file = find_binary( target_alias, *names ))
+            || (names == alt_names && (file = find_binary( "llvm", *names ))))
         {
             struct strarray ret = empty_strarray;
             strarray_add_one( &ret, file );
