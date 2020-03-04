@@ -2460,7 +2460,6 @@ static void init_functions(void)
     X(ImageList_AddMasked);
     X(ImageList_DrawIndirect);
     X(ImageList_SetImageCount);
-    X(ImageList_SetImageCount);
     X2(ImageList_SetColorTable, 390);
     X(ImageList_GetFlags);
     X(ImageList_BeginDrag);
