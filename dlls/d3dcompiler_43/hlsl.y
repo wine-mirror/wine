@@ -32,7 +32,7 @@ int hlsl_lex(void);
 struct hlsl_parse_ctx hlsl_ctx;
 
 struct YYLTYPE;
-static void set_location(struct source_location *loc, const struct YYLTYPE *l);
+static struct source_location get_location(const struct YYLTYPE *l);
 
 void WINAPIV hlsl_message(const char *fmt, ...)
 {
@@ -1214,7 +1214,7 @@ struct_declaration:       struct_spec variables_def_optional ';'
                             {
                                 struct source_location loc;
 
-                                set_location(&loc, &@3);
+                                loc = get_location(&@3);
                                 if (!$2)
                                 {
                                     if (!$1->name)
@@ -1236,7 +1236,7 @@ named_struct_spec:        var_modifiers KW_STRUCT any_identifier '{' fields_list
                                 struct source_location loc;
 
                                 TRACE("Structure %s declaration.\n", debugstr_a($3));
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 check_invalid_matrix_modifiers($1, &loc);
                                 $$ = new_struct_type($3, $1, $5);
 
@@ -1261,7 +1261,7 @@ unnamed_struct_spec:      var_modifiers KW_STRUCT '{' fields_list '}'
                                 struct source_location loc;
 
                                 TRACE("Anonymous structure declaration.\n");
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 check_invalid_matrix_modifiers($1, &loc);
                                 $$ = new_struct_type(NULL, $1, $4);
                             }
@@ -1344,7 +1344,7 @@ func_prototype:           var_modifiers type var_identifier '(' parameters ')' c
                                 }
                                 $$.name = $3;
                                 $$.decl->semantic = $7.semantic;
-                                set_location(&$$.decl->loc, &@3);
+                                $$.decl->loc = get_location(&@3);
                                 hlsl_ctx.cur_function = $$.decl;
                             }
 
@@ -1419,7 +1419,7 @@ param_list:               parameter
 
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
                                 list_init($$);
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 if (!add_func_parameter($$, &$1, &loc))
                                 {
                                     ERR("Error adding function parameter %s.\n", $1.name);
@@ -1432,7 +1432,7 @@ param_list:               parameter
                                 struct source_location loc;
 
                                 $$ = $1;
-                                set_location(&loc, &@3);
+                                loc = get_location(&@3);
                                 if (!add_func_parameter($$, &$3, &loc))
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
@@ -1594,7 +1594,7 @@ typedef:                  KW_TYPEDEF var_modifiers type type_specs ';'
                             {
                                 struct source_location loc;
 
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 if (!add_typedef($2, $3, $4, &loc))
                                     YYABORT;
                             }
@@ -1602,7 +1602,7 @@ typedef:                  KW_TYPEDEF var_modifiers type type_specs ';'
                             {
                                 struct source_location loc;
 
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 if (!add_typedef(0, $2, $3, &loc))
                                     YYABORT;
                             }
@@ -1622,7 +1622,7 @@ type_specs:               type_spec
 type_spec:                any_identifier array
                             {
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
-                                set_location(&$$->loc, &@1);
+                                $$->loc = get_location(&@1);
                                 $$->name = $1;
                                 $$->array_size = $2;
                             }
@@ -1656,7 +1656,7 @@ variables_def:            variable_def
 variable_def:             any_identifier array colon_attribute
                             {
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
-                                set_location(&$$->loc, &@1);
+                                $$->loc = get_location(&@1);
                                 $$->name = $1;
                                 $$->array_size = $2;
                                 $$->semantic = $3.semantic;
@@ -1666,7 +1666,7 @@ variable_def:             any_identifier array colon_attribute
                             {
                                 TRACE("Declaration with initializer.\n");
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
-                                set_location(&$$->loc, &@1);
+                                $$->loc = get_location(&@1);
                                 $$->name = $1;
                                 $$->array_size = $2;
                                 $$->semantic = $3.semantic;
@@ -1803,11 +1803,8 @@ statement:                declaration_statement
 
 jump_statement:           KW_RETURN expr ';'
                             {
-                                struct source_location loc;
                                 struct hlsl_ir_jump *jump;
-
-                                set_location(&loc, &@1);
-                                if (!(jump = new_return(node_from_list($2), loc)))
+                                if (!(jump = new_return(node_from_list($2), get_location(&@1))))
                                     YYABORT;
 
                                 $$ = $2;
@@ -1815,13 +1812,9 @@ jump_statement:           KW_RETURN expr ';'
                             }
                         | KW_RETURN ';'
                             {
-                                struct source_location loc;
                                 struct hlsl_ir_jump *jump;
-
-                                set_location(&loc, &@1);
-                                if (!(jump = new_return(NULL, loc)))
+                                if (!(jump = new_return(NULL, get_location(&@1))))
                                     YYABORT;
-
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
                                 list_init($$);
                                 list_add_tail($$, &jump->node.entry);
@@ -1836,7 +1829,7 @@ selection_statement:      KW_IF '(' expr ')' if_body
                                     YYABORT;
                                 }
                                 instr->node.type = HLSL_IR_IF;
-                                set_location(&instr->node.loc, &@1);
+                                instr->node.loc = get_location(&@1);
                                 instr->condition = node_from_list($3);
                                 instr->then_instrs = $5.then_instrs;
                                 instr->else_instrs = $5.else_instrs;
@@ -1864,20 +1857,20 @@ if_body:                  statement
 loop_statement:           KW_WHILE '(' expr ')' statement
                             {
                                 struct source_location loc;
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 $$ = create_loop(LOOP_WHILE, NULL, $3, NULL, $5, &loc);
                             }
                         | KW_DO statement KW_WHILE '(' expr ')' ';'
                             {
                                 struct source_location loc;
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 $$ = create_loop(LOOP_DO_WHILE, NULL, $5, NULL, $2, &loc);
                             }
                         | KW_FOR '(' scope_start expr_statement expr_statement expr ')' statement
                             {
                                 struct source_location loc;
 
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 $$ = create_loop(LOOP_FOR, $4, $5, $6, $8, &loc);
                                 pop_scope(&hlsl_ctx);
                             }
@@ -1885,7 +1878,7 @@ loop_statement:           KW_WHILE '(' expr ')' statement
                             {
                                 struct source_location loc;
 
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 if (!$4)
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_WARNING,
                                             "no expressions in for loop initializer");
@@ -1912,7 +1905,7 @@ primary_expr:             C_FLOAT
                                     YYABORT;
                                 }
                                 c->node.type = HLSL_IR_CONSTANT;
-                                set_location(&c->node.loc, &yylloc);
+                                c->node.loc = get_location(&yylloc);
                                 c->node.data_type = new_hlsl_type(d3dcompiler_strdup("float"), HLSL_CLASS_SCALAR, HLSL_TYPE_FLOAT, 1, 1);
                                 c->v.value.f[0] = $1;
                                 if (!($$ = make_list(&c->node)))
@@ -1927,7 +1920,7 @@ primary_expr:             C_FLOAT
                                     YYABORT;
                                 }
                                 c->node.type = HLSL_IR_CONSTANT;
-                                set_location(&c->node.loc, &yylloc);
+                                c->node.loc = get_location(&yylloc);
                                 c->node.data_type = new_hlsl_type(d3dcompiler_strdup("int"), HLSL_CLASS_SCALAR, HLSL_TYPE_INT, 1, 1);
                                 c->v.value.i[0] = $1;
                                 if (!($$ = make_list(&c->node)))
@@ -1942,7 +1935,7 @@ primary_expr:             C_FLOAT
                                     YYABORT;
                                 }
                                 c->node.type = HLSL_IR_CONSTANT;
-                                set_location(&c->node.loc, &yylloc);
+                                c->node.loc = get_location(&yylloc);
                                 c->node.data_type = new_hlsl_type(d3dcompiler_strdup("bool"), HLSL_CLASS_SCALAR, HLSL_TYPE_BOOL, 1, 1);
                                 c->v.value.b[0] = $1;
                                 if (!($$ = make_list(&c->node)))
@@ -1962,7 +1955,7 @@ primary_expr:             C_FLOAT
                                 }
                                 if ((deref = new_var_deref(var)))
                                 {
-                                    set_location(&deref->node.loc, &@1);
+                                    deref->node.loc = get_location(&@1);
                                     if (!($$ = make_list(&deref->node)))
                                         YYABORT;
                                 }
@@ -1983,7 +1976,7 @@ postfix_expr:             primary_expr
                                 struct source_location loc;
                                 struct hlsl_ir_node *inc;
 
-                                set_location(&loc, &@2);
+                                loc = get_location(&@2);
                                 if (node_from_list($1)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
@@ -2001,7 +1994,7 @@ postfix_expr:             primary_expr
                                 struct source_location loc;
                                 struct hlsl_ir_node *inc;
 
-                                set_location(&loc, &@2);
+                                loc = get_location(&@2);
                                 if (node_from_list($1)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
@@ -2019,7 +2012,7 @@ postfix_expr:             primary_expr
                                 struct hlsl_ir_node *node = node_from_list($1);
                                 struct source_location loc;
 
-                                set_location(&loc, &@2);
+                                loc = get_location(&@2);
                                 if (node->data_type->type == HLSL_CLASS_STRUCT)
                                 {
                                     struct hlsl_type *type = node->data_type;
@@ -2085,7 +2078,7 @@ postfix_expr:             primary_expr
                                     YYABORT;
                                 }
                                 deref->node.type = HLSL_IR_DEREF;
-                                set_location(&loc, &@2);
+                                loc = get_location(&@2);
                                 deref->node.loc = loc;
                                 if (expr_type->type == HLSL_CLASS_ARRAY)
                                 {
@@ -2159,7 +2152,7 @@ postfix_expr:             primary_expr
 
                                 constructor = d3dcompiler_alloc(sizeof(*constructor));
                                 constructor->node.type = HLSL_IR_CONSTRUCTOR;
-                                set_location(&constructor->node.loc, &@3);
+                                constructor->node.loc = get_location(&@3);
                                 constructor->node.data_type = $2;
                                 constructor->args_count = $4.args_count;
                                 memcpy(constructor->args, $4.args, $4.args_count * sizeof(*$4.args));
@@ -2175,7 +2168,7 @@ unary_expr:               postfix_expr
                             {
                                 struct source_location loc;
 
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 if (node_from_list($2)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
@@ -2188,7 +2181,7 @@ unary_expr:               postfix_expr
                             {
                                 struct source_location loc;
 
-                                set_location(&loc, &@1);
+                                loc = get_location(&@1);
                                 if (node_from_list($2)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
@@ -2201,7 +2194,6 @@ unary_expr:               postfix_expr
                             {
                                 enum hlsl_ir_expr_op ops[] = {0, HLSL_IR_UNOP_NEG,
                                         HLSL_IR_UNOP_LOGIC_NOT, HLSL_IR_UNOP_BIT_NOT};
-                                struct source_location loc;
 
                                 if ($1 == UNARY_OP_PLUS)
                                 {
@@ -2209,8 +2201,7 @@ unary_expr:               postfix_expr
                                 }
                                 else
                                 {
-                                    set_location(&loc, &@1);
-                                    $$ = append_unop($2, new_unary_expr(ops[$1], node_from_list($2), loc));
+                                    $$ = append_unop($2, new_unary_expr(ops[$1], node_from_list($2), get_location(&@1)));
                                 }
                             }
                           /* var_modifiers just to avoid shift/reduce conflicts */
@@ -2220,7 +2211,7 @@ unary_expr:               postfix_expr
                                 struct hlsl_type *dst_type;
                                 struct source_location loc;
 
-                                set_location(&loc, &@3);
+                                loc = get_location(&@3);
                                 if ($2)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
@@ -2267,24 +2258,18 @@ mul_expr:                 unary_expr
                             }
                         | mul_expr '*' unary_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_MUL, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_MUL,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
                         | mul_expr '/' unary_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_DIV, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_DIV,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
                         | mul_expr '%' unary_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_MOD, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_MOD,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
 
 add_expr:                 mul_expr
@@ -2293,17 +2278,13 @@ add_expr:                 mul_expr
                             }
                         | add_expr '+' mul_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_ADD, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_ADD,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
                         | add_expr '-' mul_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_SUB, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_SUB,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
 
 shift_expr:               add_expr
@@ -2325,31 +2306,23 @@ relational_expr:          shift_expr
                             }
                         | relational_expr '<' shift_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_LESS, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_LESS,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
                         | relational_expr '>' shift_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_GREATER, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_GREATER,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
                         | relational_expr OP_LE shift_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_LEQUAL, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_LEQUAL,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
                         | relational_expr OP_GE shift_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_GEQUAL, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_GEQUAL,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
 
 equality_expr:            relational_expr
@@ -2358,17 +2331,13 @@ equality_expr:            relational_expr
                             }
                         | equality_expr OP_EQ relational_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_EQUAL, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_EQUAL,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
                         | equality_expr OP_NE relational_expr
                             {
-                                struct source_location loc;
-
-                                set_location(&loc, &@2);
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_NEQUAL, node_from_list($1), node_from_list($3), loc));
+                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_NEQUAL,
+                                        node_from_list($1), node_from_list($3), get_location(&@2)));
                             }
 
 bitand_expr:              equality_expr
@@ -2434,7 +2403,7 @@ assignment_expr:          conditional_expr
                                 struct source_location loc;
                                 struct hlsl_ir_node *instr;
 
-                                set_location(&loc, &@2);
+                                loc = get_location(&@2);
                                 if (node_from_list($1)->data_type->modifiers & HLSL_MODIFIER_CONST)
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
@@ -2506,11 +2475,15 @@ expr:                     assignment_expr
 
 %%
 
-static void set_location(struct source_location *loc, const struct YYLTYPE *l)
+static struct source_location get_location(const struct YYLTYPE *l)
 {
-    loc->file = hlsl_ctx.source_file;
-    loc->line = l->first_line;
-    loc->col = l->first_column;
+    const struct source_location loc =
+    {
+        .file = hlsl_ctx.source_file,
+        .line = l->first_line,
+        .col = l->first_column,
+    };
+    return loc;
 }
 
 static DWORD add_modifier(DWORD modifiers, DWORD mod, const struct YYLTYPE *loc)
