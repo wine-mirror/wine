@@ -113,6 +113,7 @@ enum exec_mode_values
     MODE_EXE,
     MODE_DEF,
     MODE_IMPLIB,
+    MODE_STATICLIB,
     MODE_BUILTIN,
     MODE_RESOURCES
 };
@@ -299,6 +300,7 @@ static const char usage_str[] =
 "       --def                 Build a .def file from a .spec file\n"
 "       --exe                 Build an executable from object files\n"
 "       --implib              Build an import library\n"
+"       --staticlib           Build a static library\n"
 "       --builtin             Mark a library as a Wine builtin\n"
 "       --resources           Build a .o or .res file for the resource files\n\n"
 "The mode options are mutually exclusive; you must specify one and only one.\n\n";
@@ -320,6 +322,7 @@ enum long_options_values
     LONG_OPT_NXCOMPAT,
     LONG_OPT_RESOURCES,
     LONG_OPT_SAVE_TEMPS,
+    LONG_OPT_STATICLIB,
     LONG_OPT_SUBSYSTEM,
     LONG_OPT_VERSION
 };
@@ -332,6 +335,7 @@ static const struct option long_options[] =
     { "def",           0, 0, LONG_OPT_DEF },
     { "exe",           0, 0, LONG_OPT_EXE },
     { "implib",        0, 0, LONG_OPT_IMPLIB },
+    { "staticlib",     0, 0, LONG_OPT_STATICLIB },
     { "builtin",       0, 0, LONG_OPT_BUILTIN },
     { "as-cmd",        1, 0, LONG_OPT_ASCMD },
     { "cc-cmd",        1, 0, LONG_OPT_CCCMD },
@@ -500,6 +504,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_IMPLIB:
             set_exec_mode( MODE_IMPLIB );
+            break;
+        case LONG_OPT_STATICLIB:
+            set_exec_mode( MODE_STATICLIB );
             break;
         case LONG_OPT_BUILTIN:
             set_exec_mode( MODE_BUILTIN );
@@ -685,7 +692,10 @@ int main(int argc, char **argv)
     case MODE_IMPLIB:
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
-        output_import_lib( spec, argv );
+        output_static_lib( spec, argv );
+        break;
+    case MODE_STATICLIB:
+        output_static_lib( NULL, argv );
         break;
     case MODE_BUILTIN:
         if (!argv[0]) fatal_error( "missing file argument for --builtin option\n" );
