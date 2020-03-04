@@ -3167,24 +3167,24 @@ static void test_SetConsoleScreenBufferInfoEx(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pSetConsoleScreenBufferInfoEx(NULL, &info);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pSetConsoleScreenBufferInfoEx(std_output, &info);
-    todo_wine ok(ret, "got %d, expected one\n", ret);
-    todo_wine ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(ret, "got %d, expected one\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pSetConsoleScreenBufferInfoEx(std_input, &info);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE || GetLastError() == ERROR_ACCESS_DENIED,
+    ok(GetLastError() == ERROR_INVALID_HANDLE || GetLastError() == ERROR_ACCESS_DENIED,
             "got %u, expected 5 or 6\n", GetLastError());
 
     info.cbSize = 0;
     SetLastError(0xdeadbeef);
     ret = pSetConsoleScreenBufferInfoEx(std_output, &info);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
 
     CloseHandle(std_input);
 }
