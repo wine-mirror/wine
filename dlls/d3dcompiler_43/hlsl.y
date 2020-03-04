@@ -826,7 +826,7 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
     return TRUE;
 }
 
-static BOOL add_func_parameter(struct list *list, struct parse_parameter *param, const struct source_location *loc)
+static BOOL add_func_parameter(struct list *list, struct parse_parameter *param, const struct source_location loc)
 {
     struct hlsl_ir_var *decl = d3dcompiler_alloc(sizeof(*decl));
 
@@ -836,7 +836,7 @@ static BOOL add_func_parameter(struct list *list, struct parse_parameter *param,
         return FALSE;
     }
     decl->data_type = param->type;
-    decl->loc = *loc;
+    decl->loc = loc;
     decl->name = param->name;
     decl->semantic = param->semantic;
     decl->reg_reservation = param->reg_reservation;
@@ -1411,12 +1411,9 @@ parameters:               scope_start
 
 param_list:               parameter
                             {
-                                struct source_location loc;
-
                                 $$ = d3dcompiler_alloc(sizeof(*$$));
                                 list_init($$);
-                                loc = get_location(&@1);
-                                if (!add_func_parameter($$, &$1, &loc))
+                                if (!add_func_parameter($$, &$1, get_location(&@1)))
                                 {
                                     ERR("Error adding function parameter %s.\n", $1.name);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
@@ -1425,13 +1422,10 @@ param_list:               parameter
                             }
                         | param_list ',' parameter
                             {
-                                struct source_location loc;
-
                                 $$ = $1;
-                                loc = get_location(&@3);
-                                if (!add_func_parameter($$, &$3, &loc))
+                                if (!add_func_parameter($$, &$3, get_location(&@3)))
                                 {
-                                    hlsl_report_message(loc, HLSL_LEVEL_ERROR,
+                                    hlsl_report_message(get_location(&@3), HLSL_LEVEL_ERROR,
                                             "duplicate parameter %s", $3.name);
                                     YYABORT;
                                 }
