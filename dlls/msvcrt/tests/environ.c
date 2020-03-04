@@ -20,6 +20,7 @@
 
 #include "wine/test.h"
 #include <stdlib.h>
+#include <process.h>
 
 static const char *a_very_long_env_string =
  "LIBRARY_PATH="
@@ -41,9 +42,6 @@ static const char *a_very_long_env_string =
  "/lib/;"
  "/usr/lib/mingw32/3.4.2/;"
  "/usr/lib/";
-
-void __cdecl __getmainargs(int *, char ***, char ***, int, int *);
-void __cdecl __wgetmainargs(int *, wchar_t ***, wchar_t ***, int, int *);
 
 static char ***(__cdecl *p__p__environ)(void);
 static WCHAR ***(__cdecl *p__p__wenviron)(void);
