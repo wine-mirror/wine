@@ -3382,12 +3382,12 @@ static void output_static_lib( struct makefile *make )
         char *name = replace_extension( make->staticlib, ".a", ".cross.a" );
 
         strarray_add( &make->all_targets, name );
-        output( "%s:", obj_dir_path( make, name ));
+        output( "%s: %s", obj_dir_path( make, name ), tools_path( make, "winebuild" ));
         output_filenames_obj_dir( make, make->crossobj_files );
-        output( "\n\trm -f $@\n" );
-        output( "\t%s-ar rc $@", crosstarget );
+        output( "\n" );
+        output( "\t%s -b %s -w --staticlib -o $@", tools_path( make, "winebuild" ), crosstarget );
         output_filenames_obj_dir( make, make->crossobj_files );
-        output( "\n\t%s-ranlib $@\n", crosstarget );
+        output( "\n" );
     }
 }
 
