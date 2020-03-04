@@ -1,11 +1,11 @@
 # Lithuanian translations for Wine
-# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019.
+# Aurimas Fišeras <aurimas@members.fsf.org>, 2011-2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-02-26 10:03+0200\n"
+"PO-Revision-Date: 2020-03-04 09:19+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -8437,7 +8437,7 @@ msgstr "Išrinkite tiekėją."
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
-msgstr ""
+msgstr "Tiekėjas nebeprieinamas. Įsitikinkite, kad tiekėjas įdiegtas tinkamai."
 
 #: version.rc:36
 msgid "Data Link Properties"
