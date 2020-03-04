@@ -74,7 +74,7 @@
 @ stub MFGetMultipleServiceProviders
 @ stdcall MFGetService(ptr ptr ptr ptr)
 @ stdcall MFGetSupportedMimeTypes(ptr)
-@ stub MFGetSupportedSchemes
+@ stdcall MFGetSupportedSchemes(ptr)
 @ stub MFGetTopoNodeCurrentType
 @ stub MFReadSequencerSegmentOffset
 @ stub MFRequireProtectedEnvironment

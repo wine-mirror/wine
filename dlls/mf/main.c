@@ -1081,14 +1081,127 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+static HRESULT prop_string_vector_append(PROPVARIANT *vector, unsigned int *count, BOOL unique, const WCHAR *str)
+{
+    WCHAR *ptrW;
+    int len, i;
+
+    if (unique)
+    {
+        for (i = 0; i < vector->calpwstr.cElems; ++i)
+        {
+            if (!lstrcmpW(vector->calpwstr.pElems[i], str))
+                return S_OK;
+        }
+    }
+
+    if (!vector->calpwstr.cElems || *count > vector->calpwstr.cElems - 1)
+    {
+        unsigned int new_count;
+        WCHAR **ptr;
+
+        new_count = *count ? *count * 2 : 10;
+        ptr = CoTaskMemRealloc(vector->calpwstr.pElems, new_count * sizeof(*vector->calpwstr.pElems));
+        if (!ptr)
+            return E_OUTOFMEMORY;
+        vector->calpwstr.pElems = ptr;
+        *count = new_count;
+    }
+
+    len = lstrlenW(str);
+    if (!(vector->calpwstr.pElems[vector->calpwstr.cElems] = ptrW = CoTaskMemAlloc((len + 1) * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+
+    lstrcpyW(ptrW, str);
+    vector->calpwstr.cElems++;
+
+    return S_OK;
+}
+
+static int __cdecl qsort_string_compare(const void *a, const void *b)
+{
+    return lstrcmpW(a, b);
+}
+
+static HRESULT mf_get_handler_strings(const WCHAR *path, WCHAR filter, unsigned int maxlen, PROPVARIANT *dst)
+{
+    static const HKEY hkey_roots[2] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
+    HRESULT hr = S_OK;
+    int i, index;
+    WCHAR *buffW;
+
+    buffW = heap_calloc(maxlen, sizeof(*buffW));
+    if (!buffW)
+        return E_OUTOFMEMORY;
+
+    memset(dst, 0, sizeof(*dst));
+    dst->vt = VT_VECTOR | VT_LPWSTR;
+
+    for (i = 0; i < ARRAY_SIZE(hkey_roots); ++i)
+    {
+        unsigned int count;
+        DWORD size;
+        HKEY hkey;
+
+        if (RegOpenKeyW(hkey_roots[i], path, &hkey))
+            continue;
+
+        index = 0;
+        size = maxlen;
+        count = dst->calpwstr.cElems;
+        while (!RegEnumKeyExW(hkey, index++, buffW, &size, NULL, NULL, NULL, NULL))
+        {
+            if (filter && !wcschr(buffW, filter))
+                continue;
+            if (FAILED(hr = prop_string_vector_append(dst, &count, i > 0, buffW)))
+                break;
+            size = maxlen;
+        }
+
+        /* Sort last pass results. */
+        qsort(&dst->calpwstr.pElems[count], dst->calpwstr.cElems - count, sizeof(*dst->calpwstr.pElems),
+                qsort_string_compare);
+
+        RegCloseKey(hkey);
+    }
+
+    if (FAILED(hr))
+        PropVariantClear(dst);
+
+    heap_free(buffW);
+
+    return hr;
+}
+
 /***********************************************************************
  *      MFGetSupportedMimeTypes (mf.@)
  */
-HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *array)
+HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *dst)
 {
-    FIXME("(%p) stub\n", array);
+    unsigned int maxlen;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", dst);
+
+    if (!dst)
+        return E_POINTER;
+
+    /* According to RFC4288 it's 127/127 characters. */
+    maxlen = 127 /* type */ + 1 /* / */ + 127 /* subtype */ + 1;
+    return mf_get_handler_strings(L"Software\\Microsoft\\Windows Media Foundation\\ByteStreamHandlers", '/',
+            maxlen,  dst);
+}
+
+/***********************************************************************
+ *      MFGetSupportedSchemes (mf.@)
+ */
+HRESULT WINAPI MFGetSupportedSchemes(PROPVARIANT *dst)
+{
+    TRACE("%p.\n", dst);
+
+    if (!dst)
+        return E_POINTER;
+
+    return mf_get_handler_strings(L"Software\\Microsoft\\Windows Media Foundation\\SchemeHandlers", 0, 64, dst);
 }
 
 /***********************************************************************

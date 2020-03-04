@@ -2719,6 +2719,38 @@ static void test_MFCreateSimpleTypeHandler(void)
     IMFMediaTypeHandler_Release(handler);
 }
 
+static void test_MFGetSupportedMimeTypes(void)
+{
+    PROPVARIANT value;
+    HRESULT hr;
+
+    hr = MFGetSupportedMimeTypes(NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    value.vt = VT_EMPTY;
+    hr = MFGetSupportedMimeTypes(&value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value.vt == (VT_VECTOR | VT_LPWSTR), "Unexpected value type %#x.\n", value.vt);
+
+    PropVariantClear(&value);
+}
+
+static void test_MFGetSupportedSchemes(void)
+{
+    PROPVARIANT value;
+    HRESULT hr;
+
+    hr = MFGetSupportedSchemes(NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    value.vt = VT_EMPTY;
+    hr = MFGetSupportedSchemes(&value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value.vt == (VT_VECTOR | VT_LPWSTR), "Unexpected value type %#x.\n", value.vt);
+
+    PropVariantClear(&value);
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -2734,4 +2766,6 @@ START_TEST(mf)
     test_sar();
     test_evr();
     test_MFCreateSimpleTypeHandler();
+    test_MFGetSupportedMimeTypes();
+    test_MFGetSupportedSchemes();
 }
