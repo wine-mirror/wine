@@ -3142,6 +3142,53 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
     ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
 }
 
+static void test_SetConsoleScreenBufferInfoEx(HANDLE std_output)
+{
+    BOOL ret;
+    HANDLE hmod;
+    HANDLE std_input = CreateFileA("CONIN$", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    BOOL (WINAPI *pSetConsoleScreenBufferInfoEx)(HANDLE, CONSOLE_SCREEN_BUFFER_INFOEX *);
+    BOOL (WINAPI *pGetConsoleScreenBufferInfoEx)(HANDLE, CONSOLE_SCREEN_BUFFER_INFOEX *);
+    CONSOLE_SCREEN_BUFFER_INFOEX info;
+
+    hmod = GetModuleHandleA("kernel32.dll");
+    pSetConsoleScreenBufferInfoEx = (void *)GetProcAddress(hmod, "SetConsoleScreenBufferInfoEx");
+    pGetConsoleScreenBufferInfoEx = (void *)GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
+    if (!pSetConsoleScreenBufferInfoEx || !pGetConsoleScreenBufferInfoEx)
+    {
+        win_skip("SetConsoleScreenBufferInfoEx is not available\n");
+        return;
+    }
+
+    memset(&info, 0, sizeof(CONSOLE_SCREEN_BUFFER_INFOEX));
+    info.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+    pGetConsoleScreenBufferInfoEx(std_output, &info);
+
+    SetLastError(0xdeadbeef);
+    ret = pSetConsoleScreenBufferInfoEx(NULL, &info);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pSetConsoleScreenBufferInfoEx(std_output, &info);
+    todo_wine ok(ret, "got %d, expected one\n", ret);
+    todo_wine ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pSetConsoleScreenBufferInfoEx(std_input, &info);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE || GetLastError() == ERROR_ACCESS_DENIED,
+            "got %u, expected 5 or 6\n", GetLastError());
+
+    info.cbSize = 0;
+    SetLastError(0xdeadbeef);
+    ret = pSetConsoleScreenBufferInfoEx(std_output, &info);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    CloseHandle(std_input);
+}
+
 static void test_AttachConsole_child(DWORD console_pid)
 {
     HANDLE pipe_in, pipe_out;
@@ -3398,5 +3445,6 @@ START_TEST(console)
     test_GetConsoleFontInfo(hConOut);
     test_SetConsoleFont(hConOut);
     test_GetConsoleScreenBufferInfoEx(hConOut);
+    test_SetConsoleScreenBufferInfoEx(hConOut);
     test_AttachConsole(hConOut);
 }
