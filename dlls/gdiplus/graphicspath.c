@@ -2295,6 +2295,7 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
     int dash_index=0;
     const REAL *dash_pattern;
     REAL *dash_pattern_scaled;
+    REAL dash_pattern_scaling = max(pen->width, 1.0);
     int dash_count;
     GpPointF *tmp_points;
     REAL segment_dy;
@@ -2337,7 +2338,7 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
     if (!dash_pattern_scaled) return;
 
     for (i = 0; i < dash_count; i++)
-        dash_pattern_scaled[i] = pen->width * dash_pattern[i];
+        dash_pattern_scaled[i] = dash_pattern_scaling * dash_pattern[i];
 
     tmp_points = heap_alloc_zero((end - start + 2) * sizeof(GpPoint));
     if (!tmp_points) {

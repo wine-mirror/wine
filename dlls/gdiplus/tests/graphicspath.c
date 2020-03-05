@@ -1278,6 +1278,17 @@ static path_test_t widenline_dash_path[] = {
     {45.0, 10.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0}, /*7*/
     };
 
+static path_test_t widenline_thin_dash_path[] = {
+    {5.0, 4.75, PathPointTypeStart, 0, 0}, /*0*/
+    {8.0, 4.75, PathPointTypeLine,  0, 0}, /*1*/
+    {8.0, 5.25, PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 5.25, PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0}, /*3*/
+    {9.0, 4.75, PathPointTypeStart, 0, 0}, /*4*/
+    {9.5, 4.75, PathPointTypeLine,  0, 0}, /*5*/
+    {9.5, 5.25, PathPointTypeLine,  0, 0}, /*6*/
+    {9.0, 5.25, PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0}, /*7*/
+    };
+
 static path_test_t widenline_unit_path[] = {
     {5.0, 9.5,   PathPointTypeStart, 0, 0}, /*0*/
     {50.0, 9.5,  PathPointTypeLine,  0, 0}, /*1*/
@@ -1374,6 +1385,18 @@ static void test_widen(void)
 
     status = GdipSetPenDashStyle(pen, DashStyleSolid);
     expect(Ok, status);
+
+    /* dashed line less than 1 pixel wide */
+    GdipDeletePen(pen);
+    GdipCreatePen1(0xffffffff, 0.5, UnitPixel, &pen);
+    GdipSetPenDashStyle(pen, DashStyleDash);
+
+    GdipResetPath(path);
+    GdipAddPathLine(path, 5.0, 5.0, 9.5, 5.0);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path_fudge(path, widenline_thin_dash_path, ARRAY_SIZE(widenline_thin_dash_path), FALSE, 0.000005);
 
     /* pen width in UnitWorld */
     GdipDeletePen(pen);
