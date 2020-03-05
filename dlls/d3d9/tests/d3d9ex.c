@@ -3514,13 +3514,15 @@ static void test_window_style(void)
         }
 
         style = GetWindowLongA(device_window, GWL_STYLE);
-        todo_wine ok((style & ~WS_OVERLAPPEDWINDOW) == (device_style & ~WS_OVERLAPPEDWINDOW),
+        expected_style = device_style;
+        todo_wine ok(style == expected_style || broken(style == (expected_style & ~WS_OVERLAPPEDWINDOW)) /* w1064v1809 */,
                 "Expected device window style %#x, got %#x, i=%u.\n",
-                device_style, style, i);
+                expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
-        todo_wine ok((style & ~WS_EX_OVERLAPPEDWINDOW) == (device_exstyle & ~WS_EX_OVERLAPPEDWINDOW),
+        expected_style = device_exstyle;
+        todo_wine ok(style == expected_style || broken(style == (expected_style & ~WS_EX_OVERLAPPEDWINDOW)) /* w1064v1809 */,
                 "Expected device window extended style %#x, got %#x, i=%u.\n",
-                device_exstyle, style, i);
+                expected_style, style, i);
 
         style = GetWindowLongA(focus_window, GWL_STYLE);
         ok(style == focus_style, "Expected focus window style %#x, got %#x, i=%u.\n",
@@ -3537,8 +3539,8 @@ static void test_window_style(void)
             ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s, i=%u.\n",
                     wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r), i);
         GetClientRect(device_window, &r2);
-        if (!(device_style & WS_OVERLAPPEDWINDOW))
-            ok(!EqualRect(&r, &r2), "Client rect and window rect are equal, i=%u.\n", i);
+        todo_wine ok(!EqualRect(&r, &r2) || broken(!(style & WS_THICKFRAME)) /* w1064v1809 */,
+                "Client rect and window rect are equal, i=%u.\n", i);
         GetWindowRect(focus_window, &r);
         ok(EqualRect(&r, &focus_rect), "Expected %s, got %s, i=%u.\n",
                 wine_dbgstr_rect(&focus_rect), wine_dbgstr_rect(&r), i);
@@ -3548,12 +3550,14 @@ static void test_window_style(void)
         ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
         style = GetWindowLongA(device_window, GWL_STYLE);
+        expected_style = device_style;
         todo_wine_if (!(tests[i].style_flags & WS_VISIBLE))
-            ok(style == device_style, "Expected device window style %#x, got %#x, i=%u.\n",
-                    device_style, style, i);
+            ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                    expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
-        todo_wine ok(style == device_exstyle, "Expected device window extended style %#x, got %#x, i=%u.\n",
-                device_exstyle, style, i);
+        expected_style = device_exstyle;
+        todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
 
         style = GetWindowLongA(focus_window, GWL_STYLE);
         ok(style == focus_style, "Expected focus window style %#x, got %#x, i=%u.\n",
@@ -3566,12 +3570,14 @@ static void test_window_style(void)
         ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
 
         style = GetWindowLongA(device_window, GWL_STYLE);
-        todo_wine_if (!(device_style & WS_VISIBLE))
-            ok(style == device_style, "Expected device window style %#x, got %#x, i=%u.\n",
-                device_style, style, i);
+        expected_style = device_style;
+        todo_wine_if (!(tests[i].style_flags & WS_VISIBLE))
+            ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                    expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
-        todo_wine ok(style == device_exstyle, "Expected device window extended style %#x, got %#x, i=%u.\n",
-                device_exstyle, style, i);
+        expected_style = device_exstyle;
+        todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
 
         style = GetWindowLongA(focus_window, GWL_STYLE);
         ok(style == focus_style, "Expected focus window style %#x, got %#x, i=%u.\n",
@@ -3587,13 +3593,12 @@ static void test_window_style(void)
         ok(!!device, "Failed to create a D3D device.\n");
         style = GetWindowLongA(device_window, GWL_STYLE);
         expected_style = device_style | tests[i].create2_style;
-        todo_wine ok((style & ~WS_OVERLAPPEDWINDOW) == (expected_style & ~WS_OVERLAPPEDWINDOW),
+        todo_wine ok(style == expected_style || broken(style == (expected_style & ~WS_OVERLAPPEDWINDOW)) /* w1064v1809 */,
                 "Expected device window style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
-        expected_style = device_exstyle | tests[i].create2_exstyle;
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
-        todo_wine_if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
-        ok((style & ~WS_EX_OVERLAPPEDWINDOW) == (expected_style & ~WS_EX_OVERLAPPEDWINDOW),
+        expected_style = device_exstyle | tests[i].create2_exstyle;
+        todo_wine ok(style == expected_style || broken(style == (expected_style & ~WS_EX_OVERLAPPEDWINDOW)) /* w1064v1809 */,
                 "Expected device window extended style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
 
@@ -3624,8 +3629,9 @@ static void test_window_style(void)
         todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
-        todo_wine ok(style == device_exstyle, "Expected device window extended style %#x, got %#x, i=%u.\n",
-                device_exstyle, style, i);
+        expected_style = device_exstyle;
+        todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
 
         style = GetWindowLongA(focus_window, GWL_STYLE);
         ok(style == focus_style, "Expected focus window style %#x, got %#x, i=%u.\n",
