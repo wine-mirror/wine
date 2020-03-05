@@ -1646,6 +1646,15 @@ static void test_initialize(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!got_add_filter, "Got %d calls to IGraphBuilder::AddFilter().\n", got_add_filter);
 
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, (IGraphBuilder *)&graph);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
     IMediaStreamFilter_Release(filter);
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);

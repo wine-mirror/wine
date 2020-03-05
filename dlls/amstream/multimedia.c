@@ -244,6 +244,12 @@ static HRESULT WINAPI multimedia_stream_Initialize(IAMMultiMediaStream *iface,
 
     TRACE("mmstream %p, type %u, flags %#x, graph %p.\n", mmstream, type, flags, graph);
 
+    if (graph && mmstream->graph)
+    {
+        WARN("Graph already initialized, returning E_INVALIDARG.\n");
+        return E_INVALIDARG;
+    }
+
     if (graph && FAILED(hr = create_graph(mmstream, graph)))
         return hr;
 
