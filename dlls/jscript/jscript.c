@@ -113,7 +113,7 @@ named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *item_name, unsig
     named_item_t *item;
     HRESULT hr;
 
-    for(item = ctx->named_items; item; item = item->next) {
+    LIST_FOR_EACH_ENTRY(item, &ctx->named_items, named_item_t, entry) {
         if((item->flags & flags) == flags && !wcscmp(item->name, item_name)) {
             if(!item->disp && (flags || !(item->flags & SCRIPTITEM_CODEONLY))) {
                 IUnknown *unk;
@@ -414,20 +414,13 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
                 This->ctx->host_global = NULL;
             }
 
-            if(This->ctx->named_items) {
-                named_item_t *iter, *iter2;
+            while(!list_empty(&This->ctx->named_items)) {
+                named_item_t *iter = LIST_ENTRY(list_head(&This->ctx->named_items), named_item_t, entry);
 
-                iter = This->ctx->named_items;
-                while(iter) {
-                    iter2 = iter->next;
-
-                    if(iter->disp)
-                        IDispatch_Release(iter->disp);
-                    release_named_item(iter);
-                    iter = iter2;
-                }
-
-                This->ctx->named_items = NULL;
+                list_remove(&iter->entry);
+                if(iter->disp)
+                    IDispatch_Release(iter->disp);
+                release_named_item(iter);
             }
 
             if(This->ctx->secmgr) {
@@ -681,6 +674,7 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
         ctx->version = This->version;
         ctx->html_mode = This->html_mode;
         ctx->acc = jsval_undefined();
+        list_init(&ctx->named_items);
         heap_pool_init(&ctx->tmp_heap);
 
         hres = create_jscaller(ctx);
@@ -851,9 +845,7 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
         return E_OUTOFMEMORY;
     }
 
-    item->next = This->ctx->named_items;
-    This->ctx->named_items = item;
-
+    list_add_tail(&This->ctx->named_items, &item->entry);
     return S_OK;
 }
 

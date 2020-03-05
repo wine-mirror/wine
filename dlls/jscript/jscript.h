@@ -210,7 +210,7 @@ typedef struct named_item_t {
     DWORD flags;
     LPWSTR name;
 
-    struct named_item_t *next;
+    struct list entry;
 } named_item_t;
 
 named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
@@ -409,7 +409,7 @@ struct _script_ctx_t {
     IActiveScript *active_script;
 
     struct _call_frame_t *call_ctx;
-    named_item_t *named_items;
+    struct list named_items;
     IActiveScriptSite *site;
     IInternetHostSecurityManager *secmgr;
     DWORD safeopt;

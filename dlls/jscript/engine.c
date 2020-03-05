@@ -591,7 +591,7 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
     DISPID id;
     HRESULT hres;
 
-    for(item = ctx->named_items; item; item = item->next) {
+    LIST_FOR_EACH_ENTRY(item, &ctx->named_items, named_item_t, entry) {
         if(item->flags & SCRIPTITEM_GLOBALMEMBERS) {
             hres = disp_get_id(ctx, item->disp, identifier, identifier, 0, &id);
             if(SUCCEEDED(hres)) {
