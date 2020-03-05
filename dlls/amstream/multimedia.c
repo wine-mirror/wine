@@ -244,7 +244,7 @@ static HRESULT WINAPI multimedia_stream_Initialize(IAMMultiMediaStream *iface,
 
     TRACE("mmstream %p, type %u, flags %#x, graph %p.\n", mmstream, type, flags, graph);
 
-    if (FAILED(hr = create_graph(mmstream, graph)))
+    if (graph && FAILED(hr = create_graph(mmstream, graph)))
         return hr;
 
     mmstream->type = type;

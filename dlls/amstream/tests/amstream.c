@@ -1504,7 +1504,7 @@ static void test_initialize(void)
     ret_graph = (IGraphBuilder *)0xdeadbeef;
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+    ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1538,7 +1538,7 @@ static void test_initialize(void)
     ret_graph = (IGraphBuilder *)0xdeadbeef;
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+    ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1566,7 +1566,7 @@ static void test_initialize(void)
     ret_graph = (IGraphBuilder *)0xdeadbeef;
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+    ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
