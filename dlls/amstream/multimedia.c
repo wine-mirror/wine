@@ -39,6 +39,7 @@ struct multimedia_stream
     IMediaControl* media_control;
     IMediaStreamFilter *filter;
     IPin* ipin;
+    BOOL initialized;
     STREAM_TYPE type;
     OAEVENT event;
 };
@@ -250,10 +251,17 @@ static HRESULT WINAPI multimedia_stream_Initialize(IAMMultiMediaStream *iface,
         return E_INVALIDARG;
     }
 
+    if (mmstream->initialized && type != mmstream->type)
+    {
+        WARN("Attempt to change type from %u, returning E_INVALIDARG.\n", mmstream->type);
+        return E_INVALIDARG;
+    }
+
     if (graph && FAILED(hr = create_graph(mmstream, graph)))
         return hr;
 
     mmstream->type = type;
+    mmstream->initialized = TRUE;
 
     return S_OK;
 }

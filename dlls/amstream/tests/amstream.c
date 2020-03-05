@@ -1497,9 +1497,9 @@ static void test_initialize(void)
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     ret_graph = (IGraphBuilder *)0xdeadbeef;
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
@@ -1511,7 +1511,7 @@ static void test_initialize(void)
     type = 0xdeadbeef;
     hr = IMediaStream_GetInformation(stream, NULL, &type);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(type == STREAMTYPE_READ, "Got type %u.\n", type);
+    ok(type == STREAMTYPE_READ, "Got type %u.\n", type);
     IMediaStream_Release(stream);
 
     ret_graph = NULL;
@@ -1531,9 +1531,9 @@ static void test_initialize(void)
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     ret_graph = (IGraphBuilder *)0xdeadbeef;
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
@@ -1545,7 +1545,7 @@ static void test_initialize(void)
     type = 0xdeadbeef;
     hr = IMediaStream_GetInformation(stream, NULL, &type);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(type == STREAMTYPE_WRITE, "Got type %u.\n", type);
+    ok(type == STREAMTYPE_WRITE, "Got type %u.\n", type);
     IMediaStream_Release(stream);
 
     ref = IAMMultiMediaStream_Release(mmstream);
@@ -1559,9 +1559,9 @@ static void test_initialize(void)
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     ret_graph = (IGraphBuilder *)0xdeadbeef;
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
@@ -1573,7 +1573,7 @@ static void test_initialize(void)
     type = 0xdeadbeef;
     hr = IMediaStream_GetInformation(stream, NULL, &type);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(type == STREAMTYPE_TRANSFORM, "Got type %u.\n", type);
+    ok(type == STREAMTYPE_TRANSFORM, "Got type %u.\n", type);
     IMediaStream_Release(stream);
 
     ref = IAMMultiMediaStream_Release(mmstream);
@@ -1651,9 +1651,9 @@ static void test_initialize(void)
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     IMediaStreamFilter_Release(filter);
     ref = IAMMultiMediaStream_Release(mmstream);
