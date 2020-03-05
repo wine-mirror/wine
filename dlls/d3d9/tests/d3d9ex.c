@@ -123,12 +123,6 @@ out:
 
 static HWND create_window(void)
 {
-    WNDCLASSA wc = {0};
-
-    wc.lpfnWndProc = DefWindowProcA;
-    wc.lpszClassName = "d3d9_test_wc";
-    RegisterClassA(&wc);
-
     return CreateWindowA("d3d9_test_wc", "d3d9_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION,
             0, 0, 640, 480, 0, 0, 0, 0);
 }
@@ -4911,6 +4905,7 @@ static void test_pinned_buffers(void)
 START_TEST(d3d9ex)
 {
     DEVMODEW current_mode;
+    WNDCLASSA wc = {0};
 
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
@@ -4937,6 +4932,10 @@ START_TEST(d3d9ex)
         return;
     }
 
+    wc.lpfnWndProc = DefWindowProcA;
+    wc.lpszClassName = "d3d9_test_wc";
+    RegisterClassA(&wc);
+
     test_qi_base_to_ex();
     test_qi_ex_to_base();
     test_swapchain_get_displaymode_ex();
@@ -4962,4 +4961,6 @@ START_TEST(d3d9ex)
     test_resource_access();
     test_sysmem_draw();
     test_pinned_buffers();
+
+    UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
