@@ -5364,7 +5364,13 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     {
         stat = GdipSetEmpty(regions[i]);
         if (stat != Ok)
+        {
+            SelectObject(hdc, oldfont);
+            DeleteObject(gdifont);
+            if (temp_hdc)
+                DeleteDC(temp_hdc);
             return stat;
+        }
     }
 
     args.regions = regions;
