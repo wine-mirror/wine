@@ -250,20 +250,19 @@ static HRESULT WINAPI multimedia_stream_Initialize(IAMMultiMediaStream *iface,
     return hr;
 }
 
-static HRESULT WINAPI multimedia_stream_GetFilterGraph(IAMMultiMediaStream *iface,
-        IGraphBuilder **ppGraphBuilder)
+static HRESULT WINAPI multimedia_stream_GetFilterGraph(IAMMultiMediaStream *iface, IGraphBuilder **graph)
 {
-    struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
+    struct multimedia_stream *mmstream = impl_from_IAMMultiMediaStream(iface);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppGraphBuilder);
+    TRACE("mmstream %p, graph %p.\n", mmstream, graph);
 
-    if (!ppGraphBuilder)
+    if (!graph)
         return E_POINTER;
 
-    if (This->pFilterGraph)
-        return IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IGraphBuilder, (void**)ppGraphBuilder);
+    if (mmstream->pFilterGraph)
+        IGraphBuilder_AddRef(*graph = mmstream->pFilterGraph);
     else
-        *ppGraphBuilder = NULL;
+        *graph = NULL;
 
     return S_OK;
 }
