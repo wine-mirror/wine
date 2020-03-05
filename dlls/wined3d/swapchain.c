@@ -257,6 +257,38 @@ struct wined3d_texture * CDECL wined3d_swapchain_get_back_buffer(const struct wi
     return swapchain->back_buffers[back_buffer_idx];
 }
 
+static struct wined3d_output * get_output_from_window(const struct wined3d *wined3d, HWND hwnd)
+{
+    unsigned int adapter_idx, output_idx;
+    struct wined3d_adapter *adapter;
+    MONITORINFOEXW monitor_info;
+    HMONITOR monitor;
+
+    TRACE("wined3d %p, hwnd %p.\n", wined3d, hwnd);
+
+    monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+    monitor_info.cbSize = sizeof(monitor_info);
+    if (!GetMonitorInfoW(monitor, (MONITORINFO *)&monitor_info))
+    {
+        ERR("Failed to get monitor information.\n");
+        return NULL;
+    }
+
+    for (adapter_idx = 0; adapter_idx < wined3d->adapter_count; ++adapter_idx)
+    {
+        adapter = wined3d->adapters[adapter_idx];
+        for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
+        {
+            if (!lstrcmpiW(adapter->outputs[output_idx].device_name, monitor_info.szDevice))
+                return &adapter->outputs[output_idx];
+        }
+    }
+
+    /* Because wined3d only supports one output right now. A window can be on non-primary outputs
+     * and thus fails to get its correct output. In this case, return the primary output for now */
+    return &wined3d->adapters[0]->outputs[0];
+}
+
 HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain *swapchain,
         struct wined3d_raster_status *raster_status)
 {
@@ -767,9 +799,16 @@ static HRESULT wined3d_swapchain_state_init(struct wined3d_swapchain_state *stat
         const struct wined3d_swapchain_desc *desc, HWND window,
         struct wined3d *wined3d, unsigned int adapter_idx)
 {
+    struct wined3d_output *output;
     HRESULT hr;
 
     state->desc = *desc;
+
+    if (!(output = get_output_from_window(wined3d, window)))
+    {
+        WARN("Failed to get output from window %p.\n", window);
+        return E_FAIL;
+    }
 
     if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &state->original_mode, NULL)))
     {
@@ -781,11 +820,10 @@ static HRESULT wined3d_swapchain_state_init(struct wined3d_swapchain_state *stat
     {
         if (desc->flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
         {
-            struct wined3d_adapter *adapter = wined3d->adapters[adapter_idx];
-
             state->d3d_mode.width = desc->backbuffer_width;
             state->d3d_mode.height = desc->backbuffer_height;
-            state->d3d_mode.format_id = adapter_format_from_backbuffer_format(adapter, desc->backbuffer_format);
+            state->d3d_mode.format_id = adapter_format_from_backbuffer_format(output->adapter,
+                    desc->backbuffer_format);
             state->d3d_mode.refresh_rate = desc->refresh_rate;
             state->d3d_mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
         }
