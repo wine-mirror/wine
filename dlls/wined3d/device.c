@@ -5147,7 +5147,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             }
         }
         if (FAILED(hr = wined3d_swapchain_state_set_fullscreen(&swapchain->state,
-                swapchain_desc, device->wined3d, device->adapter->ordinal, mode)))
+                swapchain_desc, device->wined3d, &device->adapter->outputs[0], mode)))
             return hr;
 
         /* Switch from fullscreen to windowed. */

@@ -565,7 +565,7 @@ static LRESULT CALLBACK wined3d_hook_proc(int code, WPARAM wparam, LPARAM lparam
             wined3d_swapchain_get_desc(swapchain, &swapchain_desc);
             swapchain_desc.windowed = !swapchain_desc.windowed;
             wined3d_swapchain_state_set_fullscreen(&swapchain->state, &swapchain_desc,
-                    swapchain->device->wined3d, swapchain->device->adapter->ordinal, NULL);
+                    swapchain->device->wined3d, &swapchain->device->adapter->outputs[0], NULL);
 
             wined3d_wndproc_mutex_unlock();
 

@@ -164,7 +164,7 @@ static HRESULT dxgi_swapchain_set_fullscreen_state(struct wined3d_swapchain_stat
 
     wined3d_mutex_lock();
     hr = wined3d_swapchain_state_set_fullscreen(state, swapchain_desc,
-            adapter->factory->wined3d, adapter->ordinal, NULL);
+            adapter->factory->wined3d, dxgi_output->wined3d_output, NULL);
     wined3d_mutex_unlock();
 
     return hr;

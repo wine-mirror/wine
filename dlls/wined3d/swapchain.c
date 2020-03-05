@@ -1604,13 +1604,13 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
 
 HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_state *state,
         const struct wined3d_swapchain_desc *swapchain_desc, struct wined3d *wined3d,
-        unsigned int adapter_idx, const struct wined3d_display_mode *mode)
+        struct wined3d_output *output, const struct wined3d_display_mode *mode)
 {
     struct wined3d_display_mode actual_mode;
     HRESULT hr;
 
-    TRACE("state %p, swapchain_desc %p, wined3d %p, adapter_idx %u, mode %p.\n",
-            state, swapchain_desc, wined3d, adapter_idx, mode);
+    TRACE("state %p, swapchain_desc %p, wined3d %p, output %p, mode %p.\n",
+            state, swapchain_desc, wined3d, output, mode);
 
     if (state->desc.flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
     {
@@ -1622,12 +1622,10 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
         {
             if (!swapchain_desc->windowed)
             {
-                const struct wined3d_adapter *adapter = wined3d->adapters[adapter_idx];
-
                 actual_mode.width = swapchain_desc->backbuffer_width;
                 actual_mode.height = swapchain_desc->backbuffer_height;
                 actual_mode.refresh_rate = swapchain_desc->refresh_rate;
-                actual_mode.format_id = adapter_format_from_backbuffer_format(adapter,
+                actual_mode.format_id = adapter_format_from_backbuffer_format(output->adapter,
                         swapchain_desc->backbuffer_format);
                 actual_mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
             }
@@ -1637,7 +1635,7 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
             }
         }
 
-        if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, wined3d, adapter_idx, &actual_mode)))
+        if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, wined3d, 0, &actual_mode)))
             return hr;
     }
     else
@@ -1645,7 +1643,7 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
         if (mode)
             WARN("WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH is not set, ignoring mode.\n");
 
-        if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &actual_mode, NULL)))
+        if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, 0, &actual_mode, NULL)))
         {
             ERR("Failed to get display mode, hr %#x.\n", hr);
             return WINED3DERR_INVALIDCALL;
