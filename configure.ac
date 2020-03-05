@@ -2712,7 +2712,6 @@ AC_CHECK_FUNCS(\
 	nearbyintf \
 	nexttoward \
 	nexttowardf \
-	powl \
 	remainder \
 	remainderf \
 	remquo \
