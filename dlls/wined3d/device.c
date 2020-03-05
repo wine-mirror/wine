@@ -1472,7 +1472,7 @@ static void wined3d_device_set_light(struct wined3d_device *device,
     wined3d_cs_emit_set_light(device->cs, object);
 }
 
-static HRESULT wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
+static void wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
 {
     struct wined3d_light_info *light_info;
 
@@ -1487,14 +1487,12 @@ static HRESULT wined3d_device_set_light_enable(struct wined3d_device *device, UI
         if (!(light_info = wined3d_light_state_get_light(&device->state.light_state, light_idx)))
         {
             FIXME("Adding default lights has failed dismally\n");
-            return WINED3DERR_INVALIDCALL;
+            return;
         }
     }
 
     wined3d_light_state_enable_light(&device->state.light_state, &device->adapter->d3d_info, light_info, enable);
     wined3d_cs_emit_set_light_enable(device->cs, light_idx, enable);
-
-    return WINED3D_OK;
 }
 
 static HRESULT wined3d_device_set_clip_plane(struct wined3d_device *device,
