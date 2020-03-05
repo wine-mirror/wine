@@ -34,12 +34,12 @@ struct multimedia_stream
 {
     IAMMultiMediaStream IAMMultiMediaStream_iface;
     LONG ref;
-    IGraphBuilder* pFilterGraph;
+    IGraphBuilder *graph;
     IMediaSeeking* media_seeking;
     IMediaControl* media_control;
     IMediaStreamFilter *filter;
     IPin* ipin;
-    STREAM_TYPE StreamType;
+    STREAM_TYPE type;
     OAEVENT event;
 };
 
@@ -95,8 +95,8 @@ static ULONG WINAPI multimedia_stream_Release(IAMMultiMediaStream *iface)
             IMediaSeeking_Release(This->media_seeking);
         if (This->media_control)
             IMediaControl_Release(This->media_control);
-        if (This->pFilterGraph)
-            IGraphBuilder_Release(This->pFilterGraph);
+        if (This->graph)
+            IGraphBuilder_Release(This->graph);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -194,60 +194,62 @@ static HRESULT WINAPI multimedia_stream_GetEndOfStream(IAMMultiMediaStream *ifac
     return E_NOTIMPL;
 }
 
-/*** IAMMultiMediaStream methods ***/
-static HRESULT WINAPI multimedia_stream_Initialize(IAMMultiMediaStream *iface,
-        STREAM_TYPE StreamType, DWORD dwFlags, IGraphBuilder *pFilterGraph)
+static HRESULT create_graph(struct multimedia_stream *mmstream, IGraphBuilder *graph)
 {
-    struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
-    HRESULT hr = S_OK;
+    IMediaEventEx *eventsrc;
+    HRESULT hr;
 
-    TRACE("(%p/%p)->(%x,%x,%p)\n", This, iface, (DWORD)StreamType, dwFlags, pFilterGraph);
+    if (graph)
+        IGraphBuilder_AddRef(mmstream->graph = graph);
+    else if (FAILED(hr = CoCreateInstance(&CLSID_FilterGraph, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (void **)&mmstream->graph)))
+        return hr;
 
-    if (pFilterGraph)
-    {
-        This->pFilterGraph = pFilterGraph;
-        IGraphBuilder_AddRef(This->pFilterGraph);
-    }
-    else
-    {
-        hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (LPVOID*)&This->pFilterGraph);
-    }
-
+    hr = IGraphBuilder_QueryInterface(mmstream->graph, &IID_IMediaSeeking, (void **)&mmstream->media_seeking);
+    if (SUCCEEDED(hr))
+        hr = IGraphBuilder_QueryInterface(mmstream->graph, &IID_IMediaControl, (void **)&mmstream->media_control);
+    if (SUCCEEDED(hr))
+        hr = IGraphBuilder_AddFilter(mmstream->graph, (IBaseFilter *)mmstream->filter, L"MediaStreamFilter");
+    if (SUCCEEDED(hr))
+        hr = IGraphBuilder_QueryInterface(mmstream->graph, &IID_IMediaEventEx, (void **)&eventsrc);
     if (SUCCEEDED(hr))
     {
-        This->StreamType = StreamType;
-        hr = IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaSeeking, (void**)&This->media_seeking);
+        hr = IMediaEventEx_GetEventHandle(eventsrc, &mmstream->event);
         if (SUCCEEDED(hr))
-            hr = IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaControl, (void**)&This->media_control);
-        if (SUCCEEDED(hr))
-            hr = IGraphBuilder_AddFilter(This->pFilterGraph, (IBaseFilter*)This->filter, L"MediaStreamFilter");
-        if (SUCCEEDED(hr))
-        {
-            IMediaEventEx* media_event = NULL;
-            hr = IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaEventEx, (void**)&media_event);
-            if (SUCCEEDED(hr))
-                hr = IMediaEventEx_GetEventHandle(media_event, &This->event);
-            if (SUCCEEDED(hr))
-                hr = IMediaEventEx_SetNotifyFlags(media_event, AM_MEDIAEVENT_NONOTIFY);
-            if (media_event)
-                IMediaEventEx_Release(media_event);
-        }
+            hr = IMediaEventEx_SetNotifyFlags(eventsrc, AM_MEDIAEVENT_NONOTIFY);
+        IMediaEventEx_Release(eventsrc);
     }
 
     if (FAILED(hr))
     {
-        if (This->media_seeking)
-            IMediaSeeking_Release(This->media_seeking);
-        This->media_seeking = NULL;
-        if (This->media_control)
-            IMediaControl_Release(This->media_control);
-        This->media_control = NULL;
-        if (This->pFilterGraph)
-            IGraphBuilder_Release(This->pFilterGraph);
-        This->pFilterGraph = NULL;
+        if (mmstream->media_seeking)
+            IMediaSeeking_Release(mmstream->media_seeking);
+        mmstream->media_seeking = NULL;
+        if (mmstream->media_control)
+            IMediaControl_Release(mmstream->media_control);
+        mmstream->media_control = NULL;
+        if (mmstream->graph)
+            IGraphBuilder_Release(mmstream->graph);
+        mmstream->graph = NULL;
     }
 
     return hr;
+}
+
+static HRESULT WINAPI multimedia_stream_Initialize(IAMMultiMediaStream *iface,
+        STREAM_TYPE type, DWORD flags, IGraphBuilder *graph)
+{
+    struct multimedia_stream *mmstream = impl_from_IAMMultiMediaStream(iface);
+    HRESULT hr;
+
+    TRACE("mmstream %p, type %u, flags %#x, graph %p.\n", mmstream, type, flags, graph);
+
+    if (FAILED(hr = create_graph(mmstream, graph)))
+        return hr;
+
+    mmstream->type = type;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI multimedia_stream_GetFilterGraph(IAMMultiMediaStream *iface, IGraphBuilder **graph)
@@ -259,8 +261,8 @@ static HRESULT WINAPI multimedia_stream_GetFilterGraph(IAMMultiMediaStream *ifac
     if (!graph)
         return E_POINTER;
 
-    if (mmstream->pFilterGraph)
-        IGraphBuilder_AddRef(*graph = mmstream->pFilterGraph);
+    if (mmstream->graph)
+        IGraphBuilder_AddRef(*graph = mmstream->graph);
     else
         *graph = NULL;
 
@@ -302,6 +304,9 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
         return MS_E_PURPOSEID;
     }
 
+    if (!This->graph && FAILED(hr = create_graph(This, NULL)))
+        return hr;
+
     if (dwFlags & AMMSF_ADDDEFAULTRENDERER)
     {
         IBaseFilter *dsound_render;
@@ -318,16 +323,16 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
         if (SUCCEEDED(hr = CoCreateInstance(&CLSID_DSoundRender, NULL,
                 CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&dsound_render)))
         {
-            hr = IGraphBuilder_AddFilter(This->pFilterGraph, dsound_render, NULL);
+            hr = IGraphBuilder_AddFilter(This->graph, dsound_render, NULL);
             IBaseFilter_Release(dsound_render);
         }
         return hr;
     }
 
     if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
-        hr = ddraw_stream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->StreamType, &pStream);
+        hr = ddraw_stream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->type, &pStream);
     else
-        hr = audio_stream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->StreamType, &pStream);
+        hr = audio_stream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->type, &pStream);
 
     if (SUCCEEDED(hr))
     {
@@ -358,11 +363,11 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
         return E_POINTER;
 
     /* If Initialize was not called before, we do it here */
-    if (!This->pFilterGraph)
+    if (!This->graph)
         ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
 
     if (SUCCEEDED(ret))
-        ret = IGraphBuilder_AddSourceFilter(This->pFilterGraph, filename, L"Source", &BaseFilter);
+        ret = IGraphBuilder_AddSourceFilter(This->graph, filename, L"Source", &BaseFilter);
 
     if (SUCCEEDED(ret))
         ret = IBaseFilter_EnumPins(BaseFilter, &EnumPins);
@@ -378,7 +383,7 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
     }
 
     if (SUCCEEDED(ret) && !(flags & AMMSF_NORENDER))
-        ret = IGraphBuilder_Render(This->pFilterGraph, This->ipin);
+        ret = IGraphBuilder_Render(This->graph, This->ipin);
 
     if (EnumPins)
         IEnumPins_Release(EnumPins);
@@ -406,7 +411,7 @@ static HRESULT WINAPI multimedia_stream_Render(IAMMultiMediaStream *iface, DWORD
     if(dwFlags != AMMSF_NOCLOCK)
         return E_INVALIDARG;
 
-    return IGraphBuilder_Render(This->pFilterGraph, This->ipin);
+    return IGraphBuilder_Render(This->graph, This->ipin);
 }
 
 static const IAMMultiMediaStreamVtbl multimedia_stream_vtbl =

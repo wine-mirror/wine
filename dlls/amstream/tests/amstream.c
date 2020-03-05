@@ -705,20 +705,18 @@ static void test_add_stream(void)
 
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(!!graph, "Expected a non-NULL graph.\n");
-    if (graph)
-    {
-        hr = IGraphBuilder_EnumFilters(graph, &enum_filters);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        hr = IEnumFilters_Next(enum_filters, 3, filters, &count);
-        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-        ok(count == 1, "Got count %u.\n", count);
-        ok(filters[0] == (IBaseFilter *)stream_filter,
-                "Expected filter %p, got %p.\n", stream_filter, filters[0]);
-        IBaseFilter_Release(filters[0]);
-        IEnumFilters_Release(enum_filters);
-        IGraphBuilder_Release(graph);
-    }
+    ok(!!graph, "Expected a non-NULL graph.\n");
+
+    hr = IGraphBuilder_EnumFilters(graph, &enum_filters);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumFilters_Next(enum_filters, 3, filters, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    ok(filters[0] == (IBaseFilter *)stream_filter,
+            "Expected filter %p, got %p.\n", stream_filter, filters[0]);
+    IBaseFilter_Release(filters[0]);
+    IEnumFilters_Release(enum_filters);
+    IGraphBuilder_Release(graph);
 
     IMediaStreamFilter_Release(stream_filter);
     ref = IAMMultiMediaStream_Release(mmstream);
@@ -790,10 +788,6 @@ static void test_add_stream(void)
 
     mmstream = create_ammultimediastream();
     hr = IAMMultiMediaStream_GetFilter(mmstream, &stream_filter);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    /* FIXME: This call should not be necessary. */
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo,
@@ -1520,6 +1514,12 @@ static void test_initialize(void)
     todo_wine ok(type == STREAMTYPE_READ, "Got type %u.\n", type);
     IMediaStream_Release(stream);
 
+    ret_graph = NULL;
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+    IGraphBuilder_Release(ret_graph);
+
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 
@@ -1589,6 +1589,12 @@ static void test_initialize(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(type == STREAMTYPE_READ, "Got type %u.\n", type);
 
+    ret_graph = NULL;
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+    IGraphBuilder_Release(ret_graph);
+
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -1657,10 +1663,6 @@ static void test_enum_media_types(void)
     ULONG ref, count;
     HRESULT hr;
     IPin *pin;
-
-    /* FIXME: This call should not be necessary. */
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2377,9 +2379,6 @@ static void test_audiostream_get_format(void)
     ULONG ref;
     IPin *pin;
 
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaStream_QueryInterface(stream, &IID_IAudioMediaStream, (void **)&audio_stream);
@@ -2570,9 +2569,6 @@ static void test_audiostream_set_format(void)
 
     mmstream = create_ammultimediastream();
 
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaStream_QueryInterface(stream, &IID_IAudioMediaStream, (void **)&audio_stream);
@@ -2653,8 +2649,6 @@ static void test_audiostream_receive_connection(void)
     IPin *pin;
 
     mmstream = create_ammultimediastream();
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaStream_QueryInterface(stream, &IID_IAudioMediaStream, (void **)&audio_stream);
