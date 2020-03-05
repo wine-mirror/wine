@@ -3784,11 +3784,13 @@ static void test_window_style(void)
 
     style = GetWindowLongA(device_window, GWL_STYLE);
     expected_style = device_style | WS_VISIBLE;
-    todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x.\n",
+    todo_wine ok(style == expected_style || broken(style == (expected_style & ~WS_OVERLAPPEDWINDOW)) /* w1064v1809 */,
+            "Expected device window style %#x, got %#x.\n",
             expected_style, style);
     style = GetWindowLongA(device_window, GWL_EXSTYLE);
     expected_style = device_exstyle | WS_EX_TOPMOST;
-    todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x.\n",
+    todo_wine ok(style == expected_style || broken(style == (expected_style & ~WS_EX_OVERLAPPEDWINDOW)) /* w1064v1809 */,
+            "Expected device window extended style %#x, got %#x.\n",
             expected_style, style);
 
     style = GetWindowLongA(focus_window, GWL_STYLE);
@@ -3802,7 +3804,8 @@ static void test_window_style(void)
     ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s.\n",
             wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r));
     GetClientRect(device_window, &r);
-    todo_wine ok(!EqualRect(&r, &fullscreen_rect), "Client rect and window rect are equal.\n");
+    todo_wine ok(!EqualRect(&r, &fullscreen_rect) || broken(!(style & WS_THICKFRAME)) /* w1064v1809 */,
+        "Client rect and window rect are equal.\n");
     GetWindowRect(focus_window, &r);
     ok(EqualRect(&r, &focus_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&focus_rect),
             wine_dbgstr_rect(&r));
