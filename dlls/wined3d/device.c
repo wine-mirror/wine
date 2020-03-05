@@ -1372,46 +1372,16 @@ static void wined3d_device_get_transform(const struct wined3d_device *device,
  * stateblock problems. When capturing the state block, I duplicate the
  * hashmap, but when recording, just build a chain pretty much of commands to
  * be replayed. */
-static HRESULT wined3d_device_set_light(struct wined3d_device *device,
+static void wined3d_device_set_light(struct wined3d_device *device,
         UINT light_idx, const struct wined3d_light *light)
 {
     struct wined3d_light_info *object = NULL;
-    HRESULT hr;
     float rho;
 
     TRACE("device %p, light_idx %u, light %p.\n", device, light_idx, light);
 
-    /* Check the parameter range. Need for speed most wanted sets junk lights
-     * which confuse the GL driver. */
-    if (!light)
-        return WINED3DERR_INVALIDCALL;
-
-    switch (light->type)
-    {
-        case WINED3D_LIGHT_POINT:
-        case WINED3D_LIGHT_SPOT:
-        case WINED3D_LIGHT_GLSPOT:
-            /* Incorrect attenuation values can cause the gl driver to crash.
-             * Happens with Need for speed most wanted. */
-            if (light->attenuation0 < 0.0f || light->attenuation1 < 0.0f || light->attenuation2 < 0.0f)
-            {
-                WARN("Attenuation is negative, returning WINED3DERR_INVALIDCALL.\n");
-                return WINED3DERR_INVALIDCALL;
-            }
-            break;
-
-        case WINED3D_LIGHT_DIRECTIONAL:
-        case WINED3D_LIGHT_PARALLELPOINT:
-            /* Ignores attenuation */
-            break;
-
-        default:
-        WARN("Light type out of range, returning WINED3DERR_INVALIDCALL\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (FAILED(hr = wined3d_light_state_set_light(&device->state.light_state, light_idx, light, &object)))
-        return hr;
+    if (FAILED(wined3d_light_state_set_light(&device->state.light_state, light_idx, light, &object)))
+        return;
 
     /* Initialize the object. */
     TRACE("Light %u setting to type %#x, diffuse %s, specular %s, ambient %s, "
@@ -1500,8 +1470,6 @@ static HRESULT wined3d_device_set_light(struct wined3d_device *device,
     }
 
     wined3d_cs_emit_set_light(device->cs, object);
-
-    return WINED3D_OK;
 }
 
 static HRESULT wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
