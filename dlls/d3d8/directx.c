@@ -134,12 +134,16 @@ static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
 static UINT WINAPI d3d8_GetAdapterModeCount(IDirect3D8 *iface, UINT adapter)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
-    UINT count;
+    unsigned int output_idx, count;
 
     TRACE("iface %p, adapter %u.\n", iface, adapter);
 
+    output_idx = adapter;
+    if (output_idx >= d3d8->wined3d_output_count)
+        return 0;
+
     wined3d_mutex_lock();
-    count = wined3d_get_adapter_mode_count(d3d8->wined3d, adapter,
+    count = wined3d_output_get_mode_count(d3d8->wined3d_outputs[output_idx],
             WINED3DFMT_UNKNOWN, WINED3D_SCANLINE_ORDERING_UNKNOWN);
     wined3d_mutex_unlock();
 

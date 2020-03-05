@@ -952,7 +952,7 @@ HRESULT CDECL wined3d_get_output_desc(const struct wined3d *wined3d, unsigned in
      of the same bpp but different resolutions                                  */
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
-UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT adapter_idx,
+unsigned int CDECL wined3d_output_get_mode_count(const struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering)
 {
     const struct wined3d_adapter *adapter;
@@ -962,20 +962,17 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
     UINT format_bits;
     DEVMODEW mode;
 
-    TRACE("wined3d %p, adapter_idx %u, format %s, scanline_ordering %#x.\n",
-            wined3d, adapter_idx, debug_d3dformat(format_id), scanline_ordering);
+    TRACE("output %p, format %s, scanline_ordering %#x.\n",
+            output, debug_d3dformat(format_id), scanline_ordering);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return 0;
-
-    adapter = wined3d->adapters[adapter_idx];
+    adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
     format_bits = format->byte_count * CHAR_BIT;
 
     memset(&mode, 0, sizeof(mode));
     mode.dmSize = sizeof(mode);
 
-    while (EnumDisplaySettingsExW(adapter->device_name, j++, &mode, 0))
+    while (EnumDisplaySettingsExW(output->device_name, j++, &mode, 0))
     {
         if (mode.dmFields & DM_DISPLAYFLAGS)
         {
@@ -999,7 +996,7 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
         }
     }
 
-    TRACE("Returning %u matching modes (out of %u total) for adapter %u.\n", i, j, adapter_idx);
+    TRACE("Returning %u matching modes (out of %u total) for output %p.\n", i, j, output);
 
     return i;
 }
@@ -1093,10 +1090,10 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
 
     TRACE("wined3d %p, adapter_idx %u, mode %p.\n", wined3d, adapter_idx, mode);
 
-    if (!(mode_count = wined3d_get_adapter_mode_count(wined3d, adapter_idx,
+    if (!(mode_count = wined3d_output_get_mode_count(&wined3d->adapters[adapter_idx]->outputs[0],
             mode->format_id, WINED3D_SCANLINE_ORDERING_UNKNOWN)))
     {
-        WARN("Adapter has 0 matching modes.\n");
+        WARN("Output has 0 matching modes.\n");
         return E_FAIL;
     }
 
@@ -1829,7 +1826,7 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
     if (!windowed)
     {
         /* If the requested display format is not available, don't continue. */
-        if (!wined3d_get_adapter_mode_count(wined3d, adapter_idx,
+        if (!wined3d_output_get_mode_count(&wined3d->adapters[adapter_idx]->outputs[0],
                 display_format, WINED3D_SCANLINE_ORDERING_UNKNOWN))
         {
             TRACE("No available modes for display format %s.\n", debug_d3dformat(display_format));

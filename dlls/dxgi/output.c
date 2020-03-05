@@ -107,7 +107,6 @@ static HRESULT dxgi_output_get_display_mode_list(struct dxgi_output *output,
     enum wined3d_format_id wined3d_format;
     struct wined3d_display_mode mode;
     unsigned int i, max_count;
-    struct wined3d *wined3d;
     HRESULT hr;
 
     if (!mode_count)
@@ -122,8 +121,7 @@ static HRESULT dxgi_output_get_display_mode_list(struct dxgi_output *output,
     wined3d_format = wined3dformat_from_dxgi_format(format);
 
     wined3d_mutex_lock();
-    wined3d = output->adapter->factory->wined3d;
-    max_count = wined3d_get_adapter_mode_count(wined3d, output->adapter->ordinal,
+    max_count = wined3d_output_get_mode_count(output->wined3d_output,
             wined3d_format, WINED3D_SCANLINE_ORDERING_UNKNOWN);
 
     if (!modes)

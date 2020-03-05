@@ -149,20 +149,24 @@ static HRESULT WINAPI d3d9_GetAdapterIdentifier(IDirect3D9Ex *iface, UINT adapte
 static UINT WINAPI d3d9_GetAdapterModeCount(IDirect3D9Ex *iface, UINT adapter, D3DFORMAT format)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
-    UINT ret;
+    unsigned int output_idx, count;
 
     TRACE("iface %p, adapter %u, format %#x.\n", iface, adapter, format);
+
+    output_idx = adapter;
+    if (output_idx >= d3d9->wined3d_output_count)
+        return 0;
 
     /* Others than that not supported by d3d9, but reported by wined3d for ddraw. Filter them out. */
     if (format != D3DFMT_X8R8G8B8 && format != D3DFMT_R5G6B5)
         return 0;
 
     wined3d_mutex_lock();
-    ret = wined3d_get_adapter_mode_count(d3d9->wined3d, adapter,
+    count = wined3d_output_get_mode_count(d3d9->wined3d_outputs[output_idx],
             wined3dformat_from_d3dformat(format), WINED3D_SCANLINE_ORDERING_UNKNOWN);
     wined3d_mutex_unlock();
 
-    return ret;
+    return count;
 }
 
 static HRESULT WINAPI d3d9_EnumAdapterModes(IDirect3D9Ex *iface, UINT adapter,
@@ -440,19 +444,23 @@ static UINT WINAPI d3d9_GetAdapterModeCountEx(IDirect3D9Ex *iface,
         UINT adapter, const D3DDISPLAYMODEFILTER *filter)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
-    UINT ret;
+    unsigned int output_idx, count;
 
     TRACE("iface %p, adapter %u, filter %p.\n", iface, adapter, filter);
+
+    output_idx = adapter;
+    if (output_idx >= d3d9->wined3d_output_count)
+        return 0;
 
     if (filter->Format != D3DFMT_X8R8G8B8 && filter->Format != D3DFMT_R5G6B5)
         return 0;
 
     wined3d_mutex_lock();
-    ret = wined3d_get_adapter_mode_count(d3d9->wined3d, adapter,
+    count = wined3d_output_get_mode_count(d3d9->wined3d_outputs[output_idx],
             wined3dformat_from_d3dformat(filter->Format), filter->ScanLineOrdering);
     wined3d_mutex_unlock();
 
-    return ret;
+    return count;
 }
 
 static HRESULT WINAPI d3d9_EnumAdapterModesEx(IDirect3D9Ex *iface,
