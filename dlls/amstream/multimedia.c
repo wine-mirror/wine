@@ -364,7 +364,11 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
 
     /* If Initialize was not called before, we do it here */
     if (!This->graph)
+    {
         ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
+        if (SUCCEEDED(ret))
+            ret = create_graph(This, NULL);
+    }
 
     if (SUCCEEDED(ret))
         ret = IGraphBuilder_AddSourceFilter(This->graph, filename, L"Source", &BaseFilter);
