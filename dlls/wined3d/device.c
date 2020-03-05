@@ -1314,7 +1314,7 @@ HRESULT CDECL wined3d_device_get_stream_source(const struct wined3d_device *devi
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_stream_source_freq(struct wined3d_device *device, UINT stream_idx, UINT divider)
+static HRESULT wined3d_device_set_stream_source_freq(struct wined3d_device *device, UINT stream_idx, UINT divider)
 {
     struct wined3d_stream_state *stream;
     UINT old_flags, old_freq;
@@ -1350,7 +1350,7 @@ HRESULT CDECL wined3d_device_set_stream_source_freq(struct wined3d_device *devic
     return WINED3D_OK;
 }
 
-void CDECL wined3d_device_set_transform(struct wined3d_device *device,
+static void wined3d_device_set_transform(struct wined3d_device *device,
         enum wined3d_transform_state d3dts, const struct wined3d_matrix *matrix)
 {
     TRACE("device %p, state %s, matrix %p.\n",
@@ -1376,7 +1376,7 @@ void CDECL wined3d_device_set_transform(struct wined3d_device *device,
     wined3d_cs_emit_set_transform(device->cs, d3dts, matrix);
 }
 
-void CDECL wined3d_device_get_transform(const struct wined3d_device *device,
+static void wined3d_device_get_transform(const struct wined3d_device *device,
         enum wined3d_transform_state state, struct wined3d_matrix *matrix)
 {
     TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
@@ -1391,7 +1391,7 @@ void CDECL wined3d_device_get_transform(const struct wined3d_device *device,
  * stateblock problems. When capturing the state block, I duplicate the
  * hashmap, but when recording, just build a chain pretty much of commands to
  * be replayed. */
-HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
+static HRESULT wined3d_device_set_light(struct wined3d_device *device,
         UINT light_idx, const struct wined3d_light *light)
 {
     struct wined3d_light_info *object = NULL;
@@ -1523,7 +1523,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
+static HRESULT wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
 {
     struct wined3d_light_info *light_info;
 
@@ -1548,7 +1548,7 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device,
+static HRESULT wined3d_device_set_clip_plane(struct wined3d_device *device,
         UINT plane_idx, const struct wined3d_vec4 *plane)
 {
     TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
@@ -1594,7 +1594,7 @@ HRESULT CDECL wined3d_device_get_clip_status(const struct wined3d_device *device
     return WINED3D_OK;
 }
 
-void CDECL wined3d_device_set_material(struct wined3d_device *device, const struct wined3d_material *material)
+static void wined3d_device_set_material(struct wined3d_device *device, const struct wined3d_material *material)
 {
     TRACE("device %p, material %p.\n", device, material);
 
@@ -1793,7 +1793,7 @@ DWORD CDECL wined3d_device_get_render_state(const struct wined3d_device *device,
     return device->state.render_states[state];
 }
 
-void CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
+static void wined3d_device_set_sampler_state(struct wined3d_device *device,
         UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
 {
     TRACE("device %p, sampler_idx %u, state %s, value %#x.\n",
@@ -2060,7 +2060,7 @@ struct wined3d_sampler * CDECL wined3d_device_get_vs_sampler(const struct wined3
     return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_VERTEX, idx);
 }
 
-HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
+static HRESULT wined3d_device_set_vs_consts_b(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const BOOL *constants)
 {
     unsigned int i;
@@ -2086,7 +2086,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_vs_consts_i(struct wined3d_device *device,
+static HRESULT wined3d_device_set_vs_consts_i(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants)
 {
     unsigned int i;
@@ -2112,7 +2112,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_i(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
+static HRESULT wined3d_device_set_vs_consts_f(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
@@ -2191,7 +2191,7 @@ struct wined3d_sampler * CDECL wined3d_device_get_ps_sampler(const struct wined3
     return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_PIXEL, idx);
 }
 
-HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
+static HRESULT wined3d_device_set_ps_consts_b(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const BOOL *constants)
 {
     unsigned int i;
@@ -2217,7 +2217,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
+static HRESULT wined3d_device_set_ps_consts_i(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants)
 {
     unsigned int i;
@@ -2243,7 +2243,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_ps_consts_f(struct wined3d_device *device,
+static HRESULT wined3d_device_set_ps_consts_f(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
@@ -3512,7 +3512,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     return hr;
 }
 
-void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
+static void wined3d_device_set_texture_stage_state(struct wined3d_device *device,
         UINT stage, enum wined3d_texture_stage_state state, DWORD value)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
@@ -3544,7 +3544,7 @@ void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
     wined3d_cs_emit_set_texture_state(device->cs, stage, state, value);
 }
 
-void CDECL wined3d_device_set_texture(struct wined3d_device *device,
+static void wined3d_device_set_texture(struct wined3d_device *device,
         UINT stage, struct wined3d_texture *texture)
 {
     struct wined3d_texture *prev;
