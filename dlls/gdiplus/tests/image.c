@@ -4491,7 +4491,7 @@ static void test_DrawImage_SourceCopy(void)
     expect(0, dst_pixels[0]);
     expect(0xffff0000, dst_pixels[1]);
     expect(0, dst_pixels[2]);
-    todo_wine expect(0, dst_pixels[3]);
+    expect(0, dst_pixels[3]);
 
     status = GdipDeleteGraphics(graphics);
     expect(Ok, status);
