@@ -289,6 +289,19 @@ static struct wined3d_output * get_output_from_window(const struct wined3d *wine
     return &wined3d->adapters[0]->outputs[0];
 }
 
+struct wined3d_output * wined3d_swapchain_get_output(const struct wined3d_swapchain *swapchain)
+{
+    HWND hwnd;
+
+    TRACE("swapchain %p.\n", swapchain);
+
+    hwnd = swapchain->state.device_window;
+    if (!hwnd)
+        hwnd = swapchain->win_handle;
+
+    return get_output_from_window(swapchain->device->wined3d, hwnd);
+}
+
 HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain *swapchain,
         struct wined3d_raster_status *raster_status)
 {

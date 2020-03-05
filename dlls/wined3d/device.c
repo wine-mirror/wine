@@ -5038,6 +5038,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_swapchain *swapchain;
     struct wined3d_view_desc view_desc;
     BOOL backbuffer_resized, windowed;
+    struct wined3d_output *output;
     HRESULT hr = WINED3D_OK;
     unsigned int i;
 
@@ -5146,8 +5147,14 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
                 return hr;
             }
         }
+
+        if (!(output = wined3d_swapchain_get_output(swapchain)))
+        {
+            ERR("Failed to get output from swapchain %p.\n", swapchain);
+            return E_FAIL;
+        }
         if (FAILED(hr = wined3d_swapchain_state_set_fullscreen(&swapchain->state,
-                swapchain_desc, device->wined3d, &device->adapter->outputs[0], mode)))
+                swapchain_desc, device->wined3d, output, mode)))
             return hr;
 
         /* Switch from fullscreen to windowed. */
