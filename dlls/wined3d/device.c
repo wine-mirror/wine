@@ -1314,29 +1314,12 @@ HRESULT CDECL wined3d_device_get_stream_source(const struct wined3d_device *devi
     return WINED3D_OK;
 }
 
-static HRESULT wined3d_device_set_stream_source_freq(struct wined3d_device *device, UINT stream_idx, UINT divider)
+static void wined3d_device_set_stream_source_freq(struct wined3d_device *device, UINT stream_idx, UINT divider)
 {
     struct wined3d_stream_state *stream;
     UINT old_flags, old_freq;
 
     TRACE("device %p, stream_idx %u, divider %#x.\n", device, stream_idx, divider);
-
-    /* Verify input. At least in d3d9 this is invalid. */
-    if ((divider & WINED3DSTREAMSOURCE_INSTANCEDATA) && (divider & WINED3DSTREAMSOURCE_INDEXEDDATA))
-    {
-        WARN("INSTANCEDATA and INDEXEDDATA were set, returning D3DERR_INVALIDCALL.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    if ((divider & WINED3DSTREAMSOURCE_INSTANCEDATA) && !stream_idx)
-    {
-        WARN("INSTANCEDATA used on stream 0, returning D3DERR_INVALIDCALL.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    if (!divider)
-    {
-        WARN("Divider is 0, returning D3DERR_INVALIDCALL.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
 
     stream = &device->state.streams[stream_idx];
     old_flags = stream->flags;
@@ -1346,8 +1329,6 @@ static HRESULT wined3d_device_set_stream_source_freq(struct wined3d_device *devi
     stream->frequency = divider & 0x7fffff;
     if (stream->frequency != old_freq || stream->flags != old_flags)
         wined3d_cs_emit_set_stream_source_freq(device->cs, stream_idx, stream->frequency, stream->flags);
-
-    return WINED3D_OK;
 }
 
 static void wined3d_device_set_transform(struct wined3d_device *device,
