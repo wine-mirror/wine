@@ -7215,8 +7215,13 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
     }
 
     if (max_glyphsize == 0)
+    {
         /* Nothing to draw. */
+        heap_free(pti);
+        DeleteDC(hdc);
+        DeleteObject(hfont);
         return Ok;
+    }
 
     glyph_mask = heap_alloc_zero(max_glyphsize);
     text_mask = heap_alloc_zero((max_x - min_x) * (max_y - min_y));
