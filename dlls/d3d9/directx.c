@@ -170,17 +170,23 @@ static HRESULT WINAPI d3d9_EnumAdapterModes(IDirect3D9Ex *iface, UINT adapter,
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
     struct wined3d_display_mode wined3d_mode;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, format %#x, mode_idx %u, mode %p.\n",
             iface, adapter, format, mode_idx, mode);
 
+    output_idx = adapter;
+    if (output_idx >= d3d9->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
+
     if (format != D3DFMT_X8R8G8B8 && format != D3DFMT_R5G6B5)
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = wined3d_enum_adapter_modes(d3d9->wined3d, adapter, wined3dformat_from_d3dformat(format),
-            WINED3D_SCANLINE_ORDERING_UNKNOWN, mode_idx, &wined3d_mode);
+    hr = wined3d_output_get_mode(d3d9->wined3d_outputs[output_idx],
+            wined3dformat_from_d3dformat(format), WINED3D_SCANLINE_ORDERING_UNKNOWN, mode_idx,
+            &wined3d_mode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
@@ -454,17 +460,23 @@ static HRESULT WINAPI d3d9_EnumAdapterModesEx(IDirect3D9Ex *iface,
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
     struct wined3d_display_mode wined3d_mode;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, filter %p, mode_idx %u, mode %p.\n",
             iface, adapter, filter, mode_idx, mode);
 
+    output_idx = adapter;
+    if (output_idx >= d3d9->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
+
     if (filter->Format != D3DFMT_X8R8G8B8 && filter->Format != D3DFMT_R5G6B5)
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = wined3d_enum_adapter_modes(d3d9->wined3d, adapter, wined3dformat_from_d3dformat(filter->Format),
-            filter->ScanLineOrdering, mode_idx, &wined3d_mode);
+    hr = wined3d_output_get_mode(d3d9->wined3d_outputs[output_idx],
+            wined3dformat_from_d3dformat(filter->Format), filter->ScanLineOrdering, mode_idx,
+            &wined3d_mode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))

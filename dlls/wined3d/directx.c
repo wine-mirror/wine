@@ -116,7 +116,8 @@ static void wined3d_output_cleanup(const struct wined3d_output *output)
     D3DKMTCloseAdapter(&close_adapter_desc);
 }
 
-static HRESULT wined3d_output_init(struct wined3d_output *output, const WCHAR *device_name)
+static HRESULT wined3d_output_init(struct wined3d_output *output, struct wined3d_adapter *adapter,
+        const WCHAR *device_name)
 {
     D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_desc;
     D3DKMT_CREATEDEVICE create_device_desc = {{0}};
@@ -136,6 +137,8 @@ static HRESULT wined3d_output_init(struct wined3d_output *output, const WCHAR *d
         return E_FAIL;
     }
 
+    lstrcpyW(output->device_name, device_name);
+    output->adapter = adapter;
     output->kmt_adapter = open_adapter_desc.hAdapter;
     output->kmt_device = create_device_desc.hDevice;
     output->vidpn_source_id = open_adapter_desc.VidPnSourceId;
@@ -1002,9 +1005,9 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
 }
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
-HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT adapter_idx,
+HRESULT CDECL wined3d_output_get_mode(const struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering,
-        UINT mode_idx, struct wined3d_display_mode *mode)
+        unsigned int mode_idx, struct wined3d_display_mode *mode)
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
@@ -1013,13 +1016,13 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
     UINT i = 0;
     int j = 0;
 
-    TRACE("wined3d %p, adapter_idx %u, format %s, scanline_ordering %#x, mode_idx %u, mode %p.\n",
-            wined3d, adapter_idx, debug_d3dformat(format_id), scanline_ordering, mode_idx, mode);
+    TRACE("output %p, format %s, scanline_ordering %#x, mode_idx %u, mode %p.\n",
+            output, debug_d3dformat(format_id), scanline_ordering, mode_idx, mode);
 
-    if (!mode || adapter_idx >= wined3d->adapter_count)
+    if (!mode)
         return WINED3DERR_INVALIDCALL;
 
-    adapter = wined3d->adapters[adapter_idx];
+    adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
     format_bits = format->byte_count * CHAR_BIT;
 
@@ -1028,7 +1031,7 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
 
     while (i <= mode_idx)
     {
-        if (!EnumDisplaySettingsExW(adapter->device_name, j++, &m, 0))
+        if (!EnumDisplaySettingsExW(output->device_name, j++, &m, 0))
         {
             WARN("Invalid mode_idx %u.\n", mode_idx);
             return WINED3DERR_INVALIDCALL;
@@ -1107,7 +1110,7 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
 
     for (i = 0; i < mode_count; ++i)
     {
-        if (FAILED(hr = wined3d_enum_adapter_modes(wined3d, adapter_idx,
+        if (FAILED(hr = wined3d_output_get_mode(&wined3d->adapters[adapter_idx]->outputs[0],
                 mode->format_id, WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i])))
         {
             heap_free(matching_modes);
@@ -2851,7 +2854,7 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         return FALSE;
     }
 
-    if (FAILED(hr = wined3d_output_init(&adapter->outputs[0], adapter->device_name)))
+    if (FAILED(hr = wined3d_output_init(&adapter->outputs[0], adapter, display_device.DeviceName)))
     {
         ERR("Failed to initialise output, hr %#x.\n", hr);
         goto done;

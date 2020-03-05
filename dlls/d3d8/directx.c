@@ -150,13 +150,18 @@ static HRESULT WINAPI d3d8_EnumAdapterModes(IDirect3D8 *iface, UINT adapter, UIN
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
     struct wined3d_display_mode wined3d_mode;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, mode_idx %u, mode %p.\n",
             iface, adapter, mode_idx, mode);
 
+    output_idx = adapter;
+    if (output_idx >= d3d8->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
+
     wined3d_mutex_lock();
-    hr = wined3d_enum_adapter_modes(d3d8->wined3d, adapter, WINED3DFMT_UNKNOWN,
+    hr = wined3d_output_get_mode(d3d8->wined3d_outputs[output_idx], WINED3DFMT_UNKNOWN,
             WINED3D_SCANLINE_ORDERING_UNKNOWN, mode_idx, &wined3d_mode);
     wined3d_mutex_unlock();
 

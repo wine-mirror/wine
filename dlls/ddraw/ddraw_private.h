@@ -94,6 +94,8 @@ struct ddraw
     LONG                    ref7, ref4, ref2, ref3, ref1, numIfaces;
 
     struct wined3d *wined3d;
+    struct wined3d_adapter *wined3d_adapter;
+    struct wined3d_output *wined3d_output;
     struct wined3d_device *wined3d_device;
     DWORD flags;
     LONG device_state;

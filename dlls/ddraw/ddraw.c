@@ -2404,7 +2404,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     for(fmt = 0; fmt < ARRAY_SIZE(checkFormatList); fmt++)
     {
         modenum = 0;
-        while (wined3d_enum_adapter_modes(ddraw->wined3d, WINED3DADAPTER_DEFAULT, checkFormatList[fmt],
+        while (wined3d_output_get_mode(ddraw->wined3d_output, checkFormatList[fmt],
                 WINED3D_SCANLINE_ORDERING_UNKNOWN, modenum++, &mode) == WINED3D_OK)
         {
             BOOL found = FALSE;
@@ -5001,6 +5001,20 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
             WARN("Failed to create a wined3d object.\n");
             return E_FAIL;
         }
+    }
+
+    if (!(ddraw->wined3d_adapter = wined3d_get_adapter(ddraw->wined3d, WINED3DADAPTER_DEFAULT)))
+    {
+        WARN("Failed to get the default wined3d adapter.\n");
+        wined3d_decref(ddraw->wined3d);
+        return E_FAIL;
+    }
+
+    if (!(ddraw->wined3d_output = wined3d_adapter_get_output(ddraw->wined3d_adapter, 0)))
+    {
+        WARN("Failed to get the default wined3d output.\n");
+        wined3d_decref(ddraw->wined3d);
+        return E_FAIL;
     }
 
     if (FAILED(hr = wined3d_get_device_caps(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type, &caps)))
