@@ -384,7 +384,12 @@ static GpStatus alpha_blend_bmp_pixels(GpGraphics *graphics, INT dst_x, INT dst_
             src_color = ((ARGB*)(src + src_stride * y))[x];
 
             if (comp_mode == CompositingModeSourceCopy)
-                GdipBitmapSetPixel(dst_bitmap, x+dst_x, y+dst_y, src_color);
+            {
+                if (!(src_color & 0xff000000))
+                    GdipBitmapSetPixel(dst_bitmap, x+dst_x, y+dst_y, 0);
+                else
+                    GdipBitmapSetPixel(dst_bitmap, x+dst_x, y+dst_y, src_color);
+            }
             else
             {
                 if (!(src_color & 0xff000000))
