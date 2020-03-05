@@ -1749,12 +1749,6 @@ static void wined3d_device_set_sampler_state(struct wined3d_device *device,
     if (sampler_idx >= WINED3DVERTEXTEXTURESAMPLER0 && sampler_idx <= WINED3DVERTEXTEXTURESAMPLER3)
         sampler_idx -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
 
-    if (sampler_idx >= ARRAY_SIZE(device->state.sampler_states))
-    {
-        WARN("Invalid sampler %u.\n", sampler_idx);
-        return; /* Windows accepts overflowing this array ... we do not. */
-    }
-
     if (value == device->state.sampler_states[sampler_idx][state])
     {
         TRACE("Application is setting the old value over, nothing to do.\n");
