@@ -1247,7 +1247,7 @@ static void test_writesource_palette(void)
     ok(hr == S_OK, "GetFrame error %#x\n", hr);
 
     hr = IWICBitmapFrameDecode_CopyPalette(frame_decode, palette);
-    todo_wine ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
 
     hr = IWICPalette_GetColors(palette, 2, result_palette, &result_colors);
     ok(hr == S_OK, "GetColors error %#x\n", hr);

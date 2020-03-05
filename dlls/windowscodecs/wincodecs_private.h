@@ -174,7 +174,7 @@ extern HRESULT configure_write_source(IWICBitmapFrameEncode *iface,
 
 extern HRESULT write_source(IWICBitmapFrameEncode *iface,
     IWICBitmapSource *source, const WICRect *prc,
-    const WICPixelFormatGUID *format, UINT bpp,
+    const WICPixelFormatGUID *format, UINT bpp, BOOL need_palette,
     INT width, INT height) DECLSPEC_HIDDEN;
 
 extern void reverse_bgr8(UINT bytesperpixel, LPBYTE bits, UINT width, UINT height, INT stride) DECLSPEC_HIDDEN;

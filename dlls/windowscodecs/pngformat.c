@@ -1772,7 +1772,9 @@ static HRESULT WINAPI PngFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
     if (SUCCEEDED(hr))
     {
         hr = write_source(iface, pIBitmapSource, prc,
-            This->format->guid, This->format->bpp, This->width, This->height);
+            This->format->guid, This->format->bpp,
+            !This->colors && This->format->color_type == PNG_COLOR_TYPE_PALETTE,
+            This->width, This->height);
     }
 
     return hr;

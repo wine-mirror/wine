@@ -154,7 +154,7 @@ HRESULT configure_write_source(IWICBitmapFrameEncode *iface,
 
 HRESULT write_source(IWICBitmapFrameEncode *iface,
     IWICBitmapSource *source, const WICRect *prc,
-    const WICPixelFormatGUID *format, UINT bpp,
+    const WICPixelFormatGUID *format, UINT bpp, BOOL need_palette,
     INT width, INT height)
 {
     IWICBitmapSource *converted_source;
@@ -183,6 +183,28 @@ HRESULT write_source(IWICBitmapFrameEncode *iface,
     {
         ERR("Failed to convert source, target format %s, %#x\n", debugstr_guid(format), hr);
         return E_NOTIMPL;
+    }
+
+    if (need_palette)
+    {
+        IWICPalette *palette;
+
+        hr = PaletteImpl_Create(&palette);
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICBitmapSource_CopyPalette(converted_source, palette);
+
+            if (SUCCEEDED(hr))
+                hr = IWICBitmapFrameEncode_SetPalette(iface, palette);
+
+            IWICPalette_Release(palette);
+        }
+
+        if (FAILED(hr))
+        {
+            IWICBitmapSource_Release(converted_source);
+            return hr;
+        }
     }
 
     stride = (bpp * width + 7)/8;

@@ -1769,7 +1769,9 @@ static HRESULT WINAPI TiffFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
     if (SUCCEEDED(hr))
     {
         hr = write_source(iface, pIBitmapSource, prc,
-            This->format->guid, This->format->bpp, This->width, This->height);
+            This->format->guid, This->format->bpp,
+            !This->colors && This->format->bpp <= 8 && !IsEqualGUID(This->format->guid, &GUID_WICPixelFormatBlackWhite),
+            This->width, This->height);
     }
 
     return hr;

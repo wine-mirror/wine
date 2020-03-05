@@ -1181,7 +1181,8 @@ static HRESULT WINAPI JpegEncoder_Frame_WriteSource(IWICBitmapFrameEncode *iface
     if (SUCCEEDED(hr))
     {
         hr = write_source(iface, pIBitmapSource, prc,
-            This->format->guid, This->format->bpp, This->width, This->height);
+            This->format->guid, This->format->bpp, FALSE,
+            This->width, This->height);
     }
 
     return hr;
