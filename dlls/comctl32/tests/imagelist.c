@@ -1444,6 +1444,43 @@ static void check_ImageList_DrawIndirect_broken(HDC hdc, HIMAGELIST himl, UINT32
        bits[0] & 0x00FFFFFF, expected, line);
 }
 
+static void check_ImageList_DrawIndirect_grayscale(HDC hdc, HIMAGELIST himl, UINT32 *dst_bits, const UINT32 *bitmap_bits,
+                                                   int index, UINT width, UINT height, int line)
+{
+    int i;
+    BOOL has_alpha = FALSE;
+    IMAGELISTDRAWPARAMS ildp = { sizeof(IMAGELISTDRAWPARAMS), himl, index, hdc,
+                                 0, 0, 0, 0, 0, 0, CLR_NONE, CLR_NONE, ILD_NORMAL, 0, ILS_SATURATE, 0, 0x00000000 };
+    memset(dst_bits, 0, width * height * sizeof(*dst_bits));
+    pImageList_DrawIndirect(&ildp);
+
+    for (i = 0; i < width *  height; i++)
+        if ((has_alpha = ((bitmap_bits[i] & 0xFF000000) != 0))) break;
+
+    for (i = 0; i < width * height; i++)
+    {
+        UINT32 expected, expected_winxp;
+        UINT32 red   = (bitmap_bits[i] & 0x00FF0000) >> 16;
+        UINT32 green = (bitmap_bits[i] & 0x0000FF00) >>  8;
+        UINT32 blue  = (bitmap_bits[i] & 0x000000FF) >>  0;
+        UINT32 gray = (red * 299 + green * 587 + blue * 114 + 500) / 1000;
+        UINT32 gray_winxp = (red + green  + blue) / 3;
+        if (has_alpha)
+        {
+            UINT32 alpha = (bitmap_bits[i] & 0xFF000000) >> 24;
+            gray = gray * alpha / 0xff * alpha / 0xff;
+            gray_winxp = gray_winxp * alpha / 0xff * 0x96 / 0xff;
+        }
+        expected = (gray << 16) | (gray << 8) | gray;
+        expected_winxp = (gray_winxp << 16) | (gray_winxp << 8) | gray_winxp;
+
+        todo_wine_if(expected != 0 && expected != 0x00FFFFFF)
+        ok(colour_match(dst_bits[i], expected) || broken(colour_match(dst_bits[i], expected_winxp)),
+           "ImageList_DrawIndirect: got Pixel(%d,%d) %08X, Expected a close match to %08X from line %d\n",
+           i % width, i / width, dst_bits[i] & 0x00FFFFFF, expected, line);
+    }
+}
+
 static void test_ImageList_DrawIndirect(void)
 {
     const UINT32 bits_image[] =       { 0x00ABCDEF, 0x00ABCDEF };
@@ -1546,8 +1583,9 @@ static void test_ImageList_DrawIndirect(void)
     check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCCOPY, 0x00D3E5F7, __LINE__);
     check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCINVERT, 0x00D3E5F7, __LINE__);
 
-    todo_wine check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_SATURATE, 0, 0x00CCCCCC, __LINE__);
-    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_SATURATE, 0, 0x00AFAFAF, 0x00F0F0F0, __LINE__);
+    check_ImageList_DrawIndirect_grayscale(hdcDst, himl, bits, bits_image, iImage, 2, 1, __LINE__);
+    check_ImageList_DrawIndirect_grayscale(hdcDst, himl, bits, bits_alpha, iAlphaImage, 2, 1, __LINE__);
+    check_ImageList_DrawIndirect_grayscale(hdcDst, himl, bits, bits_transparent, iTransparentImage, 2, 1, __LINE__);
 
     check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_GLOW, 0, 0x00ABCDEF, __LINE__);
     check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_SHADOW, 0, 0x00ABCDEF, __LINE__);
