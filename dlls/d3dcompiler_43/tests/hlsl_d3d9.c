@@ -307,6 +307,21 @@ static void test_swizzle(void)
         "    return ret;\n"
         "}";
 
+    static const char ps_multiple_lhs_source[] =
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    float4 ret = float4(0.1, 0.2, 0.3, 0.4);\n"
+        "    ret.wyz.yx = float2(0.5, 0.6).yx;\n"
+        "    return ret;\n"
+        "}";
+
+    static const char ps_multiple_rhs_source[] =
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    float4 ret = float4(0.1, 0.2, 0.3, 0.4).ywxz.zyyz;\n"
+        "    return ret;\n"
+        "}";
+
     if (!init_test_context(&test_context))
         return;
     device = test_context.device;
@@ -328,6 +343,31 @@ static void test_swizzle(void)
 
         ID3D10Blob_Release(ps_code);
     }
+
+    todo_wine ps_code = compile_shader(ps_multiple_lhs_source, "ps_2_0");
+    if (ps_code)
+    {
+        draw_quad(device, ps_code);
+
+        v = get_color_vec4(device, 0, 0);
+        ok(compare_vec4(&v, 0.1f, 0.6f, 0.3f, 0.5f, 0),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+
+        ID3D10Blob_Release(ps_code);
+    }
+
+    todo_wine ps_code = compile_shader(ps_multiple_rhs_source, "ps_2_0");
+    if (ps_code)
+    {
+        draw_quad(device, ps_code);
+
+        v = get_color_vec4(device, 0, 0);
+        ok(compare_vec4(&v, 0.1f, 0.4f, 0.4f, 0.1f, 0),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+
+        ID3D10Blob_Release(ps_code);
+    }
+
     release_test_context(&test_context);
 }
 
