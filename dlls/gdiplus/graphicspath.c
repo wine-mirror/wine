@@ -1984,10 +1984,8 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
 }
 
 static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
-    GpPen *pen, GpLineCap cap, GpCustomLineCap *custom, path_list_node_t **last_point)
+    REAL pen_width, GpLineCap cap, GpCustomLineCap *custom, path_list_node_t **last_point)
 {
-    REAL pen_width = max(pen->width, 2.0);
-
     switch (cap)
     {
     default:
@@ -2130,14 +2128,6 @@ static void widen_open_figure(const GpPointF *points, GpPen *pen, int start, int
 
     prev_point->next->type = PathPointTypeStart;
     (*last_point)->type |= PathPointTypeCloseSubpath;
-
-    if (start_cap & LineCapAnchorMask)
-        add_anchor(&points[start], &points[start+1],
-            pen, start_cap, start_custom, last_point);
-
-    if (end_cap & LineCapAnchorMask)
-        add_anchor(&points[end], &points[end-1],
-            pen, end_cap, end_custom, last_point);
 }
 
 static void widen_closed_figure(GpPath *path, GpPen *pen, int start, int end,
@@ -2327,7 +2317,6 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     GpStatus status;
     path_list_node_t *points=NULL, *last_point=NULL;
     int i, subpath_start=0, new_length;
-    BYTE type;
 
     TRACE("(%p,%p,%p,%0.2f)\n", path, pen, matrix, flatness);
 
@@ -2347,6 +2336,9 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
 
     if (status == Ok)
     {
+        REAL anchor_pen_width = max(pen->width, 2.0);
+        BYTE *types = flat_path->pathdata.Types;
+
         last_point = points;
 
         if (pen->endcap > LineCapDiamondAnchor)
@@ -2366,12 +2358,10 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
 
         for (i=0; i < flat_path->pathdata.Count; i++)
         {
-            type = flat_path->pathdata.Types[i];
-
-            if ((type&PathPointTypePathTypeMask) == PathPointTypeStart)
+            if ((types[i]&PathPointTypePathTypeMask) == PathPointTypeStart)
                 subpath_start = i;
 
-            if ((type&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
+            if ((types[i]&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
             {
                 if (pen->dash != DashStyleSolid)
                     widen_dashed_figure(flat_path, pen, subpath_start, i, 1, &last_point);
@@ -2379,12 +2369,35 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
                     widen_closed_figure(flat_path, pen, subpath_start, i, &last_point);
             }
             else if (i == flat_path->pathdata.Count-1 ||
-                (flat_path->pathdata.Types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
+                (types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
             {
                 if (pen->dash != DashStyleSolid)
                     widen_dashed_figure(flat_path, pen, subpath_start, i, 0, &last_point);
                 else
                     widen_open_figure(flat_path->pathdata.Points, pen, subpath_start, i, pen->startcap, pen->customstart, pen->endcap, pen->customend, &last_point);
+            }
+        }
+
+        for (i=0; i < flat_path->pathdata.Count; i++)
+        {
+            if ((types[i]&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
+                continue;
+
+            if ((types[i]&PathPointTypePathTypeMask) == PathPointTypeStart)
+                subpath_start = i;
+
+            if (i == flat_path->pathdata.Count-1 ||
+                (types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
+            {
+                if (pen->startcap & LineCapAnchorMask)
+                    add_anchor(&flat_path->pathdata.Points[subpath_start],
+                        &flat_path->pathdata.Points[subpath_start+1],
+                        anchor_pen_width, pen->startcap, pen->customstart, &last_point);
+
+                if (pen->endcap & LineCapAnchorMask)
+                    add_anchor(&flat_path->pathdata.Points[i],
+                        &flat_path->pathdata.Points[i-1],
+                        anchor_pen_width, pen->endcap, pen->customend, &last_point);
             }
         }
 

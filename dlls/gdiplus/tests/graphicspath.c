@@ -1380,14 +1380,14 @@ static path_test_t widenline_capsquareanchor_dashed_path[] = {
     {35.0, 5.0,            PathPointTypeLine,  0, 0}, /*1*/
     {35.0, 15.0,           PathPointTypeLine,  0, 0}, /*2*/
     {5.0, 15.0,            PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
-    {45.0, 5.0,            PathPointTypeStart, 0, 1}, /*4*/
-    {50.0, 5.0,            PathPointTypeLine,  0, 1}, /*5*/
-    {50.0, 15.0,           PathPointTypeLine,  0, 1}, /*6*/
-    {45.0, 15.0,           PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*7*/
-    {12.071068, 2.928932,  PathPointTypeStart, 0, 1}, /*8*/
-    {12.071068, 17.071066, PathPointTypeLine,  0, 1}, /*9*/
-    {-2.071068, 17.071066, PathPointTypeLine,  0, 1}, /*10*/
-    {-2.071068, 2.928932,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*11*/
+    {45.0, 5.0,            PathPointTypeStart, 0, 0}, /*4*/
+    {50.0, 5.0,            PathPointTypeLine,  0, 0}, /*5*/
+    {50.0, 15.0,           PathPointTypeLine,  0, 0}, /*6*/
+    {45.0, 15.0,           PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*7*/
+    {12.071068, 2.928932,  PathPointTypeStart, 0, 0}, /*8*/
+    {12.071068, 17.071066, PathPointTypeLine,  0, 0}, /*9*/
+    {-2.071068, 17.071066, PathPointTypeLine,  0, 0}, /*10*/
+    {-2.071068, 2.928932,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*11*/
     {42.928928, 17.071068, PathPointTypeStart, 0, 0}, /*12*/
     {42.928928, 2.928932,  PathPointTypeLine,  0, 0}, /*13*/
     {57.071068, 2.928932,  PathPointTypeLine,  0, 0}, /*14*/
@@ -1399,18 +1399,18 @@ static path_test_t widenline_capsquareanchor_multifigure_path[] = {
     {25.0, 5.0,            PathPointTypeLine,  0, 0}, /*1*/
     {25.0, 15.0,           PathPointTypeLine,  0, 0}, /*2*/
     {5.0, 15.0,            PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
-    {30.0, 5.0,            PathPointTypeStart, 0, 1}, /*4*/
-    {50.0, 5.0,            PathPointTypeLine,  0, 1}, /*5*/
-    {50.0, 15.0,           PathPointTypeLine,  0, 1}, /*6*/
-    {30.0, 15.0,           PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*7*/
-    {12.071068, 2.928932,  PathPointTypeStart, 0, 1}, /*8*/
-    {12.071068, 17.071066, PathPointTypeLine,  0, 1}, /*9*/
-    {-2.071068, 17.071066, PathPointTypeLine,  0, 1}, /*10*/
-    {-2.071068, 2.928932,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*11*/
-    {17.928930, 17.071068, PathPointTypeStart, 0, 1}, /*12*/
-    {17.928930, 2.928932,  PathPointTypeLine,  0, 1}, /*13*/
-    {32.071068, 2.928932,  PathPointTypeLine,  0, 1}, /*14*/
-    {32.071068, 17.071068, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*15*/
+    {30.0, 5.0,            PathPointTypeStart, 0, 0}, /*4*/
+    {50.0, 5.0,            PathPointTypeLine,  0, 0}, /*5*/
+    {50.0, 15.0,           PathPointTypeLine,  0, 0}, /*6*/
+    {30.0, 15.0,           PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*7*/
+    {12.071068, 2.928932,  PathPointTypeStart, 0, 0}, /*8*/
+    {12.071068, 17.071066, PathPointTypeLine,  0, 0}, /*9*/
+    {-2.071068, 17.071066, PathPointTypeLine,  0, 0}, /*10*/
+    {-2.071068, 2.928932,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*11*/
+    {17.928930, 17.071068, PathPointTypeStart, 0, 0}, /*12*/
+    {17.928930, 2.928932,  PathPointTypeLine,  0, 0}, /*13*/
+    {32.071068, 2.928932,  PathPointTypeLine,  0, 0}, /*14*/
+    {32.071068, 17.071068, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*15*/
     {37.071068, 2.928932,  PathPointTypeStart, 0, 0}, /*16*/
     {37.071068, 17.071066, PathPointTypeLine,  0, 0}, /*17*/
     {22.928930, 17.071066, PathPointTypeLine,  0, 0}, /*18*/
