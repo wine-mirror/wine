@@ -1430,19 +1430,19 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
 }
 
 static HRESULT wined3d_swapchain_state_set_display_mode(struct wined3d_swapchain_state *state,
-        struct wined3d *wined3d, unsigned int adapter_idx, struct wined3d_display_mode *mode)
+        struct wined3d *wined3d, struct wined3d_output *output, struct wined3d_display_mode *mode)
 {
     HRESULT hr;
 
     if (state->desc.flags & WINED3D_SWAPCHAIN_USE_CLOSEST_MATCHING_MODE)
     {
-        if (FAILED(hr = wined3d_find_closest_matching_adapter_mode(wined3d, adapter_idx, mode)))
+        if (FAILED(hr = wined3d_find_closest_matching_adapter_mode(wined3d, 0, mode)))
         {
             WARN("Failed to find closest matching mode, hr %#x.\n", hr);
         }
     }
 
-    if (FAILED(hr = wined3d_set_adapter_display_mode(wined3d, adapter_idx, mode)))
+    if (FAILED(hr = wined3d_set_adapter_display_mode(wined3d, 0, mode)))
     {
         WARN("Failed to set display mode, hr %#x.\n", hr);
         return WINED3DERR_INVALIDCALL;
@@ -1480,7 +1480,8 @@ HRESULT CDECL wined3d_swapchain_state_resize_target(struct wined3d_swapchain_sta
     else if (state->desc.flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
     {
         actual_mode = *mode;
-        if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, wined3d, 0, &actual_mode)))
+        if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, wined3d, output,
+                &actual_mode)))
         {
             wined3d_mutex_unlock();
             return hr;
@@ -1649,7 +1650,8 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
             }
         }
 
-        if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, wined3d, 0, &actual_mode)))
+        if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, wined3d, output,
+                &actual_mode)))
             return hr;
     }
     else
