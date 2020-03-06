@@ -3415,12 +3415,6 @@ static void wined3d_device_set_texture_stage_state(struct wined3d_device *device
     TRACE("device %p, stage %u, state %s, value %#x.\n",
             device, stage, debug_d3dtexturestate(state), value);
 
-    if (state > WINED3D_HIGHEST_TEXTURE_STATE)
-    {
-        WARN("Invalid state %#x passed.\n", state);
-        return;
-    }
-
     if (stage >= d3d_info->limits.ffp_blend_stages)
     {
         WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring.\n",
