@@ -1218,12 +1218,15 @@ static HRESULT interp_call_member(script_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.1.1 */
 static HRESULT interp_this(script_ctx_t *ctx)
 {
-    call_frame_t *frame = ctx->call_ctx;
+    IDispatch *this_obj = ctx->call_ctx->this_obj;
 
     TRACE("\n");
 
-    IDispatch_AddRef(frame->this_obj);
-    return stack_push(ctx, jsval_disp(frame->this_obj));
+    if(!this_obj)
+        this_obj = ctx->host_global ? ctx->host_global : to_disp(ctx->global);
+
+    IDispatch_AddRef(this_obj);
+    return stack_push(ctx, jsval_disp(this_obj));
 }
 
 static HRESULT interp_identifier_ref(script_ctx_t *ctx, BSTR identifier, unsigned flags)
@@ -2700,7 +2703,7 @@ static void print_backtrace(script_ctx_t *ctx)
         WARN("%u\t", depth);
         depth++;
 
-        if(frame->this_obj && frame->this_obj != to_disp(ctx->global) && frame->this_obj != ctx->host_global)
+        if(frame->this_obj)
             WARN("%p->", frame->this_obj);
         WARN("%s(", frame->function->name ? debugstr_w(frame->function->name) : "[unnamed]");
         if(frame->base_scope && frame->base_scope->frame) {
@@ -3055,13 +3058,10 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
 
     frame->ip = function->instr_off;
     frame->stack_base = ctx->stack_top;
-    if(this_obj)
+    if(this_obj) {
         frame->this_obj = this_obj;
-    else if(ctx->host_global)
-        frame->this_obj = ctx->host_global;
-    else
-        frame->this_obj = to_disp(ctx->global);
-    IDispatch_AddRef(frame->this_obj);
+        IDispatch_AddRef(frame->this_obj);
+    }
 
     if(function_instance)
         frame->function_instance = jsdisp_addref(function_instance);
