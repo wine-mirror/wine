@@ -1437,7 +1437,7 @@ enum init_return WCUSER_InitBackend(struct inner_data* data)
     RegisterClassW(&wndclass);
 
     data->hWnd = CreateWindowW(wndclass.lpszClassName, NULL,
-                               WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_HSCROLL|WS_VSCROLL,
+                               WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_HSCROLL|WS_VSCROLL,
                                CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, 0, wndclass.hInstance, data);
     if (!data->hWnd) return init_not_supported;
 
