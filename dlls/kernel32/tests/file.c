@@ -5591,6 +5591,99 @@ static void test_hard_link(void)
     SetCurrentDirectoryA( cwd );
 }
 
+static void test_move_file(void)
+{
+    char cwd[MAX_PATH], temp_dir[MAX_PATH];
+    HANDLE file;
+    BOOL ret;
+
+    GetCurrentDirectoryA( sizeof(cwd), cwd );
+    GetTempPathA( sizeof(temp_dir), temp_dir );
+    SetCurrentDirectoryA( temp_dir );
+
+    ret = CreateDirectoryA( "winetest_dir1", NULL );
+    ok(ret, "failed to create directory, error %u\n", GetLastError());
+    ret = CreateDirectoryA( "winetest_dir2", NULL );
+    ok(ret, "failed to create directory, error %u\n", GetLastError());
+    create_file( "winetest_file1" );
+    create_file( "winetest_file2" );
+
+    ret = MoveFileA( "winetest_file1", "winetest_file3" );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+    ret = GetFileAttributesA( "winetest_file1" );
+    ok(ret == INVALID_FILE_ATTRIBUTES, "got %#x\n", ret);
+    ret = GetFileAttributesA( "winetest_file3" );
+    ok(ret != INVALID_FILE_ATTRIBUTES, "got %#x\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileA( "winetest_file3", "winetest_file2" );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileA( "winetest_file1", "winetest_file4" );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %u\n", GetLastError());
+
+    ret = MoveFileA( "winetest_dir1", "winetest_dir3" );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileA( "winetest_dir3", "winetest_dir2" );
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
+
+    file = CreateFileA( "winetest_file3", DELETE, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
+    ret = MoveFileA( "winetest_file3", "winetest_file1" );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "got error %u\n", GetLastError());
+    CloseHandle( file );
+
+    file = CreateFileA( "winetest_file3", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
+    ret = MoveFileA( "winetest_file3", "winetest_file1" );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+    ret = GetFileAttributesA( "winetest_file1" );
+    ok(ret != INVALID_FILE_ATTRIBUTES, "got %#x\n", ret);
+    ret = GetFileAttributesA( "winetest_file3" );
+    ok(ret == INVALID_FILE_ATTRIBUTES, "got %#x\n", ret);
+    CloseHandle( file );
+
+    ret = MoveFileExA( "winetest_file1", "winetest_file2", MOVEFILE_REPLACE_EXISTING );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+
+    file = CreateFileA( "winetest_file1", GENERIC_ALL,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, CREATE_NEW, 0, 0 );
+    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = MoveFileExA( "winetest_file2", "winetest_file1", MOVEFILE_REPLACE_EXISTING );
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    CloseHandle( file );
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileExA( "winetest_file2", "winetest_dir2", MOVEFILE_REPLACE_EXISTING );
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileExA( "winetest_dir3", "winetest_dir2", MOVEFILE_REPLACE_EXISTING );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    ret = MoveFileExA( "winetest_dir2", "winetest_file2", MOVEFILE_REPLACE_EXISTING );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+
+    ret = RemoveDirectoryA( "winetest_dir3" );
+    ok(ret, "failed to remove directory, error %u\n", GetLastError());
+    ret = RemoveDirectoryA( "winetest_file2" );
+    ok(ret, "failed to remove directory, error %u\n", GetLastError());
+    ret = DeleteFileA( "winetest_file1" );
+    ok(ret, "failed to delete file, error %u\n", GetLastError());
+    SetCurrentDirectoryA( cwd );
+}
+
 START_TEST(file)
 {
     char temp_path[MAX_PATH];
@@ -5666,4 +5759,5 @@ START_TEST(file)
     test_SetFileTime();
     test_ReOpenFile();
     test_hard_link();
+    test_move_file();
 }
