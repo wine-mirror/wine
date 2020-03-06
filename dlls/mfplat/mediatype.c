@@ -58,7 +58,6 @@ struct presentation_desc
     IMFPresentationDescriptor IMFPresentationDescriptor_iface;
     struct presentation_desc_entry *descriptors;
     unsigned int count;
-    CRITICAL_SECTION cs;
 };
 
 static HRESULT presentation_descriptor_init(struct presentation_desc *object, DWORD count);
@@ -1239,7 +1238,6 @@ static ULONG WINAPI presentation_descriptor_Release(IMFPresentationDescriptor *i
                 IMFStreamDescriptor_Release(presentation_desc->descriptors[i].descriptor);
         }
         clear_attributes_object(&presentation_desc->attributes);
-        DeleteCriticalSection(&presentation_desc->cs);
         heap_free(presentation_desc->descriptors);
         heap_free(presentation_desc);
     }
@@ -1553,9 +1551,9 @@ static HRESULT WINAPI presentation_descriptor_GetStreamDescriptorByIndex(IMFPres
     if (index >= presentation_desc->count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&presentation_desc->cs);
+    EnterCriticalSection(&presentation_desc->attributes.cs);
     *selected = presentation_desc->descriptors[index].selected;
-    LeaveCriticalSection(&presentation_desc->cs);
+    LeaveCriticalSection(&presentation_desc->attributes.cs);
 
     *descriptor = presentation_desc->descriptors[index].descriptor;
     IMFStreamDescriptor_AddRef(*descriptor);
@@ -1572,9 +1570,9 @@ static HRESULT WINAPI presentation_descriptor_SelectStream(IMFPresentationDescri
     if (index >= presentation_desc->count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&presentation_desc->cs);
+    EnterCriticalSection(&presentation_desc->attributes.cs);
     presentation_desc->descriptors[index].selected = TRUE;
-    LeaveCriticalSection(&presentation_desc->cs);
+    LeaveCriticalSection(&presentation_desc->attributes.cs);
 
     return S_OK;
 }
@@ -1588,9 +1586,9 @@ static HRESULT WINAPI presentation_descriptor_DeselectStream(IMFPresentationDesc
     if (index >= presentation_desc->count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&presentation_desc->cs);
+    EnterCriticalSection(&presentation_desc->attributes.cs);
     presentation_desc->descriptors[index].selected = FALSE;
-    LeaveCriticalSection(&presentation_desc->cs);
+    LeaveCriticalSection(&presentation_desc->attributes.cs);
 
     return S_OK;
 }
@@ -1610,7 +1608,7 @@ static HRESULT WINAPI presentation_descriptor_Clone(IMFPresentationDescriptor *i
 
     presentation_descriptor_init(object, presentation_desc->count);
 
-    EnterCriticalSection(&presentation_desc->cs);
+    EnterCriticalSection(&presentation_desc->attributes.cs);
 
     for (i = 0; i < presentation_desc->count; ++i)
     {
@@ -1620,7 +1618,7 @@ static HRESULT WINAPI presentation_descriptor_Clone(IMFPresentationDescriptor *i
 
     attributes_CopyAllItems(&presentation_desc->attributes, (IMFAttributes *)&object->IMFPresentationDescriptor_iface);
 
-    LeaveCriticalSection(&presentation_desc->cs);
+    LeaveCriticalSection(&presentation_desc->attributes.cs);
 
     *descriptor = &object->IMFPresentationDescriptor_iface;
 
@@ -1677,7 +1675,6 @@ static HRESULT presentation_descriptor_init(struct presentation_desc *object, DW
         return hr;
     object->IMFPresentationDescriptor_iface.lpVtbl = &presentationdescriptorvtbl;
     object->descriptors = heap_alloc_zero(count * sizeof(*object->descriptors));
-    InitializeCriticalSection(&object->cs);
     if (!object->descriptors)
     {
         IMFPresentationDescriptor_Release(&object->IMFPresentationDescriptor_iface);
