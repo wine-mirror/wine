@@ -401,7 +401,7 @@ static HRESULT WINAPI IcnsFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
     if (SUCCEEDED(hr))
     {
         hr = write_source(iface, pIBitmapSource, prc,
-            &GUID_WICPixelFormat32bppBGRA, 32, This->size, This->size);
+            &GUID_WICPixelFormat32bppBGRA, 32, FALSE, This->size, This->size);
     }
 
     return hr;
