@@ -1422,13 +1422,46 @@ static enum hlsl_ir_expr_op op_from_assignment(enum parse_assign_op op)
     return ops[op];
 }
 
-struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assign_op assign_op,
-        struct hlsl_ir_node *right)
+static unsigned int invert_swizzle(unsigned int *swizzle, unsigned int writemask)
+{
+    unsigned int i, j, bit = 0, inverted = 0, components, new_writemask = 0, new_swizzle = 0;
+
+    /* Apply the writemask to the swizzle to get a new writemask and swizzle. */
+    for (i = 0; i < 4; ++i)
+    {
+        if (writemask & (1 << i))
+        {
+            unsigned int s = (*swizzle >> (i * 2)) & 3;
+            new_swizzle |= s << (bit++ * 2);
+            if (new_writemask & (1 << s))
+                return 0;
+            new_writemask |= 1 << s;
+        }
+    }
+    components = bit;
+
+    /* Invert the swizzle. */
+    bit = 0;
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < components; ++j)
+        {
+            unsigned int s = (new_swizzle >> (j * 2)) & 3;
+            if (s == i)
+                inverted |= j << (bit++ * 2);
+        }
+    }
+
+    *swizzle = inverted;
+    return new_writemask;
+}
+
+struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign_op assign_op,
+        struct hlsl_ir_node *rhs)
 {
     struct hlsl_ir_assignment *assign = d3dcompiler_alloc(sizeof(*assign));
-    DWORD writemask = BWRITERSP_WRITEMASK_ALL;
+    DWORD writemask = (1 << lhs->data_type->dimx) - 1;
     struct hlsl_type *type;
-    struct hlsl_ir_node *lhs, *rhs;
 
     if (!assign)
     {
@@ -1436,46 +1469,81 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         return NULL;
     }
 
+    while (lhs->type != HLSL_IR_DEREF)
+    {
+        struct hlsl_ir_node *lhs_inner;
+
+        if (lhs->type == HLSL_IR_EXPR && expr_from_node(lhs)->op == HLSL_IR_UNOP_CAST)
+        {
+            FIXME("Cast on the lhs.\n");
+            d3dcompiler_free(assign);
+            return NULL;
+        }
+        else if (lhs->type == HLSL_IR_SWIZZLE)
+        {
+            struct hlsl_ir_swizzle *swizzle = swizzle_from_node(lhs);
+
+            if (lhs->data_type->type == HLSL_CLASS_MATRIX)
+                FIXME("Assignments with writemasks and matrices on lhs are not supported yet.\n");
+
+            lhs_inner = swizzle->val;
+            list_remove(&lhs->entry);
+
+            list_add_after(&rhs->entry, &lhs->entry);
+            swizzle->val = rhs;
+            if (!(writemask = invert_swizzle(&swizzle->swizzle, writemask)))
+            {
+                hlsl_report_message(lhs->loc, HLSL_LEVEL_ERROR, "invalid writemask");
+                d3dcompiler_free(assign);
+                return NULL;
+            }
+            rhs = &swizzle->node;
+        }
+        else
+        {
+            hlsl_report_message(lhs->loc, HLSL_LEVEL_ERROR, "invalid lvalue");
+            d3dcompiler_free(assign);
+            return NULL;
+        }
+
+        lhs = lhs_inner;
+    }
+
     TRACE("Creating proper assignment expression.\n");
-    rhs = right;
     if (writemask == BWRITERSP_WRITEMASK_ALL)
-        type = left->data_type;
+        type = lhs->data_type;
     else
     {
         unsigned int dimx = 0;
         DWORD bitmask;
         enum hlsl_type_class type_class;
 
-        if (left->data_type->type > HLSL_CLASS_LAST_NUMERIC)
+        if (lhs->data_type->type > HLSL_CLASS_LAST_NUMERIC)
         {
-            hlsl_report_message(left->loc, HLSL_LEVEL_ERROR,
+            hlsl_report_message(lhs->loc, HLSL_LEVEL_ERROR,
                     "writemask on a non scalar/vector/matrix type");
             d3dcompiler_free(assign);
             return NULL;
         }
-        bitmask = writemask & ((1 << left->data_type->dimx) - 1);
+        bitmask = writemask & ((1 << lhs->data_type->dimx) - 1);
         while (bitmask)
         {
             if (bitmask & 1)
                 dimx++;
             bitmask >>= 1;
         }
-        if (left->data_type->type == HLSL_CLASS_MATRIX)
+        if (lhs->data_type->type == HLSL_CLASS_MATRIX)
             FIXME("Assignments with writemasks and matrices on lhs are not supported yet.\n");
         if (dimx == 1)
             type_class = HLSL_CLASS_SCALAR;
         else
-            type_class = left->data_type->type;
-        type = new_hlsl_type(NULL, type_class, left->data_type->base_type, dimx, 1);
+            type_class = lhs->data_type->type;
+        type = new_hlsl_type(NULL, type_class, lhs->data_type->base_type, dimx, 1);
     }
     assign->node.type = HLSL_IR_ASSIGNMENT;
-    assign->node.loc = left->loc;
+    assign->node.loc = lhs->loc;
     assign->node.data_type = type;
     assign->writemask = writemask;
-    FIXME("Check for casts in the lhs.\n");
-
-    lhs = left;
-    /* FIXME: check for invalid writemasks on the lhs. */
 
     rhs = implicit_conversion(rhs, type, &rhs->loc);
 
@@ -1485,7 +1553,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         enum hlsl_ir_expr_op op = op_from_assignment(assign_op);
         struct hlsl_ir_node *expr;
 
-        if (lhs->type != HLSL_IR_DEREF || deref_from_node(lhs)->type != HLSL_IR_DEREF_VAR)
+        if (deref_from_node(lhs)->type != HLSL_IR_DEREF_VAR)
         {
             FIXME("LHS expression not supported in compound assignments yet.\n");
             assign->rhs = rhs;
