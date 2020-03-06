@@ -1242,7 +1242,7 @@ ImageList_DrawEx (HIMAGELIST himl, INT i, HDC hdc, INT x, INT y,
 
 static BOOL alpha_blend_image( HIMAGELIST himl, HDC dest_dc, int dest_x, int dest_y,
                                int src_x, int src_y, int cx, int cy, BLENDFUNCTION func,
-                               UINT style, COLORREF blend_col, BOOL has_alpha )
+                               UINT style, COLORREF blend_col, BOOL has_alpha, BOOL grayscale )
 {
     BOOL ret = FALSE;
     HDC hdc;
@@ -1290,6 +1290,18 @@ static BOOL alpha_blend_image( HIMAGELIST himl, HDC dest_dc, int dest_x, int des
                         ((((*ptr & 0x00ff0000) + (r << 16)) / 2) & 0x00ff0000) |
                         ((((*ptr & 0x0000ff00) + (g << 8))  / 2) & 0x0000ff00) |
                         ((((*ptr & 0x000000ff) + (b << 0))  / 2) & 0x000000ff));
+        }
+    }
+
+    if (grayscale)
+    {
+        for (i = 0, ptr = bits; i < cx * cy; i++, ptr++)
+        {
+            DWORD gray = (((*ptr & 0x00ff0000) >> 16) * 299 +
+                          ((*ptr & 0x0000ff00) >>  8) * 587 +
+                          ((*ptr & 0x000000ff) >>  0) * 114 + 500) / 1000;
+            if (has_alpha) gray = gray * (*ptr >> 24) / 255;
+            *ptr = (*ptr & 0xff000000)| (gray << 16) | (gray << 8) | gray;
         }
     }
 
@@ -1422,7 +1434,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     oldImageBk = SetBkColor( hImageDC, RGB( 0xff, 0xff, 0xff ) );
 
     has_alpha = (himl->has_alpha && himl->has_alpha[pimldp->i]);
-    if (!bMask && (has_alpha || (fState & ILS_ALPHA)))
+    if (!bMask && (has_alpha || (fState & ILS_ALPHA) || (fState & ILS_SATURATE)))
     {
         COLORREF colour, blend_col = CLR_NONE;
         BLENDFUNCTION func;
@@ -1441,8 +1453,8 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 
         if (bIsTransparent)
         {
-            bResult = alpha_blend_image( himl, pimldp->hdcDst, pimldp->x, pimldp->y,
-                                         pt.x, pt.y, cx, cy, func, fStyle, blend_col, has_alpha );
+            bResult = alpha_blend_image( himl, pimldp->hdcDst, pimldp->x, pimldp->y, pt.x, pt.y, cx, cy,
+                                         func, fStyle, blend_col, has_alpha, fState & ILS_SATURATE );
             goto end;
         }
         colour = pimldp->rgbBk;
@@ -1451,7 +1463,8 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 
         hOldBrush = SelectObject (hImageDC, CreateSolidBrush (colour));
         PatBlt( hImageDC, 0, 0, cx, cy, PATCOPY );
-        alpha_blend_image( himl, hImageDC, 0, 0, pt.x, pt.y, cx, cy, func, fStyle, blend_col, has_alpha );
+        alpha_blend_image( himl, hImageDC, 0, 0, pt.x, pt.y, cx, cy, func,
+                           fStyle, blend_col, has_alpha, fState & ILS_SATURATE );
         DeleteObject (SelectObject (hImageDC, hOldBrush));
         bResult = BitBlt( pimldp->hdcDst, pimldp->x,  pimldp->y, cx, cy, hImageDC, 0, 0, SRCCOPY );
         goto end;
@@ -1545,7 +1558,6 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 	}
     }
 
-    if (fState & ILS_SATURATE) FIXME("ILS_SATURATE: unimplemented!\n");
     if (fState & ILS_GLOW) FIXME("ILS_GLOW: unimplemented!\n");
     if (fState & ILS_SHADOW) FIXME("ILS_SHADOW: unimplemented!\n");
 

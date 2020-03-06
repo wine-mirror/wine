@@ -1475,7 +1475,6 @@ static void check_ImageList_DrawIndirect_grayscale(HDC hdc, HIMAGELIST himl, UIN
         expected = (gray << 16) | (gray << 8) | gray;
         expected_winxp = (gray_winxp << 16) | (gray_winxp << 8) | gray_winxp;
 
-        todo_wine_if(expected != 0 && expected != 0x00FFFFFF)
         ok(colour_match(dst_bits[i], expected) || broken(colour_match(dst_bits[i], expected_winxp)),
            "ImageList_DrawIndirect: got Pixel(%d,%d) %08X, Expected a close match to %08X from line %d\n",
            i % width, i / width, dst_bits[i] & 0x00FFFFFF, expected, line);
