@@ -2001,19 +2001,13 @@ struct wined3d_sampler * CDECL wined3d_device_get_vs_sampler(const struct wined3
     return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_VERTEX, idx);
 }
 
-static HRESULT wined3d_device_set_vs_consts_b(struct wined3d_device *device,
+static void wined3d_device_set_vs_consts_b(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const BOOL *constants)
 {
     unsigned int i;
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n",
             device, start_idx, count, constants);
-
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
-        return WINED3DERR_INVALIDCALL;
-
-    if (count > WINED3D_MAX_CONSTS_B - start_idx)
-        count = WINED3D_MAX_CONSTS_B - start_idx;
 
     memcpy(&device->state.vs_consts_b[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
@@ -2023,23 +2017,15 @@ static HRESULT wined3d_device_set_vs_consts_b(struct wined3d_device *device,
     }
 
     wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_B, start_idx, count, constants);
-
-    return WINED3D_OK;
 }
 
-static HRESULT wined3d_device_set_vs_consts_i(struct wined3d_device *device,
+static void wined3d_device_set_vs_consts_i(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants)
 {
     unsigned int i;
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n",
             device, start_idx, count, constants);
-
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
-        return WINED3DERR_INVALIDCALL;
-
-    if (count > WINED3D_MAX_CONSTS_I - start_idx)
-        count = WINED3D_MAX_CONSTS_I - start_idx;
 
     memcpy(&device->state.vs_consts_i[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
@@ -2049,22 +2035,15 @@ static HRESULT wined3d_device_set_vs_consts_i(struct wined3d_device *device,
     }
 
     wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_I, start_idx, count, constants);
-
-    return WINED3D_OK;
 }
 
-static HRESULT wined3d_device_set_vs_consts_f(struct wined3d_device *device,
+static void wined3d_device_set_vs_consts_f(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
 {
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     unsigned int i;
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n",
             device, start_idx, count, constants);
-
-    if (!constants || start_idx >= d3d_info->limits.vs_uniform_count
-            || count > d3d_info->limits.vs_uniform_count - start_idx)
-        return WINED3DERR_INVALIDCALL;
 
     memcpy(&device->state.vs_consts_f[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
@@ -2074,8 +2053,6 @@ static HRESULT wined3d_device_set_vs_consts_f(struct wined3d_device *device,
     }
 
     wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_F, start_idx, count, constants);
-
-    return WINED3D_OK;
 }
 
 void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader)
@@ -2132,19 +2109,13 @@ struct wined3d_sampler * CDECL wined3d_device_get_ps_sampler(const struct wined3
     return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_PIXEL, idx);
 }
 
-static HRESULT wined3d_device_set_ps_consts_b(struct wined3d_device *device,
+static void wined3d_device_set_ps_consts_b(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const BOOL *constants)
 {
     unsigned int i;
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n",
             device, start_idx, count, constants);
-
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
-        return WINED3DERR_INVALIDCALL;
-
-    if (count > WINED3D_MAX_CONSTS_B - start_idx)
-        count = WINED3D_MAX_CONSTS_B - start_idx;
 
     memcpy(&device->state.ps_consts_b[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
@@ -2154,23 +2125,15 @@ static HRESULT wined3d_device_set_ps_consts_b(struct wined3d_device *device,
     }
 
     wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_B, start_idx, count, constants);
-
-    return WINED3D_OK;
 }
 
-static HRESULT wined3d_device_set_ps_consts_i(struct wined3d_device *device,
+static void wined3d_device_set_ps_consts_i(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_ivec4 *constants)
 {
     unsigned int i;
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n",
             device, start_idx, count, constants);
-
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
-        return WINED3DERR_INVALIDCALL;
-
-    if (count > WINED3D_MAX_CONSTS_I - start_idx)
-        count = WINED3D_MAX_CONSTS_I - start_idx;
 
     memcpy(&device->state.ps_consts_i[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
@@ -2180,22 +2143,15 @@ static HRESULT wined3d_device_set_ps_consts_i(struct wined3d_device *device,
     }
 
     wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_I, start_idx, count, constants);
-
-    return WINED3D_OK;
 }
 
-static HRESULT wined3d_device_set_ps_consts_f(struct wined3d_device *device,
+static void wined3d_device_set_ps_consts_f(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
 {
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     unsigned int i;
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n",
             device, start_idx, count, constants);
-
-    if (!constants || start_idx >= d3d_info->limits.ps_uniform_count
-            || count > d3d_info->limits.ps_uniform_count - start_idx)
-        return WINED3DERR_INVALIDCALL;
 
     memcpy(&device->state.ps_consts_f[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
@@ -2205,8 +2161,6 @@ static HRESULT wined3d_device_set_ps_consts_f(struct wined3d_device *device,
     }
 
     wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_F, start_idx, count, constants);
-
-    return WINED3D_OK;
 }
 
 void CDECL wined3d_device_set_hull_shader(struct wined3d_device *device, struct wined3d_shader *shader)
