@@ -482,8 +482,7 @@ static void test_media_types(void)
     IBaseFilter_FindPin(filter, L"Out", &source);
 
     hr = IPin_EnumMediaTypes(sink, &enummt);
-    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK) IEnumMediaTypes_Release(enummt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     hr = IPin_EnumMediaTypes(source, &enummt);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
@@ -497,8 +496,7 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_EnumMediaTypes(sink, &enummt);
-    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK) IEnumMediaTypes_Release(enummt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     hr = IPin_EnumMediaTypes(source, &enummt);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
@@ -824,8 +822,7 @@ static void test_connect_pin(void)
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
 
     hr = IPin_EnumMediaTypes(sink, &enummt);
-    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK) IEnumMediaTypes_Release(enummt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
     hr = IPin_EnumMediaTypes(source, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
@@ -1000,6 +997,14 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
+
+    hr = IPin_EnumMediaTypes(sink, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(pmt, testsink.sink_mt), "Media types didn't match.\n");
+    IEnumMediaTypes_Release(enummt);
+
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
 
