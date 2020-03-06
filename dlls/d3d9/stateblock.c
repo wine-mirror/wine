@@ -151,7 +151,7 @@ static HRESULT WINAPI d3d9_stateblock_Apply(IDirect3DStateBlock9 *iface)
     device->auto_mipmaps = 0;
     for (i = 0; i < D3D9_MAX_TEXTURE_UNITS; ++i)
     {
-        if ((wined3d_texture = wined3d_stateblock_get_state(device->state)->textures[i])
+        if ((wined3d_texture = device->stateblock_state->textures[i])
                 && (texture = wined3d_texture_get_parent(wined3d_texture))
                 && texture->usage & D3DUSAGE_AUTOGENMIPMAP)
             device->auto_mipmaps |= 1u << i;

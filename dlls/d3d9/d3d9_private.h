@@ -122,6 +122,7 @@ struct d3d9_device
     struct wined3d_swapchain **implicit_swapchains;
 
     struct wined3d_stateblock *recording, *state, *update_state;
+    const struct wined3d_stateblock_state *stateblock_state;
 };
 
 HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wined3d *wined3d,
