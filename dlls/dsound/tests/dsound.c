@@ -1157,6 +1157,13 @@ static HRESULT test_duplicate(LPGUID lpGuid)
             ok(rc==DS_OK && buf!=NULL,
                "IDirectSoundBuffer_Lock failed to lock the buffer %08x\n",rc);
             if (rc==DS_OK && buf!=NULL) {
+                if (sizeof(void*)==4) { /* crashes on 64-bit */
+                    /* broken apps like Asuka 120% Return BURNING Fest,
+                       pass the pointer to GlobalHandle. */
+                    HGLOBAL hmem = GlobalHandle(buf);
+                    todo_wine ok(!hmem,"GlobalHandle should return NULL "
+                       "for buffer %p, got %p\n",buf,hmem);
+                }
                 ZeroMemory(buf,bufsize);
                 rc=IDirectSoundBuffer_Unlock(original,buf,bufsize,
                                              NULL,0);
