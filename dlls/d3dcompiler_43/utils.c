@@ -1652,7 +1652,7 @@ void init_functions_tree(struct wine_rb_tree *funcs)
     wine_rb_init(&hlsl_ctx.functions, compare_function_rb);
 }
 
-static const char *debug_base_type(const struct hlsl_type *type)
+const char *debug_base_type(const struct hlsl_type *type)
 {
     const char *name = "(unknown)";
 
@@ -1744,7 +1744,7 @@ const char *debug_modifiers(DWORD modifiers)
     return wine_dbg_sprintf("%s", string[0] ? string + 1 : "");
 }
 
-static const char *debug_node_type(enum hlsl_ir_node_type type)
+const char *debug_node_type(enum hlsl_ir_node_type type)
 {
     static const char * const names[] =
     {

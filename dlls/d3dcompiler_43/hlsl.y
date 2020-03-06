@@ -926,6 +926,47 @@ static struct list *make_list(struct hlsl_ir_node *node)
     return list;
 }
 
+static unsigned int evaluate_array_dimension(struct hlsl_ir_node *node)
+{
+    if (node->data_type->type != HLSL_CLASS_SCALAR)
+        return 0;
+
+    switch (node->type)
+    {
+    case HLSL_IR_CONSTANT:
+    {
+        struct hlsl_ir_constant *constant = constant_from_node(node);
+
+        switch (constant->node.data_type->base_type)
+        {
+        case HLSL_TYPE_UINT:
+            return constant->v.value.u[0];
+        case HLSL_TYPE_INT:
+            return constant->v.value.i[0];
+        case HLSL_TYPE_FLOAT:
+            return constant->v.value.f[0];
+        case HLSL_TYPE_DOUBLE:
+            return constant->v.value.d[0];
+        case HLSL_TYPE_BOOL:
+            return constant->v.value.b[0];
+        default:
+            WARN("Invalid type %s.\n", debug_base_type(constant->node.data_type));
+            return 0;
+        }
+    }
+    case HLSL_IR_CONSTRUCTOR:
+    case HLSL_IR_DEREF:
+    case HLSL_IR_EXPR:
+    case HLSL_IR_SWIZZLE:
+        FIXME("Unhandled type %s.\n", debug_node_type(node->type));
+        return 0;
+    case HLSL_IR_ASSIGNMENT:
+    default:
+        WARN("Invalid node type %s.\n", debug_node_type(node->type));
+        return 0;
+    }
+}
+
 %}
 
 %locations
@@ -1651,9 +1692,25 @@ array:                    /* Empty */
                             }
                         | '[' expr ']'
                             {
-                                FIXME("Array.\n");
-                                $$ = 0;
+                                unsigned int size = evaluate_array_dimension(node_from_list($2));
+
                                 free_instr_list($2);
+
+                                if (!size)
+                                {
+                                    hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR,
+                                            "array size is not a positive integer constant\n");
+                                    YYABORT;
+                                }
+                                TRACE("Array size %u.\n", size);
+
+                                if (size > 65536)
+                                {
+                                    hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR,
+                                            "array size must be between 1 and 65536");
+                                    YYABORT;
+                                }
+                                $$ = size;
                             }
 
 var_modifiers:            /* Empty */

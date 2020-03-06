@@ -654,10 +654,47 @@ static void test_return(void)
     release_test_context(&test_context);
 }
 
+static void test_array_dimensions(void)
+{
+    struct test_context test_context;
+    ID3D10Blob *ps_code = NULL;
+    struct vec4 v;
+
+    static const char shader[] =
+        "float4 main(float x : TEXCOORD0) : COLOR\n"
+        "{\n"
+        "    const int dim = 4;\n"
+        "    float a[2 * 2] = {0.1, 0.2, 0.3, 0.4};\n"
+        "    float b[4.1] = a;\n"
+        "    float c[dim] = b;\n"
+        "    float d[true] = {c[0]};\n"
+        "    float e[65536];\n"
+        "    return float4(d[0], c[0], c[1], c[3]);\n"
+        "}";
+
+    if (!init_test_context(&test_context))
+        return;
+
+    todo_wine ps_code = compile_shader(shader, "ps_2_0");
+    if (ps_code)
+    {
+        draw_quad(test_context.device, ps_code);
+
+        v = get_color_vec4(test_context.device, 0, 0);
+        ok(compare_vec4(&v, 0.1f, 0.1f, 0.2f, 0.4f, 0),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+
+        ID3D10Blob_Release(ps_code);
+    }
+
+    release_test_context(&test_context);
+}
+
 static void test_fail(void)
 {
     static const char *tests[] =
     {
+        /* 0 */
         "float4 test() : SV_TARGET\n"
         "{\n"
         "   return y;\n"
@@ -689,6 +726,7 @@ static void test_fail(void)
         "  return float4(x.x, x.y, 0, 0);\n"
         "}",
 
+        /* 5 */
         "float4 test() : SV_TARGET\n"
         "{\n"
         "   struct { int b,c; } x = {0};\n"
@@ -714,6 +752,26 @@ static void test_fail(void)
         "float4 test(float2 pos : TEXCOORD0) : SV_TARGET\n"
         "{\n"
         "    return pos;\n"
+        "}",
+
+        /* 10 */
+        "float4 test(float2 pos: TEXCOORD0) : SV_TARGET\n"
+        "{\n"
+        "    float a[0];\n"
+        "    return float4(0, 0, 0, 0);\n"
+        "}",
+
+        "float4 test(float2 pos: TEXCOORD0) : SV_TARGET\n"
+        "{\n"
+        "    float a[65537];\n"
+        "    return float4(0, 0, 0, 0);\n"
+        "}",
+
+        "float4 test(float2 pos: TEXCOORD0) : SV_TARGET\n"
+        "{\n"
+        "    int x;\n"
+        "    float a[(x = 2)];\n"
+        "    return float4(0, 0, 0, 0);\n"
         "}",
     };
 
@@ -776,5 +834,6 @@ START_TEST(hlsl_d3d9)
     test_trig();
     test_comma();
     test_return();
+    test_array_dimensions();
     test_fail();
 }
