@@ -170,6 +170,7 @@ typedef struct _function_code_t {
     bytecode_t *bytecode;
 } function_code_t;
 
+IDispatch *lookup_global_host(script_ctx_t*) DECLSPEC_HIDDEN;
 local_ref_t *lookup_local(const function_code_t*,const WCHAR*) DECLSPEC_HIDDEN;
 
 struct _bytecode_t {

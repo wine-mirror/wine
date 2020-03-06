@@ -1394,7 +1394,6 @@ static void test_named_items(void)
     SET_EXPECT(OnLeaveScript);
     hr = IActiveScriptParse_ParseScriptText(parse, L"this", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
-    todo_wine
     ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == &global_named_item,
         "Unexpected 'this': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
     VariantClear(&var);
@@ -1427,7 +1426,6 @@ static void test_named_items(void)
     SET_EXPECT(OnLeaveScript);
     hr = IActiveScriptParse_ParseScriptText(parse, L"globalCode_this", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
-    todo_wine
     ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == &global_named_item,
         "Unexpected 'this': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
     VariantClear(&var);

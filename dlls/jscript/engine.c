@@ -605,6 +605,21 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
     return FALSE;
 }
 
+IDispatch *lookup_global_host(script_ctx_t *ctx)
+{
+    IDispatch *disp = NULL;
+    named_item_t *item;
+
+    LIST_FOR_EACH_ENTRY(item, &ctx->named_items, named_item_t, entry) {
+        if(!(item->flags & SCRIPTITEM_GLOBALMEMBERS)) continue;
+        disp = item->disp;
+        break;
+    }
+    if(!disp) disp = to_disp(ctx->global);
+
+    return disp;
+}
+
 static int __cdecl local_ref_cmp(const void *key, const void *ref)
 {
     return wcscmp((const WCHAR*)key, ((const local_ref_t*)ref)->name);
@@ -1223,7 +1238,7 @@ static HRESULT interp_this(script_ctx_t *ctx)
     TRACE("\n");
 
     if(!this_obj)
-        this_obj = ctx->host_global ? ctx->host_global : to_disp(ctx->global);
+        this_obj = lookup_global_host(ctx);
 
     IDispatch_AddRef(this_obj);
     return stack_push(ctx, jsval_disp(this_obj));

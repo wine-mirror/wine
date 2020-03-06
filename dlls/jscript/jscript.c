@@ -409,11 +409,6 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
         case SCRIPTSTATE_INITIALIZED:
             clear_script_queue(This);
 
-            if(This->ctx->host_global) {
-                IDispatch_Release(This->ctx->host_global);
-                This->ctx->host_global = NULL;
-            }
-
             while(!list_empty(&This->ctx->named_items)) {
                 named_item_t *iter = LIST_ENTRY(list_head(&This->ctx->named_items), named_item_t, entry);
 
@@ -820,11 +815,6 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
             WARN("object does not implement IDispatch\n");
             return hres;
         }
-
-        if(This->ctx->host_global)
-            IDispatch_Release(This->ctx->host_global);
-        IDispatch_AddRef(disp);
-        This->ctx->host_global = disp;
     }
 
     item = heap_alloc(sizeof(*item));

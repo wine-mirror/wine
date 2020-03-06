@@ -422,8 +422,6 @@ struct _script_ctx_t {
 
     heap_pool_t tmp_heap;
 
-    IDispatch *host_global;
-
     jsval_t *stack;
     unsigned stack_size;
     unsigned stack_top;
