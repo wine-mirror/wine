@@ -611,7 +611,8 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(struct strmbase_sourc
 
     TRACE("%p->(%p, %p)\n", This, pReceivePin, pmt);
 
-    /* FIXME: call queryacceptproc */
+    if (This->pin.ops->pin_query_accept(&This->pin, pmt) != S_OK)
+        return VFW_E_TYPE_NOT_ACCEPTED;
 
     This->pin.peer = pReceivePin;
     IPin_AddRef(pReceivePin);
