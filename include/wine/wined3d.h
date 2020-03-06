@@ -2762,7 +2762,8 @@ HRESULT __cdecl wined3d_swapchain_state_create(const struct wined3d_swapchain_de
         HWND window, struct wined3d *wined3d, unsigned int adapter_idx, struct wined3d_swapchain_state **state);
 void __cdecl wined3d_swapchain_state_destroy(struct wined3d_swapchain_state *state);
 HRESULT __cdecl wined3d_swapchain_state_resize_target(struct wined3d_swapchain_state *state,
-        struct wined3d *wined3d, unsigned int adapter_idx, const struct wined3d_display_mode *mode);
+        struct wined3d *wined3d, struct wined3d_output *output,
+        const struct wined3d_display_mode *mode);
 HRESULT __cdecl wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_state *state,
         const struct wined3d_swapchain_desc *desc, struct wined3d *wined3d,
         struct wined3d_output *output, const struct wined3d_display_mode *mode);
