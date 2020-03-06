@@ -1423,9 +1423,10 @@ static enum hlsl_ir_expr_op op_from_assignment(enum parse_assign_op op)
 }
 
 struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assign_op assign_op,
-        DWORD writemask, struct hlsl_ir_node *right)
+        struct hlsl_ir_node *right)
 {
     struct hlsl_ir_assignment *assign = d3dcompiler_alloc(sizeof(*assign));
+    DWORD writemask = BWRITERSP_WRITEMASK_ALL;
     struct hlsl_type *type;
     struct hlsl_ir_node *lhs, *rhs;
 

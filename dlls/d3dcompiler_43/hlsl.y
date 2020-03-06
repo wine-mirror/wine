@@ -542,7 +542,7 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
             }
             deref->node.loc = node->loc;
             list_add_tail(list, &deref->node.entry);
-            assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN, BWRITERSP_WRITEMASK_ALL, node);
+            assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN, node);
             list_add_tail(list, &assignment->entry);
         }
         else
@@ -688,8 +688,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
 
             deref = new_var_deref(var);
             list_add_tail(statements_list, &deref->node.entry);
-            assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN,
-                    BWRITERSP_WRITEMASK_ALL, v->initializer.args[0]);
+            assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN, v->initializer.args[0]);
             d3dcompiler_free(v->initializer.args);
             list_add_tail(statements_list, &assignment->entry);
         }
@@ -2413,8 +2412,7 @@ assignment_expr:          conditional_expr
                                     hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR, "l-value is const");
                                     YYABORT;
                                 }
-                                if (!(instr = make_assignment(node_from_list($1), $2,
-                                        BWRITERSP_WRITEMASK_ALL, node_from_list($3))))
+                                if (!(instr = make_assignment(node_from_list($1), $2, node_from_list($3))))
                                     YYABORT;
                                 instr->loc = get_location(&@2);
                                 $$ = append_binop($3, $1, instr);
