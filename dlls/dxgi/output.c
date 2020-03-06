@@ -49,8 +49,6 @@ static void dxgi_mode1_from_wined3d(DXGI_MODE_DESC1 *mode, const struct wined3d_
 static HRESULT dxgi_output_find_closest_matching_mode(struct dxgi_output *output,
         struct wined3d_display_mode *mode, IUnknown *device)
 {
-    struct dxgi_adapter *adapter;
-    struct wined3d *wined3d;
     HRESULT hr;
 
     if (!mode->width != !mode->height)
@@ -66,10 +64,7 @@ static HRESULT dxgi_output_find_closest_matching_mode(struct dxgi_output *output
     }
 
     wined3d_mutex_lock();
-    adapter = output->adapter;
-    wined3d = adapter->factory->wined3d;
-
-    hr = wined3d_find_closest_matching_adapter_mode(wined3d, adapter->ordinal, mode);
+    hr = wined3d_output_find_closest_matching_mode(output->wined3d_output, mode);
     wined3d_mutex_unlock();
 
     return hr;

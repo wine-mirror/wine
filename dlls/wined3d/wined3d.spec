@@ -9,7 +9,6 @@
 @ cdecl wined3d_check_device_type(ptr long long long long long)
 @ cdecl wined3d_create(long)
 @ cdecl wined3d_decref(ptr)
-@ cdecl wined3d_find_closest_matching_adapter_mode(ptr long ptr)
 @ cdecl wined3d_get_adapter(ptr long)
 @ cdecl wined3d_get_adapter_count(ptr)
 @ cdecl wined3d_get_adapter_identifier(ptr long long ptr)
@@ -158,6 +157,7 @@
 @ cdecl wined3d_device_update_texture(ptr ptr ptr)
 @ cdecl wined3d_device_validate_device(ptr ptr)
 
+@ cdecl wined3d_output_find_closest_matching_mode(ptr ptr)
 @ cdecl wined3d_output_get_display_mode(ptr ptr ptr)
 @ cdecl wined3d_output_get_mode(ptr long long long ptr)
 @ cdecl wined3d_output_get_mode_count(ptr long long)
@@ -282,8 +282,8 @@
 
 @ cdecl wined3d_swapchain_state_create(ptr ptr ptr ptr)
 @ cdecl wined3d_swapchain_state_destroy(ptr)
-@ cdecl wined3d_swapchain_state_resize_target(ptr ptr ptr ptr)
-@ cdecl wined3d_swapchain_state_set_fullscreen(ptr ptr ptr ptr ptr)
+@ cdecl wined3d_swapchain_state_resize_target(ptr ptr ptr)
+@ cdecl wined3d_swapchain_state_set_fullscreen(ptr ptr ptr ptr)
 
 @ cdecl wined3d_texture_add_dirty_region(ptr long ptr)
 @ cdecl wined3d_texture_blt(ptr long ptr ptr long ptr long ptr long)

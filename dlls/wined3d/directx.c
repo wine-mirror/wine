@@ -1080,18 +1080,18 @@ HRESULT CDECL wined3d_output_get_mode(const struct wined3d_output *output,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *wined3d,
-        unsigned int adapter_idx, struct wined3d_display_mode *mode)
+HRESULT CDECL wined3d_output_find_closest_matching_mode(const struct wined3d_output *output,
+        struct wined3d_display_mode *mode)
 {
     unsigned int i, j, mode_count, matching_mode_count, closest;
     struct wined3d_display_mode **matching_modes;
     struct wined3d_display_mode *modes;
     HRESULT hr;
 
-    TRACE("wined3d %p, adapter_idx %u, mode %p.\n", wined3d, adapter_idx, mode);
+    TRACE("output %p, mode %p.\n", output, mode);
 
-    if (!(mode_count = wined3d_output_get_mode_count(&wined3d->adapters[adapter_idx]->outputs[0],
-            mode->format_id, WINED3D_SCANLINE_ORDERING_UNKNOWN)))
+    if (!(mode_count = wined3d_output_get_mode_count(output, mode->format_id,
+            WINED3D_SCANLINE_ORDERING_UNKNOWN)))
     {
         WARN("Output has 0 matching modes.\n");
         return E_FAIL;
@@ -1107,8 +1107,8 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
 
     for (i = 0; i < mode_count; ++i)
     {
-        if (FAILED(hr = wined3d_output_get_mode(&wined3d->adapters[adapter_idx]->outputs[0],
-                mode->format_id, WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i])))
+        if (FAILED(hr = wined3d_output_get_mode(output, mode->format_id,
+                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i])))
         {
             heap_free(matching_modes);
             heap_free(modes);
@@ -1144,8 +1144,7 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
     if (!mode->width || !mode->height)
     {
         struct wined3d_display_mode current_mode;
-        if (FAILED(hr = wined3d_output_get_display_mode(&wined3d->adapters[adapter_idx]->outputs[0],
-                &current_mode, NULL)))
+        if (FAILED(hr = wined3d_output_get_display_mode(output, &current_mode, NULL)))
         {
             heap_free(matching_modes);
             heap_free(modes);

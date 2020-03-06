@@ -156,15 +156,13 @@ static HRESULT dxgi_swapchain_set_fullscreen_state(struct wined3d_swapchain_stat
         const struct wined3d_swapchain_desc *swapchain_desc, IDXGIOutput *output)
 {
     struct dxgi_output *dxgi_output;
-    struct dxgi_adapter *adapter;
     HRESULT hr;
 
     dxgi_output = unsafe_impl_from_IDXGIOutput(output);
-    adapter = dxgi_output->adapter;
 
     wined3d_mutex_lock();
     hr = wined3d_swapchain_state_set_fullscreen(state, swapchain_desc,
-            adapter->factory->wined3d, dxgi_output->wined3d_output, NULL);
+            dxgi_output->wined3d_output, NULL);
     wined3d_mutex_unlock();
 
     return hr;
@@ -175,7 +173,6 @@ static HRESULT dxgi_swapchain_resize_target(IDXGISwapChain1 *swapchain,
 {
     struct wined3d_display_mode mode;
     struct dxgi_output *dxgi_output;
-    struct dxgi_adapter *adapter;
     IDXGIOutput *output;
     HRESULT hr;
 
@@ -188,7 +185,6 @@ static HRESULT dxgi_swapchain_resize_target(IDXGISwapChain1 *swapchain,
     if (FAILED(hr = IDXGISwapChain1_GetContainingOutput(swapchain, &output)))
         return hr;
     dxgi_output = unsafe_impl_from_IDXGIOutput(output);
-    adapter = dxgi_output->adapter;
 
     TRACE("Mode: %s.\n", debug_dxgi_mode(target_mode_desc));
 
@@ -197,8 +193,7 @@ static HRESULT dxgi_swapchain_resize_target(IDXGISwapChain1 *swapchain,
 
     wined3d_display_mode_from_dxgi(&mode, target_mode_desc);
 
-    hr = wined3d_swapchain_state_resize_target(state, adapter->factory->wined3d,
-            dxgi_output->wined3d_output, &mode);
+    hr = wined3d_swapchain_state_resize_target(state, dxgi_output->wined3d_output, &mode);
     IDXGIOutput_Release(output);
     return hr;
 }
