@@ -1755,9 +1755,10 @@ static void state_scissor(struct wined3d_context *context, const struct wined3d_
 static void state_depthbias(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
+    const struct wined3d_rasterizer_state *r = state->rasterizer_state;
+    float scale_bias = r ? r->desc.scale_bias : 0.0f;
 
-    if (state->render_states[WINED3D_RS_SLOPESCALEDEPTHBIAS]
-            || state->render_states[WINED3D_RS_DEPTHBIAS])
+    if (scale_bias || state->render_states[WINED3D_RS_DEPTHBIAS])
     {
         const struct wined3d_rendertarget_view *depth = state->fb->depth_stencil;
         float factor, units, scale, clamp;
@@ -1766,10 +1767,9 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
         {
             DWORD d;
             float f;
-        } scale_bias, const_bias;
+        } const_bias;
 
-        clamp = state->rasterizer_state ? state->rasterizer_state->desc.depth_bias_clamp : 0.0f;
-        scale_bias.d = state->render_states[WINED3D_RS_SLOPESCALEDEPTHBIAS];
+        clamp = r ? r->desc.depth_bias_clamp : 0.0f;
         const_bias.d = state->render_states[WINED3D_RS_DEPTHBIAS];
 
         if (context->d3d_info->wined3d_creation_flags & WINED3D_LEGACY_DEPTH_BIAS)
@@ -1792,7 +1792,7 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
                 scale = 0.0f;
             }
 
-            factor = scale_bias.f;
+            factor = scale_bias;
             units = const_bias.f * scale;
         }
 
@@ -4663,7 +4663,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop       }, WINED3D_GL_BLEND_EQUATION       },
     { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop_w     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE),         { STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE),         state_scissor       }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SLOPESCALEDEPTHBIAS),       { STATE_RENDER(WINED3D_RS_DEPTHBIAS),                 NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         state_colorwrite1   }, EXT_DRAW_BUFFERS2               },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         state_colorwrite2   }, EXT_DRAW_BUFFERS2               },
@@ -5436,6 +5435,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         { 61, 127},
         {149, 150},
         {169, 169},
+        {175, 175},
         {177, 177},
         {193, 193},
         {196, 197},
