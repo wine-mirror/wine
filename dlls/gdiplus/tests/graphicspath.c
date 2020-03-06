@@ -1375,6 +1375,52 @@ static path_test_t widenline_capsquareanchor_thin_path[] = {
     {51.414211, 11.414213, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*7*/
     };
 
+static path_test_t widenline_capsquareanchor_dashed_path[] = {
+    {5.0, 5.0,             PathPointTypeStart, 0, 0}, /*0*/
+    {35.0, 5.0,            PathPointTypeLine,  0, 0}, /*1*/
+    {35.0, 15.0,           PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 15.0,            PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
+    {45.0, 5.0,            PathPointTypeStart, 0, 1}, /*4*/
+    {50.0, 5.0,            PathPointTypeLine,  0, 1}, /*5*/
+    {50.0, 15.0,           PathPointTypeLine,  0, 1}, /*6*/
+    {45.0, 15.0,           PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*7*/
+    {12.071068, 2.928932,  PathPointTypeStart, 0, 1}, /*8*/
+    {12.071068, 17.071066, PathPointTypeLine,  0, 1}, /*9*/
+    {-2.071068, 17.071066, PathPointTypeLine,  0, 1}, /*10*/
+    {-2.071068, 2.928932,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*11*/
+    {42.928928, 17.071068, PathPointTypeStart, 0, 0}, /*12*/
+    {42.928928, 2.928932,  PathPointTypeLine,  0, 0}, /*13*/
+    {57.071068, 2.928932,  PathPointTypeLine,  0, 0}, /*14*/
+    {57.071068, 17.071068, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*15*/
+    };
+
+static path_test_t widenline_capsquareanchor_multifigure_path[] = {
+    {5.0, 5.0,             PathPointTypeStart, 0, 0}, /*0*/
+    {25.0, 5.0,            PathPointTypeLine,  0, 0}, /*1*/
+    {25.0, 15.0,           PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 15.0,            PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
+    {30.0, 5.0,            PathPointTypeStart, 0, 1}, /*4*/
+    {50.0, 5.0,            PathPointTypeLine,  0, 1}, /*5*/
+    {50.0, 15.0,           PathPointTypeLine,  0, 1}, /*6*/
+    {30.0, 15.0,           PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*7*/
+    {12.071068, 2.928932,  PathPointTypeStart, 0, 1}, /*8*/
+    {12.071068, 17.071066, PathPointTypeLine,  0, 1}, /*9*/
+    {-2.071068, 17.071066, PathPointTypeLine,  0, 1}, /*10*/
+    {-2.071068, 2.928932,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*11*/
+    {17.928930, 17.071068, PathPointTypeStart, 0, 1}, /*12*/
+    {17.928930, 2.928932,  PathPointTypeLine,  0, 1}, /*13*/
+    {32.071068, 2.928932,  PathPointTypeLine,  0, 1}, /*14*/
+    {32.071068, 17.071068, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*15*/
+    {37.071068, 2.928932,  PathPointTypeStart, 0, 0}, /*16*/
+    {37.071068, 17.071066, PathPointTypeLine,  0, 0}, /*17*/
+    {22.928930, 17.071066, PathPointTypeLine,  0, 0}, /*18*/
+    {22.928930, 2.928932,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*19*/
+    {42.928928, 17.071068, PathPointTypeStart, 0, 0}, /*20*/
+    {42.928928, 2.928932,  PathPointTypeLine,  0, 0}, /*21*/
+    {57.071068, 2.928932,  PathPointTypeLine,  0, 0}, /*22*/
+    {57.071068, 17.071068, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*23*/
+    };
+
 static void test_widen_cap(void)
 {
     struct
@@ -1383,6 +1429,7 @@ static void test_widen_cap(void)
         REAL line_width;
         const path_test_t *expected;
         INT expected_size;
+        BOOL dashed;
         BOOL todo_size;
     }
     caps[] =
@@ -1404,9 +1451,11 @@ static void test_widen_cap(void)
         { LineCapDiamondAnchor, 10.0, widenline_capdiamondanchor_path,
                 ARRAY_SIZE(widenline_capdiamondanchor_path) },
         { LineCapArrowAnchor, 10.0, widenline_caparrowanchor_path,
-                ARRAY_SIZE(widenline_caparrowanchor_path), TRUE },
+                ARRAY_SIZE(widenline_caparrowanchor_path), FALSE, TRUE },
         { LineCapSquareAnchor, 0.0, widenline_capsquareanchor_thin_path,
-                ARRAY_SIZE(widenline_capsquareanchor_thin_path), TRUE },
+                ARRAY_SIZE(widenline_capsquareanchor_thin_path), FALSE, TRUE },
+        { LineCapSquareAnchor, 10.0, widenline_capsquareanchor_dashed_path,
+                ARRAY_SIZE(widenline_capsquareanchor_dashed_path), TRUE },
     };
     GpStatus status;
     GpPath *path;
@@ -1420,6 +1469,11 @@ static void test_widen_cap(void)
     {
         status = GdipCreatePen1(0xffffffff, caps[i].line_width, UnitPixel, &pen);
         expect(Ok, status);
+        if (caps[i].dashed)
+        {
+            status = GdipSetPenDashStyle(pen, DashStyleDash);
+            expect(Ok, status);
+        }
 
         status = GdipResetPath(path);
         expect(Ok, status);
@@ -1436,6 +1490,26 @@ static void test_widen_cap(void)
 
         GdipDeletePen(pen);
     }
+
+    status = GdipCreatePen1(0xffffffff, 10.0, UnitPixel, &pen);
+    expect(Ok, status);
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 10.0, 25.0, 10.0);
+    expect(Ok, status);
+    status = GdipStartPathFigure(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 30.0, 10.0, 50.0, 10.0);
+    expect(Ok, status);
+    status = GdipSetPenStartCap(pen, LineCapSquareAnchor);
+    expect(Ok, status);
+    status = GdipSetPenEndCap(pen, LineCapSquareAnchor);
+    expect(Ok, status);
+    status = GdipWidenPath(path, pen, NULL, FlatnessDefault);
+    expect(Ok, status);
+    ok_path_fudge(path, widenline_capsquareanchor_multifigure_path,
+        ARRAY_SIZE(widenline_capsquareanchor_multifigure_path), FALSE, 0.000005);
+    GdipDeletePen(pen);
 
     GdipDeletePath(path);
 }
