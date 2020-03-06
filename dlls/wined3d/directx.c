@@ -933,7 +933,7 @@ HRESULT CDECL wined3d_get_output_desc(const struct wined3d *wined3d, unsigned in
     if (!(monitor = MonitorFromPoint(adapter->monitor_position, MONITOR_DEFAULTTOPRIMARY)))
         return WINED3DERR_INVALIDCALL;
 
-    if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &mode, &rotation)))
+    if (FAILED(hr = wined3d_output_get_display_mode(&adapter->outputs[0], &mode, &rotation)))
         return hr;
 
     memcpy(desc->device_name, adapter->device_name, sizeof(desc->device_name));
@@ -1144,7 +1144,7 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
     if (!mode->width || !mode->height)
     {
         struct wined3d_display_mode current_mode;
-        if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx,
+        if (FAILED(hr = wined3d_output_get_display_mode(&wined3d->adapters[adapter_idx]->outputs[0],
                 &current_mode, NULL)))
         {
             heap_free(matching_modes);
@@ -1180,24 +1180,20 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
+HRESULT CDECL wined3d_output_get_display_mode(const struct wined3d_output *output,
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation)
 {
-    const struct wined3d_adapter *adapter;
     DEVMODEW m;
 
-    TRACE("wined3d %p, adapter_idx %u, display_mode %p, rotation %p.\n",
-            wined3d, adapter_idx, mode, rotation);
+    TRACE("output %p, display_mode %p, rotation %p.\n", output, mode, rotation);
 
-    if (!mode || adapter_idx >= wined3d->adapter_count)
+    if (!mode)
         return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
 
     memset(&m, 0, sizeof(m));
     m.dmSize = sizeof(m);
 
-    EnumDisplaySettingsExW(adapter->device_name, ENUM_CURRENT_SETTINGS, &m, 0);
+    EnumDisplaySettingsExW(output->device_name, ENUM_CURRENT_SETTINGS, &m, 0);
     mode->width = m.dmPelsWidth;
     mode->height = m.dmPelsHeight;
     mode->refresh_rate = DEFAULT_REFRESH_RATE;
@@ -1209,12 +1205,12 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
      * are pretty angry if they SetDisplayMode from 24 to 16 bpp and find out
      * that GetDisplayMode still returns 24 bpp. This should probably be
      * handled in winex11 instead. */
-    if (adapter->outputs[0].screen_format && adapter->outputs[0].screen_format != mode->format_id)
+    if (output->screen_format && output->screen_format != mode->format_id)
     {
         WARN("Overriding format %s with stored format %s.\n",
                 debug_d3dformat(mode->format_id),
-                debug_d3dformat(adapter->outputs[0].screen_format));
-        mode->format_id = adapter->outputs[0].screen_format;
+                debug_d3dformat(output->screen_format));
+        mode->format_id = output->screen_format;
     }
 
     if (!(m.dmFields & DM_DISPLAYFLAGS))
@@ -1421,7 +1417,8 @@ HRESULT CDECL wined3d_get_adapter_raster_status(const struct wined3d *wined3d, U
 
     if (!QueryPerformanceCounter(&counter) || !QueryPerformanceFrequency(&freq_per_sec))
         return WINED3DERR_INVALIDCALL;
-    if (FAILED(wined3d_get_adapter_display_mode(wined3d, adapter_idx, &mode, NULL)))
+    if (FAILED(wined3d_output_get_display_mode(&wined3d->adapters[adapter_idx]->outputs[0], &mode,
+            NULL)))
         return WINED3DERR_INVALIDCALL;
     if (mode.refresh_rate == DEFAULT_REFRESH_RATE)
         mode.refresh_rate = 60;

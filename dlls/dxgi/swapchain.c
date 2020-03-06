@@ -2903,7 +2903,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     if (FAILED(hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, window, swapchain_desc, fullscreen_desc)))
         return hr;
     if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window,
-            dxgi_adapter->factory->wined3d, dxgi_adapter->ordinal, &swapchain->state)))
+            dxgi_adapter->factory->wined3d, &swapchain->state)))
         return hr;
 
     if (swapchain_desc->BufferUsage && swapchain_desc->BufferUsage != DXGI_USAGE_RENDER_TARGET_OUTPUT)

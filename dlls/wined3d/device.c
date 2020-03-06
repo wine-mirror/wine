@@ -4858,7 +4858,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (FAILED(hr = wined3d_get_adapter_display_mode(device->wined3d, device->adapter->ordinal, &mode, NULL)))
+    if (FAILED(hr = wined3d_output_get_display_mode(&device->adapter->outputs[0], &mode, NULL)))
     {
         ERR("Failed to get display mode, hr %#x.\n", hr);
         return WINED3DERR_INVALIDCALL;

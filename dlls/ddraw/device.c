@@ -1086,10 +1086,10 @@ static HRESULT d3d_device7_EnumTextureFormats(IDirect3DDevice7 *iface,
     wined3d_mutex_lock();
 
     memset(&mode, 0, sizeof(mode));
-    if (FAILED(hr = wined3d_get_adapter_display_mode(device->ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
+    if (FAILED(hr = wined3d_output_get_display_mode(device->ddraw->wined3d_output, &mode, NULL)))
     {
         wined3d_mutex_unlock();
-        WARN("Cannot get the current adapter format\n");
+        WARN("Failed to get output display mode, hr %#x.\n", hr);
         return hr;
     }
 
@@ -1214,10 +1214,10 @@ static HRESULT WINAPI d3d_device2_EnumTextureFormats(IDirect3DDevice2 *iface,
     wined3d_mutex_lock();
 
     memset(&mode, 0, sizeof(mode));
-    if (FAILED(hr = wined3d_get_adapter_display_mode(device->ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
+    if (FAILED(hr = wined3d_output_get_display_mode(device->ddraw->wined3d_output, &mode, NULL)))
     {
         wined3d_mutex_unlock();
-        WARN("Cannot get the current adapter format\n");
+        WARN("Failed to get output display mode, hr %#x.\n", hr);
         return hr;
     }
 

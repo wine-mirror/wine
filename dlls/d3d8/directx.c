@@ -184,13 +184,18 @@ static HRESULT WINAPI d3d8_GetAdapterDisplayMode(IDirect3D8 *iface, UINT adapter
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
     struct wined3d_display_mode wined3d_mode;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, mode %p.\n",
             iface, adapter, mode);
 
+    output_idx = adapter;
+    if (output_idx >= d3d8->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
+
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_display_mode(d3d8->wined3d, adapter, &wined3d_mode, NULL);
+    hr = wined3d_output_get_display_mode(d3d8->wined3d_outputs[output_idx], &wined3d_mode, NULL);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
