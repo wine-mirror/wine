@@ -1153,6 +1153,12 @@ cpp_quote("#define _IKsPropertySet_")
 cpp_quote("#define KSPROPERTY_SUPPORT_GET  1")
 cpp_quote("#define KSPROPERTY_SUPPORT_SET  2")
 
+typedef enum AMPROPERTY_PIN
+{
+    AMPROPERTY_PIN_CATEGORY,
+    AMPROPERTY_PIN_MEDIUM,
+} AMPROPERTY_PIN;
+
 [
     object,
     uuid(31efac30-515c-11d0-a9aa-00aa0061be93),

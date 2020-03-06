@@ -228,25 +228,170 @@ fnCaptureGraphBuilder2_SetOutputFileName(ICaptureGraphBuilder2 * iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI
-fnCaptureGraphBuilder2_FindInterface(ICaptureGraphBuilder2 * iface,
-                                     const GUID *pCategory,
-                                     const GUID *pType,
-                                     IBaseFilter *pf,
-                                     REFIID riid,
-                                     void **ppint)
+static BOOL pin_has_majortype(IPin *pin, const GUID *majortype)
 {
-    CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
+    IEnumMediaTypes *enummt;
+    AM_MEDIA_TYPE *mt;
 
-    FIXME("(%p/%p)->(%s, %s, %p, %s, %p) - workaround stub!\n", This, iface,
-          debugstr_guid(pCategory), debugstr_guid(pType),
-          pf, debugstr_guid(riid), ppint);
+    if (FAILED(IPin_EnumMediaTypes(pin, &enummt)))
+        return FALSE;
 
-    return IBaseFilter_QueryInterface(pf, riid, ppint);
-    /* Looks for the specified interface on the filter, upstream and
-     * downstream from the filter, and, optionally, only on the output
-     * pin of the given category.
-     */
+    while (IEnumMediaTypes_Next(enummt, 1, &mt, NULL) == S_OK)
+    {
+        if (IsEqualGUID(&mt->majortype, majortype))
+        {
+            DeleteMediaType(mt);
+            IEnumMediaTypes_Release(enummt);
+            return TRUE;
+        }
+        DeleteMediaType(mt);
+    }
+    IEnumMediaTypes_Release(enummt);
+    return FALSE;
+}
+
+static BOOL pin_matches(IPin *pin, PIN_DIRECTION dir, const GUID *category,
+        const GUID *majortype, BOOL unconnected)
+{
+    PIN_DIRECTION candidate_dir;
+    HRESULT hr;
+    IPin *peer;
+
+    if (FAILED(hr = IPin_QueryDirection(pin, &candidate_dir)))
+        ERR("Failed to query direction, hr %#x.\n", hr);
+
+    if (dir != candidate_dir)
+        return FALSE;
+
+    if (unconnected && IPin_ConnectedTo(pin, &peer) == S_OK && peer)
+    {
+        IPin_Release(peer);
+        return FALSE;
+    }
+
+    if (category)
+    {
+        IKsPropertySet *set;
+        GUID property;
+        DWORD size;
+
+        if (FAILED(IPin_QueryInterface(pin, &IID_IKsPropertySet, (void **)&set)))
+            return FALSE;
+
+        hr = IKsPropertySet_Get(set, &AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY,
+                NULL, 0, &property, sizeof(property), &size);
+        IKsPropertySet_Release(set);
+        if (FAILED(hr) || !IsEqualGUID(&property, category))
+            return FALSE;
+    }
+
+    if (majortype && !pin_has_majortype(pin, majortype))
+        return FALSE;
+
+    return TRUE;
+}
+
+static HRESULT find_interface_recurse(PIN_DIRECTION dir, const GUID *category,
+        const GUID *majortype, IBaseFilter *filter, REFIID iid, void **out)
+{
+    BOOL found_category = FALSE;
+    IEnumPins *enumpins;
+    IPin *pin, *peer;
+    PIN_INFO info;
+    HRESULT hr;
+
+    TRACE("Looking for %s pins, category %s, majortype %s from filter %p.\n",
+            dir == PINDIR_INPUT ? "sink" : "source", debugstr_guid(category),
+            debugstr_guid(majortype), filter);
+
+    if (FAILED(hr = IBaseFilter_EnumPins(filter, &enumpins)))
+    {
+        ERR("Failed to enumerate pins, hr %#x.\n", hr);
+        return hr;
+    }
+
+    while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
+    {
+        if (!pin_matches(pin, dir, category, majortype, FALSE))
+        {
+            IPin_Release(pin);
+            continue;
+        }
+
+        if (category)
+            found_category = TRUE;
+
+        if (IPin_QueryInterface(pin, iid, out) == S_OK)
+        {
+            IPin_Release(pin);
+            IEnumPins_Release(enumpins);
+            return S_OK;
+        }
+
+        hr = IPin_ConnectedTo(pin, &peer);
+        IPin_Release(pin);
+        if (hr == S_OK)
+        {
+            if (IPin_QueryInterface(peer, iid, out) == S_OK)
+            {
+                IPin_Release(peer);
+                IEnumPins_Release(enumpins);
+                return S_OK;
+            }
+
+            IPin_QueryPinInfo(peer, &info);
+            IPin_Release(peer);
+
+            if (IBaseFilter_QueryInterface(info.pFilter, iid, out) == S_OK)
+            {
+                IBaseFilter_Release(info.pFilter);
+                IEnumPins_Release(enumpins);
+                return S_OK;
+            }
+
+            hr = find_interface_recurse(dir, NULL, NULL, info.pFilter, iid, out);
+            IBaseFilter_Release(info.pFilter);
+            if (hr == S_OK)
+            {
+                IEnumPins_Release(enumpins);
+                return S_OK;
+            }
+        }
+    }
+    IEnumPins_Release(enumpins);
+
+    if (category && !found_category)
+        return E_NOINTERFACE;
+
+    return E_FAIL;
+}
+
+static HRESULT WINAPI fnCaptureGraphBuilder2_FindInterface(ICaptureGraphBuilder2 *iface,
+        const GUID *category, const GUID *majortype, IBaseFilter *filter, REFIID iid, void **out)
+{
+    CaptureGraphImpl *graph = impl_from_ICaptureGraphBuilder2(iface);
+    HRESULT hr;
+
+    TRACE("graph %p, category %s, majortype %s, filter %p, iid %s, out %p.\n",
+            graph, debugstr_guid(category), debugstr_guid(majortype), filter, debugstr_guid(iid), out);
+
+    if (category && IsEqualGUID(category, &LOOK_DOWNSTREAM_ONLY))
+        return find_interface_recurse(PINDIR_OUTPUT, NULL, NULL, filter, iid, out);
+
+    if (category && IsEqualGUID(category, &LOOK_UPSTREAM_ONLY))
+        return find_interface_recurse(PINDIR_INPUT, NULL, NULL, filter, iid, out);
+
+    if (IBaseFilter_QueryInterface(filter, iid, out) == S_OK)
+        return S_OK;
+
+    if (!category)
+        majortype = NULL;
+
+    hr = find_interface_recurse(PINDIR_OUTPUT, category, majortype, filter, iid, out);
+    if (hr == S_OK || hr == E_NOINTERFACE)
+        return hr;
+
+    return find_interface_recurse(PINDIR_INPUT, NULL, NULL, filter, iid, out);
 }
 
 static HRESULT match_smart_tee_pin(CaptureGraphImpl *This,
@@ -578,74 +723,6 @@ fnCaptureGraphBuilder2_CopyCaptureFile(ICaptureGraphBuilder2 * iface,
           fAllowEscAbort, pCallback);
 
     return E_NOTIMPL;
-}
-
-static BOOL pin_matches(IPin *pin, PIN_DIRECTION direction, const GUID *cat, const GUID *type, BOOL unconnected)
-{
-    IPin *partner;
-    PIN_DIRECTION pindir;
-    HRESULT hr;
-
-    if (FAILED(hr = IPin_QueryDirection(pin, &pindir)))
-        ERR("Failed to query direction, hr %#x.\n", hr);
-
-    if (unconnected && IPin_ConnectedTo(pin, &partner) == S_OK && partner!=NULL)
-    {
-        IPin_Release(partner);
-        TRACE("No match, %p already connected to %p\n", pin, partner);
-        return FALSE;
-    }
-
-    if (pindir != direction)
-        return FALSE;
-
-    if (cat)
-    {
-        IKsPropertySet *props;
-        GUID category;
-        DWORD fetched;
-
-        hr = IPin_QueryInterface(pin, &IID_IKsPropertySet, (void**)&props);
-        if (FAILED(hr))
-            return FALSE;
-
-        hr = IKsPropertySet_Get(props, &AMPROPSETID_Pin, 0, NULL,
-                0, &category, sizeof(category), &fetched);
-        IKsPropertySet_Release(props);
-        if (FAILED(hr) || !IsEqualIID(&category, cat))
-            return FALSE;
-    }
-
-    if (type)
-    {
-        IEnumMediaTypes *types;
-        AM_MEDIA_TYPE *media_type;
-        ULONG fetched;
-
-        hr = IPin_EnumMediaTypes(pin, &types);
-        if (FAILED(hr))
-            return FALSE;
-
-        IEnumMediaTypes_Reset(types);
-        while (1) {
-            if (IEnumMediaTypes_Next(types, 1, &media_type, &fetched) != S_OK || fetched != 1)
-            {
-                IEnumMediaTypes_Release(types);
-                return FALSE;
-            }
-
-            if (IsEqualIID(&media_type->majortype, type))
-            {
-                DeleteMediaType(media_type);
-                break;
-            }
-            DeleteMediaType(media_type);
-        }
-        IEnumMediaTypes_Release(types);
-    }
-
-    TRACE("Pin matched\n");
-    return TRUE;
 }
 
 static HRESULT WINAPI
