@@ -171,10 +171,9 @@ void state_nop(struct wined3d_context *context, const struct wined3d_state *stat
     TRACE("%s: nop in current pipe config.\n", debug_d3dstate(state_id));
 }
 
-static void state_fillmode(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void fillmode(const struct wined3d_rasterizer_state *r, const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-    enum wined3d_fill_mode mode = state->render_states[WINED3D_RS_FILLMODE];
+    enum wined3d_fill_mode mode = r ? r->desc.fill_mode : WINED3D_FILL_SOLID;
 
     switch (mode)
     {
@@ -4324,9 +4323,10 @@ static void depth_clip(const struct wined3d_rasterizer_state *r, const struct wi
 static void rasterizer(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
+    const struct wined3d_rasterizer_state *r = state->rasterizer_state;
     GLenum mode;
 
-    mode = state->rasterizer_state && state->rasterizer_state->desc.front_ccw ? GL_CCW : GL_CW;
+    mode = r && r->desc.front_ccw ? GL_CCW : GL_CW;
     if (context->render_offscreen)
         mode = (mode == GL_CW) ? GL_CCW : GL_CW;
 
@@ -4334,21 +4334,24 @@ static void rasterizer(struct wined3d_context *context, const struct wined3d_sta
     checkGLcall("glFrontFace");
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_DEPTHBIAS)))
         state_depthbias(context, state, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
-    depth_clip(state->rasterizer_state, gl_info);
+    fillmode(r, gl_info);
+    depth_clip(r, gl_info);
 }
 
 static void rasterizer_cc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
+    const struct wined3d_rasterizer_state *r = state->rasterizer_state;
     GLenum mode;
 
-    mode = state->rasterizer_state && state->rasterizer_state->desc.front_ccw ? GL_CCW : GL_CW;
+    mode = r && r->desc.front_ccw ? GL_CCW : GL_CW;
 
     gl_info->gl_ops.gl.p_glFrontFace(mode);
     checkGLcall("glFrontFace");
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_DEPTHBIAS)))
         state_depthbias(context, state, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
-    depth_clip(state->rasterizer_state, gl_info);
+    fillmode(r, gl_info);
+    depth_clip(r, gl_info);
 }
 
 static void psorigin_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4588,7 +4591,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_ZENABLE),                   { STATE_RENDER(WINED3D_RS_ZENABLE),                   state_zenable       }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAPU),                     { STATE_RENDER(WINED3D_RS_WRAPU),                     state_wrapu         }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAPV),                     { STATE_RENDER(WINED3D_RS_WRAPV),                     state_wrapv         }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_FILLMODE),                  { STATE_RENDER(WINED3D_RS_FILLMODE),                  state_fillmode      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_LEGACY_CONTEXT       },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern_w }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_MONOENABLE),                { STATE_RENDER(WINED3D_RS_MONOENABLE),                state_monoenable    }, WINED3D_GL_EXT_NONE             },
@@ -5426,6 +5428,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
     {
         {  1,   1},
         {  3,   3},
+        {  8,   8},
         { 17,  18},
         { 21,  21},
         { 42,  45},

@@ -3155,6 +3155,7 @@ struct wined3d_rasterizer_state
     const struct wined3d_parent_ops *parent_ops;
 
     struct wined3d_device *device;
+    struct wine_rb_entry entry;
 };
 
 struct wined3d_stream_output
@@ -3293,7 +3294,7 @@ struct wined3d_device
 
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
-    struct wine_rb_tree samplers;
+    struct wine_rb_tree samplers, rasterizer_states;
 
     /* Render Target Support */
     struct wined3d_fb_state fb;
