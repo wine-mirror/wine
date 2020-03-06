@@ -1161,7 +1161,7 @@ static HRESULT test_duplicate(LPGUID lpGuid)
                     /* broken apps like Asuka 120% Return BURNING Fest,
                        pass the pointer to GlobalHandle. */
                     HGLOBAL hmem = GlobalHandle(buf);
-                    todo_wine ok(!hmem,"GlobalHandle should return NULL "
+                    ok(!hmem,"GlobalHandle should return NULL "
                        "for buffer %p, got %p\n",buf,hmem);
                 }
                 ZeroMemory(buf,bufsize);
