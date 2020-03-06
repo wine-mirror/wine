@@ -49,7 +49,6 @@ struct sample
     size_t buffer_count;
     size_t capacity;
     DWORD flags;
-    CRITICAL_SECTION cs;
     DWORD prop_flags;
     LONGLONG duration;
     LONGLONG timestamp;
@@ -281,7 +280,6 @@ static ULONG WINAPI sample_Release(IMFSample *iface)
         for (i = 0; i < sample->buffer_count; ++i)
             IMFMediaBuffer_Release(sample->buffers[i]);
         clear_attributes_object(&sample->attributes);
-        DeleteCriticalSection(&sample->cs);
         heap_free(sample->buffers);
         heap_free(sample);
     }
@@ -566,9 +564,9 @@ static HRESULT WINAPI sample_GetSampleFlags(IMFSample *iface, DWORD *flags)
 
     TRACE("%p, %p.\n", iface, flags);
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     *flags = sample->flags;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return S_OK;
 }
@@ -579,9 +577,9 @@ static HRESULT WINAPI sample_SetSampleFlags(IMFSample *iface, DWORD flags)
 
     TRACE("%p, %#x.\n", iface, flags);
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     sample->flags = flags;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return S_OK;
 }
@@ -593,12 +591,12 @@ static HRESULT WINAPI sample_GetSampleTime(IMFSample *iface, LONGLONG *timestamp
 
     TRACE("%p, %p.\n", iface, timestamp);
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     if (sample->prop_flags & SAMPLE_PROP_HAS_TIMESTAMP)
         *timestamp = sample->timestamp;
     else
         hr = MF_E_NO_SAMPLE_TIMESTAMP;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return hr;
 }
@@ -609,10 +607,10 @@ static HRESULT WINAPI sample_SetSampleTime(IMFSample *iface, LONGLONG timestamp)
 
     TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(timestamp));
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     sample->timestamp = timestamp;
     sample->prop_flags |= SAMPLE_PROP_HAS_TIMESTAMP;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return S_OK;
 }
@@ -624,12 +622,12 @@ static HRESULT WINAPI sample_GetSampleDuration(IMFSample *iface, LONGLONG *durat
 
     TRACE("%p, %p.\n", iface, duration);
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     if (sample->prop_flags & SAMPLE_PROP_HAS_DURATION)
         *duration = sample->duration;
     else
         hr = MF_E_NO_SAMPLE_DURATION;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return hr;
 }
@@ -640,10 +638,10 @@ static HRESULT WINAPI sample_SetSampleDuration(IMFSample *iface, LONGLONG durati
 
     TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(duration));
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     sample->duration = duration;
     sample->prop_flags |= SAMPLE_PROP_HAS_DURATION;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return S_OK;
 }
@@ -657,9 +655,9 @@ static HRESULT WINAPI sample_GetBufferCount(IMFSample *iface, DWORD *count)
     if (!count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     *count = sample->buffer_count;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return S_OK;
 }
@@ -671,7 +669,7 @@ static HRESULT WINAPI sample_GetBufferByIndex(IMFSample *iface, DWORD index, IMF
 
     TRACE("%p, %u, %p.\n", iface, index, buffer);
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     if (index < sample->buffer_count)
     {
         *buffer = sample->buffers[index];
@@ -679,7 +677,7 @@ static HRESULT WINAPI sample_GetBufferByIndex(IMFSample *iface, DWORD index, IMF
     }
     else
         hr = E_INVALIDARG;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return hr;
 }
@@ -691,7 +689,7 @@ static HRESULT WINAPI sample_ConvertToContiguousBuffer(IMFSample *iface, IMFMedi
 
     TRACE("%p, %p.\n", iface, buffer);
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
 
     if (sample->buffer_count == 0)
         hr = E_UNEXPECTED;
@@ -706,7 +704,7 @@ static HRESULT WINAPI sample_ConvertToContiguousBuffer(IMFSample *iface, IMFMedi
         hr = E_NOTIMPL;
     }
 
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return hr;
 }
@@ -718,7 +716,7 @@ static HRESULT WINAPI sample_AddBuffer(IMFSample *iface, IMFMediaBuffer *buffer)
 
     TRACE("%p, %p.\n", iface, buffer);
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     if (!mf_array_reserve((void **)&sample->buffers, &sample->capacity, sample->buffer_count + 1,
             sizeof(*sample->buffers)))
         hr = E_OUTOFMEMORY;
@@ -727,7 +725,7 @@ static HRESULT WINAPI sample_AddBuffer(IMFSample *iface, IMFMediaBuffer *buffer)
         sample->buffers[sample->buffer_count++] = buffer;
         IMFMediaBuffer_AddRef(buffer);
     }
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return hr;
 }
@@ -739,7 +737,7 @@ static HRESULT WINAPI sample_RemoveBufferByIndex(IMFSample *iface, DWORD index)
 
     TRACE("%p, %u.\n", iface, index);
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     if (index < sample->buffer_count)
     {
         IMFMediaBuffer_Release(sample->buffers[index]);
@@ -752,7 +750,7 @@ static HRESULT WINAPI sample_RemoveBufferByIndex(IMFSample *iface, DWORD index)
     }
     else
         hr = E_INVALIDARG;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return hr;
 }
@@ -764,11 +762,11 @@ static HRESULT WINAPI sample_RemoveAllBuffers(IMFSample *iface)
 
     TRACE("%p.\n", iface);
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     for (i = 0; i < sample->buffer_count; ++i)
          IMFMediaBuffer_Release(sample->buffers[i]);
     sample->buffer_count = 0;
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return S_OK;
 }
@@ -783,13 +781,13 @@ static HRESULT WINAPI sample_GetTotalLength(IMFSample *iface, DWORD *total_lengt
 
     *total_length = 0;
 
-    EnterCriticalSection(&sample->cs);
+    EnterCriticalSection(&sample->attributes.cs);
     for (i = 0; i < sample->buffer_count; ++i)
     {
         if (SUCCEEDED(IMFMediaBuffer_GetCurrentLength(sample->buffers[i], &length)))
             *total_length += length;
     }
-    LeaveCriticalSection(&sample->cs);
+    LeaveCriticalSection(&sample->attributes.cs);
 
     return S_OK;
 }
@@ -873,7 +871,6 @@ HRESULT WINAPI MFCreateSample(IMFSample **sample)
     }
 
     object->IMFSample_iface.lpVtbl = &samplevtbl;
-    InitializeCriticalSection(&object->cs);
 
     *sample = &object->IMFSample_iface;
 
