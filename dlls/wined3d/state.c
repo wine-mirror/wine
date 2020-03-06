@@ -255,13 +255,13 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
         context_apply_state(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
 }
 
-static void state_cullmode(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void cullmode(const struct wined3d_rasterizer_state *r, const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
+    enum wined3d_cull mode = r ? r->desc.cull_mode : WINED3D_CULL_BACK;
 
     /* glFrontFace() is set in context.c at context init and on an
      * offscreen / onscreen rendering switch. */
-    switch (state->render_states[WINED3D_RS_CULLMODE])
+    switch (mode)
     {
         case WINED3D_CULL_NONE:
             gl_info->gl_ops.gl.p_glDisable(GL_CULL_FACE);
@@ -280,8 +280,7 @@ static void state_cullmode(struct wined3d_context *context, const struct wined3d
             checkGLcall("glCullFace(GL_BACK)");
             break;
         default:
-            FIXME("Unrecognized cull mode %#x.\n",
-                    state->render_states[WINED3D_RS_CULLMODE]);
+            FIXME("Unrecognized cull mode %#x.\n", mode);
     }
 }
 
@@ -4335,6 +4334,7 @@ static void rasterizer(struct wined3d_context *context, const struct wined3d_sta
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_DEPTHBIAS)))
         state_depthbias(context, state, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
     fillmode(r, gl_info);
+    cullmode(r, gl_info);
     depth_clip(r, gl_info);
 }
 
@@ -4351,6 +4351,7 @@ static void rasterizer_cc(struct wined3d_context *context, const struct wined3d_
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_DEPTHBIAS)))
         state_depthbias(context, state, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
     fillmode(r, gl_info);
+    cullmode(r, gl_info);
     depth_clip(r, gl_info);
 }
 
@@ -4598,7 +4599,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_PLANEMASK),                 { STATE_RENDER(WINED3D_RS_PLANEMASK),                 state_planemask     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ZWRITEENABLE),              { STATE_RENDER(WINED3D_RS_ZWRITEENABLE),              state_zwriteenable  }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_LASTPIXEL),                 { STATE_RENDER(WINED3D_RS_LASTPIXEL),                 state_lastpixel     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_CULLMODE),                  { STATE_RENDER(WINED3D_RS_CULLMODE),                  state_cullmode      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ZFUNC),                     { STATE_RENDER(WINED3D_RS_ZFUNC),                     state_zfunc         }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DITHERENABLE),              { STATE_RENDER(WINED3D_RS_DITHERENABLE),              state_ditherenable  }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SUBPIXEL),                  { STATE_RENDER(WINED3D_RS_SUBPIXEL),                  state_subpixel      }, WINED3D_GL_EXT_NONE             },
@@ -5430,7 +5430,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {  3,   3},
         {  8,   8},
         { 17,  18},
-        { 21,  21},
+        { 21,  22},
         { 42,  45},
         { 47,  47},
         { 61, 127},

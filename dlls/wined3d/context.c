@@ -3150,7 +3150,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE));
     gl_info->gl_ops.gl.p_glDisable(GL_CULL_FACE);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_CULLMODE));
+    context_invalidate_state(context, STATE_RASTERIZER);
     gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST);
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_STENCILENABLE));
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);

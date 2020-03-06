@@ -3599,6 +3599,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     break;
 
                 case WINED3D_RS_FILLMODE:
+                case WINED3D_RS_CULLMODE:
                     set_rasterizer_state = TRUE;
                     break;
 
@@ -3616,6 +3617,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wine_rb_entry *entry;
 
         desc.fill_mode = state->rs[WINED3D_RS_FILLMODE];
+        desc.cull_mode = state->rs[WINED3D_RS_CULLMODE];
         desc.front_ccw = FALSE;
         desc.depth_bias_clamp = 0.0f;
         desc.depth_clip = TRUE;
