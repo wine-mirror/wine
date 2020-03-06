@@ -480,9 +480,31 @@ static HRESULT sample_grabber_sink_query_interface(struct strmbase_pin *iface, R
     return S_OK;
 }
 
+static BOOL check_filter_mt(SG_Impl *filter, const AM_MEDIA_TYPE *mt)
+{
+    if (IsEqualGUID(&filter->filter_mt.majortype, &GUID_NULL))
+        return TRUE;
+    if (!IsEqualGUID(&filter->filter_mt.majortype, &mt->majortype))
+        return FALSE;
+
+    if (IsEqualGUID(&filter->filter_mt.subtype, &GUID_NULL))
+        return TRUE;
+    if (!IsEqualGUID(&filter->filter_mt.subtype, &mt->subtype))
+        return FALSE;
+
+    if (IsEqualGUID(&filter->filter_mt.formattype, &GUID_NULL))
+        return TRUE;
+    if (!IsEqualGUID(&filter->filter_mt.formattype, &mt->formattype))
+        return FALSE;
+
+    return TRUE;
+}
+
 static HRESULT sample_grabber_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
-    return S_OK;
+    SG_Impl *filter = impl_from_sink_pin(iface);
+
+    return check_filter_mt(filter, mt) ? S_OK : S_FALSE;
 }
 
 static HRESULT sample_grabber_sink_get_media_type(struct strmbase_pin *iface,
@@ -498,32 +520,11 @@ static HRESULT sample_grabber_sink_get_media_type(struct strmbase_pin *iface,
     return VFW_S_NO_MORE_ITEMS;
 }
 
-static HRESULT sample_grabber_sink_connect(struct strmbase_sink *iface,
-        IPin *peer, const AM_MEDIA_TYPE *mt)
-{
-    SG_Impl *filter = impl_from_sink_pin(&iface->pin);
-
-    if (!IsEqualGUID(&filter->filter_mt.majortype, &GUID_NULL)
-            && !IsEqualGUID(&filter->filter_mt.majortype, &mt->majortype))
-        return VFW_E_TYPE_NOT_ACCEPTED;
-
-    if (!IsEqualGUID(&filter->filter_mt.subtype, &GUID_NULL)
-            && !IsEqualGUID(&filter->filter_mt.subtype, &mt->subtype))
-        return VFW_E_TYPE_NOT_ACCEPTED;
-
-    if (!IsEqualGUID(&filter->filter_mt.formattype, &GUID_NULL)
-            && !IsEqualGUID(&filter->filter_mt.formattype, &mt->formattype))
-        return VFW_E_TYPE_NOT_ACCEPTED;
-
-    return S_OK;
-}
-
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = sample_grabber_sink_query_interface,
     .base.pin_query_accept = sample_grabber_sink_query_accept,
     .base.pin_get_media_type = sample_grabber_sink_get_media_type,
-    .sink_connect = sample_grabber_sink_connect,
 };
 
 static inline SG_Impl *impl_from_source_pin(struct strmbase_pin *iface)
@@ -548,24 +549,7 @@ static HRESULT sample_grabber_source_query_accept(struct strmbase_pin *iface, co
     if (filter->sink.pin.peer && IPin_QueryAccept(filter->sink.pin.peer, mt) != S_OK)
         return S_FALSE;
 
-    strmbase_dump_media_type(&filter->filter_mt);
-
-    if (IsEqualGUID(&filter->filter_mt.majortype, &GUID_NULL))
-        return S_OK;
-    if (!IsEqualGUID(&filter->filter_mt.majortype, &mt->majortype))
-        return S_FALSE;
-
-    if (IsEqualGUID(&filter->filter_mt.subtype, &GUID_NULL))
-        return S_OK;
-    if (!IsEqualGUID(&filter->filter_mt.subtype, &mt->subtype))
-        return S_FALSE;
-
-    if (IsEqualGUID(&filter->filter_mt.formattype, &GUID_NULL))
-        return S_OK;
-    if (!IsEqualGUID(&filter->filter_mt.formattype, &mt->formattype))
-        return S_FALSE;
-
-    return S_OK;
+    return check_filter_mt(filter, mt) ? S_OK : S_FALSE;
 }
 
 static HRESULT sample_grabber_source_get_media_type(struct strmbase_pin *iface,

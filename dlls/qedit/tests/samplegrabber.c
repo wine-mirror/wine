@@ -513,13 +513,13 @@ static void test_media_types(void)
     hr = ISampleGrabber_SetMediaType(grabber, &match_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IPin_QueryAccept(sink, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IPin_QueryAccept(source, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     mt.majortype = GUID_NULL;
     hr = IPin_QueryAccept(sink, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IPin_QueryAccept(source, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     mt.majortype = match_mt.majortype;
@@ -533,13 +533,13 @@ static void test_media_types(void)
     hr = ISampleGrabber_SetMediaType(grabber, &match_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IPin_QueryAccept(sink, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IPin_QueryAccept(source, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     mt.subtype = GUID_NULL;
     hr = IPin_QueryAccept(sink, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IPin_QueryAccept(source, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     mt.subtype = match_mt.subtype;
@@ -552,13 +552,13 @@ static void test_media_types(void)
     hr = ISampleGrabber_SetMediaType(grabber, &match_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IPin_QueryAccept(sink, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IPin_QueryAccept(source, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     mt.formattype = GUID_NULL;
     hr = IPin_QueryAccept(sink, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IPin_QueryAccept(source, &mt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     mt.formattype = match_mt.formattype;
