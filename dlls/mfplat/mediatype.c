@@ -43,7 +43,6 @@ struct stream_desc
     IMFMediaType **media_types;
     unsigned int media_types_count;
     IMFMediaType *current_type;
-    CRITICAL_SECTION cs;
 };
 
 struct presentation_desc_entry
@@ -665,7 +664,6 @@ static ULONG WINAPI stream_descriptor_Release(IMFStreamDescriptor *iface)
         if (stream_desc->current_type)
             IMFMediaType_Release(stream_desc->current_type);
         clear_attributes_object(&stream_desc->attributes);
-        DeleteCriticalSection(&stream_desc->cs);
         heap_free(stream_desc);
     }
 
@@ -1087,12 +1085,12 @@ static HRESULT WINAPI mediatype_handler_SetCurrentMediaType(IMFMediaTypeHandler 
     if (!type)
         return E_POINTER;
 
-    EnterCriticalSection(&stream_desc->cs);
+    EnterCriticalSection(&stream_desc->attributes.cs);
     if (stream_desc->current_type)
         IMFMediaType_Release(stream_desc->current_type);
     stream_desc->current_type = type;
     IMFMediaType_AddRef(stream_desc->current_type);
-    LeaveCriticalSection(&stream_desc->cs);
+    LeaveCriticalSection(&stream_desc->attributes.cs);
 
     return S_OK;
 }
@@ -1104,7 +1102,7 @@ static HRESULT WINAPI mediatype_handler_GetCurrentMediaType(IMFMediaTypeHandler 
 
     TRACE("%p, %p.\n", iface, type);
 
-    EnterCriticalSection(&stream_desc->cs);
+    EnterCriticalSection(&stream_desc->attributes.cs);
     if (stream_desc->current_type)
     {
         *type = stream_desc->current_type;
@@ -1112,7 +1110,7 @@ static HRESULT WINAPI mediatype_handler_GetCurrentMediaType(IMFMediaTypeHandler 
     }
     else
         hr = MF_E_NOT_INITIALIZED;
-    LeaveCriticalSection(&stream_desc->cs);
+    LeaveCriticalSection(&stream_desc->attributes.cs);
 
     return hr;
 }
@@ -1124,12 +1122,12 @@ static HRESULT WINAPI mediatype_handler_GetMajorType(IMFMediaTypeHandler *iface,
 
     TRACE("%p, %p.\n", iface, type);
 
-    EnterCriticalSection(&stream_desc->cs);
+    EnterCriticalSection(&stream_desc->attributes.cs);
     if (stream_desc->current_type)
         hr = IMFMediaType_GetGUID(stream_desc->current_type, &MF_MT_MAJOR_TYPE, type);
     else
         hr = MF_E_ATTRIBUTENOTFOUND;
-    LeaveCriticalSection(&stream_desc->cs);
+    LeaveCriticalSection(&stream_desc->attributes.cs);
 
     return hr;
 }
@@ -1175,7 +1173,6 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
     object->IMFMediaTypeHandler_iface.lpVtbl = &mediatypehandlervtbl;
     object->identifier = identifier;
     object->media_types = heap_alloc(count * sizeof(*object->media_types));
-    InitializeCriticalSection(&object->cs);
     if (!object->media_types)
     {
         IMFStreamDescriptor_Release(&object->IMFStreamDescriptor_iface);
