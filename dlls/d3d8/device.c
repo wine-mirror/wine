@@ -3295,7 +3295,8 @@ static HRESULT WINAPI d3d8_device_GetPixelShaderConstant(IDirect3DDevice8 *iface
 
     TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (!constants || start_idx >= WINED3D_MAX_PS_CONSTS_F || count > WINED3D_MAX_PS_CONSTS_F - start_idx)
+    if (!constants || start_idx >= D3D8_MAX_PIXEL_SHADER_CONSTANTF
+            || count > D3D8_MAX_PIXEL_SHADER_CONSTANTF - start_idx)
         return WINED3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
