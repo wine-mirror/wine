@@ -1209,12 +1209,12 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
      * are pretty angry if they SetDisplayMode from 24 to 16 bpp and find out
      * that GetDisplayMode still returns 24 bpp. This should probably be
      * handled in winex11 instead. */
-    if (adapter->screen_format && adapter->screen_format != mode->format_id)
+    if (adapter->outputs[0].screen_format && adapter->outputs[0].screen_format != mode->format_id)
     {
         WARN("Overriding format %s with stored format %s.\n",
                 debug_d3dformat(mode->format_id),
-                debug_d3dformat(adapter->screen_format));
-        mode->format_id = adapter->screen_format;
+                debug_d3dformat(adapter->outputs[0].screen_format));
+        mode->format_id = adapter->outputs[0].screen_format;
     }
 
     if (!(m.dmFields & DM_DISPLAYFLAGS))
@@ -1253,20 +1253,15 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
-        UINT adapter_idx, const struct wined3d_display_mode *mode)
+HRESULT CDECL wined3d_output_set_display_mode(struct wined3d_output *output,
+        const struct wined3d_display_mode *mode)
 {
-    struct wined3d_adapter *adapter;
     DEVMODEW new_mode, current_mode;
     RECT clip_rc;
     LONG ret;
     enum wined3d_format_id new_format_id;
 
-    TRACE("wined3d %p, adapter_idx %u, mode %p.\n", wined3d, adapter_idx, mode);
-
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-    adapter = wined3d->adapters[adapter_idx];
+    TRACE("output %p, mode %p.\n", output, mode);
 
     memset(&new_mode, 0, sizeof(new_mode));
     new_mode.dmSize = sizeof(new_mode);
@@ -1279,7 +1274,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
         TRACE("mode %ux%u@%u %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
                 debug_d3dformat(mode->format_id), mode->scanline_ordering);
 
-        format = wined3d_get_format(adapter, mode->format_id, WINED3D_BIND_RENDER_TARGET);
+        format = wined3d_get_format(output->adapter, mode->format_id, WINED3D_BIND_RENDER_TARGET);
 
         new_mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
         new_mode.dmBitsPerPel = format->byte_count * CHAR_BIT;
@@ -1300,7 +1295,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
     }
     else
     {
-        if (!EnumDisplaySettingsW(adapter->device_name, ENUM_REGISTRY_SETTINGS, &new_mode))
+        if (!EnumDisplaySettingsW(output->device_name, ENUM_REGISTRY_SETTINGS, &new_mode))
         {
             ERR("Failed to read mode from registry.\n");
             return WINED3DERR_NOTAVAILABLE;
@@ -1309,7 +1304,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
     }
 
     /* Only change the mode if necessary. */
-    if (!EnumDisplaySettingsW(adapter->device_name, ENUM_CURRENT_SETTINGS, &current_mode))
+    if (!EnumDisplaySettingsW(output->device_name, ENUM_CURRENT_SETTINGS, &current_mode))
     {
         ERR("Failed to get current display mode.\n");
     }
@@ -1322,11 +1317,11 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
             || !(new_mode.dmFields & DM_DISPLAYFLAGS)))
     {
         TRACE("Skipping redundant mode setting call.\n");
-        adapter->screen_format = new_format_id;
+        output->screen_format = new_format_id;
         return WINED3D_OK;
     }
 
-    ret = ChangeDisplaySettingsExW(adapter->device_name, &new_mode, NULL, CDS_FULLSCREEN, NULL);
+    ret = ChangeDisplaySettingsExW(output->device_name, &new_mode, NULL, CDS_FULLSCREEN, NULL);
     if (ret != DISP_CHANGE_SUCCESSFUL)
     {
         if (new_mode.dmFields & DM_DISPLAYFREQUENCY)
@@ -1334,14 +1329,14 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
             WARN("ChangeDisplaySettingsExW failed, trying without the refresh rate.\n");
             new_mode.dmFields &= ~DM_DISPLAYFREQUENCY;
             new_mode.dmDisplayFrequency = 0;
-            ret = ChangeDisplaySettingsExW(adapter->device_name, &new_mode, NULL, CDS_FULLSCREEN, NULL);
+            ret = ChangeDisplaySettingsExW(output->device_name, &new_mode, NULL, CDS_FULLSCREEN, NULL);
         }
         if (ret != DISP_CHANGE_SUCCESSFUL)
             return WINED3DERR_NOTAVAILABLE;
     }
 
     /* Store the new values. */
-    adapter->screen_format = new_format_id;
+    output->screen_format = new_format_id;
 
     /* And finally clip mouse to our screen. */
     SetRect(&clip_rc, 0, 0, new_mode.dmPelsWidth, new_mode.dmPelsHeight);

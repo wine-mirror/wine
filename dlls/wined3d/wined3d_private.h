@@ -2900,6 +2900,7 @@ struct wined3d_output
 {
     WCHAR device_name[CCHDEVICENAME];
     struct wined3d_adapter *adapter;
+    enum wined3d_format_id screen_format;
 
     D3DKMT_HANDLE kmt_adapter;
     D3DKMT_HANDLE kmt_device;
@@ -2911,7 +2912,6 @@ struct wined3d_adapter
 {
     unsigned int ordinal;
     POINT monitor_position;
-    enum wined3d_format_id screen_format;
 
     struct wined3d_gl_info  gl_info;
     struct wined3d_d3d_info d3d_info;

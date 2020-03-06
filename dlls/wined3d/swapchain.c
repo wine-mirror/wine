@@ -29,7 +29,8 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
 {
-    HRESULT hr;
+    struct wined3d_output *output;
+    HRESULT hr = E_FAIL;
     UINT i;
 
     TRACE("Destroying swapchain %p.\n", swapchain);
@@ -71,8 +72,9 @@ void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
     {
         if (swapchain->state.desc.auto_restore_display_mode)
         {
-            if (FAILED(hr = wined3d_set_adapter_display_mode(swapchain->device->wined3d,
-                    swapchain->device->adapter->ordinal, &swapchain->state.original_mode)))
+            output = wined3d_swapchain_get_output(swapchain);
+            if (!output || FAILED(hr = wined3d_output_set_display_mode(output,
+                    &swapchain->state.original_mode)))
                 ERR("Failed to restore display mode, hr %#x.\n", hr);
 
             if (swapchain->state.desc.flags & WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT)
@@ -858,6 +860,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 {
     const struct wined3d_adapter *adapter = device->adapter;
     struct wined3d_resource_desc texture_desc;
+    struct wined3d_output *output;
     BOOL displaymode_set = FALSE;
     DWORD texture_flags = 0;
     RECT client_rect;
@@ -964,8 +967,9 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     if (!desc->windowed && desc->flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
     {
         /* Change the display settings */
-        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d,
-                adapter->ordinal, &swapchain->state.d3d_mode)))
+        output = wined3d_swapchain_get_output(swapchain);
+        if (!output || FAILED(hr = wined3d_output_set_display_mode(output,
+                &swapchain->state.d3d_mode)))
         {
             WARN("Failed to set display mode, hr %#x.\n", hr);
             goto err;
@@ -1048,8 +1052,8 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 err:
     if (displaymode_set)
     {
-        if (FAILED(wined3d_set_adapter_display_mode(device->wined3d,
-                adapter->ordinal, &swapchain->state.original_mode)))
+        if (!output || FAILED(wined3d_output_set_display_mode(output,
+                &swapchain->state.original_mode)))
             ERR("Failed to restore display mode.\n");
         ClipCursor(NULL);
     }
@@ -1261,6 +1265,7 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
     struct wined3d_device *device = swapchain->device;
     HWND window = swapchain->state.device_window;
     unsigned int screensaver_active;
+    struct wined3d_output *output;
     BOOL focus_messages, filter;
 
     /* This code is not protected by the wined3d mutex, so it may run while
@@ -1292,8 +1297,9 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
 
         if (device->wined3d->flags & WINED3D_RESTORE_MODE_ON_ACTIVATE)
         {
-            if (FAILED(wined3d_set_adapter_display_mode(device->wined3d,
-                    device->adapter->ordinal, &swapchain->state.d3d_mode)))
+            output = wined3d_swapchain_get_output(swapchain);
+            if (!output || FAILED(wined3d_output_set_display_mode(output,
+                    &swapchain->state.d3d_mode)))
                 ERR("Failed to set display mode.\n");
         }
 
@@ -1308,8 +1314,8 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
             device->restore_screensaver = FALSE;
         }
 
-        if (FAILED(wined3d_set_adapter_display_mode(device->wined3d,
-                device->adapter->ordinal, NULL)))
+        output = wined3d_swapchain_get_output(swapchain);
+        if (!output || FAILED(wined3d_output_set_display_mode(output, NULL)))
             ERR("Failed to set display mode.\n");
 
         swapchain->reapply_mode = TRUE;
@@ -1442,7 +1448,7 @@ static HRESULT wined3d_swapchain_state_set_display_mode(struct wined3d_swapchain
         }
     }
 
-    if (FAILED(hr = wined3d_set_adapter_display_mode(wined3d, 0, mode)))
+    if (FAILED(hr = wined3d_output_set_display_mode(output, mode)))
     {
         WARN("Failed to set display mode, hr %#x.\n", hr);
         return WINED3DERR_INVALIDCALL;

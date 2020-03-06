@@ -20,7 +20,6 @@
 @ cdecl wined3d_incref(ptr)
 @ cdecl wined3d_register_software_device(ptr ptr)
 @ cdecl wined3d_register_window(ptr ptr ptr long)
-@ cdecl wined3d_set_adapter_display_mode(ptr long ptr)
 @ cdecl wined3d_unregister_windows(ptr)
 
 @ cdecl wined3d_adapter_get_output(ptr long)
@@ -162,6 +161,7 @@
 
 @ cdecl wined3d_output_get_mode(ptr long long long ptr)
 @ cdecl wined3d_output_get_mode_count(ptr long long)
+@ cdecl wined3d_output_set_display_mode(ptr ptr)
 @ cdecl wined3d_output_release_ownership(ptr)
 @ cdecl wined3d_output_take_ownership(ptr long)
 
