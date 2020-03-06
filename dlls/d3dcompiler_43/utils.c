@@ -1380,8 +1380,8 @@ struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var)
     }
     deref->node.type = HLSL_IR_DEREF;
     deref->node.data_type = var->data_type;
-    deref->type = HLSL_IR_DEREF_VAR;
-    deref->v.var = var;
+    deref->src.type = HLSL_IR_DEREF_VAR;
+    deref->src.v.var = var;
     return deref;
 }
 
@@ -1396,9 +1396,9 @@ struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record, struct hlsl_
     }
     deref->node.type = HLSL_IR_DEREF;
     deref->node.data_type = field->type;
-    deref->type = HLSL_IR_DEREF_RECORD;
-    deref->v.record.record = record;
-    deref->v.record.field = field;
+    deref->src.type = HLSL_IR_DEREF_RECORD;
+    deref->src.v.record.record = record;
+    deref->src.v.record.field = field;
     return deref;
 }
 
@@ -1547,13 +1547,13 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
 
     rhs = implicit_conversion(rhs, type, &rhs->loc);
 
-    assign->lhs = lhs;
+    assign->lhs = deref_from_node(lhs)->src;
     if (assign_op != ASSIGN_OP_ASSIGN)
     {
         enum hlsl_ir_expr_op op = op_from_assignment(assign_op);
         struct hlsl_ir_node *expr;
 
-        if (deref_from_node(lhs)->type != HLSL_IR_DEREF_VAR)
+        if (assign->lhs.type != HLSL_IR_DEREF_VAR)
         {
             FIXME("LHS expression not supported in compound assignments yet.\n");
             assign->rhs = rhs;
@@ -1567,7 +1567,12 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         }
     }
     else
+    {
+        list_remove(&lhs->entry);
+        /* Don't recursively free the deref; we just copied its members. */
+        d3dcompiler_free(lhs);
         assign->rhs = rhs;
+    }
 
     return &assign->node;
 }
@@ -1860,7 +1865,7 @@ static void debug_dump_ir_var(const struct hlsl_ir_var *var)
         wine_dbg_printf(" : %s", debugstr_a(var->semantic));
 }
 
-static void debug_dump_ir_deref(const struct hlsl_ir_deref *deref)
+static void debug_dump_deref(const struct hlsl_deref *deref)
 {
     switch (deref->type)
     {
@@ -2048,7 +2053,7 @@ static const char *debug_writemask(DWORD writemask)
 static void debug_dump_ir_assignment(const struct hlsl_ir_assignment *assign)
 {
     wine_dbg_printf("= (");
-    debug_dump_src(assign->lhs);
+    debug_dump_deref(&assign->lhs);
     if (assign->writemask != BWRITERSP_WRITEMASK_ALL)
         wine_dbg_printf("%s", debug_writemask(assign->writemask));
     wine_dbg_printf(" ");
@@ -2129,7 +2134,7 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
             debug_dump_ir_expr(expr_from_node(instr));
             break;
         case HLSL_IR_DEREF:
-            debug_dump_ir_deref(deref_from_node(instr));
+            debug_dump_deref(&deref_from_node(instr)->src);
             break;
         case HLSL_IR_CONSTANT:
             debug_dump_ir_constant(constant_from_node(instr));

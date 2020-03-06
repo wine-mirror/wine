@@ -796,14 +796,6 @@ struct hlsl_ir_loop
     struct list *body;
 };
 
-struct hlsl_ir_assignment
-{
-    struct hlsl_ir_node node;
-    struct hlsl_ir_node *lhs;
-    struct hlsl_ir_node *rhs;
-    unsigned char writemask;
-};
-
 enum hlsl_ir_expr_op {
     HLSL_IR_UNOP_BIT_NOT = 0,
     HLSL_IR_UNOP_LOGIC_NOT,
@@ -907,9 +899,8 @@ enum hlsl_ir_deref_type
     HLSL_IR_DEREF_RECORD,
 };
 
-struct hlsl_ir_deref
+struct hlsl_deref
 {
-    struct hlsl_ir_node node;
     enum hlsl_ir_deref_type type;
     union
     {
@@ -925,6 +916,20 @@ struct hlsl_ir_deref
             struct hlsl_struct_field *field;
         } record;
     } v;
+};
+
+struct hlsl_ir_deref
+{
+    struct hlsl_ir_node node;
+    struct hlsl_deref src;
+};
+
+struct hlsl_ir_assignment
+{
+    struct hlsl_ir_node node;
+    struct hlsl_deref lhs;
+    struct hlsl_ir_node *rhs;
+    unsigned char writemask;
 };
 
 struct hlsl_ir_constant

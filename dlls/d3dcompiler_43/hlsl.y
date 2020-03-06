@@ -2123,9 +2123,9 @@ postfix_expr:             primary_expr
                                     free_instr_list($3);
                                     YYABORT;
                                 }
-                                deref->type = HLSL_IR_DEREF_ARRAY;
-                                deref->v.array.array = node_from_list($1);
-                                deref->v.array.index = node_from_list($3);
+                                deref->src.type = HLSL_IR_DEREF_ARRAY;
+                                deref->src.v.array.array = node_from_list($1);
+                                deref->src.v.array.index = node_from_list($3);
 
                                 $$ = append_binop($1, $3, &deref->node);
                             }
