@@ -77,6 +77,7 @@ static void (WINAPI *pImageList_EndDrag)(void);
 static INT (WINAPI *pImageList_GetImageCount)(HIMAGELIST);
 static BOOL (WINAPI *pImageList_SetDragCursorImage)(HIMAGELIST, int, int, int);
 static BOOL (WINAPI *pImageList_GetIconSize)(HIMAGELIST, int *, int *);
+static BOOL (WINAPI *pImageList_SetIconSize)(HIMAGELIST, INT, INT);
 static BOOL (WINAPI *pImageList_Remove)(HIMAGELIST, int);
 static INT (WINAPI *pImageList_ReplaceIcon)(HIMAGELIST, int, HICON);
 static BOOL (WINAPI *pImageList_Replace)(HIMAGELIST, int, HBITMAP, HBITMAP);
@@ -1487,12 +1488,17 @@ static void test_ImageList_DrawIndirect(void)
     const UINT32 bits_alpha[] =       { 0x89ABCDEF, 0x89ABCDEF };
     const UINT32 bits_transparent[] = { 0x00ABCDEF, 0x89ABCDEF };
 
+    const UINT32 bits_4x4[] =  { 0x00ABCDEF, 0x89ABCDEF, 0xFFABCDEF, 0xFEDCBA98,
+                                 0x00345678, 0x12345678, 0xFF345678, 0x87654321,
+                                 0x00987654, 0xBA987654, 0xFF987654, 0x456789AB,
+                                 0x00000000, 0xFF000000, 0xFFFFFFFF, 0x00FFFFFF };
+
     HIMAGELIST himl = NULL;
     int ret;
     HDC hdcDst = NULL;
     HBITMAP hbmOld = NULL, hbmDst = NULL;
     HBITMAP hbmMask = NULL, hbmInverseMask = NULL;
-    HBITMAP hbmImage = NULL, hbmAlphaImage = NULL, hbmTransparentImage = NULL;
+    HBITMAP hbmImage = NULL, hbmAlphaImage = NULL, hbmTransparentImage = NULL, hbm4x4 = NULL;
     int iImage = -1, iAlphaImage = -1, iTransparentImage = -1;
     UINT32 *bits = 0;
     UINT32 maskBits = 0x00000000, inverseMaskBits = 0xFFFFFFFF;
@@ -1594,6 +1600,29 @@ static void test_ImageList_DrawIndirect(void)
     check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00E9F2FB, 0x00AEB7C0, __LINE__);
     todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_NORMAL, 127, 0x00E9F2FB, 0x00D3E5F7, __LINE__);
 
+    /* 4x4 bitmap tests */
+    SelectObject(hdcDst, hbmOld);
+    DeleteObject(hbmDst);
+    bitmapInfo.bmiHeader.biWidth = 4;
+    bitmapInfo.bmiHeader.biHeight = -4;
+    hbmDst = CreateDIBSection(hdcDst, &bitmapInfo, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok (hbmDst && bits, "CreateDIBSection failed to return a valid bitmap and buffer\n");
+    if (!hbmDst || !bits) goto cleanup;
+    SelectObject(hdcDst, hbmDst);
+
+    hbm4x4 = create_test_bitmap(hdcDst, 4, 4, 32, bits_4x4);
+    if (!hbm4x4) goto cleanup;
+
+    ret = pImageList_SetIconSize(himl, 4, 4);
+    ok(ret, "ImageList_SetIconSize failed\n");
+    if (!ret) goto cleanup;
+
+    ret = pImageList_Add(himl, hbm4x4, NULL);
+    ok(ret != -1, "ImageList_Add failed\n");
+    if(ret == -1) goto cleanup;
+
+    check_ImageList_DrawIndirect_grayscale(hdcDst, himl, bits, bits_4x4, 0, 4, 4, __LINE__);
+
 cleanup:
 
     if(hbmOld)
@@ -1614,6 +1643,8 @@ cleanup:
         DeleteObject(hbmAlphaImage);
     if(hbmTransparentImage)
         DeleteObject(hbmTransparentImage);
+    if(hbm4x4)
+        DeleteObject(hbm4x4);
 
     if(himl)
     {
@@ -2509,6 +2540,7 @@ static void init_functions(void)
     X(ImageList_GetImageCount);
     X(ImageList_SetDragCursorImage);
     X(ImageList_GetIconSize);
+    X(ImageList_SetIconSize);
     X(ImageList_Remove);
     X(ImageList_ReplaceIcon);
     X(ImageList_Replace);
