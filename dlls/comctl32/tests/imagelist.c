@@ -1363,12 +1363,12 @@ static void test_shell_imagelist(void)
     FreeLibrary(hShell32);
 }
 
-static HBITMAP create_test_bitmap(HDC hdc, int bpp, UINT32 pixel1, UINT32 pixel2)
+static HBITMAP create_test_bitmap(HDC hdc, UINT width, UINT height, WORD bpp, const UINT32 *bits)
 {
     HBITMAP hBitmap;
     UINT32 *buffer = NULL;
-    BITMAPINFO bitmapInfo = {{sizeof(BITMAPINFOHEADER), 2, 1, 1, bpp, BI_RGB,
-                                0, 0, 0, 0, 0}};
+    UINT stride = ((width * bpp + 31) >> 3) & ~3;
+    BITMAPINFO bitmapInfo = { { sizeof(BITMAPINFOHEADER), width, - height, 1, bpp, BI_RGB, 0, 0, 0, 0, 0 } };
 
     hBitmap = CreateDIBSection(hdc, &bitmapInfo, DIB_RGB_COLORS, (void**)&buffer, NULL, 0);
     ok(hBitmap != NULL && buffer != NULL, "CreateDIBSection failed.\n");
@@ -1379,8 +1379,7 @@ static HBITMAP create_test_bitmap(HDC hdc, int bpp, UINT32 pixel1, UINT32 pixel2
         return NULL;
     }
 
-    buffer[0] = pixel1;
-    buffer[1] = pixel2;
+    memcpy(buffer, bits, stride * height);
 
     return hBitmap;
 }
@@ -1447,6 +1446,10 @@ static void check_ImageList_DrawIndirect_broken(HDC hdc, HIMAGELIST himl, UINT32
 
 static void test_ImageList_DrawIndirect(void)
 {
+    const UINT32 bits_image[] =       { 0x00ABCDEF, 0x00ABCDEF };
+    const UINT32 bits_alpha[] =       { 0x89ABCDEF, 0x89ABCDEF };
+    const UINT32 bits_transparent[] = { 0x00ABCDEF, 0x89ABCDEF };
+
     HIMAGELIST himl = NULL;
     int ret;
     HDC hdcDst = NULL;
@@ -1480,7 +1483,7 @@ static void test_ImageList_DrawIndirect(void)
     if(!himl) goto cleanup;
 
     /* Add a no-alpha image */
-    hbmImage = create_test_bitmap(hdcDst, 32, 0x00ABCDEF, 0x00ABCDEF);
+    hbmImage = create_test_bitmap(hdcDst, 2, 1, 32, bits_image);
     if(!hbmImage) goto cleanup;
 
     iImage = pImageList_Add(himl, hbmImage, hbmMask);
@@ -1488,7 +1491,7 @@ static void test_ImageList_DrawIndirect(void)
     if(iImage == -1) goto cleanup;
 
     /* Add an alpha image */
-    hbmAlphaImage = create_test_bitmap(hdcDst, 32, 0x89ABCDEF, 0x89ABCDEF);
+    hbmAlphaImage = create_test_bitmap(hdcDst, 2, 1, 32, bits_alpha);
     if(!hbmAlphaImage) goto cleanup;
 
     iAlphaImage = pImageList_Add(himl, hbmAlphaImage, hbmMask);
@@ -1496,7 +1499,7 @@ static void test_ImageList_DrawIndirect(void)
     if(iAlphaImage == -1) goto cleanup;
 
     /* Add a transparent alpha image */
-    hbmTransparentImage = create_test_bitmap(hdcDst, 32, 0x00ABCDEF, 0x89ABCDEF);
+    hbmTransparentImage = create_test_bitmap(hdcDst, 2, 1, 32, bits_transparent);
     if(!hbmTransparentImage) goto cleanup;
 
     iTransparentImage = pImageList_Add(himl, hbmTransparentImage, hbmMask);
@@ -2310,7 +2313,7 @@ static void test_alpha(void)
 
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
     {
-        hbm_test = create_test_bitmap(hdc, 32, test_bitmaps[i], test_bitmaps[i + 1]);
+        hbm_test = create_test_bitmap(hdc, 2, 1, 32, test_bitmaps + i);
         ret = pImageList_AddMasked(himl, hbm_test, CLR_NONE);
         ok(ret == i / 2, "ImageList_AddMasked returned %d, expected %d\n", ret, i / 2);
         DeleteObject(hbm_test);
