@@ -883,6 +883,7 @@ static HRESULT WINAPI JScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR 
                                                 IDispatch **ppdisp)
 {
     JScript *This = impl_from_IActiveScript(iface);
+    jsdisp_t *script_obj;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(pstrItemName), ppdisp);
 
@@ -894,7 +895,14 @@ static HRESULT WINAPI JScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR 
         return E_UNEXPECTED;
     }
 
-    *ppdisp = to_disp(This->ctx->global);
+    script_obj = This->ctx->global;
+    if(pstrItemName) {
+        named_item_t *item = lookup_named_item(This->ctx, pstrItemName, 0);
+        if(!item) return E_INVALIDARG;
+        if(item->script_obj) script_obj = item->script_obj;
+    }
+
+    *ppdisp = to_disp(script_obj);
     IDispatch_AddRef(*ppdisp);
     return S_OK;
 }

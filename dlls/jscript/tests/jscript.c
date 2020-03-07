@@ -1183,6 +1183,11 @@ static void test_named_items(void)
     ok(visible_named_item_ref == 0, "visible_named_item_ref = %u\n", visible_named_item_ref);
     ok(visible_code_named_item_ref == 0, "visible_code_named_item_ref = %u\n", visible_code_named_item_ref);
 
+    hr = IActiveScript_GetScriptDispatch(script, L"noContext", &disp);
+    ok(hr == E_INVALIDARG, "GetScriptDispatch returned: %08x\n", hr);
+    hr = IActiveScript_GetScriptDispatch(script, L"codeONLYItem", &disp);
+    ok(hr == E_INVALIDARG, "GetScriptDispatch returned: %08x\n", hr);
+
     SET_EXPECT(GetItemInfo_global_code);
     hr = IActiveScript_AddNamedItem(script, L"globalCodeItem", SCRIPTITEM_GLOBALMEMBERS | SCRIPTITEM_CODEONLY);
     ok(hr == S_OK, "AddNamedItem failed: %08x\n", hr);
