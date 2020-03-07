@@ -2041,6 +2041,7 @@ struct wined3d_rasterizer_state_desc
     float scale_bias;
     BOOL depth_clip;
     BOOL scissor;
+    BOOL line_antialias;
 };
 
 struct wined3d_sampler_desc

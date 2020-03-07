@@ -1707,9 +1707,9 @@ static void state_msaa(struct wined3d_context *context, const struct wined3d_sta
 static void state_line_antialias(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
+    const struct wined3d_rasterizer_state *r = state->rasterizer_state;
 
-    if (state->render_states[WINED3D_RS_EDGEANTIALIAS]
-            || state->render_states[WINED3D_RS_ANTIALIASEDLINEENABLE])
+    if (state->render_states[WINED3D_RS_EDGEANTIALIAS] || (r && r->desc.line_antialias))
     {
         gl_info->gl_ops.gl.p_glEnable(GL_LINE_SMOOTH);
         checkGLcall("glEnable(GL_LINE_SMOOTH)");
@@ -4334,6 +4334,7 @@ static void rasterizer(struct wined3d_context *context, const struct wined3d_sta
     cullmode(r, gl_info);
     depth_clip(r, gl_info);
     scissor(r, gl_info);
+    state_line_antialias(context, state, STATE_RENDER(WINED3D_RS_ANTIALIASEDLINEENABLE));
 }
 
 static void rasterizer_cc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4351,6 +4352,7 @@ static void rasterizer_cc(struct wined3d_context *context, const struct wined3d_
     cullmode(r, gl_info);
     depth_clip(r, gl_info);
     scissor(r, gl_info);
+    state_line_antialias(context, state, STATE_RENDER(WINED3D_RS_ANTIALIASEDLINEENABLE));
 }
 
 static void psorigin_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4511,7 +4513,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_DESTBLEND),                 { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          state_blend         }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             state_line_antialias}, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_ANTIALIASEDLINEENABLE),     { STATE_RENDER(WINED3D_RS_ANTIALIASEDLINEENABLE),     state_line_antialias}, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SEPARATEALPHABLENDENABLE),  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SRCBLENDALPHA),             { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
@@ -5431,8 +5432,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         { 61, 127},
         {149, 150},
         {169, 169},
-        {174, 175},
-        {177, 177},
+        {174, 177},
         {193, 193},
         {195, 197},
         {  0,   0},
