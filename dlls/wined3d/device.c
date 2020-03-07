@@ -3622,10 +3622,9 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             float f;
         } bias;
 
+        memset(&desc, 0, sizeof(desc));
         desc.fill_mode = state->rs[WINED3D_RS_FILLMODE];
         desc.cull_mode = state->rs[WINED3D_RS_CULLMODE];
-        desc.front_ccw = FALSE;
-        desc.depth_bias_clamp = 0.0f;
         bias.d = state->rs[WINED3D_RS_SLOPESCALEDEPTHBIAS];
         desc.scale_bias = bias.f;
         desc.depth_clip = TRUE;
