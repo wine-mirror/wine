@@ -936,7 +936,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
     if (!(rasterizer_state_impl = unsafe_impl_from_ID3D11RasterizerState(rasterizer_state)))
     {
         wined3d_device_set_rasterizer_state(device->wined3d_device, NULL);
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, FALSE);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, FALSE);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ANTIALIASEDLINEENABLE, FALSE);
         wined3d_mutex_unlock();
@@ -946,7 +945,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
     wined3d_device_set_rasterizer_state(device->wined3d_device, rasterizer_state_impl->wined3d_state);
 
     desc = &rasterizer_state_impl->desc;
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, desc->ScissorEnable);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, desc->MultisampleEnable);
     wined3d_device_set_render_state(device->wined3d_device,
             WINED3D_RS_ANTIALIASEDLINEENABLE, desc->AntialiasedLineEnable);

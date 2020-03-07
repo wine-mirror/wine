@@ -1721,11 +1721,9 @@ static void state_line_antialias(struct wined3d_context *context, const struct w
     }
 }
 
-static void state_scissor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void scissor(const struct wined3d_rasterizer_state *r, const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-
-    if (state->render_states[WINED3D_RS_SCISSORTESTENABLE])
+    if (r && r->desc.scissor)
     {
         gl_info->gl_ops.gl.p_glEnable(GL_SCISSOR_TEST);
         checkGLcall("glEnable(GL_SCISSOR_TEST)");
@@ -4335,6 +4333,7 @@ static void rasterizer(struct wined3d_context *context, const struct wined3d_sta
     fillmode(r, gl_info);
     cullmode(r, gl_info);
     depth_clip(r, gl_info);
+    scissor(r, gl_info);
 }
 
 static void rasterizer_cc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4351,6 +4350,7 @@ static void rasterizer_cc(struct wined3d_context *context, const struct wined3d_
     fillmode(r, gl_info);
     cullmode(r, gl_info);
     depth_clip(r, gl_info);
+    scissor(r, gl_info);
 }
 
 static void psorigin_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4660,7 +4660,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          state_colorwrite    }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop       }, WINED3D_GL_BLEND_EQUATION       },
     { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop_w     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE),         { STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE),         state_scissor       }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         state_colorwrite1   }, EXT_DRAW_BUFFERS2               },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         state_colorwrite2   }, EXT_DRAW_BUFFERS2               },
@@ -5432,7 +5431,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         { 61, 127},
         {149, 150},
         {169, 169},
-        {175, 175},
+        {174, 175},
         {177, 177},
         {193, 193},
         {195, 197},

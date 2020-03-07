@@ -3602,6 +3602,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_CULLMODE:
                 case WINED3D_RS_SLOPESCALEDEPTHBIAS:
                 case WINED3D_RS_DEPTHBIAS:
+                case WINED3D_RS_SCISSORTESTENABLE:
                     set_rasterizer_state = TRUE;
                     break;
 
@@ -3631,6 +3632,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         bias.d = state->rs[WINED3D_RS_SLOPESCALEDEPTHBIAS];
         desc.scale_bias = bias.f;
         desc.depth_clip = TRUE;
+        desc.scissor = state->rs[WINED3D_RS_SCISSORTESTENABLE];
 
         if ((entry = wine_rb_get(&device->rasterizer_states, &desc)))
         {

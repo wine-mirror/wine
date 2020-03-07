@@ -1083,6 +1083,7 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
     wined3d_desc.depth_bias_clamp = desc->DepthBiasClamp;
     wined3d_desc.scale_bias = desc->SlopeScaledDepthBias;
     wined3d_desc.depth_clip = desc->DepthClipEnable;
+    wined3d_desc.scissor = desc->ScissorEnable;
 
     /* We cannot fail after creating a wined3d_rasterizer_state object. It
      * would lead to double free. */

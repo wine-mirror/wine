@@ -131,7 +131,7 @@ static void texture2d_depth_blt_fbo(const struct wined3d_device *device, struct 
     }
 
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE));
+    context_invalidate_state(context, STATE_RASTERIZER);
 
     gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
             dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, gl_mask, GL_NEAREST);
@@ -267,7 +267,7 @@ void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_context *co
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3));
 
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE));
+    context_invalidate_state(context, STATE_RASTERIZER);
 
     gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
             dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, GL_COLOR_BUFFER_BIT, gl_filter);

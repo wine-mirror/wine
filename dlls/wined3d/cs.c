@@ -614,7 +614,7 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     op->rt_count = rt_count;
     op->fb = &cs->fb;
     SetRect(&op->draw_rect, vp->x, vp->y, vp->x + vp->width, vp->y + vp->height);
-    if (state->render_states[WINED3D_RS_SCISSORTESTENABLE])
+    if (state->rasterizer_state && state->rasterizer_state->desc.scissor)
         IntersectRect(&op->draw_rect, &op->draw_rect, &state->scissor_rects[0]);
     op->color = *color;
     op->depth = depth;

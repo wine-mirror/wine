@@ -3150,11 +3150,10 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE));
     gl_info->gl_ops.gl.p_glDisable(GL_CULL_FACE);
+    gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
     context_invalidate_state(context, STATE_RASTERIZER);
     gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST);
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_STENCILENABLE));
-    gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE));
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
         gl_info->gl_ops.gl.p_glDisable(GL_POINT_SPRITE_ARB);
@@ -3428,7 +3427,7 @@ BOOL wined3d_context_gl_apply_clear_state(struct wined3d_context_gl *context_gl,
     checkGLcall("setting up state for clear");
 
     context_invalidate_state(&context_gl->c, STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE));
-    context_invalidate_state(&context_gl->c, STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE));
+    context_invalidate_state(&context_gl->c, STATE_RASTERIZER);
     context_invalidate_state(&context_gl->c, STATE_SCISSORRECT);
 
     return TRUE;
