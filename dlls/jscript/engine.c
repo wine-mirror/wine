@@ -2990,6 +2990,13 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     unsigned i;
     HRESULT hres;
 
+    if(bytecode->named_item) {
+        if(!bytecode->named_item->script_obj) {
+            hres = create_named_item_script_obj(ctx, bytecode->named_item);
+            if(FAILED(hres)) return hres;
+        }
+    }
+
     if(!ctx->ei->enter_notified) {
         ctx->ei->enter_notified = TRUE;
         IActiveScriptSite_OnEnterScript(ctx->site);

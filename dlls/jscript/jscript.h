@@ -205,6 +205,7 @@ typedef HRESULT (*builtin_setter_t)(script_ctx_t*,jsdisp_t*,jsval_t);
 HRESULT builtin_set_const(script_ctx_t*,jsdisp_t*,jsval_t) DECLSPEC_HIDDEN;
 
 typedef struct named_item_t {
+    jsdisp_t *script_obj;
     IDispatch *disp;
     unsigned ref;
     DWORD flags;
@@ -213,6 +214,7 @@ typedef struct named_item_t {
     struct list entry;
 } named_item_t;
 
+HRESULT create_named_item_script_obj(script_ctx_t*,named_item_t*) DECLSPEC_HIDDEN;
 named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
 void release_named_item(named_item_t*) DECLSPEC_HIDDEN;
 
