@@ -1129,13 +1129,15 @@ static void test_named_items(void)
     static const WCHAR *context_idents[] =
     {
         L"testFunc",
-        L"testVar"
+        L"testVar",
+        L"testFuncConstr"
     };
     static const WCHAR *context_code_test[] =
     {
         L"testFunc();",
         L"if(testVar != 42) throw new Error();",
-        L"if(Math.abs(-testVar) != 42) throw new Error();"
+        L"if(Math.abs(-testVar) != 42) throw new Error();",
+        L"if(testFuncConstr() != testVar) throw new Error();"
     };
     IDispatchEx *dispex, *dispex2;
     IActiveScriptParse *parse;
@@ -1302,7 +1304,8 @@ static void test_named_items(void)
     SET_EXPECT(GetIDsOfNames);
     hr = IActiveScriptParse_ParseScriptText(parse, L""
         "var testVar = 42;\n"
-        "testVar_global = 5;\n",
+        "testVar_global = 5;\n"
+        "var testFuncConstr = new Function(\"return testVar;\");\n",
         L"codeOnlyItem", NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
     CHECK_CALLED(OnEnterScript);
