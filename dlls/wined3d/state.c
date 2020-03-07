@@ -1752,25 +1752,25 @@ static void state_scissor(struct wined3d_context *context, const struct wined3d_
  *
  * Note that SLOPESCALEDEPTHBIAS is a scaling factor for the depth slope, and
  * doesn't need to be scaled to account for GL vs D3D differences. */
-static void state_depthbias(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void depthbias(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     const struct wined3d_rasterizer_state *r = state->rasterizer_state;
     float scale_bias = r ? r->desc.scale_bias : 0.0f;
+    union
+    {
+        DWORD d;
+        float f;
+    } const_bias;
 
-    if (scale_bias || state->render_states[WINED3D_RS_DEPTHBIAS])
+    const_bias.f = r ? r->desc.depth_bias : 0.0f;
+
+    if (scale_bias || const_bias.f)
     {
         const struct wined3d_rendertarget_view *depth = state->fb->depth_stencil;
         float factor, units, scale, clamp;
 
-        union
-        {
-            DWORD d;
-            float f;
-        } const_bias;
-
         clamp = r ? r->desc.depth_bias_clamp : 0.0f;
-        const_bias.d = state->render_states[WINED3D_RS_DEPTHBIAS];
 
         if (context->d3d_info->wined3d_creation_flags & WINED3D_LEGACY_DEPTH_BIAS)
         {
@@ -4331,8 +4331,7 @@ static void rasterizer(struct wined3d_context *context, const struct wined3d_sta
 
     gl_info->gl_ops.gl.p_glFrontFace(mode);
     checkGLcall("glFrontFace");
-    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_DEPTHBIAS)))
-        state_depthbias(context, state, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
+    depthbias(context, state);
     fillmode(r, gl_info);
     cullmode(r, gl_info);
     depth_clip(r, gl_info);
@@ -4348,8 +4347,7 @@ static void rasterizer_cc(struct wined3d_context *context, const struct wined3d_
 
     gl_info->gl_ops.gl.p_glFrontFace(mode);
     checkGLcall("glFrontFace");
-    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_DEPTHBIAS)))
-        state_depthbias(context, state, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
+    depthbias(context, state);
     fillmode(r, gl_info);
     cullmode(r, gl_info);
     depth_clip(r, gl_info);
@@ -4669,7 +4667,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3),         state_colorwrite3   }, EXT_DRAW_BUFFERS2               },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_DEPTHBIAS),                 { STATE_RENDER(WINED3D_RS_DEPTHBIAS),                 state_depthbias     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ZVISIBLE),                  { STATE_RENDER(WINED3D_RS_ZVISIBLE),                  state_zvisible      }, WINED3D_GL_EXT_NONE             },
     /* Samplers */
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler             }, WINED3D_GL_EXT_NONE             },
@@ -5438,7 +5435,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {175, 175},
         {177, 177},
         {193, 193},
-        {196, 197},
+        {195, 197},
         {  0,   0},
     };
     static const DWORD simple_states[] =

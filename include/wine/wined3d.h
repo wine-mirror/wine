@@ -2036,6 +2036,7 @@ struct wined3d_rasterizer_state_desc
     enum wined3d_fill_mode fill_mode;
     enum wined3d_cull cull_mode;
     BOOL front_ccw;
+    float depth_bias;
     float depth_bias_clamp;
     float scale_bias;
     BOOL depth_clip;

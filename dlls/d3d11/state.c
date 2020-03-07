@@ -1079,6 +1079,7 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
     wined3d_desc.fill_mode = desc->FillMode;
     wined3d_desc.cull_mode = desc->CullMode;
     wined3d_desc.front_ccw = desc->FrontCounterClockwise;
+    wined3d_desc.depth_bias = desc->DepthBias;
     wined3d_desc.depth_bias_clamp = desc->DepthBiasClamp;
     wined3d_desc.scale_bias = desc->SlopeScaledDepthBias;
     wined3d_desc.depth_clip = desc->DepthClipEnable;

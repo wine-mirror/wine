@@ -929,11 +929,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
     struct d3d_rasterizer_state *rasterizer_state_impl;
     const D3D11_RASTERIZER_DESC *desc;
-    union
-    {
-        DWORD d;
-        float f;
-    } const_bias;
 
     TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
 
@@ -941,7 +936,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
     if (!(rasterizer_state_impl = unsafe_impl_from_ID3D11RasterizerState(rasterizer_state)))
     {
         wined3d_device_set_rasterizer_state(device->wined3d_device, NULL);
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DEPTHBIAS, 0);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, FALSE);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, FALSE);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ANTIALIASEDLINEENABLE, FALSE);
@@ -952,8 +946,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
     wined3d_device_set_rasterizer_state(device->wined3d_device, rasterizer_state_impl->wined3d_state);
 
     desc = &rasterizer_state_impl->desc;
-    const_bias.f = desc->DepthBias;
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DEPTHBIAS, const_bias.d);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, desc->ScissorEnable);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, desc->MultisampleEnable);
     wined3d_device_set_render_state(device->wined3d_device,
