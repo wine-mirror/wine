@@ -1267,6 +1267,9 @@ static void test_named_items(void)
     parse_script(parse, L"visibleItem.testCall();");
     CHECK_CALLED(testCall);
 
+    hr = IActiveScriptParse_ParseScriptText(parse, L"function testFunc() { }", L"CodeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ParseScriptText returned: %08x\n", hr);
+
     SET_EXPECT(OnEnterScript);
     SET_EXPECT(GetIDsOfNames);
     SET_EXPECT(OnLeaveScript);

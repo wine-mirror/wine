@@ -2250,6 +2250,8 @@ void release_bytecode(bytecode_t *code)
     for(i=0; i < code->str_cnt; i++)
         jsstr_release(code->str_pool[i]);
 
+    if(code->named_item)
+        release_named_item(code->named_item);
     heap_free(code->source);
     heap_pool_free(&code->heap);
     heap_free(code->bstr_pool);
@@ -2485,7 +2487,8 @@ static HRESULT compile_arguments(compiler_ctx_t *ctx, const WCHAR *args)
 }
 
 HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, UINT64 source_context, unsigned start_line,
-                       const WCHAR *args, const WCHAR *delimiter, BOOL from_eval, BOOL use_decode, bytecode_t **ret)
+                       const WCHAR *args, const WCHAR *delimiter, BOOL from_eval, BOOL use_decode,
+                       named_item_t *named_item, bytecode_t **ret)
 {
     compiler_ctx_t compiler = {0};
     HRESULT hres;
@@ -2524,6 +2527,11 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, UINT64 source_conte
         set_error_location(ctx->ei, compiler.code, compiler.loc, IDS_COMPILATION_ERROR, NULL);
         release_bytecode(compiler.code);
         return DISP_E_EXCEPTION;
+    }
+
+    if(named_item) {
+        compiler.code->named_item = named_item;
+        named_item->ref++;
     }
 
     *ret = compiler.code;

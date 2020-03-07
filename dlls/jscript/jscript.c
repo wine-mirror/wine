@@ -983,6 +983,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     JScript *This = impl_from_IActiveScriptParse(iface);
+    named_item_t *item = NULL;
     bytecode_t *code;
     jsexcept_t ei;
     HRESULT hres;
@@ -994,9 +995,17 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
+    if(pstrItemName) {
+        item = lookup_named_item(This->ctx, pstrItemName, 0);
+        if(!item) {
+            WARN("Unknown context %s\n", debugstr_w(pstrItemName));
+            return E_INVALIDARG;
+        }
+    }
+
     enter_script(This->ctx, &ei);
     hres = compile_script(This->ctx, pstrCode, dwSourceContextCookie, ulStartingLine, NULL, pstrDelimiter,
-            (dwFlags & SCRIPTTEXT_ISEXPRESSION) != 0, This->is_encode, &code);
+            (dwFlags & SCRIPTTEXT_ISEXPRESSION) != 0, This->is_encode, item, &code);
     if(FAILED(hres))
         return leave_script(This->ctx, hres);
 
@@ -1075,6 +1084,7 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
         CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
 {
     JScript *This = impl_from_IActiveScriptParseProcedure2(iface);
+    named_item_t *item = NULL;
     bytecode_t *code;
     jsdisp_t *dispex;
     jsexcept_t ei;
@@ -1087,9 +1097,17 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
     if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
+    if(pstrItemName) {
+        item = lookup_named_item(This->ctx, pstrItemName, 0);
+        if(!item) {
+            WARN("Unknown context %s\n", debugstr_w(pstrItemName));
+            return E_INVALIDARG;
+        }
+    }
+
     enter_script(This->ctx, &ei);
     hres = compile_script(This->ctx, pstrCode, dwSourceContextCookie, ulStartingLineNumber, pstrFormalParams,
-                          pstrDelimiter, FALSE, This->is_encode, &code);
+                          pstrDelimiter, FALSE, This->is_encode, item, &code);
     if(SUCCEEDED(hres))
         hres = create_source_function(This->ctx, code, &code->global_code, NULL,  &dispex);
     release_bytecode(code);

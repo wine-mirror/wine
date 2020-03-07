@@ -982,7 +982,8 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
     if(FAILED(hres))
         return hres;
 
-    hres = compile_script(ctx, str, 0, 0, NULL, NULL, FALSE, FALSE, &code);
+    hres = compile_script(ctx, str, 0, 0, NULL, NULL, FALSE, FALSE,
+                          ctx->call_ctx ? ctx->call_ctx->bytecode->named_item : NULL, &code);
     heap_free(str);
     if(FAILED(hres))
         return hres;
