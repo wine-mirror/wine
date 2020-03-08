@@ -4333,7 +4333,7 @@ CONFIGRET WINAPI CM_Get_DevNode_PropertyW(DEVINST dev, const DEVPROPKEY *key, DE
  */
 BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    WCHAR section[LINE_LEN], section_ext[LINE_LEN], iface_section[LINE_LEN], refstr[LINE_LEN], guidstr[39];
+    WCHAR section_ext[LINE_LEN], iface_section[LINE_LEN], refstr[LINE_LEN], guidstr[39];
     UINT install_flags = SPINST_ALL;
     struct device_iface *iface;
     struct device *device;
@@ -4360,9 +4360,7 @@ BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *de
     if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
-    SetupGetStringFieldW(&ctx, 1, section, ARRAY_SIZE(section), NULL);
-    SetupDiGetActualSectionToInstallW(hinf, section, section_ext, ARRAY_SIZE(section_ext), NULL, NULL);
+    SetupDiGetActualSectionToInstallW(hinf, driver->section, section_ext, ARRAY_SIZE(section_ext), NULL, NULL);
 
     if (device->params.Flags & DI_NOFILECOPY)
         install_flags &= ~SPINST_FILES;
@@ -4410,12 +4408,11 @@ BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *de
 BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
     static const WCHAR coinstallersW[] = {'.','C','o','I','n','s','t','a','l','l','e','r','s',0};
-    WCHAR coinst_key[LINE_LEN], coinst_key_ext[LINE_LEN];
+    WCHAR coinst_key_ext[LINE_LEN];
     struct device *device;
     struct driver *driver;
     void *callback_ctx;
     HKEY driver_key;
-    INFCONTEXT ctx;
     HINF hinf;
     LONG l;
 
@@ -4434,9 +4431,7 @@ BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO devinfo, SP_DEVINFO_DATA 
     if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
-    SetupGetStringFieldW(&ctx, 1, coinst_key, ARRAY_SIZE(coinst_key), NULL);
-    SetupDiGetActualSectionToInstallW(hinf, coinst_key, coinst_key_ext, ARRAY_SIZE(coinst_key_ext), NULL, NULL);
+    SetupDiGetActualSectionToInstallW(hinf, driver->section, coinst_key_ext, ARRAY_SIZE(coinst_key_ext), NULL, NULL);
     lstrcatW(coinst_key_ext, coinstallersW);
 
     if ((l = create_driver_key(device, &driver_key)))
@@ -4998,10 +4993,10 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     static const WCHAR addserviceW[] = {'A','d','d','S','e','r','v','i','c','e',0};
     static const WCHAR rootW[] = {'r','o','o','t','\\',0};
     WCHAR section[LINE_LEN], section_ext[LINE_LEN], subsection[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
-    WCHAR svc_name[LINE_LEN], field[LINE_LEN];
     UINT install_flags = SPINST_ALL;
     HKEY driver_key, device_key;
     SC_HANDLE manager, service;
+    WCHAR svc_name[LINE_LEN];
     struct device *device;
     struct driver *driver;
     void *callback_ctx;
@@ -5024,13 +5019,10 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    RegSetValueExW(device->key, L"DeviceDesc", 0, REG_SZ, (BYTE *)driver->description,
+            wcslen(driver->description) * sizeof(WCHAR));
 
-    SetupGetStringFieldW(&ctx, 0, field, ARRAY_SIZE(field), NULL);
-    RegSetValueExW(device->key, L"DeviceDesc", 0, REG_SZ, (BYTE *)field, wcslen(field) * sizeof(WCHAR));
-
-    SetupGetStringFieldW(&ctx, 1, section, ARRAY_SIZE(section), NULL);
-    SetupDiGetActualSectionToInstallW(hinf, section, section_ext, ARRAY_SIZE(section_ext), NULL, &extptr);
+    SetupDiGetActualSectionToInstallW(hinf, driver->section, section_ext, ARRAY_SIZE(section_ext), NULL, &extptr);
 
     if ((l = create_driver_key(device, &driver_key)))
     {
