@@ -563,16 +563,13 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
-IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
+HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR source_name[] = {'O','u','t','p','u','t',0};
     VfwCapture *object;
 
     if (!(object = CoTaskMemAlloc(sizeof(*object))))
-    {
-        *phr = E_OUTOFMEMORY;
-        return NULL;
-    }
+        return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_VfwCapture, &filter_ops);
 
@@ -587,6 +584,6 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
 
     TRACE("Created VFW capture filter %p.\n", object);
     ObjectRefCount(TRUE);
-    *phr = S_OK;
-    return &object->filter.IUnknown_inner;
+    *out = &object->filter.IUnknown_inner;
+    return S_OK;
 }

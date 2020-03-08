@@ -74,33 +74,27 @@ static inline CaptureGraphImpl *impl_from_ICaptureGraphBuilder2(ICaptureGraphBui
 }
 
 
-IUnknown * CALLBACK QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter,
-                                                    HRESULT *phr)
+HRESULT capture_graph_create(IUnknown *outer, IUnknown **out)
 {
-    CaptureGraphImpl * pCapture = NULL;
+    CaptureGraphImpl *object;
 
-    TRACE("(%p, %p)\n", pUnkOuter, phr);
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
 
-    *phr = CLASS_E_NOAGGREGATION;
-    if (pUnkOuter)
-    {
-        return NULL;
-    }
-    *phr = E_OUTOFMEMORY;
+    if (!(object = CoTaskMemAlloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    pCapture = CoTaskMemAlloc(sizeof(CaptureGraphImpl));
-    if (pCapture)
-    {
-        pCapture->ICaptureGraphBuilder2_iface.lpVtbl = &builder2_Vtbl;
-        pCapture->ICaptureGraphBuilder_iface.lpVtbl = &builder_Vtbl;
-        pCapture->ref = 1;
-        pCapture->mygraph = NULL;
-        InitializeCriticalSection(&pCapture->csFilter);
-        pCapture->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CaptureGraphImpl.csFilter");
-        *phr = S_OK;
-        ObjectRefCount(TRUE);
-    }
-    return (IUnknown *)&pCapture->ICaptureGraphBuilder_iface;
+    object->ICaptureGraphBuilder2_iface.lpVtbl = &builder2_Vtbl;
+    object->ICaptureGraphBuilder_iface.lpVtbl = &builder_Vtbl;
+    object->ref = 1;
+    object->mygraph = NULL;
+    InitializeCriticalSection(&object->csFilter);
+    object->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CaptureGraphImpl.csFilter");
+
+    TRACE("Created capture graph builder %p.\n", object);
+    ObjectRefCount(TRUE);
+    *out = (IUnknown *)&object->ICaptureGraphBuilder_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI

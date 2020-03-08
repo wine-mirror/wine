@@ -25,18 +25,11 @@
 
 extern DWORD ObjectRefCount(BOOL increment) DECLSPEC_HIDDEN;
 
-extern IUnknown * WINAPI QCAP_createAudioCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createAVICompressor(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createVFWCaptureFilterPropertyPage(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createAVICompressor(IUnknown*,HRESULT*) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createAVIMuxPropertyPage(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createAVIMuxPropertyPage1(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createFileWriter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createInfinitePinTeeFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createSmartTeeFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createAudioInputMixerPropertyPage(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+HRESULT audio_record_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT avi_mux_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT capture_graph_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT smart_tee_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
 #endif /* _QCAP_MAIN_H_DEFINED */
