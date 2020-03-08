@@ -18,9 +18,7 @@
 
 #include <stdarg.h>
 
-#define COBJMACROS
-#define NONAMELESSUNION
-
+#include "gst_private.h"
 #include "mfapi.h"
 #include "mfidl.h"
 
@@ -28,8 +26,6 @@
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
-
-static LONG object_locks;
 
 struct video_processor
 {
@@ -436,9 +432,4 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
     }
 
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-HRESULT mfplat_can_unload_now(void)
-{
-    return !object_locks ? S_OK : S_FALSE;
 }

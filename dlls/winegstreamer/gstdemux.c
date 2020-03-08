@@ -20,11 +20,6 @@
  */
 
 #include "config.h"
-
-#include <gst/gst.h>
-#include <gst/video/video.h>
-#include <gst/audio/audio.h>
-
 #include "gst_private.h"
 #include "gst_guids.h"
 #include "gst_cbs.h"
@@ -1719,23 +1714,17 @@ static HRESULT gstdecoder_source_get_media_type(struct gstdemux_source *pin,
     return VFW_S_NO_MORE_ITEMS;
 }
 
-IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
+HRESULT gstdemux_create(IUnknown *outer, IUnknown **out)
 {
     struct gstdemux *object;
 
     if (!init_gstreamer())
-    {
-        *phr = E_FAIL;
-        return NULL;
-    }
+        return E_FAIL;
 
     mark_wine_thread();
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
-    {
-        *phr = E_OUTOFMEMORY;
-        return NULL;
-    }
+        return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_Gstreamer_Splitter, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, wcsInputPinName, &sink_ops, NULL);
@@ -1745,10 +1734,10 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     object->init_gst = gstdecoder_init_gst;
     object->source_query_accept = gstdecoder_source_query_accept;
     object->source_get_media_type = gstdecoder_source_get_media_type;
-    *phr = S_OK;
 
     TRACE("Created GStreamer demuxer %p.\n", object);
-    return &object->filter.IUnknown_inner;
+    *out = &object->filter.IUnknown_inner;
+    return S_OK;
 }
 
 static struct gstdemux *impl_from_IAMStreamSelect(IAMStreamSelect *iface)
@@ -2422,24 +2411,18 @@ static HRESULT wave_parser_source_get_media_type(struct gstdemux_source *pin,
     return S_OK;
 }
 
-IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
+HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     struct gstdemux *object;
 
     if (!init_gstreamer())
-    {
-        *phr = E_FAIL;
-        return NULL;
-    }
+        return E_FAIL;
 
     mark_wine_thread();
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
-    {
-        *phr = E_OUTOFMEMORY;
-        return NULL;
-    }
+        return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &wave_parser_sink_ops, NULL);
@@ -2447,10 +2430,10 @@ IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
     object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     object->source_query_accept = wave_parser_source_query_accept;
     object->source_get_media_type = wave_parser_source_get_media_type;
-    *phr = S_OK;
 
     TRACE("Created WAVE parser %p.\n", object);
-    return &object->filter.IUnknown_inner;
+    *out = &object->filter.IUnknown_inner;
+    return S_OK;
 }
 
 static HRESULT avi_splitter_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
@@ -2543,24 +2526,18 @@ static HRESULT avi_splitter_source_get_media_type(struct gstdemux_source *pin,
     return S_OK;
 }
 
-IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr)
+HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     struct gstdemux *object;
 
     if (!init_gstreamer())
-    {
-        *phr = E_FAIL;
-        return NULL;
-    }
+        return E_FAIL;
 
     mark_wine_thread();
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
-    {
-        *phr = E_OUTOFMEMORY;
-        return NULL;
-    }
+        return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_AviSplitter, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &avi_splitter_sink_ops, NULL);
@@ -2569,10 +2546,10 @@ IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr)
     object->init_gst = avi_splitter_init_gst;
     object->source_query_accept = avi_splitter_source_query_accept;
     object->source_get_media_type = avi_splitter_source_get_media_type;
-    *phr = S_OK;
 
     TRACE("Created AVI splitter %p.\n", object);
-    return &object->filter.IUnknown_inner;
+    *out = &object->filter.IUnknown_inner;
+    return S_OK;
 }
 
 static HRESULT mpeg_splitter_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
@@ -2701,24 +2678,18 @@ static const struct strmbase_filter_ops mpeg_splitter_ops =
     .filter_wait_state = gstdemux_wait_state,
 };
 
-IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr)
+HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR sink_name[] = {'I','n','p','u','t',0};
     struct gstdemux *object;
 
     if (!init_gstreamer())
-    {
-        *phr = E_FAIL;
-        return NULL;
-    }
+        return E_FAIL;
 
     mark_wine_thread();
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
-    {
-        *phr = E_OUTOFMEMORY;
-        return NULL;
-    }
+        return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_MPEG1Splitter, &mpeg_splitter_ops);
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &mpeg_splitter_sink_ops, NULL);
@@ -2730,8 +2701,8 @@ IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr)
     object->source_query_accept = mpeg_splitter_source_query_accept;
     object->source_get_media_type = mpeg_splitter_source_get_media_type;
     object->enum_sink_first = TRUE;
-    *phr = S_OK;
 
     TRACE("Created MPEG-1 splitter %p.\n", object);
-    return &object->filter.IUnknown_inner;
+    *out = &object->filter.IUnknown_inner;
+    return S_OK;
 }

@@ -5,7 +5,6 @@ EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 PARENTSRC = ../strmbase
 
 C_SRCS = \
-	dllfunc.c \
 	filter.c \
 	gst_cbs.c \
 	gstdemux.c \
@@ -16,7 +15,8 @@ C_SRCS = \
 	qualitycontrol.c \
 	seeking.c
 
-IDL_SRCS = mfplat.idl
+IDL_SRCS = \
+	winegstreamer_classes.idl
 
 RC_SRCS = \
 	rsrc.rc
