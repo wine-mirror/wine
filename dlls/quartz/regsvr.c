@@ -174,18 +174,6 @@ static HRESULT unregister_filters(struct regsvr_filter const *list)
  */
 
 static struct regsvr_filter const filter_list[] = {
-    {   &CLSID_NullRenderer,
-        &CLSID_LegacyAmFilterCategory,
-        L"Null Renderer",
-        0x200000,
-        {   {   REG_PINFLAG_B_RENDERER,
-                {   { &MEDIATYPE_NULL, &GUID_NULL },
-                    { NULL }
-                },
-            },
-            { 0xFFFFFFFF },
-        }
-    },
     {   &CLSID_VideoRenderer,
 	&CLSID_LegacyAmFilterCategory,
 	L"Video Renderer",

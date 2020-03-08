@@ -192,12 +192,71 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     return S_OK;
 }
 
+static const REGPINTYPES reg_null_mt = {&GUID_NULL, &GUID_NULL};
+
+static const REGFILTERPINS2 reg_sample_grabber_pins[2] =
+{
+    {
+        .cInstances = 1,
+        .nMediaTypes = 1,
+        .lpMediaType = &reg_null_mt,
+    },
+    {
+        .dwFlags = REG_PINFLAG_B_OUTPUT,
+        .cInstances = 1,
+        .nMediaTypes = 1,
+        .lpMediaType = &reg_null_mt,
+    },
+};
+
+static const REGFILTER2 reg_sample_grabber =
+{
+    .dwVersion = 2,
+    .dwMerit = MERIT_DO_NOT_USE,
+    .u.s2.cPins2 = 2,
+    .u.s2.rgPins2 = reg_sample_grabber_pins,
+};
+
+static const REGFILTERPINS2 reg_null_renderer_pins[1] =
+{
+    {
+        .dwFlags = REG_PINFLAG_B_OUTPUT,
+        .cInstances = 1,
+        .nMediaTypes = 1,
+        .lpMediaType = &reg_null_mt,
+    },
+};
+
+static const REGFILTER2 reg_null_renderer =
+{
+    .dwVersion = 2,
+    .dwMerit = MERIT_DO_NOT_USE,
+    .u.s2.cPins2 = 1,
+    .u.s2.rgPins2 = reg_null_renderer_pins,
+};
+
 /***********************************************************************
  *		DllRegisterServer (QEDIT.@)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( instance );
+    IFilterMapper2 *mapper;
+    HRESULT hr;
+
+    if (FAILED(hr = __wine_register_resources( instance )))
+        return hr;
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterMapper2, (void **)&mapper)))
+        return hr;
+
+    IFilterMapper2_RegisterFilter(mapper, &CLSID_SampleGrabber, L"SampleGrabber",
+            NULL, NULL, NULL, &reg_sample_grabber);
+    IFilterMapper2_RegisterFilter(mapper, &CLSID_NullRenderer, L"Null Renderer",
+            NULL, NULL, NULL, &reg_null_renderer);
+
+    IFilterMapper2_Release(mapper);
+    return S_OK;
 }
 
 /***********************************************************************
@@ -205,5 +264,19 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( instance );
+    IFilterMapper2 *mapper;
+    HRESULT hr;
+
+    if (FAILED(hr = __wine_unregister_resources( instance )))
+        return hr;
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterMapper2, (void **)&mapper)))
+        return hr;
+
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_SampleGrabber);
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_NullRenderer);
+
+    IFilterMapper2_Release(mapper);
+    return S_OK;
 }
