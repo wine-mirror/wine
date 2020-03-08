@@ -4,7 +4,6 @@ EXTRALIBS = $(QUICKTIME_LIBS)
 PARENTSRC = ../strmbase
 
 C_SRCS = \
-	dllfunc.c \
 	filter.c \
 	main.c \
 	mediatype.c \
@@ -20,3 +19,6 @@ C_SRCS = \
 
 RC_SRCS = \
 	rsrc.rc
+
+IDL_SRCS = \
+	wineqtdecoder_classes.idl

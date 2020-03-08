@@ -126,6 +126,7 @@
 #include "wine/strmbase.h"
 
 #include "qtprivate.h"
+#include "wineqtdecoder_classes.h"
 
 extern CLSID CLSID_QTVDecoder;
 
@@ -505,22 +506,17 @@ static const TransformFilterFuncTable QTVDecoder_FuncsTable = {
     .pfnBreakConnect = QTVDecoder_BreakConnect,
 };
 
-IUnknown * CALLBACK QTVDecoder_create(IUnknown *outer, HRESULT* phr)
+HRESULT video_decoder_create(IUnknown *outer, IUnknown **out)
 {
+    QTVDecoderImpl *object;
     HRESULT hr;
-    QTVDecoderImpl * This;
-
-    *phr = S_OK;
 
     hr = strmbase_transform_create(sizeof(QTVDecoderImpl), outer, &CLSID_QTVDecoder,
-            &QTVDecoder_FuncsTable, (IBaseFilter **)&This);
-
+            &QTVDecoder_FuncsTable, (IBaseFilter **)&object);
     if (FAILED(hr))
-    {
-        *phr = hr;
-        return NULL;
-    }
+        return hr;
 
-    *phr = hr;
-    return &This->tf.filter.IUnknown_inner;
+    TRACE("Created video decoder %p.\n", object);
+    *out = &object->tf.filter.IUnknown_inner;
+    return S_OK;
 }
