@@ -110,6 +110,7 @@ struct driver
     WCHAR manufacturer[LINE_LEN];
     WCHAR mfg_key[LINE_LEN];
     WCHAR description[LINE_LEN];
+    WCHAR section[LINE_LEN];
 };
 
 /* is used to identify if a DeviceInfoSet pointer is
@@ -4564,6 +4565,8 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
                     lstrcpyW(device->drivers[count - 1].mfg_key, mfg_key_ext);
                     SetupGetStringFieldW(&ctx, 0, device->drivers[count - 1].description,
                             ARRAY_SIZE(device->drivers[count - 1].description), NULL);
+                    SetupGetStringFieldW(&ctx, 1, device->drivers[count - 1].section,
+                            ARRAY_SIZE(device->drivers[count - 1].section), NULL);
 
                     TRACE("Found compatible driver: manufacturer %s, desc %s.\n",
                             debugstr_w(mfg_name), debugstr_w(device->drivers[count - 1].description));
@@ -4659,6 +4662,7 @@ static BOOL copy_driver_data(SP_DRVINFO_DATA_W *data, const struct driver *drive
     wcscpy(data->Description, driver->description);
     wcscpy(data->MfgName, driver->manufacturer);
     data->DriverType = SPDIT_COMPATDRIVER;
+    data->Reserved = (ULONG_PTR)driver;
 
     SetupCloseInfFile(hinf);
 
@@ -4778,6 +4782,155 @@ BOOL WINAPI SetupDiGetSelectedDriverA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_
     if ((ret = SetupDiGetSelectedDriverW(devinfo, device_data, &driver_dataW)))
         driver_data_wtoa(driver_data, &driver_dataW);
     return ret;
+}
+
+/***********************************************************************
+ *              SetupDiGetDriverInfoDetailW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDriverInfoDetailW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
+        SP_DRVINFO_DATA_W *driver_data, SP_DRVINFO_DETAIL_DATA_W *detail_data, const DWORD size, DWORD *ret_size)
+{
+    struct driver *driver = (struct driver *)driver_data->Reserved;
+    DWORD size_needed, i, id_size = 1;
+    WCHAR id[MAX_DEVICE_ID_LEN];
+    INFCONTEXT ctx;
+    HANDLE file;
+    HINF hinf;
+
+    TRACE("devinfo %p, device_data %p, driver_data %p, detail_data %p, size %u, ret_size %p.\n",
+            devinfo, device_data, driver_data, detail_data, size, ret_size);
+
+    if ((detail_data || size) && size < sizeof(SP_DRVINFO_DETAIL_DATA_W))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    for (i = 2; SetupGetStringFieldW(&ctx, i, id, ARRAY_SIZE(id), NULL); ++i)
+        id_size += wcslen(id) + 1;
+
+    size_needed = FIELD_OFFSET(SP_DRVINFO_DETAIL_DATA_W, HardwareID[id_size]);
+    if (ret_size)
+        *ret_size = size_needed;
+    if (!detail_data)
+        return TRUE;
+
+    detail_data->CompatIDsLength = detail_data->CompatIDsOffset = 0;
+    detail_data->HardwareID[0] = 0;
+
+    if (size >= size_needed)
+    {
+        id_size = 0;
+        for (i = 2; SetupGetStringFieldW(&ctx, i, id, ARRAY_SIZE(id), NULL); ++i)
+        {
+            wcscpy(&detail_data->HardwareID[id_size], id);
+            if (i == 3)
+                detail_data->CompatIDsOffset = id_size;
+            id_size += wcslen(id) + 1;
+        }
+        detail_data->HardwareID[id_size++] = 0;
+        if (i > 3)
+            detail_data->CompatIDsLength = id_size - detail_data->CompatIDsOffset;
+    }
+
+    SetupCloseInfFile(hinf);
+
+    if ((file = CreateFileW(driver->inf_path, 0, 0, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+    GetFileTime(file, NULL, NULL, &detail_data->InfDate);
+    CloseHandle(file);
+
+    wcscpy(detail_data->SectionName, driver->section);
+    wcscpy(detail_data->InfFileName, driver->inf_path);
+    wcscpy(detail_data->DrvDescription, driver->description);
+
+    if (size < size_needed)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              SetupDiGetDriverInfoDetailA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDriverInfoDetailA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
+        SP_DRVINFO_DATA_A *driver_data, SP_DRVINFO_DETAIL_DATA_A *detail_data, const DWORD size, DWORD *ret_size)
+{
+    struct driver *driver = (struct driver *)driver_data->Reserved;
+    DWORD size_needed, i, id_size = 1;
+    char id[MAX_DEVICE_ID_LEN];
+    INFCONTEXT ctx;
+    HANDLE file;
+    HINF hinf;
+
+    TRACE("devinfo %p, device_data %p, driver_data %p, detail_data %p, size %u, ret_size %p.\n",
+            devinfo, device_data, driver_data, detail_data, size, ret_size);
+
+    if ((detail_data || size) && size < sizeof(SP_DRVINFO_DETAIL_DATA_A))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    for (i = 2; SetupGetStringFieldA(&ctx, i, id, ARRAY_SIZE(id), NULL); ++i)
+        id_size += strlen(id) + 1;
+
+    size_needed = FIELD_OFFSET(SP_DRVINFO_DETAIL_DATA_A, HardwareID[id_size]);
+    if (ret_size)
+        *ret_size = size_needed;
+    if (!detail_data)
+        return TRUE;
+
+    detail_data->CompatIDsLength = detail_data->CompatIDsOffset = 0;
+    detail_data->HardwareID[0] = 0;
+
+    if (size >= size_needed)
+    {
+        id_size = 0;
+        for (i = 2; SetupGetStringFieldA(&ctx, i, id, ARRAY_SIZE(id), NULL); ++i)
+        {
+            strcpy(&detail_data->HardwareID[id_size], id);
+            if (i == 3)
+                detail_data->CompatIDsOffset = id_size;
+            id_size += strlen(id) + 1;
+        }
+        detail_data->HardwareID[id_size++] = 0;
+        if (i > 3)
+            detail_data->CompatIDsLength = id_size - detail_data->CompatIDsOffset;
+    }
+
+    SetupCloseInfFile(hinf);
+
+    if ((file = CreateFileW(driver->inf_path, 0, 0, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+    GetFileTime(file, NULL, NULL, &detail_data->InfDate);
+    CloseHandle(file);
+
+    WideCharToMultiByte(CP_ACP, 0, driver->section, -1, detail_data->SectionName,
+            sizeof(detail_data->SectionName), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, driver->inf_path, -1, detail_data->InfFileName,
+            sizeof(detail_data->InfFileName), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, driver->description, -1, detail_data->DrvDescription,
+            sizeof(detail_data->InfFileName), NULL, NULL);
+
+    if (size < size_needed)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
