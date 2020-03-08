@@ -256,33 +256,6 @@ HRESULT WINAPI SourceSeekingImpl_GetPreroll(IMediaSeeking * iface, LONGLONG * pP
 HRESULT WINAPI CreatePosPassThru(IUnknown* pUnkOuter, BOOL bRenderer, IPin *pPin, IUnknown **ppPassThru);
 HRESULT WINAPI PosPassThru_Construct(IUnknown* pUnkOuter, LPVOID *ppPassThru);
 
-/* Filter Registration */
-
-typedef REGPINTYPES AMOVIESETUP_MEDIATYPE;
-typedef REGFILTERPINS AMOVIESETUP_PIN;
-
-typedef struct AMOVIESETUP_FILTER {
-	const CLSID *clsid;
-	const WCHAR *name;
-	DWORD merit;
-	UINT pins;
-	const AMOVIESETUP_PIN *pPin;
-} AMOVIESETUP_FILTER, *LPAMOVIESETUP_FILTER;
-
-typedef IUnknown *(CALLBACK *LPFNNewCOMObject)(LPUNKNOWN pUnkOuter, HRESULT *phr);
-typedef void (CALLBACK *LPFNInitRoutine)(BOOL bLoading, const CLSID *rclsid);
-
-typedef struct tagFactoryTemplate {
-	const WCHAR *m_Name;
-	const CLSID *m_ClsID;
-	LPFNNewCOMObject m_lpfnNew;
-	LPFNInitRoutine m_lpfnInit;
-	const AMOVIESETUP_FILTER *m_pAMovieSetup_Filter;
-} FactoryTemplate;
-
-HRESULT WINAPI AMovieDllRegisterServer2(BOOL bRegister);
-HRESULT WINAPI AMovieSetupRegisterFilter2(const AMOVIESETUP_FILTER *pFilter, IFilterMapper2  *pIFM2, BOOL  bRegister);
-
 /* Output Queue */
 typedef struct tagOutputQueue {
     CRITICAL_SECTION csQueue;
@@ -528,8 +501,3 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *filter, IMedia
 HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
         const CLSID *clsid, const WCHAR *sink_name, const struct strmbase_renderer_ops *ops);
 void strmbase_renderer_cleanup(struct strmbase_renderer *filter);
-
-/* Dll Functions */
-BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv);
-HRESULT WINAPI STRMBASE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
-HRESULT WINAPI STRMBASE_DllCanUnloadNow(void);
