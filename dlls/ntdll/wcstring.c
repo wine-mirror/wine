@@ -38,7 +38,14 @@
  */
 INT __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 )
 {
-    return strcmpiW( str1, str2 );
+    for (;;)
+    {
+        WCHAR ch1 = (*str1 >= 'A' && *str1 <= 'Z') ? *str1 + 32 : *str1;
+        WCHAR ch2 = (*str2 >= 'A' && *str2 <= 'Z') ? *str2 + 32 : *str2;
+        if (ch1 != ch2 || !*str1) return ch1 - ch2;
+        str1++;
+        str2++;
+    }
 }
 
 
@@ -64,7 +71,14 @@ LPWSTR __cdecl NTDLL__wcslwr( LPWSTR str )
  */
 INT __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, INT n )
 {
-    return strncmpiW( str1, str2, n );
+    int ret = 0;
+    for ( ; n > 0; n--, str1++, str2++)
+    {
+        WCHAR ch1 = (*str1 >= 'A' && *str1 <= 'Z') ? *str1 + 32 : *str1;
+        WCHAR ch2 = (*str2 >= 'A' && *str2 <= 'Z') ? *str2 + 32 : *str2;
+        if ((ret = ch1 - ch2) ||  !*str1) break;
+    }
+    return ret;
 }
 
 

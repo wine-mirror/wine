@@ -57,6 +57,8 @@ static LPWSTR   (__cdecl *p_wcslwr)(LPWSTR);
 static LPWSTR   (__cdecl *p_wcsupr)(LPWSTR);
 static WCHAR    (__cdecl *ptowlower)(WCHAR);
 static WCHAR    (__cdecl *ptowupper)(WCHAR);
+static int      (__cdecl *p_wcsicmp)(LPCWSTR,LPCWSTR);
+static int      (__cdecl *p_wcsnicmp)(LPCWSTR,LPCWSTR,int);
 
 static LPWSTR   (__cdecl *pwcschr)(LPCWSTR, WCHAR);
 static LPWSTR   (__cdecl *pwcsrchr)(LPCWSTR, WCHAR);
@@ -102,6 +104,8 @@ static void InitFunctionPtrs(void)
     X(_wcsupr);
     X(towlower);
     X(towupper);
+    X(_wcsicmp);
+    X(_wcsnicmp);
     X(wcschr);
     X(wcsrchr);
     X(qsort);
@@ -1196,6 +1200,28 @@ static void test_wcslwrupr(void)
         ok( buffer[i - 1] == (i >= 'a' && i <= 'z' ? i - 32 : i), "%04x: got %04x\n", i, buffer[i-1] );
 }
 
+static void test_wcsicmp(void)
+{
+    WCHAR buf_a[2], buf_b[2];
+    int i, j, ret;
+
+    buf_a[1] = buf_b[1] = 0;
+    for (i = 0; i < 0x300; i++)
+    {
+        int lwr_a = (i >= 'A' && i <= 'Z') ? i + 32 : i;
+        buf_a[0] = i;
+        for (j = 0; j < 0x300; j++)
+        {
+            int lwr_b = (j >= 'A' && j <= 'Z') ? j + 32 : j;
+            buf_b[0] = j;
+            ret = p_wcsicmp( buf_a, buf_b );
+            ok( ret == lwr_a - lwr_b, "%04x:%04x: strings differ %d\n", i, j, ret );
+            ret = p_wcsnicmp( buf_a, buf_b, 2 );
+            ok( ret == lwr_a - lwr_b, "%04x:%04x: strings differ %d\n", i, j, ret );
+        }
+    }
+}
+
 static int __cdecl intcomparefunc(const void *a, const void *b)
 {
     const int *p = a, *q = b;
@@ -1567,5 +1593,6 @@ START_TEST(string)
     test_tolower();
     test_toupper();
     test__strnicmp();
+    test_wcsicmp();
     test_sscanf();
 }
