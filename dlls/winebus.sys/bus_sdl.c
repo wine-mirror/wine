@@ -265,24 +265,14 @@ static void set_button_value(struct platform_private *ext, int index, int value)
     }
 }
 
-static void set_axis_value(struct platform_private *ext, int index, short value)
+static void set_axis_value(struct platform_private *ext, int index, short value, BOOL controller)
 {
-    int offset;
-    offset = ext->axis_start + index * sizeof(WORD);
+    WORD *report = (WORD *)(ext->report_buffer + ext->axis_start);
 
-    switch (index)
-    {
-    case SDL_CONTROLLER_AXIS_LEFTX:
-    case SDL_CONTROLLER_AXIS_LEFTY:
-    case SDL_CONTROLLER_AXIS_RIGHTX:
-    case SDL_CONTROLLER_AXIS_RIGHTY:
-        *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value) + 32768;
-        break;
-    case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-    case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-        *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value);
-        break;
-    }
+    if (controller && (index == SDL_CONTROLLER_AXIS_TRIGGERLEFT || index == SDL_CONTROLLER_AXIS_TRIGGERRIGHT))
+        report[index] = LE_WORD(value);
+    else
+        report[index] = LE_WORD(value) + 32768;
 }
 
 static void set_ball_value(struct platform_private *ext, int index, int value1, int value2)
@@ -510,7 +500,7 @@ static BOOL build_report_descriptor(struct platform_private *ext)
 
     /* Initialize axis in the report */
     for (i = 0; i < axis_count; i++)
-        set_axis_value(ext, i, pSDL_JoystickGetAxis(ext->sdl_joystick, i));
+        set_axis_value(ext, i, pSDL_JoystickGetAxis(ext->sdl_joystick, i), FALSE);
     for (i = 0; i < hat_count; i++)
         set_hat_value(ext, i, pSDL_JoystickGetHat(ext->sdl_joystick, i));
 
@@ -608,7 +598,7 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
 
     /* Initialize axis in the report */
     for (i = SDL_CONTROLLER_AXIS_LEFTX; i < SDL_CONTROLLER_AXIS_MAX; i++)
-        set_axis_value(ext, i, pSDL_GameControllerGetAxis(ext->sdl_controller, i));
+        set_axis_value(ext, i, pSDL_GameControllerGetAxis(ext->sdl_controller, i), TRUE);
 
     set_hat_value(ext, 0, compose_dpad_value(ext->sdl_controller));
 
@@ -787,7 +777,7 @@ static BOOL set_report_from_event(SDL_Event *event)
 
             if (ie->axis < 6)
             {
-                set_axis_value(private, ie->axis, ie->value);
+                set_axis_value(private, ie->axis, ie->value, FALSE);
                 process_hid_report(device, private->report_buffer, private->buffer_length);
             }
             break;
@@ -873,7 +863,7 @@ static BOOL set_mapped_report_from_event(SDL_Event *event)
         {
             SDL_ControllerAxisEvent *ie = &event->caxis;
 
-            set_axis_value(private, ie->axis, ie->value);
+            set_axis_value(private, ie->axis, ie->value, TRUE);
             process_hid_report(device, private->report_buffer, private->buffer_length);
             break;
         }
