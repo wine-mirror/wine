@@ -158,9 +158,7 @@ void WINAPI DECLSPEC_HOTPATCH FatalAppExitA( UINT action, LPCSTR str )
  */
 void WINAPI DECLSPEC_HOTPATCH FatalAppExitW( UINT action, LPCWSTR str )
 {
-    static const WCHAR User32DllW[] = {'u','s','e','r','3','2','.','d','l','l',0};
-
-    HMODULE mod = GetModuleHandleW( User32DllW );
+    HMODULE mod = GetModuleHandleW( L"user32.dll" );
     MessageBoxW_funcptr pMessageBoxW = NULL;
 
     if (mod) pMessageBoxW = (MessageBoxW_funcptr)GetProcAddress( mod, "MessageBoxW" );
@@ -216,8 +214,7 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
     if (!mutex_inited)
     {
         /* first call to OutputDebugString, initialize mutex handle */
-        static const WCHAR mutexname[] = {'D','B','W','i','n','M','u','t','e','x',0};
-        HANDLE mutex = CreateMutexExW( NULL, mutexname, 0, SYNCHRONIZE );
+        HANDLE mutex = CreateMutexExW( NULL, L"DBWinMutex", 0, SYNCHRONIZE );
         if (mutex)
         {
             if (InterlockedCompareExchangePointer( &DBWinMutex, mutex, 0 ) != 0)
@@ -229,20 +226,17 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
 
     if (DBWinMutex)
     {
-        static const WCHAR shmname[] = {'D','B','W','I','N','_','B','U','F','F','E','R',0};
-        static const WCHAR eventbuffername[] = {'D','B','W','I','N','_','B','U','F','F','E','R','_','R','E','A','D','Y',0};
-        static const WCHAR eventdataname[] = {'D','B','W','I','N','_','D','A','T','A','_','R','E','A','D','Y',0};
         HANDLE mapping;
 
-        mapping = OpenFileMappingW( FILE_MAP_WRITE, FALSE, shmname );
+        mapping = OpenFileMappingW( FILE_MAP_WRITE, FALSE, L"DBWIN_BUFFER" );
         if (mapping)
         {
             LPVOID buffer;
             HANDLE eventbuffer, eventdata;
 
             buffer = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
-            eventbuffer = OpenEventW( SYNCHRONIZE, FALSE, eventbuffername );
-            eventdata = OpenEventW( EVENT_MODIFY_STATE, FALSE, eventdataname );
+            eventbuffer = OpenEventW( SYNCHRONIZE, FALSE, L"DBWIN_BUFFER_READY" );
+            eventdata = OpenEventW( EVENT_MODIFY_STATE, FALSE, L"DBWIN_DATA_READY" );
 
             if (buffer && eventbuffer && eventdata)
             {
@@ -519,16 +513,6 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     BOOL ret = FALSE;
     char buffer[256];
 
-    static const WCHAR AeDebugW[] = {'\\','R','e','g','i','s','t','r','y','\\',
-                                     'M','a','c','h','i','n','e','\\',
-                                     'S','o','f','t','w','a','r','e','\\',
-                                     'M','i','c','r','o','s','o','f','t','\\',
-                                     'W','i','n','d','o','w','s',' ','N','T','\\',
-                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                     'A','e','D','e','b','u','g',0};
-    static const WCHAR DebuggerW[] = {'D','e','b','u','g','g','e','r',0};
-    static const WCHAR AutoW[] = {'A','u','t','o',0};
-
     format_exception_msg( epointers, buffer, sizeof(buffer) );
     MESSAGE( "wine: %s (thread %04x), starting debugger...\n", buffer, GetCurrentThreadId() );
 
@@ -538,14 +522,14 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, AeDebugW );
+    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" );
 
     if (!NtOpenKey( &dbg_key, KEY_READ, &attr ))
     {
         KEY_VALUE_PARTIAL_INFORMATION *info;
         DWORD format_size = 0;
 
-        RtlInitUnicodeString( &nameW, DebuggerW );
+        RtlInitUnicodeString( &nameW, L"Debugger" );
         if (NtQueryValueKey( dbg_key, &nameW, KeyValuePartialInformation,
                              NULL, 0, &format_size ) == STATUS_BUFFER_TOO_SMALL)
         {
@@ -570,7 +554,7 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
             HeapFree( GetProcessHeap(), 0, data );
         }
 
-        RtlInitUnicodeString( &nameW, AutoW );
+        RtlInitUnicodeString( &nameW, L"Auto" );
         if (!NtQueryValueKey( dbg_key, &nameW, KeyValuePartialInformation,
                               buffer, sizeof(buffer)-sizeof(WCHAR), &format_size ))
        {
@@ -596,9 +580,8 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     }
     else
     {
-        static const WCHAR fmtW[] = {'w','i','n','e','d','b','g',' ','-','-','a','u','t','o',' ','%','l','d',' ','%','l','d',0};
         cmdline = HeapAlloc( GetProcessHeap(), 0, 80 * sizeof(WCHAR) );
-        swprintf( cmdline, 80, fmtW, (long)GetCurrentProcessId(), (long)HandleToLong(event) );
+        swprintf( cmdline, 80, L"winedbg --auto %ld %ld", (long)GetCurrentProcessId(), (long)HandleToLong(event) );
     }
 
     if (!autostart)
@@ -625,15 +608,14 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     env = GetEnvironmentStringsW();
     if (!TRACE_ON(winedbg))
     {
-        static const WCHAR winedebugW[] = {'W','I','N','E','D','E','B','U','G','=',0};
         for (p = env; *p; p += lstrlenW(p) + 1)
         {
-            if (!wcsncmp( p, winedebugW, lstrlenW(winedebugW) ))
+            if (!wcsncmp( p, L"WINEDEBUG=", 10 ))
             {
                 WCHAR *next = p + lstrlenW(p);
                 WCHAR *end = next + 1;
                 while (*end) end += lstrlenW(end) + 1;
-                memmove( p + lstrlenW(winedebugW), next, end + 1 - next );
+                memmove( p + 10, next, end + 1 - next );
                 break;
             }
         }
