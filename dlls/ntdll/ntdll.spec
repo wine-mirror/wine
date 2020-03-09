@@ -700,7 +700,7 @@
 # Yes, Microsoft really misspelled this one!
 # @ stub RtlGetLengthWithoutTrailingPathSeperators
 @ stdcall RtlGetLongestNtPathLength()
-# @ stub RtlGetNativeSystemInformation
+@ stdcall RtlGetNativeSystemInformation(long ptr long ptr)
 # @ stub RtlGetNextRange
 @ stdcall RtlGetNtGlobalFlags()
 @ stdcall RtlGetNtProductType(ptr)

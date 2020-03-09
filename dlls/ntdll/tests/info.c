@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI * pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS, void*, ULONG, void*, ULONG, ULONG*);
 static NTSTATUS (WINAPI * pNtPowerInformation)(POWER_INFORMATION_LEVEL, PVOID, ULONG, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -75,6 +76,7 @@ static BOOL InitFunctionPtrs(void)
     }
 
     NTDLL_GET_PROC(NtQuerySystemInformation);
+    NTDLL_GET_PROC(RtlGetNativeSystemInformation);
     NTDLL_GET_PROC(NtPowerInformation);
     NTDLL_GET_PROC(NtQueryInformationProcess);
     NTDLL_GET_PROC(NtQueryInformationThread);
@@ -111,7 +113,7 @@ static void test_query_basic(void)
 {
     NTSTATUS status;
     ULONG ReturnLength;
-    SYSTEM_BASIC_INFORMATION sbi;
+    SYSTEM_BASIC_INFORMATION sbi, sbi2;
 
     /* This test also covers some basic parameter testing that should be the same for 
      * every information class
@@ -153,6 +155,38 @@ static void test_query_basic(void)
     /* Check if we have some return values */
     trace("Number of Processors : %d\n", sbi.NumberOfProcessors);
     ok( sbi.NumberOfProcessors > 0, "Expected more than 0 processors, got %d\n", sbi.NumberOfProcessors);
+
+    memset(&sbi2, 0, sizeof(sbi2));
+    status = pRtlGetNativeSystemInformation(SystemBasicInformation, &sbi2, sizeof(sbi2), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x.\n", status);
+    ok( sizeof(sbi2) == ReturnLength, "Unexpected length %u.\n", ReturnLength);
+
+    ok( sbi.unknown == sbi2.unknown, "Expected unknown %#x, got %#x.\n", sbi.unknown, sbi2.unknown);
+    ok( sbi.KeMaximumIncrement == sbi2.KeMaximumIncrement, "Expected KeMaximumIncrement %u, got %u.\n",
+            sbi.KeMaximumIncrement, sbi2.KeMaximumIncrement);
+    ok( sbi.PageSize == sbi2.PageSize, "Expected PageSize field %u, %u.\n", sbi.PageSize, sbi2.PageSize);
+    ok( sbi.MmNumberOfPhysicalPages == sbi2.MmNumberOfPhysicalPages,
+            "Expected MmNumberOfPhysicalPages %u, got %u.\n",
+            sbi.MmNumberOfPhysicalPages, sbi2.MmNumberOfPhysicalPages);
+    ok( sbi.MmLowestPhysicalPage == sbi2.MmLowestPhysicalPage, "Expected MmLowestPhysicalPage %u, got %u.\n",
+            sbi.MmLowestPhysicalPage, sbi2.MmLowestPhysicalPage);
+    ok( sbi.MmHighestPhysicalPage == sbi2.MmHighestPhysicalPage, "Expected MmHighestPhysicalPage %u, got %u.\n",
+            sbi.MmHighestPhysicalPage, sbi2.MmHighestPhysicalPage);
+    /* Higher 32 bits of AllocationGranularity is sometimes garbage on Windows. */
+    ok( (ULONG)sbi.AllocationGranularity == (ULONG)sbi2.AllocationGranularity,
+            "Expected AllocationGranularity %#lx, got %#lx.\n",
+            sbi.AllocationGranularity, sbi2.AllocationGranularity);
+    ok( sbi.LowestUserAddress == sbi2.LowestUserAddress, "Expected LowestUserAddress %p, got %p.\n",
+            (void *)sbi.LowestUserAddress, (void *)sbi2.LowestUserAddress);
+    /* Not testing HighestUserAddress. The field is different from NtQuerySystemInformation result
+     * on 32 bit Windows (some of Win8 versions are the exception). Whenever it is different,
+     * NtQuerySystemInformation returns user space limit (0x0x7ffeffff) and RtlGetNativeSystemInformation
+     * returns address space limit (0xfffeffff). */
+    ok( sbi.ActiveProcessorsAffinityMask == sbi2.ActiveProcessorsAffinityMask,
+            "Expected ActiveProcessorsAffinityMask %#lx, got %#lx.\n",
+            sbi.ActiveProcessorsAffinityMask, sbi2.ActiveProcessorsAffinityMask);
+    ok( sbi.NumberOfProcessors == sbi2.NumberOfProcessors, "Expected NumberOfProcessors %u, got %u.\n",
+            sbi.NumberOfProcessors, sbi2.NumberOfProcessors);
 }
 
 static void test_query_cpu(void)

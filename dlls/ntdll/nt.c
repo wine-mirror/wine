@@ -3076,6 +3076,26 @@ NTSTATUS WINAPI NtQuerySystemInformation(
     return ret;
 }
 
+
+/******************************************************************************
+ * RtlGetNativeSystemInformation [NTDLL.@]
+ */
+NTSTATUS WINAPI /* DECLSPEC_HOTPATCH */ RtlGetNativeSystemInformation(
+	IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
+	OUT PVOID SystemInformation,
+	IN ULONG Length,
+	OUT PULONG ResultLength)
+{
+    FIXME( "semi-stub, SystemInformationClass %#x, SystemInformation %p, Length %#x, ResultLength %p.\n",
+            SystemInformationClass, SystemInformation, Length, ResultLength );
+
+    /* RtlGetNativeSystemInformation function is the same as NtQuerySystemInformation on some Win7
+     * versions but there are differences for earlier and newer versions, at least:
+     *     - HighestUserAddress field for SystemBasicInformation;
+     *     - Some information classes are not supported by RtlGetNativeSystemInformation. */
+    return NtQuerySystemInformation( SystemInformationClass, SystemInformation, Length, ResultLength );
+}
+
 /******************************************************************************
  * NtQuerySystemInformationEx [NTDLL.@]
  * ZwQuerySystemInformationEx [NTDLL.@]
