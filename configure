@@ -1792,6 +1792,7 @@ enable_uninstaller
 enable_unlodctr
 enable_view
 enable_wevtutil
+enable_whoami
 enable_wineboot
 enable_winebrowser
 enable_winecfg
@@ -21266,6 +21267,7 @@ wine_fn_config_makefile programs/uninstaller enable_uninstaller
 wine_fn_config_makefile programs/unlodctr enable_unlodctr
 wine_fn_config_makefile programs/view enable_view
 wine_fn_config_makefile programs/wevtutil enable_wevtutil
+wine_fn_config_makefile programs/whoami enable_whoami
 wine_fn_config_makefile programs/wineboot enable_wineboot
 wine_fn_config_makefile programs/winebrowser enable_winebrowser
 wine_fn_config_makefile programs/winecfg enable_winecfg
