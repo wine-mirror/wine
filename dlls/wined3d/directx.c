@@ -1444,23 +1444,17 @@ HRESULT CDECL wined3d_output_get_raster_status(const struct wined3d_output *outp
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
-        UINT adapter_idx, enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id,
+HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d_adapter *adapter,
+        enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id,
         enum wined3d_format_id render_target_format_id, enum wined3d_format_id depth_stencil_format_id)
 {
     const struct wined3d_format *rt_format;
     const struct wined3d_format *ds_format;
-    const struct wined3d_adapter *adapter;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s,  "
-            "adapter_format %s, render_target_format %s, depth_stencil_format %s.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(adapter_format_id),
+    TRACE("adapter %p, device_type %s, adapter_format %s, render_target_format %s, "
+            "depth_stencil_format %s.\n",
+            adapter, debug_d3ddevicetype(device_type), debug_d3dformat(adapter_format_id),
             debug_d3dformat(render_target_format_id), debug_d3dformat(depth_stencil_format_id));
-
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
 
     rt_format = wined3d_get_format(adapter, render_target_format_id, WINED3D_BIND_RENDER_TARGET);
     ds_format = wined3d_get_format(adapter, depth_stencil_format_id, WINED3D_BIND_DEPTH_STENCIL);

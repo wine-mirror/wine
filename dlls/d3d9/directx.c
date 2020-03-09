@@ -349,13 +349,20 @@ static HRESULT WINAPI d3d9_CheckDepthStencilMatch(IDirect3D9Ex *iface, UINT adap
         D3DFORMAT adapter_format, D3DFORMAT rt_format, D3DFORMAT ds_format)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
+    struct wined3d_adapter *wined3d_adapter;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, adapter_format %#x, rt_format %#x, ds_format %#x.\n",
             iface, adapter, device_type, adapter_format, rt_format, ds_format);
 
+    output_idx = adapter;
+    if (output_idx >= d3d9->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
+
     wined3d_mutex_lock();
-    hr = wined3d_check_depth_stencil_match(d3d9->wined3d, adapter, device_type,
+    wined3d_adapter = wined3d_output_get_adapter(d3d9->wined3d_outputs[output_idx]);
+    hr = wined3d_check_depth_stencil_match(wined3d_adapter, device_type,
             wined3dformat_from_d3dformat(adapter_format), wined3dformat_from_d3dformat(rt_format),
             wined3dformat_from_d3dformat(ds_format));
     wined3d_mutex_unlock();
