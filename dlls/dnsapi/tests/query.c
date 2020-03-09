@@ -38,8 +38,11 @@ static void test_DnsQuery(void)
     DNS_RECORDW *rec;
     DNS_STATUS status;
 
-    wcscpy(domain, L"_ldap._tcp.deadbeef");
     status = DnsQuery_W(L"", DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
+    ok(status == DNS_ERROR_RCODE_NAME_ERROR || status == DNS_INFO_NO_RECORDS || status == ERROR_INVALID_NAME /* XP */, "got %u\n", status);
+
+    wcscpy(domain, L"_ldap._tcp.deadbeef");
+    status = DnsQuery_W(domain, DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
     ok(status == DNS_ERROR_RCODE_NAME_ERROR || status == DNS_INFO_NO_RECORDS || status == ERROR_INVALID_NAME /* XP */, "got %u\n", status);
 
     wcscpy(domain, L"_ldap._tcp.dc._msdcs.");
