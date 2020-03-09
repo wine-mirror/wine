@@ -797,6 +797,8 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
         continue; \
     }
 
+        memset(&reg_tzi, 0, sizeof(reg_tzi));
+
         if (!reg_query_value(hSubkey, mui_stdW, REG_SZ, reg_tzi.StandardName, sizeof(reg_tzi.StandardName)))
             get_value(hSubkey, stdW, REG_SZ, reg_tzi.StandardName, sizeof(reg_tzi.StandardName));
         if (!reg_query_value(hSubkey, mui_dltW, REG_SZ, reg_tzi.DaylightName, sizeof(reg_tzi.DaylightName)))
