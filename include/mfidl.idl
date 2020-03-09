@@ -591,6 +591,7 @@ cpp_quote("HRESULT WINAPI MFCreatePresentationClock(IMFPresentationClock **clock
 cpp_quote("HRESULT WINAPI MFCreatePresentationDescriptor(DWORD count, IMFStreamDescriptor **descriptors,")
 cpp_quote("     IMFPresentationDescriptor **presentation_desc);")
 cpp_quote("HRESULT WINAPI MFCreateSimpleTypeHandler(IMFMediaTypeHandler **handler);")
+cpp_quote("HRESULT WINAPI MFCreateSampleCopierMFT(IMFTransform **transform);")
 cpp_quote("HRESULT WINAPI MFCreateSampleGrabberSinkActivate(IMFMediaType *media_type,")
 cpp_quote("        IMFSampleGrabberSinkCallback *callback, IMFActivate **activate);")
 cpp_quote("HRESULT WINAPI MFCreateSequencerSource(IUnknown *reserved, IMFSequencerSource **seq_source);" )

@@ -50,7 +50,7 @@
 @ stub MFCreateProxyLocator
 @ stub MFCreateRemoteDesktopPlugin
 @ stub MFCreateSAMIByteStreamPlugin
-@ stub MFCreateSampleCopierMFT
+@ stdcall MFCreateSampleCopierMFT(ptr)
 @ stdcall MFCreateSampleGrabberSinkActivate(ptr ptr ptr)
 @ stub MFCreateSecureHttpSchemePlugin
 @ stub MFCreateSequencerSegmentOffset

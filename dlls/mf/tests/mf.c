@@ -2751,6 +2751,276 @@ static void test_MFGetSupportedSchemes(void)
     PropVariantClear(&value);
 }
 
+static BOOL is_sample_copier_available_type(IMFMediaType *type)
+{
+    GUID major = { 0 };
+    UINT32 count;
+    HRESULT hr;
+
+    hr = IMFMediaType_GetMajorType(type, &major);
+    ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_GetCount(type, &count);
+    ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected attribute count %u.\n", count);
+
+    return IsEqualGUID(&major, &MFMediaType_Video) || IsEqualGUID(&major, &MFMediaType_Audio);
+}
+
+static void test_sample_copier(void)
+{
+    DWORD in_min, in_max, out_min, out_max;
+    IMFMediaType *mediatype, *mediatype2;
+    MFT_OUTPUT_STREAM_INFO output_info;
+    IMFSample *sample, *client_sample;
+    MFT_INPUT_STREAM_INFO input_info;
+    DWORD input_count, output_count;
+    MFT_OUTPUT_DATA_BUFFER buffer;
+    IMFMediaBuffer *media_buffer;
+    IMFAttributes *attributes;
+    IMFTransform *copier;
+    DWORD flags, status;
+    HRESULT hr;
+
+    hr = MFCreateSampleCopierMFT(&copier);
+    ok(hr == S_OK, "Failed to create sample copier, hr %#x.\n", hr);
+
+    hr = IMFTransform_GetAttributes(copier, &attributes);
+    ok(hr == S_OK, "Failed to get transform attributes, hr %#x.\n", hr);
+    IMFAttributes_Release(attributes);
+
+    hr = IMFTransform_GetInputStreamAttributes(copier, 0, &attributes);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputStreamAttributes(copier, 1, &attributes);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamAttributes(copier, 0, &attributes);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamAttributes(copier, 1, &attributes);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputBounds(copier, 0, 0);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    /* No dynamic streams. */
+    input_count = output_count = 0;
+    hr = IMFTransform_GetStreamCount(copier, &input_count, &output_count);
+    ok(hr == S_OK, "Failed to get stream count, hr %#x.\n", hr);
+    ok(input_count == 1 && output_count == 1, "Unexpected streams count.\n");
+
+    hr = IMFTransform_GetStreamLimits(copier, &in_min, &in_max, &out_min, &out_max);
+    ok(hr == S_OK, "Failed to get stream limits, hr %#x.\n", hr);
+    ok(in_min == in_max && in_min == 1 && out_min == out_max && out_min == 1, "Unexpected stream limits.\n");
+
+    hr = IMFTransform_GetStreamIDs(copier, 1, &input_count, 1, &output_count);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_DeleteInputStream(copier, 0);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    /* Available types. */
+    hr = IMFTransform_GetInputAvailableType(copier, 0, 0, &mediatype);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(is_sample_copier_available_type(mediatype), "Unexpected type.\n");
+    IMFMediaType_Release(mediatype);
+
+    hr = IMFTransform_GetInputAvailableType(copier, 0, 1, &mediatype);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(is_sample_copier_available_type(mediatype), "Unexpected type.\n");
+    IMFMediaType_Release(mediatype);
+
+    hr = IMFTransform_GetInputAvailableType(copier, 0, 2, &mediatype);
+    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputAvailableType(copier, 1, 0, &mediatype);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputAvailableType(copier, 0, 0, &mediatype);
+    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputAvailableType(copier, 1, 0, &mediatype);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputCurrentType(copier, 0, &mediatype);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputCurrentType(copier, 1, &mediatype);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputCurrentType(copier, 0, &mediatype);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputCurrentType(copier, 1, &mediatype);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessInput(copier, 0, sample, 0);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(copier, 0, mediatype, 0);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, &MFVideoFormat_RGB8);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetUINT64(mediatype, &MF_MT_FRAME_SIZE, ((UINT64)16) << 32 | 16);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamInfo(copier, 0, &output_info);
+    ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
+    ok(!output_info.dwFlags, "Unexpected flags %#x.\n", output_info.dwFlags);
+    ok(!output_info.cbSize, "Unexpected size %u.\n", output_info.cbSize);
+    ok(!output_info.cbAlignment, "Unexpected alignment %u.\n", output_info.cbAlignment);
+
+    hr = IMFTransform_GetInputStreamInfo(copier, 0, &input_info);
+    ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
+
+    ok(!input_info.hnsMaxLatency, "Unexpected latency %s.\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    ok(!input_info.dwFlags, "Unexpected flags %#x.\n", input_info.dwFlags);
+    ok(!input_info.cbSize, "Unexpected size %u.\n", input_info.cbSize);
+    ok(!input_info.cbMaxLookahead, "Unexpected lookahead size %u.\n", input_info.cbMaxLookahead);
+    ok(!input_info.cbAlignment, "Unexpected alignment %u.\n", input_info.cbAlignment);
+
+    hr = IMFTransform_SetOutputType(copier, 0, mediatype, 0);
+    ok(hr == S_OK, "Failed to set input type, hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamInfo(copier, 0, &output_info);
+    ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
+    ok(!output_info.dwFlags, "Unexpected flags %#x.\n", output_info.dwFlags);
+    ok(output_info.cbSize == 16 * 16, "Unexpected size %u.\n", output_info.cbSize);
+    ok(!output_info.cbAlignment, "Unexpected alignment %u.\n", output_info.cbAlignment);
+
+    hr = IMFTransform_GetOutputCurrentType(copier, 0, &mediatype2);
+    ok(hr == S_OK, "Failed to get current type, hr %#x.\n", hr);
+    IMFMediaType_Release(mediatype2);
+
+    hr = IMFTransform_GetInputCurrentType(copier, 0, &mediatype2);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputStatus(copier, 0, &flags);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    /* Setting input type resets output type. */
+    hr = IMFTransform_GetOutputCurrentType(copier, 0, &mediatype2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFMediaType_Release(mediatype2);
+
+    hr = IMFTransform_SetInputType(copier, 0, mediatype, 0);
+    ok(hr == S_OK, "Failed to set input type, hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputCurrentType(copier, 0, &mediatype2);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputAvailableType(copier, 0, 1, &mediatype2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(is_sample_copier_available_type(mediatype2), "Unexpected type.\n");
+    IMFMediaType_Release(mediatype2);
+
+    hr = IMFTransform_GetInputStreamInfo(copier, 0, &input_info);
+    ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
+    ok(!input_info.hnsMaxLatency, "Unexpected latency %s.\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    ok(!input_info.dwFlags, "Unexpected flags %#x.\n", input_info.dwFlags);
+    ok(input_info.cbSize == 16 * 16, "Unexpected size %u.\n", input_info.cbSize);
+    ok(!input_info.cbMaxLookahead, "Unexpected lookahead size %u.\n", input_info.cbMaxLookahead);
+    ok(!input_info.cbAlignment, "Unexpected alignment %u.\n", input_info.cbAlignment);
+
+    hr = IMFTransform_GetOutputAvailableType(copier, 0, 0, &mediatype2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_IsEqual(mediatype2, mediatype, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFMediaType_Release(mediatype2);
+
+    hr = IMFTransform_GetInputStatus(copier, 0, &flags);
+    ok(hr == S_OK, "Failed to get input status, hr %#x.\n", hr);
+    ok(flags == MFT_INPUT_STATUS_ACCEPT_DATA, "Unexpected flags %#x.\n", flags);
+
+    hr = IMFTransform_GetInputCurrentType(copier, 0, &mediatype2);
+    ok(hr == S_OK, "Failed to get current type, hr %#x.\n", hr);
+    IMFMediaType_Release(mediatype2);
+
+    hr = IMFTransform_GetOutputStatus(copier, &flags);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(copier, 0, mediatype, 0);
+    ok(hr == S_OK, "Failed to set output type, hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStatus(copier, &flags);
+    ok(hr == S_OK, "Failed to get output status, hr %#x.\n", hr);
+    ok(!flags, "Unexpected flags %#x.\n", flags);
+
+    /* Pushing samples. */
+    hr = MFCreateAlignedMemoryBuffer(output_info.cbSize, output_info.cbAlignment, &media_buffer);
+    ok(hr == S_OK, "Failed to create media buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(sample, media_buffer);
+    ok(hr == S_OK, "Failed to add a buffer, hr %#x.\n", hr);
+    IMFMediaBuffer_Release(media_buffer);
+
+    EXPECT_REF(sample, 1);
+    hr = IMFTransform_ProcessInput(copier, 0, sample, 0);
+    ok(hr == S_OK, "Failed to process input, hr %#x.\n", hr);
+    EXPECT_REF(sample, 2);
+
+    hr = IMFTransform_GetInputStatus(copier, 0, &flags);
+    ok(hr == S_OK, "Failed to get input status, hr %#x.\n", hr);
+    ok(!flags, "Unexpected flags %#x.\n", flags);
+
+    hr = IMFTransform_GetOutputStatus(copier, &flags);
+    ok(hr == S_OK, "Failed to get output status, hr %#x.\n", hr);
+    ok(flags == MFT_OUTPUT_STATUS_SAMPLE_READY, "Unexpected flags %#x.\n", flags);
+
+    hr = IMFTransform_ProcessInput(copier, 0, sample, 0);
+    ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamInfo(copier, 0, &output_info);
+    ok(hr == S_OK, "Failed to get output info, hr %#x.\n", hr);
+
+    hr = MFCreateAlignedMemoryBuffer(output_info.cbSize, output_info.cbAlignment, &media_buffer);
+    ok(hr == S_OK, "Failed to create media buffer, hr %#x.\n", hr);
+
+    hr = MFCreateSample(&client_sample);
+    ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(client_sample, media_buffer);
+    ok(hr == S_OK, "Failed to add a buffer, hr %#x.\n", hr);
+    IMFMediaBuffer_Release(media_buffer);
+
+    status = 0;
+    memset(&buffer, 0, sizeof(buffer));
+    buffer.pSample = client_sample;
+    hr = IMFTransform_ProcessOutput(copier, 0, 1, &buffer, &status);
+    ok(hr == S_OK, "Failed to get output, hr %#x.\n", hr);
+    EXPECT_REF(sample, 1);
+
+    hr = IMFTransform_ProcessOutput(copier, 0, 1, &buffer, &status);
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Failed to get output, hr %#x.\n", hr);
+
+    /* Flushing. */
+    hr = IMFTransform_ProcessInput(copier, 0, sample, 0);
+    ok(hr == S_OK, "Failed to process input, hr %#x.\n", hr);
+    EXPECT_REF(sample, 2);
+
+    hr = IMFTransform_ProcessMessage(copier, MFT_MESSAGE_COMMAND_FLUSH, 0);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+    EXPECT_REF(sample, 1);
+
+    IMFSample_Release(sample);
+    IMFSample_Release(client_sample);
+
+    IMFMediaType_Release(mediatype);
+    IMFTransform_Release(copier);
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -2768,4 +3038,5 @@ START_TEST(mf)
     test_MFCreateSimpleTypeHandler();
     test_MFGetSupportedMimeTypes();
     test_MFGetSupportedSchemes();
+    test_sample_copier();
 }
