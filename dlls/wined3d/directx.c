@@ -1783,18 +1783,16 @@ HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d_output
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_device_type device_type, enum wined3d_format_id display_format,
-        enum wined3d_format_id backbuffer_format, BOOL windowed)
+HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d,
+        const struct wined3d_output *output, enum wined3d_device_type device_type,
+        enum wined3d_format_id display_format, enum wined3d_format_id backbuffer_format,
+        BOOL windowed)
 {
     BOOL present_conversion = wined3d->flags & WINED3D_PRESENT_CONVERSION;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s, display_format %s, backbuffer_format %s, windowed %#x.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(display_format),
+    TRACE("wined3d %p, output %p, device_type %s, display_format %s, backbuffer_format %s, windowed %#x.\n",
+            wined3d, output, debug_d3ddevicetype(device_type), debug_d3dformat(display_format),
             debug_d3dformat(backbuffer_format), windowed);
-
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
 
     /* The task of this function is to check whether a certain display / backbuffer format
      * combination is available on the given adapter. In fullscreen mode microsoft specified
@@ -1815,8 +1813,8 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
     if (!windowed)
     {
         /* If the requested display format is not available, don't continue. */
-        if (!wined3d_output_get_mode_count(&wined3d->adapters[adapter_idx]->outputs[0],
-                display_format, WINED3D_SCANLINE_ORDERING_UNKNOWN))
+        if (!wined3d_output_get_mode_count(output, display_format,
+                WINED3D_SCANLINE_ORDERING_UNKNOWN))
         {
             TRACE("No available modes for display format %s.\n", debug_d3dformat(display_format));
             return WINED3DERR_NOTAVAILABLE;
@@ -1839,8 +1837,8 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
         if (backbuffer_format == WINED3DFMT_UNKNOWN)
             backbuffer_format = display_format;
 
-        if (FAILED(wined3d_check_device_format_conversion(&wined3d->adapters[adapter_idx]->outputs[0],
-                device_type, backbuffer_format, display_format)))
+        if (FAILED(wined3d_check_device_format_conversion(output, device_type, backbuffer_format,
+                display_format)))
         {
             TRACE("Format conversion from %s to %s not supported.\n",
                     debug_d3dformat(backbuffer_format), debug_d3dformat(display_format));
@@ -1886,8 +1884,9 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
     }
 
     /* Validate that the back buffer format is usable for render targets. */
-    if (FAILED(wined3d_check_device_format(wined3d, adapter_idx, device_type, display_format,
-            0, WINED3D_BIND_RENDER_TARGET, WINED3D_RTYPE_TEXTURE_2D, backbuffer_format)))
+    if (FAILED(wined3d_check_device_format(wined3d, output->adapter->ordinal, device_type,
+            display_format, 0, WINED3D_BIND_RENDER_TARGET, WINED3D_RTYPE_TEXTURE_2D,
+            backbuffer_format)))
     {
         TRACE("Format %s not allowed for render targets.\n", debug_d3dformat(backbuffer_format));
         return WINED3DERR_NOTAVAILABLE;

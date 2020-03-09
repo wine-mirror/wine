@@ -2259,9 +2259,10 @@ HRESULT __cdecl wined3d_check_device_format_conversion(const struct wined3d_outp
 HRESULT __cdecl wined3d_check_device_multisample_type(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
         enum wined3d_multisample_type multisample_type, DWORD *quality_levels);
-HRESULT __cdecl wined3d_check_device_type(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_device_type device_type, enum wined3d_format_id display_format_id,
-        enum wined3d_format_id backbuffer_format_id, BOOL windowed);
+HRESULT __cdecl wined3d_check_device_type(const struct wined3d *wined3d,
+        const struct wined3d_output *output, enum wined3d_device_type device_type,
+        enum wined3d_format_id display_format_id, enum wined3d_format_id backbuffer_format_id,
+        BOOL windowed);
 struct wined3d * __cdecl wined3d_create(DWORD flags);
 ULONG __cdecl wined3d_decref(struct wined3d *wined3d);
 struct wined3d_adapter * __cdecl wined3d_get_adapter(const struct wined3d *wined3d,

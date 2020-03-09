@@ -6,7 +6,7 @@
 @ cdecl wined3d_check_device_format(ptr long long long long long long long)
 @ cdecl wined3d_check_device_format_conversion(ptr long long long)
 @ cdecl wined3d_check_device_multisample_type(ptr long long long long long ptr)
-@ cdecl wined3d_check_device_type(ptr long long long long long)
+@ cdecl wined3d_check_device_type(ptr ptr long long long long)
 @ cdecl wined3d_create(long)
 @ cdecl wined3d_decref(ptr)
 @ cdecl wined3d_get_adapter(ptr long)

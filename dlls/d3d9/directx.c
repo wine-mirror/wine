@@ -236,17 +236,23 @@ static HRESULT WINAPI d3d9_CheckDeviceType(IDirect3D9Ex *iface, UINT adapter, D3
         D3DFORMAT display_format, D3DFORMAT backbuffer_format, BOOL windowed)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, display_format %#x, backbuffer_format %#x, windowed %#x.\n",
             iface, adapter, device_type, display_format, backbuffer_format, windowed);
+
+    output_idx = adapter;
+    if (output_idx >= d3d9->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
 
     /* Others than that not supported by d3d9, but reported by wined3d for ddraw. Filter them out. */
     if (!windowed && display_format != D3DFMT_X8R8G8B8 && display_format != D3DFMT_R5G6B5)
         return WINED3DERR_NOTAVAILABLE;
 
     wined3d_mutex_lock();
-    hr = wined3d_check_device_type(d3d9->wined3d, adapter, device_type, wined3dformat_from_d3dformat(display_format),
+    hr = wined3d_check_device_type(d3d9->wined3d, d3d9->wined3d_outputs[output_idx], device_type,
+            wined3dformat_from_d3dformat(display_format),
             wined3dformat_from_d3dformat(backbuffer_format), windowed);
     wined3d_mutex_unlock();
 
