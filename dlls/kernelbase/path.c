@@ -114,25 +114,22 @@ static SIZE_T strnlenW(const WCHAR *string, SIZE_T maxlen)
 
 static BOOL is_prefixed_unc(const WCHAR *string)
 {
-    static const WCHAR prefixed_unc[] = {'\\', '\\', '?', '\\', 'U', 'N', 'C', '\\'};
-    return !wcsnicmp(string, prefixed_unc, ARRAY_SIZE(prefixed_unc));
+    return !wcsnicmp(string, L"\\\\?\\UNC\\", 8 );
 }
 
 static BOOL is_prefixed_disk(const WCHAR *string)
 {
-    static const WCHAR prefix[] = {'\\', '\\', '?', '\\'};
-    return !wcsncmp(string, prefix, ARRAY_SIZE(prefix)) && iswalpha(string[4]) && string[5] == ':';
+    return !wcsncmp(string, L"\\\\?\\", 4) && iswalpha(string[4]) && string[5] == ':';
 }
 
 static BOOL is_prefixed_volume(const WCHAR *string)
 {
-    static const WCHAR prefixed_volume[] = {'\\', '\\', '?', '\\', 'V', 'o', 'l', 'u', 'm', 'e'};
     const WCHAR *guid;
     INT i = 0;
 
-    if (wcsnicmp(string, prefixed_volume, ARRAY_SIZE(prefixed_volume))) return FALSE;
+    if (wcsnicmp( string, L"\\\\?\\Volume", 10 )) return FALSE;
 
-    guid = string + ARRAY_SIZE(prefixed_volume);
+    guid = string + 10;
 
     while (i <= 37)
     {
@@ -837,12 +834,10 @@ HRESULT WINAPI PathCchRenameExtension(WCHAR *path, SIZE_T size, const WCHAR *ext
 
 HRESULT WINAPI PathCchSkipRoot(const WCHAR *path, const WCHAR **root_end)
 {
-    static const WCHAR unc_prefix[] = {'\\', '\\', '?'};
-
     TRACE("%s %p\n", debugstr_w(path), root_end);
 
     if (!path || !path[0] || !root_end
-        || (!wcsnicmp(unc_prefix, path, ARRAY_SIZE(unc_prefix)) && !is_prefixed_volume(path) && !is_prefixed_unc(path)
+        || (!wcsnicmp(path, L"\\\\?", 3) && !is_prefixed_volume(path) && !is_prefixed_unc(path)
             && !is_prefixed_disk(path)))
         return E_INVALIDARG;
 
@@ -1818,7 +1813,6 @@ int WINAPI PathGetDriveNumberA(const char *path)
 
 int WINAPI PathGetDriveNumberW(const WCHAR *path)
 {
-    static const WCHAR nt_prefixW[] = {'\\','\\','?','\\'};
     WCHAR drive;
 
     TRACE("%s\n", wine_dbgstr_w(path));
@@ -1826,8 +1820,7 @@ int WINAPI PathGetDriveNumberW(const WCHAR *path)
     if (!path)
         return -1;
 
-    if (!wcsncmp(path, nt_prefixW, 4))
-        path += 4;
+    if (!wcsncmp(path, L"\\\\?\\", 4)) path += 4;
 
     drive = towlower(path[0]);
     if (drive < 'a' || drive > 'z' || path[1] != ':')
@@ -2388,8 +2381,6 @@ BOOL WINAPI PathRelativePathToA(char *path, const char *from, DWORD attributes_f
 BOOL WINAPI PathRelativePathToW(WCHAR *path, const WCHAR *from, DWORD attributes_from, const WCHAR *to,
         DWORD attributes_to)
 {
-    static const WCHAR szPrevDirSlash[] = { '.', '.', '\\', '\0' };
-    static const WCHAR szPrevDir[] = { '.', '.', '\0' };
     WCHAR fromW[MAX_PATH], toW[MAX_PATH];
     DWORD len;
 
@@ -2424,7 +2415,7 @@ BOOL WINAPI PathRelativePathToW(WCHAR *path, const WCHAR *from, DWORD attributes
     while (*from)
     {
         from = PathFindNextComponentW(from);
-        lstrcatW(path, *from ? szPrevDirSlash : szPrevDir);
+        lstrcatW(path, *from ? L"..\\" : L"..");
     }
 
     /* From the root add the components of 'to' */
@@ -2498,11 +2489,9 @@ static BOOL path_match_maskW(const WCHAR *name, const WCHAR *mask)
 
 BOOL WINAPI PathMatchSpecW(const WCHAR *path, const WCHAR *mask)
 {
-    static const WCHAR maskallW[] = {'*','.','*',0};
-
     TRACE("%s, %s\n", wine_dbgstr_w(path), wine_dbgstr_w(mask));
 
-    if (!lstrcmpW(mask, maskallW))
+    if (!lstrcmpW(mask, L"*.*"))
         return TRUE; /* Matches every path */
 
     while (*mask)
@@ -2684,17 +2673,9 @@ BOOL WINAPI PathUnExpandEnvStringsA(const char *path, char *buffer, UINT buf_len
     return TRUE;
 }
 
-static const WCHAR allusersprofileW[] = {'%','A','L','L','U','S','E','R','S','P','R','O','F','I','L','E','%',0};
-static const WCHAR appdataW[] = {'%','A','P','P','D','A','T','A','%',0};
-static const WCHAR programfilesW[] = {'%','P','r','o','g','r','a','m','F','i','l','e','s','%',0};
-static const WCHAR systemrootW[] = {'%','S','y','s','t','e','m','R','o','o','t','%',0};
-static const WCHAR systemdriveW[] = {'%','S','y','s','t','e','m','D','r','i','v','e','%',0};
-static const WCHAR userprofileW[] = {'%','U','S','E','R','P','R','O','F','I','L','E','%',0};
-
 struct envvars_map
 {
     const WCHAR *var;
-    UINT  varlen;
     WCHAR path[MAX_PATH];
     DWORD len;
 };
@@ -2712,16 +2693,16 @@ static void init_envvars_map(struct envvars_map *map)
 
 BOOL WINAPI PathUnExpandEnvStringsW(const WCHAR *path, WCHAR *buffer, UINT buf_len)
 {
-    static struct envvars_map null_var = {NULL, 0, {0}, 0};
+    static struct envvars_map null_var = {L"", {0}, 0};
     struct envvars_map *match = &null_var, *cur;
     struct envvars_map envvars[] =
     {
-        { allusersprofileW, ARRAY_SIZE(allusersprofileW) },
-        { appdataW,         ARRAY_SIZE(appdataW)         },
-        { programfilesW,    ARRAY_SIZE(programfilesW)    },
-        { systemrootW,      ARRAY_SIZE(systemrootW)      },
-        { systemdriveW,     ARRAY_SIZE(systemdriveW)     },
-        { userprofileW,     ARRAY_SIZE(userprofileW)     },
+        { L"%ALLUSERSPROFILE%" },
+        { L"%APPDATA%" },
+        { L"%ProgramFiles%" },
+        { L"%SystemRoot%" },
+        { L"%SystemDrive%" },
+        { L"%USERPROFILE%" },
         { NULL }
     };
     DWORD pathlen;
@@ -2746,8 +2727,7 @@ BOOL WINAPI PathUnExpandEnvStringsW(const WCHAR *path, WCHAR *buffer, UINT buf_l
         cur++;
     }
 
-    /* 'varlen' includes NULL termination char */
-    needed = match->varlen + pathlen - match->len;
+    needed = lstrlenW(match->var) + 1 + pathlen - match->len;
     if (match->len == 0 || needed > buf_len) return FALSE;
 
     lstrcpyW(buffer, match->var);
@@ -2760,28 +2740,28 @@ BOOL WINAPI PathUnExpandEnvStringsW(const WCHAR *path, WCHAR *buffer, UINT buf_l
 static const struct
 {
     URL_SCHEME scheme_number;
-    WCHAR scheme_name[12];
+    const WCHAR *scheme_name;
 }
 url_schemes[] =
 {
-    { URL_SCHEME_FTP,        {'f','t','p',0}},
-    { URL_SCHEME_HTTP,       {'h','t','t','p',0}},
-    { URL_SCHEME_GOPHER,     {'g','o','p','h','e','r',0}},
-    { URL_SCHEME_MAILTO,     {'m','a','i','l','t','o',0}},
-    { URL_SCHEME_NEWS,       {'n','e','w','s',0}},
-    { URL_SCHEME_NNTP,       {'n','n','t','p',0}},
-    { URL_SCHEME_TELNET,     {'t','e','l','n','e','t',0}},
-    { URL_SCHEME_WAIS,       {'w','a','i','s',0}},
-    { URL_SCHEME_FILE,       {'f','i','l','e',0}},
-    { URL_SCHEME_MK,         {'m','k',0}},
-    { URL_SCHEME_HTTPS,      {'h','t','t','p','s',0}},
-    { URL_SCHEME_SHELL,      {'s','h','e','l','l',0}},
-    { URL_SCHEME_SNEWS,      {'s','n','e','w','s',0}},
-    { URL_SCHEME_LOCAL,      {'l','o','c','a','l',0}},
-    { URL_SCHEME_JAVASCRIPT, {'j','a','v','a','s','c','r','i','p','t',0}},
-    { URL_SCHEME_VBSCRIPT,   {'v','b','s','c','r','i','p','t',0}},
-    { URL_SCHEME_ABOUT,      {'a','b','o','u','t',0}},
-    { URL_SCHEME_RES,        {'r','e','s',0}},
+    { URL_SCHEME_FTP,        L"ftp"},
+    { URL_SCHEME_HTTP,       L"http"},
+    { URL_SCHEME_GOPHER,     L"gopher"},
+    { URL_SCHEME_MAILTO,     L"mailto"},
+    { URL_SCHEME_NEWS,       L"news"},
+    { URL_SCHEME_NNTP,       L"nntp"},
+    { URL_SCHEME_TELNET,     L"telnet"},
+    { URL_SCHEME_WAIS,       L"wais"},
+    { URL_SCHEME_FILE,       L"file"},
+    { URL_SCHEME_MK,         L"mk"},
+    { URL_SCHEME_HTTPS,      L"https"},
+    { URL_SCHEME_SHELL,      L"shell"},
+    { URL_SCHEME_SNEWS,      L"snews"},
+    { URL_SCHEME_LOCAL,      L"local"},
+    { URL_SCHEME_JAVASCRIPT, L"javascript"},
+    { URL_SCHEME_VBSCRIPT,   L"vbscript"},
+    { URL_SCHEME_ABOUT,      L"about"},
+    { URL_SCHEME_RES,        L"res"},
 };
 
 static DWORD get_scheme_code(const WCHAR *scheme, DWORD scheme_len)
@@ -3022,8 +3002,6 @@ HRESULT WINAPI PathCreateFromUrlA(const char *pszUrl, char *pszPath, DWORD *pcch
 
 HRESULT WINAPI PathCreateFromUrlW(const WCHAR *url, WCHAR *path, DWORD *pcchPath, DWORD dwReserved)
 {
-    static const WCHAR file_colon[] = { 'f','i','l','e',':',0 };
-    static const WCHAR localhost[] = { 'l','o','c','a','l','h','o','s','t',0 };
     DWORD nslashes, unescape, len;
     const WCHAR *src;
     WCHAR *tpath, *dst;
@@ -3034,10 +3012,7 @@ HRESULT WINAPI PathCreateFromUrlW(const WCHAR *url, WCHAR *path, DWORD *pcchPath
     if (!url || !path || !pcchPath || !*pcchPath)
         return E_INVALIDARG;
 
-    if (lstrlenW(url) < 5)
-        return E_INVALIDARG;
-
-    if (CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, url, 5, file_colon, 5) != CSTR_EQUAL)
+    if (wcsnicmp( url, L"file:", 5))
         return E_INVALIDARG;
 
     url += 5;
@@ -3078,8 +3053,7 @@ HRESULT WINAPI PathCreateFromUrlW(const WCHAR *url, WCHAR *path, DWORD *pcchPath
             src -= 1;
         break;
     case 2:
-        if (lstrlenW(src) >= 10 && CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE,
-            src, 9, localhost, 9) == CSTR_EQUAL && (src[9] == '/' || src[9] == '\\'))
+        if (lstrlenW(src) >= 10 && !wcsnicmp( src, L"localhost", 9) && (src[9] == '/' || src[9] == '\\'))
         {
             /* 'file://localhost/' + escaped DOS path */
             src += 10;
@@ -3307,7 +3281,6 @@ HRESULT WINAPI UrlEscapeA(const char *url, char *escaped, DWORD *escaped_len, DW
 
 HRESULT WINAPI UrlEscapeW(const WCHAR *url, WCHAR *escaped, DWORD *escaped_len, DWORD flags)
 {
-    static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
     DWORD needed = 0, slashes = 0, int_flags;
     WCHAR next[12], *dst, *dst_ptr;
     BOOL stop_escaping = FALSE;
@@ -3389,15 +3362,13 @@ HRESULT WINAPI UrlEscapeW(const WCHAR *url, WCHAR *escaped, DWORD *escaped_len, 
 
         if ((int_flags & WINE_URL_COLLAPSE_SLASHES) && src == url + parsed_url.cchProtocol + 1)
         {
-            int localhost_len = ARRAY_SIZE(localhost) - 1;
             while (cur == '/' || cur == '\\')
             {
                 slashes++;
                 cur = *++src;
             }
-            if (slashes == 2 && !wcsnicmp(src, localhost, localhost_len)) { /* file://localhost/ -> file:/// */
-                if(*(src + localhost_len) == '/' || *(src + localhost_len) == '\\')
-                src += localhost_len + 1;
+            if (slashes == 2 && !wcsnicmp(src, L"localhost", 9)) { /* file://localhost/ -> file:/// */
+                if(src[9] == '/' || src[9] == '\\') src += 10;
                 slashes = 3;
             }
 
@@ -3528,11 +3499,6 @@ HRESULT WINAPI UrlCanonicalizeA(const char *src_url, char *canonicalized, DWORD 
 
 HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWORD *canonicalized_len, DWORD flags)
 {
-    static const WCHAR wszFile[] = {'f','i','l','e',':'};
-    static const WCHAR wszRes[] = {'r','e','s',':'};
-    static const WCHAR wszHttp[] = {'h','t','t','p',':'};
-    static const WCHAR wszLocalhost[] = {'l','o','c','a','l','h','o','s','t'};
-    static const WCHAR wszFilePrefix[] = {'f','i','l','e',':','/','/','/'};
     WCHAR *url_copy, *url, *wk2, *mp, *mp2;
     DWORD nByteLen, nLen, nWkLen;
     const WCHAR *wk1, *root;
@@ -3570,22 +3536,22 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
 
     /* Allocate memory for simplified URL (before escaping) */
     nByteLen = (wk2-url)*sizeof(WCHAR);
-    url_copy = heap_alloc(nByteLen + sizeof(wszFilePrefix) + sizeof(WCHAR));
+    url_copy = heap_alloc(nByteLen + sizeof(L"file:///"));
     if (!url_copy)
     {
         heap_free(url);
         return E_OUTOFMEMORY;
     }
 
-    is_file_url = !wcsncmp(wszFile, url, ARRAY_SIZE(wszFile));
+    is_file_url = !wcsncmp(url, L"file:", 5);
 
-    if ((nByteLen >= sizeof(wszHttp) && !memcmp(wszHttp, url, sizeof(wszHttp))) || is_file_url)
+    if ((nByteLen >= 5*sizeof(WCHAR) && !wcsncmp(url, L"http:", 5)) || is_file_url)
         slash = '/';
 
     if ((flags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY)) && is_file_url)
         slash = '\\';
 
-    if (nByteLen >= sizeof(wszRes) && !memcmp(wszRes, url, sizeof(wszRes)))
+    if (nByteLen >= 4*sizeof(WCHAR) && !wcsncmp(url, L"res:", 4))
     {
         flags &= ~URL_FILE_USE_PATHURL;
         slash = '\0';
@@ -3609,8 +3575,8 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
     /* Assume path */
     if (url[1] == ':')
     {
-        memcpy(wk2, wszFilePrefix, sizeof(wszFilePrefix));
-        wk2 += ARRAY_SIZE(wszFilePrefix);
+        lstrcpyW(wk2, L"file:///");
+        wk2 += lstrlenW(wk2);
         if (flags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY))
         {
             slash = '\\';
@@ -3646,10 +3612,10 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
             *wk2++ = *wk1++;
             if (*wk1 != '/') {state = 6; break;}
             *wk2++ = *wk1++;
-            if ((flags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszLocalhost) && is_file_url
-                    && !memcmp(wszLocalhost, wk1, sizeof(wszLocalhost)))
+            if ((flags & URL_FILE_USE_PATHURL) && nByteLen >= 9*sizeof(WCHAR) && is_file_url
+                && !wcsncmp(wk1, L"localhost", 9))
             {
-                wk1 += ARRAY_SIZE(wszLocalhost);
+                wk1 += 9;
                 while (*wk1 == '\\' && (flags & URL_FILE_USE_PATHURL))
                     wk1++;
             }
@@ -3843,8 +3809,8 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
     while ((nLen > 0) && ((url_copy[nLen-1] <= ' ')))
         url_copy[--nLen]=0;
 
-    if ((flags & URL_UNESCAPE) || ((flags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszFile)
-                && !memcmp(wszFile, url, sizeof(wszFile))))
+    if ((flags & URL_UNESCAPE) ||
+        ((flags & URL_FILE_USE_PATHURL) && nByteLen >= 5*sizeof(WCHAR) && !wcsncmp(url, L"file:", 5)))
     {
         UrlUnescapeW(url_copy, NULL, &nLen, URL_UNESCAPE_INPLACE);
     }
@@ -3970,8 +3936,6 @@ static HRESULT url_guess_scheme(const WCHAR *url, WCHAR *out, DWORD *out_len)
 
 static HRESULT url_create_from_path(const WCHAR *path, WCHAR *url, DWORD *url_len)
 {
-    static const WCHAR file_colonW[] = {'f','i','l','e',':',0};
-    static const WCHAR three_slashesW[] = {'/','/','/',0};
     PARSEDURLW parsed_url;
     WCHAR *new_url;
     DWORD needed;
@@ -3997,9 +3961,9 @@ static HRESULT url_create_from_path(const WCHAR *path, WCHAR *url, DWORD *url_le
     }
 
     new_url = heap_alloc((lstrlenW(path) + 9) * sizeof(WCHAR)); /* "file:///" + path length + 1 */
-    lstrcpyW(new_url, file_colonW);
+    lstrcpyW(new_url, L"file:");
     if (iswalpha(path[0]) && path[1] == ':')
-        lstrcatW(new_url, three_slashesW);
+        lstrcatW(new_url, L"///");
     lstrcatW(new_url, path);
     hr = UrlEscapeW(new_url, url, url_len, URL_ESCAPE_PERCENT);
     heap_free(new_url);
@@ -4008,19 +3972,13 @@ static HRESULT url_create_from_path(const WCHAR *path, WCHAR *url, DWORD *url_le
 
 static HRESULT url_apply_default_scheme(const WCHAR *url, WCHAR *out, DWORD *length)
 {
-    static const WCHAR prefix_keyW[] =
-        {'S','o','f','t','w','a','r','e',
-         '\\','M','i','c','r','o','s','o','f','t',
-         '\\','W','i','n','d','o','w','s',
-         '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
-         '\\','U','R','L',
-         '\\','D','e','f','a','u','l','t','P','r','e','f','i','x',0};
     DWORD data_len, dwType;
     WCHAR data[MAX_PATH];
     HKEY newkey;
 
     /* get and prepend default */
-    RegOpenKeyExW(HKEY_LOCAL_MACHINE, prefix_keyW, 0, 1, &newkey);
+    RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\URL\\DefaultPrefix",
+                  0, 1, &newkey);
     data_len = sizeof(data);
     RegQueryValueExW(newkey, NULL, 0, &dwType, (BYTE *)data, &data_len);
     RegCloseKey(newkey);
@@ -4160,14 +4118,13 @@ const char * WINAPI UrlGetLocationA(const char *url)
 
 const WCHAR * WINAPI UrlGetLocationW(const WCHAR *url)
 {
-    static const WCHAR fileW[] = {'f','i','l','e','\0'};
     PARSEDURLW base;
 
     base.cbSize = sizeof(base);
     if (ParseURLW(url, &base) != S_OK) return NULL;  /* invalid scheme */
 
     /* if scheme is file: then never return pointer */
-    if (!wcsncmp(base.pszProtocol, fileW, min(4, base.cchProtocol)))
+    if (!wcsncmp(base.pszProtocol, L"file", min(4, base.cchProtocol)))
         return NULL;
 
     /* Look for '#' and return its addr */
@@ -4575,7 +4532,6 @@ BOOL WINAPI UrlIsA(const char *url, URLIS Urlis)
 
 BOOL WINAPI UrlIsW(const WCHAR *url, URLIS Urlis)
 {
-    static const WCHAR file_colon[] = {'f','i','l','e',':',0};
     const WCHAR *last;
     PARSEDURLW base;
 
@@ -4601,7 +4557,7 @@ BOOL WINAPI UrlIsW(const WCHAR *url, URLIS Urlis)
         return FALSE;
 
     case URLIS_FILEURL:
-        return (CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, url, 5, file_colon, 5) == CSTR_EQUAL);
+        return !wcsnicmp( url, L"file:", 5 );
 
     case URLIS_DIRECTORY:
         last = url + lstrlenW(url) - 1;
@@ -4736,8 +4692,6 @@ HRESULT WINAPI UrlCombineA(const char *base, const char *relative, char *combine
 
 HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *combined, DWORD *combined_len, DWORD flags)
 {
-    static const WCHAR myfilestr[] = {'f','i','l','e',':','/','/','/','\0'};
-    static const WCHAR fragquerystr[] = {'#','?',0};
     DWORD i, len, process_case = 0, myflags, sizeloc = 0;
     LPWSTR work, preliminary, mbase, mrelative;
     PARSEDURLW base, relative;
@@ -4784,8 +4738,7 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
         /* mk is a special case */
         if (base.nScheme == URL_SCHEME_MK)
         {
-            static const WCHAR wsz[] = {':',':',0};
-            WCHAR *ptr = wcsstr(base.pszSuffix, wsz);
+            WCHAR *ptr = wcsstr(base.pszSuffix, L"::");
             if (ptr)
             {
                 int delta;
@@ -4821,27 +4774,18 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
          * immediately preceding it are ".htm[l]", then begin looking for
          * the last leaf starting from the '#'. Otherwise the '#' is not
          * meaningful and just start looking from the end. */
-        if ((work = wcspbrk(base.pszSuffix + sizeloc, fragquerystr)))
+        if ((work = wcspbrk(base.pszSuffix + sizeloc, L"#?")))
         {
-            static const WCHAR htmlW[] = {'.','h','t','m','l'};
-            static const WCHAR htmW[] = {'.','h','t','m'};
-
             if (*work == '?' || base.nScheme == URL_SCHEME_HTTP || base.nScheme == URL_SCHEME_HTTPS)
                 manual_search = TRUE;
-            else if (work - base.pszSuffix > ARRAY_SIZE(htmW))
+            else if (work - base.pszSuffix > 4)
             {
-                work -= ARRAY_SIZE(htmW);
-                if (!wcsnicmp(work, htmW, ARRAY_SIZE(htmW)))
-                    manual_search = TRUE;
-                work += ARRAY_SIZE(htmW);
+                if (!wcsnicmp(work - 4, L".htm", 4)) manual_search = TRUE;
             }
 
-            if (!manual_search && work - base.pszSuffix > ARRAY_SIZE(htmlW))
+            if (!manual_search && work - base.pszSuffix > 5)
             {
-                work -= ARRAY_SIZE(htmlW);
-                if (!wcsnicmp(work, htmlW, ARRAY_SIZE(htmlW)))
-                    manual_search = TRUE;
-                work += ARRAY_SIZE(htmlW);
+                if (!wcsnicmp(work - 5, L".html", 5)) manual_search = TRUE;
             }
         }
 
@@ -4894,7 +4838,7 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
             if (iswalnum(*mrelative) && *(mrelative + 1) == ':')
             {
                 /* case that becomes "file:///" */
-                lstrcpyW(preliminary, myfilestr);
+                lstrcpyW(preliminary, L"file:///");
                 process_case = 1;
                 break;
             }
