@@ -1017,10 +1017,6 @@ BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
 BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
                                LPVOID *lplpBuffer, PUINT puLen )
 {
-    static const WCHAR rootW[] = { '\\', 0 };
-    static const WCHAR varfileinfoW[] = { '\\','V','a','r','F','i','l','e','I','n','f','o',
-                                          '\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
-
     const VS_VERSION_INFO_STRUCT32 *info = pBlock;
 
     TRACE("(%p,%s,%p,%p)\n",
@@ -1030,7 +1026,7 @@ BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
         return FALSE;
 
     if (!lpSubBlock || !lpSubBlock[0])
-        lpSubBlock = rootW;
+        lpSubBlock = L"\\";
 
     if ( VersionInfoIs16( info ) )
     {
@@ -1050,7 +1046,7 @@ BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
 
         HeapFree(GetProcessHeap(), 0, lpSubBlockA);
 
-        if (ret && wcsicmp( lpSubBlock, rootW ) && wcsicmp( lpSubBlock, varfileinfoW ))
+        if (ret && wcscmp( lpSubBlock, L"\\" ) && wcsicmp( lpSubBlock, L"\\VarFileInfo\\Translation" ))
         {
             /* Set lpBuffer so it points to the 'empty' area where we store
              * the converted strings
@@ -1219,7 +1215,6 @@ DWORD WINAPI VerFindFileA( DWORD flags, LPCSTR filename, LPCSTR win_dir, LPCSTR 
 DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWSTR app_dir,
                            LPWSTR cur_dir, PUINT curdir_len, LPWSTR dest, PUINT dest_len )
 {
-    static const WCHAR emptyW;
     DWORD retval = 0;
     const WCHAR *curDir;
     const WCHAR *destDir;
@@ -1231,7 +1226,7 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
     /* Figure out where the file should go; shared files default to the
        system directory */
 
-    curDir = &emptyW;
+    curDir = L"";
 
     if(flags & VFFF_ISSHAREDFILE)
     {
@@ -1249,7 +1244,7 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
     }
     else /* not a shared file */
     {
-        destDir = app_dir ? app_dir : &emptyW;
+        destDir = app_dir ? app_dir : L"";
         if(filename)
         {
             if(file_existsW(destDir, filename, FALSE)) curDir = destDir;

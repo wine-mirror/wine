@@ -63,8 +63,6 @@ static inline LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout 
 NTSTATUS WINAPI BaseGetNamedObjectDirectory( HANDLE *dir )
 {
     static HANDLE handle;
-    static const WCHAR basenameW[] = {'\\','S','e','s','s','i','o','n','s','\\','%','u',
-                                      '\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',0};
     WCHAR buffer[64];
     UNICODE_STRING str;
     OBJECT_ATTRIBUTES attr;
@@ -74,7 +72,8 @@ NTSTATUS WINAPI BaseGetNamedObjectDirectory( HANDLE *dir )
     {
         HANDLE dir;
 
-        swprintf( buffer, ARRAY_SIZE(buffer), basenameW, NtCurrentTeb()->Peb->SessionId );
+        swprintf( buffer, ARRAY_SIZE(buffer), L"\\Sessions\\%u\\BaseNamedObjects",
+                  NtCurrentTeb()->Peb->SessionId );
         RtlInitUnicodeString( &str, buffer );
         InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
         status = NtOpenDirectoryObject( &dir, DIRECTORY_CREATE_OBJECT|DIRECTORY_TRAVERSE, &attr );
@@ -1170,10 +1169,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreatePipe( HANDLE *read_pipe, HANDLE *write_pipe,
     /* generate a unique pipe name (system wide) */
     for (;;)
     {
-        static const WCHAR fmtW[] = { '\\','?','?','\\','p','i','p','e','\\',
-           'W','i','n','3','2','.','P','i','p','e','s','.','%','0','8','l','u','.','%','0','8','u','\0' };
-
-        swprintf( name, ARRAY_SIZE(name), fmtW, GetCurrentProcessId(), ++index );
+        swprintf( name, ARRAY_SIZE(name), L"\\??\\pipe\\Win32.Pipes.%08lu.%08u",
+                  GetCurrentProcessId(), ++index );
         RtlInitUnicodeString( &nt_name, name );
         if (!NtCreateNamedPipeFile( read_pipe, GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
                                     &attr, &iosb, FILE_SHARE_WRITE, FILE_OVERWRITE_IF,
@@ -1336,7 +1333,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH TransactNamedPipe( HANDLE handle, LPVOID write_buf
  */
 BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
 {
-    static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
+    static const int prefix_len = sizeof(L"\\??\\PIPE\\") - sizeof(WCHAR);
     NTSTATUS status;
     UNICODE_STRING nt_name, pipe_dev_name;
     FILE_PIPE_WAIT_FOR_BUFFER *pipe_wait;
@@ -1350,15 +1347,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL )) return FALSE;
 
     if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) ||
-        nt_name.Length < sizeof(leadin) ||
-        wcsnicmp( nt_name.Buffer, leadin, ARRAY_SIZE( leadin )) != 0)
+        nt_name.Length < prefix_len ||
+        wcsnicmp( nt_name.Buffer, L"\\??\\PIPE\\", prefix_len / sizeof(WCHAR) ))
     {
         RtlFreeUnicodeString( &nt_name );
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
 
-    wait_size = sizeof(*pipe_wait) + nt_name.Length - sizeof(leadin) - sizeof(WCHAR);
+    wait_size = offsetof( FILE_PIPE_WAIT_FOR_BUFFER, Name[(nt_name.Length - prefix_len) / sizeof(WCHAR)] );
     if (!(pipe_wait = HeapAlloc( GetProcessHeap(), 0,  wait_size)))
     {
         RtlFreeUnicodeString( &nt_name );
@@ -1367,8 +1364,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
     }
 
     pipe_dev_name.Buffer = nt_name.Buffer;
-    pipe_dev_name.Length = sizeof(leadin);
-    pipe_dev_name.MaximumLength = sizeof(leadin);
+    pipe_dev_name.Length = prefix_len;
+    pipe_dev_name.MaximumLength = prefix_len;
     InitializeObjectAttributes( &attr,&pipe_dev_name, OBJ_CASE_INSENSITIVE, NULL, NULL );
     status = NtOpenFile( &pipe_dev, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr,
                          &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -1386,8 +1383,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
         pipe_wait->Timeout.QuadPart = ((ULONGLONG)0x7fffffff << 32) | 0xffffffff;
     else
         pipe_wait->Timeout.QuadPart = (ULONGLONG)timeout * -10000;
-    pipe_wait->NameLength = nt_name.Length - sizeof(leadin);
-    memcpy( pipe_wait->Name, nt_name.Buffer + ARRAY_SIZE( leadin ), pipe_wait->NameLength );
+    pipe_wait->NameLength = nt_name.Length - prefix_len;
+    memcpy( pipe_wait->Name, nt_name.Buffer + prefix_len/sizeof(WCHAR), pipe_wait->NameLength );
     RtlFreeUnicodeString( &nt_name );
 
     status = NtFsControlFile( pipe_dev, NULL, NULL, NULL, &iosb, FSCTL_PIPE_WAIT,
