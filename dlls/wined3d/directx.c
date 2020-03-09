@@ -1179,6 +1179,13 @@ HRESULT CDECL wined3d_output_find_closest_matching_mode(const struct wined3d_out
     return WINED3D_OK;
 }
 
+struct wined3d_adapter * CDECL wined3d_output_get_adapter(const struct wined3d_output *output)
+{
+    TRACE("output %p.\n", output);
+
+    return output->adapter;
+}
+
 HRESULT CDECL wined3d_output_get_display_mode(const struct wined3d_output *output,
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation)
 {
