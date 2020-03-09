@@ -9,6 +9,7 @@
 #define __WINE_WCHAR_H
 
 #include <corecrt_wctype.h>
+#include <corecrt_wdirect.h>
 #include <corecrt_wio.h>
 #include <corecrt_wprocess.h>
 #include <corecrt_wstdio.h>
@@ -27,15 +28,6 @@ extern "C" {
 #endif
 
 typedef int mbstate_t;
-
-#ifndef _WDIRECT_DEFINED
-#define _WDIRECT_DEFINED
-int      __cdecl _wchdir(const wchar_t*);
-wchar_t* __cdecl _wgetcwd(wchar_t*,int);
-wchar_t* __cdecl _wgetdcwd(int,wchar_t*,int);
-int      __cdecl _wmkdir(const wchar_t*);
-int      __cdecl _wrmdir(const wchar_t*);
-#endif /* _WDIRECT_DEFINED */
 
 #ifndef _WLOCALE_DEFINED
 #define _WLOCALE_DEFINED
