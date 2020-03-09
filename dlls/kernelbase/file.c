@@ -64,10 +64,8 @@ typedef struct
 
 static const UINT max_entry_size = offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[256] );
 
-const WCHAR windows_dir[] = {'C',':','\\','w','i','n','d','o','w','s',0};
-const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2',0};
-
-static const WCHAR krnl386W[] = {'k','r','n','l','3','8','6','.','e','x','e','1','6',0};
+const WCHAR windows_dir[] = L"C:\\windows";
+const WCHAR system_dir[] = L"C:\\windows\\system32";
 
 static BOOL oem_file_apis;
 
@@ -143,9 +141,6 @@ static WCHAR *append_ext( const WCHAR *name, const WCHAR *ext )
  */
 static NTSTATUS find_actctx_dllpath( const WCHAR *name, WCHAR **path )
 {
-    static const WCHAR winsxsW[] = {'\\','w','i','n','s','x','s','\\'};
-    static const WCHAR dotManifestW[] = {'.','m','a','n','i','f','e','s','t',0};
-
     ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION *info;
     ACTCTX_SECTION_KEYED_DATA data;
     UNICODE_STRING nameW;
@@ -188,7 +183,7 @@ static NTSTATUS find_actctx_dllpath( const WCHAR *name, WCHAR **path )
         DWORD dirlen = info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
 
         p++;
-        if (!dirlen || wcsnicmp( p, info->lpAssemblyDirectoryName, dirlen ) || wcsicmp( p + dirlen, dotManifestW ))
+        if (!dirlen || wcsnicmp( p, info->lpAssemblyDirectoryName, dirlen ) || wcsicmp( p + dirlen, L".manifest" ))
         {
             /* manifest name does not match directory name, so it's not a global
              * windows/winsxs manifest; use the manifest directory name instead */
@@ -211,18 +206,15 @@ static NTSTATUS find_actctx_dllpath( const WCHAR *name, WCHAR **path )
         goto done;
     }
 
-    needed = (lstrlenW( windows_dir ) * sizeof(WCHAR) +
-              sizeof(winsxsW) + info->ulAssemblyDirectoryNameLength + 2*sizeof(WCHAR));
+    needed = sizeof(L"C:\\windows\\winsxs\\") + info->ulAssemblyDirectoryNameLength + sizeof(WCHAR);
 
     if (!(*path = p = RtlAllocateHeap( GetProcessHeap(), 0, needed )))
     {
         status = STATUS_NO_MEMORY;
         goto done;
     }
-    lstrcpyW( p, windows_dir );
+    lstrcpyW( p, L"C:\\windows\\winsxs\\" );
     p += lstrlenW(p);
-    memcpy( p, winsxsW, sizeof(winsxsW) );
-    p += ARRAY_SIZE( winsxsW );
     memcpy( p, info->lpAssemblyDirectoryName, info->ulAssemblyDirectoryNameLength );
     p += info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
     *p++ = '\\';
@@ -473,7 +465,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     HANDLE ret;
     DWORD dosdev;
     const WCHAR *vxd_name = NULL;
-    static const WCHAR bkslashes_with_dotW[] = {'\\','\\','.','\\',0};
     SECURITY_QUALITY_OF_SERVICE qos;
 
     static const UINT nt_disposition[5] =
@@ -511,14 +502,11 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     if (!wcsicmp( filename, L"CONOUT$" ))
         return open_console( TRUE, access, sa, creation ? OPEN_EXISTING : 0 );
 
-    if (!wcsncmp( filename, bkslashes_with_dotW, 4 ))
+    if (!wcsncmp( filename, L"\\\\.\\", 4 ))
     {
-        static const WCHAR pipeW[] = {'P','I','P','E','\\',0};
-        static const WCHAR mailslotW[] = {'M','A','I','L','S','L','O','T','\\',0};
-
         if ((iswalpha(filename[4]) && filename[5] == ':' && filename[6] == '\0') ||
-            !wcsnicmp( filename + 4, pipeW, 5 ) ||
-            !wcsnicmp( filename + 4, mailslotW, 9 ))
+            !wcsnicmp( filename + 4, L"PIPE\\", 5 ) ||
+            !wcsnicmp( filename + 4, L"MAILSLOT\\", 9 ))
         {
             dosdev = 0;
         }
@@ -536,10 +524,8 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
 
     if (dosdev)
     {
-        static const WCHAR conW[] = {'C','O','N'};
-
-        if (LOWORD(dosdev) == sizeof(conW) &&
-            !wcsnicmp( filename + HIWORD(dosdev)/sizeof(WCHAR), conW, ARRAY_SIZE( conW )))
+        if (LOWORD(dosdev) == 3 * sizeof(WCHAR) &&
+            !wcsnicmp( filename + HIWORD(dosdev)/sizeof(WCHAR), L"CON", 3 ))
         {
             switch (access & (GENERIC_READ|GENERIC_WRITE))
             {
@@ -598,7 +584,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
         if (vxd_name && vxd_name[0])
         {
             static HANDLE (*vxd_open)(LPCWSTR,DWORD,SECURITY_ATTRIBUTES*);
-            if (!vxd_open) vxd_open = (void *)GetProcAddress( GetModuleHandleW(krnl386W),
+            if (!vxd_open) vxd_open = (void *)GetProcAddress( GetModuleHandleW(L"krnl386.exe16"),
                                                               "__wine_vxd_open" );
             if (vxd_open && (ret = vxd_open( vxd_name, access, sa ))) goto done;
         }
@@ -837,7 +823,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_
 
     if (!mask && (device = RtlIsDosDeviceName_U( filename )))
     {
-        static const WCHAR dotW[] = {'.',0};
         WCHAR *dir = NULL;
 
         /* we still need to check that the directory can be opened */
@@ -853,7 +838,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_
             dir[HIWORD(device)/sizeof(WCHAR)] = 0;
         }
         RtlFreeUnicodeString( &nt_name );
-        if (!RtlDosPathNameToNtPathName_U( dir ? dir : dotW, &nt_name, &mask, NULL ))
+        if (!RtlDosPathNameToNtPathName_U( dir ? dir : L".", &nt_name, &mask, NULL ))
         {
             HeapFree( GetProcessHeap(), 0, dir );
             SetLastError( ERROR_PATH_NOT_FOUND );
@@ -1413,7 +1398,6 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetLongPathNameA( LPCSTR shortpath, LPSTR longpat
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen )
 {
-    static const WCHAR wildcardsW[] = {'*','?',0};
     WCHAR tmplongpath[1024];
     DWORD sp = 0, lp = 0, tmplen;
     WIN32_FIND_DATAW wfd;
@@ -1454,7 +1438,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetLongPathNameW( LPCWSTR shortpath, LPWSTR longp
         lp = sp = 2;
     }
 
-    if (wcspbrk( shortpath + sp, wildcardsW ))
+    if (wcspbrk( shortpath + sp, L"*?" ))
     {
         SetLastError( ERROR_INVALID_NAME );
         return 0;
@@ -1522,7 +1506,6 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetLongPathNameW( LPCWSTR shortpath, LPWSTR longp
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
 {
-    static const WCHAR wildcardsW[] = {'*','?',0};
     WIN32_FIND_DATAW wfd;
     WCHAR *tmpshortpath;
     HANDLE handle;
@@ -1558,7 +1541,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetShortPathNameW( LPCWSTR longpath, LPWSTR short
         sp = lp = 4;
     }
 
-    if (wcspbrk( longpath + lp, wildcardsW ))
+    if (wcspbrk( longpath + lp, L"*?" ))
     {
         HeapFree( GetProcessHeap(), 0, tmpshortpath );
         SetLastError( ERROR_INVALID_NAME );
@@ -1756,7 +1739,6 @@ UINT WINAPI DECLSPEC_HOTPATCH GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR buffer )
 {
-    static const WCHAR formatW[] = {'%','x','.','t','m','p',0};
     int i;
     LPWSTR p;
     DWORD attr;
@@ -1785,7 +1767,7 @@ UINT WINAPI DECLSPEC_HOTPATCH GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UI
     if (prefix) for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
 
     unique &= 0xffff;
-    if (unique) swprintf( p, MAX_PATH - (p - buffer), formatW, unique );
+    if (unique) swprintf( p, MAX_PATH - (p - buffer), L"%x.tmp", unique );
     else
     {
         /* get a "random" unique number and try to create the file */
@@ -1799,7 +1781,7 @@ UINT WINAPI DECLSPEC_HOTPATCH GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UI
         unique = num;
         do
         {
-            swprintf( p, MAX_PATH - (p - buffer), formatW, unique );
+            swprintf( p, MAX_PATH - (p - buffer), L"%x.tmp", unique );
             handle = CreateFileW( buffer, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
             if (handle != INVALID_HANDLE_VALUE)
             {  /* We created it */
@@ -1840,15 +1822,12 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetTempPathA( DWORD count, LPSTR path )
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetTempPathW( DWORD count, LPWSTR path )
 {
-    static const WCHAR tmp[]  = { 'T','M','P',0 };
-    static const WCHAR temp[] = { 'T','E','M','P',0 };
-    static const WCHAR userprofile[] = { 'U','S','E','R','P','R','O','F','I','L','E',0 };
     WCHAR tmp_path[MAX_PATH];
     UINT ret;
 
-    if (!(ret = GetEnvironmentVariableW( tmp, tmp_path, MAX_PATH )) &&
-        !(ret = GetEnvironmentVariableW( temp, tmp_path, MAX_PATH )) &&
-        !(ret = GetEnvironmentVariableW( userprofile, tmp_path, MAX_PATH )) &&
+    if (!(ret = GetEnvironmentVariableW( L"TMP", tmp_path, MAX_PATH )) &&
+        !(ret = GetEnvironmentVariableW( L"TEMP", tmp_path, MAX_PATH )) &&
+        !(ret = GetEnvironmentVariableW( L"USERPROFILE", tmp_path, MAX_PATH )) &&
         !(ret = GetWindowsDirectoryW( tmp_path, MAX_PATH )))
         return 0;
 
@@ -1926,15 +1905,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH NeedCurrentDirectoryForExePathA( LPCSTR name )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH NeedCurrentDirectoryForExePathW( LPCWSTR name )
 {
-    static const WCHAR env_name[] = {'N','o','D','e','f','a','u','l','t',
-                                     'C','u','r','r','e','n','t',
-                                     'D','i','r','e','c','t','o','r','y',
-                                     'I','n','E','x','e','P','a','t','h',0};
     WCHAR env_val;
 
     if (wcschr( name, '\\' )) return TRUE;
     /* check the existence of the variable, not value */
-    return !GetEnvironmentVariableW( env_name, &env_val, 1 );
+    return !GetEnvironmentVariableW( L"NoDefaultCurrentDirectoryInExePath", &env_val, 1 );
 }
 
 
