@@ -9,6 +9,7 @@
 #define __WINE_PROCESS_H
 
 #include <corecrt_startup.h>
+#include <corecrt_wprocess.h>
 
 /* Process creation flags */
 #define _P_WAIT    0
@@ -56,27 +57,6 @@ void      __cdecl _exit(int) DECLSPEC_NORETURN;
 void      __cdecl abort(void) DECLSPEC_NORETURN;
 void      __cdecl exit(int) DECLSPEC_NORETURN;
 int       __cdecl system(const char*);
-
-#ifndef _WPROCESS_DEFINED
-#define _WPROCESS_DEFINED
-intptr_t WINAPIV _wexecl(const wchar_t*,const wchar_t*,...);
-intptr_t WINAPIV _wexecle(const wchar_t*,const wchar_t*,...);
-intptr_t WINAPIV _wexeclp(const wchar_t*,const wchar_t*,...);
-intptr_t WINAPIV _wexeclpe(const wchar_t*,const wchar_t*,...);
-intptr_t __cdecl _wexecv(const wchar_t*,const wchar_t* const *);
-intptr_t __cdecl _wexecve(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-intptr_t __cdecl _wexecvp(const wchar_t*,const wchar_t* const *);
-intptr_t __cdecl _wexecvpe(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-intptr_t WINAPIV _wspawnl(int,const wchar_t*,const wchar_t*,...);
-intptr_t WINAPIV _wspawnle(int,const wchar_t*,const wchar_t*,...);
-intptr_t WINAPIV _wspawnlp(int,const wchar_t*,const wchar_t*,...);
-intptr_t WINAPIV _wspawnlpe(int,const wchar_t*,const wchar_t*,...);
-intptr_t __cdecl _wspawnv(int,const wchar_t*,const wchar_t* const *);
-intptr_t __cdecl _wspawnve(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-intptr_t __cdecl _wspawnvp(int,const wchar_t*,const wchar_t* const *);
-intptr_t __cdecl _wspawnvpe(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-int      __cdecl _wsystem(const wchar_t*);
-#endif /* _WPROCESS_DEFINED */
 
 #ifdef __cplusplus
 }

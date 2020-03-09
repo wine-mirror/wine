@@ -428,6 +428,7 @@ SOURCES = \
 	msvcrt/corecrt_stdio_config.h \
 	msvcrt/corecrt_wctype.h \
 	msvcrt/corecrt_wio.h \
+	msvcrt/corecrt_wprocess.h \
 	msvcrt/corecrt_wstdio.h \
 	msvcrt/corecrt_wstdlib.h \
 	msvcrt/corecrt_wstring.h \
