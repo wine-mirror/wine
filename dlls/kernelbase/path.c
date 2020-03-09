@@ -1652,7 +1652,7 @@ int WINAPI PathCommonPrefixW(const WCHAR *file1, const WCHAR *file2, WCHAR *path
         if ((!*iter1 || *iter1 == '\\') && (!*iter2 || *iter2 == '\\'))
             len = iter1 - file1; /* Common to this point */
 
-        if (!*iter1 || (towlower(*iter1) != towlower(*iter2)))
+        if (!*iter1 || (towupper(*iter1) != towupper(*iter2)))
             break; /* Strings differ at this point */
 
         iter1++;
@@ -1813,8 +1813,6 @@ int WINAPI PathGetDriveNumberA(const char *path)
 
 int WINAPI PathGetDriveNumberW(const WCHAR *path)
 {
-    WCHAR drive;
-
     TRACE("%s\n", wine_dbgstr_w(path));
 
     if (!path)
@@ -1822,11 +1820,10 @@ int WINAPI PathGetDriveNumberW(const WCHAR *path)
 
     if (!wcsncmp(path, L"\\\\?\\", 4)) path += 4;
 
-    drive = towlower(path[0]);
-    if (drive < 'a' || drive > 'z' || path[1] != ':')
-        return -1;
-
-    return drive - 'a';
+    if (!path[0] || path[1] != ':') return -1;
+    if (path[0] >= 'A' && path[0] <= 'Z') return path[0] - 'A';
+    if (path[0] >= 'a' && path[0] <= 'z') return path[0] - 'a';
+    return -1;
 }
 
 BOOL WINAPI PathIsFileSpecA(const char *path)
@@ -4733,7 +4730,7 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
 
         work = (LPWSTR)base.pszProtocol;
         for (i = 0; i < base.cchProtocol; ++i)
-            work[i] = towlower(work[i]);
+            work[i] = RtlDowncaseUnicodeChar(work[i]);
 
         /* mk is a special case */
         if (base.nScheme == URL_SCHEME_MK)
@@ -4871,7 +4868,7 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
         {
             work = (LPWSTR)relative.pszProtocol;
             for (i = 0; i < relative.cchProtocol; ++i)
-                work[i] = towlower(work[i]);
+                work[i] = RtlDowncaseUnicodeChar(work[i]);
         }
 
         /* Handle cases where relative has scheme. */

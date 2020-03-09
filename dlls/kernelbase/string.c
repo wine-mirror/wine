@@ -924,7 +924,7 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
     else if (*str == '+')
         str++;
 
-    if (flags & STIF_SUPPORT_HEX && *str == '0' && towlower(str[1]) == 'x')
+    if (flags & STIF_SUPPORT_HEX && *str == '0' && (str[1] == 'x' || str[1] == 'X'))
     {
         /* Read hex number */
         str += 2;
@@ -935,10 +935,12 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
         while (iswxdigit(*str))
         {
             value *= 16;
-            if (iswdigit(*str))
+            if (*str >= '0' && *str <= '9')
                 value += (*str - '0');
+            else if (*str >= 'A' && *str <= 'Z')
+                value += 10 + (*str - 'A');
             else
-                value += 10 + (towlower(*str) - 'a');
+                value += 10 + (*str - 'a');
             str++;
         }
 
