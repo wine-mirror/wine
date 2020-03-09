@@ -2310,6 +2310,7 @@ int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len
 int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
     int c1, c2;
 
     if(s1==NULL || s2==NULL)
@@ -2318,9 +2319,26 @@ int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
     if(!count)
         return 0;
 
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE])
+    {
+        do {
+            if ((c1 = *s1++) >= 'A' && c1 <= 'Z')
+                c1 -= 'A' - 'a';
+            if ((c2 = *s2++) >= 'A' && c2 <= 'Z')
+                c2 -= 'A' - 'a';
+        }while(--count && c1 && c1==c2);
+
+        return c1-c2;
+    }
+
     do {
-        c1 = MSVCRT__tolower_l(*s1++, locale);
-        c2 = MSVCRT__tolower_l(*s2++, locale);
+        c1 = MSVCRT__tolower_l((unsigned char)*s1++, locale);
+        c2 = MSVCRT__tolower_l((unsigned char)*s2++, locale);
     }while(--count && c1 && c1==c2);
 
     return c1-c2;
