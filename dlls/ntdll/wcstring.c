@@ -69,24 +69,6 @@ LPWSTR __cdecl NTDLL__wcsupr( LPWSTR str )
 }
 
 
-/*********************************************************************
- *           towlower    (NTDLL.@)
- */
-WCHAR __cdecl NTDLL_towlower( WCHAR ch )
-{
-    return tolowerW(ch);
-}
-
-
-/*********************************************************************
- *           towupper    (NTDLL.@)
- */
-WCHAR __cdecl NTDLL_towupper( WCHAR ch )
-{
-    return toupperW(ch);
-}
-
-
 /***********************************************************************
  *           wcscat    (NTDLL.@)
  */

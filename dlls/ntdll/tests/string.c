@@ -33,6 +33,7 @@ static NTSTATUS (WINAPI *pRtlUnicodeStringToAnsiString)(STRING *, const UNICODE_
 static VOID     (WINAPI *pRtlFreeAnsiString)(PSTRING);
 static BOOLEAN  (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING,LPCSTR);
 static VOID     (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
+static WCHAR    (WINAPI *pRtlUpcaseUnicodeChar)(WCHAR);
 
 static int      (__cdecl *patoi)(const char *);
 static LONG     (__cdecl *patol)(const char *);
@@ -54,6 +55,8 @@ static LPWSTR   (__cdecl *p_ui64tow)(ULONGLONG, LPWSTR, INT);
 
 static LPWSTR   (__cdecl *p_wcslwr)(LPWSTR);
 static LPWSTR   (__cdecl *p_wcsupr)(LPWSTR);
+static WCHAR    (__cdecl *ptowlower)(WCHAR);
+static WCHAR    (__cdecl *ptowupper)(WCHAR);
 
 static LPWSTR   (__cdecl *pwcschr)(LPCWSTR, WCHAR);
 static LPWSTR   (__cdecl *pwcsrchr)(LPCWSTR, WCHAR);
@@ -78,6 +81,7 @@ static void InitFunctionPtrs(void)
     X(RtlFreeAnsiString);
     X(RtlCreateUnicodeStringFromAsciiz);
     X(RtlFreeUnicodeString);
+    X(RtlUpcaseUnicodeChar);
     X(atoi);
     X(atol);
     X(_atoi64);
@@ -96,6 +100,8 @@ static void InitFunctionPtrs(void)
     X(_ui64tow);
     X(_wcslwr);
     X(_wcsupr);
+    X(towlower);
+    X(towupper);
     X(wcschr);
     X(wcsrchr);
     X(qsort);
@@ -1151,6 +1157,7 @@ static void test_wcslwrupr(void)
     static WCHAR teststringW[] = {'a','b','r','a','c','a','d','a','b','r','a',0};
     static WCHAR emptyW[] = {0};
     static const WCHAR constemptyW[] = {0};
+    int i;
 
     if (0) /* crashes on native */
     {
@@ -1166,6 +1173,14 @@ static void test_wcslwrupr(void)
     ok(p_wcsupr(emptyW) == emptyW, "p_wcsupr returned different string\n");
     ok(p_wcslwr((LPWSTR)constemptyW) == constemptyW, "p_wcslwr returned different string\n");
     ok(p_wcsupr((LPWSTR)constemptyW) == constemptyW, "p_wcsupr returned different string\n");
+
+    for (i = 0; i < 65536; i++)
+    {
+        WCHAR lwr = ((i >= 'A' && i <= 'Z') || (i >= 0xc0 && i <= 0xd6) || (i >= 0xd8 && i <= 0xde)) ? i + 32 : i;
+        WCHAR upr = pRtlUpcaseUnicodeChar( i );
+        ok( ptowlower( i ) == lwr, "%04x: towlower got %04x expected %04x\n", i, ptowlower( i ), lwr );
+        ok( ptowupper( i ) == upr, "%04x: towupper got %04x expected %04x\n", i, ptowupper( i ), upr );
+    }
 }
 
 static int __cdecl intcomparefunc(const void *a, const void *b)
