@@ -307,10 +307,18 @@ struct wined3d_output * wined3d_swapchain_get_output(const struct wined3d_swapch
 HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain *swapchain,
         struct wined3d_raster_status *raster_status)
 {
+    struct wined3d_output *output;
+
     TRACE("swapchain %p, raster_status %p.\n", swapchain, raster_status);
 
-    return wined3d_get_adapter_raster_status(swapchain->device->wined3d,
-            swapchain->device->adapter->ordinal, raster_status);
+    output = wined3d_swapchain_get_output(swapchain);
+    if (!output)
+    {
+        ERR("Failed to get output from swapchain %p.\n", swapchain);
+        return E_FAIL;
+    }
+
+    return wined3d_output_get_raster_status(output, raster_status);
 }
 
 struct wined3d_swapchain_state * CDECL wined3d_swapchain_get_state(struct wined3d_swapchain *swapchain)

@@ -2269,8 +2269,6 @@ struct wined3d_adapter * __cdecl wined3d_get_adapter(const struct wined3d *wined
 UINT __cdecl wined3d_get_adapter_count(const struct wined3d *wined3d);
 HRESULT __cdecl wined3d_get_adapter_identifier(const struct wined3d *wined3d, UINT adapter_idx,
         DWORD flags, struct wined3d_adapter_identifier *identifier);
-HRESULT __cdecl wined3d_get_adapter_raster_status(const struct wined3d *wined3d, UINT adapter_idx,
-        struct wined3d_raster_status *raster_status);
 HRESULT __cdecl wined3d_get_device_caps(const struct wined3d *wined3d, unsigned int adapter_idx,
         enum wined3d_device_type device_type, struct wined3d_caps *caps);
 HRESULT __cdecl wined3d_get_output_desc(const struct wined3d *wined3d, unsigned int adapter_idx,
@@ -2505,6 +2503,8 @@ HRESULT __cdecl wined3d_output_get_mode(const struct wined3d_output *output,
         unsigned int mode_idx, struct wined3d_display_mode *mode);
 unsigned int __cdecl wined3d_output_get_mode_count(const struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering);
+HRESULT __cdecl wined3d_output_get_raster_status(const struct wined3d_output *output,
+        struct wined3d_raster_status *raster_status);
 void __cdecl wined3d_output_release_ownership(const struct wined3d_output *output);
 HRESULT __cdecl wined3d_output_set_display_mode(struct wined3d_output *output,
         const struct wined3d_display_mode *mode);

@@ -1392,7 +1392,7 @@ fail:
     return WINED3DERR_INVALIDCALL;
 }
 
-HRESULT CDECL wined3d_get_adapter_raster_status(const struct wined3d *wined3d, UINT adapter_idx,
+HRESULT CDECL wined3d_output_get_raster_status(const struct wined3d_output *output,
         struct wined3d_raster_status *raster_status)
 {
     LONGLONG freq_per_frame, freq_per_line;
@@ -1401,11 +1401,9 @@ HRESULT CDECL wined3d_get_adapter_raster_status(const struct wined3d *wined3d, U
     static UINT once;
 
     if (!once++)
-        FIXME("wined3d %p, adapter_idx %u, raster_status %p semi-stub!\n",
-                wined3d, adapter_idx, raster_status);
+        FIXME("output %p, raster_status %p semi-stub!\n", output, raster_status);
     else
-        WARN("wined3d %p, adapter_idx %u, raster_status %p semi-stub!\n",
-                wined3d, adapter_idx, raster_status);
+        WARN("output %p, raster_status %p semi-stub!\n", output, raster_status);
 
     /* Obtaining the raster status is a widely implemented but optional
      * feature. When this method returns OK StarCraft 2 expects the
@@ -1416,8 +1414,7 @@ HRESULT CDECL wined3d_get_adapter_raster_status(const struct wined3d *wined3d, U
 
     if (!QueryPerformanceCounter(&counter) || !QueryPerformanceFrequency(&freq_per_sec))
         return WINED3DERR_INVALIDCALL;
-    if (FAILED(wined3d_output_get_display_mode(&wined3d->adapters[adapter_idx]->outputs[0], &mode,
-            NULL)))
+    if (FAILED(wined3d_output_get_display_mode(output, &mode, NULL)))
         return WINED3DERR_INVALIDCALL;
     if (mode.refresh_rate == DEFAULT_REFRESH_RATE)
         mode.refresh_rate = 60;

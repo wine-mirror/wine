@@ -1824,7 +1824,7 @@ static HRESULT WINAPI ddraw7_GetVerticalBlankStatus(IDirectDraw7 *iface, BOOL *s
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_raster_status(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &raster_status);
+    hr = wined3d_output_get_raster_status(ddraw->wined3d_output, &raster_status);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -2170,7 +2170,7 @@ static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
     TRACE("iface %p, line %p.\n", iface, Scanline);
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_raster_status(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &raster_status);
+    hr = wined3d_output_get_raster_status(ddraw->wined3d_output, &raster_status);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
