@@ -1157,6 +1157,7 @@ static void test_wcslwrupr(void)
     static WCHAR teststringW[] = {'a','b','r','a','c','a','d','a','b','r','a',0};
     static WCHAR emptyW[] = {0};
     static const WCHAR constemptyW[] = {0};
+    WCHAR buffer[65536];
     int i;
 
     if (0) /* crashes on native */
@@ -1181,6 +1182,18 @@ static void test_wcslwrupr(void)
         ok( ptowlower( i ) == lwr, "%04x: towlower got %04x expected %04x\n", i, ptowlower( i ), lwr );
         ok( ptowupper( i ) == upr, "%04x: towupper got %04x expected %04x\n", i, ptowupper( i ), upr );
     }
+
+    for (i = 1; i < 65536; i++) buffer[i - 1] = i;
+    buffer[65535] = 0;
+    p_wcslwr( buffer );
+    for (i = 1; i < 65536; i++)
+        ok( buffer[i - 1] == (i >= 'A' && i <= 'Z' ? i + 32 : i), "%04x: got %04x\n", i, buffer[i-1] );
+
+    for (i = 1; i < 65536; i++) buffer[i - 1] = i;
+    buffer[65535] = 0;
+    p_wcsupr( buffer );
+    for (i = 1; i < 65536; i++)
+        ok( buffer[i - 1] == (i >= 'a' && i <= 'z' ? i - 32 : i), "%04x: got %04x\n", i, buffer[i-1] );
 }
 
 static int __cdecl intcomparefunc(const void *a, const void *b)
