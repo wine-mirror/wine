@@ -30,6 +30,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winternl.h"
 #include "winioctl.h"
 #include "wincon.h"
@@ -183,7 +184,9 @@ static NTSTATUS find_actctx_dllpath( const WCHAR *name, WCHAR **path )
         DWORD dirlen = info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
 
         p++;
-        if (!dirlen || wcsnicmp( p, info->lpAssemblyDirectoryName, dirlen ) || wcsicmp( p + dirlen, L".manifest" ))
+        if (!dirlen ||
+            CompareStringOrdinal( p, dirlen, info->lpAssemblyDirectoryName, dirlen, TRUE ) != CSTR_EQUAL ||
+            wcsicmp( p + dirlen, L".manifest" ))
         {
             /* manifest name does not match directory name, so it's not a global
              * windows/winsxs manifest; use the manifest directory name instead */

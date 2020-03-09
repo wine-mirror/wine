@@ -2551,7 +2551,7 @@ static int reg_mui_cache_get(const WCHAR *file_name, UINT index, WCHAR **buffer)
     LIST_FOR_EACH_ENTRY(ent, &reg_mui_cache, struct mui_cache_entry, entry)
     {
         if (ent->index == index && ent->locale == GetThreadLocale() &&
-            !wcsicmp(ent->file_name, file_name))
+            !lstrcmpiW(ent->file_name, file_name))
             goto found;
     }
     return 0;

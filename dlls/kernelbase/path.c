@@ -2713,7 +2713,8 @@ BOOL WINAPI PathUnExpandEnvStringsW(const WCHAR *path, WCHAR *buffer, UINT buf_l
     while (cur->var)
     {
         /* path can't contain expanded value or value wasn't retrieved */
-        if (cur->len == 0 || cur->len > pathlen || wcsnicmp(cur->path, path, cur->len))
+        if (cur->len == 0 || cur->len > pathlen ||
+            CompareStringOrdinal( cur->path, cur->len, path, cur->len, TRUE ) != CSTR_EQUAL)
         {
             cur++;
             continue;

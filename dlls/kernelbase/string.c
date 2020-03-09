@@ -416,7 +416,7 @@ WCHAR * WINAPI StrStrNIW(const WCHAR *str, const WCHAR *search, UINT max_len)
 
     for (i = max_len; *str && (i > 0); i--, str++)
     {
-        if (!wcsnicmp(str, search, len))
+        if (!StrCmpNIW(str, search, len))
             return (WCHAR *)str;
     }
 
