@@ -1737,10 +1737,7 @@ static int __cdecl uncompressed_video_format_compare(const void *a, const void *
     return memcmp(guid, format->subtype, sizeof(*guid));
 }
 
-/***********************************************************************
- *      MFCalculateImageSize (mfplat.@)
- */
-HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height, UINT32 *size)
+static HRESULT mf_get_image_size(REFGUID subtype, unsigned int width, unsigned int height, unsigned int *size)
 {
     static const struct uncompressed_video_format video_formats[] =
     {
@@ -1755,8 +1752,6 @@ HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height
     };
     struct uncompressed_video_format *format;
 
-    TRACE("%s, %u, %u, %p.\n", debugstr_mf_guid(subtype), width, height, size);
-
     format = bsearch(subtype, video_formats, ARRAY_SIZE(video_formats), sizeof(*video_formats),
             uncompressed_video_format_compare);
     if (format)
@@ -1769,6 +1764,31 @@ HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height
     }
 
     return format ? S_OK : E_INVALIDARG;
+}
+
+/***********************************************************************
+ *      MFCalculateImageSize (mfplat.@)
+ */
+HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height, UINT32 *size)
+{
+    TRACE("%s, %u, %u, %p.\n", debugstr_mf_guid(subtype), width, height, size);
+
+    return mf_get_image_size(subtype, width, height, size);
+}
+
+/***********************************************************************
+ *      MFGetPlaneSize (mfplat.@)
+ */
+HRESULT WINAPI MFGetPlaneSize(DWORD format, DWORD width, DWORD height, DWORD *size)
+{
+    GUID subtype;
+
+    TRACE("%#x, %u, %u, %p.\n", format, width, height, size);
+
+    memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
+    subtype.Data1 = format;
+
+    return mf_get_image_size(&subtype, width, height, size);
 }
 
 /***********************************************************************

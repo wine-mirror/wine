@@ -96,7 +96,7 @@
 @ stub MFGetConfigurationString
 @ stub MFGetMFTMerit
 @ stub MFGetNumericNameFromSockaddr
-@ stub MFGetPlaneSize
+@ stdcall MFGetPlaneSize(long long long ptr)
 @ stub MFGetPlatform
 @ stdcall MFGetPluginControl(ptr)
 @ stub MFGetPrivateWorkqueues

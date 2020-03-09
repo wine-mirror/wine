@@ -91,6 +91,7 @@ static HRESULT (WINAPI *pMFTUnregisterLocalByCLSID)(CLSID clsid);
 static HRESULT (WINAPI *pMFAllocateWorkQueueEx)(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
 static HRESULT (WINAPI *pMFTEnumEx)(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INFO *input_type,
         const MFT_REGISTER_TYPE_INFO *output_type, IMFActivate ***activate, UINT32 *count);
+static HRESULT (WINAPI *pMFGetPlaneSize)(DWORD format, DWORD width, DWORD height, DWORD *size);
 
 static const WCHAR fileschemeW[] = L"file://";
 
@@ -662,6 +663,7 @@ static void init_functions(void)
     X(MFCreateSourceResolver);
     X(MFCreateMFByteStreamOnStream);
     X(MFCreateTransformActivate);
+    X(MFGetPlaneSize);
     X(MFHeapAlloc);
     X(MFHeapFree);
     X(MFPutWaitingWorkItem);
@@ -3184,6 +3186,9 @@ static void test_MFCalculateImageSize(void)
     UINT32 size;
     HRESULT hr;
 
+    if (!pMFGetPlaneSize)
+        win_skip("MFGetPlaneSize() is not available.\n");
+
     size = 1;
     hr = MFCalculateImageSize(&IID_IUnknown, 1, 1, &size);
     ok(hr == E_INVALIDARG || broken(hr == S_OK) /* Vista */, "Unexpected hr %#x.\n", hr);
@@ -3200,6 +3205,15 @@ static void test_MFCalculateImageSize(void)
         ok(hr == S_OK || (is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#x.\n", i, hr);
         ok(size == image_size_tests[i].size, "%u: unexpected image size %u, expected %u.\n", i, size,
             image_size_tests[i].size);
+
+        if (pMFGetPlaneSize)
+        {
+            hr = pMFGetPlaneSize(image_size_tests[i].subtype->Data1, image_size_tests[i].width, image_size_tests[i].height,
+                    &size);
+            ok(hr == S_OK, "%u: failed to get plane size, hr %#x.\n", i, hr);
+            ok(size == image_size_tests[i].size, "%u: unexpected plane size %u, expected %u.\n", i, size,
+                    image_size_tests[i].size);
+        }
     }
 }
 
