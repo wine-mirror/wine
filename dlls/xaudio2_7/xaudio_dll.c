@@ -1955,10 +1955,8 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     FAudio_RegisterForCallbacks(object->faudio, &object->FAudioEngineCallback_vtbl);
 
     hr = IXAudio2_QueryInterface(&object->IXAudio2_iface, riid, ppobj);
+    IXAudio2_Release(&object->IXAudio2_iface);
     if(FAILED(hr)){
-        object->lock.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&object->lock);
-        HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
