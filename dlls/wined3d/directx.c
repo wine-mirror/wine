@@ -1772,11 +1772,12 @@ UINT CDECL wined3d_calculate_format_pitch(const struct wined3d *wined3d, UINT ad
     return row_pitch;
 }
 
-HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_device_type device_type, enum wined3d_format_id src_format, enum wined3d_format_id dst_format)
+HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d_output *output,
+        enum wined3d_device_type device_type, enum wined3d_format_id src_format,
+        enum wined3d_format_id dst_format)
 {
-    FIXME("wined3d %p, adapter_idx %u, device_type %s, src_format %s, dst_format %s stub!\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(src_format),
+    FIXME("output %p, device_type %s, src_format %s, dst_format %s stub!\n",
+            output, debug_d3ddevicetype(device_type), debug_d3dformat(src_format),
             debug_d3dformat(dst_format));
 
     return WINED3D_OK;
@@ -1838,7 +1839,7 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
         if (backbuffer_format == WINED3DFMT_UNKNOWN)
             backbuffer_format = display_format;
 
-        if (FAILED(wined3d_check_device_format_conversion(wined3d, adapter_idx,
+        if (FAILED(wined3d_check_device_format_conversion(&wined3d->adapters[adapter_idx]->outputs[0],
                 device_type, backbuffer_format, display_format)))
         {
             TRACE("Format conversion from %s to %s not supported.\n",

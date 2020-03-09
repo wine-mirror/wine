@@ -361,14 +361,20 @@ static HRESULT WINAPI d3d9_CheckDeviceFormatConversion(IDirect3D9Ex *iface, UINT
         D3DDEVTYPE device_type, D3DFORMAT src_format, D3DFORMAT dst_format)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, src_format %#x, dst_format %#x.\n",
             iface, adapter, device_type, src_format, dst_format);
 
+    output_idx = adapter;
+    if (output_idx >= d3d9->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
+
     wined3d_mutex_lock();
-    hr = wined3d_check_device_format_conversion(d3d9->wined3d, adapter, device_type,
-            wined3dformat_from_d3dformat(src_format), wined3dformat_from_d3dformat(dst_format));
+    hr = wined3d_check_device_format_conversion(d3d9->wined3d_outputs[output_idx],
+            device_type, wined3dformat_from_d3dformat(src_format),
+            wined3dformat_from_d3dformat(dst_format));
     wined3d_mutex_unlock();
 
     return hr;
