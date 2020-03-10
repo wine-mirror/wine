@@ -28,8 +28,13 @@
 #include "objbase.h"
 #include "rpcproxy.h"
 #include "iads.h"
+#include "adserr.h"
 #define SECURITY_WIN32
 #include "security.h"
+#include "dsgetdc.h"
+#include "lmcons.h"
+#include "lmapibuf.h"
+#include "winldap.h"
 
 #include "wine/heap.h"
 #include "wine/debug.h"
@@ -346,6 +351,10 @@ typedef struct
     IADs IADs_iface;
     IADsOpenDSObject IADsOpenDSObject_iface;
     LONG ref;
+    LDAP *ld;
+    BSTR host;
+    BSTR object;
+    ULONG port;
 } LDAP_namespace;
 
 static inline LDAP_namespace *impl_from_IADs(IADs *iface)
@@ -395,6 +404,9 @@ static ULONG WINAPI ldapns_Release(IADs *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
+        if (ldap->ld) ldap_unbind(ldap->ld);
+        SysFreeString(ldap->host);
+        SysFreeString(ldap->object);
         heap_free(ldap);
     }
 
@@ -601,12 +613,163 @@ static HRESULT WINAPI openobj_Invoke(IADsOpenDSObject *iface, DISPID dispid, REF
     return E_NOTIMPL;
 }
 
+static HRESULT parse_path(WCHAR *path, BSTR *host, ULONG *port, BSTR *object)
+{
+    WCHAR *p, *p_host;
+    int host_len;
+
+    if (host) *host = NULL;
+    if (port) *port = 0;
+    if (object) *object = NULL;
+
+    if (wcsnicmp(path, L"LDAP:", 5) != 0)
+        return E_ADS_BAD_PATHNAME;
+
+    p = path + 5;
+    if (!*p) return S_OK;
+
+    if (*p++ != '/' || *p++ != '/' || !*p)
+        return E_ADS_BAD_PATHNAME;
+
+    p_host = p;
+    host_len = 0;
+    while (*p && *p != '/')
+    {
+        if (*p == ':')
+        {
+            ULONG dummy;
+            if (!port) port = &dummy;
+            *port = wcstol(p + 1, &p, 10);
+            if (*p && *p != '/') return E_ADS_BAD_PATHNAME;
+        }
+        else
+        {
+            p++;
+            host_len++;
+        }
+    }
+    if (host_len == 0) return E_ADS_BAD_PATHNAME;
+
+    if (host)
+    {
+        *host = SysAllocStringLen(p_host, host_len);
+        if (!*host) return E_OUTOFMEMORY;
+    }
+
+    if (!*p) return S_OK;
+
+    if (*p++ != '/' || !*p)
+    {
+        SysFreeString(*host);
+        return E_ADS_BAD_PATHNAME;
+    }
+
+    if (object)
+    {
+        *object = SysAllocString(p);
+        if (!*object)
+        {
+            SysFreeString(*host);
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, BSTR user, BSTR password,
                                            LONG reserved, IDispatch **obj)
 {
-    FIXME("%p,%s,%s,%s,%d,%p: stub\n", iface, debugstr_w(path), debugstr_w(user), debugstr_w(password),
-          reserved, obj);
-    return E_NOTIMPL;
+    BSTR host, object;
+    ULONG port;
+    IADs *ads;
+    LDAP *ld = NULL;
+    HRESULT hr;
+    ULONG err;
+
+    FIXME("%p,%s,%s,%08x,%p: semi-stub\n", iface, debugstr_w(path), debugstr_w(user), reserved, obj);
+
+    hr = parse_path(path, &host, &port, &object);
+    if (hr != S_OK) return hr;
+
+    TRACE("host %s, port %u, object %s\n", debugstr_w(host), port, debugstr_w(object));
+
+    if (host)
+    {
+        int version;
+
+        if (!wcsicmp(host, L"rootDSE"))
+        {
+            DOMAIN_CONTROLLER_INFOW *dcinfo;
+
+            if (object)
+            {
+                hr = E_ADS_BAD_PATHNAME;
+                goto fail;
+            }
+
+            object = host;
+
+            err = DsGetDcNameW(NULL, NULL, NULL, NULL, DS_RETURN_DNS_NAME, &dcinfo);
+            if (err != ERROR_SUCCESS)
+            {
+                hr = HRESULT_FROM_WIN32(LdapGetLastError());
+                goto fail;
+            }
+
+            host = SysAllocString(dcinfo->DomainName);
+            NetApiBufferFree(dcinfo);
+
+            if (!host)
+            {
+                hr = E_OUTOFMEMORY;
+                goto fail;
+            }
+        }
+
+        ld = ldap_initW(host, port);
+        if (!ld)
+        {
+            hr = HRESULT_FROM_WIN32(LdapGetLastError());
+            goto fail;
+        }
+
+        version = LDAP_VERSION3;
+        err = ldap_set_optionW(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
+        if (err != LDAP_SUCCESS)
+        {
+            hr = HRESULT_FROM_WIN32(err);
+            ldap_unbind(ld);
+            goto fail;
+        }
+
+        err = ldap_connect(ld, NULL);
+        if (err != LDAP_SUCCESS)
+        {
+            hr = HRESULT_FROM_WIN32(err);
+            ldap_unbind(ld);
+            goto fail;
+        }
+    }
+
+    hr = LDAPNamespace_create(&IID_IADs, (void **)&ads);
+    if (hr == S_OK)
+    {
+        LDAP_namespace *ldap = impl_from_IADs(ads);
+        ldap->ld = ld;
+        ldap->host = host;
+        ldap->port = port;
+        ldap->object = object;
+        hr = IADs_QueryInterface(ads, &IID_IDispatch, (void **)obj);
+        IADs_Release(ads);
+        return hr;
+    }
+
+fail:
+    SysFreeString(host);
+    SysFreeString(object);
+
+    return hr;
 }
 
 static const IADsOpenDSObjectVtbl IADsOpenDSObject_vtbl =
@@ -632,6 +795,9 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->IADs_iface.lpVtbl = &IADs_vtbl;
     ldap->IADsOpenDSObject_iface.lpVtbl = &IADsOpenDSObject_vtbl;
     ldap->ref = 1;
+    ldap->ld = NULL;
+    ldap->host = NULL;
+    ldap->object = NULL;
 
     hr = IADs_QueryInterface(&ldap->IADs_iface, riid, obj);
     IADs_Release(&ldap->IADs_iface);

@@ -1,5 +1,6 @@
 MODULE    = adsldp.dll
-IMPORTS   = ole32 oleaut32 secur32
+IMPORTS   = ole32 oleaut32 secur32 uuid
+DELAYIMPORTS = netapi32 wldap32
 
 EXTRADLLFLAGS = -mno-cygwin
 

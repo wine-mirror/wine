@@ -85,9 +85,7 @@ static void test_LDAP(void)
     path = SysAllocString(L"LDAP:");
     hr = IADsOpenDSObject_OpenDSObject(ads_open, path, NULL, NULL, ADS_SECURE_AUTHENTICATION, &disp);
     SysFreeString(path);
-todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
-if (hr == S_OK)
     IDispatch_Release(disp);
 
     IUnknown_Release(unk);
