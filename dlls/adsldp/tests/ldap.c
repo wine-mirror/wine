@@ -122,7 +122,6 @@ static void test_ParseDisplayName(void)
 
         count = 0xdeadbeef;
         hr = IParseDisplayName_ParseDisplayName(parse, bc, path, &count, &mk);
-todo_wine
         ok(hr == test[i].hr || hr == test[i].hr_ads_open, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
         if (hr == S_OK)
         {
@@ -139,7 +138,7 @@ todo_wine
 
         count = 0xdeadbeef;
         hr = MkParseDisplayName(bc, test[i].path, &count, &mk);
-todo_wine
+todo_wine_if(i == 0 || i == 1 || i == 11 || i == 12)
         ok(hr == test[i].hr, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
         if (hr == S_OK)
         {

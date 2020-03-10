@@ -101,8 +101,28 @@ static ULONG WINAPI ldap_Release(IParseDisplayName *iface)
 static HRESULT WINAPI ldap_ParseDisplayName(IParseDisplayName *iface, IBindCtx *bc,
                                             LPOLESTR name, ULONG *eaten, IMoniker **mk)
 {
-    FIXME("%p,%p,%s,%p,%p: stub\n", iface, bc, debugstr_w(name), eaten, mk);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IADsOpenDSObject *ads_open;
+    IDispatch *disp;
+
+    TRACE("%p,%p,%s,%p,%p\n", iface, bc, debugstr_w(name), eaten, mk);
+
+    hr = LDAPNamespace_create(&IID_IADsOpenDSObject, (void **)&ads_open);
+    if (hr != S_OK) return hr;
+
+    hr = IADsOpenDSObject_OpenDSObject(ads_open, name, NULL, NULL, ADS_SECURE_AUTHENTICATION, &disp);
+    if (hr == S_OK)
+    {
+        hr = CreatePointerMoniker((IUnknown *)disp, mk);
+        if (hr == S_OK)
+            *eaten = wcslen(name);
+
+        IDispatch_Release(disp);
+    }
+
+    IADsOpenDSObject_Release(ads_open);
+
+    return hr;
 }
 
 static const IParseDisplayNameVtbl LDAP_PARSE_vtbl =
