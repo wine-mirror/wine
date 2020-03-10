@@ -3019,6 +3019,8 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     }
 
     if(flags & (EXEC_GLOBAL | EXEC_EVAL)) {
+        BOOL lookup_globals = (flags & EXEC_GLOBAL) && !bytecode->named_item;
+
         for(i=0; i < function->var_cnt; i++) {
             TRACE("[%d] %s %d\n", i, debugstr_w(function->variables[i].name), function->variables[i].func_id);
             if(function->variables[i].func_id != -1) {
@@ -3030,7 +3032,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
 
                 hres = jsdisp_propput_name(variable_obj, function->variables[i].name, jsval_obj(func_obj));
                 jsdisp_release(func_obj);
-            }else if(!(flags & EXEC_GLOBAL) || !lookup_global_members(ctx, function->variables[i].name, NULL)) {
+            }else if(!lookup_globals || !lookup_global_members(ctx, function->variables[i].name, NULL)) {
                 DISPID id = 0;
 
                 hres = jsdisp_get_id(variable_obj, function->variables[i].name, fdexNameEnsure, &id);

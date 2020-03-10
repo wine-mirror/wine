@@ -1301,7 +1301,6 @@ static void test_named_items(void)
 
     SET_EXPECT(OnEnterScript);
     SET_EXPECT(OnLeaveScript);
-    SET_EXPECT(GetIDsOfNames);
     hr = IActiveScriptParse_ParseScriptText(parse, L""
         "var testVar = 42;\n"
         "testVar_global = 5;\n"
@@ -1310,7 +1309,6 @@ static void test_named_items(void)
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
-    todo_wine CHECK_NOT_CALLED(GetIDsOfNames);
 
     SET_EXPECT(OnEnterScript);
     SET_EXPECT(OnLeaveScript);
