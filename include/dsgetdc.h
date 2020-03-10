@@ -23,6 +23,13 @@
 extern "C" {
 #endif
 
+#define DS_INET_ADDRESS                 1
+#define DS_NETBIOS_ADDRESS              2
+
+#define DS_DNS_CONTROLLER_FLAG          0x20000000
+#define DS_DNS_DOMAIN_FLAG              0x40000000
+#define DS_DNS_FOREST_FLAG              0x80000000
+
 #define DS_FORCE_REDISCOVERY            0x00000001
 #define DS_DIRECTORY_SERVICE_REQUIRED   0x00000010
 #define DS_DIRECTORY_SERVICE_PREFERRED  0x00000020

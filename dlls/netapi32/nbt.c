@@ -1437,11 +1437,14 @@ static const WCHAR Config_NetworkW[] = { 'S','o','f','t','w','a','r','e','\\',
 /* Initializes global variables and registers the NetBT transport */
 void NetBTInit(void)
 {
+    WSADATA wsa_data;
     HKEY hKey;
     NetBIOSTransport transport;
     LONG ret;
 
     TRACE("\n");
+
+    WSAStartup(MAKEWORD(2, 2), &wsa_data);
 
     gEnableDNS = TRUE;
     gBCastQueries = BCAST_QUERIES;

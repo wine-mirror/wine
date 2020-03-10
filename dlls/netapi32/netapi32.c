@@ -4,6 +4,7 @@
  * Copyright 2005,2006 Paul Vriens
  * Copyright 2006 Robert Reif
  * Copyright 2013 Hans Leidekker for CodeWeavers
+ * Copyright 2020 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +38,9 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winsock2.h"
+#include "ws2ipdef.h"
+#include "windns.h"
 #include "lm.h"
 #include "lmaccess.h"
 #include "atsvc.h"
@@ -56,8 +60,11 @@
 #include "wine/library.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
+#include "initguid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static char *strdup_unixcp( const WCHAR *str )
 {
@@ -3033,14 +3040,142 @@ NET_API_STATUS WINAPI I_BrowserQueryEmulatedDomains(
     return ERROR_NOT_SUPPORTED;
 }
 
-DWORD WINAPI DsGetDcNameW(LPCWSTR ComputerName, LPCWSTR AvoidDCName,
- GUID* DomainGuid, LPCWSTR SiteName, ULONG Flags,
- PDOMAIN_CONTROLLER_INFOW *DomainControllerInfo)
+#define NS_MAXDNAME 1025
+
+static DWORD get_dc_info(const WCHAR *domain, WCHAR *dc, WCHAR *ip)
 {
-    FIXME("(%s, %s, %s, %s, %08x, %p): stub\n", debugstr_w(ComputerName),
-     debugstr_w(AvoidDCName), debugstr_guid(DomainGuid),
-     debugstr_w(SiteName), Flags, DomainControllerInfo);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    static const WCHAR pfx[] = {'_','l','d','a','p','.','_','t','c','p','.','d','c','.','_','m','s','d','c','s','.',0};
+    WCHAR name[NS_MAXDNAME];
+    DWORD ret, size;
+    DNS_RECORDW *rec;
+
+    lstrcpyW(name, pfx);
+    lstrcatW(name, domain);
+
+    ret = DnsQuery_W(name, DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
+    TRACE("DnsQuery_W(%s) => %d\n", wine_dbgstr_w(domain), ret);
+    if (ret == ERROR_SUCCESS)
+    {
+        TRACE("target %s, port %d\n", wine_dbgstr_w(rec->Data.Srv.pNameTarget), rec->Data.Srv.wPort);
+
+        lstrcpynW(dc, rec->Data.Srv.pNameTarget, NS_MAXDNAME);
+        DnsRecordListFree(rec, DnsFreeRecordList);
+
+        /* IPv4 */
+        ret = DnsQuery_W(dc, DNS_TYPE_A, DNS_QUERY_STANDARD, NULL, &rec, NULL);
+        TRACE("DnsQuery_W(%s) => %d\n", wine_dbgstr_w(dc), ret);
+        if (ret == ERROR_SUCCESS)
+        {
+            SOCKADDR_IN addr;
+
+            addr.sin_family = AF_INET;
+            addr.sin_port = 0;
+            addr.sin_addr.s_addr = rec->Data.A.IpAddress;
+            size = IP6_ADDRESS_STRING_LENGTH;
+            ret = WSAAddressToStringW((SOCKADDR *)&addr, sizeof(addr), NULL, ip, &size);
+            if (!ret)
+                TRACE("WSAAddressToStringW => %d, %s\n", ret, wine_dbgstr_w(ip));
+
+            DnsRecordListFree(rec, DnsFreeRecordList);
+
+            return ret;
+        }
+
+        /* IPv6 */
+        ret = DnsQuery_W(dc, DNS_TYPE_AAAA, DNS_QUERY_STANDARD, NULL, &rec, NULL);
+        TRACE("DnsQuery_W(%s) => %d\n", wine_dbgstr_w(dc), ret);
+        if (ret == ERROR_SUCCESS)
+        {
+            SOCKADDR_IN6 addr;
+
+            addr.sin6_family = AF_INET6;
+            addr.sin6_port = 0;
+            addr.sin6_scope_id = 0;
+            memcpy(addr.sin6_addr.s6_addr, &rec->Data.AAAA.Ip6Address, sizeof(rec->Data.AAAA.Ip6Address));
+            size = IP6_ADDRESS_STRING_LENGTH;
+            ret = WSAAddressToStringW((SOCKADDR *)&addr, sizeof(addr), NULL, ip, &size);
+            if (!ret)
+                TRACE("WSAAddressToStringW => %d, %s\n", ret, wine_dbgstr_w(ip));
+
+            DnsRecordListFree(rec, DnsFreeRecordList);
+        }
+    }
+
+    return ret;
+}
+
+DWORD WINAPI DsGetDcNameW(LPCWSTR computer, LPCWSTR domain, GUID *domain_guid,
+                          LPCWSTR site, ULONG flags, PDOMAIN_CONTROLLER_INFOW *dc_info)
+{
+    static const WCHAR pfxW[] = {'\\','\\'};
+    static const WCHAR default_site_nameW[] = {'D','e','f','a','u','l','t','-','F','i','r','s','t','-','S','i','t','e','-','N','a','m','e',0};
+    NTSTATUS status;
+    POLICY_DNS_DOMAIN_INFO *dns_domain_info = NULL;
+    DOMAIN_CONTROLLER_INFOW *info;
+    WCHAR dc[NS_MAXDNAME], ip[IP6_ADDRESS_STRING_LENGTH];
+    DWORD size;
+
+    FIXME("(%s, %s, %s, %s, %08x, %p): semi-stub\n", debugstr_w(computer),
+        debugstr_w(domain), debugstr_guid(domain_guid), debugstr_w(site), flags, dc_info);
+
+    if (!dc_info) return ERROR_INVALID_PARAMETER;
+
+    if (!domain)
+    {
+        LSA_OBJECT_ATTRIBUTES attrs;
+        LSA_HANDLE lsa;
+
+        memset(&attrs, 0, sizeof(attrs));
+        attrs.Length = sizeof(attrs);
+        status = LsaOpenPolicy(NULL, &attrs, POLICY_VIEW_LOCAL_INFORMATION, &lsa);
+        if (status)
+            return LsaNtStatusToWinError(status);
+
+        status = LsaQueryInformationPolicy(lsa, PolicyDnsDomainInformation, (void **)&dns_domain_info);
+        LsaClose(lsa);
+        if (status)
+            return LsaNtStatusToWinError(status);
+
+        domain = dns_domain_info->DnsDomainName.Buffer;
+    }
+
+    status = get_dc_info(domain, dc, ip);
+    if (status) return status;
+
+    size = sizeof(DOMAIN_CONTROLLER_INFOW) + lstrlenW(domain) * sizeof(WCHAR) +
+            sizeof(pfxW) * 2 + (lstrlenW(dc) + 1 + lstrlenW(ip) + 1) * sizeof(WCHAR) +
+            lstrlenW(domain) * sizeof(WCHAR) /* assume forest == domain */ +
+            sizeof(default_site_nameW) * 2;
+    status = NetApiBufferAllocate(size, (void **)&info);
+    if (status != NERR_Success)
+    {
+        LsaFreeMemory(dns_domain_info);
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    info->DomainControllerName = (WCHAR *)(info + 1);
+    memcpy(info->DomainControllerName, pfxW, sizeof(pfxW));
+    lstrcpyW(info->DomainControllerName + 2, dc);
+    info->DomainControllerAddress = (WCHAR *)((char *)info->DomainControllerName + (strlenW(info->DomainControllerName) + 1) * sizeof(WCHAR));
+    memcpy(info->DomainControllerAddress, pfxW, sizeof(pfxW));
+    lstrcpyW(info->DomainControllerAddress + 2, ip);
+    info->DomainControllerAddressType = DS_INET_ADDRESS;
+    info->DomainGuid = dns_domain_info ? dns_domain_info->DomainGuid : GUID_NULL /* FIXME */;
+    info->DomainName = (WCHAR *)((char *)info->DomainControllerAddress + (strlenW(info->DomainControllerAddress) + 1) * sizeof(WCHAR));
+    lstrcpyW(info->DomainName, domain);
+    info->DnsForestName = (WCHAR *)((char *)info->DomainName + (lstrlenW(info->DomainName) + 1) * sizeof(WCHAR));
+    lstrcpyW(info->DnsForestName, domain);
+    info->DcSiteName = (WCHAR *)((char *)info->DnsForestName + (lstrlenW(info->DnsForestName) + 1) * sizeof(WCHAR));
+    lstrcpyW(info->DcSiteName, default_site_nameW);
+    info->ClientSiteName = (WCHAR *)((char *)info->DcSiteName + sizeof(default_site_nameW));
+    lstrcpyW(info->ClientSiteName, default_site_nameW);
+    info->Flags = DS_DNS_DOMAIN_FLAG | DS_DNS_FOREST_FLAG;
+
+    LsaFreeMemory(dns_domain_info);
+
+    *dc_info = info;
+
+    return ERROR_SUCCESS;
 }
 
 DWORD WINAPI DsGetDcNameA(LPCSTR ComputerName, LPCSTR AvoidDCName,
