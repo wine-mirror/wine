@@ -896,9 +896,8 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
     HRESULT hr;
     GstMapInfo info;
 
-    TRACE("%p %s %i %p\n", pad, wine_dbgstr_longlong(ofs), len, buf);
+    TRACE("pad %p, offset %s, length %u, buffer %p.\n", pad, wine_dbgstr_longlong(ofs), len, *buf);
 
-    *buf = NULL;
     if (ofs == GST_BUFFER_OFFSET_NONE)
         ofs = This->nextpullofs;
     if (ofs >= This->filesize) {
@@ -909,7 +908,8 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
         len = This->filesize - ofs;
     This->nextpullofs = ofs + len;
 
-    *buf = gst_buffer_new_and_alloc(len);
+    if (!*buf)
+        *buf = gst_buffer_new_and_alloc(len);
     gst_buffer_map(*buf, &info, GST_MAP_WRITE);
     hr = IAsyncReader_SyncRead(This->reader, ofs, len, info.data);
     gst_buffer_unmap(*buf, &info);
