@@ -738,7 +738,7 @@
 @ cdecl getwc(ptr) MSVCRT_getwc
 @ cdecl getwchar() MSVCRT_getwchar
 @ cdecl gmtime(ptr) MSVCRT_gmtime
-@ cdecl is_wctype(long long) ntdll.iswctype
+@ cdecl is_wctype(long long) MSVCRT_iswctype
 @ cdecl isalnum(long) MSVCRT_isalnum
 @ cdecl isalpha(long) MSVCRT_isalpha
 @ cdecl iscntrl(long) MSVCRT_iscntrl
@@ -751,10 +751,10 @@
 @ cdecl isspace(long) MSVCRT_isspace
 @ cdecl isupper(long) MSVCRT_isupper
 @ cdecl iswalnum(long) MSVCRT_iswalnum
-@ cdecl iswalpha(long) ntdll.iswalpha
+@ cdecl iswalpha(long) MSVCRT_iswalpha
 @ cdecl iswascii(long) MSVCRT_iswascii
 @ cdecl iswcntrl(long) MSVCRT_iswcntrl
-@ cdecl iswctype(long long) ntdll.iswctype
+@ cdecl iswctype(long long) MSVCRT_iswctype
 @ cdecl iswdigit(long) MSVCRT_iswdigit
 @ cdecl iswgraph(long) MSVCRT_iswgraph
 @ cdecl iswlower(long) MSVCRT_iswlower

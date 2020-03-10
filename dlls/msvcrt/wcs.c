@@ -1968,6 +1968,14 @@ INT CDECL MSVCRT__iswctype_l( MSVCRT_wchar_t wc, MSVCRT_wctype_t type, MSVCRT__l
 }
 
 /*********************************************************************
+ *		iswctype    (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswctype( MSVCRT_wchar_t wc, MSVCRT_wctype_t type )
+{
+    return (get_char_typeW(wc) & 0xfff) & type;
+}
+
+/*********************************************************************
  *		_iswblank_l (MSVCRT.@)
  */
 INT CDECL MSVCRT__iswblank_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
