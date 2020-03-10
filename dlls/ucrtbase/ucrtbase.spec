@@ -2346,7 +2346,7 @@
 @ cdecl ilogbl(double) MSVCR120_ilogbl
 @ stub imaxabs
 @ stub imaxdiv
-@ cdecl is_wctype(long long) ntdll.iswctype
+@ cdecl is_wctype(long long) MSVCRT_iswctype
 @ cdecl isalnum(long) MSVCRT_isalnum
 @ cdecl isalpha(long) MSVCRT_isalpha
 @ cdecl isblank(long) MSVCRT_isblank
@@ -2360,11 +2360,11 @@
 @ cdecl isspace(long) MSVCRT_isspace
 @ cdecl isupper(long) MSVCRT_isupper
 @ cdecl iswalnum(long) MSVCRT_iswalnum
-@ cdecl iswalpha(long) ntdll.iswalpha
+@ cdecl iswalpha(long) MSVCRT_iswalpha
 @ cdecl iswascii(long) MSVCRT_iswascii
 @ cdecl iswblank(long) MSVCRT_iswblank
 @ cdecl iswcntrl(long) MSVCRT_iswcntrl
-@ cdecl iswctype(long long) ntdll.iswctype
+@ cdecl iswctype(long long) MSVCRT_iswctype
 @ cdecl iswdigit(long) MSVCRT_iswdigit
 @ cdecl iswgraph(long) MSVCRT_iswgraph
 @ cdecl iswlower(long) MSVCRT_iswlower
