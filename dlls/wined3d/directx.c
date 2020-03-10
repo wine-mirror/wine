@@ -1558,28 +1558,24 @@ static BOOL wined3d_check_surface_format(const struct wined3d_format *format)
  *
  * For now lets report this on all formats, but in the future we may want to
  * restrict it to some should applications need that. */
-HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
-        unsigned int bind_flags, enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id)
+HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
+        const struct wined3d_adapter *adapter, enum wined3d_device_type device_type,
+        enum wined3d_format_id adapter_format_id, DWORD usage, unsigned int bind_flags,
+        enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id)
 {
     const struct wined3d_format *adapter_format, *format;
     enum wined3d_gl_resource_type gl_type, gl_type_end;
-    const struct wined3d_adapter *adapter;
     BOOL mipmap_gen_supported = TRUE;
     unsigned int allowed_bind_flags;
     DWORD format_flags = 0;
     DWORD allowed_usage;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s, adapter_format %s, usage %s, %s, "
+    TRACE("wined3d %p, adapter %p, device_type %s, adapter_format %s, usage %s, %s, "
             "bind_flags %s, resource_type %s, check_format %s.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(adapter_format_id),
+            wined3d, adapter, debug_d3ddevicetype(device_type), debug_d3dformat(adapter_format_id),
             debug_d3dusage(usage), debug_d3dusagequery(usage), wined3d_debug_bind_flags(bind_flags),
             debug_d3dresourcetype(resource_type), debug_d3dformat(check_format_id));
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
     adapter_format = wined3d_get_format(adapter, adapter_format_id, WINED3D_BIND_RENDER_TARGET);
     format = wined3d_get_format(adapter, check_format_id, bind_flags);
 
@@ -1873,7 +1869,7 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d,
     }
 
     /* Validate that the back buffer format is usable for render targets. */
-    if (FAILED(wined3d_check_device_format(wined3d, output->adapter->ordinal, device_type,
+    if (FAILED(wined3d_check_device_format(wined3d, output->adapter, device_type,
             display_format, 0, WINED3D_BIND_RENDER_TARGET, WINED3D_RTYPE_TEXTURE_2D,
             backbuffer_format)))
     {

@@ -1296,7 +1296,9 @@ static const struct wined3d_parent_ops d3d9_texture_wined3d_parent_ops =
 HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
+    struct wined3d_adapter *wined3d_adapter;
     struct wined3d_resource_desc desc;
+    unsigned int output_idx;
     DWORD flags = 0;
     HRESULT hr;
 
@@ -1346,7 +1348,9 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
             return D3DERR_INVALIDCALL;
         }
         wined3d_mutex_lock();
-        hr = wined3d_check_device_format(device->d3d_parent->wined3d, WINED3DADAPTER_DEFAULT,
+        output_idx = device->adapter_ordinal;
+        wined3d_adapter = wined3d_output_get_adapter(device->d3d_parent->wined3d_outputs[output_idx]);
+        hr = wined3d_check_device_format(device->d3d_parent->wined3d, wined3d_adapter,
                 WINED3D_DEVICE_TYPE_HAL, WINED3DFMT_B8G8R8A8_UNORM, WINED3DUSAGE_QUERY_GENMIPMAP,
                 WINED3D_BIND_SHADER_RESOURCE, WINED3D_RTYPE_TEXTURE_2D, wined3dformat_from_d3dformat(format));
         wined3d_mutex_unlock();

@@ -4617,6 +4617,7 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
 
     device->IDirect3DDevice9Ex_iface.lpVtbl = &d3d9_device_vtbl;
     device->device_parent.ops = &d3d9_wined3d_device_parent_ops;
+    device->adapter_ordinal = adapter;
     device->refcount = 1;
 
     if (!(flags & D3DCREATE_FPU_PRESERVE)) setup_fpu();
