@@ -2029,6 +2029,7 @@ struct wined3d_buffer_desc
 struct wined3d_blend_state_desc
 {
     BOOL alpha_to_coverage;
+    BOOL enable;
 };
 
 struct wined3d_rasterizer_state_desc

@@ -3148,7 +3148,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZENABLE));
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE));
+    context_invalidate_state(context, STATE_BLEND);
     gl_info->gl_ops.gl.p_glDisable(GL_CULL_FACE);
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
     context_invalidate_state(context, STATE_RASTERIZER);
@@ -3426,7 +3426,7 @@ BOOL wined3d_context_gl_apply_clear_state(struct wined3d_context_gl *context_gl,
     }
     checkGLcall("setting up state for clear");
 
-    context_invalidate_state(&context_gl->c, STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE));
+    context_invalidate_state(&context_gl->c, STATE_BLEND);
     context_invalidate_state(&context_gl->c, STATE_RASTERIZER);
     context_invalidate_state(&context_gl->c, STATE_SCISSORRECT);
 
@@ -4458,7 +4458,7 @@ static void wined3d_context_gl_setup_target(struct wined3d_context_gl *context_g
      * the alpha blend state changes with different render target formats. */
     if (!context_gl->c.current_rt.texture)
     {
-        context_invalidate_state(&context_gl->c, STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE));
+        context_invalidate_state(&context_gl->c, STATE_BLEND);
     }
     else
     {
@@ -4470,12 +4470,12 @@ static void wined3d_context_gl_setup_target(struct wined3d_context_gl *context_g
             /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
             if ((old->alpha_size && !new->alpha_size) || (!old->alpha_size && new->alpha_size)
                     || !(texture->resource.format_flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-                context_invalidate_state(&context_gl->c, STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE));
+                context_invalidate_state(&context_gl->c, STATE_BLEND);
 
             /* Update sRGB writing when switching between formats that do/do not support sRGB writing */
             if ((context_gl->c.current_rt.texture->resource.format_flags & WINED3DFMT_FLAG_SRGB_WRITE)
                     != (texture->resource.format_flags & WINED3DFMT_FLAG_SRGB_WRITE))
-                context_invalidate_state(&context_gl->c, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
+                context_invalidate_state(&context_gl->c, STATE_BLEND);
         }
 
         /* When switching away from an offscreen render target, and we're not

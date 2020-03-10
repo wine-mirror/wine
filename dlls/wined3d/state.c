@@ -525,15 +525,16 @@ static void gl_blend_from_d3d(GLenum *src_blend, GLenum *dst_blend,
     }
 }
 
-static void state_blend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void state_blend(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
+    const struct wined3d_blend_state *b = state->blend_state;
     const struct wined3d_format *rt_format;
     GLenum src_blend, dst_blend;
     unsigned int rt_fmt_flags;
     BOOL enable_blend;
 
-    enable_blend = state->fb->render_targets[0] && state->render_states[WINED3D_RS_ALPHABLENDENABLE];
+    enable_blend = state->fb->render_targets[0] && b && b->desc.enable;
     if (enable_blend)
     {
         rt_format = state->fb->render_targets[0]->format;
@@ -589,8 +590,8 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
         checkGLcall("glBlendFunc");
     }
 
-    /* Colorkey fixup for stage 0 alphaop depends on
-     * WINED3D_RS_ALPHABLENDENABLE state, so it may need updating. */
+    /* Colorkey fixup for stage 0 alphaop depends on blend state, so it may need
+     * updating. */
     if (state->render_states[WINED3D_RS_COLORKEYENABLE])
         context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP));
 }
@@ -611,26 +612,21 @@ static void state_blend_factor(struct wined3d_context *context, const struct win
     checkGLcall("glBlendColor");
 }
 
-static void state_blend_object(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void blend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-    BOOL alpha_to_coverage = FALSE;
+    const struct wined3d_blend_state *b = state->blend_state;
 
-    if (!gl_info->supported[ARB_MULTISAMPLE])
-        return;
-
-    if (state->blend_state)
+    if (gl_info->supported[ARB_MULTISAMPLE])
     {
-        struct wined3d_blend_state_desc *desc = &state->blend_state->desc;
-        alpha_to_coverage = desc->alpha_to_coverage;
+        if (b && b->desc.alpha_to_coverage)
+            gl_info->gl_ops.gl.p_glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+        else
+            gl_info->gl_ops.gl.p_glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+        checkGLcall("glEnable GL_SAMPLE_ALPHA_TO_COVERAGE");
     }
 
-    if (alpha_to_coverage)
-        gl_info->gl_ops.gl.p_glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
-    else
-        gl_info->gl_ops.gl.p_glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
-
-    checkGLcall("blend state");
+    state_blend(context, state);
 }
 
 void state_alpha_test(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -3222,10 +3218,9 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
                  * SELECTARG/CURRENT, yet puts garbage in diffuse alpha (zeroes). This works on native, because the
                  * game disables alpha test and alpha blending. Alpha test is overwritten by wine's for purposes of
                  * color-keying though, so this will lead to missing geometry if texture alpha is modulated (pixels
-                 * fail alpha test). To get around this, ALPHABLENDENABLE state is checked: if the app enables alpha
-                 * blending, it can be expected to provide meaningful values in diffuse alpha, so it should be
-                 * modulated with texture alpha; otherwise, selecting diffuse alpha is ignored in favour of texture
-                 * alpha.
+                 * fail alpha test). To get around this, blend state is checked: if the app enables alpha blending,
+                 * it can be expected to provide meaningful values in diffuse alpha, so it should be modulated with
+                 * texture alpha; otherwise, selecting diffuse alpha is ignored in favour of texture alpha.
                  *
                  * What to do with multitexturing? So far no app has been found that uses color keying with
                  * multitexturing */
@@ -3236,7 +3231,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
                 }
                 else if (op == WINED3D_TOP_SELECT_ARG1 && arg1 != WINED3DTA_TEXTURE)
                 {
-                    if (state->render_states[WINED3D_RS_ALPHABLENDENABLE])
+                    if (state->blend_state && state->blend_state->desc.enable)
                     {
                         arg2 = WINED3DTA_TEXTURE;
                         op = WINED3D_TOP_MODULATE;
@@ -3245,7 +3240,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
                 }
                 else if (op == WINED3D_TOP_SELECT_ARG2 && arg2 != WINED3DTA_TEXTURE)
                 {
-                    if (state->render_states[WINED3D_RS_ALPHABLENDENABLE])
+                    if (state->blend_state && state->blend_state->desc.enable)
                     {
                         arg1 = WINED3DTA_TEXTURE;
                         op = WINED3D_TOP_MODULATE;
@@ -4509,16 +4504,15 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        state_uav_warn      }, WINED3D_GL_EXT_NONE             },
     { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so,           }, WINED3D_GL_VERSION_3_2          },
     { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so_warn,      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SRCBLEND),                  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_DESTBLEND),                 { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          state_blend         }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SRCBLEND),                  { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DESTBLEND),                 { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             state_line_antialias}, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SEPARATEALPHABLENDENABLE),  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SRCBLENDALPHA),             { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_BLENDOPALPHA),              { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_BLEND,                                        { STATE_BLEND,                                        state_blend_object  }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SEPARATEALPHABLENDENABLE),  { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SRCBLENDALPHA),             { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_BLENDOPALPHA),              { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_BLEND,                                        { STATE_BLEND,                                        blend               }, WINED3D_GL_EXT_NONE             },
     { STATE_BLEND_FACTOR,                                 { STATE_BLEND_FACTOR,                                 state_blend_factor  }, EXT_BLEND_COLOR                 },
     { STATE_BLEND_FACTOR,                                 { STATE_BLEND_FACTOR,                                 state_blend_factor_w}, WINED3D_GL_EXT_NONE             },
     { STATE_STREAMSRC,                                    { STATE_STREAMSRC,                                    streamsrc           }, WINED3D_GL_EXT_NONE             },
@@ -5427,6 +5421,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {  8,   8},
         { 17,  18},
         { 21,  22},
+        { 27,  27},
         { 42,  45},
         { 47,  47},
         { 61, 127},

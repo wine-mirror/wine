@@ -721,7 +721,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11Devi
     {
         wined3d_device_set_blend_state(device->wined3d_device, NULL,
                 (const struct wined3d_color *)blend_factor);
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ALPHABLENDENABLE, FALSE);
         wined3d_device_set_render_state(device->wined3d_device,
                 WINED3D_RS_COLORWRITEENABLE, D3D11_COLOR_WRITE_ENABLE_ALL);
         wined3d_device_set_render_state(device->wined3d_device,
@@ -737,8 +736,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11Devi
     wined3d_device_set_blend_state(device->wined3d_device, blend_state_impl->wined3d_state,
             (const struct wined3d_color *)blend_factor);
     desc = &blend_state_impl->desc;
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ALPHABLENDENABLE,
-            desc->RenderTarget[0].BlendEnable);
     if (desc->RenderTarget[0].BlendEnable)
     {
         const D3D11_RENDER_TARGET_BLEND_DESC *d = &desc->RenderTarget[0];

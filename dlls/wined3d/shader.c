@@ -3909,7 +3909,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         static unsigned int warned = 0;
 
         args->srgb_correction = 1;
-        if (state->render_states[WINED3D_RS_ALPHABLENDENABLE] && !warned++)
+        if (state->blend_state && state->blend_state->desc.enable && !warned++)
             WARN("Blending into a sRGB render target with no GL_ARB_framebuffer_sRGB "
                     "support, expect rendering artifacts.\n");
     }

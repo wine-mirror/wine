@@ -389,6 +389,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     }
 
     wined3d_desc.alpha_to_coverage = desc->AlphaToCoverageEnable;
+    wined3d_desc.enable = desc->RenderTarget[0].BlendEnable;
 
     /* We cannot fail after creating a wined3d_blend_state object. It
      * would lead to double free. */
