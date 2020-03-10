@@ -1913,7 +1913,7 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *c
         wined3d_mutex_unlock();
         return hr;
     }
-    framebuffer_size = wined3d_calculate_format_pitch(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
+    framebuffer_size = wined3d_calculate_format_pitch(ddraw->wined3d_adapter,
             mode.format_id, mode.width);
     framebuffer_size *= mode.height;
 

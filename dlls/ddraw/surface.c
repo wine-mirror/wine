@@ -6265,7 +6265,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             }
 
             if ((desc->dwFlags & DDSD_LINEARSIZE)
-                    && desc->u1.dwLinearSize < wined3d_calculate_format_pitch(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
+                    && desc->u1.dwLinearSize < wined3d_calculate_format_pitch(ddraw->wined3d_adapter,
                             wined3d_desc.format, wined3d_desc.width) * ((desc->dwHeight + 3) / 4))
             {
                 WARN("Invalid linear size %u specified.\n", desc->u1.dwLinearSize);
@@ -6282,7 +6282,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 return DDERR_INVALIDPARAMS;
             }
 
-            if (desc->u1.lPitch < wined3d_calculate_format_pitch(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
+            if (desc->u1.lPitch < wined3d_calculate_format_pitch(ddraw->wined3d_adapter,
                     wined3d_desc.format, wined3d_desc.width) || desc->u1.lPitch & 3)
             {
                 WARN("Invalid pitch %u specified.\n", desc->u1.lPitch);
