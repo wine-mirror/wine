@@ -573,8 +573,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
             return;
         }
 
-        gl_blend_from_d3d(&src_blend_alpha, &dst_blend_alpha,
-                state->render_states[WINED3D_RS_SRCBLENDALPHA],
+        gl_blend_from_d3d(&src_blend_alpha, &dst_blend_alpha, b->desc.src_alpha,
                 state->render_states[WINED3D_RS_DESTBLENDALPHA], rt_format);
 
         GL_EXTCALL(glBlendFuncSeparate(src_blend, dst_blend, src_blend_alpha, dst_blend_alpha));
@@ -4503,7 +4502,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so_warn,      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             state_line_antialias}, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SEPARATEALPHABLENDENABLE),  { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SRCBLENDALPHA),             { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_BLENDOPALPHA),              { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
@@ -5423,6 +5421,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {174, 177},
         {193, 193},
         {195, 197},
+        {207, 207},
         {  0,   0},
     };
     static const DWORD simple_states[] =

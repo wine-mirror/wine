@@ -2033,6 +2033,7 @@ struct wined3d_blend_state_desc
     enum wined3d_blend src;
     enum wined3d_blend dst;
     enum wined3d_blend_op op;
+    enum wined3d_blend src_alpha;
 };
 
 struct wined3d_rasterizer_state_desc
