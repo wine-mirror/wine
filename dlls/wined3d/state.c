@@ -426,18 +426,17 @@ static void blendop(const struct wined3d_state *state, const struct wined3d_gl_i
     }
 
     /* BLENDOPALPHA requires GL_EXT_blend_equation_separate, so make sure it is around */
-    if (state->render_states[WINED3D_RS_BLENDOPALPHA]
-            && !gl_info->supported[EXT_BLEND_EQUATION_SEPARATE])
+    if (b->desc.op_alpha && !gl_info->supported[EXT_BLEND_EQUATION_SEPARATE])
     {
         WARN("Unsupported in local OpenGL implementation: glBlendEquationSeparate.\n");
         return;
     }
 
     blend_equation = gl_blend_op(gl_info, b->desc.op);
-    blend_equation_alpha = gl_blend_op(gl_info, state->render_states[WINED3D_RS_BLENDOPALPHA]);
+    blend_equation_alpha = gl_blend_op(gl_info, b->desc.op_alpha);
     TRACE("blend_equation %#x, blend_equation_alpha %#x.\n", blend_equation, blend_equation_alpha);
 
-    if (state->render_states[WINED3D_RS_SEPARATEALPHABLENDENABLE])
+    if (b->desc.op != b->desc.op_alpha)
     {
         GL_EXTCALL(glBlendEquationSeparate(blend_equation, blend_equation_alpha));
         checkGLcall("glBlendEquationSeparate");
@@ -562,7 +561,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
 
     blendop(state, gl_info);
 
-    if (state->render_states[WINED3D_RS_SEPARATEALPHABLENDENABLE])
+    if (b->desc.src != b->desc.src_alpha || b->desc.dst != b->desc.dst_alpha)
     {
         GLenum src_blend_alpha, dst_blend_alpha;
 
@@ -4500,8 +4499,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so,           }, WINED3D_GL_VERSION_3_2          },
     { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so_warn,      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             state_line_antialias}, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SEPARATEALPHABLENDENABLE),  { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_BLENDOPALPHA),              { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_BLEND,                                        { STATE_BLEND,                                        blend               }, WINED3D_GL_EXT_NONE             },
     { STATE_BLEND_FACTOR,                                 { STATE_BLEND_FACTOR,                                 state_blend_factor  }, EXT_BLEND_COLOR                 },
     { STATE_BLEND_FACTOR,                                 { STATE_BLEND_FACTOR,                                 state_blend_factor_w}, WINED3D_GL_EXT_NONE             },
@@ -5418,7 +5415,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {174, 177},
         {193, 193},
         {195, 197},
-        {207, 208},
+        {206, 209},
         {  0,   0},
     };
     static const DWORD simple_states[] =
