@@ -390,11 +390,6 @@ static void state_ambient(struct wined3d_context *context, const struct wined3d_
     checkGLcall("glLightModel for MODEL_AMBIENT");
 }
 
-static void state_blendop_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
-}
-
 static GLenum gl_blend_op(const struct wined3d_gl_info *gl_info, enum wined3d_blend_op op)
 {
     switch (op)
@@ -418,11 +413,17 @@ static GLenum gl_blend_op(const struct wined3d_gl_info *gl_info, enum wined3d_bl
     }
 }
 
-static void state_blendop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void blendop(const struct wined3d_state *state, const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
+    const struct wined3d_blend_state *b = state->blend_state;
     GLenum blend_equation_alpha = GL_FUNC_ADD_EXT;
     GLenum blend_equation = GL_FUNC_ADD_EXT;
+
+    if (!gl_info->supported[WINED3D_GL_BLEND_EQUATION])
+    {
+        WARN("Unsupported in local OpenGL implementation: glBlendEquation.\n");
+        return;
+    }
 
     /* BLENDOPALPHA requires GL_EXT_blend_equation_separate, so make sure it is around */
     if (state->render_states[WINED3D_RS_BLENDOPALPHA]
@@ -432,7 +433,7 @@ static void state_blendop(struct wined3d_context *context, const struct wined3d_
         return;
     }
 
-    blend_equation = gl_blend_op(gl_info, state->render_states[WINED3D_RS_BLENDOP]);
+    blend_equation = gl_blend_op(gl_info, b->desc.op);
     blend_equation_alpha = gl_blend_op(gl_info, state->render_states[WINED3D_RS_BLENDOPALPHA]);
     TRACE("blend_equation %#x, blend_equation_alpha %#x.\n", blend_equation, blend_equation_alpha);
 
@@ -559,9 +560,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
 
     gl_blend_from_d3d(&src_blend, &dst_blend, b->desc.src, b->desc.dst, rt_format);
 
-    /* Re-apply BLENDOP(ALPHA) because of a possible SEPARATEALPHABLENDENABLE change */
-    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_BLENDOP)))
-        state_blendop(context, state, STATE_RENDER(WINED3D_RS_BLENDOPALPHA));
+    blendop(state, gl_info);
 
     if (state->render_states[WINED3D_RS_SEPARATEALPHABLENDENABLE])
     {
@@ -4649,8 +4648,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),         { STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),         state_debug_monitor }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          state_colorwrite0   }, EXT_DRAW_BUFFERS2               },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          state_colorwrite    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop       }, WINED3D_GL_BLEND_EQUATION       },
-    { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop_w     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         state_colorwrite1   }, EXT_DRAW_BUFFERS2               },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         state_colorwrite2   }, EXT_DRAW_BUFFERS2               },
@@ -5422,6 +5419,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         { 61, 127},
         {149, 150},
         {169, 169},
+        {171, 171},
         {174, 177},
         {193, 193},
         {195, 197},

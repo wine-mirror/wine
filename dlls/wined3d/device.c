@@ -3584,6 +3584,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_ALPHABLENDENABLE:
                 case WINED3D_RS_SRCBLEND:
                 case WINED3D_RS_DESTBLEND:
+                case WINED3D_RS_BLENDOP:
                     set_blend_state = TRUE;
                     break;
 
@@ -3657,6 +3658,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         desc.enable = state->rs[WINED3D_RS_ALPHABLENDENABLE];
         desc.src = state->rs[WINED3D_RS_SRCBLEND];
         desc.dst = state->rs[WINED3D_RS_DESTBLEND];
+        desc.op = state->rs[WINED3D_RS_BLENDOP];
 
         if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_BLENDFACTOR))
             wined3d_color_from_d3dcolor(&colour, state->rs[WINED3D_RS_BLENDFACTOR]);

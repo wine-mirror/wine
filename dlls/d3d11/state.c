@@ -392,6 +392,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     wined3d_desc.enable = desc->RenderTarget[0].BlendEnable;
     wined3d_desc.src = desc->RenderTarget[0].SrcBlend;
     wined3d_desc.dst = desc->RenderTarget[0].DestBlend;
+    wined3d_desc.op = desc->RenderTarget[0].BlendOp;
 
     /* We cannot fail after creating a wined3d_blend_state object. It
      * would lead to double free. */
