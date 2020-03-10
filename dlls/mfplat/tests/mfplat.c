@@ -1760,12 +1760,14 @@ static void test_system_memory_buffer(void)
 
 static void test_sample(void)
 {
+    static const DWORD test_pattern = 0x22222222;
     IMFMediaBuffer *buffer, *buffer2;
     DWORD count, flags, length;
     IMFAttributes *attributes;
     IMFSample *sample;
     LONGLONG time;
     HRESULT hr;
+    BYTE *data;
 
     hr = MFCreateSample( &sample );
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1866,6 +1868,94 @@ static void test_sample(void)
     ok(time == 1, "Unexpected timestamp.\n");
 
     IMFAttributes_Release(attributes);
+    IMFSample_Release(sample);
+
+    /* CopyToBuffer() */
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
+
+    hr = MFCreateMemoryBuffer(16, &buffer2);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    /* Sample with no buffers. */
+    hr = IMFMediaBuffer_SetCurrentLength(buffer2, 1);
+    ok(hr == S_OK, "Failed to set current length, hr %#x.\n", hr);
+    hr = IMFSample_CopyToBuffer(sample, buffer2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaBuffer_GetCurrentLength(buffer2, &length);
+    ok(hr == S_OK, "Failed to get current length, hr %#x.\n", hr);
+    ok(!length, "Unexpected length %u.\n", length);
+
+    /* Single buffer, larger destination. */
+    hr = MFCreateMemoryBuffer(8, &buffer);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    ok(hr == S_OK, "Failed to lock buffer, hr %#x.\n", hr);
+    *(DWORD *)data = 0x11111111;
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Failed to unlock, hr %#x.\n", hr);
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 4);
+    ok(hr == S_OK, "Failed to set current length, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Failed to add buffer, hr %#x.\n", hr);
+
+    /* Existing content is overwritten. */
+    hr = IMFMediaBuffer_SetCurrentLength(buffer2, 8);
+    ok(hr == S_OK, "Failed to set length, hr %#x.\n", hr);
+
+    hr = IMFSample_CopyToBuffer(sample, buffer2);
+    ok(hr == S_OK, "Failed to copy to buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer2, &length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(length == 4, "Unexpected buffer length %u.\n", length);
+
+    /* Multiple buffers, matching total size. */
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Failed to add buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+    ok(count == 2, "Unexpected buffer count %u.\n", count);
+
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 8);
+    ok(hr == S_OK, "Failed to set current length, hr %#x.\n", hr);
+
+    hr = IMFSample_CopyToBuffer(sample, buffer2);
+    ok(hr == S_OK, "Failed to copy to buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer2, &length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(length == 16, "Unexpected buffer length %u.\n", length);
+
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Failed to add buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_SetCurrentLength(buffer2, 1);
+    ok(hr == S_OK, "Failed to set buffer length, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer2, &data, NULL, NULL);
+    ok(hr == S_OK, "Failed to lock buffer, hr %#x.\n", hr);
+    *(DWORD *)data = test_pattern;
+    hr = IMFMediaBuffer_Unlock(buffer2);
+    ok(hr == S_OK, "Failed to unlock buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_CopyToBuffer(sample, buffer2);
+    ok(hr == MF_E_BUFFERTOOSMALL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer2, &data, NULL, NULL);
+    ok(hr == S_OK, "Failed to lock buffer, hr %#x.\n", hr);
+    ok(!memcmp(data, &test_pattern, sizeof(test_pattern)), "Unexpected contents, %#x\n", *(DWORD *)data);
+    hr = IMFMediaBuffer_Unlock(buffer2);
+    ok(hr == S_OK, "Failed to unlock buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer2, &length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(!length, "Unexpected buffer length %u.\n", length);
+
+    IMFMediaBuffer_Release(buffer2);
     IMFSample_Release(sample);
 
     /* ConvertToContiguousBuffer() */

@@ -771,22 +771,29 @@ static HRESULT WINAPI sample_RemoveAllBuffers(IMFSample *iface)
     return S_OK;
 }
 
+static DWORD sample_get_total_length(struct sample *sample)
+{
+    DWORD total_length = 0, length;
+    size_t i;
+
+    for (i = 0; i < sample->buffer_count; ++i)
+    {
+        length = 0;
+        if (SUCCEEDED(IMFMediaBuffer_GetCurrentLength(sample->buffers[i], &length)))
+            total_length += length;
+    }
+
+    return total_length;
+}
+
 static HRESULT WINAPI sample_GetTotalLength(IMFSample *iface, DWORD *total_length)
 {
     struct sample *sample = impl_from_IMFSample(iface);
-    DWORD length;
-    size_t i;
 
     TRACE("%p, %p.\n", iface, total_length);
 
-    *total_length = 0;
-
     EnterCriticalSection(&sample->attributes.cs);
-    for (i = 0; i < sample->buffer_count; ++i)
-    {
-        if (SUCCEEDED(IMFMediaBuffer_GetCurrentLength(sample->buffers[i], &length)))
-            *total_length += length;
-    }
+    *total_length = sample_get_total_length(sample);
     LeaveCriticalSection(&sample->attributes.cs);
 
     return S_OK;
@@ -794,9 +801,61 @@ static HRESULT WINAPI sample_GetTotalLength(IMFSample *iface, DWORD *total_lengt
 
 static HRESULT WINAPI sample_CopyToBuffer(IMFSample *iface, IMFMediaBuffer *buffer)
 {
-    FIXME("%p, %p.\n", iface, buffer);
+    struct sample *sample = impl_from_IMFSample(iface);
+    DWORD total_length, dst_length, dst_current_length, src_max_length, current_length;
+    BYTE *src_ptr, *dst_ptr;
+    BOOL locked;
+    HRESULT hr;
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, buffer);
+
+    EnterCriticalSection(&sample->attributes.cs);
+
+    total_length = sample_get_total_length(sample);
+    dst_current_length = 0;
+
+    dst_ptr = NULL;
+    dst_length = current_length = 0;
+    locked = SUCCEEDED(hr = IMFMediaBuffer_Lock(buffer, &dst_ptr, &dst_length, &current_length));
+    if (locked)
+    {
+        if (dst_length < total_length)
+            hr = MF_E_BUFFERTOOSMALL;
+        else if (dst_ptr)
+        {
+            for (i = 0; i < sample->buffer_count && SUCCEEDED(hr); ++i)
+            {
+                src_ptr = NULL;
+                src_max_length = current_length = 0;
+                if (SUCCEEDED(hr = IMFMediaBuffer_Lock(sample->buffers[i], &src_ptr, &src_max_length, &current_length)))
+                {
+                    if (src_ptr)
+                    {
+                        if (current_length > dst_length)
+                            hr = MF_E_BUFFERTOOSMALL;
+                        else if (current_length)
+                        {
+                            memcpy(dst_ptr, src_ptr, current_length);
+                            dst_length -= current_length;
+                            dst_current_length += current_length;
+                            dst_ptr += current_length;
+                        }
+                    }
+                    IMFMediaBuffer_Unlock(sample->buffers[i]);
+                }
+            }
+        }
+    }
+
+    IMFMediaBuffer_SetCurrentLength(buffer, dst_current_length);
+
+    if (locked)
+        IMFMediaBuffer_Unlock(buffer);
+
+    LeaveCriticalSection(&sample->attributes.cs);
+
+    return hr;
 }
 
 static const IMFSampleVtbl samplevtbl =
