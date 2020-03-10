@@ -29,10 +29,6 @@
 extern "C" {
 #endif /* #ifdef __cplusplus */
 
-/* WINE SCSI Stuff */
-#define ASPI_DOS        1
-#define ASPI_WIN16      2
-
 #include <pshpack1.h>
 
 /* SRB HA_INQUIRY */

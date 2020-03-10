@@ -73,9 +73,6 @@ struct sg_header
 
 #define SCSI_OFF sizeof(struct sg_header)
 
-#define PTR_TO_LIN(ptr,mode) \
-  ((mode) == ASPI_DOS ? ((void*)(((unsigned int)SELECTOROF(ptr) << 4) + OFFSETOF(ptr))) : MapSL(ptr))
-
 WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 
 /* Just a container for seeing what devices are open */
@@ -158,11 +155,11 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
 
 
 static void
-ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
+ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb)
 {
   int	i;
   BYTE *cdb;
-  BYTE *lpBuf = PTR_TO_LIN( prb->SRB_BufPointer, mode );
+  BYTE *lpBuf = MapSL( prb->SRB_BufPointer );
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
@@ -236,9 +233,9 @@ ASPI_PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
 }
 
 static void
-ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb, UINT16 mode)
+ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb)
 {
-  BYTE *lpBuf = PTR_TO_LIN( prb->SRB_BufPointer, mode );
+  BYTE *lpBuf = MapSL( prb->SRB_BufPointer );
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
@@ -251,9 +248,9 @@ ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb, UINT16 mode)
 }
 
 static WORD
-ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
+ASPI_ExecScsiCmd(DWORD ptrPRB)
 {
-  SRB_ExecSCSICmd16 *lpPRB = PTR_TO_LIN( ptrPRB, mode );
+  SRB_ExecSCSICmd16 *lpPRB = MapSL( ptrPRB );
   struct sg_header *sg_hd, *sg_reply_hdr;
   int	status;
   BYTE *lpBuf = 0;
@@ -261,7 +258,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
   int	error_code = 0;
   int	fd;
 
-  ASPI_DebugPrintCmd(lpPRB, mode);
+  ASPI_DebugPrintCmd(lpPRB);
 
   fd = ASPI_OpenDevice16(lpPRB);
   if (fd == -1) {
@@ -274,7 +271,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
   sg_reply_hdr = NULL;
 
   lpPRB->SRB_Status = SS_PENDING;
-  lpBuf = PTR_TO_LIN( lpPRB->SRB_BufPointer, mode );
+  lpBuf = MapSL( lpPRB->SRB_BufPointer );
 
   if (!lpPRB->SRB_CDBLen) {
       WARN("Failed: lpPRB->SRB_CDBLen = 0.\n");
@@ -361,25 +358,12 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 
   if (ASPI_POSTING(lpPRB) && lpPRB->SRB_PostProc) {
     TRACE("Post Routine (%x) called\n", (DWORD) lpPRB->SRB_PostProc);
-    switch (mode)
-    {
-      case ASPI_DOS:
-      {
-	SEGPTR spPRB = MapLS(lpPRB);
-
-        WOWCallback16((DWORD)lpPRB->SRB_PostProc, spPRB);
-	UnMapLS(spPRB);
-	break;
-      }
-      case ASPI_WIN16:
-        WOWCallback16((DWORD)lpPRB->SRB_PostProc, ptrPRB);
-	break;
-    }
+    WOWCallback16((DWORD)lpPRB->SRB_PostProc, ptrPRB);
   }
 
   HeapFree(GetProcessHeap(), 0, sg_reply_hdr);
   HeapFree(GetProcessHeap(), 0, sg_hd);
-  ASPI_DebugPrintResult(lpPRB, mode);
+  ASPI_DebugPrintResult(lpPRB);
   return SS_COMP;
 
 error_exit:
@@ -419,14 +403,14 @@ WORD WINAPI GetASPISupportInfo16(void)
 }
 
 
-static DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
+static DWORD ASPI_SendASPICommand(DWORD ptrSRB)
 {
 #ifdef linux
-  LPSRB16 lpSRB = PTR_TO_LIN( ptrSRB, mode );
+  LPSRB16 lpSRB = MapSL( ptrSRB );
   static const char szId[] = "Wine ASPI16";
   static const char szWh[] = "Wine host";
 
-  if (mode == ASPI_WIN16 && ASPIChainFunc)
+  if (ASPIChainFunc)
   {
       /* This is not the post proc, it's the chain proc this time */
       DWORD ret = WOWCallback16((DWORD)ASPIChainFunc, ptrSRB);
@@ -457,7 +441,7 @@ adapter name */
     FIXME("Not implemented SC_GET_DEV_TYPE\n");
     break;
   case SC_EXEC_SCSI_CMD:
-    return ASPI_ExecScsiCmd(ptrSRB, mode);
+    return ASPI_ExecScsiCmd(ptrSRB);
   case SC_RESET_DEV:
     FIXME("Not implemented SC_RESET_DEV\n");
     break;
@@ -474,7 +458,7 @@ adapter name */
  */
 WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 {
-    return ASPI_SendASPICommand(segptr_srb, ASPI_WIN16);
+    return ASPI_SendASPICommand(segptr_srb);
 }
 
 
