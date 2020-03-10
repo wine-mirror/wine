@@ -507,7 +507,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
 
     if (!wcsncmp( filename, L"\\\\.\\", 4 ))
     {
-        if ((iswalpha(filename[4]) && filename[5] == ':' && filename[6] == '\0') ||
+        if ((filename[4] && filename[5] == ':' && !filename[6]) ||
             !wcsnicmp( filename + 4, L"PIPE\\", 5 ) ||
             !wcsnicmp( filename + 4, L"MAILSLOT\\", 9 ))
         {
