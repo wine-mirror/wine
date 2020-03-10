@@ -110,6 +110,7 @@ struct image_file_map
         {
             HANDLE                      hMap;
             IMAGE_NT_HEADERS            ntheader;
+            BOOL                        builtin;
             unsigned                    full_count;
             void*                       full_map;
             struct
