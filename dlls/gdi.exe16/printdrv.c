@@ -21,23 +21,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#ifdef HAVE_SYS_WAIT_H
-# include <sys/wait.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#include <fcntl.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -199,13 +188,10 @@ INT16 WINAPI SizePQ16(HPQ16 hPQ, INT16 sizechange)
  */
 typedef struct PRINTJOB
 {
-    char	*pszOutput;
-    char 	*pszTitle;
     HDC16  	hDC;
     HANDLE16 	hHandle;
     int		nIndex;
-    int		fd;
-    pid_t       pid;
+    int		id;
 } PRINTJOB, *PPRINTJOB;
 
 #define MAX_PRINT_JOBS 1
@@ -217,127 +203,6 @@ static PPRINTJOB gPrintJobsTable[MAX_PRINT_JOBS];
 static PPRINTJOB FindPrintJobFromHandle(HANDLE16 hHandle)
 {
     return gPrintJobsTable[0];
-}
-
-static int CreateSpoolFile(LPCSTR pszOutput, pid_t *out_pid)
-{
-    int fd=-1;
-    char psCmd[1024];
-    const char *psCmdP = psCmd;
-    HKEY hkey;
-
-    /* TTD convert the 'output device' into a spool file name */
-
-    if (pszOutput == NULL || *pszOutput == '\0' || out_pid == NULL)
-      return -1;
-
-    *out_pid = -1;
-
-    psCmd[0] = 0;
-    /* @@ Wine registry key: HKCU\Software\Wine\Printing\Spooler */
-    if(!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Printing\\Spooler", &hkey))
-    {
-        DWORD type, count = sizeof(psCmd);
-        RegQueryValueExA(hkey, pszOutput, 0, &type, (LPBYTE)psCmd, &count);
-        RegCloseKey(hkey);
-    }
-    if (!psCmd[0] && !strncmp("LPR:",pszOutput,4))
-        sprintf(psCmd,"|lpr -P'%s'",pszOutput+4);
-
-    TRACE("Got printerSpoolCommand '%s' for output device '%s'\n",
-	  psCmd, pszOutput);
-    if (!*psCmd)
-        psCmdP = pszOutput;
-    else
-    {
-        while (*psCmdP && isspace(*psCmdP))
-        {
-            psCmdP++;
-        }
-        if (!*psCmdP)
-            return -1;
-    }
-    TRACE("command: '%s'\n", psCmdP);
-#ifdef HAVE_FORK
-    if (*psCmdP == '|')
-    {
-        int fds[2];
-        if (pipe(fds)) {
-	    ERR("pipe() failed!\n");
-            return -1;
-	}
-        if ((*out_pid = fork()) == 0)
-        {
-            psCmdP++;
-
-            TRACE("In child need to exec %s\n",psCmdP);
-            close(0);
-            dup2(fds[0],0);
-            close (fds[1]);
-
-            /* reset signals that we previously set to SIG_IGN */
-            signal( SIGPIPE, SIG_DFL );
-
-            execl("/bin/sh", "/bin/sh", "-c", psCmdP, NULL);
-            _exit(1);
-
-        }
-        close (fds[0]);
-        fd = fds[1];
-        TRACE("Need to execute a cmnd and pipe the output to it\n");
-    }
-    else
-#endif
-    {
-        char *buffer;
-        WCHAR psCmdPW[MAX_PATH];
-
-        TRACE("Just assume it's a file\n");
-
-        /**
-         * The file name can be dos based, we have to find its
-         * corresponding Unix file name.
-         */
-        MultiByteToWideChar(CP_ACP, 0, psCmdP, -1, psCmdPW, MAX_PATH);
-        if ((buffer = wine_get_unix_file_name(psCmdPW)))
-        {
-            if ((fd = open(buffer, O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0)
-            {
-                ERR("Failed to create spool file '%s' ('%s'). (error %s)\n",
-                    buffer, psCmdP, strerror(errno));
-            }
-            HeapFree(GetProcessHeap(), 0, buffer);
-        }
-    }
-    return fd;
-}
-
-static int FreePrintJob(HANDLE16 hJob)
-{
-    int nRet = SP_ERROR;
-    PPRINTJOB pPrintJob;
-
-    pPrintJob = FindPrintJobFromHandle(hJob);
-    if (pPrintJob != NULL)
-    {
-	nRet = SP_OK;
-	gPrintJobsTable[pPrintJob->nIndex] = NULL;
-	HeapFree(GetProcessHeap(), 0, pPrintJob->pszOutput);
-	HeapFree(GetProcessHeap(), 0, pPrintJob->pszTitle);
-	if (pPrintJob->fd >= 0) close(pPrintJob->fd);
-	if (pPrintJob->pid > 0)
-	{
-	    pid_t wret;
-            int status;
-            do {
-                wret = waitpid(pPrintJob->pid, &status, 0);
-            } while (wret < 0 && errno == EINTR);
-            if (wret < 0 || !WIFEXITED(status) || WEXITSTATUS(status))
-                nRet = SP_ERROR;
-	}
-	HeapFree(GetProcessHeap(), 0, pPrintJob);
-    }
-    return nRet;
 }
 
 /**********************************************************************
@@ -354,12 +219,11 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
     pPrintJob = gPrintJobsTable[0];
     if (pPrintJob == NULL)
     {
-	int fd;
-	pid_t pid;
+        DOCINFOA info = { sizeof(info), lpTitle, lpOutput, NULL, 0 };
+        int id;
 
-	/* Try and create a spool file */
-	fd = CreateSpoolFile(lpOutput, &pid);
-	if (fd >= 0)
+        id = StartDocA( HDC_32(hDC), &info );
+        if (id > 0)
 	{
 	    pPrintJob = HeapAlloc(GetProcessHeap(), 0, sizeof(PRINTJOB));
             if(pPrintJob == NULL) {
@@ -369,16 +233,8 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
 
             hHandle = 1;
 
-	    pPrintJob->pszOutput = HeapAlloc(GetProcessHeap(), 0, strlen(lpOutput)+1);
-	    strcpy( pPrintJob->pszOutput, lpOutput );
-	    if(lpTitle)
-            {
-	        pPrintJob->pszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(lpTitle)+1);
-	        strcpy( pPrintJob->pszTitle, lpTitle );
-            }
 	    pPrintJob->hDC = hDC;
-	    pPrintJob->fd = fd;
-	    pPrintJob->pid = pid;
+	    pPrintJob->id = id;
 	    pPrintJob->nIndex = 0;
 	    pPrintJob->hHandle = hHandle;
 	    gPrintJobsTable[pPrintJob->nIndex] = pPrintJob;
@@ -400,11 +256,7 @@ INT16 WINAPI CloseJob16(HPJOB16 hJob)
     TRACE("%04x\n", hJob);
 
     pPrintJob = FindPrintJobFromHandle(hJob);
-    if (pPrintJob != NULL)
-    {
-	FreePrintJob(hJob);
-	nRet  = 1;
-    }
+    if (pPrintJob != NULL) nRet = EndDoc( HDC_32(pPrintJob->hDC) );
     return nRet;
 }
 
@@ -420,25 +272,16 @@ INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
     TRACE("%04x %p %04x\n", hJob, lpData, cch);
 
     pPrintJob = FindPrintJobFromHandle(hJob);
-    if (pPrintJob != NULL && pPrintJob->fd >= 0 && cch)
+    if (pPrintJob != NULL && cch)
     {
-	if (write(pPrintJob->fd, lpData, cch) != cch)
-	  nRet = SP_OUTOFDISK;
-	else
-	  nRet = cch;
-#if 0
-	/* FIXME: We just cannot call 16 bit functions from here, since we
-	 * have acquired several locks (DC). And we do not really need to.
-	 */
-	if (pPrintJob->hDC == 0) {
-	    TRACE("hDC == 0 so no QueryAbort\n");
-	}
-        else if (!(QueryAbort16(pPrintJob->hDC, (nRet == SP_OUTOFDISK) ? nRet : 0 )))
-	{
-	    CloseJob16(hJob); /* printing aborted */
-	    nRet = SP_APPABORT;
-	}
-#endif
+        WORD *data = HeapAlloc( GetProcessHeap(), 0, cch + 2 );
+
+        if (!data) return SP_OUTOFDISK;
+        *data = cch;
+        memcpy( data + 1, lpData, cch );
+        ExtEscape( HDC_32(pPrintJob->hDC), PASSTHROUGH, cch + 2, (char *)data, 0, NULL );
+        HeapFree( GetProcessHeap(), 0, data );
+        nRet = cch;
     }
     return nRet;
 }
@@ -472,12 +315,9 @@ INT16 WINAPI WriteDialog16(HPJOB16 hJob, LPSTR lpMsg, INT16 cchMsg)
  */
 INT16 WINAPI DeleteJob16(HPJOB16 hJob, INT16 nNotUsed)
 {
-    int nRet;
-
     TRACE("%04x\n", hJob);
 
-    nRet = FreePrintJob(hJob);
-    return nRet;
+    return CloseJob16( hJob );
 }
 
 /*
