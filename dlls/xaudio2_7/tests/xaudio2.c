@@ -948,6 +948,7 @@ static void test_xapo_creation_legacy(const char *module, unsigned int version)
     HRESULT hr;
     IUnknown *fx_unk;
     unsigned int i;
+    ULONG rc;
 
     HRESULT (CDECL *pCreateFX)(REFCLSID,IUnknown**) = NULL;
 
@@ -1009,7 +1010,8 @@ static void test_xapo_creation_legacy(const char *module, unsigned int version)
             ok(hr == S_OK, "Couldn't get IXAPO27 interface: %08x\n", hr);
             if(SUCCEEDED(hr))
                 IXAPO_Release(xapo);
-            IUnknown_Release(fx_unk);
+            rc = IUnknown_Release(fx_unk);
+            ok(rc == 0, "XAPO via CreateFX should have been released, got refcount: %u\n", rc);
         }
 
         hr = CoCreateInstance(const_clsids[i], NULL, CLSCTX_INPROC_SERVER,
@@ -1027,7 +1029,8 @@ static void test_xapo_creation_legacy(const char *module, unsigned int version)
         ok(hr == S_OK, "Couldn't get IXAPO27 interface: %08x\n", hr);
         if(SUCCEEDED(hr))
             IXAPO_Release(xapo);
-        IUnknown_Release(fx_unk);
+        rc = IUnknown_Release(fx_unk);
+        ok(rc == 0, "AudioVolumeMeter via CreateFX should have been released, got refcount: %u\n", rc);
     }
 
     hr = pCreateFX(ar_clsids[version - 20], &fx_unk);
@@ -1038,7 +1041,8 @@ static void test_xapo_creation_legacy(const char *module, unsigned int version)
         ok(hr == S_OK, "Couldn't get IXAPO27 interface: %08x\n", hr);
         if(SUCCEEDED(hr))
             IXAPO_Release(xapo);
-        IUnknown_Release(fx_unk);
+        rc = IUnknown_Release(fx_unk);
+        ok(rc == 0, "AudioReverb via CreateFX should have been released, got refcount: %u\n", rc);
     }
 
     FreeLibrary(xapofxdll);
@@ -1050,6 +1054,7 @@ static void test_xapo_creation_modern(const char *module)
     HRESULT hr;
     IUnknown *fx_unk;
     unsigned int i;
+    ULONG rc;
 
     HRESULT (CDECL *pCreateFX)(REFCLSID,IUnknown**,void*,UINT32) = NULL;
     HRESULT (WINAPI *pCAVM)(IUnknown**) = NULL;
@@ -1090,7 +1095,8 @@ static void test_xapo_creation_modern(const char *module)
             ok(hr == S_OK, "Couldn't get IXAPO interface: %08x\n", hr);
             if(SUCCEEDED(hr))
                 IXAPO_Release(xapo);
-            IUnknown_Release(fx_unk);
+            rc = IUnknown_Release(fx_unk);
+            ok(rc == 0, "XAPO via CreateFX should have been released, got refcount: %u\n", rc);
         }
 
         hr = CoCreateInstance(const_clsids[i], NULL, CLSCTX_INPROC_SERVER,
@@ -1109,7 +1115,8 @@ static void test_xapo_creation_modern(const char *module)
         ok(hr == S_OK, "Couldn't get IXAPO interface: %08x\n", hr);
         if(SUCCEEDED(hr))
             IXAPO_Release(xapo);
-        IUnknown_Release(fx_unk);
+        rc = IUnknown_Release(fx_unk);
+        ok(rc == 0, "XAPO via legacy CreateFX should have been released, got refcount: %u\n", rc);
     }
 
     pCAVM = (void*)GetProcAddress(xaudio2dll, "CreateAudioVolumeMeter");
@@ -1123,7 +1130,8 @@ static void test_xapo_creation_modern(const char *module)
         ok(hr == S_OK, "Couldn't get IXAPO interface: %08x\n", hr);
         if(SUCCEEDED(hr))
             IXAPO_Release(xapo);
-        IUnknown_Release(fx_unk);
+        rc = IUnknown_Release(fx_unk);
+        ok(rc == 0, "XAPO via CreateAudioVolumeMeter should have been released, got refcount: %u\n", rc);
     }
 
     pCAR = (void*)GetProcAddress(xaudio2dll, "CreateAudioReverb");
@@ -1137,7 +1145,8 @@ static void test_xapo_creation_modern(const char *module)
         ok(hr == S_OK, "Couldn't get IXAPO interface: %08x\n", hr);
         if(SUCCEEDED(hr))
             IXAPO_Release(xapo);
-        IUnknown_Release(fx_unk);
+        rc = IUnknown_Release(fx_unk);
+        ok(rc == 0, "XAPO via CreateAudioReverb should have been released, got refcount: %u\n", rc);
     }
 
     FreeLibrary(xaudio2dll);
@@ -1245,6 +1254,7 @@ START_TEST(xaudio2)
     IXAudio2 *xa = NULL;
     HANDLE xa28dll;
     UINT32 has_devices;
+    ULONG rc;
 
     CoInitialize(NULL);
 
@@ -1279,7 +1289,8 @@ START_TEST(xaudio2)
         }else
             skip("No audio devices available\n");
 
-        IXAudio27_Release(xa27);
+        rc = IXAudio27_Release(xa27);
+        ok(rc == 0, "IXAudio2.7 object should have been released, got refcount %u\n", rc);
     }else
         win_skip("XAudio 2.7 not available\n");
 
@@ -1304,7 +1315,8 @@ START_TEST(xaudio2)
         }else
             skip("No audio devices available\n");
 
-        IXAudio2_Release(xa);
+        rc = IXAudio2_Release(xa);
+        ok(rc == 0, "IXAudio2 object should have been released, got refcount %u\n", rc);
     }else
         win_skip("XAudio 2.8 not available\n");
 
