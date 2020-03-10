@@ -2,6 +2,7 @@
  * test parsing functions
  *
  * Copyright 2008 Hans Leidekker for CodeWeavers
+ * Copyright 2020 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +26,10 @@
 #include <winldap.h>
 
 #include "wine/test.h"
+
+#ifndef LDAP_AUTH_SIMPLE
+#define LDAP_AUTH_SIMPLE 0x80
+#endif
 
 static void test_ldap_parse_sort_control( LDAP *ld )
 {
@@ -132,9 +137,38 @@ static void test_ldap_get_optionW( LDAP *ld )
     ok( version == LDAP_VERSION3, "got %u\n", version );
 }
 
+static void test_ldap_bind_sA( void )
+{
+    LDAP *ld;
+    ULONG ret;
+    int version;
+
+    ld = ldap_initA( (char *)"ldap.forumsys.com", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+
+    version = LDAP_VERSION3;
+    ret = ldap_set_optionW( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
+
+    ret = ldap_connect( ld, NULL );
+    ok( !ret, "ldap_connect failed 0x%08x\n", ret );
+
+    ret = ldap_bind_sA( ld, (char *)"CN=read-only-admin,DC=example,DC=com", (char *)"password", LDAP_AUTH_SIMPLE );
+    ok( !ret, "ldap_bind_s failed 0x%08x\n", ret );
+
+    ldap_unbind( ld );
+}
+
 START_TEST (parse)
 {
     LDAP *ld;
+
+    test_ldap_bind_sA();
 
     ld = ldap_initA((char *)"ldap.itd.umich.edu", 389 );
     ok( ld != NULL, "ldap_init failed\n" );
