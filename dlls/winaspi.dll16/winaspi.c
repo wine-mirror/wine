@@ -30,11 +30,104 @@
 #include "wnaspi32.h"
 #include "winreg.h"
 #include "wownt32.h"
-#include "aspi.h"
-#include "wine/winaspi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(aspi);
+
+#include <pshpack1.h>
+
+typedef struct tagSRB16_HaInquiry {
+  BYTE	SRB_Cmd;
+  BYTE	SRB_Status;
+  BYTE	SRB_HaId;
+  BYTE	SRB_Flags;
+  WORD	SRB_55AASignature;
+  WORD	SRB_ExtBufferSize;
+  BYTE	HA_Count;
+  BYTE	HA_SCSI_ID;
+  BYTE	HA_ManagerId[16];
+  BYTE	HA_Identifier[16];
+  BYTE	HA_Unique[16];
+  BYTE	HA_ExtBuffer[4];
+} SRB_HaInquiry16, *PSRB_HaInquiry16, *LPSRB_HaInquiry16;
+
+typedef struct tagSRB16_GDEVBlock {
+  BYTE        SRB_Cmd;            /* ASPI command code = SC_GET_DEV_TYPE */
+  BYTE        SRB_Status;         /* ASPI command status byte */
+  BYTE        SRB_HaId;           /* ASPI host adapter number */
+  BYTE        SRB_Flags;          /* ASPI request flags */
+  DWORD       SRB_Hdr_Rsvd;       /* Reserved, MUST = 0 */
+  BYTE        SRB_Target;         /* Target's SCSI ID */
+  BYTE        SRB_Lun;            /* Target's LUN number */
+  BYTE        SRB_DeviceType;     /* Target's peripheral device type */
+} SRB_GDEVBlock16, *PSRB_GDEVBlock16, *LPSRB_GDEVBlock16;
+
+typedef struct tagSRB16_ExecSCSICmd {
+  BYTE        SRB_Cmd;                /* ASPI command code	      (W)  */
+  BYTE        SRB_Status;             /* ASPI command status byte     (R)  */
+  BYTE        SRB_HaId;               /* ASPI host adapter number     (W)  */
+  BYTE        SRB_Flags;              /* ASPI request flags	      (W)  */
+  DWORD       SRB_Hdr_Rsvd;           /* Reserved, MUST = 0	      (-)  */
+  BYTE        SRB_Target;             /* Target's SCSI ID	      (W)  */
+  BYTE        SRB_Lun;                /* Target's LUN number	      (W)  */
+  DWORD       SRB_BufLen;             /* Data Allocation LengthPG     (W/R)*/
+  BYTE        SRB_SenseLen;           /* Sense Allocation Length      (W)  */
+  SEGPTR      SRB_BufPointer;         /* Data Buffer Pointer	      (W)  */
+  DWORD       SRB_Rsvd1;              /* Reserved, MUST = 0	      (-/W)*/
+  BYTE        SRB_CDBLen;             /* CDB Length = 6		      (W)  */
+  BYTE        SRB_HaStat;             /* Host Adapter Status	      (R)  */
+  BYTE        SRB_TargStat;           /* Target Status		      (R)  */
+  FARPROC16   SRB_PostProc;	      /* Post routine		      (W)  */
+  BYTE        SRB_Rsvd2[34];          /* Reserved, MUST = 0                */
+  BYTE		CDBByte[1];	      /* SCSI CBD - variable length   (W)  */
+  /* variable example for 6 byte cbd
+   * BYTE        CDBByte[6];             * SCSI CDB                    (W) *
+   * BYTE        SenseArea6[SENSE_LEN];  * Request Sense buffer 	(R) *
+   */
+} SRB_ExecSCSICmd16, *PSRB_ExecSCSICmd16, *LPSRB_ExecSCSICmd16;
+
+typedef struct tagSRB16_Abort {
+  BYTE        SRB_Cmd;            /* ASPI command code = SC_ABORT_SRB */
+  BYTE        SRB_Status;         /* ASPI command status byte */
+  BYTE        SRB_HaId;           /* ASPI host adapter number */
+  BYTE        SRB_Flags;          /* ASPI request flags */
+  DWORD       SRB_Hdr_Rsvd;       /* Reserved, MUST = 0 */
+  SEGPTR      SRB_ToAbort;        /* Pointer to SRB to abort */
+} SRB_Abort16, *PSRB_Abort16, *LPSRB_Abort16;
+
+typedef struct tagSRB16_BusDeviceReset {
+  BYTE        SRB_Cmd;            /* ASPI command code = SC_RESET_DEV */
+  BYTE        SRB_Status;         /* ASPI command status byte */
+  BYTE        SRB_HaId;           /* ASPI host adapter number */
+  BYTE        SRB_Flags;          /* ASPI request flags */
+  DWORD       SRB_Hdr_Rsvd;       /* Reserved, MUST = 0 */
+  BYTE        SRB_Target;         /* Target's SCSI ID */
+  BYTE        SRB_Lun;            /* Target's LUN number */
+  BYTE        SRB_ResetRsvd1[14]; /* Reserved, MUST = 0 */
+  BYTE        SRB_HaStat;         /* Host Adapter Status */
+  BYTE        SRB_TargStat;       /* Target Status */
+  FARPROC16   SRB_PostProc;       /* Post routine */
+  BYTE        SRB_ResetRsvd2[34]; /* Reserved, MUST = 0 */
+} SRB_BusDeviceReset16, *PSRB_BusDeviceReset16, *LPSRB_BusDeviceReset16;
+
+typedef struct tagSRB16_Common {
+  BYTE        SRB_Cmd;            /* ASPI command code = SC_ABORT_SRB */
+  BYTE        SRB_Status;         /* ASPI command status byte */
+  BYTE        SRB_HaId;           /* ASPI host adapter number */
+  BYTE        SRB_Flags;          /* ASPI request flags */
+  DWORD       SRB_Hdr_Rsvd;       /* Reserved, MUST = 0 */
+} SRB_Common16, *PSRB_Common16, *LPSRB_Common16;
+
+typedef union tagSRB16 {
+    SRB_Common16          common;
+    SRB_HaInquiry16       inquiry;
+    SRB_ExecSCSICmd16     cmd;
+    SRB_Abort16           abort;
+    SRB_BusDeviceReset16  reset;
+    SRB_GDEVBlock16       devtype;
+} SRB16, *LPSRB16;
+
+#include <poppack.h>
 
 static FARPROC16 ASPIChainFunc = NULL;
 static FARPROC16 exec_postproc16;
