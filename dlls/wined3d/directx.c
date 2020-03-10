@@ -1475,21 +1475,18 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d_adapter *ad
     return WINED3DERR_NOTAVAILABLE;
 }
 
-HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3d, UINT adapter_idx,
+HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
         enum wined3d_multisample_type multisample_type, DWORD *quality_levels)
 {
-    const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
     HRESULT hr = WINED3D_OK;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s, surface_format %s, "
+    TRACE("adapter %p, device_type %s, surface_format %s, "
             "windowed %#x, multisample_type %#x, quality_levels %p.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(surface_format_id),
+            adapter, debug_d3ddevicetype(device_type), debug_d3dformat(surface_format_id),
             windowed, multisample_type, quality_levels);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
     if (surface_format_id == WINED3DFMT_UNKNOWN)
         return WINED3DERR_INVALIDCALL;
     if (multisample_type < WINED3D_MULTISAMPLE_NONE)
@@ -1500,7 +1497,6 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    adapter = wined3d->adapters[adapter_idx];
     format = wined3d_get_format(adapter, surface_format_id, 0);
 
     if (multisample_type && !(format->multisample_types & 1u << (multisample_type - 1)))

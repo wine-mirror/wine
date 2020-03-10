@@ -3432,6 +3432,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckMultisampleQualityLevels(ID3D
 {
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
     struct wined3d_device_creation_parameters params;
+    struct wined3d_adapter *wined3d_adapter;
     struct wined3d *wined3d;
     HRESULT hr;
 
@@ -3456,7 +3457,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckMultisampleQualityLevels(ID3D
     wined3d_mutex_lock();
     wined3d = wined3d_device_get_wined3d(device->wined3d_device);
     wined3d_device_get_creation_parameters(device->wined3d_device, &params);
-    hr = wined3d_check_device_multisample_type(wined3d, params.adapter_idx, params.device_type,
+    wined3d_adapter = wined3d_get_adapter(wined3d, params.adapter_idx);
+    hr = wined3d_check_device_multisample_type(wined3d_adapter, params.device_type,
             wined3dformat_from_dxgi_format(format), TRUE, sample_count, quality_level_count);
     wined3d_mutex_unlock();
 
