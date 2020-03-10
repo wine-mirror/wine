@@ -120,10 +120,16 @@ static HRESULT WINAPI d3d9_GetAdapterIdentifier(IDirect3D9Ex *iface, UINT adapte
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
     struct wined3d_adapter_identifier adapter_id;
+    struct wined3d_adapter *wined3d_adapter;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, flags %#x, identifier %p.\n",
             iface, adapter, flags, identifier);
+
+    output_idx = adapter;
+    if (output_idx >= d3d9->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
 
     adapter_id.driver = identifier->Driver;
     adapter_id.driver_size = sizeof(identifier->Driver);
@@ -132,7 +138,8 @@ static HRESULT WINAPI d3d9_GetAdapterIdentifier(IDirect3D9Ex *iface, UINT adapte
     adapter_id.device_name = identifier->DeviceName;
     adapter_id.device_name_size = sizeof(identifier->DeviceName);
 
-    if (SUCCEEDED(hr = wined3d_get_adapter_identifier(d3d9->wined3d, adapter, flags, &adapter_id)))
+    wined3d_adapter = wined3d_output_get_adapter(d3d9->wined3d_outputs[output_idx]);
+    if (SUCCEEDED(hr = wined3d_adapter_get_identifier(wined3d_adapter, flags, &adapter_id)))
     {
         identifier->DriverVersion = adapter_id.driver_version;
         identifier->VendorId = adapter_id.vendor_id;
@@ -590,15 +597,22 @@ static HRESULT WINAPI d3d9_GetAdapterLUID(IDirect3D9Ex *iface, UINT adapter, LUI
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
     struct wined3d_adapter_identifier adapter_id;
+    struct wined3d_adapter *wined3d_adapter;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, luid %p.\n", iface, adapter, luid);
+
+    output_idx = adapter;
+    if (output_idx >= d3d9->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
 
     adapter_id.driver_size = 0;
     adapter_id.description_size = 0;
     adapter_id.device_name_size = 0;
 
-    if (SUCCEEDED(hr = wined3d_get_adapter_identifier(d3d9->wined3d, adapter, 0, &adapter_id)))
+    wined3d_adapter = wined3d_output_get_adapter(d3d9->wined3d_outputs[output_idx]);
+    if (SUCCEEDED(hr = wined3d_adapter_get_identifier(wined3d_adapter, 0, &adapter_id)))
         *luid = adapter_id.adapter_luid;
 
     return hr;

@@ -78,7 +78,7 @@ static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMC
         adapter_id.description_size = sizeof(DriverDescription);
 
         wined3d_mutex_lock();
-        if (FAILED(hr = wined3d_get_adapter_identifier(wined3d, adapter_idx, 0x0, &adapter_id)))
+        if (FAILED(hr = wined3d_adapter_get_identifier(wined3d_adapter, 0x0, &adapter_id)))
         {
             WARN("Failed to get adapter identifier, hr %#x.\n", hr);
             wined3d_mutex_unlock();

@@ -1928,7 +1928,7 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *c
     {
         struct wined3d_adapter_identifier desc = {0};
 
-        hr = wined3d_get_adapter_identifier(ddraw->wined3d, WINED3DADAPTER_DEFAULT, 0, &desc);
+        hr = wined3d_adapter_get_identifier(ddraw->wined3d_adapter, 0, &desc);
         total_vidmem = min(UINT_MAX, desc.video_memory);
         *total = framebuffer_size > total_vidmem ? 0 : total_vidmem - framebuffer_size;
         TRACE("Total video memory %#x.\n", *total);
@@ -2609,7 +2609,7 @@ static HRESULT WINAPI ddraw7_GetDeviceIdentifier(IDirectDraw7 *iface,
     adapter_id.description_size = sizeof(DDDI->szDescription);
     adapter_id.device_name_size = 0;
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_identifier(ddraw->wined3d, WINED3DADAPTER_DEFAULT, 0x0, &adapter_id);
+    hr = wined3d_adapter_get_identifier(ddraw->wined3d_adapter, 0x0, &adapter_id);
     wined3d_mutex_unlock();
     if (FAILED(hr)) return hr;
 

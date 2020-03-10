@@ -105,10 +105,16 @@ static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
     struct wined3d_adapter_identifier adapter_id;
+    struct wined3d_adapter *wined3d_adapter;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, flags %#x, identifier %p.\n",
             iface, adapter, flags, identifier);
+
+    output_idx = adapter;
+    if (output_idx >= d3d8->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
 
     adapter_id.driver = identifier->Driver;
     adapter_id.driver_size = sizeof(identifier->Driver);
@@ -117,7 +123,8 @@ static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
     adapter_id.device_name = NULL; /* d3d9 only */
     adapter_id.device_name_size = 0; /* d3d9 only */
 
-    if (SUCCEEDED(hr = wined3d_get_adapter_identifier(d3d8->wined3d, adapter, flags, &adapter_id)))
+    wined3d_adapter = wined3d_output_get_adapter(d3d8->wined3d_outputs[output_idx]);
+    if (SUCCEEDED(hr = wined3d_adapter_get_identifier(wined3d_adapter, flags, &adapter_id)))
     {
         identifier->DriverVersion = adapter_id.driver_version;
         identifier->VendorId = adapter_id.vendor_id;
