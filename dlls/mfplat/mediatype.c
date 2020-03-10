@@ -1038,12 +1038,47 @@ static ULONG WINAPI mediatype_handler_Release(IMFMediaTypeHandler *iface)
     return IMFStreamDescriptor_Release(&stream_desc->IMFStreamDescriptor_iface);
 }
 
+static BOOL stream_descriptor_is_mediatype_supported(IMFMediaType *media_type, IMFMediaType *candidate)
+{
+    DWORD flags = 0;
+
+    if (FAILED(IMFMediaType_IsEqual(media_type, candidate, &flags)))
+        return FALSE;
+
+    return (flags & (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES)) ==
+            (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES);
+}
+
 static HRESULT WINAPI mediatype_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface, IMFMediaType *in_type,
         IMFMediaType **out_type)
 {
-    FIXME("%p, %p, %p.\n", iface, in_type, out_type);
+    struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
+    BOOL supported = FALSE;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, in_type, out_type);
+
+    if (!in_type)
+        return E_POINTER;
+
+    if (out_type)
+        *out_type = NULL;
+
+    EnterCriticalSection(&stream_desc->attributes.cs);
+
+    supported = stream_desc->current_type && stream_descriptor_is_mediatype_supported(stream_desc->current_type, in_type);
+    if (!supported)
+    {
+        for (i = 0; i < stream_desc->media_types_count; ++i)
+        {
+            if ((supported = stream_descriptor_is_mediatype_supported(stream_desc->media_types[i], in_type)))
+                break;
+        }
+    }
+
+    LeaveCriticalSection(&stream_desc->attributes.cs);
+
+    return supported ? S_OK : MF_E_INVALIDMEDIATYPE;
 }
 
 static HRESULT WINAPI mediatype_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)

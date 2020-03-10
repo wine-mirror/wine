@@ -3164,7 +3164,7 @@ static void test_MFInvokeCallback(void)
 
 static void test_stream_descriptor(void)
 {
-    IMFMediaType *media_types[2], *media_type;
+    IMFMediaType *media_types[2], *media_type, *media_type2, *media_type3;
     IMFMediaTypeHandler *type_handler;
     IMFStreamDescriptor *stream_desc;
     GUID major_type;
@@ -3217,11 +3217,35 @@ static void test_stream_descriptor(void)
     hr = IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, 2, &media_type);
     ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
 
+    /* IsMediaTypeSupported() */
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, NULL, &media_type2);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
 
+    hr = MFCreateMediaType(&media_type3);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type, &media_type2);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type);
     ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type, &media_type2);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
 
     hr = IMFMediaTypeHandler_GetMajorType(type_handler, &major_type);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
@@ -3233,11 +3257,111 @@ static void test_stream_descriptor(void)
     ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
     ok(IsEqualGUID(&major_type, &MFMediaType_Audio), "Unexpected major type.\n");
 
+    /* Mismatching major types. */
+    hr = IMFMediaType_SetGUID(media_type3, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Failed to set major type, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type3, &media_type2);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
+    /* Subtype missing. */
+    hr = IMFMediaType_SetGUID(media_type3, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type3, &media_type2);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
+    hr = IMFMediaType_SetGUID(media_type3, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type3, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
+    /* Mismatching subtype. */
+    hr = IMFMediaType_SetGUID(media_type3, &MF_MT_SUBTYPE, &MFAudioFormat_MP3);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type3, &media_type2);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
     hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, &count);
     ok(hr == S_OK, "Failed to get type count, hr %#x.\n", hr);
     ok(count == ARRAY_SIZE(media_types), "Unexpected type count.\n");
 
+    IMFMediaTypeHandler_Release(type_handler);
+    IMFStreamDescriptor_Release(stream_desc);
+
+    /* IsMediaTypeSupported() for unset current type. */
+    hr = MFCreateStreamDescriptor(123, ARRAY_SIZE(media_types), media_types, &stream_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(stream_desc, &type_handler);
+    ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type3, NULL);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    /* Initialize one from initial type set. */
+    hr = IMFMediaType_CopyAllItems(media_type3, (IMFAttributes *)media_types[0]);
+    ok(hr == S_OK, "Failed to copy attributes, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type3, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
+    hr = IMFMediaType_SetGUID(media_type3, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to copy attributes, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type3, &media_type2);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
+    hr = IMFMediaType_SetGUID(media_type3, &MF_MT_SUBTYPE, &MFAudioFormat_MP3);
+    ok(hr == S_OK, "Failed to copy attributes, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type3, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
+    /* Now set current type that's not compatible. */
+    hr = IMFMediaType_SetGUID(media_type3, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Failed to copy attributes, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type3, &MF_MT_SUBTYPE, &MFVideoFormat_RGB8);
+    ok(hr == S_OK, "Failed to copy attributes, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, media_type3);
+    ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type3, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
+    hr = IMFMediaType_CopyAllItems(media_types[0], (IMFAttributes *)media_type);
+    ok(hr == S_OK, "Failed to copy attributes, hr %#x.\n", hr);
+
+    media_type2 = (void *)0xdeadbeef;
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(type_handler, media_type, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!media_type2, "Unexpected pointer.\n");
+
     IMFMediaType_Release(media_type);
+    IMFMediaType_Release(media_type3);
 
     IMFMediaTypeHandler_Release(type_handler);
 
