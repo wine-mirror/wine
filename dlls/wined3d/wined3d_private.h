@@ -3144,6 +3144,7 @@ struct wined3d_blend_state
     const struct wined3d_parent_ops *parent_ops;
 
     struct wined3d_device *device;
+    struct wine_rb_entry entry;
 };
 
 struct wined3d_rasterizer_state
@@ -3294,7 +3295,7 @@ struct wined3d_device
 
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
-    struct wine_rb_tree samplers, rasterizer_states;
+    struct wine_rb_tree samplers, rasterizer_states, blend_states;
 
     /* Render Target Support */
     struct wined3d_fb_state fb;
@@ -3322,7 +3323,6 @@ struct wined3d_device
     /* Context management */
     struct wined3d_context **contexts;
     UINT context_count;
-    struct wined3d_blend_state *blend_state_atoc_enabled;
 };
 
 void wined3d_device_cleanup(struct wined3d_device *device) DECLSPEC_HIDDEN;
@@ -3941,7 +3941,7 @@ struct wined3d_saved_states
     DWORD vertexShader : 1;
     DWORD scissorRect : 1;
     DWORD store_stream_offset : 1;
-    DWORD blend_state : 1;
+    DWORD alpha_to_coverage : 1;
     DWORD lights : 1;
     DWORD transforms : 1;
     DWORD padding : 1;

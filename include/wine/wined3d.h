@@ -2163,6 +2163,7 @@ struct wined3d_stateblock_state
     BOOL ps_consts_b[WINED3D_MAX_CONSTS_B];
 
     DWORD rs[WINEHIGHEST_RENDER_STATE + 1];
+    BOOL alpha_to_coverage;
 
     struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
@@ -2175,7 +2176,6 @@ struct wined3d_stateblock_state
     RECT scissor_rect;
 
     struct wined3d_light_state *light_state;
-    struct wined3d_blend_state *blend_state;
 };
 
 struct wined3d_parent_ops

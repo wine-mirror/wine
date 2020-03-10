@@ -528,6 +528,13 @@ static void device_free_rasterizer_state(struct wine_rb_entry *entry, void *cont
     wined3d_rasterizer_state_decref(state);
 }
 
+static void device_free_blend_state(struct wine_rb_entry *entry, void *context)
+{
+    struct wined3d_blend_state *state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_blend_state, entry);
+
+    wined3d_blend_state_decref(state);
+}
+
 void wined3d_device_cleanup(struct wined3d_device *device)
 {
     unsigned int i;
@@ -535,8 +542,8 @@ void wined3d_device_cleanup(struct wined3d_device *device)
     if (device->swapchain_count)
         wined3d_device_uninit_3d(device);
 
-    wined3d_blend_state_decref(device->blend_state_atoc_enabled);
     wine_rb_destroy(&device->rasterizer_states, device_free_rasterizer_state, NULL);
+    wine_rb_destroy(&device->blend_states, device_free_blend_state, NULL);
 
     wined3d_cs_destroy(device->cs);
 
@@ -3485,10 +3492,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
     const struct wined3d_saved_states *changed = &stateblock->changed;
     const unsigned int word_bit_count = sizeof(DWORD) * CHAR_BIT;
-    BOOL set_blend_state, set_rasterizer_state = FALSE;
-    struct wined3d_blend_state *blend_state;
+    BOOL set_blend_state = FALSE, set_rasterizer_state = FALSE;
     unsigned int i, j, start, idx;
-    struct wined3d_color colour;
     struct wined3d_range range;
     DWORD map, stage;
 
@@ -3565,20 +3570,6 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
     }
 
-    if ((set_blend_state = changed->blend_state
-            || wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_ADAPTIVETESS_Y)))
-    {
-        blend_state = state->rs[WINED3D_RS_ADAPTIVETESS_Y] == WINED3DFMT_ATOC
-                ? device->blend_state_atoc_enabled : state->blend_state;
-
-        if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_BLENDFACTOR))
-            wined3d_color_from_d3dcolor(&colour, stateblock->stateblock_state.rs[WINED3D_RS_BLENDFACTOR]);
-        else
-            wined3d_device_get_blend_state(device, &colour);
-
-        wined3d_device_set_blend_state(device, blend_state, &colour);
-    }
-
     for (i = 0; i < ARRAY_SIZE(changed->renderState); ++i)
     {
         map = changed->renderState[i];
@@ -3590,12 +3581,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             switch (idx)
             {
                 case WINED3D_RS_BLENDFACTOR:
-                    if (!set_blend_state)
-                    {
-                        blend_state = wined3d_device_get_blend_state(device, &colour);
-                        wined3d_color_from_d3dcolor(&colour, state->rs[idx]);
-                        wined3d_device_set_blend_state(device, blend_state, &colour);
-                    }
+                    set_blend_state = TRUE;
                     break;
 
                 case WINED3D_RS_FILLMODE:
@@ -3649,6 +3635,41 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             {
                 ERR("Failed to insert rasterizer state.\n");
                 wined3d_rasterizer_state_decref(rasterizer_state);
+            }
+        }
+    }
+
+    if (set_blend_state || changed->alpha_to_coverage
+            || wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_ADAPTIVETESS_Y))
+    {
+        struct wined3d_blend_state *blend_state;
+        struct wined3d_blend_state_desc desc;
+        struct wine_rb_entry *entry;
+        struct wined3d_color colour;
+
+        memset(&desc, 0, sizeof(desc));
+        desc.alpha_to_coverage = state->alpha_to_coverage;
+        if (state->rs[WINED3D_RS_ADAPTIVETESS_Y] == WINED3DFMT_ATOC)
+            desc.alpha_to_coverage = TRUE;
+
+        if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_BLENDFACTOR))
+            wined3d_color_from_d3dcolor(&colour, state->rs[WINED3D_RS_BLENDFACTOR]);
+        else
+            wined3d_device_get_blend_state(device, &colour);
+
+        if ((entry = wine_rb_get(&device->blend_states, &desc)))
+        {
+            blend_state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_blend_state, entry);
+            wined3d_device_set_blend_state(device, blend_state, &colour);
+        }
+        else if (SUCCEEDED(wined3d_blend_state_create(device, &desc, NULL,
+                &wined3d_null_parent_ops, &blend_state)))
+        {
+            wined3d_device_set_blend_state(device, blend_state, &colour);
+            if (wine_rb_put(&device->blend_states, &desc, &blend_state->entry) == -1)
+            {
+                ERR("Failed to insert blend state.\n");
+                wined3d_blend_state_decref(blend_state);
             }
         }
     }
@@ -5459,6 +5480,13 @@ static int wined3d_rasterizer_state_compare(const void *key, const struct wine_r
     return memcmp(&state->desc, key, sizeof(state->desc));
 }
 
+static int wined3d_blend_state_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct wined3d_blend_state *state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_blend_state, entry);
+
+    return memcmp(&state->desc, key, sizeof(state->desc));
+}
+
 static BOOL wined3d_select_feature_level(const struct wined3d_adapter *adapter,
         const enum wined3d_feature_level *levels, unsigned int level_count,
         enum wined3d_feature_level *selected_level)
@@ -5488,7 +5516,6 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     struct wined3d_adapter *adapter = wined3d->adapters[adapter_idx];
     const struct wined3d_fragment_pipe_ops *fragment_pipeline;
     const struct wined3d_vertex_pipe_ops *vertex_pipeline;
-    struct wined3d_blend_state_desc blend_state_desc;
     unsigned int i;
     HRESULT hr;
 
@@ -5520,6 +5547,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
 
     wine_rb_init(&device->samplers, wined3d_sampler_compare);
     wine_rb_init(&device->rasterizer_states, wined3d_rasterizer_state_compare);
+    wine_rb_init(&device->blend_states, wined3d_blend_state_compare);
 
     if (vertex_pipeline->vp_states && fragment_pipeline->states
             && FAILED(hr = compile_state_table(device->state_table, device->multistate_funcs,
@@ -5529,6 +5557,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
         ERR("Failed to compile state table, hr %#x.\n", hr);
         wine_rb_destroy(&device->samplers, NULL, NULL);
         wine_rb_destroy(&device->rasterizer_states, NULL, NULL);
+        wine_rb_destroy(&device->blend_states, NULL, NULL);
         wined3d_decref(device->wined3d);
         return hr;
     }
@@ -5545,18 +5574,6 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
         goto err;
     }
 
-    memset(&blend_state_desc, 0, sizeof(blend_state_desc));
-    blend_state_desc.alpha_to_coverage = TRUE;
-
-    if (FAILED(hr = wined3d_blend_state_create(device, &blend_state_desc,
-            NULL, &wined3d_null_parent_ops, &device->blend_state_atoc_enabled)))
-    {
-        ERR("Failed to create blend state object, hr %#x.\n", hr);
-        wined3d_cs_destroy(device->cs);
-        state_cleanup(&device->state);
-        goto err;
-    }
-
     return WINED3D_OK;
 
 err:
@@ -5566,6 +5583,7 @@ err:
     }
     wine_rb_destroy(&device->samplers, NULL, NULL);
     wine_rb_destroy(&device->rasterizer_states, NULL, NULL);
+    wine_rb_destroy(&device->blend_states, NULL, NULL);
     wined3d_decref(device->wined3d);
     return hr;
 }

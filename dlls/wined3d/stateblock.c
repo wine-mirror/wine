@@ -208,7 +208,7 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     states->pixelShader = 1;
     states->vertexShader = 1;
     states->scissorRect = 1;
-    states->blend_state = 1;
+    states->alpha_to_coverage = 1;
     states->lights = 1;
     states->transforms = 1;
 
@@ -263,7 +263,7 @@ static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *state
 
     states->vertexDecl = 1;
     states->vertexShader = 1;
-    states->blend_state = 1;
+    states->alpha_to_coverage = 1;
     states->lights = 1;
 
     for (i = 0; i < ARRAY_SIZE(vertex_states_render); ++i)
@@ -479,7 +479,6 @@ void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state)
 {
     struct wined3d_light_info *light, *cursor;
     struct wined3d_vertex_declaration *decl;
-    struct wined3d_blend_state *blend_state;
     struct wined3d_texture *texture;
     struct wined3d_buffer *buffer;
     struct wined3d_shader *shader;
@@ -534,12 +533,6 @@ void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state)
             list_remove(&light->entry);
             heap_free(light);
         }
-    }
-
-    if ((blend_state = state->blend_state))
-    {
-        state->blend_state = NULL;
-        wined3d_blend_state_decref(blend_state);
     }
 }
 
@@ -974,14 +967,8 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
     if (stateblock->changed.lights)
         wined3d_state_record_lights(stateblock->stateblock_state.light_state, state->light_state);
 
-    if (stateblock->changed.blend_state && stateblock->stateblock_state.blend_state != state->blend_state)
-    {
-        if (state->blend_state)
-            wined3d_blend_state_incref(state->blend_state);
-        if (stateblock->stateblock_state.blend_state)
-            wined3d_blend_state_decref(stateblock->stateblock_state.blend_state);
-        stateblock->stateblock_state.blend_state = state->blend_state;
-    }
+    if (stateblock->changed.alpha_to_coverage)
+        stateblock->stateblock_state.alpha_to_coverage = state->alpha_to_coverage;
 
     TRACE("Capture done.\n");
 }
@@ -1058,14 +1045,10 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         wined3d_stateblock_set_ps_consts_b(device_state, range.offset, range.size, &state->ps_consts_b[range.offset]);
     }
 
-    if (stateblock->changed.blend_state)
+    if (stateblock->changed.alpha_to_coverage)
     {
-        if (state->blend_state)
-            wined3d_blend_state_incref(state->blend_state);
-        if (device_state->stateblock_state.blend_state)
-            wined3d_blend_state_decref(device_state->stateblock_state.blend_state);
-        device_state->stateblock_state.blend_state = state->blend_state;
-        device_state->changed.blend_state = 1;
+        device_state->stateblock_state.alpha_to_coverage = state->alpha_to_coverage;
+        device_state->changed.alpha_to_coverage = 1;
     }
 
     /* Render states. */
@@ -1359,18 +1342,8 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
     if (state == WINED3D_RS_POINTSIZE
             && (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE || value == WINED3D_ALPHA_TO_COVERAGE_DISABLE))
     {
-        stateblock->changed.blend_state = 1;
-
-        if (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE && !stateblock->stateblock_state.blend_state)
-        {
-            wined3d_blend_state_incref(stateblock->device->blend_state_atoc_enabled);
-            stateblock->stateblock_state.blend_state = stateblock->device->blend_state_atoc_enabled;
-        }
-        else if (value == WINED3D_ALPHA_TO_COVERAGE_DISABLE && stateblock->stateblock_state.blend_state)
-        {
-            wined3d_blend_state_decref(stateblock->stateblock_state.blend_state);
-            stateblock->stateblock_state.blend_state = NULL;
-        }
+        stateblock->changed.alpha_to_coverage = 1;
+        stateblock->stateblock_state.alpha_to_coverage = (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE);
     }
 }
 
