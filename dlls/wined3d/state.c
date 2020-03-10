@@ -557,8 +557,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
     gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
     checkGLcall("glEnable(GL_BLEND)");
 
-    gl_blend_from_d3d(&src_blend, &dst_blend,
-            state->render_states[WINED3D_RS_SRCBLEND],
+    gl_blend_from_d3d(&src_blend, &dst_blend, b->desc.src,
             state->render_states[WINED3D_RS_DESTBLEND], rt_format);
 
     /* Re-apply BLENDOP(ALPHA) because of a possible SEPARATEALPHABLENDENABLE change */
@@ -4504,7 +4503,6 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        state_uav_warn      }, WINED3D_GL_EXT_NONE             },
     { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so,           }, WINED3D_GL_VERSION_3_2          },
     { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so_warn,      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SRCBLEND),                  { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DESTBLEND),                 { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             state_line_antialias}, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SEPARATEALPHABLENDENABLE),  { STATE_BLEND,                                        NULL                }, WINED3D_GL_EXT_NONE             },
@@ -5419,7 +5417,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {  1,   1},
         {  3,   3},
         {  8,   8},
-        { 17,  18},
+        { 17,  19},
         { 21,  22},
         { 27,  27},
         { 42,  45},
