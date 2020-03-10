@@ -75,7 +75,7 @@
 @ stdcall MFGetService(ptr ptr ptr ptr)
 @ stdcall MFGetSupportedMimeTypes(ptr)
 @ stdcall MFGetSupportedSchemes(ptr)
-@ stub MFGetTopoNodeCurrentType
+@ stdcall MFGetTopoNodeCurrentType(ptr long long ptr)
 @ stub MFReadSequencerSegmentOffset
 @ stub MFRequireProtectedEnvironment
 @ stdcall MFShutdownObject(ptr)

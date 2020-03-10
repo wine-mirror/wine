@@ -1786,6 +1786,91 @@ HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode 
     return hr;
 }
 
+/***********************************************************************
+ *      MFGetTopoNodeCurrentType (mf.@)
+ */
+HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type)
+{
+    IMFMediaTypeHandler *type_handler;
+    MF_TOPOLOGY_TYPE node_type;
+    IMFStreamSink *stream_sink;
+    IMFStreamDescriptor *sd;
+    IMFTransform *transform;
+    UINT32 primary_output;
+    IUnknown *object;
+    HRESULT hr;
+
+    TRACE("%p, %u, %d, %p.\n", node, stream, output, type);
+
+    if (FAILED(hr = IMFTopologyNode_GetNodeType(node, &node_type)))
+        return hr;
+
+    switch (node_type)
+    {
+        case MF_TOPOLOGY_OUTPUT_NODE:
+            if (FAILED(hr = IMFTopologyNode_GetObject(node, &object)))
+                return hr;
+
+            hr = IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&stream_sink);
+            IUnknown_Release(object);
+            if (SUCCEEDED(hr))
+            {
+                hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler);
+                IMFStreamSink_Release(stream_sink);
+
+                if (SUCCEEDED(hr))
+                {
+                    hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, type);
+                    IMFMediaTypeHandler_Release(type_handler);
+                }
+            }
+            break;
+        case MF_TOPOLOGY_SOURCESTREAM_NODE:
+            if (FAILED(hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR, &IID_IMFStreamDescriptor,
+                    (void **)&sd)))
+            {
+                return hr;
+            }
+
+            hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &type_handler);
+            IMFStreamDescriptor_Release(sd);
+            if (SUCCEEDED(hr))
+            {
+                hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, type);
+                IMFMediaTypeHandler_Release(type_handler);
+            }
+            break;
+        case MF_TOPOLOGY_TRANSFORM_NODE:
+            if (FAILED(hr = IMFTopologyNode_GetObject(node, &object)))
+                return hr;
+
+            hr = IUnknown_QueryInterface(object, &IID_IMFTransform, (void **)&transform);
+            IUnknown_Release(object);
+            if (SUCCEEDED(hr))
+            {
+                if (output)
+                    hr = IMFTransform_GetOutputCurrentType(transform, stream, type);
+                else
+                    hr = IMFTransform_GetInputCurrentType(transform, stream, type);
+                IMFTransform_Release(transform);
+            }
+            break;
+        case MF_TOPOLOGY_TEE_NODE:
+            if (SUCCEEDED(hr = IMFTopologyNode_GetInputPrefType(node, 0, type)))
+                break;
+
+            if (FAILED(IMFTopologyNode_GetUINT32(node, &MF_TOPONODE_PRIMARYOUTPUT, &primary_output)))
+                primary_output = 0;
+
+            hr = IMFTopologyNode_GetOutputPrefType(node, primary_output, type);
+            break;
+        default:
+            ;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI topology_loader_QueryInterface(IMFTopoLoader *iface, REFIID riid, void **out)
 {
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);

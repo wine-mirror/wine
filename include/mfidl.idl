@@ -609,6 +609,7 @@ cpp_quote("HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *array);")
 cpp_quote("HRESULT WINAPI MFGetSupportedSchemes(PROPVARIANT *array);")
 cpp_quote("HRESULT WINAPI MFGetService(IUnknown *object, REFGUID service, REFIID iid, void **obj);")
 cpp_quote("MFTIME  WINAPI MFGetSystemTime(void);")
+cpp_quote("HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);")
 cpp_quote("HRESULT WINAPI MFShutdownObject(IUnknown *object);")
 
 typedef enum _MFMEDIASOURCE_CHARACTERISTICS
