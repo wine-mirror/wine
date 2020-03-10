@@ -1342,9 +1342,27 @@ static ULONG WINAPI simple_type_handler_Release(IMFMediaTypeHandler *iface)
 static HRESULT WINAPI simple_type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface, IMFMediaType *in_type,
         IMFMediaType **out_type)
 {
-    FIXME("%p, %p, %p.\n", iface, in_type, out_type);
+    struct simple_type_handler *handler = impl_from_IMFMediaTypeHandler(iface);
+    DWORD flags = 0;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, in_type, out_type);
+
+    if (out_type)
+        *out_type = NULL;
+
+    EnterCriticalSection(&handler->cs);
+    if (!handler->media_type)
+        hr = MF_E_UNEXPECTED;
+    else
+    {
+        if (SUCCEEDED(hr = IMFMediaType_IsEqual(handler->media_type, in_type, &flags)))
+            hr = (flags & (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES)) ==
+                    (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES) ? S_OK : E_FAIL;
+    }
+    LeaveCriticalSection(&handler->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI simple_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
