@@ -2312,7 +2312,7 @@ HRESULT __cdecl wined3d_device_copy_sub_resource_region(struct wined3d_device *d
         unsigned int src_sub_resource_idx, const struct wined3d_box *src_box, unsigned int flags);
 void __cdecl wined3d_device_copy_uav_counter(struct wined3d_device *device,
         struct wined3d_buffer *dst_buffer, unsigned int offset, struct wined3d_unordered_access_view *uav);
-HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, unsigned int adapter_idx,
+HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, HWND focus_window, DWORD behaviour_flags, BYTE surface_alignment,
         const enum wined3d_feature_level *feature_levels, unsigned int feature_level_count,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device);

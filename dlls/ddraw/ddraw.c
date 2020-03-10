@@ -5030,7 +5030,7 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
         ddraw->flags |= DDRAW_NO3D;
     }
 
-    if (FAILED(hr = wined3d_device_create(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type,
+    if (FAILED(hr = wined3d_device_create(ddraw->wined3d, ddraw->wined3d_adapter, device_type,
             NULL, 0, DDRAW_STRIDE_ALIGNMENT, feature_levels, ARRAY_SIZE(feature_levels),
             &ddraw->device_parent, &ddraw->wined3d_device)))
     {

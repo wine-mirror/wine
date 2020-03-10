@@ -519,7 +519,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     IWineDXGIDeviceParent_Release(dxgi_device_parent);
 
     if (FAILED(hr = wined3d_device_create(dxgi_factory->wined3d,
-            dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, NULL, 0, 4,
+            dxgi_adapter->wined3d_adapter, WINED3D_DEVICE_TYPE_HAL, NULL, 0, 4,
             (const enum wined3d_feature_level *)feature_levels, level_count,
             wined3d_device_parent, &device->wined3d_device)))
     {

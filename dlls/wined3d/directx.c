@@ -2319,24 +2319,19 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, unsigned in
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, unsigned int adapter_idx,
+HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, HWND focus_window, DWORD flags, BYTE surface_alignment,
         const enum wined3d_feature_level *feature_levels, unsigned int feature_level_count,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device)
 {
-    const struct wined3d_adapter *adapter;
     struct wined3d_device *object;
     HRESULT hr;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %#x, focus_window %p, flags %#x, "
+    TRACE("wined3d %p, adapter %p, device_type %#x, focus_window %p, flags %#x, "
             "surface_alignment %u, feature_levels %p, feature_level_count %u, device_parent %p, device %p.\n",
-            wined3d, adapter_idx, device_type, focus_window, flags, surface_alignment,
+            wined3d, adapter, device_type, focus_window, flags, surface_alignment,
             feature_levels, feature_level_count, device_parent, device);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
     if (FAILED(hr = adapter->adapter_ops->adapter_create_device(wined3d, adapter,
             device_type, focus_window, flags, surface_alignment,
             feature_levels, feature_level_count, device_parent, &object)))
