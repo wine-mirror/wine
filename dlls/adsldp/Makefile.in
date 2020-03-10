@@ -1,5 +1,5 @@
 MODULE    = adsldp.dll
-IMPORTS   = oleaut32 secur32
+IMPORTS   = ole32 oleaut32 secur32
 
 EXTRADLLFLAGS = -mno-cygwin
 

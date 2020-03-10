@@ -27,11 +27,36 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "iads.h"
+#include "adserr.h"
 
 #include "wine/test.h"
 
 #include "initguid.h"
+DEFINE_GUID(CLSID_LDAP,0x228d9a81,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
 DEFINE_GUID(CLSID_LDAPNamespace,0x228d9a82,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
+DEFINE_OLEGUID(CLSID_PointerMoniker,0x306,0,0);
+
+static const struct
+{
+    const WCHAR *path;
+    HRESULT hr, hr_ads_open, hr_ads_get;
+} test[] =
+{
+    { L"invalid", MK_E_SYNTAX, E_ADS_BAD_PATHNAME, E_FAIL },
+    { L"LDAP", MK_E_SYNTAX, E_ADS_BAD_PATHNAME, E_FAIL },
+    { L"LDAP:", S_OK },
+    { L"LDAP:/", E_ADS_BAD_PATHNAME },
+    { L"LDAP://", E_ADS_BAD_PATHNAME },
+    { L"LDAP://ldap.forumsys.com", S_OK },
+    { L"LDAP:///ldap.forumsys.com", E_ADS_BAD_PATHNAME },
+    { L"LDAP://ldap.forumsys.com:389", S_OK },
+    { L"LDAP://ldap.forumsys.com:389/DC=example,DC=com", S_OK },
+    { L"LDAP://ldap.forumsys.com/", E_ADS_BAD_PATHNAME },
+    { L"LDAP://ldap.forumsys.com/rootDSE", S_OK },
+    { L"LDAP://ldap.forumsys.com/rootDSE/", E_ADS_BAD_PATHNAME },
+    { L"LDAP://ldap.forumsys.com/rootDSE/invalid", E_ADS_BAD_PATHNAME },
+    /*{ L"LDAP://invalid", __HRESULT_FROM_WIN32(ERROR_DS_INVALID_DN_SYNTAX) }, takes way too much time */
+};
 
 static void test_LDAP(void)
 {
@@ -68,6 +93,72 @@ if (hr == S_OK)
     IUnknown_Release(unk);
 }
 
+static void test_ParseDisplayName(void)
+{
+    HRESULT hr;
+    IBindCtx *bc;
+    IParseDisplayName *parse;
+    IMoniker *mk;
+    IUnknown *unk;
+    CLSID clsid;
+    BSTR path;
+    ULONG count;
+    int i;
+
+    hr = CoCreateInstance(&CLSID_LDAP, 0, CLSCTX_INPROC_SERVER, &IID_IParseDisplayName, (void **)&parse);
+    ok(hr == S_OK, "got %#x\n", hr);
+    IParseDisplayName_Release(parse);
+
+    hr = CoCreateInstance(&CLSID_LDAP, 0, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "got %#x\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IParseDisplayName, (void **)&parse);
+    ok(hr == S_OK, "got %#x\n", hr);
+    IUnknown_Release(unk);
+
+    hr = CreateBindCtx(0, &bc);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(test); i++)
+    {
+        path = SysAllocString(test[i].path);
+
+        count = 0xdeadbeef;
+        hr = IParseDisplayName_ParseDisplayName(parse, bc, path, &count, &mk);
+todo_wine
+        ok(hr == test[i].hr || hr == test[i].hr_ads_open, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
+        if (hr == S_OK)
+        {
+            ok(count == lstrlenW(test[i].path), "%d: got %d\n", i, count);
+
+            hr = IMoniker_GetClassID(mk, &clsid);
+            ok(hr == S_OK, "got %#x\n", hr);
+            ok(IsEqualGUID(&clsid, &CLSID_PointerMoniker), "%d: got %s\n", i, wine_dbgstr_guid(&clsid));
+
+            IMoniker_Release(mk);
+        }
+
+        SysFreeString(path);
+
+        count = 0xdeadbeef;
+        hr = MkParseDisplayName(bc, test[i].path, &count, &mk);
+todo_wine
+        ok(hr == test[i].hr, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
+        if (hr == S_OK)
+        {
+            ok(count == lstrlenW(test[i].path), "%d: got %d\n", i, count);
+
+            hr = IMoniker_GetClassID(mk, &clsid);
+            ok(hr == S_OK, "got %#x\n", hr);
+            ok(IsEqualGUID(&clsid, &CLSID_PointerMoniker), "%d: got %s\n", i, wine_dbgstr_guid(&clsid));
+
+            IMoniker_Release(mk);
+        }
+    }
+
+    IBindCtx_Release(bc);
+    IParseDisplayName_Release(parse);
+}
+
 START_TEST(ldap)
 {
     HRESULT hr;
@@ -76,6 +167,7 @@ START_TEST(ldap)
     ok(hr == S_OK, "got %#x\n", hr);
 
     test_LDAP();
+    test_ParseDisplayName();
 
     CoUninitialize();
 }

@@ -21,6 +21,14 @@
 #pragma makedep register
 
 [
+    helpstring("LDAP Provider Object"),
+    progid("LDAP"),
+    uuid(228d9a81-c302-11cf-9aa4-00aa004a5691),
+    threading(both)
+]
+coclass LDAP { interface IParseDisplayName; }
+
+[
     helpstring("LDAP Namespace Object"),
     progid("LDAPNamespace"),
     uuid(228d9a82-c302-11cf-9aa4-00aa004a5691),

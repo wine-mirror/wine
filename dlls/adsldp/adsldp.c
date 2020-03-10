@@ -36,9 +36,94 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(adsldp);
 
+DEFINE_GUID(CLSID_LDAP,0x228d9a81,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
 DEFINE_GUID(CLSID_LDAPNamespace,0x228d9a82,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
 
 static HMODULE adsldp_hinst;
+
+static HRESULT LDAPNamespace_create(REFIID riid, void **obj);
+
+typedef struct
+{
+    IParseDisplayName IParseDisplayName_iface;
+    LONG ref;
+} LDAP_PARSE;
+
+static inline LDAP_PARSE *impl_from_IParseDisplayName(IParseDisplayName *iface)
+{
+    return CONTAINING_RECORD(iface, LDAP_PARSE, IParseDisplayName_iface);
+}
+
+static HRESULT WINAPI ldap_QueryInterface(IParseDisplayName *iface, REFIID riid, void **obj)
+{
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (!riid || !obj) return E_INVALIDARG;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IParseDisplayName))
+    {
+        IParseDisplayName_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ldap_AddRef(IParseDisplayName *iface)
+{
+    LDAP_PARSE *ldap = impl_from_IParseDisplayName(iface);
+    return InterlockedIncrement(&ldap->ref);
+}
+
+static ULONG WINAPI ldap_Release(IParseDisplayName *iface)
+{
+    LDAP_PARSE *ldap = impl_from_IParseDisplayName(iface);
+    LONG ref = InterlockedDecrement(&ldap->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        heap_free(ldap);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI ldap_ParseDisplayName(IParseDisplayName *iface, IBindCtx *bc,
+                                            LPOLESTR name, ULONG *eaten, IMoniker **mk)
+{
+    FIXME("%p,%p,%s,%p,%p: stub\n", iface, bc, debugstr_w(name), eaten, mk);
+    return E_NOTIMPL;
+}
+
+static const IParseDisplayNameVtbl LDAP_PARSE_vtbl =
+{
+    ldap_QueryInterface,
+    ldap_AddRef,
+    ldap_Release,
+    ldap_ParseDisplayName
+};
+
+static HRESULT LDAP_create(REFIID riid, void **obj)
+{
+    LDAP_PARSE *ldap;
+    HRESULT hr;
+
+    ldap = heap_alloc(sizeof(*ldap));
+    if (!ldap) return E_OUTOFMEMORY;
+
+    ldap->IParseDisplayName_iface.lpVtbl = &LDAP_PARSE_vtbl;
+    ldap->ref = 1;
+
+    hr = IParseDisplayName_QueryInterface(&ldap->IParseDisplayName_iface, riid, obj);
+    IParseDisplayName_Release(&ldap->IParseDisplayName_iface);
+
+    return hr;
+}
 
 typedef struct
 {
@@ -66,6 +151,7 @@ static HRESULT WINAPI sysinfo_QueryInterface(IADsADSystemInfo *iface, REFIID rii
         return S_OK;
     }
 
+    *obj = NULL;
     FIXME("interface %s is not implemented\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
@@ -560,6 +646,7 @@ static const struct class_info
 } class_info[] =
 {
     { &CLSID_ADSystemInfo, ADSystemInfo_create },
+    { &CLSID_LDAP, LDAP_create },
     { &CLSID_LDAPNamespace, LDAPNamespace_create },
 };
 
@@ -666,7 +753,6 @@ static HRESULT factory_constructor(const struct class_info *info, REFIID riid, v
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *obj)
 {
-    const struct class_info *info = NULL;
     int i;
 
     TRACE("%s,%s,%p\n", debugstr_guid(clsid), debugstr_guid(iid), obj);
@@ -678,14 +764,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *obj)
     for (i = 0; i < ARRAY_SIZE(class_info); i++)
     {
         if (IsEqualCLSID(class_info[i].clsid, clsid))
-        {
-            info = &class_info[i];
-            break;
-        }
+            return factory_constructor(&class_info[i], iid, obj);
     }
-
-    if (info)
-        return factory_constructor(info, iid, obj);
 
     FIXME("class %s/%s is not implemented\n", debugstr_guid(clsid), debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;
