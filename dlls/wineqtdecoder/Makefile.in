@@ -14,8 +14,7 @@ C_SRCS = \
 	qtutils.c \
 	qtvdecoder.c \
 	qualitycontrol.c \
-	seeking.c \
-	transform.c
+	seeking.c
 
 RC_SRCS = \
 	rsrc.rc

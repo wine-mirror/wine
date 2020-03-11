@@ -134,7 +134,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(qtdecoder);
 
 typedef struct QTVDecoderImpl
 {
-    TransformFilter tf;
+    struct strmbase_filter filter;
+    CRITICAL_SECTION stream_cs;
+
+    struct strmbase_source source;
+    IUnknown *seeking;
+
+    struct strmbase_sink sink;
 
     ImageDescriptionHandle hImageDescription;
     CFMutableDictionaryRef outputBufferAttributes;
@@ -142,17 +148,29 @@ typedef struct QTVDecoderImpl
     HRESULT decodeHR;
 
     DWORD outputSize;
-
 } QTVDecoderImpl;
 
-static inline QTVDecoderImpl *impl_from_IBaseFilter( IBaseFilter *iface )
+static inline QTVDecoderImpl *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
-    return CONTAINING_RECORD(iface, QTVDecoderImpl, tf.filter.IBaseFilter_iface);
+    return CONTAINING_RECORD(iface, QTVDecoderImpl, filter);
 }
 
-static inline QTVDecoderImpl *impl_from_TransformFilter( TransformFilter *iface )
+static HRESULT video_decoder_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    return CONTAINING_RECORD(iface, QTVDecoderImpl, tf.filter);
+    QTVDecoderImpl *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT video_decoder_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
 }
 
 static void trackingCallback(
@@ -185,8 +203,8 @@ static void trackingCallback(
         return;
     }
 
-    EnterCriticalSection(&This->tf.csReceive);
-    hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->tf.source, &pOutSample, NULL, NULL, 0);
+    EnterCriticalSection(&This->stream_cs);
+    hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->source, &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
         ERR("Unable to get delivery buffer (%x)\n", hr);
         goto error;
@@ -236,44 +254,21 @@ static void trackingCallback(
         IMediaSample_SetTime(pOutSample, &tStart, &tStop);
     }
 
-    hr = IMemInputPin_Receive(This->tf.source.pMemInputPin, pOutSample);
+    hr = IMemInputPin_Receive(This->source.pMemInputPin, pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
 
 error:
-    LeaveCriticalSection(&This->tf.csReceive);
+    LeaveCriticalSection(&This->stream_cs);
     if (pOutSample)
         IMediaSample_Release(pOutSample);
 
     This->decodeHR = hr;
 }
 
-static HRESULT WINAPI QTVDecoder_StartStreaming(TransformFilter* pTransformFilter)
+static HRESULT WINAPI video_decoder_Receive(struct strmbase_sink *iface, IMediaSample *pSample)
 {
-    QTVDecoderImpl* This = impl_from_TransformFilter(pTransformFilter);
-    OSErr err = noErr;
-    ICMDecompressionSessionOptionsRef sessionOptions = NULL;
-    ICMDecompressionTrackingCallbackRecord trackingCallbackRecord;
-
-    TRACE("(%p)->()\n", This);
-
-    trackingCallbackRecord.decompressionTrackingCallback = trackingCallback;
-    trackingCallbackRecord.decompressionTrackingRefCon = (void*)This;
-
-    err = ICMDecompressionSessionCreate(NULL, This->hImageDescription, sessionOptions, This->outputBufferAttributes, &trackingCallbackRecord, &This->decompressionSession);
-
-    if (err != noErr)
-    {
-        ERR("Error with ICMDecompressionSessionCreate %i\n",err);
-        return E_FAIL;
-    }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI QTVDecoder_Receive(TransformFilter *tf, IMediaSample *pSample)
-{
-    QTVDecoderImpl* This = impl_from_TransformFilter(tf);
+    QTVDecoderImpl *This = impl_from_strmbase_filter(iface->pin.filter);
     HRESULT hr;
     DWORD cbSrcStream;
     LPBYTE pbSrcStream;
@@ -283,6 +278,8 @@ static HRESULT WINAPI QTVDecoder_Receive(TransformFilter *tf, IMediaSample *pSam
     TimeScale timeScale = 1;
     OSStatus err = noErr;
     LONGLONG tStart, tStop;
+
+    EnterCriticalSection(&This->stream_cs);
 
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
@@ -321,28 +318,16 @@ static HRESULT WINAPI QTVDecoder_Receive(TransformFilter *tf, IMediaSample *pSam
     hr = This->decodeHR;
 
 error:
+    LeaveCriticalSection(&This->stream_cs);
     return hr;
 }
 
-static HRESULT WINAPI QTVDecoder_StopStreaming(TransformFilter* pTransformFilter)
+static HRESULT video_decoder_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *pmt)
 {
-    QTVDecoderImpl* This = impl_from_TransformFilter(pTransformFilter);
-
-    TRACE("(%p)->()\n", This);
-
-    if (This->decompressionSession)
-        ICMDecompressionSessionRelease(This->decompressionSession);
-    This->decompressionSession = NULL;
-
-    return S_OK;
-}
-
-static HRESULT video_decoder_connect_sink(TransformFilter *tf, const AM_MEDIA_TYPE *pmt)
-{
-    QTVDecoderImpl* This = impl_from_TransformFilter(tf);
+    QTVDecoderImpl *This = impl_from_strmbase_filter(iface->pin.filter);
     HRESULT hr = VFW_E_TYPE_NOT_ACCEPTED;
     OSErr err = noErr;
-    AM_MEDIA_TYPE *outpmt = &This->tf.pmt;
+    AM_MEDIA_TYPE *outpmt = &This->mt;
     CFNumberRef n = NULL;
 
     FreeMediaType(outpmt);
@@ -461,11 +446,9 @@ failed:
     return hr;
 }
 
-static HRESULT WINAPI QTVDecoder_BreakConnect(TransformFilter *tf, PIN_DIRECTION dir)
+static void video_decoder_sink_disconnect(struct strmbase_sink *iface)
 {
-    QTVDecoderImpl *This = impl_from_TransformFilter(tf);
-
-    TRACE("(%p)->()\n", This);
+    QTVDecoderImpl *This = impl_from_strmbase_filter(iface->pin.filter);
 
     if (This->hImageDescription)
         DisposeHandle((Handle)This->hImageDescription);
@@ -474,16 +457,58 @@ static HRESULT WINAPI QTVDecoder_BreakConnect(TransformFilter *tf, PIN_DIRECTION
 
     This->hImageDescription = NULL;
     This->outputBufferAttributes = NULL;
+}
 
+static const struct strmbase_sink_ops sink_ops =
+{
+    .base.pin_query_interface = video_decoder_sink_query_interface,
+    .base.pin_query_accept = video_decoder_sink_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .pfnReceive = video_decoder_sink_Receive,
+    .sink_connect = video_decoder_sink_connect,
+    .sink_disconnect = video_decoder_sink_disconnect,
+};
+
+static HRESULT video_decoder_source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    QTVDecoderImpl *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        return IUnknown_QueryInterface(filter->seeking, iid, out);
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
     return S_OK;
 }
 
-static HRESULT WINAPI QTVDecoder_DecideBufferSize(TransformFilter *tf, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT video_decoder_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
-    QTVDecoderImpl *This = impl_from_TransformFilter(tf);
-    ALLOCATOR_PROPERTIES actual;
+    QTVDecoderImpl *filter = impl_from_strmbase_filter(iface->filter);
 
-    TRACE("()\n");
+    if (IsEqualGUID(&mt->majortype, &filter->mt.majortype)
+            && (IsEqualGUID(&mt->subtype, &filter->mt.subtype)
+            || IsEqualGUID(&filter->mt.subtype, &GUID_NULL)))
+        return S_OK;
+    return S_FALSE;
+}
+
+static HRESULT video_decoder_source_get_media_type(struct strmbase_pin *iface,
+        unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    QTVDecoderImpl *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (index)
+        return VFW_S_NO_MORE_ITEMS;
+    CopyMediaType(mt, &filter->mt);
+    return S_OK;
+}
+
+static HRESULT WINAPI video_decoder_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+{
+    QTVDecoderImpl *This = impl_from_strmbase_filter(iface->pin.filter);
+    ALLOCATOR_PROPERTIES actual;
 
     if (!ppropInputRequest->cbAlign)
         ppropInputRequest->cbAlign = 1;
@@ -497,13 +522,89 @@ static HRESULT WINAPI QTVDecoder_DecideBufferSize(TransformFilter *tf, IMemAlloc
     return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
 }
 
-static const TransformFilterFuncTable QTVDecoder_FuncsTable = {
-    .pfnDecideBufferSize = QTVDecoder_DecideBufferSize,
-    .pfnStartStreaming = QTVDecoder_StartStreaming,
-    .pfnReceive = QTVDecoder_Receive,
-    .pfnStopStreaming = QTVDecoder_StopStreaming,
-    .transform_connect_sink = video_decoder_connect_sink,
-    .pfnBreakConnect = QTVDecoder_BreakConnect,
+static const struct strmbase_source_ops source_ops =
+{
+    .base.pin_query_interface = video_decoder_source_query_interface,
+    .base.pin_query_accept = video_decoder_source_query_accept,
+    .base.pin_get_media_type = video_decoder_source_get_media_type,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
+    .pfnDecideBufferSize = video_decoder_source_DecideBufferSize,
+};
+
+static struct strmbase_pin *video_decoder_get_pin(struct strmbase_filter *iface, unsigned int index)
+{
+    QTVDecoderImpl *filter = impl_from_strmbase_filter(iface);
+
+    if (index == 0)
+        return &filter->sink.pin;
+    else if (index == 1)
+        return &filter->source.pin;
+    return NULL;
+}
+
+static void video_decoder_destroy(struct strmbase_filter *iface)
+{
+    QTVDecoderImpl *filter = impl_from_strmbase_filter(iface);
+
+    if (filter->sink.pin.peer)
+        IPin_Disconnect(filter->sink.pin.peer);
+    IPin_Disconnect(&filter->sink.pin.IPin_iface);
+
+    if (filter->source.pin.peer)
+        IPin_Disconnect(filter->source.pin.peer);
+    IPin_Disconnect(&filter->source.pin.IPin_iface);
+
+    strmbase_sink_cleanup(&filter->sink);
+    strmbase_source_cleanup(&filter->source);
+
+    filter->stream_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->stream_cs);
+    FreeMediaType(&filter->mt);
+    IUnknown_Release(filter->seeking);
+    strmbase_filter_cleanup(&filter->filter);
+    free(filter);
+}
+
+static HRESULT video_decoder_init_stream(struct strmbase_filter *iface)
+{
+    QTVDecoderImpl *This = impl_from_strmbase_filter(iface);
+
+    OSErr err = noErr;
+    ICMDecompressionSessionOptionsRef sessionOptions = NULL;
+    ICMDecompressionTrackingCallbackRecord trackingCallbackRecord;
+
+    trackingCallbackRecord.decompressionTrackingCallback = trackingCallback;
+    trackingCallbackRecord.decompressionTrackingRefCon = (void*)This;
+
+    err = ICMDecompressionSessionCreate(NULL, This->hImageDescription, sessionOptions, This->outputBufferAttributes, &trackingCallbackRecord, &This->decompressionSession);
+
+    if (err != noErr)
+    {
+        ERR("Error with ICMDecompressionSessionCreate %i\n",err);
+        return E_FAIL;
+    }
+
+    return BaseOutputPinImpl_Active(&This->source);
+}
+
+static HRESULT video_decoder_cleanup_stream(struct strmbase_filter *iface)
+{
+    QTVDecoderImpl* This = impl_from_TransformFilter(pTransformFilter);
+
+    if (This->decompressionSession)
+        ICMDecompressionSessionRelease(This->decompressionSession);
+    This->decompressionSession = NULL;
+
+    return BaseOutputPinImpl_Inactive(&This->source);
+}
+
+static const struct strmbase_filter_ops filter_ops =
+{
+    .filter_get_pin = video_decoder_get_pin,
+    .filter_destroy = video_decoder_destroy,
+    .filter_init_stream = video_decoder_init_stream,
+    .filter_cleanup_stream = video_decoder_cleanup_stream,
 };
 
 HRESULT video_decoder_create(IUnknown *outer, IUnknown **out)
@@ -511,10 +612,32 @@ HRESULT video_decoder_create(IUnknown *outer, IUnknown **out)
     QTVDecoderImpl *object;
     HRESULT hr;
 
-    hr = strmbase_transform_create(sizeof(QTVDecoderImpl), outer, &CLSID_QTVDecoder,
-            &QTVDecoder_FuncsTable, (IBaseFilter **)&object);
-    if (FAILED(hr))
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    strmbase_filter_init(&object->filter, outer, &CLSID_QTVDecoder, &filter_ops);
+
+    InitializeCriticalSection(&object->stream_cs);
+    object->stream_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": QTVDecoderImpl.stream_cs");
+
+    strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
+
+    strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_SeekingPassThru,
+            (IUnknown *)&object->source.pin.IPin_iface, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void **)&object->seeking)))
+    {
+        strmbase_sink_cleanup(&object->sink);
+        strmbase_source_cleanup(&object->source);
+        strmbase_filter_cleanup(&object->filter);
+        free(object);
         return hr;
+    }
+
+    IUnknown_QueryInterface(object->seeking, &IID_ISeekingPassThru, (void **)&passthrough);
+    ISeekingPassThru_Init(passthrough, FALSE, &object->sink.pin.IPin_iface);
+    ISeekingPassThru_Release(passthrough);
 
     TRACE("Created video decoder %p.\n", object);
     *out = &object->tf.filter.IUnknown_inner;
