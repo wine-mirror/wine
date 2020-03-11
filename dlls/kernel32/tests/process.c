@@ -4060,7 +4060,6 @@ START_TEST(process)
         }
         else if (!strcmp(myARGV[2], "exit"))
         {
-            Sleep(100);
             return;
         }
         else if (!strcmp(myARGV[2], "nested") && myARGC >= 4)
