@@ -5631,7 +5631,7 @@ static void test_move_file(void)
     SetLastError(0xdeadbeef);
     ret = MoveFileA( "winetest_dir3", "winetest_dir2" );
     ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
 
     file = CreateFileA( "winetest_file3", DELETE, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
@@ -5658,14 +5658,14 @@ static void test_move_file(void)
     ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = MoveFileExA( "winetest_file2", "winetest_file1", MOVEFILE_REPLACE_EXISTING );
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
     CloseHandle( file );
 
     SetLastError(0xdeadbeef);
     ret = MoveFileExA( "winetest_file2", "winetest_dir2", MOVEFILE_REPLACE_EXISTING );
     ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = MoveFileExA( "winetest_dir3", "winetest_dir2", MOVEFILE_REPLACE_EXISTING );

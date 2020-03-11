@@ -448,14 +448,14 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
                                    LPPROGRESS_ROUTINE fnProgress,
                                    LPVOID param, DWORD flag )
 {
+    FILE_RENAME_INFORMATION *rename_info;
     FILE_BASIC_INFORMATION info;
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
-    HANDLE source_handle = 0, dest_handle = 0;
-    ANSI_STRING source_unix, dest_unix;
-    DWORD options;
+    HANDLE source_handle = 0;
+    ULONG size;
 
     TRACE("(%s,%s,%p,%p,%04x)\n",
           debugstr_w(source), debugstr_w(dest), fnProgress, param, flag );
@@ -473,8 +473,6 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
-    source_unix.Buffer = NULL;
-    dest_unix.Buffer = NULL;
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.Attributes = OBJ_CASE_INSENSITIVE;
@@ -484,8 +482,6 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
 
     status = NtOpenFile( &source_handle, DELETE | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT );
-    if (status == STATUS_SUCCESS)
-        status = wine_nt_to_unix_file_name( &nt_name, &source_unix, FILE_OPEN, FALSE );
     RtlFreeUnicodeString( &nt_name );
     if (status != STATUS_SUCCESS)
     {
@@ -499,101 +495,37 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
         goto error;
     }
 
-    /* we must have write access to the destination, and it must */
-    /* not exist except if MOVEFILE_REPLACE_EXISTING is set */
-
     if (!RtlDosPathNameToNtPathName_U( dest, &nt_name, NULL, NULL ))
     {
         SetLastError( ERROR_PATH_NOT_FOUND );
         goto error;
     }
-    options = FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT;
-    if (flag & MOVEFILE_WRITE_THROUGH)
-        options |= FILE_WRITE_THROUGH;
-    status = NtOpenFile( &dest_handle, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr, &io,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, options );
-    if (status == STATUS_SUCCESS)  /* destination exists */
-    {
-        if (!(flag & MOVEFILE_REPLACE_EXISTING))
-        {
-            if (!is_same_file( source_handle, dest_handle ))
-            {
-                SetLastError( ERROR_ALREADY_EXISTS );
-                RtlFreeUnicodeString( &nt_name );
-                goto error;
-            }
-        }
-        else if (info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY) /* cannot replace directory */
-        {
-            SetLastError( ERROR_ACCESS_DENIED );
-            goto error;
-        }
 
-        NtClose( dest_handle );
-        dest_handle = NULL;
-    }
-    else if (status != STATUS_OBJECT_NAME_NOT_FOUND)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        RtlFreeUnicodeString( &nt_name );
+    size = offsetof( FILE_RENAME_INFORMATION, FileName ) + nt_name.Length;
+    if (!(rename_info = HeapAlloc( GetProcessHeap(), 0, size )))
         goto error;
-    }
 
-    status = wine_nt_to_unix_file_name( &nt_name, &dest_unix, FILE_OPEN_IF, FALSE );
+    rename_info->ReplaceIfExists = !!(flag & MOVEFILE_REPLACE_EXISTING);
+    rename_info->RootDirectory = NULL;
+    rename_info->FileNameLength = nt_name.Length;
+    memcpy( rename_info->FileName, nt_name.Buffer, nt_name.Length );
     RtlFreeUnicodeString( &nt_name );
-    if (status != STATUS_SUCCESS && status != STATUS_NO_SUCH_FILE)
+    status = NtSetInformationFile( source_handle, &io, rename_info, size, FileRenameInformation );
+    if (status == STATUS_NOT_SAME_DEVICE && (flag & MOVEFILE_COPY_ALLOWED))
     {
-        SetLastError( RtlNtStatusToDosError(status) );
-        goto error;
-    }
-
-    /* now perform the rename */
-
-    if (rename( source_unix.Buffer, dest_unix.Buffer ) == -1)
-    {
-        if (errno == EXDEV && (flag & MOVEFILE_COPY_ALLOWED))
-        {
-            NtClose( source_handle );
-            RtlFreeAnsiString( &source_unix );
-            RtlFreeAnsiString( &dest_unix );
-            if (!CopyFileExW( source, dest, fnProgress, param, NULL,
-                              flag & MOVEFILE_REPLACE_EXISTING ?
-                              0 : COPY_FILE_FAIL_IF_EXISTS ))
-                return FALSE;
-            return DeleteFileW( source );
-        }
-        FILE_SetDosError();
-        /* if we created the destination, remove it */
-        if (io.Information == FILE_CREATED) unlink( dest_unix.Buffer );
-        goto error;
-    }
-
-    /* fixup executable permissions */
-
-    if (is_executable( source ) != is_executable( dest ))
-    {
-        struct stat fstat;
-        if (stat( dest_unix.Buffer, &fstat ) != -1)
-        {
-            if (is_executable( dest ))
-                /* set executable bit where read bit is set */
-                fstat.st_mode |= (fstat.st_mode & 0444) >> 2;
-            else
-                fstat.st_mode &= ~0111;
-            chmod( dest_unix.Buffer, fstat.st_mode );
-        }
+        NtClose( source_handle );
+        if (!CopyFileExW( source, dest, fnProgress, param, NULL,
+                          flag & MOVEFILE_REPLACE_EXISTING ?
+                          0 : COPY_FILE_FAIL_IF_EXISTS ))
+            return FALSE;
+        return DeleteFileW( source );
     }
 
     NtClose( source_handle );
-    RtlFreeAnsiString( &source_unix );
-    RtlFreeAnsiString( &dest_unix );
-    return TRUE;
+    return set_ntstatus( status );
 
 error:
     if (source_handle) NtClose( source_handle );
-    if (dest_handle) NtClose( dest_handle );
-    RtlFreeAnsiString( &source_unix );
-    RtlFreeAnsiString( &dest_unix );
     return FALSE;
 }
 
