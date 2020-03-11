@@ -23,7 +23,6 @@
 #include "config.h"
 
 #include <ctype.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -341,24 +340,6 @@ INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
 
 
 /*********************************************************************
- *                  wcstol  (NTDLL.@)
- */
-LONG __cdecl NTDLL_wcstol(LPCWSTR s, LPWSTR *end, INT base)
-{
-    return strtolW( s, end, base );
-}
-
-
-/*********************************************************************
- *                  wcstoul  (NTDLL.@)
- */
-ULONG __cdecl NTDLL_wcstoul(LPCWSTR s, LPWSTR *end, INT base)
-{
-    return strtoulW( s, end, base );
-}
-
-
-/*********************************************************************
  *           iswctype    (NTDLL.@)
  */
 INT __cdecl NTDLL_iswctype( WCHAR wc, unsigned short type )
@@ -439,6 +420,117 @@ INT __cdecl NTDLL_iswxdigit( WCHAR wc )
 {
     if (wc >= 256) return 0;
     return wctypes[wc] & C1_XDIGIT;
+}
+
+
+static int wctoint( WCHAR c )
+{
+    /* NOTE: MAP_FOLDDIGITS supports too many things. */
+    /* Unicode points that contain digits 0-9; keep this sorted! */
+    static const WCHAR zeros[] =
+    {
+        0x0660, 0x06f0, 0x0966, 0x09e6, 0x0a66, 0x0ae6, 0x0b66, 0x0c66, 0x0ce6,
+        0x0d66, 0x0e50, 0x0ed0, 0x0f20, 0x1040, 0x17e0, 0x1810, 0xff10
+    };
+    int i;
+
+    if ('0' <= c && c <= '9') return c - '0';
+    if ('A' <= c && c <= 'Z') return c - 'A' + 10;
+    if ('a' <= c && c <= 'z') return c - 'a' + 10;
+    for (i = 0; i < ARRAY_SIZE(zeros) && c >= zeros[i]; i++)
+        if (zeros[i] <= c && c <= zeros[i] + 9) return c - zeros[i];
+
+    return -1;
+}
+
+/*********************************************************************
+ *                  wcstol  (NTDLL.@)
+ */
+LONG __cdecl NTDLL_wcstol(LPCWSTR s, LPWSTR *end, INT base)
+{
+    BOOL negative = FALSE, empty = TRUE;
+    LONG ret = 0;
+
+    if (base < 0 || base == 1 || base > 36) return 0;
+    if (end) *end = (WCHAR *)s;
+    while (NTDLL_iswspace(*s)) s++;
+
+    if (*s == '-')
+    {
+        negative = TRUE;
+        s++;
+    }
+    else if (*s == '+') s++;
+
+    if ((base == 0 || base == 16) && !wctoint( *s ) && (s[1] == 'x' || s[1] == 'X'))
+    {
+        base = 16;
+        s += 2;
+    }
+    if (base == 0) base = wctoint( *s ) ? 10 : 8;
+
+    while (*s)
+    {
+        int v = wctoint( *s );
+        if (v < 0 || v >= base) break;
+        if (negative) v = -v;
+        s++;
+        empty = FALSE;
+
+        if (!negative && (ret > MAXLONG / base || ret * base > MAXLONG - v))
+            ret = MAXLONG;
+        else if (negative && (ret < (LONG)MINLONG / base || ret * base < (LONG)(MINLONG - v)))
+            ret = MINLONG;
+        else
+            ret = ret * base + v;
+    }
+
+    if (end && !empty) *end = (WCHAR *)s;
+    return ret;
+}
+
+
+/*********************************************************************
+ *                  wcstoul  (NTDLL.@)
+ */
+ULONG __cdecl NTDLL_wcstoul(LPCWSTR s, LPWSTR *end, INT base)
+{
+    BOOL negative = FALSE, empty = TRUE;
+    ULONG ret = 0;
+
+    if (base < 0 || base == 1 || base > 36) return 0;
+    if (end) *end = (WCHAR *)s;
+    while (NTDLL_iswspace(*s)) s++;
+
+    if (*s == '-')
+    {
+        negative = TRUE;
+        s++;
+    }
+    else if (*s == '+') s++;
+
+    if ((base == 0 || base == 16) && !wctoint( *s ) && (s[1] == 'x' || s[1] == 'X'))
+    {
+        base = 16;
+        s += 2;
+    }
+    if (base == 0) base = wctoint( *s ) ? 10 : 8;
+
+    while (*s)
+    {
+        int v = wctoint( *s );
+        if (v < 0 || v >= base) break;
+        s++;
+        empty = FALSE;
+
+        if (ret > MAXDWORD / base || ret * base > MAXDWORD - v)
+            ret = MAXDWORD;
+        else
+            ret = ret * base + v;
+    }
+
+    if (end && !empty) *end = (WCHAR *)s;
+    return negative ? -ret : ret;
 }
 
 

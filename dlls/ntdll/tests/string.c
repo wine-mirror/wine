@@ -22,6 +22,7 @@
  */
 
 #include <stdlib.h>
+#include <limits.h>
 
 #include "ntdll_test.h"
 #include "winnls.h"
@@ -47,6 +48,8 @@ static LPSTR    (__cdecl *p_ui64toa)(ULONGLONG, LPSTR, INT);
 static int      (__cdecl *p_wtoi)(LPCWSTR);
 static LONG     (__cdecl *p_wtol)(LPCWSTR);
 static LONGLONG (__cdecl *p_wtoi64)(LPCWSTR);
+static LONG     (__cdecl *pwcstol)(LPCWSTR,LPWSTR*,INT);
+static ULONG    (__cdecl *pwcstoul)(LPCWSTR,LPWSTR*,INT);
 static LPWSTR   (__cdecl *p_itow)(int, LPWSTR, int);
 static LPWSTR   (__cdecl *p_ltow)(LONG, LPWSTR, INT);
 static LPWSTR   (__cdecl *p_ultow)(ULONG, LPWSTR, INT);
@@ -102,6 +105,8 @@ static void InitFunctionPtrs(void)
     X(_wtoi);
     X(_wtol);
     X(_wtoi64);
+    X(wcstol);
+    X(wcstoul);
     X(_itow);
     X(_ltow);
     X(_ultow);
@@ -1153,6 +1158,72 @@ static void test_wtoi64(void)
     ok( result == 0, "got %s\n", wine_dbgstr_longlong(result) );
 }
 
+static void test_wcstol(void)
+{
+    static const struct { WCHAR str[24]; LONG res; ULONG ures; int base; } tests[] =
+    {
+        { L"9", 9, 9, 10 },
+        { L" ", 0, 0 },
+        { L"-1234", -1234, -1234 },
+        { L"\x09\x0a\x0b\x0c\x0d -123", -123, -123 },
+        { L"\xa0 +44", 44, 44 },
+        { L"\x2002\x2003 +55", 0, 0 },
+        { L"\x3000 +66", 0, 0 },
+        { { 0x3231 }, 0, 0 }, /* PARENTHESIZED IDEOGRAPH STOCK */
+        { { 0x4e00 }, 0, 0 }, /* CJK Ideograph, First */
+        { { 0x0bef }, 0, 0 }, /* TAMIL DIGIT NINE */
+        { { 0x0e59 }, 9, 9 }, /* THAI DIGIT NINE */
+        { { 0xff19 }, 9, 9 }, /* FULLWIDTH DIGIT NINE */
+        { { 0x00b9 }, 0, 0 }, /* SUPERSCRIPT ONE */
+        { { '-',0x0e50,'x',0xff19,'1' }, -0x91, -0x91 },
+        { { '+',0x0e50,0xff17,'1' }, 071, 071 },
+        { { 0xff19,'f',0x0e59,0xff46 }, 0x9f9, 0x9f9, 16 },
+        { L"2147483647", 2147483647, 2147483647 },
+        { L"2147483648", LONG_MAX, 2147483648 },
+        { L"4294967295", LONG_MAX, 4294967295 },
+        { L"4294967296", LONG_MAX, ULONG_MAX },
+        { L"9223372036854775807", LONG_MAX, ULONG_MAX },
+        { L"-2147483647", -2147483647, -2147483647 },
+        { L"-2147483648", LONG_MIN, LONG_MIN },
+        { L"-4294967295", LONG_MIN, 1 },
+        { L"-4294967296", LONG_MIN, 1 },
+        { L"-9223372036854775807", LONG_MIN, 1 },
+    };
+    static const WCHAR zeros[] =
+    {
+        0x0660, 0x06f0, 0x0966, 0x09e6, 0x0a66, 0x0ae6, 0x0b66, 0x0c66, 0x0ce6,
+        0x0d66, 0x0e50, 0x0ed0, 0x0f20, 0x1040, 0x17e0, 0x1810, 0xff10
+    };
+    unsigned int i;
+    LONG res;
+    ULONG ures;
+    WCHAR *endpos;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        res = pwcstol( tests[i].str, &endpos, tests[i].base );
+        ok( res == tests[i].res, "%u: %s res %08x\n", i, wine_dbgstr_w(tests[i].str), res );
+        if (!res) ok( endpos == tests[i].str, "%u: wrong endpos %p/%p\n", i, endpos, tests[i].str );
+        ures = pwcstoul( tests[i].str, &endpos, tests[i].base );
+        ok( ures == tests[i].ures, "%u: %s res %08x\n", i, wine_dbgstr_w(tests[i].str), ures );
+    }
+
+    /* Test various unicode digits */
+    for (i = 0; i < ARRAY_SIZE(zeros); ++i)
+    {
+        WCHAR tmp[] = { zeros[i] + 4, zeros[i], zeros[i] + 5, 0 };
+        res = pwcstol(tmp, NULL, 0);
+        ok(res == 405, "with zero = U+%04X: got %d, expected 405\n", zeros[i], res);
+        ures = pwcstoul(tmp, NULL, 0);
+        ok(ures == 405, "with zero = U+%04X: got %u, expected 405\n", zeros[i], ures);
+        tmp[1] = zeros[i] + 10;
+        res = pwcstol(tmp, NULL, 16);
+        ok(res == 4, "with zero = U+%04X: got %d, expected 4\n", zeros[i], res);
+        ures = pwcstoul(tmp, NULL, 16);
+        ok(ures == 4, "with zero = U+%04X: got %u, expected 4\n", zeros[i], ures);
+    }
+}
+
 static void test_wcschr(void)
 {
     static const WCHAR teststringW[] = {'a','b','r','a','c','a','d','a','b','r','a',0};
@@ -1670,6 +1741,7 @@ START_TEST(string)
     test_wtoi();
     test_wtol();
     test_wtoi64();
+    test_wcstol();
     test_wcschr();
     test_wcsrchr();
     test_wcslwrupr();
