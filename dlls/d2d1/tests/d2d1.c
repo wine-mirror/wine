@@ -9341,6 +9341,77 @@ static void test_dpi(void)
     DestroyWindow(window);
 }
 
+static void test_wic_bitmap_format(void)
+{
+    IWICImagingFactory *wic_factory;
+    IDXGISwapChain *swapchain;
+    D2D1_PIXEL_FORMAT format;
+    IWICBitmap *wic_bitmap;
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    IDXGISurface *surface;
+    ID2D1Bitmap *bitmap;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        const WICPixelFormatGUID *wic;
+        D2D1_PIXEL_FORMAT d2d;
+    }
+    tests[] =
+    {
+        {&GUID_WICPixelFormat32bppPBGRA, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}},
+        {&GUID_WICPixelFormat32bppPRGBA, {DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}},
+        {&GUID_WICPixelFormat32bppBGR,   {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = create_window();
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(hr == S_OK, "Failed to get buffer, hr %#x.\n", hr);
+    rt = create_render_target(surface);
+    ok(!!rt, "Failed to create render target.\n");
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&wic_factory);
+    ok(hr == S_OK, "Failed to create WIC imaging factory, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IWICImagingFactory_CreateBitmap(wic_factory, 16, 16,
+                tests[i].wic, WICBitmapCacheOnDemand, &wic_bitmap);
+        ok(hr == S_OK, "%s: Failed to create WIC bitmap, hr %#x.\n", debugstr_guid(tests[i].wic), hr);
+
+        hr = ID2D1RenderTarget_CreateBitmapFromWicBitmap(rt, (IWICBitmapSource *)wic_bitmap, NULL, &bitmap);
+        ok(hr == S_OK, "%s: Failed to create bitmap from WIC source, hr %#x.\n", debugstr_guid(tests[i].wic), hr);
+
+        format = ID2D1Bitmap_GetPixelFormat(bitmap);
+        ok(format.format == tests[i].d2d.format, "%s: Got unexpected DXGI format %#x.\n",
+                debugstr_guid(tests[i].wic), format.format);
+        ok(format.alphaMode == tests[i].d2d.alphaMode, "%s: Got unexpected alpha mode %#x.\n",
+                debugstr_guid(tests[i].wic), format.alphaMode);
+
+        ID2D1Bitmap_Release(bitmap);
+        IWICBitmap_Release(wic_bitmap);
+    }
+
+    IWICImagingFactory_Release(wic_factory);
+    CoUninitialize();
+    ID2D1RenderTarget_Release(rt);
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID3D10Device1_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(d2d1)
 {
     unsigned int argc, i;
@@ -9390,6 +9461,7 @@ START_TEST(d2d1)
     queue_test(test_command_list);
     queue_test(test_max_bitmap_size);
     queue_test(test_dpi);
+    queue_test(test_wic_bitmap_format);
 
     run_queued_tests();
 }
