@@ -2123,8 +2123,8 @@ static void test_file_rename_information(void)
 
     U(io).Status = 0xdeadbeef;
     res = pNtSetInformationFile( handle, &io, fri, sizeof(FILE_RENAME_INFORMATION) + fri->FileNameLength, FileRenameInformation );
-    todo_wine ok( U(io).Status == STATUS_SUCCESS, "got io status %#x\n", U(io).Status );
-    todo_wine ok( res == STATUS_SUCCESS, "got status %x\n", res );
+    ok( U(io).Status == STATUS_SUCCESS, "got io status %#x\n", U(io).Status );
+    ok( res == STATUS_SUCCESS, "got status %x\n", res );
     ok( GetFileAttributesW( oldpath ) != INVALID_FILE_ATTRIBUTES, "file should exist\n" );
 
     CloseHandle( handle );
@@ -2782,8 +2782,8 @@ static void test_file_link_information(void)
     fli->ReplaceIfExists = TRUE;
     U(io).Status = 0xdeadbeef;
     res = pNtSetInformationFile( handle, &io, fli, sizeof(FILE_LINK_INFORMATION) + fli->FileNameLength, FileLinkInformation );
-    todo_wine ok( U(io).Status == STATUS_SUCCESS, "got io status %#x\n", U(io).Status );
-    todo_wine ok( res == STATUS_SUCCESS, "got status %x\n", res );
+    ok( U(io).Status == STATUS_SUCCESS, "got io status %#x\n", U(io).Status );
+    ok( res == STATUS_SUCCESS, "got status %x\n", res );
     ok( GetFileAttributesW( oldpath ) != INVALID_FILE_ATTRIBUTES, "file should exist\n" );
 
     CloseHandle( handle );

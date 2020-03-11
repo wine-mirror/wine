@@ -2328,7 +2328,7 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
                          data_size_t len, int create_link, int replace )
 {
     struct inode *inode;
-    struct stat st;
+    struct stat st, st2;
     char *name;
 
     if (!fd->inode || !fd->unix_name)
@@ -2336,6 +2336,12 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
         set_error( STATUS_OBJECT_TYPE_MISMATCH );
         return;
     }
+    if (fd->unix_fd == -1)
+    {
+        set_error( fd->no_fd_status );
+        return;
+    }
+
     if (!len || ((nameptr[0] == '/') ^ !root))
     {
         set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
@@ -2358,8 +2364,7 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
     }
 
     /* when creating a hard link, source cannot be a dir */
-    if (create_link && fd->unix_fd != -1 &&
-        !fstat( fd->unix_fd, &st ) && S_ISDIR( st.st_mode ))
+    if (create_link && !fstat( fd->unix_fd, &st ) && S_ISDIR( st.st_mode ))
     {
         set_error( STATUS_FILE_IS_A_DIRECTORY );
         goto failed;
@@ -2367,6 +2372,13 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
 
     if (!stat( name, &st ))
     {
+        if (!fstat( fd->unix_fd, &st2 ) && st.st_ino == st2.st_ino && st.st_dev == st2.st_dev)
+        {
+            if (create_link && !replace) set_error( STATUS_OBJECT_NAME_COLLISION );
+            free( name );
+            return;
+        }
+
         if (!replace)
         {
             set_error( STATUS_OBJECT_NAME_COLLISION );
@@ -2394,8 +2406,7 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
 
         /* link() expects that the target doesn't exist */
         /* rename() cannot replace files with directories */
-        if (create_link || (fd->unix_fd != -1 &&
-            !fstat( fd->unix_fd, &st ) && S_ISDIR( st.st_mode )))
+        if (create_link || S_ISDIR( st2.st_mode ))
         {
             if (unlink( name ))
             {
