@@ -2759,7 +2759,8 @@ static void test_KillOnJobClose(void)
 
 static void test_WaitForJobObject(void)
 {
-    HANDLE job;
+    HANDLE job, sem;
+    char buffer[50];
     PROCESS_INFORMATION pi;
     BOOL ret;
     DWORD dwret;
@@ -2826,10 +2827,13 @@ static void test_WaitForJobObject(void)
     dwret = WaitForSingleObject(job, 100);
     ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
 
-    create_process("exit", &pi);
+    sprintf(buffer, "sync kernel32-process-%x", GetCurrentProcessId());
+    sem = CreateSemaphoreA(NULL, 0, 1, buffer);
+    create_process(buffer, &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
     ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    ReleaseSemaphore(sem, 1, NULL);
 
     dwret = WaitForSingleObject(job, 100);
     ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
@@ -4045,6 +4049,13 @@ START_TEST(process)
         {
             Sleep(30000);
             ok(0, "Child process not killed\n");
+            return;
+        }
+        else if (!strcmp(myARGV[2], "sync") && myARGC >= 4)
+        {
+            HANDLE sem = CreateSemaphoreA(NULL, 0, 1, myARGV[3]);
+            ok(sem != 0, "Could not get the %s semaphore: le=%u\n", myARGV[3], GetLastError());
+            if (sem) WaitForSingleObject(sem, 30000);
             return;
         }
         else if (!strcmp(myARGV[2], "exit"))
