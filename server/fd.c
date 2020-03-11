@@ -2325,7 +2325,7 @@ static void set_fd_disposition( struct fd *fd, int unlink )
 
 /* set new name for the fd */
 static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
-                         data_size_t len, int create_link )
+                         data_size_t len, int create_link, int replace )
 {
     struct inode *inode;
     struct stat st;
@@ -2367,6 +2367,12 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
 
     if (!stat( name, &st ))
     {
+        if (!replace)
+        {
+            set_error( STATUS_OBJECT_NAME_COLLISION );
+            goto failed;
+        }
+
         /* can't replace directories or special files */
         if (!S_ISREG( st.st_mode ))
         {
@@ -2695,7 +2701,7 @@ DECL_HANDLER(set_fd_name_info)
 
     if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
     {
-        set_fd_name( fd, root_fd, get_req_data(), get_req_data_size(), req->link );
+        set_fd_name( fd, root_fd, get_req_data(), get_req_data_size(), req->link, req->replace );
         release_object( fd );
     }
     if (root_fd) release_object( root_fd );

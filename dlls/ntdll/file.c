@@ -2778,18 +2778,12 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             if (io->u.Status != STATUS_SUCCESS && io->u.Status != STATUS_NO_SUCH_FILE)
                 break;
 
-            if (!info->ReplaceIfExists && io->u.Status == STATUS_SUCCESS)
-            {
-                RtlFreeAnsiString( &unix_name );
-                io->u.Status = STATUS_OBJECT_NAME_COLLISION;
-                break;
-            }
-
             SERVER_START_REQ( set_fd_name_info )
             {
                 req->handle   = wine_server_obj_handle( handle );
                 req->rootdir  = wine_server_obj_handle( attr.RootDirectory );
                 req->link     = FALSE;
+                req->replace  = info->ReplaceIfExists;
                 wine_server_add_data( req, unix_name.Buffer, unix_name.Length );
                 io->u.Status = wine_server_call( req );
             }
@@ -2821,18 +2815,12 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             if (io->u.Status != STATUS_SUCCESS && io->u.Status != STATUS_NO_SUCH_FILE)
                 break;
 
-            if (!info->ReplaceIfExists && io->u.Status == STATUS_SUCCESS)
-            {
-                RtlFreeAnsiString( &unix_name );
-                io->u.Status = STATUS_OBJECT_NAME_COLLISION;
-                break;
-            }
-
             SERVER_START_REQ( set_fd_name_info )
             {
                 req->handle   = wine_server_obj_handle( handle );
                 req->rootdir  = wine_server_obj_handle( attr.RootDirectory );
                 req->link     = TRUE;
+                req->replace  = info->ReplaceIfExists;
                 wine_server_add_data( req, unix_name.Buffer, unix_name.Length );
                 io->u.Status  = wine_server_call( req );
             }

@@ -3809,6 +3809,7 @@ struct handle_info
     obj_handle_t handle;          /* handle to a file or directory */
     obj_handle_t rootdir;         /* root directory */
     int          link;            /* link instead of renaming */
+    int          replace;         /* replace an existing file? */
     VARARG(filename,string);      /* new file name */
 @END
 
