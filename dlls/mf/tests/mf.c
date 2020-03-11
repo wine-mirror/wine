@@ -875,13 +875,7 @@ static void test_sequencer_source(void)
 struct test_callback
 {
     IMFAsyncCallback IMFAsyncCallback_iface;
-    HANDLE event;
 };
-
-static struct test_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
-{
-    return CONTAINING_RECORD(iface, struct test_callback, IMFAsyncCallback_iface);
-}
 
 static HRESULT WINAPI testcallback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
 {
@@ -915,33 +909,7 @@ static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD 
 
 static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
-    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
-    IMFMediaSession *session;
-    IUnknown *state, *obj;
-    HRESULT hr;
-
     ok(result != NULL, "Unexpected result object.\n");
-
-    state = IMFAsyncResult_GetStateNoAddRef(result);
-    if (state && SUCCEEDED(IUnknown_QueryInterface(state, &IID_IMFMediaSession, (void **)&session)))
-    {
-        IMFMediaEvent *event;
-
-        hr = IMFMediaSession_EndGetEvent(session, result, &event);
-        ok(hr == S_OK, "Failed to finalize GetEvent, hr %#x.\n", hr);
-
-        hr = IMFAsyncResult_GetObject(result, &obj);
-        ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
-
-        IMFMediaEvent_Release(event);
-
-        hr = IMFMediaSession_EndGetEvent(session, result, &event);
-        ok(hr == E_FAIL, "Unexpected result, hr %#x.\n", hr);
-
-        IMFMediaSession_Release(session);
-
-        SetEvent(callback->event);
-    }
 
     return E_NOTIMPL;
 }
@@ -958,7 +926,6 @@ static const IMFAsyncCallbackVtbl testcallbackvtbl =
 static void init_test_callback(struct test_callback *callback)
 {
     callback->IMFAsyncCallback_iface.lpVtbl = &testcallbackvtbl;
-    callback->event = NULL;
 }
 
 static void test_session_events(IMFMediaSession *session)
@@ -967,7 +934,6 @@ static void test_session_events(IMFMediaSession *session)
     IMFAsyncResult *result;
     IMFMediaEvent *event;
     HRESULT hr;
-    DWORD ret;
 
     init_test_callback(&callback);
     init_test_callback(&callback2);
@@ -997,16 +963,6 @@ static void test_session_events(IMFMediaSession *session)
     /* Different callback, different state. */
     hr = IMFMediaSession_BeginGetEvent(session, &callback2.IMFAsyncCallback_iface, (IUnknown *)&callback.IMFAsyncCallback_iface);
     ok(hr == MF_E_MULTIPLE_SUBSCRIBERS, "Unexpected hr %#x.\n", hr);
-
-    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
-
-    hr = IMFMediaSession_QueueEvent(session, MEError, &GUID_NULL, E_FAIL, NULL);
-    ok(hr == S_OK, "Failed to queue event, hr %#x.\n", hr);
-
-    ret = WaitForSingleObject(callback.event, 100);
-    ok(ret == WAIT_OBJECT_0, "Unexpected return value %#x.\n", ret);
-
-    CloseHandle(callback.event);
 
     hr = MFCreateAsyncResult(NULL, &callback.IMFAsyncCallback_iface, NULL, &result);
     ok(hr == S_OK, "Failed to create result, hr %#x.\n", hr);
