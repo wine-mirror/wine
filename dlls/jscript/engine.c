@@ -1237,8 +1237,14 @@ static HRESULT interp_this(script_ctx_t *ctx)
 
     TRACE("\n");
 
-    if(!this_obj)
-        this_obj = lookup_global_host(ctx);
+    if(!this_obj) {
+        named_item_t *item = ctx->call_ctx->bytecode->named_item;
+
+        if(item)
+            this_obj = (item->flags & SCRIPTITEM_CODEONLY) ? to_disp(item->script_obj) : item->disp;
+        else
+            this_obj = lookup_global_host(ctx);
+    }
 
     IDispatch_AddRef(this_obj);
     return stack_push(ctx, jsval_disp(this_obj));
