@@ -10,6 +10,5 @@ C_SRCS = \
 	qualitycontrol.c \
 	renderer.c \
 	seeking.c \
-	transform.c \
 	video.c \
 	window.c
