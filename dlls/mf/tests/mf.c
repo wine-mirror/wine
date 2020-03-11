@@ -1776,6 +1776,10 @@ static void test_presentation_clock(void)
     ok(rate == 1.0f, "Unexpected rate.\n");
     ok(!thin, "Unexpected thinning.\n");
 
+    hr = IMFPresentationClock_GetState(clock, 0, &state);
+    ok(hr == S_OK, "Failed to get clock state, hr %#x.\n", hr);
+    ok(state == MFCLOCK_STATE_PAUSED, "Unexpected state %d.\n", state);
+
     hr = IMFPresentationClock_Start(clock, 0);
     ok(hr == S_OK, "Failed to stop, hr %#x.\n", hr);
 
@@ -1809,18 +1813,37 @@ static void test_presentation_clock(void)
 
     /* Shutdown behavior. */
     hr = IMFShutdown_GetShutdownStatus(shutdown, NULL);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFShutdown_GetShutdownStatus(shutdown, &status);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
     hr = IMFShutdown_Shutdown(shutdown);
-todo_wine
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
+    time_source = NULL;
+    hr = IMFPresentationClock_GetTimeSource(clock, &time_source);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!time_source, "Unexpected instance %p.\n", time_source);
+    IMFPresentationTimeSource_Release(time_source);
+
+    hr = IMFPresentationClock_GetTime(clock, &time);
+    ok(hr == S_OK, "Failed to get time, hr %#x.\n", hr);
+
     hr = IMFShutdown_GetShutdownStatus(shutdown, &status);
-todo_wine {
     ok(hr == S_OK, "Failed to get status, hr %#x.\n", hr);
     ok(status == MFSHUTDOWN_COMPLETED, "Unexpected status.\n");
-}
+
+    hr = IMFPresentationClock_Start(clock, 0);
+    ok(hr == S_OK, "Failed to start the clock, hr %#x.\n", hr);
+
+    hr = IMFShutdown_GetShutdownStatus(shutdown, &status);
+    ok(hr == S_OK, "Failed to get status, hr %#x.\n", hr);
+    ok(status == MFSHUTDOWN_COMPLETED, "Unexpected status.\n");
+
+    hr = IMFShutdown_Shutdown(shutdown);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     IMFShutdown_Release(shutdown);
 
     IMFPresentationClock_Release(clock);

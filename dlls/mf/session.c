@@ -239,6 +239,7 @@ struct presentation_clock
     float rate;
     LONGLONG frequency;
     CRITICAL_SECTION cs;
+    BOOL is_shut_down;
 };
 
 struct quality_manager
@@ -3332,16 +3333,35 @@ static ULONG WINAPI present_clock_shutdown_Release(IMFShutdown *iface)
 
 static HRESULT WINAPI present_clock_shutdown_Shutdown(IMFShutdown *iface)
 {
-    FIXME("%p.\n", iface);
+    struct presentation_clock *clock = impl_from_IMFShutdown(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&clock->cs);
+    clock->is_shut_down = TRUE;
+    LeaveCriticalSection(&clock->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI present_clock_shutdown_GetShutdownStatus(IMFShutdown *iface, MFSHUTDOWN_STATUS *status)
 {
-    FIXME("%p, %p.\n", iface, status);
+    struct presentation_clock *clock = impl_from_IMFShutdown(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, status);
+
+    if (!status)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&clock->cs);
+    if (clock->is_shut_down)
+        *status = MFSHUTDOWN_COMPLETED;
+    else
+        hr = MF_E_INVALIDREQUEST;
+    LeaveCriticalSection(&clock->cs);
+
+    return hr;
 }
 
 static const IMFShutdownVtbl presentclockshutdownvtbl =
