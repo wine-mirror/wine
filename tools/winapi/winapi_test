@@ -503,10 +503,6 @@ sub output_header($$$) {
     print OUT " */\n";
     print OUT "\n";
 
-    print OUT "#define WINVER 0x0501\n";
-    print OUT "#define _WIN32_IE 0x0501\n";
-    print OUT "#define _WIN32_WINNT 0x0501\n";
-    print OUT "\n";
     print OUT "#define WINE_NOWINSOCK\n";
     print OUT "\n";
     foreach my $test (@tests) {
