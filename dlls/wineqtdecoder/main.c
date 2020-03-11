@@ -146,7 +146,6 @@ static struct class_factory video_decoder_cf = {{&class_factory_vtbl}, video_dec
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 {
     struct class_factory *factory;
-    HRESULT hr;
 
     TRACE("clsid %s, iid %s, out %p.\n", debugstr_guid(clsid), debugstr_guid(iid), out);
 
@@ -193,7 +192,7 @@ static const REGFILTER2 reg_qt_splitter =
     .u.s2.rgPins2 = reg_qt_splitter_pins,
 };
 
-static const REGFILTERPINS2 reg_qt_splitter_pins[2] =
+static const REGFILTERPINS2 reg_video_decoder_pins[2] =
 {
     {
         .nMediaTypes = 1,
