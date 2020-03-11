@@ -3307,6 +3307,8 @@ static void test__wcstoi64(void)
         { L"9", 9, 9, 10 },
         { L" ", 0, 0 },
         { L"-1234", -1234, -1234 },
+        { L"\x09\x0a\x0b\x0c\x0d -123", -123, -123 },
+        { L"\xa0\x2002\x2003\x2028\x3000 +44", 44, 44 },
         { { 0x3231 }, 0, 0 }, /* PARENTHESIZED IDEOGRAPH STOCK */
         { { 0x4e00 }, 0, 0 }, /* CJK Ideograph, First */
         { { 0x0bef }, 0, 0 }, /* TAMIL DIGIT NINE */
@@ -3373,6 +3375,8 @@ static void test__wcstol(void)
         { L"9", 9, 9, 10 },
         { L" ", 0, 0 },
         { L"-1234", -1234, -1234 },
+        { L"\x09\x0a\x0b\x0c\x0d -123", -123, -123 },
+        { L"\xa0\x2002\x2003\x2028\x3000 +44", 44, 44 },
         { { 0x3231 }, 0, 0 }, /* PARENTHESIZED IDEOGRAPH STOCK */
         { { 0x4e00 }, 0, 0 }, /* CJK Ideograph, First */
         { { 0x0bef }, 0, 0 }, /* TAMIL DIGIT NINE */
