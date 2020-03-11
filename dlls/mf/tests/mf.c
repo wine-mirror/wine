@@ -1797,6 +1797,10 @@ static void test_presentation_clock(void)
     hr = IMFRateControl_SetRate(rate_control, TRUE, -1.0f);
     ok(hr == MF_E_THINNING_UNSUPPORTED, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFPresentationClock_GetState(clock, 0, &state);
+    ok(hr == S_OK, "Failed to get clock state, hr %#x.\n", hr);
+    ok(state == MFCLOCK_STATE_RUNNING, "Unexpected state %d.\n", state);
+
     hr = IMFRateControl_GetRate(rate_control, &thin, &rate);
     ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
     ok(rate == 0.5f, "Unexpected rate.\n");

@@ -2978,7 +2978,8 @@ static HRESULT clock_change_state(struct presentation_clock *clock, enum clock_c
         return hr;
 
     old_state = clock->state;
-    clock->state = states[command];
+    if (command != CLOCK_CMD_SET_RATE)
+        clock->state = states[command];
 
     /* Dump all pending timer requests immediately on start; otherwise try to cancel scheduled items when
        transitioning from running state. */
