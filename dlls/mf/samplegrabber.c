@@ -235,6 +235,9 @@ static HRESULT WINAPI sample_grabber_stream_GetEvent(IMFStreamSink *iface, DWORD
 
     TRACE("%p, %#x, %p.\n", iface, flags, event);
 
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
+
     return IMFMediaEventQueue_GetEvent(stream->event_queue, flags, event);
 }
 
@@ -244,6 +247,9 @@ static HRESULT WINAPI sample_grabber_stream_BeginGetEvent(IMFStreamSink *iface, 
     struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
 
     TRACE("%p, %p, %p.\n", iface, callback, state);
+
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
 
     return IMFMediaEventQueue_BeginGetEvent(stream->event_queue, callback, state);
 }
@@ -255,6 +261,9 @@ static HRESULT WINAPI sample_grabber_stream_EndGetEvent(IMFStreamSink *iface, IM
 
     TRACE("%p, %p, %p.\n", iface, result, event);
 
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
+
     return IMFMediaEventQueue_EndGetEvent(stream->event_queue, result, event);
 }
 
@@ -264,6 +273,9 @@ static HRESULT WINAPI sample_grabber_stream_QueueEvent(IMFStreamSink *iface, Med
     struct sample_grabber_stream *stream = impl_from_IMFStreamSink(iface);
 
     TRACE("%p, %u, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
 
     return IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, event_type, ext_type, hr, value);
 }
@@ -1046,6 +1058,7 @@ static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
         IMFMediaSink_Release(&grabber->stream->sink->IMFMediaSink_iface);
         EnterCriticalSection(&grabber->stream->cs);
         grabber->stream->sink = NULL;
+        IMFMediaEventQueue_Shutdown(grabber->stream->event_queue);
         LeaveCriticalSection(&grabber->stream->cs);
         IMFStreamSink_Release(&grabber->stream->IMFStreamSink_iface);
         grabber->stream = NULL;
