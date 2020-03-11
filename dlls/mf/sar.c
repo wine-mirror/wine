@@ -33,6 +33,11 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
     return E_NOTIMPL;
 }
 
+static void sar_shutdown_object(void *user_context, IUnknown *obj)
+{
+    /* FIXME: shut down sink */
+}
+
 static void sar_free_private(void *user_context)
 {
 }
@@ -40,6 +45,7 @@ static void sar_free_private(void *user_context)
 static const struct activate_funcs sar_activate_funcs =
 {
     sar_create_object,
+    sar_shutdown_object,
     sar_free_private,
 };
 

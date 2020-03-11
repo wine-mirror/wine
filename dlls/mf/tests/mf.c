@@ -2044,9 +2044,14 @@ static void test_sample_grabber(void)
 
     IMFPresentationClock_Release(clock);
 
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == S_OK, "Failed to get sink flags, hr %#x.\n", hr);
+
     hr = IMFActivate_ShutdownObject(activate);
-todo_wine
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == S_OK, "Failed to get sink flags, hr %#x.\n", hr);
 
     hr = IMFStreamSink_GetMediaTypeHandler(stream, &handler);
     ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
@@ -2240,8 +2245,36 @@ todo_wine
     ok(hr == S_OK, "Failed to get sink flags, hr %#x.\n", hr);
     ok(flags & MEDIASINK_RATELESS, "Unexpected flags %#x.\n", flags);
 
+    hr = IMFActivate_ShutdownObject(activate);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
     IMFMediaSink_Release(sink);
+
+    /* Detaching */
+    hr = MFCreateSampleGrabberSinkActivate(media_type, &grabber_callback, &activate);
+    ok(hr == S_OK, "Failed to create grabber activate, hr %#x.\n", hr);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == S_OK, "Failed to activate object, hr %#x.\n", hr);
+    IMFMediaSink_Release(sink);
+
+    hr = IMFActivate_ShutdownObject(activate);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFActivate_GetCount(activate, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFActivate_DetachObject(activate);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
     IMFActivate_Release(activate);
+
     IMFMediaType_Release(media_type);
 
     hr = MFShutdown();
@@ -2608,8 +2641,9 @@ static void test_sar(void)
 {
     IMFPresentationTimeSource *time_source;
     IMFClockStateSink *state_sink;
+    IMFMediaSink *sink, *sink2;
+    IMFActivate *activate;
     MFCLOCK_STATE state;
-    IMFMediaSink *sink;
     IMFClock *clock;
     DWORD flags;
     HRESULT hr;
@@ -2656,19 +2690,103 @@ if (SUCCEEDED(hr))
 
     IMFMediaSink_Release(sink);
 }
+    /* Activation */
+    hr = MFCreateAudioRendererActivate(&activate);
+    ok(hr == S_OK, "Failed to create activation object, hr %#x.\n", hr);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+todo_wine
+    ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+
+if (hr == S_OK)
+{
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink2);
+    ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+    ok(sink == sink2, "Unexpected instance.\n");
+    IMFMediaSink_Release(sink2);
+
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == S_OK, "Failed to get sink flags, hr %#x.\n", hr);
+
+    hr = IMFActivate_ShutdownObject(activate);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaSink_Release(sink);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaSink_Release(sink);
+
+    hr = IMFActivate_DetachObject(activate);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+}
+    IMFActivate_Release(activate);
 
     CoUninitialize();
 }
 
 static void test_evr(void)
 {
+    IMFMediaSink *sink, *sink2;
     IMFActivate *activate;
+    DWORD flags;
     HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+
+    hr = MFCreateVideoRendererActivate(NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     hr = MFCreateVideoRendererActivate(NULL, &activate);
     ok(hr == S_OK, "Failed to create activate object, hr %#x.\n", hr);
 
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+todo_wine
+    ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+
+if (hr == S_OK)
+{
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFActivate_ShutdownObject(activate);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    /* Activate again. */
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink2);
+    ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+    ok(sink == sink2, "Unexpected instance.\n");
+    IMFMediaSink_Release(sink2);
+
+    hr = IMFActivate_DetachObject(activate);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink2);
+    ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+
+    hr = IMFActivate_ShutdownObject(activate);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    IMFMediaSink_Release(sink2);
+    IMFMediaSink_Release(sink);
+}
     IMFActivate_Release(activate);
+
+    CoUninitialize();
 }
 
 static void test_MFCreateSimpleTypeHandler(void)

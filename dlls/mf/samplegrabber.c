@@ -101,6 +101,7 @@ struct sample_grabber_activate_context
 {
     IMFMediaType *media_type;
     IMFSampleGrabberSinkCallback *callback;
+    BOOL shut_down;
 };
 
 static void sample_grabber_free_private(void *user_context)
@@ -1320,6 +1321,9 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
 
     TRACE("%p, %p, %p.\n", attributes, user_context, obj);
 
+    if (context->shut_down)
+        return MF_E_SHUTDOWN;
+
     /* At least major type is required. */
     if (FAILED(IMFMediaType_GetMajorType(context->media_type, &guid)))
         return MF_E_INVALIDMEDIATYPE;
@@ -1363,9 +1367,16 @@ failed:
     return hr;
 }
 
+static void sample_grabber_shutdown_object(void *user_context, IUnknown *obj)
+{
+    struct sample_grabber_activate_context *context = user_context;
+    context->shut_down = TRUE;
+}
+
 static const struct activate_funcs sample_grabber_activate_funcs =
 {
     sample_grabber_create_object,
+    sample_grabber_shutdown_object,
     sample_grabber_free_private,
 };
 
