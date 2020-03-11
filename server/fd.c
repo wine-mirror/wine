@@ -2430,6 +2430,16 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
         goto failed;
     }
 
+    if (is_file_executable( fd->unix_name ) != is_file_executable( name ) && !fstat( fd->unix_fd, &st ))
+    {
+        if (is_file_executable( fd->unix_name ))
+            /* set executable bit where read bit is set */
+            st.st_mode |= (st.st_mode & 0444) >> 2;
+        else
+            st.st_mode &= ~0111;
+        fchmod( fd->unix_fd, st.st_mode );
+    }
+
     free( fd->unix_name );
     fd->unix_name = name;
     fd->closed->unix_name = name;

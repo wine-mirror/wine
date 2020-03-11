@@ -191,6 +191,12 @@ static struct object *create_file_obj( struct fd *fd, unsigned int access, mode_
     return &file->obj;
 }
 
+int is_file_executable( const char *name )
+{
+    int len = strlen( name );
+    return len >= 4 && (!strcasecmp( name + len - 4, ".exe") || !strcasecmp( name + len - 4, ".com" ));
+}
+
 static struct object *create_file( struct fd *root, const char *nameptr, data_size_t len,
                                    unsigned int access, unsigned int sharing, int create,
                                    unsigned int options, unsigned int attrs,
@@ -236,8 +242,7 @@ static struct object *create_file( struct fd *root, const char *nameptr, data_si
     else
         mode = (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
 
-    if (len >= 4 &&
-        (!strcasecmp( name + len - 4, ".exe" ) || !strcasecmp( name + len - 4, ".com" )))
+    if (is_file_executable( name ))
     {
         if (mode & S_IRUSR)
             mode |= S_IXUSR;
