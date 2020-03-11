@@ -359,8 +359,9 @@ void macdrv_update_opengl_context(macdrv_opengl_context c)
                 [context clearDrawableLeavingSurfaceOnScreen];
                 context.view = view;
             }
-            else
+            else OnMainThread(^{
                 [context update];
+            });
             [context resetSurfaceIfBackingSizeChanged];
         }
     }
