@@ -1925,6 +1925,7 @@ static void test_sample_grabber(void)
     IMFMediaSink *sink, *sink2;
     DWORD flags, count, id;
     IMFActivate *activate;
+    IMFMediaEvent *event;
     ULONG refcount;
     IUnknown *unk;
     HRESULT hr;
@@ -1995,9 +1996,12 @@ static void test_sample_grabber(void)
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
     IMFClockStateSink_Release(clocksink);
 
+    /* Event generator. */
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaEventGenerator, (void **)&eg);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    IMFMediaEventGenerator_Release(eg);
+
+    hr = IMFMediaEventGenerator_GetEvent(eg, MF_EVENT_FLAG_NO_WAIT, &event);
+    ok(hr == MF_E_NO_EVENTS_AVAILABLE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFPresentationTimeSource, (void **)&unk);
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
@@ -2130,8 +2134,17 @@ todo_wine
     hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, NULL, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFMediaEventGenerator_GetEvent(eg, MF_EVENT_FLAG_NO_WAIT, &event);
+    ok(hr == MF_E_NO_EVENTS_AVAILABLE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamSink_GetEvent(stream, MF_EVENT_FLAG_NO_WAIT, &event);
+    ok(hr == MF_E_NO_EVENTS_AVAILABLE, "Unexpected hr %#x.\n", hr);
+
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaEventGenerator_GetEvent(eg, MF_EVENT_FLAG_NO_WAIT, &event);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
@@ -2147,6 +2160,10 @@ todo_wine
 
     hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream2);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamSink_GetEvent(stream, MF_EVENT_FLAG_NO_WAIT, &event);
+todo_wine
+    ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#x.\n", hr);
 
     hr = IMFStreamSink_GetMediaSink(stream, &sink2);
     ok(hr == MF_E_STREAMSINK_REMOVED, "Unexpected hr %#x.\n", hr);
@@ -2195,6 +2212,7 @@ todo_wine
     hr = IMFStreamSink_GetMediaTypeHandler(stream, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
+    IMFMediaEventGenerator_Release(eg);
     IMFMediaSink_Release(sink);
     IMFStreamSink_Release(stream);
 

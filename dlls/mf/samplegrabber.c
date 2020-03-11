@@ -849,10 +849,7 @@ static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
             IMFSampleGrabberSinkCallback2_Release(grabber->callback2);
         IMFMediaType_Release(grabber->media_type);
         if (grabber->event_queue)
-        {
-            IMFMediaEventQueue_Shutdown(grabber->event_queue);
             IMFMediaEventQueue_Release(grabber->event_queue);
-        }
         if (grabber->clock)
             IMFPresentationClock_Release(grabber->clock);
         if (grabber->timer)
@@ -1045,12 +1042,15 @@ static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
     grabber->is_shut_down = TRUE;
     if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber))))
     {
+        /* Detach stream. */
         IMFMediaSink_Release(&grabber->stream->sink->IMFMediaSink_iface);
         EnterCriticalSection(&grabber->stream->cs);
         grabber->stream->sink = NULL;
         LeaveCriticalSection(&grabber->stream->cs);
         IMFStreamSink_Release(&grabber->stream->IMFStreamSink_iface);
         grabber->stream = NULL;
+
+        IMFMediaEventQueue_Shutdown(grabber->event_queue);
     }
     LeaveCriticalSection(&grabber->cs);
 
