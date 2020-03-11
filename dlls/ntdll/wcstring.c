@@ -29,8 +29,9 @@
 #include <stdio.h>
 
 #include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
 #include "winternl.h"
-#include "wine/unicode.h"
 
 static const unsigned short wctypes[256] =
 {
@@ -152,47 +153,13 @@ LPWSTR __cdecl NTDLL__wcsupr( LPWSTR str )
 
 
 /***********************************************************************
- *           wcscat    (NTDLL.@)
- */
-LPWSTR __cdecl NTDLL_wcscat( LPWSTR dst, LPCWSTR src )
-{
-    return strcatW( dst, src );
-}
-
-
-/*********************************************************************
- *           wcschr    (NTDLL.@)
- */
-LPWSTR __cdecl NTDLL_wcschr( LPCWSTR str, WCHAR ch )
-{
-    return strchrW( str, ch );
-}
-
-
-/*********************************************************************
- *           wcscmp    (NTDLL.@)
- */
-INT __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
-{
-    return strcmpW( str1, str2 );
-}
-
-
-/***********************************************************************
  *           wcscpy    (NTDLL.@)
  */
 LPWSTR __cdecl NTDLL_wcscpy( LPWSTR dst, LPCWSTR src )
 {
-    return strcpyW( dst, src );
-}
-
-
-/*********************************************************************
- *           wcscspn    (NTDLL.@)
- */
-INT __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
-{
-    return strcspnW( str, reject );
+    WCHAR *p = dst;
+    while ((*p++ = *src++));
+    return dst;
 }
 
 
@@ -201,7 +168,50 @@ INT __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
  */
 INT __cdecl NTDLL_wcslen( LPCWSTR str )
 {
-    return strlenW( str );
+    const WCHAR *s = str;
+    while (*s) s++;
+    return s - str;
+}
+
+
+/***********************************************************************
+ *           wcscat    (NTDLL.@)
+ */
+LPWSTR __cdecl NTDLL_wcscat( LPWSTR dst, LPCWSTR src )
+{
+    NTDLL_wcscpy( dst + NTDLL_wcslen(dst), src );
+    return dst;
+}
+
+
+/*********************************************************************
+ *           wcschr    (NTDLL.@)
+ */
+LPWSTR __cdecl NTDLL_wcschr( LPCWSTR str, WCHAR ch )
+{
+    do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
+    return NULL;
+}
+
+
+/*********************************************************************
+ *           wcscmp    (NTDLL.@)
+ */
+INT __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
+{
+    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
+}
+
+
+/*********************************************************************
+ *           wcscspn    (NTDLL.@)
+ */
+INT __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
+{
+    const WCHAR *ptr;
+    for (ptr = str; *ptr; ptr++) if (NTDLL_wcschr( reject, *ptr )) break;
+    return ptr - str;
 }
 
 
@@ -223,7 +233,9 @@ LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, INT n )
  */
 INT __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
 {
-    return strncmpW( str1, str2, n );
+    if (n <= 0) return 0;
+    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
 }
 
 
@@ -244,7 +256,8 @@ LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, INT n )
  */
 LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
 {
-    return strpbrkW( str, accept );
+    for ( ; *str; str++) if (NTDLL_wcschr( accept, *str )) return (WCHAR *)(ULONG_PTR)str;
+    return NULL;
 }
 
 
@@ -253,7 +266,9 @@ LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
  */
 LPWSTR __cdecl NTDLL_wcsrchr( LPWSTR str, WCHAR ch )
 {
-    return strrchrW( str, ch );
+    WCHAR *ret = NULL;
+    do { if (*str == ch) ret = (WCHAR *)(ULONG_PTR)str; } while (*str++);
+    return ret;
 }
 
 
@@ -262,7 +277,9 @@ LPWSTR __cdecl NTDLL_wcsrchr( LPWSTR str, WCHAR ch )
  */
 INT __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
 {
-    return strspnW( str, accept );
+    const WCHAR *ptr;
+    for (ptr = str; *ptr; ptr++) if (!NTDLL_wcschr( accept, *ptr )) break;
+    return ptr - str;
 }
 
 
@@ -271,7 +288,14 @@ INT __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
  */
 LPWSTR __cdecl NTDLL_wcsstr( LPCWSTR str, LPCWSTR sub )
 {
-    return strstrW( str, sub );
+    while (*str)
+    {
+        const WCHAR *p1 = str, *p2 = sub;
+        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
+        if (!*p2) return (WCHAR *)str;
+        str++;
+    }
+    return NULL;
 }
 
 
@@ -305,13 +329,13 @@ INT __cdecl NTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n )
 
     if (!dst)
     {
-        RtlUnicodeToMultiByteSize( &len, src, strlenW(src)*sizeof(WCHAR) );
+        RtlUnicodeToMultiByteSize( &len, src, NTDLL_wcslen(src) * sizeof(WCHAR) );
         return len;
     }
     else
     {
         if (n <= 0) return 0;
-        RtlUnicodeToMultiByteN( dst, n, &len, src, strlenW(src)*sizeof(WCHAR) );
+        RtlUnicodeToMultiByteN( dst, n, &len, src, NTDLL_wcslen(src) * sizeof(WCHAR) );
         if (len < n) dst[len] = 0;
     }
     return len;
