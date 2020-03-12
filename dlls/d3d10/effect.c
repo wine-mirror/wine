@@ -4354,6 +4354,54 @@ static void write_variable_array_to_buffer(struct d3d10_effect_variable *variabl
     variable->buffer->u.buffer.changed = TRUE;
 }
 
+static void read_variable_from_buffer(struct d3d10_effect_variable *variable, void *dst,
+        D3D_SHADER_VARIABLE_TYPE dst_type)
+{
+    BYTE *src = variable->buffer->u.buffer.local_buffer + variable->buffer_offset;
+    D3D_SHADER_VARIABLE_TYPE src_type = variable->type->basetype;
+
+    get_vector_as_type(dst, dst_type, src, src_type, variable->type->column_count);
+}
+
+static void read_variable_array_from_buffer(struct d3d10_effect_variable *variable, void *dst,
+        D3D_SHADER_VARIABLE_TYPE dst_type, unsigned int offset, unsigned int count)
+{
+    BYTE *src = variable->buffer->u.buffer.local_buffer + variable->buffer_offset;
+    D3D_SHADER_VARIABLE_TYPE src_type = variable->type->basetype;
+    unsigned int element_size, i;
+    BYTE *cur_element = dst;
+
+    if (!variable->type->element_count)
+    {
+        read_variable_from_buffer(variable, dst, dst_type);
+        return;
+    }
+
+    if (offset >= variable->type->element_count)
+    {
+        WARN("Offset %u larger than element count %u, ignoring.\n", offset, variable->type->element_count);
+        return;
+    }
+
+    if (count > variable->type->element_count - offset)
+    {
+        WARN("Offset %u, count %u overruns the variable (element count %u), fixing up.\n",
+             offset, count, variable->type->element_count);
+        count = variable->type->element_count - offset;
+    }
+
+    element_size = variable->type->elementtype->size_packed;
+    src += variable->type->stride * offset;
+
+    for (i = 0; i < count; ++i)
+    {
+        get_vector_as_type(cur_element, dst_type, src, src_type, variable->type->column_count);
+
+        cur_element += element_size;
+        src += variable->type->stride;
+    }
+}
+
 /* ID3D10EffectVariable methods */
 
 static inline struct d3d10_effect_variable *impl_from_ID3D10EffectScalarVariable(ID3D10EffectScalarVariable *iface)
@@ -4528,9 +4576,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetFloat(ID3D10Eff
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_GetFloat(ID3D10EffectScalarVariable *iface,
         float *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectScalarVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+    read_variable_from_buffer(effect_var, value, D3D10_SVT_FLOAT);
+
+    return S_OK;
 }
 
 /* Tests show that offset is ignored for scalar variables. */
@@ -4548,9 +4599,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetFloatArray(ID3D
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_GetFloatArray(ID3D10EffectScalarVariable *iface,
         float *values, UINT offset, UINT count)
 {
-    FIXME("iface %p, values %p, offset %u, count %u stub!\n", iface, values, offset, count);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectScalarVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, values %p, offset %u, count %u.\n", iface, values, offset, count);
+    read_variable_array_from_buffer(effect_var, values, D3D10_SVT_FLOAT, 0, count);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetInt(ID3D10EffectScalarVariable *iface,
@@ -4567,9 +4621,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetInt(ID3D10Effec
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_GetInt(ID3D10EffectScalarVariable *iface,
         int *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectScalarVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+    read_variable_from_buffer(effect_var, value, D3D10_SVT_INT);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetIntArray(ID3D10EffectScalarVariable *iface,
@@ -4586,9 +4643,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetIntArray(ID3D10
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_GetIntArray(ID3D10EffectScalarVariable *iface,
         int *values, UINT offset, UINT count)
 {
-    FIXME("iface %p, values %p, offset %u, count %u stub!\n", iface, values, offset, count);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectScalarVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, values %p, offset %u, count %u.\n", iface, values, offset, count);
+    read_variable_array_from_buffer(effect_var, values, D3D10_SVT_INT, 0, count);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetBool(ID3D10EffectScalarVariable *iface,
@@ -4605,9 +4665,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetBool(ID3D10Effe
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_GetBool(ID3D10EffectScalarVariable *iface,
         BOOL *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectScalarVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+    read_variable_from_buffer(effect_var, value, D3D10_SVT_BOOL);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetBoolArray(ID3D10EffectScalarVariable *iface,
@@ -4624,9 +4687,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_SetBoolArray(ID3D1
 static HRESULT STDMETHODCALLTYPE d3d10_effect_scalar_variable_GetBoolArray(ID3D10EffectScalarVariable *iface,
         BOOL *values, UINT offset, UINT count)
 {
-    FIXME("iface %p, values %p, offset %u, count %u stub!\n", iface, values, offset, count);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectScalarVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, values %p, offset %u, count %u.\n", iface, values, offset, count);
+    read_variable_array_from_buffer(effect_var, values, D3D10_SVT_BOOL, 0, count);
+
+    return S_OK;
 }
 
 static const struct ID3D10EffectScalarVariableVtbl d3d10_effect_scalar_variable_vtbl =
