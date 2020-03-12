@@ -215,21 +215,21 @@ static void test__memicmp(void)
     errno = 0xdeadbeef;
     ret = p__memicmp(NULL, NULL, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
-    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
     ret = p__memicmp(s1, NULL, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
-    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
     ret = p__memicmp(NULL, s2, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
-    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     ret = p__memicmp(s1, s2, 2);
@@ -258,21 +258,21 @@ static void test__memicmp_l(void)
     errno = 0xdeadbeef;
     ret = p__memicmp_l(NULL, NULL, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
-    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
     ret = p__memicmp_l(s1, NULL, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
-    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
     ret = p__memicmp_l(NULL, s2, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
-    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     ret = p__memicmp_l(s1, s2, 2, NULL);
