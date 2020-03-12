@@ -2249,7 +2249,7 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     if (FAILED(hr))
         goto fail;
 
-    hr = strmbase_window_init(&pVMR->baseControlWindow, &IVideoWindow_VTable,
+    hr = video_window_init(&pVMR->baseControlWindow, &IVideoWindow_VTable,
             &pVMR->renderer.filter, &pVMR->renderer.sink.pin, &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;

@@ -1,5 +1,5 @@
 /*
- * Generic Implementation of strmbase window classes
+ * Common implementation of IVideoWindow
  *
  * Copyright 2012 Aric Stewart, CodeWeavers
  *
@@ -18,9 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "strmbase_private.h"
+#include "quartz_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+
+static const WCHAR class_name[] = L"wine_quartz_window";
 
 static inline BaseControlWindow *impl_from_IVideoWindow( IVideoWindow *iface)
 {
@@ -104,21 +106,19 @@ HRESULT WINAPI BaseWindow_Destroy(BaseWindow *This)
 
 HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
 {
-    static const WCHAR class_nameW[] = {'w','i','n','e','_','s','t','r','m','b','a','s','e','_','w','i','n','d','o','w',0};
-    static const WCHAR windownameW[] = { 'A','c','t','i','v','e','M','o','v','i','e',' ','W','i','n','d','o','w',0 };
     WNDCLASSW winclass = {0};
 
     winclass.lpfnWndProc = WndProcW;
     winclass.cbWndExtra = sizeof(BaseWindow*);
     winclass.hbrBackground = GetStockObject(BLACK_BRUSH);
-    winclass.lpszClassName = class_nameW;
+    winclass.lpszClassName = class_name;
     if (!RegisterClassW(&winclass) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
     {
         ERR("Unable to register window class: %u\n", GetLastError());
         return E_FAIL;
     }
 
-    This->hWnd = CreateWindowExW(0, class_nameW, windownameW,
+    This->hWnd = CreateWindowExW(0, class_name, L"ActiveMovie Window",
             WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             NULL, NULL, NULL, NULL);
@@ -151,7 +151,7 @@ HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
     return S_OK;
 }
 
-HRESULT WINAPI strmbase_window_init(BaseControlWindow *pControlWindow,
+HRESULT video_window_init(BaseControlWindow *pControlWindow,
         const IVideoWindowVtbl *lpVtbl, struct strmbase_filter *owner,
         struct strmbase_pin *pPin, const BaseWindowFuncTable *pFuncsTable)
 {

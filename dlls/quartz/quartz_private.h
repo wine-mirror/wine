@@ -83,4 +83,95 @@ extern void video_unregister_windowclass(void) DECLSPEC_HIDDEN;
 
 BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID *source_clsid) DECLSPEC_HIDDEN;
 
+typedef struct tagBaseWindow
+{
+    HWND hWnd;
+    LONG Width;
+    LONG Height;
+
+    const struct BaseWindowFuncTable* pFuncsTable;
+} BaseWindow;
+
+typedef RECT (WINAPI *BaseWindow_GetDefaultRect)(BaseWindow *This);
+typedef BOOL (WINAPI *BaseWindow_OnSize)(BaseWindow *This, LONG Height, LONG Width);
+
+typedef struct BaseWindowFuncTable
+{
+    /* Required */
+    BaseWindow_GetDefaultRect pfnGetDefaultRect;
+    /* Optional, WinProc Related */
+    BaseWindow_OnSize pfnOnSize;
+} BaseWindowFuncTable;
+
+HRESULT WINAPI BaseWindow_Init(BaseWindow *pBaseWindow, const BaseWindowFuncTable* pFuncsTable) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseWindow_Destroy(BaseWindow *pBaseWindow) DECLSPEC_HIDDEN;
+
+HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This) DECLSPEC_HIDDEN;
+
+typedef struct tagBaseControlWindow
+{
+    BaseWindow baseWindow;
+    IVideoWindow IVideoWindow_iface;
+
+    BOOL AutoShow;
+    HWND hwndDrain;
+    HWND hwndOwner;
+    struct strmbase_filter *pFilter;
+    struct strmbase_pin *pPin;
+} BaseControlWindow;
+
+HRESULT video_window_init(BaseControlWindow *window, const IVideoWindowVtbl *vtbl,
+        struct strmbase_filter *filter, struct strmbase_pin *pin, const BaseWindowFuncTable *func_table) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindow_Destroy(BaseControlWindow *pControlWindow) DECLSPEC_HIDDEN;
+
+BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam) DECLSPEC_HIDDEN;
+
+HRESULT WINAPI BaseControlWindowImpl_QueryInterface(IVideoWindow *iface, REFIID iid, void **out) DECLSPEC_HIDDEN;
+ULONG WINAPI BaseControlWindowImpl_AddRef(IVideoWindow *iface) DECLSPEC_HIDDEN;
+ULONG WINAPI BaseControlWindowImpl_Release(IVideoWindow *iface) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_GetTypeInfoCount(IVideoWindow *iface, UINT *pctinfo) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_GetTypeInfo(IVideoWindow *iface, UINT iTInfo, LCID lcid, ITypeInfo**ppTInfo) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_GetIDsOfNames(IVideoWindow *iface, REFIID riid, LPOLESTR*rgszNames, UINT cNames, LCID lcid, DISPID*rgDispId) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_Invoke(IVideoWindow *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS*pDispParams, VARIANT*pVarResult, EXCEPINFO*pExepInfo, UINT*puArgErr) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_Caption(IVideoWindow *iface, BSTR strCaption) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_Caption(IVideoWindow *iface, BSTR *strCaption) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG WindowStyle) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_WindowStyle(IVideoWindow *iface, LONG *WindowStyle) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_WindowStyleEx(IVideoWindow *iface, LONG WindowStyleEx) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_WindowStyleEx(IVideoWindow *iface, LONG *WindowStyleEx) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_AutoShow(IVideoWindow *iface, LONG AutoShow) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_AutoShow(IVideoWindow *iface, LONG *AutoShow) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_WindowState(IVideoWindow *iface, LONG WindowState) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_WindowState(IVideoWindow *iface, LONG *WindowState) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_BackgroundPalette(IVideoWindow *iface, LONG BackgroundPalette) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_BackgroundPalette(IVideoWindow *iface, LONG *pBackgroundPalette) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_Visible(IVideoWindow *iface, LONG Visible) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_Visible(IVideoWindow *iface, LONG *pVisible) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_Left(IVideoWindow *iface, LONG Left) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_Left(IVideoWindow *iface, LONG *pLeft) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_Width(IVideoWindow *iface, LONG Width) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_Width(IVideoWindow *iface, LONG *pWidth) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_Top(IVideoWindow *iface, LONG Top) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_Top(IVideoWindow *iface, LONG *pTop) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_Height(IVideoWindow *iface, LONG Height) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_Height(IVideoWindow *iface, LONG *pHeight) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_Owner(IVideoWindow *iface, OAHWND Owner) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_Owner(IVideoWindow *iface, OAHWND *Owner) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_MessageDrain(IVideoWindow *iface, OAHWND Drain) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_MessageDrain(IVideoWindow *iface, OAHWND *Drain) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_BorderColor(IVideoWindow *iface, LONG *Color) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_BorderColor(IVideoWindow *iface, LONG Color) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_get_FullScreenMode(IVideoWindow *iface, LONG *FullScreenMode) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_put_FullScreenMode(IVideoWindow *iface, LONG FullScreenMode) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_SetWindowForeground(IVideoWindow *iface, LONG Focus) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_SetWindowPosition(IVideoWindow *iface, LONG Left, LONG Top, LONG Width, LONG Height) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_GetWindowPosition(IVideoWindow *iface, LONG *pLeft, LONG *pTop, LONG *pWidth, LONG *pHeight) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_NotifyOwnerMessage(IVideoWindow *iface, OAHWND hwnd, LONG uMsg, LONG_PTR wParam, LONG_PTR lParam) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_GetMinIdealImageSize(IVideoWindow *iface, LONG *pWidth, LONG *pHeight) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_GetMaxIdealImageSize(IVideoWindow *iface, LONG *pWidth, LONG *pHeight) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_GetRestorePosition(IVideoWindow *iface, LONG *pLeft, LONG *pTop, LONG *pWidth, LONG *pHeight) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_HideCursor(IVideoWindow *iface, LONG HideCursor) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindowImpl_IsCursorHidden(IVideoWindow *iface, LONG *CursorHidden) DECLSPEC_HIDDEN;
+
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */

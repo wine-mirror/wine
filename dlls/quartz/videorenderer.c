@@ -720,7 +720,7 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
     if (FAILED(hr))
         goto fail;
 
-    hr = strmbase_window_init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable,
+    hr = video_window_init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable,
             &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.sink.pin,
             &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
