@@ -175,13 +175,6 @@ void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_context *co
             break;
     }
 
-    /* Resolve the source surface first if needed. */
-    if (wined3d_texture_gl_is_multisample_location(wined3d_texture_gl(src_texture), src_location)
-            && (src_texture->resource.format->id != dst_texture->resource.format->id
-                || abs(src_rect->bottom - src_rect->top) != abs(dst_rect->bottom - dst_rect->top)
-                || abs(src_rect->right - src_rect->left) != abs(dst_rect->right - dst_rect->left)))
-        src_location = WINED3D_LOCATION_RB_RESOLVED;
-
     /* Make sure the locations are up-to-date. Loading the destination
      * surface isn't required if the entire surface is overwritten. (And is
      * in fact harmful if we're being called by surface_load_location() with
@@ -2392,7 +2385,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     const struct wined3d_color_key *colour_key = NULL;
-    DWORD dst_location, valid_locations;
+    DWORD src_location, dst_location, valid_locations;
     DWORD src_ds_flags, dst_ds_flags;
     struct wined3d_context *context;
     enum wined3d_blit_op blit_op;
@@ -2613,6 +2606,12 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     if ((flags & WINED3D_BLT_RAW) || (blit_op == WINED3D_BLIT_OP_COLOR_BLIT && !scale && !convert && !resolve))
         blit_op = WINED3D_BLIT_OP_RAW_BLIT;
 
+    if (src_texture->resource.multisample_type != WINED3D_MULTISAMPLE_NONE
+            && (scale || convert || blit_op != WINED3D_BLIT_OP_COLOR_BLIT))
+        src_location = WINED3D_LOCATION_RB_RESOLVED;
+    else
+        src_location = src_texture->resource.draw_binding;
+
     if (dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU)
         dst_location = dst_texture->resource.draw_binding;
     else
@@ -2620,7 +2619,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
 
     context = context_acquire(device, dst_texture, dst_sub_resource_idx);
     valid_locations = device->blitter->ops->blitter_blit(device->blitter, blit_op, context,
-            src_texture, src_sub_resource_idx, src_texture->resource.draw_binding, &src_rect,
+            src_texture, src_sub_resource_idx, src_location, &src_rect,
             dst_texture, dst_sub_resource_idx, dst_location, &dst_rect, colour_key, filter);
     context_release(context);
 
