@@ -224,6 +224,7 @@ struct wined3d_d3d_info
     uint32_t srgb_write_control : 1;
     uint32_t clip_control : 1;
     uint32_t full_ffp_varyings : 1;
+    uint32_t scaled_resolve : 1;
     enum wined3d_feature_level feature_level;
 
     DWORD multisample_draw_location;

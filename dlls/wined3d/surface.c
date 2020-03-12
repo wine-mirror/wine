@@ -150,6 +150,7 @@ void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_context *co
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
     unsigned int restore_idx;
+    BOOL scaled_resolve;
     GLenum gl_filter;
     GLenum buffer;
     RECT s, d;
@@ -160,10 +161,14 @@ void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_context *co
             wined3d_debug_location(src_location), wine_dbgstr_rect(src_rect), dst_texture,
             dst_sub_resource_idx, wined3d_debug_location(dst_location), wine_dbgstr_rect(dst_rect));
 
+    scaled_resolve = wined3d_texture_gl_is_multisample_location(wined3d_texture_gl(src_texture), src_location)
+            && (abs(src_rect->bottom - src_rect->top) != abs(dst_rect->bottom - dst_rect->top)
+            || abs(src_rect->right - src_rect->left) != abs(dst_rect->right - dst_rect->left));
+
     switch (filter)
     {
         case WINED3D_TEXF_LINEAR:
-            gl_filter = GL_LINEAR;
+            gl_filter = scaled_resolve ? GL_SCALED_RESOLVE_NICEST_EXT : GL_LINEAR;
             break;
 
         default:
@@ -171,7 +176,7 @@ void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_context *co
             /* fall through */
         case WINED3D_TEXF_NONE:
         case WINED3D_TEXF_POINT:
-            gl_filter = GL_NEAREST;
+            gl_filter = scaled_resolve ? GL_SCALED_RESOLVE_FASTEST_EXT : GL_NEAREST;
             break;
     }
 
@@ -2606,8 +2611,11 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     if ((flags & WINED3D_BLT_RAW) || (blit_op == WINED3D_BLIT_OP_COLOR_BLIT && !scale && !convert && !resolve))
         blit_op = WINED3D_BLIT_OP_RAW_BLIT;
 
+    context = context_acquire(device, dst_texture, dst_sub_resource_idx);
+
     if (src_texture->resource.multisample_type != WINED3D_MULTISAMPLE_NONE
-            && (scale || convert || blit_op != WINED3D_BLIT_OP_COLOR_BLIT))
+            && ((scale && !context->d3d_info->scaled_resolve)
+            || convert || blit_op != WINED3D_BLIT_OP_COLOR_BLIT))
         src_location = WINED3D_LOCATION_RB_RESOLVED;
     else
         src_location = src_texture->resource.draw_binding;
@@ -2620,10 +2628,10 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     else
         dst_location = dst_texture->resource.draw_binding;
 
-    context = context_acquire(device, dst_texture, dst_sub_resource_idx);
     valid_locations = device->blitter->ops->blitter_blit(device->blitter, blit_op, context,
             src_texture, src_sub_resource_idx, src_location, &src_rect,
             dst_texture, dst_sub_resource_idx, dst_location, &dst_rect, colour_key, filter);
+
     context_release(context);
 
     wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, valid_locations);
