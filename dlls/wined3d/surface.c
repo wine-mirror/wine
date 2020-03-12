@@ -2612,10 +2612,13 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     else
         src_location = src_texture->resource.draw_binding;
 
-    if (dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU)
-        dst_location = dst_texture->resource.draw_binding;
-    else
+    if (!(dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
         dst_location = dst_texture->resource.map_binding;
+    else if (dst_texture->resource.multisample_type != WINED3D_MULTISAMPLE_NONE
+            && (scale || convert || blit_op != WINED3D_BLIT_OP_COLOR_BLIT))
+        dst_location = WINED3D_LOCATION_RB_RESOLVED;
+    else
+        dst_location = dst_texture->resource.draw_binding;
 
     context = context_acquire(device, dst_texture, dst_sub_resource_idx);
     valid_locations = device->blitter->ops->blitter_blit(device->blitter, blit_op, context,

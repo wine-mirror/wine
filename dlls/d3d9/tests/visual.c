@@ -4332,7 +4332,7 @@ static void test_multisample_stretch_rect(void)
         D3DTEXF_POINT,
         D3DTEXF_LINEAR,
     };
-    IDirect3DSurface9 *rt, *ms_rt, *rt_r5g6b5;
+    IDirect3DSurface9 *rt, *ms_rt, *ms_rt2, *rt_r5g6b5;
     struct surface_readback rb;
     IDirect3DDevice9 *device;
     DWORD quality_levels;
@@ -4367,27 +4367,30 @@ static void test_multisample_stretch_rect(void)
 
     hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128,
             D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
-    ok(hr == S_OK, "Failed to create render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128,
             D3DFMT_A8R8G8B8, D3DMULTISAMPLE_2_SAMPLES, quality_levels - 1, FALSE, &ms_rt, NULL);
-    ok(hr == S_OK, "Failed to create render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_2_SAMPLES, quality_levels - 1, FALSE, &ms_rt2, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, ms_rt);
-    ok(hr == D3D_OK, "Failed to set render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff00ff, 0.0f, 0);
-    ok(hr == D3D_OK, "Failed to clear, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
-    ok(hr == D3D_OK, "Failed to set render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(filters); ++i)
     {
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(hr == D3D_OK, "Test %u: Failed to clear, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt, NULL, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         color = getPixelColor(device, 64, 64);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
     }
 
     /* Scaling */
@@ -4395,29 +4398,67 @@ static void test_multisample_stretch_rect(void)
     for (i = 0; i < ARRAY_SIZE(filters); ++i)
     {
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(hr == D3D_OK, "Test %u: Failed to clear, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, rt, NULL, ms_rt2, NULL, D3DTEXF_NONE);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+
         hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt, &rect, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         get_rt_readback(rt, &rb);
         color = get_readback_color(&rb, 32, 32);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         color = get_readback_color(&rb, 64, 64);
-        ok(color == 0xffffffff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0xffffffff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         color = get_readback_color(&rb, 96, 96);
-        ok(color == 0xffffffff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0xffffffff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         release_surface_readback(&rb);
 
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(hr == D3D_OK, "Test %u: Failed to clear, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DDevice9_StretchRect(device, ms_rt, &rect, rt, NULL, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         get_rt_readback(rt, &rb);
         color = get_readback_color(&rb, 32, 32);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         color = get_readback_color(&rb, 64, 64);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         color = get_readback_color(&rb, 96, 96);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        release_surface_readback(&rb);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffff00, 0.0f, 0);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, rt, NULL, ms_rt, &rect, filters[i]);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, ms_rt, &rect, rt, NULL, filters[i]);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        get_rt_readback(rt, &rb);
+        color = get_readback_color(&rb, 32, 32);
+        ok(color == 0xffffff00, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        color = get_readback_color(&rb, 64, 64);
+        ok(color == 0xffffff00, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        color = get_readback_color(&rb, 96, 96);
+        ok(color == 0xffffff00, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        release_surface_readback(&rb);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff00ff, 0.0f, 0);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, rt, NULL, ms_rt, NULL, D3DTEXF_NONE);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_StretchRect(device, ms_rt, &rect, ms_rt2, NULL, filters[i]);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, ms_rt2, &rect, rt, NULL, filters[i]);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        get_rt_readback(rt, &rb);
+        color = get_readback_color(&rb, 32, 32);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        color = get_readback_color(&rb, 64, 64);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        color = get_readback_color(&rb, 96, 96);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         release_surface_readback(&rb);
     }
 
@@ -4433,18 +4474,19 @@ static void test_multisample_stretch_rect(void)
     for (i = 0; i < ARRAY_SIZE(filters); ++i)
     {
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(hr == D3D_OK, "Test %u: Failed to clear, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt_r5g6b5, NULL, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DDevice9_StretchRect(device, rt_r5g6b5, NULL, rt, NULL, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         color = getPixelColor(device, 64, 64);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
     }
 
     IDirect3DSurface9_Release(rt_r5g6b5);
 
 done:
+    IDirect3DSurface9_Release(ms_rt2);
     IDirect3DSurface9_Release(ms_rt);
     IDirect3DSurface9_Release(rt);
     refcount = IDirect3DDevice9_Release(device);
