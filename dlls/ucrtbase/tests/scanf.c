@@ -27,37 +27,15 @@
 
 #include "wine/test.h"
 
-static int (__cdecl *p_vsscanf)(unsigned __int64 options, const char *str, size_t len, const char *format,
-                                void *locale, __ms_va_list valist);
-
-static BOOL init(void)
-{
-    HMODULE hmod = LoadLibraryA("ucrtbase.dll");
-
-    if (!hmod)
-    {
-        win_skip("ucrtbase.dll not installed\n");
-        return FALSE;
-    }
-
-    p_vsscanf = (void *)GetProcAddress(hmod, "__stdio_common_vsscanf");
-
-    return TRUE;
-}
-
 static int WINAPIV vsscanf_wrapper(unsigned __int64 options, const char *str, size_t len, const char *format, ...)
 {
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vsscanf(options, str, len, format, NULL, valist);
+    ret = __stdio_common_vsscanf(options, str, len, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
-
-#define UCRTBASE_SCANF_SECURECRT                         (0x0001)
-#define UCRTBASE_SCANF_LEGACY_WIDE_SPECIFIERS            (0x0002)
-#define UCRTBASE_SCANF_LEGACY_MSVCRT_COMPATIBILITY       (0x0004)
 
 static void test_sscanf(void)
 {
@@ -74,8 +52,8 @@ static void test_sscanf(void)
     static const unsigned int tests[] =
     {
         0,
-        UCRTBASE_SCANF_LEGACY_WIDE_SPECIFIERS,
-        UCRTBASE_SCANF_LEGACY_MSVCRT_COMPATIBILITY,
+        _CRT_INTERNAL_SCANF_LEGACY_WIDE_SPECIFIERS,
+        _CRT_INTERNAL_SCANF_LEGACY_MSVCRT_COMPATIBILITY,
     };
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -316,7 +294,5 @@ static void test_sscanf(void)
 
 START_TEST(scanf)
 {
-    if (!init()) return;
-
     test_sscanf();
 }
