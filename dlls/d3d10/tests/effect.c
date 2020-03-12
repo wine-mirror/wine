@@ -4273,6 +4273,364 @@ static void test_effect_state_group_defaults(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+/*
+ * test_effect_scalar_variable
+ */
+#if 0
+cbuffer cb
+{
+    float f0, f_a[2];
+    int i0, i_a[2];
+    bool b0, b_a[2];
+};
+#endif
+static DWORD fx_test_scalar_variable[] =
+{
+    0x43425844, 0xe4da4aa6, 0x1380ddc5, 0x445edad5,
+    0x08581666, 0x00000001, 0x0000020b, 0x00000001,
+    0x00000024, 0x30315846, 0x000001df, 0xfeff1001,
+    0x00000001, 0x00000006, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x000000d3,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x66006263,
+    0x74616f6c, 0x00000700, 0x00000100, 0x00000000,
+    0x00000400, 0x00001000, 0x00000400, 0x00090900,
+    0x00306600, 0x00000007, 0x00000001, 0x00000002,
+    0x00000014, 0x00000010, 0x00000008, 0x00000909,
+    0x00615f66, 0x00746e69, 0x0000004c, 0x00000001,
+    0x00000000, 0x00000004, 0x00000010, 0x00000004,
+    0x00000911, 0x4c003069, 0x01000000, 0x02000000,
+    0x14000000, 0x10000000, 0x08000000, 0x11000000,
+    0x69000009, 0x6200615f, 0x006c6f6f, 0x0000008f,
+    0x00000001, 0x00000000, 0x00000004, 0x00000010,
+    0x00000004, 0x00000921, 0x8f003062, 0x01000000,
+    0x02000000, 0x14000000, 0x10000000, 0x08000000,
+    0x21000000, 0x62000009, 0x0400615f, 0x70000000,
+    0x00000000, 0x06000000, 0xff000000, 0x00ffffff,
+    0x29000000, 0x0d000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x48000000,
+    0x2c000000, 0x00000000, 0x10000000, 0x00000000,
+    0x00000000, 0x00000000, 0x6c000000, 0x50000000,
+    0x00000000, 0x24000000, 0x00000000, 0x00000000,
+    0x00000000, 0x8b000000, 0x6f000000, 0x00000000,
+    0x30000000, 0x00000000, 0x00000000, 0x00000000,
+    0xb0000000, 0x94000000, 0x00000000, 0x44000000,
+    0x00000000, 0x00000000, 0x00000000, 0xcf000000,
+    0xb3000000, 0x00000000, 0x50000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000,
+};
+
+static void test_scalar_methods(ID3D10EffectScalarVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name)
+{
+    float ret_f, expected_f;
+    int ret_i, expected_i;
+    BOOL ret_b, expected_b;
+    HRESULT hr;
+
+    hr = var->lpVtbl->SetFloat(var, 5.0f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloat(var, &ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_f = type == D3D10_SVT_BOOL ? -1.0f : 5.0f;
+    ok(ret_f == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f);
+
+    hr = var->lpVtbl->GetInt(var, &ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 5;
+    ok(ret_i == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i);
+
+    hr = var->lpVtbl->GetBool(var, &ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_b == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b);
+
+    hr = var->lpVtbl->SetInt(var, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloat(var, &ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_f = type == D3D10_SVT_BOOL ? -1.0f : 2.0f;
+    ok(ret_f == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f);
+
+    hr = var->lpVtbl->GetInt(var, &ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 2;
+    ok(ret_i == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i);
+
+    hr = var->lpVtbl->GetBool(var, &ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_b == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b);
+
+    hr = var->lpVtbl->SetBool(var, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloat(var, &ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_f == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f);
+
+    hr = var->lpVtbl->GetInt(var, &ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_i == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i);
+
+    hr = var->lpVtbl->GetBool(var, &ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_b = type == D3D10_SVT_BOOL ? 1 : -1;
+    ok(ret_b == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b);
+
+    hr = var->lpVtbl->SetBool(var, 32);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloat(var, &ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_f == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f);
+
+    hr = var->lpVtbl->GetInt(var, &ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_i == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i);
+
+    hr = var->lpVtbl->GetBool(var, &ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_b = type == D3D10_SVT_BOOL ? 32 : -1;
+    ok(ret_b == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b);
+}
+
+static void test_scalar_array_methods(ID3D10EffectScalarVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name)
+{
+    float set_f[2], ret_f[2], expected_f;
+    int set_i[6], ret_i[6], expected_i, expected_i_a[2];
+    BOOL set_b[2], ret_b[2], expected_b, expected_b_a[6];
+    unsigned int i;
+    HRESULT hr;
+
+    set_f[0] = 10.0f; set_f[1] = 20.0f;
+    hr = var->lpVtbl->SetFloatArray(var, set_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatArray(var, ret_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : set_f[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : (int)set_f[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolArray(var, ret_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_i[0] = 5; set_i[1] = 6;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatArray(var, ret_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : (float)set_i[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : set_i[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolArray(var, ret_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_b[0] = 1; set_b[1] = 1;
+    hr = var->lpVtbl->SetBoolArray(var, set_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatArray(var, ret_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolArray(var, ret_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? 1 : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    set_b[0] = 10; set_b[1] = 20;
+    hr = var->lpVtbl->SetBoolArray(var, set_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatArray(var, ret_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolArray(var, ret_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    /* Array offset tests. Offset argument goes unused for scalar arrays. */
+    set_i[0] = 0; set_i[1] = 0;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    /* After this, if offset is in use, return should be { 0, 5 }. */
+    set_i[0] = 5;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_b_a[0] = -1; expected_b_a[1] = 0;
+    expected_i_a[0] =  5; expected_i_a[1] = 0;
+    for (i = 0; i < 2; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? expected_b_a[i] : expected_i_a[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    /* Test the offset on GetArray methods. If offset was in use, we'd get
+     * back 5 given that the variable was previously set to { 0, 5 }. */
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 5;
+    ok(ret_i[0] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[0]);
+
+    /* Try setting offset larger than number of elements. */
+    set_i[0] = 0; set_i[1] = 0;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    set_i[0] = 1;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 6, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    /* Since offset goes unused, a larger offset than the number of elements
+     * in the array should have no effect. */
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 1;
+    ok(ret_i[0] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[0]);
+
+    memset(ret_i, 0, sizeof(ret_i));
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 6, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 1;
+    ok(ret_i[0] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[0]);
+
+    if (0)
+    {
+        /* Windows array setting function has no bounds checking, so this test
+         * ends up writing over into the adjacent variables in the local buffer. */
+        set_i[0] = 1; set_i[1] = 2; set_i[2] = 3; set_i[3] = 4; set_i[4] = 5; set_i[5] = 6;
+        hr = var->lpVtbl->SetIntArray(var, set_i, 0, 6);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        memset(ret_i, 0, sizeof(ret_i));
+        hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 6);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        expected_i_a[0] = 1; expected_i_a[1] = 2; expected_i_a[2] = 0; expected_i_a[3] = 0;
+        expected_i_a[4] = 0; expected_i_a[5] = 0;
+        expected_b_a[0] = -1; expected_b_a[1] = -1; expected_b_a[2] = 0; expected_b_a[3] = 0;
+        expected_b_a[4] = 0; expected_b_a[5] = 0;
+        for (i = 0; i < 6; ++i)
+        {
+            expected_i = type == D3D10_SVT_BOOL ? expected_b_a[i] : expected_i_a[i];
+            ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+        }
+    }
+}
+
+static void test_effect_scalar_variable(void)
+{
+    static const struct
+    {
+        const char *name;
+        D3D_SHADER_VARIABLE_TYPE type;
+        BOOL array;
+    }
+    tests[] =
+    {
+        {"f0", D3D10_SVT_FLOAT},
+        {"i0", D3D10_SVT_INT},
+        {"b0", D3D10_SVT_BOOL},
+        {"f_a", D3D10_SVT_FLOAT, TRUE},
+        {"i_a", D3D10_SVT_INT, TRUE},
+        {"b_a", D3D10_SVT_BOOL, TRUE},
+    };
+    D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10EffectScalarVariable *s_v;
+    ID3D10EffectVariable *var;
+    ID3D10EffectType *type;
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_scalar_variable, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Check each different scalar type, make sure the variable returned is
+     * valid, set it to a value, and make sure what we get back is the same
+     * as what we set it to. */
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        var = effect->lpVtbl->GetVariableByName(effect, tests[i].name);
+        type = var->lpVtbl->GetType(var);
+        hr = type->lpVtbl->GetDesc(type, &type_desc);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", tests[i].name, hr);
+        ok(type_desc.Type == tests[i].type, "Variable %s, got unexpected type %#x.\n",
+                tests[i].name, type_desc.Type);
+        s_v = var->lpVtbl->AsScalar(var);
+        test_scalar_methods(s_v, tests[i].type, tests[i].name);
+        if (tests[i].array)
+            test_scalar_array_methods(s_v, tests[i].type, tests[i].name);
+    }
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -4285,4 +4643,5 @@ START_TEST(effect)
     test_effect_get_variable_by();
     test_effect_state_groups();
     test_effect_state_group_defaults();
+    test_effect_scalar_variable();
 }
