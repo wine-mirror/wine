@@ -101,7 +101,7 @@
 @ stdcall MFGetPluginControl(ptr)
 @ stub MFGetPrivateWorkqueues
 @ stub MFGetSockaddrFromNumericName
-@ stub MFGetStrideForBitmapInfoHeader
+@ stdcall MFGetStrideForBitmapInfoHeader(long long ptr)
 @ stdcall MFGetSystemTime()
 @ stdcall MFGetTimerPeriodicity(ptr)
 @ stub MFGetUncompressedVideoFormat

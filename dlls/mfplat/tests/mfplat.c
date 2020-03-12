@@ -92,6 +92,7 @@ static HRESULT (WINAPI *pMFAllocateWorkQueueEx)(MFASYNC_WORKQUEUE_TYPE queue_typ
 static HRESULT (WINAPI *pMFTEnumEx)(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INFO *input_type,
         const MFT_REGISTER_TYPE_INFO *output_type, IMFActivate ***activate, UINT32 *count);
 static HRESULT (WINAPI *pMFGetPlaneSize)(DWORD format, DWORD width, DWORD height, DWORD *size);
+static HRESULT (WINAPI *pMFGetStrideForBitmapInfoHeader)(DWORD format, DWORD width, LONG *stride);
 
 static const WCHAR fileschemeW[] = L"file://";
 
@@ -664,6 +665,7 @@ static void init_functions(void)
     X(MFCreateMFByteStreamOnStream);
     X(MFCreateTransformActivate);
     X(MFGetPlaneSize);
+    X(MFGetStrideForBitmapInfoHeader);
     X(MFHeapAlloc);
     X(MFHeapFree);
     X(MFPutWaitingWorkItem);
@@ -3376,6 +3378,7 @@ static void test_MFCalculateImageSize(void)
         UINT32 width;
         UINT32 height;
         UINT32 size;
+        UINT32 plane_size; /* Matches image size when 0. */
     }
     image_size_tests[] =
     {
@@ -3395,6 +3398,13 @@ static void test_MFCalculateImageSize(void)
         { &MFVideoFormat_A2R10G10B10, 1, 1, 4 },
         { &MFVideoFormat_A16B16G16R16F, 3, 5, 120 },
         { &MFVideoFormat_A16B16G16R16F, 1, 1, 8 },
+
+        /* YUV */
+        { &MFVideoFormat_NV12, 1, 3, 9, 4 },
+        { &MFVideoFormat_NV12, 1, 2, 6, 3 },
+        { &MFVideoFormat_NV12, 2, 2, 6, 6 },
+        { &MFVideoFormat_NV12, 3, 2, 12, 9 },
+        { &MFVideoFormat_NV12, 4, 2, 12, 12 },
     };
     unsigned int i;
     UINT32 size;
@@ -3418,15 +3428,17 @@ static void test_MFCalculateImageSize(void)
                 image_size_tests[i].height, &size);
         ok(hr == S_OK || (is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#x.\n", i, hr);
         ok(size == image_size_tests[i].size, "%u: unexpected image size %u, expected %u.\n", i, size,
-            image_size_tests[i].size);
+                image_size_tests[i].size);
 
         if (pMFGetPlaneSize)
         {
+            unsigned int plane_size = image_size_tests[i].plane_size ? image_size_tests[i].plane_size :
+                    image_size_tests[i].size;
+
             hr = pMFGetPlaneSize(image_size_tests[i].subtype->Data1, image_size_tests[i].width, image_size_tests[i].height,
                     &size);
             ok(hr == S_OK, "%u: failed to get plane size, hr %#x.\n", i, hr);
-            ok(size == image_size_tests[i].size, "%u: unexpected plane size %u, expected %u.\n", i, size,
-                    image_size_tests[i].size);
+            ok(size == plane_size, "%u: unexpected plane size %u, expected %u.\n", i, size, plane_size);
         }
     }
 }
@@ -4473,6 +4485,60 @@ static void test_queue_com_state(const char *name)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+static void test_MFGetStrideForBitmapInfoHeader(void)
+{
+    static const struct stride_test
+    {
+        const GUID *subtype;
+        unsigned int width;
+        LONG stride;
+    }
+    stride_tests[] =
+    {
+        { &MFVideoFormat_RGB8, 3, -4 },
+        { &MFVideoFormat_RGB8, 1, -4 },
+        { &MFVideoFormat_RGB555, 3, -8 },
+        { &MFVideoFormat_RGB555, 1, -4 },
+        { &MFVideoFormat_RGB565, 3, -8 },
+        { &MFVideoFormat_RGB565, 1, -4 },
+        { &MFVideoFormat_RGB24, 3, -12 },
+        { &MFVideoFormat_RGB24, 1, -4 },
+        { &MFVideoFormat_RGB32, 3, -12 },
+        { &MFVideoFormat_RGB32, 1, -4 },
+        { &MFVideoFormat_ARGB32, 3, -12 },
+        { &MFVideoFormat_ARGB32, 1, -4 },
+        { &MFVideoFormat_A2R10G10B10, 3, -12 },
+        { &MFVideoFormat_A2R10G10B10, 1, -4 },
+        { &MFVideoFormat_A16B16G16R16F, 3, -24 },
+        { &MFVideoFormat_A16B16G16R16F, 1, -8 },
+
+        /* YUV */
+        { &MFVideoFormat_NV12, 1, 1 },
+        { &MFVideoFormat_NV12, 2, 2 },
+        { &MFVideoFormat_NV12, 3, 3 },
+    };
+    unsigned int i;
+    LONG stride;
+    HRESULT hr;
+
+    if (!pMFGetStrideForBitmapInfoHeader)
+    {
+        win_skip("MFGetStrideForBitmapInfoHeader() is not available.\n");
+        return;
+    }
+
+    hr = pMFGetStrideForBitmapInfoHeader(MAKEFOURCC('H','2','6','4'), 1, &stride);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(stride_tests); ++i)
+    {
+        hr = pMFGetStrideForBitmapInfoHeader(stride_tests[i].subtype->Data1, stride_tests[i].width, &stride);
+        ok(hr == S_OK, "%u: failed to get stride, hr %#x.\n", i, hr);
+        ok(stride == stride_tests[i].stride, "%u: format %s, unexpected stride %d, expected %d.\n", i,
+                wine_dbgstr_an((char *)&stride_tests[i].subtype->Data1, 4), stride, stride_tests[i].stride);
+    }
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -4524,6 +4590,7 @@ START_TEST(mfplat)
     test_MFCreateTransformActivate();
     test_MFTRegisterLocal();
     test_queue_com();
+    test_MFGetStrideForBitmapInfoHeader();
 
     CoUninitialize();
 }
