@@ -412,7 +412,7 @@ static DWORD CALLBACK io_thread(void *arg)
     return 0;
 }
 
-HRESULT AsyncReader_create(IUnknown *outer, void **out)
+HRESULT async_reader_create(IUnknown *outer, IUnknown **out)
 {
     AsyncReader *object;
 

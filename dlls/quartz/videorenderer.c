@@ -697,7 +697,7 @@ static const IOverlayVtbl overlay_vtbl =
     overlay_Unadvise,
 };
 
-HRESULT VideoRenderer_create(IUnknown *outer, void **out)
+HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
 {
     HRESULT hr;
     VideoRendererImpl * pVideoRenderer;
@@ -745,8 +745,8 @@ fail:
     return hr;
 }
 
-HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv)
+HRESULT video_renderer_default_create(IUnknown *outer, IUnknown **out)
 {
     /* TODO: Attempt to use the VMR-7 renderer instead when possible */
-    return VideoRenderer_create(pUnkOuter, ppv);
+    return video_renderer_create(outer, out);
 }

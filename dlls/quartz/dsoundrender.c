@@ -808,7 +808,7 @@ static const IAMDirectSoundVtbl IAMDirectSound_Vtbl =
     AMDirectSound_GetFocusWindow
 };
 
-HRESULT dsound_render_create(IUnknown *outer, void **out)
+HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
 {
     static const DSBUFFERDESC buffer_desc = {
         .dwSize = sizeof(DSBUFFERDESC),
@@ -830,8 +830,7 @@ HRESULT dsound_render_create(IUnknown *outer, void **out)
         return hr;
     }
 
-    if (FAILED(hr = QUARTZ_CreateSystemClock(&object->renderer.filter.IUnknown_inner,
-            (void **)&object->system_clock)))
+    if (FAILED(hr = system_clock_create(&object->renderer.filter.IUnknown_inner, &object->system_clock)))
     {
         strmbase_renderer_cleanup(&object->renderer);
         CoTaskMemFree(object);

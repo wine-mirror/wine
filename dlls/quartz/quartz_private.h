@@ -60,20 +60,19 @@ static inline const char *debugstr_time(REFERENCE_TIME time)
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 #define BYTES_FROM_MEDIATIME(time) ((time) / 10000000)
 
-HRESULT dsound_render_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
-HRESULT filter_graph_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
-HRESULT filter_graph_no_thread_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
-HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
-HRESULT FilterMapper_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
-HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT StdMemAllocator_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT VMR7Impl_create(IUnknown *pUnkOuter, LPVOID *ppv) DECLSPEC_HIDDEN;
-HRESULT VMR9Impl_create(IUnknown *pUnkOuter, LPVOID *ppv) DECLSPEC_HIDDEN;
+HRESULT acm_wrapper_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT avi_dec_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT async_reader_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT dsound_render_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT filter_graph_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT filter_graph_no_thread_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT filter_mapper_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT mem_allocator_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT system_clock_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT video_renderer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT video_renderer_default_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT vmr7_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT vmr9_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
 HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum) DECLSPEC_HIDDEN;
 

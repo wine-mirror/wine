@@ -327,7 +327,7 @@ static const IReferenceClockVtbl SystemClock_vtbl =
     SystemClockImpl_Unadvise
 };
 
-HRESULT QUARTZ_CreateSystemClock(IUnknown *outer, void **out)
+HRESULT system_clock_create(IUnknown *outer, IUnknown **out)
 {
     struct system_clock *object;
   

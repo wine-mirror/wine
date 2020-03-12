@@ -519,7 +519,7 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_cleanup_stream = acm_wrapper_cleanup_stream,
 };
 
-HRESULT ACMWrapper_create(IUnknown *outer, void **out)
+HRESULT acm_wrapper_create(IUnknown *outer, IUnknown **out)
 {
     ISeekingPassThru *passthrough;
     ACMWrapperImpl *object;

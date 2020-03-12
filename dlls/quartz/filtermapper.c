@@ -1386,11 +1386,9 @@ static const IAMFilterDataVtbl AMFilterDataVtbl = {
     AMFilterData_CreateFilterData
 };
 
-HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT filter_mapper_create(IUnknown *pUnkOuter, IUnknown **out)
 {
     FilterMapper3Impl * pFM2impl;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
 
     pFM2impl = CoTaskMemAlloc(sizeof(*pFM2impl));
     if (!pFM2impl)
@@ -1407,25 +1405,7 @@ HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     else
         pFM2impl->outer_unk = &pFM2impl->IUnknown_inner;
 
-    *ppObj = &pFM2impl->IUnknown_inner;
-
-    TRACE("-- created at %p\n", pFM2impl);
-
+    TRACE("Created filter mapper %p.\n", pFM2impl);
+    *out = &pFM2impl->IUnknown_inner;
     return S_OK;
-}
-
-HRESULT FilterMapper_create(IUnknown *pUnkOuter, LPVOID *ppObj)
-{
-    FilterMapper3Impl *pFM2impl;
-    HRESULT hr;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
-
-    hr = FilterMapper2_create(pUnkOuter, (LPVOID*)&pFM2impl);
-    if (FAILED(hr))
-        return hr;
-
-    *ppObj = &pFM2impl->IFilterMapper_iface;
-
-    return hr;
 }

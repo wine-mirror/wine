@@ -5675,7 +5675,7 @@ static const IUnknownVtbl IInner_VTable =
     FilterGraphInner_Release
 };
 
-static HRESULT filter_graph_common_create(IUnknown *outer, void **out, BOOL threaded)
+static HRESULT filter_graph_common_create(IUnknown *outer, IUnknown **out, BOOL threaded)
 {
     IFilterGraphImpl *fimpl;
     HRESULT hr;
@@ -5755,16 +5755,12 @@ static HRESULT filter_graph_common_create(IUnknown *outer, void **out, BOOL thre
     return S_OK;
 }
 
-HRESULT filter_graph_create(IUnknown *outer, void **out)
+HRESULT filter_graph_create(IUnknown *outer, IUnknown **out)
 {
-    TRACE("outer %p, out %p.\n", outer, out);
-
     return filter_graph_common_create(outer, out, TRUE);
 }
 
-HRESULT filter_graph_no_thread_create(IUnknown *outer, void **out)
+HRESULT filter_graph_no_thread_create(IUnknown *outer, IUnknown **out)
 {
-    TRACE("outer %p, out %p.\n", outer, out);
-
     return filter_graph_common_create(outer, out, FALSE);
 }

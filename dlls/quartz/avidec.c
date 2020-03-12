@@ -531,7 +531,7 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_cleanup_stream = avi_decompressor_cleanup_stream,
 };
 
-HRESULT AVIDec_create(IUnknown *outer, void **out)
+HRESULT avi_dec_create(IUnknown *outer, IUnknown **out)
 {
     AVIDecImpl *object;
     ISeekingPassThru *passthrough;

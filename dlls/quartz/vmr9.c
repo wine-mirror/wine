@@ -2208,7 +2208,7 @@ static const IOverlayVtbl overlay_vtbl =
     overlay_Unadvise,
 };
 
-static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
+static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
 {
     HRESULT hr;
     struct quartz_vmr* pVMR;
@@ -2278,14 +2278,14 @@ fail:
     return hr;
 }
 
-HRESULT VMR7Impl_create(IUnknown *outer_unk, LPVOID *ppv)
+HRESULT vmr7_create(IUnknown *outer, IUnknown **out)
 {
-    return vmr_create(outer_unk, ppv, &CLSID_VideoMixingRenderer);
+    return vmr_create(outer, out, &CLSID_VideoMixingRenderer);
 }
 
-HRESULT VMR9Impl_create(IUnknown *outer_unk, LPVOID *ppv)
+HRESULT vmr9_create(IUnknown *outer, IUnknown **out)
 {
-    return vmr_create(outer_unk, ppv, &CLSID_VideoMixingRenderer9);
+    return vmr_create(outer, out, &CLSID_VideoMixingRenderer9);
 }
 
 

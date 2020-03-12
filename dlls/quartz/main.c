@@ -35,9 +35,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return QUARTZ_DllMain( hInstDLL, fdwReason, lpv );
 }
 
-static HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+static HRESULT seeking_passthrough_create(IUnknown *outer, IUnknown **out)
 {
-    return PosPassThru_Construct(pUnkOuter,ppObj); /* from strmbase */
+    return PosPassThru_Construct(outer, (void **)out);
 }
 
 /******************************************************************************
@@ -46,7 +46,7 @@ static HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 typedef struct {
     IClassFactory IClassFactory_iface;
     LONG ref;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
+    HRESULT (*create_instance)(IUnknown *outer, IUnknown **out);
 } IClassFactoryImpl;
 
 static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
@@ -57,27 +57,27 @@ static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
 struct object_creation_info
 {
     const CLSID *clsid;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
+    HRESULT (*create_instance)(IUnknown *outer, IUnknown **out);
 };
 
 static const struct object_creation_info object_creation[] =
 {
-    { &CLSID_SeekingPassThru, SeekingPassThru_create },
+    { &CLSID_ACMWrapper, acm_wrapper_create },
+    { &CLSID_AsyncReader, async_reader_create },
+    { &CLSID_AudioRender, dsound_render_create },
+    { &CLSID_AVIDec, avi_dec_create },
+    { &CLSID_DSoundRender, dsound_render_create },
     { &CLSID_FilterGraph, filter_graph_create },
     { &CLSID_FilterGraphNoThread, filter_graph_no_thread_create },
-    { &CLSID_FilterMapper, FilterMapper_create },
-    { &CLSID_FilterMapper2, FilterMapper2_create },
-    { &CLSID_AsyncReader, AsyncReader_create },
-    { &CLSID_MemoryAllocator, StdMemAllocator_create },
-    { &CLSID_VideoRenderer, VideoRenderer_create },
-    { &CLSID_VideoMixingRenderer, VMR7Impl_create },
-    { &CLSID_VideoMixingRenderer9, VMR9Impl_create },
-    { &CLSID_VideoRendererDefault, VideoRendererDefault_create },
-    { &CLSID_DSoundRender, dsound_render_create },
-    { &CLSID_AudioRender, dsound_render_create },
-    { &CLSID_AVIDec, AVIDec_create },
-    { &CLSID_SystemClock, QUARTZ_CreateSystemClock },
-    { &CLSID_ACMWrapper, ACMWrapper_create },
+    { &CLSID_FilterMapper, filter_mapper_create },
+    { &CLSID_FilterMapper2, filter_mapper_create },
+    { &CLSID_MemoryAllocator, mem_allocator_create },
+    { &CLSID_SeekingPassThru, seeking_passthrough_create },
+    { &CLSID_SystemClock, system_clock_create },
+    { &CLSID_VideoRenderer, video_renderer_create },
+    { &CLSID_VideoMixingRenderer, vmr7_create },
+    { &CLSID_VideoMixingRenderer9, vmr9_create },
+    { &CLSID_VideoRendererDefault, video_renderer_default_create },
 };
 
 static HRESULT WINAPI DSCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
@@ -126,8 +126,8 @@ static HRESULT WINAPI DSCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter
     if(pOuter && !IsEqualGUID(&IID_IUnknown, riid))
         return E_NOINTERFACE;
 
-    hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
-    if (SUCCEEDED(hres)) {
+    if (SUCCEEDED(hres = This->create_instance(pOuter, &punk)))
+    {
         hres = IUnknown_QueryInterface(punk, riid, ppobj);
         IUnknown_Release(punk);
     }
@@ -189,7 +189,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
                 factory->IClassFactory_iface.lpVtbl = &DSCF_Vtbl;
                 factory->ref = 1;
 
-                factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
+                factory->create_instance = object_creation[i].create_instance;
 
                 *ppv = &factory->IClassFactory_iface;
                 return S_OK;
