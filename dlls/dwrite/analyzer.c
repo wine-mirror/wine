@@ -680,21 +680,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                 break;
             /* LB22 */
             case b_IN:
-                if (i > 0)
-                {
-                    switch (break_class[i-1])
-                    {
-                        case b_AL:
-                        case b_HL:
-                        case b_EX:
-                        case b_ID:
-                        case b_EB:
-                        case b_EM:
-                        case b_IN:
-                        case b_NU:
-                            set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
-                    }
-                }
+                set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
         }
 
