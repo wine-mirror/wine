@@ -634,7 +634,7 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideAllocator = sample_grabber_source_DecideAllocator,
 };
 
-HRESULT SampleGrabber_create(IUnknown *outer, void **out)
+HRESULT sample_grabber_create(IUnknown *outer, IUnknown **out)
 {
     SG_Impl* obj = NULL;
     ISeekingPassThru *passthru;

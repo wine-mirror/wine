@@ -33,9 +33,9 @@
 #include "dshow.h"
 #include "qedit.h"
 
-HRESULT AMTimeline_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
-HRESULT MediaDet_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
-HRESULT NullRenderer_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
-HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT timeline_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT media_detector_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT null_renderer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT sample_grabber_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
 #endif /* __QEDIT_PRIVATE_INCLUDED__ */

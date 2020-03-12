@@ -42,7 +42,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 typedef struct {
     IClassFactory IClassFactory_iface;
     LONG ref;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
+    HRESULT (*create_instance)(IUnknown *outer, IUnknown **out);
 } IClassFactoryImpl;
 
 static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
@@ -53,15 +53,15 @@ static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
 struct object_creation_info
 {
     const CLSID *clsid;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
+    HRESULT (*create_instance)(IUnknown *outer, IUnknown **out);
 };
 
 static const struct object_creation_info object_creation[] =
 {
-    { &CLSID_AMTimeline, AMTimeline_create },
-    { &CLSID_MediaDet, MediaDet_create },
-    { &CLSID_NullRenderer, NullRenderer_create },
-    { &CLSID_SampleGrabber, SampleGrabber_create },
+    {&CLSID_AMTimeline, timeline_create},
+    {&CLSID_MediaDet, media_detector_create},
+    {&CLSID_NullRenderer, null_renderer_create},
+    {&CLSID_SampleGrabber, sample_grabber_create},
 };
 
 static HRESULT WINAPI DSCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
@@ -109,7 +109,7 @@ static HRESULT WINAPI DSCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter
     if (pOuter && !IsEqualGUID(&IID_IUnknown, riid))
         return E_NOINTERFACE;
 
-    hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
+    hres = This->create_instance(pOuter, &punk);
     if (SUCCEEDED(hres)) {
         hres = IUnknown_QueryInterface(punk, riid, ppobj);
         IUnknown_Release(punk);
@@ -186,7 +186,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     factory->IClassFactory_iface.lpVtbl = &DSCF_Vtbl;
     factory->ref = 1;
 
-    factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
+    factory->create_instance = object_creation[i].create_instance;
 
     *ppv = &factory->IClassFactory_iface;
     return S_OK;

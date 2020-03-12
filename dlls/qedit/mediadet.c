@@ -637,7 +637,8 @@ static const IMediaDetVtbl IMediaDet_VTable =
     MediaDet_EnterBitmapGrabMode,
 };
 
-HRESULT MediaDet_create(IUnknown * pUnkOuter, LPVOID * ppv) {
+HRESULT media_detector_create(IUnknown *pUnkOuter, IUnknown **ppv)
+{
     MediaDetImpl* obj = NULL;
 
     TRACE("(%p,%p)\n", pUnkOuter, ppv);

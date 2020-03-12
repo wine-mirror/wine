@@ -62,7 +62,7 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_destroy = null_renderer_destroy,
 };
 
-HRESULT NullRenderer_create(IUnknown *outer, void **out)
+HRESULT null_renderer_create(IUnknown *outer, IUnknown **out)
 {
     HRESULT hr;
     NullRendererImpl *pNullRenderer;
