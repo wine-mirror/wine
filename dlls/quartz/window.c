@@ -741,3 +741,9 @@ HRESULT WINAPI BaseControlWindowImpl_IsCursorHidden(IVideoWindow *iface, LONG *C
 
     return S_OK;
 }
+
+void video_window_unregister_class(void)
+{
+    if (!UnregisterClassW(class_name, NULL) && GetLastError() != ERROR_CLASS_DOES_NOT_EXIST)
+        ERR("Failed to unregister class, error %u.\n", GetLastError());
+}

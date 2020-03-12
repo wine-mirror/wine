@@ -29,10 +29,11 @@ extern BOOL WINAPI QUARTZ_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
 
 static LONG server_locks = 0;
 
-/* For the moment, do nothing here. */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
-    return QUARTZ_DllMain( hInstDLL, fdwReason, lpv );
+    if (reason == DLL_PROCESS_DETACH)
+        video_window_unregister_class();
+    return QUARTZ_DllMain(instance, reason, reserved);
 }
 
 static HRESULT seeking_passthrough_create(IUnknown *outer, IUnknown **out)

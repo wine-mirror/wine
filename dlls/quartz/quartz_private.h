@@ -123,6 +123,7 @@ typedef struct tagBaseControlWindow
 
 HRESULT video_window_init(BaseControlWindow *window, const IVideoWindowVtbl *vtbl,
         struct strmbase_filter *filter, struct strmbase_pin *pin, const BaseWindowFuncTable *func_table) DECLSPEC_HIDDEN;
+void video_window_unregister_class(void) DECLSPEC_HIDDEN;
 HRESULT WINAPI BaseControlWindow_Destroy(BaseControlWindow *pControlWindow) DECLSPEC_HIDDEN;
 
 BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam) DECLSPEC_HIDDEN;
