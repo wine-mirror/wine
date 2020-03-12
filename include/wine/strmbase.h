@@ -255,49 +255,6 @@ enum strmbase_type_id
 
 HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **typeinfo);
 
-#ifdef __IBasicVideo_FWD_DEFINED__
-#ifdef __amvideo_h__
-typedef struct tagBaseControlVideo
-{
-	IBasicVideo IBasicVideo_iface;
-
-	struct strmbase_filter *pFilter;
-	struct strmbase_pin *pPin;
-
-	const struct BaseControlVideoFuncTable* pFuncsTable;
-} BaseControlVideo;
-
-typedef HRESULT (WINAPI *BaseControlVideo_GetSourceRect)(BaseControlVideo* This, RECT *pSourceRect);
-typedef HRESULT (WINAPI *BaseControlVideo_GetStaticImage)(BaseControlVideo* This, LONG *pBufferSize, LONG *pDIBImage);
-typedef HRESULT (WINAPI *BaseControlVideo_GetTargetRect)(BaseControlVideo* This, RECT *pTargetRect);
-typedef VIDEOINFOHEADER* (WINAPI *BaseControlVideo_GetVideoFormat)(BaseControlVideo* This);
-typedef HRESULT (WINAPI *BaseControlVideo_IsDefaultSourceRect)(BaseControlVideo* This);
-typedef HRESULT (WINAPI *BaseControlVideo_IsDefaultTargetRect)(BaseControlVideo* This);
-typedef HRESULT (WINAPI *BaseControlVideo_SetDefaultSourceRect)(BaseControlVideo* This);
-typedef HRESULT (WINAPI *BaseControlVideo_SetDefaultTargetRect)(BaseControlVideo* This);
-typedef HRESULT (WINAPI *BaseControlVideo_SetSourceRect)(BaseControlVideo* This, RECT *pSourceRect);
-typedef HRESULT (WINAPI *BaseControlVideo_SetTargetRect)(BaseControlVideo* This, RECT *pTargetRect);
-
-typedef struct BaseControlVideoFuncTable {
-	/* Required */
-	BaseControlVideo_GetSourceRect pfnGetSourceRect;
-	BaseControlVideo_GetStaticImage pfnGetStaticImage;
-	BaseControlVideo_GetTargetRect pfnGetTargetRect;
-	BaseControlVideo_GetVideoFormat pfnGetVideoFormat;
-	BaseControlVideo_IsDefaultSourceRect pfnIsDefaultSourceRect;
-	BaseControlVideo_IsDefaultTargetRect pfnIsDefaultTargetRect;
-	BaseControlVideo_SetDefaultSourceRect pfnSetDefaultSourceRect;
-	BaseControlVideo_SetDefaultTargetRect pfnSetDefaultTargetRect;
-	BaseControlVideo_SetSourceRect pfnSetSourceRect;
-	BaseControlVideo_SetTargetRect pfnSetTargetRect;
-} BaseControlVideoFuncTable;
-
-HRESULT WINAPI strmbase_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
-        struct strmbase_pin *pin, const BaseControlVideoFuncTable *func_table);
-HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo);
-#endif
-#endif
-
 struct strmbase_renderer
 {
     struct strmbase_filter filter;

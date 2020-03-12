@@ -1,5 +1,5 @@
 /*
- * Generic Implementation of strmbase video classes
+ * Common implementation of IBasicVideo
  *
  * Copyright 2012 Aric Stewart, CodeWeavers
  *
@@ -18,9 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "strmbase_private.h"
+#include "quartz_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static inline BaseControlVideo *impl_from_IBasicVideo(IBasicVideo *iface)
 {
@@ -647,7 +647,7 @@ static const IBasicVideoVtbl basic_video_vtbl =
     basic_video_IsUsingDefaultDestination
 };
 
-HRESULT WINAPI strmbase_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
+HRESULT basic_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
         struct strmbase_pin *pin, const BaseControlVideoFuncTable *func_table)
 {
     video->IBasicVideo_iface.lpVtbl = &basic_video_vtbl;

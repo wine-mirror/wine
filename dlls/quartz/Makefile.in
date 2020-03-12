@@ -17,6 +17,7 @@ C_SRCS = \
 	memallocator.c \
 	regsvr.c \
 	systemclock.c \
+	video.c \
 	videorenderer.c \
 	vmr9.c \
 	window.c

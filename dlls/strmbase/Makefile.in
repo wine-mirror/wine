@@ -9,5 +9,4 @@ C_SRCS = \
 	pospass.c \
 	qualitycontrol.c \
 	renderer.c \
-	seeking.c \
-	video.c
+	seeking.c

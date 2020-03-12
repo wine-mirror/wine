@@ -726,7 +726,7 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
     if (FAILED(hr))
         goto fail;
 
-    hr = strmbase_video_init(&pVideoRenderer->baseControlVideo, &pVideoRenderer->renderer.filter,
+    hr = basic_video_init(&pVideoRenderer->baseControlVideo, &pVideoRenderer->renderer.filter,
             &pVideoRenderer->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
         goto fail;

@@ -2257,7 +2257,7 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     if (FAILED(hr = BaseWindowImpl_PrepareWindow(&pVMR->baseControlWindow.baseWindow)))
         goto fail;
 
-    hr = strmbase_video_init(&pVMR->baseControlVideo, &pVMR->renderer.filter,
+    hr = basic_video_init(&pVMR->baseControlVideo, &pVMR->renderer.filter,
             &pVMR->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
         goto fail;
