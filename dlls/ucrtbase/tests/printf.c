@@ -58,25 +58,12 @@
 
 DEFINE_EXPECT(invalid_parameter_handler);
 
-/* make sure we use the correct errno */
-#undef errno
-#define errno (*p_errno())
-
 static inline float __port_ind(void)
 {
     static const unsigned __ind_bytes = 0xffc00000;
     return *(const float *)&__ind_bytes;
 }
 #define IND __port_ind()
-
-static FILE *(__cdecl *p_fopen)(const char *name, const char *mode);
-static int (__cdecl *p_fclose)(FILE *file);
-static long (__cdecl *p_ftell)(FILE *file);
-static char *(__cdecl *p_fgets)(char *str, int size, FILE *file);
-static wchar_t *(__cdecl *p_fgetws)(wchar_t *str, int size, FILE *file);
-
-static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
-static int* (__cdecl *p_errno)(void);
 
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
@@ -88,27 +75,6 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(file == NULL, "file is not NULL\n");
     ok(line == 0, "line = %u\n", line);
     ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
-}
-
-static BOOL init( void )
-{
-    HMODULE hmod = LoadLibraryA("ucrtbase.dll");
-
-    if (!hmod)
-    {
-        win_skip("ucrtbase.dll not installed\n");
-        return FALSE;
-    }
-
-    p_fopen = (void *)GetProcAddress(hmod, "fopen");
-    p_fclose = (void *)GetProcAddress(hmod, "fclose");
-    p_ftell = (void *)GetProcAddress(hmod, "ftell");
-    p_fgets = (void *)GetProcAddress(hmod, "fgets");
-    p_fgetws = (void *)GetProcAddress(hmod, "fgetws");
-
-    p_set_invalid_parameter_handler = (void *)GetProcAddress(hmod, "_set_invalid_parameter_handler");
-    p_errno = (void *)GetProcAddress(hmod, "_errno");
-    return TRUE;
 }
 
 static int WINAPIV vsprintf_wrapper(unsigned __int64 options, char *str,
@@ -276,61 +242,61 @@ static void test_fprintf(void)
 {
     static const char file_name[] = "fprintf.tst";
 
-    FILE *fp = p_fopen(file_name, "wb");
+    FILE *fp = fopen(file_name, "wb");
     char buf[1024];
     int ret;
 
     ret = vfprintf_wrapper(fp, "simple test\n");
     ok(ret == 12, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 12, "ftell returned %d\n", ret);
 
     ret = vfprintf_wrapper(fp, "contains%cnull\n", '\0');
     ok(ret == 14, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 26, "ftell returned %d\n", ret);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "rb");
-    p_fgets(buf, sizeof(buf), fp);
-    ret = p_ftell(fp);
+    fp = fopen(file_name, "rb");
+    fgets(buf, sizeof(buf), fp);
+    ret = ftell(fp);
     ok(ret == 12, "ftell returned %d\n", ret);
     ok(!strcmp(buf, "simple test\n"), "buf = %s\n", buf);
 
-    p_fgets(buf, sizeof(buf), fp);
-    ret = p_ftell(fp);
+    fgets(buf, sizeof(buf), fp);
+    ret = ftell(fp);
     ok(ret == 26, "ret = %d\n", ret);
     ok(!memcmp(buf, "contains\0null\n", 14), "buf = %s\n", buf);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "wt");
+    fp = fopen(file_name, "wt");
 
     ret = vfprintf_wrapper(fp, "simple test\n");
     ok(ret == 12, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 13, "ftell returned %d\n", ret);
 
     ret = vfprintf_wrapper(fp, "contains%cnull\n", '\0');
     ok(ret == 14, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 28, "ftell returned %d\n", ret);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "rb");
-    p_fgets(buf, sizeof(buf), fp);
-    ret = p_ftell(fp);
+    fp = fopen(file_name, "rb");
+    fgets(buf, sizeof(buf), fp);
+    ret = ftell(fp);
     ok(ret == 13, "ftell returned %d\n", ret);
     ok(!strcmp(buf, "simple test\r\n"), "buf = %s\n", buf);
 
-    p_fgets(buf, sizeof(buf), fp);
-    ret = p_ftell(fp);
+    fgets(buf, sizeof(buf), fp);
+    ret = ftell(fp);
     ok(ret == 28, "ret = %d\n", ret);
     ok(!memcmp(buf, "contains\0null\r\n", 15), "buf = %s\n", buf);
 
-    p_fclose(fp);
+    fclose(fp);
     unlink(file_name);
 }
 
@@ -352,65 +318,65 @@ static void test_fwprintf(void)
     static const WCHAR cont_fmt[] = {'c','o','n','t','a','i','n','s','%','c','n','u','l','l','\n',0};
     static const WCHAR cont[] = {'c','o','n','t','a','i','n','s','\0','n','u','l','l','\n',0};
 
-    FILE *fp = p_fopen(file_name, "wb");
+    FILE *fp = fopen(file_name, "wb");
     wchar_t bufw[1024];
     char bufa[1024];
     int ret;
 
     ret = vfwprintf_wrapper(fp, simple);
     ok(ret == 12, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 24, "ftell returned %d\n", ret);
 
     ret = vfwprintf_wrapper(fp, cont_fmt, '\0');
     ok(ret == 14, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 52, "ftell returned %d\n", ret);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "rb");
-    p_fgetws(bufw, ARRAY_SIZE(bufw), fp);
-    ret = p_ftell(fp);
+    fp = fopen(file_name, "rb");
+    fgetws(bufw, ARRAY_SIZE(bufw), fp);
+    ret = ftell(fp);
     ok(ret == 24, "ftell returned %d\n", ret);
     ok(!wcscmp(bufw, simple), "buf = %s\n", wine_dbgstr_w(bufw));
 
-    p_fgetws(bufw, ARRAY_SIZE(bufw), fp);
-    ret = p_ftell(fp);
+    fgetws(bufw, ARRAY_SIZE(bufw), fp);
+    ret = ftell(fp);
     ok(ret == 52, "ret = %d\n", ret);
     ok(!memcmp(bufw, cont, 28), "buf = %s\n", wine_dbgstr_w(bufw));
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "wt");
+    fp = fopen(file_name, "wt");
 
     ret = vfwprintf_wrapper(fp, simple);
     ok(ret == 12, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 13, "ftell returned %d\n", ret);
 
     ret = vfwprintf_wrapper(fp, cont_fmt, '\0');
     ok(ret == 14, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 28, "ftell returned %d\n", ret);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "rb");
-    p_fgets(bufa, sizeof(bufa), fp);
-    ret = p_ftell(fp);
+    fp = fopen(file_name, "rb");
+    fgets(bufa, sizeof(bufa), fp);
+    ret = ftell(fp);
     ok(ret == 13, "ftell returned %d\n", ret);
     ok(!strcmp(bufa, "simple test\r\n"), "buf = %s\n", bufa);
 
-    p_fgets(bufa, sizeof(bufa), fp);
-    ret = p_ftell(fp);
+    fgets(bufa, sizeof(bufa), fp);
+    ret = ftell(fp);
     ok(ret == 28, "ret = %d\n", ret);
     ok(!memcmp(bufa, "contains\0null\r\n", 15), "buf = %s\n", bufa);
 
-    p_fclose(fp);
+    fclose(fp);
     unlink(file_name);
 
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
             "Invalid parameter handler was already set\n");
 
     /* NULL format */
@@ -433,7 +399,7 @@ static void test_fwprintf(void)
     /* crashes on Windows */
     /* ret = __stdio_common_vfwprintf(0, fp, cont_fmt, NULL, NULL); */
 
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
 }
 
@@ -662,8 +628,6 @@ static void test_printf_natural_string(void)
 
 START_TEST(printf)
 {
-    if (!init()) return;
-
     test_snprintf();
     test_swprintf();
     test_fprintf();
