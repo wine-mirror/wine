@@ -93,6 +93,8 @@ static HRESULT (WINAPI *pMFTEnumEx)(GUID category, UINT32 flags, const MFT_REGIS
         const MFT_REGISTER_TYPE_INFO *output_type, IMFActivate ***activate, UINT32 *count);
 static HRESULT (WINAPI *pMFGetPlaneSize)(DWORD format, DWORD width, DWORD height, DWORD *size);
 static HRESULT (WINAPI *pMFGetStrideForBitmapInfoHeader)(DWORD format, DWORD width, LONG *stride);
+static HRESULT (WINAPI *pMFCreate2DMediaBuffer)(DWORD width, DWORD height, DWORD fourcc, BOOL bottom_up,
+        IMFMediaBuffer **buffer);
 
 static const WCHAR fileschemeW[] = L"file://";
 
@@ -660,6 +662,7 @@ static void init_functions(void)
     X(MFAllocateSerialWorkQueue);
     X(MFAllocateWorkQueueEx);
     X(MFCopyImage);
+    X(MFCreate2DMediaBuffer);
     X(MFCreateDXGIDeviceManager);
     X(MFCreateSourceResolver);
     X(MFCreateMFByteStreamOnStream);
@@ -1726,6 +1729,9 @@ static void test_system_memory_buffer(void)
     IMFMediaBuffer_Release(buffer);
 
     /* Aligned buffer. */
+    hr = MFCreateAlignedMemoryBuffer(16, MF_8_BYTE_ALIGNMENT, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
     hr = MFCreateAlignedMemoryBuffer(201, MF_8_BYTE_ALIGNMENT, &buffer);
     ok(hr == S_OK, "Failed to create memory buffer, hr %#x.\n", hr);
 
@@ -4539,6 +4545,48 @@ static void test_MFGetStrideForBitmapInfoHeader(void)
     }
 }
 
+static void test_MFCreate2DMediaBuffer(void)
+{
+    IMF2DBuffer2 *_2dbuffer2;
+    IMF2DBuffer *_2dbuffer;
+    IMFMediaBuffer *buffer;
+    DWORD length;
+    HRESULT hr;
+
+    if (!pMFCreate2DMediaBuffer)
+    {
+        win_skip("MFCreate2DMediaBuffer() is not available.\n");
+        return;
+    }
+
+    hr = pMFCreate2DMediaBuffer(2, 3, MAKEFOURCC('H','2','6','4'), FALSE, &buffer);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFCreate2DMediaBuffer(2, 3, MAKEFOURCC('N','V','1','2'), FALSE, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    hr = pMFCreate2DMediaBuffer(2, 3, MAKEFOURCC('N','V','1','2'), FALSE, &buffer);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(length > 0, "Unexpected length.\n");
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    IMF2DBuffer_Release(_2dbuffer);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2dbuffer2);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Failed to get interface, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr))
+        IMF2DBuffer2_Release(_2dbuffer2);
+    else
+        win_skip("IMF2DBuffer2 is not supported.\n");
+
+    IMFMediaBuffer_Release(buffer);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -4591,6 +4639,7 @@ START_TEST(mfplat)
     test_MFTRegisterLocal();
     test_queue_com();
     test_MFGetStrideForBitmapInfoHeader();
+    test_MFCreate2DMediaBuffer();
 
     CoUninitialize();
 }

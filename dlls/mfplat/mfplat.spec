@@ -37,6 +37,7 @@
 @ stub MFConvertFromFP16Array
 @ stub MFConvertToFP16Array
 @ stdcall MFCopyImage(ptr long ptr long long long)
+@ stdcall MFCreate2DMediaBuffer(long long long long ptr)
 @ stub MFCreateAMMediaTypeFromMFMediaType
 @ stdcall MFCreateAlignedMemoryBuffer(long long ptr)
 @ stdcall MFCreateAsyncResult(ptr ptr ptr ptr)

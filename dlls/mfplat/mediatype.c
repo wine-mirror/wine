@@ -1802,6 +1802,12 @@ static unsigned int mf_get_stride_for_format(const struct uncompressed_video_for
     return (width * format->bytes_per_pixel + format->alignment) & ~format->alignment;
 }
 
+unsigned int mf_format_get_bpp(const GUID *subtype)
+{
+    struct uncompressed_video_format *format = mf_get_video_format(subtype);
+    return format ? format->bytes_per_pixel : 0;
+}
+
 /***********************************************************************
  *      MFGetStrideForBitmapInfoHeader (mfplat.@)
  */

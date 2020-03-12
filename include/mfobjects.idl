@@ -141,6 +141,32 @@ interface IMF2DBuffer : IUnknown
     HRESULT ContiguousCopyFrom([in, size_is(cbSrcBuffer)] const BYTE *pbSrcBuffer, [in] DWORD cbSrcBuffer);
 }
 
+typedef enum _MF2DBuffer_LockFlags
+{
+    MF2DBuffer_LockFlags_LockTypeMask = 0x1 | 0x2 | 0x3,
+    MF2DBuffer_LockFlags_Read         = 0x1,
+    MF2DBuffer_LockFlags_Write        = 0x2,
+    MF2DBuffer_LockFlags_ReadWrite    = 0x3,
+    MF2DBuffer_LockFlags_ForceDWORD   = 0x7fffffff
+} MF2DBuffer_LockFlags;
+
+[
+    object,
+    uuid(33ae5ea6-4316-436f-8ddd-d73d22f829ec),
+    local
+]
+interface IMF2DBuffer2 : IMF2DBuffer
+{
+    HRESULT Lock2DSize(
+        [in] MF2DBuffer_LockFlags flags,
+        [out] BYTE **scanline0,
+        [out] LONG *pitch,
+        [out] BYTE **buffer_start,
+        [out] DWORD *buffer_length);
+
+    HRESULT Copy2DTo([in] IMF2DBuffer2 *dest_buffer);
+}
+
 [
     object,
     uuid(44ae0fa8-ea31-4109-8d2e-4cae4997c555),
