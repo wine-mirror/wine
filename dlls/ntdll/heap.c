@@ -1331,7 +1331,7 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
                               *             does not complain    */
 {
     SUBHEAP *subheap;
-    BOOL ret = TRUE;
+    BOOL ret = FALSE;
     const ARENA_LARGE *large_arena;
 
     flags &= HEAP_NO_SERIALIZE;
@@ -1353,16 +1353,11 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
                     ERR("Heap %p: block %p is not inside heap\n", heapPtr, block );
                 else if (WARN_ON(heap))
                     WARN("Heap %p: block %p is not inside heap\n", heapPtr, block );
-                ret = FALSE;
             }
-            else
-                ret = validate_large_arena( heapPtr, large_arena, quiet );
-        } else
-            ret = HEAP_ValidateInUseArena( subheap, arena, quiet );
-
-        if (!(flags & HEAP_NO_SERIALIZE))
-            RtlLeaveCriticalSection( &heapPtr->critSection );
-        return ret;
+            else ret = validate_large_arena( heapPtr, large_arena, quiet );
+        }
+        else ret = HEAP_ValidateInUseArena( subheap, arena, quiet );
+        goto done;
     }
 
     LIST_FOR_EACH_ENTRY( subheap, &heapPtr->subheap_list, SUBHEAP, entry )
@@ -1372,27 +1367,23 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
         {
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
             {
-                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr )) {
-                    ret = FALSE;
-                    break;
-                }
+                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr )) goto done;
                 ptr += sizeof(ARENA_FREE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
             }
             else
             {
-                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr, NOISY )) {
-                    ret = FALSE;
-                    break;
-                }
+                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr, NOISY )) goto done;
                 ptr += sizeof(ARENA_INUSE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
             }
         }
-        if (!ret) break;
     }
 
     LIST_FOR_EACH_ENTRY( large_arena, &heapPtr->large_list, ARENA_LARGE, entry )
-        if (!(ret = validate_large_arena( heapPtr, large_arena, quiet ))) break;
+        if (!validate_large_arena( heapPtr, large_arena, quiet )) goto done;
 
+    ret = TRUE;
+
+done:
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
     return ret;
 }
