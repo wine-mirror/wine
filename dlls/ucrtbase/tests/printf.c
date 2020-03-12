@@ -62,12 +62,6 @@ DEFINE_EXPECT(invalid_parameter_handler);
 #undef errno
 #define errno (*p_errno())
 
-#define UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION (0x0001)
-#define UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR      (0x0002)
-#define UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS           (0x0004)
-#define UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY      (0x0008)
-#define UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS     (0x0010)
-
 static inline float __port_ind(void)
 {
     static const unsigned __ind_bytes = 0xffc00000;
@@ -162,7 +156,7 @@ static void test_snprintf (void)
     for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const char *fmt  = tests[i];
         const int expect = strlen(fmt) > bufsiz ? -1 : strlen(fmt);
-        const int n      = vsprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
+        const int n      = vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
         const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
         ok (n == expect, "\"%s\": expected %d, returned %d\n",
@@ -175,7 +169,7 @@ static void test_snprintf (void)
     for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const char *fmt  = tests[i];
         const int expect = strlen(fmt);
-        const int n      = vsprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buffer, bufsiz, fmt);
+        const int n      = vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, bufsiz, fmt);
         const int valid  = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
 
         ok (n == expect, "\"%s\": expected %d, returned %d\n",
@@ -201,9 +195,9 @@ static void test_snprintf (void)
             "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
     }
 
-    ok (vsprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, NULL, 0, "abcd") == 4,
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, NULL, 0, "abcd") == 4,
         "Failure to snprintf to NULL\n");
-    ok (vsprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, "abcd") == 4,
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, "abcd") == 4,
         "Failure to snprintf to NULL\n");
     ok (vsprintf_wrapper (0, NULL, 0, "abcd") == 4,
         "Failure to snprintf to NULL\n");
@@ -237,7 +231,7 @@ static void test_swprintf (void)
     for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const wchar_t *fmt = tests[i];
         const int expect   = wcslen(fmt) > bufsiz ? -1 : wcslen(fmt);
-        const int n        = vswprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
+        const int n        = vswprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
         const int valid    = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
         WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
@@ -252,7 +246,7 @@ static void test_swprintf (void)
     for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const wchar_t *fmt = tests[i];
         const int expect   = wcslen(fmt);
-        const int n        = vswprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buffer, bufsiz, fmt);
+        const int n        = vswprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, bufsiz, fmt);
         const int valid    = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
 
         WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
@@ -282,9 +276,9 @@ static void test_swprintf (void)
             "\"%s\": Missing null termination (ret %d) - is %d\n", narrow_fmt, n, buffer[valid]);
     }
 
-    ok (vswprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, NULL, 0, str_short) == 5,
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, NULL, 0, str_short) == 5,
         "Failure to swprintf to NULL\n");
-    ok (vswprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, str_short) == 5,
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, str_short) == 5,
         "Failure to swprintf to NULL\n");
     ok (vswprintf_wrapper (0, NULL, 0, str_short) == 5,
         "Failure to swprintf to NULL\n");
@@ -587,13 +581,13 @@ static void test_printf_legacy_wide(void)
 
     vsprintf_wrapper(0, buffer, sizeof(buffer), narrow_fmt, narrow, wide);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS, buffer, sizeof(buffer), narrow_fmt, narrow, wide);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS, buffer, sizeof(buffer), narrow_fmt, narrow, wide);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
 
     vswprintf_wrapper(0, wbuffer, sizeof(wbuffer), std_wide_fmt, narrow, wide);
     WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
-    vswprintf_wrapper(UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS, wbuffer, sizeof(wbuffer), legacy_wide_fmt, narrow, wide);
+    vswprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS, wbuffer, sizeof(wbuffer), legacy_wide_fmt, narrow, wide);
     WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
 }
@@ -607,20 +601,20 @@ static void test_printf_legacy_msvcrt(void)
      * a length modifier. */
     vsprintf_wrapper(0, buf, sizeof(buf), "%F", 1.23);
     ok(!strcmp(buf, "1.230000"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%Fd %Nd", 123, 456);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%Fd %Nd", 123, 456);
     ok(!strcmp(buf, "123 456"), "buf = %s\n", buf);
 
     vsprintf_wrapper(0, buf, sizeof(buf), "%f %F %f %e %E %g %G", INFINITY, INFINITY, -INFINITY, INFINITY, INFINITY, INFINITY, INFINITY);
     ok(!strcmp(buf, "inf INF -inf inf INF inf INF"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", INFINITY);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", INFINITY);
     ok(!strcmp(buf, "1.#INF00"), "buf = %s\n", buf);
     vsprintf_wrapper(0, buf, sizeof(buf), "%f %F", NAN, NAN);
     ok(!strcmp(buf, "nan NAN"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", NAN);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", NAN);
     ok(!strcmp(buf, "1.#QNAN0"), "buf = %s\n", buf);
     vsprintf_wrapper(0, buf, sizeof(buf), "%f %F", IND, IND);
     ok(!strcmp(buf, "-nan(ind) -NAN(IND)"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", IND);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", IND);
     ok(!strcmp(buf, "-1.#IND00"), "buf = %s\n", buf);
 }
 
@@ -630,7 +624,7 @@ static void test_printf_legacy_three_digit_exp(void)
 
     vsprintf_wrapper(0, buf, sizeof(buf), "%E", 1.23);
     ok(!strcmp(buf, "1.230000E+00"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS, buf, sizeof(buf), "%E", 1.23);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS, buf, sizeof(buf), "%E", 1.23);
     ok(!strcmp(buf, "1.230000E+000"), "buf = %s\n", buf);
     vsprintf_wrapper(0, buf, sizeof(buf), "%E", 1.23e+123);
     ok(!strcmp(buf, "1.230000E+123"), "buf = %s\n", buf);
@@ -645,7 +639,7 @@ static void test_printf_c99(void)
      * as size_t size for integers. */
      for (i = 0; i < 2; i++) {
         unsigned __int64 options = (i == 0) ? 0 :
-            UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
+            _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
 
         /* z modifier accepts size_t argument */
         vsprintf_wrapper(options, buf, sizeof(buf), "%zx %d", SIZE_MAX, 1);
