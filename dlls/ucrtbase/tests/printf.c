@@ -69,21 +69,6 @@ static inline float __port_ind(void)
 }
 #define IND __port_ind()
 
-static int (__cdecl *p_vfprintf)(unsigned __int64 options, FILE *file, const char *format,
-                                 void *locale, __ms_va_list valist);
-static int (__cdecl *p_vfwprintf)(unsigned __int64 options, FILE *file, const wchar_t *format,
-                                  void *locale, __ms_va_list valist);
-static int (__cdecl *p_vsprintf)(unsigned __int64 options, char *str, size_t len, const char *format,
-                                 void *locale, __ms_va_list valist);
-static int (__cdecl *p_vsnprintf_s)(unsigned __int64 options, char *str, size_t sizeOfBuffer, size_t count, const char *format,
-                                    void *locale, __ms_va_list valist);
-static int (__cdecl *p_vsprintf_s)(unsigned __int64 options, char *str, size_t count, const char *format,
-                                    void *locale, __ms_va_list valist);
-static int (__cdecl *p_vswprintf)(unsigned __int64 options, wchar_t *str, size_t len, const wchar_t *format,
-                                  void *locale, __ms_va_list valist);
-static int (__cdecl *p_vsnwprintf_s)(unsigned __int64 options, WCHAR *str, size_t sizeOfBuffer, size_t count, const WCHAR *format,
-                                    void *locale, __ms_va_list valist);
-
 static FILE *(__cdecl *p_fopen)(const char *name, const char *mode);
 static int (__cdecl *p_fclose)(FILE *file);
 static long (__cdecl *p_ftell)(FILE *file);
@@ -115,14 +100,6 @@ static BOOL init( void )
         return FALSE;
     }
 
-    p_vfprintf = (void *)GetProcAddress(hmod, "__stdio_common_vfprintf");
-    p_vfwprintf = (void *)GetProcAddress(hmod, "__stdio_common_vfwprintf");
-    p_vsprintf = (void *)GetProcAddress(hmod, "__stdio_common_vsprintf");
-    p_vsnprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsnprintf_s");
-    p_vsnwprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsnwprintf_s");
-    p_vsprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsprintf_s");
-    p_vswprintf = (void *)GetProcAddress(hmod, "__stdio_common_vswprintf");
-
     p_fopen = (void *)GetProcAddress(hmod, "fopen");
     p_fclose = (void *)GetProcAddress(hmod, "fclose");
     p_ftell = (void *)GetProcAddress(hmod, "ftell");
@@ -140,7 +117,7 @@ static int WINAPIV vsprintf_wrapper(unsigned __int64 options, char *str,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vsprintf(options, str, len, format, NULL, valist);
+    ret = __stdio_common_vsprintf(options, str, len, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -209,7 +186,7 @@ static int WINAPIV vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vswprintf(options, str, len, format, NULL, valist);
+    ret = __stdio_common_vswprintf(options, str, len, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -290,7 +267,7 @@ static int WINAPIV vfprintf_wrapper(FILE *file,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vfprintf(0, file, format, NULL, valist);
+    ret = __stdio_common_vfprintf(0, file, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -363,7 +340,7 @@ static int WINAPIV vfwprintf_wrapper(FILE *file,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vfwprintf(0, file, format, NULL, valist);
+    ret = __stdio_common_vfwprintf(0, file, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -454,7 +431,7 @@ static void test_fwprintf(void)
 
     /* format using % with NULL arglist*/
     /* crashes on Windows */
-    /* ret = p_vfwprintf(0, fp, cont_fmt, NULL, NULL); */
+    /* ret = __stdio_common_vfwprintf(0, fp, cont_fmt, NULL, NULL); */
 
     ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
@@ -466,7 +443,7 @@ static int WINAPIV _vsnprintf_s_wrapper(char *str, size_t sizeOfBuffer,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vsnprintf_s(0, str, sizeOfBuffer, count, format, NULL, valist);
+    ret = __stdio_common_vsnprintf_s(0, str, sizeOfBuffer, count, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -518,7 +495,7 @@ static int WINAPIV _vsnwprintf_s_wrapper(WCHAR *str, size_t sizeOfBuffer,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vsnwprintf_s(0, str, sizeOfBuffer, count, format, NULL, valist);
+    ret = __stdio_common_vsnwprintf_s(0, str, sizeOfBuffer, count, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
