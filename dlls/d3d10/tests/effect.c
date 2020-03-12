@@ -4631,6 +4631,402 @@ static void test_effect_scalar_variable(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+/*
+ * test_effect_vector_variable
+ */
+#if 0
+cbuffer cb
+{
+    float4 v_f0, v_f_a[2];
+    int3 v_i0, v_i_a[3];
+    bool2 v_b0, v_b_a[4];
+};
+#endif
+static DWORD fx_test_vector_variable[] =
+{
+    0x43425844, 0x581ae0ae, 0xa906b020, 0x26bba03e,
+    0x5d7dfba2, 0x00000001, 0x0000021a, 0x00000001,
+    0x00000024, 0x30315846, 0x000001ee, 0xfeff1001,
+    0x00000001, 0x00000006, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x000000e2,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x66006263,
+    0x74616f6c, 0x00070034, 0x00010000, 0x00000000,
+    0x00100000, 0x00100000, 0x00100000, 0x210a0000,
+    0x5f760000, 0x07003066, 0x01000000, 0x02000000,
+    0x20000000, 0x10000000, 0x20000000, 0x0a000000,
+    0x76000021, 0x615f665f, 0x746e6900, 0x00510033,
+    0x00010000, 0x00000000, 0x000c0000, 0x00100000,
+    0x000c0000, 0x19120000, 0x5f760000, 0x51003069,
+    0x01000000, 0x03000000, 0x2c000000, 0x10000000,
+    0x24000000, 0x12000000, 0x76000019, 0x615f695f,
+    0x6f6f6200, 0x9900326c, 0x01000000, 0x00000000,
+    0x08000000, 0x10000000, 0x08000000, 0x22000000,
+    0x76000011, 0x0030625f, 0x00000099, 0x00000001,
+    0x00000004, 0x00000038, 0x00000010, 0x00000020,
+    0x00001122, 0x5f625f76, 0x00040061, 0x00c00000,
+    0x00000000, 0x00060000, 0xffff0000, 0x0000ffff,
+    0x002a0000, 0x000e0000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x004b0000,
+    0x002f0000, 0x00000000, 0x00100000, 0x00000000,
+    0x00000000, 0x00000000, 0x00720000, 0x00560000,
+    0x00000000, 0x00300000, 0x00000000, 0x00000000,
+    0x00000000, 0x00930000, 0x00770000, 0x00000000,
+    0x00400000, 0x00000000, 0x00000000, 0x00000000,
+    0x00bb0000, 0x009f0000, 0x00000000, 0x00700000,
+    0x00000000, 0x00000000, 0x00000000, 0x00dc0000,
+    0x00c00000, 0x00000000, 0x00800000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000,
+};
+
+static void test_vector_methods(ID3D10EffectVectorVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name, unsigned int components)
+{
+    float set_f[4], ret_f[4], expected_f, expected_f_v[4];
+    int set_i[4], ret_i[4], expected_i, expected_i_v[4];
+    BOOL set_b[4], ret_b[4], expected_b;
+    unsigned int i;
+    HRESULT hr;
+
+    set_f[0] = 1.0f; set_f[1] = 2.0f; set_f[2] = 3.0f; set_f[3] = 4.0f;
+    hr = var->lpVtbl->SetFloatVector(var, set_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVector(var, ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : set_f[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntVector(var, ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : (int)set_f[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolVector(var, ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_i[0] = 5; set_i[1] = 6; set_i[2] = 7; set_i[3] = 8;
+    hr = var->lpVtbl->SetIntVector(var, set_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVector(var, ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : (float)set_i[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntVector(var, ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : set_i[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolVector(var, ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_b[0] = 1; set_b[1] = 0; set_b[2] = 1; set_b[3] = 0;
+    hr = var->lpVtbl->SetBoolVector(var, set_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVector(var, ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_f_v[0] = -1.0f; expected_f_v[1] = 0.0f; expected_f_v[2] = -1.0f; expected_f_v[3] = 0.0f;
+    for (i = 0; i < components; ++i)
+        ok(ret_f[i] == expected_f_v[i], "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVector(var, ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i_v[0] = -1; expected_i_v[1] = 0; expected_i_v[2] = -1; expected_i_v[3] = 0;
+    for (i = 0; i < components; ++i)
+        ok(ret_i[i] == expected_i_v[i], "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVector(var, ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : expected_i_v[i];
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    set_b[0] = 5; set_b[1] = 10; set_b[2] = 15; set_b[3] = 20;
+    hr = var->lpVtbl->SetBoolVector(var, set_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVector(var, ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVector(var, ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVector(var, ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+}
+
+static void test_vector_array_methods(ID3D10EffectVectorVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name, unsigned int components, unsigned int elements)
+{
+    float set_f[9], ret_f[9], expected_f, expected_f_a[9];
+    int set_i[9], ret_i[9], expected_i, expected_i_a[9];
+    BOOL set_b[9], ret_b[9], expected_b;
+    unsigned int i;
+    HRESULT hr;
+
+    set_f[0] = 1.0f; set_f[1] = 2.0f; set_f[2] = 3.0f; set_f[3] = 4.0f;
+    set_f[4] = 5.0f; set_f[5] = 6.0f; set_f[6] = 7.0f; set_f[7] = 8.0f;
+    set_f[8] = 9.0f;
+    hr = var->lpVtbl->SetFloatVectorArray(var, set_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : set_f[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : (int)set_f[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_i[0] = 10; set_i[1] = 11; set_i[2] = 12; set_i[3] = 13;
+    set_i[4] = 14; set_i[5] = 15; set_i[6] = 16; set_i[7] = 17;
+    set_i[8] = 18;
+    hr = var->lpVtbl->SetIntVectorArray(var, set_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : (float)set_i[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : set_i[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_b[0] = 1; set_b[1] = 0; set_b[2] = 1; set_b[3] = 1;
+    set_b[4] = 1; set_b[5] = 0; set_b[6] = 0; set_b[7] = 1;
+    set_b[8] = 1;
+    hr = var->lpVtbl->SetBoolVectorArray(var, set_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_f_a[0] = -1.0f; expected_f_a[1] = 0.0f; expected_f_a[2] = -1.0f; expected_f_a[3] = -1.0f;
+    expected_f_a[4] = -1.0f; expected_f_a[5] = 0.0f; expected_f_a[6] =  0.0f; expected_f_a[7] = -1.0f;
+    expected_f_a[8] = -1.0f;
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_f[i] == expected_f_a[i], "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i_a[0] = -1; expected_i_a[1] = 0; expected_i_a[2] = -1; expected_i_a[3] = -1;
+    expected_i_a[4] = -1; expected_i_a[5] = 0; expected_i_a[6] =  0; expected_i_a[7] = -1;
+    expected_i_a[8] = -1;
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_i[i] == expected_i_a[i], "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : expected_i_a[i];
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    set_b[0] = 5;  set_b[1] = 10; set_b[2] = 15; set_b[3] = 20;
+    set_b[4] = 25; set_b[5] = 30; set_b[6] = 35; set_b[7] = 40;
+    set_b[8] = 45;
+    hr = var->lpVtbl->SetBoolVectorArray(var, set_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    /* According to MSDN, the offset argument goes unused for VectorArray
+     * methods, same as the ScalarArray methods. This test shows that's not
+     * the case. */
+    set_b[0] = 0; set_b[1] = 0; set_b[2] = 0; set_b[3] = 0;
+    set_b[4] = 0; set_b[5] = 0; set_b[6] = 0; set_b[7] = 0;
+    set_b[8] = 0;
+    hr = var->lpVtbl->SetBoolVectorArray(var, set_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    set_b[0] = 1; set_b[1] = 1; set_b[2] = 1; set_b[3] = 1;
+    hr = var->lpVtbl->SetBoolVectorArray(var, set_b, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    /* If the previous offset of 1 worked, then the first vector value of the
+     * array should still be false. */
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_f[i] == 0, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_i[i] == 0, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(!ret_b[i], "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    /* Test the GetFloatVectorArray offset argument. If it works, we should
+     * get a vector with all values set to true. */
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? 1 : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    if (0)
+    {
+        /* Windows array setting function has no bounds checking on offset values
+         * either, so this ends up writing into adjacent variables. */
+        hr = var->lpVtbl->SetBoolVectorArray(var, set_b, elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+        for (i = 0; i < components; ++i)
+        {
+            expected_b = type == D3D10_SVT_BOOL ? 1 : -1;
+            ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+        }
+    }
+}
+
+static void test_effect_vector_variable(void)
+{
+    static const struct
+    {
+        const char *name;
+        D3D_SHADER_VARIABLE_TYPE type;
+        unsigned int components;
+        unsigned int elements;
+    }
+    tests[] =
+    {
+        {"v_f0", D3D10_SVT_FLOAT, 4, 1},
+        {"v_i0", D3D10_SVT_INT, 3, 1},
+        {"v_b0", D3D10_SVT_BOOL, 2, 1},
+        {"v_f_a", D3D10_SVT_FLOAT, 4, 2},
+        {"v_i_a", D3D10_SVT_INT, 3, 3},
+        {"v_b_a", D3D10_SVT_BOOL, 2, 4},
+    };
+    ID3D10EffectVectorVariable *v_var;
+    D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10EffectVariable *var;
+    ID3D10EffectType *type;
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_vector_variable, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        var = effect->lpVtbl->GetVariableByName(effect, tests[i].name);
+        type = var->lpVtbl->GetType(var);
+        hr = type->lpVtbl->GetDesc(type, &type_desc);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", tests[i].name, hr);
+        ok(type_desc.Type == tests[i].type, "Variable %s, got unexpected type %#x.\n",
+                tests[i].name, type_desc.Type);
+        v_var = var->lpVtbl->AsVector(var);
+        test_vector_methods(v_var, tests[i].type, tests[i].name, tests[i].components);
+        if (tests[i].elements > 1)
+            test_vector_array_methods(v_var, tests[i].type, tests[i].name, tests[i].components, tests[i].elements);
+    }
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -4644,4 +5040,5 @@ START_TEST(effect)
     test_effect_state_groups();
     test_effect_state_group_defaults();
     test_effect_scalar_variable();
+    test_effect_vector_variable();
 }
