@@ -1230,8 +1230,6 @@ static const IMFSampleGrabberSinkCallbackVtbl test_grabber_callback_vtbl =
 static void test_topology_loader(void)
 {
     IMFSampleGrabberSinkCallback test_grabber_callback = { &test_grabber_callback_vtbl };
-    static const WCHAR wavW[] = {'a','u','d','i','o','/','w','a','v',0};
-    static const WCHAR nameW[] = {'t','e','s','t','.','w','a','v',0};
     IMFTopology *topology, *topology2, *full_topology;
     IMFTopologyNode *src_node, *sink_node;
     IMFPresentationDescriptor *pd;
@@ -1271,13 +1269,13 @@ todo_wine
     hr = MFCreateSourceResolver(&resolver);
     ok(hr == S_OK, "Failed to create source resolver, hr %#x.\n", hr);
 
-    filename = load_resource(nameW);
+    filename = load_resource(L"test.wav");
 
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
     ok(hr == S_OK, "Failed to create file stream, hr %#x.\n", hr);
 
     IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attr);
-    IMFAttributes_SetString(attr, &MF_BYTESTREAM_CONTENT_TYPE, wavW);
+    IMFAttributes_SetString(attr, &MF_BYTESTREAM_CONTENT_TYPE, L"audio/wav");
     IMFAttributes_Release(attr);
 
     hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
