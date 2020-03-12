@@ -4740,6 +4740,11 @@ static const struct ID3D10EffectScalarVariableVtbl d3d10_effect_scalar_variable_
 
 /* ID3D10EffectVariable methods */
 
+static inline struct d3d10_effect_variable *impl_from_ID3D10EffectVectorVariable(ID3D10EffectVectorVariable *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_effect_variable, ID3D10EffectVariable_iface);
+}
+
 static BOOL STDMETHODCALLTYPE d3d10_effect_vector_variable_IsValid(ID3D10EffectVectorVariable *iface)
 {
     TRACE("iface %p\n", iface);
@@ -4896,25 +4901,34 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_GetRawValue(ID3D10
 static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_SetBoolVector(ID3D10EffectVectorVariable *iface,
         BOOL *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectVectorVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+    write_variable_to_buffer(effect_var, value, D3D10_SVT_BOOL);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_SetIntVector(ID3D10EffectVectorVariable *iface,
         int *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectVectorVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+    write_variable_to_buffer(effect_var, value, D3D10_SVT_INT);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_SetFloatVector(ID3D10EffectVectorVariable *iface,
         float *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectVectorVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+    write_variable_to_buffer(effect_var, value, D3D10_SVT_FLOAT);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_GetBoolVector(ID3D10EffectVectorVariable *iface,
@@ -4944,25 +4958,34 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_GetFloatVector(ID3
 static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_SetBoolVectorArray(ID3D10EffectVectorVariable *iface,
         BOOL *values, UINT offset, UINT count)
 {
-    FIXME("iface %p, values %p, offset %u, count %u stub!\n", iface, values, offset, count);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectVectorVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, values %p, offset %u, count %u.\n", iface, values, offset, count);
+    write_variable_array_to_buffer(effect_var, values, D3D10_SVT_BOOL, offset, count);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_SetIntVectorArray(ID3D10EffectVectorVariable *iface,
         int *values, UINT offset, UINT count)
 {
-    FIXME("iface %p, values %p, offset %u, count %u stub!\n", iface, values, offset, count);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectVectorVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, values %p, offset %u, count %u.\n", iface, values, offset, count);
+    write_variable_array_to_buffer(effect_var, values, D3D10_SVT_INT, offset, count);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_SetFloatVectorArray(ID3D10EffectVectorVariable *iface,
         float *values, UINT offset, UINT count)
 {
-    FIXME("iface %p, values %p, offset %u, count %u stub!\n", iface, values, offset, count);
+    struct d3d10_effect_variable *effect_var = impl_from_ID3D10EffectVectorVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, values %p, offset %u, count %u.\n", iface, values, offset, count);
+    write_variable_array_to_buffer(effect_var, values, D3D10_SVT_FLOAT, offset, count);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_vector_variable_GetBoolVectorArray(ID3D10EffectVectorVariable *iface,
