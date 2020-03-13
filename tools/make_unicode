@@ -1087,7 +1087,7 @@ sub dump_indic($)
             }
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
         {
             my $type = $3;
             die "unknown indic $type" unless defined $indic_types{$type};
@@ -1110,20 +1110,20 @@ sub dump_indic($)
         next if /^\#/;  # skip comments
         next if /^\s*$/;  # skip empty lines
         next if /\x1a/;  # skip ^Z
-        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*#/)
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*#/)
         {
             my $type = $2;
             die "unknown matra $type" unless defined $matra_types{$type};
-            $indic_table[hex $1] += $matra_types{$type} << 8;
+            $indic_table[hex $1] |= $matra_types{$type} << 8;
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
         {
             my $type = $3;
             die "unknown matra $type" unless defined $matra_types{$type};
             foreach my $i (hex $1 .. hex $2)
             {
-                $indic_table[$i] += $matra_types{$type} << 8;
+                $indic_table[$i] |= $matra_types{$type} << 8;
             }
             next;
         }
@@ -1166,7 +1166,7 @@ sub dump_linebreak($)
             $break_table[hex $1] = $break_types{$type};
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z][0-9A-Z])+\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z][0-9A-Z])+\s*/)
         {
             my $type = $3;
             die "unknown breaktype $type" unless defined $break_types{$type};
@@ -1183,7 +1183,7 @@ sub dump_linebreak($)
             $break_table[hex $1] = $break_types{$type};
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z])+\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z])+\s*/)
         {
             my $type = $3;
             die "unknown breaktype $type" unless defined $break_types{$type};
@@ -1397,7 +1397,7 @@ sub dump_scripts($)
             }
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*/)
         {
             $type = $3;
             if (defined $scripts{$type})
@@ -1591,7 +1591,7 @@ sub dump_vertical($)
             }
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*/)
         {
             my $type = $3;
             die "unknown vertical $type" unless defined $vertical_types{$type};
