@@ -22,10 +22,10 @@
 use strict;
 
 # base URLs for www.unicode.org files
-my $UNIVERSION = "12.1.0";
-my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip";
+my $UNIVERSION = "13.0.0";
+my $UNIDATA  = "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip";
 my $IDNADATA = "https://www.unicode.org/Public/idna/$UNIVERSION";
+my $JISDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS";
 my $REPORTS = "http://www.unicode.org/reports";
 my $MSDATA = "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498";
 my $MSCODEPAGES = "$MSDATA/Windows Supported Code Page Data Files.zip";
@@ -184,7 +184,8 @@ my %matra_types =
     "Top_And_Bottom_And_Right"  => 0x0c,
     "Overstruck"  => 0x0d,
     "Invisible"  => 0x0e,
-    "Bottom_And_Left"  => 0x0f
+    "Bottom_And_Left"  => 0x0f,
+    "Top_And_Bottom_And_Left"  => 0x10,
 );
 
 my %break_types =
@@ -827,7 +828,7 @@ sub dump_eucjp_codepage()
         }
     }
 
-    my $INPUT = open_data_file( $MAPPINGS, "OBSOLETE/EASTASIA/JIS/JIS0208.TXT" );
+    my $INPUT = open_data_file( $JISDATA, "JIS0208.TXT" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -842,7 +843,7 @@ sub dump_eucjp_codepage()
     }
     close $INPUT;
 
-    $INPUT = open_data_file( $MAPPINGS, "OBSOLETE/EASTASIA/JIS/JIS0212.TXT" );
+    $INPUT = open_data_file( $JISDATA, "JIS0212.TXT" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments

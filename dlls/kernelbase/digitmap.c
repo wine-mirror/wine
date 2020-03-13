@@ -1,5 +1,5 @@
 /* Unicode digit folding mappings */
-/* generated from http://www.unicode.org/Public/12.1.0/ucd/UCD.zip:UnicodeData.txt */
+/* generated from https://www.unicode.org/Public/13.0.0/ucd/UCD.zip:UnicodeData.txt */
 /* DO NOT EDIT!! */
 
 #include "windef.h"
