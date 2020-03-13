@@ -127,10 +127,10 @@ HRESULT WINAPI ADsOpenObject(LPCWSTR path, LPCWSTR user, LPCWSTR password, DWORD
     if (!path || !riid || !obj)
         return E_INVALIDARG;
 
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\ADs\\Providers", 0, KEY_READ, &hkey))
-        return E_ADS_BAD_PATHNAME;
+    hr = E_FAIL;
 
-    hr = E_ADS_BAD_PATHNAME;
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\ADs\\Providers", 0, KEY_READ, &hkey))
+        return hr;
 
     for (;;)
     {

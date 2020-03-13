@@ -28,6 +28,7 @@
 #include "objbase.h"
 #include "iads.h"
 #include "adserr.h"
+#include "adshlp.h"
 
 #include "wine/test.h"
 
@@ -97,6 +98,11 @@ static void test_LDAP(void)
         ok(hr == test[i].hr || hr == test[i].hr_ads_open, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
         if (hr == S_OK)
             IDispatch_Release(disp);
+
+        hr = ADsOpenObject(path, user, password, test[i].flags, &IID_IADs, (void **)&ads);
+        ok(hr == test[i].hr || hr == test[i].hr_ads_get, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
+        if (hr == S_OK)
+            IADs_Release(ads);
 
         SysFreeString(path);
         SysFreeString(user);
