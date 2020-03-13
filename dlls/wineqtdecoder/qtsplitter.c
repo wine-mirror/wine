@@ -127,7 +127,6 @@
 #include "wineqtdecoder_classes.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qtsplitter);
-extern CLSID CLSID_QTSplitter;
 
 typedef struct QTOutPin {
     struct strmbase_source pin;
