@@ -36,8 +36,6 @@ typedef struct PassThruImpl {
     LONG ref;
     IUnknown * outer_unk;
     IPin * pin;
-    BOOL bUnkOuterValid;
-    BOOL bAggregatable;
     BOOL renderer;
     CRITICAL_SECTION time_cs;
     BOOL timevalid;
@@ -69,9 +67,6 @@ static HRESULT WINAPI SeekInner_QueryInterface(IUnknown * iface,
 					  LPVOID *ppvObj) {
     PassThruImpl *This = impl_from_IUnknown_inner(iface);
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObj);
-
-    if (This->bAggregatable)
-        This->bUnkOuterValid = TRUE;
 
     if (IsEqualGUID(&IID_IUnknown, riid))
     {
@@ -127,74 +122,25 @@ static const IUnknownVtbl IInner_VTable =
     SeekInner_Release
 };
 
-/* Generic functions for aggregation */
-static HRESULT SeekOuter_QueryInterface(PassThruImpl *This, REFIID riid, LPVOID *ppv)
+static HRESULT WINAPI SeekingPassThru_QueryInterface(ISeekingPassThru *iface, REFIID iid, void **out)
 {
-    if (This->bAggregatable)
-        This->bUnkOuterValid = TRUE;
+    PassThruImpl *passthrough = impl_from_ISeekingPassThru(iface);
 
-    if (This->outer_unk)
-    {
-        if (This->bAggregatable)
-            return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
-
-        if (IsEqualIID(riid, &IID_IUnknown))
-        {
-            HRESULT hr;
-
-            IUnknown_AddRef(&This->IUnknown_inner);
-            hr = IUnknown_QueryInterface(&This->IUnknown_inner, riid, ppv);
-            IUnknown_Release(&This->IUnknown_inner);
-            This->bAggregatable = TRUE;
-            return hr;
-        }
-
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    return IUnknown_QueryInterface(&This->IUnknown_inner, riid, ppv);
-}
-
-static ULONG SeekOuter_AddRef(PassThruImpl *This)
-{
-    if (This->outer_unk && This->bUnkOuterValid)
-        return IUnknown_AddRef(This->outer_unk);
-    return IUnknown_AddRef(&This->IUnknown_inner);
-}
-
-static ULONG SeekOuter_Release(PassThruImpl *This)
-{
-    if (This->outer_unk && This->bUnkOuterValid)
-        return IUnknown_Release(This->outer_unk);
-    return IUnknown_Release(&This->IUnknown_inner);
-}
-
-static HRESULT WINAPI SeekingPassThru_QueryInterface(ISeekingPassThru *iface, REFIID riid, LPVOID *ppvObj)
-{
-    PassThruImpl *This = impl_from_ISeekingPassThru(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
-
-    return SeekOuter_QueryInterface(This, riid, ppvObj);
+    return IUnknown_QueryInterface(passthrough->outer_unk, iid, out);
 }
 
 static ULONG WINAPI SeekingPassThru_AddRef(ISeekingPassThru *iface)
 {
-    PassThruImpl *This = impl_from_ISeekingPassThru(iface);
+    PassThruImpl *passthrough = impl_from_ISeekingPassThru(iface);
 
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return SeekOuter_AddRef(This);
+    return IUnknown_AddRef(passthrough->outer_unk);
 }
 
 static ULONG WINAPI SeekingPassThru_Release(ISeekingPassThru *iface)
 {
-    PassThruImpl *This = impl_from_ISeekingPassThru(iface);
+    PassThruImpl *passthrough = impl_from_ISeekingPassThru(iface);
 
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return SeekOuter_Release(This);
+    return IUnknown_Release(passthrough->outer_unk);
 }
 
 static HRESULT WINAPI SeekingPassThru_Init(ISeekingPassThru *iface, BOOL renderer, IPin *pin)
@@ -246,9 +192,7 @@ HRESULT WINAPI PosPassThru_Construct(IUnknown *pUnkOuter, LPVOID *ppPassThru)
     if (!fimpl)
         return E_OUTOFMEMORY;
 
-    fimpl->outer_unk = pUnkOuter;
-    fimpl->bUnkOuterValid = FALSE;
-    fimpl->bAggregatable = FALSE;
+    fimpl->outer_unk = pUnkOuter ? pUnkOuter : &fimpl->IUnknown_inner;
     fimpl->IUnknown_inner.lpVtbl = &IInner_VTable;
     fimpl->ISeekingPassThru_iface.lpVtbl = &ISeekingPassThru_Vtbl;
     fimpl->IMediaSeeking_iface.lpVtbl = &IMediaSeekingPassThru_Vtbl;
@@ -261,31 +205,25 @@ HRESULT WINAPI PosPassThru_Construct(IUnknown *pUnkOuter, LPVOID *ppPassThru)
     return S_OK;
 }
 
-static HRESULT WINAPI MediaSeekingPassThru_QueryInterface(IMediaSeeking *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI MediaSeekingPassThru_QueryInterface(IMediaSeeking *iface, REFIID iid, void **out)
 {
-    PassThruImpl *This = impl_from_IMediaSeeking(iface);
+    PassThruImpl *passthrough = impl_from_IMediaSeeking(iface);
 
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
-
-    return SeekOuter_QueryInterface(This, riid, ppvObj);
+    return IUnknown_QueryInterface(passthrough->outer_unk, iid, out);
 }
 
 static ULONG WINAPI MediaSeekingPassThru_AddRef(IMediaSeeking *iface)
 {
-    PassThruImpl *This = impl_from_IMediaSeeking(iface);
+    PassThruImpl *passthrough = impl_from_IMediaSeeking(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
-
-    return SeekOuter_AddRef(This);
+    return IUnknown_AddRef(passthrough->outer_unk);
 }
 
 static ULONG WINAPI MediaSeekingPassThru_Release(IMediaSeeking *iface)
 {
-    PassThruImpl *This = impl_from_IMediaSeeking(iface);
+    PassThruImpl *passthrough = impl_from_IMediaSeeking(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
-
-    return SeekOuter_Release(This);
+    return IUnknown_Release(passthrough->outer_unk);
 }
 
 static HRESULT get_connected(PassThruImpl *This, REFIID riid, LPVOID *ppvObj) {
@@ -644,31 +582,25 @@ static const IMediaSeekingVtbl IMediaSeekingPassThru_Vtbl =
     MediaSeekingPassThru_GetPreroll
 };
 
-static HRESULT WINAPI MediaPositionPassThru_QueryInterface(IMediaPosition *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI MediaPositionPassThru_QueryInterface(IMediaPosition *iface, REFIID iid, void **out)
 {
-    PassThruImpl *This = impl_from_IMediaPosition(iface);
+    PassThruImpl *passthrough = impl_from_IMediaPosition(iface);
 
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
-
-    return SeekOuter_QueryInterface(This, riid, ppvObj);
+    return IUnknown_QueryInterface(passthrough->outer_unk, iid, out);
 }
 
 static ULONG WINAPI MediaPositionPassThru_AddRef(IMediaPosition *iface)
 {
-    PassThruImpl *This = impl_from_IMediaPosition(iface);
+    PassThruImpl *passthrough = impl_from_IMediaPosition(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
-
-    return SeekOuter_AddRef(This);
+    return IUnknown_AddRef(passthrough->outer_unk);
 }
 
 static ULONG WINAPI MediaPositionPassThru_Release(IMediaPosition *iface)
 {
-    PassThruImpl *This = impl_from_IMediaPosition(iface);
+    PassThruImpl *passthrough = impl_from_IMediaPosition(iface);
 
-    TRACE("(%p/%p)->()\n", iface, This);
-
-    return SeekOuter_Release(This);
+    return IUnknown_Release(passthrough->outer_unk);
 }
 
 static HRESULT WINAPI MediaPositionPassThru_GetTypeInfoCount(IMediaPosition *iface, UINT *count)

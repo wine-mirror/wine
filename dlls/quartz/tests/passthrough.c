@@ -103,7 +103,7 @@ static void test_aggregation(void)
 
     hr = ISeekingPassThru_QueryInterface(passthrough, &IID_IUnknown, (void **)&unk2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = ISeekingPassThru_QueryInterface(passthrough, &IID_ISeekingPassThru, (void **)&passthrough2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -119,8 +119,8 @@ static void test_aggregation(void)
 
     ISeekingPassThru_Release(passthrough);
     ref = IUnknown_Release(unk);
-    todo_wine ok(!ref, "Got unexpected refcount %d.\n", ref);
-    todo_wine ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
 
 START_TEST(passthrough)
