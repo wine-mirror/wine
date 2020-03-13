@@ -115,6 +115,7 @@ struct topo_node
     struct list entry;
     MF_TOPOLOGY_TYPE type;
     TOPOID node_id;
+    IMFTopologyNode *node;
     enum object_state state;
     union
     {
@@ -129,8 +130,12 @@ struct topo_node
         struct
         {
             IMFMediaSource *source;
-            DWORD stream_id;
+            unsigned int stream_id;
         } source;
+        struct
+        {
+            unsigned int requests;
+        } sink;
     } u;
 };
 
@@ -624,6 +629,8 @@ static void release_topo_node(struct topo_node *node)
 
     if (node->object.object)
         IUnknown_Release(node->object.object);
+    if (node->node)
+        IMFTopologyNode_Release(node->node);
     heap_free(node);
 }
 
@@ -951,6 +958,8 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
 
     IMFTopologyNode_GetNodeType(node, &topo_node->type);
     IMFTopologyNode_GetTopoNodeID(node, &topo_node->node_id);
+    topo_node->node = node;
+    IMFTopologyNode_AddRef(topo_node->node);
 
     switch (topo_node->type)
     {
@@ -2055,6 +2064,145 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
     }
 }
 
+static struct topo_node *session_get_node_by_id(struct media_session *session, TOPOID id)
+{
+    struct topo_node *node;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->node_id == id)
+            return node;
+    }
+
+    return NULL;
+}
+
+static HRESULT session_request_sample_from_node(struct media_session *session, IMFTopologyNode *upstream_node,
+        DWORD upsteam_output)
+{
+    MF_TOPOLOGY_TYPE upstream_type;
+    struct topo_node *node;
+    TOPOID upstream_id;
+    HRESULT hr;
+
+    IMFTopologyNode_GetNodeType(upstream_node, &upstream_type);
+    IMFTopologyNode_GetTopoNodeID(upstream_node, &upstream_id);
+
+    node = session_get_node_by_id(session, upstream_id);
+
+    switch (upstream_type)
+    {
+        case MF_TOPOLOGY_SOURCESTREAM_NODE:
+            if (FAILED(hr = IMFMediaStream_RequestSample(node->object.source_stream, NULL)))
+                WARN("Sample request failed, hr %#x.\n", hr);
+            break;
+        case MF_TOPOLOGY_TRANSFORM_NODE:
+        case MF_TOPOLOGY_TEE_NODE:
+            FIXME("Unhandled upstream node type %d.\n", upstream_type);
+        default:
+            hr = E_UNEXPECTED;
+    }
+
+    return hr;
+}
+
+static void session_request_sample(struct media_session *session, IMFStreamSink *sink_stream)
+{
+    struct topo_node *sink_node = NULL, *node;
+    IMFTopologyNode *upstream_node;
+    DWORD upstream_output;
+    HRESULT hr;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->type == MF_TOPOLOGY_OUTPUT_NODE && node->object.sink_stream == sink_stream)
+        {
+            sink_node = node;
+            break;
+        }
+    }
+
+    if (!sink_node)
+        return;
+
+    if (FAILED(hr = IMFTopologyNode_GetInput(sink_node->node, 0, &upstream_node, &upstream_output)))
+    {
+        WARN("Failed to get upstream node connection, hr %#x.\n", hr);
+        return;
+    }
+
+    if (SUCCEEDED(session_request_sample_from_node(session, upstream_node, upstream_output)))
+        sink_node->u.sink.requests++;
+    IMFTopologyNode_Release(upstream_node);
+}
+
+static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *downstream_node,
+        DWORD downstream_input, IMFSample *sample)
+{
+    MF_TOPOLOGY_TYPE downstream_type;
+    struct topo_node *node;
+    TOPOID downstream_id;
+    HRESULT hr;
+
+    IMFTopologyNode_GetNodeType(downstream_node, &downstream_type);
+    IMFTopologyNode_GetTopoNodeID(downstream_node, &downstream_id);
+
+    node = session_get_node_by_id(session, downstream_id);
+
+    switch (downstream_type)
+    {
+        case MF_TOPOLOGY_OUTPUT_NODE:
+            if (node->u.sink.requests)
+            {
+                if (FAILED(hr = IMFStreamSink_ProcessSample(node->object.sink_stream, sample)))
+                    WARN("Sample delivery failed, hr %#x.\n", hr);
+                node->u.sink.requests--;
+            }
+            break;
+        case MF_TOPOLOGY_TRANSFORM_NODE:
+        case MF_TOPOLOGY_TEE_NODE:
+            FIXME("Unhandled downstream node type %d.\n", downstream_type);
+            break;
+        default:
+            ;
+    }
+}
+
+static void session_deliver_sample(struct media_session *session, IMFMediaStream *stream, const PROPVARIANT *value)
+{
+    struct topo_node *source_node = NULL, *node;
+    IMFTopologyNode *downstream_node;
+    DWORD downstream_input;
+    HRESULT hr;
+
+    if (value->vt != VT_UNKNOWN || !value->punkVal)
+    {
+        WARN("Unexpected value type %d.\n", value->vt);
+        return;
+    }
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->type == MF_TOPOLOGY_SOURCESTREAM_NODE && node->object.source_stream == stream)
+        {
+            source_node = node;
+            break;
+        }
+    }
+
+    if (!source_node)
+        return;
+
+    if (FAILED(hr = IMFTopologyNode_GetOutput(source_node->node, 0, &downstream_node, &downstream_input)))
+    {
+        WARN("Failed to get downstream node connection, hr %#x.\n", hr);
+        return;
+    }
+
+    session_deliver_sample_to_node(session, downstream_node, downstream_input, (IMFSample *)value->punkVal);
+    IMFTopologyNode_Release(downstream_node);
+}
+
 static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_session *session = impl_from_events_callback_IMFAsyncCallback(iface);
@@ -2131,6 +2279,18 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             LeaveCriticalSection(&session->cs);
 
             break;
+        case MEStreamSinkRequestSample:
+
+            EnterCriticalSection(&session->cs);
+            session_request_sample(session, (IMFStreamSink *)event_source);
+            LeaveCriticalSection(&session->cs);
+            break;
+
+        case MEMediaSample:
+
+            EnterCriticalSection(&session->cs);
+            session_deliver_sample(session, (IMFMediaStream *)event_source, &value);
+            LeaveCriticalSection(&session->cs);
         default:
             ;
     }
