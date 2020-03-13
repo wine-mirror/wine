@@ -150,6 +150,17 @@ static void test_topology(void)
 
     IMFTopology_Release(topology2);
 
+    /* No attributes by default. */
+    for (node_type = MF_TOPOLOGY_OUTPUT_NODE; node_type < MF_TOPOLOGY_TEE_NODE; ++node_type)
+    {
+        hr = MFCreateTopologyNode(node_type, &node);
+        ok(hr == S_OK, "Failed to create a node for type %d, hr %#x.\n", node_type, hr);
+        hr = IMFTopologyNode_GetCount(node, &count);
+        ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+        ok(!count, "Unexpected attribute count %u.\n", count);
+        IMFTopologyNode_Release(node);
+    }
+
     hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
