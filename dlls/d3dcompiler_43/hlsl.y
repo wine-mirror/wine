@@ -129,15 +129,7 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
     BOOL ret;
 
     TRACE("Declaring variable %s.\n", decl->name);
-    if (decl->data_type->type == HLSL_CLASS_MATRIX)
-    {
-        if (!(decl->modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)))
-        {
-            decl->modifiers |= hlsl_ctx.matrix_majority == HLSL_ROW_MAJOR
-                    ? HLSL_MODIFIER_ROW_MAJOR : HLSL_MODIFIER_COLUMN_MAJOR;
-        }
-    }
-    else
+    if (decl->data_type->type != HLSL_CLASS_MATRIX)
         check_invalid_matrix_modifiers(decl->modifiers, decl->loc);
 
     if (local)
