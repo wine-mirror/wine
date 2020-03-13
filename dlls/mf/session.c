@@ -1827,6 +1827,12 @@ static HRESULT session_start_clock(struct media_session *session)
     struct topo_node *node;
     HRESULT hr;
 
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->type == MF_TOPOLOGY_TRANSFORM_NODE)
+            IMFTransform_ProcessMessage(node->object.transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    }
+
     if (!(session->presentation.flags & SESSION_FLAG_SINKS_SUBSCRIBED))
     {
         LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
@@ -1968,8 +1974,17 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
 
             LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
             {
-                if (node->type == MF_TOPOLOGY_OUTPUT_NODE)
-                    IMFStreamSink_Flush(node->object.sink_stream);
+                switch (node->type)
+                {
+                    case MF_TOPOLOGY_OUTPUT_NODE:
+                        IMFStreamSink_Flush(node->object.sink_stream);
+                        break;
+                    case MF_TOPOLOGY_TRANSFORM_NODE:
+                        IMFTransform_ProcessMessage(node->object.transform, MFT_MESSAGE_COMMAND_FLUSH, 0);
+                        break;
+                    default:
+                        ;
+                }
             }
 
             session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
