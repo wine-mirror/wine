@@ -168,7 +168,21 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
     return TRUE;
 }
 
-static DWORD add_modifier(DWORD modifiers, DWORD mod, const struct YYLTYPE *loc);
+static DWORD add_modifiers(DWORD modifiers, DWORD mod, const struct source_location loc)
+{
+    if (modifiers & mod)
+    {
+        hlsl_report_message(loc, HLSL_LEVEL_ERROR, "modifier '%s' already specified", debug_modifiers(mod));
+        return modifiers;
+    }
+    if (mod & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
+            && modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR))
+    {
+        hlsl_report_message(loc, HLSL_LEVEL_ERROR, "more than one matrix majority keyword");
+        return modifiers;
+    }
+    return modifiers | mod;
+}
 
 static BOOL add_type_to_scope(struct hlsl_scope *scope, struct hlsl_type *def)
 {
@@ -602,7 +616,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
             local = FALSE;
         }
 
-        if (var->modifiers & HLSL_MODIFIER_CONST && !(var->modifiers & HLSL_STORAGE_UNIFORM) && !v->initializer.args_count)
+        if (type->modifiers & HLSL_MODIFIER_CONST && !(var->modifiers & HLSL_STORAGE_UNIFORM) && !v->initializer.args_count)
         {
             hlsl_report_message(v->loc, HLSL_LEVEL_ERROR, "const variable without initializer");
             free_declaration(var);
@@ -701,6 +715,21 @@ static BOOL add_struct_field(struct list *fields, struct hlsl_struct_field *fiel
     }
     list_add_tail(fields, &field->entry);
     return TRUE;
+}
+
+static struct hlsl_type *apply_type_modifiers(struct hlsl_type *type, DWORD *modifiers, struct source_location loc)
+{
+    struct hlsl_type *new_type;
+
+    if (!(*modifiers & HLSL_TYPE_MODIFIERS_MASK))
+        return type;
+
+    if (!(new_type = clone_hlsl_type(type)))
+        return NULL;
+
+    new_type->modifiers = add_modifiers(new_type->modifiers, *modifiers, loc);
+    *modifiers &= ~HLSL_TYPE_MODIFIERS_MASK;
+    return new_type;
 }
 
 static struct list *gen_struct_fields(struct hlsl_type *type, DWORD modifiers, struct list *fields)
@@ -1301,7 +1330,12 @@ fields_list:              /* Empty */
 
 field:                    var_modifiers type variables_def ';'
                             {
-                                $$ = gen_struct_fields($2, $1, $3);
+                                struct hlsl_type *type;
+                                DWORD modifiers = $1;
+
+                                if (!(type = apply_type_modifiers($2, &modifiers, get_location(&@1))))
+                                    YYABORT;
+                                $$ = gen_struct_fields(type, modifiers, $3);
                             }
                         | unnamed_struct_spec variables_def ';'
                             {
@@ -1449,9 +1483,15 @@ param_list:               parameter
 
 parameter:                input_mods var_modifiers type any_identifier colon_attribute
                             {
+                                struct hlsl_type *type;
+                                DWORD modifiers = $2;
+
+                                if (!(type = apply_type_modifiers($3, &modifiers, get_location(&@2))))
+                                    YYABORT;
+
                                 $$.modifiers = $1 ? $1 : HLSL_MODIFIER_IN;
-                                $$.modifiers |= $2;
-                                $$.type = $3;
+                                $$.modifiers |= modifiers;
+                                $$.type = type;
                                 $$.name = $4;
                                 $$.semantic = $5.semantic;
                                 $$.reg_reservation = $5.reg_reservation;
@@ -1639,7 +1679,12 @@ type_spec:                any_identifier array
 
 declaration:              var_modifiers type variables_def ';'
                             {
-                                $$ = declare_vars($2, $1, $3);
+                                struct hlsl_type *type;
+                                DWORD modifiers = $1;
+
+                                if (!(type = apply_type_modifiers($2, &modifiers, get_location(&@1))))
+                                    YYABORT;
+                                $$ = declare_vars(type, modifiers, $3);
                             }
 
 variables_def_optional:   /* Empty */
@@ -1717,47 +1762,47 @@ var_modifiers:            /* Empty */
                             }
                         | KW_EXTERN var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_EXTERN, &@1);
+                                $$ = add_modifiers($2, HLSL_STORAGE_EXTERN, get_location(&@1));
                             }
                         | KW_NOINTERPOLATION var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_NOINTERPOLATION, &@1);
+                                $$ = add_modifiers($2, HLSL_STORAGE_NOINTERPOLATION, get_location(&@1));
                             }
                         | KW_PRECISE var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_MODIFIER_PRECISE, &@1);
+                                $$ = add_modifiers($2, HLSL_MODIFIER_PRECISE, get_location(&@1));
                             }
                         | KW_SHARED var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_SHARED, &@1);
+                                $$ = add_modifiers($2, HLSL_STORAGE_SHARED, get_location(&@1));
                             }
                         | KW_GROUPSHARED var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_GROUPSHARED, &@1);
+                                $$ = add_modifiers($2, HLSL_STORAGE_GROUPSHARED, get_location(&@1));
                             }
                         | KW_STATIC var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_STATIC, &@1);
+                                $$ = add_modifiers($2, HLSL_STORAGE_STATIC, get_location(&@1));
                             }
                         | KW_UNIFORM var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_UNIFORM, &@1);
+                                $$ = add_modifiers($2, HLSL_STORAGE_UNIFORM, get_location(&@1));
                             }
                         | KW_VOLATILE var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_STORAGE_VOLATILE, &@1);
+                                $$ = add_modifiers($2, HLSL_STORAGE_VOLATILE, get_location(&@1));
                             }
                         | KW_CONST var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_MODIFIER_CONST, &@1);
+                                $$ = add_modifiers($2, HLSL_MODIFIER_CONST, get_location(&@1));
                             }
                         | KW_ROW_MAJOR var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_MODIFIER_ROW_MAJOR, &@1);
+                                $$ = add_modifiers($2, HLSL_MODIFIER_ROW_MAJOR, get_location(&@1));
                             }
                         | KW_COLUMN_MAJOR var_modifiers
                             {
-                                $$ = add_modifier($2, HLSL_MODIFIER_COLUMN_MAJOR, &@1);
+                                $$ = add_modifiers($2, HLSL_MODIFIER_COLUMN_MAJOR, get_location(&@1));
                             }
 
 complex_initializer:      initializer_expr
@@ -2484,23 +2529,6 @@ static struct source_location get_location(const struct YYLTYPE *l)
         .col = l->first_column,
     };
     return loc;
-}
-
-static DWORD add_modifier(DWORD modifiers, DWORD mod, const struct YYLTYPE *l)
-{
-    if (modifiers & mod)
-    {
-        hlsl_report_message(get_location(l), HLSL_LEVEL_ERROR,
-                "modifier '%s' already specified", debug_modifiers(mod));
-        return modifiers;
-    }
-    if (mod & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
-            && modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR))
-    {
-        hlsl_report_message(get_location(l), HLSL_LEVEL_ERROR, "more than one matrix majority keyword");
-        return modifiers;
-    }
-    return modifiers | mod;
 }
 
 static void dump_function_decl(struct wine_rb_entry *entry, void *context)
