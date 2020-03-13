@@ -310,10 +310,11 @@ static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapch
     return TRUE;
 }
 
-void d3dcaps_from_wined3dcaps(D3DCAPS8 *caps, const struct wined3d_caps *wined3d_caps)
+void d3dcaps_from_wined3dcaps(D3DCAPS8 *caps, const struct wined3d_caps *wined3d_caps,
+        unsigned int adapter_ordinal)
 {
     caps->DeviceType                = (D3DDEVTYPE)wined3d_caps->DeviceType;
-    caps->AdapterOrdinal            = wined3d_caps->AdapterOrdinal;
+    caps->AdapterOrdinal            = adapter_ordinal;
     caps->Caps                      = wined3d_caps->Caps;
     caps->Caps2                     = wined3d_caps->Caps2;
     caps->Caps3                     = wined3d_caps->Caps3;
@@ -689,7 +690,7 @@ static HRESULT WINAPI d3d8_device_GetDeviceCaps(IDirect3DDevice8 *iface, D3DCAPS
     hr = wined3d_device_get_device_caps(device->wined3d_device, &wined3d_caps);
     wined3d_mutex_unlock();
 
-    d3dcaps_from_wined3dcaps(caps, &wined3d_caps);
+    d3dcaps_from_wined3dcaps(caps, &wined3d_caps, device->adapter_ordinal);
 
     return hr;
 }
@@ -3678,6 +3679,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
 
     device->IDirect3DDevice8_iface.lpVtbl = &d3d8_device_vtbl;
     device->device_parent.ops = &d3d8_wined3d_device_parent_ops;
+    device->adapter_ordinal = adapter;
     device->ref = 1;
     if (!(device->handle_table.entries = heap_alloc_zero(D3D8_INITIAL_HANDLE_TABLE_SIZE
             * sizeof(*device->handle_table.entries))))

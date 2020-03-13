@@ -51,7 +51,8 @@
 
 extern const struct wined3d_parent_ops d3d8_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
-void d3dcaps_from_wined3dcaps(D3DCAPS8 *caps, const struct wined3d_caps *wined3d_caps) DECLSPEC_HIDDEN;
+void d3dcaps_from_wined3dcaps(D3DCAPS8 *caps, const struct wined3d_caps *wined3d_caps,
+        unsigned int adapter_ordinal) DECLSPEC_HIDDEN;
 
 struct d3d8
 {
@@ -113,6 +114,7 @@ struct d3d8_device
     struct wined3d_device_parent device_parent;
     LONG                    ref;
     struct wined3d_device  *wined3d_device;
+    unsigned int            adapter_ordinal;
     IDirect3D8             *d3d_parent;
     struct                  d3d8_handle_table handle_table;
 
