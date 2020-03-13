@@ -259,10 +259,7 @@ void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_context *co
     context_invalidate_state(context, STATE_FRAMEBUFFER);
 
     gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE));
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1));
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2));
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3));
+    context_invalidate_state(context, STATE_BLEND);
 
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
     context_invalidate_state(context, STATE_RASTERIZER);

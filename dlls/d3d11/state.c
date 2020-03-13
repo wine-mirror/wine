@@ -344,10 +344,6 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
             tmp_desc.RenderTarget[i].BlendOpAlpha = D3D11_BLEND_OP_ADD;
         }
         tmp_desc.RenderTarget[i].RenderTargetWriteMask = desc->RenderTarget[j].RenderTargetWriteMask;
-
-        if (i > 3 && tmp_desc.RenderTarget[i].RenderTargetWriteMask != D3D11_COLOR_WRITE_ENABLE_ALL)
-            FIXME("Color mask %#x not supported for render target %u.\n",
-                    tmp_desc.RenderTarget[i].RenderTargetWriteMask, i);
     }
 
     wined3d_mutex_lock();
@@ -395,6 +391,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
         wined3d_desc.rt[i].src_alpha = desc->RenderTarget[i].SrcBlendAlpha;
         wined3d_desc.rt[i].dst_alpha = desc->RenderTarget[i].DestBlendAlpha;
         wined3d_desc.rt[i].op_alpha = desc->RenderTarget[i].BlendOpAlpha;
+        wined3d_desc.rt[i].writemask = desc->RenderTarget[i].RenderTargetWriteMask;
     }
 
     /* We cannot fail after creating a wined3d_blend_state object. It

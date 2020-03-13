@@ -707,7 +707,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11Devi
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
     static const float default_blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
     struct d3d_blend_state *blend_state_impl;
-    const D3D11_BLEND_DESC *desc;
 
     TRACE("iface %p, blend_state %p, blend_factor %s, sample_mask 0x%08x.\n",
             iface, blend_state, debug_float4(blend_factor), sample_mask);
@@ -718,32 +717,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11Devi
     wined3d_mutex_lock();
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEMASK, sample_mask);
     if (!(blend_state_impl = unsafe_impl_from_ID3D11BlendState(blend_state)))
-    {
         wined3d_device_set_blend_state(device->wined3d_device, NULL,
                 (const struct wined3d_color *)blend_factor);
-        wined3d_device_set_render_state(device->wined3d_device,
-                WINED3D_RS_COLORWRITEENABLE, D3D11_COLOR_WRITE_ENABLE_ALL);
-        wined3d_device_set_render_state(device->wined3d_device,
-                WINED3D_RS_COLORWRITEENABLE1, D3D11_COLOR_WRITE_ENABLE_ALL);
-        wined3d_device_set_render_state(device->wined3d_device,
-                WINED3D_RS_COLORWRITEENABLE2, D3D11_COLOR_WRITE_ENABLE_ALL);
-        wined3d_device_set_render_state(device->wined3d_device,
-                WINED3D_RS_COLORWRITEENABLE3, D3D11_COLOR_WRITE_ENABLE_ALL);
-        wined3d_mutex_unlock();
-        return;
-    }
-
-    wined3d_device_set_blend_state(device->wined3d_device, blend_state_impl->wined3d_state,
-            (const struct wined3d_color *)blend_factor);
-    desc = &blend_state_impl->desc;
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_COLORWRITEENABLE, desc->RenderTarget[0].RenderTargetWriteMask);
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_COLORWRITEENABLE1, desc->RenderTarget[1].RenderTargetWriteMask);
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_COLORWRITEENABLE2, desc->RenderTarget[2].RenderTargetWriteMask);
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_COLORWRITEENABLE3, desc->RenderTarget[3].RenderTargetWriteMask);
+    else
+        wined3d_device_set_blend_state(device->wined3d_device, blend_state_impl->wined3d_state,
+                (const struct wined3d_color *)blend_factor);
     wined3d_mutex_unlock();
 }
 

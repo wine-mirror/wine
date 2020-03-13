@@ -2040,6 +2040,7 @@ struct wined3d_blend_state_desc
         enum wined3d_blend src_alpha;
         enum wined3d_blend dst_alpha;
         enum wined3d_blend_op op_alpha;
+        unsigned int writemask;
     } rt[WINED3D_MAX_RENDER_TARGETS];
 };
 

@@ -437,10 +437,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         }
 
         gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE));
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1));
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2));
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3));
+        context_invalidate_state(context, STATE_BLEND);
         gl_info->gl_ops.gl.p_glClearColor(color->r, color->g, color->b, color->a);
         checkGLcall("glClearColor");
         clear_mask = clear_mask | GL_COLOR_BUFFER_BIT;
@@ -3589,6 +3586,10 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_SRCBLENDALPHA:
                 case WINED3D_RS_DESTBLENDALPHA:
                 case WINED3D_RS_BLENDOPALPHA:
+                case WINED3D_RS_COLORWRITEENABLE:
+                case WINED3D_RS_COLORWRITEENABLE1:
+                case WINED3D_RS_COLORWRITEENABLE2:
+                case WINED3D_RS_COLORWRITEENABLE3:
                     set_blend_state = TRUE;
                     break;
 
@@ -3675,6 +3676,26 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             desc.rt[0].src_alpha = state->rs[WINED3D_RS_SRCBLEND];
             desc.rt[0].dst_alpha = state->rs[WINED3D_RS_DESTBLEND];
             desc.rt[0].op_alpha = state->rs[WINED3D_RS_BLENDOP];
+        }
+        desc.rt[0].writemask = state->rs[WINED3D_RS_COLORWRITEENABLE];
+        desc.rt[1].writemask = state->rs[WINED3D_RS_COLORWRITEENABLE1];
+        desc.rt[2].writemask = state->rs[WINED3D_RS_COLORWRITEENABLE2];
+        desc.rt[3].writemask = state->rs[WINED3D_RS_COLORWRITEENABLE3];
+        if (desc.rt[1].writemask != desc.rt[0].writemask
+                || desc.rt[2].writemask != desc.rt[0].writemask
+                || desc.rt[3].writemask != desc.rt[0].writemask)
+        {
+            desc.independent = TRUE;
+            for (i = 1; i < 4; ++i)
+            {
+                desc.rt[i].enable = desc.rt[0].enable;
+                desc.rt[i].src = desc.rt[0].src;
+                desc.rt[i].dst = desc.rt[0].dst;
+                desc.rt[i].op = desc.rt[0].op;
+                desc.rt[i].src_alpha = desc.rt[0].src_alpha;
+                desc.rt[i].dst_alpha = desc.rt[0].dst_alpha;
+                desc.rt[i].op_alpha = desc.rt[0].op_alpha;
+            }
         }
 
         if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_BLENDFACTOR))

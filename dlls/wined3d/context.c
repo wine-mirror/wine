@@ -3148,6 +3148,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZENABLE));
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
+    gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     context_invalidate_state(context, STATE_BLEND);
     gl_info->gl_ops.gl.p_glDisable(GL_CULL_FACE);
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
@@ -3164,11 +3165,6 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
         gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
     }
-    gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE));
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1));
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2));
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3));
 
     context->last_was_rhw = TRUE;
     context_invalidate_state(context, STATE_VDECL); /* because of last_was_rhw = TRUE */
@@ -5158,7 +5154,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         if (!(rtv = fb->render_targets[i]) || rtv->format->id == WINED3DFMT_NULL)
             continue;
 
-        if (state->render_states[WINED3D_RS_COLORWRITEENABLE])
+        if (!state->blend_state || state->blend_state->desc.rt[0].writemask)
         {
             wined3d_rendertarget_view_load_location(rtv, context, rtv->resource->draw_binding);
             wined3d_rendertarget_view_invalidate_location(rtv, ~rtv->resource->draw_binding);
