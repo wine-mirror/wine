@@ -423,11 +423,7 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
                          LPVOID lpExclude, LPVOID lpReserved)
 {
     UNICODE_STRING nt_replaced_name, nt_replacement_name;
-    ANSI_STRING unix_replaced_name, unix_replacement_name, unix_backup_name;
-    HANDLE hReplaced = NULL, hReplacement = NULL, hBackup = NULL;
-    DWORD error = ERROR_SUCCESS;
-    UINT replaced_flags;
-    BOOL ret = FALSE;
+    HANDLE hReplacement = NULL;
     NTSTATUS status;
     IO_STATUS_BLOCK io;
     OBJECT_ATTRIBUTES attr;
@@ -447,10 +443,6 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
         return FALSE;
     }
 
-    unix_replaced_name.Buffer = NULL;
-    unix_replacement_name.Buffer = NULL;
-    unix_backup_name.Buffer = NULL;
-
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.Attributes = OBJ_CASE_INSENSITIVE;
@@ -461,39 +453,21 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
     /* Open the "replaced" file for reading */
     if (!(RtlDosPathNameToNtPathName_U(lpReplacedFileName, &nt_replaced_name, NULL, NULL)))
     {
-        error = ERROR_PATH_NOT_FOUND;
-        goto fail;
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
     }
-    replaced_flags = lpBackupFileName ? FILE_OPEN : FILE_OPEN_IF;
     attr.ObjectName = &nt_replaced_name;
-    status = NtOpenFile(&hReplaced, GENERIC_READ|DELETE|SYNCHRONIZE,
-                        &attr, &io,
-                        FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                        FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE);
-    if (status == STATUS_SUCCESS)
-        status = wine_nt_to_unix_file_name(&nt_replaced_name, &unix_replaced_name, replaced_flags, FALSE);
-    RtlFreeUnicodeString(&nt_replaced_name);
-    if (status != STATUS_SUCCESS)
-    {
-        if (status == STATUS_OBJECT_NAME_NOT_FOUND)
-            error = ERROR_FILE_NOT_FOUND;
-        else
-            error = ERROR_UNABLE_TO_REMOVE_REPLACED;
-        goto fail;
-    }
 
     /* Replacement should fail if replaced is READ_ONLY */
-    status = NtQueryInformationFile(hReplaced, &io, &info, sizeof(info), FileBasicInformation);
+    status = NtQueryAttributesFile(&attr, &info);
+    RtlFreeUnicodeString(&nt_replaced_name);
     if (status != STATUS_SUCCESS)
-    {
-        error = RtlNtStatusToDosError(status);
-        goto fail;
-    }
+        return set_ntstatus( status );
 
     if (info.FileAttributes & FILE_ATTRIBUTE_READONLY)
     {
-        error = ERROR_ACCESS_DENIED;
-        goto fail;
+        SetLastError( ERROR_ACCESS_DENIED );
+        return FALSE;
     }
 
     /*
@@ -502,65 +476,41 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
      */
     if (!(RtlDosPathNameToNtPathName_U(lpReplacementFileName, &nt_replacement_name, NULL, NULL)))
     {
-        error = ERROR_PATH_NOT_FOUND;
-        goto fail;
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
     }
     attr.ObjectName = &nt_replacement_name;
     status = NtOpenFile(&hReplacement,
                         GENERIC_READ|GENERIC_WRITE|DELETE|WRITE_DAC|SYNCHRONIZE,
                         &attr, &io, 0,
                         FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE);
-    if (status == STATUS_SUCCESS)
-        status = wine_nt_to_unix_file_name(&nt_replacement_name, &unix_replacement_name, FILE_OPEN, FALSE);
     RtlFreeUnicodeString(&nt_replacement_name);
     if (status != STATUS_SUCCESS)
-    {
-        error = RtlNtStatusToDosError(status);
-        goto fail;
-    }
+        return set_ntstatus( status );
+    NtClose( hReplacement );
 
     /* If the user wants a backup then that needs to be performed first */
     if (lpBackupFileName)
     {
-        UNICODE_STRING nt_backup_name;
-        FILE_BASIC_INFORMATION replaced_info;
+        if (!MoveFileExW( lpReplacedFileName, lpBackupFileName, MOVEFILE_REPLACE_EXISTING ))
+            return FALSE;
+    }
+    else
+    {
+        /* ReplaceFile() can replace an open target. To do this, we need to move
+         * it out of the way first. */
+        static const WCHAR prefixW[] = {'r','f',0};
+        WCHAR temp_path[MAX_PATH], temp_file[MAX_PATH];
 
-        /* Obtain the file attributes from the "replaced" file */
-        status = NtQueryInformationFile(hReplaced, &io, &replaced_info,
-                                        sizeof(replaced_info),
-                                        FileBasicInformation);
-        if (status != STATUS_SUCCESS)
-        {
-            error = RtlNtStatusToDosError(status);
-            goto fail;
-        }
+        if (!GetTempPathW( ARRAY_SIZE(temp_path), temp_path )
+                || !GetTempFileNameW( temp_path, prefixW, 0, temp_file )
+                || !MoveFileExW( lpReplacedFileName, temp_file, MOVEFILE_REPLACE_EXISTING ))
+            return FALSE;
 
-        if (!(RtlDosPathNameToNtPathName_U(lpBackupFileName, &nt_backup_name, NULL, NULL)))
+        if (!DeleteFileW( temp_file ))
         {
-            error = ERROR_PATH_NOT_FOUND;
-            goto fail;
-        }
-        attr.ObjectName = &nt_backup_name;
-        /* Open the backup with permissions to write over it */
-        status = NtCreateFile(&hBackup, GENERIC_WRITE | SYNCHRONIZE,
-                              &attr, &io, NULL, replaced_info.FileAttributes,
-                              FILE_SHARE_WRITE, FILE_OPEN_IF,
-                              FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE,
-                              NULL, 0);
-        if (status == STATUS_SUCCESS)
-            status = wine_nt_to_unix_file_name(&nt_backup_name, &unix_backup_name, FILE_OPEN_IF, FALSE);
-        RtlFreeUnicodeString(&nt_backup_name);
-        if (status != STATUS_SUCCESS)
-        {
-            error = RtlNtStatusToDosError(status);
-            goto fail;
-        }
-
-        /* If an existing backup exists then copy over it */
-        if (rename(unix_replaced_name.Buffer, unix_backup_name.Buffer) == -1)
-        {
-            error = ERROR_UNABLE_TO_REMOVE_REPLACED; /* is this correct? */
-            goto fail;
+            SetLastError( ERROR_UNABLE_TO_REMOVE_REPLACED );
+            return FALSE;
         }
     }
 
@@ -568,37 +518,17 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
      * Now that the backup has been performed (if requested), copy the replacement
      * into place
      */
-    if (rename(unix_replacement_name.Buffer, unix_replaced_name.Buffer) == -1)
+    if (!MoveFileExW( lpReplacementFileName, lpReplacedFileName, 0 ))
     {
-        if (errno == EACCES)
-        {
-            /* Inappropriate permissions on "replaced", rename will fail */
-            error = ERROR_UNABLE_TO_REMOVE_REPLACED;
-            goto fail;
-        }
         /* on failure we need to indicate whether a backup was made */
         if (!lpBackupFileName)
-            error = ERROR_UNABLE_TO_MOVE_REPLACEMENT;
+            SetLastError( ERROR_UNABLE_TO_MOVE_REPLACEMENT );
         else
-            error = ERROR_UNABLE_TO_MOVE_REPLACEMENT_2;
-        goto fail;
+            SetLastError( ERROR_UNABLE_TO_MOVE_REPLACEMENT_2 );
+        return FALSE;
     }
-    /* Success! */
-    ret = TRUE;
 
-    /* Perform resource cleanup */
-fail:
-    if (hBackup) CloseHandle(hBackup);
-    if (hReplaced) CloseHandle(hReplaced);
-    if (hReplacement) CloseHandle(hReplacement);
-    RtlFreeAnsiString(&unix_backup_name);
-    RtlFreeAnsiString(&unix_replacement_name);
-    RtlFreeAnsiString(&unix_replaced_name);
-
-    /* If there was an error, set the error code */
-    if(!ret)
-        SetLastError(error);
-    return ret;
+    return TRUE;
 }
 
 
