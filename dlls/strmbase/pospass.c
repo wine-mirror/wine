@@ -24,20 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
-struct strmbase_passthrough
-{
-    ISeekingPassThru ISeekingPassThru_iface;
-    IMediaSeeking IMediaSeeking_iface;
-    IMediaPosition IMediaPosition_iface;
-
-    IUnknown * outer_unk;
-    IPin * pin;
-    BOOL renderer;
-    CRITICAL_SECTION time_cs;
-    BOOL timevalid;
-    REFERENCE_TIME time_earliest;
-};
-
 static struct strmbase_passthrough *impl_from_ISeekingPassThru(ISeekingPassThru *iface)
 {
     return CONTAINING_RECORD(iface, struct strmbase_passthrough, ISeekingPassThru_iface);
@@ -96,22 +82,6 @@ static const ISeekingPassThruVtbl ISeekingPassThru_Vtbl =
     SeekingPassThru_Release,
     SeekingPassThru_Init
 };
-
-HRESULT WINAPI CreatePosPassThru(IUnknown* pUnkOuter, BOOL bRenderer, IPin *pPin, IUnknown **ppPassThru)
-{
-    HRESULT hr;
-    ISeekingPassThru *passthru;
-
-    hr = CoCreateInstance(&CLSID_SeekingPassThru, pUnkOuter, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)ppPassThru);
-    if (FAILED(hr))
-        return hr;
-
-    IUnknown_QueryInterface(*ppPassThru, &IID_ISeekingPassThru, (void**)&passthru);
-    hr = ISeekingPassThru_Init(passthru, bRenderer, pPin);
-    ISeekingPassThru_Release(passthru);
-
-    return hr;
-}
 
 static HRESULT WINAPI MediaSeekingPassThru_QueryInterface(IMediaSeeking *iface, REFIID iid, void **out)
 {
@@ -763,6 +733,38 @@ void strmbase_passthrough_cleanup(struct strmbase_passthrough *passthrough)
     DeleteCriticalSection(&passthrough->time_cs);
 }
 
+void strmbase_passthrough_update_time(struct strmbase_passthrough *passthrough, REFERENCE_TIME time)
+{
+    EnterCriticalSection(&passthrough->time_cs);
+    passthrough->time_earliest = time;
+    passthrough->timevalid = TRUE;
+    LeaveCriticalSection(&passthrough->time_cs);
+}
+
+void strmbase_passthrough_invalidate_time(struct strmbase_passthrough *passthrough)
+{
+    EnterCriticalSection(&passthrough->time_cs);
+    passthrough->timevalid = FALSE;
+    LeaveCriticalSection(&passthrough->time_cs);
+}
+
+void strmbase_passthrough_eos(struct strmbase_passthrough *passthrough)
+{
+    REFERENCE_TIME time;
+    HRESULT hr;
+
+    hr = IMediaSeeking_GetStopPosition(&passthrough->IMediaSeeking_iface, &time);
+    EnterCriticalSection(&passthrough->time_cs);
+    if (SUCCEEDED(hr))
+    {
+        passthrough->timevalid = TRUE;
+        passthrough->time_earliest = time;
+    }
+    else
+        passthrough->timevalid = FALSE;
+    LeaveCriticalSection(&passthrough->time_cs);
+}
+
 struct seeking_passthrough
 {
     struct strmbase_passthrough passthrough;
@@ -850,44 +852,4 @@ HRESULT WINAPI PosPassThru_Construct(IUnknown *outer, void **out)
     TRACE("Created seeking passthrough %p.\n", object);
     *out = &object->IUnknown_inner;
     return S_OK;
-}
-
-HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start)
-{
-    struct seeking_passthrough *passthrough = impl_from_IUnknown(iface);
-
-    EnterCriticalSection(&passthrough->passthrough.time_cs);
-    passthrough->passthrough.time_earliest = start;
-    passthrough->passthrough.timevalid = TRUE;
-    LeaveCriticalSection(&passthrough->passthrough.time_cs);
-    return S_OK;
-}
-
-HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface)
-{
-    struct seeking_passthrough *passthrough = impl_from_IUnknown(iface);
-
-    EnterCriticalSection(&passthrough->passthrough.time_cs);
-    passthrough->passthrough.timevalid = FALSE;
-    LeaveCriticalSection(&passthrough->passthrough.time_cs);
-    return S_OK;
-}
-
-HRESULT WINAPI RendererPosPassThru_EOS(IUnknown *iface)
-{
-    struct seeking_passthrough *passthrough = impl_from_IUnknown(iface);
-    REFERENCE_TIME time;
-    HRESULT hr;
-
-    hr = IMediaSeeking_GetStopPosition(&passthrough->passthrough.IMediaSeeking_iface, &time);
-    EnterCriticalSection(&passthrough->passthrough.time_cs);
-    if (SUCCEEDED(hr))
-    {
-        passthrough->passthrough.timevalid = TRUE;
-        passthrough->passthrough.time_earliest = time;
-    }
-    else
-        passthrough->passthrough.timevalid = FALSE;
-    LeaveCriticalSection(&passthrough->passthrough.time_cs);
-    return hr;
 }

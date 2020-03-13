@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "dshow.h"
 #include "wine/list.h"
 
 HRESULT WINAPI CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc);
@@ -203,7 +204,6 @@ HRESULT WINAPI SourceSeekingImpl_SetRate(IMediaSeeking * iface, double dRate);
 HRESULT WINAPI SourceSeekingImpl_GetRate(IMediaSeeking * iface, double * dRate);
 HRESULT WINAPI SourceSeekingImpl_GetPreroll(IMediaSeeking * iface, LONGLONG * pPreroll);
 
-HRESULT WINAPI CreatePosPassThru(IUnknown* pUnkOuter, BOOL bRenderer, IPin *pPin, IUnknown **ppPassThru);
 HRESULT WINAPI PosPassThru_Construct(IUnknown* pUnkOuter, LPVOID *ppPassThru);
 
 /* Output Queue */
@@ -255,12 +255,30 @@ enum strmbase_type_id
 
 HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **typeinfo);
 
+struct strmbase_passthrough
+{
+    ISeekingPassThru ISeekingPassThru_iface;
+    IMediaSeeking IMediaSeeking_iface;
+    IMediaPosition IMediaPosition_iface;
+
+    IUnknown *outer_unk;
+    IPin *pin;
+    BOOL renderer;
+    BOOL timevalid;
+    CRITICAL_SECTION time_cs;
+    REFERENCE_TIME time_earliest;
+};
+
+void strmbase_passthrough_init(struct strmbase_passthrough *passthrough, IUnknown *outer);
+void strmbase_passthrough_cleanup(struct strmbase_passthrough *passthrough);
+
 struct strmbase_renderer
 {
     struct strmbase_filter filter;
+    struct strmbase_passthrough passthrough;
 
     struct strmbase_sink sink;
-    IUnknown *pPosition;
+
     CRITICAL_SECTION csRenderLock;
     /* Signaled when the filter has completed a state change. The filter waits
      * for this event in IBaseFilter::GetState(). */
