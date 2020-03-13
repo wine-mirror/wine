@@ -229,6 +229,7 @@ const char*	get_time_str( unsigned long );
 unsigned int    strlenW( const unsigned short *str );
 void            dump_unicode_str( const unsigned short *str, int len );
 const char*     get_guid_str(const GUID* guid);
+const char*     get_unicode_str( const WCHAR *str, int len );
 const char*     get_symbol_str(const char* symname);
 void            print_fake_dll(void);
 void            dump_file_header(const IMAGE_FILE_HEADER *);
