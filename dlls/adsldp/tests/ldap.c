@@ -40,6 +40,8 @@ static const struct
 {
     const WCHAR *path;
     HRESULT hr, hr_ads_open, hr_ads_get;
+    const WCHAR *user, *password;
+    LONG flags;
 } test[] =
 {
     { L"invalid", MK_E_SYNTAX, E_ADS_BAD_PATHNAME, E_FAIL },
@@ -55,6 +57,9 @@ static const struct
     { L"LDAP://ldap.forumsys.com/rootDSE", S_OK },
     { L"LDAP://ldap.forumsys.com/rootDSE/", E_ADS_BAD_PATHNAME },
     { L"LDAP://ldap.forumsys.com/rootDSE/invalid", E_ADS_BAD_PATHNAME },
+    { L"LDAP://ldap.forumsys.com/rootDSE", S_OK, S_OK, S_OK, NULL, NULL, 0 },
+    { L"LDAP://ldap.forumsys.com/rootDSE", S_OK, S_OK, S_OK, L"CN=read-only-admin,DC=example,DC=com", L"password", 0 },
+
     /*{ L"LDAP://invalid", __HRESULT_FROM_WIN32(ERROR_DS_INVALID_DN_SYNTAX) }, takes way too much time */
 };
 
@@ -65,7 +70,8 @@ static void test_LDAP(void)
     IADs *ads;
     IADsOpenDSObject *ads_open;
     IDispatch *disp;
-    BSTR path;
+    BSTR path, user, password;
+    int i;
 
     hr = CoCreateInstance(&CLSID_LDAPNamespace, 0, CLSCTX_INPROC_SERVER, &IID_IADs, (void **)&ads);
     ok(hr == S_OK, "got %#x\n", hr);
@@ -80,14 +86,25 @@ static void test_LDAP(void)
 
     hr = IUnknown_QueryInterface(unk, &IID_IADsOpenDSObject, (void **)&ads_open);
     ok(hr == S_OK, "got %#x\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(test); i++)
+    {
+        path = SysAllocString(test[i].path);
+        user = test[i].user ? SysAllocString(test[i].user) : NULL;
+        password = test[i].password ? SysAllocString(test[i].password) : NULL;
+
+        hr = IADsOpenDSObject_OpenDSObject(ads_open, path, user, password, test[i].flags, &disp);
+        ok(hr == test[i].hr || hr == test[i].hr_ads_open, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
+        if (hr == S_OK)
+            IDispatch_Release(disp);
+
+        SysFreeString(path);
+        SysFreeString(user);
+        SysFreeString(password);
+    }
+
+
     IADsOpenDSObject_Release(ads_open);
-
-    path = SysAllocString(L"LDAP:");
-    hr = IADsOpenDSObject_OpenDSObject(ads_open, path, NULL, NULL, ADS_SECURE_AUTHENTICATION, &disp);
-    SysFreeString(path);
-    ok(hr == S_OK, "got %#x\n", hr);
-    IDispatch_Release(disp);
-
     IUnknown_Release(unk);
 }
 

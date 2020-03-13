@@ -5,7 +5,8 @@ DELAYIMPORTS = netapi32 wldap32
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
-	adsldp.c
+	adsldp.c \
+	ldap.c
 
 IDL_SRCS = \
 	adsldp.idl

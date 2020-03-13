@@ -36,6 +36,8 @@
 #include "lmapibuf.h"
 #include "winldap.h"
 
+#include "adsldp_private.h"
+
 #include "wine/heap.h"
 #include "wine/debug.h"
 
@@ -700,7 +702,7 @@ static HRESULT parse_path(WCHAR *path, BSTR *host, ULONG *port, BSTR *object)
 }
 
 static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, BSTR user, BSTR password,
-                                           LONG reserved, IDispatch **obj)
+                                           LONG flags, IDispatch **obj)
 {
     BSTR host, object;
     ULONG port;
@@ -709,7 +711,7 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
     HRESULT hr;
     ULONG err;
 
-    FIXME("%p,%s,%s,%08x,%p: semi-stub\n", iface, debugstr_w(path), debugstr_w(user), reserved, obj);
+    FIXME("%p,%s,%s,%p,%08x,%p: semi-stub\n", iface, debugstr_w(path), debugstr_w(user), password, flags, obj);
 
     hr = parse_path(path, &host, &port, &object);
     if (hr != S_OK) return hr;
@@ -760,7 +762,7 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
         err = ldap_set_optionW(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
         if (err != LDAP_SUCCESS)
         {
-            hr = HRESULT_FROM_WIN32(err);
+            hr = HRESULT_FROM_WIN32(map_ldap_error(err));
             ldap_unbind(ld);
             goto fail;
         }
@@ -768,9 +770,28 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
         err = ldap_connect(ld, NULL);
         if (err != LDAP_SUCCESS)
         {
-            hr = HRESULT_FROM_WIN32(err);
+            hr = HRESULT_FROM_WIN32(map_ldap_error(err));
             ldap_unbind(ld);
             goto fail;
+        }
+
+        if (flags & ADS_SECURE_AUTHENTICATION)
+        {
+            FIXME("ADS_SECURE_AUTHENTICATION is not supported\n");
+            hr = ERROR_DS_AUTH_METHOD_NOT_SUPPORTED;
+            ldap_unbind(ld);
+            goto fail;
+        }
+        else
+        {
+            err = ldap_simple_bind_sW(ld, user, password);
+            if (err != LDAP_SUCCESS)
+            {
+                TRACE("ldap_simple_bind_sW error %#x\n", err);
+                hr = HRESULT_FROM_WIN32(map_ldap_error(err));
+                ldap_unbind(ld);
+                goto fail;
+            }
         }
     }
 
