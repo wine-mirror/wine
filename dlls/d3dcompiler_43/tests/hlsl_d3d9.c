@@ -925,6 +925,11 @@ static void test_fail(void)
         "    float a[(x = 2)];\n"
         "    return float4(0, 0, 0, 0);\n"
         "}",
+
+        "uniform float4 test() : SV_TARGET\n"
+        "{\n"
+        "    return float4(0, 0, 0, 0);\n"
+        "}",
     };
 
     static const char *targets[] = {"ps_2_0", "ps_3_0", "ps_4_0"};

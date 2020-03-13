@@ -1322,8 +1322,15 @@ func_declaration:         func_prototype compound_statement
                                 pop_scope(&hlsl_ctx);
                             }
 
+                        /* var_modifiers is necessary to avoid shift/reduce conflicts. */
 func_prototype:           var_modifiers type var_identifier '(' parameters ')' colon_attribute
                             {
+                                if ($1)
+                                {
+                                    hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
+                                            "unexpected modifiers on a function");
+                                    YYABORT;
+                                }
                                 if (get_variable(hlsl_ctx.globals, $3))
                                 {
                                     hlsl_report_message(get_location(&@3),
