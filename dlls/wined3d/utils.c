@@ -6134,7 +6134,7 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
                     }
                     else if (aop == WINED3D_TOP_SELECT_ARG1 && aarg1 != WINED3DTA_TEXTURE)
                     {
-                        if (state->blend_state && state->blend_state->desc.enable)
+                        if (state->blend_state && state->blend_state->desc.rt[0].enable)
                         {
                             aarg2 = WINED3DTA_TEXTURE;
                             aop = WINED3D_TOP_MODULATE;
@@ -6143,7 +6143,7 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
                     }
                     else if (aop == WINED3D_TOP_SELECT_ARG2 && aarg2 != WINED3DTA_TEXTURE)
                     {
-                        if (state->blend_state && state->blend_state->desc.enable)
+                        if (state->blend_state && state->blend_state->desc.rt[0].enable)
                         {
                             aarg1 = WINED3DTA_TEXTURE;
                             aop = WINED3D_TOP_MODULATE;

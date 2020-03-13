@@ -29918,7 +29918,7 @@ static void test_independent_blend(void)
                     D3D11_BLEND_ZERO, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL},
             {TRUE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_BLEND_FACTOR, D3D11_BLEND_OP_SUBTRACT,
                     D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_REV_SUBTRACT, D3D11_COLOR_WRITE_ENABLE_ALL},
-            {FALSE},
+            {FALSE, 0, 0, 0, 0, 0, 0, D3D11_COLOR_WRITE_ENABLE_ALL},
             {TRUE, D3D11_BLEND_DEST_COLOR, D3D11_BLEND_SRC_COLOR, D3D11_BLEND_OP_ADD,
                     D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_OP_SUBTRACT,
                     D3D11_COLOR_WRITE_ENABLE_ALL},
@@ -29926,7 +29926,7 @@ static void test_independent_blend(void)
     };
 
     static const DWORD expected_colors[] =
-            {0x66426e1c, 0xb34c3319, 0xa6214a05, 0x66333319, 0xb34c4829, 0x4d19000a, 0xb333801a, 0x081f3305};
+            {0x66426e1c, 0xb34c3319, 0xa6214a05, 0x66333319, 0xb34c4829, 0x4d19000a, 0x664c3319, 0x081f3305};
 
     static const float clear_color[] = {0.1f, 0.5f, 0.2f, 0.7f};
     static const float blend_factor[] = {0.8f, 0.4f, 0.6f, 0.2f};
@@ -29966,8 +29966,7 @@ static void test_independent_blend(void)
     {
         get_texture_readback(rts[i], 0, &rb);
         color = get_readback_color(&rb, 320, 240, 0);
-        todo_wine_if (i)
-            ok(compare_color(color, expected_colors[i], 1), "%u: Got unexpected color 0x%08x.\n", i, color);
+        ok(compare_color(color, expected_colors[i], 1), "%u: Got unexpected color 0x%08x.\n", i, color);
         release_resource_readback(&rb);
     }
 

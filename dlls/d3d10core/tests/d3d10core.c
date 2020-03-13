@@ -18275,8 +18275,7 @@ static void test_independent_blend(void)
     {
         get_texture_readback(rts[i], 0, &rb);
         color = get_readback_color(&rb, 320, 240);
-        todo_wine_if (i & 1)
-            ok(color == ((i & 1) ? 0x80008080 : 0x8000ff00), "%u: Got unexpected color 0x%08x.\n", i, color);
+        ok(color == ((i & 1) ? 0x80008080 : 0x8000ff00), "%u: Got unexpected color 0x%08x.\n", i, color);
         release_resource_readback(&rb);
 
         ID3D10Texture2D_Release(rts[i]);

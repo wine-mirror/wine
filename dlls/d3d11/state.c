@@ -350,10 +350,6 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
                     tmp_desc.RenderTarget[i].RenderTargetWriteMask, i);
     }
 
-    /* glEnableIndexedEXT(GL_BLEND, ...) */
-    if (tmp_desc.IndependentBlendEnable)
-        FIXME("Per-rendertarget blend not implemented.\n");
-
     wined3d_mutex_lock();
     if ((entry = wine_rb_get(&device->blend_states, &tmp_desc)))
     {
@@ -389,13 +385,17 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     }
 
     wined3d_desc.alpha_to_coverage = desc->AlphaToCoverageEnable;
-    wined3d_desc.enable = desc->RenderTarget[0].BlendEnable;
-    wined3d_desc.src = desc->RenderTarget[0].SrcBlend;
-    wined3d_desc.dst = desc->RenderTarget[0].DestBlend;
-    wined3d_desc.op = desc->RenderTarget[0].BlendOp;
-    wined3d_desc.src_alpha = desc->RenderTarget[0].SrcBlendAlpha;
-    wined3d_desc.dst_alpha = desc->RenderTarget[0].DestBlendAlpha;
-    wined3d_desc.op_alpha = desc->RenderTarget[0].BlendOpAlpha;
+    wined3d_desc.independent = desc->IndependentBlendEnable;
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        wined3d_desc.rt[i].enable = desc->RenderTarget[i].BlendEnable;
+        wined3d_desc.rt[i].src = desc->RenderTarget[i].SrcBlend;
+        wined3d_desc.rt[i].dst = desc->RenderTarget[i].DestBlend;
+        wined3d_desc.rt[i].op = desc->RenderTarget[i].BlendOp;
+        wined3d_desc.rt[i].src_alpha = desc->RenderTarget[i].SrcBlendAlpha;
+        wined3d_desc.rt[i].dst_alpha = desc->RenderTarget[i].DestBlendAlpha;
+        wined3d_desc.rt[i].op_alpha = desc->RenderTarget[i].BlendOpAlpha;
+    }
 
     /* We cannot fail after creating a wined3d_blend_state object. It
      * would lead to double free. */

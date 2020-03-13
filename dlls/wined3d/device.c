@@ -3657,23 +3657,24 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         memset(&desc, 0, sizeof(desc));
         desc.alpha_to_coverage = state->alpha_to_coverage;
+        desc.independent = FALSE;
         if (state->rs[WINED3D_RS_ADAPTIVETESS_Y] == WINED3DFMT_ATOC)
             desc.alpha_to_coverage = TRUE;
-        desc.enable = state->rs[WINED3D_RS_ALPHABLENDENABLE];
-        desc.src = state->rs[WINED3D_RS_SRCBLEND];
-        desc.dst = state->rs[WINED3D_RS_DESTBLEND];
-        desc.op = state->rs[WINED3D_RS_BLENDOP];
+        desc.rt[0].enable = state->rs[WINED3D_RS_ALPHABLENDENABLE];
+        desc.rt[0].src = state->rs[WINED3D_RS_SRCBLEND];
+        desc.rt[0].dst = state->rs[WINED3D_RS_DESTBLEND];
+        desc.rt[0].op = state->rs[WINED3D_RS_BLENDOP];
         if (state->rs[WINED3D_RS_SEPARATEALPHABLENDENABLE])
         {
-            desc.src_alpha = state->rs[WINED3D_RS_SRCBLENDALPHA];
-            desc.dst_alpha = state->rs[WINED3D_RS_DESTBLENDALPHA];
-            desc.op_alpha = state->rs[WINED3D_RS_BLENDOPALPHA];
+            desc.rt[0].src_alpha = state->rs[WINED3D_RS_SRCBLENDALPHA];
+            desc.rt[0].dst_alpha = state->rs[WINED3D_RS_DESTBLENDALPHA];
+            desc.rt[0].op_alpha = state->rs[WINED3D_RS_BLENDOPALPHA];
         }
         else
         {
-            desc.src_alpha = state->rs[WINED3D_RS_SRCBLEND];
-            desc.dst_alpha = state->rs[WINED3D_RS_DESTBLEND];
-            desc.op_alpha = state->rs[WINED3D_RS_BLENDOP];
+            desc.rt[0].src_alpha = state->rs[WINED3D_RS_SRCBLEND];
+            desc.rt[0].dst_alpha = state->rs[WINED3D_RS_DESTBLEND];
+            desc.rt[0].op_alpha = state->rs[WINED3D_RS_BLENDOP];
         }
 
         if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_BLENDFACTOR))

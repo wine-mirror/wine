@@ -426,17 +426,17 @@ static void blendop(const struct wined3d_state *state, const struct wined3d_gl_i
     }
 
     /* BLENDOPALPHA requires GL_EXT_blend_equation_separate, so make sure it is around */
-    if (b->desc.op_alpha && !gl_info->supported[EXT_BLEND_EQUATION_SEPARATE])
+    if (b->desc.rt[0].op_alpha && !gl_info->supported[EXT_BLEND_EQUATION_SEPARATE])
     {
         WARN("Unsupported in local OpenGL implementation: glBlendEquationSeparate.\n");
         return;
     }
 
-    blend_equation = gl_blend_op(gl_info, b->desc.op);
-    blend_equation_alpha = gl_blend_op(gl_info, b->desc.op_alpha);
+    blend_equation = gl_blend_op(gl_info, b->desc.rt[0].op);
+    blend_equation_alpha = gl_blend_op(gl_info, b->desc.rt[0].op_alpha);
     TRACE("blend_equation %#x, blend_equation_alpha %#x.\n", blend_equation, blend_equation_alpha);
 
-    if (b->desc.op != b->desc.op_alpha)
+    if (b->desc.rt[0].op != b->desc.rt[0].op_alpha)
     {
         GL_EXTCALL(glBlendEquationSeparate(blend_equation, blend_equation_alpha));
         checkGLcall("glBlendEquationSeparate");
@@ -525,43 +525,78 @@ static void gl_blend_from_d3d(GLenum *src_blend, GLenum *dst_blend,
     }
 }
 
-static void state_blend(struct wined3d_context *context, const struct wined3d_state *state)
+static void state_blend_factor_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    WARN("Unsupported in local OpenGL implementation: glBlendColor.\n");
+}
+
+static void state_blend_factor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
+    const struct wined3d_color *factor = &state->blend_factor;
+
+    TRACE("Setting blend factor to %s.\n", debug_color(factor));
+
+    GL_EXTCALL(glBlendColor(factor->r, factor->g, factor->b, factor->a));
+    checkGLcall("glBlendColor");
+}
+
+static BOOL is_blend_enabled(struct wined3d_context *context, const struct wined3d_state *state, UINT index)
+{
+    const struct wined3d_blend_state *b = state->blend_state;
+
+    if (!state->fb->render_targets[index])
+        return FALSE;
+
+    if (!b->desc.rt[index].enable)
+        return FALSE;
+
+    /* Disable blending in all cases even without pixel shaders.
+     * With blending on we could face a big performance penalty.
+     * The d3d9 visual test confirms the behavior. */
+    if (context->render_offscreen
+            && !(state->fb->render_targets[index]->format_flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+        return FALSE;
+
+    return TRUE;
+}
+
+static void blend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     const struct wined3d_blend_state *b = state->blend_state;
     const struct wined3d_format *rt_format;
     GLenum src_blend, dst_blend;
-    unsigned int rt_fmt_flags;
-    BOOL enable_blend;
 
-    enable_blend = state->fb->render_targets[0] && b && b->desc.enable;
-    if (enable_blend)
+    if (gl_info->supported[ARB_MULTISAMPLE])
     {
-        rt_format = state->fb->render_targets[0]->format;
-        rt_fmt_flags = state->fb->render_targets[0]->format_flags;
-
-        /* Disable blending in all cases even without pixelshaders.
-         * With blending on we could face a big performance penalty.
-         * The d3d9 visual test confirms the behavior. */
-        if (context->render_offscreen && !(rt_fmt_flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-            enable_blend = FALSE;
+        if (b && b->desc.alpha_to_coverage)
+            gl_info->gl_ops.gl.p_glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+        else
+            gl_info->gl_ops.gl.p_glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+        checkGLcall("glEnable GL_SAMPLE_ALPHA_TO_COVERAGE");
     }
 
-    if (!enable_blend)
+    if (b && b->desc.independent)
+        WARN("Independent blend is not supported by this GL implementation.\n");
+
+    if (!b || !is_blend_enabled(context, state, 0))
     {
         gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
-        checkGLcall("glDisable(GL_BLEND)");
+        checkGLcall("glDisable GL_BLEND");
         return;
     }
 
     gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
-    checkGLcall("glEnable(GL_BLEND)");
+    checkGLcall("glEnable GL_BLEND");
 
-    gl_blend_from_d3d(&src_blend, &dst_blend, b->desc.src, b->desc.dst, rt_format);
+    rt_format = state->fb->render_targets[0]->format;
+
+    gl_blend_from_d3d(&src_blend, &dst_blend, b->desc.rt[0].src, b->desc.rt[0].dst, rt_format);
 
     blendop(state, gl_info);
 
-    if (b->desc.src != b->desc.src_alpha || b->desc.dst != b->desc.dst_alpha)
+    if (b->desc.rt[0].src != b->desc.rt[0].src_alpha || b->desc.rt[0].dst != b->desc.rt[0].dst_alpha)
     {
         GLenum src_blend_alpha, dst_blend_alpha;
 
@@ -572,7 +607,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
             return;
         }
 
-        gl_blend_from_d3d(&src_blend_alpha, &dst_blend_alpha, b->desc.src_alpha, b->desc.dst_alpha, rt_format);
+        gl_blend_from_d3d(&src_blend_alpha, &dst_blend_alpha, b->desc.rt[0].src_alpha, b->desc.rt[0].dst_alpha, rt_format);
 
         GL_EXTCALL(glBlendFuncSeparate(src_blend, dst_blend, src_blend_alpha, dst_blend_alpha));
         checkGLcall("glBlendFuncSeparate");
@@ -590,37 +625,128 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
         context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP));
 }
 
-static void state_blend_factor_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    WARN("Unsupported in local OpenGL implementation: glBlendColor.\n");
-}
-
-static void state_blend_factor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void blend_db2(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-    const struct wined3d_color *factor = &state->blend_factor;
+    GLenum src_blend, dst_blend, src_blend_alpha, dst_blend_alpha;
+    const struct wined3d_blend_state *b = state->blend_state;
+    const struct wined3d_format *rt_format;
+    unsigned int i;
 
-    TRACE("Setting blend factor to %s.\n", debug_color(factor));
+    if (b && b->desc.alpha_to_coverage)
+        gl_info->gl_ops.gl.p_glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+    else
+        gl_info->gl_ops.gl.p_glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+    checkGLcall("glEnable GL_SAMPLE_ALPHA_TO_COVERAGE");
 
-    GL_EXTCALL(glBlendColor(factor->r, factor->g, factor->b, factor->a));
-    checkGLcall("glBlendColor");
+    if (!b)
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
+        checkGLcall("glDisable GL_BLEND");
+        return;
+    }
+
+    if (!b->desc.independent)
+    {
+        blend(context, state, state_id);
+        return;
+    }
+
+    rt_format = state->fb->render_targets[0]->format;
+    gl_blend_from_d3d(&src_blend, &dst_blend, b->desc.rt[0].src, b->desc.rt[0].dst, rt_format);
+    gl_blend_from_d3d(&src_blend_alpha, &dst_blend_alpha, b->desc.rt[0].src_alpha, b->desc.rt[0].dst_alpha, rt_format);
+
+    GL_EXTCALL(glBlendFuncSeparate(src_blend, dst_blend, src_blend_alpha, dst_blend_alpha));
+    checkGLcall("glBlendFuncSeparate");
+
+    GL_EXTCALL(glBlendEquationSeparate(gl_blend_op(gl_info, b->desc.rt[0].op),
+            gl_blend_op(gl_info, b->desc.rt[0].op_alpha)));
+    checkGLcall("glBlendEquationSeparate");
+
+    for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
+    {
+        if (!is_blend_enabled(context, state, i))
+        {
+            GL_EXTCALL(glDisablei(GL_BLEND, i));
+            checkGLcall("glDisablei GL_BLEND");
+            continue;
+        }
+
+        GL_EXTCALL(glEnablei(GL_BLEND, i));
+        checkGLcall("glEnablei GL_BLEND");
+
+        if (b->desc.rt[i].src != b->desc.rt[0].src
+                || b->desc.rt[i].dst != b->desc.rt[0].dst
+                || b->desc.rt[i].op != b->desc.rt[0].op
+                || b->desc.rt[i].src_alpha != b->desc.rt[0].src_alpha
+                || b->desc.rt[i].dst_alpha != b->desc.rt[0].dst_alpha
+                || b->desc.rt[i].op_alpha != b->desc.rt[0].op_alpha)
+            WARN("Independent blend equations and blend functions are not supported by this GL implementation.\n");
+    }
+
+    /* Colorkey fixup for stage 0 alphaop depends on blend state, so it may need
+     * updating. */
+    if (state->render_states[WINED3D_RS_COLORKEYENABLE])
+        context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP));
 }
 
-static void blend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void blend_dbb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     const struct wined3d_blend_state *b = state->blend_state;
+    unsigned int i;
 
-    if (gl_info->supported[ARB_MULTISAMPLE])
+    if (b && b->desc.alpha_to_coverage)
+        gl_info->gl_ops.gl.p_glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+    else
+        gl_info->gl_ops.gl.p_glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+    checkGLcall("glEnable GL_SAMPLE_ALPHA_TO_COVERAGE");
+
+    if (!b)
     {
-        if (b && b->desc.alpha_to_coverage)
-            gl_info->gl_ops.gl.p_glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
-        else
-            gl_info->gl_ops.gl.p_glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
-        checkGLcall("glEnable GL_SAMPLE_ALPHA_TO_COVERAGE");
+        gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
+        checkGLcall("glDisable GL_BLEND");
+        return;
     }
 
-    state_blend(context, state);
+    if (!b->desc.independent)
+    {
+        blend(context, state, state_id);
+        return;
+    }
+
+    for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
+    {
+        GLenum src_blend, dst_blend, src_blend_alpha, dst_blend_alpha;
+        const struct wined3d_format *rt_format;
+
+        if (!is_blend_enabled(context, state, i))
+        {
+            GL_EXTCALL(glDisablei(GL_BLEND, i));
+            checkGLcall("glDisablei GL_BLEND");
+            continue;
+        }
+
+        GL_EXTCALL(glEnablei(GL_BLEND, i));
+        checkGLcall("glEnablei GL_BLEND");
+
+        rt_format = state->fb->render_targets[i]->format;
+        gl_blend_from_d3d(&src_blend, &dst_blend, b->desc.rt[i].src, b->desc.rt[i].dst, rt_format);
+        gl_blend_from_d3d(&src_blend_alpha, &dst_blend_alpha,
+                b->desc.rt[i].src_alpha, b->desc.rt[i].dst_alpha, rt_format);
+
+        GL_EXTCALL(glBlendFuncSeparatei(i, src_blend, dst_blend, src_blend_alpha, dst_blend_alpha));
+        checkGLcall("glBlendFuncSeparatei");
+
+        GL_EXTCALL(glBlendEquationSeparatei(i, gl_blend_op(gl_info, b->desc.rt[i].op),
+                gl_blend_op(gl_info, b->desc.rt[i].op_alpha)));
+        checkGLcall("glBlendEquationSeparatei");
+    }
+
+    /* Colorkey fixup for stage 0 alphaop depends on blend state, so it may need
+     * updating. */
+    if (state->render_states[WINED3D_RS_COLORKEYENABLE])
+        context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP));
 }
 
 void state_alpha_test(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -3225,7 +3351,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
                 }
                 else if (op == WINED3D_TOP_SELECT_ARG1 && arg1 != WINED3DTA_TEXTURE)
                 {
-                    if (state->blend_state && state->blend_state->desc.enable)
+                    if (state->blend_state && state->blend_state->desc.rt[0].enable)
                     {
                         arg2 = WINED3DTA_TEXTURE;
                         op = WINED3D_TOP_MODULATE;
@@ -3234,7 +3360,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
                 }
                 else if (op == WINED3D_TOP_SELECT_ARG2 && arg2 != WINED3DTA_TEXTURE)
                 {
-                    if (state->blend_state && state->blend_state->desc.enable)
+                    if (state->blend_state && state->blend_state->desc.rt[0].enable)
                     {
                         arg1 = WINED3DTA_TEXTURE;
                         op = WINED3D_TOP_MODULATE;
@@ -4499,6 +4625,8 @@ const struct wined3d_state_entry_template misc_state_template[] =
     { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so,           }, WINED3D_GL_VERSION_3_2          },
     { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so_warn,      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             state_line_antialias}, WINED3D_GL_EXT_NONE             },
+    { STATE_BLEND,                                        { STATE_BLEND,                                        blend_dbb           }, ARB_DRAW_BUFFERS_BLEND          },
+    { STATE_BLEND,                                        { STATE_BLEND,                                        blend_db2           }, EXT_DRAW_BUFFERS2               },
     { STATE_BLEND,                                        { STATE_BLEND,                                        blend               }, WINED3D_GL_EXT_NONE             },
     { STATE_BLEND_FACTOR,                                 { STATE_BLEND_FACTOR,                                 state_blend_factor  }, EXT_BLEND_COLOR                 },
     { STATE_BLEND_FACTOR,                                 { STATE_BLEND_FACTOR,                                 state_blend_factor_w}, WINED3D_GL_EXT_NONE             },

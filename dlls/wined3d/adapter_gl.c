@@ -74,6 +74,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_depth_texture",                ARB_DEPTH_TEXTURE             },
     {"GL_ARB_derivative_control",           ARB_DERIVATIVE_CONTROL        },
     {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS              },
+    {"GL_ARB_draw_buffers_blend",           ARB_DRAW_BUFFERS_BLEND        },
     {"GL_ARB_draw_elements_base_vertex",    ARB_DRAW_ELEMENTS_BASE_VERTEX },
     {"GL_ARB_draw_indirect",                ARB_DRAW_INDIRECT             },
     {"GL_ARB_draw_instanced",               ARB_DRAW_INSTANCED            },
@@ -1310,6 +1311,7 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_g
 
     if (gl_info->supported[WINED3D_GL_VERSION_3_2]
             && gl_info->supported[ARB_POLYGON_OFFSET_CLAMP]
+            && gl_info->supported[ARB_DRAW_BUFFERS_BLEND]
             && gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
         if (shader_model >= 5
@@ -2679,8 +2681,12 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glBindVertexArray)                             /* OpenGL 3.0 */
     USE_GL_FUNC(glBlendColor)                                  /* OpenGL 1.4 */
     USE_GL_FUNC(glBlendEquation)                               /* OpenGL 1.4 */
+    USE_GL_FUNC(glBlendEquationi)                              /* OpenGL 4.0 */
     USE_GL_FUNC(glBlendEquationSeparate)                       /* OpenGL 2.0 */
+    USE_GL_FUNC(glBlendEquationSeparatei)                      /* OpenGL 4.0 */
+    USE_GL_FUNC(glBlendFunci)                                  /* OpenGL 4.0 */
     USE_GL_FUNC(glBlendFuncSeparate)                           /* OpenGL 1.4 */
+    USE_GL_FUNC(glBlendFuncSeparatei)                          /* OpenGL 4.0 */
     USE_GL_FUNC(glBufferData)                                  /* OpenGL 1.5 */
     USE_GL_FUNC(glBufferSubData)                               /* OpenGL 1.5 */
     USE_GL_FUNC(glColorMaski)                                  /* OpenGL 3.0 */
@@ -3370,6 +3376,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_TIMER_QUERY,                  MAKEDWORD_VERSION(3, 3)},
         {ARB_VERTEX_TYPE_2_10_10_10_REV,   MAKEDWORD_VERSION(3, 3)},
 
+        {ARB_DRAW_BUFFERS_BLEND,           MAKEDWORD_VERSION(4, 0)},
         {ARB_DRAW_INDIRECT,                MAKEDWORD_VERSION(4, 0)},
         {ARB_GPU_SHADER5,                  MAKEDWORD_VERSION(4, 0)},
         {ARB_SAMPLE_SHADING,               MAKEDWORD_VERSION(4, 0)},

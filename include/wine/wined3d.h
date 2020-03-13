@@ -1605,6 +1605,7 @@ enum wined3d_shader_type
 #define WINED3D_MAX_CONSTS_I                                    16
 #define WINED3D_MAX_VS_CONSTS_F                                 256
 #define WINED3D_MAX_PS_CONSTS_F                                 224
+#define WINED3D_MAX_RENDER_TARGETS                              8
 
 struct wined3d_display_mode
 {
@@ -2029,13 +2030,17 @@ struct wined3d_buffer_desc
 struct wined3d_blend_state_desc
 {
     BOOL alpha_to_coverage;
-    BOOL enable;
-    enum wined3d_blend src;
-    enum wined3d_blend dst;
-    enum wined3d_blend_op op;
-    enum wined3d_blend src_alpha;
-    enum wined3d_blend dst_alpha;
-    enum wined3d_blend_op op_alpha;
+    BOOL independent;
+    struct
+    {
+        BOOL enable;
+        enum wined3d_blend src;
+        enum wined3d_blend dst;
+        enum wined3d_blend_op op;
+        enum wined3d_blend src_alpha;
+        enum wined3d_blend dst_alpha;
+        enum wined3d_blend_op op_alpha;
+    } rt[WINED3D_MAX_RENDER_TARGETS];
 };
 
 struct wined3d_rasterizer_state_desc
