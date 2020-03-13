@@ -104,6 +104,11 @@ static void test_LDAP(void)
         if (hr == S_OK)
             IADs_Release(ads);
 
+        hr = ADsGetObject(path, &IID_IDispatch, (void **)&disp);
+        ok(hr == test[i].hr || hr == test[i].hr_ads_get, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
+        if (hr == S_OK)
+            IDispatch_Release(disp);
+
         SysFreeString(path);
         SysFreeString(user);
         SysFreeString(password);

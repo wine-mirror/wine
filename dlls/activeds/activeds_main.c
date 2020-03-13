@@ -61,10 +61,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 /*****************************************************
  * ADsGetObject     [ACTIVEDS.3]
  */
-HRESULT WINAPI ADsGetObject(LPCWSTR lpszPathName, REFIID riid, VOID** ppObject)
+HRESULT WINAPI ADsGetObject(LPCWSTR path, REFIID riid, void **obj)
 {
-    FIXME("(%s)->(%s,%p)!stub\n",debugstr_w(lpszPathName), debugstr_guid(riid), ppObject);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    hr = ADsOpenObject(path, NULL, NULL, ADS_SECURE_AUTHENTICATION, riid, obj);
+    if (hr != S_OK)
+        hr = ADsOpenObject(path, NULL, NULL, 0, riid, obj);
+    return hr;
 }
 
 /*****************************************************
