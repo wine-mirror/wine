@@ -119,6 +119,7 @@ struct sample
 struct transform_stream
 {
     struct list samples;
+    unsigned int requests;
 };
 
 struct topo_node
@@ -149,6 +150,7 @@ struct topo_node
         } sink;
         struct
         {
+            struct transform_stream *inputs;
             unsigned int *input_map;
             unsigned int input_count;
 
@@ -659,8 +661,11 @@ static void release_topo_node(struct topo_node *node)
                 IMFMediaSource_Release(node->u.source.source);
             break;
         case MF_TOPOLOGY_TRANSFORM_NODE:
+            for (i = 0; i < node->u.transform.input_count; ++i)
+                transform_stream_drop_samples(&node->u.transform.inputs[i]);
             for (i = 0; i < node->u.transform.output_count; ++i)
                 transform_stream_drop_samples(&node->u.transform.outputs[i]);
+            heap_free(node->u.transform.inputs);
             heap_free(node->u.transform.outputs);
             heap_free(node->u.transform.input_map);
             heap_free(node->u.transform.output_map);
@@ -1011,6 +1016,11 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
 
     if (SUCCEEDED(hr))
     {
+        streams = heap_calloc(input_count, sizeof(*streams));
+        for (i = 0; i < input_count; ++i)
+            list_init(&streams[i].samples);
+        node->u.transform.inputs = streams;
+
         streams = heap_calloc(output_count, sizeof(*streams));
         for (i = 0; i < output_count; ++i)
             list_init(&streams[i].samples);
@@ -2237,14 +2247,31 @@ static HRESULT transform_node_get_sample(struct topo_node *node, DWORD output, I
         buffers[i].pSample = NULL;
         buffers[i].dwStatus = 0;
         buffers[i].pEvents = NULL;
+    }
 
-        /* Buffer requirements. */
-        memset(&stream_info, 0, sizeof(stream_info));
-        if (FAILED(hr = IMFTransform_GetOutputStreamInfo(node->object.transform, buffers[i].dwStreamID, &stream_info)))
+    memset(&stream_info, 0, sizeof(stream_info));
+    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(node->object.transform, buffers[output].dwStreamID, &stream_info)))
+        goto exit;
+
+    if (!(stream_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES))
+    {
+        IMFMediaBuffer *buffer = NULL;
+
+        if (!stream_info.cbSize)
+            FIXME("Unhandled buffer size %u.\n", stream_info.cbSize);
+
+        hr = MFCreateAlignedMemoryBuffer(stream_info.cbSize, stream_info.cbAlignment, &buffer);
+        if (SUCCEEDED(hr))
+            hr = MFCreateSample(&buffers[output].pSample);
+
+        if (SUCCEEDED(hr))
+            hr = IMFSample_AddBuffer(buffers[output].pSample, buffer);
+
+        if (buffer)
+            IMFMediaBuffer_Release(buffer);
+
+        if (FAILED(hr))
             goto exit;
-
-        if (!(stream_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES))
-            FIXME("Allocate client sample for stream %u.\n", buffers[i].dwStreamID);
     }
 
     hr = IMFTransform_ProcessOutput(node->object.transform, 0, node->u.transform.output_count, buffers, &status);
@@ -2278,32 +2305,71 @@ exit:
     return hr;
 }
 
-static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *downstream_node,
-        DWORD downstream_input, IMFSample *sample)
+static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *node, DWORD input,
+        IMFSample *sample)
 {
-    MF_TOPOLOGY_TYPE downstream_type;
-    struct topo_node *node;
-    TOPOID downstream_id;
+    DWORD stream_id, downstream_input;
+    IMFTopologyNode *downstream_node;
+    struct topo_node *topo_node;
+    MF_TOPOLOGY_TYPE node_type;
+    TOPOID node_id;
+    unsigned int i;
     HRESULT hr;
 
-    IMFTopologyNode_GetNodeType(downstream_node, &downstream_type);
-    IMFTopologyNode_GetTopoNodeID(downstream_node, &downstream_id);
+    IMFTopologyNode_GetNodeType(node, &node_type);
+    IMFTopologyNode_GetTopoNodeID(node, &node_id);
 
-    node = session_get_node_by_id(session, downstream_id);
+    topo_node = session_get_node_by_id(session, node_id);
 
-    switch (downstream_type)
+    switch (node_type)
     {
         case MF_TOPOLOGY_OUTPUT_NODE:
-            if (node->u.sink.requests)
+            if (topo_node->u.sink.requests)
             {
-                if (FAILED(hr = IMFStreamSink_ProcessSample(node->object.sink_stream, sample)))
+                if (FAILED(hr = IMFStreamSink_ProcessSample(topo_node->object.sink_stream, sample)))
                     WARN("Sample delivery failed, hr %#x.\n", hr);
-                node->u.sink.requests--;
+                topo_node->u.sink.requests--;
             }
             break;
         case MF_TOPOLOGY_TRANSFORM_NODE:
+
+            stream_id = transform_node_get_stream_id(topo_node, FALSE, input);
+
+            hr = IMFTransform_ProcessInput(topo_node->object.transform, stream_id, sample, 0);
+            if (hr == MF_E_NOTACCEPTING)
+            {
+                struct sample *sample_entry = heap_alloc(sizeof(*sample_entry));
+                sample_entry->sample = sample;
+                list_add_tail(&topo_node->u.transform.inputs[input].samples, &sample_entry->entry);
+            }
+            else if (hr == S_OK)
+            {
+                /* Check if we need new output is available, push it down. */
+                for (i = 0; i < topo_node->u.transform.output_count; ++i)
+                {
+                    if (!topo_node->u.transform.outputs[i].requests)
+                        continue;
+
+                    sample = NULL;
+                    transform_node_get_sample(topo_node, i, &sample);
+                    if (sample)
+                    {
+                        if (SUCCEEDED(hr = IMFTopologyNode_GetOutput(node, i, &downstream_node, &downstream_input)))
+                        {
+                            session_deliver_sample_to_node(session, downstream_node, downstream_input, sample);
+                            topo_node->u.transform.outputs[i].requests--;
+                            IMFTopologyNode_Release(downstream_node);
+                        }
+                        IMFSample_Release(sample);
+                    }
+                }
+            }
+            else
+                WARN("Transform failed to process input sample, hr %#x.\n", hr);
+
+            break;
         case MF_TOPOLOGY_TEE_NODE:
-            FIXME("Unhandled downstream node type %d.\n", downstream_type);
+            FIXME("Unhandled downstream node type %d.\n", node_type);
             break;
         default:
             ;
@@ -2349,7 +2415,8 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
             {
                 if (SUCCEEDED(hr = IMFTopologyNode_GetInput(node, 0 /* FIXME */, &upstream_node, &upstream_output)))
                 {
-                    hr = session_request_sample_from_node(session, upstream_node, upstream_output);
+                    if (SUCCEEDED(hr = session_request_sample_from_node(session, upstream_node, upstream_output)))
+                        topo_node->u.transform.outputs[output].requests++;
                     IMFTopologyNode_Release(upstream_node);
                 }
             }
