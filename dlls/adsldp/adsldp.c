@@ -111,6 +111,8 @@ static HRESULT WINAPI ldap_ParseDisplayName(IParseDisplayName *iface, IBindCtx *
     if (hr != S_OK) return hr;
 
     hr = IADsOpenDSObject_OpenDSObject(ads_open, name, NULL, NULL, ADS_SECURE_AUTHENTICATION, &disp);
+    if (hr != S_OK)
+        hr = IADsOpenDSObject_OpenDSObject(ads_open, name, NULL, NULL, 0, &disp);
     if (hr == S_OK)
     {
         hr = CreatePointerMoniker((IUnknown *)disp, mk);
