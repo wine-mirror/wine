@@ -136,6 +136,14 @@ struct topo_node
         {
             unsigned int requests;
         } sink;
+        struct
+        {
+            unsigned int *input_map;
+            unsigned int input_count;
+
+            unsigned int *output_map;
+            unsigned int output_count;
+        } transform;
     } u;
 };
 
@@ -623,6 +631,10 @@ static void release_topo_node(struct topo_node *node)
             if (node->u.source.source)
                 IMFMediaSource_Release(node->u.source.source);
             break;
+        case MF_TOPOLOGY_TRANSFORM_NODE:
+            heap_free(node->u.transform.input_map);
+            heap_free(node->u.transform.output_map);
+            break;
         default:
             ;
     }
@@ -945,6 +957,40 @@ static HRESULT session_add_media_sink(struct media_session *session, IMFTopology
     return S_OK;
 }
 
+static HRESULT session_set_transform_stream_info(struct topo_node *node)
+{
+    unsigned int *input_map = NULL, *output_map = NULL;
+    unsigned int input_count, output_count;
+    HRESULT hr;
+
+    hr = IMFTransform_GetStreamCount(node->object.transform, &input_count, &output_count);
+    if (SUCCEEDED(hr) && (input_count > 1 || output_count > 1))
+    {
+        unsigned int *input_map, *output_map;
+
+        input_map = heap_calloc(input_count, sizeof(*input_map));
+        output_map = heap_calloc(output_count, sizeof(*output_map));
+        if (FAILED(IMFTransform_GetStreamIDs(node->object.transform, input_count, input_map,
+                output_count, output_map)))
+        {
+            /* Assume sequential identifiers. */
+            heap_free(input_map);
+            heap_free(output_map);
+            input_map = output_map = NULL;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        node->u.transform.input_count = input_count;
+        node->u.transform.output_count = output_count;
+        node->u.transform.input_map = input_map;
+        node->u.transform.output_map = output_map;
+    }
+
+    return hr;
+}
+
 static HRESULT session_append_node(struct media_session *session, IMFTopologyNode *node)
 {
     struct topo_node *topo_node;
@@ -1010,7 +1056,9 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
                 IUnknown_Release(object);
             }
 
-            if (FAILED(hr))
+            if (SUCCEEDED(hr))
+                hr = session_set_transform_stream_info(topo_node);
+            else
                 WARN("Failed to get IMFTransform for MFT node, hr %#x.\n", hr);
 
             break;
