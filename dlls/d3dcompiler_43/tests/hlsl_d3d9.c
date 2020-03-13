@@ -730,6 +730,118 @@ static void test_array_dimensions(void)
     release_test_context(&test_context);
 }
 
+static void check_constant_desc(const char *prefix, const D3DXCONSTANT_DESC *desc,
+        const D3DXCONSTANT_DESC *expect, BOOL nonzero_defaultvalue)
+{
+    ok(!strcmp(desc->Name, expect->Name), "%s: got Name %s.\n", prefix, debugstr_a(desc->Name));
+    ok(desc->RegisterSet == expect->RegisterSet, "%s: got RegisterSet %#x.\n", prefix, desc->RegisterSet);
+    ok(desc->RegisterCount == expect->RegisterCount, "%s: got RegisterCount %u.\n", prefix, desc->RegisterCount);
+    ok(desc->Class == expect->Class, "%s: got Class %#x.\n", prefix, desc->Class);
+    ok(desc->Type == expect->Type, "%s: got Type %#x.\n", prefix, desc->Type);
+    ok(desc->Rows == expect->Rows, "%s: got Rows %u.\n", prefix, desc->Rows);
+    ok(desc->Columns == expect->Columns, "%s: got Columns %u.\n", prefix, desc->Columns);
+    ok(desc->Elements == expect->Elements, "%s: got Elements %u.\n", prefix, desc->Elements);
+    ok(desc->StructMembers == expect->StructMembers, "%s: got StructMembers %u.\n", prefix, desc->StructMembers);
+    ok(desc->Bytes == expect->Bytes, "%s: got Bytes %u.\n", prefix, desc->Bytes);
+    ok(!!desc->DefaultValue == nonzero_defaultvalue, "%s: got DefaultValue %p.\n", prefix, desc->DefaultValue);
+}
+
+static void test_constant_table(void)
+{
+    static const char *source =
+        "uniform float4 a;\n"
+        "uniform float b;\n"
+        "uniform float unused;\n"
+        "uniform float3x1 c;\n"
+        "uniform row_major float3x1 d;\n"
+        "uniform uint e;\n"
+        "uniform struct\n"
+        "{\n"
+        "    float2x2 a;\n"
+        "    float b;\n"
+        "    float c;\n"
+        "} f;\n"
+        "uniform float g[5];\n"
+        "float4 main(uniform float4 h) : COLOR\n"
+        "{\n"
+        "    return a + b + c._31 + d._31 + f.c + g[e] + h;\n"
+        "}";
+
+    D3DXCONSTANTTABLE_DESC table_desc;
+    ID3DXConstantTable *constants;
+    ID3D10Blob *ps_code = NULL;
+    D3DXHANDLE handle, field;
+    D3DXCONSTANT_DESC desc;
+    unsigned int i, j;
+    HRESULT hr;
+    UINT count;
+
+    static const D3DXCONSTANT_DESC expect_constants[] =
+    {
+        {"$h", D3DXRS_FLOAT4, 0, 1, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 1, 0, 16},
+        {"a", D3DXRS_FLOAT4, 0, 1, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 1, 0, 16},
+        {"b", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 1, 0, 4},
+        {"c", D3DXRS_FLOAT4, 0, 1, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 1, 1, 0, 12},
+        {"d", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 1, 0, 12},
+        {"e", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 1, 0, 4},
+        {"f", D3DXRS_FLOAT4, 0, 4, D3DXPC_STRUCT, D3DXPT_VOID, 1, 6, 1, 3, 24},
+        {"g", D3DXRS_FLOAT4, 0, 5, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 5, 0, 20},
+    };
+
+    static const D3DXCONSTANT_DESC expect_fields[] =
+    {
+        {"a", D3DXRS_FLOAT4, 0, 2, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 2, 2, 1, 0, 16},
+        {"b", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 1, 0, 4},
+        {"c", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 1, 0, 4},
+    };
+
+    todo_wine ps_code = compile_shader(source, "ps_2_0");
+    if (!ps_code)
+        return;
+
+    hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(ps_code), &constants);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+
+    hr = ID3DXConstantTable_GetDesc(constants, &table_desc);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(table_desc.Version == D3DPS_VERSION(2, 0), "Got Version %#x.\n", table_desc.Version);
+    ok(table_desc.Constants == 8, "Got %u constants.\n", table_desc.Constants);
+
+    for (i = 0; i < table_desc.Constants; ++i)
+    {
+        char prefix[30];
+
+        handle = ID3DXConstantTable_GetConstant(constants, NULL, i);
+        ok(!!handle, "Failed to get constant.\n");
+        memset(&desc, 0xcc, sizeof(desc));
+        count = 1;
+        hr = ID3DXConstantTable_GetConstantDesc(constants, handle, &desc, &count);
+        ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+        ok(count == 1, "Got count %u.\n", count);
+        sprintf(prefix, "Test %u", i);
+        check_constant_desc(prefix, &desc, &expect_constants[i], FALSE);
+
+        if (!strcmp(desc.Name, "f"))
+        {
+            for (j = 0; j < ARRAY_SIZE(expect_fields); ++j)
+            {
+                field = ID3DXConstantTable_GetConstant(constants, handle, j);
+                ok(!!field, "Failed to get constant.\n");
+                memset(&desc, 0xcc, sizeof(desc));
+                count = 1;
+                hr = ID3DXConstantTable_GetConstantDesc(constants, field, &desc, &count);
+                ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+                ok(count == 1, "Got count %u.\n", count);
+                sprintf(prefix, "Test %u, %u", i, j);
+                check_constant_desc(prefix, &desc, &expect_fields[j], !!j);
+            }
+        }
+    }
+
+    ID3DXConstantTable_Release(constants);
+    ID3D10Blob_Release(ps_code);
+}
+
 static void test_fail(void)
 {
     static const char *tests[] =
@@ -874,5 +986,6 @@ START_TEST(hlsl_d3d9)
     test_comma();
     test_return();
     test_array_dimensions();
+    test_constant_table();
     test_fail();
 }
