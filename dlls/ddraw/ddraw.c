@@ -1227,7 +1227,7 @@ HRESULT ddraw_get_d3dcaps(const struct ddraw *ddraw, D3DDEVICEDESC7 *caps)
     memset(&wined3d_caps, 0, sizeof(wined3d_caps));
 
     wined3d_mutex_lock();
-    hr = wined3d_get_device_caps(ddraw->wined3d, 0, WINED3D_DEVICE_TYPE_HAL, &wined3d_caps);
+    hr = wined3d_get_device_caps(ddraw->wined3d_adapter, WINED3D_DEVICE_TYPE_HAL, &wined3d_caps);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -5017,7 +5017,7 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
         return E_FAIL;
     }
 
-    if (FAILED(hr = wined3d_get_device_caps(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type, &caps)))
+    if (FAILED(hr = wined3d_get_device_caps(ddraw->wined3d_adapter, device_type, &caps)))
     {
         ERR("Failed to get device caps, hr %#x.\n", hr);
         wined3d_decref(ddraw->wined3d);

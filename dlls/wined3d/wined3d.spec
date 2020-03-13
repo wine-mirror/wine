@@ -11,7 +11,7 @@
 @ cdecl wined3d_decref(ptr)
 @ cdecl wined3d_get_adapter(ptr long)
 @ cdecl wined3d_get_adapter_count(ptr)
-@ cdecl wined3d_get_device_caps(ptr long long ptr)
+@ cdecl wined3d_get_device_caps(ptr long ptr)
 @ cdecl wined3d_get_output_desc(ptr long ptr)
 @ cdecl wined3d_incref(ptr)
 @ cdecl wined3d_register_software_device(ptr ptr)

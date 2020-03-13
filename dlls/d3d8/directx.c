@@ -370,16 +370,23 @@ static HRESULT WINAPI d3d8_CheckDepthStencilMatch(IDirect3D8 *iface, UINT adapte
 static HRESULT WINAPI d3d8_GetDeviceCaps(IDirect3D8 *iface, UINT adapter, D3DDEVTYPE device_type, D3DCAPS8 *caps)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
+    struct wined3d_adapter *wined3d_adapter;
     struct wined3d_caps wined3d_caps;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, caps %p.\n", iface, adapter, device_type, caps);
+
+    output_idx = adapter;
+    if (output_idx >= d3d8->wined3d_output_count)
+        return D3DERR_INVALIDCALL;
 
     if (!caps)
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = wined3d_get_device_caps(d3d8->wined3d, adapter, device_type, &wined3d_caps);
+    wined3d_adapter = wined3d_output_get_adapter(d3d8->wined3d_outputs[output_idx]);
+    hr = wined3d_get_device_caps(wined3d_adapter, device_type, &wined3d_caps);
     wined3d_mutex_unlock();
 
     d3dcaps_from_wined3dcaps(caps, &wined3d_caps);

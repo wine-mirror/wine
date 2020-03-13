@@ -211,7 +211,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IWineDXGIAda
     struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
     struct wined3d_adapter_identifier adapter_id;
     struct wined3d_caps caps;
-    struct wined3d *wined3d;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, umd_version %p.\n", iface, debugstr_guid(guid), umd_version);
@@ -230,8 +229,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IWineDXGIAda
     adapter_id.device_name_size = 0;
 
     wined3d_mutex_lock();
-    wined3d = adapter->factory->wined3d;
-    hr = wined3d_get_device_caps(wined3d, adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
+    hr = wined3d_get_device_caps(adapter->wined3d_adapter, WINED3D_DEVICE_TYPE_HAL, &caps);
     if (SUCCEEDED(hr))
         hr = wined3d_adapter_get_identifier(adapter->wined3d_adapter, 0, &adapter_id);
     wined3d_mutex_unlock();

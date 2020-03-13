@@ -4633,7 +4633,7 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
         return hr;
     }
 
-    wined3d_get_device_caps(wined3d, adapter, device_type, &caps);
+    wined3d_get_device_caps(wined3d_adapter, device_type, &caps);
     device->max_user_clip_planes = caps.MaxUserClipPlanes;
     device->vs_uniform_count = caps.MaxVertexShaderConst;
     if (flags & D3DCREATE_ADAPTERGROUP_DEVICE)

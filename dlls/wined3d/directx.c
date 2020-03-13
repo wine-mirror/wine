@@ -1874,27 +1874,22 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, unsigned int adapter_idx,
+HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, struct wined3d_caps *caps)
 {
     const struct wined3d_d3d_info *d3d_info;
     struct wined3d_vertex_caps vertex_caps;
-    const struct wined3d_adapter *adapter;
     DWORD ckey_caps, blit_caps, fx_caps;
     struct fragment_caps fragment_caps;
     struct shader_caps shader_caps;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s, caps %p.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), caps);
+    TRACE("adapter %p, device_type %s, caps %p.\n",
+            adapter, debug_d3ddevicetype(device_type), caps);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
     d3d_info = &adapter->d3d_info;
 
     caps->DeviceType = (device_type == WINED3D_DEVICE_TYPE_HAL) ? WINED3D_DEVICE_TYPE_HAL : WINED3D_DEVICE_TYPE_REF;
-    caps->AdapterOrdinal           = adapter_idx;
+    caps->AdapterOrdinal           = adapter->ordinal;
 
     caps->Caps                     = 0;
     caps->Caps2                    = WINED3DCAPS2_CANRENDERWINDOWED |
