@@ -204,8 +204,6 @@ HRESULT WINAPI SourceSeekingImpl_SetRate(IMediaSeeking * iface, double dRate);
 HRESULT WINAPI SourceSeekingImpl_GetRate(IMediaSeeking * iface, double * dRate);
 HRESULT WINAPI SourceSeekingImpl_GetPreroll(IMediaSeeking * iface, LONGLONG * pPreroll);
 
-HRESULT WINAPI PosPassThru_Construct(IUnknown* pUnkOuter, LPVOID *ppPassThru);
-
 /* Output Queue */
 typedef struct tagOutputQueue {
     CRITICAL_SECTION csQueue;

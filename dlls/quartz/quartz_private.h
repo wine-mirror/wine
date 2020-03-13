@@ -69,6 +69,7 @@ HRESULT filter_graph_no_thread_create(IUnknown *outer, IUnknown **out) DECLSPEC_
 HRESULT filter_mapper_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT mem_allocator_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT system_clock_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT seeking_passthrough_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT video_renderer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT video_renderer_default_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT vmr7_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;

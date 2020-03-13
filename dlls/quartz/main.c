@@ -36,11 +36,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     return QUARTZ_DllMain(instance, reason, reserved);
 }
 
-static HRESULT seeking_passthrough_create(IUnknown *outer, IUnknown **out)
-{
-    return PosPassThru_Construct(outer, (void **)out);
-}
-
 /******************************************************************************
  * DirectShow ClassFactory
  */
