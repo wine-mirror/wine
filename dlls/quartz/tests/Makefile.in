@@ -11,6 +11,7 @@ C_SRCS = \
 	filtermapper.c \
 	memallocator.c \
 	mpegsplit.c \
+	passthrough.c \
 	systemclock.c \
 	videorenderer.c \
 	vmr7.c \
