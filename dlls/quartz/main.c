@@ -27,7 +27,7 @@ extern HRESULT WINAPI QUARTZ_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLS
 extern HRESULT WINAPI QUARTZ_DllCanUnloadNow(void) DECLSPEC_HIDDEN;
 extern BOOL WINAPI QUARTZ_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
 
-static LONG server_locks = 0;
+LONG object_locks = 0;
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
@@ -124,6 +124,7 @@ static HRESULT WINAPI DSCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter
 
     if (SUCCEEDED(hres = This->create_instance(pOuter, &punk)))
     {
+        InterlockedIncrement(&object_locks);
         hres = IUnknown_QueryInterface(punk, riid, ppobj);
         IUnknown_Release(punk);
     }
@@ -135,9 +136,9 @@ static HRESULT WINAPI DSCF_LockServer(IClassFactory *iface, BOOL dolock)
     IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     if(dolock)
-        InterlockedIncrement(&server_locks);
+        InterlockedIncrement(&object_locks);
     else
-        InterlockedDecrement(&server_locks);
+        InterlockedDecrement(&object_locks);
     return S_OK;
 }
 
@@ -200,7 +201,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    if(server_locks == 0 && QUARTZ_DllCanUnloadNow() == S_OK)
+    if (!object_locks && QUARTZ_DllCanUnloadNow() == S_OK)
         return S_OK;
     return S_FALSE;
 }

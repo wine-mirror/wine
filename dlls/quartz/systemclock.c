@@ -105,6 +105,8 @@ static ULONG WINAPI system_clock_inner_Release(IUnknown *iface)
         clock->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&clock->cs);
         heap_free(clock);
+
+        InterlockedDecrement(&object_locks);
     }
     return refcount;
 }

@@ -519,6 +519,8 @@ static void vmr_destroy(struct strmbase_renderer *iface)
     BaseControlWindow_Destroy(&filter->baseControlWindow);
     strmbase_renderer_cleanup(&filter->renderer);
     CoTaskMemFree(filter);
+
+    InterlockedDecrement(&object_locks);
 }
 
 static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, void **out)

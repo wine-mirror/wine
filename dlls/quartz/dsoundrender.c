@@ -503,6 +503,8 @@ static void dsound_render_destroy(struct strmbase_renderer *iface)
 
     strmbase_renderer_cleanup(&filter->renderer);
     CoTaskMemFree(filter);
+
+    InterlockedDecrement(&object_locks);
 }
 
 static HRESULT dsound_render_query_interface(struct strmbase_renderer *iface, REFIID iid, void **out)

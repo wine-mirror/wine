@@ -911,6 +911,8 @@ static void StdMemAllocator_Destroy(IMemAllocator *iface)
     DeleteCriticalSection(&This->csState);
 
     CoTaskMemFree(This);
+
+    InterlockedDecrement(&object_locks);
 }
 
 HRESULT mem_allocator_create(IUnknown *lpUnkOuter, IUnknown **out)
