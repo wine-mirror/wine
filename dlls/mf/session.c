@@ -102,15 +102,6 @@ struct media_source
     enum object_state state;
 };
 
-struct source_node
-{
-    struct list entry;
-    IMFMediaStream *stream;
-    IMFMediaSource *source;
-    DWORD stream_id;
-    enum object_state state;
-};
-
 struct media_sink
 {
     struct list entry;
@@ -119,11 +110,28 @@ struct media_sink
     BOOL finalized;
 };
 
-struct output_node
+struct topo_node
 {
     struct list entry;
-    IMFStreamSink *stream;
+    MF_TOPOLOGY_TYPE type;
+    TOPOID node_id;
     enum object_state state;
+    union
+    {
+        IMFMediaStream *source_stream;
+        IMFStreamSink *sink_stream;
+        IMFTransform *transform;
+        IUnknown *object;
+    } object;
+
+    union
+    {
+        struct
+        {
+            IMFMediaSource *source;
+            DWORD stream_id;
+        } source;
+    } u;
 };
 
 enum presentation_flags
@@ -154,9 +162,8 @@ struct media_session
         IMFTopology *current_topology;
         MF_TOPOSTATUS topo_status;
         struct list sources;
-        struct list source_nodes;
         struct list sinks;
-        struct list output_nodes;
+        struct list nodes;
         DWORD flags;
 
         /* Latest Start() arguments. */
@@ -603,11 +610,28 @@ static void session_set_caps(struct media_session *session, DWORD caps)
     IMFMediaEvent_Release(event);
 }
 
+static void release_topo_node(struct topo_node *node)
+{
+    switch (node->type)
+    {
+        case MF_TOPOLOGY_SOURCESTREAM_NODE:
+            if (node->u.source.source)
+                IMFMediaSource_Release(node->u.source.source);
+            break;
+        default:
+            ;
+    }
+
+    if (node->object.object)
+        IUnknown_Release(node->object.object);
+    heap_free(node);
+}
+
 static void session_clear_presentation(struct media_session *session)
 {
-    struct source_node *src_node, *src_node2;
     struct media_source *source, *source2;
     struct media_sink *sink, *sink2;
+    struct topo_node *node, *node2;
 
     IMFTopology_Clear(session->presentation.current_topology);
     session->presentation.topo_status = MF_TOPOSTATUS_INVALID;
@@ -622,12 +646,10 @@ static void session_clear_presentation(struct media_session *session)
         heap_free(source);
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(src_node, src_node2, &session->presentation.source_nodes, struct source_node, entry)
+    LIST_FOR_EACH_ENTRY_SAFE(node, node2, &session->presentation.nodes, struct topo_node, entry)
     {
-        list_remove(&src_node->entry);
-        if (src_node->stream)
-            IMFMediaStream_Release(src_node->stream);
-        heap_free(src_node);
+        list_remove(&node->entry);
+        release_topo_node(node);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(sink, sink2, &session->presentation.sinks, struct media_sink, entry)
@@ -861,84 +883,6 @@ static HRESULT session_add_media_source(struct media_session *session, IMFTopolo
     return hr;
 }
 
-static HRESULT session_add_source_node(struct media_session *session, IMFTopologyNode *node, IMFMediaSource *source)
-{
-    struct source_node *source_node;
-    IMFStreamDescriptor *sd;
-    DWORD stream_id;
-    HRESULT hr;
-
-    if (FAILED(hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR, &IID_IMFStreamDescriptor,
-            (void **)&sd)))
-    {
-        WARN("Missing MF_TOPONODE_STREAM_DESCRIPTOR, hr %#x.\n", hr);
-        return hr;
-    }
-
-    hr = IMFStreamDescriptor_GetStreamIdentifier(sd, &stream_id);
-    IMFStreamDescriptor_Release(sd);
-    if (FAILED(hr))
-        return hr;
-
-    if (!(source_node = heap_alloc_zero(sizeof(*source_node))))
-        return E_OUTOFMEMORY;
-
-    source_node->source = source;
-    IMFMediaSource_AddRef(source_node->source);
-
-    list_add_tail(&session->presentation.source_nodes, &source_node->entry);
-
-    return hr;
-}
-
-static void session_collect_source_nodes(struct media_session *session)
-{
-    IMFTopology *topology;
-    IMFTopologyNode *node;
-    IMFCollection *nodes;
-    DWORD count, i;
-    HRESULT hr;
-
-    if (!list_empty(&session->presentation.source_nodes))
-        return;
-
-    topology = session->presentation.current_topology;
-
-    if (!topology || FAILED(IMFTopology_GetSourceNodeCollection(topology, &nodes)))
-        return;
-
-    if (FAILED(IMFCollection_GetElementCount(nodes, &count)))
-        return;
-
-    /* Create list of distinct sources, and whole list of source nodes. */
-    for (i = 0; i < count; ++i)
-    {
-        if (SUCCEEDED(hr = IMFCollection_GetElement(nodes, i, (IUnknown **)&node)))
-        {
-            IMFMediaSource *source;
-
-            if (FAILED(IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_SOURCE, &IID_IMFMediaSource, (void **)&source)))
-            {
-                WARN("Missing MF_TOPONODE_SOURCE, hr %#x.\n", hr);
-                IMFTopologyNode_Release(node);
-                continue;
-            }
-
-            hr = session_add_media_source(session, node, source);
-            IMFMediaSource_Release(source);
-
-            if (SUCCEEDED(hr))
-            {
-                if (FAILED(hr = session_add_source_node(session, node, source)))
-                    WARN("Failed to add source node, hr %#x.\n", hr);
-            }
-
-            IMFMediaSource_Release(source);
-            IMFTopologyNode_Release(node);
-        }
-    }
-}
-
 static void session_raise_topology_set(struct media_session *session, IMFTopology *topology, HRESULT status)
 {
     PROPVARIANT param;
@@ -994,66 +938,105 @@ static HRESULT session_add_media_sink(struct media_session *session, IMFTopology
     return S_OK;
 }
 
-static HRESULT session_collect_output_nodes(struct media_session *session)
+static HRESULT session_append_node(struct media_session *session, IMFTopologyNode *node)
+{
+    struct topo_node *topo_node;
+    IMFMediaSink *media_sink;
+    IMFStreamDescriptor *sd;
+    HRESULT hr = S_OK;
+    IUnknown *object;
+
+    if (!(topo_node = heap_alloc_zero(sizeof(*topo_node))))
+        return E_OUTOFMEMORY;
+
+    IMFTopologyNode_GetNodeType(node, &topo_node->type);
+    IMFTopologyNode_GetTopoNodeID(node, &topo_node->node_id);
+
+    switch (topo_node->type)
+    {
+        case MF_TOPOLOGY_OUTPUT_NODE:
+            if (FAILED(hr = IMFTopologyNode_GetObject(node, &object)))
+            {
+                WARN("Node %s does not have associated object.\n", wine_dbgstr_longlong(topo_node->node_id));
+                break;
+            }
+            hr = IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&topo_node->object.object);
+            IUnknown_Release(object);
+            if (FAILED(hr))
+                break;
+
+            if (FAILED(hr = IMFStreamSink_GetMediaSink(topo_node->object.sink_stream, &media_sink)))
+                break;
+
+            hr = session_add_media_sink(session, node, media_sink);
+            IMFMediaSink_Release(media_sink);
+
+            break;
+        case MF_TOPOLOGY_SOURCESTREAM_NODE:
+            if (FAILED(IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_SOURCE, &IID_IMFMediaSource,
+                    (void **)&topo_node->u.source.source)))
+            {
+                WARN("Missing MF_TOPONODE_SOURCE, hr %#x.\n", hr);
+                break;
+            }
+
+            if (FAILED(hr = session_add_media_source(session, node, topo_node->u.source.source)))
+                break;
+
+            if (FAILED(hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR,
+                    &IID_IMFStreamDescriptor, (void **)&sd)))
+            {
+                WARN("Missing MF_TOPONODE_STREAM_DESCRIPTOR, hr %#x.\n", hr);
+                break;
+            }
+
+            hr = IMFStreamDescriptor_GetStreamIdentifier(sd, &topo_node->u.source.stream_id);
+            IMFStreamDescriptor_Release(sd);
+
+            break;
+        case MF_TOPOLOGY_TRANSFORM_NODE:
+        case MF_TOPOLOGY_TEE_NODE:
+            FIXME("Unsupported node type %d.\n", topo_node->type);
+
+            break;
+        default:
+            ;
+    }
+
+    if (SUCCEEDED(hr))
+        list_add_tail(&session->presentation.nodes, &topo_node->entry);
+    else
+        release_topo_node(topo_node);
+
+    return hr;
+}
+
+static HRESULT session_collect_nodes(struct media_session *session)
 {
     IMFTopology *topology = session->presentation.current_topology;
-    IMFTopologyNode *topo_node;
-    struct output_node *node;
-    IMFCollection *nodes;
-    DWORD count, i;
-    HRESULT hr;
+    IMFTopologyNode *node;
+    WORD i, count = 0;
 
-    if (!list_empty(&session->presentation.output_nodes))
+    if (!list_empty(&session->presentation.nodes))
         return S_OK;
 
-    if (FAILED(hr = IMFTopology_GetOutputNodeCollection(topology, &nodes)))
-        return hr;
-
-    if (FAILED(hr = IMFCollection_GetElementCount(nodes, &count)))
-    {
-        IMFCollection_Release(nodes);
-        return hr;
-    }
+    IMFTopology_GetNodeCount(topology, &count);
 
     for (i = 0; i < count; ++i)
     {
-        IMFMediaSink *media_sink = NULL;
-
-        if (FAILED(hr = IMFCollection_GetElement(nodes, i, (IUnknown **)&topo_node)))
-            break;
-
-        if (!(node = heap_alloc_zero(sizeof(*node))))
-            hr = E_OUTOFMEMORY;
-
-        if (SUCCEEDED(hr))
-            hr = IMFTopologyNode_GetObject(topo_node, (IUnknown **)&node->stream);
-
-        if (SUCCEEDED(hr))
-            hr = IMFStreamSink_GetMediaSink(node->stream, &media_sink);
-
-        if (SUCCEEDED(hr))
-            hr = session_add_media_sink(session, topo_node, media_sink);
-
-        if (media_sink)
-            IMFMediaSink_Release(media_sink);
-
-        if (SUCCEEDED(hr))
+        if (FAILED(IMFTopology_GetNode(topology, i, &node)))
         {
-            list_add_tail(&session->presentation.output_nodes, &node->entry);
-        }
-        else if (node)
-        {
-            if (node->stream)
-                IMFStreamSink_Release(node->stream);
-            heap_free(node);
+            WARN("Failed to get node %u.\n", i);
+            continue;
         }
 
-        IMFTopologyNode_Release(topo_node);
+        if (FAILED(session_append_node(session, node)))
+            WARN("Failed to add node %u.\n", i);
+
+        IMFTopologyNode_Release(node);
     }
 
-    IMFCollection_Release(nodes);
-
-    return hr;
+    return S_OK;
 }
 
 static void session_set_current_topology(struct media_session *session, IMFTopology *topology)
@@ -1070,8 +1053,7 @@ static void session_set_current_topology(struct media_session *session, IMFTopol
         return;
     }
 
-    session_collect_source_nodes(session);
-    session_collect_output_nodes(session);
+    session_collect_nodes(session);
 
     /* FIXME: attributes are all zero for now */
     if (SUCCEEDED(MFCreateMediaEvent(MESessionNotifyPresentationTime, &GUID_NULL, S_OK, NULL, &event)))
@@ -1714,7 +1696,7 @@ static HRESULT WINAPI session_events_callback_GetParameters(IMFAsyncCallback *if
 
 static HRESULT session_add_media_stream(struct media_session *session, IMFMediaSource *source, IMFMediaStream *stream)
 {
-    struct source_node *node;
+    struct topo_node *node;
     IMFStreamDescriptor *sd;
     DWORD stream_id = 0;
     HRESULT hr;
@@ -1727,18 +1709,19 @@ static HRESULT session_add_media_stream(struct media_session *session, IMFMediaS
     if (FAILED(hr))
         return hr;
 
-    LIST_FOR_EACH_ENTRY(node, &session->presentation.source_nodes, struct source_node, entry)
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
     {
-        if (node->source == source && node->stream_id == stream_id)
+        if (node->type == MF_TOPOLOGY_SOURCESTREAM_NODE && node->u.source.source == source
+                && node->u.source.stream_id == stream_id)
         {
-            if (node->stream)
+            if (node->object.source_stream)
             {
-                WARN("Source node already has stream set.\n");
+                WARN("Node already has stream set.\n");
                 return S_FALSE;
             }
 
-            node->stream = stream;
-            IMFMediaStream_AddRef(node->stream);
+            node->object.source_stream = stream;
+            IMFMediaStream_AddRef(node->object.source_stream);
             break;
         }
     }
@@ -1749,7 +1732,7 @@ static HRESULT session_add_media_stream(struct media_session *session, IMFMediaS
 static BOOL session_is_source_nodes_state(struct media_session *session, enum object_state state)
 {
     struct media_source *source;
-    struct source_node *node;
+    struct topo_node *node;
 
     LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
     {
@@ -1757,9 +1740,9 @@ static BOOL session_is_source_nodes_state(struct media_session *session, enum ob
             return FALSE;
     }
 
-    LIST_FOR_EACH_ENTRY(node, &session->presentation.source_nodes, struct source_node, entry)
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
     {
-        if (node->state != state)
+        if (node->type == MF_TOPOLOGY_SOURCESTREAM_NODE && node->state != state)
             return FALSE;
     }
 
@@ -1768,11 +1751,11 @@ static BOOL session_is_source_nodes_state(struct media_session *session, enum ob
 
 static BOOL session_is_output_nodes_state(struct media_session *session, enum object_state state)
 {
-    struct output_node *node;
+    struct topo_node *node;
 
-    LIST_FOR_EACH_ENTRY(node, &session->presentation.output_nodes, struct output_node, entry)
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
     {
-        if (node->state != state)
+        if (node->type == MF_TOPOLOGY_OUTPUT_NODE && node->state != state)
             return FALSE;
     }
 
@@ -1804,8 +1787,8 @@ static HRESULT session_start_clock(struct media_session *session)
 {
     IMFPresentationTimeSource *time_source = NULL;
     LONGLONG start_offset = 0;
-    struct output_node *node;
     struct media_sink *sink;
+    struct topo_node *node;
     HRESULT hr;
 
     if (!(session->presentation.flags & SESSION_FLAG_SINKS_SUBSCRIBED))
@@ -1828,10 +1811,13 @@ static HRESULT session_start_clock(struct media_session *session)
         if (FAILED(hr))
             WARN("Failed to set time source, hr %#x.\n", hr);
 
-        LIST_FOR_EACH_ENTRY(node, &session->presentation.output_nodes, struct output_node, entry)
+        LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
         {
-            if (FAILED(hr = IMFStreamSink_BeginGetEvent(node->stream, &session->events_callback,
-                    (IUnknown *)node->stream)))
+            if (node->type != MF_TOPOLOGY_OUTPUT_NODE)
+                continue;
+
+            if (FAILED(hr = IMFStreamSink_BeginGetEvent(node->object.sink_stream, &session->events_callback,
+                    node->object.object)))
             {
                 WARN("Failed to subscribe to stream sink events, hr %#x.\n", hr);
             }
@@ -1874,10 +1860,9 @@ static HRESULT session_start_clock(struct media_session *session)
 static void session_set_source_object_state(struct media_session *session, IUnknown *object,
         MediaEventType event_type)
 {
-    struct source_node *src_node;
-    struct output_node *out_node;
     struct media_source *src;
     enum object_state state;
+    struct topo_node *node;
     BOOL changed = FALSE;
 
     if ((state = session_get_object_state_for_event(event_type)) == OBJ_STATE_INVALID)
@@ -1903,12 +1888,12 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
         case MEStreamPaused:
         case MEStreamStopped:
 
-            LIST_FOR_EACH_ENTRY(src_node, &session->presentation.source_nodes, struct source_node, entry)
+            LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
             {
-                if (object == (IUnknown *)src_node->stream)
+                if (node->type == MF_TOPOLOGY_SOURCESTREAM_NODE && object == node->object.object)
                 {
-                    changed = src_node->state != state;
-                    src_node->state = state;
+                    changed = node->state != state;
+                    node->state = state;
                     break;
                 }
             }
@@ -1945,9 +1930,10 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
             if (!session_is_source_nodes_state(session, OBJ_STATE_STOPPED))
                 break;
 
-            LIST_FOR_EACH_ENTRY(out_node, &session->presentation.output_nodes, struct output_node, entry)
+            LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
             {
-                IMFStreamSink_Flush(out_node->stream);
+                if (node->type == MF_TOPOLOGY_OUTPUT_NODE)
+                    IMFStreamSink_Flush(node->object.sink_stream);
             }
 
             session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
@@ -1972,7 +1958,7 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
         MediaEventType event_type)
 {
     struct media_source *source;
-    struct output_node *node;
+    struct topo_node *node;
     enum object_state state;
     BOOL changed = FALSE;
     IMFMediaEvent *event;
@@ -1982,9 +1968,9 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
     if ((state = session_get_object_state_for_event(event_type)) == OBJ_STATE_INVALID)
         return;
 
-    LIST_FOR_EACH_ENTRY(node, &session->presentation.output_nodes, struct output_node, entry)
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
     {
-        if (stream == node->stream)
+        if (node->type == MF_TOPOLOGY_OUTPUT_NODE && stream == node->object.sink_stream)
         {
             changed = node->state != state;
             node->state = state;
@@ -2438,9 +2424,8 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     object->refcount = 1;
     list_init(&object->topologies);
     list_init(&object->presentation.sources);
-    list_init(&object->presentation.source_nodes);
     list_init(&object->presentation.sinks);
-    list_init(&object->presentation.output_nodes);
+    list_init(&object->presentation.nodes);
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = MFCreateTopology(&object->presentation.current_topology)))
