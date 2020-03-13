@@ -436,26 +436,28 @@ sub open_data_file($$)
     my ($base, $name) = @_;
     (my $dir = "data/$name") =~ s/\/[^\/]+$//;
     local *FILE;
-    unless (-f "data/$name")
+
+    if ($base =~ /.*\/([^\/]+)\.zip$/)
     {
-        system "mkdir", "-p", $dir;
-        if ($base =~ /.*\/([^\/]+\.zip)$/)
+        my $zip = $1;
+        unless (-f "data/$zip")
         {
-            my $zip = $1;
-            unless (-f "data/$zip")
-            {
-                print "Fetching $base...\n";
-                !system "wget", "-q", "-O", "data/$zip", "$base" or die "cannot fetch $base";
-            }
-            !system "unzip", "-q", "-d", "data", "data/$zip", $name or die "cannot extract $name from $zip";
+            mkdir "data";
+            print "Fetching $base...\n";
+            !system "wget", "-q", "-O", "data/$zip", $base or die "cannot fetch $base";
         }
-        else
+        open FILE, "-|", "unzip", "-p", "data/$zip", $name or die "cannot extract $name from $zip";
+    }
+    else
+    {
+        unless (-f "data/$name")
         {
+            system "mkdir", "-p", $dir;
             print "Fetching $base/$name...\n";
             !system "wget", "-q", "-O", "data/$name", "$base/$name" or die "cannot fetch $base/$name";
         }
+        open FILE, "<data/$name" or die "cannot open data/$name";
     }
-    open FILE, "<data/$name" or die "cannot open data/$name";
     return *FILE;
 }
 
