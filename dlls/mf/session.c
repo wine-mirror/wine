@@ -1004,6 +1004,16 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
 
             break;
         case MF_TOPOLOGY_TRANSFORM_NODE:
+            if (SUCCEEDED(hr = IMFTopologyNode_GetObject(node, &object)))
+            {
+                hr = IUnknown_QueryInterface(object, &IID_IMFTransform, (void **)&topo_node->object.transform);
+                IUnknown_Release(object);
+            }
+
+            if (FAILED(hr))
+                WARN("Failed to get IMFTransform for MFT node, hr %#x.\n", hr);
+
+            break;
         case MF_TOPOLOGY_TEE_NODE:
             FIXME("Unsupported node type %d.\n", topo_node->type);
 
@@ -1025,44 +1035,60 @@ static HRESULT session_collect_nodes(struct media_session *session)
     IMFTopology *topology = session->presentation.current_topology;
     IMFTopologyNode *node;
     WORD i, count = 0;
+    HRESULT hr;
 
     if (!list_empty(&session->presentation.nodes))
         return S_OK;
 
-    IMFTopology_GetNodeCount(topology, &count);
+    if (FAILED(hr = IMFTopology_GetNodeCount(topology, &count)))
+        return hr;
 
     for (i = 0; i < count; ++i)
     {
-        if (FAILED(IMFTopology_GetNode(topology, i, &node)))
+        if (FAILED(hr = IMFTopology_GetNode(topology, i, &node)))
         {
             WARN("Failed to get node %u.\n", i);
-            continue;
+            break;
         }
 
-        if (FAILED(session_append_node(session, node)))
-            WARN("Failed to add node %u.\n", i);
-
+        hr = session_append_node(session, node);
         IMFTopologyNode_Release(node);
+        if (FAILED(hr))
+        {
+            WARN("Failed to add node %u.\n", i);
+            break;
+        }
     }
 
-    return S_OK;
+    return hr;
 }
 
-static void session_set_current_topology(struct media_session *session, IMFTopology *topology)
+static HRESULT session_set_current_topology(struct media_session *session, IMFTopology *topology)
 {
     struct media_source *source;
     DWORD caps, object_flags;
     struct media_sink *sink;
+    struct topo_node *node;
     IMFMediaEvent *event;
     HRESULT hr;
 
     if (FAILED(hr = IMFTopology_CloneFrom(session->presentation.current_topology, topology)))
     {
         WARN("Failed to clone topology, hr %#x.\n", hr);
-        return;
+        return hr;
     }
 
     session_collect_nodes(session);
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->type == MF_TOPOLOGY_TRANSFORM_NODE)
+        {
+            if (FAILED(hr = IMFTransform_ProcessMessage(node->object.transform,
+                    MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0)))
+                return hr;
+        }
+    }
 
     /* FIXME: attributes are all zero for now */
     if (SUCCEEDED(MFCreateMediaEvent(MESessionNotifyPresentationTime, &GUID_NULL, S_OK, NULL, &event)))
@@ -1114,11 +1140,13 @@ static void session_set_current_topology(struct media_session *session, IMFTopol
     }
 
     session_set_caps(session, caps);
+
+    return S_OK;
 }
 
 static void session_set_topology(struct media_session *session, DWORD flags, IMFTopology *topology)
 {
-    HRESULT status = S_OK;
+    HRESULT hr = S_OK;
 
     /* Resolve unless claimed to be full. */
     if (!(flags & MFSESSION_SETTOPOLOGY_CLEAR_CURRENT) && topology)
@@ -1127,12 +1155,12 @@ static void session_set_topology(struct media_session *session, DWORD flags, IMF
         {
             IMFTopology *resolved_topology = NULL;
 
-            status = session_bind_output_nodes(topology);
+            hr = session_bind_output_nodes(topology);
 
-            if (SUCCEEDED(status))
-                status = IMFTopoLoader_Load(session->topo_loader, topology, &resolved_topology, NULL /* FIXME? */);
+            if (SUCCEEDED(hr))
+                hr = IMFTopoLoader_Load(session->topo_loader, topology, &resolved_topology, NULL /* FIXME? */);
 
-            if (SUCCEEDED(status))
+            if (SUCCEEDED(hr))
             {
                 topology = resolved_topology;
             }
@@ -1149,7 +1177,7 @@ static void session_set_topology(struct media_session *session, DWORD flags, IMF
             session_clear_presentation(session);
         }
         else
-            status = S_FALSE;
+            hr = S_FALSE;
 
         topology = NULL;
     }
@@ -1159,14 +1187,14 @@ static void session_set_topology(struct media_session *session, DWORD flags, IMF
         session_clear_presentation(session);
     }
 
-    session_raise_topology_set(session, topology, status);
+    session_raise_topology_set(session, topology, hr);
 
     /* With no current topology set it right away, otherwise queue. */
     if (topology)
     {
         if (session->presentation.topo_status == MF_TOPOSTATUS_INVALID)
         {
-            session_set_current_topology(session, topology);
+            hr = session_set_current_topology(session, topology);
         }
         else
         {
@@ -1182,8 +1210,7 @@ static void session_set_topology(struct media_session *session, DWORD flags, IMF
         }
     }
 
-    if (status == S_OK)
-        session_set_topo_status(session, S_OK, MF_TOPOSTATUS_READY);
+    session_set_topo_status(session, hr, MF_TOPOSTATUS_READY);
 
     LeaveCriticalSection(&session->cs);
 }
