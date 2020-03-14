@@ -128,14 +128,14 @@
 #include "qtprivate.h"
 #include "wineqtdecoder_classes.h"
 
-extern CLSID CLSID_QTVDecoder;
-
 WINE_DEFAULT_DEBUG_CHANNEL(qtdecoder);
 
 typedef struct QTVDecoderImpl
 {
     struct strmbase_filter filter;
     CRITICAL_SECTION stream_cs;
+
+    AM_MEDIA_TYPE mt;
 
     struct strmbase_source source;
     IUnknown *seeking;
@@ -266,7 +266,7 @@ error:
     This->decodeHR = hr;
 }
 
-static HRESULT WINAPI video_decoder_Receive(struct strmbase_sink *iface, IMediaSample *pSample)
+static HRESULT WINAPI video_decoder_sink_Receive(struct strmbase_sink *iface, IMediaSample *pSample)
 {
     QTVDecoderImpl *This = impl_from_strmbase_filter(iface->pin.filter);
     HRESULT hr;
@@ -504,7 +504,7 @@ static HRESULT video_decoder_source_get_media_type(struct strmbase_pin *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI video_decoder_DecideBufferSize(struct strmbase_source *iface,
+static HRESULT WINAPI video_decoder_source_DecideBufferSize(struct strmbase_source *iface,
         IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     QTVDecoderImpl *This = impl_from_strmbase_filter(iface->pin.filter);
@@ -590,7 +590,7 @@ static HRESULT video_decoder_init_stream(struct strmbase_filter *iface)
 
 static HRESULT video_decoder_cleanup_stream(struct strmbase_filter *iface)
 {
-    QTVDecoderImpl* This = impl_from_TransformFilter(pTransformFilter);
+    QTVDecoderImpl* This = impl_from_strmbase_filter(iface);
 
     if (This->decompressionSession)
         ICMDecompressionSessionRelease(This->decompressionSession);
@@ -611,6 +611,7 @@ HRESULT video_decoder_create(IUnknown *outer, IUnknown **out)
 {
     QTVDecoderImpl *object;
     HRESULT hr;
+    ISeekingPassThru *passthrough;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -640,6 +641,6 @@ HRESULT video_decoder_create(IUnknown *outer, IUnknown **out)
     ISeekingPassThru_Release(passthrough);
 
     TRACE("Created video decoder %p.\n", object);
-    *out = &object->tf.filter.IUnknown_inner;
+    *out = &object->filter.IUnknown_inner;
     return S_OK;
 }
