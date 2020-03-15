@@ -845,6 +845,35 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
 }
 
 /***********************************************************************
+ *           IoOpenDeviceRegistryKey   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoOpenDeviceRegistryKey( DEVICE_OBJECT *device, ULONG type, ACCESS_MASK access, HANDLE *key )
+{
+    SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    NTSTATUS status;
+    HDEVINFO set;
+
+    TRACE("device %p, type %#x, access %#x, key %p.\n", device, type, access, key);
+
+    if ((status = get_device_instance_id( device, device_instance_id )))
+    {
+        ERR("Failed to get device instance ID, error %#x.\n", status);
+        return status;
+    }
+
+    set = SetupDiCreateDeviceInfoList( &GUID_NULL, NULL );
+
+    SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device );
+
+    *key = SetupDiOpenDevRegKey( set, &sp_device, DICS_FLAG_GLOBAL, 0, type, access );
+    SetupDiDestroyDeviceInfoList( set );
+    if (*key == INVALID_HANDLE_VALUE)
+        return GetLastError();
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
  *           PoSetPowerState   (NTOSKRNL.EXE.@)
  */
 POWER_STATE WINAPI PoSetPowerState( DEVICE_OBJECT *device, POWER_STATE_TYPE type, POWER_STATE state)

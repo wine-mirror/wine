@@ -423,7 +423,7 @@
 @ stdcall IoIsWdmVersionAvailable(long long)
 @ stub IoMakeAssociatedIrp
 @ stub IoOpenDeviceInterfaceRegistryKey
-@ stub IoOpenDeviceRegistryKey
+@ stdcall IoOpenDeviceRegistryKey(ptr long long ptr)
 @ stub IoPageRead
 @ stub IoPnPDeliverServicePowerNotification
 @ stdcall IoQueryDeviceDescription(ptr ptr ptr ptr ptr ptr ptr ptr)
