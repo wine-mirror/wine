@@ -841,6 +841,7 @@ enable_win16
 enable_win64
 enable_tests
 enable_maintainer_mode
+enable_werror
 with_alsa
 with_capi
 with_cms
@@ -2537,6 +2538,7 @@ Optional Features:
   --disable-tests         do not build the regression tests
   --enable-maintainer-mode
                           enable maintainer-specific build rules
+  --enable-werror         treat compilation warnings as errors
   --disable-largefile     omit support for large files
 
 Optional Packages:
@@ -3859,6 +3861,11 @@ fi
 # Check whether --enable-maintainer-mode was given.
 if test "${enable_maintainer_mode+set}" = set; then :
   enableval=$enable_maintainer_mode;
+fi
+
+# Check whether --enable-werror was given.
+if test "${enable_werror+set}" = set; then :
+  enableval=$enable_werror;
 fi
 
 
@@ -6790,6 +6797,8 @@ $as_echo "yes ($icotool_version_major.$icotool_version_minor)" >&6; }
 
     with_gettext=yes
   with_gettextpo=yes
+
+    enable_werror=yes
 fi
 
 test "x$with_gettext" != xno || MSGFMT=false
@@ -10582,7 +10591,7 @@ if test "x$ac_cv_crosscflags__Wl__delayload_autoconftest_dll" = xyes; then :
 
 fi
 
-        if test "x$enable_maintainer_mode" = xyes
+        if test "x$enable_werror" = "xyes"
         then
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror" >&5
 $as_echo_n "checking whether the cross-compiler supports -Werror... " >&6; }
@@ -17691,7 +17700,7 @@ fi ;;
 
   CFLAGS=$saved_CFLAGS
 
-    if test "x$enable_maintainer_mode" = "xyes"
+    if test "x$enable_werror" = "xyes"
   then
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror" >&5
 $as_echo_n "checking whether the compiler supports -Werror... " >&6; }
