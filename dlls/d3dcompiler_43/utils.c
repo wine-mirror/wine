@@ -1456,6 +1456,29 @@ static unsigned int invert_swizzle(unsigned int *swizzle, unsigned int writemask
     return new_writemask;
 }
 
+static BOOL validate_lhs_deref(const struct hlsl_ir_node *lhs)
+{
+    struct hlsl_ir_deref *deref;
+
+    if (lhs->type != HLSL_IR_DEREF)
+    {
+        hlsl_report_message(lhs->loc, HLSL_LEVEL_ERROR, "invalid lvalue");
+        return FALSE;
+    }
+
+    deref = deref_from_node(lhs);
+
+    if (deref->src.type == HLSL_IR_DEREF_VAR)
+        return TRUE;
+    if (deref->src.type == HLSL_IR_DEREF_ARRAY)
+        return validate_lhs_deref(deref->src.v.array.array);
+    if (deref->src.type == HLSL_IR_DEREF_RECORD)
+        return validate_lhs_deref(deref->src.v.record.record);
+
+    assert(0);
+    return FALSE;
+}
+
 struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign_op assign_op,
         struct hlsl_ir_node *rhs)
 {
@@ -1507,6 +1530,12 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         }
 
         lhs = lhs_inner;
+    }
+
+    if (!validate_lhs_deref(lhs))
+    {
+        d3dcompiler_free(assign);
+        return NULL;
     }
 
     TRACE("Creating proper assignment expression.\n");
