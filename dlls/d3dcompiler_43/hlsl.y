@@ -771,7 +771,7 @@ static struct list *gen_struct_fields(struct hlsl_type *type, DWORD modifiers, s
     return list;
 }
 
-static struct hlsl_type *new_struct_type(const char *name, DWORD modifiers, struct list *fields)
+static struct hlsl_type *new_struct_type(const char *name, struct list *fields)
 {
     struct hlsl_type *type = d3dcompiler_alloc(sizeof(*type));
 
@@ -783,7 +783,6 @@ static struct hlsl_type *new_struct_type(const char *name, DWORD modifiers, stru
     type->type = HLSL_CLASS_STRUCT;
     type->name = name;
     type->dimx = type->dimy = 1;
-    type->modifiers = modifiers;
     type->e.elements = fields;
 
     list_add_tail(&hlsl_ctx.types, &type->entry);
@@ -1127,6 +1126,8 @@ static unsigned int evaluate_array_dimension(struct hlsl_ir_node *node)
 %type <type> struct_spec
 %type <type> named_struct_spec
 %type <type> unnamed_struct_spec
+%type <type> field_type
+%type <type> typedef_type
 %type <list> type_specs
 %type <variable_def> type_spec
 %type <initializer> complex_initializer
@@ -1248,56 +1249,60 @@ preproc_directive:        PRE_LINE STRING
                                 }
                             }
 
-struct_declaration:       struct_spec variables_def_optional ';'
+struct_declaration:       var_modifiers struct_spec variables_def_optional ';'
                             {
-                                if (!$2)
+                                struct hlsl_type *type;
+                                DWORD modifiers = $1;
+
+                                if (!$3)
                                 {
-                                    if (!$1->name)
+                                    if (!$2->name)
                                     {
                                         hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
                                                 "anonymous struct declaration with no variables");
                                     }
-                                    if ($1->modifiers)
+                                    if (modifiers)
                                     {
                                         hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
                                                 "modifier not allowed on struct type declaration");
                                     }
                                 }
-                                $$ = declare_vars($1, 0, $2);
+
+                                if (!(type = apply_type_modifiers($2, &modifiers, get_location(&@1))))
+                                    YYABORT;
+                                $$ = declare_vars(type, modifiers, $3);
                             }
 
 struct_spec:              named_struct_spec
                         | unnamed_struct_spec
 
-named_struct_spec:        var_modifiers KW_STRUCT any_identifier '{' fields_list '}'
+named_struct_spec:        KW_STRUCT any_identifier '{' fields_list '}'
                             {
                                 BOOL ret;
 
-                                TRACE("Structure %s declaration.\n", debugstr_a($3));
-                                check_invalid_matrix_modifiers($1, get_location(&@1));
-                                $$ = new_struct_type($3, $1, $5);
+                                TRACE("Structure %s declaration.\n", debugstr_a($2));
+                                $$ = new_struct_type($2, $4);
 
-                                if (get_variable(hlsl_ctx.cur_scope, $3))
+                                if (get_variable(hlsl_ctx.cur_scope, $2))
                                 {
-                                    hlsl_report_message(get_location(&@3),
-                                            HLSL_LEVEL_ERROR, "redefinition of '%s'", $3);
+                                    hlsl_report_message(get_location(&@2),
+                                            HLSL_LEVEL_ERROR, "redefinition of '%s'", $2);
                                     YYABORT;
                                 }
 
                                 ret = add_type_to_scope(hlsl_ctx.cur_scope, $$);
                                 if (!ret)
                                 {
-                                    hlsl_report_message(get_location(&@3),
-                                            HLSL_LEVEL_ERROR, "redefinition of struct '%s'", $3);
+                                    hlsl_report_message(get_location(&@2),
+                                            HLSL_LEVEL_ERROR, "redefinition of struct '%s'", $2);
                                     YYABORT;
                                 }
                             }
 
-unnamed_struct_spec:      var_modifiers KW_STRUCT '{' fields_list '}'
+unnamed_struct_spec:      KW_STRUCT '{' fields_list '}'
                             {
                                 TRACE("Anonymous structure declaration.\n");
-                                check_invalid_matrix_modifiers($1, get_location(&@1));
-                                $$ = new_struct_type(NULL, $1, $4);
+                                $$ = new_struct_type(NULL, $3);
                             }
 
 any_identifier:           VAR_IDENTIFIER
@@ -1328,7 +1333,10 @@ fields_list:              /* Empty */
                                 d3dcompiler_free($2);
                             }
 
-field:                    var_modifiers type variables_def ';'
+field_type:               type
+                        | unnamed_struct_spec
+
+field:                    var_modifiers field_type variables_def ';'
                             {
                                 struct hlsl_type *type;
                                 DWORD modifiers = $1;
@@ -1336,10 +1344,6 @@ field:                    var_modifiers type variables_def ';'
                                 if (!(type = apply_type_modifiers($2, &modifiers, get_location(&@1))))
                                     YYABORT;
                                 $$ = gen_struct_fields(type, modifiers, $3);
-                            }
-                        | unnamed_struct_spec variables_def ';'
-                            {
-                                $$ = gen_struct_fields($1, 0, $2);
                             }
 
 func_declaration:         func_prototype compound_statement
@@ -1636,7 +1640,10 @@ declaration_statement:    declaration
                                 list_init($$);
                             }
 
-typedef:                  KW_TYPEDEF var_modifiers type type_specs ';'
+typedef_type:             type
+                        | struct_spec
+
+typedef:                  KW_TYPEDEF var_modifiers typedef_type type_specs ';'
                             {
                                 if ($2 & ~HLSL_TYPE_MODIFIERS_MASK)
                                 {
@@ -1649,11 +1656,6 @@ typedef:                  KW_TYPEDEF var_modifiers type type_specs ';'
                                     YYABORT;
                                 }
                                 if (!add_typedef($2, $3, $4))
-                                    YYABORT;
-                            }
-                        | KW_TYPEDEF struct_spec type_specs ';'
-                            {
-                                if (!add_typedef(0, $2, $3))
                                     YYABORT;
                             }
 
