@@ -17127,16 +17127,16 @@ static void test_compressed_surface_stretch(void)
             {
                 U4(src_surface_desc).ddpfPixelFormat = test_formats[k].fmt;
                 hr = IDirectDraw7_CreateSurface(ddraw, &src_surface_desc, &src_surf, NULL);
-                ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+                ok(hr == DD_OK, "Test (%u, %u, %u), got unexpected hr %#x.\n", i, j, k, hr);
 
                 U5(fx).dwFillColor = 0x801f;
                 hr = IDirectDrawSurface7_Blt(rb_surf, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-                ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+                ok(hr == DD_OK, "Test (%u, %u, %u), got unexpected hr %#x.\n", i, j, k, hr);
 
                 hr = IDirectDrawSurface7_Blt(src_surf, &src_rect, rb_surf, &src_rect, DDBLT_WAIT, NULL);
 
                 todo_wine_if(test_formats[k].fmt.dwFlags == DDPF_FOURCC && test_sizes[j].todo_src)
-                ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+                ok(hr == DD_OK, "Test (%u, %u, %u), got unexpected hr %#x.\n", i, j, k, hr);
                 if (FAILED(hr))
                 {
                     IDirectDrawSurface7_Release(src_surf);
