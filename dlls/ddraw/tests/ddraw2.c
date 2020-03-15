@@ -4943,22 +4943,30 @@ static void test_surface_discard(void)
     unsigned int i;
 
     window = create_window();
-    ddraw = create_ddraw();
-    ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
-    {
-        skip("Failed to create a 3D device, skipping test.\n");
-        DestroyWindow(window);
-        IDirectDraw2_Release(ddraw);
-        return;
-    }
-
-    hr = IDirect3DDevice2_GetRenderTarget(device, &target);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         BOOL discarded;
+
+        /* Sigh. Anything other than the first run of the loop randomly fails with
+         * DDERR_SURFACELOST on my Radeon Pro 560 on Win10 19.09. Most of the time
+         * the blit fails, but with sleeps added between surface creation and lock
+         * the lock can fail too. Interestingly ddraw claims the render target has
+         * been lost, not the test surface.
+         *
+         * Recreating ddraw every iteration seems to fix this. */
+        ddraw = create_ddraw();
+        ok(!!ddraw, "Failed to create a ddraw object.\n");
+        if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+        {
+            skip("Failed to create a 3D device, skipping test.\n");
+            DestroyWindow(window);
+            IDirectDraw2_Release(ddraw);
+            return;
+        }
+
+        hr = IDirect3DDevice2_GetRenderTarget(device, &target);
+        ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
         memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
@@ -5005,11 +5013,12 @@ static void test_surface_discard(void)
         /* Windows 7 reliably changes the address of surfaces that are discardable (Nvidia Kepler,
          * AMD r500, evergreen). Windows XP, at least on AMD r200, never changes the pointer. */
         ok(!discarded || tests[i].discard, "Expected surface not to be discarded, case %u\n", i);
+
+        IDirectDrawSurface_Release(target);
+        IDirect3DDevice2_Release(device);
+        IDirectDraw2_Release(ddraw);
     }
 
-    IDirectDrawSurface_Release(target);
-    IDirect3DDevice2_Release(device);
-    IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
 }
 

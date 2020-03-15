@@ -6565,22 +6565,30 @@ static void test_surface_discard(void)
     unsigned int i;
 
     window = create_window();
-    if (!(device = create_device(window, DDSCL_NORMAL)))
-    {
-        skip("Failed to create a 3D device, skipping test.\n");
-        DestroyWindow(window);
-        return;
-    }
-    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
-    hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
-    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_GetRenderTarget(device, &target);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         BOOL discarded;
+
+        /* Sigh. Anything other than the first run of the loop randomly fails with
+         * DDERR_SURFACELOST on my Radeon Pro 560 on Win10 19.09. Most of the time
+         * the blit fails, but with sleeps added between surface creation and lock
+         * the lock can fail too. Interestingly ddraw claims the render target has
+         * been lost, not the test surface.
+         *
+         * Recreating ddraw every iteration seems to fix this. */
+        if (!(device = create_device(window, DDSCL_NORMAL)))
+        {
+            skip("Failed to create a 3D device, skipping test.\n");
+            DestroyWindow(window);
+            return;
+        }
+        hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+        ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+        hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
+        ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+        hr = IDirect3DDevice3_GetRenderTarget(device, &target);
+        ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
         memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
@@ -6624,12 +6632,13 @@ static void test_surface_discard(void)
         /* Windows 7 reliably changes the address of surfaces that are discardable (Nvidia Kepler,
          * AMD r500, evergreen). Windows XP, at least on AMD r200, does not. */
         ok(!discarded || tests[i].discard, "Expected surface not to be discarded, case %u\n", i);
+
+        IDirectDrawSurface4_Release(target);
+        IDirectDraw4_Release(ddraw);
+        IDirect3D3_Release(d3d);
+        IDirect3DDevice3_Release(device);
     }
 
-    IDirectDrawSurface4_Release(target);
-    IDirectDraw4_Release(ddraw);
-    IDirect3D3_Release(d3d);
-    IDirect3DDevice3_Release(device);
     DestroyWindow(window);
 }
 
