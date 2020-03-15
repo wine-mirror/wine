@@ -32,6 +32,7 @@
 #include "initguid.h"
 #include "oledb.h"
 #include "oledberr.h"
+#include "msdasql.h"
 
 #include "wine/test.h"
 
@@ -967,6 +968,87 @@ static void test_dslocator(void)
     }
 }
 
+static void test_odbc_provider(void)
+{
+    HRESULT hr;
+    IDBProperties *props;
+    DBPROPIDSET propidset;
+    ULONG infocount;
+    DBPROPINFOSET *propinfoset;
+    WCHAR *desc;
+    DBPROPID properties[14] =
+    {
+        DBPROP_AUTH_PASSWORD, DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROP_AUTH_USERID,
+        DBPROP_INIT_DATASOURCE, DBPROP_INIT_HWND, DBPROP_INIT_LOCATION,
+        DBPROP_INIT_MODE, DBPROP_INIT_PROMPT, DBPROP_INIT_TIMEOUT,
+        DBPROP_INIT_PROVIDERSTRING, DBPROP_INIT_LCID, DBPROP_INIT_CATALOG,
+        DBPROP_INIT_OLEDBSERVICES, DBPROP_INIT_GENERALTIMEOUT
+    };
+
+    hr = CoCreateInstance( &CLSID_MSDASQL, NULL, CLSCTX_ALL, &IID_IDBProperties, (void **)&props);
+    todo_wine ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    if (FAILED(hr))
+    {
+        return;
+    }
+
+    propidset.rgPropertyIDs = NULL;
+    propidset.cPropertyIDs = 0;
+    propidset.guidPropertySet = DBPROPSET_DBINITALL;
+
+    infocount = 0;
+    hr = IDBProperties_GetPropertyInfo(props, 1, &propidset, &infocount, &propinfoset, &desc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK)
+    {
+        ULONG i;
+        DBPROPIDSET propidlist;
+        ULONG propcnt;
+        DBPROPSET *propset;
+
+        ok(IsEqualGUID(&propinfoset->guidPropertySet, &DBPROPSET_DBINIT), "got %s\n",
+                debugstr_guid(&propinfoset->guidPropertySet));
+        ok(propinfoset->cPropertyInfos == 14, "got %d\n", propinfoset->cPropertyInfos);
+
+        propidlist.guidPropertySet = DBPROPSET_DBINIT;
+        propidlist.cPropertyIDs = propinfoset->cPropertyInfos;
+        propidlist.rgPropertyIDs = CoTaskMemAlloc(propinfoset->cPropertyInfos * sizeof(DBPROP));
+
+        for (i = 0; i < propinfoset->cPropertyInfos; i++)
+        {
+            ok(properties[i] == propinfoset->rgPropertyInfos[i].dwPropertyID, "%d, got %d\n", i,
+                    propinfoset->rgPropertyInfos[i].dwPropertyID);
+            ok(propinfoset->rgPropertyInfos[i].vtType != VT_EMPTY, "%d, got %d\n", i,
+                    propinfoset->rgPropertyInfos[i].vtType);
+
+            propidlist.rgPropertyIDs[i] = propinfoset->rgPropertyInfos[i].dwPropertyID;
+        }
+
+        for (i = 0; i < propinfoset->cPropertyInfos; i++)
+            VariantClear(&propinfoset->rgPropertyInfos[i].vValues);
+
+        CoTaskMemFree(propinfoset->rgPropertyInfos);
+        CoTaskMemFree(propinfoset);
+
+        hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(propidlist.cPropertyIDs == 14, "got %d\n", propinfoset->cPropertyInfos);
+
+        for (i = 0; i < propidlist.cPropertyIDs; i++)
+        {
+            ok(properties[i] == propidlist.rgPropertyIDs[i], "%d, got %d\n", i,
+                    propidlist.rgPropertyIDs[i]);
+
+            propidlist.rgPropertyIDs[i] = propinfoset->rgPropertyInfos[i].dwPropertyID;
+        }
+
+        CoTaskMemFree(propidlist.rgPropertyIDs);
+        CoTaskMemFree(propset);
+    }
+
+    IDBProperties_Release(props);
+}
+
 START_TEST(database)
 {
     OleInitialize(NULL);
@@ -975,6 +1057,7 @@ START_TEST(database)
     test_errorinfo();
     test_initializationstring();
     test_dslocator();
+    test_odbc_provider();
 
     /* row position */
     test_rowposition();
