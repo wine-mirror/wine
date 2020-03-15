@@ -181,7 +181,8 @@ static void test_gamestatisticsmgr( void )
     gs = (void *)0xdeadbeef;
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENONLY, &dwOpenResult, &gs);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "GetGameStatistics returned unexpected value: 0x%08x\n", hr);
-    ok(gs == NULL, "Expected output pointer to be NULL, got %p\n", gs);
+    ok(gs == NULL, "Expected output pointer to be NULL, got %s\n",
+       (gs == (void *)0xdeadbeef ? "deadbeef" : "neither NULL nor deadbeef"));
 
     /* now, allow them to be created */
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
