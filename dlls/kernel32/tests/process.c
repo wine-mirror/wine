@@ -910,9 +910,9 @@ static void test_CommandLine(void)
     ok(!info.dwProcessId, "unexpected dwProcessId %04x\n", info.dwProcessId);
     ok(!info.dwThreadId, "unexpected dwThreadId %04x\n", info.dwThreadId);
 
-    /* the basics */
+    /* the basics; not getting confused by the leading and trailing " */
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" process dump \"%s\" \"C:\\Program Files\\my nice app.exe\" \"\"\"\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\" \"C:\\Program Files\\my nice app.exe\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* Check that the effective STARTUPINFOA parameters are not modified */
     ok(startup.cb == sizeof(startup), "unexpected cb %d\n", startup.cb);
@@ -927,10 +927,9 @@ static void test_CommandLine(void)
     CloseHandle(info.hThread);
     CloseHandle(info.hProcess);
 
-    okChildInt("Arguments", "argcA", 6);
+    okChildInt("Arguments", "argcA", 5);
     okChildString("Arguments", "argvA4", "C:\\Program Files\\my nice app.exe");
-    okChildString("Arguments", "argvA5", "\"");
-    okChildString("Arguments", "argvA6", NULL);
+    okChildString("Arguments", "argvA5", NULL);
     okChildString("Arguments", "CommandLineA", buffer);
     release_memory();
     DeleteFileA(resfile);
@@ -955,10 +954,12 @@ static void test_CommandLine(void)
     release_memory();
     DeleteFileA(resfile);
 
-    /* Test for Bug1330 to show that XP doesn't change '/' to '\\' in argv[0]*/
+    /* Test for Bug1330 to show that XP doesn't change '/' to '\\' in argv[0]
+     * and " escaping.
+     */
     get_file_name(resfile);
     /* Use exename to avoid buffer containing things like 'C:' */
-    sprintf(buffer, "./%s process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", exename, resfile);
+    sprintf(buffer, "./%s process dump \"%s\" \"\"\"\"", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -969,13 +970,16 @@ static void test_CommandLine(void)
     CloseHandle(info.hThread);
     CloseHandle(info.hProcess);
     sprintf(buffer, "./%s", exename);
+    okChildInt("Arguments", "argcA", 5);
     okChildString("Arguments", "argvA0", buffer);
+    okChildString("Arguments", "argvA4", "\"");
+    okChildString("Arguments", "argvA5", NULL);
     release_memory();
     DeleteFileA(resfile);
 
     get_file_name(resfile);
     /* Use exename to avoid buffer containing things like 'C:' */
-    sprintf(buffer, ".\\%s process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", exename, resfile);
+    sprintf(buffer, ".\\%s process dump \"%s\"", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -996,8 +1000,8 @@ static void test_CommandLine(void)
     *(lpFilePart -1 ) = 0;
     p = strrchr(fullpath, '\\');
     /* Use exename to avoid buffer containing things like 'C:' */
-    if (p) sprintf(buffer, "..%s/%s process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", p, exename, resfile);
-    else sprintf(buffer, "./%s process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", exename, resfile);
+    if (p) sprintf(buffer, "..%s/%s process dump \"%s\"", p, exename, resfile);
+    else sprintf(buffer, "./%s process dump \"%s\"", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -1022,7 +1026,7 @@ static void test_CommandLine(void)
     /* Use exename to avoid buffer containing things like 'C:' */
     if (p) sprintf(buffer, "..%s/%s", p, exename);
     else sprintf(buffer, "./%s", exename);
-    sprintf(buffer2, "dummy process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", resfile);
+    sprintf(buffer2, "dummy process dump \"%s\"", resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(buffer, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
