@@ -1105,12 +1105,12 @@ static void test_lpFile_parsed(void)
         return;
     }
 
-    /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on wine */
+    /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on Wine */
     sprintf(fileA, "%s\\drawback_file.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     okShell(rc > 32, "failed: rc=%lu\n", rc);
 
-    /* if quoted, existing "drawback_file.noassoc" not prevents finding "drawback_file.noassoc foo.shlexec" on wine */
+    /* if quoted, existing "drawback_file.noassoc" does not prevent finding "drawback_file.noassoc foo.shlexec" on Wine */
     sprintf(fileA, "\"%s\\drawback_file.noassoc foo.shlexec\"", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
@@ -1127,7 +1127,7 @@ static void test_lpFile_parsed(void)
     todo_wine okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win9x/2000 */,
                       "failed: rc=%lu\n", rc);
 
-    /* nonexisting "drawback_nonexist.noassoc" not prevents finding "drawback_nonexist.noassoc foo.shlexec" on wine */
+    /* nonexistent "drawback_nonexist.noassoc" does not prevent finding "drawback_nonexist.noassoc foo.shlexec" on Wine */
     sprintf(fileA, "%s\\drawback_nonexist.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     okShell(rc > 32, "failed: rc=%lu\n", rc);
