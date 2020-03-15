@@ -1489,7 +1489,7 @@ parameter:                input_mods var_modifiers type any_identifier colon_att
                                 if (!(type = apply_type_modifiers($3, &modifiers, get_location(&@2))))
                                     YYABORT;
 
-                                $$.modifiers = $1 ? $1 : HLSL_MODIFIER_IN;
+                                $$.modifiers = $1 ? $1 : HLSL_STORAGE_IN;
                                 $$.modifiers |= modifiers;
                                 $$.type = type;
                                 $$.name = $4;
@@ -1514,15 +1514,15 @@ input_mods:               /* Empty */
 
 input_mod:                KW_IN
                             {
-                                $$ = HLSL_MODIFIER_IN;
+                                $$ = HLSL_STORAGE_IN;
                             }
                         | KW_OUT
                             {
-                                $$ = HLSL_MODIFIER_OUT;
+                                $$ = HLSL_STORAGE_OUT;
                             }
                         | KW_INOUT
                             {
-                                $$ = HLSL_MODIFIER_IN | HLSL_MODIFIER_OUT;
+                                $$ = HLSL_STORAGE_IN | HLSL_STORAGE_OUT;
                             }
 
 type:                     base_type

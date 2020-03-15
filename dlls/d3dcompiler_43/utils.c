@@ -1808,11 +1808,11 @@ const char *debug_modifiers(DWORD modifiers)
         strcat(string, " row_major");                    /* 10 */
     if (modifiers & HLSL_MODIFIER_COLUMN_MAJOR)
         strcat(string, " column_major");                 /* 13 */
-    if ((modifiers & (HLSL_MODIFIER_IN | HLSL_MODIFIER_OUT)) == (HLSL_MODIFIER_IN | HLSL_MODIFIER_OUT))
+    if ((modifiers & (HLSL_STORAGE_IN | HLSL_STORAGE_OUT)) == (HLSL_STORAGE_IN | HLSL_STORAGE_OUT))
         strcat(string, " inout");                        /* 6 */
-    else if (modifiers & HLSL_MODIFIER_IN)
+    else if (modifiers & HLSL_STORAGE_IN)
         strcat(string, " in");                           /* 3 */
-    else if (modifiers & HLSL_MODIFIER_OUT)
+    else if (modifiers & HLSL_STORAGE_OUT)
         strcat(string, " out");                          /* 4 */
 
     return wine_dbg_sprintf("%s", string[0] ? string + 1 : "");
