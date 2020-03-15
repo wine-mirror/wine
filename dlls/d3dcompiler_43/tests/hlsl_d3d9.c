@@ -294,78 +294,123 @@ static void test_swizzle(void)
     ID3DXConstantTable *constants;
     ID3D10Blob *ps_code = NULL;
     IDirect3DDevice9 *device;
+    unsigned int i;
     struct vec4 v;
     HRESULT hr;
 
-    static const char ps_source[] =
-        "uniform float4 color;\n"
-        "float4 main() : COLOR\n"
-        "{\n"
-        "    float4 ret = color;\n"
-        "    ret.gb = ret.ra;\n"
-        "    ret.ra = float2(0.0101, 0.0404);\n"
-        "    return ret;\n"
-        "}";
-
-    static const char ps_multiple_lhs_source[] =
-        "float4 main() : COLOR\n"
-        "{\n"
-        "    float4 ret = float4(0.1, 0.2, 0.3, 0.4);\n"
-        "    ret.wyz.yx = float2(0.5, 0.6).yx;\n"
-        "    return ret;\n"
-        "}";
-
-    static const char ps_multiple_rhs_source[] =
-        "float4 main() : COLOR\n"
-        "{\n"
-        "    float4 ret = float4(0.1, 0.2, 0.3, 0.4).ywxz.zyyz;\n"
-        "    return ret;\n"
-        "}";
+    static const struct
+    {
+        const char *source;
+        struct vec4 color;
+    }
+    tests[] =
+    {
+        {
+            "uniform float4 color;\n"
+            "float4 main() : COLOR\n"
+            "{\n"
+            "    float4 ret = color;\n"
+            "    ret.gb = ret.ra;\n"
+            "    ret.ra = float2(0.0101, 0.0404);\n"
+            "    return ret;\n"
+            "}",
+            {0.0101f, 0.0303f, 0.0202f, 0.0404f}
+        },
+        {
+            "float4 main() : COLOR\n"
+            "{\n"
+            "    float4 ret = float4(0.1, 0.2, 0.3, 0.4);\n"
+            "    ret.wyz.yx = float2(0.5, 0.6).yx;\n"
+            "    return ret;\n"
+            "}",
+            {0.1f, 0.6f, 0.3f, 0.5f}
+        },
+        {
+            "float4 main() : COLOR\n"
+            "{\n"
+            "    float4 ret;\n"
+            "    ret.zwyx = float4(0.1, 0.2, 0.3, 0.4);\n"
+            "    return ret;\n"
+            "}",
+            {0.4f, 0.3f, 0.1f, 0.2f}
+        },
+        {
+            "float4 main() : COLOR\n"
+            "{\n"
+            "    float4 ret;\n"
+            "    ret.yw.y = 0.1;\n"
+            "    ret.xzy.yz.y.x = 0.2;\n"
+            "    ret.yzwx.yzwx.wz.y = 0.3;\n"
+            "    ret.zxy.xyz.zxy.xy.y = 0.4;\n"
+            "    return ret;\n"
+            "}",
+            {0.3f, 0.2f, 0.4f, 0.1f}
+        },
+        {
+            "float4 main() : COLOR\n"
+            "{\n"
+            "    float4 ret;\n"
+            "    ret.yxz.yx = float2(0.1, 0.2);\n"
+            "    ret.w.x = 0.3;\n"
+            "    ret.wzyx.zyx.yx.x = 0.4;\n"
+            "    return ret;\n"
+            "}",
+            {0.1f, 0.2f, 0.4f, 0.3f}
+        },
+        {
+            "float4 main() : COLOR\n"
+            "{\n"
+            "    float4 ret = float4(0.1, 0.2, 0.3, 0.4).ywxz.zyyz;\n"
+            "    return ret;\n"
+            "}",
+            {0.1f, 0.4f, 0.4f, 0.1f}
+        },
+        {
+            "float4 main() : COLOR\n"
+            "{\n"
+            "    float4 ret = float4(0.1, 0.2, 0.3, 0.4);\n"
+            "    ret.yxwz = ret;\n"
+            "    ret = ret.wyzx;\n"
+            "    return ret;\n"
+            "}",
+            {0.3f, 0.1f, 0.4f, 0.2f}
+        },
+        {
+            "float4 main() : COLOR\n"
+            "{\n"
+            "    float4 ret;\n"
+            "    ret.xyzw.xyzw = float4(0.1, 0.2, 0.3, 0.4);\n"
+            "    return ret;\n"
+            "}",
+            {0.1f, 0.2f, 0.3f, 0.4f}
+        },
+    };
 
     if (!init_test_context(&test_context))
         return;
     device = test_context.device;
 
-    todo_wine ps_code = compile_shader(ps_source, "ps_2_0");
-    if (ps_code)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(ps_code), &constants);
-        ok(hr == D3D_OK, "Failed to get constant table, hr %#x.\n", hr);
-        hr = ID3DXConstantTable_SetVector(constants, device, "color", &color);
-        ok(hr == D3D_OK, "Failed to set constant, hr %#x.\n", hr);
-        ID3DXConstantTable_Release(constants);
+        todo_wine ps_code = compile_shader(tests[i].source, "ps_2_0");
+        if (ps_code)
+        {
+            if (i == 0)
+            {
+                hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(ps_code), &constants);
+                ok(hr == D3D_OK, "Failed to get constant table, hr %#x.\n", hr);
+                hr = ID3DXConstantTable_SetVector(constants, device, "color", &color);
+                ok(hr == D3D_OK, "Failed to set constant, hr %#x.\n", hr);
+                ID3DXConstantTable_Release(constants);
+            }
+            draw_quad(device, ps_code);
 
-        draw_quad(device, ps_code);
+            v = get_color_vec4(device, 0, 0);
+            ok(compare_vec4(&v, tests[i].color.x, tests[i].color.y, tests[i].color.z, tests[i].color.w, 0),
+                    "Test %u: Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", i, v.x, v.y, v.z, v.w);
 
-        v = get_color_vec4(device, 0, 0);
-        ok(compare_vec4(&v, 0.0101f, 0.0303f, 0.0202f, 0.0404f, 0),
-                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
-
-        ID3D10Blob_Release(ps_code);
-    }
-
-    todo_wine ps_code = compile_shader(ps_multiple_lhs_source, "ps_2_0");
-    if (ps_code)
-    {
-        draw_quad(device, ps_code);
-
-        v = get_color_vec4(device, 0, 0);
-        ok(compare_vec4(&v, 0.1f, 0.6f, 0.3f, 0.5f, 0),
-                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
-
-        ID3D10Blob_Release(ps_code);
-    }
-
-    todo_wine ps_code = compile_shader(ps_multiple_rhs_source, "ps_2_0");
-    if (ps_code)
-    {
-        draw_quad(device, ps_code);
-
-        v = get_color_vec4(device, 0, 0);
-        ok(compare_vec4(&v, 0.1f, 0.4f, 0.4f, 0.1f, 0),
-                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
-
-        ID3D10Blob_Release(ps_code);
+            ID3D10Blob_Release(ps_code);
+        }
     }
 
     release_test_context(&test_context);
