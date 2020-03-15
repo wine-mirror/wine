@@ -39,7 +39,7 @@
 #include "wine/test.h"
 
 static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
-static NTSTATUS (WINAPI *pNtQueryVirtualMemory)(HANDLE, LPCVOID, ULONG, PVOID, SIZE_T, SIZE_T *);
+static NTSTATUS (WINAPI *pNtQueryVirtualMemory)(HANDLE, LPCVOID, MEMORY_INFORMATION_CLASS, PVOID, SIZE_T, SIZE_T *);
 static BOOL  (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
 static BOOL  (WINAPI *pWow64DisableWow64FsRedirection)(void **);
 static BOOL  (WINAPI *pWow64RevertWow64FsRedirection)(void *);
