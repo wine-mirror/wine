@@ -117,7 +117,7 @@ static void debug_dump_decl(struct hlsl_type *type, DWORD modifiers, const char 
 
 static void check_invalid_matrix_modifiers(DWORD modifiers, struct source_location loc)
 {
-    if (modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR))
+    if (modifiers & HLSL_MODIFIERS_MAJORITY_MASK)
     {
         hlsl_report_message(loc, HLSL_LEVEL_ERROR,
                 "'row_major' or 'column_major' modifiers are only allowed for matrices");
@@ -175,8 +175,7 @@ static DWORD add_modifiers(DWORD modifiers, DWORD mod, const struct source_locat
         hlsl_report_message(loc, HLSL_LEVEL_ERROR, "modifier '%s' already specified", debug_modifiers(mod));
         return modifiers;
     }
-    if (mod & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
-            && modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR))
+    if ((mod & HLSL_MODIFIERS_MAJORITY_MASK) && (modifiers & HLSL_MODIFIERS_MAJORITY_MASK))
     {
         hlsl_report_message(loc, HLSL_LEVEL_ERROR, "more than one matrix majority keyword");
         return modifiers;

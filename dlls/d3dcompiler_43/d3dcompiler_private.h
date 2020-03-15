@@ -741,7 +741,7 @@ struct hlsl_ir_node
                                       HLSL_MODIFIER_CONST | HLSL_MODIFIER_ROW_MAJOR | \
                                       HLSL_MODIFIER_COLUMN_MAJOR)
 
-#define HLSL_MODIFIERS_COMPARISON_MASK (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
+#define HLSL_MODIFIERS_MAJORITY_MASK (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
 
 struct reg_reservation
 {
