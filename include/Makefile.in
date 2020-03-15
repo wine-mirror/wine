@@ -407,6 +407,7 @@ SOURCES = \
 	msdadc.idl \
 	msdaguid.h \
 	msdasc.idl \
+	msdasql.h \
 	mshtmcid.h \
 	mshtmdid.h \
 	mshtmhst.idl \
