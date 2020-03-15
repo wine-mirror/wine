@@ -847,26 +847,22 @@ static void test_GetVolumePathNameA(void)
             NO_ERROR, NO_ERROR
         },
         { /* test 37 */
-            "/unix-style/absolute/path", "%CurrentDrive%\\", sizeof(volume_path),
-            NO_ERROR, NO_ERROR
-        },
-        { /* test 38 */
             "\\??\\C:\\NonExistent", "%CurrentDrive%\\", sizeof(volume_path),
             NO_ERROR, NO_ERROR
         },
-        { /* test 39 */
+        { /* test 38 */
             "\\??\\M:\\NonExistent", "%CurrentDrive%\\", sizeof(volume_path),
             NO_ERROR, NO_ERROR
         },
-        { /* test 40 */
+        { /* test 39 */
             "somefile:def", "%CurrentDrive%\\", sizeof(volume_path),
             NO_ERROR, NO_ERROR
         },
-        { /* test 41 */
+        { /* test 40 */
             "s:omefile", "S:\\" /* win2k, winxp */, sizeof(volume_path),
             ERROR_FILE_NOT_FOUND, NO_ERROR
         },
-        { /* test 42: a reasonable forward slash path that is guaranteed to exist */
+        { /* test 41: a reasonable forward slash path that is guaranteed to exist */
             "C:/windows/system32", "C:\\", sizeof(volume_path),
             NO_ERROR, NO_ERROR
         },
