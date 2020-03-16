@@ -411,6 +411,8 @@ HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **man
 HRESULT WINAPI MFCreateEventQueue(IMFMediaEventQueue **queue);
 HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
                             LPCWSTR url, IMFByteStream **bytestream);
+HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLONG duration, DWORD min_length,
+        DWORD min_alignment, IMFMediaBuffer **buffer);
 HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HRESULT status,
                                   const PROPVARIANT *value, IMFMediaEvent **event);
 HRESULT WINAPI MFCreateMediaType(IMFMediaType **type);

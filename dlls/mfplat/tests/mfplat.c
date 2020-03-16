@@ -95,6 +95,8 @@ static HRESULT (WINAPI *pMFGetPlaneSize)(DWORD format, DWORD width, DWORD height
 static HRESULT (WINAPI *pMFGetStrideForBitmapInfoHeader)(DWORD format, DWORD width, LONG *stride);
 static HRESULT (WINAPI *pMFCreate2DMediaBuffer)(DWORD width, DWORD height, DWORD fourcc, BOOL bottom_up,
         IMFMediaBuffer **buffer);
+static HRESULT (WINAPI *pMFCreateMediaBufferFromMediaType)(IMFMediaType *media_type, LONGLONG duration, DWORD min_length,
+        DWORD min_alignment, IMFMediaBuffer **buffer);
 
 static const WCHAR fileschemeW[] = L"file://";
 
@@ -665,6 +667,7 @@ static void init_functions(void)
     X(MFCreate2DMediaBuffer);
     X(MFCreateDXGIDeviceManager);
     X(MFCreateSourceResolver);
+    X(MFCreateMediaBufferFromMediaType);
     X(MFCreateMFByteStreamOnStream);
     X(MFCreateTransformActivate);
     X(MFGetPlaneSize);
@@ -4587,6 +4590,72 @@ static void test_MFCreate2DMediaBuffer(void)
     IMFMediaBuffer_Release(buffer);
 }
 
+static void test_MFCreateMediaBufferFromMediaType(void)
+{
+    static struct audio_buffer_test
+    {
+        unsigned int duration;
+        unsigned int min_length;
+        unsigned int min_alignment;
+        unsigned int block_alignment;
+        unsigned int bytes_per_second;
+        unsigned int buffer_length;
+    } audio_tests[] =
+    {
+        { 0,  0,  0,  4,  0, 20 },
+        { 0, 16,  0,  4,  0, 20 },
+        { 0,  0, 32,  4,  0, 36 },
+        { 0, 64, 32,  4,  0, 64 },
+        { 1,  0,  0,  4, 16, 36 },
+        { 2,  0,  0,  4, 16, 52 },
+    };
+    IMFMediaBuffer *buffer;
+    UINT32 length;
+    HRESULT hr;
+    IMFMediaType *media_type;
+    unsigned int i;
+
+    if (!pMFCreateMediaBufferFromMediaType)
+    {
+        win_skip("MFCreateMediaBufferFromMediaType() is not available.\n");
+        return;
+    }
+
+    hr = pMFCreateMediaBufferFromMediaType(NULL, 0, 0, 0, &buffer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(audio_tests); ++i)
+    {
+        const struct audio_buffer_test *ptr = &audio_tests[i];
+
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, ptr->block_alignment);
+        ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, ptr->bytes_per_second);
+        ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+        hr = pMFCreateMediaBufferFromMediaType(media_type, ptr->duration * 10000000, ptr->min_length,
+                ptr->min_alignment, &buffer);
+        ok(hr == S_OK || broken(FAILED(hr)) /* Win8 */, "Unexpected hr %#x.\n", hr);
+        if (FAILED(hr))
+            break;
+
+        hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
+        ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+        ok(ptr->buffer_length == length, "%d: unexpected buffer length %u, expected %u.\n", i, length, ptr->buffer_length);
+
+        IMFMediaBuffer_Release(buffer);
+    }
+
+    IMFMediaType_Release(media_type);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -4640,6 +4709,7 @@ START_TEST(mfplat)
     test_queue_com();
     test_MFGetStrideForBitmapInfoHeader();
     test_MFCreate2DMediaBuffer();
+    test_MFCreateMediaBufferFromMediaType();
 
     CoUninitialize();
 }

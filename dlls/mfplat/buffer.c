@@ -448,6 +448,68 @@ HRESULT WINAPI MFCreate2DMediaBuffer(DWORD width, DWORD height, DWORD fourcc, BO
     return create_2d_buffer(width, height, fourcc, buffer);
 }
 
+static unsigned int buffer_get_aligned_length(unsigned int length, unsigned int alignment)
+{
+    length = (length + alignment) / alignment;
+    length *= alignment;
+
+    return length;
+}
+
+HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLONG duration, DWORD min_length,
+        DWORD alignment, IMFMediaBuffer **buffer)
+{
+    UINT32 length = 0, block_alignment;
+    LONGLONG avg_length;
+    HRESULT hr;
+    GUID major;
+
+    TRACE("%p, %s, %u, %u, %p.\n", media_type, wine_dbgstr_longlong(duration), min_length, alignment, buffer);
+
+    if (!media_type)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = IMFMediaType_GetMajorType(media_type, &major)))
+        return hr;
+
+    if (IsEqualGUID(&major, &MFMediaType_Audio))
+    {
+        block_alignment = 0;
+        if (FAILED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment)))
+            WARN("Block alignment was not specified.\n");
+
+        if (block_alignment)
+        {
+            avg_length = 0;
+
+            if (duration)
+            {
+                length = 0;
+                if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &length)))
+                {
+                    /* 100 ns -> 1 s */
+                    avg_length = length * duration / (10 * 1000 * 1000);
+                }
+            }
+
+            alignment = max(16, alignment);
+
+            length = buffer_get_aligned_length(avg_length + 1, alignment);
+            length = buffer_get_aligned_length(length, block_alignment);
+        }
+        else
+            length = 0;
+
+        length = max(length, min_length);
+
+        return create_1d_buffer(length, MF_1_BYTE_ALIGNMENT, buffer);
+    }
+    else
+        FIXME("Major type %s is not supported.\n", debugstr_guid(&major));
+
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI sample_QueryInterface(IMFSample *iface, REFIID riid, void **out)
 {
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
