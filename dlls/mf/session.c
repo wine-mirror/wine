@@ -2257,9 +2257,6 @@ static HRESULT transform_node_get_sample(struct topo_node *node, DWORD output, I
     {
         IMFMediaBuffer *buffer = NULL;
 
-        if (!stream_info.cbSize)
-            FIXME("Unhandled buffer size %u.\n", stream_info.cbSize);
-
         hr = MFCreateAlignedMemoryBuffer(stream_info.cbSize, stream_info.cbAlignment, &buffer);
         if (SUCCEEDED(hr))
             hr = MFCreateSample(&buffers[output].pSample);
