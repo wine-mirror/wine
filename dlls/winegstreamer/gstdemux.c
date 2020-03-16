@@ -172,17 +172,14 @@ static gboolean amt_from_gst_caps_audio_raw(const GstCaps *caps, AM_MEDIA_TYPE *
     return TRUE;
 }
 
-static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *amt)
+static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE *amt)
 {
     VIDEOINFOHEADER *vih;
     BITMAPINFOHEADER *bih;
     gint32 width, height;
-    GstVideoInfo vinfo;
 
-    if (!gst_video_info_from_caps (&vinfo, caps))
-        return FALSE;
-    width = GST_VIDEO_INFO_WIDTH(&vinfo);
-    height = GST_VIDEO_INFO_HEIGHT(&vinfo);
+    width = GST_VIDEO_INFO_WIDTH(info);
+    height = GST_VIDEO_INFO_HEIGHT(info);
 
     vih = CoTaskMemAlloc(sizeof(*vih));
     bih = &vih->bmiHeader;
@@ -197,9 +194,9 @@ static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *
     ZeroMemory(vih, sizeof(*vih));
     amt->majortype = MEDIATYPE_Video;
 
-    if (GST_VIDEO_INFO_IS_RGB(&vinfo))
+    if (GST_VIDEO_INFO_IS_RGB(info))
     {
-        switch (GST_VIDEO_INFO_FORMAT(&vinfo))
+        switch (GST_VIDEO_INFO_FORMAT(info))
         {
         case GST_VIDEO_FORMAT_BGRA:
             amt->subtype = MEDIASUBTYPE_ARGB32;
@@ -222,14 +219,14 @@ static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *
             bih->biBitCount = 16;
             break;
         default:
-            FIXME("Unhandled type %s.\n", GST_VIDEO_INFO_NAME(&vinfo));
+            FIXME("Unhandled type %s.\n", GST_VIDEO_INFO_NAME(info));
             CoTaskMemFree(vih);
             return FALSE;
         }
         bih->biCompression = BI_RGB;
     } else {
         amt->subtype = MEDIATYPE_Video;
-        if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(GST_VIDEO_INFO_FORMAT(&vinfo))))
+        if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(GST_VIDEO_INFO_FORMAT(info))))
         {
             CoTaskMemFree(vih);
             return FALSE;
@@ -248,7 +245,7 @@ static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *
     }
     bih->biSizeImage = width * height * bih->biBitCount / 8;
     if ((vih->AvgTimePerFrame = (REFERENCE_TIME)MulDiv(10000000,
-            GST_VIDEO_INFO_FPS_D(&vinfo), GST_VIDEO_INFO_FPS_N(&vinfo))) == -1)
+            GST_VIDEO_INFO_FPS_D(info), GST_VIDEO_INFO_FPS_N(info))) == -1)
         vih->AvgTimePerFrame = 0; /* zero division or integer overflow */
     bih->biSize = sizeof(*bih);
     bih->biWidth = width;
@@ -331,7 +328,13 @@ static gboolean amt_from_gst_caps(const GstCaps *caps, AM_MEDIA_TYPE *mt)
     if (!strcmp(type, "audio/x-raw"))
         return amt_from_gst_caps_audio_raw(caps, mt);
     else if (!strcmp(type, "video/x-raw"))
-        return amt_from_gst_caps_video_raw(caps, mt);
+    {
+        GstVideoInfo info;
+
+        if (!gst_video_info_from_caps(&info, caps))
+            return FALSE;
+        return amt_from_gst_video_info(&info, mt);
+    }
     else if (!strcmp(type, "audio/mpeg"))
         return amt_from_gst_caps_audio_mpeg(caps, mt);
     else if (!strcmp(type, "video/x-cinepak"))
@@ -1649,26 +1652,19 @@ static HRESULT gstdecoder_source_query_accept(struct gstdemux_source *pin, const
 static HRESULT gstdecoder_source_get_media_type(struct gstdemux_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    static const struct
-    {
-        const GUID *subtype;
-        WORD bpp;
-        DWORD compression;
-    }
-    video_types[] =
+    static const GstVideoFormat video_formats[] =
     {
         /* Roughly ordered by preference from videoflip. */
-        {&MEDIASUBTYPE_AYUV, 32, mmioFOURCC('A','Y','U','V')},
-        {&MEDIASUBTYPE_ARGB32, 32, BI_RGB},
-        {&MEDIASUBTYPE_RGB32, 32, BI_RGB},
-        {&MEDIASUBTYPE_RGB24, 24, BI_RGB},
-        {&MEDIASUBTYPE_I420, 12, mmioFOURCC('I','4','2','0')},
-        {&MEDIASUBTYPE_YV12, 12, mmioFOURCC('Y','V','1','2')},
-        {&MEDIASUBTYPE_IYUV, 12, mmioFOURCC('I','Y','U','V')},
-        {&MEDIASUBTYPE_YUY2, 16, mmioFOURCC('Y','U','Y','2')},
-        {&MEDIASUBTYPE_UYVY, 16, mmioFOURCC('U','Y','V','Y')},
-        {&MEDIASUBTYPE_YVYU, 16, mmioFOURCC('Y','V','Y','U')},
-        {&MEDIASUBTYPE_NV12, 12, mmioFOURCC('N','V','1','2')},
+        GST_VIDEO_FORMAT_AYUV,
+        GST_VIDEO_FORMAT_BGRA,
+        GST_VIDEO_FORMAT_BGRx,
+        GST_VIDEO_FORMAT_BGR,
+        GST_VIDEO_FORMAT_I420,
+        GST_VIDEO_FORMAT_YV12,
+        GST_VIDEO_FORMAT_YUY2,
+        GST_VIDEO_FORMAT_UYVY,
+        GST_VIDEO_FORMAT_YVYU,
+        GST_VIDEO_FORMAT_NV12,
     };
 
     if (!index)
@@ -1677,19 +1673,15 @@ static HRESULT gstdecoder_source_get_media_type(struct gstdemux_source *pin,
         return S_OK;
     }
     else if (IsEqualGUID(&pin->mt.majortype, &MEDIATYPE_Video)
-            && index - 1 < ARRAY_SIZE(video_types))
+            && index - 1 < ARRAY_SIZE(video_formats))
     {
-        VIDEOINFOHEADER *vih;
+        const VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)pin->mt.pbFormat;
+        GstVideoInfo info;
 
-        *mt = pin->mt;
-        mt->subtype = *video_types[index - 1].subtype;
-        mt->pbFormat = CoTaskMemAlloc(pin->mt.cbFormat);
-        memcpy(mt->pbFormat, pin->mt.pbFormat, pin->mt.cbFormat);
-        vih = (VIDEOINFOHEADER *)mt->pbFormat;
-        vih->bmiHeader.biBitCount = video_types[index - 1].bpp;
-        vih->bmiHeader.biCompression = video_types[index - 1].compression;
-        vih->bmiHeader.biSizeImage = vih->bmiHeader.biWidth
-                * vih->bmiHeader.biHeight * vih->bmiHeader.biBitCount / 8;
+        gst_video_info_set_format(&info, video_formats[index - 1],
+                vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
+        if (!amt_from_gst_video_info(&info, mt))
+            return E_OUTOFMEMORY;
         return S_OK;
     }
     else if (IsEqualGUID(&pin->mt.majortype, &MEDIATYPE_Audio) && index == 1)
