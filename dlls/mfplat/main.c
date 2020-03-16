@@ -29,6 +29,7 @@
 #include "winreg.h"
 
 #include "initguid.h"
+#include "rtworkq.h"
 #include "ole2.h"
 #include "propsys.h"
 #include "dxgi.h"
@@ -40,7 +41,6 @@
 #include "mfreadwrite.h"
 #include "propvarutil.h"
 #include "strsafe.h"
-#include "rtworkq.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -3363,8 +3363,8 @@ typedef struct bytestream
     struct attributes attributes;
     IMFByteStream IMFByteStream_iface;
     IMFGetService IMFGetService_iface;
-    IMFAsyncCallback read_callback;
-    IMFAsyncCallback write_callback;
+    IRtwqAsyncCallback read_callback;
+    IRtwqAsyncCallback write_callback;
     IStream *stream;
     HANDLE hfile;
     QWORD position;
@@ -3383,12 +3383,12 @@ static struct bytestream *impl_bytestream_from_IMFGetService(IMFGetService *ifac
     return CONTAINING_RECORD(iface, struct bytestream, IMFGetService_iface);
 }
 
-static struct bytestream *impl_from_read_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
+static struct bytestream *impl_from_read_callback_IRtwqAsyncCallback(IRtwqAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct bytestream, read_callback);
 }
 
-static struct bytestream *impl_from_write_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
+static struct bytestream *impl_from_write_callback_IRtwqAsyncCallback(IRtwqAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct bytestream, write_callback);
 }
@@ -3473,7 +3473,7 @@ static HRESULT bytestream_create_io_request(struct bytestream *stream, enum asyn
         const BYTE *data, ULONG size, IMFAsyncCallback *callback, IUnknown *state)
 {
     struct async_stream_op *op;
-    IMFAsyncResult *request;
+    IRtwqAsyncResult *request;
     HRESULT hr;
 
     op = heap_alloc(sizeof(*op));
@@ -3486,15 +3486,18 @@ static HRESULT bytestream_create_io_request(struct bytestream *stream, enum asyn
     op->position = stream->position;
     op->requested_length = size;
     op->type = type;
-    if (FAILED(hr = MFCreateAsyncResult((IUnknown *)&stream->IMFByteStream_iface, callback, state, &op->caller)))
+    if (FAILED(hr = RtwqCreateAsyncResult((IUnknown *)&stream->IMFByteStream_iface, (IRtwqAsyncCallback *)callback, state,
+            (IRtwqAsyncResult **)&op->caller)))
+    {
         goto failed;
+    }
 
-    if (FAILED(hr = MFCreateAsyncResult(&op->IUnknown_iface, type == ASYNC_STREAM_OP_READ ? &stream->read_callback :
+    if (FAILED(hr = RtwqCreateAsyncResult(&op->IUnknown_iface, type == ASYNC_STREAM_OP_READ ? &stream->read_callback :
             &stream->write_callback, NULL, &request)))
         goto failed;
 
-    MFPutWorkItemEx(MFASYNC_CALLBACK_QUEUE_STANDARD, request);
-    IMFAsyncResult_Release(request);
+    RtwqPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, 0, request);
+    IRtwqAsyncResult_Release(request);
 
 failed:
     IUnknown_Release(&op->IUnknown_iface);
@@ -3530,13 +3533,13 @@ static HRESULT bytestream_complete_io_request(struct bytestream *stream, enum as
     return hr;
 }
 
-static HRESULT WINAPI bytestream_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+static HRESULT WINAPI bytestream_callback_QueryInterface(IRtwqAsyncCallback *iface, REFIID riid, void **obj)
 {
-    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+    if (IsEqualIID(riid, &IID_IRtwqAsyncCallback) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IMFAsyncCallback_AddRef(iface);
+        IRtwqAsyncCallback_AddRef(iface);
         return S_OK;
     }
 
@@ -3545,32 +3548,32 @@ static HRESULT WINAPI bytestream_callback_QueryInterface(IMFAsyncCallback *iface
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI bytestream_read_callback_AddRef(IMFAsyncCallback *iface)
+static ULONG WINAPI bytestream_read_callback_AddRef(IRtwqAsyncCallback *iface)
 {
-    struct bytestream *stream = impl_from_read_callback_IMFAsyncCallback(iface);
+    struct bytestream *stream = impl_from_read_callback_IRtwqAsyncCallback(iface);
     return IMFByteStream_AddRef(&stream->IMFByteStream_iface);
 }
 
-static ULONG WINAPI bytestream_read_callback_Release(IMFAsyncCallback *iface)
+static ULONG WINAPI bytestream_read_callback_Release(IRtwqAsyncCallback *iface)
 {
-    struct bytestream *stream = impl_from_read_callback_IMFAsyncCallback(iface);
+    struct bytestream *stream = impl_from_read_callback_IRtwqAsyncCallback(iface);
     return IMFByteStream_Release(&stream->IMFByteStream_iface);
 }
 
-static HRESULT WINAPI bytestream_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+static HRESULT WINAPI bytestream_callback_GetParameters(IRtwqAsyncCallback *iface, DWORD *flags, DWORD *queue)
 {
     return E_NOTIMPL;
 }
 
-static ULONG WINAPI bytestream_write_callback_AddRef(IMFAsyncCallback *iface)
+static ULONG WINAPI bytestream_write_callback_AddRef(IRtwqAsyncCallback *iface)
 {
-    struct bytestream *stream = impl_from_write_callback_IMFAsyncCallback(iface);
+    struct bytestream *stream = impl_from_write_callback_IRtwqAsyncCallback(iface);
     return IMFByteStream_AddRef(&stream->IMFByteStream_iface);
 }
 
-static ULONG WINAPI bytestream_write_callback_Release(IMFAsyncCallback *iface)
+static ULONG WINAPI bytestream_write_callback_Release(IRtwqAsyncCallback *iface)
 {
-    struct bytestream *stream = impl_from_write_callback_IMFAsyncCallback(iface);
+    struct bytestream *stream = impl_from_write_callback_IRtwqAsyncCallback(iface);
     return IMFByteStream_Release(&stream->IMFByteStream_iface);
 }
 
@@ -4104,15 +4107,15 @@ static const IMFAttributesVtbl mfbytestream_attributes_vtbl =
     mfattributes_CopyAllItems
 };
 
-static HRESULT WINAPI bytestream_stream_read_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+static HRESULT WINAPI bytestream_stream_read_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
 {
-    struct bytestream *stream = impl_from_read_callback_IMFAsyncCallback(iface);
+    struct bytestream *stream = impl_from_read_callback_IRtwqAsyncCallback(iface);
     struct async_stream_op *op;
     LARGE_INTEGER position;
     IUnknown *object;
     HRESULT hr;
 
-    if (FAILED(hr = IMFAsyncResult_GetObject(result, &object)))
+    if (FAILED(hr = IRtwqAsyncResult_GetObject(result, &object)))
         return hr;
 
     op = impl_async_stream_op_from_IUnknown(object);
@@ -4136,15 +4139,15 @@ static HRESULT WINAPI bytestream_stream_read_callback_Invoke(IMFAsyncCallback *i
     return S_OK;
 }
 
-static HRESULT WINAPI bytestream_stream_write_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+static HRESULT WINAPI bytestream_stream_write_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
 {
-    struct bytestream *stream = impl_from_read_callback_IMFAsyncCallback(iface);
+    struct bytestream *stream = impl_from_read_callback_IRtwqAsyncCallback(iface);
     struct async_stream_op *op;
     LARGE_INTEGER position;
     IUnknown *object;
     HRESULT hr;
 
-    if (FAILED(hr = IMFAsyncResult_GetObject(result, &object)))
+    if (FAILED(hr = IRtwqAsyncResult_GetObject(result, &object)))
         return hr;
 
     op = impl_async_stream_op_from_IUnknown(object);
@@ -4168,7 +4171,7 @@ static HRESULT WINAPI bytestream_stream_write_callback_Invoke(IMFAsyncCallback *
     return S_OK;
 }
 
-static const IMFAsyncCallbackVtbl bytestream_stream_read_callback_vtbl =
+static const IRtwqAsyncCallbackVtbl bytestream_stream_read_callback_vtbl =
 {
     bytestream_callback_QueryInterface,
     bytestream_read_callback_AddRef,
@@ -4177,7 +4180,7 @@ static const IMFAsyncCallbackVtbl bytestream_stream_read_callback_vtbl =
     bytestream_stream_read_callback_Invoke,
 };
 
-static const IMFAsyncCallbackVtbl bytestream_stream_write_callback_vtbl =
+static const IRtwqAsyncCallbackVtbl bytestream_stream_write_callback_vtbl =
 {
     bytestream_callback_QueryInterface,
     bytestream_write_callback_AddRef,
@@ -4235,21 +4238,21 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
     return S_OK;
 }
 
-static HRESULT WINAPI bytestream_file_read_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+static HRESULT WINAPI bytestream_file_read_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
 {
     FIXME("%p, %p.\n", iface, result);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI bytestream_file_write_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+static HRESULT WINAPI bytestream_file_write_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
 {
     FIXME("%p, %p.\n", iface, result);
 
     return E_NOTIMPL;
 }
 
-static const IMFAsyncCallbackVtbl bytestream_file_read_callback_vtbl =
+static const IRtwqAsyncCallbackVtbl bytestream_file_read_callback_vtbl =
 {
     bytestream_callback_QueryInterface,
     bytestream_read_callback_AddRef,
@@ -4258,7 +4261,7 @@ static const IMFAsyncCallbackVtbl bytestream_file_read_callback_vtbl =
     bytestream_file_read_callback_Invoke,
 };
 
-static const IMFAsyncCallbackVtbl bytestream_file_write_callback_vtbl =
+static const IRtwqAsyncCallbackVtbl bytestream_file_write_callback_vtbl =
 {
     bytestream_callback_QueryInterface,
     bytestream_write_callback_AddRef,
@@ -5742,7 +5745,7 @@ struct resolver_queued_result
     IUnknown *object;
     MF_OBJECT_TYPE obj_type;
     HRESULT hr;
-    IMFAsyncResult *inner_result;
+    IRtwqAsyncResult *inner_result;
     enum resolved_object_origin origin;
 };
 
@@ -5764,8 +5767,8 @@ struct source_resolver
 {
     IMFSourceResolver IMFSourceResolver_iface;
     LONG refcount;
-    IMFAsyncCallback stream_callback;
-    IMFAsyncCallback url_callback;
+    IRtwqAsyncCallback stream_callback;
+    IRtwqAsyncCallback url_callback;
     CRITICAL_SECTION cs;
     struct list pending;
 };
@@ -5775,20 +5778,20 @@ static struct source_resolver *impl_from_IMFSourceResolver(IMFSourceResolver *if
     return CONTAINING_RECORD(iface, struct source_resolver, IMFSourceResolver_iface);
 }
 
-static struct source_resolver *impl_from_stream_IMFAsyncCallback(IMFAsyncCallback *iface)
+static struct source_resolver *impl_from_stream_IRtwqAsyncCallback(IRtwqAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct source_resolver, stream_callback);
 }
 
-static struct source_resolver *impl_from_url_IMFAsyncCallback(IMFAsyncCallback *iface)
+static struct source_resolver *impl_from_url_IRtwqAsyncCallback(IRtwqAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct source_resolver, url_callback);
 }
 
 static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enum resolved_object_origin origin,
-        IMFAsyncResult *result)
+        IRtwqAsyncResult *result)
 {
-    IMFAsyncResult *inner_result = (IMFAsyncResult *)IMFAsyncResult_GetStateNoAddRef(result);
+    IRtwqAsyncResult *inner_result = (IRtwqAsyncResult *)IRtwqAsyncResult_GetStateNoAddRef(result);
     struct resolver_queued_result *queued_result;
     union
     {
@@ -5799,16 +5802,16 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
 
     queued_result = heap_alloc_zero(sizeof(*queued_result));
 
-    IMFAsyncResult_GetObject(inner_result, &handler.handler);
+    IRtwqAsyncResult_GetObject(inner_result, &handler.handler);
 
     switch (origin)
     {
         case OBJECT_FROM_BYTESTREAM:
-            queued_result->hr = IMFByteStreamHandler_EndCreateObject(handler.stream_handler, result,
+            queued_result->hr = IMFByteStreamHandler_EndCreateObject(handler.stream_handler, (IMFAsyncResult *)result,
                     &queued_result->obj_type, &queued_result->object);
             break;
         case OBJECT_FROM_URL:
-            queued_result->hr = IMFSchemeHandler_EndCreateObject(handler.scheme_handler, result,
+            queued_result->hr = IMFSchemeHandler_EndCreateObject(handler.scheme_handler, (IMFAsyncResult *)result,
                     &queued_result->obj_type, &queued_result->object);
             break;
         default:
@@ -5819,12 +5822,12 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
 
     if (SUCCEEDED(queued_result->hr))
     {
-        MFASYNCRESULT *data = (MFASYNCRESULT *)inner_result;
+        RTWQASYNCRESULT *data = (RTWQASYNCRESULT *)inner_result;
 
         if (data->hEvent)
         {
             queued_result->inner_result = inner_result;
-            IMFAsyncResult_AddRef(queued_result->inner_result);
+            IRtwqAsyncResult_AddRef(queued_result->inner_result);
         }
 
         /* Push resolved object type and created object, so we don't have to guess on End*() call. */
@@ -5836,13 +5839,13 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
             SetEvent(data->hEvent);
         else
         {
-            IUnknown *caller_state = IMFAsyncResult_GetStateNoAddRef(inner_result);
-            IMFAsyncResult *caller_result;
+            IUnknown *caller_state = IRtwqAsyncResult_GetStateNoAddRef(inner_result);
+            IRtwqAsyncResult *caller_result;
 
-            if (SUCCEEDED(MFCreateAsyncResult(queued_result->object, data->pCallback, caller_state, &caller_result)))
+            if (SUCCEEDED(RtwqCreateAsyncResult(queued_result->object, data->pCallback, caller_state, &caller_result)))
             {
-                MFInvokeCallback(caller_result);
-                IMFAsyncResult_Release(caller_result);
+                RtwqInvokeCallback(caller_result);
+                IRtwqAsyncResult_Release(caller_result);
             }
         }
     }
@@ -5930,13 +5933,13 @@ static HRESULT resolver_create_cancel_object(IUnknown *handler, enum resolved_ob
     return S_OK;
 }
 
-static HRESULT WINAPI source_resolver_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+static HRESULT WINAPI source_resolver_callback_QueryInterface(IRtwqAsyncCallback *iface, REFIID riid, void **obj)
 {
-    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+    if (IsEqualIID(riid, &IID_IRtwqAsyncCallback) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IMFAsyncCallback_AddRef(iface);
+        IRtwqAsyncCallback_AddRef(iface);
         return S_OK;
     }
 
@@ -5944,31 +5947,31 @@ static HRESULT WINAPI source_resolver_callback_QueryInterface(IMFAsyncCallback *
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI source_resolver_callback_stream_AddRef(IMFAsyncCallback *iface)
+static ULONG WINAPI source_resolver_callback_stream_AddRef(IRtwqAsyncCallback *iface)
 {
-    struct source_resolver *resolver = impl_from_stream_IMFAsyncCallback(iface);
+    struct source_resolver *resolver = impl_from_stream_IRtwqAsyncCallback(iface);
     return IMFSourceResolver_AddRef(&resolver->IMFSourceResolver_iface);
 }
 
-static ULONG WINAPI source_resolver_callback_stream_Release(IMFAsyncCallback *iface)
+static ULONG WINAPI source_resolver_callback_stream_Release(IRtwqAsyncCallback *iface)
 {
-    struct source_resolver *resolver = impl_from_stream_IMFAsyncCallback(iface);
+    struct source_resolver *resolver = impl_from_stream_IRtwqAsyncCallback(iface);
     return IMFSourceResolver_Release(&resolver->IMFSourceResolver_iface);
 }
 
-static HRESULT WINAPI source_resolver_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+static HRESULT WINAPI source_resolver_callback_GetParameters(IRtwqAsyncCallback *iface, DWORD *flags, DWORD *queue)
 {
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI source_resolver_callback_stream_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+static HRESULT WINAPI source_resolver_callback_stream_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
 {
-    struct source_resolver *resolver = impl_from_stream_IMFAsyncCallback(iface);
+    struct source_resolver *resolver = impl_from_stream_IRtwqAsyncCallback(iface);
 
     return resolver_handler_end_create(resolver, OBJECT_FROM_BYTESTREAM, result);
 }
 
-static const IMFAsyncCallbackVtbl source_resolver_callback_stream_vtbl =
+static const IRtwqAsyncCallbackVtbl source_resolver_callback_stream_vtbl =
 {
     source_resolver_callback_QueryInterface,
     source_resolver_callback_stream_AddRef,
@@ -5977,26 +5980,26 @@ static const IMFAsyncCallbackVtbl source_resolver_callback_stream_vtbl =
     source_resolver_callback_stream_Invoke,
 };
 
-static ULONG WINAPI source_resolver_callback_url_AddRef(IMFAsyncCallback *iface)
+static ULONG WINAPI source_resolver_callback_url_AddRef(IRtwqAsyncCallback *iface)
 {
-    struct source_resolver *resolver = impl_from_url_IMFAsyncCallback(iface);
+    struct source_resolver *resolver = impl_from_url_IRtwqAsyncCallback(iface);
     return IMFSourceResolver_AddRef(&resolver->IMFSourceResolver_iface);
 }
 
-static ULONG WINAPI source_resolver_callback_url_Release(IMFAsyncCallback *iface)
+static ULONG WINAPI source_resolver_callback_url_Release(IRtwqAsyncCallback *iface)
 {
-    struct source_resolver *resolver = impl_from_url_IMFAsyncCallback(iface);
+    struct source_resolver *resolver = impl_from_url_IRtwqAsyncCallback(iface);
     return IMFSourceResolver_Release(&resolver->IMFSourceResolver_iface);
 }
 
-static HRESULT WINAPI source_resolver_callback_url_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+static HRESULT WINAPI source_resolver_callback_url_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
 {
-    struct source_resolver *resolver = impl_from_url_IMFAsyncCallback(iface);
+    struct source_resolver *resolver = impl_from_url_IRtwqAsyncCallback(iface);
 
     return resolver_handler_end_create(resolver, OBJECT_FROM_URL, result);
 }
 
-static const IMFAsyncCallbackVtbl source_resolver_callback_url_vtbl =
+static const IRtwqAsyncCallbackVtbl source_resolver_callback_url_vtbl =
 {
     source_resolver_callback_QueryInterface,
     source_resolver_callback_url_AddRef,
@@ -6227,13 +6230,13 @@ static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSch
 }
 
 static HRESULT resolver_end_create_object(struct source_resolver *resolver, enum resolved_object_origin origin,
-        IMFAsyncResult *result, MF_OBJECT_TYPE *obj_type, IUnknown **out)
+        IRtwqAsyncResult *result, MF_OBJECT_TYPE *obj_type, IUnknown **out)
 {
     struct resolver_queued_result *queued_result = NULL, *iter;
     IUnknown *object;
     HRESULT hr;
 
-    if (FAILED(hr = IMFAsyncResult_GetObject(result, &object)))
+    if (FAILED(hr = IRtwqAsyncResult_GetObject(result, &object)))
         return hr;
 
     EnterCriticalSection(&resolver->cs);
@@ -6258,7 +6261,7 @@ static HRESULT resolver_end_create_object(struct source_resolver *resolver, enum
         *obj_type = queued_result->obj_type;
         hr = queued_result->hr;
         if (queued_result->inner_result)
-            IMFAsyncResult_Release(queued_result->inner_result);
+            IRtwqAsyncResult_Release(queued_result->inner_result);
         heap_free(queued_result);
     }
     else
@@ -6328,8 +6331,8 @@ static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *ifa
 {
     struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
     IMFSchemeHandler *handler;
-    IMFAsyncResult *result;
-    MFASYNCRESULT *data;
+    IRtwqAsyncResult *result;
+    RTWQASYNCRESULT *data;
     HRESULT hr;
 
     TRACE("%p, %s, %#x, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, obj_type, object);
@@ -6340,26 +6343,26 @@ static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *ifa
     if (FAILED(hr = resolver_get_scheme_handler(url, flags, &handler)))
         return hr;
 
-    hr = MFCreateAsyncResult((IUnknown *)handler, NULL, NULL, &result);
+    hr = RtwqCreateAsyncResult((IUnknown *)handler, NULL, NULL, &result);
     IMFSchemeHandler_Release(handler);
     if (FAILED(hr))
         return hr;
 
-    data = (MFASYNCRESULT *)result;
+    data = (RTWQASYNCRESULT *)result;
     data->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, NULL, &resolver->url_callback,
+    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, NULL, (IMFAsyncCallback *)&resolver->url_callback,
             (IUnknown *)result);
     if (FAILED(hr))
     {
-        IMFAsyncResult_Release(result);
+        IRtwqAsyncResult_Release(result);
         return hr;
     }
 
     WaitForSingleObject(data->hEvent, INFINITE);
 
     hr = resolver_end_create_object(resolver, OBJECT_FROM_URL, result, obj_type, object);
-    IMFAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result);
 
     return hr;
 }
@@ -6369,8 +6372,8 @@ static HRESULT WINAPI source_resolver_CreateObjectFromByteStream(IMFSourceResolv
 {
     struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
     IMFByteStreamHandler *handler;
-    IMFAsyncResult *result;
-    MFASYNCRESULT *data;
+    IRtwqAsyncResult *result;
+    RTWQASYNCRESULT *data;
     HRESULT hr;
 
     TRACE("%p, %p, %s, %#x, %p, %p, %p.\n", iface, stream, debugstr_w(url), flags, props, obj_type, object);
@@ -6381,26 +6384,26 @@ static HRESULT WINAPI source_resolver_CreateObjectFromByteStream(IMFSourceResolv
     if (FAILED(hr = resolver_get_bytestream_handler(stream, url, flags, &handler)))
         goto fallback;
 
-    hr = MFCreateAsyncResult((IUnknown *)handler, NULL, NULL, &result);
+    hr = RtwqCreateAsyncResult((IUnknown *)handler, NULL, NULL, &result);
     IMFByteStreamHandler_Release(handler);
     if (FAILED(hr))
         return hr;
 
-    data = (MFASYNCRESULT *)result;
+    data = (RTWQASYNCRESULT *)result;
     data->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    hr = IMFByteStreamHandler_BeginCreateObject(handler, stream, url, flags, props, NULL, &resolver->stream_callback,
-            (IUnknown *)result);
+    hr = IMFByteStreamHandler_BeginCreateObject(handler, stream, url, flags, props, NULL,
+            (IMFAsyncCallback *)&resolver->stream_callback, (IUnknown *)result);
     if (FAILED(hr))
     {
-        IMFAsyncResult_Release(result);
+        IRtwqAsyncResult_Release(result);
         return hr;
     }
 
     WaitForSingleObject(data->hEvent, INFINITE);
 
     hr = resolver_end_create_object(resolver, OBJECT_FROM_BYTESTREAM, result, obj_type, object);
-    IMFAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result);
 
     /* TODO: following stub is left intentionally until real source plugins are implemented.  */
     if (SUCCEEDED(hr))
@@ -6432,7 +6435,7 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver
     struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
     IMFSchemeHandler *handler;
     IUnknown *inner_cookie = NULL;
-    IMFAsyncResult *result;
+    IRtwqAsyncResult *result;
     HRESULT hr;
 
     TRACE("%p, %s, %#x, %p, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, cancel_cookie, callback, state);
@@ -6443,18 +6446,18 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver
     if (cancel_cookie)
         *cancel_cookie = NULL;
 
-    hr = MFCreateAsyncResult((IUnknown *)handler, callback, state, &result);
+    hr = RtwqCreateAsyncResult((IUnknown *)handler, (IRtwqAsyncCallback *)callback, state, &result);
     IMFSchemeHandler_Release(handler);
     if (FAILED(hr))
         return hr;
 
     hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, cancel_cookie ? &inner_cookie : NULL,
-            &resolver->url_callback, (IUnknown *)result);
+            (IMFAsyncCallback *)&resolver->url_callback, (IUnknown *)result);
 
     if (SUCCEEDED(hr) && inner_cookie)
         resolver_create_cancel_object((IUnknown *)handler, OBJECT_FROM_URL, inner_cookie, cancel_cookie);
 
-    IMFAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result);
 
     return hr;
 }
@@ -6466,7 +6469,7 @@ static HRESULT WINAPI source_resolver_EndCreateObjectFromURL(IMFSourceResolver *
 
     TRACE("%p, %p, %p, %p.\n", iface, result, obj_type, object);
 
-    return resolver_end_create_object(resolver, OBJECT_FROM_URL, result, obj_type, object);
+    return resolver_end_create_object(resolver, OBJECT_FROM_URL, (IRtwqAsyncResult *)result, obj_type, object);
 }
 
 static HRESULT WINAPI source_resolver_BeginCreateObjectFromByteStream(IMFSourceResolver *iface, IMFByteStream *stream,
@@ -6476,7 +6479,7 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromByteStream(IMFSourceR
     struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
     IMFByteStreamHandler *handler;
     IUnknown *inner_cookie = NULL;
-    IMFAsyncResult *result;
+    IRtwqAsyncResult *result;
     HRESULT hr;
 
     TRACE("%p, %p, %s, %#x, %p, %p, %p, %p.\n", iface, stream, debugstr_w(url), flags, props, cancel_cookie,
@@ -6488,19 +6491,19 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromByteStream(IMFSourceR
     if (cancel_cookie)
         *cancel_cookie = NULL;
 
-    hr = MFCreateAsyncResult((IUnknown *)handler, callback, state, &result);
+    hr = RtwqCreateAsyncResult((IUnknown *)handler, (IRtwqAsyncCallback *)callback, state, &result);
     IMFByteStreamHandler_Release(handler);
     if (FAILED(hr))
         return hr;
 
     hr = IMFByteStreamHandler_BeginCreateObject(handler, stream, url, flags, props,
-            cancel_cookie ? &inner_cookie : NULL, &resolver->stream_callback, (IUnknown *)result);
+            cancel_cookie ? &inner_cookie : NULL, (IMFAsyncCallback *)&resolver->stream_callback, (IUnknown *)result);
 
     /* Cancel object wraps underlying handler cancel cookie with context necessary to call CancelObjectCreate(). */
     if (SUCCEEDED(hr) && inner_cookie)
         resolver_create_cancel_object((IUnknown *)handler, OBJECT_FROM_BYTESTREAM, inner_cookie, cancel_cookie);
 
-    IMFAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result);
 
     return hr;
 }
@@ -6512,7 +6515,7 @@ static HRESULT WINAPI source_resolver_EndCreateObjectFromByteStream(IMFSourceRes
 
     TRACE("%p, %p, %p, %p.\n", iface, result, obj_type, object);
 
-    return resolver_end_create_object(resolver, OBJECT_FROM_BYTESTREAM, result, obj_type, object);
+    return resolver_end_create_object(resolver, OBJECT_FROM_BYTESTREAM, (IRtwqAsyncResult *)result, obj_type, object);
 }
 
 static HRESULT WINAPI source_resolver_CancelObjectCreation(IMFSourceResolver *iface, IUnknown *cancel_cookie)
@@ -7055,7 +7058,7 @@ struct event_queue
     struct list events;
     BOOL is_shut_down;
     BOOL notified;
-    IMFAsyncResult *subscriber;
+    IRtwqAsyncResult *subscriber;
 };
 
 struct queued_event
@@ -7182,7 +7185,7 @@ static void queue_notify_subscriber(struct event_queue *queue)
         return;
 
     queue->notified = TRUE;
-    MFPutWorkItemEx(MFASYNC_CALLBACK_QUEUE_STANDARD, queue->subscriber);
+    RtwqPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, 0, queue->subscriber);
 }
 
 static HRESULT WINAPI eventqueue_BeginGetEvent(IMFMediaEventQueue *iface, IMFAsyncCallback *callback, IUnknown *state)
@@ -7203,14 +7206,14 @@ static HRESULT WINAPI eventqueue_BeginGetEvent(IMFMediaEventQueue *iface, IMFAsy
     else if (result_data)
     {
         if (result_data->pCallback == callback)
-            hr = IMFAsyncResult_GetStateNoAddRef(queue->subscriber) == state ?
+            hr = IRtwqAsyncResult_GetStateNoAddRef(queue->subscriber) == state ?
                     MF_S_MULTIPLE_BEGIN : MF_E_MULTIPLE_BEGIN;
         else
             hr = MF_E_MULTIPLE_SUBSCRIBERS;
     }
     else
     {
-        hr = MFCreateAsyncResult(NULL, callback, state, &queue->subscriber);
+        hr = RtwqCreateAsyncResult(NULL, (IRtwqAsyncCallback *)callback, state, &queue->subscriber);
         if (SUCCEEDED(hr))
             queue_notify_subscriber(queue);
     }
@@ -7231,11 +7234,11 @@ static HRESULT WINAPI eventqueue_EndGetEvent(IMFMediaEventQueue *iface, IMFAsync
 
     if (queue->is_shut_down)
         hr = MF_E_SHUTDOWN;
-    else if (queue->subscriber == result)
+    else if (queue->subscriber == (IRtwqAsyncResult *)result)
     {
         *event = queue_pop_event(queue);
         if (queue->subscriber)
-            IMFAsyncResult_Release(queue->subscriber);
+            IRtwqAsyncResult_Release(queue->subscriber);
         queue->subscriber = NULL;
         queue->notified = FALSE;
         hr = *event ? S_OK : E_FAIL;
@@ -8101,7 +8104,7 @@ HRESULT WINAPI MFCreateSystemTimeSource(IMFPresentationTimeSource **time_source)
 
 struct async_create_file
 {
-    IMFAsyncCallback IMFAsyncCallback_iface;
+    IRtwqAsyncCallback IRtwqAsyncCallback_iface;
     LONG refcount;
     MF_FILE_ACCESSMODE access_mode;
     MF_FILE_OPENMODE open_mode;
@@ -8112,25 +8115,25 @@ struct async_create_file
 struct async_create_file_result
 {
     struct list entry;
-    IMFAsyncResult *result;
+    IRtwqAsyncResult *result;
     IMFByteStream *stream;
 };
 
 static struct list async_create_file_results = LIST_INIT(async_create_file_results);
 static CRITICAL_SECTION async_create_file_cs = { NULL, -1, 0, 0, 0, 0 };
 
-static struct async_create_file *impl_from_create_file_IMFAsyncCallback(IMFAsyncCallback *iface)
+static struct async_create_file *impl_from_create_file_IRtwqAsyncCallback(IRtwqAsyncCallback *iface)
 {
-    return CONTAINING_RECORD(iface, struct async_create_file, IMFAsyncCallback_iface);
+    return CONTAINING_RECORD(iface, struct async_create_file, IRtwqAsyncCallback_iface);
 }
 
-static HRESULT WINAPI async_create_file_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+static HRESULT WINAPI async_create_file_callback_QueryInterface(IRtwqAsyncCallback *iface, REFIID riid, void **obj)
 {
-    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+    if (IsEqualIID(riid, &IID_IRtwqAsyncCallback) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IMFAsyncCallback_AddRef(iface);
+        IRtwqAsyncCallback_AddRef(iface);
         return S_OK;
     }
 
@@ -8138,9 +8141,9 @@ static HRESULT WINAPI async_create_file_callback_QueryInterface(IMFAsyncCallback
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI async_create_file_callback_AddRef(IMFAsyncCallback *iface)
+static ULONG WINAPI async_create_file_callback_AddRef(IRtwqAsyncCallback *iface)
 {
-    struct async_create_file *async = impl_from_create_file_IMFAsyncCallback(iface);
+    struct async_create_file *async = impl_from_create_file_IRtwqAsyncCallback(iface);
     ULONG refcount = InterlockedIncrement(&async->refcount);
 
     TRACE("%p, refcount %u.\n", iface, refcount);
@@ -8148,9 +8151,9 @@ static ULONG WINAPI async_create_file_callback_AddRef(IMFAsyncCallback *iface)
     return refcount;
 }
 
-static ULONG WINAPI async_create_file_callback_Release(IMFAsyncCallback *iface)
+static ULONG WINAPI async_create_file_callback_Release(IRtwqAsyncCallback *iface)
 {
-    struct async_create_file *async = impl_from_create_file_IMFAsyncCallback(iface);
+    struct async_create_file *async = impl_from_create_file_IRtwqAsyncCallback(iface);
     ULONG refcount = InterlockedDecrement(&async->refcount);
 
     TRACE("%p, refcount %u.\n", iface, refcount);
@@ -8164,19 +8167,19 @@ static ULONG WINAPI async_create_file_callback_Release(IMFAsyncCallback *iface)
     return refcount;
 }
 
-static HRESULT WINAPI async_create_file_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+static HRESULT WINAPI async_create_file_callback_GetParameters(IRtwqAsyncCallback *iface, DWORD *flags, DWORD *queue)
 {
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI async_create_file_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+static HRESULT WINAPI async_create_file_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
 {
-    struct async_create_file *async = impl_from_create_file_IMFAsyncCallback(iface);
-    IMFAsyncResult *caller;
+    struct async_create_file *async = impl_from_create_file_IRtwqAsyncCallback(iface);
+    IRtwqAsyncResult *caller;
     IMFByteStream *stream;
     HRESULT hr;
 
-    caller = (IMFAsyncResult *)IMFAsyncResult_GetStateNoAddRef(result);
+    caller = (IRtwqAsyncResult *)IRtwqAsyncResult_GetStateNoAddRef(result);
 
     hr = MFCreateFile(async->access_mode, async->open_mode, async->flags, async->path, &stream);
     if (SUCCEEDED(hr))
@@ -8187,7 +8190,7 @@ static HRESULT WINAPI async_create_file_callback_Invoke(IMFAsyncCallback *iface,
         if (result_item)
         {
             result_item->result = caller;
-            IMFAsyncResult_AddRef(caller);
+            IRtwqAsyncResult_AddRef(caller);
             result_item->stream = stream;
             IMFByteStream_AddRef(stream);
 
@@ -8199,14 +8202,14 @@ static HRESULT WINAPI async_create_file_callback_Invoke(IMFAsyncCallback *iface,
         IMFByteStream_Release(stream);
     }
     else
-        IMFAsyncResult_SetStatus(caller, hr);
+        IRtwqAsyncResult_SetStatus(caller, hr);
 
-    MFInvokeCallback(caller);
+    RtwqInvokeCallback(caller);
 
     return S_OK;
 }
 
-static const IMFAsyncCallbackVtbl async_create_file_callback_vtbl =
+static const IRtwqAsyncCallbackVtbl async_create_file_callback_vtbl =
 {
     async_create_file_callback_QueryInterface,
     async_create_file_callback_AddRef,
@@ -8222,7 +8225,7 @@ HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMOD
         const WCHAR *path, IMFAsyncCallback *callback, IUnknown *state, IUnknown **cancel_cookie)
 {
     struct async_create_file *async = NULL;
-    IMFAsyncResult *caller, *item = NULL;
+    IRtwqAsyncResult *caller, *item = NULL;
     HRESULT hr;
 
     TRACE("%#x, %#x, %#x, %s, %p, %p, %p.\n", access_mode, open_mode, flags, debugstr_w(path), callback, state,
@@ -8231,7 +8234,7 @@ HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMOD
     if (cancel_cookie)
         *cancel_cookie = NULL;
 
-    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &caller)))
+    if (FAILED(hr = RtwqCreateAsyncResult(NULL, (IRtwqAsyncCallback *)callback, state, &caller)))
         return hr;
 
     async = heap_alloc(sizeof(*async));
@@ -8241,7 +8244,7 @@ HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMOD
         goto failed;
     }
 
-    async->IMFAsyncCallback_iface.lpVtbl = &async_create_file_callback_vtbl;
+    async->IRtwqAsyncCallback_iface.lpVtbl = &async_create_file_callback_vtbl;
     async->refcount = 1;
     async->access_mode = access_mode;
     async->open_mode = open_mode;
@@ -8249,7 +8252,7 @@ HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMOD
     if (FAILED(hr = heap_strdupW(path, &async->path)))
         goto failed;
 
-    hr = MFCreateAsyncResult(NULL, &async->IMFAsyncCallback_iface, (IUnknown *)caller, &item);
+    hr = RtwqCreateAsyncResult(NULL, &async->IRtwqAsyncCallback_iface, (IUnknown *)caller, &item);
     if (FAILED(hr))
         goto failed;
 
@@ -8259,15 +8262,15 @@ HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMOD
         IUnknown_AddRef(*cancel_cookie);
     }
 
-    hr = MFInvokeCallback(item);
+    hr = RtwqInvokeCallback(item);
 
 failed:
     if (async)
-        IMFAsyncCallback_Release(&async->IMFAsyncCallback_iface);
+        IRtwqAsyncCallback_Release(&async->IRtwqAsyncCallback_iface);
     if (item)
-        IMFAsyncResult_Release(item);
+        IRtwqAsyncResult_Release(item);
     if (caller)
-        IMFAsyncResult_Release(caller);
+        IRtwqAsyncResult_Release(caller);
 
     return hr;
 }
@@ -8276,11 +8279,11 @@ static HRESULT async_create_file_pull_result(IUnknown *unk, IMFByteStream **stre
 {
     struct async_create_file_result *item;
     HRESULT hr = MF_E_UNEXPECTED;
-    IMFAsyncResult *result;
+    IRtwqAsyncResult *result;
 
     *stream = NULL;
 
-    if (FAILED(IUnknown_QueryInterface(unk, &IID_IMFAsyncResult, (void **)&result)))
+    if (FAILED(IUnknown_QueryInterface(unk, &IID_IRtwqAsyncResult, (void **)&result)))
         return hr;
 
     EnterCriticalSection(&async_create_file_cs);
@@ -8290,7 +8293,7 @@ static HRESULT async_create_file_pull_result(IUnknown *unk, IMFByteStream **stre
         if (result == item->result)
         {
             *stream = item->stream;
-            IMFAsyncResult_Release(item->result);
+            IRtwqAsyncResult_Release(item->result);
             list_remove(&item->entry);
             heap_free(item);
             break;
@@ -8300,9 +8303,9 @@ static HRESULT async_create_file_pull_result(IUnknown *unk, IMFByteStream **stre
     LeaveCriticalSection(&async_create_file_cs);
 
     if (*stream)
-        hr = IMFAsyncResult_GetStatus(result);
+        hr = IRtwqAsyncResult_GetStatus(result);
 
-    IMFAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result);
 
     return hr;
 }
