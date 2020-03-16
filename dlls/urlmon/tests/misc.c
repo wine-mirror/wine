@@ -1916,7 +1916,7 @@ static void test_internet_features(void) {
         sprintf(cmdline, "\"%s\" %s internet_features", argv[0], argv[1]);
         ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "Could not create process: %u\n", GetLastError());
-        winetest_wait_child_process( pi.hProcess );
+        wait_child_process( pi.hProcess );
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 

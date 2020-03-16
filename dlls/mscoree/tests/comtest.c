@@ -315,7 +315,7 @@ static void run_child_process(const char *dll_source, run_type run)
     ret = CreateProcessA(exe, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %u\n", GetLastError());
 
-    winetest_wait_child_process(pi.hProcess);
+    wait_child_process(pi.hProcess);
 
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);

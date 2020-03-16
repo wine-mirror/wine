@@ -481,7 +481,7 @@ static void test_alloc_shared(int argc, char **argv)
     ok(ret, "could not create child process error: %u\n", GetLastError());
     if (ret)
     {
-        winetest_wait_child_process(pi.hProcess);
+        wait_child_process(pi.hProcess);
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 

@@ -1112,7 +1112,7 @@ run_client(const char *test)
 
   make_cmdline(cmdline, test);
   ok(CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-  winetest_wait_child_process( info.hProcess );
+  wait_child_process( info.hProcess );
   ok(CloseHandle(info.hProcess), "CloseHandle\n");
   ok(CloseHandle(info.hThread), "CloseHandle\n");
 }
@@ -2337,7 +2337,7 @@ static void test_reconnect(void)
 
     stop();
 
-    winetest_wait_child_process(server_process);
+    wait_child_process(server_process);
     ok(CloseHandle(server_process), "CloseHandle\n");
 
     /* create new server, rpcrt4 will connect to it once sending to existing connection fails
@@ -2346,7 +2346,7 @@ static void test_reconnect(void)
     basic_tests();
     stop();
 
-    winetest_wait_child_process(server_process);
+    wait_child_process(server_process);
     ok(CloseHandle(server_process), "CloseHandle\n");
 
     ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");

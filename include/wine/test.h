@@ -110,12 +110,14 @@ extern void __winetest_cdecl winetest_trace( const char *msg, ... ) __WINE_PRINT
 # define skip_(file, line)     (winetest_set_location(file, 0), 0) ? (void)0 : winetest_skip
 # define win_skip_(file, line) (winetest_set_location(file, 0), 0) ? (void)0 : winetest_win_skip
 # define trace_(file, line)    (winetest_set_location(file, 0), 0) ? (void)0 : winetest_trace
+# define wait_process_(file, line) (winetest_set_location(file, 0), 0) ? (void)0 : winetest_wait_process
 #else
 # define subtest_(file, line)  (winetest_set_location(file, line), 0) ? (void)0 : winetest_subtest
 # define ok_(file, line)       (winetest_set_location(file, line), 0) ? (void)0 : winetest_ok
 # define skip_(file, line)     (winetest_set_location(file, line), 0) ? (void)0 : winetest_skip
 # define win_skip_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : winetest_win_skip
 # define trace_(file, line)    (winetest_set_location(file, line), 0) ? (void)0 : winetest_trace
+# define wait_child_process_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : winetest_wait_child_process
 #endif
 
 #define subtest  subtest_(__FILE__, __LINE__)
@@ -123,6 +125,7 @@ extern void __winetest_cdecl winetest_trace( const char *msg, ... ) __WINE_PRINT
 #define skip     skip_(__FILE__, __LINE__)
 #define win_skip win_skip_(__FILE__, __LINE__)
 #define trace    trace_(__FILE__, __LINE__)
+#define wait_child_process wait_child_process_(__FILE__, __LINE__)
 
 #define todo_if(is_todo) for (winetest_start_todo(is_todo); \
                               winetest_loop_todo(); \
@@ -477,24 +480,33 @@ void winetest_add_failures( LONG new_failures )
 
 void winetest_wait_child_process( HANDLE process )
 {
-    DWORD exit_code = 1;
+    DWORD ret;
 
-    if (WaitForSingleObject( process, 30000 ))
-        printf( "%s: child process wait failed\n", current_test->name );
+    winetest_ok( process != NULL, "No child process handle (CreateProcess failed?)\n" );
+    if (!process) return;
+
+    ret = WaitForSingleObject( process, 30000 );
+    if (ret == WAIT_TIMEOUT)
+        winetest_ok( 0, "Timed out waiting for the child process\n" );
+    else if (ret != WAIT_OBJECT_0)
+        winetest_ok( 0, "Could not wait for the child process: %d le=%u\n",
+                     ret, GetLastError() );
     else
-        GetExitCodeProcess( process, &exit_code );
-
-    if (exit_code)
     {
+        DWORD exit_code;
+        struct tls_data *data = get_tls_data();
+        GetExitCodeProcess( process, &exit_code );
         if (exit_code > 255)
         {
-            printf( "%s: exception 0x%08x in child process\n", current_test->name, exit_code );
+            DWORD pid = GetProcessId( process );
+            printf( "%s:%d: unhandled exception %08x in child process %04x\n",
+                    current_test->name, data->current_line, exit_code, pid );
             InterlockedIncrement( &failures );
         }
-        else
+        else if (exit_code)
         {
-            printf( "%s: %u failures in child process\n",
-                    current_test->name, exit_code );
+            printf( "%s:%d: %u failures in child process\n",
+                    current_test->name, data->current_line, exit_code );
             while (exit_code-- > 0)
                 InterlockedIncrement(&failures);
         }

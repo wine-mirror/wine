@@ -1102,7 +1102,7 @@ static void test_debug_heap( const char *argv0, DWORD flags )
     ok( ret, "failed to create child process error %u\n", GetLastError() );
     if (ret)
     {
-        winetest_wait_child_process( info.hProcess );
+        wait_child_process( info.hProcess );
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
     }

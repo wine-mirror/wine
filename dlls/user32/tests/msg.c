@@ -16305,7 +16305,7 @@ static void test_WaitForInputIdle( char *argv0 )
                 WaitForSingleObject( pi.hProcess, 1000 );  /* give it a chance to exit on its own */
             }
             TerminateProcess( pi.hProcess, 0 );  /* just in case */
-            winetest_wait_child_process( pi.hProcess );
+            wait_child_process( pi.hProcess );
             ret = WaitForInputIdle( pi.hProcess, 100 );
             ok( ret == WAIT_FAILED, "%u: WaitForInputIdle after exit error %08x\n", i, ret );
             CloseHandle( pi.hProcess );

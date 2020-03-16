@@ -3272,7 +3272,7 @@ static void test_AttachConsole(HANDLE console)
     ok(res, "CreateProcess failed: %u\n", GetLastError());
     CloseHandle(info.hThread);
 
-    winetest_wait_child_process(info.hProcess);
+    wait_child_process(info.hProcess);
     CloseHandle(info.hProcess);
 
     res = ReadConsoleOutputCharacterA(console, buf, 5, c, &len);

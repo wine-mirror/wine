@@ -446,7 +446,7 @@ static void do_parent(void)
 static void finish_child_process(void)
 {
     SendMessageA(child, WM_CLOSE, 0, 0);
-    winetest_wait_child_process( child_process );
+    wait_child_process( child_process );
     CloseHandle(child_process);
 }
 
