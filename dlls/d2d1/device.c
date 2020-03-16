@@ -1008,6 +1008,7 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
     if (geometry->fill.arc_vertex_count)
     {
         buffer_desc.ByteWidth = geometry->fill.arc_vertex_count * sizeof(*geometry->fill.arc_vertices);
+        buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
         buffer_data.pSysMem = geometry->fill.arc_vertices;
 
         if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &vb)))
