@@ -114,7 +114,7 @@ static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t co
     return TRUE;
 }
 
-extern unsigned int mf_format_get_bpp(const GUID *subtype) DECLSPEC_HIDDEN;
+extern unsigned int mf_format_get_bpp(const GUID *subtype, BOOL *is_yuv) DECLSPEC_HIDDEN;
 
 static inline const char *debugstr_propvar(const PROPVARIANT *v)
 {
