@@ -243,7 +243,7 @@ static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE 
         }
         bih->biCompression = amt->subtype.Data1;
     }
-    bih->biSizeImage = width * height * bih->biBitCount / 8;
+    bih->biSizeImage = GST_VIDEO_INFO_SIZE(info);
     if ((vih->AvgTimePerFrame = (REFERENCE_TIME)MulDiv(10000000,
             GST_VIDEO_INFO_FPS_D(info), GST_VIDEO_INFO_FPS_N(info))) == -1)
         vih->AvgTimePerFrame = 0; /* zero division or integer overflow */
