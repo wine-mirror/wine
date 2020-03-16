@@ -121,7 +121,7 @@ static gboolean amt_from_gst_caps_audio_raw(const GstCaps *caps, AM_MEDIA_TYPE *
     if (!gst_audio_info_from_caps (&ainfo, caps))
         return FALSE;
 
-    wfe = heap_alloc(sizeof(*wfe));
+    wfe = CoTaskMemAlloc(sizeof(*wfe));
     wfx = (WAVEFORMATEX*)wfe;
     amt->majortype = MEDIATYPE_Audio;
     amt->subtype = MEDIASUBTYPE_PCM;
@@ -186,7 +186,7 @@ static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *
     nom = vinfo.fps_n;
     denom = vinfo.fps_d;
 
-    vih = heap_alloc(sizeof(*vih));
+    vih = CoTaskMemAlloc(sizeof(*vih));
     bih = &vih->bmiHeader;
 
     amt->formattype = FORMAT_VideoInfo;
@@ -225,14 +225,14 @@ static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *
             break;
         default:
             FIXME("Unhandled type %s.\n", vinfo.finfo->name);
-            heap_free(vih);
+            CoTaskMemFree(vih);
             return FALSE;
         }
         bih->biCompression = BI_RGB;
     } else {
         amt->subtype = MEDIATYPE_Video;
         if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(vinfo.finfo->format))) {
-            heap_free(vih);
+            CoTaskMemFree(vih);
             return FALSE;
         }
         switch (amt->subtype.Data1) {
