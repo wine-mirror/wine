@@ -165,20 +165,10 @@ void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_context *co
             && (abs(src_rect->bottom - src_rect->top) != abs(dst_rect->bottom - dst_rect->top)
             || abs(src_rect->right - src_rect->left) != abs(dst_rect->right - dst_rect->left));
 
-    switch (filter)
-    {
-        case WINED3D_TEXF_LINEAR:
-            gl_filter = scaled_resolve ? GL_SCALED_RESOLVE_NICEST_EXT : GL_LINEAR;
-            break;
-
-        default:
-            FIXME("Unsupported filter mode %s (%#x).\n", debug_d3dtexturefiltertype(filter), filter);
-            /* fall through */
-        case WINED3D_TEXF_NONE:
-        case WINED3D_TEXF_POINT:
-            gl_filter = scaled_resolve ? GL_SCALED_RESOLVE_FASTEST_EXT : GL_NEAREST;
-            break;
-    }
+    if (filter == WINED3D_TEXF_LINEAR)
+        gl_filter = scaled_resolve ? GL_SCALED_RESOLVE_NICEST_EXT : GL_LINEAR;
+    else
+        gl_filter = scaled_resolve ? GL_SCALED_RESOLVE_FASTEST_EXT : GL_NEAREST;
 
     /* Make sure the locations are up-to-date. Loading the destination
      * surface isn't required if the entire surface is overwritten. (And is

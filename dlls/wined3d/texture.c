@@ -3569,6 +3569,10 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
             || src_texture->resource.type != WINED3D_RTYPE_TEXTURE_2D)
         return WINED3DERR_INVALIDCALL;
 
+    if (filter != WINED3D_TEXF_NONE && filter != WINED3D_TEXF_POINT
+            && filter != WINED3D_TEXF_LINEAR)
+        return WINED3DERR_INVALIDCALL;
+
     dst_format_flags = dst_texture->resource.format_flags;
     if (FAILED(hr = wined3d_texture_check_box_dimensions(dst_texture,
             dst_sub_resource_idx % dst_texture->level_count, &dst_box)))
