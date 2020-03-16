@@ -1035,10 +1035,7 @@ enum wined3d_shader_type
 
 /* VTF defines */
 #define WINED3DDMAPSAMPLER                                      0x100
-#define WINED3DVERTEXTEXTURESAMPLER0                            (WINED3DDMAPSAMPLER + 1)
-#define WINED3DVERTEXTEXTURESAMPLER1                            (WINED3DDMAPSAMPLER + 2)
-#define WINED3DVERTEXTEXTURESAMPLER2                            (WINED3DDMAPSAMPLER + 3)
-#define WINED3DVERTEXTEXTURESAMPLER3                            (WINED3DDMAPSAMPLER + 4)
+#define WINED3D_VERTEX_SAMPLER_OFFSET                           WINED3D_MAX_FRAGMENT_SAMPLERS
 
 #define WINED3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD           0x00000020
 #define WINED3DCAPS3_LINEAR_TO_SRGB_PRESENTATION                0x00000080

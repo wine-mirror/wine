@@ -1758,9 +1758,6 @@ static void wined3d_device_set_sampler_state(struct wined3d_device *device,
     TRACE("device %p, sampler_idx %u, state %s, value %#x.\n",
             device, sampler_idx, debug_d3dsamplerstate(state), value);
 
-    if (sampler_idx >= WINED3DVERTEXTEXTURESAMPLER0 && sampler_idx <= WINED3DVERTEXTEXTURESAMPLER3)
-        sampler_idx -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
-
     if (value == device->state.sampler_states[sampler_idx][state])
     {
         TRACE("Application is setting the old value over, nothing to do.\n");
@@ -3452,9 +3449,6 @@ static void wined3d_device_set_texture(struct wined3d_device *device,
 
     TRACE("device %p, stage %u, texture %p.\n", device, stage, texture);
 
-    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
-        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
-
     /* Windows accepts overflowing this array... we do not. */
     if (stage >= ARRAY_SIZE(device->state.textures))
     {
@@ -3492,7 +3486,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     BOOL set_blend_state = FALSE, set_rasterizer_state = FALSE;
     unsigned int i, j, start, idx;
     struct wined3d_range range;
-    DWORD map, stage;
+    uint32_t map;
 
     TRACE("device %p, stateblock %p.\n", device, stateblock);
 
@@ -3732,14 +3726,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     for (i = 0; i < ARRAY_SIZE(changed->samplerState); ++i)
     {
-        stage = i;
-        if (stage >= WINED3D_MAX_FRAGMENT_SAMPLERS)
-            stage += WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS;
         map = changed->samplerState[i];
         while (map)
         {
             j = wined3d_bit_scan(&map);
-            wined3d_device_set_sampler_state(device, stage, j, state->sampler_states[i][j]);
+            wined3d_device_set_sampler_state(device, i, j, state->sampler_states[i][j]);
         }
     }
 
@@ -3788,10 +3779,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     while (map)
     {
         i = wined3d_bit_scan(&map);
-        stage = i;
-        if (stage >= WINED3D_MAX_FRAGMENT_SAMPLERS)
-            stage += WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS;
-        wined3d_device_set_texture(device, stage, state->textures[i]);
+        wined3d_device_set_texture(device, i, state->textures[i]);
     }
 
     map = changed->clipplane;

@@ -2514,8 +2514,8 @@ static HRESULT WINAPI d3d9_device_GetTexture(IDirect3DDevice9Ex *iface, DWORD st
     if (!texture)
         return D3DERR_INVALIDCALL;
 
-    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
-        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+    if (stage >= D3DVERTEXTEXTURESAMPLER0 && stage <= D3DVERTEXTEXTURESAMPLER3)
+        stage -= D3DVERTEXTEXTURESAMPLER0 - WINED3D_VERTEX_SAMPLER_OFFSET;
 
     if (stage >= ARRAY_SIZE(state->textures))
     {
@@ -2550,20 +2550,20 @@ static HRESULT WINAPI d3d9_device_SetTexture(IDirect3DDevice9Ex *iface, DWORD st
 
     texture_impl = unsafe_impl_from_IDirect3DBaseTexture9(texture);
 
+    if (stage >= D3DVERTEXTEXTURESAMPLER0 && stage <= D3DVERTEXTEXTURESAMPLER3)
+        stage -= D3DVERTEXTEXTURESAMPLER0 - WINED3D_VERTEX_SAMPLER_OFFSET;
+
     wined3d_mutex_lock();
     wined3d_stateblock_set_texture(device->update_state, stage,
             texture_impl ? texture_impl->wined3d_texture : NULL);
     if (!device->recording)
     {
-        unsigned int i = stage < 16 || (stage >= D3DVERTEXTEXTURESAMPLER0 && stage <= D3DVERTEXTEXTURESAMPLER3)
-                ? stage < 16 ? stage : stage - D3DVERTEXTEXTURESAMPLER0 + 16 : ~0u;
-
-        if (i < D3D9_MAX_TEXTURE_UNITS)
+        if (stage < D3D9_MAX_TEXTURE_UNITS)
         {
             if (texture_impl && texture_impl->usage & D3DUSAGE_AUTOGENMIPMAP)
-                device->auto_mipmaps |= 1u << i;
+                device->auto_mipmaps |= 1u << stage;
             else
-                device->auto_mipmaps &= ~(1u << i);
+                device->auto_mipmaps &= ~(1u << stage);
         }
     }
     wined3d_mutex_unlock();
@@ -2656,8 +2656,8 @@ static HRESULT WINAPI d3d9_device_GetSamplerState(IDirect3DDevice9Ex *iface,
 
     TRACE("iface %p, sampler_idx %u, state %#x, value %p.\n", iface, sampler_idx, state, value);
 
-    if (sampler_idx >= WINED3DVERTEXTEXTURESAMPLER0 && sampler_idx <= WINED3DVERTEXTEXTURESAMPLER3)
-        sampler_idx -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+    if (sampler_idx >= D3DVERTEXTEXTURESAMPLER0 && sampler_idx <= D3DVERTEXTEXTURESAMPLER3)
+        sampler_idx -= D3DVERTEXTEXTURESAMPLER0 - WINED3D_VERTEX_SAMPLER_OFFSET;
 
     if (sampler_idx >= ARRAY_SIZE(device_state->sampler_states))
     {
@@ -2680,6 +2680,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_SetSamplerState(IDirect3DDev
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
 
     TRACE("iface %p, sampler %u, state %#x, value %#x.\n", iface, sampler, state, value);
+
+    if (sampler >= D3DVERTEXTEXTURESAMPLER0 && sampler <= D3DVERTEXTEXTURESAMPLER3)
+        sampler -= D3DVERTEXTEXTURESAMPLER0 - WINED3D_VERTEX_SAMPLER_OFFSET;
 
     wined3d_mutex_lock();
     wined3d_stateblock_set_sampler_state(device->update_state, sampler, state, value);

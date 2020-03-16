@@ -1075,7 +1075,6 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         DWORD stage = stateblock->contained_sampler_states[i].stage;
         DWORD sampler_state = stateblock->contained_sampler_states[i].state;
 
-        if (stage >= WINED3D_MAX_FRAGMENT_SAMPLERS) stage += WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS;
         wined3d_stateblock_set_sampler_state(device_state, stage, sampler_state,
                 state->sampler_states[stage][sampler_state]);
     }
@@ -1127,13 +1126,8 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
     map = stateblock->changed.textures;
     for (i = 0; map; map >>= 1, ++i)
     {
-        DWORD stage = i;
-
-        if (stage >= WINED3D_MAX_FRAGMENT_SAMPLERS)
-            stage += WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS;
-
         if (map & 1)
-            wined3d_stateblock_set_texture(device_state, stage, state->textures[i]);
+            wined3d_stateblock_set_texture(device_state, i, state->textures[i]);
     }
 
     map = stateblock->changed.clipplane;
@@ -1353,9 +1347,6 @@ void CDECL wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *state
     TRACE("stateblock %p, sampler_idx %u, state %s, value %#x.\n",
             stateblock, sampler_idx, debug_d3dsamplerstate(state), value);
 
-    if (sampler_idx >= WINED3DVERTEXTEXTURESAMPLER0 && sampler_idx <= WINED3DVERTEXTEXTURESAMPLER3)
-        sampler_idx -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
-
     if (sampler_idx >= ARRAY_SIZE(stateblock->stateblock_state.sampler_states))
     {
         WARN("Invalid sampler %u.\n", sampler_idx);
@@ -1393,9 +1384,6 @@ void CDECL wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock,
         UINT stage, struct wined3d_texture *texture)
 {
     TRACE("stateblock %p, stage %u, texture %p.\n", stateblock, stage, texture);
-
-    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
-        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
 
     if (stage >= ARRAY_SIZE(stateblock->stateblock_state.textures))
     {
