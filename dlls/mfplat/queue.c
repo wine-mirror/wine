@@ -140,16 +140,6 @@ HRESULT WINAPI MFInvokeCallback(IMFAsyncResult *result)
 }
 
 /***********************************************************************
- *      MFCreateAsyncResult (mfplat.@)
- */
-HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback, IUnknown *state, IMFAsyncResult **out)
-{
-    TRACE("%p, %p, %p, %p.\n", object, callback, state, out);
-
-    return RtwqCreateAsyncResult(object, (IRtwqAsyncCallback *)callback, state, (IRtwqAsyncResult **)out);
-}
-
-/***********************************************************************
  *      MFGetTimerPeriodicity (mfplat.@)
  */
 HRESULT WINAPI MFGetTimerPeriodicity(DWORD *period)
