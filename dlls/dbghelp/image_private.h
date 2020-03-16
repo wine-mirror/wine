@@ -61,6 +61,7 @@ struct image_file_map
 {
     enum module_type            modtype;
     unsigned                    addr_size;      /* either 16 (not used), 32 or 64 */
+    struct image_file_map*      alternate;      /* another file linked to this one */
     union
     {
         struct elf_file_map
@@ -69,7 +70,6 @@ struct image_file_map
             size_t                      elf_start;
             HANDLE                      handle;
             const char*	                shstrtab;
-            struct image_file_map*      alternate;      /* another ELF file (linked to this one) */
             char*                       target_copy;
 #ifdef __ELF__
             Elf64_Ehdr                  elfhdr;
@@ -130,7 +130,7 @@ struct image_section_map
 };
 
 extern BOOL         elf_find_section(struct image_file_map* fmap, const char* name,
-                                     unsigned sht, struct image_section_map* ism) DECLSPEC_HIDDEN;
+                                     struct image_section_map* ism) DECLSPEC_HIDDEN;
 extern const char*  elf_map_section(struct image_section_map* ism) DECLSPEC_HIDDEN;
 extern void         elf_unmap_section(struct image_section_map* ism) DECLSPEC_HIDDEN;
 extern DWORD_PTR    elf_get_map_rva(const struct image_section_map* ism) DECLSPEC_HIDDEN;
@@ -153,13 +153,26 @@ extern unsigned     pe_get_map_size(const struct image_section_map* psm) DECLSPE
 static inline BOOL image_find_section(struct image_file_map* fmap, const char* name,
                                       struct image_section_map* ism)
 {
-    switch (fmap->modtype)
+    while (fmap)
     {
-    case DMT_ELF:   return elf_find_section(fmap, name, SHT_NULL, ism);
-    case DMT_MACHO: return macho_find_section(fmap, NULL, name, ism);
-    case DMT_PE:    return pe_find_section(fmap, name, ism);
-    default: assert(0); return FALSE;
+        switch (fmap->modtype)
+        {
+        case DMT_ELF:
+            if (elf_find_section(fmap, name, ism)) return TRUE;
+            break;
+        case DMT_MACHO:
+            if (macho_find_section(fmap, NULL, name, ism)) return TRUE;
+            break;
+        case DMT_PE:
+            if (pe_find_section(fmap, name, ism)) return TRUE;
+            break;
+        default: assert(0); return FALSE;
+        }
+        fmap = fmap->alternate;
     }
+    ism->fmap = NULL;
+    ism->sidx = -1;
+    return FALSE;
 }
 
 static inline const char* image_map_section(struct image_section_map* ism)
