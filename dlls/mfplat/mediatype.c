@@ -29,6 +29,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC1, MAKEFOURCC('I','M','C','1'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC2, MAKEFOURCC('I','M','C','2'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC3, MAKEFOURCC('I','M','C','3'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC4, MAKEFOURCC('I','M','C','4'));
+
 struct media_type
 {
     struct attributes attributes;
@@ -1785,9 +1790,15 @@ static const struct uncompressed_video_format video_formats[] =
     { &MFVideoFormat_A2R10G10B10,   4, 3, 1 },
     { &MFVideoFormat_RGB8,          1, 3, 1 },
     { &MFVideoFormat_L8,            1, 3, 1 },
+    { &MFVideoFormat_AYUV,          4, 3, 0 },
+    { &MFVideoFormat_IMC1,          2, 3, 0 },
+    { &MFVideoFormat_IMC2,          1, 0, 0 },
+    { &MFVideoFormat_IMC3,          2, 3, 0 },
+    { &MFVideoFormat_IMC4,          1, 0, 0 },
     { &MFVideoFormat_NV12,          1, 0, 0 },
     { &MFVideoFormat_D16,           2, 3, 0 },
     { &MFVideoFormat_L16,           2, 3, 0 },
+    { &MFVideoFormat_YV12,          1, 0, 0 },
     { &MFVideoFormat_A16B16G16R16F, 8, 3, 1 },
 };
 
@@ -1852,7 +1863,10 @@ HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height
 
     switch (subtype->Data1)
     {
+        case MAKEFOURCC('I','M','C','2'):
+        case MAKEFOURCC('I','M','C','4'):
         case MAKEFOURCC('N','V','1','2'):
+        case MAKEFOURCC('Y','V','1','2'):
             /* 2 x 2 block, interleaving UV for half the height */
             *size = ((width + 1) & ~1) * height * 3 / 2;
             break;
@@ -1890,7 +1904,10 @@ HRESULT WINAPI MFGetPlaneSize(DWORD fourcc, DWORD width, DWORD height, DWORD *si
 
     switch (fourcc)
     {
+        case MAKEFOURCC('I','M','C','2'):
+        case MAKEFOURCC('I','M','C','4'):
         case MAKEFOURCC('N','V','1','2'):
+        case MAKEFOURCC('Y','V','1','2'):
             *size = stride * height * 3 / 2;
             break;
         default:

@@ -48,6 +48,11 @@ DEFINE_GUID(DUMMY_GUID2, 0x12345678,0x1234,0x1234,0x22,0x22,0x22,0x22,0x22,0x22,
 DEFINE_GUID(DUMMY_GUID3, 0x12345678,0x1234,0x1234,0x23,0x23,0x23,0x23,0x23,0x23,0x23,0x23);
 DEFINE_GUID(CLSID_FileSchemeHandler, 0x477ec299, 0x1421, 0x4bdd, 0x97, 0x1f, 0x7c, 0xcb, 0x93, 0x3f, 0x21, 0xad);
 
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC1, MAKEFOURCC('I','M','C','1'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC2, MAKEFOURCC('I','M','C','2'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC3, MAKEFOURCC('I','M','C','3'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC4, MAKEFOURCC('I','M','C','4'));
+
 static BOOL is_win8_plus;
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
@@ -3414,6 +3419,32 @@ static void test_MFCalculateImageSize(void)
         { &MFVideoFormat_NV12, 2, 2, 6, 6 },
         { &MFVideoFormat_NV12, 3, 2, 12, 9 },
         { &MFVideoFormat_NV12, 4, 2, 12, 12 },
+        { &MFVideoFormat_AYUV, 1, 1, 4 },
+        { &MFVideoFormat_AYUV, 2, 1, 8 },
+        { &MFVideoFormat_AYUV, 1, 2, 8 },
+        { &MFVideoFormat_AYUV, 4, 3, 48 },
+        { &MFVideoFormat_IMC1, 1, 1, 4 },
+        { &MFVideoFormat_IMC1, 2, 1, 4 },
+        { &MFVideoFormat_IMC1, 1, 2, 8 },
+        { &MFVideoFormat_IMC1, 4, 3, 24 },
+        { &MFVideoFormat_IMC3, 1, 1, 4 },
+        { &MFVideoFormat_IMC3, 2, 1, 4 },
+        { &MFVideoFormat_IMC3, 1, 2, 8 },
+        { &MFVideoFormat_IMC3, 4, 3, 24 },
+        { &MFVideoFormat_IMC2, 1, 3, 9, 4 },
+        { &MFVideoFormat_IMC2, 1, 2, 6, 3 },
+        { &MFVideoFormat_IMC2, 2, 2, 6, 6 },
+        { &MFVideoFormat_IMC2, 3, 2, 12, 9 },
+        { &MFVideoFormat_IMC2, 4, 2, 12, 12 },
+        { &MFVideoFormat_IMC4, 1, 3, 9, 4 },
+        { &MFVideoFormat_IMC4, 1, 2, 6, 3 },
+        { &MFVideoFormat_IMC4, 2, 2, 6, 6 },
+        { &MFVideoFormat_IMC4, 3, 2, 12, 9 },
+        { &MFVideoFormat_IMC4, 4, 2, 12, 12 },
+        { &MFVideoFormat_YV12, 1, 1, 3, 1 },
+        { &MFVideoFormat_YV12, 2, 1, 3 },
+        { &MFVideoFormat_YV12, 1, 2, 6, 3 },
+        { &MFVideoFormat_YV12, 4, 3, 18 },
     };
     unsigned int i;
     UINT32 size;
@@ -4525,6 +4556,24 @@ static void test_MFGetStrideForBitmapInfoHeader(void)
         { &MFVideoFormat_NV12, 1, 1 },
         { &MFVideoFormat_NV12, 2, 2 },
         { &MFVideoFormat_NV12, 3, 3 },
+        { &MFVideoFormat_AYUV, 1, 4 },
+        { &MFVideoFormat_AYUV, 4, 16 },
+        { &MFVideoFormat_AYUV, 5, 20 },
+        { &MFVideoFormat_IMC1, 1, 4 },
+        { &MFVideoFormat_IMC1, 2, 4 },
+        { &MFVideoFormat_IMC1, 3, 8 },
+        { &MFVideoFormat_IMC3, 1, 4 },
+        { &MFVideoFormat_IMC3, 2, 4 },
+        { &MFVideoFormat_IMC3, 3, 8 },
+        { &MFVideoFormat_IMC2, 1, 1 },
+        { &MFVideoFormat_IMC2, 2, 2 },
+        { &MFVideoFormat_IMC2, 3, 3 },
+        { &MFVideoFormat_IMC4, 1, 1 },
+        { &MFVideoFormat_IMC4, 2, 2 },
+        { &MFVideoFormat_IMC4, 3, 3 },
+        { &MFVideoFormat_YV12, 1, 1 },
+        { &MFVideoFormat_YV12, 2, 2 },
+        { &MFVideoFormat_YV12, 3, 3 },
     };
     unsigned int i;
     LONG stride;
