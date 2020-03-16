@@ -535,6 +535,12 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_FreePMsg(IDirectMusicPerforma
   DMUS_ItemRemoveFromQueue( This, pItem );
   LeaveCriticalSection(&This->safe);
 
+  if (pPMSG->pTool)
+    IDirectMusicTool_Release(pPMSG->pTool);
+
+  if (pPMSG->pGraph)
+    IDirectMusicGraph_Release(pPMSG->pGraph);
+
   if (pPMSG->punkUser)
     IUnknown_Release(pPMSG->punkUser);
 
