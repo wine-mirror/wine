@@ -1311,7 +1311,6 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_g
 
     if (gl_info->supported[WINED3D_GL_VERSION_3_2]
             && gl_info->supported[ARB_POLYGON_OFFSET_CLAMP]
-            && gl_info->supported[ARB_DRAW_BUFFERS_BLEND]
             && gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
         if (shader_model >= 5
@@ -1321,7 +1320,8 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_g
 
         if (shader_model >= 4)
         {
-            if (gl_info->supported[ARB_TEXTURE_CUBE_MAP_ARRAY])
+            if (gl_info->supported[ARB_TEXTURE_CUBE_MAP_ARRAY]
+                    && gl_info->supported[ARB_DRAW_BUFFERS_BLEND])
                 return WINED3D_FEATURE_LEVEL_10_1;
             return WINED3D_FEATURE_LEVEL_10;
         }
