@@ -4380,10 +4380,14 @@ static void test_window_threading(void)
     else
         skip("Could not find renderer window.\n");
 
+    SetActiveWindow(parent);
     expect_parent_message = FALSE;
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     expect_parent_message = TRUE;
+
+    hwnd = GetActiveWindow();
+    ok(hwnd == parent, "Parent window lost focus, active window %p.\n", hwnd);
 
     hr = CoCreateInstance(&CLSID_FilterGraphNoThread, NULL, CLSCTX_INPROC_SERVER,
             &IID_IFilterGraph2, (void **)&graph);

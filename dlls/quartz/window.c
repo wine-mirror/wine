@@ -136,14 +136,14 @@ HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
 
 HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
 {
-    BaseControlWindow *window = impl_from_BaseWindow(This);
-
     if (!This->hWnd)
         return S_OK;
 
-    /* Media Player Classic deadlocks if WM_PARENTNOTIFY is sent, so unparent
-     * the window first. */
-    IVideoWindow_put_Owner(&window->IVideoWindow_iface, 0);
+    /* Media Player Classic deadlocks if WM_PARENTNOTIFY is sent, so clear
+     * the child style first. Just like Windows, we don't actually unparent
+     * the window, to prevent extra focus events from being generated since
+     * it would become top-level for a brief period before being destroyed. */
+    SetWindowLongW(This->hWnd, GWL_STYLE, GetWindowLongW(This->hWnd, GWL_STYLE) & ~WS_CHILD);
 
     SendMessageW(This->hWnd, WM_CLOSE, 0, 0);
     This->hWnd = NULL;
