@@ -4471,7 +4471,7 @@ static void wined3d_context_gl_setup_target(struct wined3d_context_gl *context_g
             /* Update sRGB writing when switching between formats that do/do not support sRGB writing */
             if ((context_gl->c.current_rt.texture->resource.format_flags & WINED3DFMT_FLAG_SRGB_WRITE)
                     != (texture->resource.format_flags & WINED3DFMT_FLAG_SRGB_WRITE))
-                context_invalidate_state(&context_gl->c, STATE_BLEND);
+                context_invalidate_state(&context_gl->c, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
         }
 
         /* When switching away from an offscreen render target, and we're not
