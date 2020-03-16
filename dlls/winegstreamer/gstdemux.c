@@ -176,15 +176,13 @@ static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *
 {
     VIDEOINFOHEADER *vih;
     BITMAPINFOHEADER *bih;
-    gint32 width, height, nom, denom;
+    gint32 width, height;
     GstVideoInfo vinfo;
 
     if (!gst_video_info_from_caps (&vinfo, caps))
         return FALSE;
-    width = vinfo.width;
-    height = vinfo.height;
-    nom = vinfo.fps_n;
-    denom = vinfo.fps_d;
+    width = GST_VIDEO_INFO_WIDTH(&vinfo);
+    height = GST_VIDEO_INFO_HEIGHT(&vinfo);
 
     vih = CoTaskMemAlloc(sizeof(*vih));
     bih = &vih->bmiHeader;
@@ -201,7 +199,7 @@ static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *
 
     if (GST_VIDEO_INFO_IS_RGB(&vinfo))
     {
-        switch (vinfo.finfo->format)
+        switch (GST_VIDEO_INFO_FORMAT(&vinfo))
         {
         case GST_VIDEO_FORMAT_BGRA:
             amt->subtype = MEDIASUBTYPE_ARGB32;
@@ -224,14 +222,15 @@ static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *
             bih->biBitCount = 16;
             break;
         default:
-            FIXME("Unhandled type %s.\n", vinfo.finfo->name);
+            FIXME("Unhandled type %s.\n", GST_VIDEO_INFO_NAME(&vinfo));
             CoTaskMemFree(vih);
             return FALSE;
         }
         bih->biCompression = BI_RGB;
     } else {
         amt->subtype = MEDIATYPE_Video;
-        if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(vinfo.finfo->format))) {
+        if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(GST_VIDEO_INFO_FORMAT(&vinfo))))
+        {
             CoTaskMemFree(vih);
             return FALSE;
         }
@@ -248,7 +247,8 @@ static gboolean amt_from_gst_caps_video_raw(const GstCaps *caps, AM_MEDIA_TYPE *
         bih->biCompression = amt->subtype.Data1;
     }
     bih->biSizeImage = width * height * bih->biBitCount / 8;
-    if ((vih->AvgTimePerFrame = (REFERENCE_TIME)MulDiv(10000000, denom, nom)) == -1)
+    if ((vih->AvgTimePerFrame = (REFERENCE_TIME)MulDiv(10000000,
+            GST_VIDEO_INFO_FPS_D(&vinfo), GST_VIDEO_INFO_FPS_N(&vinfo))) == -1)
         vih->AvgTimePerFrame = 0; /* zero division or integer overflow */
     bih->biSize = sizeof(*bih);
     bih->biWidth = width;
