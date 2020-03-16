@@ -2180,6 +2180,11 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetDebugMessageLogARB)
     /* GL_ARB_draw_buffers */
     USE_GL_FUNC(glDrawBuffersARB)
+    /* GL_ARB_draw_buffers_blend */
+    USE_GL_FUNC(glBlendEquationiARB)
+    USE_GL_FUNC(glBlendEquationSeparateiARB)
+    USE_GL_FUNC(glBlendFunciARB)
+    USE_GL_FUNC(glBlendFuncSeparateiARB)
     /* GL_ARB_draw_elements_base_vertex */
     USE_GL_FUNC(glDrawElementsBaseVertex)
     USE_GL_FUNC(glDrawElementsInstancedBaseVertex)
@@ -2821,8 +2826,12 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glBindFragDataLocation, glBindFragDataLocationEXT);
     MAP_GL_FUNCTION(glBlendColor, glBlendColorEXT);
     MAP_GL_FUNCTION(glBlendEquation, glBlendEquationEXT);
+    MAP_GL_FUNCTION(glBlendEquationi, glBlendEquationiARB);
     MAP_GL_FUNCTION(glBlendEquationSeparate, glBlendEquationSeparateEXT);
+    MAP_GL_FUNCTION(glBlendEquationSeparatei, glBlendEquationSeparateiARB);
+    MAP_GL_FUNCTION(glBlendFunci, glBlendFunciARB);
     MAP_GL_FUNCTION(glBlendFuncSeparate, glBlendFuncSeparateEXT);
+    MAP_GL_FUNCTION(glBlendFuncSeparatei, glBlendFuncSeparateiARB);
     MAP_GL_FUNCTION(glBufferData, glBufferDataARB);
     MAP_GL_FUNCTION(glBufferSubData, glBufferSubDataARB);
     MAP_GL_FUNCTION(glColorMaski, glColorMaskIndexedEXT);
