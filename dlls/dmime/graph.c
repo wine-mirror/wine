@@ -149,8 +149,8 @@ static HRESULT WINAPI DirectMusicGraph_GetTool(IDirectMusicGraph *iface, DWORD d
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
     struct list* pEntry = NULL;
     LPDMUS_PRIVATE_GRAPH_TOOL pIt = NULL;
-  
-    FIXME("(%p, %d, %p): stub\n", This, dwIndex, ppTool);
+
+    TRACE("(%p, %d, %p)\n", This, dwIndex, ppTool);
 
     LIST_FOR_EACH (pEntry, &This->Tools)
     {
