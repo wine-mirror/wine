@@ -110,6 +110,7 @@ my @allfiles =
 
 my %ctype =
 (
+     # CT_CTYPE1
     "upper"  => 0x0001,
     "lower"  => 0x0002,
     "digit"  => 0x0004,
@@ -118,8 +119,22 @@ my %ctype =
     "cntrl"  => 0x0020,
     "blank"  => 0x0040,
     "xdigit" => 0x0080,
-    "alpha"  => 0x0100,
-    "defin"  => 0x0200
+    "alpha"  => 0x0100 | 0x80000000,
+    "defin"  => 0x0200,
+     # CT_CTYPE3 in high 16 bits
+    "nonspacing"    => 0x00010000,
+    "diacritic"     => 0x00020000,
+    "vowelmark"     => 0x00040000,
+    "symbol"        => 0x00080000,
+    "katakana"      => 0x00100000,
+    "hiragana"      => 0x00200000,
+    "halfwidth"     => 0x00400000,
+    "fullwidth"     => 0x00800000,
+    "ideograph"     => 0x01000000,
+    "kashida"       => 0x02000000,
+    "lexical"       => 0x04000000,
+    "highsurrogate" => 0x08000000,
+    "lowsurrogate"  => 0x10000000,
 );
 
 my %bracket_types =
@@ -248,7 +263,7 @@ my %categories =
     "Lu" => $ctype{"defin"}|$ctype{"alpha"}|$ctype{"upper"}, # Letter, Uppercase
     "Ll" => $ctype{"defin"}|$ctype{"alpha"}|$ctype{"lower"}, # Letter, Lowercase
     "Lt" => $ctype{"defin"}|$ctype{"alpha"}|$ctype{"upper"}|$ctype{"lower"},    # Letter, Titlecase
-    "Mn" => $ctype{"defin"},                    # Mark, Non-Spacing
+    "Mn" => $ctype{"defin"}|$ctype{"nonspacing"}, # Mark, Non-Spacing
     "Mc" => $ctype{"defin"},                    # Mark, Spacing Combining
     "Me" => $ctype{"defin"},                    # Mark, Enclosing
     "Nd" => $ctype{"defin"}|$ctype{"digit"},    # Number, Decimal Digit
@@ -271,10 +286,10 @@ my %categories =
     "Pi" => $ctype{"defin"}|$ctype{"punct"},    # Punctuation, Initial quote
     "Pf" => $ctype{"defin"}|$ctype{"punct"},    # Punctuation, Final quote
     "Po" => $ctype{"defin"}|$ctype{"punct"},    # Punctuation, Other
-    "Sm" => $ctype{"defin"},                    # Symbol, Math
-    "Sc" => $ctype{"defin"},                    # Symbol, Currency
-    "Sk" => $ctype{"defin"},                    # Symbol, Modifier
-    "So" => $ctype{"defin"}                     # Symbol, Other
+    "Sm" => $ctype{"defin"}|$ctype{"symbol"},   # Symbol, Math
+    "Sc" => $ctype{"defin"}|$ctype{"symbol"},   # Symbol, Currency
+    "Sk" => $ctype{"defin"}|$ctype{"symbol"},   # Symbol, Modifier
+    "So" => $ctype{"defin"}|$ctype{"symbol"}    # Symbol, Other
 );
 
 # a few characters need additional categories that cannot be determined automatically
@@ -291,7 +306,31 @@ my %special_categories =
     "punct"  => [ 0x24, 0x2b, 0x3c..0x3e, 0x5e, 0x60, 0x7c, 0x7e, 0xa2..0xbe,
                   0xd7, 0xf7 ],
     "digit"  => [ 0xb2, 0xb3, 0xb9 ],
-    "lower"  => [ 0x2071, 0x207f ]
+    "lower"  => [ 0xaa, 0xba, 0x2071, 0x207f ],
+    "nonspacing" => [ 0xc0..0xc5, 0xc7..0xcf, 0xd1..0xd6, 0xd8..0xdd, 0xe0..0xe5, 0xe7..0xef,
+                      0xf1..0xf6, 0xf8..0xfd, 0xff, 0x6de, 0x1929..0x192b, 0x302e..0x302f ],
+    "diacritic" => [ 0x5e, 0x60, 0xb7, 0xd8, 0xf8 ],
+    "symbol" => [ 0x09..0x0d, 0x20..0x23, 0x25, 0x26, 0x28..0x2a, 0x2c, 0x2e..0x2f, 0x3a..0x40,
+                  0x5b..0x60, 0x7b..0x7e, 0xa0..0xa9, 0xab..0xb1, 0xb4..0xb8, 0xbb, 0xbf,
+                  0x02b9..0x02ba, 0x02c6..0x02cf ],
+    "halfwidth" => [ 0x20..0x7e, 0xa2..0xa3, 0xa5..0xa6, 0xac, 0xaf, 0x20a9 ],
+    "fullwidth" => [ 0x2018..0x2019, 0x201c..0x201d, 0x3000..0x3002, 0x300c..0x300d, 0x309b..0x309c,
+                     0x30a1..0x30ab, 0x30ad, 0x30ad, 0x30af, 0x30b1, 0x30b3, 0x30b5, 0x30b7, 0x30b9,
+                     0x30bb, 0x30bd, 0x30bf, 0x30c1, 0x30c3, 0x30c4, 0x30c6, 0x30c8, 0x30ca..0x30cf,
+                     0x30d2, 0x30d5, 0x30d8, 0x30db, 0x30de..0x30ed, 0x30ef, 0x30f2..0x30f3, 0x30fb,
+                     0x3131..0x3164 ],
+    "ideograph" => [ 0x3006..0x3007 ],
+    "lexical" => [ 0x22, 0x24, 0x27, 0x2d, 0x2f, 0x3d, 0x40, 0x5c, 0x5e..0x60, 0x7e,
+                   0xa8, 0xaa, 0xad, 0xaf, 0xb4, 0xb8, 0xba,
+                   0x02b0..0x02b8, 0x02bc, 0x02c7, 0x02ca..0x02cb, 0x02cf, 0x02d8..0x02dd, 0x02e0..0x02e3,
+                   0x037a, 0x0384..0x0385, 0x0387, 0x0559..0x055a, 0x0640, 0x1fbd..0x1fc1,
+                   0x1fcd..0x1fcf, 0x1fdd..0x1fdf, 0x1fed..0x1fef, 0x1ffd..0x1ffe, 0x2010..0x2015,
+                   0x2032..0x2034, 0x2038, 0x2043..0x2044, 0x207b..0x207c, 0x207f, 0x208b..0x208c,
+                   0x2212, 0x2215..0x2216, 0x2500, 0x2504..0x2505, 0x2508..0x2509, 0x254c..0x254d,
+                   0x3003, 0x301c, 0x3030..0x3035, 0x309b..0x309e, 0x30fd..0x30fe, 0xfe31..0xfe32,
+                   0xfe58, 0xfe63, 0xfe66, 0xfe68..0xfe69, 0xfe6b, 0xff04, 0xff07, 0xff0d, 0xff0f,
+                   0xff1d, 0xff20, 0xff3c, 0xff3e, 0xff40, 0xff5e ],
+    "kashida" => [ 0x0640 ],
 );
 
 my %directions =
@@ -590,7 +629,6 @@ sub load_data()
 	my ($code, $name, $cat, $comb, $bidi,
             $decomp, $dec, $dig, $num, $mirror,
             $oldname, $comment, $upper, $lower, $title) = split /;/;
-        my $dst;
         my $src = hex $code;
 
         die "unknown category $cat" unless defined $categories{$cat};
@@ -617,6 +655,19 @@ sub load_data()
             $digitmap_table[$src] = ord $dig;
         }
         $combining_class_table[$src] = ($cat ne "Co") ? $comb : 0x100; # Private Use
+
+        $category_table[$src] |= $ctype{"nonspacing"}    if $bidi eq "NSM";
+        $category_table[$src] |= $ctype{"diacritic"}     if $name =~ /^(COMBINING)|(MODIFIER LETTER)\W/;
+        $category_table[$src] |= $ctype{"vowelmark"}     if $name =~ /\sVOWEL/ || $oldname =~ /\sVOWEL/;
+        $category_table[$src] |= $ctype{"halfwidth"}     if $name =~ /^HALFWIDTH\s/;
+        $category_table[$src] |= $ctype{"fullwidth"}     if $name =~ /^FULLWIDTH\s/;
+        $category_table[$src] |= $ctype{"hiragana"}      if $name =~ /(HIRAGANA)|(\WKANA\W)/;
+        $category_table[$src] |= $ctype{"katakana"}      if $name =~ /(KATAKANA)|(\WKANA\W)/;
+        $category_table[$src] |= $ctype{"ideograph"}     if $name =~ /^<CJK Ideograph/;
+        $category_table[$src] |= $ctype{"ideograph"}     if $name =~ /^CJK COMPATIBILITY IDEOGRAPH/;
+        $category_table[$src] |= $ctype{"ideograph"}     if $name =~ /^HANGZHOU/;
+        $category_table[$src] |= $ctype{"highsurrogate"} if $name =~ /High Surrogate/;
+        $category_table[$src] |= $ctype{"lowsurrogate"}  if $name =~ /Low Surrogate/;
 
         # copy the category and direction for everything between First/Last pairs
         if ($name =~ /, First>/) { $start = $src; }
@@ -645,30 +696,15 @@ sub load_data()
             if ($1 eq "isolated" || $1 eq "final" || $1 eq "initial" || $1 eq "medial")
             {
                 ${joining_forms{$1}}[hex $2] = $src;
-                next;
             }
-            next unless ($1 eq "font" ||
-                         $1 eq "noBreak" ||
-                         $1 eq "circle" ||
-                         $1 eq "super" ||
-                         $1 eq "sub" ||
-                         $1 eq "wide" ||
-                         $1 eq "narrow" ||
-                         $1 eq "compat" ||
-                         $1 eq "small");
-            $dst = hex $2;
         }
         elsif ($decomp =~ /^<compat>\s+0020\s+([0-9a-fA-F]+)/)
         {
             # decomposition "<compat> 0020 1234" -> combining accent
-            $dst = hex $1;
         }
         elsif ($decomp =~ /^([0-9a-fA-F]+)/)
         {
-            # decomposition contains only char values without prefix -> use first char
-            $dst = hex $1;
-            $category_table[$src] |= $category_table[$dst] if defined $category_table[$dst];
-            # store decomposition if it contains two chars
+            # store decomposition
             if ($decomp =~ /^([0-9a-fA-F]+)\s+([0-9a-fA-F]+)$/)
             {
                 $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1, hex $2 ];
@@ -679,19 +715,26 @@ sub load_data()
                 $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1 ];
             }
         }
-        else
-        {
-            next;
-        }
     }
     close $UNICODE_DATA;
 
     # patch the category of some special characters
 
+    for (my $i = 0; $i < @decomp_table; $i++)
+    {
+        next unless defined $decomp_table[$i];
+        $category_table[$i] |= $category_table[$decomp_table[$i]->[0]];
+    }
     foreach my $cat (keys %special_categories)
     {
         my $flag = $ctype{$cat};
         foreach my $i (@{$special_categories{$cat}}) { $category_table[$i] |= $flag; }
+    }
+    for (my $i = 0; $i < @decomp_compat_table; $i++)
+    {
+        next unless defined $decomp_compat_table[$i];
+        next unless @{$decomp_compat_table[$i]} == 2;
+        $category_table[$i] |= $category_table[$decomp_compat_table[$i]->[1]] & $ctype{"diacritic"};
     }
 
     # load the composition exclusions
@@ -1844,7 +1887,7 @@ sub dump_string_type_table($)
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"windef.h\"\n\n";
 
-    my @table = @category_table;
+    my @table = map { ($_ || 0) & 0xffff; } @category_table;
 
     # add the direction in the high 4 bits of the category
     for (my $i = 0; $i < 65536; $i++)
@@ -1895,7 +1938,7 @@ sub dump_ctype_tables($)
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"windef.h\"\n\n";
 
-    my @table = @category_table;
+    my @table = map { ($_ || 0) & 0xffff; } @category_table;
 
     # add the direction in the high 4 bits of the category
     for (my $i = 0; $i < 65536; $i++)
