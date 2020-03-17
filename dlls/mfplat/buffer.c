@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
-#define ALIGN_SIZE(size, alignment) (((size) + (alignment - 1)) & ~((alignment - 1)))
+#define ALIGN_SIZE(size, alignment) (((size) + (alignment)) & ~((alignment)))
 
 struct memory_buffer
 {
@@ -262,7 +262,7 @@ static HRESULT WINAPI memory_1d_2d_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
         hr = MF_E_INVALIDREQUEST;
     else if (!buffer->_2d.linear_buffer)
     {
-        if (!(buffer->_2d.linear_buffer = heap_alloc(ALIGN_SIZE(buffer->_2d.plane_size, 64))))
+        if (!(buffer->_2d.linear_buffer = heap_alloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
             hr = E_OUTOFMEMORY;
     }
 
@@ -575,7 +575,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
     if (!object)
         return E_OUTOFMEMORY;
 
-    pitch = ALIGN_SIZE(width * bpp, 64);
+    pitch = ALIGN_SIZE(width * bpp, MF_64_BYTE_ALIGNMENT);
 
     switch (fourcc)
     {
