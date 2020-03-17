@@ -1136,9 +1136,78 @@ static HRESULT WINAPI sample_GetBufferByIndex(IMFSample *iface, DWORD index, IMF
     return hr;
 }
 
+static unsigned int sample_get_total_length(struct sample *sample)
+{
+    DWORD total_length = 0, length;
+    size_t i;
+
+    for (i = 0; i < sample->buffer_count; ++i)
+    {
+        length = 0;
+        if (SUCCEEDED(IMFMediaBuffer_GetCurrentLength(sample->buffers[i], &length)))
+            total_length += length;
+    }
+
+    return total_length;
+}
+
+static HRESULT sample_copy_to_buffer(struct sample *sample, IMFMediaBuffer *buffer)
+{
+    DWORD total_length, dst_length, dst_current_length, src_max_length, current_length;
+    BYTE *src_ptr, *dst_ptr;
+    BOOL locked;
+    HRESULT hr;
+    size_t i;
+
+    total_length = sample_get_total_length(sample);
+    dst_current_length = 0;
+
+    dst_ptr = NULL;
+    dst_length = current_length = 0;
+    locked = SUCCEEDED(hr = IMFMediaBuffer_Lock(buffer, &dst_ptr, &dst_length, &current_length));
+    if (locked)
+    {
+        if (dst_length < total_length)
+            hr = MF_E_BUFFERTOOSMALL;
+        else if (dst_ptr)
+        {
+            for (i = 0; i < sample->buffer_count && SUCCEEDED(hr); ++i)
+            {
+                src_ptr = NULL;
+                src_max_length = current_length = 0;
+                if (SUCCEEDED(hr = IMFMediaBuffer_Lock(sample->buffers[i], &src_ptr, &src_max_length, &current_length)))
+                {
+                    if (src_ptr)
+                    {
+                        if (current_length > dst_length)
+                            hr = MF_E_BUFFERTOOSMALL;
+                        else if (current_length)
+                        {
+                            memcpy(dst_ptr, src_ptr, current_length);
+                            dst_length -= current_length;
+                            dst_current_length += current_length;
+                            dst_ptr += current_length;
+                        }
+                    }
+                    IMFMediaBuffer_Unlock(sample->buffers[i]);
+                }
+            }
+        }
+    }
+
+    IMFMediaBuffer_SetCurrentLength(buffer, dst_current_length);
+
+    if (locked)
+        IMFMediaBuffer_Unlock(buffer);
+
+    return hr;
+}
+
 static HRESULT WINAPI sample_ConvertToContiguousBuffer(IMFSample *iface, IMFMediaBuffer **buffer)
 {
     struct sample *sample = impl_from_IMFSample(iface);
+    unsigned int total_length, i;
+    IMFMediaBuffer *dest_buffer;
     HRESULT hr = S_OK;
 
     TRACE("%p, %p.\n", iface, buffer);
@@ -1147,15 +1216,29 @@ static HRESULT WINAPI sample_ConvertToContiguousBuffer(IMFSample *iface, IMFMedi
 
     if (sample->buffer_count == 0)
         hr = E_UNEXPECTED;
-    else if (sample->buffer_count == 1)
+    else if (sample->buffer_count > 1)
+    {
+        total_length = sample_get_total_length(sample);
+        if (SUCCEEDED(hr = MFCreateMemoryBuffer(total_length, &dest_buffer)))
+        {
+            if (SUCCEEDED(hr = sample_copy_to_buffer(sample, dest_buffer)))
+            {
+                for (i = 0; i < sample->buffer_count; ++i)
+                    IMFMediaBuffer_Release(sample->buffers[i]);
+
+                sample->buffers[0] = dest_buffer;
+                IMFMediaBuffer_AddRef(sample->buffers[0]);
+
+                sample->buffer_count = 1;
+            }
+            IMFMediaBuffer_Release(dest_buffer);
+        }
+    }
+
+    if (SUCCEEDED(hr))
     {
         *buffer = sample->buffers[0];
         IMFMediaBuffer_AddRef(*buffer);
-    }
-    else
-    {
-        FIXME("Samples with multiple buffers are not supported.\n");
-        hr = E_NOTIMPL;
     }
 
     LeaveCriticalSection(&sample->attributes.cs);
@@ -1223,21 +1306,6 @@ static HRESULT WINAPI sample_RemoveAllBuffers(IMFSample *iface)
     LeaveCriticalSection(&sample->attributes.cs);
 
     return S_OK;
-}
-
-static DWORD sample_get_total_length(struct sample *sample)
-{
-    DWORD total_length = 0, length;
-    size_t i;
-
-    for (i = 0; i < sample->buffer_count; ++i)
-    {
-        length = 0;
-        if (SUCCEEDED(IMFMediaBuffer_GetCurrentLength(sample->buffers[i], &length)))
-            total_length += length;
-    }
-
-    return total_length;
 }
 
 static HRESULT WINAPI sample_GetTotalLength(IMFSample *iface, DWORD *total_length)

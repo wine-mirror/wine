@@ -1778,7 +1778,7 @@ static void test_system_memory_buffer(void)
 static void test_sample(void)
 {
     static const DWORD test_pattern = 0x22222222;
-    IMFMediaBuffer *buffer, *buffer2;
+    IMFMediaBuffer *buffer, *buffer2, *buffer3;
     DWORD count, flags, length;
     IMFAttributes *attributes;
     IMFSample *sample;
@@ -1998,8 +1998,14 @@ static void test_sample(void)
     ok(buffer2 == buffer, "Unexpected buffer instance.\n");
     IMFMediaBuffer_Release(buffer2);
 
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     hr = MFCreateMemoryBuffer(16, &buffer2);
     ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_SetCurrentLength(buffer2, 4);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSample_AddBuffer(sample, buffer2);
     ok(hr == S_OK, "Failed to add buffer, hr %#x.\n", hr);
@@ -2009,15 +2015,22 @@ static void test_sample(void)
     ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
     ok(count == 2, "Unexpected buffer count %u.\n", count);
 
-    hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer2);
-todo_wine
+    hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer3);
     ok(hr == S_OK, "Failed to convert, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetMaxLength(buffer3, &length);
+    ok(hr == S_OK, "Failed to get maximum length, hr %#x.\n", hr);
+    ok(length == 7, "Unexpected length %u.\n", length);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer3, &length);
+    ok(hr == S_OK, "Failed to get maximum length, hr %#x.\n", hr);
+    ok(length == 7, "Unexpected length %u.\n", length);
+
     if (SUCCEEDED(hr))
-        IMFMediaBuffer_Release(buffer2);
+        IMFMediaBuffer_Release(buffer3);
 
     hr = IMFSample_GetBufferCount(sample, &count);
     ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
-todo_wine
     ok(count == 1, "Unexpected buffer count %u.\n", count);
 
     IMFMediaBuffer_Release(buffer);
