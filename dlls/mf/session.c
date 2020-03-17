@@ -2492,6 +2492,38 @@ static void session_deliver_sample(struct media_session *session, IMFMediaStream
     IMFTopologyNode_Release(downstream_node);
 }
 
+static void session_sink_invalidated(struct media_session *session, IMFMediaEvent *event, IMFStreamSink *sink)
+{
+    struct topo_node *node, *sink_node = NULL;
+    HRESULT hr;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->type == MF_TOPOLOGY_OUTPUT_NODE && node->object.sink_stream == sink)
+        {
+            sink_node = node;
+            break;
+        }
+    }
+
+    if (!sink_node)
+        return;
+
+    if (!event)
+    {
+        if (FAILED(hr = MFCreateMediaEvent(MESinkInvalidated, &GUID_NULL, S_OK, NULL, &event)))
+            WARN("Failed to create event, hr %#x.\n", hr);
+    }
+
+    if (!event)
+        return;
+
+    IMFMediaEvent_SetUINT64(event, &MF_EVENT_OUTPUT_NODE, sink_node->node_id);
+    IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+
+    session_set_topo_status(session, S_OK, MF_TOPOSTATUS_ENDED);
+}
+
 static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_session *session = impl_from_events_callback_IMFAsyncCallback(iface);
@@ -2573,13 +2605,31 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             EnterCriticalSection(&session->cs);
             session_request_sample(session, (IMFStreamSink *)event_source);
             LeaveCriticalSection(&session->cs);
-            break;
 
+            break;
         case MEMediaSample:
 
             EnterCriticalSection(&session->cs);
             session_deliver_sample(session, (IMFMediaStream *)event_source, &value);
             LeaveCriticalSection(&session->cs);
+
+            break;
+        case MEAudioSessionDeviceRemoved:
+        case MEAudioSessionDisconnected:
+        case MEAudioSessionExclusiveModeOverride:
+        case MEAudioSessionFormatChanged:
+        case MEAudioSessionServerShutdown:
+
+            IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+            /* fallthrough */
+        case MESinkInvalidated:
+
+            EnterCriticalSection(&session->cs);
+            session_sink_invalidated(session, event_type == MESinkInvalidated ? event : NULL,
+                    (IMFStreamSink *)event_source);
+            LeaveCriticalSection(&session->cs);
+
+            break;
         default:
             ;
     }
