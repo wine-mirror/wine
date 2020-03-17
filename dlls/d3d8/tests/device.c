@@ -41,6 +41,7 @@ struct vec3
 
 struct device_desc
 {
+    unsigned int adapter_ordinal;
     HWND device_window;
     unsigned int width;
     unsigned int height;
@@ -109,9 +110,11 @@ static BOOL adapter_is_warp(const D3DADAPTER_IDENTIFIER8 *identifier)
 static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, const struct device_desc *desc)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
+    unsigned int adapter_ordinal;
     IDirect3DDevice8 *device;
     DWORD behavior_flags = D3DCREATE_HARDWARE_VERTEXPROCESSING;
 
+    adapter_ordinal = D3DADAPTER_DEFAULT;
     present_parameters.BackBufferWidth = 640;
     present_parameters.BackBufferHeight = 480;
     present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
@@ -123,6 +126,7 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, cons
 
     if (desc)
     {
+        adapter_ordinal = desc->adapter_ordinal;
         present_parameters.BackBufferWidth = desc->width;
         present_parameters.BackBufferHeight = desc->height;
         present_parameters.hDeviceWindow = desc->device_window;
@@ -135,12 +139,12 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, cons
             behavior_flags |= D3DCREATE_FPU_PRESERVE;
     }
 
-    if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+    if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, adapter_ordinal, D3DDEVTYPE_HAL, focus_window,
             behavior_flags, &present_parameters, &device)))
         return device;
 
     present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
-    if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+    if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, adapter_ordinal, D3DDEVTYPE_HAL, focus_window,
             behavior_flags, &present_parameters, &device)))
         return device;
 
@@ -148,7 +152,7 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, cons
         return NULL;
     behavior_flags ^= (D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_SOFTWARE_VERTEXPROCESSING);
 
-    if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+    if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, adapter_ordinal, D3DDEVTYPE_HAL, focus_window,
             behavior_flags, &present_parameters, &device)))
         return device;
 
@@ -1390,6 +1394,7 @@ static void test_reset(void)
     i = 0;
     if (modes[i].w == orig_width && modes[i].h == orig_height) ++i;
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.width = modes[i].w;
     device_desc.height = modes[i].h;
     device_desc.device_window = window;
@@ -2905,6 +2910,7 @@ static void test_wndproc(void)
 
     expect_messages = create_messages;
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = device_window;
     device_desc.width = d3d_width;
     device_desc.height = d3d_height;
@@ -3311,6 +3317,7 @@ static void test_wndproc_windowed(void)
 
     filter_messages = focus_window;
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = device_window;
     device_desc.width = registry_mode.dmPelsWidth;
     device_desc.height = registry_mode.dmPelsHeight;
@@ -3543,6 +3550,7 @@ static void test_fpu_setup(void)
     hr = IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &d3ddm);
     ok(SUCCEEDED(hr), "GetAdapterDisplayMode failed, hr %#x.\n", hr);
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = window;
     device_desc.width = 640;
     device_desc.height = 480;
@@ -3772,6 +3780,7 @@ static void test_window_style(void)
     SetRect(&fullscreen_rect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
     GetWindowRect(focus_window, &focus_rect);
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = device_window;
     device_desc.width = registry_mode.dmPelsWidth;
     device_desc.height = registry_mode.dmPelsHeight;
@@ -4074,6 +4083,7 @@ static void test_mode_change(void)
     SetRect(&d3d_rect, 0, 0, d3d_width, d3d_height);
     GetWindowRect(focus_window, &focus_rect);
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = device_window;
     device_desc.width = d3d_width;
     device_desc.height = d3d_height;
@@ -4129,6 +4139,7 @@ static void test_mode_change(void)
 
     /* The mode restore also happens when the device was created at the original screen size. */
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = device_window;
     device_desc.width = registry_mode.dmPelsWidth;
     device_desc.height = registry_mode.dmPelsHeight;
@@ -4188,6 +4199,7 @@ static void test_device_window_reset(void)
     ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
             (LONG_PTR)test_proc, proc);
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = NULL;
     device_desc.width = registry_mode.dmPelsWidth;
     device_desc.height = registry_mode.dmPelsHeight;
@@ -6222,6 +6234,7 @@ static void test_pinned_buffers(void)
 
     for (test = 0; test < ARRAY_SIZE(tests); ++test)
     {
+        device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
         device_desc.device_window = window;
         device_desc.width = 640;
         device_desc.height = 480;
@@ -7823,6 +7836,7 @@ static void test_lost_device(void)
     ok(!!d3d, "Failed to create a D3D object.\n");
     hr = IDirect3D8_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
     ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = window;
     device_desc.width = registry_mode.dmPelsWidth;
     device_desc.height = registry_mode.dmPelsHeight;
@@ -8666,6 +8680,7 @@ static void test_lockable_backbuffer(void)
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.width = 640;
     device_desc.height = 480;
     device_desc.device_window = window;
@@ -8709,6 +8724,7 @@ static void test_clip_planes_limits(void)
 
     for (i = 0; i < ARRAY_SIZE(device_flags); ++i)
     {
+        desc.adapter_ordinal = D3DADAPTER_DEFAULT;
         desc.device_window = window;
         desc.width = 640;
         desc.height = 480;
@@ -9086,6 +9102,7 @@ static void test_resource_access(void)
     ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
     warp = adapter_is_warp(&identifier);
 
+    device_desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     device_desc.device_window = window;
     device_desc.width = 16;
     device_desc.height = 16;
@@ -9734,6 +9751,7 @@ static void test_get_display_mode(void)
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 
+    desc.adapter_ordinal = D3DADAPTER_DEFAULT;
     desc.device_window = window;
     desc.width = 640;
     desc.height = 480;
