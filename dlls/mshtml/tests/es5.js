@@ -768,7 +768,7 @@ function test_getPrototypeOf() {
 }
 
 function test_toString() {
-    var tmp;
+    var tmp, obj;
 
     (function () { tmp = Object.prototype.toString.call(arguments); })();
     todo_wine.
@@ -785,6 +785,13 @@ function test_toString() {
     tmp = Object.prototype.toString.call();
     todo_wine.
     ok(tmp === "[object Undefined]", "toString.call() = " + tmp);
+
+    obj = Object.create(null);
+    tmp = Object.prototype.toString.call(obj);
+    ok(tmp === "[object Object]", "toString.call(Object.create(null)) = " + tmp);
+    obj = Object.create(Number.prototype);
+    tmp = Object.prototype.toString.call(obj);
+    ok(tmp === "[object Object]", "toString.call(Object.create(Number.prototype)) = " + tmp);
 
     next_test();
 }

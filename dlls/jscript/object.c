@@ -612,7 +612,7 @@ static HRESULT Object_create(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         return E_INVALIDARG;
     }
 
-    hres = create_dispex(ctx, NULL, proto, &obj);
+    hres = create_dispex(ctx, &ObjectInst_info, proto, &obj);
     if(FAILED(hres))
         return hres;
 
