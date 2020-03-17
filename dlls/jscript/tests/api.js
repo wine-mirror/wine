@@ -351,6 +351,12 @@ tmp = Object.prototype.toString.call(new VBArray(createArray()));
 ok(tmp === "[object Object]", "toString.call(new VBArray()) = " + tmp);
 (tmp = new Enumerator()).f = Object.prototype.toString;
 ok(tmp.f() === "[object Object]", "tmp.f() = " + tmp.f());
+tmp = Object.prototype.toString.call(null);
+ok(tmp === "[object Object]", "toString.call(null) = " + tmp);
+tmp = Object.prototype.toString.call(undefined);
+ok(tmp === "[object Object]", "toString.call(undefined) = " + tmp);
+tmp = Object.prototype.toString.call();
+ok(tmp === "[object Object]", "toString.call() = " + tmp);
 
 function TSTestConstr() {}
 TSTestConstr.prototype = { toString: function() { return "test"; } };
