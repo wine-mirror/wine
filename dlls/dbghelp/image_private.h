@@ -52,6 +52,9 @@
 #ifndef SHT_NULL
 #define SHT_NULL        0
 #endif
+#ifndef NT_GNU_BUILD_ID
+#define NT_GNU_BUILD_ID 3
+#endif
 #endif
 
 /* structure holding information while handling an ELF image
@@ -129,6 +132,10 @@ struct image_section_map
     struct image_file_map*      fmap;
     long                        sidx;
 };
+
+BOOL image_check_alternate(struct image_file_map* fmap, const struct module* module) DECLSPEC_HIDDEN;
+
+BOOL elf_map_handle(HANDLE handle, struct image_file_map* fmap) DECLSPEC_HIDDEN;
 
 struct image_file_map_ops
 {
