@@ -577,6 +577,12 @@ static unsigned int nb_codepages;
 
 static struct norm_table *norm_info;
 
+static struct
+{
+    DWORD  *keys;       /* sortkey table, indexed by char */
+    USHORT *casemap;    /* casemap table, in l_intl.nls format */
+} sort;
+
 static CRITICAL_SECTION locale_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -586,13 +592,25 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION locale_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+
+/***********************************************************************
+ *		init_sortkeys
+ */
+static void init_sortkeys( DWORD *ptr )
+{
+    sort.keys      = (DWORD *)((char *)ptr + ptr[0]);
+    sort.casemap   = (USHORT *)((char *)ptr + ptr[1]);
+}
+
+
 /***********************************************************************
  *		init_locale
  */
 void init_locale(void)
 {
     UINT ansi_cp = 0, oem_cp = 0;
-    USHORT *ansi_ptr, *oem_ptr, *casemap_ptr;
+    USHORT *ansi_ptr, *oem_ptr;
+    void *sort_ptr;
     LCID lcid = GetUserDefaultLCID();
     WCHAR bufferW[80];
     DYNAMIC_TIME_ZONE_INFORMATION timezone;
@@ -610,8 +628,9 @@ void init_locale(void)
     GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
                     (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR) );
 
-    NtGetNlsSectionPtr( 10, 0, 0, (void **)&casemap_ptr, &size );
+    NtGetNlsSectionPtr( 9, 0, NULL, &sort_ptr, &size );
     NtGetNlsSectionPtr( 12, NormalizationC, NULL, (void **)&norm_info, &size );
+    init_sortkeys( sort_ptr );
 
     if (!ansi_cp || NtGetNlsSectionPtr( 11, ansi_cp, NULL, (void **)&ansi_ptr, &size ))
         NtGetNlsSectionPtr( 11, 1252, NULL, (void **)&ansi_ptr, &size );
@@ -619,8 +638,8 @@ void init_locale(void)
         NtGetNlsSectionPtr( 11, 437, NULL, (void **)&oem_ptr, &size );
     NtCurrentTeb()->Peb->AnsiCodePageData = ansi_ptr;
     NtCurrentTeb()->Peb->OemCodePageData = oem_ptr;
-    NtCurrentTeb()->Peb->UnicodeCaseTableData = casemap_ptr;
-    RtlInitNlsTables( ansi_ptr, oem_ptr, casemap_ptr, &nls_info );
+    NtCurrentTeb()->Peb->UnicodeCaseTableData = sort.casemap;
+    RtlInitNlsTables( ansi_ptr, oem_ptr, sort.casemap, &nls_info );
     RtlResetRtlTranslations( &nls_info );
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Nls",
