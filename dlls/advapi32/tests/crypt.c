@@ -125,6 +125,56 @@ static void clean_up_environment(void)
     }
 }
 
+static void test_CryptReleaseContext(void)
+{
+    BOOL ret;
+    HCRYPTPROV prov;
+
+    /* TODO: Add cases for ERROR_BUSY, ERROR_INVALID_HANDLE and NTE_BAD_UID */
+
+    /* NULL provider */
+
+    SetLastError(0xdeadbeef);
+    ret = CryptReleaseContext(0, 0);
+    ok(!ret, "CryptReleaseContext succeeded unexpectedly\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CryptReleaseContext(0, ~0);
+    ok(!ret, "CryptReleaseContext succeeded unexpectedly\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
+
+    /* Additional refcount */
+
+    ret = CryptAcquireContextA(&prov, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
+    ok(ret, "got %u\n", GetLastError());
+
+    ret = CryptContextAddRef(prov, NULL, 0);
+    ok(ret, "got %u\n", GetLastError());
+
+    ret = CryptReleaseContext(prov, 0);
+    ok(ret, "got %u\n", GetLastError());
+
+    /* Nonzero flags, which allow release nonetheless */
+
+    SetLastError(0xdeadbeef);
+    ret = CryptReleaseContext(prov, ~0);
+    ok(!ret, "CryptReleaseContext succeeded unexpectedly\n");
+    ok(GetLastError() == NTE_BAD_FLAGS, "got %u\n", GetLastError());
+
+    /* Obsolete provider */
+
+    SetLastError(0xdeadbeef);
+    ret = CryptReleaseContext(prov, 0);
+    ok(!ret, "CryptReleaseContext succeeded unexpectedly\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CryptReleaseContext(prov, ~0);
+    ok(!ret, "CryptReleaseContext succeeded unexpectedly\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
+}
+
 static void test_acquire_context(void)
 {
 	BOOL result;
@@ -258,11 +308,6 @@ static void test_incorrect_api_usage(void)
     result = CryptReleaseContext(hProv, 0);
     ok(result, "got %u\n", GetLastError());
     if (!result) return;
-
-    SetLastError(0xdeadbeef);
-    result = CryptReleaseContext(hProv, 0);
-    ok(!result, "CryptReleaseContext succeeded unexpectedly\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
 
     result = pCryptGenRandom(hProv, 1, &temp);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
@@ -1166,7 +1211,9 @@ START_TEST(crypt)
     init_function_pointers();
 
     test_rc2_keylen();
+
     init_environment();
+    test_CryptReleaseContext();
     test_acquire_context();
     test_incorrect_api_usage();
     test_verify_sig();
