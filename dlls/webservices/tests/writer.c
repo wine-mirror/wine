@@ -549,7 +549,6 @@ static void test_WsWriteStartAttribute(void)
 
 static void test_WsWriteType(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     HRESULT hr;
     WS_XML_WRITER *writer;
     WS_XML_STRING prefix = {1, (BYTE*)"p"}, localname = {3, (BYTE *)"str"}, ns = {2, (BYTE *)"ns"};
@@ -566,7 +565,7 @@ static void test_WsWriteType(void)
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    val_str = testW;
+    val_str = L"test";
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
                       WS_WRITE_REQUIRED_POINTER, &val_str, sizeof(val_str), NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
@@ -579,11 +578,11 @@ static void test_WsWriteType(void)
 
     /* required value */
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
-                      WS_WRITE_REQUIRED_VALUE, NULL, sizeof(testW), NULL );
+                      WS_WRITE_REQUIRED_VALUE, NULL, sizeof(L"test"), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
-                      WS_WRITE_REQUIRED_VALUE, testW, sizeof(testW), NULL );
+                      WS_WRITE_REQUIRED_VALUE, L"test", sizeof(L"test"), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     /* required pointer */
@@ -592,7 +591,7 @@ static void test_WsWriteType(void)
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
-                      WS_WRITE_REQUIRED_VALUE, testW, sizeof(testW), NULL );
+                      WS_WRITE_REQUIRED_VALUE, L"test", sizeof(L"test"), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
@@ -613,7 +612,7 @@ static void test_WsWriteType(void)
     hr = WsWriteStartAttribute( writer, NULL, &localname, &ns, FALSE, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    val_str = testW;
+    val_str = L"test";
     hr = WsWriteType( writer, WS_ATTRIBUTE_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
                       WS_WRITE_REQUIRED_POINTER, &val_str, sizeof(val_str), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -633,7 +632,7 @@ static void test_WsWriteType(void)
     hr = WsWriteStartElement( writer, &prefix, &localname, &ns, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    val_str = testW;
+    val_str = L"test";
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
                       WS_WRITE_REQUIRED_POINTER, &val_str, sizeof(val_str), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -689,12 +688,11 @@ static void prepare_basic_type_test( WS_XML_WRITER *writer )
 
 static void test_basic_type(void)
 {
-    static WCHAR testW[] = {'t','e','s','t',0};
     HRESULT hr;
     WS_XML_WRITER *writer;
     WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL}, xmlstr;
     GUID guid;
-    WCHAR *str;
+    const WCHAR *str;
     WS_STRING string;
     WS_BYTES bytes;
     WS_UNIQUE_ID id;
@@ -784,7 +782,7 @@ static void test_basic_type(void)
     check_output( writer, "<t>00000000-0000-0000-0000-000000000000</t>", __LINE__ );
 
     prepare_basic_type_test( writer );
-    string.chars  = testW;
+    string.chars  = (WCHAR *)L"test";
     string.length = 4;
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRING_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
                       &string, sizeof(string), NULL );
@@ -794,7 +792,7 @@ static void test_basic_type(void)
     check_output( writer, "<t>test</t>", __LINE__ );
 
     prepare_basic_type_test( writer );
-    str = testW;
+    str = L"test";
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL, WS_WRITE_REQUIRED_POINTER,
                       &str, sizeof(str), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -860,7 +858,7 @@ static void test_basic_type(void)
 
     prepare_basic_type_test( writer );
     id.uri.length = 4;
-    id.uri.chars  = testW;
+    id.uri.chars  = (WCHAR *)L"test";
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_UNIQUE_ID_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
                       &id, sizeof(id), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -873,7 +871,6 @@ static void test_basic_type(void)
 
 static void test_simple_struct_type(void)
 {
-    static const WCHAR valueW[] = {'v','a','l','u','e',0};
     HRESULT hr;
     WS_XML_WRITER *writer;
     WS_STRUCT_DESCRIPTION s;
@@ -905,7 +902,7 @@ static void test_simple_struct_type(void)
     s.fieldCount    = 1;
 
     test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) );
-    test->field  = valueW;
+    test->field  = L"value";
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, NULL,
                       WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
@@ -977,7 +974,6 @@ static void test_simple_struct_type(void)
 
 static void test_WsWriteElement(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     HRESULT hr;
     WS_XML_WRITER *writer;
     WS_STRUCT_DESCRIPTION s;
@@ -1010,7 +1006,7 @@ static void test_WsWriteElement(void)
     desc.typeDescription  = &s;
 
     test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) );
-    test->str = testW;
+    test->str = L"test";
     hr = WsWriteElement( NULL, &desc, WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
@@ -1165,7 +1161,6 @@ static void test_WsWriteValue(void)
 
 static void test_WsWriteAttribute(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     HRESULT hr;
     WS_XML_WRITER *writer;
     WS_STRUCT_DESCRIPTION s;
@@ -1198,7 +1193,7 @@ static void test_WsWriteAttribute(void)
     desc.typeDescription    = &s;
 
     test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) );
-    test->str = testW;
+    test->str = L"test";
     hr = WsWriteAttribute( NULL, &desc, WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
@@ -1580,8 +1575,6 @@ static void test_complex_struct_type(void)
         "<o:OfficeConfig xmlns:o=\"urn:schemas-microsoft-com:office:office\">"
         "<o:services o:GenerationTime=\"2015-09-03T18:47:54\"/>"
         "</o:OfficeConfig>";
-    static const WCHAR timestampW[] =
-        {'2','0','1','5','-','0','9','-','0','3','T','1','8',':','4','7',':','5','4',0};
     WS_XML_STRING str_officeconfig = {12, (BYTE *)"OfficeConfig"};
     WS_XML_STRING str_services = {8, (BYTE *)"services"};
     WS_XML_STRING str_generationtime = {14, (BYTE *)"GenerationTime"};
@@ -1654,7 +1647,7 @@ static void test_complex_struct_type(void)
     size = sizeof(struct officeconfig) + sizeof(struct services);
     test = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
     test->services = (struct services *)(test + 1);
-    test->services->generationtime = timestampW;
+    test->services->generationtime = L"2015-09-03T18:47:54";
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
                       WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2141,7 +2134,6 @@ static void test_WsCopyNode(void)
 
 static void test_text_types(void)
 {
-    static const WCHAR utf16W[] = {'u','t','f','1','6'};
     WS_XML_STRING prefix = {1, (BYTE *)"p"}, localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"u"};
     WS_XML_STRING ns = {0, NULL}, ns2 = {2, (BYTE *)"ns"};
     WS_XML_WRITER *writer;
@@ -2180,8 +2172,8 @@ static void test_text_types(void)
     HRESULT hr;
     ULONG i;
 
-    val_utf16.bytes     = (BYTE *)utf16W;
-    val_utf16.byteCount = sizeof(utf16W);
+    val_utf16.bytes     = (BYTE *)L"utf16";
+    val_utf16.byteCount = 10;
     val_qname.localName = &localname2;
     val_qname.ns        = &ns;
 
@@ -2432,7 +2424,6 @@ static void test_field_options(void)
 
 static void test_WsWriteText(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t'};
     WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"a"}, ns = {0, NULL};
     HRESULT hr;
     WS_XML_WRITER *writer;
@@ -2504,8 +2495,8 @@ static void test_WsWriteText(void)
     hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    utf16.bytes     = (BYTE *)testW;
-    utf16.byteCount = sizeof(testW);
+    utf16.bytes     = (BYTE *)L"test";
+    utf16.byteCount = 8;
     hr = WsWriteText( writer, &utf16.text, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t>test", __LINE__ );
@@ -2852,11 +2843,10 @@ static void test_escapes(void)
 
 static void test_write_option(void)
 {
-    static const WCHAR sW[] = {'s',0};
     static const WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
     WS_XML_WRITER *writer;
     int val_int = -1, val_int_zero = 0, *ptr_int = &val_int, *ptr_int_null = NULL;
-    const WCHAR *ptr_wsz = sW, *ptr_wsz_null = NULL;
+    const WCHAR *ptr_wsz = L"s", *ptr_wsz_null = NULL;
     static const WS_XML_STRING val_xmlstr = {1, (BYTE *)"x"}, val_xmlstr_zero = {0, NULL};
     const WS_XML_STRING *ptr_xmlstr = &val_xmlstr, *ptr_xmlstr_null = NULL;
     struct
@@ -3060,7 +3050,6 @@ static void test_datetime(void)
 
 static void test_repeating_element(void)
 {
-    static const WCHAR oneW[] = {'1',0}, twoW[] = {'2',0};
     WS_XML_STRING localname = {4, (BYTE *)"test"}, ns = {0, NULL};
     WS_XML_STRING val = {3, (BYTE *)"val"}, wrapper = {7, (BYTE *)"wrapper"};
     HRESULT hr;
@@ -3113,8 +3102,8 @@ static void test_repeating_element(void)
 
     test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) + 2 * sizeof(const WCHAR *) );
     test->val = (const WCHAR **)(test + 1);
-    test->val[0] = oneW;
-    test->val[1] = twoW;
+    test->val[0] = L"1";
+    test->val[1] = L"2";
     test->count  = 2;
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
                       WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
@@ -3317,7 +3306,6 @@ static void test_WsWriteBytes(void)
 static void test_WsWriteChars(void)
 {
     WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"a"}, ns = {0, NULL};
-    static const WCHAR testW[] = {'t','e','s','t'};
     WS_XML_WRITER *writer;
     HRESULT hr;
 
@@ -3330,19 +3318,19 @@ static void test_WsWriteChars(void)
     hr = WsWriteChars( writer, NULL, 0, NULL );
     ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
 
-    hr = WsWriteChars( writer, testW, 0, NULL );
+    hr = WsWriteChars( writer, L"test", 0, NULL );
     ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
 
     hr = WsWriteChars( writer, NULL, 1, NULL );
     ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
 
-    hr = WsWriteChars( writer, testW, 4, NULL );
+    hr = WsWriteChars( writer, L"test", 4, NULL );
     ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
 
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsWriteChars( writer, testW, 4, NULL );
+    hr = WsWriteChars( writer, L"test", 4, NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -3352,10 +3340,10 @@ static void test_WsWriteChars(void)
     hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsWriteChars( writer, testW, 4, NULL );
+    hr = WsWriteChars( writer, L"test", 4, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsWriteChars( writer, testW, 4, NULL );
+    hr = WsWriteChars( writer, L"test", 4, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsWriteEndElement( writer, NULL );
@@ -3372,10 +3360,10 @@ static void test_WsWriteChars(void)
     hr = WsWriteStartAttribute( writer, NULL, &localname2, &ns, FALSE, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsWriteChars( writer, testW, 4, NULL );
+    hr = WsWriteChars( writer, L"test", 4, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsWriteChars( writer, testW, 4, NULL );
+    hr = WsWriteChars( writer, L"test", 4, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsWriteEndAttribute( writer, NULL );
@@ -3904,7 +3892,6 @@ static void test_dictionary(void)
 
 static void test_union_type(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     static WS_XML_STRING str_ns = {0, NULL}, str_a = {1, (BYTE *)"a"}, str_b = {1, (BYTE *)"b"};
     static WS_XML_STRING str_none = {4, (BYTE *)"none"}, str_s = {1, (BYTE *)"s"}, str_t = {1, (BYTE *)"t"};
     HRESULT hr;
@@ -3974,7 +3961,7 @@ static void test_union_type(void)
     hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     test.choice  = CHOICE_A;
-    test.value.a = testW;
+    test.value.a = L"test";
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
                       WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -4069,7 +4056,6 @@ static void prepare_binary_type_test( WS_XML_WRITER *writer, const WS_XML_STRING
 
 static void test_text_types_binary(void)
 {
-    static WCHAR testW[] = {'t','e','s','t'};
     static WS_XML_STRING str_s = {1, (BYTE *)"s"}, str_t = {1, (BYTE *)"t"}, str_u = {1, (BYTE *)"u"};
     static WS_XML_STRING str_ns = {0, NULL};
     static const char res[] =
@@ -4310,7 +4296,7 @@ static void test_text_types_binary(void)
 
     prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
     test.type = WS_XML_TEXT_TYPE_UTF16;
-    test.u.val_utf16.chars  = testW;
+    test.u.val_utf16.chars  = (WCHAR *)L"test";
     test.u.val_utf16.length = 4;
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
                       &test, sizeof(test), NULL );
@@ -4575,7 +4561,6 @@ static void test_text_types_binary(void)
 
 static void test_repeating_element_choice(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     static WS_XML_STRING str_ns = {0, NULL}, str_a = {1, (BYTE *)"a"}, str_b = {1, (BYTE *)"b"};
     static WS_XML_STRING str_s = {1, (BYTE *)"s"}, str_t = {1, (BYTE *)"t"};
     HRESULT hr;
@@ -4647,7 +4632,7 @@ static void test_repeating_element_choice(void)
     s.typeNs        = &str_ns;
 
     items[0].choice  = CHOICE_A;
-    items[0].value.a = testW;
+    items[0].value.a = L"test";
     items[1].choice  = CHOICE_B;
     items[1].value.b = 1;
     test.items = items;

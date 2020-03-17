@@ -23,58 +23,48 @@
 
 static void test_WsDecodeUrl(void)
 {
-    static WCHAR url1[] = {'h','t','t','p',':','/','/','h','o','s','t',0};
-    static WCHAR url2[] = {'h','t','t','p','s',':','/','/','h','o','s','t',0};
-    static WCHAR url3[] = {'h','t','t','p',':','/','/','h','o','s','t',':','8','0',0};
-    static WCHAR url4[] = {'h','t','t','p','s',':','/','/','h','o','s','t',':','8','0',0};
-    static WCHAR url5[] = {'h','t','t','p',':','/','/','h','o','s','t','/','p','a','t','h',0};
-    static WCHAR url6[] = {'h','t','t','p',':','/','/','h','o','s','t','/','p','a','t','h','?',
-                           'q','u','e','r','y',0};
-    static WCHAR url7[] = {'h','t','t','p',':','/','/','h','o','s','t','/','p','a','t','h','?',
-                           'q','u','e','r','y','#','f','r','a','g',0};
-    static WCHAR url8[] = {'H','T','T','P',':','/','/','h','o','s','t',0};
-    static WCHAR url9[] = {'h','t','t','q',':','/','/','h','o','s','t',0};
-    static WCHAR url10[] = {'h','t','t','p',':',0};
-    static WCHAR url11[] = {'h','t','t','p',0};
-    static WCHAR url12[] = {'n','e','t','.','t','c','p',':','/','/','h','o','s','t',0};
-    static WCHAR url13[] = {'s','o','a','p','.','u','d','p',':','/','/','h','o','s','t',0};
-    static WCHAR url14[] = {'n','e','t','.','p','i','p','e',':','/','/','h','o','s','t',0};
-    static WCHAR url15[] = {'h','t','t','p',':','/','h','o','s','t',0};
-    static WCHAR url16[] = {'h','t','t','p',':','h','o','s','t',0};
-    static WCHAR url17[] = {'h','t','t','p',':','/','/','/','h','o','s','t',0};
-    static WCHAR url18[] = {'h','t','t','p',':','/','/','h','o','s','t','/',0};
-    static WCHAR url19[] = {'h','t','t','p',':','/','/','h','o','s','t',':','/',0};
-    static WCHAR url20[] = {'h','t','t','p',':','/','/','h','o','s','t',':','6','5','5','3','6',0};
-    static WCHAR url21[] = {'h','t','t','p',':','/','/','h','o','s','t','?','q','u','e','r','y',0};
-    static WCHAR url22[] = {'h','t','t','p',':','/','/','h','o','s','t','#','f','r','a','g',0};
-    static WCHAR url23[] = {'h','t','t','p',':','/','/','h','o','s','t','%','2','0','2',0};
-    static WCHAR url24[] = {'h','t','t','p',':','/','/','h','o','s','t','/','p','a','t','h',
-                            '%','2','0','2',0};
-    static WCHAR url25[] = {'h','t','t','p',':','/','/','h','o','s','t','?','q','u','e','r','y',
-                            '%','2','0','2',0};
-    static WCHAR url26[] = {'h','t','t','p',':','/','/','h','o','s','t','#','f','r','a','g',
-                            '%','2','0','2',0};
-    static WCHAR url27[] = {'h','t','t','p',':','/','/','h','o','s','t','/','%','c','3','%','a','b','/',0};
-    static WCHAR host2[] = {'h','o','s','t',' ','2'};
-    static WCHAR path2[] = {'/','p','a','t','h',' ','2'};
-    static WCHAR path3[] = {'/',0xeb,'/'};
-    static WCHAR query2[] = {'q','u','e','r','y',' ','2'};
-    static WCHAR frag2[] = {'f','r','a','g',' ','2'};
+    static const WCHAR url1[] = L"http://host";
+    static const WCHAR url2[] = L"https://host";
+    static const WCHAR url3[] = L"http://host:80";
+    static const WCHAR url4[] = L"https://host:80";
+    static const WCHAR url5[] = L"http://host/path";
+    static const WCHAR url6[] = L"http://host/path?query";
+    static const WCHAR url7[] = L"http://host/path?query#frag";
+    static const WCHAR url8[] = L"HTTP://host";
+    static const WCHAR url9[] = L"httq://host";
+    static const WCHAR url10[] = L"http:";
+    static const WCHAR url11[] = L"http";
+    static const WCHAR url12[] = L"net.tcp://host";
+    static const WCHAR url13[] = L"soap.udp://host";
+    static const WCHAR url14[] = L"net.pipe://host";
+    static const WCHAR url15[] = L"http:/host";
+    static const WCHAR url16[] = L"http:host";
+    static const WCHAR url17[] = L"http:///host";
+    static const WCHAR url18[] = L"http://host/";
+    static const WCHAR url19[] = L"http://host:/";
+    static const WCHAR url20[] = L"http://host:65536";
+    static const WCHAR url21[] = L"http://host?query";
+    static const WCHAR url22[] = L"http://host#frag";
+    static const WCHAR url23[] = L"http://host%202";
+    static const WCHAR url24[] = L"http://host/path%202";
+    static const WCHAR url25[] = L"http://host?query%202";
+    static const WCHAR url26[] = L"http://host#frag%202";
+    static const WCHAR url27[] = L"http://host/%c3%ab/";
     static const struct
     {
-        WCHAR              *str;
+        const WCHAR        *str;
         HRESULT             hr;
         WS_URL_SCHEME_TYPE  scheme;
-        WCHAR              *host;
+        const WCHAR        *host;
         ULONG               host_len;
         USHORT              port;
-        WCHAR              *port_str;
+        const WCHAR        *port_str;
         ULONG               port_len;
-        WCHAR              *path;
+        const WCHAR        *path;
         ULONG               path_len;
-        WCHAR              *query;
+        const WCHAR        *query;
         ULONG               query_len;
-        WCHAR              *fragment;
+        const WCHAR        *fragment;
         ULONG               fragment_len;
     }
     tests[] =
@@ -85,8 +75,7 @@ static void test_WsDecodeUrl(void)
         { url4, S_OK, WS_URL_HTTPS_SCHEME_TYPE, url4 + 8, 4, 80, url4 + 13, 2 },
         { url5, S_OK, WS_URL_HTTP_SCHEME_TYPE, url5 + 7, 4, 80, NULL, 0, url5 + 11, 5 },
         { url6, S_OK, WS_URL_HTTP_SCHEME_TYPE, url5 + 7, 4, 80, NULL, 0, url6 + 11, 5, url6 + 17, 5 },
-        { url7, S_OK, WS_URL_HTTP_SCHEME_TYPE, url5 + 7, 4, 80, NULL, 0, url7 + 11, 5, url7 + 17, 5,
-          url7 + 23, 4 },
+        { url7, S_OK, WS_URL_HTTP_SCHEME_TYPE, url5 + 7, 4, 80, NULL, 0, url7 + 11, 5, url7 + 17, 5, url7 + 23, 4 },
         { url8, S_OK, WS_URL_HTTP_SCHEME_TYPE, url1 + 7, 4, 80 },
         { url9, WS_E_INVALID_FORMAT },
         { url10, WS_E_INVALID_FORMAT },
@@ -103,11 +92,11 @@ static void test_WsDecodeUrl(void)
         { url21, S_OK, WS_URL_HTTP_SCHEME_TYPE, url21 + 7, 4, 80, NULL, 0, NULL, 0, url21 + 12, 5 },
         { url22, S_OK, WS_URL_HTTP_SCHEME_TYPE, url22 + 7, 4, 80, NULL, 0, NULL, 0, NULL, 0,
           url22 + 12, 4  },
-        { url23, S_OK, WS_URL_HTTP_SCHEME_TYPE, host2, 6, 80 },
-        { url24, S_OK, WS_URL_HTTP_SCHEME_TYPE, url24 + 7, 4, 80, NULL, 0, path2, 7 },
-        { url25, S_OK, WS_URL_HTTP_SCHEME_TYPE, url25 + 7, 4, 80, NULL, 0, NULL, 0, query2, 7 },
-        { url26, S_OK, WS_URL_HTTP_SCHEME_TYPE, url26 + 7, 4, 80, NULL, 0, NULL, 0, NULL, 0, frag2, 6 },
-        { url27, S_OK, WS_URL_HTTP_SCHEME_TYPE, url27 + 7, 4, 80, NULL, 0, path3, 3 },
+        { url23, S_OK, WS_URL_HTTP_SCHEME_TYPE, L"host 2", 6, 80 },
+        { url24, S_OK, WS_URL_HTTP_SCHEME_TYPE, url24 + 7, 4, 80, NULL, 0, L"/path 2", 7 },
+        { url25, S_OK, WS_URL_HTTP_SCHEME_TYPE, url25 + 7, 4, 80, NULL, 0, NULL, 0, L"query 2", 7 },
+        { url26, S_OK, WS_URL_HTTP_SCHEME_TYPE, url26 + 7, 4, 80, NULL, 0, NULL, 0, NULL, 0, L"frag 2", 6 },
+        { url27, S_OK, WS_URL_HTTP_SCHEME_TYPE, url27 + 7, 4, 80, NULL, 0, L"/\x00eb/", 3 },
     };
     WS_HEAP *heap;
     WS_STRING str;
@@ -126,21 +115,19 @@ static void test_WsDecodeUrl(void)
     hr = WsDecodeUrl( &str, 0, heap, (WS_URL **)&url, NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
-    str.chars  = url1;
+    str.chars  = (WCHAR *)url1;
     str.length = lstrlenW( url1 );
     hr = WsDecodeUrl( &str, 0, NULL, (WS_URL **)&url, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     for (i = 0; i < ARRAY_SIZE( tests ); i++)
     {
-        static const WCHAR netpipe[] = {'n','e','t','.','p','i','p','e'};
-
         str.length = lstrlenW( tests[i].str );
-        str.chars  = tests[i].str;
+        str.chars  = (WCHAR *)tests[i].str;
         url = NULL;
         hr = WsDecodeUrl( &str, 0, heap, (WS_URL **)&url, NULL );
         ok( hr == tests[i].hr ||
-            broken(hr == WS_E_INVALID_FORMAT && str.length >= 8 && !memcmp(netpipe, str.chars, 8)),
+            broken(hr == WS_E_INVALID_FORMAT && str.length >= 8 && !memcmp(L"net.pipe", str.chars, 8)),
             "%u: got %08x\n", i, hr );
         if (hr != S_OK) continue;
 
@@ -193,42 +180,31 @@ static void test_WsDecodeUrl(void)
 
 static void test_WsEncodeUrl(void)
 {
-    static WCHAR host[] = {'h','o','s','t'};
-    static WCHAR host2[] = {'h','o','s','t',' ','2'};
-    static WCHAR path[] = {'/','p','a','t','h'};
-    static WCHAR path2[] = {'/','p','a','t','h',' ','2'};
-    static WCHAR query[] = {'q','u','e','r','y'};
-    static WCHAR query2[] = {'q','u','e','r','y',' ','2'};
-    static WCHAR frag[] = {'f','r','a','g'};
-    static WCHAR frag2[] = {'f','r','a','g',' ','2'};
-    static WCHAR port[] = {'8','0','8','0'};
-    static WCHAR port2[] = {'6','5','5','3','6'};
-    static const WCHAR url1[] = {'h','t','t','p',':','/','/','h','o','s','t'};
-    static const WCHAR url2[] = {'h','t','t','p',':','/','/'};
-    static const WCHAR url3[] = {'h','t','t','p',':','/','/','/','p','a','t','h'};
-    static const WCHAR url4[] = {'h','t','t','p',':','/','/','?','q','u','e','r','y'};
-    static const WCHAR url5[] = {'h','t','t','p',':','/','/','#','f','r','a','g'};
-    static const WCHAR url6[] = {'h','t','t','p',':','/','/','h','o','s','t',':','8','0','8','0',
-        '/','p','a','t','h','?','q','u','e','r','y','#','f','r','a','g'};
-    static const WCHAR url7[] = {'h','t','t','p',':','/','/',':','8','0','8','0'};
-    static const WCHAR url8[] = {'h','t','t','p',':','/','/'};
-    static const WCHAR url9[] = {'h','t','t','p',':','/','/','/','p','a','t','h','%','2','0','2'};
-    static const WCHAR url10[] = {'h','t','t','p',':','/','/','?','q','u','e','r','y','%','2','0','2'};
-    static const WCHAR url11[] = {'h','t','t','p',':','/','/','#','f','r','a','g','%','2','0','2'};
-    static const WCHAR url12[] = {'h','t','t','p',':','/','/','h','o','s','t','%','2','0','2'};
+    static const WCHAR url1[] = L"http://host";
+    static const WCHAR url2[] = L"http://";
+    static const WCHAR url3[] = L"http:///path";
+    static const WCHAR url4[] = L"http://?query";
+    static const WCHAR url5[] = L"http://#frag";
+    static const WCHAR url6[] = L"http://host:8080/path?query#frag";
+    static const WCHAR url7[] = L"http://:8080";
+    static const WCHAR url8[] = L"http://";
+    static const WCHAR url9[] = L"http:///path%202";
+    static const WCHAR url10[] = L"http://?query%202";
+    static const WCHAR url11[] = L"http://#frag%202";
+    static const WCHAR url12[] = L"http://host%202";
     static const struct
     {
         WS_URL_SCHEME_TYPE  scheme;
-        WCHAR              *host;
+        const WCHAR        *host;
         ULONG               host_len;
         USHORT              port;
-        WCHAR              *port_str;
+        const WCHAR        *port_str;
         ULONG               port_len;
-        WCHAR              *path;
+        const WCHAR        *path;
         ULONG               path_len;
-        WCHAR              *query;
+        const WCHAR        *query;
         ULONG               query_len;
-        WCHAR              *fragment;
+        const WCHAR        *fragment;
         ULONG               fragment_len;
         HRESULT             hr;
         ULONG               len;
@@ -236,22 +212,22 @@ static void test_WsEncodeUrl(void)
     }
     tests[] =
     {
-        { WS_URL_HTTP_SCHEME_TYPE, host, 4, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, S_OK, 11, url1 },
+        { WS_URL_HTTP_SCHEME_TYPE, L"host", 4, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, S_OK, 11, url1 },
         { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, S_OK, 7, url2 },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, path, 5, NULL, 0, NULL, 0, S_OK, 12, url3 },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, NULL, 0, query, 5, NULL, 0, S_OK, 13, url4 },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, NULL, 0, NULL, 0, frag, 4, S_OK, 12, url5 },
-        { WS_URL_HTTP_SCHEME_TYPE, host, 4, 0, port, 4, path, 5, query, 5, frag, 4, S_OK, 32, url6 },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, L"/path", 5, NULL, 0, NULL, 0, S_OK, 12, url3 },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, NULL, 0, L"query", 5, NULL, 0, S_OK, 13, url4 },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, NULL, 0, NULL, 0, L"frag", 4, S_OK, 12, url5 },
+        { WS_URL_HTTP_SCHEME_TYPE, L"host", 4, 0, L"8080", 4, L"/path", 5, L"query", 5, L"frag", 4, S_OK, 32, url6 },
         { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 8080, NULL, 0, NULL, 0, NULL, 0, NULL, 0, S_OK, 12, url7 },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, port, 4, NULL, 0, NULL, 0, NULL, 0, S_OK, 12, url7 },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 8080, port, 4, NULL, 0, NULL, 0, NULL, 0, S_OK, 12, url7 },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 8181, port, 4, NULL, 0, NULL, 0, NULL, 0, E_INVALIDARG, 0, NULL },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, port2, 5, NULL, 0, NULL, 0, NULL, 0, WS_E_INVALID_FORMAT, 0, NULL },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, L"8080", 4, NULL, 0, NULL, 0, NULL, 0, S_OK, 12, url7 },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 8080, L"8080", 4, NULL, 0, NULL, 0, NULL, 0, S_OK, 12, url7 },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 8181, L"8080", 4, NULL, 0, NULL, 0, NULL, 0, E_INVALIDARG, 0, NULL },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, L"65536", 5, NULL, 0, NULL, 0, NULL, 0, WS_E_INVALID_FORMAT, 0, NULL },
         { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 80, NULL, 0, NULL, 0, NULL, 0, NULL, 0, S_OK, 7, url8 },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, path2, 7, NULL, 0, NULL, 0, S_OK, 16, url9 },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, NULL, 0, query2, 7, NULL, 0, S_OK, 17, url10 },
-        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, NULL, 0, NULL, 0, frag2, 6, S_OK, 16, url11 },
-        { WS_URL_HTTP_SCHEME_TYPE, host2, 6, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, S_OK, 15, url12 },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, L"/path 2", 7, NULL, 0, NULL, 0, S_OK, 16, url9 },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, NULL, 0, L"query 2", 7, NULL, 0, S_OK, 17, url10 },
+        { WS_URL_HTTP_SCHEME_TYPE, NULL, 0, 0, NULL, 0, NULL, 0, NULL, 0, L"frag 2", 6, S_OK, 16, url11 },
+        { WS_URL_HTTP_SCHEME_TYPE, L"host 2", 6, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, S_OK, 15, url12 },
     };
     WS_HEAP *heap;
     WS_STRING str;
@@ -275,16 +251,16 @@ static void test_WsEncodeUrl(void)
     {
         memset( &url, 0, sizeof(url) );
         url.url.scheme          = tests[i].scheme;
-        url.host.chars          = tests[i].host;
+        url.host.chars          = (WCHAR *)tests[i].host;
         url.host.length         = tests[i].host_len;
         url.port                = tests[i].port;
-        url.portAsString.chars  = tests[i].port_str;
+        url.portAsString.chars  = (WCHAR *)tests[i].port_str;
         url.portAsString.length = tests[i].port_len;
-        url.path.chars          = tests[i].path;
+        url.path.chars          = (WCHAR *)tests[i].path;
         url.path.length         = tests[i].path_len;
-        url.query.chars         = tests[i].query;
+        url.query.chars         = (WCHAR *)tests[i].query;
         url.query.length        = tests[i].query_len;
-        url.fragment.chars      = tests[i].fragment;
+        url.fragment.chars      = (WCHAR *)tests[i].fragment;
         url.fragment.length     = tests[i].fragment_len;
 
         memset( &str, 0, sizeof(str) );

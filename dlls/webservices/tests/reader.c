@@ -1325,10 +1325,8 @@ static void prepare_type_test( WS_XML_READER *reader, const char *data, ULONG si
 
 static void test_WsReadType(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0}, test2W[] = {' ','t','e','s','t',' '};
     static const GUID guid = {0,0,0,{0,0,0,0,0,0,0,0xa1}};
     static const char utf8[] = {'<','t','>',0xe2,0x80,0x99,'<','/','t','>'};
-    static const WCHAR utf8W[] = {0x2019,0};
     HRESULT hr;
     WS_XML_READER *reader;
     WS_HEAP *heap;
@@ -1381,7 +1379,7 @@ static void test_WsReadType(void)
                      WS_READ_REQUIRED_POINTER, heap, &val_str, sizeof(val_str), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( val_str != NULL, "pointer not set\n" );
-    if (val_str) ok( !lstrcmpW( val_str, testW ), "wrong data\n" );
+    if (val_str) ok( !wcscmp( val_str, L"test" ), "wrong data\n" );
 
     val_bool = -1;
     prepare_type_test( reader, "<t>true</t>", sizeof("<t>true</t>") - 1 );
@@ -1748,7 +1746,7 @@ static void test_WsReadType(void)
                      WS_READ_REQUIRED_POINTER, heap, &val_str, sizeof(val_str), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( val_str != NULL, "pointer not set\n" );
-    ok( !lstrcmpW( val_str, utf8W ), "got %s\n", wine_dbgstr_w(val_str) );
+    ok( !lstrcmpW( val_str, L"\x2019" ), "got %s\n", wine_dbgstr_w(val_str) );
 
     val_str = NULL;
     prepare_type_test( reader, "<t></t>", sizeof("<t></t>") - 1 );
@@ -1787,7 +1785,7 @@ static void test_WsReadType(void)
                      WS_READ_REQUIRED_VALUE, heap, &val_string, sizeof(val_string), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( val_string.length == 6, "got %u\n", val_string.length );
-    ok( !memcmp( val_string.chars, test2W, sizeof(test2W) ), "wrong data\n" );
+    ok( !memcmp( val_string.chars, L" test ", 12 ), "wrong data\n" );
 
     val_string.length = 0xdeadbeef;
     val_string.chars  = (WCHAR *)0xdeadbeef;
@@ -1811,7 +1809,7 @@ static void test_WsReadType(void)
                      WS_READ_REQUIRED_VALUE, heap, &val_id, sizeof(val_id), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( val_id.uri.length == 6, "got %u\n", val_string.length );
-    ok( !memcmp( val_id.uri.chars, test2W, sizeof(test2W) ), "wrong data\n" );
+    ok( !memcmp( val_id.uri.chars, L" test ", 12 ), "wrong data\n" );
     ok( IsEqualGUID( &val_id.guid, &guid_null ), "wrong guid\n" );
 
     memset( &val_id, 0, sizeof(val_id) );
@@ -1882,7 +1880,6 @@ static void test_WsReadType(void)
 
 static void test_WsGetXmlAttribute(void)
 {
-    static const WCHAR valueW[] = {'v','a','l','u','e',0};
     HRESULT hr;
     WS_XML_READER *reader;
     WS_XML_STRING xmlstr;
@@ -1919,7 +1916,7 @@ static void test_WsGetXmlAttribute(void)
     todo_wine ok( str != NULL, "str not set\n" );
     todo_wine ok( count == 5, "got %u\n", count );
     /* string is not null-terminated */
-    if (str) ok( !memcmp( str, valueW, count * sizeof(WCHAR) ), "wrong data\n" );
+    if (str) ok( !memcmp( str, L"value", count * sizeof(WCHAR) ), "wrong data\n" );
 
     xmlstr.bytes      = (BYTE *)"none";
     xmlstr.length     = sizeof("none") - 1;
@@ -2285,7 +2282,6 @@ static void prepare_struct_type_test( WS_XML_READER *reader, const char *data )
 
 static void test_simple_struct_type(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     HRESULT hr;
     WS_XML_READER *reader;
     WS_HEAP *heap;
@@ -2354,7 +2350,7 @@ static void test_simple_struct_type(void)
     if (test)
     {
         ok( test->str != NULL, "str not set\n" );
-        if (test->str) ok( !lstrcmpW( test->str, testW ), "wrong data\n" );
+        if (test->str) ok( !wcscmp( test->str, L"test" ), "wrong data\n" );
     }
 
     hr = WsGetReaderNode( reader, &node, NULL );
@@ -2370,7 +2366,7 @@ static void test_simple_struct_type(void)
     if (test)
     {
         ok( test->str != NULL, "str not set\n" );
-        if (test->str) ok( !lstrcmpW( test->str, testW ), "wrong data\n" );
+        if (test->str) ok( !wcscmp( test->str, L"test" ), "wrong data\n" );
     }
 
     hr = WsGetReaderNode( reader, &node, NULL );
@@ -2386,7 +2382,7 @@ static void test_simple_struct_type(void)
     if (test)
     {
         ok( test->str != NULL, "str not set\n" );
-        if (test->str) ok( !lstrcmpW( test->str, testW ), "wrong data\n" );
+        if (test->str) ok( !wcscmp( test->str, L"test" ), "wrong data\n" );
     }
 
     hr = WsGetReaderNode( reader, &node, NULL );
@@ -2412,7 +2408,7 @@ static void test_simple_struct_type(void)
     if (test)
     {
         ok( test->str != NULL, "str not set\n" );
-        if (test->str) ok( !lstrcmpW( test->str, testW ), "wrong data\n" );
+        if (test->str) ok( !wcscmp( test->str, L"test" ), "wrong data\n" );
     }
 
     hr = WsGetReaderNode( reader, &node, NULL );
@@ -2434,7 +2430,7 @@ static void test_simple_struct_type(void)
     if (test)
     {
         ok( test->str != NULL, "str not set\n" );
-        if (test->str) ok( !lstrcmpW( test->str, testW ), "wrong data test %p test->str %p\n", test, test->str );
+        if (test->str) ok( !wcscmp( test->str, L"test" ), "wrong data test %p test->str %p\n", test, test->str );
     }
 
     hr = WsGetReaderNode( reader, &node, NULL );
@@ -2903,7 +2899,6 @@ static void test_WsGetNamespaceFromPrefix(void)
 
 static void test_text_field_mapping(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     HRESULT hr;
     WS_XML_READER *reader;
     WS_HEAP *heap;
@@ -2939,7 +2934,7 @@ static void test_text_field_mapping(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( test != NULL, "test not set\n" );
     ok( test->str != NULL, "str not set\n" );
-    ok( !lstrcmpW( test->str, testW ), "got %s\n", wine_dbgstr_w(test->str) );
+    ok( !wcscmp( test->str, L"test" ), "got %s\n", wine_dbgstr_w(test->str) );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );
@@ -2958,8 +2953,6 @@ static void test_complex_struct_type(void)
         "<o:services o:GenerationTime=\"2015-09-03T18:47:54\"></o:services>"
         "<trailing>content</trailing>"
         "</o:OfficeConfig>";
-    static const WCHAR timestampW[] =
-        {'2','0','1','5','-','0','9','-','0','3','T','1','8',':','4','7',':','5','4',0};
     HRESULT hr;
     WS_ERROR *error;
     WS_ERROR_PROPERTY prop;
@@ -3056,7 +3049,7 @@ static void test_complex_struct_type(void)
                      WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), error );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( test != NULL, "test not set\n" );
-    ok( !lstrcmpW( test->services->generationtime, timestampW ), "wrong data\n" );
+    ok( !wcscmp( test->services->generationtime, L"2015-09-03T18:47:54" ), "wrong data\n" );
 
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -3090,7 +3083,7 @@ static void test_complex_struct_type(void)
                      WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), error );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( test != NULL, "test not set\n" );
-    if (test) ok( !lstrcmpW( test->services->generationtime, timestampW ), "wrong data\n" );
+    if (test) ok( !wcscmp( test->services->generationtime, L"2015-09-03T18:47:54" ), "wrong data\n" );
 
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -3158,7 +3151,6 @@ static void test_repeating_element(void)
         "<services>"
         "<service><name></name></service>"
         "</services>";
-    static const WCHAR oneW[] = {'1',0}, twoW[] = {'2',0};
     WS_XML_STRING str_name = {4, (BYTE *)"name"};
     WS_XML_STRING str_services = {8, (BYTE *)"services"};
     WS_XML_STRING str_service = {7, (BYTE *)"service"};
@@ -3308,8 +3300,8 @@ static void test_repeating_element(void)
     ok( test2 != NULL, "test2 not set\n" );
     ok( test2->service != NULL, "service not set\n" );
     ok( test2->service_count == 2, "got %u\n", test2->service_count );
-    ok( !lstrcmpW( test2->service[0].id, oneW ), "wrong data\n" );
-    ok( !lstrcmpW( test2->service[1].id, twoW ), "wrong data\n" );
+    ok( !wcscmp( test2->service[0].id, L"1" ), "wrong data\n" );
+    ok( !wcscmp( test2->service[1].id, L"2" ), "wrong data\n" );
 
     /* repeating attribute field + text field mapping */
     prepare_struct_type_test( reader, data5 );
@@ -3331,10 +3323,10 @@ static void test_repeating_element(void)
     ok( test3 != NULL, "test3 not set\n" );
     ok( test3->service != NULL, "service not set\n" );
     ok( test3->service_count == 2, "got %u\n", test3->service_count );
-    ok( !lstrcmpW( test3->service[0].name, oneW ), "wrong data\n" );
-    ok( !lstrcmpW( test3->service[0].id, oneW ), "wrong data\n" );
-    ok( !lstrcmpW( test3->service[1].name, twoW ), "wrong data\n" );
-    ok( !lstrcmpW( test3->service[1].id, twoW ), "wrong data\n" );
+    ok( !wcscmp( test3->service[0].name, L"1" ), "wrong data\n" );
+    ok( !wcscmp( test3->service[0].id, L"1" ), "wrong data\n" );
+    ok( !wcscmp( test3->service[1].name, L"2" ), "wrong data\n" );
+    ok( !wcscmp( test3->service[1].id, L"2" ), "wrong data\n" );
 
     /* empty text, item range */
     prepare_struct_type_test( reader, data6 );
@@ -4330,7 +4322,6 @@ static void test_WsReadBytes(void)
 
 static void test_WsReadChars(void)
 {
-    static const WCHAR textW[] = {'t','e','x','t'};
     HRESULT hr;
     WS_XML_READER *reader;
     const WS_XML_NODE *node;
@@ -4411,7 +4402,7 @@ static void test_WsReadChars(void)
     hr = WsReadChars( reader, bufW, 2, &count, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( count == 2, "got %u\n", count );
-    ok( !memcmp( bufW, textW, 2 * sizeof(WCHAR) ), "wrong data\n" );
+    ok( !memcmp( bufW, L"te", 2 * sizeof(WCHAR) ), "wrong data\n" );
 
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -6168,7 +6159,6 @@ static void test_WsReadXmlBuffer(void)
 
 static void test_union_type(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     static WS_XML_STRING str_ns = {0, NULL}, str_a = {1, (BYTE *)"a"}, str_b = {1, (BYTE *)"b"};
     static WS_XML_STRING str_s = {1, (BYTE *)"s"};
     HRESULT hr;
@@ -6243,7 +6233,7 @@ static void test_union_type(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( test != NULL, "test not set\n" );
     ok( test->choice == CHOICE_A, "got %d\n", test->choice );
-    ok( !lstrcmpW(test->value.a, testW), "got %s\n", wine_dbgstr_w(test->value.a) );
+    ok( !wcscmp(test->value.a, L"test"), "got %s\n", wine_dbgstr_w(test->value.a) );
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
@@ -6386,7 +6376,6 @@ static void test_float(void)
 
 static void test_repeating_element_choice(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     static WS_XML_STRING str_ns = {0, NULL}, str_a = {1, (BYTE *)"a"}, str_b = {1, (BYTE *)"b"};
     static WS_XML_STRING str_s = {1, (BYTE *)"s"}, str_t = {1, (BYTE *)"t"};
     HRESULT hr;
@@ -6470,7 +6459,7 @@ static void test_repeating_element_choice(void)
     ok( test != NULL, "test not set\n" );
     ok( test->count == 1, "got %u\n", test->count );
     ok( test->items[0].choice == CHOICE_A, "got %d\n", test->items[0].choice );
-    ok( !lstrcmpW(test->items[0].value.a, testW), "got %s\n", wine_dbgstr_w(test->items[0].value.a) );
+    ok( !wcscmp(test->items[0].value.a, L"test"), "got %s\n", wine_dbgstr_w(test->items[0].value.a) );
 
     test = NULL;
     prepare_struct_type_test( reader, "<t><b>123</b></t>" );
@@ -6490,7 +6479,7 @@ static void test_repeating_element_choice(void)
     ok( test != NULL, "test not set\n" );
     ok( test->count == 2, "got %u\n", test->count );
     ok( test->items[0].choice == CHOICE_A, "got %d\n", test->items[0].choice );
-    ok( !lstrcmpW(test->items[0].value.a, testW), "got %s\n", wine_dbgstr_w(test->items[0].value.a) );
+    ok( !wcscmp(test->items[0].value.a, L"test"), "got %s\n", wine_dbgstr_w(test->items[0].value.a) );
     ok( test->items[1].choice == CHOICE_B, "got %d\n", test->items[1].choice );
     ok( test->items[1].value.b == 123, "got %u\n", test->items[1].value.b );
 
