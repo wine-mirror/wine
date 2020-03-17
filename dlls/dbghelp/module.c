@@ -540,8 +540,10 @@ static BOOL refresh_module_list(struct process* pcs)
 
 static BOOL image_check_debug_link(const WCHAR* file, struct image_file_map* fmap, DWORD link_crc)
 {
+    DWORD read_bytes;
     HANDLE handle;
     WCHAR *path;
+    WORD magic;
     BOOL ret;
 
     path = get_dos_file_name(file);
@@ -560,7 +562,11 @@ static BOOL image_check_debug_link(const WCHAR* file, struct image_file_map* fma
         }
     }
 
-    ret = elf_map_handle(handle, fmap);
+    SetFilePointer(handle, 0, 0, FILE_BEGIN);
+    if (ReadFile(handle, &magic, sizeof(magic), &read_bytes, NULL) && magic == IMAGE_DOS_SIGNATURE)
+        ret = pe_map_file(handle, fmap, DMT_PE);
+    else
+        ret = elf_map_handle(handle, fmap);
     CloseHandle(handle);
     return ret;
 }
