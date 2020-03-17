@@ -370,7 +370,7 @@ my %c2_types =
     "ET"  => 5,    # C2_EUROPETERMINATOR
     "AN"  => 6,    # C2_ARABICNUMBER
     "CS"  => 7,    # C2_COMMONSEPARATOR
-    "NSM" => 0,    # C2_NOTAPPLICABLE
+    "NSM" => 11,   # C2_OTHERNEUTRAL
     "BN"  => 0,    # C2_NOTAPPLICABLE
     "B"   => 8,    # C2_BLOCKSEPARATOR
     "S"   => 9,    # C2_SEGMENTSEPARATOR
@@ -2356,6 +2356,386 @@ sub dump_msdata_codepage($)
     output_codepage_file( $codepage );
 }
 
+################################################################
+# align a string length
+sub align_string($$)
+{
+    my ($align, $str) = @_;
+    $str .= pack "C*", (0) x ($align - length($str) % $align) if length($str) % $align;
+    return $str;
+}
+
+################################################################
+# pack a GUID string
+sub pack_guid($)
+{
+    $_ = shift;
+    /([0-9A-Fa-f]{8})-([0-9A-Fa-f]{4})-([0-9A-Fa-f]{4})-([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})/;
+    return pack "L<S<2C8", hex $1, hex $2, hex $3, hex $4, hex $5, hex $6, hex $7, hex $8, hex $9, hex $10, hex $11;
+}
+
+################################################################
+# comparison function for compression sort
+sub cmp_compression
+{
+    return scalar @{$a} <=> scalar @{$b} ||
+        $a->[4] <=> $b->[4] ||
+        $a->[5] <=> $b->[5] ||
+        $a->[6] <=> $b->[6] ||
+        $a->[7] <=> $b->[7] ||
+        $a->[8] <=> $b->[8] ||
+        $a->[9] <=> $b->[9] ||
+        $a->[10] <=> $b->[10] ||
+        $a->[11] <=> $b->[11] ||
+        $a->[12] <=> $b->[12];
+}
+
+################################################################
+# build a binary sort keys table
+sub dump_sortkey_table($$)
+{
+    my ($filename, $download) = @_;
+
+    my @keys;
+    my ($part, $section, $subsection, $guid, $version);
+    my @multiple_weights;
+    my @expansions;
+    my @compressions;
+    my @exceptions;
+    my @except_guid;
+    my %guids;
+    my %locales;
+    my $default_guid = "00000001-57ee-1e5c-00b4-d0000bb1e11e";
+    my $jamostr = "";
+
+    my $re_hex = '0x[0-9A-Fa-f]+';
+    my $re_key = '(\d+\s+\d+\s+\d+\s+\d+)';
+    $guids{$default_guid} = { };
+
+    my %flags = ( "HAS_3_BYTE_WEIGHTS" => 0x01, "REVERSEDIACRITICS" => 0x10, "DOUBLECOMPRESSION" => 0x20, "INVERSECASING" => 0x40 );
+
+    my $KEYS = open_data_file( $MSDATA, $download );
+
+    printf "Building $filename\n";
+
+    while (<$KEYS>)
+    {
+        s/\s*;.*$//;
+        next if /^\s*$/;  # skip empty lines
+        if (/^\s*(SORTKEY|SORTTABLES)/)
+        {
+            $part = $1;
+            next;
+        }
+        if (/^\s*(ENDSORTKEY|ENDSORTTABLES)/)
+        {
+            $part = $section = "";
+            next;
+        }
+        if (/^\s*(DEFAULT|RELEASE|REVERSEDIACRITICS|DOUBLECOMPRESSION|INVERSECASING|MULTIPLEWEIGHTS|EXPANSION|COMPATIBILITY|COMPRESSION|EXCEPTION|JAMOSORT)\s+/)
+        {
+            $section = $1;
+            $guid = undef;
+            next;
+        }
+        next unless $part;
+        if ("$part.$section" eq "SORTKEY.DEFAULT")
+        {
+            if (/^\s*($re_hex)\s+$re_key/)
+            {
+                $keys[hex $1] = [ split(/\s+/,$2) ];
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.RELEASE")
+        {
+            if (/^\s*NLSVERSION\s+0x([0-9A-Fa-f]+)/)
+            {
+                $version = hex $1;
+                next;
+            }
+            if (/^\s*DEFINEDVERSION\s+0x([0-9A-Fa-f]+)/)
+            {
+                # ignore for now
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.REVERSEDIACRITICS" ||
+               "$part.$section" eq "SORTTABLES.DOUBLECOMPRESSION" ||
+               "$part.$section" eq "SORTTABLES.INVERSECASING")
+        {
+            if (/^\s*SORTGUID\s+([-0-9A-Fa-f]+)/)
+            {
+                $guid = lc $1;
+                $guids{$guid} = { } unless defined $guids{$guid};
+                $guids{$guid}->{flags} |= $flags{$section};
+                next;
+            }
+            if (/^\s*LOCALENAME\s+([A-Za-z0-9-_]+)/)
+            {
+                $locales{$1} = $guid;
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.MULTIPLEWEIGHTS")
+        {
+            if (/^\s*(\d+)\s+(\d+)/)
+            {
+                push @multiple_weights, $1, $2;
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.EXPANSION")
+        {
+            if (/^\s*0x([0-9A-Fa-f]+)\s+0x([0-9A-Fa-f]+)\s+0x([0-9A-Fa-f]+)/)
+            {
+                my $pos = scalar @expansions / 2;
+                $keys[hex $1] = [ 2, 0, $pos & 0xff, $pos >> 8 ] unless defined $keys[hex $1];
+                push @expansions, hex $2, hex $3;
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.COMPATIBILITY")
+        {
+            if (/^\s*0x([0-9A-Fa-f]+)\s+0x([0-9A-Fa-f]+)/)
+            {
+                $keys[hex $1] = $keys[hex $2];
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.COMPRESSION")
+        {
+            if (/^\s*SORTGUID\s+([-0-9A-Fa-f]+)\s+\d*\s*([A-Z0-9_]+)?/)
+            {
+                if ($subsection || !$guid)  # start a new one
+                {
+                    $guid = lc $1;
+                    $subsection = "";
+                    $guids{$guid} = { } unless defined $guids{$guid};
+                    $guids{$guid}->{flags} |= $flags{$2} if $2;
+                    $guids{$guid}->{compr} = @compressions;
+                    push @compressions, [ ];
+                }
+                else  # merge with current one
+                {
+                    $guids{lc $1} = { } unless defined $guids{lc $1};
+                    $guids{lc $1}->{flags} |= $flags{$2} if $2;
+                    $guids{lc $1}->{compr} = $guids{$guid}->{compr};
+                }
+                next;
+            }
+            if (/^\s*LOCALENAME\s+([A-Za-z0-9-_]+)/)
+            {
+                $locales{$1} = $guid;
+                next;
+            }
+            if (/^\s*(TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT)/)
+            {
+                $subsection = $1;
+                next;
+            }
+            if ($subsection && /^\s*(($re_hex\s+){2,8})$re_key/)
+            {
+                push @{$compressions[$#compressions]}, [ split(/\s+/,$3), map { hex $_; } split(/\s+/,$1) ];
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.EXCEPTION")
+        {
+            if (/^\s*SORTGUID\s+([-0-9A-Fa-f]+)\s+\d*\s*(LINGUISTIC_CASING)?/)
+            {
+                $guid = lc $1;
+                $guids{$guid} = { } unless defined $guids{lc $1};
+                push @except_guid, ($2 ? "+" : "-") . $guid;
+                push @exceptions, [ ];
+                next;
+            }
+            if (/^\s*LOCALENAME\s+([A-Za-z0-9-_]+)/)
+            {
+                $locales{$1} = $guid;
+                next;
+            }
+            if (/^\s*($re_hex)\s+$re_key/)
+            {
+                ${$exceptions[$#exceptions]}[hex $1] = [ split(/\s+/,$2) ];
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.JAMOSORT")
+        {
+            if (/^\s*$re_hex\s+(($re_hex\s*){5})/)
+            {
+                $jamostr .= pack "C8", map { hex $_; } split /\s+/, $1;
+                next;
+            }
+        }
+        die "$download: $part.$section: unrecognized line $_\n";
+    }
+    close $KEYS;
+
+    # Sortkey table
+
+    my $table;
+    for (my $i = 0; $i < 0x10000; $i++)
+    {
+        my @k = defined $keys[$i] ? @{$keys[$i]} : (0) x 4;
+        $table .= pack "C4", $k[1], $k[0], $k[2], $k[3];
+    }
+
+    for (my $i = 0; $i < @exceptions; $i++)
+    {
+        my $pos = length($table) / 4;
+        my @exc = @{$exceptions[$i]};
+        my @filled;
+        my $key = (substr($except_guid[$i],0,1) eq "+" ? "ling_except" : "except");
+        $guids{substr( $except_guid[$i], 1 )}->{$key} = $pos;
+        $pos += 0x100;
+        for (my $j = 0; $j < 0x10000; $j++)
+        {
+            next unless defined $exc[$j];
+            $filled[$j >> 8] = 1;
+            $j |= 0xff;
+        }
+        for (my $j = 0; $j < 0x100; $j++)
+        {
+            $table .= pack "L<", $filled[$j] ? $pos : $j * 0x100;
+            $pos += 0x100 if $filled[$j];
+        }
+        for (my $j = 0; $j < 0x10000; $j++)
+        {
+            next unless $filled[$j >> 8];
+            my @k = defined $exc[$j] ? @{$exc[$j]} : defined $keys[$j] ? @{$keys[$j]} : (0) x 4;
+            $table .= pack "C4", $k[1], $k[0], $k[2], $k[3];
+        }
+    }
+
+    # Case mapping tables
+
+    # standard table
+    my @casemaps;
+    my @upper = @toupper_table;
+    my @lower = @tolower_table;
+    remove_linguistic_mappings( \@upper, \@lower );
+    $casemaps[0] = pack( "S<*", 1) . dump_binary_case_table( @upper ) . dump_binary_case_table( @lower );
+
+    # linguistic table
+    $casemaps[1] = pack( "S<*", 1) . dump_binary_case_table( @toupper_table ) . dump_binary_case_table( @tolower_table );
+
+    # Turkish table
+    @upper = @toupper_table;
+    @lower = @tolower_table;
+    $upper[ord 'i'] = 0x130; # LATIN CAPITAL LETTER I WITH DOT ABOVE
+    $lower[ord 'I'] = 0x131; # LATIN SMALL LETTER DOTLESS I
+    $casemaps[2] = pack( "S<*", 1) . dump_binary_case_table( @upper ) . dump_binary_case_table( @lower );
+    my $casemaps = align_string( 8, $casemaps[0] . $casemaps[1] . $casemaps[2] );
+
+    # Char type table
+
+    my @table;
+    my $types = "";
+    my %typestr;
+    for (my $i = 0; $i < 0x10000; $i++)
+    {
+        my $str = pack "S<3",
+            ($category_table[$i] || 0) & 0xffff,
+            defined($direction_table[$i]) ? $c2_types{$direction_table[$i]} : 0,
+            ($category_table[$i] || 0) >> 16;
+
+        if (!defined($typestr{$str}))
+        {
+            $typestr{$str} = length($types) / 6;
+            $types .= $str;
+        }
+        $table[$i] = $typestr{$str};
+    }
+
+    my @rows = compress_array( 4096, 0, @table[0..65535] );
+    my @array = compress_array( 256, 0, @rows[0..4095] );
+    for (my $i = 0; $i < 256; $i++) { $array[$i] *= 2; }  # we need byte offsets
+    for (my $i = 256; $i < @array; $i++) { $array[$i] += 2 * @array - 4096; }
+
+    my $arraystr = pack("S<*", @array) . pack("C*", @rows[4096..$#rows]);
+    my $chartypes = pack "S<2", 4 + length($types) + length($arraystr), 2 + length($types);
+    $chartypes = align_string( 8, $chartypes . $types . $arraystr );
+
+    # Sort tables
+
+    # guids
+    my $sorttables = pack "L<2", $version, scalar %guids;
+    foreach my $id (sort keys %guids)
+    {
+        my %guid = %{$guids{$id}};
+        my $flags = $guid{flags} || 0;
+        my $map = length($casemaps[0]) + (defined $guid{ling_except} ? length($casemaps[1]) : 0);
+        $sorttables .= pack_guid($id) . pack "L<5",
+            $flags,
+            defined($guid{compr}) ? $guid{compr} : 0xffffffff,
+            $guid{except} || 0,
+            $guid{ling_except} || 0,
+            $map / 2;
+    }
+
+    # expansions
+    $sorttables .= pack "L<S<*", scalar @expansions / 2, @expansions;
+
+    # compressions
+    $sorttables .= pack "L<", scalar @compressions;
+    my $rowstr = "";
+    foreach my $c (@compressions)
+    {
+        my $pos = length($rowstr) / 2;
+        my $min = 0xffff;
+        my $max = 0;
+        my @lengths = (0) x 8;
+        foreach my $r (sort cmp_compression @{$c})
+        {
+            my @row = @{$r};
+            $lengths[scalar @row - 6]++;
+            foreach my $val (@row[4..$#row])
+            {
+                $min = $val if $min > $val;
+                $max = $val if $max < $val;
+            }
+            $rowstr .= align_string( 4, pack "S<*", @row[4..$#row] );
+            $rowstr .= pack "C4", $row[1], $row[0], $row[2], $row[3];
+        }
+        $sorttables .= pack "L<S<10", $pos, $min, $max, @lengths;
+    }
+    $sorttables .= $rowstr;
+
+    # multiple weights
+    $sorttables .= align_string( 4, pack "L<C*", scalar @multiple_weights / 2, @multiple_weights );
+
+    # jamo sort
+    $sorttables .= pack("L<", length($jamostr) / 8) . $jamostr;
+
+    # Locales
+
+    add_registry_key( "Sorting\\Ids", "{$default_guid}" );
+    foreach my $loc (sort keys %locales)
+    {
+        # skip specific locales that match more general ones
+        my @parts = split /[-_]/, $loc;
+        next if @parts > 1 && defined($locales{$parts[0]}) && $locales{$parts[0]} eq $locales{$loc};
+        next if @parts > 2 && defined($locales{"$parts[0]-$parts[1]"}) && $locales{"$parts[0]-$parts[1]"} eq $locales{$loc};
+        add_registry_value( "Sorting\\Ids", $loc, "\{$locales{$loc}\}" );
+    }
+
+    # File header
+
+    my @header;
+    $header[0] = 16;
+    $header[1] = $header[0] + length $table;
+    $header[2] = $header[1] + length $casemaps;
+    $header[3] = $header[2] + length $chartypes;
+
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT pack "L<*", @header;
+    print OUTPUT $table, $casemaps, $chartypes, $sorttables;
+    close OUTPUT;
+    save_file($filename);
+}
+
 
 ################################################################
 # build the script to create registry keys
@@ -2437,6 +2817,7 @@ dump_norm_table( "nls/normnfd.nls" );
 dump_norm_table( "nls/normnfkc.nls" );
 dump_norm_table( "nls/normnfkd.nls" );
 dump_norm_table( "nls/normidna.nls" );
+dump_sortkey_table( "nls/sortdefault.nls", "Windows 10 Sorting Weight Table.txt" );
 foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
 dump_eucjp_codepage();
 dump_registry_script( "dlls/kernelbase/kernelbase.rgs", %registry_keys );

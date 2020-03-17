@@ -30,7 +30,7 @@ signature="$CHICAGO$"
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles
+CopyFiles=InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -54,7 +54,7 @@ AddReg=\
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles
+CopyFiles=InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -80,7 +80,7 @@ RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
 WinePreInstall=Wow64
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles
+CopyFiles=InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -107,7 +107,7 @@ RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
 WinePreInstall=Wow64
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles
+CopyFiles=InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -3893,9 +3893,14 @@ normnfd.nls
 normnfkc.nls
 normnfkd.nls
 
+[SortFiles]
+sortdefault.nls
+
 [WineSourceDirs]
-NlsFiles=nls
+NlsFiles  = nls
+SortFiles = nls
 
 [DestinationDirs]
-InfFiles = 17
-NlsFiles = 11
+InfFiles  = 17
+NlsFiles  = 11
+SortFiles = 10,globalization\sorting
