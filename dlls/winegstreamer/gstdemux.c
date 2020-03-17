@@ -1964,6 +1964,7 @@ static ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
 static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
 {
     struct gstdemux_source *pin = impl_from_IQualityControl(iface);
+    GstQOSType type = GST_QOS_TYPE_OVERFLOW;
     GstEvent *evt;
 
     TRACE("(%p)->(%p, { 0x%x %u %s %s })\n", pin, sender,
@@ -1976,8 +1977,13 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
     if (qm.Type == Flood)
         qm.Late = 0;
 
-    evt = gst_event_new_qos(qm.Type == Famine ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
-            qm.Proportion / 1000., qm.Late * 100, qm.TimeStamp * 100);
+    /* GSTQOS_TYPE_OVERFLOW is also used for buffers that arrive on time, but
+     * DirectShow filters might use Famine, so check that there actually is an
+     * underrun. */
+    if (qm.Type == Famine && qm.Proportion > 1000)
+        type = GST_QOS_TYPE_UNDERFLOW;
+
+    evt = gst_event_new_qos(type, qm.Proportion / 1000.0, qm.Late * 100, qm.TimeStamp * 100);
 
     if (!evt) {
         WARN("Failed to create QOS event\n");
