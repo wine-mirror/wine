@@ -1993,6 +1993,9 @@ static void test_sample(void)
     ok(buffer2 == buffer, "Unexpected buffer instance.\n");
     IMFMediaBuffer_Release(buffer2);
 
+    hr = IMFSample_ConvertToContiguousBuffer(sample, NULL);
+    ok(hr == S_OK, "Failed to convert, hr %#x.\n", hr);
+
     hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer2);
     ok(hr == S_OK, "Failed to convert, hr %#x.\n", hr);
     ok(buffer2 == buffer, "Unexpected buffer instance.\n");
@@ -2026,8 +2029,21 @@ static void test_sample(void)
     ok(hr == S_OK, "Failed to get maximum length, hr %#x.\n", hr);
     ok(length == 7, "Unexpected length %u.\n", length);
 
-    if (SUCCEEDED(hr))
-        IMFMediaBuffer_Release(buffer3);
+    IMFMediaBuffer_Release(buffer3);
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected buffer count %u.\n", count);
+
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Failed to add buffer, hr %#x.\n", hr);
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+    ok(count == 2, "Unexpected buffer count %u.\n", count);
+
+    hr = IMFSample_ConvertToContiguousBuffer(sample, NULL);
+    ok(hr == S_OK, "Failed to convert, hr %#x.\n", hr);
 
     hr = IMFSample_GetBufferCount(sample, &count);
     ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);

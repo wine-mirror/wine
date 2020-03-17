@@ -1235,7 +1235,7 @@ static HRESULT WINAPI sample_ConvertToContiguousBuffer(IMFSample *iface, IMFMedi
         }
     }
 
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr) && buffer)
     {
         *buffer = sample->buffers[0];
         IMFMediaBuffer_AddRef(*buffer);
