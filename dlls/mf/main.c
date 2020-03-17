@@ -1957,6 +1957,7 @@ static HRESULT WINAPI sample_copier_transform_ProcessOutput(IMFTransform *iface,
         MFT_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
 {
     struct sample_copier *transform = impl_copier_from_IMFTransform(iface);
+    IMFMediaBuffer *buffer;
     DWORD sample_flags;
     HRESULT hr = S_OK;
     LONGLONG time;
@@ -1981,7 +1982,15 @@ static HRESULT WINAPI sample_copier_transform_ProcessOutput(IMFTransform *iface,
         if (SUCCEEDED(IMFSample_GetSampleFlags(transform->sample, &sample_flags)))
             IMFSample_SetSampleFlags(buffers->pSample, sample_flags);
 
-        FIXME("Copy buffers.\n");
+        if (SUCCEEDED(IMFSample_ConvertToContiguousBuffer(transform->sample, NULL)))
+        {
+            if (SUCCEEDED(IMFSample_GetBufferByIndex(buffers->pSample, 0, &buffer)))
+            {
+                if (FAILED(IMFSample_CopyToBuffer(transform->sample, buffer)))
+                    hr = MF_E_UNEXPECTED;
+                IMFMediaBuffer_Release(buffer);
+            }
+        }
 
         IMFSample_Release(transform->sample);
         transform->sample = NULL;
