@@ -662,7 +662,7 @@ BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)
 
 	if (!pProv)
 	{
-		SetLastError(NTE_BAD_UID);
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
