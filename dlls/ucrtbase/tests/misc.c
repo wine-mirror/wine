@@ -125,9 +125,11 @@ typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
 static HMODULE module;
 static LONGLONG crt_init_end;
 
-static int (CDECL *p_o__initialize_onexit_table)(_onexit_table_t *table);
-static int (CDECL *p_o__register_onexit_function)(_onexit_table_t *table, _onexit_t func);
-static int (CDECL *p_o__execute_onexit_table)(_onexit_table_t *table);
+_ACRTIMP int __cdecl _o__initialize_onexit_table(_onexit_table_t *table);
+_ACRTIMP int __cdecl _o__register_onexit_function(_onexit_table_t *table, _onexit_t func);
+_ACRTIMP int __cdecl _o__execute_onexit_table(_onexit_table_t *table);
+_ACRTIMP void *__cdecl _o_malloc(size_t);
+
 static int (CDECL *p___fpe_flt_rounds)(void);
 static _invalid_parameter_handler (CDECL *p__set_invalid_parameter_handler)(_invalid_parameter_handler);
 static _invalid_parameter_handler (CDECL *p__get_invalid_parameter_handler)(void);
@@ -148,7 +150,6 @@ static size_t (__cdecl *p__Strftime)(char*, size_t, const char*, const struct tm
 static int (CDECL *p__crt_atexit)(void (CDECL*)(void));
 static int (__cdecl *p_crt_at_quick_exit)(void (__cdecl *func)(void));
 static void (__cdecl *p_quick_exit)(int exitcode);
-static void* (__cdecl *p__o_malloc)(size_t);
 static size_t (__cdecl *p__msize)(void*);
 
 static void test__initialize_onexit_table(void)
@@ -173,7 +174,7 @@ static void test__initialize_onexit_table(void)
     ok(table2._end == table._end, "got %p, %p\n", table2._end, table._end);
 
     memset(&table2, 0, sizeof(table2));
-    ret = p_o__initialize_onexit_table(&table2);
+    ret = _o__initialize_onexit_table(&table2);
     ok(ret == 0, "got %d\n", ret);
     ok(table2._first == table._first, "got %p, %p\n", table2._first, table._first);
     ok(table2._last == table._last, "got %p, %p\n", table2._last, table._last);
@@ -258,12 +259,12 @@ static void test__register_onexit_function(void)
     ok(f != table._last, "got %p, initial %p\n", table._last, f);
 
     f = table._last;
-    ret = p_o__register_onexit_function(&table, NULL);
+    ret = _o__register_onexit_function(&table, NULL);
     ok(ret == 0, "got %d\n", ret);
     ok(f != table._last, "got %p, initial %p\n", table._last, f);
 
     f = table._last;
-    ret = p_o__register_onexit_function(&table, onexit_func);
+    ret = _o__register_onexit_function(&table, onexit_func);
     ok(ret == 0, "got %d\n", ret);
     ok(f != table._last, "got %p, initial %p\n", table._last, f);
 
@@ -297,7 +298,7 @@ static void test__execute_onexit_table(void)
     ret = _register_onexit_function(&table, onexit_func);
     ok(ret == 0, "got %d\n", ret);
 
-    ret = p_o__register_onexit_function(&table, onexit_func);
+    ret = _o__register_onexit_function(&table, onexit_func);
     ok(ret == 0, "got %d\n", ret);
 
     ok(table._first != table._end, "got %p, %p\n", table._first, table._end);
@@ -316,12 +317,12 @@ static void test__execute_onexit_table(void)
     ret = _register_onexit_function(&table, onexit_func);
     ok(ret == 0, "got %d\n", ret);
 
-    ret = p_o__register_onexit_function(&table, onexit_func);
+    ret = _o__register_onexit_function(&table, onexit_func);
     ok(ret == 0, "got %d\n", ret);
 
     ok(table._first != table._end, "got %p, %p\n", table._first, table._end);
     g_onexit_called = 0;
-    ret = p_o__execute_onexit_table(&table);
+    ret = _o__execute_onexit_table(&table);
     ok(ret == 0, "got %d\n", ret);
     ok(g_onexit_called == 3, "got %d\n", g_onexit_called);
     ok(table._first == table._end, "got %p, %p\n", table._first, table._end);
@@ -479,9 +480,6 @@ static BOOL init(void)
 
     module = GetModuleHandleW(L"ucrtbase.dll");
 
-    p_o__initialize_onexit_table = (void*)GetProcAddress(module, "_o__initialize_onexit_table");
-    p_o__register_onexit_function = (void*)GetProcAddress(module, "_o__register_onexit_function");
-    p_o__execute_onexit_table = (void*)GetProcAddress(module, "_o__execute_onexit_table");
     p___fpe_flt_rounds = (void*)GetProcAddress(module, "__fpe_flt_rounds");
     p__set_invalid_parameter_handler = (void*)GetProcAddress(module, "_set_invalid_parameter_handler");
     p__get_invalid_parameter_handler = (void*)GetProcAddress(module, "_get_invalid_parameter_handler");
@@ -502,7 +500,6 @@ static BOOL init(void)
     p__crt_atexit = (void*)GetProcAddress(module, "_crt_atexit");
     p_crt_at_quick_exit = (void*)GetProcAddress(module, "_crt_at_quick_exit");
     p_quick_exit = (void*)GetProcAddress(module, "quick_exit");
-    p__o_malloc = (void*)GetProcAddress(module, "_o_malloc");
     p__msize = (void*)GetProcAddress(module, "_msize");
 
     return TRUE;
@@ -1353,7 +1350,7 @@ static void test__o_malloc(void)
     void *m;
     size_t s;
 
-    m = p__o_malloc(1);
+    m = _o_malloc(1);
     ok(m != NULL, "p__o_malloc(1) returned NULL\n");
 
     s = p__msize(m);
