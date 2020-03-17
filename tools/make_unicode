@@ -554,6 +554,28 @@ sub compose_hangul(@)
 }
 
 ################################################################
+# remove linguistic-only mappings from the case table
+sub remove_linguistic_mappings($$)
+{
+    my ($upper, $lower) = @_;
+
+    # remove case mappings that don't round-trip
+
+    for (my $i = 0; $i < @{$upper}; $i++)
+    {
+        next unless defined ${$upper}[$i];
+        my $ch = ${$upper}[$i];
+        ${$upper}[$i] = undef unless defined ${$lower}[$ch] && ${$lower}[$ch] == $i;
+    }
+    for (my $i = 0; $i < @{$lower}; $i++)
+    {
+        next unless defined ${$lower}[$i];
+        my $ch = ${$lower}[$i];
+        ${$lower}[$i] = undef unless defined ${$upper}[$ch] && ${$upper}[$ch] == $i;
+    }
+}
+
+################################################################
 # read in the Unicode database files
 sub load_data()
 {
@@ -670,21 +692,6 @@ sub load_data()
     {
         my $flag = $ctype{$cat};
         foreach my $i (@{$special_categories{$cat}}) { $category_table[$i] |= $flag; }
-    }
-
-    # remove case mappings that don't round-trip
-
-    for (my $i = 0; $i < @toupper_table; $i++)
-    {
-        next unless defined $toupper_table[$i];
-        my $ch = $toupper_table[$i];
-        $toupper_table[$i] = undef unless defined $tolower_table[$ch] && $tolower_table[$ch] == $i;
-    }
-    for (my $i = 0; $i < @tolower_table; $i++)
-    {
-        next unless defined $tolower_table[$i];
-        my $ch = $tolower_table[$i];
-        $tolower_table[$i] = undef unless defined $toupper_table[$ch] && $toupper_table[$ch] == $i;
     }
 
     # load the composition exclusions
@@ -1651,9 +1658,13 @@ sub dump_case_mappings($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_case_table( "wine_casemap_lower", @tolower_table );
+    my @upper = @toupper_table;
+    my @lower = @tolower_table;
+    remove_linguistic_mappings( \@upper, \@lower );
+
+    dump_case_table( "wine_casemap_lower", @lower );
     print OUTPUT "\n";
-    dump_case_table( "wine_casemap_upper", @toupper_table );
+    dump_case_table( "wine_casemap_upper", @upper );
     close OUTPUT;
     save_file($filename);
 }
@@ -1793,17 +1804,21 @@ sub dump_binary_case_table(@)
 
     my @row_array = compress_array( $level1, 0, @difftable[0..$max_char-1] );
     my @array = compress_array( $level2, 0, @row_array[0..$level1-1] );
-    for (my $i = $level2; $i < @array; $i++) { $array[$i] += @array - $level1; }
-    return @array, @row_array[$level1..$#row_array];
+    my $offset = @array - $level1;
+    for (my $i = $level2; $i < @array; $i++) { $array[$i] += $offset; }
+    return pack "S<*", 1 + $offset + @row_array, @array, @row_array[$level1..$#row_array];
 }
-
 
 ################################################################
 # dump case mappings for l_intl.nls
 sub dump_intl_nls($)
 {
-    my @upper = dump_binary_case_table( @toupper_table );
-    my @lower = dump_binary_case_table( @tolower_table );
+    my @upper_table = @toupper_table;
+    my @lower_table = @tolower_table;
+    remove_linguistic_mappings( \@upper_table, \@lower_table );
+
+    my $upper = dump_binary_case_table( @upper_table );
+    my $lower = dump_binary_case_table( @lower_table );
 
     my $filename = shift;
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
@@ -1811,8 +1826,8 @@ sub dump_intl_nls($)
 
     binmode OUTPUT;
     print OUTPUT pack "S<", 1;  # version
-    print OUTPUT pack "S<*", 1 + scalar @upper, @upper;
-    print OUTPUT pack "S<*", 1 + scalar @lower, @lower;
+    print OUTPUT $upper;
+    print OUTPUT $lower;
     close OUTPUT;
     save_file($filename);
 }
