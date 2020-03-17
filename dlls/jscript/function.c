@@ -722,7 +722,7 @@ static HRESULT InterpretedFunction_call(script_ctx_t *ctx, FunctionInstance *fun
          unsigned argc, jsval_t *argv, jsval_t *r)
 {
     InterpretedFunction *function = (InterpretedFunction*)func;
-    jsdisp_t *var_disp, *new_obj = NULL;
+    jsdisp_t *new_obj = NULL;
     DWORD exec_flags = 0;
     HRESULT hres;
 
@@ -744,15 +744,10 @@ static HRESULT InterpretedFunction_call(script_ctx_t *ctx, FunctionInstance *fun
         exec_flags |= EXEC_RETURN_TO_INTERP;
     if(flags & DISPATCH_CONSTRUCT)
         exec_flags |= EXEC_CONSTRUCTOR;
-
-    hres = create_dispex(ctx, NULL, NULL, &var_disp);
-    if(SUCCEEDED(hres))
-        hres = exec_source(ctx, exec_flags, function->code, function->func_code, function->scope_chain, this_obj,
-                           &function->function.dispex, var_disp, argc, argv, r);
+    hres = exec_source(ctx, exec_flags, function->code, function->func_code, function->scope_chain, this_obj,
+                       &function->function.dispex, argc, argv, r);
     if(new_obj)
         jsdisp_release(new_obj);
-
-    jsdisp_release(var_disp);
     return hres;
 }
 

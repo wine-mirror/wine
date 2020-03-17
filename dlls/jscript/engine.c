@@ -2990,8 +2990,9 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_t
 }
 
 HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
-        IDispatch *this_obj, jsdisp_t *function_instance, jsdisp_t *variable_obj, unsigned argc, jsval_t *argv, jsval_t *r)
+        IDispatch *this_obj, jsdisp_t *function_instance, unsigned argc, jsval_t *argv, jsval_t *r)
 {
+    jsdisp_t *variable_obj;
     call_frame_t *frame;
     unsigned i;
     HRESULT hres;
@@ -3024,6 +3025,15 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
             return hres;
     }
 
+    if((flags & EXEC_EVAL) && ctx->call_ctx) {
+        variable_obj = jsdisp_addref(ctx->call_ctx->variable_obj);
+    }else if(!(flags & (EXEC_GLOBAL | EXEC_EVAL))) {
+        hres = create_dispex(ctx, NULL, NULL, &variable_obj);
+        if(FAILED(hres)) return hres;
+    }else {
+        variable_obj = jsdisp_addref(ctx->global);
+    }
+
     if(flags & (EXEC_GLOBAL | EXEC_EVAL)) {
         BOOL lookup_globals = (flags & EXEC_GLOBAL) && !bytecode->named_item;
 
@@ -3034,7 +3044,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
 
                 hres = create_source_function(ctx, bytecode, function->funcs+function->variables[i].func_id, scope, &func_obj);
                 if(FAILED(hres))
-                    return hres;
+                    goto fail;
 
                 hres = jsdisp_propput_name(variable_obj, function->variables[i].name, jsval_obj(func_obj));
                 jsdisp_release(func_obj);
@@ -3043,7 +3053,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
 
                 hres = jsdisp_get_id(variable_obj, function->variables[i].name, fdexNameEnsure, &id);
                 if(FAILED(hres))
-                    return hres;
+                    goto fail;
             }
         }
     }
@@ -3063,12 +3073,14 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     if(ctx->call_ctx && (flags & EXEC_EVAL)) {
         hres = detach_variable_object(ctx, ctx->call_ctx, FALSE);
         if(FAILED(hres))
-            return hres;
+            goto fail;
     }
 
     frame = heap_alloc_zero(sizeof(*frame));
-    if(!frame)
-        return E_OUTOFMEMORY;
+    if(!frame) {
+        hres = E_OUTOFMEMORY;
+        goto fail;
+    }
 
     frame->function = function;
     frame->ret = jsval_undefined();
@@ -3080,7 +3092,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
         if(FAILED(hres)) {
             release_bytecode(frame->bytecode);
             heap_free(frame);
-            return hres;
+            goto fail;
         }
     }else if(scope) {
         frame->base_scope = frame->scope = scope_addref(scope);
@@ -3097,7 +3109,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
         frame->function_instance = jsdisp_addref(function_instance);
 
     frame->flags = flags;
-    frame->variable_obj = jsdisp_addref(variable_obj);
+    frame->variable_obj = variable_obj;
 
     frame->prev_frame = ctx->call_ctx;
     ctx->call_ctx = frame;
@@ -3113,4 +3125,8 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     }
 
     return enter_bytecode(ctx, r);
+
+fail:
+    jsdisp_release(variable_obj);
+    return hres;
 }

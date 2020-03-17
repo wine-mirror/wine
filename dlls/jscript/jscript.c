@@ -408,7 +408,7 @@ static void exec_queued_code(JScript *This)
 
     LIST_FOR_EACH_ENTRY(iter, &This->queued_code, bytecode_t, entry) {
         enter_script(This->ctx, &ei);
-        hres = exec_source(This->ctx, EXEC_GLOBAL, iter, &iter->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, NULL);
+        hres = exec_source(This->ctx, EXEC_GLOBAL, iter, &iter->global_code, NULL, NULL, NULL, 0, NULL, NULL);
         leave_script(This->ctx, hres);
         if(FAILED(hres))
             break;
@@ -1053,7 +1053,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(dwFlags & SCRIPTTEXT_ISEXPRESSION) {
         jsval_t r;
 
-        hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, &r);
+        hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, 0, NULL, &r);
         if(SUCCEEDED(hres)) {
             if(pvarResult)
                 hres = jsval_to_variant(r, pvarResult);
@@ -1072,7 +1072,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(!pvarResult && !is_started(This->ctx)) {
         list_add_tail(&This->queued_code, &code->entry);
     }else {
-        hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, This->ctx->global, 0, NULL, NULL);
+        hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, NULL, 0, NULL, NULL);
         if(code->is_persistent)
             list_add_tail(&This->persistent_code, &code->entry);
         else

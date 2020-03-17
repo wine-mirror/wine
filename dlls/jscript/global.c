@@ -215,7 +215,7 @@ HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned a
     if(flags & DISPATCH_JSCRIPT_CALLEREXECSSOURCE)
         exec_flags |= EXEC_RETURN_TO_INTERP;
     hres = exec_source(ctx, exec_flags, code, &code->global_code, frame ? frame->scope : NULL,
-            frame ? frame->this_obj : NULL, NULL, frame ? frame->variable_obj : ctx->global, 0, NULL, r);
+            frame ? frame->this_obj : NULL, NULL, 0, NULL, r);
     release_bytecode(code);
     return hres;
 }
