@@ -97,16 +97,13 @@ static HRESULT WINAPI memory_buffer_QueryInterface(IMFMediaBuffer *iface, REFIID
             IsEqualIID(riid, &IID_IUnknown))
     {
         *out = &buffer->IMFMediaBuffer_iface;
-    }
-    else
-    {
-        FIXME("(%s, %p)\n", debugstr_guid(riid), out);
-        *out = NULL;
-        return E_NOINTERFACE;
+        IMFMediaBuffer_AddRef(iface);
+        return S_OK;
     }
 
-    IUnknown_AddRef((IUnknown*)*out);
-    return S_OK;
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI memory_buffer_AddRef(IMFMediaBuffer *iface)
