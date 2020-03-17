@@ -87,18 +87,6 @@ static const struct location_test location_tests[] = {
         NULL,
         NULL
     },
-    {
-        "FILE",
-        "file://C:\\windows\\win.ini",
-        "file:///C:/windows/win.ini",
-        "file:",
-        NULL,
-        NULL,
-        "",
-        "C:\\windows\\win.ini",
-        NULL,
-        NULL
-    }
 };
 
 static int str_eq_wa(LPCWSTR strw, const char *stra)
