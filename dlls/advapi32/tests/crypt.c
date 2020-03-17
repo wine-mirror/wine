@@ -64,25 +64,30 @@ static void init_function_pointers(void)
 static void init_environment(void)
 {
     HCRYPTPROV hProv;
+    BOOL ret;
 
     /* Ensure that container "wine_test_keyset" does exist */
     if (!CryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
     {
         CryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_NEWKEYSET);
     }
-    CryptReleaseContext(hProv, 0);
+    ret = CryptReleaseContext(hProv, 0);
+    ok(ret, "got %u\n", GetLastError());
 
     /* Ensure that container "wine_test_keyset" does exist in default PROV_RSA_FULL type provider */
     if (!CryptAcquireContextA(&hProv, szKeySet, NULL, PROV_RSA_FULL, 0))
     {
         CryptAcquireContextA(&hProv, szKeySet, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET);
     }
-    CryptReleaseContext(hProv, 0);
+    ret = CryptReleaseContext(hProv, 0);
+    ok(ret, "got %u\n", GetLastError());
 
     /* Ensure that container "wine_test_bad_keyset" does not exist. */
     if (CryptAcquireContextA(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
     {
-        CryptReleaseContext(hProv, 0);
+        ret = CryptReleaseContext(hProv, 0);
+        ok(ret, "got %u\n", GetLastError());
+
         CryptAcquireContextA(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
     }
 }
@@ -90,25 +95,32 @@ static void init_environment(void)
 static void clean_up_environment(void)
 {
     HCRYPTPROV hProv;
+    BOOL ret;
 
     /* Remove container "wine_test_keyset" */
     if (CryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
     {
-        CryptReleaseContext(hProv, 0);
+        ret = CryptReleaseContext(hProv, 0);
+        ok(ret, "got %u\n", GetLastError());
+
         CryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
     }
 
     /* Remove container "wine_test_keyset" from default PROV_RSA_FULL type provider */
     if (CryptAcquireContextA(&hProv, szKeySet, NULL, PROV_RSA_FULL, 0))
     {
-        CryptReleaseContext(hProv, 0);
+        ret = CryptReleaseContext(hProv, 0);
+        ok(ret, "got %u\n", GetLastError());
+
         CryptAcquireContextA(&hProv, szKeySet, NULL, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
     }
 
     /* Remove container "wine_test_bad_keyset" */
     if (CryptAcquireContextA(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
     {
-        CryptReleaseContext(hProv, 0);
+        ret = CryptReleaseContext(hProv, 0);
+        ok(ret, "got %u\n", GetLastError());
+
         CryptAcquireContextA(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
     }
 }
@@ -159,8 +171,11 @@ if (0)
 		      GLE == NTE_FAIL                 ||
 		      GLE == ERROR_NOT_LOGGED_ON), "%d/%d\n", result, GLE);
 
-	if (hProv) 
-		CryptReleaseContext(hProv, 0);
+	if (hProv)
+	{
+	    result = CryptReleaseContext(hProv, 0);
+	    ok(result, "got %u\n", GetLastError());
+	}
 
 	/* Try again, witch an empty ("\0") szProvider parameter */
 	hProv = 0;
@@ -173,8 +188,11 @@ if (0)
 		      GLE == NTE_FAIL                 ||
 		      GLE == ERROR_NOT_LOGGED_ON), "%d/%d\n", result, GetLastError());
 
-	if (hProv) 
-		CryptReleaseContext(hProv, 0);
+	if (hProv)
+	{
+	    result = CryptReleaseContext(hProv, 0);
+	    ok(result, "got %u\n", GetLastError());
+	}
 }
 
 static void test_incorrect_api_usage(void)
@@ -238,11 +256,13 @@ static void test_incorrect_api_usage(void)
     if (!result) return;
 
     result = CryptReleaseContext(hProv, 0);
-    ok (result, "%d\n", GetLastError());
+    ok(result, "got %u\n", GetLastError());
     if (!result) return;
 
+    SetLastError(0xdeadbeef);
     result = CryptReleaseContext(hProv, 0);
-    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
+    ok(!result, "CryptReleaseContext succeeded unexpectedly\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
 
     result = pCryptGenRandom(hProv, 1, &temp);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
@@ -426,7 +446,9 @@ static void test_verify_sig(void)
 	 "Expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
 	CryptDestroyKey(key);
 	CryptDestroyHash(hash);
-	CryptReleaseContext(prov, 0);
+
+	ret = CryptReleaseContext(prov, 0);
+	ok(ret, "got %u\n", GetLastError());
 }
 
 static BOOL FindProvRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszProvName, 
@@ -938,7 +960,8 @@ static void test_machine_guid(void)
    ret = CryptAcquireContextA(&hCryptProv, szKeySet, NULL, PROV_RSA_FULL, 0);
    ok(ret || broken(!ret && GetLastError() == NTE_KEYSET_ENTRY_BAD /* NT4 */),
       "CryptAcquireContextA failed: %08x\n", GetLastError());
-   CryptReleaseContext(hCryptProv, 0);
+   ret = CryptReleaseContext(hCryptProv, 0);
+   ok(ret, "got %u\n", GetLastError());
 
    if (restoreGuid)
        RegSetValueExA(key, "MachineGuid", 0, REG_SZ, (const BYTE *)originalGuid,
@@ -986,10 +1009,11 @@ static void test_rc2_keylen(void)
         ok(ret ||
            broken(!ret && GetLastError() == NTE_BAD_FLAGS),
            "CryptImportKey error %08x\n", GetLastError());
-
         if (ret)
             CryptDestroyKey(hkey);
-        CryptReleaseContext(provider, 0);
+
+        ret = CryptReleaseContext(provider, 0);
+        ok(ret, "got %u\n", GetLastError());
     }
 
     SetLastError(0xdeadbeef);
@@ -1033,7 +1057,8 @@ static void test_rc2_keylen(void)
         if (ret)
             CryptDestroyKey(hkey);
 
-        CryptReleaseContext(provider, 0);
+        ret = CryptReleaseContext(provider, 0);
+        ok(ret, "got %u\n", GetLastError());
     }
 
     key_blob.key_size = sizeof(key);
@@ -1068,7 +1093,8 @@ static void test_rc2_keylen(void)
         if (ret)
             CryptDestroyKey(hkey);
 
-        CryptReleaseContext(provider, 0);
+        ret = CryptReleaseContext(provider, 0);
+        ok(ret, "got %u\n", GetLastError());
     }
 }
 
