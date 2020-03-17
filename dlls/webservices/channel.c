@@ -910,8 +910,6 @@ error:
 
 static HRESULT connect_channel_http( struct channel *channel )
 {
-    static const WCHAR agentW[] =
-        {'M','S','-','W','e','b','S','e','r','v','i','c','e','s','/','1','.','0',0};
     HINTERNET ses = NULL, con = NULL;
     URL_COMPONENTS uc;
     HRESULT hr;
@@ -943,7 +941,7 @@ static HRESULT connect_channel_http( struct channel *channel )
         goto done;
     }
 
-    if (!(ses = WinHttpOpen( agentW, 0, NULL, NULL, 0 )))
+    if (!(ses = WinHttpOpen( L"MS-WebServices/1.0", 0, NULL, NULL, 0 )))
     {
         hr = HRESULT_FROM_WIN32( GetLastError() );
         goto done;
@@ -1267,8 +1265,7 @@ static HRESULT send_sized_envelope( struct channel *channel, BYTE *data, ULONG l
 
 static HRESULT open_http_request( struct channel *channel, HINTERNET *req )
 {
-    static const WCHAR postW[] = {'P','O','S','T',0};
-    if ((*req = WinHttpOpenRequest( channel->u.http.connect, postW, channel->u.http.path,
+    if ((*req = WinHttpOpenRequest( channel->u.http.connect, L"POST", channel->u.http.path,
                                     NULL, NULL, NULL, channel->u.http.flags ))) return S_OK;
     return HRESULT_FROM_WIN32( GetLastError() );
 }
