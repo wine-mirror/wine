@@ -636,7 +636,7 @@ BOOL WINAPI CryptContextAddRef (HCRYPTPROV hProv, DWORD *pdwReserved, DWORD dwFl
 		return FALSE;
 	}
 
-	pProv->refcount++;
+	InterlockedIncrement(&pProv->refcount);
 	return TRUE;
 }
 
@@ -672,8 +672,7 @@ BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)
 		return FALSE;
 	}
 
-	pProv->refcount--;
-	if (pProv->refcount <= 0) 
+	if (InterlockedDecrement(&pProv->refcount) == 0)
 	{
 		ret = pProv->pFuncs->pCPReleaseContext(pProv->hPrivate, dwFlags);
 		pProv->dwMagic = 0;
