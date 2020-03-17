@@ -131,7 +131,7 @@ typedef struct {
 typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static HMODULE module;
-static LONGLONG crt_init_start, crt_init_end;
+static LONGLONG crt_init_end;
 
 static int (CDECL *p_initialize_onexit_table)(MSVCRT__onexit_table_t *table);
 static int (CDECL *p_register_onexit_function)(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
@@ -486,15 +486,9 @@ static BOOL init(void)
     FILETIME cur;
 
     GetSystemTimeAsFileTime(&cur);
-    crt_init_start = ((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime;
-    module = LoadLibraryA("ucrtbase.dll");
-    GetSystemTimeAsFileTime(&cur);
     crt_init_end = ((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime;
 
-    if(!module) {
-        win_skip("ucrtbase.dll not available\n");
-        return FALSE;
-    }
+    module = GetModuleHandleW(L"ucrtbase.dll");
 
     p_initialize_onexit_table = (void*)GetProcAddress(module, "_initialize_onexit_table");
     p_register_onexit_function = (void*)GetProcAddress(module, "_register_onexit_function");
@@ -1384,17 +1378,16 @@ static void test__o_malloc(void)
 
 static void test_clock(void)
 {
-    static const int thresh = 100;
-    int c, expect_min, expect_max;
+    static const int thresh = 100, max_load_delay = 1000;
+    int c, expect_min;
     FILETIME cur;
 
     GetSystemTimeAsFileTime(&cur);
     c = clock();
 
     expect_min = (((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime - crt_init_end) / 10000;
-    expect_max = (((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime - crt_init_start) / 10000;
-    ok(c > expect_min-thresh && c < expect_max+thresh, "clock() = %d, expected range [%d, %d]\n",
-            c, expect_min, expect_max);
+    ok(c >= expect_min - thresh && c < expect_min + max_load_delay, "clock() = %d, expected range [%d, %d]\n",
+            c, expect_min - thresh, expect_min + max_load_delay);
 }
 
 START_TEST(misc)
