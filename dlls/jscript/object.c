@@ -81,7 +81,7 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
         str = names[jsdisp->builtin_info->class];
     }else {
         assert(jsdisp->builtin_info->class != JSCLASS_NONE);
-        FIXME("jdisp->builtin_info->class = %d\n", jsdisp->builtin_info->class);
+        FIXME("jsdisp->builtin_info->class = %d\n", jsdisp->builtin_info->class);
         return E_FAIL;
     }
 
