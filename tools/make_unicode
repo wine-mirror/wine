@@ -1895,32 +1895,6 @@ sub dump_intl_nls($)
 
 
 ################################################################
-# dump the GetStringTypeW table
-sub dump_string_type_table($)
-{
-    my $filename = shift;
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    printf "Building $filename\n";
-    printf OUTPUT "/* Unicode wctype table */\n";
-    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
-    printf OUTPUT "#include \"windef.h\"\n\n";
-
-    my @table = map { ($_ || 0) & 0xffff; } @category_table;
-
-    # add the direction in the high 4 bits of the category
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        $table[$i] |= $c2_types{$direction_table[$i]} << 12 if defined $direction_table[$i];
-    }
-
-    dump_two_level_mapping( "wctype_table", 0, 16, @table );
-
-    close OUTPUT;
-    save_file($filename);
-}
-
-
-################################################################
 # dump the bidi direction table
 sub dump_bidi_dir_table($)
 {
@@ -2798,7 +2772,6 @@ dump_ctype_tables( "libs/port/wctype.c" );
 dump_bidi_dir_table( "dlls/gdi32/direction.c" );
 dump_bidi_dir_table( "dlls/usp10/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
-dump_string_type_table( "dlls/kernelbase/wctype.c" );
 dump_digit_folding( "dlls/kernelbase/digitmap.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
 dump_mirroring( "dlls/dwrite/mirror.c" );

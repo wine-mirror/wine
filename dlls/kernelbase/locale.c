@@ -43,7 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 extern UINT CDECL __wine_get_unix_codepage(void);
 
-extern const unsigned short wctype_table[] DECLSPEC_HIDDEN;
 extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
 
 static HANDLE kernel32_handle;
@@ -581,6 +580,8 @@ static struct
 {
     DWORD  *keys;       /* sortkey table, indexed by char */
     USHORT *casemap;    /* casemap table, in l_intl.nls format */
+    WORD   *ctypes;     /* CT_CTYPE1,2,3 values */
+    BYTE   *ctype_idx;  /* index to map char to ctypes array entry */
 } sort;
 
 static CRITICAL_SECTION locale_section;
@@ -598,8 +599,13 @@ static CRITICAL_SECTION locale_section = { &critsect_debug, -1, 0, 0, 0, 0 };
  */
 static void init_sortkeys( DWORD *ptr )
 {
+    WORD *ctype;
+
     sort.keys      = (DWORD *)((char *)ptr + ptr[0]);
     sort.casemap   = (USHORT *)((char *)ptr + ptr[1]);
+    ctype          = (WORD *)((char *)ptr + ptr[2]);
+    sort.ctypes    = ctype + 2;
+    sort.ctype_idx = (BYTE *)ctype + ctype[1] + 2;
 }
 
 
@@ -723,6 +729,14 @@ static inline USHORT get_table_entry( const USHORT *table, WCHAR ch )
 static inline WCHAR casemap( const USHORT *table, WCHAR ch )
 {
     return ch + table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
+}
+
+
+static inline WORD get_char_type( DWORD type, WCHAR ch )
+{
+    const BYTE *ptr = sort.ctype_idx + ((const WORD *)sort.ctype_idx)[ch >> 8];
+    ptr = sort.ctype_idx + ((const WORD *)ptr)[(ch >> 4) & 0x0f] + (ch & 0x0f);
+    return sort.ctypes[*ptr * 3 + type / 2];
 }
 
 
@@ -2046,7 +2060,7 @@ static int get_sortkey( DWORD flags, const WCHAR *src, int srclen, char *dst, in
                 unsigned int ce;
 
                 if ((flags & NORM_IGNORESYMBOLS) &&
-                    (get_table_entry( wctype_table, wch ) & (C1_PUNCT | C1_SPACE)))
+                    (get_char_type( CT_CTYPE1, wch ) & (C1_PUNCT | C1_SPACE)))
                     continue;
 
                 if (flags & NORM_IGNORECASE) wch = casemap( nls_info.LowerCaseTable, wch );
@@ -2100,7 +2114,7 @@ static int get_sortkey( DWORD flags, const WCHAR *src, int srclen, char *dst, in
                 unsigned int ce;
 
                 if ((flags & NORM_IGNORESYMBOLS) &&
-                    (get_table_entry( wctype_table, wch ) & (C1_PUNCT | C1_SPACE)))
+                    (get_char_type( CT_CTYPE1, wch ) & (C1_PUNCT | C1_SPACE)))
                     continue;
 
                 if (flags & NORM_IGNORECASE) wch = casemap( nls_info.LowerCaseTable, wch );
@@ -2404,12 +2418,12 @@ static int compare_weights(int flags, const WCHAR *str1, int len1,
         {
             int skip = 0;
             /* FIXME: not tested */
-            if (get_table_entry( wctype_table, dstr1[dpos1] ) & (C1_PUNCT | C1_SPACE))
+            if (get_char_type( CT_CTYPE1, dstr1[dpos1] ) & (C1_PUNCT | C1_SPACE))
             {
                 inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
                 skip = 1;
             }
-            if (get_table_entry( wctype_table, dstr2[dpos2] ) & (C1_PUNCT | C1_SPACE))
+            if (get_char_type( CT_CTYPE1, dstr2[dpos2] ) & (C1_PUNCT | C1_SPACE))
             {
                 inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
                 skip = 1;
@@ -4207,60 +4221,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetStringTypeW( DWORD type, const WCHAR *src, INT 
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-
-    if (count == -1) count = lstrlenW(src) + 1;
-    switch (type)
+    if (type != CT_CTYPE1 && type != CT_CTYPE2 && type != CT_CTYPE3)
     {
-    case CT_CTYPE1:
-        while (count--) *chartype++ = get_table_entry( wctype_table, *src++ ) & 0xfff;
-        break;
-    case CT_CTYPE2:
-        while (count--) *chartype++ = get_table_entry( wctype_table, *src++ ) >> 12;
-        break;
-    case CT_CTYPE3:
-    {
-        WARN("CT_CTYPE3: semi-stub.\n");
-        while (count--)
-        {
-            int c = *src;
-            WORD type1, type3 = 0; /* C3_NOTAPPLICABLE */
-
-            type1 = get_table_entry( wctype_table, *src++ ) & 0xfff;
-            /* try to construct type3 from type1 */
-            if(type1 & C1_SPACE) type3 |= C3_SYMBOL;
-            if(type1 & C1_ALPHA) type3 |= C3_ALPHA;
-            if ((c>=0x30A0)&&(c<=0x30FF)) type3 |= C3_KATAKANA;
-            if ((c>=0x3040)&&(c<=0x309F)) type3 |= C3_HIRAGANA;
-            if ((c>=0x4E00)&&(c<=0x9FAF)) type3 |= C3_IDEOGRAPH;
-            if (c == 0x0640) type3 |= C3_KASHIDA;
-            if ((c>=0x3000)&&(c<=0x303F)) type3 |= C3_SYMBOL;
-
-            if ((c>=0xD800)&&(c<=0xDBFF)) type3 |= C3_HIGHSURROGATE;
-            if ((c>=0xDC00)&&(c<=0xDFFF)) type3 |= C3_LOWSURROGATE;
-
-            if ((c>=0xFF00)&&(c<=0xFF60)) type3 |= C3_FULLWIDTH;
-            if ((c>=0xFF00)&&(c<=0xFF20)) type3 |= C3_SYMBOL;
-            if ((c>=0xFF3B)&&(c<=0xFF40)) type3 |= C3_SYMBOL;
-            if ((c>=0xFF5B)&&(c<=0xFF60)) type3 |= C3_SYMBOL;
-            if ((c>=0xFF21)&&(c<=0xFF3A)) type3 |= C3_ALPHA;
-            if ((c>=0xFF41)&&(c<=0xFF5A)) type3 |= C3_ALPHA;
-            if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_FULLWIDTH;
-            if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_SYMBOL;
-
-            if ((c>=0xFF61)&&(c<=0xFFDC)) type3 |= C3_HALFWIDTH;
-            if ((c>=0xFF61)&&(c<=0xFF64)) type3 |= C3_SYMBOL;
-            if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_KATAKANA;
-            if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_ALPHA;
-            if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_HALFWIDTH;
-            if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_SYMBOL;
-            *chartype++ = type3;
-        }
-        break;
-    }
-    default:
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
+
+    if (count == -1) count = lstrlenW(src) + 1;
+
+    while (count--) *chartype++ = get_char_type( type, *src++ );
+
     return TRUE;
 }
 
@@ -4520,7 +4490,7 @@ INT WINAPI DECLSPEC_HOTPATCH IdnToUnicode( DWORD flags, const WCHAR *src, INT sr
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaA( CHAR c )
 {
     WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_table_entry( wctype_table, wc ) & C1_ALPHA);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_ALPHA);
 }
 
 
@@ -4529,7 +4499,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaA( CHAR c )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & C1_ALPHA);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_ALPHA);
 }
 
 
@@ -4539,7 +4509,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaW( WCHAR wc )
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaNumericA( CHAR c )
 {
     WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_table_entry( wctype_table, wc ) & (C1_ALPHA | C1_DIGIT));
+    return !!(get_char_type( CT_CTYPE1, wc ) & (C1_ALPHA | C1_DIGIT));
 }
 
 
@@ -4548,7 +4518,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaNumericA( CHAR c )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaNumericW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & (C1_ALPHA | C1_DIGIT));
+    return !!(get_char_type( CT_CTYPE1, wc ) & (C1_ALPHA | C1_DIGIT));
 }
 
 
@@ -4557,7 +4527,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaNumericW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharBlankW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & C1_BLANK);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_BLANK);
 }
 
 
@@ -4566,7 +4536,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharBlankW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharCntrlW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & C1_CNTRL);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_CNTRL);
 }
 
 
@@ -4575,7 +4545,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharCntrlW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharDigitW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & C1_DIGIT);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_DIGIT);
 }
 
 
@@ -4585,7 +4555,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharDigitW( WCHAR wc )
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharLowerA( CHAR c )
 {
     WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_table_entry( wctype_table, wc ) & C1_LOWER);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_LOWER);
 }
 
 
@@ -4594,7 +4564,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharLowerA( CHAR c )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharLowerW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & C1_LOWER);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_LOWER);
 }
 
 
@@ -4603,7 +4573,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharLowerW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharPunctW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & C1_PUNCT);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_PUNCT);
 }
 
 
@@ -4613,7 +4583,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharPunctW( WCHAR wc )
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharSpaceA( CHAR c )
 {
     WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_table_entry( wctype_table, wc ) & C1_SPACE);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_SPACE);
 }
 
 
@@ -4622,7 +4592,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharSpaceA( CHAR c )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharSpaceW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & C1_SPACE);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_SPACE);
 }
 
 
@@ -4632,7 +4602,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharSpaceW( WCHAR wc )
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharUpperA( CHAR c )
 {
     WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_table_entry( wctype_table, wc ) & C1_UPPER);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_UPPER);
 }
 
 
@@ -4641,7 +4611,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharUpperA( CHAR c )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharUpperW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & C1_UPPER);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_UPPER);
 }
 
 
@@ -4650,7 +4620,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharUpperW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharXDigitW( WCHAR wc )
 {
-    return !!(get_table_entry( wctype_table, wc ) & C1_XDIGIT);
+    return !!(get_char_type( CT_CTYPE1, wc ) & C1_XDIGIT);
 }
 
 
@@ -4841,7 +4811,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
         if (flags & NORM_IGNORESYMBOLS)
         {
             for (len = 0; srclen; src++, srclen--)
-                if (!(get_table_entry( wctype_table, *src ) & (C1_PUNCT | C1_SPACE))) len++;
+                if (!(get_char_type( CT_CTYPE1, *src ) & (C1_PUNCT | C1_SPACE))) len++;
         }
         else if (flags & LCMAP_FULLWIDTH)
         {
@@ -4881,7 +4851,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
     {
         for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--)
         {
-            if ((flags & NORM_IGNORESYMBOLS) && (get_table_entry( wctype_table, *src ) & (C1_PUNCT | C1_SPACE)))
+            if ((flags & NORM_IGNORESYMBOLS) && (get_char_type( CT_CTYPE1, *src ) & (C1_PUNCT | C1_SPACE)))
                 continue;
             *dst_ptr++ = *src;
             len--;
