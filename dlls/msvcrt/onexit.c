@@ -24,6 +24,7 @@
 #endif
 
 #define _CRTIMP
+#include <process.h>
 #include "msvcrt.h"
 #include "mtdll.h"
 
@@ -31,7 +32,7 @@
 /*********************************************************************
  *		_initialize_onexit_table (UCRTBASE.@)
  */
-int CDECL _initialize_onexit_table(MSVCRT__onexit_table_t *table)
+int __cdecl _initialize_onexit_table(_onexit_table_t *table)
 {
     if (!table)
         return -1;
@@ -45,7 +46,7 @@ int CDECL _initialize_onexit_table(MSVCRT__onexit_table_t *table)
 /*********************************************************************
  *		_register_onexit_function (UCRTBASE.@)
  */
-int CDECL _register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func)
+int __cdecl _register_onexit_function(_onexit_table_t *table, _onexit_t func)
 {
     if (!table)
         return -1;
@@ -67,7 +68,7 @@ int CDECL _register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexi
     if (table->_last == table->_end)
     {
         int len = table->_end - table->_first;
-        MSVCRT__onexit_t *tmp = HeapReAlloc(GetProcessHeap(), 0, table->_first, 2 * len * sizeof(void *));
+        _PVFV *tmp = HeapReAlloc(GetProcessHeap(), 0, table->_first, 2 * len * sizeof(void *));
         if (!tmp)
         {
             _munlock(_EXIT_LOCK1);
@@ -78,7 +79,7 @@ int CDECL _register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexi
         table->_last = table->_first + len;
     }
 
-    *table->_last = func;
+    *table->_last = (_PVFV)func;
     table->_last++;
     _munlock(_EXIT_LOCK1);
     return 0;
@@ -88,10 +89,10 @@ int CDECL _register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexi
 /*********************************************************************
  *		_execute_onexit_table (UCRTBASE.@)
  */
-int CDECL _execute_onexit_table(MSVCRT__onexit_table_t *table)
+int __cdecl _execute_onexit_table(_onexit_table_t *table)
 {
-    MSVCRT__onexit_t *func;
-    MSVCRT__onexit_table_t copy;
+    _PVFV *func;
+    _onexit_table_t copy;
 
     if (!table)
         return -1;
