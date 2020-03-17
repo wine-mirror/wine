@@ -440,6 +440,7 @@ my @decomp_compat_table = ();
 my @comp_exclusions = ();
 my @idna_decomp_table = ();
 my @idna_disallowed = ();
+my %registry_keys;
 my $default_char;
 my $default_wchar;
 
@@ -799,6 +800,23 @@ sub load_data()
     close $IDNA;
 }
 
+
+################################################################
+# add a new registry key
+sub add_registry_key($$)
+{
+    my ($key, $defval) = @_;
+    $registry_keys{$key} = [ $defval ] unless defined $registry_keys{$key};
+}
+
+################################################################
+# add a new registry value
+sub add_registry_value($$$)
+{
+    my ($key, $name, $value) = @_;
+    add_registry_key( $key, undef );
+    push @{$registry_keys{$key}}, "'$name' = s '$value'";
+}
 
 ################################################################
 # define a new lead byte
@@ -2218,6 +2236,8 @@ sub dump_norm_table($)
 
     close OUTPUT;
     save_file($filename);
+
+    add_registry_value( "Normalization", sprintf( "%x", $forms{$type} ), "norm$type.nls" );
 }
 
 
@@ -2236,6 +2256,8 @@ sub output_codepage_file($)
 
     close OUTPUT;
     save_file($output);
+
+    add_registry_value( "Codepage", sprintf( "%d", $codepage ), sprintf( "c_%03d.nls", $codepage ));
 }
 
 ################################################################
@@ -2336,6 +2358,40 @@ sub dump_msdata_codepage($)
 
 
 ################################################################
+# build the script to create registry keys
+sub dump_registry_script($%)
+{
+    my ($filename, %keys) = @_;
+    my $indent = 1;
+
+    printf "Building %s\n", $filename;
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT "HKLM\n{\n";
+    foreach my $k (split /\\/, "SYSTEM\\CurrentControlSet\\Control\\Nls")
+    {
+        printf OUTPUT "%*sNoRemove %s\n%*s{\n", 4 * $indent, "", $k, 4 * $indent, "";
+        $indent++;
+    }
+    foreach my $k (sort keys %keys)
+    {
+        my @subkeys = split /\\/, $k;
+        my ($def, @vals) = @{$keys{$k}};
+        for (my $i = 0; $i < @subkeys; $i++)
+        {
+            printf OUTPUT "%*s%s%s\n%*s{\n", 4 * $indent, "", $subkeys[$i],
+                $i == $#subkeys && $def ? " = s '$def'" : "", 4 * $indent, "";
+            $indent++;
+        }
+        foreach my $v (@vals) { printf OUTPUT "%*sval $v\n", 4 * $indent, ""; }
+        for (my $i = 0; $i < @subkeys; $i++) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; }
+    }
+    while ($indent) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; }
+    close OUTPUT;
+    save_file($filename);
+}
+
+
+################################################################
 # save a file if modified
 sub save_file($)
 {
@@ -2383,6 +2439,7 @@ dump_norm_table( "nls/normnfkd.nls" );
 dump_norm_table( "nls/normidna.nls" );
 foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
 dump_eucjp_codepage();
+dump_registry_script( "dlls/kernelbase/kernelbase.rgs", %registry_keys );
 
 exit 0;
 

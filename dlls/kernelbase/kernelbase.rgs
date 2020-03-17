@@ -1,0 +1,91 @@
+HKLM
+{
+    NoRemove SYSTEM
+    {
+        NoRemove CurrentControlSet
+        {
+            NoRemove Control
+            {
+                NoRemove Nls
+                {
+                    Codepage
+                    {
+                        val '37' = s 'c_037.nls'
+                        val '437' = s 'c_437.nls'
+                        val '500' = s 'c_500.nls'
+                        val '737' = s 'c_737.nls'
+                        val '775' = s 'c_775.nls'
+                        val '850' = s 'c_850.nls'
+                        val '852' = s 'c_852.nls'
+                        val '855' = s 'c_855.nls'
+                        val '857' = s 'c_857.nls'
+                        val '860' = s 'c_860.nls'
+                        val '861' = s 'c_861.nls'
+                        val '862' = s 'c_862.nls'
+                        val '863' = s 'c_863.nls'
+                        val '864' = s 'c_864.nls'
+                        val '865' = s 'c_865.nls'
+                        val '866' = s 'c_866.nls'
+                        val '869' = s 'c_869.nls'
+                        val '874' = s 'c_874.nls'
+                        val '875' = s 'c_875.nls'
+                        val '932' = s 'c_932.nls'
+                        val '936' = s 'c_936.nls'
+                        val '949' = s 'c_949.nls'
+                        val '950' = s 'c_950.nls'
+                        val '1026' = s 'c_1026.nls'
+                        val '1250' = s 'c_1250.nls'
+                        val '1251' = s 'c_1251.nls'
+                        val '1252' = s 'c_1252.nls'
+                        val '1253' = s 'c_1253.nls'
+                        val '1254' = s 'c_1254.nls'
+                        val '1255' = s 'c_1255.nls'
+                        val '1256' = s 'c_1256.nls'
+                        val '1257' = s 'c_1257.nls'
+                        val '1258' = s 'c_1258.nls'
+                        val '1361' = s 'c_1361.nls'
+                        val '10000' = s 'c_10000.nls'
+                        val '10001' = s 'c_10001.nls'
+                        val '10002' = s 'c_10002.nls'
+                        val '10003' = s 'c_10003.nls'
+                        val '10004' = s 'c_10004.nls'
+                        val '10005' = s 'c_10005.nls'
+                        val '10006' = s 'c_10006.nls'
+                        val '10007' = s 'c_10007.nls'
+                        val '10008' = s 'c_10008.nls'
+                        val '10010' = s 'c_10010.nls'
+                        val '10017' = s 'c_10017.nls'
+                        val '10021' = s 'c_10021.nls'
+                        val '10029' = s 'c_10029.nls'
+                        val '10079' = s 'c_10079.nls'
+                        val '10081' = s 'c_10081.nls'
+                        val '10082' = s 'c_10082.nls'
+                        val '20127' = s 'c_20127.nls'
+                        val '20866' = s 'c_20866.nls'
+                        val '21866' = s 'c_21866.nls'
+                        val '28591' = s 'c_28591.nls'
+                        val '28592' = s 'c_28592.nls'
+                        val '28593' = s 'c_28593.nls'
+                        val '28594' = s 'c_28594.nls'
+                        val '28595' = s 'c_28595.nls'
+                        val '28596' = s 'c_28596.nls'
+                        val '28597' = s 'c_28597.nls'
+                        val '28598' = s 'c_28598.nls'
+                        val '28599' = s 'c_28599.nls'
+                        val '28603' = s 'c_28603.nls'
+                        val '28605' = s 'c_28605.nls'
+                        val '20932' = s 'c_20932.nls'
+                    }
+                    Normalization
+                    {
+                        val '1' = s 'normnfc.nls'
+                        val '2' = s 'normnfd.nls'
+                        val '5' = s 'normnfkc.nls'
+                        val '6' = s 'normnfkd.nls'
+                        val 'd' = s 'normidna.nls'
+                    }
+                }
+            }
+        }
+    }
+}

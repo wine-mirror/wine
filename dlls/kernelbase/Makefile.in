@@ -22,3 +22,5 @@ C_SRCS = \
 	thread.c \
 	version.c \
 	wctype.c
+
+RC_SRCS = kernelbase.rc
