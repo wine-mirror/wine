@@ -3050,12 +3050,12 @@ static void test_datetime(void)
 
 static void test_repeating_element(void)
 {
-    WS_XML_STRING localname = {4, (BYTE *)"test"}, ns = {0, NULL};
-    WS_XML_STRING val = {3, (BYTE *)"val"}, wrapper = {7, (BYTE *)"wrapper"};
+    WS_XML_STRING localname = {4, (BYTE *)"test"}, ns = {0, NULL}, data = {4, (BYTE *)"data"};
+    WS_XML_STRING val = {3, (BYTE *)"val"}, wrapper = {7, (BYTE *)"wrapper"}, structval = {9, (BYTE *)"structval"};
     HRESULT hr;
     WS_XML_WRITER *writer;
-    WS_STRUCT_DESCRIPTION s;
-    WS_FIELD_DESCRIPTION f, *fields[1];
+    WS_STRUCT_DESCRIPTION s, s2;
+    WS_FIELD_DESCRIPTION f, f2, *fields[1], *fields2[1];
     WS_ITEM_RANGE range;
     struct test
     {
@@ -3067,6 +3067,15 @@ static void test_repeating_element(void)
         INT32 *val;
         ULONG  count;
     } *test2;
+    struct value
+    {
+        INT32 data;
+    } value;
+    struct test3
+    {
+        const struct value **val;
+        ULONG                count;
+    } *test3;
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -3152,6 +3161,50 @@ static void test_repeating_element(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<test><val>1</val><val>2</val></test>", __LINE__ );
     HeapFree( GetProcessHeap(), 0, test2 );
+
+    /* nillable item */
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.mapping       = WS_ELEMENT_FIELD_MAPPING;
+    f2.localName     = &data;
+    f2.ns            = &ns;
+    f2.type          = WS_INT32_TYPE;
+    fields2[0] = &f2;
+
+    memset( &s2, 0, sizeof(s2) );
+    s2.size          = sizeof(struct test3);
+    s2.alignment     = TYPE_ALIGNMENT(struct test3);
+    s2.typeLocalName = &structval;
+    s2.typeNs        = &ns;
+    s2.fields        = fields2;
+    s2.fieldCount    = 1;
+
+    f.type            = WS_STRUCT_TYPE;
+    f.typeDescription = &s2;
+    f.localName       = &wrapper;
+    f.ns              = &ns;
+    f.itemRange       = NULL;
+    f.options         = WS_FIELD_POINTER|WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE|WS_FIELD_NILLABLE_ITEM;
+
+    value.data = -1;
+    test3 = HeapAlloc( GetProcessHeap(), 0, sizeof(*test3) + 2 * sizeof(const struct value *) );
+    test3->val = (const struct value **)(test3 + 1);
+    test3->val[0] = &value;
+    test3->val[1] = NULL;
+    test3->count  = 2;
+
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_POINTER, &test3, sizeof(test3), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<test><wrapper><val><data>-1</data></val><val a:nil=\"true\" "
+                          "xmlns:a=\"http://www.w3.org/2001/XMLSchema-instance\"/></wrapper></test>", __LINE__ );
+    HeapFree( GetProcessHeap(), 0, test3 );
 
     WsFreeWriter( writer );
 }
