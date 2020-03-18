@@ -669,6 +669,15 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                 return S_OK;
             }
         }
+
+        if(ctx->call_ctx->bytecode->named_item) {
+            jsdisp_t *script_obj = ctx->call_ctx->bytecode->named_item->script_obj;
+            hres = jsdisp_get_id(script_obj, identifier, 0, &id);
+            if(SUCCEEDED(hres)) {
+                exprval_set_disp_ref(ret, to_disp(script_obj), id);
+                return S_OK;
+            }
+        }
     }
 
     hres = jsdisp_get_id(ctx->global, identifier, 0, &id);
@@ -1260,13 +1269,17 @@ static HRESULT interp_identifier_ref(script_ctx_t *ctx, BSTR identifier, unsigne
         return hres;
 
     if(exprval.type == EXPRVAL_INVALID && (flags & fdexNameEnsure)) {
+        jsdisp_t *script_obj = ctx->global;
         DISPID id;
 
-        hres = jsdisp_get_id(ctx->global, identifier, fdexNameEnsure, &id);
+        if(ctx->call_ctx->bytecode->named_item)
+            script_obj = ctx->call_ctx->bytecode->named_item->script_obj;
+
+        hres = jsdisp_get_id(script_obj, identifier, fdexNameEnsure, &id);
         if(FAILED(hres))
             return hres;
 
-        exprval_set_disp_ref(&exprval, to_disp(ctx->global), id);
+        exprval_set_disp_ref(&exprval, to_disp(script_obj), id);
     }
 
     if(exprval.type == EXPRVAL_JSVAL || exprval.type == EXPRVAL_INVALID) {
