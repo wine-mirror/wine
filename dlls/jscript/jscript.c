@@ -110,10 +110,15 @@ static inline BOOL is_started(script_ctx_t *ctx)
 
 HRESULT create_named_item_script_obj(script_ctx_t *ctx, named_item_t *item)
 {
-    /* FIXME: Create a separate script dispatch instead of using the global */
-    item->script_obj = ctx->global;
-    IDispatchEx_AddRef(&item->script_obj->IDispatchEx_iface);
-    return S_OK;
+    static const builtin_info_t disp_info = {
+        JSCLASS_GLOBAL,
+        {NULL, NULL, 0},
+        0, NULL,
+        NULL,
+        NULL
+    };
+
+    return create_dispex(ctx, &disp_info, NULL, &item->script_obj);
 }
 
 static void release_named_item_script_obj(named_item_t *item)

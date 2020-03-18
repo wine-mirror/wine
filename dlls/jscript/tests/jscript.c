@@ -1203,7 +1203,6 @@ static void test_named_items(void)
     ok(dispex == dispex2, "get_script_dispatch returned different dispatch objects.\n");
     IDispatchEx_Release(dispex2);
     dispex2 = get_script_dispatch(script, L"codeOnlyItem");
-    todo_wine
     ok(dispex != dispex2, "get_script_dispatch returned same dispatch objects.\n");
 
     SET_EXPECT(OnStateChange_INITIALIZED);
@@ -1333,9 +1332,7 @@ static void test_named_items(void)
 
         id = 0;
         hr = IDispatchEx_GetDispID(dispex2, bstr, 0, &id);
-        todo_wine
         ok(hr == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(global_idents[i]), hr);
-        todo_wine
         ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(global_idents[i]), id);
         SysFreeString(bstr);
     }
@@ -1345,9 +1342,7 @@ static void test_named_items(void)
         bstr = SysAllocString(context_idents[i]);
         id = 0;
         hr = IDispatchEx_GetDispID(dispex, bstr, 0, &id);
-        todo_wine
         ok(hr == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(context_idents[i]), hr);
-        todo_wine
         ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(context_idents[i]), id);
         id = 0;
         hr = IDispatchEx_GetDispID(dispex2, bstr, 0, &id);
@@ -1381,12 +1376,9 @@ static void test_named_items(void)
         SET_EXPECT(OnScriptError);
         SET_EXPECT(OnLeaveScript);
         hr = IActiveScriptParse_ParseScriptText(parse, context_code_test[i], NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-        todo_wine
         ok(FAILED(hr), "ParseScriptText(%s) returned: %08x\n", wine_dbgstr_w(context_code_test[i]), hr);
         CHECK_CALLED(OnEnterScript);
-        todo_wine_if(i != 0)
         CHECK_CALLED(GetIDsOfNames);
-        todo_wine
         CHECK_CALLED(OnScriptError);
         CHECK_CALLED(OnLeaveScript);
 
@@ -1496,9 +1488,7 @@ static void test_named_items(void)
         bstr = SysAllocString(context_idents[i]);
         id = 0;
         hr = IDispatchEx_GetDispID(dispex, bstr, 0, &id);
-        todo_wine_if(i != 0)
         ok(hr == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(context_idents[i]), hr);
-        todo_wine_if(i != 0)
         ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(context_idents[i]), id);
         SysFreeString(bstr);
     }
@@ -1537,9 +1527,7 @@ static void test_named_items(void)
         bstr = SysAllocString(global_idents[i]);
         id = 0;
         hr = IDispatchEx_GetDispID(dispex, bstr, 0, &id);
-        todo_wine
         ok(hr == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(global_idents[i]), hr);
-        todo_wine
         ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(global_idents[i]), id);
         SysFreeString(bstr);
     }
@@ -1549,9 +1537,7 @@ static void test_named_items(void)
         bstr = SysAllocString(context_idents[i]);
         id = 0;
         hr = IDispatchEx_GetDispID(dispex, bstr, 0, &id);
-        todo_wine_if(i != 0)
         ok(hr == DISP_E_UNKNOWNNAME, "GetDispID(%s) returned %08x\n", wine_dbgstr_w(context_idents[i]), hr);
-        todo_wine_if(i != 0)
         ok(id == -1, "[%s] id = %d, expected -1\n", wine_dbgstr_w(context_idents[i]), id);
         SysFreeString(bstr);
     }
@@ -1579,10 +1565,8 @@ static void test_named_items(void)
         SET_EXPECT(OnScriptError);
         SET_EXPECT(OnLeaveScript);
         hr = IActiveScriptParse_ParseScriptText(parse, context_code_test[i], NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-        todo_wine_if(i != 0)
         ok(FAILED(hr), "ParseScriptText(%s) returned: %08x\n", wine_dbgstr_w(context_code_test[i]), hr);
         CHECK_CALLED(OnEnterScript);
-        todo_wine_if(i != 0)
         CHECK_CALLED(OnScriptError);
         CHECK_CALLED(OnLeaveScript);
 
@@ -1590,10 +1574,8 @@ static void test_named_items(void)
         SET_EXPECT(OnScriptError);
         SET_EXPECT(OnLeaveScript);
         hr = IActiveScriptParse_ParseScriptText(parse, context_code_test[i], L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
-        todo_wine_if(i != 0)
         ok(FAILED(hr), "ParseScriptText(%s) returned: %08x\n", wine_dbgstr_w(context_code_test[i]), hr);
         CHECK_CALLED(OnEnterScript);
-        todo_wine_if(i != 0)
         CHECK_CALLED(OnScriptError);
         CHECK_CALLED(OnLeaveScript);
     }
