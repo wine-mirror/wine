@@ -9653,6 +9653,7 @@ out:
 
 static void test_update_volumetexture(void)
 {
+    D3DADAPTER_IDENTIFIER9 identifier;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d9;
     HWND window;
@@ -9662,6 +9663,7 @@ static void test_update_volumetexture(void)
     D3DLOCKED_BOX locked_box;
     ULONG refcount;
     D3DCAPS9 caps;
+    BOOL is_warp;
     static const struct
     {
         D3DPOOL src_pool, dst_pool;
@@ -9710,6 +9712,9 @@ static void test_update_volumetexture(void)
     window = create_window();
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
+    hr = IDirect3D9_GetAdapterIdentifier(d3d9, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    is_warp = adapter_is_warp(&identifier);
     if (!(device = create_device(d3d9, window, NULL)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -9780,7 +9785,8 @@ static void test_update_volumetexture(void)
 
         hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)src, (IDirect3DBaseTexture9 *)dst);
         todo_wine_if (FAILED(hr))
-            ok(SUCCEEDED(hr), "Failed to update texture, hr %#x, case %u.\n", hr, i);
+            ok(SUCCEEDED(hr) || (is_warp && (i == 6 || i == 7)), /* Fails with Win10 WARP driver */
+                    "Failed to update texture, hr %#x, case %u.\n", hr, i);
 
         IDirect3DVolumeTexture9_Release(src);
         IDirect3DVolumeTexture9_Release(dst);
