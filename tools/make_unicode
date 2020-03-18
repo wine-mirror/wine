@@ -2371,13 +2371,13 @@ sub dump_sortkey_table($$)
     my ($filename, $download) = @_;
 
     my @keys;
-    my ($part, $section, $subsection, $guid, $version);
+    my ($part, $section, $subsection, $guid, $version, $ling_flag);
     my @multiple_weights;
     my @expansions;
     my @compressions;
-    my @exceptions;
-    my @except_guid;
+    my %exceptions;
     my %guids;
+    my %compr_flags;
     my %locales;
     my $default_guid = "00000001-57ee-1e5c-00b4-d0000bb1e11e";
     my $jamostr = "";
@@ -2488,6 +2488,8 @@ sub dump_sortkey_table($$)
                     $guids{$guid} = { } unless defined $guids{$guid};
                     $guids{$guid}->{flags} |= $flags{$2} if $2;
                     $guids{$guid}->{compr} = @compressions;
+                    $exceptions{"$guid-"} = [ ] unless defined $exceptions{"$guid-"};
+                    $compr_flags{$guid} = [ ] unless defined $compr_flags{$guid};
                     push @compressions, [ ];
                 }
                 else  # merge with current one
@@ -2495,6 +2497,7 @@ sub dump_sortkey_table($$)
                     $guids{lc $1} = { } unless defined $guids{lc $1};
                     $guids{lc $1}->{flags} |= $flags{$2} if $2;
                     $guids{lc $1}->{compr} = $guids{$guid}->{compr};
+                    $compr_flags{lc $1} = $compr_flags{$guid};
                 }
                 next;
             }
@@ -2510,7 +2513,10 @@ sub dump_sortkey_table($$)
             }
             if ($subsection && /^\s*(($re_hex\s+){2,8})$re_key/)
             {
-                push @{$compressions[$#compressions]}, [ split(/\s+/,$3), map { hex $_; } split(/\s+/,$1) ];
+                my @comp = map { hex $_; } split(/\s+/,$1);
+                push @{$compressions[$#compressions]}, [ split(/\s+/,$3), @comp ];
+                # add compression flags
+                $compr_flags{$guid}->[$comp[0]] |= @comp >= 6 ? 0xc0 : @comp >= 4 ? 0x80 : 0x40;
                 next;
             }
         }
@@ -2520,8 +2526,8 @@ sub dump_sortkey_table($$)
             {
                 $guid = lc $1;
                 $guids{$guid} = { } unless defined $guids{lc $1};
-                push @except_guid, ($2 ? "+" : "-") . $guid;
-                push @exceptions, [ ];
+                $ling_flag = ($2 ? "+" : "-");
+                $exceptions{"$guid$ling_flag"} = [ ] unless defined $exceptions{"$guid$ling_flag"};
                 next;
             }
             if (/^\s*LOCALENAME\s+([A-Za-z0-9-_]+)/)
@@ -2531,7 +2537,7 @@ sub dump_sortkey_table($$)
             }
             if (/^\s*($re_hex)\s+$re_key/)
             {
-                ${$exceptions[$#exceptions]}[hex $1] = [ split(/\s+/,$2) ];
+                $exceptions{"$guid$ling_flag"}->[hex $1] = [ split(/\s+/,$2) ];
                 next;
             }
         }
@@ -2556,17 +2562,19 @@ sub dump_sortkey_table($$)
         $table .= pack "C4", $k[1], $k[0], $k[2], $k[3];
     }
 
-    for (my $i = 0; $i < @exceptions; $i++)
+    foreach my $id (sort keys %exceptions)
     {
         my $pos = length($table) / 4;
-        my @exc = @{$exceptions[$i]};
+        my @exc = @{$exceptions{$id}};
         my @filled;
-        my $key = (substr($except_guid[$i],0,1) eq "+" ? "ling_except" : "except");
-        $guids{substr( $except_guid[$i], 1 )}->{$key} = $pos;
+        my $key = (substr( $id, -1 ) eq "+" ? "ling_except" : "except");
+        my $guid = substr( $id, 0, -1 );
+        $guids{$guid}->{$key} = $pos;
         $pos += 0x100;
+        my @flags = @{$compr_flags{$guid}} if defined $compr_flags{$guid};
         for (my $j = 0; $j < 0x10000; $j++)
         {
-            next unless defined $exc[$j];
+            next unless defined $exc[$j] || defined $flags[$j];
             $filled[$j >> 8] = 1;
             $j |= 0xff;
         }
@@ -2579,6 +2587,7 @@ sub dump_sortkey_table($$)
         {
             next unless $filled[$j >> 8];
             my @k = defined $exc[$j] ? @{$exc[$j]} : defined $keys[$j] ? @{$keys[$j]} : (0) x 4;
+            $k[3] |= $flags[$j] || 0;
             $table .= pack "C4", $k[1], $k[0], $k[2], $k[3];
         }
     }
