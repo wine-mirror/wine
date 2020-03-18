@@ -24,6 +24,7 @@ errno_t __cdecl memcpy_s(void*,size_t,const void*,size_t);
 void*   __cdecl memset(void*,int,size_t);
 void*   __cdecl _memccpy(void*,const void*,int,unsigned int);
 int     __cdecl _memicmp(const void*,const void*,unsigned int);
+int     __cdecl _memicmp_l(const void*,const void*,unsigned int,_locale_t);
 
 static inline int memicmp(const void* s1, const void* s2, size_t len) { return _memicmp(s1, s2, len); }
 static inline void* memccpy(void *s1, const void *s2, int c, size_t n) { return _memccpy(s1, s2, c, n); }
