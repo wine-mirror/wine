@@ -3030,6 +3030,8 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     }else if(!(flags & (EXEC_GLOBAL | EXEC_EVAL))) {
         hres = create_dispex(ctx, NULL, NULL, &variable_obj);
         if(FAILED(hres)) return hres;
+    }else if(bytecode->named_item) {
+        variable_obj = jsdisp_addref(bytecode->named_item->script_obj);
     }else {
         variable_obj = jsdisp_addref(ctx->global);
     }
