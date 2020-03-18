@@ -612,7 +612,7 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
  * PARAMS
  *  hProv       [I] Handle to the CSP whose reference is being incremented.
  *  pdwReserved [IN] Reserved for future use and must be NULL.
- *  dwFlags     [I] Reserved for future use and must be NULL.
+ *  dwFlags     [I] Reserved for future use and must be 0.
  *
  * RETURNS
  *  Success: TRUE
@@ -735,7 +735,7 @@ BOOL WINAPI CryptGenRandom (HCRYPTPROV hProv, DWORD dwLen, BYTE *pbBuffer)
  *  hProv   [I] Handle of a CSP.
  *  Algid   [I] Identifies the hash algorithm to use.
  *  hKey    [I] Key for the hash (if required).
- *  dwFlags [I] Reserved for future use and must be NULL.
+ *  dwFlags [I] Reserved for future use and must be 0.
  *  phHash  [O] Address of the future handle to the new hash object.
  *
  * RETURNS
@@ -970,7 +970,7 @@ BOOL WINAPI CryptDestroyKey (HCRYPTKEY hKey)
  *
  * PARAMS
  *  hHash       [I] Handle to the hash to be copied.
- *  pdwReserved [I] Reserved for future use and must be zero.
+ *  pdwReserved [I] Reserved for future use and must be NULL.
  *  dwFlags     [I] Reserved for future use and must be zero.
  *  phHash      [O] Address of the handle to receive the copy.
  *
