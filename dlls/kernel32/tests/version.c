@@ -193,8 +193,6 @@ static void test_VerifyVersionInfo(void)
         DWORD condition3;
         DWORD typemask4;
         DWORD condition4;
-
-        BOOL todo;
     } verify_version_tests[] =
     {
         {
@@ -665,12 +663,9 @@ static void test_VerifyVersionInfo(void)
 
         SetLastError(0xdeadbeef);
         ret = VerifyVersionInfoA(&info, test->verifymask, mask);
-    todo_wine_if(test->todo)
-    {
         ok(test->err ? !ret : ret, "%u: unexpected return value %d.\n", i, ret);
         if (!ret)
             ok(GetLastError() == test->err, "%u: unexpected error code %d, expected %d.\n", i, GetLastError(), test->err);
-    }
     }
 
     /* test handling of version numbers */
