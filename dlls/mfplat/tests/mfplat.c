@@ -2066,7 +2066,7 @@ static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResul
     state = IMFAsyncResult_GetStateNoAddRef(result);
     if (state && SUCCEEDED(IUnknown_QueryInterface(state, &IID_IMFMediaEventQueue, (void **)&queue)))
     {
-        IMFMediaEvent *event;
+        IMFMediaEvent *event = NULL, *event2;
 
         if (is_win8_plus)
         {
@@ -2079,10 +2079,11 @@ static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResul
             hr = IMFMediaEventQueue_EndGetEvent(queue, result, &event);
             ok(hr == S_OK, "Failed to finalize GetEvent, hr %#x.\n", hr);
 
-            hr = IMFMediaEventQueue_EndGetEvent(queue, result, &event);
+            hr = IMFMediaEventQueue_EndGetEvent(queue, result, &event2);
             ok(hr == E_FAIL, "Unexpected result, hr %#x.\n", hr);
 
-            IMFMediaEvent_Release(event);
+            if (event)
+                IMFMediaEvent_Release(event);
         }
 
         hr = IMFAsyncResult_GetObject(result, &obj);
@@ -2719,7 +2720,7 @@ static void test_event_queue(void)
     hr = IMFMediaEventQueue_QueueEvent(queue, event);
     ok(hr == S_OK, "Failed to queue event, hr %#x.\n", hr);
 
-    ret = WaitForSingleObject(callback.event, 100);
+    ret = WaitForSingleObject(callback.event, 500);
     ok(ret == WAIT_OBJECT_0, "Unexpected return value %#x.\n", ret);
 
     CloseHandle(callback.event);
