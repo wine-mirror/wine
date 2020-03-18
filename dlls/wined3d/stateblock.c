@@ -852,9 +852,9 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
     }
 
     map = stateblock->changed.streamSource;
-    for (i = 0; map; map >>= 1, ++i)
+    while (map)
     {
-        if (!(map & 1)) continue;
+        i = wined3d_bit_scan(&map);
 
         if (stateblock->stateblock_state.streams[i].stride != state->streams[i].stride
                 || stateblock->stateblock_state.streams[i].offset != state->streams[i].offset
@@ -877,9 +877,9 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
     }
 
     map = stateblock->changed.streamFreq;
-    for (i = 0; map; map >>= 1, ++i)
+    while (map)
     {
-        if (!(map & 1)) continue;
+        i = wined3d_bit_scan(&map);
 
         if (stateblock->stateblock_state.streams[i].frequency != state->streams[i].frequency
                 || stateblock->stateblock_state.streams[i].flags != state->streams[i].flags)
@@ -893,9 +893,9 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
     }
 
     map = stateblock->changed.clipplane;
-    for (i = 0; map; map >>= 1, ++i)
+    while (map)
     {
-        if (!(map & 1)) continue;
+        i = wined3d_bit_scan(&map);
 
         if (memcmp(&stateblock->stateblock_state.clip_planes[i], &state->clip_planes[i], sizeof(state->clip_planes[i])))
         {
@@ -929,9 +929,9 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
 
     /* Samplers */
     map = stateblock->changed.textures;
-    for (i = 0; map; map >>= 1, ++i)
+    while (map)
     {
-        if (!(map & 1)) continue;
+        i = wined3d_bit_scan(&map);
 
         TRACE("Updating texture %u to %p (was %p).\n",
                 i, state->textures[i], stateblock->stateblock_state.textures[i]);
