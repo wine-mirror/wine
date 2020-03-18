@@ -2397,7 +2397,7 @@ static void parse_supportedos_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
                     set_error( xmlbuf );
                     return;
                 }
-                compat->Type = ACTCX_COMPATIBILITY_ELEMENT_TYPE_OS;
+                compat->Type = ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS;
                 compat->Id = compat_id;
             }
             else
