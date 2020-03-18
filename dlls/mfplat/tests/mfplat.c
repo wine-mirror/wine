@@ -3475,6 +3475,14 @@ static void test_MFCalculateImageSize(void)
         { &MFVideoFormat_YV12, 2, 1, 3 },
         { &MFVideoFormat_YV12, 1, 2, 6, 3 },
         { &MFVideoFormat_YV12, 4, 3, 18 },
+
+        { &MFVideoFormat_YUY2, 2, 1, 4 },
+        { &MFVideoFormat_YUY2, 4, 3, 24 },
+        { &MFVideoFormat_YUY2, 128, 128, 32768 },
+
+        { &MFVideoFormat_UYVY, 2, 1, 4 },
+        { &MFVideoFormat_UYVY, 4, 3, 24 },
+        { &MFVideoFormat_UYVY, 128, 128, 32768 },
     };
     unsigned int i;
     UINT32 size;
@@ -3490,23 +3498,22 @@ static void test_MFCalculateImageSize(void)
 
     for (i = 0; i < ARRAY_SIZE(image_size_tests); ++i)
     {
-        /* Those are supported since Win10. */
-        BOOL is_broken = IsEqualGUID(image_size_tests[i].subtype, &MFVideoFormat_A16B16G16R16F) ||
-                IsEqualGUID(image_size_tests[i].subtype, &MFVideoFormat_A2R10G10B10);
+        const struct image_size_test *ptr = &image_size_tests[i];
 
-        hr = MFCalculateImageSize(image_size_tests[i].subtype, image_size_tests[i].width,
-                image_size_tests[i].height, &size);
+        /* Those are supported since Win10. */
+        BOOL is_broken = IsEqualGUID(ptr->subtype, &MFVideoFormat_A16B16G16R16F) ||
+                IsEqualGUID(ptr->subtype, &MFVideoFormat_A2R10G10B10);
+
+        hr = MFCalculateImageSize(ptr->subtype, ptr->width, ptr->height, &size);
         ok(hr == S_OK || (is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#x.\n", i, hr);
-        ok(size == image_size_tests[i].size, "%u: unexpected image size %u, expected %u.\n", i, size,
-                image_size_tests[i].size);
+        ok(size == ptr->size, "%u: unexpected image size %u, expected %u. Size %u x %u, format %s.\n", i, size, ptr->size,
+                ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->subtype->Data1, 4));
 
         if (pMFGetPlaneSize)
         {
-            unsigned int plane_size = image_size_tests[i].plane_size ? image_size_tests[i].plane_size :
-                    image_size_tests[i].size;
+            unsigned int plane_size = ptr->plane_size ? ptr->plane_size : ptr->size;
 
-            hr = pMFGetPlaneSize(image_size_tests[i].subtype->Data1, image_size_tests[i].width, image_size_tests[i].height,
-                    &size);
+            hr = pMFGetPlaneSize(ptr->subtype->Data1, ptr->width, ptr->height, &size);
             ok(hr == S_OK, "%u: failed to get plane size, hr %#x.\n", i, hr);
             ok(size == plane_size, "%u: unexpected plane size %u, expected %u.\n", i, size, plane_size);
         }
@@ -4635,16 +4642,51 @@ static void test_MFCreate2DMediaBuffer(void)
         unsigned int height;
         unsigned int fourcc;
         unsigned int contiguous_length;
+        int pitch;
+        unsigned int plane_multiplier;
     } _2d_buffer_tests[] =
     {
-        { 2, 2, MAKEFOURCC('N','V','1','2'), 6 },
-        { 4, 2, MAKEFOURCC('N','V','1','2'), 12 },
-        { 2, 4, MAKEFOURCC('N','V','1','2'), 12 },
-        { 1, 3, MAKEFOURCC('N','V','1','2'), 4 },
+        { 2, 2, MAKEFOURCC('N','V','1','2'), 6, 64 },
+        { 4, 2, MAKEFOURCC('N','V','1','2'), 12, 64 },
+        { 2, 4, MAKEFOURCC('N','V','1','2'), 12, 64 },
+        { 1, 3, MAKEFOURCC('N','V','1','2'), 4, 64 },
 
-        { 2, 4, D3DFMT_A8R8G8B8, 32 },
-        { 1, 4, D3DFMT_A8R8G8B8, 16 },
-        { 4, 1, D3DFMT_A8R8G8B8, 16 },
+        { 2, 2, MAKEFOURCC('I','M','C','2'), 6, 128 },
+        { 4, 2, MAKEFOURCC('I','M','C','2'), 12, 128 },
+        { 2, 4, MAKEFOURCC('I','M','C','2'), 12, 128 },
+        { 2, 2, MAKEFOURCC('I','M','C','4'), 6, 128 },
+        { 4, 2, MAKEFOURCC('I','M','C','4'), 12, 128 },
+        { 2, 4, MAKEFOURCC('I','M','C','4'), 12, 128 },
+
+        { 4,  2, MAKEFOURCC('I','M','C','1'),  32, 128, 2 },
+        { 4,  4, MAKEFOURCC('I','M','C','1'),  64, 128, 2 },
+        { 4, 16, MAKEFOURCC('I','M','C','1'), 256, 128, 2 },
+        { 4, 20, MAKEFOURCC('I','M','C','1'), 320, 128, 2 },
+
+        { 4,  2, MAKEFOURCC('I','M','C','3'),  32, 128, 2 },
+        { 4,  4, MAKEFOURCC('I','M','C','3'),  64, 128, 2 },
+        { 4, 16, MAKEFOURCC('I','M','C','3'), 256, 128, 2 },
+        { 4, 20, MAKEFOURCC('I','M','C','3'), 320, 128, 2 },
+
+        { 4,  2, MAKEFOURCC('Y','V','1','2'),  12, 128 },
+        { 4,  4, MAKEFOURCC('Y','V','1','2'),  24, 128 },
+        { 4, 16, MAKEFOURCC('Y','V','1','2'),  96, 128 },
+
+        { 4,  2, MAKEFOURCC('A','Y','U','V'),  32, 64 },
+        { 4,  4, MAKEFOURCC('A','Y','U','V'),  64, 64 },
+        { 4, 16, MAKEFOURCC('A','Y','U','V'), 256, 64 },
+
+        { 4,  2, MAKEFOURCC('Y','U','Y','2'),  16, 64 },
+        { 4,  4, MAKEFOURCC('Y','U','Y','2'),  32, 64 },
+        { 4, 16, MAKEFOURCC('Y','U','Y','2'), 128, 64 },
+
+        { 4,  2, MAKEFOURCC('U','Y','V','Y'),  16, 64 },
+        { 4,  4, MAKEFOURCC('U','Y','V','Y'),  32, 64 },
+        { 4, 16, MAKEFOURCC('U','Y','V','Y'), 128, 64 },
+
+        { 2, 4, D3DFMT_A8R8G8B8, 32, 64 },
+        { 1, 4, D3DFMT_A8R8G8B8, 16, 64 },
+        { 4, 1, D3DFMT_A8R8G8B8, 16, 64 },
     };
     unsigned int max_length, length, length2;
     BYTE *buffer_start, *data, *data2;
@@ -4838,9 +4880,28 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(length == ptr->contiguous_length, "%d: unexpected contiguous length %u for %u x %u, format %s.\n",
                 i, length, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
 
+        hr = IMFMediaBuffer_Lock(buffer, &data, &length2, NULL);
+        ok(hr == S_OK, "Failed to lock buffer, hr %#x.\n", hr);
+        ok(length == ptr->contiguous_length, "%d: unexpected linear buffer length %u for %u x %u, format %s.\n",
+                i, length2, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
+
+        hr = IMFMediaBuffer_Unlock(buffer);
+        ok(hr == S_OK, "Failed to unlock buffer, hr %#x.\n", hr);
+
         hr = pMFGetPlaneSize(ptr->fourcc, ptr->width, ptr->height, &length2);
         ok(hr == S_OK, "Failed to get plane size, hr %#x.\n", hr);
-        ok(length2 == length, "%d: contiguous length %u does not match plane size %u.\n", i, length, length2);
+        if (ptr->plane_multiplier)
+            length2 *= ptr->plane_multiplier;
+        ok(length2 == length, "%d: contiguous length %u does not match plane size %u, %u x %u, format %s.\n", i, length,
+                length2, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
+
+        hr = IMF2DBuffer_Lock2D(_2dbuffer, &data, &pitch);
+        ok(hr == S_OK, "Failed to lock buffer, hr %#x.\n", hr);
+        hr = IMF2DBuffer_Unlock2D(_2dbuffer);
+        ok(hr == S_OK, "Failed to unlock buffer, hr %#x.\n", hr);
+
+        ok(pitch == ptr->pitch, "%d: unexpected pitch %d, expected %d, %u x %u, format %s.\n", i, pitch, ptr->pitch,
+                ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
 
         ret = TRUE;
         hr = IMF2DBuffer_IsContiguousFormat(_2dbuffer, &ret);

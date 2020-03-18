@@ -1799,6 +1799,8 @@ static const struct uncompressed_video_format video_formats[] =
     { &MFVideoFormat_NV12,          1, 0, 0, 1 },
     { &MFVideoFormat_D16,           2, 3, 0, 0 },
     { &MFVideoFormat_L16,           2, 3, 0, 0 },
+    { &MFVideoFormat_UYVY,          2, 0, 0, 1 },
+    { &MFVideoFormat_YUY2,          2, 0, 0, 1 },
     { &MFVideoFormat_YV12,          1, 0, 0, 1 },
     { &MFVideoFormat_A16B16G16R16F, 8, 3, 1, 0 },
 };

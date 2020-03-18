@@ -546,6 +546,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
 {
     unsigned int bpp, max_length, plane_size;
     struct memory_buffer *object;
+    unsigned int row_alignment;
     GUID subtype;
     BOOL is_yuv;
     HRESULT hr;
@@ -572,10 +573,28 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
     if (!object)
         return E_OUTOFMEMORY;
 
-    pitch = ALIGN_SIZE(width * bpp, MF_64_BYTE_ALIGNMENT);
+    switch (fourcc)
+    {
+        case MAKEFOURCC('I','M','C','1'):
+        case MAKEFOURCC('I','M','C','2'):
+        case MAKEFOURCC('I','M','C','3'):
+        case MAKEFOURCC('I','M','C','4'):
+        case MAKEFOURCC('Y','V','1','2'):
+            row_alignment = MF_128_BYTE_ALIGNMENT;
+            break;
+        default:
+            row_alignment = MF_64_BYTE_ALIGNMENT;
+    }
+
+    pitch = ALIGN_SIZE(width * bpp, row_alignment);
 
     switch (fourcc)
     {
+        case MAKEFOURCC('I','M','C','1'):
+        case MAKEFOURCC('I','M','C','3'):
+            max_length = pitch * height * 2;
+            plane_size *= 2;
+            break;
         case MAKEFOURCC('N','V','1','2'):
             max_length = pitch * height * 3 / 2;
             break;
