@@ -2302,7 +2302,7 @@ static HRESULT d3d_device7_GetRenderState(IDirect3DDevice7 *iface,
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    device_state = wined3d_stateblock_get_state(device->state);
+    device_state = device->stateblock_state;
     switch (state)
     {
         case D3DRENDERSTATE_TEXTUREMAG:
@@ -2451,7 +2451,7 @@ static HRESULT WINAPI d3d_device3_GetRenderState(IDirect3DDevice3 *iface,
             *value = 0;
 
             wined3d_mutex_lock();
-            if ((tex = wined3d_stateblock_get_state(device->state)->textures[0]))
+            if ((tex = device->stateblock_state->textures[0]))
             {
                 /* The parent of the texture is the IDirectDrawSurface7
                  * interface of the ddraw surface. */
@@ -2673,7 +2673,7 @@ static void fixup_texture_alpha_op(struct d3d_device *device)
     if (!(device->legacyTextureBlending && device->texture_map_blend == D3DTBLEND_MODULATE))
         return;
 
-    if ((tex = wined3d_stateblock_get_state(device->state)->textures[0]))
+    if ((tex = device->stateblock_state->textures[0]))
     {
         struct wined3d_resource_desc desc;
 
@@ -3233,7 +3233,7 @@ static HRESULT d3d_device7_GetTransform(IDirect3DDevice7 *iface,
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    memcpy(matrix, &wined3d_stateblock_get_state(device->state)->transforms[wined3d_state], sizeof(*matrix));
+    memcpy(matrix, &device->stateblock_state->transforms[wined3d_state], sizeof(*matrix));
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -3886,7 +3886,7 @@ static HRESULT WINAPI d3d_device7_GetClipStatus(IDirect3DDevice7 *iface, D3DCLIP
 
     FIXME("iface %p, clip_status %p stub.\n", iface, clip_status);
 
-    vp = wined3d_stateblock_get_state(device->state)->viewport;
+    vp = device->stateblock_state->viewport;
     clip_status->minx = vp.x;
     clip_status->maxx = vp.x + vp.width;
     clip_status->miny = vp.y;
@@ -4566,7 +4566,7 @@ static void prepare_clip_space_planes(struct d3d_device *device, struct wined3d_
     /* We want the wined3d matrices since those include the legacy viewport
      * transformation. */
     wined3d_mutex_lock();
-    state = wined3d_stateblock_get_state(device->state);
+    state = device->stateblock_state;
     multiply_matrix(&m, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD]);
     multiply_matrix(&m, &state->transforms[WINED3D_TS_PROJECTION], &m);
     wined3d_mutex_unlock();
@@ -4725,7 +4725,7 @@ static HRESULT d3d_device7_GetTexture(IDirect3DDevice7 *iface,
     }
 
     wined3d_mutex_lock();
-    if (!(wined3d_texture = wined3d_stateblock_get_state(device->state)->textures[stage]))
+    if (!(wined3d_texture = device->stateblock_state->textures[stage]))
     {
         *texture = NULL;
         wined3d_mutex_unlock();
@@ -4936,7 +4936,7 @@ static HRESULT d3d_device7_GetTextureStageState(IDirect3DDevice7 *iface,
 
     wined3d_mutex_lock();
 
-    device_state = wined3d_stateblock_get_state(device->state);
+    device_state = device->stateblock_state;
 
     if (l->sampler_state)
     {
@@ -5391,7 +5391,7 @@ static HRESULT d3d_device7_GetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *vi
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    wined3d_viewport = wined3d_stateblock_get_state(device->state)->viewport;
+    wined3d_viewport = device->stateblock_state->viewport;
     wined3d_mutex_unlock();
 
     viewport->dwX = wined3d_viewport.x;
@@ -5493,7 +5493,7 @@ static HRESULT d3d_device7_GetMaterial(IDirect3DDevice7 *iface, D3DMATERIAL7 *ma
 
     wined3d_mutex_lock();
     /* Note: D3DMATERIAL7 is compatible with struct wined3d_material. */
-    memcpy(material, &wined3d_stateblock_get_state(device->state)->material, sizeof(*material));
+    memcpy(material, &device->stateblock_state->material, sizeof(*material));
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -6577,7 +6577,7 @@ static HRESULT d3d_device7_GetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DV
 
     wined3d_mutex_lock();
     if (idx < WINED3D_MAX_CLIP_DISTANCES)
-        memcpy(plane, &wined3d_stateblock_get_state(device->state)->clip_planes[idx], sizeof(struct wined3d_vec4));
+        memcpy(plane, &device->stateblock_state->clip_planes[idx], sizeof(struct wined3d_vec4));
     else
     {
         WARN("Clip plane %u is not supported.\n", idx);
@@ -6997,6 +6997,7 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
     device->wined3d_device = ddraw->wined3d_device;
     wined3d_device_incref(ddraw->wined3d_device);
     device->update_state = device->state = ddraw->state;
+    device->stateblock_state = ddraw->stateblock_state;
     wined3d_stateblock_incref(ddraw->state);
 
     /* Render to the back buffer */

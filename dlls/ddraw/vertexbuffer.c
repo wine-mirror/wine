@@ -85,7 +85,7 @@ static ULONG WINAPI d3d_vertex_buffer7_Release(IDirect3DVertexBuffer7 *iface)
          * stream source in wined3d and they should get unset there before
          * they are destroyed. */
         wined3d_mutex_lock();
-        if (wined3d_stateblock_get_state(buffer->ddraw->state)->streams[0].buffer == buffer->wined3d_buffer)
+        if (buffer->ddraw->stateblock_state->streams[0].buffer == buffer->wined3d_buffer)
             wined3d_stateblock_set_stream_source(buffer->ddraw->state, 0, NULL, 0, 0);
 
         wined3d_vertex_declaration_decref(buffer->wined3d_declaration);
@@ -275,7 +275,7 @@ static HRESULT WINAPI d3d_vertex_buffer7_ProcessVertices(IDirect3DVertexBuffer7 
 
     wined3d_mutex_lock();
 
-    state = wined3d_stateblock_get_state(device_impl->state);
+    state = device_impl->stateblock_state;
 
     /* WineD3D doesn't know d3d7 vertex operation, it uses
      * render states instead. Set the render states according to

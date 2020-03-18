@@ -520,7 +520,7 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
     if (activate)
         viewport_activate(viewport, TRUE);
 
-    state = wined3d_stateblock_get_state(device->state);
+    state = device->stateblock_state;
     multiply_matrix(&mat, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD_MATRIX(0)]);
     multiply_matrix(&mat, &state->transforms[WINED3D_TS_PROJECTION], &mat);
 

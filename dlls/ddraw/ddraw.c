@@ -5048,6 +5048,7 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
         wined3d_decref(ddraw->wined3d);
         return hr;
     }
+    ddraw->stateblock_state = wined3d_stateblock_get_state(ddraw->state);
 
     return DD_OK;
 }

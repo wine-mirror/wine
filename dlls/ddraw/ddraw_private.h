@@ -132,6 +132,7 @@ struct ddraw
     UINT                    numConvertedDecls, declArraySize;
 
     struct wined3d_stateblock *state;
+    const struct wined3d_stateblock_state *stateblock_state;
 };
 
 #define DDRAW_WINDOW_CLASS_NAME "DirectDrawDeviceWnd"
@@ -356,6 +357,7 @@ struct d3d_device
     struct wined3d_vec4 user_clip_planes[D3DMAXUSERCLIPPLANES];
 
     struct wined3d_stateblock *recording, *state, *update_state;
+    const struct wined3d_stateblock_state *stateblock_state;
 };
 
 HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUnknown *rt_iface,
