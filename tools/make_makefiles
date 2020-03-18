@@ -498,15 +498,6 @@ sub update_wine_inf()
     push @lines, "\n[SortFiles]", sort grep(/^sort/, @nls_files);
     push @lines, "\n[WineSourceDirs]\n";
     replace_in_file "loader/wine.inf.in", '^\[InfFiles\]', '^\[WineSourceDirs\]', join( "\n", @lines );
-
-    my @codepages = grep /c_\d+\.nls/, @nls_files;
-    @lines = ( "[Nls]" );
-    foreach my $cp (sort { $a <=> $b; } map { /c_(\d+)\.nls/ && $1; } @codepages)
-    {
-        push @lines, sprintf "HKLM,System\\CurrentControlSet\\Control\\Nls\\Codepage,\"%u\",,\"c_%03u.nls\"", $cp, $cp;
-    }
-    push @lines, "\n";
-    replace_in_file "loader/wine.inf.in", '^\[Nls\]', '^$', join( "\n", @lines );
 }
 
 my $git_dir = $ENV{GIT_DIR} || ".git";
