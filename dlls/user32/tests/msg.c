@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define _WIN32_WINNT 0x0600 /* For WM_CHANGEUISTATE,QS_RAWINPUT,WM_DWMxxxx */
-#define WINVER 0x0600 /* for WM_GETTITLEBARINFOEX */
-
 #include <assert.h>
 #include <limits.h>
 #include <stdarg.h>

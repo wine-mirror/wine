@@ -22,7 +22,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WINVER 0x0602 /* for CURSOR_SUPPRESSED */
 #define COBJMACROS
 #include <d3d9.h>
 #include "utils.h"

@@ -29,8 +29,6 @@
  * normally be met.
  */
 
-#define WINVER 0x0600 /* For NONCLIENTMETRICS with padding */
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
