@@ -8845,6 +8845,8 @@ static void test_swapchain_multisample_reset(void)
 
 static void test_device_caps(void)
 {
+    unsigned int adapter_idx, adapter_count;
+    struct device_desc device_desc;
     IDirect3DDevice8 *device;
     IDirect3D8 *d3d;
     ULONG refcount;
@@ -8855,106 +8857,145 @@ static void test_device_caps(void)
     window = create_window();
     d3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
-    if (!(device = create_device(d3d, window, NULL)))
+
+    device_desc.device_window = window;
+    device_desc.width = 640;
+    device_desc.height = 480;
+    device_desc.flags = 0;
+
+    adapter_count = IDirect3D8_GetAdapterCount(d3d);
+    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
     {
-        skip("Failed to create a D3D device.\n");
-        IDirect3D8_Release(d3d);
-        DestroyWindow(window);
-        return;
+        /* Test IDirect3D8_GetDeviceCaps */
+        hr = IDirect3D8_GetDeviceCaps(d3d, adapter_idx, D3DDEVTYPE_HAL, &caps);
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Adapter %u: GetDeviceCaps failed, hr %#x.\n",
+                adapter_idx, hr);
+        if (hr == D3DERR_NOTAVAILABLE)
+        {
+            skip("Adapter %u: No Direct3D support, skipping test.\n", adapter_idx);
+            break;
+        }
+        ok(caps.AdapterOrdinal == adapter_idx, "Adapter %u: Got unexpected adapter ordinal %u.\n",
+                adapter_idx, caps.AdapterOrdinal);
+
+        /* Test IDirect3DDevice8_GetDeviceCaps */
+        device_desc.adapter_ordinal = adapter_idx;
+        device = create_device(d3d, window, &device_desc);
+        if (!device)
+        {
+            skip("Adapter %u: Failed to create a D3D device, skipping test.\n", adapter_idx);
+            break;
+        }
+        hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+        ok(SUCCEEDED(hr), "Adapter %u: Failed to get caps, hr %#x.\n", adapter_idx, hr);
+
+        ok(caps.AdapterOrdinal == adapter_idx, "Adapter %u: Got unexpected adapter ordinal %u.\n",
+                adapter_idx, caps.AdapterOrdinal);
+        ok(!(caps.Caps & ~D3DCAPS_READ_SCANLINE),
+                "Adapter %u: Caps field has unexpected flags %#x.\n", adapter_idx, caps.Caps);
+        ok(!(caps.Caps2 & ~(D3DCAPS2_CANCALIBRATEGAMMA | D3DCAPS2_CANRENDERWINDOWED
+                | D3DCAPS2_CANMANAGERESOURCE | D3DCAPS2_DYNAMICTEXTURES | D3DCAPS2_FULLSCREENGAMMA
+                | D3DCAPS2_NO2DDURING3DSCENE | D3DCAPS2_RESERVED)),
+                "Adapter %u: Caps2 field has unexpected flags %#x.\n", adapter_idx, caps.Caps2);
+        /* Nvidia returns that 0x400 flag, which is probably Vista+
+         * D3DCAPS3_DXVAHD from d3d9caps.h */
+        /* AMD doesn't filter all the ddraw / d3d9 caps. Consider that behavior
+         * broken. */
+        ok(!(caps.Caps3 & ~(D3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD | D3DCAPS3_RESERVED | 0x400))
+                || broken(!(caps.Caps3 & ~(D3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD | 0x80))),
+                "Adapter %u: Caps3 field has unexpected flags %#x.\n", adapter_idx, caps.Caps3);
+        ok(!(caps.PrimitiveMiscCaps & ~(D3DPMISCCAPS_MASKZ | D3DPMISCCAPS_LINEPATTERNREP
+                | D3DPMISCCAPS_CULLNONE | D3DPMISCCAPS_CULLCW | D3DPMISCCAPS_CULLCCW
+                | D3DPMISCCAPS_COLORWRITEENABLE | D3DPMISCCAPS_CLIPPLANESCALEDPOINTS
+                | D3DPMISCCAPS_CLIPTLVERTS | D3DPMISCCAPS_TSSARGTEMP | D3DPMISCCAPS_BLENDOP
+                | D3DPMISCCAPS_NULLREFERENCE))
+                || broken(!(caps.PrimitiveMiscCaps & ~0x003fdff6)),
+                "Adapter %u: PrimitiveMiscCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.PrimitiveMiscCaps);
+        /* AMD includes an unknown 0x2 flag. */
+        ok(!(caps.RasterCaps & ~(D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_PAT | D3DPRASTERCAPS_ZTEST
+                | D3DPRASTERCAPS_FOGVERTEX | D3DPRASTERCAPS_FOGTABLE | D3DPRASTERCAPS_ANTIALIASEDGES
+                | D3DPRASTERCAPS_MIPMAPLODBIAS | D3DPRASTERCAPS_ZBIAS | D3DPRASTERCAPS_ZBUFFERLESSHSR
+                | D3DPRASTERCAPS_FOGRANGE | D3DPRASTERCAPS_ANISOTROPY | D3DPRASTERCAPS_WBUFFER
+                | D3DPRASTERCAPS_WFOG | D3DPRASTERCAPS_ZFOG | D3DPRASTERCAPS_COLORPERSPECTIVE
+                | D3DPRASTERCAPS_STRETCHBLTMULTISAMPLE))
+                || broken(!(caps.RasterCaps & ~0x0ff7f19b)),
+                "Adapter %u: RasterCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.RasterCaps);
+        ok(!(caps.SrcBlendCaps & ~(D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | D3DPBLENDCAPS_SRCCOLOR
+                | D3DPBLENDCAPS_INVSRCCOLOR | D3DPBLENDCAPS_SRCALPHA | D3DPBLENDCAPS_INVSRCALPHA
+                | D3DPBLENDCAPS_DESTALPHA | D3DPBLENDCAPS_INVDESTALPHA | D3DPBLENDCAPS_DESTCOLOR
+                | D3DPBLENDCAPS_INVDESTCOLOR | D3DPBLENDCAPS_SRCALPHASAT | D3DPBLENDCAPS_BOTHSRCALPHA
+                | D3DPBLENDCAPS_BOTHINVSRCALPHA)),
+                "Adapter %u: SrcBlendCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.SrcBlendCaps);
+        ok(!(caps.DestBlendCaps & ~(D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | D3DPBLENDCAPS_SRCCOLOR
+                | D3DPBLENDCAPS_INVSRCCOLOR | D3DPBLENDCAPS_SRCALPHA | D3DPBLENDCAPS_INVSRCALPHA
+                | D3DPBLENDCAPS_DESTALPHA | D3DPBLENDCAPS_INVDESTALPHA | D3DPBLENDCAPS_DESTCOLOR
+                | D3DPBLENDCAPS_INVDESTCOLOR | D3DPBLENDCAPS_SRCALPHASAT | D3DPBLENDCAPS_BOTHSRCALPHA
+                | D3DPBLENDCAPS_BOTHINVSRCALPHA)),
+                "Adapter %u: DestBlendCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.DestBlendCaps);
+        ok(!(caps.TextureCaps & ~(D3DPTEXTURECAPS_PERSPECTIVE | D3DPTEXTURECAPS_POW2
+                | D3DPTEXTURECAPS_ALPHA | D3DPTEXTURECAPS_SQUAREONLY
+                | D3DPTEXTURECAPS_TEXREPEATNOTSCALEDBYSIZE | D3DPTEXTURECAPS_ALPHAPALETTE
+                | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PROJECTED
+                | D3DPTEXTURECAPS_CUBEMAP | D3DPTEXTURECAPS_VOLUMEMAP | D3DPTEXTURECAPS_MIPMAP
+                | D3DPTEXTURECAPS_MIPVOLUMEMAP | D3DPTEXTURECAPS_MIPCUBEMAP
+                | D3DPTEXTURECAPS_CUBEMAP_POW2 | D3DPTEXTURECAPS_VOLUMEMAP_POW2)),
+                "Adapter %u: TextureCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.TextureCaps);
+        ok(!(caps.TextureFilterCaps & ~(D3DPTFILTERCAPS_MINFPOINT | D3DPTFILTERCAPS_MINFLINEAR
+                | D3DPTFILTERCAPS_MINFANISOTROPIC | D3DPTFILTERCAPS_MIPFPOINT
+                | D3DPTFILTERCAPS_MIPFLINEAR | D3DPTFILTERCAPS_MAGFPOINT | D3DPTFILTERCAPS_MAGFLINEAR
+                | D3DPTFILTERCAPS_MAGFANISOTROPIC | D3DPTFILTERCAPS_MAGFAFLATCUBIC
+                | D3DPTFILTERCAPS_MAGFGAUSSIANCUBIC))
+                || broken(!(caps.TextureFilterCaps & ~0x0703073f)),
+                "Adapter %u: TextureFilterCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.TextureFilterCaps);
+        ok(!(caps.CubeTextureFilterCaps & ~(D3DPTFILTERCAPS_MINFPOINT | D3DPTFILTERCAPS_MINFLINEAR
+                | D3DPTFILTERCAPS_MINFANISOTROPIC | D3DPTFILTERCAPS_MIPFPOINT
+                | D3DPTFILTERCAPS_MIPFLINEAR | D3DPTFILTERCAPS_MAGFPOINT | D3DPTFILTERCAPS_MAGFLINEAR
+                | D3DPTFILTERCAPS_MAGFANISOTROPIC | D3DPTFILTERCAPS_MAGFAFLATCUBIC
+                | D3DPTFILTERCAPS_MAGFGAUSSIANCUBIC)),
+                "Adapter %u: CubeTextureFilterCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.CubeTextureFilterCaps);
+        ok(!(caps.VolumeTextureFilterCaps & ~(D3DPTFILTERCAPS_MINFPOINT | D3DPTFILTERCAPS_MINFLINEAR
+                | D3DPTFILTERCAPS_MINFANISOTROPIC | D3DPTFILTERCAPS_MIPFPOINT
+                | D3DPTFILTERCAPS_MIPFLINEAR | D3DPTFILTERCAPS_MAGFPOINT | D3DPTFILTERCAPS_MAGFLINEAR
+                | D3DPTFILTERCAPS_MAGFANISOTROPIC | D3DPTFILTERCAPS_MAGFAFLATCUBIC
+                | D3DPTFILTERCAPS_MAGFGAUSSIANCUBIC)),
+                "Adapter %u: VolumeTextureFilterCaps field has unexpected flags %#x.\n",
+                adapter_idx, caps.VolumeTextureFilterCaps);
+        ok(!(caps.LineCaps & ~(D3DLINECAPS_TEXTURE | D3DLINECAPS_ZTEST | D3DLINECAPS_BLEND
+                | D3DLINECAPS_ALPHACMP | D3DLINECAPS_FOG)),
+                "Adapter %u: LineCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.LineCaps);
+        ok(!(caps.StencilCaps & ~(D3DSTENCILCAPS_KEEP | D3DSTENCILCAPS_ZERO | D3DSTENCILCAPS_REPLACE
+                | D3DSTENCILCAPS_INCRSAT | D3DSTENCILCAPS_DECRSAT | D3DSTENCILCAPS_INVERT
+                | D3DSTENCILCAPS_INCR | D3DSTENCILCAPS_DECR)),
+                "Adapter %u: StencilCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.StencilCaps);
+        ok(!(caps.VertexProcessingCaps & ~(D3DVTXPCAPS_TEXGEN | D3DVTXPCAPS_MATERIALSOURCE7
+                | D3DVTXPCAPS_DIRECTIONALLIGHTS | D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_LOCALVIEWER
+                | D3DVTXPCAPS_TWEENING | D3DVTXPCAPS_NO_VSDT_UBYTE4)),
+                "Adapter %u: VertexProcessingCaps field has unexpected flags %#x.\n", adapter_idx,
+                caps.VertexProcessingCaps);
+        /* Both Nvidia and AMD give 10 here. */
+        ok(caps.MaxActiveLights <= 10,
+                "Adapter %u: MaxActiveLights field has unexpected value %u.\n", adapter_idx,
+                caps.MaxActiveLights);
+        /* AMD gives 6, Nvidia returns 8. */
+        ok(caps.MaxUserClipPlanes <= 8,
+                "Adapter %u: MaxUserClipPlanes field has unexpected value %u.\n", adapter_idx,
+                caps.MaxUserClipPlanes);
+        ok(caps.MaxVertexW == 0.0f || caps.MaxVertexW >= 1e10f,
+                "Adapter %u: MaxVertexW field has unexpected value %.8e.\n", adapter_idx,
+                caps.MaxVertexW);
+
+        refcount = IDirect3DDevice8_Release(device);
+        ok(!refcount, "Adapter %u: Device has %u references left.\n", adapter_idx, refcount);
     }
-
-    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
-    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
-
-    ok(!(caps.Caps & ~D3DCAPS_READ_SCANLINE), "Caps field has unexpected flags %#x.\n", caps.Caps);
-    ok(!(caps.Caps2 & ~(D3DCAPS2_CANCALIBRATEGAMMA | D3DCAPS2_CANRENDERWINDOWED
-            | D3DCAPS2_CANMANAGERESOURCE | D3DCAPS2_DYNAMICTEXTURES | D3DCAPS2_FULLSCREENGAMMA
-            | D3DCAPS2_NO2DDURING3DSCENE | D3DCAPS2_RESERVED)),
-            "Caps2 field has unexpected flags %#x.\n", caps.Caps2);
-    /* Nvidia returns that 0x400 flag, which is probably Vista+
-     * D3DCAPS3_DXVAHD from d3d9caps.h */
-    /* AMD doesn't filter all the ddraw / d3d9 caps. Consider that behavior
-     * broken. */
-    ok(!(caps.Caps3 & ~(D3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD | D3DCAPS3_RESERVED | 0x400))
-            || broken(!(caps.Caps3 & ~(D3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD | 0x80))),
-            "Caps3 field has unexpected flags %#x.\n", caps.Caps3);
-    ok(!(caps.PrimitiveMiscCaps & ~(D3DPMISCCAPS_MASKZ | D3DPMISCCAPS_LINEPATTERNREP
-            | D3DPMISCCAPS_CULLNONE | D3DPMISCCAPS_CULLCW | D3DPMISCCAPS_CULLCCW
-            | D3DPMISCCAPS_COLORWRITEENABLE | D3DPMISCCAPS_CLIPPLANESCALEDPOINTS
-            | D3DPMISCCAPS_CLIPTLVERTS | D3DPMISCCAPS_TSSARGTEMP | D3DPMISCCAPS_BLENDOP
-            | D3DPMISCCAPS_NULLREFERENCE))
-            || broken(!(caps.PrimitiveMiscCaps & ~0x003fdff6)),
-            "PrimitiveMiscCaps field has unexpected flags %#x.\n", caps.PrimitiveMiscCaps);
-    /* AMD includes an unknown 0x2 flag. */
-    ok(!(caps.RasterCaps & ~(D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_PAT | D3DPRASTERCAPS_ZTEST
-            | D3DPRASTERCAPS_FOGVERTEX | D3DPRASTERCAPS_FOGTABLE | D3DPRASTERCAPS_ANTIALIASEDGES
-            | D3DPRASTERCAPS_MIPMAPLODBIAS | D3DPRASTERCAPS_ZBIAS | D3DPRASTERCAPS_ZBUFFERLESSHSR
-            | D3DPRASTERCAPS_FOGRANGE | D3DPRASTERCAPS_ANISOTROPY | D3DPRASTERCAPS_WBUFFER
-            | D3DPRASTERCAPS_WFOG | D3DPRASTERCAPS_ZFOG | D3DPRASTERCAPS_COLORPERSPECTIVE
-            | D3DPRASTERCAPS_STRETCHBLTMULTISAMPLE))
-            || broken(!(caps.RasterCaps & ~0x0ff7f19b)),
-            "RasterCaps field has unexpected flags %#x.\n", caps.RasterCaps);
-    ok(!(caps.SrcBlendCaps & ~(D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | D3DPBLENDCAPS_SRCCOLOR
-            | D3DPBLENDCAPS_INVSRCCOLOR | D3DPBLENDCAPS_SRCALPHA | D3DPBLENDCAPS_INVSRCALPHA
-            | D3DPBLENDCAPS_DESTALPHA | D3DPBLENDCAPS_INVDESTALPHA | D3DPBLENDCAPS_DESTCOLOR
-            | D3DPBLENDCAPS_INVDESTCOLOR | D3DPBLENDCAPS_SRCALPHASAT | D3DPBLENDCAPS_BOTHSRCALPHA
-            | D3DPBLENDCAPS_BOTHINVSRCALPHA)),
-            "SrcBlendCaps field has unexpected flags %#x.\n", caps.SrcBlendCaps);
-    ok(!(caps.DestBlendCaps & ~(D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | D3DPBLENDCAPS_SRCCOLOR
-            | D3DPBLENDCAPS_INVSRCCOLOR | D3DPBLENDCAPS_SRCALPHA | D3DPBLENDCAPS_INVSRCALPHA
-            | D3DPBLENDCAPS_DESTALPHA | D3DPBLENDCAPS_INVDESTALPHA | D3DPBLENDCAPS_DESTCOLOR
-            | D3DPBLENDCAPS_INVDESTCOLOR | D3DPBLENDCAPS_SRCALPHASAT | D3DPBLENDCAPS_BOTHSRCALPHA
-            | D3DPBLENDCAPS_BOTHINVSRCALPHA)),
-            "DestBlendCaps field has unexpected flags %#x.\n", caps.DestBlendCaps);
-    ok(!(caps.TextureCaps & ~(D3DPTEXTURECAPS_PERSPECTIVE | D3DPTEXTURECAPS_POW2
-            | D3DPTEXTURECAPS_ALPHA | D3DPTEXTURECAPS_SQUAREONLY
-            | D3DPTEXTURECAPS_TEXREPEATNOTSCALEDBYSIZE | D3DPTEXTURECAPS_ALPHAPALETTE
-            | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PROJECTED
-            | D3DPTEXTURECAPS_CUBEMAP | D3DPTEXTURECAPS_VOLUMEMAP | D3DPTEXTURECAPS_MIPMAP
-            | D3DPTEXTURECAPS_MIPVOLUMEMAP | D3DPTEXTURECAPS_MIPCUBEMAP
-            | D3DPTEXTURECAPS_CUBEMAP_POW2 | D3DPTEXTURECAPS_VOLUMEMAP_POW2)),
-            "TextureCaps field has unexpected flags %#x.\n", caps.TextureCaps);
-    ok(!(caps.TextureFilterCaps & ~(D3DPTFILTERCAPS_MINFPOINT | D3DPTFILTERCAPS_MINFLINEAR
-            | D3DPTFILTERCAPS_MINFANISOTROPIC | D3DPTFILTERCAPS_MIPFPOINT
-            | D3DPTFILTERCAPS_MIPFLINEAR | D3DPTFILTERCAPS_MAGFPOINT | D3DPTFILTERCAPS_MAGFLINEAR
-            | D3DPTFILTERCAPS_MAGFANISOTROPIC | D3DPTFILTERCAPS_MAGFAFLATCUBIC
-            | D3DPTFILTERCAPS_MAGFGAUSSIANCUBIC))
-            || broken(!(caps.TextureFilterCaps & ~0x0703073f)),
-            "TextureFilterCaps field has unexpected flags %#x.\n", caps.TextureFilterCaps);
-    ok(!(caps.CubeTextureFilterCaps & ~(D3DPTFILTERCAPS_MINFPOINT | D3DPTFILTERCAPS_MINFLINEAR
-            | D3DPTFILTERCAPS_MINFANISOTROPIC | D3DPTFILTERCAPS_MIPFPOINT
-            | D3DPTFILTERCAPS_MIPFLINEAR | D3DPTFILTERCAPS_MAGFPOINT | D3DPTFILTERCAPS_MAGFLINEAR
-            | D3DPTFILTERCAPS_MAGFANISOTROPIC | D3DPTFILTERCAPS_MAGFAFLATCUBIC
-            | D3DPTFILTERCAPS_MAGFGAUSSIANCUBIC)),
-            "CubeTextureFilterCaps field has unexpected flags %#x.\n", caps.CubeTextureFilterCaps);
-    ok(!(caps.VolumeTextureFilterCaps & ~(D3DPTFILTERCAPS_MINFPOINT | D3DPTFILTERCAPS_MINFLINEAR
-            | D3DPTFILTERCAPS_MINFANISOTROPIC | D3DPTFILTERCAPS_MIPFPOINT
-            | D3DPTFILTERCAPS_MIPFLINEAR | D3DPTFILTERCAPS_MAGFPOINT | D3DPTFILTERCAPS_MAGFLINEAR
-            | D3DPTFILTERCAPS_MAGFANISOTROPIC | D3DPTFILTERCAPS_MAGFAFLATCUBIC
-            | D3DPTFILTERCAPS_MAGFGAUSSIANCUBIC)),
-            "VolumeTextureFilterCaps field has unexpected flags %#x.\n", caps.VolumeTextureFilterCaps);
-    ok(!(caps.LineCaps & ~(D3DLINECAPS_TEXTURE | D3DLINECAPS_ZTEST | D3DLINECAPS_BLEND
-            | D3DLINECAPS_ALPHACMP | D3DLINECAPS_FOG)),
-            "LineCaps field has unexpected flags %#x.\n", caps.LineCaps);
-    ok(!(caps.StencilCaps & ~(D3DSTENCILCAPS_KEEP | D3DSTENCILCAPS_ZERO | D3DSTENCILCAPS_REPLACE
-            | D3DSTENCILCAPS_INCRSAT | D3DSTENCILCAPS_DECRSAT | D3DSTENCILCAPS_INVERT
-            | D3DSTENCILCAPS_INCR | D3DSTENCILCAPS_DECR)),
-            "StencilCaps field has unexpected flags %#x.\n", caps.StencilCaps);
-    ok(!(caps.VertexProcessingCaps & ~(D3DVTXPCAPS_TEXGEN | D3DVTXPCAPS_MATERIALSOURCE7
-            | D3DVTXPCAPS_DIRECTIONALLIGHTS | D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_LOCALVIEWER
-            | D3DVTXPCAPS_TWEENING | D3DVTXPCAPS_NO_VSDT_UBYTE4)),
-            "VertexProcessingCaps field has unexpected flags %#x.\n", caps.VertexProcessingCaps);
-    /* Both Nvidia and AMD give 10 here. */
-    ok(caps.MaxActiveLights <= 10,
-            "MaxActiveLights field has unexpected value %u.\n", caps.MaxActiveLights);
-    /* AMD gives 6, Nvidia returns 8. */
-    ok(caps.MaxUserClipPlanes <= 8,
-            "MaxUserClipPlanes field has unexpected value %u.\n", caps.MaxUserClipPlanes);
-    ok(caps.MaxVertexW == 0.0f || caps.MaxVertexW >= 1e10f,
-            "MaxVertexW field has unexpected value %.8e.\n", caps.MaxVertexW);
-
-    refcount = IDirect3DDevice8_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 }
