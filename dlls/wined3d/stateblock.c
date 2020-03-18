@@ -985,6 +985,8 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
 
     if (stateblock->changed.vertexShader)
         wined3d_stateblock_set_vertex_shader(device_state, state->vs);
+    if (stateblock->changed.pixelShader)
+        wined3d_stateblock_set_pixel_shader(device_state, state->ps);
 
     for (start = 0; ; start = range.offset + range.size)
     {
@@ -1007,23 +1009,6 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         wined3d_stateblock_set_vs_consts_b(device_state, range.offset, range.size, &state->vs_consts_b[range.offset]);
     }
 
-    if (stateblock->changed.lights)
-    {
-        for (i = 0; i < ARRAY_SIZE(state->light_state->light_map); ++i)
-        {
-            const struct wined3d_light_info *light;
-
-            LIST_FOR_EACH_ENTRY(light, &state->light_state->light_map[i], struct wined3d_light_info, entry)
-            {
-                wined3d_stateblock_set_light(device_state, light->OriginalIndex, &light->OriginalParms);
-                wined3d_stateblock_set_light_enable(device_state, light->OriginalIndex, light->glIndex != -1);
-            }
-        }
-    }
-
-    if (stateblock->changed.pixelShader)
-        wined3d_stateblock_set_pixel_shader(device_state, state->ps);
-
     for (start = 0; ; start = range.offset + range.size)
     {
         if (!wined3d_bitmap_get_range(stateblock->changed.ps_consts_f, WINED3D_MAX_PS_CONSTS_F, start, &range))
@@ -1043,6 +1028,30 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         if (!wined3d_bitmap_get_range(&map, WINED3D_MAX_CONSTS_B, start, &range))
             break;
         wined3d_stateblock_set_ps_consts_b(device_state, range.offset, range.size, &state->ps_consts_b[range.offset]);
+    }
+
+    if (stateblock->changed.transforms)
+    {
+        for (i = 0; i < stateblock->num_contained_transform_states; ++i)
+        {
+            enum wined3d_transform_state transform = stateblock->contained_transform_states[i];
+
+            wined3d_stateblock_set_transform(device_state, transform, &state->transforms[transform]);
+        }
+    }
+
+    if (stateblock->changed.lights)
+    {
+        for (i = 0; i < ARRAY_SIZE(state->light_state->light_map); ++i)
+        {
+            const struct wined3d_light_info *light;
+
+            LIST_FOR_EACH_ENTRY(light, &state->light_state->light_map[i], struct wined3d_light_info, entry)
+            {
+                wined3d_stateblock_set_light(device_state, light->OriginalIndex, &light->OriginalParms);
+                wined3d_stateblock_set_light_enable(device_state, light->OriginalIndex, light->glIndex != -1);
+            }
+        }
     }
 
     if (stateblock->changed.alpha_to_coverage)
@@ -1079,16 +1088,6 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
                 state->sampler_states[stage][sampler_state]);
     }
 
-    if (stateblock->changed.transforms)
-    {
-        for (i = 0; i < stateblock->num_contained_transform_states; ++i)
-        {
-            enum wined3d_transform_state transform = stateblock->contained_transform_states[i];
-
-            wined3d_stateblock_set_transform(device_state, transform, &state->transforms[transform]);
-        }
-    }
-
     if (stateblock->changed.indices)
     {
         wined3d_stateblock_set_index_buffer(device_state, state->index_buffer, state->index_format);
@@ -1108,33 +1107,33 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         wined3d_stateblock_set_scissor_rect(device_state, &state->scissor_rect);
 
     map = stateblock->changed.streamSource;
-    for (i = 0; map; map >>= 1, ++i)
+    while (map)
     {
-        if (map & 1)
-            wined3d_stateblock_set_stream_source(device_state, i, state->streams[i].buffer,
-                    state->streams[i].offset, state->streams[i].stride);
+        i = wined3d_bit_scan(&map);
+        wined3d_stateblock_set_stream_source(device_state, i, state->streams[i].buffer,
+                state->streams[i].offset, state->streams[i].stride);
     }
 
     map = stateblock->changed.streamFreq;
-    for (i = 0; map; map >>= 1, ++i)
+    while (map)
     {
-        if (map & 1)
-            wined3d_stateblock_set_stream_source_freq(device_state, i,
-                    state->streams[i].frequency | state->streams[i].flags);
+        i = wined3d_bit_scan(&map);
+        wined3d_stateblock_set_stream_source_freq(device_state, i,
+                state->streams[i].frequency | state->streams[i].flags);
     }
 
     map = stateblock->changed.textures;
-    for (i = 0; map; map >>= 1, ++i)
+    while (map)
     {
-        if (map & 1)
-            wined3d_stateblock_set_texture(device_state, i, state->textures[i]);
+        i = wined3d_bit_scan(&map);
+        wined3d_stateblock_set_texture(device_state, i, state->textures[i]);
     }
 
     map = stateblock->changed.clipplane;
-    for (i = 0; map; map >>= 1, ++i)
+    while (map)
     {
-        if (map & 1)
-            wined3d_stateblock_set_clip_plane(device_state, i, &state->clip_planes[i]);
+        i = wined3d_bit_scan(&map);
+        wined3d_stateblock_set_clip_plane(device_state, i, &state->clip_planes[i]);
     }
 
     TRACE("Applied stateblock %p.\n", stateblock);
