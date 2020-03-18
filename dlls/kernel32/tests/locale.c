@@ -6471,7 +6471,6 @@ static void test_SpecialCasing(void)
         WCHAR ch;
         WCHAR exp;      /* 0 if self */
         WCHAR exp_ling; /* 0 if exp */
-        BOOL todo;
     } tests[] = {
         {deDEW, LCMAP_UPPERCASE, 0x00DF},   /* LATIN SMALL LETTER SHARP S */
 
@@ -6580,29 +6579,29 @@ static void test_SpecialCasing(void)
 
         {enUSW, LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
         {ltLTW, LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
-        {trTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
-        {TRTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
-        {azCyrlazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
-        {azLatnazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
+        {trTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
+        {TRTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
+        {azCyrlazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
+        {azLatnazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
 
         {enUSW, LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
         {ltLTW, LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
-        {trTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
-        {TRTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
-        {azCyrlazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
-        {azLatnazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
+        {trTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
+        {TRTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
+        {azCyrlazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
+        {azLatnazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
 
-        {enUSW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {trTRW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {TRTRW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {azCyrlazW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {azLatnazW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {enUSW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {trTRW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {TRTRW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {azCyrlazW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {azLatnazW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
 
-        {enUSW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
-        {trTRW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
-        {TRTRW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
-        {azCyrlazW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
-        {azLatnazW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
+        {enUSW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {trTRW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {TRTRW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {azCyrlazW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {azLatnazW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
     };
 
     if (!pLCMapStringEx)
@@ -6628,7 +6627,6 @@ static void test_SpecialCasing(void)
         ok(ret == 1, "expected 1, got %d for %04x for %s\n", ret, tests[i].ch,
             wine_dbgstr_w(tests[i].lang));
         exp = tests[i].exp_ling ? tests[i].exp_ling : exp;
-        todo_wine_if(tests[i].todo)
         ok(buffer[0] == exp || broken(buffer[0] != exp),
             "expected %04x, got %04x for %04x for %s\n",
             exp, buffer[0], tests[i].ch, wine_dbgstr_w(tests[i].lang));

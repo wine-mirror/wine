@@ -576,12 +576,34 @@ static unsigned int nb_codepages;
 
 static struct norm_table *norm_info;
 
+struct sortguid
+{
+    GUID  id;          /* sort GUID */
+    DWORD flags;       /* flags */
+    DWORD compr;       /* offset to compression table */
+    DWORD except;      /* exception table offset in sortkey table */
+    DWORD ling_except; /* exception table offset for linguistic casing */
+    DWORD casemap;     /* linguistic casemap table offset */
+};
+
+#define FLAG_HAS_3_BYTE_WEIGHTS 0x01
+#define FLAG_REVERSEDIACRITICS  0x10
+#define FLAG_DOUBLECOMPRESSION  0x20
+#define FLAG_INVERSECASING      0x40
+
+static const struct sortguid *current_locale_sort;
+
+static const GUID default_sort_guid = { 0x00000001, 0x57ee, 0x1e5c, { 0x00, 0xb4, 0xd0, 0x00, 0x0b, 0xb1, 0xe1, 0x1e }};
+
 static struct
 {
-    DWORD  *keys;       /* sortkey table, indexed by char */
-    USHORT *casemap;    /* casemap table, in l_intl.nls format */
-    WORD   *ctypes;     /* CT_CTYPE1,2,3 values */
-    BYTE   *ctype_idx;  /* index to map char to ctypes array entry */
+    DWORD           *keys;       /* sortkey table, indexed by char */
+    USHORT          *casemap;    /* casemap table, in l_intl.nls format */
+    WORD            *ctypes;     /* CT_CTYPE1,2,3 values */
+    BYTE            *ctype_idx;  /* index to map char to ctypes array entry */
+    DWORD            version;    /* NLS version */
+    DWORD            guid_count; /* number of sort GUIDs */
+    struct sortguid *guids;      /* table of sort GUIDs */
 } sort;
 
 static CRITICAL_SECTION locale_section;
@@ -594,18 +616,82 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION locale_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
-/***********************************************************************
- *		init_sortkeys
- */
 static void init_sortkeys( DWORD *ptr )
 {
     WORD *ctype;
+    DWORD *table;
 
-    sort.keys      = (DWORD *)((char *)ptr + ptr[0]);
-    sort.casemap   = (USHORT *)((char *)ptr + ptr[1]);
-    ctype          = (WORD *)((char *)ptr + ptr[2]);
-    sort.ctypes    = ctype + 2;
+    sort.keys = (DWORD *)((char *)ptr + ptr[0]);
+    sort.casemap = (USHORT *)((char *)ptr + ptr[1]);
+
+    ctype = (WORD *)((char *)ptr + ptr[2]);
+    sort.ctypes = ctype + 2;
     sort.ctype_idx = (BYTE *)ctype + ctype[1] + 2;
+
+    table = (DWORD *)((char *)ptr + ptr[3]);
+    sort.version = table[0];
+    sort.guid_count = table[1];
+    sort.guids = (struct sortguid *)(table + 2);
+}
+
+
+static const struct sortguid *find_sortguid( const GUID *guid )
+{
+    int pos, ret, min = 0, max = sort.guid_count - 1;
+
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        ret = memcmp( guid, &sort.guids[pos].id, sizeof(*guid) );
+        if (!ret) return &sort.guids[pos];
+        if (ret > 0) min = pos + 1;
+        else max = pos - 1;
+    }
+    ERR( "no sort found for %s\n", debugstr_guid( guid ));
+    return NULL;
+}
+
+
+static const struct sortguid *get_language_sort( const WCHAR *locale )
+{
+    WCHAR *p, *end, buffer[LOCALE_NAME_MAX_LENGTH], guidstr[39];
+    const struct sortguid *ret;
+    UNICODE_STRING str;
+    GUID guid;
+    HKEY key;
+    DWORD size, type;
+
+    if (locale == LOCALE_NAME_USER_DEFAULT)
+    {
+        if (current_locale_sort) return current_locale_sort;
+        GetUserDefaultLocaleName( buffer, ARRAY_SIZE( buffer ));
+    }
+    else lstrcpynW( buffer, locale, LOCALE_NAME_MAX_LENGTH );
+
+    if (buffer[0] && !RegOpenKeyExW( nls_key, L"Sorting\\Ids", 0, KEY_READ, &key ))
+    {
+        for (;;)
+        {
+            size = sizeof(guidstr);
+            if (!RegQueryValueExW( key, buffer, NULL, &type, (BYTE *)guidstr, &size ) && type == REG_SZ)
+            {
+                RtlInitUnicodeString( &str, guidstr );
+                if (!RtlGUIDFromString( &str, &guid ))
+                {
+                    ret = find_sortguid( &guid );
+                    goto done;
+                }
+                break;
+            }
+            for (p = end = buffer; *p; p++) if (*p == '-' || *p == '_') end = p;
+            if (end == buffer) break;
+            *end = 0;
+        }
+    }
+    ret = find_sortguid( &default_sort_guid );
+done:
+    RegCloseKey( key );
+    return ret;
 }
 
 
@@ -647,6 +733,8 @@ void init_locale(void)
     NtCurrentTeb()->Peb->UnicodeCaseTableData = sort.casemap;
     RtlInitNlsTables( ansi_ptr, oem_ptr, sort.casemap, &nls_info );
     RtlResetRtlTranslations( &nls_info );
+
+    current_locale_sort = get_language_sort( LOCALE_NAME_USER_DEFAULT );
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Nls",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &nls_key, NULL );
@@ -4737,6 +4825,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
                                             WCHAR *dst, int dstlen, NLSVERSIONINFO *version,
                                             void *reserved, LPARAM handle )
 {
+    const struct sortguid *sortid;
     LPWSTR dst_ptr;
     INT len;
 
@@ -4766,6 +4855,13 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
     }
 
     if (!dstlen) dst = NULL;
+
+    if (!(sortid = get_language_sort( locale )))
+    {
+        FIXME( "unknown locale %s\n", debugstr_w(locale) );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
     if (flags & LCMAP_SORTKEY)
     {
@@ -4910,7 +5006,8 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
 
     if (flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE))
     {
-        USHORT *table = (flags & LCMAP_LOWERCASE) ? nls_info.LowerCaseTable : nls_info.UpperCaseTable;
+        const USHORT *table = sort.casemap + (flags & LCMAP_LINGUISTIC_CASING ? sortid->casemap : 0);
+        table = table + 2 + (flags & LCMAP_LOWERCASE ? table[1] : 0);
         for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--, len--)
             *dst_ptr++ = casemap( table, *src );
     }
