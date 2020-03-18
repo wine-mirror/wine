@@ -22,6 +22,8 @@
 #include <wchar.h>
 #include <stdio.h>
 #include <locale.h>
+#include <mbctype.h>
+#include <mbstring.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -55,8 +57,6 @@
 
 DEFINE_EXPECT(invalid_parameter_handler);
 
-static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
-
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
         unsigned line, uintptr_t arg)
@@ -69,63 +69,8 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
 }
 
-static double (__cdecl *p_strtod)(const char*, char** end);
-static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
-static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
-static size_t (__cdecl *p___strncnt)(const char*, size_t);
-static int (__cdecl *p_tolower)(int);
-static int (__cdecl *p__tolower)(int);
-static int (__cdecl *p__o_tolower)(int);
-static int (__cdecl *p_towlower)(wint_t);
-static int (__cdecl *p__towlower_l)(wint_t, _locale_t);
-static int (__cdecl *p_toupper)(int);
-static int (__cdecl *p__toupper)(int);
-static int (__cdecl *p__o_toupper)(int);
-static int (__cdecl *p_towupper)(wint_t);
-static int (__cdecl *p__towupper_l)(wint_t, _locale_t);
-static char* (__cdecl *p_setlocale)(int, const char*);
-static _locale_t (__cdecl *p__create_locale)(int, const char*);
-static void (__cdecl *p__free_locale)(_locale_t);
-static int (__cdecl *p__getmbcp)(void);
-static int (__cdecl *p__setmbcp)(int);
-static size_t (__cdecl *p__mbsspn)(const unsigned char*, const unsigned char*);
-static wchar_t* (__cdecl *p_wcstok)(wchar_t*, const wchar_t*, wchar_t**);
-
-static BOOL init(void)
-{
-    HMODULE module;
-
-    module = LoadLibraryA("ucrtbase.dll");
-    if (!module)
-    {
-        win_skip("ucrtbase.dll not installed\n");
-        return FALSE;
-    }
-
-    p_set_invalid_parameter_handler = (void*)GetProcAddress(module, "_set_invalid_parameter_handler");
-    p_strtod = (void*)GetProcAddress(module, "strtod");
-    p__memicmp = (void*)GetProcAddress(module, "_memicmp");
-    p__memicmp_l = (void*)GetProcAddress(module, "_memicmp_l");
-    p___strncnt = (void*)GetProcAddress(module, "__strncnt");
-    p_tolower = (void*)GetProcAddress(module, "tolower");
-    p__tolower = (void*)GetProcAddress(module, "_tolower");
-    p__o_tolower = (void*)GetProcAddress(module, "_o_tolower");
-    p_towlower = (void*)GetProcAddress(module, "towlower");
-    p__towlower_l = (void*)GetProcAddress(module, "_towlower_l");
-    p_toupper = (void*)GetProcAddress(module, "toupper");
-    p__toupper = (void*)GetProcAddress(module, "_toupper");
-    p__o_toupper = (void*)GetProcAddress(module, "_o_toupper");
-    p_towupper = (void*)GetProcAddress(module, "towupper");
-    p__towupper_l = (void*)GetProcAddress(module, "_towupper_l");
-    p_setlocale = (void*)GetProcAddress(module, "setlocale");
-    p__create_locale = (void*)GetProcAddress(module, "_create_locale");
-    p__free_locale = (void*)GetProcAddress(module, "_free_locale");
-    p__getmbcp = (void*)GetProcAddress(module, "_getmbcp");
-    p__setmbcp = (void*)GetProcAddress(module, "_setmbcp");
-    p__mbsspn = (void*)GetProcAddress(module, "_mbsspn");
-    p_wcstok = (void*)GetProcAddress(module, "wcstok");
-    return TRUE;
-}
+_ACRTIMP int __cdecl _o_tolower(int);
+_ACRTIMP int __cdecl _o_toupper(int);
 
 static BOOL local_isnan(double d)
 {
@@ -138,7 +83,7 @@ static void _test_strtod_str(int line, const char* string, double value, int len
 {
     char *end;
     double d;
-    d = p_strtod(string, &end);
+    d = strtod(string, &end);
     todo_wine_if(todo) {
         if (local_isnan(value))
             ok_(__FILE__, line)(local_isnan(d), "d = %.16le (\"%s\")\n", d, string);
@@ -205,40 +150,40 @@ static void test__memicmp(void)
     static const char *s2 = "aBd";
     int ret;
 
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
             "Invalid parameter handler was already set\n");
 
-    ret = p__memicmp(NULL, NULL, 0);
+    ret = _memicmp(NULL, NULL, 0);
     ok(!ret, "got %d\n", ret);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
-    ret = p__memicmp(NULL, NULL, 1);
+    ret = _memicmp(NULL, NULL, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
-    ret = p__memicmp(s1, NULL, 1);
+    ret = _memicmp(s1, NULL, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
-    ret = p__memicmp(NULL, s2, 1);
+    ret = _memicmp(NULL, s2, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
-    ret = p__memicmp(s1, s2, 2);
+    ret = _memicmp(s1, s2, 2);
     ok(!ret, "got %d\n", ret);
 
-    ret = p__memicmp(s1, s2, 3);
+    ret = _memicmp(s1, s2, 3);
     ok(ret == -1, "got %d\n", ret);
 
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
 }
 
@@ -248,40 +193,40 @@ static void test__memicmp_l(void)
     static const char *s2 = "aBd";
     int ret;
 
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
             "Invalid parameter handler was already set\n");
 
-    ret = p__memicmp_l(NULL, NULL, 0, NULL);
+    ret = _memicmp_l(NULL, NULL, 0, NULL);
     ok(!ret, "got %d\n", ret);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
-    ret = p__memicmp_l(NULL, NULL, 1, NULL);
+    ret = _memicmp_l(NULL, NULL, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
-    ret = p__memicmp_l(s1, NULL, 1, NULL);
+    ret = _memicmp_l(s1, NULL, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
-    ret = p__memicmp_l(NULL, s2, 1, NULL);
+    ret = _memicmp_l(NULL, s2, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "Unexpected errno = %d\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
-    ret = p__memicmp_l(s1, s2, 2, NULL);
+    ret = _memicmp_l(s1, s2, 2, NULL);
     ok(!ret, "got %d\n", ret);
 
-    ret = p__memicmp_l(s1, s2, 3, NULL);
+    ret = _memicmp_l(s1, s2, 3, NULL);
     ok(ret == -1, "got %d\n", ret);
 
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
 }
 
@@ -306,20 +251,20 @@ static void test___strncnt(void)
 
     for (i = 0; i < ARRAY_SIZE(strncnt_tests); ++i)
     {
-        ret = p___strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
+        ret = __strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
         ok(ret == strncnt_tests[i].ret, "%u: unexpected return value %u.\n", i, (int)ret);
     }
 
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
             "Invalid parameter handler was already set\n");
 
     if (0) /* crashes */
     {
-        ret = p___strncnt(NULL, 0);
-        ret = p___strncnt(NULL, 1);
+        ret = __strncnt(NULL, 0);
+        ret = __strncnt(NULL, 1);
     }
 
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
 }
 
@@ -331,10 +276,10 @@ static void test_C_locale(void)
     static const char *locales[] = { NULL, "C" };
 
     /* C locale only converts case for [a-zA-Z] */
-    p_setlocale(LC_ALL, "C");
+    setlocale(LC_ALL, "C");
     for (i = 0; i <= 0xffff; i++)
     {
-        ret = p_tolower(i);
+        ret = tolower(i);
         if (i >= 'A' && i <= 'Z')
         {
             exp = i + 'a' - 'A';
@@ -343,11 +288,11 @@ static void test_C_locale(void)
         else
             ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
 
-        ret = p__tolower(i);
+        ret = _tolower(i);
         exp = i + 'a' - 'A';
         ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
 
-        ret = p__o_tolower(i);
+        ret = _o_tolower(i);
         if (i >= 'A' && i <= 'Z')
         {
             exp = i + 'a' - 'A';
@@ -356,7 +301,7 @@ static void test_C_locale(void)
         else
             ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
 
-        ret = p_towlower(i);
+        ret = towlower(i);
         if (i >= 'A' && i <= 'Z')
         {
             exp = i + 'a' - 'A';
@@ -365,7 +310,7 @@ static void test_C_locale(void)
         else
             ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
 
-        ret = p_toupper(i);
+        ret = toupper(i);
         if (i >= 'a' && i <= 'z')
         {
             exp = i + 'A' - 'a';
@@ -374,11 +319,11 @@ static void test_C_locale(void)
         else
             ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
 
-        ret = p__toupper(i);
+        ret = _toupper(i);
         exp = i + 'A' - 'a';
         ok(ret == exp, "expected %x, got %x for C locale\n", exp, ret);
 
-        ret = p__o_toupper(i);
+        ret = _o_toupper(i);
         if (i >= 'a' && i <= 'z')
         {
             exp = i + 'A' - 'a';
@@ -387,7 +332,7 @@ static void test_C_locale(void)
         else
             ok(ret == i, "expected self %x, got %x for C locale\n", i, ret);
 
-        ret = p_towupper(i);
+        ret = towupper(i);
         if (i >= 'a' && i <= 'z')
         {
             exp = i + 'A' - 'a';
@@ -398,10 +343,10 @@ static void test_C_locale(void)
     }
 
     for (i = 0; i < ARRAY_SIZE(locales); i++) {
-        locale = locales[i] ? p__create_locale(LC_ALL, locales[i]) : NULL;
+        locale = locales[i] ? _create_locale(LC_ALL, locales[i]) : NULL;
 
         for (j = 0; j <= 0xffff; j++) {
-            ret = p__towlower_l(j, locale);
+            ret = _towlower_l(j, locale);
             if (j >= 'A' && j <= 'Z')
             {
                 exp = j + 'a' - 'A';
@@ -410,7 +355,7 @@ static void test_C_locale(void)
             else
                 ok(ret == j, "expected self %x, got %x for C locale\n", j, ret);
 
-            ret = p__towupper_l(j, locale);
+            ret = _towupper_l(j, locale);
             if (j >= 'a' && j <= 'z')
             {
                 exp = j + 'A' - 'a';
@@ -420,7 +365,7 @@ static void test_C_locale(void)
                 ok(ret == j, "expected self %x, got %x for C locale\n", j, ret);
         }
 
-        p__free_locale(locale);
+        _free_locale(locale);
     }
 }
 
@@ -434,28 +379,28 @@ static void test_mbsspn( void)
     unsigned char mbset1[] = "0123456789 \x94\x4e";
     unsigned char mbset2[] = " \x94\x4e\x8c\x8e";
     unsigned char mbset3[] = "\x8e";
-    int ret, cp = p__getmbcp();
+    int ret, cp = _getmbcp();
 
-    ret = p__mbsspn(str1, set);
+    ret = _mbsspn(str1, set);
     ok(ret == 3, "_mbsspn returns %d should be 3\n", ret);
-    ret = p__mbsspn(str2, set);
+    ret = _mbsspn(str2, set);
     ok(ret == 0, "_mbsspn returns %d should be 0\n", ret);
-    ret = p__mbsspn(str1, empty);
+    ret = _mbsspn(str1, empty);
     ok(ret == 0, "_mbsspn returns %d should be 0\n", ret);
 
-    p__setmbcp(932);
-    ret = p__mbsspn(mbstr, mbset1);
+    _setmbcp(932);
+    ret = _mbsspn(mbstr, mbset1);
     ok(ret == 8, "_mbsspn returns %d should be 8\n", ret);
-    ret = p__mbsspn(mbstr, mbset2);
+    ret = _mbsspn(mbstr, mbset2);
     ok(ret == 1, "_mbsspn returns %d should be 1\n", ret);
-    ret = p__mbsspn(mbstr+8, mbset1);
+    ret = _mbsspn(mbstr+8, mbset1);
     ok(ret == 0, "_mbsspn returns %d should be 0\n", ret);
-    ret = p__mbsspn(mbstr+8, mbset2);
+    ret = _mbsspn(mbstr+8, mbset2);
     ok(ret == 2, "_mbsspn returns %d should be 2\n", ret);
-    ret = p__mbsspn(mbstr, mbset3);
+    ret = _mbsspn(mbstr, mbset3);
     ok(ret == 14, "_mbsspn returns %d should be 14\n", ret);
 
-    p__setmbcp(cp);
+    _setmbcp(cp);
 }
 
 static void test_wcstok(void)
@@ -467,27 +412,26 @@ static void test_wcstok(void)
 
     next = NULL;
     wcscpy(buffer, input);
-    token = p_wcstok(buffer, L" ", &next);
+    token = wcstok(buffer, L" ", &next);
     ok(!wcscmp(L"two", token), "expected \"two\", got \"%ls\"\n", token);
     ok(next == token + 4, "expected %p, got %p\n", token + 4, next);
-    token = p_wcstok(NULL, L" ", &next);
+    token = wcstok(NULL, L" ", &next);
     ok(!wcscmp(L"words", token), "expected \"words\", got \"%ls\"\n", token);
     ok(next == token + 5, "expected %p, got %p\n", token + 5, next);
-    token = p_wcstok(NULL, L" ", &next);
+    token = wcstok(NULL, L" ", &next);
     ok(!token, "expected NULL, got %p\n", token);
 
     wcscpy(buffer, input);
-    token = p_wcstok(buffer, L" ", NULL);
+    token = wcstok(buffer, L" ", NULL);
     ok(!wcscmp(L"two", token), "expected \"two\", got \"%ls\"\n", token);
-    token = p_wcstok(NULL, L" ", NULL);
+    token = wcstok(NULL, L" ", NULL);
     ok(!wcscmp(L"words", token), "expected \"words\", got \"%ls\"\n", token);
-    token = p_wcstok(NULL, L" ", NULL);
+    token = wcstok(NULL, L" ", NULL);
     ok(!token, "expected NULL, got %p\n", token);
 }
 
 START_TEST(string)
 {
-    if (!init()) return;
     test_strtod();
     test__memicmp();
     test__memicmp_l();
