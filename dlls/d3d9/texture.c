@@ -543,7 +543,7 @@ static ULONG WINAPI d3d9_texture_cube_AddRef(IDirect3DCubeTexture9 *iface)
         wined3d_mutex_lock();
         LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d9_surface, rtv_entry)
         {
-            wined3d_rendertarget_view_decref(surface->wined3d_rtv);
+            wined3d_rendertarget_view_incref(surface->wined3d_rtv);
         }
         wined3d_texture_incref(texture->wined3d_texture);
         wined3d_mutex_unlock();
