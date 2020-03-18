@@ -1049,6 +1049,42 @@ static void test_odbc_provider(void)
     IDBProperties_Release(props);
 }
 
+static void test_odbc_enumerator(void)
+{
+    HRESULT hr;
+    ISourcesRowset *source;
+    IRowset *rowset;
+
+    hr = CoCreateInstance( &CLSID_MSDASQL_ENUMERATOR, NULL, CLSCTX_ALL, &IID_ISourcesRowset, (void **)&source);
+    todo_wine ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    if (FAILED(hr))
+    {
+        return;
+    }
+
+    hr = ISourcesRowset_GetSourcesRowset(source, NULL, &IID_IRowset, 0, 0, (IUnknown**)&rowset);
+    todo_wine ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
+    if (hr == S_OK)
+    {
+        IAccessor *accessor;
+        IRowsetInfo *info;
+
+        hr = IRowset_QueryInterface(rowset, &IID_IAccessor, (void **)&accessor);
+        ok(hr == S_OK, "got %08x\n", hr);
+        if (hr == S_OK)
+            IAccessor_Release(accessor);
+
+        hr = IRowset_QueryInterface(rowset, &IID_IRowsetInfo, (void **)&info);
+        ok(hr == S_OK, "got %08x\n", hr);
+        if (hr == S_OK)
+            IRowsetInfo_Release(info);
+
+        IRowset_Release(rowset);
+    }
+
+    ISourcesRowset_Release(source);
+}
+
 START_TEST(database)
 {
     OleInitialize(NULL);
@@ -1058,6 +1094,7 @@ START_TEST(database)
     test_initializationstring();
     test_dslocator();
     test_odbc_provider();
+    test_odbc_enumerator();
 
     /* row position */
     test_rowposition();
