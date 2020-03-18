@@ -280,13 +280,16 @@ static inline BOOL is_window_resizable( struct x11drv_win_data *data, DWORD styl
  *              get_mwm_decorations
  */
 static unsigned long get_mwm_decorations( struct x11drv_win_data *data,
-                                          DWORD style, DWORD ex_style )
+                                          DWORD style, DWORD ex_style,
+                                          const RECT *window_rect,
+                                          const RECT *client_rect )
 {
     unsigned long ret = 0;
 
     if (!decorated_mode) return 0;
 
-    if (IsRectEmpty( &data->window_rect )) return 0;
+    if (EqualRect( window_rect, client_rect )) return 0;
+    if (IsRectEmpty( window_rect )) return 0;
     if (data->shaped) return 0;
 
     if (ex_style & WS_EX_TOOLWINDOW) return 0;
@@ -712,7 +715,7 @@ static void set_mwm_hints( struct x11drv_win_data *data, DWORD style, DWORD ex_s
     }
     else
     {
-        mwm_hints.decorations = get_mwm_decorations( data, style, ex_style );
+        mwm_hints.decorations = get_mwm_decorations( data, style, ex_style, &data->window_rect, &data->client_rect );
         mwm_hints.functions = MWM_FUNC_MOVE;
         if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
         if (!(style & WS_DISABLED))
@@ -1157,7 +1160,8 @@ void make_window_embedded( struct x11drv_win_data *data )
  *
  * Convert a rect from client to X window coordinates
  */
-static void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect )
+static void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect,
+                                     const RECT *window_rect, const RECT *client_rect )
 {
     DWORD style, ex_style, style_mask = 0, ex_style_mask = 0;
     unsigned long decor;
@@ -1168,7 +1172,7 @@ static void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect )
 
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
     ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
-    decor = get_mwm_decorations( data, style, ex_style );
+    decor = get_mwm_decorations( data, style, ex_style, window_rect, client_rect );
 
     if (decor & MWM_DECOR_TITLE) style_mask |= WS_CAPTION;
     if (decor & MWM_DECOR_BORDER)
@@ -2274,7 +2278,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     }
 
     *visible_rect = *window_rect;
-    X11DRV_window_to_X_rect( data, visible_rect );
+    X11DRV_window_to_X_rect( data, visible_rect, window_rect, client_rect );
 
     /* create the window surface if necessary */
 
