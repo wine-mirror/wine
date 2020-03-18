@@ -7772,7 +7772,10 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
     {
         const struct wined3d_shader_signature *output_signature = &shader->output_signature;
 
-        shader_addline(buffer, "vec4 ps_out[%u];\n", gl_info->limits.buffers);
+        if (args->dual_source_blend)
+            shader_addline(buffer, "vec4 ps_out[2];\n");
+        else
+            shader_addline(buffer, "vec4 ps_out[%u];\n", gl_info->limits.buffers);
         if (output_signature->element_count)
         {
             for (i = 0; i < output_signature->element_count; ++i)
@@ -7787,7 +7790,12 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
                     continue;
                 }
                 if (shader_glsl_use_explicit_attrib_location(gl_info))
-                    shader_addline(buffer, "layout(location = %u) ", output->semantic_idx);
+                {
+                    if (args->dual_source_blend)
+                        shader_addline(buffer, "layout(location = 0, index = %u) ", output->semantic_idx);
+                    else
+                        shader_addline(buffer, "layout(location = %u) ", output->semantic_idx);
+                }
                 shader_addline(buffer, "out %s4 color_out%u;\n",
                         component_type_info[output->component_type].glsl_vector_type, output->semantic_idx);
             }
@@ -7800,7 +7808,12 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
             {
                 i = wined3d_bit_scan(&mask);
                 if (shader_glsl_use_explicit_attrib_location(gl_info))
-                    shader_addline(buffer, "layout(location = %u) ", i);
+                {
+                    if (args->dual_source_blend)
+                        shader_addline(buffer, "layout(location = 0, index = %u) ", i);
+                    else
+                        shader_addline(buffer, "layout(location = %u) ", i);
+                }
                 shader_addline(buffer, "out vec4 color_out%u;\n", i);
             }
         }
@@ -10385,7 +10398,10 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
             for (i = 0; i < MAX_RENDER_TARGET_VIEWS; ++i)
             {
                 string_buffer_sprintf(tmp_name, "color_out%u", i);
-                GL_EXTCALL(glBindFragDataLocation(program_id, i, tmp_name->buffer));
+                if (state->blend_state && state->blend_state->dual_source)
+                    GL_EXTCALL(glBindFragDataLocationIndexed(program_id, 0, i, tmp_name->buffer));
+                else
+                    GL_EXTCALL(glBindFragDataLocation(program_id, i, tmp_name->buffer));
                 checkGLcall("glBindFragDataLocation");
             }
         }

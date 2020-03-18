@@ -74,6 +74,11 @@ void * CDECL wined3d_blend_state_get_parent(const struct wined3d_blend_state *st
     return state->parent;
 }
 
+static BOOL is_dual_source(enum wined3d_blend state)
+{
+    return state >= WINED3D_BLEND_SRC1COLOR && state <= WINED3D_BLEND_INVSRC1ALPHA;
+}
+
 HRESULT CDECL wined3d_blend_state_create(struct wined3d_device *device,
         const struct wined3d_blend_state_desc *desc, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_blend_state **state)
@@ -91,6 +96,12 @@ HRESULT CDECL wined3d_blend_state_create(struct wined3d_device *device,
     object->parent = parent;
     object->parent_ops = parent_ops;
     object->device = device;
+
+    object->dual_source = desc->rt[0].enable
+            && (is_dual_source(desc->rt[0].src)
+            || is_dual_source(desc->rt[0].dst)
+            || is_dual_source(desc->rt[0].src_alpha)
+            || is_dual_source(desc->rt[0].dst_alpha));
 
     TRACE("Created blend state %p.\n", object);
     *state = object;
@@ -650,6 +661,7 @@ static void blend_db2(struct wined3d_context *context, const struct wined3d_stat
     GLenum src_blend, dst_blend, src_blend_alpha, dst_blend_alpha;
     const struct wined3d_blend_state *b = state->blend_state;
     const struct wined3d_format *rt_format;
+    BOOL dual_source = b && b->dual_source;
     unsigned int i;
 
     if (b && b->desc.alpha_to_coverage)
@@ -657,6 +669,13 @@ static void blend_db2(struct wined3d_context *context, const struct wined3d_stat
     else
         gl_info->gl_ops.gl.p_glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
     checkGLcall("glEnable GL_SAMPLE_ALPHA_TO_COVERAGE");
+
+    if (context->last_was_dual_source_blend != dual_source)
+    {
+        /* Dual source blending changes the location of the output varyings. */
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
+        context->last_was_dual_source_blend = dual_source;
+    }
 
     if (!b || !b->desc.independent)
     {
@@ -708,6 +727,7 @@ static void blend_dbb(struct wined3d_context *context, const struct wined3d_stat
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     const struct wined3d_blend_state *b = state->blend_state;
+    BOOL dual_source = b && b->dual_source;
     unsigned int i;
 
     if (b && b->desc.alpha_to_coverage)
@@ -715,6 +735,13 @@ static void blend_dbb(struct wined3d_context *context, const struct wined3d_stat
     else
         gl_info->gl_ops.gl.p_glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
     checkGLcall("glEnable GL_SAMPLE_ALPHA_TO_COVERAGE");
+
+    if (context->last_was_dual_source_blend != dual_source)
+    {
+        /* Dual source blending changes the location of the output varyings. */
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
+        context->last_was_dual_source_blend = dual_source;
+    }
 
     if (!b || !b->desc.independent)
     {

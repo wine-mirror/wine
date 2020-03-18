@@ -3444,6 +3444,8 @@ static uint32_t find_draw_buffers_mask(const struct wined3d_context_gl *context_
 
     rt_mask = ps ? ps->reg_maps.rt_mask : 1;
     rt_mask &= (1u << gl_info->limits.buffers) - 1;
+    if (state->blend_state && state->blend_state->dual_source)
+        rt_mask = 1;
 
     mask = rt_mask;
     while (mask)

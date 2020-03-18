@@ -4167,6 +4167,8 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         if (rtv && rtv->format->id == WINED3DFMT_A8_UNORM && !is_identity_fixup(rtv->format->color_fixup))
             args->rt_alpha_swizzle |= 1u << i;
     }
+
+    args->dual_source_blend = state->blend_state && state->blend_state->dual_source;
 }
 
 static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
