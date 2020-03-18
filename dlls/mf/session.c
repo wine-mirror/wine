@@ -2614,6 +2614,14 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             LeaveCriticalSection(&session->cs);
 
             break;
+        case MEAudioSessionGroupingParamChanged:
+        case MEAudioSessionIconChanged:
+        case MEAudioSessionNameChanged:
+        case MEAudioSessionVolumeChanged:
+
+            IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+
+            break;
         case MEAudioSessionDeviceRemoved:
         case MEAudioSessionDisconnected:
         case MEAudioSessionExclusiveModeOverride:
