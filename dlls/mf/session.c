@@ -164,7 +164,7 @@ struct topo_node
 enum presentation_flags
 {
     SESSION_FLAG_SOURCES_SUBSCRIBED = 0x1,
-    SESSION_FLAG_SINKS_SUBSCRIBED = 0x2,
+    SESSION_FLAG_PRESENTATION_CLOCK_SET = 0x2,
     SESSION_FLAG_FINALIZE_SINKS = 0x4,
 };
 
@@ -1911,9 +1911,21 @@ static enum object_state session_get_object_state_for_event(MediaEventType event
     }
 }
 
+static void session_set_consumed_clock(IUnknown *object, IMFPresentationClock *clock)
+{
+    IMFClockConsumer *consumer;
+
+    if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFClockConsumer, (void **)&consumer)))
+    {
+        IMFClockConsumer_SetPresentationClock(consumer, clock);
+        IMFClockConsumer_Release(consumer);
+    }
+}
+
 static HRESULT session_start_clock(struct media_session *session)
 {
     IMFPresentationTimeSource *time_source = NULL;
+    struct media_source *source;
     LONGLONG start_offset = 0;
     struct media_sink *sink;
     struct topo_node *node;
@@ -1925,8 +1937,9 @@ static HRESULT session_start_clock(struct media_session *session)
             IMFTransform_ProcessMessage(node->object.transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
     }
 
-    if (!(session->presentation.flags & SESSION_FLAG_SINKS_SUBSCRIBED))
+    if (!(session->presentation.flags & SESSION_FLAG_PRESENTATION_CLOCK_SET))
     {
+        /* Attempt to get time source from the sinks. */
         LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
         {
             if (SUCCEEDED(IMFMediaSink_QueryInterface(sink->sink, &IID_IMFPresentationTimeSource,
@@ -1957,6 +1970,12 @@ static HRESULT session_start_clock(struct media_session *session)
             }
         }
 
+        /* Set clock for all topology nodes. */
+        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+        {
+            session_set_consumed_clock((IUnknown *)source->source, session->clock);
+        }
+
         LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
         {
             if (sink->event_generator && FAILED(hr = IMFMediaEventGenerator_BeginGetEvent(sink->event_generator,
@@ -1969,7 +1988,15 @@ static HRESULT session_start_clock(struct media_session *session)
                 WARN("Failed to set presentation clock for the sink, hr %#x.\n", hr);
         }
 
-        session->presentation.flags |= SESSION_FLAG_SINKS_SUBSCRIBED;
+        LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+        {
+            if (node->type != MF_TOPOLOGY_TRANSFORM_NODE)
+                continue;
+
+            session_set_consumed_clock(node->object.object, session->clock);
+        }
+
+        session->presentation.flags |= SESSION_FLAG_PRESENTATION_CLOCK_SET;
     }
 
     if (IsEqualGUID(&session->presentation.time_format, &GUID_NULL))
