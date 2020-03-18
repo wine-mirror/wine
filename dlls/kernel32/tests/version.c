@@ -610,7 +610,7 @@ static void test_VerifyVersionInfo(void)
 
         if (rtlinfo.dwMajorVersion != 6 || rtlinfo.dwMinorVersion != 2)
         {
-            win_skip("GetVersionEx and VerifyVersionInfo are faking values\n");
+            skip("GetVersionEx and VerifyVersionInfo are faking values\n");
             return;
         }
     }
