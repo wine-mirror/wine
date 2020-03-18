@@ -1420,11 +1420,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetProductInfo( DWORD os_major, DWORD os_minor,
  */
 DWORD WINAPI GetVersion(void)
 {
-    DWORD result = MAKELONG( MAKEWORD( NtCurrentTeb()->Peb->OSMajorVersion,
-                                       NtCurrentTeb()->Peb->OSMinorVersion ),
-                             (NtCurrentTeb()->Peb->OSPlatformId ^ 2) << 14 );
-    if (NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32_NT)
-        result |= LOWORD(NtCurrentTeb()->Peb->OSBuildNumber) << 16;
+    OSVERSIONINFOEXW info;
+    DWORD result;
+
+    info.dwOSVersionInfoSize = sizeof(info);
+    if (!GetVersionExW( (OSVERSIONINFOW *)&info )) return 0;
+
+    result = MAKELONG( MAKEWORD( info.dwMajorVersion, info.dwMinorVersion ),
+                       (info.dwPlatformId ^ 2) << 14 );
+
+    if (info.dwPlatformId == VER_PLATFORM_WIN32_NT)
+        result |= LOWORD(info.dwBuildNumber) << 16;
     return result;
 }
 
