@@ -19,7 +19,6 @@
 #define COBJMACROS
 
 #include "mfplat_private.h"
-#include "d3d9types.h"
 
 #include "initguid.h"
 #include "ks.h"
@@ -1837,7 +1836,7 @@ HRESULT WINAPI MFGetStrideForBitmapInfoHeader(DWORD fourcc, DWORD width, LONG *s
     struct uncompressed_video_format *format;
     GUID subtype;
 
-    TRACE("%#x, %u, %p.\n", fourcc, width, stride);
+    TRACE("%s, %u, %p.\n", debugstr_fourcc(fourcc), width, stride);
 
     memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
     subtype.Data1 = fourcc;
@@ -1902,7 +1901,7 @@ HRESULT WINAPI MFGetPlaneSize(DWORD fourcc, DWORD width, DWORD height, DWORD *si
     unsigned int stride;
     GUID subtype;
 
-    TRACE("%#x, %u, %u, %p.\n", fourcc, width, height, size);
+    TRACE("%s, %u, %u, %p.\n", debugstr_fourcc(fourcc), width, height, size);
 
     memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
     subtype.Data1 = fourcc;

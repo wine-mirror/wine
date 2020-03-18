@@ -23,6 +23,7 @@
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mferror.h"
+#include "d3d9types.h"
 
 #include "wine/heap.h"
 #include "wine/debug.h"
@@ -144,4 +145,40 @@ static inline const char *debugstr_propvar(const PROPVARIANT *v)
         default:
             return wine_dbg_sprintf("%p {vt %#x}", v, v->vt);
     }
+}
+
+static inline const char *debugstr_fourcc(DWORD format)
+{
+    static const struct format_name
+    {
+        unsigned int format;
+        const char *name;
+    } formats[] =
+    {
+        { D3DFMT_R8G8B8,        "R8G8B8" },
+        { D3DFMT_A8R8G8B8,      "A8R8G8B8" },
+        { D3DFMT_X8R8G8B8,      "X8R8G8B8" },
+        { D3DFMT_R5G6B5,        "R5G6B5" },
+        { D3DFMT_X1R5G5B5,      "X1R5G6B5" },
+        { D3DFMT_A2B10G10R10,   "A2B10G10R10" },
+        { D3DFMT_P8,            "P8" },
+        { D3DFMT_L8,            "L8" },
+        { D3DFMT_D16,           "D16" },
+        { D3DFMT_L16,           "L16" },
+        { D3DFMT_A16B16G16R16F, "A16B16G16R16F" },
+    };
+    int i;
+
+    if ((format & 0xff) == format)
+    {
+        for (i = 0; i < ARRAY_SIZE(formats); ++i)
+        {
+            if (formats[i].format == format)
+                return wine_dbg_sprintf("%s", wine_dbgstr_an(formats[i].name, -1));
+        }
+
+        return wine_dbg_sprintf("%#x", format);
+    }
+
+    return wine_dbgstr_an((char *)&format, 4);
 }

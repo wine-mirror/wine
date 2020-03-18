@@ -1510,7 +1510,7 @@ HRESULT WINAPI MFShutdown(void)
  */
 HRESULT WINAPI MFCopyImage(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride, DWORD width, DWORD lines)
 {
-    TRACE("(%p, %d, %p, %d, %u, %u)\n", dest, deststride, src, srcstride, width, lines);
+    TRACE("%p, %d, %p, %d, %u, %u.\n", dest, deststride, src, srcstride, width, lines);
 
     while (lines--)
     {
