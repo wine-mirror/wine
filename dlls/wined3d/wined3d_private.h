@@ -5118,10 +5118,10 @@ static inline BOOL needs_separate_srgb_gl_texture(const struct wined3d_context *
     return FALSE;
 }
 
-static inline BOOL needs_srgb_write(const struct wined3d_context *context,
+static inline BOOL needs_srgb_write(const struct wined3d_d3d_info *d3d_info,
         const struct wined3d_state *state, const struct wined3d_fb_state *fb)
 {
-    return (!(context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
+    return (!(d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
             || state->render_states[WINED3D_RS_SRGBWRITEENABLE])
             && fb->render_targets[0] && fb->render_targets[0]->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
 }

@@ -6236,7 +6236,7 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
                 break;
         }
     }
-    settings->sRGB_write = !d3d_info->srgb_write_control && needs_srgb_write(context, state, state->fb);
+    settings->sRGB_write = !d3d_info->srgb_write_control && needs_srgb_write(d3d_info, state, state->fb);
     if (d3d_info->vs_clipping || !use_vs(state) || !state->render_states[WINED3D_RS_CLIPPING]
             || !state->render_states[WINED3D_RS_CLIPPLANEENABLE])
     {

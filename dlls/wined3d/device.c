@@ -426,7 +426,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
             wined3d_texture_invalidate_location(texture, rtv->sub_resource_idx, ~rtv->resource->draw_binding);
         }
 
-        if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && needs_srgb_write(context, state, fb))
+        if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && needs_srgb_write(context->d3d_info, state, fb))
         {
             if (rt_count > 1)
                 WARN("Clearing multiple sRGB render targets without GL_ARB_framebuffer_sRGB "

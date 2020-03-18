@@ -3414,7 +3414,7 @@ BOOL wined3d_context_gl_apply_clear_state(struct wined3d_context_gl *context_gl,
     gl_info->gl_ops.gl.p_glEnable(GL_SCISSOR_TEST);
     if (rt_count && gl_info->supported[ARB_FRAMEBUFFER_SRGB])
     {
-        if (needs_srgb_write(&context_gl->c, state, fb))
+        if (needs_srgb_write(context_gl->c.d3d_info, state, fb))
             gl_info->gl_ops.gl.p_glEnable(GL_FRAMEBUFFER_SRGB);
         else
             gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);

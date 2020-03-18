@@ -4474,7 +4474,7 @@ void state_srgbwrite(struct wined3d_context *context, const struct wined3d_state
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    if (needs_srgb_write(context, state, state->fb))
+    if (needs_srgb_write(context->d3d_info, state, state->fb))
         gl_info->gl_ops.gl.p_glEnable(GL_FRAMEBUFFER_SRGB);
     else
         gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);
