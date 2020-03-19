@@ -503,7 +503,7 @@ static const IMF2DBuffer2Vtbl memory_2d_buffer_vtbl =
 static HRESULT memory_buffer_init(struct memory_buffer *buffer, DWORD max_length, DWORD alignment,
         const IMFMediaBufferVtbl *vtbl)
 {
-    buffer->data = heap_alloc(ALIGN_SIZE(max_length, alignment));
+    buffer->data = heap_alloc_zero(ALIGN_SIZE(max_length, alignment));
     if (!buffer->data)
         return E_OUTOFMEMORY;
 
