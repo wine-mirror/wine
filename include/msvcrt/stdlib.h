@@ -225,6 +225,8 @@ void          __cdecl qsort(void*,size_t,size_t,int (__cdecl *)(const void*,cons
 typedef void (__cdecl *_invalid_parameter_handler)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned, uintptr_t);
 _invalid_parameter_handler __cdecl _set_invalid_parameter_handler(_invalid_parameter_handler);
 _invalid_parameter_handler __cdecl _get_invalid_parameter_handler(void);
+_ACRTIMP _invalid_parameter_handler __cdecl _get_thread_local_invalid_parameter_handler(void);
+_ACRTIMP _invalid_parameter_handler __cdecl _set_thread_local_invalid_parameter_handler(_invalid_parameter_handler);
 void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func, const wchar_t *file,
                                 unsigned int line, uintptr_t arg);
 
