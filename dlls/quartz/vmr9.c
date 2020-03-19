@@ -351,7 +351,7 @@ static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const
 
 static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *info)
 {
-    DWORD buffer_count = 2;
+    DWORD buffer_count = 1;
     HRESULT hr;
 
     if (FAILED(hr = IVMRSurfaceAllocatorEx9_InitializeDevice(filter->allocator,
@@ -407,7 +407,7 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *filter, BOOL force, const AM_M
     info.dwWidth = filter->source_rect.right;
     info.dwHeight = filter->source_rect.bottom;
     info.Pool = D3DPOOL_DEFAULT;
-    info.MinBuffers = 2;
+    info.MinBuffers = 1;
     info.szAspectRatio.cx = info.dwWidth;
     info.szAspectRatio.cy = info.dwHeight;
     info.szNativeSize.cx = filter->bmiheader.biWidth;
