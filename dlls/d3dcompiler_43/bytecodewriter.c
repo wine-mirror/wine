@@ -340,6 +340,21 @@ static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
 }
 
 /* bwriter -> d3d9 conversion functions. */
+
+static DWORD sm1_version(const struct bwriter_shader *shader)
+{
+    switch (shader->type)
+    {
+    case ST_VERTEX:
+        return D3DVS_VERSION(shader->major_version, shader->minor_version);
+    case ST_PIXEL:
+        return D3DPS_VERSION(shader->major_version, shader->minor_version);
+    default:
+        ERR("Invalid shader type %#x.\n", shader->type);
+        return 0;
+    }
+}
+
 static DWORD d3d9_swizzle(DWORD bwriter_swizzle)
 {
     DWORD ret = 0;
@@ -2421,7 +2436,7 @@ HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **resul
         ERR("NULL shader structure, aborting\n");
         return E_FAIL;
     }
-    writer = create_writer(shader->version);
+    writer = create_writer(sm1_version(shader));
     *result = NULL;
 
     if(!writer) {
@@ -2439,7 +2454,7 @@ HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **resul
     }
 
     /* Write shader type and version */
-    put_dword(buffer, shader->version);
+    put_dword(buffer, sm1_version(shader));
 
     writer->funcs->header(writer, shader, buffer);
     if(FAILED(writer->state)) {

@@ -125,10 +125,9 @@ static void asmparser_dcl_input(struct asm_parser *This, DWORD usage, DWORD num,
     struct instruction instr;
 
     if(!This->shader) return;
-    if(mod != 0 &&
-       (This->shader->version != BWRITERPS_VERSION(3, 0) ||
-        (mod != BWRITERSPDM_MSAMPCENTROID &&
-         mod != BWRITERSPDM_PARTIALPRECISION))) {
+    if (mod && (This->shader->type != ST_PIXEL || This->shader->major_version != 3
+            || (mod != BWRITERSPDM_MSAMPCENTROID && mod != BWRITERSPDM_PARTIALPRECISION)))
+    {
         asmparser_message(This, "Line %u: Unsupported modifier in dcl instruction\n", This->line_no);
         set_parse_status(&This->status, PARSE_ERR);
         return;
@@ -170,10 +169,9 @@ static void asmparser_dcl_sampler(struct asm_parser *This, DWORD samptype,
                                   DWORD mod, DWORD regnum,
                                   unsigned int line_no) {
     if(!This->shader) return;
-    if(mod != 0 &&
-       (This->shader->version != BWRITERPS_VERSION(3, 0) ||
-        (mod != BWRITERSPDM_MSAMPCENTROID &&
-         mod != BWRITERSPDM_PARTIALPRECISION))) {
+    if (mod && (This->shader->type != ST_PIXEL || This->shader->major_version != 3
+            || (mod != BWRITERSPDM_MSAMPCENTROID && mod != BWRITERSPDM_PARTIALPRECISION)))
+    {
         asmparser_message(This, "Line %u: Unsupported modifier in dcl instruction\n", This->line_no);
         set_parse_status(&This->status, PARSE_ERR);
         return;
@@ -503,6 +501,7 @@ static void asmparser_instr(struct asm_parser *This, DWORD opcode, DWORD mod, DW
         enum bwriter_comparison_type comp, const struct shader_reg *dst,
         const struct src_regs *srcs, int expectednsrcs)
 {
+    struct bwriter_shader *shader = This->shader;
     struct instruction *instr;
     unsigned int i;
     BOOL firstreg = TRUE;
@@ -529,8 +528,8 @@ static void asmparser_instr(struct asm_parser *This, DWORD opcode, DWORD mod, DW
     switch(opcode) {
         case BWRITERSIO_SINCOS:
             /* The syntax changes between vs 2 and the other shader versions */
-            if(This->shader->version == BWRITERVS_VERSION(2, 0) ||
-               This->shader->version == BWRITERVS_VERSION(2, 1)) {
+            if (This->shader->type == ST_VERTEX && This->shader->major_version == 2)
+            {
                 asmparser_sincos(This, mod, shift, dst, srcs);
                 return;
             }
@@ -538,22 +537,20 @@ static void asmparser_instr(struct asm_parser *This, DWORD opcode, DWORD mod, DW
             break;
         case BWRITERSIO_TEXCOORD:
             /* texcoord/texcrd are two instructions present only in PS <= 1.3 and PS 1.4 respectively */
-            if(This->shader->version == BWRITERPS_VERSION(1, 4))
+            if (shader->type == ST_PIXEL && shader->major_version == 1 && shader->minor_version == 4)
                 asmparser_texcrd(This, mod, shift, dst, srcs);
-            else asmparser_texcoord(This, mod, shift, dst, srcs);
+            else
+                asmparser_texcoord(This, mod, shift, dst, srcs);
             return;
         case BWRITERSIO_TEX:
             /* this encodes both the tex PS 1.x instruction and the
                texld 1.4/2.0+ instruction */
-            if(This->shader->version == BWRITERPS_VERSION(1, 0) ||
-               This->shader->version == BWRITERPS_VERSION(1, 1) ||
-               This->shader->version == BWRITERPS_VERSION(1, 2) ||
-               This->shader->version == BWRITERPS_VERSION(1, 3)) {
-                asmparser_tex(This, mod, shift, dst);
-                return;
-            }
-            else if(This->shader->version == BWRITERPS_VERSION(1, 4)) {
-                asmparser_texld14(This, mod, shift, dst, srcs);
+            if (shader->type == ST_PIXEL && shader->major_version == 1)
+            {
+                if (shader->minor_version < 4)
+                    asmparser_tex(This, mod, shift, dst);
+                else
+                    asmparser_texld14(This, mod, shift, dst, srcs);
                 return;
             }
             /* else fallback to the standard behavior */
@@ -1355,7 +1352,8 @@ void create_vs10_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_VERTEX;
-    ret->shader->version = BWRITERVS_VERSION(1, 0);
+    ret->shader->major_version = 1;
+    ret->shader->minor_version = 0;
     ret->funcs = &parser_vs_1;
     gen_oldvs_output(ret->shader);
 }
@@ -1371,7 +1369,8 @@ void create_vs11_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_VERTEX;
-    ret->shader->version = BWRITERVS_VERSION(1, 1);
+    ret->shader->major_version = 1;
+    ret->shader->minor_version = 1;
     ret->funcs = &parser_vs_1;
     gen_oldvs_output(ret->shader);
 }
@@ -1387,7 +1386,8 @@ void create_vs20_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_VERTEX;
-    ret->shader->version = BWRITERVS_VERSION(2, 0);
+    ret->shader->major_version = 2;
+    ret->shader->minor_version = 0;
     ret->funcs = &parser_vs_2;
     gen_oldvs_output(ret->shader);
 }
@@ -1403,7 +1403,8 @@ void create_vs2x_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_VERTEX;
-    ret->shader->version = BWRITERVS_VERSION(2, 1);
+    ret->shader->major_version = 2;
+    ret->shader->minor_version = 1;
     ret->funcs = &parser_vs_2;
     gen_oldvs_output(ret->shader);
 }
@@ -1419,7 +1420,8 @@ void create_vs30_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_VERTEX;
-    ret->shader->version = BWRITERVS_VERSION(3, 0);
+    ret->shader->major_version = 3;
+    ret->shader->minor_version = 0;
     ret->funcs = &parser_vs_3;
 }
 
@@ -1434,7 +1436,8 @@ void create_ps10_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_PIXEL;
-    ret->shader->version = BWRITERPS_VERSION(1, 0);
+    ret->shader->major_version = 1;
+    ret->shader->minor_version = 0;
     ret->funcs = &parser_ps_1_0123;
     gen_oldps_input(ret->shader, 4);
 }
@@ -1450,7 +1453,8 @@ void create_ps11_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_PIXEL;
-    ret->shader->version = BWRITERPS_VERSION(1, 1);
+    ret->shader->major_version = 1;
+    ret->shader->minor_version = 1;
     ret->funcs = &parser_ps_1_0123;
     gen_oldps_input(ret->shader, 4);
 }
@@ -1466,7 +1470,8 @@ void create_ps12_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_PIXEL;
-    ret->shader->version = BWRITERPS_VERSION(1, 2);
+    ret->shader->major_version = 1;
+    ret->shader->minor_version = 2;
     ret->funcs = &parser_ps_1_0123;
     gen_oldps_input(ret->shader, 4);
 }
@@ -1482,7 +1487,8 @@ void create_ps13_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_PIXEL;
-    ret->shader->version = BWRITERPS_VERSION(1, 3);
+    ret->shader->major_version = 1;
+    ret->shader->minor_version = 3;
     ret->funcs = &parser_ps_1_0123;
     gen_oldps_input(ret->shader, 4);
 }
@@ -1498,7 +1504,8 @@ void create_ps14_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_PIXEL;
-    ret->shader->version = BWRITERPS_VERSION(1, 4);
+    ret->shader->major_version = 1;
+    ret->shader->minor_version = 4;
     ret->funcs = &parser_ps_1_4;
     gen_oldps_input(ret->shader, 6);
 }
@@ -1514,7 +1521,8 @@ void create_ps20_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_PIXEL;
-    ret->shader->version = BWRITERPS_VERSION(2, 0);
+    ret->shader->major_version = 2;
+    ret->shader->minor_version = 0;
     ret->funcs = &parser_ps_2;
     gen_oldps_input(ret->shader, 8);
 }
@@ -1530,7 +1538,8 @@ void create_ps2x_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_PIXEL;
-    ret->shader->version = BWRITERPS_VERSION(2, 1);
+    ret->shader->major_version = 2;
+    ret->shader->minor_version = 1;
     ret->funcs = &parser_ps_2_x;
     gen_oldps_input(ret->shader, 8);
 }
@@ -1546,6 +1555,7 @@ void create_ps30_parser(struct asm_parser *ret) {
     }
 
     ret->shader->type = ST_PIXEL;
-    ret->shader->version = BWRITERPS_VERSION(3, 0);
+    ret->shader->major_version = 3;
+    ret->shader->minor_version = 0;
     ret->funcs = &parser_ps_3;
 }

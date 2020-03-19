@@ -118,9 +118,7 @@ struct samplerdecl {
 #define INSTRARRAY_INITIAL_SIZE 8
 struct bwriter_shader {
     enum shader_type        type;
-
-    /* Shader version selected */
-    DWORD                   version;
+    unsigned char major_version, minor_version;
 
     /* Local constants. Every constant that is not defined below is loaded from
      * the global constant set at shader runtime

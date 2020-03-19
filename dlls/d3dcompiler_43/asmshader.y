@@ -591,8 +591,8 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                                       asm_ctx.line_no);
                                     set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
-                                if(asm_ctx.shader->version == BWRITERPS_VERSION(2, 0) ||
-                                    asm_ctx.shader->version == BWRITERPS_VERSION(2, 1)) {
+                                if (asm_ctx.shader->type == ST_PIXEL && asm_ctx.shader->major_version == 2)
+                                {
                                     asmparser_message(&asm_ctx, "Line %u: Declaration not supported in PS 2\n",
                                                       asm_ctx.line_no);
                                     set_parse_status(&asm_ctx.status,  PARSE_ERR);
@@ -614,8 +614,8 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                                       asm_ctx.line_no);
                                     set_parse_status(&asm_ctx.status,  PARSE_ERR);
                                 }
-                                if(asm_ctx.shader->version == BWRITERPS_VERSION(2, 0) ||
-                                    asm_ctx.shader->version == BWRITERPS_VERSION(2, 1)) {
+                                if (asm_ctx.shader->type == ST_PIXEL && asm_ctx.shader->major_version == 2)
+                                {
                                     asmparser_message(&asm_ctx, "Line %u: Declaration not supported in PS 2\n",
                                                       asm_ctx.line_no);
                                     set_parse_status(&asm_ctx.status,  PARSE_ERR);
