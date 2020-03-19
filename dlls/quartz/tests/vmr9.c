@@ -2508,7 +2508,7 @@ static void test_allocate_surface_helper(void)
     ok(hr == D3D_OK, "Got hr %#x.\n", hr);
     ok(desc.Format == info.Format, "Got format %#x.\n", desc.Format);
     ok(desc.Type == D3DRTYPE_SURFACE, "Got type %u.\n", desc.Type);
-    todo_wine ok(desc.Usage == D3DUSAGE_DYNAMIC, "Got usage %#x.\n", desc.Usage);
+    ok(desc.Usage == D3DUSAGE_DYNAMIC, "Got usage %#x.\n", desc.Usage);
     ok(desc.Pool == D3DPOOL_DEFAULT, "Got pool %u.\n", desc.Pool);
     ok(desc.MultiSampleType == D3DMULTISAMPLE_NONE, "Got multisample type %u.\n", desc.MultiSampleType);
     ok(!desc.MultiSampleQuality, "Got multisample quality %u.\n", desc.MultiSampleQuality);
