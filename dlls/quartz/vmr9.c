@@ -75,6 +75,7 @@ struct quartz_vmr
     /* Presentation related members */
     IDirect3DDevice9 *allocator_d3d9_dev;
     HMONITOR allocator_mon;
+    IDirect3DSurface9 **surfaces;
     DWORD num_surfaces;
     DWORD cur_surface;
     DWORD_PTR cookie;
@@ -312,14 +313,9 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
     info.rtEnd = tStop;
     info.szAspectRatio.cx = This->bmiheader.biWidth;
     info.szAspectRatio.cy = This->bmiheader.biHeight;
-
-    hr = IVMRSurfaceAllocatorEx9_GetSurface(This->allocator, This->cookie, (++This->cur_surface)%This->num_surfaces, 0, &info.lpSurf);
-
-    if (FAILED(hr))
-        return hr;
+    info.lpSurf = This->surfaces[(++This->cur_surface) % This->num_surfaces];
 
     VMR9_SendSampleData(This, &info, pbSrcStream, cbSrcStream);
-    IDirect3DSurface9_Release(info.lpSurf);
 
     if (This->renderer.filter.state == State_Paused)
     {
@@ -351,7 +347,7 @@ static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const
 
 static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *info)
 {
-    DWORD buffer_count = 1;
+    DWORD buffer_count = 1, i;
     HRESULT hr;
 
     if (FAILED(hr = IVMRSurfaceAllocatorEx9_InitializeDevice(filter->allocator,
@@ -359,6 +355,25 @@ static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *
     {
         WARN("Failed to initialize device (flags %#x), hr %#x.\n", info->dwFlags, hr);
         return hr;
+    }
+
+    if (!(filter->surfaces = calloc(buffer_count, sizeof(IDirect3DSurface9 *))))
+    {
+        IVMRSurfaceAllocatorEx9_TerminateDevice(filter->allocator, filter->cookie);
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < buffer_count; ++i)
+    {
+        if (FAILED(hr = IVMRSurfaceAllocatorEx9_GetSurface(filter->allocator,
+                filter->cookie, i, 0, &filter->surfaces[i])))
+        {
+            ERR("Failed to get surface %u, hr %#x.\n", i, hr);
+            while (i--)
+                IDirect3DSurface9_Release(filter->surfaces[i]);
+            IVMRSurfaceAllocatorEx9_TerminateDevice(filter->allocator, filter->cookie);
+            return hr;
+        }
     }
 
     SetRect(&filter->source_rect, 0, 0, filter->bmiheader.biWidth, filter->bmiheader.biHeight);
@@ -538,6 +553,7 @@ static HRESULT WINAPI VMR9_BreakConnect(struct strmbase_renderer *This)
 {
     struct quartz_vmr *pVMR9 = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
     HRESULT hr = S_OK;
+    DWORD i;
 
     if (!pVMR9->mode)
         return S_FALSE;
@@ -549,6 +565,10 @@ static HRESULT WINAPI VMR9_BreakConnect(struct strmbase_renderer *This)
         }
         if (pVMR9->renderer.filter.state == State_Running)
             hr = IVMRImagePresenter9_StopPresenting(pVMR9->presenter, pVMR9->cookie);
+
+        for (i = 0; i < pVMR9->num_surfaces; ++i)
+            IDirect3DSurface9_Release(pVMR9->surfaces[i]);
+        free(pVMR9->surfaces);
         IVMRSurfaceAllocatorEx9_TerminateDevice(pVMR9->allocator, pVMR9->cookie);
         pVMR9->num_surfaces = 0;
     }
