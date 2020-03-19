@@ -24,6 +24,8 @@ extern "C" {
 #define _LEADBYTE     0x8000
 #define _ALPHA       (0x0100|_UPPER|_LOWER)  /* (C1_ALPHA|_UPPER|_LOWER) */
 
+int     __cdecl _iswblank_l(wint_t,_locale_t);
+int     __cdecl _iswctype_l(wint_t,wctype_t,_locale_t);
 wchar_t __cdecl _towlower_l(wchar_t,_locale_t);
 wchar_t __cdecl _towupper_l(wchar_t,_locale_t);
 int     __cdecl is_wctype(wint_t,wctype_t);
@@ -31,6 +33,7 @@ int     __cdecl isleadbyte(int);
 int     __cdecl iswalnum(wint_t);
 int     __cdecl iswalpha(wint_t);
 int     __cdecl iswascii(wint_t);
+int     __cdecl iswblank(wint_t);
 int     __cdecl iswcntrl(wint_t);
 int     __cdecl iswctype(wint_t,wctype_t);
 int     __cdecl iswdigit(wint_t);
