@@ -262,10 +262,10 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
 {
     struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
     const HANDLE events[2] = {This->run_event, This->renderer.flush_event};
+    VMR9PresentationInfo info = {};
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
-    VMR9PresentationInfo info;
     HRESULT hr;
 
     TRACE("%p %p\n", iface, pSample);
