@@ -88,7 +88,7 @@ struct image_file_map
         {
             size_t                      segs_size;
             size_t                      segs_start;
-            int                         fd;
+            HANDLE                      handle;
             struct image_file_map*      dsym;   /* the debug symbols file associated with this one */
 
 #ifdef HAVE_MACH_O_LOADER_H
