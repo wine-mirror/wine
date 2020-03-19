@@ -602,11 +602,11 @@ static HRESULT assemble_shader(const char *preproc_shader,
         return D3DXERR_INVALIDDATA;
     }
 
-    hr = SlWriteBytecode(shader, 9, &res, &size);
+    hr = shader_write_bytecode(shader, &res, &size);
     SlDeleteShader(shader);
     if (FAILED(hr))
     {
-        ERR("SlWriteBytecode failed with 0x%08x\n", hr);
+        ERR("Failed to write bytecode, hr %#x.\n", hr);
         return D3DXERR_INVALIDDATA;
     }
 
@@ -829,11 +829,11 @@ static HRESULT compile_shader(const char *preproc_shader, const char *target, co
         return D3DXERR_INVALIDDATA;
     }
 
-    hr = SlWriteBytecode(shader, 9, &res, &size);
+    hr = shader_write_bytecode(shader, &res, &size);
     SlDeleteShader(shader);
     if (FAILED(hr))
     {
-        ERR("SlWriteBytecode failed with error 0x%08x.\n", hr);
+        ERR("Failed to write bytecode, hr %#x.\n", hr);
         return D3DXERR_INVALIDDATA;
     }
 

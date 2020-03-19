@@ -591,7 +591,7 @@ enum bwriterdeclusage
 #define T3_REG          5
 
 struct bwriter_shader *SlAssembleShader(const char *text, char **messages) DECLSPEC_HIDDEN;
-HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result, DWORD *size) DECLSPEC_HIDDEN;
+HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **result, DWORD *size) DECLSPEC_HIDDEN;
 void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 
 /* The general IR structure is inspired by Mesa GLSL hir, even though the code

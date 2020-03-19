@@ -2410,7 +2410,7 @@ static HRESULT call_instr_handler(struct bc_writer *writer,
     return E_INVALIDARG;
 }
 
-HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result, DWORD *size)
+HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **result, DWORD *size)
 {
     struct bc_writer *writer;
     struct bytecode_buffer *buffer = NULL;
