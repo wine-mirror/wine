@@ -21,7 +21,6 @@
 
 #define COBJMACROS
 #include "dshow.h"
-#include "initguid.h"
 #include "wmcodecdsp.h"
 #include "wine/strmbase.h"
 #include "wine/test.h"

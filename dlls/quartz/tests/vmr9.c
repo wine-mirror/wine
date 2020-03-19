@@ -19,9 +19,14 @@
  */
 
 #define COBJMACROS
+#include "ocidl.h"
+#include "olectl.h"
+#include "initguid.h"
 #include "dshow.h"
+#include "qedit.h"
 #include "d3d9.h"
 #include "vmr9.h"
+#include "wmcodecdsp.h"
 #include "wine/heap.h"
 #include "wine/strmbase.h"
 #include "wine/test.h"
@@ -984,9 +989,9 @@ static HANDLE send_frame(IMemInputPin *sink)
 
     hr = IMediaSample_GetPointer(sample, &data);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    memset(data, 0x55, 32 * 16 * 4);
+    memset(data, 0x55, IMediaSample_GetSize(sample));
 
-    hr = IMediaSample_SetActualDataLength(sample, 32 * 16 * 4);
+    hr = IMediaSample_SetActualDataLength(sample, IMediaSample_GetSize(sample));
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     start_time = 0;
@@ -1503,6 +1508,38 @@ static void test_overlay(void)
     hr = IOverlay_GetWindowHandle(overlay, &hwnd);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(hwnd && hwnd != (HWND)0xdeadbeef, "Got invalid window %p.\n", hwnd);
+
+    IOverlay_Release(overlay);
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    filter = create_vmr9(VMR9Mode_Windowless);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+
+    hr = IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hwnd = (HWND)0xdeadbeef;
+    hr = IOverlay_GetWindowHandle(overlay, &hwnd);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    todo_wine ok(hwnd == (HWND)0xdeadbeef, "Got invalid window %p.\n", hwnd);
+
+    IOverlay_Release(overlay);
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    filter = create_vmr9(VMR9Mode_Renderless);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+
+    hr = IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hwnd = (HWND)0xdeadbeef;
+    hr = IOverlay_GetWindowHandle(overlay, &hwnd);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    todo_wine ok(hwnd == (HWND)0xdeadbeef, "Got invalid window %p.\n", hwnd);
 
     IOverlay_Release(overlay);
     IPin_Release(pin);
@@ -2321,6 +2358,524 @@ out:
     DestroyWindow(our_hwnd);
 }
 
+static IDirect3DDevice9 *create_device(HWND window)
+{
+    D3DPRESENT_PARAMETERS present_parameters =
+    {
+        .Windowed = TRUE,
+        .hDeviceWindow = window,
+        .SwapEffect = D3DSWAPEFFECT_DISCARD,
+        .BackBufferWidth = 640,
+        .BackBufferHeight = 480,
+        .BackBufferFormat = D3DFMT_A8R8G8B8,
+    };
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    HRESULT hr;
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    /* We can expect this to succeed, or we couldn't have created the VMR. */
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    ok(hr == D3D_OK, "Failed to create a 3D device, hr %#x.\n", hr);
+    IDirect3D9_Release(d3d);
+    return device;
+}
+
+static void test_allocate_surface_helper(void)
+{
+    VMR9AllocationInfo info =
+    {
+        .dwFlags = VMR9AllocFlag_OffscreenSurface,
+        .dwWidth = 32,
+        .dwHeight = 16,
+        .Format = D3DFMT_X8R8G8B8,
+        .Pool = D3DPOOL_DEFAULT,
+        .MinBuffers = 2,
+        .szAspectRatio = {32, 16},
+        .szNativeSize = {32, 16},
+    };
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Renderless);
+    IVMRSurfaceAllocatorNotify9 *notify;
+    IDirect3DSurface9 *surfaces[2] = {};
+    IDirect3DDevice9 *device, *device2;
+    RECT rect = {0, 0, 640, 480};
+    IDirect3DTexture9 *container;
+    D3DSURFACE_DESC desc;
+    DWORD count;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
+
+    count = 2;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
+    device = create_device(window);
+
+    hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("Direct3D does not support video rendering.\n");
+        goto out;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    if (0) /* crashes on Windows */
+    {
+        hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, NULL, &count, surfaces);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+        hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, NULL, surfaces);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+    ok(!!surfaces[0], "Surface 0 was not allocated.\n");
+    ok(!!surfaces[1], "Surface 1 was not allocated.\n");
+
+    hr = IDirect3DSurface9_GetDevice(surfaces[0], &device2);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(device2 == device, "Devices did not match.\n");
+    IDirect3DDevice9_Release(device2);
+
+    hr = IDirect3DSurface9_GetContainer(surfaces[0], &IID_IDirect3DTexture9, (void **)&container);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+
+    hr = IDirect3DSurface9_GetDesc(surfaces[0], &desc);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(desc.Format == info.Format, "Got format %#x.\n", desc.Format);
+    ok(desc.Type == D3DRTYPE_SURFACE, "Got type %u.\n", desc.Type);
+    ok(!desc.Usage, "Got usage %#x.\n", desc.Usage);
+    ok(desc.Pool == D3DPOOL_DEFAULT, "Got pool %u.\n", desc.Pool);
+    ok(desc.MultiSampleType == D3DMULTISAMPLE_NONE, "Got multisample type %u.\n", desc.MultiSampleType);
+    ok(!desc.MultiSampleQuality, "Got multisample quality %u.\n", desc.MultiSampleQuality);
+    ok(desc.Width == 32, "Got width %u.\n", desc.Width);
+    ok(desc.Height == 16, "Got height %u.\n", desc.Height);
+
+    IDirect3DSurface9_Release(surfaces[0]);
+    IDirect3DSurface9_Release(surfaces[1]);
+
+    surfaces[0] = surfaces[1] = NULL;
+    count = 1;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!count, "Got count %u.\n", count);
+    ok(!surfaces[0], "Surface 0 was allocated.\n");
+    ok(!surfaces[1], "Surface 1 was allocated.\n");
+
+    count = 2;
+    info.MinBuffers = 1;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+    ok(!!surfaces[0], "Surface 0 was not allocated.\n");
+    ok(!!surfaces[1], "Surface 1 was not allocated.\n");
+    IDirect3DSurface9_Release(surfaces[0]);
+    IDirect3DSurface9_Release(surfaces[1]);
+
+    count = 2;
+    info.dwFlags = VMR9AllocFlag_TextureSurface;
+    surfaces[0] = surfaces[1] = NULL;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+    ok(!!surfaces[0], "Surface 0 was not allocated.\n");
+    ok(!!surfaces[1], "Surface 1 was not allocated.\n");
+
+    hr = IDirect3DSurface9_GetDevice(surfaces[0], &device2);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(device2 == device, "Devices did not match.\n");
+    IDirect3DDevice9_Release(device2);
+
+    hr = IDirect3DSurface9_GetContainer(surfaces[0], &IID_IDirect3DTexture9, (void **)&container);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    IDirect3DTexture9_Release(container);
+
+    hr = IDirect3DSurface9_GetDesc(surfaces[1], &desc);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(desc.Format == info.Format, "Got format %#x.\n", desc.Format);
+    ok(desc.Type == D3DRTYPE_SURFACE, "Got type %u.\n", desc.Type);
+    todo_wine ok(desc.Usage == D3DUSAGE_DYNAMIC, "Got usage %#x.\n", desc.Usage);
+    ok(desc.Pool == D3DPOOL_DEFAULT, "Got pool %u.\n", desc.Pool);
+    ok(desc.MultiSampleType == D3DMULTISAMPLE_NONE, "Got multisample type %u.\n", desc.MultiSampleType);
+    ok(!desc.MultiSampleQuality, "Got multisample quality %u.\n", desc.MultiSampleQuality);
+    ok(desc.Width == 32, "Got width %u.\n", desc.Width);
+    ok(desc.Height == 16, "Got height %u.\n", desc.Height);
+
+    IDirect3DSurface9_Release(surfaces[0]);
+    IDirect3DSurface9_Release(surfaces[1]);
+
+    info.Format = D3DFMT_R8G8B8;
+    surfaces[0] = surfaces[1] = NULL;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == D3DERR_INVALIDCALL, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+    ok(!surfaces[0], "Surface 0 was allocated.\n");
+    ok(!surfaces[1], "Surface 1 was allocated.\n");
+
+out:
+    IVMRSurfaceAllocatorNotify9_Release(notify);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirect3DDevice9_Release(device);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
+static IVMRSurfaceAllocator9 allocator_iface;
+static IVMRImagePresenter9 presenter_iface;
+static LONG allocator_refcount = 1;
+static D3DFORMAT allocator_format;
+static DWORD allocator_accept_flags;
+static IDirect3DSurface9 *allocator_surfaces[5];
+static IVMRSurfaceAllocatorNotify9 *allocator_notify;
+static unsigned int allocator_got_PresentImage;
+
+static HRESULT WINAPI presenter_QueryInterface(IVMRImagePresenter9 *iface, REFIID iid, void **out)
+{
+    return IVMRSurfaceAllocator9_QueryInterface(&allocator_iface, iid, out);
+}
+
+static ULONG WINAPI presenter_AddRef(IVMRImagePresenter9 *iface)
+{
+    return IVMRSurfaceAllocator9_AddRef(&allocator_iface);
+}
+
+static ULONG WINAPI presenter_Release(IVMRImagePresenter9 *iface)
+{
+    return IVMRSurfaceAllocator9_Release(&allocator_iface);
+}
+
+static HRESULT WINAPI presenter_StartPresenting(IVMRImagePresenter9 *iface, DWORD_PTR cookie)
+{
+    if (winetest_debug > 1) trace("StartPresenting()\n");
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI presenter_StopPresenting(IVMRImagePresenter9 *iface, DWORD_PTR cookie)
+{
+    if (winetest_debug > 1) trace("StopPresenting()\n");
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI presenter_PresentImage(IVMRImagePresenter9 *iface, DWORD_PTR cookie, VMR9PresentationInfo *info)
+{
+    static const RECT rect;
+    if (winetest_debug > 1) trace("PresentImage()\n");
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    todo_wine ok(info->dwFlags == VMR9Sample_TimeValid, "Got flags %#x.\n", info->dwFlags);
+    ok(!info->rtStart, "Got start time %s.\n", wine_dbgstr_longlong(info->rtStart));
+    ok(info->rtEnd == 10000000, "Got end time %s.\n", wine_dbgstr_longlong(info->rtEnd));
+    todo_wine ok(info->szAspectRatio.cx == 120, "Got aspect ratio width %d.\n", info->szAspectRatio.cx);
+    todo_wine ok(info->szAspectRatio.cy == 60, "Got aspect ratio height %d.\n", info->szAspectRatio.cy);
+    ok(EqualRect(&info->rcSrc, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&info->rcSrc));
+    ok(EqualRect(&info->rcDst, &rect), "Got dest rect %s.\n", wine_dbgstr_rect(&info->rcDst));
+    ok(!info->dwReserved1, "Got dwReserved1 %#x.\n", info->dwReserved1);
+    ok(!info->dwReserved2, "Got dwReserved2 %#x.\n", info->dwReserved2);
+
+    ++allocator_got_PresentImage;
+    return S_OK;
+}
+
+static const IVMRImagePresenter9Vtbl presenter_vtbl =
+{
+    presenter_QueryInterface,
+    presenter_AddRef,
+    presenter_Release,
+    presenter_StartPresenting,
+    presenter_StopPresenting,
+    presenter_PresentImage,
+};
+
+static HRESULT WINAPI allocator_QueryInterface(IVMRSurfaceAllocator9 *iface, REFIID iid, void **out)
+{
+    if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
+
+    if (IsEqualGUID(iid, &IID_IVMRImagePresenter9))
+    {
+        *out = &presenter_iface;
+        IVMRImagePresenter9_AddRef(&presenter_iface);
+        return S_OK;
+    }
+    *out = NULL;
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI allocator_AddRef(IVMRSurfaceAllocator9 *iface)
+{
+    return InterlockedIncrement(&allocator_refcount);
+}
+
+static ULONG WINAPI allocator_Release(IVMRSurfaceAllocator9 *iface)
+{
+    return InterlockedDecrement(&allocator_refcount);
+}
+
+static HRESULT WINAPI allocator_InitializeDevice(IVMRSurfaceAllocator9 *iface,
+        DWORD_PTR cookie, VMR9AllocationInfo *info, DWORD *buffer_count)
+{
+    if (winetest_debug > 1) trace("InitializeDevice(flags %#x, format %u)\n",
+            info->dwFlags, info->Format);
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    ok(info->dwWidth == 32, "Got width %u.\n", info->dwWidth);
+    ok(info->dwHeight == 16, "Got height %u.\n", info->dwHeight);
+    todo_wine ok(info->MinBuffers == 5, "Got buffer count %u.\n", info->MinBuffers);
+    ok(info->Pool == D3DPOOL_DEFAULT, "Got pool %u\n", info->Pool);
+    todo_wine ok(info->szAspectRatio.cx == 120, "Got aspect ratio width %d.\n", info->szAspectRatio.cx);
+    todo_wine ok(info->szAspectRatio.cy == 60, "Got aspect ratio height %d.\n", info->szAspectRatio.cy);
+    ok(info->szNativeSize.cx == 32, "Got native width %d.\n", info->szNativeSize.cx);
+    ok(info->szNativeSize.cy == 16, "Got native height %d.\n", info->szNativeSize.cy);
+    todo_wine ok(*buffer_count == 5, "Got buffer count %u.\n", *buffer_count);
+
+    allocator_format = info->Format;
+
+    if (info->dwFlags != allocator_accept_flags)
+        return 0xdeadbeef;
+    return IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(allocator_notify,
+            info, buffer_count, allocator_surfaces);
+}
+
+static HRESULT WINAPI allocator_TerminateDevice(IVMRSurfaceAllocator9 *iface, DWORD_PTR cookie)
+{
+    if (winetest_debug > 1) trace("TerminateDevice()\n");
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    /* Don't dereference the surfaces here, to mimic How to Survive. */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI allocator_GetSurface(IVMRSurfaceAllocator9 *iface,
+        DWORD_PTR cookie, DWORD index, DWORD flags, IDirect3DSurface9 **surface)
+{
+    if (winetest_debug > 1) trace("GetSurface(index %u)\n", index);
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    ok(!flags, "Got flags %#x.\n", flags);
+    ok(index < 5, "Got index %u.\n", index);
+
+    /* Don't reference the surface here, to mimic How to Survive. */
+    *surface = allocator_surfaces[index];
+    return S_OK;
+}
+
+static HRESULT WINAPI allocator_AdviseNotify(IVMRSurfaceAllocator9 *iface, IVMRSurfaceAllocatorNotify9 *notify)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IVMRSurfaceAllocator9Vtbl allocator_vtbl =
+{
+    allocator_QueryInterface,
+    allocator_AddRef,
+    allocator_Release,
+    allocator_InitializeDevice,
+    allocator_TerminateDevice,
+    allocator_GetSurface,
+    allocator_AdviseNotify,
+};
+
+static IVMRSurfaceAllocator9 allocator_iface = {&allocator_vtbl};
+static IVMRImagePresenter9 presenter_iface = {&presenter_vtbl};
+
+static void test_renderless_present(IFilterGraph2 *graph, IMemInputPin *input)
+{
+    IMediaControl *control;
+    OAFilterState state;
+    HANDLE thread;
+    HRESULT hr;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    allocator_got_PresentImage = 0;
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    thread = send_frame(input);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(allocator_got_PresentImage == 1, "Got %u calls to PresentImage().\n", allocator_got_PresentImage);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IMediaControl_Release(control);
+}
+
+static void test_renderless_formats(void)
+{
+    VIDEOINFOHEADER vih =
+    {
+        .rcSource = {4, 6, 16, 12},
+        .rcTarget = {40, 60, 160, 120},
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 16,
+    };
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    ALLOCATOR_PROPERTIES req_props = {5, 32 * 16 * 4, 1, 0}, ret_props;
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Renderless);
+    IFilterGraph2 *graph = create_graph();
+    IVMRSurfaceAllocatorNotify9 *notify;
+    RECT rect = {0, 0, 640, 480};
+    struct testfilter source;
+    IDirect3DDevice9 *device;
+    IMemAllocator *allocator;
+    IMemInputPin *input;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    static const struct
+    {
+        const GUID *subtype;
+        D3DFORMAT format;
+        DWORD flags;
+    }
+    tests[] =
+    {
+        {&MEDIASUBTYPE_ARGB1555, D3DFMT_A1R5G5B5, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_ARGB32, D3DFMT_A8R8G8B8, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_ARGB4444, D3DFMT_A4R4G4B4, VMR9AllocFlag_TextureSurface},
+
+        {&MEDIASUBTYPE_RGB555, D3DFMT_X1R5G5B5, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_RGB555, D3DFMT_X1R5G5B5, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_RGB565, D3DFMT_R5G6B5, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_RGB565, D3DFMT_R5G6B5, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_RGB24, D3DFMT_R8G8B8, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_RGB24, D3DFMT_R8G8B8, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_RGB32, D3DFMT_X8R8G8B8, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_RGB32, D3DFMT_X8R8G8B8, VMR9AllocFlag_TextureSurface},
+
+        {&MEDIASUBTYPE_NV12, MAKEFOURCC('N','V','1','2'), VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_UYVY, D3DFMT_UYVY, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_YUY2, D3DFMT_YUY2, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_YV12, MAKEFOURCC('Y','V','1','2'), VMR9AllocFlag_OffscreenSurface},
+    };
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
+
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
+    device = create_device(window);
+
+    hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("Direct3D does not support video rendering.\n");
+        goto out;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRSurfaceAllocatorNotify9_AdviseSurfaceAllocator(notify, 0xabacab, &allocator_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    allocator_notify = notify;
+
+    testfilter_init(&source);
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, filter, NULL);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        req_mt.subtype = *tests[i].subtype;
+        allocator_accept_flags = tests[i].flags;
+
+        hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+        /* Connection never fails on Native, but Wine currently creates D3D
+         * surfaces during IPin::ReceiveConnection() instead of
+         * IMemAllocator::SetProperties(), so let that fail here for now. */
+        if (hr != S_OK)
+        {
+            skip("Format %u (%#x), flags %#x are not supported, hr %#x.\n",
+                    tests[i].format, tests[i].format, tests[i].flags, hr);
+            continue;
+        }
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+
+        hr = IMemInputPin_GetAllocator(input, &allocator);
+        todo_wine_if (i == 0) ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+        if (hr != S_OK)
+        {
+            test_allocator(input);
+            hr = IMemInputPin_GetAllocator(input, &allocator);
+        }
+
+        hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
+        if (hr != S_OK)
+        {
+            skip("Format %u (%#x), flags %#x are not supported, hr %#x.\n",
+                    tests[i].format, tests[i].format, tests[i].flags, hr);
+            IMemAllocator_Release(allocator);
+            hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+            ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+            hr = IFilterGraph2_Disconnect(graph, pin);
+            ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+            continue;
+        }
+        ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
+        hr = IMemAllocator_Commit(allocator);
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+
+        ok(allocator_format == tests[i].format, "Test %u: Got format %u (%#x).\n",
+                i, allocator_format, allocator_format);
+
+        test_renderless_present(graph, input);
+
+        hr = IMemAllocator_Decommit(allocator);
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+        IMemAllocator_Release(allocator);
+
+        hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+        hr = IFilterGraph2_Disconnect(graph, pin);
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+    }
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
+
+out:
+    IVMRSurfaceAllocatorNotify9_Release(notify);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(allocator_refcount == 1, "Got outstanding refcount %d.\n", allocator_refcount);
+    ref = IDirect3DDevice9_Release(device);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -2348,6 +2903,8 @@ START_TEST(vmr9)
     test_connect_pin();
     test_overlay();
     test_video_window();
+    test_allocate_surface_helper();
+    test_renderless_formats();
 
     CoUninitialize();
 }
