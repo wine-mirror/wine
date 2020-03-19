@@ -56,6 +56,7 @@ struct lconv
 };
 #endif /* _LCONV_DEFINED */
 
+struct tm;
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,6 +64,7 @@ extern "C" {
 
 char*         __cdecl setlocale(int,const char*);
 struct lconv* __cdecl localeconv(void);
+size_t        __cdecl _Strftime(char*,size_t,const char*,const struct tm*,void*);
 int           __cdecl _configthreadlocale(int);
 _locale_t     __cdecl _get_current_locale(void);
 _locale_t     __cdecl _create_locale(int, const char*);

@@ -55,8 +55,6 @@ unsigned int __cdecl ___lc_codepage_func(void);
 int __cdecl ___lc_collate_cp_func(void);
 const unsigned short* __cdecl __pctype_func(void);
 const locale_facet* __thiscall locale__Getfacet(const locale*, MSVCP_size_t);
-MSVCP_size_t __cdecl _Strftime(char*, MSVCP_size_t, const char*,
-        const struct tm*, struct __lc_time_data*);
 const locale* __cdecl locale_classic(void);
 
 #if _MSVCP_VER >= 110
