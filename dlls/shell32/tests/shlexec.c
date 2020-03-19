@@ -2693,7 +2693,13 @@ static void init_test(void)
         strcpy(filename, "c:\\");
     else
         GetTempPathA(sizeof(filename), filename);
-    GetTempFileNameA(filename, "wt", 0, tmpdir);
+
+    /* In case of a failure it is necessary to show the path that was passed to
+     * ShellExecute(). That means the paths must not be randomized so as not to
+     * prevent the TestBot from detecting new failures.
+     */
+    strcpy(tmpdir, filename);
+    strcat(tmpdir, "\\wtShlexecDir");
     GetLongPathNameA(tmpdir, tmpdir, sizeof(tmpdir));
     DeleteFileA( tmpdir );
     rc = CreateDirectoryA( tmpdir, NULL );
@@ -2701,8 +2707,8 @@ static void init_test(void)
     /* Set %TMPDIR% for the tests */
     SetEnvironmentVariableA("TMPDIR", tmpdir);
 
-    rc = GetTempFileNameA(tmpdir, "wt", 0, child_file);
-    ok(rc != 0, "got %d\n", rc);
+    strcpy(child_file, tmpdir);
+    strcat(child_file, "\\wtShlexecFile");
     init_event(child_file);
 
     /* Set up the test files */
