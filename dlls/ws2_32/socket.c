@@ -9002,6 +9002,27 @@ INT WINAPI WSCEnableNSProvider( LPGUID provider, BOOL enable )
 }
 
 /***********************************************************************
+ *              WSCGetProviderInfo
+ */
+INT WINAPI WSCGetProviderInfo( LPGUID provider, WSC_PROVIDER_INFO_TYPE info_type,
+                               PBYTE info, size_t* len, DWORD flags, LPINT errcode )
+{
+    FIXME( "(%s 0x%08x %p %p 0x%08x %p) Stub!\n",
+           debugstr_guid(provider), info_type, info, len, flags, errcode );
+
+    if (!errcode)
+        return SOCKET_ERROR;
+
+    if (!provider) {
+        *errcode = WSAEFAULT;
+        return SOCKET_ERROR;
+    }
+
+    *errcode = WSANO_RECOVERY;
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
  *              WSCGetProviderPath                          (WS2_32.86)
  */
 INT WINAPI WSCGetProviderPath( LPGUID provider, LPWSTR path, LPINT len, LPINT errcode )

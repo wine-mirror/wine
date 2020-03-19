@@ -27,6 +27,7 @@
 #include <windows.h>
 #include <winternl.h>
 #include <ws2tcpip.h>
+#include <ws2spi.h>
 #include <wsipx.h>
 #include <wsnwlink.h>
 #include <mswsock.h>
@@ -84,6 +85,7 @@ static int   (WINAPI *pWSALookupServiceNextW)(HANDLE,DWORD,LPDWORD,LPWSAQUERYSET
 static int   (WINAPI *pWSAEnumNameSpaceProvidersA)(LPDWORD,LPWSANAMESPACE_INFOA);
 static int   (WINAPI *pWSAEnumNameSpaceProvidersW)(LPDWORD,LPWSANAMESPACE_INFOW);
 static int   (WINAPI *pWSAPoll)(WSAPOLLFD *,ULONG,INT);
+static int   (WINAPI *pWSCGetProviderInfo)(LPGUID,WSC_PROVIDER_INFO_TYPE,PBYTE,size_t*,DWORD,LPINT);
 
 /* Function pointers from iphlpapi */
 static DWORD (WINAPI *pGetAdaptersInfo)(PIP_ADAPTER_INFO,PULONG);
@@ -1300,6 +1302,7 @@ static void Init (void)
     pWSAEnumNameSpaceProvidersA = (void *)GetProcAddress(hws2_32, "WSAEnumNameSpaceProvidersA");
     pWSAEnumNameSpaceProvidersW = (void *)GetProcAddress(hws2_32, "WSAEnumNameSpaceProvidersW");
     pWSAPoll = (void *)GetProcAddress(hws2_32, "WSAPoll");
+    pWSCGetProviderInfo = (void *)GetProcAddress(hws2_32, "WSCGetProviderInfo");
 
     hiphlpapi = LoadLibraryA("iphlpapi.dll");
     if (hiphlpapi)
@@ -11597,6 +11600,48 @@ static void test_iocp(void)
     closesocket(dst);
 }
 
+static void test_WSCGetProviderInfo(void)
+{
+    int ret;
+    int errcode;
+    GUID provider = {};
+    char info[1];
+    size_t len = 0;
+
+    if (!pWSCGetProviderInfo) {
+        skip("WSCGetProviderInfo is not available.\n");
+        return;
+    }
+
+    ret = pWSCGetProviderInfo(NULL, -1, NULL, NULL, 0, NULL);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(NULL, ProviderInfoLspCategories, (PBYTE)&info, &len, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSAEFAULT, "got %d, expected WSAEFAULT\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(&provider, -1, (PBYTE)&info, &len, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(&provider, ProviderInfoLspCategories, NULL, &len, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(&provider, ProviderInfoLspCategories, (PBYTE)&info, NULL, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(&provider, ProviderInfoLspCategories, (PBYTE)&info, &len, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -11680,6 +11725,8 @@ START_TEST( sock )
 
     test_completion_port();
     test_address_list_query();
+
+    test_WSCGetProviderInfo();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
