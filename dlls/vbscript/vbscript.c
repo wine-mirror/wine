@@ -198,6 +198,27 @@ static void exec_queued_code(script_ctx_t *ctx)
     }
 }
 
+static HRESULT retrieve_named_item_disp(IActiveScriptSite *site, named_item_t *item)
+{
+    IUnknown *unk;
+    HRESULT hres;
+
+    hres = IActiveScriptSite_GetItemInfo(site, item->name, SCRIPTINFO_IUNKNOWN, &unk, NULL);
+    if(FAILED(hres)) {
+        WARN("GetItemInfo failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&item->disp);
+    IUnknown_Release(unk);
+    if(FAILED(hres)) {
+        WARN("object does not implement IDispatch\n");
+        return hres;
+    }
+
+    return S_OK;
+}
+
 named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flags)
 {
     named_item_t *item;
@@ -209,22 +230,10 @@ named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned f
                 hres = create_script_disp(ctx, &item->script_obj);
                 if(FAILED(hres)) return NULL;
             }
+
             if(!item->disp && (flags || !(item->flags & SCRIPTITEM_CODEONLY))) {
-                IUnknown *unk;
-
-                hres = IActiveScriptSite_GetItemInfo(ctx->site, item->name,
-                                                     SCRIPTINFO_IUNKNOWN, &unk, NULL);
-                if(FAILED(hres)) {
-                    WARN("GetItemInfo failed: %08x\n", hres);
-                    continue;
-                }
-
-                hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&item->disp);
-                IUnknown_Release(unk);
-                if(FAILED(hres)) {
-                    WARN("object does not implement IDispatch\n");
-                    continue;
-                }
+                hres = retrieve_named_item_disp(ctx->site, item);
+                if(FAILED(hres)) continue;
             }
 
             return item;
