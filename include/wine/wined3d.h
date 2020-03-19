@@ -2138,6 +2138,7 @@ struct wined3d_view_desc
 
 struct wined3d_output_desc
 {
+    unsigned int ordinal;
     WCHAR device_name[CCHDEVICENAME];
     RECT desktop_rect;
     BOOL attached_to_desktop;

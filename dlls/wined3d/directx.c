@@ -116,8 +116,8 @@ static void wined3d_output_cleanup(const struct wined3d_output *output)
     D3DKMTCloseAdapter(&close_adapter_desc);
 }
 
-static HRESULT wined3d_output_init(struct wined3d_output *output, struct wined3d_adapter *adapter,
-        const WCHAR *device_name)
+static HRESULT wined3d_output_init(struct wined3d_output *output, unsigned int ordinal,
+        struct wined3d_adapter *adapter, const WCHAR *device_name)
 {
     D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_desc;
     D3DKMT_CREATEDEVICE create_device_desc = {{0}};
@@ -137,6 +137,7 @@ static HRESULT wined3d_output_init(struct wined3d_output *output, struct wined3d
         return E_FAIL;
     }
 
+    output->ordinal = ordinal;
     lstrcpyW(output->device_name, device_name);
     output->adapter = adapter;
     output->kmt_adapter = open_adapter_desc.hAdapter;
@@ -933,6 +934,7 @@ HRESULT CDECL wined3d_output_get_desc(const struct wined3d_output *output,
     if (FAILED(hr = wined3d_output_get_display_mode(output, &mode, &rotation)))
         return hr;
 
+    desc->ordinal = output->ordinal;
     memcpy(desc->device_name, adapter->device_name, sizeof(desc->device_name));
     SetRect(&desc->desktop_rect, 0, 0, mode.width, mode.height);
     OffsetRect(&desc->desktop_rect, adapter->monitor_position.x, adapter->monitor_position.y);
@@ -2805,7 +2807,8 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         return FALSE;
     }
 
-    if (FAILED(hr = wined3d_output_init(&adapter->outputs[0], adapter, display_device.DeviceName)))
+    if (FAILED(hr = wined3d_output_init(&adapter->outputs[0], 0, adapter,
+            display_device.DeviceName)))
     {
         ERR("Failed to initialise output, hr %#x.\n", hr);
         goto done;
