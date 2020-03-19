@@ -59,6 +59,7 @@ static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMC
     struct wined3d_adapter_identifier adapter_id;
     struct wined3d_adapter *wined3d_adapter;
     struct wined3d_output_desc output_desc;
+    struct wined3d_output *wined3d_output;
     unsigned int interface_count = 0;
     unsigned int adapter_idx = 0;
     unsigned int output_idx;
@@ -86,11 +87,11 @@ static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMC
         }
         wined3d_mutex_unlock();
 
-        for (output_idx = 0; cont_enum && wined3d_adapter_get_output(wined3d_adapter, output_idx);
-                ++output_idx)
+        for (output_idx = 0; cont_enum && (wined3d_output = wined3d_adapter_get_output(
+                wined3d_adapter, output_idx)); ++output_idx)
         {
             wined3d_mutex_lock();
-            if (FAILED(hr = wined3d_get_output_desc(wined3d, output_idx, &output_desc)))
+            if (FAILED(hr = wined3d_output_get_desc(wined3d_output, &output_desc)))
             {
                 WARN("Failed to get output description, hr %#x.\n", hr);
                 wined3d_mutex_unlock();

@@ -398,12 +398,17 @@ static HMONITOR WINAPI d3d8_GetAdapterMonitor(IDirect3D8 *iface, UINT adapter)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
     struct wined3d_output_desc desc;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u.\n", iface, adapter);
 
+    output_idx = adapter;
+    if (output_idx >= d3d8->wined3d_output_count)
+        return NULL;
+
     wined3d_mutex_lock();
-    hr = wined3d_get_output_desc(d3d8->wined3d, adapter, &desc);
+    hr = wined3d_output_get_desc(d3d8->wined3d_outputs[output_idx], &desc);
     wined3d_mutex_unlock();
 
     if (FAILED(hr))

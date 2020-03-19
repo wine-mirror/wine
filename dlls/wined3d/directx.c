@@ -915,7 +915,7 @@ HRESULT CDECL wined3d_register_software_device(struct wined3d *wined3d, void *in
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_get_output_desc(const struct wined3d *wined3d, unsigned int adapter_idx,
+HRESULT CDECL wined3d_output_get_desc(const struct wined3d_output *output,
         struct wined3d_output_desc *desc)
 {
     enum wined3d_display_rotation rotation;
@@ -924,16 +924,13 @@ HRESULT CDECL wined3d_get_output_desc(const struct wined3d *wined3d, unsigned in
     HMONITOR monitor;
     HRESULT hr;
 
-    TRACE("wined3d %p, adapter_idx %u, desc %p.\n", wined3d, adapter_idx, desc);
+    TRACE("output %p, desc %p.\n", output, desc);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
+    adapter = output->adapter;
     if (!(monitor = MonitorFromPoint(adapter->monitor_position, MONITOR_DEFAULTTOPRIMARY)))
         return WINED3DERR_INVALIDCALL;
 
-    if (FAILED(hr = wined3d_output_get_display_mode(&adapter->outputs[0], &mode, &rotation)))
+    if (FAILED(hr = wined3d_output_get_display_mode(output, &mode, &rotation)))
         return hr;
 
     memcpy(desc->device_name, adapter->device_name, sizeof(desc->device_name));

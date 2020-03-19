@@ -289,8 +289,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput4 *iface, DXGI_O
         return E_INVALIDARG;
 
     wined3d_mutex_lock();
-    hr = wined3d_get_output_desc(output->adapter->factory->wined3d,
-            output->adapter->ordinal, &wined3d_desc);
+    hr = wined3d_output_get_desc(output->wined3d_output, &wined3d_desc);
     wined3d_mutex_unlock();
 
     if (FAILED(hr))
