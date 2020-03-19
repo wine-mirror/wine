@@ -1888,7 +1888,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
     d3d_info = &adapter->d3d_info;
 
     caps->DeviceType = (device_type == WINED3D_DEVICE_TYPE_HAL) ? WINED3D_DEVICE_TYPE_HAL : WINED3D_DEVICE_TYPE_REF;
-    caps->AdapterOrdinal           = adapter->ordinal;
 
     caps->Caps                     = 0;
     caps->Caps2                    = WINED3DCAPS2_CANRENDERWINDOWED |
@@ -2078,9 +2077,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
     caps->DevCaps2                          = WINED3DDEVCAPS2_STREAMOFFSET |
                                               WINED3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET;
     caps->MaxNpatchTessellationLevel        = 0;
-    caps->MasterAdapterOrdinal              = 0;
-    caps->AdapterOrdinalInGroup             = 0;
-    caps->NumberOfAdaptersInGroup           = 1;
 
     caps->NumSimultaneousRTs = d3d_info->limits.max_rt_count;
 

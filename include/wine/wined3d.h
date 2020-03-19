@@ -1909,7 +1909,6 @@ struct wined3d_ddraw_caps
 struct wined3d_caps
 {
     enum wined3d_device_type DeviceType;
-    UINT AdapterOrdinal;
 
     DWORD Caps;
     DWORD Caps2;
@@ -1977,9 +1976,6 @@ struct wined3d_caps
 
     float MaxNpatchTessellationLevel;
 
-    UINT MasterAdapterOrdinal;
-    UINT AdapterOrdinalInGroup;
-    UINT NumberOfAdaptersInGroup;
     DWORD DeclTypes;
     DWORD NumSimultaneousRTs;
     DWORD StretchRectFilterCaps;

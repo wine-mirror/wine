@@ -59,7 +59,6 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_H
 unsigned int wined3dmapflags_from_d3dmapflags(unsigned int flags, unsigned int usage) DECLSPEC_HIDDEN;
 void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS *present_parameters,
         const struct wined3d_swapchain_desc *swapchain_desc, DWORD presentation_interval) DECLSPEC_HIDDEN;
-void d3dcaps_from_wined3dcaps(D3DCAPS9 *caps, const struct wined3d_caps *wined3d_caps) DECLSPEC_HIDDEN;
 
 struct d3d9
 {
@@ -71,6 +70,8 @@ struct d3d9
     BOOL extended;
 };
 
+void d3d9_caps_from_wined3dcaps(const struct d3d9 *d3d9, unsigned int adapter_ordinal,
+        D3DCAPS9 *caps, const struct wined3d_caps *wined3d_caps) DECLSPEC_HIDDEN;
 BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended) DECLSPEC_HIDDEN;
 
 struct fvf_declaration
