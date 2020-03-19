@@ -6706,6 +6706,10 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
+/* ### protocol_version begin ### */
+
 #define SERVER_PROTOCOL_VERSION 596
+
+/* ### protocol_version end ### */
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

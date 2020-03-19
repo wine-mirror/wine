@@ -406,10 +406,23 @@ print SERVER_PROT "    struct reply_header reply_header;\n";
 foreach my $req (@requests) { print SERVER_PROT "    struct ${req}_reply ${req}_reply;\n"; }
 print SERVER_PROT "};\n\n";
 
-printf SERVER_PROT "#define SERVER_PROTOCOL_VERSION %d\n\n", $protocol + 1;
+print SERVER_PROT "/* ### protocol_version begin ### */\n\n";
+printf SERVER_PROT "#define SERVER_PROTOCOL_VERSION %d\n\n", $protocol;
+print SERVER_PROT "/* ### protocol_version end ### */\n\n";
 print SERVER_PROT "#endif /* __WINE_WINE_SERVER_PROTOCOL_H */\n";
 close SERVER_PROT;
-update_file( "include/wine/server_protocol.h" );
+
+if (update_file( "include/wine/server_protocol.h" ))
+{
+    my @version_lines = ();
+
+    push @version_lines, sprintf( "#define SERVER_PROTOCOL_VERSION %d\n", $protocol + 1 );
+
+    replace_in_file( "include/wine/server_protocol.h",
+                     "### protocol_version begin ###",
+                     "### protocol_version end ###",
+                     @version_lines );
+}
 
 ### Output the dumping function tables
 
