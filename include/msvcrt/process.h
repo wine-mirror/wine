@@ -56,6 +56,7 @@ void      __cdecl _cexit(void);
 void      __cdecl _exit(int) DECLSPEC_NORETURN;
 void      __cdecl abort(void) DECLSPEC_NORETURN;
 void      __cdecl exit(int) DECLSPEC_NORETURN;
+_ACRTIMP DECLSPEC_NORETURN void __cdecl quick_exit(int);
 int       __cdecl system(const char*);
 
 #ifdef __cplusplus
