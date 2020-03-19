@@ -24,7 +24,7 @@
  *
  *  TODO:
  *    - Add support for ILD_PRESERVEALPHA, ILD_SCALE, ILD_DPISCALE
- *    - Add support for ILS_GLOW, ILS_SHADOW, ILS_SATURATE
+ *    - Add support for ILS_GLOW, ILS_SHADOW
  *    - Thread-safe locking
  */
 
