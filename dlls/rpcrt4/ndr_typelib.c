@@ -810,6 +810,10 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
             break;
         case TKIND_INTERFACE:
         case TKIND_DISPATCH:
+            /* These are treated as if they were interface pointers. */
+            off = *len;
+            write_ip_tfs(str, len, &attr->guid);
+            break;
         case TKIND_COCLASS:
             assert(0);
             break;
@@ -1000,6 +1004,13 @@ static HRESULT get_param_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int is_in,
             hr = get_param_info(refinfo, &attr->tdescAlias, is_in, is_out,
                     server_size, flags, basetype, tfs_tdesc);
             break;
+
+        case TKIND_INTERFACE:
+        case TKIND_DISPATCH:
+            /* These are treated as if they were interface pointers. */
+            *flags |= MustFree;
+            break;
+
         default:
             FIXME("unhandled kind %#x\n", attr->typekind);
             hr = E_NOTIMPL;

@@ -1291,6 +1291,12 @@ static HRESULT WINAPI Widget_iface_ptr(IWidget *iface, ISomethingFromDispatch **
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_iface_noptr(IWidget *iface, IUnknown unk, IDispatch disp, ISomethingFromDispatch sfd)
+{
+    check_iface_marshal((IUnknown *)unk.lpVtbl, (IDispatch *)disp.lpVtbl, (ISomethingFromDispatch *)sfd.lpVtbl);
+    return S_OK;
+}
+
 static HRESULT WINAPI Widget_bstr(IWidget *iface, BSTR in, BSTR *out, BSTR *in_ptr, BSTR *in_out)
 {
     UINT len;
@@ -1623,6 +1629,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_iface_in,
     Widget_iface_out,
     Widget_iface_ptr,
+    Widget_iface_noptr,
     Widget_bstr,
     Widget_variant,
     Widget_safearray,
@@ -2169,6 +2176,9 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     ISomethingFromDispatch *sfd1, *sfd2, *sfd3, *proxy_sfd, *sfd_in, *sfd_out, *sfd_in_out;
     IUnknown *proxy_unk, *proxy_unk2, *unk_in, *unk_out, *unk_in_out;
     IDispatch *proxy_disp;
+    IUnknown unk_noptr;
+    IDispatch disp_noptr;
+    ISomethingFromDispatch sfd_noptr;
     HRESULT hr;
 
     testmode = 0;
@@ -2249,6 +2259,18 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!sfd_in_out, "Got [in, out] %p.\n", sfd_in_out);
+    release_iface(sfd3);
+
+    sfd1 = create_disp_obj();
+    sfd2 = create_disp_obj();
+    sfd3 = create_disp_obj();
+    unk_noptr.lpVtbl = (IUnknownVtbl *)sfd1;
+    disp_noptr.lpVtbl = (IDispatchVtbl *)sfd2;
+    sfd_noptr.lpVtbl = (ISomethingFromDispatchVtbl *)sfd3;
+    hr = IWidget_iface_noptr(widget, unk_noptr, disp_noptr, sfd_noptr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    release_iface(sfd1);
+    release_iface(sfd2);
     release_iface(sfd3);
 
     /* Test with Invoke(). Note that since we pass VT_UNKNOWN, we don't get our

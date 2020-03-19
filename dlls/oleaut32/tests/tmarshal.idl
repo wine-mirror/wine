@@ -58,6 +58,7 @@ enum IWidget_dispids
     DISPID_TM_IFACE_IN,
     DISPID_TM_IFACE_OUT,
     DISPID_TM_IFACE_PTR,
+    DISPID_TM_IFACE_NOPTR,
     DISPID_TM_BSTR,
     DISPID_TM_VARIANT,
     DISPID_TM_SAFEARRAY,
@@ -311,6 +312,9 @@ library TestTypelib
 
         [id(DISPID_TM_IFACE_PTR)]
         HRESULT iface_ptr([in] ISomethingFromDispatch **in, [out] ISomethingFromDispatch **out, [in, out] ISomethingFromDispatch **in_out);
+
+        [id(DISPID_TM_IFACE_NOPTR)]
+        HRESULT iface_noptr([in] IUnknown unk, [in] IDispatch disp, [in] ISomethingFromDispatch sfd);
 
         [id(DISPID_TM_BSTR)]
         HRESULT bstr([in] BSTR in, [out] BSTR *out, [in] BSTR *in_ptr, [in, out] BSTR *in_out);
