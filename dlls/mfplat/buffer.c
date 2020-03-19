@@ -613,7 +613,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
     object->_2d.width = width * bpp;
     object->_2d.height = height;
     object->_2d.pitch = bottom_up ? -pitch : pitch;
-    object->_2d.scanline0 = bottom_up ? object->data + object->_2d.width * (object->_2d.height - 1) : object->data;
+    object->_2d.scanline0 = bottom_up ? object->data + pitch * (object->_2d.height - 1) : object->data;
 
     *buffer = &object->IMFMediaBuffer_iface;
 
