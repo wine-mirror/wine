@@ -1782,7 +1782,7 @@ static int __cdecl uncompressed_video_format_compare(const void *a, const void *
 
 static const struct uncompressed_video_format video_formats[] =
 {
-    { &MFVideoFormat_RGB24,         3, 3, 1, 0 },
+    { &MFVideoFormat_RGB24,         4, 3, 1, 0 },
     { &MFVideoFormat_ARGB32,        4, 3, 1, 0 },
     { &MFVideoFormat_RGB32,         4, 3, 1, 0 },
     { &MFVideoFormat_RGB565,        2, 3, 1, 0 },
