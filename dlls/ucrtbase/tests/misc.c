@@ -31,6 +31,8 @@
 #include <direct.h>
 #include <locale.h>
 #include <process.h>
+#include <fenv.h>
+#include <malloc.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -72,30 +74,8 @@ static inline double __port_max_double(void)
     return *(const double *)&__max_double;
 }
 
-#define M_PI_2 1.57079632679489661923
-
-#define FE_TONEAREST 0
-
-#define _DOMAIN         1       /* domain error in argument */
-#define _SING           2       /* singularity */
-#define _OVERFLOW       3       /* range overflow */
-#define _UNDERFLOW      4       /* range underflow */
-
 DEFINE_EXPECT(global_invalid_parameter_handler);
 DEFINE_EXPECT(thread_invalid_parameter_handler);
-
-typedef struct MSVCRT__lldiv_t {
-    LONGLONG quot;  /* quotient */
-    LONGLONG rem;   /* remainder */
-} MSVCRT_lldiv_t;
-
-typedef struct MSVCRT__exception {
-    int     type;
-    char*   name;
-    double  arg1;
-    double  arg2;
-    double  retval;
-} MSVCRT__exception;
 
 typedef struct {
     const char *short_wday[7];
@@ -120,37 +100,12 @@ typedef struct {
     const wchar_t *locnameW;
 } __lc_time_data;
 
-typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
-
-static HMODULE module;
 static LONGLONG crt_init_end;
 
 _ACRTIMP int __cdecl _o__initialize_onexit_table(_onexit_table_t *table);
 _ACRTIMP int __cdecl _o__register_onexit_function(_onexit_table_t *table, _onexit_t func);
 _ACRTIMP int __cdecl _o__execute_onexit_table(_onexit_table_t *table);
 _ACRTIMP void *__cdecl _o_malloc(size_t);
-
-static int (CDECL *p___fpe_flt_rounds)(void);
-static _invalid_parameter_handler (CDECL *p__set_invalid_parameter_handler)(_invalid_parameter_handler);
-static _invalid_parameter_handler (CDECL *p__get_invalid_parameter_handler)(void);
-static _invalid_parameter_handler (CDECL *p__set_thread_local_invalid_parameter_handler)(_invalid_parameter_handler);
-static _invalid_parameter_handler (CDECL *p__get_thread_local_invalid_parameter_handler)(void);
-static char* (CDECL *p__get_narrow_winmain_command_line)(void);
-static int (CDECL *p_sopen_dispatch)(const char *, int, int, int, int *, int);
-static int (CDECL *p_sopen_s)(int *, const char *, int, int, int);
-static MSVCRT_lldiv_t* (CDECL *p_lldiv)(MSVCRT_lldiv_t*,LONGLONG,LONGLONG);
-static int (CDECL *p_isblank)(int);
-static int (CDECL *p__isblank_l)(int,_locale_t);
-static int (CDECL *p__iswctype_l)(int,int,_locale_t);
-static int (CDECL *p_iswblank)(int);
-static int (CDECL *p__iswblank_l)(wint_t,_locale_t);
-static int (CDECL *p_fesetround)(int);
-static void (CDECL *p___setusermatherr)(MSVCRT_matherr_func);
-static size_t (__cdecl *p__Strftime)(char*, size_t, const char*, const struct tm*, void*);
-static int (CDECL *p__crt_atexit)(void (CDECL*)(void));
-static int (__cdecl *p_crt_at_quick_exit)(void (__cdecl *func)(void));
-static void (__cdecl *p_quick_exit)(int exitcode);
-static size_t (__cdecl *p__msize)(void*);
 
 static void test__initialize_onexit_table(void)
 {
@@ -361,19 +316,19 @@ static void test___fpe_flt_rounds(void)
     }
 
     ok((_controlfp(_RC_NEAR, _RC_CHOP) & _RC_CHOP) == _RC_NEAR, "_controlfp(_RC_NEAR, _RC_CHOP) failed\n");
-    ret = p___fpe_flt_rounds();
+    ret = __fpe_flt_rounds();
     ok(ret == 1, "__fpe_flt_rounds returned %d\n", ret);
 
     ok((_controlfp(_RC_UP, _RC_CHOP) & _RC_CHOP) == _RC_UP, "_controlfp(_RC_UP, _RC_CHOP) failed\n");
-    ret = p___fpe_flt_rounds();
+    ret = __fpe_flt_rounds();
     ok(ret == 2 || broken(ret == 3) /* w1064v1507 */, "__fpe_flt_rounds returned %d\n", ret);
 
     ok((_controlfp(_RC_DOWN, _RC_CHOP) & _RC_CHOP) == _RC_DOWN, "_controlfp(_RC_DOWN, _RC_CHOP) failed\n");
-    ret = p___fpe_flt_rounds();
+    ret = __fpe_flt_rounds();
     ok(ret == 3 || broken(ret == 2) /* w1064v1507 */, "__fpe_flt_rounds returned %d\n", ret);
 
     ok((_controlfp(_RC_CHOP, _RC_CHOP) & _RC_CHOP) == _RC_CHOP, "_controlfp(_RC_CHOP, _RC_CHOP) failed\n");
-    ret = p___fpe_flt_rounds();
+    ret = __fpe_flt_rounds();
     ok(ret == 0, "__fpe_flt_rounds returned %d\n", ret);
 }
 
@@ -395,45 +350,45 @@ static void test_invalid_parameter_handler(void)
 {
     _invalid_parameter_handler ret;
 
-    ret = p__get_invalid_parameter_handler();
+    ret = _get_invalid_parameter_handler();
     ok(!ret, "ret != NULL\n");
 
-    ret = p__get_thread_local_invalid_parameter_handler();
+    ret = _get_thread_local_invalid_parameter_handler();
     ok(!ret, "ret != NULL\n");
 
-    ret = p__set_thread_local_invalid_parameter_handler(thread_invalid_parameter_handler);
+    ret = _set_thread_local_invalid_parameter_handler(thread_invalid_parameter_handler);
     ok(!ret, "ret != NULL\n");
 
-    ret = p__get_thread_local_invalid_parameter_handler();
+    ret = _get_thread_local_invalid_parameter_handler();
     ok(ret == thread_invalid_parameter_handler, "ret = %p\n", ret);
 
-    ret = p__get_invalid_parameter_handler();
+    ret = _get_invalid_parameter_handler();
     ok(!ret, "ret != NULL\n");
 
-    ret = p__set_invalid_parameter_handler(global_invalid_parameter_handler);
+    ret = _set_invalid_parameter_handler(global_invalid_parameter_handler);
     ok(!ret, "ret != NULL\n");
 
-    ret = p__get_invalid_parameter_handler();
+    ret = _get_invalid_parameter_handler();
     ok(ret == global_invalid_parameter_handler, "ret = %p\n", ret);
 
-    ret = p__get_thread_local_invalid_parameter_handler();
+    ret = _get_thread_local_invalid_parameter_handler();
     ok(ret == thread_invalid_parameter_handler, "ret = %p\n", ret);
 
     SET_EXPECT(thread_invalid_parameter_handler);
     _ltoa_s(0, NULL, 0, 0);
     CHECK_CALLED(thread_invalid_parameter_handler);
 
-    ret = p__set_thread_local_invalid_parameter_handler(NULL);
+    ret = _set_thread_local_invalid_parameter_handler(NULL);
     ok(ret == thread_invalid_parameter_handler, "ret = %p\n", ret);
 
     SET_EXPECT(global_invalid_parameter_handler);
     _ltoa_s(0, NULL, 0, 0);
     CHECK_CALLED(global_invalid_parameter_handler);
 
-    ret = p__set_invalid_parameter_handler(NULL);
+    ret = _set_invalid_parameter_handler(NULL);
     ok(ret == global_invalid_parameter_handler, "ret = %p\n", ret);
 
-    ret = p__set_invalid_parameter_handler(global_invalid_parameter_handler);
+    ret = _set_invalid_parameter_handler(global_invalid_parameter_handler);
     ok(!ret, "ret != NULL\n");
 }
 
@@ -445,7 +400,7 @@ static void test__get_narrow_winmain_command_line(char *path)
     char *ret, *cmdline, *name;
     int len;
 
-    ret = p__get_narrow_winmain_command_line();
+    ret = _get_narrow_winmain_command_line();
     cmdline = GetCommandLineA();
     len = strlen(cmdline);
     ok(ret>cmdline && ret<cmdline+len, "ret = %p, cmdline = %p (len = %d)\n", ret, cmdline, len);
@@ -471,40 +426,6 @@ static void test__get_narrow_winmain_command_line(char *path)
     CloseHandle(proc.hThread);
 }
 
-static BOOL init(void)
-{
-    FILETIME cur;
-
-    GetSystemTimeAsFileTime(&cur);
-    crt_init_end = ((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime;
-
-    module = GetModuleHandleW(L"ucrtbase.dll");
-
-    p___fpe_flt_rounds = (void*)GetProcAddress(module, "__fpe_flt_rounds");
-    p__set_invalid_parameter_handler = (void*)GetProcAddress(module, "_set_invalid_parameter_handler");
-    p__get_invalid_parameter_handler = (void*)GetProcAddress(module, "_get_invalid_parameter_handler");
-    p__set_thread_local_invalid_parameter_handler = (void*)GetProcAddress(module, "_set_thread_local_invalid_parameter_handler");
-    p__get_thread_local_invalid_parameter_handler = (void*)GetProcAddress(module, "_get_thread_local_invalid_parameter_handler");
-    p__get_narrow_winmain_command_line = (void*)GetProcAddress(GetModuleHandleA("ucrtbase.dll"), "_get_narrow_winmain_command_line");
-    p_sopen_dispatch = (void*)GetProcAddress(module, "_sopen_dispatch");
-    p_sopen_s = (void*)GetProcAddress(module, "_sopen_s");
-    p_lldiv = (void*)GetProcAddress(module, "lldiv");
-    p_isblank = (void*)GetProcAddress(module, "isblank");
-    p__isblank_l = (void*)GetProcAddress(module, "_isblank_l");
-    p__iswctype_l = (void*)GetProcAddress(module, "_iswctype_l");
-    p_iswblank = (void*)GetProcAddress(module, "iswblank");
-    p__iswblank_l = (void*)GetProcAddress(module, "_iswblank_l");
-    p_fesetround = (void*)GetProcAddress(module, "fesetround");
-    p___setusermatherr = (void*)GetProcAddress(module, "__setusermatherr");
-    p__Strftime = (void*)GetProcAddress(module, "_Strftime");
-    p__crt_atexit = (void*)GetProcAddress(module, "_crt_atexit");
-    p_crt_at_quick_exit = (void*)GetProcAddress(module, "_crt_at_quick_exit");
-    p_quick_exit = (void*)GetProcAddress(module, "quick_exit");
-    p__msize = (void*)GetProcAddress(module, "_msize");
-
-    return TRUE;
-}
-
 static void test__sopen_dispatch(void)
 {
     int ret, fd;
@@ -513,7 +434,7 @@ static void test__sopen_dispatch(void)
     tempf = _tempnam(".", "wne");
 
     fd = 0;
-    ret = p_sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 0);
+    ret = _sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 0);
     ok(!ret, "got %d\n", ret);
     ok(fd > 0, "got fd %d\n", fd);
     _close(fd);
@@ -521,7 +442,7 @@ static void test__sopen_dispatch(void)
 
     SET_EXPECT(global_invalid_parameter_handler);
     fd = 0;
-    ret = p_sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 1);
+    ret = _sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 1);
     ok(ret == EINVAL, "got %d\n", ret);
     ok(fd == -1, "got fd %d\n", fd);
     CHECK_CALLED(global_invalid_parameter_handler);
@@ -542,7 +463,7 @@ static void test__sopen_s(void)
     tempf = _tempnam(".", "wne");
 
     fd = 0;
-    ret = p_sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0);
+    ret = _sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0);
     ok(!ret, "got %d\n", ret);
     ok(fd > 0, "got fd %d\n", fd);
     _close(fd);
@@ -557,7 +478,7 @@ static void test__sopen_s(void)
     /* _sopen_s() invokes invalid parameter handler on invalid pmode */
     SET_EXPECT(global_invalid_parameter_handler);
     fd = 0;
-    ret = p_sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0xff);
+    ret = _sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0xff);
     ok(ret == EINVAL, "got %d\n", ret);
     ok(fd == -1, "got fd %d\n", fd);
     CHECK_CALLED(global_invalid_parameter_handler);
@@ -567,7 +488,8 @@ static void test__sopen_s(void)
 
 static void test_lldiv(void)
 {
-    MSVCRT_lldiv_t r;
+    static lldiv_t* (CDECL *p_lldiv)(lldiv_t*,LONGLONG,LONGLONG) = (void*)lldiv;
+    lldiv_t r;
 
     p_lldiv(&r, (LONGLONG)0x111 << 32 | 0x222, (LONGLONG)1 << 32);
     ok(r.quot == 0x111, "quot = %s\n", wine_dbgstr_longlong(r.quot));
@@ -584,38 +506,38 @@ static void test_isblank(void)
                 ok(!_isctype(c, _BLANK), "tab shouldn't be blank\n");
             else
                 ok(_isctype(c, _BLANK), "space should be blank\n");
-            ok(p_isblank(c), "%d should be blank\n", c);
-            ok(p__isblank_l(c, NULL), "%d should be blank\n", c);
+            ok(isblank(c), "%d should be blank\n", c);
+            ok(_isblank_l(c, NULL), "%d should be blank\n", c);
         } else {
             ok(!_isctype(c, _BLANK), "%d shouldn't be blank\n", c);
-            ok(!p_isblank(c), "%d shouldn't be blank\n", c);
-            ok(!p__isblank_l(c, NULL), "%d shouldn't be blank\n", c);
+            ok(!isblank(c), "%d shouldn't be blank\n", c);
+            ok(!_isblank_l(c, NULL), "%d shouldn't be blank\n", c);
         }
     }
 
     for(c = 0; c <= 0xffff; c++) {
         if(c == '\t' || c == ' ' || c == 0x3000 || c == 0xfeff) {
             if(c == '\t')
-                todo_wine ok(!p__iswctype_l(c, _BLANK, NULL), "tab shouldn't be blank\n");
+                todo_wine ok(!_iswctype_l(c, _BLANK, NULL), "tab shouldn't be blank\n");
             else
-                ok(p__iswctype_l(c, _BLANK, NULL), "%d should be blank\n", c);
-            ok(p_iswblank(c), "%d should be blank\n", c);
-            ok(p__iswblank_l(c, NULL), "%d should be blank\n", c);
+                ok(_iswctype_l(c, _BLANK, NULL), "%d should be blank\n", c);
+            ok(iswblank(c), "%d should be blank\n", c);
+            ok(_iswblank_l(c, NULL), "%d should be blank\n", c);
         } else {
             todo_wine_if(c == 0xa0) {
-                ok(!p__iswctype_l(c, _BLANK, NULL), "%d shouldn't be blank\n", c);
-                ok(!p_iswblank(c), "%d shouldn't be blank\n", c);
-                ok(!p__iswblank_l(c, NULL), "%d shouldn't be blank\n", c);
+                ok(!_iswctype_l(c, _BLANK, NULL), "%d shouldn't be blank\n", c);
+                ok(!iswblank(c), "%d shouldn't be blank\n", c);
+                ok(!_iswblank_l(c, NULL), "%d shouldn't be blank\n", c);
             }
         }
     }
 }
 
-static struct MSVCRT__exception exception;
+static struct _exception exception;
 
-static int CDECL matherr_callback(struct MSVCRT__exception *e)
+static int CDECL matherr_callback(struct _exception *e)
 {
-    memcpy(&exception, e, sizeof(MSVCRT__exception));
+    exception = *e;
     return 0;
 }
 
@@ -788,12 +710,14 @@ static void test_math_errors(void)
     double (CDECL *p_func2d)(double, double);
     double (CDECL *p_func3d)(double, double, double);
     double (CDECL *p_funcdl)(double, long);
+    HMODULE module;
     int i;
 
-    p___setusermatherr(matherr_callback);
+    __setusermatherr(matherr_callback);
+    module = GetModuleHandleW(L"ucrtbase.dll");
 
     /* necessary so that exp(1e100)==INFINITY on glibc, we can remove this if we change our implementation */
-    p_fesetround(FE_TONEAREST);
+    fesetround(FE_TONEAREST);
 
     for(i = 0; i < ARRAY_SIZE(testsd); i++) {
         p_funcd = (void*)GetProcAddress(module, testsd[i].func);
@@ -1110,7 +1034,7 @@ static void test_strftime(void)
         time_data.short_dateW = tests_td[i].short_date;
         time_data.dateW = tests_td[i].date;
         time_data.timeW = tests_td[i].time;
-        ret = p__Strftime(buf, sizeof(buf), tests_td[i].format, &tests_td[i].tm, &time_data);
+        ret = _Strftime(buf, sizeof(buf), tests_td[i].format, &tests_td[i].tm, &time_data);
         ok(ret == strlen(buf), "%d) ret = %d\n", i, ret);
         todo_wine_if(tests_td[i].todo) {
             ok(!strcmp(buf, tests_td[i].ret), "%d) buf = \"%s\", expected \"%s\"\n",
@@ -1247,11 +1171,11 @@ static void CDECL at_quick_exit_func2(void)
 
 static void test_call_exit(void)
 {
-    ok(!p__crt_atexit(at_exit_func1), "_crt_atexit failed\n");
-    ok(!p__crt_atexit(at_exit_func2), "_crt_atexit failed\n");
+    ok(!_crt_atexit(at_exit_func1), "_crt_atexit failed\n");
+    ok(!_crt_atexit(at_exit_func2), "_crt_atexit failed\n");
 
-    ok(!p_crt_at_quick_exit(at_quick_exit_func1), "_crt_at_quick_exit failed\n");
-    ok(!p_crt_at_quick_exit(at_quick_exit_func2), "_crt_at_quick_exit failed\n");
+    ok(!_crt_at_quick_exit(at_quick_exit_func1), "_crt_at_quick_exit failed\n");
+    ok(!_crt_at_quick_exit(at_quick_exit_func2), "_crt_at_quick_exit failed\n");
 
     set_failures_counter(winetest_get_failures());
     exit(1);
@@ -1259,14 +1183,14 @@ static void test_call_exit(void)
 
 static void test_call_quick_exit(void)
 {
-    ok(!p__crt_atexit(at_exit_func1), "_crt_atexit failed\n");
-    ok(!p__crt_atexit(at_exit_func2), "_crt_atexit failed\n");
+    ok(!_crt_atexit(at_exit_func1), "_crt_atexit failed\n");
+    ok(!_crt_atexit(at_exit_func2), "_crt_atexit failed\n");
 
-    ok(!p_crt_at_quick_exit(at_quick_exit_func1), "_crt_at_quick_exit failed\n");
-    ok(!p_crt_at_quick_exit(at_quick_exit_func2), "_crt_at_quick_exit failed\n");
+    ok(!_crt_at_quick_exit(at_quick_exit_func1), "_crt_at_quick_exit failed\n");
+    ok(!_crt_at_quick_exit(at_quick_exit_func2), "_crt_at_quick_exit failed\n");
 
     set_failures_counter(winetest_get_failures());
-    p_quick_exit(2);
+    quick_exit(2);
 }
 
 static void test_quick_exit(const char *argv0)
@@ -1353,7 +1277,7 @@ static void test__o_malloc(void)
     m = _o_malloc(1);
     ok(m != NULL, "p__o_malloc(1) returned NULL\n");
 
-    s = p__msize(m);
+    s = _msize(m);
     ok(s == 1, "_msize returned %d\n", (int)s);
 
     free(m);
@@ -1377,9 +1301,10 @@ START_TEST(misc)
 {
     int arg_c;
     char** arg_v;
+    FILETIME cur;
 
-    if(!init())
-        return;
+    GetSystemTimeAsFileTime(&cur);
+    crt_init_end = ((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime;
 
     arg_c = winetest_get_mainargs(&arg_v);
     if(arg_c == 3) {
