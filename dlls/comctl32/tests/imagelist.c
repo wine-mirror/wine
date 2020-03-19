@@ -1502,6 +1502,9 @@ static void test_ImageList_DrawIndirect(void)
     UINT32 *bits = 0;
     UINT32 maskBits = 0x00000000, inverseMaskBits = 0xFFFFFFFF;
     int bpp, broken_value;
+    IImageList *imgl;
+    DWORD flags;
+    HRESULT hr;
 
     BITMAPINFO bitmapInfo = {{sizeof(BITMAPINFOHEADER), 2, 1, 1, 32, BI_RGB,
                                 0, 0, 0, 0, 0}};
@@ -1524,6 +1527,9 @@ static void test_ImageList_DrawIndirect(void)
     ok(himl != 0, "ImageList_Create failed\n");
     if(!himl) goto cleanup;
 
+    hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList, (void **) &imgl);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
     /* Add a no-alpha image */
     hbmImage = create_test_bitmap(hdcDst, 2, 1, 32, bits_image);
     if(!hbmImage) goto cleanup;
@@ -1531,6 +1537,16 @@ static void test_ImageList_DrawIndirect(void)
     iImage = pImageList_Add(himl, hbmImage, hbmMask);
     ok(iImage != -1, "ImageList_Add failed\n");
     if(iImage == -1) goto cleanup;
+
+    hr = IImageList_GetItemFlags(imgl, 1000, &flags);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IImageList_GetItemFlags(imgl, 1000, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IImageList_GetItemFlags(imgl, iImage, &flags);
+    ok(hr == S_OK, "Failed to get item flags, hr %#x.\n", hr);
+    ok(!flags, "Unexpected flags %#x.\n", flags);
 
     /* Add an alpha image */
     hbmAlphaImage = create_test_bitmap(hdcDst, 2, 1, 32, bits_alpha);
@@ -1540,6 +1556,10 @@ static void test_ImageList_DrawIndirect(void)
     ok(iAlphaImage != -1, "ImageList_Add failed\n");
     if(iAlphaImage == -1) goto cleanup;
 
+    hr = IImageList_GetItemFlags(imgl, iAlphaImage, &flags);
+    ok(hr == S_OK, "Failed to get item flags, hr %#x.\n", hr);
+    ok(flags & ILIF_ALPHA, "Unexpected flags %#x.\n", flags);
+
     /* Add a transparent alpha image */
     hbmTransparentImage = create_test_bitmap(hdcDst, 2, 1, 32, bits_transparent);
     if(!hbmTransparentImage) goto cleanup;
@@ -1547,6 +1567,10 @@ static void test_ImageList_DrawIndirect(void)
     iTransparentImage = pImageList_Add(himl, hbmTransparentImage, hbmMask);
     ok(iTransparentImage != -1, "ImageList_Add failed\n");
     if(iTransparentImage == -1) goto cleanup;
+
+    hr = IImageList_GetItemFlags(imgl, iTransparentImage, &flags);
+    ok(hr == S_OK, "Failed to get item flags, hr %#x.\n", hr);
+    ok(flags & ILIF_ALPHA, "Unexpected flags %#x.\n", flags);
 
     /* 32-bit Tests */
     bitmapInfo.bmiHeader.biBitCount = 32;
@@ -1713,7 +1737,7 @@ static void test_iimagelist(void)
     if (!himl)
         return;
 
-    hr = (pHIMAGELIST_QueryInterface)(himl, &IID_IImageList, (void **) &imgl);
+    hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList, (void **) &imgl);
     ok(SUCCEEDED(hr), "HIMAGELIST_QueryInterface failed, hr=%x\n", hr);
 
     if (hr == S_OK)
