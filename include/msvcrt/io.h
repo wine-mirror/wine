@@ -91,6 +91,8 @@ int         __cdecl _pipe(int*,unsigned int,int);
 int         __cdecl _read(int,void*,unsigned int);
 int         __cdecl _setmode(int,int);
 int         WINAPIV _sopen(const char*,int,int,...);
+errno_t     __cdecl _sopen_dispatch(const char*,int,int,int,int*,int);
+errno_t     __cdecl _sopen_s(int*,const char*,int,int,int);
 __msvcrt_long __cdecl _tell(int);
 __int64     __cdecl _telli64(int);
 int         __cdecl _umask(int);
