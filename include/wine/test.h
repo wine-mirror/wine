@@ -110,7 +110,7 @@ extern void __winetest_cdecl winetest_trace( const char *msg, ... ) __WINE_PRINT
 # define skip_(file, line)     (winetest_set_location(file, 0), 0) ? (void)0 : winetest_skip
 # define win_skip_(file, line) (winetest_set_location(file, 0), 0) ? (void)0 : winetest_win_skip
 # define trace_(file, line)    (winetest_set_location(file, 0), 0) ? (void)0 : winetest_trace
-# define wait_process_(file, line) (winetest_set_location(file, 0), 0) ? (void)0 : winetest_wait_process
+# define wait_child_process_(file, line) (winetest_set_location(file, 0), 0) ? (void)0 : winetest_wait_child_process
 #else
 # define subtest_(file, line)  (winetest_set_location(file, line), 0) ? (void)0 : winetest_subtest
 # define ok_(file, line)       (winetest_set_location(file, line), 0) ? (void)0 : winetest_ok
