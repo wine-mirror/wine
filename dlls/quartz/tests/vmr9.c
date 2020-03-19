@@ -1388,17 +1388,13 @@ static void test_connect_pin(void)
                 skip("Got E_FAIL when connecting.\n");
                 goto out;
             }
-            todo_wine_if (bpp_tests[j] == 24)
-                ok(hr == S_OK, "Got hr %#x for subtype %s and bpp %u.\n", hr,
-                        wine_dbgstr_guid(subtype_tests[i]), bpp_tests[j]);
+            ok(hr == S_OK, "Got hr %#x for subtype %s and bpp %u.\n", hr,
+                    wine_dbgstr_guid(subtype_tests[i]), bpp_tests[j]);
 
-            if (hr == S_OK)
-            {
-                hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
-                hr = IFilterGraph2_Disconnect(graph, pin);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
-            }
+            hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            hr = IFilterGraph2_Disconnect(graph, pin);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
         }
     }
 
