@@ -348,7 +348,6 @@ struct _vbscode_t {
     BOOL pending_exec;
     BOOL is_persistent;
     function_t main_code;
-    IDispatch *context;
     named_item_t *named_item;
 
     BSTR *bstr_pool;

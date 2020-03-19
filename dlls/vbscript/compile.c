@@ -1867,8 +1867,6 @@ void release_vbscode(vbscode_t *code)
     for(i=0; i < code->bstr_cnt; i++)
         SysFreeString(code->bstr_pool[i]);
 
-    if(code->context)
-        IDispatch_Release(code->context);
     if(code->named_item)
         release_named_item(code->named_item);
     heap_pool_free(&code->heap);
@@ -2015,9 +2013,6 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *item
 
     ctx.code = NULL;
     release_compiler(&ctx);
-
-    if(item && item->disp)
-        IDispatch_AddRef(code->context = item->disp);
 
     list_add_tail(&script->code_list, &code->entry);
     *ret = code;
