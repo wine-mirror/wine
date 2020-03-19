@@ -787,6 +787,7 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
     ITypeInfo *refinfo;
     TYPEATTR *attr;
     size_t off;
+    GUID guid;
 
     TRACE("vt %d%s\n", desc->vt, toplevel ? " (toplevel)" : "");
 
@@ -815,7 +816,9 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
             write_ip_tfs(str, len, &attr->guid);
             break;
         case TKIND_COCLASS:
-            assert(0);
+            off = *len;
+            get_default_iface(refinfo, attr->cImplTypes, &guid);
+            write_ip_tfs(str, len, &guid);
             break;
         case TKIND_ALIAS:
             off = write_type_tfs(refinfo, str, len, &attr->tdescAlias, toplevel, onstack);
@@ -1007,6 +1010,7 @@ static HRESULT get_param_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int is_in,
 
         case TKIND_INTERFACE:
         case TKIND_DISPATCH:
+        case TKIND_COCLASS:
             /* These are treated as if they were interface pointers. */
             *flags |= MustFree;
             break;
