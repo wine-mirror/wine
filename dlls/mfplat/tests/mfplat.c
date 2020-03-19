@@ -4694,7 +4694,7 @@ static void test_MFCreate2DMediaBuffer(void)
     IMF2DBuffer2 *_2dbuffer2;
     IMF2DBuffer *_2dbuffer;
     IMFMediaBuffer *buffer;
-    int i, pitch;
+    int i, pitch, pitch2;
     HRESULT hr;
     BOOL ret;
 
@@ -4898,6 +4898,12 @@ static void test_MFCreate2DMediaBuffer(void)
 
         hr = IMF2DBuffer_Lock2D(_2dbuffer, &data, &pitch);
         ok(hr == S_OK, "Failed to lock buffer, hr %#x.\n", hr);
+
+        hr = IMF2DBuffer_GetScanline0AndPitch(_2dbuffer, &data2, &pitch2);
+        ok(hr == S_OK, "Failed to get scanline, hr %#x.\n", hr);
+        ok(data2 == data, "Unexpected data pointer.\n");
+        ok(pitch == pitch2, "Unexpected pitch.\n");
+
         hr = IMF2DBuffer_Unlock2D(_2dbuffer);
         ok(hr == S_OK, "Failed to unlock buffer, hr %#x.\n", hr);
 

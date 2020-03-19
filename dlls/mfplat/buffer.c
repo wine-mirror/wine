@@ -340,7 +340,7 @@ static HRESULT memory_2d_buffer_lock(struct memory_buffer *buffer, BYTE **scanli
     else
     {
         ++buffer->_2d.locks;
-        *scanline0 = buffer->data;
+        *scanline0 = buffer->_2d.scanline0;
         *pitch = buffer->_2d.pitch;
         if (buffer_start)
             *buffer_start = buffer->data;
