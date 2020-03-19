@@ -1257,7 +1257,7 @@ struct_declaration:       var_modifiers struct_spec variables_def_optional ';'
                                 {
                                     if (!$2->name)
                                     {
-                                        hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
+                                        hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR,
                                                 "anonymous struct declaration with no variables");
                                     }
                                     if (modifiers)
