@@ -544,7 +544,7 @@ static HRESULT create_1d_buffer(DWORD max_length, DWORD alignment, IMFMediaBuffe
 
 static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bottom_up, IMFMediaBuffer **buffer)
 {
-    unsigned int bpp, max_length, plane_size;
+    unsigned int stride, max_length, plane_size;
     struct memory_buffer *object;
     unsigned int row_alignment;
     GUID subtype;
@@ -560,7 +560,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
     memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
     subtype.Data1 = fourcc;
 
-    if (!(bpp = mf_format_get_bpp(&subtype, &is_yuv)))
+    if (!(stride = mf_format_get_stride(&subtype, width, &is_yuv)))
         return MF_E_INVALIDMEDIATYPE;
 
     if (is_yuv && bottom_up)
@@ -586,7 +586,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
             row_alignment = MF_64_BYTE_ALIGNMENT;
     }
 
-    pitch = ALIGN_SIZE(width * bpp, row_alignment);
+    pitch = ALIGN_SIZE(stride, row_alignment);
 
     switch (fourcc)
     {
@@ -610,7 +610,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
 
     object->IMF2DBuffer2_iface.lpVtbl = &memory_2d_buffer_vtbl;
     object->_2d.plane_size = plane_size;
-    object->_2d.width = width * bpp;
+    object->_2d.width = stride;
     object->_2d.height = height;
     object->_2d.pitch = bottom_up ? -pitch : pitch;
     object->_2d.scanline0 = bottom_up ? object->data + pitch * (object->_2d.height - 1) : object->data;

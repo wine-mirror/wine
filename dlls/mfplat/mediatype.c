@@ -1815,14 +1815,14 @@ static unsigned int mf_get_stride_for_format(const struct uncompressed_video_for
     return (width * format->bytes_per_pixel + format->alignment) & ~format->alignment;
 }
 
-unsigned int mf_format_get_bpp(const GUID *subtype, BOOL *is_yuv)
+unsigned int mf_format_get_stride(const GUID *subtype, unsigned int width, BOOL *is_yuv)
 {
     struct uncompressed_video_format *format = mf_get_video_format(subtype);
 
     if (format)
     {
         *is_yuv = format->yuv;
-        return format->bytes_per_pixel;
+        return mf_get_stride_for_format(format, width);
     }
 
     return 0;
