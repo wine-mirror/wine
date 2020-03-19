@@ -2327,7 +2327,8 @@ static void init_ps30_dx9_writer(struct bc_writer *writer) {
     writer->funcs = &ps_3_backend;
 }
 
-static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
+static struct bc_writer *create_writer(DWORD version)
+{
     struct bc_writer *ret = d3dcompiler_alloc(sizeof(*ret));
 
     if(!ret) {
@@ -2337,101 +2338,44 @@ static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
 
     switch(version) {
         case BWRITERVS_VERSION(1, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 1.0 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_vs10_dx9_writer(ret);
             break;
         case BWRITERVS_VERSION(1, 1):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 1.1 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_vs11_dx9_writer(ret);
             break;
         case BWRITERVS_VERSION(2, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 2.0 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_vs20_dx9_writer(ret);
             break;
         case BWRITERVS_VERSION(2, 1):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 2.x requested: %u\n", dxversion);
-                goto fail;
-            }
             init_vs2x_dx9_writer(ret);
             break;
         case BWRITERVS_VERSION(3, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 3.0 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_vs30_dx9_writer(ret);
             break;
-
         case BWRITERPS_VERSION(1, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.0 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_ps10_dx9_writer(ret);
             break;
         case BWRITERPS_VERSION(1, 1):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.1 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_ps11_dx9_writer(ret);
             break;
         case BWRITERPS_VERSION(1, 2):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.2 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_ps12_dx9_writer(ret);
             break;
         case BWRITERPS_VERSION(1, 3):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.3 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_ps13_dx9_writer(ret);
             break;
         case BWRITERPS_VERSION(1, 4):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.4 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_ps14_dx9_writer(ret);
             break;
-
         case BWRITERPS_VERSION(2, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 2.0 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_ps20_dx9_writer(ret);
             break;
-
         case BWRITERPS_VERSION(2, 1):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 2.x requested: %u\n", dxversion);
-                goto fail;
-            }
             init_ps2x_dx9_writer(ret);
             break;
-
         case BWRITERPS_VERSION(3, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 3.0 requested: %u\n", dxversion);
-                goto fail;
-            }
             init_ps30_dx9_writer(ret);
             break;
-
         default:
             WARN("Unexpected shader version requested: %08x\n", version);
             goto fail;
@@ -2477,7 +2421,7 @@ HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWOR
         ERR("NULL shader structure, aborting\n");
         return E_FAIL;
     }
-    writer = create_writer(shader->version, dxversion);
+    writer = create_writer(shader->version);
     *result = NULL;
 
     if(!writer) {
