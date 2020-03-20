@@ -68,8 +68,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 unsigned   dbghelp_options = SYMOPT_UNDNAME;
 BOOL       dbghelp_opt_native = FALSE;
+SYSTEM_INFO sysinfo;
 
 static struct process* process_first /* = NULL */;
+
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        GetSystemInfo(&sysinfo);
+        DisableThreadLibraryCalls(instance);
+        break;
+    }
+    return TRUE;
+}
 
 /******************************************************************
  *		process_find_by_handle
