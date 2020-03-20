@@ -53,10 +53,6 @@ HRESULT WINAPI LoadIconMetric(HINSTANCE, const WCHAR *, int, HICON *);
 
 #define COMCTL32_VERSION                5  /* dll version */
 
-#ifndef _WIN32_IE
-#define _WIN32_IE 0x0400
-#endif
-
 #define ICC_LISTVIEW_CLASSES   0x00000001  /* listview, header */
 #define ICC_TREEVIEW_CLASSES   0x00000002  /* treeview, tooltips */
 #define ICC_BAR_CLASSES        0x00000004  /* toolbar, statusbar, trackbar, tooltips */
