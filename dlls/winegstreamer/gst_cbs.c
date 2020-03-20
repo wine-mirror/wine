@@ -20,9 +20,75 @@
 
 #include <gst/gst.h>
 
+#include "objbase.h"
+
 #include "wine/list.h"
 
 #include "gst_cbs.h"
+
+static pthread_key_t wine_gst_key;
+
+void mark_wine_thread(void)
+{
+    /* set it to non-NULL to indicate that this is a Wine thread */
+    pthread_setspecific(wine_gst_key, &wine_gst_key);
+}
+
+static BOOL is_wine_thread(void)
+{
+    return pthread_getspecific(wine_gst_key) != NULL;
+}
+
+static pthread_mutex_t cb_list_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cb_list_cond = PTHREAD_COND_INITIALIZER;
+static struct list cb_list = LIST_INIT(cb_list);
+
+static void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
+{
+    struct cb_data *cbdata = user;
+
+    if (cbdata->type < GSTDEMUX_MAX)
+        perform_cb_gstdemux(cbdata);
+
+    pthread_mutex_lock(&cbdata->lock);
+    cbdata->finished = 1;
+    pthread_cond_broadcast(&cbdata->cond);
+    pthread_mutex_unlock(&cbdata->lock);
+}
+
+static DWORD WINAPI dispatch_thread(void *user)
+{
+    struct cb_data *cbdata;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    pthread_mutex_lock(&cb_list_lock);
+
+    while (1)
+    {
+        pthread_cond_wait(&cb_list_cond, &cb_list_lock);
+
+        while (!list_empty(&cb_list))
+        {
+            cbdata = LIST_ENTRY(list_head(&cb_list), struct cb_data, entry);
+            list_remove(&cbdata->entry);
+
+            TrySubmitThreadpoolCallback(&perform_cb, cbdata, NULL);
+        }
+    }
+
+    pthread_mutex_unlock(&cb_list_lock);
+
+    CoUninitialize();
+
+    return 0;
+}
+
+void start_dispatch_thread(void)
+{
+    pthread_key_create(&wine_gst_key, NULL);
+    CloseHandle(CreateThread(NULL, 0, &dispatch_thread, NULL, 0, NULL));
+}
 
 /* gstreamer calls our callbacks from threads that Wine did not create. Some
  * callbacks execute code which requires Wine to have created the thread
@@ -31,7 +97,7 @@
  * callbacks in code which avoids the Wine thread requirement, and then
  * dispatch those callbacks on a thread that is known to be created by Wine.
  *
- * This file must not contain any code that depends on the Wine TEB!
+ * This thread must not run any code that depends on the Wine TEB!
  */
 
 static void call_cb(struct cb_data *cbdata)
