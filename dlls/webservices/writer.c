@@ -3760,8 +3760,8 @@ static HRESULT write_type_field( struct writer *writer, const WS_FIELD_DESCRIPTI
         return E_NOTIMPL;
     }
 
-    /*  zero-terminated strings are always pointers */
-    if (desc->type == WS_WSZ_TYPE) field_options |= WS_FIELD_POINTER;
+    /* zero-terminated strings and descriptions are always pointers */
+    if (desc->type == WS_WSZ_TYPE || desc->type == WS_DESCRIPTION_TYPE) field_options |= WS_FIELD_POINTER;
 
     if (field_options & WS_FIELD_POINTER)
         size = sizeof(const void *);
@@ -3790,6 +3790,10 @@ static HRESULT write_type_field( struct writer *writer, const WS_FIELD_DESCRIPTI
 
     switch (desc->mapping)
     {
+    case WS_TYPE_ATTRIBUTE_FIELD_MAPPING:
+        mapping = WS_ATTRIBUTE_TYPE_MAPPING;
+        break;
+
     case WS_ATTRIBUTE_FIELD_MAPPING:
         if (!desc->localName || !desc->ns) return E_INVALIDARG;
         if ((hr = write_add_attribute( writer, NULL, desc->localName, desc->ns, FALSE )) != S_OK)
@@ -3910,6 +3914,17 @@ static HRESULT write_type_enum( struct writer *writer, WS_TYPE_MAPPING mapping,
     return write_type_text( writer, mapping, &utf8.text );
 }
 
+static HRESULT write_type_description( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                       WS_WRITE_OPTION option, const void *value, ULONG size )
+{
+    const WS_STRUCT_DESCRIPTION *ptr;
+    HRESULT hr;
+
+    if ((hr = get_value_ptr( option, value, size, sizeof(*ptr), (const void **)&ptr )) != S_OK) return hr;
+    if (ptr) FIXME( "ignoring type description %p\n", ptr );
+    return S_OK;
+}
+
 static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TYPE type,
                            const void *desc, WS_WRITE_OPTION option, const void *value,
                            ULONG size )
@@ -3969,6 +3984,9 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 
     case WS_XML_QNAME_TYPE:
         return write_type_qname( writer, mapping, desc, option, value, size );
+
+    case WS_DESCRIPTION_TYPE:
+        return write_type_description( writer, mapping, option, value, size );
 
     case WS_STRUCT_TYPE:
         return write_type_struct( writer, mapping, desc, option, value, size );

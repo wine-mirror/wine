@@ -4793,6 +4793,61 @@ static void test_stream_output(void)
     WsFreeWriter( writer );
 }
 
+static void test_description_type(void)
+{
+    static WS_XML_STRING ns = {0, NULL}, localname = {1, (BYTE *)"t"}, val = {3, (BYTE *)"val"};
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_FIELD_DESCRIPTION f, f2, *fields[2];
+    WS_STRUCT_DESCRIPTION s;
+    struct test
+    {
+        const WS_STRUCT_DESCRIPTION *desc;
+        INT32                        val;
+    } test;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping = WS_TYPE_ATTRIBUTE_FIELD_MAPPING;
+    f.type    = WS_DESCRIPTION_TYPE;
+    fields[0] = &f;
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.mapping   = WS_ATTRIBUTE_FIELD_MAPPING;
+    f2.localName = &val;
+    f2.ns        = &ns;
+    f2.offset    = FIELD_OFFSET(struct test, val);
+    f2.type      = WS_INT32_TYPE;
+    fields[1] = &f2;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields;
+    s.fieldCount    = 2;
+    s.typeLocalName = &localname;
+    s.typeNs        = &ns;
+
+    test.desc = &s;
+    test.val  = -1;
+
+    hr = set_output( writer );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t val=\"-1\"/>", __LINE__ );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -4837,4 +4892,5 @@ START_TEST(writer)
     test_text_types_binary();
     test_repeating_element_choice();
     test_stream_output();
+    test_description_type();
 }
