@@ -4268,16 +4268,16 @@ static void load_sources( struct makefile *make )
             if (crt_dll) fatal_error( "More than one crt DLL imported: %s %s\n", crt_dll, make->imports.str[i] );
             crt_dll = make->imports.str[i];
         }
-        if (!crt_dll)
+        if (!crt_dll && !strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
         {
-            if (make->use_msvcrt && make->is_exe)
+            if (make->use_msvcrt && !make->testdll && !make->staticlib)
             {
                 strarray_add( &make->imports, "ucrtbase" );
                 crt_dll = "ucrtbase";
             }
             else crt_dll = "msvcrt";
         }
-        if (!strncmp( crt_dll, "ucrt", 4 )) strarray_add( &make->define_args, "-D_UCRT" );
+        if (crt_dll && !strncmp( crt_dll, "ucrt", 4 )) strarray_add( &make->define_args, "-D_UCRT" );
     }
 
     LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
