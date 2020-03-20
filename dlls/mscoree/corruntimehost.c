@@ -1425,19 +1425,20 @@ __int32 WINAPI _CorExeMain(void)
     hr = parse_config_file(config_file, &parsed_config);
     if (SUCCEEDED(hr) && parsed_config.private_path && parsed_config.private_path[0])
     {
+        WCHAR *save;
         for(i = 0; parsed_config.private_path[i] != 0; i++)
             if (parsed_config.private_path[i] == ';') number_of_private_paths++;
         if (parsed_config.private_path[wcslen(parsed_config.private_path) - 1] != ';') number_of_private_paths++;
         config_file_dir_size = (wcsrchr(config_file, '\\') - config_file) + 1;
         priv_path = HeapAlloc(GetProcessHeap(), 0, (number_of_private_paths + 1) * sizeof(WCHAR *));
         /* wcstok ignores trailing semicolons */
-        temp = wcstok(parsed_config.private_path, scW);
+        temp = wcstok_s(parsed_config.private_path, scW, &save);
         for (i = 0; i < number_of_private_paths; i++)
         {
             priv_path[i] = HeapAlloc(GetProcessHeap(), 0, (config_file_dir_size + wcslen(temp) + 1) * sizeof(WCHAR));
             memcpy(priv_path[i], config_file, config_file_dir_size * sizeof(WCHAR));
             wcscpy(priv_path[i] + config_file_dir_size, temp);
-            temp = wcstok(NULL, scW);
+            temp = wcstok_s(NULL, scW, &save);
         }
         priv_path[number_of_private_paths] = NULL;
         if (InterlockedCompareExchangePointer((void **)&private_path, priv_path, NULL))
