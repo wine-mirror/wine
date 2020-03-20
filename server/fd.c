@@ -1756,6 +1756,7 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     struct fd *fd;
     int root_fd = -1;
     int rw_mode;
+    char *path;
 
     if (((options & FILE_DELETE_ON_CLOSE) && !(access & DELETE)) ||
         ((options & FILE_DIRECTORY_FILE) && (flags & O_TRUNC)))
@@ -1805,8 +1806,6 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     }
     else rw_mode = O_RDONLY;
 
-    fd->unix_name = dup_fd_name( root, name );
-
     if ((fd->unix_fd = open( name, rw_mode | (flags & ~O_TRUNC), *mode )) == -1)
     {
         /* if we tried to open a directory for write access, retry read-only */
@@ -1821,6 +1820,13 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
             file_set_error();
             goto error;
         }
+    }
+
+    fd->unix_name = NULL;
+    if ((path = dup_fd_name( root, name )))
+    {
+        fd->unix_name = realpath( path, NULL );
+        free( path );
     }
 
     closed_fd->unix_fd = fd->unix_fd;
@@ -2441,8 +2447,10 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
     }
 
     free( fd->unix_name );
-    fd->unix_name = name;
-    fd->closed->unix_name = name;
+    fd->closed->unix_name = fd->unix_name = realpath( name, NULL );
+    free( name );
+    if (!fd->unix_name)
+        set_error( STATUS_NO_MEMORY );
     return;
 
 failed:
