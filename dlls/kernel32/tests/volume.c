@@ -920,12 +920,12 @@ static void test_GetVolumePathNameA(void)
 
     ret = GetVolumePathNameA( "C::", volume_path, sizeof(volume_path) );
     ok(ret, "Failed to obtain the volume path, error %u.\n", GetLastError());
-    todo_wine ok(!strcmp(volume_path, expect_path), "Expected %s, got %s.\n",
+    ok(!strcmp(volume_path, expect_path), "Expected %s, got %s.\n",
             debugstr_a( expect_path ), debugstr_a( volume_path ));
 
     ret = GetVolumePathNameA( "C:ABC:DEF:\\AnInvalidFolder", volume_path, sizeof(volume_path) );
     ok(ret, "Failed to obtain the volume path, error %u.\n", GetLastError());
-    todo_wine ok(!strcmp(volume_path, expect_path), "Expected %s, got %s.\n",
+    ok(!strcmp(volume_path, expect_path), "Expected %s, got %s.\n",
             debugstr_a( expect_path ), debugstr_a( volume_path ));
 }
 

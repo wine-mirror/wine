@@ -1591,149 +1591,171 @@ BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD bufl
     return ret;
 }
 
+static BOOL is_dos_path( const UNICODE_STRING *path )
+{
+    static const WCHAR global_prefix[4] = {'\\','?','?','\\'};
+    return path->Length >= 7 * sizeof(WCHAR)
+            && !memcmp(path->Buffer, global_prefix, sizeof(global_prefix))
+            && path->Buffer[5] == ':' && path->Buffer[6] == '\\';
+}
+
+/* resolve all symlinks in a path in-place; return FALSE if allocation failed */
+static BOOL resolve_symlink( UNICODE_STRING *path )
+{
+    OBJECT_NAME_INFORMATION *info;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE file;
+    ULONG size;
+
+    InitializeObjectAttributes( &attr, path, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if (NtOpenFile( &file, SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))
+        return TRUE;
+
+    if (NtQueryObject( file, ObjectNameInformation, NULL, 0, &size ) != STATUS_INFO_LENGTH_MISMATCH)
+    {
+        NtClose( file );
+        return TRUE;
+    }
+
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, size )))
+    {
+        NtClose( file );
+        return FALSE;
+    }
+
+    status = NtQueryObject( file, ObjectNameInformation, info, size, NULL );
+    NtClose( file );
+    if (status)
+        return TRUE;
+
+    RtlFreeUnicodeString( path );
+    status = RtlDuplicateUnicodeString( 0, &info->Name, path );
+    HeapFree( GetProcessHeap(), 0, info );
+    return !status;
+}
+
 /***********************************************************************
  *           GetVolumePathNameW   (KERNEL32.@)
- *
- * This routine is intended to find the most basic path on the same filesystem
- * for any particular path name.  Since we can have very complicated drive/path
- * relationships on Unix systems, due to symbolic links, the safest way to
- * handle this is to start with the full path and work our way back folder by
- * folder unil we find a folder on a different drive (or run out of folders).
  */
-BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD buflen)
+BOOL WINAPI GetVolumePathNameW(const WCHAR *path, WCHAR *volume_path, DWORD length)
 {
-    static const WCHAR deviceprefixW[] = { '\\','?','?','\\',0 };
-    static const WCHAR ntprefixW[] = { '\\','\\','?','\\',0 };
-    WCHAR fallbackpathW[] = { 'C',':','\\',0 };
-    NTSTATUS status = STATUS_SUCCESS;
-    WCHAR *volumenameW = NULL, *c;
-    int pos, last_pos, stop_pos;
+    static const WCHAR device_prefix[4] = {'\\','\\','.','\\'};
+    static const WCHAR device_prefix2[4] = {'\\','\\','?','\\'};
+    static const WCHAR global_prefix[4] = {'\\','?','?','\\'};
+    FILE_ATTRIBUTE_TAG_INFORMATION attr_info;
+    FILE_BASIC_INFORMATION basic_info;
+    OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nt_name;
-    ANSI_STRING unix_name;
-    BOOL first_run = TRUE;
-    dev_t search_dev = 0;
-    struct stat st;
+    NTSTATUS status;
 
-    TRACE("(%s, %p, %d)\n", debugstr_w(filename), volumepathname, buflen);
-
-    if (!filename || !volumepathname || !buflen)
+    if (path && !memcmp(path, global_prefix, sizeof(global_prefix)))
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        WCHAR current_drive[MAX_PATH];
+
+        GetCurrentDirectoryW( ARRAY_SIZE(current_drive), current_drive );
+        if (length >= 3)
+        {
+            WCHAR ret_path[4] = {current_drive[0], ':', '\\', 0};
+            lstrcpynW( volume_path, ret_path, length );
+            return TRUE;
+        }
+
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return FALSE;
     }
 
-    last_pos = pos = strlenW( filename );
-    /* allocate enough memory for searching the path (need room for a slash and a NULL terminator) */
-    if (!(volumenameW = HeapAlloc( GetProcessHeap(), 0, (pos + 2) * sizeof(WCHAR) )))
+    if (!volume_path || !length || !RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    strcpyW( volumenameW, filename );
 
-    /* Normalize path */
-    for (c = volumenameW; *c; c++) if (*c == '/') *c = '\\';
-
-    stop_pos = 0;
-    /* stop searching slashes early for NT-type and nearly NT-type paths */
-    if (strncmpW(ntprefixW, filename, strlenW(ntprefixW)) == 0)
-        stop_pos = strlenW(ntprefixW)-1;
-    else if (strncmpW(ntprefixW, filename, 2) == 0)
-        stop_pos = 2;
-
-    do
+    if (!is_dos_path( &nt_name ))
     {
-        volumenameW[pos+0] = '\\';
-        volumenameW[pos+1] = '\0';
-        if (!RtlDosPathNameToNtPathName_U( volumenameW, &nt_name, NULL, NULL ))
-            goto cleanup;
-        volumenameW[pos] = '\0';
-        status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, FALSE );
         RtlFreeUnicodeString( &nt_name );
-        if (status == STATUS_SUCCESS)
-        {
-            if (stat( unix_name.Buffer, &st ) != 0)
-            {
-                RtlFreeAnsiString( &unix_name );
-                status = STATUS_OBJECT_NAME_INVALID;
-                goto cleanup;
-            }
-            if (first_run)
-            {
-                first_run = FALSE;
-                search_dev = st.st_dev;
-            }
-            else if (st.st_dev != search_dev)
-            {
-                /* folder is on a new filesystem, return the last folder */
-                RtlFreeAnsiString( &unix_name );
-                break;
-            }
-        }
-        RtlFreeAnsiString( &unix_name );
-        last_pos = pos;
-        c = strrchrW( volumenameW, '\\' );
-        if (c != NULL)
-            pos = c-volumenameW;
-    } while (c != NULL && pos > stop_pos);
-
-    if (status != STATUS_SUCCESS)
-    {
-        WCHAR cwdW[MAX_PATH];
-
-        /* the path was completely invalid */
-        if (filename[0] == '\\' && strncmpW(deviceprefixW, filename, strlenW(deviceprefixW)) != 0)
-        {
-            /* NT-style paths (that are not device paths) fail */
-            status = STATUS_OBJECT_NAME_INVALID;
-            goto cleanup;
-        }
-
-        /* DOS-style paths (anything not beginning with a slash) have fallback replies */
-        if (filename[1] == ':')
-        {
-            /* if the path is semi-sane (X:) then use the given drive letter (if it is mounted) */
-            fallbackpathW[0] = filename[0];
-            if (!isalphaW(filename[0]) || GetDriveTypeW( fallbackpathW ) == DRIVE_NO_ROOT_DIR)
-            {
-                status = STATUS_OBJECT_NAME_NOT_FOUND;
-                goto cleanup;
-            }
-        }
-        else if (GetCurrentDirectoryW(ARRAY_SIZE(cwdW), cwdW ))
-        {
-            /* if the path is completely bogus then revert to the drive of the working directory */
-            fallbackpathW[0] = cwdW[0];
-        }
-        else
-        {
-            status = STATUS_OBJECT_NAME_INVALID;
-            goto cleanup;
-        }
-        last_pos = strlenW(fallbackpathW) - 1; /* points to \\ */
-        filename = fallbackpathW;
-        status = STATUS_SUCCESS;
+        WARN("invalid path %s\n", debugstr_w(path));
+        SetLastError( ERROR_INVALID_NAME );
+        return FALSE;
     }
 
-    if (last_pos + 1 <= buflen)
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+
+    while (nt_name.Length > 7 * sizeof(WCHAR))
     {
-        memcpy(volumepathname, filename, last_pos * sizeof(WCHAR));
-        if (last_pos + 2 <= buflen) volumepathname[last_pos++] = '\\';
-        volumepathname[last_pos] = '\0';
+        IO_STATUS_BLOCK io;
+        HANDLE file;
 
-        /* DOS-style paths always return upper-case drive letters */
-        if (volumepathname[1] == ':')
-            volumepathname[0] = toupperW(volumepathname[0]);
+        if (!NtQueryAttributesFile( &attr, &basic_info )
+                && (basic_info.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+                && (basic_info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                && !NtOpenFile( &file, SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        FILE_OPEN_REPARSE_POINT | FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))
+        {
+            status = NtQueryInformationFile( file, &io, &attr_info,
+                    sizeof(attr_info), FileAttributeTagInformation );
+            NtClose( file );
+            if (!status)
+            {
 
-        TRACE("Successfully translated path %s to mount-point %s\n",
-              debugstr_w(filename), debugstr_w(volumepathname));
+                if (attr_info.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT)
+                    break;
+
+                if (!resolve_symlink( &nt_name ))
+                {
+                    SetLastError( ERROR_OUTOFMEMORY );
+                    return FALSE;
+                }
+            }
+        }
+
+        if (nt_name.Buffer[(nt_name.Length / sizeof(WCHAR)) - 1] == '\\')
+            nt_name.Length -= sizeof(WCHAR);
+        while (nt_name.Length && nt_name.Buffer[(nt_name.Length / sizeof(WCHAR)) - 1] != '\\')
+            nt_name.Length -= sizeof(WCHAR);
     }
-    else
-        status = STATUS_NAME_TOO_LONG;
 
-cleanup:
-    HeapFree( GetProcessHeap(), 0, volumenameW );
-    return set_ntstatus( status );
+    nt_name.Buffer[nt_name.Length / sizeof(WCHAR)] = 0;
+
+    if (NtQueryAttributesFile( &attr, &basic_info ))
+    {
+        RtlFreeUnicodeString( &nt_name );
+        WARN("nonexistent path %s -> %s\n", debugstr_w(path), debugstr_w( nt_name.Buffer ));
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return FALSE;
+    }
+
+    if (!memcmp(path, device_prefix, sizeof(device_prefix))
+            || !memcmp(path, device_prefix2, sizeof(device_prefix2)))
+    {
+        if (length >= nt_name.Length / sizeof(WCHAR))
+        {
+            memcpy(volume_path, path, 4 * sizeof(WCHAR));
+            lstrcpynW( volume_path + 4, nt_name.Buffer + 4, length - 4 );
+
+            TRACE("%s -> %s\n", debugstr_w(path), debugstr_w(volume_path));
+
+            RtlFreeUnicodeString( &nt_name );
+            return TRUE;
+        }
+    }
+    else if (length >= (nt_name.Length / sizeof(WCHAR)) - 4)
+    {
+        lstrcpynW( volume_path, nt_name.Buffer + 4, length );
+        volume_path[0] = toupperW(volume_path[0]);
+
+        TRACE("%s -> %s\n", debugstr_w(path), debugstr_w(volume_path));
+
+        RtlFreeUnicodeString( &nt_name );
+        return TRUE;
+    }
+
+    RtlFreeUnicodeString( &nt_name );
+    SetLastError( ERROR_FILENAME_EXCED_RANGE );
+    return FALSE;
 }
 
 
