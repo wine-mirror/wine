@@ -2832,7 +2832,8 @@ static void test_WaitForJobObject(void)
     ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
 
     sprintf(buffer, "sync kernel32-process-%x", GetCurrentProcessId());
-    sem = CreateSemaphoreA(NULL, 0, 1, buffer);
+    sem = CreateSemaphoreA(NULL, 0, 1, buffer + 5);
+    ok(sem != NULL, "CreateSemaphoreA failed le=%u\n", GetLastError());
     create_process(buffer, &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
@@ -2842,10 +2843,11 @@ static void test_WaitForJobObject(void)
     dwret = WaitForSingleObject(job, 100);
     ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
 
-    WaitForSingleObject(pi.hProcess, 1000);
+    wait_child_process(pi.hProcess);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     CloseHandle(job);
+    CloseHandle(sem);
 }
 
 static HANDLE test_AddSelfToJob(void)
@@ -4057,9 +4059,14 @@ START_TEST(process)
         }
         else if (!strcmp(myARGV[2], "sync") && myARGC >= 4)
         {
-            HANDLE sem = CreateSemaphoreA(NULL, 0, 1, myARGV[3]);
-            ok(sem != 0, "Could not get the %s semaphore: le=%u\n", myARGV[3], GetLastError());
-            if (sem) WaitForSingleObject(sem, 30000);
+            HANDLE sem = OpenSemaphoreA(SYNCHRONIZE, FALSE, myARGV[3]);
+            ok(sem != 0, "OpenSemaphoreA(%s) failed le=%u\n", myARGV[3], GetLastError());
+            if (sem)
+            {
+                DWORD ret = WaitForSingleObject(sem, 30000);
+                ok(ret == WAIT_OBJECT_0, "WaitForSingleObject(%s) returned %u\n", myARGV[3], ret);
+                CloseHandle(sem);
+            }
             return;
         }
         else if (!strcmp(myARGV[2], "exit"))
