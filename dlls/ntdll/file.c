@@ -151,6 +151,7 @@ int fd_get_file_info( int fd, struct stat *st, ULONG *attr )
 /* get the stat info and file attributes for a file (by name) */
 int get_file_info( const char *path, struct stat *st, ULONG *attr )
 {
+    char *parent_path;
     int ret;
 
     *attr = 0;
@@ -162,6 +163,19 @@ int get_file_info( const char *path, struct stat *st, ULONG *attr )
         if (ret == -1) return ret;
         /* is a symbolic link and a directory, consider these "reparse points" */
         if (S_ISDIR( st->st_mode )) *attr |= FILE_ATTRIBUTE_REPARSE_POINT;
+    }
+    else if (S_ISDIR( st->st_mode ) && (parent_path = RtlAllocateHeap( GetProcessHeap(), 0, strlen(path) + 4 )))
+    {
+        struct stat parent_st;
+
+        /* consider mount points to be reparse points (IO_REPARSE_TAG_MOUNT_POINT) */
+        strcpy( parent_path, path );
+        strcat( parent_path, "/.." );
+        if (!stat( parent_path, &parent_st )
+                && (st->st_dev != parent_st.st_dev || st->st_ino == parent_st.st_ino))
+            *attr |= FILE_ATTRIBUTE_REPARSE_POINT;
+
+        RtlFreeHeap( GetProcessHeap(), 0, parent_path );
     }
     *attr |= get_file_attributes( st );
     return ret;
