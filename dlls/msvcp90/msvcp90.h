@@ -49,10 +49,6 @@ extern void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
 extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
-#if _MSVCP_VER >= 140
-extern int* (__cdecl *UCRTBASE___processing_throw)(void);
-#endif
-
 #if _MSVCP_VER >= 110
 /* keep in sync with msvcrt/lock.c */
 typedef struct cs_queue

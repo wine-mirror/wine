@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 #define CLASS_HAS_VIRTUAL_BASE_CLASS  4
 
 void WINAPI _CxxThrowException(exception*,const cxx_exception_type*);
+int* __cdecl __processing_throw(void);
 
 #if _MSVCP_VER >= 70 || defined(_MSVCIRT)
 typedef const char **exception_name;
@@ -947,7 +948,7 @@ MSVCP_bool __cdecl MSVCP__uncaught_exception(void)
 #if _MSVCP_VER >= 140
 int __cdecl __uncaught_exceptions(void)
 {
-    return *UCRTBASE___processing_throw();
+    return *__processing_throw();
 }
 
 typedef struct

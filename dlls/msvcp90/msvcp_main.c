@@ -58,10 +58,6 @@ void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 void (__cdecl *MSVCRT_operator_delete)(void*);
 void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
-#if _MSVCP_VER >= 140
-int* (__cdecl *UCRTBASE___processing_throw)(void);
-#endif
-
 #if _MSVCP_VER >= 110
 critical_section* (__thiscall *critical_section_ctor)(critical_section*);
 void (__thiscall *critical_section_dtor)(critical_section*);
@@ -129,7 +125,6 @@ static void init_cxx_funcs(void)
     MSVCRT_operator_new = operator_new;
     MSVCRT_operator_delete = operator_delete;
     MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "_set_new_handler");
-    UCRTBASE___processing_throw = (void*)GetProcAddress(hmod, "__processing_throw");
 
     hcon = LoadLibraryA( CONCRT_NAME(_MSVCP_VER) );
     if (!hcon) FIXME( "%s not loaded\n", CONCRT_NAME(_MSVCP_VER) );
