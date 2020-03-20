@@ -735,6 +735,8 @@ typedef struct _nlsversioninfo {
     DWORD dwNLSVersionInfoSize;
     DWORD dwNLSVersion;
     DWORD dwDefinedVersion;
+    DWORD dwEffectiveId;
+    GUID  guidCustomVersion;
 } NLSVERSIONINFO, *LPNLSVERSIONINFO;
 
 typedef struct _nlsversioninfoex {
@@ -744,6 +746,9 @@ typedef struct _nlsversioninfoex {
     DWORD dwEffectiveId;
     GUID  guidCustomVersion;
 } NLSVERSIONINFOEX, *LPNLSVERSIONINFOEX;
+
+enum SYSNLS_FUNCTION { COMPARE_STRING = 1 };
+typedef DWORD NLS_FUNCTION;
 
 /* Define a bunch of callback types */
 
@@ -913,6 +918,8 @@ WINBASEAPI INT         WINAPI GetLocaleInfoA(LCID,LCTYPE,LPSTR,INT);
 WINBASEAPI INT         WINAPI GetLocaleInfoW(LCID,LCTYPE,LPWSTR,INT);
 #define                       GetLocaleInfo WINELIB_NAME_AW(GetLocaleInfo)
 WINBASEAPI INT         WINAPI GetLocaleInfoEx(LPCWSTR,LCTYPE,LPWSTR,INT);
+WINBASEAPI BOOL        WINAPI GetNLSVersion(NLS_FUNCTION,LCID,NLSVERSIONINFO*);
+WINBASEAPI BOOL        WINAPI GetNLSVersionEx(NLS_FUNCTION,LPCWSTR,NLSVERSIONINFOEX*);
 WINBASEAPI INT         WINAPI GetNumberFormatA(LCID,DWORD,LPCSTR,const NUMBERFMTA*,LPSTR,INT);
 WINBASEAPI INT         WINAPI GetNumberFormatW(LCID,DWORD,LPCWSTR,const NUMBERFMTW*,LPWSTR,INT);
 #define                       GetNumberFormat WINELIB_NAME_AW(GetNumberFormat)

@@ -724,6 +724,8 @@
 @ stdcall -import GetModuleHandleExA(long ptr ptr)
 @ stdcall -import GetModuleHandleExW(long ptr ptr)
 @ stdcall -import GetModuleHandleW(wstr)
+@ stdcall -import GetNLSVersion(long long ptr)
+@ stdcall -import GetNLSVersionEx(long wstr ptr)
 # @ stub GetNamedPipeAttribute
 # @ stub GetNamedPipeClientComputerNameA
 # @ stub GetNamedPipeClientComputerNameW
@@ -738,8 +740,6 @@
 @ stdcall -arch=x86_64 GetNextUmsListItem(ptr)
 @ stub GetNextVDMCommand
 @ stub GetNlsSectionName
-# @ stub GetNLSVersion
-# @ stub GetNLSVersionEx
 # @ stub GetNumaAvailableMemory
 @ stdcall GetNumaAvailableMemoryNode(long ptr)
 @ stdcall GetNumaAvailableMemoryNodeEx(long ptr)

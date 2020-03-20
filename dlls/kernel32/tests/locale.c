@@ -85,6 +85,8 @@ static LANGID (WINAPI *pSetThreadUILanguage)(LANGID);
 static LANGID (WINAPI *pGetThreadUILanguage)(VOID);
 static INT (WINAPI *pNormalizeString)(NORM_FORM, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pFindStringOrdinal)(DWORD, LPCWSTR lpStringSource, INT, LPCWSTR, INT, BOOL);
+static BOOL (WINAPI *pGetNLSVersion)(NLS_FUNCTION,LCID,NLSVERSIONINFO*);
+static BOOL (WINAPI *pGetNLSVersionEx)(NLS_FUNCTION,LPCWSTR,NLSVERSIONINFOEX*);
 static NTSTATUS (WINAPI *pRtlNormalizeString)(ULONG, LPCWSTR, INT, LPWSTR, INT*);
 static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
 static NTSTATUS (WINAPI *pNtGetNlsSectionPtr)(ULONG,ULONG,void*,void**,SIZE_T*);
@@ -125,6 +127,8 @@ static void InitFunctionPointers(void)
   X(GetThreadUILanguage);
   X(NormalizeString);
   X(FindStringOrdinal);
+  X(GetNLSVersion);
+  X(GetNLSVersionEx);
 
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
@@ -6633,6 +6637,134 @@ static void test_SpecialCasing(void)
     }
 }
 
+static void test_NLSVersion(void)
+{
+    static const GUID guid_null = { 0 };
+    static const GUID guid_def  = { 0x000000001, 0x57ee, 0x1e5c, {0x00,0xb4,0xd0,0x00,0x0b,0xb1,0xe1,0x1e}};
+    static const GUID guid_fr   = { 0x000000003, 0x57ee, 0x1e5c, {0x00,0xb4,0xd0,0x00,0x0b,0xb1,0xe1,0x1e}};
+    static const GUID guid_ja   = { 0x000000046, 0x57ee, 0x1e5c, {0x00,0xb4,0xd0,0x00,0x0b,0xb1,0xe1,0x1e}};
+    BOOL ret;
+    NLSVERSIONINFOEX info;
+
+    if (!pGetNLSVersion)
+    {
+        win_skip( "GetNLSVersion not available\n" );
+        return;
+    }
+    SetLastError( 0xdeadbeef );
+    memset( &info, 0xcc, sizeof(info) );
+    info.dwNLSVersionInfoSize = sizeof(info);
+    ret = pGetNLSVersion( COMPARE_STRING, MAKELANGID( LANG_FRENCH, SUBLANG_FRENCH_CANADIAN ),
+                          (NLSVERSIONINFO *)&info );
+    ok( ret, "GetNLSVersion failed err %u\n", GetLastError() );
+    ok( info.dwEffectiveId == MAKELANGID( LANG_FRENCH, SUBLANG_FRENCH_CANADIAN ),
+        "wrong id %x\n", info.dwEffectiveId );
+    ok( IsEqualIID( &info.guidCustomVersion, &guid_fr ) ||
+        broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
+        "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+
+    SetLastError( 0xdeadbeef );
+    info.dwNLSVersionInfoSize = 8;
+    ret = pGetNLSVersion( COMPARE_STRING, LOCALE_USER_DEFAULT, (NLSVERSIONINFO *)&info );
+    ok( !ret, "GetNLSVersion succeeded\n" );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    info.dwNLSVersionInfoSize = sizeof(info);
+    ret = pGetNLSVersion( 2, LOCALE_USER_DEFAULT, (NLSVERSIONINFO *)&info );
+    ok( !ret, "GetNLSVersion succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_FLAGS, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    info.dwNLSVersionInfoSize = sizeof(info);
+    ret = pGetNLSVersion( COMPARE_STRING, 0xdeadbeef, (NLSVERSIONINFO *)&info );
+    ok( !ret, "GetNLSVersion succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    if (pGetNLSVersionEx)
+    {
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"ja-JP", &info );
+        ok( ret, "GetNLSVersionEx failed err %u\n", GetLastError() );
+        ok( info.dwEffectiveId == MAKELANGID( LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN ),
+            "wrong id %x\n", info.dwEffectiveId );
+        ok( IsEqualIID( &info.guidCustomVersion, &guid_ja ) ||
+            broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
+            "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+        trace( "version %08x %08x %08x %s\n", info.dwNLSVersion, info.dwDefinedVersion, info.dwEffectiveId,
+               debugstr_guid(&info.guidCustomVersion) );
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"fr", &info );
+        ok( !ret == !pIsValidLocaleName(L"fr"), "GetNLSVersionEx doesn't match IsValidLocaleName\n" );
+        if (ret)
+        {
+            ok( info.dwEffectiveId == MAKELANGID( LANG_FRENCH, SUBLANG_DEFAULT ),
+                "wrong id %x\n", info.dwEffectiveId );
+            ok( IsEqualIID( &info.guidCustomVersion, &guid_fr ) ||
+                broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
+                "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+        }
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info) - 1;
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "GetNLSVersionEx succeeded\n" );
+        ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = offsetof( NLSVERSIONINFO, dwEffectiveId );
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "GetNLSVersionEx failed err %u\n", GetLastError() );
+        ok( info.dwEffectiveId == 0xcccccccc, "wrong id %x\n", info.dwEffectiveId );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( 2, L"en-US", &info );
+        ok( !ret, "GetNLSVersionEx succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_FLAGS, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"foobar", &info );
+        ok( !ret, "GetNLSVersionEx succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"zz-XX", &info );
+        if (!ret) ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        ok( !ret == !pIsValidLocaleName(L"zz-XX"), "GetNLSVersionEx doesn't match IsValidLocaleName\n" );
+        if (ret)
+        {
+            ok( info.dwEffectiveId == LOCALE_CUSTOM_UNSPECIFIED, "wrong id %x\n", info.dwEffectiveId );
+            ok( IsEqualIID( &info.guidCustomVersion, &guid_def ),
+                "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+        }
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, LOCALE_NAME_INVARIANT, &info );
+        ok( ret, "GetNLSVersionEx failed err %u\n", GetLastError() );
+        if (ret)
+        {
+            ok( info.dwEffectiveId == LOCALE_INVARIANT, "wrong id %x\n", info.dwEffectiveId );
+            ok( IsEqualIID( &info.guidCustomVersion, &guid_def ) ||
+                broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
+                "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+        }
+        else ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    }
+    else win_skip( "GetNLSVersionEx not available\n" );
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -6682,6 +6814,7 @@ START_TEST(locale)
   test_SetThreadUILanguage();
   test_NormalizeString();
   test_SpecialCasing();
+  test_NLSVersion();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }

@@ -4261,6 +4261,60 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *locale, LCTYPE info, 
 
 
 /******************************************************************************
+ *	GetNLSVersion   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetNLSVersion( NLS_FUNCTION func, LCID lcid, NLSVERSIONINFO *info )
+{
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+
+    if (info->dwNLSVersionInfoSize < offsetof( NLSVERSIONINFO, dwEffectiveId ))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+    if (!LCIDToLocaleName( lcid, locale, LOCALE_NAME_MAX_LENGTH, LOCALE_ALLOW_NEUTRAL_NAMES ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    return GetNLSVersionEx( func, locale, (NLSVERSIONINFOEX *)info );
+}
+
+
+/******************************************************************************
+ *	GetNLSVersionEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetNLSVersionEx( NLS_FUNCTION func, const WCHAR *locale,
+                                               NLSVERSIONINFOEX *info )
+{
+    LCID lcid = 0;
+
+    if (func != COMPARE_STRING)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return FALSE;
+    }
+    if (info->dwNLSVersionInfoSize < sizeof(*info) &&
+        (info->dwNLSVersionInfoSize != offsetof( NLSVERSIONINFO, dwEffectiveId )))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    if (!(lcid = LocaleNameToLCID( locale, 0 ))) return FALSE;
+
+    info->dwNLSVersion = info->dwDefinedVersion = sort.version;
+    if (info->dwNLSVersionInfoSize >= sizeof(*info))
+    {
+        const struct sortguid *sortid = get_language_sort( locale );
+        info->dwEffectiveId = lcid;
+        info->guidCustomVersion = sortid ? sortid->id : default_sort_guid;
+    }
+    return TRUE;
+}
+
+
+/******************************************************************************
  *	GetOEMCP   (kernelbase.@)
  */
 UINT WINAPI GetOEMCP(void)

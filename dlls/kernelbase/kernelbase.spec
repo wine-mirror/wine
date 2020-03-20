@@ -565,8 +565,8 @@
 @ stdcall GetModuleHandleExW(long ptr ptr)
 @ stdcall GetModuleHandleW(wstr)
 # @ stub GetModuleInformation
-@ stub GetNLSVersion
-@ stub GetNLSVersionEx
+@ stdcall GetNLSVersion(long long ptr)
+@ stdcall GetNLSVersionEx(long wstr ptr)
 @ stub GetNamedLocaleHashNode
 @ stub GetNamedPipeAttribute
 @ stub GetNamedPipeClientComputerNameW
