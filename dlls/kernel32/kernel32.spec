@@ -995,6 +995,7 @@
 @ stdcall -import IsValidLanguageGroup(long long)
 @ stdcall -import IsValidLocale(long long)
 @ stdcall -import IsValidLocaleName(wstr)
+@ stdcall -import IsValidNLSVersion(long wstr ptr)
 # @ stub IsValidUILanguage
 @ stdcall -import IsWow64Process(ptr ptr)
 @ stdcall K32EmptyWorkingSet(long)

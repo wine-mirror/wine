@@ -878,7 +878,7 @@
 @ stdcall IsValidLanguageGroup(long long)
 @ stdcall IsValidLocale(long long)
 @ stdcall IsValidLocaleName(wstr)
-# @ stub IsValidNLSVersion
+@ stdcall IsValidNLSVersion(long wstr ptr)
 @ stub IsValidRelativeSecurityDescriptor
 @ stdcall IsValidSecurityDescriptor(ptr)
 @ stdcall IsValidSid(ptr)

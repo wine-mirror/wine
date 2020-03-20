@@ -87,6 +87,7 @@ static INT (WINAPI *pNormalizeString)(NORM_FORM, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pFindStringOrdinal)(DWORD, LPCWSTR lpStringSource, INT, LPCWSTR, INT, BOOL);
 static BOOL (WINAPI *pGetNLSVersion)(NLS_FUNCTION,LCID,NLSVERSIONINFO*);
 static BOOL (WINAPI *pGetNLSVersionEx)(NLS_FUNCTION,LPCWSTR,NLSVERSIONINFOEX*);
+static DWORD (WINAPI *pIsValidNLSVersion)(NLS_FUNCTION,LPCWSTR,NLSVERSIONINFOEX*);
 static NTSTATUS (WINAPI *pRtlNormalizeString)(ULONG, LPCWSTR, INT, LPWSTR, INT*);
 static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
 static NTSTATUS (WINAPI *pNtGetNlsSectionPtr)(ULONG,ULONG,void*,void**,SIZE_T*);
@@ -129,6 +130,7 @@ static void InitFunctionPointers(void)
   X(FindStringOrdinal);
   X(GetNLSVersion);
   X(GetNLSVersionEx);
+  X(IsValidNLSVersion);
 
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
@@ -6763,6 +6765,84 @@ static void test_NLSVersion(void)
         else ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
     }
     else win_skip( "GetNLSVersionEx not available\n" );
+
+    if (pIsValidNLSVersion)
+    {
+        info.dwNLSVersionInfoSize = sizeof(info);
+        pGetNLSVersion( COMPARE_STRING, LOCALE_USER_DEFAULT, (NLSVERSIONINFO *)&info );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"ja-JP", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = offsetof( NLSVERSIONINFO, dwEffectiveId );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pIsValidNLSVersion( 2, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"foobar", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == ERROR_SUCCESS, "wrong error %u\n", GetLastError() );
+
+        info.dwNLSVersionInfoSize = sizeof(info);
+        pGetNLSVersion( COMPARE_STRING, LOCALE_USER_DEFAULT, (NLSVERSIONINFO *)&info );
+        info.dwNLSVersion++;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+        info.dwNLSVersion += 0x100;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == 0, "wrong error %u\n", GetLastError() );
+
+        info.dwNLSVersion -= 0x200;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == 0, "wrong error %u\n", GetLastError() );
+
+        info.dwNLSVersion += 0x100;
+        info.dwDefinedVersion += 0x100;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+        info.dwDefinedVersion -= 0x100;
+        info.guidCustomVersion.Data1 = 0x123;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == 0, "wrong error %u\n", GetLastError() );
+
+        info.guidCustomVersion = guid_null;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+    }
+    else win_skip( "IsValidNLSVersion not available\n" );
 }
 
 START_TEST(locale)

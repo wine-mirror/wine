@@ -4860,6 +4860,39 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocaleName( const WCHAR *locale )
 }
 
 
+/******************************************************************************
+ *	IsValidNLSVersion   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH IsValidNLSVersion( NLS_FUNCTION func, const WCHAR *locale,
+                                                  NLSVERSIONINFOEX *info )
+{
+    static const GUID GUID_NULL;
+    NLSVERSIONINFOEX infoex;
+    DWORD ret;
+
+    if (func != COMPARE_STRING)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (info->dwNLSVersionInfoSize < sizeof(*info) &&
+        (info->dwNLSVersionInfoSize != offsetof( NLSVERSIONINFO, dwEffectiveId )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    infoex.dwNLSVersionInfoSize = sizeof(infoex);
+    if (!GetNLSVersionEx( func, locale, &infoex )) return FALSE;
+
+    ret = (infoex.dwNLSVersion & ~0xff) == (info->dwNLSVersion & ~0xff);
+    if (ret && !IsEqualGUID( &info->guidCustomVersion, &GUID_NULL ))
+        ret = find_sortguid( &info->guidCustomVersion ) != NULL;
+
+    if (!ret) SetLastError( ERROR_SUCCESS );
+    return ret;
+}
+
+
 /***********************************************************************
  *	LCIDToLocaleName   (kernelbase.@)
  */
