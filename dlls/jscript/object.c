@@ -56,27 +56,31 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     jsdisp_t *jsdisp;
     const WCHAR *str;
 
-    static const WCHAR formatW[] = {'[','o','b','j','e','c','t',' ','%','s',']',0};
-
-    static const WCHAR arrayW[] = {'A','r','r','a','y',0};
-    static const WCHAR booleanW[] = {'B','o','o','l','e','a','n',0};
-    static const WCHAR dateW[] = {'D','a','t','e',0};
-    static const WCHAR errorW[] = {'E','r','r','o','r',0};
-    static const WCHAR functionW[] = {'F','u','n','c','t','i','o','n',0};
-    static const WCHAR mathW[] = {'M','a','t','h',0};
-    static const WCHAR numberW[] = {'N','u','m','b','e','r',0};
-    static const WCHAR objectW[] = {'O','b','j','e','c','t',0};
-    static const WCHAR regexpW[] = {'R','e','g','E','x','p',0};
-    static const WCHAR stringW[] = {'S','t','r','i','n','g',0};
     /* Keep in sync with jsclass_t enum */
-    static const WCHAR *names[] = {NULL, arrayW, booleanW, dateW, objectW, errorW,
-        functionW, NULL, mathW, numberW, objectW, regexpW, stringW, objectW, objectW, objectW};
+    static const WCHAR *names[] = {
+        NULL,
+        L"[object Array]",
+        L"[object Boolean]",
+        L"[object Date]",
+        L"[object Object]",
+        L"[object Error]",
+        L"[object Function]",
+        NULL,
+        L"[object Math]",
+        L"[object Number]",
+        L"[object Object]",
+        L"[object RegExp]",
+        L"[object String]",
+        L"[object Object]",
+        L"[object Object]",
+        L"[object Object]"
+    };
 
     TRACE("\n");
 
     jsdisp = get_jsdisp(jsthis);
     if(!jsdisp) {
-        str = objectW;
+        str = L"[object Object]";
     }else if(names[jsdisp->builtin_info->class]) {
         str = names[jsdisp->builtin_info->class];
     }else {
@@ -87,13 +91,9 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 
     if(r) {
         jsstr_t *ret;
-        WCHAR *ptr;
-
-        ret = jsstr_alloc_buf(9+lstrlenW(str), &ptr);
+        ret = jsstr_alloc(str);
         if(!ret)
             return E_OUTOFMEMORY;
-
-        swprintf(ptr, 9 + lstrlenW(str), formatW, str);
         *r = jsval_string(ret);
     }
 
