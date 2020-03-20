@@ -15359,7 +15359,8 @@ done
              ac_wine_check_funcs_save_LIBS="$LIBS"
 LIBS="$LIBS $FAUDIO_LIBS"
 for ac_func in FAudio_CommitOperationSet \
-                                   F3DAudioInitialize8
+                                   F3DAudioInitialize8 \
+                                   FAudioLinkedVersion
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

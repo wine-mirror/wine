@@ -152,6 +152,9 @@
 /* Define to 1 if you have the `fallocate' function. */
 #undef HAVE_FALLOCATE
 
+/* Define to 1 if you have the `FAudioLinkedVersion' function. */
+#undef HAVE_FAUDIOLINKEDVERSION
+
 /* Define to 1 if you have the `FAudio_CommitOperationSet' function. */
 #undef HAVE_FAUDIO_COMMITOPERATIONSET
 
