@@ -136,8 +136,15 @@ static inline ULONG get_file_attributes( const struct stat *st )
     return attr;
 }
 
+static BOOL fd_is_mount_point( int fd, const struct stat *st )
+{
+    struct stat parent;
+    return S_ISDIR( st->st_mode ) && !fstatat( fd, "..", &parent, 0 )
+            && (parent.st_dev != st->st_dev || parent.st_ino == st->st_ino);
+}
+
 /* get the stat info and file attributes for a file (by file descriptor) */
-int fd_get_file_info( int fd, struct stat *st, ULONG *attr )
+int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULONG *attr )
 {
     int ret;
 
@@ -145,6 +152,9 @@ int fd_get_file_info( int fd, struct stat *st, ULONG *attr )
     ret = fstat( fd, st );
     if (ret == -1) return ret;
     *attr |= get_file_attributes( st );
+    /* consider mount points to be reparse points (IO_REPARSE_TAG_MOUNT_POINT) */
+    if ((options & FILE_OPEN_REPARSE_POINT) && fd_is_mount_point( fd, st ))
+        *attr |= FILE_ATTRIBUTE_REPARSE_POINT;
     return ret;
 }
 
@@ -2319,6 +2329,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     struct stat st;
     int fd, needs_close = FALSE;
     ULONG attr;
+    unsigned int options;
 
     TRACE("(%p,%p,%p,0x%08x,0x%08x)\n", hFile, io, ptr, len, class);
 
@@ -2331,7 +2342,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     if (len < info_sizes[class])
         return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
 
-    if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, NULL )))
+    if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, &options )))
     {
         if (io->u.Status != STATUS_BAD_DEVICE_TYPE) return io->u.Status;
         return server_get_file_info( hFile, io, ptr, len, class );
@@ -2340,7 +2351,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     switch (class)
     {
     case FileBasicInformation:
-        if (fd_get_file_info( fd, &st, &attr ) == -1)
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1)
             io->u.Status = FILE_GetNtStatus();
         else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
             io->u.Status = STATUS_INVALID_INFO_CLASS;
@@ -2351,7 +2362,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         {
             FILE_STANDARD_INFORMATION *info = ptr;
 
-            if (fd_get_file_info( fd, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
+            if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
             else
             {
                 fill_file_info( &st, attr, info, class );
@@ -2368,7 +2379,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         }
         break;
     case FileInternalInformation:
-        if (fd_get_file_info( fd, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
         else fill_file_info( &st, attr, ptr, class );
         break;
     case FileEaInformation:
@@ -2378,7 +2389,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         }
         break;
     case FileEndOfFileInformation:
-        if (fd_get_file_info( fd, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
         else fill_file_info( &st, attr, ptr, class );
         break;
     case FileAllInformation:
@@ -2386,7 +2397,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
             FILE_ALL_INFORMATION *info = ptr;
             ANSI_STRING unix_name;
 
-            if (fd_get_file_info( fd, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
+            if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
             else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
                 io->u.Status = STATUS_INVALID_INFO_CLASS;
             else if (!(io->u.Status = server_get_unix_name( hFile, &unix_name )))
@@ -2494,7 +2505,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         }
         break;
     case FileIdInformation:
-        if (fd_get_file_info( fd, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
         else
         {
             FILE_ID_INFORMATION *info = ptr;
@@ -2504,12 +2515,14 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         }
         break;
     case FileAttributeTagInformation:
-        if (fd_get_file_info( fd, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
         else
         {
             FILE_ATTRIBUTE_TAG_INFORMATION *info = ptr;
             info->FileAttributes = attr;
             info->ReparseTag = 0; /* FIXME */
+            if ((options & FILE_OPEN_REPARSE_POINT) && fd_is_mount_point( fd, &st ))
+                info->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
         }
         break;
     default:
