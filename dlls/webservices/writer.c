@@ -3831,6 +3831,9 @@ static HRESULT write_type_field( struct writer *writer, const WS_FIELD_DESCRIPTI
         }
         break;
 
+    case WS_ANY_ATTRIBUTES_FIELD_MAPPING:
+        return S_OK;
+
     default:
         FIXME( "field mapping %u not supported\n", desc->mapping );
         return E_NOTIMPL;

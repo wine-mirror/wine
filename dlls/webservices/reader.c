@@ -6085,6 +6085,9 @@ ULONG get_type_size( WS_TYPE type, const void *desc )
         const WS_UNION_DESCRIPTION *desc_union = desc;
         return desc_union->size;
     }
+    case WS_ANY_ATTRIBUTES_TYPE:
+        return 0;
+
     default:
         ERR( "unhandled type %u\n", type );
         return 0;

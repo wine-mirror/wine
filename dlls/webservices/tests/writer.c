@@ -1586,10 +1586,11 @@ static void test_complex_struct_type(void)
     WS_XML_BUFFER *buffer;
     WS_XML_WRITER *writer;
     WS_STRUCT_DESCRIPTION s, s2;
-    WS_FIELD_DESCRIPTION f, f2, *fields[1], *fields2[1];
+    WS_FIELD_DESCRIPTION f, f2, f3, *fields[1], *fields2[2];
     struct services
     {
         const WCHAR *generationtime;
+        BYTE         dummy[12];
     };
     struct officeconfig
     {
@@ -1619,11 +1620,17 @@ static void test_complex_struct_type(void)
     f2.options         = WS_FIELD_OPTIONAL;
     fields2[0] = &f2;
 
+    memset( &f3, 0, sizeof(f3) );
+    f3.mapping  = WS_ANY_ATTRIBUTES_FIELD_MAPPING;
+    f3.type     = WS_ANY_ATTRIBUTES_TYPE;
+    f3.offset   = FIELD_OFFSET(struct services, dummy);
+    fields2[1] = &f3;
+
     memset( &s2, 0, sizeof(s2) );
     s2.size          = sizeof(*test->services);
     s2.alignment     = 4;
     s2.fields        = fields2;
-    s2.fieldCount    = 1;
+    s2.fieldCount    = 2;
     s2.typeLocalName = &str_services;
     s2.typeNs        = &ns;
 
