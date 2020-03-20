@@ -1,6 +1,6 @@
 MODULE    = ntoskrnl.exe
 IMPORTLIB = ntoskrnl
-IMPORTS   = advapi32 hal
+IMPORTS   = advapi32 hal msvcrt
 DELAYIMPORTS = setupapi user32
 
 EXTRADLLFLAGS = -mno-cygwin

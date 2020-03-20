@@ -1,6 +1,7 @@
 MODULE    = msvcirt.dll
 EXTRADEFS = -D_MSVCIRT
 PARENTSRC = ../msvcp90
+IMPORTS   = msvcrt
 
 EXTRADLLFLAGS = -mno-cygwin
 
