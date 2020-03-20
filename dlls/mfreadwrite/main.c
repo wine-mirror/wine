@@ -94,6 +94,7 @@ struct media_stream
 {
     IMFMediaStream *stream;
     IMFMediaType *current;
+    IMFTransform *decoder;
     DWORD id;
     CRITICAL_SECTION cs;
     CONDITION_VARIABLE sample_event;
@@ -576,6 +577,8 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
                 IMFMediaStream_Release(stream->stream);
             if (stream->current)
                 IMFMediaType_Release(stream->current);
+            if (stream->decoder)
+                IMFTransform_Release(stream->decoder);
             DeleteCriticalSection(&stream->cs);
 
             LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &stream->samples, struct sample, entry)
@@ -669,17 +672,14 @@ static HRESULT WINAPI src_reader_SetStreamSelection(IMFSourceReader *iface, DWOR
     return S_OK;
 }
 
-static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWORD index, DWORD type_index,
-            IMFMediaType **type)
+static HRESULT source_reader_get_native_media_type(struct source_reader *reader, DWORD index, DWORD type_index,
+        IMFMediaType **type)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
     IMFMediaTypeHandler *handler;
     IMFStreamDescriptor *sd;
     IMFMediaType *src_type;
     BOOL selected;
     HRESULT hr;
-
-    TRACE("%p, %#x, %#x, %p.\n", iface, index, type_index, type);
 
     switch (index)
     {
@@ -717,6 +717,16 @@ static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWOR
     return hr;
 }
 
+static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWORD index, DWORD type_index,
+            IMFMediaType **type)
+{
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+
+    TRACE("%p, %#x, %#x, %p.\n", iface, index, type_index, type);
+
+    return source_reader_get_native_media_type(reader, index, type_index, type);
+}
+
 static HRESULT WINAPI src_reader_GetCurrentMediaType(IMFSourceReader *iface, DWORD index, IMFMediaType **type)
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
@@ -751,6 +761,184 @@ static HRESULT WINAPI src_reader_GetCurrentMediaType(IMFSourceReader *iface, DWO
     return hr;
 }
 
+static HRESULT source_reader_get_source_type_handler(struct source_reader *reader, DWORD index,
+        IMFMediaTypeHandler **handler)
+{
+    IMFStreamDescriptor *sd;
+    BOOL selected;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(reader->descriptor, index, &selected, &sd)))
+        return hr;
+
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, handler);
+    IMFStreamDescriptor_Release(sd);
+
+    return hr;
+}
+
+static HRESULT source_reader_set_compatible_media_type(struct source_reader *reader, DWORD index, IMFMediaType *type)
+{
+    IMFMediaTypeHandler *type_handler;
+    IMFMediaType *native_type;
+    BOOL type_set = FALSE;
+    unsigned int i = 0;
+    DWORD flags;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaType_IsEqual(type, reader->streams[index].current, &flags)))
+        return hr;
+
+    if (!(flags & MF_MEDIATYPE_EQUAL_MAJOR_TYPES))
+        return MF_E_INVALIDMEDIATYPE;
+
+    /* No need for a decoder or type change. */
+    if (flags & MF_MEDIATYPE_EQUAL_FORMAT_TYPES)
+        return S_OK;
+
+    if (FAILED(hr = source_reader_get_source_type_handler(reader, index, &type_handler)))
+        return hr;
+
+    while (!type_set && IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, i++, &native_type) == S_OK)
+    {
+        static const DWORD compare_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES;
+
+        if (SUCCEEDED(IMFMediaType_IsEqual(native_type, type, &flags)) && (flags & compare_flags) == compare_flags)
+        {
+            if ((type_set = SUCCEEDED(IMFMediaTypeHandler_SetCurrentMediaType(type_handler, native_type))))
+                IMFMediaType_CopyAllItems(native_type, (IMFAttributes *)reader->streams[index].current);
+        }
+
+        IMFMediaType_Release(native_type);
+    }
+
+    IMFMediaTypeHandler_Release(type_handler);
+
+    return type_set ? S_OK : S_FALSE;
+}
+
+static HRESULT source_reader_configure_decoder(struct source_reader *reader, DWORD index, const CLSID *clsid,
+        IMFMediaType *input_type, IMFMediaType *output_type)
+{
+    IMFMediaTypeHandler *type_handler;
+    IMFTransform *transform = NULL;
+    IMFMediaType *type = NULL;
+    DWORD flags;
+    HRESULT hr;
+    int i = 0;
+
+    if (FAILED(hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform)))
+    {
+        WARN("Failed to create transform object, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0)))
+    {
+        WARN("Failed to set decoder input type, hr %#x.\n", hr);
+        IMFTransform_Release(transform);
+        return hr;
+    }
+
+    /* Find the relevant output type. */
+    while (IMFTransform_GetOutputAvailableType(transform, 0, i++, &type) == S_OK)
+    {
+        flags = 0;
+
+        if (SUCCEEDED(IMFMediaType_IsEqual(type, output_type, &flags)))
+        {
+            if (flags & MF_MEDIATYPE_EQUAL_FORMAT_TYPES)
+            {
+                if (SUCCEEDED(IMFTransform_SetOutputType(transform, 0, type, 0)))
+                {
+                    if (SUCCEEDED(source_reader_get_source_type_handler(reader, index, &type_handler)))
+                    {
+                        IMFMediaTypeHandler_SetCurrentMediaType(type_handler, input_type);
+                        IMFMediaTypeHandler_Release(type_handler);
+                    }
+
+                    if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *)reader->streams[index].current)))
+                        WARN("Failed to copy attributes, hr %#x.\n", hr);
+                    IMFMediaType_Release(type);
+
+                    if (reader->streams[index].decoder)
+                        IMFTransform_Release(reader->streams[index].decoder);
+
+                    reader->streams[index].decoder = transform;
+
+                    return S_OK;
+                }
+            }
+        }
+
+        IMFMediaType_Release(type);
+    }
+
+    WARN("Failed to find suitable decoder output type.\n");
+
+    IMFTransform_Release(transform);
+
+    return MF_E_TOPO_CODEC_NOT_FOUND;
+}
+
+static HRESULT source_reader_create_decoder_for_stream(struct source_reader *reader, DWORD index, IMFMediaType *output_type)
+{
+    MFT_REGISTER_TYPE_INFO in_type, out_type;
+    CLSID *clsids, mft_clsid, category;
+    unsigned int i = 0, count;
+    IMFMediaType *input_type;
+    HRESULT hr;
+
+    /* TODO: should we check if the source type is compressed? */
+
+    if (FAILED(hr = IMFMediaType_GetMajorType(output_type, &out_type.guidMajorType)))
+        return hr;
+
+    if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Video))
+    {
+        category = MFT_CATEGORY_VIDEO_DECODER;
+    }
+    else if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Audio))
+    {
+        category = MFT_CATEGORY_AUDIO_DECODER;
+    }
+    else
+    {
+        WARN("Unhandled major type %s.\n", debugstr_guid(&out_type.guidMajorType));
+        return MF_E_TOPO_CODEC_NOT_FOUND;
+    }
+
+    if (FAILED(hr = IMFMediaType_GetGUID(output_type, &MF_MT_SUBTYPE, &out_type.guidSubtype)))
+        return hr;
+
+    in_type.guidMajorType = out_type.guidMajorType;
+
+    while (source_reader_get_native_media_type(reader, index, i++, &input_type) == S_OK)
+    {
+        if (SUCCEEDED(IMFMediaType_GetGUID(input_type, &MF_MT_SUBTYPE, &in_type.guidSubtype)))
+        {
+            count = 0;
+            if (SUCCEEDED(hr = MFTEnum(category, 0, &in_type, &out_type, NULL, &clsids, &count)) && count)
+            {
+                mft_clsid = clsids[0];
+                CoTaskMemFree(clsids);
+
+                /* TODO: Should we iterate over all of them? */
+                if (SUCCEEDED(source_reader_configure_decoder(reader, index, &mft_clsid, input_type, output_type)))
+                {
+                    IMFMediaType_Release(input_type);
+                    return S_OK;
+                }
+
+            }
+        }
+
+        IMFMediaType_Release(input_type);
+    }
+
+    return MF_E_TOPO_CODEC_NOT_FOUND;
+}
+
 static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReader *iface, DWORD index, DWORD *reserved,
         IMFMediaType *type)
 {
@@ -774,11 +962,12 @@ static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReader *iface, DWO
     if (index >= reader->stream_count)
         return MF_E_INVALIDSTREAMNUMBER;
 
-    /* FIXME: validate passed type and current presentation state. */
+    /* FIXME: setting the output type while streaming should trigger a flush */
 
     EnterCriticalSection(&reader->cs);
 
-    hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *)reader->streams[index].current);
+    if ((hr = source_reader_set_compatible_media_type(reader, index, type)) == S_FALSE)
+        hr = source_reader_create_decoder_for_stream(reader, index, type);
 
     LeaveCriticalSection(&reader->cs);
 
