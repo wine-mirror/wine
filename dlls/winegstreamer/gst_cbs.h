@@ -54,11 +54,11 @@ struct cb_data {
             gpointer user;
             GstBusSyncReply ret;
         } watch_bus_data;
-        struct existing_new_pad_data {
-            GstElement *bin;
+        struct pad_added_data {
+            GstElement *element;
             GstPad *pad;
             gpointer user;
-        } existing_new_pad_data;
+        } pad_added_data;
         struct query_function_data {
             GstPad *pad;
             GstObject *parent;
@@ -73,17 +73,17 @@ struct cb_data {
             gboolean ret;
         } activate_mode_data;
         struct no_more_pads_data {
-            GstElement *decodebin;
+            GstElement *element;
             gpointer user;
         } no_more_pads_data;
-        struct request_buffer_src_data {
+        struct getrange_data {
             GstPad *pad;
             GstObject *parent;
             guint64 ofs;
             guint len;
             GstBuffer **buf;
             GstFlowReturn ret;
-        } request_buffer_src_data;
+        } getrange_data;
         struct event_src_data {
             GstPad *pad;
             GstObject *parent;
@@ -102,11 +102,11 @@ struct cb_data {
             GstBuffer *buf;
             GstFlowReturn ret;
         } got_data_sink_data;
-        struct removed_decoded_pad_data {
-            GstElement *bin;
+        struct pad_removed_data {
+            GstElement *element;
             GstPad *pad;
             gpointer user;
-        } removed_decoded_pad_data;
+        } pad_removed_data;
         struct autoplug_blacklist_data {
             GstElement *bin;
             GstPad *pad;

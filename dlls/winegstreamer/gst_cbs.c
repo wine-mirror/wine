@@ -89,9 +89,9 @@ void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { EXISTING_NEW_PAD };
 
-    cbdata.u.existing_new_pad_data.bin = bin;
-    cbdata.u.existing_new_pad_data.pad = pad;
-    cbdata.u.existing_new_pad_data.user = user;
+    cbdata.u.pad_added_data.element = bin;
+    cbdata.u.pad_added_data.pad = pad;
+    cbdata.u.pad_added_data.user = user;
 
     call_cb(&cbdata);
 }
@@ -123,11 +123,11 @@ gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, 
     return cbdata.u.activate_mode_data.ret;
 }
 
-void no_more_pads_wrapper(GstElement *decodebin, gpointer user)
+void no_more_pads_wrapper(GstElement *element, gpointer user)
 {
     struct cb_data cbdata = { NO_MORE_PADS };
 
-    cbdata.u.no_more_pads_data.decodebin = decodebin;
+    cbdata.u.no_more_pads_data.element = element;
     cbdata.u.no_more_pads_data.user = user;
 
     call_cb(&cbdata);
@@ -138,15 +138,15 @@ GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64
 {
     struct cb_data cbdata = { REQUEST_BUFFER_SRC };
 
-    cbdata.u.request_buffer_src_data.pad = pad;
-    cbdata.u.request_buffer_src_data.parent = parent;
-    cbdata.u.request_buffer_src_data.ofs = ofs;
-    cbdata.u.request_buffer_src_data.len = len;
-    cbdata.u.request_buffer_src_data.buf = buf;
+    cbdata.u.getrange_data.pad = pad;
+    cbdata.u.getrange_data.parent = parent;
+    cbdata.u.getrange_data.ofs = ofs;
+    cbdata.u.getrange_data.len = len;
+    cbdata.u.getrange_data.buf = buf;
 
     call_cb(&cbdata);
 
-    return cbdata.u.request_buffer_src_data.ret;
+    return cbdata.u.getrange_data.ret;
 }
 
 gboolean event_src_wrapper(GstPad *pad, GstObject *parent, GstEvent *event)
@@ -192,9 +192,9 @@ void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { REMOVED_DECODED_PAD };
 
-    cbdata.u.removed_decoded_pad_data.bin = bin;
-    cbdata.u.removed_decoded_pad_data.pad = pad;
-    cbdata.u.removed_decoded_pad_data.user = user;
+    cbdata.u.pad_removed_data.element = bin;
+    cbdata.u.pad_removed_data.pad = pad;
+    cbdata.u.pad_removed_data.user = user;
 
     call_cb(&cbdata);
 }

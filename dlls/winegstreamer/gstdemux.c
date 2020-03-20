@@ -2201,8 +2201,8 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
         }
     case EXISTING_NEW_PAD:
         {
-            struct existing_new_pad_data *data = &cbdata->u.existing_new_pad_data;
-            existing_new_pad(data->bin, data->pad, data->user);
+            struct pad_added_data *data = &cbdata->u.pad_added_data;
+            existing_new_pad(data->element, data->pad, data->user);
             break;
         }
     case QUERY_FUNCTION:
@@ -2220,13 +2220,13 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
     case NO_MORE_PADS:
         {
             struct no_more_pads_data *data = &cbdata->u.no_more_pads_data;
-            no_more_pads(data->decodebin, data->user);
+            no_more_pads(data->element, data->user);
             break;
         }
     case REQUEST_BUFFER_SRC:
         {
-            struct request_buffer_src_data *data = &cbdata->u.request_buffer_src_data;
-            cbdata->u.request_buffer_src_data.ret = request_buffer_src(data->pad, data->parent,
+            struct getrange_data *data = &cbdata->u.getrange_data;
+            cbdata->u.getrange_data.ret = request_buffer_src(data->pad, data->parent,
                     data->ofs, data->len, data->buf);
             break;
         }
@@ -2250,8 +2250,8 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
         }
     case REMOVED_DECODED_PAD:
         {
-            struct removed_decoded_pad_data *data = &cbdata->u.removed_decoded_pad_data;
-            removed_decoded_pad(data->bin, data->pad, data->user);
+            struct pad_removed_data *data = &cbdata->u.pad_removed_data;
+            removed_decoded_pad(data->element, data->pad, data->user);
             break;
         }
     case AUTOPLUG_BLACKLIST:
