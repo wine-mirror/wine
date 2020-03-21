@@ -335,11 +335,15 @@ class VkEnum(object):
         self.values = values
         self.required = False
         self.alias = alias
+        self.aliased_by = []
 
     @staticmethod
     def from_alias(enum, alias):
         name = enum.attrib.get("name")
-        return VkEnum(name, alias.values, alias=alias)
+        aliasee = VkEnum(name, alias.values, alias=alias)
+
+        alias.add_aliased_by(aliasee)
+        return aliasee
 
     @staticmethod
     def from_xml(enum):
@@ -386,17 +390,28 @@ class VkEnum(object):
         self.values.append(value)
 
     def definition(self):
+        if self.is_alias():
+            return ""
+
         text = "typedef enum {0}\n{{\n".format(self.name)
 
         # Print values sorted, values can have been added in a random order.
         values = sorted(self.values, key=lambda value: value.value)
         for value in values:
             text += "    {0},\n".format(value.definition())
-        text += "}} {0};\n\n".format(self.name)
+        text += "}} {0};\n".format(self.name)
+
+        for aliasee in self.aliased_by:
+            text += "typedef {0} {1};\n".format(self.name, aliasee.name)
+
+        text += "\n"
         return text
 
     def is_alias(self):
         return bool(self.alias)
+
+    def add_aliased_by(self, aliasee):
+        self.aliased_by.append(aliasee)
 
 
 class VkEnumValue(object):
