@@ -1707,7 +1707,7 @@ static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputP
     todo_wine ok(testsink2->got_eos == 1, "Got %u calls to IPin::EndOfStream().\n", testsink2->got_eos);
 
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine ok(hr == VFW_E_SAMPLE_REJECTED_EOS, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_FALSE /* 2003 */ || hr == VFW_E_SAMPLE_REJECTED_EOS, "Got hr %#x.\n", hr);
 
     got_Flush = 0;
     ok(!testsink->got_begin_flush, "Got %u calls to IPin::BeginFlush().\n", testsink->got_begin_flush);
