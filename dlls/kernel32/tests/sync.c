@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define _WIN32_WINNT 0x500
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
