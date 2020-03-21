@@ -188,7 +188,7 @@ static void atom_table_dump( struct object *obj, int verbose )
         if (!entry) continue;
         fprintf( stderr, "  %04x: ref=%d pinned=%c hash=%d \"",
                  entry->atom, entry->count, entry->pinned ? 'Y' : 'N', entry->hash );
-        dump_strW( entry->str, entry->len / sizeof(WCHAR), stderr, "\"\"");
+        dump_strW( entry->str, entry->len, stderr, "\"\"");
         fprintf( stderr, "\"\n" );
     }
 }

@@ -373,7 +373,7 @@ static void dump_name( struct object *obj )
     if (!name) return;
     if (name->parent) dump_name( name->parent );
     fputs( "\\\\", stderr );
-    dump_strW( name->name, name->len / sizeof(WCHAR), stderr, "[]" );
+    dump_strW( name->name, name->len, stderr, "[]" );
 }
 
 /* dump the name of an object to stderr */

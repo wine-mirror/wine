@@ -198,7 +198,7 @@ static void dump_path( const struct key *key, const struct key *base, FILE *f )
         dump_path( key->parent, base, f );
         fprintf( f, "\\\\" );
     }
-    dump_strW( key->name, key->namelen / sizeof(WCHAR), f, "[]" );
+    dump_strW( key->name, key->namelen, f, "[]" );
 }
 
 /* dump a value to a text file */
@@ -210,7 +210,7 @@ static void dump_value( const struct key_value *value, FILE *f )
     if (value->namelen)
     {
         fputc( '\"', f );
-        count = 1 + dump_strW( value->name, value->namelen / sizeof(WCHAR), f, "\"\"" );
+        count = 1 + dump_strW( value->name, value->namelen, f, "\"\"" );
         count += fprintf( f, "\"=" );
     }
     else count = fprintf( f, "@=" );
@@ -226,7 +226,7 @@ static void dump_value( const struct key_value *value, FILE *f )
         if (((WCHAR *)value->data)[value->len / sizeof(WCHAR) - 1]) break;
         if (value->type != REG_SZ) fprintf( f, "str(%x):", value->type );
         fputc( '\"', f );
-        dump_strW( (WCHAR *)value->data, value->len / sizeof(WCHAR), f, "\"\"" );
+        dump_strW( (WCHAR *)value->data, value->len, f, "\"\"" );
         fprintf( f, "\"\n" );
         return;
 
@@ -272,7 +272,7 @@ static void save_subkeys( const struct key *key, const struct key *base, FILE *f
         if (key->class)
         {
             fprintf( f, "#class=\"" );
-            dump_strW( key->class, key->classlen / sizeof(WCHAR), f, "\"\"" );
+            dump_strW( key->class, key->classlen, f, "\"\"" );
             fprintf( f, "\"\n" );
         }
         if (key->flags & KEY_SYMLINK) fputs( "#link\n", f );

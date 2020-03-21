@@ -105,7 +105,7 @@ static void dump_rectangle( const char *prefix, const rectangle_t *rect )
 static void dump_char_info( const char *prefix, const char_info_t *info )
 {
     fprintf( stderr, "%s{'", prefix );
-    dump_strW( &info->ch, 1, stderr, "\'\'" );
+    dump_strW( &info->ch, sizeof(info->ch), stderr, "\'\'" );
     fprintf( stderr, "',%04x}", info->attr );
 }
 
@@ -544,7 +544,7 @@ static void dump_varargs_string( const char *prefix, data_size_t size )
 static void dump_varargs_unicode_str( const char *prefix, data_size_t size )
 {
     fprintf( stderr, "%sL\"", prefix );
-    dump_strW( cur_data, size / sizeof(WCHAR), stderr, "\"\"" );
+    dump_strW( cur_data, size, stderr, "\"\"" );
     fputc( '\"', stderr );
     remove_data( size );
 }
@@ -824,9 +824,8 @@ static data_size_t dump_inline_unicode_string( const char *prefix, data_size_t p
     fputs( prefix, stderr );
     if (pos >= total_size) return pos;
     if (len > total_size - pos) len = total_size - pos;
-    len /= sizeof(WCHAR);
     dump_strW( (const WCHAR *)cur_data + pos/sizeof(WCHAR), len, stderr, "\"\"" );
-    return pos + len * sizeof(WCHAR);
+    return pos + (len / sizeof(WCHAR)) * sizeof(WCHAR);
 }
 
 static void dump_varargs_startup_info( const char *prefix, data_size_t size )
@@ -1133,7 +1132,7 @@ static void dump_varargs_object_attributes( const char *prefix, data_size_t size
         dump_inline_security_descriptor( ",sd=", (const struct security_descriptor *)(objattr + 1), objattr->sd_len );
         str = (const WCHAR *)objattr + (sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR);
         fprintf( stderr, ",name=L\"" );
-        dump_strW( str, objattr->name_len / sizeof(WCHAR), stderr, "\"\"" );
+        dump_strW( str, objattr->name_len, stderr, "\"\"" );
         fputc( '\"', stderr );
         remove_data( (sizeof(*objattr) + (objattr->sd_len & ~1) + (objattr->name_len & ~1) + 3) & ~3 );
     }

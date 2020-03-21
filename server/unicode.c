@@ -156,7 +156,7 @@ int dump_strW( const WCHAR *str, data_size_t len, FILE *f, const char escape[2] 
     char *pos = buffer;
     int count = 0;
 
-    for (; len; str++, len--)
+    for (len /= sizeof(WCHAR); len; str++, len--)
     {
         if (pos > buffer + sizeof(buffer) - 8)
         {
