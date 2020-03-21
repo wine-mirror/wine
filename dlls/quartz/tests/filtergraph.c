@@ -3152,9 +3152,10 @@ static void test_filter_state(void)
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
-    ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
-        "Expected time near %s, got %s.\n",
-        wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
+                "Expected time near %s, got %s.\n",
+                wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
@@ -3228,9 +3229,10 @@ static void test_filter_state(void)
     hr = IMediaFilter_Run(filter, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
-    ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
-        "Expected time near %s, got %s.\n",
-        wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
+                "Expected time near %s, got %s.\n",
+                wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
@@ -3242,9 +3244,10 @@ static void test_filter_state(void)
     hr = IMediaFilter_Run(filter, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
-    ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
-        "Expected time near %s, got %s.\n",
-        wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
+                "Expected time near %s, got %s.\n",
+                wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
@@ -3257,9 +3260,10 @@ static void test_filter_state(void)
     hr = IMediaFilter_Run(filter, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
-    ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
-        "Expected time near %s, got %s.\n",
-        wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
+                "Expected time near %s, got %s.\n",
+                wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
@@ -3996,13 +4000,15 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(time - 1234 * 10000) < 40 * 10000,
-            "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(time));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(abs(time - 1234 * 10000) < 40 * 10000,
+                "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(current - 1234 * 10000) < 40 * 10000,
-            "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(current));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(abs(current - 1234 * 10000) < 40 * 10000,
+                "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 9000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     /* This remains true even if NoFlush is specified. */
@@ -4017,13 +4023,15 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(time - 1334 * 10000) < 80 * 10000,
-            "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(abs(time - 1334 * 10000) < 80 * 10000,
+                "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(current - 1334 * 10000) < 80 * 10000,
-            "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(abs(current - 1334 * 10000) < 80 * 10000,
+                "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaControl_Pause(control);
@@ -4035,13 +4043,15 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(time - 1334 * 10000) < 80 * 10000,
-            "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(abs(time - 1334 * 10000) < 80 * 10000,
+                "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(current - 1334 * 10000) < 80 * 10000,
-            "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
+    if (winetest_interactive) /* Timing problems make this test too liable to fail. */
+        ok(abs(current - 1334 * 10000) < 80 * 10000,
+                "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaControl_Stop(control);
