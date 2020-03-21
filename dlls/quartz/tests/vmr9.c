@@ -2376,11 +2376,14 @@ static IDirect3DDevice9 *create_device(HWND window)
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
 
-    /* We can expect this to succeed, or we couldn't have created the VMR. */
     hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
             D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
-    ok(hr == D3D_OK, "Failed to create a 3D device, hr %#x.\n", hr);
     IDirect3D9_Release(d3d);
+    if (FAILED(hr))
+    {
+        skip("Failed to create a 3D device, hr %#x.\n", hr);
+        return NULL;
+    }
     return device;
 }
 
@@ -2418,7 +2421,8 @@ static void test_allocate_surface_helper(void)
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
     window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
             rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
-    device = create_device(window);
+    if (!(device = create_device(window)))
+        goto out;
 
     hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
     if (hr == E_NOINTERFACE)
@@ -2784,7 +2788,8 @@ static void test_renderless_formats(void)
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
     window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
             rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
-    device = create_device(window);
+    if (!(device = create_device(window)))
+        goto out;
 
     hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
     if (hr == E_NOINTERFACE)
