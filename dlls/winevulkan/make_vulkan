@@ -356,24 +356,24 @@ class VkEnum(object):
             alias_name = v.attrib.get("alias")
             if alias_name:
                 alias = next(x for x in values if x.name == alias_name)
-                values.append(VkEnumValue(v.attrib.get("name"), alias.value, alias.hex))
+                values.append(VkEnumValue(v.attrib.get("name"), value=alias.value, hex=alias.hex))
             elif value:
                 # Some values are in hex form. We want to preserve the hex representation
                 # at least when we convert back to a string. Internally we want to use int.
                 if "0x" in value:
-                    values.append(VkEnumValue(v.attrib.get("name"), int(value, 0), hex=True))
+                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0), hex=True))
                 else:
-                    values.append(VkEnumValue(v.attrib.get("name"), int(value, 0)))
+                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0)))
             else:
                 # bitmask
                 value = 1 << int(v.attrib.get("bitpos"))
-                values.append(VkEnumValue(v.attrib.get("name"), value, hex=True))
+                values.append(VkEnumValue(v.attrib.get("name"), value=value, hex=True))
 
         # vulkan.h contains a *_MAX_ENUM value set to 32-bit at the time of writing,
         # which is to prepare for extensions as they can add values and hence affect
         # the size definition.
         max_name = re.sub(r'([0-9a-z_])([A-Z0-9])',r'\1_\2', name).upper() + "_MAX_ENUM"
-        values.append(VkEnumValue(max_name, 0x7fffffff, hex=True))
+        values.append(VkEnumValue(max_name, value=0x7fffffff, hex=True))
 
         return VkEnum(name, values)
 
@@ -415,16 +415,21 @@ class VkEnum(object):
 
 
 class VkEnumValue(object):
-    def __init__(self, name, value, hex=False):
+    def __init__(self, name, value=None, hex=False, alias=None):
         self.name = name
         self.value = value
         self.hex = hex
+        self.alias = alias
 
     def __repr__(self):
+        if self.is_alias():
+            return "{0}={1}".format(self.name, self.alias)
         return "{0}={1}".format(self.name, self.value)
 
     def definition(self):
         """ Convert to text definition e.g. VK_FOO = 1 """
+        if self.is_alias():
+            return "{0} = {1}".format(self.name, self.alias)
 
         # Hex is commonly used for FlagBits and sometimes within
         # a non-FlagBits enum for a bitmask value as well.
@@ -432,6 +437,9 @@ class VkEnumValue(object):
             return "{0} = 0x{1:08x}".format(self.name, self.value)
         else:
             return "{0} = {1}".format(self.name, self.value)
+
+    def is_alias(self):
+        return self.alias is not None
 
 
 class VkFunction(object):
@@ -2708,7 +2716,7 @@ class VkRegistry(object):
             if "bitpos" in enum_elem.keys():
                 # We need to add an extra value to an existing enum type.
                 # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
-                enum.add(VkEnumValue(enum_elem.attrib["name"], 1 << int(enum_elem.attrib["bitpos"]), hex=True))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value=(1 << int(enum_elem.attrib["bitpos"])), hex=True))
 
             elif "offset" in enum_elem.keys():
                 # Extensions promoted to Core, have the extension number as part
