@@ -382,9 +382,10 @@ class VkEnum(object):
 
         # Extensions can add new enum values. When an extension is promoted to Core
         # the registry defines the value twice once for old extension and once for
-        # new Core features. Ignore the duplicate entry.
+        # new Core features. Add the duplicate if it's explicitly marked as an
+        # alias, otherwise ignore it.
         for v in self.values:
-            if v.value == value.value:
+            if not value.is_alias() and v.value == value.value:
                 LOGGER.debug("Adding duplicate enum value {0} to {1}".format(v, self.name))
                 return
         self.values.append(value)
@@ -396,7 +397,7 @@ class VkEnum(object):
         text = "typedef enum {0}\n{{\n".format(self.name)
 
         # Print values sorted, values can have been added in a random order.
-        values = sorted(self.values, key=lambda value: value.value)
+        values = sorted(self.values, key=lambda value: value.value if value.value is not None else 0x7ffffffe)
         for value in values:
             text += "    {0},\n".format(value.definition())
         text += "}} {0};\n".format(self.name)
@@ -2733,10 +2734,12 @@ class VkRegistry(object):
                 if direction is not None:
                     value = -value
 
-                enum.add(VkEnumValue(enum_elem.attrib["name"], value))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value=value))
 
             elif "value" in enum_elem.keys():
-                enum.add(VkEnumValue(enum_elem.attrib["name"], int(enum_elem.attrib["value"])))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value=int(enum_elem.attrib["value"])))
+            elif "alias" in enum_elem.keys():
+                enum.add(VkEnumValue(enum_elem.attrib["name"], alias=enum_elem.attrib["alias"]))
 
         elif "value" in enum_elem.keys():
             self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
