@@ -2572,21 +2572,26 @@ static void test_QueryInformationJobObject(void)
     PJOBOBJECT_BASIC_PROCESS_ID_LIST pid_list = (JOBOBJECT_BASIC_PROCESS_ID_LIST *)buf;
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION ext_limit_info;
     JOBOBJECT_BASIC_LIMIT_INFORMATION *basic_limit_info = &ext_limit_info.BasicLimitInformation;
-    DWORD dwret, ret_len;
+    DWORD ret_len;
     PROCESS_INFORMATION pi[2];
-    HANDLE job;
+    char buffer[50];
+    HANDLE job, sem;
     BOOL ret;
 
     job = pCreateJobObjectW(NULL, NULL);
     ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
 
     /* Only active processes are returned */
-    create_process("exit", &pi[0]);
+    sprintf(buffer, "sync kernel32-process-%x", GetCurrentProcessId());
+    sem = CreateSemaphoreA(NULL, 0, 1, buffer + 5);
+    ok(sem != NULL, "CreateSemaphoreA failed le=%u\n", GetLastError());
+    create_process(buffer, &pi[0]);
+
     ret = pAssignProcessToJobObject(job, pi[0].hProcess);
     ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
-    dwret = WaitForSingleObject(pi[0].hProcess, 1000);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
 
+    ReleaseSemaphore(sem, 1, NULL);
+    wait_child_process(pi[0].hProcess);
     CloseHandle(pi[0].hProcess);
     CloseHandle(pi[0].hThread);
 
