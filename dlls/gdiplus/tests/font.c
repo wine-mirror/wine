@@ -808,29 +808,20 @@ static void test_font_metrics(void)
 
 static void test_font_substitution(void)
 {
-    WCHAR ms_shell_dlg[LF_FACESIZE];
     char fallback_font[LF_FACESIZE];
     HDC hdc;
-    HFONT hfont;
     LOGFONTA lf;
     GpStatus status;
     GpGraphics *graphics;
     GpFont *font;
     GpFontFamily *family;
-    int ret;
 
     hdc = CreateCompatibleDC(0);
     status = GdipCreateFromHDC(hdc, &graphics);
     expect(Ok, status);
 
-    hfont = GetStockObject(DEFAULT_GUI_FONT);
-    ok(hfont != 0, "GetStockObject(DEFAULT_GUI_FONT) failed\n");
-
-    memset(&lf, 0xfe, sizeof(lf));
-    ret = GetObjectA(hfont, sizeof(lf), &lf);
-    ok(ret == sizeof(lf), "GetObject failed\n");
-    ok(!lstrcmpA(lf.lfFaceName, "MS Shell Dlg"), "wrong face name %s\n", lf.lfFaceName);
-    MultiByteToWideChar(CP_ACP, 0, lf.lfFaceName, -1, ms_shell_dlg, LF_FACESIZE);
+    memset(&lf, 0, sizeof(lf));
+    lstrcpyA(lf.lfFaceName, "MS Shell Dlg");
 
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
     expect(Ok, status);
@@ -841,7 +832,7 @@ static void test_font_substitution(void)
        !lstrcmpA(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
     GdipDeleteFont(font);
 
-    status = GdipCreateFontFamilyFromName(ms_shell_dlg, NULL, &family);
+    status = GdipCreateFontFamilyFromName(L"MS Shell Dlg", NULL, &family);
     expect(Ok, status);
     status = GdipCreateFont(family, 12, FontStyleRegular, UnitPoint, &font);
     expect(Ok, status);
