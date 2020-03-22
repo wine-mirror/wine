@@ -1036,7 +1036,6 @@ static void test_CommandLine(void)
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
     CloseHandle(info.hThread);
     CloseHandle(info.hProcess);
-    sprintf(buffer, "process dump %s", resfile);
     okChildString("Arguments", "argvA0", "dummy");
     okChildString("Arguments", "CommandLineA", buffer2);
     okChildStringWA("Arguments", "CommandLineW", buffer2);
