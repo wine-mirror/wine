@@ -2690,16 +2690,15 @@ static void init_test(void)
     /* Older versions (win 2k) fail tests if there is a space in
        the path. */
     if (dllver.dwMajorVersion <= 5)
-        strcpy(filename, "c:\\");
+        strcpy(tmpdir, "c:\\");
     else
-        GetTempPathA(sizeof(filename), filename);
+        GetTempPathA(sizeof(tmpdir), tmpdir);
 
     /* In case of a failure it is necessary to show the path that was passed to
      * ShellExecute(). That means the paths must not be randomized so as not to
      * prevent the TestBot from detecting new failures.
      */
-    strcpy(tmpdir, filename);
-    strcat(tmpdir, "\\wtShlexecDir");
+    strcat(tmpdir, "wtShlexecDir");
     GetLongPathNameA(tmpdir, tmpdir, sizeof(tmpdir));
     DeleteFileA( tmpdir );
     rc = CreateDirectoryA( tmpdir, NULL );
