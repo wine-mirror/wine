@@ -1807,6 +1807,14 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     lpFile = sei_tmp.lpFile;
     wcmd = wcmdBuffer;
     strcpyW(wcmd, wszApplicationName);
+    if (sei_tmp.lpDirectory)
+    {
+        LPCWSTR searchPath[] = {
+            sei_tmp.lpDirectory,
+            NULL
+        };
+        PathFindOnPathW(wcmd, searchPath);
+    }
     retval = SHELL_quote_and_execute( wcmd, wszParameters, wszEmpty,
                                       wszApplicationName, NULL, &sei_tmp,
                                       sei, execfunc );
