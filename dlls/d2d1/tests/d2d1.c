@@ -1250,7 +1250,7 @@ static void test_clip(void)
     translate_matrix(&matrix, 0.1f, 0.0f);
     ID2D1RenderTarget_SetTransform(rt, &matrix);
     set_rect(&rect, 110.0f, 250.25f, 150.0f, 300.25f);
-    set_color(&color, 0.0f, 0.5f, 1.0f, 1.0f);
+    set_color(&color, 0.0f, 1.0f, 0.0f, 1.0f);
     ID2D1RenderTarget_PushAxisAlignedClip(rt, &rect, D2D1_ANTIALIAS_MODE_ALIASED);
     ID2D1RenderTarget_Clear(rt, &color);
     ID2D1RenderTarget_PopAxisAlignedClip(rt);
@@ -1277,7 +1277,7 @@ static void test_clip(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "a958d1fe69ee880200d47b206948e4c1ef382748");
+    match = compare_surface(surface, "cb418ec4a7c8407b5e36db06fc6292a06bb8476c");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_Release(rt);
