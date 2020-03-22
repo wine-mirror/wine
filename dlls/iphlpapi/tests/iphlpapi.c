@@ -2324,7 +2324,7 @@ static void test_NotifyUnicastIpAddressChange(void)
 
     ret = pCancelMibChangeNotify2(handle);
     ok(ret == NO_ERROR, "Unexpected ret %#x.\n", ret);
-    ok(!CloseHandle(handle), "CloseHandle() succeded.\n");
+    ok(!CloseHandle(handle), "CloseHandle() succeeded.\n");
 }
 
 START_TEST(iphlpapi)
