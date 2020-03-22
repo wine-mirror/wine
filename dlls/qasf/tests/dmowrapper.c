@@ -1835,7 +1835,7 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
 
-    ok(testdmo_output_mt_set, "Ouput type should be set.\n");
+    ok(testdmo_output_mt_set, "Output type should be set.\n");
     ok(compare_media_types(&testdmo_output_mt, &req_mt), "Media types didn't match.\n");
 
     test_filter_state(control);
@@ -1878,7 +1878,7 @@ static void test_connect_pin(void)
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&testsink.sink.pin.mt, &mt2), "Media types didn't match.\n");
-    ok(testdmo_output_mt_set, "Ouput type should be set.\n");
+    ok(testdmo_output_mt_set, "Output type should be set.\n");
     ok(compare_media_types(&testdmo_output_mt, &mt2), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
