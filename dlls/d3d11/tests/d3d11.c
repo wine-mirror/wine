@@ -29819,7 +29819,7 @@ static void test_color_mask(void)
     {
         get_texture_readback(rts[i], 0, &rb);
         color = get_readback_color(&rb, 320, 240, 0);
-        ok(color == expected_colors[i], "%u: Got unexpected color 0x%08x.\n", i, color);
+        ok(compare_color(color, expected_colors[i], 1), "%u: Got unexpected color 0x%08x.\n", i, color);
         release_resource_readback(&rb);
     }
 
@@ -29837,7 +29837,7 @@ static void test_color_mask(void)
     {
         get_texture_readback(rts[i], 0, &rb);
         color = get_readback_color(&rb, 320, 240, 0);
-        ok(color == expected_colors[0], "%u: Got unexpected color 0x%08x.\n", i, color);
+        ok(compare_color(color, expected_colors[0], 1), "%u: Got unexpected color 0x%08x.\n", i, color);
         release_resource_readback(&rb);
 
         ID3D11Texture2D_Release(rts[i]);
