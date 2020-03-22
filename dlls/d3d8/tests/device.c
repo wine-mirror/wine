@@ -9869,6 +9869,53 @@ static void test_multi_adapter(void)
     IDirect3D8_Release(d3d);
 }
 
+static void test_creation_parameters(void)
+{
+    unsigned int adapter_idx, adapter_count;
+    D3DDEVICE_CREATION_PARAMETERS params;
+    struct device_desc device_desc;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    device_desc.device_window = window;
+    device_desc.width = 640;
+    device_desc.height = 480;
+    device_desc.flags = 0;
+
+    adapter_count = IDirect3D8_GetAdapterCount(d3d);
+    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
+    {
+        device_desc.adapter_ordinal = adapter_idx;
+        if (!(device = create_device(d3d, window, &device_desc)))
+        {
+            skip("Adapter %u: Failed to create a D3D device.\n", adapter_idx);
+            break;
+        }
+
+        memset(&params, 0, sizeof(params));
+        hr = IDirect3DDevice8_GetCreationParameters(device, &params);
+        ok(hr == D3D_OK, "Adapter %u: GetCreationParameters failed, hr %#x.\n", adapter_idx, hr);
+        ok(params.AdapterOrdinal == adapter_idx, "Adapter %u: Got unexpected adapter ordinal %u.\n",
+                adapter_idx, params.AdapterOrdinal);
+        ok(params.DeviceType == D3DDEVTYPE_HAL, "Adapter %u: Expect device type %#x, got %#x.\n",
+                adapter_idx, D3DDEVTYPE_HAL, params.DeviceType);
+        ok(params.hFocusWindow == window, "Adapter %u: Expect focus window %p, got %p.\n",
+                adapter_idx, window, params.hFocusWindow);
+
+        IDirect3DDevice8_Release(device);
+    }
+
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = GetModuleHandleA("d3d8.dll");
@@ -9986,6 +10033,7 @@ START_TEST(device)
     test_draw_primitive();
     test_get_display_mode();
     test_multi_adapter();
+    test_creation_parameters();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
