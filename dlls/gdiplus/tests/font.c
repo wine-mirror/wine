@@ -828,8 +828,7 @@ static void test_font_substitution(void)
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-    ok(!lstrcmpA(lf.lfFaceName, "Microsoft Sans Serif") ||
-       !lstrcmpA(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
+    ok(lstrcmpA(lf.lfFaceName, "MS Shell Dlg") != 0, "expected substitution of MS Shell Dlg\n");
     GdipDeleteFont(font);
 
     status = GdipCreateFontFamilyFromName(L"MS Shell Dlg", NULL, &family);
@@ -839,8 +838,7 @@ static void test_font_substitution(void)
     memset(&lf, 0xfe, sizeof(lf));
     status = GdipGetLogFontA(font, graphics, &lf);
     expect(Ok, status);
-    ok(!lstrcmpA(lf.lfFaceName, "Microsoft Sans Serif") ||
-       !lstrcmpA(lf.lfFaceName, "Tahoma"), "wrong face name %s\n", lf.lfFaceName);
+    ok(lstrcmpA(lf.lfFaceName, "MS Shell Dlg") != 0, "expected substitution of MS Shell Dlg\n");
     GdipDeleteFont(font);
     GdipDeleteFontFamily(family);
 
