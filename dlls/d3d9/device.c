@@ -778,6 +778,7 @@ static HRESULT WINAPI d3d9_device_GetCreationParameters(IDirect3DDevice9Ex *ifac
             (struct wined3d_device_creation_parameters *)parameters);
     wined3d_mutex_unlock();
 
+    parameters->AdapterOrdinal = device->adapter_ordinal;
     return D3D_OK;
 }
 
