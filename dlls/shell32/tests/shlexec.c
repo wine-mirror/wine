@@ -2842,7 +2842,7 @@ static void test_directory(void)
                         NULL, "test2.exe", params, tmpdir, NULL);
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
-    todo_wine okChildString("argvA0", path);
+    okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
 
@@ -2855,7 +2855,7 @@ static void test_directory(void)
                         NULL, "test2.exe", params, "%TMPDIR%", NULL);
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
-    todo_wine okChildString("argvA0", path);
+    okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
 
@@ -2872,9 +2872,9 @@ static void test_directory(void)
                         NULL, strrchr(argv0, '\\') + 1, params, tmpdir, NULL);
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
-    todo_wine okChildString("argvA0", path);
+    okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
-    todo_wine okChildPath("longPath", path);
+    okChildPath("longPath", path);
     DeleteFileA(path);
 }
 
