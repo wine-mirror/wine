@@ -36,7 +36,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <pthread.h>
 
 #include "wine/library.h"
 #include "main.h"
@@ -87,42 +86,6 @@ static int pre_exec(void)
 
 #elif defined(__linux__) && (defined(__i386__) || defined(__arm__))
 
-#ifdef __i386__
-/* separate thread to check for NPTL and TLS features */
-static void *needs_pthread( void *arg )
-{
-    pid_t tid = syscall( 224 /* SYS_gettid */ );
-    /* check for NPTL */
-    if (tid != -1 && tid != getpid()) return (void *)1;
-    /* check for TLS glibc */
-    if (wine_get_gs() != 0) return (void *)1;
-    /* check for exported epoll_create to detect new glibc versions without TLS */
-    if (wine_dlsym( RTLD_DEFAULT, "epoll_create", NULL, 0 ))
-        fprintf( stderr,
-                 "wine: glibc >= 2.3 without NPTL or TLS is not a supported combination.\n"
-                 "      Please upgrade to a glibc with NPTL support.\n" );
-    else
-        fprintf( stderr,
-                 "wine: Your C library is too old. You need at least glibc 2.3 with NPTL support.\n" );
-    return 0;
-}
-
-/* check if we support the glibc threading model */
-static void check_threading(void)
-{
-    pthread_t id;
-    void *ret;
-
-    pthread_create( &id, NULL, needs_pthread, NULL );
-    pthread_join( id, &ret );
-    if (!ret) exit(1);
-}
-#else
-static void check_threading(void)
-{
-}
-#endif
-
 static void check_vmsplit( void *stack )
 {
     if (stack < (void *)0x80000000)
@@ -150,7 +113,6 @@ static int pre_exec(void)
 {
     int temp;
 
-    check_threading();
     check_vmsplit( &temp );
     set_max_limit( RLIMIT_AS );
 #ifdef __i386__
