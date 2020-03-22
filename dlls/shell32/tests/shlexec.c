@@ -2828,6 +2828,7 @@ static void test_directory(void)
                         NULL, "test2.exe", params, NULL, NULL);
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
+    todo_wine okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
     SetCurrentDirectoryA(curdir);
@@ -2841,6 +2842,7 @@ static void test_directory(void)
                         NULL, "test2.exe", params, tmpdir, NULL);
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
+    todo_wine okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
 
@@ -2853,6 +2855,7 @@ static void test_directory(void)
                         NULL, "test2.exe", params, "%TMPDIR%", NULL);
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
+    todo_wine okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
 
@@ -2861,6 +2864,18 @@ static void test_directory(void)
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, dirpath, NULL);
     okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+
+    /* Same-named executable in different directory */
+    snprintf(path, ARRAY_SIZE(path), "%s%s", tmpdir, strrchr(argv0, '\\'));
+    CopyFileA(argv0, path, FALSE);
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
+                        NULL, strrchr(argv0, '\\') + 1, params, tmpdir, NULL);
+    okShell(rc > 32, "returned %lu\n", rc);
+    okChildInt("argcA", 4);
+    todo_wine okChildString("argvA0", path);
+    okChildString("argvA3", "Exec");
+    todo_wine okChildPath("longPath", path);
+    DeleteFileA(path);
 }
 
 START_TEST(shlexec)
