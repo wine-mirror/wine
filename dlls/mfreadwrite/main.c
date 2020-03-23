@@ -366,6 +366,100 @@ static ULONG WINAPI source_reader_stream_events_callback_Release(IMFAsyncCallbac
     return IMFSourceReader_Release(&reader->IMFSourceReader_iface);
 }
 
+static void source_reader_queue_sample(struct media_stream *stream, IMFSample *sample)
+{
+    struct sample *pending_sample;
+
+    if (!sample)
+        return;
+
+    pending_sample = heap_alloc(sizeof(*pending_sample));
+    pending_sample->sample = sample;
+    IMFSample_AddRef(pending_sample->sample);
+
+    list_add_tail(&stream->samples, &pending_sample->entry);
+}
+
+static HRESULT source_reader_pull_stream_samples(struct media_stream *stream)
+{
+    MFT_OUTPUT_STREAM_INFO stream_info = { 0 };
+    MFT_OUTPUT_DATA_BUFFER out_buffer;
+    IMFMediaBuffer *buffer;
+    DWORD status;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(stream->decoder, 0, &stream_info)))
+    {
+        WARN("Failed to get output stream info, hr %#x.\n", hr);
+        return hr;
+    }
+
+    for (;;)
+    {
+        memset(&out_buffer, 0, sizeof(out_buffer));
+
+        if (!(stream_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES))
+        {
+            if (FAILED(hr = MFCreateSample(&out_buffer.pSample)))
+                break;
+
+            if (FAILED(hr = MFCreateAlignedMemoryBuffer(stream_info.cbSize, stream_info.cbAlignment, &buffer)))
+            {
+                IMFSample_Release(out_buffer.pSample);
+                break;
+            }
+
+            IMFSample_AddBuffer(out_buffer.pSample, buffer);
+            IMFMediaBuffer_Release(buffer);
+        }
+
+        if (FAILED(hr = IMFTransform_ProcessOutput(stream->decoder, 0, 1, &out_buffer, &status)))
+        {
+            if (out_buffer.pSample)
+                IMFSample_Release(out_buffer.pSample);
+            break;
+        }
+
+        source_reader_queue_sample(stream, out_buffer.pSample);
+        if (out_buffer.pSample)
+            IMFSample_Release(out_buffer.pSample);
+        if (out_buffer.pEvents)
+            IMFCollection_Release(out_buffer.pEvents);
+    }
+
+    return hr;
+}
+
+static HRESULT source_reader_process_sample(struct media_stream *stream, IMFSample *sample)
+{
+    HRESULT hr;
+
+    if (!stream->decoder)
+    {
+        source_reader_queue_sample(stream, sample);
+        return S_OK;
+    }
+
+    /* It's assumed that decoder has 1 input and 1 output, both id's are 0. */
+
+    hr = source_reader_pull_stream_samples(stream);
+    if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+    {
+        if (FAILED(hr = IMFTransform_ProcessInput(stream->decoder, 0, sample, 0)))
+        {
+            WARN("Transform failed to process input, hr %#x.\n", hr);
+            return hr;
+        }
+
+        if ((hr = source_reader_pull_stream_samples(stream)) == MF_E_TRANSFORM_NEED_MORE_INPUT)
+            return S_OK;
+    }
+    else
+        WARN("Transform failed to process output, hr %#x.\n", hr);
+
+    return hr;
+}
+
 static HRESULT source_reader_media_sample_handler(struct source_reader *reader, IMFMediaStream *stream,
         IMFMediaEvent *event)
 {
@@ -393,20 +487,13 @@ static HRESULT source_reader_media_sample_handler(struct source_reader *reader, 
     {
         if (id == reader->streams[i].id)
         {
-            struct sample *pending_sample;
-
-            if (!(pending_sample = heap_alloc(sizeof(*pending_sample))))
-            {
-                hr = E_OUTOFMEMORY;
-                goto failed;
-            }
-
-            pending_sample->sample = sample;
-            IMFSample_AddRef(pending_sample->sample);
-
             EnterCriticalSection(&reader->streams[i].cs);
-            list_add_tail(&reader->streams[i].samples, &pending_sample->entry);
+
+            hr = source_reader_process_sample(&reader->streams[i], sample);
+
             LeaveCriticalSection(&reader->streams[i].cs);
+
+            /* FIXME: propagate processing errors? */
 
             WakeAllConditionVariable(&reader->streams[i].sample_event);
 
@@ -417,7 +504,6 @@ static HRESULT source_reader_media_sample_handler(struct source_reader *reader, 
     if (i == reader->stream_count)
         WARN("Stream with id %#x was not present in presentation descriptor.\n", id);
 
-failed:
     IMFSample_Release(sample);
 
     return hr;
@@ -438,26 +524,36 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
 
     for (i = 0; i < reader->stream_count; ++i)
     {
-        if (id == reader->streams[i].id)
+        struct media_stream *stream = &reader->streams[i];
+
+        if (id == stream->id)
         {
-            EnterCriticalSection(&reader->streams[i].cs);
+            EnterCriticalSection(&stream->cs);
 
             switch (event)
             {
                 case MEEndOfStream:
-                    reader->streams[i].state = STREAM_STATE_EOS;
+                    stream->state = STREAM_STATE_EOS;
+
+                    if (stream->decoder && SUCCEEDED(IMFTransform_ProcessMessage(stream->decoder,
+                            MFT_MESSAGE_COMMAND_DRAIN, 0)))
+                    {
+                        if ((hr = source_reader_pull_stream_samples(stream)) != MF_E_TRANSFORM_NEED_MORE_INPUT)
+                            WARN("Failed to pull pending samples, hr %#x.\n", hr);
+                    }
+
                     break;
                 case MEStreamSeeked:
                 case MEStreamStarted:
-                    reader->streams[i].state = STREAM_STATE_READY;
+                    stream->state = STREAM_STATE_READY;
                     break;
                 default:
                     ;
             }
 
-            LeaveCriticalSection(&reader->streams[i].cs);
+            LeaveCriticalSection(&stream->cs);
 
-            WakeAllConditionVariable(&reader->streams[i].sample_event);
+            WakeAllConditionVariable(&stream->sample_event);
 
             break;
         }
@@ -1006,7 +1102,7 @@ static IMFSample *media_stream_pop_sample(struct media_stream *stream, DWORD *st
         heap_free(pending_sample);
     }
 
-    *stream_flags = stream->state == STREAM_STATE_EOS ? MF_SOURCE_READERF_ENDOFSTREAM : 0;
+    *stream_flags = (!ret && stream->state == STREAM_STATE_EOS) ? MF_SOURCE_READERF_ENDOFSTREAM : 0;
 
     return ret;
 }
