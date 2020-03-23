@@ -27,6 +27,7 @@
 #include "initguid.h"
 #include "objbase.h"
 #include "rpcproxy.h"
+#include "rpc.h"
 #include "iads.h"
 #include "adserr.h"
 #define SECURITY_WIN32
@@ -777,10 +778,24 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
 
         if (flags & ADS_SECURE_AUTHENTICATION)
         {
-            FIXME("ADS_SECURE_AUTHENTICATION is not supported\n");
-            hr = ERROR_DS_AUTH_METHOD_NOT_SUPPORTED;
-            ldap_unbind(ld);
-            goto fail;
+            SEC_WINNT_AUTH_IDENTITY_W id;
+
+            id.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+            id.Domain = (unsigned short *)host;
+            id.DomainLength = wcslen(host);
+            id.User = (unsigned short *)user;
+            id.UserLength = user ? wcslen(user) : 0;
+            id.Password = (unsigned short *)password;
+            id.PasswordLength = password ? wcslen(password) : 0;
+
+            err = ldap_bind_sW(ld, NULL, (WCHAR *)&id, LDAP_AUTH_NEGOTIATE);
+            if (err != LDAP_SUCCESS)
+            {
+                TRACE("ldap_bind_sW error %#x\n", err);
+                hr = HRESULT_FROM_WIN32(map_ldap_error(err));
+                ldap_unbind(ld);
+                goto fail;
+            }
         }
         else
         {

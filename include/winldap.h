@@ -184,6 +184,18 @@ typedef struct berelement
 #define LDAP_RES_EXTENDED       0x78
 #define LDAP_RES_ANY            (-1)
 
+#define LDAP_AUTH_SIMPLE        0x80
+#define LDAP_AUTH_SASL          0x83
+#define LDAP_AUTH_OTHERKIND     0x86
+
+#define LDAP_AUTH_EXTERNAL      (LDAP_AUTH_OTHERKIND | 0x0020)
+#define LDAP_AUTH_SICILY        (LDAP_AUTH_OTHERKIND | 0x0200)
+#define LDAP_AUTH_NEGOTIATE     (LDAP_AUTH_OTHERKIND | 0x0400)
+#define LDAP_AUTH_MSN           (LDAP_AUTH_OTHERKIND | 0x0800)
+#define LDAP_AUTH_NTLM          (LDAP_AUTH_OTHERKIND | 0x1000)
+#define LDAP_AUTH_DPA           (LDAP_AUTH_OTHERKIND | 0x2000)
+#define LDAP_AUTH_DIGEST        (LDAP_AUTH_OTHERKIND | 0x4000)
+
 typedef struct ldap
 {
     struct
