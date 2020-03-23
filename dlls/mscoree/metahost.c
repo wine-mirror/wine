@@ -785,7 +785,7 @@ static BOOL get_mono_path_datadir(LPWSTR path)
     static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
     static const WCHAR unix_prefix[] = {'\\','?','?','\\','u','n','i','x','\\'};
     static const WCHAR monoW[] = {'\\','m','o','n','o',0};
-    static const WCHAR dotdotW[] = {'\\','.','.',0};
+    static const WCHAR dotdotmonoW[] = {'\\','.','.','\\','m','o','n','o',0};
     const WCHAR *data_dir, *suffix;
     WCHAR *package_dir;
     BOOL ret;
@@ -793,7 +793,7 @@ static BOOL get_mono_path_datadir(LPWSTR path)
     if ((data_dir = _wgetenv( winedatadirW )))
         suffix = monoW;
     else if ((data_dir = _wgetenv( winebuilddirW )))
-        suffix = dotdotW;
+        suffix = dotdotmonoW;
     else
         return FALSE;
 
