@@ -551,8 +551,43 @@ static HRESULT WINAPI ldapns_SetInfo(IADs *iface)
 
 static HRESULT WINAPI ldapns_Get(IADs *iface, BSTR name, VARIANT *prop)
 {
-    FIXME("%p,%s,%p: stub\n", iface, debugstr_w(name), prop);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IADs(iface);
+    HRESULT hr;
+    ULONG i;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_w(name), prop);
+
+    if (!name || !prop) return E_ADS_BAD_PARAMETER;
+
+    if (!ldap->attrs_count)
+    {
+        hr = IADs_GetInfo(iface);
+        if (hr != S_OK) return hr;
+    }
+
+    for (i = 0; i < ldap->attrs_count; i++)
+    {
+        if (!wcsicmp(name, ldap->attrs[i].name))
+        {
+            ULONG count = ldap_count_valuesW(ldap->attrs[i].values);
+            if (!count)
+            {
+                V_BSTR(prop) = NULL;
+                V_VT(prop) = VT_BSTR;
+                return S_OK;
+            }
+
+            if (count > 1)
+                FIXME("attr %s has %u values\n", debugstr_w(ldap->attrs[i].name), count);
+
+            V_BSTR(prop) = SysAllocString(ldap->attrs[i].values[0]);
+            if (!V_BSTR(prop)) return E_OUTOFMEMORY;
+            V_VT(prop) = VT_BSTR;
+            return S_OK;
+        }
+    }
+
+    return E_ADS_PROPERTY_NOT_FOUND;
 }
 
 static HRESULT WINAPI ldapns_Put(IADs *iface, BSTR name, VARIANT prop)
