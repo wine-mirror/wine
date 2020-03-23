@@ -1768,16 +1768,17 @@ static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS st
 
             while (size && left >= sizeof(*pfni))
             {
+                DWORD len = (left - offsetof(FILE_NOTIFY_INFORMATION, FileName)) / sizeof(WCHAR);
+
                 /* convert to an NT style path */
                 for (i = 0; i < event->len; i++)
                     if (event->name[i] == '/') event->name[i] = '\\';
 
                 pfni->Action = event->action;
-                pfni->FileNameLength = ntdll_umbstowcs( event->name, event->len, pfni->FileName,
-                             (left - offsetof(FILE_NOTIFY_INFORMATION, FileName)) / sizeof(WCHAR));
+                pfni->FileNameLength = ntdll_umbstowcs( event->name, event->len, pfni->FileName, len );
                 last_entry_offset = &pfni->NextEntryOffset;
 
-                if (pfni->FileNameLength == -1 || pfni->FileNameLength == -2) break;
+                if (pfni->FileNameLength == len) break;
 
                 i = offsetof(FILE_NOTIFY_INFORMATION, FileName[pfni->FileNameLength]);
                 pfni->FileNameLength *= sizeof(WCHAR);
