@@ -1455,6 +1455,14 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
                 hr = STG_E_INVALIDPARAMETER;
         }
         break;
+    case VT_CLSID:
+        if (!(prop->u.puuid = allocate(allocate_data, sizeof (*prop->u.puuid))))
+            return STG_E_INSUFFICIENTMEMORY;
+
+        if (SUCCEEDED(hr = buffer_test_offset(buffer, offset, sizeof(*prop->u.puuid))))
+            StorageUtl_ReadGUID(buffer->data, offset, prop->u.puuid);
+
+        break;
     default:
         FIXME("unsupported type %d\n", prop->vt);
         hr = STG_E_INVALIDPARAMETER;
