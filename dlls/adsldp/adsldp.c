@@ -29,6 +29,7 @@
 #include "rpcproxy.h"
 #include "rpc.h"
 #include "iads.h"
+#include "adshlp.h"
 #include "adserr.h"
 #define SECURITY_WIN32
 #include "security.h"
@@ -503,8 +504,18 @@ static HRESULT WINAPI ldapns_get_Schema(IADs *iface, BSTR *retval)
 
 static HRESULT WINAPI ldapns_GetInfo(IADs *iface)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    HRESULT hr;
+    VARIANT var;
+
+    TRACE("%p\n", iface);
+
+    hr = ADsBuildVarArrayStr(NULL, 0, &var);
+    if (hr == S_OK)
+    {
+        hr = IADs_GetInfoEx(iface, var, 0);
+        VariantClear(&var);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI ldapns_SetInfo(IADs *iface)
