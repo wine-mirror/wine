@@ -63,6 +63,15 @@ typedef enum
     XmlEncoding_ISO_8859_9,
     XmlEncoding_UTF16,
     XmlEncoding_UTF8,
+    XmlEncoding_windows_1250,
+    XmlEncoding_windows_1251,
+    XmlEncoding_windows_1252,
+    XmlEncoding_windows_1253,
+    XmlEncoding_windows_1254,
+    XmlEncoding_windows_1255,
+    XmlEncoding_windows_1256,
+    XmlEncoding_windows_1257,
+    XmlEncoding_windows_1258,
     XmlEncoding_Unknown
 } xml_encoding;
 
@@ -84,6 +93,15 @@ static const WCHAR iso_8859_13W[] = {'i','s','o','-','8','8','5','9','-','1','3'
 static const WCHAR iso_8859_15W[] = {'i','s','o','-','8','8','5','9','-','1','5',0};
 static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
 static const WCHAR utf8W[] = {'U','T','F','-','8',0};
+static const WCHAR windows_1250W[] = {'w','i','n','d','o','w','s','-','1','2','5','0',0};
+static const WCHAR windows_1251W[] = {'w','i','n','d','o','w','s','-','1','2','5','1',0};
+static const WCHAR windows_1252W[] = {'w','i','n','d','o','w','s','-','1','2','5','2',0};
+static const WCHAR windows_1253W[] = {'w','i','n','d','o','w','s','-','1','2','5','3',0};
+static const WCHAR windows_1254W[] = {'w','i','n','d','o','w','s','-','1','2','5','4',0};
+static const WCHAR windows_1255W[] = {'w','i','n','d','o','w','s','-','1','2','5','5',0};
+static const WCHAR windows_1256W[] = {'w','i','n','d','o','w','s','-','1','2','5','6',0};
+static const WCHAR windows_1257W[] = {'w','i','n','d','o','w','s','-','1','2','5','7',0};
+static const WCHAR windows_1258W[] = {'w','i','n','d','o','w','s','-','1','2','5','8',0};
 
 static const struct xml_encoding_data xml_encoding_map[] = {
     { iso_8859_1W,  XmlEncoding_ISO_8859_1,  28591 },
@@ -96,7 +114,16 @@ static const struct xml_encoding_data xml_encoding_map[] = {
     { iso_8859_7W,  XmlEncoding_ISO_8859_7,  28597 },
     { iso_8859_9W,  XmlEncoding_ISO_8859_9,  28599 },
     { utf16W,       XmlEncoding_UTF16,          ~0 },
-    { utf8W,        XmlEncoding_UTF8,      CP_UTF8 }
+    { utf8W,        XmlEncoding_UTF8,      CP_UTF8 },
+    { windows_1250W,XmlEncoding_windows_1250, 1250 },
+    { windows_1251W,XmlEncoding_windows_1251, 1251 },
+    { windows_1252W,XmlEncoding_windows_1252, 1252 },
+    { windows_1253W,XmlEncoding_windows_1253, 1253 },
+    { windows_1254W,XmlEncoding_windows_1254, 1254 },
+    { windows_1255W,XmlEncoding_windows_1255, 1255 },
+    { windows_1256W,XmlEncoding_windows_1256, 1256 },
+    { windows_1257W,XmlEncoding_windows_1257, 1257 },
+    { windows_1258W,XmlEncoding_windows_1258, 1258 }
 };
 
 typedef enum
