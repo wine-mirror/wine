@@ -229,12 +229,14 @@ PWCHAR * CDECL ldap_get_valuesW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, P
     if (!attrU) return NULL;
 
     bv = ldap_get_values_len( ld, entry, attrU );
+    if (bv)
+    {
+        retU = bv2str_array( bv );
+        ret = strarrayUtoW( retU );
 
-    retU = bv2str_array( bv );
-    ret = strarrayUtoW( retU );
-
-    ldap_value_free_len( bv );
-    strarrayfreeU( retU );
+        ldap_value_free_len( bv );
+        strarrayfreeU( retU );
+    }
     strfreeU( attrU );
 
 #endif
