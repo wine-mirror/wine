@@ -569,7 +569,7 @@ static HRESULT WINAPI ldapns_Get(IADs *iface, BSTR name, VARIANT *prop)
     {
         if (!wcsicmp(name, ldap->attrs[i].name))
         {
-            ULONG count = ldap_count_valuesW(ldap->attrs[i].values);
+            LONG count = ldap_count_valuesW(ldap->attrs[i].values);
             if (!count)
             {
                 V_BSTR(prop) = NULL;
@@ -578,12 +578,45 @@ static HRESULT WINAPI ldapns_Get(IADs *iface, BSTR name, VARIANT *prop)
             }
 
             if (count > 1)
-                FIXME("attr %s has %u values\n", debugstr_w(ldap->attrs[i].name), count);
+            {
+                SAFEARRAY *sa;
+                VARIANT item;
+                LONG idx;
 
-            V_BSTR(prop) = SysAllocString(ldap->attrs[i].values[0]);
-            if (!V_BSTR(prop)) return E_OUTOFMEMORY;
-            V_VT(prop) = VT_BSTR;
-            return S_OK;
+                TRACE("attr %s has %u values\n", debugstr_w(ldap->attrs[i].name), count);
+
+                sa = SafeArrayCreateVector(VT_VARIANT, 0, count);
+                if (!sa) return E_OUTOFMEMORY;
+
+                for (idx = 0; idx < count; idx++)
+                {
+                    V_VT(&item) = VT_BSTR;
+                    V_BSTR(&item) = SysAllocString(ldap->attrs[i].values[idx]);
+                    if (!V_BSTR(&item))
+                    {
+                        hr = E_OUTOFMEMORY;
+                        goto fail;
+                    }
+
+                    hr = SafeArrayPutElement(sa, &idx, &item);
+                    SysFreeString(V_BSTR(&item));
+                    if (hr != S_OK) goto fail;
+                }
+
+                V_VT(prop) = VT_ARRAY | VT_VARIANT;
+                V_ARRAY(prop) = sa;
+                return S_OK;
+fail:
+                SafeArrayDestroy(sa);
+                return hr;
+            }
+            else
+            {
+                V_BSTR(prop) = SysAllocString(ldap->attrs[i].values[0]);
+                if (!V_BSTR(prop)) return E_OUTOFMEMORY;
+                V_VT(prop) = VT_BSTR;
+                return S_OK;
+            }
         }
     }
 
