@@ -19,6 +19,16 @@
 #ifndef _ADSLDP_PRIVATE_H
 #define _ADSLDP_PRIVATE_H
 
+#include "wine/heap.h"
+
+static inline WCHAR *strdupW(const WCHAR *src)
+{
+    WCHAR *dst;
+    if (!src) return NULL;
+    if ((dst = heap_alloc((wcslen(src) + 1) * sizeof(WCHAR)))) wcscpy(dst, src);
+    return dst;
+}
+
 DWORD map_ldap_error(DWORD) DECLSPEC_HIDDEN;
 
 #endif

@@ -40,7 +40,6 @@
 
 #include "adsldp_private.h"
 
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(adsldp);
@@ -372,6 +371,12 @@ static HRESULT ADSystemInfo_create(REFIID riid, void **obj)
     return hr;
 }
 
+struct ldap_attribute
+{
+    WCHAR *name;
+    WCHAR **values;
+};
+
 typedef struct
 {
     IADs IADs_iface;
@@ -381,6 +386,8 @@ typedef struct
     BSTR host;
     BSTR object;
     ULONG port;
+    ULONG attrs_count, attrs_count_allocated;
+    struct ldap_attribute *attrs;
 } LDAP_namespace;
 
 static inline LDAP_namespace *impl_from_IADs(IADs *iface)
@@ -422,6 +429,23 @@ static ULONG WINAPI ldapns_AddRef(IADs *iface)
     return InterlockedIncrement(&ldap->ref);
 }
 
+static void free_attributes(LDAP_namespace *ldap)
+{
+    ULONG i;
+
+    if (!ldap->attrs) return;
+
+    for (i = 0; i < ldap->attrs_count; i++)
+    {
+        ldap_memfreeW(ldap->attrs[i].name);
+        ldap_value_freeW(ldap->attrs[i].values);
+    }
+
+    heap_free(ldap->attrs);
+    ldap->attrs = NULL;
+    ldap->attrs_count = 0;
+}
+
 static ULONG WINAPI ldapns_Release(IADs *iface)
 {
     LDAP_namespace *ldap = impl_from_IADs(iface);
@@ -433,6 +457,7 @@ static ULONG WINAPI ldapns_Release(IADs *iface)
         if (ldap->ld) ldap_unbind(ldap->ld);
         SysFreeString(ldap->host);
         SysFreeString(ldap->object);
+        free_attributes(ldap);
         heap_free(ldap);
     }
 
@@ -548,10 +573,118 @@ static HRESULT WINAPI ldapns_PutEx(IADs *iface, LONG code, BSTR name, VARIANT pr
     return E_NOTIMPL;
 }
 
+static HRESULT add_attribute(LDAP_namespace *ldap, WCHAR *name, WCHAR **values)
+{
+    struct ldap_attribute *new_attrs;
+
+    if (!ldap->attrs)
+    {
+        ldap->attrs = heap_alloc(256 * sizeof(ldap->attrs[0]));
+        if (!ldap->attrs) return E_OUTOFMEMORY;
+        ldap->attrs_count_allocated = 256;
+    }
+    else if (ldap->attrs_count_allocated < ldap->attrs_count + 1)
+    {
+        new_attrs = heap_realloc(ldap->attrs, (ldap->attrs_count_allocated * 2) * sizeof(*new_attrs));
+        if (!new_attrs) return E_OUTOFMEMORY;
+
+        ldap->attrs_count_allocated *= 2;
+        ldap->attrs = new_attrs;
+    }
+
+    ldap->attrs[ldap->attrs_count].name = name;
+    ldap->attrs[ldap->attrs_count].values = values;
+    ldap->attrs_count++;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI ldapns_GetInfoEx(IADs *iface, VARIANT prop, LONG reserved)
 {
-    FIXME("%p,%s,%d: stub\n", iface, wine_dbgstr_variant(&prop), reserved);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IADs(iface);
+    HRESULT hr;
+    SAFEARRAY *sa;
+    VARIANT *item;
+    WCHAR **props = NULL, *attr, **values;
+    DWORD i, count, err;
+    LDAPMessage *res = NULL, *entry;
+    BerElement *ber;
+
+    TRACE("%p,%s,%d\n", iface, wine_dbgstr_variant(&prop), reserved);
+
+    free_attributes(ldap);
+
+    if (!ldap->ld) return E_NOTIMPL;
+
+    if (V_VT(&prop) != (VT_ARRAY | VT_VARIANT))
+        return E_ADS_BAD_PARAMETER;
+
+    sa = V_ARRAY(&prop);
+    if (sa->cDims != 1)
+        return E_ADS_BAD_PARAMETER;
+
+    hr = SafeArrayAccessData(sa, (void *)&item);
+    if (hr != S_OK) return hr;
+
+    count = sa->rgsabound[0].cElements;
+    if (count)
+    {
+        props = heap_alloc((count + 1) * sizeof(props[0]));
+        if (!props)
+        {
+            hr = E_OUTOFMEMORY;
+            goto exit;
+        }
+
+        for (i = 0; i < count; i++)
+        {
+            if (V_VT(&item[i]) != VT_BSTR)
+            {
+                hr = E_ADS_BAD_PARAMETER;
+                goto exit;
+            }
+            props[i] = V_BSTR(&item[i]);
+        }
+        props[sa->rgsabound[0].cElements] = NULL;
+    }
+
+    err = ldap_search_sW(ldap->ld, NULL, LDAP_SCOPE_BASE, (WCHAR *)L"(objectClass=*)", props, FALSE, &res);
+    if (err != LDAP_SUCCESS)
+    {
+        TRACE("ldap_search_sW error %#x\n", err);
+        hr = HRESULT_FROM_WIN32(map_ldap_error(err));
+        goto exit;
+    }
+
+    entry = ldap_first_entry(ldap->ld, res);
+    while (entry)
+    {
+        attr = ldap_first_attributeW(ldap->ld, entry, &ber);
+        while (attr)
+        {
+            TRACE("attr: %s\n", debugstr_w(attr));
+
+            values = ldap_get_valuesW(ldap->ld, entry, attr);
+
+            hr = add_attribute(ldap, attr, values);
+            if (hr != S_OK)
+            {
+                ldap_value_freeW(values);
+                ldap_memfreeW(attr);
+                goto exit;
+            }
+
+            attr = ldap_next_attributeW(ldap->ld, entry, ber);
+        }
+
+        entry = ldap_next_entry(ldap->ld, res);
+    }
+
+exit:
+    if (res) ldap_msgfree(res);
+    heap_free(props);
+    SafeArrayUnaccessData(sa);
+    return hr;
 }
 
 static const IADsVtbl IADs_vtbl =
@@ -867,6 +1000,9 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->ld = NULL;
     ldap->host = NULL;
     ldap->object = NULL;
+    ldap->attrs_count = 0;
+    ldap->attrs_count_allocated = 0;
+    ldap->attrs = NULL;
 
     hr = IADs_QueryInterface(&ldap->IADs_iface, riid, obj);
     IADs_Release(&ldap->IADs_iface);
