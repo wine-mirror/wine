@@ -24,32 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
-static const WCHAR toLocaleStringW[] = {'t','o','L','o','c','a','l','e','S','t','r','i','n','g',0};
-static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
-static const WCHAR hasOwnPropertyW[] = {'h','a','s','O','w','n','P','r','o','p','e','r','t','y',0};
-static const WCHAR propertyIsEnumerableW[] =
-    {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
-static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
-
-static const WCHAR createW[] = {'c','r','e','a','t','e',0};
-static const WCHAR getOwnPropertyDescriptorW[] =
-    {'g','e','t','O','w','n','P','r','o','p','e','r','t','y','D','e','s','c','r','i','p','t','o','r',0};
-static const WCHAR getPrototypeOfW[] =
-    {'g','e','t','P','r','o','t','o','t','y','p','e','O','f',0};
-static const WCHAR definePropertyW[] = {'d','e','f','i','n','e','P','r','o','p','e','r','t','y',0};
-
-static const WCHAR definePropertiesW[] = {'d','e','f','i','n','e','P','r','o','p','e','r','t','i','e','s',0};
-
-static const WCHAR default_valueW[] = {'[','o','b','j','e','c','t',' ','O','b','j','e','c','t',']',0};
-
-static const WCHAR configurableW[] = {'c','o','n','f','i','g','u','r','a','b','l','e',0};
-static const WCHAR enumerableW[] = {'e','n','u','m','e','r','a','b','l','e',0};
-static const WCHAR valueW[] = {'v','a','l','u','e',0};
-static const WCHAR writableW[] = {'w','r','i','t','a','b','l','e',0};
-static const WCHAR getW[] = {'g','e','t',0};
-static const WCHAR setW[] = {'s','e','t',0};
-
 static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -110,7 +84,7 @@ static HRESULT Object_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return E_FAIL;
     }
 
-    return jsdisp_call_name(jsthis->u.jsdisp, toStringW, DISPATCH_METHOD, 0, NULL, r);
+    return jsdisp_call_name(jsthis->u.jsdisp, L"toString", DISPATCH_METHOD, 0, NULL, r);
 }
 
 static HRESULT Object_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -230,7 +204,7 @@ static HRESULT Object_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 
     TRACE("\n");
 
-    ret = jsstr_alloc(default_valueW);
+    ret = jsstr_alloc(L"[object Object]");
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -244,12 +218,12 @@ static void Object_destructor(jsdisp_t *dispex)
 }
 
 static const builtin_prop_t Object_props[] = {
-    {hasOwnPropertyW,        Object_hasOwnProperty,        PROPF_METHOD|1},
-    {isPrototypeOfW,         Object_isPrototypeOf,         PROPF_METHOD|1},
-    {propertyIsEnumerableW,  Object_propertyIsEnumerable,  PROPF_METHOD|1},
-    {toLocaleStringW,        Object_toLocaleString,        PROPF_METHOD},
-    {toStringW,              Object_toString,              PROPF_METHOD},
-    {valueOfW,               Object_valueOf,               PROPF_METHOD}
+    {L"hasOwnProperty",        Object_hasOwnProperty,        PROPF_METHOD|1},
+    {L"isPrototypeOf",         Object_isPrototypeOf,         PROPF_METHOD|1},
+    {L"propertyIsEnumerable",  Object_propertyIsEnumerable,  PROPF_METHOD|1},
+    {L"toLocaleString",        Object_toLocaleString,        PROPF_METHOD},
+    {L"toString",              Object_toString,              PROPF_METHOD},
+    {L"valueOf",               Object_valueOf,               PROPF_METHOD}
 };
 
 static const builtin_info_t Object_info = {
@@ -289,7 +263,7 @@ static HRESULT to_property_descriptor(script_ctx_t *ctx, jsdisp_t *attr_obj, pro
     memset(desc, 0, sizeof(*desc));
     desc->value = jsval_undefined();
 
-    hres = jsdisp_get_id(attr_obj, enumerableW, 0, &id);
+    hres = jsdisp_get_id(attr_obj, L"enumerable", 0, &id);
     if(SUCCEEDED(hres)) {
         desc->mask |= PROPF_ENUMERABLE;
         hres = jsdisp_propget(attr_obj, id, &v);
@@ -305,7 +279,7 @@ static HRESULT to_property_descriptor(script_ctx_t *ctx, jsdisp_t *attr_obj, pro
         return hres;
     }
 
-    hres = jsdisp_get_id(attr_obj, configurableW, 0, &id);
+    hres = jsdisp_get_id(attr_obj, L"configurable", 0, &id);
     if(SUCCEEDED(hres)) {
         desc->mask |= PROPF_CONFIGURABLE;
         hres = jsdisp_propget(attr_obj, id, &v);
@@ -321,7 +295,7 @@ static HRESULT to_property_descriptor(script_ctx_t *ctx, jsdisp_t *attr_obj, pro
         return hres;
     }
 
-    hres = jsdisp_get_id(attr_obj, valueW, 0, &id);
+    hres = jsdisp_get_id(attr_obj, L"value", 0, &id);
     if(SUCCEEDED(hres)) {
         hres = jsdisp_propget(attr_obj, id, &desc->value);
         if(FAILED(hres))
@@ -331,7 +305,7 @@ static HRESULT to_property_descriptor(script_ctx_t *ctx, jsdisp_t *attr_obj, pro
         return hres;
     }
 
-    hres = jsdisp_get_id(attr_obj, writableW, 0, &id);
+    hres = jsdisp_get_id(attr_obj, L"writable", 0, &id);
     if(SUCCEEDED(hres)) {
         desc->mask |= PROPF_WRITABLE;
         hres = jsdisp_propget(attr_obj, id, &v);
@@ -349,7 +323,7 @@ static HRESULT to_property_descriptor(script_ctx_t *ctx, jsdisp_t *attr_obj, pro
         return hres;
     }
 
-    hres = jsdisp_get_id(attr_obj, getW, 0, &id);
+    hres = jsdisp_get_id(attr_obj, L"get", 0, &id);
     if(SUCCEEDED(hres)) {
         desc->explicit_getter = TRUE;
         hres = jsdisp_propget(attr_obj, id, &v);
@@ -373,7 +347,7 @@ static HRESULT to_property_descriptor(script_ctx_t *ctx, jsdisp_t *attr_obj, pro
         return hres;
     }
 
-    hres = jsdisp_get_id(attr_obj, setW, 0, &id);
+    hres = jsdisp_get_id(attr_obj, L"set", 0, &id);
     if(SUCCEEDED(hres)) {
         desc->explicit_setter = TRUE;
         hres = jsdisp_propget(attr_obj, id, &v);
@@ -561,22 +535,22 @@ static HRESULT Object_getOwnPropertyDescriptor(script_ctx_t *ctx, vdisp_t *jsthi
         return hres;
 
     if(prop_desc.explicit_getter || prop_desc.explicit_setter) {
-        hres = jsdisp_define_data_property(desc_obj, getW, PROPF_ALL,
+        hres = jsdisp_define_data_property(desc_obj, L"get", PROPF_ALL,
                 prop_desc.getter ? jsval_obj(prop_desc.getter) : jsval_undefined());
         if(SUCCEEDED(hres))
-            hres = jsdisp_define_data_property(desc_obj, setW, PROPF_ALL,
+            hres = jsdisp_define_data_property(desc_obj, L"set", PROPF_ALL,
                     prop_desc.setter ? jsval_obj(prop_desc.setter) : jsval_undefined());
     }else {
-        hres = jsdisp_propput_name(desc_obj, valueW, prop_desc.value);
+        hres = jsdisp_propput_name(desc_obj, L"value", prop_desc.value);
         if(SUCCEEDED(hres))
-            hres = jsdisp_define_data_property(desc_obj, writableW, PROPF_ALL,
+            hres = jsdisp_define_data_property(desc_obj, L"writable", PROPF_ALL,
                     jsval_bool(!!(prop_desc.flags & PROPF_WRITABLE)));
     }
     if(SUCCEEDED(hres))
-        hres = jsdisp_define_data_property(desc_obj, enumerableW, PROPF_ALL,
+        hres = jsdisp_define_data_property(desc_obj, L"enumerable", PROPF_ALL,
                 jsval_bool(!!(prop_desc.flags & PROPF_ENUMERABLE)));
     if(SUCCEEDED(hres))
-        hres = jsdisp_define_data_property(desc_obj, configurableW, PROPF_ALL,
+        hres = jsdisp_define_data_property(desc_obj, L"configurable", PROPF_ALL,
                 jsval_bool(!!(prop_desc.flags & PROPF_CONFIGURABLE)));
 
     release_property_descriptor(&prop_desc);
@@ -652,11 +626,11 @@ static HRESULT Object_getPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
 }
 
 static const builtin_prop_t ObjectConstr_props[] = {
-    {createW,                   Object_create,                      PROPF_ES5|PROPF_METHOD|2},
-    {definePropertiesW,         Object_defineProperties,            PROPF_ES5|PROPF_METHOD|2},
-    {definePropertyW,           Object_defineProperty,              PROPF_ES5|PROPF_METHOD|2},
-    {getOwnPropertyDescriptorW, Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2},
-    {getPrototypeOfW,           Object_getPrototypeOf,              PROPF_ES5|PROPF_METHOD|1}
+    {L"create",                   Object_create,                      PROPF_ES5|PROPF_METHOD|2},
+    {L"defineProperties",         Object_defineProperties,            PROPF_ES5|PROPF_METHOD|2},
+    {L"defineProperty",           Object_defineProperty,              PROPF_ES5|PROPF_METHOD|2},
+    {L"getOwnPropertyDescriptor", Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2},
+    {L"getPrototypeOf",           Object_getPrototypeOf,              PROPF_ES5|PROPF_METHOD|1}
 };
 
 static const builtin_info_t ObjectConstr_info = {
@@ -717,9 +691,7 @@ static HRESULT ObjectConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 
 HRESULT create_object_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)
 {
-    static const WCHAR ObjectW[] = {'O','b','j','e','c','t',0};
-
-    return create_builtin_constructor(ctx, ObjectConstr_value, ObjectW, &ObjectConstr_info, PROPF_CONSTR,
+    return create_builtin_constructor(ctx, ObjectConstr_value, L"Object", &ObjectConstr_info, PROPF_CONSTR,
             object_prototype, ret);
 }
 
