@@ -101,10 +101,44 @@ HRESULT WINAPI ADsEnumerateNext(IEnumVARIANT* pEnumVariant, ULONG cElements, VAR
 /*****************************************************
  * ADsBuildVarArrayStr     [ACTIVEDS.7]
  */
-HRESULT WINAPI ADsBuildVarArrayStr(LPWSTR *lppPathNames, DWORD dwPathNames, VARIANT* pvar)
+HRESULT WINAPI ADsBuildVarArrayStr(LPWSTR *str, DWORD count, VARIANT *var)
 {
-    FIXME("(%p, %d, %p)!stub\n",*lppPathNames, dwPathNames, pvar);
-    return E_NOTIMPL;
+    HRESULT hr;
+    SAFEARRAY *sa;
+    LONG idx, end = count;
+
+    TRACE("(%p, %u, %p)\n", str, count, var);
+
+    if (!var) return E_ADS_BAD_PARAMETER;
+
+    sa = SafeArrayCreateVector(VT_VARIANT, 0, count);
+    if (!sa) return E_OUTOFMEMORY;
+
+    VariantInit(var);
+    for (idx = 0; idx < end; idx++)
+    {
+        VARIANT item;
+
+        V_VT(&item) = VT_BSTR;
+        V_BSTR(&item) = SysAllocString(str[idx]);
+        if (!V_BSTR(&item))
+        {
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        hr = SafeArrayPutElement(sa, &idx, &item);
+        SysFreeString(V_BSTR(&item));
+        if (hr != S_OK) goto fail;
+    }
+
+    V_VT(var) = VT_ARRAY | VT_VARIANT;
+    V_ARRAY(var) = sa;
+    return S_OK;
+
+fail:
+    SafeArrayDestroy(sa);
+    return hr;
 }
 
 /*****************************************************

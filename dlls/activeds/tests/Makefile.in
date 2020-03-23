@@ -1,0 +1,5 @@
+TESTDLL   = activeds.dll
+IMPORTS   = ole32 oleaut32 activeds
+
+C_SRCS = \
+	activeds.c

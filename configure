@@ -20106,6 +20106,7 @@ wine_fn_config_makefile dlls/acledit enable_acledit
 wine_fn_config_makefile dlls/aclui enable_aclui
 wine_fn_config_makefile dlls/activeds.tlb enable_activeds_tlb
 wine_fn_config_makefile dlls/activeds enable_activeds
+wine_fn_config_makefile dlls/activeds/tests enable_tests
 wine_fn_config_makefile dlls/actxprxy enable_actxprxy
 wine_fn_config_makefile dlls/adsiid enable_adsiid
 wine_fn_config_makefile dlls/adsldp enable_adsldp
