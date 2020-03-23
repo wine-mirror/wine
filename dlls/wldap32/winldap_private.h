@@ -101,6 +101,8 @@ typedef struct berelement
 #define WLDAP32_LDAP_OPT_SECURITY_CONTEXT       0x99
 #define WLDAP32_LDAP_OPT_ROOTDSE_CACHE          0x9a
 
+#define WLDAP32_LDAP_AUTH_NEGOTIATE             0x486
+
 typedef struct ldap
 {
     struct

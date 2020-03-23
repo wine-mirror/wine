@@ -93,6 +93,38 @@ static inline LPWSTR strUtoW( char *str )
     return ret;
 }
 
+static inline LPWSTR strnAtoW( LPCSTR str, DWORD inlen, DWORD *outlen )
+{
+    LPWSTR ret = NULL;
+    *outlen = 0;
+    if (str)
+    {
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, inlen, NULL, 0 );
+        if ((ret = heap_alloc( len * sizeof(WCHAR) )))
+        {
+            MultiByteToWideChar( CP_ACP, 0, str, inlen, ret, len );
+            *outlen = len;
+        }
+    }
+    return ret;
+}
+
+static inline char *strnWtoU( LPCWSTR str, DWORD inlen, DWORD *outlen )
+{
+    LPSTR ret = NULL;
+    *outlen = 0;
+    if (str)
+    {
+        DWORD len = WideCharToMultiByte( CP_UTF8, 0, str, inlen, NULL, 0, NULL, NULL );
+        if ((ret = heap_alloc( len )))
+        {
+            WideCharToMultiByte( CP_UTF8, 0, str, inlen, ret, len, NULL, NULL );
+            *outlen = len;
+        }
+    }
+    return ret;
+}
+
 static inline void strfreeA( LPSTR str )
 {
     heap_free( str );

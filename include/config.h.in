@@ -779,6 +779,9 @@
 /* Define to 1 if you have the `roundf' function. */
 #undef HAVE_ROUNDF
 
+/* Define to 1 if you have the <sasl/sasl.h> header file. */
+#undef HAVE_SASL_SASL_H
+
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 
