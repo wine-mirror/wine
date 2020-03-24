@@ -203,6 +203,21 @@ static WCHAR*   decodeW(const char* str)
     return ptr;
 }
 
+static void wait_and_close_child_process(PROCESS_INFORMATION *pi)
+{
+    wait_child_process(pi->hProcess);
+    CloseHandle(pi->hThread);
+    CloseHandle(pi->hProcess);
+}
+
+static void reload_child_info(const char* resfile)
+{
+    /* This forces the profile functions to reload the resource file
+     * after the child process has modified it.
+     */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+}
+
 /******************************************************************
  *		init
  *
@@ -615,13 +630,9 @@ static void test_Startup(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     GetStartupInfoA(&si);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", si.lpDesktop);
@@ -655,13 +666,9 @@ static void test_Startup(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
@@ -695,13 +702,9 @@ static void test_Startup(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", si.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
@@ -735,13 +738,9 @@ static void test_Startup(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
@@ -775,13 +774,9 @@ static void test_Startup(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
     result = getChildString( "StartupInfoA", "lpTitle" );
@@ -817,13 +812,9 @@ static void test_Startup(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
@@ -857,13 +848,9 @@ static void test_Startup(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
@@ -920,13 +907,9 @@ static void test_CommandLine(void)
     ok(startup.lpTitle == NULL, "lpTitle is not NULL\n");
     ok(startup.dwFlags == STARTF_USESHOWWINDOW, "unexpected dwFlags %04x\n", startup.dwFlags);
     ok(startup.wShowWindow == SW_SHOWNORMAL, "unexpected wShowWindow %d\n", startup.wShowWindow);
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildInt("Arguments", "argcA", 5);
     okChildString("Arguments", "argvA4", "C:\\Program Files\\my nice app.exe");
     okChildString("Arguments", "argvA5", NULL);
@@ -938,13 +921,9 @@ static void test_CommandLine(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\" \"a\\\"b\\\\\" c\\\" d", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildInt("Arguments", "argcA", 7);
     okChildString("Arguments", "argvA4", "a\"b\\");
     okChildString("Arguments", "argvA5", "c\"");
@@ -963,12 +942,9 @@ static void test_CommandLine(void)
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
+
+    reload_child_info(resfile);
     sprintf(buffer, "./%s", exename);
     okChildInt("Arguments", "argcA", 5);
     okChildString("Arguments", "argvA0", buffer);
@@ -983,12 +959,9 @@ static void test_CommandLine(void)
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
+
+    reload_child_info(resfile);
     sprintf(buffer, ".\\%s", exename);
     okChildString("Arguments", "argvA0", buffer);
     release_memory();
@@ -1005,12 +978,9 @@ static void test_CommandLine(void)
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
+
+    reload_child_info(resfile);
     if (p) sprintf(buffer, "..%s/%s", p, exename);
     else sprintf(buffer, "./%s", exename);
     okChildString("Arguments", "argvA0", buffer);
@@ -1030,12 +1000,9 @@ static void test_CommandLine(void)
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(buffer, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
+
+    reload_child_info(resfile);
     okChildString("Arguments", "argvA0", "dummy");
     okChildString("Arguments", "CommandLineA", buffer2);
     okChildStringWA("Arguments", "CommandLineW", buffer2);
@@ -1128,13 +1095,9 @@ static void test_Directory(void)
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     GetWindowsDirectoryA( windir, sizeof(windir) );
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, windir, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildIString("Misc", "CurrDirA", windir);
     release_memory();
     DeleteFileA(resfile);
@@ -1174,11 +1137,9 @@ static void test_Toolhelp(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed\n");
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    CloseHandle(info.hProcess);
-    CloseHandle(info.hThread);
+    wait_and_close_child_process(&info);
 
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    reload_child_info(resfile);
     okChildInt("Toolhelp", "cntUsage", 0);
     okChildInt("Toolhelp", "th32DefaultHeapID", 0);
     okChildInt("Toolhelp", "th32ModuleID", 0);
@@ -1192,7 +1153,7 @@ static void test_Toolhelp(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process nested \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed\n");
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    wait_child_process(info.hProcess);
 
     process = OpenProcess(PROCESS_ALL_ACCESS_NT4, FALSE, info.dwProcessId);
     ok(process != NULL, "OpenProcess failed %u\n", GetLastError());
@@ -1214,7 +1175,7 @@ static void test_Toolhelp(void)
     ok(i < 20 || broken(i == 20), "process object not released\n");
 
     /* Look for the nested process by pid */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    reload_child_info(resfile);
     nested_pid = GetPrivateProfileIntA("Nested", "Pid", 0, resfile);
     DeleteFileA(resfile);
 
@@ -1253,11 +1214,10 @@ static void test_Toolhelp(void)
     ok(ret == 1, "expected 1, got %u\n", ret);
     CloseHandle(thread);
 
-    ret = WaitForSingleObject(process, 30000);
-    ok(ret == WAIT_OBJECT_0, "Child process termination got %u le=%u\n", ret, GetLastError());
+    wait_child_process(process);
     CloseHandle(process);
 
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    reload_child_info(resfile);
     okChildInt("Toolhelp", "cntUsage", 0);
     okChildInt("Toolhelp", "th32DefaultHeapID", 0);
     okChildInt("Toolhelp", "th32ModuleID", 0);
@@ -1353,11 +1313,9 @@ static void test_Environment(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     env = GetEnvironmentStringsA();
     cmpEnvironment(env);
     release_memory();
@@ -1410,11 +1368,9 @@ static void test_Environment(void)
     }
     *ptr = '\0';
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, child_env, NULL, &startup, &info), "CreateProcess\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     cmpEnvironment(child_env);
 
     HeapFree(GetProcessHeap(), 0, child_env);
@@ -1446,13 +1402,11 @@ static  void    test_SuspendFlag(void)
     ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running\n");
     ok(ResumeThread(info.hThread) == 1, "Resuming thread\n");
 
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    wait_and_close_child_process(&info);
 
     GetStartupInfoA(&us);
 
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
     result = getChildString( "StartupInfoA", "lpTitle" );
@@ -1508,13 +1462,11 @@ static  void    test_DebuggingFlag(void)
     } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
 
     ok(dbg, "I have seen a debug event\n");
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    wait_and_close_child_process(&info);
 
     GetStartupInfoA(&us);
 
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
     result = getChildString( "StartupInfoA", "lpTitle" );
@@ -1588,12 +1540,9 @@ static void test_Console(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process dump \"%s\" console", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info), "CreateProcess\n");
+    wait_and_close_child_process(&info);
 
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-
+    reload_child_info(resfile);
     /* now get the modification the child has made, and resets parents expected values */
     ok(GetConsoleScreenBufferInfo(startup.hStdOutput, &sbiC), "Getting sb info\n");
     ok(GetConsoleMode(startup.hStdInput, &modeInC), "Getting console in mode\n");
@@ -1715,11 +1664,9 @@ static void test_Console(void)
     /* the child may also send the final "n tests executed" string, so read it to avoid a deadlock */
     ReadFile(hParentIn, buffer, sizeof(buffer), &w, NULL);
 
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     okChildString("StdHandle", "msg", msg);
 
     release_memory();
@@ -1743,11 +1690,10 @@ static  void    test_ExitCode(void)
     sprintf(buffer, "\"%s\" process dump \"%s\" exit_code", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info), "CreateProcess\n");
 
-    /* wait for child to terminate */
+    /* not wait_child_process() because of the exit code */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    /* child process has changed result file, so let profile functions know about it */
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
 
+    reload_child_info(resfile);
     ok(GetExitCodeProcess(info.hProcess, &code), "Getting exit code\n");
     okChildInt("ExitCode", "value", code);
 
@@ -2458,7 +2404,6 @@ static void test_IsProcessInJob(void)
     HANDLE job, job2;
     PROCESS_INFORMATION pi;
     BOOL ret, out;
-    DWORD dwret;
 
     if (!pIsProcessInJob)
     {
@@ -2503,9 +2448,7 @@ static void test_IsProcessInJob(void)
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
-
-    dwret = WaitForSingleObject(pi.hProcess, 1000);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+    wait_child_process(pi.hProcess);
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
@@ -2536,6 +2479,7 @@ static void test_TerminateJobObject(void)
     ret = pTerminateJobObject(job, 123);
     ok(ret, "TerminateJobObject error %u\n", GetLastError());
 
+    /* not wait_child_process() because of the exit code */
     dwret = WaitForSingleObject(pi.hProcess, 1000);
     ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
     if (dwret == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 0);
@@ -2550,9 +2494,7 @@ static void test_TerminateJobObject(void)
 
     /* Test adding an already terminated process to a job object */
     create_process("exit", &pi);
-
-    dwret = WaitForSingleObject(pi.hProcess, 1000);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+    wait_child_process(pi.hProcess);
 
     SetLastError(0xdeadbeef);
     ret = pAssignProcessToJobObject(job, pi.hProcess);
@@ -2590,9 +2532,7 @@ static void test_QueryInformationJobObject(void)
     ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
 
     ReleaseSemaphore(sem, 1, NULL);
-    wait_child_process(pi[0].hProcess);
-    CloseHandle(pi[0].hProcess);
-    CloseHandle(pi[0].hThread);
+    wait_and_close_child_process(&pi[0]);
 
     create_process("wait", &pi[0]);
     ret = pAssignProcessToJobObject(job, pi[0].hProcess);
@@ -2696,7 +2636,6 @@ static void test_CompletionPort(void)
     JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info;
     PROCESS_INFORMATION pi;
     HANDLE job, port;
-    DWORD dwret;
     BOOL ret;
 
     job = pCreateJobObjectW(NULL, NULL);
@@ -2718,8 +2657,7 @@ static void test_CompletionPort(void)
     test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
 
     TerminateProcess(pi.hProcess, 0);
-    dwret = WaitForSingleObject(pi.hProcess, 1000);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+    wait_child_process(pi.hProcess);
 
     test_completion(port, JOB_OBJECT_MSG_EXIT_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
     test_completion(port, JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO, (DWORD_PTR)job, 0, 100);
@@ -2757,6 +2695,7 @@ static void test_KillOnJobClose(void)
 
     CloseHandle(job);
 
+    /* not wait_child_process() for the kill */
     dwret = WaitForSingleObject(pi.hProcess, 1000);
     ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
     if (dwret == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 0);
@@ -2847,9 +2786,7 @@ static void test_WaitForJobObject(void)
     dwret = WaitForSingleObject(job, 100);
     ok(dwret == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", dwret);
 
-    wait_child_process(pi.hProcess);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    wait_and_close_child_process(&pi);
     CloseHandle(job);
     CloseHandle(sem);
 }
@@ -2871,7 +2808,6 @@ static HANDLE test_AddSelfToJob(void)
 static void test_jobInheritance(HANDLE job)
 {
     PROCESS_INFORMATION pi;
-    DWORD dwret;
     BOOL ret, out;
 
     if (!pIsProcessInJob)
@@ -2887,11 +2823,7 @@ static void test_jobInheritance(HANDLE job)
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
-    dwret = WaitForSingleObject(pi.hProcess, 1000);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
-
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    wait_and_close_child_process(&pi);
 }
 
 static void test_BreakawayOk(HANDLE job)
@@ -2901,7 +2833,6 @@ static void test_BreakawayOk(HANDLE job)
     STARTUPINFOA si = {0};
     char buffer[MAX_PATH + 23];
     BOOL ret, out;
-    DWORD dwret;
 
     if (!pIsProcessInJob)
     {
@@ -2917,12 +2848,7 @@ static void test_BreakawayOk(HANDLE job)
     if (ret)
     {
         TerminateProcess(pi.hProcess, 0);
-
-        dwret = WaitForSingleObject(pi.hProcess, 1000);
-        ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
-
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
+        wait_and_close_child_process(&pi);
     }
 
     limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK;
@@ -2936,11 +2862,7 @@ static void test_BreakawayOk(HANDLE job)
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
-    dwret = WaitForSingleObject(pi.hProcess, 1000);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
-
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    wait_and_close_child_process(&pi);
 
     limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
     ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
@@ -2953,11 +2875,7 @@ static void test_BreakawayOk(HANDLE job)
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
-    dwret = WaitForSingleObject(pi.hProcess, 1000);
-    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
-
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    wait_and_close_child_process(&pi);
 
     /* unset breakaway ok */
     limit_info.BasicLimitInformation.LimitFlags = 0;
@@ -2980,8 +2898,9 @@ static void test_StartupNoConsole(void)
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
                       &info), "CreateProcess\n");
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    wait_and_close_child_process(&info);
+
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "hStdInput", (UINT)INVALID_HANDLE_VALUE);
     okChildInt("StartupInfoA", "hStdOutput", (UINT)INVALID_HANDLE_VALUE);
     okChildInt("StartupInfoA", "hStdError", (UINT)INVALID_HANDLE_VALUE);
@@ -3012,9 +2931,9 @@ static void test_DetachConsoleHandles(void)
     sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
                       &info), "CreateProcess\n");
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    wait_and_close_child_process(&info);
 
+    reload_child_info(resfile);
     result = GetPrivateProfileIntA("StartupInfoA", "hStdInput", 0, resfile);
     ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
     result = GetPrivateProfileIntA("StartupInfoA", "hStdOutput", 0, resfile);
@@ -3203,10 +3122,11 @@ static void test_SuspendProcessNewThread(void)
     if (thread_handle)
         CloseHandle(thread_handle);
 
+    /* Note that the child's main thread is still suspended so the exit code
+     * is set by the TerminateProcess() call.
+     */
     TerminateProcess(pi.hProcess, 0);
-    WaitForSingleObject(pi.hProcess, 10000);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    wait_and_close_child_process(&pi);
 }
 
 static void test_SuspendProcessState(void)
@@ -3400,8 +3320,12 @@ static void test_SuspendProcessState(void)
 
     ret = WriteFile(server_pipe_handle, &pipe_magic, sizeof(pipe_magic), &numb, NULL);
     ok(ret, "Failed to write the magic back to the pipe (%d)\n", GetLastError());
-
     CloseHandle(server_pipe_handle);
+
+    /* Avoid wait_child_process() because the exit code results from a race
+     * between the TerminateProcess() call and the child's ExitProcess() call
+     * which uses a random value in the 64 bit case.
+     */
     TerminateProcess(pi.hProcess, 0);
     WaitForSingleObject(pi.hProcess, 10000);
     CloseHandle(pi.hProcess);
@@ -3452,8 +3376,9 @@ static void test_DetachStdHandles(void)
     SetStdHandle(STD_ERROR_HANDLE, hstderr);
 
     ok(res, "CreateProcess failed\n");
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    wait_and_close_child_process(&info);
+
+    reload_child_info(resfile);
     okChildInt("StartupInfoA", "hStdInput", (UINT)INVALID_HANDLE_VALUE);
     okChildInt("StartupInfoA", "hStdOutput", (UINT)INVALID_HANDLE_VALUE);
     okChildInt("StartupInfoA", "hStdError", (UINT)INVALID_HANDLE_VALUE);
@@ -3930,9 +3855,7 @@ void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT,
                 NULL, NULL, (STARTUPINFOA *)&si, &info);
         ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-        ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-        CloseHandle(info.hThread);
-        CloseHandle(info.hProcess);
+        wait_and_close_child_process(&info);
 #endif
         si.lpAttributeList = heap_alloc(size);
         ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
@@ -3944,9 +3867,7 @@ void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
         ret = CreateProcessA(NULL, buffer, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT,
                 NULL, NULL, (STARTUPINFOA *)&si, &info);
         ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-        ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-        CloseHandle(info.hThread);
-        CloseHandle(info.hProcess);
+        wait_and_close_child_process(&info);
         CloseHandle(handle);
         pDeleteProcThreadAttributeList(si.lpAttributeList);
         heap_free(si.lpAttributeList);
@@ -3992,11 +3913,7 @@ void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
         ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_HANDLE),
                 "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
         if (ret)
-        {
-            ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-            CloseHandle(info.hThread);
-            CloseHandle(info.hProcess);
-        }
+            wait_and_close_child_process(&info);
         pDeleteProcThreadAttributeList(si.lpAttributeList);
         heap_free(si.lpAttributeList);
 
@@ -4027,10 +3944,7 @@ void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
         ret = WriteFile(write_pipe, &parent_data, sizeof(parent_data), &size, NULL);
     }
 
-    /* wait for child to terminate */
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    CloseHandle(info.hThread);
-    CloseHandle(info.hProcess);
+    wait_and_close_child_process(&info);
 
     if (!level)
     {
