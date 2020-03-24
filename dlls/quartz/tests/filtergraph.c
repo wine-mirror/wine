@@ -4423,6 +4423,50 @@ static void test_window_threading(void)
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+/* Hyperdevotion Noire needs to be able to Render() from UYVY. */
+static void test_autoplug_uyvy(void)
+{
+    static const VIDEOINFOHEADER source_format =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 600,
+        .bmiHeader.biHeight = 400,
+        .bmiHeader.biCompression = mmioFOURCC('U','Y','V','Y'),
+        .bmiHeader.biBitCount = 16,
+    };
+    AM_MEDIA_TYPE source_type =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_UYVY,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(source_format),
+        .pbFormat = (BYTE *)&source_format,
+    };
+
+    IFilterGraph2 *graph = create_graph();
+    struct testpin source_pin;
+    struct testfilter source;
+    HRESULT hr;
+    ULONG ref;
+
+    testsource_init(&source_pin, NULL, 0);
+    testfilter_init(&source, &source_pin, 1);
+    source_pin.request_mt = &source_type;
+
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, L"source");
+
+    /* Windows 2008 doesn't seem to have an UYVY decoder, and the testbot chalks
+     * failure to decode up to missing audio hardware, even though we're not
+     * trying to render audio. */
+    hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
+    todo_wine ok(hr == S_OK || hr == VFW_E_NO_AUDIO_HARDWARE, "Got hr %#x.\n", hr);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
+    ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -4446,6 +4490,7 @@ START_TEST(filtergraph)
     test_default_sync_source();
     test_add_source_filter();
     test_window_threading();
+    test_autoplug_uyvy();
 
     CoUninitialize();
     test_render_with_multithread();
