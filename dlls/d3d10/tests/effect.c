@@ -5027,6 +5027,338 @@ static void test_effect_vector_variable(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+/*
+ * test_effect_matrix_variable
+ */
+#if 0
+cbuffer cb
+{
+    float4x4 m_f0;
+    float4x4 m_f_a[2];
+
+    row_major int2x3 m_i0;
+
+    bool3x2 m_b0;
+    bool3x2 m_b_a[2];
+};
+#endif
+
+static DWORD fx_test_matrix_variable[] =
+{
+    0x43425844, 0xc95a5c42, 0xa138d3cb, 0x8a4ef493,
+    0x3515b7ee, 0x00000001, 0x000001e2, 0x00000001,
+    0x00000024, 0x30315846, 0x000001b6, 0xfeff1001,
+    0x00000001, 0x00000005, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x000000c6,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x66006263,
+    0x74616f6c, 0x00347834, 0x00000007, 0x00000001,
+    0x00000000, 0x00000040, 0x00000040, 0x00000040,
+    0x0000640b, 0x30665f6d, 0x00000700, 0x00000100,
+    0x00000200, 0x00008000, 0x00004000, 0x00008000,
+    0x00640b00, 0x665f6d00, 0x6900615f, 0x7832746e,
+    0x00530033, 0x00010000, 0x00000000, 0x001c0000,
+    0x00200000, 0x00180000, 0x1a130000, 0x5f6d0000,
+    0x62003069, 0x336c6f6f, 0x7b003278, 0x01000000,
+    0x00000000, 0x1c000000, 0x20000000, 0x18000000,
+    0x23000000, 0x6d000053, 0x0030625f, 0x0000007b,
+    0x00000001, 0x00000002, 0x0000003c, 0x00000020,
+    0x00000030, 0x00005323, 0x5f625f6d, 0x00040061,
+    0x01400000, 0x00000000, 0x00050000, 0xffff0000,
+    0x0000ffff, 0x002c0000, 0x00100000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x004d0000, 0x00310000, 0x00000000, 0x00400000,
+    0x00000000, 0x00000000, 0x00000000, 0x00760000,
+    0x005a0000, 0x00000000, 0x00c00000, 0x00000000,
+    0x00000000, 0x00000000, 0x009f0000, 0x00830000,
+    0x00000000, 0x00e00000, 0x00000000, 0x00000000,
+    0x00000000, 0x00c00000, 0x00a40000, 0x00000000,
+    0x01000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000,
+};
+
+struct d3d10_matrix
+{
+    float m[4][4];
+};
+
+static void set_test_matrix(struct d3d10_matrix *m, D3D10_SHADER_VARIABLE_TYPE type,
+        unsigned int row_count, unsigned int col_count, unsigned int elements)
+{
+    unsigned int row, col, elem;
+    float tmp_f;
+    int tmp_i;
+    BOOL tmp_b;
+
+    memset(m, 0, elements * sizeof(*m));
+    switch (type)
+    {
+        case D3D10_SVT_FLOAT:
+            tmp_f = 1.0f;
+            for (elem = 0; elem < elements; ++elem)
+            {
+                for (row = 0; row < row_count; ++row)
+                {
+                    for (col = 0; col < col_count; ++col)
+                    {
+                        m[elem].m[row][col] = tmp_f;
+                        ++tmp_f;
+                    }
+                }
+            }
+            break;
+
+        case D3D10_SVT_INT:
+            tmp_i = 1;
+            for (elem = 0; elem < elements; ++elem)
+            {
+                for (row = 0; row < row_count; ++row)
+                {
+                    for (col = 0; col < col_count; ++col)
+                    {
+                        m[elem].m[row][col] = *(float *)&tmp_i;
+                        ++tmp_i;
+                    }
+                }
+            }
+            break;
+
+        case D3D10_SVT_BOOL:
+            tmp_b = FALSE;
+            for (elem = 0; elem < elements; ++elem)
+            {
+                tmp_b = !tmp_b;
+                for (row = 0; row < row_count; ++row)
+                {
+                    for (col = 0; col < col_count; ++col)
+                    {
+                        m[elem].m[row][col] = *(float *)&tmp_b;
+                        tmp_b = !tmp_b;
+                    }
+                }
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void transpose_matrix(struct d3d10_matrix *src, struct d3d10_matrix *dst,
+        unsigned int row_count, unsigned int col_count)
+{
+    unsigned int row, col;
+
+    for (row = 0; row < col_count; ++row)
+    {
+        for (col = 0; col < row_count; ++col)
+            dst->m[row][col] = src->m[col][row];
+    }
+}
+
+static void compare_matrix(const char *name, unsigned int line, struct d3d10_matrix *a,
+        struct d3d10_matrix *b, unsigned int row_count, unsigned int col_count, BOOL transpose)
+{
+    unsigned int row, col;
+    float tmp;
+
+    for (row = 0; row < row_count; ++row)
+    {
+        for (col = 0; col < col_count; ++col)
+        {
+            tmp = !transpose ? b->m[row][col] : b->m[col][row];
+            ok(a->m[row][col] == tmp, "Variable %s, line %d, got unexpected value 0x%08x.\n", name, line,
+                    *(unsigned int *)&tmp);
+        }
+    }
+}
+
+static void test_matrix_methods(ID3D10EffectMatrixVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name, unsigned int row_count, unsigned int col_count)
+{
+    struct d3d10_matrix m_set, m_ret, m_expected;
+    HRESULT hr;
+
+    set_test_matrix(&m_set, type, row_count, col_count, 1);
+
+    hr = var->lpVtbl->SetMatrix(var, &m_set.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(&m_ret.m[0][0], 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrix(var, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_set, &m_ret, row_count, col_count, FALSE);
+
+    memset(&m_ret.m[0][0], 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrixTranspose(var, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_set, &m_ret, row_count, col_count, TRUE);
+
+    hr = var->lpVtbl->SetMatrixTranspose(var, &m_set.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(&m_ret.m[0][0], 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrix(var, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_ret, &m_set, row_count, col_count, TRUE);
+
+    memset(&m_ret.m[0][0], 0, sizeof(m_ret));
+    memset(&m_expected.m[0][0], 0, sizeof(m_expected));
+    hr = var->lpVtbl->GetMatrixTranspose(var, &m_ret.m[0][0]);
+    transpose_matrix(&m_set, &m_expected, row_count, col_count);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_expected, &m_ret, row_count, col_count, TRUE);
+}
+
+static void test_matrix_array_methods(ID3D10EffectMatrixVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name, unsigned int row_count, unsigned int col_count, unsigned int elements)
+{
+    struct d3d10_matrix m_set[2], m_ret[2], m_expected;
+    unsigned int i;
+    HRESULT hr;
+
+    set_test_matrix(&m_set[0], type, row_count, col_count, elements);
+
+    hr = var->lpVtbl->SetMatrixArray(var, &m_set[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrixArray(var, &m_ret[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < elements; ++i)
+        compare_matrix(name, __LINE__, &m_set[i], &m_ret[i], row_count, col_count, FALSE);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrixTransposeArray(var, &m_ret[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < elements; ++i)
+        compare_matrix(name, __LINE__, &m_set[i], &m_ret[i], row_count, col_count, TRUE);
+
+    hr = var->lpVtbl->SetMatrixTransposeArray(var, &m_set[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrixArray(var, &m_ret[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < elements; ++i)
+        compare_matrix(name, __LINE__, &m_ret[i], &m_set[i], row_count, col_count, TRUE);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    memset(&m_expected, 0, sizeof(m_expected));
+    hr = var->lpVtbl->GetMatrixTransposeArray(var, &m_ret[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < elements; ++i)
+    {
+        memset(&m_expected, 0, sizeof(m_expected));
+        transpose_matrix(&m_set[i], &m_expected, row_count, col_count);
+        compare_matrix(name, __LINE__, &m_expected, &m_ret[i], row_count, col_count, TRUE);
+    }
+
+    /* Offset tests. */
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->SetMatrixArray(var, &m_ret[0].m[0][0], 0, elements);
+
+    hr = var->lpVtbl->SetMatrixArray(var, &m_set[0].m[0][0], 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetMatrixArray(var, &m_ret[0].m[0][0], 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_ret[0], &m_set[0], row_count, col_count, FALSE);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->SetMatrixArray(var, &m_ret[0].m[0][0], 0, elements);
+
+    hr = var->lpVtbl->SetMatrixTransposeArray(var, &m_set[0].m[0][0], 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(&m_expected, 0, sizeof(m_expected));
+    hr = var->lpVtbl->GetMatrixTransposeArray(var, &m_ret[0].m[0][0], 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    transpose_matrix(&m_set[0], &m_expected, row_count, col_count);
+    compare_matrix(name, __LINE__, &m_expected, &m_ret[0], row_count, col_count, TRUE);
+
+    if (0)
+    {
+        /* Like vector array functions, matrix array functions will allow for
+         * writing out of bounds into adjacent memory. */
+        hr = var->lpVtbl->SetMatrixArray(var, &m_set[0].m[0][0], elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        memset(m_ret, 0, sizeof(m_ret));
+        hr = var->lpVtbl->GetMatrixArray(var, &m_ret[0].m[0][0], elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+        compare_matrix(name, __LINE__, &m_expected, &m_ret[0], row_count, col_count, TRUE);
+
+        hr = var->lpVtbl->SetMatrixTransposeArray(var, &m_set[0].m[0][0], elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        memset(&m_expected, 0, sizeof(m_expected));
+        hr = var->lpVtbl->GetMatrixTransposeArray(var, &m_ret[0].m[0][0], elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+        transpose_matrix(&m_set[0], &m_expected, row_count, col_count);
+        compare_matrix(name, __LINE__, &m_expected, &m_ret[0], row_count, col_count, TRUE);
+    }
+}
+
+static void test_effect_matrix_variable(void)
+{
+    static const struct
+    {
+        const char *name;
+        D3D_SHADER_VARIABLE_TYPE type;
+        unsigned int rows;
+        unsigned int columns;
+        unsigned int elements;
+    }
+    tests[] =
+    {
+        {"m_f0", D3D10_SVT_FLOAT, 4, 4, 1},
+        {"m_i0", D3D10_SVT_INT, 2, 3, 1},
+        {"m_b0", D3D10_SVT_BOOL, 3, 2, 1},
+        {"m_f_a", D3D10_SVT_FLOAT, 4, 4, 2},
+        {"m_b_a", D3D10_SVT_BOOL, 3, 2, 2},
+    };
+    ID3D10EffectMatrixVariable *m_var;
+    D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10EffectVariable *var;
+    ID3D10EffectType *type;
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_matrix_variable, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        var = effect->lpVtbl->GetVariableByName(effect, tests[i].name);
+        type = var->lpVtbl->GetType(var);
+        hr = type->lpVtbl->GetDesc(type, &type_desc);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", tests[i].name, hr);
+        ok(type_desc.Type == tests[i].type, "Variable %s, got unexpected type %#x.\n",
+                tests[i].name, type_desc.Type);
+        m_var = var->lpVtbl->AsMatrix(var);
+        test_matrix_methods(m_var, tests[i].type, tests[i].name, tests[i].rows, tests[i].columns);
+        if (tests[i].elements > 1)
+            test_matrix_array_methods(m_var, tests[i].type, tests[i].name, tests[i].rows, tests[i].columns,
+                    tests[i].elements);
+    }
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -5041,4 +5373,5 @@ START_TEST(effect)
     test_effect_state_group_defaults();
     test_effect_scalar_variable();
     test_effect_vector_variable();
+    test_effect_matrix_variable();
 }
