@@ -3312,9 +3312,10 @@ static void test_SuspendProcessState(void)
 
     ok(pipe_magic == pipe_write_magic, "Did not get the correct magic from the remote process\n");
 
-    /* Validate the Imports, at this point the thread in the new process should have
-       initialized the EXE module imports and call each dll DllMain notifying it on
-       the new thread in the process. */
+    /* Validate the imports: at this point the thread in the new process
+     * should have initialized the EXE module imports and called each dll's
+     * DllMain(), notifying it of the new thread in the process.
+     */
     ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
     ok(ret, "EXE IAT is not resolved\n");
 
