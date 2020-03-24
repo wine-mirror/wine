@@ -362,12 +362,111 @@ static HRESULT avi_decompressor_source_query_accept(struct strmbase_pin *iface, 
 static HRESULT avi_decompressor_source_get_media_type(struct strmbase_pin *iface,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface->filter);
+    static const struct
+    {
+        const GUID *subtype;
+        DWORD compression;
+        WORD bpp;
+    }
+    formats[] =
+    {
+        {&MEDIASUBTYPE_CLJR, mmioFOURCC('C','L','J','R'), 8},
+        {&MEDIASUBTYPE_UYVY, mmioFOURCC('U','Y','V','Y'), 16},
+        {&MEDIASUBTYPE_YUY2, mmioFOURCC('Y','U','Y','2'), 16},
+        {&MEDIASUBTYPE_RGB32, BI_RGB, 32},
+        {&MEDIASUBTYPE_RGB24, BI_RGB, 24},
+        {&MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16},
+        {&MEDIASUBTYPE_RGB555, BI_RGB, 16},
+        {&MEDIASUBTYPE_RGB8, BI_RGB, 8},
+    };
 
-    if (index)
+    AVIDecImpl *filter = impl_from_strmbase_filter(iface->filter);
+    const VIDEOINFOHEADER *sink_format;
+    VIDEOINFO *format;
+
+    if (!filter->sink.pin.peer)
         return VFW_S_NO_MORE_ITEMS;
-    CopyMediaType(mt, &filter->mt);
-    return S_OK;
+
+    sink_format = (VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat;
+
+    memset(mt, 0, sizeof(AM_MEDIA_TYPE));
+
+    if (index < ARRAY_SIZE(formats))
+    {
+        if (!(format = CoTaskMemAlloc(offsetof(VIDEOINFO, dwBitMasks[3]))))
+            return E_OUTOFMEMORY;
+        memset(format, 0, offsetof(VIDEOINFO, dwBitMasks[3]));
+
+        format->rcSource = sink_format->rcSource;
+        format->rcTarget = sink_format->rcTarget;
+        format->dwBitRate = sink_format->dwBitRate;
+        format->dwBitErrorRate = sink_format->dwBitErrorRate;
+        format->AvgTimePerFrame = sink_format->AvgTimePerFrame;
+
+        format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        format->bmiHeader.biWidth = sink_format->bmiHeader.biWidth;
+        format->bmiHeader.biHeight = sink_format->bmiHeader.biHeight;
+        format->bmiHeader.biPlanes = sink_format->bmiHeader.biPlanes;
+        format->bmiHeader.biBitCount = formats[index].bpp;
+        format->bmiHeader.biCompression = formats[index].compression;
+        format->bmiHeader.biSizeImage = format->bmiHeader.biWidth
+                * format->bmiHeader.biHeight * formats[index].bpp / 8;
+
+        if (IsEqualGUID(formats[index].subtype, &MEDIASUBTYPE_RGB565))
+        {
+            format->dwBitMasks[iRED] = 0xf800;
+            format->dwBitMasks[iGREEN] = 0x07e0;
+            format->dwBitMasks[iBLUE] = 0x001f;
+            mt->cbFormat = offsetof(VIDEOINFO, dwBitMasks[3]);
+        }
+        else
+            mt->cbFormat = sizeof(VIDEOINFOHEADER);
+
+        mt->majortype = MEDIATYPE_Video;
+        mt->subtype = *formats[index].subtype;
+        mt->bFixedSizeSamples = TRUE;
+        mt->lSampleSize = format->bmiHeader.biSizeImage;
+        mt->formattype = FORMAT_VideoInfo;
+        mt->pbFormat = (BYTE *)format;
+
+        return S_OK;
+    }
+
+    if (index == ARRAY_SIZE(formats))
+    {
+        size_t size = ICDecompressGetFormatSize(filter->hvid, &sink_format->bmiHeader);
+
+        if (!size)
+            return VFW_S_NO_MORE_ITEMS;
+
+        mt->cbFormat = offsetof(VIDEOINFOHEADER, bmiHeader) + size;
+        if (!(format = CoTaskMemAlloc(mt->cbFormat)))
+            return E_OUTOFMEMORY;
+
+        format->rcSource = sink_format->rcSource;
+        format->rcTarget = sink_format->rcTarget;
+        format->dwBitRate = sink_format->dwBitRate;
+        format->dwBitErrorRate = sink_format->dwBitErrorRate;
+        format->AvgTimePerFrame = sink_format->AvgTimePerFrame;
+
+        if (ICDecompressGetFormat(filter->hvid, &sink_format->bmiHeader, &format->bmiHeader))
+        {
+            CoTaskMemFree(format);
+            return VFW_S_NO_MORE_ITEMS;
+        }
+
+        mt->majortype = MEDIATYPE_Video;
+        mt->subtype = MEDIATYPE_Video;
+        mt->subtype.Data1 = format->bmiHeader.biCompression;
+        mt->bFixedSizeSamples = TRUE;
+        mt->lSampleSize = format->bmiHeader.biSizeImage;
+        mt->formattype = FORMAT_VideoInfo;
+        mt->pbFormat = (BYTE *)format;
+
+        return S_OK;
+    }
+
+    return VFW_S_NO_MORE_ITEMS;
 }
 
 static HRESULT WINAPI avi_decompressor_source_DecideBufferSize(struct strmbase_source *iface,

@@ -584,7 +584,7 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     IEnumMediaTypes_Release(enummt);
     IPin_Release(pin);
@@ -639,7 +639,7 @@ static void test_enum_media_types(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -649,7 +649,7 @@ static void test_enum_media_types(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Clone(enum1, &enum2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -970,10 +970,10 @@ static void test_connect_pin(void)
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsource.source.pin.mt, &req_mt), "Media types didn't match.\n");
 
+    sink_bih = req_format.bmiHeader;
+
     hr = IPin_EnumMediaTypes(source, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    sink_bih = req_format.bmiHeader;
 
     for (i = 0; i < 9; ++i)
     {
@@ -1023,6 +1023,15 @@ static void test_connect_pin(void)
                 "%u: Media types didn't match.\n", i);
         ok(!memcmp(pmt->pbFormat, &expect_format, sizeof(VIDEOINFOHEADER)),
                 "%u: Format blocks didn't match.\n", i);
+        if (i == 5)
+        {
+            const VIDEOINFO *format = (VIDEOINFO *)pmt->pbFormat;
+
+            ok(pmt->cbFormat == offsetof(VIDEOINFO, dwBitMasks[3]), "Got format size %u.\n", pmt->cbFormat);
+            ok(format->dwBitMasks[iRED] == 0xf800, "Got red bit mask %#x.\n", format->dwBitMasks[iRED]);
+            ok(format->dwBitMasks[iGREEN] == 0x07e0, "Got green bit mask %#x.\n", format->dwBitMasks[iGREEN]);
+            ok(format->dwBitMasks[iBLUE] == 0x001f, "Got blue bit mask %#x.\n", format->dwBitMasks[iBLUE]);
+        }
 
         hr = IPin_QueryAccept(source, pmt);
         ok(hr == (i == 8 ? S_OK : S_FALSE), "Got hr %#x.\n", hr);
