@@ -13511,9 +13511,11 @@ static void test_multi_adapter(void)
 {
     unsigned int i, adapter_count, expected_adapter_count = 0;
     DISPLAY_DEVICEA display_device;
-    MONITORINFO monitor_info;
+    MONITORINFOEXA monitor_info;
+    DEVMODEA old_mode, mode;
     HMONITOR monitor;
     IDirect3D9 *d3d;
+    LONG ret;
 
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
@@ -13533,17 +13535,79 @@ static void test_multi_adapter(void)
     for (i = 0; i < adapter_count; ++i)
     {
         monitor = IDirect3D9_GetAdapterMonitor(d3d, i);
-        ok(!!monitor, "Failed to get monitor for adapter %u.\n", i);
+        ok(!!monitor, "Adapter %u: Failed to get monitor.\n", i);
 
         monitor_info.cbSize = sizeof(monitor_info);
-        ok(GetMonitorInfoA(monitor, &monitor_info),
-                "Failed to get monitor info for adapter %u, error %#x.\n", i, GetLastError());
+        ok(GetMonitorInfoA(monitor, (MONITORINFO *)&monitor_info),
+                "Adapter %u: Failed to get monitor info, error %#x.\n", i, GetLastError());
 
         if (!i)
             ok(monitor_info.dwFlags == MONITORINFOF_PRIMARY,
-                    "Got unexpected monitor flags %#x for adapter %u.\n", monitor_info.dwFlags, i);
+                    "Adapter %u: Got unexpected monitor flags %#x.\n", i, monitor_info.dwFlags);
         else
-            ok(!monitor_info.dwFlags, "Got unexpected monitor flags %#x for adapter %u.\n", monitor_info.dwFlags, i);
+            ok(!monitor_info.dwFlags, "Adapter %u: Got unexpected monitor flags %#x.\n", i,
+                    monitor_info.dwFlags);
+
+        /* Test D3D adapters after they got detached */
+        if (monitor_info.dwFlags == MONITORINFOF_PRIMARY)
+            continue;
+
+        /* Save current display settings */
+        memset(&old_mode, 0, sizeof(old_mode));
+        old_mode.dmSize = sizeof(old_mode);
+        ret = EnumDisplaySettingsA(monitor_info.szDevice, ENUM_CURRENT_SETTINGS, &old_mode);
+        /* Win10 TestBots may return FALSE but it's actually successful */
+        ok(ret || broken(!ret), "Adapter %u: EnumDisplaySettingsA failed for %s, error %#x.\n", i,
+                monitor_info.szDevice, GetLastError());
+
+        /* Detach */
+        memset(&mode, 0, sizeof(mode));
+        mode.dmSize = sizeof(mode);
+        mode.dmFields = DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT;
+        mode.dmPosition = old_mode.dmPosition;
+        ret = ChangeDisplaySettingsExA(monitor_info.szDevice, &mode, NULL,
+                CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+        ok(ret == DISP_CHANGE_SUCCESSFUL,
+                "Adapter %u: ChangeDisplaySettingsExA %s returned unexpected %d.\n", i,
+                monitor_info.szDevice, ret);
+        ret = ChangeDisplaySettingsExA(monitor_info.szDevice, NULL, NULL, 0, NULL);
+        ok(ret == DISP_CHANGE_SUCCESSFUL,
+                "Adapter %u: ChangeDisplaySettingsExA %s returned unexpected %d.\n", i,
+                monitor_info.szDevice, ret);
+
+        /* Check if it is really detached */
+        memset(&mode, 0, sizeof(mode));
+        mode.dmSize = sizeof(mode);
+        ret = EnumDisplaySettingsA(monitor_info.szDevice, ENUM_CURRENT_SETTINGS, &mode);
+        /* Win10 TestBots may return FALSE but it's actually successful */
+        ok(ret || broken(!ret) , "Adapter %u: EnumDisplaySettingsA failed for %s, error %#x.\n", i,
+                monitor_info.szDevice, GetLastError());
+        if (mode.dmPelsWidth && mode.dmPelsHeight)
+        {
+            skip("Adapter %u: Failed to detach device %s.\n", i, monitor_info.szDevice);
+            continue;
+        }
+
+        /* Detaching adapter shouldn't reduce the adapter count */
+        expected_adapter_count = adapter_count;
+        adapter_count = IDirect3D9_GetAdapterCount(d3d);
+        ok(adapter_count == expected_adapter_count,
+                "Adapter %u: Got unexpected adapter count %u, expected %u.\n", i, adapter_count,
+                expected_adapter_count);
+
+        monitor = IDirect3D9_GetAdapterMonitor(d3d, i);
+        ok(!monitor, "Adapter %u: Expect monitor to be NULL.\n", i);
+
+        /* Restore settings */
+        ret = ChangeDisplaySettingsExA(monitor_info.szDevice, &old_mode, NULL,
+                CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+        ok(ret == DISP_CHANGE_SUCCESSFUL,
+                "Adapter %u: ChangeDisplaySettingsExA %s returned unexpected %d.\n", i,
+                monitor_info.szDevice, ret);
+        ret = ChangeDisplaySettingsExA(monitor_info.szDevice, NULL, NULL, 0, NULL);
+        ok(ret == DISP_CHANGE_SUCCESSFUL,
+                "Adapter %u: ChangeDisplaySettingsExA %s returned unexpected %d.\n", i,
+                monitor_info.szDevice, ret);
     }
 
     IDirect3D9_Release(d3d);
