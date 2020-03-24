@@ -963,9 +963,7 @@ static void test_connect_pin(void)
     req_mt.subtype = test_subtype;
 
     hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr != S_OK)
-        goto out;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_ConnectedTo(sink, &peer);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1176,7 +1174,6 @@ static void test_connect_pin(void)
     ok(testsource.source.pin.peer == sink, "Got peer %p.\n", testsource.source.pin.peer);
     IFilterGraph2_Disconnect(graph, &testsource.source.pin.IPin_iface);
 
-out:
     IMemInputPin_Release(meminput);
     IPin_Release(sink);
     IPin_Release(source);
