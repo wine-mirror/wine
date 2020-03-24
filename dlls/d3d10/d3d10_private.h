@@ -61,6 +61,11 @@ enum d3d10_effect_object_operation
     D3D10_EOO_ANONYMOUS_SHADER = 7,
 };
 
+struct d3d10_matrix
+{
+    float m[4][4];
+};
+
 struct d3d10_effect_object
 {
     struct d3d10_effect_pass *pass;

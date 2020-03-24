@@ -5073,7 +5073,90 @@ static const struct ID3D10EffectVectorVariableVtbl d3d10_effect_vector_variable_
     d3d10_effect_vector_variable_GetFloatVectorArray,
 };
 
+static void write_matrix_to_buffer(struct d3d10_effect_variable *variable, void *dst_void,
+        struct d3d10_matrix *src, BOOL transpose)
+{
+    unsigned int col_count = !transpose ? variable->type->column_count : variable->type->row_count;
+    unsigned int row_count = !transpose ? variable->type->row_count : variable->type->column_count;
+    BOOL major = variable->type->type_class == D3D10_SVC_MATRIX_COLUMNS ? TRUE : FALSE;
+    float *dst = dst_void;
+    unsigned int row, col;
+
+    if (transpose)
+        major = !major;
+
+    if (major)
+    {
+        for (col = 0; col < col_count; ++col)
+        {
+            for (row = 0; row < row_count; ++row)
+                dst[(col * 4) + row] = src->m[row][col];
+        }
+    }
+    else
+    {
+        for (row = 0; row < row_count; ++row)
+        {
+            for (col = 0; col < col_count; ++col)
+                dst[(row * 4) + col] = src->m[row][col];
+        }
+    }
+}
+
+static void write_matrix_variable_to_buffer(struct d3d10_effect_variable *variable, void *src_data, BOOL transpose)
+{
+    BYTE *dst = variable->buffer->u.buffer.local_buffer + variable->buffer_offset;
+
+    write_matrix_to_buffer(variable, dst, src_data, transpose);
+
+    variable->buffer->u.buffer.changed = TRUE;
+}
+
+static void write_matrix_variable_array_to_buffer(struct d3d10_effect_variable *variable, void *src_data,
+        unsigned int offset, unsigned int count, BOOL transpose)
+{
+    BYTE *dst = variable->buffer->u.buffer.local_buffer + variable->buffer_offset;
+    struct d3d10_matrix *src = src_data;
+    unsigned int i;
+
+    if (!variable->type->element_count)
+    {
+        write_matrix_variable_to_buffer(variable, src_data, transpose);
+        return;
+    }
+
+    if (offset >= variable->type->element_count)
+    {
+        WARN("Offset %u larger than element count %u, ignoring.\n", offset, variable->type->element_count);
+        return;
+    }
+
+    if (count > variable->type->element_count - offset)
+    {
+        WARN("Offset %u, count %u overruns the variable (element count %u), fixing up.\n",
+             offset, count, variable->type->element_count);
+        count = variable->type->element_count - offset;
+    }
+
+    if (offset)
+        dst += variable->type->stride * offset;
+
+    for (i = 0; i < count; ++i)
+    {
+        write_matrix_to_buffer(variable, dst, &src[i], transpose);
+
+        dst += variable->type->stride;
+    }
+
+    variable->buffer->u.buffer.changed = TRUE;
+}
+
 /* ID3D10EffectVariable methods */
+
+static inline struct d3d10_effect_variable *impl_from_ID3D10EffectMatrixVariable(ID3D10EffectMatrixVariable *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_effect_variable, ID3D10EffectVariable_iface);
+}
 
 static BOOL STDMETHODCALLTYPE d3d10_effect_matrix_variable_IsValid(ID3D10EffectMatrixVariable *iface)
 {
@@ -5231,9 +5314,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_GetRawValue(ID3D10
 static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_SetMatrix(ID3D10EffectMatrixVariable *iface,
         float *data)
 {
-    FIXME("iface %p, data %p stub!\n", iface, data);
+    struct d3d10_effect_variable *var = impl_from_ID3D10EffectMatrixVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %p.\n", iface, data);
+    write_matrix_variable_to_buffer(var, data, FALSE);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_GetMatrix(ID3D10EffectMatrixVariable *iface,
@@ -5247,9 +5333,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_GetMatrix(ID3D10Ef
 static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_SetMatrixArray(ID3D10EffectMatrixVariable *iface,
         float *data, UINT offset, UINT count)
 {
-    FIXME("iface %p, data %p, offset %u, count %u stub!\n", iface, data, offset, count);
+    struct d3d10_effect_variable *var = impl_from_ID3D10EffectMatrixVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %p, offset %u, count %u.\n", iface, data, offset, count);
+    write_matrix_variable_array_to_buffer(var, data, offset, count, FALSE);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_GetMatrixArray(ID3D10EffectMatrixVariable *iface,
@@ -5263,9 +5352,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_GetMatrixArray(ID3
 static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_SetMatrixTranspose(ID3D10EffectMatrixVariable *iface,
         float *data)
 {
-    FIXME("iface %p, data %p stub!\n", iface, data);
+    struct d3d10_effect_variable *var = impl_from_ID3D10EffectMatrixVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %p.\n", iface, data);
+    write_matrix_variable_to_buffer(var, data, TRUE);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_GetMatrixTranspose(ID3D10EffectMatrixVariable *iface,
@@ -5279,9 +5371,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_GetMatrixTranspose
 static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_SetMatrixTransposeArray(ID3D10EffectMatrixVariable *iface,
         float *data, UINT offset, UINT count)
 {
-    FIXME("iface %p, data %p, offset %u, count %u stub!\n", iface, data, offset, count);
+    struct d3d10_effect_variable *var = impl_from_ID3D10EffectMatrixVariable(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %p, offset %u, count %u.\n", iface, data, offset, count);
+    write_matrix_variable_array_to_buffer(var, data, offset, count, TRUE);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_matrix_variable_GetMatrixTransposeArray(ID3D10EffectMatrixVariable *iface,
