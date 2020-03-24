@@ -224,8 +224,7 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start,
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw,
                        BOOL wholecmdline)
 {
-  static const WCHAR defaultDelims[] = { ' ', '\t', ',', '=', ';', '\0' };
-  return WCMD_parameter_with_delims (s, n, start, raw, wholecmdline, defaultDelims);
+  return WCMD_parameter_with_delims (s, n, start, raw, wholecmdline, L" \t,=;");
 }
 
 /****************************************************************************
@@ -537,11 +536,10 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
     /* 2. Handle 'a' : Output attributes (File doesn't have to exist) */
     if (wmemchr(firstModifier, 'a', modifierLen) != NULL) {
 
-      WCHAR defaults[] = {'-','-','-','-','-','-','-','-','-','\0'};
       doneModifier = TRUE;
 
       if (exists) {
-        lstrcpyW(thisoutput, defaults);
+        lstrcpyW(thisoutput, L"---------");
         if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
           thisoutput[0]='d';
         if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
@@ -589,12 +587,11 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
       /* FIXME: Output full 64 bit size (sprintf does not support I64 here) */
       ULONG/*64*/ fullsize = /*(fileInfo.nFileSizeHigh << 32) +*/
                                   fileInfo.nFileSizeLow;
-      static const WCHAR fmt[] = {'%','u','\0'};
 
       doneModifier = TRUE;
       if (exists) {
         if (finaloutput[0] != 0x00) lstrcatW(finaloutput, spaceW);
-        wsprintfW(thisoutput, fmt, fullsize);
+        wsprintfW(thisoutput, L"%u", fullsize);
         lstrcatW(finaloutput, thisoutput);
       }
     }
