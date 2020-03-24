@@ -479,6 +479,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD o
     if (HandleToUlong(hkey) == HandleToUlong(HKEY_CLASSES_ROOT) && name && *name == '\\') name++;
 
     if (!retkey) return ERROR_INVALID_PARAMETER;
+    *retkey = NULL;
     if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);

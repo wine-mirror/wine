@@ -1082,6 +1082,11 @@ static void test_reg_open_key(void)
 
     /* empty subkey of NULL */
     hkResult = hkPreserve;
+    ret = RegOpenKeyExW(NULL, L"", 0, KEY_QUERY_VALUE, &hkResult);
+    ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", ret);
+    ok(hkResult == NULL || broken(hkResult == hkPreserve /* Windows XP */), "expected hkResult == NULL\n");
+
+    hkResult = hkPreserve;
     ret = RegOpenKeyExA(NULL, "", 0, KEY_QUERY_VALUE, &hkResult);
     ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", ret);
     ok(hkResult == hkPreserve, "expected hkResult == hkPreserve\n");
